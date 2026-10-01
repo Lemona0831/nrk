@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>개인정보처리방침 · 나락의 유산</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;600;700&family=Nanum+Myeongjo:wght@700&display=swap">
+<style>
+:root{--bg:#f3ece0;--panel:#fbf6ec;--line:#d5c6ad;--ink:#2a1f17;--muted:#6f5f4c;--gold:#8a6420}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#120e0d;--panel:#1b1512;--line:#3b2e27;--ink:#eadfcb;--muted:#a3927f;--gold:#c9a24b}}
+:root[data-theme="dark"]{--bg:#120e0d;--panel:#1b1512;--line:#3b2e27;--ink:#eadfcb;--muted:#a3927f;--gold:#c9a24b}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;font-size:15px;line-height:1.7}
+main{max-width:720px;margin:0 auto;padding:24px 16px 48px}
+h1,h2{font-family:'Nanum Myeongjo','Noto Serif KR',serif;color:var(--gold);margin:0}
+h1{font-size:24px;margin-bottom:4px}
+h2{font-size:17px;margin:28px 0 8px}
+.meta{color:var(--muted);font-size:13px;margin:0 0 20px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px 16px 12px;margin-top:16px}
+ul{padding-left:20px;margin:6px 0}
+li{margin:2px 0}
+a{color:var(--gold)}
+table{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600}
+</style>
+</head>
+<body>
+<main>
+<h1>개인정보처리방침</h1>
+<p class="meta">나락의 유산 시험판 · 시행일 2026년 10월 1일</p>
+<p>나락의 유산은 지인과 함께 시험하는 개인 제작 게임입니다. 이 문서는 게임이 어떤 정보를 모으고, 어디에 쓰고, 어떻게 지울 수 있는지 설명합니다.</p>
+
+<section>
+<h2>1. 모으는 정보</h2>
+<table>
+<thead><tr><th scope="col">정보</th><th scope="col">언제</th></tr></thead>
+<tbody>
+<tr><td>익명 계정 id</td><td>사이트를 처음 열 때 자동으로 만들어집니다. 이름이나 연락처와 연결되지 않습니다</td></tr>
+<tr><td>구글 계정의 이메일, 이름, 프로필 사진 주소, 구글 계정 고유 번호</td><td>구글로 로그인할 때만 받습니다. 로그인은 선택입니다</td></tr>
+<tr><td>닉네임</td><td>기록판에 직접 적거나, 처음 로그인할 때 구글 계정 이름으로 채워집니다</td></tr>
+<tr><td>플레이 기록</td><td>판마다 고른 직업·스킬·능력치·아이템, 전투 행동, 방별 결과, 장비를 바꾼 이유와 메모, 판이 끝난 뒤 설문 답</td></tr>
+</tbody>
+</table>
+<p>전화번호, 주소, 결제 정보는 모으지 않습니다.</p>
+</section>
+
+<section>
+<h2>2. 쓰는 목적</h2>
+<ul>
+<li>게임의 재미와 균형을 확인하고 고치는 데 씁니다.</li>
+<li>기록판에 닉네임과 가장 좋은 기록을 보여 줍니다.</li>
+<li>로그인한 경우, 다른 기기에서도 같은 닉네임으로 기록이 이어지게 합니다.</li>
+</ul>
+<p>광고, 판매, 다른 서비스와의 결합에는 쓰지 않습니다.</p>
+</section>
+
+<section>
+<h2>3. 누가 볼 수 있나요</h2>
+<ul>
+<li><b>만든 사람:</b> 모든 플레이 기록과 닉네임을 볼 수 있습니다. 구글 계정의 이메일은 로그인 서비스(Supabase)의 관리 화면에서만 볼 수 있습니다.</li>
+<li><b>다른 플레이어:</b> 기록판의 닉네임과 보스를 쓰러뜨린 기록(쓰러진 횟수, 행동 수, 능력치, 스킬, 장비)만 볼 수 있습니다.</li>
+</ul>
+</section>
+
+<section>
+<h2>4. 맡기는 곳</h2>
+<table>
+<thead><tr><th scope="col">업체</th><th scope="col">하는 일</th></tr></thead>
+<tbody>
+<tr><td>Supabase</td><td>계정과 플레이 기록 저장</td></tr>
+<tr><td>Google</td><td>구글 로그인</td></tr>
+<tr><td>GitHub Pages</td><td>게임 화면 제공</td></tr>
+</tbody>
+</table>
+<p>각 업체는 서비스를 제공하는 과정에서 접속 기록(IP 주소 등)을 남길 수 있습니다.</p>
+</section>
+
+<section>
+<h2>5. 보관 기간과 삭제</h2>
+<ul>
+<li>시험이 끝나거나 삭제를 요청할 때까지 보관합니다.</li>
+<li>아래 이메일로 닉네임이나 로그인한 구글 이메일을 알려 주시면, 그 계정과 플레이 기록을 지우고 답장으로 알려 드립니다.</li>
+<li>로그아웃해도 이미 보낸 기록은 지워지지 않습니다.</li>
+<li>브라우저에 남은 기록은 브라우저의 사이트 데이터를 지우면 사라집니다.</li>
+</ul>
+</section>
+
+<section>
+<h2>6. 연락처</h2>
+<p>이메일: <a href="mailto:ardwi01@gmail.com">ardwi01@gmail.com</a></p>
+</section>
+
+<p class="meta" style="margin-top:24px"><a href="./">게임으로 돌아가기</a></p>
+</main>
+</body>
+</html>
