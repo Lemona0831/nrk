@@ -8,7 +8,7 @@
 - 계획과 진행 상황: docs/0.6a-구현계획.md. 설계: 기획서 11절. 보스·강적 상세는 저장소 밖 `../nrk-private/보스.md`(공개 저장소에 넣지 말 것)
 - `next/data/*.js`는 값(직업, 적, 아이템, 방, 업데이트 내역), `next/index.html`은 엔진과 화면이다. data 파일은 index.html보다 먼저 읽힌다
 - next/는 B0.5와 기록이 섞이지 않게 브라우저 저장 키(nrk_06_v1), 저장소 경로(runs6·scen6·survey6), 기록판 칸(best6)을 따로 쓴다(`COL`)
-- 음악: 원본은 `bgm/`(저장소 제외), 웹용은 `next/audio/`(MP3 96kbps, loudnorm -18). 곡 목록은 `next/data/audio.js`. 새 곡은 imageio-ffmpeg의 ffmpeg로 같은 설정으로 줄인다
+- 음악: 원본은 `bgm/`(저장소 제외), 웹용은 `next/audio/`(MP3 96kbps, loudnorm -18). 곡 목록은 `next/data/audio.js`. 곡은 모두 무료 소스(만든 사람 확인). 소리·설명 창·진행 속도는 상단 "설정" 창(`vSettings`)에서 바꾼다. 새 곡은 imageio-ffmpeg의 ffmpeg로 같은 설정으로 줄인다
 - 테스트 도구는 next/를 읽는다. 0.6a가 끝나면 next/를 루트로 옮긴다(계획 단계 12)
 
 ## 파일

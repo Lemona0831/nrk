@@ -28,8 +28,8 @@ fieldset label{display:inline-flex;align-items:center;min-height:44px;margin-rig
 .card h3{font-size:18px;margin-bottom:8px;color:var(--gold)}.card h4{font-size:15px;margin-bottom:6px;color:var(--gold)}
 .mini{font-size:13px;color:var(--muted)}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>button{flex:1}
-.hdr [data-a=sndtoggle][aria-pressed=false]{text-decoration:line-through;color:var(--muted)}
-.snd label{font-size:13px;color:var(--muted)}.snd input[type=range]{flex:1 1 140px;min-width:120px;accent-color:var(--gold);min-height:32px}
+.setg{border-top:1px solid var(--line);padding:10px 0 4px}.setg:first-of-type{border-top:0;padding-top:0}.setg h4{margin:0 0 8px}
+.setrow{display:flex;align-items:center;gap:10px;margin:8px 0}.setrow label{min-width:84px;font-size:14px}.setrow input[type=range]{flex:1;min-width:0;accent-color:var(--gold);min-height:36px}.setrow output{min-width:42px;text-align:right;font-variant-numeric:tabular-nums}.setrow select{flex:1;min-height:36px}
 .hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding:8px 12px;margin:0 -12px 10px;display:flex;align-items:center;gap:10px}
 .hdr .hi{font-size:13px;color:var(--gold);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hdr .hi-d{margin-right:6px;vertical-align:middle}.hdr .hi-m{display:none}.hdr .hl{flex:1;min-width:0}.hdr .hl b{font-family:'Nanum Myeongjo',serif;font-size:17px;display:block}
 .hero{text-align:center}.hero h1{font-size:36px;color:var(--gold);line-height:1.15}.hero p{max-width:40ch;margin:10px auto 0}
@@ -1149,7 +1149,7 @@ function vHeader() {
   const inRun = (G.scr === 'run' && !G.b);
   // 로그인 확인용 인사. 넓은 화면은 상단 버튼 옆, 좁은 화면은 제목 줄 오른쪽(버튼 줄이 늘지 않게)
   const hi = G.site && G.acct && !G.acct.anon ? (G.data.name ? esc(G.data.name) + '님, 어서 오세요' : '어서 오세요') : '';
-  return `<header class="hdr"><div class="hl"><b>나락의 유산</b><span class="mini">${sub}</span>${hi ? `<span class="hi hi-m">${hi}</span>` : ''}</div><div class="hr">${hi ? `<span class="hi hi-d">${hi}</span>` : ''}${inRun ? '<button class="sm" data-a="equip">장비와 가방</button>' : ''}<button class="sm" data-a="infotoggle" aria-pressed="${G.infoOn ? 'true' : 'false'}" title="버튼이나 카드에 마우스를 올리면 설명 창이 뜹니다. 휴대폰에서는 길게 누르세요.">설명 창 ${G.infoOn ? '켜짐' : '꺼짐'}</button><button class="sm" data-a="changes">업데이트${G.data.seenVer !== CHANGE_VER ? ' <span class="newdot" aria-label="새 소식">새</span>' : ''}</button><button class="sm" data-a="sndtoggle" aria-pressed="${sndCfg().on ? 'true' : 'false'}" title="${sndCfg().on ? '소리가 켜져 있습니다. 누르면 끕니다' : '소리가 꺼져 있습니다. 누르면 켭니다'}" aria-label="소리 ${sndCfg().on ? '켜짐' : '꺼짐'}">소리</button><button class="sm" data-a="help" data-k="">도움말</button>${G.scr === 'run' || G.scr === 'scen' ? '' : vAcctBtn()}${G.scr !== 'home' && G.scr !== 'guide' ? '<button class="sm" data-a="home">처음으로</button>' : ''}</div></header>`;
+  return `<header class="hdr"><div class="hl"><b>나락의 유산</b><span class="mini">${sub}</span>${hi ? `<span class="hi hi-m">${hi}</span>` : ''}</div><div class="hr">${hi ? `<span class="hi hi-d">${hi}</span>` : ''}${inRun ? '<button class="sm" data-a="equip">장비와 가방</button>' : ''}<button class="sm" data-a="infotoggle" aria-pressed="${G.infoOn ? 'true' : 'false'}" title="버튼이나 카드에 마우스를 올리면 설명 창이 뜹니다. 휴대폰에서는 길게 누르세요.">설명 창 ${G.infoOn ? '켜짐' : '꺼짐'}</button><button class="sm" data-a="changes">업데이트${G.data.seenVer !== CHANGE_VER ? ' <span class="newdot" aria-label="새 소식">새</span>' : ''}</button><button class="sm" data-a="settings" title="소리, 설명 창, 진행 속도">설정</button><button class="sm" data-a="help" data-k="">도움말</button>${G.scr === 'run' || G.scr === 'scen' ? '' : vAcctBtn()}${G.scr !== 'home' && G.scr !== 'guide' ? '<button class="sm" data-a="home">처음으로</button>' : ''}</div></header>`;
 }
 
 /* ---------- 내 상태 한 줄 ---------- */
@@ -1215,7 +1215,6 @@ function vHome() {
   h += `</section>`;
   h += vBoard();
   h += `<section class="card"><h3>마지막 질문</h3><p class="mini">${d.final ? '이미 답했습니다. 다시 답하면 새 답으로 바뀝니다.' : '여러 빌드를 해 본 뒤에 답해 주세요.'}</p><button data-a="final">질문에 답하기</button></section>`;
-  h += vSound();
   h += `<section class="card"><h3>기록${q('record', '기록에 대해')}</h3><p class="mini">끝낸 판 ${d.runs.filter(r => r.endedAt).length}개</p><div class="row"><button data-a="code">기록 보내기 코드</button><button data-a="dl">기록 파일 받기</button>${G.owner ? '<button class="gold" data-a="dash">결과 보기</button>' : G.site ? '<button data-a="admin">관리자</button>' : ''}</div>${G.site && G.conn === 'ok' ? '<p class="mini">기록은 이 사이트의 저장소에 자동으로 모입니다.</p>' : ''}</section>`;
   if (G.site) h += '<p class="mini"><a href="../privacy.html" target="_blank" rel="noopener">개인정보처리방침</a></p>';
   return h;
@@ -2352,6 +2351,8 @@ function vSheet() {
     body = `<p class="mini">고르지 않은 쪽은 이 방에 남습니다. 고른 뒤 바로 끼워 볼지 정할 수 있습니다.</p>`;
     for (const k of S.data.offer) body += itemCard(k, `<button class="gold" data-a="choose" data-k="${k}">이것을 가진다</button>`);
     body += `<button data-a="choose" data-k="">둘 다 두고 간다</button>`;
+  } else if (S.kind === 'settings') {
+    title = '설정'; body = vSettings();
   } else if (S.kind === 'help') {
     title = S.data.first ? '방금 적이 무너졌습니다' : '도움말'; body = (S.data.first ? '<p class="mini">처음 보는 규칙이라 잠깐 설명합니다. 이 창은 한 번만 뜹니다.</p>' : '') + vHelpBody(S.data.k);
   } else if (S.kind === 'equip') {
@@ -2364,7 +2365,7 @@ function vSheet() {
     for (const k of have) { const on = Object.values(p.eq).includes(k); body += itemCard(k, `<button class="${on ? '' : 'gold'}" data-a="eqtoggle" data-k="${k}">${on ? '해제' : '장착'}</button>${on ? '<span class="tag">장착 중</span>' : ''}`); }
     body += reasonPicker();
   }
-  return `<div class="sheet-bg" data-a="closebg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shtitle"><h3 id="shtitle">${esc(title)}${S.kind === 'equip' || S.kind === 'drop' || S.kind === 'help' ? '<button class="sm" data-a="close" aria-label="닫기">닫기</button>' : ''}</h3>${body}</div></div>`;
+  return `<div class="sheet-bg" data-a="closebg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shtitle"><h3 id="shtitle">${esc(title)}${S.kind === 'equip' || S.kind === 'drop' || S.kind === 'help' || S.kind === 'settings' ? '<button class="sm" data-a="close" aria-label="닫기">닫기</button>' : ''}</h3>${body}</div></div>`;
 }
 
 /* ---------- 결과 보기 (소유자) ---------- */
@@ -2605,9 +2606,17 @@ function sfx(k) {
 }
 function sndUnlock() { if (SND.unlocked) return; SND.unlocked = true; sndSync(); }
 function sndSet(patch) { G.data.audio = Object.assign({}, G.data.audio || {}, patch); saveLocal(); sndSync(); }
-function vSound() {
-  const c = sndCfg();
-  return `<section class="card"><h3>소리</h3><p class="mini">음악은 화면에 따라 바뀝니다. 상단의 음악 버튼으로 끄고 켤 수 있습니다.</p><div class="row snd"><label for="volm">음악 음량</label><input id="volm" type="range" min="0" max="100" step="5" value="${Math.round(c.music * 100)}"><label for="vols">효과음 음량</label><input id="vols" type="range" min="0" max="100" step="5" value="${Math.round(c.sfx * 100)}"><button class="sm" data-a="sfxtest">효과음 들어 보기</button></div></section>`;
+function vSettings() {
+  const c = sndCfg(); const pct = v => Math.round(v * 100);
+  return `<section class="setg"><h4>소리</h4>
+<div class="row"><button class="${c.on ? '' : 'gold'}" data-a="sndtoggle" aria-pressed="${c.on ? 'true' : 'false'}">${c.on ? '소리 끄기' : '소리 켜기'}</button></div>
+<div class="setrow"><label for="volm">음악 음량</label><input id="volm" type="range" min="0" max="100" step="5" value="${pct(c.music)}"${c.on ? '' : ' disabled'}><output id="volmv" for="volm">${pct(c.music)}%</output></div>
+<div class="setrow"><label for="vols">효과음 음량</label><input id="vols" type="range" min="0" max="100" step="5" value="${pct(c.sfx)}"${c.on ? '' : ' disabled'}><output id="volsv" for="vols">${pct(c.sfx)}%</output></div>
+<div class="row"><button class="sm" data-a="sfxtest"${c.on ? '' : ' disabled'}>효과음 들어 보기</button></div>
+<p class="mini">음악은 화면에 따라 바뀝니다. 브라우저 규칙 때문에 화면을 처음 누를 때부터 들립니다.</p></section>
+<section class="setg"><h4>설명 창</h4><p class="mini">버튼이나 카드에 마우스를 올리면 설명이 뜹니다. 휴대폰에서는 길게 누르세요.</p>
+<div class="row"><button data-a="infotoggle" aria-pressed="${G.infoOn ? 'true' : 'false'}">${G.infoOn ? '설명 창 끄기' : '설명 창 켜기'}</button></div></section>
+<section class="setg"><h4>적 차례 진행 속도</h4><div class="setrow"><label for="setpace">진행</label><select id="setpace">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></div></section>`;
 }
 function render() {
   if (typeof document === 'undefined') return;
@@ -2661,7 +2670,7 @@ function onClick(ev) {
       if (G.busy) { if (G.stepResolve) { const r = G.stepResolve; G.stepResolve = null; r(); } return; } hidePop(); G.sel = G.sel === el.dataset.e ? null : el.dataset.e; render(); break;
     case 'act': if (el.getAttribute('aria-disabled') === 'true') { showPop(el); return; } hidePop(); doAct(el.dataset.id, el.dataset.t || null); break;
     case 'stepnext': if (G.stepResolve) { const r = G.stepResolve; G.stepResolve = null; r(); } break;
-    case 'infotoggle': G.infoOn = !G.infoOn; G.data.infoOn = G.infoOn; saveLocal(); hidePop(); toast(G.infoOn ? '설명 창을 켰습니다' : '설명 창을 껐습니다'); break;
+    case 'infotoggle': G.infoOn = !G.infoOn; G.data.infoOn = G.infoOn; saveLocal(); hidePop(); toast(G.infoOn ? '설명 창을 켰습니다' : '설명 창을 껐습니다'); if (G.sheet && G.sheet.kind === 'settings') render(); break;
     case 'bcont': battleContinue(); break;
     case 'scennext': scenNext(); break;
     case 'retry': retryRoom(); break;
@@ -2700,6 +2709,7 @@ function onClick(ev) {
     case 'login': socialLogin(el.dataset.k); break;
     case 'loginswitch': socialLogin(el.dataset.k, true); break;
     case 'loginno': G.acct.conflict = ''; render(); break;
+    case 'settings': openSheet('settings'); break;
     case 'sndtoggle': sndSet({ on: !sndCfg().on }); render(); break;
     case 'sfxtest': sfx('coin'); break;
     case 'logout': if (confirm('로그아웃하면 이 기기는 새 익명 계정으로 돌아갑니다. 지금까지의 기록은 구글 계정에 남습니다. 로그아웃할까요?')) socialLogout(); break;
@@ -2744,10 +2754,10 @@ if (typeof document !== 'undefined') {
   if (!G.data.seenGuide) { G.scr = 'guide'; G.guideI = 0; }
   document.addEventListener('pointerdown', sndUnlock, { once: false });
   document.addEventListener('keydown', sndUnlock);
-  document.addEventListener('input', ev => { const id = ev.target && ev.target.id; if (id === 'volm') sndSet({ music: +ev.target.value / 100 }); else if (id === 'vols') sndSet({ sfx: +ev.target.value / 100 }); });
+  document.addEventListener('input', ev => { const id = ev.target && ev.target.id; if (id !== 'volm' && id !== 'vols') return; const v = +ev.target.value / 100; sndSet(id === 'volm' ? { music: v } : { sfx: v }); const o = document.getElementById(id + 'v'); if (o) o.textContent = Math.round(v * 100) + '%'; });
   document.addEventListener('click', onClick);
   document.addEventListener('keydown', onKey);
-  document.addEventListener('change', ev => { if (ev.target && ev.target.id === 'pace') { G.pace = ev.target.value; G.data.pace = G.pace; saveLocal(); if (G.stepResolve && G.pace !== 'step') { const r = G.stepResolve; G.stepResolve = null; r(); } } });
+  document.addEventListener('change', ev => { if (ev.target && (ev.target.id === 'pace' || ev.target.id === 'setpace')) { G.pace = ev.target.value; G.data.pace = G.pace; saveLocal(); if (G.stepResolve && G.pace !== 'step') { const r = G.stepResolve; G.stepResolve = null; r(); } } });
   G.infoOn = G.data.infoOn !== false; G.pace = G.data.pace || 'normal'; initPop();
   let rz = 0; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (G.b && window.innerWidth >= 1100) G.logOpen = false; render(); }, 120); });
   render();
