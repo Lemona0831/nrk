@@ -29,7 +29,7 @@ fieldset label{display:inline-flex;align-items:center;min-height:44px;margin-rig
 .mini{font-size:13px;color:var(--muted)}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>button{flex:1}
 .hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding:8px 12px;margin:0 -12px 10px;display:flex;align-items:center;gap:10px}
-.hdr .hl{flex:1;min-width:0}.hdr .hl b{font-family:'Nanum Myeongjo',serif;font-size:17px;display:block}
+.hdr .hi{font-size:13px;color:var(--gold);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hdr .hi-d{margin-right:6px;vertical-align:middle}.hdr .hi-m{display:none}.hdr .hl{flex:1;min-width:0}.hdr .hl b{font-family:'Nanum Myeongjo',serif;font-size:17px;display:block}
 .hero{text-align:center}.hero h1{font-size:36px;color:var(--gold);line-height:1.15}.hero p{max-width:40ch;margin:10px auto 0}
 .banner{border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:13.5px;border:1px solid var(--gold);background:var(--panel2)}
 .ccard{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px;background:var(--panel2)}.ccard .big{font-size:28px}
@@ -278,6 +278,8 @@ html.fitmode,html.fitmode body{overflow:hidden}
   .hdr .hl .mini{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
   .hdr .hr{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-start}
   .hdr .hr .sm{min-height:34px;padding:2px 9px;font-size:12.5px}
+  .hdr .hi-d{display:none}
+  .hdr .hi-m{display:block;flex:1 1 0;min-width:0;text-align:right}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -1313,7 +1315,9 @@ function vHeader() {
   const run = G.run;
   const sub = G.scr === 'scen' ? `고정 상황 ${G.scen.i + 1}/5 · ${esc(BUILDS[G.scen.build].n)}` : run && G.scr !== 'home' ? `${esc(BUILDS[run.build].n)} · ${run.boss === 'mother' ? '1회차' : '2회차'} · ${esc((ROOMS[run.room] || { n: '끝' }).n)}` : '전투 시험판';
   const inRun = (G.scr === 'run' && !G.b);
-  return `<header class="hdr"><div class="hl"><b>나락의 유산</b><span class="mini">${sub}</span></div><div class="hr">${inRun ? '<button class="sm" data-a="equip">장비와 가방</button>' : ''}<button class="sm" data-a="infotoggle" aria-pressed="${G.infoOn ? 'true' : 'false'}" title="버튼이나 카드에 마우스를 올리면 설명 창이 뜹니다. 휴대폰에서는 길게 누르세요.">설명 창 ${G.infoOn ? '켜짐' : '꺼짐'}</button><button class="sm" data-a="changes">업데이트${G.data.seenVer !== CHANGE_VER ? ' <span class="newdot" aria-label="새 소식">새</span>' : ''}</button><button class="sm" data-a="help" data-k="">도움말</button>${inRun ? '' : vAcctBtn()}${G.scr !== 'home' && G.scr !== 'guide' ? '<button class="sm" data-a="home">처음으로</button>' : ''}</div></header>`;
+  // 로그인 확인용 인사. 넓은 화면은 상단 버튼 옆, 좁은 화면은 제목 줄 오른쪽(버튼 줄이 늘지 않게)
+  const hi = G.site && G.acct && !G.acct.anon ? (G.data.name ? esc(G.data.name) + '님, 어서 오세요' : '어서 오세요') : '';
+  return `<header class="hdr"><div class="hl"><b>나락의 유산</b><span class="mini">${sub}</span>${hi ? `<span class="hi hi-m">${hi}</span>` : ''}</div><div class="hr">${hi ? `<span class="hi hi-d">${hi}</span>` : ''}${inRun ? '<button class="sm" data-a="equip">장비와 가방</button>' : ''}<button class="sm" data-a="infotoggle" aria-pressed="${G.infoOn ? 'true' : 'false'}" title="버튼이나 카드에 마우스를 올리면 설명 창이 뜹니다. 휴대폰에서는 길게 누르세요.">설명 창 ${G.infoOn ? '켜짐' : '꺼짐'}</button><button class="sm" data-a="changes">업데이트${G.data.seenVer !== CHANGE_VER ? ' <span class="newdot" aria-label="새 소식">새</span>' : ''}</button><button class="sm" data-a="help" data-k="">도움말</button>${G.scr === 'run' || G.scr === 'scen' ? '' : vAcctBtn()}${G.scr !== 'home' && G.scr !== 'guide' ? '<button class="sm" data-a="home">처음으로</button>' : ''}</div></header>`;
 }
 
 /* ---------- 내 상태 한 줄 ---------- */
@@ -1387,7 +1391,7 @@ function vHome() {
 /* ===== 한 화면 전투 배치 (창 크기에 맞춤) ===== */
 const CHANGE_VER = '2026-10-02b';
 const CHANGELOG = [
-  { v: '10월 2일 (로그인)', items: ['구글 계정으로 로그인할 수 있습니다. 하지 않아도 플레이할 수 있습니다.', '로그인하면 닉네임이 계정에 고정되고, 이 기기에 쌓인 기록도 그 계정으로 이어집니다. 다른 기기에서 같은 계정으로 들어오면 같은 닉네임으로 기록이 쌓입니다.', '상단의 로그인 버튼으로 로그인하고, 로그인한 뒤에는 같은 자리의 로그아웃 버튼으로 나갑니다. 버튼에 마우스를 올리면 닉네임이 보입니다.'] },
+  { v: '10월 2일 (로그인)', items: ['구글 계정으로 로그인할 수 있습니다. 하지 않아도 플레이할 수 있습니다.', '로그인하면 닉네임이 계정에 고정되고, 이 기기에 쌓인 기록도 그 계정으로 이어집니다. 다른 기기에서 같은 계정으로 들어오면 같은 닉네임으로 기록이 쌓입니다.', '상단의 로그인 버튼으로 로그인하고, 로그인한 뒤에는 같은 자리의 로그아웃 버튼으로 나갑니다. 로그인하면 상단에 "닉네임님, 어서 오세요"가 보입니다. 판을 하는 동안에는 로그인 버튼을 숨깁니다.'] },
   { v: '10월 2일 (별도 사이트)', items: ['게임을 Claude 밖의 별도 사이트에서도 열 수 있게 되었습니다. 사이트에서는 로그인 없이 기록이 자동으로 모입니다.', '사이트에서는 첫 화면의 "관리자" 버튼으로 관리자 암호를 넣으면 결과 보기가 열립니다.'] },
   { v: '10월 1일 밤', items: ['직업과 맞물리는 아이템 8종을 더해 자발 시험용 아이템이 25종이 되었습니다. 분노의 사슬(광전사), 추적자의 표식(사냥꾼), 공명석(비전술사), 수호의 문장(성전사), 독 주머니(암살자), 피의 성유(암흑술사), 정화의 묵주(사제), 흉터 부적(상흔술사). 어느 직업이든 쓸 수 있고, 괄호 안 직업과 특히 잘 맞습니다.', '지금 빌드에 쓸모없는 아이템은 고르기에 나오지 않습니다. 사슬 장갑은 근접 스킬이 있을 때, 피의 성유는 생명력으로 치르는 비용이 있을 때, 수호의 문장은 보호막을 얻는 수단이 있을 때만 나옵니다.', '사슬 장갑의 대가를 원거리·광역 피해 −5%에서 최대 스태미나 −10으로 바꾸고, 붕괴는 +20으로 올렸습니다.', '피의 계산서 생명력 6% → 4%. 독침 반지 기본 공격 피해 −20% → −10%. 선봉의 깃발 붕괴 +30 → +20. 무거운 망치 붕괴 +30 → +20. 피의 서약 +25% → +20%. 공명석 +8% → +6%.', '3,840판으로 다시 쟀습니다. 여덟 직업의 승률은 72~82%, 아이템 25종 가운데 24종은 승률을 −5%p에서 +7%p 사이로 바꿉니다. 사슬 장갑(−10%p)은 지켜보는 중입니다.'] },
   { v: '10월 1일 저녁', items: ['자발 시험용 아이템이 6종에서 17종이 되었습니다. 쌍날 단검, 무거운 망치, 가시 갑옷, 그림자 망토, 피의 서약, 정화의 성표, 분노의 반지, 수렴의 반지, 독침 반지, 끓는 플라스크, 사슬 장갑이 새로 들어왔습니다.', '아이템마다 끼운 판과 안 끼운 판을 3,840판으로 비교해 맞췄습니다. 16종이 승률을 −2%p에서 +7%p 사이로 바꿉니다(측정 오차 ±2~3%p). 잔향의 매듭은 쓰는 판이 드물어 따로 지켜봅니다.', '직업마다 직업 기술이 생겼습니다. 스킬 세 칸과 별도로 늘 쓸 수 있고, 몇 차례에 한 번 다시 쓸 수 있습니다. 광전사 해방, 사냥꾼 표적 고정, 비전술사 공명 집중, 성전사 보호 서약, 암살자 독 침투, 암흑술사 피의 대가, 사제 기도, 상흔술사 피의 응답.', '직업마다 색이 생겨, 내 상태 칸과 직업 기술 버튼에 칠해집니다.', '직업 수치: 광전사 생명력 106, 사냥꾼 118, 비전술사 104(보호막 14), 암흑술사 112, 성전사 방어 보호막 11. 여덟 직업의 승률이 74~82% 사이로 모였습니다.', '아이템 수치: 메아리 반지 +4%씩(최대 +12%), 분노의 반지 +10%, 피의 계산서 생명력 6%, 잔향의 매듭 대가는 마나 +2.', '나락의 거울이 광역 스킬로 모든 적에게 준 피해의 합을 되돌리던 문제를 고쳤습니다. 이제 대상 하나에게 준 만큼만 되돌립니다.', '휴대폰에서 상단 제목이 세로로 늘어나 전장이 가려지던 문제를 고쳤습니다.', '보호막이 피해를 모두 막으면 "0 피해" 대신 "보호막이 모두 받아냈다"로 남깁니다.', '저장소에 연결되지 않은 채 판을 마치면 기록 보내기 창이 저절로 뜹니다. 휴대폰에서는 공유 버튼으로 메신저에 바로 보낼 수 있습니다.', '이 업데이트 내역이 생겼습니다.'] },
