@@ -6,15 +6,13 @@
 <title>나락의 유산 — 시험판</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;600;700&family=Nanum+Myeongjo:wght@700&display=swap">
 <style>
-:root{--bg:#f3ece0;--panel:#fbf6ec;--panel2:#efe5d4;--line:#d5c6ad;--ink:#2a1f17;--muted:#6f5f4c;--gold:#8a6420;--gold-ink:#fff8e8;--good:#2f7a3a;--bad:#b0362a;--hp:#b8392c;--mp:#2f5fb3;--st:#a37b1c;--bk:#6b45b0;--track:#e4d8c3;
+:root{color-scheme:dark;--bg:#0d0b0a;--panel:#17120f;--panel2:#211a15;--line:#3a2c22;--ink:#e6dccb;--muted:#a39380;--gold:#c9a24b;--gold-ink:#1a1206;--good:#86c56f;--bad:#ea6a55;--hp:#c9483a;--mp:#3f7ad6;--st:#c9a23a;--bk:#9b78e0;--track:#2a1f1a;--blood:#b33a2e;--gr-n:#b9b2a6;--gr-m:#79a6e0;--gr-r:#e0b24a;
  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#120e0d;--panel:#1b1512;--panel2:#241c18;--line:#3b2e27;--ink:#eadfcb;--muted:#a3927f;--gold:#c9a24b;--gold-ink:#1a1206;--good:#86c56f;--bad:#ea6a55;--hp:#c9483a;--mp:#3f7ad6;--st:#c9a23a;--bk:#9b78e0;--track:#2a1f1a}}
-:root[data-theme="dark"]{--bg:#120e0d;--panel:#1b1512;--panel2:#241c18;--line:#3b2e27;--ink:#eadfcb;--muted:#a3927f;--gold:#c9a24b;--gold-ink:#1a1206;--good:#86c56f;--bad:#ea6a55;--hp:#c9483a;--mp:#3f7ad6;--st:#c9a23a;--bk:#9b78e0;--track:#2a1f1a}
 html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;font-size:15px;line-height:1.55}
-h1,h3,h4{font-family:'Nanum Myeongjo','Noto Serif KR',serif;margin:0}
-button{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 11px;cursor:pointer;min-height:44px;text-align:center}
+body{margin:0;background:radial-gradient(ellipse 90% 60% at 50% -10%,#2a1d15 0%,rgba(13,11,10,0) 70%) no-repeat,var(--bg);background-attachment:fixed;min-height:100dvh;color:var(--ink);font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;font-size:15px;line-height:1.55}
+h1,h3,h4{font-family:'Nanum Myeongjo','Noto Serif KR',serif;margin:0;text-shadow:0 1px 0 #000,0 0 12px rgba(201,162,75,.08)}
+button{font:inherit;color:var(--ink);background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(0,0,0,0)),var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 11px;cursor:pointer;min-height:44px;text-align:center}
 button[disabled]{opacity:.45;cursor:not-allowed}
 button.gold{background:var(--gold);color:var(--gold-ink);border-color:var(--gold);font-weight:700}
 button.sm{min-height:44px;padding:6px 10px;font-size:13.5px}
@@ -24,12 +22,13 @@ input[type=radio]{width:auto;margin:0 4px 0 0}
 fieldset{border:1px solid var(--line);border-radius:8px;margin:8px 0;padding:8px 10px}legend{padding:0 4px}
 fieldset label{display:inline-flex;align-items:center;min-height:44px;margin-right:12px}
 .app{max-width:760px;margin:0 auto;padding:0 12px 40px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.card{background:linear-gradient(180deg,rgba(201,162,75,.035),rgba(0,0,0,0) 40px),var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;box-shadow:inset 0 1px 0 rgba(201,162,75,.07),0 2px 10px rgba(0,0,0,.35)}
 .card h3{font-size:18px;margin-bottom:8px;color:var(--gold)}.card h4{font-size:15px;margin-bottom:6px;color:var(--gold)}
 .mini{font-size:13px;color:var(--muted)}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>button{flex:1}
-.setg{border-top:1px solid var(--line);padding:10px 0 4px}.setg:first-of-type{border-top:0;padding-top:0}.setg h4{margin:0 0 8px}
-.setrow{display:flex;align-items:center;gap:10px;margin:8px 0}.setrow label{min-width:84px;font-size:14px}.setrow input[type=range]{flex:1;min-width:0;accent-color:var(--gold);min-height:36px}.setrow output{min-width:42px;text-align:right;font-variant-numeric:tabular-nums}.setrow select{flex:1;min-height:36px}
+.setg{border-top:1px solid var(--line);padding:12px 0 6px}.setg:first-of-type{border-top:0;padding-top:2px}.setg h4{margin:0 0 6px;font-size:13px;color:var(--muted);font-family:inherit;letter-spacing:.06em;text-shadow:none}
+.sw{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:4px 12px 4px 6px;border-radius:999px;font-size:13.5px}.sw::before{content:'';width:34px;height:20px;border-radius:10px;background:radial-gradient(circle at 10px 50%,var(--muted) 6px,transparent 7px),var(--track);box-shadow:inset 0 0 0 1px var(--line)}.sw[aria-checked=true]::before{background:radial-gradient(circle at 24px 50%,#1a1206 6px,transparent 7px),var(--gold);box-shadow:none}.sw[aria-checked=false]{color:var(--muted)}
+.setrow{display:grid;grid-template-columns:96px 1fr auto;align-items:center;gap:10px;margin:6px 0;min-height:40px}.setrow>label,.setrow>.lab{font-size:14px}.setrow>:last-child{justify-self:end}.setrow small{grid-column:1/-1;justify-self:start!important;margin-top:-4px;color:var(--muted);font-size:12px}.setrow input[type=range]{flex:1;min-width:0;accent-color:var(--gold);min-height:36px}.setrow output{min-width:42px;text-align:right;font-variant-numeric:tabular-nums}.setrow select{flex:1;min-height:36px}
 .hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding:8px 12px;margin:0 -12px 10px;display:flex;align-items:center;gap:10px}
 .hdr .hi{font-size:13px;color:var(--gold);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hdr .hi-d{margin-right:6px;vertical-align:middle}.hdr .hi-m{display:none}.hdr .hl{flex:1;min-width:0}.hdr .hl b{font-family:'Nanum Myeongjo',serif;font-size:17px;display:block}
 .hero{text-align:center}.hero h1{font-size:36px;color:var(--gold);line-height:1.15}.hero p{max-width:40ch;margin:10px auto 0}
@@ -58,7 +57,7 @@ fieldset label{display:inline-flex;align-items:center;min-height:44px;margin-rig
 .tag{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-top:4px}
 .tbl{overflow-x:auto}
 table.st2{width:100%;border-collapse:collapse;font-size:13px}table.st2 td,table.st2 th{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:60;display:flex;align-items:flex-end;padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(2px);z-index:60;display:flex;align-items:flex-end;padding-bottom:env(safe-area-inset-bottom,0px)}
 .sheet{background:var(--bg);border-top:2px solid var(--gold);width:100%;max-width:760px;margin:0 auto;border-radius:14px 14px 0 0;max-height:88%;overflow-y:auto;padding:14px 14px calc(16px + env(safe-area-inset-bottom,0px))}
 .sheet h3{color:var(--gold);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:18px}
 .toast{pointer-events:none;position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;z-index:90;max-width:90%;text-align:center}
@@ -129,10 +128,13 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .bkline{display:flex;align-items:center;gap:6px;margin:2px 0}.bkb{flex:1;height:5px;background:var(--track);border-radius:3px;overflow:hidden}.bkb i{display:block;height:100%;background:var(--bk)}.bkline small{font-size:10.5px;color:var(--muted);white-space:nowrap}
 .dockhead{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px}
 .legend{display:flex;gap:10px;margin:4px 0;font-size:11.5px;color:var(--muted)}.lg{display:inline-flex;align-items:center;gap:4px}.lg:before{content:'';width:10px;height:10px;border-radius:2px;background:var(--c)}
+.gr-n{color:var(--gr-n)}.gr-m{color:var(--gr-m)}.gr-r{color:var(--gr-r)}.grb-n{border-color:var(--gr-n)}.grb-m{border-color:var(--gr-m)}.grb-r{border-color:var(--gr-r)}
 .g-atk{--c:#b8392c}.g-sk{--c:#7b55c0}.g-def{--c:#3a6cc4}.g-etc{--c:#3a8a45}.g-sig{--c:var(--cls,#8a6a2a)}
 .ab.g-sig{background:color-mix(in srgb, var(--cls,#8a6a2a) 10%, var(--panel))}
 .fstat,.me{border-left:5px solid var(--cls,transparent)}
 .abgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:5px}
+.agp{display:contents}.agl{display:none}
+@media (min-width:720px){.abgrid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;align-items:start}.agp{display:flex;flex-direction:column;gap:5px;min-width:0}.agl{display:block;font-size:12px;color:var(--muted);letter-spacing:.04em;padding:0 2px 1px;border-bottom:1px solid var(--line)}}
 .ab{text-align:left;padding:5px 8px;min-height:44px;border-left:4px solid var(--c)}.ab b{display:block;font-size:13.5px;line-height:1.25}.ab small{display:block;font-size:11.5px;color:var(--muted);line-height:1.25}
 .adesc{margin-top:6px;font-size:12.5px;min-height:1.4em;color:var(--ink);opacity:.9}
 .wide{width:100%}
@@ -284,6 +286,8 @@ html.fitmode,html.fitmode body{overflow:hidden}
   .hdr .hi-m{display:block;flex:1 1 0;min-width:0;text-align:right}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* PC: 고르는 창과 설정 창은 화면 가운데에 (앞의 .sheet 규칙보다 뒤에 둔다) */
+@media (min-width:720px){.sheet-bg{align-items:center;padding:24px}.sheet{border-radius:14px;border:1px solid var(--gold);max-width:720px;max-height:86vh;box-shadow:0 20px 60px rgba(0,0,0,.6)}.sheet.sh-settings{max-width:440px}}
 </style>
 </head>
 <body>
@@ -1276,6 +1280,8 @@ function vBattle() {
     let kn = 0;
     for (const [lab, ids] of AGROUP) {
       const list = ids ? L.filter(a => ids.includes(a.id)) : L.filter(a => a.skill);
+      if (!list.length) continue;
+      btns += `<div class="agp" role="group" aria-label="${esc(lab)}"><span class="agl" aria-hidden="true">${esc(lab)}</span>`;
       for (const a of list) {
         let why = '';
         if (!a.ok) why = a.why || (a.id === 'heavy' || a.id === 'guard' || a.id === 'dodge' ? '스태미나 부족' : a.skill ? '마나 부족' : '충전 없음');
@@ -1286,6 +1292,7 @@ function vBattle() {
         kn++;
         btns += `<button class="ab g-${lab === '공격' ? 'atk' : lab === '스킬' ? 'sk' : lab === '지키기' ? 'def' : lab === '직업' ? 'sig' : 'etc'}${dis ? ' dis' : ''}${urgent ? ' urgent' : ''}" data-a="act" data-id="${a.id}" data-info="act:${a.id}" data-k="${kn}" aria-disabled="${dis}"><b>${kn <= 9 ? `<kbd>${kn}</kbd>` : ''}${esc(a.n)}</b><small>${why ? esc(why) : esc(a.cost) + ' · ' + esc(skillHint(b, a) || speedWord(a.time)) + (at ? ' → ' + esc(at.n) + (gd ? ' 🛡' : '') : a.aoe ? ' → 전체' : '')}</small></button>`;
       }
+      btns += '</div>';
     }
     dock = `<section class="dock">${vCoach()}<div class="dockhead">${G.busy ? `<span class="busy" role="status">적이 움직이는 중</span>${G.stepResolve ? '<button class="sm gold" data-a="stepnext" data-focus>다음 <kbd>Space</kbd></button>' : ''}<button class="sm" data-a="skip">끝까지 넘기기</button>` : `<span>대상 <b>${tg ? esc(tg.n) : '행동마다 자동'}</b> <span class="mini">적 카드를 누르면 고정됩니다</span></span>${q('act', '행동')}`}<label class="pacesel">진행 <select id="pace" aria-label="적 차례 진행 속도">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></label></div>
       
@@ -2365,7 +2372,7 @@ function vSheet() {
     for (const k of have) { const on = Object.values(p.eq).includes(k); body += itemCard(k, `<button class="${on ? '' : 'gold'}" data-a="eqtoggle" data-k="${k}">${on ? '해제' : '장착'}</button>${on ? '<span class="tag">장착 중</span>' : ''}`); }
     body += reasonPicker();
   }
-  return `<div class="sheet-bg" data-a="closebg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shtitle"><h3 id="shtitle">${esc(title)}${S.kind === 'equip' || S.kind === 'drop' || S.kind === 'help' || S.kind === 'settings' ? '<button class="sm" data-a="close" aria-label="닫기">닫기</button>' : ''}</h3>${body}</div></div>`;
+  return `<div class="sheet-bg" data-a="closebg"><div class="sheet sh-${S.kind}" role="dialog" aria-modal="true" aria-labelledby="shtitle"><h3 id="shtitle">${esc(title)}${S.kind === 'equip' || S.kind === 'drop' || S.kind === 'help' || S.kind === 'settings' ? '<button class="sm" data-a="close" aria-label="닫기">닫기</button>' : ''}</h3>${body}</div></div>`;
 }
 
 /* ---------- 결과 보기 (소유자) ---------- */
@@ -2607,16 +2614,15 @@ function sfx(k) {
 function sndUnlock() { if (SND.unlocked) return; SND.unlocked = true; sndSync(); }
 function sndSet(patch) { G.data.audio = Object.assign({}, G.data.audio || {}, patch); saveLocal(); sndSync(); }
 function vSettings() {
-  const c = sndCfg(); const pct = v => Math.round(v * 100);
+  const c = sndCfg(); const pct = v => Math.round(v * 100); const off = c.on ? '' : ' disabled';
+  const sw = (a, on, lab) => `<button class="sw" role="switch" aria-checked="${on ? 'true' : 'false'}" data-a="${a}" aria-label="${lab}">${on ? '켜짐' : '꺼짐'}</button>`;
   return `<section class="setg"><h4>소리</h4>
-<div class="row"><button class="${c.on ? '' : 'gold'}" data-a="sndtoggle" aria-pressed="${c.on ? 'true' : 'false'}">${c.on ? '소리 끄기' : '소리 켜기'}</button></div>
-<div class="setrow"><label for="volm">음악 음량</label><input id="volm" type="range" min="0" max="100" step="5" value="${pct(c.music)}"${c.on ? '' : ' disabled'}><output id="volmv" for="volm">${pct(c.music)}%</output></div>
-<div class="setrow"><label for="vols">효과음 음량</label><input id="vols" type="range" min="0" max="100" step="5" value="${pct(c.sfx)}"${c.on ? '' : ' disabled'}><output id="volsv" for="vols">${pct(c.sfx)}%</output></div>
-<div class="row"><button class="sm" data-a="sfxtest"${c.on ? '' : ' disabled'}>효과음 들어 보기</button></div>
-<p class="mini">음악은 화면에 따라 바뀝니다. 브라우저 규칙 때문에 화면을 처음 누를 때부터 들립니다.</p></section>
-<section class="setg"><h4>설명 창</h4><p class="mini">버튼이나 카드에 마우스를 올리면 설명이 뜹니다. 휴대폰에서는 길게 누르세요.</p>
-<div class="row"><button data-a="infotoggle" aria-pressed="${G.infoOn ? 'true' : 'false'}">${G.infoOn ? '설명 창 끄기' : '설명 창 켜기'}</button></div></section>
-<section class="setg"><h4>적 차례 진행 속도</h4><div class="setrow"><label for="setpace">진행</label><select id="setpace">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></div></section>`;
+<div class="setrow"><span class="lab">소리</span><span></span>${sw('sndtoggle', c.on, '소리')}</div>
+<div class="setrow"><label for="volm">음악</label><input id="volm" type="range" min="0" max="100" step="5" value="${pct(c.music)}"${off}><output id="volmv" for="volm">${pct(c.music)}%</output></div>
+<div class="setrow"><label for="vols">효과음</label><input id="vols" type="range" min="0" max="100" step="5" value="${pct(c.sfx)}"${off}><button class="sm" data-a="sfxtest"${off} aria-label="효과음 들어 보기">들어 보기</button><small>효과음 <output id="volsv" for="vols">${pct(c.sfx)}%</output>. 음악은 화면에 따라 바뀌고, 화면을 처음 누를 때부터 들립니다.</small></div></section>
+<section class="setg"><h4>화면</h4>
+<div class="setrow"><span class="lab">설명 창</span><span class="mini">마우스를 올리거나 길게 누르면 뜹니다</span>${sw('infotoggle', G.infoOn, '설명 창')}</div>
+<div class="setrow"><label for="setpace">적 차례</label><span class="mini">적이 움직이는 빠르기</span><select id="setpace">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></div></section>`;
 }
 function render() {
   if (typeof document === 'undefined') return;
