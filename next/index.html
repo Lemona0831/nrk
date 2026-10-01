@@ -343,6 +343,8 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .lvtag{font-size:12px;font-weight:700;color:var(--gold-ink);background:var(--gold);border-radius:6px;padding:1px 6px;margin-left:6px}
 .xpbar{position:relative;height:14px;margin-top:4px;background:var(--track);border-radius:7px;overflow:hidden}.xpbar i{display:block;height:100%;background:linear-gradient(90deg,#7a5a1e,var(--gold))}.xpbar span{position:absolute;inset:0;text-align:center;font-size:10.5px;line-height:14px;color:#fff;text-shadow:0 1px 2px #000}
 .elv{color:var(--muted);font-weight:400}.etough{margin-left:4px;font-size:10.5px;padding:0 5px;border-radius:999px;border:1px solid var(--blood);color:#e9b2a8;font-weight:600}.en .nm{word-break:keep-all}.erole{color:var(--muted);font-weight:400;font-size:10.5px}
+
+.cdx{border-top:1px solid var(--line);padding:10px 0}.cdx:first-of-type{border-top:0}.cdx h4{margin:0 0 4px}.cdx ul{margin:6px 0;padding-left:18px}.cdx li{margin:3px 0;font-size:14px}.cdx textarea{width:100%;margin-top:4px}
 </style>
 </head>
 <body>
@@ -405,8 +407,8 @@ function genSkill(b, act, tgt) {
   if (fx.protect) addS(b, p, 'protect', 3);
   if (fx.healPct) { const hl = p.hpMax * fx.healPct * healMul(p); p.hp = Math.min(p.hpMax, p.hp + hl); logp(b, 'good', act.n + '. 생명력 +' + r1(hl)); }
   if (fx.lifesteal && tot > 0) { p.hp = Math.min(p.hpMax, p.hp + tot * fx.lifesteal * healMul(p)); logp(b, 'good', '빼앗은 기운으로 생명력 +' + r1(tot * fx.lifesteal)); }
-  if (fx.cleanseOne) { for (const k of ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln']) if (p.s[k]) { cleanse(b, [k], false); break; } }
-  if (fx.cleanseAll) { const n = cleanse(b, ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln'], false); if (n && fx.wardPer) { p.ward = Math.min(40, (p.ward || 0) + n * fx.wardPer); logp(b, 'good', '속죄의 빛이 막이 된다. 보호막 ' + Math.round(p.ward)); } }
+  if (fx.cleanseOne) { for (const k of ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln', 'brand']) if (p.s[k]) { cleanse(b, [k], false); break; } }
+  if (fx.cleanseAll) { const n = cleanse(b, ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln', 'brand'], false); if (n && fx.wardPer) { p.ward = Math.min(40, (p.ward || 0) + n * fx.wardPer); logp(b, 'good', '속죄의 빛이 막이 된다. 보호막 ' + Math.round(p.ward)); } }
   if (fx.scarFromCost && cost > 0) { p.scar = Math.min(p.hpMax * 0.5, p.scar + cost * fx.scarFromCost); logp(b, 'good', '흘린 피가 상흔이 된다. 상흔 ' + Math.round(p.scar)); }
   if (fx.suture) { const hl = p.scar; p.scar = 0; p.hp = Math.min(p.hpMax, p.hp + hl); logp(b, 'good', '상흔을 꿰매 생명력 +' + r1(hl)); }
   p.lastSkillDmg = act.aoe ? tot / Math.max(1, targets.length) : tot;
@@ -457,8 +459,11 @@ const STAM_FLASK = 60; // 스태미나 플라스크 회복량 (11.6절 [가설])
          inMul(받는 피해 배율) onHurt(맞은 뒤) onParry(흘리기 성공) onKill onStart onCleanse onFlask block(디버프 막기) dur(내 상태 지속 조정)
          st(최대치 더하기 {hp,mp,st}) hpMul cost(행동 비용 더하기) regen(스태미나 자연 회복 더하기) heal(플라스크 회복 더하기 %p) */
 const FXHIT = {};
+/* 타락한 수도원장 수치. 사람처럼 판단하는 테스터(여섯 성향) 1,920판에서 첫 도전 승률 48%로 맞춘 값 (10월 2일, 만든 사람 요청 50% 안팎) */
+const ABBOT = { cycle: 5, brand: 0.2, vowHeal: 0.01, vowTaken: 0.6, monkHeal: 0.025 };
+function codexHit(b, id, key) { b.codex = b.codex || {}; b.codex[id + '.' + key] = 1; }
 const fxHit = k => { FXHIT[k] = (FXHIT[k] || 0) + 1; };
-const DEBUFFS = ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln'];
+const DEBUFFS = ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln', 'brand'];
 const nDebuff = e => DEBUFFS.concat(['broken']).filter(k => e.s[k]).length;
 const isSpell = c => !!(c && c.spell);
 const IFX = {
@@ -666,7 +671,7 @@ function pSpeed(b) {
   s *= 1 + 0.005 * stat(p, 'dex');
   return clamp(s, 0.7, 1.5);
 }
-function eSpeed(b, e) { let s = e.spd * (hasMod(b, 'bell') ? 1.1 : 1); if (e.s && e.s.chill) s *= 0.7; if (b.enrage && e.role === 'boss') s *= 1.3; return s; }
+function eSpeed(b, e) { let s = e.spd * (hasMod(b, 'bell') ? 1.1 : 1); if (e.boss === 'abbot' && e.phase === 3) s *= 1.2; if (e.foe === 'pilgrim' && e.hp < e.hpMax * 0.5) s *= 1.3; if (e.s && e.s.chill) s *= 0.7; if (b.enrage && e.role === 'boss') s *= 1.3; return s; }
 
 /* 1T 경계마다 전역 처리 */
 function tickOnce(b) {
@@ -689,6 +694,11 @@ function tickOnce(b) {
     }
     if (st(p, 'poison') < 10) b.hatchLock = false;
   }
+  if (boss && boss.boss === 'abbot' && boss.phase === 2) {
+    if (T - (boss.vowTick || 0) >= 3) { boss.vow = boss.vow ? 0 : 1; boss.vowTick = T; if (boss.vow) { boss.intent = { k: 'pray' }; logp(b, 'sys', boss.n + '이(가) 다시 입을 다문다'); codexHit(b, 'abbot', 'vow'); } else { decideIntent(b, boss); logp(b, 'sys', boss.n + '이(가) 입을 연다'); } }
+    if (boss.vow) boss.hp = Math.min(boss.hpMax, boss.hp + boss.hpMax * ABBOT.vowHeal);
+  }
+  { const rg = alive(b).find(e => e.foe === 'bellringer'); const bell = alive(b).find(e => e.bell); if (rg && bell && T % 4 === 0) { for (const x of alive(b)) if (x.role !== 'root') x.quick = 1; logp(b, 'bad', rg.n + '이(가) 줄을 당긴다. 종이 울린다'); codexHit(b, 'bellringer', 'ring'); } }
   if (boss && boss.boss === 'tree') {
     if (T % 4 === 0) { b.season = (b.season + 1) % 4; logp(b, 'sys', '계절이 바뀐다. 이제 ' + SEASONS[b.season]); }
     const roots = alive(b).filter(e => e.role === 'root').length;
@@ -733,6 +743,7 @@ function hurtPlayer(b, raw, o) {
   if (!o.dot && !o.aoe && p.dodge && o.src && o.src.id === p.dodge) {
     p.dodge = 0; const red = parryRed(p); raw *= 1 - red; o.parried = true; logp(b, 'good', (o.src ? o.src.n + '의 ' + (o.charged ? '강타' : '공격') : '공격') + '을(를) 칼날로 흘린다. 피해 ' + Math.round(red * 100) + '% 감소');
     fxRun(p, 'onParry', b, p, o.src);
+    if (o.charged && o.src && o.src.boss === 'abbot' && p.s.brand) { p.s.brand.stacks--; if (p.s.brand.stacks <= 0) delete p.s.brand; logp(b, 'good', '흘려 낸 칼끝이 낙인 하나를 긁어낸다'); }
     if (o.charged) { addBreak(b, o.src, 25); logp(b, 'good', o.src.n + '의 자세가 흔들린다. 붕괴 게이지 +25'); }
     if (o.charged && o.src && (p.eq.amulet === 'witness')) { addS(b, o.src, 'vuln', 2); logp(b, 'good', '증인의 부적이 빈틈을 기억한다. ' + o.src.n + ' 취약'); }
     
@@ -779,6 +790,7 @@ function hurtEnemy(b, e, raw, o) {
   if (!o.dot && o.melee && o.single && b.p.scar > 0 && hasIt(b.p, 'scarcharm')) d += Math.min(10, b.p.scar * 0.15);
   if (!o.dot && (o.single || o.melee) && hasIt(b.p, 'markamu')) { const mk = b.p.mk; if (mk && mk.id !== e.id && mk.n > 0) d *= 0.9; b.p.mk = mk && mk.id === e.id ? { id: e.id, n: mk.n + 1 } : { id: e.id, n: 1 }; if (b.p.mk.n >= 3) { b.p.mk.n = 0; b.markTgt = e; } }
   if (!o.dot && hasIt(b.p, 'focusring')) d *= o.aoe ? 0.7 : 1.07;
+  if (e.vow && !o.dot) d *= ABBOT.vowTaken;
   if (!o.dot && b.cur) { d = d * fxMul(b.p, 'hit', b, b.p, e, o, b.cur) + fxAdd(b.p, 'hitAdd', b, b.p, e, o, b.cur); }
   if (o.dot && e !== b.p) d *= fxMul(b.p, 'dotOut', b, b.p, e, o.label);
   if (e.s.vuln) d *= 1.25;
@@ -793,6 +805,7 @@ function hurtEnemy(b, e, raw, o) {
   d = Math.max(0, d);
   e.hp -= d;
   if (!o.dot && b.cur) fxRun(b.p, 'onHit', b, b.p, e, o, b.cur, d);
+  if (e.foe === 'pilgrim' && !e.frenzy && e.hp < e.hpMax * 0.5 && e.hp > 0) { e.frenzy = 1; logp(b, 'bad', e.n + '의 눈이 번들거린다. 더 빨라진다'); codexHit(b, 'pilgrim', 'frenzy'); }
   if (!o.dot && b.p.build === 'berserker') addRage(b, 1);
   if (!o.silent && d > 0) logp(b, o.dot ? 'sys' : 'good', o.dot ? (o.label || '피해') + '이(가) ' + e.n + '을(를) 갉아먹는다. ' + r1(d) + ' 피해' : e.n + '에게 ' + r1(d) + ' 피해');
   if (e.hp <= 0) killEnemy(b, e);
@@ -822,6 +835,8 @@ function killEnemy(b, e) {
   e.alive = false; e.hp = 0; logp(b, 'good', e.n + '이(가) 쓰러진다');
   if (b.p.build === 'warlock' && (e.s.weak || e.s.vuln)) { const hl = b.p.hpMax * 0.1; b.p.hp = Math.min(b.p.hpMax, b.p.hp + hl); logp(b, 'good', '꺼져 가는 혼을 들이마신다. 생명력 +' + r1(hl)); }
   b.xp = (b.xp || 0) + xpOf(e);
+  if (e.bell) { const rg = b.en.find(x => x.foe === 'bellringer' && x.alive); if (rg) { rg.stun = 1; logp(b, 'crit', '큰 종이 깨진다. ' + rg.n + '이(가) 비틀거린다'); } codexHit(b, 'bellringer', 'bellbreak'); }
+  if (e.foe === 'pilgrim') { b.rotted = 1; logp(b, 'bad', e.n + '의 몸이 무너지며 썩은 냄새가 퍼진다'); codexHit(b, 'pilgrim', 'rot'); }
   fxRun(b.p, 'onKill', b, b.p, e);
   b.rec.push({ k: 'kill', t: r1(b.t), role: e.role });
 }
@@ -853,6 +868,7 @@ function decideIntent(b, e) {
     case 'shield': it = { k: 'attack' }; break;
     case 'archer': it = { k: 'attack', bleed: 1 }; break;
     case 'healer': {
+      if (e.monk) { const bs = al.find(x => x.role === 'boss'); it = bs && bs.hp < bs.hpMax ? { k: 'heal', tgt: bs.id } : { k: 'attack' }; break; }
       const hurt = al.filter(x => x.role !== 'root' && x.hp < x.hpMax * 0.7).sort((a, c) => a.hp / a.hpMax - c.hp / c.hpMax)[0];
       it = hurt && !(e.intentPrev === 'heal') ? { k: 'heal', tgt: hurt.id } : { k: 'attack' }; break;
     }
@@ -862,7 +878,8 @@ function decideIntent(b, e) {
     case 'root': it = { k: 'none' }; break;
     case 'boss': {
       const ph = e.phase; const c = n % 4;
-      if (e.boss === 'mother') it = c === 2 ? { k: 'charge' } : (ph >= 2 && c === 1) ? { k: 'mirror' } : { k: 'attack' };
+      if (e.boss === 'abbot') { if (e.vow) it = { k: 'pray' }; else if (ph === 1) { const c5 = n % ABBOT.cycle; it = c5 === 1 ? { k: 'brand' } : c5 === 3 ? { k: 'charge' } : { k: 'attack' }; } else it = n % 3 === 2 ? { k: 'charge' } : { k: 'attack' }; }
+      else if (e.boss === 'mother') it = c === 2 ? { k: 'charge' } : (ph >= 2 && c === 1) ? { k: 'mirror' } : { k: 'attack' };
       else it = (c === 2 || (ph >= 2 && c === 0 && n > 0)) ? { k: 'charge' } : { k: 'attack' };
       break;
     }
@@ -878,11 +895,13 @@ function intentText(b, e) {
     case 'attack': return { t: '공격 ' + est + (i.bleed ? ', 출혈' : ''), hv: 0 };
     case 'charge': return { t: '강타를 모으는 중. 다음 행동에 내리친다', hv: 1 };
     case 'heavy': return { t: '강타 ' + r1(est * 3) + ', 맞으면 취약', hv: 1 };
-    case 'heal': { const t = b.en.find(x => x.id === i.tgt); return { t: (t ? t.n : '아군') + '을(를) 25% 치유', hv: 1 }; }
+    case 'heal': { const t = b.en.find(x => x.id === i.tgt); return { t: (t ? t.n : '아군') + '을(를) ' + (e.monk ? ABBOT.monkHeal * 100 : 25) + '% 치유', hv: 1 }; }
     case 'summon': return { t: '하수인 둘을 부른다', hv: 0 };
     case 'fuse': return { t: '도화선에 불을 붙인다. 다음 행동에 터진다', hv: 1 };
     case 'explode': return { t: '폭발 ' + est + ', 광역, 약화', hv: 1 };
     case 'mirror': return { t: '나락의 거울. 내 직전 스킬의 절반 ' + r1(b.p.lastSkillDmg * 0.5), hv: 1 };
+    case 'brand': return { t: '죄를 읽는다. 공격 ' + r1(est * 0.6), hv: 0 };
+    case 'pray': return { t: '입을 다물고 기도한다. 공격하지 않는다', hv: 0 };
     default: return { t: '', hv: 0 };
   }
 }
@@ -897,10 +916,12 @@ function enemyAct(b, e) {
   const i = e.intent || { k: 'attack' }; const d = enemyHitEst(b, e);
   b.rec.push({ k: 'eact', t: r1(b.t), role: e.role, i: i.k });
   switch (i.k) {
-    case 'attack': { const x = hurtPlayer(b, d, { src: e, single: 1, label: e.n + '이(가) 나를 벤다' }); if (i.bleed && x > 0) addS(b, b.p, 'bleed', 3); break; }
+    case 'attack': { const x = hurtPlayer(b, d, { src: e, single: 1, label: e.n + '이(가) 나를 벤다' }); if (i.bleed && x > 0) addS(b, b.p, 'bleed', 3); leech(b, e, x); break; }
+    case 'brand': { hurtPlayer(b, d * 0.6, { src: e, single: 1, label: e.n + '이(가) 죄를 읽는다' }); if (!b.over) { const before = st(b.p, 'brand'); addS(b, b.p, 'brand', 999, 1, 3); if (st(b.p, 'brand') > before) logp(b, 'bad', '이름 위에 낙인이 새겨진다. 낙인 ' + st(b.p, 'brand')); codexHit(b, 'abbot', 'brand'); } break; }
+    case 'pray': { logp(b, 'sys', e.n + '이(가) 입을 다문 채 기도한다'); break; }
     case 'charge': logp(b, 'sys', e.n + '이(가) 무기를 높이 치켜든다. 강타가 온다'); break;
-    case 'heavy': { const x = hurtPlayer(b, d * 3, { src: e, single: 1, charged: 1, label: e.n + '의 강타가 내리꽂힌다' }); if (x > 0) addS(b, b.p, 'vuln', 2); break; }
-    case 'heal': { const t = b.en.find(x => x.id === i.tgt && x.alive) || alive(b).sort((a, c) => a.hp / a.hpMax - c.hp / c.hpMax)[0]; if (t) { t.hp = Math.min(t.hpMax, t.hp + t.hpMax * 0.25); logp(b, 'bad', e.n + '이(가) ' + t.n + '의 상처를 봉합한다. 25% 회복'); } break; }
+    case 'heavy': { const bm = e.boss === 'abbot' ? 1 + ABBOT.brand * st(b.p, 'brand') : 1; const x = hurtPlayer(b, d * 3 * bm, { src: e, single: 1, charged: 1, label: e.n + '의 강타가 내리꽂힌다' + (bm > 1 ? '. 낙인이 타오른다' : '') }); if (x > 0) addS(b, b.p, 'vuln', 2); leech(b, e, x); break; }
+    case 'heal': { const t = b.en.find(x => x.id === i.tgt && x.alive) || alive(b).sort((a, c) => a.hp / a.hpMax - c.hp / c.hpMax)[0]; if (t) { t.hp = Math.min(t.hpMax, t.hp + t.hpMax * (e.monk ? ABBOT.monkHeal : 0.25)); logp(b, 'bad', e.n + '이(가) ' + t.n + '의 상처를 봉합한다. 25% 회복'); } break; }
     case 'summon': spawn(b, 'minion'); spawn(b, 'minion'); logp(b, 'bad', e.n + '의 부름에 뼈가 일어선다'); break;
     case 'fuse': logp(b, 'sys', e.n + '의 도화선이 타들어 간다'); break;
     case 'explode': { hurtPlayer(b, d, { src: e, aoe: 1, label: e.n + '이(가) 터진다' }); if (!b.over) addS(b, b.p, 'weak', 2); e.alive = false; e.hp = 0; logp(b, 'sys', e.n + '은(는) 재가 되어 흩어진다'); checkEnd(b); break; }
@@ -910,10 +931,17 @@ function enemyAct(b, e) {
   if (e.alive && e.s.bleed) hurtEnemy(b, e, 2, { dot: 1, label: '출혈(행동)' });
   e.acts++;
   if (e.role === 'boss') bossPhase(b, e);
-  if (e.alive) { decideIntent(b, e); e.next = b.t + 1 / eSpeed(b, e); }
+  if (e.alive) { decideIntent(b, e); e.next = b.t + (e.quick ? 0.5 : 1) / eSpeed(b, e); e.quick = 0; }
 }
+/* 굶주린 순례자: 준 피해의 절반을 마신다 */
+function leech(b, e, x) { if (e.foe === 'pilgrim' && x > 0 && e.alive) { e.hp = Math.min(e.hpMax, e.hp + x * 0.5); logp(b, 'bad', e.n + '이(가) 피를 마신다. ' + r1(x * 0.5) + ' 회복'); codexHit(b, 'pilgrim', 'leech'); } }
 function bossPhase(b, e) {
-  const f = e.hp / e.hpMax; const ph = f > 0.7 ? 1 : f > 0.35 ? 2 : 3;
+  const f = e.hp / e.hpMax; const ph = e.boss === 'abbot' ? (f > 0.65 ? 1 : f > 0.3 ? 2 : 3) : f > 0.7 ? 1 : f > 0.35 ? 2 : 3;
+  if (e.boss === 'abbot' && ph !== e.phase) {
+    if (ph >= 2 && e.phase < 2) { e.vow = 1; e.vowTick = b.tick; e.intent = { k: 'pray' }; logp(b, 'crit', e.n + '이(가) 입을 다문다'); codexHit(b, 'abbot', 'vow'); }
+    if (ph === 3 && e.phase < 3) { e.vow = 0; for (let i = 0; i < 2; i++) { const m = mkEnemy('healer', 0, b.idc++, { lv: e.lv || 1, name: '수도사' }); m.monk = 1; m.summoned = true; m.next = b.t + 0.6 + i * 0.2; decideIntent(b, m); b.en.push(m); } logp(b, 'crit', '무너진 제단에서 수도사들이 일어선다'); codexHit(b, 'abbot', 'monks'); }
+    e.phase = ph; return;
+  }
   if (ph !== e.phase) { e.phase = ph; logp(b, 'crit', e.n + '의 기세가 바뀐다. ' + ph + '페이즈' + (e.boss === 'mother' && ph === 2 ? '. 나락의 거울이 열린다' : '')); }
 }
 
@@ -1081,7 +1109,7 @@ function playerAct(b, id, tgtId) {
       else if (p.build === 'templar') { p.ward = Math.min(40, (p.ward || 0) + 12); addS(b, p, 'protect', 2); logp(b, 'good', '서약의 빛이 몸을 감싼다. 보호막 ' + Math.round(p.ward)); }
       else if (p.build === 'assassin') { const n0 = tgt.s.poison.stacks; addPoison(b, tgt, Math.ceil(n0 * 0.5)); logp(b, 'crit', '독이 ' + tgt.n + '의 핏줄 깊이 스민다. 중독 ' + n0 + ' → ' + tgt.s.poison.stacks); }
       else if (p.build === 'warlock') { const c = p.hpMax * 0.1 * hpCostMul(p); p.hp -= c; p.mp = Math.min(p.mpMax, p.mp + 20); logp(b, 'bad', '피를 바쳐 마나를 얻는다. 생명력 ' + r1(c) + ', 마나 +20'); checkEnd(b); }
-      else if (p.build === 'priest') { for (const k of ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln']) if (p.s[k]) { cleanse(b, [k], false); break; } const hl = p.hpMax * 0.12 * healMul(p); p.hp = Math.min(p.hpMax, p.hp + hl); logp(b, 'good', '짧은 기도. 생명력 +' + r1(hl)); }
+      else if (p.build === 'priest') { for (const k of ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln', 'brand']) if (p.s[k]) { cleanse(b, [k], false); break; } const hl = p.hpMax * 0.12 * healMul(p); p.hp = Math.min(p.hpMax, p.hp + hl); logp(b, 'good', '짧은 기도. 생명력 +' + r1(hl)); }
       else if (p.build === 'scar') { p.retal = 1; logp(b, 'crit', '상처마다 피의 응답을 걸어 둔다'); }
       break;
     }
@@ -1114,7 +1142,7 @@ function playerAct(b, id, tgtId) {
     }
     case 'flame': { payMana(b, act.mana); const d = hurtEnemy(b, tgt, outDmg(b, 8, {}), { single: 1, fire: 1, label: '신성한 불꽃' }); if (tgt.alive) addS(b, tgt, 'ignite', 3); p.lastSkillDmg = d; applyReflux(b, tgt); break; }
     case 'purge': {
-      payMana(b, act.mana); const n = cleanse(b, ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln'], false);
+      payMana(b, act.mana); const n = cleanse(b, ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln', 'brand'], false);
       const d = n > 0 ? hurtEnemy(b, tgt, outDmg(b, n * 7 * dotMul(p), {}), { single: 1, label: '정화의 빛(' + n + ')' }) : 0;
       p.lastSkillDmg = d; if (n === 0) logp(b, 'sys', '지울 것이 없다'); break;
     }
@@ -1145,7 +1173,7 @@ function playerAct(b, id, tgtId) {
     }
     case 'flaskM': {
       p.flask.mana--; p.mp = Math.min(p.mpMax, p.mp + p.mpMax * 0.4); fxRun(p, 'onFlask', b, p, 'mana');
-      const n = cleanse(b, ['weak', 'vuln'], true); logp(b, 'good', '플라스크를 비운다. 마나 +' + r1(p.mpMax * 0.4) + (n ? ', 디버프 ' + n + ' 지움' : '')); time = 0.5; break;
+      const n = cleanse(b, ['weak', 'vuln', 'brand'], true); logp(b, 'good', '플라스크를 비운다. 마나 +' + r1(p.mpMax * 0.4) + (n ? ', 디버프 ' + n + ' 지움' : '')); time = 0.5; break;
     }
     case 'flee': {
       if (b.rngF() < fleeChance(b)) { b.over = 'flee'; logp(b, 'sys', '등을 보이고 문밖으로 물러난다. 이 방은 아직 넘지 못했다'); b.rec.push({ k: 'flee', ok: 1 }); return; }
@@ -1174,9 +1202,11 @@ function addBreak(b, e, v) {
   if (!e || !e.alive || e.role === 'root') return;
   if (b.cur) v = (v + fxAdd(b.p, 'brk', b, b.p, e, b.cur)) * fxMul(b.p, 'brkMul', b, b.p, e, b.cur);
   if (hasBt(b.p, 'break')) v *= 1.2;
+  if (e.vow) v *= 1.5;
   e.brk += v * (1 + 0.01 * stat(b.p, 'str'));
   if (e.brk >= e.brkMax) {
     e.brk = 0; e.stun = 1; addS(b, e, 'broken', 1); addS(b, e, 'vuln', 1);
+    if (e.vow) { e.vow = 0; e.vowTick = b.tick; addS(b, e, 'vuln', 2); logp(b, 'crit', e.n + '의 서원이 깨진다'); codexHit(b, 'abbot', 'vowbreak'); }
     if (e.intent && (e.intent.k === 'heavy' || e.intent.k === 'charge' || e.intent.k === 'explode' || e.intent.k === 'fuse')) { e.intent = { k: 'attack' }; }
     if (e.role === 'boss') { e.breaks++; e.brkMax = Math.round(e.brkMax * 1.5); }
     logp(b, 'crit', e.n + '의 자세가 무너진다. 모으던 힘이 흩어지고 다음 행동을 놓친다');
@@ -1243,7 +1273,8 @@ function roomBattle(player, room, bossKind, seed) {
     const bs = mkBoss(bossKind, 1, room.lv || 1); en = [bs];
     if (bossKind === 'tree') for (let i = 0; i < 3; i++) en.push(mkEnemy('root', 0, 50 + i));
   } else en = room.en.map((x, i) => mkEnemy(x[0], x[1], i, { lv: room.lv || 1, name: room.names && room.names[x[0]], tough: !!(room.tough && room.tough.includes(i)) }));
-  if (room.strong && en[0]) { const e = en[0]; e.strong = true; e.n = room.strong; e.hpMax = Math.round(e.hpMax * 1.5); e.hp = e.hpMax; }
+  if (room.strong && en[0]) { const e = en[0]; e.strong = true; e.foe = room.foe; e.n = room.strong; e.hpMax = Math.round(e.hpMax * 1.5); e.hp = e.hpMax; e.info = '강적. 무엇을 하는지는 겪어 보아야 안다.'; }
+  if (room.foe === 'bellringer') { const bell = mkEnemy('root', 0, 60, { lv: room.lv || 1 }); bell.n = '큰 종'; bell.ico = '🔔'; bell.bell = 1; bell.hpMax = Math.round(bell.hpMax * 1.2); bell.hp = bell.hpMax; bell.info = '큰 종. 후열. 스스로는 움직이지 않는다.'; en.push(bell); }
   const mods = room.mods || [];
   if (mods.includes('narrow')) { let f = 0; for (const e of en) if (e.row === 'front' && e.role !== 'boss') { f++; if (f > 2) e.row = 'back'; } }
   player.bt = Object.assign({}, room.buffs || {});
@@ -1348,7 +1379,7 @@ const HELP = [
   { k: 'rooms', n: '방과 진행', t: [
     '방 1부터 순서대로 들어갑니다. 방 6은 샘(생명력·마나 50% 회복, 플라스크 1씩)입니다. 방 5는 일부러 어렵게 만든 막힘 구간이라 들어가기 전에 아이템 하나를 고릅니다.',
     '1·3·7번 방을 이기면 아이템을 얻습니다. 마지막은 보스입니다. 쓰러지면 그 캐릭터는 끝나고, 새 캐릭터로 다시 시작합니다.',
-    '1챕터 보스(임시) 늪의 어머니: 가만히 있으면 중독이 계속 쌓이고(방어 중엔 안 쌓임), 10중첩이면 하수인이 태어납니다. 생명력 플라스크로 정화하면 지운 중첩만큼 보스가 피해를 입습니다.',
+    '1챕터 보스와 강적은 처음 만날 때 눈에 보이는 것만 알려 줍니다. 처음 겪은 일은 보스 도감에 적힙니다.',
     '보스전을 오래 끌면(보통 행동 약 35번) 보스가 광폭화합니다. 남은 차례 수는 화면에 표시됩니다.'] },
   { k: 'record', n: '무엇을 기록하나요', t: ['행동마다 그 순간의 자원과 적의 예고, 장비 교체와 그 이유, 판이 끝난 뒤 설문을 기록합니다. 이름이나 개인정보는 기록하지 않습니다. 기록은 이 브라우저에 저장되고, 공유 저장소에 연결되면 게임을 만든 사람에게 전달됩니다.'] },
 ];
@@ -1435,7 +1466,7 @@ function vRunMap() {
     h += `<section class="card"><h3>갈림길${q('rooms', '방과 보스')}</h3><p class="mini">문 하나를 고릅니다. 전투 방만 경험치를 줍니다. 문을 고르기 전에도 장비를 바꿀 수 있습니다.</p><div class="doors">${run.doors.map(doorCard).join('')}</div></section>`;
   } else if (R) h += vRoom(run, R);
   const past = (run.rooms || []).filter(x => x.room);
-  h += `<section class="card"><h4>지나온 길</h4><p class="mini">${past.map(x => floorName(x.room) + ' ' + (ROOM_TYPES[x.type] ? ROOM_TYPES[x.type].n : x.type === 'camp' ? '야영' : '') + (x.res ? ', ' + (x.res === 'win' ? '승리' : x.res === 'flee' ? '물러남' : '패배') : '')).join(' / ') || '아직 없습니다'}</p></section>`;
+  h += `<section class="card"><div class="row" style="justify-content:space-between"><h4 style="margin:0">지나온 길</h4><button class="sm" data-a="codex">보스 도감</button></div><p class="mini">${past.map(x => floorName(x.room) + ' ' + (ROOM_TYPES[x.type] ? ROOM_TYPES[x.type].n : x.type === 'camp' ? '야영' : '') + (x.res ? ', ' + (x.res === 'win' ? '승리' : x.res === 'flee' ? '물러남' : '패배') : '')).join(' / ') || '아직 없습니다'}</p></section>`;
   return h;
 }
 function vRoom(run, R) {
@@ -1487,7 +1518,7 @@ function vHome() {
   if (gv.length) h += `<section class="card"><h3>쓰러진 자의 기록</h3><ul class="graves">${gv.slice(0, 6).map(g => `<li>${(BUILDS[g.build] || {}).ico || ''} <b>${esc((BUILDS[g.build] || { n: g.build }).n)}</b> <span class="mini">${esc(g.roomN || '')}에서 · 장비 ${(g.eq || []).length}개 · ${new Date(g.at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}</span></li>`).join('')}</ul></section>`;
   h += vBoard();
   h += `<section class="card"><h3>마지막 질문</h3><p class="mini">${d.final ? '이미 답했습니다. 다시 답하면 새 답으로 바뀝니다.' : '여러 빌드를 해 본 뒤에 답해 주세요.'}</p><button data-a="final">질문에 답하기</button></section>`;
-  h += `<section class="card"><h3>기록${q('record', '기록에 대해')}</h3><p class="mini">끝낸 판 ${d.runs.filter(r => r.endedAt).length}개</p><div class="row"><button data-a="code">기록 보내기 코드</button><button data-a="dl">기록 파일 받기</button>${G.owner ? '<button class="gold" data-a="dash">결과 보기</button>' : G.site ? '<button data-a="admin">관리자</button>' : ''}</div>${G.site && G.conn === 'ok' ? '<p class="mini">기록은 이 사이트의 저장소에 자동으로 모입니다.</p>' : ''}</section>`;
+  h += `<section class="card"><h3>기록${q('record', '기록에 대해')}</h3><p class="mini">끝낸 판 ${d.runs.filter(r => r.endedAt).length}개</p><div class="row"><button data-a="codex">보스 도감</button><button data-a="code">기록 보내기 코드</button><button data-a="dl">기록 파일 받기</button>${G.owner ? '<button class="gold" data-a="dash">결과 보기</button>' : G.site ? '<button data-a="admin">관리자</button>' : ''}</div>${G.site && G.conn === 'ok' ? '<p class="mini">기록은 이 사이트의 저장소에 자동으로 모입니다.</p>' : ''}</section>`;
   if (G.site) h += '<p class="mini"><a href="../privacy.html" target="_blank" rel="noopener">개인정보처리방침</a></p>';
   return h;
 }
@@ -1593,7 +1624,7 @@ function skillHint(b, a) {
   const p = b.p; const tg = G.sel ? b.en.find(e => e.id === G.sel && e.alive) : null;
   if (a.id === 'release') return p.scar < 1 ? '상흔 없음' : `상흔 ${Math.round(p.scar)} → 적마다 ${r1(p.scar * 0.8 * dmgMult(p))}`;
   if (a.id === 'scarcut') return p.scar < 1 ? '상흔 없음' : `상흔 추가 ${r1(p.scar * 0.5 * 1.5 * dmgMult(p))}`;
-  if (a.id === 'purge') { let n = 0; for (const k of ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln']) if (p.s[k]) n += (k === 'poison' || k === 'chill') ? p.s[k].stacks : 1; return n ? `해제 ${n} → ${r1(n * 5 * dotMul(p) * dmgMult(p))}` : '해제할 것 없음'; }
+  if (a.id === 'purge') { let n = 0; for (const k of ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln', 'brand']) if (p.s[k]) n += (k === 'poison' || k === 'chill') ? p.s[k].stacks : 1; return n ? `해제 ${n} → ${r1(n * 5 * dotMul(p) * dmgMult(p))}` : '해제할 것 없음'; }
   if (a.id === 'burst') { const t = actTarget(b, a); const n = t && t.s.poison ? t.s.poison.stacks : 0; return n ? `중독 ${n} → ${r1(poisonTotal(n) * dotMul(p) * 1 * dmgMult(p))}·붕괴+${n * PSN.brk}` : '중독된 적 없음'; }
   return '';
 }
@@ -1674,7 +1705,7 @@ function stsHtml(u, b) {
     const x = u.s[k]; const n = leftTurns(b, x);
     const dur = x.dur || Math.max(1, x.until - (x.from != null ? x.from : b.t));
     const frac = Math.max(0, Math.min(1, (x.until - b.t) / dur));
-    out.push(`<i class="${BUFFS[k] ? 'b' : 'd'}" data-info="st:${who}:${k}" tabindex="0">${SNAMES[k] || k}${k === 'poison' ? ' <span class="pv2">' + x.stacks + '</span>' : (x.stacks > 1 ? ' ×' + x.stacks : '')} ${k === 'poison' ? '' : '<b>' + (n > 0 ? n : '곧') + '</b>'}${k === 'poison' ? '' : `<u style="width:${frac * 100}%"></u>`}</i>`);
+    out.push(`<i class="${BUFFS[k] ? 'b' : 'd'}" data-info="st:${who}:${k}" tabindex="0">${SNAMES[k] || k}${k === 'poison' ? ' <span class="pv2">' + x.stacks + '</span>' : (x.stacks > 1 ? ' ×' + x.stacks : '')} ${k === 'poison' || k === 'brand' ? '' : '<b>' + (n > 0 ? n : '곧') + '</b>'}${k === 'poison' || k === 'brand' ? '' : `<u style="width:${frac * 100}%"></u>`}</i>`);
   }
   if (u.stun > 0) out.push(`<i class="d" data-info="stun" tabindex="0">기절</i>`);
   if (u === b.p) {
@@ -1697,6 +1728,7 @@ function vOrder(b) {
 
 /* ---------- 설명 창 내용 ---------- */
 const SDESC = {
+  brand: '수도원장이 읽은 죄. 쌓일수록 수도원장의 강타가 더 아프다. 최대 3.',
   poison: '하나의 수치. 시간이 흐를 때마다 그 수치만큼 피해를 준 뒤 1 줄어듭니다. 걸 때마다 1씩 오르고 상한은 없습니다.', bleed: '시간마다 피해 2, 그리고 행동할 때마다 한 번 더 피해 2.', ignite: '시간마다 화염 피해 2.',
   chill: '속도 -30%. 차례가 덜 자주 옵니다.', weak: '주는 피해 -25%.', vuln: '받는 피해 +25%.', protect: '받는 피해 -20%.',
   rage: '격노: 주는 피해 +40%, 속도 +20%, 받는 피해 +15%.', broken: '붕괴: 받는 피해 +30%. 다음 행동을 잃습니다.',
@@ -1749,7 +1781,7 @@ function infoHtml(key) {
     const e = b.en.find(x => x.id === parts[1]); if (!e) return '';
     if (e.role === 'boss') return H(e.n, P(BOSSES[e.boss].d) + P('다음 행동: ' + intentText(b, e).t) + P('붕괴 게이지 ' + Math.round(e.brk) + '/' + e.brkMax + ' (강공격 약 ' + Math.max(0, Math.ceil((e.brkMax - e.brk) / 35)) + '번)'));
     const reach = e.row === 'front' || !frontBlocked(b);
-    return H(e.n, P(RINFO[e.role] || '') + P('다음 행동: ' + intentText(b, e).t) + (e.role !== 'root' ? P('붕괴 게이지 ' + Math.round(e.brk) + '/' + e.brkMax + '. 가득 차면 모으던 강타가 끊기고 다음 행동을 놓칩니다.') : '') + (reach ? '' : '<p class="no">지금은 근접 공격이 닿지 않습니다.</p>') + P('누르면 대상으로 고릅니다.'));
+    return H(e.n, P(e.info || RINFO[e.role] || '') + P('다음 행동: ' + intentText(b, e).t) + (e.role !== 'root' ? P('붕괴 게이지 ' + Math.round(e.brk) + '/' + e.brkMax + '. 가득 차면 모으던 강타가 끊기고 다음 행동을 놓칩니다.') : '') + (reach ? '' : '<p class="no">지금은 근접 공격이 닿지 않습니다.</p>') + P('누르면 대상으로 고릅니다.'));
   }
   if (parts[0] === 'st' && b) {
     const u = parts[1] === 'p' ? b.p : b.en.find(x => x.id === parts[1]); const k = parts[2]; if (!u || !u.s[k]) return '';
@@ -2007,7 +2039,7 @@ function initPop() {
     ['rooms', '방과 보스', [
       '방은 1번부터 차례로 들어갑니다. 6번은 샘입니다. 5번 막힌 문은 일부러 어렵게 만든 방이라, 들어가기 전에 아이템 하나를 고릅니다.',
       '1, 3, 7번 방을 이기면 아이템 두 개 중 하나를 고릅니다. 5번 방을 넘으면 능력치 3점을 더 받습니다. 마지막은 보스입니다. 쓰러지면 그 캐릭터는 끝나고, 새 캐릭터로 다시 시작합니다. 방과 방 사이에서 멈추면 첫 화면에서 이어 할 수 있습니다.',
-      '1챕터 보스(임시) 늪의 어머니는 가만히 있는 사이 내게 독을 쌓고, 10에 닿으면 알을 깹니다. 방어하면 쌓이지 않고, 플라스크로 지우면 어머니가 상처를 입습니다.',
+      '보스와 강적이 무엇을 하는지는 직접 겪어 보아야 압니다. 겪은 일은 보스 도감에 적히고, 대처법은 메모로 남길 수 있습니다.',
       '보스전을 너무 오래 끌면 보스가 광폭해집니다. 남은 차례 수가 화면에 적혀 있습니다. 일반 방도 오래 끌면(보통 행동 약 40번) 적들이 광폭해집니다.']],
     ['record', '기록에 대해', ['행동마다 그 순간의 자원과 적의 예고, 장비를 바꾼 때와 이유, 판이 끝난 뒤의 답을 기록합니다. 이름 같은 개인정보는 남기지 않습니다.', '기록은 이 브라우저에 저장되고, 공유 저장소에 연결되어 있으면 게임을 만든 사람에게 자동으로 전달됩니다. 연결되지 않았다면 첫 화면의 "기록 보내기 코드"를 복사해 메신저로 보내 주세요.']],
   ];
@@ -2073,7 +2105,7 @@ const esc = s => fixJosa(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&
 const SKEY = 'nrk_06_v1';     // B0.5(nrk_b0_v1)와 같은 사이트에 있어도 브라우저 기록이 섞이지 않게
 /* 저장소 경로: 0.6 기록은 B0.5 결과 보기와 섞이지 않게 runs6·scen6·survey6에, 기록판은 board/<id> 문서의 best6 칸에 둔다 */
 const COL = { runs: 'runs6', scen: 'scen6', survey: 'survey6', best: 'best6' };
-const SNAMES = { poison: '중독', bleed: '출혈', ignite: '점화', chill: '냉각', weak: '약화', vuln: '취약', protect: '보호', rage: '격노', broken: '붕괴' };
+const SNAMES = { brand: '낙인', poison: '중독', bleed: '출혈', ignite: '점화', chill: '냉각', weak: '약화', vuln: '취약', protect: '보호', rage: '격노', broken: '붕괴' };
 const BUFFS = { protect: 1, rage: 1 };
 const REASONS = [['need', '필요해서'], ['curious', '재미있어 보여서'], ['other', '기타']];
 
@@ -2294,7 +2326,7 @@ async function initCaps() {
 /* ---------- 런 ---------- */
 function shuffleSeeded(arr, seed) { const a = arr.slice(); const r = mulberry(seed); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function startRun(build, boss) {
-  boss = boss || 'mother'; // 0.6a: 새 보스(단계 8) 전까지 1챕터 보스 자리에 늪의 어머니
+  boss = boss || 'abbot'; // 1챕터 보스: 타락한 수도원장 (기믹 상세는 비공개 문서)
   const p = mkPlayer(build, {});
   const seed = Date.now() % 100000;
   G.run = {
@@ -2427,6 +2459,19 @@ function vEquip() {
   return h;
 }
 
+/* ===== 보스 도감 (11.9절): 만난 적과 처음 겪은 일만 적힌다. 대처법은 플레이어가 메모로 남긴다 ===== */
+function codexMeet(id) { const c = G.data.codex = G.data.codex || {}; c[id] = c[id] || { met: Date.now(), seen: {}, note: '' }; }
+function codexMerge(b) {
+  if (!b || !b.codex) return; let fresh = [];
+  for (const k in b.codex) { const [id, key] = k.split('.'); codexMeet(id); const c = G.data.codex[id]; if (!c.seen[key]) { c.seen[key] = Date.now(); fresh.push((FOE_INTRO[id] || {}).n); } }
+  if (fresh.length) { saveLocal(); toast('보스 도감에 새로 적혔습니다: ' + Array.from(new Set(fresh)).join(', ')); }
+}
+function vCodex() {
+  const c = G.data.codex || {}; const ids = Object.keys(FOE_INTRO).filter(id => c[id]);
+  if (!ids.length) return '<p>아직 만난 강적이나 보스가 없습니다.</p>';
+  return ids.map(id => { const F = FOE_INTRO[id], X = c[id], E = CODEX[id] || {}; const seen = Object.keys(E).filter(k => X.seen[k]); const unseen = Object.keys(E).length - seen.length;
+    return `<section class="cdx"><h4>${esc(F.n)}</h4><p class="lore">${esc(F.lore)}</p>${seen.length ? `<ul>${seen.map(k => `<li>${esc(E[k])}</li>`).join('')}</ul>` : '<p class="mini">아직 겪은 일이 없습니다.</p>'}${unseen ? `<p class="mini">아직 겪지 못한 일 ${unseen}가지</p>` : ''}<label for="cdx-${id}" class="mini">내 메모</label><textarea id="cdx-${id}" data-cdx="${id}" rows="2" placeholder="어떻게 상대했는지 적어 두세요">${esc(X.note || '')}</textarea></section>`; }).join('');
+}
 /* 캐릭터 만들기를 그만두면 아무것도 남기지 않는다 */
 function cancelCreate() { G.run = null; G.sheet = null; G.creating = false; G.abandonOnCreate = false; G.scr = 'home'; render(); toast('캐릭터 만들기를 그만두었습니다'); }
 /* 진행 중인 캐릭터를 포기한 것으로 기록한다 (새 캐릭터를 확정할 때, 또는 직접 포기할 때) */
@@ -2577,11 +2622,14 @@ function enterRoom() {
   if (nx.chase) { const e = G.b.en[G.b.en.length - 1]; if (e) e.n = '굶주린 수도사'; }
   run.nextUsed = nx; run.next = {}; saveBattle();
   G.data.seenBoss = G.data.seenBoss || {};
-  if (R.boss && !G.data.seenBoss[run.boss]) { G.data.seenBoss[run.boss] = 1; saveLocal(); setTimeout(() => openSheet('bossinfo', { boss: run.boss }), 30); }
+  const fid = R.boss ? run.boss : R.foe; G.data.seenFoe = G.data.seenFoe || {};
+  if (fid && FOE_INTRO[fid] && !G.data.seenFoe[fid]) { G.data.seenFoe[fid] = 1; codexMeet(fid); saveLocal(); setTimeout(() => openSheet('bossinfo', { foe: fid }), 30); }
+  else if (R.boss && !FOE_INTRO[run.boss] && !G.data.seenBoss[run.boss]) { G.data.seenBoss[run.boss] = 1; saveLocal(); setTimeout(() => openSheet('bossinfo', { boss: run.boss }), 30); }
   G.sel = null; render();
 }
 function afterBattle() {
   const b = G.b, run = G.run, p = run.p;
+  codexMerge(b);
   const rec = { type: (G.run.cur || {}).type || '', mods: (G.run.cur || {}).mods || [], gear: run.eqU ? EQ_SLOTS.map(sl => { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; return it ? it.tpl + ':' + it.g : null; }) : null, room: run.room, res: b.over, acts: b.turnIdx, t: Math.round(b.t * 10) / 10, hpIn: r1(run.entryHp), hpOut: r1(p.hp / p.hpMax), flIn: run.entryFl, flOut: p.flask.life + p.flask.mana, item: Object.values(p.eq).filter(Boolean) };
   run.rooms.push(rec);
   for (const x of b.rec) run.acts.push(Object.assign({ r: run.room }, x));
@@ -2603,6 +2651,7 @@ function battleContinue() {
   if (R.boss) { if (b.over === 'win') { const up = gainXp(run, Math.round(b.xp || 0)); if (up) run.statPending = (run.statPending || 0) + LV_POINTS * up; } run.result = b.over === 'win' ? 'win' : 'flee'; clearCur(); G.scr = 'survey'; saveRunLocal(); render(); return; } // 보스를 넘으면 이어 하기 자료를 지운다(설문 중에 닫아도 보스를 다시 싸우지 않게)
   // 승리 보상 (11.3절): 골드, 장비
   const nu = run.nextUsed || {}; run.nextUsed = null;
+  if (b.rotted) { run.next = run.next || {}; run.next.pre = Object.assign({}, run.next.pre, { poison: ((run.next.pre || {}).poison || 0) + 3 }); toast('썩은 기운이 몸에 남았습니다. 다음 전투에 중독 3'); }
   const xpGot = Math.round(b.xp || 0); const lvUp = gainXp(run, xpGot);
   let gold = (R.gold || 0) * (R.mods && R.mods.includes('bell') ? 1.5 : 1) + (nu.chase ? 20 : 0);
   if (gold) gainGold(run, gold, ROOM_TYPES[R.type].n + ' 방을 넘었습니다');
@@ -2850,6 +2899,9 @@ function vSheet() {
   } else if (S.kind === 'changes') {
     title = '업데이트 내역';
     body = CHANGELOG.map((c, i) => `<section class="chg"><h4>${esc(c.v)}${i === 0 ? ' <span class="newtag">최신</span>' : ''}</h4><ul>${c.items.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>`).join('');
+  } else if (S.kind === 'bossinfo' && S.data.foe) {
+    const F = FOE_INTRO[S.data.foe]; title = F.n + '을(를) 처음 만났습니다';
+    body = `<p class="lore">${esc(F.lore)}</p>${F.see.map(t => `<p>${esc(t)}</p>`).join('')}<p class="mini">무엇을 하는지는 직접 겪어 보아야 압니다. 처음 겪은 일은 보스 도감에 적힙니다. 이 창은 한 번만 뜹니다.</p><button class="gold wide" data-a="close" data-focus>싸우러 간다</button>`;
   } else if (S.kind === 'bossinfo') {
     const B = BOSSES[S.data.boss]; title = B.n + '을(를) 처음 만났습니다';
     const tips = S.data.boss === 'mother'
@@ -2897,6 +2949,8 @@ function vSheet() {
   } else if (S.kind === 'offer') {
     title = '바칠 장비를 고르세요';
     body = `<p class="mini">고른 장비는 사라지고, 한 등급 위의 장비 하나를 받습니다(희귀는 다시 희귀).</p><div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${esc(ITEMS[x.tpl].n)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${baseText(x)}</small></div><button class="sm" data-a="offerpick" data-k="${u}">바친다</button></div>`; }).join('')}</div>`;
+  } else if (S.kind === 'codex') {
+    title = '보스 도감'; body = `<p class="mini">강적과 보스를 만나 처음 겪은 일만 적힙니다. 쓰러져도 도감은 남습니다.</p>` + vCodex();
   } else if (S.kind === 'settings') {
     title = '설정'; body = vSettings();
   } else if (S.kind === 'help') {
@@ -2904,7 +2958,7 @@ function vSheet() {
   } else if (S.kind === 'equip') {
     title = '장비'; body = vEquip();
   }
-  return `<div class="sheet-bg" data-a="closebg"><div class="sheet sh-${S.kind}" role="dialog" aria-modal="true" aria-labelledby="shtitle"><h3 id="shtitle">${esc(title)}${S.kind === 'equip' || S.kind === 'drop' || S.kind === 'help' || S.kind === 'settings' || S.kind === 'offer' ? '<button class="sm" data-a="close" aria-label="닫기">닫기</button>' : ''}</h3>${body}</div></div>`;
+  return `<div class="sheet-bg" data-a="closebg"><div class="sheet sh-${S.kind}" role="dialog" aria-modal="true" aria-labelledby="shtitle"><h3 id="shtitle">${esc(title)}${S.kind === 'equip' || S.kind === 'drop' || S.kind === 'help' || S.kind === 'settings' || S.kind === 'offer' || S.kind === 'codex' ? '<button class="sm" data-a="close" aria-label="닫기">닫기</button>' : ''}</h3>${body}</div></div>`;
 }
 
 /* ---------- 결과 보기 (소유자) ---------- */
@@ -3204,6 +3258,7 @@ function onClick(ev) {
     case 'start': { if (G.data.cur && !confirm('진행 중인 캐릭터가 있습니다. 새 캐릭터를 끝까지 만들면, 지금 캐릭터는 포기한 것으로 기록되고 이어 할 수 없습니다. 계속할까요?')) break; G.abandonOnCreate = !!G.data.cur; startRun(el.dataset.b); break; }
     case 'createcancel': cancelCreate(); break;
     case 'door': chooseDoor(+el.dataset.k); break;
+    case 'codex': openSheet('codex'); break;
     case 'rest': { const run = G.run, p = run.p, R = roomDef();
       if (R.type === 'camp') { p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax; for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = Math.min(flaskCap(p, fk), (p.flask[fk] || 0) + 1); run.rooms.push({ room: run.room, type: 'camp' }); advanceFloor(); toast('불가에서 쉬었습니다. 모두 찼습니다'); render(); break; }
       const sp = 0.5 * (1 + fxVal(p, 'spring', 0, (a, v) => a + v)); p.hp = Math.min(p.hpMax, p.hp + p.hpMax * sp); p.mp = Math.min(p.mpMax, p.mp + p.mpMax * sp);
@@ -3333,7 +3388,7 @@ if (typeof document !== 'undefined') {
   if (!G.data.seenGuide) { G.scr = 'guide'; G.guideI = 0; }
   document.addEventListener('pointerdown', sndUnlock, { once: false });
   document.addEventListener('keydown', sndUnlock);
-  document.addEventListener('input', ev => { if (ev.target && ev.target.id === 'eqnote') { G.eqWhy = Object.assign({}, G.eqWhy, { note: ev.target.value }); return; } const id = ev.target && ev.target.id; if (id !== 'volm' && id !== 'vols') return; const v = +ev.target.value / 100; sndSet(id === 'volm' ? { music: v } : { sfx: v }); const o = document.getElementById(id + 'v'); if (o) o.textContent = Math.round(v * 100) + '%'; });
+  document.addEventListener('input', ev => { if (ev.target && ev.target.dataset && ev.target.dataset.cdx) { codexMeet(ev.target.dataset.cdx); G.data.codex[ev.target.dataset.cdx].note = ev.target.value.slice(0, 400); saveLocal(); return; } if (ev.target && ev.target.id === 'eqnote') { G.eqWhy = Object.assign({}, G.eqWhy, { note: ev.target.value }); return; } const id = ev.target && ev.target.id; if (id !== 'volm' && id !== 'vols') return; const v = +ev.target.value / 100; sndSet(id === 'volm' ? { music: v } : { sfx: v }); const o = document.getElementById(id + 'v'); if (o) o.textContent = Math.round(v * 100) + '%'; });
   document.addEventListener('click', onClick);
   document.addEventListener('keydown', onKey);
   document.addEventListener('change', ev => { if (ev.target && ev.target.name === 'eqrs') { G.eqWhy = Object.assign({}, G.eqWhy, { reason: ev.target.value }); return; } if (ev.target && (ev.target.id === 'pace' || ev.target.id === 'setpace')) { G.pace = ev.target.value; G.data.pace = G.pace; saveLocal(); if (G.stepResolve && G.pace !== 'step') { const r = G.stepResolve; G.stepResolve = null; r(); } } });
