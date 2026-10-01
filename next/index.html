@@ -1024,6 +1024,9 @@ function preview(b) {
 }
 
 /* ================= 전투 구성 ================= */
+/* 전투 난수: 상태를 b.rngS 숫자에 두어 전투를 저장했다가 그대로 이어 갈 수 있게 한다 (mulberry와 같은 수열) */
+function battleRng(b) { return function () { let s = b.rngS | 0; s = s + 0x6D2B79F5 | 0; b.rngS = s; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function setRng(b, seed) { b.rngS = seed | 0; b.rngF = battleRng(b); }
 function mulberry(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function roomBattle(player, room, bossKind, seed) {
   let en;
@@ -1032,7 +1035,7 @@ function roomBattle(player, room, bossKind, seed) {
     if (bossKind === 'tree') for (let i = 0; i < 3; i++) en.push(mkEnemy('root', 0, 50 + i));
   } else en = room.en.map((x, i) => mkEnemy(x[0], x[1], i));
   const b = newBattle(player, en, { boss: !!room.boss, bossKind });
-  b.rngF = mulberry(seed || 7);
+  setRng(b, seed || 7);
   runUntilPlayer(b);
   return b;
 }
@@ -1051,7 +1054,7 @@ function scenBattle(build, sc) {
   if (sc.p.scar && scarRate(p) > 0) p.scar = sc.p.scar;
   for (const k in (sc.p.s || {})) p.s[k] = { stacks: sc.p.s[k], until: 3, dur: 3 };
   for (let i = 0; i < en.length; i++) { const o = sc.en[i - (sc.boss ? 1 : 0)]; if (o && o[2] && o[2].poison) en[i].s.poison = { stacks: o[2].poison, until: POISON_FOREVER, dur: POISON_FOREVER }; }
-  b.rngF = mulberry(11);
+  setRng(b, 11);
   runUntilPlayer(b);
   return b;
 }
@@ -2042,9 +2045,31 @@ function abandonCur() {
   const keep = G.run; G.run = old; old.result = 'abandon'; old.endedAt = Date.now(); saveRunLocal(); syncRun(old, 'abandon'); G.run = keep;
   delete G.data.cur; saveLocal();
 }
+/* 전투 저장: 내 차례가 올 때마다(그리고 전투가 끝난 순간) 전투 전체를 이어 하기 자료에 넣는다.
+   행동을 누르는 순간에는 그 행동을 먼저 적어 둔다. 적의 반응을 보고 창을 닫아도, 돌아오면 같은 행동이 같은 결과로 다시 일어난다 */
+function saveBattle() {
+  const b = G.b; if (!b || !G.run || G.run.endedAt || G.creating || G.scr !== 'run') return;
+  try {
+    const snap = JSON.parse(JSON.stringify(G.run));
+    const bb = Object.assign({}, b, { rngF: undefined, p: undefined, vanguardTgt: null, chainTgt: null, markTgt: null });
+    snap.battle = { b: JSON.parse(JSON.stringify(bb)), commit: null, at: Date.now() };
+    G.data.cur = snap; saveLocal();
+  } catch (e) { }
+}
+function commitAct(id, tid) {
+  const c = G.data.cur; if (!c || !c.battle || c.battle.b.over || G.scr !== 'run') return;
+  c.battle.commit = { id, tid: tid || null }; saveLocal();
+}
+function restoreBattle(cur) {
+  const bt = cur.battle; delete cur.battle;
+  G.run = cur; const b = bt.b; b.p = G.run.p; b.rngF = battleRng(b); b.stepMode = true;
+  G.b = b; G.scr = 'run'; G.sel = null; G.busy = false; G.banner = null; render();
+  if (bt.commit && !b.over) { toast('누른 행동을 이어서 처리합니다'); setTimeout(() => doAct(bt.commit.id, bt.commit.tid), 60); }
+  else toast('싸우던 곳에서 이어 갑니다');
+}
 function saveCur() { if (!G.run || G.run.endedAt) return; try { G.data.cur = JSON.parse(JSON.stringify(G.run)); saveLocal(); } catch (e) { } }
 function clearCur() { delete G.data.cur; saveLocal(); }
-function resumeRun() { if (!G.data.cur) return; G.run = JSON.parse(JSON.stringify(G.data.cur)); G.scr = 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); }
+function resumeRun() { if (!G.data.cur) return; if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); G.scr = 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); }
 function roomDef() { return ROOMS[G.run.room]; }
 function statNext(p, k) {
   const s = stat(p, k), B = BUILDS[p.build];
@@ -2062,7 +2087,7 @@ function enterRoom() {
   if (R.block && !run.blockOffered) { run.blockOffered = true; openBlock(); return; }
   run.entry = JSON.parse(JSON.stringify(p));
   run.entryHp = p.hp / p.hpMax; run.entryFl = p.flask.life + p.flask.mana;
-  G.b = roomBattle(p, R, run.boss, run.room + 3); G.b.stepMode = true;
+  G.b = roomBattle(p, R, run.boss, run.room + 3); G.b.stepMode = true; saveBattle();
   G.data.seenBoss = G.data.seenBoss || {};
   if (R.boss && !G.data.seenBoss[run.boss]) { G.data.seenBoss[run.boss] = 1; saveLocal(); setTimeout(() => openSheet('bossinfo', { boss: run.boss }), 30); }
   G.sel = null; render();
@@ -2097,7 +2122,7 @@ function battleContinue() {
   if (b.over === 'win' && R.block) { G.b = null; run.room++; saveRunLocal(); saveCur(); openSheet('stats', { pts: 3 }); return; }
   G.b = null;
   if (b.over === 'flee') { saveRunLocal(); saveCur(); toast('방 밖으로 물러났습니다. 이 방을 이겨야 앞으로 갈 수 있습니다'); render(); return; }
-  if (R.boss) { run.result = b.over === 'win' ? 'win' : 'flee'; G.scr = 'survey'; saveRunLocal(); render(); return; }
+  if (R.boss) { run.result = b.over === 'win' ? 'win' : 'flee'; clearCur(); G.scr = 'survey'; saveRunLocal(); render(); return; } // 보스를 넘으면 이어 하기 자료를 지운다(설문 중에 닫아도 보스를 다시 싸우지 않게)
   run.room++; saveRunLocal(); saveCur(); render();
 }
 function retryRoom() {
@@ -2223,12 +2248,14 @@ function doAct(id, tid) {
   const acts = actionList(b); const a = acts.find(x => x.id === id);
   if (!a || !a.ok) return;
   const t = tid ? b.en.find(e => e.id === tid && e.alive) : actTarget(b, a);
+  commitAct(id, t ? t.id : null);
   playerAct(b, id, t ? t.id : null);
   if (G.sel && !(b.en.find(e => e.id === G.sel) || {}).alive) G.sel = null;
   const last = b.log[b.log.length - 1]; G.liveMsg = last ? last.m : '';
   if (b.waiting) animate(b); else afterTurn(b);
 }
 function afterTurn(b) {
+  if (G.b === b) saveBattle();
   if (!G.data.seenBreak && b.rec.some(x => x.k === 'break')) { G.data.seenBreak = true; saveLocal(); setTimeout(() => openSheet('help', { k: 'break', first: 1 }), 50); }
   if (G.scr === 'scen') { b.pActs = (b.pActs || 0) + 1; if (b.pActs >= 10 && !b.over) b.over = 'open'; }
   render();
@@ -2250,6 +2277,7 @@ async function animate(b) {
     if (nx) {
       G.banner = { who: nx.n, ico: nx.ico, what: nx.stun > 0 ? '비틀거려 행동을 놓친다' : intentText(b, nx).t, id: nx.id, phase: 'pre' };
       b.lastActor = nx.id; render(); await wait(0.55);
+      if (G.b !== b) break;
     }
     const r = stepWorld(b);
     if (nx && G.banner) G.banner.phase = 'post';
