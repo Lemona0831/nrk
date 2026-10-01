@@ -20,7 +20,7 @@ function invariants(b, bugs, ctx) {
   if (p.mp > p.mpMax + 1e-6 || p.mp < -1e-6) bad('마나 범위 밖 ' + p.mp);
   if (p.st > p.stMax + 1e-6 || p.st < -1e-6) bad('스태미나 범위 밖 ' + p.st);
   if (p.scar > p.hpMax * 0.5 + 1e-6) bad('상흔 한도 초과');
-  if (p.flask.life < 0 || p.flask.mana < 0 || p.flask.life > p.flaskMax || p.flask.mana > p.flaskMax) bad('플라스크 범위 밖');
+  if (p.flask.life < 0 || p.flask.mana < 0 || p.flask.life > p.flaskMax || p.flask.mana > p.flaskMax || (p.flask.stam || 0) < 0 || (p.flask.stam || 0) > p.flaskMax) bad('플라스크 범위 밖');
   for (const e of b.en) {
     if (!Number.isFinite(e.hp) || !Number.isFinite(e.next)) bad(e.n + ' 수치가 숫자가 아님');
     if (e.alive && e.hp > e.hpMax + 1e-6) bad(e.n + ' 생명력 최대치 초과');
@@ -48,7 +48,7 @@ function evalState(b0, b1, risk) {
   const eh = bb => E.alive(bb).filter(e => e.role !== 'root').reduce((a, e) => a + e.hp / (e.role === 'boss' ? 4 : 1), 0);
   const dealt = eh(b0) - eh(b1);
   const kills = E.alive(b0).length - E.alive(b1).length;
-  const flasks = (p0.flask.life + p0.flask.mana) - (p1.flask.life + p1.flask.mana);
+  const flasks = (p0.flask.life + p0.flask.mana + (p0.flask.stam || 0)) - (p1.flask.life + p1.flask.mana + (p1.flask.stam || 0));
   const lowHp = p1.hp / p1.hpMax < 0.25 ? 25 : 0;
   const threat = E.alive(b1).filter(e => e.intent && ['heavy', 'explode', 'heal', 'summon'].includes(e.intent.k)).length;
   const roots = E.alive(b1).filter(e => e.role === 'root').length;
@@ -102,6 +102,8 @@ function heuristic(b, P, r, mem) {
   // 플라스크 (기억하고 있을 때만)
   const aware = Math.min(1, P.flaskAware + (mem.flaskLearn || 0));
   if (hpf < P.flaskAt && ok('flaskL') && r() < aware) return ['flaskL'];
+  // 0.6: 기본 공격이 스태미나를 채우지 않으므로, 강타가 오는데 흘리기·방어할 스태미나가 없거나 바닥나면 스태미나 플라스크
+  if (ok('flaskS') && ((hv && p.st < 30 && r() < aware * (P.parry + P.guard + 0.3)) || (p.st < 15 && r() < aware * 0.5))) return ['flaskS'];
   const mother = al.find(e => e.boss === 'mother');
   if (mother && p.s.poison && p.s.poison.stacks >= 7 && r() < aware * 0.8) { if (p.build === 'priest' && ok('purge')) return ['purge', mother.id]; if (ok('flaskL')) return ['flaskL']; }
   // 예고 대응
@@ -208,7 +210,7 @@ function playRun(pk, build, boss, seed, mem, forceItem) {
   const blockOpts = ['hook', 'plate', 'witness'];
   for (let i = 0; i < ROOMS.length; i++) {
     const R = ROOMS[i];
-    if (R.spring) { p.hp = Math.min(p.hpMax, p.hp + p.hpMax * .5); p.mp = Math.min(p.mpMax, p.mp + p.mpMax * .5); p.flask.life = Math.min(3, p.flask.life + 1); p.flask.mana = Math.min(3, p.flask.mana + 1); continue; }
+    if (R.spring) { p.hp = Math.min(p.hpMax, p.hp + p.hpMax * .5); p.mp = Math.min(p.mpMax, p.mp + p.mpMax * .5); p.flask.life = Math.min(3, p.flask.life + 1); p.flask.mana = Math.min(3, p.flask.mana + 1); p.flask.stam = Math.min(3, (p.flask.stam || 0) + 1); continue; }
     if (R.block) { const bi = r() < 0.15 ? null : blockOpts[Math.floor(r() * 3)]; out.blockItem = bi || '없음'; if (bi && !(forceItem && ITEMS[bi].slot === ITEMS[forceItem].slot)) { p.eq[ITEMS[bi].slot] = bi; setMax(); } }
     const entry = JSON.parse(JSON.stringify(p)); let tries = 0;
     for (;;) {
@@ -222,7 +224,7 @@ function playRun(pk, build, boss, seed, mem, forceItem) {
         if (tag === 'mistake') out.mistakes++;
         const w = wasted(b, a, t, mem); if (w) out.wasted[w] = (out.wasted[w] || 0) + 1;
         if (a === 'dodge' && w) out.parryWasted++;
-        if (a === 'flaskL' || a === 'flaskM') out.flaskUse++;
+        if (a === 'flaskL' || a === 'flaskM' || a === 'flaskS') out.flaskUse++;
         const snapHeavy = E.previewAfter(b, 1).some(x => x.e.intent && x.e.intent.k === 'heavy');
         if (snapHeavy) out.heavyResp[a] = (out.heavyResp[a] || 0) + 1;
         let burstInfo = null;
