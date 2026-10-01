@@ -26,7 +26,8 @@ if (process.env.CFG) run_(process.env.CFG); // 시험할 수치: CFG='DIFF.upper
 
 const PREF = { assassin: 'int', scar: 'str', priest: 'int', berserker: 'str', hunter: 'dex', arcanist: 'int', templar: 'str', warlock: 'int' };
 const FIGHT = ['normal', 'ambush', 'strong', 'treasure', 'trial'];
-const THINK = k => k === 'expert' || k === 'explorer';
+const THINK = k => k === 'expert' || k === 'explorer'; // 한 수 앞을 계산하는 성향(전투 판단 방식)
+const MEASURE = 'careful'; // 목표의 "사고하는 유저" = 신중 (10월 2일 만든 사람 결정: 예고를 읽고 막고, 자원과 길을 관리하는 성향)
 
 /* 장비 점수: 바뀌는 수치의 합(11.11절 "비교 점수") */
 function gearScore(st) { return st.hp * 0.6 + st.mp * 0.25 + st.st * 0.25 + st.basic * 3 + st.heavy * 1.5 + st.flask * 120; }
@@ -121,7 +122,7 @@ function fightCur(pk, r, mem, out) {
       if (stall >= 3 && b.p.hp > b.p.hpMax * 0.5 && ['guard', 'dodge', 'sig'].includes(a)) { const L = G0.actionList(b).filter(x => x.ok && !['guard', 'dodge', 'flee', 'flaskL', 'flaskM', 'flaskS', 'sig'].includes(x.id)); if (L.length) { a = L[Math.floor(r() * L.length)].id; t = null; } } }
     if (a === 'flee') { const L = G0.actionList(b).filter(x => x.ok && x.id !== 'flee'); a = L[0].id; t = null; }
     if (P.look && r() < P.err) { const L = G0.actionList(b).filter(x => x.ok && x.id !== 'flee'); a = L[Math.floor(r() * L.length)].id; t = null; }
-    else if (r() < (THINK(pk) ? 0.9 : P.healerFirst)) { // 보스를 치유하는 수도사가 있으면 그쪽을 먼저 (사람이 하는 판단)
+    else if (r() < (THINK(pk) ? 0.9 : P.healerFirst)) { // 보스전 기믹에 사람이 하는 대응 (비공개 문서)
       const act = G0.actionList(b).find(x => x.id === a); const monk = G0.alive(b).find(e => e.monk && act && G0.canTarget(b, e, act));
       if (monk && act && act.tgt !== false) t = monk.id;
     }
@@ -189,9 +190,9 @@ if (require.main === module) {
   const sum = list => { const c = { clear: 0, upper: 0, lower: 0, boss: 0 }; list.forEach(x => c[where(x)]++); return `완주 ${pct(c.clear, list.length)}% | 쓰러진 곳 상층 ${pct(c.upper, list.length)} 하층 ${pct(c.lower, list.length)} 보스 ${pct(c.boss, list.length)}`; };
   console.log(`판 ${runs.length}, ${((Date.now() - t0) / 1000).toFixed(0)}초, 이상 ${runs.reduce((a, x) => a + x.bugs.length, 0)}건`);
   console.log('전체(6성향 평균):', sum(runs));
-  const think = runs.filter(x => THINK(x.pk)); console.log('사고하는 유저(숙련·탐험가):', sum(think));
+  const think = runs.filter(x => x.pk === MEASURE); console.log('사고하는 유저(신중):', sum(think));
   for (const pk of Object.keys(PERSONAS)) console.log('  ' + PERSONAS[pk].n.padEnd(4), sum(runs.filter(x => x.pk === pk)));
-  console.log('직업별 (전체 / 숙련·탐험가):');
+  console.log('직업별 (전체 / 신중):');
   for (const b of Object.keys(G0.BUILDS)) { const a = runs.filter(x => x.build === b), t = think.filter(x => x.build === b); console.log('  ' + G0.BUILDS[b].n.padEnd(6), pct(a.filter(x => x.res === 'clear').length, a.length) + '% / ' + pct(t.filter(x => x.res === 'clear').length, t.length) + '%'); }
   const bossers = runs.filter(x => x.bossHp != null); console.log(`보스에 닿은 판 ${bossers.length}: 들어갈 때 생명력 평균 ${Math.round(bossers.reduce((a, x) => a + x.bossHp, 0) / (bossers.length || 1))}%, 레벨 평균 ${(bossers.reduce((a, x) => a + x.bossLv, 0) / (bossers.length || 1)).toFixed(1)}, 보스 승률 ${pct(runs.filter(x => x.res === 'clear').length, bossers.length)}%`);
   const bugs = runs.flatMap(x => x.bugs); if (bugs.length) console.log('이상 예:', bugs.slice(0, 5));

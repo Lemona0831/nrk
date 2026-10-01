@@ -515,8 +515,9 @@ const STAM_FLASK = 60; // 스태미나 플라스크 회복량 (11.6절 [가설])
          st(최대치 더하기 {hp,mp,st}) hpMul cost(행동 비용 더하기) regen(스태미나 자연 회복 더하기) heal(플라스크 회복 더하기 %p) */
 const FXHIT = {};
 /* 타락한 수도원장 수치. 사람처럼 판단하는 테스터(여섯 성향) 1,920판에서 첫 도전 승률 48%로 맞춘 값 (10월 2일, 만든 사람 요청 50% 안팎) */
-const TELE = { heavy: 3 }; // 적 강타 = 평소 공격 × heavy (예고를 읽고 막는 판단의 무게)
-const ENRAGE = { boss: 35, room: 40, step: 10 }; // 광폭화 시각(시간 단위)과 짙어지는 간격
+const CLS_TUNE = { warlockKill: 0.15 }; // 직업 규칙 수치: 암흑술사가 약화·취약된 적을 쓰러뜨리면 회복하는 생명력 비율
+const TELE = { heavy: 5 }; // 적 강타 = 평소 공격 × heavy (예고를 읽고 막는 판단의 무게)
+const ENRAGE = { boss: 45, room: 40, step: 10 }; // 광폭화 시각(시간 단위)과 짙어지는 간격
 const ABBOT = { cycle: 5, brand: 0.2, vowHeal: 0.01, vowTaken: 0.6, monkHeal: 0.025 };
 function codexHit(b, id, key) { b.codex = b.codex || {}; b.codex[id + '.' + key] = 1; }
 const fxHit = k => { FXHIT[k] = (FXHIT[k] || 0) + 1; };
@@ -890,7 +891,7 @@ function payMana(b, cost) {
 }
 function killEnemy(b, e) {
   e.alive = false; e.hp = 0; logp(b, 'good', e.n + '이(가) 쓰러진다');
-  if (b.p.build === 'warlock' && (e.s.weak || e.s.vuln)) { const hl = b.p.hpMax * 0.1; b.p.hp = Math.min(b.p.hpMax, b.p.hp + hl); logp(b, 'good', '꺼져 가는 혼을 들이마신다. 생명력 +' + r1(hl)); }
+  if (b.p.build === 'warlock' && (e.s.weak || e.s.vuln)) { const hl = b.p.hpMax * CLS_TUNE.warlockKill; b.p.hp = Math.min(b.p.hpMax, b.p.hp + hl); logp(b, 'good', '꺼져 가는 혼을 들이마신다. 생명력 +' + r1(hl)); }
   b.xp = (b.xp || 0) + xpOf(e);
   if (e.bell) { const rg = b.en.find(x => x.foe === 'bellringer' && x.alive); if (rg) { rg.stun = 1; logp(b, 'crit', '큰 종이 깨진다. ' + rg.n + '이(가) 비틀거린다'); } codexHit(b, 'bellringer', 'bellbreak'); }
   if (e.foe === 'pilgrim') { b.rotted = 1; logp(b, 'bad', e.n + '의 몸이 무너지며 썩은 냄새가 퍼진다'); codexHit(b, 'pilgrim', 'rot'); }
@@ -1438,7 +1439,7 @@ const HELP = [
     '전투 방을 이기면 경험치와 골드, 장비를 얻습니다. 쉬는 방(샘, 성소, 제단, 이벤트)은 싸우지 않는 대신 다른 것을 줍니다. 하층은 상층보다 적이 거셉니다.',
     '보스를 넘으면 정산과 상점입니다. 쓰러지면 그 캐릭터는 끝나고, 새 캐릭터로 다시 시작합니다.',
     '1챕터 보스와 강적은 처음 만날 때 눈에 보이는 것만 알려 줍니다. 처음 겪은 일은 보스 도감에 적힙니다.',
-    '보스전을 오래 끌면(보통 행동 약 35번) 보스가 광폭화합니다. 남은 차례 수는 화면에 표시됩니다.'] },
+    '보스전을 오래 끌면(보통 행동 약 45번) 보스가 광폭화합니다. 남은 차례 수는 화면에 표시됩니다.'] },
   { k: 'record', n: '무엇을 기록하나요', t: ['행동마다 그 순간의 자원과 적의 예고, 고른 문과 고르지 않은 문, 장비 교체와 그 이유, 정산과 상점, 판이 끝난 뒤 설문을 기록합니다. 캐릭터 이름과 랭킹에 보일 플레이어 이름 말고는 개인정보를 기록하지 않습니다. 기록은 이 브라우저에 저장되고, 공유 저장소에 연결되면 게임을 만든 사람에게 전달됩니다.'] },
 ];
 const HELPM = {}; HELP.forEach(h => HELPM[h.k] = h);
