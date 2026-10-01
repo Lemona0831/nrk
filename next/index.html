@@ -333,6 +333,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 <script src="data/enemies.js"></script>
 <script src="data/classes.js"></script>
 <script src="data/items.js"></script>
+<script src="data/items_ch1.js"></script>
 <script src="data/rooms.js"></script>
 <script src="data/changelog.js"></script>
 <script src="data/audio.js"></script>
@@ -430,15 +431,116 @@ const START_GEAR = { wpn: 8, hp: 10, st: 0, mp: 0, flask: 0.3 };
 const CANTRIP = { arcanist: '마력 화살', warlock: '그림자 화살', priest: '빛줄기' };
 const isCaster = p => !!CANTRIP[p.build];
 const STAM_FLASK = 60; // 스태미나 플라스크 회복량 (11.6절 [가설])
+/* ===== 아이템 효과 표 (IFX, 기획서 11.5절 1챕터 100종 가운데 0.6 새 79종) =====
+   엔진의 정해진 지점이 낀 장비의 효과를 부른다. 효과가 실제로 무언가를 바꾸면 FXHIT[아이템]을 센다(자동 점검용).
+   지점: out(주는 피해 배율) hit(대상별 배율) hitAdd(대상별 더하기) brk(붕괴 더하기) onHit(맞힌 뒤) dotOut(내가 건 지속 피해 배율)
+         inMul(받는 피해 배율) onHurt(맞은 뒤) onParry(흘리기 성공) onKill onStart onCleanse onFlask block(디버프 막기) dur(내 상태 지속 조정)
+         st(최대치 더하기 {hp,mp,st}) hpMul cost(행동 비용 더하기) regen(스태미나 자연 회복 더하기) heal(플라스크 회복 더하기 %p) */
+const FXHIT = {};
+const fxHit = k => { FXHIT[k] = (FXHIT[k] || 0) + 1; };
+const DEBUFFS = ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln'];
+const nDebuff = e => DEBUFFS.concat(['broken']).filter(k => e.s[k]).length;
+const isSpell = c => !!(c && c.spell);
+const IFX = {
+  rustsword: { brk: (b, p, e, c) => c.id === 'basic' ? 2 : 0 },
+  pilgstaff: { out: (b, p, c) => (isSpell(c) || c.cantrip) ? 1.03 : 1 },
+  huntbow: { hit: (b, p, e, o) => e.row === 'back' ? 1.05 : 1 },
+  dullknife: { hitAdd: (b, p, e, o, c) => c.id === 'basic' && e.s.poison ? 1 : 0 },
+  guardspear: { hit: (b, p, e, o, c) => c.id === 'basic' && alive(b).filter(x => x.row === 'front').length >= 2 ? 1.05 : 1 },
+  sickle: { hitAdd: (b, p, e, o, c) => c.id === 'basic' && e.s.bleed ? 1 : 0 },
+  candlestaff: { hit: (b, p, e, o, c) => isSpell(c) && e.s.ignite ? 1.05 : 1 },
+  pilgclub: { brk: (b, p, e, c) => c.id === 'heavy' ? 3 : 0 },
+  acolyterelic: { onCleanse: (b, p, n) => { const t = (b.cur && b.cur.tgt && b.en.find(e => e.id === b.cur.tgt && e.alive)) || alive(b).find(e => e.role !== 'root'); if (t && n > 0) { hurtEnemy(b, t, n, { label: '성구의 빛' }); return 1; } } },
+  monkmace: { hit: (b, p, e) => e.s.broken ? 1.15 : 1 },
+  confwand: { onCleanse: (b, p, n) => { if (n > 0) { p.fxSpell = 1.2; return 1; } }, out: (b, p, c) => { if (isSpell(c) && p.fxSpell) { const m = p.fxSpell; p.fxSpell = 0; return m; } return 1; } },
+  sawaxe: { onHit: (b, p, e, o, c) => { if (c.id === 'heavy' && e.alive) { addS(b, e, 'bleed', 2); return 1; } } },
+  penwhip: { hit: (b, p, e, o, c) => c.id === 'basic' && e.s.weak ? 1.15 : 1 },
+  brandiron: { onHit: (b, p, e, o, c) => { if (c.id === 'heavy' && e.alive) { addS(b, e, 'ignite', 2); return 1; } } },
+  gravespade: { onKill: (b, p) => { p.fxHeavyDisc = 15; return 1; }, cost: (p, id) => id === 'heavy' && p.fxHeavyDisc ? -p.fxHeavyDisc : 0 },
+  bonedagger: { hit: (b, p, e, o, c) => c.id === 'heavy' && e.s.poison && e.s.poison.stacks >= 5 ? 1.2 : 1 },
+  silverwand: { onKill: (b, p) => { if (b.cur && b.cur.skill) { p.mp = Math.min(p.mpMax, p.mp + 5); return 1; } } },
+  twinblades: { cost: (p, id) => id === 'heavy' ? 10 : 0 },
+  bloodblade: { onHit: (b, p, e, o, c, d) => { if (o.melee && d > 0) { p.hp = Math.min(p.hpMax, p.hp + d * 0.1); return 1; } }, healMul: 0.8 },
+  quilted: { inMul: (b, p, o) => p.guard && !o.dot ? 0.95 : 1 },
+  monkrobe: { st: { mp: 5 } },
+  leathervest: { cost: (p, id) => id === 'dodge' ? -3 : 0 },
+  novicetunic: { st: { st: 5 } },
+  oldchain: { inMul: (b, p, o) => o.charged ? 0.95 : 1 },
+  pilgcoat: { inMul: (b, p, o) => o.dot ? 0.95 : 1 },
+  waxrobe: { dur: (k) => k === 'ignite' || k === 'bleed' ? -1 : 0 },
+  guardplate: { st: { hp: 5 } },
+  chainmail: { inMul: (b, p, o) => o.charged ? 0.9 : 1 },
+  pilgcloak: { spring: 0.2 },
+  oathplate: { inMul: (b, p, o) => p.s.protect ? 0.9 : 1 },
+  spikedleather: { onParry: (b, p, src) => { if (src && src.alive) { hurtEnemy(b, src, 3, { label: '가시 박힌 가죽' }); return 1; } } },
+  scarleather: { onHurt: (b, p, o, d) => { if (d >= p.hpMax * 0.1) { p.fxScar = 1; return 1; } }, out: (b, p, c) => { if (p.fxScar && (c.id === 'basic' || c.id === 'heavy' || c.skill)) { p.fxScar = 0; return 1.1; } return 1; } },
+  ascetic: { inMul: (b, p) => p.hp < p.hpMax * 0.5 ? 0.9 : 1 },
+  shroud: { block: (b, p, k) => !!p.guard, cost: (p, id) => id === 'guard' ? 10 : 0 },
+  clothgloves: { regen: 1 },
+  leatherwraps: { brk: (b, p, e, c) => c.id === 'heavy' ? 3 : 0 },
+  calloused: { out: (b, p, c) => c.id === 'heavy' ? 1.03 : 1 },
+  bandaged: { inMul: (b, p, o) => o.dot && o.label === '출혈' ? 0.8 : 1 },
+  candlegloves: { dotOut: (b, p, e, label) => label === '점화' ? 1.05 : 1 },
+  archerbracer: { brk: (b, p, e, c) => c.ranged ? 2 : 0 },
+  poisoner: { brkMul: (b, p, e, c) => c.id === 'burst' ? 1.1 : 1 },
+  pincer: { onHit: (b, p, e, o, c) => { if (c.id !== 'heavy' || !e.alive) return; if (e.s.protect) { delete e.s.protect; logp(b, 'good', '집게 손이 ' + e.n + '의 보호를 걷어 낸다'); } else addBreak(b, e, 5); return 1; } },
+  viperskin: { onHit: (b, p, e, o, c) => { if ((c.id === 'viper' || c.id === 'dagger') && e.alive) { addPoison(b, e, 1, 1); return 1; } } },
+  spikegloves: { onHit: (b, p, e, o, c) => { if (c.id === 'basic' && e.alive && e.s.broken) { addS(b, e, 'bleed', 2); return 1; } } },
+  torturer: { hit: (b, p, e) => { const n = nDebuff(e); return n >= 3 ? 1.25 : n === 0 ? 0.9 : 1; } },
+  woodsymbol: { onCleanse: (b, p, n) => { if (n > 0) { p.hp = Math.min(p.hpMax, p.hp + 2 * n); return 1; } } },
+  bonenecklace: { onKill: (b, p) => { p.mp = Math.min(p.mpMax, p.mp + 3); return 1; } },
+  pilgtoken: { spring: 0.1 },
+  rustykey: { treasureGold: 10 },
+  bellshard: { onStart: (b, p) => { p.st = Math.min(p.stMax, p.st + 10); return 1; } },
+  worrybeads: { st: { hp: 3, mp: 3 } },
+  pilgbeads: { onStart: (b, p) => { addS(b, p, 'protect', 1); return 1; } },
+  wardcharm: { cost: (p, id) => id === 'dodge' && !p.fxDodged ? -10 : 0 },
+  bloodvial: { flaskCleanse: ['weak', 'vuln'] },
+  sleeper: { inMul: (b, p, o) => o.src && (o.src.role === 'boss' || o.src.strong) ? 0.95 : 1 },
+  ashmedal: { onKill: (b, p, e) => { if (e.s.ignite) { let n = 0; for (const x of alive(b)) if (x.role !== 'root') { addS(b, x, 'ignite', 1); n++; } return n ? 1 : 0; } } },
+  deadrosary: { hpMul: 0.9, deathSave: 1 },
+  copperring: { st: { st: 3 } },
+  silverring: { inMul: (b, p, o) => o.dot ? 0.95 : 1 },
+  obsidianring: { out: (b, p, c) => isSpell(c) ? 1.03 : 1 },
+  ironring: { st: { hp: 3 } },
+  garnetring: { out: (b, p, c) => c.id === 'basic' ? 1.03 : 1 },
+  lapisring: { st: { mp: 5 } },
+  bonering: { hit: (b, p, e) => e.role === 'minion' ? 1.1 : 1 },
+  leadring: { dur: (k) => k === 'chill' || k === 'weak' ? -1 : 0 },
+  huntring: { onHit: (b, p, e, o) => { if (!o.single) return; const c = p.fxHunt; p.fxHunt = c && c.id === e.id ? { id: e.id, n: c.n + 1 } : { id: e.id, n: 1 }; if (p.fxHunt.n >= 3 && e.alive) { p.fxHunt.n = 0; addBreak(b, e, 10); return 1; } } },
+  martyrring: { onFlask: (b, p, k) => { if (k === 'life') { addS(b, p, 'protect', 1); return 1; } } },
+  greedring: { inMul: () => 1.05, goldMul: 1.15 },
+  loner: { out: (b, p) => (!p.eq.ring1 || !p.eq.ring2) ? 1.06 : 1 },
+  penancering: { onDebuff: (b, p) => { p.fxPen = Math.min(3, (p.fxPen || 0) + 1); return 1; }, out: (b, p, c) => { if (p.fxPen && (c.id === 'basic' || c.id === 'heavy' || c.skill)) { const m = 1 + 0.05 * p.fxPen; p.fxPen = 0; return m; } return 1; } },
+  oathbreaker: { st: { mp: -20 }, manaToHp: 1.5 },
+  bitterherb: { onFlask: (b, p, k) => { if (k === 'life') { p.st = Math.min(p.stMax, p.st + 10); return 1; } } },
+  clearwater: { heal: 0.02 },
+  charcoal: { onFlask: (b, p, k) => { if (k === 'life') { p.fxImmune = b.t + 1; return 1; } }, block: (b, p, k) => (k === 'bleed' || k === 'chill') && p.fxImmune && b.t < p.fxImmune },
+  pilgcanteen: { springLife: 1 },
+  wideflask: { heal: -0.05, cap: { life: 1 } },
+  tonic: { stamMul: 1.2 },
+  doubleflask: { onFlask: (b, p, k) => { if (k === 'mana') { p.hp = Math.min(p.hpMax, p.hp + p.hpMax * 0.1); return 1; } } },
+  saintgrail: { cap: { life: -1, mana: -1, stam: -1 }, onFlask: (b, p) => { p.fxQuickNext = 1; return 1; } },
+};
+const fxList = p => { const out = []; if (!p || !p.eq) return out; for (const sl in p.eq) { const k = p.eq[sl]; if (k && IFX[k]) out.push([k, IFX[k]]); } return out; };
+/* 배율·더하기 지점: 바뀌면 센다 */
+function fxMul(p, hook, ...a) { let m = 1; for (const [k, f] of fxList(p)) if (f[hook]) { const v = f[hook](...a); if (v !== 1 && v != null) { m *= v; fxHit(k); } } return m; }
+function fxAdd(p, hook, ...a) { let m = 0; for (const [k, f] of fxList(p)) if (f[hook]) { const v = f[hook](...a); if (v) { m += v; fxHit(k); } } return m; }
+function fxRun(p, hook, ...a) { for (const [k, f] of fxList(p)) if (f[hook] && f[hook](...a)) fxHit(k); }
+function fxVal(p, key, init, comb) { let v = init; for (const [k, f] of fxList(p)) if (f[key] != null) { v = comb(v, f[key]); } return v; }
+function fxStat(p, key) { let v = 0; for (const [, f] of fxList(p)) if (f.st && f.st[key]) v += f.st[key]; return v; }
+function flaskCap(p, k) { return Math.max(1, (p.flaskMax || 3) + fxList(p).reduce((a, [, f]) => a + ((f.cap && f.cap[k]) || 0), 0)); }
+function actCost(p, id, base) { return Math.max(0, base + fxAdd(p, 'cost', p, id)); }
+
 const ST_REGEN = 10; // 스태미나 자연 회복 (1T마다). B0.5의 8에서 올림: 기본 공격이 스태미나를 채우지 않게 되면서 3,840판 비교로 정함 (11.6절)
 const gearOf = p => p.gear || START_GEAR;
 function wpnDmg(p) { return gearOf(p).wpn; }
 function basicBase(p) { return wpnDmg(p) * (isCaster(p) ? 0.9 : 1) * (hasIt(p, 'venomring') ? 0.9 : 1); }
 function heavyBase(p) { return wpnDmg(p) * (isCaster(p) ? 1.6 : 1.8) * (p.eq.weapon === 'twin' ? 0.8 : 1); }
-function flaskHealFrac(p) { return gearOf(p).flask * (p.eq.flask === 'chalice' ? 0.9 : p.eq.flask === 'boilflask' ? 0.75 : p.eq.flask === 'bloodoil' ? 0.8 : 1); }
-function calcMpMax(p) { return BUILDS[p.build].mp + gearOf(p).mp + stat(p, 'int') - (p.eq.amulet === 'sigil' ? 15 : 0) - (p.eq.gloves === 'vpouch' ? 10 : 0); }
-function calcStMax(p) { return 100 + gearOf(p).st + stat(p, 'dex') - (p.eq.amulet === 'vanguard' ? 20 : 0) - (p.eq.gloves === 'chaingl' ? 10 : 0); }
-function calcHpMax(p) { return Math.round((BUILDS[p.build].hp + gearOf(p).hp + stat(p, 'str')) * (p.eq.armor === 'plate' ? 0.9 : p.eq.armor === 'wardcrest' ? 0.95 : p.eq.armor === 'cloak' || p.eq.armor === 'thorns' ? 0.95 : 1) * (p.eq.amulet === 'rosary' ? 0.97 : 1)); }
+function flaskHealFrac(p) { return (gearOf(p).flask + fxVal(p, 'heal', 0, (a, v) => a + v)) * fxVal(p, 'healMul', 1, (a, v) => a * v) * (p.eq.flask === 'chalice' ? 0.9 : p.eq.flask === 'boilflask' ? 0.75 : p.eq.flask === 'bloodoil' ? 0.8 : 1); }
+function calcMpMax(p) { return BUILDS[p.build].mp + gearOf(p).mp + fxStat(p, 'mp') + stat(p, 'int') - (p.eq.amulet === 'sigil' ? 15 : 0) - (p.eq.gloves === 'vpouch' ? 10 : 0); }
+function calcStMax(p) { return 100 + gearOf(p).st + fxStat(p, 'st') + stat(p, 'dex') - (p.eq.amulet === 'vanguard' ? 20 : 0) - (p.eq.gloves === 'chaingl' ? 10 : 0); }
+function calcHpMax(p) { return Math.round(fxVal(p, 'hpMul', 1, (a, v) => a * v) * (BUILDS[p.build].hp + gearOf(p).hp + fxStat(p, 'hp') + stat(p, 'str')) * (p.eq.armor === 'plate' ? 0.9 : p.eq.armor === 'wardcrest' ? 0.95 : p.eq.armor === 'cloak' || p.eq.armor === 'thorns' ? 0.95 : 1) * (p.eq.amulet === 'rosary' ? 0.97 : 1)); }
 function parryRed(p) { return Math.min(0.85, 0.6 + 0.005 * stat(p, 'dex') + (p.eq.armor === 'cloak' ? 0.15 : 0)); }
 function dotMul(p) { return 1 + 0.02 * stat(p, 'int'); }
 function applyStats(p, stats) {
@@ -492,7 +594,8 @@ function newBattle(player, enemies, ctx) {
     turnIdx: 0, rec: [], idc: 100,
   };
   for (const e of enemies) { e.next = 0.01 * (enemies.indexOf(e) + 1); if (!e.intent) decideIntent(b, e); }
-  player.guard = 0; player.dodge = 0; player.stun = 0;
+  player.guard = 0; player.dodge = 0; player.stun = 0; player.fxDodged = 0;
+  fxRun(player, 'onStart', b, player);
   return b;
 }
 /* 조사 고르기: 앞 글자의 받침을 보고 이/가, 을/를, 은/는, 와/과를 정한다 */
@@ -516,6 +619,11 @@ function hasShield(b, exceptId) { return alive(b).find(e => e.role === 'shield' 
 
 function st(u, k) { const x = u.s[k]; return x ? (x.stacks || 1) : 0; }
 function addS(b, u, k, dur, stacks, max) {
+  if (u === b.p && DEBUFFS.includes(k)) {
+    for (const [ik, f] of fxList(u)) if (f.block && f.block(b, u, k)) { fxHit(ik); return; }
+    const dd = fxAdd(u, 'dur', k); if (dd) dur = Math.max(0.5, dur + dd);
+    fxRun(u, 'onDebuff', b, u, k);
+  }
   if (u === b.p && ['bleed', 'ignite', 'chill', 'weak', 'vuln'].includes(k) && u.eq && u.eq.amulet === 'sigil') u.mp = Math.min(u.mpMax, u.mp + 4);
   // 상쇄 쌍 (4.4): 격노↔약화, 보호↔취약
   const opp = { rage: 'weak', weak: 'rage', protect: 'vuln', vuln: 'protect' }[k];
@@ -542,7 +650,7 @@ function tickOnce(b) {
   b.tick++; const T = b.tick; const p = b.p;
   expireAll(b);
   // 플레이어 자원 자연 회복 (전역 T)
-  p.st = Math.min(p.stMax, p.st + ST_REGEN);
+  { const rg = fxVal(p, 'regen', 0, (a, v) => a + v); if (rg && p.st < p.stMax) fxHit('clothgloves'); p.st = Math.min(p.stMax, p.st + ST_REGEN + rg); }
   p.mp = Math.min(p.mpMax, p.mp + p.mpMax * 0.05);
   // 보스 전역 기믹
   const boss = b.en.find(e => e.role === 'boss' && e.alive);
@@ -596,6 +704,7 @@ function hurtPlayer(b, raw, o) {
   const p = b.p; o = o || {};
   if (!o.dot && !o.aoe && p.dodge && o.src && o.src.id === p.dodge) {
     p.dodge = 0; const red = parryRed(p); raw *= 1 - red; o.parried = true; logp(b, 'good', (o.src ? o.src.n + '의 ' + (o.charged ? '강타' : '공격') : '공격') + '을(를) 칼날로 흘린다. 피해 ' + Math.round(red * 100) + '% 감소');
+    fxRun(p, 'onParry', b, p, o.src);
     if (o.charged) { addBreak(b, o.src, 25); logp(b, 'good', o.src.n + '의 자세가 흔들린다. 붕괴 게이지 +25'); }
     if (o.charged && o.src && (p.eq.amulet === 'witness')) { addS(b, o.src, 'vuln', 2); logp(b, 'good', '증인의 부적이 빈틈을 기억한다. ' + o.src.n + ' 취약'); }
     
@@ -609,13 +718,16 @@ function hurtPlayer(b, raw, o) {
   if (p.s.protect) d *= 0.8;
   if (p.s.vuln) d *= 1.25;
   if (p.s.rage) d *= 1.15;
+  d *= fxMul(p, 'inMul', b, p, o);
   // 1회 행동 피해 상한 (4.6): 일반 25%, 정예 35% (보스는 기믹 제외)
   if (o.src && !o.dot) { const cap = o.src.role === 'boss' ? 0.45 : o.src.elite ? 0.35 : 0.25; d = Math.min(d, p.hpMax * cap); }
   d = Math.max(0, d);
   if (p.guard && p.eq.armor === 'plate' && !o.dot) p.counter += d * 0.3;
   let wardAll = false;
   if (p.ward > 0 && d > 0) { const a = Math.min(p.ward, d); p.ward -= a; d -= a; if (d <= 0) wardAll = true; else logp(b, 'good', '보호막이 ' + r1(a) + '을(를) 받아낸다'); }
+  if (d >= p.hp && p.hp > 0 && fxList(p).some(([, f]) => f.deathSave) && !p.fxSaved) { d = p.hp - 1; p.fxSaved = 1; fxHit('deadrosary'); logp(b, 'crit', '망자의 묵주가 한 번 붙잡아 준다. 생명력 1'); }
   p.hp -= d;
+  if (d > 0) fxRun(p, 'onHurt', b, p, o, d);
   if (d > 0 && !o.dot && p.eq.gloves === 'ragechain') p.rcN = Math.min(5, (p.rcN || 0) + 1);
   if (d > 0 && o.charged && hasIt(p, 'fury')) { p.furyNext = 1; logp(b, 'good', '분노의 반지가 달아오른다. 다음 공격 +10%'); }
   if (p.guard && p.eq.armor === 'thorns' && o.src && o.src.alive && !o.dot && o.src.row === 'front') hurtEnemy(b, o.src, 2, { label: '가시 갑옷' });
@@ -639,6 +751,8 @@ function hurtEnemy(b, e, raw, o) {
   if (!o.dot && o.melee && o.single && b.p.scar > 0 && hasIt(b.p, 'scarcharm')) d += Math.min(10, b.p.scar * 0.15);
   if (!o.dot && (o.single || o.melee) && hasIt(b.p, 'markamu')) { const mk = b.p.mk; if (mk && mk.id !== e.id && mk.n > 0) d *= 0.9; b.p.mk = mk && mk.id === e.id ? { id: e.id, n: mk.n + 1 } : { id: e.id, n: 1 }; if (b.p.mk.n >= 3) { b.p.mk.n = 0; b.markTgt = e; } }
   if (!o.dot && hasIt(b.p, 'focusring')) d *= o.aoe ? 0.7 : 1.07;
+  if (!o.dot && b.cur) { d = d * fxMul(b.p, 'hit', b, b.p, e, o, b.cur) + fxAdd(b.p, 'hitAdd', b, b.p, e, o, b.cur); }
+  if (o.dot && e !== b.p) d *= fxMul(b.p, 'dotOut', b, b.p, e, o.label);
   if (e.s.vuln) d *= 1.25;
   if (e.s.broken) d *= 1.3;
   if (e.s.protect) d *= 0.8;
@@ -650,6 +764,7 @@ function hurtEnemy(b, e, raw, o) {
   }
   d = Math.max(0, d);
   e.hp -= d;
+  if (!o.dot && b.cur) fxRun(b.p, 'onHit', b, b.p, e, o, b.cur, d);
   if (!o.dot && b.p.build === 'berserker') addRage(b, 1);
   if (!o.silent && d > 0) logp(b, o.dot ? 'sys' : 'good', o.dot ? (o.label || '피해') + '이(가) ' + e.n + '을(를) 갉아먹는다. ' + r1(d) + ' 피해' : e.n + '에게 ' + r1(d) + ' 피해');
   if (e.hp <= 0) killEnemy(b, e);
@@ -670,13 +785,15 @@ function ledgerCost(p, lack) { return lack > 0 ? p.hpMax * 0.04 * hpCostMul(p) :
 function skillCost(p, id, base) { return base + (p.eq.gloves === 'knot' && (id === 'burst' || id === 'release') ? 2 : 0) + (hasIt(p, 'resostone') && id === p.lastSkillId ? 2 : 0); }
 const hasEcho = p => p.eq.ring1 === 'echo' || p.eq.ring2 === 'echo';
 function payMana(b, cost) {
-  const p = b.p; if (p.mp >= cost || p.build !== 'warlock') { p.mp = Math.max(0, p.mp - cost); return; }
+  const p = b.p; const obr = fxVal(p, 'manaToHp', 0, (a, v) => v);
+  if (p.mp < cost && obr && p.build !== 'warlock') { const lack = cost - p.mp; p.mp = 0; p.hp -= lack * obr; fxHit('oathbreaker'); logp(b, 'bad', '깨진 맹세를 피로 갚는다. 생명력 ' + r1(lack * obr)); checkEnd(b); return; }
+  if (p.mp >= cost || p.build !== 'warlock') { p.mp = Math.max(0, p.mp - cost); return; }
   const lack = cost - p.mp; p.mp = 0; p.hp -= lack * 2 * hpCostMul(p); logp(b, 'bad', '모자란 마나를 피로 채운다. 생명력 ' + r1(lack * 2)); checkEnd(b);
 }
 function killEnemy(b, e) {
   e.alive = false; e.hp = 0; logp(b, 'good', e.n + '이(가) 쓰러진다');
   if (b.p.build === 'warlock' && (e.s.weak || e.s.vuln)) { const hl = b.p.hpMax * 0.1; b.p.hp = Math.min(b.p.hpMax, b.p.hp + hl); logp(b, 'good', '꺼져 가는 혼을 들이마신다. 생명력 +' + r1(hl)); }
-  // 플라스크 충전은 방을 이길 때 (내부 테스트 후 조정) [B0 가설]
+  fxRun(b.p, 'onKill', b, b.p, e);
   b.rec.push({ k: 'kill', t: r1(b.t), role: e.role });
 }
 function checkEnd(b) {
@@ -684,8 +801,8 @@ function checkEnd(b) {
   if (b.p.hp <= 0) { b.p.hp = 0; b.over = 'lose'; logp(b, 'bad', '무릎이 꺾인다. 쓰러졌다'); return; }
   if (!alive(b).some(e => e.role !== 'root')) {
     b.over = 'win'; logp(b, 'good', '마지막 적이 쓰러진다. 방이 조용해진다');
-    const f = b.p.flask; if (f.stam == null) f.stam = b.p.flaskMax; const k = ['life', 'mana', 'stam'].reduce((a, c) => f[c] < f[a] ? c : a, 'life');
-    if (f[k] < b.p.flaskMax) { f[k]++; logp(b, 'good', ({ life: '생명력', mana: '마나', stam: '스태미나' })[k] + ' 플라스크가 1 찬다'); }
+    const f = b.p.flask; if (f.stam == null) f.stam = b.p.flaskMax; const k = ['life', 'mana', 'stam'].reduce((a, c) => f[c] - flaskCap(b.p, c) < f[a] - flaskCap(b.p, a) ? c : a, 'life');
+    if (f[k] < flaskCap(b.p, k)) { f[k]++; logp(b, 'good', ({ life: '생명력', mana: '마나', stam: '스태미나' })[k] + ' 플라스크가 1 찬다'); }
   }
 }
 function spawn(b, role) {
@@ -792,12 +909,14 @@ function pickDodge(b) {
   const hv = al.filter(e => e.intent && e.intent.k === 'heavy').sort((x, y) => x.next - y.next)[0];
   return hv || al.filter(e => e.intent && ['attack', 'mirror'].includes(e.intent.k)).sort((x, y) => x.next - y.next)[0] || al[0];
 }
-function dodgeCost(p) { return 30 + (p.eq.amulet === 'witness' ? 10 : 0) - Math.floor(stat(p, 'dex') / 10); }
+function dodgeCost(p) { return actCost(p, 'dodge', 30 + (p.eq.amulet === 'witness' ? 10 : 0) - Math.floor(stat(p, 'dex') / 10)); }
+const guardCost = p => actCost(p, 'guard', 20);
+const heavyCost = p => actCost(p, 'heavy', 40);
 function actionList(b) {
   const p = b.p; const B = BUILDS[p.build];
   const L = [
     { id: 'basic', n: CANTRIP[p.build] || '기본 공격', melee: isCaster(p) ? 0 : 1, ranged: isCaster(p) ? 1 : 0, cost: '0', time: 1, ok: true },
-    (() => { const led = p.eq.ring2 === 'ledger' || p.eq.ring1 === 'ledger'; const lack = Math.max(0, 40 - p.st); const hc = ledgerCost(p, lack); const ok = p.st >= 40 || (led && p.hp > hc + 1); return { id: 'heavy', n: isCaster(p) ? '집중 주문' : '강공격', melee: isCaster(p) ? 0 : 1, ranged: isCaster(p) ? 1 : 0, cost: lack > 0 && led ? '스태미나 ' + Math.floor(p.st) + ' + 생명력 ' + Math.ceil(hc) : '스태미나 40', time: 1.3, ok, why: !ok && led && lack > 0 ? '생명력이 모자랍니다(피의 계산서)' : null }; })(),
+    (() => { const led = p.eq.ring2 === 'ledger' || p.eq.ring1 === 'ledger'; const hcst = heavyCost(p); const lack = Math.max(0, hcst - p.st); const hc = ledgerCost(p, lack); const ok = p.st >= hcst || (led && p.hp > hc + 1); return { id: 'heavy', n: isCaster(p) ? '집중 주문' : '강공격', melee: isCaster(p) ? 0 : 1, ranged: isCaster(p) ? 1 : 0, cost: lack > 0 && led ? '스태미나 ' + Math.floor(p.st) + ' + 생명력 ' + Math.ceil(hc) : '스태미나 ' + hcst, time: 1.3, ok, why: !ok && led && lack > 0 ? '생명력이 모자랍니다(피의 계산서)' : null }; })(),
   ];
   const SKM = skillMap(p.build);
   for (const sid of skillsOf(p)) {
@@ -818,7 +937,7 @@ function actionList(b) {
       L.push(Object.assign({}, s, { mana: 0, stCost: sc, cost: '스태미나 ' + sc, time: 1, ok: !why, why, skill: 1 }));
     } else {
       const mana = skillCost(p, s.id, s.mana);
-      if (!why && p.mp < mana && !(p.build === 'warlock' && p.hp > (mana - p.mp) * 2 + 1)) why = '마나 부족';
+      if (!why && p.mp < mana && !(p.build === 'warlock' && p.hp > (mana - p.mp) * 2 + 1) && !(fxVal(p, 'manaToHp', 0, (a, v) => v) && p.hp > (mana - p.mp) * 1.5 + 1)) why = '마나 부족';
       L.push(Object.assign({}, s, { mana, cost: res === 'hp' ? resLabel(s) : '마나 ' + mana, time: 1, ok: !why, why, skill: 1 }));
     }
   }
@@ -830,7 +949,7 @@ function actionList(b) {
     if (!why && p.build === 'priest' && !['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln'].some(k => p.s[k]) && p.hp >= p.hpMax) why = '지울 것도 회복할 것도 없음';
     L.push({ id: 'sig', n: S.n, sig: 1, self: S.tgt ? 0 : 1, ranged: S.tgt ? 1 : 0, cost: S.cd ? S.cd + '차례마다' : '분노 5', time: S.time, ok: !why, why });
   } }
-  L.push({ id: 'guard', n: '방어', self: 1, cost: '스태미나 20', time: 1, ok: p.st >= 20 });
+  L.push({ id: 'guard', n: '방어', self: 1, cost: '스태미나 ' + guardCost(p), time: 1, ok: p.st >= guardCost(p) });
   L.push({ id: 'dodge', n: '흘리기', dodge: 1, cost: '스태미나 ' + dodgeCost(p), time: 1, ok: p.st >= dodgeCost(p) });
   L.push({ id: 'flaskL', n: p.eq.flask === 'chalice' ? '역류의 성배' : '생명력 플라스크', self: 1, cost: '충전 ' + p.flask.life, time: 0.5, ok: p.flask.life > 0 });
   L.push({ id: 'flaskM', n: '마나 플라스크', self: 1, cost: '충전 ' + p.flask.mana, time: 0.5, ok: p.flask.mana > 0 });
@@ -841,6 +960,7 @@ function actionList(b) {
 function fleeChance(b) { return clamp(0.6 + (pSpeed(b) - 1) * 0.4, 0.05, 0.95); }
 function outDmg(b, base, o) {
   const p = b.p; let d = base;
+  if (b.cur) d *= fxMul(p, 'out', b, p, b.cur);
   if (p.eq.weapon === 'hook' && o.weapon) d *= 0.85;
   if (o.weapon) d *= 1 + 0.01 * stat(p, 'str');
   if (p.eq.amulet === 'bloodpact' && p.hp < p.hpMax * 0.5) d *= 1.2;
@@ -867,7 +987,7 @@ function snapshotFor(b, act, tgt) {
     t: r1(b.t), a: act, tg: tgt ? tgt.role : null, tgHp: tgt ? r1(tgt.hp / tgt.hpMax) : null,
     hp: r1(p.hp / p.hpMax), mp: r1(p.mp / p.mpMax), st: Math.round(p.st), fl: p.flask.life, fm: p.flask.mana,
     heavyIn: incoming.includes('heavy') ? 1 : 0, healIn: incoming.includes('heal') ? 1 : 0, explodeIn: incoming.includes('explode') ? 1 : 0,
-    canDodge: p.st >= dodgeCost(p) ? 1 : 0, canGuard: p.st >= 20 ? 1 : 0,
+    canDodge: p.st >= dodgeCost(p) ? 1 : 0, canGuard: p.st >= guardCost(p) ? 1 : 0,
     poison: st(p, 'poison'), scar: Math.round(p.scar), en: alive(b).length,
   };
 }
@@ -885,6 +1005,7 @@ function playerAct(b, id, tgtId) {
     if (!tgt) return;
   }
   b.logGroup = (b.logGroup || 0) + 1;
+  b.cur = { id, tgt: tgt ? tgt.id : null, skill: !!act.skill, spell: !!(act.skill && skillRes(act) === 'mp'), cantrip: id === 'basic' && isCaster(p), ranged: !!(act.ranged || act.aoe || (['basic', 'heavy'].includes(id) && !isMeleeAct(p, id))) };
   if (p.sigCd > 0) p.sigCd--;
   if (p.retal) p.retal--;
   b.resonate = !!(p.build === 'arcanist' && act.skill && ((p.lastSkillId && p.lastSkillId !== id) || p.focusRes));
@@ -915,10 +1036,11 @@ function playerAct(b, id, tgtId) {
       addBreak(b, tgt, 10); applyReflux(b, tgt); break; // 0.6: 기본 공격은 스태미나를 채우지 않는다 (11.6절)
     }
     case 'heavy': {
-      let pay = 40; if (p.st < 40) { const lack = 40 - p.st; const hc = ledgerCost(p, lack); p.hp -= hc; logp(b, 'bad', '피로 값을 치른다. 생명력 ' + r1(hc)); if (scarRate(p) > 0) p.scar = Math.min(p.hpMax * .5, p.scar + hc * scarRate(p)); pay = p.st; }
+      let pay = heavyCost(p); p.fxHeavyDisc = 0; if (p.st < pay) { const lack = pay - p.st; const hc = ledgerCost(p, lack); p.hp -= hc; logp(b, 'bad', '피로 값을 치른다. 생명력 ' + r1(hc)); if (scarRate(p) > 0) p.scar = Math.min(p.hpMax * .5, p.scar + hc * scarRate(p)); pay = p.st; }
       p.st -= pay;
       if (p.eq.weapon === 'hook' && tgt.row === 'back') { tgt.row = 'front'; logp(b, 'crit', '갈고리가 ' + tgt.n + '을(를) 앞으로 끌어낸다'); }
-      hurtEnemy(b, tgt, outDmg(b, heavyBase(p), { weapon: 1 }), { single: 1, melee: isCaster(p) ? 0 : 1, label: isCaster(p) ? '집중 주문' : '강공격' });
+      if (p.eq.weapon === 'twinblades') { const hd = outDmg(b, heavyBase(p), { weapon: 1 }) * 0.6; hurtEnemy(b, tgt, hd, { single: 1, melee: 1, label: '첫 칼' }); if (tgt.alive) hurtEnemy(b, tgt, hd, { single: 1, melee: 1, label: '둘째 칼' }); fxHit('twinblades'); }
+      else hurtEnemy(b, tgt, outDmg(b, heavyBase(p), { weapon: 1 }), { single: 1, melee: isCaster(p) ? 0 : 1, label: isCaster(p) ? '집중 주문' : '강공격' });
       addBreak(b, tgt, (isCaster(p) ? 30 : 35) + 5 * Math.floor(stat(p, 'str') / 10) + (p.eq.weapon === 'maul' ? 20 : 0)); if (p.eq.weapon === 'maul') time = 1.4; applyReflux(b, tgt); break;
     }
     case 'sig': {
@@ -973,14 +1095,14 @@ function playerAct(b, id, tgtId) {
       if (k && tgt.alive) { addS(b, tgt, k, left); logp(b, 'good', '내 ' + (k === 'vuln' ? '취약' : '약화') + '을(를) ' + tgt.n + '에게 떠넘긴다'); }
       p.lastSkillDmg = d; break;
     }
-    case 'guard': p.st -= 20; p.guard = 1; if (p.build === 'templar') { p.ward = Math.min(30, (p.ward || 0) + 11); logp(b, 'good', '빛의 방패가 몸을 감싼다. 보호막 ' + p.ward); } logp(b, 'sys', '자세를 낮추고 막을 준비를 한다. 다음 차례까지 받는 피해 절반'); break;
-    case 'dodge': p.st -= dodgeCost(p); p.dodge = tgt.id; logp(b, 'sys', tgt.n + '의 다음 공격을 흘릴 준비를 한다'); break;
+    case 'guard': p.st -= guardCost(p); p.guard = 1; if (p.build === 'templar') { p.ward = Math.min(30, (p.ward || 0) + 11); logp(b, 'good', '빛의 방패가 몸을 감싼다. 보호막 ' + p.ward); } logp(b, 'sys', '자세를 낮추고 막을 준비를 한다. 다음 차례까지 받는 피해 절반'); break;
+    case 'dodge': p.st -= dodgeCost(p); p.fxDodged = 1; p.dodge = tgt.id; logp(b, 'sys', tgt.n + '의 다음 공격을 흘릴 준비를 한다'); break;
     case 'flaskL': {
       p.flask.life--; const heal = p.hpMax * flaskHealFrac(p) * healMul(p);
       if (p.eq.flask === 'boilflask') { for (const e of alive(b).slice()) hurtEnemy(b, e, outDmg(b, 5, {}), { aoe: 1, fire: 1, label: '끓는 플라스크' }); }
       p.hp = Math.min(p.hpMax, p.hp + heal);
       const before = { poison: st(p, 'poison'), bleed: st(p, 'bleed'), ignite: st(p, 'ignite'), chill: st(p, 'chill') };
-      const n = cleanse(b, ['poison', 'bleed', 'ignite', 'chill'], true);
+      const n = cleanse(b, ['poison', 'bleed', 'ignite', 'chill'].concat(fxVal(p, 'flaskCleanse', [], (a, v) => a.concat(v))), true); fxRun(p, 'onFlask', b, p, 'life');
       logp(b, 'good', '플라스크를 비운다. 생명력 +' + r1(heal) + (n ? ', 디버프 ' + n + ' 지움' : ''));
       const boss = alive(b).find(e => e.boss === 'mother');
       if (boss && n > 0) hurtEnemy(b, boss, boss.hpMax * 0.01 * n, { dot: 1, label: '역류' });
@@ -988,11 +1110,11 @@ function playerAct(b, id, tgtId) {
       time = 0.5; break;
     }
     case 'flaskS': {
-      p.flask.stam--; const add = Math.min(p.stMax - p.st, STAM_FLASK); p.st += add; p.exhaust = 0;
+      p.flask.stam--; const add = Math.min(p.stMax - p.st, STAM_FLASK * fxVal(p, 'stamMul', 1, (a, v) => a * v)); fxRun(p, 'onFlask', b, p, 'stam'); p.st += add; p.exhaust = 0;
       logp(b, 'good', '쓴 약을 삼킨다. 스태미나 +' + Math.round(add)); time = 0.5; break;
     }
     case 'flaskM': {
-      p.flask.mana--; p.mp = Math.min(p.mpMax, p.mp + p.mpMax * 0.4);
+      p.flask.mana--; p.mp = Math.min(p.mpMax, p.mp + p.mpMax * 0.4); fxRun(p, 'onFlask', b, p, 'mana');
       const n = cleanse(b, ['weak', 'vuln'], true); logp(b, 'good', '플라스크를 비운다. 마나 +' + r1(p.mpMax * 0.4) + (n ? ', 디버프 ' + n + ' 지움' : '')); time = 0.5; break;
     }
     case 'flee': {
@@ -1013,12 +1135,14 @@ function healMul(p) { return p.eq.amulet === 'bloodpact' ? 0.85 : 1; }
 function cleanse(b, keys, isFlask) {
   const p = b.p; let n = 0;
   for (const k of keys) if (p.s[k]) { n += (k === 'poison' || k === 'chill') ? st(p, k) : 1; delete p.s[k]; }
+  if (n > 0) fxRun(p, 'onCleanse', b, p, n);
   if (n > 0 && p.eq.amulet === 'rosary') { p.mp = Math.min(p.mpMax, p.mp + 3 * n); logp(b, 'good', '묵주가 씻어 낸 것을 마나로 바꾼다. 마나 +' + 3 * n); }
   if (n > 0 && p.build === 'priest') { p.hp = Math.min(p.hpMax, p.hp + p.hpMax * 0.03 * n); addS(b, p, 'protect', 3); logp(b, 'good', '정화의 불빛이 몸을 감싼다. 보호'); }
   return n;
 }
 function addBreak(b, e, v) {
   if (!e || !e.alive || e.role === 'root') return;
+  if (b.cur) v = (v + fxAdd(b.p, 'brk', b, b.p, e, b.cur)) * fxMul(b.p, 'brkMul', b, b.p, e, b.cur);
   e.brk += v * (1 + 0.01 * stat(b.p, 'str'));
   if (e.brk >= e.brkMax) {
     e.brk = 0; e.stun = 1; addS(b, e, 'broken', 1); addS(b, e, 'vuln', 1);
@@ -1029,7 +1153,8 @@ function addBreak(b, e, v) {
   }
 }
 function finishPlayer(b, time) {
-  const p = b.p;
+  const p = b.p; b.cur = null;
+  if (p.fxQuick) { time *= 0.5; p.fxQuick = 0; fxHit('saintgrail'); } if (p.fxQuickNext) { p.fxQuick = 1; p.fxQuickNext = 0; }
   if (p.st <= 0) { p.st = 0; p.exhaust = 1; }
   if (p.exhaust && p.st >= 30) p.exhaust = 0;
   b.pNext = b.t + time / pSpeed(b);
@@ -1111,7 +1236,7 @@ function scenBattle(build, sc) {
   return b;
 }
 function endBattleCarry(p) {
-  p.rcN = 0; p.mk = null;
+  p.rcN = 0; p.mk = null; p.fxSpell = 0; p.fxScar = 0; p.fxPen = 0; p.fxHunt = null; p.fxHeavyDisc = 0; p.fxImmune = 0; p.fxQuick = 0; p.fxQuickNext = 0;
   p.ward = 0; p.focus = null; p.lastSkillId = null; p.echoN = 0; p.furyNext = 0; p.retal = 0; p.sigCd = 0; p.focusRes = 0;
   // 방 사이 이월 (4.2): 생명력·마나·플라스크 유지, 스태미나는 50%까지 회복, 전투 상태 해제
   p.st = Math.max(p.st, 50); p.exhaust = 0; p.s = {}; p.guard = 0; p.dodge = 0; p.stun = 0; p.counter = 0; p.reflux = null; p.rage = 0;
@@ -2126,6 +2251,7 @@ function applyGear(run, full) {
   if (!g.wpn) g.wpn = 4; if (!g.flask) g.flask = START_GEAR.flask;
   const f = { hp: p.hpMax ? p.hp / p.hpMax : 1, mp: p.mpMax ? p.mp / p.mpMax : 1, st: p.stMax ? p.st / p.stMax : 1 };
   p.gear = g; p.hpMax = calcHpMax(p); p.mpMax = calcMpMax(p); p.stMax = calcStMax(p);
+  for (const fk of ['life', 'mana', 'stam']) if (p.flask && p.flask[fk] > flaskCap(p, fk)) p.flask[fk] = flaskCap(p, fk);
   if (full) { p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax; }
   else { p.hp = Math.min(p.hpMax, Math.round(p.hpMax * f.hp)); p.mp = Math.min(p.mpMax, p.mpMax * f.mp); p.st = Math.min(p.stMax, p.stMax * f.st); }
 }
@@ -2258,8 +2384,8 @@ function statNext(p, k) {
 function enterRoom() {
   const R = roomDef(); const run = G.run; const p = run.p;
   if (R.spring) {
-    p.hp = Math.min(p.hpMax, p.hp + p.hpMax * 0.5); p.mp = Math.min(p.mpMax, p.mp + p.mpMax * 0.5);
-    p.flask.life = Math.min(p.flaskMax, p.flask.life + 1); p.flask.mana = Math.min(p.flaskMax, p.flask.mana + 1); p.flask.stam = Math.min(p.flaskMax, (p.flask.stam || 0) + 1);
+    const sp = 0.5 * (1 + fxVal(p, 'spring', 0, (a, v) => a + v)); p.hp = Math.min(p.hpMax, p.hp + p.hpMax * sp); p.mp = Math.min(p.mpMax, p.mp + p.mpMax * sp);
+    p.flask.life = Math.min(flaskCap(p, 'life'), p.flask.life + 1 + fxVal(p, 'springLife', 0, (a, v) => a + v)); p.flask.mana = Math.min(flaskCap(p, 'mana'), p.flask.mana + 1); p.flask.stam = Math.min(flaskCap(p, 'stam'), (p.flask.stam || 0) + 1);
     run.rooms.push({ room: run.room, spring: 1 }); run.room++; saveCur(); toast('샘물로 상처를 씻었습니다. 생명력과 마나 50%, 플라스크 1씩'); saveRunLocal(); render(); return;
   }
   if (R.block && !run.blockOffered) { run.blockOffered = true; openBlock(); return; }
@@ -2291,8 +2417,11 @@ function battleContinue() {
   if (b.over === 'win' && R.drop) {
     const fits = k => itemFits(run.p, k);
     const declined = run.declined || [];
-    const owned = Object.values(run.inv || {}).map(x => x.tpl); const cand = (run.pool || FREE_POOL).filter(k => !owned.includes(k) && ITEMS[k]);
-    const offer = cand.slice().sort((x, y) => ((declined.includes(x) ? 1 : 0) + (fits(x) ? 0 : 3)) - ((declined.includes(y) ? 1 : 0) + (fits(y) ? 0 : 3))).slice(0, 2);
+    const owned = Object.values(run.inv || {}).map(x => x.tpl); const cand = CH1_POOL.filter(k => !owned.includes(k) && ITEMS[k]);
+    // 등급을 먼저 뽑고(평범 50, 고급 40, 희귀 10, 11.5절), 그 등급에서 지금 빌드에 맞고 두고 가지 않은 것을 앞세워 고른다
+    const rollG = () => { const x = Math.random() * 100; return x < 50 ? 'n' : x < 90 ? 'm' : 'r'; };
+    const pickOne = (g, not) => { const c = cand.filter(k => (ITEMS[k].g || 'n') === g && !not.includes(k)); const pool = c.length ? c : cand.filter(k => !not.includes(k)); const sc = k => (declined.includes(k) ? 1 : 0) + (fits(k) ? 0 : 3) + Math.random() * 0.9; return pool.slice().sort((x, y) => sc(x) - sc(y))[0]; };
+    const offer = []; for (let oi = 0; oi < 2; oi++) { const k = pickOne(rollG(), offer); if (k) offer.push(k); }
     G.b = null; run.room++; saveRunLocal(); saveCur();
     if (offer.length) { openSheet('choice', { offer, room: run.room - 1 }); return; }
     render(); return;

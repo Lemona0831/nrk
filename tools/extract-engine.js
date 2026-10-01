@@ -10,6 +10,6 @@ const s = html.slice(i + 8, j);
 const eng = s.slice(0, s.indexOf('/* ===== 가이드'));
 const ux = s.slice(s.indexOf('/* ===== 표시 규칙'), s.indexOf('/* 상태 표시'));
 const out = data + '\n' + eng + '\n' + ux.replace('function previewText', 'function _u') +
-  '\nmodule.exports = Object.assign(module.exports || {}, { previewAfter, myTurnsUntil, eSpeed, frontBlocked, hasShield, mkEnemy, pickDodge, stepWorld, guardOf, PSN, poisonTotal, applyStats, calcHpMax, calcMpMax, calcStMax, FREE_POOL, itemFits, allSkills, DEFAULT_SKILLS, skillsOf, scarRate, skillMap, exclOf, isMeleeAct, SIG });\n';
+  '\nmodule.exports = Object.assign(module.exports || {}, { IFX, FXHIT, CH1_POOL, flaskHealFrac, flaskCap, heavyCost, guardCost, dodgeCost, STAM_FLASK, previewAfter, myTurnsUntil, eSpeed, frontBlocked, hasShield, mkEnemy, pickDodge, stepWorld, guardOf, PSN, poisonTotal, applyStats, calcHpMax, calcMpMax, calcStMax, FREE_POOL, itemFits, allSkills, DEFAULT_SKILLS, skillsOf, scarRate, skillMap, exclOf, isMeleeAct, SIG });\n';
 fs.writeFileSync(path.join(__dirname, 'eng.gen.js'), out);
 console.log('tools/eng.gen.js 생성 (' + path.relative(path.join(__dirname, '..'), dir) + ', ' + out.length + '자)');
