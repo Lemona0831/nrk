@@ -48,7 +48,7 @@ const ENC = {
 };
 /* 강적 (자리만 먼저. 고유 규칙은 단계 8에서 비공개 문서대로 넣는다) */
 /* 강적 공통 배율과 고유 수치 (11.8절). 일반 방보다 확실히 어렵게 (10월 2일 만든 사람 요청) */
-const STRONG = { hp: 2.1, dmg: 1.3, bellEvery: 3, leech: 0.45, frenzy: 1.3 }; // 무작위 시험: 상층 승률 94%(남은 생명력 60%), 하층 76~82%(약 50%). 일반 방은 95~98%(65~83%)
+const STRONG = { hp: 2.1, dmg: 1.3, bellEvery: 3, leech: 0.45, frenzy: 1.3, lowerHp: 1.3, lowerDmg: 1.15 }; // 하층 강적만 더: 무작위 시험 하층 순례자 40%대(만든 사람 요청) // 무작위 시험: 상층 승률 94%(남은 생명력 60%), 하층 76~82%(약 50%). 일반 방은 95~98%(65~83%)
 const STRONG_FOES = [
   { id: 'bellringer', n: '종지기', en: [['shield', 1], ['bruiser'], ['minion']] },
   { id: 'pilgrim', n: '굶주린 순례자', en: [['bruiser', 1]] },
