@@ -36,6 +36,20 @@ with sync_playwright() as p:
     # 남의 경로에 쓰기 시도 → 거절
     r=pg.evaluate("async()=>{ try { await G.db.doc('playtest/someone-else/runs/x').set({a:1}); return '써짐'; } catch(e) { return '거절: '+e.message; } }")
     print('남의 경로 쓰기:', r)
+    # 구글 로그인: 익명 계정에 구글을 이어 붙이면 uid와 기록이 그대로여야 한다
+    uid0=pg.evaluate("()=>G.uid")
+    pg.click('button[data-a=login][data-k=google]'); pg.wait_for_timeout(900)
+    print('구글 연결:', pg.evaluate("()=>[G.acct.anon, G.acct.provider, G.uid===%r, G.data.name]" % uid0), '| 로그인 카드:', pg.inner_text('main').count('구글 계정으로 로그인했습니다'))
+    # 다른 기기(새 탭 = 새 익명 계정)에서 같은 구글 계정으로 이으려 하면 → 그 계정으로 들어가기
+    pg3=ctx.new_page(); pg3.on('pageerror',lambda e:errs.append('둘째 기기:'+str(e)))
+    pg3.goto(SITE); pg3.wait_for_timeout(600)
+    if pg3.query_selector('button.link[data-a=gdone]'): pg3.click('button.link[data-a=gdone]')
+    pg3.click('button[data-a=login][data-k=google]'); pg3.wait_for_timeout(900)
+    print('이미 쓰는 계정 안내:', bool(pg3.query_selector('button[data-a=loginswitch]')), '| 주소 정리:', '#' not in pg3.url)
+    pg3.click('button[data-a=loginswitch]'); pg3.wait_for_timeout(900)
+    print('그 계정으로 들어감:', pg3.evaluate("()=>[G.acct.anon, G.uid===%r, G.data.name]" % uid0))
+    pg3.click('button[data-a=logout]'); pg3.wait_for_timeout(900)
+    print('로그아웃 뒤 익명:', pg3.evaluate("()=>[G.acct.anon, G.uid!==%r, G.data.name]" % uid0)); pg3.close()
     # 만든 사람 (다른 탭 = 다른 익명 계정)
     pg2=ctx.new_page(); pg2.on('pageerror',lambda e:errs.append('관리자:'+str(e)))
     pg2.goto(SITE); pg2.wait_for_timeout(600)

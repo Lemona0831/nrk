@@ -16,7 +16,7 @@
 - 엔진: 파일 앞부분부터 `/* ===== 가이드` 직전까지. BUILDS(직업), EXCL(직업 전용 스킬), SIG(직업 기술), ITEMS, FREE_POOL, itemFits, ROOMS, BOSSES, 전투 계산(hurtPlayer, hurtEnemy, outDmg, playerAct, genSkill)
 - 표시 규칙: `/* ===== 표시 규칙` ~ `/* 상태 표시`. 예고 문장, 행동 미리보기
 - 텍스트층: `const IT = {`가 있는 즉시 실행 함수. **화면에 보이는 아이템·빌드·스킬·도움말 문장은 여기서 덮어쓴다.** ITEMS 정의의 act/cost보다 이쪽이 화면에 나온다
-- 저장: `initCaps`(Claude 저장소), `initSite`·`sbDb`(Supabase). 경로 구조는 `playtest/<id>/runs/<판>/acts/c000`, `board/<id>`
+- 저장: `initCaps`(Claude 저장소), `initSite`·`sbDb`(Supabase). 구글 로그인은 `readAcct`·`socialLogin`·`vAcct`, 결과 보기의 테스터 이름은 `testerLabel`. 경로 구조는 `playtest/<id>/runs/<판>/acts/c000`, `board/<id>`
 - 업데이트 내역: `CHANGE_VER`, `CHANGELOG`
 
 ## 고칠 때 순서
@@ -56,4 +56,4 @@
 
 ## 기획서
 
-Claude 문서 "나락의 유산 — 종합 게임 기획서 v2" (https://claude.ai/code/artifact/b595f7b4-c6a2-4835-9c76-9e66f3d56590). 규칙이나 수치를 크게 바꾸면 만든 사람에게 기획서 반영이 필요하다고 알린다.
+원본은 docs/기획서.md다. 게임 규칙이나 수치를 바꾸면 같은 작업에서 기획서의 해당 절도 함께 고친다. 예전 Claude 문서판(https://claude.ai/code/artifact/b595f7b4-c6a2-4835-9c76-9e66f3d56590)은 더 이상 기준이 아니다.
