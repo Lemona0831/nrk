@@ -110,3 +110,6 @@ const BUILDS = {
     ],
   },
 };
+
+/* 레벨이 오를 때 오르는 생명력·마나 (기획서 5.2절 표의 절반, 11.4절) */
+const LV_GAIN = { berserker: { hp: 6, mp: 2 }, hunter: { hp: 5, mp: 3 }, arcanist: { hp: 4, mp: 4 }, templar: { hp: 5, mp: 3 }, warlock: { hp: 5, mp: 3 }, assassin: { hp: 4, mp: 3 }, priest: { hp: 5, mp: 4 }, scar: { hp: 6, mp: 2 } };
