@@ -20,7 +20,7 @@ with sync_playwright() as p:
     pg.evaluate("()=>{G.data.seenCoach=true; G.data.name='민수'}")
     pg.click('button[data-a=start][data-b=hunter]'); pg.click('button[data-a=skillok]')
     for k in ['dex']*6: pg.click(f'button[data-a="stat+"][data-k={k}]')
-    pg.click('button[data-a=statok]'); pg.click('button[data-a=enter]'); pg.select_option('#pace','instant')
+    pg.click('button[data-a=statok]'); pg.click('button[data-a=door][data-k="0"]'); pg.click('button[data-a=enter]'); pg.select_option('#pace','instant')
     for i in range(30):
         if pg.query_selector('button[data-a=bcont]'): break
         pg.keyboard.press('1'); pg.wait_for_function("()=>!G.busy")

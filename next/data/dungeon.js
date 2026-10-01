@@ -1,0 +1,81 @@
+/* 나락의 유산 데이터: 던전과 갈림길 (기획서 11.3절)
+   한 챕터 = 상층 1~8층, 9층 야영지, 하층 10~17층, 18층 샘, 19층 보스. 값만 둔다. */
+const FLOORS = 19;
+const FLOOR_CAMP = 9, FLOOR_SPRING = 18, FLOOR_BOSS = 19;
+const isLower = f => f >= 10;
+
+/* 방 유형: w 가중치, max 챕터당 최대, from 나오는 첫 층, fight 전투 방 */
+const ROOM_TYPES = {
+  normal: { n: '일반', ico: '⚔️', w: 40, max: 99, from: 1, fight: 1, risk: 1, gold: [10, 15], hint: '장비 1' },
+  ambush: { n: '매복', ico: '🗡️', w: 8, max: 3, from: 2, fight: 1, risk: 2, gold: [15, 22], hint: '적이 먼저 움직인다 · 골드 많음' },
+  strong: { n: '강적', ico: '💀', w: 10, max: 4, from: 3, fight: 1, risk: 3, gold: [30, 30], hint: '고급 이상 장비' },
+  treasure: { n: '보물', ico: '🗝️', w: 9, max: 3, from: 1, fight: 1, risk: 2, gold: [25, 25], hint: '상자: 장비 둘 중 하나, 희귀 보장' },
+  trial: { n: '시련', ico: '🔥', w: 5, max: 2, from: 5, fight: 1, risk: 4, gold: [40, 40], hint: '방 특성 둘 · 희귀 장비' },
+  spring: { n: '샘', ico: '💧', w: 8, max: 2, from: 3, fight: 0, risk: 0, hint: '생명력·마나 50%, 플라스크 각 1' },
+  shrine: { n: '성소', ico: '🕯️', w: 7, max: 3, from: 1, fight: 0, risk: 0, hint: '3개 방 동안 버프' },
+  altar: { n: '제단', ico: '🩸', w: 6, max: 3, from: 2, fight: 0, risk: 0, hint: '대가 있는 거래' },
+  event: { n: '이벤트', ico: '❔', w: 7, max: 4, from: 2, fight: 0, risk: 0, hint: '선택에 따라 다르다' },
+};
+/* 강적은 상층 2, 하층 2까지 */
+const STRONG_PER_HALF = 2;
+
+/* 방 특성: 전투 방에 상층 25%, 하층 45%. 시련은 둘 */
+const ROOM_MODS = {
+  narrow: { n: '좁은 회랑', d: '전열에 적이 2기까지만 선다. 나머지는 후열이다.' },
+  ceiling: { n: '무너지는 천장', d: '시간이 4번 흐를 때마다 모두에게 피해 4.' },
+  holy: { n: '성수 웅덩이', d: '시간이 흐를 때마다 모두 생명력 1% 회복.' },
+  candle: { n: '촛불 제단', d: '모든 점화 피해 +50%.' },
+  bloodpool: { n: '피 웅덩이', d: '모든 출혈 피해 2배.' },
+  bell: { n: '종소리', d: '적 속도 +10%. 이 방의 골드 +50%.' },
+  dark: { n: '어둠', d: '후열 적의 예고가 보이지 않는다.' },
+  calm: { n: '고요', d: '마나 자연 회복 2배.' },
+};
+const MOD_CHANCE = { upper: 0.25, lower: 0.45 };
+
+/* 적 구성 틀 ([역할, 정예]) */
+const ENC = {
+  upper: [
+    [['bruiser'], ['bruiser']], [['bruiser'], ['archer']], [['shield'], ['healer']], [['shield'], ['shield'], ['healer']],
+    [['bomber'], ['bomber'], ['bruiser']], [['summoner'], ['minion'], ['minion']], [['bruiser'], ['healer']], [['archer'], ['archer'], ['bruiser']],
+    [['shield'], ['archer']], [['bomber'], ['shield']], [['summoner'], ['bruiser']], [['bruiser', 1]],
+  ],
+  lower: [
+    [['bruiser', 1], ['archer']], [['shield', 1], ['healer'], ['bruiser']], [['archer', 1], ['archer'], ['bomber']], [['summoner'], ['minion'], ['minion'], ['healer']],
+    [['bruiser'], ['bruiser'], ['healer', 1]], [['shield', 1], ['bomber'], ['bomber']], [['bruiser', 1], ['summoner']], [['archer'], ['shield'], ['healer']],
+    [['bomber', 1], ['bruiser']], [['shield'], ['archer', 1], ['minion']], [['bruiser'], ['bruiser'], ['archer']], [['healer'], ['shield'], ['bruiser', 1]],
+  ],
+  treasure: [[['shield', 1], ['bruiser']], [['bruiser', 1], ['archer']], [['archer', 1], ['shield']]],
+};
+/* 강적 (자리만 먼저. 고유 규칙은 단계 8에서 비공개 문서대로 넣는다) */
+const STRONG_FOES = [
+  { id: 'bellringer', n: '종지기', en: [['shield', 1], ['bruiser']] },
+  { id: 'pilgrim', n: '굶주린 순례자', en: [['bruiser', 1]] },
+];
+
+/* 성소: 다음 3개 방 동안 */
+const SHRINES = [
+  { id: 'break', n: '무너뜨림의 성소', d: '붕괴 게이지를 채우는 양 +20%.' },
+  { id: 'ward', n: '인내의 성소', d: '받는 지속 피해 −30%.' },
+  { id: 'wrath', n: '분노의 성소', d: '주는 피해 +10%.' },
+  { id: 'breath', n: '숨결의 성소', d: '스태미나 자연 회복 +3.' },
+  { id: 'mercy', n: '자비의 성소', d: '생명력 플라스크 회복 +10%p.' },
+];
+
+/* 제단: 대가 있는 거래 */
+const ALTARS = [
+  { id: 'blood', n: '피의 거래', d: '최대 생명력 −5%(이 캐릭터가 끝날 때까지)를 바치고 희귀 장비 하나를 받는다.' },
+  { id: 'gold', n: '황금 촛대', d: '골드 40을 바치고 세 플라스크를 하나씩 채운다.' },
+  { id: 'offer', n: '바치는 제단', d: '가방의 장비 하나를 바치면 한 등급 위의 장비 하나를 받는다(희귀는 다시 희귀).' },
+];
+
+/* 이벤트 (1챕터). 같은 것은 한 챕터에 한 번 */
+const EVENTS = [
+  { id: 'confess', n: '버려진 고해실', lore: '휘장 너머에서 누군가 숨을 고른다.', opts: [{ id: 'do', n: '고해한다', d: '약화·취약 3T를 안고 다음 전투에 들어가는 대신 희귀 장비 하나.' }, { id: 'pass', n: '지나친다', d: '' }] },
+  { id: 'pilgrim', n: '쓰러진 순례자', lore: '짐 보따리가 아직 따뜻하다.', opts: [{ id: 'loot', n: '짐을 뒤진다', d: '장비 하나. 대신 다음 전투에 중독 3.' }, { id: 'pray', n: '기도한다', d: '생명력 플라스크 +1.' }, { id: 'pass', n: '지나친다', d: '' }] },
+  { id: 'reliquary', n: '잠긴 성물함', lore: '녹슨 자물쇠가 손을 기다린다.', opts: [{ id: 'force', n: '억지로 연다', d: '스태미나 40을 쓰고 골드 30 또는 고급 장비.' }, { id: 'pass', n: '지나친다', d: '' }] },
+  { id: 'chalice', n: '피 묻은 성배', lore: '잔 바닥에 검붉은 것이 고여 있다.', opts: [{ id: 'drink', n: '마신다', d: '최대 생명력 +5(영구), 지금 생명력 −15%.' }, { id: 'spill', n: '쏟는다', d: '마나 플라스크 +1.' }] },
+  { id: 'candle', n: '속삭이는 촛불', lore: '불꽃이 이름을 부른다.', opts: [{ id: 'snuff', n: '불을 끈다', d: '다음 3개 방 동안 받는 점화 피해 0, 대신 주는 피해 −5%.' }, { id: 'pass', n: '지나친다', d: '' }] },
+  { id: 'library', n: '무너진 서고', lore: '젖은 책장 사이로 글자가 번진다.', opts: [{ id: 'read', n: '책을 읽는다', d: '능력치 1점.' }, { id: 'sell', n: '책을 챙긴다', d: '골드 20.' }] },
+  { id: 'monk', n: '굶주린 수도사', lore: '뼈만 남은 손이 소매를 붙든다.', opts: [{ id: 'feed', n: '먹을 것을 준다', d: '플라스크 하나(가장 많이 찬 것)를 비우고, 다음 전투 방에서 장비 하나 더.' }, { id: 'chase', n: '내쫓는다', d: '다음 전투에 굶주린 수도사(돌격병)가 더해지고, 이기면 골드 20.' }] },
+  { id: 'bell', n: '종탑의 줄', lore: '줄 끝이 아래로, 아래로 이어진다.', opts: [{ id: 'pull', n: '당긴다', d: '다음 층 문에 강적이 반드시 나온다. 골드 15.' }, { id: 'pass', n: '지나친다', d: '' }] },
+];
