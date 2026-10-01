@@ -18,7 +18,7 @@ with sync_playwright() as p:
     pg.click('button.link[data-a=gdone]'); pg.wait_for_timeout(300)
     print('지인 연결:', pg.evaluate("()=>[G.site,G.conn,G.uid&&G.uid.slice(0,10),G.owner]"), '| 경고 카드:', bool(pg.query_selector('.warncard')))
     pg.evaluate("()=>{G.data.seenCoach=true; G.data.name='민수'}")
-    pg.click('button[data-a=start][data-b=hunter][data-boss=mother]'); pg.click('button[data-a=skillok]')
+    pg.click('button[data-a=start][data-b=hunter]'); pg.click('button[data-a=skillok]')
     for k in ['dex']*6: pg.click(f'button[data-a="stat+"][data-k={k}]')
     pg.click('button[data-a=statok]'); pg.click('button[data-a=enter]'); pg.select_option('#pace','instant')
     for i in range(30):
