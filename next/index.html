@@ -671,7 +671,7 @@ function pSpeed(b) {
   s *= 1 + 0.005 * stat(p, 'dex');
   return clamp(s, 0.7, 1.5);
 }
-function eSpeed(b, e) { let s = e.spd * (hasMod(b, 'bell') ? 1.1 : 1); if (e.boss === 'abbot' && e.phase === 3) s *= 1.2; if (e.foe === 'pilgrim' && e.hp < e.hpMax * 0.5) s *= 1.3; if (e.s && e.s.chill) s *= 0.7; if (b.enrage && e.role === 'boss') s *= 1.3; return s; }
+function eSpeed(b, e) { let s = e.spd * (hasMod(b, 'bell') ? 1.1 : 1); if (e.boss === 'abbot' && e.phase === 3) s *= 1.2; if (e.foe === 'pilgrim' && e.hp < e.hpMax * 0.5) s *= STRONG.frenzy; if (e.s && e.s.chill) s *= 0.7; if (b.enrage && e.role === 'boss') s *= 1.3; return s; }
 
 /* 1T 경계마다 전역 처리 */
 function tickOnce(b) {
@@ -698,7 +698,7 @@ function tickOnce(b) {
     if (T - (boss.vowTick || 0) >= 3) { boss.vow = boss.vow ? 0 : 1; boss.vowTick = T; if (boss.vow) { boss.intent = { k: 'pray' }; logp(b, 'sys', boss.n + '이(가) 다시 입을 다문다'); codexHit(b, 'abbot', 'vow'); } else { decideIntent(b, boss); logp(b, 'sys', boss.n + '이(가) 입을 연다'); } }
     if (boss.vow) boss.hp = Math.min(boss.hpMax, boss.hp + boss.hpMax * ABBOT.vowHeal);
   }
-  { const rg = alive(b).find(e => e.foe === 'bellringer'); const bell = alive(b).find(e => e.bell); if (rg && bell && T % 4 === 0) { for (const x of alive(b)) if (x.role !== 'root') x.quick = 1; logp(b, 'bad', rg.n + '이(가) 줄을 당긴다. 종이 울린다'); codexHit(b, 'bellringer', 'ring'); } }
+  { const rg = alive(b).find(e => e.foe === 'bellringer'); const bell = alive(b).find(e => e.bell); if (rg && bell && T % STRONG.bellEvery === 0) { for (const x of alive(b)) if (x.role !== 'root') x.quick = 1; logp(b, 'bad', rg.n + '이(가) 줄을 당긴다. 종이 울린다'); codexHit(b, 'bellringer', 'ring'); } }
   if (boss && boss.boss === 'tree') {
     if (T % 4 === 0) { b.season = (b.season + 1) % 4; logp(b, 'sys', '계절이 바뀐다. 이제 ' + SEASONS[b.season]); }
     const roots = alive(b).filter(e => e.role === 'root').length;
@@ -934,7 +934,7 @@ function enemyAct(b, e) {
   if (e.alive) { decideIntent(b, e); e.next = b.t + (e.quick ? 0.5 : 1) / eSpeed(b, e); e.quick = 0; }
 }
 /* 굶주린 순례자: 준 피해의 절반을 마신다 */
-function leech(b, e, x) { if (e.foe === 'pilgrim' && x > 0 && e.alive) { e.hp = Math.min(e.hpMax, e.hp + x * 0.5); logp(b, 'bad', e.n + '이(가) 피를 마신다. ' + r1(x * 0.5) + ' 회복'); codexHit(b, 'pilgrim', 'leech'); } }
+function leech(b, e, x) { if (e.foe === 'pilgrim' && x > 0 && e.alive) { e.hp = Math.min(e.hpMax, e.hp + x * STRONG.leech); logp(b, 'bad', e.n + '이(가) 피를 마신다. ' + r1(x * STRONG.leech) + ' 회복'); codexHit(b, 'pilgrim', 'leech'); } }
 function bossPhase(b, e) {
   const f = e.hp / e.hpMax; const ph = e.boss === 'abbot' ? (f > 0.65 ? 1 : f > 0.3 ? 2 : 3) : f > 0.7 ? 1 : f > 0.35 ? 2 : 3;
   if (e.boss === 'abbot' && ph !== e.phase) {
@@ -1273,7 +1273,7 @@ function roomBattle(player, room, bossKind, seed) {
     const bs = mkBoss(bossKind, 1, room.lv || 1); en = [bs];
     if (bossKind === 'tree') for (let i = 0; i < 3; i++) en.push(mkEnemy('root', 0, 50 + i));
   } else en = room.en.map((x, i) => mkEnemy(x[0], x[1], i, { lv: room.lv || 1, name: room.names && room.names[x[0]], tough: !!(room.tough && room.tough.includes(i)) }));
-  if (room.strong && en[0]) { const e = en[0]; e.strong = true; e.foe = room.foe; e.n = room.strong; e.hpMax = Math.round(e.hpMax * 1.5); e.hp = e.hpMax; e.info = '강적. 무엇을 하는지는 겪어 보아야 안다.'; }
+  if (room.strong && en[0]) { const e = en[0]; e.strong = true; e.foe = room.foe; e.n = room.strong; e.hpMax = Math.round(e.hpMax * STRONG.hp); e.hp = e.hpMax; e.dmg *= STRONG.dmg; e.info = '강적. 무엇을 하는지는 겪어 보아야 안다.'; }
   if (room.foe === 'bellringer') { const bell = mkEnemy('root', 0, 60, { lv: room.lv || 1 }); bell.n = '큰 종'; bell.ico = '🔔'; bell.bell = 1; bell.hpMax = Math.round(bell.hpMax * 1.2); bell.hp = bell.hpMax; bell.info = '큰 종. 후열. 스스로는 움직이지 않는다.'; en.push(bell); }
   const mods = room.mods || [];
   if (mods.includes('narrow')) { let f = 0; for (const e of en) if (e.row === 'front' && e.role !== 'boss') { f++; if (f > 2) e.row = 'back'; } }
