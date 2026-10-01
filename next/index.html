@@ -398,6 +398,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .tag.cfit{align-self:flex-start;border-color:var(--good);color:var(--good);margin:0}
 .waitc h2{font-family:'Nanum Myeongjo',serif;color:var(--gold);font-size:clamp(24px,6.5vw,34px);line-height:1.25;margin:4px 0 8px}.waitc>p:not(.mini){max-width:46ch;margin:8px auto}.waitbtn{justify-content:center;margin-top:14px}
 @media (prefers-reduced-motion:reduce){.sgold div{animation:none}}
+.wallm{font-size:11px;margin-left:3px;opacity:.85}
 </style>
 </head>
 <body>
@@ -446,15 +447,16 @@ function genSkill(b, act, tgt) {
     if (fx.scarAll) base = scarUse * fx.scarAll;
     if (base > 0) tot += hurtEnemy(b, e, outDmg(b, base, {}), { single: act.type === 'melee' || act.type === 'ranged' ? 1 : 0, aoe: act.aoe ? 1 : 0, melee: act.melee ? 1 : 0, fire: fx.ignite ? 1 : 0, label: act.n });
     if (!e.alive) continue;
-    if (fx.poison) addPoison(b, e, fx.poison, 1);
-    if (fx.ignite) addS(b, e, 'ignite', 3);
-    if (fx.chill) addS(b, e, 'chill', 2, fx.chill, 5);
-    if (fx.weak) addS(b, e, 'weak', 2);
-    if (fx.vuln) addS(b, e, 'vuln', 2);
+    const many = act.type === 'aoe' || act.type === 'front' || act.aoe; const sn = n => many ? aoeN(n) : n; // 여럿에게 거는 상태이상은 절반
+    if (fx.poison) addPoison(b, e, sn(fx.poison), 1);
+    if (fx.ignite) addS(b, e, 'ignite', sn(3));
+    if (fx.chill) addS(b, e, 'chill', sn(2), fx.chill, 5);
+    if (fx.weak) addS(b, e, 'weak', sn(2));
+    if (fx.vuln) addS(b, e, 'vuln', sn(2));
     if (fx.brk) addBreak(b, e, fx.brk);
   }
   if (fx.scarAll) { p.scar = 0; if (scarUse < 1) logp(b, 'sys', '태울 상흔이 없다'); }
-  if (fx.allWeak) { for (const e of alive(b)) addS(b, e, 'weak', 2); logp(b, 'good', '포효에 적들이 움츠러든다. 모두 약화'); }
+  if (fx.allWeak) { for (const e of alive(b)) addS(b, e, 'weak', aoeN(2)); logp(b, 'good', '포효에 적들이 움츠러든다. 모두 약화'); }
   if (fx.rage) addRage(b, fx.rage);
   if (fx.ward) { p.ward = Math.min(40, (p.ward || 0) + fx.ward); logp(b, 'good', '보호막 ' + Math.round(p.ward)); }
   if (fx.protect) addS(b, p, 'protect', 3);
@@ -489,6 +491,7 @@ function itemFits(p, k) {
   const SKM = skillMap(p.build);
   if (k === 'chaingl') return sk.some(id => SKM[id] && SKM[id].melee);
   if (k === 'bloodoil') return p.build === 'warlock' || hasIt(p, 'ledger') || sk.some(id => SKM[id] && SKM[id].hpCost);
+  if (['hereticstaff', 'brokencenser', 'abysseye', 'singedgloves', 'conductor'].includes(k)) return sk.some(id => SKM[id] && SKM[id].aoe && (SKM[id].dmg || 0) > 0 || ['fireball', 'release'].includes(id));
   if (k === 'wardcrest') return p.build === 'templar' || p.build === 'arcanist' || sk.some(id => ['barrier', 'aura', 'atone'].includes(id));
   return true;
 }
@@ -516,6 +519,10 @@ const STAM_FLASK = 60; // 스태미나 플라스크 회복량 (11.6절 [가설])
 const FXHIT = {};
 /* 타락한 수도원장 수치. 사람처럼 판단하는 테스터(여섯 성향) 1,920판에서 첫 도전 승률 48%로 맞춘 값 (10월 2일, 만든 사람 요청 50% 안팎) */
 const CLS_TUNE = { warlockKill: 0.15 }; // 직업 규칙 수치: 암흑술사가 약화·취약된 적을 쓰러뜨리면 회복하는 생명력 비율
+/* 광역 규칙 (10월 2일): 후열은 광역 피해를 덜 받고, 방패병이 서 있으면 후열을 감싼다(방패벽). 여럿에게 거는 상태이상은 단일의 절반 */
+const AOE = { back: 0.7, wall: 0.5, shieldSelf: 0.75, status: 0.5 };
+const aoeN = n => Math.max(1, Math.round(n * AOE.status));
+const wallUp = (b, e) => e.alive && e.row === 'back' && e.role !== 'boss' && !!hasShield(b, e.id);
 const TELE = { heavy: 5 }; // 적 강타 = 평소 공격 × heavy (예고를 읽고 막는 판단의 무게)
 const ENRAGE = { boss: 45, room: 40, step: 10 }; // 광폭화 시각(시간 단위)과 짙어지는 간격
 const ABBOT = { cycle: 5, brand: 0.2, vowHeal: 0.01, vowTaken: 0.6, monkHeal: 0.025 };
@@ -540,7 +547,7 @@ const IFX = {
   penwhip: { hit: (b, p, e, o, c) => c.id === 'basic' && e.s.weak ? 1.15 : 1 },
   brandiron: { onHit: (b, p, e, o, c) => { if (c.id === 'heavy' && e.alive) { addS(b, e, 'ignite', 2); return 1; } } },
   gravespade: { onKill: (b, p) => { p.fxHeavyDisc = 15; return 1; }, cost: (p, id) => id === 'heavy' && p.fxHeavyDisc ? -p.fxHeavyDisc : 0 },
-  bonedagger: { hit: (b, p, e, o, c) => c.id === 'heavy' && e.s.poison && e.s.poison.stacks >= 5 ? 1.2 : 1 },
+  bonedagger: { hit: (b, p, e, o, c) => c.id === 'heavy' && e.s.poison && e.s.poison.stacks >= 4 ? 1.2 : 1 },
   silverwand: { onKill: (b, p) => { if (b.cur && b.cur.skill) { p.mp = Math.min(p.mpMax, p.mp + 5); return 1; } } },
   twinblades: { cost: (p, id) => id === 'heavy' ? 10 : 0 },
   bloodblade: { onHit: (b, p, e, o, c, d) => { if (o.melee && d > 0) { p.hp = Math.min(p.hpMax, p.hp + d * 0.1); return 1; } }, healMul: 0.8 },
@@ -604,11 +611,63 @@ const IFX = {
   tonic: { stamMul: 1.2 },
   doubleflask: { onFlask: (b, p, k) => { if (k === 'mana') { p.hp = Math.min(p.hpMax, p.hp + p.hpMax * 0.1); return 1; } } },
   saintgrail: { cap: { life: -1, mana: -1, stam: -1 }, onFlask: (b, p) => { p.fxQuickNext = 1; return 1; } },
+  // 10월 2일 추가 50종
+  ironmace: { hit: (b, p, e) => e.row === 'front' ? 1.04 : 1 },
+  thornrod: { brk: (b, p, e, c) => isSpell(c) ? 2 : 0 },
+  dooraxe: { hit: (b, p, e) => e.role === 'shield' ? 1.1 : 1 },
+  candlewick: { hitAdd: (b, p, e, o, c) => c.id === 'basic' && e.s.ignite ? 1 : 0 },
+  wallbreaker: { brk: (b, p, e, c) => c.id === 'heavy' && e.role === 'shield' ? 15 : 0 },
+  hereticstaff: { hit: (b, p, e, o, c) => o.aoe && isSpell(c) ? 1.12 : 1 },
+  belllongbow: { hit: (b, p, e, o, c) => e.row === 'back' && c.ranged ? 1.12 : 1 },
+  penancepike: { onHit: (b, p, e, o, c, d) => { if (!o.melee || !o.single || e.row !== 'front' || !(d > 0)) return; const t = alive(b).find(x => x.row === 'back' && x.role !== 'root'); if (!t) return; hurtEnemy(b, t, d * 0.4, { label: '참회의 장창' }); return 1; }, cost: (p, id) => id === 'heavy' ? 5 : 0 },
+  brokencenser: { aoeWall: 1, hit: (b, p, e, o, c) => o.single && isSpell(c) ? 0.85 : 1 },
+  thickhabit: { inMul: (b, p, o) => o.aoe && !o.dot ? 0.92 : 1 },
+  linenwrap: { st: { st: 4, hp: 2 } },
+  arrowcloak: { inMul: (b, p, o) => o.src && o.src.row === 'back' && !o.dot ? 0.94 : 1 },
+  ashrobe: { inMul: (b, p, o) => o.dot && o.label && (o.label === '점화' || o.label.startsWith('출혈')) ? 0.85 : 1 },
+  scaleshirt: { inMul: (b, p, o) => p.guard && o.charged ? 0.92 : 1 },
+  ripostemail: { onHurt: (b, p, o) => { if (p.guard && !o.dot && o.src && o.src.alive && o.src.role !== 'root') { addBreak(b, o.src, 8); return 1; } } },
+  butcherhide: { onKill: (b, p) => { const w = p.ward || 0; if (w >= 20) return; p.ward = Math.min(20, w + 4); return 1; } },
+  vowrobe: { onStart: (b, p) => { p.ward = Math.min(40, (p.ward || 0) + 8); return 1; } },
+  ringingmail: { onParry: (b, p) => { let n = 0; for (const e of alive(b)) if (e.role !== 'root') { addBreak(b, e, 8); n++; } return n ? 1 : 0; }, cost: (p, id) => id === 'dodge' ? 5 : 0 },
+  hookgloves: { brk: (b, p, e) => e.role === 'shield' ? 3 : 0 },
+  wristguard: { cost: (p, id) => id === 'dodge' ? -2 : 0 },
+  singedgloves: { hit: (b, p, e, o) => o.aoe ? 1.04 : 1 },
+  gripgloves: { cost: (p, id) => id === 'heavy' ? -2 : 0 },
+  duelgloves: { out: (b, p) => alive(b).filter(x => x.role !== 'root').length === 1 ? 1.12 : 1 },
+  breakerhands: { hit: (b, p, e, o, c) => c.id === 'heavy' && e.s.broken ? 1.2 : 1 },
+  alchemgloves: { dotOut: () => 1.08 },
+  reaperhands: { onKill: (b, p) => { p.fxQuickNext = 1; return 1; }, inMul: () => 1.06 },
+  smallicon: { st: { hp: 4 } },
+  waxseal: { dur: (k) => k === 'vuln' ? -1 : 0 },
+  bonecharm: { onStart: (b, p) => { p.mp = Math.min(p.mpMax, p.mp + 6); return 1; } },
+  crowfeather: { brk: (b, p, e, c) => c.ranged && e.row === 'back' ? 3 : 0 },
+  wardensigil: { onKill: (b, p, e) => { if (!e || e.role !== 'shield') return; for (const x of alive(b)) if (x.role !== 'root') addBreak(b, x, 12); return 1; } },
+  bellpendant: { hit: (b, p, e) => e.intent && (e.intent.k === 'charge' || e.intent.k === 'heavy') ? 1.12 : 1 },
+  brotherbeads: { onFlask: (b, p, k) => { if (k === 'life') { p.fxFlaskDmg = 1; return 1; } }, out: (b, p, c) => { if (p.fxFlaskDmg && (c.id === 'basic' || c.id === 'heavy' || c.skill)) { p.fxFlaskDmg = 0; return 1.1; } return 1; } },
+  abysseye: { aoeBack: 1, st: { hp: -8 } },
+  tinring: { st: { mp: 3, st: 2 } },
+  jetring: { hit: (b, p, e, o, c) => o.single && c.skill ? 1.03 : 1 },
+  amberring: { heal: 0.01 },
+  boneband: { hit: (b, p, e) => e.elite ? 1.04 : 1 },
+  rustband: { onKill: (b, p) => { p.st = Math.min(p.stMax, p.st + 6); return 1; } },
+  siegering: { hit: (b, p, e) => wallUp(b, e) ? 1.15 : 1 },
+  vigorring: { out: (b, p) => p.hp >= p.hpMax * 0.7 ? 1.06 : 1 },
+  hushring: { inMul: (b, p, o) => o.src && o.src.elite && !o.dot ? 0.94 : 1 },
+  conductor: { onHit: (b, p, e, o) => { if (o.aoe && !o.dot) { p.fxCond = 1; return 1; } }, hit: (b, p, e, o) => { if (o.aoe && !o.dot) return 0.9; if (o.single && p.fxCond) { p.fxCond = 0; return 1.3; } return 1; } },
+  smallvial: { onFlask: (b, p, k) => { if (k === 'stam') { p.hp = Math.min(p.hpMax, p.hp + 4); return 1; } } },
+  herbflask: { onFlask: (b, p, k) => { if (k === 'life') { p.mp = Math.min(p.mpMax, p.mp + 5); return 1; } } },
+  copperflask: { heal: 0.01, onFlask: (b, p, k) => { if (k === 'mana') { p.st = Math.min(p.stMax, p.st + 8); return 1; } } },
+  towerflask: { onFlask: (b, p, k) => { if (k === 'stam') { p.ward = Math.min(40, (p.ward || 0) + 10); return 1; } } },
+  bigtonic: { cap: { stam: 1 } },
+  holywater: { cap: { life: -1 }, onFlask: (b) => { const e = alive(b).find(x => x.intent && (x.intent.k === 'charge' || x.intent.k === 'heavy') && x.role !== 'boss'); if (!e) return; e.intent = { k: 'attack' }; logp(b, 'good', '성수가 튀자 ' + e.n + '이(가) 강타를 거둔다'); return 1; } },
+  emberflask: { heal: -0.05, onFlask: (b, p, k) => { if (k !== 'life') return; let n = 0; for (const e of alive(b)) if (e.role !== 'root') { addS(b, e, 'ignite', 1); n++; } return n ? 1 : 0; } },
 };
 const fxList = p => { const out = []; if (!p || !p.eq) return out; for (const sl in p.eq) { const k = p.eq[sl]; if (k && IFX[k]) out.push([k, IFX[k]]); } return out; };
 /* 배율·더하기 지점: 바뀌면 센다 */
 function fxMul(p, hook, ...a) { let m = 1; for (const [k, f] of fxList(p)) if (f[hook]) { const v = f[hook](...a); if (v !== 1 && v != null) { m *= v; fxHit(k); } } return m; }
 function fxAdd(p, hook, ...a) { let m = 0; for (const [k, f] of fxList(p)) if (f[hook]) { const v = f[hook](...a); if (v) { m += v; fxHit(k); } } return m; }
+function fxFlag(p, key) { for (const [k, f] of fxList(p)) if (f[key]) { fxHit(k); return true; } return false; }
 function fxRun(p, hook, ...a) { for (const [k, f] of fxList(p)) if (f[hook] && f[hook](...a)) fxHit(k); }
 function fxVal(p, key, init, comb) { let v = init; for (const [k, f] of fxList(p)) if (f[key] != null) { v = comb(v, f[key]); } return v; }
 function fxStat(p, key) { let v = 0; for (const [, f] of fxList(p)) if (f.st && f.st[key]) v += f.st[key]; return v; }
@@ -849,6 +908,7 @@ function hurtEnemy(b, e, raw, o) {
   if (!o.dot && (o.single || o.melee) && hasIt(b.p, 'markamu')) { const mk = b.p.mk; if (mk && mk.id !== e.id && mk.n > 0) d *= 0.9; b.p.mk = mk && mk.id === e.id ? { id: e.id, n: mk.n + 1 } : { id: e.id, n: 1 }; if (b.p.mk.n >= 3) { b.p.mk.n = 0; b.markTgt = e; } }
   if (!o.dot && hasIt(b.p, 'focusring')) d *= o.aoe ? 0.7 : 1.07;
   if (e.vow && !o.dot) d *= ABBOT.vowTaken;
+  if (o.aoe && !o.dot && e.role !== 'boss') { if (e.row === 'back') { if (!fxFlag(b.p, 'aoeBack')) d *= AOE.back; if (hasShield(b, e.id) && !fxFlag(b.p, 'aoeWall')) d *= AOE.wall; } else if (e.role === 'shield' && !(e.stun > 0) && !e.s.broken) d *= AOE.shieldSelf; } // 광역: 후열·방패벽·방패병
   if (!o.dot && b.cur) { d = d * fxMul(b.p, 'hit', b, b.p, e, o, b.cur) + fxAdd(b.p, 'hitAdd', b, b.p, e, o, b.cur); }
   if (o.dot && e !== b.p) d *= fxMul(b.p, 'dotOut', b, b.p, e, o.label);
   if (e.s.vuln) d *= 1.25;
@@ -1173,7 +1233,7 @@ function playerAct(b, id, tgtId) {
     }
     case 'crush': { payMana(b, act.mana); const d = hurtEnemy(b, tgt, outDmg(b, 11, {}), { single: 1, melee: 1, label: '분쇄의 일격' }); addBreak(b, tgt, 20); p.lastSkillDmg = d; applyReflux(b, tgt); break; }
     case 'aimshot': { payMana(b, act.mana); const d = hurtEnemy(b, tgt, outDmg(b, 9, {}), { single: 1, label: '정밀 사격' }); addBreak(b, tgt, 10); p.lastSkillDmg = d; applyReflux(b, tgt); break; }
-    case 'fireball': { payMana(b, act.mana); let tot = 0; const nT = alive(b).length; for (const e of alive(b).slice()) { tot += hurtEnemy(b, e, outDmg(b, 5, {}), { aoe: 1, fire: 1, label: '화염구' }); if (e.alive) addS(b, e, 'ignite', 3); } p.lastSkillDmg = tot / Math.max(1, nT); break; }
+    case 'fireball': { payMana(b, act.mana); let tot = 0; const nT = alive(b).length; for (const e of alive(b).slice()) { tot += hurtEnemy(b, e, outDmg(b, 5, {}), { aoe: 1, fire: 1, label: '화염구' }); if (e.alive) addS(b, e, 'ignite', aoeN(3)); } p.lastSkillDmg = tot / Math.max(1, nT); break; }
     case 'lava': { payMana(b, act.mana); const d = hurtEnemy(b, tgt, outDmg(b, 9, {}), { single: 1, melee: 1, fire: 1, label: '용암 일격' }); if (tgt.alive) addS(b, tgt, 'ignite', 3); addBreak(b, tgt, 10); p.lastSkillDmg = d; applyReflux(b, tgt); break; }
     case 'drain': { payMana(b, act.mana); const d = hurtEnemy(b, tgt, outDmg(b, 6, {}), { single: 1, label: '영혼 흡수' }); p.hp = Math.min(p.hpMax, p.hp + d * 0.7 * healMul(p)); if (tgt.alive) addS(b, tgt, 'weak', 2); if (d > 0) logp(b, 'good', '빼앗은 기운으로 생명력 +' + r1(d * 0.7)); p.lastSkillDmg = d; applyReflux(b, tgt); break; }
     case 'viper': { payMana(b, act.mana); const d = hurtEnemy(b, tgt, outDmg(b, PSN.viper, {}), { single: 1, melee: 1, label: '독사의 일격' }); if (tgt.alive) addPoison(b, tgt, PSN.viperN, 1); p.lastSkillDmg = d; addBreak(b, tgt, 10); applyReflux(b, tgt); break; }
@@ -1186,7 +1246,7 @@ function playerAct(b, id, tgtId) {
       if (keep > 0 && tgt.alive) { addPoison(b, tgt, keep); logp(b, 'good', '잔향의 매듭이 독의 절반을 붙잡아 둔다. 중독 ' + keep); }
       addBreak(b, tgt, n * PSN.brk + 5 * Math.floor(stat(p, 'int') / 10)); p.lastSkillDmg = d; applyReflux(b, tgt); break;
     }
-    case 'cloud': { payMana(b, act.mana); for (const e of alive(b)) addPoison(b, e, PSN.cloudN, 1); logp(b, 'good', '독구름이 번진다. 모든 적 중독 +' + PSN.cloudN); p.lastSkillDmg = 0; break; }
+    case 'cloud': { payMana(b, act.mana); const cn = aoeN(PSN.cloudN); for (const e of alive(b)) addPoison(b, e, cn, 1); logp(b, 'good', '독구름이 번진다. 모든 적 중독 +' + (cn + (p.build === 'assassin' ? 1 : 0))); p.lastSkillDmg = 0; break; }
     case 'scarcut': {
       payMana(b, act.mana); const use = p.scar * 0.5; p.scar -= use;
       const d = hurtEnemy(b, tgt, outDmg(b, 7 + use * 1.5, {}), { single: 1, melee: 1, label: '상흔 베기' + (use > 0 ? '(상흔 ' + r1(use) + ')' : '') });
@@ -1367,7 +1427,7 @@ function scenBattle(build, sc) {
   return b;
 }
 function endBattleCarry(p) {
-  p.bt = {}; p.rcN = 0; p.mk = null; p.fxSpell = 0; p.fxScar = 0; p.fxPen = 0; p.fxHunt = null; p.fxHeavyDisc = 0; p.fxImmune = 0; p.fxQuick = 0; p.fxQuickNext = 0;
+  p.bt = {}; p.rcN = 0; p.mk = null; p.fxSpell = 0; p.fxScar = 0; p.fxPen = 0; p.fxHunt = null; p.fxHeavyDisc = 0; p.fxImmune = 0; p.fxQuick = 0; p.fxQuickNext = 0; p.fxCond = 0; p.fxFlaskDmg = 0;
   p.ward = 0; p.focus = null; p.lastSkillId = null; p.echoN = 0; p.furyNext = 0; p.retal = 0; p.sigCd = 0; p.focusRes = 0;
   // 방 사이 이월 (4.2): 생명력·마나·플라스크 유지, 스태미나는 50%까지 회복, 전투 상태 해제
   p.st = Math.max(p.st, 50); p.exhaust = 0; p.s = {}; p.guard = 0; p.dodge = 0; p.stun = 0; p.counter = 0; p.reflux = null; p.rage = 0;
@@ -1416,7 +1476,9 @@ const HELP = [
     '치유: 치유사가 다친 아군을 25% 회복합니다. 점화 준비 → 폭발: 자폭병이 다음 행동에 광역 피해 + 약화를 주고 사라집니다.'] },
   { k: 'row', n: '전열과 후열', t: [
     '적은 앞줄(전열)과 뒷줄(후열)에 섭니다. 근접 공격(기본 공격, 강공격, 근접 스킬)은 전열만 노릴 수 있습니다.',
-    '전열이 모두 쓰러지거나 붕괴 상태면 근접 공격도 후열에 닿습니다. 원거리 스킬과 광역 스킬은 언제나 닿습니다.'] },
+    '전열이 모두 쓰러지거나 붕괴 상태면 근접 공격도 후열에 닿습니다. 원거리 스킬과 광역 스킬은 언제나 닿습니다.',
+    '광역 스킬은 후열에 70%만 들어갑니다. 방패병이 서 있으면 후열은 그 절반(방패벽, 카드에 🛡️)이고, 방패병 자신도 광역 피해를 25% 덜 받습니다. 방패병을 쓰러뜨리거나 붕괴시키면 풀립니다.',
+    '광역 스킬과 전열 전체 스킬로 거는 상태이상(중독, 점화, 약화 등)은 단일 기술의 절반입니다.'] },
   { k: 'break', n: '붕괴', t: [
     '적 카드의 보라색 게이지입니다. 기본 공격 10, 강공격 35씩 차고, 가득 차면 붕괴합니다.',
     '붕괴한 적은 충전 중이던 기술이 취소되고, 다음 행동을 잃고, 잠시 받는 피해가 늘어납니다. 방패병을 붕괴시키면 잠시 동료를 지키지 못합니다.',
@@ -1794,7 +1856,7 @@ function vBattle() {
   const ecard = e => {
     const it = intentText(b, e); const sel = G.sel === e.id;
     const reach = !frontBlocked(b) || e.row === 'front';
-    return `<button class="en${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(e.n)} 생명력 ${shownHp(e.hp)}, 예고: ${esc(it.t)}"><div class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" title="강인: 체력 +50%">강인</small>' : ''}${e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${!reach ? '<span class="nr" title="근접 공격이 닿지 않습니다">근접 불가</span>' : ''}${reach && guardOf(b, e) ? '<span class="nr gd" data-info="guarded" tabindex="0">방패병이 막는 중</span>' : ''}${e.boss === 'tree' && rootRegen(b) > 0 ? `<span class="nr rg2" data-info="regen" tabindex="0">🌱 +${rootRegen(b)}/내 차례</span>` : ''}</div>${bar('hp', e.hp, e.hpMax, '생명력')}${e.role !== 'root' ? `<div class="bkline" data-info="bar:bk" title="붕괴 ${Math.round(e.brk)}/${e.brkMax}"><small>붕괴 게이지</small><div class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></div></div><div class="intent${it.hv ? ' hv' : ''}">${esc(it.t)}</div>` : '<div class="mini">움직이지 않는다</div>'}${stsHtml(e, b)}</button>`;
+    return `<button class="en${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(e.n)} 생명력 ${shownHp(e.hp)}, 예고: ${esc(it.t)}"><div class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wallUp(b, e) ? '<span class="wallm" title="방패벽: 광역 피해 절반" aria-label="방패벽">🛡️</span>' : ''}${e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" title="강인: 체력 +50%">강인</small>' : ''}${e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${!reach ? '<span class="nr" title="근접 공격이 닿지 않습니다">근접 불가</span>' : ''}${reach && guardOf(b, e) ? '<span class="nr gd" data-info="guarded" tabindex="0">방패병이 막는 중</span>' : ''}${e.boss === 'tree' && rootRegen(b) > 0 ? `<span class="nr rg2" data-info="regen" tabindex="0">🌱 +${rootRegen(b)}/내 차례</span>` : ''}</div>${bar('hp', e.hp, e.hpMax, '생명력')}${e.role !== 'root' ? `<div class="bkline" data-info="bar:bk" title="붕괴 ${Math.round(e.brk)}/${e.brkMax}"><small>붕괴 게이지</small><div class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></div></div><div class="intent${it.hv ? ' hv' : ''}">${esc(it.t)}</div>` : '<div class="mini">움직이지 않는다</div>'}${stsHtml(e, b)}</button>`;
   };
   const bk = b.en.filter(e => e.alive && e.row === 'back'), fr = b.en.filter(e => e.alive && e.row === 'front');
   const field = `<section class="field" aria-label="전장">
@@ -1982,7 +2044,7 @@ const AINFO = {
 };
 const RINFO = {
   bruiser: '돌격병 · 전열. 공격하다가 가끔 강타를 충전한다. 충전 다음 행동에 3배 피해 + 취약.',
-  shield: '방패병 · 전열. 다른 적을 노린 근접 공격을 대신 맞는다(원거리·광역·지속 피해는 제외). 붕괴시키면 잠시 막지 못한다.',
+  shield: '방패병 · 전열. 다른 적을 노린 근접 공격을 대신 맞는다(원거리·광역·지속 피해는 제외). 서 있는 동안 후열이 받는 광역 피해는 절반(방패벽), 자신도 광역 피해 −25%. 붕괴시키면 잠시 막지 못한다.',
   archer: '사수 · 후열. 약간 빠르다. 공격하면 출혈을 건다.',
   healer: '치유사 · 후열. 체력이 70% 아래인 아군을 25% 치유한다.',
   summoner: '소환사 · 후열. 하수인 2기를 부른다(최대 3기). 소환은 3번 행동마다 한 번.',
@@ -2302,7 +2364,7 @@ function initPop() {
   });
   Object.assign(RINFO, {
     bruiser: '돌격병. 전열. 공격을 이어 가다 가끔 도끼를 치켜들어 강타를 모은다. 다음 행동에 세 배 피해를 주고 나를 취약하게 만든다.',
-    shield: '방패병. 전열. 동료를 노린 근접 공격을 대신 맞는다. 원거리, 광역, 지속 피해는 막지 못한다. 붕괴시키면 잠시 자리를 비운다.',
+    shield: '방패병. 전열. 동료를 노린 근접 공격을 대신 맞는다. 원거리, 광역, 지속 피해는 막지 못한다. 대신 서 있는 동안 방패벽으로 후열이 받는 광역 피해를 절반으로 줄이고, 자신도 광역 피해를 25% 덜 받는다. 붕괴시키면 잠시 자리를 비운다.',
     archer: '사수. 후열. 조금 빠르고, 맞히면 출혈을 건다.',
     healer: '치유사. 후열. 체력이 70% 아래인 아군을 25% 회복시킨다. 한 번 치유하면 다음 행동은 공격으로 쉰다.',
     summoner: '소환사. 후열. 세 번 행동할 때마다 하수인 둘을 불러낸다. 하수인은 셋까지.',

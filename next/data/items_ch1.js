@@ -1,4 +1,4 @@
-/* 나락의 유산 데이터: 1챕터 아이템 100종 (기획서 11.5절 표)
+/* 나락의 유산 데이터: 1챕터 아이템 150종 (기획서 11.5절 표, 10월 2일 100 → 150)
    1~45번 가운데 B0.5 효과 아이템 20종은 items.js의 것을 그대로 쓰고, 여기에는 새 79종을 둔다.
    효과의 계산은 index.html의 IFX(아이템 효과 표)가 맡는다. 여기에는 이름·슬롯·등급·문장만 둔다.
    g: n 평범 / m 고급 / r 희귀 */
@@ -19,7 +19,7 @@ const ITEMS_CH1 = {
   penwhip: { n: '참회의 채찍', slot: 'weapon', g: 'm', act: '약화된 적에게 기본 공격 피해 +15%.', cost: '', lore: '스스로를 때리던 채찍이 이제 남을 향한다.' },
   brandiron: { n: '낙인 인두', slot: 'weapon', g: 'm', act: '강공격이 점화 2T를 건다.', cost: '', lore: '죄인의 이마에 찍던 쇠. 아직 식지 않았다.' },
   gravespade: { n: '묘지기의 삽', slot: 'weapon', g: 'm', act: '적을 쓰러뜨리면 다음 강공격 스태미나 −15.', cost: '', lore: '하나를 묻으면 다음 구덩이가 쉬워진다.' },
-  bonedagger: { n: '뼈 손잡이 단검', slot: 'weapon', g: 'm', act: '중독 5 이상인 적에게 강공격 피해 +20%.', cost: '', lore: '독이 돈 상처를 찾아 깊이 박힌다.' },
+  bonedagger: { n: '뼈 손잡이 단검', slot: 'weapon', g: 'm', act: '중독 4 이상인 적에게 강공격 피해 +20%.', cost: '', lore: '독이 돈 상처를 찾아 깊이 박힌다.' },
   silverwand: { n: '은빛 마법봉', slot: 'weapon', g: 'm', act: '스킬로 적을 쓰러뜨리면 마나 +5.', cost: '', lore: '마지막 숨을 빨아들이는 은.' },
   twinblades: { n: '고해자의 쌍검', slot: 'weapon', g: 'r', act: '강공격이 두 번 친다(한 번에 60%).', cost: '강공격 스태미나 +10', lore: '두 번 고백하는 자는 두 번 벤다.' },
   bloodblade: { n: '피를 마시는 칼', slot: 'weapon', g: 'r', act: '근접 공격이 준 피해의 10%를 회복한다.', cost: '생명력 플라스크 회복 −20%', lore: '칼이 마신 피가 손잡이를 타고 올라온다.' },
@@ -88,8 +88,59 @@ const ITEMS_CH1 = {
   tonic: { n: '진한 강장제', slot: 'flask', g: 'm', act: '스태미나 플라스크 회복량 +20%.', cost: '', lore: '혀가 저릴 만큼 진하다.' },
   doubleflask: { n: '두 겹 플라스크', slot: 'flask', g: 'm', act: '마나 플라스크가 생명력 10%도 회복한다.', cost: '', lore: '안쪽 병에 무엇이 들었는지는 묻지 않는다.' },
   saintgrail: { n: '성인의 성배', slot: 'flask', g: 'r', act: '플라스크를 마신 다음 행동도 빠른 행동이 된다.', cost: '모든 플라스크 최대 충전 −1', lore: '한 모금에 시간이 느려진다.' },
+  // 10월 2일 추가 50종 (기획서 11.5절 101~150번)
+  ironmace: { n: '쇠 철퇴', slot: 'weapon', g: 'n', act: '전열 적에게 주는 피해 +4%.', cost: '', lore: '머리가 무거워 휘두르기보다 떨어뜨린다.' },
+  thornrod: { n: '가시 지팡이', slot: 'weapon', g: 'n', act: '주문 붕괴 +2.', cost: '', lore: '가시가 손바닥을 찔러 정신이 든다.' },
+  dooraxe: { n: '문 부수는 도끼', slot: 'weapon', g: 'n', act: '방패병에게 주는 피해 +10%.', cost: '', lore: '잠긴 예배당 문을 연 것은 열쇠가 아니었다.' },
+  candlewick: { n: '심지 단검', slot: 'weapon', g: 'n', act: '점화된 적에게 기본 공격 피해 +1.', cost: '', lore: '촛농이 굳은 날에 불이 옮겨 붙는다.' },
+  wallbreaker: { n: '성벽 망치', slot: 'weapon', g: 'm', act: '방패병을 강공격으로 치면 붕괴 +15.', cost: '', lore: '방패는 막으라고 있는 것이고, 망치는 그 반대다.' },
+  hereticstaff: { n: '이단자의 홀', slot: 'weapon', g: 'm', act: '광역 주문 피해 +12%.', cost: '', lore: '파문당한 사제가 끝까지 놓지 않은 홀.' },
+  belllongbow: { n: '종탑 장궁', slot: 'weapon', g: 'm', act: '후열 적에게 원거리 공격 피해 +12%.', cost: '', lore: '종탑 꼭대기에서 마당 끝까지 닿던 활.' },
+  penancepike: { n: '참회의 장창', slot: 'weapon', g: 'r', act: '근접 단일 공격이 전열 적을 꿰뚫어, 뒤에 선 후열 적 하나에게 준 피해의 40%를 더 준다.', cost: '강공격 스태미나 +5', lore: '앞사람의 죄와 뒷사람의 죄를 한 번에 묻는다.' },
+  brokencenser: { n: '부서진 향로', slot: 'weapon', g: 'r', act: '광역 공격이 방패벽을 무시한다.', cost: '단일 대상 주문 피해 −15%', lore: '연기는 방패 틈으로도 스민다.' },
+  thickhabit: { n: '두꺼운 수도복', slot: 'armor', g: 'n', act: '광역 공격에 받는 피해 −8%.', cost: '', lore: '겨울 수도원의 바람을 막던 옷.' },
+  linenwrap: { n: '아마포 감개', slot: 'armor', g: 'n', act: '최대 스태미나 +4, 최대 생명력 +2.', cost: '', lore: '몸에 감으면 숨이 덜 찬다.' },
+  arrowcloak: { n: '화살막이 외투', slot: 'armor', g: 'n', act: '후열 적에게 받는 피해 −6%.', cost: '', lore: '등에 박힌 화살촉을 세다가 그만두었다.' },
+  ashrobe: { n: '재 묻은 로브', slot: 'armor', g: 'n', act: '내게 걸린 점화·출혈 피해 −15%.', cost: '', lore: '한 번 탄 옷은 다시 잘 타지 않는다.' },
+  scaleshirt: { n: '비늘 셔츠', slot: 'armor', g: 'n', act: '방어 중 받는 강타 피해 추가 −8%.', cost: '', lore: '비늘 하나하나가 강타를 조금씩 흘린다.' },
+  ripostemail: { n: '반격의 갑주', slot: 'armor', g: 'm', act: '방어 중 공격을 받으면 그 적의 붕괴 +8.', cost: '', lore: '맞는 순간 어깨로 밀어낸다.' },
+  butcherhide: { n: '도살자의 가죽', slot: 'armor', g: 'm', act: '적을 쓰러뜨릴 때마다 보호막 +4 (이 효과로 최대 20).', cost: '', lore: '가죽 위에 핏자국이 겹겹이 말랐다.' },
+  vowrobe: { n: '침묵 서원복', slot: 'armor', g: 'm', act: '전투가 시작되면 보호막 +8.', cost: '', lore: '말을 버린 자의 옷은 소리도 막는다.' },
+  ringingmail: { n: '울리는 갑주', slot: 'armor', g: 'r', act: '흘리기에 성공하면 모든 적의 붕괴 +8.', cost: '흘리기 스태미나 +5', lore: '칼이 미끄러질 때마다 종처럼 운다.' },
+  hookgloves: { n: '갈고리 장갑', slot: 'gloves', g: 'n', act: '방패병에게 주는 붕괴 +3.', cost: '', lore: '방패 가장자리를 걸어 젖힌다.' },
+  wristguard: { n: '손목 보호대', slot: 'gloves', g: 'n', act: '흘리기 스태미나 −2.', cost: '', lore: '손목이 꺾이지 않으면 칼도 덜 무겁다.' },
+  singedgloves: { n: '그을린 장갑', slot: 'gloves', g: 'n', act: '광역 공격 피해 +4%.', cost: '', lore: '불을 뿌리다 손끝이 탔다.' },
+  gripgloves: { n: '미끄럼 막는 장갑', slot: 'gloves', g: 'n', act: '강공격 스태미나 −2.', cost: '', lore: '송진을 먹인 가죽.' },
+  duelgloves: { n: '결투 장갑', slot: 'gloves', g: 'm', act: '적이 하나만 남으면 주는 피해 +12%.', cost: '', lore: '마지막 하나와는 눈을 맞춘다.' },
+  breakerhands: { n: '부수는 손', slot: 'gloves', g: 'm', act: '붕괴한 적에게 강공격 피해 +20%.', cost: '', lore: '금 간 곳을 찾아 다시 친다.' },
+  alchemgloves: { n: '연금술사의 장갑', slot: 'gloves', g: 'm', act: '내가 건 지속 피해 +8%.', cost: '', lore: '손가락 끝이 늘 초록빛이다.' },
+  reaperhands: { n: '수확자의 손', slot: 'gloves', g: 'r', act: '적을 쓰러뜨리면 다음 행동이 빠른 행동이 된다.', cost: '받는 피해 +6%', lore: '거둔 다음에는 쉬지 않는다.' },
+  smallicon: { n: '작은 성상', slot: 'amulet', g: 'n', act: '최대 생명력 +4.', cost: '', lore: '손바닥만 한 성인이 늘 같은 쪽을 본다.' },
+  waxseal: { n: '밀랍 봉인', slot: 'amulet', g: 'n', act: '내게 걸린 취약 지속 −1T.', cost: '', lore: '봉인을 뜯지 않은 편지가 하나 있다.' },
+  bonecharm: { n: '뼈 부적', slot: 'amulet', g: 'n', act: '전투가 시작되면 마나 +6.', cost: '', lore: '작은 뼈 셋을 실로 묶었다.' },
+  crowfeather: { n: '까마귀 깃', slot: 'amulet', g: 'n', act: '후열 적에게 원거리 공격 붕괴 +3.', cost: '', lore: '종탑의 까마귀는 먼 곳부터 본다.' },
+  wardensigil: { n: '문지기의 인장', slot: 'amulet', g: 'm', act: '방패병이 쓰러지면 남은 적 모두 붕괴 +12.', cost: '', lore: '문지기가 쓰러지면 문 안이 흔들린다.' },
+  bellpendant: { n: '종 모양 펜던트', slot: 'amulet', g: 'm', act: '강타를 준비하는 적에게 주는 피해 +12%.', cost: '', lore: '종이 울리기 직전의 정적을 안다.' },
+  brotherbeads: { n: '형제의 묵주', slot: 'amulet', g: 'm', act: '생명력 플라스크를 마시면 다음 공격 피해 +10%.', cost: '', lore: '먼저 간 형제의 몫까지 센다.' },
+  abysseye: { n: '나락의 눈', slot: 'amulet', g: 'r', act: '광역 공격이 후열에도 전열과 같은 피해를 준다(방패벽은 그대로).', cost: '최대 생명력 −8', lore: '눈을 감아도 뒷줄이 보인다.' },
+  tinring: { n: '주석 반지', slot: 'ring1', g: 'n', act: '최대 마나 +3, 최대 스태미나 +2.', cost: '', lore: '싸구려라 오히려 아무도 탐내지 않는다.' },
+  jetring: { n: '흑옥 반지', slot: 'ring1', g: 'n', act: '단일 대상 스킬 피해 +3%.', cost: '', lore: '빛을 먹는 검은 돌.' },
+  amberring: { n: '호박 반지', slot: 'ring1', g: 'n', act: '생명력 플라스크 회복 +1%p.', cost: '', lore: '안에 갇힌 벌레가 아직 날갯짓을 한다.' },
+  boneband: { n: '뼈 가락지', slot: 'ring1', g: 'n', act: '정예에게 주는 피해 +4%.', cost: '', lore: '정예의 손가락에서 뺀 것이라고 한다.' },
+  rustband: { n: '녹슨 가락지', slot: 'ring1', g: 'n', act: '적을 쓰러뜨리면 스태미나 +6.', cost: '', lore: '녹이 손가락에 옮아 붙었다.' },
+  siegering: { n: '공성 반지', slot: 'ring1', g: 'm', act: '방패벽 뒤에 선 후열 적에게 주는 피해 +15%.', cost: '', lore: '성벽을 넘는 법은 성벽을 보는 법에서 시작한다.' },
+  vigorring: { n: '피의 맹세 반지', slot: 'ring1', g: 'm', act: '생명력이 70% 이상이면 주는 피해 +6%.', cost: '', lore: '다치기 전에 끝내겠다는 맹세.' },
+  hushring: { n: '침묵의 반지', slot: 'ring1', g: 'm', act: '정예에게 받는 피해 −6%.', cost: '', lore: '큰 자 앞에서 숨을 죽이는 법.' },
+  conductor: { n: '지휘자의 반지', slot: 'ring1', g: 'r', act: '광역 공격으로 적을 맞히면 다음 단일 공격 피해 +30%.', cost: '광역 공격 피해 −10%', lore: '한 번 흩뜨리고, 한 곳을 찌른다.' },
+  smallvial: { n: '작은 약병', slot: 'flask', g: 'n', act: '스태미나 플라스크를 마시면 생명력 +4.', cost: '', lore: '한 모금이면 끝나지만 그 한 모금이 귀하다.' },
+  herbflask: { n: '약초 플라스크', slot: 'flask', g: 'n', act: '생명력 플라스크를 마시면 마나 +5.', cost: '', lore: '수도원 텃밭의 쓴 풀을 우렸다.' },
+  copperflask: { n: '구리 플라스크', slot: 'flask', g: 'n', act: '생명력 플라스크 회복 +1%p. 마나 플라스크를 마시면 스태미나 +8.', cost: '', lore: '구리 맛이 나는 물도 물이다.' },
+  towerflask: { n: '종탑 물병', slot: 'flask', g: 'm', act: '스태미나 플라스크를 마시면 보호막 +10.', cost: '', lore: '종지기가 줄을 당기기 전에 마시던 물.' },
+  bigtonic: { n: '큰 강장 병', slot: 'flask', g: 'm', act: '스태미나 플라스크 최대 충전 +1.', cost: '', lore: '병이 커서 허리에 차면 걸음이 느려진다.' },
+  holywater: { n: '맑은 성수병', slot: 'flask', g: 'r', act: '플라스크를 마시면 강타를 준비하던 적 하나의 강타를 거둔다.', cost: '생명력 플라스크 최대 충전 −1', lore: '성수 한 방울에 치켜든 팔이 멈춘다.' },
+  emberflask: { n: '불씨 병', slot: 'flask', g: 'r', act: '생명력 플라스크를 마시면 모든 적에게 점화 1T.', cost: '생명력 플라스크 회복 −5%p', lore: '마시면 목이 타고, 숨에서 불씨가 튄다.' },
 };
 for (const k in ITEMS_CH1) ITEMS[k] = Object.assign({ kind: 'free' }, ITEMS_CH1[k]);
-/* 1챕터 장비 풀: B0.5에서 온 20종 + 새 79종 (시작 장비 제외) */
+/* 1챕터 장비 풀: B0.5에서 온 20종 + 새 79종 + 10월 2일 50종 (시작 장비 제외) */
 const CH1_OLD = ['twin', 'maul', 'hook', 'thorns', 'cloak', 'plate', 'chaingl', 'knot', 'ragechain', 'bloodpact', 'vanguard', 'witness', 'focusring', 'venomring', 'fury', 'echo', 'pulse', 'ledger', 'chalice', 'boilflask'];
 const CH1_POOL = CH1_OLD.concat(Object.keys(ITEMS_CH1));

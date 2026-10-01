@@ -39,7 +39,7 @@ function fight(build, k, seed) {
 function staticCheck(k) {
   const f = IFX[k]; if (!f) return null; const out = [];
   const a = player('templar', null, rng(1)), b = player('templar', k, rng(1));
-  if (f.st) { if (f.st.hp && E.calcHpMax(b) - E.calcHpMax(a) < 1) out.push('최대 생명력'); if (f.st.mp && Math.sign(E.calcMpMax(b) - E.calcMpMax(a)) !== Math.sign(f.st.mp)) out.push('최대 마나'); if (f.st.st && E.calcStMax(b) - E.calcStMax(a) < 1) out.push('최대 스태미나'); }
+  if (f.st) { if (f.st.hp && Math.sign(E.calcHpMax(b) - E.calcHpMax(a)) !== Math.sign(f.st.hp)) out.push('최대 생명력'); if (f.st.mp && Math.sign(E.calcMpMax(b) - E.calcMpMax(a)) !== Math.sign(f.st.mp)) out.push('최대 마나'); if (f.st.st && E.calcStMax(b) - E.calcStMax(a) < 1) out.push('최대 스태미나'); }
   if (f.hpMul && !(E.calcHpMax(b) < E.calcHpMax(a))) out.push('생명력 배율');
   if ((f.heal || f.healMul) && Math.abs(E.flaskHealFrac(b) - E.flaskHealFrac(a)) < 1e-9) out.push('플라스크 회복');
   if (f.cap) for (const fk in f.cap) if (E.flaskCap(b, fk) - E.flaskCap(a, fk) !== f.cap[fk]) out.push('플라스크 한도');
