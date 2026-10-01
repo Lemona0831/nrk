@@ -289,6 +289,29 @@ html.fitmode,html.fitmode body{overflow:hidden}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 /* PC: 고르는 창과 설정 창은 화면 가운데에 (앞의 .sheet 규칙보다 뒤에 둔다) */
 @media (min-width:720px){.sheet-bg{align-items:center;padding:24px}.sheet{border-radius:14px;border:1px solid var(--gold);max-width:720px;max-height:86vh;box-shadow:0 20px 60px rgba(0,0,0,.6)}.sheet.sh-settings{max-width:440px}}
+
+/* ===== 장비 창 ===== */
+.gtag{font-size:11px;padding:1px 6px;border-radius:999px;border:1px solid currentColor;margin-left:6px;vertical-align:1px;font-weight:600}
+.eqsum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 10px}.eqsum span{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 8px;display:flex;flex-direction:column}.eqsum small{font-size:11px;color:var(--muted)}.eqsum b{font-size:16px;font-variant-numeric:tabular-nums}
+.eqcols{display:grid;gap:10px}
+.eqslots{display:flex;flex-direction:column;gap:4px}
+.eqrow{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:8px;text-align:left;min-height:44px;padding:6px 10px;border-left:3px solid var(--line)}
+.eqrow.on,.bagc.on{outline:2px solid var(--gold);outline-offset:-2px;background:color-mix(in srgb,var(--gold) 10%,var(--panel2))}
+.eqsl{font-size:12px;color:var(--muted)}.eqn{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.eqn.empty{color:var(--muted);font-weight:400}.eqb{font-size:12px;color:var(--muted);white-space:nowrap}
+.grb-n{border-left-color:var(--gr-n)}.grb-m{border-left-color:var(--gr-m)}.grb-r{border-left-color:var(--gr-r)}
+.eqdet{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;min-width:0}
+.idet{border-left:3px solid var(--line);padding-left:10px;margin-bottom:8px}.idet-h{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 6px}.idet-h b{font-size:16px}.idet-base{font-size:13.5px;margin:4px 0}
+.icard.grb-n,.icard.grb-m,.icard.grb-r{border-left-width:3px}
+.cmp{border-top:1px dashed var(--line);margin:8px 0;padding-top:8px;font-size:13.5px}.cmph{color:var(--muted);font-size:12.5px;margin-bottom:4px}
+.cmp ul{list-style:none;margin:4px 0;padding:0}.cmp li{padding:2px 0 2px 18px;position:relative}.cmp-lose li::before{content:'−';position:absolute;left:2px;color:var(--bad);font-weight:700}.cmp-gain li::before{content:'+';position:absolute;left:2px;color:var(--good);font-weight:700}
+.eqbag h4{margin:12px 0 6px}.baggrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.bagc{min-height:54px;text-align:left;padding:6px 8px;border-left:3px solid var(--line);display:flex;flex-direction:column;justify-content:center;gap:2px}.bagc span{font-size:13px;font-weight:600;line-height:1.25}.bagc small{font-size:11px;color:var(--muted)}
+.bagc.empty{border:1px dashed var(--line);border-radius:8px;background:transparent;min-height:54px}
+.bagc.fits{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 45%,transparent)}
+.eqwhy{margin-top:10px;font-size:13px}.eqwhy summary{cursor:pointer;color:var(--muted)}.eqwhy input[type=text]{width:100%;margin-top:6px}
+.eqskills{margin-top:10px}
+.baglist{display:flex;flex-direction:column;gap:4px;margin:8px 0}.bagline{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px;padding:4px 0;border-top:1px solid var(--line)}
+@media (min-width:720px){.eqcols{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}.baggrid{grid-template-columns:repeat(4,minmax(0,1fr))}.eqsum{grid-template-columns:repeat(6,minmax(0,1fr))}.sheet.sh-equip{max-width:860px}}
 </style>
 </head>
 <body>
@@ -390,9 +413,16 @@ function itemFits(p, k) {
 /* 능력치 (5.2절): 1점마다 눈에 보이는 규칙 하나 */
 const STATN = { str: '힘', dex: '민첩', int: '지능' };
 function stat(p, k) { return (p.stat && p.stat[k]) || 0; }
-function calcMpMax(p) { return BUILDS[p.build].mp + stat(p, 'int') - (p.eq.amulet === 'sigil' ? 15 : 0) - (p.eq.gloves === 'vpouch' ? 10 : 0); }
-function calcStMax(p) { return 100 + stat(p, 'dex') - (p.eq.amulet === 'vanguard' ? 20 : 0) - (p.eq.gloves === 'chaingl' ? 10 : 0); }
-function calcHpMax(p) { return Math.round((BUILDS[p.build].hp + stat(p, 'str')) * (p.eq.armor === 'plate' ? 0.9 : p.eq.armor === 'wardcrest' ? 0.95 : p.eq.armor === 'cloak' || p.eq.armor === 'thorns' ? 0.95 : 1) * (p.eq.amulet === 'rosary' ? 0.97 : 1)); }
+/* 장비 기본 수치 (기획서 11.5절). 화면에서 고른 장비로 applyGear가 채운다 */
+const START_GEAR = { wpn: 8, hp: 10, st: 0, mp: 0, flask: 0.3 };
+const gearOf = p => p.gear || START_GEAR;
+function wpnDmg(p) { return gearOf(p).wpn; }
+function basicBase(p) { return wpnDmg(p) * (hasIt(p, 'venomring') ? 0.9 : 1); }
+function heavyBase(p) { return wpnDmg(p) * 1.8 * (p.eq.weapon === 'twin' ? 0.8 : 1); }
+function flaskHealFrac(p) { return gearOf(p).flask * (p.eq.flask === 'chalice' ? 0.9 : p.eq.flask === 'boilflask' ? 0.75 : p.eq.flask === 'bloodoil' ? 0.8 : 1); }
+function calcMpMax(p) { return BUILDS[p.build].mp + gearOf(p).mp + stat(p, 'int') - (p.eq.amulet === 'sigil' ? 15 : 0) - (p.eq.gloves === 'vpouch' ? 10 : 0); }
+function calcStMax(p) { return 100 + gearOf(p).st + stat(p, 'dex') - (p.eq.amulet === 'vanguard' ? 20 : 0) - (p.eq.gloves === 'chaingl' ? 10 : 0); }
+function calcHpMax(p) { return Math.round((BUILDS[p.build].hp + gearOf(p).hp + stat(p, 'str')) * (p.eq.armor === 'plate' ? 0.9 : p.eq.armor === 'wardcrest' ? 0.95 : p.eq.armor === 'cloak' || p.eq.armor === 'thorns' ? 0.95 : 1) * (p.eq.amulet === 'rosary' ? 0.97 : 1)); }
 function parryRed(p) { return Math.min(0.85, 0.6 + 0.005 * stat(p, 'dex') + (p.eq.armor === 'cloak' ? 0.15 : 0)); }
 function dotMul(p) { return 1 + 0.02 * stat(p, 'int'); }
 function applyStats(p, stats) {
@@ -402,17 +432,17 @@ function applyStats(p, stats) {
   p.hp = Math.min(p.hpMax, Math.round(p.hpMax * f.hp)); p.mp = Math.min(p.mpMax, p.mpMax * f.mp); p.st = Math.min(p.stMax, p.stMax * f.st);
 }
 function mkPlayer(build, items, stats, skills) {
-  const B = BUILDS[build];
   const it = items || {};
   const s0 = Object.assign({ str: 0, dex: 0, int: 0 }, stats || {});
-  const hpMax = Math.round((B.hp + s0.str) * (it.armor === 'plate' ? 0.9 : 1));
-  return {
+  const p = {
     stat: s0, skills: (skills && skills.length ? skills : DEFAULT_SKILLS[build]).slice(0, SKILL_SLOTS),
-    build, hpMax, hp: hpMax, mpMax: B.mp + s0.int, mp: B.mp + s0.int, st: 100 + s0.dex - (it.amulet === 'vanguard' ? 20 : 0), stMax: 100 + s0.dex - (it.amulet === 'vanguard' ? 20 : 0),
+    build, gear: Object.assign({}, START_GEAR),
     scar: 0, rage: 0, flask: { life: 3, mana: 3 }, flaskMax: 3,
     eq: Object.assign({ weapon: null, armor: null, amulet: null, flask: null, ring1: null, ring2: null, gloves: null }, it),
     s: {}, guard: 0, dodge: 0, counter: 0, reflux: null, lastSkillDmg: 0, stun: 0,
   };
+  p.hpMax = calcHpMax(p); p.hp = p.hpMax; p.mpMax = calcMpMax(p); p.mp = p.mpMax; p.stMax = calcStMax(p); p.st = p.stMax;
+  return p;
 }
 function mkEnemy(role, elite, idx, opt) {
   const R = ROLES[role]; opt = opt || {};
@@ -859,7 +889,7 @@ function playerAct(b, id, tgtId) {
   if (act.gen) { genSkill(b, act, tgt); if (b.markTgt) { if (b.markTgt.alive) { addS(b, b.markTgt, 'vuln', 2); logp(b, 'good', '표식이 ' + b.markTgt.n + '의 빈틈을 드러낸다. 취약'); } b.markTgt = null; } if (b.rcUsed) { p.rcN = 0; b.rcUsed = 0; } if (b.chainTgt) { if (b.chainTgt.alive) addBreak(b, b.chainTgt, 20); b.chainTgt = null; } if (b.vanguardTgt) { if (b.vanguardTgt.alive) addBreak(b, b.vanguardTgt, 20); b.vanguardTgt = null; } if (b.resonate) logp(b, 'crit', '서로 다른 주문이 공명한다. 피해 +15%'); b.resonate = false; b.resoBig = 0; b.echoMul = 1; if (p.hp <= 0) checkEnd(b); if (!b.over) finishPlayer(b, time); return; }
   switch (id) {
     case 'basic': {
-      let d = outDmg(b, 8 * (hasIt(p, 'venomring') ? 0.9 : 1), { weapon: 1 });
+      let d = outDmg(b, basicBase(p), { weapon: 1 });
       const melee1 = p.build !== 'hunter';
       if (p.eq.weapon === 'twin') { hurtEnemy(b, tgt, d * 0.5, { single: 1, melee: melee1, label: '첫 날' }); if (tgt.alive) hurtEnemy(b, tgt, d * 0.5, { single: 1, melee: melee1, label: '둘째 날' }); }
       else hurtEnemy(b, tgt, d, { single: 1, melee: melee1, label: '기본 공격' });
@@ -870,7 +900,7 @@ function playerAct(b, id, tgtId) {
       let pay = 40; if (p.st < 40) { const lack = 40 - p.st; const hc = ledgerCost(p, lack); p.hp -= hc; logp(b, 'bad', '피로 값을 치른다. 생명력 ' + r1(hc)); if (scarRate(p) > 0) p.scar = Math.min(p.hpMax * .5, p.scar + hc * scarRate(p)); pay = p.st; }
       p.st -= pay;
       if (p.eq.weapon === 'hook' && tgt.row === 'back') { tgt.row = 'front'; logp(b, 'crit', '갈고리가 ' + tgt.n + '을(를) 앞으로 끌어낸다'); }
-      hurtEnemy(b, tgt, outDmg(b, (14.4) * (p.eq.weapon === 'twin' ? 0.8 : 1), { weapon: 1 }), { single: 1, melee: 1, label: '강공격' });
+      hurtEnemy(b, tgt, outDmg(b, heavyBase(p), { weapon: 1 }), { single: 1, melee: 1, label: '강공격' });
       addBreak(b, tgt, 35 + 5 * Math.floor(stat(p, 'str') / 10) + (p.eq.weapon === 'maul' ? 20 : 0)); if (p.eq.weapon === 'maul') time = 1.4; applyReflux(b, tgt); break;
     }
     case 'sig': {
@@ -928,7 +958,7 @@ function playerAct(b, id, tgtId) {
     case 'guard': p.st -= 20; p.guard = 1; if (p.build === 'templar') { p.ward = Math.min(30, (p.ward || 0) + 11); logp(b, 'good', '빛의 방패가 몸을 감싼다. 보호막 ' + p.ward); } logp(b, 'sys', '자세를 낮추고 막을 준비를 한다. 다음 차례까지 받는 피해 절반'); break;
     case 'dodge': p.st -= dodgeCost(p); p.dodge = tgt.id; logp(b, 'sys', tgt.n + '의 다음 공격을 흘릴 준비를 한다'); break;
     case 'flaskL': {
-      p.flask.life--; const heal = p.hpMax * 0.3 * (p.eq.flask === 'chalice' ? 0.9 : p.eq.flask === 'boilflask' ? 0.75 : p.eq.flask === 'bloodoil' ? 0.8 : 1) * healMul(p);
+      p.flask.life--; const heal = p.hpMax * flaskHealFrac(p) * healMul(p);
       if (p.eq.flask === 'boilflask') { for (const e of alive(b).slice()) hurtEnemy(b, e, outDmg(b, 5, {}), { aoe: 1, fire: 1, label: '끓는 플라스크' }); }
       p.hp = Math.min(p.hpMax, p.hp + heal);
       const before = { poison: st(p, 'poison'), bleed: st(p, 'bleed'), ignite: st(p, 'ignite'), chill: st(p, 'chill') };
@@ -1157,7 +1187,7 @@ function vHeader() {
   const inRun = (G.scr === 'run' && !G.b);
   // 로그인 확인용 인사. 넓은 화면은 상단 버튼 옆, 좁은 화면은 제목 줄 오른쪽(버튼 줄이 늘지 않게)
   const hi = G.site && G.acct && !G.acct.anon ? (G.data.name ? esc(G.data.name) + '님, 어서 오세요' : '어서 오세요') : '';
-  return `<header class="hdr"><div class="hl"><b>나락의 유산</b><span class="mini">${sub}</span>${hi ? `<span class="hi hi-m">${hi}</span>` : ''}</div><div class="hr">${hi ? `<span class="hi hi-d">${hi}</span>` : ''}${inRun ? '<button class="sm" data-a="equip">장비와 가방</button>' : ''}<button class="sm" data-a="changes">업데이트${G.data.seenVer !== CHANGE_VER ? ' <span class="newdot" aria-label="새 소식">새</span>' : ''}</button><button class="sm" data-a="settings" title="소리, 설명 창, 진행 속도">설정</button><button class="sm" data-a="help" data-k="">도움말</button>${G.scr === 'home' ? vAcctBtn() : ''}${G.scr !== 'home' && G.scr !== 'guide' ? '<button class="sm" data-a="home">처음으로</button>' : ''}</div></header>`;
+  return `<header class="hdr"><div class="hl"><b>나락의 유산</b><span class="mini">${sub}</span>${hi ? `<span class="hi hi-m">${hi}</span>` : ''}</div><div class="hr">${hi ? `<span class="hi hi-d">${hi}</span>` : ''}${G.scr === 'run' && G.run ? '<button class="sm" data-a="equip">장비</button>' : ''}<button class="sm" data-a="changes">업데이트${G.data.seenVer !== CHANGE_VER ? ' <span class="newdot" aria-label="새 소식">새</span>' : ''}</button><button class="sm" data-a="settings" title="소리, 설명 창, 진행 속도">설정</button><button class="sm" data-a="help" data-k="">도움말</button>${G.scr === 'home' ? vAcctBtn() : ''}${G.scr !== 'home' && G.scr !== 'guide' ? '<button class="sm" data-a="home">처음으로</button>' : ''}</div></header>`;
 }
 
 /* ---------- 내 상태 한 줄 ---------- */
@@ -1216,7 +1246,7 @@ function vHome() {
   h += `<section class="card"><h3>새 캐릭터${q('build', '직업과 빌드')}</h3><p class="mini">직업을 고르고, 스킬 세 칸과 능력치 6점을 정해 1챕터로 내려갑니다. 쓰러진 캐릭터는 돌아오지 않습니다. 만드는 도중에는 언제든 그만둘 수 있습니다.</p>`;
   for (const k of Object.keys(BUILDS)) {
     const B = BUILDS[k];
-    h += `<div class="ccard"><div class="big" aria-hidden="true">${B.ico}</div><div class="cbody"><b>${esc(B.n)}</b><div class="mini">생명력 ${B.hp}, 마나 ${B.mp}</div><p class="lore">${esc(B.lore || '')}</p><p class="crule">직업 규칙: ${esc(B.rule)}</p><p class="mini"><b>직업 기술 ${esc(SIG[k].n)}</b>: ${esc(SIG[k].d)}</p><p class="mini">전용 스킬: ${exclOf(k).map(s => esc(s.n)).join(', ')}</p>
+    h += `<div class="ccard"><div class="big" aria-hidden="true">${B.ico}</div><div class="cbody"><b>${esc(B.n)}</b><div class="mini">생명력 ${B.hp + SLOT_BASE.armor.v[0]}, 마나 ${B.mp}</div><p class="lore">${esc(B.lore || '')}</p><p class="crule">직업 규칙: ${esc(B.rule)}</p><p class="mini"><b>직업 기술 ${esc(SIG[k].n)}</b>: ${esc(SIG[k].d)}</p><p class="mini">전용 스킬: ${exclOf(k).map(s => esc(s.n)).join(', ')}</p>
       <div class="row"><button class="gold" data-a="start" data-b="${k}">이 직업으로 시작</button></div></div></div>`;
   }
   h += `</section>`;
@@ -1674,7 +1704,7 @@ function initPop() {
       '광전사는 주고받는 공격마다 분노가 차 격노하고, 사냥꾼은 모든 공격이 후열에 닿으며 같은 적을 이어 칠수록 세집니다. 비전술사는 다른 스킬을 번갈아 쓰면 공명하고, 전투마다 작은 보호막을 두릅니다. 성전사는 방어할 때마다 보호막을 얻습니다.',
       '암살자는 독을 걸 때마다 1을 더 겁니다. 암흑술사는 모자란 마나를 생명력으로 치르고, 약해진 적을 쓰러뜨리면 회복합니다. 사제는 디버프를 지울 때마다 회복하고 보호를 얻습니다. 상흔술사는 받은 피해를 상흔으로 모읍니다.',
       '직업마다 직업 기술이 하나 있습니다. 스킬 세 칸과 별도로 늘 쓸 수 있고, 쓰면 정해진 차례 동안 쉬어야 합니다. 광전사의 해방(분노를 쏟아 격노하고 회복), 사냥꾼의 표적 고정, 비전술사의 공명 집중, 성전사의 보호 서약, 암살자의 독 침투, 암흑술사의 피의 대가, 사제의 기도, 상흔술사의 피의 응답입니다.',
-      '빌드는 직접 만듭니다. 들고 가는 스킬은 세 칸이고, 모든 직업이 함께 쓰는 공용 스킬 열세 개와 그 직업만 쓰는 전용 스킬 세 개 가운데서 고릅니다. 능력치를 나누고 아이템도 끼웁니다. 전투 밖에서는 언제든 바꿀 수 있습니다.',
+      '빌드는 직접 만듭니다. 들고 가는 스킬은 세 칸이고, 모든 직업이 함께 쓰는 공용 스킬 열세 개와 그 직업만 쓰는 전용 스킬 세 개 가운데서 고릅니다. 능력치를 나누고 장비를 끼웁니다. 스킬은 캐릭터를 만들 때 정하고 바꿀 수 없습니다. 장비는 전투 밖에서 언제든 바꿀 수 있습니다.',
       '같은 직업이라도 어떤 전용 스킬을 드느냐에 따라 싸우는 방식이 갈립니다. 정식 게임에서는 승천할 때 전용 스킬을 하나 더 얻습니다.']],
     ['time', '차례와 시간', [
       '전투에는 하나의 시계가 흐르고, 모두가 자기 빠르기대로 차례를 받습니다. 화면 위의 행동 순서는 왼쪽부터 먼저 움직이는 순서입니다.',
@@ -2032,11 +2062,130 @@ function startRun(build, boss) {
     deaths: [], result: null, blockPicked: null, entry: null, survey: null, drops: [],
     stats: { str: 0, dex: 0, int: 0 }, statLog: [], pool: shuffleSeeded(FREE_POOL, seed), choices: [], seed,
   };
-  G.run.skills = DEFAULT_SKILLS[build].slice(); G.run.skillLog = [];
+  G.run.skills = DEFAULT_SKILLS[build].slice(); G.run.bag = []; initGear(G.run); G.run.skillLog = [];
   G.scr = 'run'; G.b = null; G.sel = null; G.creating = true;
   openSheet('skills', { first: 1, pick: DEFAULT_SKILLS[build].slice() });
 }
 /* 이어 하기: 방과 방 사이마다 판을 통째로 저장 */
+/* ===== 장비 (기획서 11.5절) =====
+   run.inv[uid] = { uid, tpl, g(등급), ch(챕터), b(기본 수치 보너스 %) }
+   run.eqU[슬롯] = uid, run.bag = [uid...] (최대 BAG_MAX). 장비 하나는 늘 장비 칸 한 곳이나 가방 한 곳에만 있다.
+   옮기기는 equipUid / unequipUid / discardUid / addItem만 쓴다. */
+const EQ_SLOTS = ['weapon', 'armor', 'gloves', 'amulet', 'ring1', 'ring2', 'flask'];
+const EQ_SLOT_N = { weapon: '무기', armor: '갑옷', gloves: '장갑', amulet: '목걸이', ring1: '반지 1', ring2: '반지 2', flask: '플라스크' };
+const kindOf = slot => slot === 'ring1' || slot === 'ring2' ? 'ring' : slot;
+const tplKind = k => kindOf(ITEMS[k].slot);
+function rollBonus(g) { const R = GRADE[g] || GRADE.n; return Math.round((R.lo + Math.random() * (R.hi - R.lo)) * 10) / 10; }
+function mkItem(k, o) { o = o || {}; const g = o.g || ITEMS[k].g || 'n'; return { uid: 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tpl: k, g, ch: o.ch || 1, b: o.b != null ? o.b : rollBonus(g) }; }
+function itemBase(it) { const sb = SLOT_BASE[tplKind(it.tpl)]; const v = sb.v[(it.ch || 1) - 1] * (1 + (it.b || 0) / 100); return { k: sb.k, lab: sb.lab, v }; }
+function baseText(it) { const x = itemBase(it); return x.k === 'flask' ? `${x.lab} ${Math.round(x.v * 1000) / 10}%` : x.k === 'wpn' ? `${x.lab} ${r1(x.v)}` : `${x.lab} +${Math.round(x.v)}`; }
+function gradeTag(g) { return `<span class="gtag gr-${g}">${(GRADE[g] || GRADE.n).n}</span>`; }
+function initGear(run) {
+  if (run.inv) return;
+  const p = run.p; run.inv = {}; run.eqU = {}; for (const sl of EQ_SLOTS) run.eqU[sl] = null;
+  const put = (it, sl) => { run.inv[it.uid] = it; run.eqU[sl] = it.uid; };
+  put(mkItem('start_wpn_' + run.build, { b: 0 }), 'weapon'); put(mkItem('start_armor', { b: 0 }), 'armor'); put(mkItem('start_flask', { b: 0 }), 'flask');
+  const oldBag = Array.isArray(run.bag) ? run.bag.filter(k => ITEMS[k]) : []; run.bag = [];
+  for (const sl of EQ_SLOTS) { const k = p.eq && p.eq[sl]; if (k && ITEMS[k] && ITEMS[k].kind !== 'start') { const it = mkItem(k); run.inv[it.uid] = it; const prev = run.eqU[sl]; run.eqU[sl] = it.uid; if (prev) run.bag.push(prev); } }
+  for (const k of oldBag) if (!Object.values(run.inv).some(x => x.tpl === k) && run.bag.length < BAG_MAX) { const it = mkItem(k); run.inv[it.uid] = it; run.bag.push(it.uid); }
+  applyGear(run, true);
+}
+/* 장비 칸의 장비로 엔진 값(p.eq, p.gear)과 최대치를 다시 맞춘다. 남은 비율은 유지한다 */
+function applyGear(run, full) {
+  const p = run.p; const g = { wpn: 0, hp: 0, st: 0, mp: 0, flask: 0 };
+  for (const sl of EQ_SLOTS) { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; p.eq[sl] = it ? it.tpl : null; if (it) { const x = itemBase(it); g[x.k] += x.v; } }
+  if (!g.wpn) g.wpn = 4; if (!g.flask) g.flask = START_GEAR.flask;
+  const f = { hp: p.hpMax ? p.hp / p.hpMax : 1, mp: p.mpMax ? p.mp / p.mpMax : 1, st: p.stMax ? p.st / p.stMax : 1 };
+  p.gear = g; p.hpMax = calcHpMax(p); p.mpMax = calcMpMax(p); p.stMax = calcStMax(p);
+  if (full) { p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax; }
+  else { p.hp = Math.min(p.hpMax, Math.round(p.hpMax * f.hp)); p.mp = Math.min(p.mpMax, p.mpMax * f.mp); p.st = Math.min(p.stMax, p.stMax * f.st); }
+}
+function slotOfUid(run, uid) { return EQ_SLOTS.find(sl => run.eqU[sl] === uid) || null; }
+function gearCheck(run) { const seen = {}; for (const u of run.bag.concat(EQ_SLOTS.map(sl => run.eqU[sl]).filter(Boolean))) { if (seen[u] || !run.inv[u]) return false; seen[u] = 1; } return Object.keys(run.inv).length === Object.keys(seen).length; }
+function logSwap(run, it, on, ctx) { const r = G.eqWhy || {}; run.swaps.push({ room: run.room, item: it.tpl, uid: it.uid, g: it.g, b: it.b, on: on ? 1 : 0, reason: r.reason || '', note: r.note || '', ctx: ctx || 'free', t: Date.now() }); }
+function addItem(run, it) { if (run.bag.length >= BAG_MAX) return false; run.inv[it.uid] = it; run.bag.push(it.uid); return true; }
+/* 가방의 장비를 낀다. 그 칸에 있던 장비는 같은 자리로 가방에 들어간다(가방 칸 수는 그대로) */
+function equipUid(run, uid, slot, ctx) {
+  const it = run.inv[uid]; const bi = run.bag.indexOf(uid); if (!it || bi < 0) return '가방에 없는 장비입니다';
+  const kind = tplKind(it.tpl);
+  if (!slot) slot = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind;
+  if (kindOf(slot) !== kind) return '이 칸에 낄 수 없는 장비입니다';
+  const prev = run.eqU[slot];
+  run.eqU[slot] = uid; if (prev) run.bag[bi] = prev; else run.bag.splice(bi, 1);
+  if (prev) logSwap(run, run.inv[prev], false, ctx); logSwap(run, it, true, ctx);
+  applyGear(run); return '';
+}
+function unequipUid(run, slot, ctx) {
+  const uid = run.eqU[slot]; if (!uid) return '';
+  if (slot === 'weapon') return '무기는 다른 무기로만 바꿀 수 있습니다';
+  if (run.bag.length >= BAG_MAX) return '가방이 가득 찼습니다';
+  run.eqU[slot] = null; run.bag.push(uid); logSwap(run, run.inv[uid], false, ctx); applyGear(run); return '';
+}
+function discardUid(run, uid) { const bi = run.bag.indexOf(uid); if (bi < 0) return '가방에 없는 장비입니다'; run.bag.splice(bi, 1); const it = run.inv[uid]; delete run.inv[uid]; (run.discards = run.discards || []).push({ room: run.room, item: it.tpl, g: it.g, t: Date.now() }); return ''; }
+/* 비교: 그 장비를 slot에 꼈을 때의 엔진 값 */
+function gearStats(p) { return { hp: p.hpMax, mp: p.mpMax, st: p.stMax, basic: basicBase(p), heavy: heavyBase(p), flask: flaskHealFrac(p) }; }
+const GSTAT = [['hp', '최대 생명력', v => Math.round(v)], ['mp', '최대 마나', v => Math.round(v)], ['st', '최대 스태미나', v => Math.round(v)], ['basic', '기본 공격 피해', r1], ['heavy', '강공격 피해', r1], ['flask', '생명력 플라스크 회복', v => Math.round(v * 1000) / 10 + '%']];
+function simEquip(run, uid, slot) {
+  const t = { p: JSON.parse(JSON.stringify(run.p)), inv: run.inv, eqU: Object.assign({}, run.eqU), bag: run.bag.slice() };
+  if (uid) t.eqU[slot] = uid; else t.eqU[slot] = null;
+  applyGear(t); return gearStats(t.p);
+}
+function compareHtml(run, uid, slot) {
+  const it = run.inv[uid]; const curU = run.eqU[slot]; const cur = curU && run.inv[curU];
+  const a = gearStats(run.p), b = simEquip(run, uid, slot);
+  const lose = [], gain = [];
+  if (cur && ITEMS[cur.tpl].act && cur.tpl !== it.tpl) lose.push(`효과가 사라집니다: ${esc(ITEMS[cur.tpl].act)}`);
+  for (const [k, lab, fmt] of GSTAT) { const d = b[k] - a[k]; if (Math.abs(d) < 0.05) continue; const line = `${lab} ${fmt(a[k])} → <b>${fmt(b[k])}</b>`; (d < 0 ? lose : gain).push(line); }
+  return `<div class="cmp"><div class="cmph">${cur ? `지금 낀 <b class="gr-${cur.g}">${esc(ITEMS[cur.tpl].n)}</b>과 비교` : '이 칸은 비어 있습니다'}</div>${lose.length ? `<ul class="cmp-lose" aria-label="잃는 것">${lose.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}${gain.length ? `<ul class="cmp-gain" aria-label="얻는 것">${gain.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}${!lose.length && !gain.length ? '<p class="mini">바뀌는 수치가 없습니다.</p>' : ''}</div>`;
+}
+function itemDetail(it) {
+  const I = ITEMS[it.tpl]; const R = GRADE[it.g] || GRADE.n;
+  return `<div class="idet grb-${it.g}"><div class="idet-h"><b class="gr-${it.g}">${esc(I.n)}</b>${gradeTag(it.g)}<span class="mini">${EQ_SLOT_N[kindOf(I.slot) === 'ring' ? 'ring1' : I.slot].replace(' 1', '')}</span></div>
+<div class="idet-base">${baseText(it)} <span class="mini">${I.kind === 'start' ? '시작 장비' : `${R.n} +${R.lo}~${R.hi}% 가운데 +${it.b}%`}</span></div>${I.act ? `<div class="l act">${esc(I.act)}</div>` : ''}${I.cost ? `<div class="l cost">대가: ${esc(I.cost)}</div>` : ''}${I.lore ? `<p class="lore">${esc(I.lore)}</p>` : ''}</div>`;
+}
+/* 휴대폰: 고른 장비의 설명이 화면 밖이면 보이게 굴린다 */
+function eqReveal() { setTimeout(() => { const d = document.querySelector('.sheet .eqdet'); if (!d) return; const r = d.getBoundingClientRect(); if (r.top < 0 || r.top > window.innerHeight - 120) d.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 20); }
+function vEquip() {
+  const run = G.run; initGear(run); const p = run.p; const inFight = !!G.b && !G.b.over;
+  const sel = G.eqSel || (G.eqSel = { slot: 'weapon' });
+  const a = gearStats(p);
+  let h = `<div class="eqsum" aria-label="지금 수치">${GSTAT.map(([k, lab, fmt]) => `<span><small>${lab}</small><b>${fmt(a[k])}</b></span>`).join('')}</div>`;
+  if (inFight) h += `<p class="warn">전투 중에는 볼 수만 있습니다. 전투가 끝나면 바꿀 수 있습니다.</p>`;
+  h += `<div class="eqcols"><section class="eqslots" aria-label="장비 칸">`;
+  for (const sl of EQ_SLOTS) {
+    const u = run.eqU[sl], it = u && run.inv[u]; const on = !sel.uid && sel.slot === sl;
+    h += `<button class="eqrow${on ? ' on' : ''}${it ? ' grb-' + it.g : ''}" data-a="eqsel" data-k="${sl}" aria-pressed="${on}"><span class="eqsl">${EQ_SLOT_N[sl]}</span>${it ? `<span class="eqn gr-${it.g}">${esc(ITEMS[it.tpl].n)}</span><span class="eqb">${baseText(it)}</span>` : '<span class="eqn empty">비어 있음</span>'}</button>`;
+  }
+  h += `</section><section class="eqdet" aria-live="polite">`;
+  if (sel.uid && run.inv[sel.uid]) {
+    const it = run.inv[sel.uid]; const kind = tplKind(it.tpl);
+    const slots = kind === 'ring' ? ['ring1', 'ring2'] : [kind];
+    h += itemDetail(it);
+    for (const sl of slots) h += compareHtml(run, it.uid, sl) + `<button class="gold wide" data-a="eqon" data-k="${it.uid}" data-s="${sl}"${inFight ? ' disabled' : ''}>${slots.length > 1 ? EQ_SLOT_N[sl] + '에 끼기' : '끼기'}</button>`;
+    h += `<div class="row"><button class="sm" data-a="eqdrop" data-k="${it.uid}"${inFight ? ' disabled' : ''}>버리기</button></div>`;
+  } else {
+    const u = run.eqU[sel.slot], it = u && run.inv[u];
+    if (it) { h += itemDetail(it); if (sel.slot !== 'weapon') h += `<div class="row"><button data-a="eqoff" data-k="${sel.slot}"${inFight || run.bag.length >= BAG_MAX ? ' disabled' : ''}>가방에 넣기</button></div>`; else h += '<p class="mini">무기는 다른 무기로만 바꿀 수 있습니다.</p>'; }
+    else h += `<p class="mini">${EQ_SLOT_N[sel.slot]} 칸이 비어 있습니다.</p>`;
+    const fit = run.bag.filter(x => run.inv[x] && kindOf(sel.slot) === tplKind(run.inv[x].tpl));
+    h += fit.length ? `<p class="mini">가방에서 이 칸에 낄 수 있는 장비 ${fit.length}개. 아래 가방에서 고르세요.</p>` : '<p class="mini">가방에 이 칸에 낄 장비가 없습니다.</p>';
+  }
+  h += `</section></div>`;
+  h += `<section class="eqbag" aria-label="가방"><h4>가방 <span class="mini">${run.bag.length}/${BAG_MAX}</span></h4><div class="baggrid">`;
+  for (let i = 0; i < BAG_MAX; i++) {
+    const u = run.bag[i], it = u && run.inv[u];
+    if (!it) { h += `<div class="bagc empty" aria-hidden="true"></div>`; continue; }
+    const fits = kindOf(sel.slot) === tplKind(it.tpl) && !sel.uid; const on = sel.uid === u;
+    h += `<button class="bagc grb-${it.g}${on ? ' on' : ''}${fits ? ' fits' : ''}" data-a="eqpick" data-k="${u}" aria-pressed="${on}"><span class="gr-${it.g}">${esc(ITEMS[it.tpl].n)}</span><small>${EQ_SLOT_N[kindOf(ITEMS[it.tpl].slot) === 'ring' ? 'ring1' : ITEMS[it.tpl].slot].replace(' 1', '')} · ${(GRADE[it.g] || GRADE.n).n}</small></button>`;
+  }
+  h += `</div></section>`;
+  const w = G.eqWhy || {};
+  h += `<details class="eqwhy"><summary>바꾸는 이유 남기기 <span class="mini">(선택, 기록에 남습니다)</span></summary><div class="row">${REASONS.map(r => `<label class="sv-i"><input type="radio" name="eqrs" value="${r[0]}"${w.reason === r[0] ? ' checked' : ''}> ${r[1]}</label>`).join('')}</div><input id="eqnote" type="text" placeholder="메모" value="${esc(w.note || '')}"></details>`;
+  const SKM = skillMap(p.build);
+  h += `<p class="mini eqskills">스킬 (만들 때 정함, 바꿀 수 없음): ${skillsOf(p).map(id => esc(SKM[id].n)).join(', ')}</p>`;
+  return h;
+}
+
 /* 캐릭터 만들기를 그만두면 아무것도 남기지 않는다 */
 function cancelCreate() { G.run = null; G.sheet = null; G.creating = false; G.abandonOnCreate = false; G.scr = 'home'; render(); toast('캐릭터 만들기를 그만두었습니다'); }
 /* 진행 중인 캐릭터를 포기한 것으로 기록한다 (새 캐릭터를 확정할 때, 또는 직접 포기할 때) */
@@ -2069,13 +2218,13 @@ function restoreBattle(cur) {
 }
 function saveCur() { if (!G.run || G.run.endedAt) return; try { G.data.cur = JSON.parse(JSON.stringify(G.run)); saveLocal(); } catch (e) { } }
 function clearCur() { delete G.data.cur; saveLocal(); }
-function resumeRun() { if (!G.data.cur) return; if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); G.scr = 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); }
+function resumeRun() { if (!G.data.cur) return; if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); G.scr = 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); }
 function roomDef() { return ROOMS[G.run.room]; }
 function statNext(p, k) {
-  const s = stat(p, k), B = BUILDS[p.build];
-  if (k === 'str') return `생명력 ${B.hp + s} → ${B.hp + s + 1}, 무기 공격 피해 +${s}% → +${s + 1}%, 내가 채우는 붕괴 +${s}% → +${s + 1}%` + ((s + 1) % 10 === 0 ? '. 10점: 강공격 붕괴 +5' : '');
-  if (k === 'dex') return `스태미나 ${100 + s} → ${101 + s}, 흘리기 감소 ${Math.round(parryRed(p) * 1000) / 10}% → ${Math.round(Math.min(0.8, 0.6 + 0.005 * (s + 1)) * 1000) / 10}%, 빠르기 +${(s * 0.5).toFixed(1)}% → +${((s + 1) * 0.5).toFixed(1)}%` + ((s + 1) % 10 === 0 ? '. 10점: 흘리기 스태미나 −1' : '');
-  return `마나 ${B.mp + s} → ${B.mp + s + 1}, 지속 피해와 정화 피해 +${s * 2}% → +${(s + 1) * 2}%` + ((s + 1) % 10 === 0 ? '. 10점: 독 격발 붕괴 +5' : '');
+  const s = stat(p, k), B = BUILDS[p.build]; const up = Object.assign({}, p, { stat: Object.assign({}, p.stat, { [k]: s + 1 }) });
+  if (k === 'str') return `생명력 ${calcHpMax(p)} → ${calcHpMax(up)}, 무기 공격 피해 +${s}% → +${s + 1}%, 내가 채우는 붕괴 +${s}% → +${s + 1}%` + ((s + 1) % 10 === 0 ? '. 10점: 강공격 붕괴 +5' : '');
+  if (k === 'dex') return `스태미나 ${calcStMax(p)} → ${calcStMax(up)}, 흘리기 감소 ${Math.round(parryRed(p) * 1000) / 10}% → ${Math.round(Math.min(0.8, 0.6 + 0.005 * (s + 1)) * 1000) / 10}%, 빠르기 +${(s * 0.5).toFixed(1)}% → +${((s + 1) * 0.5).toFixed(1)}%` + ((s + 1) % 10 === 0 ? '. 10점: 흘리기 스태미나 −1' : '');
+  return `마나 ${calcMpMax(p)} → ${calcMpMax(up)}, 지속 피해와 정화 피해 +${s * 2}% → +${(s + 1) * 2}%` + ((s + 1) % 10 === 0 ? '. 10점: 독 격발 붕괴 +5' : '');
 }
 function enterRoom() {
   const R = roomDef(); const run = G.run; const p = run.p;
@@ -2094,7 +2243,7 @@ function enterRoom() {
 }
 function afterBattle() {
   const b = G.b, run = G.run, p = run.p;
-  const rec = { room: run.room, res: b.over, acts: b.turnIdx, t: Math.round(b.t * 10) / 10, hpIn: r1(run.entryHp), hpOut: r1(p.hp / p.hpMax), flIn: run.entryFl, flOut: p.flask.life + p.flask.mana, item: Object.values(p.eq).filter(Boolean) };
+  const rec = { gear: run.eqU ? EQ_SLOTS.map(sl => { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; return it ? it.tpl + ':' + it.g : null; }) : null, room: run.room, res: b.over, acts: b.turnIdx, t: Math.round(b.t * 10) / 10, hpIn: r1(run.entryHp), hpOut: r1(p.hp / p.hpMax), flIn: run.entryFl, flOut: p.flask.life + p.flask.mana, item: Object.values(p.eq).filter(Boolean) };
   run.rooms.push(rec);
   for (const x of b.rec) run.acts.push(Object.assign({ r: run.room }, x));
   if (b.over === 'lose') { run.deaths.push(run.room); }
@@ -2113,7 +2262,7 @@ function battleContinue() {
   if (b.over === 'win' && R.drop) {
     const fits = k => itemFits(run.p, k);
     const declined = run.declined || [];
-    const cand = (run.pool || FREE_POOL).filter(k => !run.bag.includes(k) && ITEMS[k]);
+    const owned = Object.values(run.inv || {}).map(x => x.tpl); const cand = (run.pool || FREE_POOL).filter(k => !owned.includes(k) && ITEMS[k]);
     const offer = cand.slice().sort((x, y) => ((declined.includes(x) ? 1 : 0) + (fits(x) ? 0 : 3)) - ((declined.includes(y) ? 1 : 0) + (fits(y) ? 0 : 3))).slice(0, 2);
     G.b = null; run.room++; saveRunLocal(); saveCur();
     if (offer.length) { openSheet('choice', { offer, room: run.room - 1 }); return; }
@@ -2167,7 +2316,7 @@ function saveRunLocal() {
   saveLocal();
 }
 function runRecord(run) {
-  return { id: run.id, v: VERSION, build: run.build, boss: run.boss, startedAt: run.startedAt, endedAt: run.endedAt || null, result: run.result, roomReached: run.room, deaths: run.deaths, rooms: run.rooms, acts: run.acts.slice(-900), swaps: run.swaps, blockPicked: run.blockPicked, drops: run.drops, survey: run.survey, stats: run.stats || null, statLog: run.statLog || [], choices: run.choices || [], skills: run.skills || null, skillLog: run.skillLog || [] };
+  return { discards: run.discards || [], inv: run.inv ? Object.values(run.inv).map(x => ({ tpl: x.tpl, g: x.g, b: x.b })) : null, id: run.id, v: VERSION, build: run.build, boss: run.boss, startedAt: run.startedAt, endedAt: run.endedAt || null, result: run.result, roomReached: run.room, deaths: run.deaths, rooms: run.rooms, acts: run.acts.slice(-900), swaps: run.swaps, blockPicked: run.blockPicked, drops: run.drops, survey: run.survey, stats: run.stats || null, statLog: run.statLog || [], choices: run.choices || [], skills: run.skills || null, skillLog: run.skillLog || [] };
 }
 async function finishSurvey(ans) {
   const run = G.run; run.survey = ans; run.endedAt = Date.now(); saveRunLocal();
@@ -2178,31 +2327,18 @@ async function finishSurvey(ans) {
   if (!G.db || G.conn !== 'ok') openSheet('code', { auto: 1 });
 }
 
-/* ---------- 장비 교체 (자발 시험 기록) ---------- */
-function equip(item, on, reason, note, ctx) {
-  const run = G.run; const p = run.p; const I = ITEMS[item];
-  const isRing = I.slot === 'ring1' || I.slot === 'ring2';
-  if (on) {
-    let slot = I.slot;
-    if (isRing) slot = p.eq.ring1 === item || p.eq.ring2 === item ? (p.eq.ring1 === item ? 'ring1' : 'ring2') : !p.eq.ring1 ? 'ring1' : !p.eq.ring2 ? 'ring2' : 'ring1';
-    const prev = p.eq[slot];
-    p.eq[slot] = item;
-    if (prev && prev !== item) run.swaps.push({ room: run.room, item: prev, on: 0, reason, note, ctx });
-  } else { for (const sl of Object.keys(p.eq)) if (p.eq[sl] === item) p.eq[sl] = null; }
-  // 인내의 흉갑: 최대 생명력 -10%
-  const stMax = calcStMax(p); if (stMax !== p.stMax) { p.stMax = stMax; p.st = Math.min(p.st, stMax); }
-  const mpMax = calcMpMax(p); if (mpMax !== p.mpMax) { p.mpMax = mpMax; p.mp = Math.min(p.mp, mpMax); }
-  const hpMax = calcHpMax(p);
-  if (hpMax !== p.hpMax) { const f = p.hp / p.hpMax; p.hpMax = hpMax; p.hp = Math.min(hpMax, Math.round(hpMax * f)); }
-  run.swaps.push({ room: run.room, item, on: on ? 1 : 0, reason, note: note || '', ctx, t: Date.now() });
-  saveRunLocal(); if (!G.b) saveCur();
-}
 
 /* ---------- 시트(대화상자) ---------- */
 function openSheet(kind, data) { if (typeof hidePop === 'function') hidePop(); G.sheet = { kind, data: data || {} }; render(); setTimeout(() => { if (typeof document === 'undefined') return; const f = document.querySelector('.sheet [data-focus]') || document.querySelector('.sheet button'); if (f) f.focus(); }, 0); }
 function closeSheet() { G.sheet = null; render(); }
 function openBlock(retry) { openSheet('block', { retry: !!retry }); }
-function openDrop(item) { openSheet('drop', { item }); }
+function giveItem(it, then) {
+  const run = G.run;
+  if (!addItem(run, it)) { openSheet('bagfull', { item: it, then: then || 'drop' }); return; }
+  saveRunLocal(); saveCur();
+  if (then === 'equip') { equipUid(run, it.uid, null, 'block'); saveRunLocal(); saveCur(); return; }
+  openSheet('drop', { uid: it.uid });
+}
 function toast(m) {
   G.liveMsg = m; let el = document.querySelector('.toast');
   if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
@@ -2342,9 +2478,11 @@ function vFinal() {
   <div style="margin-top:10px"><button class="gold" data-a="finalsave">답 저장하기</button></div></section>`;
 }
 
+/* 아직 얻지 않은 장비(고르기 창): 등급과 기본 수치 범위를 함께 보인다 */
 function itemCard(k, extra) {
-  const I = ITEMS[k];
-  return `<div class="icard"><div class="in">${esc(I.n)}</div><div class="mini">${SLOT_N[I.slot]}</div>${I.lore ? `<p class="lore">${esc(I.lore)}</p>` : ''}<div class="l act">${esc(I.act)}</div><div class="l cost">대가: ${esc(I.cost)}</div>${extra || ''}</div>`;
+  const I = ITEMS[k]; const g = I.g || 'n'; const R = GRADE[g]; const sb = SLOT_BASE[tplKind(k)]; const v = sb.v[0];
+  const range = sb.k === 'flask' ? `${sb.lab} ${Math.round(v * (1 + R.lo / 100) * 1000) / 10}~${Math.round(v * (1 + R.hi / 100) * 1000) / 10}%` : `${sb.lab} ${r1(v * (1 + R.lo / 100))}~${r1(v * (1 + R.hi / 100))}`;
+  return `<div class="icard grb-${g}"><div class="idet-h"><b class="in gr-${g}">${esc(I.n)}</b>${gradeTag(g)}<span class="mini">${SLOT_N[I.slot]}</span></div><div class="idet-base">${range}</div>${I.act ? `<div class="l act">${esc(I.act)}</div>` : ''}${I.cost ? `<div class="l cost">대가: ${esc(I.cost)}</div>` : ''}${I.lore ? `<p class="lore">${esc(I.lore)}</p>` : ''}${extra || ''}</div>`;
 }
 
 function reasonPicker() { return `<fieldset class="reasons"><legend>왜 바꾸나요?</legend>${REASONS.map((r, i) => `<label><input type="radio" name="rs" value="${r[0]}"${i === 0 ? '' : ''}> ${r[1]}</label>`).join(' ')}</fieldset><label for="rnote">메모. 적지 않아도 됩니다.</label><input id="rnote" type="text">`; }
@@ -2357,8 +2495,12 @@ function vSheet() {
     for (const k of Object.keys(ITEMS).filter(k => ITEMS[k].kind === 'block')) body += itemCard(k, `<button class="gold" data-a="pickblock" data-k="${k}">이 아이템 끼우기</button>`);
     body += `<div class="row"><button data-a="pickblock" data-k="">아이템 없이 들어가기</button><button data-a="blockback">아직 들어가지 않기</button></div>`;
   } else if (S.kind === 'drop') {
-    title = '아이템을 주웠습니다';
-    body = itemCard(S.data.item) + `<p class="mini">꼭 필요한 아이템은 아닙니다. 지금 끼워 봐도 되고, 가방에 넣어 둬도 됩니다.</p>${reasonPicker()}<div class="row"><button class="gold" data-a="dropequip" data-k="${S.data.item}">지금 끼워 보기</button><button data-a="dropkeep">가방에 넣기</button></div>`;
+    const it = run.inv[S.data.uid]; const kind = tplKind(it.tpl); const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind;
+    title = '장비를 얻었습니다';
+    body = itemDetail(it) + compareHtml(run, it.uid, sl) + `<div class="row"><button class="gold" data-a="dropequip" data-k="${it.uid}" data-s="${sl}">지금 끼기${kind === 'ring' ? ' (' + EQ_SLOT_N[sl] + ')' : ''}</button><button data-a="dropkeep">가방에 두기</button></div><p class="mini">가방 ${run.bag.length}/${BAG_MAX}. 장비는 방과 방 사이에 언제든 바꿀 수 있습니다.</p>`;
+  } else if (S.kind === 'bagfull') {
+    const it = S.data.item; title = '가방이 가득 찼습니다';
+    body = `<p class="mini">새 장비를 받으려면 가방에서 하나를 버리세요. 버린 장비는 사라집니다.</p>${itemDetail(it)}<div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${esc(ITEMS[x.tpl].n)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${baseText(x)}</small></div><button class="sm" data-a="bfdrop" data-k="${u}">버리고 받기</button></div>`; }).join('')}</div><button data-a="bfskip">새 장비를 버리기</button>`;
   } else if (S.kind === 'changes') {
     title = '업데이트 내역';
     body = CHANGELOG.map((c, i) => `<section class="chg"><h4>${esc(c.v)}${i === 0 ? ' <span class="newtag">최신</span>' : ''}</h4><ul>${c.items.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>`).join('');
@@ -2381,7 +2523,7 @@ function vSheet() {
   } else if (S.kind === 'skills') {
     const run = G.run, p = run.p; const SKM = skillMap(p.build); const pick = S.data.pick;
     title = S.data.first ? '캐릭터 만들기 1/2 · 스킬 세 칸' : '스킬 바꾸기';
-    body = `<p class="mini">공용 스킬은 어느 직업이든 끼울 수 있고, 위의 세 개는 ${esc(BUILDS[p.build].n)}만 쓰는 전용 스킬입니다. 들고 가는 스킬은 모두 합쳐 세 칸이고, 전투 밖에서는 언제든 바꿀 수 있습니다. 직업 규칙: ${esc(BUILDS[p.build].rule)}</p><p><b>${pick.length}/${SKILL_SLOTS}칸</b></p><div class="skpool">`;
+    body = `<p class="mini">공용 스킬은 어느 직업이든 끼울 수 있고, 위의 세 개는 ${esc(BUILDS[p.build].n)}만 쓰는 전용 스킬입니다. 들고 가는 스킬은 모두 합쳐 세 칸이고, 한 번 정하면 이 캐릭터가 끝날 때까지 바꿀 수 없습니다. 직업 규칙: ${esc(BUILDS[p.build].rule)}</p><p><b>${pick.length}/${SKILL_SLOTS}칸</b></p><div class="skpool">`;
     const order = Object.keys(SKM).sort((x, y) => (SKM[y].excl ? 1 : 0) - (SKM[x].excl ? 1 : 0));
     let shownHead = false;
     for (const id of order) {
@@ -2411,14 +2553,7 @@ function vSheet() {
   } else if (S.kind === 'help') {
     title = S.data.first ? '방금 적이 무너졌습니다' : '도움말'; body = (S.data.first ? '<p class="mini">처음 보는 규칙이라 잠깐 설명합니다. 이 창은 한 번만 뜹니다.</p>' : '') + vHelpBody(S.data.k);
   } else if (S.kind === 'equip') {
-    title = '장비와 가방';
-    const p = run.p;
-    const SKM0 = skillMap(p.build);
-    body = `<p class="mini">전투 밖이라면 언제든 비용 없이 바꿀 수 있습니다.</p><div class="skline"><b>스킬</b> ${skillsOf(p).map(id => esc(SKM0[id].n)).join(', ')} <button class="sm" data-a="skillopen">스킬 바꾸기</button></div>`;
-    const have = Array.from(new Set(run.bag.concat(Object.values(p.eq).filter(Boolean))));
-    if (!have.length) body += '<p>아직 가진 아이템이 없습니다. 1, 3, 7번 방에서 둘 중 하나를 고를 수 있습니다.</p>';
-    for (const k of have) { const on = Object.values(p.eq).includes(k); body += itemCard(k, `<button class="${on ? '' : 'gold'}" data-a="eqtoggle" data-k="${k}">${on ? '해제' : '장착'}</button>${on ? '<span class="tag">장착 중</span>' : ''}`); }
-    body += reasonPicker();
+    title = '장비'; body = vEquip();
   }
   return `<div class="sheet-bg" data-a="closebg"><div class="sheet sh-${S.kind}" role="dialog" aria-modal="true" aria-labelledby="shtitle"><h3 id="shtitle">${esc(title)}${S.kind === 'equip' || S.kind === 'drop' || S.kind === 'help' || S.kind === 'settings' ? '<button class="sm" data-a="close" aria-label="닫기">닫기</button>' : ''}</h3>${body}</div></div>`;
 }
@@ -2724,7 +2859,7 @@ function onClick(ev) {
     case 'giveupend': endRun('lose'); break;
     case 'scen': startScen(el.dataset.b); break;
     case 'enter': enterRoom(); break;
-    case 'equip': openSheet('equip'); break;
+    case 'equip': G.eqSel = null; openSheet('equip'); break;
     case 'close': G.sheet = null; render(); break;
     case 'sel': if (!G.data.seenCoach && !(G.coachI > 0)) G.coachI = 1;
       if (G.busy) { if (G.stepResolve) { const r = G.stepResolve; G.stepResolve = null; r(); } return; } hidePop(); G.sel = G.sel === el.dataset.e ? null : el.dataset.e; render(); break;
@@ -2753,7 +2888,12 @@ function onClick(ev) {
     case 'dash': loadDash(); break;
     case 'stat+': case 'stat-': { const S = G.sheet; const al = S.data.alloc; const k = el.dataset.k; const left = S.data.pts - al.str - al.dex - al.int; if (a === 'stat+' && left > 0) al[k]++; if (a === 'stat-' && al[k] > 0) al[k]--; render(); break; }
     case 'statok': { const S = G.sheet; const al = S.data.alloc; const run = G.run; for (const k in al) run.stats[k] = (run.stats[k] || 0) + al[k]; applyStats(run.p, run.stats); run.statLog.push({ room: run.room, add: Object.assign({}, al), t: Date.now() }); const made = S.data.first; G.sheet = null; if (made) { if (G.abandonOnCreate) abandonCur(); G.creating = false; G.abandonOnCreate = false; } saveRunLocal(); saveCur(); if (made) toast('캐릭터를 만들었습니다. 첫 방 앞입니다'); render(); break; }
-    case 'choose': { const k = el.dataset.k; const run = G.run; const S = G.sheet; run.choices.push({ room: S.data.room, offered: S.data.offer, picked: k || null, t: Date.now() }); run.declined = (run.declined || []).concat(S.data.offer.filter(x => x !== k)); G.sheet = null; if (k) { run.bag.push(k); run.drops.push({ room: S.data.room, item: k }); } saveRunLocal(); saveCur(); if (k) openDrop(k); else render(); break; }
+    case 'choose': {
+      const k = el.dataset.k; const run = G.run; const S = G.sheet;
+      run.choices.push({ room: S.data.room, offered: S.data.offer, picked: k || null, t: Date.now() }); run.declined = (run.declined || []).concat(S.data.offer.filter(x => x !== k)); G.sheet = null;
+      if (k) { const it = mkItem(k); run.drops.push({ room: S.data.room, item: k, g: it.g, b: it.b }); giveItem(it); } else { saveRunLocal(); saveCur(); render(); }
+      break;
+    }
     case 'resume': resumeRun(); break;
     case 'admin': openSheet('admin', {}); break;
     case 'admingo': { const S = G.sheet; const pw = val('adminpass'); G.sb.rpc('admin_check', { pass: pw }).then(({ data: ok, error }) => { if (ok && !error) { G.owner = true; G.adminPass = pw; G.data.adminPass = pw; saveLocal(); G.sheet = null; toast('관리자로 열었습니다'); render(); } else { S.data.msg = '암호가 맞지 않습니다'; render(); } }); break; }
@@ -2765,7 +2905,6 @@ function onClick(ev) {
     case 'impgo': { const S = G.sheet; const v = val('impbox'); if (!G.db) { S.data.msg = '공유 저장소에 연결되어 있어야 넣을 수 있습니다.'; S.data.ok = 0; render(); break; } importCode(v).then(r => { S.data.msg = (r.name || '이름 없는 지인') + '의 판 ' + r.runs + '개를 넣었습니다.'; S.data.ok = 1; render(); loadDash(); }, e2 => { S.data.msg = '넣지 못했습니다: ' + (e2 && e2.message || '알 수 없는 오류'); S.data.ok = 0; render(); }); break; }
     case 'skilltog': { const S = G.sheet; const k = el.dataset.k; const i = S.data.pick.indexOf(k); if (i >= 0) S.data.pick.splice(i, 1); else if (S.data.pick.length < SKILL_SLOTS) S.data.pick.push(k); else { toast('칸이 가득 찼습니다. 먼저 하나를 빼 주세요'); return; } render(); break; }
     case 'skillok': { const S = G.sheet; const run = G.run; const prev = (run.skills || []).slice(); run.skills = S.data.pick.slice(); run.p.skills = run.skills.slice(); run.skillLog = run.skillLog || []; run.skillLog.push({ room: run.room, from: prev, to: run.skills.slice(), first: !!S.data.first, t: Date.now() }); const first = S.data.first; G.sheet = null; if (!first) { saveRunLocal(); saveCur(); } if (first) openSheet('stats', { pts: 6, first: 1, alloc: S.data.alloc }); else { toast('스킬을 바꿨습니다'); render(); } break; }
-    case 'skillopen': openSheet('skills', { pick: (G.run.skills || skillsOf(G.run.p)).slice() }); break;
     case 'login': socialLogin(el.dataset.k); break;
     case 'loginswitch': socialLogin(el.dataset.k, true); break;
     case 'loginno': G.acct.conflict = ''; render(); break;
@@ -2785,20 +2924,21 @@ function onClick(ev) {
     case 'nf': G.nf = Object.assign({ b: 'all', t: 'all' }, G.nf || {}); G.nf[el.dataset.f] = el.dataset.v; render(); break;
     case 'nfm': G.nf = Object.assign({ b: 'all', t: 'all' }, G.nf || {}); G.nf.m = el.checked; render(); break;
     case 'pickblock': {
-      const k = el.dataset.k; const run = G.run;
-      if (run.blockPicked && run.blockPicked !== k) equip(run.blockPicked, false, 'need', '', 'block');
-      if (k) { run.bag.includes(k) || run.bag.push(k); equip(k, true, 'need', '', 'block'); }
-      run.blockPicked = k || null; G.sheet = null;
+      const k = el.dataset.k; const run = G.run; G.sheet = null;
+      run.blockPicked = k || null;
+      if (k) { const it = mkItem(k); run.drops.push({ room: run.room, item: k, g: it.g, b: it.b, block: 1 }); if (!addItem(run, it)) { openSheet('bagfull', { item: it, then: 'equip' }); break; } equipUid(run, it.uid, null, 'block'); saveRunLocal(); saveCur(); }
       if (G.scr === 'run' && !G.b) { enterRoom(); } else render();
       break;
     }
-    case 'dropequip': { const r = radio('rs') || 'other'; equip(el.dataset.k, true, r, val('rnote'), 'free'); G.sheet = null; toast('끼웠습니다'); render(); break; }
+    case 'dropequip': { const run = G.run; const msg = equipUid(run, el.dataset.k, el.dataset.s, 'free'); G.sheet = null; saveRunLocal(); saveCur(); toast(msg || '끼웠습니다'); render(); break; }
+    case 'bfdrop': { const run = G.run; const S = G.sheet; discardUid(run, el.dataset.k); const it = S.data.item, then = S.data.then; G.sheet = null; giveItem(it, then); break; }
+    case 'bfskip': { const run = G.run; const S = G.sheet; (run.discards = run.discards || []).push({ room: run.room, item: S.data.item.tpl, g: S.data.item.g, t: Date.now(), new: 1 }); G.sheet = null; saveRunLocal(); saveCur(); if (S.data.then === 'equip' && G.scr === 'run' && !G.b) enterRoom(); else render(); break; }
+    case 'eqsel': G.eqSel = { slot: el.dataset.k }; render(); eqReveal(); break;
+    case 'eqpick': { const u = el.dataset.k; G.eqSel = G.eqSel && G.eqSel.uid === u ? { slot: G.eqSel.slot } : { slot: (G.eqSel || {}).slot || 'weapon', uid: u }; render(); eqReveal(); break; }
+    case 'eqon': { const run = G.run; const msg = equipUid(run, el.dataset.k, el.dataset.s, 'free'); if (!msg) { G.eqSel = { slot: el.dataset.s }; saveRunLocal(); saveCur(); toast('끼웠습니다'); } else toast(msg); render(); break; }
+    case 'eqoff': { const run = G.run; const msg = unequipUid(run, el.dataset.k, 'free'); if (!msg) { saveRunLocal(); saveCur(); toast('가방에 넣었습니다'); } else toast(msg); render(); break; }
+    case 'eqdrop': { const run = G.run; const it = run.inv[el.dataset.k]; if (!it || !confirm(ITEMS[it.tpl].n + '을(를) 버릴까요? 버린 장비는 사라집니다.')) break; discardUid(run, it.uid); G.eqSel = { slot: (G.eqSel || {}).slot || 'weapon' }; saveRunLocal(); saveCur(); toast('버렸습니다'); render(); break; }
     case 'dropkeep': G.sheet = null; render(); break;
-    case 'eqtoggle': {
-      const k = el.dataset.k; const run = G.run; const on = !Object.values(run.p.eq).includes(k);
-      const r = radio('rs'); if (!r) { toast('왜 바꾸는지 먼저 골라 주세요'); return; }
-      equip(k, on, r, val('rnote'), ITEMS[k].kind === 'block' ? 'swap' : 'free'); openSheet('equip'); break;
-    }
   }
 }
 function onKey(ev) {
@@ -2814,10 +2954,10 @@ if (typeof document !== 'undefined') {
   if (!G.data.seenGuide) { G.scr = 'guide'; G.guideI = 0; }
   document.addEventListener('pointerdown', sndUnlock, { once: false });
   document.addEventListener('keydown', sndUnlock);
-  document.addEventListener('input', ev => { const id = ev.target && ev.target.id; if (id !== 'volm' && id !== 'vols') return; const v = +ev.target.value / 100; sndSet(id === 'volm' ? { music: v } : { sfx: v }); const o = document.getElementById(id + 'v'); if (o) o.textContent = Math.round(v * 100) + '%'; });
+  document.addEventListener('input', ev => { if (ev.target && ev.target.id === 'eqnote') { G.eqWhy = Object.assign({}, G.eqWhy, { note: ev.target.value }); return; } const id = ev.target && ev.target.id; if (id !== 'volm' && id !== 'vols') return; const v = +ev.target.value / 100; sndSet(id === 'volm' ? { music: v } : { sfx: v }); const o = document.getElementById(id + 'v'); if (o) o.textContent = Math.round(v * 100) + '%'; });
   document.addEventListener('click', onClick);
   document.addEventListener('keydown', onKey);
-  document.addEventListener('change', ev => { if (ev.target && (ev.target.id === 'pace' || ev.target.id === 'setpace')) { G.pace = ev.target.value; G.data.pace = G.pace; saveLocal(); if (G.stepResolve && G.pace !== 'step') { const r = G.stepResolve; G.stepResolve = null; r(); } } });
+  document.addEventListener('change', ev => { if (ev.target && ev.target.name === 'eqrs') { G.eqWhy = Object.assign({}, G.eqWhy, { reason: ev.target.value }); return; } if (ev.target && (ev.target.id === 'pace' || ev.target.id === 'setpace')) { G.pace = ev.target.value; G.data.pace = G.pace; saveLocal(); if (G.stepResolve && G.pace !== 'step') { const r = G.stepResolve; G.stepResolve = null; r(); } } });
   G.infoOn = G.data.infoOn !== false; G.pace = G.data.pace || 'normal'; initPop();
   let rz = 0; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (G.b && window.innerWidth >= 1100) G.logOpen = false; render(); }, 120); });
   render();

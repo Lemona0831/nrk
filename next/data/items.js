@@ -34,3 +34,29 @@ const ITEMS = {
 const SLOT_N = { weapon: '무기', armor: '갑옷', amulet: '목걸이', flask: '플라스크', ring1: '반지', ring2: '반지', gloves: '장갑' };
 
 const FREE_POOL = ['ragechain', 'markamu', 'resostone', 'wardcrest', 'vpouch', 'bloodoil', 'rosary', 'scarcharm', 'chalice', 'pulse', 'ledger', 'knot', 'echo', 'vanguard', 'twin', 'maul', 'thorns', 'cloak', 'bloodpact', 'sigil', 'fury', 'focusring', 'venomring', 'boilflask', 'chaingl'];
+
+/* ===== 0.6 장비 (기획서 11.5절) ===== */
+/* 등급: 기본 수치에 붙는 보너스(%) 범위 */
+const GRADE = { n: { n: '평범', lo: 1, hi: 5 }, m: { n: '고급', lo: 5, hi: 10 }, r: { n: '희귀', lo: 10, hi: 15 } };
+/* 슬롯마다 기본 수치. v는 1·2·3챕터 값 */
+const SLOT_BASE = {
+  weapon: { k: 'wpn', lab: '무기 피해', v: [8, 11, 15] },
+  armor: { k: 'hp', lab: '최대 생명력', v: [10, 16, 24] },
+  gloves: { k: 'st', lab: '최대 스태미나', v: [5, 8, 12] },
+  amulet: { k: 'mp', lab: '최대 마나', v: [5, 8, 12] },
+  ring: { k: 'hp', lab: '최대 생명력', v: [5, 8, 12] },
+  flask: { k: 'flask', lab: '생명력 플라스크 회복', v: [0.3, 0.3, 0.3] },
+};
+const BAG_MAX = 12;
+/* 시작 장비 (평범, 보너스 없음). 시작 장비만 낀 캐릭터는 B0.5와 수치가 같다 */
+const START_WPN = { berserker: ['녹슨 도끼', '날이 무뎌졌지만 아직 무겁다.'], hunter: ['사냥 활', '시위에 오래된 피가 말라붙어 있다.'], arcanist: ['견습 지팡이', '끝에 박힌 돌이 희미하게 떨린다.'], templar: ['철퇴', '성구를 녹여 다시 두드린 쇠.'], warlock: ['뼈 지팡이', '누구의 뼈인지는 묻지 않는다.'], assassin: ['단검', '손에 익은 짧은 칼.'], priest: ['성구 지팡이', '기도문이 새겨진 손잡이.'], scar: ['톱날 검', '베는 것보다 찢는 데 가깝다.'] };
+for (const k in START_WPN) ITEMS['start_wpn_' + k] = { n: START_WPN[k][0], slot: 'weapon', kind: 'start', g: 'n', act: '', cost: '', lore: START_WPN[k][1] };
+ITEMS.start_armor = { n: '낡은 갑옷', slot: 'armor', kind: 'start', g: 'n', act: '', cost: '', lore: '여러 주인을 거친 가죽과 쇠.' };
+ITEMS.start_flask = { n: '낡은 플라스크', slot: 'flask', kind: 'start', g: 'n', act: '', cost: '', lore: '금이 갔지만 새지는 않는다.' };
+/* B0.5 효과 아이템의 등급 (11.5절: 단순한 수치 효과는 고급, 행동을 바꾸는 것은 희귀) */
+const ITEM_GRADE = {
+  twin: 'r', maul: 'r', hook: 'r', thorns: 'r', cloak: 'r', plate: 'r', chaingl: 'r', knot: 'r', ragechain: 'r', bloodpact: 'r', vanguard: 'r', witness: 'r',
+  echo: 'r', pulse: 'r', ledger: 'r', chalice: 'r', boilflask: 'r',
+  focusring: 'm', venomring: 'm', fury: 'm', markamu: 'm', resostone: 'm', wardcrest: 'm', vpouch: 'm', bloodoil: 'm', rosary: 'm', scarcharm: 'm', sigil: 'm',
+};
+for (const k in ITEM_GRADE) if (ITEMS[k]) ITEMS[k].g = ITEM_GRADE[k];

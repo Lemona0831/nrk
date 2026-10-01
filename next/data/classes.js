@@ -56,34 +56,35 @@ const SIG = {
 
 const DEFAULT_SKILLS = { berserker: ['crush', 'scarcut'], hunter: ['aimshot', 'cloud'], arcanist: ['fireball', 'flame'], templar: ['lava', 'purge'], warlock: ['drain', 'reverse'], assassin: ['viper', 'cloud', 'burst'], scar: ['scarcut', 'release'], priest: ['flame', 'purge', 'reverse'] };
 
+/* hp는 시작 장비(낡은 갑옷 +10)를 뺀 값이다. 낡은 갑옷을 끼면 B0.5와 같다 (기획서 11.5절) */
 const BUILDS = {
   berserker: {
-    n: '광전사', ico: '⚔️', hp: 106, mp: 40,
+    n: '광전사', ico: '⚔️', hp: 96, mp: 40,
     rule: '피해를 주고받을 때마다 분노 +1, 생명력이 절반 아래면 2배로 찬다. 분노 10이면 격노',
     skills: [{ id: 'crush', n: '분쇄의 일격', mana: 5, melee: 1, dmg: 11, d: '근접 9 피해, 붕괴 +20' }],
   },
   hunter: {
-    n: '사냥꾼', ico: '🎯', hp: 118, mp: 55,
+    n: '사냥꾼', ico: '🎯', hp: 108, mp: 55,
     rule: '모든 공격이 후열에 닿고, 기본 공격과 강공격은 활이라 방패병에게 막히지 않는다. 같은 적을 이어서 칠 때마다 피해 +5%(최대 25%)',
     skills: [{ id: 'aimshot', n: '정밀 사격', mana: 4, ranged: 1, dmg: 7, d: '원거리 7 피해, 붕괴 +10' }],
   },
   arcanist: {
-    n: '비전술사', ico: '🔮', hp: 104, mp: 75,
+    n: '비전술사', ico: '🔮', hp: 94, mp: 75,
     rule: '직전과 다른 스킬을 쓰면 공명으로 피해 +15%. 전투마다 보호막 14를 두르고 시작한다',
     skills: [{ id: 'fireball', n: '화염구', mana: 8, aoe: 1, fire: 1, dmg: 5, d: '모든 적 5 피해, 점화' }],
   },
   templar: {
-    n: '성전사', ico: '⚜️', hp: 120, mp: 55,
+    n: '성전사', ico: '⚜️', hp: 110, mp: 55,
     rule: '방어할 때마다 보호막 11을 얻는다(최대 30)',
     skills: [{ id: 'lava', n: '용암 일격', mana: 4, melee: 1, fire: 1, dmg: 7, d: '근접 7 화염 피해, 점화' }],
   },
   warlock: {
-    n: '암흑술사', ico: '🌑', hp: 112, mp: 70,
+    n: '암흑술사', ico: '🌑', hp: 102, mp: 70,
     rule: '마나가 모자라면 스킬 비용을 생명력으로 치른다(마나 1 = 생명력 2). 약화된 적을 쓰러뜨리면 생명력 10% 회복',
     skills: [{ id: 'drain', n: '영혼 흡수', mana: 5, ranged: 1, dmg: 6, d: '원거리 6 피해, 준 피해 절반만큼 회복, 약화' }],
   },
   assassin: {
-    n: '독 폭발 암살자', ico: '🗡️', hp: 115, mp: 60,
+    n: '독 폭발 암살자', ico: '🗡️', hp: 105, mp: 60,
     rule: '중독은 하나의 수치: 걸 때마다 1씩 오르고(상한 없음), 시간마다 그 수치만큼 피해를 준 뒤 1 줄어든다. 독 격발은 남은 독 피해를 한꺼번에 준다',
     skills: [
       { id: 'viper', n: '독사의 일격', mana: 4, melee: 1, dmg: 7, d: '근접 7 피해 + 중독 4번 걸기(+4)' },
@@ -92,7 +93,7 @@ const BUILDS = {
     ],
   },
   scar: {
-    n: '상흔술사', ico: '🩸', hp: 128, mp: 36,
+    n: '상흔술사', ico: '🩸', hp: 118, mp: 36,
     rule: '받은 피해의 15%를 상흔으로 저장(최대 생명력 50%). 피해를 주거나 받으면 분노 +1, 10이면 격노',
     skills: [
       { id: 'scarcut', n: '상흔 베기', mana: 3, melee: 1, dmg: 7, d: '근접 7 피해 + 상흔 절반 소모(×1.5 추가 피해) + 출혈' },
@@ -100,7 +101,7 @@ const BUILDS = {
     ],
   },
   priest: {
-    n: '정화 사제', ico: '✨', hp: 110, mp: 70,
+    n: '정화 사제', ico: '✨', hp: 100, mp: 70,
     rule: '디버프를 정화할 때마다 보호(받는 피해 -20%, 보통 행동 약 3번 동안)',
     skills: [
       { id: 'flame', n: '신성한 불꽃', mana: 5, ranged: 1, dmg: 9, fire: 1, d: '원거리 8 화염 피해 + 점화(보통 행동 약 3번 동안)' },
