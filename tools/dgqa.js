@@ -4,6 +4,7 @@
    쓰러지면 끝(다시 하기 없음). 1챕터 보스를 넘으면 완주.
    실행: node tools/dgqa.js [성향·직업마다 판 수=20] [결과 파일=tools/dgqa.json] */
 const fs = require('fs'), path = require('path'), vm = require('vm');
+require('child_process').execFileSync(process.execPath, [require('path').join(__dirname, 'extract-engine.js')]); // 테스터의 판단(qa.js)이 쓰는 엔진 사본을 지금 코드로 새로 만든다
 const Q = require('./qa.js');
 const { PERSONAS, heuristic, lookahead, sigRule, rng } = Q;
 
