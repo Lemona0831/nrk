@@ -417,7 +417,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 <script>
 /* ===== 나락의 유산 B0 전투 프로토타입 — 엔진 (기획서 v2, 4.1~4.8 / 6.8 / 10.2) ===== */
 'use strict';
-const VERSION = '0.6a-dev';
+const VERSION = '0.6a';
 const BHP = 22, BDMG = 2.3;            // 역할 기준값 B (4.6 역할 배율에 곱함) [B0 가설]
 const r1 = v => Math.round(v * 10) / 10;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -1476,7 +1476,7 @@ if (typeof module !== 'undefined') module.exports = { BUILDS, ITEMS, ROOMS, BOSS
 /* ===== 가이드 · 용어 사전 · 한눈에 보는 전투 배치 ===== */
 const HELP = [
   { k: 'test', n: '이 게임은', t: [
-    '나락의 유산은 캐릭터 하나를 만들어 무너진 수도원 아래로 내려가는 턴제 전투 RPG입니다. 지금은 0.6a 미리보기로, 1챕터까지 할 수 있습니다.',
+    '나락의 유산은 캐릭터 하나를 만들어 무너진 수도원 아래로 내려가는 턴제 전투 RPG입니다. 지금은 0.6a로, 1챕터까지 할 수 있습니다.',
     '층마다 문 셋 가운데 하나를 골라 내려가며 싸웁니다. 이기면 경험치·골드·장비를 얻고, 1챕터 끝의 보스를 넘으면 정산과 상점이 기다립니다.',
     '쓰러지면 그 캐릭터는 장비·골드·레벨을 모두 잃고 끝납니다. 1층부터 쉽지 않으니, 적의 예고를 읽고 자원을 아껴 쓰세요.',
     '위쪽 메뉴에서 장비, 보스 도감, 랭킹, 기록, 도움말, 설정을 언제든 열 수 있습니다.'] },
@@ -1601,7 +1601,7 @@ function menuItems() {
 function vHeader() {
   const run = G.run;
   const live = run && !G.creating && ['run', 'settle', 'shop', 'wait', 'dead'].includes(G.scr);
-  const sub = G.scr === 'scen' ? `고정 상황 ${G.scen.i + 1}/5 · ${esc(BUILDS[G.scen.build].n)}` : live ? `${esc(run.cname || BUILDS[run.build].n)} · ${esc(BUILDS[run.build].n)} · ${G.scr === 'run' ? '1챕터 ' + esc(floorName(run.room)) : G.scr === 'shop' ? '상점' : G.scr === 'settle' ? '정산' : G.scr === 'wait' ? '1챕터 돌파' : '쓰러짐'}` : G.creating ? '캐릭터 만들기' : '0.6a 미리보기';
+  const sub = G.scr === 'scen' ? `고정 상황 ${G.scen.i + 1}/5 · ${esc(BUILDS[G.scen.build].n)}` : live ? `${esc(run.cname || BUILDS[run.build].n)} · ${esc(BUILDS[run.build].n)} · ${G.scr === 'run' ? '1챕터 ' + esc(floorName(run.room)) : G.scr === 'shop' ? '상점' : G.scr === 'settle' ? '정산' : G.scr === 'wait' ? '1챕터 돌파' : '쓰러짐'}` : G.creating ? '캐릭터 만들기' : '0.6a';
   // 로그인 확인용 인사
   const hi = G.site && G.acct && !G.acct.anon ? (G.data.name ? esc(G.data.name) + '님, 어서 오세요' : '어서 오세요') : '';
   const fit = (G.scr === 'run' || G.scr === 'scen') && G.b;
@@ -1701,7 +1701,7 @@ function vRoom(run, R) {
 function curDesc(c) { return c.phase === 'wait' || c.phase === 'clearsv' ? '1챕터 돌파 · 2챕터 준비 중' : c.phase === 'shop' ? '1챕터 돌파 · 상점' : c.phase === 'settle' ? '1챕터 돌파 · 정산' : '1챕터 · ' + floorName(c.room); }
 function vTitle() {
   const d = G.data; const c = d.cur && !d.cur.endedAt && BUILDS[d.cur.build] ? d.cur : null;
-  let h = `<section class="title-scr"><div class="tlogo"><span class="ver">0.6a 미리보기</span><h1>나락의 유산</h1><p class="lore">무너진 수도원 아래, 빛이 닿지 않는 곳까지 계단이 이어진다.</p></div><div class="tmenu">`;
+  let h = `<section class="title-scr"><div class="tlogo"><span class="ver">0.6a</span><h1>나락의 유산</h1><p class="lore">무너진 수도원 아래, 빛이 닿지 않는 곳까지 계단이 이어진다.</p></div><div class="tmenu">`;
   if (c) { const B = BUILDS[c.build]; h += `<div class="tcur"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(c.cname || B.n)}</b><small>${esc(B.n)} · Lv ${c.lv || 1} · ${esc(curDesc(c))}</small></div></div><button class="gold" data-a="resume" data-focus>이어하기</button><button data-a="restart">처음부터</button>`; }
   else h += `<button class="gold" data-a="newchar" data-focus>시작</button>`;
   h += `</div></section><div class="tbelow">`;

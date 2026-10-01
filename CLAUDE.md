@@ -1,10 +1,13 @@
 # 나락의 유산 — Claude Code 작업 안내
 
-텍스트형 다크 판타지 턴제 ARPG의 시험판(B0.5)이다. 지인과 함께 노는 개인 프로젝트이며, 지인 테스트 기록을 읽고 고치는 일을 반복한다. 사이트는 GitHub Pages(https://lemona0831.github.io/nrk/), 기록은 Supabase에 모인다.
+텍스트형 다크 판타지 턴제 ARPG다. 지금 지인 주소는 0.6a(1챕터)다. 지인과 함께 노는 개인 프로젝트이며, 지인 테스트 기록을 읽고 고치는 일을 반복한다. 사이트는 GitHub Pages(https://lemona0831.github.io/nrk/), 기록은 Supabase에 모인다.
 
-## 0.6 개발 중 (지금)
+## 주소와 개발 흐름 (10월 2일 0.6a 공개)
 
-- 0.6은 `next/`에서 만든다. 지인 주소(루트 index.html)는 B0.5 그대로 두고 고치지 않는다. 미리보기: https://lemona0831.github.io/nrk/next/
+- 지인 주소(루트 `index.html`, `data/`, `audio/`) = 0.6a 안정판. **루트를 직접 고치지 않는다.**
+- 개발은 `next/`에서 한다(미리보기 https://lemona0831.github.io/nrk/next/). 다음은 0.6b(2챕터). 지인에게 내보낼 때 `python tools/release.py`로 next/를 루트에 복사하고(`../` 경로를 고침), `python tools/smoke_site.py .`로 루트를 점검한 뒤 커밋한다. 내보낼 때 next/의 `VERSION`과 타이틀 표시를 맞춘다
+- B0.5는 `b05/index.html`에 보관(https://lemona0831.github.io/nrk/b05/). 고치지 않는다. B0.5 기록(runs·best 등)은 저장소에 그대로 있고, B0.5 결과 보기도 b05에서 연다
+- 0.6과 B0.5는 같은 사이트라 브라우저 저장소를 함께 쓰지만 저장 키가 달라(0.6 `nrk_06_v1`) 섞이지 않는다. 구글 로그인 돌아오는 주소는 Supabase 설정의 Redirect URLs에 있어야 한다(루트와 next/)
 - 계획과 진행 상황: docs/0.6a-구현계획.md. 설계: 기획서 11절. 보스·강적 상세는 저장소 밖 `../nrk-private/보스.md`(공개 저장소에 넣지 말 것)
 - 보스·강적의 기믹 설명과 대처법은 공개 파일(기획서, 업데이트 내역, 게임 문장)에 쓰지 않는다. 수도원장 수치는 index.html의 `ABBOT`, 처음 만남·도감 문장은 `next/data/dungeon.js`의 `FOE_INTRO`·`CODEX`(겪은 결과만)
 - `next/data/*.js`는 값(직업, 적, 아이템, 1챕터 아이템, 던전·갈림길(dungeon.js), 방, 음악, 업데이트 내역), `next/index.html`은 엔진과 화면이다. data 파일은 index.html보다 먼저 읽힌다
@@ -12,14 +15,15 @@
 - 음악: 원본은 `bgm/`(저장소 제외), 웹용은 `next/audio/`(MP3 96kbps, loudnorm -18). 곡 목록은 `next/data/audio.js`, 화면별 곡은 `musicFor()`(기획서 11.10절 표). 곡은 모두 무료 소스(만든 사람 확인). 소리·설명 창·진행 속도는 메뉴의 "설정" 창(`vSettings`)에서 바꾼다. 새 곡은 imageio-ffmpeg의 ffmpeg로 같은 설정으로 줄인다
 - 화면(`G.scr`): title → create(이름·직업·스킬·능력치, `G.cre`) → run → settle → shop → survey → wait(2챕터 준비 중) / dead → survey → title. 페이지 rank·records·admin(`PAGES`, `G.back`으로 돌아감, 관리자는 주소 끝 `#admin`). 메뉴는 `menuItems()`/`vHeader()`. 이어하기는 `run.phase`(settle·shop·clearsv·wait)로 멈춘 화면에 돌아온다
 - 랭킹은 저장소 `board/(uid)`의 `rank6`(`pushRank`, 정렬 `rankCmp`). 상점의 "직업에 맞는 것"은 `CLASS_FIT`(data/items.js)
-- 테스트 도구는 next/를 읽는다. 0.6a가 끝나면 next/를 루트로 옮긴다(계획 단계 12)
+- 테스트 도구는 next/를 읽는다(smoke는 `python tools/smoke_site.py .`로 루트도)
 
 ## 파일
 
 | 파일 | 내용 |
 | --- | --- |
-| index.html | B0.5 게임 전체(엔진, 텍스트, 화면, 저장). 한 파일이다. 0.6 개발 중에는 고정 |
-| next/ | 0.6 개발판. index.html(엔진·화면) + data/*.js(값) |
+| index.html, data/, audio/ | 지인 주소의 0.6a. next/에서 `tools/release.py`로 만든다. 직접 고치지 않는다 |
+| next/ | 개발판. index.html(엔진·화면) + data/*.js(값) + audio/ |
+| b05/ | B0.5 보관본(한 파일). 고치지 않는다 |
 | config.js | Supabase Project URL과 anon(공개) 키. 만든 사람이 직접 관리한다. **고치지 말 것** |
 | tools/ | 자동 테스트. 아래 "테스트" 참고 |
 | docs/작업기록.md | 지금까지의 결정, 현재 수치, 남은 문제 |

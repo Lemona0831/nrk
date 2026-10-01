@@ -4,7 +4,9 @@ from playwright.sync_api import sync_playwright
 import os
 mock=open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mock_sb.js'), encoding='utf-8').read()
 import os
-SITE='file://' + os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'next', 'index.html')).replace(os.sep, '/')
+import sys
+# 점검할 폴더: 기본 next/(개발판). 루트(지인 주소)는 python tools/smoke_site.py .
+SITE='file://' + os.path.abspath(os.path.join(os.path.dirname(__file__), '..', sys.argv[1] if len(sys.argv) > 1 else 'next', 'index.html')).replace(os.sep, '/')
 with sync_playwright() as p:
     br=p.chromium.launch(); errs=[]
     ctx=br.new_context(viewport={'width':390,'height':844})
