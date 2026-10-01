@@ -23,7 +23,7 @@ with sync_playwright() as p:
     pg.fill('#cname', '사냥꾼민수'); pg.click('[data-a=cnok]'); pg.click('[data-a=clspick][data-k=hunter]')
     pg.click('button[data-a=start][data-b=hunter]'); pg.click('button[data-a=skillok]')
     for k in ['dex']*6: pg.click(f'button[data-a="stat+"][data-k={k}]')
-    pg.click('button[data-a=statok]'); pg.click('button[data-a=door][data-k="0"]'); pg.click('button[data-a=enter]'); pg.select_option('#pace','instant')
+    pg.click('button[data-a=statok]'); pg.click('button[data-a=door][data-k="0"]'); pg.click('button[data-a=enter]'); pg.evaluate("()=>{G.pace='instant'}")  # 휴대폰 폭에서는 진행 속도 고르기가 설정 창에만 있다
     for i in range(30):
         if pg.query_selector('button[data-a=bcont]'): break
         pg.keyboard.press('1'); pg.wait_for_function("()=>!G.busy")

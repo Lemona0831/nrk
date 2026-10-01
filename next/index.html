@@ -400,6 +400,81 @@ html.fitmode,html.fitmode body{overflow:hidden}
 @media (prefers-reduced-motion:reduce){.sgold div{animation:none}}
 .wallm{font-size:11px;margin-left:3px;opacity:.85}
 .chgh{margin:10px 0 2px;font-size:13px;color:var(--muted);letter-spacing:.04em}
+
+/* ===== 휴대폰 (10월 2일 대폭 정리): 전투는 한 화면 + 아래 행동판 고정, 긴 화면은 주 버튼을 아래에 ===== */
+.ans,.fq,.lbt{display:none}.lbt{display:inline}
+.ab,.en,.ord li{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.stickbar{margin-top:12px}
+@media (max-width:719px){
+ /* 전투 화면: 창 높이에 맞춘 세로 배치. 전장만 스크롤 */
+ html.fitmode,html.fitmode body{overflow:hidden;height:var(--app-h,100dvh)}
+ html.fitmode #root{height:var(--app-h,100dvh)}
+ .fit{height:var(--app-h,100dvh);min-height:0;padding:0 6px env(safe-area-inset-bottom,0px)}
+ .fit .hdr{margin:0 -6px 4px;padding:4px 8px}.fit .hdr .hl b{font-size:14px}.fit .hdr .hl .mini{font-size:11.5px}.fit .mtog{min-height:32px;padding:2px 10px;font-size:12.5px}
+ .bgrid{grid-template-rows:auto minmax(0,1fr) auto;gap:4px;padding-bottom:4px}
+ .btop{gap:4px}
+ .fstat,.bmid,.field,.dock{padding:5px 7px;border-radius:8px}
+ /* 내 상태: 이름·플라스크 한 줄 + 막대 */
+ .fstat .mehead{gap:6px;flex-wrap:nowrap;margin-bottom:3px;font-size:13px}.fstat .mehead .qm,.fstat .flk small{display:none}
+ .fstat>.mini,.fstat .rule{display:none}
+ .fstat .mbars{gap:4px}.fstat .mb .ml{display:none}.fstat .bar{height:15px}.fstat .bar span{font-size:10.5px;line-height:13px}
+ .fstat .sts{margin-top:3px}
+ /* 순서 + 마지막 기록 */
+ .bmid .axhead{display:none}
+ .bmid .ord{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0;padding:0 0 2px}.bmid .ord::-webkit-scrollbar{display:none}
+ .bmid .ord li{flex:none;font-size:12px;padding:2px 7px}
+ .logrow{margin-top:4px}.logrow .lastlog,.logrow .turnban{font-size:12.5px;padding:3px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;min-height:0}
+ .logrow .turnban>*{display:inline}
+ .logbtn{min-height:30px;padding:2px 8px}.lbt{display:none}
+ .gimmick{font-size:12px;padding:3px 7px;margin-bottom:4px}
+ /* 전장: 작은 카드 2열 */
+ .field .rowlab{font-size:12px;margin:0 0 3px;justify-content:space-between}.rlhint{display:none}
+ .fq{display:inline-flex;min-height:26px;padding:0 8px;font-size:11.5px;margin-left:auto}
+ .fhelp{display:none}
+ .field .enemies{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-bottom:5px}
+ .field .en{padding:4px 6px;border-radius:8px}
+ .field .enh{gap:4px;margin-bottom:1px;min-height:0;flex-wrap:nowrap}.field .enh .ico{font-size:15px}
+ .field .enh .nm{font-size:12.5px;min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .field .erole{display:none}.field .elv{font-size:10.5px}
+ .field .nr{font-size:10px;padding:0 4px;line-height:15px;white-space:nowrap}
+ .field .en .bar{height:12px}.field .en .bar span{font-size:9.5px;line-height:11px}
+ .bkline small{display:none}.bkline{margin:1px 0 0}
+ .field .intent{font-size:11.5px;margin-top:2px;padding:1px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .field .sts{margin-top:2px}.field .sts i{font-size:10.5px;padding:0 4px}
+ /* 행동판: 4열 작은 버튼, 묶음 이름 없이. 길게 누르면 설명 */
+ .dock{padding:5px 6px calc(5px + env(safe-area-inset-bottom,0px))}
+ .dockhead{font-size:12px;gap:4px;margin-bottom:4px;min-height:24px}.dockhead>span .mini,.dockhead .qm,.dockhead .pacesel{display:none}
+ .dockhead .sm{min-height:30px;padding:2px 9px;font-size:12px}
+ .abgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+ .agp{display:contents}.agl{display:none}
+ .ab{min-height:44px;padding:3px 5px;border-left-width:3px}
+ .ab b{font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ab kbd{display:none}
+ .anl{display:none}.ans{display:inline}
+ .ab small{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ab small .ax{display:none}
+ .coach{font-size:12px;padding:6px 8px;margin-bottom:5px}.coach p{margin:2px 0 4px}.coach .sm{min-height:30px}
+ /* 긴 화면: 주 버튼을 화면 아래에 붙인다 */
+ .stickbar{position:sticky;bottom:0;z-index:15;margin:12px -10px -10px;padding:10px 10px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,rgba(23,18,15,0),var(--panel) 18px);border-radius:0 0 10px 10px}
+ .stickbar .row{margin-top:6px}
+ .shopbar{display:flex;align-items:center;gap:10px;margin:0 -8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--gold);border-radius:0}.shopbar .gold-n{font-weight:700}.shopbar button{margin-left:auto;min-height:44px}
+ /* 지도·상점의 내 상태 칸 */
+ .me{padding:7px 9px}
+ .me .mehead{gap:6px;font-size:13.5px}.me .qm{display:none}.me .flw{display:none}.me .flk small{display:none}
+ .me>.mini{display:none}.me .mb .ml{display:none}
+ .xpbar{height:14px}.xpbar span{font-size:10px;line-height:14px}
+}
+@media (max-width:719px) and (max-height:640px){
+ .fstat .sts,.gimmick{display:none}
+ .ab small{display:none}.ab{min-height:38px}
+}
+
+@media (max-width:719px){
+ .bmid{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:6px;row-gap:4px;align-items:center}
+ .bmid>.order{grid-column:1;grid-row:1;min-width:0}.bmid>.gimmick{grid-column:1/-1;margin:0}
+ .bmid .logrow{display:contents}.bmid .logrow>.logbtn{grid-column:2;grid-row:1}.bmid .logrow>:not(.logbtn){grid-column:1/-1}
+ .bmid .ord li{min-height:0;line-height:1.3}
+ .logrow .turnban .ic{margin-right:4px}.logrow .turnban b{margin-right:6px}
+ .fq{align-items:center;gap:3px;line-height:1}
+}
 </style>
 </head>
 <body>
@@ -1125,7 +1200,7 @@ const heavyCost = p => actCost(p, 'heavy', 40);
 function actionList(b) {
   const p = b.p; const B = BUILDS[p.build];
   const L = [
-    { id: 'basic', n: CANTRIP[p.build] || '기본 공격', melee: isCaster(p) ? 0 : 1, ranged: isCaster(p) ? 1 : 0, cost: '0', time: 1, ok: true },
+    { id: 'basic', n: CANTRIP[p.build] || '기본 공격', melee: isCaster(p) ? 0 : 1, ranged: isCaster(p) ? 1 : 0, cost: '비용 없음', time: 1, ok: true },
     (() => { const led = p.eq.ring2 === 'ledger' || p.eq.ring1 === 'ledger'; const hcst = heavyCost(p); const lack = Math.max(0, hcst - p.st); const hc = ledgerCost(p, lack); const ok = p.st >= hcst || (led && p.hp > hc + 1); return { id: 'heavy', n: isCaster(p) ? '집중 주문' : '강공격', melee: isCaster(p) ? 0 : 1, ranged: isCaster(p) ? 1 : 0, cost: lack > 0 && led ? '스태미나 ' + Math.floor(p.st) + ' + 생명력 ' + Math.ceil(hc) : '스태미나 ' + hcst, time: 1.3, ok, why: !ok && led && lack > 0 ? '생명력이 모자랍니다(피의 계산서)' : null }; })(),
   ];
   const SKM = skillMap(p.build);
@@ -1616,7 +1691,7 @@ function mbar(cls, v, max, lab) { const ik = { hp: 'bar:hp', mp: 'bar:mp', st: '
 function vPlayerPanel(p, b) {
   const B = BUILDS[p.build];
   const run0 = G.run; const lvTxt = run0 && run0.lv ? `<span class="lvtag" title="경험치 ${Math.round(run0.xp || 0)}/${LV_XP[run0.lv] || '최대'}">Lv ${run0.lv}</span>` : '';
-  let h = `<section class="me"><div class="mehead"><b>${B.ico} ${esc(B.n)}</b>${lvTxt}${q('build', '빌드')}<span class="flk">플라스크 ❤️ ${p.flask.life} · 💧 ${p.flask.mana} · ⚡ ${p.flask.stam || 0} <small>/${p.flaskMax}</small></span>${q('flask', '플라스크')}${q('st', '스태미나')}</div>`;
+  let h = `<section class="me"><div class="mehead"><b>${B.ico} ${esc(B.n)}</b>${lvTxt}${q('build', '빌드')}<span class="flk" data-info="flask" tabindex="0"><span class="flw">플라스크 </span>❤️ ${p.flask.life} · 💧 ${p.flask.mana} · ⚡ ${p.flask.stam || 0} <small>/${p.flaskMax}</small></span>${q('flask', '플라스크')}${q('st', '스태미나')}</div>`;
   h += `<div class="mbars">${mbar('hp', p.hp, p.hpMax, '생명력')}${mbar('mp', p.mp, p.mpMax, '마나')}${mbar('st', p.st, p.stMax, '스태미나')}</div>${buildRes(p)}`;
   if (run0 && run0.lv && !b) { const lo = LV_XP[run0.lv - 1] || 0, hi = LV_XP[run0.lv]; h += hi ? `<div class="xpbar" role="progressbar" aria-label="경험치" aria-valuemin="0" aria-valuemax="${hi - lo}" aria-valuenow="${Math.round(run0.xp - lo)}"><i style="width:${Math.max(0, Math.min(100, (run0.xp - lo) / (hi - lo) * 100))}%"></i><span>경험치 ${Math.round(run0.xp)}/${hi} · 다음 레벨까지 ${Math.max(0, Math.ceil(hi - run0.xp))}</span></div>` : '<p class="mini">가장 높은 레벨입니다.</p>'; }
   const extra = [];
@@ -1636,6 +1711,8 @@ const AGROUP = [
   ['지키기', ['guard', 'dodge']],
   ['회복·기타', ['flaskL', 'flaskM', 'flaskS', 'flee']],
 ];
+/* 휴대폰 행동판의 짧은 이름 */
+const ASHORT = { guard: '방어', dodge: '흘리기', flaskL: '❤️ 생명력', flaskM: '💧 마나', flaskS: '⚡ 스태미나', flee: '도망' };
 const ATIP = { flaskS: '스태미나 +' + STAM_FLASK + ' · 탈진 풀림', basic: '붕괴 +10', heavy: '피해 180% · 붕괴 +35', guard: '다음 행동까지 받는 피해 절반', dodge: '고른 적의 다음 공격 피해 60% 감소', flaskL: '생명력 30% · 중독·출혈·점화·냉각 해제', flaskM: '마나 40% · 약화·취약 해제', flee: '실패하면 느린 행동' };
 function dgBar(run) {
   const done = {}; for (const x of run.rooms || []) if (x.room) done[x.room] = x;
@@ -1729,9 +1806,9 @@ function vCreate() {
   h += `</div>`;
   if (pk) {
     const B = BUILDS[pk];
-    h += `<div class="clsdet" style="--c:${CLS_COLOR[pk] || 'var(--gold)'}"><div class="clsdet-h"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(B.n)}</b><div class="mini">생명력 ${B.hp + SLOT_BASE.armor.v[0]}, 마나 ${B.mp}</div></div></div><p class="lore">${esc(B.lore || '')}</p><p class="crule">직업 규칙: ${esc(B.rule)}</p><p class="mini"><b>직업 기술 ${esc(SIG[pk].n)}</b>: ${esc(SIG[pk].d)}</p><ul class="exl">${exclOf(pk).map(x => `<li><b>${esc(x.n)}</b> <span class="mini">${esc(x.d)}</span></li>`).join('')}</ul><button class="gold wide" data-a="start" data-b="${pk}" data-focus>${esc(B.n)}(으)로 정하기</button></div>`;
+    h += `<div class="clsdet" style="--c:${CLS_COLOR[pk] || 'var(--gold)'}"><div class="clsdet-h"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(B.n)}</b><div class="mini">생명력 ${B.hp + SLOT_BASE.armor.v[0]}, 마나 ${B.mp}</div></div></div><p class="lore">${esc(B.lore || '')}</p><p class="crule">직업 규칙: ${esc(B.rule)}</p><p class="mini"><b>직업 기술 ${esc(SIG[pk].n)}</b>: ${esc(SIG[pk].d)}</p><ul class="exl">${exclOf(pk).map(x => `<li><b>${esc(x.n)}</b> <span class="mini">${esc(x.d)}</span></li>`).join('')}</ul></div>`;
   } else h += `<p class="mini clsdet-empty">직업을 하나 누르세요.</p>`;
-  return h + `<div class="row"><button data-a="cback" data-k="name">이전: 이름</button><button data-a="createcancel">그만두기</button></div></section>`;
+  return h + `<div class="stickbar">${pk ? `<button class="gold wide" data-a="start" data-b="${pk}" data-focus>${esc(BUILDS[pk].n)}(으)로 정하기</button>` : ''}<div class="row"><button data-a="cback" data-k="name">이전: 이름</button><button data-a="createcancel">그만두기</button></div></div></section>`;
 }
 
 /* ===== 랭킹 (기획서 11.11절): 가장 멀리 간 캐릭터. 깬 챕터 → 층 → 레벨, 같으면 플레이 시간이 짧은 쪽 ===== */
@@ -1874,7 +1951,7 @@ function vShop() {
   });
   h += `</div></section><section class="card"><h4>가방의 장비 팔기</h4><p class="mini">살 때 값의 25%를 받습니다. 낀 장비는 먼저 빼야 팔 수 있습니다.</p>`;
   h += run.bag.length ? `<div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${esc(ITEMS[x.tpl].n)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${baseText(x)}</small></div><button class="sm" data-a="sell" data-k="${u}">${sellOf(x)} 골드에 팔기</button></div>`; }).join('')}</div>` : '<p class="mini">가방이 비어 있습니다.</p>';
-  h += `</section><section class="card"><h4>떠나기 전에</h4><div class="row"><button data-a="equip">장비 바꾸기</button><button data-a="respec"${(run.gold || 0) >= cost && pts > 0 ? '' : ' disabled'}>능력치 다시 나누기 (${cost} 골드)</button></div><p class="mini">능력치 다시 나누기는 지금까지 나눈 ${pts}점을 모두 거두어 처음부터 다시 나눕니다. 값은 레벨 × 10골드입니다. 남은 골드는 다음 챕터로 가져갑니다.</p><button class="gold wide" data-a="shopleave">상점을 나선다</button></section>`;
+  h += `</section><section class="card"><h4>떠나기 전에</h4><div class="row"><button data-a="equip">장비 바꾸기</button><button data-a="respec"${(run.gold || 0) >= cost && pts > 0 ? '' : ' disabled'}>능력치 다시 나누기 (${cost} 골드)</button></div><p class="mini">능력치 다시 나누기는 지금까지 나눈 ${pts}점을 모두 거두어 처음부터 다시 나눕니다. 값은 레벨 × 10골드입니다. 남은 골드는 다음 챕터로 가져갑니다.</p></section><div class="stickbar shopbar"><span class="gold-n">골드 ${run.gold || 0}</span><span class="mini">가방 ${run.bag.length}/${BAG_MAX}</span><button class="gold" data-a="shopleave">상점을 나선다</button></div>`;
   return h;
 }
 function vWait() {
@@ -1925,7 +2002,7 @@ function vBattle() {
   };
   const bk = b.en.filter(e => e.alive && e.row === 'back'), fr = b.en.filter(e => e.alive && e.row === 'front');
   const field = `<section class="field" aria-label="전장">
-    <div class="rowlab"><span>후열. 근접 공격은 전열이 비거나 무너져야 닿습니다</span></div><div class="enemies">${bk.map(ecard).join('') || '<p class="mini">없음</p>'}</div>
+    <div class="rowlab"><span>후열<span class="rlhint">. 근접 공격은 전열이 비거나 무너져야 닿습니다</span></span><button class="qm fq" data-a="help" data-k="row" aria-label="전투 규칙 도움말"><span aria-hidden="true">?</span> 규칙</button></div><div class="enemies">${bk.map(ecard).join('') || '<p class="mini">없음</p>'}</div>
     <div class="rowlab"><span>전열</span></div><div class="enemies">${fr.map(ecard).join('') || '<p class="mini">없음</p>'}</div><div class="fhelp"><span class="mini">규칙 보기</span>${q('row', '전열·후열')}${q('intent', '예고')}${q('break', '붕괴')}${q('status', '상태이상')}${q('roles', '적의 역할')}</div></section>`;
   // 4) 행동판
   let dock;
@@ -1948,7 +2025,7 @@ function vBattle() {
         const urgent = !dis && (a.id === 'flaskL') && p.hp < p.hpMax * 0.35;
         const at = !dis ? actTarget(b, a) : null; const gd = at && isMeleeAct(p, a.id) ? guardOf(b, at) : null;
         kn++;
-        btns += `<button class="ab g-${lab === '공격' ? 'atk' : lab === '스킬' ? 'sk' : lab === '지키기' ? 'def' : lab === '직업' ? 'sig' : 'etc'}${dis ? ' dis' : ''}${urgent ? ' urgent' : ''}" data-a="act" data-id="${a.id}" data-info="act:${a.id}" data-k="${kn}" aria-disabled="${dis}"><b>${kn <= 9 ? `<kbd>${kn}</kbd>` : ''}${esc(a.n)}</b><small>${why ? esc(why) : esc(a.cost) + ' · ' + esc(skillHint(b, a) || speedWord(a.time)) + (at ? ' → ' + esc(at.n) + (gd ? ' 🛡' : '') : a.aoe ? ' → 전체' : '')}</small></button>`;
+        btns += `<button class="ab g-${lab === '공격' ? 'atk' : lab === '스킬' ? 'sk' : lab === '지키기' ? 'def' : lab === '직업' ? 'sig' : 'etc'}${dis ? ' dis' : ''}${urgent ? ' urgent' : ''}" data-a="act" data-id="${a.id}" data-info="act:${a.id}" data-k="${kn}" aria-disabled="${dis}"><b>${kn <= 9 ? `<kbd>${kn}</kbd>` : ''}<span class="anl">${esc(a.n)}</span><span class="ans">${esc(ASHORT[a.id] || a.n)}</span></b><small>${why ? esc(why) : '<span class="ac">' + esc(a.cost) + '</span><span class="ax"> · ' + esc(skillHint(b, a) || speedWord(a.time)) + (at ? ' → ' + esc(at.n) + (gd ? ' 🛡' : '') : a.aoe ? ' → 전체' : '') + '</span>'}</small></button>`;
       }
       btns += '</div>';
     }
@@ -1959,7 +2036,7 @@ function vBattle() {
   const groups = []; for (const x of b.log) { const g = x.g || 0; if (!groups.length || groups[groups.length - 1].g !== g) groups.push({ g, items: [] }); groups[groups.length - 1].items.push(x); }
   const glog = groups.slice(-14).reverse().map((G2, gi) => `<div class="lgrp${gi === 0 ? ' now' : ''}"><div class="lgh">${G2.g ? G2.g + '번째 차례' : '전투 시작'}</div>${G2.items.map(x => `<p class="${x.c}">${esc(x.m)}</p>`).join('')}</div>`).join('');
   const side = `<aside class="side${G.logOpen ? ' open' : ''}" aria-label="전투 기록"><div class="sidehead"><h4>전투 기록</h4><button class="sm onlym" data-a="logclose">닫기</button></div><div class="blog" role="log">${glog}</div><div class="mini">맨 위가 가장 최근 차례입니다. 한 차례 안에서는 위에서 아래로 읽습니다.</div></aside>`;
-  return `<div class="bgrid"><div class="btop">${status}<div class="bmid">${vOrder(b)}${gim}<div class="logrow">${lastl}<button class="sm onlym" data-a="logopen">기록</button></div></div></div>${field}${dock}${side}</div>`;
+  return `<div class="bgrid"><div class="btop">${status}<div class="bmid">${vOrder(b)}${gim}<div class="logrow">${lastl}<button class="sm onlym logbtn" data-a="logopen" aria-label="전투 기록">📜<span class="lbt"> 기록</span></button></div></div></div>${field}${dock}${side}</div>`;
 }
 
 /* 설명 줄: 가리키거나 포커스하면 갱신 (재렌더 없이) */
@@ -2250,7 +2327,7 @@ function initPop() {
   sk('templar', 'lava').d = '근접 공격, 화염 피해 9. 점화를 걸고 붕괴 게이지 +10.';
   sk('warlock', 'drain').d = '원거리 공격, 피해 6. 준 피해의 70%만큼 생명력을 되찾고 약화를 건다.';
   sk('assassin', 'viper').d = '근접 공격, 피해 6. 중독 +3.';
-  sk('assassin', 'cloud').d = '모든 적에게 중독 +3.';
+  sk('assassin', 'cloud').d = '모든 적에게 중독 +2 (광역이라 단일 기술의 절반).';
   sk('assassin', 'burst').d = '대상에게 남은 독 피해를 지금 전부 준다. 붕괴 게이지 +중독×4. 중독은 사라진다.';
   Object.assign(B.scar, {
     lore: '베일수록 깊어지는 자. 받은 상처가 곧 칼날이 된다.',
@@ -3131,7 +3208,7 @@ function vSurvey() {
   <label for="isnote">이상했던 것을 한 줄로 적어 주면 고치는 데 큰 도움이 됩니다.</label><input id="isnote" type="text" maxlength="200">
   <label for="hard">가장 어려웠던 방</label><select id="hard"><option value="">고르지 않음</option>${(run.rooms || []).filter(x => x.room && x.res).map(x => `<option value="${x.room}">${esc(floorName(x.room) + ' ' + (ROOM_TYPES[x.type] ? ROOM_TYPES[x.type].n : ''))}</option>`).join('')}</select>
   <label for="snote">그 밖에 하고 싶은 말</label><textarea id="snote" rows="2"></textarea>
-  <div style="margin-top:10px"><button class="gold" data-a="survey">${clear ? '저장하고 계속' : '저장하고 타이틀로'}</button></div></section>`;
+  <div class="stickbar"><button class="gold wide" data-a="survey">${clear ? '저장하고 계속' : '저장하고 타이틀로'}</button></div></section>`;
 }
 
 function vFinal() {
@@ -3199,7 +3276,7 @@ function sheetParts(S) {
   } else if (S.kind === 'skills') {
     const run = G.run, p = run.p; const SKM = skillMap(p.build); const pick = S.data.pick;
     title = S.data.first ? '스킬 세 칸을 고르세요' : '스킬 바꾸기';
-    body = `<p class="mini">공용 스킬은 어느 직업이든 끼울 수 있고, 위의 세 개는 ${esc(BUILDS[p.build].n)}만 쓰는 전용 스킬입니다. 들고 가는 스킬은 모두 합쳐 세 칸이고, 한 번 정하면 이 캐릭터가 끝날 때까지 바꿀 수 없습니다. 직업 규칙: ${esc(BUILDS[p.build].rule)}</p><p><b>${pick.length}/${SKILL_SLOTS}칸</b></p><div class="skpool">`;
+    body = `<p class="mini">공용 스킬은 어느 직업이든 끼울 수 있고, 위의 ${exclOf(p.build).length}개는 ${esc(BUILDS[p.build].n)}만 쓰는 전용 스킬입니다. 들고 가는 스킬은 모두 합쳐 세 칸이고, 한 번 정하면 이 캐릭터가 끝날 때까지 바꿀 수 없습니다. 직업 규칙: ${esc(BUILDS[p.build].rule)}</p><p><b>${pick.length}/${SKILL_SLOTS}칸</b></p><div class="skpool">`;
     const order = Object.keys(SKM).sort((x, y) => (SKM[y].excl ? 1 : 0) - (SKM[x].excl ? 1 : 0));
     let shownHead = false;
     for (const id of order) {
@@ -3210,7 +3287,7 @@ function sheetParts(S) {
       body += `<button class="skc${on ? ' on' : ''}" data-a="skilltog" data-k="${id}" aria-pressed="${on}" ${full ? 'aria-disabled="true"' : ''}><b>${esc(s.n)}</b><small>${esc(resLabel(s))}${kind ? ' · ' + kind : ''}</small><span>${esc(s.d)}</span>${on ? '<em>끼움</em>' : ''}</button>`;
     }
     const dmgIds = ['viper', 'flame', 'scarcut', 'reverse', 'crush', 'aimshot', 'fireball', 'lava', 'drain'].concat(exclOf(p.build).filter(s => s.dmg > 0 || (s.fx && s.fx.scarAll)).map(s => s.id)); const noDmg = pick.length && !pick.some(id => dmgIds.includes(id));
-    body += `</div>${noDmg ? '<p class="warn">지금 고른 스킬에는 적을 직접 때리는 스킬이 없습니다. 피해 대부분을 기본 공격에 기대게 됩니다. 그래도 괜찮다면 그대로 시작해도 됩니다.</p>' : ''}<button class="gold wide" data-a="skillok" ${pick.length ? '' : 'disabled'} data-focus>${pick.length ? (S.data.first ? '다음: 능력치 나누기' : '이대로 바꾸기') : '스킬을 하나 이상 골라 주세요'}</button>${S.data.first ? '<div class="row"><button data-a="cback" data-k="cls">이전: 직업 고르기</button><button data-a="createcancel">그만두기</button></div>' : ''}${S.data.first ? '' : '<button class="wide" data-a="close">바꾸지 않기</button>'}`;
+    body += `</div>${noDmg ? '<p class="warn">지금 고른 스킬에는 적을 직접 때리는 스킬이 없습니다. 피해 대부분을 기본 공격에 기대게 됩니다. 그래도 괜찮다면 그대로 시작해도 됩니다.</p>' : ''}<div class="stickbar"><button class="gold wide" data-a="skillok" ${pick.length ? '' : 'disabled'} data-focus>${pick.length ? (S.data.first ? '다음: 능력치 나누기 (' + pick.length + '/' + SKILL_SLOTS + '칸)' : '이대로 바꾸기') : '스킬을 하나 이상 골라 주세요'}</button>${S.data.first ? '<div class="row"><button data-a="cback" data-k="cls">이전: 직업 고르기</button><button data-a="createcancel">그만두기</button></div>' : ''}</div>${S.data.first ? '' : '<button class="wide" data-a="close">바꾸지 않기</button>'}`;
   } else if (S.kind === 'stats') {
     const run = G.run, p = run.p; const al = S.data.alloc || (S.data.alloc = { str: 0, dex: 0, int: 0 });
     const left = S.data.pts - al.str - al.dex - al.int;
@@ -3218,7 +3295,7 @@ function sheetParts(S) {
     title = S.data.first ? '능력치 6점을 나누세요' : (S.data.why || '능력치 ' + S.data.pts + '점');
     body = `<p class="mini">${S.data.first ? '6점을 힘, 민첩, 지능에 나눕니다. 1점마다 규칙이 하나씩 바뀝니다. 정답은 없습니다.' : S.data.respec ? '지금까지 나눈 점수를 모두 거두었습니다. 처음부터 다시 나눕니다.' : '지금 빌드에 무엇이 모자랐는지 떠올려 보세요.'}</p><p><b>남은 점수 ${left}</b></p>`;
     for (const k of ['str', 'dex', 'int']) body += `<div class="statrow"><div class="sname"><b>${STATN[k]} ${stat(tmp, k)}</b>${al[k] ? ` <span class="mini">(+${al[k]})</span>` : ''}</div><div class="snext mini">다음 1점: ${esc(statNext(tmp, k))}</div><div class="sbtn"><button class="sm" data-a="stat-" data-k="${k}" ${al[k] ? '' : 'disabled'} aria-label="${STATN[k]} 1점 빼기">−</button><button class="sm gold" data-a="stat+" data-k="${k}" ${left ? '' : 'disabled'} aria-label="${STATN[k]} 1점 더하기">+</button></div></div>`;
-    body += `<button class="gold wide" data-a="statok" ${left ? 'disabled' : ''} data-focus>${left ? '점수를 모두 나눠 주세요' : S.data.first ? '이 캐릭터로 시작하기' : '이대로 정하기'}</button>${S.data.first ? '<div class="row"><button data-a="createback">이전: 스킬 고르기</button><button data-a="createcancel">그만두기</button></div>' : ''}`;
+    body += `<div class="stickbar"><button class="gold wide" data-a="statok" ${left ? 'disabled' : ''} data-focus>${left ? '점수를 모두 나눠 주세요 (남은 ' + left + '점)' : S.data.first ? '이 캐릭터로 시작하기' : '이대로 정하기'}</button>${S.data.first ? '<div class="row"><button data-a="createback">이전: 스킬 고르기</button><button data-a="createcancel">그만두기</button></div>' : ''}</div>`;
   } else if (S.kind === 'choice') {
     title = S.data.chest ? '상자를 열었습니다. 하나만 가져갑니다' : '둘 중 하나만 가져갈 수 있습니다';
     body = `<p class="mini">고르지 않은 쪽은 이 방에 남습니다. 고른 뒤 바로 끼워 볼지 정할 수 있습니다.</p>`;
@@ -3514,6 +3591,7 @@ function render() {
   else if (G.scr === 'scen') main = '';
   const fit = (G.scr === 'run' && G.b) || (G.scr === 'scen' && G.b);
   document.documentElement.classList.toggle('fitmode', !!fit);
+  document.documentElement.style.setProperty('--app-h', (window.visualViewport ? window.visualViewport.height : window.innerHeight) + 'px');
   const y = window.scrollY;
   const fld = document.querySelector('.field'); const fy = fld ? fld.scrollTop : 0;
   const lg = document.querySelector('.side .blog'); const ly = lg ? lg.scrollTop : 0;
@@ -3709,6 +3787,7 @@ if (typeof document !== 'undefined') {
   document.addEventListener('change', ev => { if (ev.target && ev.target.name === 'eqrs') { G.eqWhy = Object.assign({}, G.eqWhy, { reason: ev.target.value }); return; } if (ev.target && (ev.target.id === 'pace' || ev.target.id === 'setpace')) { G.pace = ev.target.value; G.data.pace = G.pace; saveLocal(); if (G.stepResolve && G.pace !== 'step') { const r = G.stepResolve; G.stepResolve = null; r(); } } });
   G.infoOn = G.data.infoOn !== false; G.pace = G.data.pace || 'normal'; initPop();
   window.addEventListener('hashchange', () => { if (location.hash === '#admin' && G.scr !== 'admin') { G.adminLink = true; if (!PAGES.includes(G.scr)) G.back = G.scr; G.scr = 'admin'; render(); } });
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', () => document.documentElement.style.setProperty('--app-h', window.visualViewport.height + 'px'));
   let rz = 0; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (G.b && window.innerWidth >= 1100) G.logOpen = false; render(); }, 120); });
   render();
   initCaps();
