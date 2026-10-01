@@ -312,6 +312,18 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .eqskills{margin-top:10px}
 .baglist{display:flex;flex-direction:column;gap:4px;margin:8px 0}.bagline{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px;padding:4px 0;border-top:1px solid var(--line)}
 @media (min-width:720px){.eqcols{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}.baggrid{grid-template-columns:repeat(4,minmax(0,1fr))}.eqsum{grid-template-columns:repeat(6,minmax(0,1fr))}.sheet.sh-equip{max-width:860px}}
+/* 휴대폰: 전투 화면이 한 화면에 다 들어가지 않으면(앱 안 브라우저처럼 화면이 짧을 때) 스크롤로 내려 볼 수 있게 하고,
+   맨 아래에 휴대폰 하단 막대만큼 여백을 둔다. 좌우 여백은 줄여 내용 폭을 넓힌다 (지인 의견, 10월 2일) */
+@media (max-width:719px){
+ html.fitmode,html.fitmode body{overflow-y:auto;height:auto}
+ html.fitmode #root{height:auto}
+ .fit{height:auto;min-height:100dvh;padding:0 6px calc(env(safe-area-inset-bottom,0px) + 36px)}
+ .fit .hdr{margin:0 -6px 6px;padding:6px 6px}
+ .bgrid{grid-template-rows:auto auto auto}
+ .app{padding:0 8px calc(env(safe-area-inset-bottom,0px) + 48px)}
+ .card{padding:10px}
+ .fstat,.bmid,.field,.dock{padding:6px 7px}
+}
 </style>
 </head>
 <body>
