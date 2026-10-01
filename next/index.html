@@ -1013,7 +1013,7 @@ function intentText(b, e) {
     case 'attack': return { t: '공격 ' + est + (i.bleed ? ', 출혈' : ''), hv: 0 };
     case 'charge': return { t: '강타를 모으는 중. 다음 행동에 내리친다', hv: 1 };
     case 'heavy': return { t: '강타 ' + r1(est * TELE.heavy) + ', 맞으면 취약', hv: 1 };
-    case 'heal': { const t = b.en.find(x => x.id === i.tgt); return { t: (t ? t.n : '아군') + '을(를) ' + (e.monk ? ABBOT.monkHeal * 100 : 25) + '% 치유', hv: 1 }; }
+    case 'heal': { const t = b.en.find(x => x.id === i.tgt); return { t: (t ? t.n : '아군') + '을(를) ' + r1((e.monk ? ABBOT.monkHeal : 0.25) * 100) + '% 치유', hv: 1 }; }
     case 'summon': return { t: '하수인 둘을 부른다', hv: 0 };
     case 'fuse': return { t: '도화선에 불을 붙인다. 다음 행동에 터진다', hv: 1 };
     case 'explode': return { t: '폭발 ' + est + ', 광역, 약화', hv: 1 };
@@ -1039,7 +1039,7 @@ function enemyAct(b, e) {
     case 'pray': { logp(b, 'sys', e.n + '이(가) 입을 다문 채 기도한다'); break; }
     case 'charge': logp(b, 'sys', e.n + '이(가) 무기를 높이 치켜든다. 강타가 온다'); break;
     case 'heavy': { const bm = e.boss === 'abbot' ? 1 + ABBOT.brand * st(b.p, 'brand') : 1; const x = hurtPlayer(b, d * TELE.heavy * bm, { src: e, single: 1, charged: 1, label: e.n + '의 강타가 내리꽂힌다' + (bm > 1 ? '. 낙인이 타오른다' : '') }); if (x > 0) addS(b, b.p, 'vuln', 2); leech(b, e, x); break; }
-    case 'heal': { const t = b.en.find(x => x.id === i.tgt && x.alive) || alive(b).sort((a, c) => a.hp / a.hpMax - c.hp / c.hpMax)[0]; if (t) { t.hp = Math.min(t.hpMax, t.hp + t.hpMax * (e.monk ? ABBOT.monkHeal : 0.25)); logp(b, 'bad', e.n + '이(가) ' + t.n + '의 상처를 봉합한다. 25% 회복'); } break; }
+    case 'heal': { const t = b.en.find(x => x.id === i.tgt && x.alive) || alive(b).sort((a, c) => a.hp / a.hpMax - c.hp / c.hpMax)[0]; if (t) { const hf = e.monk ? ABBOT.monkHeal : 0.25; t.hp = Math.min(t.hpMax, t.hp + t.hpMax * hf); logp(b, 'bad', e.n + '이(가) ' + t.n + '의 상처를 봉합한다. ' + r1(hf * 100) + '% 회복'); } break; }
     case 'summon': spawn(b, 'minion'); spawn(b, 'minion'); logp(b, 'bad', e.n + '의 부름에 뼈가 일어선다'); break;
     case 'fuse': logp(b, 'sys', e.n + '의 도화선이 타들어 간다'); break;
     case 'explode': { hurtPlayer(b, d, { src: e, aoe: 1, label: e.n + '이(가) 터진다' }); if (!b.over) addS(b, b.p, 'weak', 2); e.alive = false; e.hp = 0; logp(b, 'sys', e.n + '은(는) 재가 되어 흩어진다'); checkEnd(b); break; }
