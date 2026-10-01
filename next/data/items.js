@@ -60,3 +60,16 @@ const ITEM_GRADE = {
   focusring: 'm', venomring: 'm', fury: 'm', markamu: 'm', resostone: 'm', wardcrest: 'm', vpouch: 'm', bloodoil: 'm', rosary: 'm', scarcharm: 'm', sigil: 'm',
 };
 for (const k in ITEM_GRADE) if (ITEMS[k]) ITEMS[k].g = ITEM_GRADE[k];
+
+/* 직업에 맞는 장비 (상점 진열의 "직업에 맞는 것 3개 이상", 기획서 11.7절)
+   장비 효과 문장(act)에 아래 낱말이 들어 있으면 그 직업에 맞는 것으로 본다. 쓸모없는 장비(itemFits가 거르는 것)는 빼고 센다 */
+const CLASS_FIT = {
+  berserker: ['분노', '격노', '강공격', '생명력이 절반', '맞을 때마다', '강타를 맞으면', '근접', '쓰러뜨리면'],
+  hunter: ['원거리', '후열', '같은 적', '기본 공격', '출혈'],
+  arcanist: ['주문', '캔트립', '마나', '점화', '같은 스킬', '스킬로'],
+  templar: ['방어', '보호', '강타', '최대 생명력'],
+  warlock: ['마나가 모자라면', '약화', '디버프가 셋', '생명력을', '마나 +', '저주'],
+  assassin: ['중독', '독', '흘리기'],
+  scar: ['상흔', '맞을 때마다', '잃으면', '생명력이 절반', '강타를 맞으면', '받는 피해'],
+  priest: ['디버프', '지우면', '지운', '정화', '보호'],
+};

@@ -9,7 +9,9 @@
 - 보스·강적의 기믹 설명과 대처법은 공개 파일(기획서, 업데이트 내역, 게임 문장)에 쓰지 않는다. 수도원장 수치는 index.html의 `ABBOT`, 처음 만남·도감 문장은 `next/data/dungeon.js`의 `FOE_INTRO`·`CODEX`(겪은 결과만)
 - `next/data/*.js`는 값(직업, 적, 아이템, 1챕터 아이템, 던전·갈림길(dungeon.js), 방, 음악, 업데이트 내역), `next/index.html`은 엔진과 화면이다. data 파일은 index.html보다 먼저 읽힌다
 - next/는 B0.5와 기록이 섞이지 않게 브라우저 저장 키(nrk_06_v1), 저장소 경로(runs6·scen6·survey6), 기록판 칸(best6)을 따로 쓴다(`COL`)
-- 음악: 원본은 `bgm/`(저장소 제외), 웹용은 `next/audio/`(MP3 96kbps, loudnorm -18). 곡 목록은 `next/data/audio.js`. 곡은 모두 무료 소스(만든 사람 확인). 소리·설명 창·진행 속도는 상단 "설정" 창(`vSettings`)에서 바꾼다. 새 곡은 imageio-ffmpeg의 ffmpeg로 같은 설정으로 줄인다
+- 음악: 원본은 `bgm/`(저장소 제외), 웹용은 `next/audio/`(MP3 96kbps, loudnorm -18). 곡 목록은 `next/data/audio.js`, 화면별 곡은 `musicFor()`(기획서 11.10절 표). 곡은 모두 무료 소스(만든 사람 확인). 소리·설명 창·진행 속도는 메뉴의 "설정" 창(`vSettings`)에서 바꾼다. 새 곡은 imageio-ffmpeg의 ffmpeg로 같은 설정으로 줄인다
+- 화면(`G.scr`): title → create(이름·직업·스킬·능력치, `G.cre`) → run → settle → shop → survey → wait(2챕터 준비 중) / dead → survey → title. 페이지 rank·records·admin(`PAGES`, `G.back`으로 돌아감, 관리자는 주소 끝 `#admin`). 메뉴는 `menuItems()`/`vHeader()`. 이어하기는 `run.phase`(settle·shop·clearsv·wait)로 멈춘 화면에 돌아온다
+- 랭킹은 저장소 `board/(uid)`의 `rank6`(`pushRank`, 정렬 `rankCmp`). 상점의 "직업에 맞는 것"은 `CLASS_FIT`(data/items.js)
 - 테스트 도구는 next/를 읽는다. 0.6a가 끝나면 next/를 루트로 옮긴다(계획 단계 12)
 
 ## 파일
@@ -48,6 +50,7 @@
 - `npm run qa:quick` : 960판 빠른 확인
 - `npm run items` : 1챕터 아이템 풀(99종)을 여덟 직업에 끼워 효과가 실제로 일어나는지(FXHIT)와 고정 수치를 점검한다. 실패 0이어야 한다. 새 아이템 효과는 next/index.html의 `IFX` 표에, 이름·문장은 `next/data/items_ch1.js`에 둔다
 - `npm run smoke` : 가짜 Supabase로 사이트 흐름 점검(Python Playwright 필요)
+- 직접 짠 브라우저 시험(Playwright로 next/index.html을 file://로 열 때)은 반드시 `config.js`를 빈 파일로 바꿔 읽게 한다: `ctx.route('**/config.js', lambda r: r.fulfill(status=200, content_type='application/javascript', body=''))`. 그러지 않으면 진짜 Supabase에 시험 기록과 랭킹이 쌓인다(10월 2일에 실제로 일어남)
 - 테스터 한계: 아이템을 받고도 행동을 바꾸지 못하고, 한 수 앞만 본다. 막힘 해결용 아이템과 회복·방어 스킬의 진짜 가치는 사람 기록으로 판단한다
 
 ## 텍스트 기준 (기획서 8.6절)
