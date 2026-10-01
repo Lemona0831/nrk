@@ -1313,7 +1313,7 @@ function vHeader() {
   const run = G.run;
   const sub = G.scr === 'scen' ? `고정 상황 ${G.scen.i + 1}/5 · ${esc(BUILDS[G.scen.build].n)}` : run && G.scr !== 'home' ? `${esc(BUILDS[run.build].n)} · ${run.boss === 'mother' ? '1회차' : '2회차'} · ${esc((ROOMS[run.room] || { n: '끝' }).n)}` : '전투 시험판';
   const inRun = (G.scr === 'run' && !G.b);
-  return `<header class="hdr"><div class="hl"><b>나락의 유산</b><span class="mini">${sub}</span></div><div class="hr">${inRun ? '<button class="sm" data-a="equip">장비와 가방</button>' : ''}<button class="sm" data-a="infotoggle" aria-pressed="${G.infoOn ? 'true' : 'false'}" title="버튼이나 카드에 마우스를 올리면 설명 창이 뜹니다. 휴대폰에서는 길게 누르세요.">설명 창 ${G.infoOn ? '켜짐' : '꺼짐'}</button><button class="sm" data-a="changes">업데이트${G.data.seenVer !== CHANGE_VER ? ' <span class="newdot" aria-label="새 소식">새</span>' : ''}</button><button class="sm" data-a="help" data-k="">도움말</button>${G.scr !== 'home' && G.scr !== 'guide' ? '<button class="sm" data-a="home">처음으로</button>' : ''}</div></header>`;
+  return `<header class="hdr"><div class="hl"><b>나락의 유산</b><span class="mini">${sub}</span></div><div class="hr">${inRun ? '<button class="sm" data-a="equip">장비와 가방</button>' : ''}<button class="sm" data-a="infotoggle" aria-pressed="${G.infoOn ? 'true' : 'false'}" title="버튼이나 카드에 마우스를 올리면 설명 창이 뜹니다. 휴대폰에서는 길게 누르세요.">설명 창 ${G.infoOn ? '켜짐' : '꺼짐'}</button><button class="sm" data-a="changes">업데이트${G.data.seenVer !== CHANGE_VER ? ' <span class="newdot" aria-label="새 소식">새</span>' : ''}</button><button class="sm" data-a="help" data-k="">도움말</button>${inRun ? '' : vAcctBtn()}${G.scr !== 'home' && G.scr !== 'guide' ? '<button class="sm" data-a="home">처음으로</button>' : ''}</div></header>`;
 }
 
 /* ---------- 내 상태 한 줄 ---------- */
@@ -1361,10 +1361,10 @@ function vHome() {
   const d = G.data; const pr = d.prog;
   const cell = (bd, bs) => pr[bd + '_' + bs] ? '완료' : '';
   let h = `<section class="card hero"><h1>나락의 유산</h1><p class="lore">무너진 수도원 아래, 빛이 닿지 않는 곳까지 계단이 이어진다.</p><p>방을 하나씩 지나며 싸우는 턴제 전투 RPG의 시험판입니다. 직업을 고르고 스킬과 능력치로 빌드를 직접 짜서, 같은 짧은 던전을 두 번씩 지나 봅니다.</p><button data-a="guide">처음 안내 다시 보기</button></section>`;
+  h += vAcct();
   if (G.sync) h += `<div class="banner" role="status">${esc(G.sync)}</div>`;
   if (G.conn && G.conn !== 'ok' && !G.owner) h += `<section class="card warncard"><h3>기록이 자동으로 모이지 않고 있습니다</h3><p>${esc(CONN_MSG[G.conn] || CONN_MSG.nodb)}</p><button class="gold" data-a="code">기록 보내기 코드</button></section>`;
   if (d.seenVer !== CHANGE_VER) h += `<section class="card news"><h3>새로 바뀐 것 <span class="newtag">${esc(CHANGELOG[0].v)}</span></h3><ul>${CHANGELOG[0].items.map(x => `<li>${esc(x)}</li>`).join('')}</ul><button data-a="changes">업데이트 내역 전체 보기</button></section>`;
-  h += vAcct();
   if (d.cur && !d.cur.endedAt && BUILDS[d.cur.build]) { const c = d.cur; h += `<section class="card resume"><h3>진행 중인 판</h3><p>${esc(BUILDS[c.build].n)}, ${c.boss === 'mother' ? '1회차' : '2회차'}, ${esc((ROOMS[c.room] || { n: '' }).n)} 앞에서 멈췄습니다. 새 판을 시작하면 이 판은 기록으로만 남습니다.</p><button class="gold" data-a="resume" data-focus>이어 하기</button></section>`; }
   h += `<section class="card"><h3>할 일</h3><ol class="todo"><li>직업 하나를 고르고 스킬 세 칸을 정해 <b>1회차</b>를 끝까지 합니다. 보스는 늪의 어머니이고, 한 판에 20~30분 걸립니다.</li><li>같은 직업으로 <b>2회차</b>를 합니다. 스킬 조합은 바꿔도 됩니다. 보스는 뒤틀린 수호목입니다.</li><li>그 직업으로 <b>고정 상황</b> 다섯 개를 합니다. 하나에 10행동 이내입니다.</li><li>다른 직업이나 다른 스킬 조합으로도 해 보고, 마지막 질문에 답합니다.</li></ol>`;
   h += `<div class="tbl"><table class="st2"><caption class="sr">직업별 진행</caption><thead><tr><th scope="col">직업</th><th scope="col">1회차</th><th scope="col">2회차</th><th scope="col">고정 상황</th></tr></thead><tbody>`;
@@ -1380,13 +1380,14 @@ function vHome() {
   h += vBoard();
   h += `<section class="card"><h3>마지막 질문</h3><p class="mini">${d.final ? '이미 답했습니다. 다시 답하면 새 답으로 바뀝니다.' : '여러 빌드를 해 본 뒤에 답해 주세요.'}</p><button data-a="final">질문에 답하기</button></section>`;
   h += `<section class="card"><h3>기록${q('record', '기록에 대해')}</h3><p class="mini">끝낸 판 ${d.runs.filter(r => r.endedAt).length}개</p><div class="row"><button data-a="code">기록 보내기 코드</button><button data-a="dl">기록 파일 받기</button>${G.owner ? '<button class="gold" data-a="dash">결과 보기</button>' : G.site ? '<button data-a="admin">관리자</button>' : ''}</div>${G.site && G.conn === 'ok' ? '<p class="mini">기록은 이 사이트의 저장소에 자동으로 모입니다.</p>' : ''}</section>`;
+  if (G.site) h += '<p class="mini"><a href="privacy.html" target="_blank" rel="noopener">개인정보처리방침</a></p>';
   return h;
 }
 
 /* ===== 한 화면 전투 배치 (창 크기에 맞춤) ===== */
 const CHANGE_VER = '2026-10-02b';
 const CHANGELOG = [
-  { v: '10월 2일 (로그인)', items: ['구글 계정으로 로그인할 수 있습니다. 하지 않아도 플레이할 수 있습니다.', '로그인하면 닉네임이 계정에 고정되고, 이 기기에 쌓인 기록도 그 계정으로 이어집니다. 다른 기기에서 같은 계정으로 들어오면 같은 닉네임으로 기록이 쌓입니다.', '첫 화면의 로그인 칸에서 로그인과 로그아웃을 합니다.'] },
+  { v: '10월 2일 (로그인)', items: ['구글 계정으로 로그인할 수 있습니다. 하지 않아도 플레이할 수 있습니다.', '로그인하면 닉네임이 계정에 고정되고, 이 기기에 쌓인 기록도 그 계정으로 이어집니다. 다른 기기에서 같은 계정으로 들어오면 같은 닉네임으로 기록이 쌓입니다.', '상단의 로그인 버튼으로 로그인하고, 로그인한 뒤에는 같은 자리의 로그아웃 버튼으로 나갑니다. 버튼에 마우스를 올리면 닉네임이 보입니다.'] },
   { v: '10월 2일 (별도 사이트)', items: ['게임을 Claude 밖의 별도 사이트에서도 열 수 있게 되었습니다. 사이트에서는 로그인 없이 기록이 자동으로 모입니다.', '사이트에서는 첫 화면의 "관리자" 버튼으로 관리자 암호를 넣으면 결과 보기가 열립니다.'] },
   { v: '10월 1일 밤', items: ['직업과 맞물리는 아이템 8종을 더해 자발 시험용 아이템이 25종이 되었습니다. 분노의 사슬(광전사), 추적자의 표식(사냥꾼), 공명석(비전술사), 수호의 문장(성전사), 독 주머니(암살자), 피의 성유(암흑술사), 정화의 묵주(사제), 흉터 부적(상흔술사). 어느 직업이든 쓸 수 있고, 괄호 안 직업과 특히 잘 맞습니다.', '지금 빌드에 쓸모없는 아이템은 고르기에 나오지 않습니다. 사슬 장갑은 근접 스킬이 있을 때, 피의 성유는 생명력으로 치르는 비용이 있을 때, 수호의 문장은 보호막을 얻는 수단이 있을 때만 나옵니다.', '사슬 장갑의 대가를 원거리·광역 피해 −5%에서 최대 스태미나 −10으로 바꾸고, 붕괴는 +20으로 올렸습니다.', '피의 계산서 생명력 6% → 4%. 독침 반지 기본 공격 피해 −20% → −10%. 선봉의 깃발 붕괴 +30 → +20. 무거운 망치 붕괴 +30 → +20. 피의 서약 +25% → +20%. 공명석 +8% → +6%.', '3,840판으로 다시 쟀습니다. 여덟 직업의 승률은 72~82%, 아이템 25종 가운데 24종은 승률을 −5%p에서 +7%p 사이로 바꿉니다. 사슬 장갑(−10%p)은 지켜보는 중입니다.'] },
   { v: '10월 1일 저녁', items: ['자발 시험용 아이템이 6종에서 17종이 되었습니다. 쌍날 단검, 무거운 망치, 가시 갑옷, 그림자 망토, 피의 서약, 정화의 성표, 분노의 반지, 수렴의 반지, 독침 반지, 끓는 플라스크, 사슬 장갑이 새로 들어왔습니다.', '아이템마다 끼운 판과 안 끼운 판을 3,840판으로 비교해 맞췄습니다. 16종이 승률을 −2%p에서 +7%p 사이로 바꿉니다(측정 오차 ±2~3%p). 잔향의 매듭은 쓰는 판이 드물어 따로 지켜봅니다.', '직업마다 직업 기술이 생겼습니다. 스킬 세 칸과 별도로 늘 쓸 수 있고, 몇 차례에 한 번 다시 쓸 수 있습니다. 광전사 해방, 사냥꾼 표적 고정, 비전술사 공명 집중, 성전사 보호 서약, 암살자 독 침투, 암흑술사 피의 대가, 사제 기도, 상흔술사 피의 응답.', '직업마다 색이 생겨, 내 상태 칸과 직업 기술 버튼에 칠해집니다.', '직업 수치: 광전사 생명력 106, 사냥꾼 118, 비전술사 104(보호막 14), 암흑술사 112, 성전사 방어 보호막 11. 여덟 직업의 승률이 74~82% 사이로 모였습니다.', '아이템 수치: 메아리 반지 +4%씩(최대 +12%), 분노의 반지 +10%, 피의 계산서 생명력 6%, 잔향의 매듭 대가는 마나 +2.', '나락의 거울이 광역 스킬로 모든 적에게 준 피해의 합을 되돌리던 문제를 고쳤습니다. 이제 대상 하나에게 준 만큼만 되돌립니다.', '휴대폰에서 상단 제목이 세로로 늘어나 전장이 가려지던 문제를 고쳤습니다.', '보호막이 피해를 모두 막으면 "0 피해" 대신 "보호막이 모두 받아냈다"로 남깁니다.', '저장소에 연결되지 않은 채 판을 마치면 기록 보내기 창이 저절로 뜹니다. 휴대폰에서는 공유 버튼으로 메신저에 바로 보낼 수 있습니다.', '이 업데이트 내역이 생겼습니다.'] },
@@ -2149,8 +2150,15 @@ async function socialLogout() {
   G.data.name = ''; saveLocal();
   location.replace(AUTH_BACK());
 }
-function vAcct() {
+/* 상단 버튼: 로그인 전에는 "로그인", 로그인 뒤에는 "로그아웃"(닉네임은 설명 창에). 판 도중에는 상단이 길어지지 않게 숨긴다 */
+function vAcctBtn() {
   if (!G.site || G.conn !== 'ok' || !G.acct) return '';
+  if (!G.acct.anon) return `<button class="sm" data-a="logout" title="${esc(PROVIDER_N[G.acct.provider] || G.acct.provider)} 계정으로 로그인했습니다. 닉네임: ${esc(G.data.name || '아직 없음')}">로그아웃</button>`;
+  return '<button class="sm" data-a="login" data-k="google" title="구글로 로그인합니다. 하지 않아도 플레이할 수 있습니다. 로그인하면 닉네임이 계정에 고정되고, 이 기기에 쌓인 기록도 그 계정으로 이어집니다.">로그인</button>';
+}
+/* 첫 화면 카드: 오류나 "이미 쓰는 계정" 선택처럼 알릴 것이 있을 때만 */
+function vAcct() {
+  if (!G.site || G.conn !== 'ok' || !G.acct || !(G.acct.err || (G.acct.anon && G.acct.conflict))) return '';
   const A = G.acct; let h = '<section class="card"><h3>로그인</h3>';
   if (A.err) h += `<p class="mini" role="alert">${esc(A.err)}</p>`;
   if (!A.anon) {
@@ -2161,7 +2169,7 @@ function vAcct() {
   } else {
     h += `<p class="mini">로그인하지 않아도 플레이할 수 있습니다. 로그인하면 닉네임이 계정에 고정되고, 만든 사람이 누구의 기록인지 바로 알 수 있습니다. 이 기기에 쌓인 기록도 그 계정으로 이어집니다.</p><div class="row"><button data-a="login" data-k="google">구글로 로그인</button></div>`;
   }
-  return h + '<p class="mini"><a href="privacy.html" target="_blank" rel="noopener">개인정보처리방침</a></p></section>';
+  return h + '</section>';
 }
 async function initCaps() {
   { const cfg = siteCfg(); if (cfg && !(window.claude && window.claude.use)) { await initSite(cfg); return; } }
@@ -2831,7 +2839,7 @@ function onClick(ev) {
     case 'login': socialLogin(el.dataset.k); break;
     case 'loginswitch': socialLogin(el.dataset.k, true); break;
     case 'loginno': G.acct.conflict = ''; render(); break;
-    case 'logout': socialLogout(); break;
+    case 'logout': if (confirm('로그아웃하면 이 기기는 새 익명 계정으로 돌아갑니다. 지금까지의 기록은 구글 계정에 남습니다. 로그아웃할까요?')) socialLogout(); break;
     case 'namesave': { G.data.name = (val('pname') || '').trim().slice(0, 16); saveLocal(); toast('이름을 저장했습니다'); pushName(); break; }
     case 'boardre': G.board = null; render(); break;
     case 'coachnext': G.coachI = (G.coachI || 0) + 1; if (G.coachI >= COACH.length) { G.data.seenCoach = true; saveLocal(); } render(); break;

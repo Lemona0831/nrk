@@ -16,7 +16,7 @@
 - 엔진: 파일 앞부분부터 `/* ===== 가이드` 직전까지. BUILDS(직업), EXCL(직업 전용 스킬), SIG(직업 기술), ITEMS, FREE_POOL, itemFits, ROOMS, BOSSES, 전투 계산(hurtPlayer, hurtEnemy, outDmg, playerAct, genSkill)
 - 표시 규칙: `/* ===== 표시 규칙` ~ `/* 상태 표시`. 예고 문장, 행동 미리보기
 - 텍스트층: `const IT = {`가 있는 즉시 실행 함수. **화면에 보이는 아이템·빌드·스킬·도움말 문장은 여기서 덮어쓴다.** ITEMS 정의의 act/cost보다 이쪽이 화면에 나온다
-- 저장: `initCaps`(Claude 저장소), `initSite`·`sbDb`(Supabase). 구글 로그인은 `readAcct`·`socialLogin`·`vAcct`, 결과 보기의 테스터 이름은 `testerLabel`. 경로 구조는 `playtest/<id>/runs/<판>/acts/c000`, `board/<id>`
+- 저장: `initCaps`(Claude 저장소), `initSite`·`sbDb`(Supabase). 구글 로그인은 `readAcct`·`socialLogin`·`vAcctBtn`(상단 버튼)·`vAcct`(알림 카드), 결과 보기의 테스터 이름은 `testerLabel`. 경로 구조는 `playtest/<id>/runs/<판>/acts/c000`, `board/<id>`
 - 업데이트 내역: `CHANGE_VER`, `CHANGELOG`
 
 ## 고칠 때 순서
