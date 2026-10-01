@@ -1,0 +1,11 @@
+{
+  "name": "nrk",
+  "private": true,
+  "description": "나락의 유산 — 텍스트형 다크 판타지 턴제 ARPG 시험판",
+  "scripts": {
+    "engine": "node tools/extract-engine.js",
+    "qa": "node tools/extract-engine.js && node tools/qa.js 40 && python tools/measure.py",
+    "qa:quick": "node tools/extract-engine.js && node tools/qa.js 10 && python tools/measure.py",
+    "smoke": "python tools/smoke_site.py"
+  }
+}

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>나락의 유산 B0 — 전투 프로토타입</title>
+<title>나락의 유산 — 시험판</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;600;700&family=Nanum+Myeongjo:wght@700&display=swap">
 <style>
 :root{--bg:#f3ece0;--panel:#fbf6ec;--panel2:#efe5d4;--line:#d5c6ad;--ink:#2a1f17;--muted:#6f5f4c;--gold:#8a6420;--gold-ink:#fff8e8;--good:#2f7a3a;--bad:#b0362a;--hp:#b8392c;--mp:#2f5fb3;--st:#a37b1c;--bk:#6b45b0;--track:#e4d8c3;
@@ -2058,6 +2058,7 @@ function vBoard() {
   return h + `<div class="tbl"><table class="st2"><caption class="sr">직업과 회차별 최고 기록</caption><tbody>${rows.join('')}</tbody></table></div><button class="sm" data-a="boardre">새로 고침</button></section>`;
 }
 const CONN_MSG = {
+  noconfig: '이 사이트는 아직 기록 저장소가 설정되지 않아, 기록이 이 브라우저에만 남습니다. 아래 "기록 보내기 코드"를 만든 사람에게 보내 주세요.',
   sitefail: '기록 저장소에 연결하지 못했습니다. 인터넷 연결을 확인하고 새로 고쳐 주세요. 그래도 안 되면 아래 "기록 보내기 코드"를 만든 사람에게 보내 주세요.',
   noviewer: '이 화면은 Claude 안에서 열어야 기록이 자동으로 모입니다. 아래 "기록 보내기 코드"를 만든 사람에게 보내 주세요.',
   nouser: 'Claude에 로그인하지 않았거나, 이 게임에 초대되지 않은 계정이라 기록이 자동으로 모이지 않습니다. 만든 사람에게 공유 초대를 요청하거나, 아래 "기록 보내기 코드"를 보내 주세요.',
@@ -2105,7 +2106,7 @@ async function initSite(cfg) {
 }
 async function initCaps() {
   { const cfg = siteCfg(); if (cfg && !(window.claude && window.claude.use)) { await initSite(cfg); return; } }
-  if (typeof window === 'undefined' || !window.claude || !window.claude.use) { G.conn = 'noviewer'; render(); return; }
+  if (typeof window === 'undefined' || !window.claude || !window.claude.use) { G.conn = window.NRK_CONFIG ? 'noconfig' : 'noviewer'; render(); return; }
   try {
     const [db, user, dl] = await Promise.all([window.claude.use('db'), window.claude.use('user'), window.claude.use('downloads')]);
     G.downloads = dl;
