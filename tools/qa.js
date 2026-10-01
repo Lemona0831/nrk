@@ -292,4 +292,4 @@ if (require.main === module) {
   require('fs').writeFileSync(require('path').join(__dirname, 'qa.json'), JSON.stringify({ runs, scen }));
   console.log('runs', runs.length, 'sec', ((Date.now() - t0) / 1000).toFixed(1));
 }
-module.exports = { playRun, PERSONAS };
+module.exports = { playRun, PERSONAS, heuristic, lookahead, sigRule, invariants, wasted, rng };

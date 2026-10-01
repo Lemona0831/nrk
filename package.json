@@ -7,6 +7,7 @@
     "qa": "node tools/extract-engine.js && node tools/qa.js 40 && python tools/measure.py",
     "qa:quick": "node tools/extract-engine.js && node tools/qa.js 10 && python tools/measure.py",
     "smoke": "python tools/smoke_site.py",
-    "items": "node tools/extract-engine.js && node tools/itemcheck.js"
+    "items": "node tools/extract-engine.js && node tools/itemcheck.js",
+    "dg": "node tools/dgqa.js 20"
   }
 }

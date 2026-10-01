@@ -50,6 +50,7 @@
 - `npm run qa:quick` : 960판 빠른 확인
 - `npm run items` : 1챕터 아이템 풀(99종)을 여덟 직업에 끼워 효과가 실제로 일어나는지(FXHIT)와 고정 수치를 점검한다. 실패 0이어야 한다. 새 아이템 효과는 next/index.html의 `IFX` 표에, 이름·문장은 `next/data/items_ch1.js`에 둔다
 - `npm run smoke` : 가짜 Supabase로 사이트 흐름 점검(Python Playwright 필요)
+- `npm run dg` : 던전 자동 테스터(tools/dgqa.js). next/의 게임 코드 전체를 Node vm에서 돌려 6성향 × 8직업이 1챕터를 끝까지 간다(문, 장비, 이벤트, 레벨, 쓰러지면 끝). 완주율과 쓰러진 곳(상층·하층·보스)을 낸다. 수치 시험은 `CFG='DIFF.upper={hp:1.3,dmg:1.4}; BOSSES.abbot.mult=7' node tools/dgqa.js 20`. 조절 값: `DIFF`(data/dungeon.js, 상층·하층 적 배율), `BOSSES.abbot.mult`·`dmgMul`, `ENRAGE`, `TELE.heavy`(적 강타 배율), `ABBOT`
 - 직접 짠 브라우저 시험(Playwright로 next/index.html을 file://로 열 때)은 반드시 `config.js`를 빈 파일로 바꿔 읽게 한다: `ctx.route('**/config.js', lambda r: r.fulfill(status=200, content_type='application/javascript', body=''))`. 그러지 않으면 진짜 Supabase에 시험 기록과 랭킹이 쌓인다(10월 2일에 실제로 일어남)
 - 테스터 한계: 아이템을 받고도 행동을 바꾸지 못하고, 한 수 앞만 본다. 막힘 해결용 아이템과 회복·방어 스킬의 진짜 가치는 사람 기록으로 판단한다
 

@@ -515,6 +515,8 @@ const STAM_FLASK = 60; // 스태미나 플라스크 회복량 (11.6절 [가설])
          st(최대치 더하기 {hp,mp,st}) hpMul cost(행동 비용 더하기) regen(스태미나 자연 회복 더하기) heal(플라스크 회복 더하기 %p) */
 const FXHIT = {};
 /* 타락한 수도원장 수치. 사람처럼 판단하는 테스터(여섯 성향) 1,920판에서 첫 도전 승률 48%로 맞춘 값 (10월 2일, 만든 사람 요청 50% 안팎) */
+const TELE = { heavy: 3 }; // 적 강타 = 평소 공격 × heavy (예고를 읽고 막는 판단의 무게)
+const ENRAGE = { boss: 35, room: 40, step: 10 }; // 광폭화 시각(시간 단위)과 짙어지는 간격
 const ABBOT = { cycle: 5, brand: 0.2, vowHeal: 0.01, vowTaken: 0.6, monkHeal: 0.025 };
 function codexHit(b, id, key) { b.codex = b.codex || {}; b.codex[id + '.' + key] = 1; }
 const fxHit = k => { FXHIT[k] = (FXHIT[k] || 0) + 1; };
@@ -662,7 +664,7 @@ function mkBoss(kind, hpFrac, lv) {
   const hpMax = BHP * B.mult * Math.pow(1 + MLV_HP, lv - 1);
   return {
     id: 'boss', role: 'boss', boss: kind, n: B.n, ico: B.ico, elite: false, row: 'front',
-    hpMax, hp: Math.round(hpMax * (hpFrac || 1)), dmg: BDMG * 1.5 * Math.pow(1 + MLV_DMG, lv - 1), spd: 1.0, brkMax: 150, brk: 0, lv,
+    hpMax, hp: Math.round(hpMax * (hpFrac || 1)), dmg: BDMG * (B.dmgMul || 1.5) * Math.pow(1 + MLV_DMG, lv - 1), spd: 1.0, brkMax: 150, brk: 0, lv,
     s: {}, stun: 0, acts: 0, alive: true, next: 0, intent: null, phase: 1, breaks: 0,
   };
 }
@@ -762,10 +764,10 @@ function tickOnce(b) {
     if (b.season === 1) addS(b, p, 'ignite', 3);
     if (b.season === 3) addS(b, p, 'chill', 2);
   }
-  const enT = boss ? 35 : 40;
-  if (b.enrage && !b.ctx.scen && T >= enT + 10 * (b.enrageLv || 1)) { b.enrageLv = (b.enrageLv || 1) + 1; logp(b, 'bad', '광폭이 짙어진다. 적의 피해가 더 커진다'); }
-  if (!boss && !b.enrage && T >= 40 && !b.ctx.scen) { b.enrage = true; b.enrageLv = 1; logp(b, 'bad', '싸움이 길어졌다. 적들이 광폭해진다'); }
-  if (boss && !b.enrage && T >= 35) { b.enrageLv = 1; b.enrage = true; logp(b, 'bad', '싸움이 길어졌다. ' + boss.n + '이(가) 광폭해진다'); }
+  const enT = boss ? ENRAGE.boss : ENRAGE.room;
+  if (b.enrage && !b.ctx.scen && T >= enT + ENRAGE.step * (b.enrageLv || 1)) { b.enrageLv = (b.enrageLv || 1) + 1; logp(b, 'bad', '광폭이 짙어진다. 적의 피해가 더 커진다'); }
+  if (!boss && !b.enrage && T >= ENRAGE.room && !b.ctx.scen) { b.enrage = true; b.enrageLv = 1; logp(b, 'bad', '싸움이 길어졌다. 적들이 광폭해진다'); }
+  if (boss && !b.enrage && T >= ENRAGE.boss) { b.enrageLv = 1; b.enrage = true; logp(b, 'bad', '싸움이 길어졌다. ' + boss.n + '이(가) 광폭해진다'); }
   // 지속 피해·지속 시간 (전역 T)
   const units = [p].concat(alive(b));
   for (const u of units) {
@@ -949,7 +951,7 @@ function intentText(b, e) {
   switch (i.k) {
     case 'attack': return { t: '공격 ' + est + (i.bleed ? ', 출혈' : ''), hv: 0 };
     case 'charge': return { t: '강타를 모으는 중. 다음 행동에 내리친다', hv: 1 };
-    case 'heavy': return { t: '강타 ' + r1(est * 3) + ', 맞으면 취약', hv: 1 };
+    case 'heavy': return { t: '강타 ' + r1(est * TELE.heavy) + ', 맞으면 취약', hv: 1 };
     case 'heal': { const t = b.en.find(x => x.id === i.tgt); return { t: (t ? t.n : '아군') + '을(를) ' + (e.monk ? ABBOT.monkHeal * 100 : 25) + '% 치유', hv: 1 }; }
     case 'summon': return { t: '하수인 둘을 부른다', hv: 0 };
     case 'fuse': return { t: '도화선에 불을 붙인다. 다음 행동에 터진다', hv: 1 };
@@ -975,7 +977,7 @@ function enemyAct(b, e) {
     case 'brand': { hurtPlayer(b, d * 0.6, { src: e, single: 1, label: e.n + '이(가) 죄를 읽는다' }); if (!b.over) { const before = st(b.p, 'brand'); addS(b, b.p, 'brand', 999, 1, 3); if (st(b.p, 'brand') > before) logp(b, 'bad', '이름 위에 낙인이 새겨진다. 낙인 ' + st(b.p, 'brand')); codexHit(b, 'abbot', 'brand'); } break; }
     case 'pray': { logp(b, 'sys', e.n + '이(가) 입을 다문 채 기도한다'); break; }
     case 'charge': logp(b, 'sys', e.n + '이(가) 무기를 높이 치켜든다. 강타가 온다'); break;
-    case 'heavy': { const bm = e.boss === 'abbot' ? 1 + ABBOT.brand * st(b.p, 'brand') : 1; const x = hurtPlayer(b, d * 3 * bm, { src: e, single: 1, charged: 1, label: e.n + '의 강타가 내리꽂힌다' + (bm > 1 ? '. 낙인이 타오른다' : '') }); if (x > 0) addS(b, b.p, 'vuln', 2); leech(b, e, x); break; }
+    case 'heavy': { const bm = e.boss === 'abbot' ? 1 + ABBOT.brand * st(b.p, 'brand') : 1; const x = hurtPlayer(b, d * TELE.heavy * bm, { src: e, single: 1, charged: 1, label: e.n + '의 강타가 내리꽂힌다' + (bm > 1 ? '. 낙인이 타오른다' : '') }); if (x > 0) addS(b, b.p, 'vuln', 2); leech(b, e, x); break; }
     case 'heal': { const t = b.en.find(x => x.id === i.tgt && x.alive) || alive(b).sort((a, c) => a.hp / a.hpMax - c.hp / c.hpMax)[0]; if (t) { t.hp = Math.min(t.hpMax, t.hp + t.hpMax * (e.monk ? ABBOT.monkHeal : 0.25)); logp(b, 'bad', e.n + '이(가) ' + t.n + '의 상처를 봉합한다. 25% 회복'); } break; }
     case 'summon': spawn(b, 'minion'); spawn(b, 'minion'); logp(b, 'bad', e.n + '의 부름에 뼈가 일어선다'); break;
     case 'fuse': logp(b, 'sys', e.n + '의 도화선이 타들어 간다'); break;
@@ -991,7 +993,7 @@ function enemyAct(b, e) {
 /* 굶주린 순례자: 준 피해의 절반을 마신다 */
 function leech(b, e, x) { if (e.foe === 'pilgrim' && x > 0 && e.alive) { e.hp = Math.min(e.hpMax, e.hp + x * STRONG.leech); logp(b, 'bad', e.n + '이(가) 피를 마신다. ' + r1(x * STRONG.leech) + ' 회복'); codexHit(b, 'pilgrim', 'leech'); } }
 function bossPhase(b, e) {
-  const f = e.hp / e.hpMax; const ph = e.boss === 'abbot' ? (f > 0.65 ? 1 : f > 0.3 ? 2 : 3) : f > 0.7 ? 1 : f > 0.35 ? 2 : 3;
+  const f = e.hp / e.hpMax; const ph = Math.max(e.phase || 1, e.boss === 'abbot' ? (f > 0.65 ? 1 : f > 0.3 ? 2 : 3) : f > 0.7 ? 1 : f > 0.35 ? 2 : 3); // 페이즈는 되돌아가지 않는다(회복해도 수도사가 다시 일어서지 않게)
   if (e.boss === 'abbot' && ph !== e.phase) {
     if (ph >= 2 && e.phase < 2) { e.vow = 1; e.vowTick = b.tick; e.intent = { k: 'pray' }; logp(b, 'crit', e.n + '이(가) 입을 다문다'); codexHit(b, 'abbot', 'vow'); }
     if (ph === 3 && e.phase < 3) { e.vow = 0; for (let i = 0; i < 2; i++) { const m = mkEnemy('healer', 0, b.idc++, { lv: e.lv || 1, name: '수도사' }); m.monk = 1; m.summoned = true; m.next = b.t + 0.6 + i * 0.2; decideIntent(b, m); b.en.push(m); } logp(b, 'crit', '무너진 제단에서 수도사들이 일어선다'); codexHit(b, 'abbot', 'monks'); }
@@ -1328,6 +1330,7 @@ function roomBattle(player, room, bossKind, seed) {
     const bs = mkBoss(bossKind, 1, room.lv || 1); en = [bs];
     if (bossKind === 'tree') for (let i = 0; i < 3; i++) en.push(mkEnemy('root', 0, 50 + i));
   } else en = room.en.map((x, i) => mkEnemy(x[0], x[1], i, { lv: room.lv || 1, name: room.names && room.names[x[0]], tough: !!(room.tough && room.tough.includes(i)) }));
+  if (!room.boss && room.floor) { const D = DIFF[room.floor >= 10 ? 'lower' : 'upper']; for (const e of en) { e.hpMax = Math.round(e.hpMax * D.hp); e.hp = e.hpMax; e.dmg *= D.dmg; } }
   if (room.strong && en[0]) { const e = en[0]; e.strong = true; e.foe = room.foe; const low = (room.floor || 0) >= 10; e.n = room.strong; e.hpMax = Math.round(e.hpMax * STRONG.hp * (low ? STRONG.lowerHp : 1)); e.hp = e.hpMax; e.dmg *= STRONG.dmg * (low ? STRONG.lowerDmg : 1); e.info = '강적. 무엇을 하는지는 겪어 보아야 안다.'; }
   if (room.foe === 'bellringer') { const bell = mkEnemy('root', 0, 60, { lv: room.lv || 1 }); bell.n = '큰 종'; bell.ico = '🔔'; bell.bell = 1; bell.hpMax = Math.round(bell.hpMax * 1.2); bell.hp = bell.hpMax; bell.info = '큰 종. 후열. 스스로는 움직이지 않는다.'; en.push(bell); }
   const mods = room.mods || [];
@@ -1779,7 +1782,7 @@ function vBattle() {
   let gim = '';
   const boss = b.en.find(e => e.role === 'boss' && e.alive);
   if (boss) {
-    let g = b.enrage ? '광폭화!' : `광폭화까지 내 차례 ${myTurnsUntil(b, 35)}번`;
+    let g = b.enrage ? '광폭화!' : `광폭화까지 내 차례 ${myTurnsUntil(b, ENRAGE.boss)}번`;
     if (boss.boss === 'mother') g += ` · 내 중독 ${st(p, 'poison')}/10 (10이면 부화) · ${boss.phase >= 2 ? '거울 활성' : '2페이즈부터 거울'}`;
     if (boss.boss === 'tree') { const roots = alive(b).filter(e => e.role === 'root').length; g += ` · 뿌리 때문에 내 차례마다 약 +${rootRegen(b)} 회복 · 계절 ${SEASONS[b.season]} → ${SEASONS[(b.season + 1) % 4]} (내 차례 ${myTurnsUntil(b, (Math.floor(b.tick / 4) + 1) * 4)}번 뒤) · 뿌리 ${roots}/3`; }
     gim = `<div class="gimmick" data-info="gim" tabindex="0">${esc(g)}</div>`;
