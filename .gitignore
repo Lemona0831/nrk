@@ -8,3 +8,6 @@ tools/qa.json
 tools/final_items.json
 node_modules/
 __pycache__/
+
+# 음악 원본 (320kbps, 127MB). 웹용은 next/audio/에 줄여 둔다
+bgm/

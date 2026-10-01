@@ -28,6 +28,8 @@ fieldset label{display:inline-flex;align-items:center;min-height:44px;margin-rig
 .card h3{font-size:18px;margin-bottom:8px;color:var(--gold)}.card h4{font-size:15px;margin-bottom:6px;color:var(--gold)}
 .mini{font-size:13px;color:var(--muted)}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>button{flex:1}
+.hdr [data-a=sndtoggle][aria-pressed=false]{text-decoration:line-through;color:var(--muted)}
+.snd label{font-size:13px;color:var(--muted)}.snd input[type=range]{flex:1 1 140px;min-width:120px;accent-color:var(--gold);min-height:32px}
 .hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding:8px 12px;margin:0 -12px 10px;display:flex;align-items:center;gap:10px}
 .hdr .hi{font-size:13px;color:var(--gold);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hdr .hi-d{margin-right:6px;vertical-align:middle}.hdr .hi-m{display:none}.hdr .hl{flex:1;min-width:0}.hdr .hl b{font-family:'Nanum Myeongjo',serif;font-size:17px;display:block}
 .hero{text-align:center}.hero h1{font-size:36px;color:var(--gold);line-height:1.15}.hero p{max-width:40ch;margin:10px auto 0}
@@ -293,6 +295,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 <script src="data/items.js"></script>
 <script src="data/rooms.js"></script>
 <script src="data/changelog.js"></script>
+<script src="data/audio.js"></script>
 <script>
 /* ===== 나락의 유산 B0 전투 프로토타입 — 엔진 (기획서 v2, 4.1~4.8 / 6.8 / 10.2) ===== */
 'use strict';
@@ -1146,7 +1149,7 @@ function vHeader() {
   const inRun = (G.scr === 'run' && !G.b);
   // 로그인 확인용 인사. 넓은 화면은 상단 버튼 옆, 좁은 화면은 제목 줄 오른쪽(버튼 줄이 늘지 않게)
   const hi = G.site && G.acct && !G.acct.anon ? (G.data.name ? esc(G.data.name) + '님, 어서 오세요' : '어서 오세요') : '';
-  return `<header class="hdr"><div class="hl"><b>나락의 유산</b><span class="mini">${sub}</span>${hi ? `<span class="hi hi-m">${hi}</span>` : ''}</div><div class="hr">${hi ? `<span class="hi hi-d">${hi}</span>` : ''}${inRun ? '<button class="sm" data-a="equip">장비와 가방</button>' : ''}<button class="sm" data-a="infotoggle" aria-pressed="${G.infoOn ? 'true' : 'false'}" title="버튼이나 카드에 마우스를 올리면 설명 창이 뜹니다. 휴대폰에서는 길게 누르세요.">설명 창 ${G.infoOn ? '켜짐' : '꺼짐'}</button><button class="sm" data-a="changes">업데이트${G.data.seenVer !== CHANGE_VER ? ' <span class="newdot" aria-label="새 소식">새</span>' : ''}</button><button class="sm" data-a="help" data-k="">도움말</button>${G.scr === 'run' || G.scr === 'scen' ? '' : vAcctBtn()}${G.scr !== 'home' && G.scr !== 'guide' ? '<button class="sm" data-a="home">처음으로</button>' : ''}</div></header>`;
+  return `<header class="hdr"><div class="hl"><b>나락의 유산</b><span class="mini">${sub}</span>${hi ? `<span class="hi hi-m">${hi}</span>` : ''}</div><div class="hr">${hi ? `<span class="hi hi-d">${hi}</span>` : ''}${inRun ? '<button class="sm" data-a="equip">장비와 가방</button>' : ''}<button class="sm" data-a="infotoggle" aria-pressed="${G.infoOn ? 'true' : 'false'}" title="버튼이나 카드에 마우스를 올리면 설명 창이 뜹니다. 휴대폰에서는 길게 누르세요.">설명 창 ${G.infoOn ? '켜짐' : '꺼짐'}</button><button class="sm" data-a="changes">업데이트${G.data.seenVer !== CHANGE_VER ? ' <span class="newdot" aria-label="새 소식">새</span>' : ''}</button><button class="sm" data-a="sndtoggle" aria-pressed="${sndCfg().on ? 'true' : 'false'}" title="${sndCfg().on ? '소리가 켜져 있습니다. 누르면 끕니다' : '소리가 꺼져 있습니다. 누르면 켭니다'}" aria-label="소리 ${sndCfg().on ? '켜짐' : '꺼짐'}">소리</button><button class="sm" data-a="help" data-k="">도움말</button>${G.scr === 'run' || G.scr === 'scen' ? '' : vAcctBtn()}${G.scr !== 'home' && G.scr !== 'guide' ? '<button class="sm" data-a="home">처음으로</button>' : ''}</div></header>`;
 }
 
 /* ---------- 내 상태 한 줄 ---------- */
@@ -1212,6 +1215,7 @@ function vHome() {
   h += `</section>`;
   h += vBoard();
   h += `<section class="card"><h3>마지막 질문</h3><p class="mini">${d.final ? '이미 답했습니다. 다시 답하면 새 답으로 바뀝니다.' : '여러 빌드를 해 본 뒤에 답해 주세요.'}</p><button data-a="final">질문에 답하기</button></section>`;
+  h += vSound();
   h += `<section class="card"><h3>기록${q('record', '기록에 대해')}</h3><p class="mini">끝낸 판 ${d.runs.filter(r => r.endedAt).length}개</p><div class="row"><button data-a="code">기록 보내기 코드</button><button data-a="dl">기록 파일 받기</button>${G.owner ? '<button class="gold" data-a="dash">결과 보기</button>' : G.site ? '<button data-a="admin">관리자</button>' : ''}</div>${G.site && G.conn === 'ok' ? '<p class="mini">기록은 이 사이트의 저장소에 자동으로 모입니다.</p>' : ''}</section>`;
   if (G.site) h += '<p class="mini"><a href="../privacy.html" target="_blank" rel="noopener">개인정보처리방침</a></p>';
   return h;
@@ -2571,8 +2575,43 @@ function vDash() {
 
 /* ---------- 전체 렌더 ---------- */
 const CLS_COLOR = { berserker: '#b3402a', hunter: '#3f7d3a', arcanist: '#3f5fb3', templar: '#a0692a', assassin: '#4f7a2a', warlock: '#6b3a8a', priest: '#c49a1f', scar: '#8e2f5f' };
+/* ===== 소리: 화면에 맞는 음악, 효과음, 켜기·끄기와 음량 =====
+   브라우저는 사람이 누르거나 키를 입력하기 전에는 소리를 내지 못하게 한다. 첫 입력에서 시작한다.
+   음악은 미리 내려받지 않고(preload none) 듣는 만큼만 받는다. */
+const SND = { el: null, cur: '', want: '', unlocked: false, fadeT: 0 };
+function sndCfg() { const a = (G.data && G.data.audio) || {}; return { on: a.on !== false, music: a.music == null ? 0.45 : a.music, sfx: a.sfx == null ? 0.7 : a.sfx }; }
+function musicFor() {
+  if (G.scr === 'run' && G.b && G.b.ctx && G.b.ctx.boss) return 'ch1_boss';
+  if (G.scr === 'run' || G.scr === 'scen' || G.scr === 'dead') return 'ch1_dungeon';
+  if (G.scr === 'shop') return 'shop';
+  return 'title';
+}
+function sndSync() {
+  if (typeof Audio === 'undefined') return;
+  const c = sndCfg(); SND.want = c.on ? musicFor() : '';
+  if (!SND.unlocked) return;
+  if (!SND.el) { SND.el = new Audio(); SND.el.loop = true; SND.el.preload = 'none'; }
+  const el = SND.el;
+  if (SND.want === SND.cur) { el.volume = c.music; if (SND.cur && el.paused) el.play().catch(() => { }); return; }
+  clearInterval(SND.fadeT);
+  const next = SND.want;
+  const start = () => { SND.cur = next; if (!next) { el.pause(); return; } el.src = MUSIC[next].src; el.volume = 0; el.play().catch(() => { }); let v = 0; SND.fadeT = setInterval(() => { v = Math.min(c.music, v + c.music / 10); el.volume = v; if (v >= c.music) clearInterval(SND.fadeT); }, 60); };
+  if (!SND.cur || el.paused) { start(); return; }
+  let v = el.volume; SND.fadeT = setInterval(() => { v = Math.max(0, v - Math.max(0.02, c.music / 8)); el.volume = v; if (v <= 0) { clearInterval(SND.fadeT); start(); } }, 60);
+}
+function sfx(k) {
+  const c = sndCfg(); if (!c.on || !SND.unlocked || typeof Audio === 'undefined' || !SFX[k]) return;
+  try { const a = new Audio(SFX[k].src); a.volume = c.sfx; a.play().catch(() => { }); } catch (e) { }
+}
+function sndUnlock() { if (SND.unlocked) return; SND.unlocked = true; sndSync(); }
+function sndSet(patch) { G.data.audio = Object.assign({}, G.data.audio || {}, patch); saveLocal(); sndSync(); }
+function vSound() {
+  const c = sndCfg();
+  return `<section class="card"><h3>소리</h3><p class="mini">음악은 화면에 따라 바뀝니다. 상단의 음악 버튼으로 끄고 켤 수 있습니다.</p><div class="row snd"><label for="volm">음악 음량</label><input id="volm" type="range" min="0" max="100" step="5" value="${Math.round(c.music * 100)}"><label for="vols">효과음 음량</label><input id="vols" type="range" min="0" max="100" step="5" value="${Math.round(c.sfx * 100)}"><button class="sm" data-a="sfxtest">효과음 들어 보기</button></div></section>`;
+}
 function render() {
   if (typeof document === 'undefined') return;
+  sndSync();
   { const bd = (G.b && G.b.p && G.b.p.build) || (G.run && G.run.build) || ''; document.documentElement.style.setProperty('--cls', CLS_COLOR[bd] || 'transparent'); }
   const root = document.getElementById('root');
   let main = '';
@@ -2661,6 +2700,8 @@ function onClick(ev) {
     case 'login': socialLogin(el.dataset.k); break;
     case 'loginswitch': socialLogin(el.dataset.k, true); break;
     case 'loginno': G.acct.conflict = ''; render(); break;
+    case 'sndtoggle': sndSet({ on: !sndCfg().on }); render(); break;
+    case 'sfxtest': sfx('coin'); break;
     case 'logout': if (confirm('로그아웃하면 이 기기는 새 익명 계정으로 돌아갑니다. 지금까지의 기록은 구글 계정에 남습니다. 로그아웃할까요?')) socialLogout(); break;
     case 'namesave': { G.data.name = (val('pname') || '').trim().slice(0, 16); saveLocal(); toast('이름을 저장했습니다'); pushName(); break; }
     case 'boardre': G.board = null; render(); break;
@@ -2701,6 +2742,9 @@ function onKey(ev) {
 if (typeof document !== 'undefined') {
   G.data = loadLocal();
   if (!G.data.seenGuide) { G.scr = 'guide'; G.guideI = 0; }
+  document.addEventListener('pointerdown', sndUnlock, { once: false });
+  document.addEventListener('keydown', sndUnlock);
+  document.addEventListener('input', ev => { const id = ev.target && ev.target.id; if (id === 'volm') sndSet({ music: +ev.target.value / 100 }); else if (id === 'vols') sndSet({ sfx: +ev.target.value / 100 }); });
   document.addEventListener('click', onClick);
   document.addEventListener('keydown', onKey);
   document.addEventListener('change', ev => { if (ev.target && ev.target.id === 'pace') { G.pace = ev.target.value; G.data.pace = G.pace; saveLocal(); if (G.stepResolve && G.pace !== 'step') { const r = G.stepResolve; G.stepResolve = null; r(); } } });
