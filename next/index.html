@@ -439,29 +439,46 @@ function genSkill(b, act, tgt) {
   payMana(b, act.mana);
   let cost = 0;
   if (act.hpCost) { cost = p.hpMax * act.hpCost * hpCostMul(p); p.hp -= cost; logp(b, 'bad', act.n + '의 값으로 생명력 ' + r1(cost)); if (p.hp <= 0) { checkEnd(b); return; } }
-  const targets = act.type === 'aoe' ? alive(b).slice() : act.type === 'front' ? alive(b).filter(e => e.row === 'front') : act.type === 'self' ? [] : (tgt ? [tgt] : []);
+  let targets = act.type === 'aoe' ? alive(b).slice() : act.type === 'front' ? alive(b).filter(e => e.row === 'front') : act.type === 'self' ? [] : (tgt ? [tgt] : []);
+  if (fx.harvest) { targets = targets.filter(e => e.s.weak || e.s.plague); if (!targets.length) logp(b, 'sys', '거둘 혼이 없다. 약화나 역병에 걸린 적이 없다'); }
+  let spent = 0; if (fx.wardSpend) { spent = (p.ward || 0) * fx.wardSpend; p.ward = Math.max(0, (p.ward || 0) - spent); if (spent > 0) logp(b, 'good', '보호막 ' + r1(spent) + '을(를) 태운다'); else logp(b, 'sys', '태울 보호막이 없다'); }
+  if (fx.brace) { p.brace = 1; logp(b, 'good', '살갗이 쇠처럼 굳는다. 다음 행동까지 받는 피해 −35%'); }
   let tot = 0; const scarUse = fx.scarAll ? p.scar : 0;
   for (const e of targets) {
+    const many = act.type === 'aoe' || act.type === 'front' || act.aoe; const sn = n => many ? aoeN(n) : n; // 여럿에게 거는 상태이상은 절반
+    if (fx.plague) addS(b, e, 'plague', sn(fx.plague)); // 저주로 쓰러뜨려도 역병이 옮도록 피해보다 먼저
     let base = act.dmg || 0;
     if (fx.poisonBonus && e.s.poison) base += e.s.poison.stacks;
     if (fx.weakDouble && e.s.weak) base *= 2;
     if (fx.scarAll) base = scarUse * fx.scarAll;
-    if (base > 0) tot += hurtEnemy(b, e, outDmg(b, base, {}), { single: act.type === 'melee' || act.type === 'ranged' ? 1 : 0, aoe: act.aoe ? 1 : 0, melee: act.melee ? 1 : 0, fire: fx.ignite ? 1 : 0, label: act.n });
+    if (fx.wardSpend) base += spent * fx.wardMul;
+    if (fx.grudge) base += (p.tookLast || 0) * fx.grudge;
+    if (fx.execute && e.hp <= e.hpMax * fx.execute) { base *= fx.execMul; logp(b, 'crit', e.n + '의 숨통을 끊으러 든다'); }
+    if (fx.radiance && e.s.smite) { base *= 2; delete e.s.smite; }
+    let dealt = 0;
+    if (base > 0) dealt = hurtEnemy(b, e, outDmg(b, base, {}), { single: act.type === 'melee' || act.type === 'ranged' ? 1 : 0, aoe: act.aoe ? 1 : 0, melee: act.melee ? 1 : 0, fire: fx.ignite ? 1 : 0, label: act.n }); tot += dealt;
+    if (fx.harvest && dealt > 0) { const hl = p.hpMax * fx.harvest * healMul(p); p.hp = Math.min(p.hpMax, p.hp + hl); smiteHeal(b, hl); }
+    if (fx.transfuse && dealt > 0 && e.s.bond) { const hl = dealt * fx.transfuse * healMul(p); p.hp = Math.min(p.hpMax, p.hp + hl); logp(b, 'good', '이어진 피를 거두어 생명력 +' + r1(hl)); }
     if (!e.alive) continue;
-    const many = act.type === 'aoe' || act.type === 'front' || act.aoe; const sn = n => many ? aoeN(n) : n; // 여럿에게 거는 상태이상은 절반
     if (fx.poison) addPoison(b, e, sn(fx.poison), 1);
     if (fx.ignite) addS(b, e, 'ignite', sn(3));
     if (fx.chill) addS(b, e, 'chill', sn(2), fx.chill, 5);
     if (fx.weak) addS(b, e, 'weak', sn(2));
     if (fx.vuln) addS(b, e, 'vuln', sn(2));
     if (fx.brk) addBreak(b, e, fx.brk);
+    if (fx.trap) { e.s.trap = { stacks: outDmg(b, fx.trap, {}), brk: fx.trapBrk || 0, until: b.t + 4, dur: 4 }; }
+    if (fx.rift) { e.s.rift = { stacks: outDmg(b, fx.rift, {}), brk: fx.riftBrk || 0, until: b.t + 2, dur: 2 }; }
+    if (fx.echo) { e.s.echo = { stacks: outDmg(b, act.dmg, {}), until: b.t + 1.5, dur: 1.5 }; }
+    if (fx.bleed) addS(b, e, 'bleed', sn(fx.bleed));
+    if (fx.smite) addS(b, e, 'smite', sn(fx.smite));
+    if (fx.bond) addS(b, e, 'bond', sn(fx.bond));
   }
   if (fx.scarAll) { p.scar = 0; if (scarUse < 1) logp(b, 'sys', '태울 상흔이 없다'); }
   if (fx.allWeak) { for (const e of alive(b)) addS(b, e, 'weak', aoeN(2)); logp(b, 'good', '포효에 적들이 움츠러든다. 모두 약화'); }
   if (fx.rage) addRage(b, fx.rage);
   if (fx.ward) { p.ward = Math.min(40, (p.ward || 0) + fx.ward); logp(b, 'good', '보호막 ' + Math.round(p.ward)); }
   if (fx.protect) addS(b, p, 'protect', 3);
-  if (fx.healPct) { const hl = p.hpMax * fx.healPct * healMul(p); p.hp = Math.min(p.hpMax, p.hp + hl); logp(b, 'good', act.n + '. 생명력 +' + r1(hl)); }
+  if (fx.healPct) { const hl = p.hpMax * fx.healPct * healMul(p); p.hp = Math.min(p.hpMax, p.hp + hl); logp(b, 'good', act.n + '. 생명력 +' + r1(hl)); smiteHeal(b, hl); }
   if (fx.lifesteal && tot > 0) { p.hp = Math.min(p.hpMax, p.hp + tot * fx.lifesteal * healMul(p)); logp(b, 'good', '빼앗은 기운으로 생명력 +' + r1(tot * fx.lifesteal)); }
   if (fx.cleanseOne) { for (const k of ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln', 'brand']) if (p.s[k]) { cleanse(b, [k], false); break; } }
   if (fx.cleanseAll) { const n = cleanse(b, ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln', 'brand'], false); if (n && fx.wardPer) { p.ward = Math.min(40, (p.ward || 0) + n * fx.wardPer); logp(b, 'good', '속죄의 빛이 막이 된다. 보호막 ' + Math.round(p.ward)); } }
@@ -835,6 +852,7 @@ function tickOnce(b) {
     const dm = u === p ? 1 : dotMul(p);
     if (u.s.poison) { const n = u.s.poison.stacks; dmgDot(b, u, n * dm, '중독'); if (u.s.poison) { u.s.poison.stacks = n - 1; if (u.s.poison.stacks <= 0) delete u.s.poison; } }
     if (u.s.bleed) dmgDot(b, u, 2 * dm, '출혈');
+    if (u.s.plague) dmgDot(b, u, 1 * dm, '역병');
     if (u.s.ignite) dmgDot(b, u, 2 * dm * (u.role === 'boss' && b.season === 1 ? 1.5 : 1), '점화', true);
   }
   expireAll(b);
@@ -842,7 +860,10 @@ function tickOnce(b) {
 }
 /* 끝날 시각이 지난 상태는 바로 지운다 (지속 피해보다 먼저) */
 function expireAll(b) {
-  for (const u of [b.p].concat(b.en)) for (const k of Object.keys(u.s)) if (u.s[k].until <= b.t + 1e-9) delete u.s[k];
+  for (const u of [b.p].concat(b.en)) for (const k of Object.keys(u.s)) if (u.s[k].until <= b.t + 1e-9) {
+    const x = u.s[k]; delete u.s[k];
+    if ((k === 'rift' || k === 'echo') && u !== b.p && u.alive && !b.over) { hurtEnemy(b, u, x.stacks, { label: k === 'rift' ? '시간 균열' : '메아리 섬광', aoe: k === 'echo' ? 1 : 0 }); if (k === 'rift' && u.alive) addBreak(b, u, x.brk || 0); }
+  }
 }
 function advanceTo(b, t) {
   while (b.tick + 1 <= t + 1e-9 && !b.over) { b.t = b.tick + 1; tickOnce(b); }
@@ -870,6 +891,7 @@ function hurtPlayer(b, raw, o) {
   if (p.guard) d *= p.eq.gloves === 'ragechain' ? 0.6 : 0.5;
   if (p.ward > 0 && p.eq.armor === 'wardcrest') d *= 0.85;
   if (p.retal) d *= 0.7;
+  if (p.brace) d *= 0.65;
   if (o.charged && hasIt(p, 'fury')) d *= 1.1;
   if (p.st <= 0 || p.exhaust) d *= 1.2;
   if (p.s.protect) d *= 0.8;
@@ -889,6 +911,9 @@ function hurtPlayer(b, raw, o) {
   if (d > 0 && o.charged && hasIt(p, 'fury')) { p.furyNext = 1; logp(b, 'good', '분노의 반지가 달아오른다. 다음 공격 +10%'); }
   if (p.guard && p.eq.armor === 'thorns' && o.src && o.src.alive && !o.dot && o.src.row === 'front') hurtEnemy(b, o.src, 2, { label: '가시 갑옷' });
   if (p.retal && d > 0 && o.src && o.src.alive && !o.dot) hurtEnemy(b, o.src, d, { label: '피의 응답' });
+  if (d > 0) p.tookSince = (p.tookSince || 0) + d;
+  if (p.brace && !o.dot && o.src && o.src.alive && o.src.row === 'front') { hurtEnemy(b, o.src, 4, { label: '강철 살갗의 반격' }); if (p.build === 'berserker' && d > 0) addRage(b, 1); }
+  if (d > 0 && !o.dot) for (const e of alive(b)) if (e.s.bond) hurtEnemy(b, e, d * 0.5, { label: '피의 연결' });
   if (d > 0 && scarRate(p) > 0) p.scar = Math.min(p.hpMax * 0.5, p.scar + d * scarRate(p));
   if (p.build === 'berserker' && d > 0) addRage(b, 1);
   if (!o.silent && wardAll) logp(b, 'good', (o.label || '공격') + '. 보호막이 모두 받아냈다');
@@ -937,7 +962,7 @@ function addRage(b, n) {
   p.rage += n;
   if (p.rage >= 10) { p.rage = 0; addS(b, p, 'rage', 3); logp(b, 'crit', '분노가 넘친다. 격노'); }
 }
-const ST_COST = { crush: 18, cleave: 18, reckless: 12, shieldbash: 15, aimshot: 15, volley: 20, weakspot: 15, snare: 15, viper: 15, dagger: 12, shadowstrike: 15, scarcut: 12 };
+const ST_COST = { grudge: 15, judgment: 14, lacerate: 12, crush: 18, cleave: 18, reckless: 12, shieldbash: 15, aimshot: 15, volley: 20, weakspot: 15, snare: 15, viper: 15, dagger: 12, shadowstrike: 15, scarcut: 12 };
 function skillRes(s) { if (ST_COST[s.id] != null) return 'st'; if (!s.mana && s.hpCost) return 'hp'; return 'mp'; }
 function resLabel(s, mana) { const r = skillRes(s); if (r === 'st') return '스태미나 ' + ST_COST[s.id]; if (r === 'hp') return '생명력 ' + Math.round(s.hpCost * 100) + '%'; return '마나 ' + (mana != null ? mana : s.mana); }
 const hpCostMul = p => p.eq && p.eq.flask === 'bloodoil' ? 0.7 : 1;
@@ -956,6 +981,7 @@ function killEnemy(b, e) {
   b.xp = (b.xp || 0) + xpOf(e);
   if (e.bell) { const rg = b.en.find(x => x.foe === 'bellringer' && x.alive); if (rg) { rg.stun = 1; logp(b, 'crit', '큰 종이 깨진다. ' + rg.n + '이(가) 비틀거린다'); } codexHit(b, 'bellringer', 'bellbreak'); }
   if (e.foe === 'pilgrim') { b.rotted = 1; logp(b, 'bad', e.n + '의 몸이 무너지며 썩은 냄새가 퍼진다'); codexHit(b, 'pilgrim', 'rot'); }
+  if (e.s.plague) { let n = 0; for (const x of alive(b)) if (x.role !== 'root') { addS(b, x, 'weak', aoeN(2)); addS(b, x, 'plague', 4); n++; } if (n) logp(b, 'good', '역병이 남은 적들에게 옮는다'); }
   fxRun(b.p, 'onKill', b, b.p, e);
   b.rec.push({ k: 'kill', t: r1(b.t), role: e.role });
 }
@@ -1031,6 +1057,7 @@ function enemyHitEst(b, e) {
   return d;
 }
 function enemyAct(b, e) {
+  if (e.s.trap) { const tr = e.s.trap; delete e.s.trap; hurtEnemy(b, e, tr.stacks, { label: '덫' }); if (e.alive) addBreak(b, e, tr.brk || 0); logp(b, 'good', e.n + '이(가) 덫을 밟는다'); if (!e.alive || b.over) return; }
   if (e.stun > 0) { e.stun--; logp(b, 'sys', e.n + '이(가) 비틀거린다. 행동을 놓친다'); e.next = b.t + 1 / eSpeed(b, e); e.acts++; return; }
   const i = e.intent || { k: 'attack' }; const d = enemyHitEst(b, e);
   b.rec.push({ k: 'eact', t: r1(b.t), role: e.role, i: i.k });
@@ -1197,7 +1224,8 @@ function playerAct(b, id, tgtId) {
     const g = guardOf(b, tgt);
     if (g) { logp(b, 'sys', g.n + '이(가) 방패를 들어 ' + tgt.n + '을(를) 가로막는다'); b.rec.push({ k: 'redirect', t: r1(b.t), from: tgt.role, to: g.role }); tgt = g; }
   }
-  p.guard = 0; p.dodge = 0;  // 준비는 자기 다음 행동까지
+  p.guard = 0; p.dodge = 0; p.brace = 0;  // 준비는 자기 다음 행동까지
+  p.tookLast = p.tookSince || 0; p.tookSince = 0; // 앙갚음: 지난 행동 뒤로 받은 피해
   if (p.stun > 0) { p.stun--; logp(b, 'bad', '몸이 말을 듣지 않는다. 행동을 놓친다'); finishPlayer(b, 1); return; }
   let time = act.time;
   if (p.vanguard && !act.self && !['guard', 'dodge', 'flaskL', 'flaskM', 'flee'].includes(id)) { p.vanguard = 0; time *= 0.5; if (tgt) b.vanguardTgt = tgt; logp(b, 'crit', '깃발을 앞세워 먼저 뛰어든다'); }
@@ -1228,7 +1256,7 @@ function playerAct(b, id, tgtId) {
       else if (p.build === 'templar') { p.ward = Math.min(40, (p.ward || 0) + 12); addS(b, p, 'protect', 2); logp(b, 'good', '서약의 빛이 몸을 감싼다. 보호막 ' + Math.round(p.ward)); }
       else if (p.build === 'assassin') { const n0 = tgt.s.poison.stacks; addPoison(b, tgt, Math.ceil(n0 * 0.5)); logp(b, 'crit', '독이 ' + tgt.n + '의 핏줄 깊이 스민다. 중독 ' + n0 + ' → ' + tgt.s.poison.stacks); }
       else if (p.build === 'warlock') { const c = p.hpMax * 0.1 * hpCostMul(p); p.hp -= c; p.mp = Math.min(p.mpMax, p.mp + 20); logp(b, 'bad', '피를 바쳐 마나를 얻는다. 생명력 ' + r1(c) + ', 마나 +20'); checkEnd(b); }
-      else if (p.build === 'priest') { for (const k of ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln', 'brand']) if (p.s[k]) { cleanse(b, [k], false); break; } const hl = p.hpMax * 0.12 * healMul(p); p.hp = Math.min(p.hpMax, p.hp + hl); logp(b, 'good', '짧은 기도. 생명력 +' + r1(hl)); }
+      else if (p.build === 'priest') { for (const k of ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln', 'brand']) if (p.s[k]) { cleanse(b, [k], false); break; } const hl = p.hpMax * 0.12 * healMul(p); p.hp = Math.min(p.hpMax, p.hp + hl); smiteHeal(b, hl); logp(b, 'good', '짧은 기도. 생명력 +' + r1(hl)); }
       else if (p.build === 'scar') { p.retal = 1; logp(b, 'crit', '상처마다 피의 응답을 걸어 둔다'); }
       break;
     }
@@ -1277,7 +1305,7 @@ function playerAct(b, id, tgtId) {
     case 'flaskL': {
       p.flask.life--; const heal = p.hpMax * flaskHealFrac(p) * healMul(p);
       if (p.eq.flask === 'boilflask') { for (const e of alive(b).slice()) hurtEnemy(b, e, outDmg(b, 5, {}), { aoe: 1, fire: 1, label: '끓는 플라스크' }); }
-      p.hp = Math.min(p.hpMax, p.hp + heal);
+      p.hp = Math.min(p.hpMax, p.hp + heal); smiteHeal(b, heal);
       const before = { poison: st(p, 'poison'), bleed: st(p, 'bleed'), ignite: st(p, 'ignite'), chill: st(p, 'chill') };
       const n = cleanse(b, ['poison', 'bleed', 'ignite', 'chill'].concat(fxVal(p, 'flaskCleanse', [], (a, v) => a.concat(v))), true); fxRun(p, 'onFlask', b, p, 'life');
       logp(b, 'good', '플라스크를 비운다. 생명력 +' + r1(heal) + (n ? ', 디버프 ' + n + ' 지움' : ''));
@@ -1308,6 +1336,8 @@ function playerAct(b, id, tgtId) {
   if (p.hp <= 0) checkEnd(b);
   finishPlayer(b, time);
 }
+/* 단죄: 내가 생명력을 회복하면 단죄된 적 모두가 회복량의 60%만큼 피해 */
+function smiteHeal(b, hl) { if (!(hl > 0) || b.over) return; for (const e of alive(b)) if (e.s.smite) hurtEnemy(b, e, hl * 0.6, { label: '단죄' }); }
 function healMul(p) { return p.eq.amulet === 'bloodpact' ? 0.85 : 1; }
 function cleanse(b, keys, isFlask) {
   const p = b.p; let n = 0;
@@ -1428,7 +1458,7 @@ function scenBattle(build, sc) {
   return b;
 }
 function endBattleCarry(p) {
-  p.bt = {}; p.rcN = 0; p.mk = null; p.fxSpell = 0; p.fxScar = 0; p.fxPen = 0; p.fxHunt = null; p.fxHeavyDisc = 0; p.fxImmune = 0; p.fxQuick = 0; p.fxQuickNext = 0; p.fxCond = 0; p.fxFlaskDmg = 0;
+  p.bt = {}; p.rcN = 0; p.mk = null; p.fxSpell = 0; p.fxScar = 0; p.fxPen = 0; p.fxHunt = null; p.fxHeavyDisc = 0; p.fxImmune = 0; p.fxQuick = 0; p.fxQuickNext = 0; p.fxCond = 0; p.fxFlaskDmg = 0; p.brace = 0; p.tookSince = 0; p.tookLast = 0;
   p.ward = 0; p.focus = null; p.lastSkillId = null; p.echoN = 0; p.furyNext = 0; p.retal = 0; p.sigCd = 0; p.focusRes = 0;
   // 방 사이 이월 (4.2): 생명력·마나·플라스크 유지, 스태미나는 50%까지 회복, 전투 상태 해제
   p.st = Math.max(p.st, 50); p.exhaust = 0; p.s = {}; p.guard = 0; p.dodge = 0; p.stun = 0; p.counter = 0; p.reflux = null; p.rage = 0;
@@ -1444,7 +1474,7 @@ const HELP = [
     '쓰러지면 그 캐릭터는 장비·골드·레벨을 모두 잃고 끝납니다. 1층부터 쉽지 않으니, 적의 예고를 읽고 자원을 아껴 쓰세요.',
     '위쪽 메뉴에서 장비, 보스 도감, 랭킹, 기록, 도움말, 설정을 언제든 열 수 있습니다.'] },
   { k: 'build', n: '직업과 빌드', t: [
-    '직업은 여덟 가지입니다. 직업마다 고유 규칙, 직업 기술(스킬 칸과 따로 늘 쓸 수 있는 기술), 전용 스킬 셋이 있습니다.',
+    '직업은 여덟 가지입니다. 직업마다 고유 규칙, 직업 기술(스킬 칸과 따로 늘 쓸 수 있는 기술), 전용 스킬 다섯이 있습니다. 전용 스킬 가운데 둘은 그 직업의 주된 방향과 살짝 다른 갈래입니다.',
     '캐릭터를 만들 때 전용 스킬과 공용 스킬 가운데 세 칸을 고릅니다. 한 번 정하면 그 캐릭터가 끝날 때까지 바꿀 수 없습니다.',
     '능력치는 힘, 민첩, 지능 셋입니다. 무엇이 바뀌는지는 도움말 "능력치"에 있습니다.',
     '직업 고르기 화면에서 직업을 누르면 규칙과 스킬이 아래에 보입니다.'] },
@@ -1505,7 +1535,8 @@ const HELP = [
     '초록 테두리는 좋은 상태, 빨강은 나쁜 상태입니다. 굵은 숫자는 끝나기까지 남은 내 차례 수, ×숫자는 중첩 수입니다(중독은 옆 숫자가 곧 수치).',
     '중독: 하나의 수치. 시간이 흐를 때마다 그 수치만큼 피해를 준 뒤 1 줄어듭니다(5 → 4 → 3…). 출혈: 시간마다 2 피해, 행동할 때 한 번 더. 점화: 시간마다 2 화염 피해. 냉각: 차례가 덜 자주 옵니다(속도 −30%).',
     '약화: 주는 피해 −25%. 취약: 받는 피해 +25%. 보호: 받는 피해 −20%. 격노: 피해 +40%, 속도 +20%, 받는 피해 +15%. 붕괴: 받는 피해 +30%.',
-    '약화와 격노, 취약과 보호는 서로 지웁니다.'] },
+    '약화와 격노, 취약과 보호는 서로 지웁니다.',
+    '덫, 균열, 메아리, 역병, 단죄, 피의 연결은 직업 전용 스킬이 적에게 거는 표시입니다. 적 카드의 표시에 마우스를 올리면(휴대폰은 길게 누르면) 무엇이 일어나는지 뜹니다.'] },
   { k: 'item', n: '장비', t: [
     '장비 칸은 일곱입니다: 무기, 갑옷, 장갑, 목걸이, 반지 둘, 플라스크. 무기는 무기 피해, 갑옷은 생명력, 플라스크는 생명력 플라스크 회복량을 정합니다.',
     '등급은 평범(회색), 고급(파랑), 희귀(금색)입니다. 등급이 높을수록 기본 수치가 더 오르고, 희귀는 행동을 바꾸는 효과와 빨간 글씨의 대가를 가집니다. 같은 장비도 얻을 때마다 수치가 조금씩 다릅니다.',
@@ -2047,6 +2078,12 @@ function vOrder(b) {
 
 /* ---------- 설명 창 내용 ---------- */
 const SDESC = {
+  trap: '발밑의 덫. 다음에 움직이면 덫을 밟아 피해와 붕괴를 입는다.',
+  rift: '시간 균열. 시간이 다 되면 터져 큰 피해와 붕괴를 준다.',
+  echo: '메아리. 곧 같은 광역 피해가 한 번 더 울린다.',
+  plague: '역병. 시간마다 피해 1. 쓰러지면 남은 적 모두에게 약화와 역병이 옮는다.',
+  smite: '단죄. 내가 생명력을 회복하면 회복량의 60%만큼 피해를 입는다.',
+  bond: '피의 연결. 내가 받는 직접 피해의 절반을 이 적도 받는다.',
   brand: '수도원장이 읽은 죄. 쌓일수록 수도원장의 강타가 더 아프다. 최대 3.',
   poison: '하나의 수치. 시간이 흐를 때마다 그 수치만큼 피해를 준 뒤 1 줄어듭니다. 걸 때마다 1씩 오르고 상한은 없습니다.', bleed: '시간마다 피해 2, 그리고 행동할 때마다 한 번 더 피해 2.', ignite: '시간마다 화염 피해 2.',
   chill: '속도 -30%. 차례가 덜 자주 옵니다.', weak: '주는 피해 -25%.', vuln: '받는 피해 +25%.', protect: '받는 피해 -20%.',
@@ -2345,7 +2382,7 @@ const esc = s => fixJosa(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&
 const SKEY = 'nrk_06_v1';     // B0.5(nrk_b0_v1)와 같은 사이트에 있어도 브라우저 기록이 섞이지 않게
 /* 저장소 경로: 0.6 기록은 B0.5 결과 보기와 섞이지 않게 runs6·scen6·survey6에, 기록판은 board/<id> 문서의 best6 칸에 둔다 */
 const COL = { runs: 'runs6', scen: 'scen6', survey: 'survey6', best: 'best6' };
-const SNAMES = { brand: '낙인', poison: '중독', bleed: '출혈', ignite: '점화', chill: '냉각', weak: '약화', vuln: '취약', protect: '보호', rage: '격노', broken: '붕괴' };
+const SNAMES = { trap: '덫', rift: '균열', echo: '메아리', plague: '역병', smite: '단죄', bond: '피의 연결', brand: '낙인', poison: '중독', bleed: '출혈', ignite: '점화', chill: '냉각', weak: '약화', vuln: '취약', protect: '보호', rage: '격노', broken: '붕괴' };
 const BUFFS = { protect: 1, rage: 1 };
 const REASONS = [['need', '필요해서'], ['curious', '재미있어 보여서'], ['other', '기타']];
 
