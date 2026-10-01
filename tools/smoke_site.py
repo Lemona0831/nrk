@@ -1,10 +1,10 @@
-# 사이트 흐름 점검: 가짜 Supabase로 지인 접속, 판 기록 저장, 남의 경로 쓰기 거절, 관리자 결과 보기, 기록판을 확인한다.
+# 사이트 흐름 점검 (0.6 개발 중에는 next/): 가짜 Supabase로 지인 접속, 판 기록 저장, 남의 경로 쓰기 거절, 관리자 결과 보기, 기록판을 확인한다.
 # 실행: pip install playwright && playwright install chromium && python tools/smoke_site.py
 from playwright.sync_api import sync_playwright
 import os
 mock=open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mock_sb.js'), encoding='utf-8').read()
 import os
-SITE='file://' + os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'index.html')).replace(os.sep, '/')
+SITE='file://' + os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'next', 'index.html')).replace(os.sep, '/')
 with sync_playwright() as p:
     br=p.chromium.launch(); errs=[]
     ctx=br.new_context(viewport={'width':390,'height':844})
@@ -31,7 +31,7 @@ with sync_playwright() as p:
     pg.evaluate("()=>{G.run.result='win'; G.scr='survey'; G.b=null; G.sheet=null; render();}")
     pg.check('input[name=fun][value="4"]'); pg.fill('#isnote','사이트 시험'); pg.click('button[data-a=survey]'); pg.wait_for_timeout(1500)
     st=pg.evaluate("()=>{const s=JSON.parse(localStorage.getItem('MOCKSB')); return Object.keys(s.docs)}")
-    print('저장소에 쌓인 문서:', len(st), [k.split('/')[0]+'/…/'+k.split('/')[-1] for k in st][:8])
+    print('저장소에 쌓인 문서:', len(st), [k.split('/')[0]+'/…'+('/'+k.split('/')[2] if k.count('/')>1 else '')+'/'+k.split('/')[-1][:6] for k in st][:8])
     print('판 끝난 뒤 기록 보내기 창(사이트면 안 떠야 함):', pg.inner_text('#shtitle') if pg.query_selector('#shtitle') else '안 뜸')
     # 남의 경로에 쓰기 시도 → 거절
     r=pg.evaluate("async()=>{ try { await G.db.doc('playtest/someone-else/runs/x').set({a:1}); return '써짐'; } catch(e) { return '거절: '+e.message; } }")

@@ -2,11 +2,20 @@
 
 텍스트형 다크 판타지 턴제 ARPG의 시험판(B0.5)이다. 지인과 함께 노는 개인 프로젝트이며, 지인 테스트 기록을 읽고 고치는 일을 반복한다. 사이트는 GitHub Pages(https://lemona0831.github.io/nrk/), 기록은 Supabase에 모인다.
 
+## 0.6 개발 중 (지금)
+
+- 0.6은 `next/`에서 만든다. 지인 주소(루트 index.html)는 B0.5 그대로 두고 고치지 않는다. 미리보기: https://lemona0831.github.io/nrk/next/
+- 계획과 진행 상황: docs/0.6a-구현계획.md. 설계: 기획서 11절. 보스·강적 상세는 저장소 밖 `../nrk-private/보스.md`(공개 저장소에 넣지 말 것)
+- `next/data/*.js`는 값(직업, 적, 아이템, 방, 업데이트 내역), `next/index.html`은 엔진과 화면이다. data 파일은 index.html보다 먼저 읽힌다
+- next/는 B0.5와 기록이 섞이지 않게 브라우저 저장 키(nrk_06_v1), 저장소 경로(runs6·scen6·survey6), 기록판 칸(best6)을 따로 쓴다(`COL`)
+- 테스트 도구는 next/를 읽는다. 0.6a가 끝나면 next/를 루트로 옮긴다(계획 단계 12)
+
 ## 파일
 
 | 파일 | 내용 |
 | --- | --- |
-| index.html | 게임 전체(엔진, 텍스트, 화면, 저장). 한 파일이다 |
+| index.html | B0.5 게임 전체(엔진, 텍스트, 화면, 저장). 한 파일이다. 0.6 개발 중에는 고정 |
+| next/ | 0.6 개발판. index.html(엔진·화면) + data/*.js(값) |
 | config.js | Supabase Project URL과 anon(공개) 키. 만든 사람이 직접 관리한다. **고치지 말 것** |
 | tools/ | 자동 테스트. 아래 "테스트" 참고 |
 | docs/작업기록.md | 지금까지의 결정, 현재 수치, 남은 문제 |
