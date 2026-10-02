@@ -276,7 +276,9 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .tsum{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:flex-end;margin:6px 0 8px}.trow{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px}
 .tstart,.tslot{min-height:34px;padding:4px 10px;border-radius:17px;font-size:13px;display:inline-flex;align-items:center;gap:5px}
 .tstart{border-color:var(--gold)}.tstart .tc{color:var(--gold)}.tslot{border:1px dashed var(--line);color:var(--muted)}.tslot.on{border:1px solid var(--gold);color:var(--ink)}
-.tpts{margin-left:auto;font-size:15px}.tpts b{color:var(--gold);font-size:18px}
+.tpts{margin-left:auto;font-size:15px;text-align:right}.tpts b{color:var(--gold);font-size:18px}.tpts small{display:block;font-size:11px;color:var(--muted)}
+.thead2{margin:0 0 6px}.tleg{margin-left:10px;white-space:nowrap}.tleg i{font-style:normal;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border:1px solid var(--line);border-radius:50%;font-size:10.5px;margin:0 3px 0 6px}
+.tlocked{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;padding:7px 10px;border:1px dashed var(--line);border-radius:8px;font-size:12.5px;color:var(--muted)}.tlocked b{color:var(--ink);font-weight:600}
 .tbranch{border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:8px 6px 4px}
 .tbh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;padding:0 4px}.tbh b{color:var(--gold);font-size:16px}.tbh small{flex-basis:100%;color:var(--muted);font-size:12px}.tbp{margin-left:auto;font-size:12px;color:var(--muted)}
 .tcanvas{position:relative;margin-top:4px}.tcanvas svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
@@ -3713,9 +3715,9 @@ function vSheet() {
    쓰는 곳: 캐릭터 만들기의 스킬 단계(mode 'create'), 따로 보는 페이지 'tree'(메뉴·지도). 전투 중에는 보기만 한다 */
 const TIERS2 = ['기본', '중급', '상급', '궁극'];
 const TREE_ROW_H = 92, TREE_TOP = 38;
-function treeLayout(build, br) {
+function treeLayout(build, br, tiers) {
   const all = SKILLS2[build].filter(s => s.b === br && !s.start); const rows = []; const pos = {};
-  TIERS2.forEach((tier, ri) => {
+  (tiers || TIERS2).forEach((tier, ri) => {
     let row = all.filter(s => s.tier === tier);
     if (ri > 0) row = row.map((s, i) => [s, (s.par || []).reduce((a, x) => a + (pos[x] ? pos[x].x : 50), 0) / Math.max(1, (s.par || []).length), i]).sort((a, b) => a[1] - b[1] || a[2] - b[2]).map(x => x[0]); // 부모 위치의 평균으로 줄 세워 선이 덜 꼬이게
     row.forEach((s, i) => { pos[s.id] = { x: (i + 0.5) / row.length * 100, y: ri }; });
@@ -3725,22 +3727,26 @@ function treeLayout(build, br) {
 }
 const treeCanEdit = () => !(G.b && !G.b.over);
 function vTreeBranch(run, br) {
-  const { rows, pos } = treeLayout(run.build, br); const H = TREE_TOP * 2 + TREE_ROW_H * (rows.length - 1) + 14;
+  const ch = run.ch || 1; const T = TREE2[run.build] || {};
+  const all = SKILLS2[run.build].filter(x => x.b === br && !x.start);
+  const tiers = TIERS2.filter(tier => ch >= (TREE_CH[tier] || 1) || all.some(x => x.tier === tier && run.tree.open.includes(x.id))); // 챕터가 안 된 등급은 그리지 않는다(예전 저장본에서 이미 연 칸은 그린다)
+  const { rows, pos } = treeLayout(run.build, br, tiers); const H = TREE_TOP * 2 + TREE_ROW_H * (rows.length - 1) + 14;
   const yp = r => (TREE_TOP + r * TREE_ROW_H) / H * 100; let lines = '', nodes = '';
   for (const row of rows) for (const s of row) for (const pid of (s.par || [])) { const a = pos[pid], c = pos[s.id]; if (a) lines += `<line x1="${a.x}" y1="${yp(a.y)}" x2="${c.x}" y2="${yp(c.y)}"${run.tree.open.includes(pid) ? ' class="lit"' : ''}/>`; }
   for (const row of rows) for (const s of row) {
     const p = pos[s.id]; const vis = treeVis(run, s.id); const open = run.tree.open.includes(s.id); const eq = (run.skills || []).includes(s.id); const can = !open && !treeWhy(run, s.id);
-    const cls = ['tnode', 't-' + vis, open ? 'open' : '', eq ? 'eq' : '', can ? 'can' : '', G.tsel === s.id ? 'sel' : '', s.tier === '궁극' ? 'ult' : '', (!open && (run.ch || 1) < ((TREE_CH || {})[s.tier] || 1)) ? 'chlock' : '', row.length >= 4 ? 'r5' : ''].filter(Boolean).join(' ');
-    const chL = !open && (run.ch || 1) < ((TREE_CH || {})[s.tier] || 1);
-    const glyph = vis === 'hidden' ? (chL ? '🔒' : '?') : eq ? '✓' : open ? '●' : chL ? '🔒' : can ? '+' : s.tier === '궁극' ? '★' : '·';
+    const cls = ['tnode', 't-' + vis, open ? 'open' : '', eq ? 'eq' : '', can ? 'can' : '', G.tsel === s.id ? 'sel' : '', s.tier === '궁극' ? 'ult' : '', row.length >= 4 ? 'r5' : ''].filter(Boolean).join(' ');
+    const glyph = vis === 'hidden' ? '?' : eq ? '✓' : open ? '●' : can ? '+' : s.tier === '궁극' ? '★' : '·';
     nodes += `<button class="${cls}" style="left:${p.x}%;top:${TREE_TOP + p.y * TREE_ROW_H}px" data-a="tsel" data-k="${s.id}" data-info="tn:${s.id}" aria-label="${esc(vis === 'hidden' ? '아직 보이지 않는 칸' : s.n + ', ' + s.tier + (open ? ', 열림' : can ? ', 열 수 있음' : '') + (eq ? ', 끼움' : ''))}"><span class="tc">${glyph}</span><small>${vis === 'hidden' ? '' : esc(s.n)}</small></button>`;
   }
-  const hs = ((TREE2[run.build] || {}).haste || {})[br];
-  // 아래로 몇 칸이 있는지: 등급마다 칸 수와 숨은 칸 수 (처음에는 대부분 "?"라 스킬이 이것뿐인지 헷갈린다. 10월 3일 만든 사람 지적)
-  const all = rows.flat(); const hid = all.filter(x => treeVis(run, x.id) !== 'full').length;
-  const cnt = `<p class="tcount">이 갈래 스킬 <b>${all.length}개</b> · ${rows.map((r, i) => TIERS2[i] + ' ' + r.length).join(' · ')}${hid ? ` · 아직 <b>${hid}칸</b>이 숨어 있습니다(?·★). 칸을 열면 선으로 이어진 아래 칸이 드러납니다.` : ''} 왼쪽 등급 밑 숫자는 그 등급을 열기 전에 이 갈래에 써야 하는 포인트이고, 🔒는 그 챕터에 들어가야 열리는 등급입니다(상급 3챕터, 궁극 5챕터).</p>`;
-  const tl = TIERS2.map((tier, i) => { const c = TREE_CH[tier] || 1; const lk = (run.ch || 1) < c; return `<span class="ttier${lk ? ' lk' : ''}" style="top:${TREE_TOP + i * TREE_ROW_H}px"><b>${tier}</b>${lk ? `<small>${c}챕터~</small>` : TREE_GATE[tier] ? `<small>${TREE_GATE[tier]}점</small>` : ''}</span>`; }).join('');
-  return `<div class="tbranch">${hs ? `<p class="thaste"><b>갈래 규칙</b> ${esc(skHasteLine(hs, br))}</p>` : ''}${cnt}<div class="tcwrap"><div class="ttiers" style="height:${H}px" aria-hidden="true" title="등급. 숫자는 이 갈래에 먼저 써야 하는 포인트">${tl}</div><div class="tcanvas" style="height:${H}px"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${nodes}</div></div></div>`;
+  const hs = (T.haste || {})[br];
+  const shown = rows.flat(); const op = shown.filter(x => run.tree.open.includes(x.id)).length; const hid = shown.filter(x => treeVis(run, x.id) === 'hidden').length;
+  const head = `<div class="thead2">${hs ? `<p class="thaste"><b>갈래 규칙</b> ${esc(SK_HS[hs])} 이 갈래 스킬 대기 −1</p>` : ''}<p class="tcount">스킬 <b>${all.length}칸</b> · 열림 ${op}${hid ? ` · 숨은 칸 ${hid}` : ''}<span class="tleg"><i>+</i>열 수 있음 <i>?</i>앞 칸을 열면 보임</span></p></div>`;
+  const tl = tiers.map((tier, i) => `<span class="ttier" style="top:${TREE_TOP + i * TREE_ROW_H}px"><b>${tier}</b>${TREE_GATE[tier] ? `<small>${TREE_GATE[tier]}점</small>` : ''}</span>`).join('');
+  // 잠긴 등급: 그림 대신 한 줄 (깊이는 보이게: 칸 수, 궁극은 이름)
+  const lockT = TIERS2.filter(tier => !tiers.includes(tier));
+  const foot = lockT.length ? `<div class="tlocked">${lockT.map(tier => { const xs = all.filter(x => x.tier === tier); return `<span>🔒 <b>${TREE_CH[tier]}챕터부터</b> ${tier} ${xs.length}칸${tier === '궁극' ? ' · ' + xs.map(x => esc(x.n)).join(', ') : ''}</span>`; }).join('')}</div>` : '';
+  return `<div class="tbranch">${head}<div class="tcwrap"><div class="ttiers" style="height:${H}px" aria-hidden="true" title="등급. 숫자는 이 갈래에 먼저 써야 하는 포인트">${tl}</div><div class="tcanvas" style="height:${H}px"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${nodes}</div></div>${foot}</div>`;
 }
 function vTreeDetail(run, id, preview) {
   const s = id && SK2[id]; if (!s) return `<p class="mini">칸에 마우스를 올리면 여기에 설명이 나옵니다. 누르면 그 칸을 골라 열거나 끼웁니다.</p>`;
@@ -3759,7 +3765,7 @@ function vTreeView(mode) {
   const brs = T.branches; const tab = brs.includes(G.tbr) ? G.tbr : brs[0];
   const st = T.starters.map(id => `<button class="tstart${G.tsel === id ? ' sel' : ''}" data-a="tsel" data-k="${id}" data-info="tn:${id}"><span class="tc">✓</span>${esc(SK2[id].n)}</button>`).join('');
   const slots = Array.from({ length: EQUIP_SLOTS2 }, (_, i) => eqd[i] ? `<button class="tslot on" data-a="tsel" data-k="${eqd[i]}" data-info="tn:${eqd[i]}">${esc(SK2[eqd[i]].n)}</button>` : `<span class="tslot">빈 칸</span>`).join('');
-  let h = `<div class="tsum"><div><span class="mini">시작 스킬 · 늘 끼움</span><div class="trow">${st}</div></div><div><span class="mini">장착 ${eqd.length}/${EQUIP_SLOTS2}</span><div class="trow">${slots}</div></div><div class="tpts">포인트 <b>${t.pts}</b></div></div>`;
+  let h = `<div class="tsum"><div><span class="mini">시작 스킬 · 늘 끼움</span><div class="trow">${st}</div></div><div><span class="mini">장착 ${eqd.length}/${EQUIP_SLOTS2}</span><div class="trow">${slots}</div></div><div class="tpts">포인트 <b>${t.pts}</b><small>레벨마다 +1 · 챕터 돌파 +2</small></div></div>`;
   if (!treeCanEdit()) h += `<p class="mini">전투 중에는 볼 수만 있습니다. 방과 방 사이에 열고 바꿉니다.</p>`;
   const menu = `<nav class="tbmenu" role="tablist" aria-label="스킬 트리 갈래">${brs.map(br => { const ns = SKILLS2[run.build].filter(x => x.b === br && !x.start); const op = ns.filter(x => t.open.includes(x.id)).length; const can = ns.some(x => !t.open.includes(x.id) && !treeWhy(run, x.id)); return `<button class="tseg${tab === br ? ' on' : ''}" data-a="tbr" data-k="${br}" role="tab" aria-selected="${tab === br}"><b>${esc(br)}${can ? ' <i class="tcan" aria-label="열 수 있는 칸 있음">+</i>' : ''}</b><small>${esc(T.bd[br])}</small><span>포인트 ${t.spent[br] || 0} · ${op}/${ns.length}칸</span></button>`; }).join('')}</nav>`;
   return h + `<div class="tlay treev">${menu}<div class="tmain">${vTreeBranch(run, tab)}</div><aside class="tside"><div id="tdet" class="tdet">${vTreeDetail(run, G.tsel)}</div></aside></div>`;
