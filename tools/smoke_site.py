@@ -32,7 +32,7 @@ with sync_playwright() as p:
     if pg.query_selector('button[data-a=choose]'): pg.click('button[data-a=choose] >> nth=0')
     if pg.query_selector('button[data-a=dropkeep]'): pg.click('button[data-a=dropkeep]')
     pg.evaluate("()=>{G.run.result='win'; G.scr='survey'; G.b=null; G.sheet=null; render();}")
-    pg.check('input[name=fun][value="4"]'); pg.fill('#isnote','사이트 시험'); pg.click('button[data-a=survey]'); pg.wait_for_timeout(1500)
+    pg.check('input[name=fun][value="4"]'); pg.fill('#isnote' if pg.query_selector('#isnote') else '#snote','사이트 시험'); pg.click('button[data-a=survey]'); pg.wait_for_timeout(1500)  # 0.6b 설문은 한 줄 칸(#snote)만 있다
     st=pg.evaluate("()=>{const s=JSON.parse(localStorage.getItem('MOCKSB')); return Object.keys(s.docs)}")
     print('저장소에 쌓인 문서:', len(st), [k.split('/')[0]+'/…'+('/'+k.split('/')[2] if k.count('/')>1 else '')+'/'+k.split('/')[-1][:6] for k in st][:8])
     print('판 끝난 뒤 기록 보내기 창(사이트면 안 떠야 함):', pg.inner_text('#shtitle') if pg.query_selector('#shtitle') else '안 뜸')
