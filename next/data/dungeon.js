@@ -1,8 +1,14 @@
-/* 나락의 유산 데이터: 던전과 갈림길 (기획서 11.3절)
-   한 챕터 = 상층 1~8층, 9층 야영지, 하층 10~17층, 18층 샘, 19층 보스. 값만 둔다. */
-const FLOORS = 19;
-const FLOOR_CAMP = 9, FLOOR_SPRING = 18, FLOOR_BOSS = 19;
-const isLower = f => f >= 10;
+/* 나락의 유산 데이터: 던전과 갈림길 (기획서 11.3절, 2챕터는 11.12절). 값만 둔다.
+   챕터 틀: 층 번호는 모두 여기서 읽는다.
+   floors 마지막 층, camp 야영지, spring 고정 샘, boss 보스 층, lower 하층 첫 층,
+   mlv 몬스터 레벨 [이 층까지, 레벨]…(그 뒤와 보스는 mlvTop), maxMul 방 유형 최대 개수 배율(내림),
+   strongHalf 상층·하층마다 강적 최대, forceAt 샘·강적이 아직 문에 나오지 않았으면 넣는 층 [상층, 하층] */
+const CHAPTERS = {
+  1: { n: '저주받은 수도원', floors: 19, camp: 9, spring: 18, boss: 19, lower: 10, mlv: [[4, 1], [8, 2], [13, 3]], mlvTop: 4, maxMul: 1, strongHalf: 2, forceAt: [6, 14] },
+  2: { n: '잊힌 지하묘지', floors: 27, camp: 13, spring: 26, boss: 27, lower: 14, mlv: [[6, 5], [12, 6], [19, 7]], mlvTop: 8, maxMul: 1.5, strongHalf: 3, forceAt: [9, 22] }, // 1챕터의 1.5배 (10월 2일 만든 사람 결정)
+};
+const chOf = ch => CHAPTERS[ch] || CHAPTERS[1];
+const isLower = (f, ch) => f >= chOf(ch).lower;
 
 /* 방 유형: w 가중치, max 챕터당 최대, from 나오는 첫 층, fight 전투 방 */
 const ROOM_TYPES = {
@@ -16,10 +22,10 @@ const ROOM_TYPES = {
   altar: { n: '제단', ico: '🩸', w: 6, max: 3, from: 2, fight: 0, risk: 0, hint: '대가 있는 거래' },
   event: { n: '이벤트', ico: '❔', w: 7, max: 4, from: 2, fight: 0, risk: 0, hint: '선택에 따라 다르다' },
 };
-/* 강적은 상층 2, 하층 2까지 */
-const STRONG_PER_HALF = 2;
+/* 챕터당 최대: 위 max × 챕터 배율(내림). 일반은 제한 없음. 강적은 상층·하층마다 chOf(ch).strongHalf까지 */
+const roomMax = (t, ch) => ROOM_TYPES[t].max >= 99 ? ROOM_TYPES[t].max : Math.floor(ROOM_TYPES[t].max * chOf(ch).maxMul);
 
-/* 방 특성: 전투 방에 상층 25%, 하층 45%. 시련은 둘 */
+/* 방 특성: 전투 방에 상층 25%, 하층 45%. 시련은 둘. ch: 처음 나오는 챕터(없으면 1). 앞 챕터의 특성도 뒤 챕터에 나온다 */
 const ROOM_MODS = {
   narrow: { n: '좁은 회랑', d: '전열에 적이 2기까지만 선다. 나머지는 후열이다.' },
   ceiling: { n: '무너지는 천장', d: '시간이 4번 흐를 때마다 모두에게 피해 4.' },
@@ -31,9 +37,10 @@ const ROOM_MODS = {
   calm: { n: '고요', d: '마나 자연 회복 2배.' },
 };
 const MOD_CHANCE = { upper: 0.25, lower: 0.45 };
+const modsOf = ch => Object.keys(ROOM_MODS).filter(k => (ROOM_MODS[k].ch || 1) <= (ch || 1));
 
-/* 적 구성 틀 ([역할, 정예]) */
-const ENC = {
+/* 적 구성 틀 ([역할, 정예]), 챕터마다 */
+const ENC = { 1: {
   upper: [
     [['bruiser'], ['bruiser']], [['bruiser'], ['archer']], [['shield'], ['healer']], [['shield'], ['shield'], ['healer']],
     [['bomber'], ['bomber'], ['bruiser']], [['summoner'], ['minion'], ['minion']], [['bruiser'], ['healer']], [['archer'], ['archer'], ['bruiser']],
@@ -45,14 +52,16 @@ const ENC = {
     [['bomber', 1], ['bruiser']], [['shield'], ['archer', 1], ['minion']], [['bruiser'], ['bruiser'], ['archer']], [['healer'], ['shield'], ['bruiser', 1]],
   ],
   treasure: [[['shield', 1], ['bruiser']], [['bruiser', 1], ['archer']], [['archer', 1], ['shield']]],
-};
+} };
+const encOf = ch => ENC[ch] || ENC[1]; // 2챕터 틀은 단계 2에서
 /* 강적 (자리만 먼저. 고유 규칙은 단계 8에서 비공개 문서대로 넣는다) */
 /* 강적 공통 배율과 고유 수치 (11.8절). 일반 방보다 확실히 어렵게 (10월 2일 만든 사람 요청) */
 const STRONG = { hp: 2.1, dmg: 1.3, bellEvery: 3, leech: 0.45, frenzy: 1.3, lowerHp: 1.3, lowerDmg: 1.15 }; // 하층 강적만 더: 무작위 시험 하층 순례자 40%대(만든 사람 요청) // 무작위 시험: 상층 승률 94%(남은 생명력 60%), 하층 76~82%(약 50%). 일반 방은 95~98%(65~83%)
 const STRONG_FOES = [
-  { id: 'bellringer', n: '종지기', en: [['shield', 1], ['bruiser'], ['minion']] },
-  { id: 'pilgrim', n: '굶주린 순례자', en: [['bruiser', 1]] },
+  { id: 'bellringer', ch: 1, n: '종지기', en: [['shield', 1], ['bruiser'], ['minion']] },
+  { id: 'pilgrim', ch: 1, n: '굶주린 순례자', en: [['bruiser', 1]] },
 ];
+const foesOf = ch => { const L = STRONG_FOES.filter(x => x.ch === (ch || 1)); return L.length ? L : STRONG_FOES.filter(x => x.ch === 1); }; // 2챕터 강적은 단계 9에서
 
 /* 성소: 다음 3개 방 동안 */
 const SHRINES = [
@@ -63,14 +72,15 @@ const SHRINES = [
   { id: 'mercy', n: '자비의 성소', d: '생명력 플라스크 회복 +10%p.' },
 ];
 
-/* 제단: 대가 있는 거래 */
+/* 제단: 대가 있는 거래. ch: 처음 나오는 챕터(없으면 1) */
 const ALTARS = [
   { id: 'blood', n: '피의 거래', d: '최대 생명력 −5%(이 캐릭터가 끝날 때까지)를 바치고 희귀 장비 하나를 받는다.' },
   { id: 'gold', n: '황금 촛대', d: '골드 40을 바치고 세 플라스크를 하나씩 채운다.' },
   { id: 'offer', n: '바치는 제단', d: '가방의 장비 하나를 바치면 한 등급 위의 장비 하나를 받는다(희귀는 다시 희귀).' },
 ];
+const altarsOf = ch => ALTARS.filter(a => (a.ch || 1) <= (ch || 1));
 
-/* 이벤트 (1챕터). 같은 것은 한 챕터에 한 번 */
+/* 이벤트. ch: 나오는 챕터(없으면 1). 챕터마다 그 챕터 것만 나오고, 같은 것은 한 챕터에 한 번 */
 const EVENTS = [
   { id: 'confess', n: '버려진 고해실', lore: '휘장 너머에서 누군가 숨을 고른다.', opts: [{ id: 'do', n: '고해한다', d: '약화·취약 3T를 안고 다음 전투에 들어가는 대신 희귀 장비 하나.' }, { id: 'pass', n: '지나친다', d: '' }] },
   { id: 'pilgrim', n: '쓰러진 순례자', lore: '짐 보따리가 아직 따뜻하다.', opts: [{ id: 'loot', n: '짐을 뒤진다', d: '장비 하나. 대신 다음 전투에 중독 3.' }, { id: 'pray', n: '기도한다', d: '생명력 플라스크 +1.' }, { id: 'pass', n: '지나친다', d: '' }] },
@@ -82,12 +92,18 @@ const EVENTS = [
   { id: 'bell', n: '종탑의 줄', lore: '줄 끝이 아래로, 아래로 이어진다.', opts: [{ id: 'pull', n: '당긴다', d: '다음 층 문에 강적이 반드시 나온다. 골드 15.' }, { id: 'pass', n: '지나친다', d: '' }] },
 ];
 
+const eventsOf = ch => { const L = EVENTS.filter(e => (e.ch || 1) === (ch || 1)); return L.length ? L : EVENTS.filter(e => (e.ch || 1) === 1); }; // 2챕터 이벤트는 단계 2에서
+
 /* ===== 성장과 적 (기획서 11.4절, 11.8절) ===== */
 /* 몬스터 레벨: 1챕터 1~4. 레벨마다 체력 +12%, 피해 +10% */
 const MLV_HP = 0.12, MLV_DMG = 0.10;
 /* 난이도 (10월 2일, 만든 사람 결정: 1챕터 완주 자동 테스터 평균 20%, 숙련·탐험가 40%. 1층부터 실전) 던전 방의 적 체력·피해 배율 */
-const DIFF = { upper: { hp: 1.25, dmg: 1.25 }, lower: { hp: 1.05, dmg: 0.9 } }; // 상층은 1층부터 거세게. 하층은 몬스터 레벨이 이미 높아 덜 올린다
-function mlvOf(f) { return f >= FLOOR_BOSS ? 4 : f <= 4 ? 1 : f <= 8 ? 2 : f <= 13 ? 3 : 4; }
+const DIFF = {
+  1: { upper: { hp: 1.25, dmg: 1.25 }, lower: { hp: 1.05, dmg: 0.9 } }, // 상층은 1층부터 거세게. 하층은 몬스터 레벨이 이미 높아 덜 올린다
+  2: { upper: { hp: 1.25, dmg: 1.25 }, lower: { hp: 1.05, dmg: 0.9 } }, // 2챕터 (평균 15%, 신중 35%): 단계 12에서 맞춘다. 지금은 1챕터 값
+};
+const diffOf = (f, ch) => (DIFF[ch] || DIFF[1])[isLower(f, ch) ? 'lower' : 'upper'];
+function mlvOf(f, ch) { const C = chOf(ch); if (f >= C.boss) return C.mlvTop; for (const [to, lv] of C.mlv) if (f <= to) return lv; return C.mlvTop; }
 /* 경험치: 일반 5, 정예 12, 강적 30, 보스 100 × (1 + 0.15 × (몬스터 레벨 − 1)). 소환된 적은 0 */
 const XP_BASE = { normal: 5, elite: 12, strong: 30, boss: 100 }; // 보스 150이면 챕터 끝 Lv6으로 목표(4~5)를 넘어 100으로 (10월 2일)
 /* 보스에서 오른 능력치는 다음 챕터 준비에서 나눈다(run.statPending, 단계 9) */
@@ -97,7 +113,7 @@ const LV_XP = [0, 40, 100, 180, 300, 470, 660, 870, 1100, 1350, 1620, 1910, 2220
 const LV_POINTS = 2;
 /* 정예 접사 "강인": 체력 +50% (4.6절 1막 접사). 정예에게 상층 35%, 하층 60% */
 const TOUGH_CHANCE = { upper: 0.35, lower: 0.6 };
-/* 1챕터(저주받은 수도원) 적 이름. 역할은 카드에 작게 함께 보인다 */
+/* 챕터별 적 이름 (1챕터 저주받은 수도원). 역할은 카드에 작게 함께 보인다 */
 const ENEMY_NAMES = {
   1: { bruiser: '광신 수도사', shield: '문지기 수사', archer: '종탑 궁수', healer: '피 닦는 수녀', summoner: '뼈 부르는 사제', bomber: '불붙은 고행자', minion: '일어선 시체' },
 };

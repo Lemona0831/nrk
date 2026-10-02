@@ -5,12 +5,14 @@
 ## 주소와 개발 흐름 (10월 2일 0.6a 공개)
 
 - 지인 주소(루트 `index.html`, `data/`, `audio/`) = 0.6a 안정판. **루트를 직접 고치지 않는다.**
-- 개발은 `next/`에서 한다(미리보기 https://lemona0831.github.io/nrk/next/). 다음은 0.6b(2챕터). 지인에게 내보낼 때 `python tools/release.py`로 next/를 루트에 복사하고(`../` 경로를 고침), `python tools/smoke_site.py .`로 루트를 점검한 뒤 커밋한다. 내보낼 때 next/의 `VERSION`과 타이틀 표시를 맞춘다
+- 개발은 `next/`에서 한다(미리보기 https://lemona0831.github.io/nrk/next/). 지금은 0.6b(2챕터와 성장 시스템, docs/0.6b-구현계획.md, 기획서 11.12절)를 만든다. 지인에게 내보낼 때 `python tools/release.py`로 next/를 루트에 복사하고(`../` 경로를 고침), `python tools/smoke_site.py .`로 루트를 점검한 뒤 커밋한다. 내보낼 때 next/의 `VERSION`과 타이틀 표시를 맞춘다
 - B0.5는 `b05/index.html`에 보관(https://lemona0831.github.io/nrk/b05/). 고치지 않는다. B0.5 기록(runs·best 등)은 저장소에 그대로 있고, B0.5 결과 보기도 b05에서 연다
 - 0.6과 B0.5는 같은 사이트라 브라우저 저장소를 함께 쓰지만 저장 키가 달라(0.6 `nrk_06_v1`) 섞이지 않는다. 구글 로그인 돌아오는 주소는 Supabase 설정의 Redirect URLs에 있어야 한다(루트와 next/)
 - 계획과 진행 상황: docs/0.6a-구현계획.md. 설계: 기획서 11절. 보스·강적 상세는 저장소 밖 `../nrk-private/보스.md`(공개 저장소에 넣지 말 것)
 - 보스·강적의 기믹 설명과 대처법은 공개 파일(기획서, 업데이트 내역, 게임 문장)에 쓰지 않는다. 수도원장 수치는 index.html의 `ABBOT`, 처음 만남·도감 문장은 `next/data/dungeon.js`의 `FOE_INTRO`·`CODEX`(겪은 결과만)
 - `next/data/*.js`는 값(직업, 적, 아이템, 1챕터 아이템, 던전·갈림길(dungeon.js), 방, 음악, 업데이트 내역), `next/index.html`은 엔진과 화면이다. data 파일은 index.html보다 먼저 읽힌다
+- 챕터 틀: 층 번호(야영지·샘·보스·하층 시작), 몬스터 레벨, 방 최대 개수 배율은 `data/dungeon.js`의 `CHAPTERS`에서만 읽는다(`chOf(ch)`, `isLower(f, ch)`, `mlvOf(f, ch)`, `floorName(f, ch)`). 층 번호를 숫자로 쓰지 않는다. 챕터별 값은 `DIFF[ch]`, `encOf`, `eventsOf`, `foesOf`, `altarsOf`, `modsOf`, `ENEMY_NAMES[ch]`, 장비 풀은 `poolsOf(ch)`
+- 저장본에 새 칸을 더할 때는 `migrateRun`(index.html)에서만 채운다. `node tools/savecheck.js check`가 0.6a 저장본 56개(방 사이·전투 중·정산·상점·설문·대기)를 열어 끝까지 이어 가 본다(저장본은 `make`로 루트 코드에서 만든다, 올리지 않는다)
 - next/는 B0.5와 기록이 섞이지 않게 브라우저 저장 키(nrk_06_v1), 저장소 경로(runs6·scen6·survey6), 기록판 칸(best6)을 따로 쓴다(`COL`)
 - 음악: 원본은 `bgm/`(저장소 제외), 웹용은 `next/audio/`(MP3 96kbps, loudnorm -18). 곡 목록은 `next/data/audio.js`, 화면별 곡은 `musicFor()`(기획서 11.10절 표). 곡은 모두 무료 소스(만든 사람 확인). 소리·설명 창·진행 속도는 메뉴의 "설정" 창(`vSettings`)에서 바꾼다. 새 곡은 imageio-ffmpeg의 ffmpeg로 같은 설정으로 줄인다
 - 화면(`G.scr`): title → create(이름·직업·스킬·능력치, `G.cre`) → run → settle → shop → survey → wait(2챕터 준비 중) / dead → survey → title. 페이지 rank·records·admin(`PAGES`, `G.back`으로 돌아감, 관리자는 주소 끝 `#admin`). 메뉴는 `menuItems()`/`vHeader()`. 이어하기는 `run.phase`(settle·shop·clearsv·wait)로 멈춘 화면에 돌아온다
@@ -55,7 +57,7 @@
 - `npm run qa:quick` : 960판 빠른 확인
 - `npm run items` : 1챕터 아이템 풀(99종)을 여덟 직업에 끼워 효과가 실제로 일어나는지(FXHIT)와 고정 수치를 점검한다. 실패 0이어야 한다. 새 아이템 효과는 next/index.html의 `IFX` 표에, 이름·문장은 `next/data/items_ch1.js`에 둔다
 - `npm run smoke` : 가짜 Supabase로 사이트 흐름 점검(Python Playwright 필요)
-- `npm run dg` : 던전 자동 테스터(tools/dgqa.js). next/의 게임 코드 전체를 Node vm에서 돌려 6성향 × 8직업이 1챕터를 끝까지 간다(문, 장비, 이벤트, 레벨, 쓰러지면 끝). 완주율과 쓰러진 곳(상층·하층·보스)을 낸다. 수치 시험은 `CFG='DIFF.upper={hp:1.3,dmg:1.4}; BOSSES.abbot.mult=7' node tools/dgqa.js 20`. 조절 값: `DIFF`(data/dungeon.js, 상층·하층 적 배율), `BOSSES.abbot.mult`·`dmgMul`, `ENRAGE`, `TELE.heavy`(적 강타 배율), `ABBOT`
+- `npm run dg` : 던전 자동 테스터(tools/dgqa.js). next/의 게임 코드 전체를 Node vm에서 돌려 6성향 × 8직업이 1챕터를 끝까지 간다(문, 장비, 이벤트, 레벨, 쓰러지면 끝). 완주율과 쓰러진 곳(상층·하층·보스)을 낸다. 수치 시험은 `CFG='DIFF[1].upper={hp:1.3,dmg:1.4}; BOSSES.abbot.mult=7' node tools/dgqa.js 20`. 판은 고정 씨앗이라 같은 코드면 결과가 똑같다(구조만 바꾼 뒤에는 결과 파일이 같은지로 확인). `DGDIR=.`이면 루트 코드를 돌린다. 조절 값: `DIFF[챕터]`(data/dungeon.js, 상층·하층 적 배율), `BOSSES.abbot.mult`·`dmgMul`, `ENRAGE`, `TELE.heavy`(적 강타 배율), `ABBOT`
 - 직접 짠 브라우저 시험(Playwright로 next/index.html을 file://로 열 때)은 반드시 `config.js`를 빈 파일로 바꿔 읽게 한다: `ctx.route('**/config.js', lambda r: r.fulfill(status=200, content_type='application/javascript', body=''))`. 그러지 않으면 진짜 Supabase에 시험 기록과 랭킹이 쌓인다(10월 2일에 실제로 일어남)
 - 테스터 한계: 아이템을 받고도 행동을 바꾸지 못하고, 한 수 앞만 본다. 막힘 해결용 아이템과 회복·방어 스킬의 진짜 가치는 사람 기록으로 판단한다
 

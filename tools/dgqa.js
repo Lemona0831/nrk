@@ -4,12 +4,13 @@
    쓰러지면 끝(다시 하기 없음). 1챕터 보스를 넘으면 완주.
    실행: node tools/dgqa.js [성향·직업마다 판 수=20] [결과 파일=tools/dgqa.json] */
 const fs = require('fs'), path = require('path'), vm = require('vm');
-require('child_process').execFileSync(process.execPath, [require('path').join(__dirname, 'extract-engine.js')]); // 테스터의 판단(qa.js)이 쓰는 엔진 사본을 지금 코드로 새로 만든다
+const DIR = process.env.DGDIR || 'next'; // 돌릴 게임 폴더 (저장본 점검은 지인 사이트 코드 '.'로 저장본을 만든다)
+require('child_process').execFileSync(process.execPath, [require('path').join(__dirname, 'extract-engine.js'), DIR]); // 테스터의 판단(qa.js)이 쓰는 엔진 사본을 지금 코드로 새로 만든다
 const Q = require('./qa.js');
 const { PERSONAS, heuristic, lookahead, sigRule, rng } = Q;
 
 function loadGame() {
-  const dir = path.join(__dirname, '..', 'next');
+  const dir = path.join(__dirname, '..', DIR);
   const html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
   const data = [...html.matchAll(/<script src="(data\/[^"]+\.js)"><\/script>/g)].map(m => fs.readFileSync(path.join(dir, m[1]), 'utf8')).join('\n');
   const i = html.indexOf('<script>'); const j = html.indexOf('</script>', i);
@@ -17,13 +18,13 @@ function loadGame() {
   vm.createContext(ctx);
   vm.runInContext(data + '\n' + html.slice(i + 8, j) + '\n;this.__G = G;', ctx, { filename: 'next/index.html' });
   // 화면·저장·소리는 끈다
-  vm.runInContext('Object.assign(this, { isLower, ITEMS, EVENTS, ROOM_TYPES, BUILDS, FLOOR_BOSS, FLOOR_SPRING, tplKind });', ctx); // const 값은 밖에서 읽을 수 있게 꺼내 둔다
+  vm.runInContext('Object.assign(this, { isLower, chOf: typeof chOf !== "undefined" ? chOf : null, ITEMS, EVENTS, ROOM_TYPES, BUILDS, tplKind });', ctx); // const 값은 밖에서 읽을 수 있게 꺼내 둔다
   vm.runInContext(`toast = () => {}; scheduleSync = () => {}; syncRun = async () => false; pushRank = async () => {}; saveLocal = () => true; sfx = () => {};`, ctx);
   return ctx;
 }
 const G0 = loadGame();
 const run_ = code => vm.runInContext(code, G0);
-if (process.env.CFG) run_(process.env.CFG); // 시험할 수치: CFG='DIFF.upper.dmg=1.3; BOSSES.abbot.mult=7'
+if (process.env.CFG) run_(process.env.CFG); // 시험할 수치: CFG='DIFF[1].upper.dmg=1.3; BOSSES.abbot.mult=7'
 
 const PREF = { assassin: 'int', scar: 'str', priest: 'int', berserker: 'str', hunter: 'dex', arcanist: 'int', templar: 'str', warlock: 'int' };
 const FIGHT = ['normal', 'ambush', 'strong', 'treasure', 'trial'];
@@ -36,7 +37,7 @@ function gearScore(st) { return st.hp * 0.6 + st.mp * 0.25 + st.st * 0.25 + st.b
 /* 문 고르기 (성향별) */
 function pickDoor(pk, run, r) {
   const P = PERSONAS[pk]; const p = run.p; const h = p.hp / p.hpMax; const fl = p.flask.life;
-  const low = G0.isLower(run.room);
+  const low = G0.isLower(run.room, run.ch);
   const loss = { normal: 0.22, ambush: 0.3, treasure: 0.3, trial: 0.45, strong: low ? 0.75 : 0.5 };
   const gain = { normal: 3, ambush: 3.3, treasure: 5, trial: 5, strong: 6, spring: 0, shrine: 1.5, altar: 1, event: 1.5 };
   const sc = run.doors.map(d => {
@@ -109,7 +110,7 @@ function restRoom(pk, run, r) {
   }
 }
 
-const OPT = { snap: false };
+const OPT = { snap: false, onStep: null, onTurn: null }; // onStep(G): 방과 방 사이마다, onTurn(G, n): 전투 행동마다 (저장본 점검)
 /* 지금 방에 들어가 성향대로 싸운다 */
 function fightCur(pk, r, mem, out) {
   const P = PERSONAS[pk]; const G = G0.__G;
@@ -127,6 +128,7 @@ function fightCur(pk, r, mem, out) {
       const act = G0.actionList(b).find(x => x.id === a); const monk = G0.alive(b).find(e => e.monk && act && G0.canTarget(b, e, act));
       if (monk && act && act.tgt !== false) t = monk.id;
     }
+    if (OPT.onTurn) OPT.onTurn(G, n);
     try { G0.playerAct(b, a, t); } catch (e) { out.bugs.push('예외 ' + e.message + ' @' + a); b.over = 'lose'; }
     out.acts++;
   }
@@ -158,8 +160,13 @@ function playChar(pk, build, seed) {
   for (let i = 0; i < 6; i++) st[pk === 'novice' || r() > 0.6 ? ['str', 'dex', 'int'][Math.floor(r() * 3)] : pref]++;
   run.stats = st; G0.applyStats(run.p, st); run.p.hp = run.p.hpMax; run.p.mp = run.p.mpMax; run.p.st = run.p.stMax;
   const out = { pk, build, seed, res: 'lose', floor: 0, lv: 1, rooms: [], bossHp: null, bugs: [], acts: 0 };
-  const mem = {};
-  for (let guard = 0; guard < 80; guard++) {
+  return playLoop(pk, r, out);
+}
+/* 지금 G.run을 성향대로 끝(쓰러짐 또는 정산)까지 진행한다 */
+function playLoop(pk, r, out) {
+  const G = G0.__G, run = G.run; const mem = {};
+  for (let guard = 0; guard < 120; guard++) {
+    if (OPT.onStep) OPT.onStep(G);
     if (G.scr === 'dead') { out.res = 'lose'; break; }
     if (G.scr === 'settle') { out.res = 'clear'; break; }
     handleSheets(pk, r);
@@ -176,7 +183,7 @@ function playChar(pk, build, seed) {
     G0.battleContinue();
     handleSheets(pk, r);
   }
-  out.floor = run.room; out.lv = run.lv; out.gold = run.gold; out.gear = Object.values(run.inv).filter(x => run.eqU && Object.values(run.eqU).includes(x.uid)).map(x => x.tpl + ':' + x.g);
+  out.floor = run.room; out.ch = run.ch || 1; out.lv = run.lv; out.gold = run.gold; out.gear = Object.values(run.inv).filter(x => run.eqU && Object.values(run.eqU).includes(x.uid)).map(x => x.tpl + ':' + x.g);
   return out;
 }
 
@@ -187,7 +194,7 @@ if (require.main === module) {
   fs.writeFileSync(file, JSON.stringify(runs));
   // 요약
   const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
-  const where = x => x.res === 'clear' ? 'clear' : x.floor >= G0.FLOOR_BOSS ? 'boss' : G0.isLower(x.floor) || x.floor === G0.FLOOR_SPRING ? 'lower' : 'upper';
+  const where = x => x.res === 'clear' ? 'clear' : x.floor >= G0.chOf(x.ch).boss ? 'boss' : G0.isLower(x.floor, x.ch) || x.floor === G0.chOf(x.ch).spring ? 'lower' : 'upper';
   const sum = list => { const c = { clear: 0, upper: 0, lower: 0, boss: 0 }; list.forEach(x => c[where(x)]++); return `완주 ${pct(c.clear, list.length)}% | 쓰러진 곳 상층 ${pct(c.upper, list.length)} 하층 ${pct(c.lower, list.length)} 보스 ${pct(c.boss, list.length)}`; };
   console.log(`판 ${runs.length}, ${((Date.now() - t0) / 1000).toFixed(0)}초, 이상 ${runs.reduce((a, x) => a + x.bugs.length, 0)}건`);
   console.log('전체(6성향 평균):', sum(runs));
@@ -198,4 +205,4 @@ if (require.main === module) {
   const bossers = runs.filter(x => x.bossHp != null); console.log(`보스에 닿은 판 ${bossers.length}: 들어갈 때 생명력 평균 ${Math.round(bossers.reduce((a, x) => a + x.bossHp, 0) / (bossers.length || 1))}%, 레벨 평균 ${(bossers.reduce((a, x) => a + x.bossLv, 0) / (bossers.length || 1)).toFixed(1)}, 보스 승률 ${pct(runs.filter(x => x.res === 'clear').length, bossers.length)}%`);
   const bugs = runs.flatMap(x => x.bugs); if (bugs.length) console.log('이상 예:', bugs.slice(0, 5));
 }
-module.exports = { playChar, replayBoss, OPT, G0, run_, PERSONAS };
+module.exports = { playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng };

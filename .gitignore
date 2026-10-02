@@ -6,6 +6,7 @@ setup.sql
 tools/eng.gen.js
 tools/qa.json
 tools/final_items.json
+tools/saves06a.json
 node_modules/
 __pycache__/
 
