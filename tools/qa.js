@@ -118,13 +118,20 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   // 처형·터뜨리기: 죽일 수 있거나 충분히 쌓였을 때
   for (const a of okS.filter(a => has(a, 'burst'))) {
     if (a.aoe) { if (E.alive(b).filter(e => psn(e) >= 3).length >= 2) return [a.id]; continue; }
-    const exe = a.s.fx.find(e => e.k === 'execute');
-    const t = best(a, (x, y) => psn(y) - psn(x)); if (!t || !psn(t)) continue;
-    const kill = E.poisonTotal(psn(t)) >= t.hp; const low = exe && t.hp <= t.hpMax * exe.hp;
-    if (kill || low || psn(t) >= th || (t.intent && t.intent.k === 'heavy')) return [a.id, t.id];
+    const exe = a.s.fx.find(e => e.k === 'execute'); const pre = (a.s.fx.find(e => e.k === 'burst') || {}).pre || 0;
+    const t = best(a, (x, y) => psn(y) - psn(x)); if (!t || !(psn(t) + pre)) continue;
+    const bf = a.s.fx.find(e => e.k === 'burst') || {}; const dmg = E.poisonTotal(psn(t) + pre) * (bf.mul || 1); // 터뜨리면 나올 피해 (사람은 버튼의 숫자를 보고 누른다)
+    const kill = dmg >= t.hp; const low = exe && t.hp <= t.hpMax * exe.hp;
+    if (kill || low || psn(t) + pre >= th || dmg >= 15 || (t.intent && t.intent.k === 'heavy')) return [a.id, t.id];
   }
+  // 터뜨리기를 가진 빌드: 곧 터뜨릴 적에게 먼저 독을 쌓는다 (독 심기 → 독 격발)
+  { const bu = L.filter(a => a.v2 && a.s.fx.some(e => e.k === 'burst') && !a.s.once);
+    const pz = okS.filter(a => has(a, 'poison') && !a.aoe && !has(a, 'burst'));
+    if (bu.length && pz.length && bu.some(a => (a.wait || 0) <= 1)) { const a = pz.sort((x, y) => (y.s.fx.find(e => e.k === 'poison').n) - (x.s.fx.find(e => e.k === 'poison').n))[0]; const t = best(a, (x, y) => (psn(y) - psn(x)) || (y.hp - x.hp)); if (t && psn(t) < th) return [a.id, t.id]; } }
   // 키우기: 중독 4 이상
   for (const a of okS.filter(a => has(a, 'grow'))) { const t = best(a, (x, y) => psn(y) - psn(x)); if (t && psn(t) >= 4) return [a.id, t.id]; }
+  // 흘리기형 스킬에 보상(피해·되받기)이 붙어 있으면 강타가 아니어도: 내 다음 차례 전에 나를 칠 적에게
+  { const pa = okS.find(a => has(a, 'parry') && (has(a, 'onParry') || has(a, 'dmg'))); if (pa && r() < 0.7) { const at = pv1.find(x => x.e.intent && x.e.intent.k === 'attack'); if (at) return [pa.id, at.e.id]; } }
   // 광역: 둘 이상
   for (const a of okS.filter(a => a.aoe && !has(a, 'burst'))) if (reach(a).length >= 2) return [a.id];
   // 중독을 이용하는 스킬: 중독 3 이상

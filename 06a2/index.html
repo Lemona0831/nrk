@@ -295,6 +295,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
  .tnode{width:96px}.tnode small{max-width:96px;font-size:12.5px}.tnode .tc{width:44px;height:44px;font-size:18px}.tnode.ult .tc{width:50px;height:50px}
 }
 .tdet .tdn{font-size:17px;color:var(--gold)}.tdet .tdh{color:var(--muted);font-size:12.5px}.tdet .tdp{border-top:1px dashed var(--line);padding-top:6px;margin-top:8px}.tdb{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}.tdb button{min-width:130px}
+.thaste{font-size:13px;margin:0 0 4px;padding:6px 8px;border-left:3px solid var(--gold);background:var(--panel2);border-radius:4px}.thaste b{color:var(--gold);margin-right:4px}
 .tutbar{border:2px solid var(--gold);border-radius:8px;padding:8px 10px;margin-bottom:6px;background:var(--panel2)}
 .tutbar .tuth{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.tutbar .tuth b{color:var(--gold);font-size:15px}.tutok{margin-left:auto;color:var(--good);font-weight:700;font-size:13px}
 .tutbar p{margin:4px 0;font-size:14px}.tutbar .tutg b{color:var(--gold);margin-right:4px}.tutbar .tutt{color:var(--ink);border-left:3px solid var(--line);padding-left:8px}
@@ -574,15 +575,15 @@ function setParry(b, tgt, red, on) {
 }
 /* 0.6a.2 스킬 실행: data/skills.js의 한 줄(fx 목록)을 그대로 처리한다. 설명 문장(skBody)도 같은 줄에서 나온다 */
 function runSkill2(b, act, tgt) {
-  const p = b.p; const s = act.s; const F = k => s.fx.find(e => e.k === k);
-  p.chg[s.id] = Math.max(0, (p.chg[s.id] || 0) - 1);
+  const p = b.p; const s = act.s; if (!p.cd) resetCharges(p); const F = k => s.fx.find(e => e.k === k);
   b.curSkill = s.id;
   const capOver = (F('capOver') || {}).cap || 0;
   const targets = s.tgt === 'front' ? alive(b).filter(e => e.row === 'front' && e.role !== 'root') : s.tgt === 'all' ? alive(b).filter(e => e.role !== 'root') : s.tgt === 'self' ? [] : (tgt ? [tgt] : []);
   const par = F('parry'); if (par && tgt) { setParry(b, tgt, par.red, F('onParry')); logp(b, 'sys', tgt.n + '의 다음 공격을 흘릴 준비를 한다'); }
+  const sm = F('stam'); if (sm) { p.st = Math.min(p.stMax, p.st + sm.n); if (p.exhaust && p.st >= 30) p.exhaust = 0; }
   const pb = F('parryBuff'); if (pb) { p.pbuf = { n: pb.times || 1, red: pb.red || 0, stam: pb.stam || 0, dmg: pb.dmg || 0, poison: pb.poison || 0 }; logp(b, 'good', '칼끝을 겨눈다. 다음 흘리기 ' + p.pbuf.n + '번이 날카로워진다'); }
   const multi = s.tgt === 'front' || s.tgt === 'all'; const hits = s.hits || 1; let tot = 0, killed = 0;
-  const dm = F('dmg'), ex = F('exploit'), po = F('poison'), bk = F('brk'), bp = F('brkPer');
+  const dm = F('dmg'), ex = F('exploit'), po = F('poison'), bk = F('brk'), bp = F('brkPer'); const stx = s.fx.filter(e => e.k === 'st');
   for (let h = 0; h < hits; h++) for (const e of targets) {
     if (!e.alive || b.over) continue;
     const base = (dm ? dm.n : 0) + (ex ? ex.per * st(e, 'poison') : 0);
@@ -590,12 +591,14 @@ function runSkill2(b, act, tgt) {
     if (po) addPoison(b, e, po.n, 1, capOver);
     if (bk) addBreak(b, e, bk.n);
     if (bp && h === 0) addBreak(b, e, bp.per * st(e, 'poison'));
+    if (h === 0) for (const x of stx) if (e.alive) addS(b, e, x.s, x.n); // 적에게 거는 상태 (독무의 약화)
   }
   const gr = F('grow'), bu = F('burst'), exe = F('execute');
   for (const e of targets) {
     if (!e.alive || b.over) continue;
     if (gr) { const n0 = st(e, 'poison'); const add = Math.round(n0 * (gr.mul - 1)) + (gr.add || 0); const got = addPoison(b, e, add, 1, capOver); logp(b, 'good', e.n + '의 독이 끓어오른다. 중독 ' + n0 + ' → ' + st(e, 'poison') + (got < add ? ' (상한)' : '')); }
     if (bu) {
+      if (bu.pre) addPoison(b, e, bu.pre, 1, capOver); // 터뜨리기 전에 거는 중독 (독 격발: 이 갈래만으로도 돌게)
       const n = st(e, 'poison'); if (n <= 0) { logp(b, 'sys', e.n + '에게 터뜨릴 중독이 없다'); continue; }
       const take = bu.half ? Math.ceil(n / 2) : bu.top ? Math.min(bu.top, n) : n;
       const low = exe && e.hp <= e.hpMax * exe.hp; const mul = low ? exe.mul : (bu.mul || 1);
@@ -608,7 +611,8 @@ function runSkill2(b, act, tgt) {
       if (bu.brkPer) addBreak(b, e, take * bu.brkPer);
     }
   }
-  if (s.killRecharge && killed) { p.chg[s.id] = Math.min(s.ch.max, (p.chg[s.id] || 0) + 1); logp(b, 'good', s.n + '을(를) 한 번 더 쓸 수 있다'); }
+  if (s.killRecharge && killed) { p.cd[s.id] = 0; logp(b, 'good', s.n + '을(를) ' + (s.once ? '한 번 더' : '기다리지 않고 바로 다시') + ' 쓸 수 있다'); }
+  else { p.cd[s.id] = s.once ? CD_USED : s.cd; p.cdJust = s.id; } // 이번 차례가 끝날 때는 줄지 않는다
   p.lastSkillDmg = multi ? tot / Math.max(1, targets.length) : tot;
   b.curSkill = null;
 }
@@ -675,7 +679,7 @@ const REV_DMG = 8;
 const PSN = { viper: 6, viperN: 3, cloudN: 3, brk: 4, swampN: 2 };
 const POISON_FOREVER = 1e9; // 중독은 시간 제한이 아니라 수치로 끝난다
 /* 중독 걸기: 1씩 오른다(상한 없음). n번 건다 = +n */
-/* 0.6a.2: 상한 20(capOver를 주는 스킬만 넘긴다). 막음에 막힌다. 내가 적에게 걸면 "상태를 걸 때" 충전 */
+/* 0.6a.2: 상한 20(capOver를 주는 스킬만 넘긴다). 막음에 막힌다. 내가 적에게 걸면 갈래 규칙 "독을 걸면" */
 function addPoison(b, u, n, byMe, capOver) {
   if (!(n > 0)) return 0;
   if (u === b.p && u.eq && u.eq.amulet === 'sigil') u.mp = Math.min(u.mpMax, u.mp + 4);
@@ -683,7 +687,7 @@ function addPoison(b, u, n, byMe, capOver) {
   if (kwBlocked(b, u, 'poison')) return 0;
   const cur = st(u, 'poison'); const nv = Math.min(Math.max(KW.poison, capOver || 0, cur), cur + n);
   if (nv > cur) u.s.poison = { stacks: nv, until: POISON_FOREVER, dur: POISON_FOREVER };
-  if (byMe && u !== b.p && nv > cur) chargeEv(b, 'apply');
+  if (byMe && u !== b.p && nv > cur) chargeEv(b, 'poison');
   return nv - cur;
 }
 /* 남은 독 피해 총합: n + (n-1) + ... + 1 */
@@ -1011,7 +1015,7 @@ function kwTaken(b, u, d, o) {
   if (u.s.ignite) { const n = stk(u, 'ignite'); kwDec(u, 'ignite'); let x = n * (hasMod(b, 'candle') ? 1.5 : 1) * (u === b.p ? 1 : dotMul(b.p)); if (u === b.p && hasBt(u, 'snuff')) x = 0; d += x; }
   return d;
 }
-/* 0.6a.2 직업 (v2: 충전 스킬, 트리, 마나 없음) */
+/* 0.6a.2 직업 (v2: 재사용 대기 스킬, 트리, 마나 없음) */
 const isV2 = p => !!(p && BUILDS[p.build] && BUILDS[p.build].v2);
 const CLASS_KEYS = () => Object.keys(BUILDS).filter(k => !BUILDS[k].tut); // 고를 수 있는 직업 (수련장 견습생 제외)
 const SK2 = {}; for (const k in SKILLS2) for (const s of SKILLS2[k]) SK2[s.id] = s;
@@ -1019,20 +1023,33 @@ const SK2 = {}; for (const k in SKILLS2) for (const s of SKILLS2[k]) SK2[s.id] =
    아이템 손보기(개편 기획 1절) 전까지 드롭과 상점에서 뺀다. 장비 점검(tools/itemcheck.js)은 그대로 이 장비들을 시험해 실패로 보인다 */
 const V2_OFF = ['pilgstaff', 'candlestaff', 'acolyterelic', 'confwand', 'penwhip', 'monkrobe', 'oathplate', 'candlegloves', 'archerbracer', 'poisoner', 'viperskin', 'woodsymbol', 'worrybeads', 'ashmedal', 'obsidianring', 'lapisring', 'oathbreaker', 'thornrod', 'candlewick', 'hereticstaff', 'belllongbow', 'crowfeather', 'abysseye', 'tinring', 'siegering'];
 const poolOk = (p, k) => !(isV2(p) && V2_OFF.includes(k));
-/* 충전: 전투를 가득 찬 채 시작한다. 조건이 일어나면 진행이 1 오르고, 정한 횟수가 되면 1 찬다.
-   스킬은 자기 효과로 일어난 조건으로 충전되지 않는다(b.curSkill). 가득 찬 동안의 진행은 쌓이지 않는다 */
-function resetCharges(p) { p.chg = {}; p.chgP = {}; for (const id of p.skills || []) if (SK2[id]) p.chg[id] = SK2[id].ch.max; p.pbuf = null; p.dodgeRed = 0; p.dodgeOn = null; }
+/* 재사용 대기 (10월 3일 만든 사람 결정, 충전을 대신한다): 전투를 모두 준비된 채 시작한다. 스킬을 쓰면 cd만큼 내 차례를 기다리고(p.cd),
+   내 차례가 지날 때마다 1 준다(쓴 그 차례는 빼고). 전투마다 1번(once)인 스킬은 쓰면 그 전투 동안 CD_USED로 남는다.
+   갈래 규칙(TREE2.haste): 그 일(독을 걸기, 적을 쓰러뜨리기, 흘리기 성공)이 일어난 행동마다 한 번, 그 갈래 스킬의 남은 대기가 1 준다 */
+const CD_USED = 999;
+function resetCharges(p) { p.cd = {}; p.cdJust = null; p.hsAt = {}; p.pbuf = null; p.dodgeRed = 0; p.dodgeOn = null; }
 function chargeEv(b, kind) {
-  const p = b.p; if (!p.chg) return;
-  for (const id of p.skills || []) {
-    const s = SK2[id]; if (!s || !s.ch.every || s.ch.on !== kind || id === b.curSkill) continue;
-    if ((p.chg[id] || 0) >= s.ch.max) { p.chgP[id] = 0; continue; }
-    p.chgP[id] = (p.chgP[id] || 0) + 1;
-    if (p.chgP[id] >= s.ch.every) { p.chgP[id] = 0; p.chg[id] = Math.min(s.ch.max, (p.chg[id] || 0) + 1); }
+  const p = b.p; if (!p.cd) return;
+  if (kind === 'turn') { for (const id of p.skills || []) { const s = SK2[id]; if (!s || s.once || id === p.cdJust) continue; if (p.cd[id] > 0) p.cd[id]--; } p.cdJust = null; return; }
+  const H = (TREE2[p.build] || {}).haste; if (!H) return;
+  for (const br in H) {
+    if (H[br] !== kind || p.hsAt[br] === b.actN) continue;
+    const ids = (p.skills || []).filter(id => SK2[id] && SK2[id].b === br && !SK2[id].once && p.cd[id] > 0);
+    if (!ids.length) continue;
+    p.hsAt[br] = b.actN; for (const id of ids) p.cd[id]--;
+    logp(b, 'good', br + ' 스킬 대기 −1 (' + HS_WHY[kind] + ')');
   }
 }
+const HS_WHY = { poison: '독을 걸었다', kill: '적을 쓰러뜨렸다', parry: '흘려 냈다' };
 /* 스킬 트리 (개편 기획 4절): 포인트 1로 한 칸을 연다. 깊은 등급은 그 갈래에 먼저 쓴 포인트가 있어야 열린다(TREE_GATE). 연 스킬 가운데 4칸을 장착 */
 function treeInit(run) { const T = TREE2[run.build]; if (!T) return; run.tree = run.tree || { pts: T.pts || 0, open: [], spent: {} }; }
+/* 저장본 고치기: 스킬 데이터에서 빠진 칸(10월 3일 재사용 대기 개편: 짧은 격발 → 독 심기, 시작 스킬 바뀜)은 연 칸에서 지우고 포인트를 돌려준다 */
+function treeFix(run) {
+  const t = run.tree; if (!t) return;
+  const ok = t.open.filter(id => SK2[id] && !SK2[id].start); const lost = t.open.length - ok.length;
+  if (lost > 0) { t.open = ok; t.pts += lost; t.spent = {}; for (const id of ok) t.spent[SK2[id].b] = (t.spent[SK2[id].b] || 0) + 1; }
+  run.skills = (run.skills || []).filter(id => ok.includes(id));
+}
 /* 장착: 시작 스킬(늘) + 트리에서 끼운 스킬(run.skills, 4칸까지) */
 function v2Equip(run) { const T = TREE2[run.build]; return (T ? T.starters : []).concat((run.skills || []).filter(id => !(T && T.starters.includes(id)))).slice(0, (T ? T.starters.length : 0) + EQUIP_SLOTS2); }
 function treeWhy(run, id) {
@@ -1064,7 +1081,7 @@ function addS(b, u, k, dur, stacks, max) {
     const opp = KW_OPP[k]; if (opp && u.s[opp]) { const m = Math.min(n, u.s[opp].stacks); kwDec(u, opp, m); n -= m; if (n <= 0) return 0; }
     const cur = stk(u, k); const nv = Math.min(Math.max(KW[k], cur), cur + n);
     if (nv > cur) u.s[k] = { stacks: nv, until: KW_FOREVER, dur: KW_FOREVER };
-    if (u !== b.p && KW_BAD.includes(k) && nv > cur) chargeEv(b, 'apply');
+    if (u !== b.p && KW_BAD.includes(k) && nv > cur) chargeEv(b, k === 'poison' ? 'poison' : 'apply');
     return nv - cur;
   }
   if (u === b.p && DEBUFFS.includes(k)) {
@@ -1342,6 +1359,7 @@ function enemyHitEst(b, e) {
   return d;
 }
 function enemyAct(b, e) {
+  b.actN = (b.actN || 0) + 1;
   if (e.s.trap) { const tr = e.s.trap; delete e.s.trap; hurtEnemy(b, e, tr.stacks, { label: '덫', aoe: tr.aoe || 0 }); if (e.alive) addBreak(b, e, tr.brk || 0); logp(b, 'good', e.n + '이(가) 덫을 밟는다'); if (!e.alive || b.over) return; }
   if (e.stun > 0) { e.stun--; logp(b, 'sys', e.n + '이(가) 비틀거린다. 행동을 놓친다'); e.next = b.t + 1 / eSpeed(b, e); e.acts++; return; }
   const i = e.intent || { k: 'attack' }; const d = enemyHitEst(b, e);
@@ -1408,13 +1426,13 @@ function actionList(b) {
     (() => { const led = p.eq.ring2 === 'ledger' || p.eq.ring1 === 'ledger'; const hcst = heavyCost(p); const lack = Math.max(0, hcst - p.st); const hc = ledgerCost(p, lack); const ok = p.st >= hcst || (led && p.hp > hc + 1); return { id: 'heavy', n: isCaster(p) ? '집중 주문' : '강공격', melee: isCaster(p) ? 0 : 1, ranged: isCaster(p) ? 1 : 0, cost: lack > 0 && led ? '스태미나 ' + Math.floor(p.st) + ' + 생명력 ' + Math.ceil(hc) : '스태미나 ' + hcst, time: 1.3, ok, why: !ok && led && lack > 0 ? '생명력이 모자랍니다(피의 계산서)' : null }; })(),
   ];
   const SKM = skillMap(p.build);
-  if (isV2(p)) for (const sid of skillsOf(p)) { // 0.6a.2: 충전으로 쓴다
-    const s = SK2[sid]; if (!s) continue; const n = (p.chg && p.chg[sid]) || 0;
-    const needPoison = s.fx.some(e => e.k === 'burst' || e.k === 'grow');
-    let why = n <= 0 ? (s.ch.every ? '충전 없음' : '이번 전투에 이미 씀') : null;
+  if (isV2(p)) for (const sid of skillsOf(p)) { // 0.6a.2: 재사용 대기
+    const s = SK2[sid]; if (!s) continue; const w = (p.cd && p.cd[sid]) || 0;
+    const needPoison = s.fx.some(e => (e.k === 'burst' && !e.pre) || e.k === 'grow'); // 먼저 중독을 거는 터뜨리기(pre)는 중독 없는 적에게도 쓴다
+    let why = w > 0 ? (s.once ? '이번 전투에 이미 씀' : '⏳ ' + w + '차례 뒤') : null;
     if (!why && needPoison && !alive(b).some(e => e.s.poison)) why = '중독된 적 없음';
     if (!why && s.tgt === 'front' && !alive(b).some(e => e.row === 'front' && e.role !== 'root')) why = '전열에 적 없음';
-    L.push(Object.assign(v2Static(s), { cost: s.ch.every ? '충전 ' + n + '/' + s.ch.max : (n ? '전투마다 1번' : '이미 씀'), ok: !why, why }));
+    L.push(Object.assign(v2Static(s), { cost: s.once ? '전투마다 1번' : '재사용 ' + s.cd + '차례', wait: w, ok: !why, why }));
   }
   if (!isV2(p)) for (const sid of skillsOf(p)) {
     const s = SKM[sid]; if (!s) continue;
@@ -1448,9 +1466,9 @@ function actionList(b) {
   } }
   L.push({ id: 'guard', n: '방어', self: 1, cost: '스태미나 ' + guardCost(p), time: 1, ok: p.st >= guardCost(p) });
   L.push({ id: 'dodge', n: '흘리기', dodge: 1, cost: '스태미나 ' + dodgeCost(p), time: 1, ok: p.st >= dodgeCost(p) });
-  L.push({ id: 'flaskL', n: p.eq.flask === 'chalice' ? '역류의 성배' : '생명력 플라스크', self: 1, cost: '충전 ' + p.flask.life, time: 0.5, ok: p.flask.life > 0 });
-  L.push({ id: 'flaskM', n: isV2(p) ? '정화 플라스크' : '마나 플라스크', self: 1, cost: '충전 ' + p.flask.mana, time: 0.5, ok: p.flask.mana > 0 });
-  L.push({ id: 'flaskS', n: '스태미나 플라스크', self: 1, cost: '충전 ' + (p.flask.stam || 0), time: 0.5, ok: (p.flask.stam || 0) > 0 });
+  L.push({ id: 'flaskL', n: p.eq.flask === 'chalice' ? '역류의 성배' : '생명력 플라스크', self: 1, cost: '남은 ' + p.flask.life, time: 0.5, ok: p.flask.life > 0 });
+  L.push({ id: 'flaskM', n: isV2(p) ? '정화 플라스크' : '마나 플라스크', self: 1, cost: '남은 ' + p.flask.mana, time: 0.5, ok: p.flask.mana > 0 });
+  L.push({ id: 'flaskS', n: '스태미나 플라스크', self: 1, cost: '남은 ' + (p.flask.stam || 0), time: 0.5, ok: (p.flask.stam || 0) > 0 });
   if (!b.ctx.boss && !b.ctx.scen && !b.ctx.tut) L.push({ id: 'flee', n: '도망', self: 1, cost: '성공 ' + Math.round(fleeChance(b) * 100) + '%', time: 1, ok: true });
   return b.ctx.allow ? L.filter(a => b.ctx.allow.includes(a.id)) : L; // 수련장: 그 장면에서 배우는 행동만
 }
@@ -1492,7 +1510,7 @@ function snapshotFor(b, act, tgt) {
   };
 }
 function playerAct(b, id, tgtId) {
-  const p = b.p; if (b.over) return;
+  const p = b.p; if (b.over) return; b.actN = (b.actN || 0) + 1; // 갈래 규칙은 한 행동에 한 번
   const L = actionList(b); const act = L.find(x => x.id === id);
   if (!act || !act.ok) return;
   if (act.stCost) p.st = Math.max(0, p.st - act.stCost);
@@ -1500,7 +1518,7 @@ function playerAct(b, id, tgtId) {
   if (id === 'dodge' && (!tgt || tgt.role === 'root')) tgt = pickDodge(b);
   if (id === 'sig' && p.build === 'assassin' && (!tgt || !tgt.s.poison)) tgt = alive(b).filter(e => e.s.poison).sort((x, y) => y.s.poison.stacks - x.s.poison.stacks)[0] || tgt;
   if (id === 'burst' && (!tgt || !tgt.s.poison)) tgt = alive(b).filter(e => e.s.poison).sort((x, y) => y.s.poison.stacks - x.s.poison.stacks)[0] || tgt;
-  if (act.v2 && act.s.fx.some(e => e.k === 'burst' || e.k === 'grow') && (!tgt || !tgt.s.poison)) tgt = alive(b).filter(e => e.s.poison && canTarget(b, e, act)).sort((x, y) => y.s.poison.stacks - x.s.poison.stacks)[0] || tgt;
+  if (act.v2 && act.s.fx.some(e => (e.k === 'burst' && !e.pre) || e.k === 'grow') && (!tgt || !tgt.s.poison)) tgt = alive(b).filter(e => e.s.poison && canTarget(b, e, act)).sort((x, y) => y.s.poison.stacks - x.s.poison.stacks)[0] || tgt;
   if (act.v2 && act.dodge && (!tgt || tgt.role === 'root')) tgt = pickDodge(b);
   if (!act.self && !act.aoe) {
     if (!tgt || !canTarget(b, tgt, act)) tgt = alive(b).find(e => canTarget(b, e, act) && e.role !== 'root') || alive(b).find(e => canTarget(b, e, act));
@@ -1668,8 +1686,9 @@ function addBreak(b, e, v) {
 }
 function finishPlayer(b, time, lost) {
   const p = b.p; b.cur = null; b.curSkill = null;
-  // 0.6a.2: 행동했으면(기절로 놓친 차례가 아니면) 약화·강화(공격했을 때), 출혈, 둔화·가속, "내 차례" 충전
-  if (!lost) { if (b.atkUsed) { kwDec(p, 'weak'); kwDec(p, 'empower'); } kwBleed(b, p); time = kwTime(p, time); chargeEv(b, 'turn'); }
+  // 0.6a.2: 행동했으면(기절로 놓친 차례가 아니면) 약화·강화(공격했을 때), 출혈, 둔화·가속. 재사용 대기는 놓친 차례에도 준다
+  if (!lost) { if (b.atkUsed) { kwDec(p, 'weak'); kwDec(p, 'empower'); } kwBleed(b, p); time = kwTime(p, time); }
+  chargeEv(b, 'turn');
   b.atkUsed = 0;
   if (p.fxQuick) { time *= 0.5; p.fxQuick = 0; fxHit('saintgrail'); } if (p.fxQuickNext) { p.fxQuick = 1; p.fxQuickNext = 0; }
   if (p.st <= 0) { p.st = 0; p.exhaust = 1; }
@@ -1806,7 +1825,8 @@ const HELP = [
     '스킬 트리는 세 갈래이고, 갈래마다 기본 → 중급 → 상급 → 궁극으로 가지가 뻗습니다. 처음에는 모두 잠겨 있고, 캐릭터를 만들 때 포인트 1로 첫 칸 하나를 엽니다. 레벨이 오르면 포인트 1, 챕터를 깨면 포인트 2를 얻습니다.',
     '칸은 선으로 이어진 앞 칸을 열어야 열립니다. 깊은 등급은 그 갈래에 포인트를 먼저 써야 합니다. 앞 칸을 열기 전에는 이어진 칸이 "?"로 보이고, 궁극은 이름만 보입니다.',
     '연 스킬 가운데 4칸을 끼웁니다. 메뉴의 "스킬 트리"에서 언제든 보고, 방과 방 사이에 열고 바꿉니다. 전투 중에는 보기만 합니다.',
-    '스킬은 마나 대신 충전으로 씁니다. 전투를 시작할 때 충전이 가득 차고, 쓰면 1 줄고, 스킬마다 적힌 조건(내 차례, 상태를 걸 때, 흘리기에 성공할 때, 적을 쓰러뜨릴 때)으로 다시 찹니다. 스킬은 자기 효과로는 다시 차지 않습니다.',
+    '스킬은 마나 대신 재사용 대기로 씁니다. 전투를 시작할 때 모두 준비되어 있고, 쓰면 적힌 차례만큼 기다립니다(예: 재사용 3차례). 버튼에 "⏳ 2차례 뒤"처럼 남은 차례가 보입니다.',
+    '갈래마다 규칙이 하나 있어 그 갈래 스킬의 남은 대기를 1 줄입니다. 암살자는 독사: 독을 걸면, 격발: 적을 쓰러뜨리면, 그림자: 흘려 내면. 한 행동에 한 번만 줄고, 시작 스킬은 차례로만 돕니다.',
     '스킬마다 빠르기가 있습니다. 센 스킬일수록 느려서 그사이 적이 더 끼어듭니다.'] },
   { k: 'stats', n: '능력치', t: [
     '캐릭터를 만들 때 6점, 레벨이 오를 때마다 2점을 힘, 민첩, 지능에 나눕니다. 1점마다 규칙이 하나씩 바뀝니다. 나눌 때 "다음 1점"에 무엇이 바뀌는지 보입니다.',
@@ -1824,7 +1844,7 @@ const HELP = [
   { k: 'hp', n: '생명력', t: [
     '0이 되면 쓰러지고, 그 캐릭터는 끝납니다.',
     '전투가 끝나도 저절로 차지 않고 다음 방으로 그대로 이어집니다. 생명력 플라스크, 샘(50%), 9층 야영지(전부), 정산(전부)에서 회복합니다.'] },
-  { k: 'mp', n: '충전', t: ['0.6a.2 직업에는 마나가 없습니다. 스킬마다 충전 칸이 있고, 전투를 시작할 때 가득 찹니다. 쓰면 1 줄고, 스킬에 적힌 조건으로 다시 찹니다. "전투마다 1번"인 스킬은 전투가 끝나야 다시 찹니다.'] },
+  { k: 'mp', n: '재사용 대기', t: ['0.6a.2 직업에는 마나가 없습니다. 스킬은 전투를 시작할 때 모두 준비되어 있고, 쓰면 적힌 차례만큼 기다립니다. 내 차례가 지날 때마다 1 줄고, 그 갈래의 규칙(예: 암살자 그림자는 흘려 내면)이 일어나면 1 더 줍니다. "전투마다 1번"인 스킬은 전투가 끝나야 다시 씁니다.'] },
   { k: 'st', n: '스태미나', t: [
     '강공격(40), 방어(20), 흘리기(30)에 듭니다. 시간이 흐르면 보통 행동 1번마다 ' + ST_REGEN + '씩 찹니다. 기본 공격은 스태미나를 채우지 않습니다.',
     '0이 되면 탈진합니다. 강공격·방어·흘리기를 못 하고 받는 피해가 20% 늘어납니다. 30까지 차거나 스태미나 플라스크를 마시면 풀립니다.',
@@ -1838,7 +1858,7 @@ const HELP = [
   { k: 'act', n: '행동', t: [
     '기본 공격(보통): 비용 없음. 무기 피해만큼 치고 붕괴 게이지를 10 채웁니다.',
     '강공격(느림): 스태미나 40. 180% 피해 + 붕괴 35. 대신 다음 차례가 늦어져 적이 끼어들 수 있습니다.',
-    '스킬: 충전을 1 써서 직업 고유의 효과를 냅니다. 버튼에 "충전 2/3"처럼 남은 충전이 보입니다.',
+    '스킬: 직업 고유의 효과를 냅니다. 쓰고 나면 적힌 차례만큼 기다리고, 버튼에 "⏳ 2차례 뒤"처럼 남은 차례가 보입니다.',
     '방어(보통): 스태미나 20. 내 다음 행동까지 받는 피해가 절반이 됩니다.',
     '흘리기(보통): 스태미나 30(암살자 25). 적 하나를 골라 그 적의 다음 단일 공격 피해를 60%(암살자 70%) 줄입니다. 그 공격이 강타였다면 그 적의 붕괴 게이지가 25 찹니다. 광역·지속 피해는 흘리지 못하고, 고른 적이 그 사이 움직이지 않으면 헛됩니다.',
     '도망: 보스전이 아닐 때만. 성공하면 방 밖으로 물러나고, 앞으로 가려면 그 방을 다시 이겨야 합니다. 실패하면 느린 행동이 됩니다.'] },
@@ -2326,7 +2346,7 @@ function vBattle() {
       btns += `<div class="agp" role="group" aria-label="${esc(lab)}"><span class="agl" aria-hidden="true">${esc(lab)}</span>`;
       for (const a of list) {
         let why = '';
-        if (!a.ok) why = a.why || (a.id === 'heavy' || a.id === 'guard' || a.id === 'dodge' ? '스태미나 부족' : a.skill ? '마나 부족' : '충전 없음');
+        if (!a.ok) why = a.why || (a.id === 'heavy' || a.id === 'guard' || a.id === 'dodge' ? '스태미나 부족' : a.skill ? '마나 부족' : '플라스크 없음');
         else if (tg && !a.self && !a.aoe && !canTarget(b, tg, a)) why = '이 대상에 닿지 않음';
         const dis = G.busy || !(a.ok && !why);
         const urgent = !dis && (a.id === 'flaskL') && p.hp < p.hpMax * 0.35; const tnew = G.scr === 'tut' && tutNew(b, a.id);
@@ -2523,14 +2543,14 @@ function infoHtml(key) {
   if (parts[0] === 'act' && b) {
     const a = actionList(b).find(x => x.id === parts[1]); if (!a) return '';
     const s = skillMap(b.p.build)[a.id];
-    let body = (a.v2 ? P(skHead(a.s)) + P(skBody(a.s)) + P('지금 ' + a.cost + '.') : P(a.id === 'sig' ? '직업 기술. ' + (SIG[b.p.build].cd ? SIG[b.p.build].cd + '차례에 한 번. ' : '') + SIG[b.p.build].d : (s ? resLabel(s, a.mana) + '. ' + s.d : actInfo(b.p, a.id)))) + (a.v2 ? '' : P('빠르기: ' + speedWord(a.time)));
+    let body = (a.v2 ? P(skHead(a.s)) + P(skBody(a.s)) + (a.wait > 0 && !a.s.once ? P('지금은 ' + a.wait + '차례 뒤에 쓸 수 있습니다.') : '') : P(a.id === 'sig' ? '직업 기술. ' + (SIG[b.p.build].cd ? SIG[b.p.build].cd + '차례에 한 번. ' : '') + SIG[b.p.build].d : (s ? resLabel(s, a.mana) + '. ' + s.d : actInfo(b.p, a.id)))) + (a.v2 ? '' : P('빠르기: ' + speedWord(a.time)));
     if (a.id !== 'flee') body += `<p class="pv">${esc(previewText(b, a.time))}</p>`;
     if (a.id === 'dodge') {
       const sel = G.sel ? b.en.find(e => e.id === G.sel && e.alive && e.role !== 'root') : null; const dt = sel || pickDodge(b);
       if (dt) { const moves = previewAfter(b, 1).some(x => x.e === dt); body += moves ? `<p>흘릴 적: <b>${esc(dt.n)}</b> (${esc(intentText(b, dt).t)})</p>` : `<p class="no">${esc(dt.n)}은(는) 내 다음 차례 전에 움직이지 않아 흘리기가 헛됩니다.</p>`; }
     }
     const tg = G.sel ? b.en.find(e => e.id === G.sel && e.alive) : null;
-    if (!a.ok) body += `<p class="no">지금은 쓸 수 없음: ${a.why || (a.id === 'heavy' || a.id === 'guard' || a.id === 'dodge' ? '스태미나 부족' : a.skill ? '마나 부족' : '충전 없음')}</p>`;
+    if (!a.ok) body += `<p class="no">지금은 쓸 수 없음: ${a.why || (a.id === 'heavy' || a.id === 'guard' || a.id === 'dodge' ? '스태미나 부족' : a.skill ? '마나 부족' : '플라스크 없음')}</p>`;
     else if (tg && !a.self && !a.aoe && !canTarget(b, tg, a)) body += `<p class="no">선택한 대상(${esc(tg.n)})에 닿지 않습니다. 전열이 막고 있습니다.</p>`;
     if (tg && isMeleeAct(b.p, a.id) && guardOf(b, tg) && !(a.id === 'heavy' && b.p.eq.weapon === 'hook' && tg.row === 'back')) body += `<p class="no">이 근접 공격은 ${esc(guardOf(b, tg).n)}이(가) 대신 맞습니다(피해·붕괴·상태이상 모두). 방패병을 붕괴시키거나, 원거리·광역 공격을 쓰면 뚫립니다.</p>`;
     return H(a.n, body);
@@ -3182,13 +3202,14 @@ function commitAct(id, tid) {
 function restoreBattle(cur) {
   const bt = cur.battle; delete cur.battle;
   G.run = cur; const b = bt.b; b.p = G.run.p; b.rngF = battleRng(b); b.stepMode = true;
+  if (G.run.tree && isV2(b.p)) { treeFix(G.run); b.p.skills = v2Equip(G.run); if (!b.p.cd) resetCharges(b.p); } // 개편 전 저장본: 바뀐 스킬과 재사용 대기
   G.b = b; G.scr = 'run'; G.sel = null; G.busy = false; G.banner = null; render();
   if (bt.commit && !b.over) { toast('누른 행동을 이어서 처리합니다'); setTimeout(() => doAct(bt.commit.id, bt.commit.tid), 60); }
   else toast('싸우던 곳에서 이어 갑니다');
 }
 function saveCur() { if (!G.run || G.run.endedAt) return; try { G.data.cur = JSON.parse(JSON.stringify(G.run)); saveLocal(); } catch (e) { } }
 function clearCur() { delete G.data.cur; saveLocal(); }
-function resumeRun() { if (!G.data.cur) return; if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); if (G.run.tree && isV2(G.run.p)) G.run.p.skills = v2Equip(G.run); /* 0.6a.2: 시작 스킬이 생기기 전 저장본도 시작 스킬을 끼운다 */ G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); }
+function resumeRun() { if (!G.data.cur) return; if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); if (G.run.tree && isV2(G.run.p)) { treeFix(G.run); G.run.p.skills = v2Equip(G.run); } /* 0.6a.2: 시작 스킬이 생기기 전 저장본도 시작 스킬을 끼운다 */ G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); }
 /* ===== 던전과 갈림길 (기획서 11.3절) =====
    run.room = 지금 층(1~19). run.doors = 이 층의 문 셋, run.cur = 고른 방. run.dg = 챕터 동안의 집계(유형별 횟수, 본 유형, 이벤트, 강적).
    run.buffs = { 성소·이벤트 버프: 남은 방 수 }, run.next = 다음 전투 방에 걸리는 것, run.gold = 모은 골드(정산은 단계 9) */
@@ -3610,7 +3631,8 @@ function vTreeBranch(run, br) {
     const glyph = vis === 'hidden' ? '?' : eq ? '✓' : open ? '●' : can ? '+' : s.tier === '궁극' ? '★' : '·';
     nodes += `<button class="${cls}" style="left:${p.x}%;top:${TREE_TOP + p.y * TREE_ROW_H}px" data-a="tsel" data-k="${s.id}" data-info="tn:${s.id}" aria-label="${esc(vis === 'hidden' ? '아직 보이지 않는 칸' : s.n + ', ' + s.tier + (open ? ', 열림' : can ? ', 열 수 있음' : '') + (eq ? ', 끼움' : ''))}"><span class="tc">${glyph}</span><small>${vis === 'hidden' ? '' : esc(s.n)}</small></button>`;
   }
-  return `<div class="tbranch"><div class="tcanvas" style="height:${H}px"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${nodes}</div></div>`;
+  const hs = ((TREE2[run.build] || {}).haste || {})[br];
+  return `<div class="tbranch">${hs ? `<p class="thaste"><b>갈래 규칙</b> ${esc(skHasteLine(hs, br))}</p>` : ''}<div class="tcanvas" style="height:${H}px"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${nodes}</div></div>`;
 }
 function vTreeDetail(run, id, preview) {
   const s = id && SK2[id]; if (!s) return `<p class="mini">칸에 마우스를 올리면 여기에 설명이 나옵니다. 누르면 그 칸을 골라 열거나 끼웁니다.</p>`;

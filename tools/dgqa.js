@@ -190,13 +190,14 @@ const TIER_N = { 기본: 0, 중급: 1, 상급: 2, 궁극: 3 };
 function spendTree(pk, r) {
   const G = G0.__G, run = G.run; if (!run.tree || !(run.tree.pts > 0)) return;
   const all = G0.SKILLS2[run.build]; const T = G0.TREE2[run.build];
-  run.focus = run.focus || T.branches[Math.floor(r() * T.branches.length)];
+  run.focus = run.focus || (process.env.FOCUS && T.branches.includes(process.env.FOCUS) ? process.env.FOCUS : T.branches[Math.floor(r() * T.branches.length)]); // FOCUS=갈래 이름으로 고정해 잴 수 있다
   for (let n = 0; n < 20 && run.tree.pts > 0; n++) {
     const can = all.filter(s => !G0.treeWhy(run, s.id));
     if (!can.length) break;
     const focus = THINK(pk) || pk === 'careful';
     const pool = focus ? (can.filter(s => s.b === run.focus).length ? can.filter(s => s.b === run.focus) : can) : can;
-    const s = focus ? pool.sort((x, y) => TIER_N[y.tier] - TIER_N[x.tier] || r() - 0.5)[0] : pool[Math.floor(r() * pool.length)];
+    const root = focus ? pool.filter(x => x.tier === '기본' && x.b === run.focus) : []; // 한 갈래를 파는 사람은 그 갈래의 기본 두 칸부터 연다
+    const s = root.length ? root[0] : focus ? pool.sort((x, y) => TIER_N[y.tier] - TIER_N[x.tier] || r() - 0.5)[0] : pool[Math.floor(r() * pool.length)];
     G0.treeUnlock(run, s.id);
     const eq = run.skills.slice();
     if (eq.length < G0.EQUIP_SLOTS2) eq.push(s.id);
