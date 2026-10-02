@@ -186,7 +186,8 @@ function shopPhase(pk, r) {
 }
 /* 0.6a.2 트리: 포인트가 있으면 성향대로 연다. 숙련·탐험가·신중은 한 갈래에 몰고(깊은 칸), 나머지는 아무 칸이나.
    연 스킬은 빈칸에 끼우고, 칸이 차면 가장 낮은 등급과 바꾼다 */
-const TIER_N = { 기본: 0, 중급: 1, 상급: 2, 궁극: 3 };
+const TIER_N = { 기본: 0, 하급: 0, 중급: 1, 상급: 2, 궁극: 3 };
+const ROWN = s => s.row || TIER_N[s.tier] + 1; // 0.6a.2 사다리: 줄이 깊을수록 높다
 function spendTree(pk, r) {
   const G = G0.__G, run = G.run; if (!run.tree || !(run.tree.pts > 0)) return;
   const all = G0.SKILLS2[run.build]; const T = G0.TREE2[run.build];
@@ -196,12 +197,12 @@ function spendTree(pk, r) {
     if (!can.length) break;
     const focus = THINK(pk) || pk === 'careful';
     const pool = focus ? (can.filter(s => s.b === run.focus).length ? can.filter(s => s.b === run.focus) : can) : can;
-    const root = focus ? pool.filter(x => x.tier === '기본' && x.b === run.focus) : []; // 한 갈래를 파는 사람은 그 갈래의 기본 두 칸부터 연다
-    const s = root.length ? root[0] : focus ? pool.sort((x, y) => TIER_N[y.tier] - TIER_N[x.tier] || r() - 0.5)[0] : pool[Math.floor(r() * pool.length)];
+    const root = focus ? pool.filter(x => ROWN(x) === 1 && x.b === run.focus) : []; // 한 갈래를 파는 사람은 그 갈래의 첫 줄 두 칸부터 연다
+    const s = root.length ? root[0] : focus ? pool.sort((x, y) => ROWN(y) - ROWN(x) || r() - 0.5)[0] : pool[Math.floor(r() * pool.length)];
     G0.treeUnlock(run, s.id);
     const eq = run.skills.slice();
     if (eq.length < G0.EQUIP_SLOTS2) eq.push(s.id);
-    else { const lo = eq.map((id, i) => [i, TIER_N[G0.SK2[id].tier]]).sort((x, y) => x[1] - y[1])[0]; if (lo[1] < TIER_N[s.tier] || r() < 0.3) eq[lo[0]] = s.id; }
+    else { const lo = eq.map((id, i) => [i, ROWN(G0.SK2[id])]).sort((x, y) => x[1] - y[1])[0]; if (lo[1] < ROWN(s) || r() < 0.3) eq[lo[0]] = s.id; }
     run.skills = eq; run.p.skills = G0.v2Equip(run);
   }
 }

@@ -17,7 +17,7 @@ const SKK = {
   turns: 11,                    // 기준 전투에서 첫 차례 뒤 내 차례 수 (목표 전투 길이 12행동, 10월 3일 만든 사람 결정: 옛 암살자 수준)
   haste: { poison: 5, kill: 2, parry: 1.5 },  // 기준 전투에서 갈래 규칙이 일어나는 행동 수 (한 행동에 한 번만 센다) [가설]
   kw: { weak: 1.5, vuln: 1.5, chill: 1.5 },   // 적에게 거는 상태 1의 값 (한 번 막거나 키우는 피해)
-  budget: { 시작: 35, 기본: 34, 중급: 40, 상급: 50, 궁극: 70 },   // 시작 30 → 35 (10월 3일: 늘 끼워지는 시작 스킬로 전투를 줄인다)   // 10월 3일: 06a2 감도 시험(스킬 효과 ×1.3 → 6성향 20%, 신중 35%)에서 등급별 점수 중앙값. 처음 값(20·24·30·42)의 약 1.7배
+  budget: { 시작: 35, 하급: 34, 중급: 40, 상급: 50, 궁극: 70 },   // 시작 30 → 35 (10월 3일: 늘 끼워지는 시작 스킬로 전투를 줄인다)   // 10월 3일: 06a2 감도 시험(스킬 효과 ×1.3 → 6성향 20%, 신중 35%)에서 등급별 점수 중앙값. 처음 값(20·24·30·42)의 약 1.7배
   Fmax: 6,                      // 한 스킬을 전투에서 쓰는 횟수의 상한 (실측: 바탕 스킬 독니 5.4)
 };
 const skTri = n => n * (n + 1) / 2;
@@ -28,9 +28,9 @@ function skValue(s) {
     switch (e.k) {
       case 'dmg': v += e.n * hits * (s.tgt === 'self' ? 1 : tm); break;
       case 'poison': v += e.n * hits * K.poison * (s.tgt === 'self' ? 1 : tm); break;
-      case 'grow': v += Sof('grow') * (e.mul - 1) * K.poison + (e.add || 0) * K.poison; break;
+      case 'grow': v += (Sof('grow') * (e.mul - 1) * K.poison + (e.add || 0) * K.poison) * (s.tgt === 'all' || s.tgt === 'front' ? tm : 1); break;
       case 'burst': { const S0 = Sof('burst') + (e.pre || 0); const S = e.half ? Math.ceil(S0 / 2) : e.top ? Math.min(e.top, S0) : S0; const tot = (e.top || e.half) ? (skTri(S0) - skTri(S0 - S)) : skTri(S0); // pre: 터뜨리기 전에 거는 중독
-        v += tot * ((e.mul || 1) - 0.5) * (s.tgt === 'all' ? 2 : 1) + (e.keep || 0) * S0 * K.poison + S * (e.brkPer || 0) * K.brk * (s.tgt === 'all' ? 2 : 1); break; }
+        const am = s.tgt === 'all' || s.tgt === 'front' ? tm : 1; v += tot * ((e.mul || 1) - 0.5) * am + (e.keep || 0) * S0 * K.poison + S * (e.brkPer || 0) * K.brk * am; break; } // 광역 터뜨리기는 맞히는 수만큼
       case 'exploit': v += e.per * Sof('exploit') + (e.n || 0); break;
       case 'brk': v += e.n * K.brk * (s.tgt === 'self' ? 1 : tm); break;
       case 'stam': v += e.n * 0.15; break;
