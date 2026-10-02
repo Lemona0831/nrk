@@ -2,11 +2,13 @@
    챕터 틀: 층 번호는 모두 여기서 읽는다.
    floors 마지막 층, camp 야영지, spring 고정 샘, boss 보스 층, lower 하층 첫 층,
    mlv 몬스터 레벨 [이 층까지, 레벨]…(그 뒤와 보스는 mlvTop), maxMul 방 유형 최대 개수 배율(내림),
-   strongHalf 상층·하층마다 강적 최대, forceAt 샘·강적이 아직 문에 나오지 않았으면 넣는 층 [상층, 하층] */
+   strongHalf 상층·하층마다 강적 최대, forceAt 샘·강적이 아직 문에 나오지 않았으면 넣는 층 [상층, 하층],
+   bossId 챕터 보스(BOSSES), clearLore 정산 화면의 한 줄, goldMul 방 골드 배율 */
 const CHAPTERS = {
-  1: { n: '저주받은 수도원', floors: 19, camp: 9, spring: 18, boss: 19, lower: 10, mlv: [[4, 1], [8, 2], [13, 3]], mlvTop: 4, maxMul: 1, strongHalf: 2, forceAt: [6, 14] },
-  2: { n: '잊힌 지하묘지', floors: 27, camp: 13, spring: 26, boss: 27, lower: 14, mlv: [[6, 5], [12, 6], [19, 7]], mlvTop: 8, maxMul: 1.5, strongHalf: 3, forceAt: [9, 22] }, // 1챕터의 1.5배 (10월 2일 만든 사람 결정)
+  1: { n: '저주받은 수도원', floors: 19, camp: 9, spring: 18, boss: 19, lower: 10, mlv: [[4, 1], [8, 2], [13, 3]], mlvTop: 4, maxMul: 1, strongHalf: 2, forceAt: [6, 14], bossId: 'abbot', clearLore: '수도원장의 종이 멎었다. 계단은 더 아래로 이어진다.' },
+  2: { n: '잊힌 지하묘지', floors: 27, camp: 13, spring: 26, boss: 27, lower: 14, mlv: [[6, 5], [12, 6], [19, 7]], mlvTop: 8, maxMul: 1.5, strongHalf: 3, forceAt: [9, 22], goldMul: 1.3, bossId: 'cryptlord', clearLore: '녹슨 왕관이 뼈 더미 위로 굴러떨어졌다. 더 깊은 곳에서 뜨거운 모래바람이 불어온다.' }, // 1챕터의 1.5배 (10월 2일 만든 사람 결정)
 };
+const NEXT_CH_N = { 3: '재의 사막 유적' }; // 아직 열리지 않은 챕터의 이름 (기다리는 화면)
 const chOf = ch => CHAPTERS[ch] || CHAPTERS[1];
 const isLower = (f, ch) => f >= chOf(ch).lower;
 
@@ -123,6 +125,7 @@ const ENEMY_NAMES = {
 const FOE_INTRO = {
   abbot: { n: '타락한 수도원장', lore: '제단 앞에서 등을 돌린 채, 아직도 누군가의 고해를 기다린다.', see: ['수도원장이 낡은 성서를 펼친다. 손가락이 당신의 이름 위에서 멈춘다.'] },
   bellringer: { n: '종지기', lore: '줄을 놓지 않는 손. 종은 아직 울리지 않았다.', see: ['뒤쪽에 큰 종이 매달려 있다. 종지기가 줄을 감아쥔다.'] },
+  cryptlord: { n: '지하묘지의 군주', lore: '무너진 관 더미 위에 앉아, 녹슨 왕관을 아직 내려놓지 않았다.', see: ['군주가 관 뚜껑을 짚고 천천히 일어선다. 왕관이 한쪽으로 기울어 있다.'] },
   pilgrim: { n: '굶주린 순례자', lore: '먼 길을 걸어온 자. 이제 무엇을 먹어도 배가 부르지 않다.', see: ['순례자가 입가를 훔친다. 손등에 마른 피가 묻어 있다.'] },
 };
 /* 도감: 처음 겪은 일만 적힌다 (결과만, 대처법은 플레이어 메모) */

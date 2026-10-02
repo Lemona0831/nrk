@@ -1,7 +1,7 @@
 /* ===== 저장본 이주 점검 (0.6b 단계 0, 구현계획 "0.6a 저장본이 오류 없이 열린다")
    지인 사이트(루트, 0.6a) 코드로 여러 시점의 이어 하기 저장본을 만들고, next/ 코드로 열어 끝까지 이어 가 본다.
    node tools/savecheck.js make   → 루트 코드로 저장본을 만든다 (tools/saves06a.json, 저장소에 올리지 않는다)
-   node tools/savecheck.js check  → next/ 코드로 저장본마다 이어 하기를 누르고, 성향대로 끝까지 진행한다 */
+   node tools/savecheck.js check  → next/ 코드로 저장본마다 이어 하기를 누르고, 성향대로 끝까지 진행한다. 2챕터를 기다리던 캐릭터는 2챕터로 내려가 끝까지 */
 const fs = require('fs'), path = require('path');
 const mode = process.argv[2] || 'check';
 const FILE = path.join(__dirname, 'saves06a.json');
@@ -9,7 +9,6 @@ if (mode === 'make') process.env.DGDIR = '.';
 const D = require('./dgqa.js');
 const { G0, OPT, playChar, playLoop, handleSheets, click, rng, run_ } = D;
 const BUILDS = Object.keys(G0.BUILDS);
-run_('var window = { scrollTo() { }, innerWidth: 1280, innerHeight: 800, scrollY: 0, addEventListener() { } };'); // 화면이 없는 vm에서 정산·상점 버튼이 부르는 창 함수만 둔다
 
 if (mode === 'make') {
   const saves = [];
@@ -36,7 +35,7 @@ if (mode === 'make') {
   const by = {}; saves.forEach(x => { const k = x.why.replace(/ \d+층/, ''); by[k] = (by[k] || 0) + 1; }); console.log(by);
 } else {
   const { saves } = JSON.parse(fs.readFileSync(FILE, 'utf8'));
-  const G = G0.__G; let bad = 0, done = 0;
+  const G = G0.__G; let bad = 0, done = 0; const wait2 = [];
   saves.forEach((sv, i) => {
     const errs = [];
     try {
@@ -52,12 +51,15 @@ if (mode === 'make') {
         }
         const out = { bugs: [], rooms: [], acts: 0 }; playLoop('expert', rng(800 + i), out);
         errs.push(...out.bugs);
-      } else if (!['settle', 'shop', 'survey', 'wait'].includes(G.scr)) errs.push('화면 ' + G.scr + ' (단계 ' + ph + ')');
+      } else if (G.scr === 'wait') { // 1챕터를 깨고 기다리던 캐릭터: 2챕터로 내려가 끝까지 해 본다
+        click('nextch'); if (G.run.ch !== 2 || G.scr !== 'run') errs.push('2챕터로 내려가지 못함');
+        else { OPT.chapters = 2; const out = { bugs: [], rooms: [], acts: 0 }; playLoop('expert', rng(900 + i), out); OPT.chapters = 1; errs.push(...out.bugs); wait2.push(G.run.room + '층 ' + (G.scr === 'settle' ? '돌파' : '쓰러짐') + ' Lv' + G.run.lv); }
+      } else if (!['settle', 'shop', 'survey'].includes(G.scr)) errs.push('화면 ' + G.scr + ' (단계 ' + ph + ')');
       G0.render();
     } catch (e) { errs.push('예외 ' + (e && e.message)); }
     done++;
     if (errs.length) { bad++; console.log('✗ ' + sv.build + ' ' + sv.why + ': ' + errs.slice(0, 3).join(' / ')); }
   });
-  console.log(`저장본 ${done}개 열기, 오류 ${bad}개`);
+  console.log(`저장본 ${done}개 열기, 오류 ${bad}개. 기다리던 캐릭터의 2챕터: ${wait2.join(', ')}`);
   process.exitCode = bad ? 1 : 0;
 }

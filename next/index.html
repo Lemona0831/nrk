@@ -328,7 +328,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 
 /* ===== 던전: 진행 바, 문 ===== */
 .dgtop{padding:10px 12px}.dghead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}.dghead .gold-n{margin-left:auto;color:var(--gold);font-weight:600}
-.dgbar{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(19,minmax(0,1fr));gap:3px}
+.dgbar{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(var(--fl,19),minmax(0,1fr));gap:3px}.dgbar.long{gap:2px}.dgbar.long li{font-size:10px}
 .dgbar li{height:26px;border-radius:5px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;min-width:0;overflow:hidden}
 .dgbar li.past{opacity:.75}.dgbar li.now{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset;background:color-mix(in srgb,var(--gold) 14%,var(--panel2))}.dgbar li.camp{border-style:dashed}
 .bufs{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}.chip{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:var(--panel2)}.chip.mod{border-color:var(--blood);color:#e9b2a8}
@@ -339,7 +339,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .door.t-normal,.door.t-ambush{border-left-color:#8a3a2e}.door.t-strong,.door.t-trial{border-left-color:var(--blood)}.door.t-treasure{border-left-color:var(--gr-r)}.door.t-spring,.door.t-shrine{border-left-color:var(--mp)}.door.t-altar{border-left-color:#7a2a4a}.door.t-event{border-left-color:var(--muted)}
 .evopts{display:grid;gap:6px;margin-top:8px}.evo{text-align:left;display:flex;flex-direction:column;gap:2px}.evo small{color:var(--muted);font-size:12.5px}
 @media (min-width:720px){.doors{grid-template-columns:repeat(3,minmax(0,1fr))}.evopts{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}}
-@media (max-width:420px){.dgbar{gap:2px}.dgbar li{height:22px;font-size:10px;border-radius:4px}}
+@media (max-width:420px){.dgbar{gap:2px}.dgbar li{height:22px;font-size:10px;border-radius:4px}.dgbar.long{gap:1px}.dgbar.long li{font-size:8px;border-radius:3px}}
 
 .lvtag{font-size:12px;font-weight:700;color:var(--gold-ink);background:var(--gold);border-radius:6px;padding:1px 6px;margin-left:6px}
 .xpbar{position:relative;height:14px;margin-top:4px;background:var(--track);border-radius:7px;overflow:hidden}.xpbar i{display:block;height:100%;background:linear-gradient(90deg,#7a5a1e,var(--gold))}.xpbar span{position:absolute;inset:0;text-align:center;font-size:10.5px;line-height:14px;color:#fff;text-shadow:0 1px 2px #000}
@@ -1719,7 +1719,7 @@ const ASHORT = { guard: '방어', dodge: '흘리기', flaskL: '❤️ 생명력'
 const ATIP = { flaskS: '스태미나 +' + STAM_FLASK + ' · 탈진 풀림', basic: '붕괴 +10', heavy: '피해 180% · 붕괴 +35', guard: '다음 행동까지 받는 피해 절반', dodge: '고른 적의 다음 공격 피해 60% 감소', flaskL: '생명력 30% · 중독·출혈·점화·냉각 해제', flaskM: '마나 40% · 약화·취약 해제', flee: '실패하면 느린 행동' };
 function dgBar(run) {
   const C = chOf(run.ch); const done = {}; for (const x of run.rooms || []) if (x.room && (x.ch || 1) === (run.ch || 1)) done[x.room] = x;
-  let h = '<ol class="dgbar" aria-label="던전 진행">';
+  let h = `<ol class="dgbar${C.floors > 19 ? ' long' : ''}" style="--fl:${C.floors}" aria-label="던전 진행">`;
   for (let f = 1; f <= C.floors; f++) {
     const cls = f === run.room ? 'now' : f < run.room ? 'past' : '';
     const ico = f === C.camp ? '⛺' : f === C.spring ? '💧' : f === C.boss ? '👑' : done[f] && ROOM_TYPES[done[f].type] ? ROOM_TYPES[done[f].type].ico : (run.log6 && run.log6[f]) || '';
@@ -1747,7 +1747,7 @@ function vRunMap() {
   if (!R && run.doors) {
     h += `<section class="card"><h3>갈림길${q('rooms', '방과 보스')}</h3><p class="mini">문 하나를 고릅니다. 전투 방만 경험치를 줍니다. 문을 고르기 전에도 장비를 바꿀 수 있습니다.</p><div class="doors">${run.doors.map(doorCard).join('')}</div></section>`;
   } else if (R) h += vRoom(run, R);
-  const past = (run.rooms || []).filter(x => x.room);
+  const past = (run.rooms || []).filter(x => x.room && (x.ch || 1) === (run.ch || 1));
   h += `<section class="card"><h4>지나온 길</h4><p class="mini">${past.map(x => floorName(x.room) + ' ' + (ROOM_TYPES[x.type] ? ROOM_TYPES[x.type].n : x.type === 'camp' ? '야영' : '') + (x.res ? ', ' + (x.res === 'win' ? '승리' : x.res === 'flee' ? '물러남' : '패배') : '')).join(' / ') || '아직 없습니다'}</p></section>`;
   return h;
 }
@@ -1778,10 +1778,10 @@ function vRoom(run, R) {
 }
 
 /* ===== 타이틀 (진행 중인 캐릭터가 없으면 [시작], 있으면 [이어하기]·[처음부터]) ===== */
-function curDesc(c) { const n = c.ch || 1; return c.phase === 'wait' || c.phase === 'clearsv' ? n + '챕터 돌파 · ' + (n + 1) + '챕터 준비 중' : c.phase === 'shop' ? n + '챕터 돌파 · 상점' : c.phase === 'settle' ? n + '챕터 돌파 · 정산' : n + '챕터 · ' + floorName(c.room, n); }
+function curDesc(c) { const n = c.ch || 1; return c.phase === 'wait' || c.phase === 'clearsv' ? n + '챕터 돌파 · ' + (n + 1) + (CHAPTERS[n + 1] ? '챕터 입구' : '챕터 준비 중') : c.phase === 'shop' ? n + '챕터 돌파 · 상점' : c.phase === 'settle' ? n + '챕터 돌파 · 정산' : n + '챕터 · ' + floorName(c.room, n); }
 function vTitle() {
   const d = G.data; const c = d.cur && !d.cur.endedAt && BUILDS[d.cur.build] ? d.cur : null;
-  let h = `<section class="title-scr"><div class="tlogo"><span class="ver">0.6a</span><h1>나락의 유산</h1><p class="lore">무너진 수도원 아래, 빛이 닿지 않는 곳까지 계단이 이어진다.</p></div><div class="tmenu">`;
+  let h = `<section class="title-scr"><div class="tlogo"><span class="ver">${VERSION}</span><h1>나락의 유산</h1><p class="lore">무너진 수도원 아래, 빛이 닿지 않는 곳까지 계단이 이어진다.</p></div><div class="tmenu">`;
   if (c) { const B = BUILDS[c.build]; h += `<div class="tcur"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(c.cname || B.n)}</b><small>${esc(B.n)} · Lv ${c.lv || 1} · ${esc(curDesc(c))}</small></div></div><button class="gold" data-a="resume" data-focus>이어하기</button><button data-a="restart">처음부터</button>`; }
   else h += `<button class="gold" data-a="newchar" data-focus>시작</button>`;
   h += `</div></section><div class="tbelow">`;
@@ -1921,14 +1921,15 @@ const sellOf = it => Math.floor(priceOf(it.g, it.ch) * 0.25);
 function startSettle(run) {
   const ch = run.ch || 1; const strongN = run.rooms.filter(x => x.type === 'strong' && x.res === 'win').length;
   const mul = fxVal(run.p, 'goldMul', 1, (a, v) => a * v);
-  const lines = [{ n: '던전에서 모은 골드', v: run.gold || 0 }, { n: '보스 처치', v: Math.round(SETTLE.boss[ch - 1] * mul) }];
+  const carry = Math.min(run.carry || 0, run.gold || 0); const lines = carry ? [{ n: '가지고 내려온 골드', v: carry }] : [];
+  lines.push({ n: '던전에서 모은 골드', v: (run.gold || 0) - carry }, { n: '보스 처치', v: Math.round(SETTLE.boss[ch - 1] * mul) });
   if (strongN) lines.push({ n: '강적 처치 ' + strongN + '번', v: Math.round(SETTLE.strong * strongN * mul) });
   run.settle = { ch, lines, mul, total: lines.reduce((a, x) => a + x.v, 0) };
   run.phase = 'settle'; run.cur = null; run.doors = null;
 }
 function vSettle() {
   const run = G.run, S = run.settle;
-  return `<section class="card settle"><p class="mini">1챕터 · 저주받은 수도원</p><h3>챕터를 넘었습니다</h3><p class="lore">수도원장의 종이 멎었다. 계단은 더 아래로 이어진다.</p>
+  return `<section class="card settle"><p class="mini">${S.ch}챕터 · ${esc(chOf(S.ch).n)}</p><h3>챕터를 넘었습니다</h3><p class="lore">${esc(chOf(S.ch).clearLore || '')}</p>
 <dl class="sgold">${S.lines.map((x, i) => `<div style="--i:${i}"><dt>${esc(x.n)}</dt><dd>${x.v}</dd></div>`).join('')}<div class="tot" style="--i:${S.lines.length}"><dt>합계</dt><dd>${S.total} 골드</dd></div></dl>
 ${S.mul > 1 ? '<p class="mini">보스와 강적 보상에 얻는 골드 증가가 붙었습니다.</p>' : ''}<p>정산을 확정하면 생명력·마나·스태미나와 플라스크가 모두 차고, 상점으로 갑니다.${run.statPending ? ` 보스를 넘으며 오른 레벨의 능력치 ${run.statPending}점도 이때 나눕니다.` : ''}</p>
 <button class="gold wide" data-a="settleok" data-focus>정산 확정</button></section>`;
@@ -1958,8 +1959,15 @@ function vShop() {
   return h;
 }
 function vWait() {
-  const run = G.run;
-  return `<section class="card hero waitc"><p class="mini">${esc(run.cname || '')} · 1챕터 돌파</p><h2>2챕터 · 잊힌 지하묘지</h2><p class="lore">수도원보다 더 깊은 곳에서 찬 바람이 올라온다.</p><p>2챕터는 아직 준비 중입니다. 이 캐릭터는 여기에서 기다리고, 2챕터가 열리면 지금 장비와 골드 그대로 이어서 내려갑니다. 랭킹에는 "1챕터 돌파"로 올라갔습니다.</p><div class="row waitbtn"><button class="gold" data-a="title">타이틀로</button><button data-a="rank">랭킹 보기</button><button data-a="equip">장비</button></div></section>`;
+  const run = G.run, ch = run.ch || 1, nx = ch + 1;
+  if (CHAPTERS[nx]) { const C = chOf(nx); return `<section class="card hero waitc"><p class="mini">${esc(run.cname || '')} · ${ch}챕터 돌파</p><h2>${nx}챕터 · ${esc(C.n)}</h2><p class="lore">수도원보다 더 깊은 곳에서 찬 바람이 올라온다.</p><p>지금 장비와 골드 그대로 내려갑니다. ${nx}챕터는 ${C.floors}층(상층 ${C.camp - 1}층, 야영지, 하층 ${C.spring - C.lower}층, 샘, 보스)이고, 적은 몬스터 레벨 ${mlvOf(1, nx)}부터 시작합니다.</p><div class="row waitbtn"><button class="gold" data-a="nextch" data-focus>${nx}챕터로 내려가기</button><button data-a="equip">장비</button><button data-a="title">타이틀로</button></div></section>`; }
+  return `<section class="card hero waitc"><p class="mini">${esc(run.cname || '')} · ${ch}챕터 돌파</p><h2>${nx}챕터 · ${esc(NEXT_CH_N[nx] || '')}</h2><p class="lore">더 깊은 곳에서 뜨거운 바람이 올라온다.</p><p>${nx}챕터는 아직 준비 중입니다. 이 캐릭터는 여기에서 기다리고, ${nx}챕터가 열리면 지금 장비와 골드 그대로 이어서 내려갑니다. 랭킹에는 "${ch}챕터 돌파"로 올라갔습니다.</p><div class="row waitbtn"><button class="gold" data-a="title">타이틀로</button><button data-a="rank">랭킹 보기</button><button data-a="equip">장비</button></div></section>`;
+}
+/* 다음 챕터로: 지난 챕터의 정산·상점은 run.hist에 남기고, 던전을 새로 연다. 가지고 내려온 골드(run.carry)는 정산에서 따로 보인다 */
+function enterChapter(run, ch) {
+  (run.hist = run.hist || []).push({ ch: run.ch || 1, settle: run.settle || null, shop: run.shop ? { log: run.shop.log, stock: run.shop.stock.map(x => ({ tpl: x.it.tpl, g: x.it.g, price: x.price, sold: x.sold })) } : null, survey: (run.surveys || {})['ch' + (run.ch || 1)] || null, lv: run.lv, gold: run.gold || 0, at: Date.now() });
+  run.ch = ch; run.boss = chOf(ch).bossId; run.dg = null; run.settle = null; run.shop = null; run.result = null; run.phase = ''; run.carry = run.gold || 0; run.chAt = Date.now();
+  dgInit(run); const p = run.p; p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax; for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = flaskCap(p, fk);
 }
 
 /* ===== 한 화면 전투 배치 (창 크기에 맞춤) ===== */
@@ -2858,7 +2866,7 @@ const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 function dgInit(run) {
   if (run.dg) return;
   run.dg = { counts: {}, seen: {}, last: null, events: [], strong: { u: 0, l: 0 }, force: null, foes: [] };
-  run.room = 1; run.cur = null; run.gold = run.gold || 0; run.lv = run.lv || 1; run.xp = run.xp || 0; run.p.lv = run.lv; run.buffs = {}; run.next = {}; run.doorLog = [];
+  run.room = 1; run.cur = null; run.gold = run.gold || 0; run.lv = run.lv || 1; run.xp = run.xp || 0; run.p.lv = run.lv; run.buffs = {}; run.next = {}; run.doorLog = run.doorLog || [];
   run.doors = genDoors(run, 1);
 }
 function typeOk(run, t, f) {
@@ -2904,7 +2912,7 @@ function mkRoom(run, t, f) {
     else r.mods = [];
     if (t === 'ambush') r.ambush = 1;
     r.tough = r.en.map((x, k) => x[1] && !(r.strong && k === 0) ? k : -1).filter(k => k >= 0 && Math.random() < TOUGH_CHANCE[low ? 'lower' : 'upper']); // 정예에게 강인 (강적 본인은 제외)
-    r.gold = rint(T.gold[0], T.gold[1]);
+    r.gold = Math.round(rint(T.gold[0], T.gold[1]) * (chOf(ch).goldMul || 1)); // 상점 값이 챕터마다 ×1.5라 방 골드도 늘린다
     r.risk = Math.min(4, T.risk + (low ? 1 : 0) + (r.mods.length ? 0 : 0));
   }
   if (t === 'shrine') r.shrine = pickR(SHRINES).id;
@@ -3061,7 +3069,7 @@ function saveRunLocal() {
   saveLocal();
 }
 function runRecord(run) {
-  return { discards: run.discards || [], inv: run.inv ? Object.values(run.inv).map(x => ({ tpl: x.tpl, g: x.g, b: x.b })) : null, id: run.id, v: VERSION, build: run.build, boss: run.boss, startedAt: run.startedAt, endedAt: run.endedAt || null, result: run.result, roomReached: run.room, deaths: run.deaths, rooms: run.rooms, acts: run.acts.slice(-900), swaps: run.swaps, blockPicked: run.blockPicked, drops: run.drops, survey: run.survey, stats: run.stats || null, statLog: run.statLog || [], choices: run.choices || [], skills: run.skills || null, skillLog: run.skillLog || [], cname: run.cname || '', ch: run.ch || 1, clears: run.clears || 0, lv: run.lv || 1, xp: Math.round(run.xp || 0), gold: run.gold || 0, playMs: Math.round(run.playMs || 0), doorLog: run.doorLog || [], settle: run.settle || null, shop: run.shop ? { log: run.shop.log, stock: run.shop.stock.map(x => ({ tpl: x.it.tpl, g: x.it.g, price: x.price, sold: x.sold })) } : null, eq7: run.eqU ? EQ_SLOTS.map(sl => { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; return it ? it.tpl + ':' + it.g : null; }) : null, phase: run.phase || '', surveys: run.surveys || null };
+  return { discards: run.discards || [], inv: run.inv ? Object.values(run.inv).map(x => ({ tpl: x.tpl, g: x.g, b: x.b })) : null, id: run.id, v: VERSION, build: run.build, boss: run.boss, startedAt: run.startedAt, endedAt: run.endedAt || null, result: run.result, roomReached: run.room, deaths: run.deaths, rooms: run.rooms, acts: run.acts.slice(-900), swaps: run.swaps, blockPicked: run.blockPicked, drops: run.drops, survey: run.survey, stats: run.stats || null, statLog: run.statLog || [], choices: run.choices || [], skills: run.skills || null, skillLog: run.skillLog || [], cname: run.cname || '', ch: run.ch || 1, clears: run.clears || 0, lv: run.lv || 1, xp: Math.round(run.xp || 0), gold: run.gold || 0, playMs: Math.round(run.playMs || 0), doorLog: run.doorLog || [], settle: run.settle || null, shop: run.shop ? { log: run.shop.log, stock: run.shop.stock.map(x => ({ tpl: x.it.tpl, g: x.it.g, price: x.price, sold: x.sold })) } : null, eq7: run.eqU ? EQ_SLOTS.map(sl => { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; return it ? it.tpl + ':' + it.g : null; }) : null, phase: run.phase || '', surveys: run.surveys || null, hist: run.hist || null, carry: run.carry || 0 };
 }
 async function finishSurvey(ans) {
   const run = G.run;
@@ -3204,8 +3212,8 @@ function vSurvey() {
   const run = G.run;
   const clear = run.phase === 'clearsv'; const buys = clear && run.shop ? run.shop.log.filter(x => x.a === 'buy') : [];
   const doorN = x => x.offered.map((o, i) => { const T = ROOM_TYPES[o.split('+')[0]]; return (i === x.picked ? '[' : '') + (T ? T.n : o) + (i === x.picked ? ']' : ''); }).join(' / ');
-  return `<section class="card survey"><h3>${clear ? '1챕터를 넘은 소감' : '이번 판에 대한 질문'}</h3><p>${clear ? '보스를 쓰러뜨리고 상점까지 들렀습니다.' : run.result === 'lose' ? esc(run.cname || '이 캐릭터') + '의 여정이 끝났습니다.' : '이번 판을 마쳤습니다.'} 1~2분이면 끝납니다. 모든 문항은 답하고 싶은 것만 골라도 됩니다.</p>
-  <label for="fork">이번 챕터에서 가장 고민한 갈림길</label><select id="fork"><option value="">고르지 않음</option>${(run.doorLog || []).map(x => `<option value="${x.floor}">${esc(floorName(x.floor) + ': ' + doorN(x))}</option>`).join('')}</select>
+  return `<section class="card survey"><h3>${clear ? (run.ch || 1) + '챕터를 넘은 소감' : '이번 판에 대한 질문'}</h3><p>${clear ? '보스를 쓰러뜨리고 상점까지 들렀습니다.' : run.result === 'lose' ? esc(run.cname || '이 캐릭터') + '의 여정이 끝났습니다.' : '이번 판을 마쳤습니다.'} 1~2분이면 끝납니다. 모든 문항은 답하고 싶은 것만 골라도 됩니다.</p>
+  <label for="fork">이번 챕터에서 가장 고민한 갈림길</label><select id="fork"><option value="">고르지 않음</option>${(run.doorLog || []).filter(x => (x.ch || 1) === (run.ch || 1)).map(x => `<option value="${x.floor}">${esc(floorName(x.floor) + ': ' + doorN(x))}</option>`).join('')}</select>
   <label for="forknote">무엇을 두고 고민했나요?</label><input id="forknote" type="text" maxlength="200">
   ${clear ? `<label for="shopwhy">상점에서 ${buys.length ? esc(buys.map(x => ITEMS[x.tpl] ? ITEMS[x.tpl].n : x.tpl).join(', ')) + '을(를) 산' : '아무것도 사지 않은'} 이유</label><textarea id="shopwhy" rows="2"></textarea>` : ''}
   <fieldset><legend>이번 판은 재미있었나요?</legend><div class="sv-row">${svRadio('fun', SV.fun, true)}</div></fieldset>
@@ -3216,7 +3224,7 @@ function vSurvey() {
   <fieldset><legend>헷갈렸던 규칙이 있었나요? 모두 골라 주세요.</legend>${svCheck('cf', SV.cf)}</fieldset>
   <fieldset><legend>불편하거나 이상했던 것이 있었나요? 모두 골라 주세요.</legend>${svCheck('is', SV.is)}</fieldset>
   <label for="isnote">이상했던 것을 한 줄로 적어 주면 고치는 데 큰 도움이 됩니다.</label><input id="isnote" type="text" maxlength="200">
-  <label for="hard">가장 어려웠던 방</label><select id="hard"><option value="">고르지 않음</option>${(run.rooms || []).filter(x => x.room && x.res).map(x => `<option value="${x.room}">${esc(floorName(x.room) + ' ' + (ROOM_TYPES[x.type] ? ROOM_TYPES[x.type].n : ''))}</option>`).join('')}</select>
+  <label for="hard">가장 어려웠던 방</label><select id="hard"><option value="">고르지 않음</option>${(run.rooms || []).filter(x => x.room && x.res && (x.ch || 1) === (run.ch || 1)).map(x => `<option value="${x.room}">${esc(floorName(x.room) + ' ' + (ROOM_TYPES[x.type] ? ROOM_TYPES[x.type].n : ''))}</option>`).join('')}</select>
   <label for="snote">그 밖에 하고 싶은 말</label><textarea id="snote" rows="2"></textarea>
   <div class="stickbar"><button class="gold wide" data-a="survey">${clear ? '저장하고 계속' : '저장하고 타이틀로'}</button></div></section>`;
 }
@@ -3541,8 +3549,8 @@ const SND = { el: null, cur: '', want: '', unlocked: false, fadeT: 0 };
 function sndCfg() { const a = (G.data && G.data.audio) || {}; return { on: a.on !== false, music: a.music == null ? 0.45 : a.music, sfx: a.sfx == null ? 0.7 : a.sfx }; }
 function musicFor() {
   const scr = PAGES.includes(G.scr) ? G.back || 'title' : G.scr; // 랭킹·기록·관리자 페이지는 원래 화면의 곡을 이어 간다
-  if (scr === 'run' && G.b && G.b.ctx && G.b.ctx.boss) return 'ch1_boss';
-  if (scr === 'run' || scr === 'scen') return 'ch1_dungeon';
+  if (scr === 'run' && G.b && G.b.ctx && G.b.ctx.boss) return G.run && (G.run.ch || 1) >= 2 ? 'ch2_boss' : 'ch1_boss';
+  if (scr === 'run' || scr === 'scen') return 'ch1_dungeon'; // 2챕터 던전도 1챕터 곡 (10월 2일 만든 사람 결정)
   if (scr === 'dead' || (scr === 'survey' && G.run && G.run.result === 'lose')) return 'failed';
   if (scr === 'settle' || scr === 'wait' || (scr === 'survey' && G.run && G.run.phase === 'clearsv')) return 'finished';
   if (scr === 'shop') return 'shop';
@@ -3656,6 +3664,7 @@ function onClick(ev) {
       run.bag.splice(run.bag.indexOf(it.uid), 1); delete run.inv[it.uid]; run.gold = (run.gold || 0) + v; S.log.push({ a: 'sell', tpl: it.tpl, g: it.g, b: it.b, price: v, t: Date.now() }); sfx('coin'); toast('골드 +' + v); saveRunLocal(); saveCur(); render(); break; }
     case 'respec': { const run = G.run, S = run.shop; const cost = (run.lv || 1) * 10; const pts = (run.stats.str || 0) + (run.stats.dex || 0) + (run.stats.int || 0); if (!S || (run.gold || 0) < cost || !pts) break; if (!confirm(cost + ' 골드를 내고 능력치 ' + pts + '점을 처음부터 다시 나눌까요? 시작하면 끝까지 나눠야 합니다.')) break;
       run.gold -= cost; S.log.push({ a: 'respec', price: cost, from: Object.assign({}, run.stats), t: Date.now() }); run.stats = { str: 0, dex: 0, int: 0 }; applyStats(run.p, run.stats); saveRunLocal(); saveCur(); openSheet('stats', { pts, respec: 1, why: '능력치 다시 나누기 · ' + pts + '점' }); break; }
+    case 'nextch': { const run = G.run; if (!run || run.phase !== 'wait' || !CHAPTERS[(run.ch || 1) + 1]) break; enterChapter(run, (run.ch || 1) + 1); G.scr = 'run'; G.b = null; G.sel = null; saveRunLocal(); saveCur(); render(); window.scrollTo(0, 0); toast((run.ch) + '챕터 ' + chOf(run.ch).n + '로 내려갑니다'); break; }
     case 'shopleave': { const run = G.run; if (run.phase !== 'shop') break; run.phase = 'clearsv'; G.scr = 'survey'; saveRunLocal(); saveCur(); pushRank(run, 'clear'); render(); window.scrollTo(0, 0); break; }
     case 'createcancel': cancelCreate(); break;
     case 'door': chooseDoor(+el.dataset.k); break;

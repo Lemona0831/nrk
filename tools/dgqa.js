@@ -20,6 +20,7 @@ function loadGame() {
   // 화면·저장·소리는 끈다
   vm.runInContext('Object.assign(this, { isLower, chOf: typeof chOf !== "undefined" ? chOf : null, ITEMS, EVENTS, ROOM_TYPES, BUILDS, tplKind });', ctx); // const 값은 밖에서 읽을 수 있게 꺼내 둔다
   vm.runInContext(`toast = () => {}; scheduleSync = () => {}; syncRun = async () => false; pushRank = async () => {}; saveLocal = () => true; sfx = () => {};`, ctx);
+  vm.runInContext('var window = { scrollTo() { }, innerWidth: 1280, innerHeight: 800, scrollY: 0, addEventListener() { } };', ctx); // 정산·상점 버튼이 부르는 창 함수만 둔다
   return ctx;
 }
 const G0 = loadGame();
@@ -110,7 +111,7 @@ function restRoom(pk, run, r) {
   }
 }
 
-const OPT = { snap: false, onStep: null, onTurn: null }; // onStep(G): 방과 방 사이마다, onTurn(G, n): 전투 행동마다 (저장본 점검)
+const OPT = { snap: false, onStep: null, onTurn: null, chapters: 1 }; // chapters: 몇 챕터까지 이어 갈지 (2면 1챕터를 깬 뒤 정산·상점·설문을 지나 2챕터로) // onStep(G): 방과 방 사이마다, onTurn(G, n): 전투 행동마다 (저장본 점검)
 /* 지금 방에 들어가 성향대로 싸운다 */
 function fightCur(pk, r, mem, out) {
   const P = PERSONAS[pk]; const G = G0.__G;
@@ -162,13 +163,36 @@ function playChar(pk, build, seed) {
   const out = { pk, build, seed, res: 'lose', floor: 0, lv: 1, rooms: [], bossHp: null, bugs: [], acts: 0 };
   return playLoop(pk, r, out);
 }
+/* 챕터 사이: 정산 확정 → 상점(성향대로 산다) → 설문 → 다음 챕터 */
+function betweenChapters(pk, r) {
+  const G = G0.__G, run = G.run;
+  click('settleok'); handleSheets(pk, r);
+  shopPhase(pk, r);
+  click('shopleave'); G0.finishSurvey({ fun: 4 }); click('nextch');
+}
+/* 상점: 끼우면 나아지는 장비를 골드 안에서 산다. 신중·숙련·탐험가는 가장 나은 것부터, 나머지는 무작위로 */
+function shopPhase(pk, r) {
+  const G = G0.__G, run = G.run, S = run.shop; if (!S) return;
+  const delta = it => { const kind = G0.tplKind(it.tpl); const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind; const had = !!run.inv[it.uid]; run.inv[it.uid] = it; const d = gearScore(G0.simEquip(run, it.uid, sl)) - gearScore(G0.gearStats(run.p)); if (!had) delete run.inv[it.uid]; return { d: d + (G0.classFit(run.p, it.tpl) && G0.ITEMS[it.tpl].act ? 2 : 0), sl }; };
+  for (let n = 0; n < 6; n++) {
+    const opts = S.stock.map((x, i) => Object.assign({ i }, x)).filter(o => !o.sold && o.price <= (run.gold || 0) && run.bag.length < 12).map(o => Object.assign(o, delta(o.it))).filter(o => o.d > 0.5);
+    if (!opts.length) break;
+    const o = THINK(pk) || pk === 'careful' ? opts.sort((a, b) => b.d - a.d)[0] : opts[Math.floor(r() * opts.length)];
+    click('buy', o.i); const uid = o.it.uid; if (run.bag.includes(uid)) G0.equipUid(run, uid, o.sl);
+    G0.applyGear(run);
+  }
+}
 /* 지금 G.run을 성향대로 끝(쓰러짐 또는 정산)까지 진행한다 */
 function playLoop(pk, r, out) {
   const G = G0.__G, run = G.run; const mem = {};
-  for (let guard = 0; guard < 120; guard++) {
+  for (let guard = 0; guard < 240; guard++) {
     if (OPT.onStep) OPT.onStep(G);
     if (G.scr === 'dead') { out.res = 'lose'; break; }
-    if (G.scr === 'settle') { out.res = 'clear'; break; }
+    if (G.scr === 'settle') {
+      if ((run.ch || 1) >= OPT.chapters) { out.res = 'clear'; break; }
+      (out.chs = out.chs || []).push({ ch: run.ch, lv: run.lv, gold: run.settle.total, bossHp: out.bossHp, bossLv: out.bossLv });
+      betweenChapters(pk, r); out.bossHp = null; out.bossLv = null; continue;
+    }
     handleSheets(pk, r);
     if (!run.cur && run.doors) { const i = pickDoor(pk, run, r); out.rooms.push(run.doors[i].type); G0.chooseDoor(i); continue; }
     const R = run.cur; if (!R) { out.bugs.push('방이 없음 ' + run.room); break; }
@@ -189,20 +213,28 @@ function playLoop(pk, r, out) {
 
 if (require.main === module) {
   const N = +(process.argv[2] || 20); const file = process.argv[3] || path.join(__dirname, 'dgqa.json');
+  OPT.chapters = +(process.argv[4] || 1); // 2: 1챕터를 깬 캐릭터가 2챕터까지 이어 간다
   const t0 = Date.now(); const runs = [];
   for (const pk of Object.keys(PERSONAS)) for (const build of Object.keys(G0.BUILDS)) for (let s = 0; s < N; s++) runs.push(playChar(pk, build, 5000 + s * 13));
   fs.writeFileSync(file, JSON.stringify(runs));
-  // 요약
+  // 요약: 챕터마다 따로 (2챕터는 1챕터를 깬 캐릭터 기준, 기획서 11.12절)
   const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
-  const where = x => x.res === 'clear' ? 'clear' : x.floor >= G0.chOf(x.ch).boss ? 'boss' : G0.isLower(x.floor, x.ch) || x.floor === G0.chOf(x.ch).spring ? 'lower' : 'upper';
-  const sum = list => { const c = { clear: 0, upper: 0, lower: 0, boss: 0 }; list.forEach(x => c[where(x)]++); return `완주 ${pct(c.clear, list.length)}% | 쓰러진 곳 상층 ${pct(c.upper, list.length)} 하층 ${pct(c.lower, list.length)} 보스 ${pct(c.boss, list.length)}`; };
+  const passed = (x, ch) => (x.chs || []).some(c => c.ch === ch) || (x.res === 'clear' && (x.ch || 1) === ch);
+  const where = (x, ch) => passed(x, ch) ? 'clear' : x.floor >= G0.chOf(x.ch).boss ? 'boss' : G0.isLower(x.floor, x.ch) || x.floor === G0.chOf(x.ch).spring ? 'lower' : 'upper';
   console.log(`판 ${runs.length}, ${((Date.now() - t0) / 1000).toFixed(0)}초, 이상 ${runs.reduce((a, x) => a + x.bugs.length, 0)}건`);
-  console.log('전체(6성향 평균):', sum(runs));
-  const think = runs.filter(x => x.pk === MEASURE); console.log('사고하는 유저(신중):', sum(think));
-  for (const pk of Object.keys(PERSONAS)) console.log('  ' + PERSONAS[pk].n.padEnd(4), sum(runs.filter(x => x.pk === pk)));
-  console.log('직업별 (전체 / 신중):');
-  for (const b of Object.keys(G0.BUILDS)) { const a = runs.filter(x => x.build === b), t = think.filter(x => x.build === b); console.log('  ' + G0.BUILDS[b].n.padEnd(6), pct(a.filter(x => x.res === 'clear').length, a.length) + '% / ' + pct(t.filter(x => x.res === 'clear').length, t.length) + '%'); }
-  const bossers = runs.filter(x => x.bossHp != null); console.log(`보스에 닿은 판 ${bossers.length}: 들어갈 때 생명력 평균 ${Math.round(bossers.reduce((a, x) => a + x.bossHp, 0) / (bossers.length || 1))}%, 레벨 평균 ${(bossers.reduce((a, x) => a + x.bossLv, 0) / (bossers.length || 1)).toFixed(1)}, 보스 승률 ${pct(runs.filter(x => x.res === 'clear').length, bossers.length)}%`);
+  for (let ch = 1; ch <= OPT.chapters; ch++) {
+    const R = ch === 1 ? runs : runs.filter(x => passed(x, ch - 1));
+    const sum = list => { const c = { clear: 0, upper: 0, lower: 0, boss: 0 }; list.forEach(x => c[where(x, ch)]++); return `완주 ${pct(c.clear, list.length)}% | 쓰러진 곳 상층 ${pct(c.upper, list.length)} 하층 ${pct(c.lower, list.length)} 보스 ${pct(c.boss, list.length)}`; };
+    if (OPT.chapters > 1) console.log(`== ${ch}챕터 (${ch === 1 ? '모든 캐릭터' : (ch - 1) + '챕터를 깬 캐릭터'} ${R.length}명)`);
+    console.log('전체(6성향 평균):', sum(R));
+    const think = R.filter(x => x.pk === MEASURE); console.log('사고하는 유저(신중):', sum(think));
+    for (const pk of Object.keys(PERSONAS)) console.log('  ' + PERSONAS[pk].n.padEnd(4), sum(R.filter(x => x.pk === pk)));
+    console.log('직업별 (전체 / 신중):');
+    for (const b of Object.keys(G0.BUILDS)) { const a = R.filter(x => x.build === b), t = think.filter(x => x.build === b); console.log('  ' + G0.BUILDS[b].n.padEnd(6), pct(a.filter(x => passed(x, ch)).length, a.length) + '% / ' + pct(t.filter(x => passed(x, ch)).length, t.length) + '%'); }
+    const bo = R.map(x => { const c = (x.chs || []).find(c => c.ch === ch) || ((x.ch || 1) === ch ? x : null); return c && c.bossHp != null ? { hp: c.bossHp, lv: c.bossLv } : null; }).filter(Boolean);
+    console.log(`보스에 닿은 판 ${bo.length}: 들어갈 때 생명력 평균 ${Math.round(bo.reduce((a, x) => a + x.hp, 0) / (bo.length || 1))}%, 레벨 평균 ${(bo.reduce((a, x) => a + x.lv, 0) / (bo.length || 1)).toFixed(1)}, 보스 승률 ${pct(R.filter(x => passed(x, ch)).length, bo.length)}%`);
+    if (ch < OPT.chapters) { const P = R.filter(x => passed(x, ch)); const cs = P.map(x => x.chs.find(c => c.ch === ch)); console.log(`넘은 캐릭터: 레벨 평균 ${(cs.reduce((a, c) => a + c.lv, 0) / (cs.length || 1)).toFixed(1)}, 정산 골드 평균 ${Math.round(cs.reduce((a, c) => a + c.gold, 0) / (cs.length || 1))}`); }
+  }
   const bugs = runs.flatMap(x => x.bugs); if (bugs.length) console.log('이상 예:', bugs.slice(0, 5));
 }
 module.exports = { playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng };
