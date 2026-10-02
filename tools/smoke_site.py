@@ -20,8 +20,9 @@ with sync_playwright() as p:
     pg.click('[data-a=newchar]'); pg.click('button.link[data-a=gdone]'); pg.wait_for_timeout(300)
     print('지인 연결:', pg.evaluate("()=>[G.site,G.conn,G.uid&&G.uid.slice(0,10),G.owner]"), '| 경고 카드:', bool(pg.query_selector('.warncard')))
     pg.evaluate("()=>{G.data.seenCoach=true; G.data.name='민수'}")
-    pg.fill('#cname', '사냥꾼민수'); pg.click('[data-a=cnok]'); pg.click('[data-a=clspick][data-k=hunter]')
-    pg.click('button[data-a=start][data-b=hunter]'); pg.click('button[data-a=skillok]')
+    pg.fill('#cname', '사냥꾼민수'); pg.click('[data-a=cnok]'); cls = 'hunter' if pg.query_selector('[data-a=clspick][data-k=hunter]') else pg.get_attribute('[data-a=clspick]', 'data-k')  # 0.6a.2 시험판(06a2)에는 사냥꾼이 아직 없다
+    pg.click(f'[data-a=clspick][data-k={cls}]')
+    pg.click(f'button[data-a=start][data-b={cls}]'); pg.click('button[data-a=skillok]')
     for k in ['dex']*6: pg.click(f'button[data-a="stat+"][data-k={k}]')
     pg.click('button[data-a=statok]'); pg.click('button[data-a=door][data-k="0"]'); pg.click('button[data-a=enter]'); pg.evaluate("()=>{G.pace='instant'}")  # 휴대폰 폭에서는 진행 속도 고르기가 설정 창에만 있다
     for i in range(30):

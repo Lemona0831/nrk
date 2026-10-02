@@ -18,7 +18,7 @@ function loadGame() {
   vm.createContext(ctx);
   vm.runInContext(data + '\n' + html.slice(i + 8, j) + '\n;this.__G = G;', ctx, { filename: 'next/index.html' });
   // 화면·저장·소리는 끈다
-  vm.runInContext('Object.assign(this, { isLower, chOf: typeof chOf !== "undefined" ? chOf : null, ITEMS, EVENTS, ROOM_TYPES, BUILDS, tplKind });', ctx); // const 값은 밖에서 읽을 수 있게 꺼내 둔다
+  vm.runInContext('Object.assign(this, { isLower, chOf: typeof chOf !== "undefined" ? chOf : null, ITEMS, EVENTS, ROOM_TYPES, BUILDS, tplKind, SKILLS2: typeof SKILLS2 !== "undefined" ? SKILLS2 : null, TREE2: typeof TREE2 !== "undefined" ? TREE2 : null, SK2: typeof SK2 !== "undefined" ? SK2 : null, EQUIP_SLOTS2: typeof EQUIP_SLOTS2 !== "undefined" ? EQUIP_SLOTS2 : 4 });', ctx); // const 값은 밖에서 읽을 수 있게 꺼내 둔다
   vm.runInContext(`toast = () => {}; scheduleSync = () => {}; syncRun = async () => false; pushRank = async () => {}; saveLocal = () => true; sfx = () => {};`, ctx);
   vm.runInContext('var window = { scrollTo() { }, innerWidth: 1280, innerHeight: 800, scrollY: 0, addEventListener() { } };', ctx); // 정산·상점 버튼이 부르는 창 함수만 둔다
   return ctx;
@@ -155,7 +155,8 @@ function playChar(pk, build, seed) {
   const run = G.run; G.sheet = null; G.creating = false; G.cre = null; G.scr = 'run';
   // 스킬과 능력치 (qa.js와 같은 규칙)
   const SKM = G0.skillMap(build); const ids = Object.keys(SKM); let skills;
-  if (THINK(pk) || pk === 'novice') skills = ids.slice().sort(() => r() - 0.5).slice(0, 3);
+  if (G0.BUILDS[build].v2) skills = run.skills.slice(); // 0.6a.2: 트리의 시작 스킬로 시작하고 포인트로 연다(spendTree)
+  else if (THINK(pk) || pk === 'novice') skills = ids.slice().sort(() => r() - 0.5).slice(0, 3);
   else { const ex = ids.filter(id => SKM[id].excl).sort(() => r() - 0.5); const home = ids.filter(id => SKM[id].home === build); const other = ids.filter(id => !SKM[id].excl && SKM[id].home !== build).sort(() => r() - 0.5); skills = ex.slice(0, 1 + Math.floor(r() * 2)).concat(home).concat(other).slice(0, 3); }
   run.skills = skills.slice(); run.p.skills = skills.slice();
   const pref = PREF[build]; const st = { str: 0, dex: 0, int: 0 };
@@ -183,6 +184,26 @@ function shopPhase(pk, r) {
     G0.applyGear(run);
   }
 }
+/* 0.6a.2 트리: 포인트가 있으면 성향대로 연다. 숙련·탐험가·신중은 한 갈래에 몰고(깊은 칸), 나머지는 아무 칸이나.
+   연 스킬은 빈칸에 끼우고, 칸이 차면 가장 낮은 등급과 바꾼다 */
+const TIER_N = { 기본: 0, 중급: 1, 상급: 2, 궁극: 3 };
+function spendTree(pk, r) {
+  const G = G0.__G, run = G.run; if (!run.tree || !(run.tree.pts > 0)) return;
+  const all = G0.SKILLS2[run.build]; const T = G0.TREE2[run.build];
+  run.focus = run.focus || T.branches[Math.floor(r() * T.branches.length)];
+  for (let n = 0; n < 20 && run.tree.pts > 0; n++) {
+    const can = all.filter(s => !G0.treeWhy(run, s.id));
+    if (!can.length) break;
+    const focus = THINK(pk) || pk === 'careful';
+    const pool = focus ? (can.filter(s => s.b === run.focus).length ? can.filter(s => s.b === run.focus) : can) : can;
+    const s = focus ? pool.sort((x, y) => TIER_N[y.tier] - TIER_N[x.tier] || r() - 0.5)[0] : pool[Math.floor(r() * pool.length)];
+    G0.treeUnlock(run, s.id);
+    const eq = run.skills.slice();
+    if (eq.length < G0.EQUIP_SLOTS2) eq.push(s.id);
+    else { const lo = eq.map((id, i) => [i, TIER_N[G0.SK2[id].tier]]).sort((x, y) => x[1] - y[1])[0]; if (lo[1] < TIER_N[s.tier] || r() < 0.3) eq[lo[0]] = s.id; }
+    run.skills = eq; run.p.skills = eq.slice();
+  }
+}
 /* 지금 G.run을 성향대로 끝(쓰러짐 또는 정산)까지 진행한다 */
 function playLoop(pk, r, out) {
   const G = G0.__G, run = G.run; const mem = {};
@@ -194,7 +215,7 @@ function playLoop(pk, r, out) {
       (out.chs = out.chs || []).push({ ch: run.ch, lv: run.lv, gold: run.settle.total, bossHp: out.bossHp, bossLv: out.bossLv });
       betweenChapters(pk, r); out.bossHp = null; out.bossLv = null; continue;
     }
-    handleSheets(pk, r);
+    handleSheets(pk, r); spendTree(pk, r);
     if (!run.cur && run.doors) { const i = pickDoor(pk, run, r); out.rooms.push(run.doors[i].type); G0.chooseDoor(i); continue; }
     const R = run.cur; if (!R) { out.bugs.push('방이 없음 ' + run.room); break; }
     if (!G0.ROOM_TYPES[R.type] || !G0.ROOM_TYPES[R.type].fight) { if (R.type !== 'boss') { restRoom(pk, run, r); handleSheets(pk, r); continue; } }
@@ -221,7 +242,9 @@ if (require.main === module) {
   // 요약: 챕터마다 따로 (2챕터는 1챕터를 깬 캐릭터 기준, 기획서 11.12절)
   const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
   const passed = (x, ch) => (x.chs || []).some(c => c.ch === ch) || (x.res === 'clear' && (x.ch || 1) === ch);
-  const where = (x, ch) => passed(x, ch) ? 'clear' : x.floor >= G0.chOf(x.ch).boss ? 'boss' : G0.isLower(x.floor, x.ch) || x.floor === G0.chOf(x.ch).spring ? 'lower' : 'upper';
+  const chOf = c => G0.chOf ? G0.chOf(c) : { boss: 19, spring: 18, lower: 10 }; // 루트(0.6a)에는 챕터 틀이 없다
+  const isLower = (f, c) => G0.isLower ? G0.isLower(f, c) : f >= chOf(c).lower;
+  const where = (x, ch) => passed(x, ch) ? 'clear' : x.floor >= chOf(x.ch).boss ? 'boss' : isLower(x.floor, x.ch) || x.floor === chOf(x.ch).spring ? 'lower' : 'upper';
   console.log(`판 ${runs.length}, ${((Date.now() - t0) / 1000).toFixed(0)}초, 이상 ${runs.reduce((a, x) => a + x.bugs.length, 0)}건`);
   for (let ch = 1; ch <= OPT.chapters; ch++) {
     const R = ch === 1 ? runs : runs.filter(x => passed(x, ch - 1));

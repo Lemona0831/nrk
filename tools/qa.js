@@ -45,7 +45,9 @@ function evalState(b0, b1, risk) {
   if (b1.over === 'win') return 1e4 - (b0.p.hp - b1.p.hp);
   const p0 = b0.p, p1 = b1.p;
   const hpLoss = (p0.hp - p1.hp) / p0.hpMax;
-  const eh = bb => E.alive(bb).filter(e => e.role !== 'root').reduce((a, e) => a + e.hp / (e.role === 'boss' ? 4 : 1), 0);
+  // 0.6a.2 직업: 적에게 쌓인 중독이 앞으로 줄 피해의 절반을 깎은 체력으로 본다(한 수 앞만 보면 지속 피해를 낮게 보는 편향을 줄인다). 옛 직업 측정은 그대로
+  const v2 = E.isV2 && E.isV2(b0.p);
+  const eh = bb => E.alive(bb).filter(e => e.role !== 'root').reduce((a, e) => a + Math.max(0, e.hp - (v2 && e.s.poison ? Math.min(e.hp, E.poisonTotal(e.s.poison.stacks) * 0.5) : 0)) / (e.role === 'boss' ? 4 : 1), 0);
   const dealt = eh(b0) - eh(b1);
   const kills = E.alive(b0).length - E.alive(b1).length;
   const flasks = (p0.flask.life + p0.flask.mana + (p0.flask.stam || 0)) - (p1.flask.life + p1.flask.mana + (p1.flask.stam || 0));
@@ -90,6 +92,50 @@ function sigRule(b, r) {
   }
   return null;
 }
+/* 0.6a.2 직업의 판단: 스킬 이름이 아니라 데이터(fx)를 보고 고른다. 사람처럼 단순한 규칙 몇 개 */
+const psn2 = (u, k) => (u.s[k] ? u.s[k].stacks : 0);
+function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
+  const p = b.p; const okS = L.filter(a => a.v2 && a.ok); const has = (a, k) => a.s.fx.some(e => e.k === k);
+  const psn = e => (e.s.poison ? e.s.poison.stacks : 0);
+  const reach = a => E.alive(b).filter(e => e.role !== 'root' && E.canTarget(b, e, a));
+  const best = (a, f) => reach(a).sort(f)[0];
+  const useMech = r() < (P.mech || 0.5);
+  // 정화 플라스크: 적이 이번에 상태를 걸 예정이면 미리 막는다
+  // 정화 플라스크: 출혈이 이미 쌓여 더 걸리면 아프거나, 폭발 약화가 올 때만(사람은 막을 거리가 클 때 마신다)
+  const pv1 = E.previewAfter(b, 1); const bleedIn = pv1.some(x => x.e.intent && x.e.intent.k === 'attack' && x.e.intent.bleed); const boomIn = pv1.some(x => x.e.intent && x.e.intent.k === 'explode');
+  if (((bleedIn && psn2(p, 'bleed') >= 2) || boomIn) && !p.s.block && p.flask.mana > 0 && r() < aware * 0.5) return ['flaskM'];
+  // 강타 예고: 흘리기형 스킬(스태미나 없이) → 흘리기 준비 → 스태미나 흘리기
+  if (hv && r() < Math.max(P.parry, 0.35) + 0.2) {
+    const ps = okS.find(a => has(a, 'parry')); if (ps) return [ps.id, hv.e.id];
+    const pb = okS.find(a => has(a, 'parryBuff')); if (pb && !p.pbuf && E.dodgeCost(p) <= p.st) return [pb.id];
+    if (L.find(a => a.id === 'dodge' && a.ok) && r() < P.parry + 0.3) return ['dodge', hv.e.id];
+  }
+  if ((hv || ex) && r() < P.guard && L.find(a => a.id === 'guard' && a.ok)) return ['guard'];
+  // 강공격: 스태미나가 넉넉하고 강타 예고가 없으면 가끔 (흘리기 몫 40은 남긴다)
+  if (!hv && p.st >= 80 && r() < 0.3 + P.risk * 0.3 && L.find(a => a.id === 'heavy' && a.ok)) { const t = best({ id: 'heavy', melee: 1 }, (x, y) => y.hp - x.hp); if (t) return ['heavy', t.id]; }
+  if (!useMech) { const pool = okS.filter(a => !has(a, 'parry') && !has(a, 'parryBuff') && !(has(a, 'burst') && !E.alive(b).some(e => psn(e) > 0))); if (pool.length && r() < 0.6) { const a = pool[Math.floor(r() * pool.length)]; const t = a.self || a.aoe ? null : best(a, (x, y) => x.hp - y.hp); return [a.id, t && t.id]; } return null; }
+  const th = mem.burstTh || (mem.burstTh = 4 + Math.floor(r() * 4));
+  // 처형·터뜨리기: 죽일 수 있거나 충분히 쌓였을 때
+  for (const a of okS.filter(a => has(a, 'burst'))) {
+    if (a.aoe) { if (E.alive(b).filter(e => psn(e) >= 3).length >= 2) return [a.id]; continue; }
+    const exe = a.s.fx.find(e => e.k === 'execute');
+    const t = best(a, (x, y) => psn(y) - psn(x)); if (!t || !psn(t)) continue;
+    const kill = E.poisonTotal(psn(t)) >= t.hp; const low = exe && t.hp <= t.hpMax * exe.hp;
+    if (kill || low || psn(t) >= th || (t.intent && t.intent.k === 'heavy')) return [a.id, t.id];
+  }
+  // 키우기: 중독 4 이상
+  for (const a of okS.filter(a => has(a, 'grow'))) { const t = best(a, (x, y) => psn(y) - psn(x)); if (t && psn(t) >= 4) return [a.id, t.id]; }
+  // 광역: 둘 이상
+  for (const a of okS.filter(a => a.aoe && !has(a, 'burst'))) if (reach(a).length >= 2) return [a.id];
+  // 중독을 이용하는 스킬: 중독 3 이상
+  for (const a of okS.filter(a => has(a, 'exploit') || has(a, 'brkPer'))) { const t = best(a, (x, y) => psn(y) - psn(x)); if (t && psn(t) >= 3) return [a.id, t.id]; }
+  // 흘리기 준비(자신): 강타가 곧 오면
+  const pb = okS.find(a => has(a, 'parryBuff')); if (pb && !p.pbuf && E.alive(b).some(e => e.intent && e.intent.k === 'charge') && r() < 0.6) return [pb.id];
+  // 그 밖의 공격 스킬: 아직 중독이 적은 적 / 약한 적
+  const atk = okS.filter(a => !a.self && !has(a, 'parry') && !has(a, 'burst') && !has(a, 'grow'));
+  if (atk.length) { const a = atk[Math.floor(r() * atk.length)]; const t = has(a, 'poison') ? best(a, (x, y) => (psn(x) - psn(y)) || (x.hp - y.hp)) : best(a, (x, y) => x.hp - y.hp); if (t) return [a.id, t.id]; }
+  return null;
+}
 function heuristic(b, P, r, mem) {
   const p = b.p, L = E.actionList(b), ok = id => { const a = L.find(x => x.id === id); return a && a.ok; };
   const al = E.alive(b).filter(e => e.role !== 'root');
@@ -106,6 +152,8 @@ function heuristic(b, P, r, mem) {
   if (ok('flaskS') && ((hv && p.st < 30 && r() < aware * (P.parry + P.guard + 0.3)) || (p.st < 15 && r() < aware * 0.5))) return ['flaskS'];
   const mother = al.find(e => e.boss === 'mother');
   if (mother && p.s.poison && p.s.poison.stacks >= 7 && r() < aware * 0.8) { if (p.build === 'priest' && ok('purge')) return ['purge', mother.id]; if (ok('flaskL')) return ['flaskL']; }
+  // 0.6a.2 직업(충전 스킬): 스킬 데이터를 보고 고른다
+  if (E.isV2 && E.isV2(p)) { const v = v2Pick(b, P, r, mem, L, al, hv, ex, aware); if (v) return v; }
   // 예고 대응
   if (hv && r() < P.parry && ok('dodge')) return ['dodge', hv.e.id];
   if ((hv || ex) && r() < P.guard && ok('guard')) return ['guard'];
