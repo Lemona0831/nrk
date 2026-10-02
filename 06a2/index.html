@@ -340,7 +340,11 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .newdot{display:inline-block;background:var(--bad);color:#fff;border-radius:8px;font-size:10.5px;padding:0 5px;margin-left:3px;line-height:16px}
 .newtag{font-size:11.5px;color:var(--gold);font-weight:600;margin-left:6px}
 .news{border-color:var(--gold)}.news ul,.chg ul{margin:6px 0 8px 18px;padding:0}.news li,.chg li{margin:3px 0;font-size:14px}
-.chg{border-top:1px solid var(--line);padding:8px 0}.chg:first-child{border-top:0}.chg h4{margin:0 0 4px}
+.chg{border-top:1px solid var(--line);padding:8px 0}.chg:first-child{border-top:0}.chg h4{margin:0 0 2px}.chgd{font-size:12px;color:var(--muted);margin:0 0 4px}
+.chgl{list-style:none;margin:4px 0 6px!important;padding:0!important}.chgl li{margin:4px 0;padding-left:0;line-height:1.45}
+.ctag{display:inline-block;min-width:44px;text-align:center;font-size:11px;font-weight:700;border-radius:4px;padding:0 5px;margin-right:6px;border:1px solid;vertical-align:1px}
+.ck-new{color:var(--good);border-color:var(--good)}.ck-chg{color:var(--gold);border-color:var(--gold)}.ck-fix{color:#7fb3ff;border-color:#7fb3ff}
+.news .chg{padding:4px 0}.chgmore{border-top:1px solid var(--line);padding:6px 0;font-size:13.5px}.chgmore b{color:var(--gold);font-weight:600}.chgmore .chgd{display:inline;margin-left:6px}
 
 @media (max-width:640px){
   .hdr{gap:4px 8px;padding-top:6px;padding-bottom:6px}
@@ -2098,6 +2102,15 @@ function vRoom(run, R) {
 }
 
 /* ===== 타이틀 (진행 중인 캐릭터가 없으면 [시작], 있으면 [이어하기]·[처음부터]) ===== */
+/* 업데이트 항목 하나: 판 이름 · 제목, 날짜와 시각, 줄마다 종류 표(새 기능·바뀜·고침). 옛 항목은 top·groups 글 묶음 */
+const CHG_K = { '새 기능': 'new', '바뀜': 'chg', '고침': 'fix' };
+function chgEntry(c, latest, brief) {
+  const li = x => typeof x === 'string' ? `<li>${esc(x)}</li>` : `<li><span class="ctag ck-${CHG_K[x.k] || 'chg'}">${esc(x.k)}</span>${esc(x.t)}</li>`;
+  const ul = a => `<ul class="chgl">${a.map(li).join('')}</ul>`;
+  const head = `<h4>${esc(c.v)}${c.t ? ' · ' + esc(c.t) : ''}${latest ? ' <span class="newtag">최신</span>' : ''}</h4>${c.d ? `<div class="chgd">${esc(c.d)}</div>` : ''}`;
+  const body = c.groups && !brief ? c.groups.map(g => `<h5 class="chgh">${esc(g.h)}</h5>${ul(g.items)}`).join('') : ul((brief && c.top) || c.items || c.top || []);
+  return `<section class="chg">${head}${body}</section>`;
+}
 function curDesc(c) { return c.phase === 'wait' || c.phase === 'clearsv' ? '1챕터 돌파 · 2챕터 준비 중' : c.phase === 'shop' ? '1챕터 돌파 · 상점' : c.phase === 'settle' ? '1챕터 돌파 · 정산' : '1챕터 · ' + floorName(c.room); }
 function vTitle() {
   const d = G.data; const c = d.cur && !d.cur.endedAt && BUILDS[d.cur.build] ? d.cur : null;
@@ -2111,7 +2124,8 @@ function vTitle() {
   if (G.sync) h += `<div class="banner" role="status">${esc(G.sync)}</div>`;
   if (G.conn && G.conn !== 'ok' && !G.owner) h += `<section class="card warncard"><h3>기록이 자동으로 모이지 않고 있습니다</h3><p>${esc(CONN_MSG[G.conn] || CONN_MSG.nodb)}</p><button class="gold" data-a="code">기록 보내기 코드</button></section>`;
   h += vAcct();
-  if (d.seenVer !== CHANGE_VER) h += `<section class="card news"><h3>새로 바뀐 것 <span class="newtag">${esc(CHANGELOG[0].v)}</span></h3><ul>${(CHANGELOG[0].top || CHANGELOG[0].items || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul><button data-a="changes">업데이트 내역 전체 보기</button></section>`;
+  if (d.seenVer !== CHANGE_VER) { const seen = CHANGELOG.findIndex(c => c.v === d.seenVer); const nw = CHANGELOG.slice(0, seen > 0 ? Math.min(seen, 3) : 1); // 아직 안 본 업데이트만(최대 3개)
+    h += `<section class="card news"><h3>새로 바뀐 것${seen > 1 ? ` <span class="newtag">업데이트 ${seen}개</span>` : ''}</h3>${nw.map((c, i) => i === 0 ? chgEntry(c, false, true) : `<div class="chgmore"><b>${esc(c.v)}${c.t ? ' · ' + esc(c.t) : ''}</b> <span class="chgd">${esc(c.d || '')}</span></div>`).join('')}<button data-a="changes">업데이트 내역 전체 보기</button></section>`; }
   if (G.site) h += '<p class="mini tfoot"><a href="../privacy.html" target="_blank" rel="noopener">개인정보처리방침</a></p>';
   return h + '</div>';
 }
@@ -3769,8 +3783,7 @@ function sheetParts(S) {
     body = `<p class="mini">새 장비를 받으려면 가방에서 하나를 버리세요. 버린 장비는 사라집니다.</p>${itemDetail(it)}<div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${esc(ITEMS[x.tpl].n)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${baseText(x)}</small></div><button class="sm" data-a="bfdrop" data-k="${u}">버리고 받기</button></div>`; }).join('')}</div><button data-a="bfskip">새 장비를 버리기</button>`;
   } else if (S.kind === 'changes') {
     title = '업데이트 내역';
-    const ul = a => `<ul>${a.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
-    body = CHANGELOG.map((c, i) => `<section class="chg"><h4>${esc(c.v)}${c.d ? ` <span class="mini">${esc(c.d)}</span>` : ''}${i === 0 ? ' <span class="newtag">최신</span>' : ''}</h4>${c.groups ? c.groups.map(g => `<h5 class="chgh">${esc(g.h)}</h5>${ul(g.items)}`).join('') : ul(c.items || [])}</section>`).join('');
+    body = CHANGELOG.map((c, i) => chgEntry(c, i === 0)).join('');
   } else if (S.kind === 'bossinfo' && S.data.foe) {
     const F = FOE_INTRO[S.data.foe]; title = F.n + '을(를) 처음 만났습니다';
     body = `<p class="lore">${esc(F.lore)}</p>${F.see.map(t => `<p>${esc(t)}</p>`).join('')}<p class="mini">무엇을 하는지는 직접 겪어 보아야 압니다. 처음 겪은 일은 보스 도감에 적힙니다. 이 창은 한 번만 뜹니다.</p><button class="gold wide" data-a="close" data-focus>싸우러 간다</button>`;
