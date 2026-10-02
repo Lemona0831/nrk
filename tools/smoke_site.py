@@ -17,9 +17,11 @@ with sync_playwright() as p:
     # 지인
     pg=ctx.new_page(); pg.on('pageerror',lambda e:errs.append('지인:'+str(e)))
     pg.goto(SITE); pg.wait_for_timeout(600)
-    pg.click('[data-a=newchar]'); pg.click('button.link[data-a=gdone]'); pg.wait_for_timeout(300)
+    pg.click('[data-a=newchar]')
+    if pg.query_selector('[data-a=tutskip]'): pg.click('[data-a=tutskip]')  # 0.6a.2: 처음 시작하면 수련장을 권한다(건너뛰기)
+    pg.click('button.link[data-a=gdone]'); pg.wait_for_timeout(300)
     print('지인 연결:', pg.evaluate("()=>[G.site,G.conn,G.uid&&G.uid.slice(0,10),G.owner]"), '| 경고 카드:', bool(pg.query_selector('.warncard')))
-    pg.evaluate("()=>{G.data.seenCoach=true; G.data.name='민수'}")
+    pg.evaluate("()=>{G.data.seenCoach=true; G.data.seenBreak=true; G.data.name='민수'}")  # 첫 붕괴 안내 창이 전투 버튼을 가리지 않게
     pg.fill('#cname', '사냥꾼민수'); pg.click('[data-a=cnok]'); cls = 'hunter' if pg.query_selector('[data-a=clspick][data-k=hunter]') else pg.get_attribute('[data-a=clspick]', 'data-k')  # 0.6a.2 시험판(06a2)에는 사냥꾼이 아직 없다
     pg.click(f'[data-a=clspick][data-k={cls}]')
     pg.click(f'button[data-a=start][data-b={cls}]'); pg.click('button[data-a=skillok]')

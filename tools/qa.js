@@ -332,11 +332,11 @@ function scenRun(build, pk, seed) {
 if (require.main === module) {
   const N = +(process.argv[2] || 30);
   const t0 = Date.now(); const runs = [];
-  for (const pk of Object.keys(PERSONAS)) for (const build of Object.keys(BUILDS)) for (const boss of ['mother', 'tree']) {
+  for (const pk of Object.keys(PERSONAS)) for (const build of Object.keys(BUILDS).filter(k => !BUILDS[k].tut)) for (const boss of ['mother', 'tree']) {
     const mem = {};
     for (let s = 0; s < N; s++) runs.push(playRun(pk, build, boss, 1000 + s * 7 + boss.length, mem));
   }
-  const scen = {}; for (const build of Object.keys(BUILDS)) for (const pk of ['expert', 'casual']) scen[build + '/' + pk] = [0, 1, 2, 3, 4].map(s => scenRun(build, pk, 50 + s));
+  const scen = {}; for (const build of Object.keys(BUILDS).filter(k => !BUILDS[k].tut)) for (const pk of ['expert', 'casual']) scen[build + '/' + pk] = [0, 1, 2, 3, 4].map(s => scenRun(build, pk, 50 + s));
   require('fs').writeFileSync(require('path').join(__dirname, 'qa.json'), JSON.stringify({ runs, scen }));
   console.log('runs', runs.length, 'sec', ((Date.now() - t0) / 1000).toFixed(1));
 }

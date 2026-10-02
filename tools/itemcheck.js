@@ -54,8 +54,8 @@ for (const k of POOL) {
   for (const key in FXHIT) delete FXHIT[key];
   const before = bad.length;
   let seed = 100;
-  for (const build of Object.keys(BUILDS)) for (let i = 0; i < 4; i++) fight(build, k, seed += 13);
-  if (!(FXHIT[k] > 0) && IFX[k]) for (const build of Object.keys(BUILDS)) for (let i = 0; i < 12; i++) fight(build, k, seed += 13); // 조건이 드문 효과는 더 싸워 본다
+  for (const build of Object.keys(BUILDS).filter(x => !BUILDS[x].tut)) for (let i = 0; i < 4; i++) fight(build, k, seed += 13);
+  if (!(FXHIT[k] > 0) && IFX[k]) for (const build of Object.keys(BUILDS).filter(x => !BUILDS[x].tut)) for (let i = 0; i < 12; i++) fight(build, k, seed += 13); // 조건이 드문 효과는 더 싸워 본다
   const hits = FXHIT[k] || 0; const st = staticCheck(k); const f = IFX[k];
   const kind = !f ? '예전 아이템(엔진 직접)' : UI_ONLY[k] ? UI_ONLY[k] : (Object.keys(f).every(x => ['st', 'hpMul', 'heal', 'healMul', 'cap', 'cost', 'stamMul', 'flaskCleanse', 'goldMul', 'treasureGold', 'spring', 'springLife', 'manaToHp', 'deathSave'].includes(x)) ? '고정 수치' : '전투 효과');
   const ok = bad.length === before && (!f || UI_ONLY[k] || hits > 0 || (st && st.length === 0 && kind === '고정 수치')) && !(st && st.length);
