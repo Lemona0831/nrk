@@ -284,6 +284,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .tnode{position:absolute;transform:translate(-50%,-50%);width:76px;min-height:0;padding:0;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;z-index:1}
 .tnode .tc{width:38px;height:38px;border-radius:50%;border:2px solid var(--line);background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--muted)}
 .tnode small{font-size:11.5px;line-height:1.2;text-align:center;color:var(--muted);max-width:76px;word-break:keep-all}
+@media (max-width:599px){.tnode.r5{width:60px}.tnode.r5 small{max-width:60px;font-size:10.5px}} /* 한 줄에 4칸 이상인 등급: 휴대폰에서 이름이 겹치지 않게 */
 .tnode.t-hidden .tc{border-style:dashed;opacity:.6}.tnode.t-name .tc{border-style:dashed}.tnode.t-name small{color:var(--ink)}
 .tnode.t-full small{color:var(--ink)}.tnode.can .tc{border-color:var(--gold);color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,75,.18)}
 .tnode.open .tc{background:var(--gold);border-color:var(--gold);color:#1b140f}.tnode.eq .tc{box-shadow:0 0 0 3px var(--panel),0 0 0 5px var(--gold)}
@@ -304,7 +305,8 @@ html.fitmode,html.fitmode body{overflow:hidden}
 }
 .tdet .tdn{font-size:17px;color:var(--gold)}.tdet .tdh{color:var(--muted);font-size:12.5px}.tdet .tdp{border-top:1px dashed var(--line);padding-top:6px;margin-top:8px}.tdb{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}.tdb button{min-width:130px}
 .tcount{font-size:12.5px;color:var(--muted);margin:0 0 4px}.tcount b{color:var(--ink)}
-.tcwrap{display:flex;gap:4px}.tcwrap .tcanvas{flex:1;min-width:0}.ttiers{position:relative;flex:none;width:38px;border-right:1px dashed var(--line)}
+.tcwrap{display:flex;gap:4px}.tcwrap .tcanvas{flex:1;min-width:0}.ttiers{position:relative;flex:none;width:40px;border-right:1px dashed var(--line)}
+.ttier.lk b,.ttier.lk small{color:var(--muted);opacity:.75}.tnode.chlock .tc{opacity:.55;border-style:dashed}
 .ttier{position:absolute;left:0;right:4px;transform:translateY(-50%);display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}.ttier b{font-size:11.5px;color:var(--muted);font-weight:600}.ttier small{font-size:10px;color:var(--muted)}
 .thaste{font-size:13px;margin:0 0 4px;padding:6px 8px;border-left:3px solid var(--gold);background:var(--panel2);border-radius:4px}.thaste b{color:var(--gold);margin-right:4px}
 .tutgoal{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:6px 8px;border:1px dashed var(--gold);border-radius:8px;background:var(--panel2)}
@@ -580,7 +582,7 @@ const SKILL_SLOTS = 3;
 function exclOf(build) { return (EXCL[build] || []).map(s => Object.assign({ excl: build, gen: 1, melee: s.type === 'melee' ? 1 : 0, ranged: s.type === 'ranged' ? 1 : 0, aoe: s.type === 'aoe' || s.type === 'front' ? 1 : 0, self: s.type === 'self' ? 1 : 0 }, s)); }
 function skillMap(build) { const m = allSkills(); for (const s of exclOf(build)) m[s.id] = s; for (const s of (SKILLS2[build] || [])) m[s.id] = v2Static(s); return m; }
 /* 0.6a.2 스킬 한 줄 → 행동 목록이 쓰는 꼴 (대상 종류, 근접 여부, 빠르기) */
-function v2Static(s) { return { id: s.id, n: s.n, v2: 1, s, skill: 1, melee: s.tgt === 'melee' ? 1 : 0, dodge: s.tgt === 'pick' ? 1 : 0, aoe: s.tgt === 'front' || s.tgt === 'all' ? 1 : 0, self: s.tgt === 'self' ? 1 : 0, front: s.tgt === 'front' ? 1 : 0, time: SKK.T[s.time], d: skBody(s) }; }
+function v2Static(s) { return { id: s.id, n: s.n, v2: 1, s, skill: 1, melee: s.tgt === 'melee' ? 1 : 0, ranged: s.tgt === 'ranged' ? 1 : 0, dodge: s.tgt === 'pick' ? 1 : 0, aoe: s.tgt === 'front' || s.tgt === 'all' ? 1 : 0, self: s.tgt === 'self' ? 1 : 0, front: s.tgt === 'front' ? 1 : 0, time: SKK.T[s.time], d: skBody(s) }; }
 /* 흘리기를 건다: 고른 적의 다음 공격을 줄이고, 흘려 내면 on의 효과를 그 적에게. 흘리기 준비(pbuf)가 있으면 얹고 1 쓴다 */
 function setParry(b, tgt, red, on) {
   const p = b.p; p.dodge = tgt.id; p.fxDodged = 1;
@@ -598,15 +600,17 @@ function runSkill2(b, act, tgt) {
   const sm = F('stam'); if (sm) { p.st = Math.min(p.stMax, p.st + sm.n); if (p.exhaust && p.st >= 30) p.exhaust = 0; }
   const pb = F('parryBuff'); if (pb) { p.pbuf = { n: pb.times || 1, red: pb.red || 0, stam: pb.stam || 0, dmg: pb.dmg || 0, poison: pb.poison || 0 }; logp(b, 'good', '칼끝을 겨눈다. 다음 흘리기 ' + p.pbuf.n + '번이 날카로워진다'); }
   const multi = s.tgt === 'front' || s.tgt === 'all'; const hits = s.hits || 1; let tot = 0, killed = 0;
-  const dm = F('dmg'), ex = F('exploit'), po = F('poison'), bk = F('brk'), bp = F('brkPer'); const stx = s.fx.filter(e => e.k === 'st');
+  const dm = F('dmg'), ex = F('exploit'), po = F('poison'), bk = F('brk'), bp = F('brkPer'); const stx = s.fx.filter(e => e.k === 'st'); const lx = F('lowx'), bx = F('brokenx'), sp = F('spread');
   for (let h = 0; h < hits; h++) for (const e of targets) {
     if (!e.alive || b.over) continue;
-    const base = (dm ? dm.n : 0) + (ex ? ex.per * st(e, 'poison') : 0);
+    let base = (dm ? dm.n : 0) + (ex ? ex.per * st(e, 'poison') : 0);
+    if (lx && e.hp <= e.hpMax * lx.hp) base *= lx.mul; if (bx && e.s.broken) base *= bx.mul; // 마무리(생명력 낮음), 붕괴한 적
     if (base > 0) { tot += hurtEnemy(b, e, outDmg(b, base, {}), { single: multi ? 0 : 1, aoe: multi ? 1 : 0, melee: s.tgt === 'melee' || s.tgt === 'front' ? 1 : 0, label: s.n }); if (!e.alive) { killed++; continue; } }
     if (po) addPoison(b, e, po.n, 1, capOver);
     if (bk) addBreak(b, e, bk.n);
     if (bp && h === 0) addBreak(b, e, bp.per * st(e, 'poison'));
     if (h === 0) for (const x of stx) if (e.alive) addS(b, e, x.s, x.n); // 적에게 거는 상태 (독무의 약화)
+    if (sp && h === hits - 1 && e.alive) { const n = Math.ceil(st(e, 'poison') * sp.per); if (n > 0) { let k = 0; for (const o of alive(b)) if (o !== e && o.role !== 'root') { addPoison(b, o, n, 1, capOver); k++; } if (k) logp(b, 'good', e.n + '의 독이 번진다. 다른 적에게 중독 ' + n); } } // 독 번지기
   }
   const gr = F('grow'), bu = F('burst'), exe = F('execute');
   for (const e of targets) {
@@ -1072,6 +1076,7 @@ function treeWhy(run, id) {
   if (s.start) return '시작 스킬';
   if (t.open.includes(id)) return '이미 열림';
   if (s.par && !s.par.some(x => t.open.includes(x))) return '이어진 앞 칸을 먼저 열어야 합니다';
+  const chN = (typeof TREE_CH !== 'undefined' && TREE_CH[s.tier]) || 1; if ((run.ch || 1) < chN) return `${chN}챕터부터 열립니다`; // 10월 3일 만든 사람 결정: 상급 3챕터, 궁극 5챕터
   const need = TREE_GATE[s.tier] || 0; const sp = t.spent[s.b] || 0;
   if (sp < need) return `${s.b} 갈래에 포인트 ${need}점을 먼저 써야 합니다 (지금 ${sp}점)`;
   if (t.pts < 1) return '포인트가 없습니다';
@@ -3725,15 +3730,16 @@ function vTreeBranch(run, br) {
   for (const row of rows) for (const s of row) for (const pid of (s.par || [])) { const a = pos[pid], c = pos[s.id]; if (a) lines += `<line x1="${a.x}" y1="${yp(a.y)}" x2="${c.x}" y2="${yp(c.y)}"${run.tree.open.includes(pid) ? ' class="lit"' : ''}/>`; }
   for (const row of rows) for (const s of row) {
     const p = pos[s.id]; const vis = treeVis(run, s.id); const open = run.tree.open.includes(s.id); const eq = (run.skills || []).includes(s.id); const can = !open && !treeWhy(run, s.id);
-    const cls = ['tnode', 't-' + vis, open ? 'open' : '', eq ? 'eq' : '', can ? 'can' : '', G.tsel === s.id ? 'sel' : '', s.tier === '궁극' ? 'ult' : ''].filter(Boolean).join(' ');
-    const glyph = vis === 'hidden' ? '?' : eq ? '✓' : open ? '●' : can ? '+' : s.tier === '궁극' ? '★' : '·';
+    const cls = ['tnode', 't-' + vis, open ? 'open' : '', eq ? 'eq' : '', can ? 'can' : '', G.tsel === s.id ? 'sel' : '', s.tier === '궁극' ? 'ult' : '', (!open && (run.ch || 1) < ((TREE_CH || {})[s.tier] || 1)) ? 'chlock' : '', row.length >= 4 ? 'r5' : ''].filter(Boolean).join(' ');
+    const chL = !open && (run.ch || 1) < ((TREE_CH || {})[s.tier] || 1);
+    const glyph = vis === 'hidden' ? (chL ? '🔒' : '?') : eq ? '✓' : open ? '●' : chL ? '🔒' : can ? '+' : s.tier === '궁극' ? '★' : '·';
     nodes += `<button class="${cls}" style="left:${p.x}%;top:${TREE_TOP + p.y * TREE_ROW_H}px" data-a="tsel" data-k="${s.id}" data-info="tn:${s.id}" aria-label="${esc(vis === 'hidden' ? '아직 보이지 않는 칸' : s.n + ', ' + s.tier + (open ? ', 열림' : can ? ', 열 수 있음' : '') + (eq ? ', 끼움' : ''))}"><span class="tc">${glyph}</span><small>${vis === 'hidden' ? '' : esc(s.n)}</small></button>`;
   }
   const hs = ((TREE2[run.build] || {}).haste || {})[br];
   // 아래로 몇 칸이 있는지: 등급마다 칸 수와 숨은 칸 수 (처음에는 대부분 "?"라 스킬이 이것뿐인지 헷갈린다. 10월 3일 만든 사람 지적)
   const all = rows.flat(); const hid = all.filter(x => treeVis(run, x.id) !== 'full').length;
-  const cnt = `<p class="tcount">이 갈래 스킬 <b>${all.length}개</b> · ${rows.map((r, i) => TIERS2[i] + ' ' + r.length).join(' · ')}${hid ? ` · 아직 <b>${hid}칸</b>이 숨어 있습니다(?·★). 칸을 열면 선으로 이어진 아래 칸이 드러납니다.` : ''} 왼쪽 등급 밑 숫자는 그 등급을 열기 전에 이 갈래에 써야 하는 포인트입니다.</p>`;
-  const tl = TIERS2.map((tier, i) => `<span class="ttier" style="top:${TREE_TOP + i * TREE_ROW_H}px"><b>${tier}</b>${TREE_GATE[tier] ? `<small>${TREE_GATE[tier]}점</small>` : ''}</span>`).join('');
+  const cnt = `<p class="tcount">이 갈래 스킬 <b>${all.length}개</b> · ${rows.map((r, i) => TIERS2[i] + ' ' + r.length).join(' · ')}${hid ? ` · 아직 <b>${hid}칸</b>이 숨어 있습니다(?·★). 칸을 열면 선으로 이어진 아래 칸이 드러납니다.` : ''} 왼쪽 등급 밑 숫자는 그 등급을 열기 전에 이 갈래에 써야 하는 포인트이고, 🔒는 그 챕터에 들어가야 열리는 등급입니다(상급 3챕터, 궁극 5챕터).</p>`;
+  const tl = TIERS2.map((tier, i) => { const c = TREE_CH[tier] || 1; const lk = (run.ch || 1) < c; return `<span class="ttier${lk ? ' lk' : ''}" style="top:${TREE_TOP + i * TREE_ROW_H}px"><b>${tier}</b>${lk ? `<small>${c}챕터~</small>` : TREE_GATE[tier] ? `<small>${TREE_GATE[tier]}점</small>` : ''}</span>`; }).join('');
   return `<div class="tbranch">${hs ? `<p class="thaste"><b>갈래 규칙</b> ${esc(skHasteLine(hs, br))}</p>` : ''}${cnt}<div class="tcwrap"><div class="ttiers" style="height:${H}px" aria-hidden="true" title="등급. 숫자는 이 갈래에 먼저 써야 하는 포인트">${tl}</div><div class="tcanvas" style="height:${H}px"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${nodes}</div></div></div>`;
 }
 function vTreeDetail(run, id, preview) {

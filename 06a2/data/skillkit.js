@@ -6,12 +6,12 @@ const SKK = {
   B: 9.5,                       // 기본 공격 값 (무기 피해 8 + 붕괴 10)
   T: { fast: 0.5, normal: 1, slow: 1.5, vslow: 2 },
   TN: { fast: '빠름', normal: '보통', slow: '느림', vslow: '아주 느림' },
-  tmul: { melee: 1, pick: 1, front: 2.0, all: 2.5, self: 0 },   // 10월 3일: 방마다 적이 2~4라 광역이 맞히는 수를 올렸다(1.5·2.0 → 2.0·2.5)
-  TGN: { melee: '근접 한 적', pick: '고른 적', front: '전열 모두', all: '모든 적', self: '나' },
+  tmul: { melee: 1, pick: 1, ranged: 1, front: 2.0, all: 2.5, self: 0 },   // 10월 3일: 방마다 적이 2~4라 광역이 맞히는 수를 올렸다(1.5·2.0 → 2.0·2.5)
+  TGN: { melee: '근접 한 적', pick: '고른 적', ranged: '후열까지 한 적', front: '전열 모두', all: '모든 적', self: '나' },
   poison: 4,                    // 중독 1의 값 (10월 3일 3 → 4: 쌓인 중독 위에 더하면 남은 피해가 1보다 크게 늘어 독사가 점수보다 셌다)
   brk: 0.15,                    // 붕괴 게이지 1의 값 (10 = 1.5)
   S: 4,                         // 쓸 때 대상의 기대 중독 수치 (10월 3일 06a2 실측 3.9)
-  Sk: { burst: 2, grow: 5, exploit: 4, brkPer: 3 },  // 효과마다 쓸 때 대상의 중독 (10월 3일 재사용 대기 판 실측: 터뜨리기 1.1(먼저 거는 중독 전), 키우기 6.4, 이용 4.1, 붕괴 2.9). 터뜨리기는 먼저 거는 중독(pre)을 더한다
+  Sk: { burst: 3, grow: 5, exploit: 4, brkPer: 3, spread: 5 },  // 효과마다 쓸 때 대상의 중독 (10월 3일 재사용 대기 판 실측: 터뜨리기 1.1 → 기본 4칸 판 2.8(먼저 거는 중독 전), 키우기 6.4, 이용 4.1, 붕괴 2.9). 터뜨리기는 먼저 거는 중독(pre)을 더한다
   ph: 8,                        // 흘리기형 스킬이 막는 공격의 기대 피해 (10월 3일: 재사용 대기로 바뀌어 평범한 공격에도 쓰므로 15 → 8)
   pOk: 0.75,                    // 흘리기 성공 확률 (고른 적이 내 다음 차례 전에 친다)
   turns: 11,                    // 기준 전투에서 첫 차례 뒤 내 차례 수 (목표 전투 길이 12행동, 10월 3일 만든 사람 결정: 옛 암살자 수준)
@@ -34,6 +34,9 @@ function skValue(s) {
       case 'exploit': v += e.per * Sof('exploit') + (e.n || 0); break;
       case 'brk': v += e.n * K.brk * (s.tgt === 'self' ? 1 : tm); break;
       case 'stam': v += e.n * 0.15; break;
+      case 'lowx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * 0.35; break; } // 생명력이 낮은 적: 쓸 때 셋 중 하나쯤
+      case 'brokenx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * 0.3; break; } // 붕괴한 적: 붕괴를 노리고 쓰면 열에 셋
+      case 'spread': v += Math.ceil(Sof('spread') * e.per) * 1.5 * K.poison; break; // 다른 적 평균 1.5
       case 'st': v += e.n * (K.kw[e.s] || 1) * (s.tgt === 'self' ? 1 : tm); break;
       case 'brkPer': v += e.per * Sof('brkPer') * K.brk; break;
       case 'parry': v += K.ph * e.red + 0.5 * 25 * K.brk; break;
@@ -90,6 +93,9 @@ function skBody(s) {
         out.push((buf.length ? `다음 흘리기 ${t}번은 ${buf.join('. ')}.` : '') + (hit ? ` ${t > 1 ? '흘리기에 성공할 때마다' : '다음 흘리기에 성공하면'} 그 적에게 ${hit}.` : '')); break; }
       case 'execute': out.push(`대상의 생명력이 ${Math.round(e.hp * 100)}% 이하면 터뜨린 피해 ×${e.mul}.`); break;
       case 'stam': out.push(`스태미나 +${e.n}.`); break;
+      case 'lowx': out.push(`대상의 생명력이 ${Math.round(e.hp * 100)}% 이하면 피해 ×${e.mul}.`); break;
+      case 'brokenx': out.push(`대상이 붕괴 상태면 피해 ×${e.mul}.`); break;
+      case 'spread': out.push(`대상의 중독 ${e.per === 0.5 ? '절반(올림)' : Math.round(e.per * 100) + '%'}만큼 다른 적 모두에게 중독을 건다. 대상의 중독은 그대로다.`); break;
       case 'capOver': out.push(`이 스킬로 거는 중독은 상한을 넘어 ${e.cap}까지 쌓인다.`); break;
     }
   }
