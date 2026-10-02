@@ -158,7 +158,7 @@ function playChar(pk, build, seed) {
   if (G0.BUILDS[build].v2) skills = run.skills.slice(); // 0.6a.2: 트리의 시작 스킬로 시작하고 포인트로 연다(spendTree)
   else if (THINK(pk) || pk === 'novice') skills = ids.slice().sort(() => r() - 0.5).slice(0, 3);
   else { const ex = ids.filter(id => SKM[id].excl).sort(() => r() - 0.5); const home = ids.filter(id => SKM[id].home === build); const other = ids.filter(id => !SKM[id].excl && SKM[id].home !== build).sort(() => r() - 0.5); skills = ex.slice(0, 1 + Math.floor(r() * 2)).concat(home).concat(other).slice(0, 3); }
-  run.skills = skills.slice(); run.p.skills = skills.slice();
+  run.skills = skills.slice(); run.p.skills = G0.BUILDS[build].v2 ? G0.v2Equip(run) : skills.slice(); // 0.6a.2: 시작 스킬은 늘 끼운다
   const pref = PREF[build]; const st = { str: 0, dex: 0, int: 0 };
   for (let i = 0; i < 6; i++) st[pk === 'novice' || r() > 0.6 ? ['str', 'dex', 'int'][Math.floor(r() * 3)] : pref]++;
   run.stats = st; G0.applyStats(run.p, st); run.p.hp = run.p.hpMax; run.p.mp = run.p.mpMax; run.p.st = run.p.stMax;
@@ -201,7 +201,7 @@ function spendTree(pk, r) {
     const eq = run.skills.slice();
     if (eq.length < G0.EQUIP_SLOTS2) eq.push(s.id);
     else { const lo = eq.map((id, i) => [i, TIER_N[G0.SK2[id].tier]]).sort((x, y) => x[1] - y[1])[0]; if (lo[1] < TIER_N[s.tier] || r() < 0.3) eq[lo[0]] = s.id; }
-    run.skills = eq; run.p.skills = eq.slice();
+    run.skills = eq; run.p.skills = G0.v2Equip(run);
   }
 }
 /* 지금 G.run을 성향대로 끝(쓰러짐 또는 정산)까지 진행한다 */

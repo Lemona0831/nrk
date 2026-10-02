@@ -264,7 +264,26 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .skline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px;padding:6px 8px;background:var(--panel2);border-radius:6px}
 .warn{border-left:3px solid var(--bad);padding:6px 10px;background:var(--panel2);font-size:13.5px;margin:0 0 8px}
 .skhead{grid-column:1/-1;font-size:12.5px;font-weight:700;color:var(--gold);margin-top:4px}
-/* 0.6a.2 스킬 트리 */
+/* 0.6a.2 스킬 트리 (원형 칸이 아래로 뻗는 가지) */
+.tsum{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:flex-end;margin:6px 0 8px}.trow{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px}
+.tstart,.tslot{min-height:34px;padding:4px 10px;border-radius:17px;font-size:13px;display:inline-flex;align-items:center;gap:5px}
+.tstart{border-color:var(--gold)}.tstart .tc{color:var(--gold)}.tslot{border:1px dashed var(--line);color:var(--muted)}.tslot.on{border:1px solid var(--gold);color:var(--fg,inherit)}
+.tpts{margin-left:auto;font-size:15px}.tpts b{color:var(--gold);font-size:18px}
+.ttabs{display:flex;gap:6px;margin:4px 0}.tgrid{display:grid;grid-template-columns:1fr;gap:10px}.tcol:not(.on){display:none}
+@media (min-width:860px){.ttabs{display:none}.tgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.tcol:not(.on){display:block}}
+.tbranch{border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:8px 6px 4px}
+.tbh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;padding:0 4px}.tbh b{color:var(--gold);font-size:16px}.tbh small{flex-basis:100%;color:var(--muted);font-size:12px}.tbp{margin-left:auto;font-size:12px;color:var(--muted)}
+.tcanvas{position:relative;margin-top:4px}.tcanvas svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.tcanvas line{stroke:var(--line);stroke-width:2;vector-effect:non-scaling-stroke}.tcanvas line.lit{stroke:var(--gold)}
+.tnode{position:absolute;transform:translate(-50%,-50%);width:76px;min-height:0;padding:0;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;z-index:1}
+.tnode .tc{width:38px;height:38px;border-radius:50%;border:2px solid var(--line);background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--muted)}
+.tnode small{font-size:11.5px;line-height:1.2;text-align:center;color:var(--muted);max-width:76px;word-break:keep-all}
+.tnode.t-hidden .tc{border-style:dashed;opacity:.6}.tnode.t-name .tc{border-style:dashed}.tnode.t-name small{color:var(--fg,inherit)}
+.tnode.t-full small{color:var(--fg,inherit)}.tnode.can .tc{border-color:var(--gold);color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,75,.18)}
+.tnode.open .tc{background:var(--gold);border-color:var(--gold);color:#1b140f}.tnode.eq .tc{box-shadow:0 0 0 3px var(--panel),0 0 0 5px var(--gold)}
+.tnode.ult .tc{width:44px;height:44px}.tnode.sel small{text-decoration:underline;text-underline-offset:3px}.tnode.sel .tc{outline:2px solid var(--fg,#eee);outline-offset:3px}
+.tdet .row button{flex:0 0 auto;min-width:120px}.tdet{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:10px;background:var(--panel2)}.tdet p{margin:4px 0}
+/* (옛 목록형 트리 클래스, 쓰지 않음) */
 .tree{display:grid;grid-template-columns:1fr;gap:10px;margin:6px 0 10px}
 @media (min-width:860px){.tree{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .tbr{border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--panel2)}.tbr h4{margin:0 0 4px;color:var(--gold)}.tbr h4 small{color:var(--muted);font-weight:400}
@@ -553,10 +572,10 @@ function runSkill2(b, act, tgt) {
     if (gr) { const n0 = st(e, 'poison'); const add = Math.round(n0 * (gr.mul - 1)) + (gr.add || 0); const got = addPoison(b, e, add, 1, capOver); logp(b, 'good', e.n + '의 독이 끓어오른다. 중독 ' + n0 + ' → ' + st(e, 'poison') + (got < add ? ' (상한)' : '')); }
     if (bu) {
       const n = st(e, 'poison'); if (n <= 0) { logp(b, 'sys', e.n + '에게 터뜨릴 중독이 없다'); continue; }
-      const take = bu.top ? Math.min(bu.top, n) : n;
+      const take = bu.half ? Math.ceil(n / 2) : bu.top ? Math.min(bu.top, n) : n;
       const low = exe && e.hp <= e.hpMax * exe.hp; const mul = low ? exe.mul : (bu.mul || 1);
       const total = (poisonTotal(n) - poisonTotal(n - take)) * mul * dotMul(p);
-      const left = bu.top ? n - take : Math.floor(n * (bu.keep || 0));
+      const left = (bu.top || bu.half) ? n - take : Math.floor(n * (bu.keep || 0));
       if (left > 0) e.s.poison.stacks = left; else delete e.s.poison;
       logp(b, 'crit', (low ? '숨통을 끊으러 든다. ' : '') + e.n + '의 독이 터진다. 중독 ' + take + (left ? ' (남은 중독 ' + left + ')' : ''));
       tot += hurtEnemy(b, e, outDmg(b, total, {}), { single: multi ? 0 : 1, aoe: multi ? 1 : 0, melee: s.tgt === 'melee' ? 1 : 0, label: s.n });
@@ -869,7 +888,7 @@ function mkPlayer(build, items, stats, skills) {
   const it = items || {};
   const s0 = Object.assign({ str: 0, dex: 0, int: 0 }, stats || {});
   const p = {
-    stat: s0, skills: (skills && skills.length ? skills : DEFAULT_SKILLS[build]).slice(0, BUILDS[build].v2 ? EQUIP_SLOTS2 : SKILL_SLOTS),
+    stat: s0, skills: (skills && skills.length ? skills : DEFAULT_SKILLS[build]).slice(0, BUILDS[build].v2 ? EQUIP_SLOTS2 + ((TREE2[build] || {}).starters || []).length : SKILL_SLOTS),
     build, gear: Object.assign({}, START_GEAR),
     scar: 0, rage: 0, flask: { life: 3, mana: 3, stam: 3 }, flaskMax: 3,
     eq: Object.assign({ weapon: null, armor: null, amulet: null, flask: null, ring1: null, ring2: null, gloves: null }, it),
@@ -987,14 +1006,24 @@ function chargeEv(b, kind) {
   }
 }
 /* 스킬 트리 (개편 기획 4절): 포인트 1로 한 칸을 연다. 깊은 등급은 그 갈래에 먼저 쓴 포인트가 있어야 열린다(TREE_GATE). 연 스킬 가운데 4칸을 장착 */
-function treeInit(run) { const T = TREE2[run.build]; if (!T) return; run.tree = run.tree || { pts: 0, open: T.start.slice(), spent: {} }; }
+function treeInit(run) { const T = TREE2[run.build]; if (!T) return; run.tree = run.tree || { pts: T.pts || 0, open: [], spent: {} }; }
+/* 장착: 시작 스킬(늘) + 트리에서 끼운 스킬(run.skills, 4칸까지) */
+function v2Equip(run) { const T = TREE2[run.build]; return (T ? T.starters : []).concat((run.skills || []).filter(id => !(T && T.starters.includes(id)))).slice(0, (T ? T.starters.length : 0) + EQUIP_SLOTS2); }
 function treeWhy(run, id) {
   const t = run.tree, s = SK2[id]; if (!t || !s) return '없는 스킬';
+  if (s.start) return '시작 스킬';
   if (t.open.includes(id)) return '이미 열림';
+  if (s.par && !s.par.some(x => t.open.includes(x))) return '이어진 앞 칸을 먼저 열어야 합니다';
   const need = TREE_GATE[s.tier] || 0; const sp = t.spent[s.b] || 0;
   if (sp < need) return `${s.b} 갈래에 포인트 ${need}점을 먼저 써야 합니다 (지금 ${sp}점)`;
   if (t.pts < 1) return '포인트가 없습니다';
   return null;
+}
+/* 보이는 범위: full(다 보임), name(이름만), hidden(?). 기본과 부모가 열린 칸은 다 보이고, 궁극(tease)은 이름만 먼저 보인다 */
+function treeVis(run, id) {
+  const t = run.tree, s = SK2[id]; if (!t || !s) return 'hidden';
+  if (s.start || t.open.includes(id) || !s.par || s.par.some(x => t.open.includes(x))) return 'full';
+  return s.tease ? 'name' : 'hidden';
 }
 function treeUnlock(run, id) { const why = treeWhy(run, id); if (why) return why; const s = SK2[id]; run.tree.pts--; run.tree.open.push(id); run.tree.spent[s.b] = (run.tree.spent[s.b] || 0) + 1; (run.treeLog = run.treeLog || []).push({ room: run.room, id, lv: run.lv, t: Date.now() }); return null; }
 function addS(b, u, k, dur, stacks, max) {
@@ -1725,9 +1754,10 @@ const HELP = [
     '위쪽 메뉴에서 장비, 보스 도감, 랭킹, 기록, 도움말, 설정을 언제든 열 수 있습니다.'] },
   { k: 'build', n: '직업과 스킬', t: [
     '시험판에서는 암살자를 고를 수 있습니다. 나머지 직업은 만드는 대로 열립니다.',
-    '직업마다 스킬 트리가 있습니다. 세 갈래에 액티브 스킬이 열 개씩 있고, 처음에는 갈래마다 기본 스킬 하나가 열려 있습니다.',
-    '레벨이 오르면 포인트 1, 챕터를 깨면 포인트 2를 얻습니다. 포인트 1로 스킬 하나를 엽니다. 깊은 등급(중급·상급·궁극)은 그 갈래에 포인트를 먼저 써야 열립니다.',
-    '연 스킬 가운데 4칸을 끼웁니다. 방과 방 사이에 "트리 열기"로 언제든 바꿀 수 있습니다.',
+    '직업마다 시작 스킬 둘이 늘 끼워져 있습니다. 장착 칸을 차지하지 않습니다.',
+    '스킬 트리는 세 갈래이고, 갈래마다 기본 → 중급 → 상급 → 궁극으로 가지가 뻗습니다. 처음에는 모두 잠겨 있고, 캐릭터를 만들 때 포인트 1로 첫 칸 하나를 엽니다. 레벨이 오르면 포인트 1, 챕터를 깨면 포인트 2를 얻습니다.',
+    '칸은 선으로 이어진 앞 칸을 열어야 열립니다. 깊은 등급은 그 갈래에 포인트를 먼저 써야 합니다. 앞 칸을 열기 전에는 이어진 칸이 "?"로 보이고, 궁극은 이름만 보입니다.',
+    '연 스킬 가운데 4칸을 끼웁니다. 메뉴의 "스킬 트리"에서 언제든 보고, 방과 방 사이에 열고 바꿉니다. 전투 중에는 보기만 합니다.',
     '스킬은 마나 대신 충전으로 씁니다. 전투를 시작할 때 충전이 가득 차고, 쓰면 1 줄고, 스킬마다 적힌 조건(내 차례, 상태를 걸 때, 흘리기에 성공할 때, 적을 쓰러뜨릴 때)으로 다시 찹니다. 스킬은 자기 효과로는 다시 차지 않습니다.',
     '스킬마다 빠르기가 있습니다. 센 스킬일수록 느려서 그사이 적이 더 끼어듭니다.'] },
   { k: 'stats', n: '능력치', t: [
@@ -1796,7 +1826,7 @@ const HELP = [
     '전투 밖이면 언제든 메뉴의 장비에서 비용 없이 바꿀 수 있습니다. 전투 중에는 보기만 합니다. 무기는 다른 무기로만 바꿀 수 있습니다.'] },
   { k: 'level', n: '레벨과 경험치', t: [
     '전투 방에서 적을 쓰러뜨리면 경험치를 얻습니다. 정예, 강적, 보스일수록 많이 줍니다.',
-    '레벨이 오르면 능력치 2점을 나누고, 최대 생명력이 오르고, 스킬 트리 포인트 1을 얻습니다. 1챕터를 끝까지 가면 Lv5 안팎입니다.',
+    '레벨이 오르면 능력치 2점을 나누고, 최대 생명력이 오르고, 스킬 트리 포인트 1을 얻습니다(메뉴의 스킬 트리에 숫자가 뜹니다). 1챕터를 끝까지 가면 Lv5 안팎입니다.',
     '적에게도 레벨이 있습니다. 문과 적 카드의 Lv가 높을수록 체력과 피해가 큽니다.'] },
   { k: 'gold', n: '골드와 상점', t: [
     '전투 방을 이기면 골드를 얻습니다. 던전 안에서는 제단 거래에만 씁니다.',
@@ -1829,12 +1859,13 @@ function vHelpBody(focusK) {
 }
 
 /* ---------- 헤더 ---------- */
-const PAGES = ['rank', 'records', 'admin'];
+const PAGES = ['rank', 'records', 'admin', 'tree'];
 function menuItems() {
-  const inRun = G.run && !G.creating && ['run', 'settle', 'shop', 'wait'].includes(G.scr === 'rank' || G.scr === 'records' || G.scr === 'admin' ? G.back : G.scr);
+  const inRun = G.run && !G.creating && ['run', 'settle', 'shop', 'wait'].includes(PAGES.includes(G.scr) ? G.back : G.scr);
   const it = [];
   if (G.scr !== 'title') it.push(['title', '🏰', '타이틀']);
   if (inRun) it.push(['equip', '🎒', '장비']);
+  if (G.run && !G.creating && G.run.tree && G.scr !== 'tree') it.push(['tree', '🌳', '스킬 트리' + (G.run.tree.pts ? ' <span class="newdot" aria-label="포인트">' + G.run.tree.pts + '</span>' : '')]);
   it.push(['codex', '📖', '보스 도감'], ['rank', '🏆', '랭킹'], ['records', '📜', '기록'], ['changes', '📰', '업데이트' + (G.data.seenVer !== CHANGE_VER ? ' <span class="newdot" aria-label="새 소식">새</span>' : '')], ['help', '❔', '도움말'], ['settings', '⚙️', '설정']);
   if (G.site && G.conn === 'ok' && G.acct) it.push(G.acct.anon ? ['login', '🔑', '구글 로그인', 'google'] : ['logout', '🚪', '로그아웃']);
   if (G.owner || G.adminLink) it.push(['admin', '🛠️', '관리자']);
@@ -1844,7 +1875,7 @@ function menuItems() {
 function vHeader() {
   const run = G.run;
   const live = run && !G.creating && ['run', 'settle', 'shop', 'wait', 'dead'].includes(G.scr);
-  const sub = G.scr === 'scen' ? `고정 상황 ${G.scen.i + 1}/5 · ${esc(BUILDS[G.scen.build].n)}` : live ? `${esc(run.cname || BUILDS[run.build].n)} · ${esc(BUILDS[run.build].n)} · ${G.scr === 'run' ? '1챕터 ' + esc(floorName(run.room)) : G.scr === 'shop' ? '상점' : G.scr === 'settle' ? '정산' : G.scr === 'wait' ? '1챕터 돌파' : '쓰러짐'}` : G.creating ? '캐릭터 만들기' : '0.6a';
+  const sub = G.scr === 'scen' ? `고정 상황 ${G.scen.i + 1}/5 · ${esc(BUILDS[G.scen.build].n)}` : live ? `${esc(run.cname || BUILDS[run.build].n)} · ${esc(BUILDS[run.build].n)} · ${G.scr === 'run' ? '1챕터 ' + esc(floorName(run.room)) : G.scr === 'shop' ? '상점' : G.scr === 'settle' ? '정산' : G.scr === 'wait' ? '1챕터 돌파' : '쓰러짐'}` : G.creating ? '캐릭터 만들기' : VERSION;
   // 로그인 확인용 인사
   const hi = G.site && G.acct && !G.acct.anon ? (G.data.name ? esc(G.data.name) + '님, 어서 오세요' : '어서 오세요') : '';
   const fit = (G.scr === 'run' || G.scr === 'scen') && G.b;
@@ -1912,7 +1943,7 @@ function vRunMap() {
   if (!R && run.doors) {
     h += `<section class="card"><h3>갈림길${q('rooms', '방과 보스')}</h3><p class="mini">문 하나를 고릅니다. 전투 방만 경험치를 줍니다. 문을 고르기 전에도 장비를 바꿀 수 있습니다.</p><div class="doors">${run.doors.map(doorCard).join('')}</div></section>`;
   } else if (R) h += vRoom(run, R);
-  if (run.tree) h += `<section class="card"><h4>스킬 트리${run.tree.pts ? ` <span class="newtag">포인트 ${run.tree.pts}</span>` : ''}</h4><p class="mini">장착 ${(run.skills || []).length}/${EQUIP_SLOTS2}칸: ${(run.skills || []).map(id => esc(SK2[id] ? SK2[id].n : id)).join(', ') || '없음'}. 방과 방 사이에 스킬을 열고 바꿉니다.</p><button data-a="tree"${run.tree.pts ? ' class="gold"' : ''}>트리 열기</button></section>`;
+  if (run.tree) h += `<section class="card"><h4>스킬 트리${run.tree.pts ? ` <span class="newtag">포인트 ${run.tree.pts}</span>` : ''}</h4><p class="mini">시작: ${TREE2[run.build].starters.map(id => esc(SK2[id].n)).join(', ')} · 장착 ${(run.skills || []).length}/${EQUIP_SLOTS2}: ${(run.skills || []).map(id => esc(SK2[id] ? SK2[id].n : id)).join(', ') || '없음'}. 방과 방 사이에 스킬을 열고 바꿉니다.</p><button data-a="tree"${run.tree.pts ? ' class="gold"' : ''}>트리 열기</button></section>`;
   const past = (run.rooms || []).filter(x => x.room);
   h += `<section class="card"><h4>지나온 길</h4><p class="mini">${past.map(x => floorName(x.room) + ' ' + (ROOM_TYPES[x.type] ? ROOM_TYPES[x.type].n : x.type === 'camp' ? '야영' : '') + (x.res ? ', ' + (x.res === 'win' ? '승리' : x.res === 'flee' ? '물러남' : '패배') : '')).join(' / ') || '아직 없습니다'}</p></section>`;
   return h;
@@ -1978,7 +2009,7 @@ function vCreate() {
   h += `</div>`;
   if (pk) {
     const B = BUILDS[pk];
-    h += `<div class="clsdet" style="--c:${CLS_COLOR[pk] || 'var(--gold)'}"><div class="clsdet-h"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(B.n)}</b><div class="mini">생명력 ${B.hp + SLOT_BASE.armor.v[0]}${B.v2 ? '' : ', 마나 ' + B.mp}</div></div></div><p class="lore">${esc(B.lore || '')}</p><p class="crule">직업 규칙: ${esc(B.rule)}</p>${B.v2 ? `<p class="mini">스킬 트리 세 갈래: <b>${TREE2[pk].branches.map(esc).join(', ')}</b>. 처음에는 갈래마다 기본 스킬이 하나씩 열려 있습니다.</p><ul class="exl">${TREE2[pk].start.map(id => `<li><b>${esc(SK2[id].n)}</b> <span class="mini">${esc(skBody(SK2[id]))}</span></li>`).join('')}</ul>` : `<p class="mini"><b>직업 기술 ${esc(SIG[pk].n)}</b>: ${esc(SIG[pk].d)}</p><ul class="exl">${exclOf(pk).map(x => `<li><b>${esc(x.n)}</b> <span class="mini">${esc(x.d)}</span></li>`).join('')}</ul>`}</div>`;
+    h += `<div class="clsdet" style="--c:${CLS_COLOR[pk] || 'var(--gold)'}"><div class="clsdet-h"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(B.n)}</b><div class="mini">생명력 ${B.hp + SLOT_BASE.armor.v[0]}${B.v2 ? '' : ', 마나 ' + B.mp}</div></div></div><p class="lore">${esc(B.lore || '')}</p><p class="crule">직업 규칙: ${esc(B.rule)}</p>${B.v2 ? `<p class="mini">시작 스킬 (늘 끼워져 있음)</p><ul class="exl">${TREE2[pk].starters.map(id => `<li><b>${esc(SK2[id].n)}</b> <span class="mini">${esc(skBody(SK2[id]))}</span></li>`).join('')}</ul><p class="mini">스킬 트리 세 갈래: ${TREE2[pk].branches.map(br => `<b>${esc(br)}</b>(${esc(TREE2[pk].bd[br])})`).join(', ')}. 다음 단계에서 트리를 봅니다.</p>` : `<p class="mini"><b>직업 기술 ${esc(SIG[pk].n)}</b>: ${esc(SIG[pk].d)}</p><ul class="exl">${exclOf(pk).map(x => `<li><b>${esc(x.n)}</b> <span class="mini">${esc(x.d)}</span></li>`).join('')}</ul>`}</div>`;
   } else h += `<p class="mini clsdet-empty">직업을 하나 누르세요.</p>`;
   return h + `<div class="stickbar">${pk ? `<button class="gold wide" data-a="start" data-b="${pk}" data-focus>${esc(BUILDS[pk].n)}(으)로 정하기</button>` : ''}<div class="row"><button data-a="cback" data-k="name">이전: 이름</button><button data-a="createcancel">그만두기</button></div></div></section>`;
 }
@@ -2379,6 +2410,13 @@ function infoHtml(key) {
   const b = G.b; const parts = key.split(':');
   const H = (t, body) => `<b class="pt">${esc(t)}</b>${body}`;
   const P = s => `<p>${esc(s)}</p>`;
+  if (parts[0] === 'tn' && G.run && G.run.tree) {
+    const s = SK2[parts[1]]; if (!s) return ''; const vis = treeVis(G.run, s.id);
+    if (vis === 'hidden') return H('?', P('아직 보이지 않는 칸입니다. 이어진 앞 칸을 열면 드러납니다.'));
+    if (vis === 'name') return H(s.n, P(s.b + ' · ' + s.tier + '. 이어진 앞 칸을 열면 자세히 드러납니다.'));
+    const open = s.start || G.run.tree.open.includes(s.id); const why = open ? null : treeWhy(G.run, s.id);
+    return H(s.n, P((s.start ? '시작 스킬 · 늘 끼움' : s.b + ' · ' + s.tier + (open ? ' · 열림' : '')) + '. ' + skHead(s)) + P(skBody(s)) + (why ? `<p class="no">${esc(why)}</p>` : ''));
+  }
   if (parts[0] === 'act' && b) {
     const a = actionList(b).find(x => x.id === parts[1]); if (!a) return '';
     const s = skillMap(b.p.build)[a.id];
@@ -2820,10 +2858,10 @@ function startRun(build, boss) {
     deaths: [], result: null, blockPicked: null, entry: null, survey: null, drops: [],
     stats: { str: 0, dex: 0, int: 0 }, statLog: [], pool: shuffleSeeded(FREE_POOL, seed), choices: [], seed,
   };
-  G.run.skills = DEFAULT_SKILLS[build].slice(); G.run.bag = []; initGear(G.run); dgInit(G.run); G.run.skillLog = []; treeInit(G.run);
+  G.run.skills = isV2(p) ? [] : DEFAULT_SKILLS[build].slice(); G.run.bag = []; initGear(G.run); dgInit(G.run); G.run.skillLog = []; treeInit(G.run); if (isV2(p)) p.skills = v2Equip(G.run);
   G.run.cname = (G.cre && G.cre.name) || ''; G.run.ch = 1; G.run.playMs = 0;
   G.scr = 'create'; G.b = null; G.sel = null; G.creating = true;
-  openSheet('skills', { first: 1, pick: DEFAULT_SKILLS[build].slice() });
+  openSheet('skills', { first: 1, pick: G.run.skills.slice() });
 }
 /* 이어 하기: 방과 방 사이마다 판을 통째로 저장 */
 /* ===== 장비 (기획서 11.5절) =====
@@ -3046,7 +3084,7 @@ function restoreBattle(cur) {
 }
 function saveCur() { if (!G.run || G.run.endedAt) return; try { G.data.cur = JSON.parse(JSON.stringify(G.run)); saveLocal(); } catch (e) { } }
 function clearCur() { delete G.data.cur; saveLocal(); }
-function resumeRun() { if (!G.data.cur) return; if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); }
+function resumeRun() { if (!G.data.cur) return; if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); if (G.run.tree && isV2(G.run.p)) G.run.p.skills = v2Equip(G.run); /* 0.6a.2: 시작 스킬이 생기기 전 저장본도 시작 스킬을 끼운다 */ G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); }
 /* ===== 던전과 갈림길 (기획서 11.3절) =====
    run.room = 지금 층(1~19). run.doors = 이 층의 문 셋, run.cur = 고른 방. run.dg = 챕터 동안의 집계(유형별 횟수, 본 유형, 이벤트, 강적).
    run.buffs = { 성소·이벤트 버프: 남은 방 수 }, run.next = 다음 전투 방에 걸리는 것, run.gold = 모은 골드(정산은 단계 9) */
@@ -3440,27 +3478,59 @@ function vSheet() {
   const [title, body] = sheetParts(S);
   return `<div class="sheet-bg" data-a="closebg"><div class="sheet sh-${S.kind}" role="dialog" aria-modal="true" aria-labelledby="shtitle"><h3 id="shtitle">${esc(title)}${S.kind === 'equip' || S.kind === 'drop' || S.kind === 'help' || S.kind === 'settings' || S.kind === 'offer' || S.kind === 'codex' || S.kind === 'changes' ? '<button class="sm" data-a="close" aria-label="닫기">닫기</button>' : ''}</h3>${body}</div></div>`;
 }
-/* 0.6a.2 스킬 트리 창: 세 갈래 × 등급. 포인트로 열고, 연 스킬 가운데 4칸을 끼운다 */
-function vTree(S) {
-  const run = G.run, t = run.tree, T = TREE2[run.build]; const pick = S.data.pick;
-  let h = `<p class="mini">${S.data.first ? '처음에는 세 갈래의 기본 스킬이 하나씩 열려 있습니다. 레벨이 오르면 포인트 1, 챕터를 깨면 포인트 2를 얻어 스킬을 엽니다.' : '포인트 1로 스킬 하나를 엽니다. 깊은 등급은 그 갈래에 포인트를 먼저 써야 열립니다.'} 연 스킬 가운데 ${EQUIP_SLOTS2}칸을 끼우고, 방과 방 사이에 언제든 바꿀 수 있습니다. 스킬은 마나 대신 충전으로 쓰고, 전투를 시작할 때 충전이 가득 찹니다.</p>`;
-  h += `<p><b>포인트 ${t.pts}</b> · 장착 ${pick.length}/${EQUIP_SLOTS2}칸${pick.length ? ': ' + pick.map(id => esc(SK2[id].n)).join(', ') : ''}</p><div class="tree">`;
-  for (const br of T.branches) {
-    h += `<div class="tbr"><h4>${esc(br)} <small>포인트 ${t.spent[br] || 0}점</small></h4>`;
-    for (const tier of ['기본', '중급', '상급', '궁극']) {
-      const list = SKILLS2[run.build].filter(s => s.b === br && s.tier === tier); if (!list.length) continue;
-      h += `<div class="ttier">${tier}${TREE_GATE[tier] ? ` <small>· 이 갈래에 ${TREE_GATE[tier]}점 이상</small>` : ''}</div>`;
-      for (const s of list) {
-        const open = t.open.includes(s.id); const on = pick.includes(s.id); const why = open ? null : treeWhy(run, s.id);
-        h += `<div class="skc tsk${open ? ' open' : ''}${on ? ' on' : ''}"><b>${esc(s.n)}</b><small>${esc(skHead(s))}</small><span>${esc(skBody(s))}</span><div class="row2">`
-          + (open ? `<button class="sm${on ? '' : ' gold'}" data-a="skilltog" data-k="${s.id}" aria-pressed="${on}">${on ? '빼기' : '끼우기'}</button>${on ? '<em>끼움</em>' : ''}`
-            : `<button class="sm${why ? '' : ' gold'}" data-a="tunlock" data-k="${s.id}"${why ? ' aria-disabled="true"' : ''}>열기 · 포인트 1</button>${why ? `<span class="lockw">${esc(why)}</span>` : ''}`) + '</div></div>';
-      }
-    }
-    h += '</div>';
+/* ===== 0.6a.2 스킬 트리 화면 (10월 3일 만든 사람 요청) =====
+   원형 칸이 기본 → 중급 → 상급 → 궁극으로 아래로 가지처럼 뻗고, 부모와 선으로 잇는다. 칸에 마우스를 올리면 설명창, 누르면 아래 상세 칸.
+   보이는 범위는 treeVis(기본·부모가 열린 칸은 다 보이고, 궁극은 이름만, 나머지는 ?). 휴대폰은 갈래 탭, PC는 세 갈래를 나란히.
+   쓰는 곳: 캐릭터 만들기의 스킬 단계(mode 'create'), 따로 보는 페이지 'tree'(메뉴·지도). 전투 중에는 보기만 한다 */
+const TIERS2 = ['기본', '중급', '상급', '궁극'];
+const TREE_ROW_H = 92, TREE_TOP = 38;
+function treeLayout(build, br) {
+  const all = SKILLS2[build].filter(s => s.b === br && !s.start); const rows = []; const pos = {};
+  TIERS2.forEach((tier, ri) => {
+    let row = all.filter(s => s.tier === tier);
+    if (ri > 0) row = row.map((s, i) => [s, (s.par || []).reduce((a, x) => a + (pos[x] ? pos[x].x : 50), 0) / Math.max(1, (s.par || []).length), i]).sort((a, b) => a[1] - b[1] || a[2] - b[2]).map(x => x[0]); // 부모 위치의 평균으로 줄 세워 선이 덜 꼬이게
+    row.forEach((s, i) => { pos[s.id] = { x: (i + 0.5) / row.length * 100, y: ri }; });
+    rows.push(row);
+  });
+  return { rows, pos };
+}
+const treeCanEdit = () => !(G.b && !G.b.over);
+function vTreeBranch(run, br) {
+  const { rows, pos } = treeLayout(run.build, br); const H = TREE_TOP * 2 + TREE_ROW_H * (rows.length - 1) + 14;
+  const yp = r => (TREE_TOP + r * TREE_ROW_H) / H * 100; let lines = '', nodes = '';
+  for (const row of rows) for (const s of row) for (const pid of (s.par || [])) { const a = pos[pid], c = pos[s.id]; if (a) lines += `<line x1="${a.x}" y1="${yp(a.y)}" x2="${c.x}" y2="${yp(c.y)}"${run.tree.open.includes(pid) ? ' class="lit"' : ''}/>`; }
+  for (const row of rows) for (const s of row) {
+    const p = pos[s.id]; const vis = treeVis(run, s.id); const open = run.tree.open.includes(s.id); const eq = (run.skills || []).includes(s.id); const can = !open && !treeWhy(run, s.id);
+    const cls = ['tnode', 't-' + vis, open ? 'open' : '', eq ? 'eq' : '', can ? 'can' : '', G.tsel === s.id ? 'sel' : '', s.tier === '궁극' ? 'ult' : ''].filter(Boolean).join(' ');
+    const glyph = vis === 'hidden' ? '?' : eq ? '✓' : open ? '●' : can ? '+' : s.tier === '궁극' ? '★' : '·';
+    nodes += `<button class="${cls}" style="left:${p.x}%;top:${TREE_TOP + p.y * TREE_ROW_H}px" data-a="tsel" data-k="${s.id}" data-info="tn:${s.id}" aria-label="${esc(vis === 'hidden' ? '아직 보이지 않는 칸' : s.n + ', ' + s.tier + (open ? ', 열림' : can ? ', 열 수 있음' : '') + (eq ? ', 끼움' : ''))}"><span class="tc">${glyph}</span><small>${vis === 'hidden' ? '' : esc(s.n)}</small></button>`;
   }
+  return `<div class="tbranch"><div class="tbh"><b>${esc(br)}</b><span class="tbp">포인트 ${run.tree.spent[br] || 0}</span><small>${esc((TREE2[run.build].bd || {})[br] || '')}</small></div><div class="tcanvas" style="height:${H}px"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${nodes}</div></div>`;
+}
+function vTreeDetail(run) {
+  const id = G.tsel; const s = id && SK2[id]; if (!s) return `<div class="tdet mini">칸을 누르면 여기에 자세히 나옵니다. 마우스를 올려도 설명이 뜹니다(휴대폰은 길게 누르기).</div>`;
+  const vis = treeVis(run, id); const open = s.start || run.tree.open.includes(id); const eq = (run.skills || []).includes(id); const why = open ? null : treeWhy(run, id); const edit = treeCanEdit();
+  if (vis === 'hidden') return `<div class="tdet"><b>?</b><p class="mini">아직 보이지 않는 칸입니다. 이어진 앞 칸을 열면 드러납니다.</p></div>`;
+  let h = `<div class="tdet"><b>${esc(s.n)}</b> <span class="mini">${esc(s.start ? '시작 스킬' : s.b + ' · ' + s.tier)}</span>`;
+  h += vis === 'name' ? `<p class="mini">이 갈래의 궁극입니다. 이어진 앞 칸을 열면 자세히 드러납니다.</p>` : `<p class="mini">${esc(skHead(s))}</p><p>${esc(skBody(s))}</p>`;
+  if (s.start) h += `<p class="mini">시작 스킬은 늘 끼워져 있고 장착 칸을 차지하지 않습니다.</p>`;
+  else if (open) h += `<div class="row">${edit ? `<button class="${eq ? '' : 'gold'}" data-a="tequip" data-k="${id}">${eq ? '빼기' : '끼우기'}</button>` : ''}<span class="mini">${eq ? '끼워 둔 스킬입니다.' : '연 스킬입니다.'}${edit ? '' : ' 전투 중에는 바꿀 수 없습니다.'}</span></div>`;
+  else if (vis === 'full') h += `<div class="row">${edit ? `<button class="${why ? '' : 'gold'}" data-a="tunlock" data-k="${id}"${why ? ' aria-disabled="true"' : ''}>열기 · 포인트 1</button>` : ''}${why ? `<span class="mini">${esc(why)}</span>` : ''}</div>`;
   return h + '</div>';
 }
+function vTreeView(mode) {
+  const run = G.run, T = TREE2[run.build], t = run.tree, eqd = run.skills || []; const B = BUILDS[run.build];
+  const brs = T.branches; const tab = brs.includes(G.tbr) ? G.tbr : brs[0];
+  let h = mode === 'create' ? `<p class="mini">${esc(B.n)}의 스킬 트리는 세 갈래입니다: ${brs.map(br => `<b>${esc(br)}</b>(${esc(T.bd[br])})`).join(', ')}. 지금은 시작 스킬과 각 갈래의 첫 칸, 궁극의 이름만 보입니다. 칸을 열면 그 아래로 이어진 칸이 드러납니다.</p><p><b>포인트 1로 첫 칸 하나를 여세요.</b> <span class="mini">레벨이 오를 때마다 포인트 1, 챕터를 깨면 2를 얻습니다.</span></p>` : '';
+  const st = T.starters.map(id => `<button class="tstart${G.tsel === id ? ' sel' : ''}" data-a="tsel" data-k="${id}" data-info="tn:${id}"><span class="tc">✓</span>${esc(SK2[id].n)}</button>`).join('');
+  const slots = Array.from({ length: EQUIP_SLOTS2 }, (_, i) => eqd[i] ? `<button class="tslot on" data-a="tsel" data-k="${eqd[i]}" data-info="tn:${eqd[i]}">${esc(SK2[eqd[i]].n)}</button>` : `<span class="tslot">빈 칸</span>`).join('');
+  h += `<div class="tsum"><div><span class="mini">시작 스킬 · 늘 끼움</span><div class="trow">${st}</div></div><div><span class="mini">장착 ${eqd.length}/${EQUIP_SLOTS2}</span><div class="trow">${slots}</div></div><div class="tpts">포인트 <b>${t.pts}</b></div></div>`;
+  if (!treeCanEdit()) h += `<p class="mini">전투 중에는 볼 수만 있습니다. 방과 방 사이에 열고 바꿉니다.</p>`;
+  h += `<div class="ttabs" role="tablist">${brs.map(br => `<button class="chip${tab === br ? ' on' : ''}" data-a="tbr" data-k="${br}" role="tab" aria-selected="${tab === br}">${esc(br)}</button>`).join('')}</div>`;
+  h += `<div class="tgrid">${brs.map(br => `<div class="tcol${tab === br ? ' on' : ''}">${vTreeBranch(run, br)}</div>`).join('')}</div>`;
+  return h + vTreeDetail(run);
+}
+function vTreePage() { return `<section class="card"><div class="phead">${backBtn()}<h3>스킬 트리</h3></div>${G.run && G.run.tree ? vTreeView('page') : '<p class="mini">진행 중인 캐릭터가 없습니다.</p>'}</section>`; }
 function sheetParts(S) {
   const run = G.run; let body = '', title = '';
   if (S.kind === 'block') {
@@ -3499,8 +3569,8 @@ function sheetParts(S) {
     title = '지인 기록 넣기';
     body = `<p class="mini">지인이 메신저로 보낸 "기록 보내기 코드"를 붙여 넣으세요. 결과 보기에 그 사람의 기록으로 들어갑니다. 같은 코드를 두 번 넣어도 한 번만 들어갑니다.</p><label for="impbox" class="sr">기록 보내기 코드</label><textarea id="impbox" rows="6" placeholder="NRK1:로 시작하는 글자"></textarea>${S.data.msg ? `<p class="${S.data.ok ? 'mini' : 'no'}" role="status">${esc(S.data.msg)}</p>` : ''}<button class="gold" data-a="impgo">넣기</button>`;
   } else if (S.kind === 'skills' && G.run && isV2(G.run.p)) {
-    title = S.data.first ? '스킬 트리' : '스킬 트리와 장착';
-    body = vTree(S) + `<div class="stickbar"><button class="gold wide" data-a="skillok" ${S.data.pick.length ? '' : 'disabled'} data-focus>${S.data.first ? '다음: 능력치 나누기' : S.data.pick.length ? '이대로 하기' : '스킬을 하나 이상 끼워 주세요'}</button>${S.data.first ? '<div class="row"><button data-a="cback" data-k="cls">이전: 직업 고르기</button><button data-a="createcancel">그만두기</button></div>' : ''}</div>`;
+    title = '스킬 트리';
+    body = vTreeView('create') + `<div class="stickbar"><button class="gold wide" data-a="skillok" data-focus>${G.run.tree.pts ? '다음: 능력치 나누기 (포인트는 나중에 써도 됩니다)' : '다음: 능력치 나누기'}</button>${S.data.first ? '<div class="row"><button data-a="cback" data-k="cls">이전: 직업 고르기</button><button data-a="createcancel">그만두기</button></div>' : ''}</div>`;
   } else if (S.kind === 'skills') {
     const run = G.run, p = run.p; const SKM = skillMap(p.build); const pick = S.data.pick;
     title = S.data.first ? '스킬 세 칸을 고르세요' : '스킬 바꾸기';
@@ -3820,6 +3890,7 @@ function render() {
   else if (G.scr === 'rank') main = vRank();
   else if (G.scr === 'records') main = vRecords();
   else if (G.scr === 'admin') main = vAdmin();
+  else if (G.scr === 'tree') main = vTreePage();
   else if (G.scr === 'run') main = G.b ? '' : vRunMap();
   else if (G.scr === 'dead') main = vDead();
   else if (G.scr === 'survey') main = vSurvey();
@@ -3965,9 +4036,12 @@ function onClick(ev) {
     case 'import': openSheet('import', {}); break;
     case 'impgo': { const S = G.sheet; const v = val('impbox'); if (!G.db) { S.data.msg = '공유 저장소에 연결되어 있어야 넣을 수 있습니다.'; S.data.ok = 0; render(); break; } importCode(v).then(r => { S.data.msg = (r.name || '이름 없는 지인') + '의 판 ' + r.runs + '개를 넣었습니다.'; S.data.ok = 1; render(); loadDash(); }, e2 => { S.data.msg = '넣지 못했습니다: ' + (e2 && e2.message || '알 수 없는 오류'); S.data.ok = 0; render(); }); break; }
     case 'skilltog': { const S = G.sheet; const k = el.dataset.k; const v2 = G.run && isV2(G.run.p); if (v2 && !G.run.tree.open.includes(k)) { toast('먼저 포인트로 열어야 합니다'); return; } const i = S.data.pick.indexOf(k); if (i >= 0) S.data.pick.splice(i, 1); else if (S.data.pick.length < (v2 ? EQUIP_SLOTS2 : SKILL_SLOTS)) S.data.pick.push(k); else { toast('칸이 가득 찼습니다. 먼저 하나를 빼 주세요'); return; } render(); break; }
-    case 'tunlock': { const run = G.run; const id = el.dataset.k; const why = treeUnlock(run, id); if (why) { toast(why); return; } const S = G.sheet; if (S && S.kind === 'skills' && S.data.pick.length < EQUIP_SLOTS2 && !S.data.pick.includes(id)) S.data.pick.push(id); saveRunLocal(); saveCur(); toast('열었습니다: ' + SK2[id].n); render(); break; }
-    case 'tree': openSheet('skills', { pick: (G.run.skills || []).slice() }); break;
-    case 'skillok': { const S = G.sheet; const run = G.run; const prev = (run.skills || []).slice(); run.skills = S.data.pick.slice(); run.p.skills = run.skills.slice(); run.skillLog = run.skillLog || []; run.skillLog.push({ room: run.room, from: prev, to: run.skills.slice(), first: !!S.data.first, t: Date.now() }); const first = S.data.first; G.sheet = null; if (!first) { saveRunLocal(); saveCur(); } if (first) { openSheet('stats', { pts: 6, first: 1, alloc: S.data.alloc }); window.scrollTo(0, 0); } else { toast('스킬을 바꿨습니다'); render(); } break; }
+    case 'tsel': G.tsel = el.dataset.k; render(); break;
+    case 'tbr': G.tbr = el.dataset.k; render(); break;
+    case 'tunlock': { const run = G.run; const id = el.dataset.k; if (!treeCanEdit()) { toast('전투 중에는 바꿀 수 없습니다'); return; } const why = treeUnlock(run, id); if (why) { toast(why); return; } run.skills = run.skills || []; if (run.skills.length < EQUIP_SLOTS2 && !run.skills.includes(id)) run.skills.push(id); run.p.skills = v2Equip(run); G.tsel = id; if (!G.creating) { saveRunLocal(); saveCur(); } toast('열었습니다: ' + SK2[id].n + (run.skills.includes(id) ? '. 끼웠습니다' : '')); render(); break; }
+    case 'tequip': { const run = G.run; const id = el.dataset.k; if (!treeCanEdit()) { toast('전투 중에는 바꿀 수 없습니다'); return; } run.skills = run.skills || []; const i = run.skills.indexOf(id); if (i >= 0) run.skills.splice(i, 1); else if (run.skills.length < EQUIP_SLOTS2) run.skills.push(id); else { toast('장착 칸이 가득 찼습니다. 먼저 하나를 빼 주세요'); return; } run.p.skills = v2Equip(run); (run.skillLog = run.skillLog || []).push({ room: run.room, to: run.skills.slice(), t: Date.now() }); if (!G.creating) { saveRunLocal(); saveCur(); } render(); break; }
+    case 'tree': if (!PAGES.includes(G.scr)) G.back = G.scr; G.scr = 'tree'; G.sheet = null; G.menuOpen = false; render(); window.scrollTo(0, 0); break;
+    case 'skillok': { const S = G.sheet; const run = G.run; const prev = (run.skills || []).slice(); if (!isV2(run.p)) run.skills = S.data.pick.slice(); run.p.skills = isV2(run.p) ? v2Equip(run) : run.skills.slice(); run.skillLog = run.skillLog || []; run.skillLog.push({ room: run.room, from: prev, to: run.skills.slice(), first: !!S.data.first, t: Date.now() }); const first = S.data.first; G.sheet = null; if (!first) { saveRunLocal(); saveCur(); } if (first) { openSheet('stats', { pts: 6, first: 1, alloc: S.data.alloc }); window.scrollTo(0, 0); } else { toast('스킬을 바꿨습니다'); render(); } break; }
     case 'login': socialLogin(el.dataset.k); break;
     case 'loginswitch': socialLogin(el.dataset.k, true); break;
     case 'loginno': G.acct.conflict = ''; render(); break;

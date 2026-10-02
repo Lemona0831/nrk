@@ -6,8 +6,8 @@
 const EXCL = {};   // 옛 직업 전용 스킬 (v2 직업은 data/skills.js의 트리를 쓴다)
 const SIG = {};    // 옛 직업 기술 (v2 시범에는 없다. 기획서 12절 질문 4)
 
-/* 시작 스킬: v2 직업은 트리 세 갈래의 기본 스킬 하나씩 (data/skills.js의 TREE2.start와 같다) */
-const DEFAULT_SKILLS = { assassin: ['a_fang', 'a_burst', 'a_shadow'] };
+/* 시작 스킬: v2 직업은 트리 밖의 시작 스킬 둘 (data/skills.js의 TREE2.starters와 같다) */
+const DEFAULT_SKILLS = { assassin: ['a_sting', 'a_squeeze'] };
 
 /* hp는 시작 장비(낡은 갑옷 +10)를 뺀 값이다. mp는 v2 직업에 없다 */
 const BUILDS = {

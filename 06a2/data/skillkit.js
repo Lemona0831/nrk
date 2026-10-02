@@ -13,7 +13,7 @@ const SKK = {
   ph: 15,                       // 흘리기형 스킬이 막는 공격의 기대 피해 (강타 예고 때 골라 쓰므로 강타가 반)
   pOk: 0.75,                    // 흘리기 성공 확률 (고른 적이 내 다음 차례 전에 친다)
   cond: { apply: 7, parry: 0.8, kill: 3, turn: 14 },  // 기준 전투에서 조건이 일어나는 횟수 (10월 3일 06a2 실측: 전투당 내 차례 14.3, 걸기 7.1, 흘리기 성공 0.8, 처치 3.2)
-  budget: { 기본: 34, 중급: 40, 상급: 50, 궁극: 70 },   // 10월 3일: 06a2 감도 시험(스킬 효과 ×1.3 → 6성향 20%, 신중 35%)에서 등급별 점수 중앙값. 처음 값(20·24·30·42)의 약 1.7배
+  budget: { 시작: 30, 기본: 34, 중급: 40, 상급: 50, 궁극: 70 },   // 10월 3일: 06a2 감도 시험(스킬 효과 ×1.3 → 6성향 20%, 신중 35%)에서 등급별 점수 중앙값. 처음 값(20·24·30·42)의 약 1.7배
   Fmax: 6,                      // 한 스킬을 전투에서 쓰는 횟수의 상한 (실측: 바탕 스킬 독니 5.4)
 };
 const skTri = n => n * (n + 1) / 2;
@@ -24,7 +24,7 @@ function skValue(s) {
       case 'dmg': v += e.n * hits * (s.tgt === 'self' ? 1 : tm); break;
       case 'poison': v += e.n * hits * K.poison * (s.tgt === 'self' ? 1 : tm); break;
       case 'grow': v += K.S * (e.mul - 1) * K.poison + (e.add || 0) * K.poison; break;
-      case 'burst': { const S = e.top ? Math.min(e.top, K.S) : K.S; const tot = e.top ? (skTri(K.S) - skTri(K.S - S)) : skTri(K.S);
+      case 'burst': { const S = e.half ? Math.ceil(K.S / 2) : e.top ? Math.min(e.top, K.S) : K.S; const tot = (e.top || e.half) ? (skTri(K.S) - skTri(K.S - S)) : skTri(K.S);
         v += tot * ((e.mul || 1) - 0.5) * (s.tgt === 'all' ? 2 : 1) + (e.keep || 0) * K.S * K.poison + S * (e.brkPer || 0) * K.brk * (s.tgt === 'all' ? 2 : 1); break; }
       case 'exploit': v += e.per * K.S + (e.n || 0); break;
       case 'brk': v += e.n * K.brk * (s.tgt === 'self' ? 1 : tm); break;
@@ -59,7 +59,7 @@ function skBody(s) {
     switch (e.k) {
       case 'grow': out.push(`대상의 중독을 ${e.mul}배로 만든다.` + (e.add ? ` 그 뒤 중독 ${e.add}.` : '')); break;
       case 'burst':
-        out.push((s.tgt === 'all' ? '모든 적의 중독을 모두 터뜨린다.' : e.top ? `대상의 중독을 ${e.top}만 터뜨린다.` : '대상의 중독을 모두 터뜨린다.')
+        out.push((s.tgt === 'all' ? '모든 적의 중독을 모두 터뜨린다.' : e.half ? '대상의 중독을 절반(올림)만 터뜨린다.' : e.top ? `대상의 중독을 ${e.top}만 터뜨린다.` : '대상의 중독을 모두 터뜨린다.')
           + (e.mul && e.mul !== 1 ? ` 터뜨린 피해 ×${e.mul}.` : '')
           + (e.brkPer ? ` 터뜨린 중독 1마다 붕괴 +${e.brkPer}.` : '')
           + (e.keep ? ` 터뜨린 뒤 중독이 ${e.keep === 0.5 ? '절반' : Math.round(e.keep * 100) + '%'} 남는다.` : '')); break;
