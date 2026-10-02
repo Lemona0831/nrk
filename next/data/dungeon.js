@@ -3,10 +3,11 @@
    floors 마지막 층, camp 야영지, spring 고정 샘, boss 보스 층, lower 하층 첫 층,
    mlv 몬스터 레벨 [이 층까지, 레벨]…(그 뒤와 보스는 mlvTop), maxMul 방 유형 최대 개수 배율(내림),
    strongHalf 상층·하층마다 강적 최대, forceAt 샘·강적이 아직 문에 나오지 않았으면 넣는 층 [상층, 하층],
-   bossId 챕터 보스(BOSSES), clearLore 정산 화면의 한 줄, goldMul 방 골드 배율 */
+   bossId 챕터 보스(BOSSES), clearLore 정산 화면의 한 줄, goldMul 방 골드 배율,
+   restMax 챕터마다 고를 수 있는 쉬는 방(샘·성소·제단·이벤트) 합계. 고정 야영지·샘은 세지 않는다 (10월 2일 만든 사람 결정: 전투를 거의 하지 않고 보스에 닿는 길을 막는다) */
 const CHAPTERS = {
-  1: { n: '저주받은 수도원', floors: 19, camp: 9, spring: 18, boss: 19, lower: 10, mlv: [[4, 1], [8, 2], [13, 3]], mlvTop: 4, maxMul: 1, strongHalf: 2, forceAt: [6, 14], bossId: 'abbot', clearLore: '수도원장의 종이 멎었다. 계단은 더 아래로 이어진다.' },
-  2: { n: '잊힌 지하묘지', floors: 27, camp: 13, spring: 26, boss: 27, lower: 14, mlv: [[6, 5], [12, 6], [19, 7]], mlvTop: 8, maxMul: 1.5, strongHalf: 3, forceAt: [9, 22], goldMul: 1.3, bossId: 'cryptlord', clearLore: '녹슨 왕관이 뼈 더미 위로 굴러떨어졌다. 더 깊은 곳에서 뜨거운 모래바람이 불어온다.' }, // 1챕터의 1.5배 (10월 2일 만든 사람 결정)
+  1: { n: '저주받은 수도원', floors: 19, camp: 9, spring: 18, boss: 19, lower: 10, mlv: [[4, 1], [8, 2], [13, 3]], mlvTop: 4, maxMul: 1, strongHalf: 2, forceAt: [6, 14], restMax: 6, bossId: 'abbot', clearLore: '수도원장의 종이 멎었다. 계단은 더 아래로 이어진다.' },
+  2: { n: '잊힌 지하묘지', floors: 27, camp: 13, spring: 26, boss: 27, lower: 14, mlv: [[6, 5], [12, 6], [19, 7]], mlvTop: 8, maxMul: 1.5, strongHalf: 3, forceAt: [9, 22], restMax: 9, goldMul: 1.3, bossId: 'cryptlord', clearLore: '녹슨 왕관이 뼈 더미 위로 굴러떨어졌다. 더 깊은 곳에서 뜨거운 모래바람이 불어온다.' }, // 1챕터의 1.5배 (10월 2일 만든 사람 결정)
 };
 const NEXT_CH_N = { 3: '재의 사막 유적' }; // 아직 열리지 않은 챕터의 이름 (기다리는 화면)
 const chOf = ch => CHAPTERS[ch] || CHAPTERS[1];

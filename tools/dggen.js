@@ -7,7 +7,7 @@ const { G0, run_, rng, click, handleSheets } = require('./dgqa.js');
 const G = G0.__G;
 const C_ = ch => run_(`chOf(${ch})`), roomMax = run_('roomMax');
 const FIGHTS = ['normal', 'ambush', 'strong', 'treasure', 'trial'], RESTS = ['spring', 'shrine', 'altar', 'event'];
-let bad = 0; const errs = {};
+let bad = 0; const errs = {}; const restMaxSeen = {};
 const fail = (k, ex) => { bad++; errs[k] = errs[k] || { n: 0, ex }; errs[k].n++; };
 
 function genCheck(ch, seed) {
@@ -38,13 +38,15 @@ function genCheck(ch, seed) {
       seen[half][d.type] = 1;
     }
     if (f === 1 && !(ts[0] === 'normal' && ts[1] === 'normal' && ['treasure', 'shrine'].includes(ts[2]))) fail('1층 규칙', ts.join());
-    if (f === C.lower && !(ts[0] === 'normal' && ['ambush', 'strong'].includes(ts[1]) && RESTS.includes(ts[2]))) fail('하층 첫 층 규칙', ts.join());
+    if (f === C.lower && !(ts[0] === 'normal' && ['ambush', 'strong'].includes(ts[1]) && (RESTS.includes(ts[2]) || (run.dg.rest || 0) >= C.restMax))) fail('하층 첫 층 규칙', ts.join()); // 쉬는 방을 다 썼으면 셋째 문은 아무것이나
     for (const [t, at, h] of [['spring', C.forceAt[0], 'u'], ['strong', C.forceAt[0], 'u'], ['spring', C.forceAt[1], 'l'], ['strong', C.forceAt[1], 'l']])
       if (f === at && !seen[h][t] && G0.typeOk(run, t, f)) fail('보정: ' + t + ' ' + h, ch + '챕터 ' + f + '층');
     const i = Math.floor(G0.__rnd() * D.length); G0.chooseDoor(i);
     const d = run.dg;
     for (const t of Object.keys(d.counts)) if (d.counts[t] > roomMax(t, ch)) fail('최대 개수 ' + t, ch + '챕터 ' + d.counts[t]);
     if (d.strong.u > C.strongHalf || d.strong.l > C.strongHalf) fail('강적 반 최대', JSON.stringify(d.strong));
+    if ((d.rest || 0) > C.restMax) fail('쉬는 방 최대', ch + '챕터 ' + d.rest);
+    restMaxSeen[ch] = Math.max(restMaxSeen[ch] || 0, d.rest || 0);
     if (new Set(d.events).size !== d.events.length) fail('이벤트 중복', d.events.join());
     run.cur = null;
   }
@@ -53,6 +55,7 @@ const t0 = Date.now();
 for (const ch of [1, 2]) for (let s = 0; s < N; s++) genCheck(ch, 100 + s * 7 + ch * 100003);
 console.log(`던전 생성 ${N}번 × 2챕터, ${((Date.now() - t0) / 1000).toFixed(0)}초, 규칙 위반 ${bad}건`);
 for (const k in errs) console.log('  ' + k + ': ' + errs[k].n + '건 (예: ' + errs[k].ex + ')');
+console.log('고른 쉬는 방 최대:', JSON.stringify(restMaxSeen));
 
 /* 2) 강제 승리로 끝까지 지나기 */
 function forceWin() {

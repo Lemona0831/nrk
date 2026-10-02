@@ -365,7 +365,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .tlogo .lore{max-width:30ch;margin:0 auto}
 .tmenu{display:flex;flex-direction:column;gap:10px;width:min(320px,100%);margin-top:34px}
 .tmenu>button{min-height:54px;font-size:18px;font-family:'Nanum Myeongjo',serif;letter-spacing:.14em}
-.tcur{display:flex;gap:10px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:10px 12px}.tcur .big{font-size:28px}.tcur small{display:block;color:var(--muted);font-size:12.5px}
+.tcur{display:flex;gap:10px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:10px 12px}.tkept{display:flex;flex-direction:column;gap:6px;margin-top:6px}.tkept>.mini{margin:4px 0 0;text-align:left}.tcur.sm{padding:8px 10px}.tcur.sm .big{font-size:22px}.tcur.sm>div{flex:1;min-width:0}.tcur.sm button{flex:0 0 auto}.tcur .big{font-size:28px}.tcur small{display:block;color:var(--muted);font-size:12.5px}
 .tbelow{max-width:560px;margin:0 auto}.tfoot{text-align:center;margin-top:14px}
 .linkbtn{background:none;border:0;min-height:0;padding:0;color:var(--muted);text-decoration:underline;font-size:inherit}
 /* 캐릭터 만들기 */
@@ -1653,6 +1653,7 @@ const HELP = [
   { k: 'rooms', n: '방과 진행', t: [
     '1챕터는 상층 8층, 9층 야영지, 하층 8층, 18층 샘, 19층 보스로 이루어집니다. 층마다 문 셋 가운데 하나를 고릅니다. 문에는 방의 종류, 적, 위험도(★), 방 특성이 적혀 있습니다.',
     '싸우는 방: 일반, 매복(적이 먼저 움직임), 강적, 보물(상자에서 장비 둘 중 하나), 시련(특성 둘, 희귀 보장). 쉬는 방: 샘, 성소(몇 방 동안 버프), 제단(거래), 이벤트(선택).',
+    '쉬는 방은 챕터마다 ' + CHAPTERS[1].restMax + '번(2챕터 ' + CHAPTERS[2].restMax + '번)까지 고를 수 있습니다. 남은 횟수는 던전 진행 줄에 보입니다. 경험치는 싸우는 방에서만 얻습니다.',
     '하층은 상층보다 적이 거셉니다. 9층 야영지에서 모두 회복하고, 18층 샘에서 한 번 더 쉬어 갑니다.',
     '보스와 강적은 처음 만날 때 눈에 보이는 것만 알려 줍니다. 처음 겪은 일은 보스 도감에 적히고, 메모를 남길 수 있습니다. 보스전을 오래 끌면(보통 행동 약 ' + ENRAGE.boss + '번) 보스가 광폭해집니다.',
     '방과 방 사이, 정산, 상점에서 저장됩니다. 전투 중에 닫아도 이어하기로 같은 차례에서 다시 싸웁니다.'] },
@@ -1740,7 +1741,7 @@ function dgBar(run) {
   }
   h += '</ol>';
   const bl = Object.keys(run.buffs || {}).map(k => { const S = SHRINES.find(x => x.id === k); return `<span class="chip" title="${esc(S ? S.d : '')}">${esc(S ? S.n : k === 'snuff' ? '꺼진 촛불' : k === 'funeral' ? '장례 행렬' : k)} ${run.buffs[k]}</span>`; }).join('');
-  return `<section class="card dgtop"><div class="dghead"><b>${run.ch || 1}챕터 · ${esc(floorName(run.room, run.ch))}</b><span class="mini">${run.room < C.camp ? '상층' : run.room < C.spring ? '하층' : ''} · 남은 층 ${Math.max(0, C.floors - run.room)}</span><span class="gold-n">골드 ${run.gold || 0}</span></div>${h}${bl ? `<div class="bufs">${bl}</div>` : ''}</section>`;
+  return `<section class="card dgtop"><div class="dghead"><b>${run.ch || 1}챕터 · ${esc(floorName(run.room, run.ch))}</b><span class="mini">${run.room < C.camp ? '상층' : run.room < C.spring ? '하층' : ''} · 남은 층 ${Math.max(0, C.floors - run.room)} · 쉬는 방 ${Math.max(0, C.restMax - ((run.dg && run.dg.rest) || 0))}번 남음</span><span class="gold-n">골드 ${run.gold || 0}</span></div>${h}${bl ? `<div class="bufs">${bl}</div>` : ''}</section>`;
 }
 function doorCard(r, i) {
   const T = ROOM_TYPES[r.type]; const stars = T.fight ? '★'.repeat(r.risk || 1) + '☆'.repeat(4 - (r.risk || 1)) : '';
@@ -1797,6 +1798,8 @@ function vTitle() {
   let h = `<section class="title-scr"><div class="tlogo"><span class="ver">${VERSION}</span><h1>나락의 유산</h1><p class="lore">무너진 수도원 아래, 빛이 닿지 않는 곳까지 계단이 이어진다.</p></div><div class="tmenu">`;
   if (c) { const B = BUILDS[c.build]; h += `<div class="tcur"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(c.cname || B.n)}</b><small>${esc(B.n)} · Lv ${c.lv || 1} · ${esc(curDesc(c))}</small></div></div><button class="gold" data-a="resume" data-focus>이어하기</button><button data-a="restart">처음부터</button>`; }
   else h += `<button class="gold" data-a="newchar" data-focus>시작</button>`;
+  const kept = (d.kept || []).filter(k => !k.endedAt && BUILDS[k.build]);
+  if (kept.length) h += `<div class="tkept"><p class="mini">기다리는 캐릭터 ${kept.length}</p>${kept.map(k => { const B = BUILDS[k.build]; return `<div class="tcur sm"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(k.cname || B.n)}</b><small>${esc(B.n)} · Lv ${k.lv || 1} · ${esc(curDesc(k))}</small></div><button class="sm" data-a="resumekept" data-k="${esc(k.id)}">이어하기</button></div>`; }).join('')}</div>`;
   h += `</div></section><div class="tbelow">`;
   if (G.sync) h += `<div class="banner" role="status">${esc(G.sync)}</div>`;
   if (G.conn && G.conn !== 'ok' && !G.owner) h += `<section class="card warncard"><h3>기록이 자동으로 모이지 않고 있습니다</h3><p>${esc(CONN_MSG[G.conn] || CONN_MSG.nodb)}</p><button class="gold" data-a="code">기록 보내기 코드</button></section>`;
@@ -2841,11 +2844,21 @@ function vCodex() {
 /* 캐릭터 만들기를 그만두면 아무것도 남기지 않는다 */
 function cancelCreate() { G.run = null; G.sheet = null; G.creating = false; G.abandonOnCreate = false; G.cre = null; G.scr = 'title'; render(); toast('캐릭터 만들기를 그만두었습니다'); }
 function beginCreate() { G.cre = { step: 'name', name: '' }; G.abandonOnCreate = !!G.data.cur; G.creating = true; G.run = null; G.sheet = null; G.b = null; G.scr = 'create'; render(); setTimeout(() => { const x = document.getElementById('cname'); if (x) x.focus(); }, 0); }
-/* 진행 중인 캐릭터를 포기한 것으로 기록한다 (새 캐릭터를 확정할 때, 또는 직접 포기할 때) */
-function abandonCur() {
-  const old = G.data.cur; if (!old) return;
+/* 캐릭터를 포기한 것으로 기록한다 (새 캐릭터를 확정할 때, 또는 직접 포기할 때) */
+function abandonRun(old) {
+  if (!old) return;
   const keep = G.run; G.run = old; old.result = 'abandon'; old.endedAt = Date.now(); saveRunLocal(); syncRun(old, 'abandon'); pushRank(old, 'abandon'); G.run = keep;
-  delete G.data.cur; saveLocal();
+}
+function abandonCur() { abandonRun(G.data.cur); delete G.data.cur; saveLocal(); }
+/* 기다리는 캐릭터 (10월 2일 만든 사람 결정): 챕터를 깨고 챕터 사이(정산·상점·설문·대기)에 있는 캐릭터는
+   새 캐릭터를 만들어도 포기되지 않고 따로 남는다(G.data.kept). 타이틀에서 골라 이어 한다. 던전 안에 있는 캐릭터는 지금처럼 포기된다 */
+const KEPT_MAX = 8;
+const isBetween = c => !!(c && !c.endedAt && (c.clears || 0) > 0 && ['settle', 'shop', 'clearsv', 'wait'].includes(c.phase));
+function keepCur() {
+  const c = G.data.cur; if (!c) return; const K = G.data.kept = G.data.kept || [];
+  K.push(c); delete G.data.cur;
+  while (K.length > KEPT_MAX) abandonRun(K.shift()); // 너무 많으면 가장 오래된 캐릭터부터 포기
+  saveLocal();
 }
 /* 전투 저장: 내 차례가 올 때마다(그리고 전투가 끝난 순간) 전투 전체를 이어 하기 자료에 넣는다.
    행동을 누르는 순간에는 그 행동을 먼저 적어 둔다. 적의 반응을 보고 창을 닫아도, 돌아오면 같은 행동이 같은 결과로 다시 일어난다 */
@@ -2891,6 +2904,7 @@ function typeOk(run, t, f) {
   if ((d.counts[t] || 0) >= roomMax(t, run.ch)) return false;
   if (t === 'strong' && d.strong[isLower(f, run.ch) ? 'l' : 'u'] >= chOf(run.ch).strongHalf) return false;
   if (t === 'event' && eventsOf(run.ch).every(e => d.events.includes(e.id))) return false;
+  if (RESTS.includes(t) && (d.rest || 0) >= chOf(run.ch).restMax) return false; // 쉬는 방은 챕터마다 restMax번까지
   return true;
 }
 function pickType(run, f, not, only) {
@@ -2944,6 +2958,7 @@ function chooseDoor(i) {
   d.counts[r.type] = (d.counts[r.type] || 0) + 1; d.last = r.type;
   if (r.type === 'strong') { d.strong[isLower(r.floor, run.ch) ? 'l' : 'u']++; d.foes.push(r.foe); }
   if (r.type === 'event') d.events.push(r.event);
+  if (RESTS.includes(r.type)) d.rest = (d.rest || 0) + 1;
   run.doorLog.push({ ch: run.ch || 1, floor: run.room, offered: run.doors.map(x => x.type + (x.mods && x.mods.length ? '+' + x.mods.join('+') : '')), picked: i, t: Date.now() });
   run.cur = r; run.doors = null; saveRunLocal(); saveCur(); render();
 }
@@ -3230,22 +3245,13 @@ const svCheck = (name, map) => Object.entries(map).map(([v, l]) => `<label class
 const checks = n => Array.from(document.querySelectorAll('input[name="' + n + '"]:checked')).map(x => x.value);
 function vSurvey() {
   const run = G.run;
-  const clear = run.phase === 'clearsv'; const buys = clear && run.shop ? run.shop.log.filter(x => x.a === 'buy') : [];
-  const doorN = x => x.offered.map((o, i) => { const T = ROOM_TYPES[o.split('+')[0]]; return (i === x.picked ? '[' : '') + (T ? T.n : o) + (i === x.picked ? ']' : ''); }).join(' / ');
-  return `<section class="card survey"><h3>${clear ? (run.ch || 1) + '챕터를 넘은 소감' : '이번 판에 대한 질문'}</h3><p>${clear ? '보스를 쓰러뜨리고 상점까지 들렀습니다.' : run.result === 'lose' ? esc(run.cname || '이 캐릭터') + '의 여정이 끝났습니다.' : '이번 판을 마쳤습니다.'} 1~2분이면 끝납니다. 모든 문항은 답하고 싶은 것만 골라도 됩니다.</p>
-  <label for="fork">이번 챕터에서 가장 고민한 갈림길</label><select id="fork"><option value="">고르지 않음</option>${(run.doorLog || []).filter(x => (x.ch || 1) === (run.ch || 1)).map(x => `<option value="${x.floor}">${esc(floorName(x.floor) + ': ' + doorN(x))}</option>`).join('')}</select>
-  <label for="forknote">무엇을 두고 고민했나요?</label><input id="forknote" type="text" maxlength="200">
-  ${clear ? `<label for="shopwhy">상점에서 ${buys.length ? esc(buys.map(x => ITEMS[x.tpl] ? ITEMS[x.tpl].n : x.tpl).join(', ')) + '을(를) 산' : '아무것도 사지 않은'} 이유</label><textarea id="shopwhy" rows="2"></textarea>` : ''}
+  const clear = run.phase === 'clearsv';
+  return `<section class="card survey"><h3>${clear ? (run.ch || 1) + '챕터를 넘은 소감' : '이번 판에 대한 질문'}</h3><p>${clear ? '보스를 쓰러뜨리고 상점까지 들렀습니다.' : run.result === 'lose' ? esc(run.cname || '이 캐릭터') + '의 여정이 끝났습니다.' : '이번 판을 마쳤습니다.'} 30초면 끝납니다. 답하고 싶은 것만 골라도 됩니다.</p>
   <fieldset><legend>이번 판은 재미있었나요?</legend><div class="sv-row">${svRadio('fun', SV.fun, true)}</div></fieldset>
-  <fieldset><legend>안전하게 갈지 빠르게 끝낼지, 또는 자원을 지금 쓸지 다음 방을 위해 아낄지 고민한 순간이 있었나요?</legend><div class="sv-row"><label class="sv-i"><input type="radio" name="dl" value="yes"> 있었다</label><label class="sv-i"><input type="radio" name="dl" value="no"> 없었다</label></div></fieldset>
-  <label for="dnote">있었다면 어떤 순간이었나요?</label><textarea id="dnote" rows="2"></textarea>
-  <fieldset><legend>스킬 세 칸은 어떻게 골랐나요?</legend>${svRadio('skw', SV.skw)}</fieldset>
-  <fieldset><legend>막혔을 때 무엇을 했나요? 해당하는 것을 모두 골라 주세요.</legend>${svCheck('stk', SV.stk)}</fieldset>
-  <fieldset><legend>헷갈렸던 규칙이 있었나요? 모두 골라 주세요.</legend>${svCheck('cf', SV.cf)}</fieldset>
-  <fieldset><legend>불편하거나 이상했던 것이 있었나요? 모두 골라 주세요.</legend>${svCheck('is', SV.is)}</fieldset>
-  <label for="isnote">이상했던 것을 한 줄로 적어 주면 고치는 데 큰 도움이 됩니다.</label><input id="isnote" type="text" maxlength="200">
+  <fieldset><legend>안전하게 갈지 빠르게 끝낼지, 또는 자원을 지금 쓸지 아낄지 고민한 순간이 있었나요?</legend><div class="sv-row"><label class="sv-i"><input type="radio" name="dl" value="yes"> 있었다</label><label class="sv-i"><input type="radio" name="dl" value="no"> 없었다</label></div></fieldset>
+  ${run.result === 'lose' ? `<fieldset><legend>새 캐릭터로 다시 하고 싶나요?</legend><div class="sv-row"><label class="sv-i"><input type="radio" name="again" value="yes"> 하고 싶다</label><label class="sv-i"><input type="radio" name="again" value="maybe"> 글쎄</label><label class="sv-i"><input type="radio" name="again" value="no"> 아니다</label></div></fieldset>` : ''}
   <label for="hard">가장 어려웠던 방</label><select id="hard"><option value="">고르지 않음</option>${(run.rooms || []).filter(x => x.room && x.res && (x.ch || 1) === (run.ch || 1)).map(x => `<option value="${x.room}">${esc(floorName(x.room) + ' ' + (ROOM_TYPES[x.type] ? ROOM_TYPES[x.type].n : ''))}</option>`).join('')}</select>
-  <label for="snote">그 밖에 하고 싶은 말</label><textarea id="snote" rows="2"></textarea>
+  <label for="snote">이상했던 것이나 하고 싶은 말 한 줄</label><input id="snote" type="text" maxlength="300">
   <div class="stickbar"><button class="gold wide" data-a="survey">${clear ? '저장하고 계속' : '저장하고 타이틀로'}</button></div></section>`;
 }
 
@@ -3405,6 +3411,7 @@ function collectNotes(testers) {
         if (r.survey.dilemma || r.survey.note) out.push(Object.assign({}, ctx, { type: 'survey', where: '판 설문', label: r.survey.dilemma === 'yes' ? '고민 있었음' : r.survey.dilemma === 'no' ? '고민 없었음' : '', text: r.survey.note || '' }));
         if ((r.survey.issues && r.survey.issues.some(k => k !== 'none')) || r.survey.issueNote) out.push(Object.assign({}, ctx, { type: 'issue', where: '판 설문', label: (r.survey.issues || []).filter(k => k !== 'none').map(k => SV.is[k] || k).join(', '), text: r.survey.issueNote || '' }));
         if (r.survey.extra) out.push(Object.assign({}, ctx, { type: 'survey', where: '판 설문', label: '하고 싶은 말', text: r.survey.extra }));
+        if (r.survey.again) out.push(Object.assign({}, ctx, { type: 'survey', where: '판 설문', label: '다시 하고 싶은가', text: ({ yes: '하고 싶다', maybe: '글쎄', no: '아니다' })[r.survey.again] || r.survey.again }));
         if (r.survey.hard !== '' && r.survey.hard != null && r.survey.hard !== '') out.push(Object.assign({}, ctx, { type: 'hard', where: '판 설문', label: '가장 어려운 방', text: floorName(+r.survey.hard) }));
       }
       for (const s of r.swaps || []) {
@@ -3676,7 +3683,10 @@ function onClick(ev) {
     case 'back': G.scr = G.back || 'title'; G.back = null; render(); break;
     case 'rtab': G.rankTab = el.dataset.k; render(); break;
     case 'newchar': if (!G.data.seenGuide) { G.guideI = 0; G.afterGuide = 'create'; G.scr = 'guide'; render(); } else beginCreate(); break;
-    case 'restart': { const c = G.data.cur; if (c && !confirm((c.cname || '지금 캐릭터') + '을(를) 두고 처음부터 시작할까요? 새 캐릭터를 끝까지 만들면 지금 캐릭터는 포기한 것으로 기록되고 이어 할 수 없습니다.')) break; beginCreate(); break; }
+    case 'restart': { const c = G.data.cur; if (c && !isBetween(c) && !confirm((c.cname || '지금 캐릭터') + '을(를) 두고 처음부터 시작할까요? 새 캐릭터를 끝까지 만들면 지금 캐릭터는 포기한 것으로 기록되고 이어 할 수 없습니다.')) break; if (c && isBetween(c)) toast((c.cname || '지금 캐릭터') + '은(는) 기다리는 캐릭터로 따로 남습니다'); beginCreate(); break; }
+    case 'resumekept': { const d = G.data, i = (d.kept || []).findIndex(k => k.id === el.dataset.k); if (i < 0) break; const cur = d.cur && !d.cur.endedAt ? d.cur : null;
+      if (cur && !isBetween(cur)) { toast((cur.cname || '지금 캐릭터') + '이(가) 던전에 있습니다. 그 캐릭터가 챕터를 깨거나 여정이 끝나면 바꿔 이어 할 수 있습니다'); break; }
+      const k = d.kept.splice(i, 1)[0]; if (cur) d.kept.push(cur); d.cur = k; saveLocal(); resumeRun(); break; }
     case 'cnroll': { const cur = val('cname'); let n = pickR(CNAMES); for (let k = 0; k < 5 && n === cur; k++) n = pickR(CNAMES); G.cre.name = n; render(); break; }
     case 'cnok': { const n = (val('cname') || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 12); if (!n) { toast('이름을 적거나 주사위를 눌러 주세요'); const x = document.getElementById('cname'); if (x) x.focus(); break; } G.cre.name = n; G.cre.step = 'cls'; render(); window.scrollTo(0, 0); break; }
     case 'cback': { if (el.dataset.k === 'name') { G.cre.step = 'name'; } else { G.run = null; G.sheet = null; G.cre.step = 'cls'; } render(); break; }
@@ -3760,7 +3770,7 @@ function onClick(ev) {
     case 'endrun': endRun('lose'); break;
     case 'survey': {
       const fun = radio('fun'), dl = radio('dl');
-      finishSurvey({ fun: fun ? +fun : null, dilemma: dl, note: val('dnote'), skillWhy: radio('skw') || '', stuck: checks('stk'), confuse: checks('cf'), issues: checks('is'), issueNote: val('isnote'), hard: val('hard'), extra: val('snote'), skills: (G.run && G.run.skills) || null, fork: val('fork'), forkNote: val('forknote'), shopWhy: val('shopwhy') });
+      finishSurvey({ fun: fun ? +fun : null, dilemma: dl, again: radio('again') || '', hard: val('hard'), extra: val('snote'), skills: (G.run && G.run.skills) || null }); // 핵심만 (10월 2일 만든 사람 결정)
       break;
     }
     case 'final': G.scr = 'final'; render(); break;
@@ -3775,7 +3785,7 @@ function onClick(ev) {
     case 'logclose': G.logOpen = false; render(); break;
     case 'dash': loadDash(); break;
     case 'stat+': case 'stat-': { const S = G.sheet; const al = S.data.alloc; const k = el.dataset.k; const left = S.data.pts - al.str - al.dex - al.int; if (a === 'stat+' && left > 0) al[k]++; if (a === 'stat-' && al[k] > 0) al[k]--; render(); break; }
-    case 'statok': { const S = G.sheet; const al = S.data.alloc; const run = G.run; for (const k in al) run.stats[k] = (run.stats[k] || 0) + al[k]; applyStats(run.p, run.stats); run.statLog.push({ room: run.room, add: Object.assign({}, al), t: Date.now() }); const made = S.data.first; if (S.data.pending) run.statPending = 0; G.sheet = null; if (made) { if (G.abandonOnCreate) abandonCur(); G.creating = false; G.abandonOnCreate = false; G.cre = null; G.scr = 'run'; run.tick = Date.now(); } saveRunLocal(); saveCur(); if (made) toast('캐릭터를 만들었습니다. 첫 방 앞입니다'); render(); break; }
+    case 'statok': { const S = G.sheet; const al = S.data.alloc; const run = G.run; for (const k in al) run.stats[k] = (run.stats[k] || 0) + al[k]; applyStats(run.p, run.stats); run.statLog.push({ room: run.room, add: Object.assign({}, al), t: Date.now() }); const made = S.data.first; if (S.data.pending) run.statPending = 0; G.sheet = null; if (made) { if (G.abandonOnCreate) { if (isBetween(G.data.cur)) keepCur(); else abandonCur(); } G.creating = false; G.abandonOnCreate = false; G.cre = null; G.scr = 'run'; run.tick = Date.now(); } saveRunLocal(); saveCur(); if (made) toast('캐릭터를 만들었습니다. 첫 방 앞입니다'); render(); break; }
     case 'choose': {
       const k = el.dataset.k; const run = G.run; const S = G.sheet;
       run.choices.push({ room: S.data.room, offered: S.data.offer, picked: k || null, t: Date.now() }); run.declined = (run.declined || []).concat(S.data.offer.filter(x => x !== k)); G.sheet = null;
