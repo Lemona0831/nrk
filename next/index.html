@@ -1316,7 +1316,7 @@ function playerAct(b, id, tgtId) {
   b.rec.push(Object.assign({ k: 'act' }, snapshotFor(b, id, tgt)));
   if (isMeleeAct(p, id) && tgt && !(id === 'heavy' && p.eq.weapon === 'hook' && tgt.row === 'back')) {
     const g = guardOf(b, tgt);
-    if (g) { logp(b, 'sys', g.n + '이(가) 방패를 들어 ' + tgt.n + '을(를) 가로막는다'); b.rec.push({ k: 'redirect', t: r1(b.t), from: tgt.role, to: g.role }); tgt = g; }
+    if (g) { logp(b, 'sys', g.n + '이(가) 방패를 들어 ' + tgt.n + '을(를) 가로막는다'); b.rec.push({ k: 'redirect', t: r1(b.t), from: tgt.role, to: g.role }); tgt = g; b.cur.tgt = g.id; } // 장비 효과도 바뀐 대상을 본다
   }
   p.guard = 0; p.dodge = 0; p.brace = 0;  // 준비는 자기 다음 행동까지
   p.tookLast = p.tookSince || 0; p.tookSince = 0; // 앙갚음: 지난 행동 뒤로 받은 피해
@@ -1338,8 +1338,8 @@ function playerAct(b, id, tgtId) {
       let pay = heavyCost(p); p.fxHeavyDisc = 0; if (p.st < pay) { const lack = pay - p.st; const hc = ledgerCost(p, lack); p.hp -= hc; logp(b, 'bad', '피로 값을 치른다. 생명력 ' + r1(hc)); if (scarRate(p) > 0) p.scar = Math.min(p.hpMax * .5, p.scar + hc * scarRate(p)); pay = p.st; }
       p.st -= pay;
       if (p.eq.weapon === 'hook' && tgt.row === 'back') { tgt.row = 'front'; logp(b, 'crit', '갈고리가 ' + tgt.n + '을(를) 앞으로 끌어낸다'); }
-      if (p.eq.weapon === 'twinblades') { const hd = outDmg(b, heavyBase(p), { weapon: 1 }) * 0.6; hurtEnemy(b, tgt, hd, { single: 1, melee: 1, label: '첫 칼' }); if (tgt.alive) hurtEnemy(b, tgt, hd, { single: 1, melee: 1, label: '둘째 칼' }); fxHit('twinblades'); }
-      else hurtEnemy(b, tgt, outDmg(b, heavyBase(p), { weapon: 1 }), { single: 1, melee: isCaster(p) ? 0 : 1, label: isCaster(p) ? '집중 주문' : '강공격' });
+      if (p.eq.weapon === 'twinblades') { const hd = outDmg(b, heavyBase(p), { weapon: 1 }) * 0.6; const mh = isMeleeAct(p, 'heavy') ? 1 : 0; hurtEnemy(b, tgt, hd, { single: 1, melee: mh, label: '첫 칼' }); if (tgt.alive) hurtEnemy(b, tgt, hd, { single: 1, melee: mh, label: '둘째 칼' }); fxHit('twinblades'); }
+      else hurtEnemy(b, tgt, outDmg(b, heavyBase(p), { weapon: 1 }), { single: 1, melee: isMeleeAct(p, 'heavy') ? 1 : 0, label: isCaster(p) ? '집중 주문' : '강공격' }); // 사냥꾼 강공격은 활이라 근접이 아니다
       addBreak(b, tgt, (isCaster(p) ? 30 : 35) + 5 * Math.floor(stat(p, 'str') / 10) + (p.eq.weapon === 'maul' ? 20 : 0)); if (p.eq.weapon === 'maul') time = 1.4; applyReflux(b, tgt); break;
     }
     case 'sig': {
@@ -3427,9 +3427,16 @@ function testerRows(testers) {
   });
 }
 function csvCell(s) { s = String(s == null ? '' : s); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+/* 파일 내려받기: 아티팩트 화면이면 그 기능으로, 일반 웹사이트(지인 주소)면 브라우저 내려받기로 */
 async function saveFile(name, data) {
   if (G.downloads) { try { await G.downloads.save({ filename: name, data }); toast('내려받았습니다'); } catch (e) { toast('내려받기를 취소했습니다'); } return; }
-  toast('이 화면에서는 내려받기를 쓸 수 없습니다');
+  try {
+    const type = /\.csv$/.test(name) ? 'text/csv;charset=utf-8' : 'application/json;charset=utf-8';
+    const url = URL.createObjectURL(new Blob([data], { type }));
+    const a = document.createElement('a'); a.href = url; a.download = name; a.rel = 'noopener'; a.style.display = 'none';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
+    toast('내려받았습니다');
+  } catch (e) { toast('이 브라우저에서는 내려받기를 할 수 없습니다'); }
 }
 function dashJson() { return JSON.stringify({ v: VERSION, exportedAt: Date.now(), testers: (G.dashRaw || []).map((T, i) => Object.assign({ label: testerLabel(T, i) }, T)) }, null, 1); }
 function notesCsv() {
@@ -3651,9 +3658,7 @@ function val(id) { const x = document.getElementById(id); return x ? x.value : '
 
 async function download() {
   const blob = JSON.stringify({ v: VERSION, exportedAt: Date.now(), data: G.data }, null, 1);
-  const name = 'nrk-b0-기록-' + new Date().toISOString().slice(0, 10) + '.json';
-  if (G.downloads) { try { await G.downloads.save({ filename: name, data: blob }); toast('기록을 내려받았습니다'); } catch (e) { toast('내려받기를 취소했습니다'); } return; }
-  toast('이 화면에서는 내려받기를 쓸 수 없습니다');
+  return saveFile('nrk-' + VERSION + '-기록-' + new Date().toISOString().slice(0, 10) + '.json', blob);
 }
 
 function onClick(ev) {
@@ -3799,8 +3804,8 @@ function onClick(ev) {
     case 'coachoff': G.data.seenCoach = true; saveLocal(); render(); break;
     case 'skip': G.skip = true; if (G.stepResolve) { const r = G.stepResolve; G.stepResolve = null; r(); } break;
     case 'pace': G.pace = el.dataset.v; G.data.pace = G.pace; saveLocal(); render(); break;
-    case 'dashjson': saveFile('nrk-b0-전체기록-' + new Date().toISOString().slice(0, 10) + '.json', dashJson()); break;
-    case 'notescsv': saveFile('nrk-b0-의견-' + new Date().toISOString().slice(0, 10) + '.csv', notesCsv()); break;
+    case 'dashjson': saveFile('nrk-' + VERSION + '-전체기록-' + new Date().toISOString().slice(0, 10) + '.json', dashJson()); break;
+    case 'notescsv': saveFile('nrk-' + VERSION + '-의견-' + new Date().toISOString().slice(0, 10) + '.csv', notesCsv()); break;
     case 'archive': archiveAll(); break;
     case 'nf': G.nf = Object.assign({ b: 'all', t: 'all' }, G.nf || {}); G.nf[el.dataset.f] = el.dataset.v; render(); break;
     case 'nfm': G.nf = Object.assign({ b: 'all', t: 'all' }, G.nf || {}); G.nf.m = el.checked; render(); break;
