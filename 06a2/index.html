@@ -267,10 +267,8 @@ html.fitmode,html.fitmode body{overflow:hidden}
 /* 0.6a.2 스킬 트리 (원형 칸이 아래로 뻗는 가지) */
 .tsum{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:flex-end;margin:6px 0 8px}.trow{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px}
 .tstart,.tslot{min-height:34px;padding:4px 10px;border-radius:17px;font-size:13px;display:inline-flex;align-items:center;gap:5px}
-.tstart{border-color:var(--gold)}.tstart .tc{color:var(--gold)}.tslot{border:1px dashed var(--line);color:var(--muted)}.tslot.on{border:1px solid var(--gold);color:var(--fg,inherit)}
+.tstart{border-color:var(--gold)}.tstart .tc{color:var(--gold)}.tslot{border:1px dashed var(--line);color:var(--muted)}.tslot.on{border:1px solid var(--gold);color:var(--ink)}
 .tpts{margin-left:auto;font-size:15px}.tpts b{color:var(--gold);font-size:18px}
-.ttabs{display:flex;gap:6px;margin:4px 0}.tgrid{display:grid;grid-template-columns:1fr;gap:10px}.tcol:not(.on){display:none}
-@media (min-width:860px){.ttabs{display:none}.tgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.tcol:not(.on){display:block}}
 .tbranch{border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:8px 6px 4px}
 .tbh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;padding:0 4px}.tbh b{color:var(--gold);font-size:16px}.tbh small{flex-basis:100%;color:var(--muted);font-size:12px}.tbp{margin-left:auto;font-size:12px;color:var(--muted)}
 .tcanvas{position:relative;margin-top:4px}.tcanvas svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
@@ -278,11 +276,25 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .tnode{position:absolute;transform:translate(-50%,-50%);width:76px;min-height:0;padding:0;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;z-index:1}
 .tnode .tc{width:38px;height:38px;border-radius:50%;border:2px solid var(--line);background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--muted)}
 .tnode small{font-size:11.5px;line-height:1.2;text-align:center;color:var(--muted);max-width:76px;word-break:keep-all}
-.tnode.t-hidden .tc{border-style:dashed;opacity:.6}.tnode.t-name .tc{border-style:dashed}.tnode.t-name small{color:var(--fg,inherit)}
-.tnode.t-full small{color:var(--fg,inherit)}.tnode.can .tc{border-color:var(--gold);color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,75,.18)}
+.tnode.t-hidden .tc{border-style:dashed;opacity:.6}.tnode.t-name .tc{border-style:dashed}.tnode.t-name small{color:var(--ink)}
+.tnode.t-full small{color:var(--ink)}.tnode.can .tc{border-color:var(--gold);color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,75,.18)}
 .tnode.open .tc{background:var(--gold);border-color:var(--gold);color:#1b140f}.tnode.eq .tc{box-shadow:0 0 0 3px var(--panel),0 0 0 5px var(--gold)}
-.tnode.ult .tc{width:44px;height:44px}.tnode.sel small{text-decoration:underline;text-underline-offset:3px}.tnode.sel .tc{outline:2px solid var(--fg,#eee);outline-offset:3px}
+.tnode.ult .tc{width:44px;height:44px}.tnode.sel small{text-decoration:underline;text-underline-offset:3px}.tnode.sel .tc{outline:2px solid var(--ink);outline-offset:3px}
 .tdet .row button{flex:0 0 auto;min-width:120px}.tdet{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:10px;background:var(--panel2)}.tdet p{margin:4px 0}
+.tlay{display:grid;grid-template-columns:1fr;gap:10px;margin-top:6px}
+.tbmenu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.tseg{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:8px 10px;border-radius:10px;min-height:0;margin:0}
+.tseg b{font-size:15px;color:var(--gold)}.tseg small{font-size:11.5px;color:var(--muted);line-height:1.3}.tseg span{font-size:11.5px;color:var(--muted)}
+.tseg.on{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold) inset;background:var(--panel)}.tseg .tcan{font-style:normal;color:var(--gold);border:1px solid var(--gold);border-radius:50%;display:inline-flex;width:16px;height:16px;align-items:center;justify-content:center;font-size:11px;vertical-align:2px}
+@media (max-width:899px){.tseg small{display:none}}
+@media (min-width:900px){
+ .tlay{grid-template-columns:200px minmax(0,1fr) 300px;align-items:start}
+ .tbmenu{grid-template-columns:1fr;grid-template-rows:repeat(3,minmax(0,1fr));gap:8px;position:sticky;top:12px}
+ .tseg{padding:12px;min-height:96px;justify-content:center}.tseg b{font-size:17px}
+ .tside{position:sticky;top:12px}.tside .tdet{margin-top:0;min-height:220px}
+ .tnode{width:96px}.tnode small{max-width:96px;font-size:12.5px}.tnode .tc{width:44px;height:44px;font-size:18px}.tnode.ult .tc{width:50px;height:50px}
+}
+.tdet .tdn{font-size:17px;color:var(--gold)}.tdet .tdh{color:var(--muted);font-size:12.5px}.tdet .tdp{border-top:1px dashed var(--line);padding-top:6px;margin-top:8px}.tdb{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}.tdb button{min-width:130px}
 /* (옛 목록형 트리 클래스, 쓰지 않음) */
 .tree{display:grid;grid-template-columns:1fr;gap:10px;margin:6px 0 10px}
 @media (min-width:860px){.tree{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -2498,6 +2510,7 @@ function initPop() {
   document.addEventListener('pointerover', ev => {
     if (ev.pointerType === 'touch') return;
     const t = ev.target.closest && ev.target.closest('[data-info]'); if (!t) return;
+    if (t.closest('.treev, .tsum') && window.innerWidth >= 900) return; // 스킬 트리: PC는 오른쪽 설명 칸이 맡는다
     clearTimeout(POP.t); POP.t = setTimeout(() => showPop(t), 180);
   });
   document.addEventListener('pointerout', ev => {
@@ -3505,30 +3518,36 @@ function vTreeBranch(run, br) {
     const glyph = vis === 'hidden' ? '?' : eq ? '✓' : open ? '●' : can ? '+' : s.tier === '궁극' ? '★' : '·';
     nodes += `<button class="${cls}" style="left:${p.x}%;top:${TREE_TOP + p.y * TREE_ROW_H}px" data-a="tsel" data-k="${s.id}" data-info="tn:${s.id}" aria-label="${esc(vis === 'hidden' ? '아직 보이지 않는 칸' : s.n + ', ' + s.tier + (open ? ', 열림' : can ? ', 열 수 있음' : '') + (eq ? ', 끼움' : ''))}"><span class="tc">${glyph}</span><small>${vis === 'hidden' ? '' : esc(s.n)}</small></button>`;
   }
-  return `<div class="tbranch"><div class="tbh"><b>${esc(br)}</b><span class="tbp">포인트 ${run.tree.spent[br] || 0}</span><small>${esc((TREE2[run.build].bd || {})[br] || '')}</small></div><div class="tcanvas" style="height:${H}px"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${nodes}</div></div>`;
+  return `<div class="tbranch"><div class="tcanvas" style="height:${H}px"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${nodes}</div></div>`;
 }
-function vTreeDetail(run) {
-  const id = G.tsel; const s = id && SK2[id]; if (!s) return `<div class="tdet mini">칸을 누르면 여기에 자세히 나옵니다. 마우스를 올려도 설명이 뜹니다(휴대폰은 길게 누르기).</div>`;
+function vTreeDetail(run, id, preview) {
+  const s = id && SK2[id]; if (!s) return `<p class="mini">칸에 마우스를 올리면 여기에 설명이 나옵니다. 누르면 그 칸을 골라 열거나 끼웁니다.</p>`;
   const vis = treeVis(run, id); const open = s.start || run.tree.open.includes(id); const eq = (run.skills || []).includes(id); const why = open ? null : treeWhy(run, id); const edit = treeCanEdit();
-  if (vis === 'hidden') return `<div class="tdet"><b>?</b><p class="mini">아직 보이지 않는 칸입니다. 이어진 앞 칸을 열면 드러납니다.</p></div>`;
-  let h = `<div class="tdet"><b>${esc(s.n)}</b> <span class="mini">${esc(s.start ? '시작 스킬' : s.b + ' · ' + s.tier)}</span>`;
-  h += vis === 'name' ? `<p class="mini">이 갈래의 궁극입니다. 이어진 앞 칸을 열면 자세히 드러납니다.</p>` : `<p class="mini">${esc(skHead(s))}</p><p>${esc(skBody(s))}</p>`;
+  if (vis === 'hidden') return `<b class="tdn">?</b><p class="mini">아직 보이지 않는 칸입니다. 선으로 이어진 앞 칸을 열면 드러납니다.</p>`;
+  let h = `<b class="tdn">${esc(s.n)}</b><div class="mini">${esc(s.start ? '시작 스킬 · 늘 끼움' : s.b + ' · ' + s.tier + (open ? ' · 열림' : '') + (eq ? ' · 끼움' : ''))}</div>`;
+  h += vis === 'name' ? `<p class="mini">이 갈래의 궁극입니다. 이어진 앞 칸을 열면 자세히 드러납니다.</p>` : `<p class="tdh">${esc(skHead(s))}</p><p>${esc(skBody(s))}</p>`;
+  if (preview) return h + (s.start ? '' : `<p class="mini tdp">눌러서 고르면 ${open ? '끼우거나 뺄' : '열'} 수 있습니다.</p>`);
   if (s.start) h += `<p class="mini">시작 스킬은 늘 끼워져 있고 장착 칸을 차지하지 않습니다.</p>`;
-  else if (open) h += `<div class="row">${edit ? `<button class="${eq ? '' : 'gold'}" data-a="tequip" data-k="${id}">${eq ? '빼기' : '끼우기'}</button>` : ''}<span class="mini">${eq ? '끼워 둔 스킬입니다.' : '연 스킬입니다.'}${edit ? '' : ' 전투 중에는 바꿀 수 없습니다.'}</span></div>`;
-  else if (vis === 'full') h += `<div class="row">${edit ? `<button class="${why ? '' : 'gold'}" data-a="tunlock" data-k="${id}"${why ? ' aria-disabled="true"' : ''}>열기 · 포인트 1</button>` : ''}${why ? `<span class="mini">${esc(why)}</span>` : ''}</div>`;
-  return h + '</div>';
+  else if (open) h += `<div class="tdb">${edit ? `<button class="${eq ? '' : 'gold'}" data-a="tequip" data-k="${id}">${eq ? '빼기' : '끼우기'}</button>` : ''}${edit ? '' : '<span class="mini">전투 중에는 바꿀 수 없습니다.</span>'}</div>`;
+  else if (vis === 'full') h += `<div class="tdb">${edit ? `<button class="${why ? '' : 'gold'}" data-a="tunlock" data-k="${id}"${why ? ' aria-disabled="true"' : ''}>열기 · 포인트 1</button>` : ''}${why ? `<span class="mini">${esc(why)}</span>` : ''}</div>`;
+  return h;
 }
 function vTreeView(mode) {
-  const run = G.run, T = TREE2[run.build], t = run.tree, eqd = run.skills || []; const B = BUILDS[run.build];
+  const run = G.run, T = TREE2[run.build], t = run.tree, eqd = run.skills || [];
   const brs = T.branches; const tab = brs.includes(G.tbr) ? G.tbr : brs[0];
-  let h = mode === 'create' ? `<p class="mini">${esc(B.n)}의 스킬 트리는 세 갈래입니다: ${brs.map(br => `<b>${esc(br)}</b>(${esc(T.bd[br])})`).join(', ')}. 지금은 시작 스킬과 각 갈래의 첫 칸, 궁극의 이름만 보입니다. 칸을 열면 그 아래로 이어진 칸이 드러납니다.</p><p><b>포인트 1로 첫 칸 하나를 여세요.</b> <span class="mini">레벨이 오를 때마다 포인트 1, 챕터를 깨면 2를 얻습니다.</span></p>` : '';
   const st = T.starters.map(id => `<button class="tstart${G.tsel === id ? ' sel' : ''}" data-a="tsel" data-k="${id}" data-info="tn:${id}"><span class="tc">✓</span>${esc(SK2[id].n)}</button>`).join('');
   const slots = Array.from({ length: EQUIP_SLOTS2 }, (_, i) => eqd[i] ? `<button class="tslot on" data-a="tsel" data-k="${eqd[i]}" data-info="tn:${eqd[i]}">${esc(SK2[eqd[i]].n)}</button>` : `<span class="tslot">빈 칸</span>`).join('');
-  h += `<div class="tsum"><div><span class="mini">시작 스킬 · 늘 끼움</span><div class="trow">${st}</div></div><div><span class="mini">장착 ${eqd.length}/${EQUIP_SLOTS2}</span><div class="trow">${slots}</div></div><div class="tpts">포인트 <b>${t.pts}</b></div></div>`;
+  let h = `<div class="tsum"><div><span class="mini">시작 스킬 · 늘 끼움</span><div class="trow">${st}</div></div><div><span class="mini">장착 ${eqd.length}/${EQUIP_SLOTS2}</span><div class="trow">${slots}</div></div><div class="tpts">포인트 <b>${t.pts}</b></div></div>`;
   if (!treeCanEdit()) h += `<p class="mini">전투 중에는 볼 수만 있습니다. 방과 방 사이에 열고 바꿉니다.</p>`;
-  h += `<div class="ttabs" role="tablist">${brs.map(br => `<button class="chip${tab === br ? ' on' : ''}" data-a="tbr" data-k="${br}" role="tab" aria-selected="${tab === br}">${esc(br)}</button>`).join('')}</div>`;
-  h += `<div class="tgrid">${brs.map(br => `<div class="tcol${tab === br ? ' on' : ''}">${vTreeBranch(run, br)}</div>`).join('')}</div>`;
-  return h + vTreeDetail(run);
+  const menu = `<nav class="tbmenu" role="tablist" aria-label="스킬 트리 갈래">${brs.map(br => { const ns = SKILLS2[run.build].filter(x => x.b === br && !x.start); const op = ns.filter(x => t.open.includes(x.id)).length; const can = ns.some(x => !t.open.includes(x.id) && !treeWhy(run, x.id)); return `<button class="tseg${tab === br ? ' on' : ''}" data-a="tbr" data-k="${br}" role="tab" aria-selected="${tab === br}"><b>${esc(br)}${can ? ' <i class="tcan" aria-label="열 수 있는 칸 있음">+</i>' : ''}</b><small>${esc(T.bd[br])}</small><span>포인트 ${t.spent[br] || 0} · ${op}/${ns.length}칸</span></button>`; }).join('')}</nav>`;
+  return h + `<div class="tlay treev">${menu}<div class="tmain">${vTreeBranch(run, tab)}</div><aside class="tside"><div id="tdet" class="tdet">${vTreeDetail(run, G.tsel)}</div></aside></div>`;
+}
+function treeHover(ev) {
+  if (!G.run || !G.run.tree || window.innerWidth < 900) return; const box = document.getElementById('tdet'); if (!box || !ev.target.closest) return;
+  if (ev.target.closest('.tside')) return;
+  const nd = ev.target.closest('.treev [data-a="tsel"], .tsum [data-a="tsel"]'); const id = nd ? nd.dataset.k : (G.tsel || ''); const pv = nd && id !== G.tsel ? '1' : '';
+  if (box.dataset.k === id && box.dataset.pv === pv) return;
+  box.innerHTML = vTreeDetail(G.run, id, !!pv); box.dataset.k = id; box.dataset.pv = pv;
 }
 function vTreePage() { return `<section class="card"><div class="phead">${backBtn()}<h3>스킬 트리</h3></div>${G.run && G.run.tree ? vTreeView('page') : '<p class="mini">진행 중인 캐릭터가 없습니다.</p>'}</section>`; }
 function sheetParts(S) {
@@ -4098,7 +4117,7 @@ if (typeof document !== 'undefined') {
   document.addEventListener('click', onClick);
   document.addEventListener('keydown', onKey);
   document.addEventListener('change', ev => { if (ev.target && ev.target.name === 'eqrs') { G.eqWhy = Object.assign({}, G.eqWhy, { reason: ev.target.value }); return; } if (ev.target && (ev.target.id === 'pace' || ev.target.id === 'setpace')) { G.pace = ev.target.value; G.data.pace = G.pace; saveLocal(); if (G.stepResolve && G.pace !== 'step') { const r = G.stepResolve; G.stepResolve = null; r(); } } });
-  G.infoOn = G.data.infoOn !== false; G.pace = G.data.pace || 'normal'; initPop();
+  G.infoOn = G.data.infoOn !== false; G.pace = G.data.pace || 'normal'; initPop(); document.addEventListener('pointerover', treeHover);
   window.addEventListener('hashchange', () => { if (location.hash === '#admin' && G.scr !== 'admin') { G.adminLink = true; if (!PAGES.includes(G.scr)) G.back = G.scr; G.scr = 'admin'; render(); } });
   if (window.visualViewport) window.visualViewport.addEventListener('resize', () => document.documentElement.style.setProperty('--app-h', window.visualViewport.height + 'px'));
   let rz = 0; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (G.b && window.innerWidth >= 1100) G.logOpen = false; render(); }, 120); });
