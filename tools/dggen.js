@@ -57,11 +57,11 @@ for (const k in errs) console.log('  ' + k + ': ' + errs[k].n + '건 (예: ' + e
 /* 2) 강제 승리로 끝까지 지나기 */
 function forceWin() {
   G0.enterRoom(); const b = G.b;
-  for (const e of b.en) if (e.alive) { e.hp = 0; G0.killEnemy(b, e); }
+  for (let k = 0; k < 4; k++) for (const e of b.en) if (e.alive) { e.hp = 0; G0.killEnemy(b, e); } // 해골은 한 번 다시 일어선다
   G0.checkEnd(b); if (b.over !== 'win') throw new Error('강제 승리 실패');
   G0.battleContinue();
 }
-let walkBad = 0; const lvs = [];
+let walkBad = 0; const lvs = []; let evTurn = 0; const evSeen = {};
 for (const build of Object.keys(G0.BUILDS)) {
   const out = [];
   try {
@@ -80,7 +80,7 @@ for (const build of Object.keys(G0.BUILDS)) {
       }
       if (!run.cur && run.doors) { G0.chooseDoor(0); continue; }
       const R = run.cur; if (!R) throw new Error('방이 없음 ' + run.ch + '챕터 ' + run.room);
-      if (!G0.ROOM_TYPES[R.type] || !G0.ROOM_TYPES[R.type].fight) { if (R.type !== 'boss') { click(R.type === 'camp' || R.type === 'spring' ? 'rest' : R.type === 'shrine' ? 'shrine' : R.type === 'altar' ? 'altar' : 'event', R.type === 'event' ? G0.EVENTS.find(e => e.id === R.event).opts.slice(-1)[0].id : 0); continue; } }
+      if (!G0.ROOM_TYPES[R.type] || !G0.ROOM_TYPES[R.type].fight) { if (R.type !== 'boss') { const E0 = R.type === 'event' && G0.EVENTS.find(e => e.id === R.event); click(R.type === 'camp' || R.type === 'spring' ? 'rest' : R.type === 'shrine' ? 'shrine' : R.type === 'altar' ? 'altar' : 'event', E0 ? E0.opts[evTurn++ % E0.opts.length].id : 0); if (G.sheet && G.sheet.kind === 'swap') { const before = run.skills.slice(); click('swapdo', G.sheet.data.offer[0], { s: '0' }); if (run.skills[0] === before[0] || run.p.skills[0] !== run.skills[0]) throw new Error('스킬 바꾸기 실패'); evSeen.swap = (evSeen.swap || 0) + 1; } handleSheets('expert', r); if (G.sheet && G.sheet.kind === 'offer') { evSeen.trade = (evSeen.trade || 0) + 1; click('offerpick', run.bag[0]); handleSheets('expert', r); } if (E0) evSeen[E0.id] = (evSeen[E0.id] || 0) + 1; continue; } }
       forceWin();
     }
     if (!(G.scr === 'settle' && run.ch === 2)) throw new Error('2챕터 정산에 닿지 못함: ' + G.scr + ' ' + run.ch + '챕터 ' + run.room + '층');
@@ -91,5 +91,6 @@ for (const build of Object.keys(G0.BUILDS)) {
     console.log('✓ ' + G0.BUILDS[build].n + ': ' + out.join(' / '));
   } catch (e) { walkBad++; console.log('✗ ' + build + ': ' + (e && e.message) + ' | ' + out.join(' / ')); }
 }
+console.log('지나며 고른 이벤트·창:', JSON.stringify(evSeen));
 console.log(`끝까지 지나기 8직업, 오류 ${walkBad}개. 2챕터 끝 레벨 ${lvs.join(', ')} (모든 전투 방을 고름)`);
 process.exitCode = bad || walkBad ? 1 : 0;

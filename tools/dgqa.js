@@ -84,6 +84,7 @@ function handleSheets(pk, r) {
       for (let i = 0; i < S.data.pts; i++) { const k = pk === 'novice' || r() > 0.65 ? ['str', 'dex', 'int'][Math.floor(r() * 3)] : pref; S.data.alloc = S.data.alloc || { str: 0, dex: 0, int: 0 }; S.data.alloc[k]++; }
       click('statok');
     } else if (S.kind === 'offer') { click('offerpick', run.bag[0]); }
+    else if (S.kind === 'swap') { click('swapskip'); } // 스킬 바꾸기: 단계 3에서 성향별로
     else { G.sheet = null; }
     while (!G.sheet && G.dropQ && G.dropQ.length) G0.nextDrop();
   }

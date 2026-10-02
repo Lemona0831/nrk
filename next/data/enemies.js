@@ -8,6 +8,8 @@ const ROLES = {
   summoner: { n: '소환사', ico: '🕯️', row: 'back',  hp: 0.6, dmg: 0.5, spd: 0.8 },
   bomber:   { n: '자폭병', ico: '💣', row: 'front', hp: 0.5, dmg: 1.6, spd: 1.0 },
   minion:   { n: '하수인', ico: '💀', row: 'front', hp: 0.4, dmg: 0.5, spd: 1.0 },
+  skeleton: { n: '해골',   ico: '🦴', row: 'front', hp: 0.8, dmg: 0.9, spd: 1.0 }, // 2챕터: 쓰러지면 한 번 다시 일어선다
+  curser:   { n: '저주술사', ico: '🧿', row: 'back', hp: 0.7, dmg: 0.6, spd: 0.9 }, // 2챕터: 나에게 저주(받는 회복 절반)
   root:     { n: '뿌리',   ico: '🌱', row: 'back',  hp: 0.55, dmg: 0, spd: 0 },
 };
 
@@ -19,3 +21,10 @@ const BOSSES = {
 };
 
 const SEASONS = ['봄', '여름', '가을', '겨울'];
+/* 2챕터 적 (기획서 11.12절) \[가설\]
+   해골: 쓰러지면 최대 체력의 rise만큼으로 한 번 다시 일어선다. 점화 중이거나 붕괴 상태에서 쓰러지면 일어서지 않는다.
+   저주: 받는 회복 ×heal. 걸 때마다 지속 시간이 더해진다(최대 max). 저주술사는 every번 행동마다 한 번 건다.
+   신속: 2챕터 정예 접사. 정예 접사가 붙을 때 share 확률로 강인 대신 신속(속도 ×spd) */
+const UNDEAD = { rise: 0.5 };
+const CURSE = { dur: 3, max: 9, heal: 0.5, every: 3, hit: 0.5 };
+const SWIFT = { spd: 1.3, share: 0.5 };

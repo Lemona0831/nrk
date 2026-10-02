@@ -37,6 +37,10 @@ const ROOM_MODS = {
   bell: { n: '종소리', d: '적 속도 +10%. 이 방의 골드 +50%.' },
   dark: { n: '어둠', d: '후열 적의 예고가 보이지 않는다.' },
   calm: { n: '고요', d: '마나 자연 회복 2배.' },
+  fog: { ch: 2, n: '납골 안개', d: '모든 원거리 피해 −20%(나와 후열 적 모두).' },
+  wall: { ch: 2, n: '무너진 납골벽', d: '해골 1기가 더 나온다.' },
+  lamp: { ch: 2, n: '꺼지지 않는 등불', d: '저주가 걸릴 때마다 지속 +1.' },
+  water: { ch: 2, n: '지하수', d: '모두 냉각 1을 안고 시작한다.' },
 };
 const MOD_CHANCE = { upper: 0.25, lower: 0.45 };
 const modsOf = ch => Object.keys(ROOM_MODS).filter(k => (ROOM_MODS[k].ch || 1) <= (ch || 1));
@@ -54,8 +58,20 @@ const ENC = { 1: {
     [['bomber', 1], ['bruiser']], [['shield'], ['archer', 1], ['minion']], [['bruiser'], ['bruiser'], ['archer']], [['healer'], ['shield'], ['bruiser', 1]],
   ],
   treasure: [[['shield', 1], ['bruiser']], [['bruiser', 1], ['archer']], [['archer', 1], ['shield']]],
+}, 2: { // 잊힌 지하묘지: 해골과 저주술사가 섞인다
+  upper: [
+    [['skeleton'], ['skeleton']], [['bruiser'], ['curser']], [['shield'], ['healer']], [['skeleton'], ['archer']],
+    [['bomber'], ['bomber'], ['skeleton']], [['summoner'], ['minion'], ['minion']], [['shield'], ['curser'], ['archer']], [['bruiser'], ['skeleton'], ['healer']],
+    [['shield'], ['archer']], [['skeleton'], ['curser']], [['summoner'], ['skeleton']], [['skeleton', 1]],
+  ],
+  lower: [
+    [['skeleton', 1], ['curser']], [['shield', 1], ['healer'], ['skeleton']], [['archer', 1], ['curser'], ['bomber']], [['summoner'], ['minion'], ['minion'], ['curser']],
+    [['skeleton'], ['skeleton'], ['healer', 1]], [['shield', 1], ['bomber'], ['skeleton']], [['bruiser', 1], ['summoner']], [['curser', 1], ['shield'], ['archer']],
+    [['bomber', 1], ['skeleton']], [['shield'], ['archer', 1], ['minion']], [['skeleton'], ['bruiser'], ['curser']], [['healer'], ['shield'], ['skeleton', 1]],
+  ],
+  treasure: [[['shield', 1], ['skeleton']], [['skeleton', 1], ['curser']], [['curser', 1], ['shield']]],
 } };
-const encOf = ch => ENC[ch] || ENC[1]; // 2챕터 틀은 단계 2에서
+const encOf = ch => ENC[ch] || ENC[1];
 /* 강적 (자리만 먼저. 고유 규칙은 단계 8에서 비공개 문서대로 넣는다) */
 /* 강적 공통 배율과 고유 수치 (11.8절). 일반 방보다 확실히 어렵게 (10월 2일 만든 사람 요청) */
 const STRONG = { hp: 2.1, dmg: 1.3, bellEvery: 3, leech: 0.45, frenzy: 1.3, lowerHp: 1.3, lowerDmg: 1.15 }; // 하층 강적만 더: 무작위 시험 하층 순례자 40%대(만든 사람 요청) // 무작위 시험: 상층 승률 94%(남은 생명력 60%), 하층 76~82%(약 50%). 일반 방은 95~98%(65~83%)
@@ -92,9 +108,18 @@ const EVENTS = [
   { id: 'library', n: '무너진 서고', lore: '젖은 책장 사이로 글자가 번진다.', opts: [{ id: 'read', n: '책을 읽는다', d: '능력치 1점.' }, { id: 'sell', n: '책을 챙긴다', d: '골드 20.' }] },
   { id: 'monk', n: '굶주린 수도사', lore: '뼈만 남은 손이 소매를 붙든다.', opts: [{ id: 'feed', n: '먹을 것을 준다', d: '플라스크 하나(가장 많이 찬 것)를 비우고, 다음 전투 방에서 장비 하나 더.' }, { id: 'chase', n: '내쫓는다', d: '다음 전투에 굶주린 수도사(돌격병)가 더해지고, 이기면 골드 20.' }] },
   { id: 'bell', n: '종탑의 줄', lore: '줄 끝이 아래로, 아래로 이어진다.', opts: [{ id: 'pull', n: '당긴다', d: '다음 층 문에 강적이 반드시 나온다. 골드 15.' }, { id: 'pass', n: '지나친다', d: '' }] },
+  // 2챕터: 잊힌 지하묘지
+  { id: 'nameless', ch: 2, n: '이름 없는 묘비', lore: '이끼 낀 비석에서 이름만 지워져 있다.', opts: [{ id: 'carve', n: '이름을 새긴다', d: '최대 생명력 +5(영구). 대신 다음 전투를 저주 3을 안고 시작한다.' }, { id: 'pass', n: '지나친다', d: '' }] },
+  { id: 'bonetrader', ch: 2, n: '뼈 상인', lore: '등에 뼈 자루를 진 자가 손을 내민다. 금화는 받지 않는다.', opts: [{ id: 'trade', n: '장비를 넘긴다', d: '가방의 장비 하나를 주고, 같은 등급의 다른 장비 둘 가운데 하나를 받는다.' }, { id: 'pass', n: '지나친다', d: '' }] },
+  { id: 'coffin', ch: 2, n: '봉인된 관', lore: '쇠사슬이 감긴 관. 안에서 무언가 긁는 소리가 난다.', opts: [{ id: 'open', n: '사슬을 끊는다', d: '절반 확률로 희귀 장비. 아니면 다음 전투에 정예 해골이 더해지고, 이기면 희귀 장비.' }, { id: 'pass', n: '지나친다', d: '' }] },
+  { id: 'funeral', ch: 2, n: '장례 행렬', lore: '횃불도 없이 관을 멘 자들이 지나간다.', opts: [{ id: 'follow', n: '뒤따른다', d: '다음 3개 방 동안 받는 피해 −10%, 주는 피해 −10%.' }, { id: 'block', n: '길을 막는다', d: '다음 전투에 무덤지기 하나가 더해지고, 이기면 골드 25.' }] },
+  { id: 'mentor', ch: 2, n: '잊힌 스승의 묘비', lore: '비문에 낯익은 기술이 새겨져 있다.', opts: [{ id: 'learn', n: '비문을 읽는다', d: '스킬 한 칸을 비문의 스킬 셋 가운데 하나로 바꿀 수 있다.' }, { id: 'pass', n: '지나친다', d: '' }] },
+  { id: 'robber', ch: 2, n: '도굴꾼의 시체', lore: '삽을 쥔 채 굳은 손. 자루가 아직 묵직하다.', opts: [{ id: 'search', n: '자루를 뒤진다', d: '골드 25 또는 장비 하나. 대신 다음 전투에 중독 3.' }, { id: 'bury', n: '묻어 준다', d: '생명력 플라스크 +1.' }] },
+  { id: 'blackpool', ch: 2, n: '검은 샘', lore: '물이 등불 빛을 삼킨다.', opts: [{ id: 'drink', n: '마신다', d: '마나·스태미나 플라스크 +1. 대신 다음 전투를 저주 3을 안고 시작한다.' }, { id: 'pass', n: '지나친다', d: '' }] },
+  { id: 'bonepipe', ch: 2, n: '뼈 피리', lore: '바람이 구멍을 지나며 운다. 아래에서 무언가 대답한다.', opts: [{ id: 'blow', n: '분다', d: '다음 층 문에 강적이 반드시 나온다. 골드 20.' }, { id: 'pass', n: '지나친다', d: '' }] },
 ];
 
-const eventsOf = ch => { const L = EVENTS.filter(e => (e.ch || 1) === (ch || 1)); return L.length ? L : EVENTS.filter(e => (e.ch || 1) === 1); }; // 2챕터 이벤트는 단계 2에서
+const eventsOf = ch => { const L = EVENTS.filter(e => (e.ch || 1) === (ch || 1)); return L.length ? L : EVENTS.filter(e => (e.ch || 1) === 1); };
 
 /* ===== 성장과 적 (기획서 11.4절, 11.8절) ===== */
 /* 몬스터 레벨: 1챕터 1~4. 레벨마다 체력 +12%, 피해 +10% */
@@ -113,11 +138,12 @@ const XP_LV = 0.15;
 /* 레벨 n이 되는 데 필요한 누적 경험치 (LV_XP[n-1]) */
 const LV_XP = [0, 40, 100, 180, 300, 470, 660, 870, 1100, 1350, 1620, 1910, 2220]; // 1챕터를 무작위 길로 끝까지 가면 Lv5 안팎 (10월 2일 8판 시험)
 const LV_POINTS = 2;
-/* 정예 접사 "강인": 체력 +50% (4.6절 1막 접사). 정예에게 상층 35%, 하층 60% */
+/* 정예 접사 "강인": 체력 +50% (4.6절 1막 접사). 정예에게 상층 35%, 하층 60%. 2챕터는 접사가 붙을 때 절반은 "신속"(SWIFT, data/enemies.js) */
 const TOUGH_CHANCE = { upper: 0.35, lower: 0.6 };
 /* 챕터별 적 이름 (1챕터 저주받은 수도원). 역할은 카드에 작게 함께 보인다 */
 const ENEMY_NAMES = {
   1: { bruiser: '광신 수도사', shield: '문지기 수사', archer: '종탑 궁수', healer: '피 닦는 수녀', summoner: '뼈 부르는 사제', bomber: '불붙은 고행자', minion: '일어선 시체' },
+  2: { bruiser: '무덤지기', shield: '납골당 문지기', archer: '납골당 궁수', healer: '곡하는 사제', summoner: '뼈 엮는 자', bomber: '부푼 시체', minion: '기어 나온 뼈', skeleton: '해골 병사', curser: '무덤 주술사' },
 };
 
 /* ===== 강적과 보스: 처음 만날 때 "눈에 보이는 것", 겪은 뒤 도감 (기획서 11.9절) =====
