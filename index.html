@@ -3390,9 +3390,16 @@ function testerRows(testers) {
   });
 }
 function csvCell(s) { s = String(s == null ? '' : s); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+/* 파일 내려받기: 아티팩트 화면이면 그 기능으로, 일반 웹사이트(지인 주소)면 브라우저 내려받기로 */
 async function saveFile(name, data) {
   if (G.downloads) { try { await G.downloads.save({ filename: name, data }); toast('내려받았습니다'); } catch (e) { toast('내려받기를 취소했습니다'); } return; }
-  toast('이 화면에서는 내려받기를 쓸 수 없습니다');
+  try {
+    const type = /\.csv$/.test(name) ? 'text/csv;charset=utf-8' : 'application/json;charset=utf-8';
+    const url = URL.createObjectURL(new Blob([data], { type }));
+    const a = document.createElement('a'); a.href = url; a.download = name; a.rel = 'noopener'; a.style.display = 'none';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
+    toast('내려받았습니다');
+  } catch (e) { toast('이 브라우저에서는 내려받기를 할 수 없습니다'); }
 }
 function dashJson() { return JSON.stringify({ v: VERSION, exportedAt: Date.now(), testers: (G.dashRaw || []).map((T, i) => Object.assign({ label: testerLabel(T, i) }, T)) }, null, 1); }
 function notesCsv() {
@@ -3614,9 +3621,7 @@ function val(id) { const x = document.getElementById(id); return x ? x.value : '
 
 async function download() {
   const blob = JSON.stringify({ v: VERSION, exportedAt: Date.now(), data: G.data }, null, 1);
-  const name = 'nrk-b0-기록-' + new Date().toISOString().slice(0, 10) + '.json';
-  if (G.downloads) { try { await G.downloads.save({ filename: name, data: blob }); toast('기록을 내려받았습니다'); } catch (e) { toast('내려받기를 취소했습니다'); } return; }
-  toast('이 화면에서는 내려받기를 쓸 수 없습니다');
+  return saveFile('nrk-' + VERSION + '-기록-' + new Date().toISOString().slice(0, 10) + '.json', blob);
 }
 
 function onClick(ev) {
@@ -3745,8 +3750,8 @@ function onClick(ev) {
     case 'coachoff': G.data.seenCoach = true; saveLocal(); render(); break;
     case 'skip': G.skip = true; if (G.stepResolve) { const r = G.stepResolve; G.stepResolve = null; r(); } break;
     case 'pace': G.pace = el.dataset.v; G.data.pace = G.pace; saveLocal(); render(); break;
-    case 'dashjson': saveFile('nrk-b0-전체기록-' + new Date().toISOString().slice(0, 10) + '.json', dashJson()); break;
-    case 'notescsv': saveFile('nrk-b0-의견-' + new Date().toISOString().slice(0, 10) + '.csv', notesCsv()); break;
+    case 'dashjson': saveFile('nrk-' + VERSION + '-전체기록-' + new Date().toISOString().slice(0, 10) + '.json', dashJson()); break;
+    case 'notescsv': saveFile('nrk-' + VERSION + '-의견-' + new Date().toISOString().slice(0, 10) + '.csv', notesCsv()); break;
     case 'archive': archiveAll(); break;
     case 'nf': G.nf = Object.assign({ b: 'all', t: 'all' }, G.nf || {}); G.nf[el.dataset.f] = el.dataset.v; render(); break;
     case 'nfm': G.nf = Object.assign({ b: 'all', t: 'all' }, G.nf || {}); G.nf.m = el.checked; render(); break;
