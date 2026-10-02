@@ -544,7 +544,7 @@ function genSkill(b, act, tgt) {
     if (fx.weak) addS(b, e, 'weak', sn(2));
     if (fx.vuln) addS(b, e, 'vuln', sn(2));
     if (fx.brk) addBreak(b, e, fx.brk);
-    if (fx.trap) { e.s.trap = { stacks: outDmg(b, fx.trap, {}), brk: fx.trapBrk || 0, until: b.t + 4, dur: 4 }; }
+    if (fx.trap) { e.s.trap = { stacks: outDmg(b, fx.trap, {}), brk: fx.trapBrk || 0, until: b.t + 4, dur: 4, aoe: act.aoe ? 1 : 0 }; } // 여럿에게 놓은 덫은 터질 때 광역 피해(방패벽이 줄인다)
     if (fx.rift) { e.s.rift = { stacks: outDmg(b, fx.rift, {}), brk: fx.riftBrk || 0, until: b.t + 2, dur: 2 }; }
     if (fx.echo) { e.s.echo = { stacks: outDmg(b, act.dmg, {}), until: b.t + 1.5, dur: 1.5 }; }
     if (fx.bleed) addS(b, e, 'bleed', sn(fx.bleed));
@@ -622,9 +622,10 @@ const stk = (u, k) => (u.s[k] && u.s[k].stacks) || 0;
 const chillSlow = n => n > 0 ? Math.min(0.4, 0.3 + 0.05 * (n - 1)) : 0; // 냉각: 1중첩 30%, 더할 때마다 +5%, 최대 40%
 /* 치유 피로: 같은 치유사가 치유할 때마다 다음 치유가 30%씩 준다 (수도사 제외) */
 const healFrac = e => e.monk ? ABBOT.monkHeal : 0.25 * Math.pow(0.7, e.healN || 0);
-const AOE = { back: 0.7, wall: 0.5, shieldSelf: 0.75, status: 0.5 };
+const AOE = { back: 0.7, wall: 0.5, wallFront: 0.6, shieldSelf: 0.75, status: 0.5 }; // wallFront: 방패병이 서 있으면 옆 전열 동료가 받는 광역 피해 (10월 2일 만든 사람 결정)
 const aoeN = n => Math.max(1, Math.round(n * AOE.status));
 const wallUp = (b, e) => e.alive && e.row === 'back' && e.role !== 'boss' && !!hasShield(b, e.id);
+const wallFrontUp = (b, e) => e.alive && e.row === 'front' && !['boss', 'shield', 'root'].includes(e.role) && !!hasShield(b, e.id); // 방패병 옆 전열 동료
 const TELE = { heavy: 5 }; // 적 강타 = 평소 공격 × heavy (예고를 읽고 막는 판단의 무게)
 const ENRAGE = { boss: 45, room: 40, step: 10 }; // 광폭화 시각(시간 단위)과 짙어지는 간격
 const ABBOT = { cycle: 5, brand: 0.2, vowHeal: 0.01, vowTaken: 0.6, monkHeal: 0.025 };
@@ -1023,7 +1024,7 @@ function hurtEnemy(b, e, raw, o) {
   if (!o.dot && (o.single || o.melee) && hasIt(b.p, 'markamu')) { const mk = b.p.mk; if (mk && mk.id !== e.id && mk.n > 0) d *= 0.9; b.p.mk = mk && mk.id === e.id ? { id: e.id, n: mk.n + 1 } : { id: e.id, n: 1 }; if (b.p.mk.n >= 3) { b.p.mk.n = 0; b.markTgt = e; } }
   if (!o.dot && hasIt(b.p, 'focusring')) d *= o.aoe ? 0.7 : 1.07;
   if (e.vow && !o.dot) d *= ABBOT.vowTaken;
-  if (o.aoe && !o.dot && e.role !== 'boss') { if (e.row === 'back') { if (!fxFlag(b.p, 'aoeBack')) d *= AOE.back; if (hasShield(b, e.id) && !fxFlag(b.p, 'aoeWall')) d *= AOE.wall; } else if (e.role === 'shield' && !(e.stun > 0) && !e.s.broken) d *= AOE.shieldSelf; } // 광역: 후열·방패벽·방패병
+  if (o.aoe && !o.dot && e.role !== 'boss') { if (e.row === 'back') { if (!fxFlag(b.p, 'aoeBack')) d *= AOE.back; if (hasShield(b, e.id) && !fxFlag(b.p, 'aoeWall')) d *= AOE.wall; } else if (e.role !== 'shield' && hasShield(b, e.id) && !fxFlag(b.p, 'aoeWall')) d *= AOE.wallFront; else if (e.role === 'shield' && !(e.stun > 0) && !e.s.broken) d *= AOE.shieldSelf; } // 광역: 후열·방패벽·방패병
   if (!o.dot && b.cur) { d = d * fxMul(b.p, 'hit', b, b.p, e, o, b.cur) + fxAdd(b.p, 'hitAdd', b, b.p, e, o, b.cur); }
   if (!o.dot && b.cur && b.cur.ranged && hasMod(b, 'fog')) d *= 0.8;
   if (o.dot && e !== b.p) d *= fxMul(b.p, 'dotOut', b, b.p, e, o.label);
@@ -1150,7 +1151,7 @@ function enemyHitEst(b, e) {
   return d;
 }
 function enemyAct(b, e) {
-  if (e.s.trap) { const tr = e.s.trap; delete e.s.trap; hurtEnemy(b, e, tr.stacks, { label: '덫' }); if (e.alive) addBreak(b, e, tr.brk || 0); logp(b, 'good', e.n + '이(가) 덫을 밟는다'); if (!e.alive || b.over) return; }
+  if (e.s.trap) { const tr = e.s.trap; delete e.s.trap; hurtEnemy(b, e, tr.stacks, { label: '덫', aoe: tr.aoe || 0 }); if (e.alive) addBreak(b, e, tr.brk || 0); logp(b, 'good', e.n + '이(가) 덫을 밟는다'); if (!e.alive || b.over) return; }
   if (e.stun > 0) { e.stun--; logp(b, 'sys', e.n + '이(가) 비틀거린다. 행동을 놓친다'); e.next = b.t + 1 / eSpeed(b, e); e.acts++; return; }
   const i = e.intent || { k: 'attack' }; const d = enemyHitEst(b, e);
   b.rec.push({ k: 'eact', t: r1(b.t), role: e.role, i: i.k });
@@ -1188,7 +1189,7 @@ function bossPhase(b, e) {
 /* ================= 플레이어 행동 (4.2) ================= */
 function canTarget(b, e, act) {
   if (!e || !e.alive) return false;
-  if (b.p.build === 'hunter') return !(act.id === 'dodge' && e.role === 'root');
+  if (b.p.build === 'hunter' && !isMeleeAct(b.p, act.id)) return !(act.id === 'dodge' && e.role === 'root'); // 사냥꾼은 활과 원거리 스킬이 후열에 닿는다. 근접 스킬은 다른 직업처럼 전열에 막힌다 (10월 2일)
   if (isCaster(b.p) && (act.id === 'basic' || act.id === 'heavy')) return true; // 캔트립·집중 주문은 원거리
   if (act.ranged || act.aoe) return true;
   if (act.id === 'dodge' || act.dodge) return e.role !== 'root';
@@ -1615,14 +1616,14 @@ const HELP = [
   { k: 'row', n: '전열과 후열', t: [
     '적은 앞줄(전열)과 뒷줄(후열)에 섭니다. 근접 공격(기본 공격, 강공격, 근접 스킬)은 전열만 노릴 수 있습니다. 전열이 모두 쓰러지거나 붕괴하면 근접 공격도 후열에 닿습니다.',
     '원거리와 광역 스킬은 언제나 닿습니다. 다만 광역 스킬은 후열에 70%만 들어갑니다.',
-    '방패벽: 방패병이 서 있으면 후열이 받는 광역 피해가 다시 절반이 되고(카드에 🛡️), 방패병 자신도 광역 피해를 25% 덜 받습니다. 방패병을 쓰러뜨리거나 붕괴시키면 풀립니다.',
+    '방패벽: 방패병이 서 있으면 후열이 받는 광역 피해가 다시 절반이 되고, 옆 전열 동료도 광역·전열 전체 피해를 40% 덜 받습니다(카드에 🛡️). 방패병 자신도 광역 피해를 25% 덜 받습니다. 방패병을 쓰러뜨리거나 붕괴시키면 풀립니다.',
     '광역 스킬과 전열 전체 스킬로 거는 상태이상(중독, 점화, 약화 등)은 단일 기술의 절반입니다.'] },
   { k: 'break', n: '붕괴', t: [
     '적 카드의 보라색 게이지입니다. 기본 공격 10, 강공격 35씩 차고, 가득 차면 붕괴합니다.',
     '붕괴한 적은 충전 중이던 강타가 취소되고, 다음 행동을 잃고, 잠시 받는 피해가 30% 늘어납니다. 방패병을 붕괴시키면 잠시 동료를 지키지 못하고 방패벽도 풀립니다.',
     '보스는 게이지가 커서 즉석으로 끊기 어렵습니다. 미리 채워 두었다가 원하는 순간에 끊으세요.'] },
   { k: 'roles', n: '적의 역할', t: [
-    '돌격병(전열): 공격하다가 가끔 강타를 충전합니다. 방패병(전열): 동료를 노린 근접 공격을 대신 맞고, 서 있는 동안 방패벽으로 후열을 감쌉니다.',
+    '돌격병(전열): 공격하다가 가끔 강타를 충전합니다. 방패병(전열): 동료를 노린 근접 공격을 대신 맞고, 서 있는 동안 방패벽으로 동료가 받는 광역 피해를 줄입니다.',
     '사수(후열): 공격하고, 두 번에 한 번 출혈을 겁니다. 치유사(후열): 다친 아군을 치유하고, 치유할수록 지칩니다. 소환사(후열): 하수인을 부릅니다. 자폭병(전열): 준비한 뒤 터집니다.',
     '2챕터에는 둘이 더 나옵니다. 해골(전열): 쓰러지면 한 번 다시 일어섭니다. 점화 중이거나 붕괴 상태에서 쓰러뜨리면 일어서지 못합니다. 저주술사(후열): 저주를 걸어 받는 회복을 절반으로 만듭니다.',
     '정예는 체력과 피해가 높고 붕괴 게이지가 큽니다. [강인]이 붙은 정예는 체력이 더 많고, 2챕터의 [신속]이 붙은 정예는 더 빠릅니다. 강적은 고유한 규칙을 하나씩 가지고, 처음 만나면 보이는 것만 알려 줍니다.',
@@ -2021,7 +2022,7 @@ function vBattle() {
   const ecard = e => {
     const it = intentText(b, e); const sel = G.sel === e.id;
     const reach = !frontBlocked(b) || e.row === 'front';
-    return `<button class="en${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(e.n)} 생명력 ${shownHp(e.hp)}, 예고: ${esc(it.t)}"><div class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wallUp(b, e) ? '<span class="wallm" title="방패벽: 광역 피해 절반" aria-label="방패벽">🛡️</span>' : ''}${e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" title="강인: 체력 +50%">강인</small>' : ''}${e.swift ? '<small class="etough" title="신속: 속도 +30%">신속</small>' : ''}${e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${!reach ? '<span class="nr" title="근접 공격이 닿지 않습니다">근접 불가</span>' : ''}${reach && guardOf(b, e) ? '<span class="nr gd" data-info="guarded" tabindex="0">방패병이 막는 중</span>' : ''}${e.boss === 'tree' && rootRegen(b) > 0 ? `<span class="nr rg2" data-info="regen" tabindex="0">🌱 +${rootRegen(b)}/내 차례</span>` : ''}</div>${bar('hp', e.hp, e.hpMax, '생명력')}${e.role !== 'root' ? `<div class="bkline" data-info="bar:bk" title="붕괴 ${Math.round(e.brk)}/${e.brkMax}"><small>붕괴 게이지</small><div class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></div></div><div class="intent${it.hv ? ' hv' : ''}">${esc(it.t)}</div>` : '<div class="mini">움직이지 않는다</div>'}${stsHtml(e, b)}</button>`;
+    return `<button class="en${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(e.n)} 생명력 ${shownHp(e.hp)}, 예고: ${esc(it.t)}"><div class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wallUp(b, e) ? '<span class="wallm" title="방패벽: 광역 피해 절반" aria-label="방패벽">🛡️</span>' : wallFrontUp(b, e) ? '<span class="wallm" title="방패벽: 광역 피해 −40%" aria-label="방패벽">🛡️</span>' : ''}${e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" title="강인: 체력 +50%">강인</small>' : ''}${e.swift ? '<small class="etough" title="신속: 속도 +30%">신속</small>' : ''}${e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${!reach ? '<span class="nr" title="근접 공격이 닿지 않습니다">근접 불가</span>' : ''}${reach && guardOf(b, e) ? '<span class="nr gd" data-info="guarded" tabindex="0">방패병이 막는 중</span>' : ''}${e.boss === 'tree' && rootRegen(b) > 0 ? `<span class="nr rg2" data-info="regen" tabindex="0">🌱 +${rootRegen(b)}/내 차례</span>` : ''}</div>${bar('hp', e.hp, e.hpMax, '생명력')}${e.role !== 'root' ? `<div class="bkline" data-info="bar:bk" title="붕괴 ${Math.round(e.brk)}/${e.brkMax}"><small>붕괴 게이지</small><div class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></div></div><div class="intent${it.hv ? ' hv' : ''}">${esc(it.t)}</div>` : '<div class="mini">움직이지 않는다</div>'}${stsHtml(e, b)}</button>`;
   };
   const bk = b.en.filter(e => e.alive && e.row === 'back'), fr = b.en.filter(e => e.alive && e.row === 'front');
   const field = `<section class="field" aria-label="전장">
@@ -2216,7 +2217,7 @@ const AINFO = {
 };
 const RINFO = {
   bruiser: '돌격병 · 전열. 공격하다가 가끔 강타를 충전한다. 충전 다음 행동에 3배 피해 + 취약.',
-  shield: '방패병 · 전열. 다른 적을 노린 근접 공격을 대신 맞는다(원거리·광역·지속 피해는 제외). 서 있는 동안 후열이 받는 광역 피해는 절반(방패벽), 자신도 광역 피해 −25%. 붕괴시키면 잠시 막지 못한다.',
+  shield: '방패병 · 전열. 다른 적을 노린 근접 공격을 대신 맞는다(원거리·광역·지속 피해는 제외). 서 있는 동안 후열이 받는 광역 피해는 절반, 옆 전열 동료는 −40%(방패벽), 자신도 광역 피해 −25%. 붕괴시키면 잠시 막지 못한다.',
   archer: '사수 · 후열. 약간 빠르다. 공격하면 출혈을 건다.',
   healer: '치유사 · 후열. 체력이 70% 아래인 아군을 25% 치유한다.',
   summoner: '소환사 · 후열. 하수인 2기를 부른다(최대 3기). 소환은 3번 행동마다 한 번.',
@@ -2458,7 +2459,7 @@ function initPop() {
   });
   Object.assign(RINFO, {
     bruiser: '돌격병. 전열. 공격을 이어 가다 가끔 도끼를 치켜들어 강타를 모은다. 다음 행동에 세 배 피해를 주고 나를 취약하게 만든다.',
-    shield: '방패병. 전열. 동료를 노린 근접 공격을 대신 맞는다. 원거리, 광역, 지속 피해는 막지 못한다. 대신 서 있는 동안 방패벽으로 후열이 받는 광역 피해를 절반으로 줄이고, 자신도 광역 피해를 25% 덜 받는다. 붕괴시키면 잠시 자리를 비운다.',
+    shield: '방패병. 전열. 동료를 노린 근접 공격을 대신 맞는다. 원거리, 광역, 지속 피해는 막지 못한다. 대신 서 있는 동안 방패벽으로 후열이 받는 광역 피해를 절반으로, 옆 전열 동료가 받는 광역 피해를 40% 줄이고, 자신도 광역 피해를 25% 덜 받는다. 붕괴시키면 잠시 자리를 비운다.',
     archer: '사수. 후열. 조금 빠르고, 맞히면 출혈을 건다.',
     healer: '치유사. 후열. 체력이 70% 아래인 아군을 25% 회복시킨다. 한 번 치유하면 다음 행동은 공격으로 쉰다.',
     summoner: '소환사. 후열. 세 번 행동할 때마다 하수인 둘을 불러낸다. 하수인은 셋까지.',
