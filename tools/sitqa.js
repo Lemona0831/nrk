@@ -1,0 +1,105 @@
+/* 특정 상황 50종으로 직업 스킬 균형을 잰다 (0.6a.2, 10월 3일 만든 사람 요청)
+   06a2의 게임 코드를 그대로 돌리고(dgqa.js의 loadGame), 갈래마다 두 기둥(왼쪽 칸만 / 오른쪽 칸만 따라 내려간 빌드)을 Lv5·Lv10으로 만들어
+   tools/situations.js의 50상황에서 싸운다. 전투 판단은 qa.js의 성향(기본 신중, PK=expert 등)을 쓴다.
+   결과: 빌드·범주별 승률, 갈래 평균 차이, 기둥 차이, 갈래 성격(TREE2.profile)과 맞는지.
+   실행: DGDIR=06a2 node tools/sitqa.js [상황마다 판 수=8] [직업=assassin]
+   기준 (docs/0.6a.2-암살자-스킬.md 1절):
+     점수 = 이기면 40 + 남은 생명력 비율 × 40 + 빠르기 × 20(3라운드 안 20, 23라운드 0), 지면 0 (상황마다 판 평균)
+     1) 갈래 평균 점수 차이 ≤ 6 (Lv5, Lv10 각각)
+     2) 갈래의 강한 범주는 세 갈래 평균보다 +4 이상, 약한 범주는 −4 이하
+     3) 같은 갈래의 두 기둥 차이 ≤ 10 */
+process.env.DGDIR = process.env.DGDIR || '06a2';
+const D = require('./dgqa.js');
+const Q = require('./qa.js');
+const { SIT, SIT_CATS } = require('./situations.js');
+const G0 = D.G0; const run_ = D.run_;
+/* 기준 세기 (10월 3일): 50상황은 갈래끼리의 상대 균형을 재는 고정 시험이다. 던전 난이도(DIFF·보스 배수)를 바꿔도 기준이 움직이지 않게,
+   균형을 맞춘 날의 세기(하층 체력 ×1.05·피해 ×0.9, 수도원장 ×6·피해 ×1.6)로 고정한다. 던전 전체 난이도는 dgqa.js로 따로 맞춘다.
+   SIT_REAL=1이면 게임의 지금 세기 그대로 잰다(참고용) */
+const SIT_REAL = !!process.env.SIT_REAL;
+if (!SIT_REAL) run_('DIFF.lower = { hp: 1.05, dmg: 0.9 }; BOSSES.abbot.mult = 6; BOSSES.abbot.dmgMul = 1.6;');
+const MAIN = require.main === module; const MIX = {};
+const TH = { cat: 0.04, parity: 0.06, col: 0.10 }; // 기준 문턱 (점수 100점 만점): 강함 +4 이상·약함 −4 이하(세 갈래 평균 대비), 갈래 평균 차이 6 이하, 기둥 차이 10 이하
+const N = +((MAIN && process.argv[2]) || 8); const CLS = (MAIN && process.argv[3]) || process.env.SIT_CLS || 'assassin'; const PK = process.env.PK || 'careful';
+const LVS = [5, 10]; const MLV = { 5: +(process.env.MLV5 || 6), 10: +(process.env.MLV10 || 9) }; // 내 레벨 → 상황의 몬스터 레벨: 그 챕터 끝 몬스터 레벨(기획서 11.4절: 1챕터 1~4, 2챕터 5~8)보다 1~2 높게(점수가 너무 높으면 강점·약점이 묻힌다)
+const SKL = G0.SKILLS2[CLS]; const T = G0.TREE2[CLS];
+
+function buildOf(br, col, lv) {
+  const open = [];
+  for (let r = 1; r <= Math.min(lv, 10); r++) { const row = SKL.filter(s => s.b === br && s.row === r); if (row[col] || row[0]) open.push((row[col] || row[0]).id); }
+  return { br, col, lv, open };
+}
+/* 끼울 4칸: 문에 보이는 적을 보고 고르는 사람처럼 (후열이 있으면 후열에 닿는 스킬, 셋 이상이면 광역, 강타형이 있으면 흘리기·끊기, 큰 적 하나면 터뜨리기) */
+function equipFor(bd, sit) {
+  const en = (sit.room.en || []).map(x => x[0]); const big = !!sit.room.boss || en.length <= 1 || !!sit.room.strong;
+  const back = en.some(r => ['archer', 'healer', 'summoner'].includes(r)); const many = en.length >= 3; const heavy = en.includes('bruiser') || !!sit.room.boss || !!sit.room.strong; const boom = en.includes('bomber');
+  const has = (s, k) => s.fx.some(e => e.k === k);
+  const val = id => { const s = G0.SK2[id]; let v = s.row;
+    if (back && s.tgt === 'ranged') v += 6; if (many && (s.tgt === 'front' || s.tgt === 'all' || has(s, 'spread'))) v += 6; if (big && has(s, 'bigx')) v += 4;
+    if (heavy && (has(s, 'parry') || has(s, 'parryBuff') || has(s, 'onParry') || has(s, 'cutx') || s.fx.some(e => e.k === 'brk' && e.n >= 25))) v += 6; if (boom && (has(s, 'cutx') || s.fx.some(e => e.k === 'brk' && e.n >= 25))) v += 4; if (big && (has(s, 'burst') || has(s, 'grow') || has(s, 'exploit') || has(s, 'lowx'))) v += 2;
+    return v; };
+  const pick = bd.open.slice().sort((a, c) => val(c) - val(a)).slice(0, G0.EQUIP_SLOTS2);
+  // 독을 쓰는 스킬(터뜨리기·키우기·중독 비례)을 끼웠으면 독을 거는 스킬도 하나는 끼운다 (사람은 짝을 맞춘다)
+  const pay = id => G0.SK2[id].fx.some(e => ['burst', 'grow', 'exploit', 'brkPer', 'spread', 'drain'].includes(e.k));
+  const src = id => G0.SK2[id].fx.some(e => e.k === 'poison' && e.n >= 3);
+  if (pick.some(pay) && !pick.some(src)) { const cand = bd.open.filter(id => src(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (cand) { const lo = pick.slice().sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; } }
+  return pick;
+}
+function statsOf(lv) { const pts = 6 + 2 * (lv - 1); return { int: Math.ceil(pts / 2), dex: Math.floor(pts / 2), str: 0 }; }
+function fight(bd, sit, seed) {
+  const r = D.rng(seed); G0.__rnd = D.rng(seed * 31 + 7); run_('Math.random = __rnd');
+  const st = statsOf(bd.lv);
+  const p = G0.mkPlayer(CLS, {}, st, T.starters.concat(equipFor(bd, sit))); p.lv = bd.lv; G0.applyStats(p, st); p.hp = p.hpMax; p.st = p.stMax;
+  const sp = sit.p || {}; if (sp.hp) p.hp = Math.round(p.hpMax * sp.hp); if (sp.st != null) p.st = sp.st;
+  for (const k in (sp.s || {})) p.s[k] = { stacks: sp.s[k], until: 1e9, dur: 1e9 };
+  const room = JSON.parse(JSON.stringify(sit.room)); const bossKind = room.boss || null; if (room.boss) room.boss = true;
+  room.lv = (sit.lv && sit.lv[bd.lv]) || MLV[bd.lv]; room.floor = 10; if (!room.en) room.en = [];
+  const b = G0.roomBattle(p, room, bossKind, seed); b.rngF = r; b.stepMode = false;
+  const P = Q.PERSONAS[PK]; const mem = {}; let n = 0;
+  while (!b.over && n++ < 250) {
+    const sr = r() < (P.mech || 0.5) ? Q.sigRule(b, r) : null;
+    let [a, t] = sr || (P.look ? Q.lookahead(b, P, r) : Q.heuristic(b, P, r, mem));
+    if (a === 'flee') { const L = G0.actionList(b).filter(x => x.ok && x.id !== 'flee'); a = L[0].id; t = null; }
+    const sk = G0.SK2[a]; const kind = sk ? (sk.start ? 'st' : 'tr') : 'gen'; MIX[bd.lv + bd.br] = MIX[bd.lv + bd.br] || { st: 0, tr: 0, gen: 0 }; MIX[bd.lv + bd.br][kind]++;
+    try { G0.playerAct(b, a, t); } catch (e) { return { win: 0, bug: e.message }; }
+  }
+  return { win: b.over === 'win' ? 1 : 0, hp: b.p.hp / b.p.hpMax, rounds: b.round || 0, timeout: !b.over, b };
+}
+module.exports = { buildOf, equipFor, statsOf, fight, MLV, G0 };
+if (MAIN) {
+const builds = []; for (const lv of LVS) for (const br of T.branches) for (const col of [0, 1]) builds.push(buildOf(br, col, lv));
+const res = {}; let bugs = 0, touts = 0;
+for (const bd of builds) for (const sit of SIT) {
+  let w = 0, hp = 0, rd = 0, sc = 0;
+  for (let i = 0; i < N; i++) { const o = fight(bd, sit, 1000 + sit.id * 97 + i * 13); w += o.win; hp += o.win ? o.hp : 0; sc += o.win ? 0.4 + 0.4 * o.hp + 0.2 * Math.max(0, Math.min(1, 1 - ((o.rounds || 0) - 3) / 20)) : 0; rd += o.rounds || 0; if (o.bug) bugs++; if (o.timeout) touts++; }
+  res[bd.lv + bd.br + bd.col + ':' + sit.id] = { w: w / N, sc: sc / N, hp: w ? hp / w : 0, rd: rd / N }; // sc: 이기면 40 + 남은 생명력 40 + 빠르기 20(3라운드 안이면 다, 23라운드면 0), 지면 0
+}
+const pct = v => Math.round(v * 100);
+const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+const MET = process.env.MET || 'sc'; // 기본은 점수(승리 + 남은 생명력). MET=w면 승률
+const W = (lv, br, cols, sits) => avg(cols.flatMap(c => sits.map(s => res[lv + br + c + ':' + s.id][MET])));
+const WR = (lv, br, sits) => avg([0, 1].flatMap(c => sits.map(s => res[lv + br + c + ':' + s.id].w)));
+console.log(`상황 ${SIT.length} × 빌드 ${builds.length} × ${N}판, 성향 ${PK}, 세기 ${SIT_REAL ? "게임의 지금 세기" : "기준 세기(하층 ×1.05·×0.9)"}, 오류 ${bugs}, 시간 초과 ${touts}`);
+const verdict = [];
+for (const lv of LVS) {
+  console.log(`\n== Lv${lv} (몬스터 Lv${MLV[lv]}) — 범주별 ${MET === 'w' ? '승률' : '점수(승리 40 + 남은 생명력 40 + 빠르기 20)'} (두 기둥 평균)`);
+  console.log('범주'.padEnd(6) + T.branches.map(b => b.padStart(6)).join('') + '   평균');
+  const brAvg = {}; for (const br of T.branches) brAvg[br] = W(lv, br, [0, 1], SIT);
+  for (const cat of SIT_CATS) {
+    const ss = SIT.filter(s => s.cat === cat); const vs = T.branches.map(br => W(lv, br, [0, 1], ss)); const m = avg(vs);
+    const mark = T.branches.map((br, i) => { const pr = (T.profile || {})[br] || {}; const d = vs[i] - m; const want = (pr.strong || []).includes(cat) ? 'S' : (pr.weak || []).includes(cat) ? 'W' : ''; const ok = want === 'S' ? d >= TH.cat : want === 'W' ? d <= -TH.cat : true; if (want) verdict.push({ lv, br, cat, want, d, ok }); return (pct(vs[i]) + (want ? (ok ? want : want.toLowerCase() + '!') : '')).padStart(6); });
+    console.log(cat.padEnd(6) + mark.join('') + String(pct(m)).padStart(7));
+  }
+  { const cp = (T.profile || {}).직업; if (cp) { const all = avg(T.branches.map(br => W(lv, br, [0, 1], SIT))); for (const cat of SIT_CATS) { const want = (cp.strong || []).includes(cat) ? 'S' : (cp.weak || []).includes(cat) ? 'W' : ''; if (!want) continue; const v = avg(T.branches.map(br => W(lv, br, [0, 1], SIT.filter(x => x.cat === cat)))); const d = v - all; const ok = want === 'S' ? d >= TH.cat : d <= -TH.cat; verdict.push({ lv, br: '직업 전체', cat, want, d, ok }); console.log('직업 전체 ' + cat + ' ' + pct(v) + ' (전체 평균 ' + pct(all) + ', ' + (want === 'S' ? '강함' : '약함') + ' 목표) ' + (ok ? '맞음' : '못 맞춤')); } } }
+  console.log('승률 ' + T.branches.map(br => br + ' ' + pct(WR(lv, br, SIT)) + '%').join(' · '));
+  console.log('갈래 평균 ' + T.branches.map(br => br + ' ' + pct(brAvg[br])).join(' · ') + ` (차이 ${pct(Math.max(...Object.values(brAvg)) - Math.min(...Object.values(brAvg)))}%p)`);
+  console.log('행동 몫(갈래 스킬/시작 스킬/공통) ' + T.branches.map(br => { const m = MIX[lv + br] || { st: 0, tr: 0, gen: 1 }; const n = m.st + m.tr + m.gen; return br + ' ' + pct(m.tr / n) + '/' + pct(m.st / n) + '/' + pct(m.gen / n); }).join(' · '));
+  console.log('기둥(왼/오) ' + T.branches.map(br => br + ' ' + pct(W(lv, br, [0], SIT)) + '/' + pct(W(lv, br, [1], SIT))).join(' · '));
+  verdict.push({ lv, kind: 'parity', d: Math.max(...Object.values(brAvg)) - Math.min(...Object.values(brAvg)), ok: Math.max(...Object.values(brAvg)) - Math.min(...Object.values(brAvg)) <= TH.parity });
+  for (const br of T.branches) { const d = Math.abs(W(lv, br, [0], SIT) - W(lv, br, [1], SIT)); verdict.push({ lv, br, kind: 'col', d, ok: d <= TH.col }); }
+}
+const bad = verdict.filter(v => !v.ok);
+console.log(`\n기준 ${verdict.length}개 중 통과 ${verdict.length - bad.length}개`);
+for (const v of bad) console.log('  못 맞춤: Lv' + v.lv + ' ' + (v.kind === 'parity' ? '갈래 평균 차이 ' + pct(v.d) + '%p' : v.kind === 'col' ? v.br + ' 기둥 차이 ' + pct(v.d) + '%p' : v.br + ' ' + v.cat + (v.want === 'S' ? ' 강함' : ' 약함') + ' (평균 대비 ' + (v.d >= 0 ? '+' : '') + pct(v.d) + '%p)'));
+if (process.env.SITJSON) require('fs').writeFileSync(process.env.SITJSON, JSON.stringify({ res, verdict, builds }));
+}

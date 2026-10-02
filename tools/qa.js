@@ -122,7 +122,8 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     const t = best(a, (x, y) => psn(y) - psn(x)); if (!t || !(psn(t) + pre)) continue;
     const bf = a.s.fx.find(e => e.k === 'burst') || {}; const dmg = E.poisonTotal(psn(t) + pre) * (bf.mul || 1); // 터뜨리면 나올 피해 (사람은 버튼의 숫자를 보고 누른다)
     const kill = dmg >= t.hp; const low = exe && t.hp <= t.hpMax * exe.hp;
-    if (kill || low || psn(t) + pre >= th || dmg >= 15 || (t.intent && t.intent.k === 'heavy')) return [a.id, t.id];
+    const big = !!(t.elite || t.strong || t.role === 'boss');
+    if (kill || low || psn(t) + pre >= th || dmg >= 15 || (big && psn(t) + pre >= 3) || (t.intent && t.intent.k === 'heavy')) return [a.id, t.id]; // 큰 적은 독이 조금만 쌓여도 터뜨린다(큰 적 배수)
   }
   // 터뜨리기를 가진 빌드: 곧 터뜨릴 적에게 먼저 독을 쌓는다 (독 심기 → 독 격발)
   { const bu = L.filter(a => a.v2 && a.s.fx.some(e => e.k === 'burst') && !a.s.once);
@@ -130,6 +131,11 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     if (bu.length && pz.length && bu.some(a => (a.wait || 0) <= 1)) { const a = pz.sort((x, y) => (y.s.fx.find(e => e.k === 'poison').n) - (x.s.fx.find(e => e.k === 'poison').n))[0]; const t = best(a, (x, y) => (psn(y) - psn(x)) || (y.hp - x.hp)); if (t && psn(t) < th) return [a.id, t.id]; } }
   // 키우기: 중독 4 이상
   for (const a of okS.filter(a => has(a, 'grow'))) { const t = best(a, (x, y) => psn(y) - psn(x)); if (t && psn(t) >= 4) return [a.id, t.id]; }
+  // 강타·폭발을 모으는 적: 끊는 스킬(끊어 내기, 붕괴가 큰 스킬)로 그 적을 노린다 (사람은 예고를 보고 끊는다)
+  { const chg = E.alive(b).filter(e => e.intent && ['charge', 'heavy', 'fuse', 'explode'].includes(e.intent.k));
+    if (chg.length && r() < 0.8) { const brkOf = a => a.s.fx.reduce((m, e) => m + (e.k === 'cutx' ? e.brk : e.k === 'brk' ? e.n : e.k === 'brkPer' ? e.per * psn(chg[0]) : 0), 0);
+      const cs = okS.filter(a => !a.self && brkOf(a) >= 25).sort((x, y) => brkOf(y) - brkOf(x));
+      for (const a of cs) { const t = chg.filter(e => E.canTarget(b, e, a)).sort((x, y) => (y.brk / y.brkMax) - (x.brk / x.brkMax))[0]; if (t && t.brk + brkOf(a) >= t.brkMax * 0.6) return [a.id, t.id]; } } }
   // 흘리기형 스킬에 보상(피해·되받기)이 붙어 있으면 강타가 아니어도: 내 다음 차례 전에 나를 칠 적에게
   { const pa = okS.find(a => has(a, 'parry') && (has(a, 'onParry') || has(a, 'dmg'))); if (pa && r() < 0.7) { const at = pv1.find(x => x.e.intent && x.e.intent.k === 'attack'); if (at) return [pa.id, at.e.id]; } }
   // 광역: 둘 이상

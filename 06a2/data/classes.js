@@ -4,7 +4,7 @@
    나머지 시작 직업은 만드는 대로 더한다(CLASS_SOON은 캐릭터 만들기에 "준비 중"으로만 보인다).
    옛 직업 8종(0.6a)의 값은 지인 주소 data/classes.js에 그대로 있다. */
 const EXCL = {};   // 옛 직업 전용 스킬 (v2 직업은 data/skills.js의 트리를 쓴다)
-const SIG = {};    // 옛 직업 기술 (v2 시범에는 없다. 기획서 12절 질문 4)
+const SIG = {};    // 옛 직업 기술 (v2 시범에는 없다. docs/0.6a.2-개편-기획.md 12절 질문 4)
 
 /* 시작 스킬: v2 직업은 트리 밖의 시작 스킬 둘 (data/skills.js의 TREE2.starters와 같다) */
 const DEFAULT_SKILLS = { assassin: ['a_vital', 'a_slip'] };

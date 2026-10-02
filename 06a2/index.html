@@ -194,7 +194,24 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .sts i{position:relative;overflow:hidden;padding-bottom:3px}.sts i b{font-weight:700;margin-left:2px}.sts i u{position:absolute;left:0;bottom:0;height:2px;background:currentColor;opacity:.7;text-decoration:none}
 .ord{list-style:none;display:flex;gap:4px;overflow-x:auto;margin:6px 0 2px;padding:0}.ord li{flex:none;font-size:12.5px;border:1px solid var(--line);border-radius:6px;padding:3px 8px;background:var(--panel2);position:relative}
 .ord li+li:before{content:'›';position:absolute;left:-6px;color:var(--muted)}.ord li.me{border-color:var(--gold);color:var(--gold-ink);background:var(--gold);font-weight:700}
+.ord li.rsep{border:0;background:none;color:var(--muted);font-weight:700;padding:3px 2px;font-size:11.5px}.ord li.rsep:before,.ord li.rsep+li:before{content:none}.ord li.now{box-shadow:0 0 0 2px var(--gold)}.ord li.nx{opacity:.6}
 .ab.dis{opacity:.45;cursor:not-allowed}
+/* 0.6a.2 전투 보기 (10월 3일): 적 생명력은 굵은 막대와 큰 숫자, 상태는 생명력 바로 아래, 순번은 카드 위, 이번 차례에 남은 칸은 행동판 위 */
+.field .enemies{row-gap:12px;padding-top:6px}
+.field .en{padding-top:9px}
+.en .eord{position:absolute;top:-8px;left:8px;z-index:2;font-size:11px;font-weight:700;line-height:15px;border-radius:9px;padding:0 7px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);white-space:nowrap}
+.en .eord.soon{background:var(--bad);border-color:var(--bad);color:#fff}.en .eord.done{color:var(--muted);font-weight:500}
+.en .bar.ehp,.field .en .bar.ehp{height:20px;margin:3px 0 2px;border-radius:5px}
+.en .bar.ehp span,.field .en .bar.ehp span{font-size:11.5px;line-height:18px;font-weight:600}
+.bar.ehp span b{font-size:14px;font-weight:800}.bar.ehp.lo{border-color:var(--bad)}.bar.ehp.lo i{background:#e5432f}
+.field .en .sts{margin:3px 0 1px}.field .en .sts i{font-size:12px}
+.slotrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 6px}
+.slots{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600}.slots .pl{color:var(--muted)}
+.slot{border:1px solid var(--line);border-radius:12px;padding:2px 10px;background:var(--panel2);white-space:nowrap}.slot.on{border-color:var(--gold);color:var(--gold)}.slot.used{opacity:.5;text-decoration:line-through}
+.ab{position:relative}.ab b{padding-right:18px}.ab .spd{position:absolute;top:5px;right:6px;font-size:12px;line-height:1}.ab .spd.sn{opacity:.45}
+.ord li.dn{opacity:.5;text-decoration:line-through}
+@media (min-width:720px){.field .enemies{grid-template-columns:repeat(auto-fill,minmax(190px,250px))}}
+@media (max-width:719px){.slotrow .mini{display:none}.en .eord{font-size:10.5px}}
 [data-info]{cursor:help}.ab[data-info],.en[data-info]{cursor:pointer}.ab.dis{cursor:not-allowed}
 
 
@@ -600,16 +617,19 @@ function runSkill2(b, act, tgt) {
   const targets = s.tgt === 'front' ? alive(b).filter(e => e.row === 'front' && e.role !== 'root') : s.tgt === 'all' ? alive(b).filter(e => e.role !== 'root') : s.tgt === 'self' ? [] : (tgt ? [tgt] : []);
   const par = F('parry'); if (par && tgt) { setParry(b, tgt, par.red, F('onParry')); logp(b, 'sys', tgt.n + '의 다음 공격을 흘릴 준비를 한다'); }
   const sm = F('stam'); if (sm) { p.st = Math.min(p.stMax, p.st + sm.n); if (p.exhaust && p.st >= 30) p.exhaust = 0; }
+  if (s.tgt === 'self') for (const x of s.fx) if (x.k === 'st') { addS(b, p, x.s, x.n); logp(b, 'good', s.n + '. ' + (KW_N[x.s] || x.s) + ' ' + x.n); } // 나에게 거는 상태
   const pb = F('parryBuff'); if (pb) { p.pbuf = { n: pb.times || 1, red: pb.red || 0, stam: pb.stam || 0, dmg: pb.dmg || 0, poison: pb.poison || 0 }; logp(b, 'good', '칼끝을 겨눈다. 다음 흘리기 ' + p.pbuf.n + '번이 날카로워진다'); }
   const multi = s.tgt === 'front' || s.tgt === 'all'; const hits = s.hits || 1; let tot = 0, killed = 0;
-  const dm = F('dmg'), ex = F('exploit'), po = F('poison'), bk = F('brk'), bp = F('brkPer'); const stx = s.fx.filter(e => e.k === 'st'); const lx = F('lowx'), bx = F('brokenx'), sp = F('spread');
+  const dm = F('dmg'), ex = F('exploit'), po = F('poison'), bk = F('brk'), bp = F('brkPer'); const stx = s.tgt === 'self' ? [] : s.fx.filter(e => e.k === 'st'); const lx = F('lowx'), bx = F('brokenx'), sp = F('spread'), cx = F('cutx'), dr = F('drain'), gx = F('bigx'); const isBig = e => !!(e.elite || e.strong || e.role === 'boss');
   for (let h = 0; h < hits; h++) for (const e of targets) {
     if (!e.alive || b.over) continue;
     let base = (dm ? dm.n : 0) + (ex ? ex.per * st(e, 'poison') : 0);
-    if (lx && e.hp <= e.hpMax * lx.hp) base *= lx.mul; if (bx && e.s.broken) base *= bx.mul; // 마무리(생명력 낮음), 붕괴한 적
+    if (lx && e.hp <= e.hpMax * lx.hp) base *= lx.mul; if (bx && e.s.broken) base *= bx.mul; if (gx && isBig(e)) base *= gx.mul; // 마무리(생명력 낮음), 붕괴한 적, 큰 적
     if (base > 0) { tot += hurtEnemy(b, e, outDmg(b, base, {}), { single: multi ? 0 : 1, aoe: multi ? 1 : 0, melee: s.tgt === 'melee' || s.tgt === 'front' ? 1 : 0, label: s.n }); if (!e.alive) { killed++; continue; } }
     if (po) addPoison(b, e, po.n, 1, capOver);
     if (bk) addBreak(b, e, bk.n);
+    if (cx && h === 0 && e.alive && e.intent && ['charge', 'heavy', 'fuse', 'explode'].includes(e.intent.k)) { logp(b, 'good', e.n + '이(가) 모으던 힘을 노린다. 붕괴 +' + cx.brk); addBreak(b, e, cx.brk); } // 끊어 내기
+    if (dr && h === 0 && st(e, 'poison') > 0) { const hl = Math.min(p.hpMax - p.hp, st(e, 'poison') * dr.per * healMul(p)); if (hl > 0) { p.hp += hl; logp(b, 'good', e.n + '의 독에서 생명력 +' + r1(hl)); } } // 독 흡수: 중독은 그대로
     if (bp && h === 0) addBreak(b, e, bp.per * st(e, 'poison'));
     if (h === 0) for (const x of stx) if (e.alive) addS(b, e, x.s, x.n); // 적에게 거는 상태 (독무의 약화)
     if (sp && h === hits - 1 && e.alive) { const n = Math.ceil(st(e, 'poison') * sp.per); if (n > 0) { let k = 0; for (const o of alive(b)) if (o !== e && o.role !== 'root') { addPoison(b, o, n, 1, capOver); k++; } if (k) logp(b, 'good', e.n + '의 독이 번진다. 다른 적에게 중독 ' + n); } } // 독 번지기
@@ -622,7 +642,7 @@ function runSkill2(b, act, tgt) {
       if (bu.pre) addPoison(b, e, bu.pre, 1, capOver); // 터뜨리기 전에 거는 중독 (독 격발: 이 갈래만으로도 돌게)
       const n = st(e, 'poison'); if (n <= 0) { logp(b, 'sys', e.n + '에게 터뜨릴 중독이 없다'); continue; }
       const take = bu.half ? Math.ceil(n / 2) : bu.top ? Math.min(bu.top, n) : n;
-      const low = exe && e.hp <= e.hpMax * exe.hp; const mul = low ? exe.mul : (bu.mul || 1);
+      const low = exe && e.hp <= e.hpMax * exe.hp; const mul = (low ? exe.mul : (bu.mul || 1)) * (gx && isBig(e) ? gx.mul : 1);
       const total = (poisonTotal(n) - poisonTotal(n - take)) * mul * dotMul(p);
       const left = (bu.top || bu.half) ? n - take : Math.floor(n * (bu.keep || 0));
       if (left > 0) e.s.poison.stacks = left; else delete e.s.poison;
@@ -766,7 +786,7 @@ const wallUp = (b, e) => e.alive && e.row === 'back' && e.role !== 'boss' && !!h
 const wallFrontUp = (b, e) => e.alive && e.row === 'front' && !['boss', 'shield', 'root'].includes(e.role) && !!hasShield(b, e.id); // 방패병 옆 전열 동료
 const TELE = { heavy: 5 }; // 적 강타 = 평소 공격 × heavy (예고를 읽고 막는 판단의 무게)
 /* 0.6a.2: 적이 거는 상태 (숫자 하나, 발동마다 1 감소). 사수 출혈은 걸린 쪽이 행동할 때마다 터지므로 세 번에 한 번, 2만 건다 */
-const EKW = { archerBleed: 2, archerEvery: 3, heavyVuln: 2, explodeWeak: 2 };
+const EKW = { archerBleed: 2, archerEvery: 3, heavyVuln: 2, explodeWeak: 2, explodeMul: 3 }; // explodeMul: 자폭병 폭발 = 평소 공격 × 3 (10월 3일: 폭발이 평소 공격과 같아 "터지기 전에 끊는다"는 판단이 없었다)
 const ENRAGE = { boss: 45, room: 40, step: 10 }; // 광폭화 시각(시간 단위)과 짙어지는 간격
 const ABBOT = { cycle: 5, brand: 0.2, vowHeal: 0.01, vowTaken: 0.6, monkHeal: 0.025 };
 function codexHit(b, id, key) { b.codex = b.codex || {}; b.codex[id + '.' + key] = 1; }
@@ -917,11 +937,11 @@ function fxStat(p, key) { let v = 0; for (const [, f] of fxList(p)) if (f.st && 
 function flaskCap(p, k) { return Math.max(1, (p.flaskMax || 3) + fxList(p).reduce((a, [, f]) => a + ((f.cap && f.cap[k]) || 0), 0)); }
 function actCost(p, id, base) { return Math.max(0, base + fxAdd(p, 'cost', p, id)); }
 
-const ST_REGEN = 10; // 스태미나 자연 회복 (1T마다). B0.5의 8에서 올림: 기본 공격이 스태미나를 채우지 않게 되면서 3,840판 비교로 정함 (11.6절)
+const ST_REGEN = 10; // 스태미나 자연 회복 (라운드가 끝날 때마다). B0.5의 8에서 올림: 기본 공격이 스태미나를 채우지 않게 되면서 3,840판 비교로 정함 (11.6절)
 const gearOf = p => p.gear || START_GEAR;
 function wpnDmg(p) { return gearOf(p).wpn; }
 function basicBase(p) { return wpnDmg(p) * (isCaster(p) ? 0.9 : 1) * (hasIt(p, 'venomring') ? 0.9 : 1); }
-function heavyBase(p) { return wpnDmg(p) * (isCaster(p) ? 1.6 : 1.8) * (p.eq.weapon === 'twin' ? 0.8 : 1); }
+function heavyBase(p) { return wpnDmg(p) * (isCaster(p) ? 1.6 : isV2(p) ? 1.5 : 1.8) * (p.eq.weapon === 'twin' ? 0.8 : 1); } // 0.6a.2: 강공격 180% → 150% (10월 3일: 공통 행동이 갈래 스킬보다 세서 갈래 성격이 묻혔다)
 function flaskHealFrac(p) { return (gearOf(p).flask + (hasBt(p, 'mercy') ? 0.1 : 0) + fxVal(p, 'heal', 0, (a, v) => a + v)) * fxVal(p, 'healMul', 1, (a, v) => a * v) * (p.eq.flask === 'chalice' ? 0.9 : p.eq.flask === 'boilflask' ? 0.75 : p.eq.flask === 'bloodoil' ? 0.8 : 1); }
 function calcMpMax(p) { if (isV2(p)) return 0; return BUILDS[p.build].mp + gearOf(p).mp + fxStat(p, 'mp') + ((p.lv || 1) - 1) * ((LV_GAIN[p.build] || {}).mp || 0) + stat(p, 'int') - (p.eq.amulet === 'sigil' ? 15 : 0) - (p.eq.gloves === 'vpouch' ? 10 : 0); }
 function calcStMax(p) { return 100 + gearOf(p).st + fxStat(p, 'st') + stat(p, 'dex') - (p.eq.amulet === 'vanguard' ? 20 : 0) - (p.eq.gloves === 'chaingl' ? 10 : 0); }
@@ -978,10 +998,10 @@ function newBattle(player, enemies, ctx) {
   player.vanguard = player.eq && player.eq.amulet === 'vanguard' ? 1 : 0;
   const b = {
     t: 0, p: player, en: enemies, log: [], over: null, ctx: ctx || {}, seq: 0,
-    pNext: 0, tick: 0, season: 0, enrage: false, mirrorCount: 0, hatchLock: false, missToggle: false,
+    round: 0, queue: null, bonusUsed: 0, tick: 0, season: 0, enrage: false, mirrorCount: 0, hatchLock: false, missToggle: false,
     turnIdx: 0, rec: [], idc: 100,
   };
-  for (const e of enemies) { e.next = 0.01 * (enemies.indexOf(e) + 1); if (!e.intent) decideIntent(b, e); }
+  for (const e of enemies) { if (!e.intent) decideIntent(b, e); } // 0.6a.2 라운드: 첫 라운드는 runUntilPlayer가 연다
   player.guard = 0; player.dodge = 0; player.stun = 0; player.fxDodged = 0;
   if (isV2(player)) resetCharges(player);
   fxRun(player, 'onStart', b, player);
@@ -1009,8 +1029,8 @@ function hasShield(b, exceptId) { return alive(b).find(e => e.role === 'shield' 
 function st(u, k) { const x = u.s[k]; return x ? (x.stacks || 1) : 0; }
 /* ===== 0.6a.2 상태 키워드 (docs/0.6a.2-개편-기획.md 5절): 숫자 하나, 발동할 때마다 1 감소, 키워드별 상한 =====
    내부 이름은 옛 것을 그대로 쓴다(장비 효과 코드가 그대로 돈다): ignite = 화상, chill = 둔화.
-   중독: 시간마다 N 피해. 출혈: 걸린 쪽이 행동할 때마다 N 피해. 화상: 걸린 쪽이 직접 피해를 받을 때마다 N 더.
-   약화↔강화: 공격할 때마다 그 공격 −25%/+25%. 취약↔보호: 직접 피해를 받을 때마다 +25%/−25%. 둔화↔가속: 행동할 때마다 그 행동 시간 +50%/−33%.
+   중독: 라운드가 끝날 때마다 N 피해. 출혈: 걸린 쪽이 행동할 때마다 N 피해. 화상: 걸린 쪽이 직접 피해를 받을 때마다 N 더.
+   약화↔강화: 공격할 때마다 그 공격 −25%/+25%. 취약↔보호: 직접 피해를 받을 때마다 +25%/−25%. 둔화↔가속: 라운드가 시작될 때 그 라운드의 맨 뒤/맨 앞에서 움직이고 1 감소 (roundOrder).
    반대 쌍은 걸 때 숫자끼리 뺀다. 상한을 넘친 몫은 버린다. 막음: 걸리려는 해로운 상태를 튕겨 낸다(정화 플라스크).
    붕괴(broken)와 낙인(brand, 보스 기믹)은 예전 규칙을 따른다. */
 const KW = { poison: 20, bleed: 10, ignite: 10, weak: 5, empower: 5, vuln: 5, protect: 5, chill: 3, haste: 3, block: 5 };
@@ -1026,8 +1046,6 @@ function kwBlocked(b, u, k) {
 }
 /* 출혈: 걸린 쪽이 행동할 때마다 N 피해, 1 감소 */
 function kwBleed(b, u) { const n = stk(u, 'bleed'); if (!n || b.over) return; kwDec(u, 'bleed'); dmgDot(b, u, n * (hasMod(b, 'bloodpool') ? 2 : 1) * (u === b.p ? 1 : dotMul(b.p)), '출혈'); }
-/* 둔화·가속: 행동할 때마다 그 행동 시간 ×1.5 / ×0.67, 1 감소 */
-function kwTime(u, t) { if (u.s.chill) { kwDec(u, 'chill'); return t * 1.5; } if (u.s.haste) { kwDec(u, 'haste'); return t * 0.67; } return t; }
 /* 직접 피해를 받을 때: 취약 ×1.25 / 보호 ×0.75 (1 감소), 화상 N 더 (1 감소). 지속 피해는 발동시키지 않는다 */
 function kwTaken(b, u, d, o) {
   if (o.dot || !(d > 0)) return d;
@@ -1061,7 +1079,7 @@ function chargeEv(b, kind) {
     logp(b, 'good', br + ' 스킬 대기 −1 (' + HS_WHY[kind] + ')');
   }
 }
-const HS_WHY = { poison: '독을 걸었다', kill: '적을 쓰러뜨렸다', parry: '흘려 냈다' };
+const HS_WHY = { poison: '독을 걸었다', kill: '적을 쓰러뜨렸다', parry: '흘려 냈다', break: '정예 이상을 무너뜨렸다' };
 /* 스킬 트리 (개편 기획 4절): 포인트 1로 한 칸을 연다. 깊은 등급은 그 갈래에 먼저 쓴 포인트가 있어야 열린다(TREE_GATE). 연 스킬 가운데 4칸을 장착 */
 function treeInit(run) { const T = TREE2[run.build]; if (!T) return; run.tree = run.tree || { pts: T.pts || 0, open: [], spent: {} }; }
 /* 저장본 고치기: 스킬 데이터에서 빠진 칸(10월 3일 재사용 대기 개편: 짧은 격발 → 독 심기, 시작 스킬 바뀜)은 연 칸에서 지우고 포인트를 돌려준다 */
@@ -1330,12 +1348,12 @@ function checkEnd(b) {
   if (!alive(b).some(e => e.role !== 'root')) {
     b.over = 'win'; logp(b, 'good', '마지막 적이 쓰러진다. 방이 조용해진다');
     const f = b.p.flask; if (f.stam == null) f.stam = b.p.flaskMax; const k = ['life', 'mana', 'stam'].reduce((a, c) => f[c] - flaskCap(b.p, c) < f[a] - flaskCap(b.p, a) ? c : a, 'life');
-    if (f[k] < flaskCap(b.p, k)) { f[k]++; logp(b, 'good', ({ life: '생명력', mana: '마나', stam: '스태미나' })[k] + ' 플라스크가 1 찬다'); }
+    if (f[k] < flaskCap(b.p, k)) { f[k]++; logp(b, 'good', ({ life: '생명력', mana: isV2(b.p) ? '정화' : '마나', stam: '스태미나' })[k] + ' 플라스크가 1 찬다'); }
   }
 }
 function spawn(b, role) {
   if (alive(b).filter(e => e.role === 'minion').length >= 4) return null;
-  const e = mkEnemy(role, 0, b.idc++, { lv: (b.ctx && b.ctx.lv) || 1, name: b.ctx && b.ctx.names && b.ctx.names[role] }); e.summoned = true; e.next = b.t + 1 / e.spd; decideIntent(b, e); b.en.push(e); return e;
+  const e = mkEnemy(role, 0, b.idc++, { lv: (b.ctx && b.ctx.lv) || 1, name: b.ctx && b.ctx.names && b.ctx.names[role] }); e.summoned = true; decideIntent(b, e); b.en.push(e); return e;
 }
 
 /* ================= 적 의도 (4.5, 규칙 기반) ================= */
@@ -1382,7 +1400,7 @@ function intentText(b, e) {
     case 'heal': { const t = b.en.find(x => x.id === i.tgt); return { t: (t ? t.n : '아군') + '을(를) ' + r1(healFrac(e) * 100) + '% 치유' + (e.healN && !e.monk ? ' (지침)' : ''), hv: 1 }; }
     case 'summon': return { t: '하수인 둘을 부른다', hv: 0 };
     case 'fuse': return { t: '도화선에 불을 붙인다. 다음 행동에 터진다', hv: 1 };
-    case 'explode': return { t: '폭발 ' + est + ' · 광역 · 약화 ' + EKW.explodeWeak, hv: 1 };
+    case 'explode': return { t: '폭발 ' + r1(est * EKW.explodeMul) + ' · 광역 · 약화 ' + EKW.explodeWeak, hv: 1 };
     case 'mirror': return { t: '나락의 거울. 내 직전 스킬의 절반 ' + r1(b.p.lastSkillDmg * 0.5), hv: 1 };
     case 'brand': return { t: '죄를 읽는다. 공격 ' + r1(est * 0.6), hv: 0 };
     case 'pray': return { t: '입을 다물고 기도한다. 공격하지 않는다', hv: 0 };
@@ -1401,7 +1419,7 @@ function intentBadge(b, e) {
     case 'heal': { const t = b.en.find(x => x.id === i.tgt); return { ico: INTENT_ICO.heal, num: Math.round(healFrac(e) * 100) + '%', txt: '치유 → ' + (t ? t.n : '아군'), cls: 'sup' }; }
     case 'summon': return { ico: INTENT_ICO.summon, num: '', txt: '하수인 둘을 부른다', cls: 'sup' };
     case 'fuse': return { ico: INTENT_ICO.fuse, num: '', txt: '불을 붙인다. 다음 행동에 폭발', cls: 'warn' };
-    case 'explode': return { ico: INTENT_ICO.explode, num: r1(est), txt: '폭발 · 모두에게 · 약화 ' + EKW.explodeWeak, cls: 'hv' };
+    case 'explode': return { ico: INTENT_ICO.explode, num: r1(Math.min(est * EKW.explodeMul, b.p.hpMax * (e.elite ? 0.35 : 0.25))), txt: '폭발 · 모두에게 · 약화 ' + EKW.explodeWeak, cls: 'hv' };
     case 'mirror': return { ico: INTENT_ICO.mirror, num: r1(b.p.lastSkillDmg * 0.5), txt: '거울: 내 스킬의 절반', cls: 'hv' };
     case 'brand': return { ico: INTENT_ICO.brand, num: r1(capOf(est * 0.6)), txt: '죄를 읽는다 · 낙인', cls: 'atk' };
     case 'pray': return { ico: INTENT_ICO.pray, num: '', txt: '기도. 공격하지 않는다', cls: 'sup' };
@@ -1426,7 +1444,7 @@ function enemyHitEst(b, e) {
 function enemyAct(b, e) {
   b.actN = (b.actN || 0) + 1;
   if (e.s.trap) { const tr = e.s.trap; delete e.s.trap; hurtEnemy(b, e, tr.stacks, { label: '덫', aoe: tr.aoe || 0 }); if (e.alive) addBreak(b, e, tr.brk || 0); logp(b, 'good', e.n + '이(가) 덫을 밟는다'); if (!e.alive || b.over) return; }
-  if (e.stun > 0) { e.stun--; logp(b, 'sys', e.n + '이(가) 비틀거린다. 행동을 놓친다'); e.next = b.t + 1 / eSpeed(b, e); e.acts++; return; }
+  if (e.stun > 0) { e.stun--; logp(b, 'sys', e.n + '이(가) 비틀거린다. 행동을 놓친다'); e.acts++; return; }
   const i = e.intent || { k: 'attack' }; const d = enemyHitEst(b, e);
   b.rec.push({ k: 'eact', t: r1(b.t), role: e.role, i: i.k });
   switch (i.k) {
@@ -1438,7 +1456,7 @@ function enemyAct(b, e) {
     case 'heal': { const t = b.en.find(x => x.id === i.tgt && x.alive) || alive(b).sort((a, c) => a.hp / a.hpMax - c.hp / c.hpMax)[0]; if (t) { const hf = healFrac(e); t.hp = Math.min(t.hpMax, t.hp + t.hpMax * hf); if (!e.monk) e.healN = (e.healN || 0) + 1; logp(b, 'bad', e.n + '이(가) ' + t.n + '의 상처를 봉합한다. ' + r1(hf * 100) + '% 회복' + (!e.monk ? '. 손이 점점 무뎌진다' : '')); } break; }
     case 'summon': spawn(b, 'minion'); spawn(b, 'minion'); logp(b, 'bad', e.n + '의 부름에 뼈가 일어선다'); break;
     case 'fuse': logp(b, 'sys', e.n + '의 도화선이 타들어 간다'); break;
-    case 'explode': { hurtPlayer(b, d, { src: e, aoe: 1, label: e.n + '이(가) 터진다' }); if (!b.over) addS(b, b.p, 'weak', EKW.explodeWeak); e.alive = false; e.hp = 0; logp(b, 'sys', e.n + '은(는) 재가 되어 흩어진다'); checkEnd(b); break; }
+    case 'explode': { hurtPlayer(b, d * EKW.explodeMul, { src: e, aoe: 1, label: e.n + '이(가) 터진다' }); if (!b.over) addS(b, b.p, 'weak', EKW.explodeWeak); e.alive = false; e.hp = 0; logp(b, 'sys', e.n + '은(는) 재가 되어 흩어진다'); checkEnd(b); break; }
     case 'mirror': { const x = b.p.lastSkillDmg * 0.5; if (x > 0) hurtPlayer(b, x, { src: e, single: 1, label: '나락의 거울이 내 스킬을 되비춘다' }); else logp(b, 'sys', '거울에 비칠 것이 없다'); break; }
   }
   // 0.6a.2: 공격했으면 약화·강화 1 감소, 행동했으니 출혈 발동, 다음 행동 시간에 둔화·가속
@@ -1446,7 +1464,7 @@ function enemyAct(b, e) {
   if (e.alive) kwBleed(b, e);
   e.acts++;
   if (e.role === 'boss' && e.alive) bossPhase(b, e);
-  if (e.alive) { decideIntent(b, e); e.next = b.t + kwTime(e, (e.quick ? 0.5 : 1)) / eSpeed(b, e); e.quick = 0; }
+  if (e.alive) decideIntent(b, e);
 }
 /* 굶주린 순례자: 준 피해의 절반을 마신다 */
 function leech(b, e, x) { if (e.foe === 'pilgrim' && x > 0 && e.alive) { e.hp = Math.min(e.hpMax, e.hp + x * STRONG.leech); logp(b, 'bad', e.n + '이(가) 피를 마신다. ' + r1(x * STRONG.leech) + ' 회복'); codexHit(b, 'pilgrim', 'leech'); } }
@@ -1454,7 +1472,7 @@ function bossPhase(b, e) {
   const f = e.hp / e.hpMax; const ph = Math.max(e.phase || 1, e.boss === 'abbot' ? (f > 0.65 ? 1 : f > 0.3 ? 2 : 3) : f > 0.7 ? 1 : f > 0.35 ? 2 : 3); // 페이즈는 되돌아가지 않는다(회복해도 수도사가 다시 일어서지 않게)
   if (e.boss === 'abbot' && ph !== e.phase) {
     if (ph >= 2 && e.phase < 2) { e.vow = 1; e.vowTick = b.tick; e.intent = { k: 'pray' }; logp(b, 'crit', e.n + '이(가) 입을 다문다'); codexHit(b, 'abbot', 'vow'); }
-    if (ph === 3 && e.phase < 3) { e.vow = 0; for (let i = 0; i < 2; i++) { const m = mkEnemy('healer', 0, b.idc++, { lv: e.lv || 1, name: '수도사' }); m.monk = 1; m.summoned = true; m.next = b.t + 0.6 + i * 0.2; decideIntent(b, m); b.en.push(m); } logp(b, 'crit', '무너진 제단에서 수도사들이 일어선다'); codexHit(b, 'abbot', 'monks'); }
+    if (ph === 3 && e.phase < 3) { e.vow = 0; for (let i = 0; i < 2; i++) { const m = mkEnemy('healer', 0, b.idc++, { lv: e.lv || 1, name: '수도사' }); m.monk = 1; m.summoned = true; decideIntent(b, m); b.en.push(m); } logp(b, 'crit', '무너진 제단에서 수도사들이 일어선다'); codexHit(b, 'abbot', 'monks'); }
     e.phase = ph; return;
   }
   if (ph !== e.phase) { e.phase = ph; logp(b, 'crit', e.n + '의 기세가 바뀐다. ' + ph + '페이즈' + (e.boss === 'mother' && ph === 2 ? '. 나락의 거울이 열린다' : '')); }
@@ -1478,8 +1496,8 @@ function guardOf(b, e) {
 }
 function pickDodge(b) {
   const al = alive(b).filter(e => e.role !== 'root');
-  const hv = al.filter(e => e.intent && e.intent.k === 'heavy').sort((x, y) => x.next - y.next)[0];
-  return hv || al.filter(e => e.intent && ['attack', 'mirror'].includes(e.intent.k)).sort((x, y) => x.next - y.next)[0] || al[0];
+  const hv = al.filter(e => e.intent && e.intent.k === 'heavy').sort((x, y) => actIdx(b, x) - actIdx(b, y))[0];
+  return hv || al.filter(e => e.intent && ['attack', 'mirror'].includes(e.intent.k)).sort((x, y) => actIdx(b, x) - actIdx(b, y))[0] || al[0];
 }
 function dodgeCost(p) { return Math.max(0, actCost(p, 'dodge', (p.build === 'assassin' && isV2(p) ? 25 : 30) + (p.eq.amulet === 'witness' ? 10 : 0) - Math.floor(stat(p, 'dex') / 10)) - (p.pbuf ? p.pbuf.stam : 0)); }
 const guardCost = p => actCost(p, 'guard', 20);
@@ -1535,6 +1553,7 @@ function actionList(b) {
   L.push({ id: 'flaskM', n: isV2(p) ? '정화 플라스크' : '마나 플라스크', self: 1, cost: '남은 ' + p.flask.mana, time: 0.5, ok: p.flask.mana > 0 });
   L.push({ id: 'flaskS', n: '스태미나 플라스크', self: 1, cost: '남은 ' + (p.flask.stam || 0), time: 0.5, ok: (p.flask.stam || 0) > 0 });
   if (!b.ctx.boss && !b.ctx.scen && !b.ctx.tut) L.push({ id: 'flee', n: '도망', self: 1, cost: '성공 ' + Math.round(fleeChance(b) * 100) + '%', time: 1, ok: true });
+  if (b.bonusUsed) for (const a of L) if (a.time >= 1.25 && a.ok) { a.ok = false; a.why = '빠른 행동을 써서 이번 차례엔 느린 행동 불가'; } // 느린 행동은 두 칸
   return b.ctx.allow ? L.filter(a => b.ctx.allow.includes(a.id)) : L; // 수련장: 그 장면에서 배우는 행동만
 }
 function fleeChance(b) { return clamp(0.6 + (pSpeed(b) - 1) * 0.4, 0.05, 0.95); }
@@ -1741,7 +1760,7 @@ function addBreak(b, e, v) {
   e.brk += v * (1 + 0.01 * stat(b.p, 'str'));
   if (e.brk >= e.brkMax) {
     const cut = !!(e.intent && ['heavy', 'charge', 'explode', 'fuse'].includes(e.intent.k)); // 모으던 강타·폭발을 끊었는가 (수련장 목표)
-    e.brk = 0; e.stun = 1; addS(b, e, 'broken', 1); addS(b, e, 'vuln', 2);
+    e.brk = 0; e.stun = 1; addS(b, e, 'broken', 2); addS(b, e, 'vuln', 2); /* 붕괴 상태는 다음 라운드가 끝날 때까지 (10월 3일 라운드 방식: 1이면 이번 라운드 끝에 풀려, 무너뜨린 뒤 내 다음 차례에는 붕괴한 적을 칠 수 없었다) */ if (e.elite || e.strong || e.role === 'boss') chargeEv(b, 'break'); // 격발 갈래 규칙: 정예 이상을 무너뜨리면 대기 −1 (하수인·일반은 세지 않는다: 무리에서 돌지 않게)
     if (e.vow) { e.vow = 0; e.vowTick = b.tick; addS(b, e, 'vuln', 2); logp(b, 'crit', e.n + '의 서원이 깨진다'); codexHit(b, 'abbot', 'vowbreak'); }
     if (e.intent && (e.intent.k === 'heavy' || e.intent.k === 'charge' || e.intent.k === 'explode' || e.intent.k === 'fuse')) { e.intent = { k: 'attack' }; }
     if (e.role === 'boss') { e.breaks++; e.brkMax = Math.round(e.brkMax * 1.5); }
@@ -1751,54 +1770,73 @@ function addBreak(b, e, v) {
 }
 function finishPlayer(b, time, lost) {
   const p = b.p; b.cur = null; b.curSkill = null;
-  // 0.6a.2: 행동했으면(기절로 놓친 차례가 아니면) 약화·강화(공격했을 때), 출혈, 둔화·가속. 재사용 대기는 놓친 차례에도 준다
-  if (!lost) { if (b.atkUsed) { kwDec(p, 'weak'); kwDec(p, 'empower'); } kwBleed(b, p); time = kwTime(p, time); }
-  chargeEv(b, 'turn');
+  // 0.6a.2: 행동했으면(기절로 놓친 차례가 아니면) 약화·강화(공격했을 때)와 출혈
+  if (!lost) { if (b.atkUsed) { kwDec(p, 'weak'); kwDec(p, 'empower'); } kwBleed(b, p); }
   b.atkUsed = 0;
-  if (p.fxQuick) { time *= 0.5; p.fxQuick = 0; fxHit('saintgrail'); } if (p.fxQuickNext) { p.fxQuick = 1; p.fxQuickNext = 0; }
   if (p.st <= 0) { p.st = 0; p.exhaust = 1; }
   if (p.exhaust && p.st >= 30) p.exhaust = 0;
-  b.pNext = b.t + time / pSpeed(b);
+  // 내 차례 = 빠른 행동 1번(먼저) + 주 행동 1번 (10월 3일, 기획서 12.7절). 빠른 칸을 쓰면 차례가 이어지고, 주 행동을 하면 차례가 끝난다.
+  // 느린 행동은 두 칸을 다 쓴다(빠른 칸이 남아 있어야 한다). 성인의 성배·수확자의 손: 다음 빠른 행동 한 번은 빠른 칸을 쓰지 않는다
+  if (!lost && !b.over && time <= 0.6 && !b.bonusUsed) {
+    b.bonusUsed = 1; if (p.fxQuickNext) { p.fxQuickNext = 0; b.bonusUsed = 0; fxHit(p.eq.flask === 'saintgrail' ? 'saintgrail' : 'reaperhands'); }
+    b.waiting = false; return;
+  }
+  chargeEv(b, 'turn'); b.bonusUsed = 0; // fxQuickNext(성인의 성배·수확자의 손)는 지우지 않는다: 주 행동으로 쓰러뜨려도 다음 빠른 행동 한 번이 빠른 칸을 쓰지 않게
+  if (b.queue && b.queue[0] === 'p') b.queue.shift();
   b.turnIdx++;
   if (b.stepMode) { b.waiting = true; return; }
   runUntilPlayer(b);
 }
+/* ===== 0.6a.2 라운드 (10월 3일 만든 사람 요청: 턴이 분명한 기준으로 움직이게, 기획서 12.7절) =====
+   라운드마다 살아 있는 모두(나와 적)가 한 번씩 정해진 순서로 행동한다. 순서는 무리(가속 → 보통 → 둔화·느린 행동 뒤·매복 첫 라운드의 나) 안에서
+   속도가 높은 쪽 먼저, 같으면 나 먼저, 그다음 적이 놓인 순서. 속도 1.5 이상인 적은 라운드 끝에 한 번 더 움직인다.
+   라운드가 끝나면 중독, 스태미나, 보스 시계, 광폭화를 처리한다(tickOnce). b.t는 지난 라운드 수다 */
+const RND_TWICE = 1.5;
+function roundOrder(b, consume, slowMe) {
+  const p = b.p; const al = alive(b).filter(e => e.role !== 'root');
+  const grp = (u, isP) => { if (isP && (b.ambushR && (b.round || 0) === 0)) return 2; if (!isP && u.quick) return 0; if (u.s.haste) return 0; if (u.s.chill) return 2; return 1; };
+  const ents = [{ id: 'p', g: grp(p, true), sp: pSpeed(b), i: -1 }].concat(al.map((e, i) => ({ id: e.id, g: grp(e, false), sp: eSpeed(b, e), i })));
+  ents.sort((a, c) => a.g - c.g || c.sp - a.sp || a.i - c.i);
+  const out = ents.slice(); for (const x of ents) if (x.id !== 'p' && x.sp >= RND_TWICE) out.push(Object.assign({}, x, { twice: 1 })); // 두 번 움직이는 적
+  if (consume) {
+    for (const x of ents) { const u = x.id === 'p' ? p : b.en.find(e => e.id === x.id); if (!u) continue;
+      if (x.g === 0 && u.s.haste) kwDec(u, 'haste'); if (x.g === 2 && u.s.chill) kwDec(u, 'chill'); if (x.id !== 'p') u.quick = 0; }
+    b.ambushR = 0;
+  }
+  return out;
+}
+function startRound(b) { b.round = (b.round || 0) + 1; b.queue = roundOrder(b, true).map(x => x.id); b.roundAll = b.queue.slice(); b.bonusUsed = 0; }
+function endRound(b) { b.t = b.tick + 1; tickOnce(b); }
+/* 순서 안의 자리: 이번 라운드 남은 줄 → 다음 라운드 (흘릴 적 고르기, 미리 보기) */
+function actIdx(b, e) { const q = (b.queue || []).filter(id => id !== 'p'); const i = q.indexOf(e.id); if (i >= 0) return i; const j = roundOrder(b, false).map(x => x.id).indexOf(e.id); return j >= 0 ? q.length + j : 99; }
 /* 한 번에 하나씩: 적 한 명의 행동 또는 내 차례 도달 */
 function stepWorld(b) {
   if (b.over) { b.waiting = false; return 'over'; }
-  const al = alive(b).filter(e => e.role !== 'root');
-  let nxt = null; for (const e of al) if (!nxt || e.next < nxt.next) nxt = e;
-  if (!nxt || b.pNext <= nxt.next) { advanceTo(b, b.pNext); b.waiting = false; b.lastActor = null; return b.over ? 'over' : 'player'; }
-  advanceTo(b, nxt.next);
-  if (b.over) { b.waiting = false; return 'over'; }
-  if (nxt.alive) { b.lastActor = nxt.id; enemyAct(b, nxt); }
-  if (b.over) { b.waiting = false; return 'over'; }
+  if (!b.queue) startRound(b);
+  for (let n = 0; n < 200; n++) {
+    if (!b.queue.length) { endRound(b); if (b.over) { b.waiting = false; return 'over'; } startRound(b); }
+    const id = b.queue[0];
+    if (id === 'p') { b.waiting = false; b.lastActor = null; return 'player'; }
+    b.queue.shift();
+    const e = b.en.find(x => x.id === id);
+    if (!e || !e.alive || e.role === 'root') continue;
+    b.lastActor = e.id; enemyAct(b, e);
+    if (b.over) { b.waiting = false; return 'over'; }
+    return 'acted';
+  }
   return 'acted';
 }
 /* 다음 플레이어 차례까지 진행 */
 function runUntilPlayer(b) {
   let guardN = 0;
-  while (!b.over && guardN++ < 500) {
-    const al = alive(b).filter(e => e.role !== 'root');
-    let nxt = null;
-    for (const e of al) if (!nxt || e.next < nxt.next) nxt = e;
-    if (!nxt || b.pNext <= nxt.next) { advanceTo(b, b.pNext); return; }
-    advanceTo(b, nxt.next);
-    if (b.over) return;
-    if (nxt.alive) enemyAct(b, nxt);
-  }
+  while (!b.over && guardN++ < 2000) { const r = stepWorld(b); if (r !== 'acted') return; }
 }
-/* 순서표: 다음 8번의 행동 */
+/* 순서표: 이번 라운드에 남은 순서와 다음 라운드 */
 function preview(b) {
-  const q = [{ who: 'p', at: b.pNext, n: '나' }];
-  for (const e of alive(b).filter(x => x.role !== 'root')) q.push({ who: e.id, at: e.next, n: e.n, sp: eSpeed(b, e) });
-  const out = []; const tmp = q.map(x => Object.assign({}, x));
-  for (let i = 0; i < 8 && tmp.length; i++) {
-    tmp.sort((a, c) => a.at - c.at || (a.who === 'p' ? -1 : 1));
-    const x = tmp[0]; out.push({ n: x.n, me: x.who === 'p', at: r1(x.at) });
-    x.at += 1 / (x.who === 'p' ? pSpeed(b) : x.sp);
-  }
-  return out;
+  const nm = id => id === 'p' ? '나' : ((b.en.find(e => e.id === id) || {}).n || '');
+  const cur = (b.queue || []).filter(id => id === 'p' || (b.en.find(e => e.id === id) || {}).alive).map((id, k) => ({ id, n: nm(id), me: id === 'p', now: k === 0, r: b.round || 1 }));
+  const nxt = roundOrder(b, false).map(x => ({ id: x.id, n: nm(x.id), me: x.id === 'p', r: (b.round || 1) + 1 }));
+  return cur.concat(nxt);
 }
 
 /* ================= 전투 구성 ================= */
@@ -1823,7 +1861,7 @@ function roomBattle(player, room, bossKind, seed) {
   setRng(b, seed || 7);
   const pre = room.pre || {};
   if (pre.weak) addS(b, player, 'weak', pre.weak); if (pre.vuln) addS(b, player, 'vuln', pre.vuln); if (pre.poison) addPoison(b, player, pre.poison, 0);
-  if (room.ambush) { b.pNext = 0.6; logp(b, 'bad', '어둠 속에서 적이 먼저 덮친다'); }
+  if (room.ambush) { b.ambushR = 1; logp(b, 'bad', '어둠 속에서 적이 먼저 덮친다. 첫 라운드에 내가 맨 뒤다'); }
   runUntilPlayer(b);
   return b;
 }
@@ -1887,12 +1925,12 @@ const HELP = [
   { k: 'build', n: '직업과 스킬', t: [
     '시험판에서는 암살자를 고를 수 있습니다. 나머지 직업은 만드는 대로 열립니다.',
     '직업마다 시작 스킬 둘이 늘 끼워져 있습니다. 장착 칸을 차지하지 않습니다.',
-    '스킬 트리는 세 갈래이고, 갈래마다 두 칸씩 10줄의 사다리입니다(하급 4줄 → 중급 3줄 → 상급 2줄 → 궁극). 윗줄 두 칸 가운데 하나만 열어도 아랫줄이 열립니다. 상급은 3챕터, 궁극은 5챕터부터 엽니다. 처음에는 모두 잠겨 있고, 캐릭터를 만들 때 포인트 1로 첫 줄의 한 칸을 엽니다. 레벨이 오르면 포인트 1, 챕터를 깨면 포인트 2를 얻습니다.',
-    '칸은 선으로 이어진 앞 칸을 열어야 열립니다. 깊은 등급은 그 갈래에 포인트를 먼저 써야 합니다. 앞 칸을 열기 전에는 이어진 칸이 "?"로 보이고, 궁극은 이름만 보입니다.',
+    '스킬 트리는 세 갈래이고, 갈래마다 두 칸씩 10줄의 사다리입니다(하급 6줄 → 중급 4줄). 윗줄 두 칸 가운데 하나만 열어도 아랫줄이 열립니다. 처음에는 모두 잠겨 있고, 캐릭터를 만들 때 포인트 1로 첫 줄의 한 칸을 엽니다. 레벨이 오를 때마다 포인트 1을 얻어 Lv10에 10점이 됩니다. 한 갈래를 줄마다 하나씩 내려가면 Lv6에 하급 끝, Lv10에 중급 끝입니다. 상급·궁극은 3챕터부터 더합니다.',
+    '윗줄을 열기 전에는 아랫줄 칸이 "?"로 보입니다. 갈래마다 강한 상황과 약한 상황이 있습니다(트리 갈래 설명).',
     '연 스킬 가운데 4칸을 끼웁니다. 메뉴의 "스킬 트리"에서 언제든 보고, 방과 방 사이에 열고 바꿉니다. 전투 중에는 보기만 합니다.',
     '스킬은 마나 대신 재사용 대기로 씁니다. 전투를 시작할 때 모두 준비되어 있고, 쓰면 적힌 차례만큼 기다립니다(예: 재사용 3차례). 버튼에 "⏳ 2차례 뒤"처럼 남은 차례가 보입니다.',
     '갈래마다 규칙이 하나 있어 그 갈래 스킬의 남은 대기를 1 줄입니다. 암살자는 독사: 독을 걸면, 격발: 적을 쓰러뜨리면, 그림자: 흘려 내면. 한 행동에 한 번만 줄고, 시작 스킬은 차례로만 돕니다.',
-    '스킬마다 빠르기가 있습니다. 센 스킬일수록 느려서 그사이 적이 더 끼어듭니다.'] },
+    '스킬마다 빠르기가 있습니다. ⚡빠른 스킬은 빠른 칸을, ▶보통 스킬은 주 행동을, ⏳느린 스킬은 두 칸을 다 씁니다(도움말 "라운드와 순서").'] },
   { k: 'stats', n: '능력치', t: [
     '캐릭터를 만들 때 6점, 레벨이 오를 때마다 2점을 힘, 민첩, 지능에 나눕니다. 1점마다 규칙이 하나씩 바뀝니다. 나눌 때 "다음 1점"에 무엇이 바뀌는지 보입니다.',
     '힘은 1점마다 생명력 +1, 기본 공격과 강공격 피해 +1%, 내가 채우는 붕괴 게이지 +1%입니다.',
@@ -1900,18 +1938,19 @@ const HELP = [
     '지능은 1점마다 중독·출혈·화상 피해와 터뜨리는 피해 +2%입니다.',
     '같은 능력치가 10점이 될 때마다 규칙이 하나 더 붙습니다. 힘은 강공격 붕괴 +5, 민첩은 흘리기 스태미나 −1입니다.',
     '상점에서 레벨 × 10골드를 내면 지금까지 나눈 점수를 모두 거두어 처음부터 다시 나눌 수 있습니다.'] },
-  { k: 'time', n: '순서와 시간', t: [
-    '전투는 하나의 시계로 흐르고, 모두 자기 빠르기대로 차례가 옵니다. 위쪽 "행동 순서"는 왼쪽부터 먼저 움직이는 순서입니다. 빠른 적은 내가 한 번 행동하는 사이에 두 번 나오기도 합니다.',
-    '행동마다 걸리는 시간이 다릅니다. 빠름(플라스크, 빠른 스킬): 곧 다시 내 차례가 옵니다. 보통(기본 공격, 방어, 흘리기, 보통 스킬). 느림(강공격, 느린 스킬, 도망 실패): 적이 한 번 더 끼어들 수 있습니다.',
+  { k: 'time', n: '라운드와 순서', t: [
+    '전투는 라운드로 흐릅니다. 라운드마다 살아 있는 모두(나와 적)가 한 번씩 움직이고, 모두 움직이면 다음 라운드가 됩니다. 위쪽 순서 줄은 왼쪽부터 움직이는 순서이고, 이번 라운드에 이미 움직인 쪽은 ✓로 흐리게 남습니다.',
+    '순서는 속도로 정합니다. 빠른 쪽이 먼저, 같으면 내가 먼저입니다. 가속이 걸리면 맨 앞, 둔화가 걸리면 맨 뒤로 갑니다. 매복을 당하면 첫 라운드에 내가 맨 뒤입니다. 속도가 1.5 이상인 적은 라운드에 두 번 움직입니다.',
+    '내 차례에는 ⚡빠른 행동 1번과 ▶주 행동 1번을 합니다. 빠른 행동(플라스크, 빠른 스킬)을 먼저 쓰면 차례가 이어지고, 주 행동(기본 공격, 방어, 흘리기, 보통 스킬)을 하면 차례가 끝납니다. ⏳느린 행동(강공격, 느린 스킬)은 두 칸을 다 써서, 이번 차례에 빠른 행동을 이미 했으면 고를 수 없습니다.',
+    '행동판 위의 "⚡ 빠른 행동 + ▶ 주 행동"이 이번 차례에 남은 칸입니다. 적 카드 위쪽 번호는 그 적이 이번 라운드에 몇 번째로 움직이는지입니다.',
     '행동 버튼에 마우스를 올리면(휴대폰은 길게 누르면) 설명 창이 뜨고, 그 행동을 하면 내 다음 차례 전에 누가 움직이는지 미리 보여 줍니다.',
-    '상태 옆 숫자는 시간이 아니라 세기입니다. 정해진 때가 오면 효과가 나고 1 줄어듭니다(도움말 "상태이상").',
-    '중독과 스태미나 회복은 시간에 따라 흐릅니다. 내가 빨라져도 이것들이 빨라지지는 않습니다.'] },
+    '중독, 스태미나 회복, 보스의 시간 규칙은 라운드가 끝날 때 한 번씩 흐릅니다. 상태 옆 숫자는 세기입니다(도움말 "상태이상").'] },
   { k: 'hp', n: '생명력', t: [
     '0이 되면 쓰러지고, 그 캐릭터는 끝납니다.',
     '전투가 끝나도 저절로 차지 않고 다음 방으로 그대로 이어집니다. 생명력 플라스크, 샘(50%), 9층 야영지(전부), 정산(전부)에서 회복합니다.'] },
   { k: 'mp', n: '재사용 대기', t: ['0.6a.2 직업에는 마나가 없습니다. 스킬은 전투를 시작할 때 모두 준비되어 있고, 쓰면 적힌 차례만큼 기다립니다. 내 차례가 지날 때마다 1 줄고, 그 갈래의 규칙(예: 암살자 그림자는 흘려 내면)이 일어나면 1 더 줍니다. "전투마다 1번"인 스킬은 전투가 끝나야 다시 씁니다.'] },
   { k: 'st', n: '스태미나', t: [
-    '강공격(40), 방어(20), 흘리기(30)에 듭니다. 시간이 흐르면 보통 행동 1번마다 ' + ST_REGEN + '씩 찹니다. 기본 공격은 스태미나를 채우지 않습니다.',
+    '강공격(40), 방어(20), 흘리기(30)에 듭니다. 라운드가 끝날 때마다 ' + ST_REGEN + '씩 찹니다. 기본 공격은 스태미나를 채우지 않습니다.',
     '0이 되면 탈진합니다. 강공격·방어·흘리기를 못 하고 받는 피해가 20% 늘어납니다. 30까지 차거나 스태미나 플라스크를 마시면 풀립니다.',
     '전투가 끝나면 최소 50까지 회복합니다.'] },
   { k: 'flask', n: '플라스크', t: [
@@ -1919,14 +1958,14 @@ const HELP = [
     '❤️ 생명력 플라스크: 생명력을 회복합니다(낀 플라스크에 따라, 처음 30%). 상태는 지우지 않습니다.',
     '🧪 정화 플라스크: 지우지 않고 막습니다. 마시면 막음 2: 다음에 걸리는 해로운 상태 2번을 튕겨 냅니다. 적의 예고에 "출혈 2"처럼 걸 상태가 보이면 미리 마십니다.',
     '⚡ 스태미나 플라스크: 스태미나 ' + STAM_FLASK + ' 회복 + 탈진이 풀립니다.',
-    '마시는 행동은 빠름이라 곧 다시 차례가 옵니다. 대신 다시 채우기 어렵습니다. 방을 이기면 셋 가운데 가장 덜 찬 것이 1 차고, 샘과 야영지에서 셋 다 1씩 찹니다.'] },
+    '마시는 행동은 ⚡빠름이라 마신 뒤에도 주 행동을 할 수 있습니다. 대신 다시 채우기 어렵습니다. 방을 이기면 셋 가운데 가장 덜 찬 것이 1 차고, 샘과 야영지에서 셋 다 1씩 찹니다.'] },
   { k: 'act', n: '행동', t: [
-    '기본 공격(보통): 비용 없음. 무기 피해만큼 치고 붕괴 게이지를 10 채웁니다.',
-    '강공격(느림): 스태미나 40. 180% 피해 + 붕괴 35. 대신 다음 차례가 늦어져 적이 끼어들 수 있습니다.',
+    '기본 공격(▶보통): 비용 없음. 무기 피해만큼 치고 붕괴 게이지를 10 채웁니다.',
+    '강공격(⏳느림): 스태미나 40. 180% 피해 + 붕괴 35. 빠른 칸과 주 행동을 함께 써서, 이번 차례에 빠른 행동을 이미 했으면 쓸 수 없습니다.',
     '스킬: 직업 고유의 효과를 냅니다. 쓰고 나면 적힌 차례만큼 기다리고, 버튼에 "⏳ 2차례 뒤"처럼 남은 차례가 보입니다.',
-    '방어(보통): 스태미나 20. 내 다음 행동까지 받는 피해가 절반이 됩니다.',
-    '흘리기(보통): 스태미나 30(암살자 25). 적 하나를 골라 그 적의 다음 단일 공격 피해를 60%(암살자 70%) 줄입니다. 그 공격이 강타였다면 그 적의 붕괴 게이지가 25 찹니다. 광역·지속 피해는 흘리지 못하고, 고른 적이 그 사이 움직이지 않으면 헛됩니다.',
-    '도망: 보스전이 아닐 때만. 성공하면 방 밖으로 물러나고, 앞으로 가려면 그 방을 다시 이겨야 합니다. 실패하면 느린 행동이 됩니다.'] },
+    '방어(▶보통): 스태미나 20. 내 다음 행동까지 받는 피해가 절반이 됩니다.',
+    '흘리기(▶보통): 스태미나 30(암살자 25). 적 하나를 골라 그 적의 다음 단일 공격 피해를 60%(암살자 70%) 줄입니다. 그 공격이 강타였다면 그 적의 붕괴 게이지가 25 찹니다. 광역·지속 피해는 흘리지 못하고, 고른 적이 그 사이 움직이지 않으면 헛됩니다.',
+    '도망: 보스전이 아닐 때만. 성공하면 방 밖으로 물러나고, 앞으로 가려면 그 방을 다시 이겨야 합니다. 실패하면 그대로 차례가 끝납니다.'] },
   { k: 'target', n: '대상 고르기', t: ['적 카드를 누르면 그 적이 대상이 됩니다(금색 테두리). 고르지 않으면 공격할 수 있는 적을 자동으로 고릅니다. 닿지 않는 대상이면 행동 버튼에 이유가 뜹니다.'] },
   { k: 'intent', n: '적의 예고', t: [
     '적 카드 아래에 그 적이 다음에 할 행동이 적혀 있습니다. 빨간 테두리는 위험한 행동입니다. 걸 상태도 숫자로 보입니다(예: "공격 4 · 출혈 2").',
@@ -1939,7 +1978,7 @@ const HELP = [
     '스킬 설명의 숫자가 실제로 걸리는 숫자입니다. 여럿에게 거는 스킬은 이미 줄인 숫자로 적혀 있습니다.'] },
   { k: 'break', n: '붕괴', t: [
     '적 카드의 보라색 게이지입니다. 기본 공격 10, 강공격 35씩 차고, 가득 차면 붕괴합니다. 터뜨리는 스킬은 중독 수치만큼 게이지를 채우기도 합니다.',
-    '붕괴한 적은 충전 중이던 강타가 취소되고, 다음 행동을 잃고, 취약 2가 걸립니다. 방패병을 붕괴시키면 잠시 동료를 지키지 못하고 방패벽도 풀립니다.',
+    '붕괴한 적은 충전 중이던 강타가 취소되고, 다음 행동을 잃고, 취약 2가 걸립니다. 붕괴 상태는 다음 라운드가 끝날 때까지 남습니다. 방패병을 붕괴시키면 잠시 동료를 지키지 못하고 방패벽도 풀립니다.',
     '보스는 게이지가 커서 즉석으로 끊기 어렵습니다. 미리 채워 두었다가 원하는 순간에 끊으세요.'] },
   { k: 'roles', n: '적의 역할', t: [
     '돌격병(전열): 공격하다가 가끔 강타를 충전합니다. 방패병(전열): 동료를 노린 근접 공격을 대신 맞고, 서 있는 동안 방패벽으로 동료가 받는 광역 피해를 줄입니다.',
@@ -1948,8 +1987,8 @@ const HELP = [
     '적 카드에 마우스를 올리면(휴대폰은 길게 누르면) 그 적의 설명이 뜹니다.'] },
   { k: 'status', n: '상태이상', t: [
     '모든 상태는 숫자 하나입니다. 정해진 때가 오면 효과가 나고 숫자가 1 줄어듭니다. 초록 테두리는 좋은 상태, 빨강은 나쁜 상태입니다. 칩에 마우스를 올리면(휴대폰은 길게 누르면) 앞으로 무엇이 일어나는지 뜹니다.',
-    '중독 N: 시간이 흐를 때마다 N 피해(상한 20). 출혈 N: 걸린 쪽이 행동할 때마다 N 피해(상한 10). 화상 N: 걸린 쪽이 직접 피해를 받을 때마다 N 피해 더(상한 10). 지속 피해는 화상·취약·보호를 발동시키지 않습니다.',
-    '약화 N ↔ 강화 N: 공격할 때마다 그 공격 −25% / +25%(상한 5). 취약 N ↔ 보호 N: 직접 피해를 받을 때마다 +25% / −25%(상한 5). 둔화 N ↔ 가속 N: 행동할 때마다 그 행동이 느려짐 / 빨라짐(상한 3).',
+    '중독 N: 라운드가 끝날 때마다 N 피해(상한 20). 출혈 N: 걸린 쪽이 행동할 때마다 N 피해(상한 10). 화상 N: 걸린 쪽이 직접 피해를 받을 때마다 N 피해 더(상한 10). 지속 피해는 화상·취약·보호를 발동시키지 않습니다.',
+    '약화 N ↔ 강화 N: 공격할 때마다 그 공격 −25% / +25%(상한 5). 취약 N ↔ 보호 N: 직접 피해를 받을 때마다 +25% / −25%(상한 5). 둔화 N ↔ 가속 N: 라운드가 시작될 때마다 그 라운드의 맨 뒤 / 맨 앞에서 움직임(상한 3).',
     '반대되는 상태는 걸 때 숫자끼리 뺍니다(보호 2에 취약 3이 걸리면 보호 0, 취약 1). 상한을 넘친 몫은 버립니다.',
     '막음 N: 해로운 상태가 걸리려 할 때마다 튕겨 냅니다(정화 플라스크). 붕괴: 다음 행동을 잃고 취약 2.'] },
   { k: 'item', n: '장비', t: [
@@ -2416,9 +2455,9 @@ function vBattle() {
   let gim = '';
   const boss = b.en.find(e => e.role === 'boss' && e.alive);
   if (boss) {
-    let g = b.enrage ? '광폭화!' : `광폭화까지 내 차례 ${myTurnsUntil(b, ENRAGE.boss)}번`;
+    let g = b.enrage ? '광폭화!' : `광폭화까지 ${myTurnsUntil(b, ENRAGE.boss)}라운드`;
     if (boss.boss === 'mother') g += ` · 내 중독 ${st(p, 'poison')}/10 (10이면 부화) · ${boss.phase >= 2 ? '거울 활성' : '2페이즈부터 거울'}`;
-    if (boss.boss === 'tree') { const roots = alive(b).filter(e => e.role === 'root').length; g += ` · 뿌리 때문에 내 차례마다 약 +${rootRegen(b)} 회복 · 계절 ${SEASONS[b.season]} → ${SEASONS[(b.season + 1) % 4]} (내 차례 ${myTurnsUntil(b, (Math.floor(b.tick / 4) + 1) * 4)}번 뒤) · 뿌리 ${roots}/3`; }
+    if (boss.boss === 'tree') { const roots = alive(b).filter(e => e.role === 'root').length; g += ` · 뿌리 때문에 라운드마다 약 +${rootRegen(b)} 회복 · 계절 ${SEASONS[b.season]} → ${SEASONS[(b.season + 1) % 4]} (${myTurnsUntil(b, (Math.floor(b.tick / 4) + 1) * 4)}라운드 뒤) · 뿌리 ${roots}/3`; }
     gim = `<div class="gimmick" data-info="gim" tabindex="0">${esc(g)}</div>`;
   }
   const last = b.log[b.log.length - 1];
@@ -2428,7 +2467,7 @@ function vBattle() {
   const ecard = e => {
     const it = intentText(b, e); const ib = intentBadge(b, e); const sel = G.sel === e.id; const pop = pops[e.id];
     const reach = !frontBlocked(b) || e.row === 'front';
-    return `<button class="en${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(e.n)} 생명력 ${shownHp(e.hp)}, 예고: ${esc(it.t)}"><div class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wallUp(b, e) ? '<span class="wallm" title="방패벽: 광역 피해 절반" aria-label="방패벽">🛡️</span>' : wallFrontUp(b, e) ? '<span class="wallm" title="방패벽: 광역 피해 −40%" aria-label="방패벽">🛡️</span>' : ''}${e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" title="강인: 체력 +50%">강인</small>' : ''}${e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${!reach ? '<span class="nr" title="근접 공격이 닿지 않습니다">근접 불가</span>' : ''}${reach && guardOf(b, e) ? '<span class="nr gd" data-info="guarded" tabindex="0">방패병이 막는 중</span>' : ''}${e.boss === 'tree' && rootRegen(b) > 0 ? `<span class="nr rg2" data-info="regen" tabindex="0">🌱 +${rootRegen(b)}/내 차례</span>` : ''}</div>${bar('hp', e.hp, e.hpMax, '생명력')}${e.role !== 'root' ? `<div class="bkline" data-info="bar:bk" title="붕괴 ${Math.round(e.brk)}/${e.brkMax}"><small>붕괴 게이지</small><div class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></div></div><div class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}" title="${esc(it.t)}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${acts1[e.id] > 1 ? `<span class="ix" title="내 다음 차례 전에 ${acts1[e.id]}번 움직입니다">×${acts1[e.id]}</span>` : ''}</div>` : '<div class="mini">움직이지 않는다</div>'}${stsHtml(e, b)}${pop ? popHtml(pop) : ''}</button>`;
+    return `<button class="en${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(e.n)} 생명력 ${shownHp(e.hp)}/${Math.round(e.hpMax)}${e.role !== 'root' ? ', ' + esc(eordText(b, e)) : ''}, 예고: ${esc(it.t)}">${eordHtml(b, e)}<div class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wallUp(b, e) ? '<span class="wallm" title="방패벽: 광역 피해 절반" aria-label="방패벽">🛡️</span>' : wallFrontUp(b, e) ? '<span class="wallm" title="방패벽: 광역 피해 −40%" aria-label="방패벽">🛡️</span>' : ''}${e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" title="강인: 체력 +50%">강인</small>' : ''}${e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${!reach ? '<span class="nr" title="근접 공격이 닿지 않습니다">근접 불가</span>' : ''}${reach && guardOf(b, e) ? '<span class="nr gd" data-info="guarded" tabindex="0">방패병이 막는 중</span>' : ''}${e.boss === 'tree' && rootRegen(b) > 0 ? `<span class="nr rg2" data-info="regen" tabindex="0">🌱 +${rootRegen(b)}/라운드</span>` : ''}</div>${ehpBar(e)}${e.role !== 'root' ? `<div class="bkline" data-info="bar:bk" title="붕괴 ${Math.round(e.brk)}/${e.brkMax}"><small>붕괴 게이지</small><div class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></div></div>` : ''}${stsHtml(e, b)}${e.role !== 'root' ? `<div class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}" title="${esc(it.t)}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${acts1[e.id] > 1 ? `<span class="ix" title="내 다음 차례 전에 ${acts1[e.id]}번 움직입니다">×${acts1[e.id]}</span>` : ''}</div>` : '<div class="mini">움직이지 않는다</div>'}${pop ? popHtml(pop) : ''}</button>`;
   };
   const bk = b.en.filter(e => e.alive && e.row === 'back'), fr = b.en.filter(e => e.alive && e.row === 'front');
   const field = `<section class="field" aria-label="전장">${G.scr === 'tut' ? vTutGoal(b) : ''}
@@ -2455,13 +2494,13 @@ function vBattle() {
         const urgent = !dis && (a.id === 'flaskL') && p.hp < p.hpMax * 0.35; const tnew = G.scr === 'tut' && tutNew(b, a.id);
         const at = !dis ? actTarget(b, a) : null; const gd = at && isMeleeAct(p, a.id) ? guardOf(b, at) : null;
         kn++;
-        btns += `<button class="ab g-${lab === '공격' ? 'atk' : lab === '스킬' ? 'sk' : lab === '지키기' ? 'def' : lab === '직업' ? 'sig' : 'etc'}${dis ? ' dis' : ''}${urgent ? ' urgent' : ''}${tnew ? ' tnew' : ''}" data-a="act" data-id="${a.id}" data-info="act:${a.id}" data-k="${kn}" aria-disabled="${dis}"><b>${kn <= 9 ? `<kbd>${kn}</kbd>` : ''}<span class="anl">${esc(a.n)}</span><span class="ans">${esc(a.id === 'flaskM' && isV2(p) ? '🧪 정화' : ASHORT[a.id] || a.n)}</span></b><small>${why ? esc(why) : '<span class="ac">' + esc(a.cost) + '</span><span class="ax"> · ' + esc(skillHint(b, a) || speedWord(a.time)) + (at ? ' → ' + esc(at.n) + (gd ? ' 🛡' : '') : a.aoe ? ' → 전체' : '') + '</span>'}</small></button>`;
+        btns += `<button class="ab g-${lab === '공격' ? 'atk' : lab === '스킬' ? 'sk' : lab === '지키기' ? 'def' : lab === '직업' ? 'sig' : 'etc'}${dis ? ' dis' : ''}${urgent ? ' urgent' : ''}${tnew ? ' tnew' : ''}" data-a="act" data-id="${a.id}" data-info="act:${a.id}" data-k="${kn}" aria-disabled="${dis}"><b>${kn <= 9 ? `<kbd>${kn}</kbd>` : ''}<span class="anl">${esc(a.n)}</span><span class="ans">${esc(a.id === 'flaskM' && isV2(p) ? '🧪 정화' : ASHORT[a.id] || a.n)}</span>${spdIco(a.time)}</b><small>${why ? esc(why) : '<span class="ac">' + esc(a.cost) + '</span><span class="ax"> · ' + esc(skillHint(b, a) || speedWord(a.time)) + (at ? ' → ' + esc(at.n) + (gd ? ' 🛡' : '') : a.aoe ? ' → 전체' : '') + '</span>'}</small></button>`;
       }
       btns += '</div>';
     }
     dock = `<section class="dock">${G.scr === 'tut' ? '' : vCoach()}<div class="dockhead">${G.busy ? `<span class="busy" role="status">적이 움직이는 중</span>${G.stepResolve ? '<button class="sm gold" data-a="stepnext" data-focus>다음 <kbd>Space</kbd></button>' : ''}<button class="sm" data-a="skip">끝까지 넘기기</button>` : `<span>대상 <b>${tg ? esc(tg.n) : '행동마다 자동'}</b> <span class="mini">적 카드를 누르면 고정됩니다</span></span>${q('act', '행동')}`}<label class="pacesel">진행 <select id="pace" aria-label="적 차례 진행 속도">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></label></div>
       
-      <div class="abgrid">${btns}</div></section>`;
+      ${G.busy ? '' : `<div class="slotrow">${slotHtml(b)}<span class="mini">⚡ 빠른 행동을 먼저 쓰면 차례가 이어지고, ▶ 주 행동을 하면 차례가 끝납니다. ⏳ 느린 행동은 두 칸을 다 씁니다</span></div>`}<div class="abgrid">${btns}</div></section>`;
   }
   const groups = []; for (const x of b.log) { const g = x.g || 0; if (!groups.length || groups[groups.length - 1].g !== g) groups.push({ g, items: [] }); groups[groups.length - 1].items.push(x); }
   const glog = groups.slice(-14).reverse().map((G2, gi) => `<div class="lgrp${gi === 0 ? ' now' : ''}"><div class="lgh">${G2.g ? G2.g + '번째 차례' : '전투 시작'}</div>${G2.items.map(x => `<p class="${x.c}">${esc(x.m)}</p>`).join('')}</div>`).join('');
@@ -2497,7 +2536,7 @@ function skillHint(b, a) {
 function rootRegen(b) {
   const boss = alive(b).find(e => e.boss === 'tree'); if (!boss) return 0;
   const roots = alive(b).filter(e => e.role === 'root').length;
-  return Math.round(boss.hpMax * 0.025 * roots / 3 * (b.season === 0 ? 2 : 1) / pSpeed(b) * 10) / 10;
+  return Math.round(boss.hpMax * 0.025 * roots / 3 * (b.season === 0 ? 2 : 1) * 10) / 10;
 }
 function autoTarget(b, a) {
   const p = b.p;
@@ -2519,23 +2558,16 @@ function explodeTarget(b) {
   return alive(b).filter(ok).sort((x, y) => y.s.poison.stacks - x.s.poison.stacks)[0] || null;
 }
 function speedWord(t) { return t <= 0.6 ? '빠름' : t <= 1.05 ? '보통' : '느림'; }
-/* 지금부터 until 시점 전까지 내 차례가 몇 번 오는가 (기본 행동 기준) */
-function myTurnsUntil(b, until) {
-  const s = pSpeed(b); const start = Math.max(b.pNext, b.t);
-  if (until <= start + 1e-9) return 0;
-  return Math.ceil((until - start) * s - 1e-9);
-}
+/* 지금부터 until(라운드) 전까지 내 차례가 몇 번 오는가: 라운드마다 한 번 */
+function myTurnsUntil(b, until) { return Math.max(0, Math.ceil(until - (b.t || 0) - 1e-9)); }
 /* 이 행동을 하면 내 다음 차례 전에 누가 몇 번 움직이는가 */
 function previewAfter(b, time) {
-  const myNext = b.t + time / pSpeed(b);
-  const out = [];
-  for (const e of alive(b)) {
-    if (e.role === 'root') continue;
-    const sp = eSpeed(b, e); let n = 0; let at = e.next;
-    while (at < myNext - 1e-9 && n < 5) { n++; at += 1 / sp; }
-    if (n) out.push({ e, n });
-  }
-  return out;
+  if (time <= 0.6 && !b.bonusUsed) return []; // 빠른 칸: 같은 차례에 주 행동이 남는다
+  const cnt = {}; const add = id => { const e = b.en.find(x => x.id === id && x.alive && x.role !== 'root'); if (e) cnt[e.id] = (cnt[e.id] || 0) + 1; };
+  const q = (b.queue || []).slice(); if (q[0] === 'p') q.shift();
+  for (const id of q) add(id);
+  for (const x of roundOrder(b, false)) { if (x.id === 'p') break; add(x.id); }
+  return Object.keys(cnt).map(id => ({ e: b.en.find(x => x.id === id), n: cnt[id] }));
 }
 function previewText(b, time) {
   const L = previewAfter(b, time);
@@ -2587,38 +2619,66 @@ function stsHtml(u, b) {
   return out.length ? `<div class="sts">${out.join('')}</div>` : '';
 }
 
+/* 적 카드 위 순번: 이번 라운드에 남은 줄에서 몇 번째로 움직이는가 (나를 빼고 1부터). 비면 이번 라운드에는 이미 움직였다 */
+function enSlots(b, e) {
+  const q = (b.queue || []).filter(id => id === 'p' || (b.en.find(x => x.id === id) || {}).alive);
+  const L = []; let k = 0; for (const id of q) { if (id === 'p') continue; k++; if (id === e.id) L.push(k); }
+  return L;
+}
+function eordText(b, e) { const L = enSlots(b, e); return L.length ? '이번 라운드 ' + L.join('·') + '번째로 움직임' : '이번 라운드에는 이미 움직임'; }
+function eordHtml(b, e) {
+  if (e.role === 'root' || b.over) return '';
+  const L = enSlots(b, e);
+  return L.length ? `<span class="eord${L[0] === 1 ? ' soon' : ''}" data-info="eord">${L.join('·')}번째</span>` : '<span class="eord done" data-info="eord">✓ 다음 라운드</span>';
+}
+/* 적 생명력: 굵은 막대 + 큰 숫자. 30% 아래면 붉게 */
+function ehpBar(e) { const r = e.hpMax > 0 ? Math.max(0, Math.min(1, e.hp / e.hpMax)) : 0; return `<div class="bar hp ehp${r <= 0.3 ? ' lo' : ''}" role="progressbar" aria-label="생명력" aria-valuemin="0" aria-valuemax="${Math.round(e.hpMax)}" aria-valuenow="${shownHp(e.hp)}"><i style="width:${r * 100}%"></i><span><b>${shownHp(e.hp)}</b> / ${Math.round(e.hpMax)}</span></div>`; }
+/* 이번 차례에 남은 칸: ⚡ 빠른 행동(먼저) + ▶ 주 행동(차례를 끝냄) */
+function slotHtml(b) {
+  const f = !b.bonusUsed;
+  return `<span class="slots" data-info="slots" tabindex="0" aria-label="이번 차례에 남은 칸: ${f ? '빠른 행동과 ' : ''}주 행동"><span class="slot${f ? ' on' : ' used'}">⚡ 빠른 행동${f ? '' : ' 씀'}</span><span class="pl" aria-hidden="true">+</span><span class="slot on">▶ 주 행동</span></span>`;
+}
+function spdIco(t) { return t <= 0.6 ? '<span class="spd sf" aria-hidden="true">⚡</span>' : t >= 1.25 ? '<span class="spd ss" aria-hidden="true">⏳</span>' : '<span class="spd sn" aria-hidden="true">▶</span>'; }
+
 /* 순서표 (숫자 없이) */
 function vOrder(b) {
-  const tl = preview(b);
-  return `<div class="order"><div class="axhead"><span><b>행동 순서</b></span><span class="axdef">왼쪽이 먼저 움직입니다</span>${q('time', '차례와 시간')}</div>
-  <ol class="ord">${tl.map((x, i) => { const e = b.en.find(y => y.n === x.n && y.alive); const ico = x.me ? '' : (e ? e.ico + ' ' : ''); return `<li class="${x.me ? 'me' : ''}" data-info="tl:${i}" tabindex="0">${ico}${esc(x.me ? '나' : x.n)}</li>`; }).join('')}</ol></div>`;
+  const tl = preview(b); const rN = b.round || 1;
+  const all = b.roundAll || [], q0 = b.queue || []; const dn = all.length >= q0.length && all.slice(all.length - q0.length).join() === q0.join() ? all.slice(0, all.length - q0.length) : [];
+  const dnLis = dn.map(id => { const e = id === 'p' ? null : b.en.find(y => y.id === id); return id === 'p' || e ? `<li class="dn${id === 'p' ? ' me' : ''}" aria-label="${esc(id === 'p' ? '나' : e.n)}: 이번 라운드에 움직임 끝">✓ ${e ? e.ico + ' ' + esc(e.n) : '나'}</li>` : ''; }).join('');
+  let lis = '', prevR = null;
+  tl.forEach((x, i) => {
+    if (x.r !== prevR) { lis += `<li class="rsep" aria-hidden="true">${x.r}R</li>`; if (x.r === rN) lis += dnLis; prevR = x.r; }
+    const e = x.me ? null : b.en.find(y => y.id === x.id);
+    lis += `<li class="${[x.me ? 'me' : '', x.now ? 'now' : '', x.r > rN ? 'nx' : ''].filter(Boolean).join(' ')}" data-info="tl:${i}" tabindex="0">${e ? e.ico + ' ' : ''}${esc(x.me ? '나' : x.n)}</li>`;
+  });
+  return `<div class="order"><div class="axhead"><span><b>${rN}라운드</b></span><span class="axdef">모두 한 번씩, 왼쪽부터 움직입니다</span>${q('time', '라운드와 순서')}</div><ol class="ord">${lis}</ol></div>`;
 }
 
 /* ---------- 설명 창 내용 ---------- */
 const SDESC = {
   trap: '발밑의 덫. 다음에 움직이면 덫을 밟아 피해와 붕괴를 입는다.',
-  rift: '시간 균열. 시간이 다 되면 터져 큰 피해와 붕괴를 준다.',
+  rift: '시간 균열. 정해진 라운드가 지나면 터져 큰 피해와 붕괴를 준다.',
   echo: '메아리. 곧 같은 광역 피해가 한 번 더 울린다.',
-  plague: '역병. 중첩마다 시간당 피해 1. 쓰러지면 남은 적 모두에게 약화와 역병이 옮는다.',
+  plague: '역병. 중첩마다 라운드당 피해 1. 쓰러지면 남은 적 모두에게 약화와 역병이 옮는다.',
   smite: '단죄. 내가 생명력을 회복하면 회복량의 60%만큼 피해를 입는다.',
   bond: '피의 연결. 내가 받는 직접 피해의 절반을 이 적도 받는다.',
   brand: '수도원장이 읽은 죄. 쌓일수록 수도원장의 강타가 더 아프다. 최대 3.',
-  poison: '하나의 수치. 시간이 흐를 때마다 그 수치만큼 피해를 준 뒤 1 줄어듭니다. 걸 때마다 1씩 오르고 상한은 없습니다.', bleed: '시간마다 피해 2, 그리고 행동할 때마다 한 번 더 피해 2.', ignite: '시간마다 화염 피해 2.',
-  chill: '속도 -30%. 차례가 덜 자주 옵니다.', weak: '주는 피해 -25%.', vuln: '받는 피해 +25%.', protect: '받는 피해 -20%.',
+  poison: '하나의 수치. 라운드가 끝날 때마다 그 수치만큼 피해를 준 뒤 1 줄어듭니다. 걸 때마다 1씩 오르고 상한은 없습니다.', bleed: '라운드마다 피해 2, 그리고 행동할 때마다 한 번 더 피해 2.', ignite: '라운드마다 화염 피해 2.',
+  chill: '둔화. 라운드의 맨 뒤에서 움직입니다.', weak: '주는 피해 -25%.', vuln: '받는 피해 +25%.', protect: '받는 피해 -20%.',
   rage: '격노: 주는 피해 +40%, 속도 +20%, 받는 피해 +15%.', broken: '붕괴: 받는 피해 +30%. 다음 행동을 잃습니다.',
 };
 /* 주문직의 기본 공격·강공격은 캔트립·집중 주문이다 */
 function actInfo(p, id) {
   if (isCaster(p) && id === 'basic') return CANTRIP[p.build] + '. 비용 없이 원거리 주문을 쏜다. 피해는 무기 피해의 90%. 후열에 닿고 방패병에게 막히지 않는다. 붕괴 게이지 +10. 스태미나는 채우지 않는다.';
-  if (isCaster(p) && id === 'heavy') return '집중 주문. 스태미나 40. 원거리, 무기 피해의 160%, 붕괴 게이지 +30. 느린 행동이라 적이 한 번 더 끼어들 수 있다.';
+  if (isCaster(p) && id === 'heavy') return '집중 주문. 스태미나 40. 원거리, 무기 피해의 160%, 붕괴 게이지 +30. 느린 행동이라 빠른 칸과 주 행동을 함께 쓴다.';
   return AINFO[id] || '';
 }
 const AINFO = {
   basic: '비용 없이 무기로 친다. 피해는 무기 피해. 붕괴 게이지 +10. 스태미나는 채우지 않는다.',
-  heavy: '스태미나 40. 피해 180%, 붕괴 게이지 +35. 느린 행동이라 적이 한 번 더 끼어들 수 있다.',
+  heavy: '스태미나 40. 피해 180%, 붕괴 게이지 +35. 느린 행동이라 빠른 칸과 주 행동을 함께 쓴다.',
   guard: '스태미나 20. 내 다음 차례까지 받는 피해가 절반이 된다. 그동안 공격하지 않는다.',
   dodge: '스태미나 30. 적 하나를 골라(적 카드 선택, 없으면 강타 예고한 적) 그 적의 다음 단일 공격 피해를 60% 줄인다. 강타였다면 그 적의 붕괴 게이지 +25. 내 다음 차례까지 유효. 광역·지속 피해는 흘리지 못한다.',
-  flaskL: '충전 1. 생명력 30% 회복 + 중독·출혈·점화·냉각 해제. 빠른 행동이라 곧 다시 차례가 온다.',
+  flaskL: '충전 1. 생명력 30% 회복 + 중독·출혈·점화·냉각 해제. 빠른 행동이라 마신 뒤에도 주 행동을 할 수 있다.',
   flaskM: '충전 1. 마나 40% 회복 + 약화·취약 해제. 빠른 행동.',
   flee: '성공하면 이 방을 떠나고 전리품을 잃는다. 실패하면 느린 행동이 된다. 보스전에서는 못 쓴다.',
 };
@@ -2673,14 +2733,15 @@ function infoHtml(key) {
   }
   if (parts[0] === 'tl' && b) {
     const x = preview(b)[+parts[1]]; if (!x) return '';
-    if (x.me) return H('내 차례', P(+parts[1] === 0 ? '지금 행동할 차례입니다.' : '앞으로 ' + (+parts[1] + 1) + '번째로 행동합니다.'));
-    const e = b.en.find(y => y.n === x.n && y.alive);
-    return H(x.n, P((+parts[1] + 1) + '번째로 행동합니다.') + (e ? P('예고: ' + intentText(b, e).t) : ''));
+    const when = x.now ? '지금 움직이는 차례입니다.' : (x.r > (b.round || 1) ? '다음 라운드(' + x.r + '라운드)에 움직입니다.' : '이번 라운드에 곧 움직입니다.');
+    if (x.me) return H('나', P(when) + P('내 차례에는 ⚡빠른 행동 1번(플라스크·빠른 스킬)과 ▶주 행동 1번을 합니다. ⏳느린 행동은 두 칸을 다 씁니다.'));
+    const e = b.en.find(y => y.id === x.id && y.alive);
+    return H(x.n, P(when) + (e ? P('예고: ' + intentText(b, e).t) : ''));
   }
   const fixed = {
     'bar:hp': ['생명력', '0이 되면 쓰러집니다. 다음 방으로 그대로 이어지고, 샘·생명력 플라스크로만 회복합니다.'],
-    'bar:mp': ['마나', '스킬에 씁니다. 시간이 흐르면 조금씩 찹니다(기본 행동 한 번마다 최대치의 5%).'],
-    'bar:st': ['스태미나', '강공격 40, 방어 20, 흘리기 30. 시간이 흐를 때마다 10씩 차고, 스태미나 플라스크로 60을 채웁니다. 기본 공격은 채우지 않습니다. 0이면 탈진.'],
+    'bar:mp': ['마나', '스킬에 씁니다. 라운드가 끝날 때마다 최대치의 5%가 찹니다.'],
+    'bar:st': ['스태미나', '강공격 40, 방어 20, 흘리기 30. 라운드가 끝날 때마다 10씩 차고, 스태미나 플라스크로 60을 채웁니다. 기본 공격은 채우지 않습니다. 0이면 탈진.'],
     'bar:bk': ['붕괴 게이지', '가득 차면 적이 붕괴: 충전 중이던 기술이 취소되고 다음 행동을 잃습니다.'],
     flask: ['플라스크', '❤️ 생명력, 💧 마나, ⚡ 스태미나 플라스크의 남은 수입니다. 방을 이기면 셋 가운데 가장 덜 찬 것이 1 차고, 샘에서 1씩 찹니다. 기본 공격은 스태미나를 채우지 않으니, 스태미나는 시간과 스태미나 플라스크로 채웁니다.'],
     stun: ['기절', '다음 행동 한 번을 잃습니다.'],
@@ -2688,15 +2749,15 @@ function infoHtml(key) {
     rage: ['분노', '피해를 주거나 받을 때마다 1칸 찹니다(칸당 피해 +3%). 10칸이 차면 격노: 잠시 피해 +40%, 속도 +20%, 받는 피해 +15%. 격노가 끝나면 0부터 다시.'],
     buildrule: ['빌드 규칙', ''],
     explode_old: ['독 폭발', '중독이 5중첩 이상 쌓인 적을 기본 공격하면 중첩 × 4 피해로 한꺼번에 터뜨립니다(중첩은 사라짐). 이 버튼은 조건이 되는 적에게 바로 기본 공격을 합니다. 방패병이 가로막으면 방패병의 중독으로 판정합니다.'],
-    regen: ['뿌리의 회복', '뒷줄 뿌리가 살아 있는 동안 수호목은 시간이 흐를 때마다 체력을 회복합니다(뿌리 수에 비례, 봄에는 2배). 숫자는 내 차례 한 번 동안 회복하는 양입니다. 뿌리는 원거리·광역 공격으로, 또는 수호목을 붕괴시켜 근접으로 칠 수 있습니다.'],
+    regen: ['뿌리의 회복', '뒷줄 뿌리가 살아 있는 동안 수호목은 라운드가 끝날 때마다 체력을 회복합니다(뿌리 수에 비례, 봄에는 2배). 숫자는 한 라운드에 회복하는 양입니다. 뿌리는 원거리·광역 공격으로, 또는 수호목을 붕괴시켜 근접으로 칠 수 있습니다.'],
     guarded: ['방패병이 막음', '이 적을 노린 근접 공격은 방패병이 대신 맞습니다(피해·붕괴·상태이상 모두). 방패병을 붕괴시키면 잠시 뚫리고, 원거리·광역·지속 피해는 막지 못합니다.'],
     guardon: ['방어 준비', '내 다음 차례까지 받는 피해가 절반입니다.'],
     dodgeon: ['흘리기 준비', '고른 적의 다음 단일 공격 피해를 60% 줄입니다. 강타라면 그 적의 붕괴 게이지 +25.'],
     exhaust: ['탈진', '스태미나가 바닥났습니다. 강공격·방어·흘리기 불가, 받는 피해 +20%. 30까지 차면 풀립니다.'],
     counter: ['반격 (인내의 흉갑)', '방어 중 받은 피해의 30%가 다음 공격에 더해집니다.'],
     reflux: ['역류 대기 (역류의 성배)', '다음 공격이 방금 정화한 디버프를 대상에게 겁니다.'],
-    gim: ['보스 기믹', '보스의 특별한 규칙입니다. 숫자는 남은 내 차례 수입니다.'],
-    speed: ['속도', '1보다 크면 내 차례가 더 자주, 작으면 덜 자주 옵니다. 중독 같은 지속 피해가 흐르는 속도는 바뀌지 않습니다.'],
+    gim: ['보스 기믹', '보스의 특별한 규칙입니다. 숫자는 남은 라운드 수입니다.'],
+    speed: ['속도', '같은 라운드 안에서 누가 먼저 움직일지 정합니다. 나보다 빠른 적은 내 앞에서, 느린 적은 내 뒤에서 움직이고, 같으면 내가 먼저입니다. 중독 같은 지속 피해는 라운드가 끝날 때 흐르므로 속도와 상관없습니다.'],
   };
   if (key === 'stats' && b) { const p = b.p; return H('능력치', P('힘 ' + stat(p, 'str') + ', 민첩 ' + stat(p, 'dex') + ', 지능 ' + stat(p, 'int') + '.') + ['str', 'dex', 'int'].map(k => P(STATN[k] + ' 다음 1점: ' + statNext(p, k))).join('')); }
   if (INFO2[key]) return H(INFO2[key][0], INFO2[key].slice(1).map(P).join(''));
@@ -2800,11 +2861,11 @@ function initPop() {
 
   Object.assign(BOSSES.mother, {
     lore: '늪이 낳은 어미. 독을 먹고 자란 알들이 발밑에서 꿈틀댄다.',
-    d: '시간이 흐를 때마다 내게 중독을 2씩 건다. 방어하는 동안은 걸지 않는다. 내 중독이 10에 닿으면 알이 깨어 하수인 2기가 나온다. 생명력 플라스크로 중독을 지우면 지운 1마다 어머니가 최대 체력의 1%를 잃는다. 체력이 70% 아래로 떨어지면 나락의 거울이 열려, 내가 방금 쓴 스킬을 절반 위력으로 되돌려준다.',
+    d: '라운드가 끝날 때마다 내게 중독을 2씩 건다. 방어하는 동안은 걸지 않는다. 내 중독이 10에 닿으면 알이 깨어 하수인 2기가 나온다. 생명력 플라스크로 중독을 지우면 지운 1마다 어머니가 최대 체력의 1%를 잃는다. 체력이 70% 아래로 떨어지면 나락의 거울이 열려, 내가 방금 쓴 스킬을 절반 위력으로 되돌려준다.',
   });
   Object.assign(BOSSES.tree, {
     lore: '나락 깊이 뿌리를 내린 고목. 계절이 돌 때마다 다른 얼굴을 한다.',
-    d: '뒷줄의 뿌리가 살아 있는 동안 체력을 되찾는다. 뿌리 셋이면 시간마다 2.5%, 봄에는 두 배다. 계절은 보통 행동 4번쯤마다 바뀐다. 여름에는 불에 약하고 내게 점화를 건다. 가을에는 단일 공격 절반이 빗나가는 대신 광역 공격에 약하다. 겨울에는 내게 냉각을 건다.',
+    d: '뒷줄의 뿌리가 살아 있는 동안 체력을 되찾는다. 뿌리 셋이면 라운드마다 2.5%, 봄에는 두 배다. 계절은 4라운드마다 바뀐다. 여름에는 불에 약하고 내게 점화를 건다. 가을에는 단일 공격 절반이 빗나가는 대신 광역 공격에 약하다. 겨울에는 내게 냉각을 건다.',
   });
 
   const SC = {
@@ -2820,26 +2881,26 @@ function initPop() {
   GUIDE_STEPS.length = 0; ['test', 'build', 'stats', 'time', 'hp', 'flask', 'act', 'intent', 'break', 'row', 'rooms'].forEach(k => GUIDE_STEPS.push(k));
 
   Object.assign(SDESC, { // 0.6a.2 상태 키워드: 숫자 하나, 발동할 때마다 1 줄어든다 (개편 기획 5절)
-    poison: '시간이 흐를 때마다 그 숫자만큼 피해를 주고 1 줄어듭니다. 걸면 숫자가 오릅니다(상한 20).',
+    poison: '라운드가 끝날 때마다 그 숫자만큼 피해를 주고 1 줄어듭니다. 걸면 숫자가 오릅니다(상한 20).',
     bleed: '걸린 쪽이 행동할 때마다 그 숫자만큼 피해를 주고 1 줄어듭니다. 방어, 흘리기, 플라스크도 행동입니다(상한 10).',
     ignite: '화상. 걸린 쪽이 직접 피해를 받을 때마다 그 숫자만큼 피해를 더 받고 1 줄어듭니다(상한 10).',
-    chill: '둔화. 걸린 쪽이 행동할 때마다 그 행동이 50% 느려지고 1 줄어듭니다(상한 3).',
-    haste: '가속. 행동할 때마다 그 행동이 빨라지고(시간 −33%) 1 줄어듭니다(상한 3).',
+    chill: '둔화. 라운드가 시작될 때 그 라운드의 맨 뒤로 밀리고 1 줄어듭니다(상한 3).',
+    haste: '가속. 라운드가 시작될 때 그 라운드의 맨 앞에서 움직이고 1 줄어듭니다(상한 3).',
     weak: '공격할 때마다 그 공격의 피해가 25% 줄고 1 줄어듭니다(상한 5). 강화와 숫자끼리 뺍니다.',
     empower: '강화. 공격할 때마다 그 공격의 피해가 25% 늘고 1 줄어듭니다(상한 5). 약화와 숫자끼리 뺍니다.',
     vuln: '직접 피해를 받을 때마다 그 피해가 25% 늘고 1 줄어듭니다(상한 5). 보호와 숫자끼리 뺍니다.',
     protect: '직접 피해를 받을 때마다 그 피해가 25% 줄고 1 줄어듭니다(상한 5). 취약과 숫자끼리 뺍니다.',
     block: '막음. 해로운 상태가 걸리려 할 때마다 튕겨 내고 1 줄어듭니다. 정화 플라스크로 얻습니다.',
     rage: '격노. 주는 피해 +40%, 빠르기 +20%, 받는 피해 +15%.',
-    broken: '붕괴. 자세가 무너져 다음 행동을 놓칩니다. 무너질 때 취약 2가 걸립니다.',
+    broken: '붕괴. 자세가 무너져 다음 행동을 놓칩니다. 무너질 때 취약 2가 걸리고, 다음 라운드가 끝날 때까지 붕괴 상태입니다. 전열이 무너지면 근접 공격이 후열에 닿습니다.',
   });
   Object.assign(AINFO, {
     basic: '비용 없이 무기를 휘두른다. 피해는 무기 피해만큼. 붕괴 게이지 +10. 스태미나는 채우지 않는다.',
-    flaskS: '충전 1. 스태미나를 ' + STAM_FLASK + ' 채우고 탈진을 푼다. 빠른 행동이라 곧 다시 차례가 온다.',
-    heavy: '스태미나 40. 180% 피해, 붕괴 게이지 +35. 느린 행동이라 적이 한 번 더 끼어들 수 있다.',
+    flaskS: '충전 1. 스태미나를 ' + STAM_FLASK + ' 채우고 탈진을 푼다. 빠른 행동이라 마신 뒤에도 주 행동을 할 수 있다.',
+    heavy: '스태미나 40. 180% 피해, 붕괴 게이지 +35. 느린 행동이라 빠른 칸과 주 행동을 함께 쓴다.',
     guard: '스태미나 20. 내 다음 차례까지 받는 피해가 절반이 된다. 그동안 공격하지 않는다.',
     dodge: '스태미나 30. 고른 적의 다음 공격 피해를 60% 줄인다. 그 공격이 강타였다면 그 적의 붕괴 게이지 +25. 광역 공격과 지속 피해는 흘리지 못한다.',
-    flaskL: '충전 1. 생명력 30%를 채우고 중독, 출혈, 점화, 냉각을 지운다. 빠른 행동이라 곧 다시 차례가 온다.',
+    flaskL: '충전 1. 생명력 30%를 채우고 중독, 출혈, 점화, 냉각을 지운다. 빠른 행동이라 마신 뒤에도 주 행동을 할 수 있다.',
     flaskM: '충전 1. 마나 40%를 채우고 약화와 취약을 지운다. 빠른 행동이다.',
     flee: '성공하면 방 밖으로 물러난다. 이 방은 넘지 못한 채로 남아, 앞으로 가려면 다시 들어가 이겨야 한다. 다시 들어가면 적은 처음 상태다. 실패하면 느린 행동이 된다. 보스전에서는 쓸 수 없다.',
   });
@@ -2855,12 +2916,14 @@ function initPop() {
   });
 })();
 const INFO2 = {
-  incoming: ['내 다음 차례 전 받을 피해', '내가 보통 행동을 하면 그사이 적이 몇 번 움직여 얼마나 아프게 칠지 어림한 값입니다. 적 카드의 아이콘 옆 숫자를 더하고, 두 번 움직이는 적(×2)은 평소 공격을 한 번 더 셉니다. 흘리기·방어·몸 빼기로 줄일 수 있고, 빠른 행동을 하면 더 적게 맞습니다.'],
+  slots: ['이번 차례에 남은 칸', '내 차례에는 ⚡빠른 행동 1번과 ▶주 행동 1번을 합니다. 빠른 행동(플라스크, 빠른 스킬)은 먼저 쓰고, 쓰고 나도 차례가 이어집니다. 주 행동(기본 공격, 방어, 흘리기, 보통 스킬)을 하면 차례가 끝납니다.', '⏳느린 행동(강공격, 느린 스킬)은 두 칸을 다 씁니다. 빠른 행동을 이미 썼으면 이번 차례에는 고를 수 없습니다.', '빠른 칸을 쓰지 않고 바로 주 행동을 해도 됩니다. 남은 빠른 칸은 다음 차례로 넘어가지 않습니다.'],
+  eord: ['적의 순번', '이 적이 이번 라운드에 몇 번째로 움직이는지입니다(나를 빼고 셉니다). 빨간 "1번째"는 내 차례가 끝나면 바로 움직입니다.', '"✓ 다음 라운드"는 이번 라운드에 이미 움직였다는 뜻입니다. 두 번 움직이는 적은 "1·4번째"처럼 둘 다 적힙니다.'],
+  incoming: ['내 다음 차례 전 받을 피해', '내 차례가 끝나고 다음 차례가 오기 전까지 적이 몇 번 움직여 얼마나 아프게 칠지 어림한 값입니다. 적 카드의 아이콘 옆 숫자를 더하고, 두 번 움직이는 적(×2)은 평소 공격을 한 번 더 셉니다. 흘리기·방어·몸 빼기로 줄일 수 있습니다. 빠른 행동은 차례를 끝내지 않으므로 이 값을 바꾸지 않습니다.'],
   'bar:hp': ['생명력', '0이 되면 쓰러집니다. 다음 방으로 그대로 이어지고, 샘과 생명력 플라스크로만 회복합니다.'],
-  'bar:mp': ['마나', '스킬에 씁니다. 보통 행동 한 번마다 최대치의 5%씩 찹니다.'],
-  'bar:st': ['스태미나', '강공격 40, 방어 20, 흘리기 30이 듭니다. 시간이 흐를 때마다 10씩 차고, 스태미나 플라스크로 60을 채웁니다. 기본 공격은 스태미나를 채우지 않습니다. 0이 되면 탈진합니다.'],
+  'bar:mp': ['마나', '스킬에 씁니다. 라운드가 끝날 때마다 최대치의 5%씩 찹니다.'],
+  'bar:st': ['스태미나', '강공격 40, 방어 20, 흘리기 30이 듭니다. 라운드가 끝날 때마다 10씩 차고, 스태미나 플라스크로 60을 채웁니다. 기본 공격은 스태미나를 채우지 않습니다. 0이 되면 탈진합니다.'],
   'bar:bk': ['붕괴 게이지', '적이 자세를 잃기까지 남은 여유입니다. 기본 공격 10, 강공격 35, 강타 흘리기 25, 독 격발은 중독×4만큼 찹니다.', '가득 차면 그 적은 모으던 강타가 끊기고, 다음 행동을 놓치며, 잠시 더 아프게 맞습니다.'],
-  flask: ['플라스크', '❤️는 생명력, 💧는 마나, ⚡는 스태미나 플라스크의 남은 수입니다. 방을 이기면 셋 가운데 가장 덜 찬 것이 1, 샘에서는 셋 다 1씩 찹니다. 기본 공격은 스태미나를 채우지 않으니, 스태미나는 시간과 스태미나 플라스크로 채웁니다.'],
+  flask: ['플라스크', '❤️는 생명력, 🧪는 정화(옛 직업은 💧 마나), ⚡는 스태미나 플라스크의 남은 수입니다. 방을 이기면 셋 가운데 가장 덜 찬 것이 1, 샘에서는 셋 다 1씩 찹니다. 기본 공격은 스태미나를 채우지 않으니, 스태미나는 시간과 스태미나 플라스크로 채웁니다.'],
   stun: ['기절', '다음 행동 한 번을 놓칩니다.'],
   guardon: ['방어 준비', '내 다음 차례까지 받는 피해가 절반입니다.'],
   dodgeon: ['흘리기 준비', '고른 적의 다음 공격 피해가 60% 줄어듭니다. 강타라면 그 적의 붕괴 게이지가 25 찹니다.'],
@@ -3308,6 +3371,7 @@ function restoreBattle(cur) {
   const bt = cur.battle; delete cur.battle;
   G.run = cur; const b = bt.b; b.p = G.run.p; b.rngF = battleRng(b); b.stepMode = true;
   if (G.run.tree && isV2(b.p)) { treeFix(G.run); b.p.skills = v2Equip(G.run); if (!b.p.cd) resetCharges(b.p); } // 개편 전 저장본: 바뀐 스킬과 재사용 대기
+  if (!b.queue) { b.round = b.tick || 1; b.queue = ['p']; b.bonusUsed = 0; } // 라운드 전 저장본: 지금이 내 차례
   G.b = b; G.scr = 'run'; G.sel = null; G.busy = false; G.banner = null; render();
   if (bt.commit && !b.over) { toast('누른 행동을 이어서 처리합니다'); setTimeout(() => doAct(bt.commit.id, bt.commit.tid), 60); }
   else toast('싸우던 곳에서 이어 갑니다');
@@ -3459,7 +3523,7 @@ function battleContinue() {
   endBattleCarry(run.p);
   G.b = null;
   if (b.over === 'flee') { saveRunLocal(); saveCur(); toast('방 밖으로 물러났습니다. 이 방을 이겨야 앞으로 갈 수 있습니다'); render(); return; }
-  if (R.boss && b.over === 'win') { const up = gainXp(run, Math.round(b.xp || 0)); if (up) run.statPending = (run.statPending || 0) + LV_POINTS * up; run.clears = (run.clears || 0) + 1; if (run.tree) run.tree.pts += 2; run.result = 'win'; run.rooms.push({ room: run.room, type: 'boss', res: 'win' }); startSettle(run); G.scr = 'settle'; saveRunLocal(); saveCur(); pushRank(run, 'clear'); render(); return; } // 정산부터는 이어 하기가 정산 화면으로 돌아온다(보스를 다시 싸우지 않는다)
+  if (R.boss && b.over === 'win') { const up = gainXp(run, Math.round(b.xp || 0)); if (up) run.statPending = (run.statPending || 0) + LV_POINTS * up; run.clears = (run.clears || 0) + 1; run.result = 'win'; /* 0.6a.2: 챕터 돌파 포인트 2는 없앴다(레벨마다 1점, Lv10에 10점) */ run.rooms.push({ room: run.room, type: 'boss', res: 'win' }); startSettle(run); G.scr = 'settle'; saveRunLocal(); saveCur(); pushRank(run, 'clear'); render(); return; } // 정산부터는 이어 하기가 정산 화면으로 돌아온다(보스를 다시 싸우지 않는다)
   if (R.boss) { run.result = 'flee'; clearCur(); G.scr = 'survey'; saveRunLocal(); render(); return; }
   // 승리 보상 (11.3절): 골드, 장비
   const nu = run.nextUsed || {}; run.nextUsed = null;
@@ -3609,11 +3673,11 @@ function afterTurn(b) {
   if (G.scr === 'scen') { b.pActs = (b.pActs || 0) + 1; if (b.pActs >= 10 && !b.over) b.over = 'open'; }
   render();
 }
-/* 다음에 움직일 적 */
+/* 다음에 움직일 적 (알림용): 이번 라운드 줄의 맨 앞, 줄이 비었으면 다음 라운드의 맨 앞 */
 function nextActor(b) {
-  const al = alive(b).filter(e => e.role !== 'root'); let n = null;
-  for (const e of al) if (!n || e.next < n.next) n = e;
-  return n && n.next < b.pNext ? n : null;
+  const head = (b.queue && b.queue.length) ? b.queue[0] : (roundOrder(b, false)[0] || {}).id;
+  if (!head || head === 'p') return null;
+  const e = b.en.find(x => x.id === head); return e && e.alive && e.role !== 'root' ? e : null;
 }
 /* 적이 한 명씩: 먼저 "누가 무엇을 한다"를 알리고, 그다음 결과를 보여준다 */
 async function animate(b) {
@@ -3713,7 +3777,7 @@ function vSheet() {
    원형 칸이 기본 → 중급 → 상급 → 궁극으로 아래로 가지처럼 뻗고, 부모와 선으로 잇는다. 칸에 마우스를 올리면 설명창, 누르면 아래 상세 칸.
    보이는 범위는 treeVis(기본·부모가 열린 칸은 다 보이고, 궁극은 이름만, 나머지는 ?). 휴대폰은 갈래 탭, PC는 세 갈래를 나란히.
    쓰는 곳: 캐릭터 만들기의 스킬 단계(mode 'create'), 따로 보는 페이지 'tree'(메뉴·지도). 전투 중에는 보기만 한다 */
-const TIERS2 = ['하급', '중급', '상급', '궁극'];
+const TIERS2 = ['하급', '중급']; // 상급·궁극은 지웠다(2챕터까지의 반응을 보고 3챕터부터 더한다)
 const TREE_ROW_H = 82, TREE_TOP = 38;
 function treeLayout(build, br, tiers) {
   const all = SKILLS2[build].filter(s => s.b === br && !s.start && (tiers || TIERS2).includes(s.tier)); const pos = {};
@@ -3747,8 +3811,8 @@ function vTreeBranch(run, br) {
   const head = `<div class="thead2">${hs ? `<p class="thaste"><b>갈래 규칙</b> ${esc(SK_HS[hs])} 이 갈래 스킬 대기 −1</p>` : ''}<p class="tcount">스킬 <b>${all.length}칸</b> · 열림 ${op}${hid ? ` · 숨은 칸 ${hid}` : ''}<span class="tleg"><i>+</i>열 수 있음 <i>?</i>윗줄을 열면 보임</span></p><p class="tcount">한 줄에 두 칸: 윗줄에서 하나만 열어도 아랫줄이 열립니다.</p></div>`;
   const tl = rows.map((row, i) => (i === 0 || rows[i - 1][0].tier !== row[0].tier) ? `<span class="ttier" style="top:${TREE_TOP + i * TREE_ROW_H}px"><b>${row[0].tier}</b></span>` : '').join(''); // 등급 이름은 그 등급의 첫 줄에
   // 잠긴 등급: 그림 대신 한 줄 (깊이는 보이게: 칸 수, 궁극은 이름)
-  const lockT = TIERS2.filter(tier => !tiers.includes(tier));
-  const foot = lockT.length ? `<div class="tlocked">${lockT.map(tier => { const xs = all.filter(x => x.tier === tier); return `<span>🔒 <b>${TREE_CH[tier]}챕터부터</b> ${tier} ${xs.length}칸${tier === '궁극' ? ' · ' + xs.map(x => esc(x.n)).join(', ') : ''}</span>`; }).join('')}</div>` : '';
+  const lockT = TIERS2.filter(tier => !tiers.includes(tier) && all.some(x => x.tier === tier));
+  const foot = `<div class="tlocked">${lockT.map(tier => { const xs = all.filter(x => x.tier === tier); return `<span>🔒 <b>${TREE_CH[tier]}챕터부터</b> ${tier} ${xs.length}칸</span>`; }).join('')}<span>🔒 <b>3챕터부터</b> 상급·궁극 (준비 중)</span></div>`;
   return `<div class="tbranch">${head}<div class="tcwrap"><div class="ttiers" style="height:${H}px" aria-hidden="true" title="등급. 숫자는 이 갈래에 먼저 써야 하는 포인트">${tl}</div><div class="tcanvas" style="height:${H}px"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${nodes}</div></div>${foot}</div>`;
 }
 function vTreeDetail(run, id, preview) {
@@ -3768,7 +3832,7 @@ function vTreeView(mode) {
   const brs = T.branches; const tab = brs.includes(G.tbr) ? G.tbr : brs[0];
   const st = T.starters.map(id => `<button class="tstart${G.tsel === id ? ' sel' : ''}" data-a="tsel" data-k="${id}" data-info="tn:${id}"><span class="tc">✓</span>${esc(SK2[id].n)}</button>`).join('');
   const slots = Array.from({ length: EQUIP_SLOTS2 }, (_, i) => eqd[i] ? `<button class="tslot on" data-a="tsel" data-k="${eqd[i]}" data-info="tn:${eqd[i]}">${esc(SK2[eqd[i]].n)}</button>` : `<span class="tslot">빈 칸</span>`).join('');
-  let h = `<div class="tsum"><div><span class="mini">시작 스킬 · 늘 끼움</span><div class="trow">${st}</div></div><div><span class="mini">장착 ${eqd.length}/${EQUIP_SLOTS2}</span><div class="trow">${slots}</div></div><div class="tpts">포인트 <b>${t.pts}</b><small>레벨마다 +1 · 챕터 돌파 +2</small></div></div>`;
+  let h = `<div class="tsum"><div><span class="mini">시작 스킬 · 늘 끼움</span><div class="trow">${st}</div></div><div><span class="mini">장착 ${eqd.length}/${EQUIP_SLOTS2}</span><div class="trow">${slots}</div></div><div class="tpts">포인트 <b>${t.pts}</b><small>레벨마다 +1 (Lv10에 10점)</small></div></div>`;
   if (!treeCanEdit()) h += `<p class="mini">전투 중에는 볼 수만 있습니다. 방과 방 사이에 열고 바꿉니다.</p>`;
   const menu = `<nav class="tbmenu" role="tablist" aria-label="스킬 트리 갈래">${brs.map(br => { const ns = SKILLS2[run.build].filter(x => x.b === br && !x.start); const op = ns.filter(x => t.open.includes(x.id)).length; const can = ns.some(x => !t.open.includes(x.id) && !treeWhy(run, x.id)); return `<button class="tseg${tab === br ? ' on' : ''}" data-a="tbr" data-k="${br}" role="tab" aria-selected="${tab === br}"><b>${esc(br)}${can ? ' <i class="tcan" aria-label="열 수 있는 칸 있음">+</i>' : ''}</b><small>${esc(T.bd[br])}</small><span>포인트 ${t.spent[br] || 0} · ${op}/${ns.length}칸</span></button>`; }).join('')}</nav>`;
   return h + `<div class="tlay treev">${menu}<div class="tmain">${vTreeBranch(run, tab)}</div><aside class="tside"><div id="tdet" class="tdet">${vTreeDetail(run, G.tsel)}</div></aside></div>`;
@@ -3805,7 +3869,7 @@ function sheetParts(S) {
   } else if (S.kind === 'bossinfo') {
     const B = BOSSES[S.data.boss]; title = B.n + '을(를) 처음 만났습니다';
     const tips = S.data.boss === 'mother'
-      ? ['어머니는 시간이 흐를 때마다 내게 중독을 건다. 중독이 10에 닿으면 알이 깨 하수인 둘이 나온다.', '방어하는 동안은 독이 쌓이지 않는다. 생명력 플라스크로 독을 지우면, 지운 만큼 어머니가 다친다.', '체력이 70% 아래로 떨어지면 나락의 거울이 열린다. 내가 방금 쓴 스킬이 절반 위력으로 나에게 되돌아온다. 강한 한 방 뒤에는 대비하자.']
+      ? ['어머니는 라운드가 끝날 때마다 내게 중독을 건다. 중독이 10에 닿으면 알이 깨 하수인 둘이 나온다.', '방어하는 동안은 독이 쌓이지 않는다. 생명력 플라스크로 독을 지우면, 지운 만큼 어머니가 다친다.', '체력이 70% 아래로 떨어지면 나락의 거울이 열린다. 내가 방금 쓴 스킬이 절반 위력으로 나에게 되돌아온다. 강한 한 방 뒤에는 대비하자.']
       : ['뒷줄의 뿌리가 살아 있는 한 수호목은 계속 체력을 되찾는다. 원거리나 광역 공격으로 뿌리부터 끊자.', '계절이 바뀔 때마다 약점이 달라진다. 여름에는 불에 약하고, 가을에는 단일 공격 절반이 빗나가는 대신 광역에 약하다. 겨울에는 냉각을 건다.', '보스 카드의 "+N/내 차례"는 뿌리 때문에 회복하는 양이다.'];
     body = `<p class="lore">${esc(B.lore || '')}</p>${tips.map(t => `<p>${esc(t)}</p>`).join('')}<p class="mini">오래 끌면 광폭해지고, 10T마다 더 거세집니다. 이 안내는 보스마다 한 번만 뜹니다. 보스 카드 위의 규칙 줄에서 언제든 다시 볼 수 있습니다.</p><button class="gold wide" data-a="close" data-focus>싸우러 간다</button>`;
   } else if (S.kind === 'admin') {

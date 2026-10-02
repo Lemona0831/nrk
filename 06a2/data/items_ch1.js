@@ -87,7 +87,7 @@ const ITEMS_CH1 = {
   wideflask: { n: '넓은 플라스크', slot: 'flask', g: 'm', act: '생명력 플라스크 최대 충전 +1.', cost: '생명력 플라스크 회복 −5%p', lore: '더 담기지만 더 묽다.' },
   tonic: { n: '진한 강장제', slot: 'flask', g: 'm', act: '스태미나 플라스크 회복량 +20%.', cost: '', lore: '혀가 저릴 만큼 진하다.' },
   doubleflask: { n: '두 겹 플라스크', slot: 'flask', g: 'm', act: '마나 플라스크가 생명력 10%도 회복한다.', cost: '', lore: '안쪽 병에 무엇이 들었는지는 묻지 않는다.' },
-  saintgrail: { n: '성인의 성배', slot: 'flask', g: 'r', act: '플라스크를 마신 다음 행동도 빠른 행동이 된다.', cost: '모든 플라스크 최대 충전 −1', lore: '한 모금에 시간이 느려진다.' },
+  saintgrail: { n: '성인의 성배', slot: 'flask', g: 'r', act: '플라스크를 마셔도 빠른 칸이 남는다(그 차례에 빠른 행동을 한 번 더).', cost: '모든 플라스크 최대 충전 −1', lore: '한 모금에 시간이 느려진다.' },
   // 10월 2일 추가 50종 (기획서 11.5절 101~150번)
   ironmace: { n: '쇠 철퇴', slot: 'weapon', g: 'n', act: '전열 적에게 주는 피해 +4%.', cost: '', lore: '머리가 무거워 휘두르기보다 떨어뜨린다.' },
   thornrod: { n: '가시 지팡이', slot: 'weapon', g: 'n', act: '주문 붕괴 +2.', cost: '', lore: '가시가 손바닥을 찔러 정신이 든다.' },
@@ -114,7 +114,7 @@ const ITEMS_CH1 = {
   duelgloves: { n: '결투 장갑', slot: 'gloves', g: 'm', act: '적이 하나만 남으면 주는 피해 +12%.', cost: '', lore: '마지막 하나와는 눈을 맞춘다.' },
   breakerhands: { n: '부수는 손', slot: 'gloves', g: 'm', act: '붕괴한 적에게 강공격 피해 +20%.', cost: '', lore: '금 간 곳을 찾아 다시 친다.' },
   alchemgloves: { n: '연금술사의 장갑', slot: 'gloves', g: 'm', act: '내가 건 지속 피해 +8%.', cost: '', lore: '손가락 끝이 늘 초록빛이다.' },
-  reaperhands: { n: '수확자의 손', slot: 'gloves', g: 'r', act: '적을 쓰러뜨리면 다음 행동이 빠른 행동이 된다.', cost: '받는 피해 +6%', lore: '거둔 다음에는 쉬지 않는다.' },
+  reaperhands: { n: '수확자의 손', slot: 'gloves', g: 'r', act: '적을 쓰러뜨리면 다음 빠른 행동 한 번은 빠른 칸을 쓰지 않는다.', cost: '받는 피해 +6%', lore: '거둔 다음에는 쉬지 않는다.' },
   smallicon: { n: '작은 성상', slot: 'amulet', g: 'n', act: '최대 생명력 +4.', cost: '', lore: '손바닥만 한 성인이 늘 같은 쪽을 본다.' },
   waxseal: { n: '밀랍 봉인', slot: 'amulet', g: 'n', act: '내게 걸린 취약 지속 −1T.', cost: '', lore: '봉인을 뜯지 않은 편지가 하나 있다.' },
   bonecharm: { n: '뼈 부적', slot: 'amulet', g: 'n', act: '전투가 시작되면 마나 +6.', cost: '', lore: '작은 뼈 셋을 실로 묶었다.' },
