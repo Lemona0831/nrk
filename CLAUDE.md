@@ -8,6 +8,7 @@
 - 지인 사이트(루트)를 직접 고치는 것은 만든 사람이 승인한 고침만, next/와 같은 문장으로 한다(10월 2일: 기록 내려받기, 방패병, 기다리는 캐릭터, 포기된 깬 캐릭터 되살리기). 0.6b를 공개할 때 next/가 그대로 덮으므로 next/에도 반드시 같은 고침이 있어야 한다
 - 개발은 `next/`에서 한다(미리보기 https://lemona0831.github.io/nrk/next/). 지금은 0.6b(2챕터와 성장 시스템, docs/0.6b-구현계획.md, 기획서 11.12절)를 만든다. 지인에게 내보낼 때 `python tools/release.py`로 next/를 루트에 복사하고(`../` 경로를 고침), `python tools/smoke_site.py .`로 루트를 점검한 뒤 커밋한다. 내보낼 때 next/의 `VERSION`과 타이틀 표시를 맞춘다
 - B0.5는 `b05/index.html`에 보관(https://lemona0831.github.io/nrk/b05/). 고치지 않는다. B0.5 기록(runs·best 등)은 저장소에 그대로 있고, B0.5 결과 보기도 b05에서 연다
+- **0.6a.2 스킬 시험판은 `06a2/`**(https://lemona0831.github.io/nrk/06a2/, 10월 2일 만든 사람 요청). 모든 스킬 체계를 새로 짜기 위해 지인 주소의 0.6a를 그대로 복제한 별도 사이트다(복제 직후 자동 테스트 결과가 루트와 똑같음). 스킬 개편은 여기서 하고, 루트·next/에는 넣지 않는다. next/(0.6b)와 합칠지는 만든 사람이 정한다. 기록이 지인 주소와 섞이지 않게 브라우저 저장 키 `nrk_062_v1`, 저장소 경로 runs62·scen62·survey62, 기록판 칸 best62, 랭킹 칸 rank62를 쓴다. 설정은 `../config.js`, 음악은 루트의 `../audio/`를 함께 쓴다(루트 audio/의 파일 이름이 바뀌면 06a2/data/audio.js도 고친다). `playtest/(uid)` 문서(이름·판 수)는 지인 주소와 같은 문서를 쓴다. 구글 로그인을 쓰려면 Supabase Redirect URLs에 06a2/ 주소를 더해야 한다. 점검: `python tools/smoke_site.py 06a2`, `DGDIR=06a2 node tools/dgqa.js 20`, `node tools/extract-engine.js 06a2`
 - 0.6과 B0.5는 같은 사이트라 브라우저 저장소를 함께 쓰지만 저장 키가 달라(0.6 `nrk_06_v1`) 섞이지 않는다. 구글 로그인 돌아오는 주소는 Supabase 설정의 Redirect URLs에 있어야 한다(루트와 next/)
 - 계획과 진행 상황: docs/0.6a-구현계획.md. 설계: 기획서 11절. 보스·강적 상세는 저장소 밖 `../nrk-private/보스.md`(공개 저장소에 넣지 말 것)
 - 보스·강적의 기믹 설명과 대처법은 공개 파일(기획서, 업데이트 내역, 게임 문장)에 쓰지 않는다. 수도원장 수치는 index.html의 `ABBOT`, 처음 만남·도감 문장은 `next/data/dungeon.js`의 `FOE_INTRO`·`CODEX`(겪은 결과만)
@@ -27,6 +28,7 @@
 | index.html, data/, audio/ | 지인 주소의 0.6a. next/에서 `tools/release.py`로 만든다. 직접 고치지 않는다 |
 | next/ | 개발판. index.html(엔진·화면) + data/*.js(값) + audio/ |
 | b05/ | B0.5 보관본(한 파일). 고치지 않는다 |
+| 06a2/ | 0.6a.2 스킬 시험판. 0.6a 복제 + 스킬 개편. index.html + data/*.js (음악은 루트 audio/) |
 | config.js | Supabase Project URL과 anon(공개) 키. 만든 사람이 직접 관리한다. **고치지 말 것** |
 | tools/ | 자동 테스트. 아래 "테스트" 참고 |
 | docs/작업기록.md | 지금까지의 결정, 현재 수치, 남은 문제 |
