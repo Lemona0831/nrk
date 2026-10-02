@@ -1889,11 +1889,12 @@ function vRecords() {
 /* ===== 관리자 페이지: 암호(사이트) → 결과 보기 ===== */
 function vAdmin() {
   let h = `<section class="card"><div class="phead">${backBtn()}<h3>관리자</h3></div>`;
-  if (G.site && !G.owner) {
+  const siteMode = G.site || !!siteCfg(); // 설정 파일이 있으면 접속이 끝나기 전에도 사이트로 본다 (주소 #admin으로 바로 열 때)
+  if (siteMode && !G.owner) {
     if (G.conn !== 'ok') return h + '<p class="mini">저장소에 연결하는 중입니다. 연결되지 않으면 새로 고쳐 주세요.</p></section>';
     return h + `<p class="mini">결과 보기와 지인 기록 넣기는 Supabase 설정 때 정한 관리자 암호로 엽니다. 이 기기에만 기억됩니다.</p><label for="adminpass">관리자 암호</label><input id="adminpass" type="password" autocomplete="current-password">${G.adminMsg ? `<p class="no" role="status">${esc(G.adminMsg)}</p>` : ''}<button class="gold" data-a="admingo">확인</button></section>`;
   }
-  if (!G.dash && !G.dashReq && (G.conn || !G.site)) { G.dashReq = 1; setTimeout(loadDash, 0); }
+  if (!G.dash && !G.dashReq && (G.conn || !siteMode)) { G.dashReq = 1; setTimeout(loadDash, 0); }
   return h + '<p class="mini">0.6 기록만 모았습니다. B0.5 기록은 친구 사이트(루트)의 결과 보기에서 봅니다.</p></section>' + (G.dash ? vDash06() : '') + vDash();
 }
 /* 0.6 요약: 직업별 완주, 쓰러진 층, 문 고르기, 방 결과, 상점 */
@@ -2616,6 +2617,7 @@ async function initSite(cfg) {
     if (G.data.adminPass) { const { data: ok } = await sb.rpc('admin_check', { pass: G.data.adminPass }); if (ok) { G.owner = true; G.adminPass = G.data.adminPass; } }
   } catch (e) { G.conn = 'sitefail'; G.siteErr = (e && e.message) || String(e); }
   if (G.conn === 'ok') reviveCloud(); // 다른 브라우저에서 들어와도 저장소 기록으로 되살린다
+  if (G.scr === 'admin' && G.db && G.owner && (!G.dash || G.dashErr)) { G.dash = null; G.dashErr = ''; G.dashReq = 0; } // 접속 전에 열린 관리자 화면은 접속 뒤 다시 불러온다
   render();
 }
 /* ===== 구글 로그인 (사이트 전용, 선택)
@@ -3427,7 +3429,8 @@ async function readTester(id) {
 function testerLabel(T, i) { return !T.name ? '테스터 ' + (i + 1) : T.login ? T.name + ' · ' + (PROVIDER_N[T.login] || T.login) : T.name + ' (익명)'; }
 async function loadDash() {
   G.dash = null; G.dashErr = ''; G.dashReq = 1; if (!PAGES.includes(G.scr)) G.back = G.scr; G.scr = 'admin'; render();
-  if (!G.db) { G.dashRaw = [{ uid: 'local', runs: G.data.runs, scen: Object.values(G.data.scen), final: G.data.final }]; G.dash = aggregate(G.dashRaw); G.dashErr = '공유 저장소에 연결되지 않아 이 브라우저 기록만 보여줍니다.'; render(); return; }
+  if (!G.db && siteCfg() && G.conn !== 'sitefail') { G.dashReq = 0; G.dashErr = '저장소에 연결하는 중입니다. 연결되면 자동으로 불러옵니다.'; render(); return; } // 접속 전에는 이 브라우저 기록으로 대신하지 않는다
+  if (!G.db) { G.dashRaw = [{ uid: 'local', runs: G.data.runs, scen: Object.values(G.data.scen), final: G.data.final }]; G.dash = aggregate(G.dashRaw); G.dashErr = G.conn === 'sitefail' ? '저장소에 연결하지 못했습니다(' + (G.siteErr || '') + '). 이 브라우저 기록만 보여줍니다.' : '공유 저장소에 연결되지 않아 이 브라우저 기록만 보여줍니다.'; render(); return; }
   try {
     if (G.site) {
       const { data: rows, error } = await G.sb.rpc('admin_dump', { pass: G.adminPass || '' });
