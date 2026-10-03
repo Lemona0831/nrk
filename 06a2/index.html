@@ -134,6 +134,15 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .lastlog.bad{border-color:var(--bad)}.lastlog.good{border-color:var(--good)}
 .rowlab{font-size:12.5px;color:var(--muted);margin:0 0 4px;display:flex;align-items:center;gap:2px;flex-wrap:wrap}
 .field .enemies{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-bottom:8px}
+.lanes{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.lane{border:1px solid var(--line);border-left:4px solid var(--lc);border-radius:10px;padding:5px 8px 7px;background:var(--lbg);min-width:0}
+.lane.front{--lc:#d9744f;--lbg:rgba(217,116,79,.07)}.lane.back{--lc:#6b9be0;--lbg:rgba(107,155,224,.07)}
+.lanehd{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 4px;min-height:24px}
+.lanehd b{color:var(--lc);font-size:14.5px;letter-spacing:.03em}.lanect{color:var(--muted);font-size:12px}
+.reach{font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 9px;border:1px solid;line-height:18px}
+.reach.ok{color:var(--good);border-color:rgba(134,197,111,.55);background:rgba(134,197,111,.08)}.reach.no{color:var(--muted);border-color:var(--line);background:var(--panel2)}
+.lane .enemies{margin-bottom:0}.lane.empty{padding:3px 8px}.lane.empty .lanehd{margin:0}.lanehd .fq{margin-left:auto}
+@media (min-width:900px){.lanes{flex-direction:row;align-items:flex-start}.lane{flex:var(--n,1) 1 0}.lane.empty{flex:0 0 150px}.field .lane .enemies{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}}
 .en{padding:6px 8px}.enh{display:flex;align-items:center;gap:6px;margin-bottom:3px}.enh .ico{font-size:20px}
 .nr{margin-left:auto;font-size:11px;color:var(--bad);border:1px solid var(--bad);border-radius:4px;padding:0 4px;white-space:nowrap}
 .bkline{display:flex;align-items:center;gap:6px;margin:2px 0}.bkb{flex:1;height:5px;background:var(--track);border-radius:3px;overflow:hidden}.bkb i{display:block;height:100%;background:var(--bk)}.bkline small{font-size:10.5px;color:var(--muted);white-space:nowrap}
@@ -518,7 +527,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
  .logbtn{min-height:30px;padding:2px 8px}.lbt{display:none}
  .gimmick{font-size:12px;padding:3px 7px;margin-bottom:4px}
  /* 전장: 작은 카드 2열 */
- .field .rowlab{font-size:12px;margin:0 0 3px;justify-content:space-between}.rlhint{display:none}
+ .lane{padding:4px 6px 5px;border-radius:8px}.lanehd{margin:0 0 3px;min-height:22px;gap:5px}.lanehd b{font-size:13.5px}.reach{font-size:11px;padding:0 7px}.rlhint{display:none}
  .fq{display:inline-flex;min-height:26px;padding:0 8px;font-size:11.5px;margin-left:auto}
  .fhelp{display:none}
  .field .enemies{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-bottom:5px}
@@ -2497,12 +2506,16 @@ function vBattle() {
   const ecard = e => {
     const it = intentText(b, e); const ib = intentBadge(b, e); const sel = G.sel === e.id; const pop = pops[e.id];
     const reach = !frontBlocked(b) || e.row === 'front';
-    return `<button class="en${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(e.n)} 생명력 ${shownHp(e.hp)}/${Math.round(e.hpMax)}${e.role !== 'root' ? ', ' + esc(eordText(b, e)) : ''}, 예고: ${esc(it.t)}">${eordHtml(b, e)}<div class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wallUp(b, e) ? '<span class="wallm" title="방패벽: 광역 피해 절반" aria-label="방패벽">🛡️</span>' : wallFrontUp(b, e) ? '<span class="wallm" title="방패벽: 광역 피해 −40%" aria-label="방패벽">🛡️</span>' : ''}${e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" title="강인: 체력 +50%">강인</small>' : ''}${e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${!reach ? '<span class="nr" title="근접 공격이 닿지 않습니다">근접 불가</span>' : ''}${reach && guardOf(b, e) ? '<span class="nr gd" data-info="guarded" tabindex="0">방패병이 막는 중</span>' : ''}${e.boss === 'tree' && rootRegen(b) > 0 ? `<span class="nr rg2" data-info="regen" tabindex="0">🌱 +${rootRegen(b)}/라운드</span>` : ''}</div>${ehpBar(e)}${e.role !== 'root' ? `<div class="bkline" data-info="bar:bk" title="붕괴 ${Math.round(e.brk)}/${e.brkMax}"><small>붕괴 게이지</small><div class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></div></div>` : ''}${stsHtml(e, b)}${e.role !== 'root' ? `<div class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}" title="${esc(it.t)}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${acts1[e.id] > 1 ? `<span class="ix" title="내 다음 차례 전에 ${acts1[e.id]}번 움직입니다">×${acts1[e.id]}</span>` : ''}</div>` : '<div class="mini">움직이지 않는다</div>'}${pop ? popHtml(pop) : ''}</button>`;
+    return `<button class="en${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(e.n)} 생명력 ${shownHp(e.hp)}/${Math.round(e.hpMax)}${e.role !== 'root' ? ', ' + esc(eordText(b, e)) : ''}, 예고: ${esc(it.t)}">${eordHtml(b, e)}<div class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wallUp(b, e) ? '<span class="wallm" title="방패벽: 광역 피해 절반" aria-label="방패벽">🛡️</span>' : wallFrontUp(b, e) ? '<span class="wallm" title="방패벽: 광역 피해 −40%" aria-label="방패벽">🛡️</span>' : ''}${e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" title="강인: 체력 +50%">강인</small>' : ''}${e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${reach && guardOf(b, e) ? '<span class="nr gd" data-info="guarded" tabindex="0">방패병이 막는 중</span>' : ''}${e.boss === 'tree' && rootRegen(b) > 0 ? `<span class="nr rg2" data-info="regen" tabindex="0">🌱 +${rootRegen(b)}/라운드</span>` : ''}</div>${ehpBar(e)}${e.role !== 'root' ? `<div class="bkline" data-info="bar:bk" title="붕괴 ${Math.round(e.brk)}/${e.brkMax}"><small>붕괴 게이지</small><div class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></div></div>` : ''}${stsHtml(e, b)}${e.role !== 'root' ? `<div class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}" title="${esc(it.t)}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${acts1[e.id] > 1 ? `<span class="ix" title="내 다음 차례 전에 ${acts1[e.id]}번 움직입니다">×${acts1[e.id]}</span>` : ''}</div>` : '<div class="mini">움직이지 않는다</div>'}${pop ? popHtml(pop) : ''}</button>`;
   };
   const bk = b.en.filter(e => e.alive && e.row === 'back'), fr = b.en.filter(e => e.alive && e.row === 'front');
+  /* 전열 · 후열 띠 (10월 3일 만든 사람: 한눈에 안 들어온다): 줄마다 색 띠와 머리글, 머리에 근접 공격이 닿는지.
+     전열이 내 쪽이다(휴대폰은 위, PC는 왼쪽). PC 폭에서는 두 줄을 나란히 놓아 함께 보인다 */
+  const blocked = frontBlocked(b);
+  const lane = (k, nm, list, reach, extra) => `<div class="lane ${k}${list.length ? '' : ' empty'}" role="group" aria-label="${nm}" style="--n:${Math.max(1, list.length)}"><div class="lanehd"><b>${nm}</b><span class="lanect">${list.length ? list.length + '명' : '비어 있음'}</span>${list.length ? `<span class="reach ${reach[0]}">${reach[1]}</span>` : ''}${extra || ''}</div>${list.length ? `<div class="enemies">${list.map(ecard).join('')}</div>` : ''}</div>`;
   const field = `<section class="field" aria-label="전장">${G.scr === 'tut' ? vTutGoal(b) : ''}
-    <div class="rowlab"><span>후열<span class="rlhint">. 근접 공격은 전열이 비거나 무너져야 닿습니다</span></span><button class="qm fq" data-a="help" data-k="row" aria-label="전투 규칙 도움말"><span aria-hidden="true">?</span> 규칙</button></div><div class="enemies">${bk.map(ecard).join('') || '<p class="mini">없음</p>'}</div>
-    <div class="rowlab"><span>전열</span></div><div class="enemies">${fr.map(ecard).join('') || '<p class="mini">없음</p>'}</div><div class="fhelp"><span class="mini">규칙 보기</span>${q('row', '전열·후열')}${q('intent', '예고')}${q('break', '붕괴')}${q('status', '상태이상')}${q('roles', '적의 역할')}</div></section>`;
+    <div class="lanes">${lane('front', '전열', fr, ['ok', '근접 닿음'], '<button class="qm fq" data-a="help" data-k="row" aria-label="전투 규칙 도움말"><span aria-hidden="true">?</span> 규칙</button>')}${lane('back', '후열', bk, blocked ? ['no', '근접 불가<span class="rlhint"> · 전열이 막는 중</span>'] : ['ok', '근접 닿음<span class="rlhint"> · 전열이 비었거나 무너짐</span>'])}</div>
+    <div class="fhelp"><span class="mini">규칙 보기</span>${q('row', '전열·후열')}${q('intent', '예고')}${q('break', '붕괴')}${q('status', '상태이상')}${q('roles', '적의 역할')}</div></section>`;
   // 4) 행동판
   let dock;
   if (b.over) {
