@@ -48,10 +48,10 @@ fieldset label{display:inline-flex;align-items:center;min-height:44px;margin-rig
 .intent{font-size:12.5px;margin-top:4px;padding:3px 6px;border-radius:5px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;gap:5px;min-width:0}.intent.hv{border-color:var(--bad);color:var(--bad);font-weight:600}
 .intent .ii{font-size:17px;line-height:1;flex:none}.intent .inum{font-size:16px;font-weight:800;flex:none}.intent .itx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.intent .ix{flex:none;font-weight:800;font-size:12px;border-radius:9px;padding:0 6px;background:var(--bad);color:#fff}
 .intent.ik-atk .inum{color:var(--ink)}.intent.ik-hv{background:rgba(200,60,50,.12)}.intent.ik-warn{border-color:var(--gold);color:var(--gold)}.intent.ik-sup{color:var(--muted)}
-.en{position:relative}.mbars{position:relative}.pop{position:absolute;right:8px;top:2px;z-index:5;font-weight:900;font-size:18px;pointer-events:none;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.6);animation:popup 1.4s ease-out forwards}
-.pop.hurt{color:#ff6b5e}.pop.heal{color:#7be08a}.mbars .pop{right:auto;left:30%;top:-10px}
+.en{position:relative}.mbars{position:relative}.dpop{position:absolute;right:8px;top:2px;z-index:5;font-weight:900;font-size:18px;pointer-events:none;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.6);animation:popup 1.4s ease-out forwards}
+.dpop.hurt{color:#ff6b5e}.dpop.heal{color:#7be08a}.mbars .dpop{right:auto;left:30%;top:-10px}
 @keyframes popup{0%{opacity:0;transform:translateY(8px) scale(.9)}12%{opacity:1;transform:translateY(0) scale(1.15)}70%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
-@media (prefers-reduced-motion:reduce){.pop{animation:none}}
+@media (prefers-reduced-motion:reduce){.dpop{animation:none}}
 .incoming{font-size:12.5px;margin:4px 0 2px;padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:var(--panel2)}.incoming b{font-size:15px;color:var(--bad)}.incoming small{color:var(--muted)}.incoming.bad{border-color:var(--bad)}.incoming.calm{color:var(--muted)}
 .sts .sic{margin-right:2px}
 .sts{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}.sts i{font-style:normal;font-size:11.5px;border:1px solid;border-radius:4px;padding:0 4px}.sts .b{border-color:var(--good);color:var(--good)}.sts .d{border-color:var(--bad);color:var(--bad)}
@@ -2459,7 +2459,8 @@ function incHtml(b) {
 }
 /* 생명력 증감 숫자: 그리기 사이의 차이를 1.4초 동안 띄운다. 다시 그려도 애니메이션이 이어지게 지난 시간만큼 당겨 시작한다(엔진은 건드리지 않는다) */
 const POP_MS = 1400;
-function popHtml(x) { return `<span class="pop ${x.d < 0 ? 'hurt' : 'heal'}" style="animation-delay:-${x.el}ms" aria-hidden="true">${x.d < 0 ? '−' : '+'}${r1(Math.abs(x.d))}</span>`; }
+/* 피해 숫자(떠올랐다 사라짐)는 dpop. 설명 창(#pop.pop)과 이름이 같으면 설명 창도 1.4초 뒤에 사라진다(10월 3일 고침) */
+function popHtml(x) { return `<span class="dpop ${x.d < 0 ? 'hurt' : 'heal'}" style="animation-delay:-${x.el}ms" aria-hidden="true">${x.d < 0 ? '−' : '+'}${r1(Math.abs(x.d))}</span>`; }
 function hpPops(b) {
   const us = [b.p].concat(b.en); const key = u => u === b.p ? 'p' : u.id; const out = {}; const now = Date.now();
   if (G.popB !== b) { G.popB = b; G.hpSeen = {}; G.popL = {}; for (const u of us) G.hpSeen[key(u)] = u.hp; return out; }
