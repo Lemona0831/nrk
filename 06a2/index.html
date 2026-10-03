@@ -1542,6 +1542,7 @@ function enemyAct(b, e) {
   if (e.stun > 0) { e.stun--; logp(b, 'sys', e.n + '이(가) 비틀거린다. 행동을 놓친다'); e.acts++; return; }
   e.braced = 0; e.countering = 0; e.evading = 0; e.guarding = null; // 버티기 · 반격 태세 · 몸 낮추기 · 지키기는 그 적의 다음 행동까지
   const i = e.intent || { k: 'attack' }; const d = enemyHitEst(b, e);
+  if ((i.k === 'heavy' || i.k === 'explode' || i.aimed) && e.teleTurn === b.turnIdx) { logp(b, 'sys', e.n + '이(가) 힘을 모은 채 노려본다'); return; } // 10월 4일: 예고한 큰 공격은 내 차례가 한 번 지난 뒤에 나간다 (한 라운드에 두 번 움직이는 적이 모은 바로 그 라운드에 내리쳤다)
   b.rec.push({ k: 'eact', t: r1(b.t), role: e.role, i: i.k });
   switch (i.k) {
     case 'attack': { const x = hurtPlayer(b, d * (i.aimed ? EKW.aimMul : 1), { src: e, single: 1, label: e.n + (i.aimed ? '이(가) 겨눈 한 발을 쏜다' : '이(가) 나를 벤다') }); if (i.bleed && x > 0) addS(b, b.p, 'bleed', i.bleed); leech(b, e, x); break; }
@@ -1550,17 +1551,17 @@ function enemyAct(b, e) {
     case 'brace': { e.braced = 1; logp(b, 'sys', e.n + '이(가) 몸을 굳혀 버틴다. 받는 피해 절반'); break; }
     case 'counter': { e.countering = 1; logp(b, 'sys', e.n + '이(가) 방패 뒤에서 되받을 자세를 잡는다'); break; }
     case 'evade': { e.evading = 1; logp(b, 'sys', e.n + '이(가) 몸을 낮춘다'); break; }
-    case 'aim': { logp(b, 'sys', e.n + '이(가) 시위를 당겨 겨눈다'); break; }
+    case 'aim': { e.teleTurn = b.turnIdx; logp(b, 'sys', e.n + '이(가) 시위를 당겨 겨눈다'); break; }
     case 'guard': { const t = b.en.find(x => x.id === i.tgt && x.alive); if (t) { e.guarding = t.id; logp(b, 'sys', e.n + '이(가) ' + t.n + ' 앞을 막아선다'); } break; }
     case 'bless': { const t = b.en.find(x => x.id === i.tgt && x.alive); if (t) { addS(b, t, 'empower', 1); logp(b, 'bad', e.n + '이(가) ' + t.n + '에게 축복을 내린다. 다음 공격 피해 +25%'); } break; }
     case 'curse': { addS(b, b.p, 'weak', EKW.curseWeak); logp(b, 'bad', e.n + '이(가) 저주를 읊는다. 약화 ' + EKW.curseWeak); break; }
     case 'steal': { const lt = stealLoot(b); if (lt) { e.loot = lt; logp(b, 'bad', e.n + '이(가) ' + lt.n + '을(를) 훔친다. 달아나기 전에 잡으면 되찾는다'); } else logp(b, 'sys', e.n + '이(가) 훔칠 것을 찾지 못한다'); break; }
     case 'flee': { e.alive = false; e.fled = 1; logp(b, 'bad', e.n + '이(가) ' + (e.loot ? e.loot.n + '을(를) 들고 ' : '') + '달아난다'); if (e.loot) loseLoot(e.loot); checkEnd(b); break; }
-    case 'charge': logp(b, 'sys', e.n + '이(가) 무기를 높이 치켜든다. 강타가 온다'); break;
+    case 'charge': e.teleTurn = b.turnIdx; logp(b, 'sys', e.n + '이(가) 무기를 높이 치켜든다. 강타가 온다'); break;
     case 'heavy': { const bm = e.boss === 'abbot' ? 1 + ABBOT.brand * st(b.p, 'brand') : 1; const x = hurtPlayer(b, d * heavyMulOf(e) * bm, { src: e, single: 1, charged: 1, label: e.n + '의 강타가 내리꽂힌다' + (bm > 1 ? '. 낙인이 타오른다' : '') }); if (x > 0) addS(b, b.p, 'vuln', EKW.heavyVuln); leech(b, e, x); break; }
     case 'heal': { const t = b.en.find(x => x.id === i.tgt && x.alive) || alive(b).sort((a, c) => a.hp / a.hpMax - c.hp / c.hpMax)[0]; if (t) { const hf = healFrac(e); t.hp = Math.min(t.hpMax, t.hp + t.hpMax * hf); if (!e.monk) e.healN = (e.healN || 0) + 1; logp(b, 'bad', e.n + '이(가) ' + t.n + '의 상처를 봉합한다. ' + r1(hf * 100) + '% 회복' + (!e.monk ? '. 손이 점점 무뎌진다' : '')); } break; }
     case 'summon': for (let k = 0; k < SUMMON.n; k++) spawn(b, 'minion'); logp(b, 'bad', e.n + '의 부름에 뼈가 일어선다'); break;
-    case 'fuse': logp(b, 'sys', e.n + '의 도화선이 타들어 간다'); break;
+    case 'fuse': e.teleTurn = b.turnIdx; logp(b, 'sys', e.n + '의 도화선이 타들어 간다'); break;
     case 'explode': { hurtPlayer(b, d * EKW.explodeMul, { src: e, aoe: 1, label: e.n + '이(가) 터진다' }); if (!b.over) addS(b, b.p, 'weak', EKW.explodeWeak); e.alive = false; e.hp = 0; logp(b, 'sys', e.n + '은(는) 재가 되어 흩어진다'); checkEnd(b); break; }
     case 'mirror': { const x = b.p.lastSkillDmg * 0.5; if (x > 0) hurtPlayer(b, x, { src: e, single: 1, label: '나락의 거울이 내 스킬을 되비춘다' }); else logp(b, 'sys', '거울에 비칠 것이 없다'); break; }
   }
