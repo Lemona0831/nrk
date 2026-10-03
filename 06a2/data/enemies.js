@@ -1,13 +1,16 @@
 /* 나락의 유산 데이터: 적 역할(4.6절), 보스, 계절
    index.html보다 먼저 읽힌다. 값만 두고, 계산은 index.html에서 한다. */
+/* hit: 한 번 피해 = 기준 생명력(암살자 생명력 곡선 102 + 레벨마다 5) × hit (10월 4일 만든 사람 기준: 잡몹도 암살자 10~15% · 파수꾼 5~10%, 최소 5%, 강한 공격 15% 이상). dmg는 hit이 없을 때의 옛 배율 */
 const ROLES = {
-  bruiser:  { n: '돌격병', ico: '🪓', row: 'front', hp: 1.0, dmg: 1.0, spd: 1.0 },
-  shield:   { n: '방패병', ico: '🛡️', row: 'front', hp: 1.6, dmg: 0.6, spd: 0.8 },
-  archer:   { n: '사수',   ico: '🏹', row: 'back',  hp: 0.7, dmg: 1.1, spd: 1.1 },
-  healer:   { n: '치유사', ico: '✚', row: 'back',  hp: 0.7, dmg: 0.4, spd: 0.9 },
-  summoner: { n: '소환사', ico: '🕯️', row: 'back',  hp: 0.6, dmg: 0.5, spd: 0.8 },
-  bomber:   { n: '자폭병', ico: '💣', row: 'front', hp: 0.5, dmg: 1.6, spd: 1.0 },
-  minion:   { n: '하수인', ico: '💀', row: 'front', hp: 0.4, dmg: 0.5, spd: 1.0 },
+  bruiser:  { n: '돌격병', ico: '🪓', row: 'front', hp: 1.0, dmg: 1.0, spd: 1.0, hit: 0.13 },
+  shield:   { n: '방패병', ico: '🛡️', row: 'front', hp: 1.6, dmg: 0.6, spd: 0.8, hit: 0.10 },
+  archer:   { n: '사수',   ico: '🏹', row: 'back',  hp: 0.7, dmg: 1.1, spd: 1.1, hit: 0.12 },
+  healer:   { n: '사제',   ico: '✚', row: 'back',  hp: 0.7, dmg: 0.4, spd: 0.9, hit: 0.07 },
+  summoner: { n: '소환사', ico: '🕯️', row: 'back',  hp: 0.6, dmg: 0.5, spd: 0.8, hit: 0.08 },
+  bomber:   { n: '자폭병', ico: '💣', row: 'front', hp: 0.5, dmg: 1.6, spd: 1.0, hit: 0.10 },
+  minion:   { n: '하수인', ico: '💀', row: 'front', hp: 0.4, dmg: 0.5, spd: 1.0, hit: 0.10 },
+  thief:    { n: '도둑',   ico: '🫳', row: 'front', hp: 0.6, dmg: 0.4, spd: 1.2, hit: 0.07 },
+  darkmage: { n: '암흑술사', ico: '🌑', row: 'back', hp: 0.6, dmg: 0.8, spd: 0.9, hit: 0.11 },
   root:     { n: '뿌리',   ico: '🌱', row: 'back',  hp: 0.55, dmg: 0, spd: 0 },
 };
 

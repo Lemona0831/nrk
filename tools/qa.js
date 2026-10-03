@@ -94,14 +94,17 @@ function sigRule(b, r) {
 }
 /* 0.6a.2 직업의 판단: 스킬 이름이 아니라 데이터(fx)를 보고 고른다. 사람처럼 단순한 규칙 몇 개 */
 const psn2 = (u, k) => (u.s[k] ? u.s[k].stacks : 0);
+const enemyAvoid = (e, a) => !a.aoe && (!!e.evading || (!!e.countering && (a.melee || (a.s && a.s.tgt === 'melee')))); // 몸 낮추기 · 반격 태세 (10월 4일)
+const enemyPrio = e => (e.role === 'thief' && (e.loot || (e.intent && e.intent.k === 'steal'))) ? 2 : e.braced ? -1 : 0; // 도둑은 먼저, 버티는 적은 나중
 const WARDEN_FX = ['ward', 'wardFill', 'wardBurn', 'thorn', 'pull', 'vulnGrow', 'vulnPer', 'chillx', 'shieldx']; // 파수꾼 효과 (v2Pick의 파수꾼 판단이 이 효과를 가진 스킬에만 걸린다)
 /* 0.6a.2 라운드: 이번 차례에(빠른 행동으로) 흘릴 준비를 이미 했는가 (id를 주면 그 적에게). 옛 직업은 늘 false라 next/ 측정은 그대로다 */
 const v2Ready = (b, id) => !!(E.isV2 && E.isV2(b.p) && b.p.dodge && b.prepTurn === b.turnIdx && (id == null || b.p.dodge === id));
 function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   const p = b.p; const nf = !!(E.noFast && E.noFast(p)); const okS = L.filter(a => a.v2 && a.ok && !(nf && a.time <= 0.6)); const has = (a, k) => a.s.fx.some(e => e.k === k); // 느린 맥박: 빠른 칸이 없어 빠른 스킬도 차례를 끝내므로 사람처럼 빠른 스킬을 고르지 않는다
   const psn = e => (e.s.poison ? e.s.poison.stacks : 0);
-  const reach = a => E.alive(b).filter(e => e.role !== 'root' && E.canTarget(b, e, a));
-  const best = (a, f) => reach(a).sort(f)[0];
+  // 10월 4일 적 행동: 몸 낮춘 적에게 한 적 공격, 반격 태세인 적에게 근접 한 적 공격은 다른 적이 있으면 하지 않는다. 버티는 적은 뒤로, 훔쳤거나 훔치려는 도둑은 앞으로 (사람은 예고를 보고 고른다)
+  const reach = a => { const all = E.alive(b).filter(e => e.role !== 'root' && E.canTarget(b, e, a)); const ok = all.filter(e => !enemyAvoid(e, a)); return ok.length ? ok : all; };
+  const best = (a, f) => reach(a).sort((x, y) => (enemyPrio(y) - enemyPrio(x)) || f(x, y))[0];
   const useMech = r() < (P.mech || 0.5);
   // 정화 플라스크: 적이 이번에 상태를 걸 예정이면 미리 막는다
   // 정화 플라스크: 출혈이 이미 쌓여 더 걸리면 아프거나, 폭발 약화가 올 때만(사람은 막을 거리가 클 때 마신다)
@@ -200,7 +203,7 @@ function heuristic(b, P, r, mem) {
   // 대상 고르기 (사람의 눈: 위협·치유사·약한 적)
   const reachable = a => E.alive(b).filter(e => E.canTarget(b, e, { id: a, melee: ['basic', 'heavy', 'viper', 'scarcut', 'crush', 'lava'].includes(a) ? 1 : 0, ranged: ['flame', 'purge', 'reverse', 'aimshot', 'drain'].includes(a) ? 1 : 0 }));
   const pick = a => {
-    let c = reachable(a); if (!c.length) return null;
+    let c = reachable(a); if (!c.length) return null; { const ok = c.filter(e => !enemyAvoid(e, { aoe: 0, melee: ['basic', 'heavy', 'viper', 'scarcut', 'crush', 'lava'].includes(a) })); if (ok.length) c = ok; } const th = c.find(e => enemyPrio(e) > 0); if (th) return th;
     const shieldAware = P.shieldAware || (mem.redirSeen || 0) >= 3;
     if (shieldAware && ['basic', 'heavy', 'viper', 'scarcut', 'crush', 'lava'].includes(a)) { const unguarded = c.filter(e => !E.guardOf(b, e)); if (unguarded.length) c = unguarded; }
     const roots = c.filter(e => e.role === 'root'); if (roots.length && r() < 0.6) return roots[0];

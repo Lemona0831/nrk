@@ -38,11 +38,13 @@ const ENC = {
     [['bruiser'], ['bruiser']], [['bruiser'], ['archer']], [['shield'], ['healer']], [['shield'], ['shield'], ['healer']],
     [['bomber'], ['bomber'], ['bruiser']], [['summoner'], ['minion'], ['minion']], [['bruiser'], ['healer']], [['archer'], ['archer'], ['bruiser']],
     [['shield'], ['archer']], [['bomber'], ['shield']], [['summoner'], ['bruiser']], [['bruiser', 1]],
+    [['thief'], ['bruiser']], [['darkmage'], ['shield']], [['healer'], ['bruiser'], ['minion']], [['thief'], ['archer']],
   ],
   lower: [
     [['bruiser', 1], ['archer']], [['shield', 1], ['healer'], ['bruiser']], [['archer', 1], ['archer'], ['bomber']], [['summoner'], ['minion'], ['minion'], ['healer']],
     [['bruiser'], ['bruiser'], ['healer', 1]], [['shield', 1], ['bomber'], ['bomber']], [['bruiser', 1], ['summoner']], [['archer'], ['shield'], ['healer']],
     [['bomber', 1], ['bruiser']], [['shield'], ['archer', 1], ['minion']], [['bruiser'], ['bruiser'], ['archer']], [['healer'], ['shield'], ['bruiser', 1]],
+    [['thief'], ['shield'], ['archer']], [['darkmage'], ['bruiser'], ['healer']], [['darkmage', 1], ['shield'], ['minion']], [['thief'], ['bruiser', 1]],
   ],
   treasure: [[['shield', 1], ['bruiser']], [['bruiser', 1], ['archer']], [['archer', 1], ['shield']]],
 };
@@ -86,7 +88,7 @@ const EVENTS = [
 /* 몬스터 레벨: 1챕터 1~4. 레벨마다 체력 +12%, 피해 +10% */
 const MLV_HP = 0.12, MLV_DMG = 0.10;
 /* 난이도 (10월 2일, 만든 사람 결정: 1챕터 완주 자동 테스터 평균 20%, 숙련·탐험가 40%. 1층부터 실전) 던전 방의 적 체력·피해 배율 */
-const DIFF = { upper: { hp: 1.25, dmg: 1.25 }, lower: { hp: 1.4, dmg: 1.25 } }; // 상층은 1층부터 거세게. 10월 3일 라운드 방식으로 바꾼 뒤 하층을 다시 맞춤(×1.05·×0.9 → ×1.4·×1.25): 그대로면 평균 완주 63%·신중 80%로 너무 쉬웠다. 목표는 기획서 11.11절(평균 20%·신중 40%, 신중이 쓰러지는 곳 상층 15·하층 20·보스 25). dgqa 360판: 29%·40%, 15·22·23
+const DIFF = { upper: { hp: 0.9, dmg: 0.85 }, lower: { hp: 1.2, dmg: 0.9 } }; // 10월 4일 적 행동 개편: 한 번 피해는 기준표(ROLES.hit), 이 배율은 층마다의 미세 조정. AI 테스터 완주 9%(암살자 8 · 파수꾼 10), 전투당 내 행동 11 · 14 // 상층은 1층부터 거세게. 10월 3일 라운드 방식으로 바꾼 뒤 하층을 다시 맞춤(×1.05·×0.9 → ×1.4·×1.25): 그대로면 평균 완주 63%·신중 80%로 너무 쉬웠다. 목표는 기획서 11.11절(평균 20%·신중 40%, 신중이 쓰러지는 곳 상층 15·하층 20·보스 25). dgqa 360판: 29%·40%, 15·22·23
 function mlvOf(f) { return f >= FLOOR_BOSS ? 4 : f <= 4 ? 1 : f <= 8 ? 2 : f <= 13 ? 3 : 4; }
 /* 경험치: 일반 5, 정예 12, 강적 30, 보스 100 × (1 + 0.15 × (몬스터 레벨 − 1)). 소환된 적은 0 */
 const XP_BASE = { normal: 5, elite: 12, strong: 30, boss: 100 }; // 보스 150이면 챕터 끝 Lv6으로 목표(4~5)를 넘어 100으로 (10월 2일)
@@ -99,7 +101,7 @@ const LV_POINTS = 2;
 const TOUGH_CHANCE = { upper: 0.35, lower: 0.6 };
 /* 1챕터(저주받은 수도원) 적 이름. 역할은 카드에 작게 함께 보인다 */
 const ENEMY_NAMES = {
-  1: { bruiser: '광신 수도사', shield: '문지기 수사', archer: '종탑 궁수', healer: '피 닦는 수녀', summoner: '뼈 부르는 사제', bomber: '불붙은 고행자', minion: '일어선 시체' },
+  1: { bruiser: '광신 수도사', shield: '문지기 수사', archer: '종탑 궁수', healer: '피 닦는 수녀', summoner: '뼈 부르는 사제', bomber: '불붙은 고행자', minion: '일어선 시체', thief: '헌금함 도둑', darkmage: '검은 기도사' },
 };
 
 /* ===== 강적과 보스: 처음 만날 때 "눈에 보이는 것", 겪은 뒤 도감 (기획서 11.9절) =====
