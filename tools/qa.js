@@ -94,6 +94,7 @@ function sigRule(b, r) {
 }
 /* 0.6a.2 직업의 판단: 스킬 이름이 아니라 데이터(fx)를 보고 고른다. 사람처럼 단순한 규칙 몇 개 */
 const psn2 = (u, k) => (u.s[k] ? u.s[k].stacks : 0);
+const WARDEN_FX = ['ward', 'wardFill', 'wardBurn', 'thorn', 'pull', 'vulnGrow', 'vulnPer', 'chillx', 'shieldx']; // 파수꾼 효과 (v2Pick의 파수꾼 판단이 이 효과를 가진 스킬에만 걸린다)
 /* 0.6a.2 라운드: 이번 차례에(빠른 행동으로) 흘릴 준비를 이미 했는가 (id를 주면 그 적에게). 옛 직업은 늘 false라 next/ 측정은 그대로다 */
 const v2Ready = (b, id) => !!(E.isV2 && E.isV2(b.p) && b.p.dodge && b.prepTurn === b.turnIdx && (id == null || b.p.dodge === id));
 function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
@@ -112,10 +113,34 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     const pb = okS.find(a => has(a, 'parryBuff')); if (pb && !p.pbuf && E.dodgeCost(p) <= p.st) return [pb.id];
     if (L.find(a => a.id === 'dodge' && a.ok) && r() < P.parry + 0.3) return ['dodge', hv.e.id];
   }
+  // 0.6a.2 파수꾼 (10월 4일): 보호막 · 가시 · 태우기 · 끌어내기 · 취약 · 둔화 · 붕괴 조건. 새 효과를 가진 스킬에만 걸린다
+  if (E.wardMax && okS.some(a => a.s.fx.some(e => WARDEN_FX.includes(e.k)))) {
+    const cap = E.wardMax(p), ward = p.ward || 0; const atk = pv1.filter(x => x.e.intent && ['attack', 'heavy', 'explode', 'brand'].includes(x.e.intent.k)).length;
+    const wardGain = a => a.s.fx.reduce((m, e) => m + (e.k === 'ward' ? e.n : e.k === 'wardFill' ? Math.max(0, cap * (e.to || 1) - ward) : 0), 0);
+    // 막기: 내 다음 차례 전에 공격이 오는데 보호막이 절반 아래면 보호막을 가장 많이 주는 나에게 쓰는 스킬, 가시가 없으면 가시 (10월 4일: 둘 이상 칠 때만 쓰던 것을 한 적에게도. 보스전에서 막는 스킬을 거의 쓰지 않았다)
+    if ((hv || atk >= 1) && ward < cap * 0.5) { const ws = okS.filter(a => a.self && wardGain(a) >= 6).sort((x, y) => wardGain(y) - wardGain(x))[0]; if (ws && r() < 0.8) return [ws.id]; }
+    if (atk >= 1 && !p.thorn) { const ts = okS.find(a => a.self && has(a, 'thorn')); if (ts && r() < 0.7) return [ts.id]; }
+    // 마무리 태우기(생명력이 낮은 적에게 ×): 그런 적이 있으면 그 적에게 쓰고, 정예 · 강적 · 보스가 아직 높으면 아껴 둔다 (사람은 버튼 설명을 보고 아낀다)
+    { const lowOf = a => a.s.fx.find(e => e.k === 'lowx'); const fin = okS.filter(a => has(a, 'wardBurn') && lowOf(a));
+      for (const a of fin) { const t = reach(a).filter(e => e.hp <= e.hpMax * lowOf(a).hp).sort((x, y) => y.hp - x.hp)[0]; if (t && ward >= 12) return [a.id, t.id]; }
+      const hold = a => E.alive(b).some(e => (e.role === 'boss' || e.elite || e.strong) && e.hp > e.hpMax * lowOf(a).hp);
+      for (const a of fin) if (hold(a)) okS.splice(okS.indexOf(a), 1); }
+    // 태우기: 태울 보호막이 넉넉하면(그 스킬이 태우는 상한의 60% 이상) 큰 적 · 강타를 모으는 적부터
+    for (const a of okS.filter(a => has(a, 'wardBurn'))) { const wb = a.s.fx.find(e => e.k === 'wardBurn'); if (ward >= Math.min(wb.max || cap, cap) * 0.6) { const t = a.aoe ? null : best(a, (x, y) => ((y.intent && ['charge', 'heavy'].includes(y.intent.k)) - (x.intent && ['charge', 'heavy'].includes(x.intent.k))) || (y.hp - x.hp)); if (a.aoe || t) return [a.id, t && t.id]; } }
+    // 끌어내기: 전열이 막고 있고 후열에 사수 · 치유사 · 소환사가 있으면
+    if (E.frontBlocked(b)) { const pa = okS.find(a => has(a, 'pull')); const t = pa && E.alive(b).filter(e => e.row === 'back' && ['archer', 'healer', 'summoner'].includes(e.role) && E.canTarget(b, e, pa)).sort((x, y) => x.hp - y.hp)[0]; if (t) return [pa.id, t.id]; }
+    // 취약 키우기 · 취약 비례: 취약이 걸린 적에게
+    { const vt = a => best(a, (x, y) => psn2(y, 'vuln') - psn2(x, 'vuln')); const vg = okS.find(a => has(a, 'vulnGrow')); if (vg) { const t = vt(vg); if (t && psn2(t, 'vuln') >= 1) return [vg.id, t.id]; } const vp = okS.find(a => has(a, 'vulnPer')); if (vp) { const t = vt(vp); if (t && psn2(t, 'vuln') >= 2) return [vp.id, t.id]; } }
+    // 둔화된 적 · 붕괴한 적에게 배수가 붙는 스킬: 그런 적이 있으면
+    for (const a of okS.filter(a => has(a, 'chillx') || has(a, 'brokenx'))) { const ok = e => (has(a, 'chillx') && e.s.chill) || (has(a, 'brokenx') && e.s.broken); const ts = reach(a).filter(ok); if (!ts.length) continue; if (a.aoe) return [a.id]; return [a.id, ts.sort((x, y) => y.hp - x.hp)[0].id]; }
+    // 방패병에게 붕괴 ×: 방패병이 있으면 그 방패병을
+    { const sx = okS.find(a => has(a, 'shieldx')); if (sx) { const sh = reach(sx).find(e => e.role === 'shield' && !e.s.broken); if (sh) return sx.aoe ? [sx.id] : [sx.id, sh.id]; } }
+  }
   if ((hv || ex) && r() < P.guard && L.find(a => a.id === 'guard' && a.ok)) return ['guard'];
   // 강공격: 스태미나가 넉넉하고 강타 예고가 없으면 가끔 (흘리기 몫 40은 남긴다)
   if (!hv && p.st >= 80 && r() < 0.3 + P.risk * 0.3 && L.find(a => a.id === 'heavy' && a.ok)) { const t = best({ id: 'heavy', melee: 1 }, (x, y) => y.hp - x.hp); if (t) return ['heavy', t.id]; }
-  if (!useMech) { const pool = okS.filter(a => !has(a, 'parry') && !has(a, 'parryBuff') && !(has(a, 'burst') && !E.alive(b).some(e => psn(e) > 0))); if (pool.length && r() < 0.6) { const a = pool[Math.floor(r() * pool.length)]; const t = a.self || a.aoe ? null : best(a, (x, y) => x.hp - y.hp); return [a.id, t && t.id]; } return null; }
+  const burnLow = a => has(a, 'wardBurn') && (p.ward || 0) < Math.min(a.s.fx.find(e => e.k === 'wardBurn').max || 99, E.wardMax ? E.wardMax(p) : 99) * 0.5; // 파수꾼: 태울 보호막이 모자라면 태우기를 고르지 않는다 (사람은 버튼의 "보호막 n 태움"을 보고 고른다)
+  if (!useMech) { const pool = okS.filter(a => !has(a, 'parry') && !has(a, 'parryBuff') && !burnLow(a) && !(has(a, 'burst') && !E.alive(b).some(e => psn(e) > 0))); if (pool.length && r() < 0.6) { const a = pool[Math.floor(r() * pool.length)]; const t = a.self || a.aoe ? null : best(a, (x, y) => x.hp - y.hp); return [a.id, t && t.id]; } return null; }
   const th = mem.burstTh || (mem.burstTh = 4 + Math.floor(r() * 4));
   // 처형·터뜨리기: 죽일 수 있거나 충분히 쌓였을 때
   for (const a of okS.filter(a => has(a, 'burst'))) {
@@ -141,13 +166,13 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   // 흘리기형 스킬에 보상(피해·되받기)이 붙어 있으면 강타가 아니어도: 내 다음 차례 전에 나를 칠 적에게
   { const pa = okS.find(a => has(a, 'parry') && (has(a, 'onParry') || has(a, 'dmg'))); if (pa && !v2Ready(b) && r() < 0.7) { const at = pv1.find(x => x.e.intent && x.e.intent.k === 'attack'); if (at) return [pa.id, at.e.id]; } }
   // 광역: 둘 이상
-  for (const a of okS.filter(a => a.aoe && !has(a, 'burst'))) if (reach(a).length >= 2) return [a.id];
+  for (const a of okS.filter(a => a.aoe && !has(a, 'burst') && !burnLow(a))) if (reach(a).length >= 2) return [a.id];
   // 중독을 이용하는 스킬: 중독 3 이상
   for (const a of okS.filter(a => has(a, 'exploit') || has(a, 'brkPer'))) { const t = best(a, (x, y) => psn(y) - psn(x)); if (t && psn(t) >= 3) return [a.id, t.id]; }
   // 흘리기 준비(자신): 강타가 곧 오면
   const pb = okS.find(a => has(a, 'parryBuff')); if (pb && !p.pbuf && E.alive(b).some(e => e.intent && e.intent.k === 'charge') && r() < 0.6) return [pb.id];
   // 그 밖의 공격 스킬: 아직 중독이 적은 적 / 약한 적
-  const atk = okS.filter(a => !a.self && !has(a, 'parry') && !has(a, 'burst') && !has(a, 'grow'));
+  const atk = okS.filter(a => !a.self && !has(a, 'parry') && !has(a, 'burst') && !has(a, 'grow') && !burnLow(a));
   if (atk.length) { const a = atk[Math.floor(r() * atk.length)]; const t = has(a, 'poison') ? best(a, (x, y) => (psn(x) - psn(y)) || (x.hp - y.hp)) : best(a, (x, y) => x.hp - y.hp); if (t) return [a.id, t.id]; }
   return null;
 }

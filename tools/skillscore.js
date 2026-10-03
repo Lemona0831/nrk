@@ -12,11 +12,11 @@ const rows = SK.map(s => Object.assign({ s }, ctx.skScore(s)));
 let out = 0;
 if (!md) {
   for (const r of rows) {
-    const ok = Math.abs(r.V / r.B - 1) <= 0.08 + 1e-9 ? 'ok' : (r.V > r.B ? '높음' : '낮음'); if (ok !== 'ok') out++;
+    const ok = r.s.exc ? '예외 ' + (r.V / r.B * 100 - 100).toFixed(0) + '% (' + r.s.exc + ')' : Math.abs(r.V / r.B - 1) <= 0.08 + 1e-9 ? 'ok' : (r.V > r.B ? '높음' : '낮음'); if (ok !== 'ok' && !r.s.exc) out++; // exc: 줄 예산의 예외로 표시한 칸 (10월 4일: 아껴 두는 마무리)
     console.log(`${r.s.b}\t${r.s.tier}\t${r.s.n.padEnd(8)}\tE ${r.E.toFixed(1)}\t순 ${r.net.toFixed(1)}\t× ${r.F.toFixed(1)}\t= ${r.V.toFixed(1)} / ${r.B}\t${ok}`);
   }
-  console.log(`${rows.length}개, 예산 밖 ${out}개`);
+  console.log(`${rows.length}개, 예산 밖 ${out}개` + (rows.some(r => r.s.exc) ? `, 예외 ${rows.filter(r => r.s.exc).length}개` : ''));
 } else {
   console.log('| 갈래 | 등급 | 스킬 | 머리줄 | 설명 | 점수 (예산) |\n| --- | --- | --- | --- | --- | --- |');
-  for (const r of rows) console.log(`| ${r.s.b} | ${r.s.tier} | ${r.s.n} | ${ctx.skHead(r.s)} | ${ctx.skBody(r.s)} | ${r.V.toFixed(0)} (${r.B}) |`);
+  for (const r of rows) console.log(`| ${r.s.b} | ${r.s.tier} | ${r.s.n} | ${ctx.skHead(r.s)} | ${ctx.skBody(r.s)} | ${r.V.toFixed(0)} (${r.B}${r.s.exc ? ', 예외' : ''}) |`);
 }

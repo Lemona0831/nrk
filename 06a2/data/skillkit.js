@@ -19,14 +19,18 @@ const SKK = {
   kw: { weak: 1.5, vuln: 1.5, chill: 1.5, protect: 2, haste: 2 },   // 적에게 거는 상태 1의 값 (한 번 막거나 키우는 피해)
   budget: { 시작: 28, 하급: 39, 중급: 48 },   // 10월 3일 50상황: 시작 스킬을 낮추고(35 → 28) 트리를 1.15배로 올렸다. 공통 행동이 갈래 스킬보다 세면 갈래 성격이 묻힌다
   rowB: { 1: 37, 2: 38, 3: 39, 4: 40, 5: 41, 6: 42.5, 7: 46, 8: 47.5, 9: 49.5, 10: 51 },  // 줄마다 예산 (10월 3일): 깊은 줄일수록 조금 세다. 하급 1~6줄, 중급 7~10줄   // 시작 30 → 35 (10월 3일: 늘 끼워지는 시작 스킬로 전투를 줄인다)   // 10월 3일: 06a2 감도 시험(스킬 효과 ×1.3 → 6성향 20%, 신중 35%)에서 등급별 점수 중앙값. 처음 값(20·24·30·42)의 약 1.7배
-  ward: { v: 0.8, S: 12, fill: 20, loss: 0.5, thorn: 0.85, vuln: 2, shield: 0.3, pull: 6 }, // 파수꾼 [가설] (10월 3일 초안): 보호막 1의 값, 쓸 때 쌓인 보호막, 가득 채우기로 더해지는 양, 태운 보호막이 막았을 몫, 가시가 맞는 몫, 쓸 때 대상의 취약, 방패병이 있는 몫, 끌어내기
+  /* 파수꾼 (10월 4일 50상황 측정으로 보정): 보호막은 맞으며 금방 줄어 쓸 때 대개 비어 있다. [하급(1~6줄), 중급(7~10줄)]마다
+     S: 보호막 비례 피해를 쓸 때의 보유량(측정 Lv5 7~8, Lv10 13~15), B: 한 번에 태우는 양(측정 Lv5 8~9 · 상한에 막힘, Lv10 12~14), cap: 채우기의 기준 상한(Lv5 49, Lv10 58, 쓸 때 거의 0이라 넘침 0~1%)
+     v: 보호막 1의 값, loss: 태운 보호막이 막았을 몫, thorn: 가시가 맞는 몫, vuln: 쓸 때 대상의 취약, shield: 방패병이 있는 몫, pull: 끌어내기, chill: 둔화된 적이 있는 몫 [가설] */
+  ward: { v: 0.8, S: [11, 17], B: [15, 21], cap: [45, 58], loss: 0.5, thorn: 0.85, vuln: 2, shield: 0.3, pull: 6, chill: 0.35, all: [12, 18], fin: 0.9 }, // 10월 4일 3차 측정(테스터가 보호막을 얻는 스킬을 태우는 스킬만큼 끼우고, 한 적의 공격에도 막는 스킬을 쓴 뒤): all은 모두 태우는 스킬이 한 번에 태우는 양(지금 10줄 최후의 성벽뿐, Lv10 측정 18), fin은 마무리 태우기를 생명력이 낮은 적에게 쓴 몫(측정 91~100%)
   hz: 1.5,                      // 🔄 쿨타임 당기기 1번의 값 [가설] (10월 3일 50상황: 평소 싸움에서는 스킬이 늘 3~4개 준비되어 있어 거의 0, 쿨타임이 묶이는 보스전에서만 크다)
   Fmax: 6,                      // 한 스킬을 전투에서 쓰는 횟수의 상한 (실측: 바탕 스킬 독니 5.4)
 };
 const skTri = n => n * (n + 1) / 2;
 const skJo = n => '013678'.includes(String(n).slice(-1)) ? '을' : '를'; // 숫자 뒤 을/를
 function skValue(s) {
-  const K = SKK; const Sof = k => (K.Sk && K.Sk[k] != null ? K.Sk[k] : K.S); const tm = K.tmul[s.tgt]; const hits = s.hits || 1; let v = 0;
+  const K = SKK; const Sof = k => (K.Sk && K.Sk[k] != null ? K.Sk[k] : K.S); const tm = K.tmul[s.tgt]; const hits = s.hits || 1; let v = 0; const hi = (s.row || 0) >= 7 ? 1 : 0; // hi: 중급(7~10줄)은 Lv7 이상에서 쓴다
+  const burnTake = e => e.max ? Math.min(e.max, K.ward.B[hi]) : K.ward.all[hi]; // 한 번에 태우는 양: 상한이 있으면 측정 보유량과 상한 가운데 작은 쪽, 모두 태우면 측정값
   for (const e of s.fx) {
     switch (e.k) {
       case 'dmg': v += e.n * hits * (s.tgt === 'self' ? 1 : tm); break;
@@ -40,7 +44,7 @@ function skValue(s) {
       case 'bigx': break; // 끝에서 곱한다
       case 'cutx': v += e.brk * K.brk * 0.25; break; // 강타·폭발을 모으는 적: 쓸 때 넷 중 하나쯤
       case 'drain': v += e.per * Sof('drain'); break; // 대상의 중독 1마다 생명력
-      case 'lowx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * 0.35; break; } // 생명력이 낮은 적: 쓸 때 셋 중 하나쯤
+      case 'lowx': { const d = s.fx.find(x => x.k === 'dmg'); const wb = s.fx.find(x => x.k === 'wardBurn'); v += ((d ? d.n * hits : 0) + (wb ? burnTake(wb) * wb.mul : 0)) * (e.mul - 1) * (wb ? K.ward.fin : 0.35); break; } // 생명력이 낮은 적: 쓸 때 셋 중 하나쯤. 마무리 태우기(파수꾼)는 아껴 두었다 쓰므로 태운 피해에도 붙고 몫이 크다
       case 'brokenx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * 0.3; break; } // 붕괴한 적: 붕괴를 노리고 쓰면 열에 셋
       case 'spread': v += Math.ceil(Sof('spread') * e.per) * 1.5 * K.poison; break; // 다른 적 평균 1.5
       case 'st': v += e.n * (K.kw[e.s] || 1) * (s.tgt === 'self' ? 1 : tm); break;
@@ -51,14 +55,15 @@ function skValue(s) {
       case 'execute': v += skTri(Sof('burst') + 2) * (e.mul - 1) * 0.5; break;
       case 'capOver': break;
       case 'ward': v += e.n * K.ward.v; break; // 나에게 보호막 (공격 스킬에 붙어도 나에게)
-      case 'wardFill': v += K.ward.fill * K.ward.v; break;
-      case 'wardBurn': { const take = Math.min(e.max || Infinity, K.ward.S); v += take * e.mul * (s.tgt === 'front' || s.tgt === 'all' ? tm : 1) - take * K.ward.v * K.ward.loss; break; } // 태운 만큼 × 배수, 태운 보호막이 막았을 몫을 뺀다
-      case 'wardDmg': v += e.per * K.ward.S * (s.tgt === 'front' || s.tgt === 'all' ? tm : 1); break; // 쌓인 보호막 1마다 피해 (보호막은 그대로)
+      case 'wardFill': v += (e.to || 1) * K.ward.cap[hi] * K.ward.v; break; // 쓸 때 거의 비어 있어 상한의 to만큼 찬다 (10월 4일 측정)
+      case 'wardBurn': { const take = burnTake(e); v += take * e.mul * (s.tgt === 'front' || s.tgt === 'all' ? tm : 1) - take * K.ward.v * K.ward.loss; break; } // 태운 만큼 × 배수, 태운 보호막이 막았을 몫을 뺀다
+      case 'wardDmg': v += e.per * K.ward.S[hi] * (s.tgt === 'front' || s.tgt === 'all' ? tm : 1); break; // 쌓인 보호막 1마다 피해 (보호막은 그대로, 보유량은 레벨에 달렸다)
       case 'thorn': v += e.times * e.dmg * K.ward.thorn; break;
       case 'vulnPer': v += e.per * K.ward.vuln; break;
       case 'shieldx': { const bk = s.fx.find(x => x.k === 'brk'); v += (bk ? bk.n : 0) * (e.mul - 1) * K.brk * K.ward.shield; break; }
       case 'pull': v += K.ward.pull; break;
       case 'vulnGrow': v += K.ward.vuln * (e.mul - 1) * K.kw.vuln; break; // 쓸 때 대상의 취약을 키운다
+      case 'chillx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * K.ward.chill * (s.tgt === 'front' || s.tgt === 'all' ? tm : 1); break; } // 둔화된 적에게 ×
       case 'hasten': { const pb = s.fx.find(x => x.k === 'parryBuff'); v += (e.n || 1) * K.hz * (e.on === 'parry' ? K.pOk * (pb ? (pb.times || 1) : 1) : 1); break; } // 🔄 다른 같은 갈래 스킬 쿨타임 당기기
     }
   }
@@ -122,17 +127,19 @@ function skBody(s) {
       case 'brokenx': out.push(`대상이 붕괴 상태면 피해 ×${e.mul}.`); break;
       case 'spread': out.push(`대상의 중독 ${e.per === 0.5 ? '절반(올림)' : Math.round(e.per * 100) + '%'}만큼 다른 적 모두에게 중독을 건다. 대상의 중독은 그대로다.`); break;
       case 'capOver': out.push(`이 스킬로 거는 중독은 상한을 넘어 ${e.cap}까지 쌓인다.`); break;
-      case 'wardFill': out.push('보호막을 상한까지 채운다.'); break;
-      case 'wardBurn': out.push(`보호막을 ${e.max ? '최대 ' + e.max + '까지' : '모두'} 태운다. 태운 보호막 1마다 ${s.tgt === 'front' ? '전열 모두에게 ' : ''}피해 ${e.mul}.`); break;
+      case 'wardFill': out.push(e.to && e.to < 1 ? `보호막을 상한의 ${Math.round(e.to * 100)}%까지 채운다. 이미 그만큼 있으면 늘지 않는다.` : '보호막을 상한까지 채운다.'); break;
+      case 'wardBurn': out.push(`보호막을 ${e.max ? '최대 ' + e.max + '까지' : '모두'} 태운다. 태운 보호막 1마다 ${s.tgt === 'front' ? '전열 모두에게 ' : ''}피해 ${e.mul}. 보호막이 없으면 이 피해는 0이다.`); break;
       case 'wardDmg': out.push(`${e.per >= 1 ? '내 보호막 1마다 피해 +' + e.per : '내 보호막 ' + Math.round(1 / e.per) + '마다 피해 +1'}. 보호막은 줄지 않는다.`); break;
-      case 'thorn': out.push(`다음 ${e.times}번 맞을 때마다 때린 적에게 피해 ${e.dmg}.`); break;
+      case 'thorn': out.push(`가시 ${e.times}번: 맞을 때마다 때린 적에게 피해 ${e.dmg}. 이미 있으면 횟수를 더한다(최대 8번).`); break;
       case 'vulnPer': out.push(`대상의 취약 1마다 피해 +${e.per}. 취약은 줄지 않는다.`); break;
       case 'shieldx': out.push(`방패병에게는 붕괴 ×${e.mul}.`); break;
       case 'pull': out.push('대상이 후열이면 전열로 끌어낸다.'); break;
       case 'vulnGrow': out.push(`대상의 취약을 ${e.mul}배로 만든다(상한 5).`); break;
+      case 'chillx': out.push(`둔화된 적에게는 피해 ×${e.mul}.`); break;
       case 'hasten': { const pb = s.fx.find(x => x.k === 'parryBuff'); out.push((e.on === 'parry' ? (pb ? ((pb.times || 1) > 1 ? '🔄 그 흘리기에 성공할 때마다' : '🔄 그 흘리기에 성공하면') : '🔄 그 공격을 흘려 내면') : '🔄 쓰면') + ` 다른 ${s.b} 스킬 쿨타임 −${e.n || 1}.`); break; }
     }
   }
+  if (s.fx.filter(e => ['lowx', 'brokenx', 'bigx', 'chillx'].includes(e.k)).length >= 2) out.push('조건이 겹치면 배수를 곱한다.'); // 10월 4일: 박살(붕괴한 정예 · 보스에게 ×2.5 × 1.5) 등
   if (s.killRecharge) out.push(s.once ? '이 스킬로 적을 쓰러뜨리면 한 번 더 쓸 수 있다.' : '이 스킬로 적을 쓰러뜨리면 기다리지 않고 바로 다시 쓸 수 있다.');
   return out.join(' ').replace(/\s+/g, ' ').trim();
 }

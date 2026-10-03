@@ -47,6 +47,9 @@ function equipFor(bd, sit) {
   const pay = id => G0.SK2[id].fx.some(e => ['burst', 'grow', 'exploit', 'brkPer', 'spread', 'drain'].includes(e.k));
   const src = id => G0.SK2[id].fx.some(e => e.k === 'poison' && e.n >= 3);
   if (pick.some(pay) && !pick.some(src)) { const cand = bd.open.filter(id => src(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (cand) { const lo = pick.slice().sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; } }
+  // 파수꾼 (10월 4일): 보호막을 태우는 스킬이 보호막을 얻는 스킬보다 많으면 얻는 스킬로 바꾼다 (태울 보호막이 있어야 한다. 사람은 짝을 맞춘다)
+  const burn = id => G0.SK2[id].fx.some(e => e.k === 'wardBurn'); const gain = id => G0.SK2[id].fx.some(e => e.k === 'ward' || e.k === 'wardFill');
+  while (pick.filter(burn).length > Math.max(1, pick.filter(gain).length)) { const cand = bd.open.filter(id => gain(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) break; const lo = pick.filter(burn).sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; }
   return pick;
 }
 function statsOf(lv) { const pts = 6 + 2 * (lv - 1); return { int: Math.ceil(pts / 2), dex: Math.floor(pts / 2), str: 0 }; }
