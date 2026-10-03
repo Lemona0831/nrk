@@ -61,8 +61,9 @@ for (const k of POOL) {
   const ok = bad.length === before && (!f || UI_ONLY[k] || hits > 0 || (st && st.length === 0 && kind === '고정 수치')) && !(st && st.length);
   res.push({ k, n: ITEMS[k].n, g: ITEMS[k].g, kind, hits, fail: st && st.length ? st.join(', ') : '', ok });
 }
-const fails = res.filter(x => !x.ok);
-for (const x of res) if (!x.ok || process.argv.includes('-v')) console.log((x.ok ? 'ok  ' : 'FAIL') + ' ' + x.k.padEnd(14) + ' ' + x.n + ' [' + x.kind + '] 발동 ' + x.hits + (x.fail ? ' 비교 실패: ' + x.fail : ''));
-console.log('아이템 ' + res.length + '종, 통과 ' + (res.length - fails.length) + ', 실패 ' + fails.length + ', 이상 상태 ' + bad.length + ' (' + ((Date.now() - t0) / 1000).toFixed(1) + '초)');
+const OFF = E.V2_OFF || []; // 0.6a.2(06a2): 사라진 규칙에 묶여 드롭·상점에서 뺀 장비는 실패로 세지 않고 따로 보인다
+const fails = res.filter(x => !x.ok && !OFF.includes(x.k)); const offs = res.filter(x => !x.ok && OFF.includes(x.k));
+for (const x of res) if (!x.ok || process.argv.includes('-v')) console.log((x.ok ? 'ok  ' : OFF.includes(x.k) ? 'off ' : 'FAIL') + ' ' + x.k.padEnd(14) + ' ' + x.n + ' [' + x.kind + '] 발동 ' + x.hits + (x.fail ? ' 비교 실패: ' + x.fail : ''));
+console.log('아이템 ' + res.length + '종, 통과 ' + (res.length - fails.length - offs.length) + ', 실패 ' + fails.length + (OFF.length ? ', 드롭에서 뺀 장비(V2_OFF) 가운데 발동 0: ' + offs.length + '/' + OFF.length : '') + ', 이상 상태 ' + bad.length + ' (' + ((Date.now() - t0) / 1000).toFixed(1) + '초)');
 if (bad.length) console.log(bad.slice(0, 10).join('\n'));
 process.exitCode = fails.length || bad.length ? 1 : 0;

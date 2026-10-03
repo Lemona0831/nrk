@@ -653,7 +653,7 @@ function runSkill2(b, act, tgt) {
     }
   }
   if (s.killRecharge && killed) { p.cd[s.id] = 0; logp(b, 'good', s.n + '을(를) ' + (s.once ? '한 번 더' : '기다리지 않고 바로 다시') + ' 쓸 수 있다'); }
-  else { p.cd[s.id] = s.once ? CD_USED : s.cd; p.cdJust = s.id; } // 이번 차례가 끝날 때는 줄지 않는다
+  else { p.cd[s.id] = s.once ? CD_USED : s.cd; p.cdJust = [].concat(p.cdJust || [], s.id); } // 이번 차례에 쓴 스킬은 모두 이번 차례가 끝날 때 줄지 않는다 (10월 3일: 빠른 스킬 다음에 스킬을 쓰면 빠른 스킬의 대기가 1 짧았다)
   p.lastSkillDmg = multi ? tot / Math.max(1, targets.length) : tot;
   b.curSkill = null;
 }
@@ -941,7 +941,8 @@ const ST_REGEN = 10; // 스태미나 자연 회복 (라운드가 끝날 때마�
 const gearOf = p => p.gear || START_GEAR;
 function wpnDmg(p) { return gearOf(p).wpn; }
 function basicBase(p) { return wpnDmg(p) * (isCaster(p) ? 0.9 : 1) * (hasIt(p, 'venomring') ? 0.9 : 1); }
-function heavyBase(p) { return wpnDmg(p) * (isCaster(p) ? 1.6 : isV2(p) ? 1.5 : 1.8) * (p.eq.weapon === 'twin' ? 0.8 : 1); } // 0.6a.2: 강공격 180% → 150% (10월 3일: 공통 행동이 갈래 스킬보다 세서 갈래 성격이 묻혔다)
+const HEAVY_V2 = 1.5; // 0.6a.2 직업의 강공격 배율 (도움말·설명 창도 이 값을 쓴다)
+function heavyBase(p) { return wpnDmg(p) * (isCaster(p) ? 1.6 : isV2(p) ? HEAVY_V2 : 1.8) * (p.eq.weapon === 'twin' ? 0.8 : 1); } // 0.6a.2: 강공격 180% → 150% (10월 3일: 공통 행동이 갈래 스킬보다 세서 갈래 성격이 묻혔다)
 function flaskHealFrac(p) { return (gearOf(p).flask + (hasBt(p, 'mercy') ? 0.1 : 0) + fxVal(p, 'heal', 0, (a, v) => a + v)) * fxVal(p, 'healMul', 1, (a, v) => a * v) * (p.eq.flask === 'chalice' ? 0.9 : p.eq.flask === 'boilflask' ? 0.75 : p.eq.flask === 'bloodoil' ? 0.8 : 1); }
 function calcMpMax(p) { if (isV2(p)) return 0; return BUILDS[p.build].mp + gearOf(p).mp + fxStat(p, 'mp') + ((p.lv || 1) - 1) * ((LV_GAIN[p.build] || {}).mp || 0) + stat(p, 'int') - (p.eq.amulet === 'sigil' ? 15 : 0) - (p.eq.gloves === 'vpouch' ? 10 : 0); }
 function calcStMax(p) { return 100 + gearOf(p).st + fxStat(p, 'st') + stat(p, 'dex') - (p.eq.amulet === 'vanguard' ? 20 : 0) - (p.eq.gloves === 'chaingl' ? 10 : 0); }
@@ -1060,7 +1061,10 @@ const CLASS_KEYS = () => Object.keys(BUILDS).filter(k => !BUILDS[k].tut); // 고
 const SK2 = {}; for (const k in SKILLS2) for (const s of SKILLS2[k]) SK2[s.id] = s;
 /* 사라진 규칙(마나, 주문·캔트립, 옛 점화·냉각의 시간당 피해, 옛 직업 스킬)에 묶여 v2 직업에게 효과가 없는 장비 (npm run items, 10월 3일 06a2에서 발동 0).
    아이템 손보기(개편 기획 1절) 전까지 드롭과 상점에서 뺀다. 장비 점검(tools/itemcheck.js)은 그대로 이 장비들을 시험해 실패로 보인다 */
-const V2_OFF = ['pilgstaff', 'candlestaff', 'acolyterelic', 'confwand', 'penwhip', 'monkrobe', 'oathplate', 'candlegloves', 'archerbracer', 'poisoner', 'viperskin', 'woodsymbol', 'worrybeads', 'ashmedal', 'obsidianring', 'lapisring', 'oathbreaker', 'thornrod', 'candlewick', 'hereticstaff', 'belllongbow', 'crowfeather', 'abysseye', 'tinring', 'siegering'];
+const V2_OFF = ['pilgstaff', 'candlestaff', 'acolyterelic', 'confwand', 'penwhip', 'monkrobe', 'oathplate', 'candlegloves', 'archerbracer', 'poisoner', 'viperskin', 'woodsymbol', 'worrybeads', 'ashmedal', 'obsidianring', 'lapisring', 'oathbreaker', 'thornrod', 'candlewick', 'hereticstaff', 'belllongbow', 'crowfeather', 'abysseye', 'tinring', 'siegering',
+  // 10월 3일 더함: 마나만 주는 장비(마나가 없어 아무 일도 없다), 옛 독 격발·상흔 방출에만 붙는 잔향의 매듭, 생명력 플라스크가 지우지 않아 대가만 남는 역류의 성배,
+  // 재사용 대기 때문에 같은 스킬을 이어 쓸 수 없는 메아리 반지, 출혈을 거는 수단이 쇠못 장갑뿐인 굽은 낫(출혈을 거는 직업이 들어오면 되돌린다)
+  'silverwand', 'bonenecklace', 'bonecharm', 'herbflask', 'knot', 'chalice', 'echo', 'sickle'];
 const poolOk = (p, k) => !(isV2(p) && V2_OFF.includes(k));
 /* 재사용 대기 (10월 3일 만든 사람 결정, 충전을 대신한다): 전투를 모두 준비된 채 시작한다. 스킬을 쓰면 cd만큼 내 차례를 기다리고(p.cd),
    내 차례가 지날 때마다 1 준다(쓴 그 차례는 빼고). 전투마다 1번(once)인 스킬은 쓰면 그 전투 동안 CD_USED로 남는다.
@@ -1069,7 +1073,7 @@ const CD_USED = 999;
 function resetCharges(p) { p.cd = {}; p.cdJust = null; p.hsAt = {}; p.pbuf = null; p.dodgeRed = 0; p.dodgeOn = null; }
 function chargeEv(b, kind) {
   const p = b.p; if (!p.cd) return;
-  if (kind === 'turn') { for (const id of p.skills || []) { const s = SK2[id]; if (!s || s.once || id === p.cdJust) continue; if (p.cd[id] > 0) p.cd[id]--; } p.cdJust = null; return; }
+  if (kind === 'turn') { const just = [].concat(p.cdJust || []); for (const id of p.skills || []) { const s = SK2[id]; if (!s || s.once || just.includes(id)) continue; if (p.cd[id] > 0) p.cd[id]--; } p.cdJust = null; return; } // cdJust: 이번 차례에 쓴 스킬 목록 (예전 저장본은 id 하나)
   const H = (TREE2[p.build] || {}).haste; if (!H) return;
   for (const br in H) {
     if (H[br] !== kind || p.hsAt[br] === b.actN) continue;
@@ -1088,6 +1092,9 @@ function treeFix(run) {
   const ok = t.open.filter(id => SK2[id] && !SK2[id].start); const lost = t.open.length - ok.length;
   if (lost > 0) { t.open = ok; t.pts += lost; t.spent = {}; for (const id of ok) t.spent[SK2[id].b] = (t.spent[SK2[id].b] || 0) + 1; }
   run.skills = (run.skills || []).filter(id => ok.includes(id));
+  // 포인트 = 레벨(만들 때 1 + 레벨마다 1, 기획서 12.2절). 0.6a.2-9까지는 1챕터를 깨면 2점을 더 주었다: 아직 쓰지 않은 포인트에서 넘친 몫을 거둔다
+  const T = TREE2[run.build]; const over = t.pts + t.open.length - ((T && T.pts) || 1) - ((run.lv || 1) - 1);
+  if (over > 0) t.pts = Math.max(0, t.pts - over);
 }
 /* 장착: 시작 스킬(늘) + 트리에서 끼운 스킬(run.skills, 4칸까지) */
 function v2Equip(run) { const T = TREE2[run.build]; return (T ? T.starters : []).concat((run.skills || []).filter(id => !(T && T.starters.includes(id)))).slice(0, (T ? T.starters.length : 0) + EQUIP_SLOTS2); }
@@ -1096,7 +1103,7 @@ function treeWhy(run, id) {
   if (s.start) return '시작 스킬';
   if (t.open.includes(id)) return '이미 열림';
   if (s.par && !s.par.some(x => t.open.includes(x))) return '이어진 앞 칸을 먼저 열어야 합니다';
-  const chN = (typeof TREE_CH !== 'undefined' && TREE_CH[s.tier]) || 1; if ((run.ch || 1) < chN) return `${chN}챕터부터 열립니다`; // 10월 3일 만든 사람 결정: 상급 3챕터, 궁극 5챕터
+  const chN = (typeof TREE_CH !== 'undefined' ? TREE_CH : {})[s.tier]; if (!chN) return '아직 열 수 없는 등급입니다'; if ((run.ch || 1) < chN) return `${chN}챕터부터 열립니다`; // 10월 3일 만든 사람 결정: 상급 3챕터, 궁극 5챕터. TREE_CH에 없는 등급은 잠근다(설정을 빠뜨려도 1챕터에 열리지 않게)
   const need = TREE_GATE[s.tier] || 0; const sp = t.spent[s.b] || 0;
   if (sp < need) return `${s.b} 갈래에 포인트 ${need}점을 먼저 써야 합니다 (지금 ${sp}점)`;
   if (t.pts < 1) return '포인트가 없습니다';
@@ -1158,7 +1165,7 @@ function addS(b, u, k, dur, stacks, max) {
 }
 function pSpeed(b) {
   const p = b.p; let s = 1;
-  if (p.eq.ring1 === 'pulse' || p.eq.ring2 === 'pulse') s *= 0.8;
+  if ((p.eq.ring1 === 'pulse' || p.eq.ring2 === 'pulse') && !isV2(p)) s *= 0.8; // 0.6a.2 라운드에서는 빠르기 대신 빠른 칸을 잃는다(noFast)
   s *= 1 + 0.005 * stat(p, 'dex');
   return clamp(s, 0.7, 1.5);
 }
@@ -1501,7 +1508,7 @@ function pickDodge(b) {
 }
 function dodgeCost(p) { return Math.max(0, actCost(p, 'dodge', (p.build === 'assassin' && isV2(p) ? 25 : 30) + (p.eq.amulet === 'witness' ? 10 : 0) - Math.floor(stat(p, 'dex') / 10)) - (p.pbuf ? p.pbuf.stam : 0)); }
 const guardCost = p => actCost(p, 'guard', 20);
-const heavyCost = p => actCost(p, 'heavy', 40);
+const heavyCost = p => actCost(p, 'heavy', 40 + (p.eq.weapon === 'maul' && isV2(p) ? 10 : 0)); // 무거운 망치(0.6a.2): 강공격 스태미나 +10 (옛 대가 "1.3T → 1.4T"는 라운드에서 차이가 없다)
 function actionList(b) {
   const p = b.p; const B = BUILDS[p.build];
   const L = [
@@ -1511,7 +1518,7 @@ function actionList(b) {
   const SKM = skillMap(p.build);
   if (isV2(p)) for (const sid of skillsOf(p)) { // 0.6a.2: 재사용 대기
     const s = SK2[sid]; if (!s) continue; const w = (p.cd && p.cd[sid]) || 0;
-    const needPoison = s.fx.some(e => (e.k === 'burst' && !e.pre) || e.k === 'grow'); // 먼저 중독을 거는 터뜨리기(pre)는 중독 없는 적에게도 쓴다
+    const needPoison = !s.fx.some(e => ['dmg', 'poison', 'brk', 'st', 'parry', 'parryBuff', 'stam', 'cutx'].includes(e.k) || (e.k === 'burst' && e.pre) || (e.k === 'grow' && e.add)); // 중독 없이는 아무 일도 없는 스킬만 잠근다 (10월 3일: 피해를 주는 터뜨리는 일격, 중독 4를 거는 독 응축도 잠겼다)
     let why = w > 0 ? (s.once ? '이번 전투에 이미 씀' : '⏳ ' + w + '차례 뒤') : null;
     if (!why && needPoison && !alive(b).some(e => e.s.poison)) why = '중독된 적 없음';
     if (!why && s.tgt === 'front' && !alive(b).some(e => e.row === 'front' && e.role !== 'root')) why = '전열에 적 없음';
@@ -1624,7 +1631,7 @@ function playerAct(b, id, tgtId) {
     const g = guardOf(b, tgt);
     if (g) { logp(b, 'sys', g.n + '이(가) 방패를 들어 ' + tgt.n + '을(를) 가로막는다'); b.rec.push({ k: 'redirect', t: r1(b.t), from: tgt.role, to: g.role }); tgt = g; b.cur.tgt = g.id; } // 장비 효과도 바뀐 대상을 본다
   }
-  p.guard = 0; p.dodge = 0; p.brace = 0; p.dodgeRed = 0; p.dodgeOn = null;  // 준비는 자기 다음 행동까지
+  if (b.prepTurn !== b.turnIdx) { b.prepTurn = b.turnIdx; p.guard = 0; p.dodge = 0; p.brace = 0; p.dodgeRed = 0; p.dodgeOn = null; } // 준비(방어·흘리기)는 내 다음 차례까지. 빠른 행동으로 건 흘리기를 같은 차례의 주 행동이 지우지 않게 차례의 첫 행동에서만 지운다 (10월 3일: 잔상·흘리며 물러서기가 한 번도 발동하지 않았다)
   p.tookLast = p.tookSince || 0; p.tookSince = 0; // 앙갚음: 지난 행동 뒤로 받은 피해
   if (p.stun > 0) { p.stun--; logp(b, 'bad', '몸이 말을 듣지 않는다. 행동을 놓친다'); finishPlayer(b, 1, true); return; }
   let time = act.time;
@@ -1777,7 +1784,7 @@ function finishPlayer(b, time, lost) {
   if (p.exhaust && p.st >= 30) p.exhaust = 0;
   // 내 차례 = 빠른 행동 1번(먼저) + 주 행동 1번 (10월 3일, 기획서 12.7절). 빠른 칸을 쓰면 차례가 이어지고, 주 행동을 하면 차례가 끝난다.
   // 느린 행동은 두 칸을 다 쓴다(빠른 칸이 남아 있어야 한다). 성인의 성배·수확자의 손: 다음 빠른 행동 한 번은 빠른 칸을 쓰지 않는다
-  if (!lost && !b.over && time <= 0.6 && !b.bonusUsed) {
+  if (!lost && !b.over && time <= 0.6 && !b.bonusUsed && !noFast(p)) {
     b.bonusUsed = 1; if (p.fxQuickNext) { p.fxQuickNext = 0; b.bonusUsed = 0; fxHit(p.eq.flask === 'saintgrail' ? 'saintgrail' : 'reaperhands'); }
     b.waiting = false; return;
   }
@@ -1792,6 +1799,8 @@ function finishPlayer(b, time, lost) {
    속도가 높은 쪽 먼저, 같으면 나 먼저, 그다음 적이 놓인 순서. 속도 1.5 이상인 적은 라운드 끝에 한 번 더 움직인다.
    라운드가 끝나면 중독, 스태미나, 보스 시계, 광폭화를 처리한다(tickOnce). b.t는 지난 라운드 수다 */
 const RND_TWICE = 1.5;
+/* 느린 맥박(0.6a.2 라운드): 내 차례에 빠른 칸이 없다. 빠른 행동도 주 행동처럼 차례를 끝낸다 (10월 3일: 옛 대가 "내 차례가 덜 자주 온다"가 라운드에서는 순서만 뒤로 미뤘다) */
+const noFast = p => isV2(p) && (p.eq.ring1 === 'pulse' || p.eq.ring2 === 'pulse');
 function roundOrder(b, consume, slowMe) {
   const p = b.p; const al = alive(b).filter(e => e.role !== 'root');
   const grp = (u, isP) => { if (isP && (b.ambushR && (b.round || 0) === 0)) return 2; if (!isP && u.quick) return 0; if (u.s.haste) return 0; if (u.s.chill) return 2; return 1; };
@@ -1929,7 +1938,7 @@ const HELP = [
     '윗줄을 열기 전에는 아랫줄 칸이 "?"로 보입니다. 갈래마다 강한 상황과 약한 상황이 있습니다(트리 갈래 설명).',
     '연 스킬 가운데 4칸을 끼웁니다. 메뉴의 "스킬 트리"에서 언제든 보고, 방과 방 사이에 열고 바꿉니다. 전투 중에는 보기만 합니다.',
     '스킬은 마나 대신 재사용 대기로 씁니다. 전투를 시작할 때 모두 준비되어 있고, 쓰면 적힌 차례만큼 기다립니다(예: 재사용 3차례). 버튼에 "⏳ 2차례 뒤"처럼 남은 차례가 보입니다.',
-    '갈래마다 규칙이 하나 있어 그 갈래 스킬의 남은 대기를 1 줄입니다. 암살자는 독사: 독을 걸면, 격발: 적을 쓰러뜨리면, 그림자: 흘려 내면. 한 행동에 한 번만 줄고, 시작 스킬은 차례로만 돕니다.',
+    '갈래마다 규칙이 하나 있어 그 갈래 스킬의 남은 대기를 1 줄입니다. 암살자는 ' + TREE2.assassin.branches.map(br => br + ': ' + SK_HS[TREE2.assassin.haste[br]]).join(', ') + '. 한 행동에 한 번만 줄고, 시작 스킬은 차례로만 돕니다.',
     '스킬마다 빠르기가 있습니다. ⚡빠른 스킬은 빠른 칸을, ▶보통 스킬은 주 행동을, ⏳느린 스킬은 두 칸을 다 씁니다(도움말 "라운드와 순서").'] },
   { k: 'stats', n: '능력치', t: [
     '캐릭터를 만들 때 6점, 레벨이 오를 때마다 2점을 힘, 민첩, 지능에 나눕니다. 1점마다 규칙이 하나씩 바뀝니다. 나눌 때 "다음 1점"에 무엇이 바뀌는지 보입니다.',
@@ -1950,7 +1959,7 @@ const HELP = [
     '전투가 끝나도 저절로 차지 않고 다음 방으로 그대로 이어집니다. 생명력 플라스크, 샘(50%), 9층 야영지(전부), 정산(전부)에서 회복합니다.'] },
   { k: 'mp', n: '재사용 대기', t: ['0.6a.2 직업에는 마나가 없습니다. 스킬은 전투를 시작할 때 모두 준비되어 있고, 쓰면 적힌 차례만큼 기다립니다. 내 차례가 지날 때마다 1 줄고, 그 갈래의 규칙(예: 암살자 그림자는 흘려 내면)이 일어나면 1 더 줍니다. "전투마다 1번"인 스킬은 전투가 끝나야 다시 씁니다.'] },
   { k: 'st', n: '스태미나', t: [
-    '강공격(40), 방어(20), 흘리기(30)에 듭니다. 라운드가 끝날 때마다 ' + ST_REGEN + '씩 찹니다. 기본 공격은 스태미나를 채우지 않습니다.',
+    '강공격(40), 방어(20), 흘리기(30, 암살자 25)에 듭니다. 라운드가 끝날 때마다 ' + ST_REGEN + '씩 찹니다. 기본 공격은 스태미나를 채우지 않습니다.',
     '0이 되면 탈진합니다. 강공격·방어·흘리기를 못 하고 받는 피해가 20% 늘어납니다. 30까지 차거나 스태미나 플라스크를 마시면 풀립니다.',
     '전투가 끝나면 최소 50까지 회복합니다.'] },
   { k: 'flask', n: '플라스크', t: [
@@ -1961,16 +1970,16 @@ const HELP = [
     '마시는 행동은 ⚡빠름이라 마신 뒤에도 주 행동을 할 수 있습니다. 대신 다시 채우기 어렵습니다. 방을 이기면 셋 가운데 가장 덜 찬 것이 1 차고, 샘과 야영지에서 셋 다 1씩 찹니다.'] },
   { k: 'act', n: '행동', t: [
     '기본 공격(▶보통): 비용 없음. 무기 피해만큼 치고 붕괴 게이지를 10 채웁니다.',
-    '강공격(⏳느림): 스태미나 40. 180% 피해 + 붕괴 35. 빠른 칸과 주 행동을 함께 써서, 이번 차례에 빠른 행동을 이미 했으면 쓸 수 없습니다.',
+    '강공격(⏳느림): 스태미나 40. ' + Math.round(HEAVY_V2 * 100) + '% 피해 + 붕괴 35. 빠른 칸과 주 행동을 함께 써서, 이번 차례에 빠른 행동을 이미 했으면 쓸 수 없습니다.',
     '스킬: 직업 고유의 효과를 냅니다. 쓰고 나면 적힌 차례만큼 기다리고, 버튼에 "⏳ 2차례 뒤"처럼 남은 차례가 보입니다.',
-    '방어(▶보통): 스태미나 20. 내 다음 행동까지 받는 피해가 절반이 됩니다.',
+    '방어(▶보통): 스태미나 20. 내 다음 차례까지 받는 피해가 절반이 됩니다.',
     '흘리기(▶보통): 스태미나 30(암살자 25). 적 하나를 골라 그 적의 다음 단일 공격 피해를 60%(암살자 70%) 줄입니다. 그 공격이 강타였다면 그 적의 붕괴 게이지가 25 찹니다. 광역·지속 피해는 흘리지 못하고, 고른 적이 그 사이 움직이지 않으면 헛됩니다.',
     '도망: 보스전이 아닐 때만. 성공하면 방 밖으로 물러나고, 앞으로 가려면 그 방을 다시 이겨야 합니다. 실패하면 그대로 차례가 끝납니다.'] },
   { k: 'target', n: '대상 고르기', t: ['적 카드를 누르면 그 적이 대상이 됩니다(금색 테두리). 고르지 않으면 공격할 수 있는 적을 자동으로 고릅니다. 닿지 않는 대상이면 행동 버튼에 이유가 뜹니다.'] },
   { k: 'intent', n: '적의 예고', t: [
     '적 카드 아래에 그 적이 다음에 할 행동이 적혀 있습니다. 빨간 테두리는 위험한 행동입니다. 걸 상태도 숫자로 보입니다(예: "공격 4 · 출혈 2").',
     '충전 중 → 강타: 한 번 쉬고 다음 행동에 평소의 ' + TELE.heavy + '배 피해를 주고, 맞으면 취약 ' + EKW.heavyVuln + '가 걸립니다. 흘리기, 방어, 붕괴로 끊기, 먼저 쓰러뜨리기 가운데 고르세요.',
-    '치유: 치유사가 다친 아군을 25% 회복합니다. 같은 치유사가 치유할 때마다 다음 치유는 30%씩 줄어듭니다(지침). 점화 준비 → 폭발: 자폭병이 다음 행동에 광역 피해와 약화 ' + EKW.explodeWeak + '를 주고 사라집니다.'] },
+    '치유: 치유사가 다친 아군을 25% 회복합니다. 같은 치유사가 치유할 때마다 다음 치유는 30%씩 줄어듭니다(지침). 도화선 → 폭발: 자폭병이 다음 행동에 평소의 ' + EKW.explodeMul + '배 광역 피해와 약화 ' + EKW.explodeWeak + '를 주고 사라집니다.'] },
   { k: 'row', n: '전열과 후열', t: [
     '적은 앞줄(전열)과 뒷줄(후열)에 섭니다. 근접 공격(기본 공격, 강공격, 근접 스킬)은 전열만 노릴 수 있습니다. 전열이 모두 쓰러지거나 붕괴하면 근접 공격도 후열에 닿습니다.',
     '원거리와 광역 스킬은 언제나 닿습니다. 다만 광역 스킬은 후열에 70%만 들어갑니다.',
@@ -2494,7 +2503,7 @@ function vBattle() {
         const urgent = !dis && (a.id === 'flaskL') && p.hp < p.hpMax * 0.35; const tnew = G.scr === 'tut' && tutNew(b, a.id);
         const at = !dis ? actTarget(b, a) : null; const gd = at && isMeleeAct(p, a.id) ? guardOf(b, at) : null;
         kn++;
-        btns += `<button class="ab g-${lab === '공격' ? 'atk' : lab === '스킬' ? 'sk' : lab === '지키기' ? 'def' : lab === '직업' ? 'sig' : 'etc'}${dis ? ' dis' : ''}${urgent ? ' urgent' : ''}${tnew ? ' tnew' : ''}" data-a="act" data-id="${a.id}" data-info="act:${a.id}" data-k="${kn}" aria-disabled="${dis}"><b>${kn <= 9 ? `<kbd>${kn}</kbd>` : ''}<span class="anl">${esc(a.n)}</span><span class="ans">${esc(a.id === 'flaskM' && isV2(p) ? '🧪 정화' : ASHORT[a.id] || a.n)}</span>${spdIco(a.time)}</b><small>${why ? esc(why) : '<span class="ac">' + esc(a.cost) + '</span><span class="ax"> · ' + esc(skillHint(b, a) || speedWord(a.time)) + (at ? ' → ' + esc(at.n) + (gd ? ' 🛡' : '') : a.aoe ? ' → 전체' : '') + '</span>'}</small></button>`;
+        btns += `<button class="ab g-${lab === '공격' ? 'atk' : lab === '스킬' ? 'sk' : lab === '지키기' ? 'def' : lab === '직업' ? 'sig' : 'etc'}${dis ? ' dis' : ''}${urgent ? ' urgent' : ''}${tnew ? ' tnew' : ''}" data-a="act" data-id="${a.id}" data-info="act:${a.id}" data-k="${kn}" aria-disabled="${dis}"><b>${kn <= 9 ? `<kbd>${kn}</kbd>` : ''}<span class="anl">${esc(a.n)}</span><span class="ans">${esc(a.id === 'flaskM' && isV2(p) ? '🧪 정화' : ASHORT[a.id] || a.n)}</span>${spdIco(noFast(p) && a.time <= 0.6 ? 1 : a.time)}</b><small>${why ? esc(why) : '<span class="ac">' + esc(a.cost) + '</span><span class="ax"> · ' + esc(skillHint(b, a) || speedWord(a.time)) + (at ? ' → ' + esc(at.n) + (gd ? ' 🛡' : '') : a.aoe ? ' → 전체' : '') + '</span>'}</small></button>`;
       }
       btns += '</div>';
     }
@@ -2562,7 +2571,7 @@ function speedWord(t) { return t <= 0.6 ? '빠름' : t <= 1.05 ? '보통' : '느
 function myTurnsUntil(b, until) { return Math.max(0, Math.ceil(until - (b.t || 0) - 1e-9)); }
 /* 이 행동을 하면 내 다음 차례 전에 누가 몇 번 움직이는가 */
 function previewAfter(b, time) {
-  if (time <= 0.6 && !b.bonusUsed) return []; // 빠른 칸: 같은 차례에 주 행동이 남는다
+  if (time <= 0.6 && !b.bonusUsed && !noFast(b.p)) return []; // 빠른 칸: 같은 차례에 주 행동이 남는다
   const cnt = {}; const add = id => { const e = b.en.find(x => x.id === id && x.alive && x.role !== 'root'); if (e) cnt[e.id] = (cnt[e.id] || 0) + 1; };
   const q = (b.queue || []).slice(); if (q[0] === 'p') q.shift();
   for (const id of q) add(id);
@@ -2570,6 +2579,7 @@ function previewAfter(b, time) {
   return Object.keys(cnt).map(id => ({ e: b.en.find(x => x.id === id), n: cnt[id] }));
 }
 function previewText(b, time) {
+  if (time <= 0.6 && !b.bonusUsed && !noFast(b.p)) return '빠른 칸을 써서 차례가 이어집니다. 적은 내 주 행동 뒤에 움직입니다.';
   const L = previewAfter(b, time);
   if (!L.length) return '내 다음 차례 전에 움직이는 적이 없습니다.';
   const g = {};
@@ -2635,8 +2645,8 @@ function eordHtml(b, e) {
 function ehpBar(e) { const r = e.hpMax > 0 ? Math.max(0, Math.min(1, e.hp / e.hpMax)) : 0; return `<div class="bar hp ehp${r <= 0.3 ? ' lo' : ''}" role="progressbar" aria-label="생명력" aria-valuemin="0" aria-valuemax="${Math.round(e.hpMax)}" aria-valuenow="${shownHp(e.hp)}"><i style="width:${r * 100}%"></i><span><b>${shownHp(e.hp)}</b> / ${Math.round(e.hpMax)}</span></div>`; }
 /* 이번 차례에 남은 칸: ⚡ 빠른 행동(먼저) + ▶ 주 행동(차례를 끝냄) */
 function slotHtml(b) {
-  const f = !b.bonusUsed;
-  return `<span class="slots" data-info="slots" tabindex="0" aria-label="이번 차례에 남은 칸: ${f ? '빠른 행동과 ' : ''}주 행동"><span class="slot${f ? ' on' : ' used'}">⚡ 빠른 행동${f ? '' : ' 씀'}</span><span class="pl" aria-hidden="true">+</span><span class="slot on">▶ 주 행동</span></span>`;
+  const nf = noFast(b.p); const f = !b.bonusUsed && !nf;
+  return `<span class="slots" data-info="slots" tabindex="0" aria-label="이번 차례에 남은 칸: ${f ? '빠른 행동과 ' : ''}주 행동"><span class="slot${f ? ' on' : ' used'}">⚡ ${nf ? '빠른 칸 없음' : '빠른 행동' + (f ? '' : ' 씀')}</span><span class="pl" aria-hidden="true">+</span><span class="slot on">▶ 주 행동</span></span>`;
 }
 function spdIco(t) { return t <= 0.6 ? '<span class="spd sf" aria-hidden="true">⚡</span>' : t >= 1.25 ? '<span class="spd ss" aria-hidden="true">⏳</span>' : '<span class="spd sn" aria-hidden="true">▶</span>'; }
 
@@ -2671,8 +2681,17 @@ const SDESC = {
 function actInfo(p, id) {
   if (isCaster(p) && id === 'basic') return CANTRIP[p.build] + '. 비용 없이 원거리 주문을 쏜다. 피해는 무기 피해의 90%. 후열에 닿고 방패병에게 막히지 않는다. 붕괴 게이지 +10. 스태미나는 채우지 않는다.';
   if (isCaster(p) && id === 'heavy') return '집중 주문. 스태미나 40. 원거리, 무기 피해의 160%, 붕괴 게이지 +30. 느린 행동이라 빠른 칸과 주 행동을 함께 쓴다.';
+  if (isV2(p) && AINFO2[id]) return AINFO2[id](p);
   return AINFO[id] || '';
 }
+/* 0.6a.2 직업의 공용 행동 설명: 엔진 값에서 바로 만든다 (10월 3일: 0.6a 문장이 남아 강공격 180%, 흘리기 60%, 플라스크가 지운다고 나왔다) */
+const AINFO2 = {
+  heavy: p => '스태미나 ' + heavyCost(p) + '. 무기 피해의 ' + Math.round(heavyBase(p) / wpnDmg(p) * 100) + '%, 붕괴 게이지 +' + (35 + 5 * Math.floor(stat(p, 'str') / 10) + (p.eq.weapon === 'maul' ? 20 : 0)) + '. 느린 행동이라 빠른 칸과 주 행동을 함께 쓴다.',
+  dodge: p => '스태미나 ' + dodgeCost(p) + '. 고른 적의 다음 공격 피해를 ' + Math.round(parryRed(p) * 100) + '% 줄인다. 그 공격이 강타였다면 그 적의 붕괴 게이지 +25. 광역 공격과 지속 피해는 흘리지 못한다. 내 다음 차례까지 유효하다.',
+  flaskL: p => '생명력을 ' + Math.round(flaskHealFrac(p) * healMul(p) * 100) + '% 채운다. 걸린 상태는 지우지 않는다. 빠른 행동이라 마신 뒤에도 주 행동을 할 수 있다.',
+  flaskM: p => '마시면 막음 ' + Math.min(KW.block, 2 + fxAdd(p, 'blockAdd', p)) + ': 다음에 걸리려는 해로운 상태를 그만큼 튕겨 낸다. 이미 걸린 상태는 지우지 않는다. 빠른 행동이다.',
+  flaskS: p => '스태미나를 ' + Math.round(STAM_FLASK * fxVal(p, 'stamMul', 1, (a, v) => a * v)) + ' 채우고 탈진을 푼다. 빠른 행동이라 마신 뒤에도 주 행동을 할 수 있다.',
+};
 const AINFO = {
   basic: '비용 없이 무기로 친다. 피해는 무기 피해. 붕괴 게이지 +10. 스태미나는 채우지 않는다.',
   heavy: '스태미나 40. 피해 180%, 붕괴 게이지 +35. 느린 행동이라 빠른 칸과 주 행동을 함께 쓴다.',
@@ -2760,6 +2779,11 @@ function infoHtml(key) {
     speed: ['속도', '같은 라운드 안에서 누가 먼저 움직일지 정합니다. 나보다 빠른 적은 내 앞에서, 느린 적은 내 뒤에서 움직이고, 같으면 내가 먼저입니다. 중독 같은 지속 피해는 라운드가 끝날 때 흐르므로 속도와 상관없습니다.'],
   };
   if (key === 'stats' && b) { const p = b.p; return H('능력치', P('힘 ' + stat(p, 'str') + ', 민첩 ' + stat(p, 'dex') + ', 지능 ' + stat(p, 'int') + '.') + ['str', 'dex', 'int'].map(k => P(STATN[k] + ' 다음 1점: ' + statNext(p, k))).join('')); }
+  if (key === 'dodgeon' && b) { // 흘리기 준비: 실제로 줄이는 몫과 흘려 낸 뒤 효과 (스킬마다 50~90%)
+    const p = b.p; const de = b.en.find(x => x.id === p.dodge && x.alive); const on = p.dodgeOn;
+    const ret = on ? [on.dmg ? '피해 ' + on.dmg : '', on.poison ? '중독 ' + on.poison : '', on.brk ? '붕괴 +' + on.brk : ''].filter(Boolean).join(', ') : '';
+    return H('흘리기 준비', P((de ? de.n + '의' : '고른 적의') + ' 다음 공격 피해가 ' + Math.round((p.dodgeRed || parryRed(p)) * 100) + '% 줄어듭니다. 강타라면 그 적의 붕괴 게이지가 25 찹니다.') + (ret ? P('흘려 내면 그 적에게 ' + ret + '.') : '') + P('내 다음 차례까지 유효합니다. 고른 적이 그 사이 움직이지 않으면 헛됩니다.'));
+  }
   if (INFO2[key]) return H(INFO2[key][0], INFO2[key].slice(1).map(P).join(''));
   if (key === 'buildrule' && b) { const B = BUILDS[b.p.build]; const SKM = skillMap(b.p.build); return H(B.n, P('직업 규칙: ' + B.rule) + skillsOf(b.p).map(id => P(SKM[id].n + ' (' + resLabel(SKM[id]) + '): ' + SKM[id].d)).join('')); }
   if (fixed[key]) return H(fixed[key][0], P(fixed[key][1]));
@@ -2819,11 +2843,11 @@ function initPop() {
     plate: ['방어하는 동안 받은 피해의 30%가 다음 공격에 실린다.', '최대 생명력 -10%', '버틴 만큼 되돌려준다는 맹세가 안쪽에 새겨져 있다.'],
     witness: ['적의 강타를 흘리면 그 적이 잠시 취약해진다.', '흘리기 스태미나 +10', '누군가는 보고 있었다. 그 눈이 빈틈을 기억한다.'],
     chalice: ['생명력 플라스크로 지운 디버프를, 다음 공격이 대상에게 그대로 건다.', '생명력 플라스크 회복량 -10%', '마신 독은 버려지지 않는다. 잔은 늘 되돌려줄 곳을 찾는다.'],
-    pulse: ['내 차례가 덜 자주 온다. 대신 한 번 칠 때 피해가 35% 늘어난다. 중독 같은 지속 피해는 그대로 흐른다.', '적이 그만큼 자주 끼어든다', '심장이 느리게 뛸수록 칼은 무거워진다.'],
+    pulse: ['한 번 칠 때 피해가 35% 늘어난다. 중독 같은 지속 피해는 그대로 흐른다.', '내 차례에 빠른 칸이 없다. 빠른 행동(플라스크, 빠른 스킬)도 차례를 끝낸다', '심장이 느리게 뛸수록 칼은 무거워진다.'],
     twin: ['기본 공격이 두 번 친다. 한 번에 50%라 합치면 100%이고, 중독이나 반격처럼 맞을 때마다 일어나는 효과가 두 번 걸린다.', '강공격 피해 -20%', '한 손은 막고 한 손은 찌른다. 둘 다 찌르면 더 좋다.'],
-    maul: ['강공격의 붕괴 게이지가 20 더 찬다. 한 방으로 자세를 무너뜨리는 무기다.', '강공격이 조금 더 느려진다(1.3T → 1.4T)', '휘두르기 전에 숨을 고른다. 그 숨이 길수록 적의 다리가 꺾인다.'],
+    maul: ['강공격의 붕괴 게이지가 20 더 찬다. 한 방으로 자세를 무너뜨리는 무기다.', '강공격에 드는 스태미나 +10', '휘두르기 전에 숨을 고른다. 그 숨이 길수록 적의 다리가 꺾인다.'],
     thorns: ['방어하는 동안 전열의 적에게 맞으면, 그 적에게 피해 2를 되돌린다.', '최대 생명력 -5%', '안쪽에도 가시가 있다. 입는 자도 각오해야 한다.'],
-    cloak: ['흘리기로 줄이는 피해가 15%p 커진다(기본 60% → 75%).', '최대 생명력 -5%', '빛이 닿지 않는 천. 칼끝이 어디로 갔는지 아무도 모른다.'],
+    cloak: ['흘리기로 줄이는 피해가 15%p 커진다(최대 90%).', '최대 생명력 -5%', '빛이 닿지 않는 천. 칼끝이 어디로 갔는지 아무도 모른다.'],
     bloodpact: ['생명력이 절반 아래로 떨어지면 주는 피해가 20% 늘어난다.', '플라스크와 스킬로 되찾는 생명력 -15%', '피를 흘릴수록 맹세가 또렷해진다.'],
     sigil: ['약화, 취약, 출혈, 점화, 냉각, 중독이 내게 걸릴 때마다 마나를 4 얻는다.', '최대 마나 -15', '더러움이 닿으면 성표가 그 힘을 마신다.'],
     fury: ['강타를 맞으면 다음 공격 하나의 피해가 10% 늘어난다.', '받는 강타 피해 +10%', '맞은 자리에서 열이 오른다. 그 열은 오래가지 않는다.'],
@@ -2905,12 +2929,12 @@ function initPop() {
     flee: '성공하면 방 밖으로 물러난다. 이 방은 넘지 못한 채로 남아, 앞으로 가려면 다시 들어가 이겨야 한다. 다시 들어가면 적은 처음 상태다. 실패하면 느린 행동이 된다. 보스전에서는 쓸 수 없다.',
   });
   Object.assign(RINFO, {
-    bruiser: '돌격병. 전열. 공격을 이어 가다 가끔 도끼를 치켜들어 강타를 모은다. 다음 행동에 세 배 피해를 주고 나를 취약하게 만든다.',
+    bruiser: '돌격병. 전열. 공격을 이어 가다 가끔 도끼를 치켜들어 강타를 모은다. 다음 행동에 평소의 ' + TELE.heavy + '배 피해를 주고 나를 취약하게 만든다.',
     shield: '방패병. 전열. 동료를 노린 근접 공격을 대신 맞는다. 원거리, 광역, 지속 피해는 막지 못한다. 대신 서 있는 동안 방패벽으로 후열이 받는 광역 피해를 절반으로, 옆 전열 동료가 받는 광역 피해를 40% 줄이고, 자신도 광역 피해를 25% 덜 받는다. 붕괴시키면 잠시 자리를 비운다.',
-    archer: '사수. 후열. 조금 빠르고, 맞히면 출혈을 건다.',
+    archer: '사수. 후열. 조금 빠르고, 공격 ' + EKW.archerEvery + '번에 한 번 출혈 ' + EKW.archerBleed + skJo(EKW.archerBleed) + ' 건다.',
     healer: '치유사. 후열. 체력이 70% 아래인 아군을 25% 회복시킨다. 한 번 치유하면 다음 행동은 공격으로 쉰다.',
     summoner: '소환사. 후열. 세 번 행동할 때마다 하수인 둘을 불러낸다. 하수인은 셋까지.',
-    bomber: '자폭병. 전열. 도화선에 불을 붙인 다음 행동에 터진다. 광역 피해와 함께 나를 약화시키고 사라진다.',
+    bomber: '자폭병. 전열. 도화선에 불을 붙인 다음 행동에 터진다. 평소의 ' + EKW.explodeMul + '배 광역 피해와 함께 나를 약화시키고 사라진다.',
     minion: '하수인. 전열. 약하지만 수가 많다.',
     root: '뿌리. 후열. 살아 있는 동안 수호목이 체력을 되찾는다. 스스로는 움직이지 않는다.',
   });
@@ -2921,8 +2945,8 @@ const INFO2 = {
   incoming: ['내 다음 차례 전 받을 피해', '내 차례가 끝나고 다음 차례가 오기 전까지 적이 몇 번 움직여 얼마나 아프게 칠지 어림한 값입니다. 적 카드의 아이콘 옆 숫자를 더하고, 두 번 움직이는 적(×2)은 평소 공격을 한 번 더 셉니다. 흘리기·방어·몸 빼기로 줄일 수 있습니다. 빠른 행동은 차례를 끝내지 않으므로 이 값을 바꾸지 않습니다.'],
   'bar:hp': ['생명력', '0이 되면 쓰러집니다. 다음 방으로 그대로 이어지고, 샘과 생명력 플라스크로만 회복합니다.'],
   'bar:mp': ['마나', '스킬에 씁니다. 라운드가 끝날 때마다 최대치의 5%씩 찹니다.'],
-  'bar:st': ['스태미나', '강공격 40, 방어 20, 흘리기 30이 듭니다. 라운드가 끝날 때마다 10씩 차고, 스태미나 플라스크로 60을 채웁니다. 기본 공격은 스태미나를 채우지 않습니다. 0이 되면 탈진합니다.'],
-  'bar:bk': ['붕괴 게이지', '적이 자세를 잃기까지 남은 여유입니다. 기본 공격 10, 강공격 35, 강타 흘리기 25, 독 격발은 중독×4만큼 찹니다.', '가득 차면 그 적은 모으던 강타가 끊기고, 다음 행동을 놓치며, 잠시 더 아프게 맞습니다.'],
+  'bar:st': ['스태미나', '강공격 40, 방어 20, 흘리기 30(암살자 25)이 듭니다. 라운드가 끝날 때마다 10씩 차고, 스태미나 플라스크로 60을 채웁니다. 기본 공격은 스태미나를 채우지 않습니다. 0이 되면 탈진합니다.'],
+  'bar:bk': ['붕괴 게이지', '적이 자세를 잃기까지 남은 여유입니다. 기본 공격 10, 강공격 35, 강타 흘리기 25씩 찹니다. 스킬이 채우는 양은 스킬 설명에 있습니다.', '가득 차면 그 적은 모으던 강타가 끊기고, 다음 행동을 놓치며, 취약 2가 걸립니다. 붕괴 상태는 다음 라운드가 끝날 때까지 남습니다.'],
   flask: ['플라스크', '❤️는 생명력, 🧪는 정화(옛 직업은 💧 마나), ⚡는 스태미나 플라스크의 남은 수입니다. 방을 이기면 셋 가운데 가장 덜 찬 것이 1, 샘에서는 셋 다 1씩 찹니다. 기본 공격은 스태미나를 채우지 않으니, 스태미나는 시간과 스태미나 플라스크로 채웁니다.'],
   stun: ['기절', '다음 행동 한 번을 놓칩니다.'],
   guardon: ['방어 준비', '내 다음 차례까지 받는 피해가 절반입니다.'],
@@ -2930,8 +2954,8 @@ const INFO2 = {
   exhaust: ['탈진', '스태미나가 바닥났습니다. 강공격, 방어, 흘리기를 쓸 수 없고 받는 피해가 20% 늘어납니다. 30까지 차면 풀립니다.'],
   counter: ['반격', '인내의 흉갑. 방어하는 동안 받은 피해의 30%가 다음 공격에 실립니다.'],
   reflux: ['되돌릴 독', '역류의 성배. 다음 공격이 방금 지운 디버프를 대상에게 겁니다.'],
-  gim: ['보스의 규칙', '이 보스만의 규칙입니다. 적힌 숫자는 남은 내 차례 수입니다.'],
-  speed: ['빠르기', '1보다 크면 차례가 더 자주, 작으면 덜 자주 옵니다. 지속 피해가 흐르는 속도는 바뀌지 않습니다.'],
+  gim: ['보스의 규칙', '이 보스만의 규칙입니다. 적힌 숫자는 남은 라운드 수입니다.'],
+  speed: ['빠르기', '같은 라운드 안에서 누가 먼저 움직일지 정합니다. 나보다 빠른 적은 내 앞에서, 느린 적은 내 뒤에서 움직이고, 같으면 내가 먼저입니다.', '빠르기가 달라도 라운드마다 한 번씩 움직이는 것은 같습니다. 빠르기 1.5 이상인 적만 라운드 끝에 한 번 더 움직입니다. 지속 피해는 라운드가 끝날 때 흐릅니다.'],
   scar: ['상흔', '받은 피해의 일부가 쌓입니다. 상흔술사는 20%, 상흔 스킬을 끼운 다른 직업은 10%이고, 최대 생명력의 절반이 한도입니다.', '상흔 베기는 절반을 태워 그 1.5배를 더하고, 상흔 방출은 모두 태워 모든 적에게 상흔×0.8 피해를 줍니다. 버튼에 지금 쓰면 나올 값이 적혀 있습니다.'],
   rage: ['분노', '광전사의 규칙입니다. 주고받는 공격마다 한 칸씩 차고, 생명력이 절반 아래면 두 칸씩 찹니다. 한 칸마다 피해가 3% 늘어납니다.', '열 칸이 차면 격노합니다. 잠시 피해 +40%, 빠르기 +20%, 받는 피해 +15%. 격노가 끝나면 처음부터 다시 찹니다.'],
   regen: ['뿌리의 회복', '뒷줄의 뿌리가 살아 있는 동안 수호목은 체력을 되찾습니다. 뿌리가 많을수록, 봄일수록 빠릅니다. 숫자는 내 차례 한 번 사이에 회복하는 양입니다.', '뿌리는 원거리 공격이나 광역 공격으로 치거나, 수호목을 붕괴시킨 틈에 근접으로 칠 수 있습니다.'],

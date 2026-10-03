@@ -19,7 +19,7 @@ const SKILLS2 = {
     { id: 'a_sap', row: 4, b: '독사', tier: '하급', n: '기운 빼는 독', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'poison', n: 5 }, { k: 'st', s: 'weak', n: 1 }] },
     { id: 'a_wedge', row: 5, b: '독사', tier: '하급', n: '독 쐐기', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'poison', n: 4 }, { k: 'brk', n: 32 }] },
     { id: 'a_mist', row: 5, b: '독사', tier: '하급', n: '독무', tgt: 'front', time: 'normal', cd: 2, fx: [{ k: 'poison', n: 3 }] },
-    { id: 'a_seep', row: 6, b: '독사', tier: '하급', n: '독 스미기', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 3 }, { k: 'poison', n: 2 }, { k: 'exploit', per: 1.1 }] },
+    { id: 'a_seep', row: 6, b: '독사', tier: '하급', n: '독 스미기', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 4 }, { k: 'poison', n: 2 }, { k: 'exploit', per: 1 }] },
     { id: 'a_siphon', row: 6, b: '독사', tier: '하급', n: '독 흡수', tgt: 'melee', time: 'normal', cd: 2, fx: [{ k: 'poison', n: 3 }, { k: 'drain', per: 1.5 }] },
     { id: 'a_double', row: 7, b: '독사', tier: '중급', n: '독 배가', tgt: 'melee', time: 'normal', cd: 2, fx: [{ k: 'grow', mul: 2 }] },
     { id: 'a_spread', row: 7, b: '독사', tier: '중급', n: '독 번지기', tgt: 'melee', time: 'normal', cd: 2, fx: [{ k: 'dmg', n: 2 }, { k: 'spread', per: 0.5 }] },
@@ -28,7 +28,7 @@ const SKILLS2 = {
     { id: 'a_venomstrike', row: 9, b: '독사', tier: '중급', n: '맹독 일격', tgt: 'melee', time: 'slow', cd: 3, fx: [{ k: 'dmg', n: 5 }, { k: 'poison', n: 6 }] },
     { id: 'a_rotbreath', row: 9, b: '독사', tier: '중급', n: '썩은 숨', tgt: 'front', time: 'normal', cd: 2, fx: [{ k: 'poison', n: 3 }, { k: 'st', s: 'vuln', n: 1 }] },
     { id: 'a_cycle', row: 10, b: '독사', tier: '중급', n: '독의 순환', tgt: 'all', time: 'slow', cd: 3, fx: [{ k: 'grow', mul: 1.6 }] },
-    { id: 'a_feast', row: 10, b: '독사', tier: '중급', n: '독 흡혈', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'poison', n: 4 }, { k: 'drain', per: 1.3 }] },
+    { id: 'a_feast', row: 10, b: '독사', tier: '중급', n: '독 흡혈', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'poison', n: 4 }, { k: 'drain', per: 1.5 }] },
     // 격발: 독을 심고 터뜨려 큰 적을 무너뜨린다. 거구·강타에 강하고 무리에 약하다 (정예 이상을 무너뜨리면 대기 −1)
     { id: 'a_plant', row: 1, b: '격발', tier: '하급', n: '독 심기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'poison', n: 5 }] },
     { id: 'a_burst', row: 1, b: '격발', tier: '하급', n: '독 격발', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'burst', pre: 2, mul: 2.5, brkPer: 3 }, { k: 'bigx', mul: 2 }] },
@@ -38,8 +38,8 @@ const SKILLS2 = {
     { id: 'a_pouch', row: 3, b: '격발', tier: '하급', n: '독 바르기', tgt: 'melee', time: 'normal', cd: 2, fx: [{ k: 'poison', n: 4 }] },
     { id: 'a_deepplant', row: 4, b: '격발', tier: '하급', n: '깊이 심기', tgt: 'melee', time: 'slow', cd: 4, fx: [{ k: 'poison', n: 6 }] },
     { id: 'a_burststab', row: 4, b: '격발', tier: '하급', n: '터뜨리는 일격', tgt: 'melee', time: 'normal', cd: 2, fx: [{ k: 'dmg', n: 8 }, { k: 'burst', top: 3, mul: 2.5, brkPer: 3 }, { k: 'bigx', mul: 2 }] },
-    { id: 'a_rend', row: 5, b: '격발', tier: '하급', n: '갈라 터뜨리기', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 3 }, { k: 'exploit', per: 3.8 }] },
-    { id: 'a_crumble', row: 5, b: '격발', tier: '하급', n: '무너뜨리는 독', tgt: 'melee', time: 'fast', cd: 2, fx: [{ k: 'dmg', n: 3 }, { k: 'brkPer', per: 19.7 }] },
+    { id: 'a_rend', row: 5, b: '격발', tier: '하급', n: '갈라 터뜨리기', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 2 }, { k: 'exploit', per: 4 }] },
+    { id: 'a_crumble', row: 5, b: '격발', tier: '하급', n: '무너뜨리는 독', tgt: 'melee', time: 'fast', cd: 2, fx: [{ k: 'dmg', n: 3 }, { k: 'brkPer', per: 20 }] },
     { id: 'a_cutoff', row: 6, b: '격발', tier: '하급', n: '끊어 내기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 19 }, { k: 'cutx', brk: 76 }, { k: 'bigx', mul: 2 }] },
     { id: 'a_expose', row: 6, b: '격발', tier: '하급', n: '약점 드러내기', tgt: 'melee', time: 'fast', cd: 2, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'vuln', n: 3 }] },
     { id: 'a_boil', row: 7, b: '격발', tier: '중급', n: '끓는 피', tgt: 'melee', time: 'normal', cd: 2, fx: [{ k: 'burst', pre: 2, mul: 1.5, keep: 0.5, brkPer: 4 }] },
@@ -47,30 +47,30 @@ const SKILLS2 = {
     { id: 'a_gash', row: 8, b: '격발', tier: '중급', n: '상처 벌리기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'st', s: 'vuln', n: 3 }, { k: 'burst', pre: 3, mul: 2, brkPer: 3 }] },
     { id: 'a_vitalburst', row: 8, b: '격발', tier: '중급', n: '급소 터뜨리기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 6 }, { k: 'burst', pre: 2, mul: 2, brkPer: 3 }, { k: 'bigx', mul: 2 }] },
     { id: 'a_deepburst', row: 9, b: '격발', tier: '중급', n: '깊은 격발', tgt: 'melee', time: 'slow', cd: 6, fx: [{ k: 'burst', pre: 2, mul: 3, brkPer: 6 }, { k: 'bigx', mul: 2 }] },
-    { id: 'a_hunt', row: 9, b: '격발', tier: '중급', n: '독 사냥', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 7 }, { k: 'exploit', per: 2.6 }, { k: 'lowx', hp: 0.3, mul: 2 }, { k: 'bigx', mul: 2 }] },
+    { id: 'a_hunt', row: 9, b: '격발', tier: '중급', n: '독 사냥', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 6 }, { k: 'exploit', per: 3 }, { k: 'lowx', hp: 0.3, mul: 2 }, { k: 'bigx', mul: 2 }] },
     { id: 'a_brkburst', row: 10, b: '격발', tier: '중급', n: '무너지는 격발', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'burst', pre: 4, mul: 1.5, brkPer: 10 }] },
     { id: 'a_reap', row: 10, b: '격발', tier: '중급', n: '거두기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 13 }, { k: 'lowx', hp: 0.35, mul: 2 }, { k: 'bigx', mul: 2 }] },
     // 그림자: 공격을 흘려 낸 틈을 찌르고 후열에 닿는다. 후열에 강하고 무리·거구에 약하다 (흘려 내면 대기 −1)
     { id: 'a_shadow', row: 1, b: '그림자', tier: '하급', n: '그림자 찌르기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 18 }] },
-    { id: 'a_deflect', row: 1, b: '그림자', tier: '하급', n: '흘려 베기', tgt: 'pick', time: 'normal', cd: 6, fx: [{ k: 'parry', red: 0.7 }, { k: 'dmg', n: 7 }, { k: 'onParry', dmg: 10 }] },
+    { id: 'a_deflect', row: 1, b: '그림자', tier: '하급', n: '흘려 베기', tgt: 'pick', time: 'normal', cd: 6, fx: [{ k: 'parry', red: 0.7 }, { k: 'dmg', n: 6 }, { k: 'onParry', dmg: 9 }] },
     { id: 'a_trip', row: 2, b: '그림자', tier: '하급', n: '발 걸기', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 35 }] },
     { id: 'a_step', row: 2, b: '그림자', tier: '하급', n: '그림자 밟기', tgt: 'ranged', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 17 }] },
     { id: 'a_check', row: 3, b: '그림자', tier: '하급', n: '견제 찌르기', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 14 }, { k: 'st', s: 'weak', n: 2 }] },
-    { id: 'a_backstep', row: 3, b: '그림자', tier: '하급', n: '흘리며 물러서기', tgt: 'pick', time: 'fast', cd: 3, fx: [{ k: 'parry', red: 0.5 }, { k: 'onParry', brk: 79 }] },
-    { id: 'a_ambush', row: 4, b: '그림자', tier: '하급', n: '후열 기습', tgt: 'ranged', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 21 }] },
+    { id: 'a_backstep', row: 3, b: '그림자', tier: '하급', n: '흘리며 물러서기', tgt: 'pick', time: 'fast', cd: 5, fx: [{ k: 'parry', red: 0.5 }, { k: 'onParry', brk: 79 }] },
+    { id: 'a_ambush', row: 4, b: '그림자', tier: '하급', n: '후열 기습', tgt: 'ranged', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 20 }] },
     { id: 'a_smoke', row: 4, b: '그림자', tier: '하급', n: '연막', tgt: 'self', time: 'fast', cd: 3, fx: [{ k: 'parryBuff', red: 0.2, stam: 33, times: 2 }] },
-    { id: 'a_after', row: 5, b: '그림자', tier: '하급', n: '잔상', tgt: 'pick', time: 'fast', cd: 5, fx: [{ k: 'parry', red: 0.7 }, { k: 'onParry', dmg: 14, brk: 9 }] },
-    { id: 'a_aim', row: 5, b: '그림자', tier: '하급', n: '칼끝 겨누기', tgt: 'self', time: 'fast', cd: 2, fx: [{ k: 'parryBuff', red: 0, dmg: 19 }] },
+    { id: 'a_after', row: 5, b: '그림자', tier: '하급', n: '잔상', tgt: 'pick', time: 'fast', cd: 6, fx: [{ k: 'parry', red: 0.7 }, { k: 'onParry', dmg: 11, brk: 7 }] },
+    { id: 'a_aim', row: 5, b: '그림자', tier: '하급', n: '칼끝 겨누기', tgt: 'self', time: 'fast', cd: 2, fx: [{ k: 'parryBuff', red: 0, dmg: 14 }] },
     { id: 'a_mark', row: 6, b: '그림자', tier: '하급', n: '그림자 표식', tgt: 'melee', time: 'fast', cd: 2, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'vuln', n: 3 }] },
-    { id: 'a_shade', row: 6, b: '그림자', tier: '하급', n: '그늘 숨기', tgt: 'self', time: 'fast', cd: 2, fx: [{ k: 'st', s: 'protect', n: 2 }, { k: 'parryBuff', red: 0, dmg: 13 }] },
+    { id: 'a_shade', row: 6, b: '그림자', tier: '하급', n: '그늘 숨기', tgt: 'self', time: 'fast', cd: 2, fx: [{ k: 'st', s: 'protect', n: 2 }, { k: 'parryBuff', red: 0, dmg: 9 }] },
     { id: 'a_gap', row: 7, b: '그림자', tier: '중급', n: '빈틈 노리기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 22 }] },
-    { id: 'a_venomguard', row: 7, b: '그림자', tier: '중급', n: '독 묻은 칼막이', tgt: 'pick', time: 'normal', cd: 3, fx: [{ k: 'parry', red: 0.6 }, { k: 'onParry', poison: 5 }] },
+    { id: 'a_venomguard', row: 7, b: '그림자', tier: '중급', n: '독 묻은 칼막이', tgt: 'pick', time: 'normal', cd: 4, fx: [{ k: 'parry', red: 0.6 }, { k: 'onParry', poison: 4 }] },
     { id: 'a_pierce', row: 8, b: '그림자', tier: '중급', n: '급소 꿰기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 16 }, { k: 'brokenx', mul: 2 }] },
     { id: 'a_strangle', row: 8, b: '그림자', tier: '중급', n: '목 조르기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 18 }, { k: 'st', s: 'chill', n: 2 }] },
-    { id: 'a_counter', row: 9, b: '그림자', tier: '중급', n: '되받아치기', tgt: 'pick', time: 'normal', cd: 4, fx: [{ k: 'parry', red: 0.8 }, { k: 'onParry', dmg: 20, brk: 10 }] },
+    { id: 'a_counter', row: 9, b: '그림자', tier: '중급', n: '되받아치기', tgt: 'pick', time: 'normal', cd: 4, fx: [{ k: 'parry', red: 0.8 }, { k: 'onParry', dmg: 15, brk: 7 }] },
     { id: 'a_rush', row: 9, b: '그림자', tier: '중급', n: '그림자 연타', tgt: 'melee', time: 'normal', cd: 4, hits: 3, fx: [{ k: 'dmg', n: 7 }, { k: 'brk', n: 5 }] },
     { id: 'a_darkstrike', row: 10, b: '그림자', tier: '중급', n: '어둠 일격', tgt: 'melee', time: 'slow', cd: 6, fx: [{ k: 'dmg', n: 26 }, { k: 'brk', n: 25 }] },
-    { id: 'a_parrydance', row: 10, b: '그림자', tier: '중급', n: '흘림의 춤', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'parryBuff', red: 0.2, stam: 22, times: 2, dmg: 8 }] },
+    { id: 'a_parrydance', row: 10, b: '그림자', tier: '중급', n: '흘림의 춤', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'parryBuff', red: 0.2, stam: 22, times: 2, dmg: 6 }] },
   ],
 };
 /* 사다리 (10월 3일 만든 사람 결정): 2챕터(Lv10)까지 갈래마다 하급 6줄 · 중급 4줄 = 10줄, 줄마다 두 칸(갈래 20칸, 직업 60칸).
@@ -95,5 +95,5 @@ const TREE2 = {
    챕터 돌파 포인트(+2)는 0.6a.2에서 주지 않는다: Lv10까지 10점이 트리 크기의 기준이다(기획서 12.2절) */
 const TREE_GATE = { 시작: 0, 하급: 0, 중급: 0 }; // 사다리에서는 깊이가 등급 조건을 대신한다(쓰지 않음)
 /* 챕터로 여는 등급: 1~2챕터는 하급·중급만으로 싸운다. 상급·궁극은 3챕터를 만들 때 다시 설계해 더한다 */
-const TREE_CH = { 시작: 1, 하급: 1, 중급: 1 }; // 상급·궁극은 지웠다(3챕터부터 다시 짠다)
+const TREE_CH = { 시작: 1, 하급: 1, 중급: 1, 상급: 3, 궁극: 5 }; // 상급·궁극 칸은 지웠지만(3챕터부터 다시 짠다) 여는 챕터는 남겨 둔다. 이 표에 없는 등급은 열리지 않는다(index.html treeWhy)
 const EQUIP_SLOTS2 = 4;

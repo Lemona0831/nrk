@@ -94,8 +94,10 @@ function sigRule(b, r) {
 }
 /* 0.6a.2 직업의 판단: 스킬 이름이 아니라 데이터(fx)를 보고 고른다. 사람처럼 단순한 규칙 몇 개 */
 const psn2 = (u, k) => (u.s[k] ? u.s[k].stacks : 0);
+/* 0.6a.2 라운드: 이번 차례에(빠른 행동으로) 흘릴 준비를 이미 했는가 (id를 주면 그 적에게). 옛 직업은 늘 false라 next/ 측정은 그대로다 */
+const v2Ready = (b, id) => !!(E.isV2 && E.isV2(b.p) && b.p.dodge && b.prepTurn === b.turnIdx && (id == null || b.p.dodge === id));
 function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
-  const p = b.p; const okS = L.filter(a => a.v2 && a.ok); const has = (a, k) => a.s.fx.some(e => e.k === k);
+  const p = b.p; const nf = !!(E.noFast && E.noFast(p)); const okS = L.filter(a => a.v2 && a.ok && !(nf && a.time <= 0.6)); const has = (a, k) => a.s.fx.some(e => e.k === k); // 느린 맥박: 빠른 칸이 없어 빠른 스킬도 차례를 끝내므로 사람처럼 빠른 스킬을 고르지 않는다
   const psn = e => (e.s.poison ? e.s.poison.stacks : 0);
   const reach = a => E.alive(b).filter(e => e.role !== 'root' && E.canTarget(b, e, a));
   const best = (a, f) => reach(a).sort(f)[0];
@@ -104,8 +106,8 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   // 정화 플라스크: 출혈이 이미 쌓여 더 걸리면 아프거나, 폭발 약화가 올 때만(사람은 막을 거리가 클 때 마신다)
   const pv1 = E.previewAfter(b, 1); const bleedIn = pv1.some(x => x.e.intent && x.e.intent.k === 'attack' && x.e.intent.bleed); const boomIn = pv1.some(x => x.e.intent && x.e.intent.k === 'explode');
   if (((bleedIn && psn2(p, 'bleed') >= 2) || boomIn) && !p.s.block && p.flask.mana > 0 && r() < aware * 0.5) return ['flaskM'];
-  // 강타 예고: 흘리기형 스킬(스태미나 없이) → 흘리기 준비 → 스태미나 흘리기
-  if (hv && r() < Math.max(P.parry, 0.35) + 0.2) {
+  // 강타 예고: 흘리기형 스킬(스태미나 없이) → 흘리기 준비 → 스태미나 흘리기. 이번 차례에 빠른 행동으로 이미 그 적을 흘릴 준비를 했으면 다시 걸지 않는다(덮어쓰면 붙은 효과를 잃는다)
+  if (hv && !v2Ready(b, hv.e.id) && r() < Math.max(P.parry, 0.35) + 0.2) {
     const ps = okS.find(a => has(a, 'parry')); if (ps) return [ps.id, hv.e.id];
     const pb = okS.find(a => has(a, 'parryBuff')); if (pb && !p.pbuf && E.dodgeCost(p) <= p.st) return [pb.id];
     if (L.find(a => a.id === 'dodge' && a.ok) && r() < P.parry + 0.3) return ['dodge', hv.e.id];
@@ -137,7 +139,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
       const cs = okS.filter(a => !a.self && brkOf(a) >= 25).sort((x, y) => brkOf(y) - brkOf(x));
       for (const a of cs) { const t = chg.filter(e => E.canTarget(b, e, a)).sort((x, y) => (y.brk / y.brkMax) - (x.brk / x.brkMax))[0]; if (t && t.brk + brkOf(a) >= t.brkMax * 0.6) return [a.id, t.id]; } } }
   // 흘리기형 스킬에 보상(피해·되받기)이 붙어 있으면 강타가 아니어도: 내 다음 차례 전에 나를 칠 적에게
-  { const pa = okS.find(a => has(a, 'parry') && (has(a, 'onParry') || has(a, 'dmg'))); if (pa && r() < 0.7) { const at = pv1.find(x => x.e.intent && x.e.intent.k === 'attack'); if (at) return [pa.id, at.e.id]; } }
+  { const pa = okS.find(a => has(a, 'parry') && (has(a, 'onParry') || has(a, 'dmg'))); if (pa && !v2Ready(b) && r() < 0.7) { const at = pv1.find(x => x.e.intent && x.e.intent.k === 'attack'); if (at) return [pa.id, at.e.id]; } }
   // 광역: 둘 이상
   for (const a of okS.filter(a => a.aoe && !has(a, 'burst'))) if (reach(a).length >= 2) return [a.id];
   // 중독을 이용하는 스킬: 중독 3 이상
@@ -168,7 +170,7 @@ function heuristic(b, P, r, mem) {
   // 0.6a.2 직업(충전 스킬): 스킬 데이터를 보고 고른다
   if (E.isV2 && E.isV2(p)) { const v = v2Pick(b, P, r, mem, L, al, hv, ex, aware); if (v) return v; }
   // 예고 대응
-  if (hv && r() < P.parry && ok('dodge')) return ['dodge', hv.e.id];
+  if (hv && !v2Ready(b, hv.e.id) && r() < P.parry && ok('dodge')) return ['dodge', hv.e.id];
   if ((hv || ex) && r() < P.guard && ok('guard')) return ['guard'];
   // 대상 고르기 (사람의 눈: 위협·치유사·약한 적)
   const reachable = a => E.alive(b).filter(e => E.canTarget(b, e, { id: a, melee: ['basic', 'heavy', 'viper', 'scarcut', 'crush', 'lava'].includes(a) ? 1 : 0, ranged: ['flame', 'purge', 'reverse', 'aimshot', 'drain'].includes(a) ? 1 : 0 }));
