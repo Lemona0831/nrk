@@ -129,7 +129,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .tm.me{border-color:var(--gold);color:var(--gold-ink);background:var(--gold);font-weight:700}
 .axis .tl{padding:2px 0 0;display:flex;gap:4px;overflow-x:auto}.axis .tl span{font-size:11.5px;padding:1px 6px}
 .gimmick{margin:6px 0 0}
-.logrow{display:flex;gap:6px;align-items:center;margin-top:6px}.logrow .lastlog{flex:1;margin:0}.logrow button{flex:none;min-height:36px}
+.logrow{display:flex;gap:6px;align-items:center;margin-top:6px}.logrow .lastlog{flex:1;margin:0}.logrow button{flex:none;min-height:36px}.logbtns{display:flex;gap:4px;flex:none;margin-left:auto}
 .lastlog{font-size:13px;padding:4px 8px;border-left:3px solid var(--gold);background:var(--panel2);border-radius:4px}
 .lastlog.bad{border-color:var(--bad)}.lastlog.good{border-color:var(--good)}
 .rowlab{font-size:12.5px;color:var(--muted);margin:0 0 4px;display:flex;align-items:center;gap:2px;flex-wrap:wrap}
@@ -141,6 +141,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .lanehd b{color:var(--lc);font-size:14.5px;letter-spacing:.03em}.lanect{color:var(--muted);font-size:12px}
 .reach{font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 9px;border:1px solid;line-height:18px}
 .reach.ok{color:var(--good);border-color:rgba(134,197,111,.55);background:rgba(134,197,111,.08)}.reach.no{color:var(--muted);border-color:var(--line);background:var(--panel2)}
+.fstat>.mini,.fstat .rule,.incoming small{display:none}
 .lane .enemies{margin-bottom:0}.lane.empty{padding:3px 8px}.lane.empty .lanehd{margin:0}.lanehd .fq{margin-left:auto}
 @media (min-width:900px){.lanes{flex-direction:row;align-items:flex-start}.lane{flex:var(--n,1) 1 0}.lane.empty{flex:0 0 150px}.field .lane .enemies{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}}
 .en{padding:6px 8px}.enh{display:flex;align-items:center;gap:6px;margin-bottom:3px}.enh .ico{font-size:20px}
@@ -154,7 +155,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .fstat,.me{border-left:5px solid var(--cls,transparent)}
 .abgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:5px}
 .agp{display:contents}.agl{display:none}
-@media (min-width:720px){.abgrid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;align-items:start}.agp{display:flex;flex-direction:column;gap:5px;min-width:0}.agl{display:block;font-size:12px;color:var(--muted);letter-spacing:.04em;padding:0 2px 1px;border-bottom:1px solid var(--line)}}
+@media (min-width:720px){.abgrid{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}.agp{display:grid;grid-template-columns:repeat(var(--c,1),minmax(0,1fr));gap:5px;flex:var(--c,1) 1 0;min-width:calc(var(--c,1) * 138px)}.agl{grid-column:1/-1;display:block;font-size:12px;color:var(--muted);letter-spacing:.04em;padding:0 2px 1px;border-bottom:1px solid var(--line)}}
 .ab{text-align:left;padding:5px 8px;min-height:44px;border-left:4px solid var(--c)}.ab b{display:block;font-size:13.5px;line-height:1.25}.ab small{display:block;font-size:11.5px;color:var(--muted);line-height:1.25}
 .adesc{margin-top:6px;font-size:12.5px;min-height:1.4em;color:var(--ink);opacity:.9}
 .wide{width:100%}
@@ -524,7 +525,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
  .bmid .ord li{flex:none;font-size:12px;padding:2px 7px}
  .logrow{margin-top:4px}.logrow .lastlog,.logrow .turnban{font-size:12.5px;padding:3px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;min-height:0}
  .logrow .turnban>*{display:inline}
- .logbtn{min-height:30px;padding:2px 8px}.lbt{display:none}
+ .logbtn,.rulebtn{min-height:30px;padding:2px 8px}.lbt{display:none}
  .gimmick{font-size:12px;padding:3px 7px;margin-bottom:4px}
  /* 전장: 작은 카드 2열 */
  .lane{padding:4px 6px 5px;border-radius:8px}.lanehd{margin:0 0 3px;min-height:22px;gap:5px}.lanehd b{font-size:13.5px}.reach{font-size:11px;padding:0 7px}.rlhint{display:none}
@@ -570,7 +571,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 @media (max-width:719px){
  .bmid{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:6px;row-gap:4px;align-items:center}
  .bmid>.order{grid-column:1;grid-row:1;min-width:0}.bmid>.gimmick{grid-column:1/-1;margin:0}
- .bmid .logrow{display:contents}.bmid .logrow>.logbtn{grid-column:2;grid-row:1}.bmid .logrow>:not(.logbtn){grid-column:1/-1}
+ .bmid .logrow{display:contents}.bmid .logrow>.logbtns{grid-column:2;grid-row:1}.bmid .logrow>:not(.logbtns){grid-column:1/-1}
  .bmid .ord li{min-height:0;line-height:1.3}
  .logrow .turnban .ic{margin-right:4px}.logrow .turnban b{margin-right:6px}
  .fq{align-items:center;gap:3px;line-height:1}
@@ -2487,7 +2488,7 @@ function vBattle() {
   extra.push(`<span data-info="speed" tabindex="0">속도 ${r1(pSpeed(b))}</span>`);
   const eq = Object.values(p.eq).filter(Boolean); if (eq.length) extra.push(eq.map(k => esc(ITEMS[k].n)).join(', '));
   const scen = G.scr === 'scen' ? `<div class="scenline"><b>${SCEN[G.scen.i].id}. ${esc(SCEN[G.scen.i].n)}</b> ${esc(SCEN[G.scen.i].d)} 최대 10행동 중 ${b.pActs || 0}행동.</div>` : '';
-  const status = `<section class="fstat">${scen}<div class="mehead"><b>${B.ico} ${esc(B.n)}</b><span class="flk" data-info="flask" tabindex="0">플라스크 ❤️${p.flask.life} ${isV2(p) ? '🧪' : '💧'}${p.flask.mana} ⚡${p.flask.stam || 0} <small>/${p.flaskMax}</small></span>${q('flask', '플라스크')}</div>
+  const status = `<section class="fstat">${scen}<div class="mehead"><b data-info="buildrule" tabindex="0">${B.ico} ${esc(B.n)}</b><span class="flk" data-info="flask" tabindex="0">플라스크 ❤️${p.flask.life} ${isV2(p) ? '🧪' : '💧'}${p.flask.mana} ⚡${p.flask.stam || 0} <small>/${p.flaskMax}</small></span>${q('flask', '플라스크')}</div>
     <div class="mbars">${pops.p ? popHtml(pops.p) : ''}${mbar('hp', p.hp, p.hpMax, '생명력')}${p.mpMax > 0 ? mbar('mp', p.mp, p.mpMax, '마나') : ''}${mbar('st', p.st, p.stMax, '스태미나')}</div>${buildRes(p)}
     ${incHtml(b)}<div class="mini">${extra.join(' · ')}</div><div class="rule" data-info="buildrule" tabindex="0">${esc(BUILDS[p.build].rule)}</div>${stsHtml(p, b)}</section>`;
   // 2) 시간 축 + 기믹
@@ -2510,12 +2511,11 @@ function vBattle() {
   };
   const bk = b.en.filter(e => e.alive && e.row === 'back'), fr = b.en.filter(e => e.alive && e.row === 'front');
   /* 전열 · 후열 띠 (10월 3일 만든 사람: 한눈에 안 들어온다): 줄마다 색 띠와 머리글, 머리에 근접 공격이 닿는지.
-     전열이 내 쪽이다(휴대폰은 위, PC는 왼쪽). PC 폭에서는 두 줄을 나란히 놓아 함께 보인다 */
+     후열이 먼저다(휴대폰은 위, PC는 왼쪽, 만든 사람: 후열이 위가 낫다). PC 폭에서는 두 줄을 나란히 놓아 함께 보인다. 규칙 버튼은 전장 밖(순서 줄 옆)에 둔다 */
   const blocked = frontBlocked(b);
   const lane = (k, nm, list, reach, extra) => `<div class="lane ${k}${list.length ? '' : ' empty'}" role="group" aria-label="${nm}" style="--n:${Math.max(1, list.length)}"><div class="lanehd"><b>${nm}</b><span class="lanect">${list.length ? list.length + '명' : '비어 있음'}</span>${list.length ? `<span class="reach ${reach[0]}">${reach[1]}</span>` : ''}${extra || ''}</div>${list.length ? `<div class="enemies">${list.map(ecard).join('')}</div>` : ''}</div>`;
   const field = `<section class="field" aria-label="전장">${G.scr === 'tut' ? vTutGoal(b) : ''}
-    <div class="lanes">${lane('front', '전열', fr, ['ok', '근접 닿음'], '<button class="qm fq" data-a="help" data-k="row" aria-label="전투 규칙 도움말"><span aria-hidden="true">?</span> 규칙</button>')}${lane('back', '후열', bk, blocked ? ['no', '근접 불가<span class="rlhint"> · 전열이 막는 중</span>'] : ['ok', '근접 닿음<span class="rlhint"> · 전열이 비었거나 무너짐</span>'])}</div>
-    <div class="fhelp"><span class="mini">규칙 보기</span>${q('row', '전열·후열')}${q('intent', '예고')}${q('break', '붕괴')}${q('status', '상태이상')}${q('roles', '적의 역할')}</div></section>`;
+    <div class="lanes">${lane('back', '후열', bk, blocked ? ['no', '근접 불가<span class="rlhint"> · 전열이 막는 중</span>'] : ['ok', '근접 닿음<span class="rlhint"> · 전열이 비었거나 무너짐</span>'])}${lane('front', '전열', fr, ['ok', '근접 닿음'])}</div></section>`;
   // 4) 행동판
   let dock;
   if (b.over) {
@@ -2528,7 +2528,7 @@ function vBattle() {
     for (const [lab, ids] of AGROUP) {
       const list = ids ? L.filter(a => ids.includes(a.id)) : L.filter(a => a.skill);
       if (!list.length) continue;
-      btns += `<div class="agp" role="group" aria-label="${esc(lab)}"><span class="agl" aria-hidden="true">${esc(lab)}</span>`;
+      btns += `<div class="agp" role="group" aria-label="${esc(lab)}" style="--c:${Math.ceil(list.length / 3)}"><span class="agl" aria-hidden="true">${esc(lab)}</span>`; // PC: 묶음마다 3줄을 넘지 않게 칸을 늘린다(10월 3일: 스킬 6개가 세로로 쌓여 전장이 눌렸다)
       for (const a of list) {
         let why = '';
         if (!a.ok) why = a.why || (a.id === 'heavy' || a.id === 'guard' || a.id === 'dodge' ? '스태미나 부족' : a.skill ? '마나 부족' : '플라스크 없음');
@@ -2537,7 +2537,7 @@ function vBattle() {
         const urgent = !dis && (a.id === 'flaskL') && p.hp < p.hpMax * 0.35; const tnew = G.scr === 'tut' && tutNew(b, a.id);
         const at = !dis ? actTarget(b, a) : null; const gd = at && isMeleeAct(p, a.id) ? guardOf(b, at) : null;
         kn++;
-        btns += `<button class="ab g-${lab === '공격' ? 'atk' : lab === '스킬' ? 'sk' : lab === '지키기' ? 'def' : lab === '직업' ? 'sig' : 'etc'}${dis ? ' dis' : ''}${urgent ? ' urgent' : ''}${tnew ? ' tnew' : ''}${a.v2 && skHz(a.s) ? ' hzb' : ''}" data-a="act" data-id="${a.id}" data-info="act:${a.id}" data-k="${kn}" aria-disabled="${dis}"><b>${kn <= 9 ? `<kbd>${kn}</kbd>` : ''}<span class="anl">${esc(a.n)}</span><span class="ans">${esc(a.id === 'flaskM' && isV2(p) ? '🧪 정화' : ASHORT[a.id] || a.n)}</span>${spdIco(noFast(p) && a.time <= 0.6 ? 1 : a.time)}${a.v2 && skHz(a.s) ? '<span class="hz" aria-hidden="true">🔄</span>' : ''}</b><small>${why ? esc(why) : '<span class="ac">' + esc(a.cost) + '</span><span class="ax"> · ' + esc(skillHint(b, a) || speedWord(a.time)) + (at ? ' → ' + esc(at.n) + (gd ? ' 🛡' : '') : a.aoe ? ' → 전체' : '') + '</span>'}</small></button>`;
+        btns += `<button class="ab g-${lab === '공격' ? 'atk' : lab === '스킬' ? 'sk' : lab === '지키기' ? 'def' : lab === '직업' ? 'sig' : 'etc'}${dis ? ' dis' : ''}${urgent ? ' urgent' : ''}${tnew ? ' tnew' : ''}${a.v2 && skHz(a.s) ? ' hzb' : ''}" data-a="act" data-id="${a.id}" data-info="act:${a.id}" data-k="${kn}" aria-disabled="${dis}"><b>${kn <= 9 ? `<kbd>${kn}</kbd>` : ''}<span class="anl">${esc(a.n)}</span><span class="ans">${esc(a.id === 'flaskM' && isV2(p) ? '🧪 정화' : ASHORT[a.id] || a.n)}</span>${spdIco(noFast(p) && a.time <= 0.6 ? 1 : a.time)}${a.v2 && skHz(a.s) ? '<span class="hz" aria-hidden="true">🔄</span>' : ''}</b><small>${why ? esc(why) : '<span class="ac">' + esc(a.cost) + '</span><span class="ax">' + (skillHint(b, a) ? ' · ' + esc(skillHint(b, a)) : '') + (at ? ' → ' + esc(at.n) + (gd ? ' 🛡' : '') : a.aoe ? ' → 전체' : '') + '</span>'}</small></button>`;
       }
       btns += '</div>';
     }
@@ -2548,7 +2548,7 @@ function vBattle() {
   const groups = []; for (const x of b.log) { const g = x.g || 0; if (!groups.length || groups[groups.length - 1].g !== g) groups.push({ g, items: [] }); groups[groups.length - 1].items.push(x); }
   const glog = groups.slice(-14).reverse().map((G2, gi) => `<div class="lgrp${gi === 0 ? ' now' : ''}"><div class="lgh">${G2.g ? G2.g + '번째 차례' : '전투 시작'}</div>${G2.items.map(x => `<p class="${x.c}">${esc(x.m)}</p>`).join('')}</div>`).join('');
   const side = `<aside class="side${G.logOpen ? ' open' : ''}" aria-label="전투 기록"><div class="sidehead"><h4>전투 기록</h4><button class="sm onlym" data-a="logclose">닫기</button></div><div class="blog" role="log">${glog}</div><div class="mini">맨 위가 가장 최근 차례입니다. 한 차례 안에서는 위에서 아래로 읽습니다.</div></aside>`;
-  return `<div class="bgrid"><div class="btop">${status}<div class="bmid">${vOrder(b)}${gim}<div class="logrow">${lastl}<button class="sm onlym logbtn" data-a="logopen" aria-label="전투 기록">📜<span class="lbt"> 기록</span></button></div></div></div>${field}${dock}${side}</div>`;
+  return `<div class="bgrid"><div class="btop">${status}<div class="bmid">${vOrder(b)}${gim}<div class="logrow">${lastl}<span class="logbtns"><button class="sm rulebtn" data-a="help" data-k="row" aria-label="전투 규칙">❔<span class="lbt"> 전투 규칙</span></button><button class="sm onlym logbtn" data-a="logopen" aria-label="전투 기록">📜<span class="lbt"> 기록</span></button></span></div></div></div>${field}${dock}${side}</div>`;
 }
 
 /* 설명 줄: 가리키거나 포커스하면 갱신 (재렌더 없이) */
@@ -2682,7 +2682,7 @@ function slotHtml(b) {
   const nf = noFast(b.p); const f = !b.bonusUsed && !nf;
   return `<span class="slots" data-info="slots" tabindex="0" aria-label="이번 차례에 남은 칸: ${f ? '빠른 행동과 ' : ''}주 행동"><span class="slot${f ? ' on' : ' used'}">⚡ ${nf ? '빠른 칸 없음' : '빠른 행동' + (f ? '' : ' 씀')}</span><span class="pl" aria-hidden="true">+</span><span class="slot on">▶ 주 행동</span></span>`;
 }
-function spdIco(t) { return t <= 0.6 ? '<span class="spd sf" aria-hidden="true">⚡</span>' : t >= 1.25 ? '<span class="spd ss" aria-hidden="true">⏳</span>' : '<span class="spd sn" aria-hidden="true">▶</span>'; }
+function spdIco(t) { return t <= 0.6 ? '<span class="spd sf" role="img" aria-label="빠른 행동">⚡</span>' : t >= 1.25 ? '<span class="spd ss" role="img" aria-label="느린 행동, 두 칸">⏳</span>' : '<span class="spd sn" role="img" aria-label="주 행동">▶</span>'; } // 버튼 둘째 줄의 빠르기 글자를 뺀 대신 읽어 주는 이름을 단다
 
 /* 순서표 (숫자 없이) */
 function vOrder(b) {
