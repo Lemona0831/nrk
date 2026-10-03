@@ -2,7 +2,8 @@
    06a2의 게임 코드를 그대로 돌리고(dgqa.js의 loadGame), 갈래마다 두 기둥(왼쪽 칸만 / 오른쪽 칸만 따라 내려간 빌드)을 Lv5·Lv10으로 만들어
    tools/situations.js의 50상황에서 싸운다. 전투 판단은 qa.js의 성향(기본 신중, PK=expert 등)을 쓴다.
    결과: 빌드·범주별 승률, 갈래 평균 차이, 기둥 차이, 갈래 성격(TREE2.profile)과 맞는지.
-   실행: DGDIR=06a2 node tools/sitqa.js [상황마다 판 수=8] [직업=assassin]
+   실행: DGDIR=06a2 node tools/sitqa.js [상황마다 판 수=12] [직업=assassin]
+   판 수 (10월 3일): 같은 코드를 씨앗만 바꿔 재면 6판은 범주 점수가 ±3쯤, 12판도 ±2쯤 흔들린다. 기준 ±4 근처의 칸은 12판 이상으로 본다
    기준 (docs/0.6a.2-암살자-스킬.md 1절):
      점수 = 이기면 40 + 남은 생명력 비율 × 40 + 빠르기 × 20(3라운드 안 20, 23라운드 0), 지면 0 (상황마다 판 평균)
      1) 갈래 평균 점수 차이 ≤ 6 (Lv5, Lv10 각각)
@@ -23,7 +24,7 @@ const SIT_REAL = !!process.env.SIT_REAL;
 if (!SIT_REAL) run_('DIFF.lower = { hp: 1.05, dmg: 0.9 }; BOSSES.abbot.mult = 6; BOSSES.abbot.dmgMul = 1.6;');
 const MAIN = require.main === module; const MIX = {};
 const TH = { cat: 0.04, parity: 0.06, col: 0.10, means: 0.5 }; // 기준 문턱 (점수 100점 만점): 강함 +4 이상·약함 −4 이하(세 갈래 평균 대비), 갈래 평균 차이 6 이하, 기둥 차이 10 이하
-const N = +((MAIN && process.argv[2]) || 8); const CLS = (MAIN && process.argv[3]) || process.env.SIT_CLS || 'assassin'; const PK = process.env.PK || 'careful';
+const N = +((MAIN && process.argv[2]) || 12); const CLS = (MAIN && process.argv[3]) || process.env.SIT_CLS || 'assassin'; const PK = process.env.PK || 'careful';
 const LVS = [5, 10]; const MLV = { 5: +(process.env.MLV5 || 6), 10: +(process.env.MLV10 || 9) }; // 내 레벨 → 상황의 몬스터 레벨: 그 챕터 끝 몬스터 레벨(기획서 11.4절: 1챕터 1~4, 2챕터 5~8)보다 1~2 높게(점수가 너무 높으면 강점·약점이 묻힌다)
 const SKL = G0.SKILLS2[CLS]; const T = G0.TREE2[CLS];
 
@@ -101,7 +102,8 @@ for (const lv of LVS) {
   verdict.push({ lv, kind: 'parity', d: Math.max(...Object.values(brAvg)) - Math.min(...Object.values(brAvg)), ok: Math.max(...Object.values(brAvg)) - Math.min(...Object.values(brAvg)) <= TH.parity });
   for (const br of T.branches) { const d = Math.abs(W(lv, br, [0], SIT) - W(lv, br, [1], SIT)); verdict.push({ lv, br, kind: 'col', d, ok: d <= TH.col }); }
 }
-/* 5) 보스전 이길 수단: 기둥마다 기본 장착의 승률을 보고, 문턱 아래면 연 스킬 가운데 4칸의 모든 조합을 짧게(3판) 싸운 뒤 좋은 넷을 길게(24판 이상) 다시 잰다 */
+/* 5) 보스전 이길 수단: 기둥마다 기본 장착의 승률을 보고, 문턱 아래면 연 스킬 가운데 4칸의 모든 조합을 짧게(6판) 싸운 뒤 좋은 여섯을 길게(60판 이상) 다시 잰다.
+   10월 3일: 3판 거르기 · 24판 다시 재기는 문턱(50%) 근처에서 판마다 ±10%p 흔들려, 거르는 판과 다시 재는 판을 늘렸다 */
 const EQ = G0.EQUIP_SLOTS2;
 const combos = (arr, k) => { const out = []; const rec = (i, cur) => { if (cur.length === k) { out.push(cur.slice()); return; } for (let j = i; j < arr.length; j++) { cur.push(arr[j]); rec(j + 1, cur); cur.pop(); } }; rec(0, []); return out; };
 const winRate = (bd, sit, eq, n, base) => { let w = 0; for (let i = 0; i < n; i++) w += fight(bd, sit, base + i * 13, eq).win; return w / n; };
@@ -113,8 +115,8 @@ for (const sit of SIT.filter(x => x.room.boss)) for (const lv of LVS) for (const
     const bd = builds.find(x => x.lv === lv && x.br === br && x.col === col);
     let pick = { w: res[lv + br + col + ':' + sit.id].w, eq: equipFor(bd, sit), how: '기본 장착' };
     if (pick.w < TH.means && bd.open.length > EQ) {
-      const cs = combos(bd.open, EQ).map(eq => ({ eq, w: winRate(bd, sit, eq, 3, 5000 + sit.id * 97) })).sort((a, c) => c.w - a.w).slice(0, 4);
-      for (const c of cs) { const w = winRate(bd, sit, c.eq, Math.max(24, N * 4), 7000 + sit.id * 97); if (w > pick.w) pick = { w, eq: c.eq, how: '찾은 장착' }; }
+      const cs = combos(bd.open, EQ).map(eq => ({ eq, w: winRate(bd, sit, eq, 6, 5000 + sit.id * 97) })).sort((a, c) => c.w - a.w).slice(0, 6);
+      for (const c of cs) { const w = winRate(bd, sit, c.eq, Math.max(60, N * 4), 7000 + sit.id * 97); if (w > pick.w) pick = { w, eq: c.eq, how: '찾은 장착' }; }
     }
     parts.push((col ? '오' : '왼') + ' ' + pct(pick.w) + '%' + (pick.how === '찾은 장착' ? ' [' + nameOf(pick.eq) + ']' : ''));
     if (!best || pick.w > best.w) best = pick;

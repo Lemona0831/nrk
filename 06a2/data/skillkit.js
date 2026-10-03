@@ -1,7 +1,7 @@
 /* 0.6a.2 개편: 스킬 점수제 v0와 설명 문장 생성기 (docs/0.6a.2-암살자-스킬.md 2절)
    data/skills.js의 스킬 한 줄에서 화면 설명 문장과 점수를 같은 데이터로 만든다. 게임(설명 창, 트리)과 도구(tools/skillscore.js)가 함께 쓴다.
    data 폴더의 예외: 값이 아니라 문장·점수 계산이지만, 게임과 도구가 한 벌만 쓰도록 여기 둔다. 기준값(SKK)은 모두 가설이다.
-   10월 3일: 충전 대신 재사용 대기(cd)로 바꾸며 쓰는 횟수(skUses)를 대기와 갈래 규칙으로 계산한다. */
+   10월 3일: 충전 대신 재사용 대기(cd)로 바꾸며 쓰는 횟수(skUses)를 대기와 갈래 규칙으로 계산한다. 3차 결정으로 갈래 규칙을 없애 지금은 쿨타임으로만 센다(SKK.haste는 남겨 둔다). */
 const SKK = {
   B: 9.5,                       // 기본 공격 값 (무기 피해 8 + 붕괴 10)
   T: { fast: 0.5, normal: 1, slow: 1.5, vslow: 2 },
@@ -19,6 +19,7 @@ const SKK = {
   kw: { weak: 1.5, vuln: 1.5, chill: 1.5, protect: 2, haste: 2 },   // 적에게 거는 상태 1의 값 (한 번 막거나 키우는 피해)
   budget: { 시작: 28, 하급: 39, 중급: 48 },   // 10월 3일 50상황: 시작 스킬을 낮추고(35 → 28) 트리를 1.15배로 올렸다. 공통 행동이 갈래 스킬보다 세면 갈래 성격이 묻힌다
   rowB: { 1: 37, 2: 38, 3: 39, 4: 40, 5: 41, 6: 42.5, 7: 46, 8: 47.5, 9: 49.5, 10: 51 },  // 줄마다 예산 (10월 3일): 깊은 줄일수록 조금 세다. 하급 1~6줄, 중급 7~10줄   // 시작 30 → 35 (10월 3일: 늘 끼워지는 시작 스킬로 전투를 줄인다)   // 10월 3일: 06a2 감도 시험(스킬 효과 ×1.3 → 6성향 20%, 신중 35%)에서 등급별 점수 중앙값. 처음 값(20·24·30·42)의 약 1.7배
+  hz: 1.5,                      // 🔄 쿨타임 당기기 1번의 값 [가설] (10월 3일 50상황: 평소 싸움에서는 스킬이 늘 3~4개 준비되어 있어 거의 0, 쿨타임이 묶이는 보스전에서만 크다)
   Fmax: 6,                      // 한 스킬을 전투에서 쓰는 횟수의 상한 (실측: 바탕 스킬 독니 5.4)
 };
 const skTri = n => n * (n + 1) / 2;
@@ -48,6 +49,7 @@ function skValue(s) {
       case 'parryBuff': v += K.ph * e.red * (e.times || 1) + (e.stam || 0) * 0.15 * (e.times || 1) + K.pOk * (e.times || 1) * ((e.dmg || 0) + (e.poison || 0) * K.poison); break;
       case 'execute': v += skTri(Sof('burst') + 2) * (e.mul - 1) * 0.5; break;
       case 'capOver': break;
+      case 'hasten': { const pb = s.fx.find(x => x.k === 'parryBuff'); v += (e.n || 1) * K.hz * (e.on === 'parry' ? K.pOk * (pb ? (pb.times || 1) : 1) : 1); break; } // 🔄 다른 같은 갈래 스킬 쿨타임 당기기
     }
   }
   const gx = s.fx.find(e => e.k === 'bigx'); if (gx) v *= 1 + (gx.mul - 1) * 0.3; // 큰 적에게 ×: 열에 셋쯤 큰 적 (10월 3일 50상황으로 넣음)
@@ -55,18 +57,20 @@ function skValue(s) {
 }
 /* 전투 한 번에 쓰는 횟수: 처음 1번 + (남은 차례 + 갈래 규칙으로 줄어드는 대기) / (대기 + 1). 전투마다 1번은 1 */
 function skUses(s) { if (s.once) return 1 + (s.killRecharge ? 0.3 : 0); return Math.min(SKK.Fmax, 1 + (SKK.turns + (SKK.haste[s.hs] || 0)) / (s.cd + 1) + (s.killRecharge ? 0.5 : 0)); }
-/* 갈래 보정 (10월 3일, tools/sitqa.js 50상황 실측): 같은 점수라도 갈래마다 실제로 버는 몫이 다르다. 독사는 덜(×0.85), 격발(×1.08)·그림자(×1.1)는 더 번다 */
-SKK.brAdj = { 독사: 0.85, 격발: 1.08, 그림자: 1.1 };
+/* 갈래 보정 (10월 3일, tools/sitqa.js 50상황 실측): 같은 점수라도 갈래마다 실제로 버는 몫이 다르다.
+   쿨타임 하나로 바꾸며(3차 결정) 다시 쟀다: 갈래 규칙을 빼도 50상황 갈래 평균은 그대로였으므로, 지금 수치가 줄 예산 가운데에 오는 값(예전 ×0.85 · ×1.08 · ×1.1) */
+SKK.brAdj = { 독사: 0.97, 격발: 1.1, 그림자: 1.15 };
 function skScore(s) { const E = skValue(s) * (SKK.brAdj[s.b] || 1); const net = E - SKK.B * SKK.T[s.time]; const F = skUses(s); return { E, net, F, V: net * F, B: (s.row && SKK.rowB[s.row]) || SKK.budget[s.tier] }; }
 
 /* 설명 문장. 키워드(중독, 붕괴, 터뜨리기, 흘리기)의 뜻은 설명창의 키워드 칸이 맡고, 스킬 문장은 숫자만 말한다 */
-/* 재사용: 쓰고 나면 cd만큼 내 차례를 기다린다. 갈래 규칙(TREE2.haste)이 남은 대기를 줄인다. 시작 스킬은 갈래가 없어 차례로만 돈다 */
+/* 쿨타임: 쓰고 나면 cd만큼 내 턴을 기다린다(내 턴이 끝날 때마다 1 준다). 갈래 규칙(TREE2.haste)은 10월 3일에 없앴다: 아래 SK_HS는 다시 쓸 때를 위해 남긴다 */
 const SK_HS = { poison: '독을 걸면', kill: '적을 쓰러뜨리면', parry: '흘려 내면', break: '정예 이상을 무너뜨리면' };
 const SK_HSL = { poison: '독을 건 행동마다', kill: '적을 쓰러뜨린 행동마다', parry: '흘리기에 성공할 때마다', break: '정예·강적·보스를 무너뜨린 행동마다' };
 for (const k in TREE2) for (const x of (SKILLS2[k] || [])) x.hs = (TREE2[k].haste || {})[x.b] || null; // 스킬마다 갈래 규칙을 붙여 둔다
-function skCd(s) { return s.once ? '전투마다 1번' : `재사용 ${s.cd}차례` + (s.hs ? ` · ${SK_HS[s.hs]} −1` : ''); }
+function skCd(s) { return s.once ? '전투마다 1번' : `쿨타임 ${s.cd}턴` + (s.hs ? ` · ${SK_HS[s.hs]} −1` : ''); } // 갈래 규칙(hs)은 지금 없다
 const skCharge = skCd; // 옛 이름
-function skHead(s) { return `${SKK.TGN[s.tgt]} · ${SKK.TN[s.time]} · ${skCd(s)}`; }
+const skHz = s => !!(s && s.fx && s.fx.some(e => e.k === 'hasten')); // 🔄 표시를 붙일 스킬
+function skHead(s) { return `${SKK.TGN[s.tgt]} · ${SKK.TN[s.time]} · ${skCd(s)}` + (skHz(s) ? ' · 🔄' : ''); }
 /* 갈래 규칙 한 줄 (트리 갈래 설명, 도움말) */
 function skHasteLine(hs, br) { return hs ? `${SK_HSL[hs]} ${br} 스킬의 남은 대기가 1 준다(한 행동에 한 번).` : ''; }
 const SK_KWN = { weak: '약화', vuln: '취약', chill: '둔화', bleed: '출혈', ignite: '화상', protect: '보호', haste: '가속', empower: '강화' };
@@ -107,6 +111,7 @@ function skBody(s) {
       case 'brokenx': out.push(`대상이 붕괴 상태면 피해 ×${e.mul}.`); break;
       case 'spread': out.push(`대상의 중독 ${e.per === 0.5 ? '절반(올림)' : Math.round(e.per * 100) + '%'}만큼 다른 적 모두에게 중독을 건다. 대상의 중독은 그대로다.`); break;
       case 'capOver': out.push(`이 스킬로 거는 중독은 상한을 넘어 ${e.cap}까지 쌓인다.`); break;
+      case 'hasten': { const pb = s.fx.find(x => x.k === 'parryBuff'); out.push((e.on === 'parry' ? (pb ? ((pb.times || 1) > 1 ? '🔄 그 흘리기에 성공할 때마다' : '🔄 그 흘리기에 성공하면') : '🔄 그 공격을 흘려 내면') : '🔄 쓰면') + ` 다른 ${s.b} 스킬 쿨타임 −${e.n || 1}.`); break; }
     }
   }
   if (s.killRecharge) out.push(s.once ? '이 스킬로 적을 쓰러뜨리면 한 번 더 쓸 수 있다.' : '이 스킬로 적을 쓰러뜨리면 기다리지 않고 바로 다시 쓸 수 있다.');

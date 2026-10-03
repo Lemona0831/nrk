@@ -208,7 +208,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .slotrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 6px}
 .slots{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600}.slots .pl{color:var(--muted)}
 .slot{border:1px solid var(--line);border-radius:12px;padding:2px 10px;background:var(--panel2);white-space:nowrap}.slot.on{border-color:var(--gold);color:var(--gold)}.slot.used{opacity:.5;text-decoration:line-through}
-.ab{position:relative}.ab b{padding-right:18px}.ab .spd{position:absolute;top:5px;right:6px;font-size:12px;line-height:1}.ab .spd.sn{opacity:.45}
+.ab{position:relative}.ab b{padding-right:18px}.ab.hzb b{padding-right:34px}.ab .hz{position:absolute;top:5px;right:22px;font-size:12px;line-height:1}.tnode .tc{position:relative}.tnode .thz{position:absolute;top:-8px;right:-10px;font-size:12px;line-height:1}.ab .spd{position:absolute;top:5px;right:6px;font-size:12px;line-height:1}.ab .spd.sn{opacity:.45}
 .ord li.dn{opacity:.5;text-decoration:line-through}
 @media (min-width:720px){.field .enemies{grid-template-columns:repeat(auto-fill,minmax(190px,250px))}}
 @media (max-width:719px){.slotrow .mini{display:none}.en .eord{font-size:10.5px}}
@@ -606,8 +606,8 @@ function v2Static(s) { return { id: s.id, n: s.n, v2: 1, s, skill: 1, melee: s.t
 function setParry(b, tgt, red, on) {
   const p = b.p; p.dodge = tgt.id; p.fxDodged = 1;
   let r = red != null ? red : parryRed(p); const o = Object.assign({}, on || {});
-  if (p.pbuf) { r += p.pbuf.red; if (p.pbuf.dmg) o.dmg = (o.dmg || 0) + p.pbuf.dmg; if (p.pbuf.poison) o.poison = (o.poison || 0) + p.pbuf.poison; p.pbuf.n--; if (p.pbuf.n <= 0) p.pbuf = null; }
-  p.dodgeRed = Math.min(0.9, r); p.dodgeOn = (o.dmg || o.poison || o.brk) ? o : null;
+  if (p.pbuf) { r += p.pbuf.red; if (p.pbuf.dmg) o.dmg = (o.dmg || 0) + p.pbuf.dmg; if (p.pbuf.poison) o.poison = (o.poison || 0) + p.pbuf.poison; if (p.pbuf.hasten) { o.hasten = (o.hasten || 0) + p.pbuf.hasten; o.hb = p.pbuf.hb; } p.pbuf.n--; if (p.pbuf.n <= 0) p.pbuf = null; }
+  p.dodgeRed = Math.min(0.9, r); p.dodgeOn = (o.dmg || o.poison || o.brk || o.hasten) ? o : null;
 }
 /* 0.6a.2 스킬 실행: data/skills.js의 한 줄(fx 목록)을 그대로 처리한다. 설명 문장(skBody)도 같은 줄에서 나온다 */
 function runSkill2(b, act, tgt) {
@@ -615,10 +615,11 @@ function runSkill2(b, act, tgt) {
   b.curSkill = s.id;
   const capOver = (F('capOver') || {}).cap || 0;
   const targets = s.tgt === 'front' ? alive(b).filter(e => e.row === 'front' && e.role !== 'root') : s.tgt === 'all' ? alive(b).filter(e => e.role !== 'root') : s.tgt === 'self' ? [] : (tgt ? [tgt] : []);
-  const par = F('parry'); if (par && tgt) { setParry(b, tgt, par.red, F('onParry')); logp(b, 'sys', tgt.n + '의 다음 공격을 흘릴 준비를 한다'); }
+  const hz = F('hasten'); const hzOn = hz ? (hz.on || 'use') : null; // 🔄 쿨타임 당기기 (10월 3일 만든 사람 결정 D: 갈래 규칙 대신 스킬에만 적는다)
+  const par = F('parry'); if (par && tgt) { setParry(b, tgt, par.red, Object.assign({}, F('onParry') || {}, hzOn === 'parry' ? { hasten: hz.n || 1, hb: s.b } : {})); logp(b, 'sys', tgt.n + '의 다음 공격을 흘릴 준비를 한다'); }
   const sm = F('stam'); if (sm) { p.st = Math.min(p.stMax, p.st + sm.n); if (p.exhaust && p.st >= 30) p.exhaust = 0; }
   if (s.tgt === 'self') for (const x of s.fx) if (x.k === 'st') { addS(b, p, x.s, x.n); logp(b, 'good', s.n + '. ' + (KW_N[x.s] || x.s) + ' ' + x.n); } // 나에게 거는 상태
-  const pb = F('parryBuff'); if (pb) { p.pbuf = { n: pb.times || 1, red: pb.red || 0, stam: pb.stam || 0, dmg: pb.dmg || 0, poison: pb.poison || 0 }; logp(b, 'good', '칼끝을 겨눈다. 다음 흘리기 ' + p.pbuf.n + '번이 날카로워진다'); }
+  const pb = F('parryBuff'); if (pb) { p.pbuf = { n: pb.times || 1, red: pb.red || 0, stam: pb.stam || 0, dmg: pb.dmg || 0, poison: pb.poison || 0, hasten: hzOn === 'parry' ? (hz.n || 1) : 0, hb: s.b }; logp(b, 'good', '칼끝을 겨눈다. 다음 흘리기 ' + p.pbuf.n + '번이 날카로워진다'); }
   const multi = s.tgt === 'front' || s.tgt === 'all'; const hits = s.hits || 1; let tot = 0, killed = 0;
   const dm = F('dmg'), ex = F('exploit'), po = F('poison'), bk = F('brk'), bp = F('brkPer'); const stx = s.tgt === 'self' ? [] : s.fx.filter(e => e.k === 'st'); const lx = F('lowx'), bx = F('brokenx'), sp = F('spread'), cx = F('cutx'), dr = F('drain'), gx = F('bigx'); const isBig = e => !!(e.elite || e.strong || e.role === 'boss');
   for (let h = 0; h < hits; h++) for (const e of targets) {
@@ -653,7 +654,8 @@ function runSkill2(b, act, tgt) {
     }
   }
   if (s.killRecharge && killed) { p.cd[s.id] = 0; logp(b, 'good', s.n + '을(를) ' + (s.once ? '한 번 더' : '기다리지 않고 바로 다시') + ' 쓸 수 있다'); }
-  else { p.cd[s.id] = s.once ? CD_USED : s.cd; p.cdJust = [].concat(p.cdJust || [], s.id); } // 이번 차례에 쓴 스킬은 모두 이번 차례가 끝날 때 줄지 않는다 (10월 3일: 빠른 스킬 다음에 스킬을 쓰면 빠른 스킬의 대기가 1 짧았다)
+  else { p.cd[s.id] = s.once ? CD_USED : s.cd; p.cdJust = [].concat(p.cdJust || [], s.id); }
+  if (hzOn === 'use') hastenBranch(b, s.b, hz.n || 1, s.id); // 🔄 쓰면 다른 같은 갈래 스킬 쿨타임 −n // 이번 차례에 쓴 스킬은 모두 이번 차례가 끝날 때 줄지 않는다 (10월 3일: 빠른 스킬 다음에 스킬을 쓰면 빠른 스킬의 대기가 1 짧았다)
   p.lastSkillDmg = multi ? tot / Math.max(1, targets.length) : tot;
   b.curSkill = null;
 }
@@ -1072,7 +1074,8 @@ const V2_OFF = ['pilgstaff', 'candlestaff', 'acolyterelic', 'confwand', 'penwhip
 const poolOk = (p, k) => !(isV2(p) && V2_OFF.includes(k));
 /* 재사용 대기 (10월 3일 만든 사람 결정, 충전을 대신한다): 전투를 모두 준비된 채 시작한다. 스킬을 쓰면 cd만큼 내 차례를 기다리고(p.cd),
    내 차례가 지날 때마다 1 준다(쓴 그 차례는 빼고). 전투마다 1번(once)인 스킬은 쓰면 그 전투 동안 CD_USED로 남는다.
-   갈래 규칙(TREE2.haste): 그 일(독을 걸기, 적을 쓰러뜨리기, 흘리기 성공)이 일어난 행동마다 한 번, 그 갈래 스킬의 남은 대기가 1 준다 */
+   갈래 규칙(TREE2.haste): 그 일(독을 걸기, 적을 쓰러뜨리기, 흘리기 성공)이 일어난 행동마다 한 번, 그 갈래 스킬의 남은 대기가 1 준다.
+   10월 3일 3차 결정(만든 사람): 모든 직업이 쿨타임 하나만 쓴다. TREE2.haste는 비어 있고, 쿨타임을 당기는 일은 🔄 스킬(hastenBranch)만 한다 */
 const CD_USED = 999;
 function resetCharges(p) { p.cd = {}; p.cdJust = null; p.hsAt = {}; p.pbuf = null; p.dodgeRed = 0; p.dodgeOn = null; }
 function chargeEv(b, kind) {
@@ -1086,6 +1089,12 @@ function chargeEv(b, kind) {
     p.hsAt[br] = b.actN; for (const id of ids) p.cd[id]--;
     logp(b, 'good', br + ' 스킬 대기 −1 (' + HS_WHY[kind] + ')');
   }
+}
+/* 🔄 쿨타임 당기기 (D): 같은 갈래의 다른 끼운 스킬의 남은 쿨타임을 n 줄인다(0 아래로 내려가지 않는다) */
+function hastenBranch(b, br, n, exceptId) {
+  const p = b.p; if (!p.cd || !br) return; let k = 0;
+  for (const id of p.skills || []) { const s = SK2[id]; if (!s || s.b !== br || id === exceptId || s.once || !(p.cd[id] > 0)) continue; p.cd[id] = Math.max(0, p.cd[id] - n); k++; }
+  if (k) logp(b, 'good', '🔄 다른 ' + br + ' 스킬 쿨타임 −' + n);
 }
 const HS_WHY = { poison: '독을 걸었다', kill: '적을 쓰러뜨렸다', parry: '흘려 냈다', break: '정예 이상을 무너뜨렸다' };
 /* 스킬 트리 (개편 기획 4절): 포인트 1로 한 칸을 연다. 깊은 등급은 그 갈래에 먼저 쓴 포인트가 있어야 열린다(TREE_GATE). 연 스킬 가운데 4칸을 장착 */
@@ -1261,6 +1270,7 @@ function hurtPlayer(b, raw, o) {
       if (on.poison && o.src.alive) addPoison(b, o.src, on.poison, 1);
       if (on.brk && o.src.alive) addBreak(b, o.src, on.brk);
     }
+    if (on && on.hasten) hastenBranch(b, on.hb, on.hasten, null); // 🔄 흘려 내면 다른 같은 갈래 스킬 쿨타임 −n
   }
   let d = raw;
   if (p.guard) d *= p.eq.gloves === 'ragechain' ? 0.6 : 0.5;
@@ -1528,10 +1538,10 @@ function actionList(b) {
   if (isV2(p)) for (const sid of skillsOf(p)) { // 0.6a.2: 재사용 대기
     const s = SK2[sid]; if (!s) continue; const w = (p.cd && p.cd[sid]) || 0;
     const needPoison = !s.fx.some(e => ['dmg', 'poison', 'brk', 'st', 'parry', 'parryBuff', 'stam', 'cutx'].includes(e.k) || (e.k === 'burst' && e.pre) || (e.k === 'grow' && e.add)); // 중독 없이는 아무 일도 없는 스킬만 잠근다 (10월 3일: 피해를 주는 터뜨리는 일격, 중독 4를 거는 독 응축도 잠겼다)
-    let why = w > 0 ? (s.once ? '이번 전투에 이미 씀' : '⏳ ' + w + '차례 뒤') : null;
+    let why = w > 0 ? (s.once ? '이번 전투에 이미 씀' : '쿨타임 ' + w + '턴 남음') : null;
     if (!why && needPoison && !alive(b).some(e => e.s.poison)) why = '중독된 적 없음';
     if (!why && s.tgt === 'front' && !alive(b).some(e => e.row === 'front' && e.role !== 'root')) why = '전열에 적 없음';
-    L.push(Object.assign(v2Static(s), { cost: s.once ? '전투마다 1번' : '재사용 ' + s.cd + '차례', wait: w, ok: !why, why }));
+    L.push(Object.assign(v2Static(s), { cost: s.once ? '전투마다 1번' : '사용 가능', wait: w, ok: !why, why }));
   }
   if (!isV2(p)) for (const sid of skillsOf(p)) {
     const s = SKM[sid]; if (!s) continue;
@@ -1946,8 +1956,8 @@ const HELP = [
     '스킬 트리는 세 갈래이고, 갈래마다 두 칸씩 10줄의 사다리입니다(하급 6줄 → 중급 4줄). 윗줄 두 칸 가운데 하나만 열어도 아랫줄이 열립니다. 처음에는 모두 잠겨 있고, 캐릭터를 만들 때 포인트 1로 첫 줄의 한 칸을 엽니다. 레벨이 오를 때마다 포인트 1을 얻어 Lv10에 10점이 됩니다. 한 갈래를 줄마다 하나씩 내려가면 Lv6에 하급 끝, Lv10에 중급 끝입니다. 상급·궁극은 3챕터부터 더합니다. 챕터 사이 상점에서 트리 초기화를 사면 연 칸을 모두 닫고 포인트를 돌려받습니다(연 칸 하나에 ' + TREE_RESET.cell + '골드, 챕터마다 1.5배).',
     '윗줄을 열기 전에는 아랫줄 칸이 "?"로 보입니다. 갈래마다 강한 상황과 약한 상황이 있습니다(트리 갈래 설명).',
     '연 스킬 가운데 4칸을 끼웁니다. 메뉴의 "스킬 트리"에서 언제든 보고, 방과 방 사이에 열고 바꿉니다. 전투 중에는 보기만 합니다.',
-    '스킬은 마나 대신 재사용 대기로 씁니다. 전투를 시작할 때 모두 준비되어 있고, 쓰면 적힌 차례만큼 기다립니다(예: 재사용 3차례). 버튼에 "⏳ 2차례 뒤"처럼 남은 차례가 보입니다.',
-    '갈래마다 규칙이 하나 있어 그 갈래 스킬의 남은 대기를 1 줄입니다. 암살자는 ' + TREE2.assassin.branches.map(br => br + ': ' + SK_HS[TREE2.assassin.haste[br]]).join(', ') + '. 한 행동에 한 번만 줄고, 시작 스킬은 차례로만 돕니다.',
+    '스킬은 마나 대신 쿨타임으로 씁니다. 전투를 시작할 때 모두 사용 가능하고, 쓰면 적힌 턴만큼 기다립니다(예: 쿨타임 3턴). 턴은 내 차례 한 번입니다. 버튼에 "쿨타임 2턴 남음" 또는 "사용 가능"이 보입니다.',
+    '🔄가 붙은 스킬은 같은 갈래의 다른 스킬 쿨타임을 1 줄입니다. 쓰면 줄이는 스킬과 흘려 내면 줄이는 스킬이 있고, 스킬 설명에 적혀 있습니다. 트리 칸과 버튼 오른쪽 위에 🔄가 보입니다.',
     '스킬마다 빠르기가 있습니다. ⚡빠른 스킬은 빠른 칸을, ▶보통 스킬은 주 행동을, ⏳느린 스킬은 두 칸을 다 씁니다(도움말 "라운드와 순서").'] },
   { k: 'stats', n: '능력치', t: [
     '캐릭터를 만들 때 6점, 레벨이 오를 때마다 2점을 힘, 민첩, 지능에 나눕니다. 1점마다 규칙이 하나씩 바뀝니다. 나눌 때 "다음 1점"에 무엇이 바뀌는지 보입니다.',
@@ -1966,7 +1976,7 @@ const HELP = [
   { k: 'hp', n: '생명력', t: [
     '0이 되면 쓰러지고, 그 캐릭터는 끝납니다.',
     '전투가 끝나도 저절로 차지 않고 다음 방으로 그대로 이어집니다. 생명력 플라스크, 샘(50%), 9층 야영지(전부), 정산(전부)에서 회복합니다.'] },
-  { k: 'mp', n: '재사용 대기', t: ['0.6a.2 직업에는 마나가 없습니다. 스킬은 전투를 시작할 때 모두 준비되어 있고, 쓰면 적힌 차례만큼 기다립니다. 내 차례가 지날 때마다 1 줄고, 그 갈래의 규칙(예: 암살자 그림자는 흘려 내면)이 일어나면 1 더 줍니다. "전투마다 1번"인 스킬은 전투가 끝나야 다시 씁니다.'] },
+  { k: 'mp', n: '쿨타임', t: ['0.6a.2 직업에는 마나가 없습니다. 스킬은 전투를 시작할 때 모두 사용 가능하고, 쓰면 적힌 턴만큼 기다립니다. 턴은 내 차례 한 번이고, 내 턴이 끝날 때마다 1 줍니다. 쓴 그 턴에는 줄지 않습니다. 버튼에는 "쿨타임 2턴 남음" 또는 "사용 가능"이 보입니다. "전투마다 1번"인 스킬은 전투가 끝나야 다시 씁니다.'] },
   { k: 'st', n: '스태미나', t: [
     '강공격(40), 방어(20), 흘리기(30, 암살자 25)에 듭니다. 라운드가 끝날 때마다 ' + ST_REGEN + '씩 찹니다. 기본 공격은 스태미나를 채우지 않습니다.',
     '0이 되면 탈진합니다. 강공격·방어·흘리기를 못 하고 받는 피해가 20% 늘어납니다. 30까지 차거나 스태미나 플라스크를 마시면 풀립니다.',
@@ -1980,7 +1990,7 @@ const HELP = [
   { k: 'act', n: '행동', t: [
     '기본 공격(▶보통): 비용 없음. 무기 피해만큼 치고 붕괴 게이지를 10 채웁니다.',
     '강공격(⏳느림): 스태미나 40. ' + Math.round(HEAVY_V2 * 100) + '% 피해 + 붕괴 35. 빠른 칸과 주 행동을 함께 써서, 이번 차례에 빠른 행동을 이미 했으면 쓸 수 없습니다.',
-    '스킬: 직업 고유의 효과를 냅니다. 쓰고 나면 적힌 차례만큼 기다리고, 버튼에 "⏳ 2차례 뒤"처럼 남은 차례가 보입니다.',
+    '스킬: 직업 고유의 효과를 냅니다. 쓰고 나면 쿨타임만큼 기다리고, 버튼에 "쿨타임 2턴 남음" 또는 "사용 가능"이 보입니다.',
     '방어(▶보통): 스태미나 20. 내 다음 차례까지 받는 피해가 절반이 됩니다.',
     '흘리기(▶보통): 스태미나 30(암살자 25). 적 하나를 골라 그 적의 다음 단일 공격 피해를 60%(암살자 70%) 줄입니다. 그 공격이 강타였다면 그 적의 붕괴 게이지가 25 찹니다. 광역·지속 피해는 흘리지 못하고, 고른 적이 그 사이 움직이지 않으면 헛됩니다. 강적과 보스의 공격은 줄이는 몫이 ' + Math.round(PARRY_BIG * 100) + '%p 작습니다.',
     '도망: 보스전이 아닐 때만. 성공하면 방 밖으로 물러나고, 앞으로 가려면 그 방을 다시 이겨야 합니다. 실패하면 그대로 차례가 끝납니다.'] },
@@ -2513,7 +2523,7 @@ function vBattle() {
         const urgent = !dis && (a.id === 'flaskL') && p.hp < p.hpMax * 0.35; const tnew = G.scr === 'tut' && tutNew(b, a.id);
         const at = !dis ? actTarget(b, a) : null; const gd = at && isMeleeAct(p, a.id) ? guardOf(b, at) : null;
         kn++;
-        btns += `<button class="ab g-${lab === '공격' ? 'atk' : lab === '스킬' ? 'sk' : lab === '지키기' ? 'def' : lab === '직업' ? 'sig' : 'etc'}${dis ? ' dis' : ''}${urgent ? ' urgent' : ''}${tnew ? ' tnew' : ''}" data-a="act" data-id="${a.id}" data-info="act:${a.id}" data-k="${kn}" aria-disabled="${dis}"><b>${kn <= 9 ? `<kbd>${kn}</kbd>` : ''}<span class="anl">${esc(a.n)}</span><span class="ans">${esc(a.id === 'flaskM' && isV2(p) ? '🧪 정화' : ASHORT[a.id] || a.n)}</span>${spdIco(noFast(p) && a.time <= 0.6 ? 1 : a.time)}</b><small>${why ? esc(why) : '<span class="ac">' + esc(a.cost) + '</span><span class="ax"> · ' + esc(skillHint(b, a) || speedWord(a.time)) + (at ? ' → ' + esc(at.n) + (gd ? ' 🛡' : '') : a.aoe ? ' → 전체' : '') + '</span>'}</small></button>`;
+        btns += `<button class="ab g-${lab === '공격' ? 'atk' : lab === '스킬' ? 'sk' : lab === '지키기' ? 'def' : lab === '직업' ? 'sig' : 'etc'}${dis ? ' dis' : ''}${urgent ? ' urgent' : ''}${tnew ? ' tnew' : ''}${a.v2 && skHz(a.s) ? ' hzb' : ''}" data-a="act" data-id="${a.id}" data-info="act:${a.id}" data-k="${kn}" aria-disabled="${dis}"><b>${kn <= 9 ? `<kbd>${kn}</kbd>` : ''}<span class="anl">${esc(a.n)}</span><span class="ans">${esc(a.id === 'flaskM' && isV2(p) ? '🧪 정화' : ASHORT[a.id] || a.n)}</span>${spdIco(noFast(p) && a.time <= 0.6 ? 1 : a.time)}${a.v2 && skHz(a.s) ? '<span class="hz" aria-hidden="true">🔄</span>' : ''}</b><small>${why ? esc(why) : '<span class="ac">' + esc(a.cost) + '</span><span class="ax"> · ' + esc(skillHint(b, a) || speedWord(a.time)) + (at ? ' → ' + esc(at.n) + (gd ? ' 🛡' : '') : a.aoe ? ' → 전체' : '') + '</span>'}</small></button>`;
       }
       btns += '</div>';
     }
@@ -2735,7 +2745,7 @@ function infoHtml(key) {
   if (parts[0] === 'act' && b) {
     const a = actionList(b).find(x => x.id === parts[1]); if (!a) return '';
     const s = skillMap(b.p.build)[a.id];
-    let body = (a.v2 ? P(skHead(a.s)) + P(skBody(a.s)) + (a.wait > 0 && !a.s.once ? P('지금은 ' + a.wait + '차례 뒤에 쓸 수 있습니다.') : '') : P(a.id === 'sig' ? '직업 기술. ' + (SIG[b.p.build].cd ? SIG[b.p.build].cd + '차례에 한 번. ' : '') + SIG[b.p.build].d : (s ? resLabel(s, a.mana) + '. ' + s.d : actInfo(b.p, a.id)))) + (a.v2 ? '' : P('빠르기: ' + speedWord(a.time)));
+    let body = (a.v2 ? P(skHead(a.s)) + P(skBody(a.s)) + (a.wait > 0 && !a.s.once ? P('쿨타임 ' + a.wait + '턴 남음') : P('사용 가능')) : P(a.id === 'sig' ? '직업 기술. ' + (SIG[b.p.build].cd ? SIG[b.p.build].cd + '차례에 한 번. ' : '') + SIG[b.p.build].d : (s ? resLabel(s, a.mana) + '. ' + s.d : actInfo(b.p, a.id)))) + (a.v2 ? '' : P('빠르기: ' + speedWord(a.time)));
     if (a.id !== 'flee') body += `<p class="pv">${esc(previewText(b, a.time))}</p>`;
     if (a.id === 'dodge') {
       const sel = G.sel ? b.en.find(e => e.id === G.sel && e.alive && e.role !== 'root') : null; const dt = sel || pickDodge(b);
@@ -3838,11 +3848,11 @@ function vTreeBranch(run, br) {
     const p = pos[s.id]; const vis = treeVis(run, s.id); const open = run.tree.open.includes(s.id); const eq = (run.skills || []).includes(s.id); const can = !open && !treeWhy(run, s.id);
     const cls = ['tnode', 't-' + vis, open ? 'open' : '', eq ? 'eq' : '', can ? 'can' : '', G.tsel === s.id ? 'sel' : '', s.tier === '궁극' ? 'ult' : '', row.length >= 4 ? 'r5' : ''].filter(Boolean).join(' ');
     const glyph = vis === 'hidden' ? '?' : eq ? '✓' : open ? '●' : can ? '+' : s.tier === '궁극' ? '★' : '·';
-    nodes += `<button class="${cls}" style="left:${p.x}%;top:${TREE_TOP + p.y * TREE_ROW_H}px" data-a="tsel" data-k="${s.id}" data-info="tn:${s.id}" aria-label="${esc(vis === 'hidden' ? '아직 보이지 않는 칸' : s.n + ', ' + s.tier + (open ? ', 열림' : can ? ', 열 수 있음' : '') + (eq ? ', 끼움' : ''))}"><span class="tc">${glyph}</span><small>${vis === 'hidden' ? '' : esc(s.n)}</small></button>`;
+    nodes += `<button class="${cls}" style="left:${p.x}%;top:${TREE_TOP + p.y * TREE_ROW_H}px" data-a="tsel" data-k="${s.id}" data-info="tn:${s.id}" aria-label="${esc(vis === 'hidden' ? '아직 보이지 않는 칸' : s.n + ', ' + s.tier + (open ? ', 열림' : can ? ', 열 수 있음' : '') + (eq ? ', 끼움' : ''))}"><span class="tc">${glyph}${vis !== 'hidden' && skHz(s) ? '<span class="thz" aria-hidden="true">🔄</span>' : ''}</span><small>${vis === 'hidden' ? '' : esc(s.n)}</small></button>`;
   }
   const hs = (T.haste || {})[br];
   const shown = rows.flat(); const op = shown.filter(x => run.tree.open.includes(x.id)).length; const hid = shown.filter(x => treeVis(run, x.id) === 'hidden').length;
-  const head = `<div class="thead2">${hs ? `<p class="thaste"><b>갈래 규칙</b> ${esc(SK_HS[hs])} 이 갈래 스킬 대기 −1</p>` : ''}<p class="tcount">스킬 <b>${all.length}칸</b> · 열림 ${op}${hid ? ` · 숨은 칸 ${hid}` : ''}<span class="tleg"><i>+</i>열 수 있음 <i>?</i>윗줄을 열면 보임</span></p><p class="tcount">한 줄에 두 칸: 윗줄에서 하나만 열어도 아랫줄이 열립니다.</p></div>`;
+  const head = `<div class="thead2">${hs ? `<p class="thaste"><b>갈래 규칙</b> ${esc(SK_HS[hs])} 이 갈래 스킬 대기 −1</p>` : ''}<p class="tcount">스킬 <b>${all.length}칸</b> · 열림 ${op}${hid ? ` · 숨은 칸 ${hid}` : ''}<span class="tleg"><i>+</i>열 수 있음 <i>?</i>윗줄을 열면 보임 <i>🔄</i>다른 스킬 쿨타임을 당김</span></p><p class="tcount">한 줄에 두 칸: 윗줄에서 하나만 열어도 아랫줄이 열립니다.</p></div>`;
   const tl = rows.map((row, i) => (i === 0 || rows[i - 1][0].tier !== row[0].tier) ? `<span class="ttier" style="top:${TREE_TOP + i * TREE_ROW_H}px"><b>${row[0].tier}</b></span>` : '').join(''); // 등급 이름은 그 등급의 첫 줄에
   // 잠긴 등급: 그림 대신 한 줄 (깊이는 보이게: 칸 수, 궁극은 이름)
   const lockT = TIERS2.filter(tier => !tiers.includes(tier) && all.some(x => x.tier === tier));
