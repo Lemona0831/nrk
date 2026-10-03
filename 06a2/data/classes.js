@@ -7,14 +7,21 @@ const EXCL = {};   // 옛 직업 전용 스킬 (v2 직업은 data/skills.js의 �
 const SIG = {};    // 옛 직업 기술 (v2 시범에는 없다. docs/0.6a.2-개편-기획.md 12절 질문 4)
 
 /* 시작 스킬: v2 직업은 트리 밖의 시작 스킬 둘 (data/skills.js의 TREE2.starters와 같다) */
-const DEFAULT_SKILLS = { assassin: ['a_vital', 'a_slip'] };
+const DEFAULT_SKILLS = { assassin: ['a_vital', 'a_slip'], warden: ['w_bash', 'w_brace'] };
 
 /* hp는 시작 장비(낡은 갑옷 +10)를 뺀 값이다. mp는 v2 직업에 없다 */
 const BUILDS = {
   assassin: {
     n: '암살자', ico: '🗡️', hp: 102, mp: 0, v2: 1,
     lore: '독을 쌓아 터뜨리고, 칼끝으로 공격을 흘려 그 틈을 찌른다.',
-    rule: '흘리기가 피해를 70% 줄이고 스태미나 25만 든다. 스킬은 쓰고 나면 몇 차례 기다린다',
+    rule: '흘리기가 피해를 70% 줄이고 스태미나 25만 든다. 스킬은 쓰고 나면 쿨타임만큼 기다린다',
+    skills: [],
+  },
+  /* 파수꾼 (10월 3일 만든 사람 결정: 생명력 128, 방어하면 보호막 +6, 직업 약점 후열). soon: 초안을 맞추는 동안 캐릭터 만들기에는 "준비 중"으로만 보인다 */
+  warden: {
+    n: '파수꾼', ico: '🛡️', hp: 128, mp: 0, v2: 1, soon: 1,
+    lore: '방패를 세워 버티고, 쌓인 힘으로 적의 자세를 무너뜨린다.',
+    rule: '방어하면 보호막 +6(최대 생명력의 30%까지). 스킬은 쓰고 나면 쿨타임만큼 기다린다',
     skills: [],
   },
 };
@@ -29,4 +36,4 @@ const CLASS_SOON = [
 ];
 
 /* 레벨이 오를 때 오르는 생명력 (11.4절) */
-const LV_GAIN = { assassin: { hp: 5, mp: 0 } };
+const LV_GAIN = { assassin: { hp: 5, mp: 0 }, warden: { hp: 6, mp: 0 } };
