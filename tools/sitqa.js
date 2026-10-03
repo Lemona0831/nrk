@@ -7,7 +7,10 @@
      점수 = 이기면 40 + 남은 생명력 비율 × 40 + 빠르기 × 20(3라운드 안 20, 23라운드 0), 지면 0 (상황마다 판 평균)
      1) 갈래 평균 점수 차이 ≤ 6 (Lv5, Lv10 각각)
      2) 갈래의 강한 범주는 세 갈래 평균보다 +4 이상, 약한 범주는 −4 이하
-     3) 같은 갈래의 두 기둥 차이 ≤ 10 */
+     3) 같은 갈래의 두 기둥 차이 ≤ 10
+     4) 직업 전체 약점은 직업 전체 평균보다 −4 이하
+     5) 보스전 이길 수단 (10월 3일 만든 사람 원칙): 갈래마다 보스를 이기는 장착이 하나는 있다(두 기둥 가운데 하나라도 승률 50% 이상).
+        난도가 높아도 이길 수단이 정해져 있으면 플레이어는 그 수단을 찾아 움직일 수 있다. 기본 장착이 문턱 아래면 연 스킬 4칸의 모든 조합을 싸워 본다 */
 process.env.DGDIR = process.env.DGDIR || '06a2';
 const D = require('./dgqa.js');
 const Q = require('./qa.js');
@@ -19,7 +22,7 @@ const G0 = D.G0; const run_ = D.run_;
 const SIT_REAL = !!process.env.SIT_REAL;
 if (!SIT_REAL) run_('DIFF.lower = { hp: 1.05, dmg: 0.9 }; BOSSES.abbot.mult = 6; BOSSES.abbot.dmgMul = 1.6;');
 const MAIN = require.main === module; const MIX = {};
-const TH = { cat: 0.04, parity: 0.06, col: 0.10 }; // 기준 문턱 (점수 100점 만점): 강함 +4 이상·약함 −4 이하(세 갈래 평균 대비), 갈래 평균 차이 6 이하, 기둥 차이 10 이하
+const TH = { cat: 0.04, parity: 0.06, col: 0.10, means: 0.5 }; // 기준 문턱 (점수 100점 만점): 강함 +4 이상·약함 −4 이하(세 갈래 평균 대비), 갈래 평균 차이 6 이하, 기둥 차이 10 이하
 const N = +((MAIN && process.argv[2]) || 8); const CLS = (MAIN && process.argv[3]) || process.env.SIT_CLS || 'assassin'; const PK = process.env.PK || 'careful';
 const LVS = [5, 10]; const MLV = { 5: +(process.env.MLV5 || 6), 10: +(process.env.MLV10 || 9) }; // 내 레벨 → 상황의 몬스터 레벨: 그 챕터 끝 몬스터 레벨(기획서 11.4절: 1챕터 1~4, 2챕터 5~8)보다 1~2 높게(점수가 너무 높으면 강점·약점이 묻힌다)
 const SKL = G0.SKILLS2[CLS]; const T = G0.TREE2[CLS];
@@ -46,10 +49,10 @@ function equipFor(bd, sit) {
   return pick;
 }
 function statsOf(lv) { const pts = 6 + 2 * (lv - 1); return { int: Math.ceil(pts / 2), dex: Math.floor(pts / 2), str: 0 }; }
-function fight(bd, sit, seed) {
+function fight(bd, sit, seed, eqOver) { // eqOver: 장착을 직접 줄 때(보스전 이길 수단 찾기). 이때는 행동 몫을 세지 않는다
   const r = D.rng(seed); G0.__rnd = D.rng(seed * 31 + 7); run_('Math.random = __rnd');
   const st = statsOf(bd.lv);
-  const p = G0.mkPlayer(CLS, {}, st, T.starters.concat(equipFor(bd, sit))); p.lv = bd.lv; G0.applyStats(p, st); p.hp = p.hpMax; p.st = p.stMax;
+  const p = G0.mkPlayer(CLS, {}, st, T.starters.concat(eqOver || equipFor(bd, sit))); p.lv = bd.lv; G0.applyStats(p, st); p.hp = p.hpMax; p.st = p.stMax;
   const sp = sit.p || {}; if (sp.hp) p.hp = Math.round(p.hpMax * sp.hp); if (sp.st != null) p.st = sp.st;
   for (const k in (sp.s || {})) p.s[k] = { stacks: sp.s[k], until: 1e9, dur: 1e9 };
   const room = JSON.parse(JSON.stringify(sit.room)); const bossKind = room.boss || null; if (room.boss) room.boss = true;
@@ -60,7 +63,7 @@ function fight(bd, sit, seed) {
     const sr = r() < (P.mech || 0.5) ? Q.sigRule(b, r) : null;
     let [a, t] = sr || (P.look ? Q.lookahead(b, P, r) : Q.heuristic(b, P, r, mem));
     if (a === 'flee') { const L = G0.actionList(b).filter(x => x.ok && x.id !== 'flee'); a = L[0].id; t = null; }
-    const sk = G0.SK2[a]; const kind = sk ? (sk.start ? 'st' : 'tr') : 'gen'; MIX[bd.lv + bd.br] = MIX[bd.lv + bd.br] || { st: 0, tr: 0, gen: 0 }; MIX[bd.lv + bd.br][kind]++;
+    if (!eqOver) { const sk = G0.SK2[a]; const kind = sk ? (sk.start ? 'st' : 'tr') : 'gen'; MIX[bd.lv + bd.br] = MIX[bd.lv + bd.br] || { st: 0, tr: 0, gen: 0 }; MIX[bd.lv + bd.br][kind]++; }
     try { G0.playerAct(b, a, t); } catch (e) { return { win: 0, bug: e.message }; }
   }
   return { win: b.over === 'win' ? 1 : 0, hp: b.p.hp / b.p.hpMax, rounds: b.round || 0, timeout: !b.over, b };
@@ -98,8 +101,29 @@ for (const lv of LVS) {
   verdict.push({ lv, kind: 'parity', d: Math.max(...Object.values(brAvg)) - Math.min(...Object.values(brAvg)), ok: Math.max(...Object.values(brAvg)) - Math.min(...Object.values(brAvg)) <= TH.parity });
   for (const br of T.branches) { const d = Math.abs(W(lv, br, [0], SIT) - W(lv, br, [1], SIT)); verdict.push({ lv, br, kind: 'col', d, ok: d <= TH.col }); }
 }
+/* 5) 보스전 이길 수단: 기둥마다 기본 장착의 승률을 보고, 문턱 아래면 연 스킬 가운데 4칸의 모든 조합을 짧게(3판) 싸운 뒤 좋은 넷을 길게(24판 이상) 다시 잰다 */
+const EQ = G0.EQUIP_SLOTS2;
+const combos = (arr, k) => { const out = []; const rec = (i, cur) => { if (cur.length === k) { out.push(cur.slice()); return; } for (let j = i; j < arr.length; j++) { cur.push(arr[j]); rec(j + 1, cur); cur.pop(); } }; rec(0, []); return out; };
+const winRate = (bd, sit, eq, n, base) => { let w = 0; for (let i = 0; i < n; i++) w += fight(bd, sit, base + i * 13, eq).win; return w / n; };
+const nameOf = eq => eq.map(id => G0.SK2[id].n).join(', ');
+console.log('\n== 보스전 이길 수단 (기둥 둘 가운데 하나라도 승률 ' + pct(TH.means) + '% 이상인 장착이 있어야 한다)');
+for (const sit of SIT.filter(x => x.room.boss)) for (const lv of LVS) for (const br of T.branches) {
+  let best = null; const parts = [];
+  for (const col of [0, 1]) {
+    const bd = builds.find(x => x.lv === lv && x.br === br && x.col === col);
+    let pick = { w: res[lv + br + col + ':' + sit.id].w, eq: equipFor(bd, sit), how: '기본 장착' };
+    if (pick.w < TH.means && bd.open.length > EQ) {
+      const cs = combos(bd.open, EQ).map(eq => ({ eq, w: winRate(bd, sit, eq, 3, 5000 + sit.id * 97) })).sort((a, c) => c.w - a.w).slice(0, 4);
+      for (const c of cs) { const w = winRate(bd, sit, c.eq, Math.max(24, N * 4), 7000 + sit.id * 97); if (w > pick.w) pick = { w, eq: c.eq, how: '찾은 장착' }; }
+    }
+    parts.push((col ? '오' : '왼') + ' ' + pct(pick.w) + '%' + (pick.how === '찾은 장착' ? ' [' + nameOf(pick.eq) + ']' : ''));
+    if (!best || pick.w > best.w) best = pick;
+  }
+  const ok = best.w >= TH.means; verdict.push({ lv, br, kind: 'means', d: best.w, ok });
+  console.log('Lv' + lv + ' ' + br.padEnd(4) + parts.join(' · ') + (ok ? '' : '  ← 이길 수단 없음'));
+}
 const bad = verdict.filter(v => !v.ok);
 console.log(`\n기준 ${verdict.length}개 중 통과 ${verdict.length - bad.length}개`);
-for (const v of bad) console.log('  못 맞춤: Lv' + v.lv + ' ' + (v.kind === 'parity' ? '갈래 평균 차이 ' + pct(v.d) + '%p' : v.kind === 'col' ? v.br + ' 기둥 차이 ' + pct(v.d) + '%p' : v.br + ' ' + v.cat + (v.want === 'S' ? ' 강함' : ' 약함') + ' (평균 대비 ' + (v.d >= 0 ? '+' : '') + pct(v.d) + '%p)'));
+for (const v of bad) console.log('  못 맞춤: Lv' + v.lv + ' ' + (v.kind === 'parity' ? '갈래 평균 차이 ' + pct(v.d) + '%p' : v.kind === 'col' ? v.br + ' 기둥 차이 ' + pct(v.d) + '%p' : v.kind === 'means' ? v.br + ' 보스전 이길 수단 없음 (가장 좋은 장착 승률 ' + pct(v.d) + '%)' : v.br + ' ' + v.cat + (v.want === 'S' ? ' 강함' : ' 약함') + ' (평균 대비 ' + (v.d >= 0 ? '+' : '') + pct(v.d) + '%p)'));
 if (process.env.SITJSON) require('fs').writeFileSync(process.env.SITJSON, JSON.stringify({ res, verdict, builds }));
 }

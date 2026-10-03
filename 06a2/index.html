@@ -948,6 +948,10 @@ function calcMpMax(p) { if (isV2(p)) return 0; return BUILDS[p.build].mp + gearO
 function calcStMax(p) { return 100 + gearOf(p).st + fxStat(p, 'st') + stat(p, 'dex') - (p.eq.amulet === 'vanguard' ? 20 : 0) - (p.eq.gloves === 'chaingl' ? 10 : 0); }
 function calcHpMax(p) { return Math.round(fxVal(p, 'hpMul', 1, (a, v) => a * v) * (1 - (p.hpPen || 0)) * (BUILDS[p.build].hp + gearOf(p).hp + fxStat(p, 'hp') + (p.hpBonus || 0) + ((p.lv || 1) - 1) * ((LV_GAIN[p.build] || {}).hp || 0) + stat(p, 'str')) * (p.eq.armor === 'plate' ? 0.9 : p.eq.armor === 'wardcrest' ? 0.95 : p.eq.armor === 'cloak' || p.eq.armor === 'thorns' ? 0.95 : 1) * (p.eq.amulet === 'rosary' ? 0.97 : 1)); }
 function parryRed(p) { return Math.min(0.9, (p.build === 'assassin' && isV2(p) ? 0.7 : 0.6) + 0.005 * stat(p, 'dex') + (p.eq.armor === 'cloak' ? 0.15 : 0)); }
+/* 강적·보스의 공격은 흘려도 줄이는 몫이 작다(모든 흘리기, 10월 3일 만든 사람: 거구의 힘은 칼끝으로 다 흘리지 못한다. 흘리기로 싸우는 그림자의 거구 약점).
+   50상황 2차 탐색에서 고른 중간 지점: 정예까지 넣으면 독사의 장기전 강점이 깨지고, 25%p면 그림자의 보스전 이길 수단이 문턱 아래로 떨어졌다 */
+const PARRY_BIG = 0.2;
+const parryBig = e => (e && (e.strong || e.role === 'boss') ? PARRY_BIG : 0);
 function dotMul(p) { return 1 + 0.02 * stat(p, 'int'); }
 function applyStats(p, stats) {
   const f = { hp: p.hp / p.hpMax, mp: p.mpMax ? p.mp / p.mpMax : 1, st: p.st / p.stMax };
@@ -1240,7 +1244,7 @@ function dmgDot(b, u, amt, label) {
 function hurtPlayer(b, raw, o) {
   const p = b.p; o = o || {};
   if (!o.dot && !o.aoe && p.dodge && o.src && o.src.id === p.dodge) {
-    p.dodge = 0; const red = p.dodgeRed || parryRed(p); raw *= 1 - red; o.parried = true; logp(b, 'good', (o.src ? o.src.n + '의 ' + (o.charged ? '강타' : '공격') : '공격') + '을(를) 칼날로 흘린다. 피해 ' + Math.round(red * 100) + '% 감소');
+    p.dodge = 0; const red = Math.max(0, (p.dodgeRed || parryRed(p)) - parryBig(o.src)); raw *= 1 - red; o.parried = true; logp(b, 'good', (o.src ? o.src.n + '의 ' + (o.charged ? '강타' : '공격') : '공격') + '을(를) 칼날로 흘린다. 피해 ' + Math.round(red * 100) + '% 감소');
     fxRun(p, 'onParry', b, p, o.src);
     if (o.charged && o.src && o.src.boss === 'abbot' && p.s.brand) { p.s.brand.stacks--; if (p.s.brand.stacks <= 0) delete p.s.brand; logp(b, 'good', '흘려 낸 칼끝이 낙인 하나를 긁어낸다'); }
     if (o.charged) { addBreak(b, o.src, 25); logp(b, 'good', o.src.n + '의 자세가 흔들린다. 붕괴 게이지 +25'); }
@@ -1973,7 +1977,7 @@ const HELP = [
     '강공격(⏳느림): 스태미나 40. ' + Math.round(HEAVY_V2 * 100) + '% 피해 + 붕괴 35. 빠른 칸과 주 행동을 함께 써서, 이번 차례에 빠른 행동을 이미 했으면 쓸 수 없습니다.',
     '스킬: 직업 고유의 효과를 냅니다. 쓰고 나면 적힌 차례만큼 기다리고, 버튼에 "⏳ 2차례 뒤"처럼 남은 차례가 보입니다.',
     '방어(▶보통): 스태미나 20. 내 다음 차례까지 받는 피해가 절반이 됩니다.',
-    '흘리기(▶보통): 스태미나 30(암살자 25). 적 하나를 골라 그 적의 다음 단일 공격 피해를 60%(암살자 70%) 줄입니다. 그 공격이 강타였다면 그 적의 붕괴 게이지가 25 찹니다. 광역·지속 피해는 흘리지 못하고, 고른 적이 그 사이 움직이지 않으면 헛됩니다.',
+    '흘리기(▶보통): 스태미나 30(암살자 25). 적 하나를 골라 그 적의 다음 단일 공격 피해를 60%(암살자 70%) 줄입니다. 그 공격이 강타였다면 그 적의 붕괴 게이지가 25 찹니다. 광역·지속 피해는 흘리지 못하고, 고른 적이 그 사이 움직이지 않으면 헛됩니다. 강적과 보스의 공격은 줄이는 몫이 ' + Math.round(PARRY_BIG * 100) + '%p 작습니다.',
     '도망: 보스전이 아닐 때만. 성공하면 방 밖으로 물러나고, 앞으로 가려면 그 방을 다시 이겨야 합니다. 실패하면 그대로 차례가 끝납니다.'] },
   { k: 'target', n: '대상 고르기', t: ['적 카드를 누르면 그 적이 대상이 됩니다(금색 테두리). 고르지 않으면 공격할 수 있는 적을 자동으로 고릅니다. 닿지 않는 대상이면 행동 버튼에 이유가 뜹니다.'] },
   { k: 'intent', n: '적의 예고', t: [
@@ -2687,7 +2691,7 @@ function actInfo(p, id) {
 /* 0.6a.2 직업의 공용 행동 설명: 엔진 값에서 바로 만든다 (10월 3일: 0.6a 문장이 남아 강공격 180%, 흘리기 60%, 플라스크가 지운다고 나왔다) */
 const AINFO2 = {
   heavy: p => '스태미나 ' + heavyCost(p) + '. 무기 피해의 ' + Math.round(heavyBase(p) / wpnDmg(p) * 100) + '%, 붕괴 게이지 +' + (35 + 5 * Math.floor(stat(p, 'str') / 10) + (p.eq.weapon === 'maul' ? 20 : 0)) + '. 느린 행동이라 빠른 칸과 주 행동을 함께 쓴다.',
-  dodge: p => '스태미나 ' + dodgeCost(p) + '. 고른 적의 다음 공격 피해를 ' + Math.round(parryRed(p) * 100) + '% 줄인다. 그 공격이 강타였다면 그 적의 붕괴 게이지 +25. 광역 공격과 지속 피해는 흘리지 못한다. 내 다음 차례까지 유효하다.',
+  dodge: p => '스태미나 ' + dodgeCost(p) + '. 고른 적의 다음 공격 피해를 ' + Math.round(parryRed(p) * 100) + '% 줄인다. 그 공격이 강타였다면 그 적의 붕괴 게이지 +25. 광역 공격과 지속 피해는 흘리지 못한다. 강적·보스의 공격은 ' + Math.round(PARRY_BIG * 100) + '%p 덜 줄인다. 내 다음 차례까지 유효하다.',
   flaskL: p => '생명력을 ' + Math.round(flaskHealFrac(p) * healMul(p) * 100) + '% 채운다. 걸린 상태는 지우지 않는다. 빠른 행동이라 마신 뒤에도 주 행동을 할 수 있다.',
   flaskM: p => '마시면 막음 ' + Math.min(KW.block, 2 + fxAdd(p, 'blockAdd', p)) + ': 다음에 걸리려는 해로운 상태를 그만큼 튕겨 낸다. 이미 걸린 상태는 지우지 않는다. 빠른 행동이다.',
   flaskS: p => '스태미나를 ' + Math.round(STAM_FLASK * fxVal(p, 'stamMul', 1, (a, v) => a * v)) + ' 채우고 탈진을 푼다. 빠른 행동이라 마신 뒤에도 주 행동을 할 수 있다.',
@@ -2782,7 +2786,7 @@ function infoHtml(key) {
   if (key === 'dodgeon' && b) { // 흘리기 준비: 실제로 줄이는 몫과 흘려 낸 뒤 효과 (스킬마다 50~90%)
     const p = b.p; const de = b.en.find(x => x.id === p.dodge && x.alive); const on = p.dodgeOn;
     const ret = on ? [on.dmg ? '피해 ' + on.dmg : '', on.poison ? '중독 ' + on.poison : '', on.brk ? '붕괴 +' + on.brk : ''].filter(Boolean).join(', ') : '';
-    return H('흘리기 준비', P((de ? de.n + '의' : '고른 적의') + ' 다음 공격 피해가 ' + Math.round((p.dodgeRed || parryRed(p)) * 100) + '% 줄어듭니다. 강타라면 그 적의 붕괴 게이지가 25 찹니다.') + (ret ? P('흘려 내면 그 적에게 ' + ret + '.') : '') + P('내 다음 차례까지 유효합니다. 고른 적이 그 사이 움직이지 않으면 헛됩니다.'));
+    return H('흘리기 준비', P((de ? de.n + '의' : '고른 적의') + ' 다음 공격 피해가 ' + Math.round(Math.max(0, (p.dodgeRed || parryRed(p)) - parryBig(de)) * 100) + '% 줄어듭니다' + (parryBig(de) ? '(강적·보스라 ' + Math.round(PARRY_BIG * 100) + '%p 덜)' : '') + '. 강타라면 그 적의 붕괴 게이지가 25 찹니다.') + (ret ? P('흘려 내면 그 적에게 ' + ret + '.') : '') + P('내 다음 차례까지 유효합니다. 고른 적이 그 사이 움직이지 않으면 헛됩니다.'));
   }
   if (INFO2[key]) return H(INFO2[key][0], INFO2[key].slice(1).map(P).join(''));
   if (key === 'buildrule' && b) { const B = BUILDS[b.p.build]; const SKM = skillMap(b.p.build); return H(B.n, P('직업 규칙: ' + B.rule) + skillsOf(b.p).map(id => P(SKM[id].n + ' (' + resLabel(SKM[id]) + '): ' + SKM[id].d)).join('')); }
