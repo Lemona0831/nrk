@@ -125,6 +125,15 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     if (atkN >= 3 && !p.s.protect && r() < 0.6) { const vs = okS.find(a => a.s.fx.some(e => e.k === 'meSt' && e.s === 'protect')) || okS.find(a => has(a, 'quickTurns')); if (vs) return [vs.id, tgtOf(vs)]; }
     if (atkN >= 2 && !(p.evade > 0) && r() < 0.5) { const es = okS.find(a => a.self && has(a, 'evade')); if (es) return [es.id]; }
     if (!b.bonusUsed && okS.filter(a => !a.self && a.time >= 1).length >= 2) { const qs = okS.find(a => has(a, 'quick')); if (qs && r() < 0.7) return [qs.id]; }
+    { // 기동 오른쪽 (10월 5일): 둔화된 채 모으는 적은 멈춰 세우기, 모으는 적이 둔화돼 있지 않으면 먼저 둔화, 둔화 2 이상이면 얼음 깨기(반쯤), 적이 셋 이상이면 시간 늦추기 · 냉기 번짐, 얼음 감옥은 모으는 적이나 가장 아픈 적에게
+      const stopT = e => !!(e.intent && (['charge', 'heavy', 'chant', 'chanting', 'burn', 'aim'].includes(e.intent.k) || e.intent.aimed)); const chOf = e => psn2(e, 'chill');
+      const sc = okS.find(a => has(a, 'chillCut')); if (sc) { const t = reach(sc).find(e => chOf(e) > 0 && stopT(e)); if (t) return [sc.id, t.id]; }
+      const fz = okS.find(a => has(a, 'freeze')); if (fz) { const t = reach(fz).filter(e => stopT(e) || e.elite || e.strong || e.role === 'boss').sort((x, y) => (stopT(y) - stopT(x)) || (y.dmg - x.dmg))[0]; if (t && r() < 0.8) return [fz.id, t.id]; }
+      const chg = E.alive(b).filter(e => stopT(e) && chOf(e) === 0); const one = okS.find(a => !a.aoe && a.s.fx.some(e => e.k === 'st' && e.s === 'chill')); if (chg.length && one) { const t = chg.find(e => E.canTarget(b, e, one)); if (t && r() < 0.7) return [one.id, t.id]; }
+      const sh = okS.find(a => has(a, 'chillShatter')); if (sh) { const t = reach(sh).filter(e => chOf(e) >= 2).sort((x, y) => chOf(y) - chOf(x))[0]; if (t && (chOf(t) >= 3 || r() < 0.5)) return [sh.id, t.id]; }
+      const many = E.alive(b).filter(e => e.role !== 'root').length >= 3;
+      if (many) { const ts = okS.find(a => a.aoe && a.s.fx.some(e => e.k === 'st' && e.s === 'chill')); if (ts && r() < 0.6) return [ts.id]; const spr = okS.find(a => has(a, 'chillSpread')); if (spr) { const t = reach(spr).find(e => chOf(e) >= 1); if (t) return [spr.id, t.id]; } }
+    }
     for (const a of okS.filter(a => has(a, 'focusBurst'))) if (fe && E.canTarget(b, fe, a) && (fn >= 3 || (fn >= 2 && fe.hp < fe.hpMax * 0.35))) return [a.id, fe.id];
     for (const a of okS.filter(a => has(a, 'focusAdd') && !a.s.start)) { const t = fe && E.canTarget(b, fe, a) ? fe : best(a, (x, y) => y.hp - x.hp); if (t && (t !== fe || fn < 2)) return [a.id, t.id]; }
   }

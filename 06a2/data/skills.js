@@ -192,21 +192,21 @@ const SKILLS2 = {
     { id: 'h_dash', row: 2, b: '기동', tier: '하급', n: '질주', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'quick', n: 1 }, { k: 'st', s: 'haste', n: 2 }, { k: 'stam', n: 44 }] }, // 템포: 이번 차례에 더 많이
     { id: 'h_leg', row: 2, b: '기동', tier: '하급', n: '다리 쏘기', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'chill', n: 2 }, { k: 'cutx', brk: 44 }] },
     { id: 'h_side', row: 3, b: '기동', tier: '하급', n: '옆걸음 사격', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 9 }, { k: 'swapx', mul: 1.5 }, { k: 'evade', n: 1 }] }, // 피하면서 표적 바꾸기
-    { id: 'h_check', row: 3, b: '기동', tier: '하급', n: '견제 사격', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 21 }, { k: 'cutx', brk: 61 }] },
+    { id: 'h_slowrain', row: 3, b: '기동', tier: '하급', n: '늦추는 비', tgt: 'all', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'chill', n: 1 }] }, // 무리를 한꺼번에 늦추기
     { id: 'h_veil', row: 4, b: '기동', tier: '하급', n: '흙먼지 장막', tgt: 'all', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 8 }, { k: 'meSt', s: 'protect', n: 5 }] }, // 여럿의 공격 버티기: 흙먼지를 일으켜 모두를 약하게 맞히고 나에게 보호(피할 수 없는 공격에도 든다)
     { id: 'h_frost', row: 4, b: '기동', tier: '하급', n: '얼어붙는 화살', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 19 }, { k: 'st', s: 'chill', n: 2 }, { k: 'chillx', mul: 1.5 }] },
     { id: 'h_counter', row: 5, b: '기동', tier: '하급', n: '받아넘기기', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'evade', n: 1 }, { k: 'evadeCtr', dmg: 30, chill: 2, charged: 1 }] }, // 강타 예고를 보고 쓰기
-    { id: 'h_cut', row: 5, b: '기동', tier: '하급', n: '끊는 화살', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 24 }, { k: 'cutx', brk: 70 }] },
+    { id: 'h_stop', row: 5, b: '기동', tier: '하급', n: '멈춰 세우기', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 16 }, { k: 'chillCut', brk: 40 }] }, // 둔화와 끊기를 잇기
     { id: 'h_wind', row: 6, b: '기동', tier: '하급', n: '바람 걸음', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'evade', n: 2 }, { k: 'hasten', n: 1, on: 'evade' }, { k: 'stam', n: 30 }] }, // 피하기로 기동을 돌리기
-    { id: 'h_slowrain', row: 6, b: '기동', tier: '하급', n: '늦추는 비', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'h_shatter', row: 6, b: '기동', tier: '하급', n: '얼음 깨기', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 13 }, { k: 'chillShatter', dmg: 5, brk: 25 }] }, // 둔화를 자원으로
     { id: 'h_after', row: 7, b: '기동', tier: '중급', n: '잔상', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'evade', n: 2 }, { k: 'evadeCtr', dmg: 6 }] }, // 피하기가 피해가 되는 첫 칸
-    { id: 'h_pin', row: 7, b: '기동', tier: '중급', n: '꿰매는 화살', tgt: 'ranged', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 24 }, { k: 'st', s: 'chill', n: 2 }, { k: 'chillx', mul: 2 }] },
+    { id: 'h_spread', row: 7, b: '기동', tier: '중급', n: '냉기 번짐', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 25 }, { k: 'chillSpread', per: 1 }] }, // 한 적의 둔화를 무리로
     { id: 'h_foresee', row: 8, b: '기동', tier: '중급', n: '예고 읽기', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'foresee', red: 0.6, rounds: 3 }, { k: 'st', s: 'protect', n: 3 }, { k: 'stam', n: 30 }] }, // 큰 공격이 겹치는 순간(피할 수 없는 화형 포함)
-    { id: 'h_ankle', row: 8, b: '기동', tier: '중급', n: '발목 끊기', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 20 }, { k: 'brk', n: 50 }, { k: 'cutx', brk: 53 }] },
+    { id: 'h_ankle', row: 8, b: '기동', tier: '중급', n: '발목 끊기', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 19 }, { k: 'brk', n: 49 }, { k: 'cutx', brk: 55 }, { k: 'onCutBreak', haste: 2, hasten: 1 }] }, // 끊기 강화: 모으던 적을 무너뜨리면 보상(수치는 측정 뒤)
     { id: 'h_windarrow', row: 9, b: '기동', tier: '중급', n: '바람의 화살', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'meSt', s: 'haste', n: 2 }, { k: 'evade', n: 1 }, { k: 'hastex', mul: 1.4 }] }, // 공격하면서 회피 유지
-    { id: 'h_timeslow', row: 9, b: '기동', tier: '중급', n: '시간 늦추기', tgt: 'all', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'h_timeslow', row: 9, b: '기동', tier: '중급', n: '시간 늦추기', tgt: 'all', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'chill', n: 2 }, { k: 'meSt', s: 'haste', n: 1 }] }, // 라운드를 쥐기
     { id: 'h_shadowrun', row: 10, b: '기동', tier: '중급', n: '그림자 질주', tgt: 'self', time: 'fast', cd: 10, once: 1, fx: [{ k: 'evade', n: 3 }, { k: 'evadeCtr', dmg: 8, rounds: 3 }, { k: 'quickTurns', n: 3 }] }, // 피할수록 세지는 마무리 (빠른 칸 +1은 내 차례 3번 내내: 측정 때 따로 본다)
-    { id: 'h_icecage', row: 10, b: '기동', tier: '중급', n: '얼음 감옥', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 26 }, { k: 'st', s: 'chill', n: 3 }, { k: 'chillx', mul: 2 }] },
+    { id: 'h_icecage', row: 10, b: '기동', tier: '중급', n: '얼음 감옥', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 30 }, { k: 'freeze', chill: 3, brk: 40 }] }, // 한 적을 확실히 멈추는 마무리(강적 · 보스는 둔화 3 + 붕괴)
   ],
 };
 /* 사다리 (10월 3일 만든 사람 결정): 2챕터(Lv10)까지 갈래마다 하급 6줄 · 중급 4줄 = 10줄, 줄마다 두 칸(갈래 20칸, 직업 60칸).
