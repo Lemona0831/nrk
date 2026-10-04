@@ -64,14 +64,42 @@ const ENC = {
 };
 /* 강적 (자리만 먼저. 고유 규칙은 단계 8에서 비공개 문서대로 넣는다) */
 /* 강적 공통 배율과 고유 수치 (11.8절). 일반 방보다 확실히 어렵게 (10월 2일 만든 사람 요청) */
-const STRONG = { big: 0.40, hp: 2.4, dmg: 1.3, bellEvery: 3, leech: 0.45, frenzy: 1.3, lowerHp: 1.3, lowerDmg: 1.15 }; // 하층 강적만 더: 무작위 시험 하층 순례자 40%대(만든 사람 요청) // 무작위 시험: 상층 승률 94%(남은 생명력 60%), 하층 76~82%(약 50%). 일반 방은 95~98%(65~83%)
+const STRONG = { big: 0.46, hp: 3.3, dmg: 2.4, bellEvery: 3, leech: 0.45, frenzy: 1.3, lowerHp: 1.3, lowerDmg: 1.15 }; // 하층 강적만 더: 무작위 시험 하층 순례자 40%대(만든 사람 요청) // 무작위 시험: 상층 승률 94%(남은 생명력 60%), 하층 76~82%(약 50%). 일반 방은 95~98%(65~83%)
 /* 강적의 한 방 (10월 4일 만든 사람 결정: 강적은 보스보다 약하되 생명력의 20~30%를 깎는 한 방이 중심에 있다).
    big: 강적의 강타 = 기준 생명력(HIT_REF) × big. 던전 세기 · 길과 상관없이 늘 같다. 강적은 모두 공격 → 버티기 → 강타 준비 → 강타 */
 /* 매복 (10월 4일 만든 사람 결정: 난이도는 늘 일반과 강적 사이, 강적 쪽에 가깝게). 적 체력 · 피해 배율, elite: 정예로 바꾸는 적 수, loot: 전리품 확률 배율 */
-const AMBUSH = { hp: 1.45, dmg: 1.35, elite: 1, loot: 1.5 }; // 방 하나에 잃는 생명력이 일반과 강적 사이의 60~70% 자리(암살자 14 · 30 · 41%, 파수꾼 10 · 26 · 32%)
+const AMBUSH = { hp: 1.35, dmg: 1.3, elite: 1, loot: 1.5 }; // 방 하나에 잃는 생명력이 일반과 강적 사이의 60~70% 자리(암살자 14 · 30 · 41%, 파수꾼 10 · 26 · 32%)
 const STRONG_FOES = [
-  { id: 'bellringer', n: '종지기', en: [['shield', 1], ['bruiser'], ['minion']] },
-  { id: 'pilgrim', n: '굶주린 순례자', en: [['bruiser', 1]] },
+  { id: 'bellringer', n: '종지기', en: [['shield', 1], ['minion']] }, // 10월 4일: 하수인을 뺐다(강적 다섯 가운데 가장 무거웠다)
+  { id: 'pilgrim', n: '굶주린 순례자', en: [['bruiser', 1]], dmg: 0.8 }, // dmg · hp: 강적마다 평소 공격 · 체력 배율(큰 한 방은 그대로). 순례자는 다섯 가운데 가장 무거웠다
+  { id: 'bishop', n: '납골당 주교', en: [['summoner', 1]] }, // 10월 4일 소환 축
+  { id: 'cantor', n: '성가 조율자', en: [['healer', 1], ['bruiser'], ['bruiser'], ['archer']] }, // 10월 4일 축복 축
+  { id: 'scribe', n: '검은 서기관', en: [['darkmage', 1], ['darkmage'], ['bruiser']] }, // 10월 4일 저주 축
+];
+/* 새 강적 셋의 수치 (10월 4일 만든 사람 결정). 무엇을 하는지와 대처는 비공개 문서에만 적는다.
+   bishop: 한 번에 일으키는 수 raise, 최대 cap, 큰 한 방 = 기준 생명력 × (base + per × 남은 시체)
+   cantor: 한 겹마다 곁의 적 피해 +hymn, 최대 cap, 큰 한 방 = 기준 생명력 × per × 곁의 적 수
+   scribe: 봉인 최대 cap, 큰 한 방은 강적 기본(STRONG.big) */
+const FOE_X = {
+  bishop: { raise: 2, cap: 4, base: 0.30, per: 0.04 },
+  cantor: { hymn: 0.25, cap: 3, per: 0.2 },
+  scribe: { cap: 3 },
+};
+/* 테마 무리 (10월 4일 만든 사람 결정: 테마 무리 + 변주). 일반 · 매복 · 시련 방의 적.
+   up · low: 상층 · 하층 구성 [역할, 정예], vary: [칸, 바뀔 수 있는 역할들](반쯤 확률로 그 칸이 바뀐다), w: 가중치, press: 압박이 센 무리(험한 길에서 잦고 샛길에서 드물다) */
+const SQUAD_VARY = 0.5;
+// 가중치(w)는 직업 사이도 맞춘다: 저주 의식 · 광신 돌격 · 성가 행렬은 파수꾼에게, 문지기 · 혼성 순찰 · 자폭 행렬 · 도둑 떼는 암살자에게 상대적으로 무겁다 (10월 4일 잼)
+const SQUADS = [
+  { id: 'wall', n: '방패벽', w: 1, up: [['shield'], ['shield'], ['minion']], low: [['shield', 1], ['shield'], ['archer']], vary: [2, ['minion', 'archer']] },
+  { id: 'hymn', n: '성가 행렬', w: 1.4, up: [['bruiser'], ['bruiser'], ['healer']], low: [['bruiser', 1], ['bruiser'], ['healer']], vary: [1, ['bruiser', 'thief']] },
+  { id: 'fuse', n: '자폭 행렬', w: 0.8, press: 1, up: [['bomber'], ['bomber'], ['minion']], low: [['shield'], ['bomber', 1], ['bomber']], vary: [2, ['minion', 'shield', 'bomber']] },
+  { id: 'thieves', n: '도둑 떼', w: 0.8, up: [['thief'], ['thief'], ['archer']], low: [['thief'], ['thief'], ['archer', 1]], vary: [2, ['archer', 'darkmage']] },
+  { id: 'rite', n: '저주 의식', w: 1.5, press: 1, up: [['minion'], ['darkmage'], ['darkmage']], low: [['shield'], ['darkmage', 1], ['darkmage']], vary: [0, ['bruiser', 'shield']] },
+  { id: 'bones', n: '뼈 무덤', w: 1, up: [['bruiser'], ['summoner']], low: [['bruiser', 1], ['summoner']], vary: [0, ['bruiser', 'shield']] },
+  { id: 'hunt', n: '사냥패', w: 1, press: 1, up: [['minion'], ['archer'], ['archer']], low: [['bruiser', 1], ['archer'], ['archer']], vary: [0, ['minion', 'bruiser', 'thief']] },
+  { id: 'zeal', n: '광신 돌격', w: 1.3, up: [['bruiser'], ['bruiser']], low: [['bruiser', 1], ['bruiser']], vary: [1, ['bruiser', 'thief', 'bomber']] },
+  { id: 'patrol', n: '혼성 순찰', w: 1, up: [['bruiser'], ['archer'], ['healer']], low: [['bruiser'], ['archer'], ['healer', 1]], vary: [1, ['archer', 'darkmage', 'thief', 'bomber']] },
+  { id: 'gate', n: '문지기', w: 0.6, up: [['bruiser', 1]], low: [['bruiser', 1], ['shield']], vary: [0, ['bruiser', 'shield']] },
 ];
 
 /* 성소: 다음 3개 방 동안 */
@@ -106,7 +134,7 @@ const EVENTS = [
 /* 몬스터 레벨: 1챕터 1~4. 레벨마다 체력 +12%, 피해 +10% */
 const MLV_HP = 0.12, MLV_DMG = 0.10;
 /* 난이도 (10월 2일, 만든 사람 결정: 1챕터 완주 자동 테스터 평균 20%, 숙련·탐험가 40%. 1층부터 실전) 던전 방의 적 체력·피해 배율 */
-const DIFF = { upper: { hp: 0.75, dmg: 0.6 }, lower: { hp: 1.0, dmg: 0.68 } }; // 10월 4일 던전 24층 개편 2차(강적의 한 방 · 매복 강화 뒤): AI 테스터 완주 9%(암살자 8 · 파수꾼 11), 보스 승률 27%. 1차: 상층 0.8 · 0.65, 하층 1.05 · 0.7. 그 전: 상층 0.9 · 0.85, 하층 1.2 · 0.9
+const DIFF = { upper: { hp: 0.72, dmg: 0.57 }, lower: { hp: 0.9, dmg: 0.58 } }; // 10월 4일 강적 다섯 · 테마 무리 뒤: AI 테스터 완주 암살자 9 · 파수꾼 13%. 이전: 상층 0.75 · 0.6, 하층 1.0 · 0.68 (1차 0.8 · 0.65, 1.05 · 0.7. 개편 전 0.9 · 0.85, 1.2 · 0.9)
 function mlvOf(f) { return f >= FLOOR_BOSS ? 4 : f <= 6 ? 1 : f <= FLOOR_CAMP ? 2 : f <= 18 ? 3 : 4; } // 24층: 6층마다 한 단계
 /* 경험치: 일반 5, 정예 12, 강적 30, 보스 100 × (1 + 0.15 × (몬스터 레벨 − 1)). 소환된 적은 0 */
 const XP_BASE = { normal: 5, elite: 12, strong: 40, boss: 100 }; // 강적 30 → 40 (10월 4일 하이 리스크 하이 리턴) // 보스 150이면 챕터 끝 Lv6으로 목표(4~5)를 넘어 100으로 (10월 2일)
@@ -129,11 +157,17 @@ const ENEMY_NAMES = {
 const FOE_INTRO = {
   abbot: { n: '타락한 수도원장', lore: '제단 앞에서 등을 돌린 채, 아직도 누군가의 고해를 기다린다.', see: ['수도원장이 낡은 성서를 펼친다. 손가락이 당신의 이름 위에서 멈춘다.'] },
   bellringer: { n: '종지기', lore: '줄을 놓지 않는 손. 종은 아직 울리지 않았다.', see: ['뒤쪽에 큰 종이 매달려 있다. 종지기가 줄을 감아쥔다.'] },
+  bishop: { n: '납골당 주교', lore: '뼈로 엮은 주교관을 쓴 자. 묻힌 이들이 아직 그의 말을 듣는다.', see: ['주교가 지팡이로 바닥을 두드린다. 흙 아래에서 무언가 꿈틀거린다.'] },
+  cantor: { n: '성가 조율자', lore: '무너진 성가대석에서 혼자 박자를 센다.', see: ['조율자가 손을 들자 곁의 수도사들이 숨을 맞춘다.'] },
+  scribe: { n: '검은 서기관', lore: '펜촉에서 검은 잉크가 끝없이 떨어진다.', see: ['서기관이 두루마리를 펼친다. 당신이 할 수 있는 일들이 한 줄씩 적혀 있다.'] },
   pilgrim: { n: '굶주린 순례자', lore: '먼 길을 걸어온 자. 이제 무엇을 먹어도 배가 부르지 않다.', see: ['순례자가 입가를 훔친다. 손등에 마른 피가 묻어 있다.'] },
 };
 /* 도감: 처음 겪은 일만 적힌다 (결과만, 대처법은 플레이어 메모) */
 const CODEX = {
   abbot: { brand: '죄를 읽으면 낙인이 남는다. 낙인이 쌓인 채 내리치는 강타는 더 아프다.', vow: '입을 다문 동안에는 공격하지 않고 상처를 다스린다. 그동안 직접 공격은 덜 들어간다.', vowbreak: '입을 다문 채 자세가 무너지면 서원이 깨지고 빈틈이 드러난다.', judgment: '낙인이 가득 찬 채 내리치는 강타는 심판이 된다.', demand: '수도원장은 때로 맞서기를, 때로 침묵을 요구한다.', bell: '입을 다물기 전, 종이 울리며 몸에 두른 기운이 흩어진다.', candles: '입을 다문 동안 촛불이 켜진다. 서원이 끝날 때 남은 촛불이 수도원장을 북돋운다.', altar: '제단이 무너지며 돌이 떨어진다. 돌은 이따금 다시 떨어진다.', sacrifice: '숨이 다해 가면 수도원장이 수도사를 끌어당겨 제물로 삼는다.', monks: '쓰러지기 직전, 제단에서 수도사들이 일어나 수도원장을 돌본다.' },
   bellringer: { ring: '종이 울리면 적들이 서두른다.', bellbreak: '큰 종이 부서지면 종지기가 비틀거리고, 종은 더 울리지 않는다.' },
+  bishop: { raise: '주교가 지팡이를 두드리면 시체가 일어선다.', spear: '뼈 창은 일어선 시체를 삼키고, 삼킨 만큼 무겁다.' },
+  cantor: { hymn: '조율자가 음을 고를수록 곁의 적들이 거세진다.', chorus: '노래가 끝나면 곁의 적들이 한꺼번에 덮친다.', cut: '조율자의 자세가 무너지자 노래가 흩어졌다.' },
+  scribe: { seal: '서기관이 적어 넣은 것은 한동안 쓸 수 없다.', verdict: '봉인이 가득 차자 선고가 내렸다.', unseal: '서기관의 자세가 무너지자 봉인이 풀렸다.' },
   pilgrim: { leech: '맞힐 때마다 피를 마시며 상처를 메운다.', frenzy: '반쯤 쓰러지면 더 빨라진다.', rot: '쓰러질 때 썩은 기운이 퍼져, 다음 방까지 몸에 남는다.' },
 };
