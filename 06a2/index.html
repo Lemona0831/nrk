@@ -816,7 +816,7 @@ const EKW = { archerBleed: 2, archerEvery: 3, heavyVuln: 2, explodeWeak: 2, expl
 const HIT_REF = lv => 102 + 5 * (lv - 1);
 const PRIEST = { heal: 0.4 };
 const SUMMON = { n: 1, cap: 3 };
-const heavyMulOf = e => e.role === 'boss' ? TELE.boss : TELE.heavy; // explodeMul: 자폭병 폭발 = 평소 공격 × 3 (10월 3일: 폭발이 평소 공격과 같아 "터지기 전에 끊는다"는 판단이 없었다)
+const heavyMulOf = e => e.role === 'boss' ? TELE.boss : e.strong && e.bigMul ? e.bigMul : TELE.heavy; // 강적의 강타는 기준 생명력 × STRONG.big (e.bigMul) // explodeMul: 자폭병 폭발 = 평소 공격 × 3 (10월 3일: 폭발이 평소 공격과 같아 "터지기 전에 끊는다"는 판단이 없었다)
 const ENRAGE = { boss: 45, room: 40, step: 10 }; // 광폭화 시각(시간 단위)과 짙어지는 간격
 const ABBOT = { brand: 0.2, vowTaken: 0.6, monkHeal: 0.05, monkDecay: 0.85, healHp: 0.10, shieldHp: 0.18, candleHp: 0.04, candles: [2, 3, 4], candleHeal: 0.03, vowR: 3, sermonR: 3, sermonWeak: 2, stoneEvery: 3, stoneP: 0.06, stoneM: 0.10, altar: 0.08, sacHp: 0.15, sacHeal: 0.20, sacCool: 3 }; // 10월 4일 고해의 밤 (상세는 비공개 문서)
 function codexHit(b, id, key) { b.codex = b.codex || {}; b.codex[id + '.' + key] = 1; }
@@ -1578,7 +1578,8 @@ function decideIntent(b, e) {
   const al = alive(b);
   const n = e.acts;
   let it;
-  switch (e.role) {
+  if (e.strong && e.role !== 'boss') { const c = n % 4; it = c === 1 ? { k: 'brace' } : c === 2 ? { k: 'charge' } : { k: 'attack' }; } // 강적: 공격 → 버티기 → 강타 준비 → 강타 (10월 4일)
+  else switch (e.role) {
     case 'bruiser': { // 10월 4일 패턴: 공격 → 버티기 → 강타 준비 → 강타. 일반 전투에서 동시에 예고되는 충전 기술은 최대 1개 (4.5)
       const c = n % 4; const other = al.some(x => x !== e && x.intent && (x.intent.k === 'charge' || x.intent.k === 'heavy'));
       it = c === 1 ? { k: 'brace' } : (c === 2 && !other) ? { k: 'charge' } : { k: 'attack' }; break;
@@ -2182,13 +2183,14 @@ function roomBattle(player, room, bossKind, seed) {
     if (bossKind === 'tree') for (let i = 0; i < 3; i++) en.push(mkEnemy('root', 0, 50 + i));
   } else en = room.en.map((x, i) => mkEnemy(x[0], x[1], i, { lv: room.lv || 1, name: room.names && room.names[x[0]], tough: !!(room.tough && room.tough.includes(i)) }));
   if (!room.boss && room.floor) { const D = DIFF[isLower(room.floor) ? 'lower' : 'upper'], P = PATHS[room.path] || PATHS.main; for (const e of en) { e.hpMax = Math.round(e.hpMax * D.hp * P.hp); e.hp = e.hpMax; e.dmg *= D.dmg * P.dmg; } }
-  if (room.strong && en[0]) { const e = en[0]; e.strong = true; e.foe = room.foe; const low = isLower(room.floor || 0); e.n = room.strong; e.hpMax = Math.round(e.hpMax * STRONG.hp * (low ? STRONG.lowerHp : 1)); e.hp = e.hpMax; e.dmg *= STRONG.dmg * (low ? STRONG.lowerDmg : 1); e.info = '강적. 무엇을 하는지는 겪어 보아야 안다.'; }
+  if (room.ambush && !room.boss) for (const e of en) { e.hpMax = Math.round(e.hpMax * AMBUSH.hp); e.hp = e.hpMax; e.dmg *= AMBUSH.dmg; } // 매복: 일반과 강적 사이
+  if (room.strong && en[0]) { const e = en[0]; e.strong = true; e.foe = room.foe; const low = isLower(room.floor || 0); e.n = room.strong; e.hpMax = Math.round(e.hpMax * STRONG.hp * (low ? STRONG.lowerHp : 1)); e.hp = e.hpMax; e.dmg *= STRONG.dmg * (low ? STRONG.lowerDmg : 1); e.bigMul = HIT_REF(e.lv || 1) * STRONG.big / e.dmg; e.info = '강적. 무엇을 하는지는 겪어 보아야 안다.'; }
   if (room.foe === 'bellringer') { const bell = mkEnemy('root', 0, 60, { lv: room.lv || 1 }); bell.n = '큰 종'; bell.ico = '🔔'; bell.bell = 1; bell.hpMax = Math.round(bell.hpMax * 1.2); bell.hp = bell.hpMax; bell.info = '큰 종. 후열. 스스로는 움직이지 않는다.'; en.push(bell); }
   const mods = room.mods || [];
   if (mods.includes('narrow')) { let f = 0; for (const e of en) if (e.row === 'front' && e.role !== 'boss') { f++; if (f > 2) e.row = 'back'; } }
   player.bt = Object.assign({}, room.buffs || {});
   const b = newBattle(player, en, { boss: !!room.boss, bossKind, mods, ambush: !!room.ambush, lv: room.lv || 1, names: room.names || null, lower: isLower(room.floor || 0) });
-  if (!room.boss && room.floor) b.lootMul = (room.ambush ? 2 : 1) * ((PATHS[room.path] || PATHS.main).loot); // 매복은 전리품 두 배, 길마다 배율 (10월 4일)
+  if (!room.boss && room.floor) b.lootMul = (room.ambush ? AMBUSH.loot : 1) * ((PATHS[room.path] || PATHS.main).loot); // 매복은 전리품 1.5배, 길마다 배율 (10월 4일)
   setRng(b, seed || 7);
   const pre = room.pre || {};
   if (pre.weak) addS(b, player, 'weak', pre.weak); if (pre.vuln) addS(b, player, 'vuln', pre.vuln); if (pre.poison) addPoison(b, player, pre.poison, 0);
@@ -2348,7 +2350,7 @@ const HELP = [
   { k: 'rooms', n: '방과 진행', t: [
     '1챕터는 24층입니다. 상층 11층, ' + FLOOR_CAMP + '층 야영지, 하층 11층, ' + FLOOR_BOSS + '층 보스로 이루어집니다. 층마다 문 셋 가운데 하나를 고릅니다. 문에는 방의 종류, 적, 위험도(★), 방 특성이 적혀 있습니다. 보상은 일부 문에만 적혀 있습니다.',
     '몇 층마다 갈래길이 나옵니다. 험한 길은 적이 거세고 강적 · 매복이 잦은 대신 전리품과 골드가 많습니다. 샛길은 적이 덜 거세고 쉬는 방이 잦은 대신 얻는 것이 적습니다. 큰 길은 평소대로입니다. 고른 길은 다음 갈래길까지 이어집니다.',
-    '싸우는 방: 일반, 매복(적이 먼저 움직이는 대신 전리품 두 배), 강적, 보물(상자에서 장비 둘 중 하나), 시련(특성 둘, 희귀 보장). 쉬는 방: 샘, 성소(몇 방 동안 버프), 제단(거래), 이벤트(선택).',
+    '싸우는 방: 일반, 매복(적이 먼저 움직이고 거센 대신 전리품이 많음), 강적, 보물(상자에서 장비 둘 중 하나), 시련(특성 둘, 희귀 보장). 쉬는 방: 샘, 성소(몇 방 동안 버프), 제단(거래), 이벤트(선택).',
     '하층은 상층보다 적이 거셉니다. 야영지에서 모두 회복합니다. 샘은 드물게만 나옵니다.',
     '보스와 강적은 처음 만날 때 눈에 보이는 것만 알려 줍니다. 처음 겪은 일은 보스 도감에 적히고, 메모를 남길 수 있습니다. 보스전을 오래 끌면(보통 행동 약 ' + ENRAGE.boss + '번) 보스가 광폭해집니다.',
     '방과 방 사이, 정산, 상점에서 저장됩니다. 전투 중에 닫아도 이어하기로 같은 차례에서 다시 싸웁니다.'] },
@@ -2488,7 +2490,7 @@ function vRoom(run, R) {
   }
   // 전투 방
   h += `<h3>${T.ico} ${esc(T.n)}${R.strong ? ' · ' + esc(R.strong) : ''}${q('rooms', '방과 보스')}</h3>`;
-  if (R.ambush) h += `<p class="warn">매복입니다. 적이 먼저 움직입니다. 대신 쓰러뜨린 적이 전리품을 두 배로 떨굽니다.</p>`;
+  if (R.ambush) h += `<p class="warn">매복입니다. 적이 먼저 움직이고 더 거셉니다. 대신 쓰러뜨린 적이 전리품을 더 자주 떨굽니다.</p>`;
   if (R.mods && R.mods.length) h += R.mods.map(m => `<p class="mini"><b>${esc(ROOM_MODS[m].n)}</b>: ${esc(ROOM_MODS[m].d)}</p>`).join('');
   h += `<p>이 방의 적 <span class="mini">Lv${R.lv || 1}</span></p><ul class="elist">${R.en.map((x, i) => `<li>${ROLES[x[0]].ico} ${i === 0 && R.strong ? esc(R.strong) + ' (강적)' : (R.tough && R.tough.includes(i) ? '[강인] ' : '') + (x[1] ? '정예 ' : '') + esc((R.names && R.names[x[0]]) || ROLES[x[0]].n)} <span class="mini">${ROLES[x[0]].n} · ${ROLES[x[0]].row === 'front' ? '전열' : '후열'}</span></li>`).join('')}${run.next && run.next.chase ? '<li>굶주린 수도사 <span class="mini">전열</span></li>' : ''}</ul>${q('roles', '적의 역할')}`;
   const nx = run.next || {};
@@ -3817,7 +3819,7 @@ function mkRoom(run, t, f) {
     if (t === 'trial') r.mods = rollMods(2);
     else if (t !== 'strong' && Math.random() < MOD_CHANCE[low ? 'lower' : 'upper']) r.mods = rollMods(1);
     else r.mods = [];
-    if (t === 'ambush') r.ambush = 1;
+    if (t === 'ambush') { r.ambush = 1; let k = AMBUSH.elite; for (const x of r.en) if (k > 0 && !x[1] && x[0] !== 'bomber') { x[1] = 1; k--; } } // 매복: 정예 하나 더
     r.tough = r.en.map((x, k) => x[1] && !(r.strong && k === 0) ? k : -1).filter(k => k >= 0 && Math.random() < TOUGH_CHANCE[low ? 'lower' : 'upper']); // 정예에게 강인 (강적 본인은 제외)
     r.gold = Math.round(rint(T.gold[0], T.gold[1]) * P.gold);
     r.risk = Math.max(1, Math.min(4, T.risk + (low ? 1 : 0) + P.risk));
