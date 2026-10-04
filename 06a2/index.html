@@ -1626,13 +1626,13 @@ function intentText(b, e) {
     case 'explode': return { t: '폭발 ' + r1(est * EKW.explodeMul) + ' · 광역 · 약화 ' + EKW.explodeWeak, hv: 1 };
     case 'mirror': return { t: '나락의 거울. 내 직전 스킬의 절반 ' + r1(b.p.lastSkillDmg * 0.5), hv: 1 };
     case 'brand': return { t: '죄를 읽는다. 공격 ' + r1(est * 0.6), hv: 0 };
-    case 'challenge': return { t: '심문한다. 요구가 걸린 다음 내 차례에 수도원장을 치지 않으면 낙인이 새겨진다', hv: 1 };
-    case 'confess': return { t: '고해를 요구한다. 요구가 걸린 다음 내 차례에 수도원장을 치면 낙인이 깊어지고, 치지 않으면 낙인 하나가 사라진다', hv: 1 };
+    case 'challenge': return { t: '심문한다', hv: 1 };
+    case 'confess': return { t: '고해를 요구한다', hv: 1 };
     case 'sermon': return { t: '설교한다. 나에게 약화 ' + ABBOT.sermonWeak, hv: 1 };
     case 'rest': return { t: '숨을 고른다', hv: 0 };
-    case 'sacprep': { const t = b.en.find(x => x.id === i.tgt); return { t: (t ? t.n : '수도사') + '을(를) 끌어당긴다. 다음 행동에 제물로 바친다', hv: 1 }; }
-    case 'sacrifice': { const t = b.en.find(x => x.id === i.tgt); return { t: (t ? t.n : '수도사') + '을(를) 제물로 바친다. 생명력 +' + Math.round(ABBOT.sacHeal * 100) + '%', hv: 1 }; }
-    case 'lastprayer': return { t: '최후의 기도. 강화 2', hv: 1 };
+    case 'sacprep': { const t = b.en.find(x => x.id === i.tgt); return { t: (t ? t.n : '수도사') + '을(를) 끌어당긴다', hv: 1 }; }
+    case 'sacrifice': { const t = b.en.find(x => x.id === i.tgt); return { t: (t ? t.n : '수도사') + '을(를) 제물로 바친다', hv: 1 }; }
+    case 'lastprayer': return { t: '최후의 기도', hv: 1 };
     case 'pray': return { t: '입을 다물고 기도한다. 공격하지 않는다', hv: 0 };
     case 'brace': return { t: '몸을 굳혀 버틴다. 다음 행동까지 받는 피해 절반. 무너지면 풀린다', hv: 0 };
     case 'counter': return { t: '반격 태세. 근접 한 적 공격을 맞으면 ' + est + ' 되받는다. 무너지면 풀린다', hv: 1 };
@@ -1663,19 +1663,19 @@ function intentBadge(b, e) {
     case 'steal': return { ico: INTENT_ICO.steal, num: '', txt: '훔친다. 플라스크 · 골드 · 장비', cls: 'warn' };
     case 'flee': return { ico: INTENT_ICO.flee, num: '', txt: '달아난다' + (e.loot ? ' · ' + e.loot.n : ''), cls: 'hv' };
     case 'charge': return { ico: INTENT_ICO.charge, num: '', txt: '강타 준비. 다음 행동에 강타', cls: 'warn' };
-    case 'heavy': if (e.boss === 'abbot' && st(b.p, 'brand') >= 3) return { ico: '⚡', num: r1(capOf(est * heavyMulOf(e) * (1 + ABBOT.brand * 3))), txt: '심판 · 방어로 줄지 않음', cls: 'hv' }; return { ico: INTENT_ICO.heavy, num: r1(capOf(est * heavyMulOf(e))), txt: '강타 · 맞으면 취약 ' + EKW.heavyVuln, cls: 'hv' };
+    case 'heavy': if (e.boss === 'abbot' && st(b.p, 'brand') >= 3) return { ico: '⚡', num: r1(capOf(est * heavyMulOf(e) * (1 + ABBOT.brand * 3))), txt: '심판', cls: 'hv' }; return { ico: INTENT_ICO.heavy, num: r1(capOf(est * heavyMulOf(e))), txt: '강타 · 맞으면 취약 ' + EKW.heavyVuln, cls: 'hv' };
     case 'heal': { const t = b.en.find(x => x.id === i.tgt); return { ico: INTENT_ICO.heal, num: Math.round(healFrac(e) * 100) + '%', txt: '치유 → ' + (t ? t.n : '아군'), cls: 'sup' }; }
     case 'summon': return { ico: INTENT_ICO.summon, num: '', txt: '하수인 둘을 부른다', cls: 'sup' };
     case 'fuse': return { ico: INTENT_ICO.fuse, num: '', txt: '불을 붙인다. 다음 행동에 폭발', cls: 'warn' };
     case 'explode': return { ico: INTENT_ICO.explode, num: r1(Math.min(est * EKW.explodeMul, b.p.hpMax * (e.elite ? 0.35 : 0.25))), txt: '폭발 · 모두에게 · 약화 ' + EKW.explodeWeak, cls: 'hv' };
     case 'mirror': return { ico: INTENT_ICO.mirror, num: r1(b.p.lastSkillDmg * 0.5), txt: '거울: 내 스킬의 절반', cls: 'hv' };
     case 'brand': return { ico: INTENT_ICO.brand, num: r1(capOf(est * 0.6)), txt: '죄를 읽는다 · 낙인', cls: 'atk' };
-    case 'challenge': return { ico: '⚖️', num: '', txt: '심문할 것이다. 그다음 내 차례에 맞서라', cls: 'warn' };
-    case 'confess': return { ico: '🤲', num: '', txt: '고해를 요구할 것이다. 그다음 내 차례에 칼을 거두어라', cls: 'warn' };
+    case 'challenge': return { ico: '⚖️', num: '', txt: '심문한다', cls: 'warn' };
+    case 'confess': return { ico: '🤲', num: '', txt: '고해를 요구한다', cls: 'warn' };
     case 'sermon': return { ico: '📖', num: '', txt: '설교. 나에게 약화 ' + ABBOT.sermonWeak, cls: 'warn' };
     case 'rest': return { ico: '…', num: '', txt: '숨을 고른다', cls: 'sup' };
     case 'sacprep': { const t = b.en.find(x => x.id === i.tgt); return { ico: '🩸', num: '', txt: (t ? t.n : '수도사') + '을(를) 끌어당긴다', cls: 'hv' }; }
-    case 'sacrifice': { const t = b.en.find(x => x.id === i.tgt); return { ico: '🩸', num: '+' + Math.round(ABBOT.sacHeal * 100) + '%', txt: '제물: ' + (t ? t.n : '수도사'), cls: 'hv' }; }
+    case 'sacrifice': { const t = b.en.find(x => x.id === i.tgt); return { ico: '🩸', num: '', txt: '제물: ' + (t ? t.n : '수도사'), cls: 'hv' }; }
     case 'lastprayer': return { ico: '🙏', num: '', txt: '최후의 기도', cls: 'warn' };
     case 'pray': return { ico: INTENT_ICO.pray, num: '', txt: '기도. 공격하지 않는다', cls: 'sup' };
     default: return { ico: INTENT_ICO.none, num: '', txt: '', cls: '' };
@@ -2805,7 +2805,7 @@ function vBattle() {
     if (boss.boss === 'mother') g += ` · 내 중독 ${st(p, 'poison')}/10 (10이면 부화) · ${boss.phase >= 2 ? '거울 활성' : '2페이즈부터 거울'}`;
     if (boss.boss === 'tree') { const roots = alive(b).filter(e => e.role === 'root').length; g += ` · 뿌리 때문에 라운드마다 약 +${rootRegen(b)} 회복 · 계절 ${SEASONS[b.season]} → ${SEASONS[(b.season + 1) % 4]} (${myTurnsUntil(b, (Math.floor(b.tick / 4) + 1) * 4)}라운드 뒤) · 뿌리 ${roots}/3`; }
     gim = `<div class="gimmick" data-info="gim" tabindex="0">${esc(g)}</div>`;
-    if (boss.demand && boss.demand.turn === b.turnIdx) gim += `<div class="gimmick dmd" data-info="edemand" tabindex="0">${boss.demand.k === 'rest' ? '🤲 고해 요구: 이번 차례에 수도원장을 치지 마라' : '⚖️ 심문: 이번 차례에 수도원장에게 맞서라'}</div>`; // 10월 4일: 휴대폰에서 카드의 표시가 잘려 따로 한 줄
+    if (boss.demand && boss.demand.turn === b.turnIdx) gim += `<div class="gimmick dmd" data-info="edemand" tabindex="0">${boss.demand.k === 'rest' ? '🤲 수도원장이 고해를 기다린다' : '⚖️ 수도원장이 심문한다'}</div>`; // 10월 4일: 휴대폰에서 카드의 표시가 잘려 따로 한 줄
   }
   const last = b.log[b.log.length - 1];
   const lastl = G.banner ? `<div class="turnban ${G.banner.phase}" role="status"><span class="ic">${G.banner.ico}</span><b>${esc(G.banner.who)}</b><span>${esc(G.banner.phase === 'post' && last ? last.m : G.banner.what)}</span></div>` : G.myTurnFlash ? '<div class="turnban me" role="status"><b>내 차례</b><span>무엇을 할지 고르세요</span></div>' : last ? `<div class="lastlog ${last.c}">${esc(last.m)}</div>` : '';
@@ -3312,7 +3312,7 @@ const INFO2 = {
   ecounter: ['반격 태세', '이 적을 근접 한 적 공격으로 치면 평소 공격만큼 되받아칩니다. 한 번 되받으면 풀립니다.', '원거리, 광역, 지속 피해로 치거나, 무너뜨리면 풀립니다.'],
   eevade: ['몸 낮춤', '이 적을 노린 다음 한 적 공격은 피해가 들어가지 않습니다. 함께 거는 상태와 붕괴는 들어갑니다.', '광역과 지속 피해는 그대로 들어갑니다. 무너뜨리면 풀립니다.'],
   eguard: ['지키는 중', '이 적이 동료 하나 앞을 막고 있습니다. 그 동료를 노린 한 적 공격을 이 적이 대신 맞습니다.', '무너뜨리면 풀립니다.'],
-  edemand: ['수도원장의 요구', '이번 내 차례에 걸린 요구입니다. 🤲 고해: 수도원장을 치지 않으면 낙인 하나가 사라지고, 치면 낙인이 깊어지며 수도원장이 북받칩니다. ⚖️ 심문: 수도원장을 치면 낙인 하나가 옅어지고, 치지 않으면 낙인이 새겨집니다.', '수도사나 촛불을 치는 것은 수도원장을 친 것으로 세지 않습니다.'],
+  edemand: ['수도원장의 요구', '수도원장이 이번 내 차례에 무언가를 기다리고 있습니다. 어떻게 답하느냐에 따라 낙인이 달라집니다.', ''],
   eloot: ['훔친 것', '도둑이 훔친 것입니다. 달아나기 전에 쓰러뜨리면 되찾고, 달아나면 잃습니다.', ''],
   guarded: ['방패병이 막는 중', '이 적을 노린 근접 공격은 방패병이 대신 맞습니다. 피해도 붕괴도 상태이상도 방패병에게 갑니다.', '방패병을 붕괴시키거나 원거리, 광역 공격을 쓰면 뚫립니다.'],
 };
