@@ -36,7 +36,7 @@ function buildOf(br, col, lv) {
 /* 끼울 4칸: 문에 보이는 적을 보고 고르는 사람처럼 (후열이 있으면 후열에 닿는 스킬, 셋 이상이면 광역, 강타형이 있으면 흘리기·끊기, 큰 적 하나면 터뜨리기) */
 function equipFor(bd, sit) {
   const en = (sit.room.en || []).map(x => x[0]); const big = !!sit.room.boss || en.length <= 1 || !!sit.room.strong;
-  const back = en.some(r => ['archer', 'healer', 'summoner'].includes(r)); const many = en.length >= 3; const heavy = en.includes('bruiser') || !!sit.room.boss || !!sit.room.strong; const boom = en.includes('bomber');
+  const back = en.some(r => ['archer', 'healer', 'summoner'].includes(r)); const many = en.length >= 3; const heavy = en.includes('bruiser') || !!sit.room.boss || !!sit.room.strong; const boom = en.includes('bomber') || en.includes('pyre'); /* 10월 5일: 화형 사제도 끊는 스킬을 반긴다 */
   const has = (s, k) => s.fx.some(e => e.k === k);
   const val = id => { const s = G0.SK2[id]; let v = s.row;
     if (back && s.tgt === 'ranged') v += 6; if (many && (s.tgt === 'front' || s.tgt === 'all' || has(s, 'spread'))) v += 6; if (big && has(s, 'bigx')) v += 4;

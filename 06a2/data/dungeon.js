@@ -50,14 +50,14 @@ const MOD_CHANCE = { upper: 0.25, lower: 0.45 };
 const ENC = {
   upper: [
     [['bruiser'], ['bruiser']], [['bruiser'], ['archer']], [['shield'], ['healer']], [['shield'], ['shield'], ['healer']],
-    [['bomber'], ['bomber'], ['bruiser']], [['summoner'], ['minion'], ['minion']], [['bruiser'], ['healer']], [['archer'], ['archer'], ['bruiser']],
-    [['shield'], ['archer']], [['bomber'], ['shield']], [['summoner'], ['bruiser']], [['bruiser', 1]],
+    [['pyre'], ['shield'], ['bruiser']], [['summoner'], ['minion'], ['minion']], [['bruiser'], ['healer']], [['archer'], ['archer'], ['bruiser']],
+    [['shield'], ['archer']], [['pyre'], ['shield']], [['summoner'], ['bruiser']], [['bruiser', 1]],
     [['thief'], ['bruiser']], [['darkmage'], ['shield']], [['healer'], ['bruiser'], ['minion']], [['thief'], ['archer']],
   ],
   lower: [
-    [['bruiser', 1], ['archer']], [['shield', 1], ['healer'], ['bruiser']], [['archer', 1], ['archer'], ['bomber']], [['summoner'], ['minion'], ['minion'], ['healer']],
-    [['bruiser'], ['bruiser'], ['healer', 1]], [['shield', 1], ['bomber'], ['bomber']], [['bruiser', 1], ['summoner']], [['archer'], ['shield'], ['healer']],
-    [['bomber', 1], ['bruiser']], [['shield'], ['archer', 1], ['minion']], [['bruiser'], ['bruiser'], ['archer']], [['healer'], ['shield'], ['bruiser', 1]],
+    [['bruiser', 1], ['archer']], [['shield', 1], ['healer'], ['bruiser']], [['archer', 1], ['archer'], ['pyre']], [['summoner'], ['minion'], ['minion'], ['healer']],
+    [['bruiser'], ['bruiser'], ['healer', 1]], [['shield', 1], ['pyre'], ['bruiser']], [['bruiser', 1], ['summoner']], [['archer'], ['shield'], ['healer']],
+    [['pyre', 1], ['bruiser']], [['shield'], ['archer', 1], ['minion']], [['bruiser'], ['bruiser'], ['archer']], [['healer'], ['shield'], ['bruiser', 1]],
     [['thief'], ['shield'], ['archer']], [['darkmage'], ['bruiser'], ['healer']], [['darkmage', 1], ['shield'], ['minion']], [['thief'], ['bruiser', 1]],
   ],
   treasure: [[['shield', 1], ['bruiser']], [['bruiser', 1], ['archer']], [['archer', 1], ['shield']]],
@@ -88,17 +88,17 @@ const FOE_X = {
 /* 테마 무리 (10월 4일 만든 사람 결정: 테마 무리 + 변주). 일반 · 매복 · 시련 방의 적.
    up · low: 상층 · 하층 구성 [역할, 정예], vary: [칸, 바뀔 수 있는 역할들](반쯤 확률로 그 칸이 바뀐다), w: 가중치, press: 압박이 센 무리(험한 길에서 잦고 샛길에서 드물다) */
 const SQUAD_VARY = 0.5;
-// 가중치(w)는 직업 사이도 맞춘다: 저주 의식 · 광신 돌격 · 성가 행렬은 파수꾼에게, 문지기 · 혼성 순찰 · 자폭 행렬 · 도둑 떼는 암살자에게 상대적으로 무겁다 (10월 4일 잼)
+// 가중치(w)는 직업 사이도 맞춘다: 저주 의식 · 광신 돌격 · 성가 행렬은 파수꾼에게, 문지기 · 혼성 순찰 · 화형 의식 · 도둑 떼는 암살자에게 상대적으로 무겁다 (10월 4일 잼)
 const SQUADS = [
   { id: 'wall', n: '방패벽', w: 1, up: [['shield'], ['shield'], ['minion']], low: [['shield', 1], ['shield'], ['archer']], vary: [2, ['minion', 'archer']] },
   { id: 'hymn', n: '성가 행렬', w: 1.4, up: [['bruiser'], ['bruiser'], ['healer']], low: [['bruiser', 1], ['bruiser'], ['healer']], vary: [1, ['bruiser', 'thief']] },
-  { id: 'fuse', n: '자폭 행렬', w: 0.8, press: 1, up: [['bomber'], ['bomber'], ['minion']], low: [['shield'], ['bomber', 1], ['bomber']], vary: [2, ['minion', 'shield', 'bomber']] },
+  { id: 'pyre', n: '화형 의식', w: 0.8, press: 1, up: [['bruiser'], ['pyre']], low: [['shield'], ['bruiser'], ['pyre', 1]], vary: [0, ['bruiser', 'shield', 'minion']] }, // 10월 5일: 자폭 행렬을 바꿨다
   { id: 'thieves', n: '도둑 떼', w: 0.8, up: [['thief'], ['thief'], ['archer']], low: [['thief'], ['thief'], ['archer', 1]], vary: [2, ['archer', 'darkmage']] },
   { id: 'rite', n: '저주 의식', w: 1.5, press: 1, up: [['minion'], ['darkmage'], ['darkmage']], low: [['shield'], ['darkmage', 1], ['darkmage']], vary: [0, ['bruiser', 'shield']] },
   { id: 'bones', n: '뼈 무덤', w: 1, up: [['bruiser'], ['summoner']], low: [['bruiser', 1], ['summoner']], vary: [0, ['bruiser', 'shield']] },
   { id: 'hunt', n: '사냥패', w: 1, press: 1, up: [['minion'], ['archer'], ['archer']], low: [['bruiser', 1], ['archer'], ['archer']], vary: [0, ['minion', 'bruiser', 'thief']] },
-  { id: 'zeal', n: '광신 돌격', w: 1.3, up: [['bruiser'], ['bruiser']], low: [['bruiser', 1], ['bruiser']], vary: [1, ['bruiser', 'thief', 'bomber']] },
-  { id: 'patrol', n: '혼성 순찰', w: 1, up: [['bruiser'], ['archer'], ['healer']], low: [['bruiser'], ['archer'], ['healer', 1]], vary: [1, ['archer', 'darkmage', 'thief', 'bomber']] },
+  { id: 'zeal', n: '광신 돌격', w: 1.3, up: [['bruiser'], ['bruiser']], low: [['bruiser', 1], ['bruiser']], vary: [1, ['bruiser', 'thief']] },
+  { id: 'patrol', n: '혼성 순찰', w: 1, up: [['bruiser'], ['archer'], ['healer']], low: [['bruiser'], ['archer'], ['healer', 1]], vary: [1, ['archer', 'darkmage', 'thief', 'pyre']] },
   { id: 'gate', n: '문지기', w: 0.6, up: [['bruiser', 1]], low: [['bruiser', 1], ['shield']], vary: [0, ['bruiser', 'shield']] },
 ];
 
@@ -149,7 +149,7 @@ const STAT_REC = { assassin: { dex: 0.4, int: 0.35, con: 0.25 }, warden: { str: 
 const TOUGH_CHANCE = { upper: 0.35, lower: 0.6 };
 /* 1챕터(저주받은 수도원) 적 이름. 역할은 카드에 작게 함께 보인다 */
 const ENEMY_NAMES = {
-  1: { bruiser: '광신 수도사', shield: '문지기 수사', archer: '종탑 궁수', healer: '피 닦는 수녀', summoner: '뼈 부르는 사제', bomber: '불붙은 고행자', minion: '일어선 시체', thief: '헌금함 도둑', darkmage: '검은 기도사' },
+  1: { bruiser: '광신 수도사', shield: '문지기 수사', archer: '종탑 궁수', healer: '피 닦는 수녀', summoner: '뼈 부르는 사제', bomber: '불붙은 고행자', pyre: '화형 사제', minion: '일어선 시체', thief: '헌금함 도둑', darkmage: '검은 기도사' },
 };
 
 /* ===== 강적과 보스: 처음 만날 때 "눈에 보이는 것", 겪은 뒤 도감 (기획서 11.9절) =====

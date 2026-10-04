@@ -28,11 +28,11 @@ const SIT = [
   { id: 19, cat: '지원', n: '치유사, 소환사, 돌격병', room: { en: [['bruiser', 0], ['healer', 0], ['summoner', 0]] } },
   { id: 20, cat: '지원', n: '정예 방패병과 치유사', room: { en: [['shield', 1], ['healer', 0]] } },
   // 5. 폭발: 자폭병이 몇 라운드 안에 터진다. 빨리 끊거나 버티는 직업이 강하다
-  { id: 21, cat: '폭발', n: '정예 자폭병 둘', room: { en: [['bomber', 1], ['bomber', 1]] } },
-  { id: 22, cat: '폭발', n: '자폭병 넷', room: { en: [['bomber', 0], ['bomber', 0], ['bomber', 0], ['bomber', 0]] } },
-  { id: 23, cat: '폭발', n: '정예 자폭병, 돌격병, 하수인', room: { en: [['bomber', 1], ['bruiser', 0], ['minion', 0]] } },
-  { id: 24, cat: '폭발', n: '방패병이 지키는 정예 자폭병 둘', room: { en: [['shield', 0], ['bomber', 1], ['bomber', 1]] } },
-  { id: 25, cat: '폭발', n: '매복한 정예 자폭병 셋', room: { en: [['bomber', 1], ['bomber', 1], ['bomber', 1]], ambush: 1 } },
+  { id: 21, cat: '영창', n: '정예 화형 사제 둘', room: { en: [['pyre', 1], ['pyre', 1]] } }, // 10월 5일: 폭발 범주(자폭병)를 영창 범주(화형 사제)로 바꿨다
+  { id: 22, cat: '영창', n: '방패병 둘 뒤의 화형 사제', room: { en: [['shield', 0], ['shield', 0], ['pyre', 0]] } },
+  { id: 23, cat: '영창', n: '정예 화형 사제, 돌격병, 하수인', room: { en: [['pyre', 1], ['bruiser', 0], ['minion', 0]] } },
+  { id: 24, cat: '영창', n: '하수인 셋 뒤의 화형 사제 둘', room: { en: [['minion', 0], ['minion', 0], ['minion', 0], ['pyre', 0], ['pyre', 0]] } },
+  { id: 25, cat: '영창', n: '매복한 정예 화형 사제와 돌격병 둘', room: { en: [['pyre', 1], ['bruiser', 0], ['bruiser', 0]], ambush: 1 } },
   // 6. 거구: 체력이 큰 단일 적. 중독·터뜨리기·마무리가 강하다
   { id: 26, cat: '거구', n: '강인한 정예 방패병', room: { en: [['shield', 1]], tough: [0] } },
   { id: 27, cat: '거구', n: '종지기와 큰 종', room: { en: [['shield', 0]], strong: '종지기', foe: 'bellringer' } },
@@ -64,5 +64,5 @@ const SIT = [
   { id: 49, cat: '혼합', n: '정예 방패병, 정예 사수, 소환사', room: { en: [['shield', 1], ['archer', 1], ['summoner', 0]] } },
   { id: 50, cat: '혼합', n: '돌격병 둘, 자폭병, 치유사', room: { en: [['bruiser', 0], ['bruiser', 0], ['bomber', 0], ['healer', 0]] } },
 ];
-const SIT_CATS = ['무리', '강타', '후열', '지원', '폭발', '거구', '상처', '특성', '장기전', '혼합'];
+const SIT_CATS = ['무리', '강타', '후열', '지원', '영창', '거구', '상처', '특성', '장기전', '혼합'];
 if (typeof module !== 'undefined') module.exports = { SIT, SIT_CATS };

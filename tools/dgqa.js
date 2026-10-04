@@ -151,9 +151,9 @@ function useCons(pk, r, b, run) {
     case 'brk': return al.some(e => (e.elite || e.strong || e.role === 'boss') && it(e, 'charge', 'heavy'));
     case 'whet': return r() < 0.15;
     case 'mark': return r() < 0.1;
-    case 'guard1': return al.some(e => it(e, 'heavy', 'explode')) && p.hp < p.hpMax * 0.6;
-    case 'halfboom': return al.some(e => it(e, 'explode'));
-    case 'block': return al.some(e => e.intent && (e.intent.bleed || it(e, 'curse', 'explode')));
+    case 'guard1': return al.some(e => it(e, 'heavy', 'explode', 'burn')) && p.hp < p.hpMax * 0.6;
+    case 'halfboom': return al.some(e => it(e, 'explode', 'burn'));
+    case 'block': return al.some(e => e.intent && (e.intent.bleed || it(e, 'curse', 'explode', 'burn')));
     case 'unmod': return true;
     case 'escape': return p.hp < p.hpMax * 0.15 && !p.flask.life;
     case 'lootx': return al.length >= 3 && r() < 0.5;

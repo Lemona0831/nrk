@@ -7,7 +7,8 @@ const ROLES = {
   archer:   { n: '사수',   ico: '🏹', row: 'back',  hp: 0.7, dmg: 1.1, spd: 1.1, hit: 0.12 },
   healer:   { n: '사제',   ico: '✚', row: 'back',  hp: 0.7, dmg: 0.4, spd: 0.9, hit: 0.07 },
   summoner: { n: '소환사', ico: '🕯️', row: 'back',  hp: 0.6, dmg: 0.5, spd: 0.8, hit: 0.08 },
-  bomber:   { n: '자폭병', ico: '💣', row: 'front', hp: 0.5, dmg: 1.6, spd: 1.0, hit: 0.10 },
+  bomber:   { n: '자폭병', ico: '💣', row: 'front', hp: 0.5, dmg: 1.6, spd: 1.0, hit: 0.10 }, // 10월 5일: 던전에서 뺐다(화형 사제로 바꿈). 옛 시험 상황(rooms.js)만 쓴다
+  pyre:     { n: '영창자', ico: '🔥', row: 'back', hp: 0.8, dmg: 0.8, spd: 0.9, hit: 0.10 }, // 10월 5일 만든 사람 결정: 영창 → 화형. 영창 중 받은 피해가 쌓이거나 무너지면 끊긴다(CHANT)
   minion:   { n: '하수인', ico: '💀', row: 'front', hp: 0.4, dmg: 0.5, spd: 1.0, hit: 0.10 },
   thief:    { n: '도둑',   ico: '🫳', row: 'front', hp: 0.6, dmg: 0.4, spd: 1.2, hit: 0.07 },
   darkmage: { n: '암흑술사', ico: '🌑', row: 'back', hp: 0.6, dmg: 0.8, spd: 0.9, hit: 0.11 },

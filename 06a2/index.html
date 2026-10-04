@@ -646,7 +646,7 @@ function runSkill2(b, act, tgt) {
     if (base > 0) { tot += hurtEnemy(b, e, outDmg(b, base, {}), { single: multi ? 0 : 1, aoe: multi ? 1 : 0, melee: s.tgt === 'melee' || s.tgt === 'front' ? 1 : 0, label: s.n }); if (!e.alive) { killed++; continue; } }
     if (po) addPoison(b, e, po.n, 1, capOver);
     if (bk) addBreak(b, e, bk.n * (shx && e.role === 'shield' ? shx.mul : 1)); // 방패병에게 붕괴 ×
-    if (cx && h === 0 && e.alive && e.intent && ['charge', 'heavy', 'fuse', 'explode'].includes(e.intent.k)) { logp(b, 'good', e.n + '이(가) 모으던 힘을 노린다. 붕괴 +' + cx.brk); addBreak(b, e, cx.brk); } // 끊어 내기
+    if (cx && h === 0 && e.alive && e.intent && ['charge', 'heavy', 'fuse', 'explode', 'chant', 'chanting', 'burn'].includes(e.intent.k)) { logp(b, 'good', e.n + '이(가) 모으던 힘을 노린다. 붕괴 +' + cx.brk); addBreak(b, e, cx.brk); } // 끊어 내기
     if (dr && h === 0 && st(e, 'poison') > 0) { const hl = Math.min(p.hpMax - p.hp, st(e, 'poison') * dr.per * healMul(p)); if (hl > 0) { p.hp += hl; logp(b, 'good', e.n + '의 독에서 생명력 +' + r1(hl)); } } // 독 흡수: 중독은 그대로
     if (bp && h === 0) addBreak(b, e, bp.per * st(e, 'poison'));
     if (h === 0) for (const x of stx) if (e.alive) addS(b, e, x.s, x.n); // 적에게 거는 상태 (독무의 약화)
@@ -811,6 +811,9 @@ const wallUp = (b, e) => e.alive && e.row === 'back' && e.role !== 'boss' && !!h
 const wallFrontUp = (b, e) => e.alive && e.row === 'front' && !['boss', 'shield', 'root'].includes(e.role) && !!hasShield(b, e.id); // 방패병 옆 전열 동료
 const TELE = { heavy: 1.75, boss: 3.5 }; // 적 강타 = 평소 공격 × heavy, 보스 강타 × boss (10월 4일: 평소 공격이 기준표로 커져 일반 적의 강타는 1.75배. 한 번 상한은 그대로) // 적 강타 = 평소 공격 × heavy (예고를 읽고 막는 판단의 무게)
 /* 0.6a.2: 적이 거는 상태 (숫자 하나, 발동마다 1 감소). 사수 출혈은 걸린 쪽이 행동할 때마다 터지므로 세 번에 한 번, 2만 건다 */
+const CHANT = { cut: 0.3, big: 0.28, burn: 3 }; // 화형 사제 (10월 5일): 영창 중 받은 피해가 최대 생명력 × cut이면 끊긴다. 화형 = 기준 생명력 × big(정예 ×1.25), 화상 burn. 영창은 한 번에 한 적만
+const chantDmg = (b, e) => HIT_REF(e.lv || 1) * CHANT.big * (e.elite ? 1.25 : 1) * enemyHitEst(b, e) / Math.max(0.01, e.dmg);
+const CHANT_K = ['chant', 'chanting', 'burn'];
 const EKW = { archerBleed: 2, archerEvery: 3, heavyVuln: 2, explodeWeak: 2, explodeMul: 3, aimMul: 1.35, curseWeak: 2, braceRed: 0.5 };
 /* 10월 4일 적 행동 개편 (docs/0.6a.2-적-행동-기획.md): 한 번 피해의 기준 생명력, 사제가 치유하는 문턱, 소환사가 한 번에 부르는 수와 하수인 상한 */
 const HIT_REF = lv => 102 + 5 * (lv - 1);
@@ -1343,6 +1346,8 @@ function hurtPlayer(b, raw, o) {
   checkEnd(b);
   return d;
 }
+/* 화형 사제의 영창이 끊긴다 (쌓인 피해 · 무너짐 · 소모품) */
+function chantBreak(b, e, why) { e.chant = null; e.pyreRest = 1; e.teleTurn = null; if (e.intent && CHANT_K.includes(e.intent.k)) e.intent = { k: 'attack' }; logp(b, 'good', (why ? why + ' ' : '') + e.n + '의 영창이 끊긴다'); }
 function hurtEnemy(b, e, raw, o) {
   o = o || {};
   if (!e.alive) return 0;
@@ -1373,6 +1378,7 @@ function hurtEnemy(b, e, raw, o) {
   d = Math.max(0, d);
   if (e.role === 'bomber') d = !o.dot && !o.aoe ? Math.max(d, e.hp) : Math.min(d, Math.max(0, e.hp - 1)); // 자폭병 (10월 4일): 한 적 공격 한 번에는 반드시 쓰러지고, 광역 · 지속 피해로는 쓰러지지 않는다
   e.hp -= d;
+  if (e.chant && d > 0 && e.hp > 0) { e.chant.taken += d; if (e.chant.taken >= e.chant.need) chantBreak(b, e, '쌓인 상처에'); } // 화형 사제: 영창 중 받은 피해
   if (!o.dot && b.cur) fxRun(b.p, 'onHit', b, b.p, e, o, b.cur, d);
   if (e.countering && e.hp > 0 && !o.dot && o.melee && o.single && b.p.decoy) { e.countering = 0; b.p.decoy = 0; logp(b, 'good', e.n + '의 반격이 미끼 인형을 친다'); }
   if (e.countering && e.hp > 0 && !o.dot && o.melee && o.single) { e.countering = 0; hurtPlayer(b, enemyHitEst(b, e), { src: e, single: 1, label: e.n + '이(가) 되받아친다' }); } // 반격 태세
@@ -1465,7 +1471,7 @@ function consTargets(b, D) {
     case 'noheal': return al.filter(e => e.role === 'healer' && !e.noHeal);
     case 'nosummon': return al.filter(e => e.role === 'summoner' && !e.noSummon);
     case 'sticky': return al.filter(e => e.role === 'thief' && !e.stuck);
-    case 'interrupt': return al.filter(e => e.intent && (['charge', 'heavy', 'aim'].includes(e.intent.k) || e.intent.aimed) && e.role !== 'boss');
+    case 'interrupt': return al.filter(e => e.intent && (['charge', 'heavy', 'aim', 'chant', 'chanting', 'burn'].includes(e.intent.k) || e.intent.aimed) && e.role !== 'boss');
     default: return al;
   }
 }
@@ -1509,8 +1515,8 @@ function consApply(b, run, c, tgt) {
     case 'quick': b.extraQuick = 1; return '이번 차례에 빠른 칸이 하나 더 생긴다';
     case 'cure': delete p.s[D.s]; return (KW_N[D.s] || D.s) + '이(가) 사라진다';
     case 'block': addS(b, p, 'block', 1); return '다음 해로운 상태 하나를 막는다';
-    case 'interrupt': { const was = tgt.intent.k, aimed = !!tgt.intent.aimed; tgt.intent = { k: 'attack' }; tgt.teleTurn = null; return tgt.n + '이(가) 모으던 ' + (was === 'aim' || aimed ? '겨누기' : '강타') + '를 놓친다'; }
-    case 'halfboom': b.halfBoom = b.round; return '이번 라운드 폭발 피해 절반';
+    case 'interrupt': { const was = tgt.intent.k, aimed = !!tgt.intent.aimed; tgt.intent = { k: 'attack' }; tgt.teleTurn = null; if (tgt.chant) { tgt.chant = null; tgt.pyreRest = 1; } return tgt.n + '이(가) 모으던 ' + (was === 'aim' || aimed ? '겨누기' : CHANT_K.includes(was) ? '영창' : '강타') + '를 놓친다'; }
+    case 'halfboom': b.halfBoom = b.round; return '이번 라운드 화형 피해 절반';
     case 'blind': for (const e of alive(b)) if (e.row === 'back' && e.role !== 'root') e.missNext = 1; return '후열 적들의 다음 공격이 빗나간다';
     case 'unevade': tgt.evading = 0; return tgt.n + '이(가) 몸을 일으킨다';
     case 'unbrace': tgt.braced = 0; return tgt.n + '의 버티기가 풀린다';
@@ -1628,6 +1634,14 @@ function decideIntent(b, e) {
     }
     case 'summoner': { const c = n % 3; it = c === 0 && al.filter(x => x.role === 'minion').length < SUMMON.cap ? { k: 'summon' } : c === 1 ? { k: 'curse' } : { k: 'attack' }; break; } // 소환 → 저주 → 공격
     case 'bomber': it = { k: 'fuse' }; break;
+    case 'pyre': { // 화형 사제 (10월 5일): 영창 시작 → 영창 → 화형. 다른 적이 영창 중이면 불화살. 화형이나 끊긴 뒤에는 한 번 불화살
+      const other = al.some(x => x !== e && x.intent && CHANT_K.includes(x.intent.k));
+      if (e.intent && e.intent.k === 'chant' && e.chant) it = { k: 'chanting' };
+      else if (e.intent && e.intent.k === 'chanting' && e.chant) it = { k: 'burn' };
+      else if (e.pyreRest || other) { e.pyreRest = 0; it = { k: 'attack' }; }
+      else it = { k: 'chant' };
+      break;
+    }
     case 'minion': { const sm = al.find(x => x.role === 'summoner'); if (sm) it = al.filter(x => x.role === 'minion')[0] === e ? { k: 'guard', tgt: sm.id } : { k: 'attack' }; else it = n % 2 === 0 || (b.ctx && b.ctx.tut) ? { k: 'attack' } : { k: 'evade' }; break; } // 소환사가 있으면 하나가 지키고 나머지는 공격, 없으면 공격 ↔ 몸 낮추기 (수련장 인형은 늘 공격)
     case 'thief': it = e.loot ? { k: 'flee' } : n % 2 === 0 ? { k: 'evade' } : { k: 'steal' }; break; // 몸 낮추기 → 훔치기 → 달아나기
     case 'darkmage': it = n % 2 === 0 ? { k: 'curse' } : { k: 'attack' }; break; // 저주 → 어둠 화살
@@ -1657,6 +1671,9 @@ function intentText(b, e) {
     case 'heal': { const t = b.en.find(x => x.id === i.tgt); return { t: (t ? t.n : '아군') + '을(를) ' + r1(healFrac(e) * 100) + '% 치유' + (e.healN && !e.monk ? ' (지침)' : ''), hv: 1 }; }
     case 'summon': return { t: '하수인을 부른다', hv: 0 };
     case 'fuse': return { t: '도화선에 불을 붙인다. 다음 행동에 터진다', hv: 1 };
+    case 'chant': return { t: '화형 영창을 시작한다. 영창하는 동안 생명력의 ' + Math.round(CHANT.cut * 100) + '%만큼 피해를 받으면 끊긴다', hv: 1 };
+    case 'chanting': return { t: '영창 중. 다음 행동에 화형 ' + r1(chantDmg(b, e)) + ' · 화상 ' + CHANT.burn + '. 끊기까지 피해 ' + r1(e.chant ? e.chant.need - e.chant.taken : 0), hv: 1 };
+    case 'burn': return { t: '화형 ' + r1(chantDmg(b, e)) + ' · 화상 ' + CHANT.burn, hv: 1 };
     case 'explode': return { t: '폭발 ' + r1(est * EKW.explodeMul) + ' · 약화 ' + EKW.explodeWeak, hv: 1 };
     case 'mirror': return { t: '나락의 거울. 내 직전 스킬의 절반 ' + r1(b.p.lastSkillDmg * 0.5), hv: 1 };
     case 'brand': return { t: '죄를 읽는다. 공격 ' + r1(est * 0.6), hv: 0 };
@@ -1683,7 +1700,7 @@ function intentText(b, e) {
 
 /* 예고 아이콘 (10월 3일 만든 사람 요청: 적이 얼마나 아프게, 무엇을 하는지 한눈에. 아이콘 + 큰 숫자 + 짧은 말) */
 const heavyName = e => ({ bishop: '뼈 창', cantor: '합창', scribe: '선고' })[e.foe] || '강타';
-const INTENT_ICO = { raise: '⚰️', tune: '🎵', seal: '🔏', attack: '⚔️', charge: '⏳', heavy: '💥', heal: '✚', summon: '📯', fuse: '🧨', explode: '💣', mirror: '🪞', brand: '📜', pray: '🙏', none: '·', brace: '🪨', counter: '↩️', evade: '🌀', aim: '🎯', guard: '🙌', bless: '✨', curse: '🕯️', steal: '🫳', flee: '💨' };
+const INTENT_ICO = { chant: '📿', chanting: '📿', burn: '🔥', raise: '⚰️', tune: '🎵', seal: '🔏', attack: '⚔️', charge: '⏳', heavy: '💥', heal: '✚', summon: '📯', fuse: '🧨', explode: '💣', mirror: '🪞', brand: '📜', pray: '🙏', none: '·', brace: '🪨', counter: '↩️', evade: '🌀', aim: '🎯', guard: '🙌', bless: '✨', curse: '🕯️', steal: '🫳', flee: '💨' };
 function intentBadge(b, e) {
   const i = e.intent || {}; const est = enemyHitEst(b, e); const capOf = d => Math.min(d, b.p.hpMax * (e.role === 'boss' ? 0.45 : e.elite ? 0.35 : 0.25));
   switch (i.k) {
@@ -1705,6 +1722,9 @@ function intentBadge(b, e) {
     case 'heal': { const t = b.en.find(x => x.id === i.tgt); return { ico: INTENT_ICO.heal, num: Math.round(healFrac(e) * 100) + '%', txt: '치유', cls: 'sup' }; }
     case 'summon': return { ico: INTENT_ICO.summon, num: '', txt: '부르기', cls: 'sup' };
     case 'fuse': return { ico: INTENT_ICO.fuse, num: '', txt: '도화선 · 곧 폭발', cls: 'warn' };
+    case 'chant': return { ico: INTENT_ICO.chant, num: '', txt: '영창 시작', cls: 'warn' };
+    case 'chanting': return { ico: INTENT_ICO.chanting, num: '', txt: '영창 · 곧 화형', cls: 'hv' };
+    case 'burn': return { ico: INTENT_ICO.burn, num: r1(capOf(chantDmg(b, e))), txt: '화형 · 화상 ' + CHANT.burn, cls: 'hv' };
     case 'explode': return { ico: INTENT_ICO.explode, num: r1(Math.min(est * EKW.explodeMul, b.p.hpMax * (e.elite ? 0.35 : 0.25))), txt: '폭발 · 약화 ' + EKW.explodeWeak, cls: 'hv' };
     case 'mirror': return { ico: INTENT_ICO.mirror, num: r1(b.p.lastSkillDmg * 0.5), txt: '거울', cls: 'hv' };
     case 'brand': return { ico: INTENT_ICO.brand, num: r1(capOf(est * 0.6)), txt: '죄를 읽는다 · 낙인', cls: 'atk' };
@@ -1724,7 +1744,7 @@ function incomingEst(b) {
   let sum = 0, n = 0;
   for (const x of previewAfter(b, 1)) {
     const e = x.e; const bd = intentBadge(b, e); const cap = d => Math.min(d, b.p.hpMax * (e.role === 'boss' ? 0.45 : e.elite ? 0.35 : 0.25));
-    if (['attack', 'heavy', 'explode', 'mirror', 'brand'].includes((e.intent || {}).k)) { sum += +bd.num || 0; n++; }
+    if (['attack', 'heavy', 'explode', 'mirror', 'brand', 'burn'].includes((e.intent || {}).k)) { sum += +bd.num || 0; n++; }
     for (let k = 1; k < x.n; k++) { sum += cap(enemyHitEst(b, e)); n++; }
   }
   return { sum, n };
@@ -1740,10 +1760,10 @@ function enemyAct(b, e) {
   if (e.stun > 0) { e.stun--; logp(b, 'sys', e.n + '이(가) 비틀거린다. 행동을 놓친다'); e.acts++; return; }
   e.braced = 0; e.countering = 0; e.evading = 0; e.guarding = null; e.unguard = 0; // 버티기 · 반격 태세 · 몸 낮추기 · 지키기는 그 적의 다음 행동까지
   const i = e.intent || { k: 'attack' }; const d = enemyHitEst(b, e);
-  if ((i.k === 'heavy' || i.k === 'explode' || i.aimed || i.k === 'sacrifice') && e.teleTurn === b.turnIdx) { logp(b, 'sys', e.n + '이(가) 힘을 모은 채 노려본다'); return; } // 10월 4일: 예고한 큰 공격은 내 차례가 한 번 지난 뒤에 나간다 (한 라운드에 두 번 움직이는 적이 모은 바로 그 라운드에 내리쳤다)
+  if ((i.k === 'heavy' || i.k === 'explode' || i.k === 'burn' || i.aimed || i.k === 'sacrifice') && e.teleTurn === b.turnIdx) { logp(b, 'sys', e.n + '이(가) 힘을 모은 채 노려본다'); return; } // 10월 4일: 예고한 큰 공격은 내 차례가 한 번 지난 뒤에 나간다 (한 라운드에 두 번 움직이는 적이 모은 바로 그 라운드에 내리쳤다)
   b.rec.push({ k: 'eact', t: r1(b.t), role: e.role, i: i.k });
   switch (i.k) {
-    case 'attack': { if (e.missNext) { e.missNext = 0; logp(b, 'good', e.n + '의 공격이 연막 속에서 빗나간다'); break; } const x = hurtPlayer(b, d * (i.aimed ? EKW.aimMul : 1), { src: e, single: 1, label: e.n + (i.aimed ? '이(가) 겨눈 한 발을 쏜다' : '이(가) 나를 벤다') }); if (i.bleed && x > 0) addS(b, b.p, 'bleed', i.bleed); leech(b, e, x); break; }
+    case 'attack': { if (e.missNext) { e.missNext = 0; logp(b, 'good', e.n + '의 공격이 연막 속에서 빗나간다'); break; } const x = hurtPlayer(b, d * (i.aimed ? EKW.aimMul : 1), { src: e, single: 1, label: e.n + (i.aimed ? '이(가) 겨눈 한 발을 쏜다' : ({ archer: '이(가) 활을 쏜다', darkmage: '이(가) 어둠 화살을 날린다', pyre: '이(가) 불씨를 던진다' })[e.role] || '이(가) 나를 벤다') }); if (i.bleed && x > 0) addS(b, b.p, 'bleed', i.bleed); leech(b, e, x); break; }
     case 'brand': { hurtPlayer(b, d * 0.6, { src: e, single: 1, label: e.n + '이(가) 죄를 읽는다' }); if (!b.over) { const before = st(b.p, 'brand'); addS(b, b.p, 'brand', 999, 1, 3); if (st(b.p, 'brand') > before) logp(b, 'bad', '이름 위에 낙인이 새겨진다. 낙인 ' + st(b.p, 'brand')); codexHit(b, 'abbot', 'brand'); } break; }
     case 'pray': { logp(b, 'sys', e.n + '이(가) 입을 다문 채 기도한다'); break; }
     case 'challenge': { e.demand = { k: 'atk', turn: b.turnIdx, hit: 0 }; logp(b, 'crit', e.n + '이(가) 심문한다. 다음 차례에 맞서라'); codexHit(b, 'abbot', 'demand'); break; }
@@ -1777,11 +1797,14 @@ function enemyAct(b, e) {
       (b.seal = b.seal || []).push(r); logp(b, 'bad', e.n + '이(가) ' + r.n + '을(를) 적어 넣는다. 봉인 ' + b.seal.length + '/' + FOE_X.scribe.cap); codexHit(b, 'scribe', 'seal'); break; }
     case 'summon': if (e.noSummon) { e.noSummon = 0; logp(b, 'good', e.n + '의 부름이 소금 원에 막힌다'); break; } for (let k = 0; k < SUMMON.n; k++) spawn(b, 'minion'); logp(b, 'bad', e.n + '의 부름에 뼈가 일어선다'); break;
     case 'fuse': e.teleTurn = b.turnIdx; logp(b, 'sys', e.n + '의 도화선이 타들어 간다'); break;
+    case 'chant': { e.chant = { taken: 0, need: Math.round(e.hpMax * CHANT.cut) }; logp(b, 'sys', e.n + '이(가) 화형 영창을 시작한다'); break; }
+    case 'chanting': { e.teleTurn = b.turnIdx; logp(b, 'sys', e.n + '의 영창이 높아진다. 장작에 불이 붙는다'); break; }
+    case 'burn': { e.chant = null; e.pyreRest = 1; const x = hurtPlayer(b, chantDmg(b, e) * (b.halfBoom === b.round ? 0.5 : 1), { src: e, single: 1, charged: 1, label: e.n + '의 화형이 나를 덮친다' }); if (x > 0 && !b.over) addS(b, b.p, 'ignite', CHANT.burn); break; }
     case 'explode': { hurtPlayer(b, d * EKW.explodeMul * (b.halfBoom === b.round ? 0.5 : 1), { src: e, aoe: 1, label: e.n + '이(가) 터진다' }); if (!b.over) addS(b, b.p, 'weak', EKW.explodeWeak); e.alive = false; e.hp = 0; logp(b, 'sys', e.n + '은(는) 재가 되어 흩어진다'); checkEnd(b); break; }
     case 'mirror': { const x = b.p.lastSkillDmg * 0.5; if (x > 0) hurtPlayer(b, x, { src: e, single: 1, label: '나락의 거울이 내 스킬을 되비춘다' }); else logp(b, 'sys', '거울에 비칠 것이 없다'); break; }
   }
   // 0.6a.2: 공격했으면 약화·강화 1 감소, 행동했으니 출혈 발동, 다음 행동 시간에 둔화·가속
-  if (['attack', 'heavy', 'explode', 'mirror', 'brand'].includes(i.k)) { kwDec(e, 'weak'); kwDec(e, 'empower'); }
+  if (['attack', 'heavy', 'explode', 'mirror', 'brand', 'burn'].includes(i.k)) { kwDec(e, 'weak'); kwDec(e, 'empower'); }
   if (e.alive) kwBleed(b, e);
   e.acts++;
   if (e.role === 'boss' && e.alive) bossPhase(b, e);
@@ -2135,13 +2158,13 @@ function addBreak(b, e, v) {
   if (e.vow) v *= 1.5;
   e.brk += v * (1 + 0.01 * stat(b.p, 'str'));
   if (e.brk >= e.brkMax) {
-    const cut = !!(e.intent && ['heavy', 'charge', 'explode', 'fuse'].includes(e.intent.k)); // 모으던 강타·폭발을 끊었는가 (수련장 목표)
+    const cut = !!(e.intent && ['heavy', 'charge', 'explode', 'fuse', 'chant', 'chanting', 'burn'].includes(e.intent.k)); if (e.chant) { e.chant = null; e.pyreRest = 1; logp(b, 'good', e.n + '의 영창이 끊긴다'); } // 모으던 강타·폭발을 끊었는가 (수련장 목표)
     e.brk = 0; e.stun = 1; addS(b, e, 'broken', 2); addS(b, e, 'vuln', 2); e.braced = 0; e.countering = 0; e.evading = 0; e.guarding = null; // 10월 4일: 무너지면 버티기 · 반격 태세 · 몸 낮추기 · 지키기가 모두 풀린다 /* 붕괴 상태는 다음 라운드가 끝날 때까지 (10월 3일 라운드 방식: 1이면 이번 라운드 끝에 풀려, 무너뜨린 뒤 내 다음 차례에는 붕괴한 적을 칠 수 없었다) */ if (e.elite || e.strong || e.role === 'boss') chargeEv(b, 'break'); // 격발 갈래 규칙: 정예 이상을 무너뜨리면 대기 −1 (하수인·일반은 세지 않는다: 무리에서 돌지 않게)
     if (e.vow) { e.vow = 0; e.vowTick = b.tick; addS(b, e, 'vuln', 2); logp(b, 'crit', e.n + '의 서원이 깨진다'); codexHit(b, 'abbot', 'vowbreak'); const cs = b.en.filter(x => x.role === 'candle' && x.alive); for (const c of cs) { c.alive = false; c.hp = 0; } if (cs.length) logp(b, 'good', '촛불이 모두 꺼진다'); }
     if (e.foe === 'cantor' && hymnReset(b)) { logp(b, 'good', '노래가 흩어진다'); codexHit(b, 'cantor', 'cut'); }
     if (e.foe === 'scribe' && (b.seal || []).length) { b.seal = []; logp(b, 'good', '봉인이 풀린다'); codexHit(b, 'scribe', 'unseal'); }
     if (e.intent && e.intent.k === 'sacrifice') { e.sacNext = null; e.sacCool = ABBOT.sacCool; logp(b, 'good', e.n + '의 제사가 끊긴다'); }
-    if (e.intent && (e.intent.k === 'heavy' || e.intent.k === 'charge' || e.intent.k === 'explode' || e.intent.k === 'fuse' || e.intent.k === 'sacrifice' || e.intent.k === 'sacprep')) { e.intent = { k: 'attack' }; }
+    if (e.intent && (e.intent.k === 'heavy' || e.intent.k === 'charge' || e.intent.k === 'explode' || e.intent.k === 'fuse' || CHANT_K.includes(e.intent.k) || e.intent.k === 'sacrifice' || e.intent.k === 'sacprep')) { e.intent = { k: 'attack' }; }
     if (e.role === 'boss') { e.breaks++; e.brkMax = Math.round(e.brkMax * 1.5); }
     logp(b, 'crit', e.n + '의 자세가 무너진다. 모으던 힘이 흩어지고 다음 행동을 놓친다');
     b.rec.push({ k: 'break', t: r1(b.t), role: e.role, cut: cut ? 1 : 0 });
@@ -2365,7 +2388,7 @@ const HELP = [
     '충전 중 → 강타: 한 번 쉬고 다음 행동에 평소의 ' + TELE.heavy + '배 피해를 주고, 맞으면 취약 ' + EKW.heavyVuln + '가 걸립니다. 흘리기, 방어, 붕괴로 끊기, 먼저 쓰러뜨리기 가운데 고르세요.',
     '적은 매번 때리지 않습니다. 버티기(다음 행동까지 받는 피해 절반), 반격 태세(근접으로 치면 되받음), 몸 낮추기(다음에 맞는 공격 하나를 피함. 여럿을 함께 치는 공격과 지속 피해는 못 피함), 겨누기(다음 행동에 강한 한 발), 지키기(동료 대신 맞음)를 섞습니다. 버티기 · 반격 태세 · 몸 낮추기 · 지키기는 그 적이 무너지면 모두 풀립니다.',
     '치유: 사제가 생명력 ' + Math.round(PRIEST.heal * 100) + '% 아래인 동료를 25% 회복합니다. 치유할 때마다 다음 치유는 30%씩 줄어듭니다(지침). 축복: 동료의 다음 공격 피해 +25%. 저주: 나에게 약화 ' + EKW.curseWeak + '. 훔치기: 도둑이 플라스크 한 칸, 골드, 가방의 장비 가운데 하나를 훔치고 다음 행동에 달아납니다. 달아나기 전에 쓰러뜨리면 되찾습니다.',
-    '도화선 → 폭발: 자폭병이 다음 행동에 평소의 ' + EKW.explodeMul + '배 피해와 약화 ' + EKW.explodeWeak + '를 주고 사라집니다. 자폭병은 한 적만 노리는 공격 한 번에 쓰러지고, 전열 모두를 치는 공격과 지속 피해로는 쓰러지지 않습니다.'] },
+    '영창 → 화형: 화형 사제가 영창을 시작하면 다음 행동에 화형(큰 피해와 화상 ' + CHANT.burn + ')이 옵니다. 영창하는 동안 받은 피해가 그 적 생명력의 ' + Math.round(CHANT.cut * 100) + '%가 되면 끊깁니다. 어떤 공격이든 쌓이고, 무너뜨려도 끊깁니다. 영창은 한 번에 한 적만 합니다.'] },
   { k: 'row', n: '전열과 후열', t: [
     '적은 앞줄(전열)과 뒷줄(후열)에 섭니다. 근접 공격(기본 공격, 강공격, 근접 스킬)은 전열만 노릴 수 있습니다. 전열이 모두 쓰러지거나 붕괴하면 근접 공격도 후열에 닿습니다.',
     '원거리와 광역 스킬은 언제나 닿습니다. 다만 광역 스킬은 후열에 70%만 들어갑니다.',
@@ -2880,7 +2903,7 @@ function vBattle() {
   const ecard = e => {
     const it = intentText(b, e); const ib = intentBadge(b, e); const sel = G.sel === e.id; const pop = pops[e.id];
     const reach = !frontBlocked(b) || e.row === 'front';
-    return `<button class="en${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(e.n)} 생명력 ${shownHp(e.hp)}/${Math.round(e.hpMax)}${e.role !== 'root' ? ', ' + esc(eordText(b, e)) : ''}, 예고: ${esc(it.t)}">${eordHtml(b, e)}<div class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wallUp(b, e) ? '<span class="wallm" data-info="ewall" aria-label="방패벽">🛡️</span>' : wallFrontUp(b, e) ? '<span class="wallm" data-info="ewallf" aria-label="방패벽">🛡️</span>' : ''}${e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" data-info="etough">강인</small>' : ''}${e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${reach && guardOf(b, e) ? '<span class="nr gd" data-info="guarded" tabindex="0" aria-label="방패병이 막는 중">🛡️막힘</span>' : ''}${e.braced ? '<span class="nr gd" data-info="ebraced" tabindex="0" role="img" aria-label="버팀">🪨</span>' : ''}${e.countering ? '<span class="nr gd" data-info="ecounter" tabindex="0" role="img" aria-label="반격 태세">↩️</span>' : ''}${e.evading ? '<span class="nr gd" data-info="eevade" tabindex="0" role="img" aria-label="몸 낮춤">🌀</span>' : ''}${e.guarding ? '<span class="nr gd" data-info="eguard" tabindex="0" role="img" aria-label="지키는 중">🙌</span>' : ''}${e.hymn ? '<span class="nr gd" data-info="ehymn" tabindex="0" aria-label="노래 ' + e.hymn + '겹">🎵' + e.hymn + '</span>' : ''}${e.demand && e.demand.turn === b.turnIdx ? '<span class="nr gd hv" data-info="edemand" tabindex="0">' + (e.demand.k === 'rest' ? '🤲 고해' : '⚖️ 심문') + '</span>' : ''}${e.loot ? '<span class="nr gd" data-info="eloot" tabindex="0" role="img" aria-label="훔친 것: ' + esc(e.loot.n) + '">🫳</span>' : ''}${e.boss === 'tree' && rootRegen(b) > 0 ? `<span class="nr rg2" data-info="regen" tabindex="0">🌱 +${rootRegen(b)}/라운드</span>` : ''}</div>${ehpBar(e)}${e.role !== 'root' ? `<div class="bkline" data-info="bar:bk"><small>붕괴 게이지</small><div class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></div></div>` : ''}${stsHtml(e, b)}${e.role !== 'root' ? `<div class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${acts1[e.id] > 1 ? `<span class="ix">×${acts1[e.id]}</span>` : ''}</div>` : '<div class="mini">움직이지 않는다</div>'}${pop ? popHtml(pop) : ''}</button>`;
+    return `<button class="en${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(e.n)} 생명력 ${shownHp(e.hp)}/${Math.round(e.hpMax)}${e.role !== 'root' ? ', ' + esc(eordText(b, e)) : ''}, 예고: ${esc(it.t)}">${eordHtml(b, e)}<div class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wallUp(b, e) ? '<span class="wallm" data-info="ewall" aria-label="방패벽">🛡️</span>' : wallFrontUp(b, e) ? '<span class="wallm" data-info="ewallf" aria-label="방패벽">🛡️</span>' : ''}${e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" data-info="etough">강인</small>' : ''}${e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${reach && guardOf(b, e) ? '<span class="nr gd" data-info="guarded" tabindex="0" aria-label="방패병이 막는 중">🛡️막힘</span>' : ''}${e.braced ? '<span class="nr gd" data-info="ebraced" tabindex="0" role="img" aria-label="버팀">🪨</span>' : ''}${e.countering ? '<span class="nr gd" data-info="ecounter" tabindex="0" role="img" aria-label="반격 태세">↩️</span>' : ''}${e.evading ? '<span class="nr gd" data-info="eevade" tabindex="0" role="img" aria-label="몸 낮춤">🌀</span>' : ''}${e.guarding ? '<span class="nr gd" data-info="eguard" tabindex="0" role="img" aria-label="지키는 중">🙌</span>' : ''}${e.chant ? '<span class="nr gd hv" data-info="echant" aria-label="영창 끊기까지 ' + r1(e.chant.need - e.chant.taken) + '">📿 ' + r1(e.chant.need - e.chant.taken) + '</span>' : ''}${e.hymn ? '<span class="nr gd" data-info="ehymn" tabindex="0" aria-label="노래 ' + e.hymn + '겹">🎵' + e.hymn + '</span>' : ''}${e.demand && e.demand.turn === b.turnIdx ? '<span class="nr gd hv" data-info="edemand" tabindex="0">' + (e.demand.k === 'rest' ? '🤲 고해' : '⚖️ 심문') + '</span>' : ''}${e.loot ? '<span class="nr gd" data-info="eloot" tabindex="0" role="img" aria-label="훔친 것: ' + esc(e.loot.n) + '">🫳</span>' : ''}${e.boss === 'tree' && rootRegen(b) > 0 ? `<span class="nr rg2" data-info="regen" tabindex="0">🌱 +${rootRegen(b)}/라운드</span>` : ''}</div>${ehpBar(e)}${e.role !== 'root' ? `<div class="bkline" data-info="bar:bk"><small>붕괴 게이지</small><div class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></div></div>` : ''}${stsHtml(e, b)}${e.role !== 'root' ? `<div class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${acts1[e.id] > 1 ? `<span class="ix">×${acts1[e.id]}</span>` : ''}</div>` : '<div class="mini">움직이지 않는다</div>'}${pop ? popHtml(pop) : ''}</button>`;
   };
   const bk = b.en.filter(e => e.alive && e.row === 'back'), fr = b.en.filter(e => e.alive && e.row === 'front');
   /* 전열 · 후열 띠 (10월 3일 만든 사람: 한눈에 안 들어온다): 줄마다 색 띠와 머리글, 머리에 근접 공격이 닿는지.
@@ -3005,6 +3028,7 @@ function previewText(b, time) {
     if (k === 'heavy') warn.push(x.e.n + '의 강타');
     else if (k === 'charge' && x.n >= 2) warn.push(x.e.n + '의 강타(충전 후 이어서)');
     else if (k === 'explode') warn.push(x.e.n + '의 폭발');
+    else if (k === 'burn') warn.push(x.e.n + '의 화형');
     else if (k === 'fuse' && x.n >= 2) warn.push(x.e.n + '의 폭발(준비 후 이어서)');
     else if (k === 'heal') warn.push(x.e.n + '의 치유');
     else if (k === 'mirror') warn.push('나락의 거울');
@@ -3120,6 +3144,7 @@ const RINFO = {
   darkmage: '암흑술사 · 후열. 저주(약화)와 어둠 화살을 번갈아 쓴다.',
   summoner: '소환사 · 후열. 하수인 2기를 부른다(최대 3기). 소환은 3번 행동마다 한 번.',
   bomber: '자폭병 · 전열. 점화를 준비한 다음 행동에 폭발: 광역 피해 + 약화, 그리고 사라진다.',
+  pyre: '영창자 · 후열. 화형 영창을 시작하고, 다음 행동에 화형(큰 피해 + 화상)을 내린다. 영창 중 피해가 쌓이거나 무너지면 끊긴다.',
   minion: '하수인 · 전열. 약하지만 수가 많다.',
   root: '뿌리 · 후열. 살아 있는 동안 수호목이 체력을 회복한다. 행동하지 않는다.',
 };
@@ -3353,6 +3378,7 @@ function initPop() {
     darkmage: '암흑술사. 후열. 저주로 나에게 약화 ' + EKW.curseWeak + skJo(EKW.curseWeak) + ' 걸고, 다음에는 어둠 화살을 쏜다.',
     summoner: '소환사. 후열. 세 번 행동할 때마다 하수인 둘을 불러낸다. 하수인은 셋까지.',
     bomber: '자폭병. 전열. 도화선에 불을 붙인 다음 행동에 터진다. 평소의 ' + EKW.explodeMul + '배 광역 피해와 함께 나를 약화시키고 사라진다.',
+    pyre: '영창자. 후열. 화형 영창을 시작하고 다음 행동에 화형을 내린다. 큰 피해와 함께 화상 ' + CHANT.burn + '. 영창하는 동안 생명력의 ' + Math.round(CHANT.cut * 100) + '%만큼 피해를 받거나 무너지면 끊긴다. 영창은 한 번에 한 적만.',
     minion: '하수인. 전열. 약하지만 수가 많다.',
     root: '뿌리. 후열. 살아 있는 동안 수호목이 체력을 되찾는다. 스스로는 움직이지 않는다.',
   });
@@ -3379,6 +3405,7 @@ const INFO2 = {
   regen: ['뿌리의 회복', '뒷줄의 뿌리가 살아 있는 동안 수호목은 체력을 되찾습니다. 뿌리가 많을수록, 봄일수록 빠릅니다. 숫자는 내 차례 한 번 사이에 회복하는 양입니다.', '뿌리는 원거리 공격이나 광역 공격으로 치거나, 수호목을 붕괴시킨 틈에 근접으로 칠 수 있습니다.'],
   ward: ['보호막', '받는 피해를 먼저 대신 받아내는 막입니다. 최대 생명력의 30%까지 쌓이고, 라운드가 지나도 줄지 않으며, 전투가 끝나면 사라집니다. 파수꾼은 방어할 때마다 6을 얻고, 스킬로도 얻습니다. 쌓인 보호막을 태워 치는 스킬도 있습니다. 후열 적의 공격은 절반만 받아냅니다.'],
   thorn: ['가시', '숫자만큼 남은 횟수입니다(옆의 작은 숫자는 되돌리는 피해). 적의 직접 공격에 맞을 때마다, 보호막이 다 받아내더라도 때린 적에게 피해를 되돌리고 1 줄어듭니다. 가시를 또 걸면 횟수를 더하고(최대 8번) 피해는 더 큰 쪽을 씁니다. 전투가 끝나면 사라집니다.'],
+  echant: ['영창', '이 적이 화형 영창 중입니다. 숫자만큼 피해를 더 받으면 영창이 끊깁니다.', '한 적만 치는 공격, 여럿을 치는 공격, 지속 피해가 모두 쌓입니다. 무너뜨려도 끊깁니다.'],
   ehymn: ['노래', '조율자의 노래가 겹마다 이 적의 피해를 ' + Math.round(FOE_X.cantor.hymn * 100) + '% 올립니다.'],
   seal: ['봉인', '적힌 행동은 쓸 수 없습니다.'],
   ebraced: ['버팀', '이 적이 다음 행동까지 받는 피해가 절반입니다. 지속 피해는 그대로 들어갑니다.', '무너뜨리면 풀립니다.'],

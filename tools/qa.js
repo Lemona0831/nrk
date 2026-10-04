@@ -52,7 +52,7 @@ function evalState(b0, b1, risk) {
   const kills = E.alive(b0).length - E.alive(b1).length;
   const flasks = (p0.flask.life + p0.flask.mana + (p0.flask.stam || 0)) - (p1.flask.life + p1.flask.mana + (p1.flask.stam || 0));
   const lowHp = p1.hp / p1.hpMax < 0.25 ? 25 : 0;
-  const threat = E.alive(b1).filter(e => e.intent && ['heavy', 'explode', 'heal', 'summon'].includes(e.intent.k)).length;
+  const threat = E.alive(b1).filter(e => e.intent && ['heavy', 'explode', 'burn', 'heal', 'summon'].includes(e.intent.k)).length;
   const roots = E.alive(b1).filter(e => e.role === 'root').length;
   const healers = E.alive(b1).filter(e => e.role === 'healer' || e.role === 'summoner').length;
   const poison = p1.s.poison ? p1.s.poison.stacks : 0;
@@ -96,7 +96,7 @@ function sigRule(b, r) {
 /* 0.6a.2 직업의 판단: 스킬 이름이 아니라 데이터(fx)를 보고 고른다. 사람처럼 단순한 규칙 몇 개 */
 const psn2 = (u, k) => (u.s[k] ? u.s[k].stacks : 0);
 const enemyAvoid = (e, a) => !a.aoe && (!!e.evading || (!!e.countering && (a.melee || (a.s && a.s.tgt === 'melee')))); // 몸 낮추기 · 반격 태세 (10월 4일)
-const enemyPrio = e => (e.role === 'thief' && (e.loot || (e.intent && e.intent.k === 'steal'))) ? 2 : e.braced ? -1 : 0; // 도둑은 먼저, 버티는 적은 나중
+const enemyPrio = e => (e.role === 'thief' && (e.loot || (e.intent && e.intent.k === 'steal'))) ? 2 : e.chant ? 1.5 : e.braced ? -1 : 0; // 도둑은 먼저, 영창 중인 화형 사제는 그다음(피해가 쌓이면 끊긴다), 버티는 적은 나중
 const WARDEN_FX = ['ward', 'wardFill', 'wardBurn', 'thorn', 'pull', 'vulnGrow', 'vulnPer', 'chillx', 'shieldx']; // 파수꾼 효과 (v2Pick의 파수꾼 판단이 이 효과를 가진 스킬에만 걸린다)
 /* 0.6a.2 라운드: 이번 차례에(빠른 행동으로) 흘릴 준비를 이미 했는가 (id를 주면 그 적에게). 옛 직업은 늘 false라 next/ 측정은 그대로다 */
 const v2Ready = (b, id) => !!(E.isV2 && E.isV2(b.p) && b.p.dodge && b.prepTurn === b.turnIdx && (id == null || b.p.dodge === id));
@@ -109,7 +109,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   const useMech = r() < (P.mech || 0.5);
   // 정화 플라스크: 적이 이번에 상태를 걸 예정이면 미리 막는다
   // 정화 플라스크: 출혈이 이미 쌓여 더 걸리면 아프거나, 폭발 약화가 올 때만(사람은 막을 거리가 클 때 마신다)
-  const pv1 = E.previewAfter(b, 1); const bleedIn = pv1.some(x => x.e.intent && x.e.intent.k === 'attack' && x.e.intent.bleed); const boomIn = pv1.some(x => x.e.intent && x.e.intent.k === 'explode');
+  const pv1 = E.previewAfter(b, 1); const bleedIn = pv1.some(x => x.e.intent && x.e.intent.k === 'attack' && x.e.intent.bleed); const boomIn = pv1.some(x => x.e.intent && ['explode', 'burn'].includes(x.e.intent.k));
   if (((bleedIn && psn2(p, 'bleed') >= 2) || boomIn) && !p.s.block && p.flask.mana > 0 && r() < aware * 0.5) return ['flaskM'];
   // 강타 예고: 흘리기형 스킬(스태미나 없이) → 흘리기 준비 → 스태미나 흘리기. 이번 차례에 빠른 행동으로 이미 그 적을 흘릴 준비를 했으면 다시 걸지 않는다(덮어쓰면 붙은 효과를 잃는다)
   if (hv && !v2Ready(b, hv.e.id) && r() < Math.max(P.parry, 0.35) + 0.2) {
@@ -163,7 +163,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   // 키우기: 중독 4 이상
   for (const a of okS.filter(a => has(a, 'grow'))) { const t = best(a, (x, y) => psn(y) - psn(x)); if (t && psn(t) >= 4) return [a.id, t.id]; }
   // 강타·폭발을 모으는 적: 끊는 스킬(끊어 내기, 붕괴가 큰 스킬)로 그 적을 노린다 (사람은 예고를 보고 끊는다)
-  { const chg = E.alive(b).filter(e => e.intent && ['charge', 'heavy', 'fuse', 'explode'].includes(e.intent.k));
+  { const chg = E.alive(b).filter(e => e.intent && ['charge', 'heavy', 'fuse', 'explode', 'chant', 'chanting', 'burn'].includes(e.intent.k));
     if (chg.length && r() < 0.8) { const brkOf = a => a.s.fx.reduce((m, e) => m + (e.k === 'cutx' ? e.brk : e.k === 'brk' ? e.n : e.k === 'brkPer' ? e.per * psn(chg[0]) : 0), 0);
       const cs = okS.filter(a => !a.self && brkOf(a) >= 25).sort((x, y) => brkOf(y) - brkOf(x));
       for (const a of cs) { const t = chg.filter(e => E.canTarget(b, e, a)).sort((x, y) => (y.brk / y.brkMax) - (x.brk / x.brkMax))[0]; if (t && t.brk + brkOf(a) >= t.brkMax * 0.6) return [a.id, t.id]; } } }
@@ -187,7 +187,7 @@ function heuristic(b, P, r, mem) {
   const hpf = p.hp / p.hpMax;
   const pv = E.previewAfter(b, 1);
   const hv = pv.find(x => x.e.intent && x.e.intent.k === 'heavy');
-  const ex = pv.find(x => x.e.intent && x.e.intent.k === 'explode');
+  const ex = pv.find(x => x.e.intent && ['explode', 'burn'].includes(x.e.intent.k));
   // 실수
   if (r() < P.err * (mem.errMul || 1)) { const okL = L.filter(a => a.ok && a.id !== 'flee'); const a = okL[Math.floor(r() * okL.length)]; const ts = E.alive(b).filter(e => E.canTarget(b, e, a)); return [a.id, ts.length ? ts[Math.floor(r() * ts.length)].id : null, 'mistake']; }
   // 플라스크 (기억하고 있을 때만)
