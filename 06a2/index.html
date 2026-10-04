@@ -2591,7 +2591,7 @@ function vCreate() {
   const pk = C.pick && BUILDS[C.pick] ? C.pick : null;
   h += `<section class="card cstep"><h3>직업을 고르세요${q('build', '직업과 빌드')}</h3><p class="mini"><b>${esc(C.name)}</b>의 직업입니다. 직업을 누르면 규칙과 스킬이 아래에 보입니다.</p><div class="clsgrid" role="group" aria-label="직업">`;
   for (const k of CLASS_KEYS()) { const B = BUILDS[k]; h += `<button class="clsc${pk === k ? ' on' : ''}" data-a="clspick" data-k="${k}" aria-pressed="${pk === k}" style="--c:${CLS_COLOR[k] || 'var(--gold)'}"><span class="big" aria-hidden="true">${B.ico}</span><b>${esc(B.n)}</b><small>생명력 ${B.hp + SLOT_BASE.armor.v[0]}${B.v2 ? ' · 충전 스킬' : ' · 마나 ' + B.mp}</small></button>`; }
-  for (const c of (typeof CLASS_SOON !== 'undefined' ? CLASS_SOON : [])) h += `<button class="clsc" aria-disabled="true" title="${esc(c.d)}"><span class="big" aria-hidden="true">${c.ico}</span><b>${esc(c.n)}</b><small>준비 중</small></button>`;
+  for (const c of (typeof CLASS_SOON !== 'undefined' ? CLASS_SOON : []).filter(c => !CLASS_KEYS().some(k => BUILDS[k].n === c.n))) h += `<button class="clsc" aria-disabled="true" title="${esc(c.d)}"><span class="big" aria-hidden="true">${c.ico}</span><b>${esc(c.n)}</b><small>준비 중</small></button>`;
   h += `</div>`;
   if (pk) {
     const B = BUILDS[pk];
