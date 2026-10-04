@@ -1,11 +1,11 @@
 /* 나락의 유산 데이터: 소모품 (0.6a.2, 10월 4일 만든 사람 결정 · docs/0.6a.2-소모품-능력치-기획.md)
    index.html보다 먼저 읽힌다. 소모품 하나는 한 상황을 푼다. 가방에서 바로 쓰고 차례 칸을 쓰지 않는다(한 차례에 CONS_TURN개까지).
    k: 효과 종류(엔진 consApply), v: 수치(vm = 고급 수치, 있으면 고급이 나온다), max: 한 칸에 겹치는 수, price: 상점 값, use: fight(전투 중) · any(언제나) · out(전투 밖), tgt: enemy(적 하나를 고른다)
-   sit: 푸는 상황(설명 창 머리), d: 효과 문장(합니다체) */
+   sit: 푸는 상황(설명 창 머리), d: 효과 문장(합니다체), dw: 전리품으로 나오는 무게(없으면 1, 파는 것은 0.5). 10월 4일: 플라스크가 차지 않으므로 회복 소모품이 자주 나온다 */
 const CONS_TURN = 3; // 한 차례에 쓸 수 있는 소모품 수
 const CONS = {
-  herb:      { n: '약초 묶음', ico: '🌿', sit: '생명력이 낮다', k: 'heal', v: 0.12, vm: 0.2, max: 5, price: 12, use: 'any', d: v => '생명력을 최대의 ' + Math.round(v * 100) + '% 회복합니다.' },
-  bread:     { n: '마른 빵', ico: '🍞', sit: '방 사이에 쉬고 싶다', k: 'heal', v: 0.2, vm: 0.3, max: 5, price: 10, use: 'out', d: v => '전투 밖에서만 씁니다. 생명력을 최대의 ' + Math.round(v * 100) + '% 회복합니다.' },
+  herb:      { n: '약초 묶음', ico: '🌿', sit: '생명력이 낮다', k: 'heal', v: 0.12, vm: 0.2, max: 5, price: 12, dw: 6, use: 'any', d: v => '생명력을 최대의 ' + Math.round(v * 100) + '% 회복합니다.' },
+  bread:     { n: '마른 빵', ico: '🍞', sit: '방 사이에 쉬고 싶다', k: 'heal', v: 0.2, vm: 0.3, max: 5, price: 10, dw: 4, use: 'out', d: v => '전투 밖에서만 씁니다. 생명력을 최대의 ' + Math.round(v * 100) + '% 회복합니다.' },
   leaf:      { n: '각성 잎', ico: '🍃', sit: '스태미나가 바닥났다', k: 'stam', v: 30, max: 5, price: 8, use: 'fight', d: v => '스태미나 +' + v + '.' },
   incense:   { n: '향 한 줌', ico: '🪔', sit: '이번 차례에 손이 모자란다', k: 'quick', max: 3, price: 20, use: 'fight', d: () => '이번 차례에 빠른 칸이 하나 더 생깁니다.' },
   bandage:   { n: '붕대', ico: '🩹', sit: '출혈이 쌓였다', k: 'cure', s: 'bleed', max: 5, price: 8, use: 'any', d: () => '출혈을 모두 지웁니다.' },
@@ -42,11 +42,12 @@ const CONS = {
   candlest:  { n: '촛대', ico: '🕎', sit: '팔아서 골드로', k: 'sell', sell: 35, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
   beads:     { n: '묵주 구슬', ico: '📿', sit: '팔아서 골드로', k: 'sell', sell: 10, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
 };
-/* 전리품 (적 하나마다): p 무언가 떨어질 확률, rolls 굴리는 수, gold · cons · flask 나뉘는 몫, n 소모품 개수 [최소, 최대], hi 고급 확률 */
+/* 전리품 (적 하나마다): p 무언가 떨어질 확률, rolls 굴리는 수, gold · cons 나뉘는 몫, n 소모품 개수 [최소, 최대], hi 고급 확률.
+   flask: 플라스크 한 칸을 따로 떨굴 확률. 10월 4일 만든 사람 결정: 1% 이하의 아주 드문 확률(방을 이길 때 차던 규칙은 없앴다) */
 const LOOT = {
-  normal: { p: 0.35, rolls: 1, gold: 0.4, cons: 0.55, flask: 0.05, n: [1, 2], hi: 0.1 },
-  elite:  { p: 0.65, rolls: 1, gold: 0.3, cons: 0.6, flask: 0.1, n: [1, 3], hi: 0.3 },
-  big:    { p: 1, rolls: 2, gold: 0.35, cons: 0.5, flask: 0.15, n: [2, 3], hi: 0.5 },
+  normal: { p: 0.35, rolls: 1, gold: 0.4, cons: 0.6, flask: 0.003, n: [1, 2], hi: 0.1 },
+  elite:  { p: 0.65, rolls: 1, gold: 0.3, cons: 0.7, flask: 0.006, n: [1, 3], hi: 0.3 },
+  big:    { p: 1, rolls: 2, gold: 0.35, cons: 0.65, flask: 0.01, n: [2, 3], hi: 0.5 },
   goldPer: lv => 4 + 2 * lv, // 골드 한 번 = 4 + 2 × 몬스터 레벨 (방 보상 10~40과 견줌)
   lowerHi: 0.15, // 하층에서 고급 확률 더
 };

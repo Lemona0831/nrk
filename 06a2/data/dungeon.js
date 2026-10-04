@@ -1,23 +1,36 @@
 /* 나락의 유산 데이터: 던전과 갈림길 (기획서 11.3절)
-   한 챕터 = 상층 1~8층, 9층 야영지, 하층 10~17층, 18층 샘, 19층 보스. 값만 둔다. */
-const FLOORS = 19;
-const FLOOR_CAMP = 9, FLOOR_SPRING = 18, FLOOR_BOSS = 19;
-const isLower = f => f >= 10;
+   한 챕터 = 상층 12층(1~11층, 12층 야영지) + 하층 12층(13~23층, 24층 보스). 10월 4일 만든 사람 결정: 24층, 12:12. 샘은 정해진 층 없이 드문 방이다. 값만 둔다. */
+const FLOORS = 24;
+const FLOOR_CAMP = 12, FLOOR_BOSS = 24;
+const isLower = f => f > FLOOR_CAMP;
+const chOf = () => ({ boss: FLOOR_BOSS, camp: FLOOR_CAMP, lower: FLOOR_CAMP + 1, spring: 0 }); // 테스터(dgqa)가 읽는 챕터 틀
 
-/* 방 유형: w 가중치, max 챕터당 최대, from 나오는 첫 층, fight 전투 방 */
+/* 방 유형: w 가중치, max 챕터당 최대, from 나오는 첫 층, fight 전투 방.
+   10월 4일 만든 사람 결정: 보물을 줄이고 일반 · 매복 · 강적을 늘린다. 시련은 드물게. 샘은 문 하나에 2~3%, 한 층의 문 셋 가운데 나올 확률 4~9%(가중치 2). 언제나 1~10% 사이 */
 const ROOM_TYPES = {
-  normal: { n: '일반', ico: '⚔️', w: 40, max: 99, from: 1, fight: 1, risk: 1, gold: [10, 15], hint: '장비 1' },
-  ambush: { n: '매복', ico: '🗡️', w: 8, max: 3, from: 2, fight: 1, risk: 2, gold: [15, 22], hint: '적이 먼저 움직인다 · 골드 많음' },
-  strong: { n: '강적', ico: '💀', w: 10, max: 4, from: 3, fight: 1, risk: 3, gold: [30, 30], hint: '고급 이상 장비' },
-  treasure: { n: '보물', ico: '🗝️', w: 9, max: 3, from: 1, fight: 1, risk: 2, gold: [25, 25], hint: '상자: 장비 둘 중 하나, 희귀 보장' },
-  trial: { n: '시련', ico: '🔥', w: 5, max: 2, from: 5, fight: 1, risk: 4, gold: [40, 40], hint: '방 특성 둘 · 희귀 장비' },
-  spring: { n: '샘', ico: '💧', w: 8, max: 2, from: 3, fight: 0, risk: 0, hint: '생명력·마나 50%, 플라스크 각 1' },
-  shrine: { n: '성소', ico: '🕯️', w: 7, max: 3, from: 1, fight: 0, risk: 0, hint: '3개 방 동안 버프' },
-  altar: { n: '제단', ico: '🩸', w: 6, max: 3, from: 2, fight: 0, risk: 0, hint: '대가 있는 거래' },
-  event: { n: '이벤트', ico: '❔', w: 7, max: 4, from: 2, fight: 0, risk: 0, hint: '선택에 따라 다르다' },
+  normal: { n: '일반', ico: '⚔️', w: 44, max: 99, from: 1, fight: 1, risk: 1, gold: [10, 15], hint: '장비 1' },
+  ambush: { n: '매복', ico: '🗡️', w: 15, max: 5, from: 2, fight: 1, risk: 2, gold: [15, 22], hint: '적이 먼저 움직인다 · 전리품 두 배 · 장비 1' },
+  strong: { n: '강적', ico: '💀', w: 13, max: 6, from: 3, fight: 1, risk: 3, gold: [30, 30], hint: '고급 이상 장비' },
+  treasure: { n: '보물', ico: '🗝️', w: 4, max: 2, from: 2, fight: 1, risk: 2, gold: [25, 25], hint: '상자: 장비 둘 중 하나, 희귀 보장' },
+  trial: { n: '시련', ico: '🔥', w: 3, max: 2, from: 5, fight: 1, risk: 4, gold: [40, 40], hint: '방 특성 둘 · 희귀 장비' },
+  spring: { n: '샘', ico: '💧', w: 2, max: 2, from: 3, fight: 0, risk: 0, hint: '생명력·마나 50%, 플라스크 각 1' },
+  shrine: { n: '성소', ico: '🕯️', w: 6, max: 3, from: 1, fight: 0, risk: 0, hint: '3개 방 동안 버프' },
+  altar: { n: '제단', ico: '🩸', w: 5, max: 3, from: 2, fight: 0, risk: 0, hint: '대가 있는 거래' },
+  event: { n: '이벤트', ico: '❔', w: 7, max: 5, from: 2, fight: 0, risk: 0, hint: '선택에 따라 다르다' },
 };
-/* 강적은 상층 2, 하층 2까지 */
-const STRONG_PER_HALF = 2;
+/* 강적은 상층 3, 하층 3까지 */
+const STRONG_PER_HALF = 3;
+/* 문에 보상이 적혀 있지 않을 확률 (전투 방). 10월 4일 만든 사람 결정: 보상은 일부만 보인다 */
+const HIDE_REWARD = 0.45;
+
+/* 갈래길 (10월 4일 만든 사람 결정): 방과 방 사이에서 길을 고른다. 고른 길은 다음 갈래길까지 이어지고, 층마다 문 셋을 고르는 것은 그대로다.
+   hp · dmg: 적 배율, loot: 전리품 확률 배율, gold: 방 골드 배율, risk: 문 위험도(★) 더하기, w: 문 종류 가중치 배율 */
+const PATH_AT = [4, 8, 13, 17, 21]; // 이 층의 문을 열기 전에 길을 고른다(1~3층은 큰 길)
+const PATHS = {
+  rough: { n: '험한 길', ico: '⛰️', hp: 1.15, dmg: 1.12, loot: 1.5, gold: 1.3, risk: 1, w: { strong: 1.6, ambush: 1.5, trial: 2, treasure: 1.3, spring: 0.5, shrine: 0.6, event: 0.8 }, d: '적이 더 거셉니다. 강적 · 매복 · 시련 문이 자주 나옵니다. 전리품과 골드가 많습니다.' },
+  main: { n: '큰 길', ico: '🛤️', hp: 1, dmg: 1, loot: 1, gold: 1, risk: 0, w: {}, d: '평소대로입니다.' },
+  quiet: { n: '샛길', ico: '🌿', hp: 0.88, dmg: 0.9, loot: 0.7, gold: 0.75, risk: -1, w: { strong: 0.4, ambush: 0.5, trial: 0.3, shrine: 1.5, event: 1.4, altar: 1.2, spring: 0.8 }, d: '적이 덜 거셉니다. 쉬는 방 문이 자주 나옵니다. 전리품과 골드가 적습니다.' },
+};
 
 /* 방 특성: 전투 방에 상층 25%, 하층 45%. 시련은 둘 */
 const ROOM_MODS = {
@@ -88,8 +101,8 @@ const EVENTS = [
 /* 몬스터 레벨: 1챕터 1~4. 레벨마다 체력 +12%, 피해 +10% */
 const MLV_HP = 0.12, MLV_DMG = 0.10;
 /* 난이도 (10월 2일, 만든 사람 결정: 1챕터 완주 자동 테스터 평균 20%, 숙련·탐험가 40%. 1층부터 실전) 던전 방의 적 체력·피해 배율 */
-const DIFF = { upper: { hp: 0.9, dmg: 0.85 }, lower: { hp: 1.2, dmg: 0.9 } }; // 10월 4일 적 행동 개편: 한 번 피해는 기준표(ROLES.hit), 이 배율은 층마다의 미세 조정. AI 테스터 완주 9%(암살자 8 · 파수꾼 10), 전투당 내 행동 11 · 14 // 상층은 1층부터 거세게. 10월 3일 라운드 방식으로 바꾼 뒤 하층을 다시 맞춤(×1.05·×0.9 → ×1.4·×1.25): 그대로면 평균 완주 63%·신중 80%로 너무 쉬웠다. 목표는 기획서 11.11절(평균 20%·신중 40%, 신중이 쓰러지는 곳 상층 15·하층 20·보스 25). dgqa 360판: 29%·40%, 15·22·23
-function mlvOf(f) { return f >= FLOOR_BOSS ? 4 : f <= 4 ? 1 : f <= 8 ? 2 : f <= 13 ? 3 : 4; }
+const DIFF = { upper: { hp: 0.8, dmg: 0.65 }, lower: { hp: 1.05, dmg: 0.7 } }; // 10월 4일 던전 24층 개편: 방을 이겨도 플라스크가 차지 않고 층이 늘어 적을 낮췄다. AI 테스터 완주 11%(암살자 10 · 파수꾼 13), 보스 승률 24%. 그 전: 상층 0.9 · 0.85, 하층 1.2 · 0.9
+function mlvOf(f) { return f >= FLOOR_BOSS ? 4 : f <= 6 ? 1 : f <= FLOOR_CAMP ? 2 : f <= 18 ? 3 : 4; } // 24층: 6층마다 한 단계
 /* 경험치: 일반 5, 정예 12, 강적 30, 보스 100 × (1 + 0.15 × (몬스터 레벨 − 1)). 소환된 적은 0 */
 const XP_BASE = { normal: 5, elite: 12, strong: 30, boss: 100 }; // 보스 150이면 챕터 끝 Lv6으로 목표(4~5)를 넘어 100으로 (10월 2일)
 /* 보스에서 오른 능력치는 다음 챕터 준비에서 나눈다(run.statPending, 단계 9) */

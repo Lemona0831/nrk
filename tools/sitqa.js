@@ -60,7 +60,7 @@ function fight(bd, sit, seed, eqOver) { // eqOver: 장착을 직접 줄 때(보�
   const sp = sit.p || {}; if (sp.hp) p.hp = Math.round(p.hpMax * sp.hp); if (sp.st != null) p.st = sp.st;
   for (const k in (sp.s || {})) p.s[k] = { stacks: sp.s[k], until: 1e9, dur: 1e9 };
   const room = JSON.parse(JSON.stringify(sit.room)); const bossKind = room.boss || null; if (room.boss) room.boss = true;
-  room.lv = (sit.lv && sit.lv[bd.lv]) || MLV[bd.lv]; room.floor = 10; if (!room.en) room.en = [];
+  room.lv = (sit.lv && sit.lv[bd.lv]) || MLV[bd.lv]; room.floor = 13; /* 하층 (06a2 24층 틀은 13층부터, next/는 10층부터) */ if (!room.en) room.en = [];
   const b = G0.roomBattle(p, room, bossKind, seed); b.rngF = r; b.stepMode = false;
   const P = Q.PERSONAS[PK]; const mem = {}; let n = 0;
   while (!b.over && n++ < 250) {

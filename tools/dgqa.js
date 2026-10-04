@@ -60,6 +60,18 @@ function pickDoor(pk, run, r) {
   return sc.indexOf(Math.max(...sc));
 }
 
+/* 갈래길 고르기 (0.6a.2, 10월 4일): 험한 길 · 큰 길 · 샛길. 생명력과 플라스크를 보고 성향대로 */
+function pickPath(pk, run, r) {
+  const p = run.p; const h = p.hp / p.hpMax; const fl = p.flask.life;
+  if (pk === 'novice') return ['rough', 'main', 'quiet'][Math.floor(r() * 3)];
+  if (!THINK(pk) && r() < 0.15) return ['rough', 'main', 'quiet'][Math.floor(r() * 3)];
+  if (pk === 'reckless') return h < 0.3 ? 'main' : 'rough';
+  if (pk === 'careful') return h < 0.6 || fl < 1 ? 'quiet' : 'main';
+  if (pk === 'casual') return h < 0.4 ? 'quiet' : 'main';
+  if (pk === 'explorer') return h < 0.4 ? 'quiet' : 'rough';
+  return h < 0.45 || fl < 1 ? 'quiet' : h > 0.8 && fl >= 2 ? 'rough' : 'main'; // 숙련
+}
+
 /* 창(시트) 처리: 전리품, 상자, 가방, 능력치, 제단 */
 function click(a, k, extra) { const ds = Object.assign({ a }, k != null ? { k: String(k) } : {}, extra || {}); const el = { dataset: ds, checked: false, closest: () => null }; G0.onClick({ target: { closest: () => el } }); }
 function handleSheets(pk, r) {
@@ -260,6 +272,7 @@ function playLoop(pk, r, out) {
       betweenChapters(pk, r); out.bossHp = null; out.bossLv = null; continue;
     }
     handleSheets(pk, r); spendTree(pk, r);
+    if (!run.cur && run.cross) { const k = pickPath(pk, run, r); (out.paths = out.paths || []).push(k); G0.choosePath(k); continue; }
     if (!run.cur && run.doors) { const i = pickDoor(pk, run, r); out.rooms.push(run.doors[i].type); G0.chooseDoor(i); continue; }
     const R = run.cur; if (!R) { out.bugs.push('방이 없음 ' + run.room); break; }
     if (!G0.ROOM_TYPES[R.type] || !G0.ROOM_TYPES[R.type].fight) { if (R.type !== 'boss') { restRoom(pk, run, r); handleSheets(pk, r); continue; } }

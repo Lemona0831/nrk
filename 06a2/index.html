@@ -426,13 +426,13 @@ html.fitmode,html.fitmode body{overflow:hidden}
 
 /* ===== 던전: 진행 바, 문 ===== */
 .dgtop{padding:10px 12px}.dghead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}.dghead .gold-n{margin-left:auto;color:var(--gold);font-weight:600}
-.dgbar{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(19,minmax(0,1fr));gap:3px}
+.dgbar{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px}
 .dgbar li{height:26px;border-radius:5px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;min-width:0;overflow:hidden}
 .dgbar li.past{opacity:.75}.dgbar li.now{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset;background:color-mix(in srgb,var(--gold) 14%,var(--panel2))}.dgbar li.camp{border-style:dashed}
 .bufs{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}.chip{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:var(--panel2)}.chip.mod{border-color:var(--blood);color:#e9b2a8}
 .doors{display:grid;gap:8px;grid-template-columns:minmax(0,1fr)}
 .door{text-align:left;display:flex;flex-direction:column;gap:4px;padding:10px 12px;min-height:96px;border-left:4px solid var(--line)}
-.door .dr-h{display:flex;align-items:center;gap:8px}.door .dr-h b{font-size:16px}.dr-ico{font-size:18px}.dr-risk{margin-left:auto;color:var(--bad);letter-spacing:1px;font-size:12px}
+.door .dr-h{display:flex;align-items:center;gap:8px}.door .dr-h b{font-size:16px}.dr-ico{font-size:18px}.dr-risk{margin-left:auto;color:var(--bad);letter-spacing:1px;font-size:12px}.dr-risk.down{color:var(--good)}
 .dr-what{margin:0;font-size:14px}.dr-mods{display:flex;gap:4px;flex-wrap:wrap}.dr-hint{font-size:12px;color:var(--muted);margin-top:auto}
 .door.t-normal,.door.t-ambush{border-left-color:#8a3a2e}.door.t-strong,.door.t-trial{border-left-color:var(--blood)}.door.t-treasure{border-left-color:var(--gr-r)}.door.t-spring,.door.t-shrine{border-left-color:var(--mp)}.door.t-altar{border-left-color:#7a2a4a}.door.t-event{border-left-color:var(--muted)}
 .evopts{display:grid;gap:6px;margin-top:8px}.evo{text-align:left;display:flex;flex-direction:column;gap:2px}.evo small{color:var(--muted);font-size:12.5px}
@@ -1421,9 +1421,7 @@ function checkEnd(b) {
   if (b.p.hp <= 0 && b.ctx.safe) { b.p.hp = 1; logp(b, 'good', '수련장의 짚 인형처럼 버틴다. 여기서는 쓰러지지 않는다(생명력 1)'); }
   if (b.p.hp <= 0) { b.p.hp = 0; b.over = 'lose'; logp(b, 'bad', '무릎이 꺾인다. 쓰러졌다'); return; }
   if (!alive(b).some(e => e.role !== 'root')) {
-    b.over = 'win'; logp(b, 'good', '마지막 적이 쓰러진다. 방이 조용해진다');
-    const f = b.p.flask; if (f.stam == null) f.stam = b.p.flaskMax; const k = ['life', 'mana', 'stam'].reduce((a, c) => f[c] - flaskCap(b.p, c) < f[a] - flaskCap(b.p, a) ? c : a, 'life');
-    if (f[k] < flaskCap(b.p, k)) { f[k]++; logp(b, 'good', ({ life: '생명력', mana: isV2(b.p) ? '정화' : '마나', stam: '스태미나' })[k] + ' 플라스크가 1 찬다'); }
+    b.over = 'win'; logp(b, 'good', '마지막 적이 쓰러진다. 방이 조용해진다'); // 10월 4일: 방을 이기면 플라스크가 차던 규칙은 없앴다(플라스크는 아주 드문 전리품)
   }
 }
 /* 도둑 (10월 4일): 플라스크 한 칸 · 골드 · 가방의 장비(무작위) 가운데 하나. 잡으면 돌려받고, 달아나면 잃는다 */
@@ -1494,7 +1492,7 @@ function consWhyNot(b, run, c, tgtId) {
     case 'guard1': return p.nextRed ? '이미 효과가 있습니다' : '';
     case 'whet': return p.whet ? '이미 효과가 있습니다' : '';
     case 'antisteal': return b.antiSteal ? '이미 효과가 있습니다' : '';
-    case 'lootx': return (b.lootMul || 1) > 1 ? '이미 효과가 있습니다' : '';
+    case 'lootx': return (b.lootX || 1) > 1 ? '이미 효과가 있습니다' : '';
     case 'unmod': return D.mods.some(m => hasMod(b, m)) ? '' : '끌 방 특성이 없습니다';
     case 'escape': return b.ctx.boss || b.ctx.scen || b.ctx.tut ? '보스전에서는 쓰지 못합니다' : '';
     default: return D.tgt === 'enemy' && !consTarget(b, D, tgtId) ? '쓸 대상이 없습니다' : '';
@@ -1528,7 +1526,7 @@ function consApply(b, run, c, tgt) {
     case 'guard1': p.nextRed = v; return '다음 공격 피해 −' + Math.round(v * 100) + '%';
     case 'unmod': { const m = D.mods.find(x => hasMod(b, x)); b.ctx.mods = b.ctx.mods.filter(x => x !== m); return (ROOM_MODS[m] ? ROOM_MODS[m].n : m) + '을(를) 끈다'; }
     case 'escape': b.over = 'flee'; return '연기 속으로 물러난다';
-    case 'lootx': b.lootMul = 2; return '이 전투의 전리품 확률 두 배';
+    case 'lootx': b.lootX = 2; return '이 전투의 전리품 확률 두 배';
   }
   return '';
 }
@@ -1546,14 +1544,14 @@ function consUse(b, run, idx, tgtId) {
 function rollDrops(b, e) {
   if (e.summoned || !b.ctx || b.ctx.tut || b.ctx.scen || e.role === 'root') return;
   const L = e.role === 'boss' || e.strong ? LOOT.big : e.elite ? LOOT.elite : LOOT.normal; const rr = b.rngF || Math.random;
-  const ids = Object.keys(CONS); const pick = () => { const w = ids.map(k => CONS[k].use === 'none' ? 0.5 : 1); let x = rr() * w.reduce((a, c) => a + c, 0); for (let i = 0; i < ids.length; i++) { x -= w[i]; if (x <= 0) return ids[i]; } return ids[0]; };
+  const ids = Object.keys(CONS); const pick = () => { const w = ids.map(k => CONS[k].dw != null ? CONS[k].dw : CONS[k].use === 'none' ? 0.5 : 1); let x = rr() * w.reduce((a, c) => a + c, 0); for (let i = 0; i < ids.length; i++) { x -= w[i]; if (x <= 0) return ids[i]; } return ids[0]; };
   b.drops = b.drops || [];
+  if (rr() < Math.min(0.01, L.flask * (b.lootMul || 1) * (b.lootX || 1))) b.drops.push({ flask: ['life', 'mana', 'stam'][Math.floor(rr() * 3)] }); // 플라스크 한 칸: 1% 이하
   for (let k = 0; k < L.rolls; k++) {
-    if (rr() >= Math.min(1, L.p * (b.lootMul || 1))) continue;
-    const x = rr() * (L.gold + L.cons + L.flask);
+    if (rr() >= Math.min(1, L.p * (b.lootMul || 1) * (b.lootX || 1))) continue;
+    const x = rr() * (L.gold + L.cons);
     if (x < L.gold) b.drops.push({ gold: LOOT.goldPer(e.lv || 1) });
-    else if (x < L.gold + L.cons) { const n = L.n[0] + Math.floor(rr() * (L.n[1] - L.n[0] + 1)); for (let i = 0; i < n; i++) { const id = pick(); b.drops.push({ cons: id, g: CONS[id].vm != null && rr() < L.hi + (b.ctx.lower ? LOOT.lowerHi : 0) ? 'm' : 'n' }); } }
-    else b.drops.push({ flask: ['life', 'mana', 'stam'][Math.floor(rr() * 3)] });
+    else { const n = L.n[0] + Math.floor(rr() * (L.n[1] - L.n[0] + 1)); for (let i = 0; i < n; i++) { const id = pick(); b.drops.push({ cons: id, g: CONS[id].vm != null && rr() < L.hi + (b.ctx.lower ? LOOT.lowerHi : 0) ? 'm' : 'n' }); } }
   }
 }
 function grantDrops(run, b) {
@@ -2183,13 +2181,14 @@ function roomBattle(player, room, bossKind, seed) {
     const bs = mkBoss(bossKind, 1, room.lv || 1); en = [bs];
     if (bossKind === 'tree') for (let i = 0; i < 3; i++) en.push(mkEnemy('root', 0, 50 + i));
   } else en = room.en.map((x, i) => mkEnemy(x[0], x[1], i, { lv: room.lv || 1, name: room.names && room.names[x[0]], tough: !!(room.tough && room.tough.includes(i)) }));
-  if (!room.boss && room.floor) { const D = DIFF[room.floor >= 10 ? 'lower' : 'upper']; for (const e of en) { e.hpMax = Math.round(e.hpMax * D.hp); e.hp = e.hpMax; e.dmg *= D.dmg; } }
-  if (room.strong && en[0]) { const e = en[0]; e.strong = true; e.foe = room.foe; const low = (room.floor || 0) >= 10; e.n = room.strong; e.hpMax = Math.round(e.hpMax * STRONG.hp * (low ? STRONG.lowerHp : 1)); e.hp = e.hpMax; e.dmg *= STRONG.dmg * (low ? STRONG.lowerDmg : 1); e.info = '강적. 무엇을 하는지는 겪어 보아야 안다.'; }
+  if (!room.boss && room.floor) { const D = DIFF[isLower(room.floor) ? 'lower' : 'upper'], P = PATHS[room.path] || PATHS.main; for (const e of en) { e.hpMax = Math.round(e.hpMax * D.hp * P.hp); e.hp = e.hpMax; e.dmg *= D.dmg * P.dmg; } }
+  if (room.strong && en[0]) { const e = en[0]; e.strong = true; e.foe = room.foe; const low = isLower(room.floor || 0); e.n = room.strong; e.hpMax = Math.round(e.hpMax * STRONG.hp * (low ? STRONG.lowerHp : 1)); e.hp = e.hpMax; e.dmg *= STRONG.dmg * (low ? STRONG.lowerDmg : 1); e.info = '강적. 무엇을 하는지는 겪어 보아야 안다.'; }
   if (room.foe === 'bellringer') { const bell = mkEnemy('root', 0, 60, { lv: room.lv || 1 }); bell.n = '큰 종'; bell.ico = '🔔'; bell.bell = 1; bell.hpMax = Math.round(bell.hpMax * 1.2); bell.hp = bell.hpMax; bell.info = '큰 종. 후열. 스스로는 움직이지 않는다.'; en.push(bell); }
   const mods = room.mods || [];
   if (mods.includes('narrow')) { let f = 0; for (const e of en) if (e.row === 'front' && e.role !== 'boss') { f++; if (f > 2) e.row = 'back'; } }
   player.bt = Object.assign({}, room.buffs || {});
-  const b = newBattle(player, en, { boss: !!room.boss, bossKind, mods, ambush: !!room.ambush, lv: room.lv || 1, names: room.names || null, lower: (room.floor || 0) >= 10 });
+  const b = newBattle(player, en, { boss: !!room.boss, bossKind, mods, ambush: !!room.ambush, lv: room.lv || 1, names: room.names || null, lower: isLower(room.floor || 0) });
+  if (!room.boss && room.floor) b.lootMul = (room.ambush ? 2 : 1) * ((PATHS[room.path] || PATHS.main).loot); // 매복은 전리품 두 배, 길마다 배율 (10월 4일)
   setRng(b, seed || 7);
   const pre = room.pre || {};
   if (pre.weak) addS(b, player, 'weak', pre.weak); if (pre.vuln) addS(b, player, 'vuln', pre.vuln); if (pre.poison) addPoison(b, player, pre.poison, 0);
@@ -2281,7 +2280,7 @@ const HELP = [
     '중독, 스태미나 회복, 보스의 시간 규칙은 라운드가 끝날 때 한 번씩 흐릅니다. 상태 옆 숫자는 세기입니다(도움말 "상태이상").'] },
   { k: 'hp', n: '생명력', t: [
     '0이 되면 쓰러지고, 그 캐릭터는 끝납니다.',
-    '전투가 끝나도 저절로 차지 않고 다음 방으로 그대로 이어집니다. 생명력 플라스크, 샘(50%), 9층 야영지(전부), 정산(전부)에서 회복합니다.'] },
+    '전투가 끝나도 저절로 차지 않고 다음 방으로 그대로 이어집니다. 생명력 플라스크, 소모품, 샘(50%), 야영지(전부), 정산(전부)에서 회복합니다.'] },
   { k: 'mp', n: '쿨타임', t: ['0.6a.2 직업에는 마나가 없습니다. 스킬은 전투를 시작할 때 모두 사용 가능하고, 쓰면 적힌 턴만큼 기다립니다. 턴은 내 차례 한 번이고, 내 턴이 끝날 때마다 1 줍니다. 쓴 그 턴에는 줄지 않습니다. 버튼에는 "쿨타임 2턴 남음" 또는 "사용 가능"이 보입니다. "전투마다 1번"인 스킬은 전투가 끝나야 다시 씁니다.'] },
   { k: 'st', n: '스태미나', t: [
     '강공격(40), 방어(20), 흘리기(30, 암살자 25)에 듭니다. 라운드가 끝날 때마다 ' + ST_REGEN + '씩 찹니다. 기본 공격은 스태미나를 채우지 않습니다.',
@@ -2292,7 +2291,7 @@ const HELP = [
     '❤️ 생명력 플라스크: 생명력을 회복합니다(낀 플라스크에 따라, 처음 30%). 상태는 지우지 않습니다.',
     '🧪 정화 플라스크: 지우지 않고 막습니다. 마시면 막음 2: 다음에 걸리는 해로운 상태 2번을 튕겨 냅니다. 적의 예고에 "출혈 2"처럼 걸 상태가 보이면 미리 마십니다.',
     '⚡ 스태미나 플라스크: 스태미나 ' + STAM_FLASK + ' 회복 + 탈진이 풀립니다.',
-    '마시는 행동은 ⚡빠름이라 마신 뒤에도 주 행동을 할 수 있습니다. 대신 다시 채우기 어렵습니다. 방을 이기면 셋 가운데 가장 덜 찬 것이 1 차고, 샘과 야영지에서 셋 다 1씩 찹니다.'] },
+    '마시는 행동은 ⚡빠름이라 마신 뒤에도 주 행동을 할 수 있습니다. 대신 다시 채우기 어렵습니다. 방을 이겨도 차지 않습니다. 샘과 야영지에서 셋 다 1씩 차고, 아주 드물게 적이 플라스크 한 칸을 떨굽니다.'] },
   { k: 'act', n: '행동', t: [
     '기본 공격(▶보통): 비용 없음. 무기 피해만큼 치고 붕괴 게이지를 10 채웁니다.',
     '강공격(⏳느림): 스태미나 40. ' + Math.round(HEAVY_V2 * 100) + '% 피해 + 붕괴 35. 빠른 칸과 주 행동을 함께 써서, 이번 차례에 빠른 행동을 이미 했으면 쓸 수 없습니다.',
@@ -2336,7 +2335,7 @@ const HELP = [
   { k: 'item', n: '장비', t: [
     '장비 칸은 일곱입니다: 무기, 갑옷, 장갑, 목걸이, 반지 둘, 플라스크. 무기는 무기 피해, 갑옷은 생명력, 플라스크는 생명력 플라스크 회복량을 정합니다.',
     '등급은 평범(회색), 고급(파랑), 희귀(금색)입니다. 등급이 높을수록 기본 수치가 더 오르고, 희귀는 행동을 바꾸는 효과와 빨간 글씨의 대가를 가집니다. 같은 장비도 얻을 때마다 수치가 조금씩 다릅니다.',
-    '전투 방을 이기면 장비를 얻습니다. 얻을 때 지금 장비와 비교해 잃는 것부터 보여 줍니다. 가방은 12칸이고, 가득 차면 하나를 버리고 받습니다.',
+    '전투 방을 이기면 장비를 얻습니다. 얻을 때 지금 장비와 비교해 잃는 것부터 보여 줍니다. 가방은 ' + BAG_MAX + '칸이고, 가득 차면 하나를 버리고 받습니다.',
     '전투 밖이면 언제든 메뉴의 장비에서 비용 없이 바꿀 수 있습니다. 전투 중에는 보기만 합니다. 무기는 다른 무기로만 바꿀 수 있습니다.'] },
   { k: 'level', n: '레벨과 경험치', t: [
     '전투 방에서 적을 쓰러뜨리면 경험치를 얻습니다. 정예, 강적, 보스일수록 많이 줍니다.',
@@ -2347,9 +2346,10 @@ const HELP = [
     '보스를 넘으면 정산합니다. 모은 골드에 보스와 강적을 쓰러뜨린 보상이 더해지고, 생명력·마나·스태미나와 플라스크가 모두 찹니다.',
     '상점에는 장비 여섯 개가 놓입니다(직업에 맞는 것 셋 이상, 희귀 하나 이상). 가방의 장비는 산 값의 25%에 팔 수 있고, 레벨 × 10골드로 능력치를 처음부터 다시 나눌 수 있습니다. 남은 골드는 다음 챕터로 가져갑니다.'] },
   { k: 'rooms', n: '방과 진행', t: [
-    '1챕터는 상층 8층, 9층 야영지, 하층 8층, 18층 샘, 19층 보스로 이루어집니다. 층마다 문 셋 가운데 하나를 고릅니다. 문에는 방의 종류, 적, 위험도(★), 방 특성이 적혀 있습니다.',
-    '싸우는 방: 일반, 매복(적이 먼저 움직임), 강적, 보물(상자에서 장비 둘 중 하나), 시련(특성 둘, 희귀 보장). 쉬는 방: 샘, 성소(몇 방 동안 버프), 제단(거래), 이벤트(선택).',
-    '하층은 상층보다 적이 거셉니다. 9층 야영지에서 모두 회복하고, 18층 샘에서 한 번 더 쉬어 갑니다.',
+    '1챕터는 24층입니다. 상층 11층, ' + FLOOR_CAMP + '층 야영지, 하층 11층, ' + FLOOR_BOSS + '층 보스로 이루어집니다. 층마다 문 셋 가운데 하나를 고릅니다. 문에는 방의 종류, 적, 위험도(★), 방 특성이 적혀 있습니다. 보상은 일부 문에만 적혀 있습니다.',
+    '몇 층마다 갈래길이 나옵니다. 험한 길은 적이 거세고 강적 · 매복이 잦은 대신 전리품과 골드가 많습니다. 샛길은 적이 덜 거세고 쉬는 방이 잦은 대신 얻는 것이 적습니다. 큰 길은 평소대로입니다. 고른 길은 다음 갈래길까지 이어집니다.',
+    '싸우는 방: 일반, 매복(적이 먼저 움직이는 대신 전리품 두 배), 강적, 보물(상자에서 장비 둘 중 하나), 시련(특성 둘, 희귀 보장). 쉬는 방: 샘, 성소(몇 방 동안 버프), 제단(거래), 이벤트(선택).',
+    '하층은 상층보다 적이 거셉니다. 야영지에서 모두 회복합니다. 샘은 드물게만 나옵니다.',
     '보스와 강적은 처음 만날 때 눈에 보이는 것만 알려 줍니다. 처음 겪은 일은 보스 도감에 적히고, 메모를 남길 수 있습니다. 보스전을 오래 끌면(보통 행동 약 ' + ENRAGE.boss + '번) 보스가 광폭해집니다.',
     '방과 방 사이, 정산, 상점에서 저장됩니다. 전투 중에 닫아도 이어하기로 같은 차례에서 다시 싸웁니다.'] },
   { k: 'record', n: '무엇을 기록하나요', t: [
@@ -2433,12 +2433,12 @@ function dgBar(run) {
   let h = '<ol class="dgbar" aria-label="던전 진행">';
   for (let f = 1; f <= FLOORS; f++) {
     const cls = f === run.room ? 'now' : f < run.room ? 'past' : '';
-    const ico = f === FLOOR_CAMP ? '⛺' : f === FLOOR_SPRING ? '💧' : f === FLOOR_BOSS ? '👑' : done[f] && ROOM_TYPES[done[f].type] ? ROOM_TYPES[done[f].type].ico : (run.log6 && run.log6[f]) || '';
+    const ico = f === FLOOR_CAMP ? '⛺' : f === FLOOR_BOSS ? '👑' : PATH_AT.includes(f) && f > run.room ? '🔀' : done[f] && ROOM_TYPES[done[f].type] ? ROOM_TYPES[done[f].type].ico : (run.log6 && run.log6[f]) || '';
     h += `<li class="${cls}${f === FLOOR_CAMP ? ' camp' : ''}" title="${esc(floorName(f))}"><span>${ico || (f < run.room ? '·' : '')}</span></li>`;
   }
   h += '</ol>';
   const bl = Object.keys(run.buffs || {}).map(k => { const S = SHRINES.find(x => x.id === k); return `<span class="chip" title="${esc(S ? S.d : '')}">${esc(S ? S.n : k === 'snuff' ? '꺼진 촛불' : k)} ${run.buffs[k]}</span>`; }).join('');
-  return `<section class="card dgtop"><div class="dghead"><b>1챕터 · ${esc(floorName(run.room))}</b><span class="mini">${run.room <= 8 ? '상층' : run.room <= 17 ? '하층' : ''} · 남은 층 ${Math.max(0, FLOORS - run.room)}</span><span class="gold-n">골드 ${run.gold || 0}</span></div>${h}${bl ? `<div class="bufs">${bl}</div>` : ''}</section>`;
+  return `<section class="card dgtop"><div class="dghead"><b>1챕터 · ${esc(floorName(run.room))}</b><span class="mini">${run.room < FLOOR_CAMP ? '상층' : run.room > FLOOR_CAMP && run.room < FLOOR_BOSS ? '하층' : ''}${run.path && PATHS[run.path] ? ' · ' + PATHS[run.path].ico + ' ' + PATHS[run.path].n : ''} · 남은 층 ${Math.max(0, FLOORS - run.room)}</span><span class="gold-n">골드 ${run.gold || 0}</span></div>${h}${bl ? `<div class="bufs">${bl}</div>` : ''}</section>`;
 }
 function doorCard(r, i) {
   const T = ROOM_TYPES[r.type]; const stars = T.fight ? '★'.repeat(r.risk || 1) + '☆'.repeat(4 - (r.risk || 1)) : '';
@@ -2449,13 +2449,21 @@ function doorCard(r, i) {
   }
   if (r.shrine) { const S = SHRINES.find(x => x.id === r.shrine); body += `<p class="dr-what">${esc(S.n)}</p><p class="mini">${esc(S.d)} 3개 방 동안.</p>`; }
   if (r.mods && r.mods.length) body += `<div class="dr-mods">${r.mods.map(m => `<span class="chip mod" title="${esc(ROOM_MODS[m].d)}">${esc(ROOM_MODS[m].n)}</span>`).join('')}</div><p class="mini">${r.mods.map(m => esc(ROOM_MODS[m].d)).join(' ')}</p>`;
-  return `<button class="door t-${r.type}" data-a="door" data-k="${i}"><span class="dr-h"><span class="dr-ico" aria-hidden="true">${T.ico}</span><b>${esc(T.n)}</b>${stars ? `<span class="dr-risk" aria-label="위험 ${r.risk}">${stars}</span>` : ''}</span>${body}<span class="dr-hint">${esc(T.hint)}</span></button>`;
+  return `<button class="door t-${r.type}" data-a="door" data-k="${i}"><span class="dr-h"><span class="dr-ico" aria-hidden="true">${T.ico}</span><b>${esc(T.n)}</b>${stars ? `<span class="dr-risk" aria-label="위험 ${r.risk}">${stars}</span>` : ''}</span>${body}<span class="dr-hint">${esc(rewardHint(r))}</span></button>`;
+}
+const rewardHint = r => r.hide ? '보상은 열어 봐야 안다' : ROOM_TYPES[r.type].hint; // 10월 4일: 보상은 일부 문에만 적힌다
+/* 갈래길: 길 셋 가운데 하나 (다음 갈래길이나 야영지 · 보스 앞까지) */
+function crossCard(id) {
+  const P = PATHS[id], f = G.run.room; const to = Math.min(f < FLOOR_CAMP ? FLOOR_CAMP : FLOOR_BOSS, PATH_AT.find(x => x > f) || FLOOR_BOSS) - 1;
+  return `<button class="door t-path-${id}" data-a="path" data-k="${id}"><span class="dr-h"><span class="dr-ico" aria-hidden="true">${P.ico}</span><b>${esc(P.n)}</b>${P.risk ? `<span class="dr-risk${P.risk < 0 ? ' down' : ''}">${P.risk > 0 ? '위험 ▲' : '위험 ▼'}</span>` : ''}</span><p class="mini">${esc(P.d)}</p><span class="dr-hint">${f}층부터 ${to}층까지</span></button>`;
 }
 function vRunMap() {
   const run = G.run, p = run.p; dgInit(run);
   let h = vPlayerPanel(p, null) + dgBar(run);
   const R = run.cur;
-  if (!R && run.doors) {
+  if (!R && run.cross) {
+    h += `<section class="card"><h3>갈래길${q('rooms', '방과 보스')}</h3><p class="mini">다음 갈래길까지 걸을 길을 고릅니다. 층마다 문을 고르는 것은 그대로입니다.</p><div class="doors">${Object.keys(PATHS).map(crossCard).join('')}</div></section>`;
+  } else if (!R && run.doors) {
     h += `<section class="card"><h3>갈림길${q('rooms', '방과 보스')}</h3><p class="mini">문 하나를 고릅니다. 전투 방만 경험치를 줍니다. 문을 고르기 전에도 장비를 바꿀 수 있습니다.</p><div class="doors">${run.doors.map(doorCard).join('')}</div></section>`;
   } else if (R) h += vRoom(run, R);
   if (run.tree) h += `<section class="card"><h4>스킬 트리${run.tree.pts ? ` <span class="newtag">포인트 ${run.tree.pts}</span>` : ''}</h4><p class="mini">시작: ${TREE2[run.build].starters.map(id => esc(SK2[id].n)).join(', ')} · 장착 ${(run.skills || []).length}/${EQUIP_SLOTS2}: ${(run.skills || []).map(id => esc(SK2[id] ? SK2[id].n : id)).join(', ') || '없음'}. 방과 방 사이에 스킬을 열고 바꿉니다.</p><button data-a="tree"${run.tree.pts ? ' class="gold"' : ''}>트리 열기</button></section>`;
@@ -2480,12 +2488,12 @@ function vRoom(run, R) {
   }
   // 전투 방
   h += `<h3>${T.ico} ${esc(T.n)}${R.strong ? ' · ' + esc(R.strong) : ''}${q('rooms', '방과 보스')}</h3>`;
-  if (R.ambush) h += `<p class="warn">매복입니다. 적이 먼저 움직입니다.</p>`;
+  if (R.ambush) h += `<p class="warn">매복입니다. 적이 먼저 움직입니다. 대신 쓰러뜨린 적이 전리품을 두 배로 떨굽니다.</p>`;
   if (R.mods && R.mods.length) h += R.mods.map(m => `<p class="mini"><b>${esc(ROOM_MODS[m].n)}</b>: ${esc(ROOM_MODS[m].d)}</p>`).join('');
   h += `<p>이 방의 적 <span class="mini">Lv${R.lv || 1}</span></p><ul class="elist">${R.en.map((x, i) => `<li>${ROLES[x[0]].ico} ${i === 0 && R.strong ? esc(R.strong) + ' (강적)' : (R.tough && R.tough.includes(i) ? '[강인] ' : '') + (x[1] ? '정예 ' : '') + esc((R.names && R.names[x[0]]) || ROLES[x[0]].n)} <span class="mini">${ROLES[x[0]].n} · ${ROLES[x[0]].row === 'front' ? '전열' : '후열'}</span></li>`).join('')}${run.next && run.next.chase ? '<li>굶주린 수도사 <span class="mini">전열</span></li>' : ''}</ul>${q('roles', '적의 역할')}`;
   const nx = run.next || {};
   if (nx.pre) h += `<p class="mini warn">${nx.pre.weak ? '약화·취약을 안고 ' : ''}${nx.pre.poison ? '중독 ' + nx.pre.poison + '을 안고 ' : ''}들어갑니다.</p>`;
-  h += `<p class="mini">보상: 골드 ${R.gold}${R.mods && R.mods.includes('bell') ? ' ×1.5' : ''}, ${esc(T.hint)}. 들어가기 전에 장비를 바꿀 수 있습니다.</p><div><button class="gold" data-a="enter" data-focus>방에 들어가기</button></div></section>`;
+  h += `<p class="mini">보상: ${R.hide ? esc(rewardHint(R)) : '골드 ' + R.gold + (R.mods && R.mods.includes('bell') ? ' ×1.5' : '') + ', ' + esc(T.hint)}. 들어가기 전에 장비를 바꿀 수 있습니다.</p><div><button class="gold" data-a="enter" data-focus>방에 들어가기</button></div></section>`;
   return h;
 }
 
@@ -3107,7 +3115,7 @@ function infoHtml(key) {
     'bar:mp': ['마나', '스킬에 씁니다. 라운드가 끝날 때마다 최대치의 5%가 찹니다.'],
     'bar:st': ['스태미나', '강공격 40, 방어 20, 흘리기 30. 라운드가 끝날 때마다 10씩 차고, 스태미나 플라스크로 60을 채웁니다. 기본 공격은 채우지 않습니다. 0이면 탈진.'],
     'bar:bk': ['붕괴 게이지', '가득 차면 적이 붕괴: 충전 중이던 기술이 취소되고 다음 행동을 잃습니다.'],
-    flask: ['플라스크', '❤️ 생명력, 💧 마나, ⚡ 스태미나 플라스크의 남은 수입니다. 방을 이기면 셋 가운데 가장 덜 찬 것이 1 차고, 샘에서 1씩 찹니다. 기본 공격은 스태미나를 채우지 않으니, 스태미나는 시간과 스태미나 플라스크로 채웁니다.'],
+    flask: ['플라스크', '❤️ 생명력, 💧 마나, ⚡ 스태미나 플라스크의 남은 수입니다. 방을 이겨도 차지 않습니다. 샘과 야영지에서 1씩 차고, 아주 드물게 적이 떨굽니다. 기본 공격은 스태미나를 채우지 않으니, 스태미나는 시간과 스태미나 플라스크로 채웁니다.'],
     stun: ['기절', '다음 행동 한 번을 잃습니다.'],
     scar: ['상흔', '받은 피해의 15%가 상흔으로 쌓입니다(최대 생명력의 절반까지). 상흔 베기는 상흔의 절반을 써서 1.5배 피해를 더하고, 상흔 방출은 전부 써서 모든 적에게 상흔 × 0.65 피해를 줍니다. 스킬 버튼에 지금 쓰면 나올 값이 적힙니다.'],
     rage: ['분노', '피해를 주거나 받을 때마다 1칸 찹니다(칸당 피해 +3%). 10칸이 차면 격노: 잠시 피해 +40%, 속도 +20%, 받는 피해 +15%. 격노가 끝나면 0부터 다시.'],
@@ -3294,7 +3302,7 @@ const INFO2 = {
   'bar:mp': ['마나', '스킬에 씁니다. 라운드가 끝날 때마다 최대치의 5%씩 찹니다.'],
   'bar:st': ['스태미나', '강공격 40, 방어 20, 흘리기 30(암살자 25)이 듭니다. 라운드가 끝날 때마다 10씩 차고, 스태미나 플라스크로 60을 채웁니다. 기본 공격은 스태미나를 채우지 않습니다. 0이 되면 탈진합니다.'],
   'bar:bk': ['붕괴 게이지', '적이 자세를 잃기까지 남은 여유입니다. 기본 공격 10, 강공격 35, 강타 흘리기 25씩 찹니다. 스킬이 채우는 양은 스킬 설명에 있습니다.', '가득 차면 그 적은 모으던 강타가 끊기고, 다음 행동을 놓치며, 취약 2가 걸립니다. 붕괴 상태는 다음 라운드가 끝날 때까지 남습니다.'],
-  flask: ['플라스크', '❤️는 생명력, 🧪는 정화(옛 직업은 💧 마나), ⚡는 스태미나 플라스크의 남은 수입니다. 방을 이기면 셋 가운데 가장 덜 찬 것이 1, 샘에서는 셋 다 1씩 찹니다. 기본 공격은 스태미나를 채우지 않으니, 스태미나는 시간과 스태미나 플라스크로 채웁니다.'],
+  flask: ['플라스크', '❤️는 생명력, 🧪는 정화(옛 직업은 💧 마나), ⚡는 스태미나 플라스크의 남은 수입니다. 방을 이겨도 차지 않습니다. 샘과 야영지에서 셋 다 1씩 차고, 아주 드물게 적이 떨굽니다. 기본 공격은 스태미나를 채우지 않으니, 스태미나는 시간과 스태미나 플라스크로 채웁니다.'],
   stun: ['기절', '다음 행동 한 번을 놓칩니다.'],
   guardon: ['방어 준비', '내 다음 차례까지 받는 피해가 절반입니다.'],
   dodgeon: ['흘리기 준비', '고른 적의 다음 공격 피해가 60% 줄어듭니다. 강타라면 그 적의 붕괴 게이지가 25 찹니다.'],
@@ -3756,17 +3764,17 @@ function restoreBattle(cur) {
 }
 function saveCur() { if (!G.run || G.run.endedAt) return; try { G.data.cur = JSON.parse(JSON.stringify(G.run)); saveLocal(); } catch (e) { } }
 function clearCur() { delete G.data.cur; saveLocal(); }
-function resumeRun() { if (!G.data.cur) return; if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); statFix(G.run); if (G.run.tree && isV2(G.run.p)) { treeFix(G.run); G.run.p.skills = v2Equip(G.run); } /* 0.6a.2: 시작 스킬이 생기기 전 저장본도 시작 스킬을 끼운다 */ G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); }
+function resumeRun() { if (!G.data.cur) return; dgFix(G.data.cur); if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); statFix(G.run); if (G.run.tree && isV2(G.run.p)) { treeFix(G.run); G.run.p.skills = v2Equip(G.run); } /* 0.6a.2: 시작 스킬이 생기기 전 저장본도 시작 스킬을 끼운다 */ G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); }
 /* ===== 던전과 갈림길 (기획서 11.3절) =====
    run.room = 지금 층(1~19). run.doors = 이 층의 문 셋, run.cur = 고른 방. run.dg = 챕터 동안의 집계(유형별 횟수, 본 유형, 이벤트, 강적).
    run.buffs = { 성소·이벤트 버프: 남은 방 수 }, run.next = 다음 전투 방에 걸리는 것, run.gold = 모은 골드(정산은 단계 9) */
-function floorName(f) { return f === FLOOR_CAMP ? '야영지' : f === FLOOR_SPRING ? '샘' : f === FLOOR_BOSS ? '보스' : f > FLOORS ? '끝' : (isLower(f) ? '하층 ' : '상층 ') + f + '층'; }
+function floorName(f) { return f === FLOOR_CAMP ? '야영지' : f === FLOOR_BOSS ? '보스' : f > FLOORS ? '끝' : (isLower(f) ? '하층 ' : '상층 ') + f + '층'; }
 const pickR = a => a[Math.floor(Math.random() * a.length)];
 const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 function dgInit(run) {
   if (run.dg) return;
   run.dg = { counts: {}, seen: {}, last: null, events: [], strong: { u: 0, l: 0 }, force: null, foes: [] };
-  run.room = 1; run.cur = null; run.gold = run.gold || 0; run.lv = run.lv || 1; run.xp = run.xp || 0; run.p.lv = run.lv; run.buffs = {}; run.next = {}; run.doorLog = [];
+  run.room = 1; run.cur = null; run.path = 'main'; run.dgv = 2; run.gold = run.gold || 0; run.lv = run.lv || 1; run.xp = run.xp || 0; run.p.lv = run.lv; run.buffs = {}; run.next = {}; run.doorLog = [];
   run.doors = genDoors(run, 1);
 }
 function typeOk(run, t, f) {
@@ -3779,7 +3787,7 @@ function typeOk(run, t, f) {
 function pickType(run, f, not, only) {
   const d = run.dg; const opts = Object.keys(ROOM_TYPES).filter(t => !not.includes(t) && typeOk(run, t, f) && (!only || only.includes(t)));
   if (!opts.length) return null;
-  const ws = opts.map(t => ROOM_TYPES[t].w * (t === d.last ? 0.5 : 1) * (t === 'strong' && isLower(f) ? 1.3 : 1));
+  const PW = (PATHS[run.path] || PATHS.main).w; const ws = opts.map(t => ROOM_TYPES[t].w * (t === d.last ? 0.5 : 1) * (t === 'strong' && isLower(f) ? 1.3 : 1) * (PW[t] || 1));
   let x = Math.random() * ws.reduce((a, v) => a + v, 0); for (let i = 0; i < opts.length; i++) { x -= ws[i]; if (x <= 0) return opts[i]; } return opts[opts.length - 1];
 }
 const FIGHTS = ['normal', 'ambush', 'strong', 'treasure', 'trial'];
@@ -3788,11 +3796,10 @@ function genDoors(run, f) {
   const d = run.dg; const half = isLower(f) ? 'l' : 'u'; let types = [];
   const need = t => typeOk(run, t, f) && !types.includes(t) && types.push(t);
   if (f === 1) types = ['normal', 'normal', typeOk(run, 'treasure', f) && Math.random() < 0.5 ? 'treasure' : 'shrine'];
-  else if (f === 10) { types = ['normal']; const t2 = pickType(run, f, types, ['ambush', 'strong']); if (t2) types.push(t2); const t3 = pickType(run, f, types, RESTS); if (t3) types.push(t3); }
+  else if (f === FLOOR_CAMP + 1) { types = ['normal']; const t2 = pickType(run, f, types, ['ambush', 'strong']); if (t2) types.push(t2); const t3 = pickType(run, f, types, RESTS); if (t3) types.push(t3); }
   else {
     if (d.force === 'strong') { need('strong'); d.force = null; }
-    if ((f === 6 && !d.seen.springu) || (f === 14 && !d.seen.springl)) need('spring');
-    if ((f === 6 && !d.seen.strongu) || (f === 14 && !d.seen.strongl)) need('strong');
+    if ((f === 7 && !d.seen.strongu) || (f === FLOOR_CAMP + 7 && !d.seen.strongl)) need('strong'); // 반쯤 왔는데 강적을 못 봤으면 (샘은 억지로 넣지 않는다)
   }
   while (types.length < 3) { const t = pickType(run, f, types); if (!t) break; types.push(t); }
   while (types.length < 3) types.push('normal');
@@ -3802,7 +3809,7 @@ function genDoors(run, f) {
 }
 function rollMods(n) { const ks = Object.keys(ROOM_MODS); const out = []; while (out.length < n) { const k = pickR(ks); if (!out.includes(k)) out.push(k); } return out; }
 function mkRoom(run, t, f) {
-  const T = ROOM_TYPES[t], low = isLower(f); const r = { type: t, floor: f, lv: mlvOf(f), names: ENEMY_NAMES[1] };
+  const T = ROOM_TYPES[t], low = isLower(f), P = PATHS[run.path] || PATHS.main; const r = { type: t, floor: f, lv: mlvOf(f), names: ENEMY_NAMES[1], path: run.path || 'main' };
   if (T.fight) {
     if (t === 'strong') { const unused = STRONG_FOES.filter(x => !run.dg.foes.includes(x.id)); const foe = pickR(unused.length ? unused : STRONG_FOES); r.en = JSON.parse(JSON.stringify(foe.en)); r.strong = foe.n; r.foe = foe.id; }
     else if (t === 'treasure') r.en = JSON.parse(JSON.stringify(pickR(ENC.treasure)));
@@ -3812,15 +3819,16 @@ function mkRoom(run, t, f) {
     else r.mods = [];
     if (t === 'ambush') r.ambush = 1;
     r.tough = r.en.map((x, k) => x[1] && !(r.strong && k === 0) ? k : -1).filter(k => k >= 0 && Math.random() < TOUGH_CHANCE[low ? 'lower' : 'upper']); // 정예에게 강인 (강적 본인은 제외)
-    r.gold = rint(T.gold[0], T.gold[1]);
-    r.risk = Math.min(4, T.risk + (low ? 1 : 0) + (r.mods.length ? 0 : 0));
+    r.gold = Math.round(rint(T.gold[0], T.gold[1]) * P.gold);
+    r.risk = Math.max(1, Math.min(4, T.risk + (low ? 1 : 0) + P.risk));
+    r.hide = Math.random() < HIDE_REWARD ? 1 : 0;
   }
   if (t === 'shrine') r.shrine = pickR(SHRINES).id;
   if (t === 'altar') r.altar = pickR(ALTARS).id;
   if (t === 'event') { const left = EVENTS.filter(e => !run.dg.events.includes(e.id)); r.event = (pickR(left) || EVENTS[0]).id; }
   return r;
 }
-function fixedRoom(f) { return f === FLOOR_CAMP ? { type: 'camp', floor: f } : f === FLOOR_SPRING ? { type: 'spring', floor: f, fixed: 1 } : f === FLOOR_BOSS ? { type: 'boss', floor: f, boss: 1, lv: mlvOf(f) } : null; }
+function fixedRoom(f) { return f === FLOOR_CAMP ? { type: 'camp', floor: f } : f === FLOOR_BOSS ? { type: 'boss', floor: f, boss: 1, lv: mlvOf(f) } : null; }
 function chooseDoor(i) {
   const run = G.run, d = run.dg; const r = run.doors && run.doors[i]; if (!r) return;
   d.counts[r.type] = (d.counts[r.type] || 0) + 1; d.last = r.type;
@@ -3833,8 +3841,22 @@ function chooseDoor(i) {
 function advanceFloor() {
   const run = G.run;
   for (const k in run.buffs) { run.buffs[k]--; if (run.buffs[k] <= 0) delete run.buffs[k]; }
-  run.room++; run.cur = fixedRoom(run.room); run.doors = run.cur ? null : genDoors(run, run.room);
+  run.room++; run.cur = fixedRoom(run.room);
+  if (!run.cur && PATH_AT.includes(run.room)) { run.cross = { floor: run.room }; run.doors = null; } // 갈래길: 길을 고른 뒤 문이 나온다
+  else run.doors = run.cur ? null : genDoors(run, run.room);
   saveRunLocal(); saveCur();
+}
+function choosePath(id) {
+  const run = G.run; if (!run.cross || !PATHS[id]) return;
+  run.path = id; (run.pathLog = run.pathLog || []).push({ floor: run.room, path: id, t: Date.now() }); run.cross = null;
+  run.doors = genDoors(run, run.room); saveRunLocal(); saveCur(); render();
+}
+/* 옛 저장본(19층)을 24층 틀로 옮긴다: 상층 그대로, 야영지 9 → 12, 하층 10~17 → 13~20, 샘 18 → 23, 보스 19 → 24 */
+function dgFix(run) {
+  if (!run || !run.dg || run.dgv === 2) return;
+  const m = f => f <= 8 ? f : f === 9 ? FLOOR_CAMP : f <= 17 ? f + 3 : f === 18 ? FLOOR_BOSS - 1 : FLOOR_BOSS;
+  run.room = m(run.room || 1); if (run.cur && run.cur.floor) run.cur.floor = m(run.cur.floor); for (const d of run.doors || []) if (d.floor) d.floor = m(d.floor);
+  run.path = run.path || 'main'; run.dgv = 2;
 }
 /* 전리품을 차례로 하나씩 건넨다 (방마다 여러 개일 수 있다) */
 function rollGrade(minG) { const x = Math.random() * 100; let g = x < 50 ? 'n' : x < 90 ? 'm' : 'r'; if (minG === 'm' && g === 'n') g = Math.random() < 0.8 ? 'm' : 'r'; if (minG === 'r') g = 'r'; return g; }
@@ -4676,6 +4698,7 @@ function onClick(ev) {
     case 'shopleave': { const run = G.run; if (run.phase !== 'shop') break; run.phase = 'clearsv'; G.scr = 'survey'; saveRunLocal(); saveCur(); pushRank(run, 'clear'); render(); window.scrollTo(0, 0); break; }
     case 'createcancel': cancelCreate(); break;
     case 'door': chooseDoor(+el.dataset.k); break;
+    case 'path': choosePath(el.dataset.k); break;
     case 'codex': openSheet('codex'); break;
     case 'rest': { const run = G.run, p = run.p, R = roomDef();
       if (R.type === 'camp') { p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax; for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = Math.min(flaskCap(p, fk), (p.flask[fk] || 0) + 1); run.rooms.push({ room: run.room, type: 'camp' }); advanceFloor(); toast('불가에서 쉬었습니다. 모두 찼습니다'); render(); break; }
