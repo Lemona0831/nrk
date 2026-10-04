@@ -55,7 +55,7 @@ fieldset label{display:inline-flex;align-items:center;min-height:44px;margin-rig
 @media (prefers-reduced-motion:reduce){.dpop{animation:none}}
 .incoming{font-size:12.5px;margin:4px 0 2px;padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:var(--panel2)}.incoming b{font-size:15px;color:var(--bad)}.incoming small{color:var(--muted)}.incoming.bad{border-color:var(--bad)}.incoming.calm{color:var(--muted)}
 .sts .sic{margin-right:2px}
-.sealln{font-size:12px;color:var(--bad);margin-top:3px}.focusln{font-size:12px;color:var(--gold);margin-top:3px}.focusln b{font-size:13.5px}.en .nr.fc{border-color:var(--gold);color:var(--gold)}.toast{white-space:pre-line}.tsk{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px;margin:2px 0 6px}.tskb{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:1px;padding:5px 7px;font-size:12.5px}.tskb.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset;background:color-mix(in srgb,var(--gold) 12%,var(--panel2))}.tskb small{font-size:11px;line-height:1.35}.row.wrap{flex-wrap:wrap}.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:4px;margin:2px 0 6px}.tgrid.sm5{grid-template-columns:repeat(5,minmax(0,1fr))}.tgrid button,.tpick button{white-space:normal;word-break:keep-all;min-height:34px}.tpick{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 8px}.chgh .sm{margin-left:6px;min-height:0;padding:1px 8px}.lootln{font-size:13px;color:var(--good);margin:2px 0 6px}.sts{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}.sts i{font-style:normal;font-size:11.5px;border:1px solid;border-radius:4px;padding:0 4px}.sts .b{border-color:var(--good);color:var(--good)}.sts .d{border-color:var(--bad);color:var(--bad)}
+.sealln{font-size:12px;color:var(--bad);margin-top:3px}.focusln{font-size:12px;color:var(--gold);margin-top:3px}.focusln.lk{color:#7fc4d8}.ab .lk{color:#7fc4d8;font-weight:600}.focusln b{font-size:13.5px}.en .nr.fc{border-color:var(--gold);color:var(--gold)}.toast{white-space:pre-line}.tsk{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px;margin:2px 0 6px}.tskb{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:1px;padding:5px 7px;font-size:12.5px}.tskb.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset;background:color-mix(in srgb,var(--gold) 12%,var(--panel2))}.tskb small{font-size:11px;line-height:1.35}.row.wrap{flex-wrap:wrap}.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:4px;margin:2px 0 6px}.tgrid.sm5{grid-template-columns:repeat(5,minmax(0,1fr))}.tgrid button,.tpick button{white-space:normal;word-break:keep-all;min-height:34px}.tpick{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 8px}.chgh .sm{margin-left:6px;min-height:0;padding:1px 8px}.lootln{font-size:13px;color:var(--good);margin:2px 0 6px}.sts{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}.sts i{font-style:normal;font-size:11.5px;border:1px solid;border-radius:4px;padding:0 4px}.sts .b{border-color:var(--good);color:var(--good)}.sts .d{border-color:var(--bad);color:var(--bad)}
 .skills{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-top:6px}
 .skills button{text-align:left;padding:8px}.skills small{display:block;color:var(--muted);font-size:12px;line-height:1.35}
 .blog{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;max-height:240px;overflow-y:auto;font-size:13px}
@@ -646,6 +646,7 @@ function runSkill2(b, act, tgt) {
   const wb = F('wardBurn'); let burn = 0; if (wb) { burn = Math.min(p.ward || 0, wb.max || Infinity); p.ward = (p.ward || 0) - burn; logp(b, burn > 0 ? 'good' : 'sys', burn > 0 ? '보호막 ' + Math.round(burn) + '을(를) 태운다' : '태울 보호막이 없다'); } // 파수꾼: 태운 만큼 × 배수 피해
   const wdm = F('wardDmg'), vp = F('vulnPer'), shx = F('shieldx'), pl = F('pull'), vg = F('vulnGrow'), chx = F('chillx'); const wardNow = p.ward || 0;
   const dm = F('dmg'), ex = F('exploit'), po = F('poison'), bk = F('brk'), bp = F('brkPer'); const stx = s.tgt === 'self' ? [] : s.fx.filter(e => e.k === 'st'); const lx = F('lowx'), bx = F('brokenx'), sp = F('spread'), cx = F('cutx'), dr = F('drain'), gx = F('bigx'); const isBig = e => !!(e.elite || e.strong || e.role === 'boss');
+  const lnk = linkOn(b, act); if (lnk) logp(b, 'good', '🔗 연계 (' + p.lastBr + ' → ' + s.b + '): 피해 +' + Math.round(HUNT.link * 100) + '%');
   const ccut = F('chillCut'), csh = F('chillShatter'), csp = F('chillSpread'), frz = F('freeze'), ocb = F('onCutBreak'); const big = e => !!(e.strong || e.role === 'boss'); // 사냥꾼 기동 오른쪽 (10월 5일)
   const preCh = {}, preStop = {}, preBrk = {}; for (const e of targets) { preCh[e.id] = st(e, 'chill'); preStop[e.id] = isStopTarget(e); preBrk[e.id] = !!e.s.broken; }
   const hsp = F('hasteSpend'); let hspOn = false; if (hsp && p.s.haste > 0 && targets.length) { kwDec(p, 'haste'); hspOn = true; logp(b, 'good', s.n + '. 가속 1을 써서 피해 ×' + hsp.mul); } // 가속 쓰기: 다음 라운드의 연속 행동 대신 지금 큰 한 방
@@ -654,7 +655,7 @@ function runSkill2(b, act, tgt) {
     if (!e.alive || b.over) continue;
     let base = (dm ? dm.n : 0) + (ex ? ex.per * st(e, 'poison') : 0) + (wb && h === 0 ? burn * wb.mul : 0) + (wdm ? wdm.per * wardNow : 0) + (vp ? vp.per * st(e, 'vuln') : 0);
     if (csh && h === 0 && preCh[e.id] > 0) { base += csh.dmg * preCh[e.id]; delete e.s.chill; } // 얼음 깨기: 둔화를 모두 깨뜨린다
-    if (fb && h === 0) base += fb.n * fOf(e); if (fxs) base *= 1 + fxs.per * fOf(e); if (swx && h === 0 && prevId != null && prevId !== e.id) base *= swx.mul; if (hsx && b.pDouble === b.round) base *= hsx.mul; if (hsp && h === 0 && hspOn) base *= hsp.mul; // 추적 터뜨리기 · 추적 비례 · 표적 바꾸기 · 가속
+    if (fb && h === 0) base += fb.n * fOf(e); if (fxs) base *= 1 + fxs.per * fOf(e); if (swx && h === 0 && prevId != null && prevId !== e.id) base *= swx.mul; if (hsx && b.pDouble === b.round) base *= hsx.mul; if (lnk) base *= 1 + HUNT.link; if (hsp && h === 0 && hspOn) base *= hsp.mul; // 추적 터뜨리기 · 추적 비례 · 표적 바꾸기 · 가속
     if (lx && e.hp <= e.hpMax * lx.hp) base *= lx.mul; if (bx && e.s.broken) base *= bx.mul; if (gx && isBig(e)) base *= gx.mul; if (chx && e.s.chill) base *= chx.mul; // 마무리(생명력 낮음), 붕괴한 적, 큰 적, 둔화된 적 (겹치면 곱한다)
     if (base > 0) { tot += hurtEnemy(b, e, outDmg(b, base, {}), { single: multi ? 0 : 1, aoe: multi ? 1 : 0, melee: s.tgt === 'melee' || s.tgt === 'front' ? 1 : 0, label: s.n }); if (!e.alive) { killed++; continue; } }
     if (fb && h === 0 && e.alive) { p.focus = { id: e.id, n: 0 }; } // 터뜨린 추적은 사라진다
@@ -696,6 +697,7 @@ function runSkill2(b, act, tgt) {
   else { p.cd[s.id] = s.once ? CD_USED : s.cd; p.cdJust = [].concat(p.cdJust || [], s.id); }
   if (hzOn === 'use') hastenBranch(b, s.b, hz.n || 1, s.id); // 🔄 쓰면 다른 같은 갈래 스킬 쿨타임 −n // 이번 차례에 쓴 스킬은 모두 이번 차례가 끝날 때 줄지 않는다 (10월 3일: 빠른 스킬 다음에 스킬을 쓰면 빠른 스킬의 대기가 1 짧았다)
   p.lastSkillDmg = multi ? tot / Math.max(1, targets.length) : tot;
+  if (p.build === 'hunter' && s.b !== '시작') p.lastBr = s.b; // 사냥꾼 연계: 쓴 갈래
   b.curSkill = null; b.focusKey = null;
 }
 function allSkillNames() { const m = allSkills(); for (const k in EXCL) for (const s of exclOf(k)) m[s.id] = s; return m; }
@@ -831,7 +833,8 @@ const wallUp = (b, e) => e.alive && e.row === 'back' && e.role !== 'boss' && !!h
 const wallFrontUp = (b, e) => e.alive && e.row === 'front' && !['boss', 'shield', 'root'].includes(e.role) && !!hasShield(b, e.id); // 방패병 옆 전열 동료
 const TELE = { heavy: 1.75, boss: 3.5 }; // 적 강타 = 평소 공격 × heavy, 보스 강타 × boss (10월 4일: 평소 공격이 기준표로 커져 일반 적의 강타는 1.75배. 한 번 상한은 그대로) // 적 강타 = 평소 공격 × heavy (예고를 읽고 막는 판단의 무게)
 /* 0.6a.2: 적이 거는 상태 (숫자 하나, 발동마다 1 감소). 사수 출혈은 걸린 쪽이 행동할 때마다 터지므로 세 번에 한 번, 2만 건다 */
-const HUNT = { focusMax: 3, focusPer: 0.05, addMax: 2, focusHaste: 1 }; // focusHaste: 추적이 3겹이 되는 순간 얻는 가속
+const HUNT = { focusMax: 3, focusPer: 0.05, focusBig: 0.1, addMax: 2, focusHaste: 0, link: 0.3 }; // 10월 5일: 3겹 가속은 저격 혼자 도는 고리를 만들어 껐다(가속은 기동이 공급). 3겹 효과는 몸 낮추기 · 버티기를 꿰뚫기 // link: 연계(직전에 쓴 스킬과 다른 갈래의 스킬) 피해 배율 (10월 5일 만든 사람 결정: 섞어 쓸 때 제 힘을 낸다)
+const linkOn = (b, a) => !!(b && b.p.build === 'hunter' && a && a.v2 && a.s && a.s.b !== '시작' && b.p.lastBr && b.p.lastBr !== a.s.b); // 사냥꾼 연계: 시작 스킬 · 기본 공격은 연계를 만들지도 끊지도 않는다 // focusHaste: 추적이 3겹이 되는 순간 얻는 가속
 const STOP_K = ['charge', 'heavy', 'chant', 'chanting', 'burn', 'aim']; // 멈춰 세우기가 끊는 행동: 강타(모으기 · 내리치기), 영창(시작 · 영창 · 화형), 겨누기(겨누기 · 겨눈 한 발). 치유 · 축복 · 소환은 끊지 않는다
 const isStopTarget = e => !!(e.intent && (STOP_K.includes(e.intent.k) || e.intent.aimed)); // 사냥꾼 추적. addMax: 추적 추가 효과로는 2겹까지만(3겹은 같은 적을 다시 맞혀야)
 const CHANT = { cut: 0.3, big: 0.28, burn: 3 }; // 화형 사제 (10월 5일): 영창 중 받은 피해가 최대 생명력 × cut이면 끊긴다. 화형 = 기준 생명력 × big(정예 ×1.25), 화상 burn. 영창은 한 번에 한 적만
@@ -1381,14 +1384,16 @@ function hurtEnemy(b, e, raw, o) {
   let d = raw;
 
   if (e.s.weak && false) d *= 1;
-  if (!o.dot && !o.aoe && b.p.build === 'hunter' && (o.single || o.melee)) { const p = b.p, key = b.curSkill ? b.curSkill + ':' + e.id : null; let pre; if (key && b.focusKey === key) pre = b.focusPre; else { const f = p.focus; pre = f && f.id === e.id ? f.n : 0; p.focus = { id: e.id, n: Math.min(HUNT.focusMax, pre + 1) }; if (key) { b.focusKey = key; b.focusPre = pre; } if (pre === HUNT.focusMax - 1 && HUNT.focusHaste) { addS(b, p, 'haste', HUNT.focusHaste); logp(b, 'good', '추적 ' + HUNT.focusMax + '겹: 가속 1'); } } d *= 1 + HUNT.focusPer * pre; } // 사냥꾼 추적 (10월 5일 만든 사람 결정): 한 적만 치는 공격 한 번(연타라도 스킬 한 번)에 한 겹, 최대 3, 피해 보너스는 맞히기 전 겹마다 +5%. 다른 적을 치면 그 적에게 1겹부터. 여럿을 치는 공격과 지속 피해는 손대지 않는다
+  const fullF = !o.dot && !o.aoe && b.p.build === 'hunter' && b.p.focus && b.p.focus.id === e.id && b.p.focus.n >= HUNT.focusMax; // 추적 3겹: 몸 낮추기 · 버티기가 통하지 않는다
+  if (!o.dot && !o.aoe && b.p.build === 'hunter' && (o.single || o.melee)) { const p = b.p, key = b.curSkill ? b.curSkill + ':' + e.id : null; let pre; if (key && b.focusKey === key) pre = b.focusPre; else { const f = p.focus; pre = f && f.id === e.id ? f.n : 0; p.focus = { id: e.id, n: Math.min(HUNT.focusMax, pre + 1) }; if (key) { b.focusKey = key; b.focusPre = pre; } if (pre === HUNT.focusMax - 1 && HUNT.focusHaste) { addS(b, p, 'haste', HUNT.focusHaste); logp(b, 'good', '추적 ' + HUNT.focusMax + '겹: 가속 1'); } } d *= 1 + (e.elite || e.strong || e.role === 'boss' ? HUNT.focusBig : HUNT.focusPer) * pre; } // 사냥꾼 추적 (10월 5일 만든 사람 결정): 한 적만 치는 공격 한 번(연타라도 스킬 한 번)에 한 겹, 최대 3, 피해 보너스는 맞히기 전 겹마다 +5%. 다른 적을 치면 그 적에게 1겹부터. 여럿을 치는 공격과 지속 피해는 손대지 않는다
   if (!o.dot && e.s.poison && hasIt(b.p, 'vpouch')) d *= 1.15;
   if (!o.dot && o.melee && o.single && b.p.scar > 0 && hasIt(b.p, 'scarcharm')) d += Math.min(10, b.p.scar * 0.15);
   if (!o.dot && (o.single || o.melee) && hasIt(b.p, 'markamu')) { const mk = b.p.mk; if (mk && mk.id !== e.id && mk.n > 0) d *= 0.9; b.p.mk = mk && mk.id === e.id ? { id: e.id, n: mk.n + 1 } : { id: e.id, n: 1 }; if (b.p.mk.n >= 3) { b.p.mk.n = 0; b.markTgt = e; } }
   if (!o.dot && hasIt(b.p, 'focusring')) d *= o.aoe ? 0.7 : 1.07;
   if (e.vow && !o.dot) d *= ABBOT.vowTaken;
-  if (e.evading && !o.dot && !o.aoe) { e.evading = 0; logp(b, 'sys', e.n + '이(가) 몸을 틀어 피한다'); return 0; } // 몸 낮추기: 다음 한 적 공격을 피한다 (광역 · 지속 피해는 그대로)
-  if (e.braced && !o.dot) d *= EKW.braceRed;
+  if (e.evading && !o.dot && !o.aoe && fullF) logp(b, 'good', '추적 3겹: ' + e.n + '의 몸 낮추기를 꿰뚫는다');
+  if (e.evading && !o.dot && !o.aoe && !fullF) { e.evading = 0; logp(b, 'sys', e.n + '이(가) 몸을 틀어 피한다'); return 0; } // 몸 낮추기: 다음 한 적 공격을 피한다 (광역 · 지속 피해는 그대로)
+  if (e.braced && !o.dot && !fullF) d *= EKW.braceRed;
   if (e.demand && e.demand.turn === b.turnIdx && !o.dot && b.cur) e.demand.hit = 1; // 수도원장의 요구: 이번 차례에 쳤는가
   if (!o.dot && b.cur && b.p.whet) { d *= 1 + b.p.whet; b.p.whet = 0; } // 소모품 숫돌
   if (!o.dot && e.markDmg) { d *= 1 + e.markDmg; e.markDmg = 0; } // 소모품 표식 분필
@@ -2344,7 +2349,7 @@ const TUT_CHECK = {
 };
 function endBattleCarry(p) {
   p.bt = {}; p.rcN = 0; p.mk = null; p.fxSpell = 0; p.fxScar = 0; p.fxPen = 0; p.fxHunt = null; p.fxHeavyDisc = 0; p.fxImmune = 0; p.fxQuick = 0; p.fxQuickNext = 0; p.fxCond = 0; p.fxFlaskDmg = 0; p.brace = 0; p.tookSince = 0; p.tookLast = 0;
-  p.ward = 0; p.thorn = null; p.evade = 0; p.evadeCtr = null; p.evadeHz = null; p.quickTurns = 0; p.foresee = null; p.focus = null; p.lastSkillId = null; p.echoN = 0; p.furyNext = 0; p.retal = 0; p.sigCd = 0; p.focusRes = 0;
+  p.ward = 0; p.thorn = null; p.evade = 0; p.lastBr = null; p.evadeCtr = null; p.evadeHz = null; p.quickTurns = 0; p.foresee = null; p.focus = null; p.lastSkillId = null; p.echoN = 0; p.furyNext = 0; p.retal = 0; p.sigCd = 0; p.focusRes = 0;
   // 방 사이 이월 (4.2): 생명력·마나·플라스크 유지, 스태미나는 50%까지 회복, 전투 상태 해제
   p.st = Math.max(p.st, 50); p.exhaust = 0; p.s = {}; p.guard = 0; p.dodge = 0; p.stun = 0; p.counter = 0; p.reflux = null; p.rage = 0;
 }
@@ -2361,7 +2366,7 @@ const HELP = [
   { k: 'build', n: '직업과 스킬', t: [
     '시험판에서는 암살자, 파수꾼, 사냥꾼을 고를 수 있습니다. 나머지 직업은 만드는 대로 열립니다. 메뉴의 🧪 시험 전투에서는 던전 없이 직업 · 레벨 · 스킬 · 적을 골라 바로 싸워 볼 수 있습니다.',
     '파수꾼은 방어할 때마다 보호막 6을 얻습니다. 보호막은 최대 생명력의 30%까지 쌓여 받는 피해를 먼저 받아냅니다. 후열 적의 공격은 보호막이 절반만 받아냅니다. 성벽 갈래는 쌓은 보호막을 태워 칩니다.',
-    '사냥꾼은 원거리라 기본 공격과 대부분의 스킬이 후열에 닿고, 전투를 시작하면 가속 2를 얻습니다. 가속이 있으면 라운드 맨 앞에서 두 번 연달아 움직입니다(한 라운드에 한 번, 두 번째 차례는 쿨타임이 줄지 않음). 같은 적을 연달아 맞히면 추적이 한 겹씩 쌓여(최대 3) 겹마다 피해 +5%이고, 3겹이 되는 순간 가속 1을 얻습니다. 스킬 한 번은 연타라도 한 겹이고, 추적을 더하는 효과로는 2겹까지만 오릅니다. 여럿을 치는 공격과 지속 피해는 추적에 손대지 않습니다.',
+    '사냥꾼은 원거리라 기본 공격과 대부분의 스킬이 후열에 닿고, 전투를 시작하면 가속 2를 얻습니다. 가속이 있으면 라운드 맨 앞에서 두 번 연달아 움직입니다(한 라운드에 한 번, 두 번째 차례는 쿨타임이 줄지 않음). 같은 적을 연달아 맞히면 추적이 한 겹씩 쌓여(최대 3) 겹마다 피해 +5%이고, 3겹인 적에게는 몸 낮추기와 버티기가 통하지 않습니다. 가속은 기동 갈래 스킬로 얻습니다. 방금 쓴 스킬과 다른 갈래의 스킬을 쓰면 연계가 되어 피해가 오릅니다(버튼의 🔗). 사냥꾼은 한 갈래를 깊이 파기보다 갈래를 바꿔 이어 쓸 때 제 힘을 냅니다. 스킬 한 번은 연타라도 한 겹이고, 추적을 더하는 효과로는 2겹까지만 오릅니다. 여럿을 치는 공격과 지속 피해는 추적에 손대지 않습니다.',
     '몸 빼기는 다음에 맞는 공격 하나를 피합니다. 적이 나를 직접 치는 공격(공격 · 겨눈 한 발 · 강타 · 큰 한 방)만 피할 수 있고, 화형 같은 주문, 지속 피해, 방 특성 피해는 피할 수 없습니다. 피했을 때 나가는 반격도 실제로 피했을 때만 나갑니다.',
     '직업마다 시작 스킬 둘이 늘 끼워져 있습니다. 장착 칸을 차지하지 않습니다.',
     '스킬 트리는 세 갈래이고, 갈래마다 두 칸씩 10줄의 사다리입니다(하급 6줄 → 중급 4줄). 윗줄 두 칸 가운데 하나만 열어도 아랫줄이 열립니다. 처음에는 모두 잠겨 있고, 캐릭터를 만들 때 포인트 1로 첫 줄의 한 칸을 엽니다. 레벨이 오를 때마다 포인트 1을 얻어 Lv10에 10점이 됩니다. 한 갈래를 줄마다 하나씩 내려가면 Lv6에 하급 끝, Lv10에 중급 끝입니다. 상급·궁극은 3챕터부터 더합니다. 챕터 사이 상점에서 트리 초기화를 사면 연 칸을 모두 닫고 포인트를 돌려받습니다(연 칸 하나에 ' + TREE_RESET.cell + '골드, 챕터마다 1.5배).',
@@ -2965,7 +2970,7 @@ function vBattle() {
         const urgent = !dis && (a.id === 'flaskL') && p.hp < p.hpMax * 0.35; const tnew = G.scr === 'tut' && tutNew(b, a.id);
         const at = !dis ? actTarget(b, a) : null; const gd = at && isMeleeAct(p, a.id) ? guardOf(b, at) : null;
         kn++;
-        btns += `<button class="ab g-${lab === '공격' ? 'atk' : lab === '스킬' ? 'sk' : lab === '지키기' ? 'def' : lab === '직업' ? 'sig' : 'etc'}${dis ? ' dis' : ''}${urgent ? ' urgent' : ''}${tnew ? ' tnew' : ''}${a.v2 && skHz(a.s) ? ' hzb' : ''}" data-a="act" data-id="${a.id}" data-info="act:${a.id}" data-k="${kn}" aria-disabled="${dis}"><b>${kn <= 9 ? `<kbd>${kn}</kbd>` : ''}<span class="anl">${esc(a.n)}</span><span class="ans">${esc(a.id === 'flaskM' && isV2(p) ? '🧪 정화' : ASHORT[a.id] || a.n)}</span>${spdIco(noFast(p) && a.time <= 0.6 ? 1 : a.time)}${a.v2 && skHz(a.s) ? '<span class="hz" aria-hidden="true">🔄</span>' : ''}</b><small>${why ? esc(why) : '<span class="ac">' + esc(a.cost) + '</span><span class="ax">' + (skillHint(b, a) ? ' · ' + esc(skillHint(b, a)) : '') + (at ? ' → ' + esc(at.n) + (gd ? ' 🛡' : '') : a.aoe ? ' → 전체' : '') + '</span>'}</small></button>`;
+        btns += `<button class="ab g-${lab === '공격' ? 'atk' : lab === '스킬' ? 'sk' : lab === '지키기' ? 'def' : lab === '직업' ? 'sig' : 'etc'}${dis ? ' dis' : ''}${urgent ? ' urgent' : ''}${tnew ? ' tnew' : ''}${a.v2 && skHz(a.s) ? ' hzb' : ''}" data-a="act" data-id="${a.id}" data-info="act:${a.id}" data-k="${kn}" aria-disabled="${dis}"><b>${kn <= 9 ? `<kbd>${kn}</kbd>` : ''}<span class="anl">${esc(a.n)}</span><span class="ans">${esc(a.id === 'flaskM' && isV2(p) ? '🧪 정화' : ASHORT[a.id] || a.n)}</span>${spdIco(noFast(p) && a.time <= 0.6 ? 1 : a.time)}${a.v2 && skHz(a.s) ? '<span class="hz" aria-hidden="true">🔄</span>' : ''}</b><small>${why ? esc(why) : '<span class="ac">' + (linkOn(b, a) ? '<span class="lk">🔗 연계 +' + Math.round(HUNT.link * 100) + '%</span>' : esc(a.cost)) + '</span><span class="ax">' + (skillHint(b, a) ? ' · ' + esc(skillHint(b, a)) : '') + (at ? ' → ' + esc(at.n) + (gd ? ' 🛡' : '') : a.aoe ? ' → 전체' : '') + '</span>'}</small></button>`;
       }
       btns += '</div>';
     }
@@ -3437,7 +3442,8 @@ const INFO2 = {
   regen: ['뿌리의 회복', '뒷줄의 뿌리가 살아 있는 동안 수호목은 체력을 되찾습니다. 뿌리가 많을수록, 봄일수록 빠릅니다. 숫자는 내 차례 한 번 사이에 회복하는 양입니다.', '뿌리는 원거리 공격이나 광역 공격으로 치거나, 수호목을 붕괴시킨 틈에 근접으로 칠 수 있습니다.'],
   ward: ['보호막', '받는 피해를 먼저 대신 받아내는 막입니다. 최대 생명력의 30%까지 쌓이고, 라운드가 지나도 줄지 않으며, 전투가 끝나면 사라집니다. 파수꾼은 방어할 때마다 6을 얻고, 스킬로도 얻습니다. 쌓인 보호막을 태워 치는 스킬도 있습니다. 후열 적의 공격은 절반만 받아냅니다.'],
   thorn: ['가시', '숫자만큼 남은 횟수입니다(옆의 작은 숫자는 되돌리는 피해). 적의 직접 공격에 맞을 때마다, 보호막이 다 받아내더라도 때린 적에게 피해를 되돌리고 1 줄어듭니다. 가시를 또 걸면 횟수를 더하고(최대 8번) 피해는 더 큰 쪽을 씁니다. 전투가 끝나면 사라집니다.'],
-  efocus: ['추적', '같은 적을 한 적만 치는 공격으로 연달아 맞히면 한 겹씩 쌓입니다(최대 3, 스킬 한 번은 연타라도 한 겹). 다음에 그 적을 맞히는 공격은 겹마다 피해 +5%입니다.', '다른 적을 치면 그 적에게 1겹부터 다시 쌓입니다. 여럿을 치는 공격과 지속 피해는 추적에 손대지 않습니다. 추적을 더하는 효과로는 2겹까지만 오릅니다.'],
+  elink: ['연계', '사냥꾼은 갈래를 바꿔 이어 쓸 때 제 힘을 냅니다. 방금 쓴 스킬과 다른 갈래(저격 · 연사 · 기동)의 스킬을 쓰면 연계가 되어 피해 +' + Math.round(HUNT.link * 100) + '%입니다. 연계가 되는 스킬 버튼에는 🔗가 보입니다.', '시작 스킬과 기본 공격은 연계를 만들지도 끊지도 않습니다. 한 갈래만 계속 쓰면 연계가 생기지 않습니다.'],
+  efocus: ['추적', '같은 적을 한 적만 치는 공격으로 연달아 맞히면 한 겹씩 쌓입니다(최대 3, 스킬 한 번은 연타라도 한 겹). 다음에 그 적을 맞히는 공격은 겹마다 피해 +5%입니다. 3겹인 적은 몸 낮추기와 버티기가 통하지 않습니다.', '다른 적을 치면 그 적에게 1겹부터 다시 쌓입니다. 여럿을 치는 공격과 지속 피해는 추적에 손대지 않습니다. 추적을 더하는 효과로는 2겹까지만 오릅니다.'],
   echant: ['영창', '이 적이 화형 영창 중입니다. 숫자만큼 피해를 더 받으면 영창이 끊깁니다.', '한 적만 치는 공격, 여럿을 치는 공격, 지속 피해가 모두 쌓입니다. 무너뜨려도 끊깁니다.'],
   ehymn: ['노래', '조율자의 노래가 겹마다 이 적의 피해를 ' + Math.round(FOE_X.cantor.hymn * 100) + '% 올립니다.'],
   seal: ['봉인', '적힌 행동은 쓸 수 없습니다.'],
@@ -4167,7 +4173,8 @@ const focusOn = (b, e) => !!(b && b.p.build === 'hunter' && b.p.focus && b.p.foc
 function focusLine(b) {
   const p = b.p; if (p.build !== 'hunter') return ''; const e = p.focus && b.en.find(x => x.id === p.focus.id && x.alive); const n = e ? p.focus.n : 0;
   const hs = st(p, 'haste'); const hl = `<div class="focusln hs" data-info="st:p:haste" tabindex="0">⚡ 가속 ${hs ? `<b>${hs}</b> · 다음 라운드 맨 앞에서 두 번 연달아 움직인다` : '없음'}${b.pDouble === b.round ? ' · 이번 라운드는 연속 행동 중' : ''}</div>`;
-  return hl + `<div class="focusln" data-info="efocus" tabindex="0">🎯 추적 ${n ? `<b>${n}</b>/${HUNT.focusMax}겹 · ${esc(e.n)} · 다음 한 방 +${Math.round(n * HUNT.focusPer * 100)}%` : '없음 · 같은 적을 연달아 맞히면 쌓입니다'}</div>`;
+  const ll = `<div class="focusln lk" data-info="elink" tabindex="0">🔗 연계 ${p.lastBr ? `방금 <b>${esc(p.lastBr)}</b> · 다른 갈래 스킬을 쓰면 피해 +${Math.round(HUNT.link * 100)}%` : `갈래를 바꿔 이어 쓰면 피해 +${Math.round(HUNT.link * 100)}%`}</div>`;
+  return hl + ll + `<div class="focusln" data-info="efocus" tabindex="0">🎯 추적 ${n ? `<b>${n}</b>/${HUNT.focusMax}겹 · ${esc(e.n)} · 다음 한 방 +${Math.round(n * HUNT.focusPer * 100)}%` : '없음 · 같은 적을 연달아 맞히면 쌓입니다'}</div>`;
 }
 /* ---------- 시험 전투 (10월 5일 만든 사람 요청): 던전 없이 직업 · 레벨 · 스킬 4칸 · 적을 골라 바로 싸운다. 기록 · 랭킹 · 전리품 없음 ---------- */
 const TEST_ROLES = ['bruiser', 'shield', 'archer', 'healer', 'summoner', 'minion', 'thief', 'darkmage', 'pyre'];

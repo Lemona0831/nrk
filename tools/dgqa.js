@@ -250,8 +250,9 @@ function spendTree(pk, r) {
     const can = all.filter(s => !G0.treeWhy(run, s.id));
     if (!can.length) break;
     const focus = THINK(pk) || pk === 'careful';
-    const pool = focus ? (can.filter(s => s.b === run.focus).length ? can.filter(s => s.b === run.focus) : can) : can;
-    const root = focus ? pool.filter(x => ROWN(x) === 1 && x.b === run.focus) : []; // 한 갈래를 파는 사람은 그 갈래의 첫 줄 두 칸부터 연다
+    let br = run.focus; if (run.build === 'hunter' && focus) { if (br === '기동') br = run.focus = r() < 0.5 ? '저격' : '연사'; const opened = b0 => run.tree.open.filter(id => (G0.SK2[id] || {}).b === b0).length; br = opened('기동') <= opened(run.focus) ? '기동' : run.focus; } // 사냥꾼(10월 5일): 피해 갈래 하나와 기동을 번갈아 (한 갈래를 몰아 찍으면 오히려 약하다)
+    const pool = focus ? (can.filter(s => s.b === br).length ? can.filter(s => s.b === br) : can) : can;
+    const root = focus ? pool.filter(x => ROWN(x) === 1 && x.b === br) : []; // 한 갈래를 파는 사람은 그 갈래의 첫 줄 두 칸부터 연다
     const s = root.length ? root[0] : focus ? pool.sort((x, y) => ROWN(y) - ROWN(x) || r() - 0.5)[0] : pool[Math.floor(r() * pool.length)];
     G0.treeUnlock(run, s.id);
     const eq = run.skills.slice();
