@@ -1670,7 +1670,7 @@ function intentText(b, e) {
     case 'pray': return { t: '입을 다물고 기도한다. 공격하지 않는다', hv: 0 };
     case 'brace': return { t: '몸을 굳혀 버틴다. 다음 행동까지 받는 피해 절반. 무너지면 풀린다', hv: 0 };
     case 'counter': return { t: '반격 태세. 이 적만 노리는 근접 공격을 맞으면 ' + est + ' 되받는다. 무너지면 풀린다', hv: 1 };
-    case 'evade': return { t: '몸을 낮춘다. 자기만 노린 다음 공격 하나를 피한다. 전열 모두를 치는 공격과 지속 피해는 들어간다', hv: 0 };
+    case 'evade': return { t: '몸을 낮춘다. 다음에 맞는 공격 하나를 피한다', hv: 0 };
     case 'aim': return { t: '겨눈다. 다음 행동에 겨눈 한 발 ' + r1(est * EKW.aimMul), hv: 1 };
     case 'guard': { const t = b.en.find(x => x.id === i.tgt); return { t: (t ? t.n : '동료') + ' 앞을 막는다. 그 적을 노린 다음 공격을 대신 맞는다', hv: 0 }; }
     case 'bless': { const t = b.en.find(x => x.id === i.tgt); return { t: (t ? t.n : '동료') + '에게 축복. 다음 공격 피해 +25%', hv: 1 }; }
@@ -2363,7 +2363,7 @@ const HELP = [
   { k: 'intent', n: '적의 예고', t: [
     '적 카드 아래에 그 적이 다음에 할 행동이 적혀 있습니다. 빨간 테두리는 위험한 행동입니다. 걸 상태도 숫자로 보입니다(예: "공격 4 · 출혈 2").',
     '충전 중 → 강타: 한 번 쉬고 다음 행동에 평소의 ' + TELE.heavy + '배 피해를 주고, 맞으면 취약 ' + EKW.heavyVuln + '가 걸립니다. 흘리기, 방어, 붕괴로 끊기, 먼저 쓰러뜨리기 가운데 고르세요.',
-    '적은 매번 때리지 않습니다. 버티기(다음 행동까지 받는 피해 절반), 반격 태세(근접으로 치면 되받음), 몸 낮추기(자기만 노린 다음 공격 하나를 피함, 전열 모두를 치는 공격과 지속 피해는 들어감), 겨누기(다음 행동에 강한 한 발), 지키기(동료 대신 맞음)를 섞습니다. 버티기 · 반격 태세 · 몸 낮추기 · 지키기는 그 적이 무너지면 모두 풀립니다.',
+    '적은 매번 때리지 않습니다. 버티기(다음 행동까지 받는 피해 절반), 반격 태세(근접으로 치면 되받음), 몸 낮추기(다음에 맞는 공격 하나를 피함. 여럿을 함께 치는 공격과 지속 피해는 못 피함), 겨누기(다음 행동에 강한 한 발), 지키기(동료 대신 맞음)를 섞습니다. 버티기 · 반격 태세 · 몸 낮추기 · 지키기는 그 적이 무너지면 모두 풀립니다.',
     '치유: 사제가 생명력 ' + Math.round(PRIEST.heal * 100) + '% 아래인 동료를 25% 회복합니다. 치유할 때마다 다음 치유는 30%씩 줄어듭니다(지침). 축복: 동료의 다음 공격 피해 +25%. 저주: 나에게 약화 ' + EKW.curseWeak + '. 훔치기: 도둑이 플라스크 한 칸, 골드, 가방의 장비 가운데 하나를 훔치고 다음 행동에 달아납니다. 달아나기 전에 쓰러뜨리면 되찾습니다.',
     '도화선 → 폭발: 자폭병이 다음 행동에 평소의 ' + EKW.explodeMul + '배 피해와 약화 ' + EKW.explodeWeak + '를 주고 사라집니다. 자폭병은 한 적만 노리는 공격 한 번에 쓰러지고, 전열 모두를 치는 공격과 지속 피해로는 쓰러지지 않습니다.'] },
   { k: 'row', n: '전열과 후열', t: [
@@ -2491,10 +2491,10 @@ function dgBar(run) {
   for (let f = 1; f <= FLOORS; f++) {
     const cls = f === run.room ? 'now' : f < run.room ? 'past' : '';
     const ico = f === FLOOR_CAMP ? '⛺' : f === FLOOR_BOSS ? '👑' : PATH_AT.includes(f) && f > run.room ? '🔀' : done[f] && ROOM_TYPES[done[f].type] ? ROOM_TYPES[done[f].type].ico : (run.log6 && run.log6[f]) || '';
-    h += `<li class="${cls}${f === FLOOR_CAMP ? ' camp' : ''}" title="${esc(floorName(f))}"><span>${ico || (f < run.room ? '·' : '')}</span></li>`;
+    h += `<li class="${cls}${f === FLOOR_CAMP ? ' camp' : ''}" data-info="floor:${f}"><span>${ico || (f < run.room ? '·' : '')}</span></li>`;
   }
   h += '</ol>';
-  const bl = Object.keys(run.buffs || {}).map(k => { const S = SHRINES.find(x => x.id === k); return `<span class="chip" title="${esc(S ? S.d : '')}">${esc(S ? S.n : k === 'snuff' ? '꺼진 촛불' : k)} ${run.buffs[k]}</span>`; }).join('');
+  const bl = Object.keys(run.buffs || {}).map(k => { const S = SHRINES.find(x => x.id === k); return `<span class="chip" data-info="buff:${k}" tabindex="0">${esc(S ? S.n : k === 'snuff' ? '꺼진 촛불' : k)} ${run.buffs[k]}</span>`; }).join('');
   return `<section class="card dgtop"><div class="dghead"><b>1챕터 · ${esc(floorName(run.room))}</b><span class="mini">${run.room < FLOOR_CAMP ? '상층' : run.room > FLOOR_CAMP && run.room < FLOOR_BOSS ? '하층' : ''}${run.path && PATHS[run.path] ? ' · ' + PATHS[run.path].ico + ' ' + PATHS[run.path].n : ''} · 남은 층 ${Math.max(0, FLOORS - run.room)}</span><span class="gold-n">골드 ${run.gold || 0}</span></div>${h}${bl ? `<div class="bufs">${bl}</div>` : ''}</section>`;
 }
 function doorCard(r, i) {
@@ -2506,7 +2506,7 @@ function doorCard(r, i) {
     body += r.strong ? `<p class="dr-what">강적 <b>${esc(r.strong)}</b> <span class="mini">Lv${r.lv}</span></p>` : R0 ? `<p class="dr-what">${R0.ico} ${rep0[1] ? '정예 ' : ''}${esc((r.names && r.names[rep0[0]]) || R0.n)}${r.en.length > 1 ? ' 외 ' + (r.en.length - 1) : ''} <span class="mini">Lv${r.lv}</span></p>` : '';
   }
   if (r.shrine) { const S = SHRINES.find(x => x.id === r.shrine); body += `<p class="dr-what">${esc(S.n)}</p><p class="mini">${esc(S.d)} 3개 방 동안.</p>`; }
-  if (r.mods && r.mods.length) body += `<div class="dr-mods">${r.mods.map(m => `<span class="chip mod" title="${esc(ROOM_MODS[m].d)}">${esc(ROOM_MODS[m].n)}</span>`).join('')}</div><p class="mini">${r.mods.map(m => esc(ROOM_MODS[m].d)).join(' ')}</p>`;
+  if (r.mods && r.mods.length) body += `<div class="dr-mods">${r.mods.map(m => `<span class="chip mod" data-info="mod:${m}">${esc(ROOM_MODS[m].n)}</span>`).join('')}</div><p class="mini">${r.mods.map(m => esc(ROOM_MODS[m].d)).join(' ')}</p>`;
   return `<button class="door t-${r.type}" data-a="door" data-k="${i}"><span class="dr-h"><span class="dr-ico" aria-hidden="true">${T.ico}</span><b>${esc(T.n)}</b>${stars ? `<span class="dr-risk" aria-label="위험 ${r.risk}">${stars}</span>` : ''}</span>${body}<span class="dr-hint">${esc(rewardHint(r))}</span></button>`;
 }
 const rewardHint = r => r.hide ? '보상은 열어 봐야 안다' : ROOM_TYPES[r.type].hint; // 10월 4일: 보상은 일부 문에만 적힌다
@@ -2597,7 +2597,7 @@ function vCreate() {
   const pk = C.pick && BUILDS[C.pick] ? C.pick : null;
   h += `<section class="card cstep"><h3>직업을 고르세요${q('build', '직업과 빌드')}</h3><p class="mini"><b>${esc(C.name)}</b>의 직업입니다. 직업을 누르면 규칙과 스킬이 아래에 보입니다.</p><div class="clsgrid" role="group" aria-label="직업">`;
   for (const k of CLASS_KEYS()) { const B = BUILDS[k]; h += `<button class="clsc${pk === k ? ' on' : ''}" data-a="clspick" data-k="${k}" aria-pressed="${pk === k}" style="--c:${CLS_COLOR[k] || 'var(--gold)'}"><span class="big" aria-hidden="true">${B.ico}</span><b>${esc(B.n)}</b><small>생명력 ${B.hp + SLOT_BASE.armor.v[0]}${B.v2 ? ' · 충전 스킬' : ' · 마나 ' + B.mp}</small></button>`; }
-  for (const c of (typeof CLASS_SOON !== 'undefined' ? CLASS_SOON : []).filter(c => !CLASS_KEYS().some(k => BUILDS[k].n === c.n))) h += `<button class="clsc" aria-disabled="true" title="${esc(c.d)}"><span class="big" aria-hidden="true">${c.ico}</span><b>${esc(c.n)}</b><small>준비 중</small></button>`;
+  for (const c of (typeof CLASS_SOON !== 'undefined' ? CLASS_SOON : []).filter(c => !CLASS_KEYS().some(k => BUILDS[k].n === c.n))) h += `<button class="clsc" aria-disabled="true" data-info="soon:${esc(c.n)}"><span class="big" aria-hidden="true">${c.ico}</span><b>${esc(c.n)}</b><small>준비 중</small></button>`;
   h += `</div>`;
   if (pk) {
     const B = BUILDS[pk];
@@ -2880,7 +2880,7 @@ function vBattle() {
   const ecard = e => {
     const it = intentText(b, e); const ib = intentBadge(b, e); const sel = G.sel === e.id; const pop = pops[e.id];
     const reach = !frontBlocked(b) || e.row === 'front';
-    return `<button class="en${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(e.n)} 생명력 ${shownHp(e.hp)}/${Math.round(e.hpMax)}${e.role !== 'root' ? ', ' + esc(eordText(b, e)) : ''}, 예고: ${esc(it.t)}">${eordHtml(b, e)}<div class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wallUp(b, e) ? '<span class="wallm" title="방패벽: 광역 피해 절반" aria-label="방패벽">🛡️</span>' : wallFrontUp(b, e) ? '<span class="wallm" title="방패벽: 광역 피해 −40%" aria-label="방패벽">🛡️</span>' : ''}${e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" title="강인: 체력 +50%">강인</small>' : ''}${e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${reach && guardOf(b, e) ? '<span class="nr gd" data-info="guarded" tabindex="0" aria-label="방패병이 막는 중">🛡️막힘</span>' : ''}${e.braced ? '<span class="nr gd" data-info="ebraced" tabindex="0" role="img" aria-label="버팀">🪨</span>' : ''}${e.countering ? '<span class="nr gd" data-info="ecounter" tabindex="0" role="img" aria-label="반격 태세">↩️</span>' : ''}${e.evading ? '<span class="nr gd" data-info="eevade" tabindex="0" role="img" aria-label="몸 낮춤">🌀</span>' : ''}${e.guarding ? '<span class="nr gd" data-info="eguard" tabindex="0" role="img" aria-label="지키는 중">🙌</span>' : ''}${e.hymn ? '<span class="nr gd" data-info="ehymn" tabindex="0" aria-label="노래 ' + e.hymn + '겹">🎵' + e.hymn + '</span>' : ''}${e.demand && e.demand.turn === b.turnIdx ? '<span class="nr gd hv" data-info="edemand" tabindex="0">' + (e.demand.k === 'rest' ? '🤲 고해' : '⚖️ 심문') + '</span>' : ''}${e.loot ? '<span class="nr gd" data-info="eloot" tabindex="0" role="img" aria-label="훔친 것: ' + esc(e.loot.n) + '">🫳</span>' : ''}${e.boss === 'tree' && rootRegen(b) > 0 ? `<span class="nr rg2" data-info="regen" tabindex="0">🌱 +${rootRegen(b)}/라운드</span>` : ''}</div>${ehpBar(e)}${e.role !== 'root' ? `<div class="bkline" data-info="bar:bk" title="붕괴 ${Math.round(e.brk)}/${e.brkMax}"><small>붕괴 게이지</small><div class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></div></div>` : ''}${stsHtml(e, b)}${e.role !== 'root' ? `<div class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}" title="${esc(it.t)}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${acts1[e.id] > 1 ? `<span class="ix" title="내 다음 차례 전에 ${acts1[e.id]}번 움직입니다">×${acts1[e.id]}</span>` : ''}</div>` : '<div class="mini">움직이지 않는다</div>'}${pop ? popHtml(pop) : ''}</button>`;
+    return `<button class="en${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(e.n)} 생명력 ${shownHp(e.hp)}/${Math.round(e.hpMax)}${e.role !== 'root' ? ', ' + esc(eordText(b, e)) : ''}, 예고: ${esc(it.t)}">${eordHtml(b, e)}<div class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wallUp(b, e) ? '<span class="wallm" data-info="ewall" aria-label="방패벽">🛡️</span>' : wallFrontUp(b, e) ? '<span class="wallm" data-info="ewallf" aria-label="방패벽">🛡️</span>' : ''}${e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" data-info="etough">강인</small>' : ''}${e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${reach && guardOf(b, e) ? '<span class="nr gd" data-info="guarded" tabindex="0" aria-label="방패병이 막는 중">🛡️막힘</span>' : ''}${e.braced ? '<span class="nr gd" data-info="ebraced" tabindex="0" role="img" aria-label="버팀">🪨</span>' : ''}${e.countering ? '<span class="nr gd" data-info="ecounter" tabindex="0" role="img" aria-label="반격 태세">↩️</span>' : ''}${e.evading ? '<span class="nr gd" data-info="eevade" tabindex="0" role="img" aria-label="몸 낮춤">🌀</span>' : ''}${e.guarding ? '<span class="nr gd" data-info="eguard" tabindex="0" role="img" aria-label="지키는 중">🙌</span>' : ''}${e.hymn ? '<span class="nr gd" data-info="ehymn" tabindex="0" aria-label="노래 ' + e.hymn + '겹">🎵' + e.hymn + '</span>' : ''}${e.demand && e.demand.turn === b.turnIdx ? '<span class="nr gd hv" data-info="edemand" tabindex="0">' + (e.demand.k === 'rest' ? '🤲 고해' : '⚖️ 심문') + '</span>' : ''}${e.loot ? '<span class="nr gd" data-info="eloot" tabindex="0" role="img" aria-label="훔친 것: ' + esc(e.loot.n) + '">🫳</span>' : ''}${e.boss === 'tree' && rootRegen(b) > 0 ? `<span class="nr rg2" data-info="regen" tabindex="0">🌱 +${rootRegen(b)}/라운드</span>` : ''}</div>${ehpBar(e)}${e.role !== 'root' ? `<div class="bkline" data-info="bar:bk"><small>붕괴 게이지</small><div class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></div></div>` : ''}${stsHtml(e, b)}${e.role !== 'root' ? `<div class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${acts1[e.id] > 1 ? `<span class="ix">×${acts1[e.id]}</span>` : ''}</div>` : '<div class="mini">움직이지 않는다</div>'}${pop ? popHtml(pop) : ''}</button>`;
   };
   const bk = b.en.filter(e => e.alive && e.row === 'back'), fr = b.en.filter(e => e.alive && e.row === 'front');
   /* 전열 · 후열 띠 (10월 3일 만든 사람: 한눈에 안 들어온다): 줄마다 색 띠와 머리글, 머리에 근접 공격이 닿는지.
@@ -3196,6 +3196,10 @@ function infoHtml(key) {
     const ret = on ? [on.dmg ? '피해 ' + on.dmg : '', on.poison ? '중독 ' + on.poison : '', on.brk ? '붕괴 +' + on.brk : ''].filter(Boolean).join(', ') : '';
     return H('흘리기 준비', P((de ? de.n + '의' : '고른 적의') + ' 다음 공격 피해가 ' + Math.round(Math.max(0, (p.dodgeRed || parryRed(p)) - parryBig(de)) * 100) + '% 줄어듭니다' + (parryBig(de) ? '(강적·보스라 ' + Math.round(PARRY_BIG * 100) + '%p 덜)' : '') + '. 강타라면 그 적의 붕괴 게이지가 25 찹니다.') + (ret ? P('흘려 내면 그 적에게 ' + ret + '.') : '') + P('내 다음 차례까지 유효합니다. 고른 적이 그 사이 움직이지 않으면 헛됩니다.'));
   }
+  if (parts[0] === 'buff' && G.run) { const k = parts[1], S = SHRINES.find(x => x.id === k); const n = (G.run.buffs || {})[k] || 0; return H(S ? S.n : k === 'snuff' ? '꺼진 촛불' : k, P(S ? S.d : k === 'snuff' ? '받는 점화 피해 0, 대신 주는 피해 −5%.' : '') + P('지금 방을 포함해 ' + n + '개 방 동안 이어집니다.')); } // 10월 5일: 브라우저 툴팁 대신 게임 설명 창
+  if (parts[0] === 'mod' && ROOM_MODS[parts[1]]) return H(ROOM_MODS[parts[1]].n, P(ROOM_MODS[parts[1]].d));
+  if (parts[0] === 'soon') { const c = (typeof CLASS_SOON !== 'undefined' ? CLASS_SOON : []).find(x => x.n === parts[1]); return c ? H(c.n, P(c.d + '.') + P('아직 준비 중입니다.')) : ''; }
+  if (parts[0] === 'floor' && G.run) { const f = +parts[1], run = G.run; const rec = (run.rooms || []).filter(x => x.room === f).pop(); const T = rec && ROOM_TYPES[rec.type]; return H(floorName(f), P(f === FLOOR_CAMP ? '야영지: 쉬면 모두 찹니다.' : f === FLOOR_BOSS ? '보스가 기다립니다.' : f === run.room ? '지금 있는 층입니다.' : f < run.room ? (T ? T.n + ' 방을 지났습니다.' : rec && rec.type === 'camp' ? '야영지에서 쉬었습니다.' : '지나온 층입니다.') : PATH_AT.includes(f) ? '갈래길이 나옵니다.' : '아직 가지 않은 층입니다.')); }
   if (INFO2[key]) return H(INFO2[key][0], INFO2[key].slice(1).map(P).join(''));
   if (key === 'buildrule' && b) { const B = BUILDS[b.p.build]; const SKM = skillMap(b.p.build); return H(B.n, P('직업 규칙: ' + B.rule) + skillsOf(b.p).map(id => P(SKM[id].n + ' (' + resLabel(SKM[id]) + '): ' + SKM[id].d)).join('')); }
   if (fixed[key]) return H(fixed[key][0], P(fixed[key][1]));
@@ -3379,7 +3383,11 @@ const INFO2 = {
   seal: ['봉인', '적힌 행동은 쓸 수 없습니다.'],
   ebraced: ['버팀', '이 적이 다음 행동까지 받는 피해가 절반입니다. 지속 피해는 그대로 들어갑니다.', '무너뜨리면 풀립니다.'],
   ecounter: ['반격 태세', '이 적만 노리는 근접 공격으로 치면 평소 공격만큼 되받아칩니다. 한 번 되받으면 풀립니다.', '원거리, 광역, 지속 피해로 치거나, 무너뜨리면 풀립니다.'],
-  eevade: ['몸 낮춤', '이 적은 자기만 노린 다음 공격 하나를 피합니다. 피하는 것은 피해뿐이고, 함께 거는 상태와 붕괴는 들어갑니다.', '전열 모두를 치는 공격과 지속 피해는 피하지 못합니다. 자세가 무너지면 풀립니다.'],
+  eevade: ['몸 낮춤', '다음에 맞는 공격 하나를 피합니다.', '여럿을 함께 치는 공격과 지속 피해는 피하지 못합니다.'],
+  etough: ['강인', '정예가 가끔 갖는 특성입니다. 체력이 50% 많습니다.'],
+  ewall: ['방패벽', '방패병이 지키는 후열 적입니다. 여럿을 함께 치는 공격의 피해가 절반입니다.', '방패병을 쓰러뜨리거나 무너뜨리면 풀립니다.'],
+  ewallf: ['방패벽', '방패병 곁의 전열 적입니다. 여럿을 함께 치는 공격의 피해가 40% 줄어듭니다.', '방패병을 쓰러뜨리거나 무너뜨리면 풀립니다.'],
+  ttier: ['등급', '숫자는 이 등급을 열기 전에 이 갈래에 먼저 써야 하는 포인트입니다.'],
   eguard: ['지키는 중', '이 적이 동료 하나 앞을 막고 있습니다. 그 동료만 노린 공격을 이 적이 대신 맞습니다.', '무너뜨리면 풀립니다.'],
   edemand: ['수도원장의 요구', '수도원장이 이번 내 차례에 무언가를 기다리고 있습니다. 어떻게 답하느냐에 따라 낙인이 달라집니다.', ''],
   eloot: ['훔친 것', '도둑이 훔친 것입니다. 달아나기 전에 쓰러뜨리면 되찾고, 달아나면 잃습니다.', ''],
@@ -4286,7 +4294,7 @@ function vTreeBranch(run, br) {
   // 잠긴 등급: 그림 대신 한 줄 (깊이는 보이게: 칸 수, 궁극은 이름)
   const lockT = TIERS2.filter(tier => !tiers.includes(tier) && all.some(x => x.tier === tier));
   const foot = `<div class="tlocked">${lockT.map(tier => { const xs = all.filter(x => x.tier === tier); return `<span>🔒 <b>${TREE_CH[tier]}챕터부터</b> ${tier} ${xs.length}칸</span>`; }).join('')}<span>🔒 <b>3챕터부터</b> 상급·궁극 (준비 중)</span></div>`;
-  return `<div class="tbranch">${head}<div class="tcwrap"><div class="ttiers" style="height:${H}px" aria-hidden="true" title="등급. 숫자는 이 갈래에 먼저 써야 하는 포인트">${tl}</div><div class="tcanvas" style="height:${H}px"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${nodes}</div></div>${foot}</div>`;
+  return `<div class="tbranch">${head}<div class="tcwrap"><div class="ttiers" style="height:${H}px" aria-hidden="true" data-info="ttier">${tl}</div><div class="tcanvas" style="height:${H}px"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${nodes}</div></div>${foot}</div>`;
 }
 function vTreeDetail(run, id, preview) {
   const s = id && SK2[id]; if (!s) return `<p class="mini">칸에 마우스를 올리면 여기에 설명이 나옵니다. 누르면 그 칸을 골라 열거나 끼웁니다.</p>`;
