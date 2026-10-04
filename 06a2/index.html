@@ -55,7 +55,7 @@ fieldset label{display:inline-flex;align-items:center;min-height:44px;margin-rig
 @media (prefers-reduced-motion:reduce){.dpop{animation:none}}
 .incoming{font-size:12.5px;margin:4px 0 2px;padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:var(--panel2)}.incoming b{font-size:15px;color:var(--bad)}.incoming small{color:var(--muted)}.incoming.bad{border-color:var(--bad)}.incoming.calm{color:var(--muted)}
 .sts .sic{margin-right:2px}
-.sealln{font-size:12px;color:var(--bad);margin-top:3px}.sts{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}.sts i{font-style:normal;font-size:11.5px;border:1px solid;border-radius:4px;padding:0 4px}.sts .b{border-color:var(--good);color:var(--good)}.sts .d{border-color:var(--bad);color:var(--bad)}
+.sealln{font-size:12px;color:var(--bad);margin-top:3px}.toast{white-space:pre-line}.lootln{font-size:13px;color:var(--good);margin:2px 0 6px}.sts{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}.sts i{font-style:normal;font-size:11.5px;border:1px solid;border-radius:4px;padding:0 4px}.sts .b{border-color:var(--good);color:var(--good)}.sts .d{border-color:var(--bad);color:var(--bad)}
 .skills{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-top:6px}
 .skills button{text-align:left;padding:8px}.skills small{display:block;color:var(--muted);font-size:12px;line-height:1.35}
 .blog{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;max-height:240px;overflow-y:auto;font-size:13px}
@@ -1546,6 +1546,11 @@ function consUse(b, run, idx, tgtId) {
 /* 전리품: 적 하나마다 (LOOT). 소환된 적 · 수련장 · 시험 상황은 떨구지 않는다. 전투를 이기면 받는다(grantDrops) */
 function rollDrops(b, e) {
   if (e.summoned || !b.ctx || b.ctx.tut || b.ctx.scen || e.role === 'root') return;
+  const n0 = (b.drops || []).length; rollDrops0(b, e); const got = (b.drops || []).slice(n0); if (got.length) logp(b, 'good', '🎁 ' + e.n + '이(가) ' + dropText(got) + '을(를) 떨어뜨린다'); // 10월 5일: 쓰러뜨릴 때 무엇이 떨어졌는지 보인다
+}
+/* 떨어진 것들을 한 줄로: 약초 묶음 ×2, 골드 8, 플라스크 한 칸 */
+function dropText(L) { const m = {}; let g = 0; for (const d of L) { if (d.gold) g += d.gold; else if (d.cons) { const nm = CONS[d.cons].ico + ' ' + consName({ id: d.cons, g: d.g }); m[nm] = (m[nm] || 0) + 1; } else if (d.flask) m['🧪 플라스크 한 칸'] = (m['🧪 플라스크 한 칸'] || 0) + 1; } const a = Object.entries(m).map(([k, n]) => k + (n > 1 ? ' ×' + n : '')); if (g) a.push('💰 골드 ' + g); return a.join(', '); }
+function rollDrops0(b, e) {
   const L = e.role === 'boss' ? LOOT.big : e.strong ? (LOOT.strong || LOOT.big) : e.elite ? LOOT.elite : LOOT.normal; const rr = b.rngF || Math.random;
   const ids = Object.keys(CONS); const pick = () => { const w = ids.map(k => CONS[k].dw != null ? CONS[k].dw : CONS[k].use === 'none' ? 0.5 : 1); let x = rr() * w.reduce((a, c) => a + c, 0); for (let i = 0; i < ids.length; i++) { x -= w[i]; if (x <= 0) return ids[i]; } return ids[0]; };
   b.drops = b.drops || [];
@@ -1650,9 +1655,9 @@ function intentText(b, e) {
     case 'tune': return { t: '음을 고른다. 곁의 적들의 피해가 오른다', hv: 1 };
     case 'seal': return { t: '내 행동 하나를 적어 넣어 쓸 수 없게 한다', hv: 1 };
     case 'heal': { const t = b.en.find(x => x.id === i.tgt); return { t: (t ? t.n : '아군') + '을(를) ' + r1(healFrac(e) * 100) + '% 치유' + (e.healN && !e.monk ? ' (지침)' : ''), hv: 1 }; }
-    case 'summon': return { t: '하수인 둘을 부른다', hv: 0 };
+    case 'summon': return { t: '하수인을 부른다', hv: 0 };
     case 'fuse': return { t: '도화선에 불을 붙인다. 다음 행동에 터진다', hv: 1 };
-    case 'explode': return { t: '폭발 ' + r1(est * EKW.explodeMul) + ' · 광역 · 약화 ' + EKW.explodeWeak, hv: 1 };
+    case 'explode': return { t: '폭발 ' + r1(est * EKW.explodeMul) + ' · 약화 ' + EKW.explodeWeak, hv: 1 };
     case 'mirror': return { t: '나락의 거울. 내 직전 스킬의 절반 ' + r1(b.p.lastSkillDmg * 0.5), hv: 1 };
     case 'brand': return { t: '죄를 읽는다. 공격 ' + r1(est * 0.6), hv: 0 };
     case 'challenge': return { t: '심문한다', hv: 1 };
@@ -1664,8 +1669,8 @@ function intentText(b, e) {
     case 'lastprayer': return { t: '최후의 기도', hv: 1 };
     case 'pray': return { t: '입을 다물고 기도한다. 공격하지 않는다', hv: 0 };
     case 'brace': return { t: '몸을 굳혀 버틴다. 다음 행동까지 받는 피해 절반. 무너지면 풀린다', hv: 0 };
-    case 'counter': return { t: '반격 태세. 근접 한 적 공격을 맞으면 ' + est + ' 되받는다. 무너지면 풀린다', hv: 1 };
-    case 'evade': return { t: '몸을 낮춘다. 다음 한 적 공격을 피한다. 광역과 지속 피해는 들어간다', hv: 0 };
+    case 'counter': return { t: '반격 태세. 이 적만 노리는 근접 공격을 맞으면 ' + est + ' 되받는다. 무너지면 풀린다', hv: 1 };
+    case 'evade': return { t: '몸을 낮춘다. 자기만 노린 다음 공격 하나를 피한다. 전열 모두를 치는 공격과 지속 피해는 들어간다', hv: 0 };
     case 'aim': return { t: '겨눈다. 다음 행동에 겨눈 한 발 ' + r1(est * EKW.aimMul), hv: 1 };
     case 'guard': { const t = b.en.find(x => x.id === i.tgt); return { t: (t ? t.n : '동료') + ' 앞을 막는다. 그 적을 노린 다음 공격을 대신 맞는다', hv: 0 }; }
     case 'bless': { const t = b.en.find(x => x.id === i.tgt); return { t: (t ? t.n : '동료') + '에게 축복. 다음 공격 피해 +25%', hv: 1 }; }
@@ -1682,35 +1687,35 @@ const INTENT_ICO = { raise: '⚰️', tune: '🎵', seal: '🔏', attack: '⚔�
 function intentBadge(b, e) {
   const i = e.intent || {}; const est = enemyHitEst(b, e); const capOf = d => Math.min(d, b.p.hpMax * (e.role === 'boss' ? 0.45 : e.elite ? 0.35 : 0.25));
   switch (i.k) {
-    case 'attack': return { ico: INTENT_ICO.attack, num: r1(capOf(est * (i.aimed ? EKW.aimMul : 1))), txt: (i.aimed ? '겨눈 한 발' : '공격') + (i.bleed ? ' · 🩸출혈 ' + i.bleed : ''), cls: 'atk' };
-    case 'brace': return { ico: INTENT_ICO.brace, num: '', txt: '버틴다. 받는 피해 절반', cls: 'sup' };
-    case 'counter': return { ico: INTENT_ICO.counter, num: r1(capOf(est)), txt: '반격 태세. 근접으로 치면 되받는다', cls: 'warn' };
-    case 'evade': return { ico: INTENT_ICO.evade, num: '', txt: '몸을 낮춘다. 다음 한 적 공격을 피한다', cls: 'sup' };
-    case 'aim': return { ico: INTENT_ICO.aim, num: '', txt: '겨눈다. 다음 행동에 강한 한 발', cls: 'warn' };
-    case 'guard': { const t = b.en.find(x => x.id === i.tgt); return { ico: INTENT_ICO.guard, num: '', txt: (t ? t.n : '동료') + '을(를) 지킨다', cls: 'sup' }; }
-    case 'bless': { const t = b.en.find(x => x.id === i.tgt); return { ico: INTENT_ICO.bless, num: '+25%', txt: '축복 → ' + (t ? t.n : '동료'), cls: 'sup' }; }
-    case 'curse': return { ico: INTENT_ICO.curse, num: '', txt: '저주. 나에게 약화 ' + EKW.curseWeak, cls: 'warn' };
-    case 'steal': return { ico: INTENT_ICO.steal, num: '', txt: '훔친다. 플라스크 · 골드 · 장비', cls: 'warn' };
-    case 'flee': return { ico: INTENT_ICO.flee, num: '', txt: '달아난다' + (e.loot ? ' · ' + e.loot.n : ''), cls: 'hv' };
-    case 'charge': return { ico: INTENT_ICO.charge, num: '', txt: heavyName(e) + ' 준비. 다음 행동에 ' + heavyName(e), cls: 'warn' };
-    case 'raise': return { ico: INTENT_ICO.raise, num: '', txt: '시체를 일으킨다', cls: 'sup' };
-    case 'tune': return { ico: INTENT_ICO.tune, num: '', txt: '음을 고른다', cls: 'warn' };
+    case 'attack': return { ico: INTENT_ICO.attack, num: r1(capOf(est * (i.aimed ? EKW.aimMul : 1))), txt: (i.aimed ? '겨눈 한 발' : '공격') + (i.bleed ? ' 🩸' + i.bleed : ''), cls: 'atk' };
+    case 'brace': return { ico: INTENT_ICO.brace, num: '', txt: '버티기', cls: 'sup' };
+    case 'counter': return { ico: INTENT_ICO.counter, num: r1(capOf(est)), txt: '반격 태세', cls: 'warn' };
+    case 'evade': return { ico: INTENT_ICO.evade, num: '', txt: '몸 낮춤', cls: 'sup' };
+    case 'aim': return { ico: INTENT_ICO.aim, num: '', txt: '겨누는 중', cls: 'warn' };
+    case 'guard': { const t = b.en.find(x => x.id === i.tgt); return { ico: INTENT_ICO.guard, num: '', txt: '동료 지키기', cls: 'sup' }; }
+    case 'bless': { const t = b.en.find(x => x.id === i.tgt); return { ico: INTENT_ICO.bless, num: '+25%', txt: '축복', cls: 'sup' }; }
+    case 'curse': return { ico: INTENT_ICO.curse, num: '', txt: '저주 · 약화 ' + EKW.curseWeak, cls: 'warn' };
+    case 'steal': return { ico: INTENT_ICO.steal, num: '', txt: '훔치기', cls: 'warn' };
+    case 'flee': return { ico: INTENT_ICO.flee, num: '', txt: '달아나기', cls: 'hv' };
+    case 'charge': return { ico: INTENT_ICO.charge, num: '', txt: heavyName(e) + ' 준비', cls: 'warn' };
+    case 'raise': return { ico: INTENT_ICO.raise, num: '', txt: '시체 일으키기', cls: 'sup' };
+    case 'tune': return { ico: INTENT_ICO.tune, num: '', txt: '음 고르기', cls: 'warn' };
     case 'seal': return { ico: INTENT_ICO.seal, num: '', txt: '봉인', cls: 'warn' };
-    case 'heavy': if (e.boss === 'abbot' && st(b.p, 'brand') >= 3) return { ico: '⚡', num: r1(capOf(est * heavyMulOf(e, b) * (1 + ABBOT.brand * 3))), txt: '심판', cls: 'hv' }; return { ico: INTENT_ICO.heavy, num: r1(capOf(est * heavyMulOf(e, b))), txt: heavyName(e) + ' · 맞으면 취약 ' + EKW.heavyVuln, cls: 'hv' };
-    case 'heal': { const t = b.en.find(x => x.id === i.tgt); return { ico: INTENT_ICO.heal, num: Math.round(healFrac(e) * 100) + '%', txt: '치유 → ' + (t ? t.n : '아군'), cls: 'sup' }; }
-    case 'summon': return { ico: INTENT_ICO.summon, num: '', txt: '하수인 둘을 부른다', cls: 'sup' };
-    case 'fuse': return { ico: INTENT_ICO.fuse, num: '', txt: '불을 붙인다. 다음 행동에 폭발', cls: 'warn' };
-    case 'explode': return { ico: INTENT_ICO.explode, num: r1(Math.min(est * EKW.explodeMul, b.p.hpMax * (e.elite ? 0.35 : 0.25))), txt: '폭발 · 모두에게 · 약화 ' + EKW.explodeWeak, cls: 'hv' };
-    case 'mirror': return { ico: INTENT_ICO.mirror, num: r1(b.p.lastSkillDmg * 0.5), txt: '거울: 내 스킬의 절반', cls: 'hv' };
+    case 'heavy': if (e.boss === 'abbot' && st(b.p, 'brand') >= 3) return { ico: '⚡', num: r1(capOf(est * heavyMulOf(e, b) * (1 + ABBOT.brand * 3))), txt: '심판', cls: 'hv' }; return { ico: INTENT_ICO.heavy, num: r1(capOf(est * heavyMulOf(e, b))), txt: heavyName(e) + ' · 취약 ' + EKW.heavyVuln, cls: 'hv' };
+    case 'heal': { const t = b.en.find(x => x.id === i.tgt); return { ico: INTENT_ICO.heal, num: Math.round(healFrac(e) * 100) + '%', txt: '치유', cls: 'sup' }; }
+    case 'summon': return { ico: INTENT_ICO.summon, num: '', txt: '부르기', cls: 'sup' };
+    case 'fuse': return { ico: INTENT_ICO.fuse, num: '', txt: '도화선 · 곧 폭발', cls: 'warn' };
+    case 'explode': return { ico: INTENT_ICO.explode, num: r1(Math.min(est * EKW.explodeMul, b.p.hpMax * (e.elite ? 0.35 : 0.25))), txt: '폭발 · 약화 ' + EKW.explodeWeak, cls: 'hv' };
+    case 'mirror': return { ico: INTENT_ICO.mirror, num: r1(b.p.lastSkillDmg * 0.5), txt: '거울', cls: 'hv' };
     case 'brand': return { ico: INTENT_ICO.brand, num: r1(capOf(est * 0.6)), txt: '죄를 읽는다 · 낙인', cls: 'atk' };
     case 'challenge': return { ico: '⚖️', num: '', txt: '심문한다', cls: 'warn' };
     case 'confess': return { ico: '🤲', num: '', txt: '고해를 요구한다', cls: 'warn' };
-    case 'sermon': return { ico: '📖', num: '', txt: '설교. 나에게 약화 ' + ABBOT.sermonWeak, cls: 'warn' };
+    case 'sermon': return { ico: '📖', num: '', txt: '설교 · 약화 ' + ABBOT.sermonWeak, cls: 'warn' };
     case 'rest': return { ico: '…', num: '', txt: '숨을 고른다', cls: 'sup' };
     case 'sacprep': { const t = b.en.find(x => x.id === i.tgt); return { ico: '🩸', num: '', txt: (t ? t.n : '수도사') + '을(를) 끌어당긴다', cls: 'hv' }; }
     case 'sacrifice': { const t = b.en.find(x => x.id === i.tgt); return { ico: '🩸', num: '', txt: '제물: ' + (t ? t.n : '수도사'), cls: 'hv' }; }
     case 'lastprayer': return { ico: '🙏', num: '', txt: '최후의 기도', cls: 'warn' };
-    case 'pray': return { ico: INTENT_ICO.pray, num: '', txt: '기도. 공격하지 않는다', cls: 'sup' };
+    case 'pray': return { ico: INTENT_ICO.pray, num: '', txt: '기도', cls: 'sup' };
     default: return { ico: INTENT_ICO.none, num: '', txt: '', cls: '' };
   }
 }
@@ -2358,9 +2363,9 @@ const HELP = [
   { k: 'intent', n: '적의 예고', t: [
     '적 카드 아래에 그 적이 다음에 할 행동이 적혀 있습니다. 빨간 테두리는 위험한 행동입니다. 걸 상태도 숫자로 보입니다(예: "공격 4 · 출혈 2").',
     '충전 중 → 강타: 한 번 쉬고 다음 행동에 평소의 ' + TELE.heavy + '배 피해를 주고, 맞으면 취약 ' + EKW.heavyVuln + '가 걸립니다. 흘리기, 방어, 붕괴로 끊기, 먼저 쓰러뜨리기 가운데 고르세요.',
-    '적은 매번 때리지 않습니다. 버티기(다음 행동까지 받는 피해 절반), 반격 태세(근접으로 치면 되받음), 몸 낮추기(다음 한 적 공격을 피함, 광역과 지속 피해는 들어감), 겨누기(다음 행동에 강한 한 발), 지키기(동료 대신 맞음)를 섞습니다. 버티기 · 반격 태세 · 몸 낮추기 · 지키기는 그 적이 무너지면 모두 풀립니다.',
+    '적은 매번 때리지 않습니다. 버티기(다음 행동까지 받는 피해 절반), 반격 태세(근접으로 치면 되받음), 몸 낮추기(자기만 노린 다음 공격 하나를 피함, 전열 모두를 치는 공격과 지속 피해는 들어감), 겨누기(다음 행동에 강한 한 발), 지키기(동료 대신 맞음)를 섞습니다. 버티기 · 반격 태세 · 몸 낮추기 · 지키기는 그 적이 무너지면 모두 풀립니다.',
     '치유: 사제가 생명력 ' + Math.round(PRIEST.heal * 100) + '% 아래인 동료를 25% 회복합니다. 치유할 때마다 다음 치유는 30%씩 줄어듭니다(지침). 축복: 동료의 다음 공격 피해 +25%. 저주: 나에게 약화 ' + EKW.curseWeak + '. 훔치기: 도둑이 플라스크 한 칸, 골드, 가방의 장비 가운데 하나를 훔치고 다음 행동에 달아납니다. 달아나기 전에 쓰러뜨리면 되찾습니다.',
-    '도화선 → 폭발: 자폭병이 다음 행동에 평소의 ' + EKW.explodeMul + '배 광역 피해와 약화 ' + EKW.explodeWeak + '를 주고 사라집니다. 자폭병은 한 적 공격 한 번에 쓰러지고, 광역과 지속 피해로는 쓰러지지 않습니다.'] },
+    '도화선 → 폭발: 자폭병이 다음 행동에 평소의 ' + EKW.explodeMul + '배 피해와 약화 ' + EKW.explodeWeak + '를 주고 사라집니다. 자폭병은 한 적만 노리는 공격 한 번에 쓰러지고, 전열 모두를 치는 공격과 지속 피해로는 쓰러지지 않습니다.'] },
   { k: 'row', n: '전열과 후열', t: [
     '적은 앞줄(전열)과 뒷줄(후열)에 섭니다. 근접 공격(기본 공격, 강공격, 근접 스킬)은 전열만 노릴 수 있습니다. 전열이 모두 쓰러지거나 붕괴하면 근접 공격도 후열에 닿습니다.',
     '원거리와 광역 스킬은 언제나 닿습니다. 다만 광역 스킬은 후열에 70%만 들어갑니다.',
@@ -2888,7 +2893,8 @@ function vBattle() {
   let dock;
   if (b.over) {
     const msg = b.over === 'win' ? '승리했습니다.' : b.over === 'lose' ? '쓰러졌습니다.' : b.over === 'flee' ? '물러났습니다. 이 방은 다시 이겨야 합니다.' : '이 상황은 여기까지입니다.';
-    dock = G.scr === 'tut' ? vTutOver(b) : `<section class="dock"><p><b>${msg}</b></p><button class="gold wide" data-a="${G.scr === 'scen' ? 'scennext' : 'bcont'}" data-focus>계속</button></section>`;
+    const lootL = b.over === 'win' && (b.drops || []).length ? `<p class="lootln">🎁 전리품: ${esc(dropText(b.drops))}</p>` : '';
+    dock = G.scr === 'tut' ? vTutOver(b) : `<section class="dock"><p><b>${msg}</b></p>${lootL}<button class="gold wide" data-a="${G.scr === 'scen' ? 'scennext' : 'bcont'}" data-focus>계속</button></section>`;
   } else {
     const L = actionList(b);
     let btns = '';
@@ -3372,9 +3378,9 @@ const INFO2 = {
   ehymn: ['노래', '조율자의 노래가 겹마다 이 적의 피해를 ' + Math.round(FOE_X.cantor.hymn * 100) + '% 올립니다.'],
   seal: ['봉인', '적힌 행동은 쓸 수 없습니다.'],
   ebraced: ['버팀', '이 적이 다음 행동까지 받는 피해가 절반입니다. 지속 피해는 그대로 들어갑니다.', '무너뜨리면 풀립니다.'],
-  ecounter: ['반격 태세', '이 적을 근접 한 적 공격으로 치면 평소 공격만큼 되받아칩니다. 한 번 되받으면 풀립니다.', '원거리, 광역, 지속 피해로 치거나, 무너뜨리면 풀립니다.'],
-  eevade: ['몸 낮춤', '이 적을 노린 다음 한 적 공격은 피해가 들어가지 않습니다. 함께 거는 상태와 붕괴는 들어갑니다.', '광역과 지속 피해는 그대로 들어갑니다. 무너뜨리면 풀립니다.'],
-  eguard: ['지키는 중', '이 적이 동료 하나 앞을 막고 있습니다. 그 동료를 노린 한 적 공격을 이 적이 대신 맞습니다.', '무너뜨리면 풀립니다.'],
+  ecounter: ['반격 태세', '이 적만 노리는 근접 공격으로 치면 평소 공격만큼 되받아칩니다. 한 번 되받으면 풀립니다.', '원거리, 광역, 지속 피해로 치거나, 무너뜨리면 풀립니다.'],
+  eevade: ['몸 낮춤', '이 적은 자기만 노린 다음 공격 하나를 피합니다. 피하는 것은 피해뿐이고, 함께 거는 상태와 붕괴는 들어갑니다.', '전열 모두를 치는 공격과 지속 피해는 피하지 못합니다. 자세가 무너지면 풀립니다.'],
+  eguard: ['지키는 중', '이 적이 동료 하나 앞을 막고 있습니다. 그 동료만 노린 공격을 이 적이 대신 맞습니다.', '무너뜨리면 풀립니다.'],
   edemand: ['수도원장의 요구', '수도원장이 이번 내 차례에 무언가를 기다리고 있습니다. 어떻게 답하느냐에 따라 낙인이 달라집니다.', ''],
   eloot: ['훔친 것', '도둑이 훔친 것입니다. 달아나기 전에 쓰러뜨리면 되찾고, 달아나면 잃습니다.', ''],
   guarded: ['방패병이 막는 중', '이 적을 노린 근접 공격은 방패병이 대신 맞습니다. 피해도 붕괴도 상태이상도 방패병에게 갑니다.', '방패병을 붕괴시키거나 원거리, 광역 공격을 쓰면 뚫립니다.'],
@@ -4085,7 +4091,7 @@ function giveItem(it, then) {
 function toast(m) {
   G.liveMsg = m; let el = document.querySelector('.toast');
   if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
-  el.textContent = fixJosa(m); clearTimeout(G.toastT); G.toastT = setTimeout(() => { const e2 = document.querySelector('.toast'); if (e2) e2.remove(); }, 2400);
+  const lines = el.isConnected && G.toastLines && Date.now() - (G.toastAt || 0) < 2400 ? G.toastLines : []; lines.push(fixJosa(m)); G.toastLines = lines.slice(-4); G.toastAt = Date.now(); el.textContent = G.toastLines.join('\n'); clearTimeout(G.toastT); // 10월 5일: 전리품 알림이 골드 · 경험치 알림에 덮여 보이지 않았다 G.toastT = setTimeout(() => { const e2 = document.querySelector('.toast'); if (e2) e2.remove(); }, 2400);
 }
 
 /* ---------- 고정 상황 ---------- */
