@@ -167,7 +167,7 @@ function fightCur(pk, r, mem, out) {
     if (a === 'flee') { const L = G0.actionList(b).filter(x => x.ok && x.id !== 'flee'); a = L[0].id; t = null; }
     if (P.look && r() < P.err) { const L = G0.actionList(b).filter(x => x.ok && x.id !== 'flee'); a = L[Math.floor(r() * L.length)].id; t = null; }
     else if (r() < (THINK(pk) ? 0.9 : P.healerFirst)) { // 보스전 기믹에 사람이 하는 대응 (비공개 문서)
-      const act = G0.actionList(b).find(x => x.id === a); const monk = G0.alive(b).find(e => e.monk && act && G0.canTarget(b, e, act));
+      const act = G0.actionList(b).find(x => x.id === a); const monk = G0.alive(b).filter(e => e.monk && act && G0.canTarget(b, e, act)).sort((x, y) => (y.role === 'healer') - (x.role === 'healer'))[0];
       if (monk && act && act.tgt !== false) t = monk.id;
     }
     if (OPT.onTurn) OPT.onTurn(G, n);
