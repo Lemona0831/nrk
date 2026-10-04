@@ -16,13 +16,15 @@ const SKK = {
   pOk: 0.85,                    // 흘리기 성공 확률 (10월 3일 50상황 실측: 스킬 흘리기 84%, 빠른 흘리기 71~77%·주 행동 흘리기 96~98%. 예전 값 0.6은 빠른 흘리기가 발동하지 않던 때의 실측이다)
   turns: 11,                    // 기준 전투에서 첫 차례 뒤 내 차례 수 (목표 전투 길이 12행동, 10월 3일 만든 사람 결정: 옛 암살자 수준)
   haste: { poison: 5, kill: 2, parry: 1.5, break: 1 },  // 기준 전투에서 갈래 규칙이 일어나는 행동 수 (한 행동에 한 번만 센다) [가설]
-  kw: { weak: 1.5, vuln: 1.5, chill: 1.5, protect: 2, haste: 2 },   // 적에게 거는 상태 1의 값 (한 번 막거나 키우는 피해)
+  kw: { weak: 1.5, vuln: 1.5, chill: 1.5, protect: 2, haste: 2, empower: 3.5 },   // empower: 나에게 강화 1 = 다음 공격 하나 피해 +25% (10월 5일 사냥꾼 저격 자세, 가설)   // 적에게 거는 상태 1의 값 (한 번 막거나 키우는 피해)
   budget: { 시작: 28, 하급: 39, 중급: 48 },   // 10월 3일 50상황: 시작 스킬을 낮추고(35 → 28) 트리를 1.15배로 올렸다. 공통 행동이 갈래 스킬보다 세면 갈래 성격이 묻힌다
   rowB: { 1: 37, 2: 38, 3: 39, 4: 40, 5: 41, 6: 42.5, 7: 46, 8: 47.5, 9: 49.5, 10: 51 },  // 줄마다 예산 (10월 3일): 깊은 줄일수록 조금 세다. 하급 1~6줄, 중급 7~10줄   // 시작 30 → 35 (10월 3일: 늘 끼워지는 시작 스킬로 전투를 줄인다)   // 10월 3일: 06a2 감도 시험(스킬 효과 ×1.3 → 6성향 20%, 신중 35%)에서 등급별 점수 중앙값. 처음 값(20·24·30·42)의 약 1.7배
   /* 파수꾼 (10월 4일 50상황 측정으로 보정): 보호막은 맞으며 금방 줄어 쓸 때 대개 비어 있다. [하급(1~6줄), 중급(7~10줄)]마다
      S: 보호막 비례 피해를 쓸 때의 보유량(측정 Lv5 7~8, Lv10 13~15), B: 한 번에 태우는 양(측정 Lv5 8~9 · 상한에 막힘, Lv10 12~14), cap: 채우기의 기준 상한(Lv5 49, Lv10 58, 쓸 때 거의 0이라 넘침 0~1%)
      v: 보호막 1의 값, loss: 태운 보호막이 막았을 몫, thorn: 가시가 맞는 몫, vuln: 쓸 때 대상의 취약, shield: 방패병이 있는 몫, pull: 끌어내기, chill: 둔화된 적이 있는 몫 [가설] */
   ward: { v: 0.8, S: [8, 12.5], B: [15, 21], cap: [45, 58], loss: 0.5, thorn: 0.85, vuln: 2, shield: 0.3, pull: 6, chill: 0.35, all: [12, 22], fin: 0.9 }, // 10월 5일 4차 측정(적 행동 개편 · 강적 다섯 · 후열 절반 뒤): 보호막 비례 때 보유 하급 7~9 · 중급 12~13, 최후의 성벽이 태운 양 Lv10 23. B는 그대로(태우기 전 보유 하급 16~22 · 중급 16~35, 상한이 먼저 걸린다). // 10월 4일 3차 측정(테스터가 보호막을 얻는 스킬을 태우는 스킬만큼 끼우고, 한 적의 공격에도 막는 스킬을 쓴 뒤): all은 모두 태우는 스킬이 한 번에 태우는 양(지금 10줄 최후의 성벽뿐, Lv10 측정 18), fin은 마무리 태우기를 생명력이 낮은 적에게 쓴 몫(측정 91~100%)
+  /* 사냥꾼 (10월 5일 초안, 가설): F 쓸 때 대상의 추적 겹(최대 3), swap 직전과 다른 적을 칠 몫, ev 몸 빼기 한 번이 막는 피해, hx 쓸 때 가속 상태일 몫, fa 추적 한 겹을 더하는 값 */
+  hunt: { F: 1.5, swap: 0.5, ev: 7, hx: 0.5, fa: 1.5 },
   hz: 1.5,                      // 🔄 쿨타임 당기기 1번의 값 [가설] (10월 3일 50상황: 평소 싸움에서는 스킬이 늘 3~4개 준비되어 있어 거의 0, 쿨타임이 묶이는 보스전에서만 크다)
   Fmax: 6,                      // 한 스킬을 전투에서 쓰는 횟수의 상한 (실측: 바탕 스킬 독니 5.4)
 };
@@ -64,6 +66,13 @@ function skValue(s) {
       case 'pull': v += K.ward.pull; break;
       case 'vulnGrow': v += K.ward.vuln * (e.mul - 1) * K.kw.vuln; break; // 쓸 때 대상의 취약을 키운다
       case 'chillx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * K.ward.chill * (s.tgt === 'front' || s.tgt === 'all' ? tm : 1); break; } // 둔화된 적에게 ×
+      case 'focusx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * e.per * K.hunt.F; break; } // 추적 1겹마다 피해 +per
+      case 'focusBurst': v += e.n * K.hunt.F; break; // 추적을 터뜨린다: 1겹마다 피해 +n
+      case 'focusAdd': v += e.n * K.hunt.fa; break; // 대상에게 추적 +n겹
+      case 'swapx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n : 0) * (e.mul - 1) * K.hunt.swap; break; } // 직전과 다른 적이면 × (첫 발만)
+      case 'evade': v += e.n * K.hunt.ev; break; // 다음에 맞는 공격 n번을 피한다
+      case 'hastex': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * K.hunt.hx; break; } // 가속 상태면 ×
+      case 'meSt': v += e.n * (K.kw[e.s] || 1); break; // 공격 스킬에 붙은 나에게 거는 상태
       case 'hasten': { const pb = s.fx.find(x => x.k === 'parryBuff'); v += (e.n || 1) * K.hz * (e.on === 'parry' ? K.pOk * (pb ? (pb.times || 1) : 1) : 1); break; } // 🔄 다른 같은 갈래 스킬 쿨타임 당기기
     }
   }
@@ -99,7 +108,7 @@ function skBody(s) {
     if (e.k === 'st') parts.push(`${s.tgt === 'self' ? '나에게 ' : ''}${SK_KWN[e.s] || e.s} ${e.n}`);
     if (e.k === 'ward') parts.push(`${s.tgt === 'self' ? '' : '나에게 '}보호막 +${e.n}`);
   }
-  if (parts.length) out.push((hits > 1 ? `${hits}번 찌른다. 한 번마다 ` : '') + parts.join(', ') + '.');
+  if (parts.length) out.push((hits > 1 ? `${hits}번 ${s.tgt === 'ranged' || s.tgt === 'all' ? '쏜다' : '찌른다'}. 한 번마다 ` : '') + parts.join(', ') + '.');
   for (const e of s.fx) {
     switch (e.k) {
       case 'grow': out.push(`대상의 중독을 ${e.mul}배로 만든다.` + (e.add ? ` 그 뒤 중독 ${e.add}.` : '')); break;
@@ -120,8 +129,15 @@ function skBody(s) {
         out.push((buf.length ? `다음 흘리기 ${t}번은 ${buf.join('. ')}.` : '') + (hit ? ` ${t > 1 ? '흘리기에 성공할 때마다' : '다음 흘리기에 성공하면'} 그 적에게 ${hit}.` : '')); break; }
       case 'execute': out.push(`대상의 생명력이 ${Math.round(e.hp * 100)}% 이하면 터뜨린 피해 ×${e.mul}.`); break;
       case 'stam': out.push(`스태미나 +${e.n}.`); break;
+      case 'focusx': out.push(`대상의 추적 1겹마다 피해 +${Math.round(e.per * 100)}% 더.`); break;
+      case 'focusBurst': out.push(`대상의 추적을 모두 터뜨린다. 1겹마다 피해 +${e.n}. 추적은 사라진다.`); break;
+      case 'focusAdd': out.push(`대상에게 추적 +${e.n}겹(최대 3).`); break;
+      case 'swapx': out.push(`직전에 친 적과 다른 적이면 피해 ×${e.mul}.`); break;
+      case 'evade': out.push(`다음에 맞는 공격 ${e.n}번을 피한다.`); break;
+      case 'hastex': out.push(`내가 가속 상태면 피해 ×${e.mul}.`); break;
+      case 'meSt': out.push(`나에게 ${SK_KWN[e.s] || e.s} ${e.n}.`); break;
       case 'bigx': out.push(`정예·강적·보스에게는 피해 ×${e.mul}.`); break;
-      case 'cutx': out.push(`대상이 강타나 폭발을 모으는 중이면 붕괴 +${e.brk}.`); break;
+      case 'cutx': out.push(`대상이 강타나 영창을 모으는 중이면 붕괴 +${e.brk}.`); break;
       case 'drain': out.push(`대상의 중독 1마다 생명력 +${e.per}. 중독은 그대로다.`); break;
       case 'lowx': out.push(`대상의 생명력이 ${Math.round(e.hp * 100)}% 이하면 피해 ×${e.mul}.`); break;
       case 'brokenx': out.push(`대상이 붕괴 상태면 피해 ×${e.mul}.`); break;

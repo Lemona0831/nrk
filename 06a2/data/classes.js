@@ -7,7 +7,7 @@ const EXCL = {};   // 옛 직업 전용 스킬 (v2 직업은 data/skills.js의 �
 const SIG = {};    // 옛 직업 기술 (v2 시범에는 없다. docs/0.6a.2-개편-기획.md 12절 질문 4)
 
 /* 시작 스킬: v2 직업은 트리 밖의 시작 스킬 둘 (data/skills.js의 TREE2.starters와 같다) */
-const DEFAULT_SKILLS = { assassin: ['a_vital', 'a_slip'], warden: ['w_bash', 'w_brace'] };
+const DEFAULT_SKILLS = { assassin: ['a_vital', 'a_slip'], warden: ['w_bash', 'w_brace'], hunter: ['h_aim', 'h_step'] };
 
 /* hp는 시작 장비(낡은 갑옷 +10)를 뺀 값이다. mp는 v2 직업에 없다 */
 const BUILDS = {
@@ -24,6 +24,13 @@ const BUILDS = {
     rule: '방어하면 보호막 +6(최대 생명력의 30%까지). 후열 적의 공격은 보호막이 절반만 받아낸다. 스킬은 쓰고 나면 쿨타임만큼 기다린다',
     skills: [],
   },
+  /* 사냥꾼 (10월 5일 초안, docs/0.6a.2-사냥꾼-스킬.md): 원거리 · 생명력 낮음, 개전 가속 2, 추적(같은 적을 연달아 맞히면 겹마다 피해 +5%, 최대 3). 맞추는 동안 "준비 중" */
+  hunter: {
+    n: '사냥꾼', ico: '🏹', hp: 92, mp: 0, v2: 1, soon: 1, ranged: 1, openHaste: 2,
+    lore: '먼저 쏘고, 쫓고, 끝까지 놓치지 않는다.',
+    rule: '원거리: 기본 공격과 대부분의 스킬이 후열에 닿는다. 전투를 시작하면 가속 2. 같은 적을 연달아 맞히면 추적이 한 겹씩 쌓여(최대 3) 겹마다 피해 +5%, 다른 적을 치면 사라진다. 스킬은 쓰고 나면 쿨타임만큼 기다린다',
+    skills: [],
+  },
 };
 
 /* 아직 만들지 않은 시작 직업 (캐릭터 만들기에 "준비 중"으로 보인다) */
@@ -35,4 +42,4 @@ const CLASS_SOON = [
 ];
 
 /* 레벨이 오를 때 오르는 생명력 (11.4절) */
-const LV_GAIN = { assassin: { hp: 5, mp: 0 }, warden: { hp: 6, mp: 0 } };
+const LV_GAIN = { assassin: { hp: 5, mp: 0 }, warden: { hp: 6, mp: 0 }, hunter: { hp: 4, mp: 0 } };
