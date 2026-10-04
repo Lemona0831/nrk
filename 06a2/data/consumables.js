@@ -47,6 +47,7 @@ const CONS = {
 const LOOT = {
   normal: { p: 0.35, rolls: 1, gold: 0.4, cons: 0.6, flask: 0.003, n: [1, 2], hi: 0.1 },
   elite:  { p: 0.65, rolls: 1, gold: 0.3, cons: 0.7, flask: 0.006, n: [1, 3], hi: 0.3 },
+  strong: { p: 1, rolls: 3, gold: 0.35, cons: 0.65, flask: 0.01, n: [2, 3], hi: 0.6 }, // 강적 (10월 4일 하이 리스크 하이 리턴)
   big:    { p: 1, rolls: 2, gold: 0.35, cons: 0.65, flask: 0.01, n: [2, 3], hi: 0.5 },
   goldPer: lv => 4 + 2 * lv, // 골드 한 번 = 4 + 2 × 몬스터 레벨 (방 보상 10~40과 견줌)
   lowerHi: 0.15, // 하층에서 고급 확률 더

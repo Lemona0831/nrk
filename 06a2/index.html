@@ -1543,7 +1543,7 @@ function consUse(b, run, idx, tgtId) {
 /* 전리품: 적 하나마다 (LOOT). 소환된 적 · 수련장 · 시험 상황은 떨구지 않는다. 전투를 이기면 받는다(grantDrops) */
 function rollDrops(b, e) {
   if (e.summoned || !b.ctx || b.ctx.tut || b.ctx.scen || e.role === 'root') return;
-  const L = e.role === 'boss' || e.strong ? LOOT.big : e.elite ? LOOT.elite : LOOT.normal; const rr = b.rngF || Math.random;
+  const L = e.role === 'boss' ? LOOT.big : e.strong ? (LOOT.strong || LOOT.big) : e.elite ? LOOT.elite : LOOT.normal; const rr = b.rngF || Math.random;
   const ids = Object.keys(CONS); const pick = () => { const w = ids.map(k => CONS[k].dw != null ? CONS[k].dw : CONS[k].use === 'none' ? 0.5 : 1); let x = rr() * w.reduce((a, c) => a + c, 0); for (let i = 0; i < ids.length; i++) { x -= w[i]; if (x <= 0) return ids[i]; } return ids[0]; };
   b.drops = b.drops || [];
   if (rr() < Math.min(0.01, L.flask * (b.lootMul || 1) * (b.lootX || 1))) b.drops.push({ flask: ['life', 'mana', 'stam'][Math.floor(rr() * 3)] }); // 플라스크 한 칸: 1% 이하
@@ -2349,7 +2349,8 @@ const HELP = [
     '상점에는 장비 여섯 개가 놓입니다(직업에 맞는 것 셋 이상, 희귀 하나 이상). 가방의 장비는 산 값의 25%에 팔 수 있고, 레벨 × 10골드로 능력치를 처음부터 다시 나눌 수 있습니다. 남은 골드는 다음 챕터로 가져갑니다.'] },
   { k: 'rooms', n: '방과 진행', t: [
     '1챕터는 24층입니다. 상층 11층, ' + FLOOR_CAMP + '층 야영지, 하층 11층, ' + FLOOR_BOSS + '층 보스로 이루어집니다. 층마다 문 셋 가운데 하나를 고릅니다. 문에는 방의 종류, 적, 위험도(★), 방 특성이 적혀 있습니다. 보상은 일부 문에만 적혀 있습니다.',
-    '몇 층마다 갈래길이 나옵니다. 험한 길은 적이 거세고 강적 · 매복이 잦은 대신 전리품과 골드가 많습니다. 샛길은 적이 덜 거세고 쉬는 방이 잦은 대신 얻는 것이 적습니다. 큰 길은 평소대로입니다. 고른 길은 다음 갈래길까지 이어집니다.',
+    '몇 층마다 갈래길이 나옵니다. 험한 길은 적이 거세고 강적 · 매복이 잦은 대신 전리품과 골드가 많고 장비 등급이 자주 오릅니다. 샛길은 적이 덜 거세고 쉬는 방이 잦은 대신 얻는 것이 적고 장비 등급이 가끔 내려갑니다. 큰 길은 평소대로입니다. 고른 길은 다음 갈래길까지 이어집니다.',
+    '강적은 힘을 모아 크게 내리치는 한 방을 가집니다. 대신 이기면 희귀 장비, 많은 골드와 전리품을 얻습니다.',
     '싸우는 방: 일반, 매복(적이 먼저 움직이고 거센 대신 전리품이 많음), 강적, 보물(상자에서 장비 둘 중 하나), 시련(특성 둘, 희귀 보장). 쉬는 방: 샘, 성소(몇 방 동안 버프), 제단(거래), 이벤트(선택).',
     '하층은 상층보다 적이 거셉니다. 야영지에서 모두 회복합니다. 샘은 드물게만 나옵니다.',
     '보스와 강적은 처음 만날 때 눈에 보이는 것만 알려 줍니다. 처음 겪은 일은 보스 도감에 적히고, 메모를 남길 수 있습니다. 보스전을 오래 끌면(보통 행동 약 ' + ENRAGE.boss + '번) 보스가 광폭해집니다.',
@@ -3937,13 +3938,14 @@ function battleContinue() {
   let gold = (R.gold || 0) * (R.mods && R.mods.includes('bell') ? 1.5 : 1) + (nu.chase ? 20 : 0) + (R.type === 'treasure' ? fxVal(run.p, 'treasureGold', 0, (a, v) => a + v) : 0);
   if (gold) gainGold(run, gold, ROOM_TYPES[R.type].n + ' 방을 넘었습니다');
   const drops = []; const t = R.type;
-  if (t === 'normal' || t === 'ambush') drops.push(mkItem(dropKey(run, rollGrade()), { g: undefined }));
-  if (t === 'strong') { const g = rollGrade('m'); drops.push(mkItem(dropKey(run, g))); }
+  const PU = (PATHS[R.path] || PATHS.main).up || 0; const pg = g => PU > 0 && g !== 'r' && Math.random() < PU ? (g === 'n' ? 'm' : 'r') : PU < 0 && g !== 'n' && Math.random() < -PU ? (g === 'r' ? 'm' : 'n') : g; // 길: 장비 등급 한 단계 오르내림 (10월 4일)
+  if (t === 'normal' || t === 'ambush') drops.push(mkItem(dropKey(run, pg(rollGrade())), { g: undefined }));
+  if (t === 'strong') drops.push(mkItem(dropKey(run, 'r'))); // 강적은 희귀 보장 (10월 4일)
   if (t === 'trial') drops.push(mkItem(dropKey(run, 'r')));
-  for (let k = 0; k < (nu.extraDrop || 0); k++) drops.push(mkItem(dropKey(run, rollGrade())));
+  for (let k = 0; k < (nu.extraDrop || 0); k++) drops.push(mkItem(dropKey(run, pg(rollGrade()))));
   for (const it of drops) it.g = ITEMS[it.tpl].g || 'n';
   advanceFloor();
-  const q = []; if (t === 'treasure') { const a = dropKey(run, 'r'), b2 = dropKey(run, rollGrade(), [a]); q.push({ chest: [a, b2], room: run.room - 1 }); }
+  const q = []; if (t === 'treasure') { const a = dropKey(run, 'r'), b2 = dropKey(run, pg(rollGrade()), [a]); q.push({ chest: [a, b2], room: run.room - 1 }); }
   q.push(...drops);
   if (xpGot) toast('경험치 +' + xpGot + (lvUp ? ' · 레벨 ' + run.lv + '!' : ''));
   if (lvUp) { G.dropQ = (G.dropQ || []).concat(q); openSheet('stats', { pts: LV_POINTS * lvUp, why: '레벨 ' + run.lv + ' · 능력치 ' + LV_POINTS * lvUp + '점' }); saveRunLocal(); saveCur(); return; }
