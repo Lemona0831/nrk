@@ -16,7 +16,7 @@ const SKK = {
   pOk: 0.85,                    // 흘리기 성공 확률 (10월 3일 50상황 실측: 스킬 흘리기 84%, 빠른 흘리기 71~77%·주 행동 흘리기 96~98%. 예전 값 0.6은 빠른 흘리기가 발동하지 않던 때의 실측이다)
   turns: 11,                    // 기준 전투에서 첫 차례 뒤 내 차례 수 (목표 전투 길이 12행동, 10월 3일 만든 사람 결정: 옛 암살자 수준)
   haste: { poison: 5, kill: 2, parry: 1.5, break: 1 },  // 기준 전투에서 갈래 규칙이 일어나는 행동 수 (한 행동에 한 번만 센다) [가설]
-  kw: { weak: 1.5, vuln: 1.5, chill: 1.5, protect: 2, haste: 2, empower: 3.5 },   // empower: 나에게 강화 1 = 다음 공격 하나 피해 +25% (10월 5일 사냥꾼 저격 자세, 가설)   // 적에게 거는 상태 1의 값 (한 번 막거나 키우는 피해)
+  kw: { weak: 1.5, vuln: 1.5, chill: 1.5, protect: 2, haste: 12, empower: 3.5 },   // haste: 가속 1 = 한 라운드의 연속 행동(차례 하나, 쿨타임은 줄지 않음) (10월 5일 만든 사람 결정으로 2 → 12)   // empower: 나에게 강화 1 = 다음 공격 하나 피해 +25% (10월 5일 사냥꾼 저격 자세, 가설)   // 적에게 거는 상태 1의 값 (한 번 막거나 키우는 피해)
   budget: { 시작: 28, 하급: 39, 중급: 48 },   // 10월 3일 50상황: 시작 스킬을 낮추고(35 → 28) 트리를 1.15배로 올렸다. 공통 행동이 갈래 스킬보다 세면 갈래 성격이 묻힌다
   rowB: { 1: 37, 2: 38, 3: 39, 4: 40, 5: 41, 6: 42.5, 7: 46, 8: 47.5, 9: 49.5, 10: 51 },  // 줄마다 예산 (10월 3일): 깊은 줄일수록 조금 세다. 하급 1~6줄, 중급 7~10줄   // 시작 30 → 35 (10월 3일: 늘 끼워지는 시작 스킬로 전투를 줄인다)   // 10월 3일: 06a2 감도 시험(스킬 효과 ×1.3 → 6성향 20%, 신중 35%)에서 등급별 점수 중앙값. 처음 값(20·24·30·42)의 약 1.7배
   /* 파수꾼 (10월 4일 50상황 측정으로 보정): 보호막은 맞으며 금방 줄어 쓸 때 대개 비어 있다. [하급(1~6줄), 중급(7~10줄)]마다
@@ -73,6 +73,7 @@ function skValue(s) {
       case 'evade': v += e.n * K.hunt.ev; break; // 다음에 맞는 공격 n번을 피한다
       case 'hastex': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * K.hunt.hx; break; } // 가속 상태면 ×
       case 'meSt': v += e.n * (K.kw[e.s] || 1); break;
+      case 'hasteSpend': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * 0.4; break; } // 가속이 있으면 써서 ×
       case 'chillCut': v += K.hunt.stop * (K.hunt.stopV * 0.8 + e.brk * K.brk * 0.2); break; // 둔화된 적이 모으는 중이면 끊는다(강적 · 보스는 붕괴)
       case 'chillShatter': v += K.hunt.ch * (e.dmg + e.brk * K.brk); break; // 둔화를 깨뜨려 1마다 피해 · 붕괴
       case 'chillSpread': v += K.hunt.ch * (e.per || 1) * 1.5 * K.kw.chill; break; // 다른 적 평균 1.5
@@ -92,8 +93,10 @@ function skValue(s) {
 function skUses(s) { if (s.once) return 1 + (s.killRecharge ? 0.3 : 0); return Math.min(SKK.Fmax, 1 + (SKK.turns + (SKK.haste[s.hs] || 0)) / (s.cd + 1) + (s.killRecharge ? 0.5 : 0)); }
 /* 갈래 보정 (10월 3일, tools/sitqa.js 50상황 실측): 같은 점수라도 갈래마다 실제로 버는 몫이 다르다.
    쿨타임 하나로 바꾸며(3차 결정) 다시 쟀다: 갈래 규칙을 빼도 50상황 갈래 평균은 그대로였으므로, 지금 수치가 줄 예산 가운데에 오는 값(예전 ×0.85 · ×1.08 · ×1.1) */
+SKK.clsB = { h_: 0.9 };
+SKK.clsAdj = { h_: 1.6 }; // 직업마다 실제로 버는 몫 (10월 5일 50상황: 사냥꾼 스킬은 조건 없이 바로 들어가는 피해라 점수보다 1.6배쯤 번다. 같은 예산이면 라운드당 피해가 암살자의 1.7배였다) // 직업마다 예산 배율 (10월 5일 만든 사람: 사냥꾼은 후열에 바로 닿는 물리직이라 화력이 암살자를 넘지 않게 90%)
 SKK.brAdj = { 독사: 0.97, 격발: 1.1, 그림자: 1.15, 성벽: 1, 파쇄: 1, '전열 장악': 1 }; // 파수꾼 세 갈래는 50상황으로 재기 전이라 1 [가설]
-function skScore(s) { const E = skValue(s) * (SKK.brAdj[s.b] || 1); const net = E - SKK.B * SKK.T[s.time]; const F = skUses(s); return { E, net, F, V: net * F, B: (s.row && SKK.rowB[s.row]) || SKK.budget[s.tier] }; }
+function skScore(s) { const E = skValue(s) * (SKK.brAdj[s.b] || 1) * ((SKK.clsAdj || {})[String(s.id).slice(0, 2)] || 1); const net = E - SKK.B * SKK.T[s.time]; const F = skUses(s); return { E, net, F, V: net * F, B: Math.round(((s.row && SKK.rowB[s.row]) || SKK.budget[s.tier]) * ((SKK.clsB || {})[String(s.id).slice(0, 2)] || 1) * 10) / 10 }; }
 
 /* 설명 문장. 키워드(중독, 붕괴, 터뜨리기, 흘리기)의 뜻은 설명창의 키워드 칸이 맡고, 스킬 문장은 숫자만 말한다 */
 /* 쿨타임: 쓰고 나면 cd만큼 내 턴을 기다린다(내 턴이 끝날 때마다 1 준다). 갈래 규칙(TREE2.haste)은 10월 3일에 없앴다: 아래 SK_HS는 다시 쓸 때를 위해 남긴다 */
@@ -152,7 +155,8 @@ function skBody(s) {
       case 'onCutBreak': out.push(`모으던 적을 이 스킬로 무너뜨리면 나에게 가속 ${e.haste}${e.hasten ? ', 다른 ' + s.b + ' 스킬 쿨타임 −' + e.hasten : ''}.`); break;
       case 'quickTurns': out.push(`이번 차례부터 내 차례 ${e.n}번 동안 빠른 칸 +1.`); break;
       case 'foresee': out.push(`${e.rounds}라운드 동안 강타 · 겨눈 한 발 · 화형의 피해 −${Math.round(e.red * 100)}%. 피할 수 없는 화형에도 든다.`); break;
-      case 'hastex': out.push(`내가 가속 상태면 피해 ×${e.mul}.`); break;
+      case 'hastex': out.push(`가속으로 두 번 움직이는 라운드면 피해 ×${e.mul}.`); break;
+      case 'hasteSpend': out.push(`가속이 있으면 1을 써서 피해 ×${e.mul}(다음 라운드의 연속 행동 대신).`); break;
       case 'meSt': out.push(`나에게 ${SK_KWN[e.s] || e.s} ${e.n}.`); break;
       case 'bigx': out.push(`정예·강적·보스에게는 피해 ×${e.mul}.`); break;
       case 'cutx': out.push(`대상이 강타나 영창을 모으는 중이면 붕괴 +${e.brk}.`); break;

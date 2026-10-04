@@ -142,71 +142,72 @@ const SKILLS2 = {
   ],
   hunter: [
     // 시작 스킬: 트리 밖. 추적을 쌓는 사격 하나(주 행동), 물러서며 가속을 얻는 사격 하나(빠른 행동) (10월 5일 초안)
-    { id: 'h_aim', b: '시작', tier: '시작', start: 1, n: '겨눠 쏘기', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 18 }, { k: 'focusAdd', n: 1 }] },
-    { id: 'h_step', b: '시작', tier: '시작', start: 1, n: '물러서며 쏘기', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'meSt', s: 'haste', n: 1 }] },
+    { id: 'h_aim', b: '시작', tier: '시작', start: 1, n: '겨눠 쏘기', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 11 }, { k: 'focusAdd', n: 1 }] },
+    { id: 'h_step', b: '시작', tier: '시작', start: 1, n: '물러서며 쏘기', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 2 }, { k: 'evade', n: 1 }] }, // 10월 5일: 가속이 연속 행동이 되어 시작 스킬은 가속 대신 몸 빼기
+    // 10월 5일 만든 사람 결정: 가속(사냥꾼 전용) = 라운드 맨 앞에서 두 번 연달아. 기동이 가속을 만들고, 저격 · 연사는 가속에서 세지거나(하급 hastex) 가속을 써서 큰 한 방(중급 hasteSpend). 한 갈래만 몰아 찍으면 오히려 약하게(작은 육각형)
     // 저격: 한 적에게 추적과 취약을 쌓고 큰 한 발로 끝낸다. 왼쪽 기둥은 추적(쌓기 · 터뜨리기), 오른쪽은 취약과 무거운 한 발. 거구에 강하고 무리에 약하다
-    { id: 'h_mark', row: 1, b: '저격', tier: '하급', n: '조준 사격', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 20 }, { k: 'focusx', per: 0.1 }] },
-    { id: 'h_weak', row: 1, b: '저격', tier: '하급', n: '약점 표시', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'vuln', n: 3 }] },
-    { id: 'h_pierce', row: 2, b: '저격', tier: '하급', n: '꿰뚫는 화살', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 19 }, { k: 'brk', n: 26 }] },
-    { id: 'h_steady', row: 2, b: '저격', tier: '하급', n: '숨 고른 사격', tgt: 'ranged', time: 'slow', cd: 6, fx: [{ k: 'dmg', n: 29 }] },
-    { id: 'h_prey', row: 3, b: '저격', tier: '하급', n: '사냥감 지정', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'focusAdd', n: 2 }, { k: 'st', s: 'vuln', n: 3 }] },
-    { id: 'h_vital', row: 3, b: '저격', tier: '하급', n: '급소 노리기', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 17 }, { k: 'vulnPer', per: 4 }] },
-    { id: 'h_burst', row: 4, b: '저격', tier: '하급', n: '추적 터뜨리기', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 13 }, { k: 'focusBurst', n: 8 }] },
-    { id: 'h_heavy', row: 4, b: '저격', tier: '하급', n: '무거운 화살', tgt: 'ranged', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 27 }, { k: 'bigx', mul: 1.5 }] },
-    { id: 'h_chase', row: 5, b: '저격', tier: '하급', n: '끈질긴 추격', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 21 }, { k: 'focusx', per: 0.15 }] },
-    { id: 'h_widen', row: 5, b: '저격', tier: '하급', n: '약점 벌리기', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 16 }, { k: 'vulnGrow', mul: 2 }] },
-    { id: 'h_finish', row: 6, b: '저격', tier: '하급', n: '마무리 사격', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 20 }, { k: 'lowx', hp: 0.3, mul: 2 }] },
-    { id: 'h_through', row: 6, b: '저격', tier: '하급', n: '관통 사격', tgt: 'ranged', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 27 }, { k: 'brk', n: 34 }] },
-    { id: 'h_throat', row: 7, b: '저격', tier: '중급', n: '숨통 겨누기', tgt: 'ranged', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 20 }, { k: 'focusBurst', n: 10 }] },
-    { id: 'h_giant', row: 7, b: '저격', tier: '중급', n: '거인 사냥', tgt: 'ranged', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 24 }, { k: 'vulnPer', per: 3 }, { k: 'bigx', mul: 1.5 }] },
-    { id: 'h_lock', row: 8, b: '저격', tier: '중급', n: '표적 고정', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 16 }, { k: 'focusAdd', n: 3 }, { k: 'st', s: 'vuln', n: 2 }] },
-    { id: 'h_stance', row: 8, b: '저격', tier: '중급', n: '저격 자세', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'st', s: 'empower', n: 3 }, { k: 'evade', n: 1 }, { k: 'stam', n: 48 }] },
-    { id: 'h_hound', row: 9, b: '저격', tier: '중급', n: '끝까지 쫓는 화살', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 23 }, { k: 'focusx', per: 0.2 }, { k: 'focusAdd', n: 1 }] },
-    { id: 'h_heart', row: 9, b: '저격', tier: '중급', n: '심장 꿰뚫기', tgt: 'ranged', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 27 }, { k: 'vulnPer', per: 5 }] },
-    { id: 'h_endhunt', row: 10, b: '저격', tier: '중급', n: '사냥의 끝', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 16 }, { k: 'focusBurst', n: 14 }, { k: 'lowx', hp: 0.3, mul: 1.5 }] },
-    { id: 'h_oneshot', row: 10, b: '저격', tier: '중급', n: '일격필살', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 32 }, { k: 'brk', n: 17 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 'h_mark', row: 1, b: '저격', tier: '하급', n: '조준 사격', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 12 }, { k: 'focusx', per: 0.1 }] },
+    { id: 'h_weak', row: 1, b: '저격', tier: '하급', n: '약점 표시', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'vuln', n: 2 }] },
+    { id: 'h_pierce', row: 2, b: '저격', tier: '하급', n: '꿰뚫는 화살', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 10 }, { k: 'brk', n: 13 }, { k: 'hastex', mul: 1.3 }] },
+    { id: 'h_steady', row: 2, b: '저격', tier: '하급', n: '숨 고른 사격', tgt: 'ranged', time: 'slow', cd: 6, fx: [{ k: 'dmg', n: 17 }] },
+    { id: 'h_prey', row: 3, b: '저격', tier: '하급', n: '사냥감 지정', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 7 }, { k: 'focusAdd', n: 2 }, { k: 'st', s: 'vuln', n: 1 }] },
+    { id: 'h_vital', row: 3, b: '저격', tier: '하급', n: '급소 노리기', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 9 }, { k: 'vulnPer', per: 3 }] },
+    { id: 'h_burst', row: 4, b: '저격', tier: '하급', n: '추적 터뜨리기', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 4 }, { k: 'focusBurst', n: 8 }] },
+    { id: 'h_heavy', row: 4, b: '저격', tier: '하급', n: '무거운 화살', tgt: 'ranged', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 14 }, { k: 'bigx', mul: 1.5 }, { k: 'hastex', mul: 1.3 }] },
+    { id: 'h_chase', row: 5, b: '저격', tier: '하급', n: '끈질긴 추격', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 12 }, { k: 'focusx', per: 0.15 }] },
+    { id: 'h_widen', row: 5, b: '저격', tier: '하급', n: '약점 벌리기', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 8 }, { k: 'vulnGrow', mul: 2 }] },
+    { id: 'h_finish', row: 6, b: '저격', tier: '하급', n: '마무리 사격', tgt: 'ranged', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 13 }, { k: 'lowx', hp: 0.3, mul: 2 }] },
+    { id: 'h_through', row: 6, b: '저격', tier: '하급', n: '관통 사격', tgt: 'ranged', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 16 }, { k: 'brk', n: 20 }] },
+    { id: 'h_throat', row: 7, b: '저격', tier: '중급', n: '숨통 겨누기', tgt: 'ranged', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 5 }, { k: 'focusBurst', n: 10 }, { k: 'hasteSpend', mul: 1.5 }] },
+    { id: 'h_giant', row: 7, b: '저격', tier: '중급', n: '거인 사냥', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 15 }, { k: 'vulnPer', per: 2 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 'h_lock', row: 8, b: '저격', tier: '중급', n: '표적 고정', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 7 }, { k: 'focusAdd', n: 3 }, { k: 'st', s: 'vuln', n: 1 }] },
+    { id: 'h_stance', row: 8, b: '저격', tier: '중급', n: '저격 자세', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'st', s: 'empower', n: 1 }, { k: 'evade', n: 1 }, { k: 'stam', n: 25 }] },
+    { id: 'h_hound', row: 9, b: '저격', tier: '중급', n: '끝까지 쫓는 화살', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 13 }, { k: 'focusx', per: 0.2 }, { k: 'focusAdd', n: 1 }] },
+    { id: 'h_heart', row: 9, b: '저격', tier: '중급', n: '심장 꿰뚫기', tgt: 'ranged', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 16 }, { k: 'vulnPer', per: 3 }] },
+    { id: 'h_endhunt', row: 10, b: '저격', tier: '중급', n: '사냥의 끝', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 2 }, { k: 'focusBurst', n: 14 }, { k: 'lowx', hp: 0.3, mul: 1.5 }, { k: 'hasteSpend', mul: 1.5 }] },
+    { id: 'h_oneshot', row: 10, b: '저격', tier: '중급', n: '일격필살', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 19 }, { k: 'brk', n: 8 }, { k: 'bigx', mul: 1.5 }] },
     // 연사: 표적을 바꿀 때마다 빠른 한 발, 여러 번 쏘고, 화살비와 출혈로 여럿을 깎는다. 왼쪽 기둥은 표적 바꾸기와 연발, 오른쪽은 화살비와 출혈. 무리에 강하고 거구에 약하다
-    { id: 'h_double', row: 1, b: '연사', tier: '하급', n: '연속 사격', tgt: 'ranged', time: 'normal', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 12 }] },
-    { id: 'h_rain', row: 1, b: '연사', tier: '하급', n: '화살비', tgt: 'all', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 12 }] },
-    { id: 'h_switch', row: 2, b: '연사', tier: '하급', n: '갈아 쏘기', tgt: 'ranged', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 12 }, { k: 'swapx', mul: 1.5 }] },
-    { id: 'h_barb', row: 2, b: '연사', tier: '하급', n: '가시 화살', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 18 }, { k: 'st', s: 'bleed', n: 5 }] },
-    { id: 'h_triple', row: 3, b: '연사', tier: '하급', n: '세 발 쏘기', tgt: 'ranged', time: 'normal', cd: 6, hits: 3, fx: [{ k: 'dmg', n: 8 }] },
-    { id: 'h_scatter', row: 3, b: '연사', tier: '하급', n: '흩뿌리는 화살', tgt: 'front', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'st', s: 'bleed', n: 1 }] },
-    { id: 'h_gap', row: 4, b: '연사', tier: '하급', n: '빈틈 쏘기', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'swapx', mul: 1.5 }, { k: 'hasten', n: 1 }] },
-    { id: 'h_bloodrain', row: 4, b: '연사', tier: '하급', n: '피의 비', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 3 }] },
-    { id: 'h_spray', row: 5, b: '연사', tier: '하급', n: '난사', tgt: 'ranged', time: 'slow', cd: 7, hits: 4, fx: [{ k: 'dmg', n: 8 }] },
-    { id: 'h_dull', row: 5, b: '연사', tier: '하급', n: '무디게 하는 비', tgt: 'all', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'weak', n: 1 }] },
-    { id: 'h_turn', row: 6, b: '연사', tier: '하급', n: '돌려 쏘기', tgt: 'ranged', time: 'normal', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 12 }, { k: 'swapx', mul: 1.3 }] },
-    { id: 'h_rend', row: 6, b: '연사', tier: '하급', n: '찢는 화살', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 21 }, { k: 'st', s: 'bleed', n: 5 }] },
-    { id: 'h_storm', row: 7, b: '연사', tier: '중급', n: '폭풍 화살', tgt: 'ranged', time: 'slow', cd: 8, hits: 5, fx: [{ k: 'dmg', n: 7 }] },
-    { id: 'h_deluge', row: 7, b: '연사', tier: '중급', n: '화살 폭우', tgt: 'all', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 18 }] },
-    { id: 'h_houndshot', row: 8, b: '연사', tier: '중급', n: '물어뜯는 화살', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 15 }, { k: 'swapx', mul: 1.6 }, { k: 'hasten', n: 1 }] },
-    { id: 'h_tearrain', row: 8, b: '연사', tier: '중급', n: '찢는 비', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'bleed', n: 4 }] },
-    { id: 'h_endless', row: 9, b: '연사', tier: '중급', n: '끝없는 사격', tgt: 'ranged', time: 'normal', cd: 8, hits: 3, fx: [{ k: 'dmg', n: 10 }, { k: 'swapx', mul: 1.3 }] },
-    { id: 'h_slaughter', row: 9, b: '연사', tier: '중급', n: '학살의 비', tgt: 'all', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 17 }, { k: 'st', s: 'bleed', n: 2 }] },
-    { id: 'h_thousand', row: 10, b: '연사', tier: '중급', n: '천 개의 화살', tgt: 'ranged', time: 'vslow', cd: 10, hits: 6, fx: [{ k: 'dmg', n: 7 }, { k: 'brk', n: 10 }] },
-    { id: 'h_skysplit', row: 10, b: '연사', tier: '중급', n: '하늘 가르기', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 17 }, { k: 'st', s: 'bleed', n: 3 }] },
+    { id: 'h_double', row: 1, b: '연사', tier: '하급', n: '연속 사격', tgt: 'ranged', time: 'normal', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 6 }, { k: 'hastex', mul: 1.3 }] },
+    { id: 'h_rain', row: 1, b: '연사', tier: '하급', n: '화살비', tgt: 'all', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 7 }] },
+    { id: 'h_switch', row: 2, b: '연사', tier: '하급', n: '갈아 쏘기', tgt: 'ranged', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 7 }, { k: 'swapx', mul: 1.5 }] },
+    { id: 'h_barb', row: 2, b: '연사', tier: '하급', n: '가시 화살', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'bleed', n: 4 }] },
+    { id: 'h_triple', row: 3, b: '연사', tier: '하급', n: '세 발 쏘기', tgt: 'ranged', time: 'normal', cd: 7, hits: 3, fx: [{ k: 'dmg', n: 5 }] },
+    { id: 'h_scatter', row: 3, b: '연사', tier: '하급', n: '흩뿌리는 화살', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'bleed', n: 1 }] },
+    { id: 'h_gap', row: 4, b: '연사', tier: '하급', n: '빈틈 쏘기', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 8 }, { k: 'swapx', mul: 1.5 }, { k: 'hasten', n: 1 }] },
+    { id: 'h_bloodrain', row: 4, b: '연사', tier: '하급', n: '피의 비', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'hastex', mul: 1.3 }] },
+    { id: 'h_spray', row: 5, b: '연사', tier: '하급', n: '난사', tgt: 'ranged', time: 'slow', cd: 10, hits: 4, fx: [{ k: 'dmg', n: 5 }] },
+    { id: 'h_dull', row: 5, b: '연사', tier: '하급', n: '무디게 하는 비', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'weak', n: 1 }] },
+    { id: 'h_turn', row: 6, b: '연사', tier: '하급', n: '돌려 쏘기', tgt: 'ranged', time: 'normal', cd: 9, hits: 2, fx: [{ k: 'dmg', n: 8 }, { k: 'swapx', mul: 1.3 }] },
+    { id: 'h_rend', row: 6, b: '연사', tier: '하급', n: '찢는 화살', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'bleed', n: 3 }] },
+    { id: 'h_storm', row: 7, b: '연사', tier: '중급', n: '폭풍 화살', tgt: 'ranged', time: 'slow', cd: 10, hits: 4, fx: [{ k: 'dmg', n: 4 }, { k: 'brk', n: 12 }, { k: 'hasteSpend', mul: 1.5 }] },
+    { id: 'h_deluge', row: 7, b: '연사', tier: '중급', n: '화살 폭우', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 11 }] },
+    { id: 'h_houndshot', row: 8, b: '연사', tier: '중급', n: '물어뜯는 화살', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'swapx', mul: 1.6 }, { k: 'hasten', n: 1 }] },
+    { id: 'h_tearrain', row: 8, b: '연사', tier: '중급', n: '찢는 비', tgt: 'all', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'bleed', n: 3 }] },
+    { id: 'h_endless', row: 9, b: '연사', tier: '중급', n: '끝없는 사격', tgt: 'ranged', time: 'normal', cd: 5, hits: 3, fx: [{ k: 'dmg', n: 5 }, { k: 'swapx', mul: 1.3 }] },
+    { id: 'h_slaughter', row: 9, b: '연사', tier: '중급', n: '학살의 비', tgt: 'all', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'bleed', n: 2 }] },
+    { id: 'h_thousand', row: 10, b: '연사', tier: '중급', n: '천 개의 화살', tgt: 'ranged', time: 'vslow', cd: 7, hits: 5, fx: [{ k: 'dmg', n: 4 }, { k: 'hasteSpend', mul: 1.5 }] },
+    { id: 'h_skysplit', row: 10, b: '연사', tier: '중급', n: '하늘 가르기', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 2 }] },
     // 기동: 먼저 움직이고, 피하고, 늦춘다. 왼쪽 기둥은 쓰는 때가 다른 회피(기본 · 템포 · 표적 바꾸기 · 버티기 · 강타 받아넘기기 · 🔄, 중급은 피하기를 피해로), 오른쪽은 둔화와 끊기. 강타에 강하고 상처 · 무리에 약하다 (10월 5일 2차: 만든 사람 검토)
-    { id: 'h_dodge', row: 1, b: '기동', tier: '하급', n: '몸 빼기', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'evade', n: 1 }, { k: 'stam', n: 60 }] }, // 기본 회피
-    { id: 'h_hobble', row: 1, b: '기동', tier: '하급', n: '발 묶는 화살', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 20 }, { k: 'st', s: 'chill', n: 2 }] },
-    { id: 'h_dash', row: 2, b: '기동', tier: '하급', n: '질주', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'quick', n: 1 }, { k: 'st', s: 'haste', n: 2 }, { k: 'stam', n: 44 }] }, // 템포: 이번 차례에 더 많이
-    { id: 'h_leg', row: 2, b: '기동', tier: '하급', n: '다리 쏘기', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'chill', n: 2 }, { k: 'cutx', brk: 44 }] },
-    { id: 'h_side', row: 3, b: '기동', tier: '하급', n: '옆걸음 사격', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 9 }, { k: 'swapx', mul: 1.5 }, { k: 'evade', n: 1 }] }, // 피하면서 표적 바꾸기
-    { id: 'h_slowrain', row: 3, b: '기동', tier: '하급', n: '늦추는 비', tgt: 'all', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'chill', n: 1 }] }, // 무리를 한꺼번에 늦추기
-    { id: 'h_veil', row: 4, b: '기동', tier: '하급', n: '흙먼지 장막', tgt: 'all', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 8 }, { k: 'meSt', s: 'protect', n: 5 }] }, // 여럿의 공격 버티기: 흙먼지를 일으켜 모두를 약하게 맞히고 나에게 보호(피할 수 없는 공격에도 든다)
-    { id: 'h_frost', row: 4, b: '기동', tier: '하급', n: '얼어붙는 화살', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 19 }, { k: 'st', s: 'chill', n: 2 }, { k: 'chillx', mul: 1.5 }] },
-    { id: 'h_counter', row: 5, b: '기동', tier: '하급', n: '받아넘기기', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'evade', n: 1 }, { k: 'evadeCtr', dmg: 30, chill: 2, charged: 1 }] }, // 강타 예고를 보고 쓰기
-    { id: 'h_stop', row: 5, b: '기동', tier: '하급', n: '멈춰 세우기', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 16 }, { k: 'chillCut', brk: 40 }] }, // 둔화와 끊기를 잇기
-    { id: 'h_wind', row: 6, b: '기동', tier: '하급', n: '바람 걸음', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'evade', n: 2 }, { k: 'hasten', n: 1, on: 'evade' }, { k: 'stam', n: 30 }] }, // 피하기로 기동을 돌리기
-    { id: 'h_shatter', row: 6, b: '기동', tier: '하급', n: '얼음 깨기', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 13 }, { k: 'chillShatter', dmg: 5, brk: 25 }] }, // 둔화를 자원으로
-    { id: 'h_after', row: 7, b: '기동', tier: '중급', n: '잔상', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'evade', n: 2 }, { k: 'evadeCtr', dmg: 6 }] }, // 피하기가 피해가 되는 첫 칸
-    { id: 'h_spread', row: 7, b: '기동', tier: '중급', n: '냉기 번짐', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 25 }, { k: 'chillSpread', per: 1 }] }, // 한 적의 둔화를 무리로
-    { id: 'h_foresee', row: 8, b: '기동', tier: '중급', n: '예고 읽기', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'foresee', red: 0.6, rounds: 3 }, { k: 'st', s: 'protect', n: 3 }, { k: 'stam', n: 30 }] }, // 큰 공격이 겹치는 순간(피할 수 없는 화형 포함)
-    { id: 'h_ankle', row: 8, b: '기동', tier: '중급', n: '발목 끊기', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 19 }, { k: 'brk', n: 49 }, { k: 'cutx', brk: 55 }, { k: 'onCutBreak', haste: 2, hasten: 1 }] }, // 끊기 강화: 모으던 적을 무너뜨리면 보상(수치는 측정 뒤)
-    { id: 'h_windarrow', row: 9, b: '기동', tier: '중급', n: '바람의 화살', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'meSt', s: 'haste', n: 2 }, { k: 'evade', n: 1 }, { k: 'hastex', mul: 1.4 }] }, // 공격하면서 회피 유지
-    { id: 'h_timeslow', row: 9, b: '기동', tier: '중급', n: '시간 늦추기', tgt: 'all', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'chill', n: 2 }, { k: 'meSt', s: 'haste', n: 1 }] }, // 라운드를 쥐기
-    { id: 'h_shadowrun', row: 10, b: '기동', tier: '중급', n: '그림자 질주', tgt: 'self', time: 'fast', cd: 10, once: 1, fx: [{ k: 'evade', n: 3 }, { k: 'evadeCtr', dmg: 8, rounds: 3 }, { k: 'quickTurns', n: 3 }] }, // 피할수록 세지는 마무리 (빠른 칸 +1은 내 차례 3번 내내: 측정 때 따로 본다)
-    { id: 'h_icecage', row: 10, b: '기동', tier: '중급', n: '얼음 감옥', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 30 }, { k: 'freeze', chill: 3, brk: 40 }] }, // 한 적을 확실히 멈추는 마무리(강적 · 보스는 둔화 3 + 붕괴)
+    { id: 'h_dodge', row: 1, b: '기동', tier: '하급', n: '몸 빼기', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'evade', n: 1 }, { k: 'stam', n: 16 }] }, // 기본 회피
+    { id: 'h_hobble', row: 1, b: '기동', tier: '하급', n: '발 묶는 화살', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'h_dash', row: 2, b: '기동', tier: '하급', n: '질주', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'st', s: 'haste', n: 1 }, { k: 'stam', n: 8 }] }, // 템포: 다음 라운드에 두 번 연달아
+    { id: 'h_leg', row: 2, b: '기동', tier: '하급', n: '다리 쏘기', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 5 }, { k: 'st', s: 'chill', n: 2 }, { k: 'cutx', brk: 44 }] },
+    { id: 'h_side', row: 3, b: '기동', tier: '하급', n: '옆걸음 사격', tgt: 'ranged', time: 'fast', cd: 7, fx: [{ k: 'dmg', n: 4 }, { k: 'swapx', mul: 1.5 }, { k: 'evade', n: 1 }] }, // 피하면서 표적 바꾸기
+    { id: 'h_slowrain', row: 3, b: '기동', tier: '하급', n: '늦추는 비', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'chill', n: 1 }] }, // 무리를 한꺼번에 늦추기
+    { id: 'h_veil', row: 4, b: '기동', tier: '하급', n: '흙먼지 장막', tgt: 'all', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 3 }, { k: 'meSt', s: 'protect', n: 5 }] }, // 여럿의 공격 버티기: 흙먼지를 일으켜 모두를 약하게 맞히고 나에게 보호(피할 수 없는 공격에도 든다)
+    { id: 'h_frost', row: 4, b: '기동', tier: '하급', n: '얼어붙는 화살', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'chill', n: 2 }, { k: 'chillx', mul: 1.5 }] },
+    { id: 'h_counter', row: 5, b: '기동', tier: '하급', n: '받아넘기기', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'evade', n: 1 }, { k: 'evadeCtr', dmg: 12, chill: 1, charged: 1 }] }, // 강타 예고를 보고 쓰기
+    { id: 'h_stop', row: 5, b: '기동', tier: '하급', n: '멈춰 세우기', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'chillCut', brk: 40 }] }, // 둔화와 끊기를 잇기
+    { id: 'h_wind', row: 6, b: '기동', tier: '하급', n: '바람 걸음', tgt: 'self', time: 'fast', cd: 8, fx: [{ k: 'evade', n: 1 }, { k: 'hasten', n: 1, on: 'evade' }, { k: 'stam', n: 36 }] }, // 피하기로 기동을 돌리기
+    { id: 'h_shatter', row: 6, b: '기동', tier: '하급', n: '얼음 깨기', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 3 }, { k: 'chillShatter', dmg: 5, brk: 25 }] }, // 둔화를 자원으로
+    { id: 'h_after', row: 7, b: '기동', tier: '중급', n: '잔상', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'evade', n: 1 }, { k: 'evadeCtr', dmg: 4 }, { k: 'stam', n: 23 }] }, // 피하기가 피해가 되는 첫 칸
+    { id: 'h_spread', row: 7, b: '기동', tier: '중급', n: '냉기 번짐', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 13 }, { k: 'chillSpread', per: 1 }] }, // 한 적의 둔화를 무리로
+    { id: 'h_foresee', row: 8, b: '기동', tier: '중급', n: '예고 읽기', tgt: 'self', time: 'fast', cd: 10, fx: [{ k: 'foresee', red: 0.6, rounds: 3 }, { k: 'st', s: 'protect', n: 1 }, { k: 'stam', n: 5 }] }, // 큰 공격이 겹치는 순간(피할 수 없는 화형 포함)
+    { id: 'h_ankle', row: 8, b: '기동', tier: '중급', n: '발목 끊기', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 8 }, { k: 'brk', n: 22 }, { k: 'cutx', brk: 21 }, { k: 'onCutBreak', haste: 2, hasten: 1 }] }, // 끊기 강화: 모으던 적을 무너뜨리면 보상(수치는 측정 뒤)
+    { id: 'h_windarrow', row: 9, b: '기동', tier: '중급', n: '바람의 화살', tgt: 'ranged', time: 'fast', cd: 10, fx: [{ k: 'dmg', n: 4 }, { k: 'meSt', s: 'haste', n: 1 }, { k: 'hastex', mul: 1.4 }] }, // 공격하면서 회피 유지
+    { id: 'h_timeslow', row: 9, b: '기동', tier: '중급', n: '시간 늦추기', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 2 }, { k: 'st', s: 'chill', n: 1 }, { k: 'meSt', s: 'haste', n: 1 }] }, // 라운드를 쥐기
+    { id: 'h_shadowrun', row: 10, b: '기동', tier: '중급', n: '그림자 질주', tgt: 'self', time: 'fast', cd: 10, once: 1, fx: [{ k: 'evade', n: 1 }, { k: 'evadeCtr', dmg: 6, rounds: 3 }, { k: 'quickTurns', n: 3 }] }, // 피할수록 세지는 마무리 (빠른 칸 +1은 내 차례 3번 내내: 측정 때 따로 본다)
+    { id: 'h_icecage', row: 10, b: '기동', tier: '중급', n: '얼음 감옥', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 13 }, { k: 'freeze', chill: 3, brk: 40 }] }, // 한 적을 확실히 멈추는 마무리(강적 · 보스는 둔화 3 + 붕괴)
   ],
 };
 /* 사다리 (10월 3일 만든 사람 결정): 2챕터(Lv10)까지 갈래마다 하급 6줄 · 중급 4줄 = 10줄, 줄마다 두 칸(갈래 20칸, 직업 60칸).

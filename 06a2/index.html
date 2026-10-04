@@ -648,12 +648,13 @@ function runSkill2(b, act, tgt) {
   const dm = F('dmg'), ex = F('exploit'), po = F('poison'), bk = F('brk'), bp = F('brkPer'); const stx = s.tgt === 'self' ? [] : s.fx.filter(e => e.k === 'st'); const lx = F('lowx'), bx = F('brokenx'), sp = F('spread'), cx = F('cutx'), dr = F('drain'), gx = F('bigx'); const isBig = e => !!(e.elite || e.strong || e.role === 'boss');
   const ccut = F('chillCut'), csh = F('chillShatter'), csp = F('chillSpread'), frz = F('freeze'), ocb = F('onCutBreak'); const big = e => !!(e.strong || e.role === 'boss'); // 사냥꾼 기동 오른쪽 (10월 5일)
   const preCh = {}, preStop = {}, preBrk = {}; for (const e of targets) { preCh[e.id] = st(e, 'chill'); preStop[e.id] = isStopTarget(e); preBrk[e.id] = !!e.s.broken; }
+  const hsp = F('hasteSpend'); let hspOn = false; if (hsp && p.s.haste > 0 && targets.length) { kwDec(p, 'haste'); hspOn = true; logp(b, 'good', s.n + '. 가속 1을 써서 피해 ×' + hsp.mul); } // 가속 쓰기: 다음 라운드의 연속 행동 대신 지금 큰 한 방
   b.focusKey = null; const fxs = F('focusx'), fb = F('focusBurst'), fa = F('focusAdd'), swx = F('swapx'), hsx = F('hastex'); const prevId = p.focus ? p.focus.id : null; const preF = {}; const fOf = e => (e.id in preF ? preF[e.id] : (preF[e.id] = p.focus && p.focus.id === e.id ? p.focus.n : 0)); // 사냥꾼: 이 스킬을 쓰기 전 추적
   for (let h = 0; h < hits; h++) for (const e of targets) {
     if (!e.alive || b.over) continue;
     let base = (dm ? dm.n : 0) + (ex ? ex.per * st(e, 'poison') : 0) + (wb && h === 0 ? burn * wb.mul : 0) + (wdm ? wdm.per * wardNow : 0) + (vp ? vp.per * st(e, 'vuln') : 0);
     if (csh && h === 0 && preCh[e.id] > 0) { base += csh.dmg * preCh[e.id]; delete e.s.chill; } // 얼음 깨기: 둔화를 모두 깨뜨린다
-    if (fb && h === 0) base += fb.n * fOf(e); if (fxs) base *= 1 + fxs.per * fOf(e); if (swx && h === 0 && prevId != null && prevId !== e.id) base *= swx.mul; if (hsx && p.s.haste) base *= hsx.mul; // 추적 터뜨리기 · 추적 비례 · 표적 바꾸기 · 가속
+    if (fb && h === 0) base += fb.n * fOf(e); if (fxs) base *= 1 + fxs.per * fOf(e); if (swx && h === 0 && prevId != null && prevId !== e.id) base *= swx.mul; if (hsx && b.pDouble === b.round) base *= hsx.mul; if (hsp && h === 0 && hspOn) base *= hsp.mul; // 추적 터뜨리기 · 추적 비례 · 표적 바꾸기 · 가속
     if (lx && e.hp <= e.hpMax * lx.hp) base *= lx.mul; if (bx && e.s.broken) base *= bx.mul; if (gx && isBig(e)) base *= gx.mul; if (chx && e.s.chill) base *= chx.mul; // 마무리(생명력 낮음), 붕괴한 적, 큰 적, 둔화된 적 (겹치면 곱한다)
     if (base > 0) { tot += hurtEnemy(b, e, outDmg(b, base, {}), { single: multi ? 0 : 1, aoe: multi ? 1 : 0, melee: s.tgt === 'melee' || s.tgt === 'front' ? 1 : 0, label: s.n }); if (!e.alive) { killed++; continue; } }
     if (fb && h === 0 && e.alive) { p.focus = { id: e.id, n: 0 }; } // 터뜨린 추적은 사라진다
@@ -830,7 +831,7 @@ const wallUp = (b, e) => e.alive && e.row === 'back' && e.role !== 'boss' && !!h
 const wallFrontUp = (b, e) => e.alive && e.row === 'front' && !['boss', 'shield', 'root'].includes(e.role) && !!hasShield(b, e.id); // 방패병 옆 전열 동료
 const TELE = { heavy: 1.75, boss: 3.5 }; // 적 강타 = 평소 공격 × heavy, 보스 강타 × boss (10월 4일: 평소 공격이 기준표로 커져 일반 적의 강타는 1.75배. 한 번 상한은 그대로) // 적 강타 = 평소 공격 × heavy (예고를 읽고 막는 판단의 무게)
 /* 0.6a.2: 적이 거는 상태 (숫자 하나, 발동마다 1 감소). 사수 출혈은 걸린 쪽이 행동할 때마다 터지므로 세 번에 한 번, 2만 건다 */
-const HUNT = { focusMax: 3, focusPer: 0.05, addMax: 2 };
+const HUNT = { focusMax: 3, focusPer: 0.05, addMax: 2, focusHaste: 1 }; // focusHaste: 추적이 3겹이 되는 순간 얻는 가속
 const STOP_K = ['charge', 'heavy', 'chant', 'chanting', 'burn', 'aim']; // 멈춰 세우기가 끊는 행동: 강타(모으기 · 내리치기), 영창(시작 · 영창 · 화형), 겨누기(겨누기 · 겨눈 한 발). 치유 · 축복 · 소환은 끊지 않는다
 const isStopTarget = e => !!(e.intent && (STOP_K.includes(e.intent.k) || e.intent.aimed)); // 사냥꾼 추적. addMax: 추적 추가 효과로는 2겹까지만(3겹은 같은 적을 다시 맞혀야)
 const CHANT = { cut: 0.3, big: 0.28, burn: 3 }; // 화형 사제 (10월 5일): 영창 중 받은 피해가 최대 생명력 × cut이면 끊긴다. 화형 = 기준 생명력 × big(정예 ×1.25), 화상 burn. 영창은 한 번에 한 적만
@@ -994,7 +995,7 @@ function actCost(p, id, base) { return Math.max(0, base + fxAdd(p, 'cost', p, id
 
 const ST_REGEN = 10; // 스태미나 자연 회복 (라운드가 끝날 때마다). B0.5의 8에서 올림: 기본 공격이 스태미나를 채우지 않게 되면서 3,840판 비교로 정함 (11.6절)
 const gearOf = p => p.gear || START_GEAR;
-function wpnDmg(p) { return gearOf(p).wpn; }
+function wpnDmg(p) { return gearOf(p).wpn * ((BUILDS[p.build] || {}).wpnMul || 1); } // wpnMul: 직업마다 무기 피해 배율 (사냥꾼 활 55%: 후열에 바로 닿는 물리직, 10월 5일)
 function basicBase(p) { return wpnDmg(p) * (isCaster(p) ? 0.9 : 1) * (hasIt(p, 'venomring') ? 0.9 : 1); }
 const HEAVY_V2 = 1.5; // 0.6a.2 직업의 강공격 배율 (도움말·설명 창도 이 값을 쓴다)
 function heavyBase(p) { return wpnDmg(p) * (isCaster(p) ? 1.6 : isV2(p) ? HEAVY_V2 : 1.8) * (p.eq.weapon === 'twin' ? 0.8 : 1); } // 0.6a.2: 강공격 180% → 150% (10월 3일: 공통 행동이 갈래 스킬보다 세서 갈래 성격이 묻혔다)
@@ -1069,7 +1070,7 @@ function newBattle(player, enemies, ctx) {
   for (const e of enemies) { if (!e.intent) decideIntent(b, e); } // 0.6a.2 라운드: 첫 라운드는 runUntilPlayer가 연다
   player.guard = 0; player.dodge = 0; player.stun = 0; player.fxDodged = 0;
   if (isV2(player)) resetCharges(player);
-  { const oh = (BUILDS[player.build] || {}).openHaste; if (oh) { addS(b, player, 'haste', oh); logp(b, 'good', '먼저 움직인다. 가속 ' + oh); } } // 사냥꾼 개전 가속 (10월 5일)
+  { const oh = (BUILDS[player.build] || {}).openHaste; if (oh) { addS(b, player, 'haste', oh); logp(b, 'good', '먼저 움직인다. 가속 ' + oh + ' (라운드 맨 앞에서 두 번 연달아)'); } } // 사냥꾼 개전 가속 (10월 5일)
   fxRun(player, 'onStart', b, player);
   return b;
 }
@@ -1380,7 +1381,7 @@ function hurtEnemy(b, e, raw, o) {
   let d = raw;
 
   if (e.s.weak && false) d *= 1;
-  if (!o.dot && !o.aoe && b.p.build === 'hunter' && (o.single || o.melee)) { const p = b.p, key = b.curSkill ? b.curSkill + ':' + e.id : null; let pre; if (key && b.focusKey === key) pre = b.focusPre; else { const f = p.focus; pre = f && f.id === e.id ? f.n : 0; p.focus = { id: e.id, n: Math.min(HUNT.focusMax, pre + 1) }; if (key) { b.focusKey = key; b.focusPre = pre; } } d *= 1 + HUNT.focusPer * pre; } // 사냥꾼 추적 (10월 5일 만든 사람 결정): 한 적만 치는 공격 한 번(연타라도 스킬 한 번)에 한 겹, 최대 3, 피해 보너스는 맞히기 전 겹마다 +5%. 다른 적을 치면 그 적에게 1겹부터. 여럿을 치는 공격과 지속 피해는 손대지 않는다
+  if (!o.dot && !o.aoe && b.p.build === 'hunter' && (o.single || o.melee)) { const p = b.p, key = b.curSkill ? b.curSkill + ':' + e.id : null; let pre; if (key && b.focusKey === key) pre = b.focusPre; else { const f = p.focus; pre = f && f.id === e.id ? f.n : 0; p.focus = { id: e.id, n: Math.min(HUNT.focusMax, pre + 1) }; if (key) { b.focusKey = key; b.focusPre = pre; } if (pre === HUNT.focusMax - 1 && HUNT.focusHaste) { addS(b, p, 'haste', HUNT.focusHaste); logp(b, 'good', '추적 ' + HUNT.focusMax + '겹: 가속 1'); } } d *= 1 + HUNT.focusPer * pre; } // 사냥꾼 추적 (10월 5일 만든 사람 결정): 한 적만 치는 공격 한 번(연타라도 스킬 한 번)에 한 겹, 최대 3, 피해 보너스는 맞히기 전 겹마다 +5%. 다른 적을 치면 그 적에게 1겹부터. 여럿을 치는 공격과 지속 피해는 손대지 않는다
   if (!o.dot && e.s.poison && hasIt(b.p, 'vpouch')) d *= 1.15;
   if (!o.dot && o.melee && o.single && b.p.scar > 0 && hasIt(b.p, 'scarcharm')) d += Math.min(10, b.p.scar * 0.15);
   if (!o.dot && (o.single || o.melee) && hasIt(b.p, 'markamu')) { const mk = b.p.mk; if (mk && mk.id !== e.id && mk.n > 0) d *= 0.9; b.p.mk = mk && mk.id === e.id ? { id: e.id, n: mk.n + 1 } : { id: e.id, n: 1 }; if (b.p.mk.n >= 3) { b.p.mk.n = 0; b.markTgt = e; } }
@@ -1934,7 +1935,7 @@ function actionList(b) {
   const SKM = skillMap(p.build);
   if (isV2(p)) for (const sid of skillsOf(p)) { // 0.6a.2: 재사용 대기
     const s = SK2[sid]; if (!s) continue; const w = (p.cd && p.cd[sid]) || 0;
-    const needPoison = !s.fx.some(e => ['dmg', 'poison', 'brk', 'st', 'parry', 'parryBuff', 'stam', 'cutx', 'ward', 'wardFill', 'wardBurn', 'wardDmg', 'thorn', 'pull', 'vulnPer', 'vulnGrow', 'shieldx', 'chillx', 'evade', 'evadeCtr', 'quick', 'quickTurns', 'foresee', 'meSt', 'focusAdd', 'focusBurst', 'focusx', 'swapx', 'hastex', 'chillCut', 'chillShatter', 'chillSpread', 'freeze', 'onCutBreak'].includes(e.k) || (e.k === 'burst' && e.pre) || (e.k === 'grow' && e.add)); // 중독 없이는 아무 일도 없는 스킬만 잠근다 (10월 3일: 피해를 주는 터뜨리는 일격, 중독 4를 거는 독 응축도 잠겼다)
+    const needPoison = !s.fx.some(e => ['dmg', 'poison', 'brk', 'st', 'parry', 'parryBuff', 'stam', 'cutx', 'ward', 'wardFill', 'wardBurn', 'wardDmg', 'thorn', 'pull', 'vulnPer', 'vulnGrow', 'shieldx', 'chillx', 'evade', 'evadeCtr', 'quick', 'quickTurns', 'foresee', 'meSt', 'focusAdd', 'focusBurst', 'focusx', 'swapx', 'hastex', 'chillCut', 'chillShatter', 'chillSpread', 'freeze', 'onCutBreak', 'hasteSpend'].includes(e.k) || (e.k === 'burst' && e.pre) || (e.k === 'grow' && e.add)); // 중독 없이는 아무 일도 없는 스킬만 잠근다 (10월 3일: 피해를 주는 터뜨리는 일격, 중독 4를 거는 독 응축도 잠겼다)
     let why = w > 0 ? (s.once ? '이번 전투에 이미 씀' : '쿨타임 ' + w + '턴 남음') : null;
     if (!why && needPoison && !alive(b).some(e => e.s.poison)) why = '중독된 적 없음';
     if (!why && s.tgt === 'front' && !alive(b).some(e => e.row === 'front' && e.role !== 'root')) why = '전열에 적 없음';
@@ -2210,8 +2211,8 @@ function finishPlayer(b, time, lost) {
     b.bonusUsed = 1; if (p.fxQuickNext) { p.fxQuickNext = 0; b.bonusUsed = 0; fxHit(p.eq.flask === 'saintgrail' ? 'saintgrail' : 'reaperhands'); }
     b.waiting = false; return;
   }
-  chargeEv(b, 'turn'); b.bonusUsed = 0; // fxQuickNext(성인의 성배·수확자의 손)는 지우지 않는다: 주 행동으로 쓰러뜨려도 다음 빠른 행동 한 번이 빠른 칸을 쓰지 않게
-  if (b.queue && b.queue[0] === 'p') b.queue.shift();
+  const extraNow = !!b.extraTurn; b.extraTurn = 0; if (!extraNow) chargeEv(b, 'turn'); b.bonusUsed = 0; // 사냥꾼 연속 행동: 두 번째 차례는 쿨타임이 줄지 않는다 // fxQuickNext(성인의 성배·수확자의 손)는 지우지 않는다: 주 행동으로 쓰러뜨려도 다음 빠른 행동 한 번이 빠른 칸을 쓰지 않게
+  if (b.queue && b.queue[0] === 'p') { b.queue.shift(); if (b.queue[0] === 'p') { b.extraTurn = 1; logp(b, 'good', '가속: 한 번 더 움직인다'); } }
   abbotDemand(b);
   b.turnIdx++; b.consN = 0; b.extraQuick = 0; if (p.quickTurns > 0) { b.extraQuick = 1; p.quickTurns--; } // 사냥꾼 그림자 질주
   if (b.stepMode) { b.waiting = true; return; }
@@ -2230,6 +2231,7 @@ function roundOrder(b, consume, slowMe) {
   const ents = [{ id: 'p', g: grp(p, true), sp: pSpeed(b), i: -1 }].concat(al.map((e, i) => ({ id: e.id, g: grp(e, false), sp: eSpeed(b, e), i })));
   ents.sort((a, c) => a.g - c.g || c.sp - a.sp || a.i - c.i);
   const out = ents.slice(); for (const x of ents) if (x.id !== 'p' && x.sp >= RND_TWICE) out.push(Object.assign({}, x, { twice: 1 })); // 두 번 움직이는 적
+  if (p.s.haste && p.build === 'hunter') { const i = out.findIndex(x => x.id === 'p'); out.splice(i + 1, 0, Object.assign({}, out[i], { extra: 1 })); if (consume) b.pDouble = (b.round || 0) + 1; } // 가속 (10월 5일 만든 사람 결정): 사냥꾼 전용, 라운드 맨 앞에서 두 번 연달아 움직인다(한 라운드에 한 번). 두 번째 차례는 쿨타임이 줄지 않는다
   if (consume) {
     for (const x of ents) { const u = x.id === 'p' ? p : b.en.find(e => e.id === x.id); if (!u) continue;
       if (x.g === 0 && u.s.haste) kwDec(u, 'haste'); if (x.g === 2 && u.s.chill) kwDec(u, 'chill'); if (x.id !== 'p') u.quick = 0; }
@@ -2359,7 +2361,7 @@ const HELP = [
   { k: 'build', n: '직업과 스킬', t: [
     '시험판에서는 암살자, 파수꾼, 사냥꾼을 고를 수 있습니다. 나머지 직업은 만드는 대로 열립니다. 메뉴의 🧪 시험 전투에서는 던전 없이 직업 · 레벨 · 스킬 · 적을 골라 바로 싸워 볼 수 있습니다.',
     '파수꾼은 방어할 때마다 보호막 6을 얻습니다. 보호막은 최대 생명력의 30%까지 쌓여 받는 피해를 먼저 받아냅니다. 후열 적의 공격은 보호막이 절반만 받아냅니다. 성벽 갈래는 쌓은 보호막을 태워 칩니다.',
-    '사냥꾼은 원거리라 기본 공격과 대부분의 스킬이 후열에 닿고, 전투를 시작하면 가속 2를 얻습니다. 같은 적을 연달아 맞히면 추적이 한 겹씩 쌓여(최대 3) 겹마다 피해 +5%입니다. 스킬 한 번은 연타라도 한 겹이고, 추적을 더하는 효과로는 2겹까지만 오릅니다. 여럿을 치는 공격과 지속 피해는 추적에 손대지 않습니다.',
+    '사냥꾼은 원거리라 기본 공격과 대부분의 스킬이 후열에 닿고, 전투를 시작하면 가속 2를 얻습니다. 가속이 있으면 라운드 맨 앞에서 두 번 연달아 움직입니다(한 라운드에 한 번, 두 번째 차례는 쿨타임이 줄지 않음). 같은 적을 연달아 맞히면 추적이 한 겹씩 쌓여(최대 3) 겹마다 피해 +5%이고, 3겹이 되는 순간 가속 1을 얻습니다. 스킬 한 번은 연타라도 한 겹이고, 추적을 더하는 효과로는 2겹까지만 오릅니다. 여럿을 치는 공격과 지속 피해는 추적에 손대지 않습니다.',
     '몸 빼기는 다음에 맞는 공격 하나를 피합니다. 적이 나를 직접 치는 공격(공격 · 겨눈 한 발 · 강타 · 큰 한 방)만 피할 수 있고, 화형 같은 주문, 지속 피해, 방 특성 피해는 피할 수 없습니다. 피했을 때 나가는 반격도 실제로 피했을 때만 나갑니다.',
     '직업마다 시작 스킬 둘이 늘 끼워져 있습니다. 장착 칸을 차지하지 않습니다.',
     '스킬 트리는 세 갈래이고, 갈래마다 두 칸씩 10줄의 사다리입니다(하급 6줄 → 중급 4줄). 윗줄 두 칸 가운데 하나만 열어도 아랫줄이 열립니다. 처음에는 모두 잠겨 있고, 캐릭터를 만들 때 포인트 1로 첫 줄의 한 칸을 엽니다. 레벨이 오를 때마다 포인트 1을 얻어 Lv10에 10점이 됩니다. 한 갈래를 줄마다 하나씩 내려가면 Lv6에 하급 끝, Lv10에 중급 끝입니다. 상급·궁극은 3챕터부터 더합니다. 챕터 사이 상점에서 트리 초기화를 사면 연 칸을 모두 닫고 포인트를 돌려받습니다(연 칸 하나에 ' + TREE_RESET.cell + '골드, 챕터마다 1.5배).',
@@ -3035,7 +3037,7 @@ function previewAfter(b, time) {
   if (time <= 0.6 && !b.bonusUsed && !noFast(b.p)) return []; // 빠른 칸: 같은 차례에 주 행동이 남는다
   const cnt = {}; const add = id => { const e = b.en.find(x => x.id === id && x.alive && x.role !== 'root'); if (e) cnt[e.id] = (cnt[e.id] || 0) + 1; };
   const q = (b.queue || []).slice(); if (q[0] === 'p') q.shift();
-  for (const id of q) add(id);
+  for (const id of q) { if (id === 'p') return Object.keys(cnt).map(k => ({ e: b.en.find(x => x.id === k), n: cnt[k] })); add(id); } // 연속 행동: 내 차례가 바로 이어지면 여기까지
   for (const x of roundOrder(b, false)) { if (x.id === 'p') break; add(x.id); }
   return Object.keys(cnt).map(id => ({ e: b.en.find(x => x.id === id), n: cnt[id] }));
 }
@@ -3380,7 +3382,7 @@ function initPop() {
     bleed: '걸린 쪽이 행동할 때마다 그 숫자만큼 피해를 주고 1 줄어듭니다. 방어, 흘리기, 플라스크도 행동입니다(상한 10).',
     ignite: '화상. 걸린 쪽이 직접 피해를 받을 때마다 그 숫자만큼 피해를 더 받고 1 줄어듭니다(상한 10).',
     chill: '둔화. 라운드가 시작될 때 그 라운드의 맨 뒤로 밀리고 1 줄어듭니다(상한 3).',
-    haste: '가속. 라운드가 시작될 때 그 라운드의 맨 앞에서 움직이고 1 줄어듭니다(상한 3).',
+    haste: '가속(사냥꾼 전용). 라운드가 시작될 때 그 라운드 맨 앞에서 두 번 연달아 움직이고 1 줄어듭니다. 한 라운드에 한 번이고 상한 3입니다. 두 번째 차례에는 쿨타임이 줄지 않습니다.',
     weak: '공격할 때마다 그 공격의 피해가 25% 줄고 1 줄어듭니다(상한 5). 강화와 숫자끼리 뺍니다.',
     empower: '강화. 공격할 때마다 그 공격의 피해가 25% 늘고 1 줄어듭니다(상한 5). 약화와 숫자끼리 뺍니다.',
     vuln: '직접 피해를 받을 때마다 그 피해가 25% 늘고 1 줄어듭니다(상한 5). 보호와 숫자끼리 뺍니다.',
@@ -4164,7 +4166,8 @@ function toast(m) {
 const focusOn = (b, e) => !!(b && b.p.build === 'hunter' && b.p.focus && b.p.focus.id === e.id && b.p.focus.n > 0 && e.alive);
 function focusLine(b) {
   const p = b.p; if (p.build !== 'hunter') return ''; const e = p.focus && b.en.find(x => x.id === p.focus.id && x.alive); const n = e ? p.focus.n : 0;
-  return `<div class="focusln" data-info="efocus" tabindex="0">🎯 추적 ${n ? `<b>${n}</b>/${HUNT.focusMax}겹 · ${esc(e.n)} · 다음 한 방 +${Math.round(n * HUNT.focusPer * 100)}%` : '없음 · 같은 적을 연달아 맞히면 쌓입니다'}</div>`;
+  const hs = st(p, 'haste'); const hl = `<div class="focusln hs" data-info="st:p:haste" tabindex="0">⚡ 가속 ${hs ? `<b>${hs}</b> · 다음 라운드 맨 앞에서 두 번 연달아 움직인다` : '없음'}${b.pDouble === b.round ? ' · 이번 라운드는 연속 행동 중' : ''}</div>`;
+  return hl + `<div class="focusln" data-info="efocus" tabindex="0">🎯 추적 ${n ? `<b>${n}</b>/${HUNT.focusMax}겹 · ${esc(e.n)} · 다음 한 방 +${Math.round(n * HUNT.focusPer * 100)}%` : '없음 · 같은 적을 연달아 맞히면 쌓입니다'}</div>`;
 }
 /* ---------- 시험 전투 (10월 5일 만든 사람 요청): 던전 없이 직업 · 레벨 · 스킬 4칸 · 적을 골라 바로 싸운다. 기록 · 랭킹 · 전리품 없음 ---------- */
 const TEST_ROLES = ['bruiser', 'shield', 'archer', 'healer', 'summoner', 'minion', 'thief', 'darkmage', 'pyre'];
