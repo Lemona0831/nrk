@@ -105,12 +105,29 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   const psn = e => (e.s.poison ? e.s.poison.stacks : 0);
   // 10월 4일 적 행동: 몸 낮춘 적에게 한 적 공격, 반격 태세인 적에게 근접 한 적 공격은 다른 적이 있으면 하지 않는다. 버티는 적은 뒤로, 훔쳤거나 훔치려는 도둑은 앞으로 (사람은 예고를 보고 고른다)
   const reach = a => { const all = E.alive(b).filter(e => e.role !== 'root' && E.canTarget(b, e, a)); const ok = all.filter(e => !enemyAvoid(e, a)); return ok.length ? ok : all; };
-  const best = (a, f) => reach(a).sort((x, y) => (enemyPrio(y) - enemyPrio(x)) || f(x, y))[0];
+  const huPref = (e, a) => p.build !== 'hunter' || a.aoe || a.self || !p.focus ? 0 : a.s && has(a, 'swapx') ? (e.id !== p.focus.id ? 1 : 0) : (e.id === p.focus.id ? 1 : 0); // 사냥꾼 (10월 5일): 한 적 스킬은 추적이 쌓인 적을 계속, 표적 바꾸기 스킬은 다른 적에게
+  const best = (a, f) => reach(a).sort((x, y) => (enemyPrio(y) - enemyPrio(x)) || (huPref(y, a) - huPref(x, a)) || f(x, y))[0];
   const useMech = r() < (P.mech || 0.5);
   // 정화 플라스크: 적이 이번에 상태를 걸 예정이면 미리 막는다
   // 정화 플라스크: 출혈이 이미 쌓여 더 걸리면 아프거나, 폭발 약화가 올 때만(사람은 막을 거리가 클 때 마신다)
   const pv1 = E.previewAfter(b, 1); const bleedIn = pv1.some(x => x.e.intent && x.e.intent.k === 'attack' && x.e.intent.bleed); const boomIn = pv1.some(x => x.e.intent && ['explode', 'burn'].includes(x.e.intent.k));
   if (((bleedIn && psn2(p, 'bleed') >= 2) || boomIn) && !p.s.block && p.flask.mana > 0 && r() < aware * 0.5) return ['flaskM'];
+  // 0.6a.2 사냥꾼 (10월 5일, 흘리기보다 먼저: 사냥꾼은 피하기로 받는다): 예고 대응(피할 수 있는 강타 · 겨눈 한 발은 받아넘기기 · 몸 빼기, 피할 수 없는 화형은 예고 읽기 · 흙먼지 장막), 추적 유지 · 터뜨리기, 표적 바꾸기
+  if (p.build === 'hunter') {
+    const fe = p.focus ? E.alive(b).find(e => e.id === p.focus.id) : null; const fn = fe ? p.focus.n : 0;
+    const aimedIn = pv1.find(x => x.e.intent && x.e.intent.aimed); const bigIn = hv || aimedIn; const burnIn = pv1.find(x => x.e.intent && x.e.intent.k === 'burn');
+    const atkN = pv1.filter(x => x.e.intent && ['attack', 'heavy'].includes(x.e.intent.k)).reduce((m, x) => m + x.n, 0);
+    const tgtOf = a => a.self || a.aoe ? null : (best(a, (x, y) => x.hp - y.hp) || {}).id;
+    const firstAtk = pv1.find(x => x.e.intent && ['attack', 'heavy', 'brand'].includes(x.e.intent.k)); const bigFirst = !!(firstAtk && (firstAtk.e.intent.k === 'heavy' || firstAtk.e.intent.aimed)); // 몸 빼기는 다음에 맞는 공격 하나를 피하므로, 큰 공격이 바로 다음일 때만 쓴다
+    if (bigFirst && !(p.evade > 0) && r() < Math.max(P.parry, 0.35) + 0.35) { const cs = okS.find(a => a.s.fx.some(e => e.k === 'evadeCtr' && e.charged)) || okS.find(a => a.self && has(a, 'evade') && !a.s.once) || okS.find(a => !a.self && has(a, 'evade')) || okS.find(a => a.self && has(a, 'evade')); if (cs) return [cs.id, tgtOf(cs)]; }
+    if (bigIn && !bigFirst && !p.foresee && r() < 0.6) { const fs = okS.find(a => has(a, 'foresee')); if (fs) return [fs.id]; }
+    if (burnIn && !p.foresee && r() < 0.75) { const fs = okS.find(a => has(a, 'foresee')) || okS.find(a => a.s.fx.some(e => e.k === 'meSt' && e.s === 'protect')); if (fs) return [fs.id, tgtOf(fs)]; }
+    if (atkN >= 3 && !p.s.protect && r() < 0.6) { const vs = okS.find(a => a.s.fx.some(e => e.k === 'meSt' && e.s === 'protect')) || okS.find(a => has(a, 'quickTurns')); if (vs) return [vs.id, tgtOf(vs)]; }
+    if (atkN >= 2 && !(p.evade > 0) && r() < 0.5) { const es = okS.find(a => a.self && has(a, 'evade')); if (es) return [es.id]; }
+    if (!b.bonusUsed && okS.filter(a => !a.self && a.time >= 1).length >= 2) { const qs = okS.find(a => has(a, 'quick')); if (qs && r() < 0.7) return [qs.id]; }
+    for (const a of okS.filter(a => has(a, 'focusBurst'))) if (fe && E.canTarget(b, fe, a) && (fn >= 3 || (fn >= 2 && fe.hp < fe.hpMax * 0.35))) return [a.id, fe.id];
+    for (const a of okS.filter(a => has(a, 'focusAdd') && !a.s.start)) { const t = fe && E.canTarget(b, fe, a) ? fe : best(a, (x, y) => y.hp - x.hp); if (t && (t !== fe || fn < 2)) return [a.id, t.id]; }
+  }
   // 강타 예고: 흘리기형 스킬(스태미나 없이) → 흘리기 준비 → 스태미나 흘리기. 이번 차례에 빠른 행동으로 이미 그 적을 흘릴 준비를 했으면 다시 걸지 않는다(덮어쓰면 붙은 효과를 잃는다)
   if (hv && !v2Ready(b, hv.e.id) && r() < Math.max(P.parry, 0.35) + 0.2) {
     const ps = okS.find(a => has(a, 'parry')); if (ps) return [ps.id, hv.e.id];

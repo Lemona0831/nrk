@@ -633,6 +633,11 @@ function runSkill2(b, act, tgt) {
   if (s.tgt === 'self') for (const x of s.fx) if (x.k === 'st') { addS(b, p, x.s, x.n); logp(b, 'good', s.n + '. ' + (KW_N[x.s] || x.s) + ' ' + x.n); } // 나에게 거는 상태
   for (const x of s.fx) if (x.k === 'meSt') { addS(b, p, x.s, x.n); logp(b, 'good', s.n + '. ' + (KW_N[x.s] || x.s) + ' ' + x.n); } // 공격 스킬에 붙은 나에게 거는 상태
   const ev = F('evade'); if (ev) { p.evade = Math.min(3, (p.evade || 0) + ev.n); logp(b, 'good', s.n + '. 다음에 맞는 공격 ' + p.evade + '번을 피한다'); } // 사냥꾼: 몸 빼기
+  const ec = F('evadeCtr'); if (ec) p.evadeCtr = { dmg: ec.dmg, chill: ec.chill || 0, charged: ec.charged || 0, until: ec.rounds ? (b.round || 0) + ec.rounds : 0 }; // 피했을 때 반격
+  if (hzOn === 'evade') p.evadeHz = { n: hz.n || 1, br: s.b, id: s.id }; // 🔄 피할 때마다 쿨타임 당기기
+  const qk = F('quick'); if (qk) { b.extraQuick = 1; logp(b, 'good', s.n + '. 이번 차례에 빠른 칸이 하나 더 생긴다'); }
+  const qt = F('quickTurns'); if (qt) { b.extraQuick = 1; p.quickTurns = qt.n - 1; logp(b, 'good', s.n + '. 내 차례 ' + qt.n + '번 동안 빠른 칸이 하나 더 생긴다'); }
+  const fs = F('foresee'); if (fs) { p.foresee = { red: fs.red, until: (b.round || 0) + fs.rounds }; logp(b, 'good', s.n + '. ' + fs.rounds + '라운드 동안 강타 · 겨눈 한 발 · 화형의 피해 −' + Math.round(fs.red * 100) + '%'); }
   const wd = F('ward'); if (wd) { const g = addWard(b, p, wd.n); logp(b, 'good', s.n + '. 보호막 +' + Math.round(g) + ' (' + Math.round(p.ward) + '/' + wardMax(p) + ')'); } // 파수꾼: 보호막 얻기
   const wf = F('wardFill'); if (wf) { const goal = Math.round(wardMax(p) * (wf.to || 1)); const g = addWard(b, p, Math.max(0, goal - (p.ward || 0))); logp(b, g > 0 ? 'good' : 'sys', s.n + (g > 0 ? '. 보호막 +' + Math.round(g) + ' (' + Math.round(p.ward) + '/' + wardMax(p) + ')' : '. 보호막이 이미 그만큼 있다')); } // 보호막 채우기: 상한의 to까지 (비어 있을수록 많이)
   const th = F('thorn'); if (th) { const n0 = p.thorn ? p.thorn.n : 0; p.thorn = { n: Math.min(WARD.thornMax, n0 + th.times), dmg: Math.max(p.thorn ? p.thorn.dmg : 0, th.dmg) }; logp(b, 'good', s.n + '. 가시 ' + p.thorn.n + '번(맞을 때마다 피해 ' + p.thorn.dmg + ')'); } // 가시: 이미 있으면 횟수를 더한다(최대 8), 피해는 큰 쪽 (10월 4일)
@@ -641,7 +646,7 @@ function runSkill2(b, act, tgt) {
   const wb = F('wardBurn'); let burn = 0; if (wb) { burn = Math.min(p.ward || 0, wb.max || Infinity); p.ward = (p.ward || 0) - burn; logp(b, burn > 0 ? 'good' : 'sys', burn > 0 ? '보호막 ' + Math.round(burn) + '을(를) 태운다' : '태울 보호막이 없다'); } // 파수꾼: 태운 만큼 × 배수 피해
   const wdm = F('wardDmg'), vp = F('vulnPer'), shx = F('shieldx'), pl = F('pull'), vg = F('vulnGrow'), chx = F('chillx'); const wardNow = p.ward || 0;
   const dm = F('dmg'), ex = F('exploit'), po = F('poison'), bk = F('brk'), bp = F('brkPer'); const stx = s.tgt === 'self' ? [] : s.fx.filter(e => e.k === 'st'); const lx = F('lowx'), bx = F('brokenx'), sp = F('spread'), cx = F('cutx'), dr = F('drain'), gx = F('bigx'); const isBig = e => !!(e.elite || e.strong || e.role === 'boss');
-  const fxs = F('focusx'), fb = F('focusBurst'), fa = F('focusAdd'), swx = F('swapx'), hsx = F('hastex'); const prevId = p.focus ? p.focus.id : null; const fOf = e => (p.focus && p.focus.id === e.id ? p.focus.n : 0); // 사냥꾼
+  b.focusKey = null; const fxs = F('focusx'), fb = F('focusBurst'), fa = F('focusAdd'), swx = F('swapx'), hsx = F('hastex'); const prevId = p.focus ? p.focus.id : null; const preF = {}; const fOf = e => (e.id in preF ? preF[e.id] : (preF[e.id] = p.focus && p.focus.id === e.id ? p.focus.n : 0)); // 사냥꾼: 이 스킬을 쓰기 전 추적
   for (let h = 0; h < hits; h++) for (const e of targets) {
     if (!e.alive || b.over) continue;
     let base = (dm ? dm.n : 0) + (ex ? ex.per * st(e, 'poison') : 0) + (wb && h === 0 ? burn * wb.mul : 0) + (wdm ? wdm.per * wardNow : 0) + (vp ? vp.per * st(e, 'vuln') : 0);
@@ -649,7 +654,7 @@ function runSkill2(b, act, tgt) {
     if (lx && e.hp <= e.hpMax * lx.hp) base *= lx.mul; if (bx && e.s.broken) base *= bx.mul; if (gx && isBig(e)) base *= gx.mul; if (chx && e.s.chill) base *= chx.mul; // 마무리(생명력 낮음), 붕괴한 적, 큰 적, 둔화된 적 (겹치면 곱한다)
     if (base > 0) { tot += hurtEnemy(b, e, outDmg(b, base, {}), { single: multi ? 0 : 1, aoe: multi ? 1 : 0, melee: s.tgt === 'melee' || s.tgt === 'front' ? 1 : 0, label: s.n }); if (!e.alive) { killed++; continue; } }
     if (fb && h === 0 && e.alive) { p.focus = { id: e.id, n: 0 }; } // 터뜨린 추적은 사라진다
-    if (fa && h === hits - 1 && e.alive) { p.focus = { id: e.id, n: Math.min(HUNT.focusMax, fOf(e) + fa.n) }; logp(b, 'good', e.n + '에게 추적 ' + p.focus.n + '겹'); }
+    if (fa && h === hits - 1 && e.alive) { const cur = p.focus && p.focus.id === e.id ? p.focus.n : 0; p.focus = { id: e.id, n: Math.max(cur, Math.min(HUNT.addMax, cur + fa.n)) }; logp(b, 'good', e.n + '에게 추적 ' + p.focus.n + '겹'); } // 추적 추가는 2겹까지만
     if (po) addPoison(b, e, po.n, 1, capOver);
     if (bk) addBreak(b, e, bk.n * (shx && e.role === 'shield' ? shx.mul : 1)); // 방패병에게 붕괴 ×
     if (cx && h === 0 && e.alive && e.intent && ['charge', 'heavy', 'fuse', 'explode', 'chant', 'chanting', 'burn'].includes(e.intent.k)) { logp(b, 'good', e.n + '이(가) 모으던 힘을 노린다. 붕괴 +' + cx.brk); addBreak(b, e, cx.brk); } // 끊어 내기
@@ -682,7 +687,7 @@ function runSkill2(b, act, tgt) {
   else { p.cd[s.id] = s.once ? CD_USED : s.cd; p.cdJust = [].concat(p.cdJust || [], s.id); }
   if (hzOn === 'use') hastenBranch(b, s.b, hz.n || 1, s.id); // 🔄 쓰면 다른 같은 갈래 스킬 쿨타임 −n // 이번 차례에 쓴 스킬은 모두 이번 차례가 끝날 때 줄지 않는다 (10월 3일: 빠른 스킬 다음에 스킬을 쓰면 빠른 스킬의 대기가 1 짧았다)
   p.lastSkillDmg = multi ? tot / Math.max(1, targets.length) : tot;
-  b.curSkill = null;
+  b.curSkill = null; b.focusKey = null;
 }
 function allSkillNames() { const m = allSkills(); for (const k in EXCL) for (const s of exclOf(k)) m[s.id] = s; return m; }
 function isMeleeAct(p, id) { if ((p.build === 'hunter' || isCaster(p)) && (id === 'basic' || id === 'heavy')) return false; if (id === 'basic' || id === 'heavy') return true; const s = skillMap(p.build)[id]; return !!(s && s.melee); }
@@ -817,7 +822,7 @@ const wallUp = (b, e) => e.alive && e.row === 'back' && e.role !== 'boss' && !!h
 const wallFrontUp = (b, e) => e.alive && e.row === 'front' && !['boss', 'shield', 'root'].includes(e.role) && !!hasShield(b, e.id); // 방패병 옆 전열 동료
 const TELE = { heavy: 1.75, boss: 3.5 }; // 적 강타 = 평소 공격 × heavy, 보스 강타 × boss (10월 4일: 평소 공격이 기준표로 커져 일반 적의 강타는 1.75배. 한 번 상한은 그대로) // 적 강타 = 평소 공격 × heavy (예고를 읽고 막는 판단의 무게)
 /* 0.6a.2: 적이 거는 상태 (숫자 하나, 발동마다 1 감소). 사수 출혈은 걸린 쪽이 행동할 때마다 터지므로 세 번에 한 번, 2만 건다 */
-const HUNT = { focusMax: 3, focusPer: 0.05 }; // 사냥꾼 추적
+const HUNT = { focusMax: 3, focusPer: 0.05, addMax: 2 }; // 사냥꾼 추적. addMax: 추적 추가 효과로는 2겹까지만(3겹은 같은 적을 다시 맞혀야)
 const CHANT = { cut: 0.3, big: 0.28, burn: 3 }; // 화형 사제 (10월 5일): 영창 중 받은 피해가 최대 생명력 × cut이면 끊긴다. 화형 = 기준 생명력 × big(정예 ×1.25), 화상 burn. 영창은 한 번에 한 적만
 const chantDmg = (b, e) => HIT_REF(e.lv || 1) * CHANT.big * (e.elite ? 1.25 : 1) * enemyHitEst(b, e) / Math.max(0.01, e.dmg);
 const CHANT_K = ['chant', 'chanting', 'burn'];
@@ -1303,7 +1308,9 @@ function dmgDot(b, u, amt, label) {
 }
 function hurtPlayer(b, raw, o) {
   const p = b.p; o = o || {};
-  if (p.evade > 0 && !o.dot && o.src) { p.evade--; logp(b, 'good', (o.src.n || '적') + '의 공격을 몸을 빼 피한다' + (p.evade ? ' (남은 ' + p.evade + '번)' : '')); return 0; } // 사냥꾼 몸 빼기 (10월 5일)
+  const bigHit = !!(o.charged || (o.src && o.src.intent && o.src.intent.aimed && !o.dot)); // 예고된 큰 공격: 강타 · 강적과 보스의 큰 한 방 · 겨눈 한 발 · 화형
+  if (p.foresee && (b.round || 0) < p.foresee.until && bigHit) raw *= 1 - p.foresee.red; // 사냥꾼 예고 읽기 (피할 수 없는 화형에도 든다)
+  if (p.evade > 0 && !o.dot && !o.aoe && !o.spell && o.src) { p.evade--; logp(b, 'good', (o.src.n || '적') + '의 공격을 몸을 빼 피한다' + (p.evade ? ' (남은 ' + p.evade + '번)' : '')); const c = p.evadeCtr; if (c && o.src.alive && (!c.charged || bigHit)) { hurtEnemy(b, o.src, outDmg(b, c.dmg, {}), { single: 1, label: '반격 사격' }); if (c.chill && o.src.alive) addS(b, o.src, 'chill', c.chill); } if (p.evadeHz) hastenBranch(b, p.evadeHz.br, p.evadeHz.n, p.evadeHz.id); if (!p.evade && !(c && c.until > (b.round || 0))) p.evadeCtr = null; return 0; } // 사냥꾼 몸 빼기 (10월 5일): 실제로 피했을 때만 반격 · 🔄
   if (!o.dot && !o.aoe && p.dodge && o.src && o.src.id === p.dodge) {
     p.dodge = 0; const red = Math.max(0, (p.dodgeRed || parryRed(p)) - parryBig(o.src)); raw *= 1 - red; o.parried = true; logp(b, 'good', (o.src ? o.src.n + '의 ' + (o.charged ? '강타' : '공격') : '공격') + '을(를) 칼날로 흘린다. 피해 ' + Math.round(red * 100) + '% 감소');
     fxRun(p, 'onParry', b, p, o.src);
@@ -1363,7 +1370,7 @@ function hurtEnemy(b, e, raw, o) {
   let d = raw;
 
   if (e.s.weak && false) d *= 1;
-  if (!o.dot && b.p.build === 'hunter' && (o.single || o.melee)) { const f = b.p.focus; b.p.focus = f && f.id === e.id ? { id: e.id, n: Math.min(HUNT.focusMax, f.n + 1) } : { id: e.id, n: 0 }; d *= 1 + HUNT.focusPer * b.p.focus.n; } // 사냥꾼 추적 (10월 5일 만든 사람 결정: 겹마다 +5%, 최대 3)
+  if (!o.dot && !o.aoe && b.p.build === 'hunter' && (o.single || o.melee)) { const p = b.p, key = b.curSkill ? b.curSkill + ':' + e.id : null; let pre; if (key && b.focusKey === key) pre = b.focusPre; else { const f = p.focus; pre = f && f.id === e.id ? f.n : 0; p.focus = { id: e.id, n: Math.min(HUNT.focusMax, pre + 1) }; if (key) { b.focusKey = key; b.focusPre = pre; } } d *= 1 + HUNT.focusPer * pre; } // 사냥꾼 추적 (10월 5일 만든 사람 결정): 한 적만 치는 공격 한 번(연타라도 스킬 한 번)에 한 겹, 최대 3, 피해 보너스는 맞히기 전 겹마다 +5%. 다른 적을 치면 그 적에게 1겹부터. 여럿을 치는 공격과 지속 피해는 손대지 않는다
   if (!o.dot && e.s.poison && hasIt(b.p, 'vpouch')) d *= 1.15;
   if (!o.dot && o.melee && o.single && b.p.scar > 0 && hasIt(b.p, 'scarcharm')) d += Math.min(10, b.p.scar * 0.15);
   if (!o.dot && (o.single || o.melee) && hasIt(b.p, 'markamu')) { const mk = b.p.mk; if (mk && mk.id !== e.id && mk.n > 0) d *= 0.9; b.p.mk = mk && mk.id === e.id ? { id: e.id, n: mk.n + 1 } : { id: e.id, n: 1 }; if (b.p.mk.n >= 3) { b.p.mk.n = 0; b.markTgt = e; } }
@@ -1808,7 +1815,7 @@ function enemyAct(b, e) {
     case 'fuse': e.teleTurn = b.turnIdx; logp(b, 'sys', e.n + '의 도화선이 타들어 간다'); break;
     case 'chant': { e.chant = { taken: 0, need: Math.round(e.hpMax * CHANT.cut) }; logp(b, 'sys', e.n + '이(가) 화형 영창을 시작한다'); break; }
     case 'chanting': { e.teleTurn = b.turnIdx; logp(b, 'sys', e.n + '의 영창이 높아진다. 장작에 불이 붙는다'); break; }
-    case 'burn': { e.chant = null; e.pyreRest = 1; const x = hurtPlayer(b, chantDmg(b, e) * (b.halfBoom === b.round ? 0.5 : 1), { src: e, single: 1, charged: 1, label: e.n + '의 화형이 나를 덮친다' }); if (x > 0 && !b.over) addS(b, b.p, 'ignite', CHANT.burn); break; }
+    case 'burn': { e.chant = null; e.pyreRest = 1; const x = hurtPlayer(b, chantDmg(b, e) * (b.halfBoom === b.round ? 0.5 : 1), { src: e, single: 1, charged: 1, spell: 1, label: e.n + '의 화형이 나를 덮친다' }); if (x > 0 && !b.over) addS(b, b.p, 'ignite', CHANT.burn); break; }
     case 'explode': { hurtPlayer(b, d * EKW.explodeMul * (b.halfBoom === b.round ? 0.5 : 1), { src: e, aoe: 1, label: e.n + '이(가) 터진다' }); if (!b.over) addS(b, b.p, 'weak', EKW.explodeWeak); e.alive = false; e.hp = 0; logp(b, 'sys', e.n + '은(는) 재가 되어 흩어진다'); checkEnd(b); break; }
     case 'mirror': { const x = b.p.lastSkillDmg * 0.5; if (x > 0) hurtPlayer(b, x, { src: e, single: 1, label: '나락의 거울이 내 스킬을 되비춘다' }); else logp(b, 'sys', '거울에 비칠 것이 없다'); break; }
   }
@@ -1917,7 +1924,7 @@ function actionList(b) {
   const SKM = skillMap(p.build);
   if (isV2(p)) for (const sid of skillsOf(p)) { // 0.6a.2: 재사용 대기
     const s = SK2[sid]; if (!s) continue; const w = (p.cd && p.cd[sid]) || 0;
-    const needPoison = !s.fx.some(e => ['dmg', 'poison', 'brk', 'st', 'parry', 'parryBuff', 'stam', 'cutx', 'ward', 'wardFill', 'wardBurn', 'wardDmg', 'thorn', 'pull', 'vulnPer', 'vulnGrow', 'shieldx', 'chillx'].includes(e.k) || (e.k === 'burst' && e.pre) || (e.k === 'grow' && e.add)); // 중독 없이는 아무 일도 없는 스킬만 잠근다 (10월 3일: 피해를 주는 터뜨리는 일격, 중독 4를 거는 독 응축도 잠겼다)
+    const needPoison = !s.fx.some(e => ['dmg', 'poison', 'brk', 'st', 'parry', 'parryBuff', 'stam', 'cutx', 'ward', 'wardFill', 'wardBurn', 'wardDmg', 'thorn', 'pull', 'vulnPer', 'vulnGrow', 'shieldx', 'chillx', 'evade', 'evadeCtr', 'quick', 'quickTurns', 'foresee', 'meSt', 'focusAdd', 'focusBurst', 'focusx', 'swapx', 'hastex'].includes(e.k) || (e.k === 'burst' && e.pre) || (e.k === 'grow' && e.add)); // 중독 없이는 아무 일도 없는 스킬만 잠근다 (10월 3일: 피해를 주는 터뜨리는 일격, 중독 4를 거는 독 응축도 잠겼다)
     let why = w > 0 ? (s.once ? '이번 전투에 이미 씀' : '쿨타임 ' + w + '턴 남음') : null;
     if (!why && needPoison && !alive(b).some(e => e.s.poison)) why = '중독된 적 없음';
     if (!why && s.tgt === 'front' && !alive(b).some(e => e.row === 'front' && e.role !== 'root')) why = '전열에 적 없음';
@@ -2196,7 +2203,7 @@ function finishPlayer(b, time, lost) {
   chargeEv(b, 'turn'); b.bonusUsed = 0; // fxQuickNext(성인의 성배·수확자의 손)는 지우지 않는다: 주 행동으로 쓰러뜨려도 다음 빠른 행동 한 번이 빠른 칸을 쓰지 않게
   if (b.queue && b.queue[0] === 'p') b.queue.shift();
   abbotDemand(b);
-  b.turnIdx++; b.consN = 0; b.extraQuick = 0;
+  b.turnIdx++; b.consN = 0; b.extraQuick = 0; if (p.quickTurns > 0) { b.extraQuick = 1; p.quickTurns--; } // 사냥꾼 그림자 질주
   if (b.stepMode) { b.waiting = true; return; }
   runUntilPlayer(b);
 }
@@ -2325,7 +2332,7 @@ const TUT_CHECK = {
 };
 function endBattleCarry(p) {
   p.bt = {}; p.rcN = 0; p.mk = null; p.fxSpell = 0; p.fxScar = 0; p.fxPen = 0; p.fxHunt = null; p.fxHeavyDisc = 0; p.fxImmune = 0; p.fxQuick = 0; p.fxQuickNext = 0; p.fxCond = 0; p.fxFlaskDmg = 0; p.brace = 0; p.tookSince = 0; p.tookLast = 0;
-  p.ward = 0; p.thorn = null; p.evade = 0; p.focus = null; p.lastSkillId = null; p.echoN = 0; p.furyNext = 0; p.retal = 0; p.sigCd = 0; p.focusRes = 0;
+  p.ward = 0; p.thorn = null; p.evade = 0; p.evadeCtr = null; p.evadeHz = null; p.quickTurns = 0; p.foresee = null; p.focus = null; p.lastSkillId = null; p.echoN = 0; p.furyNext = 0; p.retal = 0; p.sigCd = 0; p.focusRes = 0;
   // 방 사이 이월 (4.2): 생명력·마나·플라스크 유지, 스태미나는 50%까지 회복, 전투 상태 해제
   p.st = Math.max(p.st, 50); p.exhaust = 0; p.s = {}; p.guard = 0; p.dodge = 0; p.stun = 0; p.counter = 0; p.reflux = null; p.rage = 0;
 }

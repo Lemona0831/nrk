@@ -24,7 +24,7 @@ const SKK = {
      v: 보호막 1의 값, loss: 태운 보호막이 막았을 몫, thorn: 가시가 맞는 몫, vuln: 쓸 때 대상의 취약, shield: 방패병이 있는 몫, pull: 끌어내기, chill: 둔화된 적이 있는 몫 [가설] */
   ward: { v: 0.8, S: [8, 12.5], B: [15, 21], cap: [45, 58], loss: 0.5, thorn: 0.85, vuln: 2, shield: 0.3, pull: 6, chill: 0.35, all: [12, 22], fin: 0.9 }, // 10월 5일 4차 측정(적 행동 개편 · 강적 다섯 · 후열 절반 뒤): 보호막 비례 때 보유 하급 7~9 · 중급 12~13, 최후의 성벽이 태운 양 Lv10 23. B는 그대로(태우기 전 보유 하급 16~22 · 중급 16~35, 상한이 먼저 걸린다). // 10월 4일 3차 측정(테스터가 보호막을 얻는 스킬을 태우는 스킬만큼 끼우고, 한 적의 공격에도 막는 스킬을 쓴 뒤): all은 모두 태우는 스킬이 한 번에 태우는 양(지금 10줄 최후의 성벽뿐, Lv10 측정 18), fin은 마무리 태우기를 생명력이 낮은 적에게 쓴 몫(측정 91~100%)
   /* 사냥꾼 (10월 5일 초안, 가설): F 쓸 때 대상의 추적 겹(최대 3), swap 직전과 다른 적을 칠 몫, ev 몸 빼기 한 번이 막는 피해, hx 쓸 때 가속 상태일 몫, fa 추적 한 겹을 더하는 값 */
-  hunt: { F: 1.5, swap: 0.5, ev: 7, hx: 0.5, fa: 1.5 },
+  hunt: { F: 1.5, swap: 0.5, ev: 7, hx: 0.5, fa: 1.5, ctr: 0.85, ctrBig: 0.4, q: 6, fs: 8 }, // ctr: 피한 뒤 반격이 나갈 몫(강타일 때만이면 ctrBig), q: 빠른 칸 하나, fs: 한 라운드에 받는 예고된 큰 공격 피해
   hz: 1.5,                      // 🔄 쿨타임 당기기 1번의 값 [가설] (10월 3일 50상황: 평소 싸움에서는 스킬이 늘 3~4개 준비되어 있어 거의 0, 쿨타임이 묶이는 보스전에서만 크다)
   Fmax: 6,                      // 한 스킬을 전투에서 쓰는 횟수의 상한 (실측: 바탕 스킬 독니 5.4)
 };
@@ -72,8 +72,12 @@ function skValue(s) {
       case 'swapx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n : 0) * (e.mul - 1) * K.hunt.swap; break; } // 직전과 다른 적이면 × (첫 발만)
       case 'evade': v += e.n * K.hunt.ev; break; // 다음에 맞는 공격 n번을 피한다
       case 'hastex': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * K.hunt.hx; break; } // 가속 상태면 ×
-      case 'meSt': v += e.n * (K.kw[e.s] || 1); break; // 공격 스킬에 붙은 나에게 거는 상태
-      case 'hasten': { const pb = s.fx.find(x => x.k === 'parryBuff'); v += (e.n || 1) * K.hz * (e.on === 'parry' ? K.pOk * (pb ? (pb.times || 1) : 1) : 1); break; } // 🔄 다른 같은 갈래 스킬 쿨타임 당기기
+      case 'meSt': v += e.n * (K.kw[e.s] || 1); break;
+      case 'evadeCtr': { const evn = (s.fx.find(x => x.k === 'evade') || { n: 1 }).n; const m = (e.charged ? K.hunt.ctrBig : K.hunt.ctr) * evn; v += m * (e.dmg + (e.chill || 0) * K.kw.chill); break; } // 피할 때마다 반격
+      case 'quick': v += e.n * K.hunt.q; break; // 이번 차례 빠른 칸 +n
+      case 'quickTurns': v += e.n * K.hunt.q; break; // 내 차례 n번 동안 빠른 칸 +1
+      case 'foresee': v += e.red * e.rounds * K.hunt.fs; break; // 예고된 큰 공격 피해 줄이기 // 공격 스킬에 붙은 나에게 거는 상태
+      case 'hasten': if (e.on === 'evade') { v += (e.n || 1) * K.hz * K.hunt.ctr * ((s.fx.find(x => x.k === 'evade') || { n: 1 }).n); break; } { const pb = s.fx.find(x => x.k === 'parryBuff'); v += (e.n || 1) * K.hz * (e.on === 'parry' ? K.pOk * (pb ? (pb.times || 1) : 1) : 1); break; } // 🔄 다른 같은 갈래 스킬 쿨타임 당기기
     }
   }
   const gx = s.fx.find(e => e.k === 'bigx'); if (gx) v *= 1 + (gx.mul - 1) * 0.3; // 큰 적에게 ×: 열에 셋쯤 큰 적 (10월 3일 50상황으로 넣음)
@@ -131,9 +135,13 @@ function skBody(s) {
       case 'stam': out.push(`스태미나 +${e.n}.`); break;
       case 'focusx': out.push(`대상의 추적 1겹마다 피해 +${Math.round(e.per * 100)}% 더.`); break;
       case 'focusBurst': out.push(`대상의 추적을 모두 터뜨린다. 1겹마다 피해 +${e.n}. 추적은 사라진다.`); break;
-      case 'focusAdd': out.push(`대상에게 추적 +${e.n}겹(최대 3).`); break;
+      case 'focusAdd': out.push(`대상에게 추적 +${e.n}겹. 이 효과로는 2겹까지만 오르고, 3겹은 같은 적을 다시 맞혀야 된다.`); break;
       case 'swapx': out.push(`직전에 친 적과 다른 적이면 피해 ×${e.mul}.`); break;
-      case 'evade': out.push(`다음에 맞는 공격 ${e.n}번을 피한다.`); break;
+      case 'evade': out.push(`다음에 맞는 공격 ${e.n}번을 피한다. 화형 · 지속 피해처럼 피할 수 없는 것은 빼고.`); break;
+      case 'evadeCtr': out.push((e.charged ? '피한 공격이 강타나 겨눈 한 발이면' : (e.rounds ? e.rounds + '라운드 동안 ' : '') + '공격을 피할 때마다') + ` 그 적에게 반격 사격: 피해 ${e.dmg}${e.chill ? ', 둔화 ' + e.chill : ''}.`); break;
+      case 'quick': out.push('이번 차례에 빠른 칸 +1.'); break;
+      case 'quickTurns': out.push(`이번 차례부터 내 차례 ${e.n}번 동안 빠른 칸 +1.`); break;
+      case 'foresee': out.push(`${e.rounds}라운드 동안 강타 · 겨눈 한 발 · 화형의 피해 −${Math.round(e.red * 100)}%. 피할 수 없는 화형에도 든다.`); break;
       case 'hastex': out.push(`내가 가속 상태면 피해 ×${e.mul}.`); break;
       case 'meSt': out.push(`나에게 ${SK_KWN[e.s] || e.s} ${e.n}.`); break;
       case 'bigx': out.push(`정예·강적·보스에게는 피해 ×${e.mul}.`); break;
@@ -152,7 +160,8 @@ function skBody(s) {
       case 'pull': out.push('대상이 후열이면 전열로 끌어낸다.'); break;
       case 'vulnGrow': out.push(`대상의 취약을 ${e.mul}배로 만든다(상한 5).`); break;
       case 'chillx': out.push(`둔화된 적에게는 피해 ×${e.mul}.`); break;
-      case 'hasten': { const pb = s.fx.find(x => x.k === 'parryBuff'); out.push((e.on === 'parry' ? (pb ? ((pb.times || 1) > 1 ? '🔄 그 흘리기에 성공할 때마다' : '🔄 그 흘리기에 성공하면') : '🔄 그 공격을 흘려 내면') : '🔄 쓰면') + ` 다른 ${s.b} 스킬 쿨타임 −${e.n || 1}.`); break; }
+      case 'hasten': if (e.on === 'evade') { out.push(`🔄 공격을 피할 때마다 다른 ${s.b} 스킬 쿨타임 −${e.n || 1}.`); break; }
+      { const pb = s.fx.find(x => x.k === 'parryBuff'); out.push((e.on === 'parry' ? (pb ? ((pb.times || 1) > 1 ? '🔄 그 흘리기에 성공할 때마다' : '🔄 그 흘리기에 성공하면') : '🔄 그 공격을 흘려 내면') : '🔄 쓰면') + ` 다른 ${s.b} 스킬 쿨타임 −${e.n || 1}.`); break; }
     }
   }
   if (s.fx.filter(e => ['lowx', 'brokenx', 'bigx', 'chillx'].includes(e.k)).length >= 2) out.push('조건이 겹치면 배수를 곱한다.'); // 10월 4일: 박살(붕괴한 정예 · 보스에게 ×2.5 × 1.5) 등

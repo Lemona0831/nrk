@@ -40,7 +40,7 @@ function equipFor(bd, sit) {
   const has = (s, k) => s.fx.some(e => e.k === k);
   const val = id => { const s = G0.SK2[id]; let v = s.row;
     if (back && s.tgt === 'ranged') v += 6; if (many && (s.tgt === 'front' || s.tgt === 'all' || has(s, 'spread'))) v += 6; if (big && has(s, 'bigx')) v += 4;
-    if (heavy && (has(s, 'parry') || has(s, 'parryBuff') || has(s, 'onParry') || has(s, 'cutx') || s.fx.some(e => e.k === 'brk' && e.n >= 25))) v += 6; if (boom && (has(s, 'cutx') || s.fx.some(e => e.k === 'brk' && e.n >= 25))) v += 4; if (big && (has(s, 'burst') || has(s, 'grow') || has(s, 'exploit') || has(s, 'lowx'))) v += 2;
+    if (heavy && (has(s, 'parry') || has(s, 'parryBuff') || has(s, 'onParry') || has(s, 'cutx') || has(s, 'evade') || has(s, 'evadeCtr') || has(s, 'foresee') || s.fx.some(e => e.k === 'brk' && e.n >= 25))) v += 6; /* 10월 5일: 사냥꾼 피하기 · 예고 읽기도 */ if (boom && (has(s, 'cutx') || s.fx.some(e => e.k === 'brk' && e.n >= 25))) v += 4; if (big && (has(s, 'burst') || has(s, 'grow') || has(s, 'exploit') || has(s, 'lowx'))) v += 2;
     return v; };
   const pick = bd.open.slice().sort((a, c) => val(c) - val(a)).slice(0, G0.EQUIP_SLOTS2);
   // 독을 쓰는 스킬(터뜨리기·키우기·중독 비례)을 끼웠으면 독을 거는 스킬도 하나는 끼운다 (사람은 짝을 맞춘다)
