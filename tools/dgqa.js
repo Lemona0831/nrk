@@ -18,7 +18,7 @@ function loadGame() {
   vm.createContext(ctx);
   vm.runInContext(data + '\n' + html.slice(i + 8, j) + '\n;this.__G = G;', ctx, { filename: 'next/index.html' });
   // 화면·저장·소리는 끈다
-  vm.runInContext('Object.assign(this, { STAT_KEYS: typeof STAT_KEYS !== "undefined" ? STAT_KEYS : null, STAT_REC: typeof STAT_REC !== "undefined" ? STAT_REC : null, STAT_START: typeof STAT_START !== "undefined" ? STAT_START : null, LV_POINTS: typeof LV_POINTS !== "undefined" ? LV_POINTS : 2, isLower, chOf: typeof chOf !== "undefined" ? chOf : null, ITEMS, EVENTS, ROOM_TYPES, BUILDS, tplKind, SKILLS2: typeof SKILLS2 !== "undefined" ? SKILLS2 : null, TREE2: typeof TREE2 !== "undefined" ? TREE2 : null, SK2: typeof SK2 !== "undefined" ? SK2 : null, EQUIP_SLOTS2: typeof EQUIP_SLOTS2 !== "undefined" ? EQUIP_SLOTS2 : 4 });', ctx); // const 값은 밖에서 읽을 수 있게 꺼내 둔다
+  vm.runInContext('Object.assign(this, { CONS: typeof CONS !== "undefined" ? CONS : null, LOOT: typeof LOOT !== "undefined" ? LOOT : null, STAT_KEYS: typeof STAT_KEYS !== "undefined" ? STAT_KEYS : null, STAT_REC: typeof STAT_REC !== "undefined" ? STAT_REC : null, STAT_START: typeof STAT_START !== "undefined" ? STAT_START : null, LV_POINTS: typeof LV_POINTS !== "undefined" ? LV_POINTS : 2, isLower, chOf: typeof chOf !== "undefined" ? chOf : null, ITEMS, EVENTS, ROOM_TYPES, BUILDS, tplKind, SKILLS2: typeof SKILLS2 !== "undefined" ? SKILLS2 : null, TREE2: typeof TREE2 !== "undefined" ? TREE2 : null, SK2: typeof SK2 !== "undefined" ? SK2 : null, EQUIP_SLOTS2: typeof EQUIP_SLOTS2 !== "undefined" ? EQUIP_SLOTS2 : 4 });', ctx); // const 값은 밖에서 읽을 수 있게 꺼내 둔다
   vm.runInContext(`toast = () => {}; scheduleSync = () => {}; syncRun = async () => false; pushRank = async () => {}; saveLocal = () => true; sfx = () => {};`, ctx);
   vm.runInContext('var window = { scrollTo() { }, innerWidth: 1280, innerHeight: 800, scrollY: 0, addEventListener() { } };', ctx); // 정산·상점 버튼이 부르는 창 함수만 둔다
   return ctx;
@@ -115,11 +115,49 @@ function restRoom(pk, run, r) {
 }
 
 const OPT = { snap: false, onStep: null, onTurn: null, chapters: 1 }; // chapters: 몇 챕터까지 이어 갈지 (2면 1챕터를 깬 뒤 정산·상점·설문을 지나 2챕터로) // onStep(G): 방과 방 사이마다, onTurn(G, n): 전투 행동마다 (저장본 점검)
+/* 소모품 (0.6a.2, 10월 4일): 사람처럼 상황에 맞는 것을 쓴다(초보는 거의 쓰지 않는다). 한 차례 최대 수는 엔진이 막는다 */
+function useCons(pk, r, b, run) {
+  if (!G0.consUse || !G0.CONS || !run.cons || !run.cons.length) return;
+  const aware = THINK(pk) ? 0.9 : pk === 'novice' ? 0.15 : 0.5; const p = run.p; const al = G0.alive(b).filter(e => e.role !== 'root'); const sk = (u, k) => (u.s[k] ? u.s[k].stacks : 0);
+  const it = (e, ...k) => e.intent && (k.includes(e.intent.k) || (k.includes('aimed') && e.intent.aimed));
+  const want = c => { const D = G0.CONS[c.id]; switch (D.k) {
+    case 'heal': return p.hp < p.hpMax * 0.35 && (!p.flask.life || r() < 0.5);
+    case 'stam': return p.st < 30;
+    case 'cure': return sk(p, D.s) >= ({ bleed: 4, poison: 6, ignite: 3, weak: 2, vuln: 2, chill: 1 }[D.s] || 3);
+    case 'interrupt': return al.some(e => e.role !== 'boss' && it(e, 'heavy', 'aimed')) && !p.dodge;
+    case 'blind': return al.some(e => e.row === 'back' && it(e, 'aimed'));
+    case 'unevade': { const f = al.filter(e => e.row === 'front'); return f.length > 0 && f.every(e => e.evading); }
+    case 'decoy': return al.some(e => e.countering);
+    case 'unguard': return al.some(e => e.guarding);
+    case 'unbless': return al.some(e => e.s.empower && it(e, 'attack', 'heavy'));
+    case 'noheal': return al.some(e => e.role === 'healer' && it(e, 'heal'));
+    case 'nosummon': return al.some(e => e.role === 'summoner' && it(e, 'summon'));
+    case 'antisteal': return al.some(e => e.role === 'thief' && it(e, 'steal'));
+    case 'sticky': return al.some(e => e.role === 'thief' && it(e, 'flee'));
+    case 'aoe': return al.length >= 3 && r() < 0.4;
+    case 'dart': return al.some(e => e.row === 'back' && ['healer', 'summoner'].includes(e.role)) && G0.frontBlocked(b) && r() < 0.5;
+    case 'brk': return al.some(e => (e.elite || e.strong || e.role === 'boss') && it(e, 'charge', 'heavy'));
+    case 'whet': return r() < 0.15;
+    case 'mark': return r() < 0.1;
+    case 'guard1': return al.some(e => it(e, 'heavy', 'explode')) && p.hp < p.hpMax * 0.6;
+    case 'halfboom': return al.some(e => it(e, 'explode'));
+    case 'block': return al.some(e => e.intent && (e.intent.bleed || it(e, 'curse', 'explode')));
+    case 'unmod': return true;
+    case 'escape': return p.hp < p.hpMax * 0.15 && !p.flask.life;
+    case 'lootx': return al.length >= 3 && r() < 0.5;
+    default: return false; } };
+  for (let k = 0; k < 3; k++) { const i = run.cons.findIndex(c => G0.CONS[c.id].use !== 'none' && !G0.consWhyNot(b, run, c, null) && r() < aware && want(c)); if (i < 0) break; G0.consUse(b, run, i, null); if (b.over) break; }
+}
+function useConsOut(pk, run, r) {
+  if (!G0.consUse || !G0.CONS || !run.cons) return; const p = run.p;
+  for (let k = 0; k < 6 && p.hp < p.hpMax * 0.6 && (pk !== 'novice' || r() < 0.3); k++) { const i = run.cons.findIndex(c => G0.CONS[c.id].k === 'heal' && !G0.consWhyNot(null, run, c, null)); if (i < 0) break; G0.consUse(null, run, i, null); }
+}
 /* 지금 방에 들어가 성향대로 싸운다 */
 function fightCur(pk, r, mem, out) {
   const P = PERSONAS[pk]; const G = G0.__G;
   G0.enterRoom(); const b = G.b; b.rngF = r; b.stepMode = false; let n = 0; let stall = 0, lastHp = Infinity;
   while (!b.over && n++ < 300) {
+    useCons(pk, r, b, G.run); if (b.over) break;
     const sr = r() < (P.mech || 0.5) ? sigRule(b, r) : null;
     let [a, t] = sr || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem));
     // 보스를 깎지 못한 채 버티기만 하면 사람은 밀어붙인다 (한 수 앞만 보는 계산이 페이즈 전환을 피하는 것을 막는다)
@@ -226,6 +264,7 @@ function playLoop(pk, r, out) {
     const R = run.cur; if (!R) { out.bugs.push('방이 없음 ' + run.room); break; }
     if (!G0.ROOM_TYPES[R.type] || !G0.ROOM_TYPES[R.type].fight) { if (R.type !== 'boss') { restRoom(pk, run, r); handleSheets(pk, r); continue; } }
     if (R.type === 'boss') { out.bossHp = Math.round(run.p.hp / run.p.hpMax * 100); out.bossLv = run.lv; }
+    useConsOut(pk, run, r);
     const hpIn = run.p.hp / run.p.hpMax;
     if (R.type === 'boss' && OPT.snap) out.snap = JSON.stringify(run);
     const b = fightCur(pk, r, mem, out);
