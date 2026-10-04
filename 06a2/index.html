@@ -55,7 +55,7 @@ fieldset label{display:inline-flex;align-items:center;min-height:44px;margin-rig
 @media (prefers-reduced-motion:reduce){.dpop{animation:none}}
 .incoming{font-size:12.5px;margin:4px 0 2px;padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:var(--panel2)}.incoming b{font-size:15px;color:var(--bad)}.incoming small{color:var(--muted)}.incoming.bad{border-color:var(--bad)}.incoming.calm{color:var(--muted)}
 .sts .sic{margin-right:2px}
-.sealln{font-size:12px;color:var(--bad);margin-top:3px}.toast{white-space:pre-line}.lootln{font-size:13px;color:var(--good);margin:2px 0 6px}.sts{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}.sts i{font-style:normal;font-size:11.5px;border:1px solid;border-radius:4px;padding:0 4px}.sts .b{border-color:var(--good);color:var(--good)}.sts .d{border-color:var(--bad);color:var(--bad)}
+.sealln{font-size:12px;color:var(--bad);margin-top:3px}.toast{white-space:pre-line}.tsk{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px;margin:2px 0 6px}.tskb{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:1px;padding:5px 7px;font-size:12.5px}.tskb.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset;background:color-mix(in srgb,var(--gold) 12%,var(--panel2))}.tskb small{font-size:11px;line-height:1.35}.row.wrap{flex-wrap:wrap}.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:4px;margin:2px 0 6px}.tgrid.sm5{grid-template-columns:repeat(5,minmax(0,1fr))}.tgrid button,.tpick button{white-space:normal;word-break:keep-all;min-height:34px}.tpick{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 8px}.chgh .sm{margin-left:6px;min-height:0;padding:1px 8px}.lootln{font-size:13px;color:var(--good);margin:2px 0 6px}.sts{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}.sts i{font-style:normal;font-size:11.5px;border:1px solid;border-radius:4px;padding:0 4px}.sts .b{border-color:var(--good);color:var(--good)}.sts .d{border-color:var(--bad);color:var(--bad)}
 .skills{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-top:6px}
 .skills button{text-align:left;padding:8px}.skills small{display:block;color:var(--muted);font-size:12px;line-height:1.35}
 .blog{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;max-height:240px;overflow-y:auto;font-size:13px}
@@ -1577,7 +1577,7 @@ function consUse(b, run, idx, tgtId) {
 }
 /* 전리품: 적 하나마다 (LOOT). 소환된 적 · 수련장 · 시험 상황은 떨구지 않는다. 전투를 이기면 받는다(grantDrops) */
 function rollDrops(b, e) {
-  if (e.summoned || !b.ctx || b.ctx.tut || b.ctx.scen || e.role === 'root') return;
+  if (e.summoned || !b.ctx || b.ctx.tut || b.ctx.scen || b.ctx.test || e.role === 'root') return;
   const n0 = (b.drops || []).length; rollDrops0(b, e); const got = (b.drops || []).slice(n0); if (got.length) logp(b, 'good', '🎁 ' + e.n + '이(가) ' + dropText(got) + '을(를) 떨어뜨린다'); // 10월 5일: 쓰러뜨릴 때 무엇이 떨어졌는지 보인다
 }
 /* 떨어진 것들을 한 줄로: 약초 묶음 ×2, 골드 8, 플라스크 한 칸 */
@@ -2357,8 +2357,10 @@ const HELP = [
     '쓰러지면 그 캐릭터는 장비·골드·레벨을 모두 잃고 끝납니다. 1층부터 쉽지 않으니, 적의 예고를 읽고 자원을 아껴 쓰세요.',
     '위쪽 메뉴에서 장비, 보스 도감, 랭킹, 기록, 도움말, 설정을 언제든 열 수 있습니다. 🎯 수련장에서는 직업 없이 전투의 기본을 여섯 장면으로 연습합니다(쓰러져도 잃는 것 없음).'] },
   { k: 'build', n: '직업과 스킬', t: [
-    '시험판에서는 암살자와 파수꾼을 고를 수 있습니다. 나머지 직업은 만드는 대로 열립니다.',
+    '시험판에서는 암살자, 파수꾼, 사냥꾼을 고를 수 있습니다. 나머지 직업은 만드는 대로 열립니다. 메뉴의 🧪 시험 전투에서는 던전 없이 직업 · 레벨 · 스킬 · 적을 골라 바로 싸워 볼 수 있습니다.',
     '파수꾼은 방어할 때마다 보호막 6을 얻습니다. 보호막은 최대 생명력의 30%까지 쌓여 받는 피해를 먼저 받아냅니다. 후열 적의 공격은 보호막이 절반만 받아냅니다. 성벽 갈래는 쌓은 보호막을 태워 칩니다.',
+    '사냥꾼은 원거리라 기본 공격과 대부분의 스킬이 후열에 닿고, 전투를 시작하면 가속 2를 얻습니다. 같은 적을 연달아 맞히면 추적이 한 겹씩 쌓여(최대 3) 겹마다 피해 +5%입니다. 스킬 한 번은 연타라도 한 겹이고, 추적을 더하는 효과로는 2겹까지만 오릅니다. 여럿을 치는 공격과 지속 피해는 추적에 손대지 않습니다.',
+    '몸 빼기는 다음에 맞는 공격 하나를 피합니다. 적이 나를 직접 치는 공격(공격 · 겨눈 한 발 · 강타 · 큰 한 방)만 피할 수 있고, 화형 같은 주문, 지속 피해, 방 특성 피해는 피할 수 없습니다. 피했을 때 나가는 반격도 실제로 피했을 때만 나갑니다.',
     '직업마다 시작 스킬 둘이 늘 끼워져 있습니다. 장착 칸을 차지하지 않습니다.',
     '스킬 트리는 세 갈래이고, 갈래마다 두 칸씩 10줄의 사다리입니다(하급 6줄 → 중급 4줄). 윗줄 두 칸 가운데 하나만 열어도 아랫줄이 열립니다. 처음에는 모두 잠겨 있고, 캐릭터를 만들 때 포인트 1로 첫 줄의 한 칸을 엽니다. 레벨이 오를 때마다 포인트 1을 얻어 Lv10에 10점이 됩니다. 한 갈래를 줄마다 하나씩 내려가면 Lv6에 하급 끝, Lv10에 중급 끝입니다. 상급·궁극은 3챕터부터 더합니다. 챕터 사이 상점에서 트리 초기화를 사면 연 칸을 모두 닫고 포인트를 돌려받습니다(연 칸 하나에 ' + TREE_RESET.cell + '골드, 챕터마다 1.5배).',
     '윗줄을 열기 전에는 아랫줄 칸이 "?"로 보입니다. 갈래마다 강한 상황과 약한 상황이 있습니다(트리 갈래 설명).',
@@ -2486,6 +2488,7 @@ function menuItems() {
   if (inRun) it.push(['equip', '🎒', '장비']);
   if (G.run && !G.creating && G.run.tree && G.scr !== 'tree' && G.scr !== 'tut') it.push(['tree', '🌳', '스킬 트리' + (G.run.tree.pts ? ' <span class="newdot" aria-label="포인트">' + G.run.tree.pts + '</span>' : '')]);
   if (!inRun && !G.creating && G.scr !== 'tut' && G.scr !== 'tutoffer') it.push(['tut', '🎯', '수련장' + (G.data.tutDone ? ' ✓' : '')]);
+  it.push(['test', '🧪', '시험 전투']);
   it.push(['codex', '📖', '보스 도감'], ['rank', '🏆', '랭킹'], ['records', '📜', '기록'], ['changes', '📰', '업데이트' + (G.data.seenVer !== CHANGE_VER ? ' <span class="newdot" aria-label="새 소식">새</span>' : '')], ['help', '❔', '도움말'], ['settings', '⚙️', '설정']);
   if (G.site && G.conn === 'ok' && G.acct) it.push(G.acct.anon ? ['login', '🔑', '구글 로그인', 'google'] : ['logout', '🚪', '로그아웃']);
   if (G.owner || G.adminLink) it.push(['admin', '🛠️', '관리자']);
@@ -2495,10 +2498,10 @@ function menuItems() {
 function vHeader() {
   const run = G.run;
   const live = run && !G.creating && ['run', 'settle', 'shop', 'wait', 'dead'].includes(G.scr);
-  const sub = G.scr === 'tut' ? '수련장' + (G.b ? ' ' + (G.tut.i + 1) + '/' + TUT.length : '') : G.scr === 'scen' ? `고정 상황 ${G.scen.i + 1}/5 · ${esc(BUILDS[G.scen.build].n)}` : live ? `${esc(run.cname || BUILDS[run.build].n)} · ${esc(BUILDS[run.build].n)} · ${G.scr === 'run' ? '1챕터 ' + esc(floorName(run.room)) : G.scr === 'shop' ? '상점' : G.scr === 'settle' ? '정산' : G.scr === 'wait' ? '1챕터 돌파' : '쓰러짐'}` : G.creating ? '캐릭터 만들기' : VERSION;
+  const sub = G.scr === 'test' ? '시험 전투 · ' + esc((BUILDS[(G.test || {}).build] || {}).n || '') + ' Lv' + ((G.test || {}).lv || '') : G.scr === 'tut' ? '수련장' + (G.b ? ' ' + (G.tut.i + 1) + '/' + TUT.length : '') : G.scr === 'scen' ? `고정 상황 ${G.scen.i + 1}/5 · ${esc(BUILDS[G.scen.build].n)}` : live ? `${esc(run.cname || BUILDS[run.build].n)} · ${esc(BUILDS[run.build].n)} · ${G.scr === 'run' ? '1챕터 ' + esc(floorName(run.room)) : G.scr === 'shop' ? '상점' : G.scr === 'settle' ? '정산' : G.scr === 'wait' ? '1챕터 돌파' : '쓰러짐'}` : G.creating ? '캐릭터 만들기' : VERSION;
   // 로그인 확인용 인사
   const hi = G.site && G.acct && !G.acct.anon ? (G.data.name ? esc(G.data.name) + '님, 어서 오세요' : '어서 오세요') : '';
-  const fit = (G.scr === 'run' || G.scr === 'scen' || G.scr === 'tut') && G.b;
+  const fit = (G.scr === 'run' || G.scr === 'scen' || G.scr === 'tut' || G.scr === 'test') && G.b;
   const drop = fit || (typeof window !== 'undefined' && window.innerWidth < 720);
   const shown = drop ? !!G.menuOpen : !G.data.menuFold;
   const tog = shown ? (drop ? '<span aria-hidden="true">✕</span> 닫기' : '<span aria-hidden="true">▴</span> 접기') : '<span aria-hidden="true">☰</span> 메뉴';
@@ -2943,7 +2946,7 @@ function vBattle() {
   if (b.over) {
     const msg = b.over === 'win' ? '승리했습니다.' : b.over === 'lose' ? '쓰러졌습니다.' : b.over === 'flee' ? '물러났습니다. 이 방은 다시 이겨야 합니다.' : '이 상황은 여기까지입니다.';
     const lootL = b.over === 'win' && (b.drops || []).length ? `<p class="lootln">🎁 전리품: ${esc(dropText(b.drops))}</p>` : '';
-    dock = G.scr === 'tut' ? vTutOver(b) : `<section class="dock"><p><b>${msg}</b></p>${lootL}<button class="gold wide" data-a="${G.scr === 'scen' ? 'scennext' : 'bcont'}" data-focus>계속</button></section>`;
+    dock = G.scr === 'tut' ? vTutOver(b) : G.scr === 'test' ? `<section class="dock"><p><b>${msg}</b> <span class="mini">${b.turnIdx}번째 차례, 남은 생명력 ${Math.round(Math.max(0, b.p.hp) / b.p.hpMax * 100)}%</span></p><div class="row"><button class="gold" data-a="teststart" data-focus>같은 설정으로 다시</button><button data-a="testsetup">설정 바꾸기</button></div></section>` : `<section class="dock"><p><b>${msg}</b></p>${lootL}<button class="gold wide" data-a="${G.scr === 'scen' ? 'scennext' : 'bcont'}" data-focus>계속</button></section>`;
   } else {
     const L = actionList(b);
     let btns = '';
@@ -3248,6 +3251,7 @@ function infoHtml(key) {
     return H('흘리기 준비', P((de ? de.n + '의' : '고른 적의') + ' 다음 공격 피해가 ' + Math.round(Math.max(0, (p.dodgeRed || parryRed(p)) - parryBig(de)) * 100) + '% 줄어듭니다' + (parryBig(de) ? '(강적·보스라 ' + Math.round(PARRY_BIG * 100) + '%p 덜)' : '') + '. 강타라면 그 적의 붕괴 게이지가 25 찹니다.') + (ret ? P('흘려 내면 그 적에게 ' + ret + '.') : '') + P('내 다음 차례까지 유효합니다. 고른 적이 그 사이 움직이지 않으면 헛됩니다.'));
   }
   if (parts[0] === 'buff' && G.run) { const k = parts[1], S = SHRINES.find(x => x.id === k); const n = (G.run.buffs || {})[k] || 0; return H(S ? S.n : k === 'snuff' ? '꺼진 촛불' : k, P(S ? S.d : k === 'snuff' ? '받는 점화 피해 0, 대신 주는 피해 −5%.' : '') + P('지금 방을 포함해 ' + n + '개 방 동안 이어집니다.')); } // 10월 5일: 브라우저 툴팁 대신 게임 설명 창
+  if (parts[0] === 'sk' && SK2[parts[1]]) { const s = SK2[parts[1]]; return H(s.n, P((s.start ? '시작 스킬' : s.b + ' · ' + s.tier + ' · ' + s.row + '줄') + '. ' + skHead(s)) + P(skBody(s))); } // 시험 전투의 스킬 칸
   if (parts[0] === 'mod' && ROOM_MODS[parts[1]]) return H(ROOM_MODS[parts[1]].n, P(ROOM_MODS[parts[1]].d));
   if (parts[0] === 'soon') { const c = (typeof CLASS_SOON !== 'undefined' ? CLASS_SOON : []).find(x => x.n === parts[1]); return c ? H(c.n, P(c.d + '.') + P('아직 준비 중입니다.')) : ''; }
   if (parts[0] === 'floor' && G.run) { const f = +parts[1], run = G.run; const rec = (run.rooms || []).filter(x => x.room === f).pop(); const T = rec && ROOM_TYPES[rec.type]; return H(floorName(f), P(f === FLOOR_CAMP ? '야영지: 쉬면 모두 찹니다.' : f === FLOOR_BOSS ? '보스가 기다립니다.' : f === run.room ? '지금 있는 층입니다.' : f < run.room ? (T ? T.n + ' 방을 지났습니다.' : rec && rec.type === 'camp' ? '야영지에서 쉬었습니다.' : '지나온 층입니다.') : PATH_AT.includes(f) ? '갈래길이 나옵니다.' : '아직 가지 않은 층입니다.')); }
@@ -4155,6 +4159,57 @@ function toast(m) {
   const lines = el.isConnected && G.toastLines && Date.now() - (G.toastAt || 0) < 2400 ? G.toastLines : []; lines.push(fixJosa(m)); G.toastLines = lines.slice(-4); G.toastAt = Date.now(); el.textContent = G.toastLines.join('\n'); clearTimeout(G.toastT); // 10월 5일: 전리품 알림이 골드 · 경험치 알림에 덮여 보이지 않았다 G.toastT = setTimeout(() => { const e2 = document.querySelector('.toast'); if (e2) e2.remove(); }, 2400);
 }
 
+/* ---------- 시험 전투 (10월 5일 만든 사람 요청): 던전 없이 직업 · 레벨 · 스킬 4칸 · 적을 골라 바로 싸운다. 기록 · 랭킹 · 전리품 없음 ---------- */
+const TEST_ROLES = ['bruiser', 'shield', 'archer', 'healer', 'summoner', 'minion', 'thief', 'darkmage', 'pyre'];
+function testFoes() {
+  const L = SQUADS.map(q => ({ id: 'sq:' + q.id, g: '무리', n: q.n }));
+  for (const f of STRONG_FOES) L.push({ id: 'sf:' + f.id, g: '강적', n: f.n });
+  L.push({ id: 'boss', g: '보스', n: BOSSES.abbot.n });
+  for (const r of TEST_ROLES) L.push({ id: 'one:' + r, g: '하나', n: (ENEMY_NAMES[1][r] || ROLES[r].n) });
+  return L;
+}
+const testClasses = () => Object.keys(BUILDS).filter(k => BUILDS[k].v2 && !BUILDS[k].tut);
+function testCfg() {
+  const T = G.test = G.test || {}; if (!T.build || !BUILDS[T.build]) T.build = testClasses()[0];
+  if (!T.lv) T.lv = 5; if (!T.floor) T.floor = 'low'; if (TREE2[T.build] && !TREE2[T.build].branches.includes(T.br)) T.br = TREE2[T.build].branches[0]; if (!T.foe) T.foe = 'sq:patrol'; if (!T.sk || T.skFor !== T.build) { T.sk = []; T.skFor = T.build; } return T;
+}
+function testRoom(T) {
+  const low = T.floor === 'low'; const lv = T.foe === 'boss' ? mlvOf(FLOOR_BOSS) : low ? 3 : 2; const room = { lv, floor: T.foe === 'boss' ? FLOOR_BOSS : low ? FLOOR_CAMP + 3 : 5, names: ENEMY_NAMES[1], path: 'main', en: [] };
+  const [kind, id] = T.foe.split(':');
+  if (kind === 'sq') { const q = SQUADS.find(x => x.id === id); room.en = JSON.parse(JSON.stringify(low ? q.low : q.up)); room.squad = id; }
+  else if (kind === 'sf') { const f = STRONG_FOES.find(x => x.id === id); room.en = JSON.parse(JSON.stringify(f.en)); room.strong = f.n; room.foe = f.id; }
+  else if (kind === 'boss') room.boss = 1;
+  else room.en = [[id, T.elite ? 1 : 0]];
+  if (T.amb && !room.boss) room.ambush = 1;
+  return room;
+}
+function testStart() {
+  const T = testCfg(); const B = BUILDS[T.build]; const lv = T.lv;
+  const st = statRecommend(T.build, {}, STAT_START + LV_POINTS * (lv - 1));
+  const p = mkPlayer(T.build, {}, st, (TREE2[T.build] ? TREE2[T.build].starters : []).concat(T.sk)); p.lv = lv; applyStats(p, st); p.hp = p.hpMax; p.st = p.stMax;
+  const room = testRoom(T); G.testRun = G.testRun || G.run; G.run = null;
+  G.b = roomBattle(p, room, room.boss ? 'abbot' : null, Math.floor(Math.random() * 1e6)); G.b.ctx.test = 1; G.b.stepMode = true; G.sel = null; G.scr = 'test'; render();
+}
+function testLeave() { G.b = null; G.scr = 'title'; if (G.testRun) { G.run = G.testRun; G.testRun = null; } render(); }
+function vTestSetup() {
+  const T = testCfg(); const B = BUILDS[T.build]; const TR = TREE2[T.build];
+  const btn = (a, k, on, label) => `<button class="sm${on ? ' gold' : ''}" data-a="${a}" data-k="${esc(String(k))}">${label}</button>`;
+  let h = `<section class="card"><h3>🧪 시험 전투</h3><p class="mini">직업 · 레벨 · 스킬 4칸 · 적을 골라 바로 싸웁니다. 트리 조건 없이 아무 칸이나 끼웁니다. 기록과 랭킹에 남지 않고 전리품도 없습니다. 능력치는 추천 배분, 장비는 처음 장비입니다.</p></section>`;
+  h += `<section class="card"><h4>직업</h4><div class="tgrid">${testClasses().map(k => btn('testcls', k, T.build === k, BUILDS[k].ico + ' ' + esc(BUILDS[k].n) + (BUILDS[k].soon ? ' (준비 중)' : ''))).join('')}</div>`;
+  h += `<h4>레벨</h4><div class="tgrid sm5">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => btn('testlv', n, T.lv === n, 'Lv' + n)).join('')}</div></section>`;
+  if (TR) {
+    h += `<section class="card"><h4>스킬 <span class="mini">${T.sk.length}/${EQUIP_SLOTS2}</span></h4><p class="mini">시작 스킬 ${TR.starters.map(id => esc(SK2[id].n)).join(', ')}은 늘 끼웁니다. 칸에 마우스를 올리거나 길게 누르면 설명이 나옵니다.</p>`;
+    h += `<div class="tpick">${T.sk.length ? T.sk.map(id => `<button class="sm gold" data-a="testsk" data-k="${id}" data-info="sk:${id}">✕ ${esc(SK2[id].n)}</button>`).join('') : '<span class="mini">아직 끼운 칸이 없습니다.</span>'}</div>`;
+    h += `<div class="tgrid">${TR.branches.map(br => btn('testbr', br, T.br === br, esc(br))).join('')}${btn('testfill', T.br, false, '⚡ ' + esc(T.br) + ' 위 4칸')}${btn('testclear', 0, false, '비우기')}</div><div class="tsk">`;
+    for (let r = 1; r <= 10; r++) for (const sk of SKILLS2[T.build].filter(x => x.b === T.br && x.row === r)) { const on = T.sk.includes(sk.id); h += `<button class="tskb${on ? ' on' : ''}" data-a="testsk" data-k="${sk.id}" data-info="sk:${sk.id}"><b>${r}. ${esc(sk.n)}</b><small>${esc(skHead(sk))}</small></button>`; }
+    h += `</div></section>`;
+  }
+  const F = testFoes(); const grp = {}; for (const f of F) (grp[f.g] = grp[f.g] || []).push(f);
+  h += `<section class="card"><h4>적</h4>${Object.keys(grp).map(g => `<h5 class="chgh">${g}${g === '하나' ? ' ' + btn('testelite', 0, !!T.elite, '정예로') : ''}</h5><div class="tgrid">${grp[g].map(f => btn('testfoe', f.id, T.foe === f.id, esc(f.n))).join('')}</div>`).join('')}`;
+  h += `<h4>층</h4><div class="tgrid">${btn('testfloor', 'up', T.floor === 'up', '상층 (몬스터 Lv2)')}${btn('testfloor', 'low', T.floor === 'low', '하층 (몬스터 Lv3)')}${btn('testamb', 0, !!T.amb, '매복')}</div><p class="mini">보스는 늘 보스층(몬스터 Lv${mlvOf(FLOOR_BOSS)})입니다.</p></section>`;
+  h += `<div class="stickbar"><button class="gold wide" data-a="teststart" data-focus>싸우기</button><div class="row"><button data-a="testleave">그만두기</button></div></div>`;
+  return h;
+}
 /* ---------- 고정 상황 ---------- */
 function startScen(build) { G.scen = { build, i: 0, results: [] }; G.scr = 'scen'; loadScen(); }
 function loadScen() { const S = G.scen; const sc = SCEN[S.i]; G.b = scenBattle(S.build, sc); G.b.stepMode = true; G.b.pActs = 0; G.sel = null; render(); }
@@ -4752,9 +4807,10 @@ function render() {
   else if (G.scr === 'survey') main = vSurvey();
   else if (G.scr === 'final') main = vFinal();
   else if (G.scr === 'scen') main = '';
+  else if (G.scr === 'test') main = G.b ? '' : vTestSetup();
   else if (G.scr === 'tut') main = G.b ? '' : vTutHub();
   else if (G.scr === 'tutoffer') main = vTutOffer();
-  const fit = (G.scr === 'run' && G.b) || (G.scr === 'scen' && G.b) || (G.scr === 'tut' && G.b);
+  const fit = (G.scr === 'run' && G.b) || (G.scr === 'scen' && G.b) || (G.scr === 'tut' && G.b) || (G.scr === 'test' && G.b);
   document.documentElement.classList.toggle('fitmode', !!fit);
   document.documentElement.style.setProperty('--app-h', (window.visualViewport ? window.visualViewport.height : window.innerHeight) + 'px');
   const y = window.scrollY;
@@ -4788,7 +4844,7 @@ function onClick(ev) {
   if (a === 'closebg') { if (ev.target !== el) return; if (G.sheet && !['block', 'stats', 'choice'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } return; }
   switch (a) {
     case 'home': case 'title': if (G.creating) { cancelCreate(); break; } if (G.run && !G.run.endedAt) { saveRunLocal(); if (G.run.phase) saveCur(); clearTimeout(syncT); syncRun(G.run, 'left').then(render); if (G.run.result !== 'lose') pushRank(G.run); } G.scr = 'title'; G.back = null; G.b = null; G.sheet = null; render(); break;
-    case 'menu': if ((G.scr === 'run' || G.scr === 'scen' || G.scr === 'tut') && G.b || window.innerWidth < 720) G.menuOpen = !G.menuOpen; else { G.data.menuFold = !G.data.menuFold; saveLocal(); } render(); break;
+    case 'menu': if ((G.scr === 'run' || G.scr === 'scen' || G.scr === 'tut' || G.scr === 'test') && G.b || window.innerWidth < 720) G.menuOpen = !G.menuOpen; else { G.data.menuFold = !G.data.menuFold; saveLocal(); } render(); break;
     case 'rank': case 'records': case 'admin': if (!PAGES.includes(G.scr)) G.back = G.scr; G.scr = a; G.sheet = null; G.adminMsg = ''; if (a === 'rank') G.board = null; render(); window.scrollTo(0, 0); break;
     case 'back': G.scr = G.back || 'title'; G.back = null; render(); break;
     case 'rtab': G.rankTab = el.dataset.k; render(); break;
@@ -4874,6 +4930,20 @@ function onClick(ev) {
     case 'infotoggle': G.infoOn = !G.infoOn; G.data.infoOn = G.infoOn; saveLocal(); hidePop(); toast(G.infoOn ? '설명 창을 켰습니다' : '설명 창을 껐습니다'); if (G.sheet && G.sheet.kind === 'settings') render(); break;
     case 'bcont': battleContinue(); break;
     case 'scennext': scenNext(); break;
+    case 'test': hidePop(); G.menuOpen = false; if (G.scr === 'run' && G.b && !G.b.over) { if (!confirm('시험 전투로 갑니다. 진행 중인 전투는 타이틀의 이어하기로 돌아올 수 있습니다.')) break; } if (G.scr === 'test' && G.b && !G.b.over && !confirm('이 시험 전투를 그만두고 설정으로 갑니다.')) break; if (G.scr !== 'test') { G.testRun = G.run; G.run = null; } G.b = null; G.scr = 'test'; render(); break;
+    case 'testcls': testCfg().build = el.dataset.k; render(); break;
+    case 'testlv': testCfg().lv = +el.dataset.k; render(); break;
+    case 'testsk': { const T = testCfg(); const id = el.dataset.k; const i = T.sk.indexOf(id); if (i >= 0) T.sk.splice(i, 1); else if (T.sk.length < EQUIP_SLOTS2) T.sk.push(id); else toast('4칸이 찼습니다. 하나를 빼고 고르세요'); render(); break; }
+    case 'testfill': { const T = testCfg(); T.sk = SKILLS2[T.build].filter(x => x.b === el.dataset.k && x.row <= T.lv).sort((a, c) => c.row - a.row).filter((x, i, a) => a.findIndex(y => y.row === x.row) === i).slice(0, EQUIP_SLOTS2).map(x => x.id); render(); break; }
+    case 'testclear': testCfg().sk = []; render(); break;
+    case 'testbr': testCfg().br = el.dataset.k; render(); break;
+    case 'testelite': { const T = testCfg(); T.elite = !T.elite; render(); break; }
+    case 'testfoe': testCfg().foe = el.dataset.k; render(); break;
+    case 'testfloor': testCfg().floor = el.dataset.k; render(); break;
+    case 'testamb': { const T = testCfg(); T.amb = !T.amb; render(); break; }
+    case 'teststart': testStart(); break;
+    case 'testsetup': G.b = null; render(); break;
+    case 'testleave': testLeave(); break;
     case 'retry': retryRoom(); break;
     case 'endrun': endRun('lose'); break;
     case 'survey': {
