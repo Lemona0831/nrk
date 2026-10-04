@@ -777,7 +777,11 @@ function classFit(p, k) { const ws = CLASS_FIT[p.build] || []; const a = (ITEMS[
 
 /* ================= 상태 생성 ================= */
 /* 능력치 (5.2절): 1점마다 눈에 보이는 규칙 하나 */
-const STATN = { str: '힘', dex: '민첩', int: '지능' };
+const STATN = { str: '힘', dex: '민첩', int: '지능', con: '체력', wil: '의지' };
+const STAT_KEYS = ['str', 'dex', 'int', 'con', 'wil'];
+const statSum = o => STAT_KEYS.reduce((a, k) => a + ((o && o[k]) || 0), 0);
+/* 추천 배분: 직업의 몫대로 남은 점수를 나눈다 (가장 모자란 능력치부터 1점씩) */
+function statRecommend(build, cur, pts) { const W = STAT_REC[build] || { str: 0.34, dex: 0.33, con: 0.33 }; const al = Object.assign({}, { str: 0, dex: 0, int: 0, con: 0, wil: 0 }); const tot = statSum(cur) + pts; for (let i = 0; i < pts; i++) { const k = Object.keys(W).sort((a, c) => (((cur[c] || 0) + al[c]) / tot - W[c]) * -1 - (((cur[a] || 0) + al[a]) / tot - W[a]) * -1)[0]; al[k]++; } return al; }
 function stat(p, k) { return (p.stat && p.stat[k]) || 0; }
 /* 장비 기본 수치 (기획서 11.5절). 화면에서 고른 장비로 applyGear가 채운다 */
 const START_GEAR = { wpn: 8, hp: 10, st: 0, mp: 0, flask: 0.3 };
@@ -970,7 +974,7 @@ function heavyBase(p) { return wpnDmg(p) * (isCaster(p) ? 1.6 : isV2(p) ? HEAVY_
 function flaskHealFrac(p) { return (gearOf(p).flask + (hasBt(p, 'mercy') ? 0.1 : 0) + fxVal(p, 'heal', 0, (a, v) => a + v)) * fxVal(p, 'healMul', 1, (a, v) => a * v) * (p.eq.flask === 'chalice' ? 0.9 : p.eq.flask === 'boilflask' ? 0.75 : p.eq.flask === 'bloodoil' ? 0.8 : 1); }
 function calcMpMax(p) { if (isV2(p)) return 0; return BUILDS[p.build].mp + gearOf(p).mp + fxStat(p, 'mp') + ((p.lv || 1) - 1) * ((LV_GAIN[p.build] || {}).mp || 0) + stat(p, 'int') - (p.eq.amulet === 'sigil' ? 15 : 0) - (p.eq.gloves === 'vpouch' ? 10 : 0); }
 function calcStMax(p) { return 100 + gearOf(p).st + fxStat(p, 'st') + stat(p, 'dex') - (p.eq.amulet === 'vanguard' ? 20 : 0) - (p.eq.gloves === 'chaingl' ? 10 : 0); }
-function calcHpMax(p) { return Math.round(fxVal(p, 'hpMul', 1, (a, v) => a * v) * (1 - (p.hpPen || 0)) * (BUILDS[p.build].hp + gearOf(p).hp + fxStat(p, 'hp') + (p.hpBonus || 0) + ((p.lv || 1) - 1) * ((LV_GAIN[p.build] || {}).hp || 0) + stat(p, 'str')) * (p.eq.armor === 'plate' ? 0.9 : p.eq.armor === 'wardcrest' ? 0.95 : p.eq.armor === 'cloak' || p.eq.armor === 'thorns' ? 0.95 : 1) * (p.eq.amulet === 'rosary' ? 0.97 : 1)); }
+function calcHpMax(p) { return Math.round(fxVal(p, 'hpMul', 1, (a, v) => a * v) * (1 - (p.hpPen || 0)) * (BUILDS[p.build].hp + gearOf(p).hp + fxStat(p, 'hp') + (p.hpBonus || 0) + ((p.lv || 1) - 1) * ((LV_GAIN[p.build] || {}).hp || 0) + stat(p, 'str') + 3 * stat(p, 'con')) * (p.eq.armor === 'plate' ? 0.9 : p.eq.armor === 'wardcrest' ? 0.95 : p.eq.armor === 'cloak' || p.eq.armor === 'thorns' ? 0.95 : 1) * (p.eq.amulet === 'rosary' ? 0.97 : 1)); }
 function parryRed(p) { return Math.min(0.9, (p.build === 'assassin' && isV2(p) ? 0.7 : 0.6) + 0.005 * stat(p, 'dex') + (p.eq.armor === 'cloak' ? 0.15 : 0)); }
 /* 강적·보스의 공격은 흘려도 줄이는 몫이 작다(모든 흘리기, 10월 3일 만든 사람: 거구의 힘은 칼끝으로 다 흘리지 못한다. 흘리기로 싸우는 그림자의 거구 약점).
    50상황 2차 탐색에서 고른 중간 지점: 정예까지 넣으면 독사의 장기전 강점이 깨지고, 25%p면 그림자의 보스전 이길 수단이 문턱 아래로 떨어졌다 */
@@ -979,18 +983,18 @@ const PARRY_BIG = 0.2;
    파수꾼은 방어할 때마다 +6. 옛 직업(0.6a)의 상한 40은 그대로 둔다 */
 const WARD = { cap: 0.3, guard: 6, thornMax: 8 };
 function wardMax(p) { return isV2(p) ? Math.round(p.hpMax * WARD.cap) : 40; }
-function addWard(b, p, n, cap) { const m = Math.min(cap != null ? cap : Infinity, wardMax(p)); const w0 = p.ward || 0; p.ward = Math.max(w0, Math.min(m, w0 + n)); return p.ward - w0; }
+function addWard(b, p, n, cap) { n *= 1 + 0.02 * stat(p, 'wil'); /* 의지 1점마다 보호막 +2% */ const m = Math.min(cap != null ? cap : Infinity, wardMax(p)); const w0 = p.ward || 0; p.ward = Math.max(w0, Math.min(m, w0 + n)); return p.ward - w0; }
 const parryBig = e => (e && (e.strong || e.role === 'boss') ? PARRY_BIG : 0);
 function dotMul(p) { return 1 + 0.02 * stat(p, 'int'); }
 function applyStats(p, stats) {
   const f = { hp: p.hp / p.hpMax, mp: p.mpMax ? p.mp / p.mpMax : 1, st: p.st / p.stMax };
-  p.stat = Object.assign({ str: 0, dex: 0, int: 0 }, stats);
+  p.stat = Object.assign({ str: 0, dex: 0, int: 0, con: 0, wil: 0 }, stats);
   p.hpMax = calcHpMax(p); p.mpMax = calcMpMax(p); p.stMax = calcStMax(p);
   p.hp = Math.min(p.hpMax, Math.round(p.hpMax * f.hp)); p.mp = Math.min(p.mpMax, p.mpMax * f.mp); p.st = Math.min(p.stMax, p.stMax * f.st);
 }
 function mkPlayer(build, items, stats, skills) {
   const it = items || {};
-  const s0 = Object.assign({ str: 0, dex: 0, int: 0 }, stats || {});
+  const s0 = Object.assign({ str: 0, dex: 0, int: 0, con: 0, wil: 0 }, stats || {});
   const p = {
     stat: s0, skills: (skills && skills.length ? skills : DEFAULT_SKILLS[build]).slice(0, BUILDS[build].v2 ? EQUIP_SLOTS2 + ((TREE2[build] || {}).starters || []).length : SKILL_SLOTS),
     build, gear: Object.assign({}, START_GEAR),
@@ -1127,6 +1131,8 @@ const HS_WHY = { poison: '독을 걸었다', kill: '적을 쓰러뜨렸다', par
 /* 스킬 트리 (개편 기획 4절): 포인트 1로 한 칸을 연다. 깊은 등급은 그 갈래에 먼저 쓴 포인트가 있어야 열린다(TREE_GATE). 연 스킬 가운데 4칸을 장착 */
 function treeInit(run) { const T = TREE2[run.build]; if (!T) return; run.tree = run.tree || { pts: T.pts || 0, open: [], spent: {} }; }
 /* 저장본 고치기: 스킬 데이터에서 빠진 칸(10월 3일 재사용 대기 개편: 짧은 격발 → 독 심기, 시작 스킬 바뀜)은 연 칸에서 지우고 포인트를 돌려준다 */
+/* 능력치 다섯 전 저장본 (10월 4일): 체력 · 의지를 0으로 더하고, 처음 점수가 6 → 15로 는 몫(9점)을 다음 능력치 창에서 나누게 한다 */
+function statFix(run) { if (!run || !run.stats || run.stats.con != null) return; run.stats.con = 0; run.stats.wil = 0; run.statPending = (run.statPending || 0) + (STAT_START - 6); if (run.p) applyStats(run.p, run.stats); }
 function treeFix(run) {
   const t = run.tree; if (!t) return;
   const ok = t.open.filter(id => SK2[id] && !SK2[id].start); const lost = t.open.length - ok.length;
@@ -1183,6 +1189,7 @@ function addS(b, u, k, dur, stacks, max) {
       for (const [ik, f] of fxList(u)) if (f.block && f.block(b, u, k)) { fxHit(ik); return 0; }
       const dd = fxAdd(u, 'dur', k); if (dd) n = Math.max(1, n + Math.round(dd));
       if (kwBlocked(b, u, k)) return 0;
+      if (stat(u, 'wil') > 0 && b.rngF && b.rngF() < Math.min(0.25, 0.01 * stat(u, 'wil'))) { logp(b, 'good', '의지로 ' + (KW_N[k] || k) + '을(를) 버틴다'); return 0; } // 의지 1점마다 해로운 상태를 1% 확률로 버팀(최대 25%)
       fxRun(u, 'onDebuff', b, u, k);
     }
     const opp = KW_OPP[k]; if (opp && u.s[opp]) { const m = Math.min(n, u.s[opp].stacks); kwDec(u, opp, m); n -= m; if (n <= 0) return 0; }
@@ -1850,7 +1857,7 @@ function playerAct(b, id, tgtId) {
 }
 /* 단죄: 내가 생명력을 회복하면 단죄된 적 모두가 회복량의 60%만큼 피해 */
 function smiteHeal(b, hl) { if (!(hl > 0) || b.over) return; for (const e of alive(b)) if (e.s.smite) hurtEnemy(b, e, hl * 0.6, { label: '단죄' }); }
-function healMul(p) { return p.eq.amulet === 'bloodpact' ? 0.85 : 1; }
+function healMul(p) { return (p.eq.amulet === 'bloodpact' ? 0.85 : 1) * (1 + 0.02 * stat(p, 'wil')); } // 의지 1점마다 회복 +2%
 function cleanse(b, keys, isFlask) {
   const p = b.p; let n = 0;
   for (const k of keys) if (p.s[k]) { n += (k === 'poison' || k === 'chill') ? st(p, k) : 1; delete p.s[k]; }
@@ -2041,10 +2048,12 @@ const HELP = [
     '🔄가 붙은 스킬은 같은 갈래의 다른 스킬 쿨타임을 1 줄입니다. 쓰면 줄이는 스킬과 흘려 내면 줄이는 스킬이 있고, 스킬 설명에 적혀 있습니다. 트리 칸과 버튼 오른쪽 위에 🔄가 보입니다.',
     '스킬마다 빠르기가 있습니다. ⚡빠른 스킬은 빠른 칸을, ▶보통 스킬은 주 행동을, ⏳느린 스킬은 두 칸을 다 씁니다(도움말 "라운드와 순서").'] },
   { k: 'stats', n: '능력치', t: [
-    '캐릭터를 만들 때 6점, 레벨이 오를 때마다 2점을 힘, 민첩, 지능에 나눕니다. 1점마다 규칙이 하나씩 바뀝니다. 나눌 때 "다음 1점"에 무엇이 바뀌는지 보입니다.',
+    '캐릭터를 만들 때 ' + STAT_START + '점, 레벨이 오를 때마다 ' + LV_POINTS + '점을 힘, 민첩, 지능, 체력, 의지에 나눕니다. 1점마다 규칙이 하나씩 바뀝니다. 나눌 때 "다음 1점"에 무엇이 바뀌는지 보입니다. "추천 배분"은 직업에 맞게 나눠 줍니다.',
     '힘은 1점마다 생명력 +1, 기본 공격과 강공격 피해 +1%, 내가 채우는 붕괴 게이지 +1%입니다.',
     '민첩은 1점마다 스태미나 +1, 흘리기로 줄이는 피해 +0.5%p, 빠르기 +0.5%입니다.',
     '지능은 1점마다 중독·출혈·화상 피해와 터뜨리는 피해 +2%입니다.',
+    '체력은 1점마다 생명력 +3입니다.',
+    '의지는 1점마다 보호막으로 얻는 양과 회복 +2%, 적이 거는 해로운 상태를 1% 확률로 버팁니다(최대 25%).',
     '같은 능력치가 10점이 될 때마다 규칙이 하나 더 붙습니다. 힘은 강공격 붕괴 +5, 민첩은 흘리기 스태미나 −1입니다.',
     '상점에서 레벨 × 10골드를 내면 지금까지 나눈 점수를 모두 거두어 처음부터 다시 나눌 수 있습니다.'] },
   { k: 'time', n: '라운드와 순서', t: [
@@ -2442,7 +2451,7 @@ function genShop(run) {
   run.shop = { ch, stock: take.map(k => { const it = mkItem(k, { ch }); return { it, price: priceOf(it.g, ch), sold: 0 }; }), log: [] };
 }
 function vShop() {
-  const run = G.run, S = run.shop; const cost = (run.lv || 1) * 10; const pts = (run.stats.str || 0) + (run.stats.dex || 0) + (run.stats.int || 0);
+  const run = G.run, S = run.shop; const cost = (run.lv || 1) * 10; const pts = statSum(run.stats);
   const tOpen = run.tree ? run.tree.open.length : 0; const tCost = treeResetCost(run);
   let h = vPlayerPanel(run.p, null);
   h += `<section class="card shop"><div class="dghead"><h3 style="margin:0">떠돌이 상인</h3><span class="gold-n">골드 ${run.gold || 0}</span></div><p class="lore">무너진 계단참에 등불 하나. 상인은 묻지 않고 값만 부른다.</p><p class="mini">진열은 챕터마다 새로 바뀝니다. 산 장비는 가방에 들어갑니다(가방 ${run.bag.length}/${BAG_MAX}).</p><div class="shopgrid">`;
@@ -2558,7 +2567,7 @@ function vBattle() {
   const tg = G.sel ? b.en.find(e => e.id === G.sel && e.alive) : null;
   // 1) 내 상태
   const extra = [];
-  extra.push(`<span data-info="stats" tabindex="0">힘 ${stat(p, 'str')} · 민첩 ${stat(p, 'dex')} · 지능 ${stat(p, 'int')}</span>`);
+  extra.push(`<span data-info="stats" tabindex="0">${STAT_KEYS.map(k => STATN[k] + ' ' + stat(p, k)).join(' · ')}</span>`);
   extra.push(`<span data-info="speed" tabindex="0">속도 ${r1(pSpeed(b))}</span>`);
   const eq = Object.values(p.eq).filter(Boolean); if (eq.length) extra.push(eq.map(k => esc(ITEMS[k].n)).join(', '));
   const scen = G.scr === 'scen' ? `<div class="scenline"><b>${SCEN[G.scen.i].id}. ${esc(SCEN[G.scen.i].n)}</b> ${esc(SCEN[G.scen.i].d)} 최대 10행동 중 ${b.pActs || 0}행동.</div>` : '';
@@ -2890,7 +2899,7 @@ function infoHtml(key) {
     gim: ['보스 기믹', '보스의 특별한 규칙입니다. 숫자는 남은 라운드 수입니다.'],
     speed: ['속도', '같은 라운드 안에서 누가 먼저 움직일지 정합니다. 나보다 빠른 적은 내 앞에서, 느린 적은 내 뒤에서 움직이고, 같으면 내가 먼저입니다. 중독 같은 지속 피해는 라운드가 끝날 때 흐르므로 속도와 상관없습니다.'],
   };
-  if (key === 'stats' && b) { const p = b.p; return H('능력치', P('힘 ' + stat(p, 'str') + ', 민첩 ' + stat(p, 'dex') + ', 지능 ' + stat(p, 'int') + '.') + ['str', 'dex', 'int'].map(k => P(STATN[k] + ' 다음 1점: ' + statNext(p, k))).join('')); }
+  if (key === 'stats' && b) { const p = b.p; return H('능력치', P(STAT_KEYS.map(k => STATN[k] + ' ' + stat(p, k)).join(', ') + '.') + STAT_KEYS.map(k => P(STATN[k] + ' 다음 1점: ' + statNext(p, k))).join('')); }
   if (key === 'dodgeon' && b) { // 흘리기 준비: 실제로 줄이는 몫과 흘려 낸 뒤 효과 (스킬마다 50~90%)
     const p = b.p; const de = b.en.find(x => x.id === p.dodge && x.alive); const on = p.dodgeOn;
     const ret = on ? [on.dmg ? '피해 ' + on.dmg : '', on.poison ? '중독 ' + on.poison : '', on.brk ? '붕괴 +' + on.brk : ''].filter(Boolean).join(', ') : '';
@@ -3292,7 +3301,7 @@ function startRun(build, boss) {
   G.run = {
     id: 'r' + Date.now().toString(36), build, boss, startedAt: Date.now(), room: 0, p, bag: [], swaps: [], rooms: [], acts: [],
     deaths: [], result: null, blockPicked: null, entry: null, survey: null, drops: [],
-    stats: { str: 0, dex: 0, int: 0 }, statLog: [], pool: shuffleSeeded(FREE_POOL, seed), choices: [], seed,
+    stats: { str: 0, dex: 0, int: 0, con: 0, wil: 0 }, statLog: [], pool: shuffleSeeded(FREE_POOL, seed), choices: [], seed,
   };
   G.run.skills = isV2(p) ? [] : DEFAULT_SKILLS[build].slice(); G.run.bag = []; initGear(G.run); dgInit(G.run); G.run.skillLog = []; treeInit(G.run); if (isV2(p)) p.skills = v2Equip(G.run);
   G.run.cname = (G.cre && G.cre.name) || ''; G.run.ch = 1; G.run.playMs = 0; G.run.tut = G.data.tutDone ? 1 : 0; // 수련장을 마친 뒤 만든 캐릭터인가
@@ -3459,7 +3468,7 @@ const revivable = r => !!(r && r.result === 'abandon' && (r.clears || 0) > 0 && 
 function reviveRun(r) {
   const p = mkPlayer(r.build, {});
   const run = { id: r.id, build: r.build, boss: r.boss, startedAt: r.startedAt, room: r.roomReached || 0, p, bag: [], swaps: r.swaps || [], rooms: r.rooms || [], acts: r.acts || [], deaths: r.deaths || [], result: null, blockPicked: null, entry: null, survey: r.survey || null, drops: r.drops || [],
-    stats: Object.assign({ str: 0, dex: 0, int: 0 }, r.stats || {}), statLog: r.statLog || [], pool: shuffleSeeded(FREE_POOL, 1), choices: r.choices || [], seed: 1, skills: (r.skills || []).slice(), skillLog: r.skillLog || [],
+    stats: Object.assign({ str: 0, dex: 0, int: 0, con: 0, wil: 0 }, r.stats || {}), statLog: r.statLog || [], pool: shuffleSeeded(FREE_POOL, 1), choices: r.choices || [], seed: 1, skills: (r.skills || []).slice(), skillLog: r.skillLog || [],
     cname: r.cname || '', ch: r.ch || 1, clears: r.clears || 0, lv: r.lv || 1, xp: r.xp || 0, gold: r.phase === 'settle' && r.settle ? r.settle.total : (r.gold || 0), playMs: r.playMs || 0, doorLog: r.doorLog || [], settle: r.settle || null, shop: null,
     phase: 'wait', surveys: r.surveys || null, discards: r.discards || [], revivedAt: Date.now() };
   run.syncedActs = run.acts.length; // 행동 기록은 이미 올라가 있다
@@ -3513,7 +3522,7 @@ function commitAct(id, tid) {
 }
 function restoreBattle(cur) {
   const bt = cur.battle; delete cur.battle;
-  G.run = cur; const b = bt.b; b.p = G.run.p; b.rngF = battleRng(b); b.stepMode = true;
+  G.run = cur; statFix(G.run); const b = bt.b; b.p = G.run.p; b.rngF = battleRng(b); b.stepMode = true;
   if (G.run.tree && isV2(b.p)) { treeFix(G.run); b.p.skills = v2Equip(G.run); if (!b.p.cd) resetCharges(b.p); } // 개편 전 저장본: 바뀐 스킬과 재사용 대기
   if (!b.queue) { b.round = b.tick || 1; b.queue = ['p']; b.bonusUsed = 0; } // 라운드 전 저장본: 지금이 내 차례
   G.b = b; G.scr = 'run'; G.sel = null; G.busy = false; G.banner = null; render();
@@ -3522,7 +3531,7 @@ function restoreBattle(cur) {
 }
 function saveCur() { if (!G.run || G.run.endedAt) return; try { G.data.cur = JSON.parse(JSON.stringify(G.run)); saveLocal(); } catch (e) { } }
 function clearCur() { delete G.data.cur; saveLocal(); }
-function resumeRun() { if (!G.data.cur) return; if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); if (G.run.tree && isV2(G.run.p)) { treeFix(G.run); G.run.p.skills = v2Equip(G.run); } /* 0.6a.2: 시작 스킬이 생기기 전 저장본도 시작 스킬을 끼운다 */ G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); }
+function resumeRun() { if (!G.data.cur) return; if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); statFix(G.run); if (G.run.tree && isV2(G.run.p)) { treeFix(G.run); G.run.p.skills = v2Equip(G.run); } /* 0.6a.2: 시작 스킬이 생기기 전 저장본도 시작 스킬을 끼운다 */ G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); }
 /* ===== 던전과 갈림길 (기획서 11.3절) =====
    run.room = 지금 층(1~19). run.doors = 이 층의 문 셋, run.cur = 고른 방. run.dg = 챕터 동안의 집계(유형별 횟수, 본 유형, 이벤트, 강적).
    run.buffs = { 성소·이벤트 버프: 남은 방 수 }, run.next = 다음 전투 방에 걸리는 것, run.gold = 모은 골드(정산은 단계 9) */
@@ -3627,8 +3636,10 @@ function roomDef() { const run = G.run; return run.cur || fixedRoom(run.room) ||
 function statNext(p, k) {
   const s = stat(p, k), B = BUILDS[p.build]; const up = Object.assign({}, p, { stat: Object.assign({}, p.stat, { [k]: s + 1 }) });
   if (k === 'str') return `생명력 ${calcHpMax(p)} → ${calcHpMax(up)}, 무기 공격 피해 +${s}% → +${s + 1}%, 내가 채우는 붕괴 +${s}% → +${s + 1}%` + ((s + 1) % 10 === 0 ? '. 10점: 강공격 붕괴 +5' : '');
-  if (k === 'dex') return `스태미나 ${calcStMax(p)} → ${calcStMax(up)}, 흘리기 감소 ${Math.round(parryRed(p) * 1000) / 10}% → ${Math.round(Math.min(0.8, 0.6 + 0.005 * (s + 1)) * 1000) / 10}%, 빠르기 +${(s * 0.5).toFixed(1)}% → +${((s + 1) * 0.5).toFixed(1)}%` + ((s + 1) % 10 === 0 ? '. 10점: 흘리기 스태미나 −1' : '');
-  return `마나 ${calcMpMax(p)} → ${calcMpMax(up)}, 지속 피해와 정화 피해 +${s * 2}% → +${(s + 1) * 2}%` + ((s + 1) % 10 === 0 ? '. 10점: 독 격발 붕괴 +5' : '');
+  if (k === 'dex') return `스태미나 ${calcStMax(p)} → ${calcStMax(up)}, 흘리기 감소 ${Math.round(parryRed(p) * 1000) / 10}% → ${Math.round(parryRed(up) * 1000) / 10}%, 빠르기 +${(s * 0.5).toFixed(1)}% → +${((s + 1) * 0.5).toFixed(1)}%` + ((s + 1) % 10 === 0 ? '. 10점: 흘리기 스태미나 −1' : '');
+  if (k === 'con') return `생명력 ${calcHpMax(p)} → ${calcHpMax(up)}`;
+  if (k === 'wil') return `보호막으로 얻는 양과 회복 +${s * 2}% → +${(s + 1) * 2}%, 해로운 상태를 버틸 확률 ${Math.min(25, s)}% → ${Math.min(25, s + 1)}%`;
+  return (isV2(p) ? '' : `마나 ${calcMpMax(p)} → ${calcMpMax(up)}, `) + `지속 피해와 정화 피해 +${s * 2}% → +${(s + 1) * 2}%` + ((s + 1) % 10 === 0 ? '. 10점: 독 격발 붕괴 +5' : '');
 }
 function enterRoom() {
   const run = G.run; const R = roomDef(); const p = run.p; if (!R.type) return;
@@ -4045,12 +4056,13 @@ function sheetParts(S) {
     const dmgIds = ['viper', 'flame', 'scarcut', 'reverse', 'crush', 'aimshot', 'fireball', 'lava', 'drain'].concat(exclOf(p.build).filter(s => s.dmg > 0 || (s.fx && s.fx.scarAll)).map(s => s.id)); const noDmg = pick.length && !pick.some(id => dmgIds.includes(id));
     body += `</div>${noDmg ? '<p class="warn">지금 고른 스킬에는 적을 직접 때리는 스킬이 없습니다. 피해 대부분을 기본 공격에 기대게 됩니다. 그래도 괜찮다면 그대로 시작해도 됩니다.</p>' : ''}<div class="stickbar"><button class="gold wide" data-a="skillok" ${pick.length ? '' : 'disabled'} data-focus>${pick.length ? (S.data.first ? '다음: 능력치 나누기 (' + pick.length + '/' + SKILL_SLOTS + '칸)' : '이대로 바꾸기') : '스킬을 하나 이상 골라 주세요'}</button>${S.data.first ? '<div class="row"><button data-a="cback" data-k="cls">이전: 직업 고르기</button><button data-a="createcancel">그만두기</button></div>' : ''}</div>${S.data.first ? '' : '<button class="wide" data-a="close">바꾸지 않기</button>'}`;
   } else if (S.kind === 'stats') {
-    const run = G.run, p = run.p; const al = S.data.alloc || (S.data.alloc = { str: 0, dex: 0, int: 0 });
-    const left = S.data.pts - al.str - al.dex - al.int;
-    const tmp = { stat: { str: stat(p, 'str') + al.str, dex: stat(p, 'dex') + al.dex, int: stat(p, 'int') + al.int }, build: p.build, eq: p.eq };
-    title = S.data.first ? '능력치 6점을 나누세요' : (S.data.why || '능력치 ' + S.data.pts + '점');
-    body = `<p class="mini">${S.data.first ? '6점을 힘, 민첩, 지능에 나눕니다. 1점마다 규칙이 하나씩 바뀝니다. 정답은 없습니다.' : S.data.respec ? '지금까지 나눈 점수를 모두 거두었습니다. 처음부터 다시 나눕니다.' : '지금 빌드에 무엇이 모자랐는지 떠올려 보세요.'}</p><p><b>남은 점수 ${left}</b></p>`;
-    for (const k of ['str', 'dex', 'int']) body += `<div class="statrow"><div class="sname"><b>${STATN[k]} ${stat(tmp, k)}</b>${al[k] ? ` <span class="mini">(+${al[k]})</span>` : ''}</div><div class="snext mini">다음 1점: ${esc(statNext(tmp, k))}</div><div class="sbtn"><button class="sm" data-a="stat-" data-k="${k}" ${al[k] ? '' : 'disabled'} aria-label="${STATN[k]} 1점 빼기">−</button><button class="sm gold" data-a="stat+" data-k="${k}" ${left ? '' : 'disabled'} aria-label="${STATN[k]} 1점 더하기">+</button></div></div>`;
+    const run = G.run, p = run.p; const al = S.data.alloc || (S.data.alloc = { str: 0, dex: 0, int: 0, con: 0, wil: 0 }); for (const k of STAT_KEYS) al[k] = al[k] || 0;
+    const left = S.data.pts - statSum(al);
+    const tmp = Object.assign({}, p, { stat: Object.fromEntries(STAT_KEYS.map(k => [k, stat(p, k) + al[k]])) });
+    title = S.data.first ? '능력치 ' + S.data.pts + '점을 나누세요' : (S.data.why || '능력치 ' + S.data.pts + '점');
+    body = `<p class="mini">${S.data.first ? S.data.pts + '점을 힘, 민첩, 지능, 체력, 의지에 나눕니다. 1점마다 규칙이 하나씩 바뀝니다. 정답은 없습니다. 어렵다면 "추천 배분"을 누르세요.' : S.data.respec ? '지금까지 나눈 점수를 모두 거두었습니다. 처음부터 다시 나눕니다.' : '지금 빌드에 무엇이 모자랐는지 떠올려 보세요.'}</p><p><b>남은 점수 ${left}</b></p>`;
+    body += `<div class="row"><button class="sm" data-a="statrec" ${left ? '' : 'disabled'}>추천 배분</button><button class="sm" data-a="statclear" ${statSum(al) ? '' : 'disabled'}>다시 나누기</button></div>`;
+    for (const k of STAT_KEYS) body += `<div class="statrow"><div class="sname"><b>${STATN[k]} ${stat(tmp, k)}</b>${al[k] ? ` <span class="mini">(+${al[k]})</span>` : ''}</div><div class="snext mini">다음 1점: ${esc(statNext(tmp, k))}</div><div class="sbtn"><button class="sm" data-a="stat-" data-k="${k}" ${al[k] ? '' : 'disabled'} aria-label="${STATN[k]} 1점 빼기">−</button><button class="sm gold" data-a="stat+" data-k="${k}" ${left ? '' : 'disabled'} aria-label="${STATN[k]} 1점 더하기">+</button></div></div>`;
     body += `<div class="stickbar"><button class="gold wide" data-a="statok" ${left ? 'disabled' : ''} data-focus>${left ? '점수를 모두 나눠 주세요 (남은 ' + left + '점)' : S.data.first ? '이 캐릭터로 시작하기' : '이대로 정하기'}</button>${S.data.first ? '<div class="row"><button data-a="createback">이전: 스킬 고르기</button><button data-a="createcancel">그만두기</button></div>' : ''}</div>`;
   } else if (S.kind === 'choice') {
     title = S.data.chest ? '상자를 열었습니다. 하나만 가져갑니다' : '둘 중 하나만 가져갈 수 있습니다';
@@ -4420,8 +4432,8 @@ function onClick(ev) {
       run.gold -= x.price; x.sold = 1; S.log.push({ a: 'buy', tpl: x.it.tpl, g: x.it.g, b: x.it.b, price: x.price, t: Date.now() }); sfx('coin'); toast(ITEMS[x.it.tpl].n + '을(를) 샀습니다. 가방에 넣었습니다'); saveRunLocal(); saveCur(); render(); break; }
     case 'sell': { const run = G.run, S = run.shop, it = run.inv[el.dataset.k]; if (!it || !S || run.bag.indexOf(it.uid) < 0) break; const v = sellOf(it); if (!confirm(ITEMS[it.tpl].n + '을(를) ' + v + ' 골드에 팔까요?')) break;
       run.bag.splice(run.bag.indexOf(it.uid), 1); delete run.inv[it.uid]; run.gold = (run.gold || 0) + v; S.log.push({ a: 'sell', tpl: it.tpl, g: it.g, b: it.b, price: v, t: Date.now() }); sfx('coin'); toast('골드 +' + v); saveRunLocal(); saveCur(); render(); break; }
-    case 'respec': { const run = G.run, S = run.shop; const cost = (run.lv || 1) * 10; const pts = (run.stats.str || 0) + (run.stats.dex || 0) + (run.stats.int || 0); if (!S || (run.gold || 0) < cost || !pts) break; if (!confirm(cost + ' 골드를 내고 능력치 ' + pts + '점을 처음부터 다시 나눌까요? 시작하면 끝까지 나눠야 합니다.')) break;
-      run.gold -= cost; S.log.push({ a: 'respec', price: cost, from: Object.assign({}, run.stats), t: Date.now() }); run.stats = { str: 0, dex: 0, int: 0 }; applyStats(run.p, run.stats); saveRunLocal(); saveCur(); openSheet('stats', { pts, respec: 1, why: '능력치 다시 나누기 · ' + pts + '점' }); break; }
+    case 'respec': { const run = G.run, S = run.shop; const cost = (run.lv || 1) * 10; const pts = statSum(run.stats); if (!S || (run.gold || 0) < cost || !pts) break; if (!confirm(cost + ' 골드를 내고 능력치 ' + pts + '점을 처음부터 다시 나눌까요? 시작하면 끝까지 나눠야 합니다.')) break;
+      run.gold -= cost; S.log.push({ a: 'respec', price: cost, from: Object.assign({}, run.stats), t: Date.now() }); run.stats = { str: 0, dex: 0, int: 0, con: 0, wil: 0 }; applyStats(run.p, run.stats); saveRunLocal(); saveCur(); openSheet('stats', { pts, respec: 1, why: '능력치 다시 나누기 · ' + pts + '점' }); break; }
     case 'treereset': { const run = G.run, S = run.shop; if (!S || run.phase !== 'shop' || !run.tree) break; const cost = treeResetCost(run); const n = run.tree.open.length; if (!n || (run.gold || 0) < cost) break; if (!confirm(cost + ' 골드를 내고 연 칸 ' + n + '개를 모두 닫을까요? 포인트 ' + n + '점을 돌려받고, 끼운 트리 스킬도 빠집니다. 스킬 트리에서 다시 열고 끼웁니다.')) break;
       run.gold -= cost; S.log.push({ a: 'treereset', price: cost, from: run.tree.open.slice(), t: Date.now() }); treeReset(run); saveRunLocal(); saveCur(); sfx('coin'); toast('트리를 초기화했습니다. 포인트 ' + n + '점을 다시 씁니다'); G.back = G.scr; G.scr = 'tree'; G.sheet = null; render(); window.scrollTo(0, 0); break; }
     case 'shopleave': { const run = G.run; if (run.phase !== 'shop') break; run.phase = 'clearsv'; G.scr = 'survey'; saveRunLocal(); saveCur(); pushRank(run, 'clear'); render(); window.scrollTo(0, 0); break; }
@@ -4489,7 +4501,9 @@ function onClick(ev) {
     case 'logopen': G.logOpen = true; render(); break;
     case 'logclose': G.logOpen = false; render(); break;
     case 'dash': loadDash(); break;
-    case 'stat+': case 'stat-': { const S = G.sheet; const al = S.data.alloc; const k = el.dataset.k; const left = S.data.pts - al.str - al.dex - al.int; if (a === 'stat+' && left > 0) al[k]++; if (a === 'stat-' && al[k] > 0) al[k]--; render(); break; }
+    case 'statrec': { const S = G.sheet; const al = S.data.alloc; const left = S.data.pts - statSum(al); const add = statRecommend(G.run.build, Object.fromEntries(STAT_KEYS.map(k => [k, stat(G.run.p, k) + (al[k] || 0)])), left); for (const k of STAT_KEYS) al[k] = (al[k] || 0) + add[k]; render(); break; }
+    case 'statclear': { const S = G.sheet; S.data.alloc = Object.assign({}, { str: 0, dex: 0, int: 0, con: 0, wil: 0 }); render(); break; }
+    case 'stat+': case 'stat-': { const S = G.sheet; const al = S.data.alloc; const k = el.dataset.k; const left = S.data.pts - statSum(al); if (a === 'stat+' && left > 0) al[k]++; if (a === 'stat-' && al[k] > 0) al[k]--; render(); break; }
     case 'statok': { const S = G.sheet; const al = S.data.alloc; const run = G.run; for (const k in al) run.stats[k] = (run.stats[k] || 0) + al[k]; applyStats(run.p, run.stats); run.statLog.push({ room: run.room, add: Object.assign({}, al), t: Date.now() }); const made = S.data.first; if (S.data.pending) run.statPending = 0; G.sheet = null; if (made) { if (G.abandonOnCreate) { if (isBetween(G.data.cur)) keepCur(); else abandonCur(); } G.creating = false; G.abandonOnCreate = false; G.cre = null; G.scr = 'run'; run.tick = Date.now(); } saveRunLocal(); saveCur(); if (made) toast('캐릭터를 만들었습니다. 첫 방 앞입니다'); render(); break; }
     case 'choose': {
       const k = el.dataset.k; const run = G.run; const S = G.sheet;
@@ -4512,7 +4526,7 @@ function onClick(ev) {
     case 'trefund': { const run = G.run; const why = treeRefund(run, el.dataset.k); if (why) { toast(why); break; } run.p.skills = v2Equip(run); toast('되돌렸습니다. 포인트 +1'); render(); break; }
     case 'tequip': { const run = G.run; const id = el.dataset.k; if (!treeCanEdit()) { toast('전투 중에는 바꿀 수 없습니다'); return; } run.skills = run.skills || []; const i = run.skills.indexOf(id); if (i >= 0) run.skills.splice(i, 1); else if (run.skills.length < EQUIP_SLOTS2) run.skills.push(id); else { toast('장착 칸이 가득 찼습니다. 먼저 하나를 빼 주세요'); return; } run.p.skills = v2Equip(run); (run.skillLog = run.skillLog || []).push({ room: run.room, to: run.skills.slice(), t: Date.now() }); if (!G.creating) { saveRunLocal(); saveCur(); } render(); break; }
     case 'tree': if (!PAGES.includes(G.scr)) G.back = G.scr; G.scr = 'tree'; G.sheet = null; G.menuOpen = false; render(); window.scrollTo(0, 0); break;
-    case 'skillok': { const S = G.sheet; const run = G.run; const prev = (run.skills || []).slice(); if (!isV2(run.p)) run.skills = S.data.pick.slice(); run.p.skills = isV2(run.p) ? v2Equip(run) : run.skills.slice(); run.skillLog = run.skillLog || []; run.skillLog.push({ room: run.room, from: prev, to: run.skills.slice(), first: !!S.data.first, t: Date.now() }); const first = S.data.first; G.sheet = null; if (!first) { saveRunLocal(); saveCur(); } if (first) { openSheet('stats', { pts: 6, first: 1, alloc: S.data.alloc }); window.scrollTo(0, 0); } else { toast('스킬을 바꿨습니다'); render(); } break; }
+    case 'skillok': { const S = G.sheet; const run = G.run; const prev = (run.skills || []).slice(); if (!isV2(run.p)) run.skills = S.data.pick.slice(); run.p.skills = isV2(run.p) ? v2Equip(run) : run.skills.slice(); run.skillLog = run.skillLog || []; run.skillLog.push({ room: run.room, from: prev, to: run.skills.slice(), first: !!S.data.first, t: Date.now() }); const first = S.data.first; G.sheet = null; if (!first) { saveRunLocal(); saveCur(); } if (first) { openSheet('stats', { pts: STAT_START, first: 1, alloc: S.data.alloc }); window.scrollTo(0, 0); } else { toast('스킬을 바꿨습니다'); render(); } break; }
     case 'login': socialLogin(el.dataset.k); break;
     case 'loginswitch': socialLogin(el.dataset.k, true); break;
     case 'loginno': G.acct.conflict = ''; render(); break;

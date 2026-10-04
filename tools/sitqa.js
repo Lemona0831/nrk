@@ -52,7 +52,7 @@ function equipFor(bd, sit) {
   while (pick.filter(burn).length > Math.max(1, pick.filter(gain).length)) { const cand = bd.open.filter(id => gain(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) break; const lo = pick.filter(burn).sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; }
   return pick;
 }
-function statsOf(lv) { const pts = 6 + 2 * (lv - 1); return { int: Math.ceil(pts / 2), dex: Math.floor(pts / 2), str: 0 }; }
+function statsOf(lv) { if (G0.statRecommend && G0.STAT_START) return G0.statRecommend(CLS, {}, G0.STAT_START + G0.LV_POINTS * (lv - 1)); const pts = 6 + 2 * (lv - 1); return { int: Math.ceil(pts / 2), dex: Math.floor(pts / 2), str: 0 }; } // 10월 4일 능력치 다섯: 직업 추천 배분
 function fight(bd, sit, seed, eqOver) { // eqOver: 장착을 직접 줄 때(보스전 이길 수단 찾기). 이때는 행동 몫을 세지 않는다
   const r = D.rng(seed); G0.__rnd = D.rng(seed * 31 + 7); run_('Math.random = __rnd');
   const st = statsOf(bd.lv);

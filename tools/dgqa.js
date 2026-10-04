@@ -18,7 +18,7 @@ function loadGame() {
   vm.createContext(ctx);
   vm.runInContext(data + '\n' + html.slice(i + 8, j) + '\n;this.__G = G;', ctx, { filename: 'next/index.html' });
   // 화면·저장·소리는 끈다
-  vm.runInContext('Object.assign(this, { isLower, chOf: typeof chOf !== "undefined" ? chOf : null, ITEMS, EVENTS, ROOM_TYPES, BUILDS, tplKind, SKILLS2: typeof SKILLS2 !== "undefined" ? SKILLS2 : null, TREE2: typeof TREE2 !== "undefined" ? TREE2 : null, SK2: typeof SK2 !== "undefined" ? SK2 : null, EQUIP_SLOTS2: typeof EQUIP_SLOTS2 !== "undefined" ? EQUIP_SLOTS2 : 4 });', ctx); // const 값은 밖에서 읽을 수 있게 꺼내 둔다
+  vm.runInContext('Object.assign(this, { STAT_KEYS: typeof STAT_KEYS !== "undefined" ? STAT_KEYS : null, STAT_REC: typeof STAT_REC !== "undefined" ? STAT_REC : null, STAT_START: typeof STAT_START !== "undefined" ? STAT_START : null, LV_POINTS: typeof LV_POINTS !== "undefined" ? LV_POINTS : 2, isLower, chOf: typeof chOf !== "undefined" ? chOf : null, ITEMS, EVENTS, ROOM_TYPES, BUILDS, tplKind, SKILLS2: typeof SKILLS2 !== "undefined" ? SKILLS2 : null, TREE2: typeof TREE2 !== "undefined" ? TREE2 : null, SK2: typeof SK2 !== "undefined" ? SK2 : null, EQUIP_SLOTS2: typeof EQUIP_SLOTS2 !== "undefined" ? EQUIP_SLOTS2 : 4 });', ctx); // const 값은 밖에서 읽을 수 있게 꺼내 둔다
   vm.runInContext(`toast = () => {}; scheduleSync = () => {}; syncRun = async () => false; pushRank = async () => {}; saveLocal = () => true; sfx = () => {};`, ctx);
   vm.runInContext('var window = { scrollTo() { }, innerWidth: 1280, innerHeight: 800, scrollY: 0, addEventListener() { } };', ctx); // 정산·상점 버튼이 부르는 창 함수만 둔다
   return ctx;
@@ -81,7 +81,9 @@ function handleSheets(pk, r) {
     } else if (S.kind === 'bagfull') { click(run.bag.length ? 'bfdrop' : 'bfskip', run.bag[0]); }
     else if (S.kind === 'stats') {
       const pref = PREF[run.build];
-      for (let i = 0; i < S.data.pts; i++) { const k = pk === 'novice' || r() > 0.65 ? ['str', 'dex', 'int'][Math.floor(r() * 3)] : pref; S.data.alloc = S.data.alloc || { str: 0, dex: 0, int: 0 }; S.data.alloc[k]++; }
+      const KEYS = G0.STAT_KEYS || ['str', 'dex', 'int']; S.data.alloc = S.data.alloc || Object.fromEntries(KEYS.map(k => [k, 0]));
+      if (G0.statRecommend && G0.STAT_REC && G0.STAT_REC[run.build] && pk !== 'novice') { const add = G0.statRecommend(run.build, Object.fromEntries(KEYS.map(k => [k, (run.stats[k] || 0)])), S.data.pts); for (const k of KEYS) S.data.alloc[k] += add[k] || 0; }
+      else for (let i = 0; i < S.data.pts; i++) { const k = pk === 'novice' || r() > 0.65 ? KEYS[Math.floor(r() * KEYS.length)] : pref; S.data.alloc[k]++; }
       click('statok');
     } else if (S.kind === 'offer') { click('offerpick', run.bag[0]); }
     else if (S.kind === 'swap') { click('swapskip'); } // 스킬 바꾸기: 단계 3에서 성향별로
@@ -159,8 +161,10 @@ function playChar(pk, build, seed) {
   else if (THINK(pk) || pk === 'novice') skills = ids.slice().sort(() => r() - 0.5).slice(0, 3);
   else { const ex = ids.filter(id => SKM[id].excl).sort(() => r() - 0.5); const home = ids.filter(id => SKM[id].home === build); const other = ids.filter(id => !SKM[id].excl && SKM[id].home !== build).sort(() => r() - 0.5); skills = ex.slice(0, 1 + Math.floor(r() * 2)).concat(home).concat(other).slice(0, 3); }
   run.skills = skills.slice(); run.p.skills = G0.BUILDS[build].v2 ? G0.v2Equip(run) : skills.slice(); // 0.6a.2: 시작 스킬은 늘 끼운다
-  const pref = PREF[build]; const st = { str: 0, dex: 0, int: 0 };
-  for (let i = 0; i < 6; i++) st[pk === 'novice' || r() > 0.6 ? ['str', 'dex', 'int'][Math.floor(r() * 3)] : pref]++;
+  const pref = PREF[build]; const KEYS = G0.STAT_KEYS || ['str', 'dex', 'int']; const st = Object.fromEntries(KEYS.map(k => [k, 0]));
+  if (G0.statRecommend && G0.STAT_REC && G0.STAT_REC[build]) { // 0.6a.2 능력치 다섯: 추천 배분을 쓰되 초보 · 일부는 아무렇게나
+    const n0 = G0.STAT_START || 6; const rec = G0.statRecommend(build, st, n0); for (const k of KEYS) st[k] = rec[k] || 0; for (let i = 0; i < n0; i++) if (pk === 'novice' || r() > 0.75) { const from = KEYS.filter(k => st[k] > 0)[Math.floor(r() * KEYS.filter(k => st[k] > 0).length)]; st[from]--; st[KEYS[Math.floor(r() * KEYS.length)]]++; }
+  } else for (let i = 0; i < 6; i++) st[pk === 'novice' || r() > 0.6 ? ['str', 'dex', 'int'][Math.floor(r() * 3)] : pref]++;
   run.stats = st; G0.applyStats(run.p, st); run.p.hp = run.p.hpMax; run.p.mp = run.p.mpMax; run.p.st = run.p.stMax;
   const out = { pk, build, seed, res: 'lose', floor: 0, lv: 1, rooms: [], bossHp: null, bugs: [], acts: 0 };
   return playLoop(pk, r, out);

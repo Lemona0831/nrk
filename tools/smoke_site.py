@@ -26,6 +26,7 @@ with sync_playwright() as p:
     pg.click(f'[data-a=clspick][data-k={cls}]')
     pg.click(f'button[data-a=start][data-b={cls}]'); pg.click('button[data-a=skillok]')
     for k in ['dex']*6: pg.click(f'button[data-a="stat+"][data-k={k}]')
+    if pg.query_selector('button[data-a=statrec]:not([disabled])'): pg.click('button[data-a=statrec]')  # 06a2 능력치 다섯(15점): 남은 점수는 추천 배분으로
     pg.click('button[data-a=statok]'); pg.click('button[data-a=door][data-k="0"]'); pg.click('button[data-a=enter]'); pg.evaluate("()=>{G.pace='instant'}")  # 휴대폰 폭에서는 진행 속도 고르기가 설정 창에만 있다
     for i in range(30):
         if pg.query_selector('button[data-a=bcont]'): break
