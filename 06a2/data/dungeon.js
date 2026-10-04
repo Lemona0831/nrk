@@ -8,16 +8,17 @@ const chOf = () => ({ boss: FLOOR_BOSS, camp: FLOOR_CAMP, lower: FLOOR_CAMP + 1,
 /* 방 유형: w 가중치, max 챕터당 최대, from 나오는 첫 층, fight 전투 방.
    10월 4일 만든 사람 결정: 보물을 줄이고 일반 · 매복 · 강적을 늘린다. 시련은 드물게. 샘은 문 하나에 2~3%, 한 층의 문 셋 가운데 나올 확률 4~9%(가중치 2). 언제나 1~10% 사이 */
 const ROOM_TYPES = {
-  normal: { n: '일반', ico: '⚔️', w: 44, max: 99, from: 1, fight: 1, risk: 1, gold: [10, 15], hint: '장비 1' },
-  ambush: { n: '매복', ico: '🗡️', w: 15, max: 5, from: 2, fight: 1, risk: 2, gold: [15, 22], hint: '적이 먼저 움직인다 · 적이 거세다 · 전리품 많음 · 장비 1' },
-  strong: { n: '강적', ico: '💀', w: 13, max: 6, from: 3, fight: 1, risk: 3, gold: [50, 50], hint: '희귀 장비 · 골드 많음 · 전리품 많음' }, // 10월 4일 하이 리스크 하이 리턴: 희귀 보장, 골드 30 → 50, 전리품 LOOT.strong
-  treasure: { n: '보물', ico: '🗝️', w: 4, max: 2, from: 2, fight: 1, risk: 2, gold: [25, 25], hint: '상자: 장비 둘 중 하나, 희귀 보장' },
-  trial: { n: '시련', ico: '🔥', w: 3, max: 2, from: 5, fight: 1, risk: 4, gold: [40, 40], hint: '방 특성 둘 · 희귀 장비' },
+  normal: { n: '일반', ico: '⚔️', w: 44, max: 99, from: 1, fight: 1, risk: 1, gold: [6, 9], hint: '장비 1' },
+  ambush: { n: '매복', ico: '🗡️', w: 15, max: 5, from: 2, fight: 1, risk: 2, gold: [9, 13], hint: '적이 먼저 움직인다 · 적이 거세다 · 전리품 많음 · 장비 1' },
+  strong: { n: '강적', ico: '💀', w: 13, max: 6, from: 3, fight: 1, risk: 3, gold: [40, 40], hint: '희귀 장비 · 골드 많음 · 전리품 많음' }, // 10월 4일 하이 리스크 하이 리턴: 희귀 보장, 전리품 LOOT.strong. 골드는 경제 맞춤으로 40
+  treasure: { n: '보물', ico: '🗝️', w: 4, max: 2, from: 2, fight: 1, risk: 2, gold: [16, 16], hint: '상자: 장비 둘 중 하나, 희귀 보장' },
+  trial: { n: '시련', ico: '🔥', w: 3, max: 2, from: 5, fight: 1, risk: 4, gold: [25, 25], hint: '방 특성 둘 · 희귀 장비' },
   spring: { n: '샘', ico: '💧', w: 2, max: 2, from: 3, fight: 0, risk: 0, hint: '생명력·마나 50%, 플라스크 각 1' },
   shrine: { n: '성소', ico: '🕯️', w: 6, max: 3, from: 1, fight: 0, risk: 0, hint: '3개 방 동안 버프' },
   altar: { n: '제단', ico: '🩸', w: 5, max: 3, from: 2, fight: 0, risk: 0, hint: '대가 있는 거래' },
   event: { n: '이벤트', ico: '❔', w: 7, max: 5, from: 2, fight: 0, risk: 0, hint: '선택에 따라 다르다' },
 };
+/* 방 골드 (10월 4일 경제 맞춤): 24층이 되어 깬 캐릭터의 정산이 평균 464(목표 약 320)라 방 골드를 30%쯤 낮췄다. 정산 평균 368, 험한 길 위주 478, 샛길 위주 313 */
 /* 강적은 상층 3, 하층 3까지 */
 const STRONG_PER_HALF = 3;
 /* 문에 보상이 적혀 있지 않을 확률 (전투 방). 10월 4일 만든 사람 결정: 보상은 일부만 보인다 */
