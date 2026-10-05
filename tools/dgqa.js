@@ -164,10 +164,22 @@ function useConsOut(pk, run, r) {
   if (!G0.consUse || !G0.CONS || !run.cons) return; const p = run.p;
   for (let k = 0; k < 6 && p.hp < p.hpMax * 0.6 && (pk !== 'novice' || r() < 0.3); k++) { const i = run.cons.findIndex(c => G0.CONS[c.id].k === 'heal' && !G0.consWhyNot(null, run, c, null)); if (i < 0) break; G0.consUse(null, run, i, null); }
 }
+const countBy = a => a.reduce((m, k) => (m[k] = (m[k] || 0) + 1, m), {});
+/* 전투 한 번의 기록 (10월 5일, 목표 7단계 지표: 사망 원인 · 예고 뒤 대응 · 받은 피해 출처 · 행동 종류 · 스킬 사용) */
+function fightRec(R, b, run, hpIn, acts) {
+  const hits = b.rec.filter(x => x.k === 'hit'); const src = {};
+  for (const h of hits) { const k = (h.dot ? 'dot:' : '') + (h.src || 'none') + (h.charged ? ':big' : ''); src[k] = Math.round(((src[k] || 0) + h.d) * 10) / 10; }
+  const used = countBy(b.rec.filter(x => x.k === 'act').map(x => x.a));
+  const rec = { f: run.room, ch: run.ch || 1, t: R.type, sq: R.squad, foe: R.foe, mods: (R.mods || []).join('+') || undefined, path: R.path, res: b.over, hpIn: Math.round(hpIn * 100), hpOut: Math.round(run.p.hp / run.p.hpMax * 100), rounds: b.round || 0, acts, src, used, brk: b.rec.filter(x => x.k === 'break').length, cut: b.rec.filter(x => x.k === 'break' && x.cut).length, blk: b.rec.filter(x => x.k === 'block').length, parried: hits.filter(h => h.parried).length, guarded: hits.filter(h => h.guard).length, cons: b.rec.filter(x => x.k === 'cons').length };
+  if (b.over === 'lose') { const last = hits[hits.length - 1] || {}; const big = hits.slice(-3).filter(h => h.charged); rec.death = { by: (last.dot ? 'dot:' : '') + (last.src || 'none'), big: !!last.charged, bigIn3: big.length, lastD: last.d, st: Math.round(b.p.st), fl: Object.assign({}, b.p.flask), consLeft: (run.cons || []).reduce((a, c) => a + c.n, 0) }; }
+  return rec;
+}
 /* 지금 방에 들어가 성향대로 싸운다 */
 function fightCur(pk, r, mem, out) {
   const P = PERSONAS[pk]; const G = G0.__G;
-  G0.enterRoom(); const b = G.b; b.rngF = r; b.stepMode = false; let n = 0; let stall = 0, lastHp = Infinity;
+  G0.enterRoom(); const b = G.b; b.stepMode = false; let n = 0; let stall = 0, lastHp = Infinity;
+  // 10월 5일: 전투 난수를 테스터 판단 난수와 나눈다(판단 규칙 하나를 바꿔도 전투 운은 그대로 남아 비교가 깨끗하다). LEGACY_RNG=1이면 예전처럼 같은 난수
+  b.rngF = process.env.LEGACY_RNG ? r : rng(((out.seed || 1) * 7919 + (G.run.room || 0) * 131 + (G.run.ch || 1) * 100003 + (out.acts || 0)) | 0);
   while (!b.over && n++ < 300) {
     useCons(pk, r, b, G.run); if (b.over) break;
     const sr = r() < (P.mech || 0.5) ? sigRule(b, r) : null;
@@ -216,7 +228,7 @@ function playChar(pk, build, seed) {
     const n0 = G0.STAT_START || 6; const rec = G0.statRecommend(build, st, n0); for (const k of KEYS) st[k] = rec[k] || 0; for (let i = 0; i < n0; i++) if (pk === 'novice' || r() > 0.75) { const from = KEYS.filter(k => st[k] > 0)[Math.floor(r() * KEYS.filter(k => st[k] > 0).length)]; st[from]--; st[KEYS[Math.floor(r() * KEYS.length)]]++; }
   } else for (let i = 0; i < 6; i++) st[pk === 'novice' || r() > 0.6 ? ['str', 'dex', 'int'][Math.floor(r() * 3)] : pref]++;
   run.stats = st; G0.applyStats(run.p, st); run.p.hp = run.p.hpMax; run.p.mp = run.p.mpMax; run.p.st = run.p.stMax;
-  const out = { pk, build, seed, res: 'lose', floor: 0, lv: 1, rooms: [], bossHp: null, bugs: [], acts: 0 };
+  const out = { pk, build, seed, res: 'lose', floor: 0, lv: 1, rooms: [], bossHp: null, bugs: [], acts: 0, fights: [] };
   return playLoop(pk, r, out);
 }
 /* 챕터 사이: 정산 확정 → 상점(성향대로 산다) → 설문 → 다음 챕터 */
@@ -281,22 +293,28 @@ function playLoop(pk, r, out) {
     useConsOut(pk, run, r);
     const hpIn = run.p.hp / run.p.hpMax;
     if (R.type === 'boss' && OPT.snap) out.snap = JSON.stringify(run);
-    const b = fightCur(pk, r, mem, out);
+    const acts0 = out.acts; const b = fightCur(pk, r, mem, out);
     out.rooms[out.rooms.length - 1] = (R.type === 'boss' ? 'boss' : out.rooms[out.rooms.length - 1]) + ':' + b.over + ':' + Math.round((hpIn - run.p.hp / run.p.hpMax) * 100);
+    if (OPT.detail) out.fights.push(fightRec(R, b, run, hpIn, out.acts - acts0));
     if (R.type === 'boss') { const bs = b.en.find(e => e.role === 'boss'); out.bossEnd = { hp: bs ? Math.round(Math.max(0, bs.hp) / bs.hpMax * 100) : 0, ph: bs ? bs.phase || 1 : 0, turns: b.turnIdx, enr: !!b.enrage, bhp: bs ? Math.round(bs.hpMax) : 0, php: Math.round(run.p.hpMax) }; }
     out.floor = run.room;
     G0.battleContinue();
     handleSheets(pk, r);
   }
-  out.floor = run.room; out.ch = run.ch || 1; out.lv = run.lv; out.gold = run.gold; out.gear = Object.values(run.inv).filter(x => run.eqU && Object.values(run.eqU).includes(x.uid)).map(x => x.tpl + ':' + x.g);
+  out.floor = run.room; out.ch = run.ch || 1; out.lv = run.lv; out.gold = run.gold;
+  if (OPT.detail) { out.cons = (run.consLog || []).length; out.consIds = countBy((run.consLog || []).map(x => x.id)); out.loot = (run.lootLog || []).reduce((a, x) => ({ gold: a.gold + (x.gold || 0), lost: a.lost + (x.lost || 0), n: a.n + Object.values(x.got || {}).reduce((m, v) => m + v, 0) }), { gold: 0, lost: 0, n: 0 }); out.tree = run.tree ? run.tree.open.slice() : null; out.equip = (run.skills || []).slice(); out.flaskLeft = Object.assign({}, run.p.flask); out.pathsTaken = (run.pathLog || []).map(x => x.path); } out.gear = Object.values(run.inv).filter(x => run.eqU && Object.values(run.eqU).includes(x.uid)).map(x => x.tpl + ':' + x.g);
   return out;
 }
 
 if (require.main === module) {
   const N = +(process.argv[2] || 20); const file = process.argv[3] || path.join(__dirname, 'dgqa.json');
   OPT.chapters = +(process.argv[4] || 1); // 2: 1챕터를 깬 캐릭터가 2챕터까지 이어 간다
+  OPT.detail = process.env.DETAIL !== '0';
   const t0 = Date.now(); const runs = [];
-  for (const pk of Object.keys(PERSONAS)) for (const build of Object.keys(G0.BUILDS).filter(k => !G0.BUILDS[k].tut && (!G0.BUILDS[k].soon || process.env.DG_SOON))) for (let s = 0; s < N; s++) runs.push(playChar(pk, build, 5000 + s * 13));
+  // 10월 5일 옵션: SEED(씨앗 시작값, 기본 5000), CLS=암살자 키들(쉼표), PK=성향 키들(쉼표), SHARD=i/n(n조각 가운데 i번째만, 0부터), DETAIL=0이면 전투 기록을 빼고 가볍게
+  const SEED0 = +(process.env.SEED || 5000); const CLSF = process.env.CLS ? process.env.CLS.split(',') : null; const PKF = process.env.PK ? process.env.PK.split(',') : null;
+  const [SI, SN] = (process.env.SHARD || '0/1').split('/').map(Number); let job = 0;
+  for (const pk of Object.keys(PERSONAS).filter(k => !PKF || PKF.includes(k))) for (const build of Object.keys(G0.BUILDS).filter(k => !G0.BUILDS[k].tut && (!G0.BUILDS[k].soon || process.env.DG_SOON) && (!CLSF || CLSF.includes(k)))) for (let s = 0; s < N; s++) { if ((job++ % SN) !== SI) continue; runs.push(playChar(pk, build, SEED0 + s * 13)); }
   fs.writeFileSync(file, JSON.stringify(runs));
   // 요약: 챕터마다 따로 (2챕터는 1챕터를 깬 캐릭터 기준, 기획서 11.12절)
   const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
@@ -317,6 +335,14 @@ if (require.main === module) {
     const bo = R.map(x => { const c = (x.chs || []).find(c => c.ch === ch) || ((x.ch || 1) === ch ? x : null); return c && c.bossHp != null ? { hp: c.bossHp, lv: c.bossLv } : null; }).filter(Boolean);
     console.log(`보스에 닿은 판 ${bo.length}: 들어갈 때 생명력 평균 ${Math.round(bo.reduce((a, x) => a + x.hp, 0) / (bo.length || 1))}%, 레벨 평균 ${(bo.reduce((a, x) => a + x.lv, 0) / (bo.length || 1)).toFixed(1)}, 보스 승률 ${pct(R.filter(x => passed(x, ch)).length, bo.length)}%`);
     if (ch < OPT.chapters) { const P = R.filter(x => passed(x, ch)); const cs = P.map(x => x.chs.find(c => c.ch === ch)); console.log(`넘은 캐릭터: 레벨 평균 ${(cs.reduce((a, c) => a + c.lv, 0) / (cs.length || 1)).toFixed(1)}, 정산 골드 평균 ${Math.round(cs.reduce((a, c) => a + c.gold, 0) / (cs.length || 1))}`); }
+  }
+  if (OPT.detail && runs.length) { // 10월 5일: 층별 도달 곡선, 사망 원인, 예고된 큰 공격으로 쓰러진 몫
+    const reach = []; for (let f = 1; f <= 24; f++) reach.push(pct(runs.filter(x => x.floor >= f || x.res === 'clear').length, runs.length));
+    console.log('층별 도달(%):', reach.join(' '));
+    const deaths = runs.flatMap(x => x.fights.filter(f => f.death).map(f => Object.assign({ build: x.build }, f)));
+    const by = countBy(deaths.map(d => d.t + ' ← ' + d.death.by + (d.death.big ? ' (큰 공격)' : '')));
+    console.log('사망 원인(방 ← 마지막 일격):', Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, n]) => k + ' ' + n).join(' | '));
+    console.log(`예고된 큰 공격으로 쓰러짐 ${pct(deaths.filter(d => d.death.big).length, deaths.length)}%, 마지막 세 일격 안에 큰 공격 ${pct(deaths.filter(d => d.death.bigIn3).length, deaths.length)}%, 쓰러질 때 생명력 플라스크가 남음 ${pct(deaths.filter(d => d.death.fl && d.death.fl.life > 0).length, deaths.length)}%`);
   }
   const bugs = runs.flatMap(x => x.bugs); if (bugs.length) console.log('이상 예:', bugs.slice(0, 5));
 }
