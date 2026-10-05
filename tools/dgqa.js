@@ -170,7 +170,7 @@ function fightRec(R, b, run, hpIn, acts) {
   const hits = b.rec.filter(x => x.k === 'hit'); const src = {};
   for (const h of hits) { const k = (h.dot ? 'dot:' : '') + (h.src || 'none') + (h.charged ? ':big' : ''); src[k] = Math.round(((src[k] || 0) + h.d) * 10) / 10; }
   const used = countBy(b.rec.filter(x => x.k === 'act').map(x => x.a));
-  const rec = { f: run.room, ch: run.ch || 1, t: R.type, sq: R.squad, foe: R.foe, mods: (R.mods || []).join('+') || undefined, path: R.path, res: b.over, hpIn: Math.round(hpIn * 100), hpOut: Math.round(run.p.hp / run.p.hpMax * 100), rounds: b.round || 0, acts, src, used, brk: b.rec.filter(x => x.k === 'break').length, cut: b.rec.filter(x => x.k === 'break' && x.cut).length, blk: b.rec.filter(x => x.k === 'block').length, parried: hits.filter(h => h.parried).length, guarded: hits.filter(h => h.guard).length, cons: b.rec.filter(x => x.k === 'cons').length };
+  const rec = { f: run.room, ch: run.ch || 1, t: R.type, sq: R.squad, foe: R.foe, mods: (R.mods || []).join('+') || undefined, path: R.path, res: b.over, hpIn: Math.round(hpIn * 100), hpOut: Math.round(run.p.hp / run.p.hpMax * 100), rounds: b.round || 0, acts, src, used, brk: b.rec.filter(x => x.k === 'break').length, cut: b.rec.filter(x => x.k === 'break' && x.cut).length, blk: b.rec.filter(x => x.k === 'block').length, parried: hits.filter(h => h.parried).length, guarded: hits.filter(h => h.guard).length, cons: b.rec.filter(x => x.k === 'cons').length, big: b.rec.filter(x => x.k === 'bigfire').length, bigNoTurn: b.rec.filter(x => x.k === 'bigfire' && x.gap < 1).map(x => x.role + ':' + x.i + ':' + x.gap) };
   if (b.over === 'lose') { const last = hits[hits.length - 1] || {}; const big = hits.slice(-3).filter(h => h.charged); rec.death = { by: (last.dot ? 'dot:' : '') + (last.src || 'none'), big: !!last.charged, bigIn3: big.length, lastD: last.d, st: Math.round(b.p.st), fl: Object.assign({}, b.p.flask), consLeft: (run.cons || []).reduce((a, c) => a + c.n, 0) }; }
   return rec;
 }
@@ -342,6 +342,7 @@ if (require.main === module) {
     const deaths = runs.flatMap(x => x.fights.filter(f => f.death).map(f => Object.assign({ build: x.build }, f)));
     const by = countBy(deaths.map(d => d.t + ' ← ' + d.death.by + (d.death.big ? ' (큰 공격)' : '')));
     console.log('사망 원인(방 ← 마지막 일격):', Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, n]) => k + ' ' + n).join(' | '));
+    { const F = runs.flatMap(x => x.fights); const nb = F.reduce((a, f) => a + (f.big || 0), 0); const bad = F.flatMap(f => f.bigNoTurn || []); console.log(`예고된 큰 공격 ${nb}번 가운데 예고 뒤 내 차례 없이 나간 것 ${bad.length}번`, bad.length ? countBy(bad) : ''); }
     console.log(`예고된 큰 공격으로 쓰러짐 ${pct(deaths.filter(d => d.death.big).length, deaths.length)}%, 마지막 세 일격 안에 큰 공격 ${pct(deaths.filter(d => d.death.bigIn3).length, deaths.length)}%, 쓰러질 때 생명력 플라스크가 남음 ${pct(deaths.filter(d => d.death.fl && d.death.fl.life > 0).length, deaths.length)}%`);
   }
   const bugs = runs.flatMap(x => x.bugs); if (bugs.length) console.log('이상 예:', bugs.slice(0, 5));
