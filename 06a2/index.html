@@ -1692,7 +1692,7 @@ function decideIntent(b, e) {
   e.intent = it;
 }
 /* 어둠 방 특성 (10월 5일 고침: 문장대로 후열 적의 예고를 가린다. 등잔 기름으로 걷어 낸다) */
-const darkHid = (b, e) => hasMod(b, 'dark') && e.row === 'back' && e.role !== 'boss';
+const darkHid = (b, e) => hasMod(b, 'dark') && e.row === 'back' && e.role !== 'boss' && !(e.intent && (['charge', 'heavy', 'aim', 'chant', 'chanting', 'burn', 'explode', 'fuse', 'sacprep', 'sacrifice'].includes(e.intent.k) || e.intent.aimed)); // 10월 5일 반례 검토: 큰 공격의 예고는 어둠에서도 보인다(읽을 수 없는 죽음을 만들지 않는다)
 function intentText(b, e) {
   if (darkHid(b, e)) return { t: '어둠 속이라 무엇을 하려는지 보이지 않는다', hv: 0 };
   const i = e.intent || {}; const est = r1(enemyHitEst(b, e));
