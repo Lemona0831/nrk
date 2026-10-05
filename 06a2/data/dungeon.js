@@ -135,7 +135,7 @@ const EVENTS = [
 const MLV_HP = 0.12, MLV_DMG = 0.10;
 /* 난이도 (10월 2일, 만든 사람 결정: 1챕터 완주 자동 테스터 평균 20%, 숙련·탐험가 40%. 1층부터 실전) 던전 방의 적 체력·피해 배율 */
 const DIFF = { upper: { hp: 0.72, dmg: 0.57 }, lower: { hp: 0.9, dmg: 0.58 } }; // 10월 4일 강적 다섯 · 테마 무리 뒤: AI 테스터 완주 암살자 9 · 파수꾼 13%. 이전: 상층 0.75 · 0.6, 하층 1.0 · 0.68 (1차 0.8 · 0.65, 1.05 · 0.7. 개편 전 0.9 · 0.85, 1.2 · 0.9)
-function mlvOf(f) { return f >= FLOOR_BOSS ? 4 : f <= 6 ? 1 : f <= FLOOR_CAMP ? 2 : f <= 18 ? 3 : 4; } // 24층: 6층마다 한 단계
+function mlvOf(f, ch) { return (f >= FLOOR_BOSS ? 4 : f <= 6 ? 1 : f <= FLOOR_CAMP ? 2 : f <= 18 ? 3 : 4) + 4 * (((ch || (typeof G !== 'undefined' && G.run && G.run.ch)) || 1) - 1); } // 24층: 6층마다 한 단계. 챕터마다 +4 (1챕터 1~4, 2챕터 5~8, 3챕터 9~12, 기획서 11.4)
 /* 경험치: 일반 5, 정예 12, 강적 30, 보스 100 × (1 + 0.15 × (몬스터 레벨 − 1)). 소환된 적은 0 */
 const XP_BASE = { normal: 5, elite: 12, strong: 40, boss: 100 }; // 강적 30 → 40 (10월 4일 하이 리스크 하이 리턴) // 보스 150이면 챕터 끝 Lv6으로 목표(4~5)를 넘어 100으로 (10월 2일)
 /* 보스에서 오른 능력치는 다음 챕터 준비에서 나눈다(run.statPending, 단계 9) */
@@ -152,6 +152,15 @@ const ENEMY_NAMES = {
   1: { bruiser: '광신 수도사', shield: '문지기 수사', archer: '종탑 궁수', healer: '피 닦는 수녀', summoner: '뼈 부르는 사제', bomber: '불붙은 고행자', pyre: '화형 사제', minion: '일어선 시체', thief: '헌금함 도둑', darkmage: '검은 기도사' },
 };
 
+/* ===== 챕터 (10월 5일, 1~3챕터 작업): 챕터마다 다른 값은 여기서만 읽는다(chData). 층 틀(24층, 12:12, 갈래길)은 모든 챕터가 같다.
+   n 이름, boss 보스, settleLore 정산 분위기 문장, nextLore 다음 챕터를 내다보는 문장, diff 던전 세기(없으면 DIFF), names 적 이름(없으면 ENEMY_NAMES[1]).
+   SQUADS · STRONG_FOES · EVENTS의 ch(없으면 1)와 ROOM_MODS의 chs(없으면 모든 챕터)로 챕터를 가른다 */
+const CHAPTERS = {
+  1: { n: '저주받은 수도원', boss: 'abbot', settleLore: '수도원장의 종이 멎었다. 계단은 더 아래로 이어진다.', nextLore: '수도원보다 더 깊은 곳에서 찬 바람이 올라온다.' },
+};
+const chData = ch => CHAPTERS[ch] || CHAPTERS[1];
+const diffOf = ch => chData(ch).diff || DIFF;
+const inCh = (x, ch) => (x.ch || 1) === (ch || 1);
 /* ===== 강적과 보스: 처음 만날 때 "눈에 보이는 것", 겪은 뒤 도감 (기획서 11.9절) =====
    여기에는 대처법을 쓰지 않는다. 기믹 상세는 저장소 밖 비공개 문서에 있다 */
 const FOE_INTRO = {

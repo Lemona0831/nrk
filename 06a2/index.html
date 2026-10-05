@@ -2295,7 +2295,7 @@ function roomBattle(player, room, bossKind, seed) {
     const bs = mkBoss(bossKind, 1, room.lv || 1); en = [bs];
     if (bossKind === 'tree') for (let i = 0; i < 3; i++) en.push(mkEnemy('root', 0, 50 + i));
   } else en = room.en.map((x, i) => mkEnemy(x[0], x[1], i, { lv: room.lv || 1, name: room.names && room.names[x[0]], tough: !!(room.tough && room.tough.includes(i)) }));
-  if (!room.boss && room.floor) { const D = DIFF[isLower(room.floor) ? 'lower' : 'upper'], P = PATHS[room.path] || PATHS.main; for (const e of en) { e.hpMax = Math.round(e.hpMax * D.hp * P.hp); e.hp = e.hpMax; e.dmg *= D.dmg * P.dmg; } }
+  if (!room.boss && room.floor) { const D = diffOf(room.ch)[isLower(room.floor) ? 'lower' : 'upper'], P = PATHS[room.path] || PATHS.main; for (const e of en) { e.hpMax = Math.round(e.hpMax * D.hp * P.hp); e.hp = e.hpMax; e.dmg *= D.dmg * P.dmg; } }
   if (room.ambush && !room.boss) for (const e of en) { e.hpMax = Math.round(e.hpMax * AMBUSH.hp); e.hp = e.hpMax; e.dmg *= AMBUSH.dmg; } // 매복: 일반과 강적 사이
   if (room.strong && en[0]) { const e = en[0]; e.strong = true; e.foe = room.foe; const low = isLower(room.floor || 0); e.n = room.strong; e.hpMax = Math.round(e.hpMax * STRONG.hp * (low ? STRONG.lowerHp : 1)); e.hp = e.hpMax; { const F = STRONG_FOES.find(x => x.id === room.foe) || {}; e.hpMax = Math.round(e.hpMax * (F.hp || 1)); e.hp = e.hpMax; e.dmg *= F.dmg || 1; } e.dmg *= STRONG.dmg * (low ? STRONG.lowerDmg : 1); e.bigMul = HIT_REF(e.lv || 1) * STRONG.big / e.dmg; e.info = '강적. 무엇을 하는지는 겪어 보아야 안다.'; }
   if (room.foe === 'bellringer') { const bell = mkEnemy('root', 0, 60, { lv: room.lv || 1 }); bell.n = '큰 종'; bell.ico = '🔔'; bell.bell = 1; bell.hpMax = Math.round(bell.hpMax * 1.2); bell.hp = bell.hpMax; bell.info = '큰 종. 후열. 스스로는 움직이지 않는다.'; en.push(bell); }
@@ -2559,7 +2559,7 @@ function dgBar(run) {
   }
   h += '</ol>';
   const bl = Object.keys(run.buffs || {}).map(k => { const S = SHRINES.find(x => x.id === k); return `<span class="chip" data-info="buff:${k}" tabindex="0">${esc(S ? S.n : k === 'snuff' ? '꺼진 촛불' : k)} ${run.buffs[k]}</span>`; }).join('');
-  return `<section class="card dgtop"><div class="dghead"><b>1챕터 · ${esc(floorName(run.room))}</b><span class="mini">${run.room < FLOOR_CAMP ? '상층' : run.room > FLOOR_CAMP && run.room < FLOOR_BOSS ? '하층' : ''}${run.path && PATHS[run.path] ? ' · ' + PATHS[run.path].ico + ' ' + PATHS[run.path].n : ''} · 남은 층 ${Math.max(0, FLOORS - run.room)}</span><span class="gold-n">골드 ${run.gold || 0}</span></div>${h}${bl ? `<div class="bufs">${bl}</div>` : ''}</section>`;
+  return `<section class="card dgtop"><div class="dghead"><b>${run.ch || 1}챕터 · ${esc(floorName(run.room))}</b><span class="mini">${run.room < FLOOR_CAMP ? '상층' : run.room > FLOOR_CAMP && run.room < FLOOR_BOSS ? '하층' : ''}${run.path && PATHS[run.path] ? ' · ' + PATHS[run.path].ico + ' ' + PATHS[run.path].n : ''} · 남은 층 ${Math.max(0, FLOORS - run.room)}</span><span class="gold-n">골드 ${run.gold || 0}</span></div>${h}${bl ? `<div class="bufs">${bl}</div>` : ''}</section>`;
 }
 function doorCard(r, i) {
   const T = ROOM_TYPES[r.type]; const stars = T.fight ? '★'.repeat(r.risk || 1) + '☆'.repeat(4 - (r.risk || 1)) : '';
@@ -2629,7 +2629,7 @@ function chgEntry(c, latest, brief) {
   const body = c.groups && !brief ? c.groups.map(g => `<h5 class="chgh">${esc(g.h)}</h5>${ul(g.items)}`).join('') : ul((brief && c.top) || c.items || c.top || []);
   return `<section class="chg">${head}${body}</section>`;
 }
-function curDesc(c) { return c.phase === 'wait' || c.phase === 'clearsv' ? '1챕터 돌파 · 2챕터 준비 중' : c.phase === 'shop' ? '1챕터 돌파 · 상점' : c.phase === 'settle' ? '1챕터 돌파 · 정산' : '1챕터 · ' + floorName(c.room); }
+function curDesc(c) { const ch = c.ch || 1; return c.phase === 'wait' || c.phase === 'clearsv' ? ch + '챕터 돌파 · ' + (CHAPTERS[ch + 1] ? (ch + 1) + '챕터로 갈 준비' : (ch + 1) + '챕터 준비 중') : c.phase === 'shop' ? ch + '챕터 돌파 · 상점' : c.phase === 'settle' ? ch + '챕터 돌파 · 정산' : ch + '챕터 · ' + floorName(c.room); }
 function vTitle() {
   const d = G.data; const c = d.cur && !d.cur.endedAt && BUILDS[d.cur.build] ? d.cur : null;
   let h = `<section class="title-scr"><div class="tlogo"><span class="ver">0.6a.2</span><h1>나락의 유산</h1><p class="lore">무너진 수도원 아래, 빛이 닿지 않는 곳까지 계단이 이어진다.</p></div><div class="tmenu">`;
@@ -2776,7 +2776,7 @@ const PRICE = { n: 30, m: 70, r: 160 };
 const priceOf = (g, ch) => Math.round((PRICE[g] || PRICE.n) * Math.pow(1.5, (ch || 1) - 1));
 const sellOf = it => Math.floor(priceOf(it.g, it.ch) * 0.25);
 function startSettle(run) {
-  const ch = run.ch || 1; const strongN = run.rooms.filter(x => x.type === 'strong' && x.res === 'win').length;
+  const ch = run.ch || 1; const strongN = run.rooms.filter(x => x.type === 'strong' && x.res === 'win' && (x.ch || 1) === ch).length; // 이번 챕터 강적만 (next/ 0.6b에서 1챕터 강적까지 다시 세던 오류)
   const mul = fxVal(run.p, 'goldMul', 1, (a, v) => a * v);
   const lines = [{ n: '던전에서 모은 골드', v: run.gold || 0 }, { n: '보스 처치', v: Math.round(SETTLE.boss[ch - 1] * mul) }];
   if (strongN) lines.push({ n: '강적 처치 ' + strongN + '번', v: Math.round(SETTLE.strong * strongN * mul) });
@@ -2785,14 +2785,14 @@ function startSettle(run) {
 }
 function vSettle() {
   const run = G.run, S = run.settle;
-  return `<section class="card settle"><p class="mini">1챕터 · 저주받은 수도원</p><h3>챕터를 넘었습니다</h3><p class="lore">수도원장의 종이 멎었다. 계단은 더 아래로 이어진다.</p>
+  return `<section class="card settle"><p class="mini">${run.ch || 1}챕터 · ${esc(chData(run.ch).n)}</p><h3>챕터를 넘었습니다</h3><p class="lore">${esc(chData(run.ch).settleLore || '')}</p>
 <dl class="sgold">${S.lines.map((x, i) => `<div style="--i:${i}"><dt>${esc(x.n)}</dt><dd>${x.v}</dd></div>`).join('')}<div class="tot" style="--i:${S.lines.length}"><dt>합계</dt><dd>${S.total} 골드</dd></div></dl>
 ${S.mul > 1 ? '<p class="mini">보스와 강적 보상에 얻는 골드 증가가 붙었습니다.</p>' : ''}<p>정산을 확정하면 생명력·마나·스태미나와 플라스크가 모두 차고, 상점으로 갑니다.${run.statPending ? ` 보스를 넘으며 오른 레벨의 능력치 ${run.statPending}점도 이때 나눕니다.` : ''}</p>
 <button class="gold wide" data-a="settleok" data-focus>정산 확정</button></section>`;
 }
 function genShop(run) {
   const ch = run.ch || 1; const owned = Object.values(run.inv).map(x => x.tpl);
-  const pool = CH1_POOL.filter(k => ITEMS[k] && ITEMS[k].kind !== 'start' && !owned.includes(k) && poolOk(run.p, k));
+  const pool = poolOf(ch).filter(k => ITEMS[k] && ITEMS[k].kind !== 'start' && !owned.includes(k) && poolOk(run.p, k));
   const fit = k => classFit(run.p, k); const gOf = k => ITEMS[k].g || 'n'; const take = [];
   const add = list => { const c = list.filter(k => !take.includes(k)); if (c.length) { take.push(pickR(c)); return true; } return false; };
   add(pool.filter(k => gOf(k) === 'r' && fit(k))) || add(pool.filter(k => gOf(k) === 'r')); // 희귀 1개 이상
@@ -2817,9 +2817,17 @@ function vShop() {
   h += `</section><section class="card"><h4>떠나기 전에</h4><div class="row"><button data-a="equip">장비 바꾸기</button><button data-a="respec"${(run.gold || 0) >= cost && pts > 0 ? '' : ' disabled'}>능력치 다시 나누기 (${cost} 골드)</button>${run.tree ? `<button data-a="treereset"${(run.gold || 0) >= tCost && tOpen > 0 ? '' : ' disabled'}>트리 초기화 (${tCost} 골드)</button>` : ''}</div><p class="mini">능력치 다시 나누기는 지금까지 나눈 ${pts}점을 모두 거두어 처음부터 다시 나눕니다. 값은 레벨 × 10골드입니다.${run.tree ? ` 트리 초기화는 연 칸 ${tOpen}개를 모두 닫고 포인트를 돌려줍니다. 끼운 트리 스킬도 빠지므로 스킬 트리에서 다시 열고 끼웁니다. 값은 연 칸 하나에 ${Math.round(TREE_RESET.cell * Math.pow(1.5, (run.ch || 1) - 1))}골드입니다.` : ''} 남은 골드는 다음 챕터로 가져갑니다.</p></section><div class="stickbar shopbar"><span class="gold-n">골드 ${run.gold || 0}</span><span class="mini">가방 ${run.bag.length}/${BAG_MAX}</span><button class="gold" data-a="shopleave">상점을 나선다</button></div>`;
   return h;
 }
+/* 다음 챕터로 (10월 5일, 1~3챕터 작업): 정산 · 상점 · 설문을 지난 캐릭터가 장비 · 골드 · 레벨 · 트리를 그대로 들고 다음 챕터 1층으로 */
+function enterChapter(run) {
+  const nx = (run.ch || 1) + 1; if (!CHAPTERS[nx]) return false;
+  const keepDoors = run.doorLog || []; run.ch = nx; run.boss = chData(nx).boss; run.phase = null; run.settle = null; run.shop = null; run.result = null;
+  delete run.dg; dgInit(run); run.doorLog = keepDoors; (run.chLog = run.chLog || []).push({ ch: nx, lv: run.lv, gold: run.gold, t: Date.now() });
+  G.scr = 'run'; G.b = null; G.sel = null; saveRunLocal(); saveCur(); render(); toast(nx + '챕터 · ' + chData(nx).n); return true;
+}
 function vWait() {
-  const run = G.run;
-  return `<section class="card hero waitc"><p class="mini">${esc(run.cname || '')} · 1챕터 돌파</p><h2>2챕터 · 잊힌 지하묘지</h2><p class="lore">수도원보다 더 깊은 곳에서 찬 바람이 올라온다.</p><p>2챕터는 아직 준비 중입니다. 이 캐릭터는 여기에서 기다리고, 2챕터가 열리면 지금 장비와 골드 그대로 이어서 내려갑니다. 랭킹에는 "1챕터 돌파"로 올라갔습니다.</p><div class="row waitbtn"><button class="gold" data-a="title">타이틀로</button><button data-a="rank">랭킹 보기</button><button data-a="equip">장비</button></div></section>`;
+  const run = G.run; const ch = run.ch || 1, nx = ch + 1;
+  if (CHAPTERS[nx]) return `<section class="card hero waitc"><p class="mini">${esc(run.cname || '')} · ${ch}챕터 돌파</p><h2>${nx}챕터 · ${esc(chData(nx).n)}</h2><p class="lore">${esc(chData(ch).nextLore || '')}</p><p>장비 · 골드 · 레벨 · 스킬 트리를 그대로 들고 ${nx}챕터 1층으로 내려갑니다. 적은 더 거세고, 처음 보는 적과 강적이 기다립니다.</p><div class="row waitbtn"><button class="gold" data-a="nextch" data-focus>${nx}챕터로 내려간다</button><button data-a="equip">장비</button><button data-a="tree">스킬 트리</button><button data-a="title">타이틀로</button></div></section>`;
+  return `<section class="card hero waitc"><p class="mini">${esc(run.cname || '')} · ${ch}챕터 돌파</p><h2>${nx}챕터 준비 중</h2><p class="lore">${esc(chData(ch).nextLore || '')}</p><p>${nx}챕터는 아직 준비 중입니다. 이 캐릭터는 여기에서 기다리고, ${nx}챕터가 열리면 지금 장비와 골드 그대로 이어서 내려갑니다. 랭킹에는 "${ch}챕터 돌파"로 올라갔습니다.</p><div class="row waitbtn"><button class="gold" data-a="title">타이틀로</button><button data-a="rank">랭킹 보기</button><button data-a="equip">장비</button></div></section>`;
 }
 
 /* ===== 한 화면 전투 배치 (창 크기에 맞춤) ===== */
@@ -3668,7 +3676,7 @@ async function initCaps() {
 /* ---------- 런 ---------- */
 function shuffleSeeded(arr, seed) { const a = arr.slice(); const r = mulberry(seed); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function startRun(build, boss) {
-  boss = boss || 'abbot'; // 1챕터 보스: 타락한 수도원장 (기믹 상세는 비공개 문서)
+  boss = boss || chData(1).boss; // 1챕터 보스: 타락한 수도원장 (기믹 상세는 비공개 문서). 챕터를 넘으면 enterChapter가 바꾼다
   const p = mkPlayer(build, {});
   const seed = Date.now() % 100000;
   G.run = {
@@ -3691,7 +3699,9 @@ const EQ_SLOT_N = { weapon: '무기', armor: '갑옷', gloves: '장갑', amulet:
 const kindOf = slot => slot === 'ring1' || slot === 'ring2' ? 'ring' : slot;
 const tplKind = k => kindOf(ITEMS[k].slot);
 function rollBonus(g) { const R = GRADE[g] || GRADE.n; return Math.round((R.lo + Math.random() * (R.hi - R.lo)) * 10) / 10; }
-function mkItem(k, o) { o = o || {}; const g = o.g || ITEMS[k].g || 'n'; return { uid: 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tpl: k, g, ch: o.ch || 1, b: o.b != null ? o.b : rollBonus(g) }; }
+/* 챕터마다 장비 풀 (CH_POOLS[ch], 없으면 1챕터 풀) */
+function poolOf(ch) { return (typeof CH_POOLS !== 'undefined' && CH_POOLS[ch]) || CH1_POOL; }
+function mkItem(k, o) { o = o || {}; const g = o.g || ITEMS[k].g || 'n'; return { uid: 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tpl: k, g, ch: o.ch || (typeof G !== 'undefined' && G.run && G.run.ch) || 1, /* 10월 5일: 기본값이 늘 1이라 2챕터 드롭이 1챕터 수치로 나올 뻔했다 */ b: o.b != null ? o.b : rollBonus(g) }; }
 function itemBase(it) { const sb = SLOT_BASE[tplKind(it.tpl)]; const v = sb.v[(it.ch || 1) - 1] * (1 + (it.b || 0) / 100); return { k: sb.k, lab: sb.lab, v }; }
 function baseText(it) { const x = itemBase(it); return x.k === 'flask' ? `${x.lab} ${Math.round(x.v * 1000) / 10}%` : x.k === 'wpn' ? `${x.lab} ${r1(x.v)}` : `${x.lab} +${Math.round(x.v)}`; }
 function gradeTag(g) { return `<span class="gtag gr-${g}">${(GRADE[g] || GRADE.n).n}</span>`; }
@@ -3921,7 +3931,7 @@ function typeOk(run, t, f) {
   const T = ROOM_TYPES[t], d = run.dg; if (!T || f < T.from) return false;
   if ((d.counts[t] || 0) >= T.max) return false;
   if (t === 'strong' && d.strong[isLower(f) ? 'l' : 'u'] >= STRONG_PER_HALF) return false;
-  if (t === 'event' && EVENTS.every(e => d.events.includes(e.id))) return false;
+  if (t === 'event' && EVENTS.filter(e => inCh(e, run.ch)).every(e => d.events.includes(e.id))) return false;
   return true;
 }
 function pickType(run, f, not, only) {
@@ -3951,19 +3961,19 @@ function genDoors(run, f) {
 function pickSquad(run, f) {
   const d = run.dg; if (!d.fsq || d.fsqF !== f) { d.fsq = []; d.fsqF = f; }
   const pw = { rough: 1.6, quiet: 0.5 }[run.path] || 1;
-  const ws = SQUADS.map(s => d.fsq.includes(s.id) || s.id === d.lastSquad ? 0 : s.w * (s.press ? pw : 1));
+  const ws = SQUADS.map(s => !inCh(s, run.ch) || d.fsq.includes(s.id) || s.id === d.lastSquad ? 0 : s.w * (s.press ? pw : 1)); // 챕터가 다른 무리는 무게 0
   let x = Math.random() * ws.reduce((a, v) => a + v, 0), pick = SQUADS[0]; for (let i = 0; i < SQUADS.length; i++) { x -= ws[i]; if (x <= 0 && ws[i] > 0) { pick = SQUADS[i]; break; } }
   d.fsq.push(pick.id); return pick;
 }
-function rollMods(n) { const ks = Object.keys(ROOM_MODS).filter(k => k !== 'calm'); /* 고요(마나 회복)는 마나가 없는 0.6a.2 직업에게 효과가 없어 뽑지 않는다 (10월 5일) */ const out = []; while (out.length < n) { const k = pickR(ks); if (!out.includes(k)) out.push(k); } return out; }
+function rollMods(n, ch) { const ks = Object.keys(ROOM_MODS).filter(k => k !== 'calm' && (!ROOM_MODS[k].chs || ROOM_MODS[k].chs.includes(ch || 1))); /* 고요(마나 회복)는 마나가 없는 0.6a.2 직업에게 효과가 없어 뽑지 않는다 (10월 5일) */ const out = []; while (out.length < n) { const k = pickR(ks); if (!out.includes(k)) out.push(k); } return out; }
 function mkRoom(run, t, f) {
-  const T = ROOM_TYPES[t], low = isLower(f), P = PATHS[run.path] || PATHS.main; const r = { type: t, floor: f, lv: mlvOf(f), names: ENEMY_NAMES[1], path: run.path || 'main' };
+  const T = ROOM_TYPES[t], low = isLower(f), P = PATHS[run.path] || PATHS.main; const ch = run.ch || 1; const r = { type: t, floor: f, ch, lv: mlvOf(f, ch), names: ENEMY_NAMES[ch] || ENEMY_NAMES[1], path: run.path || 'main' };
   if (T.fight) {
-    if (t === 'strong') { const unused = STRONG_FOES.filter(x => !run.dg.foes.includes(x.id)); const foe = pickR(unused.length ? unused : STRONG_FOES); r.en = JSON.parse(JSON.stringify(foe.en)); r.strong = foe.n; r.foe = foe.id; }
+    if (t === 'strong') { const chF = STRONG_FOES.filter(x => inCh(x, ch)); const unused = chF.filter(x => !run.dg.foes.includes(x.id)); const foe = pickR(unused.length ? unused : chF); r.en = JSON.parse(JSON.stringify(foe.en)); r.strong = foe.n; r.foe = foe.id; }
     else if (t === 'treasure') r.en = JSON.parse(JSON.stringify(pickR(ENC.treasure)));
     else { const sq = pickSquad(run, f); r.squad = sq.id; r.en = JSON.parse(JSON.stringify(low ? sq.low : sq.up)); if (sq.vary && Math.random() < SQUAD_VARY) { const [vi, pool] = sq.vary; if (r.en[vi]) r.en[vi][0] = pickR(pool); } } // 테마 무리 + 변주 (10월 4일)
-    if (t === 'trial') r.mods = rollMods(2);
-    else if (t !== 'strong' && Math.random() < MOD_CHANCE[low ? 'lower' : 'upper']) r.mods = rollMods(1);
+    if (t === 'trial') r.mods = rollMods(2, ch);
+    else if (t !== 'strong' && Math.random() < MOD_CHANCE[low ? 'lower' : 'upper']) r.mods = rollMods(1, ch);
     else r.mods = [];
     if (t === 'ambush') { r.ambush = 1; let k = AMBUSH.elite; for (const x of r.en) if (k > 0 && !x[1] && x[0] !== 'bomber') { x[1] = 1; k--; } } // 매복: 정예 하나 더
     r.tough = r.en.map((x, k) => x[1] && !(r.strong && k === 0) ? k : -1).filter(k => k >= 0 && Math.random() < TOUGH_CHANCE[low ? 'lower' : 'upper']); // 정예에게 강인 (강적 본인은 제외)
@@ -3973,10 +3983,10 @@ function mkRoom(run, t, f) {
   }
   if (t === 'shrine') r.shrine = pickR(SHRINES).id;
   if (t === 'altar') r.altar = pickR(ALTARS).id;
-  if (t === 'event') { const left = EVENTS.filter(e => !run.dg.events.includes(e.id)); r.event = (pickR(left) || EVENTS[0]).id; }
+  if (t === 'event') { const chE = EVENTS.filter(e => inCh(e, ch)); const left = chE.filter(e => !run.dg.events.includes(e.id)); r.event = (pickR(left) || chE[0]).id; }
   return r;
 }
-function fixedRoom(f) { return f === FLOOR_CAMP ? { type: 'camp', floor: f } : f === FLOOR_BOSS ? { type: 'boss', floor: f, boss: 1, lv: mlvOf(f) } : null; }
+function fixedRoom(f) { const ch = (G.run && G.run.ch) || 1; return f === FLOOR_CAMP ? { type: 'camp', floor: f, ch } : f === FLOOR_BOSS ? { type: 'boss', floor: f, boss: 1, ch, lv: mlvOf(f, ch) } : null; }
 function chooseDoor(i) {
   const run = G.run, d = run.dg; const r = run.doors && run.doors[i]; if (!r) return;
   d.counts[r.type] = (d.counts[r.type] || 0) + 1; d.last = r.type; if (r.squad) d.lastSquad = r.squad;
@@ -4010,7 +4020,7 @@ function dgFix(run) {
 function rollGrade(minG) { const x = Math.random() * 100; let g = x < 50 ? 'n' : x < 90 ? 'm' : 'r'; if (minG === 'm' && g === 'n') g = Math.random() < 0.8 ? 'm' : 'r'; if (minG === 'r') g = 'r'; return g; }
 function dropKey(run, g, not) {
   const owned = Object.values(run.inv || {}).map(x => x.tpl); not = not || [];
-  const base = CH1_POOL.filter(k => poolOk(run.p, k));
+  const base = poolOf(run.ch).filter(k => poolOk(run.p, k));
   let c = base.filter(k => (ITEMS[k].g || 'n') === g && !owned.includes(k) && !not.includes(k)); if (!c.length) c = base.filter(k => (ITEMS[k].g || 'n') === g && !not.includes(k));
   const fit = c.filter(k => itemFits(run.p, k)); const pool = Math.random() < 0.3 && fit.length ? fit : c; return pickR(pool);
 }
@@ -4055,7 +4065,7 @@ function enterRoom() {
 function afterBattle() {
   const b = G.b, run = G.run, p = run.p;
   codexMerge(b);
-  const rec = { type: (G.run.cur || {}).type || '', squad: (G.run.cur || {}).squad || undefined, foe: (G.run.cur || {}).foe || undefined, mods: (G.run.cur || {}).mods || [], gear: run.eqU ? EQ_SLOTS.map(sl => { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; return it ? it.tpl + ':' + it.g : null; }) : null, room: run.room, res: b.over, acts: b.turnIdx, t: Math.round(b.t * 10) / 10, hpIn: r1(run.entryHp), hpOut: r1(p.hp / p.hpMax), flIn: run.entryFl, flOut: p.flask.life + p.flask.mana, item: Object.values(p.eq).filter(Boolean) };
+  const rec = { ch: run.ch || 1, type: (G.run.cur || {}).type || '', squad: (G.run.cur || {}).squad || undefined, foe: (G.run.cur || {}).foe || undefined, mods: (G.run.cur || {}).mods || [], gear: run.eqU ? EQ_SLOTS.map(sl => { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; return it ? it.tpl + ':' + it.g : null; }) : null, room: run.room, res: b.over, acts: b.turnIdx, t: Math.round(b.t * 10) / 10, hpIn: r1(run.entryHp), hpOut: r1(p.hp / p.hpMax), flIn: run.entryFl, flOut: p.flask.life + p.flask.mana, item: Object.values(p.eq).filter(Boolean) };
   run.rooms.push(rec);
   for (const x of b.rec) run.acts.push(Object.assign({ r: run.room }, x));
   if (b.over === 'lose') { run.deaths.push(run.room); }
@@ -4771,8 +4781,9 @@ const SND = { el: null, cur: '', want: '', unlocked: false, fadeT: 0 };
 function sndCfg() { const a = (G.data && G.data.audio) || {}; return { on: a.on !== false, music: a.music == null ? 0.45 : a.music, sfx: a.sfx == null ? 0.7 : a.sfx }; }
 function musicFor() {
   const scr = PAGES.includes(G.scr) ? G.back || 'title' : G.scr; // 랭킹·기록·관리자 페이지는 원래 화면의 곡을 이어 간다
-  if (scr === 'run' && G.b && G.b.ctx && G.b.ctx.boss) return 'ch1_boss';
-  if (scr === 'run' || scr === 'scen' || (scr === 'tut' && G.b)) return 'ch1_dungeon';
+  const chM = k => { const c = (G.run && G.run.ch) || 1; return MUSIC['ch' + c + '_' + k] ? 'ch' + c + '_' + k : 'ch1_' + k; }; // 챕터 곡이 없으면 1챕터 곡
+  if (scr === 'run' && G.b && G.b.ctx && G.b.ctx.boss) return chM('boss');
+  if (scr === 'run' || scr === 'scen' || (scr === 'tut' && G.b)) return chM('dungeon');
   if (scr === 'dead' || (scr === 'survey' && G.run && G.run.result === 'lose')) return 'failed';
   if (scr === 'settle' || scr === 'wait' || (scr === 'survey' && G.run && G.run.phase === 'clearsv')) return 'finished';
   if (scr === 'shop') return 'shop';
@@ -4905,6 +4916,7 @@ function onClick(ev) {
       run.gold -= cost; S.log.push({ a: 'respec', price: cost, from: Object.assign({}, run.stats), t: Date.now() }); run.stats = { str: 0, dex: 0, int: 0, con: 0, wil: 0 }; applyStats(run.p, run.stats); saveRunLocal(); saveCur(); openSheet('stats', { pts, respec: 1, why: '능력치 다시 나누기 · ' + pts + '점' }); break; }
     case 'treereset': { const run = G.run, S = run.shop; if (!S || run.phase !== 'shop' || !run.tree) break; const cost = treeResetCost(run); const n = run.tree.open.length; if (!n || (run.gold || 0) < cost) break; if (!confirm(cost + ' 골드를 내고 연 칸 ' + n + '개를 모두 닫을까요? 포인트 ' + n + '점을 돌려받고, 끼운 트리 스킬도 빠집니다. 스킬 트리에서 다시 열고 끼웁니다.')) break;
       run.gold -= cost; S.log.push({ a: 'treereset', price: cost, from: run.tree.open.slice(), t: Date.now() }); treeReset(run); saveRunLocal(); saveCur(); sfx('coin'); toast('트리를 초기화했습니다. 포인트 ' + n + '점을 다시 씁니다'); G.back = G.scr; G.scr = 'tree'; G.sheet = null; render(); window.scrollTo(0, 0); break; }
+    case 'nextch': { const run = G.run; if (!run || run.phase !== 'wait') break; enterChapter(run); break; }
     case 'shopleave': { const run = G.run; if (run.phase !== 'shop') break; run.phase = 'clearsv'; G.scr = 'survey'; saveRunLocal(); saveCur(); pushRank(run, 'clear'); render(); window.scrollTo(0, 0); break; }
     case 'createcancel': cancelCreate(); break;
     case 'door': chooseDoor(+el.dataset.k); break;
