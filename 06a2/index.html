@@ -1115,7 +1115,7 @@ function kwBlocked(b, u, k) {
   kwDec(u, 'block'); logp(b, 'good', '정화의 막이 ' + (KW_N[k] || k) + '을(를) 튕겨 낸다'); b.rec.push({ k: 'block', t: r1(b.t), kw: k }); return true;
 }
 /* 출혈: 걸린 쪽이 행동할 때마다 N 피해, 1 감소 */
-function kwBleed(b, u) { const n = stk(u, 'bleed'); if (!n || b.over) return; kwDec(u, 'bleed'); dmgDot(b, u, n * (hasMod(b, 'bloodpool') ? 2 : 1) * (u === b.p ? 1 : dotMul(b.p)), '출혈'); }
+function kwBleed(b, u) { const n = stk(u, 'bleed'); if (!n || b.over) return; kwDec(u, 'bleed'); dmgDot(b, u, n * (u === b.p ? 1 : dotMul(b.p)), '출혈'); /* 피 웅덩이 ×2는 dmgDot이 한 번만 곱한다 (10월 5일 고침: 여기서도 곱해 4배였다) */ }
 /* 직접 피해를 받을 때: 취약 ×1.25 / 보호 ×0.75 (1 감소), 화상 N 더 (1 감소). 지속 피해는 발동시키지 않는다 */
 function kwTaken(b, u, d, o) {
   if (o.dot || !(d > 0)) return d;
@@ -1691,7 +1691,10 @@ function decideIntent(b, e) {
   if (e.intent && e.intent.k === 'fuse') it = { k: 'explode' };
   e.intent = it;
 }
+/* 어둠 방 특성 (10월 5일 고침: 문장대로 후열 적의 예고를 가린다. 등잔 기름으로 걷어 낸다) */
+const darkHid = (b, e) => hasMod(b, 'dark') && e.row === 'back' && e.role !== 'boss';
 function intentText(b, e) {
+  if (darkHid(b, e)) return { t: '어둠 속이라 무엇을 하려는지 보이지 않는다', hv: 0 };
   const i = e.intent || {}; const est = r1(enemyHitEst(b, e));
   switch (i.k) {
     case 'attack': return { t: '공격 ' + est + (i.bleed ? ' · 출혈 ' + i.bleed : ''), hv: 0 };
@@ -1734,6 +1737,7 @@ function intentText(b, e) {
 const heavyName = e => ({ bishop: '뼈 창', cantor: '합창', scribe: '선고' })[e.foe] || '강타';
 const INTENT_ICO = { chant: '📿', chanting: '📿', burn: '🔥', raise: '⚰️', tune: '🎵', seal: '🔏', attack: '⚔️', charge: '⏳', heavy: '💥', heal: '✚', summon: '📯', fuse: '🧨', explode: '💣', mirror: '🪞', brand: '📜', pray: '🙏', none: '·', brace: '🪨', counter: '↩️', evade: '🌀', aim: '🎯', guard: '🙌', bless: '✨', curse: '🕯️', steal: '🫳', flee: '💨' };
 function intentBadge(b, e) {
+  if (darkHid(b, e)) return { ico: '❓', num: '', txt: '보이지 않음', cls: '' };
   const i = e.intent || {}; const est = enemyHitEst(b, e); const capOf = d => Math.min(d, b.p.hpMax * (e.role === 'boss' ? 0.45 : e.elite ? 0.35 : 0.25));
   switch (i.k) {
     case 'attack': return { ico: INTENT_ICO.attack, num: r1(capOf(est * (i.aimed ? EKW.aimMul : 1))), txt: (i.aimed ? '겨눈 한 발' : '공격') + (i.bleed ? ' 🩸' + i.bleed : ''), cls: 'atk' };
@@ -2366,8 +2370,8 @@ const HELP = [
   { k: 'build', n: '직업과 스킬', t: [
     '시험판에서는 암살자, 파수꾼, 사냥꾼을 고를 수 있습니다. 나머지 직업은 만드는 대로 열립니다. 메뉴의 🧪 시험 전투에서는 던전 없이 직업 · 레벨 · 스킬 · 적을 골라 바로 싸워 볼 수 있습니다.',
     '파수꾼은 방어할 때마다 보호막 6을 얻습니다. 보호막은 최대 생명력의 30%까지 쌓여 받는 피해를 먼저 받아냅니다. 후열 적의 공격은 보호막이 절반만 받아냅니다. 성벽 갈래는 쌓은 보호막을 태워 칩니다.',
-    '사냥꾼은 원거리라 기본 공격과 대부분의 스킬이 후열에 닿고, 전투를 시작하면 가속 2를 얻습니다. 가속이 있으면 라운드 맨 앞에서 두 번 연달아 움직입니다(한 라운드에 한 번, 두 번째 차례는 쿨타임이 줄지 않음). 같은 적을 연달아 맞히면 추적이 한 겹씩 쌓여(최대 3) 겹마다 피해 +5%이고, 3겹인 적에게는 몸 낮추기와 버티기가 통하지 않습니다. 가속은 기동 갈래 스킬로 얻습니다. 방금 쓴 스킬과 다른 갈래의 스킬을 쓰면 연계가 되어 피해가 오릅니다(버튼의 🔗). 사냥꾼은 한 갈래를 깊이 파기보다 갈래를 바꿔 이어 쓸 때 제 힘을 냅니다. 스킬 한 번은 연타라도 한 겹이고, 추적을 더하는 효과로는 2겹까지만 오릅니다. 여럿을 치는 공격과 지속 피해는 추적에 손대지 않습니다.',
-    '몸 빼기는 다음에 맞는 공격 하나를 피합니다. 적이 나를 직접 치는 공격(공격 · 겨눈 한 발 · 강타 · 큰 한 방)만 피할 수 있고, 화형 같은 주문, 지속 피해, 방 특성 피해는 피할 수 없습니다. 피했을 때 나가는 반격도 실제로 피했을 때만 나갑니다.',
+    '사냥꾼은 원거리라 기본 공격과 대부분의 스킬이 후열에 닿고, 전투를 시작하면 가속 1을 얻습니다. 가속이 있으면 라운드 맨 앞에서 두 번 연달아 움직입니다(한 라운드에 한 번, 두 번째 차례는 쿨타임이 줄지 않음). 같은 적을 연달아 맞히면 추적이 한 겹씩 쌓여(최대 3) 겹마다 피해 +5%(정예 · 강적 · 보스에게는 +10%)이고, 3겹인 적에게는 몸 낮추기와 버티기가 통하지 않습니다. 가속은 기동 갈래 스킬로 얻습니다. 방금 쓴 스킬과 다른 갈래의 스킬을 쓰면 연계가 되어 피해가 오릅니다(버튼의 🔗). 사냥꾼은 한 갈래를 깊이 파기보다 갈래를 바꿔 이어 쓸 때 제 힘을 냅니다. 스킬 한 번은 연타라도 한 겹이고, 추적을 더하는 효과로는 2겹까지만 오릅니다. 여럿을 치는 공격과 지속 피해는 추적에 손대지 않습니다.',
+    '사냥꾼의 몸 빼기(기동 갈래)와 피하기 스킬은 다음에 맞는 공격 하나를 피합니다. 암살자의 시작 스킬 몸 빼기는 피하지 않고 보호와 스태미나를 줍니다. 적이 나를 직접 치는 공격(공격 · 겨눈 한 발 · 강타 · 큰 한 방)만 피할 수 있고, 화형 같은 주문, 지속 피해, 방 특성 피해는 피할 수 없습니다. 피했을 때 나가는 반격도 실제로 피했을 때만 나갑니다.',
     '직업마다 시작 스킬 둘이 늘 끼워져 있습니다. 장착 칸을 차지하지 않습니다.',
     '스킬 트리는 세 갈래이고, 갈래마다 두 칸씩 10줄의 사다리입니다(하급 6줄 → 중급 4줄). 윗줄 두 칸 가운데 하나만 열어도 아랫줄이 열립니다. 처음에는 모두 잠겨 있고, 캐릭터를 만들 때 포인트 1로 첫 줄의 한 칸을 엽니다. 레벨이 오를 때마다 포인트 1을 얻어 Lv10에 10점이 됩니다. 한 갈래를 줄마다 하나씩 내려가면 Lv6에 하급 끝, Lv10에 중급 끝입니다. 상급·궁극은 3챕터부터 더합니다. 챕터 사이 상점에서 트리 초기화를 사면 연 칸을 모두 닫고 포인트를 돌려받습니다(연 칸 하나에 ' + TREE_RESET.cell + '골드, 챕터마다 1.5배).',
     '윗줄을 열기 전에는 아랫줄 칸이 "?"로 보입니다. 갈래마다 강한 상황과 약한 상황이 있습니다(트리 갈래 설명).',
@@ -3174,11 +3178,11 @@ const AINFO = {
 const RINFO = {
   bruiser: '돌격병 · 전열. 공격하다가 가끔 강타를 충전한다. 충전 다음 행동에 3배 피해 + 취약.',
   shield: '방패병 · 전열. 다른 적을 노린 근접 공격을 대신 맞는다(원거리·광역·지속 피해는 제외). 서 있는 동안 후열이 받는 광역 피해는 절반, 옆 전열 동료는 −40%(방패벽), 자신도 광역 피해 −25%. 붕괴시키면 잠시 막지 못한다.',
-  archer: '사수 · 후열. 약간 빠르다. 공격하면 출혈을 건다.',
+  archer: '사수 · 후열. 약간 빠르다. 겨눈 한 발 두 번에 한 번 출혈을 건다.',
   healer: '사제 · 후열. 생명력이 40% 아래인 동료를 25% 치유하고, 아니면 축복(다음 공격 +25%)을 건다.',
   thief: '도둑 · 전열. 몸을 낮추고, 훔치고, 달아난다. 잡으면 되찾는다.',
   darkmage: '암흑술사 · 후열. 저주(약화)와 어둠 화살을 번갈아 쓴다.',
-  summoner: '소환사 · 후열. 하수인 2기를 부른다(최대 3기). 소환은 3번 행동마다 한 번.',
+  summoner: '소환사 · 후열. 소환 → 저주(약화) → 공격을 되풀이한다. 소환은 하수인 1기(최대 3기).',
   bomber: '자폭병 · 전열. 점화를 준비한 다음 행동에 폭발: 광역 피해 + 약화, 그리고 사라진다.',
   pyre: '영창자 · 후열. 화형 영창을 시작하고, 다음 행동에 화형(큰 피해 + 화상)을 내린다. 영창 중 피해가 쌓이거나 무너지면 끊긴다.',
   minion: '하수인 · 전열. 약하지만 수가 많다.',
@@ -3409,11 +3413,11 @@ function initPop() {
   Object.assign(RINFO, {
     bruiser: '돌격병. 전열. 공격을 이어 가다 가끔 도끼를 치켜들어 강타를 모은다. 다음 행동에 평소의 ' + TELE.heavy + '배 피해를 주고 나를 취약하게 만든다.',
     shield: '방패병. 전열. 동료를 노린 근접 공격을 대신 맞는다. 원거리, 광역, 지속 피해는 막지 못한다. 대신 서 있는 동안 방패벽으로 후열이 받는 광역 피해를 절반으로, 옆 전열 동료가 받는 광역 피해를 40% 줄이고, 자신도 광역 피해를 25% 덜 받는다. 붕괴시키면 잠시 자리를 비운다.',
-    archer: '사수. 후열. 조금 빠르고, 공격 ' + EKW.archerEvery + '번에 한 번 출혈 ' + EKW.archerBleed + skJo(EKW.archerBleed) + ' 건다.',
+    archer: '사수. 후열. 조금 빠르다. 겨누기 → 겨눈 한 발 → 몸 낮추기를 되풀이하고, 겨눈 한 발 두 번에 한 번 출혈 ' + EKW.archerBleed + skJo(EKW.archerBleed) + ' 건다.',
     healer: '사제. 후열. 생명력이 ' + Math.round(PRIEST.heal * 100) + '% 아래인 동료를 25% 회복시키고, 아니면 곧 때릴 동료에게 축복(다음 공격 피해 +25%)을 건다. 치유할수록 지친다.',
     thief: '도둑. 전열. 몸을 낮췄다가 플라스크 한 칸, 골드, 가방의 장비 가운데 하나를 훔치고, 다음 행동에 달아난다. 달아나기 전에 쓰러뜨리면 되찾는다.',
     darkmage: '암흑술사. 후열. 저주로 나에게 약화 ' + EKW.curseWeak + skJo(EKW.curseWeak) + ' 걸고, 다음에는 어둠 화살을 쏜다.',
-    summoner: '소환사. 후열. 세 번 행동할 때마다 하수인 둘을 불러낸다. 하수인은 셋까지.',
+    summoner: '소환사. 후열. 하수인 부르기 → 저주(약화 ' + EKW.curseWeak + ') → 공격을 되풀이한다. 한 번에 하나씩, 하수인은 ' + SUMMON.cap + '까지.',
     bomber: '자폭병. 전열. 도화선에 불을 붙인 다음 행동에 터진다. 평소의 ' + EKW.explodeMul + '배 광역 피해와 함께 나를 약화시키고 사라진다.',
     pyre: '영창자. 후열. 화형 영창을 시작하고 다음 행동에 화형을 내린다. 큰 피해와 함께 화상 ' + CHANT.burn + '. 영창하는 동안 생명력의 ' + Math.round(CHANT.cut * 100) + '%만큼 피해를 받거나 무너지면 끊긴다. 영창은 한 번에 한 적만.',
     minion: '하수인. 전열. 약하지만 수가 많다.',
@@ -3950,7 +3954,7 @@ function pickSquad(run, f) {
   let x = Math.random() * ws.reduce((a, v) => a + v, 0), pick = SQUADS[0]; for (let i = 0; i < SQUADS.length; i++) { x -= ws[i]; if (x <= 0 && ws[i] > 0) { pick = SQUADS[i]; break; } }
   d.fsq.push(pick.id); return pick;
 }
-function rollMods(n) { const ks = Object.keys(ROOM_MODS); const out = []; while (out.length < n) { const k = pickR(ks); if (!out.includes(k)) out.push(k); } return out; }
+function rollMods(n) { const ks = Object.keys(ROOM_MODS).filter(k => k !== 'calm'); /* 고요(마나 회복)는 마나가 없는 0.6a.2 직업에게 효과가 없어 뽑지 않는다 (10월 5일) */ const out = []; while (out.length < n) { const k = pickR(ks); if (!out.includes(k)) out.push(k); } return out; }
 function mkRoom(run, t, f) {
   const T = ROOM_TYPES[t], low = isLower(f), P = PATHS[run.path] || PATHS.main; const r = { type: t, floor: f, lv: mlvOf(f), names: ENEMY_NAMES[1], path: run.path || 'main' };
   if (T.fight) {
@@ -4029,7 +4033,7 @@ function statNext(p, k) {
   if (k === 'dex') return `스태미나 ${calcStMax(p)} → ${calcStMax(up)}, 흘리기 감소 ${Math.round(parryRed(p) * 1000) / 10}% → ${Math.round(parryRed(up) * 1000) / 10}%, 빠르기 +${(s * 0.5).toFixed(1)}% → +${((s + 1) * 0.5).toFixed(1)}%` + ((s + 1) % 10 === 0 ? '. 10점: 흘리기 스태미나 −1' : '');
   if (k === 'con') return `생명력 ${calcHpMax(p)} → ${calcHpMax(up)}`;
   if (k === 'wil') return `보호막으로 얻는 양과 회복 +${s * 2}% → +${(s + 1) * 2}%, 해로운 상태를 버틸 확률 ${Math.min(25, s)}% → ${Math.min(25, s + 1)}%`;
-  return (isV2(p) ? '' : `마나 ${calcMpMax(p)} → ${calcMpMax(up)}, `) + `지속 피해와 정화 피해 +${s * 2}% → +${(s + 1) * 2}%` + ((s + 1) % 10 === 0 ? '. 10점: 독 격발 붕괴 +5' : '');
+  return (isV2(p) ? '' : `마나 ${calcMpMax(p)} → ${calcMpMax(up)}, `) + `지속 피해와 정화 피해 +${s * 2}% → +${(s + 1) * 2}%` + ((s + 1) % 10 === 0 && !isV2(p) ? '. 10점: 독 격발 붕괴 +5' : '');
 }
 function enterRoom() {
   const run = G.run; const R = roomDef(); const p = run.p; if (!R.type) return;
@@ -4165,7 +4169,8 @@ function giveItem(it, then) {
 function toast(m) {
   G.liveMsg = m; let el = document.querySelector('.toast');
   if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
-  const lines = el.isConnected && G.toastLines && Date.now() - (G.toastAt || 0) < 2400 ? G.toastLines : []; lines.push(fixJosa(m)); G.toastLines = lines.slice(-4); G.toastAt = Date.now(); el.textContent = G.toastLines.join('\n'); clearTimeout(G.toastT); // 10월 5일: 전리품 알림이 골드 · 경험치 알림에 덮여 보이지 않았다 G.toastT = setTimeout(() => { const e2 = document.querySelector('.toast'); if (e2) e2.remove(); }, 2400);
+  const lines = el.isConnected && G.toastLines && Date.now() - (G.toastAt || 0) < 2400 ? G.toastLines : []; lines.push(fixJosa(m)); G.toastLines = lines.slice(-4); G.toastAt = Date.now(); el.textContent = G.toastLines.join('\n'); clearTimeout(G.toastT); /* 10월 5일: 전리품 알림이 골드 · 경험치 알림에 덮여 보이지 않았다 */
+  G.toastT = setTimeout(() => { const e2 = document.querySelector('.toast'); if (e2) e2.remove(); }, 2400 + 800 * (G.toastLines.length - 1)); // 10월 5일 고침: 타이머가 주석 안으로 들어가 알림이 사라지지 않았다. 줄이 많으면 조금 더 남긴다
 }
 
 /* 사냥꾼 추적 표시 (10월 5일 만든 사람 요청: 얼마나 쌓였는지 보이게) */
