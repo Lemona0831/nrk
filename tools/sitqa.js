@@ -15,17 +15,18 @@
 process.env.DGDIR = process.env.DGDIR || '06a2';
 const D = require('./dgqa.js');
 const Q = require('./qa.js');
-const { SIT, SIT_CATS } = require('./situations.js');
+const SITS = require('./situations.js'); const SIT_CH = +(process.env.SIT_CH || 1); const SIT = SIT_CH >= 2 ? SITS.SIT2 : SITS.SIT; const SIT_CATS = SITS.SIT_CATS; // 10월 7일: SIT_CH=2면 2챕터 50상황
 const G0 = D.G0; const run_ = D.run_;
 /* 기준 세기 (10월 3일): 50상황은 갈래끼리의 상대 균형을 재는 고정 시험이다. 던전 난이도(DIFF·보스 배수)를 바꿔도 기준이 움직이지 않게,
    균형을 맞춘 날의 세기(하층 체력 ×1.05·피해 ×0.9, 수도원장 ×6·피해 ×1.6)로 고정한다. 던전 전체 난이도는 dgqa.js로 따로 맞춘다.
    SIT_REAL=1이면 게임의 지금 세기 그대로 잰다(참고용) */
 const SIT_REAL = !!process.env.SIT_REAL;
-if (!SIT_REAL) run_('DIFF.lower = { hp: 1.05, dmg: 0.9 }; BOSSES.abbot.mult = 6; BOSSES.abbot.dmgMul = 1.6;');
+if (!SIT_REAL) run_('DIFF.lower = { hp: 1.05, dmg: 0.9 }; BOSSES.abbot.mult = 6; BOSSES.abbot.dmgMul = 1.6; if (typeof CHAPTERS !== "undefined" && CHAPTERS[2] && CHAPTERS[2].diff) CHAPTERS[2].diff.lower = { hp: 0.92, dmg: 0.62 };'); // 2챕터 기준 세기는 10월 7일 게임 값(하층 ×0.92 · ×0.62, 보스 군주도 그날 값)
+const ENAMES = run_('typeof ENEMY_NAMES !== "undefined" ? ENEMY_NAMES : {}');
 const MAIN = require.main === module; const MIX = {};
 const TH = { cat: 0.04, parity: 0.06, col: 0.10, means: 0.5 }; // 기준 문턱 (점수 100점 만점): 강함 +4 이상·약함 −4 이하(세 갈래 평균 대비), 갈래 평균 차이 6 이하, 기둥 차이 10 이하
 const N = +((MAIN && process.argv[2]) || 12); const CLS = (MAIN && process.argv[3]) || process.env.SIT_CLS || 'assassin'; const PK = process.env.PK || 'careful';
-const LVS = [5, 10]; const MLV = { 5: +(process.env.MLV5 || 6), 10: +(process.env.MLV10 || 9) }; // 내 레벨 → 상황의 몬스터 레벨: 그 챕터 끝 몬스터 레벨(기획서 11.4절: 1챕터 1~4, 2챕터 5~8)보다 1~2 높게(점수가 너무 높으면 강점·약점이 묻힌다)
+const LVS = SIT_CH >= 2 ? [7, 10] : [5, 10]; const MLV = SIT_CH >= 2 ? { 7: 7, 10: 9 } : { 5: +(process.env.MLV5 || 6), 10: +(process.env.MLV10 || 9) }; // 내 레벨 → 상황의 몬스터 레벨: 그 챕터 끝 몬스터 레벨(기획서 11.4절: 1챕터 1~4, 2챕터 5~8)보다 1~2 높게(점수가 너무 높으면 강점·약점이 묻힌다)
 const SKL = G0.SKILLS2[CLS]; const T = G0.TREE2[CLS];
 
 function buildOf(br, col, lv) {
@@ -60,12 +61,13 @@ function fight(bd, sit, seed, eqOver) { // eqOver: 장착을 직접 줄 때(보�
   const sp = sit.p || {}; if (sp.hp) p.hp = Math.round(p.hpMax * sp.hp); if (sp.st != null) p.st = sp.st;
   for (const k in (sp.s || {})) p.s[k] = { stacks: sp.s[k], until: 1e9, dur: 1e9 };
   const room = JSON.parse(JSON.stringify(sit.room)); const bossKind = room.boss || null; if (room.boss) room.boss = true;
-  room.lv = (sit.lv && sit.lv[bd.lv]) || MLV[bd.lv]; room.floor = 13; /* 하층 (06a2 24층 틀은 13층부터, next/는 10층부터) */ if (!room.en) room.en = [];
+  room.lv = (sit.lv && sit.lv[bd.lv]) || MLV[bd.lv]; room.floor = 13; /* 하층 (06a2 24층 틀은 13층부터, next/는 10층부터) */ if (SIT_CH >= 2) { room.ch = SIT_CH; room.names = ENAMES[SIT_CH]; } if (!room.en) room.en = [];
   const b = G0.roomBattle(p, room, bossKind, seed); b.rngF = r; b.stepMode = false;
   const P = Q.PERSONAS[PK]; const mem = {}; let n = 0;
   while (!b.over && n++ < 250) {
     const sr = r() < (P.mech || 0.5) ? Q.sigRule(b, r) : null;
-    let [a, t] = sr || (P.look ? Q.lookahead(b, P, r) : Q.heuristic(b, P, r, mem));
+    let [a, t] = D.ch2Pre(b, P, r) || sr || (P.look ? Q.lookahead(b, P, r) : Q.heuristic(b, P, r, mem));
+    [a, t] = D.ch2Post(b, P, r, a, t); // 2챕터 판단(dgqa.js와 같다. 1챕터 상황에서는 아무것도 하지 않는다)
     if (a === 'flee') { const L = G0.actionList(b).filter(x => x.ok && x.id !== 'flee'); a = L[0].id; t = null; }
     if (!eqOver) { const sk = G0.SK2[a]; const kind = sk ? (sk.start ? 'st' : 'tr') : 'gen'; MIX[bd.lv + bd.br] = MIX[bd.lv + bd.br] || { st: 0, tr: 0, gen: 0 }; MIX[bd.lv + bd.br][kind]++; }
     try { G0.playerAct(b, a, t); } catch (e) { return { win: 0, bug: e.message }; }

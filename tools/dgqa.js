@@ -190,6 +190,12 @@ function ch2Pre(b, P, r) {
     if (aoe) return [aoe.id, null];
     const one = L.filter(x => ['basic'].includes(x.id) || (x.v2 && x.time <= 0.6)).find(x => G0.canTarget(b, piles[0], x)); if (one) return [one.id, piles[0].id];
   }
+  const wall = al.find(e => e.lordWall); // 군주의 뼈벽: 붕괴가 큰 행동으로 부순다(벽은 붕괴 게이지가 차면 곧바로 부서진다)
+  if (wall && r() < (P.mech || 0.5) + 0.2) {
+    const L = G0.actionList(b).filter(x => x.ok && !x.self && x.id !== 'flee' && G0.canTarget(b, wall, x));
+    const brkOf = x => x.id === 'heavy' ? 35 : x.v2 ? x.s.fx.reduce((m, f) => m + (f.k === 'brk' ? f.n : f.k === 'cutx' ? f.brk : 0), 0) : 0;
+    const c = L.filter(x => brkOf(x) >= 25).sort((x, y) => brkOf(y) - brkOf(x))[0]; if (c) return [c.id, c.aoe ? null : wall.id];
+  }
   return null;
 }
 const ACT_G = (b, a) => { if (a === 'basic' || a === 'heavy') return 'wpn'; if (a === 'guard' || a === 'dodge') return 'prep'; const x = G0.actionList(b).find(y => y.id === a); return x && x.v2 ? (x.s.tgt === 'self' && !x.s.fx.some(f => f.k === 'dmg') ? 'prep' : 'skill') : null; };
@@ -376,4 +382,4 @@ if (require.main === module) {
   }
   const bugs = runs.flatMap(x => x.bugs); if (bugs.length) console.log('이상 예:', bugs.slice(0, 5));
 }
-module.exports = { playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng };
+module.exports = { playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post };
