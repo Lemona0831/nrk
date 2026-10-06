@@ -180,3 +180,100 @@ const CODEX = {
   scribe: { seal: '서기관이 적어 넣은 것은 한동안 쓸 수 없다.', verdict: '봉인이 가득 차자 선고가 내렸다.', unseal: '서기관의 자세가 무너지자 봉인이 풀렸다.' },
   pilgrim: { leech: '맞힐 때마다 피를 마시며 상처를 메운다.', frenzy: '반쯤 쓰러지면 더 빨라진다.', rot: '쓰러질 때 썩은 기운이 퍼져, 다음 방까지 몸에 남는다.' },
 };
+
+/* ===== 2챕터: 잊힌 지하묘지 (10월 5일, docs/챕터/2챕터.md. 강적 · 보스의 기믹과 대처는 비공개 문서) =====
+   틀은 1챕터와 같다(24층, 12:12, 갈래길). 이 칸은 1챕터 배열에 ch: 2 항목을 더하고 CHAPTERS[2]를 채운다. 수치는 모두 [가설] */
+ENEMY_NAMES[2] = { bruiser: '무덤지기', shield: '납골당 문지기', archer: '납골당 궁수', healer: '곡하는 사제', summoner: '뼈 엮는 자', minion: '기어 나온 뼈', thief: '도굴꾼', pyre: '장송 영창자', skeleton: '해골 병사', hexer: '무덤 주술사', mason: '뼈 쌓는 자', burrower: '굴 파는 시체', bloat: '부푼 시체', bonewall: '뼈벽' };
+CHAPTERS[2] = {
+  n: '잊힌 지하묘지', boss: 'cryptlord', names: ENEMY_NAMES[2], strongFrom: 4, xp: 1.55, gold: 1.35, settleStrong: 30,
+  diff: { upper: { hp: 0.75, dmg: 0.60 }, lower: { hp: 0.92, dmg: 0.62 } }, // 2챕터 장비가 생기기 전의 임시 값
+  settleLore: '녹슨 왕관이 뼈 더미 위로 굴러떨어졌다. 더 깊은 곳에서 뜨거운 모래바람이 불어온다.',
+  nextLore: '계단 아래로 마른 열기가 올라온다. 벽 틈마다 재가 쌓여 있다.',
+  zones: [[6, '무너진 제단 아래'], [11, '납골 회랑'], [12, '마른 세례조'], [18, '이름의 벽'], [23, '왕의 묘실 앞'], [24, '군주의 묘실']],
+};
+CHAPTERS[1].xp = 1; CHAPTERS[1].gold = 1; CHAPTERS[1].settleStrong = 20;
+/* 새 역할의 행동 수치 (docs/챕터/2챕터.md 5절) */
+const RISE = { pile: 0.15, wait: 2, hp: 0.5 };   // 해골: 쓰러지면 뼈 더미(최대의 15%), 2라운드 뒤 50%로 한 번만 일어선다
+const HEX = { base: 0.04, per: 0.04, cap: 0.24, kinds: ['poison', 'bleed', 'ignite', 'weak', 'vuln'] }; // 무덤 주술사 조이기 = 기준 × (base + per × 내 해로운 상태 가짓수)
+const BWALL = { hp: 1.0, brk: 30, cut: 0.5, mend: 0.5, wait: 2 }; // 뼈벽: 후열이 받는 한 적 대상 피해 ×cut
+const BURROW = { up: 1.6, aoe: 1.3, vuln: 2, chill: 1 }; // 굴 파는 시체: 솟구침 = 평소 × up, 땅속에서 광역 ×aoe, 드러나면 취약
+const BLOAT = { me: 4, foes: 3 };                // 부푼 시체: 쓰러질 때 중독
+const SWIFT = { share: 0.5, hp: 1.15, from: 9 }; // 신속 접사(2챕터부터): 라운드가 시작될 때 둔화가 없으면 가속 1
+const INTRO_AT = { skeleton: 1, hexer: 3, burrower: 5, mason: 7, bloat: 13 }; // 처음 만남 보장 문 (그 층까지 못 봤으면)
+const ROLE_INTRO = {
+  skeleton: ['뼈마디가 덜그럭거린다.', '쓰러진 해골은 뼈 더미가 됩니다. 더미 위 숫자는 다시 일어서기까지 남은 라운드입니다. 화상이 걸렸거나 무너진 채 쓰러진 해골은 일어서지 않습니다.'],
+  hexer: ['손가락에 감긴 실이 내 쪽으로 뻗어 있다.', '조이기는 내 해로운 상태가 여러 가지일수록 아픕니다.'],
+  mason: ['등에 진 바구니에서 뼈가 쏟아진다.', '뼈벽이 서 있으면 후열의 적은 한 적을 노린 공격을 절반만 받습니다. 뼈벽은 붕괴에 약합니다.'],
+  burrower: ['바닥의 흙이 숨을 쉰다.', '땅속의 적은 고를 수 없습니다. 솟구친 직후에는 드러나 취약해집니다.'],
+  bloat: ['배가 터질 듯 부어 있다.', '쓰러지면 터져 중독을 퍼뜨립니다. 불에 타면 터지지 않습니다.'],
+  swift: ['이 적은 발이 땅에 닿지 않는다.', '라운드가 시작될 때마다 가속 1을 얻습니다. 둔화가 걸리면 그만큼 사라집니다.'],
+};
+/* 2챕터 테마 무리 (7절). from: 나오는 첫 층 */
+SQUADS.push(
+  { id: 'bonepatrol', ch: 2, n: '뼈 순찰', w: 1.2, from: 1, up: [['skeleton'], ['skeleton']], low: [['skeleton', 1], ['skeleton'], ['archer']], vary: [1, ['bruiser', 'shield']] },
+  { id: 'diggers', ch: 2, n: '무덤지기 패', w: 1.0, from: 1, up: [['bruiser'], ['skeleton']], low: [['bruiser', 1], ['skeleton'], ['healer']], vary: [1, ['skeleton', 'shield', 'bloat']] },
+  { id: 'weave', ch: 2, n: '뼈 엮기', w: 0.8, from: 2, up: [['skeleton'], ['summoner']], low: [['skeleton', 1], ['summoner'], ['healer']], vary: [0, ['skeleton', 'bruiser']] },
+  { id: 'knot', ch: 2, n: '저주 매듭', w: 1.2, press: 1, from: 3, up: [['bruiser'], ['hexer']], low: [['shield'], ['hexer', 1], ['hexer']], vary: [0, ['bruiser', 'skeleton', 'bloat']] },
+  { id: 'mourn', ch: 2, n: '곡하는 행렬', w: 1.2, from: 4, up: [['skeleton'], ['skeleton'], ['healer']], low: [['skeleton', 1], ['skeleton'], ['healer']], vary: [1, ['skeleton', 'bruiser', 'bloat']] },
+  { id: 'robbers', ch: 2, n: '도굴꾼 떼', w: 0.8, from: 4, up: [['thief'], ['thief'], ['archer']], low: [['thief'], ['burrower'], ['archer', 1]], vary: [2, ['archer', 'hexer']] },
+  { id: 'burrow', ch: 2, n: '굴 무리', w: 1.0, press: 1, from: 5, up: [['burrower'], ['archer']], low: [['burrower', 1], ['burrower'], ['archer']], vary: [1, ['archer', 'skeleton']] },
+  { id: 'dirge', ch: 2, n: '장송 영창', w: 0.8, press: 1, from: 6, up: [['skeleton'], ['pyre']], low: [['shield'], ['skeleton'], ['pyre', 1]], vary: [0, ['bruiser', 'shield', 'skeleton']] },
+  { id: 'masonry', ch: 2, n: '뼈벽 공사', w: 1.0, from: 7, up: [['bruiser'], ['mason']], low: [['skeleton'], ['mason', 1], ['archer']], vary: [0, ['bruiser', 'shield', 'skeleton']] },
+  { id: 'garrison', ch: 2, n: '납골당 수비대', w: 1.2, press: 1, from: 14, up: [['skeleton', 1], ['mason'], ['hexer']], low: [['skeleton', 1], ['mason'], ['hexer']], vary: [0, ['burrower', 'shield', 'bloat']] },
+);
+ENC.treasure2 = [[['shield', 1], ['skeleton']], [['skeleton', 1], ['archer']], [['burrower', 1], ['hexer']]];
+/* 방 특성 (9절): 새 셋은 2챕터만, 수도원 주제(성수 · 종소리)는 1챕터만 */
+ROOM_MODS.holy.chs = [1]; ROOM_MODS.bell.chs = [1];
+ROOM_MODS.bonepile = { n: '무너진 납골벽', chs: [2], d: '전투가 시작될 때 전열에 뼈 더미 둘이 있습니다. 2라운드 뒤 해골 병사로 일어섭니다.' };
+ROOM_MODS.rotair = { n: '썩은 공기', chs: [2], d: '이 방에서는 중독이 줄지 않습니다.' };
+ROOM_MODS.flooded = { n: '물에 잠긴 바닥', chs: [2], d: '전투가 시작될 때 나와 모든 적이 둔화 1을 안습니다. 물이 차 있어 아무도 땅속에 숨지 못합니다.' };
+/* 성소 · 제단 (10절): chs가 없으면 모든 챕터 */
+SHRINES.push({ id: 'rest', chs: [2, 3], n: '안식의 성소', d: '쓰러뜨린 적은 다시 일어서지 않습니다.' }, { id: 'firm', chs: [2, 3], n: '굳건함의 성소', d: '예고된 큰 공격에 받는 피해 −15%.' });
+ALTARS.find(a => a.id === 'gold').cost = [40, 60, 90];
+ALTARS.push({ id: 'bone', chs: [2], n: '뼈 제단', d: '가방의 소모품 셋을 바치고 2챕터 소모품 둘을 받는다. 파는 것은 바칠 수 없다.' });
+/* 이벤트 여덟 (10.3절, 2챕터) */
+EVENTS.push(
+  { id: 'tomb', ch: 2, n: '이름 없는 묘비', lore: '비석의 맨 윗줄만 비어 있다.', opts: [{ id: 'carve', n: '이름을 새긴다', d: '최대 생명력 +5(영구). 다음 전투를 약화 2 · 취약 2를 안고 시작합니다.' }, { id: 'pass', n: '지나친다', d: '' }] },
+  { id: 'bonetrader', ch: 2, n: '뼈 상인', lore: '해골 하나가 좌판 앞에 앉아 있다. 금화는 받지 않는다.', opts: [{ id: 'gear', n: '장비를 넘긴다', d: '가방의 장비 하나를 주고 같은 등급 장비 하나를 받습니다.' }, { id: 'cons', n: '소모품을 넘긴다', d: '소모품 셋을 주고 2챕터 소모품 하나를 받습니다(파는 것은 넘길 수 없습니다).' }, { id: 'pass', n: '지나친다', d: '' }] },
+  { id: 'coffin', ch: 2, n: '봉인된 관', lore: '사슬이 안쪽에서 당겨진다.', opts: [{ id: 'break', n: '사슬을 끊는다', d: '절반은 희귀 장비. 아니면 다음 전투에 정예 해골 병사가 더해지고, 이기면 희귀 장비를 받습니다.' }, { id: 'pass', n: '지나친다', d: '' }] },
+  { id: 'procession', ch: 2, n: '장례 행렬', lore: '촛불 없는 행렬이 지나간다.', opts: [{ id: 'follow', n: '뒤따른다', d: '다음 3개 방 동안 받는 피해 −10%, 주는 피해 −10%.' }, { id: 'block', n: '길을 막는다', d: '다음 전투에 무덤지기 하나가 더해지고, 이기면 골드 30.' }] },
+  { id: 'master', ch: 2, n: '잊힌 스승의 묘비', lore: '비문이 당신의 손버릇을 적고 있다.', opts: [{ id: 'read', n: '비문을 읽는다', d: '연 트리 칸 하나를 되돌려 포인트를 돌려받습니다(가장 아래 줄의 칸부터).' }, { id: 'pass', n: '지나친다', d: '' }] },
+  { id: 'robber', ch: 2, n: '도굴꾼의 시체', lore: '자루 끈이 아직 손에 감겨 있다.', opts: [{ id: 'loot', n: '자루를 뒤진다', d: '골드 30 또는 장비 하나. 다음 전투를 중독 3으로 시작합니다.' }, { id: 'bury', n: '묻어 준다', d: '생명력 플라스크 +1.' }] },
+  { id: 'blackwell', ch: 2, n: '검은 샘', lore: '물이 비추는 얼굴이 내 것이 아니다.', opts: [{ id: 'drink', n: '마신다', d: '정화 · 스태미나 플라스크 각 +1. 다음 전투를 취약 2를 안고 시작합니다.' }, { id: 'pass', n: '지나친다', d: '' }] },
+  { id: 'bonepipe', ch: 2, n: '뼈 피리', lore: '불지 않았는데 소리가 난다. 아래에서 무언가 대답한다.', opts: [{ id: 'blow', n: '분다', d: '다음 층 문에 강적이 반드시 나옵니다. 골드 20.' }, { id: 'pass', n: '지나친다', d: '' }] },
+);
+/* 경험치 곡선 Lv16까지 (12.2절: 2챕터 끝 Lv10, 3챕터 끝 Lv15) */
+LV_XP.push(2550, 2900, 3270);
+
+/* 2챕터 강적 다섯 · 보스 (10월 5일). 무엇을 하는지와 대처는 비공개 문서에만 적는다. upper: 0이면 하층에만 */
+STRONG_FOES.push(
+  { id: 'collector', ch: 2, n: '뼈 수집가', en: [['bruiser', 1], ['skeleton'], ['skeleton']] },
+  { id: 'knight', ch: 2, n: '저주받은 기사', en: [['shield', 1], ['hexer']], hp: 1.1, dmg: 0.9, needs: ['hexer'] },
+  { id: 'well', ch: 2, n: '역병 우물지기', en: [['healer', 1], ['shield'], ['skeleton']], hp: 0.8, dmg: 0.6 },
+  { id: 'sexton', ch: 2, n: '굴 파는 묘지기', en: [['burrower', 1], ['skeleton'], ['skeleton']], hp: 0.9, upper: 0 },
+  { id: 'echo', ch: 2, n: '메아리 망령', en: [['bruiser', 1], ['hexer']], hp: 0.85, upper: 0, needs: ['hexer'] },
+);
+Object.assign(FOE_X, {
+  collector: { pick: 2, cap: 5, base: 0.38, per: 0.02 },
+  knight: { share: 0.5 },
+  well: { spray: 3, base: 0.10, per: 0.025 },
+  sexton: { aoe: 1.5, vuln: 2, brk: 1.5, chill: 1 },
+  echo: { mirror: 0.8, first: 0.5, cap: 0.35, capFirst: 0.25 },
+});
+const LORD = { read: 6, turns: 2, cut: 0.4, cut2: 0.2, ph: [0.6, 0.3], walls: 2, wallHp: 0.10, wallBrk: 60, wallAoe: 0.5, expose: 2, mendPile: 1.0, mendBare: 0.5, mendTop: 0.5, hand: 0.85, handChill: 1, fall: 0.08, guards: 2 }; // 지하묘지의 군주 (뜻은 비공개 문서)
+Object.assign(FOE_INTRO, {
+  cryptlord: { n: '지하묘지의 군주', lore: '이 지하묘지에 처음 묻힌 왕. 아직도 신하들의 이름을 부른다.', see: ['벽마다 이름이 새겨져 있다. 맨 아래 줄에 갓 새긴 자국이 있다.', '군주의 발치에서 해골 둘이 일어선다.'] },
+  collector: { n: '뼈 수집가', lore: '바구니 가득 뼈를 진 자. 남의 뼈로 제 몸을 덮는다.', see: ['수집가가 해골들 뒤에서 바닥을 훑는다. 등의 바구니가 덜그럭거린다.'] },
+  knight: { n: '저주받은 기사', lore: '녹슨 갑옷 틈마다 검은 실이 비어져 나온다.', see: ['기사가 방패를 든다. 방패 안쪽에 이름이 빼곡하다.'] },
+  well: { n: '역병 우물지기', lore: '우물 뚜껑을 등에 지고 다니는 자. 뚜껑 아래에서 물이 끓는다.', see: ['우물지기가 국자를 든다. 국자에서 초록 물이 떨어진다.'] },
+  sexton: { n: '굴 파는 묘지기', lore: '삽 한 자루로 이 묘지를 다 판 자.', see: ['묘지기가 삽을 바닥에 꽂는다. 발밑이 흔들린다.'] },
+  echo: { n: '메아리 망령', lore: '얼굴이 없다. 당신이 움직이면 그것도 움직인다.', see: ['망령이 고개를 기울인다. 당신의 칼끝을 따라 눈이 움직인다.'] },
+});
+Object.assign(CODEX, {
+  collector: { pick: '수집가가 뼈를 주울수록 몸이 단단해졌다.', shatter: '수집가가 무너지자 몸에 두른 뼈가 흩어졌다.' },
+  knight: { ret: '기사에게 건 것이 나에게 돌아왔다.', stop: '기사가 자세를 잃자 돌려보내던 것이 멈췄다.' },
+  well: { open: '우물이 열리자 몸속의 독이 한꺼번에 끓어올랐다.', spent: '우물이 열린 뒤 독이 모두 빠져나갔다.' },
+  sexton: { under: '묘지기가 땅속에 있는 동안 칼이 닿지 않았다.', exposed: '솟구친 묘지기는 잠시 몸을 드러냈다.' },
+  echo: { mirror: '망령이 내 공격을 되비췄다. 내가 세게 칠수록 되비친 것도 셌다.', cut: '본뜨던 망령이 무너지자 되비추지 못했다.' },
+  cryptlord: { carve: '군주가 이름을 새긴 행동은 한동안 힘이 빠졌다.', throne: '군주가 옥좌로 물러나자 뼈벽이 앞을 가렸다.', mend: '무너진 벽이 다시 쌓였다. 바닥의 뼈가 줄었다.', fall: '옥좌가 무너지자 흩어지지 않은 뼈가 한꺼번에 일어섰다.', twoname: '마지막에는 두 이름을 한꺼번에 새겼다.', carvebreak: '군주가 무너지자 새긴 이름이 흐려졌다.' },
+});

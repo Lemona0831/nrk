@@ -52,4 +52,21 @@ const LOOT = {
   goldPer: lv => 4 + 2 * lv, // 골드 한 번 = 4 + 2 × 몬스터 레벨 (방 보상 10~40과 견줌)
   lowerHi: 0.15, // 하층에서 고급 확률 더
 };
+/* 2챕터 소모품 (10월 5일, docs/챕터/2챕터.md 11절). ch: 그 챕터부터 전리품에 나온다(상점은 다음 챕터 것까지 판다). vs: 그 역할과 싸운 뒤 전리품 무게 ×1.5 */
+Object.assign(CONS, {
+  lime:      { n: '석회 가루', ico: '⚪', ch: 2, vs: 'skeleton', sit: '해골이 다시 일어선다', k: 'norise', tgt: 'enemy', max: 5, price: 10, use: 'fight', d: () => '한 적에게 뿌립니다. 그 적은 쓰러져도 다시 일어서지 않습니다. 뼈 더미에 쓰면 바로 흩어집니다.' },
+  oiljar:    { n: '기름 단지', ico: '🏺', ch: 2, vs: 'skeleton', sit: '뼈 더미가 여럿이다', k: 'burnpiles', max: 2, price: 18, use: 'fight', d: () => '뼈 더미를 모두 태우고, 적 모두에게 화상 2를 겁니다.' },
+  mugwort:   { n: '쑥 다발', ico: '🌾', ch: 2, vs: 'hexer', sit: '해로운 상태가 여러 가지다', k: 'trim', max: 5, price: 12, use: 'any', d: () => '내 해로운 상태가 종류마다 1씩 줄어듭니다.' },
+  tamper:    { n: '흙 다지개', ico: '🔨', ch: 2, vs: 'burrower', sit: '적이 땅속에 숨었다', k: 'unearth', max: 3, price: 14, use: 'fight', d: () => '땅속의 적을 모두 끌어냅니다. 솟구치려던 공격이 끊기고, 끌려 나온 적은 취약 1을 받습니다.' },
+  pick:      { n: '곡괭이', ico: '⛏️', ch: 2, vs: 'mason', sit: '뼈벽이 후열을 가린다', k: 'wallbreak', tgt: 'enemy', max: 3, price: 12, use: 'fight', d: () => '뼈벽 하나에 붕괴 30을 줍니다.' },
+  frostmoss: { n: '찬 이끼', ico: '❄️', ch: 2, sit: '적이 너무 빠르다', k: 'slow', tgt: 'enemy', max: 3, price: 12, use: 'fight', d: () => '한 적에게 둔화 2를 겁니다.' },
+  charcloth: { n: '숯 천', ico: '😷', ch: 2, vs: 'bloat', sit: '시체가 터지려 한다', k: 'nobloat', max: 2, price: 10, use: 'fight', d: () => '이 전투에서 터지는 시체의 중독이 나에게 오지 않습니다.' },
+  goldtooth: { n: '금니', ico: '🦷', ch: 2, sit: '팔아서 골드로', k: 'sell', sell: 20, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
+  ring:      { n: '부장품 반지', ico: '💍', ch: 2, sit: '팔아서 골드로', k: 'sell', sell: 30, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
+});
+/* 2챕터에서 무게가 바뀌는 1챕터 소모품 (11.3절): 상황이 드문 것은 낮추고, 조이기 · 썩은 화살 · 부푼 시체의 답은 높인다 */
+for (const [k, w] of [['coldwater', 0.6], ['blackinc', 0.6], ['hookrope', 0.6], ['birdlime', 0.6], ['bittertea', 1.5], ['salve', 1.5], ['antidote', 1.5]]) CONS[k].dw2 = w;
+CONS.silash.d = () => '한 적의 다음 치유 · 곡하기 하나가 실패합니다.';
+CONS.wetcloth.d = () => '이번 라운드에 받는 영창의 큰 한 방(화형 · 장송곡) 피해가 절반입니다.';
+CONS.sandbag.mods.push('bonepile', 'rotair', 'flooded'); CONS.sandbag.d = () => '이 전투에서 방 특성 하나(피 웅덩이, 촛불 제단, 무너지는 천장, 종소리, 좁은 회랑, 무너진 납골벽, 썩은 공기, 물에 잠긴 바닥)를 끕니다.';
 const SHOP_CONS = { n: 5, always: ['herb'] }; // 상점은 소모품 다섯 가지를 판다(약초 묶음은 늘)
