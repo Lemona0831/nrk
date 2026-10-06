@@ -2442,7 +2442,7 @@ function finishPlayer(b, time, lost) {
   const extraNow = !!b.extraTurn; b.extraTurn = 0; if (!extraNow) { chargeEv(b, 'turn'); if (b.carve && --b.carve.left <= 0) { b.carve = null; logp(b, 'good', '새긴 이름이 흐려진다'); } } b.bonusUsed = 0; // 사냥꾼 연속 행동: 두 번째 차례는 쿨타임이 줄지 않는다 // fxQuickNext(성인의 성배·수확자의 손)는 지우지 않는다: 주 행동으로 쓰러뜨려도 다음 빠른 행동 한 번이 빠른 칸을 쓰지 않게
   if (b.queue && b.queue[0] === 'p') { b.queue.shift(); if (b.queue[0] === 'p') { b.extraTurn = 1; logp(b, 'good', '가속: 한 번 더 움직인다'); } }
   abbotDemand(b);
-  b.turnIdx++; b.consN = 0; b.extraQuick = 0; if (p.quickTurns > 0) { b.extraQuick = 1; p.quickTurns--; } // 사냥꾼 그림자 질주
+  b.turnIdx++; if (b.extraTurn && b.prepTurn === b.turnIdx - 1) b.prepTurn = b.turnIdx; /* 10월 7일: 연속 두 행동 사이에는 적이 움직이지 않으므로 첫 차례의 준비(방어 · 흘리기)가 두 번째 차례까지 남는다 */ b.consN = 0; b.extraQuick = 0; if (p.quickTurns > 0) { b.extraQuick = 1; p.quickTurns--; } // 사냥꾼 그림자 질주
   if (b.stepMode) { b.waiting = true; return; }
   runUntilPlayer(b);
 }
@@ -3673,7 +3673,7 @@ function initPop() {
     bleed: '걸린 쪽이 행동할 때마다 그 숫자만큼 피해를 주고 1 줄어듭니다. 방어, 흘리기, 플라스크도 행동입니다(상한 10).',
     ignite: '화상. 걸린 쪽이 직접 피해를 받을 때마다 그 숫자만큼 피해를 더 받고 1 줄어듭니다(상한 10).',
     chill: '둔화. 라운드가 시작될 때 그 라운드의 맨 뒤로 밀리고 1 줄어듭니다(상한 3).',
-    haste: '가속(사냥꾼 전용). 라운드가 시작될 때 그 라운드 맨 앞에서 두 번 연달아 움직이고 1 줄어듭니다. 한 라운드에 한 번이고 상한 3입니다. 두 번째 차례에는 쿨타임이 줄지 않습니다.',
+    haste: '가속(사냥꾼 전용). 라운드가 시작될 때 그 라운드 맨 앞에서 두 번 연달아 움직이고 1 줄어듭니다. 한 라운드에 한 번이고 상한 3입니다. 두 번째 차례에는 쿨타임이 줄지 않습니다. 첫 차례에 한 방어 · 흘리기는 두 번째 차례에도 남습니다.',
     weak: '공격할 때마다 그 공격의 피해가 25% 줄고 1 줄어듭니다(상한 5). 강화와 숫자끼리 뺍니다.',
     empower: '강화. 공격할 때마다 그 공격의 피해가 25% 늘고 1 줄어듭니다(상한 5). 약화와 숫자끼리 뺍니다.',
     vuln: '직접 피해를 받을 때마다 그 피해가 25% 늘고 1 줄어듭니다(상한 5). 보호와 숫자끼리 뺍니다.',
