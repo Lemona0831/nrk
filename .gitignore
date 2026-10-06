@@ -12,3 +12,5 @@ __pycache__/
 
 # 음악 원본 (320kbps, 127MB). 웹용은 next/audio/에 줄여 둔다
 bgm/
+# 에이전트 작업 폴더(git worktree)
+.claude/
