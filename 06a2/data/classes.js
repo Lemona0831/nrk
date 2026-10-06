@@ -7,7 +7,7 @@ const EXCL = {};   // 옛 직업 전용 스킬 (v2 직업은 data/skills.js의 �
 const SIG = {};    // 옛 직업 기술 (v2 시범에는 없다. docs/0.6a.2-개편-기획.md 12절 질문 4)
 
 /* 시작 스킬: v2 직업은 트리 밖의 시작 스킬 둘 (data/skills.js의 TREE2.starters와 같다) */
-const DEFAULT_SKILLS = { assassin: ['a_vital', 'a_slip'], warden: ['w_bash', 'w_brace'], hunter: ['h_aim', 'h_step'] };
+const DEFAULT_SKILLS = { assassin: ['a_vital', 'a_slip'], warden: ['w_bash', 'w_brace'], hunter: ['h_aim', 'h_step'], spellblade: ['sb_edge', 'sb_aegis'] };
 
 /* hp는 시작 장비(낡은 갑옷 +10)를 뺀 값이다. mp는 v2 직업에 없다 */
 const BUILDS = {
@@ -31,6 +31,13 @@ const BUILDS = {
     rule: '원거리: 기본 공격과 대부분의 스킬이 후열에 닿는다. 대신 활은 무기 피해의 55%다. 가속(사냥꾼 전용)이 있으면 라운드 맨 앞에서 두 번 연달아 움직인다(한 라운드에 한 번, 두 번째 차례는 쿨타임이 줄지 않는다). 전투를 시작하면 가속 1. 같은 적을 연달아 맞히면 추적이 한 겹씩 쌓여(최대 3) 겹마다 피해 +5%(정예 · 강적 · 보스 +10%), 3겹인 적에게는 몸 낮추기 · 버티기가 통하지 않는다. 방금 쓴 스킬과 다른 갈래의 스킬은 연계: 피해 +30%. 스킬은 쓰고 나면 쿨타임만큼 기다린다',
     skills: [],
   },
+  /* 마검사 (10월 7일, docs/직업/마검사.md): 혼합 사거리(베기는 근접, 주문 스킬은 후열까지). 교대 보호막 altWard(내 차례마다 한 번), 보호막 상한 wardCap(최대 생명력의 15%, 파수꾼의 절반) */
+  spellblade: {
+    n: '마검사', ico: '⚔️', hp: 100, mp: 0, v2: 1, wpnMul: 0.9, wardCap: 0.15, altWard: 4,
+    lore: '칼끝에 주문을 얹어 베고, 베는 틈마다 마력의 막을 두른다.',
+    rule: '베기(⚔ 기본 공격 · 강공격 · 베기 스킬)와 주문(✦ 주문 스킬)을 번갈아 쓰면 교대가 되어, 그 행동이 끝난 뒤 보호막 +4를 얻는다. 교대 보호막은 내 차례마다 한 번이고, 보호막은 최대 생명력의 15%까지 쌓인다. 방어 · 흘리기 · 플라스크는 순서를 끊지 않는다. 주문이 칼에 실은 출혈이나 화상은 다음 베기가 고른 적에게 건다. 빗나가면 칼에 남는다. 주문 스킬은 후열에 닿는다. 스킬은 쓰고 나면 쿨타임만큼 기다린다',
+    skills: [],
+  },
 };
 
 /* 아직 만들지 않은 시작 직업 (캐릭터 만들기에 "준비 중"으로 보인다) */
@@ -41,4 +48,4 @@ const CLASS_SOON = [
 ];
 
 /* 레벨이 오를 때 오르는 생명력 (11.4절) */
-const LV_GAIN = { assassin: { hp: 5, mp: 0 }, warden: { hp: 6, mp: 0 }, hunter: { hp: 4, mp: 0 } };
+const LV_GAIN = { assassin: { hp: 5, mp: 0 }, warden: { hp: 6, mp: 0 }, hunter: { hp: 4, mp: 0 }, spellblade: { hp: 5, mp: 0 } };

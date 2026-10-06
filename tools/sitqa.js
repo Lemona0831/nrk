@@ -51,6 +51,15 @@ function equipFor(bd, sit) {
   // 파수꾼 (10월 4일): 보호막을 태우는 스킬이 보호막을 얻는 스킬보다 많으면 얻는 스킬로 바꾼다 (태울 보호막이 있어야 한다. 사람은 짝을 맞춘다)
   const burn = id => G0.SK2[id].fx.some(e => e.k === 'wardBurn'); const gain = id => G0.SK2[id].fx.some(e => e.k === 'ward' || e.k === 'wardFill');
   while (pick.filter(burn).length > Math.max(1, pick.filter(gain).length)) { const cand = bd.open.filter(id => gain(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) break; const lo = pick.filter(burn).sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; }
+  // 마검사 (10월 7일, docs/직업/마검사.md F-2의 13): 짝 맞추기(칼 × ↔ 칼에 싣기, 상태 조건 · 상태 비례 ↔ 그 상태를 거는 칸, 퍼뜨리기 ↔ 출혈), 그리고 4칸에 ⚔ 베기 · ✦ 주문을 하나 이상씩(시작 스킬과 합쳐 둘 이상씩)
+  if (pick.some(id => G0.SK2[id].kind)) {
+    const S = id => G0.SK2[id]; const kd = k => id => S(id).kind === k; const fxs = (id, f) => S(id).fx.some(f);
+    const swapIn = (need, ok) => { if (!pick.some(need) || pick.some(ok)) return; const cand = bd.open.filter(id => ok(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) return; const lo = pick.filter(id => !need(id)).sort((a, c) => val(a) - val(c))[0]; if (lo) pick[pick.indexOf(lo)] = cand; };
+    swapIn(id => has(S(id), 'edgeX'), id => has(S(id), 'imbue'));
+    for (const k of ['bleed', 'ignite']) swapIn(id => fxs(id, e => (e.k === 'kwx' || e.k === 'exploit') && e.s === k), id => fxs(id, e => (e.k === 'st' && e.s === k && S(id).tgt !== 'self') || (e.k === 'imbue' && e.s === k)));
+    swapIn(id => has(S(id), 'killSpread'), id => !has(S(id), 'killSpread') && fxs(id, e => e.k === 'st' && e.s === 'bleed'));
+    for (const k of ['cut', 'spell']) if (!pick.some(kd(k))) { const cand = bd.open.filter(id => kd(k)(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) continue; const lo = pick.filter(id => !kd(k)(id)).sort((a, c) => val(a) - val(c))[0]; if (lo) pick[pick.indexOf(lo)] = cand; }
+  }
   return pick;
 }
 function statsOf(lv) { if (G0.statRecommend && G0.STAT_START) return G0.statRecommend(CLS, {}, G0.STAT_START + G0.LV_POINTS * (lv - 1)); const pts = 6 + 2 * (lv - 1); return { int: Math.ceil(pts / 2), dex: Math.floor(pts / 2), str: 0 }; } // 10월 4일 능력치 다섯: 직업 추천 배분

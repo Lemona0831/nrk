@@ -60,7 +60,7 @@ function evalState(b0, b1, risk) {
   return dealt * 1.0 + kills * 6 - hpLoss * (40 + 80 * (1 - risk)) - flasks * 7 - lowHp - threat * 1.5 - roots * 3 - healers * 3 - poison * 0.6 + scarKeep + (p1.st - p0.st) * 0.03;
 }
 function lookahead(b, P, r) {
-  { const dmd = E.alive(b).find(e => e.demand && e.demand.turn === b.turnIdx); if (dmd && r() < (P.mech || 0.5) + 0.1) { const L = E.actionList(b); if (dmd.demand.k === 'rest') { const g = L.find(a => a.id === 'guard' && a.ok) || L.find(a => a.id === 'dodge' && a.ok); if (g) return [g.id, g.id === 'dodge' ? dmd.id : null]; } else if (!dmd.demand.hit) { const a = L.find(x => x.id === 'basic' && x.ok); if (a && E.canTarget(b, dmd, a)) return ['basic', dmd.id]; } } } // 0.6a.2 수도원장의 요구(심문 · 고해)를 사람처럼 따른다 (10월 4일)
+  { const dmd = E.alive(b).find(e => e.demand && e.demand.turn === b.turnIdx); if (dmd && r() < (P.mech || 0.5) + 0.1) { const L = E.actionList(b); if (dmd.demand.k === 'rest') { const g = (b.p.build === 'spellblade' && L.find(a => a.ok && a.v2 && a.self && a.s.kind === 'spell')) || L.find(a => a.id === 'guard' && a.ok) || L.find(a => a.id === 'dodge' && a.ok); if (g) return [g.id, g.id === 'dodge' ? dmd.id : null]; } else if (!dmd.demand.hit) { const a = L.find(x => x.id === 'basic' && x.ok); if (a && E.canTarget(b, dmd, a)) return ['basic', dmd.id]; } } } // 0.6a.2 수도원장의 요구(심문 · 고해)를 사람처럼 따른다 (10월 4일)
   const L = E.actionList(b).filter(a => a.ok && a.id !== 'flee' && a.id !== 'sig');
   const cands = [];
   for (const a of L) {
@@ -98,6 +98,7 @@ const psn2 = (u, k) => (u.s[k] ? u.s[k].stacks : 0);
 const stFx = a => !!(a && a.s && a.s.fx && a.s.fx.some(f => ['poison', 'st', 'bleed', 'ignite'].includes(f.k))); // 상태를 거는 스킬
 const enemyAvoid = (e, a) => !a.aoe && (!!e.evading || (!!e.countering && (a.melee || (a.s && a.s.tgt === 'melee'))) || (!!e.mimicOn && !a.self) || (e.foe === 'knight' && e.intent && ['retprep', 'return'].includes(e.intent.k) && stFx(a))); // 몸 낮추기 · 반격 태세 (10월 4일). 2챕터 (10월 7일): 본뜨는 망령에게는 세게 치지 않고, 되돌리기를 준비하는 기사에게는 상태를 걸지 않는다
 const enemyPrio = e => (e.role === 'thief' && (e.loot || (e.intent && e.intent.k === 'steal'))) ? 2 : e.lordWall ? 1.2 : e.pile ? (e.pileCol ? 1.8 : e.pile.wait <= 1 ? 0.6 : 0.3) : e.chant ? 1.5 : e.braced ? -1 : 0; // 도둑은 먼저, 영창 중인 화형 사제는 그다음(피해가 쌓이면 끊긴다), 버티는 적은 나중. 2챕터 뼈 더미(10월 7일): 수집가가 있으면 줍기 전에, 곧 일어설 더미는 앞으로(더미는 생명력이 낮아 한 번에 흩어진다). 군주의 뼈벽은 먼저 부순다(벽이 서 있으면 군주가 받는 한 적 피해가 절반)
+const SB_FX = ['imbue', 'edgeX', 'kwx', 'alt', 'killSpread']; // 마검사 효과 (참고: 마검사 판단은 kind가 있는 스킬이 끼워졌을 때만 걸린다)
 const WARDEN_FX = ['ward', 'wardFill', 'wardBurn', 'thorn', 'pull', 'vulnGrow', 'vulnPer', 'chillx', 'shieldx']; // 파수꾼 효과 (v2Pick의 파수꾼 판단이 이 효과를 가진 스킬에만 걸린다)
 /* 0.6a.2 라운드: 이번 차례에(빠른 행동으로) 흘릴 준비를 이미 했는가 (id를 주면 그 적에게). 옛 직업은 늘 false라 next/ 측정은 그대로다 */
 const v2Ready = (b, id) => !!(E.isV2 && E.isV2(b.p) && b.p.dodge && b.prepTurn === b.turnIdx && (id == null || b.p.dodge === id));
@@ -145,8 +146,63 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     const pb = okS.find(a => has(a, 'parryBuff')); if (pb && !p.pbuf && E.dodgeCost(p) <= p.st) return [pb.id];
     if (L.find(a => a.id === 'dodge' && a.ok) && r() < P.parry + 0.3) return ['dodge', hv.e.id];
   }
-  // 0.6a.2 파수꾼 (10월 4일): 보호막 · 가시 · 태우기 · 끌어내기 · 취약 · 둔화 · 붕괴 조건. 새 효과를 가진 스킬에만 걸린다
-  if (E.wardMax && okS.some(a => a.s.fx.some(e => WARDEN_FX.includes(e.k)))) {
+  // 0.6a.2 마검사 (10월 7일, docs/직업/마검사.md F-2): 베기(⚔)와 주문(✦)을 번갈아 쓰고(교대 보호막), 칼에 실은 원소를 오래 살 적에게 박는다.
+  // 사람처럼 버튼에 보이는 숫자(피해 · 상태 · 교대 표시)를 어림해 가장 나은 행동을 고른다. 빠른 칸이 남아 있으면 빠른 행동을 먼저 본다. 마검사 스킬(kind)이 끼워졌을 때만
+  if (p.build === 'spellblade' && useMech && okS.some(a => a.s.kind)) {
+    const cap = E.wardMax(p), ward = p.ward || 0; const last = p.sbLast; const want = last === 'cut' ? 'spell' : last === 'spell' ? 'cut' : null;
+    const altFree = b.sbAltTurn !== b.turnIdx; const runIf = (p.sbRun || 0) + 1; const fastFree = !b.bonusUsed && !nf;
+    const atkIn = pv1.filter(x => x.e.intent && ['attack', 'heavy', 'explode', 'brand', 'burn'].includes(x.e.intent.k)).length;
+    const bigIn = !!(hv || pv1.some(x => x.e.intent && (x.e.intent.aimed || x.e.intent.k === 'burn')));
+    const kindOf = a => a.id === 'basic' || a.id === 'heavy' ? 'cut' : a.s && a.s.kind;
+    const big = e => !!(e.elite || e.strong || e.role === 'boss');
+    const fx = (a, k) => a.s ? a.s.fx.find(e => e.k === k) : null;
+    const chg = e => !!(e.intent && ['charge', 'heavy', 'fuse', 'explode', 'chant', 'chanting', 'burn'].includes(e.intent.k));
+    const wardGain = a => !a.s ? 0 : a.s.fx.reduce((m, e) => m + (e.k === 'ward' ? e.n : e.k === 'wardFill' ? Math.max(0, cap * (e.to || 1) - ward) : 0), 0);
+    // 막: 다음 차례 전에 큰 공격이 오고 보호막이 상한 절반 아래면 채우는 주문 (사람은 예고를 보고 막을 두른다)
+    if (bigIn && ward < cap * 0.5) { const ws = okS.filter(a => a.self && wardGain(a) >= 6).sort((x, y) => wardGain(y) - wardGain(x))[0]; if (ws && r() < 0.8) return [ws.id]; }
+    const value = (a, t) => {
+      const k = kindOf(a); const hits = (a.s && a.s.hits) || 1; const multi = !!a.aoe; const ts = a.self ? [] : multi ? reach(a).filter(e => !a.s || a.s.tgt !== 'front' || e.row === 'front') : t ? [t] : [];
+      const dm = a.id === 'basic' ? E.basicBase(p) : a.id === 'heavy' ? E.heavyBase(p) : ((fx(a, 'dmg') || {}).n || 0);
+      const ex = fx(a, 'exploit'), kx = fx(a, 'kwx'), lx = fx(a, 'lowx'), bx = fx(a, 'brokenx'), wb = fx(a, 'wardBurn'), wd = fx(a, 'wardDmg'), bk = fx(a, 'brk'), cx = fx(a, 'cutx'), ks = fx(a, 'killSpread'), ed = fx(a, 'edgeX'), im = fx(a, 'imbue'), al = fx(a, 'alt');
+      const altNow = !!(want && k === want); const run2 = altNow && runIf >= 2;
+      const altOn = al && altNow && (al.run === 2 ? run2 : true);
+      let v = 0, i = 0;
+      for (const e of ts) {
+        let x = dm * hits + (ex ? ex.per * psn2(e, ex.s || 'poison') : 0) + (wb && i === 0 ? Math.min(ward, wb.max || 99) * wb.mul : 0) + (wd ? wd.per * ward : 0);
+        if (kx && psn2(e, kx.s) > 0) x *= kx.mul; if (lx && e.hp <= e.hpMax * lx.hp) x *= lx.mul; if (bx && e.s.broken) x *= bx.mul;
+        if (e.braced) x *= 0.5; if (e.evading && !multi) x = 0; if (multi && e.row === 'back') x *= 0.7;
+        if (x > 0) { const ig = psn2(e, 'ignite'); for (let h = 0; h < hits && ig - h > 0; h++) x += ig - h; } // 화상은 맞을 때마다 더 든다
+        const kill = x >= e.hp; v += Math.min(x, e.hp) + (kill ? 8 : 0);
+        if (!kill && a.s) for (const f of a.s.fx) if (f.k === 'st' && (f.s === 'bleed' || f.s === 'ignite')) v += f.n * (f.s === 'bleed' ? 2 : 1.5) * (big(e) ? 1.3 : 1); else if (f.k === 'st' && f.s === 'weak') v += f.n * 1.5;
+        const brk = (bk ? bk.n : a.id === 'basic' ? 10 : a.id === 'heavy' ? 35 : 0) + (cx && chg(e) ? cx.brk : 0) + (altOn && al.brk ? al.brk : 0);
+        v += brk * (chg(e) || big(e) ? 0.3 : 0.12) + (chg(e) && e.brk + brk >= e.brkMax ? 14 : 0);
+        if (a.s && a.s.killRecharge && kill) v += 6; if (ks && kill && psn2(e, 'bleed') >= 2) v += Math.ceil(psn2(e, 'bleed') * ks.per) * Math.max(0, E.alive(b).filter(o => o.role !== 'root').length - 1) * 1.5;
+        if (k === 'cut' && p.edge && i === 0 && x > 0 && !kill) v += p.edge.n * (ed ? ed.mul : 1) * (p.edge.s === 'bleed' ? 2 : 1.6) * (e.hp > e.hpMax * 0.4 ? 1 : 0.5);
+        if (k === 'cut' && e.countering && !multi) v -= 15;
+        i++;
+      }
+      if (ed && !p.edge) v -= 3; // 칼이 비었으면 ×가 놀아난다
+      if (a.s) for (const f of a.s.fx) if (f.k === 'st' && a.self) v += f.s === 'protect' ? f.n * (atkIn ? 2.5 : 0.5) : 0;
+      v += Math.min(Math.max(0, cap - ward), wardGain(a)) * (atkIn ? 0.9 : 0.35) + ((fx(a, 'stam') || {}).n || 0) * (p.st < 50 ? 0.12 : 0.03);
+      if (im && !(p.edge && p.edge.s === im.s && p.edge.n >= im.n)) v += im.n * 2 - (p.edge && p.edge.s !== im.s ? p.edge.n * 2 : 0);
+      if (altOn) v += (al.ward || 0) * (atkIn ? 0.9 : 0.4) + (al.protect || 0) * (atkIn ? 2.5 : 0.5) + (al.stam || 0) * 0.05;
+      if (al && al.run === 2 && !run2) v -= 2; // 박자가 안 맞으면 아낀다
+      if (fx(a, 'hasten') && fx(a, 'hasten').on === 'alt' && altNow) v += 1.5;
+      if (want && k === want) v += altFree ? 5 : 1.5; else if (want && k && k !== want) v -= (p.sbRun || 0) >= 1 ? 2 : 0.5;
+      if (a.s) v -= a.s.cd * 0.35; if (a.id === 'heavy') v -= 6; // 쿨타임 · 스태미나 값
+      if (wb && fx(a, 'lowx') && E.alive(b).some(e => big(e) && e.hp > e.hpMax * fx(a, 'lowx').hp) && !ts.some(e => e.hp <= e.hpMax * fx(a, 'lowx').hp)) v -= 30; // 마무리 태우기는 큰 적이 높을 때 아낀다
+      return a.time >= 1.25 ? v * 0.8 : v;
+    };
+    const tgtFor = a => { if (a.self || a.aoe) return null; const ex = fx(a, 'exploit'), kx = fx(a, 'kwx'), cx = fx(a, 'cutx');
+      const sc = e => (cx && chg(e) ? 30 : 0) + (kx && psn2(e, kx.s) > 0 ? 12 : 0) + (ex ? psn2(e, ex.s || 'poison') * 3 : 0) + (kindOf(a) === 'cut' && p.edge ? (e.hp / e.hpMax) * 6 : 0) + (a.s && a.s.killRecharge ? (e.hp <= ((fx(a, 'dmg') || {}).n || 0) ? 10 : 0) : 0) - e.hp / 20;
+      return best(a, (x, y) => sc(y) - sc(x)); };
+    const cand = okS.concat(L.filter(a => a.ok && (a.id === 'basic' || (a.id === 'heavy' && p.st >= 70)))).map(a => { const t = tgtFor(a); return (a.self || a.aoe || t) ? { a, t, v: value(a, t) + (r() - 0.5) * 10 } : null; }).filter(Boolean); // 사람의 어림: 버튼의 숫자를 정확히 더하지 않는다(값에 ±5 흔들림)
+    const fastC = cand.filter(c => c.a.time <= 0.6).sort((x, y) => y.v - x.v)[0];
+    if (fastFree && fastC && fastC.v > 4) return [fastC.a.id, fastC.t && fastC.t.id];
+    const pickC = cand.filter(c => !fastFree || c.a.time > 0.6).sort((x, y) => y.v - x.v)[0] || fastC; if (pickC && !(hv && pickC.v < 8)) return [pickC.a.id, pickC.t && pickC.t.id]; // 강타가 오는데 마땅한 행동이 없으면 아래(방어)로
+  }
+  // 0.6a.2 파수꾼 (10월 4일): 보호막 · 가시 · 태우기 · 끌어내기 · 취약 · 둔화 · 붕괴 조건. 새 효과를 가진 스킬에만 걸린다 (마검사는 위의 자기 칸이 맡는다)
+  if (E.wardMax && p.build !== 'spellblade' && okS.some(a => a.s.fx.some(e => WARDEN_FX.includes(e.k)))) {
     const cap = E.wardMax(p), ward = p.ward || 0; const atk = pv1.filter(x => x.e.intent && ['attack', 'heavy', 'explode', 'brand'].includes(x.e.intent.k)).length;
     const wardGain = a => a.s.fx.reduce((m, e) => m + (e.k === 'ward' ? e.n : e.k === 'wardFill' ? Math.max(0, cap * (e.to || 1) - ward) : 0), 0);
     // 막기: 내 다음 차례 전에 공격이 오는데 보호막이 절반 아래면 보호막을 가장 많이 주는 나에게 쓰는 스킬, 가시가 없으면 가시 (10월 4일: 둘 이상 칠 때만 쓰던 것을 한 적에게도. 보스전에서 막는 스킬을 거의 쓰지 않았다)
@@ -209,7 +265,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   return null;
 }
 function heuristic(b, P, r, mem) {
-  { const dmd = E.alive(b).find(e => e.demand && e.demand.turn === b.turnIdx); if (dmd && r() < (P.mech || 0.5) + 0.1) { const L = E.actionList(b); if (dmd.demand.k === 'rest') { const g = L.find(a => a.id === 'guard' && a.ok) || L.find(a => a.id === 'dodge' && a.ok); if (g) return [g.id, g.id === 'dodge' ? dmd.id : null]; } else if (!dmd.demand.hit) { const a = L.find(x => x.id === 'basic' && x.ok); if (a && E.canTarget(b, dmd, a)) return ['basic', dmd.id]; } } } // 0.6a.2 수도원장의 요구(심문 · 고해)를 사람처럼 따른다 (10월 4일)
+  { const dmd = E.alive(b).find(e => e.demand && e.demand.turn === b.turnIdx); if (dmd && r() < (P.mech || 0.5) + 0.1) { const L = E.actionList(b); if (dmd.demand.k === 'rest') { const g = (b.p.build === 'spellblade' && L.find(a => a.ok && a.v2 && a.self && a.s.kind === 'spell')) || L.find(a => a.id === 'guard' && a.ok) || L.find(a => a.id === 'dodge' && a.ok); if (g) return [g.id, g.id === 'dodge' ? dmd.id : null]; } else if (!dmd.demand.hit) { const a = L.find(x => x.id === 'basic' && x.ok); if (a && E.canTarget(b, dmd, a)) return ['basic', dmd.id]; } } } // 0.6a.2 수도원장의 요구(심문 · 고해)를 사람처럼 따른다 (10월 4일)
   const p = b.p, L = E.actionList(b), ok = id => { const a = L.find(x => x.id === id); return a && a.ok; };
   const al = E.alive(b).filter(e => e.role !== 'root');
   const hpf = p.hp / p.hpMax;

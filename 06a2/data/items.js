@@ -51,6 +51,7 @@ const BAG_MAX = 20; // 10월 4일: 소모품이 생기며 12 → 20 (장비 하�
 /* 시작 장비 (평범, 보너스 없음). 시작 장비만 낀 캐릭터는 B0.5와 수치가 같다 */
 const START_WPN = { berserker: ['녹슨 도끼', '날이 무뎌졌지만 아직 무겁다.'], hunter: ['사냥 활', '시위에 오래된 피가 말라붙어 있다.'], arcanist: ['견습 지팡이', '끝에 박힌 돌이 희미하게 떨린다.'], templar: ['철퇴', '성구를 녹여 다시 두드린 쇠.'], warlock: ['뼈 지팡이', '누구의 뼈인지는 묻지 않는다.'], assassin: ['단검', '손에 익은 짧은 칼.'], priest: ['성구 지팡이', '기도문이 새겨진 손잡이.'], scar: ['톱날 검', '베는 것보다 찢는 데 가깝다.'] };
 START_WPN.warden = ['짧은 철퇴', '방패 뒤에서 휘두르기 좋게 자루를 줄였다.']; // 파수꾼 (0.6a.2)
+START_WPN.spellblade = ['글 새긴 장검', '날을 따라 옅은 글자가 새겨져 있다.']; // 마검사 (0.6a.2)
 for (const k in START_WPN) ITEMS['start_wpn_' + k] = { n: START_WPN[k][0], slot: 'weapon', kind: 'start', g: 'n', act: '', cost: '', lore: START_WPN[k][1] };
 ITEMS.start_armor = { n: '낡은 갑옷', slot: 'armor', kind: 'start', g: 'n', act: '', cost: '', lore: '여러 주인을 거친 가죽과 쇠.' };
 ITEMS.start_flask = { n: '낡은 플라스크', slot: 'flask', kind: 'start', g: 'n', act: '', cost: '', lore: '금이 갔지만 새지는 않는다.' };
@@ -72,6 +73,7 @@ const CLASS_FIT = {
   warlock: ['마나가 모자라면', '약화', '디버프가 셋', '생명력을', '마나 +', '저주'],
   assassin: ['중독', '독', '흘리기'],
   warden: ['방어', '보호막', '보호', '붕괴', '강타', '최대 생명력', '방패병'],
+  spellblade: ['근접', '후열', '출혈', '화상', '보호막', '강공격'],
   scar: ['상흔', '맞을 때마다', '잃으면', '생명력이 절반', '강타를 맞으면', '받는 피해'],
   priest: ['디버프', '지우면', '지운', '정화', '보호'],
 };
