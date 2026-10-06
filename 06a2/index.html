@@ -1530,7 +1530,7 @@ function hurtEnemy(b, e, raw, o) {
   if (e.foe === 'pilgrim' && !e.frenzy && e.hp < e.hpMax * 0.5 && e.hp > 0) { e.frenzy = 1; logp(b, 'bad', e.n + '의 눈이 번들거린다. 더 빨라진다'); codexHit(b, 'pilgrim', 'frenzy'); }
   if (!o.dot && b.p.build === 'berserker') addRage(b, 1);
   if (!o.silent && d > 0) logp(b, o.dot ? 'sys' : 'good', o.dot ? (o.label || '피해') + '이(가) ' + e.n + '을(를) 갉아먹는다. ' + r1(d) + ' 피해' : e.n + '에게 ' + r1(d) + ' 피해');
-  if (e.hp <= 0) killEnemy(b, e);
+  if (e.hp <= 0) { if (o.dot && o.label === '중독' && !e.pile && !e.summoned && e.role !== 'root') unlAdd(b, 'poisonKill'); killEnemy(b, e); } // 해금 셈: 중독이 마지막 피해
   checkEnd(b);
   return d;
 }
@@ -1581,7 +1581,7 @@ function checkEnd(b) {
   if (b.p.hp <= 0) { b.p.hp = 0; b.over = 'lose'; logp(b, 'bad', '무릎이 꺾인다. 쓰러졌다'); return; }
   if (!alive(b).some(realFoe)) {
     for (const e of alive(b)) if (e.pile || e.role === 'bonewall') { e.alive = false; e.hp = 0; } // 남은 것이 뼈 더미 · 뼈벽뿐이면 무너진다(G8)
-    b.over = 'win'; logp(b, 'good', '마지막 적이 쓰러진다. 방이 조용해진다'); if (b.p.hp <= b.p.hpMax * 0.3) unlAdd(b, 'edge'); if (b.ctx.boss && b.ctx.bossKind) unlAdd(b, 'boss:' + b.ctx.bossKind); // 10월 4일: 방을 이기면 플라스크가 차던 규칙은 없앴다(플라스크는 아주 드문 전리품)
+    b.over = 'win'; logp(b, 'good', '마지막 적이 쓰러진다. 방이 조용해진다'); if (b.p.hp <= b.p.hpMax * 0.3) unlAdd(b, 'edge'); if (b.ctx.boss && b.ctx.bossKind) { unlAdd(b, 'boss:' + b.ctx.bossKind); if (b.p.hpPen) unlAdd(b, 'bloodBoss:' + b.ctx.bossKind); } // 10월 4일: 방을 이기면 플라스크가 차던 규칙은 없앴다(플라스크는 아주 드문 전리품)
   }
 }
 /* 도둑 (10월 4일): 플라스크 한 칸 · 골드 · 가방의 장비(무작위) 가운데 하나. 잡으면 돌려받고, 달아나면 잃는다 */
