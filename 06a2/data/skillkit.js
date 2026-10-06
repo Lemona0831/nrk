@@ -41,7 +41,8 @@ const skTri = n => n * (n + 1) / 2;
 const skJo = n => '013678'.includes(String(n).slice(-1)) ? '을' : '를'; // 숫자 뒤 을/를
 function skValue(s, ov) {
   if (!ov && SKK.butch && /^b_/.test(String(s.id)) && !s._bu) return skValueBu(s);
-  if (!ov && String(s.id).slice(0, 2) === 'e_') return skValueElem(s); // 원소술사: 열충격 가설(아래 skValueElem)이 화상 · 둔화 값을 바꿔 이 함수를 다시 부른다
+  if (!ov && String(s.id).slice(0, 2) === 'e_') return skValueElem(s);
+  if (!ov && String(s.id).slice(0, 2) === 'c_' && !s._cf && SKK.conf) return skValueConf(s); // 숨겨진 직업 2: 정화 · 옮기기 · 비례 · 벗기기 · 고행 몫을 더한다(아래 skValueConf) // 원소술사: 열충격 가설(아래 skValueElem)이 화상 · 둔화 값을 바꿔 이 함수를 다시 부른다
   const KWv = (ov && ov.kw) || SKK.kw; const K = SKK; const Sof = k => (K.Sk && K.Sk[k] != null ? K.Sk[k] : K.S); const tm = K.tmul[s.tgt]; const hits = s.hits || 1; let v = 0; const hi = (s.row || 0) >= 7 ? 1 : 0; // hi: 중급(7~10줄)은 Lv7 이상에서 쓴다
   const sbk = /^sb_/.test(s.id || ''); const W = sbk && K.wardCls ? Object.assign({}, K.ward, K.wardCls.spellblade) : K.ward; const SB = K.sb; const multi = s.tgt === 'front' || s.tgt === 'all'; // 마검사: 직업 보호막 표, 출혈 · 화상 값
   const burnTake = e => e.max ? Math.min(e.max, W.B[hi]) : W.all[hi]; // 한 번에 태우는 양: 상한이 있으면 측정 보유량과 상한 가운데 작은 쪽, 모두 태우면 측정값
@@ -166,6 +167,50 @@ function skValueElem(s) {
   if (gx) v *= 1 + (gx.mul - 1) * 0.3;
   return v;
 }
+/* 숨겨진 직업 2 점수 가설 ('c_' 칸, 10월 7일. 50상황 측정 전). cap: 세는 숫자 상한, C: 정화 · 사함 · 옮기기를 쓸 때 내 짐(적이 건 몫) [하급, 중급], share: 짐 가운데 상태별 몫(중독은 짐이 아니다),
+   cv: 내 해로운 상태 1을 없앤 값, give: 적에게 건 상태 1의 값, hasteOrd: 가속 1(순서만), B: 짐 비례 때 내 짐, P: 보호 비례 때 내 보호, CT: 앞서 이번 차례에 지운 숫자,
+   tgt: 대상의 약화 · 출혈 · 해로운 상태, self: 스스로 진 상태 1의 대가, fuel: 고행 갈래에서 스스로 진 1이 짐 비례로 돌아오는 값, emp: 벗길 강화가 있을 몫, cleanP: 지울 것이 있을 몫(🔄 · 빠른 칸 덤), spendLoss: 써 버린 보호가 막았을 몫 */
+SKK.conf = { cap: 5, C: { self: [2.2, 2.2], hit: [0.3, 0.3] }, O: [0.9, 0.5], X: [0.5, 0.5], share: { vuln: 0.29, weak: 0.23, bleed: 0.43, ignite: 0.05, chill: 0.02 }, cv: 2, give: { weak: 1.5, vuln: 1.5, bleed: 1.5, ignite: 1.2, chill: 1.5 }, hasteOrd: 4, B: [1.8, 1.25], P: [0.45, 0.2], CT: [0.6, 0.75], tgt: { weak: [0.45, 2.6], bleed: [0.2, 0.05], tbad: [1.3, 1.3] }, self: { bleed: 1, ignite: 1, chill: 2, vuln: 2.5, weak: 2 }, fuel: 2, emp: 0.05, cleanP: 0.4, spendLoss: 0.5 };
+/* 10월 7일 50상황 측정(성향 신중 3판, 1챕터 기준 세기, tools 밖 측정 스크립트): 쓸 때 적이 건 짐 하급 0.82 · 중급 0.49, 상태별 몫 취약 0.29 · 약화 0.23 · 출혈 0.43 · 화상 0.05, 짐 비례 때 짐 1.78 · 1.23,
+   보호 비례 때 보호 0.46 · 0.15(보호가 없어도 친다), 앞서 지운 숫자 0.57 · 0.76(빠른 정화를 먼저 쓸 수 있을 때만 순서를 맞춘다), 대상 약화 0.42 · 2.66 · 대상 해로운 상태 1.34 · 출혈 0.04, 벗길 강화가 있던 몫 하급 10% · 중급 3%, 지울 것이 있던 몫 약 40%.
+   칸마다: 나에게 쓰는 정화 칸(고해 · 사죄의 기도 · 대사면 등, 지울 짐이 있을 때 쓴다)은 쓸 때 적이 건 짐 약 2.2, 공격에 붙은 정화는 0.1~0.4(C.self · C.hit), 사함은 고행 몫까지 0.9 · 0.5(O), 옮기기는 0.5(X).
+   설계 가설(C 2.5 · 3.2, B 3 · 4, P 1.5 · 2)보다 재료가 훨씬 적어, 이 값으로 다시 맞추면 정화 덤과 피해 몸통이 오른다(설계 남은 위험 1의 순서) */
+const CF_NEWK = ['cleanse', 'transfer', 'perDmg', 'dispel'], CF_BAD = ['poison', 'bleed', 'ignite', 'weak', 'vuln', 'chill'];
+function skValueConf(s) {
+  const K = SKK.conf, hi = (s.row || 0) >= 7 ? 1 : 0, multi = s.tgt === 'front' || s.tgt === 'all', tm = SKK.tmul[s.tgt], hits = s.hits || 1;
+  const deep = e => s.tgt === 'self'; /* 나에게 쓰는 정화 칸은 지울 짐이 있을 때 쓴다(공격에 붙은 정화는 치는 김에) */ const cP = s.tgt === 'self' ? 1 : K.cleanP; // 나에게 쓰는 칸의 덤(빠른 칸 · 가속 · 🔄)은 지울 것이 있을 때 쓰므로 거의 늘 든다
+  const shareOf = only => only ? only.reduce((a, k) => a + (K.share[k] || 0), 0) : 1; const cnt = e => Math.min(e.n || 99, K.cap, (e.k === 'transfer' ? K.X[hi] : e.offer ? K.O[hi] : deep(e) ? K.C.self[hi] : K.C.hit[hi]) * shareOf(e.only)); const protOf = c => c <= 0 ? 0 : Math.min(3, c / 2 + 0.5 * Math.min(1, c));
+  const old = s.fx.filter(e => !CF_NEWK.includes(e.k) && !(e.k === 'meSt' && CF_BAD.includes(e.s)) && !(e.k === 'hasten' && e.on === 'clean'));
+  const gx = s.fx.find(e => e.k === 'bigx'); const gm = gx ? 1 + (gx.mul - 1) * 0.3 : 1;
+  let v = skValue(Object.assign({}, s, { fx: old, _cf: 1 })) / gm; // 기존 효과 (bigx 배수는 끝에 한 번)
+  const lx = s.fx.find(e => e.k === 'lowx'); let extra = 0; const cl = s.fx.find(e => e.k === 'cleanse'); const cc = cl ? cnt(cl) : 0;
+  for (const e of s.fx) {
+    switch (e.k) {
+      case 'cleanse': v += cc * K.cv;
+        if (e.offer) { const d = cc * (e.dmg || 0) * (multi ? tm : 1); v += d + cc * (e.brk || 0) * SKK.brk * (multi ? tm : 1); extra += d; }
+        else v += protOf(cc) * SKK.kw.protect + cc * (e.heal || 0) + cc * (e.stam || 0) * 0.15 + (e.quick ? cP * SKK.hunt.q : 0) + (e.haste ? K.hasteOrd * cP : 0);
+        break;
+      case 'transfer': { const m = cnt(e); const ks = e.only || ['weak', 'vuln', 'bleed', 'ignite']; const gv = ks.reduce((a, k) => a + K.give[k] * K.share[k], 0) / ks.reduce((a, k) => a + K.share[k], 0);
+        v += m * K.cv + m * gv + (e.add || 0) * K.give[e.addK || ks[0]] * (multi ? tm : 1);
+        const vp = s.fx.find(x => x.k === 'vulnPer'); if (vp && (!e.only || e.only.includes('vuln'))) v += Math.min(m, K.X[hi] * K.share.vuln) * vp.per * 0.6 + ((e.addK || ks[0]) === 'vuln' ? (e.add || 0) * vp.per : 0);
+        break; }
+      case 'perDmg': { let X;
+        if (e.of === 'prot') X = Math.min(5, K.P[hi] + (cl && !cl.offer && !cl.after ? protOf(cc) : 0));
+        else if (e.of === 'burden') X = K.B[hi];
+        else if (e.of === 'clean') X = K.CT[hi];
+        else if (e.of === 'tbad') { const tr = s.fx.find(x => x.k === 'transfer'); X = Math.min(5, K.tgt.tbad[hi] + (tr ? cnt(tr) * 0.6 : 0)); }
+        else { const tr = s.fx.find(x => x.k === 'transfer' && (!x.only || x.only.includes(e.of))); X = Math.min(5, K.tgt[e.of][hi] + (tr ? (tr.add || 0) : 0)); }
+        const d = (e.per || 0) * X * hits * (multi ? tm : 1); v += d + (e.brk || 0) * X * SKK.brk * (multi ? tm : 1); extra += d;
+        if (e.spend) v -= X * SKK.kw.protect * K.spendLoss;
+        break; }
+      case 'dispel': v += K.emp * Math.min(e.n || 5, 2) * SKK.kw.empower * (multi ? tm : 1); break;
+      case 'meSt': if (CF_BAD.includes(e.s)) v += e.n * ((s.b === '고행' ? K.fuel : 0) - K.self[e.s]); break;
+      case 'hasten': if (e.on === 'clean') v += (e.n || 1) * SKK.hz * cP; break;
+    }
+  }
+  if (lx) v += extra * (lx.mul - 1) * 0.35;
+  return v * gm;
+}
 /* 전투 한 번에 쓰는 횟수: 처음 1번 + (남은 차례 + 갈래 규칙으로 줄어드는 대기) / (대기 + 1). 전투마다 1번은 1 */
 function skUses(s) { if (s.once) return 1 + (s.killRecharge ? 0.3 : 0); return Math.min(SKK.Fmax, 1 + (SKK.turns + (SKK.haste[s.hs] || 0)) / (s.cd + 1) + (s.killRecharge ? 0.5 : 0)); }
 /* 갈래 보정 (10월 3일, tools/sitqa.js 50상황 실측): 같은 점수라도 갈래마다 실제로 버는 몫이 다르다.
@@ -173,7 +218,7 @@ function skUses(s) { if (s.once) return 1 + (s.killRecharge ? 0.3 : 0); return M
 SKK.clsB = { h_: 0.9, e_: 1.1, sb: 0.9 }; /* sb: 마검사 (10월 7일 가설: 교대 보호막이 스킬 예산 밖의 직업 몫). 직업은 id 앞 두 글자로 고른다(sb_는 파수꾼 s_와 겹치지 않는다) */ // 원소술사 1.1: 기본 공격(마력 화살 50%)이 약한 만큼 스킬이 세다 (10월 7일 설계 원칙 9)
 SKK.clsMid = { h_: 0.85 }; // 직업마다 중급(7~10줄) 예산 배율 (10월 5일 만든 사람: 사냥꾼은 한 갈래를 몰아 찍어도 강해지지 않는다. 깊은 칸은 더 센 한 방보다 새 효과)
 SKK.clsAdj = { h_: 1.4, b_: 1, e_: 1 }; // 직업마다 실제로 버는 몫 (10월 5일 50상황: 사냥꾼 스킬은 조건 없이 바로 들어가는 피해라 점수보다 1.6배쯤 번다. 같은 예산이면 라운드당 피해가 암살자의 1.7배였다) // 직업마다 예산 배율 (10월 5일 만든 사람: 사냥꾼은 후열에 바로 닿는 물리직이라 화력이 암살자를 넘지 않게 90%)
-SKK.brAdj = { 독사: 0.97, 격발: 1.1, 그림자: 1.15, 성벽: 1, 파쇄: 1, '전열 장악': 1, 도륙: 1, 광기: 1, 학살: 1, 서리: 0.9, 공명: 1.1, 주문갑: 1.08 }; // 파수꾼 세 갈래는 50상황으로 재기 전이라 1 [가설]
+SKK.brAdj = { 독사: 0.97, 격발: 1.1, 그림자: 1.15, 성벽: 1, 파쇄: 1, '전열 장악': 1, 도륙: 1, 광기: 1, 학살: 1, 서리: 0.9, 공명: 1.1, 주문갑: 1.08, 속죄: 1, 전가: 1.1, 고행: 1 }; // 파수꾼 세 갈래는 50상황으로 재기 전이라 1 [가설]
 /* 원소술사 갈래 몫 (10월 7일 50상황 12판, 기준 세기): 서리 0.9 · 공명 1.1 */
 function skScore(s) { const E = skValue(s) * (SKK.brAdj[s.b] || 1) * ((SKK.clsAdj || {})[String(s.id).slice(0, 2)] || 1); const net = E - SKK.B * SKK.T[s.time]; const F = skUses(s); return { E, net, F, V: net * F, B: Math.round(((s.row && SKK.rowB[s.row]) || SKK.budget[s.tier]) * ((SKK.clsB || {})[String(s.id).slice(0, 2)] || 1) * ((s.row || 0) >= 7 ? ((SKK.clsMid || {})[String(s.id).slice(0, 2)] || 1) : 1) * 10) / 10 }; }
 
@@ -223,9 +268,39 @@ function skBodyBu(s, e, late) {
   }
   return null;
 }
+/* 숨겨진 직업 2 ('c_' 칸)의 문장: 정화 · 사함 · 옮기기 · 벗기기 · 비례 · 고행 */
+const cfList = only => only ? only.map(k => SK_KWN[k] || k).join(' · ') : '해로운 상태';
+function skBodyConfPre(s) { // 피해 문장보다 먼저 일어나는 것 (옮기기 · 벗기기 · 정화 · 사함, 나에게 쓰는 칸의 고행)
+  const out = []; const many = s.tgt === 'front' || s.tgt === 'all';
+  for (const e of s.fx) {
+    if (e.k === 'transfer') { const w = cfList(e.only); out.push(`내 ${w}${skJoW(w, '을', '를')} 모두 ${many ? '거두어 맞힌 적에게 나눠 건다' : '대상에게 옮긴다'}.`); if (e.add) { const a = SK_KWN[e.addK || (e.only || [])[0]] || ''; out.push(`그 뒤 ${many ? '맞힌 적마다 ' : ''}${a} ${e.add}${skJo(e.add)} 더 건다.`); } }
+    if (e.k === 'dispel') out.push(many ? `모든 적의 강화를 ${e.n || 5}씩 벗긴다.` : `대상의 강화를 ${e.n ? e.n + '까지' : '모두'} 벗긴다.`);
+    if (e.k === 'cleanse' && !e.after) { const w = cfList(e.only); const amt = e.n ? e.n : '모두';
+      if (e.offer) { out.push(`내 ${w}${e.only ? '만' : '를'} ${amt} 바친다(사함).`); const g = [e.dmg ? '피해 +' + e.dmg : '', e.brk ? '붕괴 +' + e.brk : ''].filter(Boolean).join(', '); if (g) out.push(`바친 1마다 ${g}${many ? '(맞힌 적마다)' : ''}.`); }
+      else { out.push(`내 ${w}${e.only ? '만' : '를'} ${amt} 지운다(정화).`); if (e.heal) out.push(`지운 1마다 생명력 +${e.heal}.`); if (e.stam) out.push(`지운 1마다 스태미나 +${e.stam}.`); if (e.quick) out.push('하나라도 지우면 이번 차례에 빠른 칸 +1.'); if (e.haste) out.push('하나라도 지우면 나에게 가속 1.'); } }
+  }
+  const ms = s.fx.filter(e => e.k === 'meSt' && CF_BAD.includes(e.s)); if (ms.length && s.tgt === 'self') out.push(`나에게 ${ms.map(e => (SK_KWN[e.s] || e.s) + ' ' + e.n).join(', ')}(고행).`);
+  return out;
+}
+function skBodyConf(s, e) { // null이면 공통 문장, ''이면 문장 없음
+  switch (e.k) {
+    case 'transfer': case 'dispel': return '';
+    case 'cleanse': return e.after ? `친 뒤 내 ${cfList(e.only)}${e.only ? '만' : '를'} ${e.n || '모두'} 지운다(정화).` : '';
+    case 'perDmg': { const g = [e.per ? '피해 +' + e.per : '', e.brk ? '붕괴 +' + e.brk : ''].filter(Boolean).join(', ');
+      if (e.of === 'prot') return e.spend ? `내 보호를 모두 써서 1마다 ${g}.` : `내 보호 1마다 ${g}. 보호는 줄지 않는다.`;
+      if (e.of === 'burden') return `내 짐 1마다 ${g}. 짐은 줄지 않는다.`;
+      if (e.of === 'clean') return `이 스킬 앞서 이번 차례에 지우거나 바친 숫자 1마다 ${g}.`;
+      if (e.of === 'tbad') return `대상의 해로운 상태 1마다 ${g}.`;
+      { const w = SK_KWN[e.of] || e.of; return `대상의 ${w} 1마다 ${g}. ${w}${skJoW(w, '은', '는')} 줄지 않는다.`; } }
+    case 'meSt': if (!CF_BAD.includes(e.s)) return null; if (s.tgt === 'self') return ''; { const ms = s.fx.filter(x => x.k === 'meSt' && CF_BAD.includes(x.s)); return ms[0] === e ? `행동이 끝나면 나에게 ${ms.map(x => (SK_KWN[x.s] || x.s) + ' ' + x.n).join(', ')}(고행).` : ''; }
+    case 'hasten': return e.on === 'clean' ? `🔄 하나라도 지우면 다른 ${s.b} 스킬 쿨타임 −${e.n || 1}.` : null;
+  }
+  return null;
+}
 function skBody(s) {
   const out = []; const hits = s.hits || 1; const parts = []; const first = []; const burnWard = s.fx.some(e => e.k === 'wardBurn'); const isE = String(s.id).slice(0, 2) === 'e_'; // first: 연타의 첫 타격에만 거는 상태 (마검사 연타 칸)
   const eMulti = isE && hits > 1 && s.fx.some(e => e.k === 'st'); // 원소술사 여러 번 쏘기: 상태는 첫 발 뒤에 걸려 다음 발부터 쓴다 (엔진 그대로, 문장만)
+  const cf = String(s.id).slice(0, 2) === 'c_'; if (cf) out.push(...skBodyConfPre(s)); // 숨겨진 직업 2: 옮기기 · 벗기기 · 정화 · 사함은 피해보다 먼저
   const bu = /^b_/.test(String(s.id)); const eatT = bu && s.fx.find(e => e.k === 'drain' && e.s === 'bleed' && !e.me); const late = []; // 숨겨진 직업 1: 먹는 칸의 출혈은 먹은 뒤 다시 건다, 연타의 상태는 첫 타격 뒤
   for (const e of s.fx) {
     if (bu && e.k === 'meSt' && e.s === 'bleed') out.push(`먼저 나에게 출혈 ${e.n}${skJo(e.n)} 건다.`);
@@ -238,13 +313,14 @@ function skBody(s) {
     if (e.k === 'st' && !eMulti) { const t = `${s.tgt === 'self' ? '나에게 ' : ''}${SK_KWN[e.s] || e.s} ${e.n}`; if (bu && ((eatT && e.s === 'bleed') || hits > 1)) late.push(e); else (s.kind && hits > 1 && s.tgt !== 'self' ? first : parts).push(t); }
     if (e.k === 'ward' && !(s.kind && burnWard)) parts.push(`${s.tgt === 'self' ? '' : '나에게 '}보호막 +${e.n}`);
   }
-  if (parts.length) out.push((hits > 1 ? `${hits}번 ${s.tgt === 'ranged' || s.tgt === 'all' ? '쏜다' : (bu || s.kind) ? '벤다' : '찌른다'}. 한 번마다 ` : '') + (s.tgt === 'front' && bu ? '전열 모두에게 ' : '') + parts.join(', ') + '.');
+  if (parts.length) out.push((hits > 1 ? `${hits}번 ${cf ? '친다' : s.tgt === 'ranged' || s.tgt === 'all' ? '쏜다' : (bu || s.kind) ? '벤다' : '찌른다'}. 한 번마다 ` : '') + (s.tgt === 'front' && bu ? '전열 모두에게 ' : '') + parts.join(', ') + '.');
   if (bu && hits > 1 && late.length) out.push('첫 타격 뒤 ' + late.map(e => (SK_KWN[e.s] || e.s) + ' ' + e.n).join(', ') + '.');
   if (first.length) { const l = first[first.length - 1]; out.push(`${s.tgt === 'ranged' || s.tgt === 'all' ? '첫 발' : '첫 칼'}에 ${first.join(', ')}${skJo(l.slice(-1))} 건다.`); }
   if (eMulti) for (const e of s.fx) if (e.k === 'st') out.push(`첫 발이 ${SK_KWN[e.s] || e.s} ${e.n}${skJo(e.n)} 걸고, 다음 발부터 그 ${SK_KWN[e.s] || e.s}${e.s === 'ignite' ? '을 태운다' : '를 쓴다'}.`);
   if (isE && s.fx.some(e => e.k === 'st' && e.s === 'ignite') && s.fx.some(e => e.k === 'st' && e.s === 'chill')) out.push(s.tgt === 'all' || s.tgt === 'front' ? '적마다 두 원소가 함께 걸려 바로 열충격이 일어난다.' : '두 원소가 함께 걸려 바로 열충격이 일어난다.');
   for (const e of s.fx) {
     if (bu) { const t = skBodyBu(s, e, late); if (t !== null) { if (t) out.push(t); continue; } }
+    if (cf) { const t = skBodyConf(s, e); if (t !== null) { if (t) out.push(t); continue; } }
     switch (e.k) {
       case 'grow': out.push(`대상의 중독을 ${e.mul}배로 만든다.` + (e.add ? ` 그 뒤 중독 ${e.add}.` : '')); break;
       case 'burst':
