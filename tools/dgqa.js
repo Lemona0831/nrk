@@ -18,7 +18,7 @@ function loadGame() {
   vm.createContext(ctx);
   vm.runInContext(data + '\n' + html.slice(i + 8, j) + '\n;this.__G = G;', ctx, { filename: 'next/index.html' });
   // 화면·저장·소리는 끈다
-  vm.runInContext('Object.assign(this, { bagUsed: typeof bagUsed !== "undefined" ? bagUsed : null, BAG_MAX: typeof BAG_MAX !== "undefined" ? BAG_MAX : 12, CHAPTERS: typeof CHAPTERS !== "undefined" ? CHAPTERS : null, CONS: typeof CONS !== "undefined" ? CONS : null, LOOT: typeof LOOT !== "undefined" ? LOOT : null, STAT_KEYS: typeof STAT_KEYS !== "undefined" ? STAT_KEYS : null, STAT_REC: typeof STAT_REC !== "undefined" ? STAT_REC : null, STAT_START: typeof STAT_START !== "undefined" ? STAT_START : null, LV_POINTS: typeof LV_POINTS !== "undefined" ? LV_POINTS : 2, isLower, chOf: typeof chOf !== "undefined" ? chOf : null, ITEMS, EVENTS, ROOM_TYPES, BUILDS, tplKind, SKILLS2: typeof SKILLS2 !== "undefined" ? SKILLS2 : null, TREE2: typeof TREE2 !== "undefined" ? TREE2 : null, SK2: typeof SK2 !== "undefined" ? SK2 : null, EQUIP_SLOTS2: typeof EQUIP_SLOTS2 !== "undefined" ? EQUIP_SLOTS2 : 4 });', ctx); // const 값은 밖에서 읽을 수 있게 꺼내 둔다
+  vm.runInContext('Object.assign(this, { bagUsed: typeof bagUsed !== "undefined" ? bagUsed : null, BAG_MAX: typeof BAG_MAX !== "undefined" ? BAG_MAX : 12, CHAPTERS: typeof CHAPTERS !== "undefined" ? CHAPTERS : null, CONS: typeof CONS !== "undefined" ? CONS : null, UNLOCK: typeof UNLOCK !== "undefined" ? UNLOCK : {}, LOOT: typeof LOOT !== "undefined" ? LOOT : null, STAT_KEYS: typeof STAT_KEYS !== "undefined" ? STAT_KEYS : null, STAT_REC: typeof STAT_REC !== "undefined" ? STAT_REC : null, STAT_START: typeof STAT_START !== "undefined" ? STAT_START : null, LV_POINTS: typeof LV_POINTS !== "undefined" ? LV_POINTS : 2, isLower, chOf: typeof chOf !== "undefined" ? chOf : null, ITEMS, EVENTS, ROOM_TYPES, BUILDS, tplKind, SKILLS2: typeof SKILLS2 !== "undefined" ? SKILLS2 : null, TREE2: typeof TREE2 !== "undefined" ? TREE2 : null, SK2: typeof SK2 !== "undefined" ? SK2 : null, EQUIP_SLOTS2: typeof EQUIP_SLOTS2 !== "undefined" ? EQUIP_SLOTS2 : 4 });', ctx); // const 값은 밖에서 읽을 수 있게 꺼내 둔다
   vm.runInContext(`toast = () => {}; scheduleSync = () => {}; syncRun = async () => false; pushRank = async () => {}; saveLocal = () => true; sfx = () => {};`, ctx);
   vm.runInContext('var window = { scrollTo() { }, innerWidth: 1280, innerHeight: 800, scrollY: 0, addEventListener() { } };', ctx); // 정산·상점 버튼이 부르는 창 함수만 둔다
   return ctx;
@@ -248,7 +248,7 @@ function playChar(pk, build, seed) {
   const P = PERSONAS[pk]; const r = rng(seed);
   G0.__rnd = rng(seed * 31 + 7); run_('Math.random = __rnd');
   const G = G0.__G;
-  G.data = G0.blankData(); G.data.seenFoe = { abbot: 1, bellringer: 1, pilgrim: 1 }; G.data.seenBoss = { abbot: 1 }; G.data.seenCoach = true;
+  G.data = G0.blankData(); G.data.seenFoe = { abbot: 1, bellringer: 1, pilgrim: 1 }; G.data.seenBoss = { abbot: 1 }; G.data.seenCoach = true; G.data.unlAll = 1; /* 숨겨진 직업도 고를 수 있게(어느 직업을 잴지는 DG_LOCK이 정한다) */
   G.cre = { name: 'qa' }; G.dropQ = []; G.b = null; G.sheet = null;
   G0.startRun(build);
   const run = G.run; G.sheet = null; G.creating = false; G.cre = null; G.scr = 'run';
@@ -349,7 +349,7 @@ if (require.main === module) {
   // 10월 5일 옵션: SEED(씨앗 시작값, 기본 5000), CLS=암살자 키들(쉼표), PK=성향 키들(쉼표), SHARD=i/n(n조각 가운데 i번째만, 0부터), DETAIL=0이면 전투 기록을 빼고 가볍게
   const SEED0 = +(process.env.SEED || 5000); const CLSF = process.env.CLS ? process.env.CLS.split(',') : null; const PKF = process.env.PK ? process.env.PK.split(',') : null;
   const [SI, SN] = (process.env.SHARD || '0/1').split('/').map(Number); let job = 0;
-  for (const pk of Object.keys(PERSONAS).filter(k => !PKF || PKF.includes(k))) for (const build of Object.keys(G0.BUILDS).filter(k => !G0.BUILDS[k].tut && (!G0.BUILDS[k].soon || process.env.DG_SOON) && (!CLSF || CLSF.includes(k)))) for (let s = 0; s < N; s++) { if ((job++ % SN) !== SI) continue; runs.push(playChar(pk, build, SEED0 + s * 13)); }
+  for (const pk of Object.keys(PERSONAS).filter(k => !PKF || PKF.includes(k))) for (const build of Object.keys(G0.BUILDS).filter(k => !G0.BUILDS[k].tut && (!G0.BUILDS[k].soon || process.env.DG_SOON) && (!G0.UNLOCK[k] || process.env.DG_LOCK || (CLSF && CLSF.includes(k))) && (!CLSF || CLSF.includes(k)))) for (let s = 0; s < N; s++) { if ((job++ % SN) !== SI) continue; runs.push(playChar(pk, build, SEED0 + s * 13)); }
   fs.writeFileSync(file, JSON.stringify(runs));
   // 요약: 챕터마다 따로 (2챕터는 1챕터를 깬 캐릭터 기준, 기획서 11.12절)
   const pct = (a, b) => b ? Math.round(a / b * 100) : 0;

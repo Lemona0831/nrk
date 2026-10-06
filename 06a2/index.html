@@ -471,6 +471,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .clsgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0}
 .clsc{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;min-height:92px;border-top:3px solid var(--c)}.clsc .big{font-size:26px;line-height:1.1}.clsc small{font-size:11.5px;color:var(--muted)}
 .clsc.on{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold) inset;background:var(--panel)}
+.clsc.locked{border-style:dashed;border-top:3px dashed var(--muted)}.clsc.locked b{letter-spacing:2px}.unlnews{border:1px solid var(--gold);border-radius:8px;padding:8px 10px;color:var(--ink)}
 .clsdet{border:1px solid var(--line);border-left:4px solid var(--c);border-radius:10px;padding:12px;margin:10px 0;background:var(--panel2)}
 .clsdet-h{display:flex;gap:10px;align-items:center}.clsdet-h .big{font-size:34px}.clsdet-h b{font-family:'Nanum Myeongjo',serif;font-size:20px;color:var(--gold)}
 .exl{margin:6px 0 10px;padding-left:18px}.exl li{margin:3px 0;font-size:14px}.clsdet-empty{margin:10px 0}
@@ -1208,7 +1209,24 @@ function kwTaken(b, u, d, o) {
 }
 /* 0.6a.2 직업 (v2: 재사용 대기 스킬, 트리, 마나 없음) */
 const isV2 = p => !!(p && BUILDS[p.build] && BUILDS[p.build].v2);
-const CLASS_KEYS = () => Object.keys(BUILDS).filter(k => !BUILDS[k].tut && !BUILDS[k].soon); // 고를 수 있는 직업 (수련장 견습생, 만드는 중인 직업 제외)
+const CLASS_KEYS = () => Object.keys(BUILDS).filter(k => !BUILDS[k].tut && !BUILDS[k].soon && unlOpen(k)); // 고를 수 있는 직업 (수련장 견습생, 만드는 중인 직업, 아직 열리지 않은 숨겨진 직업 제외)
+const ALL_CLASS_KEYS = () => Object.keys(BUILDS).filter(k => !BUILDS[k].tut && !BUILDS[k].soon); // 기록 · 결과 보기용(잠긴 직업도)
+/* 숨겨진 직업 해금 (10월 7일): 계정 셈과 열림 (data/classes.js UNLOCK) */
+const unlLocked = () => typeof UNLOCK === 'undefined' ? [] : Object.keys(UNLOCK).filter(k => BUILDS[k] && !BUILDS[k].soon && !unlOpen(k));
+function unlData() { const d = G.data; if (!d.unl) d.unl = { c: {}, open: {} }; if (!d.unl.c) d.unl.c = {}; if (!d.unl.open) d.unl.open = {}; return d.unl; }
+function unlOpen(k) { if (typeof UNLOCK === 'undefined' || !UNLOCK[k]) return true; const d = typeof G !== 'undefined' && G.data; return !!(d && (d.unlAll || (d.unl && d.unl.open && d.unl.open[k]))); }
+function unlAdd(b, key, n) {
+  if (typeof UNLOCK === 'undefined' || !Object.keys(UNLOCK).length || typeof G === 'undefined' || !G.data) return;
+  if (b && b.ctx && (b.ctx.tut || b.ctx.scen || b.ctx.test)) return;
+  const U = unlData(); U.c[key] = (U.c[key] || 0) + (n || 1);
+  for (const k of Object.keys(UNLOCK)) {
+    const L = UNLOCK[k]; if (U.open[k] || !BUILDS[k] || BUILDS[k].soon) continue;
+    if ((L.need || []).some(x => (U.c[x.c] || 0) >= x.n)) { U.open[k] = Date.now(); (U.news = U.news || []).push(k); if (b) logp(b, 'crit', L.open || '숨겨진 직업이 열렸습니다'); toast(L.open || '숨겨진 직업이 열렸습니다'); }
+  }
+  saveLocal();
+}
+function unlNewsHtml() { const U = G.data && G.data.unl; if (!U || !U.news || !U.news.length) return ''; return U.news.filter(k => UNLOCK[k] && BUILDS[k]).map(k => `<p class="unlnews">🔓 ${esc(UNLOCK[k].open || '')} 새 직업 ${esc(BUILDS[k].n)}을(를) 고를 수 있습니다.</p>`).join(''); }
+function unlNewsSeen() { const U = G.data && G.data.unl; if (U && U.news && U.news.length) { U.news = []; saveLocal(); } }
 const SK2 = {}; for (const k in SKILLS2) for (const s of SKILLS2[k]) SK2[s.id] = s;
 /* 사라진 규칙(마나, 주문·캔트립, 옛 점화·냉각의 시간당 피해, 옛 직업 스킬)에 묶여 v2 직업에게 효과가 없는 장비 (npm run items, 10월 3일 06a2에서 발동 0).
    아이템 손보기(개편 기획 1절) 전까지 드롭과 상점에서 뺀다. 장비 점검(tools/itemcheck.js)은 그대로 이 장비들을 시험해 실패로 보인다 */
@@ -1536,6 +1554,7 @@ function payMana(b, cost) {
   const lack = cost - p.mp; p.mp = 0; p.hp -= lack * 2 * hpCostMul(p); logp(b, 'bad', '모자란 마나를 피로 채운다. 생명력 ' + r1(lack * 2)); checkEnd(b);
 }
 function killEnemy(b, e) {
+  if (!e.pile && !e.summoned && !['root', 'candle', 'bonewall'].includes(e.role) && !b.over) { if (['poison', 'bleed', 'ignite', 'weak', 'vuln', 'chill'].some(k => b.p.s[k])) unlAdd(b, 'sinKill'); if (e.strong && e.foe) unlAdd(b, 'foe:' + e.foe); } // 숨겨진 직업 해금 셈
   if (e.role === 'skeleton' && !e.pile && !e.rose && !e.norise && !st(e, 'ignite') && !e.s.broken && !hasBt(b.p, 'rest') && !b.over) { makePile(b, e); return; } // 2챕터 해골: 화상 · 붕괴 · 한 번 일어섬 · 안식의 성소면 더미가 남지 않는다
   if (e.role === 'skeleton' && !e.pile && !e.rose && st(e, 'ignite')) logp(b, 'good', e.n + '이(가) 재가 되어 흩어진다');
   e.alive = false; e.hp = 0; logp(b, 'good', e.n + (e.pile ? '의 뼈 더미가 흩어진다' : '이(가) 쓰러진다'));
@@ -1562,7 +1581,7 @@ function checkEnd(b) {
   if (b.p.hp <= 0) { b.p.hp = 0; b.over = 'lose'; logp(b, 'bad', '무릎이 꺾인다. 쓰러졌다'); return; }
   if (!alive(b).some(realFoe)) {
     for (const e of alive(b)) if (e.pile || e.role === 'bonewall') { e.alive = false; e.hp = 0; } // 남은 것이 뼈 더미 · 뼈벽뿐이면 무너진다(G8)
-    b.over = 'win'; logp(b, 'good', '마지막 적이 쓰러진다. 방이 조용해진다'); // 10월 4일: 방을 이기면 플라스크가 차던 규칙은 없앴다(플라스크는 아주 드문 전리품)
+    b.over = 'win'; logp(b, 'good', '마지막 적이 쓰러진다. 방이 조용해진다'); if (b.p.hp <= b.p.hpMax * 0.3) unlAdd(b, 'edge'); if (b.ctx.boss && b.ctx.bossKind) unlAdd(b, 'boss:' + b.ctx.bossKind); // 10월 4일: 방을 이기면 플라스크가 차던 규칙은 없앴다(플라스크는 아주 드문 전리품)
   }
 }
 /* 도둑 (10월 4일): 플라스크 한 칸 · 골드 · 가방의 장비(무작위) 가운데 하나. 잡으면 돌려받고, 달아나면 잃는다 */
@@ -2058,7 +2077,7 @@ function abbotDemand(b) {
     if (!e.demand || e.demand.turn !== b.turnIdx) continue; const D = e.demand; e.demand = null; const p = b.p;
     const down = () => { if (p.s.brand) { p.s.brand.stacks--; if (p.s.brand.stacks <= 0) delete p.s.brand; } };
     if (D.k === 'atk') { if (D.hit) { down(); logp(b, 'good', '맞서는 칼끝에 낙인 하나가 옅어진다'); } else { addS(b, p, 'brand', 999, 1, 3); logp(b, 'bad', '맞서지 않은 죄가 새겨진다. 낙인 ' + st(p, 'brand')); } }
-    else { if (!D.hit) { down(); logp(b, 'good', '고해를 받아들인다. 낙인 하나가 사라진다'); } else { addS(b, p, 'brand', 999, 1, 3); addS(b, e, 'empower', 1); logp(b, 'bad', '고해 중에 칼을 들었다. 낙인이 깊어지고 ' + e.n + '이(가) 북받친다'); } }
+    else { if (!D.hit) { down(); logp(b, 'good', '고해를 받아들인다. 낙인 하나가 사라진다'); unlAdd(b, 'confess'); } else { addS(b, p, 'brand', 999, 1, 3); addS(b, e, 'empower', 1); logp(b, 'bad', '고해 중에 칼을 들었다. 낙인이 깊어지고 ' + e.n + '이(가) 북받친다'); } }
   }
 }
 function abbotCandles(b, e) {
@@ -2871,6 +2890,7 @@ function vCreate() {
   const pk = C.pick && BUILDS[C.pick] ? C.pick : null;
   h += `<section class="card cstep"><h3>직업을 고르세요${q('build', '직업과 빌드')}</h3><p class="mini"><b>${esc(C.name)}</b>의 직업입니다. 직업을 누르면 규칙과 스킬이 아래에 보입니다.</p><div class="clsgrid" role="group" aria-label="직업">`;
   for (const k of CLASS_KEYS()) { const B = BUILDS[k]; h += `<button class="clsc${pk === k ? ' on' : ''}" data-a="clspick" data-k="${k}" aria-pressed="${pk === k}" style="--c:${CLS_COLOR[k] || 'var(--gold)'}"><span class="big" aria-hidden="true">${B.ico}</span><b>${esc(B.n)}</b><small>생명력 ${B.hp + SLOT_BASE.armor.v[0]}${B.v2 ? ' · 충전 스킬' : ' · 마나 ' + B.mp}</small></button>`; }
+  for (const k of unlLocked()) { const L = UNLOCK[k]; const U = G.data.unl || { c: {} }; const pr = L.show ? (L.need || []).find(x => x.c === L.show) : null; h += `<button class="clsc locked" aria-disabled="true" data-info="lock:${k}" aria-label="잠긴 숨겨진 직업. ${esc(L.door || '')}${pr ? ', 진행 ' + Math.min(pr.n, U.c[pr.c] || 0) + '/' + pr.n : ''}"><span class="big" aria-hidden="true">${L.ico || '❔'}</span><b>???</b><small>🔒 ${esc(L.door || '숨겨진 직업')}${pr ? ' · ' + Math.min(pr.n, U.c[pr.c] || 0) + '/' + pr.n : ''}</small></button>`; }
   for (const c of (typeof CLASS_SOON !== 'undefined' ? CLASS_SOON : []).filter(c => !CLASS_KEYS().some(k => BUILDS[k].n === c.n))) h += `<button class="clsc" aria-disabled="true" data-info="soon:${esc(c.n)}"><span class="big" aria-hidden="true">${c.ico}</span><b>${esc(c.n)}</b><small>준비 중</small></button>`;
   h += `</div>`;
   if (pk) {
@@ -2944,6 +2964,7 @@ function vAdmin() {
     if (G.conn !== 'ok') return h + '<p class="mini">저장소에 연결하는 중입니다. 연결되지 않으면 새로 고쳐 주세요.</p></section>';
     return h + `<p class="mini">결과 보기와 지인 기록 넣기는 Supabase 설정 때 정한 관리자 암호로 엽니다. 이 기기에만 기억됩니다.</p><label for="adminpass">관리자 암호</label><input id="adminpass" type="password" autocomplete="current-password">${G.adminMsg ? `<p class="no" role="status">${esc(G.adminMsg)}</p>` : ''}<button class="gold" data-a="admingo">확인</button></section>`;
   }
+  if (typeof UNLOCK !== 'undefined' && Object.keys(UNLOCK).length) h += `<div class="row"><button data-a="unlall" aria-pressed="${!!G.data.unlAll}">숨겨진 직업 ${G.data.unlAll ? '잠그기' : '모두 열기'} (이 기기에서만, 시험용)</button></div>`;
   if (!G.dash && !G.dashReq && (G.conn || !siteMode)) { G.dashReq = 1; setTimeout(loadDash, 0); }
   return h + '<p class="mini">0.6a.2 스킬 시험판 기록만 모았습니다. 지인 주소(0.6a) 기록은 지인 주소의 결과 보기에서, B0.5 기록은 b05에서 봅니다.</p></section>' + (G.dash ? vDash06() : '') + vDash();
 }
@@ -2952,7 +2973,7 @@ function vDash06() {
   const runs = []; (G.dashRaw || []).forEach((t, i) => (t.runs || []).forEach(r => { if (r.doorLog || r.cname != null) runs.push(Object.assign({ who: testerLabel(t, i) }, r)); }));
   let h = `<section class="card"><h4>0.6 캐릭터 ${runs.length}명</h4>`;
   if (!runs.length) return h + '<p class="mini">아직 0.6 판이 없습니다.</p></section>';
-  const bn = CLASS_KEYS(); const by = {}; for (const k of bn) by[k] = runs.filter(r => r.build === k);
+  const bn = ALL_CLASS_KEYS(); const by = {}; for (const k of bn) by[k] = runs.filter(r => r.build === k);
   const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '—';
   const done = rs => rs.filter(r => r.result === 'lose' || (r.clears || 0) >= 1);
   h += `<div class="tbl"><table class="st2"><thead><tr><th>항목</th>${bn.map(k => `<th>${esc(BUILDS[k].n)}</th>`).join('')}</tr></thead><tbody>`;
@@ -2996,7 +3017,7 @@ function startSettle(run) {
 function vSettle() {
   const run = G.run, S = run.settle;
   return `<section class="card settle"><p class="mini">${run.ch || 1}챕터 · ${esc(chData(run.ch).n)}</p><h3>챕터를 넘었습니다</h3><p class="lore">${esc(chData(run.ch).settleLore || '')}</p>
-<dl class="sgold">${S.lines.map((x, i) => `<div style="--i:${i}"><dt>${esc(x.n)}</dt><dd>${x.v}</dd></div>`).join('')}<div class="tot" style="--i:${S.lines.length}"><dt>합계</dt><dd>${S.total} 골드</dd></div></dl>
+${unlNewsHtml()}<dl class="sgold">${S.lines.map((x, i) => `<div style="--i:${i}"><dt>${esc(x.n)}</dt><dd>${x.v}</dd></div>`).join('')}<div class="tot" style="--i:${S.lines.length}"><dt>합계</dt><dd>${S.total} 골드</dd></div></dl>
 ${S.mul > 1 ? '<p class="mini">보스와 강적 보상에 얻는 골드 증가가 붙었습니다.</p>' : ''}<p>정산을 확정하면 생명력·마나·스태미나와 플라스크가 모두 차고, 상점으로 갑니다.${run.statPending ? ` 보스를 넘으며 오른 레벨의 능력치 ${run.statPending}점도 이때 나눕니다.` : ''}</p>
 <button class="gold wide" data-a="settleok" data-focus>정산 확정</button></section>`;
 }
@@ -3521,6 +3542,7 @@ function infoHtml(key) {
   if (parts[0] === 'buff' && G.run) { const k = parts[1], S = SHRINES.find(x => x.id === k); const n = (G.run.buffs || {})[k] || 0; return H(S ? S.n : (EVBUFF[k] || [k])[0], P(S ? S.d : (EVBUFF[k] || ['', ''])[1]) + P('지금 방을 포함해 ' + n + '개 방 동안 이어집니다.')); } // 10월 5일: 브라우저 툴팁 대신 게임 설명 창
   if (parts[0] === 'sk' && SK2[parts[1]]) { const s = SK2[parts[1]]; return H(s.n, P((s.start ? '시작 스킬' : s.b + ' · ' + s.tier + ' · ' + s.row + '줄') + '. ' + skHead(s)) + P(skBody(s))); } // 시험 전투의 스킬 칸
   if (parts[0] === 'mod' && ROOM_MODS[parts[1]]) return H(ROOM_MODS[parts[1]].n, P(ROOM_MODS[parts[1]].d));
+  if (parts[0] === 'lock') { const L = typeof UNLOCK !== 'undefined' && UNLOCK[parts[1]]; return L ? H('???', P('숨겨진 직업입니다.') + P(L.hint || '') + P('한 번 열리면 이 계정에 남습니다.')) : ''; }
   if (parts[0] === 'soon') { const c = (typeof CLASS_SOON !== 'undefined' ? CLASS_SOON : []).find(x => x.n === parts[1]); return c ? H(c.n, P(c.d + '.') + P('아직 준비 중입니다.')) : ''; }
   if (parts[0] === 'floor' && G.run) { const f = +parts[1], run = G.run; const rec = (run.rooms || []).filter(x => x.room === f).pop(); const T = rec && ROOM_TYPES[rec.type]; return H(floorName(f), P(f === FLOOR_CAMP ? '야영지: 쉬면 모두 찹니다.' : f === FLOOR_BOSS ? '보스가 기다립니다.' : f === run.room ? '지금 있는 층입니다.' : f < run.room ? (T ? T.n + ' 방을 지났습니다.' : rec && rec.type === 'camp' ? '야영지에서 쉬었습니다.' : '지나온 층입니다.') : PATH_AT.includes(f) ? '갈래길이 나옵니다.' : '아직 가지 않은 층입니다.')); }
   if (INFO2[key]) return H(INFO2[key][0], INFO2[key].slice(1).map(P).join(''));
@@ -3744,7 +3766,7 @@ function blankData() { return { v: VERSION, runs: [], scen: {}, final: null, pro
 function loadLocal() { try { const s = localStorage.getItem(SKEY); if (s) return JSON.parse(s); } catch (e) { } return blankData(); }
 function saveLocal() { try { localStorage.setItem(SKEY, JSON.stringify(G.data)); return true; } catch (e) { return false; } }
 /* 결과 보기에서 누구 기록인지 바로 알 수 있게, 기록마다 닉네임과 로그인 방식을 함께 남긴다 */
-function testerMeta() { return { v: VERSION, updatedAt: Date.now(), runs: G.data.runs.length, name: G.data.name || '', login: G.acct && !G.acct.anon ? G.acct.provider : '' }; }
+function testerMeta() { const m = { v: VERSION, updatedAt: Date.now(), runs: G.data.runs.length, name: G.data.name || '', login: G.acct && !G.acct.anon ? G.acct.provider : '' }; if (G.data.unl) m.unl62 = { c: G.data.unl.c || {}, open: G.data.unl.open || {} }; return m; }
 async function pushDb(path, obj) {
   if (!G.db || !G.uid || G.conn === 'readonly') { G.sync = CONN_MSG[G.conn] || CONN_MSG.nodb; return false; }
   try {
@@ -3870,7 +3892,7 @@ async function readAcct(user) {
   if (anon) return;
   // 닉네임은 계정을 따라간다. 저장소에 남긴 이름 → 구글 계정의 이름 순서로 채운다
   let saved = '';
-  try { const cur = await G.db.doc('playtest/' + G.uid).get(); if (cur.exists) saved = (cur.data() || {}).name || ''; } catch (e) { }
+  try { const cur = await G.db.doc('playtest/' + G.uid).get(); if (cur.exists) { const cd = cur.data() || {}; saved = cd.name || ''; if (cd.unl62) { const U = unlData(); for (const [k, v] of Object.entries(cd.unl62.c || {})) U.c[k] = Math.max(U.c[k] || 0, v || 0); for (const [k, v] of Object.entries(cd.unl62.open || {})) if (v && !U.open[k]) U.open[k] = v; saveLocal(); } } } catch (e) { } // 해금은 기기와 계정 가운데 큰 값을 남긴다
   const md = user.user_metadata || {};
   const nick = saved || G.data.name || md.name || md.full_name || md.nickname || md.preferred_username || md.user_name || '';
   if (nick && nick !== G.data.name) { G.data.name = String(nick).trim().slice(0, 16); saveLocal(); }
@@ -4617,7 +4639,7 @@ function bar(cls, v, max, label) { const w = max > 0 ? Math.max(0, Math.min(100,
 function vDead() {
   const run = G.run, g = run.grave || {}; const SKM = skillMap(run.build);
   const actN = id => ({ basic: '기본 공격', heavy: '강공격', guard: '방어', dodge: '흘리기', flaskL: '생명력 플라스크', flaskM: isV2(run.p) ? '정화 플라스크' : '마나 플라스크', flee: '도망', sig: '직업 기술' })[id] || (SKM[id] && SKM[id].n) || id;
-  return vPlayerPanel(run.p, null) + `<section class="card grave"><h3>쓰러졌습니다</h3><p class="lore">돌바닥이 차갑다. 이 이름은 더 내려가지 못한다.</p>
+  return vPlayerPanel(run.p, null) + `<section class="card grave"><h3>쓰러졌습니다</h3>${unlNewsHtml()}<p class="lore">돌바닥이 차갑다. 이 이름은 더 내려가지 못한다.</p>
 <p>${esc(run.cname || BUILDS[run.build].n)}(${esc(BUILDS[run.build].n)}, Lv ${run.lv || 1})의 여정은 ${esc(g.roomN || '')}에서 끝났습니다. 쓰러진 캐릭터는 돌아오지 않습니다. 새 캐릭터로 다시 시작합니다.</p>
 <dl class="gdl"><dt>마지막 행동</dt><dd>${(g.last || []).map(a => esc(actN(a))).join(' → ') || '없음'}</dd><dt>장비</dt><dd>${(g.eq || []).map(k => esc((ITEMS[k] || { n: k }).n)).join(', ') || '없음'}</dd><dt>능력치</dt><dd>${STAT_KEYS.map(k => STATN[k] + ' ' + (g.stats ? g.stats[k] || 0 : 0)).join(' · ')}</dd></dl>
 <button class="gold wide" data-a="giveupend" data-focus>기록을 남기고 마치기</button></section>`;
@@ -5233,7 +5255,8 @@ function onClick(ev) {
     case 'cback': { if (el.dataset.k === 'name') { G.cre.step = 'name'; } else { G.run = null; G.sheet = null; G.cre.step = 'cls'; } render(); break; }
     case 'clspick': G.cre.pick = el.dataset.k; render(); setTimeout(() => { const d = document.querySelector('.clsdet'); if (d && d.getBoundingClientRect().bottom > window.innerHeight) d.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 20); break;
     case 'start': startRun(el.dataset.b); window.scrollTo(0, 0); break;
-    case 'settleok': { const run = G.run, p = run.p, S = run.settle; if (!S || run.phase !== 'settle') break;
+    case 'unlall': G.data.unlAll = G.data.unlAll ? 0 : 1; saveLocal(); render(); break;
+    case 'settleok': { unlNewsSeen(); const run = G.run, p = run.p, S = run.settle; if (!S || run.phase !== 'settle') break;
       run.gold = S.total; p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax; for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = flaskCap(p, fk); sfx('coin');
       genShop(run); run.phase = 'shop'; G.scr = 'shop'; saveRunLocal(); saveCur(); window.scrollTo(0, 0);
       if (run.statPending) { openSheet('stats', { pts: run.statPending, pending: 1, why: '레벨 ' + run.lv + ' · 능력치 ' + run.statPending + '점' }); } else render(); break; }
