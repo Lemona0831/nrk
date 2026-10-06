@@ -10,12 +10,12 @@
  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
 *{box-sizing:border-box}
-body{margin:0;background:radial-gradient(ellipse 90% 60% at 50% -10%,#2a1d15 0%,rgba(13,11,10,0) 70%) no-repeat,var(--bg);background-attachment:fixed;min-height:100dvh;color:var(--ink);font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;font-size:15px;line-height:1.55}
+body{margin:0;background:radial-gradient(ellipse 90% 60% at 50% -10%,#2a1d15 0%,rgba(13,11,10,0) 70%) no-repeat,var(--bg);background-attachment:fixed;min-height:100dvh;color:var(--ink);font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;font-size:calc(15px*var(--fs,1));line-height:1.55}
 h1,h3,h4{font-family:'Nanum Myeongjo','Noto Serif KR',serif;margin:0;text-shadow:0 1px 0 #000,0 0 12px rgba(201,162,75,.08)}
 button{font:inherit;color:var(--ink);background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(0,0,0,0)),var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:9px 11px;cursor:pointer;min-height:44px;text-align:center}
 button[disabled]{cursor:not-allowed;color:var(--muted);background:var(--panel);border-style:dashed}button.gold[disabled]{background:var(--panel);color:var(--muted);border-color:var(--line2)}
 button.gold{background:var(--gold);color:var(--gold-ink);border-color:var(--gold);font-weight:700}
-button.sm{min-height:44px;padding:6px 10px;font-size:13.5px}
+button.sm{min-height:44px;padding:6px 10px;font-size:calc(13.5px*var(--fs,1))}
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 input,select,textarea{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:9px;width:100%;margin:4px 0 8px}
 input[type=radio]{width:auto;margin:0 4px 0 0}
@@ -23,82 +23,82 @@ fieldset{border:1px solid var(--line);border-radius:8px;margin:8px 0;padding:8px
 fieldset label{display:inline-flex;align-items:center;min-height:44px;margin-right:12px}
 .app{max-width:760px;margin:0 auto;padding:0 12px 40px}
 .card{background:linear-gradient(180deg,rgba(201,162,75,.035),rgba(0,0,0,0) 40px),var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;box-shadow:inset 0 1px 0 rgba(201,162,75,.07),0 2px 10px rgba(0,0,0,.35)}
-.card h3{font-size:18px;margin-bottom:8px;color:var(--gold)}.card h4{font-size:15px;margin-bottom:6px;color:var(--gold)}
-.mini{font-size:13px;color:var(--muted)}
+.card h3{font-size:calc(18px*var(--fs,1));margin-bottom:8px;color:var(--gold)}.card h4{font-size:calc(15px*var(--fs,1));margin-bottom:6px;color:var(--gold)}
+.mini{font-size:calc(13px*var(--fs,1));color:var(--muted)}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>button{flex:1}
-.setg{border-top:1px solid var(--line);padding:12px 0 6px}.setg:first-of-type{border-top:0;padding-top:2px}.setg h4{margin:0 0 6px;font-size:13px;color:var(--muted);font-family:inherit;letter-spacing:.06em;text-shadow:none}
-.sw{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:4px 12px 4px 6px;border-radius:999px;font-size:13.5px}.sw::before{content:'';width:34px;height:20px;border-radius:10px;background:radial-gradient(circle at 10px 50%,var(--muted) 6px,transparent 7px),var(--track);box-shadow:inset 0 0 0 1px var(--line)}.sw[aria-checked=true]::before{background:radial-gradient(circle at 24px 50%,#1a1206 6px,transparent 7px),var(--gold);box-shadow:none}.sw[aria-checked=false]{color:var(--muted)}
-.setrow{display:grid;grid-template-columns:96px 1fr auto;align-items:center;gap:10px;margin:6px 0;min-height:40px}.setrow>label,.setrow>.lab{font-size:14px}.setrow>:last-child{justify-self:end}.setrow small{grid-column:1/-1;justify-self:start!important;margin-top:-4px;color:var(--muted);font-size:12px}.setrow input[type=range]{flex:1;min-width:0;accent-color:var(--gold);min-height:36px}.setrow output{min-width:42px;text-align:right;font-variant-numeric:tabular-nums}.setrow select{flex:1;min-height:36px}
+.setg{border-top:1px solid var(--line);padding:12px 0 6px}.setg:first-of-type{border-top:0;padding-top:2px}.setg h4{margin:0 0 6px;font-size:calc(13px*var(--fs,1));color:var(--muted);font-family:inherit;letter-spacing:.06em;text-shadow:none}
+.sw{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:4px 12px 4px 6px;border-radius:999px;font-size:calc(13.5px*var(--fs,1))}.sw::before{content:'';width:34px;height:20px;border-radius:10px;background:radial-gradient(circle at 10px 50%,var(--muted) 6px,transparent 7px),var(--track);box-shadow:inset 0 0 0 1px var(--line)}.sw[aria-checked=true]::before{background:radial-gradient(circle at 24px 50%,#1a1206 6px,transparent 7px),var(--gold);box-shadow:none}.sw[aria-checked=false]{color:var(--muted)}
+.setrow{display:grid;grid-template-columns:96px 1fr auto;align-items:center;gap:10px;margin:6px 0;min-height:40px}.setrow>label,.setrow>.lab{font-size:calc(14px*var(--fs,1))}.setrow>:last-child{justify-self:end}.setrow small{grid-column:1/-1;justify-self:start!important;margin-top:-4px;color:var(--muted);font-size:calc(12px*var(--fs,1))}.setrow input[type=range]{flex:1;min-width:0;accent-color:var(--gold);min-height:36px}.setrow output{min-width:42px;text-align:right;font-variant-numeric:tabular-nums}.setrow select{flex:1;min-height:36px}
 .hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding:8px 12px;margin:0 -12px 10px;display:flex;align-items:center;gap:10px}
-.hdr .hi{font-size:13px;color:var(--gold);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hdr .hi-d{margin-right:6px;vertical-align:middle}.hdr .hi-m{display:none}.hdr .hl{flex:1;min-width:0}.hdr .hl .hname{font-family:'Nanum Myeongjo',serif;font-size:17px;display:block;margin:0}
-.hero{text-align:center}.hero h1{font-size:36px;color:var(--gold);line-height:1.15}.hero p{max-width:40ch;margin:10px auto 0}
-.banner{border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:13.5px;border:1px solid var(--gold);background:var(--panel2)}
-.ccard{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px;background:var(--panel2)}.ccard .big{font-size:28px}
+.hdr .hi{font-size:calc(13px*var(--fs,1));color:var(--gold);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hdr .hi-d{margin-right:6px;vertical-align:middle}.hdr .hi-m{display:none}.hdr .hl{flex:1;min-width:0}.hdr .hl .hname{font-family:'Nanum Myeongjo',serif;font-size:calc(17px*var(--fs,1));display:block;margin:0}
+.hero{text-align:center}.hero h1{font-size:calc(36px*var(--fs,1));color:var(--gold);line-height:1.15}.hero p{max-width:40ch;margin:10px auto 0}
+.banner{border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:calc(13.5px*var(--fs,1));border:1px solid var(--gold);background:var(--panel2)}
+.ccard{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px;background:var(--panel2)}.ccard .big{font-size:calc(28px*var(--fs,1))}
 .rules{padding-left:18px;margin:0}.rules li{margin-bottom:4px}
 .bar{position:relative;height:16px;background:var(--track);border-radius:4px;overflow:hidden;border:1px solid var(--line);margin:2px 0}
-.bar i{display:block;height:100%}.bar span{position:absolute;inset:0;text-align:center;font-size:11px;line-height:15px;color:#fff;text-shadow:0 1px 2px #000}
+.bar i{display:block;height:100%}.bar span{position:absolute;inset:0;text-align:center;font-size:calc(11px*var(--fs,1));line-height:calc(15px*var(--fs,1));color:#fff;text-shadow:0 1px 2px #000}
 .bar.hp i{background:var(--hp)}.bar.mp i{background:var(--mp)}.bar.st i{background:var(--st)}.bar.bk i{background:var(--bk)}
 .bars3{display:grid;gap:3px;margin:8px 0}
-.tl{display:flex;gap:4px;overflow-x:auto;padding:2px 0 8px}.tl span{flex:none;font-size:12.5px;border:1px solid var(--line);border-radius:6px;padding:3px 7px;background:var(--panel)}.tl span.me{border-color:var(--gold);color:var(--gold);font-weight:700}
-.gimmick{font-size:13px;background:var(--panel);border:1px dashed var(--gold);border-radius:8px;padding:6px 9px;margin-bottom:8px}
+.tl{display:flex;gap:4px;overflow-x:auto;padding:2px 0 8px}.tl span{flex:none;font-size:calc(12.5px*var(--fs,1));border:1px solid var(--line);border-radius:6px;padding:3px 7px;background:var(--panel)}.tl span.me{border-color:var(--gold);color:var(--gold);font-weight:700}
+.gimmick{font-size:calc(13px*var(--fs,1));background:var(--panel);border:1px dashed var(--gold);border-radius:8px;padding:6px 9px;margin-bottom:8px}
 .gimmick.dmd{border:1px solid var(--bad,#c55);font-weight:700}
 .enemies{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:10px}
 .en{background:var(--panel);text-align:left;padding:8px;display:block;width:100%}
 .en.tg{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold) inset}
-.en .ico{font-size:22px;flex:0 0 auto}.en .nm{font-weight:600;font-size:13.5px}.en .bar{height:12px}.en .bar span{font-size:9.5px;line-height:11px}
-.intent{font-size:12.5px;margin-top:4px;padding:3px 6px;border-radius:5px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;gap:5px;min-width:0}.intent.hv{border-color:var(--bad);border-width:2px;color:var(--bad);font-weight:600}
-.intent .ii{font-size:17px;line-height:1;flex:none}.intent .inum{font-size:16px;font-weight:800;flex:none}.intent .itx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.intent .ix{flex:none;font-weight:800;font-size:12px;border-radius:9px;padding:0 6px;background:#b8402f;color:#fff}
+.en .ico{font-size:calc(22px*var(--fs,1));flex:0 0 auto}.en .nm{font-weight:600;font-size:calc(13.5px*var(--fs,1))}.en .bar{height:12px}.en .bar span{font-size:calc(9.5px*var(--fs,1));line-height:calc(11px*var(--fs,1))}
+.intent{font-size:calc(12.5px*var(--fs,1));margin-top:4px;padding:3px 6px;border-radius:5px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;gap:5px;min-width:0}.intent.hv{border-color:var(--bad);border-width:2px;color:var(--bad);font-weight:600}
+.intent .ii{font-size:calc(17px*var(--fs,1));line-height:1;flex:none}.intent .inum{font-size:calc(16px*var(--fs,1));font-weight:800;flex:none}.intent .itx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.intent .ix{flex:none;font-weight:800;font-size:calc(12px*var(--fs,1));border-radius:9px;padding:0 6px;background:#b8402f;color:#fff}
 .intent.ik-atk .inum{color:var(--ink)}.intent.ik-hv{background:rgba(200,60,50,.12)}.intent.ik-warn{border-color:var(--gold);color:var(--gold)}.intent.ik-sup{color:var(--muted)}
-.en{position:relative}.mbars{position:relative}.dpop{position:absolute;right:8px;top:2px;z-index:5;font-weight:900;font-size:18px;pointer-events:none;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.6);animation:popup 1.4s ease-out forwards}
+.en{position:relative}.mbars{position:relative}.dpop{position:absolute;right:8px;top:2px;z-index:5;font-weight:900;font-size:calc(18px*var(--fs,1));pointer-events:none;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.6);animation:popup 1.4s ease-out forwards}
 .dpop.hurt{color:#ff6b5e}.dpop.heal{color:#7be08a}.mbars .dpop{right:auto;left:30%;top:-10px}
 @keyframes popup{0%{opacity:0;transform:translateY(8px) scale(.9)}12%{opacity:1;transform:translateY(0) scale(1.15)}70%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
 @media (prefers-reduced-motion:reduce){.dpop{animation:none}}
-.incoming{font-size:12.5px;margin:4px 0 2px;padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:var(--panel2)}.incoming b{font-size:15px;color:var(--bad)}.incoming small{color:var(--muted)}.incoming.bad{border-color:var(--bad)}.incoming.calm{color:var(--muted)}
+.incoming{font-size:calc(12.5px*var(--fs,1));margin:4px 0 2px;padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:var(--panel2)}.incoming b{font-size:calc(15px*var(--fs,1));color:var(--bad)}.incoming small{color:var(--muted)}.incoming.bad{border-color:var(--bad)}.incoming.calm{color:var(--muted)}
 .sts .sic{margin-right:2px}
-.sealln{font-size:12px;color:var(--bad);margin-top:3px}.focusln{font-size:12px;color:var(--gold);margin-top:3px}.focusln.lk{color:#7fc4d8}.ab .lk{color:#7fc4d8;font-weight:600}.focusln b{font-size:13.5px}.en .nr.fc{border-color:var(--gold);color:var(--gold)}.toast{white-space:pre-line}.tsk{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px;margin:2px 0 6px}.tskb{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:1px;padding:5px 7px;font-size:12.5px}.tskb.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset;background:color-mix(in srgb,var(--gold) 12%,var(--panel2))}.tskb small{font-size:11px;line-height:1.35}.row.wrap{flex-wrap:wrap}.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:4px;margin:2px 0 6px}.tgrid.sm5{grid-template-columns:repeat(5,minmax(0,1fr))}.tgrid button,.tpick button{white-space:normal;word-break:keep-all;min-height:34px}.tpick{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 8px}.chgh .sm{margin-left:6px;min-height:0;padding:1px 8px}.lootln{font-size:13px;color:var(--good);margin:2px 0 6px}.sts{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}.sts i{font-style:normal;font-size:11.5px;border:1px solid;border-radius:4px;padding:0 4px}.sts .b{border-color:var(--good);color:var(--good)}.sts .d{border-color:var(--bad);color:var(--bad)}
+.sealln{font-size:calc(12px*var(--fs,1));color:var(--bad);margin-top:3px}.focusln{font-size:calc(12px*var(--fs,1));color:var(--gold);margin-top:3px}.focusln.lk{color:#7fc4d8}.ab .lk{color:#7fc4d8;font-weight:600}.focusln b{font-size:calc(13.5px*var(--fs,1))}.en .nr.fc{border-color:var(--gold);color:var(--gold)}.toast{white-space:pre-line}.tsk{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px;margin:2px 0 6px}.tskb{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:1px;padding:5px 7px;font-size:calc(12.5px*var(--fs,1))}.tskb.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset;background:color-mix(in srgb,var(--gold) 12%,var(--panel2))}.tskb small{font-size:calc(11px*var(--fs,1));line-height:1.35}.row.wrap{flex-wrap:wrap}.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:4px;margin:2px 0 6px}.tgrid.sm5{grid-template-columns:repeat(5,minmax(0,1fr))}.tgrid button,.tpick button{white-space:normal;word-break:keep-all;min-height:34px}.tpick{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 8px}.chgh .sm{margin-left:6px;min-height:0;padding:1px 8px}.lootln{font-size:calc(13px*var(--fs,1));color:var(--good);margin:2px 0 6px}.sts{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}.sts i{font-style:normal;font-size:calc(11.5px*var(--fs,1));border:1px solid;border-radius:4px;padding:0 4px}.sts .b{border-color:var(--good);color:var(--good)}.sts .d{border-color:var(--bad);color:var(--bad)}
 .skills{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-top:6px}
-.skills button{text-align:left;padding:8px}.skills small{display:block;color:var(--muted);font-size:12px;line-height:1.35}
-.blog{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;max-height:240px;overflow-y:auto;font-size:13px}
+.skills button{text-align:left;padding:8px}.skills small{display:block;color:var(--muted);font-size:calc(12px*var(--fs,1));line-height:1.35}
+.blog{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;max-height:240px;overflow-y:auto;font-size:calc(13px*var(--fs,1))}
 .blog p{margin:0 0 3px}.blog .bad{color:var(--bad)}.blog .good{color:var(--good)}.blog .crit{color:var(--gold);font-weight:600}.blog .sys{color:var(--muted)}
 .icard{border:1px solid var(--gold);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:var(--panel2)}
-.icard .in{font-family:'Nanum Myeongjo',serif;font-size:17px;color:var(--gold)}.icard .l{margin:3px 0;font-size:14px}.icard .act{font-weight:600}.icard .cost{color:var(--bad)}
+.icard .in{font-family:'Nanum Myeongjo',serif;font-size:calc(17px*var(--fs,1));color:var(--gold)}.icard .l{margin:3px 0;font-size:calc(14px*var(--fs,1))}.icard .act{font-weight:600}.icard .cost{color:var(--bad)}
 .icard button{margin-top:6px;width:100%}
-.tag{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-top:4px}
+.tag{display:inline-block;font-size:calc(12px*var(--fs,1));border:1px solid var(--line);border-radius:999px;padding:0 8px;margin-top:4px}
 .tbl{overflow-x:auto}
-table.st2{width:100%;border-collapse:collapse;font-size:13px}table.st2 td,table.st2 th{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+table.st2{width:100%;border-collapse:collapse;font-size:calc(13px*var(--fs,1))}table.st2 td,table.st2 th{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 .sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(2px);z-index:60;display:flex;align-items:flex-end;padding-bottom:env(safe-area-inset-bottom,0px)}
 .sheet{background:var(--bg);border-top:2px solid var(--gold);width:100%;max-width:760px;margin:0 auto;border-radius:14px 14px 0 0;max-height:88%;overflow-y:auto;padding:14px 14px calc(16px + env(safe-area-inset-bottom,0px))}
-.sheet h3{color:var(--gold);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:18px}
-.toast{pointer-events:none;position:fixed;left:0;right:0;margin:0 auto;width:max-content;top:calc(env(safe-area-inset-top,0px) + 64px);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:14px;z-index:90;max-width:90%;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.45);animation:toastin .18s ease-out}
+.sheet h3{color:var(--gold);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:calc(18px*var(--fs,1))}
+.toast{pointer-events:none;position:fixed;left:0;right:0;margin:0 auto;width:max-content;top:calc(env(safe-area-inset-top,0px) + 64px);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:calc(14px*var(--fs,1));z-index:90;max-width:90%;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.45);animation:toastin .18s ease-out}
 @keyframes toastin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
-@media (max-width:719px){.toast{top:calc(env(safe-area-inset-top,0px) + 50px);font-size:13px;padding:6px 14px;max-width:94%}}
+@media (max-width:719px){.toast{top:calc(env(safe-area-inset-top,0px) + 50px);font-size:calc(13px*var(--fs,1));padding:6px 14px;max-width:94%}}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px;padding:0;border:0}
 
 .app{max-width:1180px}
 .hr{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-.qm{min-height:32px;padding:2px 9px;border-radius:999px;font-size:12.5px;margin-left:6px;vertical-align:middle;line-height:1.2;background:var(--panel);color:var(--gold);border-color:var(--gold);white-space:nowrap}.qm span{font-weight:700}
+.qm{min-height:32px;padding:2px 9px;border-radius:999px;font-size:calc(12.5px*var(--fs,1));margin-left:6px;vertical-align:middle;line-height:1.2;background:var(--panel);color:var(--gold);border-color:var(--gold);white-space:nowrap}.qm span{font-weight:700}
 @media (pointer:coarse){.qm{min-height:40px}}
 .link{background:none;border:0;color:var(--muted);text-decoration:underline;width:100%;margin-top:6px}
-.guide{max-width:640px;margin:10px auto}.guide p{margin:0 0 10px;max-width:62ch}.guide h3{font-size:22px}
+.guide{max-width:640px;margin:10px auto}.guide p{margin:0 0 10px;max-width:62ch}.guide h3{font-size:calc(22px*var(--fs,1))}
 .helpbox{border-top:1px solid var(--line);margin-top:10px;padding-top:10px}.helpbox p{margin:0 0 8px;max-width:62ch}
-.wrap{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.chip{border-radius:999px;padding:5px 12px;font-size:13.5px}.chip.on{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+.wrap{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.chip{border-radius:999px;padding:5px 12px;font-size:calc(13.5px*var(--fs,1))}.chip.on{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
 .me{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px}
-.mehead{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.mehead b{font-size:15px}.flk{margin-left:auto;font-size:13.5px;white-space:nowrap}
+.mehead{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.mehead b{font-size:calc(15px*var(--fs,1))}.flk{margin-left:auto;font-size:calc(13.5px*var(--fs,1));white-space:nowrap}
 .mbars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:6px 0 2px}
-.mb .ml{display:block;font-size:11.5px;color:var(--muted)}.mb .bar{margin:0}
+.mb .ml{display:block;font-size:calc(11.5px*var(--fs,1));color:var(--muted)}.mb .bar{margin:0}
 .tlw{display:flex;align-items:center;gap:6px}.tlw>.mini{flex:none;white-space:nowrap}.tlw .tl{flex:1}
-.lastlog{font-size:13.5px;padding:5px 9px;border-left:3px solid var(--gold);background:var(--panel);border-radius:4px;margin-bottom:8px}
+.lastlog{font-size:calc(13.5px*var(--fs,1));padding:5px 9px;border-left:3px solid var(--gold);background:var(--panel);border-radius:4px;margin-bottom:8px}
 .lastlog.bad{border-color:var(--bad)}.lastlog.good{border-color:var(--good)}
-.rowlab{font-size:12.5px;color:var(--muted);margin:2px 0 4px;display:flex;align-items:center}
+.rowlab{font-size:calc(12.5px*var(--fs,1));color:var(--muted);margin:2px 0 4px;display:flex;align-items:center}
 .enh{display:flex;align-items:center;gap:6px;margin-bottom:4px}
 .acts{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px}
 .agrp{display:grid;grid-template-columns:64px 1fr;gap:6px;align-items:start;margin-top:8px}
-.alab{font-size:12.5px;color:var(--muted);padding-top:10px}
+.alab{font-size:calc(12.5px*var(--fs,1));color:var(--muted);padding-top:10px}
 .abtns{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px}
-.abtns button{text-align:left;padding:7px 9px}.abtns small{display:block;color:var(--muted);font-size:12px;line-height:1.35}.abtns .tip{color:var(--ink);opacity:.8}
+.abtns button{text-align:left;padding:7px 9px}.abtns small{display:block;color:var(--muted);font-size:calc(12px*var(--fs,1));line-height:1.35}.abtns .tip{color:var(--ink);opacity:.8}
 .todo{padding-left:20px;margin:0 0 10px}.todo li{margin-bottom:4px}
-.ccard .cbody{flex:1;min-width:0}.crule{margin:4px 0;font-size:14px}.sk{margin:4px 0 8px;padding-left:18px;font-size:13.5px}.sk li{margin-bottom:2px}
+.ccard .cbody{flex:1;min-width:0}.crule{margin:4px 0;font-size:calc(14px*var(--fs,1))}.sk{margin:4px 0 8px;padding-left:18px;font-size:calc(13.5px*var(--fs,1))}.sk li{margin-bottom:2px}
 .elist{margin:4px 0 8px;padding-left:18px}
 
 #root{height:100%}
@@ -106,7 +106,7 @@ html,body{height:100%}
 html.fitmode,html.fitmode body{overflow:hidden}
 .fit{height:100%;display:flex;flex-direction:column;max-width:1680px;margin:0 auto;padding:0 10px}
 .fit .hdr{position:static;margin:0 -10px 6px;padding:6px 10px}
-.fit .hdr .hl .hname{font-size:15px}
+.fit .hdr .hl .hname{font-size:calc(15px*var(--fs,1))}
 .bgrid{flex:1;min-height:0;display:grid;gap:8px;padding-bottom:8px;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"top" "field" "dock"}
 .btop{grid-area:top;display:grid;gap:8px;grid-template-columns:minmax(0,1fr)}
 .fstat,.bmid,.field,.dock{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
@@ -116,49 +116,48 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .side.open{display:flex;flex-direction:column;position:fixed;inset:0;z-index:70;background:var(--bg);padding:calc(12px + env(safe-area-inset-top,0px)) 14px calc(14px + env(safe-area-inset-bottom,0px))}
 .side .blog{flex:1;min-height:0;max-height:none;overflow-y:auto}
 .sidehead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-.blog .lt{color:var(--muted);font-size:11.5px;margin-right:4px}
-.scenline{font-size:13px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px dashed var(--line)}
-.mehead{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.flk{margin-left:auto;font-size:13.5px;white-space:nowrap}
+.blog .lt{color:var(--muted);font-size:calc(11.5px*var(--fs,1));margin-right:4px}
+.scenline{font-size:calc(13px*var(--fs,1));margin-bottom:6px;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+.mehead{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.flk{margin-left:auto;font-size:calc(13.5px*var(--fs,1));white-space:nowrap}
 .mbars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:4px 0 2px}
 .mb .ml{display:none}.mb .bar{margin:0}
-.axhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}
-.axdef{color:var(--muted);font-size:12px}
+.axhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:calc(13px*var(--fs,1))}
+.axdef{color:var(--muted);font-size:calc(12px*var(--fs,1))}
 .track{position:relative;margin:24px 10px 4px;border-top:2px solid var(--line)}
 .tick{position:absolute;top:-2px;transform:translateX(-50%)}.tick i{display:block;width:1px;height:8px;background:var(--muted);margin:0 auto}
-.tick em{font-style:normal;font-size:10.5px;color:var(--muted);white-space:nowrap;position:absolute;left:50%;transform:translateX(-50%);top:-18px}
-.tm{position:absolute;transform:translateX(-50%);margin-top:6px;font-size:12px;min-width:22px;height:18px;line-height:16px;text-align:center;border:1px solid var(--line);border-radius:9px;background:var(--panel2);padding:0 4px}
+.tick em{font-style:normal;font-size:calc(10.5px*var(--fs,1));color:var(--muted);white-space:nowrap;position:absolute;left:50%;transform:translateX(-50%);top:-18px}
+.tm{position:absolute;transform:translateX(-50%);margin-top:6px;font-size:calc(12px*var(--fs,1));min-width:22px;height:18px;line-height:calc(16px*var(--fs,1));text-align:center;border:1px solid var(--line);border-radius:9px;background:var(--panel2);padding:0 4px}
 .tm.me{border-color:var(--gold);color:var(--gold-ink);background:var(--gold);font-weight:700}
-.axis .tl{padding:2px 0 0;display:flex;gap:4px;overflow-x:auto}.axis .tl span{font-size:11.5px;padding:1px 6px}
+.axis .tl{padding:2px 0 0;display:flex;gap:4px;overflow-x:auto}.axis .tl span{font-size:calc(11.5px*var(--fs,1));padding:1px 6px}
 .gimmick{margin:6px 0 0}
 .logrow{display:flex;gap:6px;align-items:center;margin-top:6px}.logrow .lastlog{flex:1;margin:0}.logrow button{flex:none;min-height:36px}.logbtns{display:flex;gap:4px;flex:none;margin-left:auto}
-.lastlog{font-size:13px;padding:4px 8px;border-left:3px solid var(--gold);background:var(--panel2);border-radius:4px}
+.lastlog{font-size:calc(13px*var(--fs,1));padding:4px 8px;border-left:3px solid var(--gold);background:var(--panel2);border-radius:4px}
 .lastlog.bad{border-color:var(--bad)}.lastlog.good{border-color:var(--good)}
-.rowlab{font-size:12.5px;color:var(--muted);margin:0 0 4px;display:flex;align-items:center;gap:2px;flex-wrap:wrap}
+.rowlab{font-size:calc(12.5px*var(--fs,1));color:var(--muted);margin:0 0 4px;display:flex;align-items:center;gap:2px;flex-wrap:wrap}
 .field .enemies{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-bottom:8px}
 .lanes{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
 .lane{border:1px solid var(--line);border-left:4px solid var(--lc);border-radius:10px;padding:5px 8px 7px;background:var(--lbg);min-width:0}
 .lane.front{--lc:#d9744f;--lbg:rgba(217,116,79,.07)}.lane.back{--lc:#6b9be0;--lbg:rgba(107,155,224,.07)}
 .lanehd{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 4px;min-height:24px}
-.lanehd b{color:var(--lc);font-size:14.5px;letter-spacing:.03em}.lanect{color:var(--muted);font-size:12px}
-.reach{font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 9px;border:1px solid;line-height:18px}
+.lanehd b{color:var(--lc);font-size:calc(14.5px*var(--fs,1));letter-spacing:.03em}.lanect{color:var(--muted);font-size:calc(12px*var(--fs,1))}
+.reach{font-size:calc(11.5px*var(--fs,1));font-weight:700;border-radius:999px;padding:1px 9px;border:1px solid;line-height:calc(18px*var(--fs,1))}
 .reach.ok{color:var(--good);border-color:rgba(134,197,111,.55);background:rgba(134,197,111,.08)}.reach.no{color:var(--muted);border-color:var(--line);background:var(--panel2)}
-.fstat>.mini,.fstat .rule,.incoming small{display:none}
 .lane .enemies{margin-bottom:0}.lane.empty{padding:3px 8px}.lane.empty .lanehd{margin:0}.lanehd .fq{margin-left:auto}
 @media (min-width:900px){.lanes{flex-direction:row;align-items:flex-start}.lane{flex:var(--n,1) 1 0}.lane.empty{flex:0 0 150px}.field .lane .enemies{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}}
-.en{padding:6px 8px}.enh{display:flex;align-items:center;gap:6px;margin-bottom:3px}.enh .ico{font-size:20px}
-.nr{margin-left:auto;font-size:11px;color:var(--bad);border:1px solid var(--bad);border-radius:4px;padding:0 4px;white-space:nowrap}
-.bkline{display:flex;align-items:center;gap:6px;margin:2px 0}.bkb{flex:1;height:5px;background:var(--track);border-radius:3px;overflow:hidden}.bkb i{display:block;height:100%;background:var(--bk)}.bkline small{font-size:10.5px;color:var(--muted);white-space:nowrap}
-.dockhead{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px}
-.legend{display:flex;gap:10px;margin:4px 0;font-size:11.5px;color:var(--muted)}.lg{display:inline-flex;align-items:center;gap:4px}.lg:before{content:'';width:10px;height:10px;border-radius:2px;background:var(--c)}
+.en{padding:6px 8px}.enh{display:flex;align-items:center;gap:6px;margin-bottom:3px}.enh .ico{font-size:calc(20px*var(--fs,1))}
+.nr{margin-left:auto;font-size:calc(11px*var(--fs,1));color:var(--bad);border:1px solid var(--bad);border-radius:4px;padding:0 4px;white-space:nowrap}
+.bkline{display:flex;align-items:center;gap:6px;margin:2px 0}.bkb{flex:1;height:5px;background:var(--track);border-radius:3px;overflow:hidden}.bkb i{display:block;height:100%;background:var(--bk)}.bkline small{font-size:calc(10.5px*var(--fs,1));color:var(--muted);white-space:nowrap}
+.dockhead{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:calc(13px*var(--fs,1))}
+.legend{display:flex;gap:10px;margin:4px 0;font-size:calc(11.5px*var(--fs,1));color:var(--muted)}.lg{display:inline-flex;align-items:center;gap:4px}.lg:before{content:'';width:10px;height:10px;border-radius:2px;background:var(--c)}
 .gr-n{color:var(--gr-n)}.gr-m{color:var(--gr-m)}.gr-r{color:var(--gr-r)}.grb-n{border-color:var(--gr-n)}.grb-m{border-color:var(--gr-m)}.grb-r{border-color:var(--gr-r)}
 .g-atk{--c:#b8392c}.g-sk{--c:#7b55c0}.g-def{--c:#3a6cc4}.g-etc{--c:#3a8a45}.g-sig{--c:var(--cls,#8a6a2a)}
 .ab.g-sig{background:color-mix(in srgb, var(--cls,#8a6a2a) 10%, var(--panel))}
 .fstat,.me{border-left:5px solid var(--cls,transparent)}
 .abgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:5px}
 .agp{display:contents}.agl{display:none}
-@media (min-width:720px){.abgrid{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}.agp{display:grid;grid-template-columns:repeat(var(--c,1),minmax(0,1fr));gap:5px;flex:var(--c,1) 1 0;min-width:calc(var(--c,1) * 138px)}.agl{grid-column:1/-1;display:block;font-size:12px;color:var(--muted);letter-spacing:.04em;padding:0 2px 1px;border-bottom:1px solid var(--line)}}
-.ab{text-align:left;padding:5px 8px;min-height:44px;border-left:4px solid var(--c)}.ab b{display:block;font-size:13.5px;line-height:1.25}.ab small{display:block;font-size:11.5px;color:var(--muted);line-height:1.25}
-.adesc{margin-top:6px;font-size:12.5px;min-height:1.4em;color:var(--ink);opacity:.9}
+@media (min-width:720px){.abgrid{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}.agp{display:grid;grid-template-columns:repeat(var(--c,1),minmax(0,1fr));gap:5px;flex:var(--c,1) 1 0;min-width:calc(var(--c,1) * 138px)}.agl{grid-column:1/-1;display:block;font-size:calc(12px*var(--fs,1));color:var(--muted);letter-spacing:.04em;padding:0 2px 1px;border-bottom:1px solid var(--line)}}
+.ab{text-align:left;padding:5px 8px;min-height:44px;border-left:4px solid var(--c)}.ab b{display:block;font-size:calc(13.5px*var(--fs,1));line-height:1.25}.ab small{display:block;font-size:calc(11.5px*var(--fs,1));color:var(--muted);line-height:1.25}
+.adesc{margin-top:6px;font-size:calc(12.5px*var(--fs,1));min-height:1.4em;color:var(--ink);opacity:.9}
 .wide{width:100%}
 .dock p{margin:0 0 6px}
 @media (min-width:720px){.btop{grid-template-columns:minmax(260px,.9fr) minmax(0,1.4fr)}}
@@ -169,152 +168,149 @@ html.fitmode,html.fitmode body{overflow:hidden}
 }
 @media (max-height:760px){
  .axis .tl{display:none}.legend{display:none}
- .fit .hdr .hl .mini{display:none}
- .fstat>.mini{display:none}
 }
 @media (max-height:600px){
  .track{display:none}.axdef{display:none}.axis .tl{display:flex}
- .ab{min-height:40px;padding:3px 6px}.ab small{display:none}.adesc{display:none}
- .enh .ico{font-size:16px}.intent{font-size:11.5px;padding:1px 4px}
+ .ab{min-height:40px;padding:3px 6px}.adesc{display:none}
+ .enh .ico{font-size:calc(16px*var(--fs,1))}.intent{font-size:calc(11.5px*var(--fs,1));padding:1px 4px}
 }
-@media (max-width:420px){.abgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.ab b{font-size:12.5px}.axdef{display:none}.field .enemies{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:420px){.abgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.ab b{font-size:calc(12.5px*var(--fs,1))}.axdef{display:none}.field .enemies{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 @media (max-width:719px){
  .fit .hdr button{min-height:40px;padding:4px 10px}
  .axis .tl{display:none}.axdef{display:none}.legend,.adesc{display:none}
- .ab{min-height:42px;padding:3px 6px}.ab small{font-size:11px}
+ .ab{min-height:42px;padding:3px 6px}.ab small{font-size:calc(11px*var(--fs,1))}
  .fstat,.bmid,.field,.dock{padding:6px 8px}.bgrid{gap:6px}
- .track{margin-top:20px}.tm{height:16px;line-height:14px;font-size:11px}
+ .track{margin-top:20px}.tm{height:16px;line-height:calc(14px*var(--fs,1));font-size:calc(11px*var(--fs,1))}
  .qm{min-height:34px;padding:1px 8px}
 }
-@media (max-width:719px) and (max-height:700px){.track{display:none}.axis .tl{display:flex}.fstat>.mini{display:none}}
+@media (max-width:719px) and (max-height:700px){.track{display:none}.axis .tl{display:flex}}
 
-.field .en{padding:5px 7px}.field .en .bar{height:13px;margin:1px 0}.field .en .bar span{font-size:9.5px;line-height:12px}
-.field .enh{margin-bottom:2px}.field .enh .nm{font-size:13px}
+.field .en{padding:5px 7px}.field .en .bar{height:13px;margin:1px 0}.field .en .bar span{font-size:calc(9.5px*var(--fs,1));line-height:calc(12px*var(--fs,1))}
+.field .enh{margin-bottom:2px}.field .enh .nm{font-size:calc(13px*var(--fs,1))}
 .field .intent{margin-top:3px;padding:2px 6px}.field .sts{margin-top:2px}
 .bkline{margin:1px 0}
 
 .rowlab{min-height:18px}
-.field .enh .ico{font-size:17px;line-height:1}.field .enh{min-height:20px}
-.bkline small{font-size:10px;line-height:1}
+.field .enh .ico{font-size:calc(17px*var(--fs,1));line-height:1}.field .enh{min-height:20px}
+.bkline small{font-size:calc(10px*var(--fs,1));line-height:1}
 .fhelp{display:flex;flex-wrap:wrap;align-items:center;gap:4px;border-top:1px dashed var(--line);padding-top:6px}
 
 
-.pop{position:fixed;z-index:95;display:none;background:var(--bg);color:var(--ink);border:1px solid var(--gold);border-radius:10px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.35);font-size:13.5px;line-height:1.5;pointer-events:none}
-.pop .pt{display:block;color:var(--gold);font-size:14.5px;margin-bottom:4px}.pop p{margin:0 0 6px}.pop p:last-child{margin-bottom:0}.pop .pv{border-left:3px solid var(--gold);padding-left:8px}.pop .no{color:var(--bad)}
+.pop{position:fixed;z-index:95;display:none;background:var(--bg);color:var(--ink);border:1px solid var(--gold);border-radius:10px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.35);font-size:calc(13.5px*var(--fs,1));line-height:1.5;pointer-events:none}
+.pop .pt{display:block;color:var(--gold);font-size:calc(14.5px*var(--fs,1));margin-bottom:4px}.pop p{margin:0 0 6px}.pop p:last-child{margin-bottom:0}.pop .pv{border-left:3px solid var(--gold);padding-left:8px}.pop .no{color:var(--bad)}
 .sts i{position:relative;overflow:hidden;padding-bottom:3px}.sts i b{font-weight:700;margin-left:2px}.sts i u{position:absolute;left:0;bottom:0;height:2px;background:currentColor;opacity:.7;text-decoration:none}
-.ord{list-style:none;display:flex;gap:4px;overflow-x:auto;margin:6px 0 2px;padding:0}.ord li{flex:none;font-size:12.5px;border:1px solid var(--line);border-radius:6px;padding:3px 8px;background:var(--panel2);position:relative}
+.ord{list-style:none;display:flex;gap:4px;overflow-x:auto;margin:6px 0 2px;padding:0}.ord li{flex:none;font-size:calc(12.5px*var(--fs,1));border:1px solid var(--line);border-radius:6px;padding:3px 8px;background:var(--panel2);position:relative}
 .ord li+li:before{content:'›';position:absolute;left:-6px;color:var(--muted)}.ord li.me{border-color:var(--gold);color:var(--gold-ink);background:var(--gold);font-weight:700}
-.ord li.rsep{border:0;background:none;color:var(--muted);font-weight:700;padding:3px 2px;font-size:11.5px}.ord li.rsep:before,.ord li.rsep+li:before{content:none}.ord li.now{box-shadow:0 0 0 2px var(--gold)}.ord li.nx{opacity:.6}
+.ord li.rsep{border:0;background:none;color:var(--muted);font-weight:700;padding:3px 2px;font-size:calc(11.5px*var(--fs,1))}.ord li.rsep:before,.ord li.rsep+li:before{content:none}.ord li.now{box-shadow:0 0 0 2px var(--gold)}.ord li.nx{opacity:.6}
 .ab.dis{cursor:not-allowed;background:var(--panel);border-style:dashed;border-left-style:solid;border-left-color:color-mix(in srgb,var(--c) 40%,var(--panel))}.ab.dis b{color:var(--muted)}
 /* 0.6a.2 전투 보기 (10월 3일): 적 생명력은 굵은 막대와 큰 숫자, 상태는 생명력 바로 아래, 순번은 카드 위, 이번 차례에 남은 칸은 행동판 위 */
 .field .enemies{row-gap:12px;padding-top:6px}
 .field .en{padding-top:9px}
-.en .eord{position:absolute;top:-8px;left:8px;z-index:2;font-size:11px;font-weight:700;line-height:15px;border-radius:9px;padding:0 7px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);white-space:nowrap}
+.en .eord{position:absolute;top:-8px;left:8px;z-index:2;font-size:calc(11px*var(--fs,1));font-weight:700;line-height:calc(15px*var(--fs,1));border-radius:9px;padding:0 7px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);white-space:nowrap}
 .en .eord.soon{background:#b8402f;border-color:#b8402f;color:#fff}.en .eord.done{color:var(--muted);font-weight:500}
 .en .bar.ehp,.field .en .bar.ehp{height:20px;margin:3px 0 2px;border-radius:5px}
-.en .bar.ehp span,.field .en .bar.ehp span{font-size:11.5px;line-height:18px;font-weight:600}
-.bar.ehp span b{font-size:14px;font-weight:800}.bar.ehp.lo{border-color:var(--bad)}.bar.ehp.lo i{background:#a8362b}
-.field .en .sts{margin:3px 0 1px}.field .en .sts i{font-size:12px}
+.en .bar.ehp span,.field .en .bar.ehp span{font-size:calc(11.5px*var(--fs,1));line-height:calc(18px*var(--fs,1));font-weight:600}
+.bar.ehp span b{font-size:calc(14px*var(--fs,1));font-weight:800}.bar.ehp.lo{border-color:var(--bad)}.bar.ehp.lo i{background:#a8362b}
+.field .en .sts{margin:3px 0 1px}.field .en .sts i{font-size:calc(12px*var(--fs,1))}
 .slotrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 6px}
-.slots{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600}.slots .pl{color:var(--muted)}
+.slots{display:inline-flex;align-items:center;gap:4px;font-size:calc(12.5px*var(--fs,1));font-weight:600}.slots .pl{color:var(--muted)}
 .slot{border:1px solid var(--line);border-radius:12px;padding:2px 10px;background:var(--panel2);white-space:nowrap}.slot.on{border-color:var(--gold);color:var(--gold)}.slot.used{opacity:.7;text-decoration:line-through}
-.ab{position:relative}.ab b{padding-right:18px}.ab.hzb b{padding-right:34px}.ab .hz{position:absolute;top:5px;right:22px;font-size:12px;line-height:1}.tnode .tc{position:relative}.tnode .thz{position:absolute;top:-8px;right:-10px;font-size:12px;line-height:1}.ab .spd{position:absolute;top:5px;right:6px;font-size:12px;line-height:1}.ab .spd.sn{opacity:.45}
+.ab{position:relative}.ab b{padding-right:18px}.ab.hzb b{padding-right:34px}.ab .hz{position:absolute;top:5px;right:22px;font-size:calc(12px*var(--fs,1));line-height:1}.tnode .tc{position:relative}.tnode .thz{position:absolute;top:-8px;right:-10px;font-size:calc(12px*var(--fs,1));line-height:1}.ab .spd{position:absolute;top:5px;right:6px;font-size:calc(12px*var(--fs,1));line-height:1}.ab .spd.sn{opacity:.45}
 .ord li.dn{opacity:.7}
 @media (min-width:720px){.field .enemies{grid-template-columns:repeat(auto-fill,minmax(190px,250px))}}
-@media (max-width:719px){.slotrow .mini{display:none}.en .eord{font-size:10.5px}}
+@media (max-width:719px){.slotrow .mini{display:none}.en .eord{font-size:calc(10.5px*var(--fs,1))}}
 [data-info]{cursor:help}.ab[data-info],.en[data-info]{cursor:pointer}.ab.dis{cursor:not-allowed}
 
 
 .notes{display:grid;gap:6px;max-height:60vh;overflow-y:auto}
 .note{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--panel2)}
-.note .nh{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;color:var(--muted)}.note .nh b{color:var(--ink)}
-.note .nl{font-size:13.5px;font-weight:600;margin-top:2px}.note .nt{margin:4px 0 0;font-size:14px;white-space:pre-wrap}
-.chk{display:inline-flex;align-items:center;gap:4px;font-size:13px;min-height:36px;margin-left:6px}.chk input{width:auto;margin:0}
+.note .nh{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:calc(12.5px*var(--fs,1));color:var(--muted)}.note .nh b{color:var(--ink)}
+.note .nl{font-size:calc(13.5px*var(--fs,1));font-weight:600;margin-top:2px}.note .nt{margin:4px 0 0;font-size:calc(14px*var(--fs,1));white-space:pre-wrap}
+.chk{display:inline-flex;align-items:center;gap:4px;font-size:calc(13px*var(--fs,1));min-height:36px;margin-left:6px}.chk input{width:auto;margin:0}
 
 
 .en.acting{box-shadow:0 0 0 1px var(--panel),0 0 0 4px var(--bad);animation:actp .6s ease-out}.en.tg.acting{box-shadow:0 0 0 2px var(--gold) inset,0 0 0 1px var(--panel),0 0 0 4px var(--bad)}
 @keyframes actp{0%{transform:scale(1.04)}100%{transform:scale(1)}}
-.busy{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--bad);margin:4px 0}
-.pace{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:6px}.pace .chip{min-height:32px;padding:2px 10px;font-size:12.5px}
+.busy{display:flex;align-items:center;gap:8px;font-size:calc(13px*var(--fs,1));color:var(--bad);margin:4px 0}
+.pace{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:6px}.pace .chip{min-height:32px;padding:2px 10px;font-size:calc(12.5px*var(--fs,1))}
 .blog p:first-child{font-weight:600}
 @media (max-height:600px){.pace{display:none}}
 
 
 .nr.gd{color:var(--gold);border-color:var(--gold)}
 .ab.urgent{box-shadow:0 0 0 2px var(--bad) inset;background:var(--panel)}
-.ab.urgent b:after{content:' ← 생명력 낮음';color:var(--bad);font-size:11px;font-weight:600}
+.ab.urgent b:after{content:' ← 생명력 낮음';color:var(--bad);font-size:calc(11px*var(--fs,1));font-weight:600}
 
 
 .bres{display:flex;align-items:center;gap:8px;margin-top:4px}.bres .mb{flex:1}
-.bar.sc i{background:#8e2f5f}.rgw{font-size:12.5px;white-space:nowrap}.pips{letter-spacing:1px;color:var(--bad);font-size:11px}.rg{color:var(--bad)}
+.bar.sc i{background:#8e2f5f}.rgw{font-size:calc(12.5px*var(--fs,1));white-space:nowrap}.pips{letter-spacing:1px;color:var(--bad);font-size:calc(11px*var(--fs,1))}.rg{color:var(--bad)}
 
 
-.turnban{display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:8px;border-radius:8px;border:2px solid var(--bad);background:var(--panel2);font-size:15px}
-.turnban .ic{font-size:22px}.turnban b{font-size:16px}.turnban.post{border-color:var(--line);opacity:.85}
+.turnban{display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:8px;border-radius:8px;border:2px solid var(--bad);background:var(--panel2);font-size:calc(15px*var(--fs,1))}
+.turnban .ic{font-size:calc(22px*var(--fs,1))}.turnban b{font-size:calc(16px*var(--fs,1))}.turnban.post{border-color:var(--line);opacity:.85}
 .turnban.me{border-color:var(--gold);color:var(--gold)}
-.rule{font-size:12px;background:var(--panel2);border-radius:6px;padding:3px 7px;margin:4px 0 2px;color:var(--ink)}
+.rule{font-size:calc(12px*var(--fs,1));background:var(--panel2);border-radius:6px;padding:3px 7px;margin:4px 0 2px;color:var(--ink)}
 .dockhead .busy{color:var(--bad);font-weight:600;margin:0}
 .dockhead{min-height:36px}
-.ab kbd{display:inline-block;font:600 10.5px/1 ui-monospace,monospace;border:1px solid var(--line);border-radius:3px;padding:2px 4px;margin-right:5px;color:var(--muted);vertical-align:1px}
+.ab kbd{display:inline-block;font:600 calc(10.5px*var(--fs,1))/1 ui-monospace,monospace;border:1px solid var(--line);border-radius:3px;padding:2px 4px;margin-right:5px;color:var(--muted);vertical-align:1px}
 .ab .tgt{color:var(--ink);opacity:.85}
 @media (pointer:coarse){.ab kbd{display:none}}
 .blog .lgrp{border-bottom:1px solid var(--line);padding:6px 0}.blog .lgrp:first-child{padding-top:0}
-.blog .lgh{font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:2px}
+.blog .lgh{font-size:calc(11.5px*var(--fs,1));color:var(--muted);font-weight:700;margin-bottom:2px}
 .blog .lgrp.now{background:var(--panel);margin:0 -6px;padding:6px;border-radius:6px}
 .blog p.mine{font-weight:700;color:var(--gold);margin-top:2px}
 .blog p:first-child{font-weight:inherit}
-.blog{font-size:13.5px;line-height:1.5}
+.blog{font-size:calc(13.5px*var(--fs,1));line-height:1.5}
 
 
 .ab small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ab b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rule{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:719px){.abgrid{gap:4px}.ab{min-height:40px}}
-@media (max-height:680px){.fstat .rule{display:none}}
 
 
-.turnban{margin:0;flex:1;padding:5px 10px;font-size:14px}.turnban .ic{font-size:18px}.turnban b{font-size:14.5px}
-.pacesel{margin-left:auto;font-size:12.5px;color:var(--muted);display:inline-flex;align-items:center;gap:4px}
-.pacesel select{width:auto;margin:0;padding:4px 6px;min-height:34px;font-size:13px}
+.turnban{margin:0;flex:1;padding:5px 10px;font-size:calc(14px*var(--fs,1))}.turnban .ic{font-size:calc(18px*var(--fs,1))}.turnban b{font-size:calc(14.5px*var(--fs,1))}
+.pacesel{margin-left:auto;font-size:calc(12.5px*var(--fs,1));color:var(--muted);display:inline-flex;align-items:center;gap:4px}
+.pacesel select{width:auto;margin:0;padding:4px 6px;min-height:34px;font-size:calc(13px*var(--fs,1))}
 
 .nr.rg2{color:var(--good);border-color:var(--good)}
-.sts .pv2{font-weight:800;font-size:12.5px}
+.sts .pv2{font-weight:800;font-size:calc(12.5px*var(--fs,1))}
 
-.lore{font-family:'Nanum Myeongjo','Noto Serif KR',serif;font-style:italic;color:var(--muted);font-size:13.5px;margin:4px 0 6px;line-height:1.55}
-.hero .lore{font-size:15px;margin:10px auto 4px;max-width:36ch}
+.lore{font-family:'Nanum Myeongjo','Noto Serif KR',serif;font-style:italic;color:var(--muted);font-size:calc(13.5px*var(--fs,1));margin:4px 0 6px;line-height:1.55}
+.hero .lore{font-size:calc(15px*var(--fs,1));margin:10px auto 4px;max-width:36ch}
 .bkb{height:7px}
 
-.grave{border-color:var(--blood)}.gdl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:10px 0 14px;font-size:14px}.gdl dt{color:var(--muted)}.gdl dd{margin:0}.graves{list-style:none;margin:0;padding:0}.graves li{padding:6px 0;border-top:1px solid var(--line)}.graves li:first-child{border-top:0}
+.grave{border-color:var(--blood)}.gdl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:10px 0 14px;font-size:calc(14px*var(--fs,1))}.gdl dt{color:var(--muted)}.gdl dd{margin:0}.graves{list-style:none;margin:0;padding:0}.graves li{padding:6px 0;border-top:1px solid var(--line)}.graves li:first-child{border-top:0}
 .statrow{display:grid;grid-template-columns:minmax(80px,auto) 1fr auto;gap:6px 10px;align-items:center;border-top:1px solid var(--line);padding:8px 0}
-.statrow .sname{font-size:15px}.statrow .sbtn{display:flex;gap:6px}.statrow .sbtn button{min-width:44px}
+.statrow .sname{font-size:calc(15px*var(--fs,1))}.statrow .sbtn{display:flex;gap:6px}.statrow .sbtn button{min-width:44px}
 @media (max-width:520px){.statrow{grid-template-columns:1fr auto}.statrow .snext{grid-column:1/-1;grid-row:2}}
-.coach{border:2px solid var(--gold);border-radius:8px;padding:8px 10px;margin-bottom:6px;background:var(--panel2)}.coach p{margin:4px 0 6px;font-size:14px}
+.coach{border:2px solid var(--gold);border-radius:8px;padding:8px 10px;margin-bottom:6px;background:var(--panel2)}.coach p{margin:4px 0 6px;font-size:calc(14px*var(--fs,1))}
 .resume{border-color:var(--gold)}
 .brow{padding:2px 0}.brow.me2 b{color:var(--gold)}
 
 .skpool{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px;margin:6px 0 10px}
-.skc{text-align:left;padding:8px 10px;position:relative}.skc b{display:block}.skc small{display:block;color:var(--muted);font-size:12px}.skc span{display:block;font-size:12.5px;margin-top:3px}
-.skc.on{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold) inset}.skc em{position:absolute;top:6px;right:8px;font-style:normal;font-size:11px;color:var(--gold);font-weight:700}
+.skc{text-align:left;padding:8px 10px;position:relative}.skc b{display:block}.skc small{display:block;color:var(--muted);font-size:calc(12px*var(--fs,1))}.skc span{display:block;font-size:calc(12.5px*var(--fs,1));margin-top:3px}
+.skc.on{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold) inset}.skc em{position:absolute;top:6px;right:8px;font-style:normal;font-size:calc(11px*var(--fs,1));color:var(--gold);font-weight:700}
 .skc[aria-disabled=true]{background:var(--panel);border-style:dashed;color:var(--muted)}.skc[aria-disabled=true] span{color:var(--muted)}
 .skline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px;padding:6px 8px;background:var(--panel2);border-radius:6px}
-.warn{border-left:3px solid var(--bad);padding:6px 10px;background:var(--panel2);font-size:13.5px;margin:0 0 8px}
-.skhead{grid-column:1/-1;font-size:12.5px;font-weight:700;color:var(--gold);margin-top:4px}
+.warn{border-left:3px solid var(--bad);padding:6px 10px;background:var(--panel2);font-size:calc(13.5px*var(--fs,1));margin:0 0 8px}
+.skhead{grid-column:1/-1;font-size:calc(12.5px*var(--fs,1));font-weight:700;color:var(--gold);margin-top:4px}
 /* 0.6a.2 스킬 트리 (원형 칸이 아래로 뻗는 가지) */
 .tsum{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:flex-end;margin:6px 0 8px}.trow{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px}
-.tstart,.tslot{min-height:34px;padding:4px 10px;border-radius:17px;font-size:13px;display:inline-flex;align-items:center;gap:5px}
+.tstart,.tslot{min-height:34px;padding:4px 10px;border-radius:17px;font-size:calc(13px*var(--fs,1));display:inline-flex;align-items:center;gap:5px}
 .tstart{border-color:var(--gold)}.tstart .tc{color:var(--gold)}.tslot{border:1px dashed var(--line);color:var(--muted)}.tslot.on{border:1px solid var(--gold);color:var(--ink)}
-.tpts{margin-left:auto;font-size:15px;text-align:right}.tpts b{color:var(--gold);font-size:18px}.tpts small{display:block;font-size:11px;color:var(--muted)}
-.thead2{margin:0 0 6px}.tleg{margin-left:10px;white-space:nowrap}.tleg i{font-style:normal;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border:1px solid var(--line);border-radius:50%;font-size:10.5px;margin:0 3px 0 6px}
-.tlocked{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;padding:7px 10px;border:1px dashed var(--line);border-radius:8px;font-size:12.5px;color:var(--muted)}.tlocked b{color:var(--ink);font-weight:600}
+.tpts{margin-left:auto;font-size:calc(15px*var(--fs,1));text-align:right}.tpts b{color:var(--gold);font-size:calc(18px*var(--fs,1))}.tpts small{display:block;font-size:calc(11px*var(--fs,1));color:var(--muted)}
+.thead2{margin:0 0 6px}.tleg{margin-left:10px;white-space:nowrap}.tleg i{font-style:normal;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border:1px solid var(--line);border-radius:50%;font-size:calc(10.5px*var(--fs,1));margin:0 3px 0 6px}
+.tlocked{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;padding:7px 10px;border:1px dashed var(--line);border-radius:8px;font-size:calc(12.5px*var(--fs,1));color:var(--muted)}.tlocked b{color:var(--ink);font-weight:600}
 .tbranch{border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:8px 6px 4px}
-.tbh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;padding:0 4px}.tbh b{color:var(--gold);font-size:16px}.tbh small{flex-basis:100%;color:var(--muted);font-size:12px}.tbp{margin-left:auto;font-size:12px;color:var(--muted)}
+.tbh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;padding:0 4px}.tbh b{color:var(--gold);font-size:calc(16px*var(--fs,1))}.tbh small{flex-basis:100%;color:var(--muted);font-size:calc(12px*var(--fs,1))}.tbp{margin-left:auto;font-size:calc(12px*var(--fs,1));color:var(--muted)}
 .tcanvas{position:relative;margin-top:4px}.tcanvas svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .tcanvas line{stroke:var(--line);stroke-width:2;vector-effect:non-scaling-stroke}.tcanvas line.lit{stroke:var(--gold)}
 .tnode{position:absolute;transform:translate(-50%,-50%);width:76px;min-height:0;padding:0;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;z-index:1}
-.tnode .tc{width:38px;height:38px;border-radius:50%;border:2px solid var(--line);background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--muted)}
-.tnode small{font-size:11.5px;line-height:1.2;text-align:center;color:var(--muted);max-width:76px;word-break:keep-all}
-@media (max-width:599px){.tnode.r5{width:60px}.tnode.r5 small{max-width:60px;font-size:10.5px}} /* 한 줄에 4칸 이상인 등급: 휴대폰에서 이름이 겹치지 않게 */
+.tnode .tc{width:38px;height:38px;border-radius:50%;border:2px solid var(--line);background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:calc(16px*var(--fs,1));font-weight:700;color:var(--muted)}
+.tnode small{font-size:calc(11.5px*var(--fs,1));line-height:1.2;text-align:center;color:var(--muted);max-width:76px;word-break:keep-all}
+@media (max-width:599px){.tnode.r5{width:60px}.tnode.r5 small{max-width:60px;font-size:calc(10.5px*var(--fs,1))}} /* 한 줄에 4칸 이상인 등급: 휴대폰에서 이름이 겹치지 않게 */
 .tnode.t-hidden .tc{border-style:dashed;opacity:.6}.tnode.t-name .tc{border-style:dashed}.tnode.t-name small{color:var(--ink)}
 .tnode.t-full small{color:var(--ink)}.tnode.can .tc{border-color:var(--gold);color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,75,.18)}
 .tnode.open .tc{background:var(--gold);border-color:var(--gold);color:#1b140f}.tnode.eq .tc{box-shadow:0 0 0 3px var(--panel),0 0 0 5px var(--gold)}
@@ -323,86 +319,86 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .tlay{display:grid;grid-template-columns:1fr;gap:10px;margin-top:6px}
 .tbmenu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .tseg{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:8px 10px;border-radius:10px;min-height:0;margin:0}
-.tseg b{font-size:15px;color:var(--gold)}.tseg small{font-size:11.5px;color:var(--muted);line-height:1.3}.tseg span{font-size:11.5px;color:var(--muted)}
-.tseg.on{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold) inset;background:var(--panel)}.tseg .tcan{font-style:normal;color:var(--gold);border:1px solid var(--gold);border-radius:50%;display:inline-flex;width:16px;height:16px;align-items:center;justify-content:center;font-size:11px;vertical-align:2px}
+.tseg b{font-size:calc(15px*var(--fs,1));color:var(--gold)}.tseg small{font-size:calc(11.5px*var(--fs,1));color:var(--muted);line-height:1.3}.tseg span{font-size:calc(11.5px*var(--fs,1));color:var(--muted)}
+.tseg.on{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold) inset;background:var(--panel)}.tseg .tcan{font-style:normal;color:var(--gold);border:1px solid var(--gold);border-radius:50%;display:inline-flex;width:16px;height:16px;align-items:center;justify-content:center;font-size:calc(11px*var(--fs,1));vertical-align:2px}
 @media (max-width:899px){.tseg small{display:none}}
 @media (min-width:900px){
  .tlay{grid-template-columns:200px minmax(0,1fr) 300px;align-items:start}
  .tbmenu{grid-template-columns:1fr;grid-template-rows:repeat(3,minmax(0,1fr));gap:8px;position:sticky;top:12px}
- .tseg{padding:12px;min-height:96px;justify-content:center}.tseg b{font-size:17px}
+ .tseg{padding:12px;min-height:96px;justify-content:center}.tseg b{font-size:calc(17px*var(--fs,1))}
  .tside{position:sticky;top:12px}.tside .tdet{margin-top:0;min-height:220px}
- .tnode{width:96px}.tnode small{max-width:96px;font-size:12.5px}.tnode .tc{width:44px;height:44px;font-size:18px}.tnode.ult .tc{width:50px;height:50px}
+ .tnode{width:96px}.tnode small{max-width:96px;font-size:calc(12.5px*var(--fs,1))}.tnode .tc{width:44px;height:44px;font-size:calc(18px*var(--fs,1))}.tnode.ult .tc{width:50px;height:50px}
 }
-.tdet .tdn{font-size:17px;color:var(--gold)}.tdet .tdh{color:var(--muted);font-size:12.5px}.tdet .tdp{border-top:1px dashed var(--line);padding-top:6px;margin-top:8px}.tdb{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}.tdb button{min-width:130px}
-.tcount{font-size:12.5px;color:var(--muted);margin:0 0 4px}.tcanvas svg line.rung{stroke-dasharray:2 3}.tcount b{color:var(--ink)}
+.tdet .tdn{font-size:calc(17px*var(--fs,1));color:var(--gold)}.tdet .tdh{color:var(--muted);font-size:calc(12.5px*var(--fs,1))}.tdet .tdp{border-top:1px dashed var(--line);padding-top:6px;margin-top:8px}.tdb{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}.tdb button{min-width:130px}
+.tcount{font-size:calc(12.5px*var(--fs,1));color:var(--muted);margin:0 0 4px}.tcanvas svg line.rung{stroke-dasharray:2 3}.tcount b{color:var(--ink)}
 .tcwrap{display:flex;gap:4px}.tcwrap .tcanvas{flex:1;min-width:0}.ttiers{position:relative;flex:none;width:40px;border-right:1px dashed var(--line)}
 .ttier.lk b,.ttier.lk small{color:var(--muted);opacity:.75}.tnode.chlock .tc{opacity:.55;border-style:dashed}
-.ttier{position:absolute;left:0;right:4px;transform:translateY(-50%);display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}.ttier b{font-size:11.5px;color:var(--muted);font-weight:600}.ttier small{font-size:10px;color:var(--muted)}
-.thaste{font-size:13px;margin:0 0 4px;padding:6px 8px;border-left:3px solid var(--gold);background:var(--panel2);border-radius:4px}.thaste b{color:var(--gold);margin-right:4px}
+.ttier{position:absolute;left:0;right:4px;transform:translateY(-50%);display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}.ttier b{font-size:calc(11.5px*var(--fs,1));color:var(--muted);font-weight:600}.ttier small{font-size:calc(10px*var(--fs,1));color:var(--muted)}
+.thaste{font-size:calc(13px*var(--fs,1));margin:0 0 4px;padding:6px 8px;border-left:3px solid var(--gold);background:var(--panel2);border-radius:4px}.thaste b{color:var(--gold);margin-right:4px}
 .tutgoal{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:6px 8px;border:1px dashed var(--gold);border-radius:8px;background:var(--panel2)}
-.tutgoal .tgi{font-size:18px;flex:none}.tutgoal .tgt{flex:1;min-width:0;font-size:13.5px;line-height:1.35}.tutgoal .tgt small{color:var(--muted);margin-right:4px}
+.tutgoal .tgi{font-size:calc(18px*var(--fs,1));flex:none}.tutgoal .tgt{flex:1;min-width:0;font-size:calc(13.5px*var(--fs,1));line-height:1.35}.tutgoal .tgt small{color:var(--muted);margin-right:4px}
 .tutgoal .sm{flex:none;min-height:30px;padding:2px 10px}.tutgoal.met{border-style:solid;border-color:var(--good)}.tutgoal.met .tgi{color:var(--good)}
-.tutover p{margin:0 0 6px}.okc{color:var(--good)}.tutg2{font-size:15px}.tutg2 b{color:var(--gold)}.tutlist2{margin:8px 0;padding-left:18px}.tutlist2 li{margin:5px 0}
+.tutover p{margin:0 0 6px}.okc{color:var(--good)}.tutg2{font-size:calc(15px*var(--fs,1))}.tutg2 b{color:var(--gold)}.tutlist2{margin:8px 0;padding-left:18px}.tutlist2 li{margin:5px 0}
 .ab.tnew{box-shadow:0 0 0 2px var(--gold),0 0 12px var(--gold);animation:tglow 1.6s ease-in-out infinite}
 @keyframes tglow{50%{box-shadow:0 0 0 2px var(--gold),0 0 2px var(--gold)}}
 @media (prefers-reduced-motion:reduce){.ab.tnew{animation:none}}
 .tutlist{padding-left:0;list-style:none;display:grid;gap:6px;margin:10px 0}.tutlist li .mini{display:block}
-.tutsc{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;padding:8px 10px}.tutsc small{color:var(--muted);font-size:12px}.tutsc.ok b{color:var(--good)}
+.tutsc{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;padding:8px 10px}.tutsc small{color:var(--muted);font-size:calc(12px*var(--fs,1))}.tutsc.ok b{color:var(--good)}
 .tutend{margin:8px 0;padding-left:18px}.tutend li{margin:4px 0}
-.tmenu .tutbtn{font-size:14px}.tutbtn small{color:var(--good);margin-left:4px}
+.tmenu .tutbtn{font-size:calc(14px*var(--fs,1))}.tutbtn small{color:var(--good);margin-left:4px}
 /* 트리 등급 이름. 옛 목록형 트리(.tree, .tbr, .tsk) 규칙은 10월 7일 지웠다: 시험 설정의 스킬 격자 .tsk가 72%로 흐려졌다 */
-.ttier{font-size:12px;color:var(--muted);margin:8px 0 3px;font-weight:700}.ttier small{font-weight:400}
+.ttier{font-size:calc(12px*var(--fs,1));color:var(--muted);margin:8px 0 3px;font-weight:700}.ttier small{font-weight:400}
 .chgp{letter-spacing:1px}
 
 .survey fieldset{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:8px 0}
-.survey legend{font-weight:600;padding:0 4px;font-size:14px}
+.survey legend{font-weight:600;padding:0 4px;font-size:calc(14px*var(--fs,1))}
 .sv-row{display:flex;flex-wrap:wrap;gap:4px 14px}
-.sv-b{display:flex;align-items:center;gap:8px;min-height:36px;font-size:14px}
-.sv-i{display:inline-flex;align-items:center;gap:6px;min-height:40px;font-size:14px}
+.sv-b{display:flex;align-items:center;gap:8px;min-height:36px;font-size:calc(14px*var(--fs,1))}
+.sv-i{display:inline-flex;align-items:center;gap:6px;min-height:40px;font-size:calc(14px*var(--fs,1))}
 .sv-b input,.sv-i input{width:20px;height:20px;margin:0}
 #pop{pointer-events:auto}
 .warncard{border-color:var(--bad)}
 #codebox,#impbox{width:100%;font:12px/1.4 ui-monospace,monospace;word-break:break-all}
 
-.newdot{display:inline-block;background:#b8402f;color:#fff;border-radius:8px;font-size:10.5px;padding:0 5px;margin-left:3px;line-height:16px}
-.newtag{font-size:11.5px;color:var(--gold);font-weight:600;margin-left:6px}
-.news{border-color:var(--gold)}.news ul,.chg ul{margin:6px 0 8px 18px;padding:0}.news li,.chg li{margin:3px 0;font-size:14px}
-.chg{border-top:1px solid var(--line);padding:8px 0}.chg:first-child{border-top:0}.chg h4{margin:0 0 2px}.chgd{font-size:12px;color:var(--muted);margin:0 0 4px}
+.newdot{display:inline-block;background:#b8402f;color:#fff;border-radius:8px;font-size:calc(10.5px*var(--fs,1));padding:0 5px;margin-left:3px;line-height:calc(16px*var(--fs,1))}
+.newtag{font-size:calc(11.5px*var(--fs,1));color:var(--gold);font-weight:600;margin-left:6px}
+.news{border-color:var(--gold)}.news ul,.chg ul{margin:6px 0 8px 18px;padding:0}.news li,.chg li{margin:3px 0;font-size:calc(14px*var(--fs,1))}
+.chg{border-top:1px solid var(--line);padding:8px 0}.chg:first-child{border-top:0}.chg h4{margin:0 0 2px}.chgd{font-size:calc(12px*var(--fs,1));color:var(--muted);margin:0 0 4px}
 .chgl{list-style:none;margin:4px 0 6px!important;padding:0!important}.chgl li{margin:4px 0;padding-left:0;line-height:1.45}
-.ctag{display:inline-block;min-width:44px;text-align:center;font-size:11px;font-weight:700;border-radius:4px;padding:0 5px;margin-right:6px;border:1px solid;vertical-align:1px}
+.ctag{display:inline-block;min-width:44px;text-align:center;font-size:calc(11px*var(--fs,1));font-weight:700;border-radius:4px;padding:0 5px;margin-right:6px;border:1px solid;vertical-align:1px}
 .ck-new{color:var(--good);border-color:var(--good)}.ck-chg{color:var(--gold);border-color:var(--gold)}.ck-fix{color:#7fb3ff;border-color:#7fb3ff}
-.news .chg{padding:4px 0}.chgmore{border-top:1px solid var(--line);padding:6px 0;font-size:13.5px}.chgmore b{color:var(--gold);font-weight:600}.chgmore .chgd{display:inline;margin-left:6px}
+.news .chg{padding:4px 0}.chgmore{border-top:1px solid var(--line);padding:6px 0;font-size:calc(13.5px*var(--fs,1))}.chgmore b{color:var(--gold);font-weight:600}.chgmore .chgd{display:inline;margin-left:6px}
 
 @media (max-width:640px){
   .hdr{gap:4px 8px;padding-top:6px;padding-bottom:6px}
   .hdr .hl{display:flex;align-items:baseline;gap:8px;min-width:0}
   .hdr .hl .hname{flex:none}
-  .hdr .hl .mini{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-  .hdr .hi{max-width:34%;font-size:12px}
+  .hdr .hl .mini{white-space:normal;min-width:0}
+  .hdr .hi{max-width:34%;font-size:calc(12px*var(--fs,1))}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 /* PC: 고르는 창과 설정 창은 화면 가운데에 (앞의 .sheet 규칙보다 뒤에 둔다) */
 @media (min-width:720px){.sheet-bg{align-items:center;padding:24px}.sheet{border-radius:14px;border:1px solid var(--gold);max-width:720px;max-height:86vh;box-shadow:0 20px 60px rgba(0,0,0,.6)}.sheet.sh-settings{max-width:440px}}
 
 /* ===== 장비 창 ===== */
-.gtag{font-size:11px;padding:1px 6px;border-radius:999px;border:1px solid currentColor;margin-left:6px;vertical-align:1px;font-weight:600}
-.eqsum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 10px}.eqsum span{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 8px;display:flex;flex-direction:column}.eqsum small{font-size:11px;color:var(--muted)}.eqsum b{font-size:16px;font-variant-numeric:tabular-nums}
+.gtag{font-size:calc(11px*var(--fs,1));padding:1px 6px;border-radius:999px;border:1px solid currentColor;margin-left:6px;vertical-align:1px;font-weight:600}
+.eqsum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 10px}.eqsum span{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 8px;display:flex;flex-direction:column}.eqsum small{font-size:calc(11px*var(--fs,1));color:var(--muted)}.eqsum b{font-size:calc(16px*var(--fs,1));font-variant-numeric:tabular-nums}
 .eqcols{display:grid;gap:10px}
 .eqslots{display:flex;flex-direction:column;gap:4px}
 .eqrow{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:8px;text-align:left;min-height:44px;padding:6px 10px;border-left:3px solid var(--line)}
 .eqrow.on,.bagc.on{outline:2px solid var(--gold);outline-offset:-2px;background:color-mix(in srgb,var(--gold) 10%,var(--panel2))}
-.eqsl{font-size:12px;color:var(--muted)}.eqn{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.eqn.empty{color:var(--muted);font-weight:400}.eqb{font-size:12px;color:var(--muted);white-space:nowrap}
+.eqsl{font-size:calc(12px*var(--fs,1));color:var(--muted)}.eqn{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.eqn.empty{color:var(--muted);font-weight:400}.eqb{font-size:calc(12px*var(--fs,1));color:var(--muted);white-space:nowrap}
 .grb-n{border-left-color:var(--gr-n)}.grb-m{border-left-color:var(--gr-m)}.grb-r{border-left-color:var(--gr-r)}
 .eqdet{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;min-width:0}
-.idet{border-left:3px solid var(--line);padding-left:10px;margin-bottom:8px}.idet-h{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 6px}.idet-h b{font-size:16px}.idet-base{font-size:13.5px;margin:4px 0}
+.idet{border-left:3px solid var(--line);padding-left:10px;margin-bottom:8px}.idet-h{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 6px}.idet-h b{font-size:calc(16px*var(--fs,1))}.idet-base{font-size:calc(13.5px*var(--fs,1));margin:4px 0}
 .icard.grb-n,.icard.grb-m,.icard.grb-r{border-left-width:3px}
-.cmp{border-top:1px dashed var(--line);margin:8px 0;padding-top:8px;font-size:13.5px}.cmph{color:var(--muted);font-size:12.5px;margin-bottom:4px}
+.cmp{border-top:1px dashed var(--line);margin:8px 0;padding-top:8px;font-size:calc(13.5px*var(--fs,1))}.cmph{color:var(--muted);font-size:calc(12.5px*var(--fs,1));margin-bottom:4px}
 .cmp ul{list-style:none;margin:4px 0;padding:0}.cmp li{padding:2px 0 2px 18px;position:relative}.cmp-lose li::before{content:'−';position:absolute;left:2px;color:var(--bad);font-weight:700}.cmp-gain li::before{content:'+';position:absolute;left:2px;color:var(--good);font-weight:700}
 .eqbag h4{margin:12px 0 6px}.baggrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-.bagc{min-height:54px;text-align:left;padding:6px 8px;border-left:3px solid var(--line);display:flex;flex-direction:column;justify-content:center;gap:2px}.bagc span{font-size:13px;font-weight:600;line-height:1.25}.bagc small{font-size:11px;color:var(--muted)}
+.bagc{min-height:54px;text-align:left;padding:6px 8px;border-left:3px solid var(--line);display:flex;flex-direction:column;justify-content:center;gap:2px}.bagc span{font-size:calc(13px*var(--fs,1));font-weight:600;line-height:1.25}.bagc small{font-size:calc(11px*var(--fs,1));color:var(--muted)}
 .bagc.empty{border:1px dashed var(--line);border-radius:8px;background:transparent;min-height:54px}
 .bagc.fits{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 45%,transparent)}
-.eqwhy{margin-top:10px;font-size:13px}.eqwhy summary{cursor:pointer;color:var(--muted)}.eqwhy input[type=text]{width:100%;margin-top:6px}
+.eqwhy{margin-top:10px;font-size:calc(13px*var(--fs,1))}.eqwhy summary{cursor:pointer;color:var(--muted)}.eqwhy input[type=text]{width:100%;margin-top:6px}
 .eqskills{margin-top:10px}
 .baglist{display:flex;flex-direction:column;gap:4px;margin:8px 0}.bagline{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px;padding:4px 0;border-top:1px solid var(--line)}
 @media (min-width:720px){.eqcols{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}.baggrid{grid-template-columns:repeat(4,minmax(0,1fr))}.eqsum{grid-template-columns:repeat(6,minmax(0,1fr))}.sheet.sh-equip{max-width:860px}}
@@ -422,29 +418,29 @@ html.fitmode,html.fitmode body{overflow:hidden}
 /* ===== 던전: 진행 바, 문 ===== */
 .dgtop{padding:10px 12px}.dghead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}.dghead .gold-n{margin-left:auto;color:var(--gold);font-weight:600}
 .dgbar{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px}
-.dgbar li{height:26px;border-radius:5px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;min-width:0;overflow:hidden}
+.dgbar li{height:26px;border-radius:5px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:calc(12px*var(--fs,1));min-width:0;overflow:hidden}
 .dgbar li.past{opacity:.75}.dgbar li.now{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset;background:color-mix(in srgb,var(--gold) 14%,var(--panel2))}.dgbar li.camp{border-style:dashed}
-.bufs{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}.chip{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:var(--panel2)}.chip.mod{border-color:var(--blood);color:#e9b2a8}
+.bufs{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}.chip{display:inline-block;font-size:calc(12px*var(--fs,1));padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:var(--panel2)}.chip.mod{border-color:var(--blood);color:#e9b2a8}
 .doors{display:grid;gap:8px;grid-template-columns:minmax(0,1fr)}
 .door{text-align:left;display:flex;flex-direction:column;gap:4px;padding:10px 12px;min-height:96px;border-left:4px solid var(--line)}
-.door .dr-h{display:flex;align-items:center;gap:8px}.door .dr-h b{font-size:16px}.dr-ico{font-size:18px}.dr-risk{margin-left:auto;color:var(--bad);letter-spacing:1px;font-size:12px}.dr-risk.down{color:var(--good)}
-.dr-what{margin:0;font-size:14px}.dr-mods{display:flex;gap:4px;flex-wrap:wrap}.dr-hint{font-size:12px;color:var(--muted);margin-top:auto}
+.door .dr-h{display:flex;align-items:center;gap:8px}.door .dr-h b{font-size:calc(16px*var(--fs,1))}.dr-ico{font-size:calc(18px*var(--fs,1))}.dr-risk{margin-left:auto;color:var(--bad);letter-spacing:1px;font-size:calc(12px*var(--fs,1))}.dr-risk.down{color:var(--good)}
+.dr-what{margin:0;font-size:calc(14px*var(--fs,1))}.dr-mods{display:flex;gap:4px;flex-wrap:wrap}.dr-hint{font-size:calc(12px*var(--fs,1));color:var(--muted);margin-top:auto}
 .door.t-normal,.door.t-ambush{border-left-color:#8a3a2e}.door.t-strong,.door.t-trial{border-left-color:var(--blood)}.door.t-treasure{border-left-color:var(--gr-r)}.door.t-spring,.door.t-shrine{border-left-color:var(--mp)}.door.t-altar{border-left-color:#7a2a4a}.door.t-event{border-left-color:var(--muted)}
-.evopts{display:grid;gap:6px;margin-top:8px}.evo{text-align:left;display:flex;flex-direction:column;gap:2px}.evo small{color:var(--muted);font-size:12.5px}
+.evopts{display:grid;gap:6px;margin-top:8px}.evo{text-align:left;display:flex;flex-direction:column;gap:2px}.evo small{color:var(--muted);font-size:calc(12.5px*var(--fs,1))}
 @media (min-width:720px){.doors{grid-template-columns:repeat(3,minmax(0,1fr))}.evopts{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}}
-@media (max-width:420px){.dgbar{gap:2px}.dgbar li{height:22px;font-size:10px;border-radius:4px}}
+@media (max-width:420px){.dgbar{gap:2px}.dgbar li{height:22px;font-size:calc(10px*var(--fs,1));border-radius:4px}}
 
-.lvtag{font-size:12px;font-weight:700;color:var(--gold-ink);background:var(--gold);border-radius:6px;padding:1px 6px;margin-left:6px}
-.xpbar{position:relative;height:14px;margin-top:4px;background:var(--track);border-radius:7px;overflow:hidden}.xpbar i{display:block;height:100%;background:linear-gradient(90deg,#7a5a1e,var(--gold))}.xpbar span{position:absolute;inset:0;text-align:center;font-size:10.5px;line-height:14px;color:#fff;text-shadow:0 1px 2px #000}
-.elv{color:var(--muted);font-weight:400}.etough{margin-left:4px;font-size:10.5px;padding:0 5px;border-radius:999px;border:1px solid var(--blood);color:#e9b2a8;font-weight:600}.en .nm{word-break:keep-all}.erole{color:var(--muted);font-weight:400;font-size:10.5px}
+.lvtag{font-size:calc(12px*var(--fs,1));font-weight:700;color:var(--gold-ink);background:var(--gold);border-radius:6px;padding:1px 6px;margin-left:6px}
+.xpbar{position:relative;height:14px;margin-top:4px;background:var(--track);border-radius:7px;overflow:hidden}.xpbar i{display:block;height:100%;background:linear-gradient(90deg,#7a5a1e,var(--gold))}.xpbar span{position:absolute;inset:0;text-align:center;font-size:calc(10.5px*var(--fs,1));line-height:calc(14px*var(--fs,1));color:#fff;text-shadow:0 1px 2px #000}
+.elv{color:var(--muted);font-weight:400}.etough{margin-left:4px;font-size:calc(10.5px*var(--fs,1));padding:0 5px;border-radius:999px;border:1px solid var(--blood);color:#e9b2a8;font-weight:600}.en .nm{word-break:keep-all}.erole{color:var(--muted);font-weight:400;font-size:calc(10.5px*var(--fs,1))}
 
-.cdx{border-top:1px solid var(--line);padding:10px 0}.cdx:first-of-type{border-top:0}.cdx h4{margin:0 0 4px}.cdx ul{margin:6px 0;padding-left:18px}.cdx li{margin:3px 0;font-size:14px}.cdx textarea{width:100%;margin-top:4px}
+.cdx{border-top:1px solid var(--line);padding:10px 0}.cdx:first-of-type{border-top:0}.cdx h4{margin:0 0 4px}.cdx ul{margin:6px 0;padding-left:18px}.cdx li{margin:3px 0;font-size:calc(14px*var(--fs,1))}.cdx textarea{width:100%;margin-top:4px}
 
 /* 메뉴 막대 */
-.hdr{flex-wrap:wrap}.hdr .hl .mini{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mtog{flex:none;min-height:36px;padding:3px 12px;font-size:13.5px;border-radius:999px;white-space:nowrap}
+.hdr{flex-wrap:wrap}.hdr .hl .mini{display:block;white-space:normal;word-break:keep-all}
+.mtog{flex:none;min-height:36px;padding:3px 12px;font-size:calc(13.5px*var(--fs,1));border-radius:999px;white-space:nowrap}
 .mnav{display:none;gap:4px}
-.mi{min-height:36px;padding:3px 11px;font-size:13.5px;white-space:nowrap;background:transparent;border-color:transparent}
+.mi{min-height:36px;padding:3px 11px;font-size:calc(13.5px*var(--fs,1));white-space:nowrap;background:transparent;border-color:transparent}
 .mi:hover{border-color:var(--line);background:var(--panel2)}.mi.on{color:var(--gold);border-color:var(--gold)}
 .hdr.inl.mopen .mnav{display:flex;flex-wrap:wrap;flex:1 1 100%;order:3;border-top:1px solid var(--line);padding-top:6px;margin-top:2px}
 .hdr.drop .mnav{position:absolute;top:100%;left:0;right:0;z-index:40;background:var(--panel);border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;padding:10px;box-shadow:0 14px 30px rgba(0,0,0,.55);grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:6px}
@@ -453,41 +449,41 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .fit .hdr{position:relative}
 /* 타이틀 */
 .title-scr{min-height:calc(100dvh - 190px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px 0 18px}
-.tlogo .ver{font-size:11.5px;letter-spacing:.32em;color:var(--muted)}
+.tlogo .ver{font-size:calc(11.5px*var(--fs,1));letter-spacing:.32em;color:var(--muted)}
 .tlogo .tlh{font-weight:700;font-family:'Nanum Myeongjo',serif;font-size:clamp(40px,10vw,66px);color:var(--gold);letter-spacing:.06em;line-height:1.15;margin:6px 0 10px;text-shadow:0 2px 28px rgba(201,162,75,.28)}
 .tlogo .lore{max-width:30ch;margin:0 auto}
 .tmenu{display:flex;flex-direction:column;gap:10px;width:min(320px,100%);margin-top:34px}
-.tmenu>button{min-height:54px;font-size:18px;font-family:'Nanum Myeongjo',serif;letter-spacing:.14em}
-.tcur{display:flex;gap:10px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:10px 12px}.tkept{display:flex;flex-direction:column;gap:6px;margin-top:6px}.tkept>.mini{margin:4px 0 0;text-align:left}.tcur.sm{padding:8px 10px}.tcur.sm .big{font-size:22px}.tcur.sm>div{flex:1;min-width:0}.tcur.sm button{flex:0 0 auto}.tcur .big{font-size:28px}.tcur small{display:block;color:var(--muted);font-size:12.5px}
+.tmenu>button{min-height:54px;font-size:calc(18px*var(--fs,1));font-family:'Nanum Myeongjo',serif;letter-spacing:.14em}
+.tcur{display:flex;gap:10px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:10px 12px}.tkept{display:flex;flex-direction:column;gap:6px;margin-top:6px}.tkept>.mini{margin:4px 0 0;text-align:left}.tcur.sm{padding:8px 10px}.tcur.sm .big{font-size:calc(22px*var(--fs,1))}.tcur.sm>div{flex:1;min-width:0}.tcur.sm button{flex:0 0 auto}.tcur .big{font-size:calc(28px*var(--fs,1))}.tcur small{display:block;color:var(--muted);font-size:calc(12.5px*var(--fs,1))}
 .tbelow{max-width:560px;margin:0 auto}.tfoot{text-align:center;margin-top:14px}
 .linkbtn{background:none;border:0;min-height:0;padding:0;color:var(--muted);text-decoration:underline;font-size:inherit}
 /* 캐릭터 만들기 */
 .stepper{display:flex;gap:6px;list-style:none;padding:0;margin:4px 0 12px}
-.stepper li{flex:1;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);border-bottom:2px solid var(--line);padding:4px 2px 7px;min-width:0;white-space:nowrap}
-.stepper li span{flex:none;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);font-size:12px}
+.stepper li{flex:1;display:flex;align-items:center;gap:6px;font-size:calc(13px*var(--fs,1));color:var(--muted);border-bottom:2px solid var(--line);padding:4px 2px 7px;min-width:0;white-space:nowrap}
+.stepper li span{flex:none;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);font-size:calc(12px*var(--fs,1))}
 .stepper li.now{color:var(--gold);border-color:var(--gold);font-weight:600}.stepper li.now span{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
 .stepper li.done{color:var(--ink);border-color:#6b5535}.stepper li.done span{border-color:var(--gold);color:var(--gold)}
 .row.nowrap{flex-wrap:nowrap;align-items:center}.row.nowrap input{margin:0;flex:1;min-width:0}
 .clsgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0}
-.clsc{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;min-height:92px;border-top:3px solid var(--c)}.clsc .big{font-size:26px;line-height:1.1}.clsc small{font-size:11.5px;color:var(--muted)}
+.clsc{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;min-height:92px;border-top:3px solid var(--c)}.clsc .big{font-size:calc(26px*var(--fs,1));line-height:1.1}.clsc small{font-size:calc(11.5px*var(--fs,1));color:var(--muted)}
 .clsc.on{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold) inset;background:var(--panel)}
 .clsc.locked{border-style:dashed;border-top:3px dashed var(--muted)}.clsc.locked b{letter-spacing:2px}.unlnews{border:1px solid var(--gold);border-radius:8px;padding:8px 10px;color:var(--ink)}
 .clsdet{border:1px solid var(--line);border-left:4px solid var(--c);border-radius:10px;padding:12px;margin:10px 0;background:var(--panel2)}
-.clsdet-h{display:flex;gap:10px;align-items:center}.clsdet-h .big{font-size:34px}.clsdet-h b{font-family:'Nanum Myeongjo',serif;font-size:20px;color:var(--gold)}
-.exl{margin:6px 0 10px;padding-left:18px}.exl li{margin:3px 0;font-size:14px}.clsdet-empty{margin:10px 0}
-@media (max-width:640px){.clsgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.stepper li{font-size:12px;gap:4px}}
+.clsdet-h{display:flex;gap:10px;align-items:center}.clsdet-h .big{font-size:calc(34px*var(--fs,1))}.clsdet-h b{font-family:'Nanum Myeongjo',serif;font-size:calc(20px*var(--fs,1));color:var(--gold)}
+.exl{margin:6px 0 10px;padding-left:18px}.exl li{margin:3px 0;font-size:calc(14px*var(--fs,1))}.clsdet-empty{margin:10px 0}
+@media (max-width:640px){.clsgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.stepper li{font-size:calc(12px*var(--fs,1));gap:4px}}
 /* 페이지 */
 .phead{display:flex;align-items:center;gap:10px;margin-bottom:6px}.phead h3{margin:0}.back{min-height:36px}
 .rk{list-style:none;padding:0;margin:8px 0}
 .rk li{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 6px;border-bottom:1px solid var(--line)}
 .rk li.me2{background:rgba(201,162,75,.08)}
-.rkn{font-family:'Nanum Myeongjo',serif;font-size:18px;color:var(--muted);text-align:center}.rk li:nth-child(-n+3) .rkn{color:var(--gold);font-weight:700}
-.rkc{min-width:0}.rkc b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rkc small,.rkp small{display:block;font-size:12px;color:var(--muted)}.rkp{text-align:right}
+.rkn{font-family:'Nanum Myeongjo',serif;font-size:calc(18px*var(--fs,1));color:var(--muted);text-align:center}.rk li:nth-child(-n+3) .rkn{color:var(--gold);font-weight:700}
+.rkc{min-width:0}.rkc b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rkc small,.rkp small{display:block;font-size:calc(12px*var(--fs,1));color:var(--muted)}.rkp{text-align:right}
 /* 정산과 상점 */
 .settle{text-align:center}.settle .sgold{max-width:380px;margin:14px auto;padding:0;text-align:left}
 .sgold div{display:flex;justify-content:space-between;gap:10px;padding:7px 2px;border-bottom:1px dashed var(--line);animation:sgin .45s both;animation-delay:calc(var(--i) * .35s)}
 .sgold dt{color:var(--muted)}.sgold dd{margin:0;font-variant-numeric:tabular-nums}
-.sgold .tot{border-bottom:0;border-top:1px solid var(--gold);font-weight:700;color:var(--gold);font-size:18px;margin-top:4px}.sgold .tot dt{color:var(--gold)}
+.sgold .tot{border-bottom:0;border-top:1px solid var(--gold);font-weight:700;color:var(--gold);font-size:calc(18px*var(--fs,1));margin-top:4px}.sgold .tot dt{color:var(--gold)}
 @keyframes sgin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .shopgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;margin-top:8px}
 .sitem{display:flex;flex-direction:column;gap:6px}.sitem .idet{flex:1;margin:0}.sitem.sold{opacity:.5}
@@ -495,8 +491,8 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .tag.cfit{align-self:flex-start;border-color:var(--good);color:var(--good);margin:0}
 .waitc h2{font-family:'Nanum Myeongjo',serif;color:var(--gold);font-size:clamp(24px,6.5vw,34px);line-height:1.25;margin:4px 0 8px}.waitc>p:not(.mini){max-width:46ch;margin:8px auto}.waitbtn{justify-content:center;margin-top:14px}
 @media (prefers-reduced-motion:reduce){.sgold div{animation:none}}
-.wallm{font-size:11px;margin-left:3px;opacity:.85}
-.chgh{margin:10px 0 2px;font-size:13px;color:var(--muted);letter-spacing:.04em}
+.wallm{font-size:calc(11px*var(--fs,1));margin-left:3px;opacity:.85}
+.chgh{margin:10px 0 2px;font-size:calc(13px*var(--fs,1));color:var(--muted);letter-spacing:.04em}
 
 /* ===== 휴대폰 (10월 2일 대폭 정리): 전투는 한 화면 + 아래 행동판 고정, 긴 화면은 주 버튼을 아래에 ===== */
 .ans,.fq,.lbt{display:none}.lbt{display:inline}
@@ -507,62 +503,57 @@ html.fitmode,html.fitmode body{overflow:hidden}
  html.fitmode,html.fitmode body{overflow:hidden;height:var(--app-h,100dvh)}
  html.fitmode #root{height:var(--app-h,100dvh)}
  .fit{height:var(--app-h,100dvh);min-height:0;padding:0 6px env(safe-area-inset-bottom,0px)}
- .fit .hdr{margin:0 -6px 4px;padding:4px 8px}.fit .hdr .hl .hname{font-size:14px}.fit .hdr .hl .mini{font-size:11.5px}.fit .mtog{min-height:32px;padding:2px 10px;font-size:12.5px}
+ .fit .hdr{margin:0 -6px 4px;padding:4px 8px}.fit .hdr .hl .hname{font-size:calc(14px*var(--fs,1))}.fit .hdr .hl .mini{font-size:calc(11.5px*var(--fs,1))}.fit .mtog{min-height:32px;padding:2px 10px;font-size:calc(12.5px*var(--fs,1))}
  .bgrid{grid-template-rows:auto minmax(0,1fr) auto;gap:4px;padding-bottom:4px}
  .btop{gap:4px}
  .fstat,.bmid,.field,.dock{padding:5px 7px;border-radius:8px}
  /* 내 상태: 이름·플라스크 한 줄 + 막대 */
- .fstat .mehead{gap:6px;flex-wrap:nowrap;margin-bottom:3px;font-size:13px}.fstat .mehead .qm,.fstat .flk small{display:none}
- .fstat>.mini,.fstat .rule{display:none}
- .fstat .mbars{gap:4px}.fstat .mb .ml{display:none}.fstat .bar{height:15px}.fstat .bar span{font-size:10.5px;line-height:13px}
+ .fstat .mehead{gap:6px;flex-wrap:nowrap;margin-bottom:3px;font-size:calc(13px*var(--fs,1))}.fstat .mehead .qm{display:none}
+ .fstat .mbars{gap:4px}.fstat .mb .ml{display:none}.fstat .bar{height:15px}.fstat .bar span{font-size:calc(10.5px*var(--fs,1));line-height:calc(13px*var(--fs,1))}
  .fstat .sts{margin-top:3px}
  /* 순서 + 마지막 기록 */
  .bmid .axhead{display:none}
  .bmid .ord{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0;padding:0 0 2px}.bmid .ord::-webkit-scrollbar{display:none}
- .bmid .ord li{flex:none;font-size:12px;padding:2px 7px}
- .logrow{margin-top:4px}.logrow .lastlog,.logrow .turnban{font-size:12.5px;padding:3px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;min-height:0}
+ .bmid .ord li{flex:none;font-size:calc(12px*var(--fs,1));padding:2px 7px}
+ .logrow{margin-top:4px}.logrow .lastlog,.logrow .turnban{font-size:calc(12.5px*var(--fs,1));padding:3px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;min-height:0}
  .logrow .turnban>*{display:inline}
  .logbtn,.rulebtn{min-height:30px;padding:2px 8px}.lbt{display:none}
- .gimmick{font-size:12px;padding:3px 7px;margin-bottom:4px}
+ .gimmick{font-size:calc(12px*var(--fs,1));padding:3px 7px;margin-bottom:4px}
  /* 전장: 작은 카드 2열 */
- .lane{padding:4px 6px 5px;border-radius:8px}.lanehd{margin:0 0 3px;min-height:22px;gap:5px}.lanehd b{font-size:13.5px}.reach{font-size:11px;padding:0 7px}.rlhint{display:none}
- .fq{display:inline-flex;min-height:26px;padding:0 8px;font-size:11.5px;margin-left:auto}
+ .lane{padding:4px 6px 5px;border-radius:8px}.lanehd{margin:0 0 3px;min-height:22px;gap:5px}.lanehd b{font-size:calc(13.5px*var(--fs,1))}.reach{font-size:calc(11px*var(--fs,1));padding:0 7px}.rlhint{display:none}
+ .fq{display:inline-flex;min-height:26px;padding:0 8px;font-size:calc(11.5px*var(--fs,1));margin-left:auto}
  .fhelp{display:none}
  .field .enemies{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-bottom:5px}
  .field .en{padding:4px 6px;border-radius:8px}
- .field .enh{gap:4px;margin-bottom:1px;min-height:0;flex-wrap:nowrap}.field .enh .ico{font-size:15px}
- .field .enh .nm{font-size:12.5px;min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
- .field .erole{display:none}.field .elv{font-size:10.5px}
- .field .nr{font-size:10px;padding:0 4px;line-height:15px;white-space:nowrap}
- .field .en .bar{height:12px}.field .en .bar span{font-size:9.5px;line-height:11px}
- .bkline small{display:none}.bkline{margin:1px 0 0}
- .field .intent{font-size:11.5px;margin-top:2px;padding:1px 5px}.intent .ii{font-size:15px}.intent .inum{font-size:14px}.incoming small{display:none}
- .field .sts{margin-top:2px}.field .sts i{font-size:10.5px;padding:0 4px}
+ .field .enh{gap:4px;margin-bottom:1px;min-height:0;flex-wrap:nowrap}.field .enh .ico{font-size:calc(15px*var(--fs,1))}
+ .field .enh .nm{font-size:calc(12.5px*var(--fs,1));min-width:0;flex:1;white-space:normal;word-break:keep-all;overflow-wrap:anywhere;line-height:1.3}
+ .field .elv,.field .erole{font-size:calc(12px*var(--fs,1))}
+ .field .nr{font-size:calc(10px*var(--fs,1));padding:0 4px;line-height:calc(15px*var(--fs,1));white-space:nowrap}
+ .field .en .bar{height:12px}.field .en .bar span{font-size:calc(9.5px*var(--fs,1));line-height:calc(11px*var(--fs,1))}
+ .bkline .bkl{display:none}.bkline{margin:1px 0 0}
+ .field .intent{font-size:calc(11.5px*var(--fs,1));margin-top:2px;padding:1px 5px}.intent .ii{font-size:calc(15px*var(--fs,1))}.intent .inum{font-size:calc(14px*var(--fs,1))}
+ .field .sts{margin-top:2px}.field .sts i{font-size:calc(10.5px*var(--fs,1));padding:0 4px}
  /* 행동판: 4열 작은 버튼, 묶음 이름 없이. 길게 누르면 설명 */
  .dock{padding:5px 6px calc(5px + env(safe-area-inset-bottom,0px))}
- .dockhead{font-size:12px;gap:4px;margin-bottom:4px;min-height:24px}.dockhead>span .mini,.dockhead .qm,.dockhead .pacesel{display:none}
- .dockhead .sm{min-height:30px;padding:2px 9px;font-size:12px}
+ .dockhead{font-size:calc(12px*var(--fs,1));gap:4px;margin-bottom:4px;min-height:24px}.dockhead>span .mini,.dockhead .qm,.dockhead .pacesel{display:none}
+ .dockhead .sm{min-height:30px;padding:2px 9px;font-size:calc(12px*var(--fs,1))}
  .abgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
  .agp{display:contents}.agl{display:none}
  .ab{min-height:44px;padding:3px 5px;border-left-width:3px}
- .ab b{font-size:12px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ab kbd{display:none}
+ .ab b{font-size:calc(12px*var(--fs,1));line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ab kbd{display:none}
  .anl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.ans{display:inline}
- .ab small{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ab small .ax{display:none}
- .coach{font-size:12px;padding:6px 8px;margin-bottom:5px}.coach p{margin:2px 0 4px}.coach .sm{min-height:30px}
- .tutgoal{padding:4px 6px;margin-bottom:5px}.tutgoal .tgt{font-size:12px}.tutgoal .tgt small{display:none}.tutgoal .tgi{font-size:15px}
+ .ab small{font-size:calc(10.5px*var(--fs,1));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ab small .ax{display:none}
+ .coach{font-size:calc(12px*var(--fs,1));padding:6px 8px;margin-bottom:5px}.coach p{margin:2px 0 4px}.coach .sm{min-height:30px}
+ .tutgoal{padding:4px 6px;margin-bottom:5px}.tutgoal .tgt{font-size:calc(12px*var(--fs,1))}.tutgoal .tgt small{display:none}.tutgoal .tgi{font-size:calc(15px*var(--fs,1))}
  /* 긴 화면: 주 버튼을 화면 아래에 붙인다 */
  .stickbar{position:sticky;bottom:0;z-index:15;margin:12px -10px -10px;padding:10px 10px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,rgba(23,18,15,0),var(--panel) 18px);border-radius:0 0 10px 10px}
  .stickbar .row{margin-top:6px}
  .shopbar{display:flex;align-items:center;gap:10px;margin:0 -8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--gold);border-radius:0}.shopbar .gold-n{font-weight:700}.shopbar button{margin-left:auto;min-height:44px}
  /* 지도·상점의 내 상태 칸 */
  .me{padding:7px 9px}
- .me .mehead{gap:6px;font-size:13.5px}.me .qm{display:none}.me .flw{display:none}.me .flk small{display:none}
+ .me .mehead{gap:6px;font-size:calc(13.5px*var(--fs,1))}.me .qm{display:none}.me .flw{display:none}.me .flk small{display:none}
  .me>.mini{display:none}.me .mb .ml{display:none}
- .xpbar{height:14px}.xpbar span{font-size:10px;line-height:14px}
-}
-@media (max-width:719px) and (max-height:640px){
- .fstat .sts,.gimmick{display:none}
- .ab small{display:none}.ab{min-height:38px}
+ .xpbar{height:14px}.xpbar span{font-size:calc(10px*var(--fs,1));line-height:calc(14px*var(--fs,1))}
 }
 
 @media (max-width:719px){
@@ -583,32 +574,86 @@ html.fitmode,html.fitmode body{overflow:hidden}
 /* 상태 칩: 이로움 ▲ · 해로움 ▼ (색만으로 가르지 않는다) */
 .sts .sgn{font-size:.78em;margin-right:2px;vertical-align:.05em}
 /* 장비 칸 등급 글자 */
-.eqg{display:inline-block;font-size:11px;font-weight:700;border:1px solid currentColor;border-radius:3px;padding:0 3px;margin-right:5px;line-height:1.35;vertical-align:1px}
+.eqg{display:inline-block;font-size:calc(11px*var(--fs,1));font-weight:700;border:1px solid currentColor;border-radius:3px;padding:0 3px;margin-right:5px;line-height:1.35;vertical-align:1px}
 /* 시트 머리: 제목과 닫기 버튼을 나눈다 */
 .sheet .shead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}.sheet .shead h3{margin:0;flex:1;min-width:0}
 /* 전투 화면의 main */
-.fit>.bmain{flex:1;min-height:0;display:flex;flex-direction:column}.sidehead h3{font-size:15px}
+.fit>.bmain{flex:1;min-height:0;display:flex;flex-direction:column}.sidehead h3{font-size:calc(15px*var(--fs,1))}
 /* 전투 화면 맨 앞의 건너뛰기(초점을 받을 때만 보임), 헤더 소리 버튼 */
 .skip{position:absolute;left:8px;top:-80px;z-index:100;min-height:40px;background:var(--gold);color:var(--gold-ink);border-color:var(--gold);font-weight:700}.skip:focus{top:8px}
-.sndb{flex:none;min-height:36px;min-width:40px;padding:2px 8px;border-radius:999px;font-size:15px;line-height:1}
+.sndb{flex:none;min-height:36px;min-width:40px;padding:2px 8px;border-radius:999px;font-size:calc(15px*var(--fs,1));line-height:1}
 /* 판단에 쓰는 글: 줄임표 대신 두 줄까지, 13px 이상 */
 .ab b,.ab small,.intent .itx{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:clip;word-break:keep-all;overflow-wrap:anywhere}
-.ab b,.ab small{line-height:1.3}.ab small{font-size:13px}.intent,.field .intent{font-size:13px}.sts i,.field .sts i,.field .en .sts i{font-size:13px}.lastlog{font-size:13px}
-@media (max-height:600px){.ab small{display:none}}
+.ab b,.ab small{line-height:1.3}.ab small{font-size:calc(13px*var(--fs,1))}.intent,.field .intent{font-size:calc(13px*var(--fs,1))}.sts i,.field .sts i,.field .en .sts i{font-size:calc(13px*var(--fs,1))}.lastlog{font-size:calc(13px*var(--fs,1))}
 @media (max-width:719px){
  .app>.hdr{margin:0 -8px 10px;padding-left:8px;padding-right:8px}
  .app main>.stickbar{margin-left:-8px;margin-right:-8px}
- .ab b{font-size:13px}
- .field .intent{font-size:13px;padding:1px 5px}
- .en .eord{font-size:12px}.field .nr{font-size:12px}
- .logrow .lastlog,.logrow .turnban{font-size:13px;white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:clip}
+ .ab b{font-size:calc(13px*var(--fs,1))}
+ .field .intent{font-size:calc(13px*var(--fs,1));padding:1px 5px}
+ .en .eord{font-size:calc(12px*var(--fs,1))}.field .nr{font-size:calc(12px*var(--fs,1))}
+ .logrow .lastlog,.logrow .turnban{font-size:calc(13px*var(--fs,1));white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:clip}
 }
-@media (max-width:719px) and (max-height:640px){.ab small{display:none}}
+
+/* ===== 10월 7일 2차 (docs/조사/D-UI-접근성.md 고친 기록 2) ===== */
+/* 짧은 창: 창 높이에 맞춘 고정 배치로는 전장이 모자라면 고정을 풀고 페이지를 스크롤한다(fitDecide) */
+html.fitmode.fitscroll,html.fitmode.fitscroll body{overflow-y:auto;height:auto}
+html.fitmode.fitscroll #root{height:auto}
+html.fitscroll .fit{height:auto;min-height:var(--app-h,100dvh)}
+html.fitscroll .fit>.bmain{flex:none}
+html.fitscroll .bgrid{flex:none;grid-template-rows:auto auto auto}
+html.fitscroll .field{overflow:visible}
+html.fitscroll .side{position:sticky;top:8px;max-height:calc(var(--app-h,100dvh) - 16px);align-self:start}
+/* 내 상태의 자세한 정보(능력치 · 속도 · 장비 · 직업 규칙 · 예상 피해의 뜻)는 숨기지 않고 접는다 */
+button.fdtog{flex:none;min-height:30px;padding:1px 8px;font-size:calc(12.5px*var(--fs,1));margin-left:4px;line-height:1.2}
+.fdet{border-top:1px dashed var(--line);margin-top:5px;padding-top:4px;display:grid;gap:3px}.fdet[hidden]{display:none}.fdet .rule{white-space:normal;overflow:visible;margin:0}.fdet p{margin:0}
+.incoming{line-height:1.35}
+/* 막대: 글자 크기 설정에 맞춰 높이도 늘린다 */
+.bar{height:calc(16px*var(--fs,1))}.en .bar.ehp,.field .en .bar.ehp{height:calc(20px*var(--fs,1))}.xpbar{height:calc(14px*var(--fs,1))}.bkb{height:calc(7px*var(--fs,1))}
+.bar span{z-index:1}.bkline small{font-size:calc(12px*var(--fs,1))}
+/* 행동 미리보기: 빗금 무늬(색만이 아니라 무늬로) */
+.bar .pvg,.bar .pvi,.bar .pvh,.bkb .pvk{position:absolute;top:0;bottom:0;z-index:0;pointer-events:none}
+.bar .pvg{background:repeating-linear-gradient(135deg,rgba(255,226,220,.95) 0 3px,rgba(140,30,22,.95) 3px 6px);box-shadow:inset 0 0 0 1px #ffd9d2}
+.bar .pvi{background:repeating-linear-gradient(45deg,rgba(13,11,10,.85) 0 3px,rgba(255,217,210,.5) 3px 5px)}
+.bar .pvh{background:repeating-linear-gradient(135deg,rgba(134,197,111,.95) 0 3px,rgba(13,40,10,.9) 3px 6px)}
+.bkb{position:relative}.bkb .pvk{background:repeating-linear-gradient(135deg,#e6dcff 0 2px,#5b3d9e 2px 4px)}
+.en .pvt{position:absolute;right:6px;top:-9px;z-index:3;font-size:calc(12px*var(--fs,1));font-weight:800;line-height:calc(16px*var(--fs,1));background:#1a1206;color:#ffd9d2;border:1px solid #ffd9d2;border-radius:9px;padding:0 6px;white-space:nowrap;pointer-events:none}
+.fstat .pvt{display:inline-block;font-size:calc(12px*var(--fs,1));font-weight:700;margin-left:6px;color:var(--good)}
+/* 쓰러짐 화면의 결정타 */
+.killb{border-left:3px solid var(--blood);padding:6px 10px;background:var(--panel2);border-radius:6px;margin:8px 0}.killb b.kd{font-size:calc(18px*var(--fs,1));color:var(--bad)}
+.lasthits{margin:4px 0 0;padding-left:18px}.lasthits li{margin:2px 0}
+/* 쓸 수 없는 버튼(초점은 간다): 상점 · 다시 나누기 */
+button.adis{cursor:not-allowed;color:var(--muted);background:var(--panel);border-style:dashed}
+/* 갈래길 · 문 */
+.dr-nums{font-size:calc(13px*var(--fs,1));margin:2px 0 0;font-variant-numeric:tabular-nums}.dr-nums b{color:var(--ink)}.dr-w{font-size:calc(12px*var(--fs,1));color:var(--muted);margin:0}
+.dr-risk .rw{font-size:calc(12px*var(--fs,1));letter-spacing:0;margin-left:4px;font-weight:700}
+/* 상점 비교 */
+.sitem .cmp{margin:0}.sitem .cmph{font-size:calc(12.5px*var(--fs,1))}
+/* 움직임 줄이기 (설정, OS 설정과 같은 결과) */
+@media (prefers-reduced-motion:reduce){.en.acting{animation:none}}
+html.rm .en.acting,html.rm .toast,html.rm .ab.tnew,html.rm .sgold div{animation:none}
+html.rm .ab.tnew{box-shadow:0 0 0 2px var(--gold)}
+html.rm .dpop{animation:popfade 1.4s linear forwards}
+@keyframes popfade{0%,70%{opacity:1}100%{opacity:0}}
+html.rm *,html.rm *::before{transition:none!important;scroll-behavior:auto!important}
+@media (max-width:719px){
+ /* 전장 높이를 되찾는다: 헤더 두 줄을 한 덩이로, 머리 버튼 낮게, 행동판 머리와 남은 칸을 한 줄로 */
+ .fit .hdr .hl{display:block}.fit .hdr .hl .hname{display:block;line-height:1.2}.fit .hdr .hl .mini{display:block;font-size:calc(12px*var(--fs,1));line-height:1.25}
+ .fit .hdr .sndb,.fit .hdr .mtog{min-height:34px;padding:2px 10px}
+ .fit .logbtns button.sm{min-height:36px}
+ .slotrow{display:none}.dockhead .slots{font-size:calc(12px*var(--fs,1))}.dockhead .slot{padding:1px 8px}
+ .fstat .bar span{font-size:calc(12px*var(--fs,1));line-height:calc(14px*var(--fs,1))}.fstat .bar{height:calc(16px*var(--fs,1))}
+ .field .en .bar.ehp span{font-size:calc(12px*var(--fs,1))}
+ .field .nr{line-height:calc(16px*var(--fs,1))}
+}
+@media (max-width:360px){.fstat .mehead{flex-wrap:wrap;row-gap:2px}}
+/* 판단에 쓰는 작은 글자: 12px 아래로 내리지 않는다 */
+.en .eord,.nr,.reach,.ord li.rsep,.bar span,.en .bar.ehp span,.field .en .bar.ehp span,.bkline small{font-size:calc(12px*var(--fs,1))}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <div id="live" class="sr" aria-live="polite"></div>
+<div id="pvdesc" class="sr" aria-hidden="true"></div>
 <script src="../config.js"></script>
 <script src="data/enemies.js"></script>
 <script src="data/classes.js"></script>
@@ -1456,6 +1501,7 @@ function hurtPlayer(b, raw, o) {
   if (p.brace) d *= 0.65;
   if (o.charged && hasIt(p, 'fury')) d *= 1.1;
   if (p.st <= 0 || p.exhaust) d *= 1.2;
+  const hx = o.dot ? null : { vu: st(p, 'vuln'), pr: st(p, 'protect'), ig: st(p, 'ignite'), ex: p.st <= 0 || !!p.exhaust, gd: !!(p.guard && !o.judgment) }; /* 10월 7일 2차: 쓰러짐 화면에 보일 더해진 것 (값을 바꾸지 않는다) */
   d = kwTaken(b, p, d, o);
   d *= fxMul(p, 'inMul', b, p, o);
   // 1회 행동 피해 상한 (4.6): 일반 25%, 정예 35% (보스는 기믹 제외)
@@ -1463,8 +1509,8 @@ function hurtPlayer(b, raw, o) {
   d = Math.max(0, d);
   if (o.judgment && p.s.brand) { delete p.s.brand; logp(b, 'sys', '심판이 내려지고 낙인이 사라진다'); }
   if (p.guard && p.eq.armor === 'plate' && !o.dot) p.counter += d * 0.3;
-  let wardAll = false;
-  if (p.ward > 0 && d > 0) { const bk = o.src && !o.dot && o.src.row === 'back'; const a = Math.min(p.ward, bk ? d * WARD.back : d); p.ward -= a; d -= a; if (d <= 0) wardAll = true; else logp(b, 'good', '보호막이 ' + r1(a) + '을(를) 받아낸다' + (bk ? '. 멀리서 온 공격이라 절반만 막는다' : '')); }
+  let wardAll = false, wardA = 0;
+  if (p.ward > 0 && d > 0) { const bk = o.src && !o.dot && o.src.row === 'back'; const a = Math.min(p.ward, bk ? d * WARD.back : d); p.ward -= a; d -= a; wardA = a; if (d <= 0) wardAll = true; else logp(b, 'good', '보호막이 ' + r1(a) + '을(를) 받아낸다' + (bk ? '. 멀리서 온 공격이라 절반만 막는다' : '')); }
   if (d >= p.hp && p.hp > 0 && fxList(p).some(([, f]) => f.deathSave) && !p.fxSaved) { d = p.hp - 1; p.fxSaved = 1; fxHit('deadrosary'); logp(b, 'crit', '망자의 묵주가 한 번 붙잡아 준다. 생명력 1'); }
   p.hp -= d;
   if (d > 0) fxRun(p, 'onHurt', b, p, o, d);
@@ -1481,9 +1527,14 @@ function hurtPlayer(b, raw, o) {
   if (!o.silent && wardAll) logp(b, 'good', (o.label || '공격') + '. 보호막이 모두 받아냈다');
   else if (!o.silent) logp(b, 'bad', o.dot ? (o.label || '피해') + '이(가) 나를 갉아먹는다. ' + r1(d) + ' 피해' : (o.label || '공격') + '. ' + r1(d) + ' 피해' + (p.guard ? ', 방어로 절반' : ''));
   b.rec.push({ k: 'hit', t: r1(b.t), d: r1(d), dot: !!o.dot, charged: !!o.charged, src: o.src ? o.src.role : null, guard: !!p.guard, parried: o.parried ? 1 : 0 });
+  { const m = []; if (hx) { if (hx.vu) m.push('취약 ' + hx.vu + '(으)로 +25%'); if (hx.pr) m.push('보호 ' + hx.pr + '(으)로 −25%'); if (hx.ig) m.push('화상 ' + hx.ig + '만큼 더함'); if (hx.ex) m.push('탈진으로 +20%'); if (hx.gd) m.push('방어로 줄어듦'); }
+    if (o.parried) m.push('흘리기로 줄어듦'); if (wardA > 0) m.push('보호막이 ' + r1(wardA) + ' 받아냄'); if (b.enrage && o.src && !o.dot) m.push('광폭화');
+    const ik = o.src && o.src.intent ? o.src.intent.k : ''; const it = o.dot ? '' : /되받아친다/.test(o.label || '') ? '반격' : !o.src ? '' : ik === 'heavy' ? heavyName(o.src) : ik === 'attack' ? (o.src.intent.aimed ? '겨눈 한 발' : '공격') : (HIT_N[ik] || '');
+    (b.hits3 = b.hits3 || []).push({ n: o.src ? o.src.n : '', it, l: o.src ? '' : (o.label || ''), d: r1(d), dot: o.dot ? 1 : 0, big: o.charged ? 1 : 0, m, left: r1(Math.max(0, p.hp)), r: b.round || 0 }); if (b.hits3.length > 3) b.hits3.shift(); } /* 10월 7일 2차: 쓰러짐 화면의 결정타 · 마지막 세 번 (기록 b.rec는 그대로) */
   checkEnd(b);
   return d;
 }
+const HIT_N = { explode: '폭발', burn: '화형', brand: '죄를 읽는다', erupt: '솟구침', hand: '무덤의 손', constrict: '조이기', reflect: '되비추기', mirror: '거울', counter: '반격' };
 /* 화형 사제의 영창이 끊긴다 (쌓인 피해 · 무너짐 · 소모품) */
 function chantBreak(b, e, why) { e.chant = null; e.pyreRest = 1; e.teleTurn = null; if (e.intent && CHANT_K.includes(e.intent.k)) e.intent = { k: 'attack' }; logp(b, 'good', (why ? why + ' ' : '') + e.n + '의 영창이 끊긴다'); }
 function hurtEnemy(b, e, raw, o) {
@@ -2640,7 +2691,10 @@ const HELP = [
     '흘리기(▶보통): 스태미나 30(암살자 25). 적 하나를 골라 그 적의 다음 단일 공격 피해를 60%(암살자 70%) 줄입니다. 그 공격이 강타였다면 그 적의 붕괴 게이지가 25 찹니다. 광역·지속 피해는 흘리지 못하고, 고른 적이 그 사이 움직이지 않으면 헛됩니다. 강적과 보스의 공격은 줄이는 몫이 ' + Math.round(PARRY_BIG * 100) + '%p 작습니다.',
     '도망: 보스전이 아닐 때만. 성공하면 방 밖으로 물러나고, 앞으로 가려면 그 방을 다시 이겨야 합니다. 실패하면 그대로 차례가 끝납니다.',
     '키보드: 숫자 키 1부터 9까지가 행동 버튼 앞의 번호와 같습니다. 적 차례 진행을 "한 단계씩"으로 두면 Space로 적의 다음 행동을 넘깁니다. Esc는 설명 창을 먼저 닫고, 한 번 더 누르면 열린 창을 닫습니다. 숫자 키는 설정에서 끌 수 있습니다.',
-    '전투 화면에서 Tab을 처음 누르면 "행동판으로 건너뛰기" 버튼이 나타납니다. 행동 순서 줄은 Tab 한 번으로 들어가 좌우 화살표로 옮겨 다닙니다.'] },
+    '전투 화면에서 Tab을 처음 누르면 "행동판으로 건너뛰기" 버튼이 나타납니다. 행동 순서 줄은 Tab 한 번으로 들어가 좌우 화살표로 옮겨 다닙니다.',
+    '미리보기: 행동 버튼에 초점을 두거나 마우스를 올리면(휴대폰은 길게 누르면) 맞을 적의 생명력 막대에 예상 피해가, 붕괴 막대에 오를 양이 빗금으로 겹쳐 보입니다. 카드 위에는 숫자가 뜹니다. 내 생명력 막대의 빗금은 내 다음 차례 전에 받을 피해 어림입니다.',
+    '내 상태의 "정보" 버튼을 누르면 능력치, 속도, 장비, 직업 규칙을 펼칩니다. 창이 짧아 전장이 모자라면 전투 화면이 위아래로 스크롤됩니다.',
+    '설정에서 글자 크기(90%부터 130%까지)와 움직임 줄이기를 고릅니다.'] },
   { k: 'cons', n: '소모품', t: [
     '쓰러뜨린 적은 정해진 확률로 골드, 소모품, 가끔 플라스크 한 칸을 떨굽니다. 전투를 이기면 받습니다. 소환된 적은 떨구지 않습니다.',
     '소모품은 🎒 버튼(플라스크 옆)에서 바로 씁니다. 차례 칸(빠른 행동 · 주 행동)을 쓰지 않고, 한 차례에 ' + CONS_TURN + '개까지 씁니다. 같은 효과는 겹치지 않습니다.',
@@ -2750,7 +2804,7 @@ function vHeader() {
 }
 
 /* ---------- 내 상태 한 줄 ---------- */
-function mbar(cls, v, max, lab) { const ik = { hp: 'bar:hp', mp: 'bar:mp', st: 'bar:st' }[cls]; const w = max > 0 ? Math.max(0, Math.min(100, v / max * 100)) : 0; const lo = cls === 'hp' && v > 0 && v < max * 0.35; /* 10월 7일: 낮은 생명력은 색만이 아니라 "위험" 글자로 */ return `<div class="mb" data-info="${ik}" tabindex="0"><span class="ml">${lab}</span><div class="bar ${cls}${lo ? ' lo' : ''}" role="progressbar" aria-label="${esc(lab)}" aria-valuemin="0" aria-valuemax="${Math.round(max)}" aria-valuenow="${shownHp(v)}"${lo ? ` aria-valuetext="${shownHp(v)}/${Math.round(max)}, 위험"` : ''}><i style="width:${w}%"></i><span>${lo ? '<b class="dz">위험</b> ' : lab + ' '}${shownHp(v)}/${Math.round(max)}</span></div></div>`; }
+function mbar(cls, v, max, lab, inc) { const ik = { hp: 'bar:hp', mp: 'bar:mp', st: 'bar:st' }[cls]; const w = max > 0 ? Math.max(0, Math.min(100, v / max * 100)) : 0; const lo = cls === 'hp' && v > 0 && v < max * 0.35; /* 10월 7일: 낮은 생명력은 색만이 아니라 "위험" 글자로 */ return `<div class="mb" data-info="${ik}" tabindex="0"><span class="ml">${lab}</span><div class="bar ${cls}${lo ? ' lo' : ''}" role="progressbar" aria-label="${esc(lab)}" aria-valuemin="0" aria-valuemax="${Math.round(max)}" aria-valuenow="${shownHp(v)}"${lo ? ` aria-valuetext="${shownHp(v)}/${Math.round(max)}, 위험"` : ''}><i style="width:${w}%"></i>${inc > 0 && v > 0 && max > 0 ? `<b class="pvi" aria-hidden="true" style="left:${Math.max(0, v - inc) / max * 100}%;width:${Math.min(inc, v) / max * 100}%"></b>` : ''}<span>${lo ? '<b class="dz">위험</b> ' : lab + ' '}${shownHp(v)}/${Math.round(max)}</span></div></div>`; } /* 10월 7일 2차: inc = 내 다음 차례 전 받을 피해 어림(incomingEst, 예상 피해 줄과 같은 값). 빗금으로 겹친다 */
 function vPlayerPanel(p, b) {
   const B = BUILDS[p.build];
   const run0 = G.run; const lvTxt = run0 && run0.lv ? `<span class="lvtag" title="경험치 ${Math.round(run0.xp || 0)}/${LV_XP[run0.lv] || '최대'}">Lv ${run0.lv}</span>` : '';
@@ -2800,13 +2854,16 @@ function doorCard(r, i) {
   }
   if (r.shrine) { const S = SHRINES.find(x => x.id === r.shrine); body += `<p class="dr-what">${esc(S.n)}</p><p class="mini">${esc(S.d)} 3개 방 동안.</p>`; }
   if (r.mods && r.mods.length) body += `<div class="dr-mods">${r.mods.map(m => `<span class="chip mod" data-info="mod:${m}">${esc(ROOM_MODS[m].n)}</span>`).join('')}</div><p class="mini">${r.mods.map(m => esc(ROOM_MODS[m].d)).join(' ')}</p>`;
-  return `<button class="door t-${r.type}" data-a="door" data-k="${i}"><span class="dr-h"><span class="dr-ico" aria-hidden="true">${T.ico}</span><b>${esc(T.n)}</b>${stars ? `<span class="dr-risk" aria-label="위험 ${r.risk}">${stars}</span>` : ''}</span>${body}<span class="dr-hint">${esc(rewardHint(r))}</span></button>`;
+  return `<button class="door t-${r.type}" data-a="door" data-k="${i}"><span class="dr-h"><span class="dr-ico" aria-hidden="true">${T.ico}</span><b>${esc(T.n)}</b>${stars ? `<span class="dr-risk"><span aria-hidden="true">${stars}</span><span class="rw">위험 ${RISK_W[Math.max(1, Math.min(4, r.risk || 1))]}</span></span>` : ''}</span>${body}<span class="dr-hint">${esc(rewardHint(r))}</span></button>`;
 }
+const RISK_W = { 1: '낮음', 2: '보통', 3: '높음', 4: '매우 높음' }; /* 10월 7일 2차: 별에 읽히는 이름 */
 const rewardHint = r => r.hide ? '보상은 열어 봐야 안다' : ROOM_TYPES[r.type].hint; // 10월 4일: 보상은 일부 문에만 적힌다
 /* 갈래길: 길 셋 가운데 하나 (다음 갈래길이나 야영지 · 보스 앞까지) */
 function crossCard(id) {
   const P = PATHS[id], f = G.run.room; const to = Math.min(f < FLOOR_CAMP ? FLOOR_CAMP : FLOOR_BOSS, PATH_AT.find(x => x > f) || FLOOR_BOSS) - 1;
-  return `<button class="door t-path-${id}" data-a="path" data-k="${id}"><span class="dr-h"><span class="dr-ico" aria-hidden="true">${P.ico}</span><b>${esc(P.n)}</b>${P.risk ? `<span class="dr-risk${P.risk < 0 ? ' down' : ''}">${P.risk > 0 ? '위험 ▲' : '위험 ▼'}</span>` : ''}</span><p class="mini">${esc(P.d)}</p><span class="dr-hint">${f}층부터 ${to}층까지</span></button>`;
+  const x = v => '×' + v; const W = Object.entries(P.w || {}).filter(([t]) => ROOM_TYPES[t]).map(([t, v]) => ROOM_TYPES[t].n + ' ' + x(v));
+  const nums = [P.hp === 1 && P.dmg === 1 ? '적 체력 · 피해 그대로' : `적 체력 <b>${x(P.hp)}</b> · 피해 <b>${x(P.dmg)}</b>`, `전리품 <b>${x(P.loot)}</b> · 골드 <b>${x(P.gold)}</b>`].concat(P.up ? [`장비 등급 ${P.up > 0 ? '오름' : '내림'} <b>${Math.round(Math.abs(P.up) * 100)}%</b>`] : []);
+  return `<button class="door t-path-${id}" data-a="path" data-k="${id}"><span class="dr-h"><span class="dr-ico" aria-hidden="true">${P.ico}</span><b>${esc(P.n)}</b>${P.risk ? `<span class="dr-risk${P.risk < 0 ? ' down' : ''}">${P.risk > 0 ? '위험 ▲' : '위험 ▼'}</span>` : ''}</span><span class="mini">${esc(P.d)}</span><span class="dr-nums">${nums.join(' · ')}</span>${W.length ? `<span class="dr-w">나오는 문(큰 길 대비): ${esc(W.join(', '))}</span>` : ''}<span class="dr-hint">${f}층부터 ${to}층까지</span></button>`; /* 10월 7일 2차: PATHS의 배율을 숫자로 함께 */
 }
 function vRunMap() {
   const run = G.run, p = run.p; dgInit(run);
@@ -3039,14 +3096,23 @@ function vShop() {
   let h = vPlayerPanel(run.p, null);
   h += `<section class="card shop"><div class="dghead"><h3 style="margin:0">떠돌이 상인</h3><span class="gold-n">골드 ${run.gold || 0}</span></div><p class="lore">무너진 계단참에 등불 하나. 상인은 묻지 않고 값만 부른다.</p><p class="mini">진열은 챕터마다 새로 바뀝니다. 산 장비와 소모품은 가방에 들어갑니다(가방 ${bagUsed(run)}/${BAG_MAX}).</p><div class="shopgrid">`;
   S.stock.forEach((x, i) => {
-    const can = !x.sold && (run.gold || 0) >= x.price && bagUsed(run) < BAG_MAX;
-    h += `<div class="sitem${x.sold ? ' sold' : ''}">${itemDetail(x.it)}${!x.sold && classFit(run.p, x.it.tpl) ? '<span class="tag cfit">' + esc(BUILDS[run.build].n) + '에게 맞음</span>' : ''}<button class="${can ? 'gold' : ''}" data-a="buy" data-k="${i}"${can ? '' : ' disabled'}>${x.sold ? '샀습니다' : x.price + ' 골드에 사기'}</button>${!x.sold && (run.gold || 0) < x.price ? '<p class="mini">골드가 모자랍니다.</p>' : !x.sold && bagUsed(run) >= BAG_MAX ? '<p class="mini">가방이 가득 찼습니다.</p>' : ''}</div>`;
+    const why = x.sold ? '이미 샀습니다' : (run.gold || 0) < x.price ? '골드가 ' + (x.price - (run.gold || 0)) + ' 모자랍니다' : bagUsed(run) >= BAG_MAX ? '가방이 가득 찼습니다' : '';
+    h += `<div class="sitem${x.sold ? ' sold' : ''}">${itemDetail(x.it)}${!x.sold && classFit(run.p, x.it.tpl) ? '<span class="tag cfit">' + esc(BUILDS[run.build].n) + '에게 맞음</span>' : ''}${x.sold ? '' : shopCmp(run, x.it)}${adisBtn(why, why ? '' : 'gold', 'buy', i, x.sold ? '샀습니다' : x.price + ' 골드에 사기')}${why && !x.sold ? `<p class="mini" aria-hidden="true">${esc(why)}</p>` : ''}</div>`;
   });
-  h += `</div></section><section class="card"><h4>소모품</h4><p class="mini">몇 개든 살 수 있습니다. 가방 ${bagUsed(run)}/${BAG_MAX}.</p><div class="baglist">${(S.cons || []).map((x, i) => { const D = CONS[x.id]; const can = (run.gold || 0) >= x.price; return `<div class="bagline"><div><b>${D.ico} ${esc(D.n)}</b><br><small class="mini">${esc(D.sit)} · ${esc(D.d(D.v))}</small></div><button class="sm${can ? ' gold' : ''}" data-a="consbuy" data-k="${i}"${can ? '' : ' disabled'}>${x.price} 골드에 사기</button></div>`; }).join('')}</div>${(run.cons || []).length ? `<h4>가방의 소모품 팔기</h4><div class="baglist">${run.cons.map((c, i) => `<div class="bagline"><div><b>${CONS[c.id].ico} ${esc(consName(c))} ×${c.n}</b></div><button class="sm" data-a="conssell" data-k="${i}">하나 ${consSell(c)} 골드에 팔기</button></div>`).join('')}</div>` : ''}</section>`;
+  h += `</div></section><section class="card"><h4>소모품</h4><p class="mini">몇 개든 살 수 있습니다. 가방 ${bagUsed(run)}/${BAG_MAX}.</p><div class="baglist">${(S.cons || []).map((x, i) => { const D = CONS[x.id]; const why = (run.gold || 0) >= x.price ? '' : '골드가 ' + (x.price - (run.gold || 0)) + ' 모자랍니다'; return `<div class="bagline"><div><b>${D.ico} ${esc(D.n)}</b><br><small class="mini">${esc(D.sit)} · ${esc(D.d(D.v))}</small></div>${adisBtn(why, 'sm' + (why ? '' : ' gold'), 'consbuy', i, x.price + ' 골드에 사기')}</div>`; }).join('')}</div>${(run.cons || []).length ? `<h4>가방의 소모품 팔기</h4><div class="baglist">${run.cons.map((c, i) => `<div class="bagline"><div><b>${CONS[c.id].ico} ${esc(consName(c))} ×${c.n}</b></div><button class="sm" data-a="conssell" data-k="${i}">하나 ${consSell(c)} 골드에 팔기</button></div>`).join('')}</div>` : ''}</section>`;
   h += `<section class="card"><h4>가방의 장비 팔기</h4><p class="mini">살 때 값의 25%를 받습니다. 낀 장비는 먼저 빼야 팔 수 있습니다.</p>`;
   h += run.bag.length ? `<div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${esc(ITEMS[x.tpl].n)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${baseText(x)}</small></div><button class="sm" data-a="sell" data-k="${u}">${sellOf(x)} 골드에 팔기</button></div>`; }).join('')}</div>` : '<p class="mini">가방이 비어 있습니다.</p>';
-  h += `</section><section class="card"><h4>떠나기 전에</h4><div class="row"><button data-a="equip">장비 바꾸기</button><button data-a="respec"${(run.gold || 0) >= cost && pts > 0 ? '' : ' disabled'}>능력치 다시 나누기 (${cost} 골드)</button>${run.tree ? `<button data-a="treereset"${(run.gold || 0) >= tCost && tOpen > 0 ? '' : ' disabled'}>트리 초기화 (${tCost} 골드)</button>` : ''}</div><p class="mini">능력치 다시 나누기는 지금까지 나눈 ${pts}점을 모두 거두어 처음부터 다시 나눕니다. 값은 레벨 × 10골드입니다.${run.tree ? ` 트리 초기화는 연 칸 ${tOpen}개를 모두 닫고 포인트를 돌려줍니다. 끼운 트리 스킬도 빠지므로 스킬 트리에서 다시 열고 끼웁니다. 값은 연 칸 하나에 ${Math.round(TREE_RESET.cell * Math.pow(1.5, (run.ch || 1) - 1))}골드입니다.` : ''} 남은 골드는 다음 챕터로 가져갑니다.</p></section><div class="stickbar shopbar"><span class="gold-n">골드 ${run.gold || 0}</span><span class="mini">가방 ${run.bag.length}/${BAG_MAX}</span><button class="gold" data-a="shopleave">상점을 나선다</button></div>`;
+  h += `</section><section class="card"><h4>떠나기 전에</h4><div class="row"><button data-a="equip">장비 바꾸기</button>${adisBtn(!pts ? '나눈 능력치가 없습니다' : (run.gold || 0) < cost ? '골드가 ' + (cost - (run.gold || 0)) + ' 모자랍니다' : '', '', 'respec', null, '능력치 다시 나누기 (' + cost + ' 골드)')}${run.tree ? adisBtn(!tOpen ? '연 칸이 없습니다' : (run.gold || 0) < tCost ? '골드가 ' + (tCost - (run.gold || 0)) + ' 모자랍니다' : '', '', 'treereset', null, '트리 초기화 (' + tCost + ' 골드)') : ''}</div><p class="mini">능력치 다시 나누기는 지금까지 나눈 ${pts}점을 모두 거두어 처음부터 다시 나눕니다. 값은 레벨 × 10골드입니다.${run.tree ? ` 트리 초기화는 연 칸 ${tOpen}개를 모두 닫고 포인트를 돌려줍니다. 끼운 트리 스킬도 빠지므로 스킬 트리에서 다시 열고 끼웁니다. 값은 연 칸 하나에 ${Math.round(TREE_RESET.cell * Math.pow(1.5, (run.ch || 1) - 1))}골드입니다.` : ''} 남은 골드는 다음 챕터로 가져갑니다.</p></section><div class="stickbar shopbar"><span class="gold-n">골드 ${run.gold || 0}</span><span class="mini">가방 ${run.bag.length}/${BAG_MAX}</span><button class="gold" data-a="shopleave">상점을 나선다</button></div>`;
   return h;
+}
+/* 쓸 수 없어도 초점이 가는 버튼 (10월 7일 2차): disabled 대신 aria-disabled, 이유는 읽는 이름에 넣고 누르면 알림으로 */
+function adisBtn(why, cls, a, k, lab) { return `<button class="${(cls || '') + (why ? ' adis' : '')}" data-a="${a}"${k != null ? ` data-k="${k}"` : ''}${why ? ` aria-disabled="true" data-why="${esc(why)}" aria-label="${esc(lab + ', 살 수 없음: ' + why)}"` : ''}>${esc(lab)}</button>`; }
+/* 상점 진열 장비를 지금 낀 것과 비교한다(장비 창과 같은 compareHtml). 반지는 빈 칸이 있으면 그 칸, 둘 다 차 있으면 두 칸 모두 */
+function shopCmp(run, it) {
+  initGear(run); const kind = tplKind(it.tpl);
+  const slots = kind === 'ring' ? (!run.eqU.ring1 ? ['ring1'] : !run.eqU.ring2 ? ['ring2'] : ['ring1', 'ring2']) : [kind];
+  const fake = { p: run.p, inv: Object.assign({}, run.inv, { __shop: it }), eqU: run.eqU, bag: run.bag };
+  return slots.map(sl => (slots.length > 1 ? `<p class="mini">${EQ_SLOT_N[sl]} 대신 끼면</p>` : '') + compareHtml(fake, '__shop', sl)).join('');
 }
 /* 다음 챕터로 (10월 5일, 1~3챕터 작업): 정산 · 상점 · 설문을 지난 캐릭터가 장비 · 골드 · 레벨 · 트리를 그대로 들고 다음 챕터 1층으로 */
 function enterChapter(run) {
@@ -3140,8 +3206,10 @@ function vCoach() {
 function incHtml(b) {
   if (b.over) return ''; const x = incomingEst(b); if (!x.n) return `<div class="incoming calm">🕊️ 내 다음 차례 전에 공격할 적이 없습니다</div>`;
   const bad = x.sum >= b.p.hp * 0.5 ? ' bad' : '';
-  return `<div class="incoming${bad}" data-info="incoming" tabindex="0">⚠️ 내 다음 차례 전 받을 피해 약 <b>${r1(x.sum)}</b> <small>(공격 ${x.n}번 · 보통 행동 기준, 흘리기·방어로 줄일 수 있음)</small></div>`;
+  return `<div class="incoming${bad}" data-info="incoming" tabindex="0">⚠️ 내 다음 차례 전 받을 피해 약 <b>${r1(x.sum)}</b></div>`;
 }
+/* 예상 피해의 뜻: 접힌 자세한 정보 안에 둔다(10월 7일 2차: 전에는 늘 숨겨져 있었다) */
+function incWhy(b) { if (b.over) return ''; const x = incomingEst(b); return x.n ? `<p class="mini">예상 피해는 공격 ${x.n}번을 보통 행동 기준으로 셉니다. 흘리기와 방어로 줄일 수 있습니다. 생명력 막대의 빗금이 이 몫입니다.</p>` : ''; }
 /* 생명력 증감 숫자: 그리기 사이의 차이를 1.4초 동안 띄운다. 다시 그려도 애니메이션이 이어지게 지난 시간만큼 당겨 시작한다(엔진은 건드리지 않는다) */
 const POP_MS = 1400;
 /* 피해 숫자(떠올랐다 사라짐)는 dpop. 설명 창(#pop.pop)과 이름이 같으면 설명 창도 1.4초 뒤에 사라진다(10월 3일 고침) */
@@ -3155,7 +3223,7 @@ function hpPops(b) {
   return out;
 }
 function vBattle() {
-  const b = G.b; const p = b.p; const B = BUILDS[p.build]; const pops = hpPops(b);
+  const b = G.b; const p = b.p; const B = BUILDS[p.build]; const pops = hpPops(b); const fdo = !!G.data.fdet;
   const tg = G.sel ? b.en.find(e => e.id === G.sel && e.alive) : null;
   // 1) 내 상태
   const extra = [];
@@ -3163,9 +3231,9 @@ function vBattle() {
   extra.push(`<span data-info="speed" tabindex="0">속도 ${r1(pSpeed(b))}</span>`);
   const eq = Object.values(p.eq).filter(Boolean); if (eq.length) extra.push(eq.map(k => esc(ITEMS[k].n)).join(', '));
   const scen = G.scr === 'scen' ? `<div class="scenline"><b>${SCEN[G.scen.i].id}. ${esc(SCEN[G.scen.i].n)}</b> ${esc(SCEN[G.scen.i].d)} 최대 10행동 중 ${b.pActs || 0}행동.</div>` : '';
-  const status = `<section class="fstat" aria-label="내 상태">${scen}<div class="mehead"><b data-info="buildrule" tabindex="0">${B.ico} ${esc(B.n)}</b><span class="flk" data-info="flask" tabindex="0">플라스크 ❤️${p.flask.life} ${isV2(p) ? '🧪' : '💧'}${p.flask.mana} ⚡${p.flask.stam || 0} <small>/${p.flaskMax}</small></span>${q('flask', '플라스크')}${G.run && G.run.cons ? `<button class="sm consbtn" data-a="consopen" aria-label="소모품 ${G.run.cons.reduce((a, c) => a + c.n, 0)}개">🎒 ${G.run.cons.reduce((a, c) => a + c.n, 0)}</button>` : ''}</div>
-    <div class="mbars">${pops.p ? popHtml(pops.p) : ''}${mbar('hp', p.hp, p.hpMax, '생명력')}${p.mpMax > 0 ? mbar('mp', p.mp, p.mpMax, '마나') : ''}${mbar('st', p.st, p.stMax, '스태미나')}</div>${buildRes(p)}
-    ${incHtml(b)}${focusLine(b)}${b.seal && b.seal.length ? `<div class="sealln" data-info="seal" tabindex="0">🔏 봉인: ${b.seal.map(x => esc(x.n)).join(', ')}</div>` : ''}<div class="mini">${extra.join(' · ')}</div><div class="rule" data-info="buildrule" tabindex="0">${esc(BUILDS[p.build].rule)}</div>${stsHtml(p, b)}</section>`;
+  const status = `<section class="fstat" aria-label="내 상태">${scen}<div class="mehead"><b data-info="buildrule" tabindex="0">${B.ico} ${esc(B.n)}</b><span class="flk" data-info="flask" tabindex="0">플라스크 ❤️${p.flask.life} ${isV2(p) ? '🧪' : '💧'}${p.flask.mana} ⚡${p.flask.stam || 0} <small>/${p.flaskMax}</small></span>${q('flask', '플라스크')}${G.run && G.run.cons ? `<button class="sm consbtn" data-a="consopen" aria-label="소모품 ${G.run.cons.reduce((a, c) => a + c.n, 0)}개">🎒 ${G.run.cons.reduce((a, c) => a + c.n, 0)}</button>` : ''}<button class="sm fdtog" data-a="fdet" aria-expanded="${fdo}" aria-controls="fdet"><span aria-hidden="true">${fdo ? '▴' : '▾'}</span> 정보</button></div>
+    <div class="mbars">${pops.p ? popHtml(pops.p) : ''}${mbar('hp', p.hp, p.hpMax, '생명력', b.over ? 0 : incomingEst(b).sum)}${p.mpMax > 0 ? mbar('mp', p.mp, p.mpMax, '마나') : ''}${mbar('st', p.st, p.stMax, '스태미나')}</div>${buildRes(p)}
+    ${incHtml(b)}${focusLine(b)}${b.seal && b.seal.length ? `<div class="sealln" data-info="seal" tabindex="0">🔏 봉인: ${b.seal.map(x => esc(x.n)).join(', ')}</div>` : ''}${stsHtml(p, b)}<div class="fdet" id="fdet"${fdo ? '' : ' hidden'}><div class="mini">${extra.join(' · ')}</div><div class="rule" data-info="buildrule" tabindex="0">${esc(BUILDS[p.build].rule)}</div>${incWhy(b)}</div></section>`;
   // 2) 시간 축 + 기믹
   let gim = '';
   const boss = b.en.find(e => e.role === 'boss' && e.alive);
@@ -3207,7 +3275,7 @@ function vBattle() {
       '생명력 ' + shownHp(e.hp) + '/' + Math.round(e.hpMax)].concat(e.role !== 'root' ? [eordText(b, e), '붕괴 ' + Math.round(e.brk) + '/' + e.brkMax] : [])
       .concat(sw.length ? ['상태: ' + sw.join(', ')] : []).concat(wall || fl.length ? ['표시: ' + (wall ? ['방패벽'] : []).concat(fl.map(x => x[1])).join(', ')] : [])
       .concat(e.role !== 'root' ? ['예고: ' + it.t] : ['움직이지 않는다']).join(', ');
-    return `<button class="en${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(lab)}">${eordHtml(b, e)}<span class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wall ? `<span class="wallm" data-info="${wall}">🛡️</span>` : ''}${e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" data-info="etough">강인</small>' : ''}${e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${fl.map(x => x[0]).join('')}</span>${ehpBar(e)}${e.role !== 'root' ? `<span class="bkline" data-info="bar:bk"><small>붕괴 게이지</small><span class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></span></span>` : ''}${stsHtml(e, b, 1)}${e.role !== 'root' ? `<span class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${acts1[e.id] > 1 ? `<span class="ix">×${acts1[e.id]}</span>` : ''}</span>` : '<span class="mini emv">움직이지 않는다</span>'}${pop ? popHtml(pop) : ''}</button>`;
+    return `<button class="en${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(lab)}">${eordHtml(b, e)}<span class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wall ? `<span class="wallm" data-info="${wall}">🛡️</span>` : ''}${e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" data-info="etough">강인</small>' : ''}${e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${fl.map(x => x[0]).join('')}</span>${ehpBar(e)}${e.role !== 'root' ? `<span class="bkline" data-info="bar:bk"><small>붕괴<span class="bkl"> 게이지</span></small><span class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></span></span>` : ''}${stsHtml(e, b, 1)}${e.role !== 'root' ? `<span class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${acts1[e.id] > 1 ? `<span class="ix">×${acts1[e.id]}</span>` : ''}</span>` : '<span class="mini emv">움직이지 않는다</span>'}${pop ? popHtml(pop) : ''}</button>`;
   };
   const bk = b.en.filter(e => e.alive && e.row === 'back'), fr = b.en.filter(e => e.alive && e.row === 'front');
   /* 전열 · 후열 띠 (10월 3일 만든 사람: 한눈에 안 들어온다): 줄마다 색 띠와 머리글, 머리에 근접 공격이 닿는지.
@@ -3242,9 +3310,9 @@ function vBattle() {
       }
       btns += '</div>';
     }
-    dock = `<section class="dock" aria-label="행동">${G.scr === 'tut' ? '' : vCoach()}<div class="dockhead">${G.busy ? `<span class="busy">적이 움직이는 중</span>${G.stepResolve ? '<button class="sm gold" data-a="stepnext" data-focus>다음 <kbd>Space</kbd></button>' : ''}<button class="sm" data-a="skip">끝까지 넘기기</button>` : `<span>대상 <b>${tg ? esc(tg.n) : '행동마다 자동'}</b> <span class="mini">적 카드를 누르면 고정됩니다</span></span>${q('act', '행동')}`}<label class="pacesel">진행 <select id="pace" aria-label="적 차례 진행 속도">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></label></div>
+    dock = `<section class="dock" aria-label="행동">${G.scr === 'tut' ? '' : vCoach()}<div class="dockhead">${G.busy ? `<span class="busy">적이 움직이는 중</span>${G.stepResolve ? '<button class="sm gold" data-a="stepnext" data-focus>다음 <kbd>Space</kbd></button>' : ''}<button class="sm" data-a="skip">끝까지 넘기기</button>` : `<span>대상 <b>${tg ? esc(tg.n) : '행동마다 자동'}</b> <span class="mini">적 카드를 누르면 고정됩니다</span></span>${slotHtml(b)}${q('act', '행동')}`}<label class="pacesel">진행 <select id="pace" aria-label="적 차례 진행 속도">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></label></div>
       
-      ${G.busy ? '' : `<div class="slotrow">${slotHtml(b)}<span class="mini">⚡ 빠른 행동을 먼저 쓰면 차례가 이어지고, ▶ 주 행동을 하면 차례가 끝납니다. ⏳ 느린 행동은 두 칸을 다 씁니다</span></div>`}<div class="abgrid">${btns}</div></section>`;
+      ${G.busy ? '' : `<div class="slotrow"><span class="mini">⚡ 빠른 행동을 먼저 쓰면 차례가 이어지고, ▶ 주 행동을 하면 차례가 끝납니다. ⏳ 느린 행동은 두 칸을 다 씁니다</span></div>`}<div class="abgrid">${btns}</div></section>`;
   }
   const groups = []; for (const x of b.log) { const g = x.g || 0; if (!groups.length || groups[groups.length - 1].g !== g) groups.push({ g, items: [] }); groups[groups.length - 1].items.push(x); }
   const glog = groups.slice(-14).reverse().map((G2, gi) => `<div class="lgrp${gi === 0 ? ' now' : ''}"><div class="lgh">${G2.g ? G2.g + '번째 차례' : '전투 시작'}</div>${G2.items.map(x => `<p class="${x.c}">${esc(x.m)}</p>`).join('')}</div>`).join('');
@@ -3557,8 +3625,8 @@ function popEl() { if (!POP.el) { POP.el = document.createElement('div'); POP.el
 function showPop(target, force) {
   if (!G.infoOn && !force) return; /* force: 쓸 수 없는 행동을 눌렀을 때는 설명 창을 꺼 두어도 이유를 보인다 */
   const key = target.dataset.info; const html = infoHtml(key); if (!html) return hidePop();
-  if (POP.cur && POP.cur !== target && POP.cur.removeAttribute) POP.cur.removeAttribute('aria-describedby');
-  clearTimeout(POP.h); const el = popEl(); el.innerHTML = html; el.style.display = 'block'; POP.cur = target; target.setAttribute('aria-describedby', 'pop');
+  if (POP.cur && POP.cur !== target) descDel(POP.cur, 'pop');
+  clearTimeout(POP.h); const el = popEl(); el.innerHTML = html; el.style.display = 'block'; POP.cur = target; descAdd(target, 'pop');
   const r = target.getBoundingClientRect(); const pw = Math.min(320, window.innerWidth - 16);
   el.style.width = pw + 'px';
   const ph = el.offsetHeight;
@@ -3566,7 +3634,73 @@ function showPop(target, force) {
   let top = r.top - ph - 8; if (top < 8) top = Math.min(window.innerHeight - ph - 8, r.bottom + 8);
   el.style.left = left + 'px'; el.style.top = top + 'px';
 }
-function hidePop() { clearTimeout(POP.t); clearTimeout(POP.h); if (POP.el) POP.el.style.display = 'none'; if (POP.cur && POP.cur.removeAttribute) POP.cur.removeAttribute('aria-describedby'); POP.cur = null; }
+function hidePop() { clearTimeout(POP.t); clearTimeout(POP.h); if (POP.el) POP.el.style.display = 'none'; if (POP.cur) descDel(POP.cur, 'pop'); POP.cur = null; }
+/* aria-describedby에 설명 창(pop)과 미리보기 문장(pvdesc)을 함께 단다 */
+function descAdd(el, id) { if (!el || !el.getAttribute) return; const L = (el.getAttribute('aria-describedby') || '').split(' ').filter(Boolean); if (!L.includes(id)) L.push(id); el.setAttribute('aria-describedby', L.join(' ')); }
+function descDel(el, id) { if (!el || !el.getAttribute) return; const L = (el.getAttribute('aria-describedby') || '').split(' ').filter(x => x && x !== id); if (L.length) el.setAttribute('aria-describedby', L.join(' ')); else el.removeAttribute('aria-describedby'); }
+/* ===== 행동 미리보기 (10월 7일 2차, Into the Breach · Monster Train의 겹쳐 그리기) =====
+   행동 버튼에 초점이 가거나 마우스를 올리면(휴대폰은 길게 누르면) 맞을 적의 생명력 막대에 예상 피해를, 붕괴 막대에 오를 양을 빗금으로 겹친다.
+   값은 새 계산식이 아니라 엔진의 playerAct를 전투 사본에서 그대로 돌린 결과다(자동 테스터의 한 수 앞 계산과 같은 방법).
+   사본은 적 차례를 돌리지 않고(stepMode), 해금 셈 · 전리품에 닿지 않는다(ctx.test). 난수는 가장 낮은 값과 가장 높은 값으로 두 번 돌려 범위를 낸다 */
+const PV = { btn: null, hover: null };
+function actSim(b, id) {
+  if (!b || b.over || G.busy) return null;
+  const a = actionList(b).find(x => x.id === id); if (!a || !a.ok || a.id === 'flee') return null;
+  const t = actTarget(b, a);
+  const one = r => {
+    const c = JSON.parse(JSON.stringify(Object.assign({}, b, { log: [], rec: [], hits3: [], rngF: null, vanguardTgt: null, chainTgt: null, markTgt: null })));
+    const re = o => o ? c.en.find(e => e.id === o.id) || null : null; c.vanguardTgt = re(b.vanguardTgt); c.chainTgt = re(b.chainTgt); c.markTgt = re(b.markTgt);
+    c.ctx = Object.assign({}, c.ctx, { test: 1 }); c.stepMode = true; c.waiting = false; c.rngF = () => r;
+    try { playerAct(c, id, t ? t.id : null); } catch (e) { return null; }
+    return c;
+  };
+  const c0 = one(0), c1 = one(0.9999); if (!c0 || !c1) return null;
+  const out = { en: {}, p: null };
+  for (const e of b.en) {
+    if (!e.alive) continue; const x0 = c0.en.find(y => y.id === e.id), x1 = c1.en.find(y => y.id === e.id); if (!x0 || !x1) continue;
+    const d0 = e.hp - Math.max(0, x0.alive ? x0.hp : 0), d1 = e.hp - Math.max(0, x1.alive ? x1.hp : 0);
+    const kill = !x0.alive || !x1.alive || (!!x0.pile && !e.pile);
+    const brk = (!!x0.s.broken && !e.s.broken) || (!!x1.s.broken && !e.s.broken); const bk = Math.max(0, x0.brk - e.brk, x1.brk - e.brk);
+    if (Math.max(d0, d1) > 0.05 || bk > 0.05 || brk || kill) out.en[e.id] = { lo: Math.max(0, Math.min(d0, d1)), hi: Math.max(0, d0, d1), bk, brk, kill, hp: e.hp, max: e.hpMax, b0: e.brk, bmax: e.brkMax };
+  }
+  const p0 = c0.p.hp - b.p.hp, p1 = c1.p.hp - b.p.hp;
+  if (Math.abs(p0) > 0.05 || Math.abs(p1) > 0.05) out.p = { lo: Math.min(p0, p1), hi: Math.max(p0, p1) };
+  return out;
+}
+const pvNum = (lo, hi) => Math.abs(hi - lo) < 0.05 ? String(r1(hi)) : r1(lo) + '–' + r1(hi);
+function pvShow(btn) {
+  pvHide(); const b = G.b; if (!b || !btn || !btn.isConnected || btn.getAttribute('aria-disabled') === 'true') return;
+  const sim = actSim(b, btn.dataset.id); if (!sim) return;
+  const say = [];
+  for (const id in sim.en) {
+    const x = sim.en[id], e = b.en.find(y => y.id === id); const card = document.querySelector('.en[data-e="' + id + '"]');
+    const num = pvNum(x.lo, x.hi);
+    if (card) {
+      const bar = card.querySelector('.bar.ehp');
+      if (bar && x.hi > 0.05 && x.max > 0) bar.insertAdjacentHTML('beforeend', `<b class="pvg" aria-hidden="true" style="left:${Math.max(0, x.hp - x.hi) / x.max * 100}%;width:${Math.min(x.hp, x.hi) / x.max * 100}%"></b>`);
+      const bkb = card.querySelector('.bkb');
+      if (bkb && x.bmax > 0 && (x.bk > 0.05 || x.brk)) { const f = Math.min(100, x.b0 / x.bmax * 100); bkb.insertAdjacentHTML('beforeend', `<b class="pvk" aria-hidden="true" style="left:${f}%;width:${x.brk ? 100 - f : Math.min(100 - f, x.bk / x.bmax * 100)}%"></b>`); }
+      const tx = [x.kill ? '쓰러짐' : x.hi > 0.05 ? '−' + num : '', x.brk ? '붕괴' : x.bk > 0.05 ? '붕괴 +' + Math.round(x.bk) : ''].filter(Boolean).join(' · ');
+      if (tx) card.insertAdjacentHTML('beforeend', `<span class="pvt" aria-hidden="true">${esc(tx)}</span>`);
+    }
+    say.push((e ? e.n : '') + ' ' + [x.kill ? '쓰러짐' : x.hi > 0.05 ? '생명력 −' + num : '', x.brk ? '붕괴' : x.bk > 0.05 ? '붕괴 +' + Math.round(x.bk) : ''].filter(Boolean).join(', '));
+  }
+  if (sim.p) {
+    const p = b.p, bar = document.querySelector('.fstat .bar.hp');
+    if (bar && p.hpMax > 0) { const up = sim.p.hi > 0; const a = up ? p.hp : Math.max(0, p.hp + sim.p.lo), w = up ? Math.min(p.hpMax - p.hp, sim.p.hi) : Math.min(p.hp, -sim.p.lo); if (w > 0) bar.insertAdjacentHTML('beforeend', `<b class="${up ? 'pvh' : 'pvg'}" aria-hidden="true" style="left:${a / p.hpMax * 100}%;width:${w / p.hpMax * 100}%"></b>`); }
+    say.push('내 생명력 ' + (sim.p.hi > 0 ? '+' + pvNum(sim.p.lo, sim.p.hi) : '−' + pvNum(-sim.p.hi, -sim.p.lo)));
+  }
+  const d = document.getElementById('pvdesc'); if (d) d.textContent = say.length ? '이 행동의 예상: ' + say.join('. ') : '';
+  if (say.length) descAdd(btn, 'pvdesc'); PV.btn = btn;
+}
+function pvHide() { if (typeof document === 'undefined') return; document.querySelectorAll('.pvg:not(.pvi),.pvk,.pvh,.en .pvt').forEach(x => x.remove()); if (PV.btn) descDel(PV.btn, 'pvdesc'); PV.btn = null; }
+function initPv() {
+  const ab = t => t && t.closest ? t.closest('.ab[data-a=act]') : null;
+  document.addEventListener('focusin', ev => { const t = ab(ev.target); if (t) pvShow(t); else if (PV.btn && !PV.hover) pvHide(); });
+  document.addEventListener('focusout', ev => { if (PV.btn && ev.target === PV.btn && !PV.hover) setTimeout(() => { const f = ab(document.activeElement); if (!f) pvHide(); }, 0); });
+  document.addEventListener('pointerover', ev => { if (ev.pointerType === 'touch') return; const t = ab(ev.target); if (t && t !== PV.hover) { PV.hover = t; pvShow(t); } });
+  document.addEventListener('pointerout', ev => { if (ev.pointerType === 'touch') return; const t = ab(ev.target); if (!t) return; const rt = ev.relatedTarget; if (rt && ab(rt) === t) return; PV.hover = null; const f = ab(document.activeElement); if (f) pvShow(f); else pvHide(); });
+}
 function initPop() {
   document.addEventListener('pointerover', ev => {
     if (ev.pointerType === 'touch') return;
@@ -3586,9 +3720,9 @@ function initPop() {
   document.addEventListener('focusout', () => hidePop());
   document.addEventListener('pointerdown', ev => {
     if (ev.pointerType !== 'touch') { return; }
-    const t = ev.target.closest && ev.target.closest('[data-info]'); hidePop(); if (!t) return;
+    const t = ev.target.closest && ev.target.closest('[data-info]'); hidePop(); if (!(t && t.closest('.ab[data-a=act]'))) pvHide(); if (!t) return;
     POP.suppress = false; clearTimeout(POP.touchT);
-    POP.touchT = setTimeout(() => { POP.suppress = true; showPop(t); }, 450);
+    POP.touchT = setTimeout(() => { POP.suppress = true; showPop(t); if (t.matches('.ab[data-a=act]')) pvShow(t); }, 450);
   });
   const cancel = () => clearTimeout(POP.touchT);
   document.addEventListener('pointerup', cancel); document.addEventListener('pointercancel', cancel);
@@ -4043,7 +4177,7 @@ function itemDetail(it) {
 <div class="idet-base">${baseText(it)} <span class="mini">${I.kind === 'start' ? '시작 장비' : `${R.n} +${R.lo}~${R.hi}% 가운데 +${it.b}%`}</span></div>${I.act ? `<div class="l act">${esc(I.act)}</div>` : ''}${I.cost ? `<div class="l cost">대가: ${esc(I.cost)}</div>` : ''}${I.lore ? `<p class="lore">${esc(I.lore)}</p>` : ''}</div>`;
 }
 /* 휴대폰: 고른 장비의 설명이 화면 밖이면 보이게 굴린다 */
-function eqReveal() { setTimeout(() => { const d = document.querySelector('.sheet .eqdet'); if (!d) return; const r = d.getBoundingClientRect(); if (r.top < 0 || r.top > window.innerHeight - 120) d.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 20); }
+function eqReveal() { setTimeout(() => { const d = document.querySelector('.sheet .eqdet'); if (!d) return; const r = d.getBoundingClientRect(); if (r.top < 0 || r.top > window.innerHeight - 120) d.scrollIntoView({ block: 'start', behavior: smoothB() }); }, 20); }
 function vEquip() {
   const run = G.run; initGear(run); const p = run.p; const inFight = !!G.b && !G.b.over;
   const sel = G.eqSel || (G.eqSel = { slot: 'weapon' });
@@ -4364,8 +4498,8 @@ function battleContinue() {
   const b = G.b, run = G.run, R = roomDef();
   afterBattle();
   if (b.over === 'lose') {
-    const acts = b.rec.filter(x => x.k === 'act').slice(-3).map(x => x.a);
-    run.grave = { id: run.id, cname: run.cname || '', lv: run.lv || 1, room: run.room, roomN: floorName(run.room) + (run.cur && ROOM_TYPES[run.cur.type] ? ' ' + ROOM_TYPES[run.cur.type].n + ' 방' : ''), build: run.build, name: G.data.name || '', eq: Object.values(run.p.eq).filter(Boolean), last: acts, stats: Object.assign({}, run.stats), at: Date.now() };
+    const acts = b.rec.filter(x => x.k === 'act').slice(-3).map(x => x.a); const hl = (b.hits3 || []).slice(-3);
+    run.grave = { kill: hl.length ? hl[hl.length - 1] : null, hits: hl, id: run.id, cname: run.cname || '', lv: run.lv || 1, room: run.room, roomN: floorName(run.room) + (run.cur && ROOM_TYPES[run.cur.type] ? ' ' + ROOM_TYPES[run.cur.type].n + ' 방' : ''), build: run.build, name: G.data.name || '', eq: Object.values(run.p.eq).filter(Boolean), last: acts, stats: Object.assign({}, run.stats), at: Date.now() };
     G.data.graves = [run.grave].concat(G.data.graves || []).slice(0, 20);
     run.result = 'lose'; clearCur(); pushRank(run, 'dead');
     G.scr = 'dead'; saveRunLocal(); clearTimeout(syncT); syncRun(run).then(render); render(); return;
@@ -4641,10 +4775,18 @@ function vDead() {
   const actN = id => ({ basic: '기본 공격', heavy: '강공격', guard: '방어', dodge: '흘리기', flaskL: '생명력 플라스크', flaskM: isV2(run.p) ? '정화 플라스크' : '마나 플라스크', flee: '도망', sig: '직업 기술' })[id] || (SKM[id] && SKM[id].n) || id;
   return vPlayerPanel(run.p, null) + `<section class="card grave"><h3>쓰러졌습니다</h3>${unlNewsHtml()}<p class="lore">돌바닥이 차갑다. 이 이름은 더 내려가지 못한다.</p>
 <p>${esc(run.cname || BUILDS[run.build].n)}(${esc(BUILDS[run.build].n)}, Lv ${run.lv || 1})의 여정은 ${esc(g.roomN || '')}에서 끝났습니다. 쓰러진 캐릭터는 돌아오지 않습니다. 새 캐릭터로 다시 시작합니다.</p>
-<dl class="gdl"><dt>마지막 행동</dt><dd>${(g.last || []).map(a => esc(actN(a))).join(' → ') || '없음'}</dd><dt>장비</dt><dd>${(g.eq || []).map(k => esc((ITEMS[k] || { n: k }).n)).join(', ') || '없음'}</dd><dt>능력치</dt><dd>${STAT_KEYS.map(k => STATN[k] + ' ' + (g.stats ? g.stats[k] || 0 : 0)).join(' · ')}</dd></dl>
+${graveKill(g)}<dl class="gdl"><dt>마지막 행동</dt><dd>${(g.last || []).map(a => esc(actN(a))).join(' → ') || '없음'}</dd><dt>장비</dt><dd>${(g.eq || []).map(k => esc((ITEMS[k] || { n: k }).n)).join(', ') || '없음'}</dd><dt>능력치</dt><dd>${STAT_KEYS.map(k => STATN[k] + ' ' + (g.stats ? g.stats[k] || 0 : 0)).join(' · ')}</dd></dl>
 <button class="gold wide" data-a="giveupend" data-focus>기록을 남기고 마치기</button></section>`;
 }
 
+/* 결정타: 누가, 무엇으로, 얼마나, 무엇이 더해졌나 (10월 7일 2차) */
+const hitWho = h => h.dot ? (h.l || '지속 피해') : h.n ? h.n + (h.it ? '의 ' + h.it : '') : (h.l || '피해');
+const hitMods = h => h.m && h.m.length ? ` <span class="mini">(${esc(h.m.join(', '))})</span>` : '';
+function graveKill(g) {
+  const k = g.kill; if (!k) return '';
+  const hs = g.hits || [];
+  return `<div class="killb"><p class="mini">${k.left > 0 ? '마지막으로 받은 피해' : '결정타'}</p><p>${esc(hitWho(k))} <b class="kd">${k.d}</b> 피해${hitMods(k)}</p>${hs.length > 1 ? `<p class="mini">마지막 ${hs.length}번 받은 피해 (먼저 받은 것부터)</p><ol class="lasthits">${hs.map(h => `<li>${esc(hitWho(h))} <b>${h.d}</b> 피해${hitMods(h)}${h.big ? ' <span class="mini">· 예고된 큰 공격</span>' : ''}</li>`).join('')}</ol>` : ''}</div>`;
+}
 const SV = {
   fun: { 1: '1 지루했다', 2: '2', 3: '3 보통', 4: '4', 5: '5 아주 재미있었다' },
   skw: { curious: '직업 전용 스킬이 궁금해서', strong: '강해 보여서', default: '처음 끼워진 그대로', combo: '조합을 시험해 보려고', other: '기타' },
@@ -5126,11 +5268,13 @@ function vSettings() {
 <section class="setg"><h4>화면</h4>
 <div class="setrow"><span class="lab">숫자 키</span><span class="mini">숫자 키 1부터 9까지로 행동 버튼을 누릅니다</span>${sw('numkeys', G.data.numKeys !== false, '숫자 키로 행동')}</div>
 <div class="setrow"><span class="lab">설명 창</span><span class="mini">마우스를 올리거나 길게 누르면 뜹니다</span>${sw('infotoggle', G.infoOn, '설명 창')}</div>
+<div class="setrow"><label for="setfs">글자 크기</label><span class="mini">화면 글자의 크기</span><select id="setfs">${FS_OPTS.map(v => `<option value="${v}"${(FS_OPTS.includes(+G.data.fs) ? +G.data.fs : 1) === v ? ' selected' : ''}>${Math.round(v * 100)}%</option>`).join('')}</select></div>
+<div class="setrow"><span class="lab">움직임 줄이기</span><span class="mini">적 카드 확대, 버튼 빛남, 부드러운 스크롤, 알림이 미끄러져 나오는 것을 끕니다</span>${sw('rmotion', !!G.data.rm, '움직임 줄이기')}</div>
 <div class="setrow"><label for="setpace">적 차례</label><span class="mini">적이 움직이는 빠르기</span><select id="setpace">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></div></section>`;
 }
 function render() {
   if (typeof document === 'undefined') return;
-  sndSync();
+  sndSync(); applyPrefs();
   { const bd = (G.b && G.b.p && G.b.p.build) || (G.run && G.run.build) || ''; document.documentElement.style.setProperty('--cls', CLS_COLOR[bd] || 'transparent'); }
   const root = document.getElementById('root');
   let main = '';
@@ -5168,12 +5312,33 @@ function render() {
   else root.innerHTML = `<div class="app scr-${G.scr}"${ine}>${vHeader()}<main>${h2}${main}</main></div>${tail}`;
   if (POP.cur && !document.body.contains(POP.cur)) hidePop(); // 설명 창의 기준이 된 요소가 사라졌으면 닫는다
   if (!G.sheet && G.dropQ && G.dropQ.length && G.scr === 'run' && !G.b) setTimeout(nextDrop, 0); // 전리품 창을 닫기로 닫아도 남은 전리품을 이어서 건넨다
+  fitDecide(fit);
   const f2 = document.querySelector('.field'); if (f2) f2.scrollTop = fy;
   const l2 = document.querySelector('.side .blog'); if (l2) l2.scrollTop = ly;
   const same = G.lastScr === G.scr; G.lastScr = G.scr; // 화면이 바뀌면 맨 위에서 시작한다
   if (!G.sheet && !fit) window.scrollTo(0, same ? y : 0);
+  if (fit && G.fitS) window.scrollTo(0, G.fitNew ? 0 : y); /* 짧은 창의 전투: 다시 그려도 보던 자리 */
   focusBack(tail ? (hadSheet ? fk : null) : (hadSheet ? G.sheetRet || fk : fk), !!tail && !hadSheet, fit);
 }
+/* 10월 7일 2차: 전투 화면은 창 높이에 맞춰 한 화면에 두되, 그러면 전장이 모자란 창(확대 · 가로 휴대폰 · 짧은 휴대폰)에서는
+   고정을 풀고 페이지를 스크롤한다(10월 2일의 원래 뜻). 같은 창 크기 · 같은 전투 · 같은 글자 크기에서는 한 번 정한 대로 둔다(차례마다 바뀌지 않게) */
+const FIT_FIELD = 200;
+function fitDecide(fit) {
+  const de = document.documentElement;
+  if (!fit) { de.classList.remove('fitscroll'); G.fitS = false; G.fitK = null; G.fitB = null; G.fitNew = false; return; }
+  const ah = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  const k = window.innerWidth + 'x' + Math.round(ah) + ':' + (G.data.fs || 1) + ':' + (G.data.fdet ? 1 : 0);
+  G.fitNew = G.fitB !== G.b;
+  if (G.fitK === k && !G.fitNew) { de.classList.toggle('fitscroll', !!G.fitS); return; }
+  const h = sel => { const e = document.querySelector(sel); return e ? e.getBoundingClientRect().height : 0; };
+  const fld = document.querySelector('.field'); const want = Math.min(fld ? fld.scrollHeight : 0, FIT_FIELD);
+  const need = h('.fit > .hdr') + h('.btop') + h('.dock') + want + 24;
+  G.fitS = need > ah; G.fitK = k; G.fitB = G.b; de.classList.toggle('fitscroll', G.fitS);
+}
+/* 설정: 글자 크기(--fs)와 움직임 줄이기(html.rm) */
+const FS_OPTS = [0.9, 1, 1.15, 1.3];
+function applyPrefs() { if (typeof document === 'undefined' || !G.data) return; const de = document.documentElement; const fs = FS_OPTS.includes(+G.data.fs) ? +G.data.fs : 1; de.style.setProperty('--fs', String(fs)); de.classList.toggle('rm', !!G.data.rm); }
+const smoothB = () => (G.data && G.data.rm) || (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
 /* 화면 이름: 브라우저 탭 제목과 숨은 h2 */
 const SCR_N = { guide: '처음 안내', create: '캐릭터 만들기', settle: '정산', shop: '상점', wait: '챕터 돌파', rank: '랭킹', records: '기록', admin: '관리자', tree: '스킬 트리', dead: '쓰러짐', survey: '설문', final: '마무리', scen: '고정 상황', tutoffer: '수련장 안내' };
 function scrName() {
@@ -5230,6 +5395,7 @@ function onClick(ev) {
   if (G.menuOpen && !ev.target.closest('.hdr')) { G.menuOpen = false; render(); if (a === 'closebg') return; } // 펼친 메뉴 밖을 누르면 닫는다
   if (el.closest('.mnav')) G.menuOpen = false;
   playTick();
+  if (el.getAttribute && el.getAttribute('aria-disabled') === 'true' && el.dataset && el.dataset.why) { toast(el.dataset.why); return; } /* 10월 7일 2차: 상점 등 쓸 수 없는 버튼의 이유 */
   if (a === 'closebg') { if (ev.target !== el) return; if (G.sheet && !['block', 'stats', 'choice'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } return; }
   switch (a) {
     case 'home': case 'title': if (G.creating) { cancelCreate(); break; } if (G.run && !G.run.endedAt) { saveRunLocal(); if (G.run.phase) saveCur(); clearTimeout(syncT); syncRun(G.run, 'left').then(render); if (G.run.result !== 'lose') pushRank(G.run); } G.scr = 'title'; G.back = null; G.b = null; G.sheet = null; render(); break;
@@ -5253,7 +5419,7 @@ function onClick(ev) {
     case 'cnroll': { const cur = val('cname'); let n = pickR(CNAMES); for (let k = 0; k < 5 && n === cur; k++) n = pickR(CNAMES); G.cre.name = n; render(); break; }
     case 'cnok': { const n = (val('cname') || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 12); if (!n) { toast('이름을 적거나 주사위를 눌러 주세요'); const x = document.getElementById('cname'); if (x) x.focus(); break; } G.cre.name = n; G.cre.step = 'cls'; render(); window.scrollTo(0, 0); break; }
     case 'cback': { if (el.dataset.k === 'name') { G.cre.step = 'name'; } else { G.run = null; G.sheet = null; G.cre.step = 'cls'; } render(); break; }
-    case 'clspick': G.cre.pick = el.dataset.k; render(); setTimeout(() => { const d = document.querySelector('.clsdet'); if (d && d.getBoundingClientRect().bottom > window.innerHeight) d.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 20); break;
+    case 'clspick': G.cre.pick = el.dataset.k; render(); setTimeout(() => { const d = document.querySelector('.clsdet'); if (d && d.getBoundingClientRect().bottom > window.innerHeight) d.scrollIntoView({ block: 'nearest', behavior: smoothB() }); }, 20); break;
     case 'start': startRun(el.dataset.b); window.scrollTo(0, 0); break;
     case 'unlall': G.data.unlAll = G.data.unlAll ? 0 : 1; saveLocal(); render(); break;
     case 'settleok': { unlNewsSeen(); const run = G.run, p = run.p, S = run.settle; if (!S || run.phase !== 'settle') break;
@@ -5331,6 +5497,8 @@ function onClick(ev) {
     case 'act': if (el.getAttribute('aria-disabled') === 'true') { showPop(el, true); return; } hidePop(); doAct(el.dataset.id, el.dataset.t || null); break;
     case 'skipacts': { const t = document.querySelector('.ab:not([aria-disabled="true"])') || document.querySelector('.dock [data-focus], .dock button'); if (t) t.focus(); break; }
     case 'stepnext': if (G.stepResolve) { const r = G.stepResolve; G.stepResolve = null; r(); } break;
+    case 'rmotion': G.data.rm = !G.data.rm; saveLocal(); applyPrefs(); toast(G.data.rm ? '움직임을 줄였습니다' : '움직임을 되돌렸습니다'); render(); break;
+    case 'fdet': G.data.fdet = !G.data.fdet; saveLocal(); render(); break;
     case 'numkeys': G.data.numKeys = G.data.numKeys === false; saveLocal(); toast(G.data.numKeys ? '숫자 키로 행동합니다' : '숫자 키 행동을 껐습니다'); render(); break;
     case 'infotoggle': G.infoOn = !G.infoOn; G.data.infoOn = G.infoOn; saveLocal(); hidePop(); toast(G.infoOn ? '설명 창을 켰습니다' : '설명 창을 껐습니다'); if (G.sheet && G.sheet.kind === 'settings') render(); break;
     case 'bcont': battleContinue(); break;
@@ -5456,8 +5624,8 @@ if (typeof document !== 'undefined') {
   document.addEventListener('input', ev => { if (ev.target && ev.target.dataset && ev.target.dataset.cdx) { codexMeet(ev.target.dataset.cdx); G.data.codex[ev.target.dataset.cdx].note = ev.target.value.slice(0, 400); saveLocal(); return; } if (ev.target && ev.target.id === 'eqnote') { G.eqWhy = Object.assign({}, G.eqWhy, { note: ev.target.value }); return; } const id = ev.target && ev.target.id; if (id !== 'volm' && id !== 'vols') return; const v = +ev.target.value / 100; sndSet(id === 'volm' ? { music: v } : { sfx: v }); const o = document.getElementById(id + 'v'); if (o) o.textContent = Math.round(v * 100) + '%'; });
   document.addEventListener('click', onClick);
   document.addEventListener('keydown', onKey);
-  document.addEventListener('change', ev => { if (ev.target && ev.target.name === 'eqrs') { G.eqWhy = Object.assign({}, G.eqWhy, { reason: ev.target.value }); return; } if (ev.target && (ev.target.id === 'pace' || ev.target.id === 'setpace')) { G.pace = ev.target.value; G.data.pace = G.pace; saveLocal(); if (G.stepResolve && G.pace !== 'step') { const r = G.stepResolve; G.stepResolve = null; r(); } } });
-  G.infoOn = G.data.infoOn !== false; G.pace = G.data.pace || 'normal'; initPop(); document.addEventListener('pointerover', treeHover);
+  document.addEventListener('change', ev => { if (ev.target && ev.target.name === 'eqrs') { G.eqWhy = Object.assign({}, G.eqWhy, { reason: ev.target.value }); return; } if (ev.target && ev.target.id === 'setfs') { G.data.fs = FS_OPTS.includes(+ev.target.value) ? +ev.target.value : 1; saveLocal(); applyPrefs(); render(); return; } if (ev.target && (ev.target.id === 'pace' || ev.target.id === 'setpace')) { G.pace = ev.target.value; G.data.pace = G.pace; saveLocal(); if (G.stepResolve && G.pace !== 'step') { const r = G.stepResolve; G.stepResolve = null; r(); } } });
+  G.infoOn = G.data.infoOn !== false; G.pace = G.data.pace || 'normal'; initPop(); initPv(); document.addEventListener('pointerover', treeHover);
   window.addEventListener('hashchange', () => { if (location.hash === '#admin' && G.scr !== 'admin') { G.adminLink = true; if (!PAGES.includes(G.scr)) G.back = G.scr; G.scr = 'admin'; render(); } });
   if (window.visualViewport) window.visualViewport.addEventListener('resize', () => document.documentElement.style.setProperty('--app-h', window.visualViewport.height + 'px'));
   let rz = 0; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (G.b && window.innerWidth >= 1100) G.logOpen = false; render(); }, 120); });
