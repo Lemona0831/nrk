@@ -887,6 +887,7 @@ function lordFall(b, e) {
   e.row = 'front'; logp(b, 'crit', '옥좌가 무너진다'); hurtPlayer(b, b.p.hpMax * LORD.fall, { label: '무너지는 옥좌' });
   for (const x of alive(b).filter(x => x.pile)) riseSkel(b, x, ''); codexHit(b, 'cryptlord', 'fall');
 }
+function lordGuard(lv, id, ch) { const s0 = mkEnemy('skeleton', 0, id, { lv, name: (ENEMY_NAMES[ch] || ENEMY_NAMES[2] || {}).skeleton }); const D = diffOf(ch).lower; s0.hpMax = Math.round(s0.hpMax * D.hp); s0.hp = s0.hpMax; s0.dmg *= D.dmg; s0.summoned = true; return s0; } // 근위 · 부름 해골: 하층 해골과 같은 세기 (10월 7일: 던전 배율이 빠져 1.6배로 때렸다)
 function riseSkel(b, e, pre) { e.pile = null; e.rose = 1; e.hp = Math.max(1, Math.round(e.hpMax * RISE.hp)); e.intent = { k: 'brace' }; e.acts = 2; logp(b, 'bad', (pre || '') + '뼈 더미가 다시 맞춰져 ' + e.n + '이(가) 일어선다'); }
 const EKW = { archerBleed: 2, archerEvery: 3, heavyVuln: 2, explodeWeak: 2, explodeMul: 3, aimMul: 1.35, curseWeak: 2, braceRed: 0.5 };
 /* 10월 4일 적 행동 개편 (docs/0.6a.2-적-행동-기획.md): 한 번 피해의 기준 생명력, 사제가 치유하는 문턱, 소환사가 한 번에 부르는 수와 하수인 상한 */
@@ -1956,7 +1957,7 @@ function enemyAct(b, e) {
     case 'mimic': e.mimicOn = { max: 0 }; e.teleTurn = b.turnIdx; /* 되비추기도 예고 뒤 내 차례가 한 번 지난 뒤 */ logp(b, 'sys', e.n + '이(가) 당신의 움직임을 따라 하기 시작한다'); break;
     case 'reflect': { const X = FOE_X.echo; const fst = b.firstFoe ? 1 : 0; const raw = Math.max(d, ((e.mimicOn && e.mimicOn.max) || 0) * X.mirror * (fst ? X.first : 1)); const dd = Math.min(raw, b.p.hpMax * (fst ? X.capFirst : X.cap)); e.mimicOn = null; hurtPlayer(b, dd, { src: e, single: 1, charged: 1, label: e.n + '이(가) 당신의 공격을 되비춘다' }); codexHit(b, 'echo', 'mirror'); break; }
     case 'carve': case 'twocarve': lordCarve(b, e, i.k === 'twocarve'); break;
-    case 'call': { const n0 = alive(b).filter(x => x.role === 'skeleton').length; if (n0 < LORD.guards) { const s0 = mkEnemy('skeleton', 0, b.idc++, { lv: e.lv || 1, name: (ENEMY_NAMES[2] || {}).skeleton }); s0.summoned = true; s0.intent = { k: 'brace' }; s0.acts = 2; s0.xpCh = 0; b.en.push(s0); logp(b, 'bad', e.n + '이(가) 이름을 부른다. 벽에서 해골이 걸어 나온다'); } else logp(b, 'sys', e.n + '이(가) 이름을 부르지만 대답이 없다'); break; }
+    case 'call': { const n0 = alive(b).filter(x => x.role === 'skeleton').length; if (n0 < LORD.guards) { const s0 = lordGuard(e.lv || 1, b.idc++, b.ctx.ch || 2); s0.intent = { k: 'brace' }; s0.acts = 2; s0.xpCh = 0; b.en.push(s0); logp(b, 'bad', e.n + '이(가) 이름을 부른다. 벽에서 해골이 걸어 나온다'); } else logp(b, 'sys', e.n + '이(가) 이름을 부르지만 대답이 없다'); break; }
     case 'throne': lordThrone(b, e); break;
     case 'mend': if (e.boss === 'cryptlord') { lordMend(b, e); break; } { const w = wallOf(b, e); if (w) { const h0 = w.hp; w.hp = Math.min(w.hpMax, w.hp + w.hpMax * BWALL.mend); logp(b, 'sys', e.n + '이(가) 뼈벽을 보강한다. +' + r1(w.hp - h0)); } else buildWall(b, e); break; }
     case 'hand': { const x = hurtPlayer(b, d * LORD.hand, { src: e, single: 1, label: '무덤의 손이 바닥에서 뻗어 나온다' }); if (x > 0 && !b.over) addS(b, b.p, 'chill', LORD.handChill); break; }
@@ -2458,7 +2459,7 @@ function roomBattle(player, room, bossKind, seed) {
   let en;
   if (room.boss) {
     const bs = mkBoss(bossKind, 1, room.lv || 1); en = [bs];
-    if (bossKind === 'cryptlord') for (let i = 0; i < LORD.guards; i++) { const s0 = mkEnemy('skeleton', 0, 50 + i, { lv: room.lv || 1, name: (ENEMY_NAMES[2] || {}).skeleton }); s0.summoned = true; en.push(s0); } // 근위 해골 둘(경험치 0)
+    if (bossKind === 'cryptlord') for (let i = 0; i < LORD.guards; i++) en.push(lordGuard(room.lv || 1, 50 + i, room.ch || 2)); // 근위 해골 둘(경험치 0)
     if (bossKind === 'tree') for (let i = 0; i < 3; i++) en.push(mkEnemy('root', 0, 50 + i));
   } else en = room.en.map((x, i) => mkEnemy(x[0], x[1], i, { lv: room.lv || 1, name: room.names && room.names[x[0]], tough: !!(room.tough && room.tough.includes(i)) }));
   if (!room.boss && room.floor) { const D = diffOf(room.ch)[isLower(room.floor) ? 'lower' : 'upper'], P = PATHS[room.path] || PATHS.main; for (const e of en) { e.hpMax = Math.round(e.hpMax * D.hp * P.hp); e.hp = e.hpMax; e.dmg *= D.dmg * P.dmg; } }
