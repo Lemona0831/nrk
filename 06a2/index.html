@@ -1702,7 +1702,7 @@ function spawn(b, role) {
 /* ================= 적 의도 (4.5, 규칙 기반) ================= */
 /* 강적 패턴 (10월 4일). 큰 한 방은 모두 '모으기 → 큰 한 방'(charge → heavy). 상세는 비공개 문서 */
 function strongIntent(b, e, n) {
-  if (e.foe === 'collector') { const c = n % 4; return c === 0 ? (alive(b).some(x => x.pile) ? { k: 'pick' } : { k: 'attack' }) : c === 2 ? { k: 'charge' } : { k: 'attack' }; } // 2챕터 강적 (상세 · 대처는 비공개 문서)
+  if (e.foe === 'collector') { const c = n % 4; return c === 0 ? { k: 'pick' } : c === 2 ? { k: 'charge' } : { k: 'attack' }; } // 10월 7일: 더미가 없어도 바닥을 훑는다(평소 공격이 다른 강적의 두 배라 쓰러짐 44%였다) // 2챕터 강적 (상세 · 대처는 비공개 문서)
   if (e.foe === 'knight') { const c = n % 5; return c === 1 ? { k: 'retprep' } : c === 2 ? { k: 'return' } : c === 3 ? { k: 'charge' } : { k: 'attack' }; }
   if (e.foe === 'well') { const c = n % 5; return c === 0 || c === 2 ? { k: 'spray' } : c === 3 ? { k: 'charge' } : { k: 'attack' }; }
   if (e.foe === 'sexton') { const c = n % 4; if (e.under) return c === 2 ? { k: 'rumble' } : { k: 'erupt' }; const esc = alive(b).some(x => x !== e && !x.pile && !x.under && x.role !== 'root'); return c === 1 ? (esc ? { k: 'burrow' } : { k: 'charge' }) : { k: 'attack' }; }
@@ -1816,7 +1816,7 @@ function intentText(b, e) {
     case 'lastprayer': return { t: '최후의 기도', hv: 1 };
     case 'pray': return { t: '입을 다물고 기도한다. 공격하지 않는다', hv: 0 };
     case 'hexcurse': return { t: '저주를 맺는다. 나에게 약화 1 · 취약 1', hv: 1 };
-    case 'pick': return { t: '뼈를 줍는다 · 더미 ' + alive(b).filter(x => x.pile).length, hv: 1 };
+    case 'pick': { const n = alive(b).filter(x => x.pile).length; return n ? { t: '뼈를 줍는다 · 더미 ' + n, hv: 1 } : { t: '바닥을 훑는다. 거둘 뼈가 없다', hv: 0 }; }
     case 'retprep': { const L = ['poison', 'bleed', 'ignite', 'weak', 'vuln', 'chill'].map(k => [k, Math.floor(st(e, k) * FOE_X.knight.share)]).filter(x => x[1] > 0); return { t: '저주를 되돌리려 한다' + (L.length ? ' · ' + L.map(x => KW_N[x[0]] + ' ' + x[1]).join(' · ') : ''), hv: 1 }; }
     case 'return': return { t: '저주를 되돌린다', hv: 1 };
     case 'spray': return { t: '국자를 흩뿌린다 · 중독 ' + FOE_X.well.spray, hv: 1 };
@@ -1856,7 +1856,7 @@ function intentBadge(b, e) {
   switch (i.k) {
     case 'attack': return { ico: INTENT_ICO.attack, num: r1(capOf(est * (i.aimed ? EKW.aimMul : 1))), txt: (i.aimed ? '겨눈 한 발' : '공격') + (i.bleed ? ' 🩸' + i.bleed : '') + (i.poison ? ' ☠️' + i.poison : ''), cls: 'atk' };
     case 'hexcurse': return { ico: '🪢', num: '', txt: '저주 · 약화 1 · 취약 1', cls: 'warn' };
-    case 'pick': return { ico: '🦴', num: alive(b).filter(x => x.pile).length, txt: '뼈 줍기 · 더미', cls: 'warn' };
+    case 'pick': { const n = alive(b).filter(x => x.pile).length; return { ico: '🦴', num: n, txt: '뼈 줍기 · 더미', cls: n ? 'warn' : 'sup' }; }
     case 'retprep': return { ico: '🔁', num: '', txt: '되돌리기 준비', cls: 'warn' };
     case 'return': return { ico: '🔁', num: '', txt: '되돌리기', cls: 'hv' };
     case 'spray': return { ico: '🪣', num: '', txt: '독 뿌리기 · 중독 ' + FOE_X.well.spray, cls: 'warn' };

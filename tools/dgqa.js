@@ -135,7 +135,7 @@ function useCons(pk, r, b, run) {
   const want = c => { const D = G0.CONS[c.id]; switch (D.k) {
     case 'heal': return p.hp < p.hpMax * 0.35 && (!p.flask.life || r() < 0.5);
     case 'stam': return p.st < 30;
-    case 'cure': return sk(p, D.s) >= ({ bleed: 4, poison: 6, ignite: 3, weak: 2, vuln: 2, chill: 1 }[D.s] || 3);
+    case 'cure': return sk(p, D.s) >= ({ bleed: 4, poison: 6, ignite: 3, weak: 2, vuln: 2, chill: 1 }[D.s] || 3) || (D.s === 'poison' && sk(p, 'poison') >= 3 && al.some(e => e.foe === 'well' && it(e, 'charge', 'heavy'))); // 2챕터: 우물이 열리기 전에는 중독 3부터 지운다
     case 'interrupt': return al.some(e => e.role !== 'boss' && it(e, 'heavy', 'aimed')) && !p.dodge;
     case 'blind': return al.some(e => e.row === 'back' && it(e, 'aimed'));
     case 'unevade': { const f = al.filter(e => e.row === 'front'); return f.length > 0 && f.every(e => e.evading); }
@@ -157,6 +157,13 @@ function useCons(pk, r, b, run) {
     case 'unmod': return true;
     case 'escape': return p.hp < p.hpMax * 0.15 && !p.flask.life;
     case 'lootx': return al.length >= 3 && r() < 0.5;
+    case 'norise': return al.some(e => e.pile && !e.norise) && (al.some(e => e.foe === 'collector') || al.some(e => e.pile && e.pile.wait <= 1));
+    case 'burnpiles': return al.filter(e => e.pile).length >= 2;
+    case 'trim': return ['poison', 'bleed', 'ignite', 'weak', 'vuln'].filter(k => sk(p, k) > 0).length >= 2 && al.some(e => e.role === 'hexer' || e.foe === 'knight');
+    case 'unearth': return al.some(e => e.under);
+    case 'wallbreak': return al.some(e => e.role === 'bonewall') && al.some(e => e.row === 'back' && e.role !== 'bonewall');
+    case 'slow': return al.some(e => e.swift || ((e.strong || e.role === 'boss') && it(e, 'charge'))) && r() < 0.5;
+    case 'nobloat': return al.some(e => e.role === 'bloat');
     default: return false; } };
   for (let k = 0; k < 3; k++) { const i = run.cons.findIndex(c => G0.CONS[c.id].use !== 'none' && !G0.consWhyNot(b, run, c, null) && r() < aware && want(c)); if (i < 0) break; G0.consUse(b, run, i, null); if (b.over) break; }
 }
@@ -174,6 +181,27 @@ function fightRec(R, b, run, hpIn, acts) {
   if (b.over === 'lose') { const last = hits[hits.length - 1] || {}; const big = hits.slice(-3).filter(h => h.charged); rec.death = { by: (last.dot ? 'dot:' : '') + (last.src || 'none'), big: !!last.charged, bigIn3: big.length, lastD: last.d, st: Math.round(b.p.st), fl: Object.assign({}, b.p.flask), consLeft: (run.cons || []).reduce((a, c) => a + c.n, 0) }; }
   return rec;
 }
+/* 2챕터 판단 (10월 7일, 비공개 문서의 대처 가운데 사람이 화면을 보고 할 만한 것만). 2챕터에만 있는 것이 판에 있을 때만 난수를 써서 1챕터 측정은 그대로다 */
+function ch2Pre(b, P, r) {
+  const al = G0.alive(b); const col = al.find(e => e.foe === 'collector'); const piles = al.filter(e => e.pile);
+  for (const e of piles) e.pileCol = col ? 1 : 0; // 수집가가 있으면 더미를 먼저 흩는다(qa.js enemyPrio)
+  if (col && piles.length && col.intent && col.intent.k === 'pick' && r() < (P.mech || 0.5) + 0.2) { // 줍기 예고: 더미를 흩는다(광역이면 한 번에)
+    const L = G0.actionList(b).filter(x => x.ok && !x.self && x.id !== 'flee'); const aoe = piles.length >= 2 && L.find(x => x.aoe && x.v2);
+    if (aoe) return [aoe.id, null];
+    const one = L.filter(x => ['basic'].includes(x.id) || (x.v2 && x.time <= 0.6)).find(x => G0.canTarget(b, piles[0], x)); if (one) return [one.id, piles[0].id];
+  }
+  return null;
+}
+const ACT_G = (b, a) => { if (a === 'basic' || a === 'heavy') return 'wpn'; if (a === 'guard' || a === 'dodge') return 'prep'; const x = G0.actionList(b).find(y => y.id === a); return x && x.v2 ? (x.s.tgt === 'self' && !x.s.fx.some(f => f.k === 'dmg') ? 'prep' : 'skill') : null; };
+function ch2Post(b, P, r, a, t) {
+  if (!b.carve || !b.carve.g) return [a, t]; const g = ACT_G(b, a); if (!g || !(b.carve.g[g] < 1) || r() >= (P.mech || 0.5) + 0.2) return [a, t]; // 군주가 이름을 새긴 행동은 힘이 빠지므로 다른 종류를 쓴다
+  const L = G0.actionList(b).filter(x => x.ok && x.id !== 'flee' && !['flaskL', 'flaskM', 'flaskS', 'sig'].includes(x.id) && !(b.carve.g[ACT_G(b, x.id)] < 1));
+  const atk = L.filter(x => !x.self && (x.id === 'basic' || x.id === 'heavy' || (x.v2 && x.s.fx.some(f => f.k === 'dmg'))));
+  const pick = (atk.length ? atk : L)[0]; if (!pick) return [a, t];
+  if (pick.self || pick.aoe) return [pick.id, null];
+  const tg = G0.alive(b).filter(e => !e.pile && e.role !== 'bonewall' && G0.canTarget(b, e, pick)).sort((x, y) => ((y.role === 'boss') - (x.role === 'boss')) || (x.hp - y.hp))[0] || G0.alive(b).find(e => G0.canTarget(b, e, pick));
+  return tg ? [pick.id, tg.id] : [a, t];
+}
 /* 지금 방에 들어가 성향대로 싸운다 */
 function fightCur(pk, r, mem, out) {
   const P = PERSONAS[pk]; const G = G0.__G;
@@ -183,7 +211,8 @@ function fightCur(pk, r, mem, out) {
   while (!b.over && n++ < 300) {
     useCons(pk, r, b, G.run); if (b.over) break;
     const sr = r() < (P.mech || 0.5) ? sigRule(b, r) : null;
-    let [a, t] = sr || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem));
+    let [a, t] = ch2Pre(b, P, r) || sr || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem));
+    [a, t] = ch2Post(b, P, r, a, t);
     // 보스를 깎지 못한 채 버티기만 하면 사람은 밀어붙인다 (한 수 앞만 보는 계산이 페이즈 전환을 피하는 것을 막는다)
     const bs = b.en.find(e => e.role === 'boss' && e.alive);
     if (bs) { if (bs.hp < lastHp - 0.5) stall = 0; else stall++; lastHp = bs.hp;
