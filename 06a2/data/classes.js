@@ -7,7 +7,7 @@ const EXCL = {};   // 옛 직업 전용 스킬 (v2 직업은 data/skills.js의 �
 const SIG = {};    // 옛 직업 기술 (v2 시범에는 없다. docs/0.6a.2-개편-기획.md 12절 질문 4)
 
 /* 시작 스킬: v2 직업은 트리 밖의 시작 스킬 둘 (data/skills.js의 TREE2.starters와 같다) */
-const DEFAULT_SKILLS = { assassin: ['a_vital', 'a_slip'], warden: ['w_bash', 'w_brace'], hunter: ['h_aim', 'h_step'] };
+const DEFAULT_SKILLS = { assassin: ['a_vital', 'a_slip'], warden: ['w_bash', 'w_brace'], hunter: ['h_aim', 'h_step'], monk: ['m_palm', 'm_brace'] };
 
 /* hp는 시작 장비(낡은 갑옷 +10)를 뺀 값이다. mp는 v2 직업에 없다 */
 const BUILDS = {
@@ -31,6 +31,14 @@ const BUILDS = {
     rule: '원거리: 기본 공격과 대부분의 스킬이 후열에 닿는다. 대신 활은 무기 피해의 55%다. 가속(사냥꾼 전용)이 있으면 라운드 맨 앞에서 두 번 연달아 움직인다(한 라운드에 한 번, 두 번째 차례는 쿨타임이 줄지 않는다). 전투를 시작하면 가속 1. 같은 적을 연달아 맞히면 추적이 한 겹씩 쌓여(최대 3) 겹마다 피해 +5%(정예 · 강적 · 보스 +10%), 3겹인 적에게는 몸 낮추기 · 버티기가 통하지 않는다. 방금 쓴 스킬과 다른 갈래의 스킬은 연계: 피해 +30%. 스킬은 쓰고 나면 쿨타임만큼 기다린다',
     skills: [],
   },
+  /* 수도승 (10월 7일 구현, docs/직업/수도승.md): 근접 · 생명력 110(암살자 102와 파수꾼 122 사이), 맨손 무기 배율 0.9(▶ 공격에 기가 실리는 몫을 빼 평균이 1에 가깝게).
+     대표 방어는 되받기(index.html MONK · monkCounter), 기 = 강화(⚡ 공격에는 실리지 않는다) */
+  monk: {
+    n: '수도승', ico: '👊', hp: 110, mp: 0, v2: 1, wpnMul: 0.9,
+    lore: '맨손으로 막고, 막은 힘을 기로 모아 한 번에 몰아친다.',
+    rule: '방어하거나 자세를 잡은 동안 전열 적이 나를 직접 치면 되받아친다. 되받거나 차례의 첫 ⚡ 공격을 맞히면 기 +1. ⚡ 공격에는 기가 실리지 않고, ▶ 공격은 기 1을 써서 피해 +25%. 스킬은 쓰고 나면 쿨타임만큼 기다린다',
+    skills: [],
+  },
 };
 
 /* 아직 만들지 않은 시작 직업 (캐릭터 만들기에 "준비 중"으로 보인다) */
@@ -41,4 +49,4 @@ const CLASS_SOON = [
 ];
 
 /* 레벨이 오를 때 오르는 생명력 (11.4절) */
-const LV_GAIN = { assassin: { hp: 5, mp: 0 }, warden: { hp: 6, mp: 0 }, hunter: { hp: 4, mp: 0 } };
+const LV_GAIN = { assassin: { hp: 5, mp: 0 }, warden: { hp: 6, mp: 0 }, hunter: { hp: 4, mp: 0 }, monk: { hp: 5, mp: 0 } };
