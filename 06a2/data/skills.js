@@ -209,6 +209,75 @@ const SKILLS2 = {
     { id: 'h_shadowrun', row: 10, b: '기동', tier: '중급', n: '그림자 질주', tgt: 'self', time: 'fast', cd: 10, once: 1, fx: [{ k: 'evade', n: 1 }, { k: 'evadeCtr', dmg: 6, rounds: 3 }, { k: 'quickTurns', n: 3 }] }, // 피할수록 세지는 마무리 (빠른 칸 +1은 내 차례 3번 내내: 측정 때 따로 본다)
     { id: 'h_icecage', row: 10, b: '기동', tier: '중급', n: '얼음 감옥', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 14 }, { k: 'freeze', chill: 3, brk: 40 }] }, // 한 적을 확실히 멈추는 마무리(강적 · 보스는 둔화 3 + 붕괴)
   ],
+  /* 숨겨진 직업 1 (10월 7일, key butcher). 새 효과 키 grudge · carry, 넓힌 인자(st/exploit/grow/drain/spread s: 'bleed', exploit · drain me, lowx me, hasten · quick · meSt on: 'kill', thorn · onParry bleed)는 index.html runSkill2, 점수는 skillkit.js SKK.butch */
+  butcher: [
+    // 시작 스킬 (트리 밖, 늘 끼움): 출혈을 거는 공격 하나(주 행동), 피해 없이 먹는 방어 하나(빠른 행동)
+    { id: 'b_hook', b: '시작', tier: '시작', start: 1, n: '갈고리 베기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 3 }] },
+    { id: 'b_lap', b: '시작', tier: '시작', start: 1, n: '피 들이켜기', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'drain', s: 'bleed', eat: 1, max: 5, per: 4 }, { k: 'stam', n: 26 }] },
+    // 도륙: 한 적에게 출혈을 깊게 새기고 먹는다. 왼쪽 기둥은 새기기 · 이용(걸기, 출혈 비례, 키우기, 붕괴), 오른쪽 기둥은 먹기(먹는 양 · 바꾸는 것이 줄마다 다르다)
+    { id: 'b_gash', row: 1, b: '도륙', tier: '하급', n: '살 가르기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'bleed', n: 5 }] },
+    { id: 'b_bite', row: 1, b: '도륙', tier: '하급', n: '물어뜯기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 10 }, { k: 'drain', s: 'bleed', eat: 1, per: 2.5 }, { k: 'st', s: 'bleed', n: 3 }] },
+    { id: 'b_saw', row: 2, b: '도륙', tier: '하급', n: '톱질', tgt: 'melee', time: 'fast', cd: 5, hits: 2, fx: [{ k: 'dmg', n: 5 }, { k: 'st', s: 'bleed', n: 3 }] },
+    { id: 'b_sip', row: 2, b: '도륙', tier: '하급', n: '한 모금', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 11 }, { k: 'drain', s: 'bleed', eat: 1, half: 1, per: 3.5 }] },
+    { id: 'b_tendon', row: 3, b: '도륙', tier: '하급', n: '힘줄 끊기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'st', s: 'weak', n: 2 }] },
+    { id: 'b_wring', row: 3, b: '도륙', tier: '하급', n: '핏물 짜내기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 16 }, { k: 'drain', s: 'bleed', eat: 1, max: 5, per: 1.5, brk: 10 }] },
+    { id: 'b_deep', row: 4, b: '도륙', tier: '하급', n: '깊게 긋기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'exploit', s: 'bleed', per: 2.5 }] },
+    { id: 'b_drained', row: 4, b: '도륙', tier: '하급', n: '피 말리기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 21 }, { k: 'drain', s: 'bleed', eat: 1, per: 2, weak: 3 }] },
+    { id: 'b_hooks', row: 5, b: '도륙', tier: '하급', n: '갈고리 박기', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'bleed', n: 5 }, { k: 'brk', n: 30 }] },
+    { id: 'b_finish', row: 5, b: '도륙', tier: '하급', n: '숨통 끊고 마시기', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 17 }, { k: 'lowx', hp: 0.35, mul: 1.5 }, { k: 'drain', s: 'bleed', eat: 1, per: 3 }] },
+    { id: 'b_widen', row: 6, b: '도륙', tier: '하급', n: '상처 벌리기', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 8 }, { k: 'grow', s: 'bleed', mul: 1.5, add: 1 }] },
+    { id: 'b_feastfront', row: 6, b: '도륙', tier: '하급', n: '돌려 마시기', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 16 }, { k: 'drain', s: 'bleed', eat: 1, half: 1, per: 2 }] },
+    { id: 'b_dissect', row: 7, b: '도륙', tier: '중급', n: '해체', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 11 }, { k: 'exploit', s: 'bleed', per: 3 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 'b_hoard', row: 7, b: '도륙', tier: '중급', n: '피 갈무리', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 19 }, { k: 'drain', s: 'bleed', eat: 1, per: 2, emp: 3 }] },
+    { id: 'b_open', row: 8, b: '도륙', tier: '중급', n: '마르지 않는 상처', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 16 }, { k: 'st', s: 'bleed', n: 4 }, { k: 'hasten', n: 1, on: 'use' }] },
+    { id: 'b_spring', row: 8, b: '도륙', tier: '중급', n: '마르지 않는 샘', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 21 }, { k: 'drain', s: 'bleed', eat: 1, per: 2.5, keep: 0.5 }] },
+    { id: 'b_slaughter', row: 9, b: '도륙', tier: '중급', n: '도축', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 4 }, { k: 'brk', n: 40 }, { k: 'exploit', s: 'bleed', per: 2 }] },
+    { id: 'b_glut', row: 9, b: '도륙', tier: '중급', n: '탐식', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 24 }, { k: 'drain', s: 'bleed', eat: 1, per: 2.5, brk: 8 }] },
+    { id: 'b_river', row: 10, b: '도륙', tier: '중급', n: '피의 강', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 13 }, { k: 'grow', s: 'bleed', mul: 2 }, { k: 'exploit', s: 'bleed', per: 2.5 }] },
+    { id: 'b_banquet', row: 10, b: '도륙', tier: '중급', n: '피의 만찬', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 8 }, { k: 'exploit', s: 'bleed', per: 3 }, { k: 'drain', s: 'bleed', eat: 1, per: 3 }, { k: 'bigx', mul: 1.5 }] },
+    // 광기: 맞을수록, 낮을수록 세다. 왼쪽 기둥은 맞받기(받은 피해 되갚기 · 맞을 때 출혈 · 덜 막는 흘리기), 오른쪽 기둥은 핏값(내게 출혈을 걸어 치고, 내 생명력이 낮을 때 크게)
+    { id: 'b_retort', row: 1, b: '광기', tier: '하급', n: '앙갚음', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'grudge', per: 0.6, max: 20 }] },
+    { id: 'b_reckless', row: 1, b: '광기', tier: '하급', n: '무모한 베기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'meSt', s: 'bleed', n: 2 }, { k: 'dmg', n: 24 }] },
+    { id: 'b_bare', row: 2, b: '광기', tier: '하급', n: '맨살로 받기', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'thorn', times: 3, bleed: 2 }, { k: 'stam', n: 25 }] },
+    { id: 'b_boil', row: 2, b: '광기', tier: '하급', n: '들끓는 일격', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 15 }, { k: 'lowx', me: 1, hp: 0.5, mul: 1.5 }] },
+    { id: 'b_spite', row: 3, b: '광기', tier: '하급', n: '앙갚음 연타', tgt: 'melee', time: 'normal', cd: 6, hits: 3, fx: [{ k: 'dmg', n: 5 }, { k: 'grudge', per: 0.25, max: 8 }] },
+    { id: 'b_share', row: 3, b: '광기', tier: '하급', n: '피 나누기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'meSt', s: 'bleed', n: 2 }, { k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 6 }] },
+    { id: 'b_take', row: 4, b: '광기', tier: '하급', n: '몸으로 받기', tgt: 'pick', time: 'fast', cd: 6, fx: [{ k: 'parry', red: 0.35 }, { k: 'onParry', dmg: 9, bleed: 3 }] },
+    { id: 'b_frenzy', row: 4, b: '광기', tier: '하급', n: '광란', tgt: 'melee', time: 'normal', cd: 7, hits: 3, fx: [{ k: 'dmg', n: 8 }, { k: 'lowx', me: 1, hp: 0.4, mul: 1.5 }] },
+    { id: 'b_revenge', row: 5, b: '광기', tier: '하급', n: '피의 보복', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 13 }, { k: 'grudge', per: 1, max: 30 }, { k: 'brk', n: 30 }] },
+    { id: 'b_price', row: 5, b: '광기', tier: '하급', n: '핏값', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'meSt', s: 'bleed', n: 3 }, { k: 'dmg', n: 30 }, { k: 'brk', n: 30 }] },
+    { id: 'b_grudgefront', row: 6, b: '광기', tier: '하급', n: '앙심', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'grudge', per: 0.4, max: 12 }] },
+    { id: 'b_brink', row: 6, b: '광기', tier: '하급', n: '벼랑 끝', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 22 }, { k: 'lowx', me: 1, hp: 0.3, mul: 2 }] },
+    { id: 'b_answer', row: 7, b: '광기', tier: '중급', n: '핏빛 응수', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 8 }, { k: 'grudge', per: 0.6, max: 20, bl: 5 }] },
+    { id: 'b_bloodblade', row: 7, b: '광기', tier: '중급', n: '흐르는 피의 칼', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'exploit', s: 'bleed', me: 1, per: 4, max: 6 }] },
+    { id: 'b_snapback', row: 8, b: '광기', tier: '중급', n: '살 내주기', tgt: 'pick', time: 'fast', cd: 7, fx: [{ k: 'parry', red: 0.35 }, { k: 'onParry', dmg: 10, bleed: 4 }, { k: 'hasten', n: 1, on: 'parry' }] },
+    { id: 'b_offer', row: 8, b: '광기', tier: '중급', n: '피를 바치는 일격', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'drain', s: 'bleed', me: 1, eat: 1, emp: 1 }, { k: 'dmg', n: 16 }] },
+    { id: 'b_brand', row: 9, b: '광기', tier: '중급', n: '원한의 각인', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 14 }, { k: 'grudge', per: 0.8, max: 25, vu: 8 }] },
+    { id: 'b_lastbreath', row: 9, b: '광기', tier: '중급', n: '마지막 숨', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'drain', s: 'bleed', me: 1, eat: 1, dmg: 5, max: 6 }, { k: 'dmg', n: 10 }, { k: 'brk', n: 30 }, { k: 'bigx', mul: 1.5 }] }, // 10월 7일 검토: 벼랑 끝과 같은 '내 생명력 30% ×2' 대신 내 출혈을 지워 피해로
+    { id: 'b_retribution', row: 10, b: '광기', tier: '중급', n: '응징의 도끼', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 8 }, { k: 'grudge', per: 1.5, max: 45, brk: 2, brkMax: 60 }] }, // 10월 7일 검토: 피의 보복과 같은 '받은 피해 + 고정 붕괴'를 받은 피해에 비례하는 붕괴로
+    { id: 'b_rampage', row: 10, b: '광기', tier: '중급', n: '피의 광란', tgt: 'melee', time: 'normal', cd: 9, hits: 4, fx: [{ k: 'meSt', s: 'bleed', n: 2 }, { k: 'dmg', n: 4 }, { k: 'exploit', s: 'bleed', me: 1, per: 1.5, max: 6 }] },
+    // 학살: 쓰러뜨리며 이어 간다. 왼쪽 기둥은 휩쓸기(전열 광역 + 줄마다 다른 덧붙임), 오른쪽 기둥은 처형(마무리 배수, 처치 보상, 후열에 닿는 칸 하나)
+    { id: 'b_sweep', row: 1, b: '학살', tier: '하급', n: '휘둘러 베기', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'bleed', n: 2 }] },
+    { id: 'b_throat', row: 1, b: '학살', tier: '하급', n: '목 따기', tgt: 'melee', time: 'normal', cd: 6, killRecharge: 1, fx: [{ k: 'dmg', n: 16 }, { k: 'lowx', hp: 0.3, mul: 2 }] },
+    { id: 'b_splash', row: 2, b: '학살', tier: '하급', n: '핏방울 튀기기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'spread', s: 'bleed', per: 1, kill: 1 }] },
+    { id: 'b_chop', row: 2, b: '학살', tier: '하급', n: '토막 치기', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 16 }, { k: 'quick', n: 1, on: 'kill' }] },
+    { id: 'b_spin', row: 3, b: '학살', tier: '하급', n: '갈고리 돌리기', tgt: 'front', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 12 }] },
+    { id: 'b_scent', row: 3, b: '학살', tier: '하급', n: '피 냄새 쫓기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 17 }, { k: 'lowx', hp: 0.3, mul: 2 }, { k: 'hasten', n: 1, on: 'kill' }] },
+    { id: 'b_roar', row: 4, b: '학살', tier: '하급', n: '도살꾼의 고함', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'weak', n: 2 }] },
+    { id: 'b_hookthrow', row: 4, b: '학살', tier: '하급', n: '갈고리 던지기', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'bleed', n: 4 }] },
+    { id: 'b_gale', row: 5, b: '학살', tier: '하급', n: '피보라', tgt: 'front', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 13 }, { k: 'exploit', s: 'bleed', per: 1.5 }] },
+    { id: 'b_cleaver', row: 5, b: '학살', tier: '하급', n: '피 묻은 식칼', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 14 }, { k: 'lowx', hp: 0.3, mul: 2 }, { k: 'spread', s: 'bleed', per: 1, kill: 1 }] },
+    { id: 'b_sickle', row: 6, b: '학살', tier: '하급', n: '사슬 낫', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'st', s: 'chill', n: 1 }] },
+    { id: 'b_hunger', row: 6, b: '학살', tier: '하급', n: '허기', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 13 }, { k: 'lowx', hp: 0.4, mul: 2 }] },
+    { id: 'b_ripple', row: 7, b: '학살', tier: '중급', n: '피의 잔물결', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'hasten', n: 2, on: 'kill' }] },
+    { id: 'b_scaffold', row: 7, b: '학살', tier: '중급', n: '처형대', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 23 }, { k: 'lowx', hp: 0.35, mul: 2 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 'b_harvest', row: 8, b: '학살', tier: '중급', n: '피의 수확', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 12 }, { k: 'drain', s: 'bleed', eat: 1, kill: 1, per: 3 }] },
+    { id: 'b_next', row: 8, b: '학살', tier: '중급', n: '다음 놈', tgt: 'melee', time: 'normal', cd: 8, hits: 3, fx: [{ k: 'dmg', n: 8 }, { k: 'lowx', hp: 0.35, mul: 1.5 }, { k: 'carry' }] }, // 10월 7일 검토: 목 따기와 같은 kr를 버리고 남은 타격 잇기
+    { id: 'b_storm', row: 9, b: '학살', tier: '중급', n: '붉은 폭풍', tgt: 'all', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'bleed', n: 2 }] },
+    { id: 'b_headsman', row: 9, b: '학살', tier: '중급', n: '망나니', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 26 }, { k: 'lowx', hp: 0.4, mul: 2 }, { k: 'meSt', s: 'empower', n: 2, on: 'kill' }] }, // 10월 7일 검토: 피 냄새 쫓기와 같은 🔄 대신 쓰러뜨리면 나에게 강화 2
+    { id: 'b_redtide', row: 10, b: '학살', tier: '중급', n: '붉은 물결', tgt: 'front', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'spread', s: 'bleed', per: 1, kill: 1 }] },
+    { id: 'b_procession', row: 10, b: '학살', tier: '중급', n: '도살 행렬', tgt: 'melee', time: 'normal', cd: 10, fx: [{ k: 'dmg', n: 23 }, { k: 'lowx', hp: 0.35, mul: 2 }, { k: 'quick', n: 1, on: 'kill', next: 1 }, { k: 'hasten', n: 2, on: 'kill' }] }, // 10월 7일 검토: 빠른 칸은 다음 차례에. 보통 행동은 차례를 끝내 이번 차례 빠른 칸이 쓰이지 않았다
+  ],
 };
 /* 사다리 (10월 3일 만든 사람 결정): 2챕터(Lv10)까지 갈래마다 하급 6줄 · 중급 4줄 = 10줄, 줄마다 두 칸(갈래 20칸, 직업 60칸).
    한 기둥(세로줄)이 10칸 = Lv10까지 얻는 포인트 10이다(하급 60%, 중급 40%). 윗줄 두 칸 가운데 하나라도 열려 있으면 아랫줄이 열린다.
@@ -241,6 +310,13 @@ const TREE2 = {
     // 갈래 성격 (10월 5일 만든 사람 결정): 직업 약점은 장기전(몸이 약하고 회복이 적다). 기동은 상처 · 무리를 섞는다(피하기는 맞는 것만, 한 번에 하나만 막는다)
     profile: { 저격: { strong: ['거구'], weak: ['무리'] }, 연사: { strong: ['무리'], weak: ['거구'] }, 기동: { strong: ['강타'], weak: ['상처', '무리'] }, 직업: { strong: [], weak: ['장기전'] } },
     starters: ['h_aim', 'h_step'], pts: 1,
+  },
+  butcher: {
+    branches: ['도륙', '광기', '학살'],
+    bd: { 도륙: '한 적에게 출혈을 깊게 내고, 때가 오면 그 피를 먹어 버틴다. 거는 칸과 먹는 칸을 섞어야 돈다. 긴 싸움에 강하고, 무리에 약하다', 광기: '막지 않고 받아낸 만큼 되갚고, 내 피를 대가로 세게 친다. 강타에 강하고, 치유·소환하는 적에게 약하다', 학살: '쓰러뜨릴 때마다 다음 칼이 빨라지고, 쓰러진 적의 피가 곁의 적에게 튄다. 무리에 강하고, 큰 적 하나에 약하다' },
+    haste: {},
+    profile: { 도륙: { strong: ['장기전'], weak: ['무리'] }, 광기: { strong: ['강타'], weak: ['지원'] }, 학살: { strong: ['무리'], weak: ['거구'] }, 직업: { strong: [], weak: ['후열'] } },
+    starters: ['b_hook', 'b_lap'], pts: 1,
   },
 };
 /* 갈래 크기 (10월 3일 만든 사람 결정): 사다리 10줄(하급 6 · 중급 4), 줄마다 두 칸 = 갈래 20칸, 직업 60칸.

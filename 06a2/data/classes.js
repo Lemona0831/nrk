@@ -7,7 +7,7 @@ const EXCL = {};   // 옛 직업 전용 스킬 (v2 직업은 data/skills.js의 �
 const SIG = {};    // 옛 직업 기술 (v2 시범에는 없다. docs/0.6a.2-개편-기획.md 12절 질문 4)
 
 /* 시작 스킬: v2 직업은 트리 밖의 시작 스킬 둘 (data/skills.js의 TREE2.starters와 같다) */
-const DEFAULT_SKILLS = { assassin: ['a_vital', 'a_slip'], warden: ['w_bash', 'w_brace'], hunter: ['h_aim', 'h_step'] };
+const DEFAULT_SKILLS = { assassin: ['a_vital', 'a_slip'], warden: ['w_bash', 'w_brace'], hunter: ['h_aim', 'h_step'], butcher: ['b_hook', 'b_lap'] };
 
 /* hp는 시작 장비(낡은 갑옷 +10)를 뺀 값이다. mp는 v2 직업에 없다 */
 const BUILDS = {
@@ -31,6 +31,13 @@ const BUILDS = {
     rule: '원거리: 기본 공격과 대부분의 스킬이 후열에 닿는다. 대신 활은 무기 피해의 55%다. 가속(사냥꾼 전용)이 있으면 라운드 맨 앞에서 두 번 연달아 움직인다(한 라운드에 한 번, 두 번째 차례는 쿨타임이 줄지 않는다). 전투를 시작하면 가속 1. 같은 적을 연달아 맞히면 추적이 한 겹씩 쌓여(최대 3) 겹마다 피해 +5%(정예 · 강적 · 보스 +10%), 3겹인 적에게는 몸 낮추기 · 버티기가 통하지 않는다. 방금 쓴 스킬과 다른 갈래의 스킬은 연계: 피해 +30%. 스킬은 쓰고 나면 쿨타임만큼 기다린다',
     skills: [],
   },
+  /* 숨겨진 직업 1 (10월 7일, UNLOCK.butcher). 설계 · 까닭은 비공개 문서. 엔진 값은 index.html BUTCH */
+  butcher: {
+    n: '도살자', ico: '🔪', hp: 118, mp: 0, v2: 1,
+    lore: '피를 내어 피로 산다. 막지 않고 받아내고, 상처 난 적의 피를 마셔 다시 일어선다.',
+    rule: '흡혈: 출혈된 적을 근접으로 치면 준 피해 × (그 적의 출혈 × 4%, 최대 40%)만큼 생명력을 되찾는다(한 차례에 최대 생명력의 8%까지). 갈증: 잃은 생명력 10%마다 주는 직접 피해 +3%(최대 +18%). 흡혈과 먹기로는 이 전투를 시작할 때의 생명력까지만 오르고, 먹기는 한 전투에 최대 생명력의 40%까지다. 내가 나에게 건 출혈이 남아 있는 동안에는 출혈로 쓰러지지 않는다(생명력 1에서 멈춘다). 스킬은 쓰고 나면 쿨타임만큼 기다린다',
+    skills: [],
+  },
 };
 
 /* 아직 만들지 않은 시작 직업 (캐릭터 만들기에 "준비 중"으로 보인다) */
@@ -46,7 +53,9 @@ const CLASS_SOON = [
    셈은 계정에 남는다(G.data.unl.c). 엔진이 세는 것: edge(생명력 30% 이하로 이긴 전투), sinKill(해로운 상태를 안고 쓰러뜨린 적),
    confess(수도원장의 고해 요구를 따른 차례), 'foe:<강적>'(쓰러뜨린 강적), 'boss:<보스>'(이긴 보스). 수련장 · 시험 전투 · 고정 상황은 세지 않는다.
    조건의 뜻과 까닭은 비공개 문서(nrk-private/직업/)에만 적는다 */
-const UNLOCK = {};
+const UNLOCK = {
+  butcher: { ico: '🚪', door: '피 냄새가 짙은 문', hint: '위태로운 싸움을 이겨 내면 열립니다.', need: [{ c: 'edge', n: 3 }, { c: 'foe:pilgrim', n: 1 }], show: 'edge', open: '피 냄새를 따라온 자가 문을 엽니다.' },
+};
 
 /* 레벨이 오를 때 오르는 생명력 (11.4절) */
-const LV_GAIN = { assassin: { hp: 5, mp: 0 }, warden: { hp: 6, mp: 0 }, hunter: { hp: 4, mp: 0 } };
+const LV_GAIN = { assassin: { hp: 5, mp: 0 }, warden: { hp: 6, mp: 0 }, hunter: { hp: 4, mp: 0 }, butcher: { hp: 6, mp: 0 } };

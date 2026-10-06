@@ -25,12 +25,17 @@ const SKK = {
   ward: { v: 0.8, S: [8, 12.5], B: [15, 21], cap: [45, 58], loss: 0.5, thorn: 0.85, vuln: 2, shield: 0.3, pull: 6, chill: 0.35, all: [12, 22], fin: 0.9 }, // 10월 5일 4차 측정(적 행동 개편 · 강적 다섯 · 후열 절반 뒤): 보호막 비례 때 보유 하급 7~9 · 중급 12~13, 최후의 성벽이 태운 양 Lv10 23. B는 그대로(태우기 전 보유 하급 16~22 · 중급 16~35, 상한이 먼저 걸린다). // 10월 4일 3차 측정(테스터가 보호막을 얻는 스킬을 태우는 스킬만큼 끼우고, 한 적의 공격에도 막는 스킬을 쓴 뒤): all은 모두 태우는 스킬이 한 번에 태우는 양(지금 10줄 최후의 성벽뿐, Lv10 측정 18), fin은 마무리 태우기를 생명력이 낮은 적에게 쓴 몫(측정 91~100%)
   /* 사냥꾼 (10월 5일 초안, 가설): F 쓸 때 대상의 추적 겹(최대 3), swap 직전과 다른 적을 칠 몫, ev 몸 빼기 한 번이 막는 피해, hx 쓸 때 가속 상태일 몫, fa 추적 한 겹을 더하는 값 */
   hunt: { F: 1.5, swap: 0.5, ev: 7, hx: 0.5, fa: 1.5, ctr: 0.85, ctrBig: 0.4, q: 6, fs: 8, ch: 1.5, stop: 0.25, stopV: 14, stun: 10, ocb: 0.2 }, // ch: 쓸 때 대상의 둔화, stop: 둔화된 적이 모으는 중일 몫, stopV: 끊은 큰 공격의 값, stun: 적 행동 하나를 놓치게 한 값, ocb: 모으는 적을 무너뜨릴 몫 // ctr: 피한 뒤 반격이 나갈 몫(강타일 때만이면 ctrBig), q: 빠른 칸 하나, fs: 한 라운드에 받는 예고된 큰 공격 피해
+  /* 숨겨진 직업 1 (10월 7일, 'b_' 칸에만): bl 출혈 1의 값(적이 움직일 때마다 약 2 + 흡혈 근원 약 1), S 먹기 · 이용을 쓸 때 대상의 출혈 [하급, 중급], spr 튀길 때 그 적의 출혈,
+     hv 먹기 회복이 한도에 잘리지 않는 몫, loss 먹어 없앤 출혈이 앞으로 줬을 몫, took 받은 피해 칸을 쓸 때 받은 피해 [하급, 중급], low 내 생명력 문턱마다 들 몫,
+     killP 처치 조건이 일어날 몫 [한 적, 광역], selfHp 나에게 건 출혈 피해의 값, meS 쓸 때 내 출혈, thornHit 맞을 때 출혈이 걸릴 몫, kwEat 먹기로 얻는 약화 · 강화 1의 값 [가설] */
+  butch: { bl: 3, S: [5, 6], spr: 4, hv: 0.8, loss: 0.35, took: [14, 18], low: { 0.5: 0.35, 0.4: 0.28, 0.35: 0.24, 0.3: 0.2 }, killP: [0.4, 0.6], selfHp: 0.5, meS: 3, thornHit: 0.8, kwEat: { weak: 1.5, empower: 3.5 } },
   hz: 1.5,                      // 🔄 쿨타임 당기기 1번의 값 [가설] (10월 3일 50상황: 평소 싸움에서는 스킬이 늘 3~4개 준비되어 있어 거의 0, 쿨타임이 묶이는 보스전에서만 크다)
   Fmax: 6,                      // 한 스킬을 전투에서 쓰는 횟수의 상한 (실측: 바탕 스킬 독니 5.4)
 };
 const skTri = n => n * (n + 1) / 2;
 const skJo = n => '013678'.includes(String(n).slice(-1)) ? '을' : '를'; // 숫자 뒤 을/를
 function skValue(s) {
+  if (SKK.butch && /^b_/.test(String(s.id)) && !s._bu) return skValueBu(s);
   const K = SKK; const Sof = k => (K.Sk && K.Sk[k] != null ? K.Sk[k] : K.S); const tm = K.tmul[s.tgt]; const hits = s.hits || 1; let v = 0; const hi = (s.row || 0) >= 7 ? 1 : 0; // hi: 중급(7~10줄)은 Lv7 이상에서 쓴다
   const burnTake = e => e.max ? Math.min(e.max, K.ward.B[hi]) : K.ward.all[hi]; // 한 번에 태우는 양: 상한이 있으면 측정 보유량과 상한 가운데 작은 쪽, 모두 태우면 측정값
   for (const e of s.fx) {
@@ -89,14 +94,42 @@ function skValue(s) {
   const gx = s.fx.find(e => e.k === 'bigx'); if (gx) v *= 1 + (gx.mul - 1) * 0.3; // 큰 적에게 ×: 열에 셋쯤 큰 적 (10월 3일 50상황으로 넣음)
   return v;
 }
+/* 숨겨진 직업 1 점수 ('b_' 칸): 출혈 · 먹기 · 받은 피해 · 내 생명력 · 처치 보상 몫을 더하고, 나머지 효과는 공통 식(skValue)으로 센다 */
+function skValueBu(s) {
+  const B = SKK.butch, K = SKK, tm = K.tmul[s.tgt], hits = s.hits || 1, hi = (s.row || 0) >= 7 ? 1 : 0, multi = s.tgt === 'front' || s.tgt === 'all', am = multi ? tm : 1;
+  const d = s.fx.find(x => x.k === 'dmg'); const dmgTot = d ? d.n * hits : 0; const S = B.S[hi]; const kp = B.killP[multi ? 1 : 0]; let add = 0; const keep = [];
+  for (const e of s.fx) {
+    if (e.k === 'st' && e.s === 'bleed' && s.tgt !== 'self') { add += e.n * B.bl * tm; continue; }
+    if (e.k === 'meSt' && e.s === 'bleed') { add -= skTri(e.n) * B.selfHp; continue; }
+    if (e.k === 'meSt' && e.on === 'kill') { add += e.n * (K.kw[e.s] || 1) * B.killP[0]; continue; }
+    if (e.k === 'exploit' && e.s === 'bleed') { add += e.per * (e.me ? Math.min(e.max || 99, B.meS) * hits : S) * am; continue; }
+    if (e.k === 'grow' && e.s === 'bleed') { add += (Math.min(10, Math.ceil(S * e.mul) + (e.add || 0)) - S) * B.bl * am; continue; }
+    if (e.k === 'drain' && e.s === 'bleed' && e.me) { const t = Math.min(e.max || 99, B.meS); add += (e.dmg ? t * e.dmg : Math.min(4, t * (e.emp || 0)) * K.kw.empower) + skTri(t) * B.selfHp; continue; }
+    if (e.k === 'drain' && e.s === 'bleed') { let t = S; if (e.max) t = Math.min(e.max, t); if (e.half) t = Math.ceil(t / 2);
+      let v = t * e.per * B.hv - (e.kill ? 0 : t * B.bl * B.loss * (e.keep ? 1 - e.keep : 1));
+      if (e.brk) v += t * e.brk * K.brk; if (e.weak) v += Math.min(3, Math.floor(t / e.weak)) * B.kwEat.weak; if (e.emp) v += Math.min(3, Math.floor(t / e.emp)) * B.kwEat.empower;
+      add += e.kill ? v * kp * (multi ? 1.3 : 1) : v * am; continue; }
+    if (e.k === 'spread' && e.s === 'bleed') { add += Math.ceil(B.spr * e.per) * 1.5 * B.bl * (e.kill ? kp * (multi ? 1.3 : 1) : 1); continue; }
+    if (e.k === 'lowx' && e.me) { add += dmgTot * (e.mul - 1) * (B.low[e.hp] || 0.7 * e.hp) * am; continue; }
+    if (e.k === 'grudge') { const t = B.took[hi]; let v = Math.min(e.max || 999, e.per * t) * hits; if (e.bl) v += Math.min(6, Math.floor(t / e.bl)) * B.bl; if (e.vu) v += Math.min(3, Math.floor(t / e.vu)) * K.kw.vuln; if (e.brk) v += Math.min(e.brkMax || 999, t * e.brk) * K.brk; add += v * am; continue; }
+    if (e.k === 'carry') { add += B.killP[0] * (d ? d.n : 0) * Math.max(0, hits - 1) / 2; continue; }
+    if (e.k === 'hasten' && e.on === 'kill') { add += (e.n || 1) * K.hz * kp; continue; }
+    if (e.k === 'quick' && e.on === 'kill') { add += e.n * K.hunt.q * kp; continue; }
+    if (e.k === 'thorn') { add += e.times * B.thornHit * ((e.dmg || 0) + (e.bleed || 0) * B.bl); continue; }
+    if (e.k === 'onParry' && e.bleed) { add += K.pOk * e.bleed * B.bl; keep.push(Object.assign({}, e, { bleed: 0 })); continue; }
+    keep.push(e);
+  }
+  const gx = s.fx.find(e => e.k === 'bigx'); const f = gx ? 1 + (gx.mul - 1) * 0.3 : 1;
+  return skValue(Object.assign({}, s, { fx: keep, _bu: 1 })) + add * f;
+}
 /* 전투 한 번에 쓰는 횟수: 처음 1번 + (남은 차례 + 갈래 규칙으로 줄어드는 대기) / (대기 + 1). 전투마다 1번은 1 */
 function skUses(s) { if (s.once) return 1 + (s.killRecharge ? 0.3 : 0); return Math.min(SKK.Fmax, 1 + (SKK.turns + (SKK.haste[s.hs] || 0)) / (s.cd + 1) + (s.killRecharge ? 0.5 : 0)); }
 /* 갈래 보정 (10월 3일, tools/sitqa.js 50상황 실측): 같은 점수라도 갈래마다 실제로 버는 몫이 다르다.
    쿨타임 하나로 바꾸며(3차 결정) 다시 쟀다: 갈래 규칙을 빼도 50상황 갈래 평균은 그대로였으므로, 지금 수치가 줄 예산 가운데에 오는 값(예전 ×0.85 · ×1.08 · ×1.1) */
 SKK.clsB = { h_: 0.9 };
 SKK.clsMid = { h_: 0.85 }; // 직업마다 중급(7~10줄) 예산 배율 (10월 5일 만든 사람: 사냥꾼은 한 갈래를 몰아 찍어도 강해지지 않는다. 깊은 칸은 더 센 한 방보다 새 효과)
-SKK.clsAdj = { h_: 1.4 }; // 직업마다 실제로 버는 몫 (10월 5일 50상황: 사냥꾼 스킬은 조건 없이 바로 들어가는 피해라 점수보다 1.6배쯤 번다. 같은 예산이면 라운드당 피해가 암살자의 1.7배였다) // 직업마다 예산 배율 (10월 5일 만든 사람: 사냥꾼은 후열에 바로 닿는 물리직이라 화력이 암살자를 넘지 않게 90%)
-SKK.brAdj = { 독사: 0.97, 격발: 1.1, 그림자: 1.15, 성벽: 1, 파쇄: 1, '전열 장악': 1 }; // 파수꾼 세 갈래는 50상황으로 재기 전이라 1 [가설]
+SKK.clsAdj = { h_: 1.4, b_: 1 }; // 직업마다 실제로 버는 몫 (10월 5일 50상황: 사냥꾼 스킬은 조건 없이 바로 들어가는 피해라 점수보다 1.6배쯤 번다. 같은 예산이면 라운드당 피해가 암살자의 1.7배였다) // 직업마다 예산 배율 (10월 5일 만든 사람: 사냥꾼은 후열에 바로 닿는 물리직이라 화력이 암살자를 넘지 않게 90%)
+SKK.brAdj = { 독사: 0.97, 격발: 1.1, 그림자: 1.15, 성벽: 1, 파쇄: 1, '전열 장악': 1, 도륙: 1, 광기: 1, 학살: 1 }; // 파수꾼 세 갈래는 50상황으로 재기 전이라 1 [가설]
 function skScore(s) { const E = skValue(s) * (SKK.brAdj[s.b] || 1) * ((SKK.clsAdj || {})[String(s.id).slice(0, 2)] || 1); const net = E - SKK.B * SKK.T[s.time]; const F = skUses(s); return { E, net, F, V: net * F, B: Math.round(((s.row && SKK.rowB[s.row]) || SKK.budget[s.tier]) * ((SKK.clsB || {})[String(s.id).slice(0, 2)] || 1) * ((s.row || 0) >= 7 ? ((SKK.clsMid || {})[String(s.id).slice(0, 2)] || 1) : 1) * 10) / 10 }; }
 
 /* 설명 문장. 키워드(중독, 붕괴, 터뜨리기, 흘리기)의 뜻은 설명창의 키워드 칸이 맡고, 스킬 문장은 숫자만 말한다 */
@@ -112,17 +145,55 @@ function skHead(s) { return `${SKK.TGN[s.tgt]} · ${SKK.TN[s.time]} · ${skCd(s)
 function skHasteLine(hs, br) { return hs ? `${SK_HSL[hs]} ${br} 스킬의 남은 대기가 1 준다(한 행동에 한 번).` : ''; }
 const SK_KWN = { weak: '약화', vuln: '취약', chill: '둔화', bleed: '출혈', ignite: '화상', protect: '보호', haste: '가속', empower: '강화' };
 const skPer = (per, what) => per >= 1 ? `대상의 중독 1마다 ${what} +${per}` : `대상의 중독 ${Math.round(1 / per)}마다 ${what} +1`;
+/* 숨겨진 직업 1 ('b_' 칸)의 효과 문장. null이면 공통 문장, ''이면 문장 없음 */
+const skPct = v => v >= 1 ? (v === 1 ? '' : v + '배') : Math.round(v * 100) + '%';
+function skBodyBu(s, e, late) {
+  const hits = s.hits || 1; const each = hits > 1 ? '한 번마다, ' : ''; const many = s.tgt === 'front' || s.tgt === 'all';
+  switch (e.k) {
+    case 'meSt': if (e.s === 'bleed') return ''; if (e.on === 'kill') return `이 스킬로 적을 쓰러뜨리면 나에게 ${SK_KWN[e.s] || e.s} ${e.n}.`; return null;
+    case 'drain': if (e.s !== 'bleed') return null; if (e.me) return '';
+      { const st = s.fx.find(x => x.k === 'st' && x.s === 'bleed'); const noHit = !s.fx.some(x => x.k === 'dmg');
+        const amt = e.max ? `최대 ${e.max}까지` : e.half ? '절반(올림)만' : '모두';
+        let t = e.kill ? '이 스킬로 쓰러뜨린 적의 출혈을 모두 먹는다.' : (noHit ? '' : '그 뒤 ') + (many ? '저마다 ' : '대상의 ') + `출혈을 ${amt} 먹는다.`;
+        t += ` 먹은 출혈 1마다 생명력 +${e.per}` + (e.brk ? `, 붕괴 +${e.brk}` : '') + '.';
+        if (e.weak) t += ` 먹은 출혈 ${e.weak}마다 약화 1(최대 3).`; if (e.emp) t += ` 먹은 출혈 ${e.emp}마다 나에게 강화 1(최대 3).`;
+        if (e.keep) t += ` 먹은 뒤 그 ${e.keep === 0.5 ? '절반' : Math.round(e.keep * 100) + '%'}(내림)이 대상에게 남는다.`;
+        if (st && hits === 1) t += ` 먹은 뒤 출혈 ${st.n}${skJo(st.n)} 다시 건다.`;
+        if (noHit) t += ' 피해는 주지 않는다. 출혈된 적에게만 쓸 수 있다.';
+        return t; }
+    case 'exploit': if (e.s !== 'bleed') return null;
+      return e.me ? `내 출혈 1마다 피해 +${e.per}(${each}내 출혈은 ${e.max || 10}까지 센다).` : `${many ? '저마다 ' : ''}대상의 출혈 1마다 피해 +${e.per}. 출혈은 줄지 않는다.`;
+    case 'grow': if (e.s !== 'bleed') return null; return ''; // 출혈 키우기는 피해 뒤에 일어나 문장 끝에 둔다 (skBody)
+    case 'grudge': { const p = skPct(e.per); let t = `지난 내 차례 뒤로 적에게 맞아 잃은 생명력${p ? '의 ' + p : ''}만큼 피해가 늘어난다(${each}최대 +${e.max}).`;
+      if (e.bl) t += ` 그 잃은 생명력 ${e.bl}마다 출혈 1을 건다(최대 6).`; if (e.vu) t += ` 그 잃은 생명력 ${e.vu}마다 취약 1을 건다(최대 3).`; if (e.brk) t += ` 그 잃은 생명력 1마다 붕괴 +${e.brk}(최대 +${e.brkMax}).`; return t; }
+    case 'lowx': return e.me ? `내 생명력이 ${Math.round(e.hp * 100)}% 이하면 피해 ×${e.mul}.` : null;
+    case 'spread': if (e.s !== 'bleed') return null; return '이 스킬로 쓰러뜨리면 그 적에게 있던 출혈과 이 스킬의 출혈을 더한 만큼 다른 적 모두에게 출혈을 건다(한 번에 최대 6).';
+    case 'hasten': if (e.on !== 'kill') return null; return `🔄 이 스킬로 적을 쓰러뜨리면 다른 ${s.b} 스킬 쿨타임 −${e.n || 1}.`;
+    case 'quick': if (e.on !== 'kill') return null; return `이 스킬로 적을 쓰러뜨리면 ${e.next ? '다음' : '이번'} 차례에 빠른 칸 +${e.n || 1}.`;
+    case 'thorn': return `다음에 맞는 직접 공격 ${e.times}번은 때린 적에게 ${e.dmg ? '피해 ' + e.dmg + ', ' : ''}출혈 ${e.bleed}${skJo(e.bleed)} 건다. 이미 있으면 횟수를 더한다(최대 8번).`;
+    case 'onParry': return `그 공격을 흘려 내면 그 적에게 ${[e.dmg ? '피해 ' + e.dmg : '', e.bleed ? '출혈 ' + e.bleed : '', e.brk ? '붕괴 +' + e.brk : ''].filter(Boolean).join(', ')}.`;
+    case 'carry': return '대상이 쓰러지면 남은 타격은 근접으로 닿는 적 가운데 생명력이 가장 낮은 적에게 이어진다.';
+  }
+  return null;
+}
 function skBody(s) {
   const out = []; const hits = s.hits || 1; const parts = [];
+  const bu = /^b_/.test(String(s.id)); const eatT = bu && s.fx.find(e => e.k === 'drain' && e.s === 'bleed' && !e.me); const late = []; // 숨겨진 직업 1: 먹는 칸의 출혈은 먹은 뒤 다시 건다, 연타의 상태는 첫 타격 뒤
+  for (const e of s.fx) {
+    if (bu && e.k === 'meSt' && e.s === 'bleed') out.push(`먼저 나에게 출혈 ${e.n}${skJo(e.n)} 건다.`);
+    if (bu && e.k === 'drain' && e.s === 'bleed' && e.me) out.push('먼저 내 출혈을 모두 지운다. ' + (e.dmg ? `지운 출혈 1마다 이 스킬의 피해 +${e.dmg}(${e.max || 10}까지 센다).` : `지운 출혈 1마다 나에게 강화 ${e.emp || 1}(최대 4).`));
+  }
   for (const e of s.fx) {
     if (e.k === 'dmg') parts.push(`피해 ${e.n}`);
     if (e.k === 'poison') parts.push(`중독 ${e.n}`);
     if (e.k === 'brk') parts.push(`붕괴 +${e.n}`);
-    if (e.k === 'st') parts.push(`${s.tgt === 'self' ? '나에게 ' : ''}${SK_KWN[e.s] || e.s} ${e.n}`);
+    if (e.k === 'st') { const t = `${s.tgt === 'self' ? '나에게 ' : ''}${SK_KWN[e.s] || e.s} ${e.n}`; if (bu && ((eatT && e.s === 'bleed') || hits > 1)) late.push(e); else parts.push(t); }
     if (e.k === 'ward') parts.push(`${s.tgt === 'self' ? '' : '나에게 '}보호막 +${e.n}`);
   }
-  if (parts.length) out.push((hits > 1 ? `${hits}번 ${s.tgt === 'ranged' || s.tgt === 'all' ? '쏜다' : '찌른다'}. 한 번마다 ` : '') + parts.join(', ') + '.');
+  if (parts.length) out.push((hits > 1 ? `${hits}번 ${s.tgt === 'ranged' || s.tgt === 'all' ? '쏜다' : bu ? '벤다' : '찌른다'}. 한 번마다 ` : '') + (s.tgt === 'front' && bu ? '전열 모두에게 ' : '') + parts.join(', ') + '.');
+  if (bu && hits > 1 && late.length) out.push('첫 타격 뒤 ' + late.map(e => (SK_KWN[e.s] || e.s) + ' ' + e.n).join(', ') + '.');
   for (const e of s.fx) {
+    if (bu) { const t = skBodyBu(s, e, late); if (t !== null) { if (t) out.push(t); continue; } }
     switch (e.k) {
       case 'grow': out.push(`대상의 중독을 ${e.mul}배로 만든다.` + (e.add ? ` 그 뒤 중독 ${e.add}.` : '')); break;
       case 'burst':
@@ -179,7 +250,9 @@ function skBody(s) {
       { const pb = s.fx.find(x => x.k === 'parryBuff'); out.push((e.on === 'parry' ? (pb ? ((pb.times || 1) > 1 ? '🔄 그 흘리기에 성공할 때마다' : '🔄 그 흘리기에 성공하면') : '🔄 그 공격을 흘려 내면') : '🔄 쓰면') + ` 다른 ${s.b} 스킬 쿨타임 −${e.n || 1}.`); break; }
     }
   }
+  { const g = bu && s.fx.find(e => e.k === 'grow' && e.s === 'bleed'); if (g) out.push(`그 뒤 대상의 출혈을 ${g.mul}배${Number.isInteger(g.mul) ? '' : '(올림)'}로 만${g.add ? `들고 ${g.add}${skJo(g.add)} 더한다` : '든다'}(최대 10).`); }
   if (s.fx.filter(e => ['lowx', 'brokenx', 'bigx', 'chillx'].includes(e.k)).length >= 2) out.push('조건이 겹치면 배수를 곱한다.'); // 10월 4일: 박살(붕괴한 정예 · 보스에게 ×2.5 × 1.5) 등
-  if (s.killRecharge) out.push(s.once ? '이 스킬로 적을 쓰러뜨리면 한 번 더 쓸 수 있다.' : '이 스킬로 적을 쓰러뜨리면 기다리지 않고 바로 다시 쓸 수 있다.');
+  if (s.killRecharge) out.push(s.once ? '이 스킬로 적을 쓰러뜨리면 한 번 더 쓸 수 있다.' : bu ? '이 스킬로 적을 쓰러뜨리면 쿨타임이 돌지 않아 다음 차례에 다시 쓸 수 있다.' : '이 스킬로 적을 쓰러뜨리면 기다리지 않고 바로 다시 쓸 수 있다.');
+  if (bu && (s.tgt === 'ranged' || s.tgt === 'all') && s.fx.some(e => e.k === 'dmg')) out.push((s.tgt === 'all' ? '후열에도 닿는다. ' : '') + '근접이 아니라 흡혈은 들지 않는다.');
   return out.join(' ').replace(/\s+/g, ' ').trim();
 }
