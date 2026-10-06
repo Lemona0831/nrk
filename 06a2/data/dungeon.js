@@ -144,7 +144,7 @@ const XP_LV = 0.15;
 const LV_XP = [0, 40, 100, 180, 300, 470, 660, 870, 1100, 1350, 1620, 1910, 2220]; // 1챕터를 무작위 길로 끝까지 가면 Lv5 안팎 (10월 2일 8판 시험)
 const LV_POINTS = 2;
 const STAT_START = 15; // 10월 4일 만든 사람 결정: 능력치 다섯, 처음 15점 · 레벨마다 2점
-const STAT_REC = { assassin: { dex: 0.4, int: 0.35, con: 0.25 }, warden: { str: 0.35, con: 0.35, wil: 0.3 }, hunter: { dex: 0.45, con: 0.3, str: 0.25 }, butcher: { str: 0.3, con: 0.3, wil: 0.25, int: 0.15 }, elementalist: { int: 0.45, con: 0.35, wil: 0.2 }, spellblade: { str: 0.3, int: 0.3, con: 0.25, wil: 0.15 } }; // 추천 배분 (직업마다)
+const STAT_REC = { assassin: { dex: 0.4, int: 0.35, con: 0.25 }, warden: { str: 0.35, con: 0.35, wil: 0.3 }, hunter: { dex: 0.45, con: 0.3, str: 0.25 }, butcher: { str: 0.3, con: 0.3, wil: 0.25, int: 0.15 }, elementalist: { int: 0.45, con: 0.35, wil: 0.2 }, spellblade: { str: 0.3, int: 0.3, con: 0.25, wil: 0.15 }, monk: { str: 0.35, dex: 0.35, con: 0.3 } }; // 추천 배분 (직업마다)
 /* 정예 접사 "강인": 체력 +50% (4.6절 1막 접사). 정예에게 상층 35%, 하층 60% */
 const TOUGH_CHANCE = { upper: 0.35, lower: 0.6 };
 /* 1챕터(저주받은 수도원) 적 이름. 역할은 카드에 작게 함께 보인다 */

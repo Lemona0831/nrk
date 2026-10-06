@@ -13,7 +13,7 @@ const STCAP = { weak: 3, vuln: 3, protect: 4, empower: 3, chill: 2, haste: 2 }; 
 /* 고정할 수치: 붕괴 · 상태가 중심인 칸은 피해를 작게 두고 쿨타임으로 맞춘다 */
 const LOCK = {}; // 스킬 데이터의 keep: [효과]도 맞춤에서 바꾸지 않는다 (예: 철옹성의 상한까지 채우기) // 10월 3일: 붕괴 · 상태만으로는 줄 예산에 닿지 않아(붕괴 1 = 피해 0.15) 고정을 풀었다
 const PER_STEPS = [0.25, 0.5]; // 보호막 비례: 상한까지 쌓으면 한 방이 너무 커져 2마다 +1까지
-const FIELDS = { dmg: ['n'], brk: ['n'], poison: ['n'], st: ['n'], stam: ['n'], ward: ['n'], wardFill: ['to'], thorn: ['dmg', 'times'], vulnPer: ['per'], wardDmg: ['per'], wardBurn: ['mul', 'max'], cutx: ['brk'], onParry: ['dmg', 'brk', 'poison'], parryBuff: ['dmg', 'poison'] };
+const FIELDS = { dmg: ['n'], brk: ['n'], poison: ['n'], st: ['n'], stam: ['n'], ward: ['n'], wardFill: ['to'], thorn: ['dmg', 'times'], vulnPer: ['per'], wardDmg: ['per'], wardBurn: ['mul', 'max'], cutx: ['brk'], kiBurst: ['per'], kiPer: ['per'], ctrPer: ['per'], stance: ['dmg'], sealx: ['brk'], onParry: ['dmg', 'brk', 'poison'], parryBuff: ['dmg', 'poison'] };
 const FILL_STEPS = [0.25, 0.33, 0.5, 0.6, 0.75, 1]; // 보호막 채우기: 상한의 몇 %까지
 /* 수치 상한 (10월 3일): 붕괴는 일반 적 50 · 정예 100 · 보스 150이라, 한 방이 너무 커지지 않게 줄 깊이로 묶는다 */
 function capOf(s, e, k) {
