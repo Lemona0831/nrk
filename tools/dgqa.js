@@ -300,11 +300,13 @@ function spendTree(pk, r) {
     let br = run.focus; if (run.build === 'hunter' && focus) { if (br === '기동') br = run.focus = r() < 0.5 ? '저격' : '연사'; const opened = b0 => run.tree.open.filter(id => (G0.SK2[id] || {}).b === b0).length; br = opened('기동') <= opened(run.focus) ? '기동' : run.focus; } // 사냥꾼(10월 5일): 피해 갈래 하나와 기동을 번갈아 (한 갈래를 몰아 찍으면 오히려 약하다)
     const pool = focus ? (can.filter(s => s.b === br).length ? can.filter(s => s.b === br) : can) : can;
     const root = focus ? pool.filter(x => ROWN(x) === 1 && x.b === br) : []; // 한 갈래를 파는 사람은 그 갈래의 첫 줄 두 칸부터 연다
-    const s = root.length ? root[0] : focus ? pool.sort((x, y) => ROWN(y) - ROWN(x) || r() - 0.5)[0] : pool[Math.floor(r() * pool.length)];
+    const sbPref = x => run.build === 'spellblade' && [3, 5].includes(x.row) && x.tgt === 'self' ? 1 : 0; // 마검사(10월 7일): 3 · 5줄에서는 나에게 쓰는 칸(칼에 싣기 · 채우기)
+    const s = root.length ? root[0] : focus ? pool.sort((x, y) => ROWN(y) - ROWN(x) || sbPref(y) - sbPref(x) || r() - 0.5)[0] : pool[Math.floor(r() * pool.length)];
     G0.treeUnlock(run, s.id);
     const eq = run.skills.slice();
     if (eq.length < G0.EQUIP_SLOTS2) eq.push(s.id);
     else { const lo = eq.map((id, i) => [i, ROWN(G0.SK2[id])]).sort((x, y) => x[1] - y[1])[0]; if (lo[1] < ROWN(s) || r() < 0.3) eq[lo[0]] = s.id; }
+    if (run.build === 'spellblade' && eq.length >= G0.EQUIP_SLOTS2) for (const k of ['spell', 'cut']) if (!eq.some(id => G0.SK2[id].kind === k)) { const c = run.tree.open.filter(id => G0.SK2[id].kind === k && !eq.includes(id)).sort((x, y) => ROWN(G0.SK2[y]) - ROWN(G0.SK2[x]))[0]; if (c) { const lo = eq.map((id, i) => [i, ROWN(G0.SK2[id])]).filter(x => G0.SK2[eq[x[0]]].kind !== k).sort((x, y) => x[1] - y[1])[0]; if (lo) eq[lo[0]] = c; } } // 마검사: 4칸에 ⚔ · ✦를 하나 이상씩
     run.skills = eq; run.p.skills = G0.v2Equip(run);
   }
 }
