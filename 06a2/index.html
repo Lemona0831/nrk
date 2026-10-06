@@ -2611,6 +2611,10 @@ const HELP = [
     '돌격병(전열): 공격 → 버티기 → 강타 준비 → 강타. 방패병(전열): 동료를 노린 근접 공격을 대신 맞고, 서 있는 동안 방패벽으로 동료가 받는 광역 피해를 줄입니다. 공격 → 버티기 → 반격 태세 → 버티기.',
     '사수(후열): 겨누기 → 겨눈 한 발(가끔 출혈 ' + EKW.archerBleed + ') → 몸 낮추기. 사제(후열): 다친 동료를 치유하고, 아니면 축복을 겁니다. 소환사(후열): 하수인 부르기 → 저주 → 공격. 하수인(전열): 소환사가 있으면 하나가 소환사를 지키고 나머지는 공격합니다. 자폭병(전열): 준비한 뒤 터집니다.',
     '도둑(전열): 몸 낮추기 → 훔치기 → 달아나기. 암흑술사(후열): 저주 → 어둠 화살.',
+    '2챕터 해골 병사(전열): 쓰러지면 뼈 더미가 되고, 더미 위 숫자만큼 라운드가 지나면 한 번 다시 일어섭니다. 화상이 걸렸거나 무너진 채 쓰러지면 일어서지 않습니다. 남은 적이 뼈 더미뿐이면 전투가 끝납니다.',
+    '2챕터 무덤 주술사(후열): 저주(약화 1 · 취약 1) → 조이기 → 어둠 화살. 조이기는 내 해로운 상태(중독 · 출혈 · 화상 · 약화 · 취약)가 여러 가지일수록 아픕니다. 뼈 쌓는 자(후열): 뼈벽을 쌓고 보강합니다. 뼈벽이 서 있으면 후열 적은 한 적을 노린 공격을 절반만 받습니다. 뼈벽은 붕괴에 약합니다.',
+    '2챕터 굴 파는 시체(전열): 땅속으로 파고들면 한 적 대상으로 고를 수 없고, 광역 · 지속 피해만 들어갑니다. 다음 행동에 솟구치고(예고가 보입니다), 솟구친 뒤에는 드러나 취약해집니다. 부푼 시체(전열): 쓰러지면 터져 나와 다른 적 모두에게 중독을 퍼뜨립니다. 불에 타면 터지지 않습니다.',
+    '2챕터 정예 가운데 신속이 붙은 적은 라운드가 시작될 때 가속 1을 얻어 맨 앞에서 움직입니다. 둔화가 걸려 있으면 가속을 얻지 못합니다.',
     '정예는 체력과 피해가 높고 붕괴 게이지가 큽니다. [강인]이 붙은 정예는 체력이 더 많습니다. 강적은 고유한 규칙을 하나씩 가지고, 처음 만나면 보이는 것만 알려 줍니다.',
     '적 카드에 마우스를 올리면(휴대폰은 길게 누르면) 그 적의 설명이 뜹니다.'] },
   { k: 'status', n: '상태이상', t: [
@@ -2633,6 +2637,7 @@ const HELP = [
     '보스를 넘으면 정산합니다. 모은 골드에 보스와 강적을 쓰러뜨린 보상이 더해지고, 생명력·마나·스태미나와 플라스크가 모두 찹니다.',
     '상점에는 장비 여섯 개가 놓입니다(직업에 맞는 것 셋 이상, 희귀 하나 이상). 가방의 장비는 산 값의 25%에 팔 수 있고, 레벨 × 10골드로 능력치를 처음부터 다시 나눌 수 있습니다. 남은 골드는 다음 챕터로 가져갑니다.'] },
   { k: 'rooms', n: '방과 진행', t: [
+    '챕터마다 24층입니다. 1챕터를 깨면 정산과 상점을 지나 장비 · 골드 · 레벨 · 스킬 트리를 그대로 들고 2챕터로 내려갑니다. 2챕터는 적의 레벨이 높고 처음 보는 적이 나옵니다. 새 적을 처음 만나면 한 번 알려 줍니다.',
     '1챕터는 24층입니다. 상층 11층, ' + FLOOR_CAMP + '층 야영지, 하층 11층, ' + FLOOR_BOSS + '층 보스로 이루어집니다. 층마다 문 셋 가운데 하나를 고릅니다. 문에는 방의 종류, 적, 위험도(★), 방 특성이 적혀 있습니다. 보상은 일부 문에만 적혀 있습니다.',
     '몇 층마다 갈래길이 나옵니다. 험한 길은 적이 거세고 강적 · 매복이 잦은 대신 전리품과 골드가 많고 장비 등급이 자주 오릅니다. 샛길은 적이 덜 거세고 쉬는 방이 잦은 대신 얻는 것이 적고 장비 등급이 가끔 내려갑니다. 큰 길은 평소대로입니다. 고른 길은 다음 갈래길까지 이어집니다.',
     '강적은 힘을 모아 크게 내리치는 한 방을 가집니다. 대신 이기면 희귀 장비, 많은 골드와 전리품을 얻습니다.',
@@ -4381,20 +4386,20 @@ function focusLine(b) {
 }
 /* ---------- 시험 전투 (10월 5일 만든 사람 요청): 던전 없이 직업 · 레벨 · 스킬 4칸 · 적을 골라 바로 싸운다. 기록 · 랭킹 · 전리품 없음 ---------- */
 const TEST_ROLES = ['bruiser', 'shield', 'archer', 'healer', 'summoner', 'minion', 'thief', 'darkmage', 'pyre'];
-function testFoes() {
-  const L = SQUADS.map(q => ({ id: 'sq:' + q.id, g: '무리', n: q.n }));
-  for (const f of STRONG_FOES) L.push({ id: 'sf:' + f.id, g: '강적', n: f.n });
-  L.push({ id: 'boss', g: '보스', n: BOSSES.abbot.n });
-  for (const r of TEST_ROLES) L.push({ id: 'one:' + r, g: '하나', n: (ENEMY_NAMES[1][r] || ROLES[r].n) });
+function testFoes(ch) {
+  ch = ch || 1; const L = SQUADS.filter(q => inCh(q, ch)).map(q => ({ id: 'sq:' + q.id, g: '무리', n: q.n }));
+  for (const f of STRONG_FOES.filter(x => inCh(x, ch))) L.push({ id: 'sf:' + f.id, g: '강적', n: f.n });
+  L.push({ id: 'boss', g: '보스', n: BOSSES[chData(ch).boss].n });
+  for (const r of TEST_ROLES.concat(ch >= 2 ? NEWR : []).filter(r => ch < 2 || r !== 'darkmage')) L.push({ id: 'one:' + r, g: '하나', n: ((ENEMY_NAMES[ch] || ENEMY_NAMES[1])[r] || ROLES[r].n) });
   return L;
 }
 const testClasses = () => Object.keys(BUILDS).filter(k => BUILDS[k].v2 && !BUILDS[k].tut);
 function testCfg() {
   const T = G.test = G.test || {}; if (!T.build || !BUILDS[T.build]) T.build = testClasses()[0];
-  if (!T.lv) T.lv = 5; if (!T.floor) T.floor = 'low'; if (TREE2[T.build] && !TREE2[T.build].branches.includes(T.br)) T.br = TREE2[T.build].branches[0]; if (!T.foe) T.foe = 'sq:patrol'; if (!T.sk || T.skFor !== T.build) { T.sk = []; T.skFor = T.build; } return T;
+  if (!T.lv) T.lv = 5; if (!T.floor) T.floor = 'low'; if (TREE2[T.build] && !TREE2[T.build].branches.includes(T.br)) T.br = TREE2[T.build].branches[0]; if (!T.ch || !CHAPTERS[T.ch]) T.ch = 1; if (!T.foe || !testFoes(T.ch).some(f => f.id === T.foe)) T.foe = testFoes(T.ch)[0].id; if (!T.sk || T.skFor !== T.build) { T.sk = []; T.skFor = T.build; } return T;
 }
 function testRoom(T) {
-  const low = T.floor === 'low'; const lv = T.foe === 'boss' ? mlvOf(FLOOR_BOSS) : low ? 3 : 2; const room = { lv, floor: T.foe === 'boss' ? FLOOR_BOSS : low ? FLOOR_CAMP + 3 : 5, names: ENEMY_NAMES[1], path: 'main', en: [] };
+  const low = T.floor === 'low'; const ch = T.ch || 1; const fl = T.foe === 'boss' ? FLOOR_BOSS : low ? FLOOR_CAMP + 3 : 5; const room = { lv: mlvOf(fl, ch), floor: fl, ch, names: ENEMY_NAMES[ch] || ENEMY_NAMES[1], path: 'main', en: [] };
   const [kind, id] = T.foe.split(':');
   if (kind === 'sq') { const q = SQUADS.find(x => x.id === id); room.en = JSON.parse(JSON.stringify(low ? q.low : q.up)); room.squad = id; }
   else if (kind === 'sf') { const f = STRONG_FOES.find(x => x.id === id); room.en = JSON.parse(JSON.stringify(f.en)); room.strong = f.n; room.foe = f.id; }
@@ -4408,7 +4413,7 @@ function testStart() {
   const st = statRecommend(T.build, {}, STAT_START + LV_POINTS * (lv - 1));
   const p = mkPlayer(T.build, {}, st, (TREE2[T.build] ? TREE2[T.build].starters : []).concat(T.sk)); p.lv = lv; applyStats(p, st); p.hp = p.hpMax; p.st = p.stMax;
   const room = testRoom(T); G.testRun = G.testRun || G.run; G.run = null;
-  G.b = roomBattle(p, room, room.boss ? 'abbot' : null, Math.floor(Math.random() * 1e6)); G.b.ctx.test = 1; G.b.stepMode = true; G.sel = null; G.scr = 'test'; render();
+  G.b = roomBattle(p, room, room.boss ? chData(room.ch).boss : null, Math.floor(Math.random() * 1e6)); G.b.ctx.test = 1; G.b.stepMode = true; G.sel = null; G.scr = 'test'; render();
 }
 function testLeave() { G.b = null; G.scr = 'title'; if (G.testRun) { G.run = G.testRun; G.testRun = null; } render(); }
 function vTestSetup() {
@@ -4424,9 +4429,10 @@ function vTestSetup() {
     for (let r = 1; r <= 10; r++) for (const sk of SKILLS2[T.build].filter(x => x.b === T.br && x.row === r)) { const on = T.sk.includes(sk.id); h += `<button class="tskb${on ? ' on' : ''}" data-a="testsk" data-k="${sk.id}" data-info="sk:${sk.id}"><b>${r}. ${esc(sk.n)}</b><small>${esc(skHead(sk))}</small></button>`; }
     h += `</div></section>`;
   }
-  const F = testFoes(); const grp = {}; for (const f of F) (grp[f.g] = grp[f.g] || []).push(f);
+  h += `<section class="card"><h4>챕터</h4><div class="tgrid">${Object.keys(CHAPTERS).map(c => btn('testch', c, +T.ch === +c, c + '챕터 · ' + esc(CHAPTERS[c].n))).join('')}</div></section>`;
+  const F = testFoes(T.ch); const grp = {}; for (const f of F) (grp[f.g] = grp[f.g] || []).push(f);
   h += `<section class="card"><h4>적</h4>${Object.keys(grp).map(g => `<h5 class="chgh">${g}${g === '하나' ? ' ' + btn('testelite', 0, !!T.elite, '정예로') : ''}</h5><div class="tgrid">${grp[g].map(f => btn('testfoe', f.id, T.foe === f.id, esc(f.n))).join('')}</div>`).join('')}`;
-  h += `<h4>층</h4><div class="tgrid">${btn('testfloor', 'up', T.floor === 'up', '상층 (몬스터 Lv2)')}${btn('testfloor', 'low', T.floor === 'low', '하층 (몬스터 Lv3)')}${btn('testamb', 0, !!T.amb, '매복')}</div><p class="mini">보스는 늘 보스층(몬스터 Lv${mlvOf(FLOOR_BOSS)})입니다.</p></section>`;
+  h += `<h4>층</h4><div class="tgrid">${btn('testfloor', 'up', T.floor === 'up', '상층 (몬스터 Lv' + mlvOf(5, T.ch) + ')')}${btn('testfloor', 'low', T.floor === 'low', '하층 (몬스터 Lv' + mlvOf(FLOOR_CAMP + 3, T.ch) + ')')}${btn('testamb', 0, !!T.amb, '매복')}</div><p class="mini">보스는 늘 보스층(몬스터 Lv${mlvOf(FLOOR_BOSS, T.ch)})입니다.</p></section>`;
   h += `<div class="stickbar"><button class="gold wide" data-a="teststart" data-focus>싸우기</button><div class="row"><button data-a="testleave">그만두기</button></div></div>`;
   return h;
 }
@@ -5174,6 +5180,7 @@ function onClick(ev) {
     case 'testelite': { const T = testCfg(); T.elite = !T.elite; render(); break; }
     case 'testfoe': testCfg().foe = el.dataset.k; render(); break;
     case 'testfloor': testCfg().floor = el.dataset.k; render(); break;
+    case 'testch': { const T = testCfg(); T.ch = +el.dataset.k; T.foe = testFoes(T.ch)[0].id; render(); break; }
     case 'testamb': { const T = testCfg(); T.amb = !T.amb; render(); break; }
     case 'teststart': testStart(); break;
     case 'testsetup': G.b = null; render(); break;
