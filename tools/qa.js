@@ -102,6 +102,7 @@ const enemyPrio = e => (e.role === 'thief' && (e.loot || (e.intent && e.intent.k
 const buFx = a => !!(a && a.s && a.s.fx.some(e => (e.s === 'bleed' && ['drain', 'exploit', 'grow', 'spread', 'meSt'].includes(e.k)) || e.k === 'grudge' || e.k === 'carry' || (e.k === 'lowx' && e.me) || e.on === 'kill' || (e.k === 'thorn' && e.bleed)));
 const buEatOnlyQ = a => !!(a && a.s && a.s.fx.some(e => e.k === 'drain' && e.s === 'bleed' && !e.me) && !a.s.fx.some(e => e.k === 'dmg'));
 const SB_FX = ['imbue', 'edgeX', 'kwx', 'alt', 'killSpread']; // 마검사 효과 (참고: 마검사 판단은 kind가 있는 스킬이 끼워졌을 때만 걸린다)
+const MONK_FX = ['stance', 'kiBurst', 'kiPer', 'kiGrow', 'ctrPer', 'sealx']; // 수도승 효과 (v2Pick의 수도승 판단이 이 효과를 가진 스킬이 끼워졌을 때만 걸린다)
 const WARDEN_FX = ['ward', 'wardFill', 'wardBurn', 'thorn', 'pull', 'vulnGrow', 'vulnPer', 'chillx', 'shieldx']; // 파수꾼 효과 (v2Pick의 파수꾼 판단이 이 효과를 가진 스킬에만 걸린다)
 /* 0.6a.2 라운드: 이번 차례에(빠른 행동으로) 흘릴 준비를 이미 했는가 (id를 주면 그 적에게). 옛 직업은 늘 false라 next/ 측정은 그대로다 */
 const v2Ready = (b, id) => !!(E.isV2 && E.isV2(b.p) && b.p.dodge && b.prepTurn === b.turnIdx && (id == null || b.p.dodge === id));
@@ -252,6 +253,67 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     }
   }
   if (p.build === 'elementalist' && E.elemPreview && useMech && !process.env.ELEM_OFF) { const v = elemPick(b, P, r, okS, reach, pv1); if (v) return v; } // 0.6a.2 원소술사 (10월 7일): 열충격 미리 보기로 고른다
+  // 0.6a.2 수도승 (10월 7일, docs/직업/수도승.md F-4): 되받을 직접 공격 예고가 있으면 자세, 차례의 첫 ⚡ 공격, 기를 보고 터뜨리기 · 흘려 쓰기, 늦춘 적에게서 거두기, 되받은 다음 차례의 되갚기, 모으는 적 · 지원하는 적 끊기
+  if (p.build === 'monk' && (p.skills || []).some(id => E.SK2[id] && E.SK2[id].fx.some(e => MONK_FX.includes(e.k)))) { // 끼운 스킬로 본다(지금 쓸 수 있는 칸이 아니라)
+    const ki = psn2(p, 'empower'); const fastOk = !b.bonusUsed && !nf; const kbOf = a => a.s.fx.find(e => e.k === 'kiBurst'); const fxOf = (a, k) => a.s.fx.find(e => e.k === k);
+    const ctrIn = pv1.filter(x => E.monkShowCtr(b, x.e)); const M = ctrIn.reduce((m, x) => m + x.n, 0);
+    const bigCtr = ctrIn.some(x => x.e.intent.k === 'heavy' || x.e.intent.aimed || x.e.intent.k === 'reflect' || x.e.intent.k === 'erupt');
+    const farIn = pv1.some(x => x.e.row === 'back' && x.e.intent && E.CTR_SHOW.includes(x.e.intent.k));
+    const stOf = a => fxOf(a, 'stance'); const fastSt = a => a.self && stOf(a) && a.time <= 0.6; const blockSt = a => a.self && stOf(a) && a.time > 0.6;
+    const stVal = a => { const x = stOf(a); return (x.dmg || 0) + (x.brk || 0) * 0.15 + (x.ki || 0) * 4 + (x.max || 0) * 3 + (x.weak || 0) * 2 + (x.chill || 0); };
+    const tgtOf = a => a.self || a.aoe ? null : (best(a, (x, y) => x.hp - y.hp) || {}).id; const hitL = a => reach(a).filter(e => a.s.tgt !== 'front' || e.row === 'front'); // 전열 모두 칸은 전열만 맞는다
+    const weakIn = pv1.some(x => x.e.intent && ['curse', 'hexcurse', 'sermon'].includes(x.e.intent.k));
+    const chg = e => !!(e.intent && (['charge', 'heavy', 'chant', 'chanting', 'aim'].includes(e.intent.k) || e.intent.aimed));
+    const sure = r() < 0.6 + 0.35 * (P.mech || 0.5); const cur = b.prepTurn === b.turnIdx; const stNow = cur && p.stance, gdNow = cur && p.guard; // 지난 차례의 자세 · 방어는 이번 차례 첫 행동에서 지워진다
+    // 0. 끊기: 강타 · 영창을 모으는 적을 이번 행동으로 무너뜨릴 수 있으면(끊기 붕괴 · 큰 붕괴) 막기보다 먼저 끊는다
+    { const brkOf = a => a.s.fx.reduce((m, e) => m + (e.k === 'cutx' ? e.brk : e.k === 'brk' ? e.n : 0), 0); const cg = E.alive(b).filter(e => chg(e) && !e.s.broken);
+      if (cg.length && sure) for (const a of okS.filter(a => !a.self && brkOf(a) >= 25 && (fastOk || a.time > 0.6)).sort((x, y) => brkOf(y) - brkOf(x))) { const t = cg.filter(e => E.canTarget(b, e, a) && !enemyAvoid(e, a)).sort((x, y) => (y.brk / y.brkMax) - (x.brk / x.brkMax))[0]; if (t && (t.brk + brkOf(a) >= t.brkMax || a.s.fx.some(e => e.k === 'cutx'))) return [a.id, t.id]; } }
+    // 1. 자세: 되받을 공격 예고가 있으면 ⚡ 자세를 먼저, 강타 · 큰 한 방이 오거나 둘 이상 치거나 생명력 절반 아래면 ▶ 자세(없으면 방어)
+    if (M >= 1 && sure) {
+      if (!stNow && fastOk) { const fs = okS.filter(a => fastSt(a) && (!stOf(a).far || farIn)).sort((x, y) => stVal(y) - stVal(x))[0]; if (fs) return [fs.id]; }
+      if (hv && hv.e.role === 'boss' && psn2(p, 'brand') >= 1 && !v2Ready(b, hv.e.id) && L.find(a => a.id === 'dodge' && a.ok) && r() < 0.85) return ['dodge', hv.e.id]; // 보스의 강타는 흘린다 (비공개 문서의 규칙)
+      if ((bigCtr || M >= 2 || p.hp < p.hpMax * 0.5) && !gdNow) { const bs = okS.filter(blockSt).sort((x, y) => stVal(y) - stVal(x))[0]; if (bs) return [bs.id]; if (bigCtr && L.find(a => a.id === 'guard' && a.ok) && r() < 0.4 + P.guard) return ['guard']; }
+    } else if (farIn && fastOk && !stNow && sure) { const fs = okS.find(a => fastSt(a) && stOf(a).far); if (fs) return [fs.id]; }
+    // 2. 빠른 칸: 기가 적고 터뜨리기가 준비되면 기 모으기, 거두기가 준비되면 둔화 걸기, 모으는 적에게 약화 · 붕괴, 아니면 차례의 첫 ⚡ 공격
+    if (fastOk) {
+      const br = okS.find(a => a.self && a.time <= 0.6 && a.s.fx.some(e => e.k === 'st' && e.s === 'empower'));
+      if (br && ki <= 2 && okS.some(a => kbOf(a) && !kbOf(a).max)) return [br.id];
+      const fa = okS.filter(a => !a.self && a.time <= 0.6 && has(a, 'dmg'));
+      const harv = okS.find(a => a.time > 0.6 && !a.aoe && a.s.fx.some(e => (e.k === 'meSt' && e.if === 'chill') || e.k === 'chillx' || (e.k === 'kiBurst' && e.pre)));
+      const chf = fa.find(a => a.s.fx.some(e => e.k === 'st' && e.s === 'chill'));
+      if (harv && chf && !reach(harv).some(e => psn2(e, 'chill') > 0)) { const t = best(chf, (x, y) => y.hp - x.hp); if (t && E.canTarget(b, t, harv)) return [chf.id, t.id]; }
+      const cg = E.alive(b).filter(e => chg(e)); if (cg.length) { const wk = fa.find(a => a.s.fx.some(e => (e.k === 'st' && e.s === 'weak') || (e.k === 'brk' && e.n >= 25) || e.k === 'cutx')); if (wk) { const t = cg.find(e => E.canTarget(b, e, wk) && !enemyAvoid(e, wk)); if (t) return [wk.id, t.id]; } }
+      const sx = fa.find(a => has(a, 'sealx')); if (sx) { const t = reach(sx).find(e => e.intent && E.SEAL_K.includes(e.intent.k)); if (t) return [sx.id, t.id]; }
+      if (b.kiFastTurn !== b.turnIdx && fa.length) { const a = fa.slice().sort((x, y) => ((fxOf(y, 'dmg') || { n: 0 }).n * (y.s.hits || 1) - (fxOf(x, 'dmg') || { n: 0 }).n * (x.s.hits || 1)))[0]; const t = best(a, (x, y) => x.hp - y.hp); if (t) return [a.id, t.id]; }
+      if (br && ki <= 2) return [br.id];
+    }
+    // 3. 터뜨리기: 기 4 이상, 기 3이고 쓰러뜨릴 수 있음, 약화 예고 앞, 붕괴형은 모으는 적을 무너뜨릴 때, 상한이 있는 칸은 상한만큼 찼을 때
+    for (const a of okS.filter(a => kbOf(a) && !a.self)) {
+      const k = kbOf(a); const d0 = (fxOf(a, 'dmg') || { n: 0 }).n;
+      if (a.aoe) { const tk = Math.min(k.max || 5, ki); if (tk >= 3 && reach(a).length >= 2) return [a.id]; continue; }
+      const t = best(a, (x, y) => (chg(y) - chg(x)) || ((k.pre ? psn2(y, 'chill') > 0 : 0) - (k.pre ? psn2(x, 'chill') > 0 : 0)) || (y.hp - x.hp)); if (!t) continue;
+      const tk = Math.min(k.max || 5, ki + (k.pre && psn2(t, 'chill') > 0 ? k.pre : 0)); const big = !!(t.elite || t.strong || t.role === 'boss'); const gx = fxOf(a, 'bigx');
+      const dmg = (d0 + tk * k.per) * (gx && big ? gx.mul : 1); const kill = dmg >= t.hp;
+      const brkIt = k.brk && chg(t) && t.brk + tk * k.brk >= t.brkMax;
+      if (tk <= 1 && !(k.max && k.max <= 3)) continue;
+      if (tk >= 4 || (tk >= 3 && kill) || (weakIn && tk >= 2) || brkIt || (k.max && tk >= k.max)) return [a.id, t.id];
+    }
+    // 4. 기 지키기: 큰 터뜨리기가 곧 준비되고 기 3 이상이면, 되받을 예고가 있을 때 ▶ 자세로 기를 모은다
+    if (ki >= 3 && M >= 1 && !gdNow && L.some(a => a.v2 && kbOf(a) && !kbOf(a).max && (a.wait || 0) <= 1)) { const bs = okS.filter(blockSt).sort((x, y) => stVal(y) - stVal(x))[0]; if (bs) return [bs.id]; }
+    // 5. 기 비례(기 3 이상) · 기 끌어올리기(기 1~2)
+    for (const a of okS.filter(a => has(a, 'kiPer') && a.time > 0.6)) if (ki >= 3) { const t = best(a, (x, y) => y.hp - x.hp); if (t) return [a.id, t.id]; }
+    for (const a of okS.filter(a => has(a, 'kiGrow'))) if (ki >= 1 && ki <= 2) { const t = best(a, (x, y) => x.hp - y.hp); if (t) return [a.id, t.id]; }
+    // 6. 거두기 · 둔화 배수: 이미 둔화된 적에게
+    for (const a of okS.filter(a => a.time > 0.6 && a.s.fx.some(e => (e.k === 'meSt' && e.if === 'chill') || e.k === 'chillx'))) { const ts = hitL(a).filter(e => psn2(e, 'chill') > 0); if (!ts.length) continue; if (a.aoe) { if (ts.length >= 2 || hitL(a).length === 1) return [a.id]; continue; } return [a.id, ts.sort((x, y) => y.hp - x.hp)[0].id]; }
+    // 7. 되갚기: 지난 차례 뒤 되받았으면
+    if ((p.ctrSince || 0) >= 1) { const cs = okS.filter(a => has(a, 'ctrPer') && a.time > 0.6 && (!a.aoe || reach(a).length >= 2)).sort((x, y) => fxOf(y, 'ctrPer').per * (y.aoe ? reach(y).length : 1) - fxOf(x, 'ctrPer').per * (x.aoe ? reach(x).length : 1))[0]; if (cs) return [cs.id, tgtOf(cs)]; }
+    // 8. 끊기: 지원 예고(치유 > 축복 > 소환 > 저주 > 지키기)는 sealx, 모으는 적은 cutx · 약화
+    { const sp = e => e.intent ? ['heal', 'bless', 'summon', 'curse', 'guard'].indexOf(e.intent.k) : -1; for (const a of okS.filter(a => has(a, 'sealx') && a.time > 0.6)) { const ts = reach(a).filter(e => e.intent && E.SEAL_K.includes(e.intent.k)); if (!ts.length) continue; if (a.aoe) return [a.id]; return [a.id, ts.sort((x, y) => ((sp(x) < 0 ? 9 : sp(x)) - (sp(y) < 0 ? 9 : sp(y))))[0].id]; } }
+    { const cg = E.alive(b).filter(e => chg(e)); if (cg.length) for (const a of okS.filter(a => a.time > 0.6 && !a.self && a.s.fx.some(e => e.k === 'cutx' || (e.k === 'st' && e.s === 'weak')))) { const t = cg.find(e => E.canTarget(b, e, a) && !enemyAvoid(e, a)); if (t) return [a.id, t.id]; } }
+    // 그 밖의 판단(광역, 끊기 붕괴, 무작위 공격)에서 지금 쓸모가 적은 칸은 뺀다: 기가 1 이하인 큰 터뜨리기, 되받은 것이 없는 되갚기, 둔화된 적이 없는 거두기, 되받을 예고가 없는 자세
+    const weakNow = a => { const k = kbOf(a); if (k && !(k.max && k.max <= 3) && ki + (k.pre ? 1 : 0) <= 1) return true; if (has(a, 'kiPer') && ki <= 1) return true; if (has(a, 'kiGrow') && ki === 0) return true; if (has(a, 'chillx') && !hitL(a).some(e => psn2(e, 'chill') > 0)) return true; if (has(a, 'ctrPer') && !(p.ctrSince > 0)) return true; if (a.s.fx.some(e => e.k === 'meSt' && e.if === 'chill') && !hitL(a).some(e => psn2(e, 'chill') > 0)) return true; if (a.self && stOf(a) && M === 0) return true; return false; };
+    for (const a of okS.slice()) if (weakNow(a)) okS.splice(okS.indexOf(a), 1); // 큰 터뜨리기는 기가 찰 때까지 아껴 둔다(그동안 기본 공격)
+  }
   // 강타 예고: 흘리기형 스킬(스태미나 없이) → 흘리기 준비 → 스태미나 흘리기. 이번 차례에 빠른 행동으로 이미 그 적을 흘릴 준비를 했으면 다시 걸지 않는다(덮어쓰면 붙은 효과를 잃는다)
   if (hv && !v2Ready(b, hv.e.id) && r() < Math.max(P.parry, 0.35) + 0.2) {
     const ps = okS.find(a => has(a, 'parry')); if (ps) return [ps.id, hv.e.id];
@@ -313,8 +375,8 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     if (fastFree && fastC && fastC.v > 4) return [fastC.a.id, fastC.t && fastC.t.id];
     const pickC = cand.filter(c => !fastFree || c.a.time > 0.6).sort((x, y) => y.v - x.v)[0] || fastC; if (pickC && !(hv && pickC.v < 8)) return [pickC.a.id, pickC.t && pickC.t.id]; // 강타가 오는데 마땅한 행동이 없으면 아래(방어)로
   }
-  // 0.6a.2 파수꾼 (10월 4일): 보호막 · 가시 · 태우기 · 끌어내기 · 취약 · 둔화 · 붕괴 조건. 새 효과를 가진 스킬에만 걸린다 (마검사는 위의 자기 칸이 맡는다)
-  if (E.wardMax && p.build !== 'spellblade' && okS.some(a => a.s.fx.some(e => WARDEN_FX.includes(e.k)))) {
+  // 0.6a.2 파수꾼 (10월 4일): 보호막 · 가시 · 태우기 · 끌어내기 · 취약 · 둔화 · 붕괴 조건. 새 효과를 가진 스킬에만 걸린다 (마검사는 위의 자기 칸이 맡는다. 수도승의 둔화 배수(chillx)는 수도승 판단이 맡는다)
+  if (E.wardMax && p.build !== 'spellblade' && p.build !== 'monk' && okS.some(a => a.s.fx.some(e => WARDEN_FX.includes(e.k)))) {
     const cap = E.wardMax(p), ward = p.ward || 0; const atk = pv1.filter(x => x.e.intent && ['attack', 'heavy', 'explode', 'brand'].includes(x.e.intent.k)).length;
     const wardGain = a => a.s.fx.reduce((m, e) => m + (e.k === 'ward' ? e.n : e.k === 'wardFill' ? Math.max(0, cap * (e.to || 1) - ward) : 0), 0);
     // 막기: 내 다음 차례 전에 공격이 오는데 보호막이 절반 아래면 보호막을 가장 많이 주는 나에게 쓰는 스킬, 가시가 없으면 가시 (10월 4일: 둘 이상 칠 때만 쓰던 것을 한 적에게도. 보스전에서 막는 스킬을 거의 쓰지 않았다)

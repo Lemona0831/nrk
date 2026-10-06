@@ -42,12 +42,18 @@ function equipFor(bd, sit) {
   const val = id => { const s = G0.SK2[id]; let v = s.row;
     if (back && s.tgt === 'ranged') v += 6; if (many && (s.tgt === 'front' || s.tgt === 'all' || has(s, 'spread'))) v += 6; if (big && has(s, 'bigx')) v += 4;
     if (heavy && (has(s, 'parry') || has(s, 'parryBuff') || has(s, 'onParry') || has(s, 'cutx') || has(s, 'evade') || has(s, 'evadeCtr') || has(s, 'foresee') || s.fx.some(e => e.k === 'brk' && e.n >= 25))) v += 6; /* 10월 5일: 사냥꾼 피하기 · 예고 읽기도 */ if (boom && (has(s, 'cutx') || s.fx.some(e => e.k === 'brk' && e.n >= 25))) v += 4; if (big && (has(s, 'burst') || has(s, 'grow') || has(s, 'exploit') || has(s, 'lowx'))) v += 2;
+    if (String(id).slice(0, 2) === 'm_') { /* 수도승 (10월 7일): 근접 무리에는 자세, 강타에는 자세 · 끊기, 영창(화형 사제)에는 후열까지 닿는 칸 */ if (many && has(s, 'stance')) v += 4; if (heavy && (has(s, 'stance') || s.fx.some(e => e.k === 'st' && e.s === 'weak'))) v += 3; if (boom && s.tgt === 'ranged') v += 6; }
     return v; };
   const pick = bd.open.slice().sort((a, c) => val(c) - val(a)).slice(0, G0.EQUIP_SLOTS2);
   // 독을 쓰는 스킬(터뜨리기·키우기·중독 비례)을 끼웠으면 독을 거는 스킬도 하나는 끼운다 (사람은 짝을 맞춘다)
   const pay = id => G0.SK2[id].fx.some(e => ['burst', 'grow', 'exploit', 'brkPer', 'spread', 'drain'].includes(e.k));
   const src = id => G0.SK2[id].fx.some(e => e.k === 'poison' && e.n >= 3);
   if (pick.some(pay) && !pick.some(src)) { const cand = bd.open.filter(id => src(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (cand) { const lo = pick.slice().sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; } }
+  // 수도승 (10월 7일, 수도승.md F-4 11): 터뜨리기 · 기 비례 칸을 끼웠으면 기를 만드는 칸(⚡ 공격 · 기 모으기 · 기 덤 자세) 하나, 거두기 칸을 끼웠으면 둔화를 거는 칸 하나를 함께 (사람은 짝을 맞춘다)
+  { const S = id => G0.SK2[id]; const mk = id => String(id).slice(0, 2) === 'm_';
+    const swap = (need, give) => { if (pick.some(need) && !pick.some(give)) { const cand = bd.open.filter(id => give(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (cand) { const lo = (pick.filter(id => !need(id)).length ? pick.filter(id => !need(id)) : pick).sort((a, c) => val(a) - val(c))[0]; if (lo) pick[pick.indexOf(lo)] = cand; } } };
+    swap(id => mk(id) && S(id).fx.some(e => (e.k === 'kiBurst' && !e.max) || e.k === 'kiPer'), id => mk(id) && ((S(id).time === 'fast' && has(S(id), 'dmg')) || S(id).fx.some(e => (e.k === 'st' && e.s === 'empower') || (e.k === 'stance' && e.ki))));
+    swap(id => mk(id) && S(id).fx.some(e => (e.k === 'meSt' && e.if === 'chill') || e.k === 'chillx' || (e.k === 'kiBurst' && e.pre)), id => mk(id) && S(id).fx.some(e => e.k === 'st' && e.s === 'chill') && !S(id).fx.some(e => e.k === 'kiBurst')); }
   // 파수꾼 (10월 4일): 보호막을 태우는 스킬이 보호막을 얻는 스킬보다 많으면 얻는 스킬로 바꾼다 (태울 보호막이 있어야 한다. 사람은 짝을 맞춘다)
   const burn = id => G0.SK2[id].fx.some(e => e.k === 'wardBurn'); const gain = id => G0.SK2[id].fx.some(e => e.k === 'ward' || e.k === 'wardFill');
   while (pick.filter(burn).length > Math.max(1, pick.filter(gain).length)) { const cand = bd.open.filter(id => gain(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) break; const lo = pick.filter(burn).sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; }
