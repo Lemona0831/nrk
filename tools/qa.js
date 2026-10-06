@@ -104,6 +104,66 @@ const buEatOnlyQ = a => !!(a && a.s && a.s.fx.some(e => e.k === 'drain' && e.s =
 const WARDEN_FX = ['ward', 'wardFill', 'wardBurn', 'thorn', 'pull', 'vulnGrow', 'vulnPer', 'chillx', 'shieldx']; // 파수꾼 효과 (v2Pick의 파수꾼 판단이 이 효과를 가진 스킬에만 걸린다)
 /* 0.6a.2 라운드: 이번 차례에(빠른 행동으로) 흘릴 준비를 이미 했는가 (id를 주면 그 적에게). 옛 직업은 늘 false라 next/ 측정은 그대로다 */
 const v2Ready = (b, id) => !!(E.isV2 && E.isV2(b.p) && b.p.dodge && b.prepTurn === b.turnIdx && (id == null || b.p.dodge === id));
+/* 0.6a.2 원소술사 (10월 7일, docs/직업/원소술사.md F-3절): 쓸 수 있는 칸 × 대상마다 엔진의 열충격 미리 보기(E.elemPreview)로 값을 매겨 가장 큰 것을 고른다.
+   긴급 깨기(큰 공격 예고 적을 무너뜨림) > 처치 > 무뎌진 적은 깨지 않기 > 무뎌짐 유지(평소 공격할 적에게 둔화) > 미리 깔기 > 불 모으기. 원소술사에만 걸린다(다른 직업의 측정은 그대로) */
+const ELEM_BIGK = ['heavy', 'burn', 'chanting', 'reflect']; const ELEM_SOONK = ['charge', 'chant', 'aim', 'fuse'];
+function elemPick(b, P, r, okS, reach, pv1) {
+  const p = b.p; const al = E.alive(b).filter(e => e.role !== 'root');
+  const urgent = e => !!(e.intent && (ELEM_BIGK.includes(e.intent.k) || (e.intent.k === 'attack' && e.intent.aimed)));
+  const soon = e => !!(e.intent && ELEM_SOONK.includes(e.intent.k));
+  const nAct = {}; for (const x of pv1) nAct[x.e.id] = x.n;
+  const hitter = e => !!(nAct[e.id] && e.intent && e.intent.k === 'attack' && !e.intent.aimed); // 내 다음 차례 전에 나를 평소 공격으로 칠 적 (무뎌짐이 드는 공격)
+  const atkN = pv1.filter(x => x.e.intent && ['attack', 'heavy', 'brand', 'constrict', 'hand'].includes(x.e.intent.k)).reduce((m, x) => m + x.n, 0);
+  const isBig = e => !!(e.elite || e.strong || e.role === 'boss');
+  const prio = e => (e.chant ? 5 : 0) + (['healer', 'summoner', 'pyre'].includes(e.role) ? 3 : 0) + (e.role === 'thief' && (e.loot || (e.intent && e.intent.k === 'steal')) ? 6 : 0) + (e.pile ? -3 : 0) + (e.lordWall ? 2 : 0);
+  const fxOf = (a, k) => a.s.fx.find(x => x.k === k);
+  const evalOn = (a, e, multi) => {
+    const v = E.elemPreview(b, a.s, e, multi); const d0 = fxOf(a, 'dmg'); const bo = fxOf(a, 'burnOut');
+    let m = 1; const lx = fxOf(a, 'lowx'), gx = fxOf(a, 'bigx'), bx = fxOf(a, 'brokenx'), cx = fxOf(a, 'chillx');
+    if (lx && e.hp <= e.hpMax * lx.hp) m *= lx.mul; if (gx && isBig(e)) m *= gx.mul; if (bx && e.s.broken) m *= bx.mul; if (cx && e.s.chill) m *= cx.mul;
+    const dd = ((d0 ? d0.n * (a.s.hits || 1) : 0) + (bo ? bo.per * v.burn : 0)) * m * (multi ? 0.8 : 1) * (e.evading && !multi ? 0 : 1) * (e.braced ? 0.5 : 1);
+    const tot = dd + (v.shock ? v.d : 0); const kill = tot >= e.hp;
+    const cut = a.s.fx.find(x => x.k === 'cutx'); const cutOn = cut && e.intent && (cut.chant ? ['chant', 'chanting', 'burn'] : ['charge', 'heavy', 'fuse', 'explode', 'chant', 'chanting', 'burn']).includes(e.intent.k);
+    const brk = a.s.fx.reduce((s0, x) => s0 + (x.k === 'brk' ? x.n : 0), 0) + (cutOn ? cut.brk : 0) + (v.shock ? v.brk : 0) + (bo ? bo.brk * v.burn : 0);
+    const breaks = !e.s.broken && e.role !== 'root' && e.brk + brk >= e.brkMax;
+    let val = Math.min(tot, e.hp) * (e.role === 'boss' ? 0.7 : 1);
+    if (kill) val += 6 + prio(e) * 2;
+    if (breaks) val += urgent(e) ? 30 : soon(e) ? 8 : 4; else if (urgent(e) || soon(e)) val += brk * 0.06;
+    if (v.shock && v.C0 > 0 && hitter(e) && !kill && !breaks) val -= 4 + e.dmg * 0.3 * Math.min(2, v.C0); // 무뎌진 적은 깨지 않는다
+    if (!v.shock && !kill) {
+      if (v.C > v.C0) val += (hitter(e) ? 1 : nAct[e.id] ? 0.3 : 0.5) * e.dmg * 0.3 * Math.min(2, v.C) + (v.I0 === 0 ? 1 : 0); // 무뎌짐 (평소 공격을 30% 줄인다)
+      if (v.I > v.I0) val += (v.I - v.I0) * (isBig(e) ? 1.2 : 0.6); // 화상: 다음 타격 덧피해와 열충격 재료
+      if ((soon(e) || urgent(e)) && !v.I0 && !v.C0 && (v.I || v.C)) val += 5; // 큰 공격을 모을 적에게 원소 하나를 미리 깐다
+    }
+    const wk = a.s.fx.find(x => x.k === 'st' && x.s === 'weak'); if (wk && !kill && (urgent(e) || soon(e))) val += 6; else if (wk && hitter(e) && !kill) val += 2;
+    return val + prio(e) * 0.5;
+  };
+  let best = null;
+  for (const a of okS) {
+    let val = 0, tid = null;
+    if (a.self) {
+      const rm = fxOf(a, 'rime'); const stam = fxOf(a, 'stam'); const pr = a.s.fx.find(x => x.k === 'st' && x.s === 'protect');
+      if (rm) { const cur = p.rime && p.rime[rm.s || 'chill'] ? p.rime[rm.s || 'chill'].times : 0; const use = Math.max(0, Math.min(rm.times, atkN) - cur); val += rm.s === 'ignite' ? use * (pv1.some(x => x.e.s.chill) ? 5 : 1.5) : use * 3.5; }
+      if (stam && p.st < 45) val += stam.n * 0.08; if (pr && atkN) val += pr.n * 1.5;
+    } else {
+      const mp = a.s.fx.find(x => x.k === 'meSt' && x.s === 'protect'); if (mp && atkN) val += mp.n * 1.2;
+      if (a.aoe) { for (const e of al) if (a.s.tgt === 'all' || e.row === 'front') val += evalOn(a, e, true); }
+      else { let bv = -1e9; for (const e of reach(a)) { const v = evalOn(a, e, false); if (v > bv) { bv = v; tid = e.id; } } if (tid == null) continue; val += bv; }
+    }
+    val -= (a.s.cd || 0) * 0.25 + (a.time > 1.25 ? 4 : 0); if (a.time <= 0.6 && !b.bonusUsed) val += 2; // 긴 쿨타임 · 느린 칸은 아끼고, 빠른 칸은 차례를 잇는다
+    if (!best || val > best.v) best = { a, t: tid, v: val };
+  }
+  { const hvA = E.actionList(b).find(x => x.id === 'heavy' && x.ok); if (hvA && p.st >= 60) for (const e of al) if (urgent(e) && !e.s.broken && E.canTarget(b, e, hvA) && e.brk + 35 >= e.brkMax && (!best || best.v < 30)) best = { a: hvA, t: e.id, v: 30 }; } // 집중 주문(붕괴 +35)으로 큰 공격을 끊을 수 있으면 (그 밖에는 스태미나를 방어 · 흘리기에 남긴다)
+  const bigNow = al.some(e => urgent(e) && nAct[e.id]);
+  if (bigNow && !(best && (best.v >= 28 || best.a.time <= 0.6 || best.a.id === 'heavy'))) { // 큰 공격을 끊지 못하면: 약화(빠른 칸) → 방어(강적 · 보스의 큰 공격은 흘리기가 덜 줄인다) → 흘리기
+    const big = al.filter(e => urgent(e) && nAct[e.id]).sort((x, y) => y.dmg - x.dmg)[0];
+    const wk = okS.find(a => a.time <= 0.6 && !a.aoe && a.s.fx.some(x => x.k === 'st' && x.s === 'weak') && E.canTarget(b, big, a)); if (wk && !big.s.weak && !b.bonusUsed) return [wk.id, big.id];
+    const L2 = E.actionList(b); const g = L2.find(x => x.id === 'guard' && x.ok), d = L2.find(x => x.id === 'dodge' && x.ok);
+    if (g && (big.strong || big.role === 'boss' || big.elite || !d)) return ['guard']; if (d) return ['dodge', big.id]; if (g) return ['guard'];
+    return null;
+  } // 큰 공격을 끊지 못하면 방어 · 흘리기에 차례를 넘긴다(아래 공통 판단)
+  return best && best.v > 4 ? [best.a.id, best.t] : null;
+}
 function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   const p = b.p; const nf = !!(E.noFast && E.noFast(p)); const okS = L.filter(a => a.v2 && a.ok && !(nf && a.time <= 0.6)); const has = (a, k) => a.s.fx.some(e => e.k === k); // 느린 맥박: 빠른 칸이 없어 빠른 스킬도 차례를 끝내므로 사람처럼 빠른 스킬을 고르지 않는다
   const psn = e => (e.s.poison ? e.s.poison.stacks : 0);
@@ -190,6 +250,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     if (!okS.some(a => !a.self && !has(a, 'parry'))) { const t = best({ id: 'basic', melee: 1 }, (x, y) => (bl(y) - bl(x)) || (x.hp - y.hp)); if (t && bl(t) > 0 && r() < 0.8) return ['basic', t.id]; }
     }
   }
+  if (p.build === 'elementalist' && E.elemPreview && useMech && !process.env.ELEM_OFF) { const v = elemPick(b, P, r, okS, reach, pv1); if (v) return v; } // 0.6a.2 원소술사 (10월 7일): 열충격 미리 보기로 고른다
   // 강타 예고: 흘리기형 스킬(스태미나 없이) → 흘리기 준비 → 스태미나 흘리기. 이번 차례에 빠른 행동으로 이미 그 적을 흘릴 준비를 했으면 다시 걸지 않는다(덮어쓰면 붙은 효과를 잃는다)
   if (hv && !v2Ready(b, hv.e.id) && r() < Math.max(P.parry, 0.35) + 0.2) {
     const ps = okS.find(a => has(a, 'parry')); if (ps) return [ps.id, hv.e.id];
@@ -221,7 +282,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   }
   if ((hv || ex) && r() < P.guard && L.find(a => a.id === 'guard' && a.ok)) return ['guard'];
   // 강공격: 스태미나가 넉넉하고 강타 예고가 없으면 가끔 (흘리기 몫 40은 남긴다)
-  if (!hv && p.st >= 80 && r() < 0.3 + P.risk * 0.3 && L.find(a => a.id === 'heavy' && a.ok)) { const t = best({ id: 'heavy', melee: 1 }, (x, y) => y.hp - x.hp); if (t) return ['heavy', t.id]; }
+  if (!hv && p.st >= 80 && p.build !== 'elementalist' && r() < 0.3 + P.risk * 0.3 && L.find(a => a.id === 'heavy' && a.ok)) { const t = best({ id: 'heavy', melee: 1 }, (x, y) => y.hp - x.hp); if (t) return ['heavy', t.id]; }
   const burnLow = a => has(a, 'wardBurn') && (p.ward || 0) < Math.min(a.s.fx.find(e => e.k === 'wardBurn').max || 99, E.wardMax ? E.wardMax(p) : 99) * 0.5; // 파수꾼: 태울 보호막이 모자라면 태우기를 고르지 않는다 (사람은 버튼의 "보호막 n 태움"을 보고 고른다)
   if (!useMech) { const pool = okS.filter(a => !has(a, 'parry') && !has(a, 'parryBuff') && !burnLow(a) && !(has(a, 'burst') && !E.alive(b).some(e => psn(e) > 0))); if (pool.length && r() < 0.6) { const a = pool[Math.floor(r() * pool.length)]; const t = a.self || a.aoe ? null : best(a, (x, y) => x.hp - y.hp); return [a.id, t && t.id]; } return null; }
   const th = mem.burstTh || (mem.burstTh = 4 + Math.floor(r() * 4));
@@ -359,7 +420,7 @@ function wasted(b, id, tid, mem) {
   if (id === 'dodge') { const tt = t || E.pickDodge(b); if (tt && !E.previewAfter(b, 1).some(x => x.e === tt)) return '움직이지 않을 적에게 흘리기'; }
   if (id === 'flaskL' && p.hp > p.hpMax * 0.9 && !p.s.poison && !p.s.bleed && !p.s.ignite && !p.s.chill) return '생명력 거의 가득한데 생명력 플라스크';
   if (id === 'flaskM' && p.mp > p.mpMax * 0.9 && !p.s.weak && !p.s.vuln) return '마나 거의 가득한데 마나 플라스크';
-  if (['basic', 'heavy', 'viper', 'scarcut', 'crush', 'lava'].includes(id) && !(p.build === 'hunter' && (id === 'basic' || id === 'heavy')) && t && E.guardOf(b, t) && !(id === 'heavy' && p.eq.weapon === 'hook' && t.row === 'back')) return '방패병에게 가로막힐 대상을 근접 공격';
+  if (['basic', 'heavy', 'viper', 'scarcut', 'crush', 'lava'].includes(id) && !((p.build === 'hunter' || p.build === 'elementalist') && (id === 'basic' || id === 'heavy')) && t && E.guardOf(b, t) && !(id === 'heavy' && p.eq.weapon === 'hook' && t.row === 'back')) return '방패병에게 가로막힐 대상을 근접 공격';
   if (id === 'cloud' && E.alive(b).every(e => e.s.poison && e.s.poison.stacks >= 9)) return '이미 중독 가득한데 독구름';
   return null;
 }

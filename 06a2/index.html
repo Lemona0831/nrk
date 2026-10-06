@@ -669,10 +669,12 @@ function runSkill2(b, act, tgt) {
   const fs = F('foresee'); if (fs) { p.foresee = { red: fs.red, until: (b.round || 0) + fs.rounds }; logp(b, 'good', s.n + '. ' + fs.rounds + '라운드 동안 강타 · 겨눈 한 발 · 화형의 피해 −' + Math.round(fs.red * 100) + '%'); }
   const wd = F('ward'); if (wd) { const g = addWard(b, p, wd.n); logp(b, 'good', s.n + '. 보호막 +' + Math.round(g) + ' (' + Math.round(p.ward) + '/' + wardMax(p) + ')'); } // 파수꾼: 보호막 얻기
   const wf = F('wardFill'); if (wf) { const goal = Math.round(wardMax(p) * (wf.to || 1)); const g = addWard(b, p, Math.max(0, goal - (p.ward || 0))); logp(b, g > 0 ? 'good' : 'sys', s.n + (g > 0 ? '. 보호막 +' + Math.round(g) + ' (' + Math.round(p.ward) + '/' + wardMax(p) + ')' : '. 보호막이 이미 그만큼 있다')); } // 보호막 채우기: 상한의 to까지 (비어 있을수록 많이)
+  const rm = F('rime'); if (rm) { const k = rm.s || 'chill'; p.rime = p.rime || {}; const c0 = p.rime[k]; p.rime[k] = { n: Math.max(c0 ? c0.n : 0, rm.n), times: Math.min(ELEM.rimeMax, (c0 ? c0.times : 0) + rm.times) }; logp(b, 'good', s.n + '. 다음 ' + p.rime[k].times + '번, 나를 친 적에게 ' + KW_N[k] + ' ' + p.rime[k].n); } // 원소술사 되얼림 · 불꽃 외투: 이미 있으면 횟수를 더한다(최대 8번), 수치는 큰 쪽
   const th = F('thorn'); if (th && th.bleed) { const n0 = p.thorn ? p.thorn.n : 0; p.thorn = { n: Math.min(WARD.thornMax, n0 + th.times), dmg: Math.max(p.thorn ? p.thorn.dmg : 0, th.dmg || 0), bleed: Math.max(p.thorn ? p.thorn.bleed || 0 : 0, th.bleed) }; logp(b, 'good', s.n + '. 맞으면 때린 적에게 출혈 ' + p.thorn.bleed + ' · ' + p.thorn.n + '번'); } // 맞을 때 출혈 (숨겨진 직업 1)
   else if (th) { const n0 = p.thorn ? p.thorn.n : 0; p.thorn = { n: Math.min(WARD.thornMax, n0 + th.times), dmg: Math.max(p.thorn ? p.thorn.dmg : 0, th.dmg) }; logp(b, 'good', s.n + '. 가시 ' + p.thorn.n + '번(맞을 때마다 피해 ' + p.thorn.dmg + ')'); } // 가시: 이미 있으면 횟수를 더한다(최대 8), 피해는 큰 쪽 (10월 4일)
   const pb = F('parryBuff'); if (pb) { p.pbuf = { n: pb.times || 1, red: pb.red || 0, stam: pb.stam || 0, dmg: pb.dmg || 0, poison: pb.poison || 0, hasten: hzOn === 'parry' ? (hz.n || 1) : 0, hb: s.b }; logp(b, 'good', '칼끝을 겨눈다. 다음 흘리기 ' + p.pbuf.n + '번이 날카로워진다'); }
   const multi = s.tgt === 'front' || s.tgt === 'all'; const hits = s.hits || 1; let tot = 0, killed = 0;
+  const wv = F('weave'), bo = F('burnOut'); const preI = {}; if (bo) for (const e of targets) preI[e.id] = st(e, 'ignite'); // 원소술사: 엮기, 불태우기(첫 타격 전의 화상)
   const wb = F('wardBurn'); let burn = 0; if (wb) { burn = Math.min(p.ward || 0, wb.max || Infinity); p.ward = (p.ward || 0) - burn; logp(b, burn > 0 ? 'good' : 'sys', burn > 0 ? '보호막 ' + Math.round(burn) + '을(를) 태운다' : '태울 보호막이 없다'); } // 파수꾼: 태운 만큼 × 배수 피해
   const wdm = F('wardDmg'), vp = F('vulnPer'), shx = F('shieldx'), pl = F('pull'), vg = F('vulnGrow'), chx = F('chillx'); const wardNow = p.ward || 0;
   const dm = F('dmg'), ex = F('exploit'), po = F('poison'), bk = F('brk'), bp = F('brkPer'); const stx = s.tgt === 'self' ? [] : s.fx.filter(e => e.k === 'st'); const lx = F('lowx'), bx = F('brokenx'), sp = F('spread'), cx = F('cutx'), dr = F('drain'), gx = F('bigx'); const isBig = e => !!(e.elite || e.strong || e.role === 'boss');
@@ -702,10 +704,12 @@ function runSkill2(b, act, tgt) {
     if (!e.alive || b.over) continue;
     let base = (dm ? dm.n : 0) + (ex ? ex.per * (ex.s === 'bleed' ? (ex.me ? Math.min(ex.max || 10, stk(p, 'bleed')) : preBlOf(e)) : st(e, 'poison')) : 0) + (wb && h === 0 ? burn * wb.mul : 0) + (wdm ? wdm.per * wardNow : 0) + (vp ? vp.per * st(e, 'vuln') : 0);
     if (BU) { if (gru) base += Math.min(gru.max || 999, gru.per * (p.grudge || 0)); base += meDrainDmg; } // 받은 피해 · 지운 내 출혈
+    if (bo && h === 0) base += bo.per * preI[e.id] * dotMul(p); // 불태우기: 태운 화상 1마다 (지능 반영)
     if (csh && h === 0 && preCh[e.id] > 0) { base += csh.dmg * preCh[e.id]; delete e.s.chill; } // 얼음 깨기: 둔화를 모두 깨뜨린다
     if (fb && h === 0) base += fb.n * fOf(e); if (fxs) base *= 1 + fxs.per * fOf(e); if (swx && h === 0 && prevId != null && prevId !== e.id) base *= swx.mul; if (hsx && b.pDouble === b.round) base *= hsx.mul; if (lnk) base *= 1 + HUNT.link; if (hsp && h === 0 && hspOn) base *= hsp.mul; // 추적 터뜨리기 · 추적 비례 · 표적 바꾸기 · 가속
     if (lx && (lx.me ? p.hp <= p.hpMax * lx.hp : e.hp <= e.hpMax * lx.hp)) base *= lx.mul; if (bx && e.s.broken) base *= bx.mul; if (gx && isBig(e)) base *= gx.mul; if (chx && e.s.chill) base *= chx.mul; // 마무리(생명력 낮음), 붕괴한 적, 큰 적, 둔화된 적 (겹치면 곱한다)
-    if (base > 0) { tot += hurtEnemy(b, e, outDmg(b, base, {}), { single: multi ? 0 : 1, aoe: multi ? 1 : 0, melee: s.tgt === 'melee' || s.tgt === 'front' ? 1 : 0, label: s.n }); if (!e.alive) { killed++; if (BU) { if (h === 0) buEat(e, true); buKill(e); if (cr && h < hits - 1 && targets.length === 1) { const nx = buCarry(b, act, e); if (nx) { targets[0] = nx; logp(b, 'good', '남은 타격이 ' + nx.n + '에게 이어진다'); } } } continue; } }
+    if (base > 0) { tot += hurtEnemy(b, e, outDmg(b, base, {}), { single: multi ? 0 : 1, aoe: multi ? 1 : 0, melee: s.tgt === 'melee' || s.tgt === 'front' ? 1 : 0, noIgn: bo && h === 0 ? 1 : 0, label: s.n }); if (!e.alive) { killed++; if (BU) { if (h === 0) buEat(e, true); buKill(e); if (cr && h < hits - 1 && targets.length === 1) { const nx = buCarry(b, act, e); if (nx) { targets[0] = nx; logp(b, 'good', '남은 타격이 ' + nx.n + '에게 이어진다'); } } } continue; } }
+    if (bo && h === 0 && e.alive) { const n = preI[e.id]; if (n > 0) { delete e.s.ignite; addBreak(b, e, bo.brk * n); logp(b, 'good', e.n + '의 화상 ' + n + '을(를) 모두 태운다. 붕괴 +' + bo.brk * n); } else logp(b, 'sys', e.n + '에게 태울 화상이 없다'); } // 불태우기: 화상은 타격 뒤에 지운다(그 타격으로 쓰러지면 불로 쓰러진 것)
     if (BU && h === 0) buEat(e, false);
     if (fb && h === 0 && e.alive) { p.focus = { id: e.id, n: 0 }; } // 터뜨린 추적은 사라진다
     if (csh && h === 0 && e.alive && preCh[e.id] > 0) { logp(b, 'good', e.n + '의 얼음이 깨진다. 둔화 ' + preCh[e.id]); addBreak(b, e, csh.brk * preCh[e.id]); b.rec.push({ k: 'shatter', n: preCh[e.id], broke: e.s.broken && !preBrk[e.id] ? 1 : 0 }); }
@@ -716,11 +720,12 @@ function runSkill2(b, act, tgt) {
     if (fa && h === hits - 1 && e.alive) { const cur = p.focus && p.focus.id === e.id ? p.focus.n : 0; p.focus = { id: e.id, n: Math.max(cur, Math.min(HUNT.addMax, cur + fa.n)) }; logp(b, 'good', e.n + '에게 추적 ' + p.focus.n + '겹'); } // 추적 추가는 2겹까지만
     if (po) addPoison(b, e, po.n, 1, capOver);
     if (bk) addBreak(b, e, bk.n * (shx && e.role === 'shield' ? shx.mul : 1)); // 방패병에게 붕괴 ×
-    if (cx && h === 0 && e.alive && e.intent && ['charge', 'heavy', 'fuse', 'explode', 'chant', 'chanting', 'burn'].includes(e.intent.k)) { logp(b, 'good', e.n + '이(가) 모으던 힘을 노린다. 붕괴 +' + cx.brk); addBreak(b, e, cx.brk); } // 끊어 내기
+    if (cx && h === 0 && e.alive && e.intent && (cx.chant ? CHANT_K : ['charge', 'heavy', 'fuse', 'explode', 'chant', 'chanting', 'burn']).includes(e.intent.k)) { logp(b, 'good', e.n + '이(가) 모으던 힘을 노린다. 붕괴 +' + cx.brk); addBreak(b, e, cx.brk); } // 끊어 내기
     if (dr && !dr.s && h === 0 && st(e, 'poison') > 0) { const hl = Math.min(p.hpMax - p.hp, st(e, 'poison') * dr.per * healMul(p)); if (hl > 0) { p.hp += hl; logp(b, 'good', e.n + '의 독에서 생명력 +' + r1(hl)); } } // 독 흡수: 중독은 그대로
     if (bp && h === 0) addBreak(b, e, bp.per * st(e, 'poison'));
     if (h === 0) for (const x of stx) if (e.alive) addS(b, e, x.s, x.n); // 적에게 거는 상태 (독무의 약화)
     if (gru && h === 0 && e.alive && (p.grudge || 0) > 0) { if (gru.bl) addS(b, e, 'bleed', Math.min(6, Math.floor(p.grudge / gru.bl))); if (gru.vu) addS(b, e, 'vuln', Math.min(3, Math.floor(p.grudge / gru.vu))); if (gru.brk) addBreak(b, e, Math.min(gru.brkMax || 999, p.grudge * gru.brk)); } // 받은 피해를 출혈 · 취약 · 붕괴로
+    if (wv && h === 0 && e.alive) { const I = st(e, 'ignite'), C = st(e, 'chill'); if (I && !C) addS(b, e, 'chill', wv.chill); else if (!I) addS(b, e, 'ignite', wv.ign); } // 원소술사 엮기: 없는 원소 (첫 타격이 화상을 쓴 뒤의 상태로 고른다. 둘 다 있으면 걸지 않는다)
     if (pl && h === 0 && e.alive && e.row === 'back') { e.row = 'front'; logp(b, 'crit', e.n + '을(를) 전열로 끌어낸다'); } // 파수꾼: 후열 끌어내기
     if (vg && h === 0 && e.alive) { const n0 = st(e, 'vuln'); const add = Math.round(n0 * (vg.mul - 1)); if (add > 0) { addS(b, e, 'vuln', add); logp(b, 'good', e.n + '의 약점이 벌어진다. 취약 ' + n0 + ' → ' + st(e, 'vuln')); } } // 파수꾼: 취약 키우기
     if (sp && !sp.s && h === hits - 1 && e.alive) { const n = Math.ceil(st(e, 'poison') * sp.per); if (n > 0) { let k = 0; for (const o of alive(b)) if (o !== e && o.role !== 'root') { addPoison(b, o, n, 1, capOver); k++; } if (k) logp(b, 'good', e.n + '의 독이 번진다. 다른 적에게 중독 ' + n); } } // 독 번지기
@@ -755,6 +760,7 @@ function runSkill2(b, act, tgt) {
   if (hzOn === 'use') hastenBranch(b, s.b, hz.n || 1, s.id); // 🔄 쓰면 다른 같은 갈래 스킬 쿨타임 −n // 이번 차례에 쓴 스킬은 모두 이번 차례가 끝날 때 줄지 않는다 (10월 3일: 빠른 스킬 다음에 스킬을 쓰면 빠른 스킬의 대기가 1 짧았다)
   p.lastSkillDmg = multi ? tot / Math.max(1, targets.length) : tot;
   if (p.build === 'hunter' && s.b !== '시작') p.lastBr = s.b; // 사냥꾼 연계: 쓴 갈래
+  if (p.build === 'elementalist') b.shockCtx = { id: s.id, br: s.b, ids: targets.map(e => e.id), multi, sx: F('shockx') || null, hz: hzOn === 'shock' ? (hz.n || 1) : 0 }; // 원소술사: 이 행동 끝의 열충격에 붙일 것 (finishPlayer가 쓰고 지운다)
   b.curSkill = null; b.focusKey = null;
 }
 function allSkillNames() { const m = allSkills(); for (const k in EXCL) for (const s of exclOf(k)) m[s.id] = s; return m; }
@@ -867,7 +873,7 @@ function statRecommend(build, cur, pts) { const W = STAT_REC[build] || { str: 0.
 function stat(p, k) { return (p.stat && p.stat[k]) || 0; }
 /* 장비 기본 수치 (기획서 11.5절). 화면에서 고른 장비로 applyGear가 채운다 */
 const START_GEAR = { wpn: 8, hp: 10, st: 0, mp: 0, flask: 0.3 };
-const CANTRIP = { arcanist: '마력 화살', warlock: '그림자 화살', priest: '빛줄기' };
+const CANTRIP = { arcanist: '마력 화살', warlock: '그림자 화살', priest: '빛줄기', elementalist: '마력 화살' }; // 원소술사(0.6a.2): 옛 시전자 배율(×0.9 · 1.6 · 붕괴 30)은 쓰지 않고 wpnMul 0.5 · HEAVY_V2
 const isCaster = p => !!CANTRIP[p.build];
 const STAM_FLASK = 60; // 스태미나 플라스크 회복량 (11.6절 [가설])
 /* ===== 아이템 효과 표 (IFX, 기획서 11.5절 1챕터 100종 가운데 0.6 새 79종) =====
@@ -924,6 +930,65 @@ const isStopTarget = e => !!(e.intent && (STOP_K.includes(e.intent.k) || e.inten
 const CHANT = { cut: 0.3, big: 0.28, burn: 3 }; // 화형 사제 (10월 5일): 영창 중 받은 피해가 최대 생명력 × cut이면 끊긴다. 화형 = 기준 생명력 × big(정예 ×1.25), 화상 burn. 영창은 한 번에 한 적만
 const chantDmg = (b, e) => HIT_REF(e.lv || 1) * CHANT.big * ((b && b.ctx && b.ctx.ch || 1) >= 2 ? 0.26 / CHANT.big : 1) * (e.elite ? 1.25 : 1) * enemyHitEst(b, e) / Math.max(0.01, e.dmg);
 const CHANT_K = ['chant', 'chanting', 'burn'];
+/* ===== 원소술사 (10월 7일, docs/직업/원소술사.md B절) =====
+   열충격: 원소술사가 싸우는 동안 한 적에게 화상(1 이상)과 둔화(1 이상)가 함께 있으면 그 행동이 끝날 때(내 행동은 finishPlayer 첫 줄, 적 행동은 stepWorld의 enemyAct 뒤) 깨진다.
+   T = min(cap, 화상 + Cw × 둔화), 피해 T × D × 지능(dotMul) (× 이 행동 스킬 대상이면 shockx.dmg, × 여럿 대상 행동이면 aoeCut), 붕괴 둔화 × Bk (× shockx.brk).
+   열충격은 몸 낮추기를 지나가고 버티기 · 서원(보스 고유 감소)은 감소 몫의 half만 받는다. 취약 · 보호 · 화상 · 장비 타격 배율은 쓰지도 받지도 않는다. 두 상태는 피해 뒤에 지운다(쓰러지면 화상이 남은 채 쓰러진다).
+   서리 무게: 둔화된 적(또는 이번 라운드 둔화로 맨 뒤에 선 적, e.chillR)이 나를 치는 평소 공격은 피해 ×(1 − guard). 큰 공격(bigHit)과 지속 피해는 그대로.
+   되얼림(rime): 나를 직접 친 적에게 상태 n, 횟수 상한 rimeMax */
+const ELEM = { D: 3, Cw: 2, Bk: 12, guard: 0.3, half: 0.5, cap: 16, rimeMax: 8 };
+/* 광역 배율 (hurtEnemy와 열충격이 함께 쓴다): 땅속 · 군주의 뼈벽 · 후열 · 방패벽 · 방패병, 보스는 1. quiet면 장비 효과 발동을 세지 않는다(미리 보기) */
+function aoeApply(b, e, d, quiet) {
+  const fl = k => quiet ? fxList(b.p).some(([, f]) => f[k]) : fxFlag(b.p, k);
+  if (e.under) d *= e.foe === 'sexton' ? FOE_X.sexton.aoe : BURROW.aoe;
+  if (e.lordWall) d *= LORD.wallAoe;
+  if (e.role !== 'boss') { if (e.row === 'back') { if (!fl('aoeBack')) d *= AOE.back; if (hasShield(b, e.id) && !fl('aoeWall')) d *= AOE.wall; } else if (e.role !== 'shield' && hasShield(b, e.id) && !fl('aoeWall')) d *= AOE.wallFront; else if (e.role === 'shield' && !(e.stun > 0) && !e.s.broken) d *= AOE.shieldSelf; }
+  return d;
+}
+const aoeCut = (b, e, quiet) => aoeApply(b, e, 1, quiet);
+const frostOn = (b, e) => !!(b && b.p.build === 'elementalist' && e && (e.s.chill || e.chillR === b.round)); // 서리 무게가 걸린 적 (화면 표시)
+/* 이 스킬을 이 적에게 쓰면 행동 끝에 남는 화상 · 둔화와 열충격 (버튼 미리 보기 · 테스터). 엔진과 같은 순서: 타격이 화상 1을 쓰고 → 첫 타격 뒤 상태 → 엮기 → 다음 타격 */
+function elemPreview(b, s, e, multi) {
+  let I = st(e, 'ignite'), C = st(e, 'chill'), H = st(e, 'haste'); const I0 = I, C0 = C;
+  const dm = s.fx.find(x => x.k === 'dmg'), bo = s.fx.find(x => x.k === 'burnOut'), wv = s.fx.find(x => x.k === 'weave'); const hit = !!(dm && dm.n > 0) || !!bo; let wvAdd = null;
+  const add = (k, n) => { if (k === 'chill') { const m = Math.min(n, H); H -= m; n -= m; if (n > 0) C = Math.min(Math.max(KW.chill, C), C + n); } else if (k === 'ignite') I = Math.min(Math.max(KW.ignite, I), I + n); };
+  for (let h = 0; h < (s.hits || 1); h++) {
+    if (hit && !(bo && h === 0) && I > 0) I--;
+    if (h === 0) { if (bo) I = 0; if (s.tgt !== 'self') for (const x of s.fx) if (x.k === 'st') add(x.s, x.n); if (wv) { if (I && !C) { wvAdd = ['chill', wv.chill]; add('chill', wv.chill); } else if (!I) { wvAdd = ['ignite', wv.ign]; add('ignite', wv.ign); } } }
+  }
+  const sx = s.fx.find(x => x.k === 'shockx'); const shock = I >= 1 && C >= 1 && !e.under;
+  const T = shock ? Math.min(ELEM.cap, I + ELEM.Cw * C) : 0;
+  return { I0, C0, I, C, shock, T, d: T * ELEM.D * dotMul(b.p) * ((sx && sx.dmg) || 1) * (multi ? aoeCut(b, e, 1) : 1), brk: shock ? C * ELEM.Bk * ((sx && sx.brk) || 1) : 0, wv: wvAdd, burn: bo ? I0 : 0 };
+}
+/* 열충격 처리 (by: 'me' 내 행동 끝, 'enemy' 적 행동 끝). 내 행동이면 b.shockCtx(runSkill2가 싣는다)의 대상에게 shockx를 붙인다 */
+function elemShock(b, by) {
+  if (b.over || b.p.build !== 'elementalist') return;
+  const ctx = by === 'me' ? b.shockCtx : null; let tgtN = 0;
+  for (const e of b.en.slice()) {
+    if (b.over) break;
+    if (!e.alive || e.under || e.role === 'root' || e.shockAct === b.actN) continue; // 땅속이면 상태를 남긴다
+    const I = st(e, 'ignite'), C = st(e, 'chill'); if (!(I >= 1 && C >= 1)) continue;
+    e.shockAct = b.actN; const tgt = !!(ctx && ctx.ids.includes(e.id)); const sx = tgt ? ctx.sx : null; if (tgt) tgtN++;
+    const T = Math.min(ELEM.cap, I + ELEM.Cw * C); const base = T * ELEM.D * dotMul(b.p) * ((sx && sx.dmg) || 1); const multi = !!(ctx && ctx.multi);
+    const big = !!(e.intent && (['heavy', 'charge', 'chant', 'chanting', 'burn', 'aim', 'reflect', 'erupt'].includes(e.intent.k) || e.intent.aimed)); const preB = !!e.s.broken; const red = !!(e.braced || e.vow);
+    logp(b, 'crit', ''); const ent = b.log[b.log.length - 1];
+    const dealt = hurtEnemy(b, e, base * (multi ? aoeCut(b, e) : 1), { dot: 1, shock: 1, shockAoe: multi ? 1 : 0, silent: 1, label: '열충격' });
+    let brk = 0; if (e.alive) { delete e.s.ignite; delete e.s.chill; e.chillR = 0; brk = C * ELEM.Bk * ((sx && sx.brk) || 1); addBreak(b, e, brk); }
+    const broke = e.alive && !!e.s.broken && !preB;
+    ent.m = fixJosa((by === 'enemy' ? '(적 차례) ' : '') + '열충격: ' + e.n + '. 화상 ' + I + ' + 둔화 ' + C + ' × 2 → 피해 ' + r1(dealt) + (brk ? ', 붕괴 +' + Math.round(brk) : ''));
+    let arc = 0; if (sx && sx.arc && !b.over) for (const o of alive(b)) { if (o === e || o.role === 'root') continue; arc += hurtEnemy(b, o, base * sx.arc * aoeCut(b, o), { dot: 1, shock: 1, shockAoe: 1, silent: 1, label: '번진 열충격' }); if (b.over) break; }
+    if (arc > 0) logp(b, 'good', '열충격이 다른 적에게 번진다. 모두 ' + r1(arc) + ' 피해');
+    if (sx && sx.keep && e.alive && !b.over) { const g = addS(b, e, sx.keep.s, sx.keep.n); if (g) logp(b, 'good', e.n + '에게 ' + KW_N[sx.keep.s] + ' ' + g + '이(가) 남는다'); }
+    b.rec.push({ k: 'shock', by, I, C, T, dmg: r1(dealt), brk: Math.round(brk), broke: broke ? 1 : 0, cut: broke && big ? 1 : 0, kill: e.alive ? 0 : 1, arc: r1(arc), red: red ? 1 : 0, multi: multi ? 1 : 0 });
+  }
+  if (ctx && ctx.hz && tgtN && !b.over) hastenBranch(b, ctx.br, ctx.hz, ctx.id); // 🔄 이 스킬로 열충격이 일어나면 (행동에 한 번)
+}
+/* 되얼림 · 불꽃 외투: 나를 직접 친 적에게 상태 (보호막 · 방어 · 흘리기로 0이 되어도 센다. 몸 빼기로 피한 공격은 hurtPlayer가 먼저 끝낸다) */
+function elemRime(b, src) {
+  const p = b.p;
+  for (const k of Object.keys(p.rime)) { const r = p.rime[k]; if (!r || !(r.times > 0) || !src.alive) continue; const g = addS(b, src, k, r.n); r.times--; if (r.times <= 0) delete p.rime[k]; logp(b, 'good', (k === 'ignite' ? '불꽃이 ' : '서리가 ') + src.n + '에게 옮겨 간다. ' + KW_N[k] + ' ' + g + (r.times > 0 ? ' (남은 ' + r.times + '번)' : '')); }
+  if (!Object.keys(p.rime).length) p.rime = null;
+}
 /* ===== 2챕터 몸과 역할 (10월 5일, docs/챕터/2챕터.md 5절) ===== */
 const BIGK = ['charge', 'heavy', 'burrow', 'erupt', 'chant', 'chanting', 'burn']; // 한 라운드 큰 공격 상한(G7)이 세는 예고
 const hexDmgOf = (b, e) => { const k = HEX.kinds.filter(s => st(b.p, s) > 0).length; return enemyHitEst(b, e) / ROLES.hexer.hit * Math.min(HEX.cap, HEX.base + HEX.per * k); }; // 조이기: 내 해로운 상태 가짓수
@@ -1131,9 +1196,9 @@ function actCost(p, id, base) { return Math.max(0, base + fxAdd(p, 'cost', p, id
 const ST_REGEN = 10; // 스태미나 자연 회복 (라운드가 끝날 때마다). B0.5의 8에서 올림: 기본 공격이 스태미나를 채우지 않게 되면서 3,840판 비교로 정함 (11.6절)
 const gearOf = p => p.gear || START_GEAR;
 function wpnDmg(p) { return gearOf(p).wpn * ((BUILDS[p.build] || {}).wpnMul || 1); } // wpnMul: 직업마다 무기 피해 배율 (사냥꾼 활 55%: 후열에 바로 닿는 물리직, 10월 5일)
-function basicBase(p) { return wpnDmg(p) * (isCaster(p) ? 0.9 : 1) * (hasIt(p, 'venomring') ? 0.9 : 1); }
+function basicBase(p) { return wpnDmg(p) * (isCaster(p) && !isV2(p) ? 0.9 : 1) * (hasIt(p, 'venomring') ? 0.9 : 1); }
 const HEAVY_V2 = 1.5; // 0.6a.2 직업의 강공격 배율 (도움말·설명 창도 이 값을 쓴다)
-function heavyBase(p) { return wpnDmg(p) * (isCaster(p) ? 1.6 : isV2(p) ? HEAVY_V2 : 1.8) * (p.eq.weapon === 'twin' ? 0.8 : 1); } // 0.6a.2: 강공격 180% → 150% (10월 3일: 공통 행동이 갈래 스킬보다 세서 갈래 성격이 묻혔다)
+function heavyBase(p) { return wpnDmg(p) * (isCaster(p) && !isV2(p) ? 1.6 : isV2(p) ? HEAVY_V2 : 1.8) * (p.eq.weapon === 'twin' ? 0.8 : 1); } // 0.6a.2: 강공격 180% → 150% (10월 3일: 공통 행동이 갈래 스킬보다 세서 갈래 성격이 묻혔다)
 function flaskHealFrac(p) { return (gearOf(p).flask + (hasBt(p, 'mercy') ? 0.1 : 0) + fxVal(p, 'heal', 0, (a, v) => a + v)) * fxVal(p, 'healMul', 1, (a, v) => a * v) * (p.eq.flask === 'chalice' ? 0.9 : p.eq.flask === 'boilflask' ? 0.75 : p.eq.flask === 'bloodoil' ? 0.8 : 1); }
 function calcMpMax(p) { if (isV2(p)) return 0; return BUILDS[p.build].mp + gearOf(p).mp + fxStat(p, 'mp') + ((p.lv || 1) - 1) * ((LV_GAIN[p.build] || {}).mp || 0) + stat(p, 'int') - (p.eq.amulet === 'sigil' ? 15 : 0) - (p.eq.gloves === 'vpouch' ? 10 : 0); }
 function calcStMax(p) { return 100 + gearOf(p).st + fxStat(p, 'st') + stat(p, 'dex') - (p.eq.amulet === 'vanguard' ? 20 : 0) - (p.eq.gloves === 'chaingl' ? 10 : 0); }
@@ -1206,6 +1271,7 @@ function newBattle(player, enemies, ctx) {
   player.guard = 0; player.dodge = 0; player.stun = 0; player.fxDodged = 0;
   if (isV2(player)) resetCharges(player);
   if (isBu(player)) { player.hpFight = player.hp; player.tookAcc = 0; player.grudge = 0; player.selfBl = 0; } // 숨겨진 직업 1: 되찾기 한도 · 받은 피해 · 나에게 건 출혈
+  if (player.rime) player.rime = null; // 원소술사 되얼림은 전투마다
   { const oh = (BUILDS[player.build] || {}).openHaste; if (oh) { addS(b, player, 'haste', oh); logp(b, 'good', '먼저 움직인다. 가속 ' + oh + ' (라운드 맨 앞에서 두 번 연달아)'); } } // 사냥꾼 개전 가속 (10월 5일)
   fxRun(player, 'onStart', b, player);
   return b;
@@ -1261,7 +1327,7 @@ function kwTaken(b, u, d, o) {
   if (o.dot || !(d > 0)) return d;
   if (u.s.vuln) { d *= 1.25; kwDec(u, 'vuln'); }
   if (u.s.protect) { d *= 0.75; kwDec(u, 'protect'); }
-  if (u.s.ignite) { const n = stk(u, 'ignite'); kwDec(u, 'ignite'); let x = n * (hasMod(b, 'candle') ? 1.5 : 1) * (u === b.p ? 1 : dotMul(b.p)); if (u === b.p && hasBt(u, 'snuff')) x = 0; d += x; }
+  if (u.s.ignite && !o.noIgn) { const n = stk(u, 'ignite'); kwDec(u, 'ignite'); let x = n * (hasMod(b, 'candle') ? 1.5 : 1) * (u === b.p ? 1 : dotMul(b.p)); if (u === b.p && hasBt(u, 'snuff')) x = 0; d += x; }
   return d;
 }
 /* 0.6a.2 직업 (v2: 재사용 대기 스킬, 트리, 마나 없음) */
@@ -1515,6 +1581,7 @@ function hurtPlayer(b, raw, o) {
   if (p.brace) d *= 0.65;
   if (o.charged && hasIt(p, 'fury')) d *= 1.1;
   if (p.st <= 0 || p.exhaust) d *= 1.2;
+  if (p.build === 'elementalist' && o.src && !o.dot && !bigHit && (o.src.s.chill || o.src.chillR === b.round)) { const d0 = d; d *= 1 - ELEM.guard; b.frostN = (b.frostN || 0) + 1; b.frostSaved = (b.frostSaved || 0) + (d0 - d); } // 원소술사 서리 무게 (10월 7일)
   d = kwTaken(b, p, d, o);
   d *= fxMul(p, 'inMul', b, p, o);
   // 1회 행동 피해 상한 (4.6): 일반 25%, 정예 35% (보스는 기믹 제외)
@@ -1542,6 +1609,7 @@ function hurtPlayer(b, raw, o) {
   if (!o.silent && wardAll) logp(b, 'good', (o.label || '공격') + '. 보호막이 모두 받아냈다');
   else if (!o.silent) logp(b, 'bad', o.dot ? (o.label || '피해') + '이(가) 나를 갉아먹는다. ' + r1(d) + ' 피해' : (o.label || '공격') + '. ' + r1(d) + ' 피해' + (p.guard ? ', 방어로 절반' : ''));
   b.rec.push({ k: 'hit', t: r1(b.t), d: r1(d), dot: !!o.dot, charged: !!o.charged, src: o.src ? o.src.role : null, guard: !!p.guard, parried: o.parried ? 1 : 0 });
+  if (p.rime && o.src && o.src.alive && !o.dot && p.hp > 0) elemRime(b, o.src); // 원소술사 되얼림 · 불꽃 외투 (그 공격의 기록 뒤)
   checkEnd(b);
   return d;
 }
@@ -1559,17 +1627,16 @@ function hurtEnemy(b, e, raw, o) {
   if (!o.dot && o.melee && o.single && b.p.scar > 0 && hasIt(b.p, 'scarcharm')) d += Math.min(10, b.p.scar * 0.15);
   if (!o.dot && (o.single || o.melee) && hasIt(b.p, 'markamu')) { const mk = b.p.mk; if (mk && mk.id !== e.id && mk.n > 0) d *= 0.9; b.p.mk = mk && mk.id === e.id ? { id: e.id, n: mk.n + 1 } : { id: e.id, n: 1 }; if (b.p.mk.n >= 3) { b.p.mk.n = 0; b.markTgt = e; } }
   if (!o.dot && hasIt(b.p, 'focusring')) d *= o.aoe ? 0.7 : 1.07;
-  if (e.vow && !o.dot) d *= ABBOT.vowTaken;
+  if (e.vow && !o.dot) d *= ABBOT.vowTaken; else if (e.vow && o.shock) d *= 1 - (1 - ABBOT.vowTaken) * ELEM.half; // 열충격은 서원의 감소를 절반만
   if (e.evading && !o.dot && !o.aoe && fullF) logp(b, 'good', '추적 3겹: ' + e.n + '의 몸 낮추기를 꿰뚫는다');
   if (e.evading && !o.dot && !o.aoe && !fullF) { e.evading = 0; logp(b, 'sys', e.n + '이(가) 몸을 틀어 피한다'); return 0; } // 몸 낮추기: 다음 한 적 공격을 피한다 (광역 · 지속 피해는 그대로)
-  if (e.braced && !o.dot && !fullF) d *= EKW.braceRed;
-  if (e.demand && e.demand.turn === b.turnIdx && !o.dot && b.cur) e.demand.hit = 1; // 수도원장의 요구: 이번 차례에 쳤는가
+  if (e.braced && !o.dot && !fullF) d *= EKW.braceRed; else if (e.braced && o.shock) d *= 1 - (1 - EKW.braceRed) * ELEM.half; // 열충격은 버티기의 감소를 절반만
+  if (e.demand && e.demand.turn === b.turnIdx && (!o.dot || o.shock) && b.cur) e.demand.hit = 1; // 수도원장의 요구: 이번 차례에 쳤는가
   if (!o.dot && b.cur && b.p.whet) { d *= 1 + b.p.whet; b.p.whet = 0; } // 소모품 숫돌
   if (!o.dot && e.markDmg) { d *= 1 + e.markDmg; e.markDmg = 0; } // 소모품 표식 분필
-  if (e.under && !o.dot) { if (o.aoe) d *= e.foe === 'sexton' ? FOE_X.sexton.aoe : BURROW.aoe; else return 0; }
-  if (e.lordWall && o.aoe && !o.dot) d *= LORD.wallAoe; // 군주의 뼈벽은 광역을 절반만 // 땅속: 광역 ×1.3, 한 적 대상은 닿지 않는다
-  if (!o.aoe && !o.dot && e.row === 'back' && alive(b).some(x => x.role === 'bonewall')) d *= BWALL.cut; // 뼈벽 뒤 후열
-  if (o.aoe && !o.dot && e.role !== 'boss') { if (e.row === 'back') { if (!fxFlag(b.p, 'aoeBack')) d *= AOE.back; if (hasShield(b, e.id) && !fxFlag(b.p, 'aoeWall')) d *= AOE.wall; } else if (e.role !== 'shield' && hasShield(b, e.id) && !fxFlag(b.p, 'aoeWall')) d *= AOE.wallFront; else if (e.role === 'shield' && !(e.stun > 0) && !e.s.broken) d *= AOE.shieldSelf; } // 광역: 후열·방패벽·방패병
+  if (e.under && !o.dot && !o.aoe) return 0; // 땅속: 한 적 대상은 닿지 않는다 (광역 ×1.3은 aoeApply)
+  if (!o.aoe && (!o.dot || (o.shock && !o.shockAoe)) && e.row === 'back' && alive(b).some(x => x.role === 'bonewall')) d *= BWALL.cut; // 뼈벽 뒤 후열 (한 적 대상 열충격도)
+  if (o.aoe && !o.dot) d = aoeApply(b, e, d); // 광역: 땅속 · 군주의 뼈벽(절반) · 후열 · 방패벽 · 방패병 (10월 7일: 원소술사 열충격과 같은 함수로 뺐다)
   if (!o.dot && b.cur) { d = d * fxMul(b.p, 'hit', b, b.p, e, o, b.cur) + fxAdd(b.p, 'hitAdd', b, b.p, e, o, b.cur); }
   if (o.dot && e !== b.p) d *= fxMul(b.p, 'dotOut', b, b.p, e, o.label);
   d = kwTaken(b, e, d, o);
@@ -1908,7 +1975,7 @@ function intentText(b, e) {
   if (darkHid(b, e)) return { t: '어둠 속이라 무엇을 하려는지 보이지 않는다', hv: 0 };
   const i = e.intent || {}; const est = r1(enemyHitEst(b, e));
   switch (i.k) {
-    case 'attack': return { t: '공격 ' + est + (i.bleed ? ' · 출혈 ' + i.bleed : '') + (i.poison ? ' · 중독 ' + i.poison : ''), hv: 0 };
+    case 'attack': return { t: '공격 ' + est + (i.bleed ? ' · 출혈 ' + i.bleed : '') + (i.poison ? ' · 중독 ' + i.poison : '') + (!i.aimed && frostOn(b, e) ? ' · ❄️ 무뎌짐 −' + Math.round(ELEM.guard * 100) + '%' : ''), hv: 0 };
     case 'charge': return { t: heavyName(e) + '을(를) 모으는 중. 다음 행동에 내리친다', hv: 1 };
     case 'heavy': return { t: heavyName(e) + ' ' + r1(est * heavyMulOf(e, b)) + ' · 맞으면 취약 ' + EKW.heavyVuln, hv: 1 };
     case 'raise': return { t: '시체를 일으킨다', hv: 0 };
@@ -1970,7 +2037,7 @@ function intentBadge(b, e) {
   if (darkHid(b, e)) return { ico: '❓', num: '', txt: '보이지 않음', cls: '' };
   const i = e.intent || {}; const est = enemyHitEst(b, e); const capOf = d => Math.min(d, b.p.hpMax * (e.role === 'boss' ? 0.45 : e.elite ? 0.35 : 0.25));
   switch (i.k) {
-    case 'attack': return { ico: INTENT_ICO.attack, num: r1(capOf(est * (i.aimed ? EKW.aimMul : 1))), txt: (i.aimed ? '겨눈 한 발' : '공격') + (i.bleed ? ' 🩸' + i.bleed : '') + (i.poison ? ' ☠️' + i.poison : ''), cls: 'atk' };
+    case 'attack': { const fw = !i.aimed && frostOn(b, e); return { ico: INTENT_ICO.attack, num: r1(capOf(est * (i.aimed ? EKW.aimMul : 1) * (fw ? 1 - ELEM.guard : 1))), txt: (i.aimed ? '겨눈 한 발' : '공격') + (fw ? ' ❄️무뎌짐' : '') + (i.bleed ? ' 🩸' + i.bleed : '') + (i.poison ? ' ☠️' + i.poison : ''), cls: 'atk' }; }
     case 'hexcurse': return { ico: '🪢', num: '', txt: '저주 · 약화 1 · 취약 1', cls: 'warn' };
     case 'pick': { const n = alive(b).filter(x => x.pile).length; return { ico: '🦴', num: n, txt: '뼈 줍기 · 더미', cls: n ? 'warn' : 'sup' }; }
     case 'retprep': return { ico: '🔁', num: '', txt: '되돌리기 준비', cls: 'warn' };
@@ -2149,7 +2216,7 @@ function abbotCandles(b, e) {
   logp(b, 'crit', '제단에 촛불 ' + n + '개가 켜진다'); codexHit(b, 'abbot', 'candles');
 }
 function abbotBell(b, e) {
-  const p = b.p; for (const k of ['protect', 'rage', 'empower', 'haste', 'block']) delete p.s[k]; p.whet = 0; p.nextRed = 0; p.decoy = 0;
+  const p = b.p; for (const k of ['protect', 'rage', 'empower', 'haste', 'block']) delete p.s[k]; p.whet = 0; p.nextRed = 0; p.decoy = 0; if (p.rime) p.rime = null; // 원소술사 되얼림도 흩어진다
   for (const k in (p.cd || {})) if (p.cd[k] > 0) p.cd[k]++;
   logp(b, 'crit', e.n + '이(가) 침묵의 종을 울린다. 몸에 두른 기운이 흩어지고, 손이 무거워진다'); codexHit(b, 'abbot', 'bell');
   e.vow = 1; e.vowTick = b.tick; e.serN = 0; e.intent = { k: 'pray' }; logp(b, 'crit', e.n + '이(가) 입을 다문다'); codexHit(b, 'abbot', 'vow'); abbotCandles(b, e);
@@ -2221,7 +2288,7 @@ function actionList(b) {
   const SKM = skillMap(p.build);
   if (isV2(p)) for (const sid of skillsOf(p)) { // 0.6a.2: 재사용 대기
     const s = SK2[sid]; if (!s) continue; const w = (p.cd && p.cd[sid]) || 0;
-    const needPoison = !s.fx.some(e => ['dmg', 'poison', 'brk', 'st', 'parry', 'parryBuff', 'stam', 'cutx', 'ward', 'wardFill', 'wardBurn', 'wardDmg', 'thorn', 'pull', 'vulnPer', 'vulnGrow', 'shieldx', 'chillx', 'evade', 'evadeCtr', 'quick', 'quickTurns', 'foresee', 'meSt', 'focusAdd', 'focusBurst', 'focusx', 'swapx', 'hastex', 'chillCut', 'chillShatter', 'chillSpread', 'freeze', 'onCutBreak', 'hasteSpend', 'grudge', 'carry'].includes(e.k) || (e.k === 'burst' && e.pre) || (e.k === 'grow' && e.add) || (['drain', 'exploit', 'grow', 'spread'].includes(e.k) && e.s === 'bleed')); // 중독 없이는 아무 일도 없는 스킬만 잠근다 (10월 3일: 피해를 주는 터뜨리는 일격, 중독 4를 거는 독 응축도 잠겼다)
+    const needPoison = !s.fx.some(e => ['dmg', 'poison', 'brk', 'st', 'parry', 'parryBuff', 'stam', 'cutx', 'ward', 'wardFill', 'wardBurn', 'wardDmg', 'thorn', 'pull', 'vulnPer', 'vulnGrow', 'shieldx', 'chillx', 'evade', 'evadeCtr', 'quick', 'quickTurns', 'foresee', 'meSt', 'focusAdd', 'focusBurst', 'focusx', 'swapx', 'hastex', 'chillCut', 'chillShatter', 'chillSpread', 'freeze', 'onCutBreak', 'hasteSpend', 'grudge', 'carry', 'weave', 'shockx', 'rime', 'burnOut'].includes(e.k) || (e.k === 'burst' && e.pre) || (e.k === 'grow' && e.add) || (['drain', 'exploit', 'grow', 'spread'].includes(e.k) && e.s === 'bleed')); // 중독 없이는 아무 일도 없는 스킬만 잠근다 (10월 3일: 피해를 주는 터뜨리는 일격, 중독 4를 거는 독 응축도 잠겼다)
     let why = w > 0 ? (s.once ? '이번 전투에 이미 씀' : '쿨타임 ' + w + '턴 남음') : null;
     if (!why && needPoison && !alive(b).some(e => e.s.poison)) why = '중독된 적 없음';
     if (!why && buEatOnly(s) && !alive(b).some(e => stk(e, 'bleed') > 0 && canTarget(b, e, v2Static(s)))) why = '출혈된 적 없음'; // 피해 없이 먹는 칸
@@ -2364,7 +2431,7 @@ function playerAct(b, id, tgtId) {
       if (p.eq.weapon === 'hook' && tgt.row === 'back') { tgt.row = 'front'; logp(b, 'crit', '갈고리가 ' + tgt.n + '을(를) 앞으로 끌어낸다'); }
       if (p.eq.weapon === 'twinblades') { const hd = outDmg(b, heavyBase(p), { weapon: 1 }) * 0.6; const mh = isMeleeAct(p, 'heavy') ? 1 : 0; hurtEnemy(b, tgt, hd, { single: 1, melee: mh, label: '첫 칼' }); if (tgt.alive) hurtEnemy(b, tgt, hd, { single: 1, melee: mh, label: '둘째 칼' }); fxHit('twinblades'); }
       else hurtEnemy(b, tgt, outDmg(b, heavyBase(p), { weapon: 1 }), { single: 1, melee: isMeleeAct(p, 'heavy') ? 1 : 0, label: isCaster(p) ? '집중 주문' : '강공격' }); // 사냥꾼 강공격은 활이라 근접이 아니다
-      addBreak(b, tgt, (isCaster(p) ? 30 : 35) + 5 * Math.floor(stat(p, 'str') / 10) + (p.eq.weapon === 'maul' ? 20 : 0)); if (p.eq.weapon === 'maul') time = 1.4; applyReflux(b, tgt); break;
+      addBreak(b, tgt, (isCaster(p) && !isV2(p) ? 30 : 35) + 5 * Math.floor(stat(p, 'str') / 10) + (p.eq.weapon === 'maul' ? 20 : 0)); if (p.eq.weapon === 'maul') time = 1.4; applyReflux(b, tgt); break;
     }
     case 'sig': {
       const S = SIG[p.build]; p.sigCd = S.cd; time = S.time;
@@ -2492,7 +2559,7 @@ function addBreak(b, e, v) {
   }
 }
 function finishPlayer(b, time, lost) {
-  const p = b.p; b.cur = null; b.curSkill = null;
+  const p = b.p; if (!lost && p.build === 'elementalist') elemShock(b, 'me'); if (b.shockCtx) b.shockCtx = null; b.cur = null; b.curSkill = null; // 원소술사 열충격: 행동 하나가 끝날 때 (빠른 행동도)
   // 0.6a.2: 행동했으면(기절로 놓친 차례가 아니면) 약화·강화(공격했을 때)와 출혈
   if (!lost) { if (b.atkUsed) { kwDec(p, 'weak'); kwDec(p, 'empower'); } kwBleed(b, p); }
   b.atkUsed = 0;
@@ -2528,7 +2595,7 @@ function roundOrder(b, consume, slowMe) {
   if (p.s.haste && p.build === 'hunter') { const i = out.findIndex(x => x.id === 'p'); out.splice(i + 1, 0, Object.assign({}, out[i], { extra: 1 })); if (consume) b.pDouble = (b.round || 0) + 1; } // 가속 (10월 5일 만든 사람 결정): 사냥꾼 전용, 라운드 맨 앞에서 두 번 연달아 움직인다(한 라운드에 한 번). 두 번째 차례는 쿨타임이 줄지 않는다
   if (consume) {
     for (const x of ents) { const u = x.id === 'p' ? p : b.en.find(e => e.id === x.id); if (!u) continue;
-      if (x.g === 0 && u.s.haste) kwDec(u, 'haste'); if (x.g === 2 && u.s.chill) kwDec(u, 'chill'); if (x.id !== 'p') u.quick = 0; }
+      if (x.g === 0 && u.s.haste) kwDec(u, 'haste'); if (x.g === 2 && u.s.chill) { if (x.id !== 'p' && p.build === 'elementalist') u.chillR = b.round; kwDec(u, 'chill'); } /* 원소술사 서리 무게: 둔화로 맨 뒤에 선 라운드는 둔화가 0이 되어도 무뎌진다 */ if (x.id !== 'p') u.quick = 0; }
     b.ambushR = 0;
   }
   return out;
@@ -2548,7 +2615,7 @@ function stepWorld(b) {
     b.queue.shift();
     const e = b.en.find(x => x.id === id);
     if (!e || !e.alive || e.role === 'root' || e.pile || e.role === 'bonewall') continue;
-    b.lastActor = e.id; enemyAct(b, e);
+    b.lastActor = e.id; enemyAct(b, e); if (b.p.build === 'elementalist') elemShock(b, 'enemy'); // 되얼림 · 불꽃 외투 · 장비가 적 차례에 원소를 건 경우
     if (b.over) { b.waiting = false; return 'over'; }
     return 'acted';
   }
@@ -2657,10 +2724,13 @@ const HELP = [
     '쓰러지면 그 캐릭터는 장비·골드·레벨을 모두 잃고 끝납니다. 1층부터 쉽지 않으니, 적의 예고를 읽고 자원을 아껴 쓰세요.',
     '위쪽 메뉴에서 장비, 보스 도감, 랭킹, 기록, 도움말, 설정을 언제든 열 수 있습니다. 🎯 수련장에서는 직업 없이 전투의 기본을 여섯 장면으로 연습합니다(쓰러져도 잃는 것 없음).'] },
   { k: 'build', n: '직업과 스킬', t: [
-    '시험판에서는 암살자, 파수꾼, 사냥꾼을 고를 수 있습니다. 나머지 직업은 만드는 대로 열립니다. 메뉴의 🧪 시험 전투에서는 던전 없이 직업 · 레벨 · 스킬 · 적을 골라 바로 싸워 볼 수 있습니다.',
+    '시험판에서는 암살자, 파수꾼, 사냥꾼, 원소술사를 고를 수 있습니다. 나머지 직업은 만드는 대로 열립니다. 메뉴의 🧪 시험 전투에서는 던전 없이 직업 · 레벨 · 스킬 · 적을 골라 바로 싸워 볼 수 있습니다.',
     '파수꾼은 방어할 때마다 보호막 6을 얻습니다. 보호막은 최대 생명력의 30%까지 쌓여 받는 피해를 먼저 받아냅니다. 후열 적의 공격은 보호막이 절반만 받아냅니다. 성벽 갈래는 쌓은 보호막을 태워 칩니다.',
     '사냥꾼은 원거리라 기본 공격과 대부분의 스킬이 후열에 닿고, 전투를 시작하면 가속 1을 얻습니다. 가속이 있으면 라운드 맨 앞에서 두 번 연달아 움직입니다(한 라운드에 한 번, 두 번째 차례는 쿨타임이 줄지 않음). 같은 적을 연달아 맞히면 추적이 한 겹씩 쌓여(최대 3) 겹마다 피해 +5%(정예 · 강적 · 보스에게는 +10%)이고, 3겹인 적에게는 몸 낮추기와 버티기가 통하지 않습니다. 가속은 기동 갈래 스킬로 얻습니다. 방금 쓴 스킬과 다른 갈래의 스킬을 쓰면 연계가 되어 피해가 오릅니다(버튼의 🔗). 사냥꾼은 한 갈래를 깊이 파기보다 갈래를 바꿔 이어 쓸 때 제 힘을 냅니다. 스킬 한 번은 연타라도 한 겹이고, 추적을 더하는 효과로는 2겹까지만 오릅니다. 여럿을 치는 공격과 지속 피해는 추적에 손대지 않습니다.',
     '사냥꾼의 몸 빼기(기동 갈래)와 피하기 스킬은 다음에 맞는 공격 하나를 피합니다. 암살자의 시작 스킬 몸 빼기는 피하지 않고 보호와 스태미나를 줍니다. 적이 나를 직접 치는 공격(공격 · 겨눈 한 발 · 강타 · 큰 한 방)만 피할 수 있고, 화형 같은 주문, 지속 피해, 방 특성 피해는 피할 수 없습니다. 피했을 때 나가는 반격도 실제로 피했을 때만 나갑니다.',
+    '원소술사는 원거리라 마력 화살과 집중 주문이 후열에 닿고, 대신 무기 피해의 ' + Math.round(BUILDS.elementalist.wpnMul * 100) + '%입니다. 한 적에게 화상과 둔화가 함께 있으면 그 행동이 끝날 때 열충격이 일어납니다. 열충격은 두 상태를 모두 지우고 (화상 + 둔화 × ' + ELEM.Cw + ') × ' + ELEM.D + '의 피해와 둔화 × ' + ELEM.Bk + '의 붕괴를 줍니다. 몸 낮추기를 지나가고, 버티기 같은 피해 감소는 절반만 받습니다. 지능이 열충격 피해를 올립니다.',
+    '열충격은 행동이 끝난 뒤에 일어납니다. 한 행동 안의 여러 번 쏘기는 모두 먼저 맞습니다. 여럿을 치는 스킬로 일으킨 열충격은 광역 공격처럼 후열 · 방패벽에서 줄어듭니다. 적의 차례에 두 원소가 만나도(서리 갑옷 · 불꽃 외투) 그 행동 끝에 열충격이 일어납니다.',
+    '서리 무게: 둔화된 적이 원소술사를 치는 평소 공격은 피해가 ' + Math.round(ELEM.guard * 100) + '% 줄어듭니다(적 카드의 ❄️무뎌짐). 강타 · 겨눈 한 발 · 화형 · 큰 한 방은 줄지 않습니다. 둔화로 라운드 맨 뒤에 선 적은 둔화가 다 줄어도 그 라운드의 공격이 무뎌집니다. 열충격으로 둔화를 깨뜨리면 무뎌짐도 사라집니다.',
     '직업마다 시작 스킬 둘이 늘 끼워져 있습니다. 장착 칸을 차지하지 않습니다.',
     '스킬 트리는 세 갈래이고, 갈래마다 두 칸씩 10줄의 사다리입니다(하급 6줄 → 중급 4줄). 윗줄 두 칸 가운데 하나만 열어도 아랫줄이 열립니다. 처음에는 모두 잠겨 있고, 캐릭터를 만들 때 포인트 1로 첫 줄의 한 칸을 엽니다. 레벨이 오를 때마다 포인트 1을 얻어 Lv10에 10점이 됩니다. 한 갈래를 줄마다 하나씩 내려가면 Lv6에 하급 끝, Lv10에 중급 끝입니다. 상급·궁극은 3챕터부터 더합니다. 챕터 사이 상점에서 트리 초기화를 사면 연 칸을 모두 닫고 포인트를 돌려받습니다(연 칸 하나에 ' + TREE_RESET.cell + '골드, 챕터마다 1.5배).',
     '윗줄을 열기 전에는 아랫줄 칸이 "?"로 보입니다. 갈래마다 강한 상황과 약한 상황이 있습니다(트리 갈래 설명).',
@@ -3355,8 +3425,20 @@ function skillHint(b, a) {
   if (a.id === 'scarcut') return p.scar < 1 ? '상흔 없음' : `상흔 추가 ${r1(p.scar * 0.5 * 1.5 * dmgMult(p))}`;
   if (a.id === 'purge') { let n = 0; for (const k of ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln', 'brand']) if (p.s[k]) n += (k === 'poison' || k === 'chill') ? p.s[k].stacks : 1; return n ? `해제 ${n} → ${r1(n * 5 * dotMul(p) * dmgMult(p))}` : '해제할 것 없음'; }
   if (a.v2 && a.s) { const wb = a.s.fx.find(e => e.k === 'wardBurn'), wd = a.s.fx.find(e => e.k === 'wardDmg'); if (wb) { const take = Math.min(p.ward || 0, wb.max || Infinity); return take > 0 ? '보호막 ' + Math.round(take) + ' 태움 → 피해 ' + r1(take * wb.mul) : '보호막 없음: 태우기 피해 0'; } if (wd) return '보호막 비례 +' + r1((p.ward || 0) * wd.per); } // 파수꾼 (10월 4일: 보호막이 0이어도 다른 효과는 들어가 버튼은 쓸 수 있다)
+  if (a.v2 && a.s && p.build === 'elementalist' && a.s.tgt !== 'self') return elemHint(b, a); // 원소술사: 열충격 미리 보기
   if (a.id === 'burst') { const t = actTarget(b, a); const n = t && t.s.poison ? t.s.poison.stacks : 0; return n ? `중독 ${n} → ${r1(poisonTotal(n) * dotMul(p) * 1 * dmgMult(p))}·붕괴+${n * PSN.brk}` : '중독된 적 없음'; }
   return '';
+}
+/* 원소술사 버튼 미리 보기 (10월 7일, 설계 F-2절): 열충격이 나면 T · 피해 · 붕괴, 엮기는 걸 원소, 불태우기는 태울 화상. 둔화를 깨면 무뎌짐을 잃는다 */
+function elemHint(b, a) {
+  const s = a.s; const multi = s.tgt === 'front' || s.tgt === 'all';
+  if (multi) { const n = alive(b).filter(e => e.role !== 'root' && (s.tgt === 'all' || e.row === 'front') && elemPreview(b, s, e, 1).shock).length; return n ? '💥 열충격 ' + n + '명' : ''; }
+  const t = actTarget(b, a); if (!t) return ''; const v = elemPreview(b, s, t);
+  const bo = s.fx.find(x => x.k === 'burnOut'); const L = [];
+  if (bo) L.push(v.burn ? '🔥 화상 ' + v.burn + ' 태움 +' + r1(bo.per * v.burn * dotMul(b.p)) : '태울 화상 없음');
+  if (v.shock) L.push('💥 T' + v.T + ' → ' + r1(v.d) + ' · 붕괴 ' + Math.round(v.brk) + (v.C0 > 0 && t.intent && t.intent.k === 'attack' && !t.intent.aimed ? ' · 무뎌짐 잃음' : ''));
+  else if (v.wv) L.push((v.wv[0] === 'ignite' ? '🔥 화상 ' : '❄️ 둔화 ') + v.wv[1]);
+  return L.join(' · ');
 }
 function rootRegen(b) {
   const boss = alive(b).find(e => e.boss === 'tree'); if (!boss) return 0;
@@ -3446,6 +3528,7 @@ function stsHtml(u, b, inCard) {
       if (gn > 0) out.push(`<i class="b" data-info="bugrudge" tabindex="0">받은 피해 <b>${Math.round(gn)}</b></i>`);
       out.push(`<i class="b" data-info="bueat" tabindex="0">먹기 ${Math.round(buEatLeft(b))}<small>/${Math.round(u.hpMax * BUTCH.eatFight)} 남음</small></i>`);
       if ((u.selfBl || 0) > 0 && stk(u, 'bleed') > 0) out.push('<i class="b" data-info="bufloor" tabindex="0">출혈로는 1에서 멈춤</i>'); }
+    if (u.rime) for (const k in u.rime) if (u.rime[k] && u.rime[k].times > 0) out.push(`<i class="b" data-info="rime" tabindex="0">${k === 'ignite' ? '🔥' : '❄️'}↩ <b>${u.rime[k].times}</b><small>·${u.rime[k].n}</small></i>`); // 원소술사 되얼림 · 불꽃 외투
     if (u.counter > 0) out.push(`<i class="b" data-info="counter" tabindex="0">반격 +${r1(u.counter)}</i>`);
     if (u.reflux) out.push('<i class="b" data-info="reflux" tabindex="0">되돌릴 독</i>');
   }
@@ -3517,6 +3600,8 @@ const SDESC = {
 };
 /* 주문직의 기본 공격·강공격은 캔트립·집중 주문이다 */
 function actInfo(p, id) {
+  if (isCaster(p) && isV2(p) && id === 'basic') return CANTRIP[p.build] + '. 비용 없이 원거리 주문을 쏜다. 피해는 무기 피해의 ' + Math.round(((BUILDS[p.build] || {}).wpnMul || 1) * 100) + '%. 후열에 닿고 방패병에게 막히지 않는다. 붕괴 게이지 +10. 스태미나는 채우지 않는다.'; // 원소술사 (10월 7일)
+  if (isCaster(p) && isV2(p) && id === 'heavy') return '집중 주문. 스태미나 ' + heavyCost(p) + '. 원거리, 무기 피해의 ' + Math.round(((BUILDS[p.build] || {}).wpnMul || 1) * HEAVY_V2 * 100) + '%, 붕괴 게이지 +' + (35 + 5 * Math.floor(stat(p, 'str') / 10) + (p.eq.weapon === 'maul' ? 20 : 0)) + '. 후열에 닿는다. 느린 행동이라 빠른 칸과 주 행동을 함께 쓴다.';
   if (isCaster(p) && id === 'basic') return CANTRIP[p.build] + '. 비용 없이 원거리 주문을 쏜다. 피해는 무기 피해의 90%. 후열에 닿고 방패병에게 막히지 않는다. 붕괴 게이지 +10. 스태미나는 채우지 않는다.';
   if (isCaster(p) && id === 'heavy') return '집중 주문. 스태미나 40. 원거리, 무기 피해의 160%, 붕괴 게이지 +30. 느린 행동이라 빠른 칸과 주 행동을 함께 쓴다.';
   if (isV2(p) && AINFO2[id]) return AINFO2[id](p);
@@ -3818,6 +3903,7 @@ const INFO2 = {
   bufloor: ['출혈 바닥', '내가 나에게 건 출혈이 남아 있는 동안에는 출혈로 쓰러지지 않습니다. 생명력 1에서 멈춥니다.', '직접 공격은 막지 못합니다.'],
   buthorn: ['맞으면 출혈', '적의 직접 공격에 맞을 때마다 때린 적에게 출혈을 겁니다. 작은 숫자는 남은 횟수입니다. 또 걸면 횟수를 더합니다(최대 8번).'],
   thorn: ['가시', '숫자만큼 남은 횟수입니다(옆의 작은 숫자는 되돌리는 피해). 적의 직접 공격에 맞을 때마다, 보호막이 다 받아내더라도 때린 적에게 피해를 되돌리고 1 줄어듭니다. 가시를 또 걸면 횟수를 더하고(최대 8번) 피해는 더 큰 쪽을 씁니다. 전투가 끝나면 사라집니다.'],
+  rime: ['되얼림', '숫자만큼 남은 횟수입니다(옆의 작은 숫자는 거는 상태의 양). 적이 나를 직접 칠 때마다 그 적에게 둔화를 걸고 1 줄어듭니다. 🔥는 불꽃 외투라 화상을 겁니다. 또 걸면 횟수를 더합니다(최대 ' + ELEM.rimeMax + '번).', '보호막 · 방어 · 흘리기로 피해가 0이어도 걸립니다. 몸을 빼 피한 공격과 지속 피해에는 걸리지 않습니다. 그 공격의 피해는 줄지 않습니다. 전투가 끝나면 사라집니다.'],
   elink: ['연계', '사냥꾼은 갈래를 바꿔 이어 쓸 때 제 힘을 냅니다. 방금 쓴 스킬과 다른 갈래(저격 · 연사 · 기동)의 스킬을 쓰면 연계가 되어 피해 +' + Math.round(HUNT.link * 100) + '%입니다. 연계가 되는 스킬 버튼에는 🔗가 보입니다.', '시작 스킬과 기본 공격은 연계를 만들지도 끊지도 않습니다. 한 갈래만 계속 쓰면 연계가 생기지 않습니다.'],
   efocus: ['추적', '같은 적을 한 적만 치는 공격으로 연달아 맞히면 한 겹씩 쌓입니다(최대 3, 스킬 한 번은 연타라도 한 겹). 다음에 그 적을 맞히는 공격은 겹마다 피해 +5%입니다. 3겹인 적은 몸 낮추기와 버티기가 통하지 않습니다.', '다른 적을 치면 그 적에게 1겹부터 다시 쌓입니다. 여럿을 치는 공격과 지속 피해는 추적에 손대지 않습니다. 추적을 더하는 효과로는 2겹까지만 오릅니다.'],
   echant: ['영창', '이 적이 화형 영창 중입니다. 숫자만큼 피해를 더 받으면 영창이 끊깁니다.', '한 적만 치는 공격, 여럿을 치는 공격, 지속 피해가 모두 쌓입니다. 무너뜨려도 끊깁니다.'],
