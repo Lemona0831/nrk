@@ -51,6 +51,13 @@ function equipFor(bd, sit) {
   // 파수꾼 (10월 4일): 보호막을 태우는 스킬이 보호막을 얻는 스킬보다 많으면 얻는 스킬로 바꾼다 (태울 보호막이 있어야 한다. 사람은 짝을 맞춘다)
   const burn = id => G0.SK2[id].fx.some(e => e.k === 'wardBurn'); const gain = id => G0.SK2[id].fx.some(e => e.k === 'ward' || e.k === 'wardFill');
   while (pick.filter(burn).length > Math.max(1, pick.filter(gain).length)) { const cand = bd.open.filter(id => gain(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) break; const lo = pick.filter(burn).sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; }
+  // 원소술사 (10월 7일, 설계 F-3절 10): 물결(모든 적에게 한 원소) 하나를 끼우면 반대 원소의 물결도 하나, 강타 · 보스 상황에는 약화 칸 하나와 열충격 붕괴 ×2 칸 하나 (사람은 짝을 맞춘다). 다른 직업은 그대로
+  if (CLS === 'elementalist') {
+    const wave = (id, k) => { const s = G0.SK2[id]; return s.tgt === 'all' && s.fx.some(e => e.k === 'st' && e.s === k) && !s.fx.some(e => e.k === 'st' && e.s === (k === 'ignite' ? 'chill' : 'ignite')); };
+    const swapIn = (want, keep) => { if (pick.some(want)) return; const cand = bd.open.filter(id => want(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) return; const lo = pick.filter(id => !keep(id)).sort((a, c) => val(a) - val(c))[0]; if (lo) pick[pick.indexOf(lo)] = cand; };
+    for (const [k, o] of [['ignite', 'chill'], ['chill', 'ignite']]) if (pick.some(id => wave(id, k))) swapIn(id => wave(id, o), id => wave(id, k));
+    if (heavy) { const weak = id => G0.SK2[id].fx.some(e => e.k === 'st' && e.s === 'weak'); const brk2 = id => G0.SK2[id].fx.some(e => e.k === 'shockx' && (e.brk || 1) >= 2); swapIn(weak, id => brk2(id) || weak(id)); swapIn(brk2, id => weak(id) || brk2(id)); }
+  }
   return pick;
 }
 function statsOf(lv) { if (G0.statRecommend && G0.STAT_START) return G0.statRecommend(CLS, {}, G0.STAT_START + G0.LV_POINTS * (lv - 1)); const pts = 6 + 2 * (lv - 1); return { int: Math.ceil(pts / 2), dex: Math.floor(pts / 2), str: 0 }; } // 10월 4일 능력치 다섯: 직업 추천 배분
