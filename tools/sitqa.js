@@ -88,6 +88,12 @@ function equipFor(bd, sit) {
     swapIn(id => has(S(id), 'killSpread'), id => !has(S(id), 'killSpread') && fxs(id, e => e.k === 'st' && e.s === 'bleed'));
     for (const k of ['cut', 'spell']) if (!pick.some(kd(k))) { const cand = bd.open.filter(id => kd(k)(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) continue; const lo = pick.filter(id => !kd(k)(id)).sort((a, c) => val(a) - val(c))[0]; if (lo) pick[pick.indexOf(lo)] = cand; }
   }
+  // 숨겨진 직업 3 (10월 7일, 비공개 문서 F4-10): 약화 비례 · 약화 퍼뜨리기를 끼우면 약화를 거는 칸도 하나, 낸 피 칸을 끼우면 생명력을 내는 칸도 하나 (사람은 짝을 맞춘다)
+  if (CLS === 'bloodmage') {
+    const S = id => G0.SK2[id]; const swapIn = (need, ok) => { if (!pick.some(need) || pick.some(ok)) return; const cand = bd.open.filter(id => ok(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) return; const lo = pick.filter(id => !need(id)).sort((a, c) => val(a) - val(c))[0]; if (lo) pick[pick.indexOf(lo)] = cand; };
+    swapIn(id => S(id).fx.some(e => e.k === 'perDmg' || (e.k === 'spread' && e.s === 'weak')), id => S(id).tgt !== 'self' && S(id).fx.some(e => e.k === 'st' && e.s === 'weak') && !S(id).fx.some(e => e.k === 'perDmg' || (e.k === 'spread' && e.s === 'weak')));
+    swapIn(id => has(S(id), 'bloodDmg'), id => has(S(id), 'hpCost') && !has(S(id), 'bloodDmg'));
+  }
   return pick;
 }
 function statsOf(lv) { if (G0.statRecommend && G0.STAT_START) return G0.statRecommend(CLS, {}, G0.STAT_START + G0.LV_POINTS * (lv - 1)); const pts = 6 + 2 * (lv - 1); return { int: Math.ceil(pts / 2), dex: Math.floor(pts / 2), str: 0 }; } // 10월 4일 능력치 다섯: 직업 추천 배분
@@ -105,7 +111,7 @@ function fight(bd, sit, seed, eqOver) { // eqOver: 장착을 직접 줄 때(보�
     const sr = r() < (P.mech || 0.5) ? Q.sigRule(b, r) : null;
     let [a, t] = D.ch2Pre(b, P, r) || sr || (P.look ? Q.lookahead(b, P, r) : Q.heuristic(b, P, r, mem));
     [a, t] = D.ch2Post(b, P, r, a, t); // 2챕터 판단(dgqa.js와 같다. 1챕터 상황에서는 아무것도 하지 않는다)
-    if (a === 'flee') { const L = G0.actionList(b).filter(x => x.ok && x.id !== 'flee'); a = L[0].id; t = null; }
+    if (a === 'flee') { const L = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); a = L[0].id; t = null; }
     if (!eqOver) { const sk = G0.SK2[a]; const kind = sk ? (sk.start ? 'st' : 'tr') : 'gen'; MIX[bd.lv + bd.br] = MIX[bd.lv + bd.br] || { st: 0, tr: 0, gen: 0 }; MIX[bd.lv + bd.br][kind]++; }
     try { G0.playerAct(b, a, t); } catch (e) { return { win: 0, bug: e.message }; }
   }
