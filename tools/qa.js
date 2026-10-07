@@ -261,6 +261,12 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     { const lk = okS.filter(a => !a.self && a.s.b !== '시작' && p.lastBr && a.s.b !== p.lastBr && has(a, 'dmg')).sort((x, y) => (y.s.row || 0) - (x.s.row || 0)); if (lk.length && r() < 0.55 + 0.35 * (P.mech || 0.5)) return [lk[0].id, tgtOf(lk[0])]; } // 연계: 방금과 다른 갈래의 공격 스킬 (사람은 버튼의 🔗를 보고 고른다)
     for (const a of okS.filter(a => has(a, 'focusAdd') && !a.s.start)) { const t = fe && E.canTarget(b, fe, a) ? fe : best(a, (x, y) => y.hp - x.hp); if (t && (t !== fe || fn < 2)) return [a.id, t.id]; }
   }
+  // 10월 8일: 강타 예고 대응을 직업 판단보다 먼저 (고해사 · 해금 1 · 해금 3 · 원소술사 · 수도승). 전에는 이 직업들의 판단이 먼저 행동을 돌려줘 예고된 큰 공격을 흘리지도 막지도 않았다(1챕터 보스전 받은 큰 공격 96–338, 다른 직업 63–87). 사람은 예고를 보고 대응한다
+  if (hv && ['confessor', 'butcher', 'bloodmage', 'elementalist', 'monk'].includes(p.build) && !v2Ready(b, hv.e.id) && r() < Math.max(P.parry, 0.35) + 0.2) {
+    const ps = okS.find(a => has(a, 'parry')); if (ps) return [ps.id, hv.e.id];
+    const pb = okS.find(a => has(a, 'parryBuff')); if (pb && !p.pbuf && E.dodgeCost(p) <= p.st) return [pb.id];
+    if (L.find(a => a.id === 'dodge' && a.ok) && r() < P.parry + 0.3) return ['dodge', hv.e.id];
+  }
   // 숨겨진 직업 2 (10월 7일, 비공개 문서 F-3 4): 짐(적이 건 몫)을 옮길까 · 지울까 · 안고 칠까, 앞서 지운 숫자, 보호 비례, 고행. 이 직업의 효과를 가진 스킬이 끼워졌을 때만
   if (p.build === 'confessor' && E.cfTake && L.some(a => a.v2 && cfFx(a))) {
     const C = E.CONF, F = (a, k) => a.s.fx.find(e => e.k === k), hpf = p.hp / p.hpMax, fastFree = !b.bonusUsed && !nf;
@@ -476,7 +482,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     for (const a of okS.slice()) if (weakNow(a)) okS.splice(okS.indexOf(a), 1); // 큰 터뜨리기는 기가 찰 때까지 아껴 둔다(그동안 기본 공격)
   }
   // 강타 예고: 흘리기형 스킬(스태미나 없이) → 흘리기 준비 → 스태미나 흘리기. 이번 차례에 빠른 행동으로 이미 그 적을 흘릴 준비를 했으면 다시 걸지 않는다(덮어쓰면 붙은 효과를 잃는다)
-  if (hv && !v2Ready(b, hv.e.id) && r() < Math.max(P.parry, 0.35) + 0.2) {
+  if (hv && !['confessor', 'butcher', 'bloodmage', 'elementalist', 'monk'].includes(p.build) && !v2Ready(b, hv.e.id) && r() < Math.max(P.parry, 0.35) + 0.2) { /* 앞의 다섯 직업은 직업 판단 앞에서 같은 대응을 한다 */
     const ps = okS.find(a => has(a, 'parry')); if (ps) return [ps.id, hv.e.id];
     const pb = okS.find(a => has(a, 'parryBuff')); if (pb && !p.pbuf && E.dodgeCost(p) <= p.st) return [pb.id];
     if (L.find(a => a.id === 'dodge' && a.ok) && r() < P.parry + 0.3) return ['dodge', hv.e.id];
