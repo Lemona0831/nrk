@@ -18,7 +18,7 @@ function loadGame() {
   vm.createContext(ctx);
   vm.runInContext(data + '\n' + html.slice(i + 8, j) + '\n;this.__G = G;', ctx, { filename: 'next/index.html' });
   // 화면·저장·소리는 끈다
-  vm.runInContext('Object.assign(this, { bagUsed: typeof bagUsed !== "undefined" ? bagUsed : null, BAG_MAX: typeof BAG_MAX !== "undefined" ? BAG_MAX : 12, CHAPTERS: typeof CHAPTERS !== "undefined" ? CHAPTERS : null, CONS: typeof CONS !== "undefined" ? CONS : null, UNLOCK: typeof UNLOCK !== "undefined" ? UNLOCK : {}, LOOT: typeof LOOT !== "undefined" ? LOOT : null, STAT_KEYS: typeof STAT_KEYS !== "undefined" ? STAT_KEYS : null, STAT_REC: typeof STAT_REC !== "undefined" ? STAT_REC : null, STAT_START: typeof STAT_START !== "undefined" ? STAT_START : null, LV_POINTS: typeof LV_POINTS !== "undefined" ? LV_POINTS : 2, isLower, chOf: typeof chOf !== "undefined" ? chOf : null, ITEMS, EVENTS, ROOM_TYPES, BUILDS, tplKind, SKILLS2: typeof SKILLS2 !== "undefined" ? SKILLS2 : null, TREE2: typeof TREE2 !== "undefined" ? TREE2 : null, SK2: typeof SK2 !== "undefined" ? SK2 : null, EQUIP_SLOTS2: typeof EQUIP_SLOTS2 !== "undefined" ? EQUIP_SLOTS2 : 4 });', ctx); // const 값은 밖에서 읽을 수 있게 꺼내 둔다
+  vm.runInContext('Object.assign(this, { bagUsed: typeof bagUsed !== "undefined" ? bagUsed : null, BAG_MAX: typeof BAG_MAX !== "undefined" ? BAG_MAX : 12, CHAPTERS: typeof CHAPTERS !== "undefined" ? CHAPTERS : null, CONS: typeof CONS !== "undefined" ? CONS : null, UNLOCK: typeof UNLOCK !== "undefined" ? UNLOCK : {}, LOOT: typeof LOOT !== "undefined" ? LOOT : null, STAT_KEYS: typeof STAT_KEYS !== "undefined" ? STAT_KEYS : null, LV_XP_: typeof LV_XP !== "undefined" ? LV_XP : null, poolOk_: typeof poolOk !== "undefined" ? poolOk : () => true, STAT_REC: typeof STAT_REC !== "undefined" ? STAT_REC : null, STAT_START: typeof STAT_START !== "undefined" ? STAT_START : null, LV_POINTS: typeof LV_POINTS !== "undefined" ? LV_POINTS : 2, isLower, chOf: typeof chOf !== "undefined" ? chOf : null, ITEMS, EVENTS, ROOM_TYPES, BUILDS, tplKind, SKILLS2: typeof SKILLS2 !== "undefined" ? SKILLS2 : null, TREE2: typeof TREE2 !== "undefined" ? TREE2 : null, SK2: typeof SK2 !== "undefined" ? SK2 : null, EQUIP_SLOTS2: typeof EQUIP_SLOTS2 !== "undefined" ? EQUIP_SLOTS2 : 4 });', ctx); // const 값은 밖에서 읽을 수 있게 꺼내 둔다
   vm.runInContext(`toast = () => {}; scheduleSync = () => {}; syncRun = async () => false; pushRank = async () => {}; saveLocal = () => true; sfx = () => {};`, ctx);
   vm.runInContext('var window = { scrollTo() { }, innerWidth: 1280, innerHeight: 800, scrollY: 0, addEventListener() { } };', ctx); // 정산·상점 버튼이 부르는 창 함수만 둔다
   return ctx;
@@ -113,16 +113,16 @@ function restRoom(pk, run, r) {
   if (R.type === 'camp' || R.type === 'spring') return click('rest');
   if (R.type === 'shrine') return click('shrine', pk === 'novice' ? (r() < 0.5 ? 1 : 0) : 1);
   if (R.type === 'altar') {
-    const can = R.altar === 'gold' ? (run.gold || 0) >= 40 : R.altar === 'offer' ? run.bag.length > 0 : true;
-    const want = R.altar === 'blood' ? (THINK(pk) ? h > 0.6 : r() < 0.5) : can;
+    const can = R.altar === 'gold' ? (run.gold || 0) >= 40 : R.altar === 'offer' ? run.bag.length > 0 : R.altar === 'ash' ? (run.cons || []).filter(c => G0.CONS[c.id].use !== 'none' && G0.CONS[c.id].price > 6).reduce((a, c) => a + c.n, 0) >= 6 : true;
+    const want = R.altar === 'blood' || R.altar === 'scale' ? (THINK(pk) ? h > 0.6 : r() < 0.5) : can; // 3챕터 재의 제단은 태울 것이 넉넉할 때만
     return click('altar', can && want ? 1 : 0);
   }
   if (R.type === 'event') {
     const E0 = G0.EVENTS.find(x => x.id === R.event);
-    const ok = E0.opts.filter(o => !((E0.id === 'reliquary' && o.id === 'force' && p.st < 40) || (E0.id === 'monk' && o.id === 'feed' && !(p.flask.life + p.flask.mana + (p.flask.stam || 0)))));
+    const ok = E0.opts.filter(o => !((E0.id === 'reliquary' && o.id === 'force' && p.st < 40) || (E0.id === 'buried' && o.id === 'dig' && p.st < 50) || (E0.id === 'monk' && o.id === 'feed' && !(p.flask.life + p.flask.mana + (p.flask.stam || 0)))));
     let o = ok[Math.floor(r() * ok.length)];
     if (THINK(pk) || pk === 'careful') { // 위험한 선택은 생명력이 넉넉할 때만
-      const safe = ok.filter(x => !(x.id === 'drink' && h < 0.5) && !(x.id === 'chase' && h < 0.6) && !(x.id === 'do' && h < 0.6) && !(x.id === 'loot' && h < 0.5));
+      const safe = ok.filter(x => !(x.id === 'drink' && h < 0.5) && !(x.id === 'chase' && h < 0.6) && !(x.id === 'do' && h < 0.6) && !(x.id === 'loot' && h < 0.5) && !((E0.ch || 1) >= 3 && ((['pull', 'take', 'dig', 'hasten'].includes(x.id) && h < 0.6) || (x.id === 'draw' && h < 0.7)))); // 3챕터 위험한 선택 (1 · 2챕터 이벤트는 그대로: 종탑의 줄도 id가 pull이다)
       if (safe.length) o = pk === 'careful' ? safe[safe.length - 1] : safe[Math.floor(r() * safe.length)];
     }
     return click('event', o.id);
@@ -139,7 +139,7 @@ function useCons(pk, r, b, run) {
     case 'heal': return p.hp < p.hpMax * 0.35 && (!p.flask.life || r() < 0.5);
     case 'stam': return p.st < 30;
     case 'cure': return sk(p, D.s) >= ({ bleed: 4, poison: 6, ignite: 3, weak: 2, vuln: 2, chill: 1 }[D.s] || 3) || (D.s === 'poison' && sk(p, 'poison') >= 3 && al.some(e => e.foe === 'well' && it(e, 'charge', 'heavy'))); // 2챕터: 우물이 열리기 전에는 중독 3부터 지운다
-    case 'interrupt': return al.some(e => e.role !== 'boss' && it(e, 'heavy', 'aimed')) && !p.dodge;
+    case 'interrupt': return (al.some(e => e.role !== 'boss' && it(e, 'heavy', 'aimed')) && !p.dodge) || al.some(e => it(e, 'noon'));
     case 'blind': return al.some(e => e.row === 'back' && it(e, 'aimed'));
     case 'unevade': { const f = al.filter(e => e.row === 'front'); return f.length > 0 && f.every(e => e.evading); }
     case 'decoy': return al.some(e => e.countering);
@@ -155,7 +155,7 @@ function useCons(pk, r, b, run) {
     case 'whet': return r() < 0.15;
     case 'mark': return r() < 0.1;
     case 'guard1': return al.some(e => it(e, 'heavy', 'explode', 'burn')) && p.hp < p.hpMax * 0.6;
-    case 'halfboom': return al.some(e => it(e, 'explode', 'burn'));
+    case 'halfboom': return al.some(e => it(e, 'explode', 'burn')) || (b.heatWarn != null && b.heatWarn <= (b.round || 0));
     case 'block': return al.some(e => e.intent && (e.intent.bleed || it(e, 'curse', 'explode', 'burn')));
     case 'unmod': return true;
     case 'escape': return p.hp < p.hpMax * 0.15 && !p.flask.life;
@@ -167,6 +167,10 @@ function useCons(pk, r, b, run) {
     case 'wallbreak': return al.some(e => e.role === 'bonewall') && al.some(e => e.row === 'back' && e.role !== 'bonewall');
     case 'slow': return al.some(e => e.swift || ((e.strong || e.role === 'boss') && it(e, 'charge'))) && r() < 0.5;
     case 'nobloat': return al.some(e => e.role === 'bloat');
+    case 'cool': return b.heat != null && (b.heat >= 70 || (b.heatWarn != null && b.heatWarn <= (b.round || 0))); // 3챕터 (10월 7일)
+    case 'unhaze': return al.reduce((a, e) => a + (e.haze || 0), 0) >= 3 || al.some(e => e.foe === 'dancer' && e.haze >= 2 && it(e, 'charge'));
+    case 'rewind': return al.some(e => (e.foe === 'sundial' && (e.clock || 0) <= 1) || (e.foe === 'colossus' && e.glow >= 2) || (e.foe === 'reaper' && e.embers >= 4) || (e.chant && it(e, 'chanting', 'mchanting')));
+    case 'healcure': return (p.hp < p.hpMax * 0.45 && (!p.flask.life || r() < 0.5)) || sk(p, 'ignite') >= 4;
     default: return false; } };
   for (let k = 0; k < 3; k++) { const i = run.cons.findIndex(c => G0.CONS[c.id].use !== 'none' && !G0.consWhyNot(b, run, c, null) && r() < aware && want(c)); if (i < 0) break; G0.consUse(b, run, i, null); if (b.over) break; }
 }
@@ -201,6 +205,19 @@ function ch2Pre(b, P, r) {
   }
   return null;
 }
+/* 3챕터 판단 (10월 7일, 비공개 문서의 테스터 판단 가운데 사람이 화면을 보고 할 만한 것만). 3챕터 전투에서만 난수를 쓴다: 1 · 2챕터 측정은 그대로다 */
+function ch3Pre(b, P, r) {
+  if (!(((b.ctx && b.ctx.ch) || 1) >= 3)) return null;
+  const al = G0.alive(b); const q = al.find(e => e.boss === 'queen'); const crown = al.find(e => e.role === 'crown');
+  const hot = (b.heat || 0) >= 80 || (b.heatWarn != null && b.heatWarn <= (b.round || 0) + 1); if (crown) crown.crownHot = hot ? 1 : 0; // qa.js enemyPrio: 열기가 높거나 예고가 뜨면 왕관을 먼저
+  const L = () => G0.actionList(b).filter(x => x.ok && x.id !== 'flee');
+  const hitOn = (e, fast) => { const c = L().filter(x => !x.self && G0.canTarget(b, e, x) && (x.id === 'basic' || x.id === 'heavy' || (x.v2 && x.s.fx.some(f => f.k === 'dmg')))); return (fast && c.find(x => x.v2 && x.time <= 0.6)) || c.find(x => x.v2 && !x.aoe) || c.find(x => x.id === 'basic') || null; };
+  { const er = al.find(e => e.under && e.intent && e.intent.k === 'erupt'); if (er && b.prepTurn !== b.turnIdx && r() < (P.parry || 0.3) + 0.2) { const d = L().find(x => x.id === 'dodge'); if (d && G0.canTarget(b, er, d)) return ['dodge', er.id]; } } // 솟구칠 적을 흘린다
+  if (b.heatWarn != null && b.heatWarn <= (b.round || 0) && b.prepTurn !== b.turnIdx && r() < (P.guard || 0.3) + 0.3) { const g = L().find(x => x.id === 'guard'); if (g) return ['guard', null]; } // 열풍 · 재폭풍 예고: 막는다
+  if (q && crown && hot && r() < (P.mech || 0.5) + 0.2) { const a = hitOn(crown, 1); if (a) return [a.id, a.aoe ? null : crown.id]; } // 열기가 높으면 왕관
+  if (q && q.under) { const m = al.find(e => e.role === 'maid' && e.chant); if (m && r() < (P.mech || 0.5) + 0.2) { const a = hitOn(m, 0); if (a) return [a.id, a.aoe ? null : m.id]; } } // 여왕이 숨으면 영창하는 시녀
+  return null;
+}
 const ACT_G = (b, a) => { if (a === 'basic' || a === 'heavy') return 'wpn'; if (a === 'guard' || a === 'dodge') return 'prep'; const x = G0.actionList(b).find(y => y.id === a); return x && x.v2 ? (x.s.tgt === 'self' && !x.s.fx.some(f => f.k === 'dmg') ? 'prep' : 'skill') : null; };
 function ch2Post(b, P, r, a, t) {
   if (!b.carve || !b.carve.g) return [a, t]; const g = ACT_G(b, a); if (!g || !(b.carve.g[g] < 1) || r() >= (P.mech || 0.5) + 0.2) return [a, t]; // 군주가 이름을 새긴 행동은 힘이 빠지므로 다른 종류를 쓴다
@@ -220,7 +237,7 @@ function fightCur(pk, r, mem, out) {
   while (!b.over && n++ < 300) {
     useCons(pk, r, b, G.run); if (b.over) break;
     const sr = r() < (P.mech || 0.5) ? sigRule(b, r) : null;
-    let [a, t] = ch2Pre(b, P, r) || sr || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem));
+    let [a, t] = ch2Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem));
     [a, t] = ch2Post(b, P, r, a, t);
     // 보스를 깎지 못한 채 버티기만 하면 사람은 밀어붙인다 (한 수 앞만 보는 계산이 페이즈 전환을 피하는 것을 막는다)
     const bs = b.en.find(e => e.role === 'boss' && e.alive);
@@ -267,7 +284,28 @@ function playChar(pk, build, seed) {
   } else for (let i = 0; i < 6; i++) st[pk === 'novice' || r() > 0.6 ? ['str', 'dex', 'int'][Math.floor(r() * 3)] : pref]++;
   run.stats = st; G0.applyStats(run.p, st); run.p.hp = run.p.hpMax; run.p.mp = run.p.mpMax; run.p.st = run.p.stMax;
   const out = { pk, build, seed, res: 'lose', floor: 0, lv: 1, rooms: [], bossHp: null, bugs: [], acts: 0, fights: [] };
+  if (FROM > 1) jumpTo(pk, r, FROM);
   return playLoop(pk, r, out);
+}
+/* DG_FROM=3 (10월 7일): 앞 챕터를 깬 캐릭터를 흉내 내 그 챕터 1층에서 시작한다. AI가 2챕터를 거의 깨지 못해(완주 0~3%) 3챕터를 재려면 따로 세운다.
+   레벨은 챕터 시작 레벨(2챕터 Lv5, 3챕터 Lv10, 기획서 11.4), 능력치는 추천 배분, 트리는 성향대로, 장비는 앞 챕터 장비(슬롯마다 고급, 무기 · 갑옷은 희귀), 소모품 약초 셋과 무작위 셋, 생명력 · 플라스크 가득 */
+const FROM = +(process.env.DG_FROM || 1);
+function jumpTo(pk, r, ch) {
+  const G = G0.__G, run = G.run; const lv = ch >= 3 ? 10 : 5; const up = lv - (run.lv || 1);
+  run.lv = lv; run.xp = G0.LV_XP_[lv - 1]; run.p.lv = lv; if (run.tree) run.tree.pts += up;
+  const KEYS = G0.STAT_KEYS; const add = G0.statRecommend(run.build, Object.fromEntries(KEYS.map(k => [k, run.stats[k] || 0])), G0.LV_POINTS * up); for (const k of KEYS) run.stats[k] = (run.stats[k] || 0) + (add[k] || 0); G0.applyStats(run.p, run.stats);
+  G0.initGear(run);
+  for (const sl of ['weapon', 'armor', 'gloves', 'amulet', 'ring1', 'ring2']) {
+    const kind = sl === 'ring1' || sl === 'ring2' ? 'ring' : sl; const g = sl === 'weapon' || sl === 'armor' ? 'r' : 'm';
+    const owned = Object.values(run.inv).map(x => x.tpl); const pool = G0.poolOf(ch - 1).filter(k => G0.ITEMS[k] && G0.ITEMS[k].kind !== 'start' && G0.tplKind(k) === kind && G0.poolOk_(run.p, k) && !owned.includes(k));
+    const fit = pool.filter(k => G0.itemFits(run.p, k) && (G0.ITEMS[k].g || 'n') === g); const any = pool.filter(k => (G0.ITEMS[k].g || 'n') === g); const L = fit.length ? fit : any.length ? any : pool; if (!L.length) continue;
+    const it = G0.mkItem(L[Math.floor(r() * L.length)], { ch: ch - 1 }); run.inv[it.uid] = it; run.bag.push(it.uid); G0.equipUid(run, it.uid, sl);
+  }
+  for (const u of run.bag.slice()) G0.discardUid(run, u); // 뺀 시작 장비는 버린다
+  const ids = Object.keys(G0.CONS).filter(k => (G0.CONS[k].ch || 1) < ch && G0.CONS[k].use !== 'none'); G0.consAdd(run, 'herb', 'n', 3); for (let k = 0; k < 3; k++) G0.consAdd(run, ids[Math.floor(r() * ids.length)], 'n', 1);
+  G0.applyGear(run); run.p.hp = run.p.hpMax; run.p.st = run.p.stMax; run.p.flask.life = run.p.flaskMax; run.p.flask.mana = run.p.flaskMax; run.p.flask.stam = run.p.flaskMax; run.gold = 0;
+  spendTree(pk, r);
+  run.ch = ch - 1; run.clears = ch - 1; run.phase = 'wait'; G0.enterChapter(run);
 }
 /* 챕터 사이: 정산 확정 → 상점(성향대로 산다) → 설문 → 다음 챕터 */
 function betweenChapters(pk, r, out) {
@@ -356,6 +394,20 @@ function playLoop(pk, r, out) {
   return out;
 }
 
+/* 3챕터 요약 (10월 7일): 들어간 수, 방 종류 · 무리 · 강적 · 특성마다 들어간 판과 쓰러진 몫, 예고 위반, 층별 도달 */
+function ch3Detail(R, ch) {
+  const F = R.flatMap(x => (x.fights || []).filter(f => f.ch === ch).map(f => Object.assign({ build: x.build }, f))); if (!F.length) { console.log('3챕터 전투 기록 없음'); return; }
+  const pct = (a, b) => b ? Math.round(a / b * 100) : 0; const tab = key => { const m = {}; for (const f of F) { const k = key(f); if (!k) continue; m[k] = m[k] || { n: 0, d: 0 }; m[k].n++; if (f.res === 'lose') m[k].d++; } return Object.entries(m).sort((x, y) => y[1].d - x[1].d || y[1].n - x[1].n).map(([k, v]) => k + ' ' + v.d + '/' + v.n + ' (' + pct(v.d, v.n) + '%)').join(' · '); };
+  console.log('3챕터 방 종류 (쓰러짐/들어감):', tab(f => f.t));
+  console.log('3챕터 무리:', tab(f => f.sq));
+  console.log('3챕터 강적 · 보스:', tab(f => f.foe || (f.t === 'boss' ? 'queen' : null)));
+  console.log('3챕터 특성:', tab(f => f.mods));
+  const reach = []; const ent = R.filter(x => (x.fights || []).some(f => f.ch === ch)); for (let f = 1; f <= 24; f++) reach.push(pct(ent.filter(x => (x.ch === ch ? x.floor >= f : true) || x.res === 'clear').length, ent.length));
+  console.log(`3챕터에 들어간 캐릭터 ${ent.length}명, 층별 도달(%):`, reach.join(' '));
+  const bad = F.flatMap(f => f.bigNoTurn || []); console.log(`3챕터 예고된 큰 공격 ${F.reduce((a, f) => a + (f.big || 0), 0)}번 가운데 예고 뒤 내 차례 없이 나간 것 ${bad.length}번`, bad.length ? countBy(bad) : '');
+  const deaths = F.filter(f => f.death); const by = countBy(deaths.map(d => d.t + ' ← ' + d.death.by + (d.death.big ? ' (큰 공격)' : ''))); console.log('3챕터 사망 원인:', Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, n]) => k + ' ' + n).join(' | '));
+  const bs = F.filter(f => f.t === 'boss'); if (bs.length) console.log(`3챕터 보스전 ${bs.length}번, 이김 ${bs.filter(f => f.res === 'win').length}`);
+}
 if (require.main === module) {
   const N = +(process.argv[2] || 20); const file = process.argv[3] || path.join(__dirname, 'dgqa.json');
   OPT.chapters = +(process.argv[4] || 1); // 2: 1챕터를 깬 캐릭터가 2챕터까지 이어 간다
@@ -373,10 +425,10 @@ if (require.main === module) {
   const isLower = (f, c) => G0.isLower ? G0.isLower(f, c) : f >= chOf(c).lower;
   const where = (x, ch) => passed(x, ch) ? 'clear' : x.floor >= chOf(x.ch).boss ? 'boss' : isLower(x.floor, x.ch) || x.floor === chOf(x.ch).spring ? 'lower' : 'upper';
   console.log(`판 ${runs.length}, ${((Date.now() - t0) / 1000).toFixed(0)}초, 이상 ${runs.reduce((a, x) => a + x.bugs.length, 0)}건`);
-  for (let ch = 1; ch <= OPT.chapters; ch++) {
-    const R = ch === 1 ? runs : runs.filter(x => passed(x, ch - 1));
+  for (let ch = FROM; ch <= Math.max(FROM, OPT.chapters); ch++) {
+    const R = ch === FROM ? runs : runs.filter(x => passed(x, ch - 1));
     const sum = list => { const c = { clear: 0, upper: 0, lower: 0, boss: 0 }; list.forEach(x => c[where(x, ch)]++); return `완주 ${pct(c.clear, list.length)}% | 쓰러진 곳 상층 ${pct(c.upper, list.length)} 하층 ${pct(c.lower, list.length)} 보스 ${pct(c.boss, list.length)}`; };
-    if (OPT.chapters > 1) console.log(`== ${ch}챕터 (${ch === 1 ? '모든 캐릭터' : (ch - 1) + '챕터를 깬 캐릭터'} ${R.length}명)`);
+    if (OPT.chapters > 1 || FROM > 1) console.log(`== ${ch}챕터 (${ch === FROM ? (FROM > 1 ? (ch - 1) + '챕터를 깬 캐릭터를 흉내 낸 시작' : '모든 캐릭터') : (ch - 1) + '챕터를 깬 캐릭터'} ${R.length}명)`);
     console.log('전체(6성향 평균):', sum(R));
     const think = R.filter(x => x.pk === MEASURE); console.log('사고하는 유저(신중):', sum(think));
     for (const pk of Object.keys(PERSONAS)) console.log('  ' + PERSONAS[pk].n.padEnd(4), sum(R.filter(x => x.pk === pk)));
@@ -384,6 +436,7 @@ if (require.main === module) {
     for (const b of Object.keys(G0.BUILDS).filter(k => !G0.BUILDS[k].tut && (!G0.BUILDS[k].soon || process.env.DG_SOON))) { const a = R.filter(x => x.build === b), t = think.filter(x => x.build === b); console.log('  ' + G0.BUILDS[b].n.padEnd(6), pct(a.filter(x => passed(x, ch)).length, a.length) + '% / ' + pct(t.filter(x => passed(x, ch)).length, t.length) + '%'); }
     const bo = R.map(x => { const c = (x.chs || []).find(c => c.ch === ch) || ((x.ch || 1) === ch ? x : null); return c && c.bossHp != null ? { hp: c.bossHp, lv: c.bossLv } : null; }).filter(Boolean);
     console.log(`보스에 닿은 판 ${bo.length}: 들어갈 때 생명력 평균 ${Math.round(bo.reduce((a, x) => a + x.hp, 0) / (bo.length || 1))}%, 레벨 평균 ${(bo.reduce((a, x) => a + x.lv, 0) / (bo.length || 1)).toFixed(1)}, 보스 승률 ${pct(R.filter(x => passed(x, ch)).length, bo.length)}%`);
+    if (ch >= 3) ch3Detail(R, ch);
     if (ch < OPT.chapters) { const P = R.filter(x => passed(x, ch)); const cs = P.map(x => x.chs.find(c => c.ch === ch)); console.log(`넘은 캐릭터: 레벨 평균 ${(cs.reduce((a, c) => a + c.lv, 0) / (cs.length || 1)).toFixed(1)}, 정산 골드 평균 ${Math.round(cs.reduce((a, c) => a + c.gold, 0) / (cs.length || 1))}`); }
   }
   if (OPT.detail && runs.length) { // 10월 5일: 층별 도달 곡선, 사망 원인, 예고된 큰 공격으로 쓰러진 몫
@@ -397,4 +450,4 @@ if (require.main === module) {
   }
   const bugs = runs.flatMap(x => x.bugs); if (bugs.length) console.log('이상 예:', bugs.slice(0, 5));
 }
-module.exports = { playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post };
+module.exports = { playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post, ch3Pre };

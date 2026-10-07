@@ -69,4 +69,22 @@ for (const [k, w] of [['coldwater', 0.6], ['blackinc', 0.6], ['hookrope', 0.6], 
 CONS.silash.d = () => '한 적의 다음 치유 · 곡하기 하나가 실패합니다.';
 CONS.wetcloth.d = () => '이번 라운드에 받는 영창의 큰 한 방(화형 · 장송곡) 피해가 절반입니다.';
 CONS.sandbag.mods.push('bonepile', 'rotair', 'flooded'); CONS.sandbag.d = () => '이 전투에서 방 특성 하나(피 웅덩이, 촛불 제단, 무너지는 천장, 종소리, 좁은 회랑, 무너진 납골벽, 썩은 공기, 물에 잠긴 바닥)를 끕니다.';
+/* 3챕터 소모품 (10월 7일, docs/챕터/3챕터.md 12절). vsMod: 그 방 특성과 싸운 뒤 전리품 무게 ×2. vs3: 3챕터에서 그 역할과 싸운 뒤 ×2. dw3: 3챕터 전리품 무게 */
+Object.assign(CONS, {
+  awning:    { n: '차양 천', ico: '⛱️', ch: 3, vsMod: 'noon', sit: '열기가 차오른다', k: 'cool', v: 30, max: 3, price: 16, use: 'fight', d: v => '이 전투의 열기를 ' + v + ' 내립니다.' },
+  mirror:    { n: '거울 조각', ico: '🪞', ch: 3, vs: 'mirage', vsMod: 'haze', sit: '허상이 겹쳐 있다', k: 'unhaze', max: 3, price: 12, use: 'fight', d: () => '모든 적의 허상을 걷어 냅니다.' },
+  hourglass: { n: '작은 모래시계', ico: '⏳', ch: 3, sit: '적이 세는 숫자가 다 되어 간다', k: 'rewind', tgt: 'enemy', max: 2, price: 18, dw: 0.5, use: 'fight', d: () => '한 적이 세는 숫자 칩(영창 포함)을 두 칸 되돌립니다.' },
+  sap:       { n: '선인장 수액', ico: '🌵', ch: 3, vs: 'ember', sit: '화상을 안고 다쳤다', k: 'healcure', s: 'ignite', v: 0.08, vm: 0.12, max: 5, price: 14, dw: 3, use: 'any', d: v => '생명력을 최대의 ' + Math.round(v * 100) + '% 회복하고 화상을 모두 지웁니다.' },
+  compass:   { n: '사막 나침반', ico: '🧭', ch: 3, sit: '문 뒤를 알 수 없다', k: 'reveal', max: 2, price: 12, dw: 0.5, use: 'out', d: () => '이 층과 다음 층 문의 숨은 보상이 모두 보입니다.' },
+  earring:   { n: '금 귀걸이', ico: '🪙', ch: 3, sit: '팔아서 골드로', k: 'sell', sell: 40, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
+  glassbead: { n: '유리 구슬', ico: '🫧', ch: 3, sit: '팔아서 골드로', k: 'sell', sell: 15, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
+});
+/* 3챕터에서 무게가 바뀌는 것 (12.3절): 1 · 2챕터의 파는 것은 3챕터 것과 바꾸고, 화상의 답은 높인다. 2챕터 소모품은 3챕터 상황의 답(vs3) */
+for (const [k, w] of [['silver', 0], ['goblet', 0], ['candlest', 0], ['beads', 0], ['goldtooth', 0], ['ring', 0], ['coldwater', 1.5], ['blackinc', 1], ['lime', 0.5], ['pick', 0.3], ['charcloth', 0.3], ['mugwort', 0.8]]) CONS[k].dw3 = w;
+CONS.tamper.vs3 = 'lurker'; CONS.oiljar.vs3 = 'wrapped'; CONS.coldwater.vs3 = 'ember';
+CONS.wetcloth.d = () => '이번 라운드에 받는 영창의 큰 한 방(화형 · 장송곡)과 열풍 피해가 절반입니다.';
+CONS.stone.sit = '적이 몸을 낮췄다 · 허상이 있다'; CONS.stone.d = () => '한 적의 몸 낮추기나 허상 한 겹을 풉니다.';
+CONS.bellshard.d = () => '한 적이 모으던 강타, 겨눈 한 발, 영창을 끊어 평소 공격으로 바꿉니다. 숨은 적은 고를 수 없습니다.';
+CONS.blackinc.d = () => '한 적의 축복(강화)이나 받은 불씨를 지웁니다.';
+CONS.sandbag.mods.push('alley', 'pillar', 'shade', 'brazier', 'drums', 'haze', 'sandstorm'); CONS.sandbag.d = () => '이 전투에서 방 특성 하나(피 웅덩이, 촛불 제단, 무너지는 천장, 종소리, 좁은 회랑, 무너진 납골벽, 썩은 공기, 물에 잠긴 바닥, 무너진 골목, 무너지는 기둥, 오아시스 그늘, 불씨 화로, 북소리, 아지랑이, 모래폭풍)를 끕니다. 작열하는 한낮은 끄지 못합니다.';
 const SHOP_CONS = { n: 5, always: ['herb'] }; // 상점은 소모품 다섯 가지를 판다(약초 묶음은 늘)
