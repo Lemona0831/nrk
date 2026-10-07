@@ -206,12 +206,12 @@ function ch2Pre(b, P, r) {
 function ch3Pre(b, P, r) {
   if (!(((b.ctx && b.ctx.ch) || 1) >= 3)) return null;
   const al = G0.alive(b); const q = al.find(e => e.boss === 'queen'); const crown = al.find(e => e.role === 'crown');
-  if (crown) crown.crownHot = (b.heat || 0) >= 70 ? 1 : 0; // qa.js enemyPrio: 열기가 높으면 왕관을 먼저
+  const hot = (b.heat || 0) >= 80 || (b.heatWarn != null && b.heatWarn <= (b.round || 0) + 1); if (crown) crown.crownHot = hot ? 1 : 0; // qa.js enemyPrio: 열기가 높거나 예고가 뜨면 왕관을 먼저
   const L = () => G0.actionList(b).filter(x => x.ok && x.id !== 'flee');
   const hitOn = (e, fast) => { const c = L().filter(x => !x.self && G0.canTarget(b, e, x) && (x.id === 'basic' || x.id === 'heavy' || (x.v2 && x.s.fx.some(f => f.k === 'dmg')))); return (fast && c.find(x => x.v2 && x.time <= 0.6)) || c.find(x => x.v2 && !x.aoe) || c.find(x => x.id === 'basic') || null; };
   { const er = al.find(e => e.under && e.intent && e.intent.k === 'erupt'); if (er && b.prepTurn !== b.turnIdx && r() < (P.parry || 0.3) + 0.2) { const d = L().find(x => x.id === 'dodge'); if (d && G0.canTarget(b, er, d)) return ['dodge', er.id]; } } // 솟구칠 적을 흘린다
   if (b.heatWarn != null && b.heatWarn <= (b.round || 0) && b.prepTurn !== b.turnIdx && r() < (P.guard || 0.3) + 0.3) { const g = L().find(x => x.id === 'guard'); if (g) return ['guard', null]; } // 열풍 · 재폭풍 예고: 막는다
-  if (q && crown && (b.heat || 0) >= 70 && r() < (P.mech || 0.5) + 0.2) { const a = hitOn(crown, 1); if (a) return [a.id, a.aoe ? null : crown.id]; } // 열기가 높으면 왕관
+  if (q && crown && hot && r() < (P.mech || 0.5) + 0.2) { const a = hitOn(crown, 1); if (a) return [a.id, a.aoe ? null : crown.id]; } // 열기가 높으면 왕관
   if (q && q.under) { const m = al.find(e => e.role === 'maid' && e.chant); if (m && r() < (P.mech || 0.5) + 0.2) { const a = hitOn(m, 0); if (a) return [a.id, a.aoe ? null : m.id]; } } // 여왕이 숨으면 영창하는 시녀
   return null;
 }

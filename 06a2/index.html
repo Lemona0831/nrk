@@ -1173,7 +1173,7 @@ function heatRise(b) {
 const heatName = b => queenOf(b) ? '재폭풍' : '열풍';
 function heatStormEst(b) { const q = queenOf(b); const lv = (q && q.lv) || (b.ctx && b.ctx.lv) || 1; const raw = HIT_REF(lv) * (q ? QUEEN.storm : HEAT.burst) * (b.halfBoom === b.round ? 0.5 : 1); return Math.min(raw, HIT_REF(lv) * UNAVOID_CAP) * (b.p.guard ? 0.5 : 1); }
 function heatWarnSet(b, r) {
-  if (b.heatWarn != null && b.heatWarn >= r) return; b.heatWarn = r; b.heatWarnT = b.turnIdx;
+  if (b.heatWarn != null && b.heatWarn >= Math.min(r, b.round || 0)) return; b.heatWarn = r; b.heatWarnT = b.turnIdx; // 이미 뜬 예고(이번 라운드 · 다음 라운드)는 그대로 둔다
   logp(b, 'crit', '🌡️ ' + (r <= (b.round || 0) ? '이번' : '다음') + ' 라운드가 끝날 때 ' + heatName(b) + '이(가) 분다');
 }
 function heatAdd(b, n, why) {
@@ -1276,7 +1276,7 @@ function ch3OnBreak(b, e) {
 /* 쓰러졌을 때 (killEnemy) */
 function ch3OnKill(b, e) {
   if (e.role === 'mirage') { let n = 0; for (const x of alive(b)) if (x !== e && x.hazeSrc === e.id && x.haze > 0) { x.haze = 0; x.hazeSrc = null; n++; } if (n) logp(b, 'good', e.n + '이(가) 쓰러지자 아지랑이가 걷힌다'); }
-  if (st(e, 'ignite') > 0) { const rp = alive(b).find(x => x !== e && x.foe === 'reaper'); if (rp) { rp.embers = Math.min(FOE_X.reaper.cap, (rp.embers || 0) + FOE_X.reaper.death); logp(b, 'bad', '불붙은 채 쓰러진 ' + e.n + '의 불씨가 낫으로 날아든다. 불씨 ' + rp.embers); codexHit(b, 'reaper', 'ember'); } }
+  if (st(e, 'ignite') > 0 || e.ignLast === b.actN) { /* 쓰러뜨린 그 타격이 화상을 썼어도 불붙은 채 쓰러진 것 */ const rp = alive(b).find(x => x !== e && x.foe === 'reaper'); if (rp) { rp.embers = Math.min(FOE_X.reaper.cap, (rp.embers || 0) + FOE_X.reaper.death); logp(b, 'bad', '불붙은 채 쓰러진 ' + e.n + '의 불씨가 낫으로 날아든다. 불씨 ' + rp.embers); codexHit(b, 'reaper', 'ember'); } }
   if (e.boss === 'queen') { for (const x of b.en) if (x.alive && x !== e && (x.role === 'maid' || x.role === 'crown')) { x.alive = false; x.hp = 0; } b.crownBack = null; }
 }
 function crownBreak(b, c) {
@@ -1301,7 +1301,7 @@ function queenAct(b, e, i, d) {
     case 'qmelt': { e.qNext = null; e.phase = 3; e.pn = 0; const c = b.en.find(x => x.role === 'crown'); if (c) { c.alive = false; c.hp = 0; } b.crownBack = null; e.fire = 1; logp(b, 'crit', '왕관이 녹아내린다'); if (b.heat < QUEEN.p3Heat) heatAdd(b, QUEEN.p3Heat - b.heat, '녹은 왕관'); codexHit(b, 'queen', 'melt'); return 1; }
     case 'burrow': { e.under = 1; e.qPrep = 0; e.teleTurn = b.turnIdx; logp(b, 'sys', e.n + '이(가) 모래 속으로 가라앉는다'); return 1; }
     case 'surgeprep': { e.qPrep = 1; e.teleTurn = b.turnIdx; logp(b, 'sys', '모래가 들끓는다. ' + e.n + '이(가) 솟구칠 곳을 찾는다'); return 1; }
-    case 'erupt': { e.under = 0; e.qPrep = 0; const x = hurtPlayer(b, d * QUEEN.surge, { src: e, single: 1, charged: 1, label: e.n + '이(가) 발밑에서 솟구친다' }); if (x > 0 && !b.over) addS(b, b.p, 'bleed', QUEEN.surgeBleed); fireCarry(b, e, 1, x > 0); if (alive(b).filter(m => m.role === 'maid').length < QUEEN.maidMax && !b.over) { maidSpawn(b, e); logp(b, 'bad', '모래 속에서 재의 시녀가 다시 일어선다'); } return 1; }
+    case 'erupt': { e.under = 0; e.qPrep = 0; const x = hurtPlayer(b, d * QUEEN.surge, { src: e, single: 1, charged: 1, label: e.n + '이(가) 발밑에서 솟구친다' }); if (x > 0 && !b.over) addS(b, b.p, 'bleed', QUEEN.surgeBleed); fireCarry(b, e, 1, x > 0); if (alive(b).filter(m => m.role === 'maid').length < QUEEN.maidMax && (e.maidBackN || 0) < QUEEN.maidBack && !b.over) { e.maidBackN = (e.maidBackN || 0) + 1; maidSpawn(b, e); logp(b, 'bad', '모래 속에서 재의 시녀가 다시 일어선다'); } return 1; }
   }
   return 0;
 }
@@ -1730,7 +1730,7 @@ function kwTaken(b, u, d, o) {
   if (o.dot || !(d > 0)) return d;
   if (u.s.vuln) { d *= 1.25; kwDec(u, 'vuln'); }
   if (u.s.protect) { d *= 0.75; kwDec(u, 'protect'); }
-  if (u.s.ignite && !o.noIgn) { const n = stk(u, 'ignite'); kwDec(u, 'ignite'); let x = n * (hasMod(b, 'candle') ? 1.5 : 1) * (u === b.p ? 1 : dotMul(b.p)); if (u === b.p && hasBt(u, 'snuff')) x = 0; if ((b.ctx.ch || 1) >= 3) { if (hasMod(b, 'brazier')) x *= 1.5; if (hasMod(b, 'shade')) x *= 0.5; if (u === b.p && hasBt(u, 'shade')) x *= 0.5; if (u === b.p && hasBt(u, 'herald')) x = 0; if (u.boss === 'queen' && b.heat != null) { logp(b, 'bad', '불길이 여왕에게 스며든다'); heatAdd(b, QUEEN.ignTick, '불'); codexHit(b, 'queen', 'fire'); } } d += x; }
+  if (u.s.ignite && !o.noIgn) { const n = stk(u, 'ignite'); kwDec(u, 'ignite'); let x = n * (hasMod(b, 'candle') ? 1.5 : 1) * (u === b.p ? 1 : dotMul(b.p)); if (u === b.p && hasBt(u, 'snuff')) x = 0; if ((b.ctx.ch || 1) >= 3) { if (u !== b.p) u.ignLast = b.actN; if (hasMod(b, 'brazier')) x *= 1.5; if (hasMod(b, 'shade')) x *= 0.5; if (u === b.p && hasBt(u, 'shade')) x *= 0.5; if (u === b.p && hasBt(u, 'herald')) x = 0; if (u.boss === 'queen' && b.heat != null) { logp(b, 'bad', '불길이 여왕에게 스며든다'); heatAdd(b, QUEEN.ignTick, '불'); codexHit(b, 'queen', 'fire'); } } d += x; }
   return d;
 }
 /* 0.6a.2 직업 (v2: 재사용 대기 스킬, 트리, 마나 없음) */
