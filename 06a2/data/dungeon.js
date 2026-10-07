@@ -26,12 +26,26 @@ const HIDE_REWARD = 0.45;
 
 /* 갈래길 (10월 4일 만든 사람 결정): 방과 방 사이에서 길을 고른다. 고른 길은 다음 갈래길까지 이어지고, 층마다 문 셋을 고르는 것은 그대로다.
    hp · dmg: 적 배율, loot: 전리품 확률 배율, gold: 방 골드 배율, up: 방에서 얻는 장비 등급이 한 단계 오를 확률(음수면 내려갈 확률), risk: 문 위험도(★) 더하기, w: 문 종류 가중치 배율 */
+/* 가혹 모드 (10월 8일, docs/가혹모드-반복.md): 적과 보스의 직접 피해 ×1.3 (한 번 피해 상한은 곱한 뒤에 그대로, 목표 범위 1.3~1.5의 아래쪽: 1.4 · 생명력 ×1.15는 완주 0%), 적 생명력 ×1(hp 칸), 전리품 · 골드 · 경험치 배율.
+   길도 다시 짠다: 가장 안전한 샛길도 일반의 큰 길만큼 아프다(PATHS_HARD). 영웅 · 전설 확률 ×1.5(hero)는 장비 풀이 합쳐진 뒤 rollGradeCh에 건다 */
+const MODES = {
+  normal: { n: '일반' },
+  hard: { n: '가혹', dmg: 1.3, hp: 1, loot: 1.25, gold: 1.2, xp: 1.2, hero: 1.5,
+    why: ['적과 보스가 30% 더 아프게 때립니다. 한 번에 받는 피해의 상한은 같습니다.', '가장 안전한 길도 일반의 큰 길만큼 위험합니다. 강적을 더 자주 만납니다.', '전리품과 골드, 경험치가 늘고 장비 등급이 더 자주 오릅니다.', '기록과 랭킹에 "가혹"이 붙습니다.'] },
+};
 const PATH_AT = [4, 8, 13, 17, 21]; // 이 층의 문을 열기 전에 길을 고른다(1~3층은 큰 길)
 const PATHS = {
   rough: { n: '험한 길', ico: '⛰️', hp: 1.15, dmg: 1.12, loot: 1.5, gold: 1.3, up: 0.35, risk: 1, w: { strong: 1.6, ambush: 1.5, trial: 2, treasure: 1.3, spring: 0.5, shrine: 0.6, event: 0.8 }, d: '적이 더 거셉니다. 강적 · 매복 · 시련 문이 자주 나옵니다. 전리품과 골드가 많고, 장비 등급이 자주 한 단계 오릅니다.' },
   main: { n: '큰 길', ico: '🛤️', hp: 1, dmg: 1, loot: 1, gold: 1, risk: 0, w: {}, d: '평소대로입니다.' },
   quiet: { n: '샛길', ico: '🌿', hp: 0.88, dmg: 0.9, loot: 0.7, gold: 0.75, up: -0.3, risk: -1, w: { strong: 0.4, ambush: 0.5, trial: 0.3, shrine: 1.5, event: 1.4, altar: 1.2, spring: 0.8 }, d: '적이 덜 거셉니다. 쉬는 방 문이 자주 나옵니다. 전리품과 골드가 적고, 장비 등급이 가끔 한 단계 내려갑니다.' },
 };
+
+const PATHS_HARD = {
+  rough: Object.assign({}, PATHS.rough, { loot: 1.7, gold: 1.5, up: 0.45, w: { strong: 2.2, ambush: 1.5, trial: 2, treasure: 1.3, spring: 0.5, shrine: 0.6, event: 0.8 }, d: '적이 더 거셉니다. 강적 · 매복 · 시련 문이 아주 자주 나옵니다. 전리품과 골드가 크게 늘고, 장비 등급이 자주 한 단계 오릅니다.' }),
+  main: Object.assign({}, PATHS.main, { loot: 1.15, w: { strong: 1.3 }, d: '강적 문이 조금 더 자주 나옵니다. 전리품이 조금 늘어납니다.' }),
+  quiet: Object.assign({}, PATHS.quiet, { hp: 1, dmg: 1, loot: 0.85, gold: 0.85, up: 0, w: { strong: 0.7, ambush: 0.7, trial: 0.5, shrine: 1.3, event: 1.2, altar: 1.1, spring: 0.8 }, d: '가혹에서도 강적을 덜 만납니다. 적은 큰 길과 같은 세기입니다. 전리품과 골드가 조금 적습니다.' }),
+};
+const pathOf = (id, mode) => (mode === 'hard' && PATHS_HARD[id]) || PATHS[id] || PATHS.main;
 
 /* 방 특성: 전투 방에 상층 25%, 하층 45%. 시련은 둘 */
 const ROOM_MODS = {

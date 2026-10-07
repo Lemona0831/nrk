@@ -270,6 +270,7 @@ function playChar(pk, build, seed) {
   const G = G0.__G;
   G.data = G0.blankData(); G.data.seenFoe = { abbot: 1, bellringer: 1, pilgrim: 1 }; G.data.seenBoss = { abbot: 1 }; G.data.seenCoach = true; G.data.unlAll = 1; /* 숨겨진 직업도 고를 수 있게(어느 직업을 잴지는 DG_LOCK이 정한다) */
   G.cre = { name: 'qa' }; G.dropQ = []; G.b = null; G.sheet = null;
+  if (process.env.MODE === 'hard') { G0.__G.data.hardOpen = 1; G0.__G.cre = { mode: 'hard' }; } /* 10월 8일: MODE=hard이면 가혹으로 만든다 */
   G0.startRun(build);
   const run = G.run; G.sheet = null; G.creating = false; G.cre = null; G.scr = 'run';
   // 스킬과 능력치 (qa.js와 같은 규칙)
