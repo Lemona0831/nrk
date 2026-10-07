@@ -60,8 +60,8 @@ function evalState(b0, b1, risk) {
   return dealt * 1.0 + kills * 6 - hpLoss * (40 + 80 * (1 - risk)) - flasks * 7 - lowHp - threat * 1.5 - roots * 3 - healers * 3 - poison * 0.6 + scarKeep + (p1.st - p0.st) * 0.03;
 }
 function lookahead(b, P, r) {
-  { const dmd = E.alive(b).find(e => e.demand && e.demand.turn === b.turnIdx); if (dmd && r() < (P.mech || 0.5) + 0.1) { const L = E.actionList(b); if (dmd.demand.k === 'rest') { const eo = L.find(a => a.v2 && a.ok && buEatOnlyQ(a)); if (eo) return [eo.id, (E.alive(b).filter(e => psn2(e, 'bleed') > 0 && E.canTarget(b, e, eo)).sort((x, y) => psn2(y, 'bleed') - psn2(x, 'bleed'))[0] || {}).id]; const g = (b.p.build === 'spellblade' && L.find(a => a.ok && a.v2 && a.self && a.s.kind === 'spell')) || L.find(a => a.id === 'guard' && a.ok) || L.find(a => a.id === 'dodge' && a.ok); if (g) return [g.id, g.id === 'dodge' ? dmd.id : null]; } else if (!dmd.demand.hit) { const a = L.find(x => x.id === 'basic' && x.ok); if (a && E.canTarget(b, dmd, a)) return ['basic', dmd.id]; } } } // 0.6a.2 수도원장의 요구(심문 · 고해)를 사람처럼 따른다 (10월 4일)
-  const L = E.actionList(b).filter(a => a.ok && a.id !== 'flee' && a.id !== 'sig');
+  { const dmd = E.alive(b).find(e => e.demand && e.demand.turn === b.turnIdx); if (dmd && r() < (P.mech || 0.5) + 0.1) { const L = E.actionList(b); if (dmd.demand.k === 'rest') { if (b.p.build === 'bloodmage') { const q = bmRest(b, L); if (q) return q; } const eo = L.find(a => a.v2 && a.ok && buEatOnlyQ(a)); if (eo) return [eo.id, (E.alive(b).filter(e => psn2(e, 'bleed') > 0 && E.canTarget(b, e, eo)).sort((x, y) => psn2(y, 'bleed') - psn2(x, 'bleed'))[0] || {}).id]; const g = (b.p.build === 'spellblade' && L.find(a => a.ok && a.v2 && a.self && a.s.kind === 'spell')) || L.find(a => a.id === 'guard' && a.ok) || L.find(a => a.id === 'dodge' && a.ok); if (g) return [g.id, g.id === 'dodge' ? dmd.id : null]; } else if (!dmd.demand.hit) { const a = L.find(x => x.id === 'basic' && x.ok); if (a && E.canTarget(b, dmd, a)) return ['basic', dmd.id]; } } } // 0.6a.2 수도원장의 요구(심문 · 고해)를 사람처럼 따른다 (10월 4일)
+  const L = E.actionList(b).filter(a => a.ok && a.id !== 'flee' && a.id !== 'sig' && (!a.pull || bmPullOk(b, a, P))); // 숨겨진 직업 3: 피로 당기기는 이유가 있을 때만
   const cands = [];
   for (const a of L) {
     let ts = [null];
@@ -102,6 +102,57 @@ const enemyPrio = e => (e.role === 'thief' && (e.loot || (e.intent && e.intent.k
 const buFx = a => !!(a && a.s && a.s.fx.some(e => (e.s === 'bleed' && ['drain', 'exploit', 'grow', 'spread', 'meSt'].includes(e.k)) || e.k === 'grudge' || e.k === 'carry' || (e.k === 'lowx' && e.me) || e.on === 'kill' || (e.k === 'thorn' && e.bleed)));
 const buEatOnlyQ = a => !!(a && a.s && a.s.fx.some(e => e.k === 'drain' && e.s === 'bleed' && !e.me) && !a.s.fx.some(e => e.k === 'dmg'));
 const SB_FX = ['imbue', 'edgeX', 'kwx', 'alt', 'killSpread']; // 마검사 효과 (참고: 마검사 판단은 kind가 있는 스킬이 끼워졌을 때만 걸린다)
+/* 숨겨진 직업 3 (10월 7일, 비공개 문서 F4): 피로 당기기는 이유가 있을 때만(끊기 · 무너뜨리기 · 쓰러뜨리기 · 서원 · 값 깎기), 내고 난 생명력 40%(신중 50%) 이상, 값은 최대 생명력 15%(급할 때 25%) 이하.
+   다른 직업은 a.pull이 없어 아무것도 바뀌지 않는다 */
+const bmFx = a => !!(a && a.s && a.s.fx.some(e => ['hpCost', 'bloodDmg', 'payCut', 'perDmg'].includes(e.k) || (e.k === 'drain' && e.eat) || (e.k === 'spread' && (e.kill || e.s === 'weak'))));
+const bmEatQ = a => !!(a && a.s && a.s.fx.some(e => e.k === 'drain' && e.eat));
+const bmEatOnlyQ = a => bmEatQ(a) && !a.s.fx.some(e => e.k === 'dmg');
+const BM_CHG = ['charge', 'heavy', 'fuse', 'explode', 'chant', 'chanting', 'burn'];
+function bmDmg(b, a, e) { // 사람의 어림: 버튼에 보이는 피해 숫자
+  const p = b.p, f = a.s ? a.s.fx : []; const F = k => f.find(x => x.k === k); const hits = (a.s && a.s.hits) || 1; const ps = psn2(e, 'poison');
+  let v = a.id === 'basic' ? E.basicBase(p) : a.id === 'heavy' ? E.heavyBase(p) : ((F('dmg') || {}).n || 0) * hits;
+  const dr = f.find(x => x.k === 'drain' && x.eat); if (dr && dr.dmg) v += Math.min(dr.max || 99, ps) * dr.dmg;
+  const bd = F('bloodDmg'); if (bd) v += bd.per * Math.min(20, (b.prepTurn === b.turnIdx ? b.paidTurn || 0 : 0) + (a.blood || 0) + (a.hpCost || 0));
+  const pd = F('perDmg'); if (pd) v += pd.per * psn2(e, 'weak');
+  const big = !!(e.elite || e.strong || e.role === 'boss'); const gx = F('bigx'), bx = F('brokenx'), lx = F('lowx');
+  if (gx && big) v *= gx.mul; if (bx && e.s.broken) v *= bx.mul; if (lx && e.hp <= e.hpMax * lx.hp) v *= lx.mul;
+  if (p.s.empower) v *= 1.25; if (p.s.weak) v *= 0.75; if (e.braced) v *= 0.5; if (e.vow) v *= 0.6; if (e.evading && !a.aoe) v = 0; if (a.aoe && e.row === 'back') v *= 0.8;
+  return v;
+}
+function bmBrk(a, e) { const f = a.s ? a.s.fx : []; let v = a.id === 'basic' ? 10 : a.id === 'heavy' ? 35 : f.reduce((m, x) => m + (x.k === 'brk' ? x.n : 0), 0); const cx = f.find(x => x.k === 'cutx'); if (cx && e.intent && BM_CHG.includes(e.intent.k)) v += cx.brk; return e.vow ? v * 1.5 : v; }
+/* 이 행동(쓸 수 있는 칸 · 당길 칸)이 지금 할 수 있는 급한 일: 영창 끊기 · 모으는 적 무너뜨리기 · 쓰러뜨리기 · 서원 · 희생 */
+function bmUrgent(b, a) {
+  const ts = E.alive(b).filter(e => e.role !== 'root' && (a.aoe ? (!a.s || a.s.tgt === 'all' || e.row === 'front') : E.canTarget(b, e, a)));
+  for (const e of ts) { if (e.pile || e.role === 'candle') continue; const d = bmDmg(b, a, e), k = bmBrk(a, e);
+    if (e.chant && d >= (e.chant.need || 0) - (e.chant.taken || 0)) return { why: 'chant', t: e };
+    if (e.intent && BM_CHG.includes(e.intent.k) && !e.s.broken && k > 0 && e.brk + k >= e.brkMax) return { why: 'break', t: e };
+    if (d >= e.hp && d > 0) return { why: 'kill', t: e };
+    if ((e.vow || (e.intent && e.intent.k === 'sacprep')) && k >= 25) return { why: 'vow', t: e }; }
+  return null;
+}
+function bmPullOk(b, a, P) {
+  const p = b.p; if (!a.pull) return null; const u = bmUrgent(b, a); const cut = (p.payCut || []).length > 0 && !a.s.start && a.s.fx.some(x => x.k === 'dmg') && (a.blood || 0) <= p.hpMax * 0.08 && p.hp - (a.blood || 0) - (a.hpCost || 0) >= p.hpMax * 0.6; // 값 깎기: 싸게 당길 수 있고 넉넉할 때만
+  if (!u && !cut) return null; const urg = !!u; const pay = (a.blood || 0) + (a.hpCost || 0); const after = p.hp - pay;
+  if (after < p.hpMax * (P && P.n === '신중' ? 0.5 : 0.4)) return null;
+  if (pay > p.hpMax * (urg ? 0.25 : 0.15)) return null;
+  if (u && u.why === 'kill' && (u.t.summoned || pay > Math.min(p.hpMax * 0.12, 2 * (E.enemyHitEst ? E.enemyHitEst(b, u.t) : u.t.dmg)))) return null; // 쓰러뜨리기: 그 적이 앞으로 줄 피해보다 비싸게 내지 않는다
+  if (u && u.why === 'kill') { const rd = E.actionList(b).filter(x => x.ok && !x.pull && (x.id === 'basic' || (x.v2 && !x.self && x.s.fx.some(f => f.k === 'dmg')))); if (rd.some(x => (x.aoe || E.canTarget(b, u.t, x)) && bmDmg(b, x, u.t) >= u.t.hp)) return null; } // 쓸 수 있는 칸으로 쓰러뜨릴 수 있으면 당기지 않는다
+  const pv = E.previewAfter(b, 1); const bigIn = pv.some(x => x.e.intent && (x.e.intent.k === 'heavy' || x.e.intent.aimed || ['burn', 'explode', 'judgment'].includes(x.e.intent.k)));
+  if (bigIn && E.incomingEst && after <= E.incomingEst(b).sum * 1.2) return null;
+  return u || { why: 'cut', t: null };
+}
+/* 테스터는 피로 당기기를 규칙으로만 고른다: 다른 판단이 우연히 당긴 칸을 누르지 않게 잠가 둔다(a.bmPull에 남긴다) */
+function bmHold(b, L) { if (b.p.build !== 'bloodmage') return L; for (const a of L) if (a.ok && a.pull) { a.ok = false; a.bmPull = 1; a.why = '테스터: 이유 없이 당기지 않음'; } return L; }
+/* 고해 요구(칼을 거두어라): 피해 없는 먹기 → 중독 · 약화만 거는 칸 → 나에게 쓰는 칸 (당기지 않는다) */
+function bmRest(b, L) {
+  const ok = L.filter(a => a.v2 && a.ok && !a.pull && !a.s.fx.some(x => x.k === 'dmg' || (x.k === 'drain' && x.dmg) || x.k === 'bloodDmg' || x.k === 'perDmg'));
+  const hpOk = a => b.p.hp - (a.hpCost || 0) >= b.p.hpMax * 0.35;
+  const eo = ok.find(a => bmEatOnlyQ(a) && !a.aoe && b.p.hp < b.p.hpMax * 0.85); if (eo) { const t = E.alive(b).filter(e => psn2(e, 'poison') > 0 && E.canTarget(b, e, eo)).sort((x, y) => psn2(y, 'poison') - psn2(x, 'poison'))[0]; if (t) return [eo.id, t.id]; }
+  const ps = ok.filter(a => !a.self && !bmEatQ(a) && hpOk(a) && a.s.fx.some(x => x.k === 'poison' || x.k === 'st')).sort((x, y) => ((y.s.fx.find(e => e.k === 'poison') || { n: 0 }).n - (x.s.fx.find(e => e.k === 'poison') || { n: 0 }).n))[0];
+  if (ps) { if (ps.aoe) return [ps.id]; const t = E.alive(b).filter(e => e.role !== 'root' && E.canTarget(b, e, ps)).sort((x, y) => (y.role === 'boss') - (x.role === 'boss'))[0]; if (t) return [ps.id, t.id]; }
+  const me = ok.find(a => a.self && hpOk(a)); if (me) return [me.id];
+  return null;
+}
 const WARDEN_FX = ['ward', 'wardFill', 'wardBurn', 'thorn', 'pull', 'vulnGrow', 'vulnPer', 'chillx', 'shieldx']; // 파수꾼 효과 (v2Pick의 파수꾼 판단이 이 효과를 가진 스킬에만 걸린다)
 /* 0.6a.2 라운드: 이번 차례에(빠른 행동으로) 흘릴 준비를 이미 했는가 (id를 주면 그 적에게). 옛 직업은 늘 false라 next/ 측정은 그대로다 */
 const v2Ready = (b, id) => !!(E.isV2 && E.isV2(b.p) && b.p.dodge && b.prepTurn === b.turnIdx && (id == null || b.p.dodge === id));
@@ -251,6 +302,58 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     if (!okS.some(a => !a.self && !has(a, 'parry'))) { const t = best({ id: 'basic', melee: 1 }, (x, y) => (bl(y) - bl(x)) || (x.hp - y.hp)); if (t && bl(t) > 0 && r() < 0.8) return ['basic', t.id]; }
     }
   }
+  // 숨겨진 직업 3 (10월 7일, 비공개 문서 F4): 피로 당기기(낼까) · 먹기(거둘까) · 옮기기 · 쓰러뜨리면 번짐 · 표식 · 약화 · 생명력 내기 · 값 깎기. 이 직업의 효과를 가진 스킬이 끼워졌을 때만
+  if (p.build === 'bloodmage' && !process.env.BM_OFF && L.some(a => a.v2 && bmFx(a))) {
+    const hpf = p.hp / p.hpMax, ps = e => psn2(e, 'poison'), F = (a, k) => a.s.fx.find(e => e.k === k), big = e => !!(e.elite || e.strong || e.role === 'boss');
+    const bigIn = !!(hv || pv1.some(x => x.e.intent && (x.e.intent.aimed || ['burn', 'explode'].includes(x.e.intent.k))));
+    const foes = E.alive(b).filter(e => e.role !== 'root' && !e.pile);
+    const atkOk = a => !a.self && !bmEatOnlyQ(a);
+    // 생명력을 내는 칸: 내고 난 생명력 35% 아래면 이번 차례 후보에서 뺀다 (급한 일이면 남긴다)
+    for (const a of okS.slice()) if ((a.hpCost || 0) > 0 && p.hp - a.hpCost < p.hpMax * 0.35 && !bmUrgent(b, a)) okS.splice(okS.indexOf(a), 1);
+    // 1) 급한 일(영창 끊기 · 모으는 적 무너뜨리기 · 쓰러뜨리기 · 서원): 쓸 수 있는 칸이 먼저, 없으면 이유가 맞을 때만 피로 당긴다
+    { const rd = okS.filter(a => atkOk(a)).map(a => ({ a, u: bmUrgent(b, a) })).filter(x => x.u && x.u.why !== 'kill').sort((x, y) => (x.a.time - y.a.time));
+      if (rd.length && r() < 0.85) { const x = rd[0]; return x.a.aoe ? [x.a.id] : [x.a.id, x.u.t.id]; }
+      const killRd = e => okS.some(a => atkOk(a) && (a.aoe ? (a.s.tgt === 'all' || e.row === 'front') : E.canTarget(b, e, a)) && bmDmg(b, a, e) >= e.hp) || (E.canTarget(b, e, { id: 'basic', ranged: 1 }) && bmDmg(b, { id: 'basic' }, e) >= e.hp);
+      const pl = L.filter(a => a.bmPull).map(a => ({ a, u: bmPullOk(b, a, P) })).filter(x => x.u && !(x.u.why === 'kill' && killRd(x.u.t))).sort((x, y) => ((x.u.why === 'cut') - (y.u.why === 'cut')) || ((x.a.blood || 0) - (y.a.blood || 0)));
+      if (pl.length && r() < 0.85) { const x = pl[0]; const t = x.u.t || (x.a.aoe || x.a.self ? null : best(x.a, (m, n) => m.hp - n.hp)); b.rec.push({ k: 'bmq', why: x.u.why, id: x.a.id, cost: x.a.blood || 0 }); return x.a.aoe || x.a.self ? [x.a.id] : [x.a.id, t && t.id]; } }
+    // 2) 먹기 (거둘까): 생명력 60% 이하이고 넘침이 적을 때, 35% 아래면 넘침을 따지지 않는다. 곧 독으로 쓰러질 적 · 영창 중인 적은 먹지 않는다
+    { const eatT = a => reach(a).filter(e => ps(e) > 0 && e.hp > ps(e) && !(e.chant && e.hp > e.hpMax * 0.3)).sort((x, y) => ps(y) - ps(x))[0];
+      for (const a of okS.filter(bmEatQ)) {
+        const dr = a.s.fx.find(e => e.k === 'drain' && e.eat); let n = 0, t = null;
+        if (a.aoe) { for (const e of foes) if ((a.s.tgt === 'all' || e.row === 'front') && e.hp > ps(e)) n += Math.min(dr.max || 99, ps(e)); } else { t = eatT(a); n = t ? Math.min(dr.max || 99, ps(t)) : 0; }
+        if (n <= 0) continue; const heal = Math.min(n * dr.per * E.healMul(p), p.hpMax * 0.25); const miss = p.hpMax - p.hp;
+        const low = (hpf <= 0.6 && heal <= miss * 1.3) || hpf < 0.35; const prot = a.s.fx.some(e => e.k === 'meSt' && e.s === 'protect') && bigIn && hpf < 0.75 && heal <= miss * 1.3; const hit = !!dr.dmg && (a.aoe ? n >= 4 : ps(t) >= 4);
+        if (hv && !prot && hpf >= 0.35) continue; // 강타가 오면 먹기보다 흘리기 · 방어 (보호를 주는 먹기와 위급할 때만)
+        if (low || prot || hit) return a.aoe ? [a.id] : [a.id, t.id];
+      }
+      for (const a of okS.slice()) if (bmEatOnlyQ(a)) okS.splice(okS.indexOf(a), 1); } // 그 밖에는 피해 없는 먹기를 아낀다
+    // 3) 약화: 큰 한 방을 모으는 적에게 먼저 (빠른 칸)
+    if (bigIn) { const bg = pv1.filter(x => x.e.intent && (x.e.intent.k === 'heavy' || x.e.intent.aimed || ['burn', 'explode'].includes(x.e.intent.k))).map(x => x.e).sort((x, y) => y.dmg - x.dmg)[0];
+      const wk = bg && !bg.s.weak && okS.filter(a => a.s.fx.some(e => e.k === 'st' && e.s === 'weak') && (a.aoe ? (a.s.tgt === 'all' || bg.row === 'front') : E.canTarget(b, bg, a))).sort((x, y) => x.time - y.time)[0]; if (wk && r() < 0.8) return wk.aoe ? [wk.id] : [wk.id, bg.id]; }
+    if (hv && (hv.e.strong || hv.e.elite || hv.e.role === 'boss') && !v2Ready(b, hv.e.id) && L.find(a => a.id === 'guard' && a.ok) && r() < 0.85) return ['guard']; // 강적 · 정예 · 보스의 강타는 흘리기가 덜 줄이므로 방어 (비공개 문서 D2)
+    if (!hv) { // 강타 예고가 있으면 아래 공통 판단(흘리기 · 방어)에 맡긴다
+    // 4) 낸 피 칸의 순서: ⚡ 생명력을 내는 빠른 칸 먼저, 그다음 ▶ 낸 피 칸
+    { const bd = okS.find(a => F(a, 'bloodDmg') && !a.self); const lt = okS.find(a => a.time <= 0.6 && (a.hpCost || 0) > 0 && !F(a, 'bloodDmg')); if (bd && lt && !b.bonusUsed && !nf && p.hp - lt.hpCost - (bd.hpCost || 0) >= p.hpMax * 0.45) return lt.self ? [lt.id] : [lt.id, (best(lt, (x, y) => x.hp - y.hp) || {}).id];
+      if (bd && (b.paidTurn || 0) > 0 && b.prepTurn === b.turnIdx) { if (bd.aoe) return [bd.id]; const t = best(bd, (x, y) => (big(y) - big(x)) || (x.hp - y.hp)); if (t) return [bd.id, t.id]; } }
+    // 5) 쓰러뜨리면 번짐: 쓰러뜨릴 수 있고 중독 3 이상, 다른 적이 남을 때. 표식(전투마다 1번): 오래 버틸 적에게
+    { for (const a of okS.filter(a => a.s.fx.some(e => e.k === 'spread' && e.kill && !e.mark))) { if (foes.length < 2) continue;
+        if (a.aoe) { if (foes.filter(e => (a.s.tgt === 'all' || e.row === 'front') && bmDmg(b, a, e) >= e.hp && ps(e) >= 3).length) return [a.id]; continue; }
+        const t = reach(a).filter(e => bmDmg(b, a, e) >= e.hp && ps(e) >= 3).sort((x, y) => ps(y) - ps(x))[0]; if (t) return [a.id, t.id]; }
+      const mk = okS.find(a => a.s.fx.some(e => e.k === 'spread' && e.mark)); if (mk) { const cand = reach(mk).filter(e => e.role !== 'boss' && e.role !== 'candle' && e.hp > e.hpMax * 0.4).sort((x, y) => y.hp - x.hp)[0]; const t = foes.length >= 2 ? cand : reach(mk)[0]; if (t && (foes.length >= 2 || t.hp > 30)) return [mk.id, t.id]; } }
+    // 6) 옮기기: 원천(중독 4 이상, 이번에 쓰러지지 않을 적), 다른 적 둘 이상
+    { for (const a of okS.filter(a => a.s.fx.some(e => e.k === 'spread' && !e.kill && !e.s))) { if (foes.length < 3) continue; const t = reach(a).filter(e => ps(e) >= 4 && e.hp > ps(e) + 4).sort((x, y) => ps(y) - ps(x))[0]; if (t) return [a.id, t.id]; } }
+    // 7) 약화 비례 · 약화 퍼뜨리기
+    { const pd = okS.find(a => F(a, 'perDmg') && !a.aoe); if (pd) { const t = best(pd, (x, y) => psn2(y, 'weak') - psn2(x, 'weak')); if (t && psn2(t, 'weak') >= 2) return [pd.id, t.id]; }
+      const sw = okS.find(a => a.s.fx.some(e => e.k === 'spread' && e.s === 'weak')); if (sw && foes.length >= 2) { const t = best(sw, (x, y) => (y.dmg - x.dmg)); if (t) return [sw.id, t.id]; } }
+    // 8) 값 깎기: 강적 · 보스 · 영창자 싸움에서 큰 칸이 쿨타임일 때 (수도원장 종 직전에는 쓰지 않는다)
+    { const pc = okS.find(a => a.self && F(a, 'payCut')); const hard = foes.some(e => e.strong || e.role === 'boss' || e.chant || e.elite);
+      const bell = foes.some(e => e.boss === 'abbot' && (e.phase || 1) === 1 && e.hp < e.hpMax * 0.75);
+      const cdBig = (p.skills || []).some(id => { const s = E.SK2[id]; return s && !s.once && s.fx.some(x => x.k === 'dmg' || x.k === 'brk') && ((p.cd || {})[id] || 0) >= 2; });
+      if (pc && hard && !bell && cdBig && (p.payCut || []).length < 2 && r() < 0.7) return [pc.id]; }
+    }
+    // 9) 사혈(나에게 쓰는 생명력 내기)은 위의 순서에서만 쓴다
+    for (const a of okS.slice()) if (a.self && (a.hpCost || 0) > 0) okS.splice(okS.indexOf(a), 1);
+  }
   if (p.build === 'elementalist' && E.elemPreview && useMech && !process.env.ELEM_OFF) { const v = elemPick(b, P, r, okS, reach, pv1); if (v) return v; } // 0.6a.2 원소술사 (10월 7일): 열충격 미리 보기로 고른다
   // 강타 예고: 흘리기형 스킬(스태미나 없이) → 흘리기 준비 → 스태미나 흘리기. 이번 차례에 빠른 행동으로 이미 그 적을 흘릴 준비를 했으면 다시 걸지 않는다(덮어쓰면 붙은 효과를 잃는다)
   if (hv && !v2Ready(b, hv.e.id) && r() < Math.max(P.parry, 0.35) + 0.2) {
@@ -377,8 +480,8 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   return null;
 }
 function heuristic(b, P, r, mem) {
-  { const dmd = E.alive(b).find(e => e.demand && e.demand.turn === b.turnIdx); if (dmd && r() < (P.mech || 0.5) + 0.1) { const L = E.actionList(b); if (dmd.demand.k === 'rest') { const eo = L.find(a => a.v2 && a.ok && buEatOnlyQ(a)); if (eo) return [eo.id, (E.alive(b).filter(e => psn2(e, 'bleed') > 0 && E.canTarget(b, e, eo)).sort((x, y) => psn2(y, 'bleed') - psn2(x, 'bleed'))[0] || {}).id]; const g = (b.p.build === 'spellblade' && L.find(a => a.ok && a.v2 && a.self && a.s.kind === 'spell')) || L.find(a => a.id === 'guard' && a.ok) || L.find(a => a.id === 'dodge' && a.ok); if (g) return [g.id, g.id === 'dodge' ? dmd.id : null]; } else if (!dmd.demand.hit) { const a = L.find(x => x.id === 'basic' && x.ok); if (a && E.canTarget(b, dmd, a)) return ['basic', dmd.id]; } } } // 0.6a.2 수도원장의 요구(심문 · 고해)를 사람처럼 따른다 (10월 4일)
-  const p = b.p, L = E.actionList(b), ok = id => { const a = L.find(x => x.id === id); return a && a.ok; };
+  { const dmd = E.alive(b).find(e => e.demand && e.demand.turn === b.turnIdx); if (dmd && r() < (P.mech || 0.5) + 0.1) { const L = E.actionList(b); if (dmd.demand.k === 'rest') { if (b.p.build === 'bloodmage') { const q = bmRest(b, L); if (q) return q; } const eo = L.find(a => a.v2 && a.ok && buEatOnlyQ(a)); if (eo) return [eo.id, (E.alive(b).filter(e => psn2(e, 'bleed') > 0 && E.canTarget(b, e, eo)).sort((x, y) => psn2(y, 'bleed') - psn2(x, 'bleed'))[0] || {}).id]; const g = (b.p.build === 'spellblade' && L.find(a => a.ok && a.v2 && a.self && a.s.kind === 'spell')) || L.find(a => a.id === 'guard' && a.ok) || L.find(a => a.id === 'dodge' && a.ok); if (g) return [g.id, g.id === 'dodge' ? dmd.id : null]; } else if (!dmd.demand.hit) { const a = L.find(x => x.id === 'basic' && x.ok); if (a && E.canTarget(b, dmd, a)) return ['basic', dmd.id]; } } } // 0.6a.2 수도원장의 요구(심문 · 고해)를 사람처럼 따른다 (10월 4일)
+  const p = b.p, L = bmHold(b, E.actionList(b)), ok = id => { const a = L.find(x => x.id === id); return a && a.ok; }; // 숨겨진 직업 3: 피로 당기기는 v2Pick의 규칙으로만
   const al = E.alive(b).filter(e => e.role !== 'root');
   const hpf = p.hp / p.hpMax;
   const pv = E.previewAfter(b, 1);
