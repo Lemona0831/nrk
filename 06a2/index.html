@@ -1583,7 +1583,7 @@ const IFX2 = {
   shockring: { dotP: (b, p, e, o) => o.shock ? 0.12 : 0 },
   leechring: { bHealP: (b, p, why) => why === 'leech' ? 0.25 : 0 },
   protring: { onProt: (b, p) => { if (!fxCnt(b, 'protring', 3)) return; addS(b, p, 'protect', 1); return 1; } },
-  pricering: { onSkill: (b, p, act) => { if (!act.s || !(act.s.hpCost || act.s.fx.some(x => x.k === 'meSt' && x.s === 'bleed'))) return; p.fxPrice = 1; return 1; }, hitP: (b, p, e, o, c) => { if (!p.fxPrice || !isAtkC(c)) return 0; p.fxPrice = 0; return 0.12; } },
+  pricering: { onSkill: (b, p, act) => { if (!act.s || !(act.hpCost || act.s.fx.some(x => x.k === 'hpCost' || (x.k === 'meSt' && x.s === 'bleed')))) return; p.fxPrice = 1; return 1; }, hitP: (b, p, e, o, c) => { if (!p.fxPrice || !isAtkC(c)) return 0; p.fxPrice = 0; return 0.12; } },
   branchring: { onSkill: (b, p, act) => { p.fxBrLast = fxBr(act) || p.fxBrLast; }, brk: (b, p, e, c) => { const br = fxBr(c); return br && p.fxBrLast && br !== p.fxBrLast ? 5 : 0; } },
   ashring: { onRise: (b, p, e) => { e.hp = Math.min(e.hp, Math.max(1, Math.round(e.hpMax * 0.3))); return 1; }, onKill: (b, p, e) => { if (!e.pile) return; return fxHeal(p, p.hpMax * 0.02) > 0 ? 1 : 0; } },
   threadring: { hitP: (b, p, e) => e.role === 'hexer' && e.intent && e.intent.k === 'constrict' ? 0.2 : 0, inP: (b, p, o) => o.src && o.src.role === 'hexer' && o.src.intent && o.src.intent.k === 'constrict' ? 0.2 : 0 },
