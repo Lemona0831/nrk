@@ -3190,7 +3190,7 @@ function mbar(cls, v, max, lab, inc) { const ik = { hp: 'bar:hp', mp: 'bar:mp', 
 function vPlayerPanel(p, b) {
   const B = BUILDS[p.build];
   const run0 = G.run; const lvTxt = run0 && run0.lv ? `<span class="lvtag" title="경험치 ${Math.round(run0.xp || 0)}/${LV_XP[run0.lv] || '최대'}">Lv ${run0.lv}</span>` : '';
-  let h = `<section class="me"><div class="mehead"><b>${B.ico} ${esc(B.n)}</b>${lvTxt}${q('build', '빌드')}<span class="flk" data-info="flask" tabindex="0"><span class="flw">플라스크 </span>❤️ ${p.flask.life} · ${isV2(p) ? '🧪' : '💧'} ${p.flask.mana} · ⚡ ${p.flask.stam || 0} <small>/${p.flaskMax}</small></span>${q('flask', '플라스크')}${q('st', '스태미나')}${run0 && run0.cons && !b ? `<button class="sm consbtn" data-a="consopen" aria-label="소모품 ${run0.cons.reduce((a, c) => a + c.n, 0)}개">🎒 ${run0.cons.reduce((a, c) => a + c.n, 0)}</button>` : ''}</div>`;
+  let h = `<section class="me"><div class="mehead"><b>${B.ico} ${esc(B.n)}</b>${lvTxt}${q('build', '빌드')}<span class="flk" data-info="flask" tabindex="0"><span class="flw">플라스크 </span><span aria-hidden="true">❤️</span><span class="sr">생명력 </span>${p.flask.life} · ${isV2(p) ? '<span aria-hidden="true">🧪</span><span class="sr">정화 </span>' : '<span aria-hidden="true">💧</span><span class="sr">마나 </span>'}${p.flask.mana} · <span aria-hidden="true">⚡</span><span class="sr">스태미나 </span>${p.flask.stam || 0} <small><span class="sr">, 최대 </span>/${p.flaskMax}</small></span>${q('flask', '플라스크')}${q('st', '스태미나')}${run0 && run0.cons && !b ? `<button class="sm consbtn" data-a="consopen" aria-label="소모품 ${run0.cons.reduce((a, c) => a + c.n, 0)}개">🎒 ${run0.cons.reduce((a, c) => a + c.n, 0)}</button>` : ''}</div>`;
   h += `<div class="mbars">${mbar('hp', p.hp, p.hpMax, '생명력')}${p.mpMax > 0 ? mbar('mp', p.mp, p.mpMax, '마나') : ''}${mbar('st', p.st, p.stMax, '스태미나')}</div>${buildRes(p)}`;
   if (run0 && run0.lv && !b) { const lo = LV_XP[run0.lv - 1] || 0, hi = LV_XP[run0.lv]; h += hi ? `<div class="xpbar" role="progressbar" aria-label="경험치" aria-valuemin="0" aria-valuemax="${hi - lo}" aria-valuenow="${Math.round(run0.xp - lo)}"><i style="width:${Math.max(0, Math.min(100, (run0.xp - lo) / (hi - lo) * 100))}%"></i><span>경험치 ${Math.round(run0.xp)}/${hi} · 다음 레벨까지 ${Math.max(0, Math.ceil(hi - run0.xp))}</span></div>` : '<p class="mini">가장 높은 레벨입니다.</p>'; }
   const extra = [];
@@ -3220,7 +3220,8 @@ function dgBar(run) {
   for (let f = 1; f <= FLOORS; f++) {
     const cls = f === run.room ? 'now' : f < run.room ? 'past' : '';
     const ico = f === FLOOR_CAMP ? '⛺' : f === FLOOR_BOSS ? '👑' : PATH_AT.includes(f) && f > run.room ? '🔀' : done[f] && ROOM_TYPES[done[f].type] ? ROOM_TYPES[done[f].type].ico : (run.log6 && run.log6[f]) || '';
-    h += `<li class="${cls}${f === FLOOR_CAMP ? ' camp' : ''}" data-info="floor:${f}"><span>${ico || (f < run.room ? '·' : '')}</span></li>`;
+    const rt = done[f] && ROOM_TYPES[done[f].type]; const sr = floorName(f) + (f === FLOOR_CAMP ? ', 야영지' : f === FLOOR_BOSS ? ', 보스' : '') + (f === run.room ? ', 지금 있는 층' : f < run.room ? (rt ? ', ' + rt.n + ' 지남' : ', 지남') : '');
+    h += `<li class="${cls}${f === FLOOR_CAMP ? ' camp' : ''}" data-info="floor:${f}"${f === run.room ? ' aria-current="step"' : ''}><span aria-hidden="true">${ico || (f < run.room ? '·' : '')}</span><span class="sr">${esc(sr)}</span></li>`;
   }
   h += '</ol>';
   const bl = Object.keys(run.buffs || {}).map(k => { const S = SHRINES.find(x => x.id === k); return `<span class="chip" data-info="buff:${k}" tabindex="0">${esc(S ? S.n : (EVBUFF[k] || [k])[0])} ${run.buffs[k]}</span>`; }).join('');
@@ -3231,11 +3232,11 @@ function doorCard(r, i) {
   let body = '';
   if (T.fight) {
     const rep0 = r.en && r.en[0]; const R0 = rep0 && ROLES[rep0[0]];
-    const SQ = r.squad && SQUADS.find(x => x.id === r.squad); if (SQ) body += `<p class="mini dr-sq">${esc(SQ.n)}</p>`;
-    body += r.strong ? `<p class="dr-what">강적 <b>${esc(r.strong)}</b> <span class="mini">Lv${r.lv}</span></p>` : R0 ? `<p class="dr-what">${R0.ico} ${rep0[1] ? '정예 ' : ''}${esc((r.names && r.names[rep0[0]]) || R0.n)}${r.en.length > 1 ? ' 외 ' + (r.en.length - 1) : ''} <span class="mini">Lv${r.lv}</span></p>` : '';
+    const SQ = r.squad && SQUADS.find(x => x.id === r.squad); if (SQ) body += `<span class="mini dr-sq">${esc(SQ.n)}</span>`;
+    body += r.strong ? `<span class="dr-what">강적 <b>${esc(r.strong)}</b> <span class="mini">Lv${r.lv}</span></span>` : R0 ? `<span class="dr-what">${R0.ico} ${rep0[1] ? '정예 ' : ''}${esc((r.names && r.names[rep0[0]]) || R0.n)}${r.en.length > 1 ? ' 외 ' + (r.en.length - 1) : ''} <span class="mini">Lv${r.lv}</span></span>` : '';
   }
-  if (r.shrine) { const S = SHRINES.find(x => x.id === r.shrine); body += `<p class="dr-what">${esc(S.n)}</p><p class="mini">${esc(S.d)} 3개 방 동안.</p>`; }
-  if (r.mods && r.mods.length) body += `<div class="dr-mods">${r.mods.map(m => `<span class="chip mod" data-info="mod:${m}">${esc(ROOM_MODS[m].n)}</span>`).join('')}</div><p class="mini">${r.mods.map(m => esc(ROOM_MODS[m].d)).join(' ')}</p>`;
+  if (r.shrine) { const S = SHRINES.find(x => x.id === r.shrine); body += `<span class="dr-what">${esc(S.n)}</span><span class="mini">${esc(S.d)} 3개 방 동안.</span>`; }
+  if (r.mods && r.mods.length) body += `<span class="dr-mods">${r.mods.map(m => `<span class="chip mod" data-info="mod:${m}">${esc(ROOM_MODS[m].n)}</span>`).join('')}</span><span class="mini">${r.mods.map(m => esc(ROOM_MODS[m].d)).join(' ')}</span>`;
   return `<button class="door t-${r.type}" data-a="door" data-k="${i}"><span class="dr-h"><span class="dr-ico" aria-hidden="true">${T.ico}</span><b>${esc(T.n)}</b>${stars ? `<span class="dr-risk"><span aria-hidden="true">${stars}</span><span class="rw">위험 ${RISK_W[Math.max(1, Math.min(4, r.risk || 1))]}</span></span>` : ''}</span>${body}<span class="dr-hint">${esc(rewardHint(r))}</span></button>`;
 }
 const RISK_W = { 1: '낮음', 2: '보통', 3: '높음', 4: '매우 높음' }; /* 10월 7일 2차: 별에 읽히는 이름 */
@@ -3415,7 +3416,7 @@ function vDash06() {
   const bn = ALL_CLASS_KEYS(); const by = {}; for (const k of bn) by[k] = runs.filter(r => r.build === k);
   const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '—';
   const done = rs => rs.filter(r => r.result === 'lose' || (r.clears || 0) >= 1);
-  h += `<div class="tbl"><table class="st2"><thead><tr><th>항목</th>${bn.map(k => `<th>${esc(BUILDS[k].n)}</th>`).join('')}</tr></thead><tbody>`;
+  h += `<div class="tbl"><table class="st2"><caption class="sr">빌드별 요약</caption><thead><tr><th scope="col">항목</th>${bn.map(k => `<th scope="col">${esc(BUILDS[k].n)}</th>`).join('')}</tr></thead><tbody>`;
   const row = (lab, f) => `<tr><td>${lab}</td>${bn.map(k => `<td>${f(by[k])}</td>`).join('')}</tr>`;
   h += row('만든 캐릭터', rs => rs.length);
   h += row('1챕터 완주 / 결판', rs => { const d = done(rs); const c = d.filter(r => (r.clears || 0) >= 1).length; return `${c}/${d.length} ${pct(c, d.length)}`; });
@@ -3431,12 +3432,12 @@ function vDash06() {
   h += `<h4>문 고르기 (나왔을 때 고른 비율)</h4><div class="wrap">${Object.keys(off).sort((a, b) => (pick[b] || 0) / off[b] - (pick[a] || 0) / off[a]).map(t => `<span class="chip">${ROOM_TYPES[t] ? ROOM_TYPES[t].ico + ' ' + esc(ROOM_TYPES[t].n) : esc(t)} ${pct(pick[t] || 0, off[t])} <small class="mini">(${pick[t] || 0}/${off[t]})</small></span>`).join('') || '—'}</div>`;
   // 방 결과
   const rw = {}; for (const r of runs) for (const x of r.rooms || []) if (x.res && x.type) { const o = rw[x.type] = rw[x.type] || { win: 0, lose: 0, flee: 0, hp: 0 }; o[x.res] = (o[x.res] || 0) + 1; if (x.res === 'win' && x.hpOut != null) o.hp += x.hpOut; }
-  h += `<h4>방 결과</h4><div class="tbl"><table class="st2"><thead><tr><th>방</th><th>이김</th><th>쓰러짐</th><th>물러남</th><th>이긴 뒤 남은 생명력</th></tr></thead><tbody>${Object.entries(rw).map(([t, o]) => `<tr><td>${ROOM_TYPES[t] ? esc(ROOM_TYPES[t].n) : t === 'boss' ? '보스' : esc(t)}</td><td>${o.win}</td><td>${o.lose}</td><td>${o.flee}</td><td>${o.win ? Math.round(o.hp / o.win * 100) + '%' : '—'}</td></tr>`).join('')}</tbody></table></div>`;
+  h += `<h4>방 결과</h4><div class="tbl"><table class="st2"><caption class="sr">방 결과</caption><thead><tr><th scope="col">방</th><th scope="col">이김</th><th scope="col">쓰러짐</th><th scope="col">물러남</th><th scope="col">이긴 뒤 남은 생명력</th></tr></thead><tbody>${Object.entries(rw).map(([t, o]) => `<tr><td>${ROOM_TYPES[t] ? esc(ROOM_TYPES[t].n) : t === 'boss' ? '보스' : esc(t)}</td><td>${o.win}</td><td>${o.lose}</td><td>${o.flee}</td><td>${o.win ? Math.round(o.hp / o.win * 100) + '%' : '—'}</td></tr>`).join('')}</tbody></table></div>`;
   // 상점
   const buys = [], sells = []; let left = 0, shops = 0, respec = 0; for (const r of runs) if (r.shop) { shops++; for (const x of r.shop.log || []) { if (x.a === 'buy') buys.push(x); if (x.a === 'sell') sells.push(x); if (x.a === 'respec') respec++; } if (r.phase === 'wait' || r.clears) left += r.gold || 0; }
   h += `<h4>상점 ${shops}번</h4><p class="mini">산 것 ${buys.length}개 (평범 ${buys.filter(x => x.g === 'n').length}, 고급 ${buys.filter(x => x.g === 'm').length}, 희귀 ${buys.filter(x => x.g === 'r').length}), 판 것 ${sells.length}개, 능력치 다시 나누기 ${respec}번, 남긴 골드 평균 ${shops ? Math.round(left / shops) : '—'}</p>${buys.length ? `<p class="mini">많이 산 것: ${Object.entries(buys.reduce((m, x) => (m[x.tpl] = (m[x.tpl] || 0) + 1, m), {})).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => esc(ITEMS[k] ? ITEMS[k].n : k) + ' ' + v).join(', ')}</p>` : ''}`;
   // 최근 캐릭터
-  h += `<h4>최근 캐릭터</h4><div class="tbl"><table class="st2"><thead><tr><th>테스터</th><th>캐릭터</th><th>도달</th><th>Lv</th><th>결과</th><th>시간</th></tr></thead><tbody>${runs.sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0)).slice(0, 30).map(r => `<tr><td>${esc(r.who)}</td><td>${esc(r.cname || '—')} <span class="mini">${esc((BUILDS[r.build] || {}).n || r.build)}</span></td><td>${esc(rankProg({ ch: r.ch, clears: r.clears, floor: r.roomReached }))}</td><td>${r.lv || 1}</td><td>${r.result === 'lose' ? '쓰러짐' : r.result === 'abandon' ? '포기' : (r.clears || 0) ? '돌파' : '진행 중'}</td><td>${fmtMs(r.playMs)}</td></tr>`).join('')}</tbody></table></div>`;
+  h += `<h4>최근 캐릭터</h4><div class="tbl"><table class="st2"><caption class="sr">최근 캐릭터</caption><thead><tr><th scope="col">테스터</th><th scope="col">캐릭터</th><th scope="col">도달</th><th scope="col">Lv</th><th scope="col">결과</th><th scope="col">시간</th></tr></thead><tbody>${runs.sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0)).slice(0, 30).map(r => `<tr><td>${esc(r.who)}</td><td>${esc(r.cname || '—')} <span class="mini">${esc((BUILDS[r.build] || {}).n || r.build)}</span></td><td>${esc(rankProg({ ch: r.ch, clears: r.clears, floor: r.roomReached }))}</td><td>${r.lv || 1}</td><td>${r.result === 'lose' ? '쓰러짐' : r.result === 'abandon' ? '포기' : (r.clears || 0) ? '돌파' : '진행 중'}</td><td>${fmtMs(r.playMs)}</td></tr>`).join('')}</tbody></table></div>`;
   return h + '</section>';
 }
 
@@ -3613,7 +3614,7 @@ function vBattle() {
   extra.push(`<span data-info="speed" tabindex="0">속도 ${r1(pSpeed(b))}</span>`);
   const eq = Object.values(p.eq).filter(Boolean); if (eq.length) extra.push(eq.map(k => esc(ITEMS[k].n)).join(', '));
   const scen = G.scr === 'scen' ? `<div class="scenline"><b>${SCEN[G.scen.i].id}. ${esc(SCEN[G.scen.i].n)}</b> ${esc(SCEN[G.scen.i].d)} 최대 10행동 중 ${b.pActs || 0}행동.</div>` : '';
-  const status = `<section class="fstat" aria-label="내 상태">${scen}<div class="mehead"><b data-info="buildrule" tabindex="0">${B.ico} ${esc(B.n)}</b><span class="flk" data-info="flask" tabindex="0">플라스크 ❤️${p.flask.life} ${isV2(p) ? '🧪' : '💧'}${p.flask.mana} ⚡${p.flask.stam || 0} <small>/${p.flaskMax}</small></span>${q('flask', '플라스크')}${G.run && G.run.cons ? `<button class="sm consbtn" data-a="consopen" aria-label="소모품 ${G.run.cons.reduce((a, c) => a + c.n, 0)}개">🎒 ${G.run.cons.reduce((a, c) => a + c.n, 0)}</button>` : ''}<button class="sm fdtog" data-a="fdet" aria-expanded="${fdo}" aria-controls="fdet"><span aria-hidden="true">${fdo ? '▴' : '▾'}</span> 정보</button></div>
+  const status = `<section class="fstat" aria-label="내 상태">${scen}<div class="mehead"><b data-info="buildrule" tabindex="0">${B.ico} ${esc(B.n)}</b><span class="flk" data-info="flask" tabindex="0">플라스크 <span aria-hidden="true">❤️</span><span class="sr">생명력 </span>${p.flask.life} ${isV2(p) ? '<span aria-hidden="true">🧪</span><span class="sr">정화 </span>' : '<span aria-hidden="true">💧</span><span class="sr">마나 </span>'}${p.flask.mana} <span aria-hidden="true">⚡</span><span class="sr">스태미나 </span>${p.flask.stam || 0} <small><span class="sr">, 최대 </span>/${p.flaskMax}</small></span>${q('flask', '플라스크')}${G.run && G.run.cons ? `<button class="sm consbtn" data-a="consopen" aria-label="소모품 ${G.run.cons.reduce((a, c) => a + c.n, 0)}개">🎒 ${G.run.cons.reduce((a, c) => a + c.n, 0)}</button>` : ''}<button class="sm fdtog" data-a="fdet" aria-expanded="${fdo}" aria-controls="fdet"><span aria-hidden="true">${fdo ? '▴' : '▾'}</span> 정보</button></div>
     <div class="mbars">${pops.p ? popHtml(pops.p) : ''}${mbar('hp', p.hp, p.hpMax, '생명력', b.over ? 0 : incomingEst(b).sum)}${p.mpMax > 0 ? mbar('mp', p.mp, p.mpMax, '마나') : ''}${mbar('st', p.st, p.stMax, '스태미나')}</div>${buildRes(p)}
     ${incHtml(b)}${focusLine(b)}${sbLine(b)}${cfLine(b)}${b.seal && b.seal.length ? `<div class="sealln" data-info="seal" tabindex="0">🔏 봉인: ${b.seal.map(x => esc(x.n)).join(', ')}</div>` : ''}${stsHtml(p, b)}<div class="fdet" id="fdet"${fdo ? '' : ' hidden'}><div class="mini">${extra.join(' · ')}</div><div class="rule" data-info="buildrule" tabindex="0">${esc(BUILDS[p.build].rule)}</div>${incWhy(b)}</div></section>`;
   // 2) 시간 축 + 기믹
@@ -3699,7 +3700,7 @@ function vBattle() {
   }
   const groups = []; for (const x of b.log) { const g = x.g || 0; if (!groups.length || groups[groups.length - 1].g !== g) groups.push({ g, items: [] }); groups[groups.length - 1].items.push(x); }
   const glog = groups.slice(-14).reverse().map((G2, gi) => `<div class="lgrp${gi === 0 ? ' now' : ''}"><div class="lgh">${G2.g ? G2.g + '번째 차례' : '전투 시작'}</div>${G2.items.map(x => `<p class="${x.c}">${esc(x.m)}</p>`).join('')}</div>`).join('');
-  const side = `<section class="side${G.logOpen ? ' open' : ''}" aria-label="전투 기록"><div class="sidehead"><h3>전투 기록</h3><button class="sm onlym" data-a="logclose">닫기</button></div><div class="blog" role="log">${glog}</div><div class="mini">맨 위가 가장 최근 차례입니다. 한 차례 안에서는 위에서 아래로 읽습니다.</div></section>`;
+  const side = `<section class="side${G.logOpen ? ' open' : ''}"${G.logOpen ? ' role="dialog" aria-modal="true" aria-labelledby="logttl"' : ' aria-label="전투 기록"'}><div class="sidehead"><h3 id="logttl">전투 기록</h3><button class="sm onlym" data-a="logclose"${G.logOpen ? ' data-focus="1"' : ''}>닫기</button></div><div class="blog" role="log">${glog}</div><div class="mini">맨 위가 가장 최근 차례입니다. 한 차례 안에서는 위에서 아래로 읽습니다.</div></section>`;
   return `<div class="bgrid"><div class="btop">${status}<div class="bmid">${vOrder(b)}${gim}<div class="logrow">${lastl}<span class="logbtns"><button class="sm rulebtn" data-a="help" data-k="row" aria-label="전투 규칙">❔<span class="lbt"> 전투 규칙</span></button><button class="sm onlym logbtn" data-a="logopen" aria-label="전투 기록">📜<span class="lbt"> 기록</span></button></span></div></div></div>${field}${dock}${side}</div>`;
 }
 
@@ -4717,7 +4718,7 @@ function vEquip() {
   }
   h += `</div></section>`;
   const w = G.eqWhy || {};
-  h += `<details class="eqwhy"><summary>바꾸는 이유 남기기 <span class="mini">(선택, 기록에 남습니다)</span></summary><div class="row">${REASONS.map(r => `<label class="sv-i"><input type="radio" name="eqrs" value="${r[0]}"${w.reason === r[0] ? ' checked' : ''}> ${r[1]}</label>`).join('')}</div><input id="eqnote" type="text" placeholder="메모" value="${esc(w.note || '')}"></details>`;
+  h += `<details class="eqwhy"><summary>바꾸는 이유 남기기 <span class="mini">(선택, 기록에 남습니다)</span></summary><div class="row">${REASONS.map(r => `<label class="sv-i"><input type="radio" name="eqrs" value="${r[0]}"${w.reason === r[0] ? ' checked' : ''}> ${r[1]}</label>`).join('')}</div><label for="eqnote" class="sr">바꾸는 이유 메모</label><input id="eqnote" type="text" placeholder="메모" value="${esc(w.note || '')}"></details>`;
   const SKM = skillMap(p.build);
   h += isV2(p) ? `<p class="mini eqskills">스킬: ${skillsOf(p).map(id => esc(SKM[id].n)).join(', ')}. 트리 스킬은 방 사이에 스킬 트리에서 바꿉니다.</p>` : `<p class="mini eqskills">스킬 (만들 때 정함, 바꿀 수 없음): ${skillsOf(p).map(id => esc(SKM[id].n)).join(', ')}</p>`;
   return h;
@@ -5688,12 +5689,12 @@ function vDash() {
   <p class="mini">저장소에 연결되지 않은 지인은 첫 화면의 "기록 보내기 코드"를 메신저로 보내 줍니다. 그 코드를 "지인 기록 넣기"에 붙여 넣으면 여기에 함께 모입니다. 자동 기록은 테스터가 방을 끝낼 때마다, 쓰러질 때, 처음으로 나갈 때, 판을 끝낼 때 자동으로 들어옵니다. "전체 기록 저장"은 지금 시점의 모든 테스터 기록을 소유자만 읽는 보관 공간에 날짜별로 남깁니다.</p></section>`;
   const D = G.dash; if (!D) return h;
   const TR = testerRows(G.dashRaw || []);
-  h += `<section class="card"><h4>테스터별 진행</h4><div class="tbl"><table class="st2"><thead><tr><th>테스터</th><th>시작한 판</th><th>끝낸 판</th><th>고정 상황</th><th>마지막 질문</th><th>마지막 기록</th></tr></thead><tbody>${TR.map(t => `<tr><td>${esc(t.who)}</td><td>${t.started}</td><td>${t.done}</td><td>${t.scen}/3</td><td>${t.final ? '✓' : '—'}</td><td>${t.last ? esc(new Date(t.last).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })) : '—'}</td></tr>`).join('') || '<tr><td colspan="6">아직 없음</td></tr>'}</tbody></table></div></section>`;
+  h += `<section class="card"><h4>테스터별 진행</h4><div class="tbl"><table class="st2"><caption class="sr">테스터별 진행</caption><thead><tr><th scope="col">테스터</th><th scope="col">시작한 판</th><th scope="col">끝낸 판</th><th scope="col">고정 상황</th><th scope="col">마지막 질문</th><th scope="col">마지막 기록</th></tr></thead><tbody>${TR.map(t => `<tr><td>${esc(t.who)}</td><td>${t.started}</td><td>${t.done}</td><td>${t.scen}/3</td><td>${t.final ? '✓' : '—'}</td><td>${t.last ? esc(new Date(t.last).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })) : '—'}</td></tr>`).join('') || '<tr><td colspan="6">아직 없음</td></tr>'}</tbody></table></div></section>`;
   h += vNotes();
   const bn = CLASS_KEYS();
   h += `<section class="card"><h4>테스터 ${D.testerN}명</h4><p class="mini">질문 5 자발적 시험: 막히지 않았는데 아이템을 장착해 본 테스터 ${D.freeTry}명 (${D.testerN ? Math.round(D.freeTry / D.testerN * 100) : 0}%), 그중 "재미있어 보여서" 교체 ${D.freeCurious}회. 목표: 50% 이상, "재미있어 보여서" 1회 이상.</p>
   <p class="mini">질문 8 방식 차이: 많이 달랐다 ${D.finals.very} · 조금 ${D.finals.some} · 거의 같았다 ${D.finals.same}. 목표: 5명 중 4명 이상.</p><p class="mini">다시 하고 싶음 평균 ${D.finals.again.length ? r1(D.finals.again.reduce((a, c) => a + c, 0) / D.finals.again.length) : '—'} (1~5). 기록판을 보고 다시 하고 싶어짐: ${Object.entries(D.finals.board).map(([k, v]) => (SV.board[k] || k) + ' ' + v).join(', ') || '—'}. 바라는 것: ${Object.entries(D.finals.want).sort((a, c) => c[1] - a[1]).map(([k, v]) => (SV.want[k] || k) + ' ' + v).join(', ') || '—'}.</p></section>`;
-  h += `<section class="card"><h4>빌드별 요약</h4><div class="tbl"><table class="st2"><thead><tr><th>항목</th>${bn.map(k => `<th>${esc(BUILDS[k].n)}</th>`).join('')}</tr></thead><tbody>`;
+  h += `<section class="card"><h4>빌드별 요약</h4><div class="tbl"><table class="st2"><caption class="sr">빌드별 요약</caption><thead><tr><th scope="col">항목</th>${bn.map(k => `<th scope="col">${esc(BUILDS[k].n)}</th>`).join('')}</tr></thead><tbody>`;
   const row = (lab, f) => `<tr><td>${lab}</td>${bn.map(k => `<td>${f(D.byB[k])}</td>`).join('')}</tr>`;
   h += row('판 수', B => B.runs);
   h += row('1회차 승리/시도', B => B.wins.mother + '/' + B.tries.mother);
@@ -5718,10 +5719,10 @@ function vDash() {
   h += row('고른 아이템', B => Object.entries(B.picks).map(([k, v]) => esc(ITEMS[k] ? ITEMS[k].n : '두고 감') + ' ' + v).join(', ') || '—');
   h += row('방 5 선택 아이템', B => Object.entries(B.block).map(([k, v]) => esc(ITEMS[k] ? ITEMS[k].n : k) + ' ' + v).join(', ') || '—');
   h += `</tbody></table></div></section>`;
-  h += `<section class="card"><h4>방 5: 고른 아이템별 행동 (질문 4)</h4><div class="tbl"><table class="st2"><thead><tr><th>빌드</th><th>아이템</th><th>많이 쓴 행동 3개</th></tr></thead><tbody>`;
+  h += `<section class="card"><h4>방 5: 고른 아이템별 행동 (질문 4)</h4><div class="tbl"><table class="st2"><caption class="sr">고른 아이템별 행동</caption><thead><tr><th scope="col">빌드</th><th scope="col">아이템</th><th scope="col">많이 쓴 행동 3개</th></tr></thead><tbody>`;
   for (const k of bn) for (const [it, m] of Object.entries(D.byB[k].room5)) { const top = Object.entries(m).sort((a, c) => c[1] - a[1]).slice(0, 3).map(([a, n]) => esc(ANAME[a] || a) + ' ' + n).join(', '); h += `<tr><td>${esc(BUILDS[k].n)}</td><td>${esc(ITEMS[it] ? ITEMS[it].n : it)}</td><td>${top}</td></tr>`; }
   h += `</tbody></table></div></section>`;
-  h += `<section class="card"><h4>고정 상황 의사결정 (질문 1)</h4><p class="mini">결정 축: 먼저 공격한 대상, 일부러 맞은 강타 수, 처음 공격을 멈춘 행동. 상황마다 빌드 간 두 축 이상이 다르면 차이로 봅니다. 아이템 교체 축은 방 기록에서 봅니다.</p><div class="tbl"><table class="st2"><thead><tr><th>상황</th><th>축</th>${bn.map(k => `<th>${esc(BUILDS[k].n)}</th>`).join('')}<th>다른 축</th></tr></thead><tbody>`;
+  h += `<section class="card"><h4>고정 상황 의사결정 (질문 1)</h4><p class="mini">결정 축: 먼저 공격한 대상, 일부러 맞은 강타 수, 처음 공격을 멈춘 행동. 상황마다 빌드 간 두 축 이상이 다르면 차이로 봅니다. 아이템 교체 축은 방 기록에서 봅니다.</p><div class="tbl"><table class="st2"><caption class="sr">고정 상황 의사결정</caption><thead><tr><th scope="col">상황</th><th scope="col">축</th>${bn.map(k => `<th scope="col">${esc(BUILDS[k].n)}</th>`).join('')}<th scope="col">다른 축</th></tr></thead><tbody>`;
   let pass = 0;
   for (const sc of SCEN) {
     const S = D.scen[sc.id] || {};
@@ -6045,8 +6046,8 @@ function onClick(ev) {
     case 'gprev': G.guideI = Math.max(0, (G.guideI || 0) - 1); render(); break;
     case 'gnext': G.guideI = (G.guideI || 0) + 1; render(); break;
     case 'gdone': G.data.seenGuide = true; saveLocal(); if (G.afterGuide === 'create') { G.afterGuide = null; beginCreate(); } else { G.scr = 'title'; render(); } break;
-    case 'logopen': G.logOpen = true; render(); break;
-    case 'logclose': G.logOpen = false; render(); break;
+    case 'logopen': G.logOpen = true; render(); setTimeout(() => { const c = document.querySelector('[data-a="logclose"]'); if (c) c.focus(); }, 0); break; /* 휴대폰 기록 창: 초점을 창 안으로 */
+    case 'logclose': G.logOpen = false; render(); setTimeout(() => { const c = document.querySelector('[data-a="logopen"]'); if (c && c.getClientRects().length) c.focus(); }, 0); break;
     case 'dash': loadDash(); break;
     case 'statrec': { const S = G.sheet; const al = S.data.alloc; const left = S.data.pts - statSum(al); const add = statRecommend(G.run.build, Object.fromEntries(STAT_KEYS.map(k => [k, stat(G.run.p, k) + (al[k] || 0)])), left); for (const k of STAT_KEYS) al[k] = (al[k] || 0) + add[k]; render(); break; }
     case 'statclear': { const S = G.sheet; S.data.alloc = Object.assign({}, { str: 0, dex: 0, int: 0, con: 0, wil: 0 }); render(); break; }
@@ -6125,7 +6126,7 @@ function onKey(ev) {
     if ((ev.key === ' ' || ev.key === 'Enter') && G.stepResolve && !(ev.target && ev.target.tagName === 'BUTTON' && ev.target.getAttribute('aria-disabled') !== 'true')) { ev.preventDefault(); const r = G.stepResolve; G.stepResolve = null; r(); return; }
     if (/^[1-9]$/.test(ev.key) && G.data.numKeys !== false && !ev.ctrlKey && !ev.metaKey && !ev.altKey && !G.busy && !G.b.over) { const btn = document.querySelector('.ab[data-k="' + ev.key + '"]'); if (btn) { ev.preventDefault(); if (btn.getAttribute('aria-disabled') !== 'true') { hidePop(); doAct(btn.dataset.id, btn.dataset.t || null); } else showPop(btn, true); } return; } /* 10월 7일: 설정에서 끌 수 있고, 쓸 수 없는 행동이면 이유를 보인다 */
   }
-  if (ev.key !== 'Escape') return; if (POP.cur || (POP.el && POP.el.style.display === 'block')) { hidePop(); return; } /* Esc는 설명 창부터 닫는다 */ if (typing) { ev.target.blur(); return; } /* 입력칸에서는 칸만 벗어난다 */ if (G.menuOpen) { G.menuOpen = false; render(); return; } if (G.scr === 'create' && !(G.sheet && !G.sheet.data.first)) { cancelCreate(); return; } if (G.sheet && !['block', 'stats', 'choice'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } else if (G.logOpen) { G.logOpen = false; render(); } }
+  if (ev.key !== 'Escape') return; if (POP.cur || (POP.el && POP.el.style.display === 'block')) { hidePop(); return; } /* Esc는 설명 창부터 닫는다 */ if (typing) { ev.target.blur(); return; } /* 입력칸에서는 칸만 벗어난다 */ if (G.menuOpen) { G.menuOpen = false; render(); return; } if (G.logOpen) { G.logOpen = false; render(); return; } /* 휴대폰 기록 창 */ if (G.scr === 'create' && !(G.sheet && !G.sheet.data.first)) { cancelCreate(); return; } if (G.sheet && !['block', 'stats', 'choice'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } else if (G.logOpen) { G.logOpen = false; render(); } }
 
 if (typeof document !== 'undefined') {
   G.data = loadLocal(); reviveLocal();
