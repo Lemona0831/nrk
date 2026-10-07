@@ -144,7 +144,7 @@ const XP_LV = 0.15;
 const LV_XP = [0, 40, 100, 180, 300, 470, 660, 870, 1100, 1350, 1620, 1910, 2220]; // 1챕터를 무작위 길로 끝까지 가면 Lv5 안팎 (10월 2일 8판 시험)
 const LV_POINTS = 2;
 const STAT_START = 15; // 10월 4일 만든 사람 결정: 능력치 다섯, 처음 15점 · 레벨마다 2점
-const STAT_REC = { assassin: { dex: 0.4, int: 0.35, con: 0.25 }, warden: { str: 0.35, con: 0.35, wil: 0.3 }, hunter: { dex: 0.45, con: 0.3, str: 0.25 }, butcher: { str: 0.3, con: 0.3, wil: 0.25, int: 0.15 }, elementalist: { int: 0.45, con: 0.35, wil: 0.2 }, spellblade: { str: 0.3, int: 0.3, con: 0.25, wil: 0.15 }, monk: { str: 0.35, dex: 0.35, con: 0.3 } }; // 추천 배분 (직업마다)
+const STAT_REC = { assassin: { dex: 0.4, int: 0.35, con: 0.25 }, warden: { str: 0.35, con: 0.35, wil: 0.3 }, hunter: { dex: 0.45, con: 0.3, str: 0.25 }, butcher: { str: 0.3, con: 0.3, wil: 0.25, int: 0.15 }, elementalist: { int: 0.45, con: 0.35, wil: 0.2 }, spellblade: { str: 0.3, int: 0.3, con: 0.25, wil: 0.15 }, monk: { str: 0.35, dex: 0.35, con: 0.3 }, confessor: { con: 0.35, str: 0.35, int: 0.3 } }; // 추천 배분 (직업마다)
 /* 정예 접사 "강인": 체력 +50% (4.6절 1막 접사). 정예에게 상층 35%, 하층 60% */
 const TOUGH_CHANCE = { upper: 0.35, lower: 0.6 };
 /* 1챕터(저주받은 수도원) 적 이름. 역할은 카드에 작게 함께 보인다 */
@@ -260,7 +260,7 @@ Object.assign(FOE_X, {
   sexton: { aoe: 1.5, vuln: 2, brk: 1.5, chill: 1 },
   echo: { mirror: 0.8, first: 0.5, cap: 0.35, capFirst: 0.25 },
 });
-const LORD = { gHp: 1, gDmg: 0.5, read: 6, turns: 2, cut: 0.4, cut2: 0.2, ph: [0.6, 0.3], walls: 2, wallHp: 0.10, wallBrk: 60, wallAoe: 0.5, expose: 2, mendPile: 1.0, mendBare: 0, mendTop: 0.5, hand: 0.85, handChill: 1, fall: 0.08, guards: 1 } /* 10월 8일: 근위 하나 · 근위 피해 ×0.5 · 뼈 더미가 없으면 벽을 다시 쌓지 않는다(근위 둘이 끝없이 때리고 벽 보수가 부수는 속도와 같아 21갈래 모두 0승이었다) */; // 지하묘지의 군주 (뜻은 비공개 문서)
+const LORD = { gHp: 1, gDmg: 0.5, read: 6, turns: 2, cut: 0.4, cut2: 0.2, ph: [0.6, 0.3], walls: 2, wallHp: 0.10, wallBrk: 60, wallAoe: 0.5, expose: 2, mendPile: 1.0, mendBare: 0, mendTop: 0.5, hand: 0.85, handChill: 1, fall: 0.08, guards: 1 } /* 10월 7일: 근위 하나 · 근위 피해 ×0.5 · 뼈 더미가 없으면 벽을 다시 쌓지 않는다(근위 둘이 끝없이 때리고 벽 보수가 부수는 속도와 같아 21갈래 모두 0승이었다) */; // 지하묘지의 군주 (뜻은 비공개 문서)
 Object.assign(FOE_INTRO, {
   cryptlord: { n: '지하묘지의 군주', lore: '이 지하묘지에 처음 묻힌 왕. 아직도 신하들의 이름을 부른다.', see: ['벽마다 이름이 새겨져 있다. 맨 아래 줄에 갓 새긴 자국이 있다.', '군주의 발치에서 해골 둘이 일어선다.'] },
   collector: { n: '뼈 수집가', lore: '바구니 가득 뼈를 진 자. 남의 뼈로 제 몸을 덮는다.', see: ['수집가가 해골들 뒤에서 바닥을 훑는다. 등의 바구니가 덜그럭거린다.'] },

@@ -21,7 +21,7 @@ const G0 = D.G0; const run_ = D.run_;
    균형을 맞춘 날의 세기(하층 체력 ×1.05·피해 ×0.9, 수도원장 ×6·피해 ×1.6)로 고정한다. 던전 전체 난이도는 dgqa.js로 따로 맞춘다.
    SIT_REAL=1이면 게임의 지금 세기 그대로 잰다(참고용) */
 const SIT_REAL = !!process.env.SIT_REAL;
-if (!SIT_REAL) run_('DIFF.lower = { hp: 1.05, dmg: 0.9 }; BOSSES.abbot.mult = 6; BOSSES.abbot.dmgMul = 1.6; if (typeof CHAPTERS !== "undefined" && CHAPTERS[2] && CHAPTERS[2].diff) CHAPTERS[2].diff.lower = { hp: 0.92, dmg: 0.62 }; BOSSES.cryptlord.mult = 6; BOSSES.cryptlord.dmgMul = 1.6;'); // 2챕터 기준 세기: 하층은 10월 7일 게임 값(×0.92 · ×0.62). 보스는 1챕터와 같은 규칙으로 게임 값(×10 · ×2.2)의 장비 없는 기준(×6 · ×1.6)으로 고정한다(10월 8일. 50상황은 장비가 없다)
+if (!SIT_REAL) run_('DIFF.lower = { hp: 1.05, dmg: 0.9 }; BOSSES.abbot.mult = 6; BOSSES.abbot.dmgMul = 1.6; if (typeof CHAPTERS !== "undefined" && CHAPTERS[2] && CHAPTERS[2].diff) CHAPTERS[2].diff.lower = { hp: 0.92, dmg: 0.62 }; BOSSES.cryptlord.mult = 6; BOSSES.cryptlord.dmgMul = 1.6;'); // 2챕터 기준 세기: 하층은 10월 7일 게임 값(×0.92 · ×0.62). 보스는 1챕터와 같은 규칙으로 게임 값(×10 · ×2.2)의 장비 없는 기준(×6 · ×1.6)으로 고정한다(10월 7일. 50상황은 장비가 없다)
 const ENAMES = run_('typeof ENEMY_NAMES !== "undefined" ? ENEMY_NAMES : {}');
 const MAIN = require.main === module; const MIX = {};
 const TH = { cat: 0.04, parity: 0.06, col: 0.10, means: 0.5 }; // 기준 문턱 (점수 100점 만점): 강함 +4 이상·약함 −4 이하(세 갈래 평균 대비), 갈래 평균 차이 6 이하, 기둥 차이 10 이하
@@ -60,6 +60,18 @@ function equipFor(bd, sit) {
   // 숨겨진 직업 1 (10월 7일): 나에게 출혈을 거는 스킬은 둘까지 (사람은 대가를 겹쳐 지지 않는다)
   const selfBl = id => G0.SK2[id].fx.some(e => e.k === 'meSt' && e.s === 'bleed');
   while (pick.filter(selfBl).length > 2) { const cand = bd.open.filter(id => !selfBl(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) break; const lo = pick.filter(selfBl).sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; }
+  // 숨겨진 직업 2 (10월 7일, 비공개 문서 F-3 4): 짐 비례 · 사함 칸을 끼우면 고행 칸 하나(상태를 거는 적이 둘 이상이면 빼도 됨), 보호 비례는 정화 칸과 짝,
+  // 강화 · 소환 적이 있으면 벗기기 칸, 정화 · 옮기기 칸은 넷 가운데 둘까지 (시작 스킬 고해가 이미 지운다). 다른 직업은 그대로
+  if (CLS === 'confessor') {
+    const S = id => G0.SK2[id]; const fx = (id, f) => S(id).fx.some(f); const swapIn = (need, ok, keep) => { if (!pick.some(need) || pick.some(ok)) return; const cand = bd.open.filter(id => ok(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) return; const lo = pick.filter(id => !need(id) && !(keep && keep(id))).sort((a, c) => val(a) - val(c))[0]; if (lo) pick[pick.indexOf(lo)] = cand; };
+    const bad = ['bleed', 'ignite', 'weak', 'vuln', 'chill']; const fuel = id => fx(id, e => e.k === 'meSt' && bad.includes(e.s)); const usesB = id => fx(id, e => (e.k === 'perDmg' && e.of === 'burden') || (e.k === 'cleanse' && e.offer));
+    const srcN = en.filter(r => ['archer', 'darkmage', 'pyre', 'bruiser'].includes(r)).length + (sit.room.boss || sit.room.strong ? 2 : 0);
+    if (srcN < 2) swapIn(usesB, fuel);
+    swapIn(id => fx(id, e => e.k === 'perDmg' && e.of === 'prot'), id => fx(id, e => e.k === 'cleanse' && !e.offer));
+    if (en.some(r => ['healer', 'summoner'].includes(r)) || sit.room.strong || sit.room.boss) { const dis = id => fx(id, e => e.k === 'dispel'); if (!pick.some(dis)) { const cand = bd.open.filter(id => dis(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (cand) { const lo = pick.slice().sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; } } }
+    const pure = id => fx(id, e => e.k === 'cleanse' && !e.offer) || fx(id, e => e.k === 'transfer');
+    while (pick.filter(pure).length > 2) { const cand = bd.open.filter(id => !pure(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) break; const lo = pick.filter(pure).sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; }
+  }
   // 원소술사 (10월 7일, 설계 F-3절 10): 물결(모든 적에게 한 원소) 하나를 끼우면 반대 원소의 물결도 하나, 강타 · 보스 상황에는 약화 칸 하나와 열충격 붕괴 ×2 칸 하나 (사람은 짝을 맞춘다). 다른 직업은 그대로
   if (CLS === 'elementalist') {
     const wave = (id, k) => { const s = G0.SK2[id]; return s.tgt === 'all' && s.fx.some(e => e.k === 'st' && e.s === k) && !s.fx.some(e => e.k === 'st' && e.s === (k === 'ignite' ? 'chill' : 'ignite')); };

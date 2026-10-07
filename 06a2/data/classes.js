@@ -7,7 +7,7 @@ const EXCL = {};   // 옛 직업 전용 스킬 (v2 직업은 data/skills.js의 �
 const SIG = {};    // 옛 직업 기술 (v2 시범에는 없다. docs/0.6a.2-개편-기획.md 12절 질문 4)
 
 /* 시작 스킬: v2 직업은 트리 밖의 시작 스킬 둘 (data/skills.js의 TREE2.starters와 같다) */
-const DEFAULT_SKILLS = { assassin: ['a_vital', 'a_slip'], warden: ['w_bash', 'w_brace'], hunter: ['h_aim', 'h_step'], butcher: ['b_hook', 'b_lap'], elementalist: ['e_ember', 'e_touch'], spellblade: ['sb_edge', 'sb_aegis'], monk: ['m_palm', 'm_brace'] };
+const DEFAULT_SKILLS = { assassin: ['a_vital', 'a_slip'], warden: ['w_bash', 'w_brace'], hunter: ['h_aim', 'h_step'], butcher: ['b_hook', 'b_lap'], elementalist: ['e_ember', 'e_touch'], spellblade: ['sb_edge', 'sb_aegis'], monk: ['m_palm', 'm_brace'], confessor: ['c_mace', 'c_confess'] };
 
 /* hp는 시작 장비(낡은 갑옷 +10)를 뺀 값이다. mp는 v2 직업에 없다 */
 const BUILDS = {
@@ -60,6 +60,13 @@ const BUILDS = {
     rule: '방어하거나 자세를 잡은 동안 전열 적이 나를 직접 치면 되받아친다. 되받거나 차례의 첫 ⚡ 공격을 맞히면 기 +1. ⚡ 공격에는 기가 실리지 않고, ▶ 공격은 기 1을 써서 피해 +25%. 스킬은 쓰고 나면 쿨타임만큼 기다린다',
     skills: [],
   },
+  /* 숨겨진 직업 2 (10월 7일, UNLOCK.confessor). 설계 · 까닭은 비공개 문서. 엔진 값은 index.html CONF */
+  confessor: {
+    n: '고해사', ico: '⚖️', hp: 100, mp: 0, v2: 1, wpnMul: 0.9,
+    lore: '몸에 새겨진 죄를 씻어 내거나, 그 죄를 건 자에게 되돌리거나, 짊어진 채 내리친다.',
+    rule: '중독을 뺀 내 해로운 상태(출혈 · 화상 · 약화 · 취약 · 둔화)가 짐이다. 짐은 5까지 센다. 스킬과 방어로 적이 건 상태를 지우면 지운 숫자 2마다 보호 1(올림, 한 번에 3까지)을 얻는다. 방어하면 해로운 상태를 2 지운다. 바치거나 옮긴 상태는 보호가 되지 않는다. 스킬이 나에게 거는 상태(고행)는 행동이 끝난 뒤 걸리고, 막음과 의지로 막히지 않는다. 고행 상태는 바치거나 안고 칠 수만 있다. 지워도 보호가 없고, 옮겨지지 않는다. 스킬은 쓰고 나면 쿨타임만큼 기다린다',
+    skills: [],
+  },
 };
 
 /* 아직 만들지 않은 시작 직업 (캐릭터 만들기에 "준비 중"으로 보인다) */
@@ -77,7 +84,8 @@ const CLASS_SOON = [
    조건의 뜻과 까닭은 비공개 문서(nrk-private/직업/)에만 적는다 */
 const UNLOCK = {
   butcher: { ico: '🚪', door: '피 냄새가 짙은 문', hint: '위태로운 싸움을 이겨 내면 열립니다.', need: [{ c: 'edge', n: 3 }, { c: 'foe:pilgrim', n: 1 }], show: 'edge', open: '피 냄새를 따라온 자가 문을 엽니다.' },
+  confessor: { ico: '❔', door: '고해소의 닫힌 문', hint: '죄를 지고도 걸음을 멈추지 않은 자에게 고해소의 문이 열립니다.', need: [{ c: 'sinKill', n: 25 }, { c: 'confess', n: 3 }], open: '고해소의 문이 열렸습니다.' },
 };
 
 /* 레벨이 오를 때 오르는 생명력 (11.4절) */
-const LV_GAIN = { assassin: { hp: 5, mp: 0 }, warden: { hp: 6, mp: 0 }, hunter: { hp: 4, mp: 0 }, butcher: { hp: 6, mp: 0 }, elementalist: { hp: 5, mp: 0 }, spellblade: { hp: 5, mp: 0 }, monk: { hp: 5, mp: 0 } };
+const LV_GAIN = { assassin: { hp: 5, mp: 0 }, warden: { hp: 6, mp: 0 }, hunter: { hp: 4, mp: 0 }, butcher: { hp: 6, mp: 0 }, elementalist: { hp: 5, mp: 0 }, spellblade: { hp: 5, mp: 0 }, monk: { hp: 5, mp: 0 }, confessor: { hp: 5, mp: 0 } };
