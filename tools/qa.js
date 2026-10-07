@@ -60,7 +60,7 @@ function evalState(b0, b1, risk) {
   return dealt * 1.0 + kills * 6 - hpLoss * (40 + 80 * (1 - risk)) - flasks * 7 - lowHp - threat * 1.5 - roots * 3 - healers * 3 - poison * 0.6 + scarKeep + (p1.st - p0.st) * 0.03;
 }
 function lookahead(b, P, r) {
-  { const dmd = E.alive(b).find(e => e.demand && e.demand.turn === b.turnIdx); if (dmd && r() < (P.mech || 0.5) + 0.1) { const L = E.actionList(b); if (dmd.demand.k === 'rest') { const eo = L.find(a => a.v2 && a.ok && buEatOnlyQ(a)); if (eo) return [eo.id, (E.alive(b).filter(e => psn2(e, 'bleed') > 0 && E.canTarget(b, e, eo)).sort((x, y) => psn2(y, 'bleed') - psn2(x, 'bleed'))[0] || {}).id]; const g = (b.p.build === 'spellblade' && L.find(a => a.ok && a.v2 && a.self && a.s.kind === 'spell')) || L.find(a => a.id === 'guard' && a.ok) || L.find(a => a.id === 'dodge' && a.ok); if (g) return [g.id, g.id === 'dodge' ? dmd.id : null]; } else if (!dmd.demand.hit) { const a = L.find(x => x.id === 'basic' && x.ok); if (a && E.canTarget(b, dmd, a)) return ['basic', dmd.id]; } } } // 0.6a.2 수도원장의 요구(심문 · 고해)를 사람처럼 따른다 (10월 4일)
+  { const dmd = E.alive(b).find(e => e.demand && e.demand.turn === b.turnIdx); if (dmd && r() < (P.mech || 0.5) + 0.1) { const L = E.actionList(b); if (dmd.demand.k === 'rest') { const eo = L.find(a => a.v2 && a.ok && buEatOnlyQ(a)); if (eo) return [eo.id, (E.alive(b).filter(e => psn2(e, 'bleed') > 0 && E.canTarget(b, e, eo)).sort((x, y) => psn2(y, 'bleed') - psn2(x, 'bleed'))[0] || {}).id]; const g = (b.p.build === 'spellblade' && L.find(a => a.ok && a.v2 && a.self && a.s.kind === 'spell')) || cfRest(b, L) || L.find(a => a.id === 'guard' && a.ok) || L.find(a => a.id === 'dodge' && a.ok); if (g) return [g.id, g.id === 'dodge' ? dmd.id : null]; } else if (!dmd.demand.hit) { const a = L.find(x => x.id === 'basic' && x.ok); if (a && E.canTarget(b, dmd, a)) return ['basic', dmd.id]; } } } // 0.6a.2 수도원장의 요구(심문 · 고해)를 사람처럼 따른다 (10월 4일)
   const L = E.actionList(b).filter(a => a.ok && a.id !== 'flee' && a.id !== 'sig');
   const cands = [];
   for (const a of L) {
@@ -101,6 +101,11 @@ const enemyPrio = e => (e.role === 'thief' && (e.loot || (e.intent && e.intent.k
 /* 숨겨진 직업 1 (10월 7일, butcher): 이 효과를 가진 스킬이 끼워졌을 때만 v2Pick의 도살자 판단이 걸린다 */
 const buFx = a => !!(a && a.s && a.s.fx.some(e => (e.s === 'bleed' && ['drain', 'exploit', 'grow', 'spread', 'meSt'].includes(e.k)) || e.k === 'grudge' || e.k === 'carry' || (e.k === 'lowx' && e.me) || e.on === 'kill' || (e.k === 'thorn' && e.bleed)));
 const buEatOnlyQ = a => !!(a && a.s && a.s.fx.some(e => e.k === 'drain' && e.s === 'bleed' && !e.me) && !a.s.fx.some(e => e.k === 'dmg'));
+/* 숨겨진 직업 2 (10월 7일, confessor): 이 효과를 가진 스킬이 끼워졌을 때만 v2Pick의 고해사 판단이 걸린다 */
+const CF_BAD = ['bleed', 'ignite', 'weak', 'vuln', 'chill'];
+const cfFx = a => !!(a && a.s && a.s.fx.some(e => ['cleanse', 'transfer', 'perDmg', 'dispel'].includes(e.k) || (e.k === 'meSt' && CF_BAD.includes(e.s))));
+/* 수도원장의 고해 요구(칼을 거두어라) 차례: 피해 없는 나에게 쓰는 칸(지울 짐이 있는 정화, 고행) → 방어 */
+const cfRest = (b, L) => b.p.build === 'confessor' && E.cfTake ? (L.find(a => a.v2 && a.ok && a.self && a.s.fx.some(e => e.k === 'cleanse' && !e.offer) && E.cfTake(b.p, a.s.fx.find(e => e.k === 'cleanse').only, a.s.fx.find(e => e.k === 'cleanse').n, 'clean', 1).e > 0) || null) : null;
 const SB_FX = ['imbue', 'edgeX', 'kwx', 'alt', 'killSpread']; // 마검사 효과 (참고: 마검사 판단은 kind가 있는 스킬이 끼워졌을 때만 걸린다)
 const MONK_FX = ['stance', 'kiBurst', 'kiPer', 'kiGrow', 'ctrPer', 'sealx']; // 수도승 효과 (v2Pick의 수도승 판단이 이 효과를 가진 스킬이 끼워졌을 때만 걸린다)
 const WARDEN_FX = ['ward', 'wardFill', 'wardBurn', 'thorn', 'pull', 'vulnGrow', 'vulnPer', 'chillx', 'shieldx']; // 파수꾼 효과 (v2Pick의 파수꾼 판단이 이 효과를 가진 스킬에만 걸린다)
@@ -177,7 +182,8 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   // 정화 플라스크: 적이 이번에 상태를 걸 예정이면 미리 막는다
   // 정화 플라스크: 출혈이 이미 쌓여 더 걸리면 아프거나, 폭발 약화가 올 때만(사람은 막을 거리가 클 때 마신다)
   const pv1 = E.previewAfter(b, 1); const bleedIn = pv1.some(x => x.e.intent && x.e.intent.k === 'attack' && x.e.intent.bleed); const boomIn = pv1.some(x => x.e.intent && ['explode', 'burn'].includes(x.e.intent.k));
-  if (((bleedIn && psn2(p, 'bleed') >= 2) || boomIn) && !p.s.block && p.flask.mana > 0 && r() < aware * 0.5) return ['flaskM'];
+  if (p.build === 'confessor') { const burnIn = pv1.some(x => x.e.intent && x.e.intent.k === 'burn'); const full = E.cfBurden && E.cfBurden(p) >= 5; if ((burnIn || full || (p.hp < p.hpMax * 0.35 && pv1.some(x => x.e.intent && (x.e.intent.bleed || ['curse', 'heavy', 'burn'].includes(x.e.intent.k))))) && !p.s.block && p.flask.mana > 0 && r() < aware * 0.5) return ['flaskM']; } // 숨겨진 직업 2 (비공개 문서 F-3): 막음은 재료도 막으므로 화형 직전 · 짐 5 · 생명력 35% 미만에만
+  else if (((bleedIn && psn2(p, 'bleed') >= 2) || boomIn) && !p.s.block && p.flask.mana > 0 && r() < aware * 0.5) return ['flaskM'];
   // 0.6a.2 사냥꾼 (10월 5일, 흘리기보다 먼저: 사냥꾼은 피하기로 받는다): 예고 대응(피할 수 있는 강타 · 겨눈 한 발은 받아넘기기 · 몸 빼기, 피할 수 없는 화형은 예고 읽기 · 흙먼지 장막), 추적 유지 · 터뜨리기, 표적 바꾸기
   if (p.build === 'hunter') {
     const fe = p.focus ? E.alive(b).find(e => e.id === p.focus.id) : null; const fn = fe ? p.focus.n : 0;
@@ -203,6 +209,58 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     for (const a of okS.filter(a => has(a, 'focusBurst'))) if (fe && E.canTarget(b, fe, a) && (fn >= 3 || (fn >= 2 && fe.hp < fe.hpMax * 0.35))) return [a.id, fe.id];
     { const lk = okS.filter(a => !a.self && a.s.b !== '시작' && p.lastBr && a.s.b !== p.lastBr && has(a, 'dmg')).sort((x, y) => (y.s.row || 0) - (x.s.row || 0)); if (lk.length && r() < 0.55 + 0.35 * (P.mech || 0.5)) return [lk[0].id, tgtOf(lk[0])]; } // 연계: 방금과 다른 갈래의 공격 스킬 (사람은 버튼의 🔗를 보고 고른다)
     for (const a of okS.filter(a => has(a, 'focusAdd') && !a.s.start)) { const t = fe && E.canTarget(b, fe, a) ? fe : best(a, (x, y) => y.hp - x.hp); if (t && (t !== fe || fn < 2)) return [a.id, t.id]; }
+  }
+  // 숨겨진 직업 2 (10월 7일, 비공개 문서 F-3 4): 짐(적이 건 몫)을 옮길까 · 지울까 · 안고 칠까, 앞서 지운 숫자, 보호 비례, 고행. 이 직업의 효과를 가진 스킬이 끼워졌을 때만
+  if (p.build === 'confessor' && E.cfTake && L.some(a => a.v2 && cfFx(a))) {
+    const C = E.CONF, F = (a, k) => a.s.fx.find(e => e.k === k), hpf = p.hp / p.hpMax, fastFree = !b.bonusUsed && !nf;
+    const take = (only, n, mode) => E.cfTake(p, only, n, mode, 1); const en = k => take([k], 5, 'xfer').c; const enAll = take(null, 5, 'xfer').c; const burden = E.cfBurden(p);
+    const big = e => !!(e.elite || e.strong || e.role === 'boss'); const chg = e => !!(e.intent && (['charge', 'heavy', 'chant', 'chanting', 'burn', 'aim', 'fuse'].includes(e.intent.k) || e.intent.aimed));
+    const bigIn = !!(hv || pv1.some(x => x.e.intent && (x.e.intent.aimed || ['burn', 'explode'].includes(x.e.intent.k)))); const bigSoon = bigIn || E.alive(b).some(chg);
+    const hitters = pv1.filter(x => x.e.intent && ['attack', 'heavy', 'brand', 'burn', 'explode', 'hand'].includes(x.e.intent.k)).map(x => x.e);
+    const mover = e => e.role !== 'candle' && e.role !== 'bonewall' && !e.pile;
+    const cleanE = a => { const c = F(a, 'cleanse'); return c && !c.offer && !c.after ? take(c.only, c.n, 'clean').e : 0; };
+    const ret = (a, t) => a.self || a.aoe ? [a.id] : t ? [a.id, t.id] : null;
+    // 고행: 짐 < 2(짐 비례 칸은 빼고), 큰 공격 예고 없음, 생명력 45%(촛불 방 · 적 여럿이 칠 때 60%) 이상일 때만. 취약 고행은 모으는 적이 없을 때만
+    { const many = hitters.length >= 2 || (b.ctx.mods || []).includes('candle'); for (const a of okS.slice()) { const ms = a.s.fx.filter(e => e.k === 'meSt' && CF_BAD.includes(e.s)); if (!ms.length) continue;
+      const okUse = !bigIn && hpf >= (many ? 0.6 : 0.45) && (burden < 2 || (F(a, 'perDmg') && F(a, 'perDmg').of === 'burden')) && !(ms.some(e => e.s === 'vuln') && bigSoon) && !(a.self && !okS.some(o => o !== a && !o.self && F(o, 'perDmg') && ['burden', 'clean'].includes(F(o, 'perDmg').of)));
+      if (!okUse) okS.splice(okS.indexOf(a), 1); } }
+    // 보호를 쓰는 칸: 큰 공격이 곧 오면 지닌 보호를 쓰지 않는다 (보호가 없으면 그냥 친다)
+    for (const a of okS.slice()) { const pd = F(a, 'perDmg'); if (pd && pd.of === 'prot' && pd.spend && psn2(p, 'protect') >= 1 && bigSoon) okS.splice(okS.indexOf(a), 1); }
+    // 지울 적의 몫이 없으면 정화만 하는 칸은 쓰지 않는다 (고행 몫을 지워도 보호가 없다)
+    for (const a of okS.slice()) if (a.self && F(a, 'cleanse') && !F(a, 'cleanse').offer && !F(a, 'meSt') && cleanE(a) === 0 && !(F(a, 'stam') && p.st < 40)) okS.splice(okS.indexOf(a), 1);
+    // 벗기기: 강화를 가진 적이 곧 때리면 그 적에게
+    { const ds = okS.filter(a => F(a, 'dispel')); for (const a of ds) { if (a.aoe) { if (E.alive(b).some(e => psn2(e, 'empower') > 0)) return [a.id]; continue; } const t = reach(a).filter(e => psn2(e, 'empower') > 0).sort((x, y) => (hitters.includes(y) - hitters.includes(x)) || (psn2(y, 'empower') - psn2(x, 'empower')))[0]; if (t && (hitters.includes(t) || psn2(t, 'empower') >= 2)) return [a.id, t.id]; } }
+    // 큰 공격 예고: 약화가 있으면 그 공격자에게 옮긴다(끊기 칸 먼저). 아니면 적이 건 짐을 지워 보호 (취약 2 이상이면 고행 몫이라도 지운다)
+    if (bigIn) { const src = (hv && hv.e) || (pv1.find(x => x.e.intent && (x.e.intent.aimed || ['burn', 'explode'].includes(x.e.intent.k))) || {}).e;
+      if (src && en('weak') > 0) { const wt = okS.filter(a => !a.self && F(a, 'transfer') && (!F(a, 'transfer').only || F(a, 'transfer').only.includes('weak')) && E.canTarget(b, src, a)).sort((x, y) => (!!F(y, 'cutx') - !!F(x, 'cutx')) || (x.time - y.time)); if (wt.length) return wt[0].aoe ? [wt[0].id] : [wt[0].id, src.id]; }
+      const cs = okS.filter(a => cleanE(a) > 0 || (psn2(p, 'vuln') >= 2 && F(a, 'cleanse') && !F(a, 'cleanse').offer && !F(a, 'cleanse').after && (!F(a, 'cleanse').only || F(a, 'cleanse').only.includes('vuln')))).sort((x, y) => (x.time - y.time) || (cleanE(y) - cleanE(x)));
+      for (const a of cs) { if (a.time > 0.6 && !fastFree && a.time >= 1.25) continue; const t = a.self || a.aoe ? null : (chg(src) && E.canTarget(b, src, a) ? src : best(a, (x, y) => x.hp - y.hp)); const v = ret(a, t); if (v) return v; } }
+    // 차례 순서: 주 행동에 "앞서 지운 숫자" 칸을 쓸 차례면 빠른 칸에서 먼저 정화 · 사함, 이미 지웠으면 그 칸
+    { const ct = okS.filter(a => F(a, 'perDmg') && F(a, 'perDmg').of === 'clean');
+      if (ct.length && (b.cleanTurn || 0) >= 2) { const a = ct.sort((x, y) => (y.s.row || 0) - (x.s.row || 0))[0]; const t = best(a, (x, y) => (big(y) - big(x)) || (x.hp - y.hp)); if (t) return [a.id, t.id]; }
+      if (ct.length && fastFree) { const fc = okS.filter(a => a.time <= 0.6 && ((cleanE(a) >= 2) || (F(a, 'cleanse') && F(a, 'cleanse').offer && take(F(a, 'cleanse').only, F(a, 'cleanse').n, 'clean').e >= 2))).sort((x, y) => cleanE(y) - cleanE(x))[0]; if (fc) { const v = ret(fc, best(fc, (x, y) => x.hp - y.hp)); if (v) return v; } } }
+    // 보호 비례: 보호 2 이상이면 (쓰는 칸은 큰 공격 예고가 없을 때만, 붕괴 칸은 모으는 적에게)
+    if (psn2(p, 'protect') >= 2) { const ps = okS.filter(a => F(a, 'perDmg') && F(a, 'perDmg').of === 'prot' && !(F(a, 'perDmg').spend && bigSoon && psn2(p, 'protect') < 4)).sort((x, y) => (y.s.row || 0) - (x.s.row || 0));
+      for (const a of ps) { const t = a.aoe ? null : F(a, 'perDmg').brk ? (reach(a).filter(chg).sort((x, y) => y.brk / y.brkMax - x.brk / x.brkMax)[0] || best(a, (x, y) => (big(y) - big(x)) || (y.hp - x.hp))) : best(a, (x, y) => x.hp - y.hp); if (a.aoe && reach(a).length < 2) continue; const v = ret(a, t); if (v) return v; } }
+    // 짐 쓰기 (적이 건 몫): 약화 → 옮기기(다음에 때릴 적), 취약 → 취약 비례 표적 · 짐 비례로 안기 · 지우기, 출혈 → 빠른 적 · 사수에게, 화상 → 오래 칠 적에게, 둘 이상이면 모두 옮기기
+    const xf = (k, tsort) => { for (const a of okS.filter(a => F(a, 'transfer') && (F(a, 'transfer').only ? F(a, 'transfer').only.includes(k) : enAll >= 2))) { if (a.aoe) { if (reach(a).filter(mover).length >= 1) return [a.id]; continue; } const t = reach(a).filter(mover).sort(tsort)[0]; if (t) return [a.id, t.id]; } return null; };
+    const hitFirst = (x, y) => (hitters.includes(y) - hitters.includes(x)) || (chg(y) - chg(x)) || (big(y) - big(x)) || (y.dmg - x.dmg);
+    const longFirst = (x, y) => (big(y) - big(x)) || (y.hp - x.hp);
+    if (en('weak') > 0) { const v = xf('weak', hitFirst); if (v) return v; }
+    if (en('vuln') > 0) { const v = xf('vuln', longFirst); if (v) return v; }
+    if (en('bleed') > 0) { const v = xf('bleed', (x, y) => ((y.role === 'archer') - (x.role === 'archer')) || (y.spd - x.spd) || longFirst(x, y)); if (v) return v; }
+    if (en('ignite') > 0) { const v = xf('ignite', longFirst); if (v) return v; }
+    if (enAll >= 2) { const v = xf('chill', hitFirst); if (v) return v; }
+    // 대상 비례: 대상의 약화 · 출혈 · 해로운 상태 · 취약이 쌓였으면
+    for (const a of okS.filter(a => (F(a, 'perDmg') && ['weak', 'bleed', 'tbad'].includes(F(a, 'perDmg').of)) || F(a, 'vulnPer'))) { const of = F(a, 'perDmg') ? F(a, 'perDmg').of : 'vuln'; const X = e => of === 'tbad' ? CF_BAD.reduce((m, k) => m + psn2(e, k), 0) : psn2(e, of); const t = best(a, (x, y) => X(y) - X(x)); if (t && X(t) >= 2) return [a.id, t.id]; }
+    // 사함: 짐 2 이상 (붕괴 칸은 모으는 적에게)
+    if (burden >= 2) for (const a of okS.filter(a => F(a, 'cleanse') && F(a, 'cleanse').offer && take(F(a, 'cleanse').only, F(a, 'cleanse').n, 'clean').c >= 2)) { if (a.aoe) { if (reach(a).length >= 2) return [a.id]; continue; } const t = F(a, 'cleanse').brk ? (reach(a).filter(chg)[0] || best(a, (x, y) => (big(y) - big(x)) || (y.hp - x.hp))) : best(a, (x, y) => (big(y) - big(x)) || (x.hp - y.hp)); if (t) return [a.id, t.id]; }
+    // 짐 비례: 짐 2 이상 (붕괴 칸은 모으는 적, 후열 칸은 후열 치유 · 소환)
+    if (burden >= 2) for (const a of okS.filter(a => F(a, 'perDmg') && F(a, 'perDmg').of === 'burden').sort((x, y) => (y.s.row || 0) - (x.s.row || 0))) { if (a.aoe) { if (reach(a).length >= 2) return [a.id]; continue; } const t = F(a, 'brk') && F(a, 'brk').n >= 25 ? (reach(a).filter(chg)[0] || best(a, (x, y) => (big(y) - big(x)) || (x.hp - y.hp))) : a.s.tgt === 'ranged' ? (reach(a).filter(e => ['healer', 'summoner'].includes(e.role))[0] || best(a, (x, y) => x.hp - y.hp)) : best(a, (x, y) => (big(y) - big(x)) || (x.hp - y.hp)); if (t) return [a.id, t.id]; }
+    // 적이 건 짐이 남았으면 지운다 (정화 칸 가운데 지우는 몫이 큰 것, 생명력이 낮으면 회복 칸)
+    if (enAll >= 1) { const cs = okS.filter(a => cleanE(a) > 0).sort((x, y) => ((hpf < 0.6 ? (F(y, 'cleanse').heal || 0) - (F(x, 'cleanse').heal || 0) : 0)) || (cleanE(y) - cleanE(x)) || (x.time - y.time)); for (const a of cs) { if (a.self && enAll < 2 && hpf > 0.6) continue; const v = ret(a, best(a, (x, y) => x.hp - y.hp)); if (v) return v; } }
+    // 고행 (위에서 거른 칸만 남아 있다): 짐이 적을 때 짐을 진다
+    if (burden < 2) for (const a of okS.filter(a => a.s.fx.some(e => e.k === 'meSt' && CF_BAD.includes(e.s)))) { const v = ret(a, best(a, (x, y) => (big(y) - big(x)) || (x.hp - y.hp))); if (v) return v; }
   }
   // 숨겨진 직업 1 (10월 7일, 비공개 문서 F4): 흡혈 표적 · 먹기 · 받은 피해 · 처치 · 나에게 출혈. 이 직업의 효과를 가진 스킬이 끼워졌을 때만
   if (L.some(a => a.v2 && buFx(a))) {
@@ -439,7 +497,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   return null;
 }
 function heuristic(b, P, r, mem) {
-  { const dmd = E.alive(b).find(e => e.demand && e.demand.turn === b.turnIdx); if (dmd && r() < (P.mech || 0.5) + 0.1) { const L = E.actionList(b); if (dmd.demand.k === 'rest') { const eo = L.find(a => a.v2 && a.ok && buEatOnlyQ(a)); if (eo) return [eo.id, (E.alive(b).filter(e => psn2(e, 'bleed') > 0 && E.canTarget(b, e, eo)).sort((x, y) => psn2(y, 'bleed') - psn2(x, 'bleed'))[0] || {}).id]; const g = (b.p.build === 'spellblade' && L.find(a => a.ok && a.v2 && a.self && a.s.kind === 'spell')) || L.find(a => a.id === 'guard' && a.ok) || L.find(a => a.id === 'dodge' && a.ok); if (g) return [g.id, g.id === 'dodge' ? dmd.id : null]; } else if (!dmd.demand.hit) { const a = L.find(x => x.id === 'basic' && x.ok); if (a && E.canTarget(b, dmd, a)) return ['basic', dmd.id]; } } } // 0.6a.2 수도원장의 요구(심문 · 고해)를 사람처럼 따른다 (10월 4일)
+  { const dmd = E.alive(b).find(e => e.demand && e.demand.turn === b.turnIdx); if (dmd && r() < (P.mech || 0.5) + 0.1) { const L = E.actionList(b); if (dmd.demand.k === 'rest') { const eo = L.find(a => a.v2 && a.ok && buEatOnlyQ(a)); if (eo) return [eo.id, (E.alive(b).filter(e => psn2(e, 'bleed') > 0 && E.canTarget(b, e, eo)).sort((x, y) => psn2(y, 'bleed') - psn2(x, 'bleed'))[0] || {}).id]; const g = (b.p.build === 'spellblade' && L.find(a => a.ok && a.v2 && a.self && a.s.kind === 'spell')) || cfRest(b, L) || L.find(a => a.id === 'guard' && a.ok) || L.find(a => a.id === 'dodge' && a.ok); if (g) return [g.id, g.id === 'dodge' ? dmd.id : null]; } else if (!dmd.demand.hit) { const a = L.find(x => x.id === 'basic' && x.ok); if (a && E.canTarget(b, dmd, a)) return ['basic', dmd.id]; } } } // 0.6a.2 수도원장의 요구(심문 · 고해)를 사람처럼 따른다 (10월 4일)
   const p = b.p, L = E.actionList(b), ok = id => { const a = L.find(x => x.id === id); return a && a.ok; };
   const al = E.alive(b).filter(e => e.role !== 'root');
   const hpf = p.hp / p.hpMax;
