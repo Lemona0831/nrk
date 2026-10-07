@@ -389,6 +389,7 @@ function playLoop(pk, r, out) {
     handleSheets(pk, r);
   }
   out.floor = run.room; out.ch = run.ch || 1; out.lv = run.lv; out.gold = run.gold;
+  if (OPT.detail && run.tree) { const cnt = {}; for (const id of run.tree.open) { const sk = G0.SK2[id]; if (sk) cnt[sk.b] = (cnt[sk.b] || 0) + 1; } const top = Object.entries(cnt).sort((x, y) => y[1] - x[1])[0]; out.branch = top ? top[0] : null; out.branchN = top ? top[1] : 0; out.branchOf = run.tree.open.length; out.mode = run.mode || 'normal'; } /* 10월 8일(7단계): 갈래(트리 칸을 가장 많이 연 갈래) · 연 칸 수 · 모드를 판마다 남긴다 */
   { const hl = (run.drops || []).filter(x => x.g === 'h' || x.g === 'l').map(x => x.item + ':' + x.g + ':' + (x.ch || 1) + (x.boss ? ':boss' : '')); if (hl.length) out.hl = hl; } /* 영웅 · 전설을 얻은 기록 (없으면 칸을 두지 않아 1챕터 결과 파일은 그대로) */
   if (OPT.detail) { out.cons = (run.consLog || []).length; out.consIds = countBy((run.consLog || []).map(x => x.id)); out.loot = (run.lootLog || []).reduce((a, x) => ({ gold: a.gold + (x.gold || 0), lost: a.lost + (x.lost || 0), n: a.n + Object.values(x.got || {}).reduce((m, v) => m + v, 0) }), { gold: 0, lost: 0, n: 0 }); out.tree = run.tree ? run.tree.open.slice() : null; out.equip = (run.skills || []).slice(); out.flaskLeft = Object.assign({}, run.p.flask); out.pathsTaken = (run.pathLog || []).map(x => x.path); } out.gear = Object.values(run.inv).filter(x => run.eqU && Object.values(run.eqU).includes(x.uid)).map(x => x.tpl + ':' + x.g);
   return out;
