@@ -581,7 +581,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 /* 전투 화면의 main */
 .fit>.bmain{flex:1;min-height:0;display:flex;flex-direction:column}.sidehead h3{font-size:calc(15px*var(--fs,1))}
 /* 전투 화면 맨 앞의 건너뛰기(초점을 받을 때만 보임), 헤더 소리 버튼 */
-.skip{position:absolute;left:8px;top:-80px;z-index:100;min-height:40px;background:var(--gold);color:var(--gold-ink);border-color:var(--gold);font-weight:700}.skip:focus{top:8px}#main:focus{outline:none}
+.skip{position:absolute;left:8px;top:-80px;z-index:100;min-height:40px;background:var(--gold);color:var(--gold-ink);border-color:var(--gold);font-weight:700}.skip:focus{top:8px}.tlog{margin:6px 0 0;padding-left:18px}.tlog li{margin:0 0 6px;white-space:pre-line}#main:focus{outline:none}
 .sndb{flex:none;min-height:36px;min-width:40px;padding:2px 8px;border-radius:999px;font-size:calc(15px*var(--fs,1));line-height:1}
 /* 판단에 쓰는 글: 줄임표 대신 두 줄까지, 13px 이상 */
 .ab b,.ab small,.intent .itx{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:clip;word-break:keep-all;overflow-wrap:anywhere}
@@ -3163,11 +3163,12 @@ function menuItems() {
   const it = [];
   if (G.scr !== 'title') it.push(['title', '🏰', '타이틀']);
   if (inRun) it.push(['equip', '🎒', '장비']);
-  if (G.run && !G.creating && G.run.tree && G.scr !== 'tree' && G.scr !== 'tut') it.push(['tree', '🌳', '스킬 트리' + (G.run.tree.pts ? ' <span class="newdot" aria-label="포인트">' + G.run.tree.pts + '</span>' : '')]);
+  if (G.run && !G.creating && G.run.tree && G.scr !== 'tree' && G.scr !== 'tut') it.push(['tree', '🌳', '스킬 트리' + (G.run.tree.pts ? ' <span class="newdot"><span class="sr">남은 포인트 </span>' + G.run.tree.pts + '</span>' : '')]);
   if (!inRun && !G.creating && G.scr !== 'tut' && G.scr !== 'tutoffer') it.push(['tut', '🎯', '수련장' + (G.data.tutDone ? ' ✓' : '')]);
   it.push(['test', '🧪', '시험 전투']);
-  it.push(['codex', '📖', '보스 도감'], ['rank', '🏆', '랭킹'], ['records', '📜', '기록'], ['changes', '📰', '업데이트' + (G.data.seenVer !== CHANGE_VER ? ' <span class="newdot" aria-label="새 소식">새</span>' : '')], ['help', '❔', '도움말'], ['settings', '⚙️', '설정']);
+  it.push(['codex', '📖', '보스 도감'], ['rank', '🏆', '랭킹'], ['records', '📜', '기록'], ['changes', '📰', '업데이트' + (G.data.seenVer !== CHANGE_VER ? ' <span class="newdot"><span aria-hidden="true">새</span><span class="sr">새 소식</span></span>' : '')], ['help', '❔', '도움말'], ['settings', '⚙️', '설정']);
   if (G.site && G.conn === 'ok' && G.acct) it.push(G.acct.anon ? ['login', '🔑', '구글 로그인', 'google'] : ['logout', '🚪', '로그아웃']);
+  if (G.toastLog && G.toastLog.length) it.push(['toasts', '🔔', '지난 알림']);
   if (G.owner || G.adminLink) it.push(['admin', '🛠️', '관리자']);
   return it;
 }
@@ -3182,7 +3183,7 @@ function vHeader() {
   const drop = fit || (typeof window !== 'undefined' && window.innerWidth < 720);
   const shown = drop ? !!G.menuOpen : !G.data.menuFold;
   const tog = shown ? (drop ? '<span aria-hidden="true">✕</span> 닫기' : '<span aria-hidden="true">▴</span> 접기') : '<span aria-hidden="true">☰</span> 메뉴';
-  return `<header class="hdr ${drop ? 'drop' : 'inl'}${shown ? ' mopen' : ''}"><div class="hl"><h1 class="hname">나락의 유산</h1><span class="mini">${sub}</span></div>${hi ? `<span class="hi">${hi}</span>` : ''}<button class="sndb" data-a="sndtoggle" aria-pressed="${sndCfg().on}" aria-label="소리"><span aria-hidden="true">${sndCfg().on ? '🔊' : '🔇'}</span></button><button class="mtog" data-a="menu" aria-expanded="${shown}" aria-controls="mnav">${tog}${!shown && G.data.seenVer !== CHANGE_VER ? ' <span class="newdot" aria-label="새 소식">새</span>' : ''}</button><nav class="mnav" id="mnav" aria-label="메뉴">${menuItems().map(([a, ico, lab, k]) => `<button class="mi${G.scr === a ? ' on' : ''}" data-a="${a}"${k != null ? ` data-k="${k}"` : ''}><span aria-hidden="true">${ico}</span> ${lab}</button>`).join('')}</nav></header>`;
+  return `<header class="hdr ${drop ? 'drop' : 'inl'}${shown ? ' mopen' : ''}"><div class="hl"><h1 class="hname">나락의 유산</h1><span class="mini">${sub}</span></div>${hi ? `<span class="hi">${hi}</span>` : ''}<button class="sndb" data-a="sndtoggle" aria-pressed="${sndCfg().on}" aria-label="소리"><span aria-hidden="true">${sndCfg().on ? '🔊' : '🔇'}</span></button><button class="mtog" data-a="menu" aria-expanded="${shown}" aria-controls="mnav">${tog}${!shown && G.data.seenVer !== CHANGE_VER ? ' <span class="newdot"><span aria-hidden="true">새</span><span class="sr">새 소식</span></span>' : ''}</button><nav class="mnav" id="mnav" aria-label="메뉴">${menuItems().map(([a, ico, lab, k]) => `<button class="mi${G.scr === a ? ' on' : ''}" data-a="${a}"${k != null ? ` data-k="${k}"` : ''}><span aria-hidden="true">${ico}</span> ${lab}</button>`).join('')}</nav></header>`;
 }
 
 /* ---------- 내 상태 한 줄 ---------- */
@@ -3221,7 +3222,7 @@ function dgBar(run) {
     const cls = f === run.room ? 'now' : f < run.room ? 'past' : '';
     const ico = f === FLOOR_CAMP ? '⛺' : f === FLOOR_BOSS ? '👑' : PATH_AT.includes(f) && f > run.room ? '🔀' : done[f] && ROOM_TYPES[done[f].type] ? ROOM_TYPES[done[f].type].ico : (run.log6 && run.log6[f]) || '';
     const rt = done[f] && ROOM_TYPES[done[f].type]; const sr = floorName(f) + (f === FLOOR_CAMP ? ', 야영지' : f === FLOOR_BOSS ? ', 보스' : '') + (f === run.room ? ', 지금 있는 층' : f < run.room ? (rt ? ', ' + rt.n + ' 지남' : ', 지남') : '');
-    h += `<li class="${cls}${f === FLOOR_CAMP ? ' camp' : ''}" data-info="floor:${f}"${f === run.room ? ' aria-current="step"' : ''}><span aria-hidden="true">${ico || (f < run.room ? '·' : '')}</span><span class="sr">${esc(sr)}</span></li>`;
+    h += `<li class="${cls}${f === FLOOR_CAMP ? ' camp' : ''}" data-info="floor:${f}" tabindex="${f === Math.max(1, Math.min(FLOORS, run.room || 1)) ? 0 : -1}"${f === run.room ? ' aria-current="step"' : ''}><span aria-hidden="true">${ico || (f < run.room ? '·' : '')}</span><span class="sr">${esc(sr)}</span></li>`;
   }
   h += '</ol>';
   const bl = Object.keys(run.buffs || {}).map(k => { const S = SHRINES.find(x => x.id === k); return `<span class="chip" data-info="buff:${k}" tabindex="0">${esc(S ? S.n : (EVBUFF[k] || [k])[0])} ${run.buffs[k]}</span>`; }).join('');
@@ -3713,10 +3714,10 @@ function onTip(ev) {
 /* ===== 표시 규칙: T 숨기기, 순서·빠르기·남은 차례 + 설명 창 ===== */
 /* 빌드 자원: 항상 보이게 */
 function buildRes(p) {
-  if (p.build === 'berserker') { const rt = p.s && p.s.rage ? '<b class="rg">격노</b>' : `<span class="pips" aria-label="분노 ${p.rage}/10">${'●'.repeat(p.rage)}${'○'.repeat(Math.max(0, 10 - p.rage))}</span>`; return `<div class="bres"><span class="rgw" data-info="rage" tabindex="0">분노 ${rt}</span></div>`; }
+  if (p.build === 'berserker') { const rt = p.s && p.s.rage ? '<b class="rg">격노</b>' : `<span class="pips" role="img" aria-label="분노 ${p.rage}/10">${'●'.repeat(p.rage)}${'○'.repeat(Math.max(0, 10 - p.rage))}</span>`; return `<div class="bres"><span class="rgw" data-info="rage" tabindex="0">분노 ${rt}</span></div>`; }
   if (!(scarRate(p) > 0)) return '';
   const mx = Math.round(p.hpMax * 0.5), w = mx ? Math.min(100, p.scar / mx * 100) : 0;
-  const rageTxt = p.s && p.s.rage ? '<b class="rg">격노</b>' : `<span class="pips" aria-label="분노 ${p.rage}/10">${'●'.repeat(p.rage)}${'○'.repeat(Math.max(0, 10 - p.rage))}</span>`;
+  const rageTxt = p.s && p.s.rage ? '<b class="rg">격노</b>' : `<span class="pips" role="img" aria-label="분노 ${p.rage}/10">${'●'.repeat(p.rage)}${'○'.repeat(Math.max(0, 10 - p.rage))}</span>`;
   return `<div class="bres"><div class="mb" data-info="scar" tabindex="0"><div class="bar sc" role="progressbar" aria-label="상흔" aria-valuemin="0" aria-valuemax="${mx}" aria-valuenow="${Math.round(p.scar)}"><i style="width:${w}%"></i><span>상흔 ${Math.round(p.scar)}/${mx}</span></div></div></div>`;
 }
 function dmgMult(p) { let m = 1; if (p.eq.ring1 === 'pulse' || p.eq.ring2 === 'pulse') m *= 1.35; if (p.s.weak) m *= 0.75; if (p.s.rage) m *= 1.4; if (p.build === 'berserker' && p.rage) m *= 1 + p.rage * 0.03; return m; }
@@ -3955,7 +3956,7 @@ function ehpBar(e) { const r = e.hpMax > 0 ? Math.max(0, Math.min(1, e.hp / e.hp
 /* 이번 차례에 남은 칸: ⚡ 빠른 행동(먼저) + ▶ 주 행동(차례를 끝냄) */
 function slotHtml(b) {
   const nf = noFast(b.p); const f = !b.bonusUsed && !nf;
-  return `<span class="slots" data-info="slots" tabindex="0" aria-label="이번 차례에 남은 칸: ${f ? '빠른 행동과 ' : ''}주 행동"><span class="slot${f ? ' on' : ' used'}">⚡ ${nf ? '빠른 칸 없음' : '빠른 행동' + (f ? '' : ' 씀')}</span><span class="pl" aria-hidden="true">+</span><span class="slot on">▶ 주 행동</span></span>`;
+  return `<span class="slots" data-info="slots" tabindex="0" role="group" aria-label="이번 차례에 남은 칸: ${f ? '빠른 행동과 ' : ''}주 행동"><span class="slot${f ? ' on' : ' used'}">⚡ ${nf ? '빠른 칸 없음' : '빠른 행동' + (f ? '' : ' 씀')}</span><span class="pl" aria-hidden="true">+</span><span class="slot on">▶ 주 행동</span></span>`;
 }
 function spdIco(t) { return t <= 0.6 ? '<span class="spd sf" role="img" aria-label="빠른 행동">⚡</span>' : t >= 1.25 ? '<span class="spd ss" role="img" aria-label="느린 행동, 두 칸">⏳</span>' : '<span class="spd sn" role="img" aria-label="주 행동">▶</span>'; } // 버튼 둘째 줄의 빠르기 글자를 뺀 대신 읽어 주는 이름을 단다
 
@@ -4687,7 +4688,7 @@ function vEquip() {
   const run = G.run; initGear(run); const p = run.p; const inFight = !!G.b && !G.b.over;
   const sel = G.eqSel || (G.eqSel = { slot: 'weapon' });
   const a = gearStats(p);
-  let h = `<div class="eqsum" aria-label="지금 수치">${GSTAT.filter(x => x[0] !== 'mp' || !isV2(p)).map(([k, lab, fmt]) => `<span><small>${lab}</small><b>${fmt(a[k])}</b></span>`).join('')}</div>`;
+  let h = `<div class="eqsum" role="group" aria-label="지금 수치">${GSTAT.filter(x => x[0] !== 'mp' || !isV2(p)).map(([k, lab, fmt]) => `<span><small>${lab}</small><b>${fmt(a[k])}</b></span>`).join('')}</div>`;
   if (inFight) h += `<p class="warn">전투 중에는 볼 수만 있습니다. 전투가 끝나면 바꿀 수 있습니다.</p>`;
   h += `<div class="eqcols"><section class="eqslots" aria-label="장비 칸">`;
   for (const sl of EQ_SLOTS) {
@@ -5122,7 +5123,7 @@ function liveNew(b) {
   G.liveMk = { b, x: L[L.length - 1] }; return L.slice(Math.max(i, L.length - 20)).map(x => x.m);
 }
 function toast(m) {
-  liveSay(fixJosa(m)); let el = document.querySelector('.toast');
+  liveSay(fixJosa(m)); G.toastLog = (G.toastLog || []).concat([{ m: fixJosa(m), at: Date.now() }]).slice(-20); /* 10월 8일: 지난 알림(메뉴 '지난 알림') */ let el = document.querySelector('.toast');
   if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('aria-hidden', 'true'); document.body.appendChild(el); } /* 읽는 것은 #live가 맡는다(두 번 읽지 않게) */
   const lines = el.isConnected && G.toastLines && Date.now() - (G.toastAt || 0) < 2400 ? G.toastLines : []; lines.push(fixJosa(m)); G.toastLines = lines.slice(-4); G.toastAt = Date.now(); el.textContent = G.toastLines.join('\n'); clearTimeout(G.toastT); /* 10월 5일: 전리품 알림이 골드 · 경험치 알림에 덮여 보이지 않았다 */
   G.toastT = setTimeout(() => { const e2 = document.querySelector('.toast'); if (e2) e2.remove(); }, 2400 + 800 * (G.toastLines.length - 1)); // 10월 5일 고침: 타이머가 주석 안으로 들어가 알림이 사라지지 않았다. 줄이 많으면 조금 더 남긴다
@@ -5356,7 +5357,7 @@ function reasonPicker() { return `<fieldset class="reasons"><legend>왜 바꾸�
 function vSheet() {
   const S = G.sheet; if (!S || (S.data.first && (S.kind === 'skills' || S.kind === 'stats'))) return ''; // 캐릭터 만들기의 스킬·능력치는 창이 아니라 만들기 화면 안에 그린다
   const [title, body] = sheetParts(S);
-  return `<div class="sheet-bg" data-a="closebg"><div class="sheet sh-${S.kind}" role="dialog" aria-modal="true" aria-labelledby="shtitle"><div class="shead"><h3 id="shtitle">${esc(title)}</h3>${S.kind === 'equip' || S.kind === 'drop' || S.kind === 'help' || S.kind === 'settings' || S.kind === 'offer' || S.kind === 'codex' || S.kind === 'changes' ? '<button class="sm" data-a="close">닫기</button>' : ''}</div>${body}</div></div>`;
+  return `<div class="sheet-bg" data-a="closebg"><div class="sheet sh-${S.kind}" role="dialog" aria-modal="true" aria-labelledby="shtitle"><div class="shead"><h3 id="shtitle">${esc(title)}</h3>${S.kind === 'equip' || S.kind === 'drop' || S.kind === 'help' || S.kind === 'settings' || S.kind === 'toasts' || S.kind === 'offer' || S.kind === 'codex' || S.kind === 'changes' ? '<button class="sm" data-a="close">닫기</button>' : ''}</div>${body}</div></div>`;
 }
 /* ===== 0.6a.2 스킬 트리 화면 (10월 3일 만든 사람 요청) =====
    원형 칸이 기본 → 중급 → 상급 → 궁극으로 아래로 가지처럼 뻗고, 부모와 선으로 잇는다. 칸에 마우스를 올리면 설명창, 누르면 아래 상세 칸.
@@ -5511,6 +5512,9 @@ function sheetParts(S) {
     body = `<p class="mini">고른 장비는 사라지고, 한 등급 위의 장비 하나를 받습니다(희귀는 다시 희귀).</p><div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${esc(ITEMS[x.tpl].n)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${baseText(x)}</small></div><button class="sm" data-a="offerpick" data-k="${u}">바친다</button></div>`; }).join('')}</div>`;
   } else if (S.kind === 'codex') {
     title = '보스 도감'; body = `<p class="mini">강적과 보스를 만나 처음 겪은 일만 적힙니다. 쓰러져도 도감은 남습니다.</p>` + vCodex();
+  } else if (S.kind === 'toasts') {
+    const L = (G.toastLog || []).slice().reverse(); const hm = t => { const d = new Date(t); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+    title = '지난 알림'; body = `<p class="mini">이번 접속에서 뜬 알림 가운데 최근 ${L.length}개입니다. 위가 가장 최근입니다.</p><ul class="tlog">${L.map(x => `<li><span class="mini">${hm(x.at)}</span> ${esc(x.m)}</li>`).join('')}</ul>`;
   } else if (S.kind === 'settings') {
     title = '설정'; body = vSettings();
   } else if (S.kind === 'help') {
@@ -5957,6 +5961,7 @@ function onClick(ev) {
     case 'door': chooseDoor(+el.dataset.k); break;
     case 'path': choosePath(el.dataset.k); break;
     case 'codex': openSheet('codex'); break;
+    case 'toasts': openSheet('toasts'); break;
     case 'rest': { const run = G.run, p = run.p, R = roomDef();
       if (R.type === 'camp') { p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax; for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = Math.min(flaskCap(p, fk), (p.flask[fk] || 0) + 1); run.rooms.push({ room: run.room, type: 'camp' }); advanceFloor(); toast('불가에서 쉬었습니다. 모두 찼습니다'); render(); break; }
       const sp = 0.5 * (1 + fxVal(p, 'spring', 0, (a, v) => a + v)); p.hp = Math.min(p.hpMax, p.hp + p.hpMax * sp); p.mp = Math.min(p.mpMax, p.mp + p.mpMax * sp);
@@ -6117,8 +6122,8 @@ function onKey(ev) {
   const typing = ev.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ev.target.tagName);
   if (ev.key === 'Enter' && ev.target && ['cname', 'adminpass', 'pname'].includes(ev.target.id)) { ev.preventDefault(); const b = document.querySelector({ cname: '[data-a=cnok]', adminpass: '[data-a=admingo]', pname: '[data-a=namesave]' }[ev.target.id]); if (b) b.click(); return; }
   if (!typing) playTick();
-  if (!typing && (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') && ev.target && ev.target.closest && ev.target.closest('.ord')) { /* 순서 줄: 한 칸씩 옮긴다 */
-    const L = [...document.querySelectorAll('.ord li[data-info]')]; const i = L.indexOf(ev.target);
+  if (!typing && (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') && ev.target && ev.target.closest && ev.target.closest('.ord, .dgbar')) { /* 순서 줄 · 던전 진행 막대: 한 칸씩 옮긴다 */
+    const L = [...ev.target.closest('.ord, .dgbar').querySelectorAll('li[data-info]')]; const i = L.indexOf(ev.target);
     const n = i < 0 ? null : L[Math.max(0, Math.min(L.length - 1, i + (ev.key === 'ArrowRight' ? 1 : -1)))];
     if (n && n !== ev.target) { ev.preventDefault(); L.forEach(x => { x.tabIndex = -1; }); n.tabIndex = 0; n.focus(); }
     return;
