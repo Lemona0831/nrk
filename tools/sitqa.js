@@ -15,13 +15,13 @@
 process.env.DGDIR = process.env.DGDIR || '06a2';
 const D = require('./dgqa.js');
 const Q = require('./qa.js');
-const SITS = require('./situations.js'); const SIT_CH = +(process.env.SIT_CH || 1); const SIT = SIT_CH >= 2 ? SITS.SIT2 : SITS.SIT; const SIT_CATS = SITS.SIT_CATS; // 10월 7일: SIT_CH=2면 2챕터 50상황
+const SITS = require('./situations.js'); const SIT_CH = +(process.env.SIT_CH || 1); const SIT = (SIT_CH >= 2 ? SITS.SIT2 : SITS.SIT).filter(x => !process.env.SIT_ONLY || process.env.SIT_ONLY.split(',').includes(String(x.id))); /* SIT_ONLY=128 등: 몇 상황만 (보스 이길 수단만 다시 잴 때) */ const SIT_CATS = SITS.SIT_CATS; // 10월 7일: SIT_CH=2면 2챕터 50상황
 const G0 = D.G0; const run_ = D.run_;
 /* 기준 세기 (10월 3일): 50상황은 갈래끼리의 상대 균형을 재는 고정 시험이다. 던전 난이도(DIFF·보스 배수)를 바꿔도 기준이 움직이지 않게,
    균형을 맞춘 날의 세기(하층 체력 ×1.05·피해 ×0.9, 수도원장 ×6·피해 ×1.6)로 고정한다. 던전 전체 난이도는 dgqa.js로 따로 맞춘다.
    SIT_REAL=1이면 게임의 지금 세기 그대로 잰다(참고용) */
 const SIT_REAL = !!process.env.SIT_REAL;
-if (!SIT_REAL) run_('DIFF.lower = { hp: 1.05, dmg: 0.9 }; BOSSES.abbot.mult = 6; BOSSES.abbot.dmgMul = 1.6; if (typeof CHAPTERS !== "undefined" && CHAPTERS[2] && CHAPTERS[2].diff) CHAPTERS[2].diff.lower = { hp: 0.92, dmg: 0.62 };'); // 2챕터 기준 세기는 10월 7일 게임 값(하층 ×0.92 · ×0.62, 보스 군주도 그날 값)
+if (!SIT_REAL) run_('DIFF.lower = { hp: 1.05, dmg: 0.9 }; BOSSES.abbot.mult = 6; BOSSES.abbot.dmgMul = 1.6; if (typeof CHAPTERS !== "undefined" && CHAPTERS[2] && CHAPTERS[2].diff) CHAPTERS[2].diff.lower = { hp: 0.92, dmg: 0.62 }; BOSSES.cryptlord.mult = 6; BOSSES.cryptlord.dmgMul = 1.6;'); // 2챕터 기준 세기: 하층은 10월 7일 게임 값(×0.92 · ×0.62). 보스는 1챕터와 같은 규칙으로 게임 값(×10 · ×2.2)의 장비 없는 기준(×6 · ×1.6)으로 고정한다(10월 8일. 50상황은 장비가 없다)
 const ENAMES = run_('typeof ENEMY_NAMES !== "undefined" ? ENEMY_NAMES : {}');
 const MAIN = require.main === module; const MIX = {};
 const TH = { cat: 0.04, parity: 0.06, col: 0.10, means: 0.5 }; // 기준 문턱 (점수 100점 만점): 강함 +4 이상·약함 −4 이하(세 갈래 평균 대비), 갈래 평균 차이 6 이하, 기둥 차이 10 이하

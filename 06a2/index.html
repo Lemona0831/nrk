@@ -1144,6 +1144,7 @@ function lordWall(b, e, frac) { const w = mkEnemy('bonewall', 0, b.idc++, { lv: 
 function lordThrone(b, e) { e.lordNext = null; e.phase = 2; e.pn = 0; b.carve = null; e.row = 'back'; for (let i = 0; i < LORD.walls; i++) lordWall(b, e, 1); logp(b, 'crit', e.n + '이(가) 옥좌로 물러난다. 무너진 뼈가 벽이 되어 솟는다'); codexHit(b, 'cryptlord', 'throne'); }
 function lordMend(b, e) {
   const ws = alive(b).filter(x => x.lordWall);
+  if (ws.length < LORD.walls && !alive(b).some(x => x.pile) && !LORD.mendBare) { logp(b, 'sys', e.n + '이(가) 벽을 다시 쌓으려 하지만 쓸 뼈가 없다'); return; } /* 10월 7일: mendBare 0이면 뼈 더미가 있을 때만 다시 쌓는다 */
   if (ws.length < LORD.walls) { const pl = alive(b).find(x => x.pile); if (pl) { pl.norise = 1; pl.hp = 0; killEnemy(b, pl); } lordWall(b, e, pl ? LORD.mendPile : LORD.mendBare); logp(b, 'bad', e.n + '이(가) 무너진 벽을 다시 쌓는다' + (pl ? '. 바닥의 뼈가 줄었다' : '')); codexHit(b, 'cryptlord', 'mend'); }
   else { const w = ws.sort((x, y) => x.hp / x.hpMax - y.hp / y.hpMax)[0]; w.hp = Math.min(w.hpMax, w.hp + w.hpMax * LORD.mendTop); logp(b, 'sys', e.n + '이(가) 뼈벽을 보수한다'); }
 }
