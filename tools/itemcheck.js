@@ -1,13 +1,14 @@
-/* ===== 아이템 효과 점검 (0.6 1챕터 풀, 0.6a.2 2챕터 풀) =====
+/* ===== 아이템 효과 점검 (0.6 1챕터 풀, 0.6a.2 2챕터 · 3챕터 풀) =====
    아이템마다 직업에 끼워 무작위로 싸우게 하고, 효과가 실제로 일어났는지(FXHIT) 센다.
    고정 수치 효과(최대치, 플라스크, 비용)는 끼우기 전후 값을 비교한다.
    2챕터 풀(CH2_POOL)은 2챕터 적 · 방 특성이 있는 방(ROOMS2)에서 싸운다. fits가 있는 장비는 그 직업으로만 센다.
-   실행: node tools/extract-engine.js 06a2 && node tools/itemcheck.js [--ch=1|2] (기본: 있는 풀 모두) */
+   3챕터 풀(CH3_POOL)은 3챕터 적 · 방 특성이 있는 방(ROOMS3: 잠복 · 화염 강화 · 붕대 · 아지랑이 · 한낮 열기 · 모래폭풍 · 오아시스 그늘 · 불씨 화로)에서 싸우고, 화상 · 출혈 · 약화를 안고 시작한다.
+   실행: node tools/extract-engine.js 06a2 && node tools/itemcheck.js [--ch=1|2|3] [--only=id,id] (기본: 있는 풀 모두) */
 const E = require('./eng.gen.js');
 const { BUILDS, ROOMS, ITEMS } = E;
 const IFX = E.IFX, FXHIT = E.FXHIT;
 const CH_ARG = (process.argv.find(a => a.startsWith('--ch=')) || '').slice(5);
-const POOLS = [[1, E.CH1_POOL]].concat(E.CH2_POOL ? [[2, E.CH2_POOL]] : []).filter(([c]) => !CH_ARG || String(c) === CH_ARG);
+const POOLS = [[1, E.CH1_POOL]].concat(E.CH2_POOL ? [[2, E.CH2_POOL]] : []).concat(E.CH3_POOL ? [[3, E.CH3_POOL]] : []).filter(([c]) => !CH_ARG || String(c) === CH_ARG);
 /* 2챕터 방: 해골 · 주술사 · 뼈벽 · 땅속 · 부푼 시체 · 신속 · 방 특성(썩은 공기 · 물 · 무너진 납골벽). 낮은 레벨로 두어 싸움이 길게 이어지게 한다 */
 const ROOMS2 = [
   { n: '2-1', ch: 2, lv: 2, en: [['skeleton'], ['skeleton'], ['healer']] },
@@ -18,6 +19,18 @@ const ROOMS2 = [
   { n: '2-6', ch: 2, lv: 2, en: [['bruiser', 1], ['skeleton'], ['healer']], swift: [0], mods: ['flooded'] },
   { n: '2-7', ch: 2, lv: 2, en: [['thief'], ['pyre'], ['bloat']], mods: ['bonepile'] },
   { n: '2-8', ch: 2, lv: 2, en: [['skeleton'], ['mason'], ['shield']] },
+];
+/* 3챕터 방: 잠복 · 화염 강화 · 붕대 · 아지랑이 · 한낮 · 모래폭풍 · 오아시스 그늘 · 불씨 화로. 낮은 레벨로 두어 싸움이 길게 이어지게 한다 */
+const NAMES3 = E.ENEMY_NAMES ? E.ENEMY_NAMES[3] : undefined;
+const ROOMS3 = [
+  { n: '3-1', ch: 3, lv: 2, en: [['lurker'], ['bruiser'], ['archer']] },
+  { n: '3-2', ch: 3, lv: 2, en: [['ember'], ['bruiser', 1], ['shield']], fire: [1] },
+  { n: '3-3', ch: 3, lv: 2, en: [['wrapped'], ['wrapped'], ['healer']] },
+  { n: '3-4', ch: 3, lv: 2, en: [['mirage'], ['bruiser'], ['bruiser']], mods: ['haze'] },
+  { n: '3-5', ch: 3, lv: 2, en: [['bruiser'], ['archer'], ['archer']], mods: ['noon'] },
+  { n: '3-6', ch: 3, lv: 2, en: [['bruiser'], ['shield'], ['archer']], mods: ['sandstorm'] },
+  { n: '3-7', ch: 3, lv: 2, en: [['wrapped'], ['ember'], ['lurker']], mods: ['shade'] },
+  { n: '3-8', ch: 3, lv: 2, en: [['bruiser'], ['thief'], ['healer']], mods: ['brazier'], fire: [0] },
 ];
 function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const slotOf = k => { const s = ITEMS[k].slot; return s === 'ring1' || s === 'ring2' ? 'ring1' : s; };
@@ -30,12 +43,13 @@ function player(build, k, r) {
 const bad = [];
 function fight(build, k, seed, ch) {
   const r = rng(seed); const p = player(build, k, r);
-  const rooms = ch === 2 ? ROOMS2 : [0, 1, 2, 3, 4, 6, 7, 8].map(i => ROOMS[i]);
+  const rooms = ch === 3 ? ROOMS3 : ch === 2 ? ROOMS2 : [0, 1, 2, 3, 4, 6, 7, 8].map(i => ROOMS[i]);
   for (let ri = 0; ri < rooms.length; ri++) {
-    if (ch === 2) for (const f of ['life', 'mana', 'stam']) p.flask[f] = E.flaskCap(p, f); /* 2챕터 방은 플라스크를 채워 방 특성 · 적과 함께 마시는 효과를 시험한다 */
+    if (ch >= 2) for (const f of ['life', 'mana', 'stam']) p.flask[f] = E.flaskCap(p, f); /* 2 · 3챕터 방은 플라스크를 채워 방 특성 · 적과 함께 마시는 효과를 시험한다 */
     const b = E.roomBattle(p, rooms[ri], 'mother', seed + ri); b.rngF = r;
     if (r() < 0.3) { p.s.weak = { stacks: 1, until: b.t + 2, dur: 2 }; } // 정화·플라스크 효과를 시험할 디버프
     if (ch === 2 && r() < 0.5) { p.s.poison = { stacks: 6, until: 9999, dur: 9999 }; p.s.vuln = { stacks: 2, until: 9999, dur: 9999 }; p.s.bleed = { stacks: 3, until: 9999, dur: 9999 }; p.s.weak = { stacks: 2, until: 9999, dur: 9999 }; } /* 2챕터: 해로운 상태 여럿을 안고 시작해 조이기 · 지우기 · 옮기기 장비를 시험한다 */
+    if (ch === 3 && r() < 0.5) { p.s.ignite = { stacks: 3, until: 9999, dur: 9999 }; p.s.bleed = { stacks: 2, until: 9999, dur: 9999 }; p.s.weak = { stacks: 1, until: 9999, dur: 9999 }; } /* 3챕터: 화상 · 출혈 · 약화를 안고 시작해 화상 · 지우기 · 옮기기 장비를 시험한다 */
     let n = 0;
     while (!b.over && n++ < 160) {
       const L = E.actionList(b).filter(a => a.ok && a.id !== 'flee');
@@ -63,7 +77,7 @@ function staticCheck(k) {
   if (f.cost && !f.condCost) { const ids = ['heavy', 'guard', 'dodge']; const fn = { heavy: E.heavyCost, guard: E.guardCost, dodge: E.dodgeCost }; if (!ids.some(id => fn[id](b) !== fn[id](a)) && k !== 'gravespade' && k !== 'wardcharm') out.push('행동 비용'); }
   return out;
 }
-const UI_ONLY = { pilgcloak: '샘 회복(화면)', pilgtoken: '샘 회복(화면)', pilgcanteen: '샘 충전(화면)', rustykey: '보물 방 골드(단계 6·9)', tonic: '스태미나 플라스크 양', baptism: '방을 이기면 충전(전투 밖, dgqa)' };
+const UI_ONLY = { copperjug: '스태미나 플라스크 양', pilgcloak: '샘 회복(화면)', pilgtoken: '샘 회복(화면)', pilgcanteen: '샘 충전(화면)', rustykey: '보물 방 골드(단계 6·9)', tonic: '스태미나 플라스크 양', baptism: '방을 이기면 충전(전투 밖, dgqa)' };
 const res = [];
 const t0 = Date.now();
 const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7).split(',').filter(Boolean);
