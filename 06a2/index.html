@@ -6,7 +6,7 @@
 <title>나락의 유산 — 0.6a.2 스킬 시험판</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;600;700&family=Nanum+Myeongjo:wght@700&display=swap">
 <style>
-:root{color-scheme:dark;--bg:#0d0b0a;--panel:#17120f;--panel2:#211a15;--line:#3a2c22;--line2:#7a6550;--ink:#e6dccb;--muted:#a39380;--gold:#c9a24b;--gold-ink:#1a1206;--good:#86c56f;--bad:#ea6a55;--hp:#c9483a;--mp:#3f7ad6;--st:#c9a23a;--bk:#9b78e0;--track:#2a1f1a;--blood:#b33a2e;--gr-n:#b9b2a6;--gr-m:#79a6e0;--gr-r:#e0b24a;
+:root{color-scheme:dark;--bg:#0d0b0a;--panel:#17120f;--panel2:#211a15;--line:#3a2c22;--line2:#7a6550;--ink:#e6dccb;--muted:#a39380;--gold:#c9a24b;--gold-ink:#1a1206;--good:#86c56f;--bad:#ea6a55;--hp:#c9483a;--mp:#3f7ad6;--st:#c9a23a;--bk:#9b78e0;--track:#2a1f1a;--blood:#b33a2e;--gr-n:#b9b2a6;--gr-m:#79a6e0;--gr-r:#e0b24a;--gr-h:#c9a2f5;--gr-l:#ff9466;
  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
 *{box-sizing:border-box}
@@ -149,7 +149,8 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .bkline{display:flex;align-items:center;gap:6px;margin:2px 0}.bkb{flex:1;height:5px;background:var(--track);border-radius:3px;overflow:hidden}.bkb i{display:block;height:100%;background:var(--bk)}.bkline small{font-size:calc(10.5px*var(--fs,1));color:var(--muted);white-space:nowrap}
 .dockhead{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:calc(13px*var(--fs,1))}
 .legend{display:flex;gap:10px;margin:4px 0;font-size:calc(11.5px*var(--fs,1));color:var(--muted)}.lg{display:inline-flex;align-items:center;gap:4px}.lg:before{content:'';width:10px;height:10px;border-radius:2px;background:var(--c)}
-.gr-n{color:var(--gr-n)}.gr-m{color:var(--gr-m)}.gr-r{color:var(--gr-r)}.grb-n{border-color:var(--gr-n)}.grb-m{border-color:var(--gr-m)}.grb-r{border-color:var(--gr-r)}
+.gr-n{color:var(--gr-n)}.gr-m{color:var(--gr-m)}.gr-r{color:var(--gr-r)}.gr-h{color:var(--gr-h)}.gr-l{color:var(--gr-l)}.grb-n{border-color:var(--gr-n)}.grb-m{border-color:var(--gr-m)}.grb-r{border-color:var(--gr-r)}.grb-h{border-color:var(--gr-h)}.grb-l{border-color:var(--gr-l)}
+.gl{display:inline-block;font-size:calc(11px*var(--fs,1));font-weight:700;border:1px solid currentColor;border-radius:3px;padding:0 3px;margin-right:5px;line-height:1.35;vertical-align:1px}
 .g-atk{--c:#b8392c}.g-sk{--c:#7b55c0}.g-def{--c:#3a6cc4}.g-etc{--c:#3a8a45}.g-sig{--c:var(--cls,#8a6a2a)}
 .ab.g-sig{background:color-mix(in srgb, var(--cls,#8a6a2a) 10%, var(--panel))}
 .fstat,.me{border-left:5px solid var(--cls,transparent)}
@@ -388,7 +389,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .eqrow{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:8px;text-align:left;min-height:44px;padding:6px 10px;border-left:3px solid var(--line)}
 .eqrow.on,.bagc.on{outline:2px solid var(--gold);outline-offset:-2px;background:color-mix(in srgb,var(--gold) 10%,var(--panel2))}
 .eqsl{font-size:calc(12px*var(--fs,1));color:var(--muted)}.eqn{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.eqn.empty{color:var(--muted);font-weight:400}.eqb{font-size:calc(12px*var(--fs,1));color:var(--muted);white-space:nowrap}
-.grb-n{border-left-color:var(--gr-n)}.grb-m{border-left-color:var(--gr-m)}.grb-r{border-left-color:var(--gr-r)}
+.grb-n{border-left-color:var(--gr-n)}.grb-m{border-left-color:var(--gr-m)}.grb-r{border-left-color:var(--gr-r)}.grb-h{border-left-color:var(--gr-h)}.grb-l{border-left-color:var(--gr-l)}
 .eqdet{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;min-width:0}
 .idet{border-left:3px solid var(--line);padding-left:10px;margin-bottom:8px}.idet-h{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 6px}.idet-h b{font-size:calc(16px*var(--fs,1))}.idet-base{font-size:calc(13.5px*var(--fs,1));margin:4px 0}
 .icard.grb-n,.icard.grb-m,.icard.grb-r{border-left-width:3px}
@@ -662,6 +663,7 @@ html.rm *,html.rm *::before{transition:none!important;scroll-behavior:auto!impor
 <script src="data/tutorial.js"></script>
 <script src="data/items.js"></script>
 <script src="data/items_ch1.js"></script>
+<script src="data/items_ch2.js"></script>
 <script src="data/consumables.js"></script>
 <script src="data/rooms.js"></script>
 <script src="data/dungeon.js"></script>
@@ -852,7 +854,7 @@ function sbBegin(b, id, act, tgt) {
   b.sbAlt = !!p.sbLast && k !== p.sbLast; b.sbRunNow = b.sbAlt ? (p.sbRun || 0) + 1 : 0;
 }
 function sbEdgeApply(b, e, mul) {
-  const p = b.p; const E = p.edge; if (!E || !e || !e.alive) return; const n = Math.min(KW[E.s] || 10, Math.round(E.n * (mul || 1)));
+  const p = b.p; const E = p.edge; if (!E || !e || !e.alive) return; const n = Math.min(KW[E.s] || 10, Math.round(E.n * (mul || 1)) + fxAdd(p, 'edgeAdd', b, p, E.s));
   const got = addS(b, e, E.s, n); p.edge = null; b.sbEdgeDone = 1; b.rec.push({ k: 'edge', s: E.s, n });
   logp(b, 'good', '칼에 실린 ' + KW_N[E.s] + ' ' + n + '이(가) ' + e.n + '에게 스민다' + (got < n ? ' (상한)' : ''));
 }
@@ -873,7 +875,7 @@ function sbEnd(b, act) {
   const af = b.sbAltFx; b.sbAltFx = null;
   if (af && !b.over) { const g = []; if (af.ward) g.push('보호막 +' + Math.round(addWard(b, p, af.ward))); if (af.protect) { addS(b, p, 'protect', af.protect); g.push('보호 ' + af.protect); } if (af.stam) { p.st = Math.min(p.stMax, p.st + af.stam); if (p.exhaust && p.st >= 30) p.exhaust = 0; g.push('스태미나 +' + af.stam); } if (g.length) logp(b, 'good', (af.run === 2 ? '⇄⇄ 이어진 교대: ' : '⇄ 교대: ') + g.join(', ')); }
   if (k === 'spell' && act && act.v2) { const im = act.s.fx.find(e => e.k === 'imbue'); if (im) { if (p.edge && p.edge.s === im.s) p.edge.n = Math.max(p.edge.n, im.n); else p.edge = { s: im.s, n: im.n }; logp(b, 'good', '칼에 ' + KW_N[im.s] + ' ' + p.edge.n + '을(를) 싣는다'); } }
-  if (b.sbAlt && b.sbAltTurn !== b.turnIdx && !b.over) { b.sbAltTurn = b.turnIdx; const g = addWard(b, p, (BUILDS[p.build] || {}).altWard || 0); b.rec.push({ k: 'alt', g: r1(g) }); logp(b, 'good', '⇄ 교대: 보호막 +' + Math.round(g) + ' (' + Math.round(p.ward || 0) + '/' + wardMax(p) + ')'); }
+  if (b.sbAlt && b.sbAltTurn !== b.turnIdx && !b.over) { b.sbAltTurn = b.turnIdx; const g = addWard(b, p, (BUILDS[p.build] || {}).altWard || 0); b.rec.push({ k: 'alt', g: r1(g) }); logp(b, 'good', '⇄ 교대: 보호막 +' + Math.round(g) + ' (' + Math.round(p.ward || 0) + '/' + wardMax(p) + ')'); fxRun(p, 'onAlt', b, p, k, b.sbRunNow); }
   p.sbLast = k; p.sbRun = b.sbRun2 ? 0 : b.sbRunNow; b.sbAlt = false; b.sbRun2 = 0;
 }
 /* 수도승 자세 (stance): ▶ 자세(half가 0이 아니면)는 방어와 같고 스태미나가 들지 않는다. ⚡ 자세(half: 0)는 되받기만 한다. 덤은 겹치면 칸마다 큰 값. 내 다음 차례의 첫 행동에서 지워진다.
@@ -950,6 +952,7 @@ const POISON_FOREVER = 1e9; // 중독은 시간 제한이 아니라 수치로 �
 /* 0.6a.2: 상한 20(capOver를 주는 스킬만 넘긴다). 막음에 막힌다. 내가 적에게 걸면 갈래 규칙 "독을 걸면" */
 function addPoison(b, u, n, byMe, capOver) {
   if (!(n > 0)) return 0;
+  if (u === b.p && u.eq) { const pa = fxAdd(u, 'psnIn', b, u, n); if (pa) n = Math.max(1, n + pa); } /* 2챕터 장비 */
   if (byMe && b.carve && b.cur && b.cur.grp && u !== b.p && carveMul(b, b.cur.grp) < 1) n = Math.max(1, Math.floor(n * carveMul(b, b.cur.grp)));
   if (u === b.p && u.eq && u.eq.amulet === 'sigil') u.mp = Math.min(u.mpMax, u.mp + 4);
   if (byMe && b.p.build === 'assassin' && !isV2(b.p)) n += 1;
@@ -965,6 +968,7 @@ function poisonTotal(n) { return n * (n + 1) / 2; }
 /* ---- 6.8 빌드를 바꾸는 아이템 (B0: 막힘 해결용 3 + 자발 시험용 3) ---- */
 const hasIt = (p, k) => Object.values(p.eq || {}).includes(k);
 function itemFits(p, k) {
+  if (ITEMS[k] && ITEMS[k].fits && !ITEMS[k].fits.includes(p.build)) return false;
   const sk = skillsOf(p);
   if (k === 'knot') return sk.some(id => ['burst', 'release', 'scarburst'].includes(id));
   if (k === 'scarcharm') return scarRate(p) > 0;
@@ -978,7 +982,9 @@ function itemFits(p, k) {
   return true;
 }
 
-function classFit(p, k) { const ws = CLASS_FIT[p.build] || []; const a = (ITEMS[k] && ITEMS[k].act) || ''; return itemFits(p, k) && ws.some(w => a.includes(w)); }
+function classFit(p, k) { const ws = CLASS_FIT[p.build] || []; const a = (ITEMS[k] && ITEMS[k].act) || ''; if (ITEMS[k] && ITEMS[k].t) return itemFits(p, k) && tagFit(p.build, ITEMS[k].t); return itemFits(p, k) && ws.some(w => a.includes(w)); }
+/* 2챕터 장비는 문장의 낱말 대신 갈래 표(t)로 직업에 맞는지 본다 */
+function tagFit(build, t) { const br = ((typeof TREE2 !== 'undefined' && TREE2[build]) || {}).branches || []; return String(t).split(' ').map(x => x.replace(/_/g, ' ')).some(x => br.includes(x) || x === build); } /* 갈래 이름의 빈칸은 _로 적는다(전열_장악) */
 
 /* ---- 방 구성 (10.2 방 표) ---- */
 
@@ -1030,7 +1036,7 @@ const buGrudgeNow = b => { const p = b.p; return b.prepTurn === b.turnIdx ? (p.g
 const buEatLeft = b => Math.max(0, b.p.hpMax * BUTCH.eatFight - (b.eatGot || 0));
 /* 도살자의 회복(흡혈 · 먹기)은 모두 여기를 지난다. 플라스크 · 소모품 · 장비 회복은 따르지 않는다 */
 function bHeal(b, x, why) {
-  const p = b.p; if (!(x > 0) || b.over) return 0; const v = x * healMul(p);
+  const p = b.p; if (!(x > 0) || b.over) return 0; const v = x * healMul(p) * (1 + Math.min(FX_CAP, fxAdd(p, 'bHealP', b, p, why)));
   let room = Math.max(0, Math.min(p.hpMax, p.hpFight != null ? p.hpFight : p.hpMax) - p.hp);
   if (why === 'eat') room = Math.min(room, buEatLeft(b));
   if (why === 'leech') { if (b.leechTurn !== b.turnIdx) { b.leechTurn = b.turnIdx; b.leechGot = 0; } room = Math.min(room, Math.max(0, p.hpMax * BUTCH.leechTurn - (b.leechGot || 0))); }
@@ -1153,6 +1159,7 @@ function elemShock(b, by) {
     const dealt = hurtEnemy(b, e, base * (multi ? aoeCut(b, e) : 1), { dot: 1, shock: 1, shockAoe: multi ? 1 : 0, silent: 1, label: '열충격' });
     let brk = 0; if (e.alive) { delete e.s.ignite; delete e.s.chill; e.chillR = 0; brk = C * ELEM.Bk * ((sx && sx.brk) || 1); addBreak(b, e, brk); }
     const broke = e.alive && !!e.s.broken && !preB;
+    fxRun(b.p, 'onShock', b, b.p, e, I, C, dealt, broke);
     ent.m = fixJosa((by === 'enemy' ? '(적 차례) ' : '') + '열충격: ' + e.n + '. 화상 ' + I + ' + 둔화 ' + C + ' × 2 → 피해 ' + r1(dealt) + (brk ? ', 붕괴 +' + Math.round(brk) : ''));
     let arc = 0; if (sx && sx.arc && !b.over) for (const o of alive(b)) { if (o === e || o.role === 'root') continue; arc += hurtEnemy(b, o, base * sx.arc * aoeCut(b, o), { dot: 1, shock: 1, shockAoe: 1, silent: 1, label: '번진 열충격' }); if (b.over) break; }
     if (arc > 0) logp(b, 'good', '열충격이 다른 적에게 번진다. 모두 ' + r1(arc) + ' 피해');
@@ -1191,6 +1198,7 @@ function makePile(b, e) { // 해골이 쓰러지면 뼈 더미가 된다 (경험
   e.pile = { wait: RISE.wait, born: b.tick }; e.hp = Math.max(1, Math.round(e.hpMax * RISE.pile)); e.intent = { k: 'none' }; e.braced = 0; e.countering = 0; e.evading = 0; e.guarding = null; e.stun = 0; e.brk = 0;
   for (const k of Object.keys(e.s)) if (!['poison', 'bleed'].includes(k)) delete e.s[k];
   logp(b, 'good', e.n + '이(가) 무너진다. 뼈가 아직 꿈틀거린다');
+  fxRun(b.p, 'onPile', b, b.p, e);
 }
 /* ===== 지하묘지의 군주 (2챕터 보스, 상세 · 대처는 비공개 문서) ===== */
 function actGroup(p, id, act) { if (id === 'basic' || id === 'heavy') return 'wpn'; if (id === 'guard' || id === 'dodge') return 'prep'; if (act && act.v2) return act.s.tgt === 'self' && !act.s.fx.some(x => x.k === 'dmg') ? 'prep' : 'skill'; return null; }
@@ -1224,7 +1232,7 @@ function lordFall(b, e) {
   for (const x of alive(b).filter(x => x.pile)) riseSkel(b, x, ''); codexHit(b, 'cryptlord', 'fall');
 }
 function lordGuard(lv, id, ch) { const s0 = mkEnemy('skeleton', 0, id, { lv, name: (ENEMY_NAMES[ch] || ENEMY_NAMES[2] || {}).skeleton }); const D = diffOf(ch).lower; s0.hpMax = Math.round(s0.hpMax * D.hp * LORD.gHp); s0.hp = s0.hpMax; s0.dmg *= D.dmg * LORD.gDmg; s0.summoned = true; return s0; } // 근위 · 부름 해골: 하층 해골과 같은 세기 (10월 7일: 던전 배율이 빠져 1.6배로 때렸다)
-function riseSkel(b, e, pre) { e.pile = null; e.rose = 1; e.hp = Math.max(1, Math.round(e.hpMax * RISE.hp)); e.intent = { k: 'brace' }; e.acts = 2; logp(b, 'bad', (pre || '') + '뼈 더미가 다시 맞춰져 ' + e.n + '이(가) 일어선다'); }
+function riseSkel(b, e, pre) { e.pile = null; e.rose = 1; e.hp = Math.max(1, Math.round(e.hpMax * RISE.hp)); e.intent = { k: 'brace' }; e.acts = 2; logp(b, 'bad', (pre || '') + '뼈 더미가 다시 맞춰져 ' + e.n + '이(가) 일어선다'); fxRun(b.p, 'onRise', b, b.p, e); }
 const EKW = { archerBleed: 2, archerEvery: 3, heavyVuln: 2, explodeWeak: 2, explodeMul: 3, aimMul: 1.35, curseWeak: 2, braceRed: 0.5 };
 /* 10월 4일 적 행동 개편 (docs/0.6a.2-적-행동-기획.md): 한 번 피해의 기준 생명력, 사제가 치유하는 문턱, 소환사가 한 번에 부르는 수와 하수인 상한 */
 const HIT_REF = lv => 102 + 5 * (lv - 1);
@@ -1370,6 +1378,242 @@ const IFX = {
   holywater: { cap: { life: -1 }, onFlask: (b) => { const e = alive(b).find(x => x.intent && (x.intent.k === 'charge' || x.intent.k === 'heavy') && x.role !== 'boss'); if (!e) return; e.intent = { k: 'attack' }; logp(b, 'good', '성수가 튀자 ' + e.n + '이(가) 강타를 거둔다'); return 1; } },
   emberflask: { heal: -0.05, onFlask: (b, p, k) => { if (k !== 'life') return; let n = 0; for (const e of alive(b)) if (e.role !== 'root') { addS(b, e, 'ignite', 1); n++; } return n ? 1 : 0; } },
 };
+/* ===== 2챕터 장비 효과 (IFX2, 10월 7일, docs/아이템/2챕터-장비.md · 장비-경제.md 9절) =====
+   1챕터 지점에 더한 지점. 모두 낀 장비가 없으면 아무것도 바꾸지 않는다(1챕터 결과 그대로).
+   더하기 지점(장비끼리 더한 뒤 한 번 곱한다, ±FX_CAP까지): hitP(주는 직접 피해, 상태 kwTaken 앞) dotP(내가 건 지속 피해) inP(받는 피해 감소, 음수면 더 받음) wardP(얻는 보호막) bHealP(흡혈 · 먹기 회복)
+   수 지점: edgeAdd(칼에 실은 상태가 스밀 때 +n) psnIn(내게 걸리는 중독 +n)
+   일 지점: onAct(행동을 시작할 때) onSkill(스킬을 쓴 뒤) onRound(라운드가 끝날 때) onPile(해골이 뼈 더미가 될 때) onRise(뼈 더미가 일어설 때) onBloat(부푼 시체가 터지기 전)
+            onBreak(적이 무너질 때) onShock(열충격) onCounter(되받기) onEvade(몸 빼기로 피함) onAlt(교대) onProt(보호를 얻음) onWardOver(보호막이 상한을 넘침) onWin(방을 이김, 전투 밖)
+   규칙 표시: quick2(내 차례마다 빠른 칸 하나 더) first(라운드 맨 앞) condCost(조건이 붙은 비용이라 점검의 고정 비용 비교를 건너뛴다)
+   쿨타임을 당기는 효과는 한 행동에 1까지(fxCdMax) */
+const FX_CAP = 0.6;
+const fxHas = (c, k) => { const s = c && (c.s || SK2[c.id]); return !!(s && s.fx && s.fx.some(x => x.k === k)); };
+const fxBr = c => { const s = c && (c.s || SK2[c.id]); return (s && s.b) || null; };
+const isAtkC = c => !!(c && (c.id === 'basic' || c.id === 'heavy' || c.skill));
+const badKinds = u => KW_BAD.filter(k => st(u, k) > 0).length;
+const badSum = u => KW_BAD.reduce((a, k) => a + st(u, k), 0);
+const badTop = (u, n) => KW_BAD.filter(k => st(u, k) > 0).sort((x, y) => st(u, y) - st(u, x)).slice(0, n || 1);
+const fFoes = b => alive(b).filter(e => realFoe(e));
+const fOther = (b, e) => fFoes(b).filter(x => x !== e && !x.under)[0] || null;
+const fPiles = b => alive(b).filter(e => e.pile);
+const fxHeal = (p, x) => { const v = Math.max(0, Math.min(p.hpMax - p.hp, x)); p.hp += v; return v; };
+const fxStam = (p, x) => { p.st = Math.min(p.stMax, p.st + x); if (p.exhaust && p.st >= 30) p.exhaust = 0; };
+const fxOnce = (b, key) => { b.fxOn = b.fxOn || {}; if (b.fxOn[key] === b.actN) return false; b.fxOn[key] = b.actN; return true; };
+const fxCnt = (b, key, max) => { b.fxN = b.fxN || {}; if ((b.fxN[key] || 0) >= max) return false; b.fxN[key] = (b.fxN[key] || 0) + 1; return true; };
+function fxCdMax(b, p, not) { if (!p.cd || b.fxCdAct === b.actN) return null; let best = null; for (const id of p.skills || []) { const s = SK2[id]; if (!s || s.once || id === not || !(p.cd[id] > 0)) continue; if (!best || p.cd[id] > p.cd[best]) best = id; } if (best) { p.cd[best]--; b.fxCdAct = b.actN; logp(b, 'good', SK2[best].n + ' 쿨타임 −1'); } return best; }
+function fxUnearth(b, e, vuln) { e.under = 0; e.intent = { k: 'attack' }; e.teleTurn = null; if (vuln) addS(b, e, 'vuln', vuln); logp(b, 'good', e.n + '이(가) 땅 위로 끌려 나온다'); }
+function fxPileKill(b, e) { e.norise = 1; e.hp = 0; killEnemy(b, e); checkEnd(b); }
+const fxBig = o => !!(o.charged || (o.src && o.src.intent && o.src.intent.aimed && !o.dot));
+function fxApplyKw(b, e, k, n) { if (!e || !e.alive || !(n > 0)) return 0; return k === 'poison' ? addPoison(b, e, n, 1) : addS(b, e, k, n); }
+const IFX2 = {
+  // 무기
+  gravepick: { onKill: (b, p, e) => { if (!e.pile) return; fxStam(p, 8); return 1; } },
+  torchclub: { onHit: (b, p, e, o, c) => { if (c.id !== 'basic' || e.role !== 'skeleton' || e.pile || !e.alive) return; addS(b, e, 'ignite', 1); return 1; } },
+  spadespear: { hitP: (b, p, e) => e.role === 'burrower' && !e.under ? 0.12 : 0 },
+  mournsickle: { onKill: (b, p, e) => { if (!stk(e, 'bleed')) return; fxStam(p, 6); return 1; } },
+  venomawl: { brk: (b, p, e, c) => c.id === 'basic' && st(e, 'poison') >= 3 ? 4 : 0 },
+  mossstaff: { hitP: (b, p, e) => st(e, 'chill') ? 0.05 : 0 },
+  scorchrod: { hitP: (b, p, e) => st(e, 'ignite') >= 3 ? 0.05 : 0 },
+  wardhammer: { brk: (b, p, e, c) => c.id === 'heavy' && p.ward > 0 ? 4 : 0 },
+  skinknife: { hitAdd: (b, p, e, o, c) => c.id === 'basic' && p.focus && p.focus.id === e.id && p.focus.n >= 2 ? 2 : 0 },
+  trainrod: { brk: (b, p, e, c) => c.id === 'heavy' && st(p, 'empower') >= 3 ? 5 : 0 },
+  confrod: { onCleanse: (b, p, n) => { if (!(n > 0)) return; p.fxConf = 1; return 1; }, hitP: (b, p, e, o, c) => { if (!c || c.id !== 'basic' || !p.fxConf) return 0; p.fxConf = 0; return 0.15; } },
+  sextonbar: { hitP: (b, p, e, o, c) => c && c.id === 'heavy' ? 0.04 : 0 },
+  wetblade: { hitP: b => hasMod(b, 'flooded') ? 0.08 : 0 },
+  ashsaber: { onKill: (b, p, e) => { if (e.role !== 'skeleton' || e.pile) return; p.fxAsh = 1; return 1; }, hitP: (b, p, e, o, c) => { if (!p.fxAsh || !isAtkC(c)) return 0; p.fxAsh = 0; return 0.15; } },
+  wallmaul: { brk: (b, p, e) => e.role === 'bonewall' ? 12 : 0 },
+  deepspear: { hitP: (b, p, e, o) => e.row === 'back' && !o.aoe ? (alive(b).some(x => x.role === 'bonewall') ? 0.2 : 0.1) : 0 },
+  bloodgroove: { onKill: (b, p, e) => { const n = stk(e, 'bleed'); const t = n >= 2 && fOther(b, e); if (!t) return; addS(b, t, 'bleed', Math.ceil(n / 2)); logp(b, 'good', e.n + '의 피가 ' + t.n + '에게 옮는다. 출혈 ' + Math.ceil(n / 2)); return 1; } },
+  viperfang: { hitP: (b, p, e, o, c) => fxHas(c, 'burst') || fxHas(c, 'drain') ? 0.12 : 0 },
+  dirgescepter: { hitP: (b, p, e) => e.chant ? 0.2 : 0 },
+  frostrod: { brk: (b, p, e) => st(e, 'chill') >= 2 ? 6 : 0 },
+  emberdirk: { onHit: (b, p, e, o, c) => { if (c.ranged || !e.alive || !st(e, 'ignite') || !fxOnce(b, 'emberdirk')) return; addS(b, e, 'ignite', 1); return 1; } },
+  wardmace: { onHurt: (b, p, o) => { if (!p.guard || o.dot || !o.src) return; p.fxWm = Math.min(3, (p.fxWm || 0) + 1); return 1; }, hitP: (b, p, e, o, c) => { if (!c || c.id !== 'heavy' || !p.fxWm) return 0; const v = 0.08 * p.fxWm; p.fxWm = 0; return v; } },
+  trackbow: { hitP: (b, p, e) => p.focus && p.focus.id === e.id && p.focus.n >= 3 ? 0.1 : 0 },
+  penchain: { hitP: (b, p, e, o, c) => c && (c.id === 'basic' || c.id === 'heavy') && badKinds(p) >= 2 ? 0.12 : 0 },
+  wristwrap: { onCounter: (b, p) => { if (!fxCnt(b, 'wristwrap', 3)) return; addS(b, p, 'empower', 1); return 1; } },
+  ashscepter: { onKill: (b, p, e) => { if (!st(e, 'ignite')) return; let n = 0; for (const x of fFoes(b)) if (x !== e) { addS(b, x, 'ignite', 2); n++; } if (n) logp(b, 'good', '재가 흩날린다. 남은 적 모두 화상 2'); return n ? 1 : 0; }, hitP: (b, p, e) => st(e, 'ignite') ? 0 : -0.08 },
+  bonemaul: { onKill: (b, p, e) => { if (!e.pile || !b.cur || b.cur.id !== 'heavy' || !fxOnce(b, 'bonemaul')) return; const ps = fPiles(b); for (const x of ps) if (x.alive) fxPileKill(b, x); if (ps.length) logp(b, 'good', '바닥의 뼈 더미가 함께 흩어진다'); return ps.length ? 1 : 0; }, brk: (b, p, e, c) => c.id === 'heavy' && e.role === 'bonewall' ? 10 : 0, cost: (p, id) => id === 'heavy' ? 5 : 0 },
+  fillspade: { onHit: (b, p, e, o) => { if (!o.aoe || !e.under || !e.alive) return; fxUnearth(b, e, 1); return 1; }, hitP: (b, p, e, o) => o.aoe ? -0.1 : 0 },
+  venomtwins: { onKill: (b, p, e) => { const n = st(e, 'poison'); const t = n >= 2 && fOther(b, e); if (!t) return; addPoison(b, t, Math.ceil(n / 2), 1); logp(b, 'good', e.n + '의 독이 ' + t.n + '에게 옮는다. 중독 ' + Math.ceil(n / 2)); return 1; }, hitP: (b, p, e) => st(e, 'poison') >= 5 ? 0.1 : 0 },
+  bloodprice: { hitP: (b, p, e, o, c) => c && !c.ranged && st(p, 'bleed') ? 0.15 : 0, dur: k => k === 'bleed' ? 1 : 0 },
+  altblades: { hitP: (b, p) => b.sbAlt && b.sbK === 'cut' ? 0.15 : 0, brk: (b, p) => b.sbAlt && b.sbK === 'spell' ? 8 : 0 },
+  swiftbow: { onHit: (b, p, e) => { if (!e.alive || !e.swift || !fxOnce(b, 'swiftbow')) return; addS(b, e, 'chill', 1); logp(b, 'good', e.n + '의 발이 묶인다. 둔화 1'); return 1; }, hitP: (b, p, e) => st(e, 'chill') ? 0.08 : 0 },
+  censer: { onSkill: (b, p, act) => { if (!fxHas(act, 'transfer')) return; p.fxCens = 1; return 1; }, hitP: (b, p, e, o, c) => { if (!p.fxCens || !isAtkC(c) || fxHas(c, 'transfer')) return 0; p.fxCens = 0; return 0.06 * badKinds(e); } },
+  graverobber: { onKill: (b, p, e) => { if (!e.pile && e.role !== 'bonewall') return; p.fxCdNext = 1; return 1; }, onSkill: (b, p, act) => { if (!p.fxCdNext || !p.cd || !(p.cd[act.id] > 1)) return; p.cd[act.id]--; p.fxCdNext = 0; logp(b, 'good', act.n + ' 쿨타임 −1'); return 1; }, hitP: (b, p, e) => e.pile || e.role === 'bonewall' ? 0 : -0.06 },
+  blackwaterblade: { st: { st: -15 }, hitP: (b, p, e) => st(e, 'chill') ? 0.15 : 0, onKill: (b, p, e) => { if (!st(e, 'chill')) return; let n = 0; for (const x of fFoes(b)) if (x !== e) { addS(b, x, 'chill', 1); n++; } if (n) logp(b, 'good', '검은 물이 번진다. 남은 적 모두 둔화 1'); return n ? 1 : 0; } },
+  bloodash: { hpMul: 0.92, hitP: (b, p, e) => stk(e, 'bleed') && st(e, 'ignite') ? 0.2 : 0, onHit: (b, p, e) => { if (!e.alive || !fxOnce(b, 'bloodash')) return; const bl = stk(e, 'bleed'), ig = st(e, 'ignite'); if (!!bl === !!ig) return; addS(b, e, bl ? 'ignite' : 'bleed', 1); return 1; } },
+  kingsaxe: { onHit: (b, p, e, o, c, d) => { if (c.id !== 'heavy' || !(d > 0) || !fxOnce(b, 'kingsaxe')) return; const xs = fFoes(b).filter(x => x !== e && x.row === 'front' && !x.under); for (const x of xs) hurtEnemy(b, x, d * 0.5, { label: '수문장의 도끼' }); return xs.length ? 1 : 0; }, hitP: (b, p, e, o, c) => c && c.id === 'basic' ? -0.1 : 0, cost: (p, id) => id === 'heavy' ? 10 : 0 },
+  namechisel: { onHit: (b, p, e, o, c) => { if (c.id !== 'basic' || !e.alive) return; let n = 0; for (const k of KW_BAD) if (st(e, k) > 0) n += fxApplyKw(b, e, k, 1) ? 1 : 0; if (n) logp(b, 'good', e.n + '에게 새긴 상처가 깊어진다'); return n ? 1 : 0; }, hitP: (b, p, e, o, c) => c && c.id === 'basic' ? -0.4 : 0 },
+  // 갑옷
+  bonescale: { inP: (b, p, o) => o.src && !o.dot && o.src.role === 'skeleton' ? 0.08 : 0 },
+  waxcoat: { inP: (b, p, o) => o.dot && o.label === '중독' && st(p, 'poison') >= 5 ? 0.15 : 0 },
+  parryleather: { onParry: (b, p) => { p.fxPl = 1; return 1; }, brk: (b, p, e, c) => { if (!p.fxPl || !isAtkC(c)) return 0; p.fxPl = 0; return 6; } },
+  knotshroud: { inP: (b, p, o) => o.src && o.src.role === 'hexer' && o.src.intent && o.src.intent.k === 'constrict' ? 0.12 : 0 },
+  wallcloak: { inP: (b, p, o) => !o.dot && alive(b).some(x => x.role === 'bonewall') ? 0.06 : 0 },
+  wardlining: { inP: (b, p, o) => o.charged && p.ward >= wardMax(p) * 0.5 ? 0.08 : 0 },
+  huntvest: { onEvade: (b, p) => { fxStam(p, 6); return 1; } },
+  trainrobe: { onCounter: (b, p) => fxHeal(p, 1) > 0 ? 1 : 0 },
+  confrobe: { onCleanse: (b, p, n) => { if (!(n > 0)) return; fxStam(p, 4); return 1; } },
+  monkmantle: { st: { hp: 8 } },
+  wadeboots: { inP: (b, p, o) => !o.dot && st(p, 'chill') ? 0.08 : 0 },
+  limeplate: { inP: b => fPiles(b).length ? 0.1 : 0 },
+  herbliner: { psnIn: () => -1 },
+  bloodvest: { inP: (b, p, o) => o.src && !o.dot && stk(o.src, 'bleed') ? 0.1 : 0 },
+  frostcloak: { inP: (b, p, o) => o.src && !o.dot && st(o.src, 'chill') ? 0.1 : 0 },
+  flamecoat: { onHurt: (b, p, o) => { if (!o.src || o.dot || !o.src.alive || b.fxFcR === b.round) return; b.fxFcR = b.round; addS(b, o.src, 'ignite', 1); return 1; } },
+  bracerobe: { onHurt: (b, p, o) => { if (!p.guard || !o.charged) return; p.fxQuickNext = 1; logp(b, 'good', '강타를 받아 낸 몸이 가볍다. 다음 빠른 행동 하나는 빠른 칸을 쓰지 않는다'); return 1; } },
+  altcloak: { onAlt: (b, p) => addWard(b, p, 2) > 0 ? 1 : 0 },
+  penancegarb: { inP: (b, p, o) => !o.dot && badKinds(p) >= 3 ? 0.12 : 0 },
+  earthmail: { inP: (b, p, o) => !o.dot && alive(b).some(x => x.under) ? 0.1 : 0 },
+  oathmail: { inP: (b, p, o) => o.dot ? 0 : 0.04 * Math.min(3, Math.floor((1 - p.hp / p.hpMax) * 5 + 1e-9)) },
+  mournshroud: { onRise: (b, p, e) => { addBreak(b, e, 20); addWard(b, p, 6); return 1; } },
+  bonebreast: { inP: (b, p, o) => p.guard && o.src && !o.dot && o.src.row === 'back' ? 0.2 : 0, onAct: (b, p, id) => { if (id !== 'guard') return; const t = fFoes(b).find(x => x.row === 'back'); if (!t) return; addBreak(b, t, 8); return 1; }, cost: (p, id) => id === 'guard' ? 5 : 0 },
+  rotmask: { onRound: (b, p) => { if (!hasMod(b, 'rotair') || !st(p, 'poison')) return; kwDec(p, 'poison'); return 1; }, inP: (b, p, o) => !o.dot && st(p, 'poison') ? 0.08 : 0 },
+  transfermail: { onAct: (b, p) => { p.fxTm = b.rec.length; }, onSkill: (b, p, act) => { if (!fxHas(act, 'transfer')) return; const r = b.rec.slice(p.fxTm || 0).find(x => x.k === 'xfer'); const w = r ? 2 * (r.c || 0) : 0; if (w <= 0) return; addWard(b, p, w); logp(b, 'good', '옮긴 죄가 사슬에 걸린다. 보호막 +' + w); return 1; } },
+  selfbleedmail: { onAct: (b, p, id) => { if (!stk(p, 'bleed') || id === 'flee') return; return addWard(b, p, 3) > 0 ? 1 : 0; }, dur: k => k === 'bleed' ? 1 : 0 },
+  rimemail: { onHurt: (b, p, o) => { const e = o.src; if (!e || o.dot || !e.alive || !realFoe(e)) return; if (st(e, 'chill')) { addBreak(b, e, 8); return 1; } if (!fxCnt(b, 'rimemail', 5)) return; addS(b, e, 'chill', 1); return 1; } },
+  wardplate: { inP: (b, p, o) => { if (p.ward > 0 && o.src && !o.dot && o.src.alive && realFoe(o.src)) { addBreak(b, o.src, 5); fxHit('wardplate'); } return 0; }, hitP: (b, p, e) => e.s.broken ? 0.1 : 0 },
+  royalguard: { st: { st: -15 }, onAct: (b, p, id) => { if (id !== 'guard') return; return addWard(b, p, 6) > 0 ? 1 : 0; } },
+  curseward: { onDebuff: (b, p) => addWard(b, p, 3) > 0 ? 1 : 0, dur: k => KW_BAD.includes(k) ? 1 : 0 },
+  lastrites: { cap: { life: -1 }, onHurt: (b, p) => { if (b.fxLr || p.hp >= p.hpMax * 0.5 || p.hp <= 0) return; b.fxLr = 1; for (const k of KW_BAD) delete p.s[k]; addWard(b, p, p.hpMax * 0.15); logp(b, 'good', '마지막 의식: 해로운 상태가 모두 씻기고 막이 선다'); return 1; } },
+  blackwater: { onStart: (b, p) => { p.fxDefer = 0; }, onHurt: (b, p, o, d) => { if (o.dot || !(d > 0)) return; const x = d * 0.3; p.hp += x; p.fxDefer = (p.fxDefer || 0) + x; return 1; }, onRound: (b, p) => { const v = p.fxDefer || 0; if (!(v > 0)) return; p.fxDefer = 0; p.hp -= v; logp(b, 'bad', '미뤄 둔 피해가 검은 물에서 올라온다. ' + r1(v) + ' 피해'); checkEnd(b); return 1; } },
+  // 장갑
+  skelgrip: { brk: (b, p, e, c) => c.id === 'heavy' && e.role === 'skeleton' && !e.pile ? 6 : 0 },
+  limehands: { onKill: (b, p, e) => { if (!e.pile) return; p.fxLime = 1; return 1; }, brk: (b, p, e, c) => { if (!p.fxLime || !isAtkC(c) || e.pile) return 0; p.fxLime = 0; return 8; } },
+  pickgrip: { hitP: (b, p, e) => e.role === 'bonewall' ? 0.15 : 0 },
+  diggerhands: { hitP: (b, p, e, o) => o.aoe && e.under ? 0.15 : 0 },
+  bloatgloves: { hitP: (b, p, e) => e.role === 'bloat' ? 0.12 : 0 },
+  venomgloves: { onHit: (b, p, e, o, c) => { if (!fxHas(c, 'poison') || !e.alive || !fxOnce(b, 'venomgloves')) return; return addPoison(b, e, 1, 1) ? 1 : 0; } },
+  clawgloves: { hitAdd: (b, p, e, o, c) => c.id === 'basic' && stk(e, 'bleed') >= 3 ? 2 : 0 },
+  charhands: { brk: (b, p, e, c) => c.id === 'heavy' && st(e, 'ignite') ? 4 : 0 },
+  quickwraps: { onAct: (b, p, id, act) => { if (!act || act.self || !(act.time <= 0.6) || ['guard', 'dodge', 'flaskL', 'flaskM', 'flaskS', 'flee'].includes(id) || b.fxQwT === b.turnIdx) return; b.fxQwT = b.turnIdx; b.fxQwA = b.actN; }, brk: b => b.fxQwA === b.actN ? 4 : 0 },
+  huntgloves: { brk: (b, p, e) => p.focus && p.focus.id === e.id ? 2 : 0 },
+  backhand: { st: { st: 6 } },
+  robberhook: { hitP: (b, p, e) => e.role === 'thief' ? 0.2 : 0 },
+  hastebreaker: { brk: (b, p, e) => e.swift ? 8 : 0 },
+  chokehands: { brk: (b, p, e) => st(e, 'weak') ? 6 : 0 },
+  wringer: { bHealP: (b, p, why) => why === 'eat' ? 0.2 : 0 },
+  twinhilt: { onAct: (b, p, id, act) => { if (!act || act.self || ['guard', 'dodge', 'flaskL', 'flaskM', 'flaskS', 'flee'].includes(id)) return; if (b.fxThT !== b.turnIdx) { b.fxThT = b.turnIdx; b.fxThN = 0; } b.fxThN++; }, hitP: b => b.fxThT === b.turnIdx && b.fxThN >= 2 ? 0.12 : 0 },
+  shockgloves: { onShock: (b, p, e) => { if (!e.alive) return; addBreak(b, e, 6); return 1; } },
+  stancegloves: { hitP: (b, p, e, o) => o.ctr && p.stance ? 0.2 : 0 },
+  confhands: { onSkill: (b, p, act, tgt) => { if (!fxHas(act, 'transfer')) return; const t = tgt && tgt.alive ? tgt : fFoes(b)[0]; if (!t) return; addBreak(b, t, 8); return 1; } },
+  bloodcost: { condCost: 1, cost: (p, id) => id === 'heavy' && p.s && stk(p, 'bleed') ? -10 : 0 },
+  bonesetter: { onKill: (b, p, e) => { if (!e.pile) return; const t = fOther(b, e); if (!t) return; addBreak(b, t, 15); return 1; }, onRise: (b, p) => { addS(b, p, 'haste', 1); return 1; } },
+  breakfist: { condCost: 1, onKill: (b, p, e) => { if (!e.s.broken) return; let n = 0; for (const x of fFoes(b)) if (x !== e) { addBreak(b, x, 10); n++; } return n ? 1 : 0; }, onBreak: (b, p) => { p.fxBf = 1; return 1; }, onAct: (b, p, id) => { if (id === 'heavy') p.fxBf = 0; }, cost: (p, id) => id === 'heavy' && p.fxBf ? -15 : 0 },
+  poisonreaper: { onAct: (b, p, id, act) => { if (!act || !act.v2 || !(fxHas(act, 'burst') || fxHas(act, 'drain'))) return; p.fxPr = alive(b).reduce((a, e) => a + st(e, 'poison'), 0); }, onSkill: (b, p, act) => { if (fxHas(act, 'poison') && p.cd && p.cd[act.id] > 0) { p.cd[act.id]++; fxHit('poisonreaper'); } if (!(fxHas(act, 'burst') || fxHas(act, 'drain')) || p.fxPr == null) return; const d = p.fxPr - alive(b).reduce((a, e) => a + st(e, 'poison'), 0); p.fxPr = null; const g = d > 0 ? fxHeal(p, d / 2) : 0; if (g > 0) logp(b, 'good', '거둔 독이 손바닥으로 스민다. 생명력 +' + r1(g)); return g > 0 ? 1 : 0; } },
+  frostgrip: { onHit: (b, p, e) => { if (!e.alive || st(e, 'chill') < 3) return; delete e.s.chill; addBreak(b, e, 15); logp(b, 'good', e.n + '의 언 몸이 깨진다. 붕괴 +15'); return 1; } },
+  trackmark: { onKill: (b, p, e) => { if (!p.focus || p.focus.id !== e.id || p.focus.n < 3) return; p.fxCarry = 1; return 1; }, onHit: (b, p, e) => { if (!p.fxCarry || !p.focus || p.focus.id !== e.id || p.focus.n >= 2 || !e.alive) return; p.focus.n = 2; p.fxCarry = 0; logp(b, 'good', e.n + '에게 표식을 옮긴다. 추적 2겹'); return 1; }, hitP: (b, p, e, o) => !o.aoe && p.focus && p.focus.id === e.id && p.focus.n === 1 ? -0.1 : 0 },
+  flamehands: { onHit: (b, p, e, o, c) => { if (!c.skill || st(e, 'ignite') < 5 || !fxOnce(b, 'flamehands')) return; const t = fOther(b, e); if (!t) return; addS(b, t, 'ignite', 2); return 1; } },
+  runegauntlet: { edgeAdd: () => 1, hitP: (b, p) => b.sbK === 'cut' && !p.edge ? -0.05 : 0 },
+  deadkinghand: { onKill: (b, p) => fxCdMax(b, p) ? 1 : 0, inP: (b, p, o) => o.dot ? 0 : -0.08 },
+  fourthfinger: { hpMul: 0.92, onAct: (b, p, id, act) => { if (!act || ['flee'].includes(id)) return; const q = act.time <= 0.6; p.fxFfMain = !q; if (q) { p.fxFfQ = b.turnIdx; p.fxFfFirst = p.fxFfNext === b.turnIdx && b.fxFfUsed !== b.turnIdx; if (p.fxFfFirst) b.fxFfUsed = b.turnIdx; } else p.fxFfNext = b.turnIdx + 1; }, hitP: (b, p) => p.fxFfMain && p.fxFfQ === b.turnIdx ? 0.15 : 0, brk: (b, p) => !p.fxFfMain && p.fxFfFirst ? 10 : 0 },
+  secondhand: { quick2: 1, onStart: b => { b.extraQuick = 1; return 1; }, onAct: (b, p, id, act) => { if (act) p.fxShMain = act.time > 0.6; }, hitP: (b, p) => p.fxShMain ? -0.15 : 0 },
+  // 반지
+  knucklering: { hitP: (b, p, e) => e.role === 'skeleton' && !e.pile ? 0.06 : 0 },
+  hexbane: { hitP: (b, p, e) => e.role === 'hexer' ? 0.1 : 0 },
+  brickring: { hitP: (b, p, e) => e.role === 'mason' ? 0.1 : 0 },
+  soilring: { brk: (b, p, e) => e.role === 'burrower' && !e.under ? 4 : 0 },
+  bloatring: { onHit: (b, p, e) => { if (e.role !== 'bloat' || !e.alive || !fxOnce(b, 'bloatring')) return; addS(b, e, 'ignite', 1); return 1; } },
+  swiftring: { hitP: (b, p, e) => e.swift ? 0.08 : 0 },
+  poisonband: { hitP: (b, p, e) => st(e, 'poison') ? 0.04 : 0 },
+  bleedband: { hitP: (b, p, e) => stk(e, 'bleed') ? 0.04 : 0 },
+  burnband: { hitP: (b, p, e) => st(e, 'ignite') ? 0.04 : 0 },
+  slowband: { onKill: (b, p, e) => { if (!st(e, 'chill')) return; fxStam(p, 6); return 1; } },
+  wardband: { wardP: () => 0.1 },
+  ironband: { st: { hp: 5 } },
+  copperband: { st: { st: 5 } },
+  mourning: { hitP: (b, p, e) => e.intent && e.intent.k === 'mourn' ? 0.25 : 0 },
+  sleepring: { onHit: (b, p, e) => { if (e.role !== 'skeleton' || e.pile || !e.alive || e.hp >= e.hpMax * 0.3 || st(e, 'ignite')) return; addS(b, e, 'ignite', 1); return 1; } },
+  untie: { onRound: (b, p) => { if (badKinds(p) < 3 || !fxCnt(b, 'untie', 3)) return; const k = KW_BAD.filter(x => st(p, x) > 0).sort((x, y) => st(p, x) - st(p, y))[0]; delete p.s[k]; logp(b, 'good', '매듭 하나가 풀린다. ' + KW_N[k] + '을(를) 지운다'); return 1; } },
+  wadering: { onAct: (b, p, id) => { if (!hasMod(b, 'flooded') || id === 'flee') return; fxStam(p, 4); return 1; } },
+  rotring: { dotP: (b, p, e, o) => hasMod(b, 'rotair') && o.label === '중독' ? 0.15 : 0 },
+  trackring: { onHit: (b, p, e, o, c) => { if (!p.focus || p.focus.id !== e.id || p.focus.n < 3 || !fxOnce(b, 'trackring')) return; b.fxN = b.fxN || {}; if ((b.fxN.trackring || 0) >= 2) return; if (!fxCdMax(b, p, c.id)) return; b.fxN.trackring = (b.fxN.trackring || 0) + 1; return 1; } },
+  ctrring: { onCounter: (b, p, e) => { if (e.alive) return; addS(b, p, 'empower', 2); return 1; } },
+  shockring: { dotP: (b, p, e, o) => o.shock ? 0.12 : 0 },
+  leechring: { bHealP: (b, p, why) => why === 'leech' ? 0.25 : 0 },
+  protring: { onProt: (b, p) => { if (!fxCnt(b, 'protring', 3)) return; addS(b, p, 'protect', 1); return 1; } },
+  pricering: { onSkill: (b, p, act) => { if (!act.s || !(act.s.hpCost || act.s.fx.some(x => x.k === 'meSt' && x.s === 'bleed'))) return; p.fxPrice = 1; return 1; }, hitP: (b, p, e, o, c) => { if (!p.fxPrice || !isAtkC(c)) return 0; p.fxPrice = 0; return 0.12; } },
+  branchring: { onSkill: (b, p, act) => { p.fxBrLast = fxBr(act) || p.fxBrLast; }, brk: (b, p, e, c) => { const br = fxBr(c); return br && p.fxBrLast && br !== p.fxBrLast ? 5 : 0; } },
+  ashring: { onRise: (b, p, e) => { e.hp = Math.min(e.hp, Math.max(1, Math.round(e.hpMax * 0.3))); return 1; }, onKill: (b, p, e) => { if (!e.pile) return; return fxHeal(p, p.hpMax * 0.02) > 0 ? 1 : 0; } },
+  threadring: { hitP: (b, p, e) => e.role === 'hexer' && e.intent && e.intent.k === 'constrict' ? 0.2 : 0, inP: (b, p, o) => o.src && o.src.role === 'hexer' && o.src.intent && o.src.intent.k === 'constrict' ? 0.2 : 0 },
+  venomcount: { hitP: (b, p, e) => st(e, 'poison') ? Math.min(0.2, 0.02 * st(e, 'poison')) : -0.08 },
+  burnring: { hitP: (b, p, e, o, c) => fxHas(c, 'wardBurn') ? 0.15 : 0, onSkill: (b, p, act) => { if (!fxHas(act, 'wardBurn') || p.ward > 0) return; addS(b, p, 'protect', 1); return 1; } },
+  twinelem: { onShock: (b, p, e, I, C, d, broke) => { if (!e.alive) return; const pre = !!e.s.broken; addBreak(b, e, 4); if (broke || (!pre && e.s.broken)) fxCdMax(b, p); return 1; } },
+  kiring: { inP: (b, p, o) => !o.dot && st(p, 'empower') >= 5 ? 0.15 : 0, hitP: (b, p, e, o, c) => c && !o.ctr && !b.curFast && st(p, 'empower') > 0 && isAtkC(c) ? 0.1 : 0 },
+  burdenring: { hitP: (b, p) => badSum(p) >= 4 ? 0.15 : 0, dur: k => KW_BAD.includes(k) ? 1 : 0 },
+  volleyring: { onStart: (b, p) => { p.fxVr = 0; }, onHit: (b, p, e, o) => { if (o.aoe || o.dot) return; if (b.fxVrT !== b.turnIdx) { b.fxVrT = b.turnIdx; b.fxVrIds = []; } if (!b.fxVrIds.includes(e.id)) b.fxVrIds.push(e.id); if (b.fxVrIds.length === 2 && b.fxVrGot !== b.turnIdx) { b.fxVrGot = b.turnIdx; p.fxVr = b.actN; return 1; } }, hitP: (b, p) => { if (!p.fxVr || p.fxVr === b.actN) return 0; b.fxVrUse = b.actN; return 0.15; }, onAct: (b, p) => { if (p.fxVr && b.fxVrUse && b.fxVrUse < b.actN) { p.fxVr = 0; b.fxVrUse = 0; } } },
+  kingseal: { healMul: 0.8, onKill: (b, p, e) => { if (e.pile || e.summoned) return; return addWard(b, p, e.elite || e.strong ? 15 : 5) > 0 ? 1 : 0; } },
+  twicering: { hpMul: 0.88, onHurt: (b, p) => { if (p.hp > 0 || b.fxTw) return; b.fxTw = 1; p.hp = 1; addS(b, p, 'haste', 1); logp(b, 'crit', '반지가 한 번 더 일으킨다. 생명력 1, 가속 1'); return 1; } },
+  mirrorring: { onDebuff: (b, u, k) => { if (!KW_BAD.includes(k) || b.fxMrR === b.round) return; b.fxMrR = b.round; let n = 0; for (const x of fFoes(b)) n += fxApplyKw(b, x, k, 1) ? 1 : 0; if (n) logp(b, 'good', '검은 물이 ' + KW_N[k] + '을(를) 되비춘다. 적 모두 ' + KW_N[k] + ' 1'); return n ? 1 : 0; }, dur: k => KW_BAD.includes(k) ? 1 : 0 },
+  voidring: { onSkill: (b, p, act) => { if (!p.cd || !(p.cd[act.id] > 2)) return; p.cd[act.id]--; return 1; }, hitP: (b, p, e, o, c) => c && c.skill ? -0.15 : 0 },
+  firstring: { first: 1, onRound: () => 1, inP: (b, p, o) => o.src && !o.dot ? -0.1 : 0 },
+  // 목걸이
+  limecharm: { onPile: (b, p, e) => { e.pile.wait++; return 1; }, onStart: b => { let n = 0; for (const e of b.en) if (e.alive && e.pile) { e.pile.wait++; n++; } return n ? 1 : 0; } },
+  threadcharm: { onRound: (b, p) => { if (!st(p, 'weak') || !st(p, 'vuln') || !fxCnt(b, 'threadcharm', 2)) return; delete p.s.weak; logp(b, 'good', '실 하나가 끊긴다. 약화를 지운다'); return 1; } },
+  soilcharm: { onRound: (b, p) => { const xs = alive(b).filter(e => e.under && !e.fxSeen); if (!xs.length) return; for (const e of xs) e.fxSeen = 1; fxStam(p, 10); return 1; } },
+  watercharm: { block: (b, p, k) => k === 'chill' && hasMod(b, 'flooded') && !(b.round > 0) },
+  rotsachet: { inP: (b, p, o) => o.dot && o.label === '중독' && hasMod(b, 'rotair') ? 0.2 : 0 },
+  swiftmark: { brk: (b, p, e) => e.swift ? 4 : 0 },
+  poisonmark: { onKill: (b, p, e) => { if (st(e, 'poison') < 5) return; const t = fOther(b, e); if (!t) return; addPoison(b, t, 2, 1); return 1; } },
+  bloodmark: { onKill: (b, p, e) => { if (stk(e, 'bleed') < 5) return; return fxHeal(p, 3) > 0 ? 1 : 0; } },
+  firemark: { onKill: (b, p, e) => { if (!st(e, 'ignite')) return; fxStam(p, 5); return 1; } },
+  shieldcharm: { onStart: (b, p) => addWard(b, p, 4) > 0 ? 1 : 0 },
+  boneicon: { st: { hp: 6 } },
+  trackcharm: { onHit: (b, p, e) => { if (!p.focus || p.focus.id !== e.id || p.focus.n < 3 || p.fxTcId === e.id) return; p.fxTcId = e.id; fxStam(p, 8); return 1; } },
+  mournbeads: { hitP: (b, p, e, o) => o.aoe && fPiles(b).length ? 0.15 : 0 },
+  wallcharm: { onKill: (b, p, e) => { if (e.role !== 'bonewall') return; const m = b.en.find(x => x.id === e.wallOf && x.alive); if (!m) return; addBreak(b, m, 20); return 1; } },
+  mirrorcharm: { onHurt: (b, p, o) => { const e = o.src; if (!e || e.role !== 'hexer' || !e.alive || !e.intent || e.intent.k !== 'constrict') return; addS(b, e, 'weak', 2); return 1; } },
+  pyrecharm: { hitP: (b, p, e) => e.role === 'bloat' && st(e, 'ignite') ? 0.2 : 0 },
+  cleanbeads: { onRound: (b, p) => { if (st(p, 'poison') < 6 || !fxCnt(b, 'cleanbeads', 2)) return; kwDec(p, 'poison', 3); logp(b, 'good', '묵주가 독을 빨아들인다. 중독 −3'); return 1; } },
+  swallowcharm: { onSkill: (b, p, act) => { if (!(fxHas(act, 'burst') || fxHas(act, 'drain'))) return; return addWard(b, p, 4) > 0 ? 1 : 0; } },
+  shockcharm: { onShock: (b, p, e) => { if (e.alive) return; const t = fOther(b, e); if (!t) return; addS(b, t, 'ignite', 1); addS(b, t, 'chill', 1); return 1; } },
+  empowercharm: { onStart: (b, p) => { addS(b, p, 'empower', 1); return 1; } },
+  altcharm: { onAlt: (b, p, k, run) => { if (!(run >= 2)) return; return fxCdMax(b, p) ? 1 : 0; } },
+  absolvecharm: { onProt: (b, p) => fxHeal(p, 2) > 0 ? 1 : 0 },
+  namecharm: { onStart: (b, p) => { const n = b.en.filter(e => e.alive && e.pile).length; if (!n) return; addWard(b, p, 6 * n); return 1; }, onKill: (b, p, e) => { if (!e.pile) return; p.fxNc = 1; return 1; }, hitP: (b, p, e, o, c) => { if (!p.fxNc || !isAtkC(c) || e.pile) return 0; p.fxNc = 0; return 0.1; } },
+  burrowcharm: { inP: (b, p, o) => { if (!o.src || o.src.role !== 'burrower' || !o.charged) return 0; if (o.src.alive) addBreak(b, o.src, 20); return 0.15; } },
+  bloatcharm: { onBloat: (b, p, e) => { b.noBloat = 1; let n = 0; for (const x of alive(b)) if (x !== e && x.role !== 'root') { addPoison(b, x, 2, 1); n++; } return 1; } },
+  rotcharm: { onRound: (b, p) => { if (!hasMod(b, 'rotair')) return; let n = 0; for (const e of alive(b)) if (e.role !== 'root' && st(e, 'poison')) { addPoison(b, e, 1, 1); n++; } if (st(p, 'poison')) addPoison(b, p, 1, 0); return n ? 1 : 0; } },
+  parrybeads: { onParry: (b, p, src) => { if (!src || !src.alive) return; let n = 0; for (const k of KW_BAD) if (st(src, k) > 0) n += fxApplyKw(b, src, k, 1) ? 1 : 0; return n ? 1 : 0; }, cost: (p, id) => id === 'dodge' ? 5 : 0 },
+  chainneck: { onWardOver: (b, p, x) => { p.fxOver = Math.min(20, (p.fxOver || 0) + x); return 1; }, hitAdd: (b, p, e, o, c) => { if (!p.fxOver || !isAtkC(c)) return 0; const v = p.fxOver; p.fxOver = 0; return v; } },
+  pilgrimneck: { onHit: (b, p, e, o, c) => { if (c.ranged || !e.alive || p.hp >= p.hpMax * 0.5 || !fxOnce(b, 'pilgrimneck')) return; addS(b, e, 'bleed', 1); return 1; }, onKill: (b, p, e) => { if (!stk(e, 'bleed')) return; return fxHeal(p, p.hpMax * 0.03) > 0 ? 1 : 0; } },
+  frostsigil: { onHit: (b, p, e) => { if (!e.alive || !e.swift || !fxOnce(b, 'frostsigil')) return; addBreak(b, e, 10); return 1; }, hitP: (b, p, e) => st(e, 'chill') && e.intent && ['charge', 'heavy'].includes(e.intent.k) ? 0.15 : 0 },
+  watcheye: { inP: (b, p, o) => o.dot || !o.src ? 0 : fxBig(o) ? 0.2 : -0.1 },
+  threename: { onStart: (b, p) => { p.fxTn = 0; p.fxTnB = []; p.fxTnL = null; }, onSkill: (b, p, act) => { if (p.fxTn && b.fxTnUse === b.actN) p.fxTn = 0; const br = fxBr(act); if (!br) return; p.fxTnL = br; p.fxTnB = (p.fxTnB || []).concat([br]).slice(-3); if (p.fxTnB.length === 3 && new Set(p.fxTnB).size === 3) { p.fxTn = 1; p.fxTnB = []; return 1; } }, hitP: (b, p, e, o, c) => { if (!c || !c.skill) return 0; const br = fxBr(c); let v = br && p.fxTnL === br ? -0.1 : 0; if (p.fxTn) { b.fxTnUse = b.actN; v += 0.3; } return v; } },
+  graveflower: { cap: { life: -1, mana: -1, stam: -1 }, onKill: (b, p) => { const k = badTop(p)[0]; if (!k) return; delete p.s[k]; logp(b, 'good', '무덤 꽃이 ' + KW_N[k] + '을(를) 빨아들인다'); return 1; } },
+  swallowname: { healMul: 0.8, onRound: (b, p) => { const k = badTop(p)[0]; if (!k) return; kwDec(p, k); const L = p.fxLoad && p.fxLoad.k === k ? p.fxLoad : { k, n: 0 }; L.n++; p.fxLoad = L; return 1; }, onHit: (b, p, e) => { const L = p.fxLoad; if (!L || !e.alive || !realFoe(e)) return; p.fxLoad = null; fxApplyKw(b, e, L.k, L.n); logp(b, 'good', '삼킨 ' + KW_N[L.k] + ' ' + L.n + '이(가) 칼끝으로 나간다'); return 1; } },
+  // 플라스크
+  limewater: { onFlask: (b, p, k) => { if (k !== 'life') return; const e = fPiles(b)[0]; if (!e) return; fxPileKill(b, e); return 1; } },
+  mugwater: { onFlask: (b, p, k) => { if (k !== 'life' || !(st(p, 'weak') || st(p, 'vuln'))) return; kwDec(p, 'weak'); kwDec(p, 'vuln'); return 1; } },
+  sievewater: { onFlask: (b, p, k) => { if (k !== 'life') return; const e = alive(b).find(x => x.under); if (!e) return; fxUnearth(b, e, 0); return 1; } },
+  antidote: { onFlask: (b, p, k) => { if (k !== 'life' || !st(p, 'poison')) return; kwDec(p, 'poison', 3); return 1; } },
+  coldwater: { onFlask: (b, p, k) => { if (k !== 'stam') return; const e = fFoes(b).find(x => x.swift); if (!e) return; addS(b, e, 'chill', 1); return 1; } },
+  bloodwater: { heal: 0.05, onFlask: (b, p, k) => { if (k !== 'life') return; b.selfSt = 1; addS(b, p, 'bleed', 1); b.selfSt = 0; return 1; } },
+  purewater: { blockAdd: () => 1 },
+  wardwater: { onFlask: (b, p, k) => { if (k !== 'mana') return; return addWard(b, p, 5) > 0 ? 1 : 0; } },
+  bigneck: { heal: 0.03 },
+  mossflask: { onFlask: (b, p, k) => { if (k !== 'stam') return; addS(b, p, 'empower', 1); return 1; } },
+  ashwater: { onFlask: (b, p, k) => { if (k !== 'life') return; let n = 0; for (const e of alive(b)) if (e.role === 'skeleton') { addS(b, e, 'ignite', 2); n++; } return n ? 1 : 0; } },
+  untieflask: { heal: -0.05, onFlask: (b, p, k) => { if (k !== 'life') return; const ks = badTop(p, 2); for (const x of ks) delete p.s[x]; return ks.length ? 1 : 0; } },
+  poolwater: { onFlask: (b, p, k) => { if (k !== 'life' || !hasMod(b, 'flooded')) return; fxHeal(p, p.hpMax * 0.1); return 1; } },
+  rotflask: { onFlask: (b, p, k) => { if (k !== 'life' || !hasMod(b, 'rotair')) return; for (const e of fFoes(b)) addPoison(b, e, 3, 1); return 1; } },
+  bloodflask: { onFlask: (b, p, k) => { if (k !== 'life') return; let n = 0; for (const e of alive(b)) if (e.role !== 'root' && stk(e, 'bleed')) { addS(b, e, 'bleed', 2); n++; } return n ? 1 : 0; } },
+  emberwater: { onFlask: (b, p, k) => { if (k !== 'mana') return; let n = 0; for (const e of alive(b)) if (e.role !== 'root' && st(e, 'ignite')) { addS(b, e, 'ignite', 2); n++; } return n ? 1 : 0; } },
+  frostwater: { onFlask: (b, p, k) => { if (k !== 'stam') return; let n = 0; for (const e of fFoes(b)) { addS(b, e, 'chill', 1); n++; } return n ? 1 : 0; } },
+  confwater: { onFlask: (b, p, k) => { if (k !== 'mana') return; const s = badTop(p)[0]; const t = fFoes(b)[0]; if (!s || !t) return; kwDec(p, s); fxApplyKw(b, t, s, 1); logp(b, 'good', KW_N[s] + ' 1을 ' + t.n + '에게 옮긴다'); return 1; } },
+  pulsewater: { onFlask: (b, p, k) => { if (k !== 'stam') return; return fxCdMax(b, p) ? 1 : 0; } },
+  bonedust: { heal: -0.05, onFlask: (b, p, k) => { if (k !== 'life') return; const ps = fPiles(b); if (!ps.length) return; for (const e of ps) fxPileKill(b, e); fxHeal(p, p.hpMax * 0.03 * ps.length); return 1; } },
+  dirtflask: { blockAdd: () => -1, onFlask: (b, p, k) => { if (k !== 'mana') return; const xs = alive(b).filter(e => e.under); for (const e of xs) fxUnearth(b, e, 2); return xs.length ? 1 : 0; } },
+  poisoneater: { heal: -0.1, onFlask: (b, p, k) => { if (k !== 'life') return; const n = Math.min(8, st(p, 'poison')); if (!n) return; delete p.s.poison; p.fxPe = n; logp(b, 'good', '삼킨 독 ' + n + '을(를) 칼끝에 모은다'); return 1; }, onHit: (b, p, e) => { if (!p.fxPe || !e.alive || !realFoe(e)) return; addPoison(b, e, p.fxPe, 1); p.fxPe = 0; return 1; } },
+  hungerflask: { onFlask: (b, p, k) => { if (k !== 'life' || p.hpFight == null || p.hp <= p.hpFight) return; p.hpFight = p.hp; return 1; }, bHealP: (b, p, why) => why === 'leech' ? 0.1 : 0 },
+  blessbasin: { heal: -0.05, onFlask: (b, p, k) => { if (k !== 'life') return; const cur = stk(p, 'block'); p.s.block = { stacks: Math.min(KW.block, cur + 3), until: KW_FOREVER, dur: KW_FOREVER }; return 1; } },
+  dantianflask: { onFlask: (b, p, k) => { if (k !== 'life') return; addS(b, p, 'empower', 2); if (st(p, 'empower') >= 3) fxHeal(p, p.hpMax * 0.05); return 1; } },
+  lordgrail: { cap: { life: -1 }, onFlask: (b, p, k) => { if (k !== 'life') return; return addWard(b, p, p.hpMax * flaskHealFrac(p) * healMul(p)) > 0 ? 1 : 0; } },
+  blackspring: { cap: { mana: -1, stam: -1 }, onFlask: b => { let n = 0; for (const e of fFoes(b)) { addS(b, e, 'vuln', 1); n++; } return n ? 1 : 0; } },
+  baptism: { cap: { life: -2 }, heal: -0.1, onWin: run => { const p = run.p; if (p.flask.life >= flaskCap(p, 'life')) return; p.flask.life++; return 1; } },
+};
+Object.assign(IFX, IFX2);
 const fxList = p => { const out = []; if (!p || !p.eq) return out; for (const sl in p.eq) { const k = p.eq[sl]; if (k && IFX[k]) out.push([k, IFX[k]]); } return out; };
 /* 배율·더하기 지점: 바뀌면 센다 */
 function fxMul(p, hook, ...a) { let m = 1; for (const [k, f] of fxList(p)) if (f[hook]) { const v = f[hook](...a); if (v !== 1 && v != null) { m *= v; fxHit(k); } } return m; }
@@ -1399,7 +1643,7 @@ const PARRY_BIG = 0.2;
    파수꾼은 방어할 때마다 +6. 옛 직업(0.6a)의 상한 40은 그대로 둔다 */
 const WARD = { cap: 0.3, guard: 6, thornMax: 8, back: 0.5 }; // back: 후열 적의 공격은 보호막이 이만큼만 받아낸다 (10월 4일 만든 사람 결정: 파수꾼의 약점은 후열)
 function wardMax(p) { return isV2(p) ? Math.round(p.hpMax * ((BUILDS[p.build] || {}).wardCap || WARD.cap)) : 40; } // wardCap: 직업마다 상한 (마검사 15%)
-function addWard(b, p, n, cap) { n *= 1 + 0.02 * stat(p, 'wil'); if (b && b.carve && b.cur && b.cur.grp) n *= carveMul(b, b.cur.grp); /* 의지 1점마다 보호막 +2% */ const m = Math.min(cap != null ? cap : Infinity, wardMax(p)); const w0 = p.ward || 0; p.ward = Math.max(w0, Math.min(m, w0 + n)); return p.ward - w0; }
+function addWard(b, p, n, cap) { n *= 1 + 0.02 * stat(p, 'wil'); { const wp = p.eq ? fxAdd(p, 'wardP', b, p) : 0; if (wp) n *= 1 + Math.min(FX_CAP, wp); } if (b && b.carve && b.cur && b.cur.grp) n *= carveMul(b, b.cur.grp); /* 의지 1점마다 보호막 +2% */ const m = Math.min(cap != null ? cap : Infinity, wardMax(p)); const w0 = p.ward || 0; p.ward = Math.max(w0, Math.min(m, w0 + n)); if (w0 + n > m && p.eq) fxRun(p, 'onWardOver', b, p, w0 + n - Math.max(m, w0)); return p.ward - w0; }
 const parryBig = e => (e && (e.strong || e.role === 'boss') ? PARRY_BIG : 0);
 function dotMul(p) { return 1 + 0.02 * stat(p, 'int'); }
 function applyStats(p, stats) {
@@ -1547,7 +1791,7 @@ const V2_OFF = ['pilgstaff', 'candlestaff', 'acolyterelic', 'confwand', 'penwhip
   // 재사용 대기 때문에 같은 스킬을 이어 쓸 수 없는 메아리 반지, 출혈을 거는 수단이 쇠못 장갑뿐인 굽은 낫(출혈을 거는 직업이 들어오면 되돌린다)
   'silverwand', 'bonenecklace', 'bonecharm', 'herbflask', 'knot', 'chalice', 'echo', 'sickle'];
 const V2_ON = { butcher: ['sickle'] }; // V2_OFF 가운데 그 직업에게는 되돌리는 장비 (굽은 낫: 출혈을 거는 직업)
-const poolOk = (p, k) => !(isV2(p) && V2_OFF.includes(k) && !(V2_ON[p.build] || []).includes(k));
+const poolOk = (p, k) => !(isV2(p) && V2_OFF.includes(k) && !(V2_ON[p.build] || []).includes(k)) && !(ITEMS[k] && ITEMS[k].fits && !ITEMS[k].fits.includes(p.build)); /* fits: 그 직업에서만 일어나는 2챕터 장비 */
 /* 재사용 대기 (10월 3일 만든 사람 결정, 충전을 대신한다): 전투를 모두 준비된 채 시작한다. 스킬을 쓰면 cd만큼 내 차례를 기다리고(p.cd),
    내 차례가 지날 때마다 1 준다(쓴 그 차례는 빼고). 전투마다 1번(once)인 스킬은 쓰면 그 전투 동안 CD_USED로 남는다.
    갈래 규칙(TREE2.haste): 그 일(독을 걸기, 적을 쓰러뜨리기, 흘리기 성공)이 일어난 행동마다 한 번, 그 갈래 스킬의 남은 대기가 1 준다.
@@ -1642,6 +1886,7 @@ function addS(b, u, k, dur, stacks, max) {
     const opp = KW_OPP[k]; if (opp && u.s[opp]) { const m = Math.min(n, u.s[opp].stacks); kwDec(u, opp, m); n -= m; if (n <= 0) return 0; }
     const cur = stk(u, k); const nv = Math.min(Math.max(KW[k], cur), cur + n);
     if (nv > cur) u.s[k] = { stacks: nv, until: KW_FOREVER, dur: KW_FOREVER };
+    if (u === b.p && k === 'protect' && nv > cur && !b.fxProtIn && u.eq) { b.fxProtIn = 1; fxRun(u, 'onProt', b, u, nv - cur); b.fxProtIn = 0; } /* 2챕터 장비 */
     if (u !== b.p && KW_BAD.includes(k) && nv > cur) chargeEv(b, k === 'poison' ? 'poison' : 'apply');
     return nv - cur;
   }
@@ -1717,6 +1962,7 @@ function tickOnce(b) {
     if ((u.pile || u.role === 'bonewall') && u.alive && u.s.bleed) kwBleed(b, u); // 움직이지 않는 몸의 출혈은 라운드 끝에
   }
   expireAll(b);
+  if (!b.over) fxRun(p, 'onRound', b, p);
   checkEnd(b);
 }
 /* 끝날 시각이 지난 상태는 바로 지운다 (지속 피해보다 먼저) */
@@ -1744,7 +1990,7 @@ function hurtPlayer(b, raw, o) {
   if (p.foresee && (b.round || 0) < p.foresee.until && bigHit) raw *= 1 - p.foresee.red;
   if (bigHit && hasBt(p, 'firm')) raw *= 0.85; // 굳건함의 성소 // 사냥꾼 예고 읽기 (피할 수 없는 화형에도 든다)
   if (p.evade > 0 && !o.dot && !o.aoe && !o.spell && o.src && carveMul(b, 'prep') < 1) { p.evade--; raw *= 1 - carveMul(b, 'prep'); logp(b, 'bad', '새겨진 이름 때문에 몸이 둔하다. 일부를 맞는다'); } // 새김: 피하기는 확률이 아니라 받는 몫으로
-  else if (p.evade > 0 && !o.dot && !o.aoe && !o.spell && o.src) { p.evade--; logp(b, 'good', (o.src.n || '적') + '의 공격을 몸을 빼 피한다' + (p.evade ? ' (남은 ' + p.evade + '번)' : '')); const c = p.evadeCtr; if (c && o.src.alive && (!c.charged || bigHit)) { hurtEnemy(b, o.src, outDmg(b, c.dmg, {}), { single: 1, label: '반격 사격' }); if (c.chill && o.src.alive) addS(b, o.src, 'chill', c.chill); } if (p.evadeHz) hastenBranch(b, p.evadeHz.br, p.evadeHz.n, p.evadeHz.id); if (!p.evade && !(c && c.until > (b.round || 0))) p.evadeCtr = null; return 0; } // 사냥꾼 몸 빼기 (10월 5일): 실제로 피했을 때만 반격 · 🔄
+  else if (p.evade > 0 && !o.dot && !o.aoe && !o.spell && o.src) { p.evade--; logp(b, 'good', (o.src.n || '적') + '의 공격을 몸을 빼 피한다' + (p.evade ? ' (남은 ' + p.evade + '번)' : '')); fxRun(p, 'onEvade', b, p, o.src); const c = p.evadeCtr; if (c && o.src.alive && (!c.charged || bigHit)) { hurtEnemy(b, o.src, outDmg(b, c.dmg, {}), { single: 1, label: '반격 사격' }); if (c.chill && o.src.alive) addS(b, o.src, 'chill', c.chill); } if (p.evadeHz) hastenBranch(b, p.evadeHz.br, p.evadeHz.n, p.evadeHz.id); if (!p.evade && !(c && c.until > (b.round || 0))) p.evadeCtr = null; return 0; } // 사냥꾼 몸 빼기 (10월 5일): 실제로 피했을 때만 반격 · 🔄
   if (!o.dot && !o.aoe && p.dodge && o.src && o.src.id === p.dodge) {
     p.dodge = 0; const red = Math.max(0, (p.dodgeRed || parryRed(p)) - parryBig(o.src)) * carveMul(b, 'prep'); raw *= 1 - red; o.parried = true; logp(b, 'good', (o.src ? o.src.n + '의 ' + (o.charged ? '강타' : '공격') : '공격') + '을(를) 칼날로 흘린다. 피해 ' + Math.round(red * 100) + '% 감소');
     fxRun(p, 'onParry', b, p, o.src);
@@ -1772,6 +2018,7 @@ function hurtPlayer(b, raw, o) {
   if (p.st <= 0 || p.exhaust) d *= 1.2;
   const hx = o.dot ? null : { vu: st(p, 'vuln'), pr: st(p, 'protect'), ig: st(p, 'ignite'), ex: p.st <= 0 || !!p.exhaust, gd: !!(p.guard && !o.judgment) }; /* 10월 7일 2차: 쓰러짐 화면에 보일 더해진 것 (값을 바꾸지 않는다) */
   if (p.build === 'elementalist' && o.src && !o.dot && !bigHit && (o.src.s.chill || o.src.chillR === b.round)) { const d0 = d; d *= 1 - ELEM.guard; b.frostN = (b.frostN || 0) + 1; b.frostSaved = (b.frostSaved || 0) + (d0 - d); } // 원소술사 서리 무게 (10월 7일)
+  { const ip = fxAdd(p, 'inP', b, p, o); if (ip) d *= 1 - Math.max(-FX_CAP, Math.min(FX_CAP, ip)); } /* 2챕터 장비(IFX2): 상태(kwTaken) 앞 */
   d = kwTaken(b, p, d, o);
   d *= fxMul(p, 'inMul', b, p, o);
   // 1회 행동 피해 상한 (4.6): 일반 25%, 정예 35% (보스는 기믹 제외)
@@ -1821,6 +2068,7 @@ function monkCounter(b, o) {
   { const L = [bk ? '붕괴 +' + bk : '', kg > 0 ? '기 +' + kg : '', e.alive && S.chill ? e.n + ' 둔화 ' + S.chill : '', e.alive && S.weak ? e.n + ' 약화 ' + S.weak : ''].filter(Boolean); if (L.length) logp(b, 'good', '되받기. ' + L.join(', ')); }
   if (S.hz && !S.hz.used) { S.hz.used = 1; hastenBranch(b, S.hz.br, S.hz.n, S.hz.id); }
   b.rec.push({ k: 'ctr', role: e.role, charged: o.charged ? 1 : 0, d: r1(d) });
+  fxRun(p, 'onCounter', b, p, e, d);
 }
 /* 화형 사제의 영창이 끊긴다 (쌓인 피해 · 무너짐 · 소모품) */
 function chantBreak(b, e, why) { e.chant = null; e.pyreRest = 1; e.teleTurn = null; if (e.intent && CHANT_K.includes(e.intent.k)) e.intent = { k: 'attack' }; logp(b, 'good', (why ? why + ' ' : '') + e.n + '의 영창이 끊긴다'); }
@@ -1848,6 +2096,8 @@ function hurtEnemy(b, e, raw, o) {
   if (o.aoe && !o.dot) d = aoeApply(b, e, d); // 광역: 땅속 · 군주의 뼈벽(절반) · 후열 · 방패벽 · 방패병 (10월 7일: 원소술사 열충격과 같은 함수로 뺐다)
   if (!o.dot && b.cur) { d = d * fxMul(b.p, 'hit', b, b.p, e, o, b.cur) + fxAdd(b.p, 'hitAdd', b, b.p, e, o, b.cur); }
   if (o.dot && e !== b.p) d *= fxMul(b.p, 'dotOut', b, b.p, e, o.label);
+  if (!o.dot && (b.cur || o.ctr)) { const hp = fxAdd(b.p, 'hitP', b, b.p, e, o, b.cur); if (hp) d *= 1 + Math.max(-FX_CAP, Math.min(FX_CAP, hp)); } /* 2챕터 장비(IFX2): 장비끼리 더해 한 번 곱한다 */
+  if (o.dot && e !== b.p) { const dp = fxAdd(b.p, 'dotP', b, b.p, e, o); if (dp) d *= 1 + Math.max(-FX_CAP, Math.min(FX_CAP, dp)); }
   d = kwTaken(b, e, d, o);
   const boss = b.en.find(x => x.role === 'boss' && x.alive);
   if (boss && boss.boss === 'tree' && e.role === 'boss' && !o.dot) {
@@ -1897,7 +2147,7 @@ function killEnemy(b, e) {
   if (e.role === 'skeleton' && !e.pile && !e.rose && !e.norise && !st(e, 'ignite') && !e.s.broken && !hasBt(b.p, 'rest') && !b.over) { makePile(b, e); return; } // 2챕터 해골: 화상 · 붕괴 · 한 번 일어섬 · 안식의 성소면 더미가 남지 않는다
   if (e.role === 'skeleton' && !e.pile && !e.rose && st(e, 'ignite')) logp(b, 'good', e.n + '이(가) 재가 되어 흩어진다');
   e.alive = false; e.hp = 0; logp(b, 'good', e.n + (e.pile ? '의 뼈 더미가 흩어진다' : '이(가) 쓰러진다'));
-  if (e.role === 'bloat') { if (st(e, 'ignite')) logp(b, 'good', e.n + '이(가) 불에 타 터지지 않는다'); else { if (!b.noBloat) addPoison(b, b.p, BLOAT.me, 0); for (const o of alive(b)) if (o.role !== 'root') addPoison(b, o, BLOAT.foes, 0); logp(b, 'bad', e.n + '이(가) 터진다. 나에게 중독 ' + (b.noBloat ? 0 : BLOAT.me) + ', 다른 적 모두에게 중독 ' + BLOAT.foes); } }
+  if (e.role === 'bloat') { if (st(e, 'ignite')) logp(b, 'good', e.n + '이(가) 불에 타 터지지 않는다'); else { fxRun(b.p, 'onBloat', b, b.p, e); if (!b.noBloat) addPoison(b, b.p, BLOAT.me, 0); for (const o of alive(b)) if (o.role !== 'root') addPoison(b, o, BLOAT.foes, 0); logp(b, 'bad', e.n + '이(가) 터진다. 나에게 중독 ' + (b.noBloat ? 0 : BLOAT.me) + ', 다른 적 모두에게 중독 ' + BLOAT.foes); } }
   if (e.role === 'bonewall') { const m = b.en.find(x => x.id === e.wallOf); if (m) m.wallWait = BWALL.wait; if (e.lordWall && m && m.alive && !alive(b).some(x => x.lordWall)) { addS(b, m, 'vuln', LORD.expose); logp(b, 'good', '뼈벽이 모두 무너져 ' + m.n + '이(가) 드러난다. 취약 ' + LORD.expose); } }
   if (e.boss === 'abbot') { for (const x of b.en) if (x.alive && (x.monk || x.role === 'candle')) { x.alive = false; x.hp = 0; } } // 수도원장이 쓰러지면 수도사와 촛불도 흩어진다
   if (e.loot) { returnLoot(b, e.loot); logp(b, 'good', e.loot.n + '을(를) 되찾는다'); e.loot = null; }
@@ -2623,11 +2873,12 @@ function playerAct(b, id, tgtId) {
   if (b.prepTurn !== b.turnIdx) { b.prepTurn = b.turnIdx; p.guard = 0; p.dodge = 0; p.brace = 0; p.dodgeRed = 0; p.dodgeOn = null; if (isBu(p)) { p.grudge = Math.min(p.tookAcc || 0, p.hpMax * BUTCH.grudgeCap); p.tookAcc = 0; b.krTurn = 0; } if (p.build === 'monk') { p.stance = null; p.ctrN = 0; } if (isCf(p)) b.cleanTurn = 0; } // 숨겨진 직업 1: 받은 피해는 차례의 첫 행동에서 정한다 // 준비(방어·흘리기)는 내 다음 차례까지. 수도승 자세와 되받은 횟수도 여기서 지운다. 빠른 행동으로 건 흘리기를 같은 차례의 주 행동이 지우지 않게 차례의 첫 행동에서만 지운다 (10월 3일: 잔상·흘리며 물러서기가 한 번도 발동하지 않았다)
   p.tookLast = p.tookSince || 0; p.tookSince = 0; // 앙갚음: 지난 행동 뒤로 받은 피해
   if (p.stun > 0) { p.stun--; logp(b, 'bad', '몸이 말을 듣지 않는다. 행동을 놓친다'); finishPlayer(b, 1, true); return; }
+  fxRun(p, 'onAct', b, p, id, act, tgt);
   if (p.build === 'spellblade') sbBegin(b, id, act, tgt); // 마검사: 행동 종류와 교대
   let time = act.time;
   if (p.vanguard && !act.self && !['guard', 'dodge', 'flaskL', 'flaskM', 'flee'].includes(id)) { p.vanguard = 0; time *= 0.5; if (tgt) b.vanguardTgt = tgt; logp(b, 'crit', '깃발을 앞세워 먼저 뛰어든다'); }
   if (act.skill && act.melee && tgt && hasIt(p, 'chaingl')) b.chainTgt = tgt;
-  if (act.v2) { runSkill2(b, act, tgt); if (b.sbK) sbEnd(b, act); if (b.markTgt) { if (b.markTgt.alive) addS(b, b.markTgt, 'vuln', 2); b.markTgt = null; } if (b.rcUsed) { p.rcN = 0; b.rcUsed = 0; } if (b.chainTgt) { if (b.chainTgt.alive) addBreak(b, b.chainTgt, 20); b.chainTgt = null; } if (b.vanguardTgt) { if (b.vanguardTgt.alive) addBreak(b, b.vanguardTgt, 20); b.vanguardTgt = null; } b.resonate = false; b.resoBig = 0; b.echoMul = 1; if (p.hp <= 0) checkEnd(b); if (!b.over) finishPlayer(b, time); return; }
+  if (act.v2) { runSkill2(b, act, tgt); if (b.sbK) sbEnd(b, act); fxRun(p, 'onSkill', b, p, act, tgt); if (b.markTgt) { if (b.markTgt.alive) addS(b, b.markTgt, 'vuln', 2); b.markTgt = null; } if (b.rcUsed) { p.rcN = 0; b.rcUsed = 0; } if (b.chainTgt) { if (b.chainTgt.alive) addBreak(b, b.chainTgt, 20); b.chainTgt = null; } if (b.vanguardTgt) { if (b.vanguardTgt.alive) addBreak(b, b.vanguardTgt, 20); b.vanguardTgt = null; } b.resonate = false; b.resoBig = 0; b.echoMul = 1; if (p.hp <= 0) checkEnd(b); if (!b.over) finishPlayer(b, time); return; }
   if (act.gen) { genSkill(b, act, tgt); if (b.markTgt) { if (b.markTgt.alive) { addS(b, b.markTgt, 'vuln', 2); logp(b, 'good', '표식이 ' + b.markTgt.n + '의 빈틈을 드러낸다. 취약'); } b.markTgt = null; } if (b.rcUsed) { p.rcN = 0; b.rcUsed = 0; } if (b.chainTgt) { if (b.chainTgt.alive) addBreak(b, b.chainTgt, 20); b.chainTgt = null; } if (b.vanguardTgt) { if (b.vanguardTgt.alive) addBreak(b, b.vanguardTgt, 20); b.vanguardTgt = null; } if (b.resonate) logp(b, 'crit', '서로 다른 주문이 공명한다. 피해 +15%'); b.resonate = false; b.resoBig = 0; b.echoMul = 1; if (p.hp <= 0) checkEnd(b); if (!b.over) finishPlayer(b, time); return; }
   switch (id) {
     case 'basic': {
@@ -2770,6 +3021,7 @@ function addBreak(b, e, v) {
     e.mimicOn = null; if (e.foe === 'collector' && e.s.protect) { delete e.s.protect; logp(b, 'good', '몸에 두른 뼈가 쏟아져 내린다'); codexHit(b, 'collector', 'shatter'); } if (e.boss === 'cryptlord' && b.carve) { b.carve = null; logp(b, 'good', '군주가 무너지자 새긴 이름이 흐려진다'); codexHit(b, 'cryptlord', 'carvebreak'); }
     if (e.role === 'boss') { e.breaks++; e.brkMax = Math.round(e.brkMax * 1.5); }
     logp(b, 'crit', e.n + '의 자세가 무너진다. 모으던 힘이 흩어지고 다음 행동을 놓친다');
+    fxRun(b.p, 'onBreak', b, b.p, e);
     b.rec.push({ k: 'break', t: r1(b.t), role: e.role, cut: cut ? 1 : 0 });
   }
 }
@@ -2792,7 +3044,7 @@ function finishPlayer(b, time, lost) {
   const extraNow = !!b.extraTurn; b.extraTurn = 0; if (!extraNow) { chargeEv(b, 'turn'); if (b.carve && --b.carve.left <= 0) { b.carve = null; logp(b, 'good', '새긴 이름이 흐려진다'); } } b.bonusUsed = 0; // 사냥꾼 연속 행동: 두 번째 차례는 쿨타임이 줄지 않는다 // fxQuickNext(성인의 성배·수확자의 손)는 지우지 않는다: 주 행동으로 쓰러뜨려도 다음 빠른 행동 한 번이 빠른 칸을 쓰지 않게
   if (b.queue && b.queue[0] === 'p') { b.queue.shift(); if (b.queue[0] === 'p') { b.extraTurn = 1; logp(b, 'good', '가속: 한 번 더 움직인다'); } }
   abbotDemand(b); if (p.build === 'monk') p.ctrSince = 0; // 수도승: 되받은 수는 내 차례가 끝날 때 0
-  b.turnIdx++; if (b.extraTurn && b.prepTurn === b.turnIdx - 1) b.prepTurn = b.turnIdx; /* 10월 7일: 연속 두 행동 사이에는 적이 움직이지 않으므로 첫 차례의 준비(방어 · 흘리기)가 두 번째 차례까지 남는다 */ b.consN = 0; b.extraQuick = 0; if (p.quickTurns > 0) { b.extraQuick = 1; p.quickTurns--; } // 사냥꾼 그림자 질주
+  b.turnIdx++; if (b.extraTurn && b.prepTurn === b.turnIdx - 1) b.prepTurn = b.turnIdx; /* 10월 7일: 연속 두 행동 사이에는 적이 움직이지 않으므로 첫 차례의 준비(방어 · 흘리기)가 두 번째 차례까지 남는다 */ b.consN = 0; b.extraQuick = 0; if (p.quickTurns > 0) { b.extraQuick = 1; p.quickTurns--; } if (fxFlag(p, 'quick2')) b.extraQuick = 1; // 사냥꾼 그림자 질주
   if (b.stepMode) { b.waiting = true; return; }
   runUntilPlayer(b);
 }
@@ -2812,7 +3064,7 @@ const RND_TWICE = 1.5;
 const noFast = p => isV2(p) && (p.eq.ring1 === 'pulse' || p.eq.ring2 === 'pulse');
 function roundOrder(b, consume, slowMe) {
   const p = b.p; const al = alive(b).filter(e => e.role !== 'root' && e.role !== 'candle' && e.role !== 'bonewall' && !e.pile);
-  const grp = (u, isP) => { if (isP && (b.ambushR && (b.round || 0) === 0)) return 2; if (!isP && u.quick) return 0; if (u.s.haste) return 0; if (u.s.chill) return 2; return 1; };
+  const grp = (u, isP) => { if (isP && (b.ambushR && (b.round || 0) === 0)) return 2; if (isP && !u.s.chill && fxList(u).some(([, f]) => f.first)) return 0; if (!isP && u.quick) return 0; if (u.s.haste) return 0; if (u.s.chill) return 2; return 1; };
   const ents = [{ id: 'p', g: grp(p, true), sp: pSpeed(b), i: -1 }].concat(al.map((e, i) => ({ id: e.id, g: grp(e, false), sp: eSpeed(b, e), i })));
   ents.sort((a, c) => a.g - c.g || c.sp - a.sp || a.i - c.i);
   const out = ents.slice(); for (const x of ents) if (x.id !== 'p' && x.sp >= RND_TWICE) out.push(Object.assign({}, x, { twice: 1 })); // 두 번 움직이는 적
@@ -3052,7 +3304,9 @@ const HELP = [
     '막음 N: 해로운 상태가 걸리려 할 때마다 튕겨 냅니다(정화 플라스크). 붕괴: 다음 행동을 잃고 취약 2.'] },
   { k: 'item', n: '장비', t: [
     '장비 칸은 일곱입니다: 무기, 갑옷, 장갑, 목걸이, 반지 둘, 플라스크. 무기는 무기 피해, 갑옷은 생명력, 플라스크는 생명력 플라스크 회복량을 정합니다.',
-    '등급은 평범, 고급, 희귀입니다. 장비 칸에는 등급의 첫 글자(평 · 고 · 희)가 붙고, 이름 색도 회색 · 파랑 · 금색으로 다릅니다. 등급이 높을수록 기본 수치가 더 오르고, 희귀는 행동을 바꾸는 효과와 "대가" 줄을 가집니다. 같은 장비도 얻을 때마다 수치가 조금씩 다릅니다.',
+    '등급은 평범, 고급, 희귀이고, 2챕터부터 영웅과 전설이 나옵니다. 장비 이름 앞에는 등급의 첫 글자(평 · 고 · 희 · 영 · 전)가 붙고, 이름 색도 회색 · 파랑 · 금색 · 보라 · 주황으로 다릅니다. 등급이 높을수록 기본 수치가 더 오르고, 희귀 이상은 행동을 바꾸는 효과를 가지며 "대가" 줄이 붙기도 합니다. 같은 장비도 얻을 때마다 수치가 조금씩 다릅니다.',
+    '영웅은 직업을 가리지 않는 큰 효과와 분명한 대가를 함께 가집니다. 전설은 이름 앞에 ✦가 붙고 규칙 하나를 바꿉니다. 전설은 한 번에 하나만 낄 수 있습니다. 같은 전설은 한 캐릭터에게 한 번만 나옵니다.',
+    '1챕터를 넘은 뒤의 상점은 진열 하나가 영웅일 때가 있습니다. 전설은 상점에서 팔지 않습니다. 2챕터 보스를 이기면 장비 하나를 얻고, 정산 화면에 보입니다.',
     '전투 방을 이기면 장비를 얻습니다. 얻을 때 지금 장비와 비교해 잃는 것부터 보여 줍니다. 가방은 ' + BAG_MAX + '칸이고, 가득 차면 하나를 버리고 받습니다.',
     '전투 밖이면 언제든 메뉴의 장비에서 비용 없이 바꿀 수 있습니다. 전투 중에는 보기만 합니다. 무기는 다른 무기로만 바꿀 수 있습니다.'] },
   { k: 'level', n: '레벨과 경험치', t: [
@@ -3132,7 +3386,7 @@ function vPlayerPanel(p, b) {
   const extra = [];
   if (b) extra.push(`<span data-info="speed" tabindex="0">속도 ${r1(pSpeed(b))}</span>`);
   const eq = Object.values(p.eq).filter(Boolean);
-  if (eq.length) extra.push('장착: ' + eq.map(k => esc(ITEMS[k].n)).join(', '));
+  if (eq.length) extra.push('장착: ' + eq.map(k => `<span class="gr-${ITEMS[k].g || 'n'}">${inm(k, ITEMS[k].g || 'n')}</span>`).join(', '));
   if (extra.length) h += `<div class="mini">${extra.join(' · ')}</div>`;
   if (b) h += stsHtml(p, b);
   if (b && b.seal && b.seal.length) h += `<div class="mini sealln" data-info="seal" tabindex="0">🔏 봉인: ${b.seal.map(x => esc(x.n)).join(', ')}</div>`;
@@ -3370,7 +3624,7 @@ function vDash06() {
   h += `<h4>방 결과</h4><div class="tbl"><table class="st2"><thead><tr><th>방</th><th>이김</th><th>쓰러짐</th><th>물러남</th><th>이긴 뒤 남은 생명력</th></tr></thead><tbody>${Object.entries(rw).map(([t, o]) => `<tr><td>${ROOM_TYPES[t] ? esc(ROOM_TYPES[t].n) : t === 'boss' ? '보스' : esc(t)}</td><td>${o.win}</td><td>${o.lose}</td><td>${o.flee}</td><td>${o.win ? Math.round(o.hp / o.win * 100) + '%' : '—'}</td></tr>`).join('')}</tbody></table></div>`;
   // 상점
   const buys = [], sells = []; let left = 0, shops = 0, respec = 0; for (const r of runs) if (r.shop) { shops++; for (const x of r.shop.log || []) { if (x.a === 'buy') buys.push(x); if (x.a === 'sell') sells.push(x); if (x.a === 'respec') respec++; } if (r.phase === 'wait' || r.clears) left += r.gold || 0; }
-  h += `<h4>상점 ${shops}번</h4><p class="mini">산 것 ${buys.length}개 (평범 ${buys.filter(x => x.g === 'n').length}, 고급 ${buys.filter(x => x.g === 'm').length}, 희귀 ${buys.filter(x => x.g === 'r').length}), 판 것 ${sells.length}개, 능력치 다시 나누기 ${respec}번, 남긴 골드 평균 ${shops ? Math.round(left / shops) : '—'}</p>${buys.length ? `<p class="mini">많이 산 것: ${Object.entries(buys.reduce((m, x) => (m[x.tpl] = (m[x.tpl] || 0) + 1, m), {})).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => esc(ITEMS[k] ? ITEMS[k].n : k) + ' ' + v).join(', ')}</p>` : ''}`;
+  h += `<h4>상점 ${shops}번</h4><p class="mini">산 것 ${buys.length}개 (평범 ${buys.filter(x => x.g === 'n').length}, 고급 ${buys.filter(x => x.g === 'm').length}, 희귀 ${buys.filter(x => x.g === 'r').length}, 영웅 ${buys.filter(x => x.g === 'h').length}), 판 것 ${sells.length}개, 능력치 다시 나누기 ${respec}번, 남긴 골드 평균 ${shops ? Math.round(left / shops) : '—'}</p>${buys.length ? `<p class="mini">많이 산 것: ${Object.entries(buys.reduce((m, x) => (m[x.tpl] = (m[x.tpl] || 0) + 1, m), {})).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => esc(ITEMS[k] ? ITEMS[k].n : k) + ' ' + v).join(', ')}</p>` : ''}`;
   // 최근 캐릭터
   h += `<h4>최근 캐릭터</h4><div class="tbl"><table class="st2"><thead><tr><th>테스터</th><th>캐릭터</th><th>도달</th><th>Lv</th><th>결과</th><th>시간</th></tr></thead><tbody>${runs.sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0)).slice(0, 30).map(r => `<tr><td>${esc(r.who)}</td><td>${esc(r.cname || '—')} <span class="mini">${esc((BUILDS[r.build] || {}).n || r.build)}</span></td><td>${esc(rankProg({ ch: r.ch, clears: r.clears, floor: r.roomReached }))}</td><td>${r.lv || 1}</td><td>${r.result === 'lose' ? '쓰러짐' : r.result === 'abandon' ? '포기' : (r.clears || 0) ? '돌파' : '진행 중'}</td><td>${fmtMs(r.playMs)}</td></tr>`).join('')}</tbody></table></div>`;
   return h + '</section>';
@@ -3378,9 +3632,11 @@ function vDash06() {
 
 /* ===== 정산과 상점 (기획서 11.7절) ===== */
 const SETTLE = { boss: [60, 90, 120], strong: 20 };
-const PRICE = { n: 30, m: 70, r: 160 };
+const PRICE = { n: 30, m: 70, r: 160, h: 400 }; /* 영웅(2챕터부터)은 상점 영웅 칸에서만, 전설은 팔지 않는다 (장비-경제.md 4.2 · 6.2절) */
+const LEG_SELL = 150; /* 전설을 팔 때 받는 값 (챕터와 상관없이 고정) */
+const SHOP_HERO = 0.4; /* 상점 진열 하나가 영웅 칸이 될 확률 (영웅이 있는 풀이 있을 때) */
 const priceOf = (g, ch) => Math.round((PRICE[g] || PRICE.n) * Math.pow(1.5, (ch || 1) - 1));
-const sellOf = it => Math.floor(priceOf(it.g, it.ch) * 0.25);
+const sellOf = it => it.g === 'l' ? LEG_SELL : Math.floor(priceOf(it.g, it.ch) * 0.25);
 function startSettle(run) {
   const ch = run.ch || 1; const strongN = run.rooms.filter(x => x.type === 'strong' && x.res === 'win' && (x.ch || 1) === ch).length; // 이번 챕터 강적만 (next/ 0.6b에서 1챕터 강적까지 다시 세던 오류)
   const mul = fxVal(run.p, 'goldMul', 1, (a, v) => a * v);
@@ -3393,19 +3649,28 @@ function vSettle() {
   const run = G.run, S = run.settle;
   return `<section class="card settle"><p class="mini">${run.ch || 1}챕터 · ${esc(chData(run.ch).n)}</p><h3>챕터를 넘었습니다</h3><p class="lore">${esc(chData(run.ch).settleLore || '')}</p>
 ${unlNewsHtml()}<dl class="sgold">${S.lines.map((x, i) => `<div style="--i:${i}"><dt>${esc(x.n)}</dt><dd>${x.v}</dd></div>`).join('')}<div class="tot" style="--i:${S.lines.length}"><dt>합계</dt><dd>${S.total} 골드</dd></div></dl>
-${S.mul > 1 ? '<p class="mini">보스와 강적 보상에 얻는 골드 증가가 붙었습니다.</p>' : ''}<p>정산을 확정하면 생명력·마나·스태미나와 플라스크가 모두 차고, 상점으로 갑니다.${run.statPending ? ` 보스를 넘으며 오른 레벨의 능력치 ${run.statPending}점도 이때 나눕니다.` : ''}</p>
+${S.mul > 1 ? '<p class="mini">보스와 강적 보상에 얻는 골드 증가가 붙었습니다.</p>' : ''}${S.loot ? `<p>보스 전리품: <span class="gr-${S.loot.g}">${inm(S.loot.tpl, S.loot.g)}</span>. ${S.loot.lost ? '가방이 가득 차 두고 왔습니다.' : '가방에 넣었습니다.'}</p>` : ''}<p>정산을 확정하면 생명력·마나·스태미나와 플라스크가 모두 차고, 상점으로 갑니다.${run.statPending ? ` 보스를 넘으며 오른 레벨의 능력치 ${run.statPending}점도 이때 나눕니다.` : ''}</p>
 <button class="gold wide" data-a="settleok" data-focus>정산 확정</button></section>`;
+}
+/* 상점 영웅 칸 (장비-경제.md 6.2절): 다음 챕터 풀(없으면 이번 챕터 풀)에 영웅이 있으면 SHOP_HERO 확률로 진열 하나가 영웅이다. 값은 이번 챕터 영웅 값 */
+function shopHero(run, ch, owned) {
+  const src = [ch + 1, ch].find(c => typeof CH_POOLS !== 'undefined' && CH_POOLS[c] && CH_POOLS[c].some(k => ITEMS[k].g === 'h')); if (!src) return null;
+  if (Math.random() >= SHOP_HERO) return null;
+  const c = CH_POOLS[src].filter(k => ITEMS[k].g === 'h' && !owned.includes(k) && poolOk(run.p, k)); if (!c.length) return null;
+  const fit = c.filter(k => classFit(run.p, k)); return { k: pickR(fit.length && Math.random() < 0.5 ? fit : c), ch: src };
 }
 function genShop(run) {
   const ch = run.ch || 1; const owned = Object.values(run.inv).map(x => x.tpl);
-  const pool = poolOf(ch).filter(k => ITEMS[k] && ITEMS[k].kind !== 'start' && !owned.includes(k) && poolOk(run.p, k));
+  const pool = poolOf(ch).filter(k => ITEMS[k] && ITEMS[k].kind !== 'start' && !owned.includes(k) && poolOk(run.p, k) && 'nmr'.includes(ITEMS[k].g || 'n'));
+  const hero = shopHero(run, ch, owned);
   const fit = k => classFit(run.p, k); const gOf = k => ITEMS[k].g || 'n'; const take = [];
   const add = list => { const c = list.filter(k => !take.includes(k)); if (c.length) { take.push(pickR(c)); return true; } return false; };
   add(pool.filter(k => gOf(k) === 'r' && fit(k))) || add(pool.filter(k => gOf(k) === 'r')); // 희귀 1개 이상
   while (take.filter(fit).length < 3 && add(pool.filter(fit))) { } // 직업에 맞는 것 3개 이상
-  while (take.length < 6) { const g = rollGrade(); if (!add(pool.filter(k => gOf(k) === g))) if (!add(pool)) break; }
+  while (take.length < (hero ? 5 : 6)) { const g = rollGrade(); if (!add(pool.filter(k => gOf(k) === g))) if (!add(pool)) break; }
   take.sort((a, b) => 'nmr'.indexOf(gOf(a)) - 'nmr'.indexOf(gOf(b)));
   run.shop = { ch, stock: take.map(k => { const it = mkItem(k, { ch }); return { it, price: priceOf(it.g, ch), sold: 0 }; }), log: [] };
+  if (hero) { const it = mkItem(hero.k, { ch: hero.ch }); run.shop.stock.push({ it, price: priceOf('h', ch), sold: 0, hero: 1 }); }
   { const nx = ch + 1; const usable = Object.keys(CONS).filter(k => CONS[k].use !== 'none' && !SHOP_CONS.always.includes(k) && (CONS[k].ch || 1) <= nx); const pick = SHOP_CONS.always.slice(); const nw = usable.filter(k => (CONS[k].ch || 1) === nx && nx >= 2); if (nw.length) pick.push(usable.splice(usable.indexOf(nw[Math.floor(Math.random() * nw.length)]), 1)[0]); while (pick.length < SHOP_CONS.n + (nx >= 2 ? 1 : 0) && usable.length) pick.push(usable.splice(Math.floor(Math.random() * usable.length), 1)[0]); run.shop.cons = pick.map(id => ({ id, price: Math.round(CONS[id].price * Math.pow(1.5, ch - 1)) })); } // 소모품 다섯 가지 (10월 4일)
 }
 function vShop() {
@@ -3419,7 +3684,7 @@ function vShop() {
   });
   h += `</div></section><section class="card"><h4>소모품</h4><p class="mini">몇 개든 살 수 있습니다. 가방 ${bagUsed(run)}/${BAG_MAX}.</p><div class="baglist">${(S.cons || []).map((x, i) => { const D = CONS[x.id]; const why = (run.gold || 0) >= x.price ? '' : '골드가 ' + (x.price - (run.gold || 0)) + ' 모자랍니다'; return `<div class="bagline"><div><b>${D.ico} ${esc(D.n)}</b><br><small class="mini">${esc(D.sit)} · ${esc(D.d(D.v))}</small></div>${adisBtn(why, 'sm' + (why ? '' : ' gold'), 'consbuy', i, x.price + ' 골드에 사기')}</div>`; }).join('')}</div>${(run.cons || []).length ? `<h4>가방의 소모품 팔기</h4><div class="baglist">${run.cons.map((c, i) => `<div class="bagline"><div><b>${CONS[c.id].ico} ${esc(consName(c))} ×${c.n}</b></div><button class="sm" data-a="conssell" data-k="${i}">하나 ${consSell(c)} 골드에 팔기</button></div>`).join('')}</div>` : ''}</section>`;
   h += `<section class="card"><h4>가방의 장비 팔기</h4><p class="mini">살 때 값의 25%를 받습니다. 낀 장비는 먼저 빼야 팔 수 있습니다.</p>`;
-  h += run.bag.length ? `<div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${esc(ITEMS[x.tpl].n)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${baseText(x)}</small></div><button class="sm" data-a="sell" data-k="${u}">${sellOf(x)} 골드에 팔기</button></div>`; }).join('')}</div>` : '<p class="mini">가방이 비어 있습니다.</p>';
+  h += run.bag.length ? `<div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${inm(x.tpl, x.g)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${baseText(x)}</small></div><button class="sm" data-a="sell" data-k="${u}">${sellOf(x)} 골드에 팔기</button></div>`; }).join('')}</div>` : '<p class="mini">가방이 비어 있습니다.</p>';
   h += `</section><section class="card"><h4>떠나기 전에</h4><div class="row"><button data-a="equip">장비 바꾸기</button>${adisBtn(!pts ? '나눈 능력치가 없습니다' : (run.gold || 0) < cost ? '골드가 ' + (cost - (run.gold || 0)) + ' 모자랍니다' : '', '', 'respec', null, '능력치 다시 나누기 (' + cost + ' 골드)')}${run.tree ? adisBtn(!tOpen ? '연 칸이 없습니다' : (run.gold || 0) < tCost ? '골드가 ' + (tCost - (run.gold || 0)) + ' 모자랍니다' : '', '', 'treereset', null, '트리 초기화 (' + tCost + ' 골드)') : ''}</div><p class="mini">능력치 다시 나누기는 지금까지 나눈 ${pts}점을 모두 거두어 처음부터 다시 나눕니다. 값은 레벨 × 10골드입니다.${run.tree ? ` 트리 초기화는 연 칸 ${tOpen}개를 모두 닫고 포인트를 돌려줍니다. 끼운 트리 스킬도 빠지므로 스킬 트리에서 다시 열고 끼웁니다. 값은 연 칸 하나에 ${Math.round(TREE_RESET.cell * Math.pow(1.5, (run.ch || 1) - 1))}골드입니다.` : ''} 남은 골드는 다음 챕터로 가져갑니다.</p></section><div class="stickbar shopbar"><span class="gold-n">골드 ${run.gold || 0}</span><span class="mini">가방 ${run.bag.length}/${BAG_MAX}</span><button class="gold" data-a="shopleave">상점을 나선다</button></div>`;
   return h;
 }
@@ -3547,7 +3812,7 @@ function vBattle() {
   const extra = [];
   extra.push(`<span data-info="stats" tabindex="0">${STAT_KEYS.map(k => STATN[k] + ' ' + stat(p, k)).join(' · ')}</span>`);
   extra.push(`<span data-info="speed" tabindex="0">속도 ${r1(pSpeed(b))}</span>`);
-  const eq = Object.values(p.eq).filter(Boolean); if (eq.length) extra.push(eq.map(k => esc(ITEMS[k].n)).join(', '));
+  const eq = Object.values(p.eq).filter(Boolean); if (eq.length) extra.push(eq.map(k => `<span class="gr-${ITEMS[k].g || 'n'}">${inm(k, ITEMS[k].g || 'n')}</span>`).join(', '));
   const scen = G.scr === 'scen' ? `<div class="scenline"><b>${SCEN[G.scen.i].id}. ${esc(SCEN[G.scen.i].n)}</b> ${esc(SCEN[G.scen.i].d)} 최대 10행동 중 ${b.pActs || 0}행동.</div>` : '';
   const status = `<section class="fstat" aria-label="내 상태">${scen}<div class="mehead"><b data-info="buildrule" tabindex="0">${B.ico} ${esc(B.n)}</b><span class="flk" data-info="flask" tabindex="0">플라스크 ❤️${p.flask.life} ${isV2(p) ? '🧪' : '💧'}${p.flask.mana} ⚡${p.flask.stam || 0} <small>/${p.flaskMax}</small></span>${q('flask', '플라스크')}${G.run && G.run.cons ? `<button class="sm consbtn" data-a="consopen" aria-label="소모품 ${G.run.cons.reduce((a, c) => a + c.n, 0)}개">🎒 ${G.run.cons.reduce((a, c) => a + c.n, 0)}</button>` : ''}<button class="sm fdtog" data-a="fdet" aria-expanded="${fdo}" aria-controls="fdet"><span aria-hidden="true">${fdo ? '▴' : '▾'}</span> 정보</button></div>
     <div class="mbars">${pops.p ? popHtml(pops.p) : ''}${mbar('hp', p.hp, p.hpMax, '생명력', b.over ? 0 : incomingEst(b).sum)}${p.mpMax > 0 ? mbar('mp', p.mp, p.mpMax, '마나') : ''}${mbar('st', p.st, p.stMax, '스태미나')}</div>${buildRes(p)}
@@ -4503,7 +4768,7 @@ function startRun(build, boss) {
   const seed = Date.now() % 100000;
   G.run = {
     id: 'r' + Date.now().toString(36), build, boss, startedAt: Date.now(), room: 0, p, bag: [], swaps: [], rooms: [], acts: [],
-    deaths: [], result: null, blockPicked: null, entry: null, survey: null, drops: [],
+    deaths: [], result: null, blockPicked: null, entry: null, survey: null, drops: [], legSeen: [],
     stats: { str: 0, dex: 0, int: 0, con: 0, wil: 0 }, statLog: [], pool: shuffleSeeded(FREE_POOL, seed), choices: [], seed,
   };
   G.run.skills = isV2(p) ? [] : DEFAULT_SKILLS[build].slice(); G.run.bag = []; G.run.cons = []; initGear(G.run); dgInit(G.run); G.run.skillLog = []; treeInit(G.run); if (isV2(p)) p.skills = v2Equip(G.run);
@@ -4523,9 +4788,13 @@ const tplKind = k => kindOf(ITEMS[k].slot);
 function rollBonus(g) { const R = GRADE[g] || GRADE.n; return Math.round((R.lo + Math.random() * (R.hi - R.lo)) * 10) / 10; }
 /* 챕터마다 장비 풀 (CH_POOLS[ch], 없으면 1챕터 풀) */
 function poolOf(ch) { return (typeof CH_POOLS !== 'undefined' && CH_POOLS[ch]) || CH1_POOL; }
-function mkItem(k, o) { o = o || {}; const g = o.g || ITEMS[k].g || 'n'; return { uid: 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tpl: k, g, ch: o.ch || (typeof G !== 'undefined' && G.run && G.run.ch) || 1, /* 10월 5일: 기본값이 늘 1이라 2챕터 드롭이 1챕터 수치로 나올 뻔했다 */ b: o.b != null ? o.b : rollBonus(g) }; }
+/* 장비의 챕터(기본 수치의 챕터): 지금 챕터 풀에 없고 이전 챕터 풀에 있으면 그 챕터 (장비-경제.md 3절 옛 장비) */
+function itemChOf(k) { const c = (typeof G !== 'undefined' && G.run && G.run.ch) || 1; if (c >= 2 && typeof CH_POOLS !== 'undefined' && CH_POOLS[c] && !CH_POOLS[c].includes(k)) for (let x = c - 1; x >= 1; x--) if (CH_POOLS[x] && CH_POOLS[x].includes(k)) return x; return c; }
+function mkItem(k, o) { o = o || {}; const g = o.g || ITEMS[k].g || 'n'; return { uid: 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tpl: k, g, ch: o.ch || itemChOf(k), /* 10월 5일: 기본값이 늘 1이라 2챕터 드롭이 1챕터 수치로 나올 뻔했다 */ b: o.b != null ? o.b : rollBonus(g) }; }
 function itemBase(it) { const sb = SLOT_BASE[tplKind(it.tpl)]; const v = sb.v[(it.ch || 1) - 1] * (1 + (it.b || 0) / 100); return { k: sb.k, lab: sb.lab, v }; }
 function baseText(it) { const x = itemBase(it); return x.k === 'flask' ? `${x.lab} ${Math.round(x.v * 1000) / 10}%` : x.k === 'wpn' ? `${x.lab} ${r1(x.v)}` : `${x.lab} +${Math.round(x.v)}`; }
+/* 장비 이름: 등급 글자(평 · 고 · 희 · 영 · 전, 색과 함께 글자로도 보인다)와 전설의 ✦. 색은 부르는 쪽의 gr-g가 입힌다 */
+function inm(tpl, g) { const R = GRADE[g] || GRADE.n; return `<span class="gl" aria-hidden="true">${R.n[0]}</span><span class="sr">${R.n} </span>${g === 'l' ? '<span aria-hidden="true">✦ </span>' : ''}${esc((ITEMS[tpl] || {}).n || tpl)}`; }
 function gradeTag(g) { return `<span class="gtag gr-${g}">${(GRADE[g] || GRADE.n).n}</span>`; }
 function initGear(run) {
   if (run.inv) return;
@@ -4558,11 +4827,14 @@ function equipUid(run, uid, slot, ctx) {
   const kind = tplKind(it.tpl);
   if (!slot) slot = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind;
   if (kindOf(slot) !== kind) return '이 칸에 낄 수 없는 장비입니다';
+  { const w = equipWhy(run, uid, slot); if (w) return w; }
   const prev = run.eqU[slot];
   run.eqU[slot] = uid; if (prev) run.bag[bi] = prev; else run.bag.splice(bi, 1);
   if (prev) logSwap(run, run.inv[prev], false, ctx); logSwap(run, it, true, ctx);
   applyGear(run); return '';
 }
+/* 낄 수 없는 까닭 (장비-경제.md 4.2절): 전설은 한 번에 하나만 (같은 칸의 전설을 바꾸는 것은 된다) */
+function equipWhy(run, uid, slot) { const it = run.inv[uid]; if (!it || it.g !== 'l') return ''; return EQ_SLOTS.some(sl => sl !== slot && run.eqU[sl] && run.inv[run.eqU[sl]] && run.inv[run.eqU[sl]].g === 'l') ? '전설은 하나만 낄 수 있습니다.' : ''; }
 function unequipUid(run, slot, ctx) {
   const uid = run.eqU[slot]; if (!uid) return '';
   if (slot === 'weapon') return '무기는 다른 무기로만 바꿀 수 있습니다';
@@ -4584,11 +4856,11 @@ function compareHtml(run, uid, slot) {
   const lose = [], gain = [];
   if (cur && ITEMS[cur.tpl].act && cur.tpl !== it.tpl) lose.push(`효과가 사라집니다: ${esc(ITEMS[cur.tpl].act)}`);
   for (const [k, lab, fmt] of GSTAT) { const d = b[k] - a[k]; if (Math.abs(d) < 0.05) continue; const line = `${lab} ${fmt(a[k])} → <b>${fmt(b[k])}</b>`; (d < 0 ? lose : gain).push(line); }
-  return `<div class="cmp"><div class="cmph">${cur ? `지금 낀 <b class="gr-${cur.g}">${esc(ITEMS[cur.tpl].n)}</b>과 비교` : '이 칸은 비어 있습니다'}</div>${lose.length ? `<ul class="cmp-lose" aria-label="잃는 것">${lose.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}${gain.length ? `<ul class="cmp-gain" aria-label="얻는 것">${gain.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}${!lose.length && !gain.length ? '<p class="mini">바뀌는 수치가 없습니다.</p>' : ''}</div>`;
+  return `<div class="cmp"><div class="cmph">${cur ? `지금 낀 <b class="gr-${cur.g}">${inm(cur.tpl, cur.g)}</b>과 비교` : '이 칸은 비어 있습니다'}</div>${lose.length ? `<ul class="cmp-lose" aria-label="잃는 것">${lose.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}${gain.length ? `<ul class="cmp-gain" aria-label="얻는 것">${gain.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}${!lose.length && !gain.length ? '<p class="mini">바뀌는 수치가 없습니다.</p>' : ''}</div>`;
 }
 function itemDetail(it) {
   const I = ITEMS[it.tpl]; const R = GRADE[it.g] || GRADE.n;
-  return `<div class="idet grb-${it.g}"><div class="idet-h"><b class="gr-${it.g}">${esc(I.n)}</b>${gradeTag(it.g)}<span class="mini">${EQ_SLOT_N[kindOf(I.slot) === 'ring' ? 'ring1' : I.slot].replace(' 1', '')}</span></div>
+  return `<div class="idet grb-${it.g}"><div class="idet-h"><b class="gr-${it.g}">${inm(it.tpl, it.g)}</b>${gradeTag(it.g)}<span class="mini">${EQ_SLOT_N[kindOf(I.slot) === 'ring' ? 'ring1' : I.slot].replace(' 1', '')}</span></div>
 <div class="idet-base">${baseText(it)} <span class="mini">${I.kind === 'start' ? '시작 장비' : `${R.n} +${R.lo}~${R.hi}% 가운데 +${it.b}%`}</span></div>${I.act ? `<div class="l act">${esc(I.act)}</div>` : ''}${I.cost ? `<div class="l cost">대가: ${esc(I.cost)}</div>` : ''}${I.lore ? `<p class="lore">${esc(I.lore)}</p>` : ''}</div>`;
 }
 /* 휴대폰: 고른 장비의 설명이 화면 밖이면 보이게 굴린다 */
@@ -4602,14 +4874,14 @@ function vEquip() {
   h += `<div class="eqcols"><section class="eqslots" aria-label="장비 칸">`;
   for (const sl of EQ_SLOTS) {
     const u = run.eqU[sl], it = u && run.inv[u]; const on = !sel.uid && sel.slot === sl;
-    h += `<button class="eqrow${on ? ' on' : ''}${it ? ' grb-' + it.g : ''}" data-a="eqsel" data-k="${sl}" aria-pressed="${on}"><span class="eqsl">${EQ_SLOT_N[sl]}</span>${it ? `<span class="eqn gr-${it.g}"><span class="eqg" aria-hidden="true">${(GRADE[it.g] || GRADE.n).n[0]}</span><span class="sr">${(GRADE[it.g] || GRADE.n).n} </span>${esc(ITEMS[it.tpl].n)}</span><span class="eqb">${baseText(it)}</span>` : '<span class="eqn empty">비어 있음</span>'}</button>`;
+    h += `<button class="eqrow${on ? ' on' : ''}${it ? ' grb-' + it.g : ''}" data-a="eqsel" data-k="${sl}" aria-pressed="${on}"><span class="eqsl">${EQ_SLOT_N[sl]}</span>${it ? `<span class="eqn gr-${it.g}"><span class="eqg" aria-hidden="true">${(GRADE[it.g] || GRADE.n).n[0]}</span><span class="sr">${(GRADE[it.g] || GRADE.n).n} </span>${it.g === 'l' ? '<span aria-hidden="true">✦ </span>' : ''}${esc(ITEMS[it.tpl].n)}</span><span class="eqb">${baseText(it)}</span>` : '<span class="eqn empty">비어 있음</span>'}</button>`;
   }
   h += `</section><section class="eqdet" aria-live="polite">`;
   if (sel.uid && run.inv[sel.uid]) {
     const it = run.inv[sel.uid]; const kind = tplKind(it.tpl);
     const slots = kind === 'ring' ? ['ring1', 'ring2'] : [kind];
     h += itemDetail(it);
-    for (const sl of slots) h += compareHtml(run, it.uid, sl) + `<button class="gold wide" data-a="eqon" data-k="${it.uid}" data-s="${sl}"${inFight ? ' disabled' : ''}>${slots.length > 1 ? EQ_SLOT_N[sl] + '에 끼기' : '끼기'}</button>`;
+    for (const sl of slots) { const ew = equipWhy(run, it.uid, sl); h += compareHtml(run, it.uid, sl) + (ew && !inFight ? `<button class="gold wide adis" data-a="eqon" data-k="${it.uid}" data-s="${sl}" aria-disabled="true" data-why="${esc(ew)}" aria-label="${esc((slots.length > 1 ? EQ_SLOT_N[sl] + '에 끼기' : '끼기') + ', 낄 수 없음: ' + ew)}">${slots.length > 1 ? EQ_SLOT_N[sl] + '에 끼기' : '끼기'}</button><p class="mini">${esc(ew)}</p>` : `<button class="gold wide" data-a="eqon" data-k="${it.uid}" data-s="${sl}"${inFight ? ' disabled' : ''}>${slots.length > 1 ? EQ_SLOT_N[sl] + '에 끼기' : '끼기'}</button>`); }
     h += `<div class="row"><button class="sm" data-a="eqdrop" data-k="${it.uid}"${inFight ? ' disabled' : ''}>버리기</button></div>`;
   } else {
     const u = run.eqU[sel.slot], it = u && run.inv[u];
@@ -4624,7 +4896,7 @@ function vEquip() {
     const u = run.bag[i], it = u && run.inv[u];
     if (!it) { h += `<div class="bagc empty" aria-hidden="true"></div>`; continue; }
     const fits = kindOf(sel.slot) === tplKind(it.tpl) && !sel.uid; const on = sel.uid === u;
-    h += `<button class="bagc grb-${it.g}${on ? ' on' : ''}${fits ? ' fits' : ''}" data-a="eqpick" data-k="${u}" aria-pressed="${on}"><span class="gr-${it.g}">${esc(ITEMS[it.tpl].n)}</span><small>${EQ_SLOT_N[kindOf(ITEMS[it.tpl].slot) === 'ring' ? 'ring1' : ITEMS[it.tpl].slot].replace(' 1', '')} · ${(GRADE[it.g] || GRADE.n).n}</small></button>`;
+    h += `<button class="bagc grb-${it.g}${on ? ' on' : ''}${fits ? ' fits' : ''}" data-a="eqpick" data-k="${u}" aria-pressed="${on}"><span class="gr-${it.g}">${inm(it.tpl, it.g)}</span><small>${EQ_SLOT_N[kindOf(ITEMS[it.tpl].slot) === 'ring' ? 'ring1' : ITEMS[it.tpl].slot].replace(' 1', '')} · ${(GRADE[it.g] || GRADE.n).n}</small></button>`;
   }
   h += `</div></section>`;
   const w = G.eqWhy || {};
@@ -4841,6 +5113,7 @@ function choosePath(id) {
 }
 /* 옛 저장본(19층)을 24층 틀로 옮긴다: 상층 그대로, 야영지 9 → 12, 하층 10~17 → 13~20, 샘 18 → 23, 보스 19 → 24 */
 function dgFix(run) {
+  if (run && !run.legSeen) run.legSeen = []; /* 2챕터 장비: 이 런에서 나온 전설 (같은 전설은 한 번만) */
   if (!run || !run.dg || run.dgv === 2) return;
   const m = f => f <= 8 ? f : f === 9 ? FLOOR_CAMP : f <= 17 ? f + 3 : f === 18 ? FLOOR_BOSS - 1 : FLOOR_BOSS;
   run.room = m(run.room || 1); if (run.cur && run.cur.floor) run.cur.floor = m(run.cur.floor); for (const d of run.doors || []) if (d.floor) d.floor = m(d.floor);
@@ -4848,16 +5121,26 @@ function dgFix(run) {
 }
 /* 전리품을 차례로 하나씩 건넨다 (방마다 여러 개일 수 있다) */
 function rollGrade(minG) { const x = Math.random() * 100; let g = x < 50 ? 'n' : x < 90 ? 'm' : 'r'; if (minG === 'm' && g === 'n') g = Math.random() < 0.8 ? 'm' : 'r'; if (minG === 'r') g = 'r'; return g; }
+/* 2챕터부터의 장비 등급 확률 (장비-경제.md 5.1절). room: 일반 · 매복, big: 강적 · 시련 · 보물, boss: 챕터 보스. 표가 없는 챕터(1챕터)는 예전 그대로 rollGrade · 희귀 */
+const DROP_G = { 2: { room: { n: 58, m: 30, r: 10, h: 1.8, l: 0.2 }, big: { r: 88, h: 10, l: 2 }, boss: { r: 60, h: 32, l: 8 } } };
+const OLD_DROP = 0.1; /* 2챕터부터 드롭의 10%는 이전 챕터 풀에서 (평범 · 고급 · 희귀만) */
+function rollGradeCh(ch, src) { const T = DROP_G[ch || 1] && DROP_G[ch || 1][src]; if (!T) return src === 'room' ? rollGrade() : 'r'; let x = Math.random() * 100; for (const g of ['n', 'm', 'r', 'h', 'l']) { if (!T[g]) continue; if (x < T[g]) return g; x -= T[g]; } return 'r'; }
 function dropKey(run, g, not) {
   const owned = Object.values(run.inv || {}).map(x => x.tpl); not = not || [];
-  const base = poolOf(run.ch).filter(k => poolOk(run.p, k));
+  let src = poolOf(run.ch); if ((run.ch || 1) >= 2 && 'nmr'.includes(g) && Math.random() < OLD_DROP) src = poolOf(run.ch - 1);
+  const base = src.filter(k => poolOk(run.p, k));
+  if (g === 'l') { const seen = run.legSeen || []; if (!base.some(k => ITEMS[k].g === 'l' && !seen.includes(k) && !not.includes(k))) g = 'h'; else not = not.concat(seen); } /* 같은 전설은 한 런에 한 번 */
   let c = base.filter(k => (ITEMS[k].g || 'n') === g && !owned.includes(k) && !not.includes(k)); if (!c.length) c = base.filter(k => (ITEMS[k].g || 'n') === g && !not.includes(k));
-  const fit = c.filter(k => itemFits(run.p, k)); const pool = Math.random() < 0.3 && fit.length ? fit : c; return pickR(pool);
+  const fit = c.filter(k => itemFits(run.p, k)); const pool = Math.random() < 0.3 && fit.length ? fit : c; const k = pickR(pool);
+  if (k && ITEMS[k] && ITEMS[k].g === 'l') run.legSeen = (run.legSeen || []).concat([k]);
+  return k;
 }
+/* 챕터 보스를 이기면 장비 하나 (표가 있는 챕터만, 정산 화면에 보인다) */
+function bossLoot(run) { if (!DROP_G[run.ch || 1]) return null; const it = mkItem(dropKey(run, rollGradeCh(run.ch, 'boss'))); it.g = ITEMS[it.tpl].g || 'n'; if (!addItem(run, it)) return { tpl: it.tpl, g: it.g, lost: 1 }; run.drops.push({ room: run.room, item: it.tpl, g: it.g, b: it.b, boss: 1, ch: run.ch || 1 }); return { tpl: it.tpl, g: it.g }; }
 function queueDrops(list) { G.dropQ = (G.dropQ || []).concat(list); nextDrop(); }
 function nextDrop() {
   const run = G.run; if (!run || !G.dropQ || !G.dropQ.length) { render(); return; }
-  const it = G.dropQ.shift(); if (it.chest) { openSheet('choice', { offer: it.chest, room: it.room, chest: 1 }); return; } run.drops.push({ room: run.room, item: it.tpl, g: it.g, b: it.b }); giveItem(it);
+  const it = G.dropQ.shift(); if (it.chest) { openSheet('choice', { offer: it.chest, room: it.room, chest: 1 }); return; } run.drops.push({ room: run.room, item: it.tpl, g: it.g, b: it.b, ch: run.ch || 1 }); giveItem(it);
 }
 function gainXp(run, n) {
   run.xp = (run.xp || 0) + n; let up = 0;
@@ -4922,25 +5205,26 @@ function battleContinue() {
   endBattleCarry(run.p);
   G.b = null;
   if (b.over === 'flee') { saveRunLocal(); saveCur(); toast('방 밖으로 물러났습니다. 이 방을 이겨야 앞으로 갈 수 있습니다'); render(); return; }
-  if (R.boss && b.over === 'win') { grantDrops(run, b); const up = gainXp(run, Math.round(b.xp || 0)); if (up) run.statPending = (run.statPending || 0) + LV_POINTS * up; run.clears = (run.clears || 0) + 1; run.result = 'win'; /* 0.6a.2: 챕터 돌파 포인트 2는 없앴다(레벨마다 1점, Lv10에 10점) */ run.rooms.push({ room: run.room, type: 'boss', res: 'win' }); startSettle(run); G.scr = 'settle'; saveRunLocal(); saveCur(); pushRank(run, 'clear'); render(); return; } // 정산부터는 이어 하기가 정산 화면으로 돌아온다(보스를 다시 싸우지 않는다)
+  if (R.boss && b.over === 'win') { grantDrops(run, b); const up = gainXp(run, Math.round(b.xp || 0)); if (up) run.statPending = (run.statPending || 0) + LV_POINTS * up; run.clears = (run.clears || 0) + 1; run.result = 'win'; /* 0.6a.2: 챕터 돌파 포인트 2는 없앴다(레벨마다 1점, Lv10에 10점) */ run.rooms.push({ room: run.room, type: 'boss', res: 'win' }); const bl = bossLoot(run); startSettle(run); if (bl) run.settle.loot = bl; G.scr = 'settle'; saveRunLocal(); saveCur(); pushRank(run, 'clear'); render(); return; } // 정산부터는 이어 하기가 정산 화면으로 돌아온다(보스를 다시 싸우지 않는다)
   if (R.boss) { run.result = 'flee'; clearCur(); G.scr = 'survey'; saveRunLocal(); render(); return; }
   // 승리 보상 (11.3절): 골드, 장비
   const nu = run.nextUsed || {}; run.nextUsed = null;
   if (b.rotted) { run.next = run.next || {}; run.next.pre = Object.assign({}, run.next.pre, { poison: ((run.next.pre || {}).poison || 0) + 3 }); toast('썩은 기운이 몸에 남았습니다. 다음 전투에 중독 3'); }
   grantDrops(run, b);
+  fxRun(run.p, 'onWin', run);
   const xpGot = Math.round(b.xp || 0); const lvUp = gainXp(run, xpGot);
   let gold = (R.gold || 0) * (R.mods && R.mods.includes('bell') ? 1.5 : 1) + (nu.chase ? 20 : 0) + (nu.block ? 30 : 0) + (R.type === 'treasure' ? fxVal(run.p, 'treasureGold', 0, (a, v) => a + v) : 0);
   if (gold) gainGold(run, gold, ROOM_TYPES[R.type].n + ' 방을 넘었습니다');
   const drops = []; const t = R.type;
-  const PU = (PATHS[R.path] || PATHS.main).up || 0; const pg = g => PU > 0 && g !== 'r' && Math.random() < PU ? (g === 'n' ? 'm' : 'r') : PU < 0 && g !== 'n' && Math.random() < -PU ? (g === 'r' ? 'm' : 'n') : g; // 길: 장비 등급 한 단계 오르내림 (10월 4일)
-  if (t === 'normal' || t === 'ambush') drops.push(mkItem(dropKey(run, pg(rollGrade())), { g: undefined }));
-  if (t === 'strong') drops.push(mkItem(dropKey(run, 'r'))); // 강적은 희귀 보장 (10월 4일)
-  if (t === 'trial') drops.push(mkItem(dropKey(run, 'r')));
-  if (nu.coffin) drops.push(mkItem(dropKey(run, 'r')));
-  for (let k = 0; k < (nu.extraDrop || 0); k++) drops.push(mkItem(dropKey(run, pg(rollGrade()))));
+  const PU = (PATHS[R.path] || PATHS.main).up || 0; const pg = g => PU > 0 && g !== 'r' && g !== 'h' && g !== 'l' && Math.random() < PU ? (g === 'n' ? 'm' : 'r') : PU < 0 && g !== 'n' && g !== 'h' && g !== 'l' && Math.random() < -PU ? (g === 'r' ? 'm' : 'n') : g; /* 영웅 · 전설은 길로 오르내리지 않는다 */ // 길: 장비 등급 한 단계 오르내림 (10월 4일)
+  if (t === 'normal' || t === 'ambush') drops.push(mkItem(dropKey(run, pg(rollGradeCh(run.ch, 'room'))), { g: undefined }));
+  if (t === 'strong') drops.push(mkItem(dropKey(run, rollGradeCh(run.ch, 'big')))); /* 강적은 희귀 이상 보장 (10월 4일, 2챕터부터 영웅 · 전설도) */
+  if (t === 'trial') drops.push(mkItem(dropKey(run, rollGradeCh(run.ch, 'big'))));
+  if (nu.coffin) drops.push(mkItem(dropKey(run, rollGradeCh(run.ch, 'big'))));
+  for (let k = 0; k < (nu.extraDrop || 0); k++) drops.push(mkItem(dropKey(run, pg(rollGradeCh(run.ch, 'room')))));
   for (const it of drops) it.g = ITEMS[it.tpl].g || 'n';
   advanceFloor();
-  const q = []; if (t === 'treasure') { const a = dropKey(run, 'r'), b2 = dropKey(run, pg(rollGrade()), [a]); q.push({ chest: [a, b2], room: run.room - 1 }); }
+  const q = []; if (t === 'treasure') { const a = dropKey(run, rollGradeCh(run.ch, 'big')), b2 = dropKey(run, pg(rollGradeCh(run.ch, 'room')), [a]); q.push({ chest: [a, b2], room: run.room - 1 }); }
   q.push(...drops);
   if (xpGot) toast('경험치 +' + xpGot + (lvUp ? ' · 레벨 ' + run.lv + '!' : ''));
   if (lvUp) { G.dropQ = (G.dropQ || []).concat(q); openSheet('stats', { pts: LV_POINTS * lvUp, why: '레벨 ' + run.lv + ' · 능력치 ' + LV_POINTS * lvUp + '점' }); saveRunLocal(); saveCur(); return; }
@@ -5257,9 +5541,9 @@ function vFinal() {
 
 /* 아직 얻지 않은 장비(고르기 창): 등급과 기본 수치 범위를 함께 보인다 */
 function itemCard(k, extra) {
-  const I = ITEMS[k]; const g = I.g || 'n'; const R = GRADE[g]; const sb = SLOT_BASE[tplKind(k)]; const v = sb.v[0];
+  const I = ITEMS[k]; const g = I.g || 'n'; const R = GRADE[g]; const sb = SLOT_BASE[tplKind(k)]; const v = sb.v[itemChOf(k) - 1] || sb.v[0];
   const range = sb.k === 'flask' ? `${sb.lab} ${Math.round(v * (1 + R.lo / 100) * 1000) / 10}~${Math.round(v * (1 + R.hi / 100) * 1000) / 10}%` : `${sb.lab} ${r1(v * (1 + R.lo / 100))}~${r1(v * (1 + R.hi / 100))}`;
-  return `<div class="icard grb-${g}"><div class="idet-h"><b class="in gr-${g}">${esc(I.n)}</b>${gradeTag(g)}<span class="mini">${SLOT_N[I.slot]}</span></div><div class="idet-base">${range}</div>${I.act ? `<div class="l act">${esc(I.act)}</div>` : ''}${I.cost ? `<div class="l cost">대가: ${esc(I.cost)}</div>` : ''}${I.lore ? `<p class="lore">${esc(I.lore)}</p>` : ''}${extra || ''}</div>`;
+  return `<div class="icard grb-${g}"><div class="idet-h"><b class="in gr-${g}">${inm(k, g)}</b>${gradeTag(g)}<span class="mini">${SLOT_N[I.slot]}</span></div><div class="idet-base">${range}</div>${I.act ? `<div class="l act">${esc(I.act)}</div>` : ''}${I.cost ? `<div class="l cost">대가: ${esc(I.cost)}</div>` : ''}${I.lore ? `<p class="lore">${esc(I.lore)}</p>` : ''}${extra || ''}</div>`;
 }
 
 function reasonPicker() { return `<fieldset class="reasons"><legend>왜 바꾸나요?</legend>${REASONS.map((r, i) => `<label><input type="radio" name="rs" value="${r[0]}"${i === 0 ? '' : ''}> ${r[1]}</label>`).join(' ')}</fieldset><label for="rnote">메모. 적지 않아도 됩니다.</label><input id="rnote" type="text">`; }
@@ -5351,10 +5635,11 @@ function sheetParts(S) {
   } else if (S.kind === 'drop') {
     const it = run.inv[S.data.uid]; const kind = tplKind(it.tpl); const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind;
     title = '장비를 얻었습니다';
-    body = itemDetail(it) + compareHtml(run, it.uid, sl) + `<div class="row"><button class="gold" data-a="dropequip" data-k="${it.uid}" data-s="${sl}">지금 끼기${kind === 'ring' ? ' (' + EQ_SLOT_N[sl] + ')' : ''}</button><button data-a="dropkeep">가방에 두기</button></div><p class="mini">가방 ${run.bag.length}/${BAG_MAX}. 장비는 방과 방 사이에 언제든 바꿀 수 있습니다.</p>`;
+    const ew = equipWhy(run, it.uid, sl);
+    body = itemDetail(it) + compareHtml(run, it.uid, sl) + (ew ? `<p class="warn">${esc(ew)} 가방에 두었다가 끼던 전설을 빼고 끼세요.</p>` : '') + `<div class="row"><button class="gold" data-a="dropequip" data-k="${it.uid}" data-s="${sl}">지금 끼기${kind === 'ring' ? ' (' + EQ_SLOT_N[sl] + ')' : ''}</button><button data-a="dropkeep">가방에 두기</button></div><p class="mini">가방 ${run.bag.length}/${BAG_MAX}. 장비는 방과 방 사이에 언제든 바꿀 수 있습니다.</p>`;
   } else if (S.kind === 'bagfull') {
     const it = S.data.item; title = '가방이 가득 찼습니다';
-    body = `<p class="mini">새 장비를 받으려면 가방에서 하나를 버리세요. 버린 장비는 사라집니다.</p>${itemDetail(it)}<div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${esc(ITEMS[x.tpl].n)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${baseText(x)}</small></div><button class="sm" data-a="bfdrop" data-k="${u}">버리고 받기</button></div>`; }).join('')}</div><button data-a="bfskip">새 장비를 버리기</button>`;
+    body = `<p class="mini">새 장비를 받으려면 가방에서 하나를 버리세요. 버린 장비는 사라집니다.</p>${itemDetail(it)}<div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${inm(x.tpl, x.g)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${baseText(x)}</small></div><button class="sm" data-a="bfdrop" data-k="${u}">버리고 받기</button></div>`; }).join('')}</div><button data-a="bfskip">새 장비를 버리기</button>`;
   } else if (S.kind === 'changes') {
     title = '업데이트 내역';
     body = CHANGELOG.map((c, i) => chgEntry(c, i === 0)).join('');
@@ -5418,7 +5703,7 @@ function sheetParts(S) {
     body += `<button data-a="choose" data-k="">둘 다 두고 간다</button>`;
   } else if (S.kind === 'offer') {
     title = '바칠 장비를 고르세요';
-    body = `<p class="mini">고른 장비는 사라지고, 한 등급 위의 장비 하나를 받습니다(희귀는 다시 희귀).</p><div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${esc(ITEMS[x.tpl].n)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${baseText(x)}</small></div><button class="sm" data-a="offerpick" data-k="${u}">바친다</button></div>`; }).join('')}</div>`;
+    body = `<p class="mini">고른 장비는 사라지고, 한 등급 위의 장비 하나를 받습니다(희귀는 다시 희귀, 영웅 · 전설은 영웅).</p><div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${inm(x.tpl, x.g)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${baseText(x)}</small></div><button class="sm" data-a="offerpick" data-k="${u}">바친다</button></div>`; }).join('')}</div>`;
   } else if (S.kind === 'codex') {
     title = '보스 도감'; body = `<p class="mini">강적과 보스를 만나 처음 겪은 일만 적힙니다. 쓰러져도 도감은 남습니다.</p>` + vCodex();
   } else if (S.kind === 'settings') {
@@ -5879,10 +6164,10 @@ function onClick(ev) {
       if (yes && R.altar === 'bone') { if (takeCons(run, 3)) { for (let k = 0; k < 2; k++) giveChCons(run, run.ch || 1); toast('뼈 제단이 소모품 셋을 받아 가고 둘을 내준다'); } }
       if (yes && R.altar === 'gold' && run.gold >= altarGold(run)) { run.gold -= altarGold(run); for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = Math.min(flaskCap(p, fk), (p.flask[fk] || 0) + 1); toast('플라스크가 하나씩 찼습니다'); }
       run.rooms.push({ room: run.room, type: 'altar', took: yes ? R.altar : null }); advanceFloor(); if (!(yes && R.altar === 'blood')) render(); break; }
-    case 'offerpick': { const run = G.run, it = run.inv[el.dataset.k]; if (!it) break; const up = it.g === 'n' ? 'm' : 'r'; const k2 = dropKey(run, up, [it.tpl]); discardUid(run, it.uid); G.sheet = null; run.rooms.push({ room: run.room, type: 'altar', took: 'offer', gave: it.tpl }); advanceFloor(); queueDrops([mkItem(k2)]); break; }
+    case 'offerpick': { const run = G.run, it = run.inv[el.dataset.k]; if (!it) break; const up = it.g === 'n' ? 'm' : it.g === 'm' || it.g === 'r' ? 'r' : 'h'; const k2 = dropKey(run, up, [it.tpl]); discardUid(run, it.uid); G.sheet = null; run.rooms.push({ room: run.room, type: 'altar', took: 'offer', gave: it.tpl }); advanceFloor(); queueDrops([mkItem(k2)]); break; }
     case 'event': { const run = G.run, p = run.p, R = roomDef(), o = el.dataset.k; const drops = []; run.next = run.next || {};
       if (R.event === 'confess' && o === 'do') { run.next.pre = Object.assign({}, run.next.pre, { weak: 3, vuln: 3 }); drops.push(mkItem(dropKey(run, 'r'))); }
-      if (R.event === 'pilgrim' && o === 'loot') { run.next.pre = Object.assign({}, run.next.pre, { poison: 3 }); drops.push(mkItem(dropKey(run, rollGrade()))); }
+      if (R.event === 'pilgrim' && o === 'loot') { run.next.pre = Object.assign({}, run.next.pre, { poison: 3 }); drops.push(mkItem(dropKey(run, rollGradeCh(run.ch, 'room')))); }
       if (R.event === 'pilgrim' && o === 'pray') p.flask.life = Math.min(flaskCap(p, 'life'), p.flask.life + 1);
       if (R.event === 'reliquary' && o === 'force') { p.st = Math.max(0, p.st - 40); if (Math.random() < 0.5) gainGold(run, 30, '성물함이 열렸습니다'); else drops.push(mkItem(dropKey(run, 'm'))); }
       if (R.event === 'chalice' && o === 'drink') { p.hpBonus = (p.hpBonus || 0) + 5; applyGear(run); p.hp = Math.max(1, p.hp - p.hpMax * 0.15); }
@@ -5899,7 +6184,7 @@ function onClick(ev) {
       if (R.event === 'procession' && o === 'follow') run.buffs.procession = 4;
       if (R.event === 'procession' && o === 'block') run.next.block = 1;
       if (R.event === 'master' && o === 'read') { const c = refundDeepest(run); toast(c ? SK2[c].n + ' 칸을 되돌렸습니다. 포인트 +1' : '되돌릴 칸이 없습니다'); }
-      if (R.event === 'robber' && o === 'loot') { if (Math.random() < 0.5) gainGold(run, 30, '자루에서 골드가 나왔습니다'); else drops.push(mkItem(dropKey(run, rollGrade()))); run.next.pre = Object.assign({}, run.next.pre, { poison: ((run.next.pre || {}).poison || 0) + 3 }); }
+      if (R.event === 'robber' && o === 'loot') { if (Math.random() < 0.5) gainGold(run, 30, '자루에서 골드가 나왔습니다'); else drops.push(mkItem(dropKey(run, rollGradeCh(run.ch, 'room')))); run.next.pre = Object.assign({}, run.next.pre, { poison: ((run.next.pre || {}).poison || 0) + 3 }); }
       if (R.event === 'robber' && o === 'bury') p.flask.life = Math.min(flaskCap(p, 'life'), p.flask.life + 1);
       if (R.event === 'blackwell' && o === 'drink') { p.flask.mana = Math.min(flaskCap(p, 'mana'), p.flask.mana + 1); p.flask.stam = Math.min(flaskCap(p, 'stam'), (p.flask.stam || 0) + 1); run.next.pre = Object.assign({}, run.next.pre, { vuln: 2 }); }
       if (R.event === 'bonepipe' && o === 'blow') { run.dg.force = 'strong'; gainGold(run, 20, '피리 소리가 아래로 내려간다'); }
@@ -5966,7 +6251,7 @@ function onClick(ev) {
     case 'choose': {
       const k = el.dataset.k; const run = G.run; const S = G.sheet;
       run.choices.push({ room: S.data.room, offered: S.data.offer, picked: k || null, t: Date.now() }); run.declined = (run.declined || []).concat(S.data.offer.filter(x => x !== k)); G.sheet = null;
-      if (k) { const it = mkItem(k); run.drops.push({ room: S.data.room, item: k, g: it.g, b: it.b, chest: 1 }); giveItem(it); } else { saveRunLocal(); saveCur(); nextDrop(); }
+      if (k) { const it = mkItem(k); run.drops.push({ room: S.data.room, item: k, g: it.g, b: it.b, chest: 1, ch: run.ch || 1 }); giveItem(it); } else { saveRunLocal(); saveCur(); nextDrop(); }
       break;
     }
     case 'resume': resumeRun(); break;
