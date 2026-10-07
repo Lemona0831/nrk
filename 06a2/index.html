@@ -581,7 +581,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 /* 전투 화면의 main */
 .fit>.bmain{flex:1;min-height:0;display:flex;flex-direction:column}.sidehead h3{font-size:calc(15px*var(--fs,1))}
 /* 전투 화면 맨 앞의 건너뛰기(초점을 받을 때만 보임), 헤더 소리 버튼 */
-.skip{position:absolute;left:8px;top:-80px;z-index:100;min-height:40px;background:var(--gold);color:var(--gold-ink);border-color:var(--gold);font-weight:700}.skip:focus{top:8px}
+.skip{position:absolute;left:8px;top:-80px;z-index:100;min-height:40px;background:var(--gold);color:var(--gold-ink);border-color:var(--gold);font-weight:700}.skip:focus{top:8px}#main:focus{outline:none}
 .sndb{flex:none;min-height:36px;min-width:40px;padding:2px 8px;border-radius:999px;font-size:calc(15px*var(--fs,1));line-height:1}
 /* 판단에 쓰는 글: 줄임표 대신 두 줄까지, 13px 이상 */
 .ab b,.ab small,.intent .itx{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:clip;word-break:keep-all;overflow-wrap:anywhere}
@@ -3313,7 +3313,7 @@ function vTitle() {
   h += vAcct();
   if (d.seenVer !== CHANGE_VER) { const seen = CHANGELOG.findIndex(c => c.v === d.seenVer); const nw = CHANGELOG.slice(0, seen > 0 ? Math.min(seen, 3) : 1); // 아직 안 본 업데이트만(최대 3개)
     h += `<section class="card news"><h3>새로 바뀐 것${seen > 1 ? ` <span class="newtag">업데이트 ${seen}개</span>` : ''}</h3>${nw.map((c, i) => i === 0 ? chgEntry(c, false, true) : `<div class="chgmore"><b>${esc(c.v)}${c.t ? ' · ' + esc(c.t) : ''}</b> <span class="chgd">${esc(c.d || '')}</span></div>`).join('')}<button data-a="changes">업데이트 내역 전체 보기</button></section>`; }
-  if (G.site) h += '<p class="mini tfoot"><a href="../privacy.html" target="_blank" rel="noopener">개인정보처리방침</a></p>';
+  if (G.site) h += '<p class="mini tfoot"><a href="../privacy.html" target="_blank" rel="noopener">개인정보처리방침<span aria-hidden="true"> ↗</span><span class="sr"> 새 창에서 열림</span></a></p>';
   return h + '</div>';
 }
 
@@ -3392,7 +3392,7 @@ function vRecords() {
   if (gv.length) h += `<h4>쓰러진 자의 기록</h4><ul class="graves">${gv.slice(0, 8).map(g => `<li>${(BUILDS[g.build] || {}).ico || ''} <b>${esc(g.cname || (BUILDS[g.build] || { n: g.build }).n)}</b> <span class="mini">${esc(g.roomN || '')}에서 · Lv ${g.lv || 1} · 장비 ${(g.eq || []).length}개 · ${new Date(g.at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}</span></li>`).join('')}</ul>`;
   h += `</section><section class="card"><h3>마지막 질문</h3><p class="mini">${d.final ? '이미 답했습니다. 다시 답하면 새 답으로 바뀝니다.' : '여러 캐릭터를 해 본 뒤에 답해 주세요.'}</p><button data-a="final">질문에 답하기</button></section>`;
   h += `<section class="card"><h3>기록 보내기${q('record', '기록에 대해')}</h3><p class="mini">끝낸 판 ${d.runs.filter(r => r.endedAt).length}개${G.site && G.conn === 'ok' ? '. 기록은 이 사이트의 저장소에 자동으로 모입니다' : ''}.</p><div class="row"><button data-a="code">기록 보내기 코드</button><button data-a="dl">기록 파일 받기</button><button data-a="guide">처음 안내 다시 보기</button></div></section>`;
-  h += `<p class="mini tfoot">${G.site ? '<a href="../privacy.html" target="_blank" rel="noopener">개인정보처리방침</a> · ' : ''}<button class="linkbtn" data-a="admin">관리자</button></p>`;
+  h += `<p class="mini tfoot">${G.site ? '<a href="../privacy.html" target="_blank" rel="noopener">개인정보처리방침<span aria-hidden="true"> ↗</span><span class="sr"> 새 창에서 열림</span></a> · ' : ''}<button class="linkbtn" data-a="admin">관리자</button></p>`;
   return h;
 }
 
@@ -5822,7 +5822,7 @@ function render() {
   const nm = scrName(); document.title = nm ? nm + ' · 나락의 유산' : '나락의 유산 · 0.6a.2 스킬 시험판';
   const h2 = `<h2 class="sr">${esc(nm || '처음 화면')}</h2>`;
   if (fit) root.innerHTML = `<div class="fit"${ine}><button class="skip" data-a="skipacts">행동판으로 건너뛰기</button>${vHeader()}<main class="bmain">${h2}${vBattle()}</main></div>${tail}`;
-  else root.innerHTML = `<div class="app scr-${G.scr}"${ine}>${vHeader()}<main>${h2}${main}</main></div>${tail}`;
+  else root.innerHTML = `<div class="app scr-${G.scr}"${ine}><button class="skip" data-a="skipmain">본문으로 건너뛰기</button>${vHeader()}<main id="main" tabindex="-1">${h2}${main}</main></div>${tail}`;
   if (POP.cur && !document.body.contains(POP.cur)) hidePop(); // 설명 창의 기준이 된 요소가 사라졌으면 닫는다
   if (!G.sheet && G.dropQ && G.dropQ.length && G.scr === 'run' && !G.b) setTimeout(nextDrop, 0); // 전리품 창을 닫기로 닫아도 남은 전리품을 이어서 건넨다
   fitDecide(fit);
@@ -6008,6 +6008,7 @@ function onClick(ev) {
     case 'sel': if (!G.data.seenCoach && !(G.coachI > 0)) G.coachI = 1;
       if (G.busy) { if (G.stepResolve) { const r = G.stepResolve; G.stepResolve = null; r(); } return; } hidePop(); G.sel = G.sel === el.dataset.e ? null : el.dataset.e; render(); break;
     case 'act': if (el.getAttribute('aria-disabled') === 'true') { showPop(el, true); return; } hidePop(); doAct(el.dataset.id, el.dataset.t || null); break;
+    case 'skipmain': { const m = document.getElementById('main'); if (m) m.focus(); break; }
     case 'skipacts': { const t = document.querySelector('.ab:not([aria-disabled="true"])') || document.querySelector('.dock [data-focus], .dock button'); if (t) t.focus(); break; }
     case 'stepnext': if (G.stepResolve) { const r = G.stepResolve; G.stepResolve = null; r(); } break;
     case 'rmotion': G.data.rm = !G.data.rm; saveLocal(); applyPrefs(); toast(G.data.rm ? '움직임을 줄였습니다' : '움직임을 되돌렸습니다'); render(); break;
@@ -6126,7 +6127,7 @@ function onKey(ev) {
     if ((ev.key === ' ' || ev.key === 'Enter') && G.stepResolve && !(ev.target && ev.target.tagName === 'BUTTON' && ev.target.getAttribute('aria-disabled') !== 'true')) { ev.preventDefault(); const r = G.stepResolve; G.stepResolve = null; r(); return; }
     if (/^[1-9]$/.test(ev.key) && G.data.numKeys !== false && !ev.ctrlKey && !ev.metaKey && !ev.altKey && !G.busy && !G.b.over) { const btn = document.querySelector('.ab[data-k="' + ev.key + '"]'); if (btn) { ev.preventDefault(); if (btn.getAttribute('aria-disabled') !== 'true') { hidePop(); doAct(btn.dataset.id, btn.dataset.t || null); } else showPop(btn, true); } return; } /* 10월 7일: 설정에서 끌 수 있고, 쓸 수 없는 행동이면 이유를 보인다 */
   }
-  if (ev.key !== 'Escape') return; if (POP.cur || (POP.el && POP.el.style.display === 'block')) { hidePop(); return; } /* Esc는 설명 창부터 닫는다 */ if (typing) { ev.target.blur(); return; } /* 입력칸에서는 칸만 벗어난다 */ if (G.menuOpen) { G.menuOpen = false; render(); return; } if (G.logOpen) { G.logOpen = false; render(); return; } /* 휴대폰 기록 창 */ if (G.scr === 'create' && !(G.sheet && !G.sheet.data.first)) { cancelCreate(); return; } if (G.sheet && !['block', 'stats', 'choice'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } else if (G.logOpen) { G.logOpen = false; render(); } }
+  if (ev.key !== 'Escape') return; if (POP.cur || (POP.el && POP.el.style.display === 'block')) { hidePop(); return; } /* Esc는 설명 창부터 닫는다 */ if (typing) { ev.target.blur(); return; } /* 입력칸에서는 칸만 벗어난다 */ if (G.menuOpen) { G.menuOpen = false; render(); return; } if (G.logOpen) { G.logOpen = false; render(); return; } /* 휴대폰 기록 창 */ if (G.scr === 'create' && !(G.sheet && !G.sheet.data.first)) { if (ask('캐릭터 만들기를 그만둘까요? 고른 것은 남지 않습니다.')) cancelCreate(); return; } /* 10월 8일: 묻지 않고 그만두던 것 */ if (G.sheet && !['block', 'stats', 'choice'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } else if (G.logOpen) { G.logOpen = false; render(); } }
 
 if (typeof document !== 'undefined') {
   G.data = loadLocal(); reviveLocal();
