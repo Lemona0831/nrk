@@ -33,7 +33,7 @@ for (const b of builds) {
     const slot = slots[k % slots.length]; const r = R('gambleRoll')(run); const got = R('rollSlotItem')(run, slot, r.g, ch, rnd() < R('GAMBLE.fit'), false);
     if (!got) { miss++; continue; }
     run.gambleN = 'rhl'.includes(got.g) ? 0 : run.gambleN + 1; cnt[got.g]++; n++;
-    const f = R('classFit')(run.p, got.k) ? 1 : 0; fit += f; ev += val(got.g); worth += val(got.g) * (f ? 1 : 0.25);
+    const f = R('gFit')(run.p, got.k) ? 1 : 0; fit += f; ev += val(got.g); worth += val(got.g) * (f ? 1 : 0.25);
     if (got.g === 'l') run.legSeen = []; /* 한 판의 시험이라 전설 목록을 비운다(런마다 1회 규칙은 따로 점검) */
   }
   tot.fit += fit; tot.n += n; tot.ev += ev; tot.worth += worth; if (miss) noItem.push(b + ' ' + miss);

@@ -4170,12 +4170,14 @@ function rollSlotItem(run, slot, g, ch, wantFit, strict) {
     if (gr === 'l') base = base.filter(k => !seen.includes(k));
     if (!base.length) { if (strict) return null; continue; }
     const fresh = base.filter(k => !owned.includes(k)); const c = fresh.length ? fresh : base;
-    const fit = c.filter(k => classFit(run.p, k)), rest = c.filter(k => !classFit(run.p, k));
+    const fit = c.filter(k => gFit(run.p, k)), rest = c.filter(k => !gFit(run.p, k));
     const pool = wantFit ? (fit.length ? fit : c) : (rest.length ? rest : c);
     return { k: pickR(pool), g: gr };
   }
   return null;
 }
+/* 꾸러미의 "맞는 장비": 직업 갈래에 맞는 것(상점의 직업에 맞음) 또는 직업을 가리지 않는 공용(t: all). 쓸모없는 장비(itemFits)는 뺀다 */
+const gFit = (p, k) => itemFits(p, k) && (classFit(p, k) || /(^| )all( |$)/.test((ITEMS[k] && ITEMS[k].t) || ''));
 const kindSlot = tpl => tplKind(tpl) === 'ring' ? 'ring1' : tplKind(tpl);
 /* 꾸러미 하나를 연다. 못 사면 { why }, 사면 { it, price } (S.gamble에 방금 연 것을 남겨 화면이 보인다) */
 function gambleDraw(run, slot) {
@@ -4189,12 +4191,12 @@ function gambleDraw(run, slot) {
   const it = mkItem(got.k); addItem(run, it); run.gold -= price;
   run.gambleN = 'rhl'.includes(it.g) ? 0 : (run.gambleN || 0) + 1;
   if (it.g === 'l') run.legSeen = (run.legSeen || []).concat([it.tpl]);
-  const fit = classFit(run.p, it.tpl) ? 1 : 0;
+  const fit = classFit(run.p, it.tpl) ? 1 : gFit(run.p, it.tpl) ? 2 : 0;
   S.gamble = { it: Object.assign({}, it), price, fit, forced: r.forced && it.g === 'r' ? 1 : 0 };
   S.log.push({ a: 'gamble', slot, tpl: it.tpl, g: it.g, b: it.b, price, fit, forced: S.gamble.forced, t: Date.now() });
   return { it, price };
 }
-function fateCan(run, it) { const ng = FATE.next[it.g]; if (!ng) return '영웅 이상은 올릴 수 없습니다'; return slotKeys(run, tplKind(it.tpl), ng, poolOf(run.ch || 1)).length ? '' : '이 칸에는 올라갈 장비가 없습니다'; }
+function fateCan(run, it) { const ng = FATE.next[it.g]; if (!ng) return '더 올릴 수 없는 등급입니다'; return slotKeys(run, tplKind(it.tpl), ng, poolOf(run.ch || 1)).length ? '' : '이 칸에는 올라갈 장비가 없습니다'; }
 /* 저울에 올린다: 성공하면 같은 칸의 한 단계 위 장비로 바꾸고, 실패하면 올린 장비를 잃는다. { ok, from, to } */
 function fateRun(run, uid) {
   const it = run.inv[uid]; if (!it || run.bag.indexOf(uid) < 0 || fateCan(run, it)) return null;
@@ -4232,9 +4234,9 @@ function vGamble(run) {
   const S = run.shop, ch = S.ch || 1, price = gamblePrice(ch), gold = run.gold || 0, full = bagUsed(run) >= BAG_MAX; const pct = v => (Math.round(v * 10) / 10) + '%';
   const sells = ['n', 'm', 'r', 'h', 'l'].map(g => (GRADE[g].n) + ' ' + (g === 'l' ? LEG_SELL : sellOf({ g, ch }))).join(', ');
   let h = `<section class="card gamble"><h4>🎁 봉인된 꾸러미</h4><p class="lore">상인이 밀랍으로 봉한 꾸러미를 내민다. 안은 열어 봐야 안다.</p><p>칸을 고르면 그 칸의 장비 하나가 등급을 모른 채 가방에 들어옵니다. 값은 ${price} 골드이고 물릴 수 없습니다.</p><ul class="odds" aria-label="등급 확률">${['n', 'm', 'r', 'h', 'l'].map(g => `<li><span class="gtag gr-${g}">${GRADE[g].n}</span> ${pct(GAMBLE.grades[g])}</li>`).join('')}</ul>`;
-  h += `<p class="mini">나온 장비가 이 직업에 맞을 확률은 ${Math.round(GAMBLE.fit * 100)}%입니다. 꾸러미를 열 번 여는 동안 희귀 이상이 한 번도 나오지 않으면 열 번째는 희귀 이상입니다. 지금 희귀 이상이 나오지 않은 횟수는 ${run.gambleN || 0}번입니다.</p><p class="mini">되팔 때 받는 값: ${sells} 골드.</p><div class="row">`;
+  h += `<p class="mini">나온 장비가 이 직업에 맞거나 직업을 가리지 않을 확률은 ${Math.round(GAMBLE.fit * 100)}%입니다(그 칸과 등급에 그런 장비가 있을 때). 꾸러미를 열 번 여는 동안 희귀 이상이 한 번도 나오지 않으면 열 번째는 희귀 이상입니다. 지금 희귀 이상이 나오지 않은 횟수는 ${run.gambleN || 0}번입니다.</p><p class="mini">되팔 때 받는 값: ${sells} 골드.</p><div class="row">`;
   h += GAMBLE.slots.map(sl => { const why = gold < price ? '골드가 ' + (price - gold) + ' 모자랍니다' : full ? '가방이 가득 찼습니다' : ''; return adisBtn(why, 'sm' + (why ? '' : ' gold'), 'gamble', sl, GAMBLE.slotN[sl] + ' 꾸러미 ' + price + ' 골드'); }).join('') + '</div>';
-  if (S.gamble) { const r = S.gamble, it = r.it, inBag = !!run.inv[it.uid]; const w = inBag && it.g === 'l' ? equipWhy(run, it.uid, kindSlot(it.tpl)) : ''; h += `<div class="gres"><h5>방금 연 꾸러미</h5>${itemDetail(it)}<p class="mini">${r.price} 골드를 냈습니다. ${r.fit ? '이 직업에 맞는 장비입니다.' : '이 직업에는 맞지 않는 장비입니다.'}${r.forced ? ' 열 번째 보장으로 희귀가 나왔습니다.' : ''}${inBag ? ' 가방에 넣었습니다.' : ' 이 장비는 이제 가방에 없습니다.'}</p>${w ? `<p class="warn mini">${esc(w)}</p>` : ''}</div>`; }
+  if (S.gamble) { const r = S.gamble, it = r.it, inBag = !!run.inv[it.uid]; const w = inBag && it.g === 'l' ? equipWhy(run, it.uid, kindSlot(it.tpl)) : ''; h += `<div class="gres"><h5>방금 연 꾸러미</h5>${itemDetail(it)}<p class="mini">${r.price} 골드를 냈습니다. ${r.fit === 1 ? '이 직업에 맞는 장비입니다.' : r.fit === 2 ? '직업을 가리지 않는 공용 장비입니다.' : '이 직업에는 맞지 않는 장비입니다.'}${r.forced ? ' 열 번째 보장으로 희귀가 나왔습니다.' : ''}${inBag ? ' 가방에 넣었습니다.' : ' 이 장비는 이제 가방에 없습니다.'}</p>${w ? `<p class="warn mini">${esc(w)}</p>` : ''}</div>`; }
   return h + '</section>';
 }
 function vFateRoom(run, h) {
