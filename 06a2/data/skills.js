@@ -421,75 +421,75 @@ const SKILLS2 = {
   monk: [
     // 수도승 (10월 7일 구현, docs/직업/수도승.md): 시작 스킬 둘 + 철권 · 부동 · 혈도 60칸. 새 효과 stance · kiBurst · kiPer · kiGrow · ctrPer · sealx, meSt if: chill, hasten on: ctr (index.html runSkill2 · monkCounter)
     // 시작 스킬: 트리 밖. 기의 첫 출구가 되는 공격 하나(주 행동), ⚡ 자세 하나(빠른 행동). "⚡로 받아칠 준비, ▶로 공격"을 Lv1부터 가르친다
-    { id: 'm_palm', b: '시작', tier: '시작', start: 1, n: '정권 지르기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 22 }, { k: 'kiBurst', per: 3, max: 3 }] },
-    { id: 'm_brace', b: '시작', tier: '시작', start: 1, n: '받아칠 자세', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'stance', half: 0, dmg: 5 }, { k: 'stam', n: 25 }] },
+    { id: 'm_palm', b: '시작', tier: '시작', start: 1, n: '정권 지르기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 26 }, { k: 'kiBurst', per: 3, max: 3 }] },
+    { id: 'm_brace', b: '시작', tier: '시작', start: 1, n: '받아칠 자세', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'stance', half: 0, dmg: 6 }, { k: 'stam', n: 31 }] },
 
     // 철권: 빠른 연타로 기를 쌓고, 모은 기를 한 주먹에 몰아친다. 왼쪽 기둥은 연타(⚡ 연타 · 기 하나로 모든 타격이 세지는 ▶ 연타), 오른쪽은 기공(모으기 · 키우기 · 터뜨리기). 거구에 강하고 무리에 약하다
-    { id: 'm_jab', row: 1, b: '철권', tier: '하급', n: '짧은 지르기', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 12 }] },
-    { id: 'm_rush', row: 1, b: '철권', tier: '하급', n: '쏟아치기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'kiBurst', per: 7 }] },
-    { id: 'm_double', row: 2, b: '철권', tier: '하급', n: '두 번 지르기', tgt: 'melee', time: 'fast', cd: 4, hits: 2, fx: [{ k: 'dmg', n: 7 }] },
-    { id: 'm_breath', row: 2, b: '철권', tier: '하급', n: '기 모으기', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'st', s: 'empower', n: 3 }, { k: 'stam', n: 40 }] },
-    { id: 'm_triple', row: 3, b: '철권', tier: '하급', n: '삼연격', tgt: 'melee', time: 'normal', cd: 7, hits: 3, fx: [{ k: 'dmg', n: 8 }] },
-    { id: 'm_kifist', row: 3, b: '철권', tier: '하급', n: '기 실은 주먹', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 16 }, { k: 'kiPer', per: 3 }] },
-    { id: 'm_knee', row: 4, b: '철권', tier: '하급', n: '무릎 차기', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 8 }, { k: 'brk', n: 48 }] }, // 짧은 지르기(피해)와 갈라 붕괴 쪽: 피해는 더 작다
-    { id: 'm_surge', row: 4, b: '철권', tier: '하급', n: '기 끌어올리는 주먹', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'kiGrow', add: 1, mul: 2 }] },
-    { id: 'm_barrage', row: 5, b: '철권', tier: '하급', n: '몰아치는 주먹', tgt: 'melee', time: 'normal', cd: 6, hits: 4, fx: [{ k: 'dmg', n: 5 }, { k: 'meSt', s: 'empower', n: 1 }] }, // 기 1을 싣고 때린 뒤 1을 돌려받는다(기를 지키는 연타)
-    { id: 'm_shock', row: 5, b: '철권', tier: '하급', n: '기 충격파', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 7 }, { k: 'kiBurst', per: 5 }] }, // 2챕터 요구(갈래마다 5줄 안에 광역): 땅속 · 뼈 더미 대책
-    { id: 'm_gale', row: 6, b: '철권', tier: '하급', n: '질풍 지르기', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 16 }, { k: 'hasten', n: 1, on: 'use' }] },
-    { id: 'm_kistrike', row: 6, b: '철권', tier: '하급', n: '기공 일격', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'kiBurst', per: 5, max: 3, brk: 6 }, { k: 'bigx', mul: 1.5 }] }, // bigx는 max 3 칸에만: 한 방 상한 (12 + 15) × 1.5 = 40.5
-    { id: 'm_hundred', row: 7, b: '철권', tier: '중급', n: '백렬권', tgt: 'melee', time: 'normal', cd: 6, hits: 5, fx: [{ k: 'dmg', n: 3 }, { k: 'kiPer', per: 1 }] }, // 기 비례가 타격마다 붙는 연타: 기 0이면 10, 기 3이면 25, 기 5면 35 (기는 1만 쓴다)
-    { id: 'm_kiblast', row: 7, b: '철권', tier: '중급', n: '기 폭발', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'kiBurst', per: 6, max: 4, brk: 12 }] }, // 붕괴로 터뜨리기: 기 4까지, 붕괴 최대 48. 남은 기는 그대로
-    { id: 'm_flow', row: 8, b: '철권', tier: '중급', n: '흐르는 주먹', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 14 }, { k: 'meSt', s: 'empower', n: 1 }] }, // meSt 강화는 피해 뒤(공통 변경)라 순 +1, 직업 규칙의 ⚡ 기 +1과 따로
-    { id: 'm_wave', row: 8, b: '철권', tier: '중급', n: '장풍', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 14 }, { k: 'kiBurst', per: 8 }] },
-    { id: 'm_endless', row: 9, b: '철권', tier: '중급', n: '멈추지 않는 주먹', tgt: 'melee', time: 'normal', cd: 6, killRecharge: 1, fx: [{ k: 'dmg', n: 23 }] },
-    { id: 'm_split', row: 9, b: '철권', tier: '중급', n: '기 가르기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'kiBurst', per: 9, keep: 0.5 }] },
-    { id: 'm_storm', row: 10, b: '철권', tier: '중급', n: '연타의 끝', tgt: 'melee', time: 'normal', cd: 10, hits: 6, fx: [{ k: 'dmg', n: 5 }, { k: 'bigx', mul: 1.3 }] }, // 연타 칸에는 brk · st를 두지 않는다(엔진은 붕괴를 타격마다, 점수는 한 번). 큰 적용 연타 마무리
-    { id: 'm_release', row: 10, b: '철권', tier: '중급', n: '기공 해방', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 16 }, { k: 'kiBurst', per: 10, brk: 8 }] }, // bigx 없음: 기 5에서 14 + 40 = 54, 붕괴 +40
+    { id: 'm_jab', row: 1, b: '철권', tier: '하급', n: '짧은 지르기', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 14 }] },
+    { id: 'm_rush', row: 1, b: '철권', tier: '하급', n: '쏟아치기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'kiBurst', per: 8 }] },
+    { id: 'm_double', row: 2, b: '철권', tier: '하급', n: '두 번 지르기', tgt: 'melee', time: 'fast', cd: 4, hits: 2, fx: [{ k: 'dmg', n: 8 }] },
+    { id: 'm_breath', row: 2, b: '철권', tier: '하급', n: '기 모으기', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'st', s: 'empower', n: 3 }, { k: 'stam', n: 57 }] },
+    { id: 'm_triple', row: 3, b: '철권', tier: '하급', n: '삼연격', tgt: 'melee', time: 'normal', cd: 7, hits: 3, fx: [{ k: 'dmg', n: 9 }] },
+    { id: 'm_kifist', row: 3, b: '철권', tier: '하급', n: '기 실은 주먹', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 18 }, { k: 'kiPer', per: 3 }] },
+    { id: 'm_knee', row: 4, b: '철권', tier: '하급', n: '무릎 차기', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 35 }] }, // 짧은 지르기(피해)와 갈라 붕괴 쪽: 피해는 더 작다
+    { id: 'm_surge', row: 4, b: '철권', tier: '하급', n: '기 끌어올리는 주먹', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 18 }, { k: 'kiGrow', add: 1, mul: 2 }] },
+    { id: 'm_barrage', row: 5, b: '철권', tier: '하급', n: '몰아치는 주먹', tgt: 'melee', time: 'normal', cd: 6, hits: 4, fx: [{ k: 'dmg', n: 6 }, { k: 'meSt', s: 'empower', n: 1 }] }, // 기 1을 싣고 때린 뒤 1을 돌려받는다(기를 지키는 연타)
+    { id: 'm_shock', row: 5, b: '철권', tier: '하급', n: '기 충격파', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 9 }, { k: 'kiBurst', per: 5 }] }, // 2챕터 요구(갈래마다 5줄 안에 광역): 땅속 · 뼈 더미 대책
+    { id: 'm_gale', row: 6, b: '철권', tier: '하급', n: '질풍 지르기', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 19 }, { k: 'hasten', n: 1, on: 'use' }] },
+    { id: 'm_kistrike', row: 6, b: '철권', tier: '하급', n: '기공 일격', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 15 }, { k: 'kiBurst', per: 5, max: 3, brk: 6 }, { k: 'bigx', mul: 1.5 }] }, // bigx는 max 3 칸에만: 한 방 상한 (12 + 15) × 1.5 = 40.5
+    { id: 'm_hundred', row: 7, b: '철권', tier: '중급', n: '백렬권', tgt: 'melee', time: 'normal', cd: 7, hits: 5, fx: [{ k: 'dmg', n: 4 }, { k: 'kiPer', per: 1 }] }, // 기 비례가 타격마다 붙는 연타: 기 0이면 10, 기 3이면 25, 기 5면 35 (기는 1만 쓴다)
+    { id: 'm_kiblast', row: 7, b: '철권', tier: '중급', n: '기 폭발', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 14 }, { k: 'kiBurst', per: 7, max: 4, brk: 12 }] }, // 붕괴로 터뜨리기: 기 4까지, 붕괴 최대 48. 남은 기는 그대로
+    { id: 'm_flow', row: 8, b: '철권', tier: '중급', n: '흐르는 주먹', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 17 }, { k: 'meSt', s: 'empower', n: 1 }] }, // meSt 강화는 피해 뒤(공통 변경)라 순 +1, 직업 규칙의 ⚡ 기 +1과 따로
+    { id: 'm_wave', row: 8, b: '철권', tier: '중급', n: '장풍', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 18 }, { k: 'kiBurst', per: 8 }] },
+    { id: 'm_endless', row: 9, b: '철권', tier: '중급', n: '멈추지 않는 주먹', tgt: 'melee', time: 'normal', cd: 6, killRecharge: 1, fx: [{ k: 'dmg', n: 26 }] },
+    { id: 'm_split', row: 9, b: '철권', tier: '중급', n: '기 가르기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 10 }, { k: 'kiBurst', per: 10, keep: 0.5 }] },
+    { id: 'm_storm', row: 10, b: '철권', tier: '중급', n: '연타의 끝', tgt: 'melee', time: 'normal', cd: 8, hits: 6, fx: [{ k: 'dmg', n: 5 }, { k: 'bigx', mul: 1.3 }] }, // 연타 칸에는 brk · st를 두지 않는다(엔진은 붕괴를 타격마다, 점수는 한 번). 큰 적용 연타 마무리
+    { id: 'm_release', row: 10, b: '철권', tier: '중급', n: '기공 해방', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 19 }, { k: 'kiBurst', per: 11, brk: 8 }] }, // bigx 없음: 기 5에서 14 + 40 = 54, 붕괴 +40
 
     // 부동: 막고 되받는다. 왼쪽 기둥은 자세(⚡ 자세는 되받기만, ▶ 자세는 막기와 되받기), 오른쪽은 되갚기(되받은 만큼 세지는 공격, 전열 밀기). 무리에 강하고 후열에 약하다
-    { id: 'm_iron', row: 1, b: '부동', tier: '하급', n: '쇠기둥 자세', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'stance', dmg: 13 }] },
-    { id: 'm_answer', row: 1, b: '부동', tier: '하급', n: '응수', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 13 }, { k: 'ctrPer', per: 7 }] },
-    { id: 'm_root', row: 2, b: '부동', tier: '하급', n: '뿌리 내리기', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'stance', half: 0, dmg: 13, ki: 1 }] },
-    { id: 'm_retort', row: 2, b: '부동', tier: '하급', n: '되치기', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 8 }, { k: 'brk', n: 15 }, { k: 'ctrPer', per: 5 }] },
-    { id: 'm_mountain', row: 3, b: '부동', tier: '하급', n: '산처럼', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'stance', dmg: 8, brk: 50 }] }, // 쇠기둥(피해)과 갈라 붕괴 쪽. 강타를 되받으면 10 + 25 + 50
-    { id: 'm_shove', row: 3, b: '부동', tier: '하급', n: '밀어내는 손', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 20 }] },
-    { id: 'm_thorns', row: 4, b: '부동', tier: '하급', n: '천수 받기', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'stance', half: 0, dmg: 11, max: 2 }] }, // 이름: 파수꾼 "가시"와 헷갈리지 않게
-    { id: 'm_repay', row: 4, b: '부동', tier: '하급', n: '되갚는 발', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 45 }, { k: 'ctrPer', per: 6 }] }, // 응수(피해)와 갈라 붕괴 쪽: 피해는 더 작다
-    { id: 'm_calm', row: 5, b: '부동', tier: '하급', n: '부동심', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'stance', half: 0, dmg: 15, weak: 1 }, { k: 'hasten', n: 1, on: 'ctr' }] }, // 부동의 🔄 되받기 칸은 이 하나뿐, 자세마다 1회
-    { id: 'm_rebound', row: 5, b: '부동', tier: '하급', n: '반탄', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'ctrPer', per: 5 }] },
-    { id: 'm_diamond', row: 6, b: '부동', tier: '하급', n: '금강', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'stance', dmg: 15, ki: 1 }] },
-    { id: 'm_breaker', row: 6, b: '부동', tier: '하급', n: '되받아 꺾기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 16 }, { k: 'ctrPer', per: 7 }, { k: 'bigx', mul: 1.5 }] },
-    { id: 'm_ironmtn', row: 7, b: '부동', tier: '중급', n: '철산고', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'stance', dmg: 15, brk: 20, weak: 2 }] }, // 산처럼과 갈라: 되받은 적에게 약화 2(큰 한 방 뒤의 다음 두 공격을 깎는다)
-    { id: 'm_tide', row: 7, b: '부동', tier: '중급', n: '되갚는 물결', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 10 }, { k: 'brk', n: 15 }, { k: 'ctrPer', per: 6 }] },
-    { id: 'm_still', row: 8, b: '부동', tier: '중급', n: '고요한 받기', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'stance', half: 0, dmg: 15, chill: 2, ki: 1 }] }, // 둔화 2: 내 다음 차례에도 1이 남아 혈도 칸과 섞을 수 있다
-    { id: 'm_hundredfold', row: 8, b: '부동', tier: '중급', n: '백배 갚기', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 24 }, { k: 'ctrPer', per: 12 }] },
-    { id: 'm_far', row: 9, b: '부동', tier: '중급', n: '멀리 받아치기', tgt: 'self', time: 'fast', cd: 8, fx: [{ k: 'stance', half: 0, dmg: 15, far: 1 }, { k: 'stam', n: 20 }] }, // 후열 약점의 출구: 화형(spell)은 여전히 되받지 못한다
-    { id: 'm_backlash', row: 9, b: '부동', tier: '중급', n: '되받아 휩쓸기', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 12 }, { k: 'ctrPer', per: 6 }, { k: 'st', s: 'weak', n: 1 }] }, // 반탄과 갈라: 전열 모두 약화 1
-    { id: 'm_myeongwang', row: 10, b: '부동', tier: '중급', n: '부동명왕', tgt: 'self', time: 'slow', cd: 10, fx: [{ k: 'stance', dmg: 14, brk: 25, ki: 1, max: 3 }] },
-    { id: 'm_final', row: 10, b: '부동', tier: '중급', n: '마지막 응수', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 19 }, { k: 'ctrPer', per: 8 }, { k: 'stance' }] }, // 친 뒤 방어 자세: 되갚고 다시 받는 고리의 끝. lowx를 두지 않는다(되받은 몫까지 곱해짐)
+    { id: 'm_iron', row: 1, b: '부동', tier: '하급', n: '쇠기둥 자세', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'stance', dmg: 16 }] },
+    { id: 'm_answer', row: 1, b: '부동', tier: '하급', n: '응수', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 15 }, { k: 'ctrPer', per: 6 }] },
+    { id: 'm_root', row: 2, b: '부동', tier: '하급', n: '뿌리 내리기', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'stance', half: 0, dmg: 17, ki: 1 }] },
+    { id: 'm_retort', row: 2, b: '부동', tier: '하급', n: '되치기', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 18 }, { k: 'ctrPer', per: 6 }] },
+    { id: 'm_mountain', row: 3, b: '부동', tier: '하급', n: '산처럼', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'stance', dmg: 12, brk: 50 }] }, // 쇠기둥(피해)과 갈라 붕괴 쪽. 강타를 되받으면 10 + 25 + 50
+    { id: 'm_shove', row: 3, b: '부동', tier: '하급', n: '밀어내는 손', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 20 }] },
+    { id: 'm_thorns', row: 4, b: '부동', tier: '하급', n: '천수 받기', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'stance', half: 0, dmg: 14, max: 2 }] }, // 이름: 파수꾼 "가시"와 헷갈리지 않게
+    { id: 'm_repay', row: 4, b: '부동', tier: '하급', n: '되갚는 발', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 36 }, { k: 'ctrPer', per: 7 }] }, // 응수(피해)와 갈라 붕괴 쪽: 피해는 더 작다
+    { id: 'm_calm', row: 5, b: '부동', tier: '하급', n: '부동심', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'stance', half: 0, dmg: 20, weak: 1 }, { k: 'hasten', n: 1, on: 'ctr' }] }, // 부동의 🔄 되받기 칸은 이 하나뿐, 자세마다 1회
+    { id: 'm_rebound', row: 5, b: '부동', tier: '하급', n: '반탄', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 13 }, { k: 'ctrPer', per: 6 }] },
+    { id: 'm_diamond', row: 6, b: '부동', tier: '하급', n: '금강', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'stance', dmg: 20, ki: 1 }] },
+    { id: 'm_breaker', row: 6, b: '부동', tier: '하급', n: '되받아 꺾기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 18 }, { k: 'ctrPer', per: 7 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 'm_ironmtn', row: 7, b: '부동', tier: '중급', n: '철산고', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'stance', dmg: 20, brk: 20, weak: 2 }] }, // 산처럼과 갈라: 되받은 적에게 약화 2(큰 한 방 뒤의 다음 두 공격을 깎는다)
+    { id: 'm_tide', row: 7, b: '부동', tier: '중급', n: '되갚는 물결', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 18 }, { k: 'ctrPer', per: 7 }] },
+    { id: 'm_still', row: 8, b: '부동', tier: '중급', n: '고요한 받기', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'stance', half: 0, dmg: 20, chill: 2, ki: 1 }] }, // 둔화 2: 내 다음 차례에도 1이 남아 혈도 칸과 섞을 수 있다
+    { id: 'm_hundredfold', row: 8, b: '부동', tier: '중급', n: '백배 갚기', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 26 }, { k: 'ctrPer', per: 14 }] },
+    { id: 'm_far', row: 9, b: '부동', tier: '중급', n: '멀리 받아치기', tgt: 'self', time: 'fast', cd: 8, fx: [{ k: 'stance', half: 0, dmg: 19, far: 1 }, { k: 'stam', n: 23 }] }, // 후열 약점의 출구: 화형(spell)은 여전히 되받지 못한다
+    { id: 'm_backlash', row: 9, b: '부동', tier: '중급', n: '되받아 휩쓸기', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 14 }, { k: 'ctrPer', per: 7 }, { k: 'st', s: 'weak', n: 1 }] }, // 반탄과 갈라: 전열 모두 약화 1
+    { id: 'm_myeongwang', row: 10, b: '부동', tier: '중급', n: '부동명왕', tgt: 'self', time: 'slow', cd: 10, fx: [{ k: 'stance', dmg: 18, brk: 25, ki: 1, max: 3 }] },
+    { id: 'm_final', row: 10, b: '부동', tier: '중급', n: '마지막 응수', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 23 }, { k: 'ctrPer', per: 9 }, { k: 'stance' }] }, // 친 뒤 방어 자세: 되갚고 다시 받는 고리의 끝. lowx를 두지 않는다(되받은 몫까지 곱해짐)
 
     // 혈도: 급소를 눌러 늦추고, 늦춘 적에게서 기를 얻는다. 왼쪽 기둥은 점혈(둔화 · 약화 걸기, 강타 끊기 붕괴, 지원 끊기), 오른쪽은 흡기(이미 둔화된 적에게서 기 얻기, 둔화된 적을 크게). 강타에 강하고 거구에 약하다
     // 둔화 타이밍(문서 B-5): 내 차례에 건 둔화 N은 라운드 시작에 1 줄어 내 다음 차례에 N−1이다. 다음 차례 준비용 칸은 둔화 2, 같은 차례에는 ⚡로 걸고 ▶로 거둔다
-    { id: 'm_point', row: 1, b: '혈도', tier: '하급', n: '혈 짚기', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'chill', n: 2 }] },
-    { id: 'm_siphon', row: 1, b: '혈도', tier: '하급', n: '기 빼앗기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 19 }, { k: 'meSt', s: 'empower', n: 2, if: 'chill' }] },
-    { id: 'm_finger', row: 2, b: '혈도', tier: '하급', n: '손끝 바람', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'st', s: 'chill', n: 2 }, { k: 'st', s: 'weak', n: 1 }] },
-    { id: 'm_lock', row: 2, b: '혈도', tier: '하급', n: '맥 누르기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 21 }, { k: 'st', s: 'chill', n: 2 }] },
-    { id: 'm_sinew', row: 3, b: '혈도', tier: '하급', n: '힘줄 누르기', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'weak', n: 2 }] },
-    { id: 'm_drink', row: 3, b: '혈도', tier: '하급', n: '흐름 마시기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 17 }, { k: 'chillx', mul: 1.3 }, { k: 'meSt', s: 'empower', n: 2, if: 'chill' }] },
-    { id: 'm_cut', row: 4, b: '혈도', tier: '하급', n: '기혈 끊기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 20 }, { k: 'st', s: 'chill', n: 2 }, { k: 'cutx', brk: 90 }] }, // 맥 누르기(18)보다 피해가 작고 끊기 붕괴가 크다
-    { id: 'm_drain', row: 4, b: '혈도', tier: '하급', n: '흡기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 19 }, { k: 'meSt', s: 'empower', n: 2, if: 'chill' }, { k: 'st', s: 'chill', n: 2 }] }, // 거둔 뒤 둔화 2를 다시 건다: 다음 차례에 1이 남아 다른 거두기 칸이 잇는다
-    { id: 'm_press', row: 5, b: '혈도', tier: '하급', n: '온몸 누르기', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 15 }, { k: 'st', s: 'chill', n: 2 }] },
-    { id: 'm_frozenvein', row: 5, b: '혈도', tier: '하급', n: '얼어붙은 맥', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 21 }, { k: 'chillx', mul: 1.5 }] },
-    { id: 'm_flick', row: 6, b: '혈도', tier: '하급', n: '탄지', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 16 }, { k: 'st', s: 'chill', n: 2 }, { k: 'sealx', brk: 30 }] }, // 지원 끊기: 후열 사제에 닿는다
-    { id: 'm_reverse', row: 6, b: '혈도', tier: '하급', n: '역혈', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 19 }, { k: 'kiPer', per: 2 }, { k: 'meSt', s: 'empower', n: 2, if: 'chill' }] },
-    { id: 'm_seal', row: 7, b: '혈도', tier: '중급', n: '혈 봉쇄', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 23 }, { k: 'st', s: 'chill', n: 2 }, { k: 'cutx', brk: 60 }, { k: 'sealx', brk: 25 }] }, // 기혈 끊기와 갈라: 모으는 힘과 지원 행동을 함께 끊는 근접 칸
-    { id: 'm_harvest', row: 7, b: '혈도', tier: '중급', n: '기 거두기', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 12 }, { k: 'chillx', mul: 1.5 }, { k: 'meSt', s: 'empower', n: 1, if: 'chill' }] },
-    { id: 'm_numb', row: 8, b: '혈도', tier: '중급', n: '마비 지르기', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 18 }, { k: 'st', s: 'chill', n: 2 }, { k: 'st', s: 'weak', n: 1 }, { k: 'hasten', n: 1, on: 'use' }] },
-    { id: 'm_backflow', row: 8, b: '혈도', tier: '중급', n: '거슬러 오르는 기', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 21 }, { k: 'chillx', mul: 1.5 }, { k: 'meSt', s: 'empower', n: 2, if: 'chill' }] }, // 흐름 마시기와 갈라: 후열까지 닿는 거두기(근접으로 덤비지 않는 적에게서 기)
-    { id: 'm_allpoint', row: 9, b: '혈도', tier: '중급', n: '만혈 짚기', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'chill', n: 2 }, { k: 'sealx', brk: 20 }] },
-    { id: 'm_veinburst', row: 9, b: '혈도', tier: '중급', n: '맥 터뜨리기', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 20 }, { k: 'kiBurst', per: 7 }, { k: 'st', s: 'chill', n: 2 }] },
-    { id: 'm_stillpt', row: 10, b: '혈도', tier: '중급', n: '정지혈', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 30 }, { k: 'st', s: 'chill', n: 3 }, { k: 'st', s: 'weak', n: 3 }, { k: 'cutx', brk: 70 }] },
-    { id: 'm_kingvein', row: 10, b: '혈도', tier: '중급', n: '혈도의 끝', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 19 }, { k: 'kiBurst', per: 7, pre: 3 }] }, // chillx를 두지 않는다(거둔 몫까지 곱해져 한 방이 커짐)
+    { id: 'm_point', row: 1, b: '혈도', tier: '하급', n: '혈 짚기', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'm_siphon', row: 1, b: '혈도', tier: '하급', n: '기 빼앗기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 22 }, { k: 'meSt', s: 'empower', n: 2, if: 'chill' }] },
+    { id: 'm_finger', row: 2, b: '혈도', tier: '하급', n: '손끝 바람', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 17 }, { k: 'st', s: 'chill', n: 2 }, { k: 'st', s: 'weak', n: 1 }] },
+    { id: 'm_lock', row: 2, b: '혈도', tier: '하급', n: '맥 누르기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 24 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'm_sinew', row: 3, b: '혈도', tier: '하급', n: '힘줄 누르기', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 14 }, { k: 'st', s: 'weak', n: 2 }] },
+    { id: 'm_drink', row: 3, b: '혈도', tier: '하급', n: '흐름 마시기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 20 }, { k: 'chillx', mul: 1.3 }, { k: 'meSt', s: 'empower', n: 2, if: 'chill' }] },
+    { id: 'm_cut', row: 4, b: '혈도', tier: '하급', n: '기혈 끊기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 24 }, { k: 'st', s: 'chill', n: 2 }, { k: 'cutx', brk: 70 }] }, // 맥 누르기(18)보다 피해가 작고 끊기 붕괴가 크다
+    { id: 'm_drain', row: 4, b: '혈도', tier: '하급', n: '흡기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 23 }, { k: 'meSt', s: 'empower', n: 2, if: 'chill' }, { k: 'st', s: 'chill', n: 2 }] }, // 거둔 뒤 둔화 2를 다시 건다: 다음 차례에 1이 남아 다른 거두기 칸이 잇는다
+    { id: 'm_press', row: 5, b: '혈도', tier: '하급', n: '온몸 누르기', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 16 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'm_frozenvein', row: 5, b: '혈도', tier: '하급', n: '얼어붙은 맥', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 23 }, { k: 'chillx', mul: 1.5 }] },
+    { id: 'm_flick', row: 6, b: '혈도', tier: '하급', n: '탄지', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 20 }, { k: 'st', s: 'chill', n: 2 }, { k: 'sealx', brk: 30 }] }, // 지원 끊기: 후열 사제에 닿는다
+    { id: 'm_reverse', row: 6, b: '혈도', tier: '하급', n: '역혈', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 23 }, { k: 'kiPer', per: 2 }, { k: 'meSt', s: 'empower', n: 2, if: 'chill' }] },
+    { id: 'm_seal', row: 7, b: '혈도', tier: '중급', n: '혈 봉쇄', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 27 }, { k: 'st', s: 'chill', n: 2 }, { k: 'cutx', brk: 52 }, { k: 'sealx', brk: 22 }] }, // 기혈 끊기와 갈라: 모으는 힘과 지원 행동을 함께 끊는 근접 칸
+    { id: 'm_harvest', row: 7, b: '혈도', tier: '중급', n: '기 거두기', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 14 }, { k: 'chillx', mul: 1.5 }, { k: 'meSt', s: 'empower', n: 1, if: 'chill' }] },
+    { id: 'm_numb', row: 8, b: '혈도', tier: '중급', n: '마비 지르기', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 22 }, { k: 'st', s: 'chill', n: 2 }, { k: 'st', s: 'weak', n: 1 }, { k: 'hasten', n: 1, on: 'use' }] },
+    { id: 'm_backflow', row: 8, b: '혈도', tier: '중급', n: '거슬러 오르는 기', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 24 }, { k: 'chillx', mul: 1.5 }, { k: 'meSt', s: 'empower', n: 2, if: 'chill' }] }, // 흐름 마시기와 갈라: 후열까지 닿는 거두기(근접으로 덤비지 않는 적에게서 기)
+    { id: 'm_allpoint', row: 9, b: '혈도', tier: '중급', n: '만혈 짚기', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 14 }, { k: 'st', s: 'chill', n: 2 }, { k: 'sealx', brk: 23 }] },
+    { id: 'm_veinburst', row: 9, b: '혈도', tier: '중급', n: '맥 터뜨리기', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 25 }, { k: 'kiBurst', per: 7 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'm_stillpt', row: 10, b: '혈도', tier: '중급', n: '정지혈', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 32 }, { k: 'st', s: 'chill', n: 3 }, { k: 'st', s: 'weak', n: 3 }, { k: 'cutx', brk: 70 }] },
+    { id: 'm_kingvein', row: 10, b: '혈도', tier: '중급', n: '혈도의 끝', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 21 }, { k: 'kiBurst', per: 8, pre: 3 }] }, // chillx를 두지 않는다(거둔 몫까지 곱해져 한 방이 커짐)
   ],
   confessor: [
     /* 숨겨진 직업 2 (10월 7일, UNLOCK.confessor). 설계 · 까닭은 비공개 문서. 새 효과: cleanse(정화 · 사함 offer · after) · transfer(옮기기) · perDmg(of: prot · burden · clean · weak · bleed · tbad) · dispel(강화 벗기기), meSt의 해로운 상태는 행동 뒤 고행(p.selfN), hasten on 'clean' */
