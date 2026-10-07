@@ -40,7 +40,7 @@ function pickDoor(pk, run, r) {
   const P = PERSONAS[pk]; const p = run.p; const h = p.hp / p.hpMax; const fl = p.flask.life;
   const low = G0.isLower(run.room, run.ch);
   const loss = { normal: 0.22, ambush: 0.3, treasure: 0.3, trial: 0.45, strong: low ? 0.75 : 0.5 };
-  const gain = { normal: 3, ambush: 3.3, treasure: 5, trial: 5, strong: 6, spring: 0, shrine: 1.5, altar: 1, event: 1.5 };
+  const gain = { normal: 3, ambush: 3.3, treasure: 5, trial: 5, strong: 6, spring: 0, shrine: 1.5, altar: 1, event: 1.5, fate: 1.2 };
   const sc = run.doors.map(d => {
     const t = d.type; let v;
     if (pk === 'novice') return r();
@@ -101,17 +101,35 @@ function handleSheets(pk, r) {
       else for (let i = 0; i < S.data.pts; i++) { const k = pk === 'novice' || r() > 0.65 ? KEYS[Math.floor(r() * KEYS.length)] : pref; S.data.alloc[k]++; }
       click('statok');
     } else if (S.kind === 'offer') { click('offerpick', run.bag[0]); }
+    else if (S.kind === 'awk') { click('awkpick', awkChoice(pk, r, run)); } /* 깨달음 (2챕터 이후에만 뜬다) */
     else if (S.kind === 'swap') { click('swapskip'); } // 스킬 바꾸기: 단계 3에서 성향별로
     else { G.sheet = null; }
     while (!G.sheet && G.dropQ && G.dropQ.length) G0.nextDrop();
   }
 }
 
+/* 깨달음 고르기: 지금 파는 갈래의 직업 깨달음 > 다른 직업 깨달음 > 공용(성향 순서). 초보는 무작위 */
+const AWK_MAP_ = run_('typeof AWK_MAP !== "undefined" ? AWK_MAP : {}');
+const AWK_COMMON = ['a_eye', 'a_skin', 'a_vial', 'a_stand', 'a_vigor', 'a_breath', 'a_shell', 'a_iron', 'a_ember', 'a_point', 'a_scatter', 'a_smolder', 'a_flow', 'a_gap', 'a_resolve', 'a_pouch', 'a_clear', 'a_gulp', 'a_warmth', 'a_light', 'a_heavyhand', 'a_brew', 'a_purse', 'a_memory'];
+function awkChoice(pk, r, run) {
+  const offer = run.awkOffer || []; if (pk === 'novice') return offer[Math.floor(r() * offer.length)];
+  const sc = id => { const a = AWK_MAP_[id]; return (a.g === 'cls' ? (a.br === run.focus ? 100 : 20) : 40 - AWK_COMMON.indexOf(id)) + r() * 0.5; };
+  return offer.slice().sort((x, y) => sc(y) - sc(x))[0];
+}
+/* 운명의 저울: 쓸모없는 평범 · 고급(직업에 맞지 않고 끼지 않은 것)만 올린다. 초보는 절반쯤 아무거나 */
+function fatePick(pk, run, r) {
+  const GR = { n: 0, m: 1, r: 2 };
+  const bag = run.bag.map(u => run.inv[u]).filter(x => x && !G0.fateCan(run, x));
+  let c = bag.filter(x => (x.g === 'n' || x.g === 'm') && !G0.classFit(run.p, x.tpl)).sort((a, b) => GR[a.g] - GR[b.g])[0];
+  if (pk === 'novice' && bag.length && r() < 0.5) c = bag[Math.floor(r() * bag.length)];
+  return c ? click('fate', c.uid) : click('fateskip');
+}
 /* 이벤트·제단·성소 고르기 */
 function restRoom(pk, run, r) {
   const R = run.cur; const p = run.p; const h = p.hp / p.hpMax;
   if (R.type === 'camp' || R.type === 'spring') return click('rest');
   if (R.type === 'shrine') return click('shrine', pk === 'novice' ? (r() < 0.5 ? 1 : 0) : 1);
+  if (R.type === 'fate') return fatePick(pk, run, r);
   if (R.type === 'altar') {
     const can = R.altar === 'gold' ? (run.gold || 0) >= 40 : R.altar === 'offer' ? run.bag.length > 0 : R.altar === 'ash' ? (run.cons || []).filter(c => G0.CONS[c.id].use !== 'none' && G0.CONS[c.id].price > 6).reduce((a, c) => a + c.n, 0) >= 6 : true;
     const want = R.altar === 'blood' || R.altar === 'scale' ? (THINK(pk) ? h > 0.6 : r() < 0.5) : can; // 3챕터 재의 제단은 태울 것이 넉넉할 때만
@@ -306,6 +324,7 @@ function jumpTo(pk, r, ch) {
   const ids = Object.keys(G0.CONS).filter(k => (G0.CONS[k].ch || 1) < ch && G0.CONS[k].use !== 'none'); G0.consAdd(run, 'herb', 'n', 3); for (let k = 0; k < 3; k++) G0.consAdd(run, ids[Math.floor(r() * ids.length)], 'n', 1);
   G0.applyGear(run); run.p.hp = run.p.hpMax; run.p.st = run.p.stMax; run.p.flask.life = run.p.flaskMax; run.p.flask.mana = run.p.flaskMax; run.p.flask.stam = run.p.flaskMax; run.gold = 0;
   spendTree(pk, r);
+  for (let c = 1; c < ch; c++) { run.ch = c; if (c >= run_('AWK.settleFrom') && G0.CHAPTERS[c + 1]) { G0.awkGrant(run); run.awkOffer = G0.awkOfferMake(run); if (run.awkOffer.length) G0.awkTake(run, awkChoice(pk, r, run)); else run.awkPending = 0; } } /* 정산 뒤의 깨달음 (앞 챕터를 깬 캐릭터 흉내) */
   run.ch = ch - 1; run.clears = ch - 1; run.phase = 'wait'; G0.enterChapter(run);
 }
 /* 챕터 사이: 정산 확정 → 상점(성향대로 산다) → 설문 → 다음 챕터 */
@@ -314,7 +333,26 @@ function betweenChapters(pk, r, out) {
   click('settleok'); handleSheets(pk, r);
   const g0 = run.gold || 0; shopPhase(pk, r);
   if (out && run.shop) (out.shops = out.shops || []).push({ ch: run.ch, gold: g0, left: run.gold || 0, hero: run.shop.stock.some(x => x.hero) ? 1 : 0, buys: (run.shop.log || []).filter(x => x.a === 'buy').map(x => x.tpl + ':' + x.g + ':' + x.price) }); /* 골드 흐름 (2챕터 장비 측정) */
+  if (out && run.shop && (run.shop.log || []).some(x => x.a === 'gamble')) out.shops[out.shops.length - 1].gamble = run.shop.log.filter(x => x.a === 'gamble').map(x => x.tpl + ':' + x.g + ':' + x.price + ':' + x.fit); /* 꾸러미를 샀을 때만 */
   click('shopleave'); G0.finishSurvey({ fun: 4 }); click('nextch');
+}
+/* 봉인된 꾸러미 (2챕터를 넘은 뒤의 상점만): 진열 장비를 산 뒤 남은 골드로. 신중 · 숙련 · 탐험가는 가장 낮은 등급의 칸부터, 나머지는 절반만 산다. 초보는 사지 않는다.
+   나온 장비는 전리품 창과 같은 판단으로 낀다(영웅 · 전설은 거의 끼운다) */
+function gamblePhase(pk, r) {
+  const G = G0.__G, run = G.run, S = run.shop; const gOn = run_('gambleOn'), gPrice = run_('gamblePrice'); if (!S || !gOn(run) || pk === 'novice') return;
+  const GR = { n: 0, m: 1, r: 2, h: 3, l: 4 }; const slots = run_('GAMBLE.slots');
+  run_('ask = () => true'); /* 팔 때 묻는 창은 늘 예 */
+  for (let n = 0; n < 4; n++) {
+    if ((G0.bagUsed ? G0.bagUsed(run) : run.bag.length) >= (G0.BAG_MAX || 12)) { const junk = run.bag.map(u => run.inv[u]).filter(x => x && (x.g === 'n' || x.g === 'm') && !run_('gFit')(run.p, x.tpl)).sort((a, b) => a.g.localeCompare(b.g) || a.uid.localeCompare(b.uid))[0]; if (junk) click('sell', junk.uid); } /* 가방이 가득 차면 직업에 맞지 않는 평범 · 고급 하나를 판다 */
+    if ((run.gold || 0) < gPrice(S.ch) || (G0.bagUsed ? G0.bagUsed(run) : run.bag.length) >= (G0.BAG_MAX || 12)) break;
+    if (!(THINK(pk) || pk === 'careful' || r() < 0.5)) break;
+    const cur = sl => Math.min(...(sl === 'ring' ? ['ring1', 'ring2'] : [sl]).map(e => run.eqU[e] && run.inv[run.eqU[e]] ? GR[run.inv[run.eqU[e]].g] : -1));
+    const slot = slots.map(sl => ({ sl, v: cur(sl) + r() * 0.5 })).sort((a, b) => a.v - b.v)[0].sl;
+    click('gamble', slot); const res = S.gamble; if (!res || !run.inv[res.it.uid]) break;
+    const it = run.inv[res.it.uid]; const kind = G0.tplKind(it.tpl); const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind;
+    const d = gearScore(G0.simEquip(run, it.uid, sl)) - gearScore(G0.gearStats(run.p)); const hl = it.g === 'h' || it.g === 'l'; const why = G0.equipWhy(run, it.uid, sl);
+    if (!why && ((hl && d > -10) || d > 0.5)) { G0.equipUid(run, it.uid, sl); G0.applyGear(run); }
+  }
 }
 /* 상점: 끼우면 나아지는 장비를 골드 안에서 산다. 신중·숙련·탐험가는 가장 나은 것부터, 나머지는 무작위로 */
 function shopPhase(pk, r) {
@@ -327,6 +365,7 @@ function shopPhase(pk, r) {
     click('buy', o.i); const uid = o.it.uid; if (run.bag.includes(uid)) G0.equipUid(run, uid, o.sl);
     G0.applyGear(run);
   }
+  gamblePhase(pk, r);
 }
 /* 0.6a.2 트리: 포인트가 있으면 성향대로 연다. 숙련·탐험가·신중은 한 갈래에 몰고(깊은 칸), 나머지는 아무 칸이나.
    연 스킬은 빈칸에 끼우고, 칸이 차면 가장 낮은 등급과 바꾼다 */
@@ -391,6 +430,7 @@ function playLoop(pk, r, out) {
   }
   out.floor = run.room; out.ch = run.ch || 1; out.lv = run.lv; out.gold = run.gold;
   if (OPT.detail && run.tree) { const cnt = {}; for (const id of run.tree.open) { const sk = G0.SK2[id]; if (sk) cnt[sk.b] = (cnt[sk.b] || 0) + 1; } const top = Object.entries(cnt).sort((x, y) => y[1] - x[1])[0]; out.branch = top ? top[0] : null; out.branchN = top ? top[1] : 0; out.branchOf = run.tree.open.length; out.mode = run.mode || 'normal'; } /* 10월 8일(7단계): 갈래(트리 칸을 가장 많이 연 갈래) · 연 칸 수 · 모드를 판마다 남긴다 */
+  if ((run.awk || []).length) out.awk = run.awk.slice(); { const ft = (run.rooms || []).filter(x => x.type === 'fate'); if (ft.length) out.fate = ft.map(x => x.took ? (x.ok ? '+' : '-') + x.took : 'skip'); } /* 깨달음 · 운명의 저울 (없으면 칸을 두지 않아 1챕터 결과 파일은 그대로) */
   { const hl = (run.drops || []).filter(x => x.g === 'h' || x.g === 'l').map(x => x.item + ':' + x.g + ':' + (x.ch || 1) + (x.boss ? ':boss' : '')); if (hl.length) out.hl = hl; } /* 영웅 · 전설을 얻은 기록 (없으면 칸을 두지 않아 1챕터 결과 파일은 그대로) */
   if (OPT.detail) { out.cons = (run.consLog || []).length; out.consIds = countBy((run.consLog || []).map(x => x.id)); out.loot = (run.lootLog || []).reduce((a, x) => ({ gold: a.gold + (x.gold || 0), lost: a.lost + (x.lost || 0), n: a.n + Object.values(x.got || {}).reduce((m, v) => m + v, 0) }), { gold: 0, lost: 0, n: 0 }); out.tree = run.tree ? run.tree.open.slice() : null; out.equip = (run.skills || []).slice(); out.flaskLeft = Object.assign({}, run.p.flask); out.pathsTaken = (run.pathLog || []).map(x => x.path); } out.gear = Object.values(run.inv).filter(x => run.eqU && Object.values(run.eqU).includes(x.uid)).map(x => x.tpl + ':' + x.g);
   return out;
