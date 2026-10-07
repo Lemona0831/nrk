@@ -40,7 +40,7 @@ const BUILDS = {
   },
   /* 원소술사 (10월 7일, docs/직업/원소술사.md): 원거리 · 생명력 90(+5, Lv1은 가장 낮다. 설계 86 · +4는 던전 보스 승률 0%라 올렸다) · 마력 화살 50%. 직업 규칙은 열충격(화상 + 둔화가 한 적에서 만나면 행동 끝에 깨진다)과 서리 무게(둔화된 적의 평소 공격 −30%) */
   elementalist: {
-    n: '원소술사', ico: '🔮', hp: 90, mp: 0, v2: 1, ranged: 1, wpnMul: 0.5,
+    n: '원소술사', ico: '🔮', hp: 110, mp: 0, v2: 1, ranged: 1, wpnMul: 0.5,
     lore: '불로 태우고 얼음으로 묶는다. 두 원소가 한 적에게서 만나면 깨진다.',
     rule: '원거리: 마력 화살과 집중 주문이 후열에 닿고 방패병에게 막히지 않는다. 대신 무기 피해의 50%(집중 주문 75%)다. 열충격: 한 적에게 화상과 둔화가 함께 있으면 그 행동이 끝날 때 둘 다 사라지고, (화상 + 둔화 × 2) × 3의 피해와 둔화 × 12의 붕괴가 들어간다. 열충격은 몸 낮추기를 지나가고, 버티기 같은 피해 감소는 절반만 받는다. 서리 무게: 둔화된 적이 나를 치는 평소 공격은 피해가 30% 준다. 강타 · 겨눈 한 발 · 화형 · 큰 한 방은 줄지 않는다. 스킬은 쓰고 나면 쿨타임만큼 기다린다',
     skills: [],
@@ -96,4 +96,4 @@ const UNLOCK = {
 };
 
 /* 레벨이 오를 때 오르는 생명력 (11.4절) */
-const LV_GAIN = { assassin: { hp: 5, mp: 0 }, warden: { hp: 6, mp: 0 }, hunter: { hp: 4, mp: 0 }, butcher: { hp: 6, mp: 0 }, elementalist: { hp: 5, mp: 0 }, spellblade: { hp: 5, mp: 0 }, monk: { hp: 5, mp: 0 }, confessor: { hp: 5, mp: 0 }, bloodmage: { hp: 5, mp: 0 } };
+const LV_GAIN = { assassin: { hp: 5, mp: 0 }, warden: { hp: 6, mp: 0 }, hunter: { hp: 4, mp: 0 }, butcher: { hp: 6, mp: 0 }, elementalist: { hp: 4, mp: 0 }, spellblade: { hp: 5, mp: 0 }, monk: { hp: 5, mp: 0 }, confessor: { hp: 5, mp: 0 }, bloodmage: { hp: 5, mp: 0 } };
