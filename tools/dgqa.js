@@ -339,10 +339,12 @@ function betweenChapters(pk, r, out) {
 /* 봉인된 꾸러미 (2챕터를 넘은 뒤의 상점만): 진열 장비를 산 뒤 남은 골드로. 신중 · 숙련 · 탐험가는 가장 낮은 등급의 칸부터, 나머지는 절반만 산다. 초보는 사지 않는다.
    나온 장비는 전리품 창과 같은 판단으로 낀다(영웅 · 전설은 거의 끼운다) */
 function gamblePhase(pk, r) {
-  const G = G0.__G, run = G.run, S = run.shop; if (!S || !G0.gambleOn || !G0.gambleOn(run) || pk === 'novice') return;
+  const G = G0.__G, run = G.run, S = run.shop; const gOn = run_('gambleOn'), gPrice = run_('gamblePrice'); if (!S || !gOn(run) || pk === 'novice') return;
   const GR = { n: 0, m: 1, r: 2, h: 3, l: 4 }; const slots = run_('GAMBLE.slots');
+  run_('ask = () => true'); /* 팔 때 묻는 창은 늘 예 */
   for (let n = 0; n < 4; n++) {
-    if ((run.gold || 0) < G0.gamblePrice(S.ch) || (G0.bagUsed ? G0.bagUsed(run) : run.bag.length) >= (G0.BAG_MAX || 12)) break;
+    if ((G0.bagUsed ? G0.bagUsed(run) : run.bag.length) >= (G0.BAG_MAX || 12)) { const junk = run.bag.map(u => run.inv[u]).filter(x => x && (x.g === 'n' || x.g === 'm') && !run_('gFit')(run.p, x.tpl)).sort((a, b) => a.g.localeCompare(b.g) || a.uid.localeCompare(b.uid))[0]; if (junk) click('sell', junk.uid); } /* 가방이 가득 차면 직업에 맞지 않는 평범 · 고급 하나를 판다 */
+    if ((run.gold || 0) < gPrice(S.ch) || (G0.bagUsed ? G0.bagUsed(run) : run.bag.length) >= (G0.BAG_MAX || 12)) break;
     if (!(THINK(pk) || pk === 'careful' || r() < 0.5)) break;
     const cur = sl => Math.min(...(sl === 'ring' ? ['ring1', 'ring2'] : [sl]).map(e => run.eqU[e] && run.inv[run.eqU[e]] ? GR[run.inv[run.eqU[e]].g] : -1));
     const slot = slots.map(sl => ({ sl, v: cur(sl) + r() * 0.5 })).sort((a, b) => a.v - b.v)[0].sl;
