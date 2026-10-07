@@ -150,13 +150,13 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .dockhead{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:calc(13px*var(--fs,1))}
 .legend{display:flex;gap:10px;margin:4px 0;font-size:calc(11.5px*var(--fs,1));color:var(--muted)}.lg{display:inline-flex;align-items:center;gap:4px}.lg:before{content:'';width:10px;height:10px;border-radius:2px;background:var(--c)}
 .gr-n{color:var(--gr-n)}.gr-m{color:var(--gr-m)}.gr-r{color:var(--gr-r)}.grb-n{border-color:var(--gr-n)}.grb-m{border-color:var(--gr-m)}.grb-r{border-color:var(--gr-r)}
-.g-atk{--c:#b8392c}.g-sk{--c:#7b55c0}.g-def{--c:#3a6cc4}.g-etc{--c:#3a8a45}.g-sig{--c:var(--cls,#8a6a2a)}
+.g-atk{--c:#b8392c;--bls:solid}.g-sk{--c:#7b55c0;--bls:double}.g-def{--c:#3a6cc4;--bls:dotted}.g-etc{--c:#3a8a45;--bls:dashed}.g-sig{--c:var(--cls,#8a6a2a);--bls:solid}.ab.g-sig{border-left-width:7px}/* 10월 8일: 묶음을 색과 함께 띠 무늬로도 나눈다(휴대폰은 묶음 이름을 숨긴다) */
 .ab.g-sig{background:color-mix(in srgb, var(--cls,#8a6a2a) 10%, var(--panel))}
 .fstat,.me{border-left:5px solid var(--cls,transparent)}
 .abgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:5px}
 .agp{display:contents}.agl{display:none}
 @media (min-width:720px){.abgrid{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}.agp{display:grid;grid-template-columns:repeat(var(--c,1),minmax(0,1fr));gap:5px;flex:var(--c,1) 1 0;min-width:calc(var(--c,1) * 138px)}.agl{grid-column:1/-1;display:block;font-size:calc(12px*var(--fs,1));color:var(--muted);letter-spacing:.04em;padding:0 2px 1px;border-bottom:1px solid var(--line)}}
-.ab{text-align:left;padding:5px 8px;min-height:44px;border-left:4px solid var(--c)}.ab b{display:block;font-size:calc(13.5px*var(--fs,1));line-height:1.25}.ab small{display:block;font-size:calc(11.5px*var(--fs,1));color:var(--muted);line-height:1.25}
+.ab{text-align:left;padding:5px 8px;min-height:44px;border-left:4px var(--bls,solid) var(--c)}.ab b{display:block;font-size:calc(13.5px*var(--fs,1));line-height:1.25}.ab small{display:block;font-size:calc(11.5px*var(--fs,1));color:var(--muted);line-height:1.25}
 .adesc{margin-top:6px;font-size:calc(12.5px*var(--fs,1));min-height:1.4em;color:var(--ink);opacity:.9}
 .wide{width:100%}
 .dock p{margin:0 0 6px}
@@ -203,7 +203,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .ord{list-style:none;display:flex;gap:4px;overflow-x:auto;margin:6px 0 2px;padding:0}.ord li{flex:none;font-size:calc(12.5px*var(--fs,1));border:1px solid var(--line);border-radius:6px;padding:3px 8px;background:var(--panel2);position:relative}
 .ord li+li:before{content:'›';position:absolute;left:-6px;color:var(--muted)}.ord li.me{border-color:var(--gold);color:var(--gold-ink);background:var(--gold);font-weight:700}
 .ord li.rsep{border:0;background:none;color:var(--muted);font-weight:700;padding:3px 2px;font-size:calc(11.5px*var(--fs,1))}.ord li.rsep:before,.ord li.rsep+li:before{content:none}.ord li.now{box-shadow:0 0 0 2px var(--gold)}.ord li.nx{opacity:.6}
-.ab.dis{cursor:not-allowed;background:var(--panel);border-style:dashed;border-left-style:solid;border-left-color:color-mix(in srgb,var(--c) 40%,var(--panel))}.ab.dis b{color:var(--muted)}
+.ab.dis{cursor:not-allowed;background:var(--panel);border-style:dashed;border-left-style:var(--bls,solid);border-left-color:color-mix(in srgb,var(--c) 40%,var(--panel))}.ab.dis b{color:var(--muted)}
 /* 0.6a.2 전투 보기 (10월 3일): 적 생명력은 굵은 막대와 큰 숫자, 상태는 생명력 바로 아래, 순번은 카드 위, 이번 차례에 남은 칸은 행동판 위 */
 .field .enemies{row-gap:12px;padding-top:6px}
 .field .en{padding-top:9px}
@@ -3049,6 +3049,7 @@ const HELP = [
     '순서는 속도로 정합니다. 빠른 쪽이 먼저, 같으면 내가 먼저입니다. 가속이 걸리면 맨 앞, 둔화가 걸리면 맨 뒤로 갑니다. 매복을 당하면 첫 라운드에 내가 맨 뒤입니다. 속도가 1.5 이상인 적은 라운드에 두 번 움직입니다.',
     '내 차례에는 ⚡빠른 행동 1번과 ▶주 행동 1번을 합니다. 빠른 행동(플라스크, 빠른 스킬)을 먼저 쓰면 차례가 이어지고, 주 행동(기본 공격, 방어, 흘리기, 보통 스킬)을 하면 차례가 끝납니다. ⏳느린 행동(강공격, 느린 스킬)은 두 칸을 다 써서, 이번 차례에 빠른 행동을 이미 했으면 고를 수 없습니다.',
     '행동판 위의 "⚡ 빠른 행동 + ▶ 주 행동"이 이번 차례에 남은 칸입니다. 적 카드 위쪽 번호는 그 적이 이번 라운드에 몇 번째로 움직이는지입니다.',
+    '행동 버튼은 왼쪽 띠로 묶음을 나눕니다. 공격은 한 줄, 스킬은 두 줄, 지키기는 점선, 회복과 그 밖은 끊긴 선, 직업 기술은 굵은 띠입니다.',
     '행동 버튼에 마우스를 올리면(휴대폰은 길게 누르면) 설명 창이 뜨고, 그 행동을 하면 내 다음 차례 전에 누가 움직이는지 미리 보여 줍니다.',
     '중독, 스태미나 회복, 보스의 시간 규칙은 라운드가 끝날 때 한 번씩 흐릅니다. 상태 옆 숫자는 세기입니다(도움말 "상태이상").'] },
   { k: 'hp', n: '생명력', t: [
