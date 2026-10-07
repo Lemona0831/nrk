@@ -17,6 +17,7 @@ const ROOM_TYPES = {
   shrine: { n: '성소', ico: '🕯️', w: 6, max: 3, from: 1, fight: 0, risk: 0, hint: '3개 방 동안 버프' },
   altar: { n: '제단', ico: '🩸', w: 5, max: 3, from: 2, fight: 0, risk: 0, hint: '대가 있는 거래' },
   event: { n: '이벤트', ico: '❔', w: 7, max: 5, from: 2, fight: 0, risk: 0, hint: '선택에 따라 다르다' },
+  fate: { n: '운명의 저울', ico: '⚖️', w: 0, max: 2, from: 2, fight: 0, risk: 0, hint: '장비를 올려 한 단계 위로 · 실패하면 잃는다' }, // 2챕터부터. genDoors가 쉬는 문 하나를 바꿔 끼운다(typeOk는 늘 거짓)
 };
 /* 방 골드 (10월 4일 경제 맞춤): 24층이 되어 깬 캐릭터의 정산이 평균 464(목표 약 320)라 방 골드를 30%쯤 낮췄다. 정산 평균 368, 험한 길 위주 478, 샛길 위주 313 */
 /* 강적은 상층 3, 하층 3까지 */
