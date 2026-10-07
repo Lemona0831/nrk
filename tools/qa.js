@@ -96,8 +96,8 @@ function sigRule(b, r) {
 /* 0.6a.2 직업의 판단: 스킬 이름이 아니라 데이터(fx)를 보고 고른다. 사람처럼 단순한 규칙 몇 개 */
 const psn2 = (u, k) => (u.s[k] ? u.s[k].stacks : 0);
 const stFx = a => !!(a && a.s && a.s.fx && a.s.fx.some(f => ['poison', 'st', 'bleed', 'ignite'].includes(f.k))); // 상태를 거는 스킬
-const enemyAvoid = (e, a) => !a.aoe && (!!e.evading || (!!e.countering && (a.melee || (a.s && a.s.tgt === 'melee'))) || (!!e.mimicOn && !a.self) || (e.foe === 'knight' && e.intent && ['retprep', 'return'].includes(e.intent.k) && stFx(a))); // 몸 낮추기 · 반격 태세 (10월 4일). 2챕터 (10월 7일): 본뜨는 망령에게는 세게 치지 않고, 되돌리기를 준비하는 기사에게는 상태를 걸지 않는다
-const enemyPrio = e => (e.role === 'thief' && (e.loot || (e.intent && e.intent.k === 'steal'))) ? 2 : e.lordWall ? 1.2 : e.pile ? (e.pileCol ? 1.8 : e.pile.wait <= 1 ? 0.6 : 0.3) : e.chant ? 1.5 : e.braced ? -1 : 0; // 도둑은 먼저, 영창 중인 화형 사제는 그다음(피해가 쌓이면 끊긴다), 버티는 적은 나중. 2챕터 뼈 더미(10월 7일): 수집가가 있으면 줍기 전에, 곧 일어설 더미는 앞으로(더미는 생명력이 낮아 한 번에 흩어진다). 군주의 뼈벽은 먼저 부순다(벽이 서 있으면 군주가 받는 한 적 피해가 절반)
+const enemyAvoid = (e, a) => !a.aoe && (!!e.evading || (!!e.countering && (a.melee || (a.s && a.s.tgt === 'melee'))) || (!!e.mimicOn && !a.self) || (e.foe === 'knight' && e.intent && ['retprep', 'return'].includes(e.intent.k) && stFx(a)) || (e.haze > 0 && !(e.foe === 'dancer' && e.intent && ['charge', 'heavy'].includes(e.intent.k)))); // 3챕터 (10월 7일): 허상을 두른 적은 다른 적이 있으면 두고 친다(칼춤을 모으는 무희는 겹을 걷는다) // 몸 낮추기 · 반격 태세 (10월 4일). 2챕터 (10월 7일): 본뜨는 망령에게는 세게 치지 않고, 되돌리기를 준비하는 기사에게는 상태를 걸지 않는다
+const enemyPrio = e => (e.role === 'thief' && (e.loot || (e.intent && e.intent.k === 'steal'))) ? 2 : e.lordWall ? 1.2 : e.role === 'crown' ? (e.crownHot ? 1.7 : -1) : e.foe === 'sundial' ? 1.3 : e.stkExp > 0 ? 1.2 : e.role === 'ember' ? 1.1 : e.role === 'mirage' ? 0.9 : e.pile ? (e.pileCol ? 1.8 : e.pile.wait <= 1 ? 0.6 : 0.3) : e.chant ? 1.5 : e.braced ? -1 : 0; // 도둑은 먼저, 영창 중인 화형 사제는 그다음(피해가 쌓이면 끊긴다), 버티는 적은 나중. 2챕터 뼈 더미(10월 7일): 수집가가 있으면 줍기 전에, 곧 일어설 더미는 앞으로(더미는 생명력이 낮아 한 번에 흩어진다). 군주의 뼈벽은 먼저 부순다(벽이 서 있으면 군주가 받는 한 적 피해가 절반)
 /* 숨겨진 직업 1 (10월 7일, butcher): 이 효과를 가진 스킬이 끼워졌을 때만 v2Pick의 도살자 판단이 걸린다 */
 const buFx = a => !!(a && a.s && a.s.fx.some(e => (e.s === 'bleed' && ['drain', 'exploit', 'grow', 'spread', 'meSt'].includes(e.k)) || e.k === 'grudge' || e.k === 'carry' || (e.k === 'lowx' && e.me) || e.on === 'kill' || (e.k === 'thorn' && e.bleed)));
 const buEatOnlyQ = a => !!(a && a.s && a.s.fx.some(e => e.k === 'drain' && e.s === 'bleed' && !e.me) && !a.s.fx.some(e => e.k === 'dmg'));
@@ -445,7 +445,7 @@ function heuristic(b, P, r, mem) {
   const hpf = p.hp / p.hpMax;
   const pv = E.previewAfter(b, 1);
   const hv = pv.find(x => x.e.intent && x.e.intent.k === 'heavy');
-  const ex = pv.find(x => x.e.intent && ['explode', 'burn', 'erupt', 'reflect'].includes(x.e.intent.k)); // 2챕터 솟구침 · 되비추기는 방어로 받는다(땅속 적은 흘릴 대상으로 고를 수 없다)
+  const ex = pv.find(x => x.e.intent && ['explode', 'burn', 'erupt', 'reflect', 'noon'].includes(x.e.intent.k)); // 3챕터 정오의 빛도 방어로 받는다 // 2챕터 솟구침 · 되비추기는 방어로 받는다(땅속 적은 흘릴 대상으로 고를 수 없다)
   // 실수
   if (r() < P.err * (mem.errMul || 1)) { const okL = L.filter(a => a.ok && a.id !== 'flee'); const a = okL[Math.floor(r() * okL.length)]; const ts = E.alive(b).filter(e => E.canTarget(b, e, a)); return [a.id, ts.length ? ts[Math.floor(r() * ts.length)].id : null, 'mistake']; }
   // 플라스크 (기억하고 있을 때만)
