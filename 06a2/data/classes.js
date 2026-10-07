@@ -7,7 +7,7 @@ const EXCL = {};   // 옛 직업 전용 스킬 (v2 직업은 data/skills.js의 �
 const SIG = {};    // 옛 직업 기술 (v2 시범에는 없다. docs/0.6a.2-개편-기획.md 12절 질문 4)
 
 /* 시작 스킬: v2 직업은 트리 밖의 시작 스킬 둘 (data/skills.js의 TREE2.starters와 같다) */
-const DEFAULT_SKILLS = { assassin: ['a_vital', 'a_slip'], warden: ['w_bash', 'w_brace'], hunter: ['h_aim', 'h_step'], butcher: ['b_hook', 'b_lap'], elementalist: ['e_ember', 'e_touch'], spellblade: ['sb_edge', 'sb_aegis'], monk: ['m_palm', 'm_brace'], confessor: ['c_mace', 'c_confess'] };
+const DEFAULT_SKILLS = { assassin: ['a_vital', 'a_slip'], warden: ['w_bash', 'w_brace'], hunter: ['h_aim', 'h_step'], butcher: ['b_hook', 'b_lap'], elementalist: ['e_ember', 'e_touch'], spellblade: ['sb_edge', 'sb_aegis'], monk: ['m_palm', 'm_brace'], confessor: ['c_mace', 'c_confess'], bloodmage: ['v_taint', 'v_drink'] };
 
 /* hp는 시작 장비(낡은 갑옷 +10)를 뺀 값이다. mp는 v2 직업에 없다 */
 const BUILDS = {
@@ -67,6 +67,13 @@ const BUILDS = {
     rule: '중독을 뺀 내 해로운 상태(출혈 · 화상 · 약화 · 취약 · 둔화)가 짐이다. 짐은 5까지 센다. 스킬과 방어로 적이 건 상태를 지우면 지운 숫자 2마다 보호 1(올림, 한 번에 3까지)을 얻는다. 방어하면 해로운 상태를 2 지운다. 바치거나 옮긴 상태는 보호가 되지 않는다. 스킬이 나에게 거는 상태(고행)는 행동이 끝난 뒤 걸리고, 막음과 의지로 막히지 않는다. 고행 상태는 바치거나 안고 칠 수만 있다. 지워도 보호가 없고, 옮겨지지 않는다. 스킬은 쓰고 나면 쿨타임만큼 기다린다',
     skills: [],
   },
+  /* 숨겨진 직업 3 (10월 7일, UNLOCK.bloodmage). 설계 · 까닭은 비공개 문서. 엔진 값은 index.html BLOOD. 원거리(BUILDS.ranged, CANTRIP 아님) */
+  bloodmage: {
+    n: '피의 술사', ico: '🩸', hp: 100, mp: 0, v2: 1, ranged: 1, wpnMul: 0.5,
+    lore: '피를 내어 주문을 앞당기고, 적에게 스민 독을 먹어 그 피를 되찾는다.',
+    rule: '원거리: 기본 공격과 스킬이 후열에 닿습니다. 대신 기본 공격은 무기 피해의 50%입니다. 피로 당기기: 쿨타임이 남은 스킬도 남은 쿨타임 1턴마다 최대 생명력의 4%를 내고 바로 쓸 수 있습니다. 내 차례마다 한 번이고, 내고 나서 생명력이 1 아래가 되면 쓸 수 없습니다. 먹기 스킬, 값을 깎는 스킬, 전투마다 1번인 스킬은 당길 수 없습니다. 낸 생명력은 피해가 아닙니다. 먹기: 적에게 걸린 중독을 없애고 그만큼 생명력을 되찾습니다. 한 번에 최대 생명력의 25%까지이고, 공격으로 치지 않습니다. 스킬은 쓰고 나면 쿨타임만큼 기다립니다',
+    skills: [],
+  },
 };
 
 /* 아직 만들지 않은 시작 직업 (캐릭터 만들기에 "준비 중"으로 보인다) */
@@ -85,7 +92,8 @@ const CLASS_SOON = [
 const UNLOCK = {
   butcher: { ico: '🚪', door: '피 냄새가 짙은 문', hint: '위태로운 싸움을 이겨 내면 열립니다.', need: [{ c: 'edge', n: 3 }, { c: 'foe:pilgrim', n: 1 }], show: 'edge', open: '피 냄새를 따라온 자가 문을 엽니다.' },
   confessor: { ico: '❔', door: '고해소의 닫힌 문', hint: '죄를 지고도 걸음을 멈추지 않은 자에게 고해소의 문이 열립니다.', need: [{ c: 'sinKill', n: 25 }, { c: 'confess', n: 3 }], open: '고해소의 문이 열렸습니다.' },
+  bloodmage: { ico: '🩸', door: '피에 젖은 문', hint: '피를 바친 이, 또는 독으로 열둘을 거둔 이에게 열립니다.', need: [{ c: 'poisonKill', n: 12 }, { c: 'bloodBoss:abbot', n: 1 }], show: 'poisonKill', open: '피를 바친 자가 문을 엽니다.' },
 };
 
 /* 레벨이 오를 때 오르는 생명력 (11.4절) */
-const LV_GAIN = { assassin: { hp: 5, mp: 0 }, warden: { hp: 6, mp: 0 }, hunter: { hp: 4, mp: 0 }, butcher: { hp: 6, mp: 0 }, elementalist: { hp: 5, mp: 0 }, spellblade: { hp: 5, mp: 0 }, monk: { hp: 5, mp: 0 }, confessor: { hp: 5, mp: 0 } };
+const LV_GAIN = { assassin: { hp: 5, mp: 0 }, warden: { hp: 6, mp: 0 }, hunter: { hp: 4, mp: 0 }, butcher: { hp: 6, mp: 0 }, elementalist: { hp: 5, mp: 0 }, spellblade: { hp: 5, mp: 0 }, monk: { hp: 5, mp: 0 }, confessor: { hp: 5, mp: 0 }, bloodmage: { hp: 5, mp: 0 } };

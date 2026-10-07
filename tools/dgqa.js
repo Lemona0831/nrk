@@ -201,7 +201,7 @@ function ch2Pre(b, P, r) {
 const ACT_G = (b, a) => { if (a === 'basic' || a === 'heavy') return 'wpn'; if (a === 'guard' || a === 'dodge') return 'prep'; const x = G0.actionList(b).find(y => y.id === a); return x && x.v2 ? (x.s.tgt === 'self' && !x.s.fx.some(f => f.k === 'dmg') ? 'prep' : 'skill') : null; };
 function ch2Post(b, P, r, a, t) {
   if (!b.carve || !b.carve.g) return [a, t]; const g = ACT_G(b, a); if (!g || !(b.carve.g[g] < 1) || r() >= (P.mech || 0.5) + 0.2) return [a, t]; // 군주가 이름을 새긴 행동은 힘이 빠지므로 다른 종류를 쓴다
-  const L = G0.actionList(b).filter(x => x.ok && x.id !== 'flee' && !['flaskL', 'flaskM', 'flaskS', 'sig'].includes(x.id) && !(b.carve.g[ACT_G(b, x.id)] < 1));
+  const L = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee' && !['flaskL', 'flaskM', 'flaskS', 'sig'].includes(x.id) && !(b.carve.g[ACT_G(b, x.id)] < 1));
   const atk = L.filter(x => !x.self && (x.id === 'basic' || x.id === 'heavy' || (x.v2 && x.s.fx.some(f => f.k === 'dmg'))));
   const pick = (atk.length ? atk : L)[0]; if (!pick) return [a, t];
   if (pick.self || pick.aoe) return [pick.id, null];
@@ -222,9 +222,9 @@ function fightCur(pk, r, mem, out) {
     // 보스를 깎지 못한 채 버티기만 하면 사람은 밀어붙인다 (한 수 앞만 보는 계산이 페이즈 전환을 피하는 것을 막는다)
     const bs = b.en.find(e => e.role === 'boss' && e.alive);
     if (bs) { if (bs.hp < lastHp - 0.5) stall = 0; else stall++; lastHp = bs.hp;
-      if (stall >= 3 && b.p.hp > b.p.hpMax * 0.5 && ['guard', 'dodge', 'sig'].includes(a)) { const L = G0.actionList(b).filter(x => x.ok && !['guard', 'dodge', 'flee', 'flaskL', 'flaskM', 'flaskS', 'sig'].includes(x.id)); if (L.length) { a = L[Math.floor(r() * L.length)].id; t = null; } } }
-    if (a === 'flee') { const L = G0.actionList(b).filter(x => x.ok && x.id !== 'flee'); a = L[0].id; t = null; }
-    if (P.look && r() < P.err) { const L = G0.actionList(b).filter(x => x.ok && x.id !== 'flee'); a = L[Math.floor(r() * L.length)].id; t = null; }
+      if (stall >= 3 && b.p.hp > b.p.hpMax * 0.5 && ['guard', 'dodge', 'sig'].includes(a)) { const L = G0.actionList(b).filter(x => x.ok && !x.pull && !['guard', 'dodge', 'flee', 'flaskL', 'flaskM', 'flaskS', 'sig'].includes(x.id)); if (L.length) { a = L[Math.floor(r() * L.length)].id; t = null; } } }
+    if (a === 'flee') { const L = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); a = L[0].id; t = null; }
+    if (P.look && r() < P.err) { const L = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); a = L[Math.floor(r() * L.length)].id; t = null; }
     else if (r() < (THINK(pk) ? 0.9 : P.healerFirst)) { // 보스전 기믹에 사람이 하는 대응 (비공개 문서)
       const act = G0.actionList(b).find(x => x.id === a); const monk = G0.alive(b).filter(e => e.monk && act && G0.canTarget(b, e, act)).sort((x, y) => (y.role === 'healer') - (x.role === 'healer'))[0];
       if (monk && act && act.tgt !== false) t = monk.id;
@@ -289,6 +289,13 @@ function shopPhase(pk, r) {
    연 스킬은 빈칸에 끼우고, 칸이 차면 가장 낮은 등급과 바꾼다 */
 const TIER_N = { 기본: 0, 하급: 0, 중급: 1, 상급: 2, 궁극: 3 };
 const ROWN = s => s.row || TIER_N[s.tier] + 1; // 0.6a.2 사다리: 줄이 깊을수록 높다
+/* 숨겨진 직업 3의 주 경로 (C5): 줄마다 연다. BM_VAR=1이면 역병 · 혈약은 다섯째 칸으로 포식 1줄 왼쪽(피 거두기)을 연다(변형 판) */
+const BM_PATH = { 역병: ['v_spill', 'v_host', 'v_gust', 'v_marsh', 'v_veil', 'v_carry', 'v_vector', 'v_pollen', 'v_black', 'v_pandemic'], 포식: ['v_reap', 'v_plant', 'v_replant', 'v_nibble', 'v_swarm', 'v_supper', 'v_deepreap', 'v_gather', 'v_teat', 'v_hunger'], 혈약: ['v_spear', 'v_cut', 'v_thorn', 'v_heart', 'v_oath', 'v_rupture', 'v_impale', 'v_covenant', 'v_burstheart', 'v_last'] };
+function bmPathNext(run, br) {
+  const L = (BM_PATH[br] || []).slice(); if (process.env.BM_VAR && br !== '포식' && run.tree.open.length === 4 && !run.tree.open.includes('v_reap')) return G0.SK2.v_reap && !G0.treeWhy(run, 'v_reap') ? G0.SK2.v_reap : null;
+  for (const id of L) if (!run.tree.open.includes(id)) return G0.SK2[id] && !G0.treeWhy(run, id) ? G0.SK2[id] : null;
+  return null;
+}
 function spendTree(pk, r) {
   const G = G0.__G, run = G.run; if (!run.tree || !(run.tree.pts > 0)) return;
   const all = G0.SKILLS2[run.build]; const T = G0.TREE2[run.build];
@@ -301,7 +308,8 @@ function spendTree(pk, r) {
     const pool = focus ? (can.filter(s => s.b === br).length ? can.filter(s => s.b === br) : can) : can;
     const root = focus ? pool.filter(x => ROWN(x) === 1 && x.b === br) : []; // 한 갈래를 파는 사람은 그 갈래의 첫 줄 두 칸부터 연다
     const sbPref = x => run.build === 'spellblade' && [3, 5].includes(x.row) && x.tgt === 'self' ? 1 : 0; // 마검사(10월 7일): 3 · 5줄에서는 나에게 쓰는 칸(칼에 싣기 · 채우기)
-    const s = root.length ? root[0] : focus ? pool.sort((x, y) => ROWN(y) - ROWN(x) || sbPref(y) - sbPref(x) || r() - 0.5)[0] : pool[Math.floor(r() * pool.length)];
+    const bmS = run.build === 'bloodmage' && focus ? bmPathNext(run, br) : null; // 숨겨진 직업 3 (비공개 문서 C5 · F4-11): 갈래마다 정한 주 경로
+    const s = bmS ? bmS : root.length ? root[0] : focus ? pool.sort((x, y) => ROWN(y) - ROWN(x) || sbPref(y) - sbPref(x) || r() - 0.5)[0] : pool[Math.floor(r() * pool.length)];
     G0.treeUnlock(run, s.id);
     const eq = run.skills.slice();
     if (eq.length < G0.EQUIP_SLOTS2) eq.push(s.id);
