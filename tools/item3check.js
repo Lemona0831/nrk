@@ -21,6 +21,19 @@ const near = (a, b, tol) => Math.abs(a - b) <= (tol || 0.6);
 
 /* 풀: 세 풀의 장비 id가 겹치지 않는다(겹치면 데이터가 서로 덮는다), 3챕터 풀은 200종 */
 T('pools', () => { const P = [V('CH1_POOL'), V('CH2_POOL'), V('CH3_POOL')]; const all = [].concat(...P); ok(new Set(all).size === all.length, '세 풀의 장비 id가 겹친다: ' + all.filter((k, i) => all.indexOf(k) !== i).join(', ')); ok(P[2].length === 200, '3챕터 풀 ' + P[2].length + '종'); ok(P[2].every(k => V('IFX["' + k + '"]')), '효과가 없는 3챕터 장비'); });
+/* 드롭: 3챕터 등급 확률, 같은 전설은 한 런에 한 번, 전설이 떨어지면 영웅으로 바꾼다 */
+T('drops', () => {
+  const tally = (src, n) => { const c = { n: 0, m: 0, r: 0, h: 0, l: 0 }; for (let i = 0; i < n; i++) c[G0.rollGradeCh(3, src)]++; return c; };
+  const rm = tally('room', 200000); const near2 = (v, t, tol) => Math.abs(v / 2000 - t) <= tol;
+  ok(near2(rm.n, 50, 1) && near2(rm.m, 32, 1) && near2(rm.r, 14, 0.7) && near2(rm.h, 3.4, 0.4) && near2(rm.l, 0.6, 0.2), '3챕터 일반 · 매복 등급 확률 ' + JSON.stringify(rm));
+  const bg = tally('big', 100000); ok(bg.n === 0 && bg.m === 0 && Math.abs(bg.h / 1000 - 10) < 1 && Math.abs(bg.l / 1000 - 2) < 0.6, '3챕터 강적 · 시련 · 보물: 희귀 이상만 ' + JSON.stringify(bg));
+  const bs = tally('boss', 100000); ok(bs.n === 0 && bs.m === 0 && Math.abs(bs.h / 1000 - 32) < 1.5 && Math.abs(bs.l / 1000 - 8) < 1, '3챕터 보스: 희귀 이상만 ' + JSON.stringify(bs));
+  const p = battle({ en: [['bruiser', 0]] }, 'assassin', 13, []).p; const run = { p, ch: 3, inv: {}, legSeen: [] }; const L3 = V('CH3_POOL'); const got = []; for (let i = 0; i < 12; i++) got.push(G0.dropKey(run, 'l'));
+  const legs = got.filter(k => G0.ITEMS[k].g === 'l');
+  ok(legs.length === 8 && new Set(legs).size === 8 && legs.every(k => L3.includes(k)), '같은 전설은 한 런에 한 번: 3챕터 전설 8종이 하나씩 (' + legs.length + '종)');
+  ok(got.slice(8).every(k => G0.ITEMS[k].g === 'h' && L3.includes(k)), '전설이 떨어지면 영웅으로 바뀐다');
+  const old = []; for (let i = 0; i < 3000; i++) old.push(G0.dropKey({ p, ch: 3, inv: {}, legSeen: [] }, 'm')); const share = old.filter(k => !L3.includes(k)).length / old.length; ok(share > 0.07 && share < 0.13 && old.filter(k => !L3.includes(k)).every(k => V('CH2_POOL').includes(k)), '고급 드롭의 10%는 2챕터 풀 (' + share.toFixed(3) + ')');
+});
 /* 허상 */
 T('mirrorlance', () => { const b = battle({ en: [['bruiser', 0]] }, 'assassin', 13, ['mirrorlance']); const e = b.en[0]; e.haze = 1; const d = hit(b, e, 100); ok(near(d, 30, 1) && e.haze === 0, '신기루 창: 허상을 걷어도 30%가 들어간다 (' + d + ')'); });
 T('gazebow', () => { const b = battle({ en: [['bruiser', 0]] }, 'hunter', 13, ['gazebow']); const e = b.en[0]; e.haze = 1; b.p.focus = { id: e.id, n: 2 }; const d = hit(b, e, 100, { id: 'basic', ranged: 1 }, { single: 1 }); ok(e.haze === 1 && d > 90, '응시하는 활: 추적 2겹이면 허상을 꿰뚫는다 (' + d + ', 허상 ' + e.haze + ')'); });
