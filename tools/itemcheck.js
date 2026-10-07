@@ -1,10 +1,24 @@
-/* ===== 아이템 효과 점검 (0.6 1챕터 풀) =====
-   아이템마다 여덟 직업에 끼워 무작위로 싸우게 하고, 효과가 실제로 일어났는지(FXHIT) 센다.
+/* ===== 아이템 효과 점검 (0.6 1챕터 풀, 0.6a.2 2챕터 풀) =====
+   아이템마다 직업에 끼워 무작위로 싸우게 하고, 효과가 실제로 일어났는지(FXHIT) 센다.
    고정 수치 효과(최대치, 플라스크, 비용)는 끼우기 전후 값을 비교한다.
-   실행: node tools/extract-engine.js && node tools/itemcheck.js */
+   2챕터 풀(CH2_POOL)은 2챕터 적 · 방 특성이 있는 방(ROOMS2)에서 싸운다. fits가 있는 장비는 그 직업으로만 센다.
+   실행: node tools/extract-engine.js 06a2 && node tools/itemcheck.js [--ch=1|2] (기본: 있는 풀 모두) */
 const E = require('./eng.gen.js');
 const { BUILDS, ROOMS, ITEMS } = E;
-const IFX = E.IFX, FXHIT = E.FXHIT, POOL = E.CH1_POOL;
+const IFX = E.IFX, FXHIT = E.FXHIT;
+const CH_ARG = (process.argv.find(a => a.startsWith('--ch=')) || '').slice(5);
+const POOLS = [[1, E.CH1_POOL]].concat(E.CH2_POOL ? [[2, E.CH2_POOL]] : []).filter(([c]) => !CH_ARG || String(c) === CH_ARG);
+/* 2챕터 방: 해골 · 주술사 · 뼈벽 · 땅속 · 부푼 시체 · 신속 · 방 특성(썩은 공기 · 물 · 무너진 납골벽). 낮은 레벨로 두어 싸움이 길게 이어지게 한다 */
+const ROOMS2 = [
+  { n: '2-1', ch: 2, lv: 2, en: [['skeleton'], ['skeleton'], ['healer']] },
+  { n: '2-2', ch: 2, lv: 2, en: [['bruiser'], ['hexer'], ['hexer']] },
+  { n: '2-3', ch: 2, lv: 2, en: [['bruiser'], ['mason'], ['archer']] },
+  { n: '2-4', ch: 2, lv: 2, en: [['burrower'], ['burrower'], ['archer']] },
+  { n: '2-5', ch: 2, lv: 2, en: [['skeleton', 1], ['bloat'], ['hexer']], mods: ['rotair'] },
+  { n: '2-6', ch: 2, lv: 2, en: [['bruiser', 1], ['skeleton'], ['healer']], swift: [0], mods: ['flooded'] },
+  { n: '2-7', ch: 2, lv: 2, en: [['thief'], ['pyre'], ['bloat']], mods: ['bonepile'] },
+  { n: '2-8', ch: 2, lv: 2, en: [['skeleton'], ['mason'], ['shield']] },
+];
 function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const slotOf = k => { const s = ITEMS[k].slot; return s === 'ring1' || s === 'ring2' ? 'ring1' : s; };
 function player(build, k, r) {
@@ -14,12 +28,14 @@ function player(build, k, r) {
   return p;
 }
 const bad = [];
-function fight(build, k, seed) {
+function fight(build, k, seed, ch) {
   const r = rng(seed); const p = player(build, k, r);
-  const rooms = [0, 1, 2, 3, 4, 6, 7, 8];
-  for (const ri of rooms) {
-    const b = E.roomBattle(p, ROOMS[ri], 'mother', seed + ri); b.rngF = r;
+  const rooms = ch === 2 ? ROOMS2 : [0, 1, 2, 3, 4, 6, 7, 8].map(i => ROOMS[i]);
+  for (let ri = 0; ri < rooms.length; ri++) {
+    if (ch === 2) for (const f of ['life', 'mana', 'stam']) p.flask[f] = E.flaskCap(p, f); /* 2챕터 방은 플라스크를 채워 방 특성 · 적과 함께 마시는 효과를 시험한다 */
+    const b = E.roomBattle(p, rooms[ri], 'mother', seed + ri); b.rngF = r;
     if (r() < 0.3) { p.s.weak = { stacks: 1, until: b.t + 2, dur: 2 }; } // 정화·플라스크 효과를 시험할 디버프
+    if (ch === 2 && r() < 0.5) { p.s.poison = { stacks: 6, until: 9999, dur: 9999 }; p.s.vuln = { stacks: 2, until: 9999, dur: 9999 }; p.s.bleed = { stacks: 3, until: 9999, dur: 9999 }; p.s.weak = { stacks: 2, until: 9999, dur: 9999 }; } /* 2챕터: 해로운 상태 여럿을 안고 시작해 조이기 · 지우기 · 옮기기 장비를 시험한다 */
     let n = 0;
     while (!b.over && n++ < 160) {
       const L = E.actionList(b).filter(a => a.ok && a.id !== 'flee');
@@ -40,30 +56,33 @@ function staticCheck(k) {
   const f = IFX[k]; if (!f) return null; const out = [];
   const SB = BUILDS.templar ? 'templar' : Object.keys(BUILDS)[0]; // 0.6a.2 시험판(06a2)에는 성전사가 없다
   const a = player(SB, null, rng(1)), b = player(SB, k, rng(1));
-  if (f.st) { if (f.st.hp && Math.sign(E.calcHpMax(b) - E.calcHpMax(a)) !== Math.sign(f.st.hp)) out.push('최대 생명력'); if (f.st.mp && Math.sign(E.calcMpMax(b) - E.calcMpMax(a)) !== Math.sign(f.st.mp)) out.push('최대 마나'); if (f.st.st && E.calcStMax(b) - E.calcStMax(a) < 1) out.push('최대 스태미나'); }
+  if (f.st) { if (f.st.hp && Math.sign(E.calcHpMax(b) - E.calcHpMax(a)) !== Math.sign(f.st.hp)) out.push('최대 생명력'); if (f.st.mp && Math.sign(E.calcMpMax(b) - E.calcMpMax(a)) !== Math.sign(f.st.mp)) out.push('최대 마나'); if (f.st.st && Math.sign(E.calcStMax(b) - E.calcStMax(a)) !== Math.sign(f.st.st)) out.push('최대 스태미나'); }
   if (f.hpMul && !(E.calcHpMax(b) < E.calcHpMax(a))) out.push('생명력 배율');
   if ((f.heal || f.healMul) && Math.abs(E.flaskHealFrac(b) - E.flaskHealFrac(a)) < 1e-9) out.push('플라스크 회복');
   if (f.cap) for (const fk in f.cap) if (E.flaskCap(b, fk) - E.flaskCap(a, fk) !== f.cap[fk]) out.push('플라스크 한도');
-  if (f.cost) { const ids = ['heavy', 'guard', 'dodge']; const fn = { heavy: E.heavyCost, guard: E.guardCost, dodge: E.dodgeCost }; if (!ids.some(id => fn[id](b) !== fn[id](a)) && k !== 'gravespade' && k !== 'wardcharm') out.push('행동 비용'); }
+  if (f.cost && !f.condCost) { const ids = ['heavy', 'guard', 'dodge']; const fn = { heavy: E.heavyCost, guard: E.guardCost, dodge: E.dodgeCost }; if (!ids.some(id => fn[id](b) !== fn[id](a)) && k !== 'gravespade' && k !== 'wardcharm') out.push('행동 비용'); }
   return out;
 }
-const UI_ONLY = { pilgcloak: '샘 회복(화면)', pilgtoken: '샘 회복(화면)', pilgcanteen: '샘 충전(화면)', rustykey: '보물 방 골드(단계 6·9)', tonic: '스태미나 플라스크 양' };
+const UI_ONLY = { pilgcloak: '샘 회복(화면)', pilgtoken: '샘 회복(화면)', pilgcanteen: '샘 충전(화면)', rustykey: '보물 방 골드(단계 6·9)', tonic: '스태미나 플라스크 양', baptism: '방을 이기면 충전(전투 밖, dgqa)' };
 const res = [];
 const t0 = Date.now();
-for (const k of POOL) {
+const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7).split(',').filter(Boolean);
+for (const [ch, POOL] of POOLS) for (const k of POOL.filter(x => !ONLY.length || ONLY.includes(x))) {
   for (const key in FXHIT) delete FXHIT[key];
   const before = bad.length;
   let seed = 100;
-  for (const build of Object.keys(BUILDS).filter(x => !BUILDS[x].tut)) for (let i = 0; i < 4; i++) fight(build, k, seed += 13);
-  if (!(FXHIT[k] > 0) && IFX[k]) for (const build of Object.keys(BUILDS).filter(x => !BUILDS[x].tut)) for (let i = 0; i < 12; i++) fight(build, k, seed += 13); // 조건이 드문 효과는 더 싸워 본다
+  const CLS = Object.keys(BUILDS).filter(x => !BUILDS[x].tut && (!ITEMS[k].fits || ITEMS[k].fits.includes(x))); /* fits: 그 직업에서만 일어나는 효과 */
+  for (const build of CLS) for (let i = 0; i < 4; i++) fight(build, k, seed += 13, ch);
+  if (!(FXHIT[k] > 0) && IFX[k]) for (const build of CLS) for (let i = 0; i < 12; i++) fight(build, k, seed += 13, ch); // 조건이 드문 효과는 더 싸워 본다
   const hits = FXHIT[k] || 0; const st = staticCheck(k); const f = IFX[k];
   const kind = !f ? '예전 아이템(엔진 직접)' : UI_ONLY[k] ? UI_ONLY[k] : (Object.keys(f).every(x => ['st', 'hpMul', 'heal', 'healMul', 'cap', 'cost', 'stamMul', 'flaskCleanse', 'goldMul', 'treasureGold', 'spring', 'springLife', 'manaToHp', 'deathSave'].includes(x)) ? '고정 수치' : '전투 효과');
   const ok = bad.length === before && (!f || UI_ONLY[k] || hits > 0 || (st && st.length === 0 && kind === '고정 수치')) && !(st && st.length);
-  res.push({ k, n: ITEMS[k].n, g: ITEMS[k].g, kind, hits, fail: st && st.length ? st.join(', ') : '', ok });
+  res.push({ k, ch, n: ITEMS[k].n, g: ITEMS[k].g, kind, hits, fail: st && st.length ? st.join(', ') : '', ok });
 }
 const OFF = E.V2_OFF || []; // 0.6a.2(06a2): 사라진 규칙에 묶여 드롭·상점에서 뺀 장비는 실패로 세지 않고 따로 보인다
 const fails = res.filter(x => !x.ok && !OFF.includes(x.k)); const offs = res.filter(x => !x.ok && OFF.includes(x.k));
-for (const x of res) if (!x.ok || process.argv.includes('-v')) console.log((x.ok ? 'ok  ' : OFF.includes(x.k) ? 'off ' : 'FAIL') + ' ' + x.k.padEnd(14) + ' ' + x.n + ' [' + x.kind + '] 발동 ' + x.hits + (x.fail ? ' 비교 실패: ' + x.fail : ''));
+for (const x of res) if (!x.ok || process.argv.includes('-v')) console.log((x.ok ? 'ok  ' : OFF.includes(x.k) ? 'off ' : 'FAIL') + ' ' + x.ch + '챕터 ' + x.k.padEnd(14) + ' ' + x.n + ' [' + x.kind + '] 발동 ' + x.hits + (x.fail ? ' 비교 실패: ' + x.fail : ''));
+for (const [ch] of POOLS) { const R = res.filter(x => x.ch === ch); const F = fails.filter(x => x.ch === ch); const O = offs.filter(x => x.ch === ch); console.log(ch + '챕터 풀: 아이템 ' + R.length + '종, 통과 ' + (R.length - F.length - O.length) + ', 실패 ' + F.length + (O.length ? ', 드롭에서 뺀 장비(V2_OFF) 발동 0: ' + O.length : '')); }
 console.log('아이템 ' + res.length + '종, 통과 ' + (res.length - fails.length - offs.length) + ', 실패 ' + fails.length + (OFF.length ? ', 드롭에서 뺀 장비(V2_OFF) 가운데 발동 0: ' + offs.length + '/' + OFF.length : '') + ', 이상 상태 ' + bad.length + ' (' + ((Date.now() - t0) / 1000).toFixed(1) + '초)');
 if (bad.length) console.log(bad.slice(0, 10).join('\n'));
 process.exitCode = fails.length || bad.length ? 1 : 0;

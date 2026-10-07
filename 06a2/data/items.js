@@ -37,7 +37,7 @@ const FREE_POOL = ['ragechain', 'markamu', 'resostone', 'wardcrest', 'vpouch', '
 
 /* ===== 0.6 장비 (기획서 11.5절) ===== */
 /* 등급: 기본 수치에 붙는 보너스(%) 범위 */
-const GRADE = { n: { n: '평범', lo: 1, hi: 5 }, m: { n: '고급', lo: 5, hi: 10 }, r: { n: '희귀', lo: 10, hi: 15 } };
+const GRADE = { n: { n: '평범', lo: 1, hi: 5 }, m: { n: '고급', lo: 5, hi: 10 }, r: { n: '희귀', lo: 10, hi: 15 }, h: { n: '영웅', lo: 15, hi: 20 }, l: { n: '전설', lo: 20, hi: 25 } }; /* 영웅 · 전설은 2챕터부터 (docs/아이템/장비-경제.md 2절) */
 /* 슬롯마다 기본 수치. v는 1·2·3챕터 값 */
 const SLOT_BASE = {
   weapon: { k: 'wpn', lab: '무기 피해', v: [8, 11, 15] },

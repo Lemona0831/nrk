@@ -82,15 +82,18 @@ function handleSheets(pk, r) {
       const it = run.inv[S.data.uid]; const kind = G0.tplKind(it.tpl); const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind;
       const d = gearScore(G0.simEquip(run, it.uid, sl)) - gearScore(G0.gearStats(run.p));
       const act = !!G0.ITEMS[it.tpl].act; const fit = G0.classFit(run.p, it.tpl);
+      const hl = it.g === 'h' || it.g === 'l'; const why = G0.equipWhy ? G0.equipWhy(run, it.uid, sl) : ''; /* 2챕터 영웅 · 전설: 성향과 상관없이 끼어 본다(초보 빼고). 전설은 하나만(equipWhy) */
       let eq;
-      if (THINK(pk)) eq = d > 0.5 || (act && fit && d > -6) || (act && r() < P.curious * 0.4 && d > -3);
+      if (hl && !why && pk !== 'novice' && d > -10) eq = true;
+      else if (THINK(pk)) eq = d > 0.5 || (act && fit && d > -6) || (act && r() < P.curious * 0.4 && d > -3);
       else if (pk === 'novice') eq = r() < 0.5;
       else eq = d > 2 || (act && r() < P.curious * 0.5);
+      if (why) eq = false;
       if (eq) click('dropequip', it.uid, { s: sl }); else click('dropkeep');
     } else if (S.kind === 'choice') {
       const o = S.data.offer; const k = THINK(pk) ? (o.find(x => G0.classFit(run.p, x)) || o[0]) : o[Math.floor(r() * o.length)];
       click('choose', k);
-    } else if (S.kind === 'bagfull') { click(run.bag.length ? 'bfdrop' : 'bfskip', run.bag[0]); }
+    } else if (S.kind === 'bagfull') { const keep = u => run.inv[u] && ['h', 'l'].includes(run.inv[u].g); click(run.bag.length ? 'bfdrop' : 'bfskip', run.bag.find(u => !keep(u)) || run.bag[0]); } /* 영웅 · 전설은 버리지 않는다 */
     else if (S.kind === 'stats') {
       const pref = PREF[run.build];
       const KEYS = G0.STAT_KEYS || ['str', 'dex', 'int']; S.data.alloc = S.data.alloc || Object.fromEntries(KEYS.map(k => [k, 0]));
@@ -267,10 +270,11 @@ function playChar(pk, build, seed) {
   return playLoop(pk, r, out);
 }
 /* 챕터 사이: 정산 확정 → 상점(성향대로 산다) → 설문 → 다음 챕터 */
-function betweenChapters(pk, r) {
+function betweenChapters(pk, r, out) {
   const G = G0.__G, run = G.run;
   click('settleok'); handleSheets(pk, r);
-  shopPhase(pk, r);
+  const g0 = run.gold || 0; shopPhase(pk, r);
+  if (out && run.shop) (out.shops = out.shops || []).push({ ch: run.ch, gold: g0, left: run.gold || 0, hero: run.shop.stock.some(x => x.hero) ? 1 : 0, buys: (run.shop.log || []).filter(x => x.a === 'buy').map(x => x.tpl + ':' + x.g + ':' + x.price) }); /* 골드 흐름 (2챕터 장비 측정) */
   click('shopleave'); G0.finishSurvey({ fun: 4 }); click('nextch');
 }
 /* 상점: 끼우면 나아지는 장비를 골드 안에서 산다. 신중·숙련·탐험가는 가장 나은 것부터, 나머지는 무작위로 */
@@ -278,7 +282,7 @@ function shopPhase(pk, r) {
   const G = G0.__G, run = G.run, S = run.shop; if (!S) return;
   const delta = it => { const kind = G0.tplKind(it.tpl); const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind; const had = !!run.inv[it.uid]; run.inv[it.uid] = it; const d = gearScore(G0.simEquip(run, it.uid, sl)) - gearScore(G0.gearStats(run.p)); if (!had) delete run.inv[it.uid]; return { d: d + (G0.classFit(run.p, it.tpl) && G0.ITEMS[it.tpl].act ? 2 : 0), sl }; };
   for (let n = 0; n < 6; n++) {
-    const opts = S.stock.map((x, i) => Object.assign({ i }, x)).filter(o => !o.sold && o.price <= (run.gold || 0) && (G0.bagUsed ? G0.bagUsed(run) : run.bag.length) < (G0.BAG_MAX || 12)).map(o => Object.assign(o, delta(o.it))).filter(o => o.d > 0.5);
+    const opts = S.stock.map((x, i) => Object.assign({ i }, x)).filter(o => !o.sold && o.price <= (run.gold || 0) && (G0.bagUsed ? G0.bagUsed(run) : run.bag.length) < (G0.BAG_MAX || 12)).map(o => Object.assign(o, delta(o.it))).map(o => (o.it.g === 'h' && (o.d += 4), o)).filter(o => o.d > 0.5); /* 영웅 칸: 효과가 크다고 보고 더 친다 */
     if (!opts.length) break;
     const o = THINK(pk) || pk === 'careful' ? opts.sort((a, b) => b.d - a.d)[0] : opts[Math.floor(r() * opts.length)];
     click('buy', o.i); const uid = o.it.uid; if (run.bag.includes(uid)) G0.equipUid(run, uid, o.sl);
@@ -327,7 +331,7 @@ function playLoop(pk, r, out) {
     if (G.scr === 'settle') {
       if ((run.ch || 1) >= OPT.chapters) { out.res = 'clear'; break; }
       (out.chs = out.chs || []).push({ ch: run.ch, lv: run.lv, gold: run.settle.total, bossHp: out.bossHp, bossLv: out.bossLv });
-      betweenChapters(pk, r); out.bossHp = null; out.bossLv = null; continue;
+      betweenChapters(pk, r, out); out.bossHp = null; out.bossLv = null; continue;
     }
     handleSheets(pk, r); spendTree(pk, r);
     if (!run.cur && run.cross) { const k = pickPath(pk, run, r); (out.paths = out.paths || []).push(k); G0.choosePath(k); continue; }
@@ -347,6 +351,7 @@ function playLoop(pk, r, out) {
     handleSheets(pk, r);
   }
   out.floor = run.room; out.ch = run.ch || 1; out.lv = run.lv; out.gold = run.gold;
+  { const hl = (run.drops || []).filter(x => x.g === 'h' || x.g === 'l').map(x => x.item + ':' + x.g + ':' + (x.ch || 1) + (x.boss ? ':boss' : '')); if (hl.length) out.hl = hl; } /* 영웅 · 전설을 얻은 기록 (없으면 칸을 두지 않아 1챕터 결과 파일은 그대로) */
   if (OPT.detail) { out.cons = (run.consLog || []).length; out.consIds = countBy((run.consLog || []).map(x => x.id)); out.loot = (run.lootLog || []).reduce((a, x) => ({ gold: a.gold + (x.gold || 0), lost: a.lost + (x.lost || 0), n: a.n + Object.values(x.got || {}).reduce((m, v) => m + v, 0) }), { gold: 0, lost: 0, n: 0 }); out.tree = run.tree ? run.tree.open.slice() : null; out.equip = (run.skills || []).slice(); out.flaskLeft = Object.assign({}, run.p.flask); out.pathsTaken = (run.pathLog || []).map(x => x.path); } out.gear = Object.values(run.inv).filter(x => run.eqU && Object.values(run.eqU).includes(x.uid)).map(x => x.tpl + ':' + x.g);
   return out;
 }
