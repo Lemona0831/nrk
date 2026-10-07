@@ -5,7 +5,7 @@
 const N = +(process.argv[2] || 10000);
 const { G0, run_, rng, click, handleSheets } = require('./dgqa.js');
 const G = G0.__G;
-const C_ = ch => run_(`chOf(${ch})`), roomMax = run_('roomMax');
+const C_ = ch => run_(`chOf(${ch})`), roomMax = (t, ch) => run_('((chData(' + ch + ').roomMax || {})["' + t + '"] || ROOM_TYPES["' + t + '"].max)');
 const FIGHTS = ['normal', 'ambush', 'strong', 'treasure', 'trial'], RESTS = ['spring', 'shrine', 'altar', 'event'];
 let bad = 0; const errs = {}; const restMaxSeen = {};
 const fail = (k, ex) => { bad++; errs[k] = errs[k] || { n: 0, ex }; errs[k].n++; };
@@ -52,11 +52,12 @@ function genCheck(ch, seed) {
   }
 }
 const t0 = Date.now();
-for (const ch of [1, 2]) for (let s = 0; s < N; s++) genCheck(ch, 100 + s * 7 + ch * 100003);
-console.log(`던전 생성 ${N}번 × 2챕터, ${((Date.now() - t0) / 1000).toFixed(0)}초, 규칙 위반 ${bad}건`);
+for (const ch of [1, 2, 3]) for (let s = 0; s < N; s++) genCheck(ch, 100 + s * 7 + ch * 100003); /* 10월 8일: 3챕터까지 */
+console.log(`던전 생성 ${N}번 × 3챕터, ${((Date.now() - t0) / 1000).toFixed(0)}초, 규칙 위반 ${bad}건`);
 for (const k in errs) console.log('  ' + k + ': ' + errs[k].n + '건 (예: ' + errs[k].ex + ')');
 console.log('고른 쉬는 방 최대:', JSON.stringify(restMaxSeen));
 
+if (!process.env.DGGEN_PASS) { console.log('끝까지 지나기(2)는 옛 0.6b 흐름 기준이라 06a2에서는 건너뛴다. 끝까지 지나기는 dgqa가 맡는다. 켜려면 DGGEN_PASS=1'); process.exit(bad ? 1 : 0); }
 /* 2) 강제 승리로 끝까지 지나기 */
 function forceWin() {
   G0.enterRoom(); const b = G.b;
