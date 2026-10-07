@@ -2374,7 +2374,7 @@ function decideIntent(b, e) {
       it = c === 1 ? { k: 'brace' } : (c === 2 && !other) ? { k: 'charge' } : { k: 'attack' }; break;
     }
     case 'shield': { const c = n % 4; if (e.monk) { const hm = al.find(x => x.monk && x.role === 'healer'); it = c === 0 ? (hm ? { k: 'guard', tgt: hm.id } : { k: 'brace' }) : c === 1 ? { k: 'brace' } : c === 2 ? { k: 'counter' } : { k: 'attack' }; break; } it = c === 0 ? { k: 'attack' } : c === 2 ? { k: 'counter' } : { k: 'brace' }; break; } // 공격 → 버티기 → 반격 태세 → 버티기 (전열 동료를 대신 맞는 것은 그대로)
-    case 'archer': { const c = n % 3; const on = Math.floor(n / 3) % 2 === 0; it = c === 0 ? { k: 'aim' } : c === 1 ? ((b.ctx.ch || 1) === 2 ? { k: 'attack', aimed: 1, poison: on ? 2 : 0 } : { k: 'attack', aimed: 1, bleed: on ? EKW.archerBleed : 0 }) : { k: 'evade' }; break; } // 2챕터 납골당 궁수: 썩은 화살(출혈 대신 중독 2) // 겨누기 → 겨눈 한 발 → 몸 낮추기
+    case 'archer': { const c = n % 3; const on = Math.floor(n / 3) % 2 === 0; it = c === 0 ? ((b.ctx.ch || 1) >= 3 && bigPending(b, e) ? { k: 'attack' } : { k: 'aim' }) : /* 3챕터: 다른 큰 공격이 예고되어 있으면 겨누지 않는다(2절 7번) */ c === 1 ? ((b.ctx.ch || 1) >= 3 && !(e.intent && e.intent.k === 'aim') ? { k: 'attack' } : (b.ctx.ch || 1) === 2 ? { k: 'attack', aimed: 1, poison: on ? 2 : 0 } : { k: 'attack', aimed: 1, bleed: on ? EKW.archerBleed : 0 }) : { k: 'evade' }; break; } /* 3챕터: 겨누지 않았으면 겨눈 한 발도 없다 */ // 2챕터 납골당 궁수: 썩은 화살(출혈 대신 중독 2) // 겨누기 → 겨눈 한 발 → 몸 낮추기
     case 'healer': {
       if (e.monk) { const bs = al.find(x => x.role === 'boss'); it = !bs ? { k: 'attack' } : n % 3 === 2 || bs.hp >= bs.hpMax ? { k: 'bless', tgt: bs.id } : { k: 'heal', tgt: bs.id }; break; } // 치유 수도사: 치유 → 치유 → 기도(축복)
       // 사제 (10월 4일): 생명력이 문턱 아래인 동료가 있으면 치유, 없으면 곧 때릴 동료에게 축복
@@ -2387,7 +2387,7 @@ function decideIntent(b, e) {
     case 'summoner': { const c = n % 3; it = c === 0 && al.filter(x => x.role === 'minion').length < SUMMON.cap ? { k: 'summon' } : c === 1 ? { k: 'curse' } : { k: 'attack' }; break; } // 소환 → 저주 → 공격
     case 'bomber': it = { k: 'fuse' }; break;
     case 'pyre': { // 화형 사제 (10월 5일): 영창 시작 → 영창 → 화형. 다른 적이 영창 중이면 불화살. 화형이나 끊긴 뒤에는 한 번 불화살
-      const other = al.some(x => x !== e && x.intent && CHANT_K.includes(x.intent.k));
+      const other = al.some(x => x !== e && x.intent && CHANT_K.includes(x.intent.k)) || ((b.ctx.ch || 1) >= 3 && !(e.intent && CHANT_K.includes(e.intent.k)) && bigPending(b, e)); // 3챕터: 다른 큰 공격이 예고되어 있으면 영창을 시작하지 않는다
       if (e.intent && e.intent.k === 'chant' && e.chant) it = { k: 'chanting' };
       else if (e.intent && e.intent.k === 'chanting' && e.chant) it = { k: 'burn' };
       else if (e.pyreRest || other) { e.pyreRest = 0; it = { k: 'attack' }; }
@@ -2618,7 +2618,7 @@ function enemyAct(b, e) {
     case 'steal': { const lt = stealLoot(b); if (lt) { e.loot = lt; logp(b, 'bad', e.n + '이(가) ' + lt.n + '을(를) 훔친다. 달아나기 전에 잡으면 되찾는다'); } else logp(b, 'sys', e.n + '이(가) 훔칠 것을 찾지 못한다'); break; }
     case 'flee': { if (e.stuck) { e.stuck = 0; logp(b, 'good', e.n + '이(가) 끈끈이에 걸려 달아나지 못한다'); break; } e.alive = false; e.fled = 1; logp(b, 'bad', e.n + '이(가) ' + (e.loot ? e.loot.n + '을(를) 들고 ' : '') + '달아난다'); if (e.loot) loseLoot(e.loot); checkEnd(b); break; }
     case 'charge': e.teleTurn = b.turnIdx; logp(b, 'sys', e.n + ({ bishop: '이(가) 뼈 창을 겨눈다', cantor: '이(가) 숨을 크게 들이쉰다. 노래가 끝나 간다', scribe: '이(가) 마지막 줄을 적기 시작한다', colossus: '의 몸이 하얗게 달아오른다', reaper: '의 낫에 불씨가 모인다', dancer: '이(가) 칼끝을 모은다. 남은 윤곽만큼 춤이 길다' }[e.foe] || (e.boss === 'queen' ? '의 창끝에 해가 맺힌다' : '') || '이(가) 무기를 높이 치켜든다. 강타가 온다')); break;
-    case 'heavy': { const bm = e.boss === 'abbot' ? 1 + ABBOT.brand * st(b.p, 'brand') : 1; const jd = e.boss === 'abbot' && st(b.p, 'brand') >= 3; if (jd) codexHit(b, 'abbot', 'judgment'); const fl = { bishop: '의 뼈 창이 꽂힌다', cantor: '의 노래가 끝난다. 곁의 적들이 한꺼번에 덮친다', scribe: '이(가) 선고를 내린다' }[e.foe]; const x = hurtPlayer(b, d * heavyMulOf(e, b) * bm, { src: e, single: 1, charged: 1, judgment: jd ? 1 : 0, label: jd ? e.n + '이(가) 심판을 내린다' : fl ? e.n + fl : e.n + '의 강타가 내리꽂힌다' + (bm > 1 ? '. 낙인이 타오른다' : '') }); if (x > 0) addS(b, b.p, 'vuln', EKW.heavyVuln); leech(b, e, x); if (isCh3(b)) fireCarry(b, e, 1, x > 0);
+    case 'heavy': { const bm = e.boss === 'abbot' ? 1 + ABBOT.brand * st(b.p, 'brand') : 1; const jd = e.boss === 'abbot' && st(b.p, 'brand') >= 3; if (jd) codexHit(b, 'abbot', 'judgment'); const fl = { bishop: '의 뼈 창이 꽂힌다', cantor: '의 노래가 끝난다. 곁의 적들이 한꺼번에 덮친다', scribe: '이(가) 선고를 내린다', colossus: '의 녹은 유리가 쏟아진다', reaper: '의 낫이 불씨를 거두어 내리친다' }[e.foe] || (e.boss === 'queen' ? '의 태양창이 꽂힌다' : null); const x = hurtPlayer(b, d * heavyMulOf(e, b) * bm, { src: e, single: 1, charged: 1, judgment: jd ? 1 : 0, label: jd ? e.n + '이(가) 심판을 내린다' : fl ? e.n + fl : e.n + '의 강타가 내리꽂힌다' + (bm > 1 ? '. 낙인이 타오른다' : '') }); if (x > 0) addS(b, b.p, 'vuln', EKW.heavyVuln); leech(b, e, x); if (isCh3(b)) fireCarry(b, e, 1, x > 0);
       if (e.foe === 'colossus') { e.glow = 0; if (x > 0 && !b.over) addS(b, b.p, 'ignite', FOE_X.colossus.pourIgn); codexHit(b, 'colossus', 'pour'); }
       if (e.foe === 'reaper') e.embers = 0;
       if (e.foe === 'bishop') { const cs = corpsesOf(b); for (const c of cs) { c.alive = false; c.hp = 0; } if (cs.length) logp(b, 'bad', '뼈 창이 시체 ' + cs.length + '구를 삼켰다'); codexHit(b, 'bishop', 'spear'); }
@@ -3695,11 +3695,11 @@ function enterChapter(run) {
   const nx = (run.ch || 1) + 1; if (!CHAPTERS[nx]) return false;
   const keepDoors = run.doorLog || []; run.ch = nx; run.boss = chData(nx).boss; run.phase = null; run.settle = null; run.shop = null; run.result = null;
   delete run.dg; dgInit(run); run.doorLog = keepDoors; (run.chLog = run.chLog || []).push({ ch: nx, lv: run.lv, gold: run.gold, t: Date.now() });
-  G.scr = 'run'; G.b = null; G.sel = null; saveRunLocal(); saveCur(); render(); toast(nx + '챕터 · ' + chData(nx).n); return true;
+  G.scr = 'run'; G.b = null; G.sel = null; saveRunLocal(); saveCur(); render(); toast(nx + '챕터 · ' + chData(nx).n); if (chData(nx).enterLore) toast(chData(nx).enterLore); return true;
 }
 function vWait() {
   const run = G.run; const ch = run.ch || 1, nx = ch + 1;
-  if (CHAPTERS[nx]) return `<section class="card hero waitc"><p class="mini">${esc(run.cname || '')} · ${ch}챕터 돌파</p><h2>${nx}챕터 · ${esc(chData(nx).n)}</h2><p class="lore">${esc(chData(ch).nextLore || '')}</p><p>장비 · 골드 · 레벨 · 스킬 트리를 그대로 들고 ${nx}챕터 1층으로 내려갑니다. 적은 더 거세고, 처음 보는 적과 강적이 기다립니다.</p><div class="row waitbtn"><button class="gold" data-a="nextch" data-focus>${nx}챕터로 내려간다</button><button data-a="equip">장비</button><button data-a="tree">스킬 트리</button><button data-a="title">타이틀로</button></div></section>`;
+  if (CHAPTERS[nx]) return `<section class="card hero waitc"><p class="mini">${esc(run.cname || '')} · ${ch}챕터 돌파</p><h2>${nx}챕터 · ${esc(chData(nx).n)}</h2><p class="lore">${esc(chData(nx).enterLore || chData(ch).nextLore || '')}</p><p>장비 · 골드 · 레벨 · 스킬 트리를 그대로 들고 ${nx}챕터 1층으로 내려갑니다. 적은 더 거세고, 처음 보는 적과 강적이 기다립니다.</p><div class="row waitbtn"><button class="gold" data-a="nextch" data-focus>${nx}챕터로 내려간다</button><button data-a="equip">장비</button><button data-a="tree">스킬 트리</button><button data-a="title">타이틀로</button></div></section>`;
   return `<section class="card hero waitc"><p class="mini">${esc(run.cname || '')} · ${ch}챕터 돌파</p><h2>${nx}챕터 준비 중</h2><p class="lore">${esc(chData(ch).nextLore || '')}</p><p>${nx}챕터는 아직 준비 중입니다. 이 캐릭터는 여기에서 기다리고, ${nx}챕터가 열리면 지금 장비와 골드 그대로 이어서 내려갑니다. 랭킹에는 "${ch}챕터 돌파"로 올라갔습니다.</p><div class="row waitbtn"><button class="gold" data-a="title">타이틀로</button><button data-a="rank">랭킹 보기</button><button data-a="equip">장비</button></div></section>`;
 }
 
@@ -5499,7 +5499,7 @@ function vSurvey() {
   const run = G.run;
   const clear = run.phase === 'clearsv'; const buys = clear && run.shop ? run.shop.log.filter(x => x.a === 'buy') : [];
   const doorN = x => x.offered.map((o, i) => { const T = ROOM_TYPES[o.split('+')[0]]; return (i === x.picked ? '[' : '') + (T ? T.n : o) + (i === x.picked ? ']' : ''); }).join(' / ');
-  return `<section class="card survey"><h3>${clear ? '1챕터를 넘은 소감' : '이번 판에 대한 질문'}</h3><p>${clear ? '보스를 쓰러뜨리고 상점까지 들렀습니다.' : run.result === 'lose' ? esc(run.cname || '이 캐릭터') + '의 여정이 끝났습니다.' : '이번 판을 마쳤습니다.'} 1~2분이면 끝납니다. 모든 문항은 답하고 싶은 것만 골라도 됩니다.</p>
+  return `<section class="card survey"><h3>${clear ? (run.ch || 1) + '챕터를 넘은 소감' : '이번 판에 대한 질문'}</h3><p>${clear ? '보스를 쓰러뜨리고 상점까지 들렀습니다.' : run.result === 'lose' ? esc(run.cname || '이 캐릭터') + '의 여정이 끝났습니다.' : '이번 판을 마쳤습니다.'} 1~2분이면 끝납니다. 모든 문항은 답하고 싶은 것만 골라도 됩니다.</p>
   <label for="fork">이번 챕터에서 가장 고민한 갈림길</label><select id="fork"><option value="">고르지 않음</option>${(run.doorLog || []).map(x => `<option value="${x.floor}">${esc(floorName(x.floor) + ': ' + doorN(x))}</option>`).join('')}</select>
   <label for="forknote">무엇을 두고 고민했나요?</label><input id="forknote" type="text" maxlength="200">
   ${clear ? `<label for="shopwhy">상점에서 ${buys.length ? esc(buys.map(x => ITEMS[x.tpl] ? ITEMS[x.tpl].n : x.tpl).join(', ') + '을(를) 산') : '아무것도 사지 않은'} 이유</label><textarea id="shopwhy" rows="2"></textarea>` : ''}
