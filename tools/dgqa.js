@@ -62,6 +62,7 @@ function pickDoor(pk, run, r) {
 
 /* 갈래길 고르기 (0.6a.2, 10월 4일): 험한 길 · 큰 길 · 샛길. 생명력과 플라스크를 보고 성향대로 */
 function pickPath(pk, run, r) {
+  if (process.env.PATH_FIX) return process.env.PATH_FIX; /* 10월 8일(7단계): 길 고정(rough · main · quiet). 없으면 아래 그대로 */
   const p = run.p; const h = p.hp / p.hpMax; const fl = p.flask.life;
   if (pk === 'novice') return ['rough', 'main', 'quiet'][Math.floor(r() * 3)];
   if (!THINK(pk) && r() < 0.15) return ['rough', 'main', 'quiet'][Math.floor(r() * 3)];
