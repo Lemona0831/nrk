@@ -60,7 +60,7 @@ function equipFor(bd, sit) {
     swap(id => mk(id) && S(id).fx.some(e => (e.k === 'kiBurst' && !e.max) || e.k === 'kiPer'), id => mk(id) && ((S(id).time === 'fast' && has(S(id), 'dmg')) || S(id).fx.some(e => (e.k === 'st' && e.s === 'empower') || (e.k === 'stance' && e.ki))));
     swap(id => mk(id) && S(id).fx.some(e => (e.k === 'meSt' && e.if === 'chill') || e.k === 'chillx' || (e.k === 'kiBurst' && e.pre)), id => mk(id) && S(id).fx.some(e => e.k === 'st' && e.s === 'chill') && !S(id).fx.some(e => e.k === 'kiBurst')); }
   // 파수꾼 (10월 4일): 보호막을 태우는 스킬이 보호막을 얻는 스킬보다 많으면 얻는 스킬로 바꾼다 (태울 보호막이 있어야 한다. 사람은 짝을 맞춘다)
-  const burn = id => G0.SK2[id].fx.some(e => e.k === 'wardBurn'); const gain = id => G0.SK2[id].fx.some(e => e.k === 'ward' || e.k === 'wardFill');
+  const burn = id => G0.SK2[id].fx.some(e => e.k === 'wardBurn'); const gain = id => G0.SK2[id].fx.some(e => e.k === 'ward' || e.k === 'wardFill') && !(CLS === 'warden' && !process.env.WARD_BG_OLD && burn(id)); /* 10월 8일 파수꾼 상급: 태우고 다시 두르는 칸(달군 방벽 · 재가 되는 성벽)은 태우는 칸으로만 센다. 얻는 칸으로도 세면 서로 바꾸는 반복이 끝나지 않는다. WARD_BG_OLD=1이면 끔 */
   while (pick.filter(burn).length > Math.max(1, pick.filter(gain).length)) { const cand = bd.open.filter(id => gain(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) break; const lo = pick.filter(burn).sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; }
   // 숨겨진 직업 1 (10월 7일): 나에게 출혈을 거는 스킬은 둘까지 (사람은 대가를 겹쳐 지지 않는다)
   const selfBl = id => G0.SK2[id].fx.some(e => e.k === 'meSt' && e.s === 'bleed');

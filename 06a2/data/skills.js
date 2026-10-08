@@ -116,6 +116,13 @@ const SKILLS2 = {
     { id: 'w_breach', row: 9, b: '성벽', tier: '중급', n: '성벽 부수기', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'wardBurn', mul: 2, max: 16 }, { k: 'brk', n: 41 }] },
     { id: 'w_citadel', row: 10, b: '성벽', tier: '중급', n: '철옹성', tgt: 'self', time: 'slow', cd: 10, once: 1, keep: ['wardFill'], fx: [{ k: 'wardFill' }, { k: 'st', s: 'protect', n: 3 }, { k: 'thorn', times: 3, dmg: 5 }] },
     { id: 'w_last', row: 10, b: '성벽', tier: '중급', n: '최후의 성벽', tgt: 'melee', time: 'slow', cd: 10, exc: '만든 사람 결정(10월 5일): 10줄 마무리, 전투당 0.1~0.6번만 써 모델(2번)보다 덜 쓴다. 태운 1마다 1.5 · 40% 이하 ×1.75 그대로', fx: [{ k: 'wardBurn', mul: 1.5 }, { k: 'lowx', hp: 0.4, mul: 1.75 }, { k: 'brk', n: 17 }] }, // 10월 4일: 보호막을 모두 태우는 마무리 (성벽 오른쪽 기둥의 보스전 이길 수단). 만든 사람 결정으로 쓰기를 완화하고(생명력 30% → 40% 이하) 한 방을 낮췄다(×2 · 피해 2 → ×1.75 · 피해 1.5): 보스 63%, 줄 예산 안이라 예외 표시를 뗐다
+    // 상급 (3챕터, 11~13줄 · 10월 8일): 왼쪽 기둥은 버티기를 완성(얻으면서 비례로 치는 칸 · 상한 채우기 · 가시 · 큰 비례 일격), 오른쪽은 태우기를 완성(태우고 곧바로 다시 두르는 칸 · 큰 태우기 · 마무리)
+    { id: 'w_bulwarkhit', row: 11, b: '성벽', tier: '상급', n: '보루 일격', tgt: 'melee', time: 'fast', cd: 5, keep: ['ward'], fx: [{ k: 'dmg', n: 7 }, { k: 'ward', n: 14 }, { k: 'wardDmg', per: 0.25 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 'w_forge', row: 11, b: '성벽', tier: '상급', n: '달군 방벽', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'wardBurn', mul: 2.5, max: 9 }, { k: 'ward', n: 12 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 'w_unyield', row: 12, b: '성벽', tier: '상급', n: '불굴의 장벽', tgt: 'self', time: 'fast', cd: 8, fx: [{ k: 'wardFill', to: 0.5 }, { k: 'thorn', times: 2, dmg: 4 }] },
+    { id: 'w_scald', row: 12, b: '성벽', tier: '상급', n: '이글거리는 막', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'ward', n: 32 }, { k: 'hasten', n: 1, on: 'use' }] },
+    { id: 'w_eternal', row: 13, b: '성벽', tier: '상급', n: '불멸의 성채', tgt: 'melee', time: 'normal', cd: 8, keep: ['ward', 'st'], fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 23 }, { k: 'ward', n: 12 }, { k: 'st', s: 'protect', n: 1 }, { k: 'wardDmg', per: 0.25 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 'w_cinder', row: 13, b: '성벽', tier: '상급', n: '재가 되는 성벽', tgt: 'melee', time: 'slow', cd: 10, keep: ['ward'], fx: [{ k: 'wardBurn', mul: 1.5, max: 18 }, { k: 'ward', n: 6 }, { k: 'brk', n: 8 }, { k: 'lowx', hp: 0.4, mul: 1.5 }, { k: 'bigx', mul: 1.5 }] },
     // 파쇄: 한 적의 붕괴 게이지를 빨리 채우고, 무너진 적을 느린 강타로 크게 친다. 왼쪽 기둥은 무너뜨리기(큰 붕괴 · 모으는 적 끊기), 오른쪽은 부수기(붕괴한 적 · 취약한 적에게 크게). 강타 · 거구에 강하고 무리에 약하다
     { id: 's_slam', row: 1, b: '파쇄', tier: '하급', n: '내리찍기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 37 }] },
     { id: 's_gap', row: 1, b: '파쇄', tier: '하급', n: '틈 노리기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 17 }, { k: 'brokenx', mul: 2 }] },
@@ -137,6 +144,13 @@ const SKILLS2 = {
     { id: 's_judge', row: 9, b: '파쇄', tier: '중급', n: '처단', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 16 }, { k: 'vulnPer', per: 5 }, { k: 'lowx', hp: 0.3, mul: 2 }] },
     { id: 's_fall', row: 10, b: '파쇄', tier: '중급', n: '산 무너뜨리기', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 24 }, { k: 'brk', n: 70 }, { k: 'bigx', mul: 1.5 }] },
     { id: 's_ruin', row: 10, b: '파쇄', tier: '중급', n: '박살', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 24 }, { k: 'brokenx', mul: 2.5 }, { k: 'bigx', mul: 1.5 }] },
+    // 상급 (3챕터, 11~13줄 · 10월 8일): 왼쪽 기둥은 무너뜨리기(큰 붕괴 · 끊기), 오른쪽은 부수기(취약 · 붕괴한 적에게 크게). 한 적 칸만 둔다(무리에 약하다)
+    { id: 's_wedgebite', row: 11, b: '파쇄', tier: '상급', n: '쐐기 파열', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 46 }, { k: 'st', s: 'vuln', n: 2 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 's_unravel', row: 11, b: '파쇄', tier: '상급', n: '약점 해체', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 16 }, { k: 'vulnPer', per: 5 }, { k: 'brokenx', mul: 1.5 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 's_stagger', row: 12, b: '파쇄', tier: '상급', n: '비틀거림', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 67 }, { k: 'cutx', brk: 70 }] },
+    { id: 's_lever', row: 12, b: '파쇄', tier: '상급', n: '틈 벌려 찌르기', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'vuln', n: 2 }, { k: 'vulnPer', per: 5 }] },
+    { id: 's_landslide', row: 13, b: '파쇄', tier: '상급', n: '산사태', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 26 }, { k: 'brk', n: 70 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 's_lastblow', row: 13, b: '파쇄', tier: '상급', n: '무너진 자의 최후', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 22 }, { k: 'brokenx', mul: 2.5 }, { k: 'lowx', hp: 0.3, mul: 1.5 }, { k: 'bigx', mul: 1.5 }] },
     // 전열 장악: 전열 전체를 치고 여러 적을 함께 무너뜨린다. 왼쪽 기둥은 휩쓸기(전열 모두를 치는 피해), 오른쪽은 깨기(방패병 깨기 · 후열 끌어내기 · 여럿의 붕괴). 무리에 강하고 거구에 약하다
     { id: 'f_sweep', row: 1, b: '전열 장악', tier: '하급', n: '휘두르기', tgt: 'front', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }] },
     { id: 'f_break', row: 1, b: '전열 장악', tier: '하급', n: '방패 깨기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 39 }, { k: 'shieldx', mul: 2 }] },
@@ -158,6 +172,13 @@ const SKILLS2 = {
     { id: 'f_net', row: 9, b: '전열 장악', tier: '중급', n: '사슬 조이기', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 18 }, { k: 'brk', n: 40 }, { k: 'chillx', mul: 2 }] },
     { id: 'f_storm', row: 10, b: '전열 장악', tier: '중급', n: '폭풍 같은 방패', tgt: 'front', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 18 }, { k: 'brk', n: 25 }, { k: 'chillx', mul: 1.5 }] },
     { id: 'f_collapse', row: 10, b: '전열 장악', tier: '중급', n: '전열 붕괴', tgt: 'front', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 19 }, { k: 'brk', n: 33 }, { k: 'shieldx', mul: 2 }] },
+    // 상급 (3챕터, 11~13줄 · 10월 8일): 왼쪽 기둥은 휩쓸기(전열 모두의 피해 · 붕괴), 오른쪽은 깨기(후열 끌어내기 · 한 적 묶기 · 방패 깨기). 큰 적 배수는 두지 않는다(거구에 약하다)
+    { id: 'f_sweepline', row: 11, b: '전열 장악', tier: '상급', n: '전열 쓸기', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 22 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'f_hook', row: 11, b: '전열 장악', tier: '상급', n: '갈고리 사슬', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 33 }, { k: 'st', s: 'chill', n: 2 }, { k: 'pull' }] },
+    { id: 'f_onrush', row: 12, b: '전열 장악', tier: '상급', n: '쇄도', tgt: 'front', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 8 }, { k: 'brk', n: 34 }, { k: 'hasten', n: 1, on: 'use' }] },
+    { id: 'f_noose', row: 12, b: '전열 장악', tier: '상급', n: '올가미', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 47 }, { k: 'st', s: 'chill', n: 3 }, { k: 'shieldx', mul: 2 }] },
+    { id: 'f_rout', row: 13, b: '전열 장악', tier: '상급', n: '전선 와해', tgt: 'front', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 32 }, { k: 'brokenx', mul: 1.5 }, { k: 'chillx', mul: 1.5 }] },
+    { id: 'f_siege', row: 13, b: '전열 장악', tier: '상급', n: '포위 분쇄', tgt: 'front', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 34 }, { k: 'chillx', mul: 1.7 }, { k: 'shieldx', mul: 2 }] },
   ],
   hunter: [
     // 시작 스킬: 트리 밖. 추적을 쌓는 사격 하나(주 행동), 물러서며 가속을 얻는 사격 하나(빠른 행동) (10월 5일 초안)
