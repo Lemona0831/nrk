@@ -745,6 +745,12 @@ const SKILLS2 = {
     { id: 'v_corpse', row: 9, b: '역병', tier: '중급', n: '송장 꽃', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 14 }, { k: 'lowx', hp: 0.35, mul: 2 }, { k: 'spread', per: 1, kill: 1 }] },
     { id: 'v_rotland', row: 10, b: '역병', tier: '중급', n: '썩어 꺼지는 땅', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 5 }, { k: 'poison', n: 3 }, { k: 'brk', n: 25 }] },
     { id: 'v_pandemic', row: 10, b: '역병', tier: '중급', n: '끝없는 역병', tgt: 'ranged', time: 'slow', cd: 10, once: 1, fx: [{ k: 'dmg', n: 4 }, { k: 'poison', n: 12 }, { k: 'spread', per: 1, kill: 1, mark: 1 }] },
+    { id: 'v_sump', row: 11, b: '역병', tier: '상급', n: '썩은 늪', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 3 }, { k: 'poison', n: 3 }, { k: 'st', s: 'weak', n: 1 }] },
+    { id: 'v_kiss', row: 11, b: '역병', tier: '상급', n: '병든 입맞춤', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 2 }, { k: 'poison', n: 2 }, { k: 'spread', per: 0.5 }] },
+    { id: 'v_stifle', row: 12, b: '역병', tier: '상급', n: '숨통 조이는 안개', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 4 }, { k: 'poison', n: 3 }, { k: 'st', s: 'weak', n: 2 }, { k: 'cutx', brk: 43 }] },
+    { id: 'v_hostmark', row: 12, b: '역병', tier: '상급', n: '숙주 낙인', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 2 }, { k: 'poison', n: 6 }, { k: 'spread', per: 1, kill: 1, mark: 1 }] },
+    { id: 'v_season', row: 13, b: '역병', tier: '상급', n: '역병의 계절', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'hpCost', pct: 0.06 }, { k: 'dmg', n: 3 }, { k: 'poison', n: 5 }, { k: 'st', s: 'vuln', n: 1 }] },
+    { id: 'v_outbreak', row: 13, b: '역병', tier: '상급', n: '대유행', tgt: 'ranged', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 6 }, { k: 'poison', n: 3 }, { k: 'spread', per: 0.5 }] },
     // 포식: 왼쪽 거두기(먹어 버티기) · 오른쪽 빼앗기(먹은 만큼 친다 · 강화). 장기전에 강하고 무리에 약하다
     { id: 'v_reap', row: 1, b: '포식', tier: '하급', n: '피 거두기', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'drain', eat: 1, per: 15 }, { k: 'st', s: 'weak', n: 2 }] },
     { id: 'v_leech', row: 1, b: '포식', tier: '하급', n: '기운 빨기', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 13 }, { k: 'poison', n: 3 }, { k: 'st', s: 'weak', n: 3 }] },
@@ -766,6 +772,12 @@ const SKILLS2 = {
     { id: 'v_predator', row: 9, b: '포식', tier: '중급', n: '포식자의 일격', tgt: 'ranged', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 26 }, { k: 'drain', eat: 1, per: 3, dmg: 3 }, { k: 'bigx', mul: 1.5 }] },
     { id: 'v_hunger', row: 10, b: '포식', tier: '중급', n: '끝없는 허기', tgt: 'ranged', time: 'slow', cd: 10, once: 1, fx: [{ k: 'drain', eat: 1, per: 10 }, { k: 'poison', n: 14 }, { k: 'meSt', s: 'protect', n: 4 }] },
     { id: 'v_gorge', row: 10, b: '포식', tier: '중급', n: '통째로 삼키기', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 17 }, { k: 'drain', eat: 1, per: 4, dmg: 2 }, { k: 'poison', n: 5 }] },
+    { id: 'v_chew', row: 11, b: '포식', tier: '상급', n: '되새김', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 10 }, { k: 'drain', eat: 1, max: 2, per: 6 }, { k: 'poison', n: 6 }] },
+    { id: 'v_incisor', row: 11, b: '포식', tier: '상급', n: '독니 박기', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 8 }, { k: 'drain', eat: 1, max: 4, per: 5, dmg: 4 }, { k: 'poison', n: 3 }] },
+    { id: 'v_savor', row: 12, b: '포식', tier: '상급', n: '음미', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 19 }, { k: 'drain', eat: 1, max: 2, per: 8 }, { k: 'st', s: 'weak', n: 2 }] },
+    { id: 'v_pillage', row: 12, b: '포식', tier: '상급', n: '약탈', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 16 }, { k: 'drain', eat: 1, max: 4, per: 3, dmg: 3 }, { k: 'meSt', s: 'empower', n: 2 }] },
+    { id: 'v_banquet', row: 13, b: '포식', tier: '상급', n: '탐식의 연회', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 8 }, { k: 'drain', eat: 1, max: 3, per: 7 }, { k: 'poison', n: 7 }, { k: 'meSt', s: 'protect', n: 4 }] },
+    { id: 'v_devour', row: 13, b: '포식', tier: '상급', n: '대식가의 일격', tgt: 'ranged', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 10 }, { k: 'drain', eat: 1, per: 5, dmg: 3 }, { k: 'poison', n: 5 }, { k: 'bigx', mul: 1.5 }] },
     // 혈약: 왼쪽 피 바치기(생명력을 내고 무너뜨리는 큰 한 발, 무너진 적) · 오른쪽 피의 저주(이번 차례에 낸 피 · 약화). 거구에 강하고 장기전에 약하다
     { id: 'v_spear', row: 1, b: '혈약', tier: '하급', n: '피의 창', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'hpCost', pct: 0.05 }, { k: 'dmg', n: 27 }] },
     { id: 'v_curse', row: 1, b: '혈약', tier: '하급', n: '저주의 피', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'weak', n: 3 }] },
@@ -787,6 +799,12 @@ const SKILLS2 = {
     { id: 'v_witherall', row: 9, b: '혈약', tier: '중급', n: '시드는 저주', tgt: 'all', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'weak', n: 2 }, { k: 'perDmg', of: 'weak', per: 3 }] },
     { id: 'v_last', row: 10, b: '혈약', tier: '중급', n: '마지막 피', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'hpCost', pct: 0.08 }, { k: 'dmg', n: 31 }, { k: 'brk', n: 64 }, { k: 'bigx', mul: 1.5 }] },
     { id: 'v_pact', row: 10, b: '혈약', tier: '중급', n: '혈약의 저주', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'hpCost', pct: 0.07 }, { k: 'dmg', n: 9 }, { k: 'bloodDmg', per: 0.5 }, { k: 'st', s: 'weak', n: 3 }, { k: 'st', s: 'vuln', n: 1 }] },
+    { id: 'v_stake', row: 11, b: '혈약', tier: '상급', n: '피의 말뚝', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'hpCost', pct: 0.02 }, { k: 'dmg', n: 21 }, { k: 'brk', n: 27 }, { k: 'bigx', mul: 2.2 }] },
+    { id: 'v_brand', row: 11, b: '혈약', tier: '상급', n: '핏빛 낙인', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 17 }, { k: 'st', s: 'weak', n: 2 }, { k: 'st', s: 'vuln', n: 2 }] },
+    { id: 'v_gallows', row: 12, b: '혈약', tier: '상급', n: '단죄의 피', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'hpCost', pct: 0.03 }, { k: 'dmg', n: 16 }, { k: 'brk', n: 25 }, { k: 'meSt', s: 'protect', n: 4 }, { k: 'bigx', mul: 2.2 }] },
+    { id: 'v_rite', row: 12, b: '혈약', tier: '상급', n: '피의 의식', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'hpCost', pct: 0.03 }, { k: 'st', s: 'empower', n: 3 }, { k: 'st', s: 'protect', n: 5 }, { k: 'payCut', mul: 0.5, n: 3 }, { k: 'stam', n: 40 }] },
+    { id: 'v_zenith', row: 13, b: '혈약', tier: '상급', n: '절정의 피', tgt: 'ranged', time: 'slow', cd: 9, fx: [{ k: 'hpCost', pct: 0.05 }, { k: 'dmg', n: 25 }, { k: 'brk', n: 56 }, { k: 'bigx', mul: 2.5 }] },
+    { id: 'v_fruit', row: 13, b: '혈약', tier: '상급', n: '저주의 결실', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'weak', n: 2 }, { k: 'perDmg', of: 'weak', per: 5 }, { k: 'spread', s: 'weak', per: 1 }, { k: 'bigx', mul: 2 }] },
   ],
 };
 /* 사다리 (10월 3일 만든 사람 결정): 2챕터(Lv10)까지 갈래마다 하급 6줄 · 중급 4줄 = 10줄, 줄마다 두 칸(갈래 20칸, 직업 60칸).
