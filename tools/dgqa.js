@@ -250,7 +250,7 @@ function ch2Post(b, P, r, a, t) {
 /* 지금 방에 들어가 성향대로 싸운다 */
 function fightCur(pk, r, mem, out) {
   const P = PERSONAS[pk]; const G = G0.__G;
-  G0.enterRoom(); const b = G.b; b.stepMode = false; let n = 0; let stall = 0, lastHp = Infinity;
+  G0.enterRoom(); const b = G.b; b.stepMode = false; let n = 0; let stall = 0, lastHp = Infinity; let stuckN = 0;
   // 10월 5일: 전투 난수를 테스터 판단 난수와 나눈다(판단 규칙 하나를 바꿔도 전투 운은 그대로 남아 비교가 깨끗하다). LEGACY_RNG=1이면 예전처럼 같은 난수
   b.rngF = process.env.LEGACY_RNG ? r : rng(((out.seed || 1) * 7919 + (G.run.room || 0) * 131 + (G.run.ch || 1) * 100003 + (out.acts || 0)) | 0);
   while (!b.over && n++ < 300) {
@@ -269,7 +269,10 @@ function fightCur(pk, r, mem, out) {
       if (monk && act && act.tgt !== false) t = monk.id;
     }
     if (OPT.onTurn) OPT.onTurn(G, n);
+    if (stuckN >= 2) { const Lk = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); const gd = Lk.find(x => x.id === 'guard') || Lk[0]; if (gd) { a = gd.id; t = null; } } /* 10월 8일: 같은 행동을 해도 차례가 흐르지 않으면(땅속의 적만 남고 단일 대상 행동뿐일 때) 사람처럼 방어로 차례를 넘긴다 */
+    const progKey = b.turnIdx + ':' + (b.round || 0) + ':' + b.log.length;
     try { G0.playerAct(b, a, t); } catch (e) { out.bugs.push('예외 ' + e.message + ' @' + a); b.over = 'lose'; }
+    stuckN = progKey === b.turnIdx + ':' + (b.round || 0) + ':' + b.log.length ? stuckN + 1 : 0;
     out.acts++;
   }
   if (!b.over) { out.bugs.push('300행동 안에 끝나지 않음 ' + G.run.room); b.over = 'lose'; }
