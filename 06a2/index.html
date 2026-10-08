@@ -3955,7 +3955,7 @@ const HELP = [
   { k: 'marks', n: '표식 도전', t: [
     '3챕터 보스를 한 번 이기면 타이틀에 표식 도전이 열립니다. 깬 챕터 하나를 고르고 표식을 걸어, 새 캐릭터로 그 챕터만 치릅니다.',
     '2챕터는 레벨 5, 3챕터는 레벨 10에서 시작합니다. 레벨만큼의 스킬 포인트와 능력치 점수를 직접 나누고, 이전 챕터의 평범 · 고급 장비 꾸러미와 약초 묶음을 받습니다.',
-    '표식마다 점수가 1점에서 3점이고, 점수의 합이 기록입니다. 점수마다 정산 골드가 10% 늘어납니다. 챕터의 보스를 넘으면 끝나고, 쓰러지면 점수가 남지 않습니다. 일반 모드와 가혹 모드를 고를 수 있습니다. 랭킹에는 오르지 않고 기록 화면에 따로 남습니다.'] },
+    '표식마다 점수가 1점에서 3점이고, 점수의 합이 기록입니다. 점수는 기록판과 칭호에 남습니다. 챕터의 보스를 넘으면 끝나고, 쓰러지면 점수가 남지 않습니다. 일반 모드와 가혹 모드를 고를 수 있습니다. 랭킹에는 오르지 않고 기록 화면에 따로 남습니다.'] },
   { k: 'hp', n: '생명력', t: [
     '0이 되면 쓰러지고, 그 캐릭터는 끝납니다.',
     '전투가 끝나도 저절로 차지 않고 다음 방으로 그대로 이어집니다. 생명력 플라스크, 소모품, 샘(50%), 야영지(전부), 정산(전부)에서 회복합니다.'] },
@@ -4359,7 +4359,7 @@ function vMark() {
   h += `<p class="mini">${M.ch > 1 ? `레벨 ${MARK_START[M.ch].lv}에서 시작하고, 레벨만큼의 스킬 포인트와 능력치 점수를 직접 나눕니다. 이전 챕터의 평범 · 고급 장비 꾸러미와 약초 묶음을 받습니다.` : '다른 캐릭터와 똑같이 처음부터 만듭니다.'}</p>`;
   h += `<h4>모드</h4><div class="row" role="group" aria-label="모드"><button class="chip${M.mode === 'normal' ? ' on' : ''}" data-a="mkmode" data-k="normal" aria-pressed="${M.mode === 'normal'}">일반</button><button class="chip${M.mode === 'hard' ? ' on' : ''}" data-a="mkmode" data-k="hard" aria-pressed="${M.mode === 'hard'}"${G.data.hardOpen ? '' : ' aria-disabled="true"'}>가혹${G.data.hardOpen ? '' : ' (잠김)'}</button></div>`;
   h += `<h4>표식</h4><ul class="mklist">${Object.keys(MARKS).map(k => { const m = MARKS[k], on = M.ids.includes(k); return `<li><button class="mkb" data-a="mktog" data-k="${k}" aria-pressed="${on}"><span class="mkp">${m.pt}점</span><b><span aria-hidden="true">${m.ico}</span> ${esc(m.n)}</b><span class="mini"> ${esc(m.d)}</span></button></li>`; }).join('')}</ul>`;
-  h += `<p role="status" aria-live="polite">고른 표식 ${M.ids.length}개 · 표식 점수 <b>${pts}점</b> · 정산 보상 +${Math.round(pts * MARK_LOOT * 100)}%</p>${M.ids.length ? '' : '<p class="mini">표식을 하나 이상 고르세요.</p>'}`;
+  h += `<p role="status" aria-live="polite">고른 표식 ${M.ids.length}개 · 표식 점수 <b>${pts}점</b></p>${M.ids.length ? '' : '<p class="mini">표식을 하나 이상 고르세요.</p>'}`;
   return h + `<button class="gold wide" data-a="mkgo"${M.ids.length ? '' : ' aria-disabled="true"'}>다음: 이름과 직업</button></section>`;
 }
 function vMarkBoard() {
@@ -4498,7 +4498,6 @@ function startSettle(run) {
   const mul = fxVal(run.p, 'goldMul', 1, (a, v) => a * v);
   const lines = [{ n: '던전에서 모은 골드', v: run.gold || 0 }, { n: '보스 처치', v: Math.round(SETTLE.boss[ch - 1] * mul) }];
   if (strongN) lines.push({ n: '강적 처치 ' + strongN + '번', v: Math.round((chData(ch).settleStrong || SETTLE.strong) * strongN * mul) });
-  if (run.markCh && run.markPts) lines.push({ n: '표식 보상 +' + Math.round(run.markPts * MARK_LOOT * 100) + '%', v: Math.round(lines.reduce((a, x) => a + x.v, 0) * MARK_LOOT * run.markPts) }); // 표식 도전: 점수마다 정산 +10%
   run.settle = { ch, lines, mul, total: lines.reduce((a, x) => a + x.v, 0) };
   run.phase = 'settle'; run.cur = null; run.doors = null;
 }
@@ -4526,7 +4525,7 @@ function genShop(run) {
   while (take.filter(fit).length < 3 && add(pool.filter(fit))) { } // 직업에 맞는 것 3개 이상
   while (take.length < (hero ? 5 : 6)) { const g = rollGrade(); if (!add(pool.filter(k => gOf(k) === g))) if (!add(pool)) break; }
   take.sort((a, b) => 'nmr'.indexOf(gOf(a)) - 'nmr'.indexOf(gOf(b)));
-  run.shop = { ch, stock: take.map(k => { const it = mkItem(k, { ch }); return { it, price: Math.round(priceOf(it.g, ch) * (markOn(run, 'price') ? MARKS.price.mul : 1)), sold: 0 }; }), log: [] };
+  run.shop = { ch, stock: take.map(k => { const it = mkItem(k, { ch }); return { it, price: priceOf(it.g, ch), sold: 0 }; }), log: [] };
   if (hero) { const it = mkItem(hero.k, { ch: hero.ch }); run.shop.stock.push({ it, price: priceOf('h', ch), sold: 0, hero: 1 }); }
   { const nx = ch + 1; const usable = Object.keys(CONS).filter(k => CONS[k].use !== 'none' && !SHOP_CONS.always.includes(k) && (CONS[k].ch || 1) <= nx); const pick = SHOP_CONS.always.slice(); const nw = usable.filter(k => (CONS[k].ch || 1) === nx && nx >= 2); if (nw.length) pick.push(usable.splice(usable.indexOf(nw[Math.floor(Math.random() * nw.length)]), 1)[0]); if (nx >= 3) { const nw2 = usable.filter(k => (CONS[k].ch || 1) === nx); if (nw2.length) pick.push(usable.splice(usable.indexOf(nw2[Math.floor(Math.random() * nw2.length)]), 1)[0]); } /* 3챕터 준비: 3챕터 소모품 둘 */ while (pick.length < SHOP_CONS.n + (nx >= 2 ? 1 : 0) && usable.length) pick.push(usable.splice(Math.floor(Math.random() * usable.length), 1)[0]); run.shop.cons = pick.map(id => ({ id, price: Math.round(CONS[id].price * Math.pow(1.5, ch - 1)) })); } // 소모품 다섯 가지 (10월 4일)
 }
@@ -6188,7 +6187,7 @@ const ashOk = c => CONS[c.id].use !== 'none' && CONS[c.id].price > 6; // 재의 
 function burnCons(run, n) { if ((run.cons || []).filter(ashOk).reduce((a, c) => a + c.n, 0) < n) return false; for (let k = 0; k < n; k++) { const c = run.cons.find(ashOk); c.n--; if (c.n <= 0) run.cons.splice(run.cons.indexOf(c), 1); } return true; }
 /* 2챕터 이벤트 · 제단 도우미 (10월 5일) */
 const EVBUFF = { snuff: ['꺼진 촛불', '받는 화상 피해 0, 대신 주는 피해 −5%.'], procession: ['장례 행렬', '받는 피해 −10%, 주는 피해 −10%.'], ashcover: ['재를 덮어 주었다', '받는 피해 −5%.'], herald: ['전령에게 무릎 꿇었다', '받는 화상 피해 0, 대신 주는 피해 −5%.'] }; // 이벤트로 얻는 몇 방 동안의 효과
-const altarGold = run => { const A = ALTARS.find(x => x.id === 'gold'); const v = A && A.cost ? A.cost[Math.min(A.cost.length, run.ch || 1) - 1] : 40; return markOn(run, 'price') ? Math.round(v * MARKS.price.mul) : v; };
+const altarGold = run => { const A = ALTARS.find(x => x.id === 'gold'); const v = A && A.cost ? A.cost[Math.min(A.cost.length, run.ch || 1) - 1] : 40; return v; };
 function n3pre(run, k, n) { run.next3 = run.next3 || {}; run.next3.pre = Object.assign({}, run.next3.pre); run.next3.pre[k] = (run.next3.pre[k] || 0) + n; } // 3챕터 이벤트: 다음 일반 · 매복 전투의 시작 상태
 function takeCons(run, n) { const pool = (run.cons || []).filter(c => CONS[c.id].use !== 'none'); if (pool.reduce((a, c) => a + c.n, 0) < n) return false; for (let k = 0; k < n; k++) { const c = run.cons.find(x => CONS[x.id].use !== 'none'); c.n--; if (c.n <= 0) run.cons.splice(run.cons.indexOf(c), 1); } return true; }
 function giveChCons(run, ch) { const ids = Object.keys(CONS).filter(k => (CONS[k].ch || 1) === ch && CONS[k].use !== 'none'); if (!ids.length) return; const id = pickR(ids); consAdd(run, id, 'n', 1); }
