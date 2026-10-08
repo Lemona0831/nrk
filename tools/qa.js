@@ -65,7 +65,7 @@ function lookahead(b, P, r) {
   const cands = [];
   for (const a of L) {
     let ts = [null];
-    if (!a.self && !a.aoe) { ts = E.alive(b).filter(e => E.canTarget(b, e, a) && !(a.id === 'dodge' && e.role === 'root')); if (b.p.build === 'hunter' && !process.env.HUNT_CROWN_OLD) { /* 사냥꾼(10월 8일): 열기가 높지 않으면 왕관을 치지 않는다. 비공개 문서 3챕터 2.2: 왕관에 준 피해는 여왕에게 가지 않고, 왕관만 쳐서 버티면 여왕은 깎이지 않는다. 한 수 앞 계산은 왕관 피해와 처치를 이득으로 세어 왕관만 쳤다 */ const nc = ts.filter(e => !(e.role === 'crown' && !e.crownHot)); if (nc.length) ts = nc; } ts = ts.map(e => e.id); }
+    if (!a.self && !a.aoe) { ts = E.alive(b).filter(e => E.canTarget(b, e, a) && !(a.id === 'dodge' && e.role === 'root')); if (b.p.build === 'hunter' && !process.env.HUNT_CROWN_OLD) { /* 사냥꾼(10월 8일): 열기가 높지 않으면 왕관을 치지 않는다(출처: 비공개 문서 3챕터 2.2–2.3절, 문장은 옮기지 않는다). 한 수 앞 계산은 왕관 피해와 처치를 이득으로 세어 왕관만 쳤다. HUNT_CROWN_OLD=1이면 끈다 */ const nc = ts.filter(e => !(e.role === 'crown' && !e.crownHot)); if (nc.length) ts = nc; } ts = ts.map(e => e.id); }
     for (const t of ts) {
       const c = cloneB(b); E.playerAct(c, a.id, t);
       cands.push({ a: a.id, t, v: evalState(b, c, P.risk) + (r() - 0.5) * 2 });
