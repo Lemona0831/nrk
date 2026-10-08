@@ -324,6 +324,12 @@ const SKILLS2 = {
     { id: 'e_cinders', row: 9, b: '불꽃', tier: '중급', n: '잿더미', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 12 }, { k: 'burnOut', per: 5, brk: 5 }, { k: 'lowx', hp: 0.35, mul: 1.5 }] },
     { id: 'e_phoenix', row: 10, b: '불꽃', tier: '중급', n: '불새의 깃', tgt: 'ranged', time: 'slow', cd: 8, hits: 5, fx: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'ignite', n: 5 }] },
     { id: 'e_sunfall', row: 10, b: '불꽃', tier: '중급', n: '태양 낙하', tgt: 'ranged', time: 'vslow', cd: 10, fx: [{ k: 'dmg', n: 35 }, { k: 'bigx', mul: 1.5 }, { k: 'lowx', hp: 0.3, mul: 1.5 }] },
+    { id: 'e_cinderrain', row: 11, b: '불꽃', tier: '상급', n: '불티 소나기', tgt: 'ranged', time: 'normal', cd: 6, hits: 3, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'ignite', n: 6 }] },
+    { id: 'e_scorchshot', row: 11, b: '불꽃', tier: '상급', n: '작열탄', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 20 }, { k: 'st', s: 'ignite', n: 4 }, { k: 'bigx', mul: 1.8 }] },
+    { id: 'e_pyreheart', row: 12, b: '불꽃', tier: '상급', n: '불씨 심장', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'ignite', n: 7 }, { k: 'shockx', dmg: 1.3, keep: { s: 'ignite', n: 4 } }] },
+    { id: 'e_judgefire', row: 12, b: '불꽃', tier: '상급', n: '심판의 불', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 24 }, { k: 'brk', n: 24 }, { k: 'brokenx', mul: 2 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 'e_hellblaze', row: 13, b: '불꽃', tier: '상급', n: '불지옥', tgt: 'ranged', time: 'slow', cd: 8, hits: 5, fx: [{ k: 'dmg', n: 4 }, { k: 'st', s: 'ignite', n: 10 }] },
+    { id: 'e_eclipse', row: 13, b: '불꽃', tier: '상급', n: '일식', tgt: 'ranged', time: 'vslow', cd: 10, fx: [{ k: 'dmg', n: 32 }, { k: 'bigx', mul: 2.3 }, { k: 'lowx', hp: 0.3, mul: 1.6 }] },
     // 서리: 왼쪽 묶기(둔화 · 약화 · 되얼림 · 보호), 오른쪽 깨기(둔화된 적 × · 열충격 붕괴 × · 둔화 남기기 · 영창 끊기). 무리와 긴 싸움에 강하고 지원에 약하다
     { id: 'e_bind', row: 1, b: '서리', tier: '하급', n: '서리 결박', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 19 }, { k: 'st', s: 'chill', n: 2 }] },
     { id: 'e_icelance', row: 1, b: '서리', tier: '하급', n: '얼음 창', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 26 }, { k: 'brk', n: 25 }] },
@@ -345,6 +351,12 @@ const SKILLS2 = {
     { id: 'e_flash', row: 9, b: '서리', tier: '중급', n: '급랭', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 19 }, { k: 'st', s: 'chill', n: 3 }, { k: 'shockx', dmg: 1.3, keep: { s: 'chill', n: 2 } }] },
     { id: 'e_zero', row: 10, b: '서리', tier: '중급', n: '절대 영도', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'chill', n: 2 }, { k: 'st', s: 'weak', n: 2 }, { k: 'rime', times: 2, n: 1 }] },
     { id: 'e_coffin', row: 10, b: '서리', tier: '중급', n: '얼음 관', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 28 }, { k: 'brk', n: 33 }, { k: 'st', s: 'chill', n: 2 }, { k: 'chillx', mul: 1.5 }, { k: 'shockx', brk: 2 }] },
+    { id: 'e_hoarbloom', row: 11, b: '서리', tier: '상급', n: '서리꽃', tgt: 'front', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'chill', n: 2 }, { k: 'meSt', s: 'protect', n: 2 }] },
+    { id: 'e_shatter', row: 11, b: '서리', tier: '상급', n: '산산조각', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 26 }, { k: 'st', s: 'chill', n: 2 }, { k: 'brk', n: 26 }, { k: 'shockx', brk: 2.5 }] },
+    { id: 'e_icebarrier', row: 12, b: '서리', tier: '상급', n: '얼음 장벽', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'rime', times: 5, n: 2 }, { k: 'st', s: 'protect', n: 3 }, { k: 'stam', n: 32 }] },
+    { id: 'e_icepick', row: 12, b: '서리', tier: '상급', n: '얼음 송곳', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 19 }, { k: 'brk', n: 39 }, { k: 'chillx', mul: 1.5 }, { k: 'cutx', brk: 70, chant: 1 }] },
+    { id: 'e_longwinter', row: 13, b: '서리', tier: '상급', n: '긴 겨울', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 14 }, { k: 'st', s: 'chill', n: 3 }, { k: 'st', s: 'weak', n: 2 }] },
+    { id: 'e_cryo', row: 13, b: '서리', tier: '상급', n: '극저온 파쇄', tgt: 'ranged', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 23 }, { k: 'st', s: 'chill', n: 3 }, { k: 'brk', n: 22 }, { k: 'chillx', mul: 1.5 }, { k: 'shockx', dmg: 1.5, brk: 2, keep: { s: 'chill', n: 1 } }] },
     // 공명: 왼쪽 엮기(한 적 · 열충격 배수 · 🔄), 오른쪽 물결(모두에게 한 원소씩 · 번짐). 지원과 섞인 무리에 강하고 큰 적에 약하다
     { id: 'e_weave', row: 1, b: '공명', tier: '하급', n: '원소 엮기', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'weave', ign: 4, chill: 1 }] },
     { id: 'e_firewave', row: 1, b: '공명', tier: '하급', n: '불꽃 물결', tgt: 'all', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'ignite', n: 1 }] },
@@ -366,6 +378,12 @@ const SKILLS2 = {
     { id: 'e_tempest', row: 9, b: '공명', tier: '중급', n: '원소 폭풍', tgt: 'all', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 2 }, { k: 'st', s: 'ignite', n: 2 }, { k: 'st', s: 'chill', n: 1 }] },
     { id: 'e_pole', row: 10, b: '공명', tier: '중급', n: '극점', tgt: 'ranged', time: 'slow', cd: 10, once: 1, fx: [{ k: 'dmg', n: 21 }, { k: 'st', s: 'ignite', n: 4 }, { k: 'st', s: 'chill', n: 2 }, { k: 'shockx', dmg: 1.5, brk: 2 }] },
     { id: 'e_resoburst', row: 10, b: '공명', tier: '중급', n: '공명 폭발', tgt: 'ranged', time: 'slow', cd: 9, fx: [{ k: 'weave', ign: 5, chill: 2 }, { k: 'shockx', dmg: 1.3, arc: 0.9 }] },
+    { id: 'e_attune', row: 11, b: '공명', tier: '상급', n: '조율', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'weave', ign: 4, chill: 1 }, { k: 'shockx', keep: { s: 'chill', n: 1 } }] },
+    { id: 'e_tide', row: 11, b: '공명', tier: '상급', n: '밀물', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 5 }, { k: 'weave', ign: 3, chill: 1 }, { k: 'shockx', arc: 0.6 }] },
+    { id: 'e_chainshock', row: 12, b: '공명', tier: '상급', n: '연쇄 충격', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'weave', ign: 4, chill: 2 }, { k: 'shockx', dmg: 1.6, brk: 1.5 }, { k: 'meSt', s: 'protect', n: 2 }] },
+    { id: 'e_stormfront', row: 12, b: '공명', tier: '상급', n: '폭풍전선', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 4 }, { k: 'weave', ign: 3, chill: 1 }, { k: 'shockx', dmg: 1.6 }] },
+    { id: 'e_critical', row: 13, b: '공명', tier: '상급', n: '임계', tgt: 'ranged', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 12 }, { k: 'weave', ign: 5, chill: 2 }, { k: 'shockx', dmg: 2.2, brk: 2 }] },
+    { id: 'e_eyestorm', row: 13, b: '공명', tier: '상급', n: '폭풍의 눈', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 2 }, { k: 'st', s: 'ignite', n: 1 }, { k: 'st', s: 'chill', n: 1 }, { k: 'shockx', dmg: 1.5, brk: 1.5 }] },
   ],
   spellblade: [
     /* 마검사 (10월 7일, docs/직업/마검사.md): kind 'cut' ⚔ 베기 · 'spell' ✦ 주문. 베기와 주문을 번갈아 쓰면 교대(직업 보호막 +4, 내 차례마다 한 번).
