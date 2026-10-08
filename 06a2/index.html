@@ -1578,7 +1578,7 @@ function rollMods3(run, n, f, forceMod) {
 const strong3Ok = (run, x, f) => (!x.from || f >= x.from) && (isLower(f) || x.upper !== 0) && (!x.needs || x.needs.every(r => introOk(run, r)));
 const floorBand3 = f => BANDS3.find(x => f <= x.to) || BANDS3[BANDS3.length - 1];
 const EKW = { archerBleed: 2, archerEvery: 3, heavyVuln: 2, explodeWeak: 2, explodeMul: 3, aimMul: 1.35, curseWeak: 2, braceRed: 0.5 };
-/* 10월 4일 적 행동 개편 (docs/0.6a.2-적-행동-기획.md): 한 번 피해의 기준 생명력, 사제가 치유하는 문턱, 소환사가 한 번에 부르는 수와 하수인 상한 */
+/* 10월 4일 적 행동 개편 (docs/기록/0.6a.2-적-행동-기획.md): 한 번 피해의 기준 생명력, 사제가 치유하는 문턱, 소환사가 한 번에 부르는 수와 하수인 상한 */
 const HIT_REF = lv => 102 + 5 * (lv - 1);
 const PRIEST = { heal: 0.4 };
 const SUMMON = { n: 1, cap: 3 };
@@ -2372,7 +2372,7 @@ function frontBlocked(b) { return alive(b).some(e => e.row === 'front' && e.stun
 function hasShield(b, exceptId) { return alive(b).find(e => e.role === 'shield' && e.id !== exceptId && !(e.stun > 0) && !e.s.broken && !e.unguard); }
 
 function st(u, k) { const x = u.s[k]; return x ? (x.stacks || 1) : 0; }
-/* ===== 0.6a.2 상태 키워드 (docs/0.6a.2-개편-기획.md 5절): 숫자 하나, 발동할 때마다 1 감소, 키워드별 상한 =====
+/* ===== 0.6a.2 상태 키워드 (docs/기록/0.6a.2-개편-기획.md 5절): 숫자 하나, 발동할 때마다 1 감소, 키워드별 상한 =====
    내부 이름은 옛 것을 그대로 쓴다(장비 효과 코드가 그대로 돈다): ignite = 화상, chill = 둔화.
    중독: 라운드가 끝날 때마다 N 피해. 출혈: 걸린 쪽이 행동할 때마다 N 피해. 화상: 걸린 쪽이 직접 피해를 받을 때마다 N 더.
    약화↔강화: 공격할 때마다 그 공격 −25%/+25%. 취약↔보호: 직접 피해를 받을 때마다 +25%/−25%. 둔화↔가속: 라운드가 시작될 때 그 라운드의 맨 뒤/맨 앞에서 움직이고 1 감소 (roundOrder).
@@ -4266,7 +4266,7 @@ function vCreate() {
   return h + `<div class="stickbar">${pk ? `<button class="gold wide" data-a="start" data-b="${pk}" data-focus>${esc(BUILDS[pk].n + '(으)로 정하기')}</button>` : ''}<div class="row"><button data-a="cback" data-k="name">이전: 이름</button><button data-a="createcancel">그만두기</button></div></div></section>`;
 }
 
-/* ===== 계정 목표 · 칭호 · 표식 도전 (10월 8일, docs/가혹모드-반복.md 2절) =====
+/* ===== 계정 목표 · 칭호 · 표식 도전 (10월 8일, docs/시스템/가혹모드-반복.md 2절) =====
    계정 목표: G.data.goals = { n: {…}, h: {…} } (일반 · 가혹). 키 '직업|갈래|챕터' → 처음 넘은 시각.
    갈래는 보스를 이긴 판의 트리에서 칸을 가장 많이 연 갈래이고, 그 갈래가 연 칸의 절반 이상이어야 센다(사냥꾼은 기동을 뺀 피해 갈래가 주).
    표식 도전: run.marks(표식 id) · run.markCh(시작 챕터) · run.markPts(점수). 표식 기록판 G.data.markBest['직업|챕터|n/h'] */

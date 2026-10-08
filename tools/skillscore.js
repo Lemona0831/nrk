@@ -1,4 +1,4 @@
-/* 스킬 점수표와 설명 문장 (0.6a.2 개편. docs/0.6a.2-암살자-스킬.md)
+/* 스킬 점수표와 설명 문장 (0.6a.2 개편. docs/기록/0.6a.2-암살자-스킬.md)
    게임이 쓰는 06a2/data/skills.js(스킬 데이터)와 06a2/data/skillkit.js(점수·문장 규칙)를 그대로 읽는다. 데이터와 규칙은 그 두 파일에만 있다.
    실행: node tools/skillscore.js [직업=assassin]        점수표 (줄 예산 ±8% 밖이면 표시, 기획서 12.6절)
          node tools/skillscore.js [직업] md             문서용 마크다운 표 */

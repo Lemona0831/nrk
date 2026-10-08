@@ -1,4 +1,4 @@
-// 7단계 검증 결과 문서를 만든다: node tools/vresult.js <결과 폴더(par)> > docs/검증-결과.md
+// 7단계 검증 결과 문서를 만든다: node tools/vresult.js <결과 폴더(par)> > docs/검증/검증-결과.md
 // 입력 파일 이름은 scratchpad verify.sh의 태그(v_learn · v_held · v_from2 · v_from3 · v_hard · v_path_* · v_f_<직업>_<번호>)다.
 const fs = require('fs'), path = require('path'), cp = require('child_process');
 const dir = process.argv[2]; if (!dir) { console.error('사용: node tools/vresult.js <par 폴더>'); process.exit(1); }
@@ -22,7 +22,7 @@ const bugs = all.reduce((a, x) => a + x.bugs.length, 0);
 P('# 검증 결과 (7단계, 자동 생성: tools/vresult.js)'); P('');
 P('- **생성일:** ', date, ' · 코드: 06a2(저장소 커밋 기준, 판 번호는 변경 내역 맨 위) · 도구: `tools/dgqa.js`(던전 자동 테스터) · 표 도구 `tools/vreport.js`');
 P('- **누적 던전 판:** ', all.length, '판(1만 회 기준 ', all.length >= 10000 ? '충족' : '미달', '), 이상(bugs) ', bugs, '건');
-P('- **재현:** 판은 고정 씨앗이라 같은 코드 · 같은 환경 변수면 결과가 판 단위로 같다. 병렬 실행은 `SHARD=i/n`으로 나누고 합쳐도 한 번에 돌린 것과 같다(10월 8일 확인). 배치 정의는 아래 표, 구동 스크립트는 docs/검증-계획.md 6절.');
+P('- **재현:** 판은 고정 씨앗이라 같은 코드 · 같은 환경 변수면 결과가 판 단위로 같다. 병렬 실행은 `SHARD=i/n`으로 나누고 합쳐도 한 번에 돌린 것과 같다(10월 8일 확인). 배치 정의는 아래 표, 구동 스크립트는 docs/검증/검증-계획.md 6절.');
 P('- **읽는 법:** 완주 = 그 챕터 보스를 이긴 판. 보스 승률 = 보스에 닿은 판 가운데 이긴 판. 갈래 = 트리 칸을 가장 많이 연 갈래. 시작 흉내(L3 · L4)는 앞 챕터를 깬 캐릭터를 그 챕터 1층에서 시작시킨다.');
 P('- **한계:** 던전 자동 테스터는 사람과 판단이 다르다(장비 교체 · 두 수 앞을 못 봄). 2 · 3챕터는 일반 흐름에서 도달하는 판이 적어 L3 · L4로 표본을 채웠다. 결과는 "직업 · 갈래 사이의 상대적 차이"를 보는 데 쓰고, 사람의 체감 난이도로 읽지 않는다.');
 P('');

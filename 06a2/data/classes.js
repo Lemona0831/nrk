@@ -1,10 +1,10 @@
-/* 나락의 유산 0.6a.2 데이터: 직업 (docs/0.6a.2-개편-기획.md 7절)
+/* 나락의 유산 0.6a.2 데이터: 직업 (docs/기록/0.6a.2-개편-기획.md 7절)
    index.html보다 먼저 읽힌다. 값만 두고, 계산은 index.html에서 한다.
    0.6a.2 개편 시범: 새 체계(v2: 재사용 대기 스킬, 스킬 트리, 마나 없음)로 만든 직업만 고를 수 있다. 지금은 암살자 하나이고,
    나머지 시작 직업은 만드는 대로 더한다(CLASS_SOON은 캐릭터 만들기에 "준비 중"으로만 보인다).
    옛 직업 8종(0.6a)의 값은 지인 주소 data/classes.js에 그대로 있다. */
 const EXCL = {};   // 옛 직업 전용 스킬 (v2 직업은 data/skills.js의 트리를 쓴다)
-const SIG = {};    // 옛 직업 기술 (v2 시범에는 없다. docs/0.6a.2-개편-기획.md 12절 질문 4)
+const SIG = {};    // 옛 직업 기술 (v2 시범에는 없다. docs/기록/0.6a.2-개편-기획.md 12절 질문 4)
 
 /* 시작 스킬: v2 직업은 트리 밖의 시작 스킬 둘 (data/skills.js의 TREE2.starters와 같다) */
 const DEFAULT_SKILLS = { assassin: ['a_vital', 'a_slip'], warden: ['w_bash', 'w_brace'], hunter: ['h_aim', 'h_step'], butcher: ['b_hook', 'b_lap'], elementalist: ['e_ember', 'e_touch'], spellblade: ['sb_edge', 'sb_aegis'], monk: ['m_palm', 'm_brace'], confessor: ['c_mace', 'c_confess'], bloodmage: ['v_taint', 'v_drink'] };
@@ -24,7 +24,7 @@ const BUILDS = {
     rule: '방어하면 보호막 +6(최대 생명력의 30%까지). 후열 적의 공격은 보호막이 절반만 받아낸다. 스킬은 쓰고 나면 쿨타임만큼 기다린다',
     skills: [],
   },
-  /* 사냥꾼 (10월 5일 초안 3차 · 공개, docs/0.6a.2-사냥꾼-스킬.md): 원거리 · 생명력 낮음, 개전 가속 1(10월 5일 2 → 1), 추적(같은 적을 연달아 맞히면 겹마다 피해 +5%, 큰 적 +10%, 최대 3) */
+  /* 사냥꾼 (10월 5일 초안 3차 · 공개, docs/기록/0.6a.2-사냥꾼-스킬.md): 원거리 · 생명력 낮음, 개전 가속 1(10월 5일 2 → 1), 추적(같은 적을 연달아 맞히면 겹마다 피해 +5%, 큰 적 +10%, 최대 3) */
   hunter: {
     n: '사냥꾼', ico: '🏹', hp: 92, mp: 0, v2: 1, ranged: 1, openHaste: 1, wpnMul: 0.55,
     lore: '먼저 쏘고, 쫓고, 끝까지 놓치지 않는다. 한 갈래 깊이는 다른 직업보다 얕지만, 갈래를 바꿔 이어 쓸 때 제 힘을 낸다.',

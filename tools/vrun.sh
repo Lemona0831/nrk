@@ -1,8 +1,8 @@
 #!/bin/bash
-# 7단계 검증 구동 (docs/검증-계획.md 6절 · docs/검증-결과.md): 던전 자동 테스터를 조각으로 나눠 병렬로 돌리고 합친다.
+# 7단계 검증 구동 (docs/검증/검증-계획.md 6절 · docs/검증/검증-결과.md): 던전 자동 테스터를 조각으로 나눠 병렬로 돌리고 합친다.
 #   사용: bash tools/vrun.sh [출력 폴더, 기본 verify_out]      (24코어에서 약 20분)
 #   조각마다 tools/ 와 06a2/ 사본을 만들어 tools/eng.gen.js 경합을 피한다. 도는 동안 코드를 고치지 않는다.
-#   결과: <출력>/par/v_<태그>.json, 표: node tools/vresult.js <출력>/par > docs/검증-결과.md
+#   결과: <출력>/par/v_<태그>.json, 표: node tools/vresult.js <출력>/par > docs/검증/검증-결과.md
 R="$(cd "$(dirname "$0")/.." && pwd)"; OUT="${1:-$R/verify_out}"; mkdir -p "$OUT/par" "$OUT/work"
 LOG="$OUT/driver.log"; : > "$LOG"
 par() { # par <태그> <조각 수> <판 수(칸당)> <끝 챕터>

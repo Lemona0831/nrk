@@ -1,4 +1,4 @@
-/* 0.6a.2 개편: 직업 스킬 트리 (docs/0.6a.2-개편-기획.md 4·7절, docs/0.6a.2-암살자-스킬.md)
+/* 0.6a.2 개편: 직업 스킬 트리 (docs/기록/0.6a.2-개편-기획.md 4·7절, docs/기록/0.6a.2-암살자-스킬.md)
    index.html보다 먼저 읽힌다. 값만 둔다. 실행은 index.html의 runSkill2, 설명 문장과 점수는 data/skillkit.js가 같은 데이터에서 만든다.
    스킬 한 줄: id, 갈래(b), 등급(tier: 하급·중급. 상급·궁극은 3챕터부터), 이름(n), 대상(tgt: melee 근접 한 적, pick 고른 적, ranged 후열까지 한 적, front 전열 모두, all 모든 적, self 나),
    빠르기(time: fast 빠른 칸 · normal 주 행동 · slow 두 칸 다), 찌르는 횟수(hits), 쿨타임(cd: 쓰고 나서 기다리는 내 턴 수, once: 전투마다 1번), 효과(fx).
