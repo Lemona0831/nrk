@@ -5993,7 +5993,7 @@ function rollGrade(minG) { const x = Math.random() * 100; let g = x < 50 ? 'n' :
 /* 2챕터부터의 장비 등급 확률 (장비-경제.md 5.1절). room: 일반 · 매복, big: 강적 · 시련 · 보물, boss: 챕터 보스. 표가 없는 챕터(1챕터)는 예전 그대로 rollGrade · 희귀 */
 const DROP_G = { 2: { room: { n: 58, m: 30, r: 10, h: 1.8, l: 0.2 }, big: { r: 88, h: 10, l: 2 }, boss: { r: 60, h: 32, l: 8 } }, 3: { room: { n: 50, m: 32, r: 14, h: 3.4, l: 0.6 }, big: { r: 88, h: 10, l: 2 }, boss: { r: 60, h: 32, l: 8 } } };
 const OLD_DROP = 0.1; /* 2챕터부터 드롭의 10%는 이전 챕터 풀에서 (평범 · 고급 · 희귀만) */
-function rollGradeCh(ch, src) { const T = DROP_G[ch || 1] && DROP_G[ch || 1][src]; if (!T) return src === 'room' ? rollGrade() : 'r'; let x = Math.random() * 100; for (const g of ['n', 'm', 'r', 'h', 'l']) { if (!T[g]) continue; if (x < T[g]) return g; x -= T[g]; } return 'r'; }
+function rollGradeCh(ch, src) { const T = DROP_G[ch || 1] && DROP_G[ch || 1][src]; if (!T) return src === 'room' ? rollGrade() : 'r'; const hard = G.run && G.run.mode === 'hard'; const W = g => (hard && (g === 'h' || g === 'l') ? MODES.hard.hero : 1) * (T[g] || 0); let x = Math.random() * (hard ? ['n', 'm', 'r', 'h', 'l'].reduce((q, g) => q + W(g), 0) : 100); /* 가혹: 영웅 · 전설 확률 ×1.5 (나머지는 그만큼 줄어든다) */ for (const g of ['n', 'm', 'r', 'h', 'l']) { if (!T[g]) continue; if (x < W(g)) return g; x -= W(g); } return 'r'; }
 function dropKey(run, g, not) {
   const owned = Object.values(run.inv || {}).map(x => x.tpl); not = not || [];
   let src = poolOf(run.ch); if ((run.ch || 1) >= 2 && 'nmr'.includes(g) && Math.random() < OLD_DROP) src = poolOf(run.ch - 1);
