@@ -7069,6 +7069,7 @@ function render() {
   if (POP.cur && !document.body.contains(POP.cur)) hidePop(); // 설명 창의 기준이 된 요소가 사라졌으면 닫는다
   if (!G.sheet && G.dropQ && G.dropQ.length && G.scr === 'run' && !G.b) setTimeout(nextDrop, 0); // 전리품 창을 닫기로 닫아도 남은 전리품을 이어서 건넨다
   fitDecide(fit);
+  document.querySelectorAll('.tbl').forEach(d => { const c = d.querySelector('caption'); d.tabIndex = 0; d.setAttribute('role', 'region'); d.setAttribute('aria-label', (c && c.textContent) || '표'); }); /* 가로로 스크롤되는 표 영역은 키보드로 닿고 이름이 있어야 한다(10월 8일 axe: scrollable-region-focusable) */
   const f2 = document.querySelector('.field'); if (f2) f2.scrollTop = fy;
   const l2 = document.querySelector('.side .blog'); if (l2) l2.scrollTop = ly;
   const same = G.lastScr === G.scr; G.lastScr = G.scr; // 화면이 바뀌면 맨 위에서 시작한다
