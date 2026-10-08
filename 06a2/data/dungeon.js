@@ -260,7 +260,7 @@ Object.assign(FOE_X, {
   sexton: { aoe: 1.5, vuln: 2, brk: 1.5, chill: 1 },
   echo: { mirror: 0.8, first: 0.5, cap: 0.35, capFirst: 0.25 },
 });
-const LORD = { gHp: 1, gDmg: 0.5, read: 6, turns: 2, cut: 0.4, cut2: 0.2, ph: [0.6, 0.3], walls: 2, wallHp: 0.10, wallBrk: 60, wallAoe: 0.5, expose: 2, mendPile: 1.0, mendBare: 0, mendTop: 0.5, hand: 0.85, handChill: 1, fall: 0.08, guards: 1 } /* 10월 7일: 근위 하나 · 근위 피해 ×0.5 · 뼈 더미가 없으면 벽을 다시 쌓지 않는다(근위 둘이 끝없이 때리고 벽 보수가 부수는 속도와 같아 21갈래 모두 0승이었다) */; // 지하묘지의 군주 (뜻은 비공개 문서)
+const LORD = { gHp: 1, gDmg: 0.35, read: 6, turns: 2, cut: 0.4, cut2: 0.2, ph: [0.6, 0.3], walls: 1, wallHp: 0.10, wallBrk: 60, wallAoe: 0.5, expose: 2, mendPile: 1.0, mendBare: 0, mendTop: 0.5, hand: 0.85, handChill: 1, fall: 0.08, guards: 1 } /* 10월 7일: 근위 하나 · 근위 피해 ×0.5 · 뼈 더미가 없으면 벽을 다시 쌓지 않는다(근위 둘이 끝없이 때리고 벽 보수가 부수는 속도와 같아 21갈래 모두 0승이었다) */; /* 10월 8일: 사냥꾼 연사 Lv7이 이길 수단 없음(35%)이라 벽 둘 → 하나, 근위 피해 ×0.5 → ×0.35 */ // 지하묘지의 군주 (뜻은 비공개 문서)
 Object.assign(FOE_INTRO, {
   cryptlord: { n: '지하묘지의 군주', lore: '이 지하묘지에 처음 묻힌 왕. 아직도 신하들의 이름을 부른다.', see: ['벽마다 이름이 새겨져 있다. 맨 아래 줄에 갓 새긴 자국이 있다.', '군주의 발치에서 해골 둘이 일어선다.'] },
   collector: { n: '뼈 수집가', lore: '바구니 가득 뼈를 진 자. 남의 뼈로 제 몸을 덮는다.', see: ['수집가가 해골들 뒤에서 바닥을 훑는다. 등의 바구니가 덜그럭거린다.'] },
@@ -392,7 +392,7 @@ Object.assign(FOE_X, { // 뜻은 비공개 문서
   sundial: { clock: 6, noon: 0.28, noonEmp: 2, brkBack: 3, lowAt: 2, lowBack: 1, bellBack: 2, glassBack: 2 },
   dancer: { haze: 2, hit: 0.11, capTot: 0.35 }, // 10월 7일: 분신 3겹은 쓰러짐 45~53%(한 적 공격 직업이 한 바퀴마다 세 번을 헛쳤다)라 2겹
 });
-const QUEEN = { brk: 180, heat0: 20, rise: [8, 10, 12], hiddenX: 2, ash: 10, breath: 0.5, ignTick: 2, chant: 25, enrageRise: 20, enrageFloor: 50, crownHp: 0.08, crownHit: 6, crownRoundCap: 24, crownBreak: 40, crownRegrow: 3, crownGrow: 1.5, breakHeat: 30, shock: 10, storm: 0.26, stormWeak: 2, stormIgn: 2, stormReset: 30, p3StormSelf: 0.06, p3SelfMax: 3, maidHp: 0.07, maidMax: 2, maidBack: 2, maidHit: 0.5, surge: 3, surgeBleed: 2, p2Cycle: 4, ph: [0.7, 0.35], p2Heat: 10, p3Heat: 40, enrage: 50 }; // 재의 여왕 (뜻은 비공개 문서)
+const QUEEN = { brk: 180, heat0: 20, rise: [8, 10, 12], hiddenX: 2, ash: 10, breath: 0.5, ignTick: 2, chant: 25, enrageRise: 20, enrageFloor: 50, crownHp: 0.08, crownHit: 6, crownRoundCap: 24, crownBreak: 40, crownRegrow: 3, crownGrow: 1.5, breakHeat: 30, shock: 10, storm: 0.26, stormWeak: 2, stormIgn: 2, stormReset: 30, p3StormSelf: 0.06, p3SelfMax: 3, maidHp: 0.05, maidMax: 2, maidBack: 2, maidHit: 0.5, surge: 3, surgeBleed: 2, p2Cycle: 4, ph: [0.7, 0.35], p2Heat: 10, p3Heat: 40, enrage: 50 }; // 재의 여왕 (뜻은 비공개 문서)
 Object.assign(FOE_INTRO, {
   queen: { n: '재의 여왕', lore: '불타는 왕국을 재로 굳혀 지킨 자. 아직도 해가 지지 않기를 기다린다.', see: ['왕좌의 재가 사람 모양으로 일어선다. 재 속에서 당신의 이름이 반짝인다.', '공기가 뜨거워진다.'] },
   stalker: { n: '모래 속 사냥꾼', lore: '발자국이 앞에서 끊기고, 뒤에서 다시 시작된다.', see: ['모래가 한 번 크게 일렁인다. 무언가 그 아래를 지나간다.'] },
