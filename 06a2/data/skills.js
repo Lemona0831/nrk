@@ -563,6 +563,13 @@ const SKILLS2 = {
     { id: 'm_split', row: 9, b: '철권', tier: '중급', n: '기 가르기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 10 }, { k: 'kiBurst', per: 10, keep: 0.5 }] },
     { id: 'm_storm', row: 10, b: '철권', tier: '중급', n: '연타의 끝', tgt: 'melee', time: 'normal', cd: 8, hits: 6, fx: [{ k: 'dmg', n: 5 }, { k: 'bigx', mul: 1.3 }] }, // 연타 칸에는 brk · st를 두지 않는다(엔진은 붕괴를 타격마다, 점수는 한 번). 큰 적용 연타 마무리
     { id: 'm_release', row: 10, b: '철권', tier: '중급', n: '기공 해방', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 19 }, { k: 'kiBurst', per: 11, brk: 8 }] }, // bigx 없음: 기 5에서 14 + 40 = 54, 붕괴 +40
+    // 상급 11~13줄 (3챕터, 10월 8일): 왼쪽 연타는 한 차례에 더 많이 치고 스스로 기를 돌려받는다, 오른쪽 기공은 터뜨린 기를 일부 돌려받아 큰 적에게 큰 한 방을 반복한다. 무리 방에는 새 광역을 더하지 않는다
+    { id: 'm_chainfist', row: 11, b: '철권', tier: '상급', n: '연환권', tgt: 'melee', time: 'fast', cd: 5, hits: 3, fx: [{ k: 'dmg', n: 9 }] },
+    { id: 'm_dantian', row: 11, b: '철권', tier: '상급', n: '단전 터뜨리기', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 10 }, { k: 'kiBurst', per: 7, max: 4, brk: 10 }, { k: 'meSt', s: 'empower', n: 2 }, { k: 'bigx', mul: 1.4 }] },
+    { id: 'm_afterimage', row: 12, b: '철권', tier: '상급', n: '잔상권', tgt: 'melee', time: 'normal', cd: 7, hits: 4, fx: [{ k: 'dmg', n: 5 }, { k: 'kiPer', per: 1 }, { k: 'meSt', s: 'empower', n: 1 }, { k: 'bigx', mul: 1.3 }] },
+    { id: 'm_overflow', row: 12, b: '철권', tier: '상급', n: '넘치는 기', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 20 }, { k: 'kiPer', per: 2 }, { k: 'kiGrow', add: 1, mul: 3 }] },
+    { id: 'm_tempest', row: 13, b: '철권', tier: '상급', n: '폭풍 연타', tgt: 'melee', time: 'normal', cd: 9, hits: 7, fx: [{ k: 'dmg', n: 4 }, { k: 'meSt', s: 'empower', n: 2 }, { k: 'bigx', mul: 1.4 }] },
+    { id: 'm_spirit', row: 13, b: '철권', tier: '상급', n: '기혼 일격', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 18 }, { k: 'kiBurst', per: 10, max: 5, brk: 10 }, { k: 'bigx', mul: 1.4 }] },
 
     // 부동: 막고 되받는다. 왼쪽 기둥은 자세(⚡ 자세는 되받기만, ▶ 자세는 막기와 되받기), 오른쪽은 되갚기(되받은 만큼 세지는 공격, 전열 밀기). 무리에 강하고 후열에 약하다
     { id: 'm_iron', row: 1, b: '부동', tier: '하급', n: '쇠기둥 자세', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'stance', dmg: 16 }] },
@@ -585,6 +592,13 @@ const SKILLS2 = {
     { id: 'm_backlash', row: 9, b: '부동', tier: '중급', n: '되받아 휩쓸기', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 14 }, { k: 'ctrPer', per: 7 }, { k: 'st', s: 'weak', n: 1 }] }, // 반탄과 갈라: 전열 모두 약화 1
     { id: 'm_myeongwang', row: 10, b: '부동', tier: '중급', n: '부동명왕', tgt: 'self', time: 'slow', cd: 10, fx: [{ k: 'stance', dmg: 18, brk: 25, ki: 1, max: 3 }] },
     { id: 'm_final', row: 10, b: '부동', tier: '중급', n: '마지막 응수', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 23 }, { k: 'ctrPer', per: 9 }, { k: 'stance' }] }, // 친 뒤 방어 자세: 되갚고 다시 받는 고리의 끝. lowx를 두지 않는다(되받은 몫까지 곱해짐)
+    // 상급 11~13줄 (3챕터, 10월 8일): 왼쪽 자세는 되받기 덤과 상한을 키우고 후열 약점을 덜어 준다, 오른쪽 되갚기는 전열 여럿에게 되받은 만큼 돌려준다
+    { id: 'm_unbroken', row: 11, b: '부동', tier: '상급', n: '불괴신', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 10 }, { k: 'stance', dmg: 11, ki: 1, weak: 1 }] },
+    { id: 'm_wrath', row: 11, b: '부동', tier: '상급', n: '분노의 응수', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 14 }, { k: 'ctrPer', per: 6 }, { k: 'stance' }, { k: 'bigx', mul: 1.3 }] },
+    { id: 'm_farwall', row: 12, b: '부동', tier: '상급', n: '천리 부동', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'stance', half: 0, dmg: 12, far: 1, max: 2, ki: 1 }] },
+    { id: 'm_wavefall', row: 12, b: '부동', tier: '상급', n: '되갚는 파도', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 12 }, { k: 'ctrPer', per: 11 }, { k: 'st', s: 'weak', n: 2 }] },
+    { id: 'm_vajra', row: 13, b: '부동', tier: '상급', n: '부동금강', tgt: 'melee', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 8 }, { k: 'stance', dmg: 8, brk: 22, ki: 2, max: 3 }] },
+    { id: 'm_karma', row: 13, b: '부동', tier: '상급', n: '업보의 일격', tgt: 'front', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 17 }, { k: 'ctrPer', per: 12 }, { k: 'brk', n: 17 }] },
 
     // 혈도: 급소를 눌러 늦추고, 늦춘 적에게서 기를 얻는다. 왼쪽 기둥은 점혈(둔화 · 약화 걸기, 강타 끊기 붕괴, 지원 끊기), 오른쪽은 흡기(이미 둔화된 적에게서 기 얻기, 둔화된 적을 크게). 강타에 강하고 거구에 약하다
     // 둔화 타이밍(문서 B-5): 내 차례에 건 둔화 N은 라운드 시작에 1 줄어 내 다음 차례에 N−1이다. 다음 차례 준비용 칸은 둔화 2, 같은 차례에는 ⚡로 걸고 ▶로 거둔다
@@ -608,6 +622,13 @@ const SKILLS2 = {
     { id: 'm_veinburst', row: 9, b: '혈도', tier: '중급', n: '맥 터뜨리기', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 25 }, { k: 'kiBurst', per: 7 }, { k: 'st', s: 'chill', n: 2 }] },
     { id: 'm_stillpt', row: 10, b: '혈도', tier: '중급', n: '정지혈', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 32 }, { k: 'st', s: 'chill', n: 3 }, { k: 'st', s: 'weak', n: 3 }, { k: 'cutx', brk: 70 }] },
     { id: 'm_kingvein', row: 10, b: '혈도', tier: '중급', n: '혈도의 끝', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 21 }, { k: 'kiBurst', per: 8, pre: 3 }] }, // chillx를 두지 않는다(거둔 몫까지 곱해져 한 방이 커짐)
+    // 상급 11~13줄 (3챕터, 10월 8일): 왼쪽 점혈은 강타를 끊는 붕괴와 늦춤을 크게, 오른쪽 흡기는 늦춘 적에게서 기를 크게 빼앗는다. 거구에 약해 큰 적 배수를 두지 않는다
+    { id: 'm_deathpt', row: 11, b: '혈도', tier: '상급', n: '절맥', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 24 }, { k: 'st', s: 'chill', n: 2 }, { k: 'st', s: 'weak', n: 2 }, { k: 'cutx', brk: 55 }] },
+    { id: 'm_absorb', row: 11, b: '혈도', tier: '상급', n: '기맥 흡수', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 16 }, { k: 'chillx', mul: 2 }, { k: 'meSt', s: 'empower', n: 2, if: 'chill' }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'm_chainpt', row: 12, b: '혈도', tier: '상급', n: '연환혈', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 28 }, { k: 'st', s: 'chill', n: 2 }, { k: 'st', s: 'weak', n: 1 }, { k: 'sealx', brk: 36 }] },
+    { id: 'm_reflux', row: 12, b: '혈도', tier: '상급', n: '역류', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'chillx', mul: 2 }, { k: 'meSt', s: 'empower', n: 2, if: 'chill' }, { k: 'kiPer', per: 1 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'm_freezeworld', row: 13, b: '혈도', tier: '상급', n: '천지 정지', tgt: 'melee', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 32 }, { k: 'st', s: 'chill', n: 3 }, { k: 'st', s: 'weak', n: 3 }, { k: 'cutx', brk: 70 }] },
+    { id: 'm_greatflow', row: 13, b: '혈도', tier: '상급', n: '대주천', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 19 }, { k: 'kiBurst', per: 6, pre: 4 }, { k: 'st', s: 'chill', n: 2 }] },
   ],
   confessor: [
     /* 숨겨진 직업 2 (10월 7일, UNLOCK.confessor). 설계 · 까닭은 비공개 문서. 새 효과: cleanse(정화 · 사함 offer · after) · transfer(옮기기) · perDmg(of: prot · burden · clean · weak · bleed · tbad) · dispel(강화 벗기기), meSt의 해로운 상태는 행동 뒤 고행(p.selfN), hasten on 'clean' */
