@@ -28,7 +28,7 @@ function capOf(s, e, k) {
   if (e.k === 'wardBurn' && k === 'max') return 24;
   return Infinity;
 }
-let CUR = null;
+let CUR = null; let TGT = 0; const FIT_T = {}; (process.env.FIT_T || '').split(',').filter(Boolean).forEach(x => { const [i, v] = x.split(':'); FIT_T[i] = +v; }); /* FIT_T=id:0.07,id:-0.07 : 칸마다 줄 예산에서 비껴 맞출 목표(기둥 균형, 10월 8일 숨겨진 직업 1 상급) */
 function cands(e, k) {
   const v0 = e[k] != null ? e[k] : (e.k === 'wardFill' && k === 'to' ? 1 : null); if (v0 == null) return null; const out = new Set([Math.min(v0, capOf(CUR, e, k))]);
   if (e.k === 'wardDmg') return PER_STEPS;
@@ -50,7 +50,7 @@ for (const s of SK) {
   if (ONLY.length && !ONLY.includes(s.id)) continue;
   if (s.exc) { log.push(`예외 ${s.n}: ${s.exc} (맞추지 않는다)`); continue; } // 줄 예산의 예외로 표시한 칸
   const score = () => { const r = ctx.skScore(s); return r.V / r.B - 1; };
-  CUR = s; const d0 = score(); const orig = JSON.parse(JSON.stringify(s.fx)); const cd0 = s.cd;
+  CUR = s; TGT = FIT_T[s.id] || 0; const d0 = score(); const orig = JSON.parse(JSON.stringify(s.fx)); const cd0 = s.cd;
   const slots = []; orig.forEach((e, i) => { for (const k of (FIELDS[e.k] || [])) { if ((LOCK[s.id] || []).includes(e.k) || (s.keep || []).includes(e.k)) continue; const c = cands(e, k); if (c) slots.push({ i, k, o: e[k] != null ? e[k] : 1, vals: c }); } });
   if (!slots.length) { log.push(`못 맞춤 ${s.n}: 고칠 수치가 없다 (${(d0 * 100).toFixed(1)}%)`); continue; }
   let best = null; const cur = slots.map(() => 0);
@@ -58,7 +58,7 @@ for (const s of SK) {
     if (j === slots.length) {
       s.fx = orig.map(e => Object.assign({}, e)); slots.forEach((sl, q) => { s.fx[sl.i][sl.k] = sl.vals[cur[q]]; });
       const d = score(); const fs2 = slots.map((sl, q) => sl.vals[cur[q]] / sl.o); const spread = Math.max(...fs2) - Math.min(...fs2);
-      const key = Math.abs(d) + spread * 0.04 + (s.cd < cd0 ? 0.05 * (cd0 - s.cd) : 0.025 * (s.cd - cd0));
+      const key = Math.abs(d - TGT) + spread * 0.04 + (s.cd < cd0 ? 0.05 * (cd0 - s.cd) : 0.025 * (s.cd - cd0));
       if (!best || key < best.key) best = { key, d, cd: s.cd, fx: JSON.parse(JSON.stringify(s.fx)) }; return;
     }
     for (let v = 0; v < slots[j].vals.length; v++) { cur[j] = v; rec(j + 1); }
