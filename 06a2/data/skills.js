@@ -412,6 +412,12 @@ const SKILLS2 = {
     { id: 'sb_redstorm', row: 9, b: '피칼날', tier: '중급', n: '붉은 회오리', kind: 'cut', tgt: 'front', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 15 }, { k: 'st', s: 'bleed', n: 1 }, { k: 'killSpread', per: 1 }] },
     { id: 'sb_crimson', row: 10, b: '피칼날', tier: '중급', n: '붉은 처형', kind: 'cut', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 11 }, { k: 'exploit', s: 'bleed', per: 8, take: 1 }, { k: 'lowx', hp: 0.35, mul: 1.5 }] },
     { id: 'sb_feast', row: 10, b: '피칼날', tier: '중급', n: '선혈 난무', kind: 'cut', tgt: 'front', time: 'normal', cd: 10, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'hasten', n: 2, on: 'kill' }] },
+    { id: 'sb_scarlet', row: 11, b: '피칼날', tier: '상급', n: '선홍 표식', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 4 }, { k: 'imbue', s: 'bleed', n: 5 }] },
+    { id: 'sb_pathway', row: 11, b: '피칼날', tier: '상급', n: '혈로 개척', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, killRecharge: 1, fx: [{ k: 'dmg', n: 16 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'lowx', hp: 0.3, mul: 1.5 }] },
+    { id: 'sb_thirst', row: 12, b: '피칼날', tier: '상급', n: '피 갈증', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'exploit', s: 'bleed', per: 3.5 }] },
+    { id: 'sb_gale', row: 12, b: '피칼날', tier: '상급', n: '피바람 가르기', kind: 'cut', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'killSpread', per: 1.5 }] },
+    { id: 'sb_ledger', row: 13, b: '피칼날', tier: '상급', n: '피의 결산', kind: 'cut', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 5 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'exploit', s: 'bleed', per: 5 }, { k: 'lowx', hp: 0.35, mul: 1.5 }] },
+    { id: 'sb_deluge', row: 13, b: '피칼날', tier: '상급', n: '혈우 낙하', kind: 'spell', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'killSpread', per: 1 }] },
     // 불칼
     { id: 'sb_ember', row: 1, b: '불칼', tier: '하급', n: '불씨 던지기', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'ignite', n: 4 }] },
     { id: 'sb_sparkcut', row: 1, b: '불칼', tier: '하급', n: '불씨 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, hits: 2, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'ignite', n: 3 }] },
@@ -433,6 +439,12 @@ const SKILLS2 = {
     { id: 'sb_blaze', row: 9, b: '불칼', tier: '중급', n: '타오르는 일격', kind: 'cut', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 23 }, { k: 'kwx', s: 'ignite', mul: 1.5 }, { k: 'brk', n: 41 }] },
     { id: 'sb_hellfire', row: 10, b: '불칼', tier: '중급', n: '업화', kind: 'spell', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 20 }, { k: 'exploit', s: 'ignite', per: 3 }, { k: 'cutx', brk: 58 }] },
     { id: 'sb_judgefire', row: 10, b: '불칼', tier: '중급', n: '불의 심판', kind: 'cut', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 11 }, { k: 'exploit', s: 'ignite', per: 4 }, { k: 'edgeX', mul: 2 }] },
+    { id: 'sb_pyre', row: 11, b: '불칼', tier: '상급', n: '꺼지지 않는 불', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'ignite', n: 4 }, { k: 'imbue', s: 'ignite', n: 4 }] },
+    { id: 'sb_inferno', row: 11, b: '불칼', tier: '상급', n: '화염 난도', kind: 'cut', tgt: 'melee', time: 'normal', cd: 8, hits: 3, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'ignite', n: 2 }, { k: 'kwx', s: 'ignite', mul: 1.3 }] },
+    { id: 'sb_ashcut', row: 12, b: '불칼', tier: '상급', n: '불 먹은 칼', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'ignite', n: 2 }, { k: 'exploit', s: 'ignite', per: 3 }] },
+    { id: 'sb_whet', row: 12, b: '불칼', tier: '상급', n: '칼날 달구기', kind: 'spell', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'imbue', s: 'ignite', n: 8 }, { k: 'st', s: 'protect', n: 1 }, { k: 'stam', n: 25 }] },
+    { id: 'sb_firefall', row: 13, b: '불칼', tier: '상급', n: '불벼락', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'ignite', n: 2 }, { k: 'exploit', s: 'ignite', per: 3 }, { k: 'cutx', brk: 32 }] },
+    { id: 'sb_drake', row: 13, b: '불칼', tier: '상급', n: '화룡 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 14 }, { k: 'st', s: 'ignite', n: 3 }, { k: 'kwx', s: 'ignite', mul: 1.5 }, { k: 'edgeX', mul: 2 }] },
     // 주문갑
     { id: 'sb_bladeward', row: 1, b: '주문갑', tier: '하급', n: '막 두른 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 15 }, { k: 'ward', n: 6 }] },
     { id: 'sb_counter', row: 1, b: '주문갑', tier: '하급', n: '맞받아 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 16 }, { k: 'alt', ward: 4 }] },
@@ -454,6 +466,12 @@ const SKILLS2 = {
     { id: 'sb_rhythm', row: 9, b: '주문갑', tier: '중급', n: '마검 연무', kind: 'cut', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 9 }, { k: 'alt', ward: 4 }, { k: 'hasten', n: 1, on: 'alt' }] },
     { id: 'sb_shatter', row: 10, b: '주문갑', tier: '중급', n: '갑주 해방', kind: 'cut', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'wardBurn', mul: 1.5 }, { k: 'brk', n: 15 }, { k: 'lowx', hp: 0.35, mul: 1.4 }] },
     { id: 'sb_finale', row: 10, b: '주문갑', tier: '중급', n: '마검 일섬', kind: 'cut', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 25 }, { k: 'brk', n: 25 }, { k: 'alt', run: 2, brk: 30 }, { k: 'brokenx', mul: 1.5 }] },
+    { id: 'sb_bulwark', row: 11, b: '주문갑', tier: '상급', n: '방벽 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'wardFill', to: 0.75 }, { k: 'dmg', n: 14 }, { k: 'brk', n: 18 }] },
+    { id: 'sb_measure', row: 11, b: '주문갑', tier: '상급', n: '박자 일섬', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 24 }, { k: 'alt', run: 2, brk: 40, ward: 4 }] },
+    { id: 'sb_barrage', row: 12, b: '주문갑', tier: '상급', n: '방벽 포격', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 22 }, { k: 'wardDmg', per: 0.5 }, { k: 'ward', n: 3 }] },
+    { id: 'sb_twin', row: 12, b: '주문갑', tier: '상급', n: '겹 영창', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 22 }, { k: 'cutx', brk: 53 }, { k: 'alt', run: 2, ward: 8, protect: 2 }] },
+    { id: 'sb_breakwall', row: 13, b: '주문갑', tier: '상급', n: '방벽 파쇄', kind: 'cut', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'wardBurn', mul: 2.5, max: 9 }, { k: 'brk', n: 12 }, { k: 'lowx', hp: 0.35, mul: 1.5 }] },
+    { id: 'sb_coda', row: 13, b: '주문갑', tier: '상급', n: '마검 종곡', kind: 'cut', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 20 }, { k: 'alt', run: 2, brk: 30, ward: 4 }] },
   ],
   monk: [
     // 수도승 (10월 7일 구현, docs/직업/수도승.md): 시작 스킬 둘 + 철권 · 부동 · 혈도 60칸. 새 효과 stance · kiBurst · kiPer · kiGrow · ctrPer · sealx, meSt if: chill, hasten on: ctr (index.html runSkill2 · monkCounter)
