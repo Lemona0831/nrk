@@ -215,7 +215,7 @@ const SKILLS2 = {
     { id: 'h_skysplit', row: 10, b: '연사', tier: '중급', n: '하늘 가르기', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 1 }, { k: 'hastex', mul: 1.6 }] }, /* 10월 7일: 학살의 비(9줄)와 모든 값이 같던 칸. 연속 행동 라운드에 크게 */
     // 상급 (3챕터, 11~13줄 · 10월 8일): 연사를 마무리한다. 왼쪽 기둥은 표적 바꾸기와 연발, 오른쪽은 모든 적 화살비와 출혈. 큰 적 배수는 없다(거구가 약점)
     { id: 'h_cross', row: 11, b: '연사', tier: '상급', n: '엇갈린 사격', tgt: 'ranged', time: 'fast', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 6 }, { k: 'swapx', mul: 1.5 }, { k: 'hasten', n: 1 }] },
-    { id: 'h_thornrain', row: 11, b: '연사', tier: '상급', n: '가시 폭우', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'st', s: 'weak', n: 1 }] },
+    { id: 'h_thornrain', row: 11, b: '연사', tier: '상급', n: '가시 폭우', tgt: 'front', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 4 }, { k: 'st', s: 'weak', n: 1 }] },
     { id: 'h_rapid', row: 12, b: '연사', tier: '상급', n: '속사', tgt: 'ranged', time: 'normal', cd: 8, hits: 4, fx: [{ k: 'dmg', n: 5 }, { k: 'swapx', mul: 1.3 }] },
     { id: 'h_crimson', row: 12, b: '연사', tier: '상급', n: '붉은 폭우', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'hastex', mul: 1.4 }] },
     { id: 'h_shade', row: 13, b: '연사', tier: '상급', n: '그림자 화살', tgt: 'ranged', time: 'vslow', cd: 6, hits: 5, fx: [{ k: 'dmg', n: 4 }, { k: 'swapx', mul: 1.6 }, { k: 'hasteSpend', mul: 1.5 }] },
@@ -243,11 +243,11 @@ const SKILLS2 = {
     { id: 'h_icecage', row: 10, b: '기동', tier: '중급', n: '얼음 감옥', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 18 }, { k: 'freeze', chill: 3, brk: 40 }] }, // 한 적을 확실히 멈추는 마무리(강적 · 보스는 둔화 3 + 붕괴)
     // 상급 (3챕터, 11~13줄 · 10월 8일): 기동을 마무리한다. 왼쪽 기둥은 피하기가 피해와 반격이 되는 길, 오른쪽은 둔화를 걸고 깨고 끊는 길. 칸마다 스스로 재료를 건다
     { id: 'h_void', row: 11, b: '기동', tier: '상급', n: '허공 사격', tgt: 'ranged', time: 'fast', cd: 8, fx: [{ k: 'dmg', n: 7 }, { k: 'evade', n: 1 }, { k: 'evadeCtr', dmg: 7 }] },
-    { id: 'h_wedge', row: 11, b: '기동', tier: '상급', n: '얼음 쐐기', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 6 }, { k: 'chillShatter', dmg: 6, brk: 30 }, { k: 'st', s: 'chill', n: 1 }] },
+    { id: 'h_wedge', row: 11, b: '기동', tier: '상급', n: '얼음 쐐기', tgt: 'ranged', time: 'fast', cd: 7, fx: [{ k: 'dmg', n: 5 }, { k: 'chillShatter', dmg: 4, brk: 20 }, { k: 'st', s: 'chill', n: 2 }] },
     { id: 'h_dance', row: 12, b: '기동', tier: '상급', n: '반격의 춤', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'evade', n: 1 }, { k: 'evadeCtr', dmg: 10, chill: 1 }, { k: 'stam', n: 30 }] },
     { id: 'h_snare', row: 12, b: '기동', tier: '상급', n: '붙잡는 화살', tgt: 'ranged', time: 'fast', cd: 8, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'chill', n: 2 }, { k: 'cutx', brk: 60 }, { k: 'chillCut', brk: 40 }] },
     { id: 'h_mirage', row: 13, b: '기동', tier: '상급', n: '환영 질주', tgt: 'self', time: 'fast', cd: 10, fx: [{ k: 'evade', n: 1 }, { k: 'st', s: 'haste', n: 1 }, { k: 'evadeCtr', dmg: 4, rounds: 3 }, { k: 'stam', n: 10 }] },
-    { id: 'h_winterchain', row: 13, b: '기동', tier: '상급', n: '겨울 사슬', tgt: 'ranged', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 6 }, { k: 'chillShatter', dmg: 6, brk: 30 }, { k: 'st', s: 'chill', n: 2 }, { k: 'onCutBreak', haste: 2, hasten: 1 }] },
+    { id: 'h_winterchain', row: 13, b: '기동', tier: '상급', n: '겨울 사슬', tgt: 'ranged', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 5 }, { k: 'chillShatter', dmg: 4, brk: 25 }, { k: 'st', s: 'chill', n: 2 }, { k: 'onCutBreak', haste: 2, hasten: 1 }] },
   ],
   /* 숨겨진 직업 1 (10월 7일, key butcher). 새 효과 키 grudge · carry, 넓힌 인자(st/exploit/grow/drain/spread s: 'bleed', exploit · drain me, lowx me, hasten · quick · meSt on: 'kill', thorn · onParry bleed)는 index.html runSkill2, 점수는 skillkit.js SKK.butch */
   butcher: [
