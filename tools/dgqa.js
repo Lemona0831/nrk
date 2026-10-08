@@ -61,7 +61,8 @@ function pickDoor(pk, run, r) {
 }
 
 /* 갈래길 고르기 (0.6a.2, 10월 4일): 험한 길 · 큰 길 · 샛길. 생명력과 플라스크를 보고 성향대로 */
-function pickPath(pk, run, r) {
+function pickPath(pk, run, r) { const k = pickPath0(pk, run, r); return k === 'quiet' && (run.marks && run.marks.includes('noquiet')) ? 'main' : k; } /* 표식 noquiet이면 샛길은 막혀 있다 */
+function pickPath0(pk, run, r) {
   if (process.env.PATH_FIX) return process.env.PATH_FIX; /* 10월 8일(7단계): 길 고정(rough · main · quiet). 없으면 아래 그대로 */
   const p = run.p; const h = p.hp / p.hpMax; const fl = p.flask.life;
   if (pk === 'novice') return ['rough', 'main', 'quiet'][Math.floor(r() * 3)];
@@ -293,6 +294,7 @@ function playChar(pk, build, seed) {
   G.data = G0.blankData(); G.data.seenFoe = { abbot: 1, bellringer: 1, pilgrim: 1 }; G.data.seenBoss = { abbot: 1 }; G.data.seenCoach = true; G.data.unlAll = 1; /* 숨겨진 직업도 고를 수 있게(어느 직업을 잴지는 DG_LOCK이 정한다) */
   G.cre = { name: 'qa' }; G.dropQ = []; G.b = null; G.sheet = null;
   if (process.env.MODE === 'hard') { G0.__G.data.hardOpen = 1; G0.__G.cre = { mode: 'hard' }; } /* 10월 8일: MODE=hard이면 가혹으로 만든다 */
+  if (MARKCH) G0.__G.cre = Object.assign(G0.__G.cre || {}, { mark: { ch: MARKCH, ids: MARK_IDS, mode: process.env.MODE === 'hard' ? 'hard' : 'normal' } }); /* 표식 도전: 화면과 같은 startRun 안의 markSetup이 레벨 · 꾸러미 · 표식을 정한다 */
   G0.startRun(build);
   const run = G.run; G.sheet = null; G.creating = false; G.cre = null; G.scr = 'run';
   // 스킬과 능력치 (qa.js와 같은 규칙)
@@ -303,16 +305,18 @@ function playChar(pk, build, seed) {
   run.skills = skills.slice(); run.p.skills = G0.BUILDS[build].v2 ? G0.v2Equip(run) : skills.slice(); // 0.6a.2: 시작 스킬은 늘 끼운다
   const pref = PREF[build]; const KEYS = G0.STAT_KEYS || ['str', 'dex', 'int']; const st = Object.fromEntries(KEYS.map(k => [k, 0]));
   if (G0.statRecommend && G0.STAT_REC && G0.STAT_REC[build]) { // 0.6a.2 능력치 다섯: 추천 배분을 쓰되 초보 · 일부는 아무렇게나
-    const n0 = G0.STAT_START || 6; const rec = G0.statRecommend(build, st, n0); for (const k of KEYS) st[k] = rec[k] || 0; for (let i = 0; i < n0; i++) if (pk === 'novice' || r() > 0.75) { const from = KEYS.filter(k => st[k] > 0)[Math.floor(r() * KEYS.filter(k => st[k] > 0).length)]; st[from]--; st[KEYS[Math.floor(r() * KEYS.length)]]++; }
+    const n0 = (G0.STAT_START || 6) + (run.markStat || 0); const rec = G0.statRecommend(build, st, n0); for (const k of KEYS) st[k] = rec[k] || 0; for (let i = 0; i < n0; i++) if (pk === 'novice' || r() > 0.75) { const from = KEYS.filter(k => st[k] > 0)[Math.floor(r() * KEYS.filter(k => st[k] > 0).length)]; st[from]--; st[KEYS[Math.floor(r() * KEYS.length)]]++; }
   } else for (let i = 0; i < 6; i++) st[pk === 'novice' || r() > 0.6 ? ['str', 'dex', 'int'][Math.floor(r() * 3)] : pref]++;
   run.stats = st; G0.applyStats(run.p, st); run.p.hp = run.p.hpMax; run.p.mp = run.p.mpMax; run.p.st = run.p.stMax;
   const out = { pk, build, seed, res: 'lose', floor: 0, lv: 1, rooms: [], bossHp: null, bugs: [], acts: 0, fights: [] };
-  if (FROM > 1) jumpTo(pk, r, FROM);
+  if (MARKCH) { out.marks = (run.marks || []).slice(); out.markCh = run.markCh; out.markPts = run.markPts || 0; }
+  if (FROM > 1 && !MARKCH) jumpTo(pk, r, FROM);
   return playLoop(pk, r, out);
 }
 /* DG_FROM=3 (10월 7일): 앞 챕터를 깬 캐릭터를 흉내 내 그 챕터 1층에서 시작한다. AI가 2챕터를 거의 깨지 못해(완주 0~3%) 3챕터를 재려면 따로 세운다.
    레벨은 챕터 시작 레벨(2챕터 Lv5, 3챕터 Lv10, 기획서 11.4), 능력치는 추천 배분, 트리는 성향대로, 장비는 앞 챕터 장비(슬롯마다 고급, 무기 · 갑옷은 희귀), 소모품 약초 셋과 무작위 셋, 생명력 · 플라스크 가득 */
-const FROM = +(process.env.DG_FROM || 1);
+const MARKCH = +(process.env.MARKCH || 0); const MARK_IDS = (process.env.MARKS || '').split(',').filter(Boolean); /* 표식 도전(10월 8일): MARKCH=2|3 챕터에서 새 캐릭터로 시작(엔진 startRun이 G.cre.mark로 만든다), MARKS=표식 id 쉼표. 표식 없이 MARKCH만 주면 같은 시작의 대조군 */
+const FROM = +(process.env.DG_FROM || process.env.MARKCH || 1);
 function jumpTo(pk, r, ch) {
   const G = G0.__G, run = G.run; const lv = ch >= 3 ? 10 : 5; const up = lv - (run.lv || 1);
   run.lv = lv; run.xp = G0.LV_XP_[lv - 1]; run.p.lv = lv; if (run.tree) run.tree.pts += up;
@@ -476,7 +480,7 @@ if (require.main === module) {
   for (let ch = FROM; ch <= Math.max(FROM, OPT.chapters); ch++) {
     const R = ch === FROM ? runs : runs.filter(x => passed(x, ch - 1));
     const sum = list => { const c = { clear: 0, upper: 0, lower: 0, boss: 0 }; list.forEach(x => c[where(x, ch)]++); return `완주 ${pct(c.clear, list.length)}% | 쓰러진 곳 상층 ${pct(c.upper, list.length)} 하층 ${pct(c.lower, list.length)} 보스 ${pct(c.boss, list.length)}`; };
-    if (OPT.chapters > 1 || FROM > 1) console.log(`== ${ch}챕터 (${ch === FROM ? (FROM > 1 ? (ch - 1) + '챕터를 깬 캐릭터를 흉내 낸 시작' : '모든 캐릭터') : (ch - 1) + '챕터를 깬 캐릭터'} ${R.length}명)`);
+    if (OPT.chapters > 1 || FROM > 1) console.log(`== ${ch}챕터 (${ch === FROM ? (FROM > 1 ? (MARKCH ? '표식 도전 ' + MARKCH + '챕터 시작 [' + MARK_IDS.join('+') + ']' : (ch - 1) + '챕터를 깬 캐릭터를 흉내 낸 시작') : '모든 캐릭터') : (ch - 1) + '챕터를 깬 캐릭터'} ${R.length}명)`);
     console.log('전체(6성향 평균):', sum(R));
     const think = R.filter(x => x.pk === MEASURE); console.log('사고하는 유저(신중):', sum(think));
     for (const pk of Object.keys(PERSONAS)) console.log('  ' + PERSONAS[pk].n.padEnd(4), sum(R.filter(x => x.pk === pk)));

@@ -41,4 +41,18 @@ for (let ch = startCh; ch <= maxCh; ch++) {
   const bad = E.flatMap(x => x.fights.filter(f => (f.ch || 1) === ch).flatMap(f => f.bigNoTurn || [])).length;
   P(''); P('- 예고된 큰 공격 ', nb, '번 가운데 예고 뒤 내 차례 없이 나간 것 ', bad, '번'); P('');
 }
+/* 표식 도전 (10월 8일): 표식 묶음 × 시작 챕터마다 완주율. 같은 시작 챕터의 표식 없는 묶음과 견준다 */
+if (R.some(x => x.markCh)) {
+  const M = R.filter(x => x.markCh);
+  P(''); P('## 표식 도전'); P('');
+  P('| 시작 챕터 | 표식 | 점수 | 판 | 보스 도달 | 완주 | 완주율 | 대조군 대비 | 보스 승률 |'); P('| --- | --- | --- | --- | --- | --- | --- | --- | --- |');
+  for (const ch of [...new Set(M.map(x => x.markCh))].sort()) {
+    const C = M.filter(x => x.markCh === ch); const grp = by(C, x => (x.marks || []).join('+') || '(없음)');
+    const ctl = grp['(없음)']; const cr = ctl ? pct(ctl.filter(x => cleared(x, ch)).length, ctl.length) : null;
+    for (const [k, L] of Object.entries(grp).sort((a, b) => (a[1][0].markPts || 0) - (b[1][0].markPts || 0))) {
+      const bo = L.filter(x => bossReached(x, ch)), w = L.filter(x => cleared(x, ch)); const r = pct(w.length, L.length);
+      P('| ', ch, ' | ', k, ' | ', L[0].markPts || 0, ' | ', L.length, ' | ', bo.length, ' | ', w.length, ' | ', r, '% | ', cr == null ? '—' : (r - cr >= 0 ? '+' : '') + (r - cr) + '%p', ' | ', pct(w.length, bo.length), '% |');
+    }
+  }
+}
 console.log(out.join('\n'));
