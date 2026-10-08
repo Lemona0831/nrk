@@ -29,6 +29,13 @@ const SKILLS2 = {
     { id: 'a_rotbreath', row: 9, b: '독사', tier: '중급', n: '썩은 숨', tgt: 'front', time: 'normal', cd: 3, fx: [{ k: 'poison', n: 3 }, { k: 'st', s: 'vuln', n: 2 }] },
     { id: 'a_cycle', row: 10, b: '독사', tier: '중급', n: '독의 순환', tgt: 'all', time: 'slow', cd: 5, fx: [{ k: 'grow', mul: 1.8 }, { k: 'hasten', n: 1, on: 'use' }] },
     { id: 'a_feast', row: 10, b: '독사', tier: '중급', n: '독 흡혈', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'poison', n: 4 }, { k: 'drain', per: 2.5 }] },
+    // 상급 (3챕터, 11~13줄 · 10월 8일): 갈래 정체성을 마무리한다. 왼쪽 기둥은 한 적에 깊게(독 키우기 · 약점), 오른쪽 기둥은 후열 · 지속 · 여럿
+    { id: 'a_festerwound', row: 11, b: '독사', tier: '상급', n: '곪은 상처', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'poison', n: 5 }, { k: 'st', s: 'vuln', n: 3 }] },
+    { id: 'a_web', row: 11, b: '독사', tier: '상급', n: '독 그물', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 2 }, { k: 'poison', n: 3 }, { k: 'spread', per: 0.5 }] },
+    { id: 'a_wither', row: 12, b: '독사', tier: '상급', n: '시드는 독', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'poison', n: 6 }, { k: 'st', s: 'weak', n: 2 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'a_breath', row: 12, b: '독사', tier: '상급', n: '독 호흡', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'poison', n: 3 }, { k: 'drain', per: 1.5 }, { k: 'stam', n: 40 }] },
+    { id: 'a_essence', row: 13, b: '독사', tier: '상급', n: '맹독의 정수', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'exploit', per: 2 }, { k: 'poison', n: 4 }, { k: 'grow', mul: 1.4 }] },
+    { id: 'a_plaguecloud', row: 13, b: '독사', tier: '상급', n: '맹독 안개', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'poison', n: 5 }, { k: 'st', s: 'weak', n: 2 }] },
     // 격발: 독을 심고 터뜨려 큰 적을 무너뜨린다. 거구·강타에 강하고 무리에 약하다
     { id: 'a_plant', row: 1, b: '격발', tier: '하급', n: '독 심기', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'poison', n: 6 }] },
     { id: 'a_burst', row: 1, b: '격발', tier: '하급', n: '독 격발', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'burst', pre: 2, mul: 2.5, brkPer: 3 }, { k: 'bigx', mul: 2 }] },
@@ -50,6 +57,12 @@ const SKILLS2 = {
     { id: 'a_hunt', row: 9, b: '격발', tier: '중급', n: '독 사냥', tgt: 'melee', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 7 }, { k: 'exploit', per: 3.5 }, { k: 'lowx', hp: 0.3, mul: 2 }, { k: 'bigx', mul: 2 }] },
     { id: 'a_brkburst', row: 10, b: '격발', tier: '중급', n: '무너지는 격발', tgt: 'melee', time: 'normal', cd: 10, fx: [{ k: 'burst', pre: 5, mul: 1.5, brkPer: 8 }] },
     { id: 'a_reap', row: 10, b: '격발', tier: '중급', n: '거두기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'lowx', hp: 0.35, mul: 2 }, { k: 'bigx', mul: 2 }] },
+    { id: 'a_fuse', row: 11, b: '격발', tier: '상급', n: '붕괴 뇌관', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'poison', n: 3 }, { k: 'brk', n: 61 }, { k: 'cutx', brk: 70 }] },
+    { id: 'a_verdict', row: 11, b: '격발', tier: '상급', n: '집행의 독', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 4 }, { k: 'exploit', per: 2.5 }, { k: 'brokenx', mul: 1.6 }, { k: 'bigx', mul: 3 }] },
+    { id: 'a_wick', row: 12, b: '격발', tier: '상급', n: '연쇄 도화선', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'burst', pre: 3, mul: 2, brkPer: 6 }, { k: 'bigx', mul: 2 }] },
+    { id: 'a_gallows', row: 12, b: '격발', tier: '상급', n: '독 처형', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'poison', n: 4 }, { k: 'dmg', n: 4 }, { k: 'lowx', hp: 0.35, mul: 2.5 }] },
+    { id: 'a_cataclysm', row: 13, b: '격발', tier: '상급', n: '종말의 격발', tgt: 'melee', time: 'normal', cd: 9, fx: [{ k: 'burst', pre: 2, mul: 2.6, brkPer: 8 }, { k: 'bigx', mul: 3 }] },
+    { id: 'a_finale', row: 13, b: '격발', tier: '상급', n: '숨통 터뜨리기', tgt: 'melee', time: 'normal', cd: 10, fx: [{ k: 'burst', pre: 3, mul: 1.35, brkPer: 4 }, { k: 'execute', hp: 0.3, mul: 3.2 }, { k: 'bigx', mul: 3 }] },
     // 그림자: 공격을 흘려 낸 틈을 찌르고 후열에 닿는다. 후열에 강하고 무리·거구에 약하다
     { id: 'a_shadow', row: 1, b: '그림자', tier: '하급', n: '그림자 찌르기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 25 }] },
     { id: 'a_deflect', row: 1, b: '그림자', tier: '하급', n: '흘려 베기', tgt: 'pick', time: 'normal', cd: 9, fx: [{ k: 'parry', red: 0.7 }, { k: 'dmg', n: 9 }, { k: 'onParry', dmg: 14 }] },
@@ -71,6 +84,12 @@ const SKILLS2 = {
     { id: 'a_rush', row: 9, b: '그림자', tier: '중급', n: '그림자 연타', tgt: 'melee', time: 'normal', cd: 6, hits: 3, fx: [{ k: 'dmg', n: 10 }, { k: 'brk', n: 3 }] },
     { id: 'a_darkstrike', row: 10, b: '그림자', tier: '중급', n: '어둠 일격', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 32 }, { k: 'brk', n: 57 }] },
     { id: 'a_parrydance', row: 10, b: '그림자', tier: '중급', n: '흘림의 춤', tgt: 'self', time: 'fast', cd: 8, fx: [{ k: 'parryBuff', red: 0.2, stam: 30, times: 2, dmg: 7 }, { k: 'hasten', n: 2, on: 'parry' }] },
+    { id: 'a_chase', row: 11, b: '그림자', tier: '상급', n: '그림자 추격', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 25 }, { k: 'brk', n: 30 }, { k: 'st', s: 'vuln', n: 2 }] },
+    { id: 'a_venomriposte', row: 11, b: '그림자', tier: '상급', n: '독니 되치기', tgt: 'pick', time: 'normal', cd: 7, fx: [{ k: 'parry', red: 0.8 }, { k: 'onParry', dmg: 14, poison: 4, brk: 5 }] },
+    { id: 'a_breach', row: 12, b: '그림자', tier: '상급', n: '틈새 베기', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 26 }, { k: 'brokenx', mul: 2.2 }] },
+    { id: 'a_reprisal', row: 12, b: '그림자', tier: '상급', n: '그림자 역습', tgt: 'pick', time: 'normal', cd: 6, fx: [{ k: 'parry', red: 0.8 }, { k: 'onParry', dmg: 24, brk: 12 }, { k: 'hasten', n: 1, on: 'parry' }] },
+    { id: 'a_umbra', row: 13, b: '그림자', tier: '상급', n: '죽음의 그림자', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 28 }, { k: 'brk', n: 44 }, { k: 'lowx', hp: 0.35, mul: 2 }] },
+    { id: 'a_daggerrain', row: 13, b: '그림자', tier: '상급', n: '단검 소나기', tgt: 'ranged', time: 'normal', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 16 }, { k: 'brk', n: 13 }] },
   ],
   warden: [
     // 시작 스킬: 트리 밖. 어느 갈래에도 치우치지 않는 공격 하나(주 행동), 방어 하나(빠른 행동). 보호막은 쓰지 않는다 (10월 3일 초안)
@@ -715,7 +734,7 @@ const TREE2 = {
 /* 갈래 크기 (10월 3일 만든 사람 결정): 사다리 10줄(하급 6 · 중급 4), 줄마다 두 칸 = 갈래 20칸, 직업 60칸.
    포인트 설계: 포인트는 레벨마다 1(시작 1 → Lv10에 10). 한 갈래를 줄마다 하나씩 내려가면 Lv6에 하급 끝, Lv10에 중급 끝. 1챕터(Lv5)는 하급만, 2챕터(Lv10)에 중급.
    챕터 돌파 포인트(+2)는 0.6a.2에서 주지 않는다: Lv10까지 10점이 트리 크기의 기준이다(기획서 12.2절) */
-const TREE_GATE = { 시작: 0, 하급: 0, 중급: 0 }; // 사다리에서는 깊이가 등급 조건을 대신한다(쓰지 않음)
+const TREE_GATE = { 시작: 0, 하급: 0, 중급: 0, 상급: 0 }; // 사다리에서는 깊이가 등급 조건을 대신한다(쓰지 않음)
 /* 챕터로 여는 등급: 1~2챕터는 하급·중급만으로 싸운다. 상급·궁극은 3챕터를 만들 때 다시 설계해 더한다 */
 const TREE_CH = { 시작: 1, 하급: 1, 중급: 1, 상급: 3, 궁극: 5 }; // 상급·궁극 칸은 지웠지만(3챕터부터 다시 짠다) 여는 챕터는 남겨 둔다. 이 표에 없는 등급은 열리지 않는다(index.html treeWhy)
 const EQUIP_SLOTS2 = 4;
