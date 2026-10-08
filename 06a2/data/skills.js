@@ -614,6 +614,13 @@ const SKILLS2 = {
     { id: 'c_lance', row: 9, b: '속죄', tier: '중급', n: '빛의 창', tgt: 'ranged', time: 'slow', cd: 8, fx: [{ k: 'cleanse', n: 2 }, { k: 'dmg', n: 32 }, { k: 'bigx', mul: 1.5 }] },
     { id: 'c_judgment', row: 10, b: '속죄', tier: '중급', n: '정결의 심판', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'cleanse' }, { k: 'dmg', n: 30 }, { k: 'perDmg', of: 'prot', per: 6, spend: 1 }, { k: 'brk', n: 66 }] },
     { id: 'c_amnesty', row: 10, b: '속죄', tier: '중급', n: '대사면', tgt: 'self', time: 'normal', cd: 10, fx: [{ k: 'cleanse', heal: 9 }, { k: 'stam', n: 56 }, { k: 'hasten', n: 2, on: 'clean' }] },
+    // 속죄 상급 (11~13줄, 10월 8일): 왼쪽 정결은 씻은 보호를 그 자리에서 읽고 쓰고 다시 채우고, 오른쪽 용서는 지우며 🔄와 회복을 잇는다
+    { id: 'c_hallow', row: 11, b: '속죄', tier: '상급', n: '성별의 일격', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'cleanse', n: 3 }, { k: 'dmg', n: 31 }, { k: 'perDmg', of: 'prot', per: 4 }] },
+    { id: 'c_litany', row: 11, b: '속죄', tier: '상급', n: '저녁 연도', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'cleanse', n: 2, heal: 4 }, { k: 'dmg', n: 24 }, { k: 'hasten', n: 1, on: 'clean' }] },
+    { id: 'c_renew', row: 12, b: '속죄', tier: '상급', n: '갱신의 일격', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 32 }, { k: 'perDmg', of: 'prot', per: 6, spend: 1 }, { k: 'cleanse', n: 2, after: 1 }] },
+    { id: 'c_unction', row: 12, b: '속죄', tier: '상급', n: '성유 부음', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'cleanse', n: 3, heal: 4 }, { k: 'dmg', n: 31 }, { k: 'brk', n: 23 }] },
+    { id: 'c_whitejudge', row: 13, b: '속죄', tier: '상급', n: '순백의 선고', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'cleanse' }, { k: 'dmg', n: 32 }, { k: 'perDmg', of: 'prot', per: 5 }, { k: 'brokenx', mul: 1.5 }, { k: 'bigx', mul: 1.4 }] },
+    { id: 'c_jubilee', row: 13, b: '속죄', tier: '상급', n: '희년', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'cleanse', heal: 6, haste: 1 }, { k: 'dmg', n: 32 }, { k: 'hasten', n: 2, on: 'clean' }] },
     // 전가 (왼쪽 되돌리기 · 오른쪽 덮어씌우기)
     { id: 'c_return', row: 1, b: '전가', tier: '하급', n: '저주 되돌리기', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'transfer', only: ['weak'], add: 1 }, { k: 'dmg', n: 19 }] },
     { id: 'c_accuse', row: 1, b: '전가', tier: '하급', n: '죄 덮어씌우기', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'transfer', only: ['vuln'], add: 1 }, { k: 'dmg', n: 22 }] },
@@ -635,6 +642,13 @@ const SKILLS2 = {
     { id: 'c_scapegoat', row: 9, b: '전가', tier: '중급', n: '희생양', tgt: 'ranged', time: 'slow', cd: 8, fx: [{ k: 'transfer' }, { k: 'dmg', n: 19 }, { k: 'vulnPer', per: 5 }, { k: 'bigx', mul: 1.5 }] },
     { id: 'c_bind', row: 10, b: '전가', tier: '중급', n: '저주의 굴레', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'transfer', only: ['weak'], add: 1 }, { k: 'dispel', n: 1 }, { k: 'dmg', n: 16 }, { k: 'brk', n: 13 }] },
     { id: 'c_weight', row: 10, b: '전가', tier: '중급', n: '죄의 무게', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'transfer' }, { k: 'dmg', n: 31 }, { k: 'perDmg', of: 'tbad', per: 4 }] },
+    // 전가 상급 (11~13줄, 10월 8일): 왼쪽 되돌리기는 옮기고 벗기고 끊는 것을 한 칸에 잇고, 오른쪽 덮어씌우기는 옮겨 건 상태를 곧바로 거둔다
+    { id: 'c_mirror', row: 11, b: '전가', tier: '상급', n: '거울 기도', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'transfer', only: ['weak'], add: 2 }, { k: 'dispel', n: 2 }, { k: 'dmg', n: 27 }] },
+    { id: 'c_brand', row: 11, b: '전가', tier: '상급', n: '죄인의 낙인', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'transfer', only: ['vuln'], add: 2 }, { k: 'dmg', n: 19 }, { k: 'vulnPer', per: 2 }] },
+    { id: 'c_gag', row: 12, b: '전가', tier: '상급', n: '입막음', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'transfer', only: ['weak'], add: 1 }, { k: 'dispel', n: 2 }, { k: 'dmg', n: 11 }, { k: 'perDmg', of: 'weak', per: 4 }] },
+    { id: 'c_pustule', row: 12, b: '전가', tier: '상급', n: '터지는 고름', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'transfer', only: ['bleed'], add: 3 }, { k: 'dmg', n: 16 }, { k: 'perDmg', of: 'bleed', per: 4 }] },
+    { id: 'c_anathema', row: 13, b: '전가', tier: '상급', n: '파문 선고', tgt: 'ranged', time: 'slow', cd: 9, fx: [{ k: 'transfer', only: ['weak'], add: 2 }, { k: 'dispel' }, { k: 'dmg', n: 20 }, { k: 'brk', n: 30 }, { k: 'perDmg', of: 'weak', per: 3 }] },
+    { id: 'c_condemn', row: 13, b: '전가', tier: '상급', n: '대죄의 단죄', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'transfer' }, { k: 'dmg', n: 32 }, { k: 'perDmg', of: 'tbad', per: 6 }] },
     // 고행 (왼쪽 채찍 · 오른쪽 참회)
     { id: 'c_lash', row: 1, b: '고행', tier: '하급', n: '채찍질', tgt: 'melee', time: 'normal', cd: 6, keep: ['meSt'], fx: [{ k: 'dmg', n: 24 }, { k: 'meSt', s: 'ignite', n: 2 }] },
     { id: 'c_repent', row: 1, b: '고행', tier: '하급', n: '참회의 일격', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'cleanse', offer: 1, dmg: 4 }, { k: 'dmg', n: 21 }] },
@@ -656,6 +670,13 @@ const SKILLS2 = {
     { id: 'c_tears', row: 9, b: '고행', tier: '중급', n: '눈물의 매', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 25 }, { k: 'perDmg', of: 'clean', per: 7 }, { k: 'bigx', mul: 1.5 }] },
     { id: 'c_martyr', row: 10, b: '고행', tier: '중급', n: '순교', tgt: 'melee', time: 'slow', cd: 10, keep: ['meSt'], fx: [{ k: 'dmg', n: 27 }, { k: 'perDmg', of: 'burden', per: 6 }, { k: 'bigx', mul: 1.5 }, { k: 'meSt', s: 'ignite', n: 3 }] },
     { id: 'c_lastrite', row: 10, b: '고행', tier: '중급', n: '마지막 고해', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 30 }, { k: 'perDmg', of: 'burden', per: 5 }, { k: 'cleanse', after: 1 }, { k: 'bigx', mul: 1.5 }] },
+    // 고행 상급 (11~13줄, 10월 8일): 왼쪽 채찍은 짐을 읽고 다음 짐을 스스로 지고, 오른쪽 참회는 바치고 다시 진다
+    { id: 'c_scourge', row: 11, b: '고행', tier: '상급', n: '가시 채찍', tgt: 'melee', time: 'normal', cd: 6, keep: ['meSt'], fx: [{ k: 'dmg', n: 24 }, { k: 'perDmg', of: 'burden', per: 4 }, { k: 'meSt', s: 'ignite', n: 2 }, { k: 'bigx', mul: 1.3 }] },
+    { id: 'c_confession', row: 11, b: '고행', tier: '상급', n: '공개 고백', tgt: 'melee', time: 'fast', cd: 5, keep: ['meSt'], fx: [{ k: 'cleanse', n: 3, offer: 1, dmg: 4, brk: 6 }, { k: 'dmg', n: 23 }, { k: 'meSt', s: 'ignite', n: 1 }] },
+    { id: 'c_humble', row: 12, b: '고행', tier: '상급', n: '굴욕의 걸음', tgt: 'melee', time: 'fast', cd: 5, keep: ['meSt'], fx: [{ k: 'dmg', n: 24 }, { k: 'perDmg', of: 'burden', per: 3 }, { k: 'meSt', s: 'chill', n: 1 }] },
+    { id: 'c_wail', row: 12, b: '고행', tier: '상급', n: '통곡', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 20 }, { k: 'brk', n: 18 }, { k: 'brokenx', mul: 1.6 }, { k: 'perDmg', of: 'clean', per: 5 }] },
+    { id: 'c_stigma', row: 13, b: '고행', tier: '상급', n: '성흔', tgt: 'melee', time: 'slow', cd: 9, keep: ['meSt'], fx: [{ k: 'dmg', n: 25 }, { k: 'perDmg', of: 'burden', per: 7 }, { k: 'brk', n: 30 }, { k: 'bigx', mul: 1.5 }, { k: 'meSt', s: 'ignite', n: 2 }] },
+    { id: 'c_vicarious', row: 13, b: '고행', tier: '상급', n: '대속', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'cleanse', offer: 1, dmg: 5, brk: 6 }, { k: 'dmg', n: 32 }, { k: 'bigx', mul: 1.6 }] },
   ],
   /* 숨겨진 직업 3 (10월 7일, UNLOCK.bloodmage). 설계 · 까닭은 비공개 문서. 엔진 값은 index.html BLOOD */
   bloodmage: [
