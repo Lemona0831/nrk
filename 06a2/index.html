@@ -668,6 +668,7 @@ html.rm *,html.rm *::before{transition:none!important;scroll-behavior:auto!impor
 <script src="data/items_ch1.js"></script>
 <script src="data/items_ch2.js"></script>
 <script src="data/awakening.js"></script>
+<script src="data/items_ch3.js"></script>
 <script src="data/consumables.js"></script>
 <script src="data/rooms.js"></script>
 <script src="data/dungeon.js"></script>
@@ -1318,6 +1319,7 @@ function heatStorm(b) {
   const q = queenOf(b); const lv = (q && q.lv) || b.ctx.lv || 1; const p = b.p;
   b.rec.push({ k: 'bigfire', role: 'heat', foe: q ? 'queen' : null, i: 'storm', gap: b.turnIdx - (b.heatWarnT != null ? b.heatWarnT : b.turnIdx) });
   logp(b, 'crit', q ? '재폭풍이 몰아친다' : '뜨거운 열풍이 분다');
+  fxRun(p, 'onStorm', b, p); // 3챕터 장비
   hurtPlayer(b, HIT_REF(lv) * (q ? QUEEN.storm : HEAT.burst) * (b.halfBoom === b.round ? 0.5 : 1), { aoe: 1, spell: 1, charged: 1, label: q ? '재폭풍' : '열풍' });
   if (!b.over) { addS(b, p, 'ignite', q ? QUEEN.stormIgn : HEAT.burstIgn); if (q) addS(b, p, 'weak', QUEEN.stormWeak); }
   if (!q) for (const e of alive(b)) if (realFoe(e)) addS(b, e, 'ignite', HEAT.foeIgn);
@@ -1360,23 +1362,27 @@ function fireCarry(b, e, heavy, hit) {
   if (e.fireNext) { n += e.fireNext; e.fireNext = 0; }
   if (!heavy && e.foe === 'reaper') n += 1; if (!heavy && e.foe === 'colossus') n += e.glow || 0; if (e.role === 'maid') n += 1;
   if (n > 0 && hit && !b.over) { const g = addS(b, b.p, 'ignite', n); if (g) logp(b, 'bad', e.n + '의 불이 옮겨붙는다. 화상 ' + g); }
+  if (n > 0) fxRun(b.p, 'onFire', b, b.p, e, n, !!(hit && !b.over)); // 3챕터 장비
 }
 /* 허상: 1 지나감(광역 · 추적 3겹), 0 막힘, 0.5 맑은 눈의 성소 */
 function hazeHit(b, e, o, fullF) {
   if (o.aoe) { if (e.foe === 'dancer' && e.haze > 0) { e.haze = 0; logp(b, 'good', '넓게 휘두르자 ' + e.n + '의 윤곽이 한꺼번에 흩어진다'); codexHit(b, 'dancer', 'sweep'); } return 1; }
   if (fullF) { logp(b, 'good', '추적 ' + HUNT.focusMax + '겹: ' + e.n + '의 허상을 꿰뚫는다'); return 1; }
-  e.haze--; e.hazeHit = b.actN; if (e.haze <= 0) { e.haze = 0; e.hazeSrc = null; }
+  let th = 0; if (b.p.eq) for (const [k, f] of fxList(b.p)) if (f.hazeThru) { const v = f.hazeThru(b, b.p, e, o) || 0; if (v > th) { th = v; fxHit(k); } } // 3챕터 장비: 허상을 꿰뚫는 정도 (1이면 걷지도 않고 지나간다)
+  if (th >= 1) { logp(b, 'good', e.n + '의 허상을 꿰뚫는다'); return 1; }
+  e.haze--; e.hazeHit = b.actN; e.hazeLast = b.round; if (e.haze <= 0) { e.haze = 0; e.hazeSrc = null; }
   logp(b, 'sys', e.n + '의 허상이 흩어진다. 공격이 헛친다' + (e.haze ? ' (남은 허상 ' + e.haze + ')' : ''));
   if (e.foe === 'dancer') codexHit(b, 'dancer', 'copies');
-  return hasBt(b.p, 'clarity') ? 0.5 : 0;
+  fxRun(b.p, 'onHaze', b, b.p, e, 'hit');
+  return Math.max(th, hasBt(b.p, 'clarity') ? 0.5 : 0);
 }
-function wrapOff(b, e, why) { if (!(e.wrap > 0)) return; e.wrap = 0; logp(b, 'good', e.n + '의 붕대가 ' + why + ' 벗겨진다'); }
+function wrapOff(b, e, why) { if (!(e.wrap > 0)) return; e.wrap = 0; e.wrapLast = b.round; logp(b, 'good', e.n + '의 붕대가 ' + why + ' 벗겨진다'); fxRun(b.p, 'onWrap', b, b.p, e, why === '불에 타' ? 'burn' : why === '찢겨' ? 'break' : 'other'); }
 /* 3챕터 적이 받는 직접 피해의 배율 (지속 피해는 1. 열충격만 여왕의 열기를 내린다) */
 function ch3HitMul(b, e, o) {
   if (o.dot) { if (o.shock && e.boss === 'queen' && b.qShockR !== b.round) { b.qShockR = b.round; heatAdd(b, -QUEEN.shock, '열충격'); } return 1; }
   if (e.role === 'crown') { if (e.crownAct !== b.actN) { e.crownAct = b.actN; if (b.crownR !== b.round) { b.crownR = b.round; b.crownRN = 0; } const can = Math.min(QUEEN.crownHit, QUEEN.crownRoundCap - (b.crownRN || 0)); if (can > 0) { b.crownRN = (b.crownRN || 0) + can; heatAdd(b, -can, '왕관'); codexHit(b, 'queen', 'crown'); } } return 1; }
   let m = 1;
-  if (e.wrap > 0) { m *= 1 - WRAP.cut; e.wrap--; if (e.wrap <= 0) { e.wrap = 0; logp(b, 'good', e.n + '의 붕대가 세 번 맞아 풀린다'); } }
+  if (e.wrap > 0) { m *= 1 - WRAP.cut; e.wrap--; if (e.wrap <= 0) { e.wrap = 0; e.wrapLast = b.round; logp(b, 'good', e.n + '의 붕대가 세 번 맞아 풀린다'); fxRun(b.p, 'onWrap', b, b.p, e, 'worn'); } }
   if (e.row === 'back' && hasMod(b, 'sandstorm')) m *= 0.8;
   if (e.foe === 'stalker') {
     if (e.stkExp > 0) m *= 1 + FOE_X.stalker.exposedTaken;
@@ -1396,7 +1402,7 @@ function ch3OnStatus(b, u, k, added) {
 }
 /* 무너졌을 때 (addBreak) */
 function ch3OnBreak(b, e) {
-  if (e.haze > 0) { e.haze = 0; e.hazeSrc = null; logp(b, 'good', e.n + '의 허상이 흩어진다'); }
+  if (e.haze > 0) { e.haze = 0; e.hazeSrc = null; e.hazeLast = b.round; logp(b, 'good', e.n + '의 허상이 흩어진다'); }
   if (e.wrap > 0) wrapOff(b, e, '찢겨');
   if (e.foe === 'colossus' && e.glow) { e.glow = 0; logp(b, 'good', e.n + '의 붉은 빛이 꺼진다'); }
   if (e.foe === 'reaper' && e.embers) { e.embers = 0; logp(b, 'good', '낫의 불씨가 흩어진다'); codexHit(b, 'reaper', 'scatter'); }
@@ -1739,7 +1745,7 @@ const fxStam = (p, x) => { p.st = Math.min(p.stMax, p.st + x); if (p.exhaust && 
 const fxOnce = (b, key) => { b.fxOn = b.fxOn || {}; if (b.fxOn[key] === b.actN) return false; b.fxOn[key] = b.actN; return true; };
 const fxCnt = (b, key, max) => { b.fxN = b.fxN || {}; if ((b.fxN[key] || 0) >= max) return false; b.fxN[key] = (b.fxN[key] || 0) + 1; return true; };
 function fxCdMax(b, p, not) { if (!p.cd || b.fxCdAct === b.actN) return null; let best = null; for (const id of p.skills || []) { const s = SK2[id]; if (!s || s.once || id === not || !(p.cd[id] > 0)) continue; if (!best || p.cd[id] > p.cd[best]) best = id; } if (best) { p.cd[best]--; b.fxCdAct = b.actN; logp(b, 'good', SK2[best].n + ' 쿨타임 −1'); } return best; }
-function fxUnearth(b, e, vuln) { e.under = 0; e.intent = { k: 'attack' }; e.teleTurn = null; if (vuln) addS(b, e, 'vuln', vuln); logp(b, 'good', e.n + '이(가) 땅 위로 끌려 나온다'); }
+function fxUnearth(b, e, vuln) { if (e.foe === 'stalker') return; e.under = 0; e.intent = { k: 'attack' }; e.teleTurn = null; if (vuln) addS(b, e, 'vuln', vuln); logp(b, 'good', e.n + '이(가) 땅 위로 끌려 나온다'); }
 function fxPileKill(b, e) { e.norise = 1; e.hp = 0; killEnemy(b, e); checkEnd(b); }
 const fxBig = o => !!(o.charged || (o.src && o.src.intent && o.src.intent.aimed && !o.dot));
 function fxApplyKw(b, e, k, n) { if (!e || !e.alive || !(n > 0)) return 0; return k === 'poison' ? addPoison(b, e, n, 1) : addS(b, e, k, n); }
@@ -2008,6 +2014,241 @@ const IFX_AWK = {
   k_bm2: { bHealP: () => 0.10 },
   k_bm3: { hitP: (b, p) => p.hp <= p.hpMax * 0.7 ? 0.06 : 0 },
 };
+/* ===== 3챕터 장비 효과 (IFX3, 10월 8일, docs/아이템/3챕터-장비.md · 장비-경제.md 9절) =====
+   IFX2의 지점을 그대로 쓰고, 3챕터 적 · 방에 답하는 새 지점만 더했다. 모두 낀 장비가 없으면 아무것도 바꾸지 않는다(1 · 2챕터 결과 그대로).
+   새 지점: onHaze(b,p,e,why) 허상을 걷음(hit 한 적 공격이 걷음 · break 무너짐) hazeThru(b,p,e,o) 허상을 꿰뚫는 정도(0.3이면 피해의 30%가 들어가고 1이면 걷지도 않고 지나감)
+            onWrap(b,p,e,why) 붕대가 벗겨짐(burn 불에 탐 · break 찢김 · worn 세 번 맞음 · other) onStorm(b,p) 열풍이 불기 직전 onFire(b,p,e,n,hit) 불을 싣는 적의 공격(맞았는가)
+            igIn(b,p,x) 내게 걸린 화상의 추가 피해 감소(음수면 더 받음) igOut(b,p,e,x) 적에게 걸린 화상의 추가 피해 증가 stOut(b,p,e,k) 내가 적에게 거는 상태에 더하는 수
+   열기를 내리는 장비는 fxHeat로 내리고, 한 전투에서 합쳐 FX_HEAT_CUT까지만 내린다. 한 행동 뒤에만 켜지는 효과는 fxArm · fxHot, 쌓이는 효과는 fxStackAdd · fxStackUse
+   전투마다 지우는 값은 b.fx3(F3)에 둔다(p에 두면 다음 방으로 샌다) */
+const F3 = b => b.fx3 || (b.fx3 = {});
+const hzE = e => !!(e && e.haze > 0);
+const wrE = e => !!(e && e.wrap > 0);
+const lkE = e => !!(e && e.role === 'lurker');
+const emE = e => !!(e && e.role === 'ember');
+const fireE = e => !!(e && (e.fire || e.fireNext > 0));
+const underAny = b => alive(b).some(x => x.under && x.role !== 'root');
+const stormWarn = b => b.heat != null && b.heatWarn != null && b.heatWarn >= (b.round || 0);
+const isStormHit = o => !!o && (o.label === '열풍' || o.label === '재폭풍');
+const bigAhead = b => alive(b).some(x => x.intent && BIGK.includes(x.intent.k)) || stormWarn(b);
+const fxSk = (c, k, s) => { const sk = c && (c.s || SK2[c.id]); return !!(sk && sk.fx && sk.fx.some(x => x.k === k && (s == null || x.s === s))); };
+const FX_HEAT_CUT = 20;
+function fxHeat(b, n, why) { if (b.heat == null || !(n > 0)) return 0; const f = F3(b); const m = Math.min(n, FX_HEAT_CUT - (f.heatCut || 0), b.heat); if (!(m > 0)) return 0; f.heatCut = (f.heatCut || 0) + m; heatAdd(b, -m, why); return m; }
+function fxArm(b, key) { const f = F3(b); f[key] = b.actN; f[key + 'U'] = 0; }
+function fxHot(b, key) { const f = F3(b); const a = f[key]; if (!a || a === b.actN) return false; if (!f[key + 'U']) f[key + 'U'] = b.actN; if (f[key + 'U'] !== b.actN) { f[key] = 0; f[key + 'U'] = 0; return false; } return true; }
+function fxStackAdd(b, key, max) { const f = F3(b); f[key] = Math.min(max, (f[key] || 0) + 1); f[key + 'T'] = b.actN; }
+function fxStackUse(b, key, per) { const f = F3(b); if (f[key + 'A'] !== b.actN) { if (!(f[key] > 0) || f[key + 'T'] === b.actN) return 0; f[key + 'A'] = b.actN; f[key + 'V'] = per * f[key]; f[key] = 0; } return f[key + 'V'] || 0; }
+function hazePeel(b, e) { if (!(e.haze > 0)) return; e.haze--; e.hazeLast = b.round; if (e.haze <= 0) { e.haze = 0; e.hazeSrc = null; } }
+function wrapWear(b, e, why) { if (!(e.wrap > 0)) return; if (e.wrap <= 1) wrapOff(b, e, why); else e.wrap--; }
+const IFX3 = {
+  // 무기
+  ashrake: { brk: (b, p, e, c) => c.id === 'basic' && wrE(e) ? 4 : 0 },
+  glassknife: { onHaze: (b, p, e, why) => { if (why !== 'hit') return; fxStam(p, 6); return 1; } },
+  brandaxe: { hitP: (b, p, e) => e.fire ? 0.08 : 0 },
+  noonblade: { hitP: (b, p, e, o, c) => c && c.id === 'basic' && b.heat >= 50 ? 0.06 : 0 },
+  lurkspike: { hitP: (b, p, e, o) => !o.aoe && e.row === 'back' && underAny(b) ? 0.1 : 0 },
+  duststaff: { hitP: (b, p, e) => e.row === 'back' && hasMod(b, 'sandstorm') ? 0.15 : 0 },
+  emberclub: { brk: (b, p, e, c) => c.id === 'heavy' && st(p, 'ignite') ? 4 : 0 },
+  driftbow: { onHit: (b, p, e, o, c) => { if (!c.ranged || e.row !== 'back' || !fxOnce(b, 'driftbow')) return; fxStam(p, 3); return 1; } },
+  priestbane: { hitP: (b, p, e) => e.role === 'healer' ? 0.12 : 0 },
+  thiefsnare: { brk: (b, p, e) => e.role === 'thief' ? 6 : 0 },
+  sandiron: { hitP: (b, p, e, o, c) => c && c.id === 'basic' ? 0.04 : 0 },
+  mirrorlance: { hazeThru: () => 0.3 },
+  burnscythe: { onWrap: (b, p, e, why) => { if (why !== 'burn' || !e.alive) return; addBreak(b, e, 10); return 1; } },
+  surfacespear: { hitP: (b, p, e) => lkE(e) && !e.under && st(e, 'vuln') ? 0.2 : 0 },
+  heatsabre: { onHit: (b, p, e, o, c) => { if (c.ranged || !e.alive || !(b.heat >= 60) || !fxOnce(b, 'heatsabre')) return; addS(b, e, 'ignite', 1); return 1; } },
+  emberhunter: { hitP: (b, p, e) => emE(e) ? 0.2 : 0, onKill: (b, p, e) => emE(e) && addWard(b, p, 4) > 0 ? 1 : 0 },
+  stormlance: { brk: (b, p, e) => e.row === 'back' && hasMod(b, 'sandstorm') ? 6 : 0 },
+  veilblade: { onHaze: (b, p, e, why) => { if (why !== 'hit') return; fxArm(b, 'veil'); return 1; }, hitP: (b, p, e, o, c) => isAtkC(c) && fxHot(b, 'veil') ? 0.15 : 0 },
+  wrapripper: { hitP: (b, p, e) => wrE(e) ? 0.12 : 0 },
+  wardsaber: { hitP: (b, p, e, o, c) => isAtkC(c) && p.ward > 0 && p.ward >= wardMax(p) * 0.5 ? 0.12 : 0 },
+  scorpionrod: { onHit: (b, p, e, o, c) => { if (c.ranged || !e.alive || !fxOnce(b, 'scorpionrod')) return; if (stk(e, 'bleed')) addS(b, e, 'bleed', 1); else if (st(e, 'poison')) addPoison(b, e, 1, 1); else return; return 1; } },
+  furnaceaxe: { hitP: (b, p, e) => hasMod(b, 'brazier') && st(e, 'ignite') ? 0.12 : 0 },
+  gazebow: { hazeThru: (b, p, e) => p.focus && p.focus.id === e.id && p.focus.n >= 2 ? 1 : 0 },
+  echoblade: { onHaze: (b, p, e, why) => { if (why !== 'hit') return; fxArm(b, 'echo'); return 1; }, brk: (b, p, e, c) => fxHot(b, 'echo') ? 12 : 0, hitP: (b, p, e) => hzE(e) ? 0 : -0.06 },
+  cinderaxe: { onHit: (b, p, e) => { if (!wrE(e) || !e.alive || !fxOnce(b, 'cinderaxe')) return; addS(b, e, 'ignite', 1); return 1; }, onWrap: (b, p, e, why) => { if (why !== 'burn') return; fxStam(p, 8); return 1; }, hitP: (b, p, e) => wrE(e) ? 0 : -0.06 },
+  surgesabre: { onParry: (b, p, src) => { if (!lkE(src) || !src.alive) return; addS(b, src, 'vuln', 2); return 1; }, onEvade: (b, p, src) => { if (!lkE(src) || !src.alive) return; addS(b, src, 'vuln', 2); return 1; }, cost: (p, id) => id === 'dodge' ? 5 : 0 },
+  stormbreaker: { hitP: b => stormWarn(b) ? 0.2 : 0, onStorm: (b, p) => { fxStam(p, 15); return 1; }, onRound: b => { if (b.heat == null) return; heatAdd(b, 2, '달군 도끼'); return 1; } },
+  cinderchain: { onHit: (b, p, e, o, c) => { if (c.ranged || !e.alive || !st(p, 'ignite') || !fxOnce(b, 'cinderchain')) return; kwDec(p, 'ignite'); addS(b, e, 'ignite', 1); logp(b, 'good', '쥔 손의 불이 사슬을 타고 ' + e.n + '에게 건너간다'); return 1; } },
+  dunescythe: { hitP: (b, p, e) => hasMod(b, 'sandstorm') ? (e.row === 'back' ? 0.1 : -0.05) : 0, onKill: (b, p, e) => { if (!hasMod(b, 'sandstorm') || e.row !== 'front') return; let n = 0; for (const x of fFoes(b)) if (x.row === 'back') { addBreak(b, x, 12); n++; } return n ? 1 : 0; } },
+  pactblade: { hpMul: 0.95, onSkill: (b, p, act) => { if (!fxSk(act, 'hpCost')) return; fxArm(b, 'bp'); return 1; }, hitP: (b, p, e, o, c) => isAtkC(c) && fxHot(b, 'bp') ? 0.1 : 0, brk: b => fxHot(b, 'bp') ? 12 : 0 },
+  sunstaff: { onCounter: (b, p, e) => { if (!e.alive || !fxCnt(b, 'sunstaff', 4)) return; addS(b, e, 'ignite', 1); return 1; } },
+  shadowsickle: { onParry: b => { fxArm(b, 'ss'); return 1; }, hazeThru: b => fxHot(b, 'ss') ? 1 : 0, brk: b => fxHot(b, 'ss') ? 10 : 0, cost: (p, id) => id === 'dodge' ? 5 : 0 },
+  emberfeeder: { igIn: () => -0.2, onRound: (b, p) => { if (!st(p, 'ignite')) return; kwDec(p, 'ignite'); fxStackAdd(b, 'feed', 3); logp(b, 'good', '불씨를 삼킨다. 다음 공격이 날카로워진다'); return 1; }, hitP: (b, p, e, o, c) => isAtkC(c) ? fxStackUse(b, 'feed', 0.12) : 0 },
+  hazeking: { hazeThru: () => 0.5, hitP: (b, p, e) => hzE(e) || e.hazeHit === b.actN ? 0.25 : 0, st: { st: -12 } },
+  cullingaxe: { hitP: (b, p, e) => e.hp <= e.hpMax * 0.2 ? 0.3 : e.hp >= e.hpMax ? -0.1 : 0 },
+  sunscorch: { dur: k => k === 'ignite' ? 1 : 0, onHit: (b, p, e) => { const n = st(e, 'ignite'); if (!e.alive || n < 5 || !fxOnce(b, 'sunscorch')) return; delete e.s.ignite; logp(b, 'good', '정오의 칼날이 ' + e.n + '의 불을 한꺼번에 태운다'); hurtEnemy(b, e, n * 4, { label: '정오의 칼날', single: 1 }); return 1; } },
+  unravel: { onWrap: (b, p, e) => { const f = F3(b); if (f.unr) return; f.unr = 1; if (e.alive) addS(b, e, 'vuln', 2); const t = fFoes(b).find(x => x !== e && wrE(x)); if (t) wrapOff(b, t, '함께 풀려'); f.unr = 0; return 1; }, hitP: (b, p, e) => wrE(e) ? 0 : -0.08 },
+  burntname: { igOut: () => -1, onRound: (b, p) => { let n = 0; for (const e of fFoes(b)) { const k = st(e, 'ignite'); if (!k) continue; kwDec(e, 'ignite'); dmgDot(b, e, k * dotMul(p), '점화'); n++; } if (n) logp(b, 'good', '불사른 이름이 한 번씩 타오른다'); return n ? 1 : 0; } },
+  // 갑옷
+  ashscale: { igIn: () => 0.25 },
+  veilcloak: { inP: (b, p, o) => o.src && !o.dot && hzE(o.src) ? 0.08 : 0 },
+  wrapvest: { inP: (b, p, o) => o.src && !o.dot && wrE(o.src) ? 0.08 : 0 },
+  sandcoat: { inP: (b, p, o) => o.src && !o.dot && o.src.row === 'back' && hasMod(b, 'sandstorm') ? 0.15 : 0 },
+  lurkboots: { inP: (b, p, o) => o.charged && lkE(o.src) ? 0.1 : 0 },
+  sunshade: { inP: (b, p, o) => isStormHit(o) ? 0.15 : 0 },
+  embercloak: { inP: (b, p, o) => o.src && !o.dot && o.src.fire ? 0.08 : 0 },
+  thickhide: { st: { hp: 9 } },
+  coolplate: { onAct: (b, p, id) => { if (id !== 'guard') return; return fxHeat(b, 3, '서늘한 흉갑') > 0 ? 1 : 0; } },
+  mirrorplate: { onHaze: (b, p, e, why) => { if (why !== 'hit') return; return addWard(b, p, 5) > 0 ? 1 : 0; } },
+  burnedmail: { dur: k => k === 'ignite' ? -1 : 0 },
+  emberguard: { inP: (b, p, o) => o.src && !o.dot && emE(o.src) ? 0.2 : 0, onKill: (b, p, e) => { if (!emE(e) || !st(p, 'ignite')) return; kwDec(p, 'ignite', 2); return 1; } },
+  stormcloak: { onKill: (b, p, e) => { if (!hasMod(b, 'sandstorm') || e.row !== 'front') return; return addWard(b, p, 6) > 0 ? 1 : 0; } },
+  dunemail: { onParry: (b, p, src) => lkE(src) && addWard(b, p, 8) > 0 ? 1 : 0, onEvade: (b, p, src) => lkE(src) && addWard(b, p, 8) > 0 ? 1 : 0 },
+  wetrobe: { onRound: b => b.heat != null && fxHeat(b, 3, '젖은 천 법복') > 0 ? 1 : 0 },
+  unwraplink: { onWrap: (b, p) => { if (!fxOnce(b, 'unwraplink')) return; return addWard(b, p, 4) > 0 ? 1 : 0; } },
+  evadecoat: { onEvade: (b, p) => { let n = addWard(b, p, 4) > 0 ? 1 : 0; if (st(p, 'ignite')) { kwDec(p, 'ignite'); n = 1; } return n; } },
+  stancehabit: { igIn: (b, p) => p.stance ? 0.4 : 0 },
+  ashpenance: { onRound: (b, p) => { if (!st(p, 'ignite') || badKinds(p) < 2 || !fxCnt(b, 'ashpenance', 3)) return; kwDec(p, 'ignite'); logp(b, 'good', '재를 쓴 몸에서 불씨 하나가 꺼진다'); return 1; } },
+  hazewalker: { onHaze: (b, p, e, why) => { if (why !== 'hit' || !fxCnt(b, 'hazewalker', 4)) return; addS(b, p, 'protect', 1); return 1; }, inP: (b, p, o) => o.src && !o.dot && !hzE(o.src) ? -0.05 : 0 },
+  wrapbreakermail: { onHurt: (b, p, o) => { const e = o.src; if (!e || o.dot || !wrE(e) || !e.alive) return; wrapWear(b, e, '닳아'); return 1; }, cost: (p, id) => id === 'guard' ? 5 : 0 },
+  stormplate: { hpMul: 0.95, inP: (b, p, o) => isStormHit(o) ? 0.3 : 0, onStorm: (b, p) => addWard(b, p, 10) > 0 ? 1 : 0 },
+  sandmantle: { onRound: (b, p) => underAny(b) && addWard(b, p, 6) > 0 ? 1 : 0, inP: (b, p, o) => { if (o.charged && lkE(o.src)) return 0.15; return o.src && !o.dot && !underAny(b) ? -0.04 : 0; } },
+  ashplate: { igIn: () => -0.15, inP: (b, p, o) => o.dot ? 0 : 0.03 * Math.min(5, st(p, 'ignite')) },
+  sandveil: { st: { st: -6 }, inP: (b, p, o) => o.src && !o.dot && o.src.row === 'back' && hasMod(b, 'sandstorm') ? 0.25 : 0, onKill: (b, p, e) => { if (!hasMod(b, 'sandstorm') || e.row !== 'back') return; fxStam(p, 10); return 1; } },
+  emberbulwark: { wardP: () => -0.1, igIn: (b, p) => p.ward > 0 ? 0.5 : 0 },
+  bloodmail: { inP: (b, p, o) => o.src && !o.dot ? -0.04 : 0, onSkill: (b, p, act) => fxSk(act, 'hpCost') && addWard(b, p, 6) > 0 ? 1 : 0 },
+  pyrerobe: { igIn: () => -0.3, onRound: (b, p) => { if (st(p, 'ignite') < 3) return; let n = 0; for (const e of fFoes(b)) if (!e.under) { addS(b, e, 'ignite', 1); n++; } if (n) logp(b, 'good', '타오르는 몸에서 불이 번진다. 적 모두 화상 1'); return n ? 1 : 0; } },
+  mirageplate: { hpMul: 0.92, inMul: (b, p, o) => { if (o.dot || !o.src || fxBig(o)) return 1; const f = F3(b); if (f.mirageDone) return 1; f.mirageDone = 1; logp(b, 'good', '허상이 대신 맞는다. 피해 0'); return 0; } },
+  wrapmail: { onStart: (b, p) => { F3(b).wrapN = 3; F3(b).rewrap = 0; return 1; }, inMul: (b, p, o) => { if (o.dot || !o.src) return 1; const f = F3(b); if (!(f.wrapN > 0)) return 1; f.wrapN--; if (f.wrapN <= 0) logp(b, 'sys', '내 붕대가 풀린다'); return 0.7; }, onAct: (b, p, id) => { const f = F3(b); if (id !== 'guard' || f.wrapN > 0 || f.rewrap) return; f.rewrap = 1; f.wrapN = 3; logp(b, 'good', '붕대를 다시 감는다'); return 1; }, onDebuff: (b, p, k) => { const f = F3(b); if (k !== 'ignite' || !(f.wrapN > 0)) return; f.wrapN = 0; logp(b, 'bad', '내 붕대가 불에 탄다'); return 1; } },
+  mirrorarmor: { wardP: () => -0.3, onHurt: (b, p, o, d) => { const e = o.src; if (!e || o.dot || !(d > 0) || !e.alive || !realFoe(e)) return; const hz = e.haze, wr = e.wrap; e.haze = 0; e.wrap = 0; hurtEnemy(b, e, d * 0.25, { label: '거울 갑옷', silent: 1 }); e.haze = hz; e.wrap = wr; return 1; } },
+  ashskin: { dur: k => k === 'ignite' ? 1 : 0, igIn: () => 1, hitP: (b, p, e, o, c) => isAtkC(c) ? 0.04 * Math.min(6, st(p, 'ignite')) : 0, onRound: b => { if (b.heat == null) return; heatAdd(b, 3, '재가 된 살갗'); return 1; } },
+  // 장갑
+  clearpalm: { hitP: (b, p, e, o) => o.aoe && hzE(e) ? 0.15 : 0 },
+  wrapshears: { brk: (b, p, e, c) => c.id === 'heavy' && wrE(e) ? 6 : 0 },
+  coolgloves: { onSkill: b => b.heat != null && fxHeat(b, 1, '젖은 장갑') > 0 ? 1 : 0 },
+  scalegloves: { brk: (b, p, e) => lkE(e) && !e.under && st(e, 'vuln') ? 8 : 0 },
+  stormgrip: { onStart: (b, p) => { if (!hasMod(b, 'sandstorm')) return; fxStam(p, 10); return 1; } },
+  burnmitt: { onDebuff: (b, p, k) => { if (k !== 'ignite') return; const f = F3(b); if (f.bmR === b.round) return; f.bmR = b.round; fxStam(p, 4); return 1; } },
+  sandglove: { st: { st: 7 } },
+  huntglove3: { onHit: (b, p, e) => { if (!p.focus || p.focus.id !== e.id || p.focus.n < 2) return; const f = F3(b); f.hg = f.hg || {}; if (f.hg[e.id]) return; f.hg[e.id] = 1; fxStam(p, 3); return 1; } },
+  warmwraps: { igIn: (b, p) => st(p, 'empower') >= 3 ? 0.3 : 0 },
+  mirrorknuckle: { onHaze: (b, p, e, why) => { if (why !== 'hit' || !fxCnt(b, 'mirrorknuckle', 2)) return; return fxCdMax(b, p) ? 1 : 0; } },
+  kindlewraps: { onWrap: (b, p, e, why) => { if (why !== 'burn' || !e.alive) return; addS(b, e, 'ignite', 2); return 1; } },
+  stormgloves: { hitP: (b, p, e, o) => o.aoe && e.row === 'back' && hasMod(b, 'sandstorm') ? 0.25 : 0 },
+  windwrap: { onStorm: b => { fxArm(b, 'wind'); return 1; }, hitP: (b, p, e, o, c) => isAtkC(c) && fxHot(b, 'wind') ? 0.2 : 0 },
+  snuffgloves: { onHit: (b, p, e) => { if (!(e.fireNext > 0)) return; e.fireNext = 0; logp(b, 'good', e.n + '이(가) 받은 불씨가 꺼진다'); return 1; } },
+  cinderglove: { brk: (b, p, e) => e.fire ? 8 : 0 },
+  sparkhands: { onShock: b => b.heat != null && fxHeat(b, 2, '불똥 손') > 0 ? 1 : 0 },
+  pennancehands: { onCleanse: (b, p, n) => n > 0 && b.heat != null && fxHeat(b, 3, '고행의 손') > 0 ? 1 : 0 },
+  stainedglove: { onHit: (b, p, e, o, c) => { if (!wrE(e) || !e.alive || !c.skill) return; const ps = fxSk(c, 'poison'), bl = fxSk(c, 'st', 'bleed'); if (!(ps || bl) || !fxOnce(b, 'stainedglove')) return; if (ps) addPoison(b, e, 1, 1); if (bl) addS(b, e, 'bleed', 1); return 1; } },
+  splitglove: { onHaze: (b, p, e, why) => { if (why !== 'hit') return; const t = fOther(b, e); if (!t) return; addBreak(b, t, 10); return 1; }, brk: (b, p, e, c) => c.id === 'basic' && !hzE(e) ? -2 : 0 },
+  wearinggrip: { onHit: (b, p, e) => { if (!wrE(e) || !e.alive || !fxOnce(b, 'wearinggrip')) return; wrapWear(b, e, '닳아'); return 1; }, hitP: (b, p, e, o, c) => c && c.id === 'basic' ? -0.05 : 0 },
+  heatpalm: { brk: (b, p, e, c) => b.heat != null && c.time <= 0.6 ? Math.floor(b.heat / 20) * 2 : 0, onRound: b => { if (b.heat == null) return; heatAdd(b, 1, '달군 손바닥'); return 1; } },
+  blazeglove: { onAlt: (b, p) => { let n = 0; for (const e of fFoes(b)) if (st(e, 'ignite') && !e.under) { addS(b, e, 'ignite', 1); n++; } return n ? 1 : 0; } },
+  shieldknuckle: { wardP: () => -0.15, block: (b, p, k) => k === 'ignite' && p.ward > 0 },
+  sunfist: { onHit: (b, p, e, o, c) => { if (!e.alive || !st(e, 'ignite') || !st(p, 'empower') || b.curFast || !isAtkC(c) || !fxOnce(b, 'sunfist')) return; addS(b, p, 'empower', 1); return 1; } },
+  poisonwrap: { onSkill: (b, p, act) => { if (!(fxSk(act, 'burst') || fxSk(act, 'drain'))) return; let n = 0; for (const e of fFoes(b)) if (wrE(e)) { wrapOff(b, e, '독에 삭아'); n++; } return n ? 1 : 0; } },
+  quickdraw: { onKill: (b, p, e) => { if (!hzE(e) && !wrE(e)) return; p.fxQuickNext = 1; logp(b, 'good', '장막이 걷힌 순간 손이 가볍다. 다음 빠른 행동 하나는 빠른 칸을 쓰지 않는다'); return 1; } },
+  unveilfist: { onHaze: (b, p, e, why) => { if (why !== 'hit') return; fxStackAdd(b, 'uv', 3); return 1; }, onWrap: b => { fxStackAdd(b, 'uv', 3); return 1; }, hitP: (b, p, e, o, c) => isAtkC(c) ? fxStackUse(b, 'uv', 0.25) + (hzE(e) || wrE(e) || e.hazeHit === b.actN ? 0 : -0.05) : 0 },
+  kindlerglove: { hpMul: 0.96, onHit: (b, p, e, o, c) => { if (!e.alive || !fxSk(c, 'st', 'ignite') || st(e, 'ignite') || !fxOnce(b, 'kindlerglove')) return; addS(b, e, 'ignite', 2); return 1; } },
+  furnacegauntlet: { onRound: (b, p) => { if (b.heat == null) return; const f = F3(b); const prev = f.fgPrev != null ? f.fgPrev : b.heat; const gain = Math.min(10, Math.max(0, b.heat - prev)); if (gain > 0) fxStam(p, gain); heatAdd(b, 4, '용광로 건틀릿'); f.fgPrev = b.heat; return gain > 0 ? 1 : 0; } },
+  mirage_hand: { onAct: (b, p, id, act) => { if (act) F3(b).mhMain = act.time > 0.6; }, hitP: b => F3(b).mhMain ? -0.1 : 0, onStart: b => { F3(b).mhN = 2; return 1; }, onHaze: (b, p, e, why) => { if (why !== 'hit') return; const f = F3(b); f.mhN = Math.min(3, (f.mhN || 0) + 1); return 1; }, inMul: (b, p, o) => { if (o.dot || o.aoe || !o.single || !o.src || fxBig(o)) return 1; const f = F3(b); if (!(f.mhN > 0)) return 1; f.mhN--; logp(b, 'good', '허상이 대신 맞는다. 공격이 헛친다(남은 허상 ' + f.mhN + ')'); return 0; } },
+  // 반지
+  hazering: { hitP: (b, p, e) => e.hazeLast === b.round ? 0.08 : 0 },
+  wrapring: { hitP: (b, p, e) => e.wrapLast === b.round ? 0.08 : 0 },
+  lurkring: { hitP: (b, p, e) => lkE(e) && !e.under ? 0.1 : 0 },
+  emberring: { brk: (b, p, e) => emE(e) ? 4 : 0 },
+  noonring: { onStorm: (b, p) => { fxStam(p, 10); return 1; } },
+  stormring: { onHit: (b, p, e) => { if (e.row !== 'back' || !hasMod(b, 'sandstorm') || !fxOnce(b, 'stormring')) return; fxStam(p, 3); return 1; } },
+  cinderband: { onKill: (b, p, e) => { if (!st(e, 'ignite') || !st(p, 'ignite')) return; kwDec(p, 'ignite'); return 1; } },
+  wardsunring: { onStorm: (b, p) => addWard(b, p, 6) > 0 ? 1 : 0 },
+  cleansering: { onCleanse: (b, p, n) => { if (!(n > 0) || !st(p, 'ignite')) return; kwDec(p, 'ignite'); return 1; } },
+  sandband: { st: { hp: 8 } },
+  tollring: { onSkill: (b, p, act) => { if (!fxSk(act, 'hpCost')) return; fxStam(p, 6); return 1; } },
+  faceless: { onHaze: (b, p, e, why) => { if (why !== 'hit' || !fxCnt(b, 'faceless', 2)) return; addS(b, p, 'haste', 1); return 1; } },
+  unwindring: { onWrap: b => { fxArm(b, 'unw'); return 1; }, hitP: (b, p, e, o, c) => isAtkC(c) && fxHot(b, 'unw') ? 0.15 : 0 },
+  lurkbreakring: { onHit: (b, p, e, o) => { if (!o.aoe || !e.under || !fxOnce(b, 'lurkbreakring')) return; fxStam(p, 6); return 1; } },
+  quenchring: { onRound: (b, p) => { if (st(p, 'ignite') < 5 || !fxCnt(b, 'quenchring', 3)) return; kwDec(p, 'ignite', 2); logp(b, 'good', '반지가 불씨를 적신다. 화상 −2'); return 1; } },
+  pyrering: { onKill: (b, p, e) => fireE(e) && addWard(b, p, 5) > 0 ? 1 : 0 },
+  bellowsring: { onRound: (b, p) => b.heat >= 80 && fxCdMax(b, p) ? 1 : 0 },
+  sandspeed: { onKill: (b, p, e) => { if (!hasMod(b, 'sandstorm') || e.row !== 'back') return; addS(b, p, 'haste', 1); return 1; } },
+  dewring: { onRound: (b, p) => hasMod(b, 'shade') && fxHeal(p, p.hpMax * 0.02) > 0 ? 1 : 0 },
+  kilnring: { igOut: b => hasMod(b, 'brazier') ? 0.2 : 0 },
+  bulwarkring: { onRound: (b, p) => b.heat != null && p.ward > 0 && p.ward >= wardMax(p) - 0.5 && fxHeat(b, 2, '보루 반지') > 0 ? 1 : 0 },
+  dodgering: { onEvade: b => b.heat != null && fxHeat(b, 2, '피함 반지') > 0 ? 1 : 0 },
+  hazebind: { hpMul: 0.95, onAct: (b, p) => { const f = F3(b); if (f.hbDone || !hasMod(b, 'haze')) return; f.hbDone = 1; for (const e of fFoes(b)) hazePeel(b, e); addWard(b, p, 10); logp(b, 'good', '엮인 허상이 한 겹 풀린다'); return 1; } },
+  kilnward: { igIn: () => -0.1, onRound: (b, p) => b.heat >= 60 && addWard(b, p, 10) > 0 ? 1 : 0 },
+  ashpact: { dur: k => k === 'ignite' ? 1 : 0, onFire: (b, p, e, n, hit) => { if (!hit || !(n > 0) || !e.alive) return; addS(b, e, 'ignite', Math.min(3, n)); logp(b, 'good', '받은 불을 ' + e.n + '에게 돌려준다'); return 1; } },
+  gustlock: { hitP: (b, p, e) => e.row === 'back' && hasMod(b, 'sandstorm') ? 0.25 : 0, inP: (b, p, o) => o.src && !o.dot && o.src.row === 'back' && hasMod(b, 'sandstorm') ? -0.1 : 0 },
+  shroudring: { onParry: (b, p) => { let n = 0; for (const e of fFoes(b)) if (e.haze > 0) { e.haze--; if (e.haze <= 0) e.hazeSrc = null; n++; } if (n) logp(b, 'good', '받아넘긴 힘이 장막을 찢는다. 허상이 한 겹씩 걷힌다'); return n ? 1 : 0; }, cost: (p, id) => id === 'dodge' ? 5 : 0 },
+  furnaceband: { onRound: (b, p) => { if (!(p.ward > 0) || p.ward < wardMax(p) - 0.5) return; let n = 0; for (const e of fFoes(b)) if (!e.under) { addS(b, e, 'ignite', 1); n++; } if (n) logp(b, 'good', '달궈진 막이 곁의 적을 태운다'); return n ? 1 : 0; } },
+  mirrorshock: { onShock: (b, p, e) => { if (!e.alive) return; if (e.haze > 0) { hazePeel(b, e); logp(b, 'good', e.n + '의 허상이 열에 일그러진다'); } else addBreak(b, e, 4); return 1; } },
+  binderctr: { onCounter: (b, p, e) => { if (!wrE(e) || !e.alive) return; wrapOff(b, e, '맞받는 주먹에'); return 1; } },
+  ashconfess: { onCleanse: (b, p, n) => { if (!(n > 0) || badKinds(p) > 0 || !fxCnt(b, 'ashconfess', 2)) return; fxHeat(b, 6, '재 고해 반지'); addWard(b, p, 6); return 1; } },
+  sandtimer: { hpMul: 0.92, onHurt: (b, p, o, d) => { if (d > 0) F3(b).hurtR = b.round; }, onRound: (b, p) => F3(b).hurtR !== b.round && fxCdMax(b, p) ? 1 : 0 },
+  soloring: { onRound: (b, p) => fFoes(b).length === 1 && fxCdMax(b, p) ? 1 : 0, hitP: b => fFoes(b).length === 1 ? 0.1 : 0, inP: (b, p, o) => o.src && !o.dot && fFoes(b).length >= 2 ? -0.08 : 0 },
+  triplering: { hitP: (b, p, e) => (st(e, 'poison') ? 1 : 0) + (stk(e, 'bleed') ? 1 : 0) + (st(e, 'ignite') ? 1 : 0) === 3 ? 0.25 : -0.05 },
+  hazeweaver: { onHaze: (b, p, e, why) => { if (why !== 'hit') return; fxStam(p, 6); if (fxOnce(b, 'hazeweaver')) fxCdMax(b, p); return 1; }, hitP: (b, p, e) => hzE(e) || e.hazeHit === b.actN ? 0 : -0.05 },
+  lowtide: { inP: (b, p, o) => { if (!o.src || o.dot || !(p.hp < p.hpMax * 0.5)) return 0; const f = F3(b); if (f.ltR === b.round) return 0; f.ltR = b.round; return 0.25; }, hitP: (b, p) => p.hp >= p.hpMax * 0.5 ? -0.05 : 0 },
+  parryrhythm: { cost: (p, id) => id === 'dodge' ? 10 : 0, onParry: (b, p) => { p.fxQuickNext = 1; fxArm(b, 'pr'); logp(b, 'good', '받아넘긴 박자가 이어진다. 다음 빠른 행동 하나는 빠른 칸을 쓰지 않는다'); return 1; }, hitP: (b, p, e, o, c) => isAtkC(c) && fxHot(b, 'pr') ? 0.15 : 0 },
+  phoenixring: { hpMul: 0.9, onHurt: (b, p) => { if (p.hp > 0 || p.phx) return; p.phx = 1; p.hp = Math.max(1, Math.round(p.hpMax * 0.5)); for (const e of fFoes(b)) addS(b, e, 'ignite', 4); logp(b, 'crit', '재 속에서 일어난다. 생명력 ' + Math.round(p.hp) + ', 적 모두 화상 4'); return 1; } },
+  // 목걸이
+  hazecharm: { onStart: (b, p) => hasMod(b, 'haze') && addWard(b, p, 6) > 0 ? 1 : 0 },
+  wrapcharm: { onWrap: (b, p) => { fxStam(p, 5); return 1; } },
+  lurkcharm: { onAct: (b, p, id) => { if (id !== 'guard' || !underAny(b)) return; fxStam(p, 6); return 1; } },
+  noontalisman: { onRound: b => { const f = F3(b); if (f.ntDone || b.heat == null) return; f.ntDone = 1; return fxHeat(b, 8, '그늘 부적') > 0 ? 1 : 0; } },
+  stormcharm: { inP: (b, p, o) => o.src && !o.dot && hasMod(b, 'sandstorm') ? 0.05 : 0 },
+  ashcharm: { onKill: (b, p, e) => { if (!e.fire || !st(p, 'ignite')) return; delete p.s.ignite; logp(b, 'good', '불의 주인이 쓰러지자 내 불도 꺼진다'); return 1; } },
+  emberbeads: { inP: (b, p, o) => o.label && String(o.label).includes('불단지') ? 0.15 : 0 },
+  sapcharm: { onFire: (b, p, e, n, hit) => { if (!hit || !(n > 0) || !e.alive || F3(b).spR === b.round) return; F3(b).spR = b.round; addS(b, e, 'bleed', 1); return 1; } },
+  dunebeads: { st: { hp: 7 } },
+  focuscharm3: { onHit: (b, p, e) => { if (!p.focus || p.focus.id !== e.id || p.focus.n < 3 || b.heat == null) return; const f = F3(b); f.fc = f.fc || {}; if (f.fc[e.id]) return; f.fc[e.id] = 1; return fxHeat(b, 3, '추적자의 눈 부적') > 0 ? 1 : 0; } },
+  mirrorbeads: { onHaze: (b, p, e, why) => { if (why !== 'hit' || !fxCnt(b, 'mirrorbeads', 3)) return; const t = fOther(b, e); if (!t) return; addS(b, t, 'vuln', 1); return 1; } },
+  wrapknot: { onWrap: (b, p, e) => { if (!e.alive) return; let n = 0; for (const k of KW_BAD) if (st(e, k) > 0) n += fxApplyKw(b, e, k, 1) ? 1 : 0; return n ? 1 : 0; } },
+  scorpionamulet: { dur: k => k === 'bleed' ? -1 : 0 },
+  heatamulet: { onRound: b => b.heat >= 80 && fxHeat(b, 6, '서늘한 구슬') > 0 ? 1 : 0 },
+  stormbeads: { onKill: (b, p, e) => { if (!hasMod(b, 'sandstorm') || e.row !== 'front' || fFoes(b).some(x => x.row === 'front' && x !== e) || !fxCnt(b, 'stormbeads', 2)) return; return addWard(b, p, 10) > 0 ? 1 : 0; } },
+  emberamulet: { onRound: (b, p) => fFoes(b).filter(e => st(e, 'ignite')).length >= 2 && fxHeal(p, p.hpMax * 0.01) > 0 ? 1 : 0 },
+  braziercharm: { igIn: b => hasMod(b, 'brazier') ? 0.5 : 0 },
+  oasischarm: { onRound: (b, p) => { if (!hasMod(b, 'shade')) return; fxStam(p, 6); return 1; } },
+  kiamulet3: { hazeThru: (b, p) => st(p, 'empower') > 0 && !b.curFast ? 1 : 0 },
+  transferamulet: { onSkill: (b, p, act) => fxSk(act, 'transfer') && b.heat != null && fxHeat(b, 2, '전가의 목걸이') > 0 ? 1 : 0 },
+  pyrewrap: { dur: k => k === 'ignite' ? 1 : 0, onWrap: (b, p, e, why) => { if (why !== 'burn') return; let n = 0; for (const x of fFoes(b)) if (x !== e && !x.under) { addS(b, x, 'ignite', 2); n++; } return n ? 1 : 0; } },
+  coolheart: { onRound: (b, p) => b.heat != null && b.heat < 50 && addWard(b, p, 6) > 0 ? 1 : 0 },
+  patience: { onRound: (b, p) => { if (!underAny(b)) return; fxStam(p, 8); return 1; }, onParry: (b, p, src) => { if (!lkE(src)) return; addS(b, p, 'haste', 1); return 1; }, onEvade: (b, p, src) => { if (!lkE(src)) return; addS(b, p, 'haste', 1); return 1; } },
+  rimeheart: { onRound: b => { let n = 0; for (const e of fFoes(b)) if (e.haze > 0 && st(e, 'chill')) { e.haze = 0; e.hazeSrc = null; e.hazeLast = b.round; n++; logp(b, 'good', e.n + '의 허상이 얼어붙어 걷힌다'); } return n ? 1 : 0; } },
+  vitalwrap: { onKill: (b, p, e) => { if (!wrE(e) || !fxCnt(b, 'vitalwrap', 3)) return; return fxHeal(p, p.hpMax * 0.04) > 0 ? 1 : 0; } },
+  shadowcharm: { onParry: (b, p) => { let n = 0; for (const e of fFoes(b)) if (addPoison(b, e, 1, 1)) n++; return n ? 1 : 0; }, cost: (p, id) => id === 'dodge' ? 5 : 0 },
+  clearsight: { hitP: (b, p, e) => !hzE(e) && e.hazeHit !== b.actN && fFoes(b).some(hzE) ? 0.15 : 0 },
+  ashgrief: { onSkill: (b, p, act) => { if (!(fxSk(act, 'hpCost') || fxSk(act, 'meSt', 'bleed')) || !st(p, 'ignite')) return; kwDec(p, 'ignite'); return 1; } },
+  eyeofnoon: { hitP: b => bigAhead(b) ? 0.2 : 0, inP: (b, p, o) => o.src && !o.dot && !fxBig(o) ? -0.05 : 0 },
+  firstlight: { hitP: (b, p, e, o) => { if (e.fx1st == null) e.fx1st = b.actN; return e.fx1st === b.actN ? 0.3 : -0.02; } },
+  sunbind: { onRound: (b, p) => { if (!(b.heat >= 40)) return; let n = 0; for (const e of fFoes(b)) if (!e.under) { addS(b, e, 'ignite', 1); n++; } heatAdd(b, 3, '해 묶는 목걸이'); return n ? 1 : 0; } },
+  merchantcharm: { goldMul: 1.25, treasureGold: 20, hpMul: 0.94 },
+  doublebrand: { stOut: () => 1, psnIn: () => 1, dur: k => KW_BAD.includes(k) && k !== 'poison' ? 1 : 0 },
+  afterglow: { psnIn: () => 1, dur: k => KW_BAD.includes(k) && k !== 'poison' ? 1 : 0, onKill: (b, p, e) => { const others = fFoes(b).filter(x => x !== e && !x.under); if (!others.length) return; let moved = 0; for (const k of KW_BAD) { const v = st(e, k); if (!v) continue; const n = Math.min(6, Math.ceil(v / 2)); for (const x of others) moved += fxApplyKw(b, x, k, n) ? 1 : 0; } if (moved) logp(b, 'good', e.n + '에게 걸렸던 상처의 절반이 남은 적에게 번진다'); return moved ? 1 : 0; } },
+  // 플라스크
+  hazewater: { onFlask: (b, p, k) => { if (k !== 'mana') return; const e = fFoes(b).find(x => x.haze > 0); if (!e) return; hazePeel(b, e); return 1; } },
+  wrapwater: { onFlask: (b, p, k) => { if (k !== 'life') return; const e = fFoes(b).find(wrE); if (!e) return; wrapWear(b, e, '닳아'); return 1; } },
+  coolwater: { onFlask: (b, p, k) => k === 'stam' && b.heat != null && fxHeat(b, 8, '찬 샘물') > 0 ? 1 : 0 },
+  sapflask: { onFlask: (b, p, k) => { if (k !== 'life' || !st(p, 'ignite')) return; delete p.s.ignite; return 1; } },
+  emberbottle: { onFlask: (b, p, k) => { if (k !== 'mana' || !st(p, 'ignite')) return; kwDec(p, 'ignite'); addWard(b, p, 5); return 1; } },
+  dustwater: { onFlask: (b, p, k) => { if (k !== 'life' || !hasMod(b, 'sandstorm')) return; fxHeal(p, p.hpMax * 0.05); return 1; } },
+  shadeflask: { onFlask: (b, p, k) => { if (k !== 'stam' || !hasMod(b, 'shade')) return; fxHeal(p, p.hpMax * 0.05); return 1; } },
+  copperjug: { stamMul: 1.1 },
+  tollwater: { onFlask: (b, p, k) => { if (k !== 'life') return; fxStam(p, 10); b.selfSt = 1; addS(b, p, 'bleed', 1); b.selfSt = 0; return 1; } },
+  windwater: { onFlask: (b, p, k) => { if (k !== 'stam' || !fxCnt(b, 'windwater', 2)) return; addS(b, p, 'haste', 1); return 1; } },
+  mirrorflask: { onFlask: (b, p, k) => { if (k !== 'mana') return; let n = 0; for (const e of fFoes(b)) if (e.haze > 0) { e.haze = 0; e.hazeSrc = null; e.hazeLast = b.round; n++; } if (n) { addWard(b, p, 3 * n); logp(b, 'good', '병에 비친 허상이 모두 흩어진다'); } return n ? 1 : 0; } },
+  oilflask: { onFlask: (b, p, k) => { if (k !== 'life') return; let n = 0; for (const e of fFoes(b)) if (wrE(e)) { addS(b, e, 'ignite', 1); n++; } return n ? 1 : 0; } },
+  stormflask: { onFlask: (b, p, k) => { if (k !== 'life' || !hasMod(b, 'sandstorm')) return; let n = 0; for (const e of fFoes(b)) if (e.row === 'back' && !e.under) { addBreak(b, e, 8); n++; } return n ? 1 : 0; } },
+  chillflask: { onFlask: (b, p, k) => k === 'life' && b.heat != null && fxHeat(b, 10, '서늘한 병') > 0 ? 1 : 0 },
+  scapeflask: { onFlask: (b, p, k) => { if (k !== 'mana') return; const n = st(p, 'ignite'); const xs = fFoes(b).filter(e => !e.under); if (!n || !xs.length) return; delete p.s.ignite; for (const e of xs) addS(b, e, 'ignite', Math.ceil(n / 2)); logp(b, 'good', '짊어진 불 ' + n + '을 적에게 나눠 건다'); return 1; } },
+  soakedflask: { onFlask: (b, p, k) => { if (k !== 'life') return; F3(b).soakR = b.round; return 1; }, inP: (b, p, o) => isStormHit(o) && F3(b).soakR === b.round ? 0.5 : 0 },
+  wrapsolvent: { onFlask: (b, p, k) => { if (k !== 'mana') return; let n = 0; for (const e of fFoes(b)) if (wrE(e)) { wrapWear(b, e, '녹아'); n++; } return n ? 1 : 0; } },
+  gritwater: { onFlask: (b, p, k) => { if (k !== 'life') return; F3(b).gritR = b.round + 1; return 1; }, igIn: b => F3(b).gritR != null && b.round <= F3(b).gritR ? 0.5 : 0 },
+  veinwater: { onFlask: (b, p, k) => { if (k !== 'life') return; const n = Math.min(3, fFoes(b).filter(e => stk(e, 'bleed')).length); if (!n) return; fxStam(p, 5 * n); return 1; } },
+  plaguewater: { onFlask: (b, p, k) => { if (k !== 'life') return; let n = 0; for (const e of fFoes(b)) if (st(e, 'poison')) { addPoison(b, e, 2, 1); n++; } return n ? 1 : 0; } },
+  hazebottle: { blockAdd: () => -1, onFlask: (b, p, k) => { if (k !== 'mana') return; let n = 0; for (const e of fFoes(b)) if (e.haze > 0) { e.haze = 0; e.hazeSrc = null; e.hazeLast = b.round; n++; } if (!n) return; fxCdMax(b, p); return 1; } },
+  furnacebottle: { onFlask: (b, p, k) => { if (k !== 'stam' || b.heat == null) return; fxStam(p, Math.min(20, Math.floor(b.heat / 20) * 5)); heatAdd(b, 6, '가마 병'); return 1; } },
+  emberwell: { heal: -0.05, onFlask: (b, p, k) => { if (k !== 'life') return; const n = st(p, 'ignite'); if (!n) return; delete p.s.ignite; fxHeal(p, p.hpMax * Math.min(0.15, 0.03 * n)); logp(b, 'good', '불이 꺼진 자리에 물이 고인다. 화상 ' + n + ' 지움'); return 1; } },
+  sandsea: { heal: -0.05, onFlask: (b, p) => { if (!hasMod(b, 'sandstorm')) return; let n = 0; for (const e of fFoes(b)) if (e.row === 'back' && !e.under) { addS(b, e, 'chill', 1); n++; } return n ? 1 : 0; } },
+  wardfont: { blockAdd: () => -1, onFlask: (b, p, k) => { if (k !== 'mana') return; const need = wardMax(p) * 0.5 - (p.ward || 0); if (!(need > 0)) return; return addWard(b, p, need) > 0 ? 1 : 0; } },
+  kibreath: { onFlask: (b, p, k) => { if (k !== 'stam') return; addS(b, p, 'empower', 2); if (b.heat != null) fxHeat(b, 4, '호흡 병'); return 1; } },
+  purgingchalice: { cap: { mana: -1 }, onFlask: (b, p, k) => { if (k !== 'mana') return; const ks = KW_BAD.filter(x => st(p, x) > 0); if (!ks.length) return; for (const x of ks) delete p.s[x]; let n = 0; for (const e of fFoes(b)) { addS(b, e, 'weak', ks.length); n++; } logp(b, 'good', '씻겨 나간 ' + ks.length + '가지가 적의 몫이 된다'); return 1; } },
+  oasis_gourd: { cap: { life: -1 }, heal: -0.05, onFlask: (b, p, k) => { if (k !== 'life') return; const f = F3(b); if (f.ogDone) return; f.ogDone = 1; p.flask.life = Math.min(flaskCap(p, 'life'), p.flask.life + 1); logp(b, 'good', '첫 모금은 줄지 않는다'); return 1; } },
+};
+Object.assign(IFX, IFX3);
 const fxList = p => { const out = []; if (!p || !p.eq) return out; for (const sl in p.eq) { const k = p.eq[sl]; if (k && IFX[k]) out.push([k, IFX[k]]); } if (p.awk && p.awk.length) for (const a of p.awk) if (IFX_AWK[a]) out.push(['awk_' + a, IFX_AWK[a]]); /* 깨달음 */ return out; };
 /* 배율·더하기 지점: 바뀌면 센다 */
 function fxMul(p, hook, ...a) { let m = 1; for (const [k, f] of fxList(p)) if (f[hook]) { const v = f[hook](...a); if (v !== 1 && v != null) { m *= v; fxHit(k); } } return m; }
@@ -2155,7 +2396,7 @@ function kwTaken(b, u, d, o) {
   if (o.dot || !(d > 0)) return d;
   if (u.s.vuln) { d *= 1.25; kwDec(u, 'vuln'); }
   if (u.s.protect) { d *= 0.75; kwDec(u, 'protect'); }
-  if (u.s.ignite && !o.noIgn) { const n = stk(u, 'ignite'); kwDec(u, 'ignite'); let x = n * (hasMod(b, 'candle') ? 1.5 : 1) * (u === b.p ? 1 : dotMul(b.p)); if (u === b.p && hasBt(u, 'snuff')) x = isCf(u) ? Math.min(x, Math.min(n, (u.selfN || {}).ignite || 0) * (hasMod(b, 'candle') ? 1.5 : 1)) : 0; if ((b.ctx.ch || 1) >= 3) { if (u !== b.p) u.ignLast = b.actN; if (hasMod(b, 'brazier')) x *= 1.5; if (hasMod(b, 'shade')) x *= 0.5; if (u === b.p && hasBt(u, 'shade')) x *= 0.5; if (u === b.p && hasBt(u, 'herald')) x = 0; if (u.boss === 'queen' && b.heat != null) { logp(b, 'bad', '불길이 여왕에게 스며든다'); heatAdd(b, QUEEN.ignTick, '불'); codexHit(b, 'queen', 'fire'); } } d += x; } // 숨겨진 직업 2: 촛불 끄기 축복은 고행 몫의 화상에는 들지 않는다
+  if (u.s.ignite && !o.noIgn) { const n = stk(u, 'ignite'); kwDec(u, 'ignite'); let x = n * (hasMod(b, 'candle') ? 1.5 : 1) * (u === b.p ? 1 : dotMul(b.p)); if (u === b.p && hasBt(u, 'snuff')) x = isCf(u) ? Math.min(x, Math.min(n, (u.selfN || {}).ignite || 0) * (hasMod(b, 'candle') ? 1.5 : 1)) : 0; if ((b.ctx.ch || 1) >= 3) { if (u !== b.p) u.ignLast = b.actN; if (hasMod(b, 'brazier')) x *= 1.5; if (hasMod(b, 'shade')) x *= 0.5; if (u === b.p && hasBt(u, 'shade')) x *= 0.5; if (u === b.p && hasBt(u, 'herald')) x = 0; if (u.boss === 'queen' && b.heat != null) { logp(b, 'bad', '불길이 여왕에게 스며든다'); heatAdd(b, QUEEN.ignTick, '불'); codexHit(b, 'queen', 'fire'); } } if (u === b.p) { const gi = fxAdd(u, 'igIn', b, u, x); if (gi) x *= 1 - Math.max(-FX_CAP, Math.min(1, gi)); } else if (b.p.eq) { const go = fxAdd(b.p, 'igOut', b, b.p, u, x); if (go) x *= Math.max(0, 1 + Math.min(FX_CAP, go)); } /* 3챕터 장비: 화상의 추가 피해 */ d += x; } // 숨겨진 직업 2: 촛불 끄기 축복은 고행 몫의 화상에는 들지 않는다
   return d;
 }
 /* 0.6a.2 직업 (v2: 재사용 대기 스킬, 트리, 마나 없음) */
@@ -2271,6 +2512,7 @@ function addS(b, u, k, dur, stacks, max) {
   if (KW[k]) {
     let n = Math.round(dur || 0); if (n <= 0) return 0;
     if (b.carve && b.cur && b.cur.grp && u !== b.p && carveMul(b, b.cur.grp) < 1) n = Math.max(1, Math.floor(n * carveMul(b, b.cur.grp)));
+    if (u !== b.p && b.cur && !b.selfSt && b.p.eq && k !== 'poison' && KW_BAD.includes(k)) { const so = fxAdd(b.p, 'stOut', b, b.p, u, k); if (so) n += Math.round(so); } // 3챕터 장비: 내가 거는 상태에 더하는 수
     if (u === b.p && DEBUFFS.includes(k) && !b.selfSt) {
       for (const [ik, f] of fxList(u)) if (f.block && f.block(b, u, k)) { fxHit(ik); return 0; }
       const dd = fxAdd(u, 'dur', k); if (dd) n = Math.max(1, n + Math.round(dd));
@@ -3767,7 +4009,9 @@ const HELP = [
     '장비 칸은 일곱입니다: 무기, 갑옷, 장갑, 목걸이, 반지 둘, 플라스크. 무기는 무기 피해, 갑옷은 생명력, 플라스크는 생명력 플라스크 회복량을 정합니다.',
     '등급은 평범, 고급, 희귀이고, 2챕터부터 영웅과 전설이 나옵니다. 장비 이름 앞에는 등급의 첫 글자(평 · 고 · 희 · 영 · 전)가 붙고, 이름 색도 회색 · 파랑 · 금색 · 보라 · 주황으로 다릅니다. 등급이 높을수록 기본 수치가 더 오르고, 희귀 이상은 행동을 바꾸는 효과를 가지며 "대가" 줄이 붙기도 합니다. 같은 장비도 얻을 때마다 수치가 조금씩 다릅니다.',
     '영웅은 직업을 가리지 않는 큰 효과와 분명한 대가를 함께 가집니다. 전설은 이름 앞에 ✦가 붙고 규칙 하나를 바꿉니다. 전설은 한 번에 하나만 낄 수 있습니다. 같은 전설은 한 캐릭터에게 한 번만 나옵니다.',
-    '1챕터를 넘은 뒤의 상점은 진열 하나가 영웅일 때가 있습니다. 전설은 상점에서 팔지 않습니다. 2챕터 보스를 이기면 장비 하나를 얻고, 정산 화면에 보입니다.',
+    '1챕터를 넘은 뒤의 상점은 진열 하나가 영웅일 때가 있습니다(2챕터 끝 상점에는 3챕터 영웅이 나옵니다). 전설은 상점에서 팔지 않습니다. 2챕터와 3챕터 보스를 이기면 장비 하나를 얻고, 정산 화면에 보입니다.',
+    '2챕터 장비는 뼈 더미, 조이기, 뼈벽, 땅속의 적에 맞서는 것이 많고, 3챕터 장비는 허상, 붕대, 열기와 열풍, 모래 속에 숨는 적, 화염 강화와 화상, 모래폭풍에 맞서는 것이 많습니다. 장비 문장에 "허상을 걷으면", "붕대가 풀리면", "열풍이 불면"처럼 그 사건이 적혀 있습니다.',
+    '열기를 내리는 장비는 한 전투에서 합쳐 20까지만 열기를 내립니다. 열기를 올리는 대가가 붙은 장비는 열기가 있는 방에서만 열기가 오릅니다.',
     '전투 방을 이기면 장비를 얻습니다. 얻을 때 지금 장비와 비교해 잃는 것부터 보여 줍니다. 가방은 ' + BAG_MAX + '칸이고, 가득 차면 하나를 버리고 받습니다.',
     '전투 밖이면 언제든 메뉴의 장비에서 비용 없이 바꿀 수 있습니다. 전투 중에는 보기만 합니다. 무기는 다른 무기로만 바꿀 수 있습니다.'] },
   { k: 'level', n: '레벨과 경험치', t: [
@@ -5747,7 +5991,7 @@ function dgFix(run) {
 /* 전리품을 차례로 하나씩 건넨다 (방마다 여러 개일 수 있다) */
 function rollGrade(minG) { const x = Math.random() * 100; let g = x < 50 ? 'n' : x < 90 ? 'm' : 'r'; if (minG === 'm' && g === 'n') g = Math.random() < 0.8 ? 'm' : 'r'; if (minG === 'r') g = 'r'; return g; }
 /* 2챕터부터의 장비 등급 확률 (장비-경제.md 5.1절). room: 일반 · 매복, big: 강적 · 시련 · 보물, boss: 챕터 보스. 표가 없는 챕터(1챕터)는 예전 그대로 rollGrade · 희귀 */
-const DROP_G = { 2: { room: { n: 58, m: 30, r: 10, h: 1.8, l: 0.2 }, big: { r: 88, h: 10, l: 2 }, boss: { r: 60, h: 32, l: 8 } } };
+const DROP_G = { 2: { room: { n: 58, m: 30, r: 10, h: 1.8, l: 0.2 }, big: { r: 88, h: 10, l: 2 }, boss: { r: 60, h: 32, l: 8 } }, 3: { room: { n: 50, m: 32, r: 14, h: 3.4, l: 0.6 }, big: { r: 88, h: 10, l: 2 }, boss: { r: 60, h: 32, l: 8 } } };
 const OLD_DROP = 0.1; /* 2챕터부터 드롭의 10%는 이전 챕터 풀에서 (평범 · 고급 · 희귀만) */
 function rollGradeCh(ch, src) { const T = DROP_G[ch || 1] && DROP_G[ch || 1][src]; if (!T) return src === 'room' ? rollGrade() : 'r'; let x = Math.random() * 100; for (const g of ['n', 'm', 'r', 'h', 'l']) { if (!T[g]) continue; if (x < T[g]) return g; x -= T[g]; } return 'r'; }
 function dropKey(run, g, not) {
