@@ -30,9 +30,13 @@ const N = +((MAIN && process.argv[2]) || 12); const CLS = (MAIN && process.argv[
 const LVS = SIT_CH >= 3 ? [12, 15] : SIT_CH >= 2 ? [7, 10] : [5, 10]; const MLV = SIT_CH >= 3 ? { 12: 11, 15: 13 } : SIT_CH >= 2 ? { 7: 7, 10: 9 } : { 5: +(process.env.MLV5 || 6), 10: +(process.env.MLV10 || 9) }; // 내 레벨 → 상황의 몬스터 레벨: 그 챕터 끝 몬스터 레벨(기획서 11.4절: 1챕터 1~4, 2챕터 5~8)보다 1~2 높게(점수가 너무 높으면 강점·약점이 묻힌다)
 const SKL = G0.SKILLS2[CLS]; const T = G0.TREE2[CLS];
 
+/* 한 기둥을 포인트(= 레벨)가 허락하는 가장 깊은 줄까지 내려간 빌드. 줄 수는 그 직업 데이터의 가장 깊은 줄까지(10월 8일: 상급 11~13줄이 있는 직업은 13줄, 없는 직업은 10줄 그대로).
+   SIT_EXTRA=1이면 남는 포인트(Lv15 암살자는 2점)로 반대 기둥의 가장 깊은 칸을 더 연다(상급 줄이 있는 직업만) */
+const MAXROW = Math.max(...SKL.map(s => s.row || 0));
 function buildOf(br, col, lv) {
   const open = [];
-  for (let r = 1; r <= Math.min(lv, 10); r++) { const row = SKL.filter(s => s.b === br && s.row === r); if (row[col] || row[0]) open.push((row[col] || row[0]).id); }
+  for (let r = 1; r <= Math.min(lv, MAXROW); r++) { const row = SKL.filter(s => s.b === br && s.row === r); if (row[col] || row[0]) open.push((row[col] || row[0]).id); }
+  if (process.env.SIT_EXTRA && MAXROW > 10) { let left = lv - Math.min(lv, MAXROW); for (let r = MAXROW; r >= 1 && left > 0; r--) { const row = SKL.filter(s => s.b === br && s.row === r); const o = row[1 - col]; if (o && !open.includes(o.id)) { open.push(o.id); left--; } } }
   return { br, col, lv, open };
 }
 /* 끼울 4칸: 문에 보이는 적을 보고 고르는 사람처럼 (후열이 있으면 후열에 닿는 스킬, 셋 이상이면 광역, 강타형이 있으면 흘리기·끊기, 큰 적 하나면 터뜨리기) */
