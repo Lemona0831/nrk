@@ -266,7 +266,7 @@ function fightCur(pk, r, mem, out) {
     if (P.look && r() < P.err) { const L = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); a = L[Math.floor(r() * L.length)].id; t = null; }
     else if (r() < (THINK(pk) ? 0.9 : P.healerFirst)) { // 보스전 기믹에 사람이 하는 대응 (비공개 문서)
       const act = G0.actionList(b).find(x => x.id === a); const monk = G0.alive(b).filter(e => e.monk && act && G0.canTarget(b, e, act)).sort((x, y) => (y.role === 'healer') - (x.role === 'healer'))[0];
-      if (monk && act && act.tgt !== false) t = monk.id;
+      if (monk && act && act.tgt !== false && !(b.p.build === 'assassin' && !process.env.ASN_PARRY_OLD && (a === 'dodge' || (act.s && act.s.fx.some(f => f.k === 'parry'))))) t = monk.id; /* 암살자(10월 8일): 흘리기는 공격하는 적에게 건다. 치유 수도사로 바꾸면 흘리기가 엉뚱한 적에게 걸린다(출처: 비공개 문서 보스, 암살자 그림자 칸). ASN_PARRY_OLD=1이면 끈다 */
     }
     if (OPT.onTurn) OPT.onTurn(G, n);
     if (stuckN >= 2 && !process.env.NO_STUCK_FIX) { const Lk = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); const gd = Lk.find(x => x.id === 'guard') || Lk[0]; if (gd) { a = gd.id; t = null; } } /* 10월 8일: 같은 행동을 해도 차례가 흐르지 않으면(땅속의 적만 남고 단일 대상 행동뿐일 때) 사람처럼 방어로 차례를 넘긴다 */
@@ -392,7 +392,8 @@ function spendTree(pk, r) {
     if (!can.length) break;
     const focus = THINK(pk) || pk === 'careful';
     let br = run.focus; if (run.build === 'hunter' && focus) { if (br === '기동') br = run.focus = r() < 0.5 ? '저격' : '연사'; const opened = b0 => run.tree.open.filter(id => (G0.SK2[id] || {}).b === b0).length; br = opened('기동') <= opened(run.focus) ? '기동' : run.focus; } // 사냥꾼(10월 5일): 피해 갈래 하나와 기동을 번갈아 (한 갈래를 몰아 찍으면 오히려 약하다)
-    const pool = focus ? (can.filter(s => s.b === br).length ? can.filter(s => s.b === br) : can) : can;
+    let pool = focus ? (can.filter(s => s.b === br).length ? can.filter(s => s.b === br) : can) : can;
+    if (run.build === 'assassin' && focus && br === '그림자' && !process.env.SH_RANDOM) { /* 암살자 그림자(10월 8일): 왼쪽 기둥(피해 칸)만 내려간다. 문서 C-5: 오른 기둥은 Lv10 보스 22%, 보스 앞에서 흘리기 준비만 끼우면 진다 */ const lp = pool.filter(s => all.filter(x => x.b === s.b && x.row === s.row)[0] === s); if (lp.length) pool = lp; }
     const root = focus ? pool.filter(x => ROWN(x) === 1 && x.b === br) : []; // 한 갈래를 파는 사람은 그 갈래의 첫 줄 두 칸부터 연다
     const sbPref = x => run.build === 'spellblade' && [3, 5].includes(x.row) && x.tgt === 'self' ? 1 : 0; // 마검사(10월 7일): 3 · 5줄에서는 나에게 쓰는 칸(칼에 싣기 · 채우기)
     const bmS = run.build === 'bloodmage' && focus ? bmPathNext(run, br) : null; // 숨겨진 직업 3 (비공개 문서 C5 · F4-11): 갈래마다 정한 주 경로
@@ -434,7 +435,7 @@ function playLoop(pk, r, out) {
     handleSheets(pk, r);
   }
   out.floor = run.room; out.ch = run.ch || 1; out.lv = run.lv; out.gold = run.gold;
-  if (OPT.detail && run.tree) { const cnt = {}; for (const id of run.tree.open) { const sk = G0.SK2[id]; if (sk) cnt[sk.b] = (cnt[sk.b] || 0) + 1; } const top = Object.entries(cnt).sort((x, y) => y[1] - x[1])[0]; out.branch = top ? top[0] : null; out.branchN = top ? top[1] : 0; out.branchOf = run.tree.open.length; out.mode = run.mode || 'normal'; } /* 10월 8일(7단계): 갈래(트리 칸을 가장 많이 연 갈래) · 연 칸 수 · 모드를 판마다 남긴다 */
+  if (OPT.detail && run.tree) { const cnt = {}; for (const id of run.tree.open) { const sk = G0.SK2[id]; if (sk) cnt[sk.b] = (cnt[sk.b] || 0) + 1; } const top = Object.entries(cnt).sort((x, y) => y[1] - x[1])[0]; out.branch = run.build === 'hunter' && run.focus ? run.focus : top ? top[0] : null; out.branchN = top ? top[1] : 0; out.branchOf = run.tree.open.length; out.mode = run.mode || 'normal'; } /* 10월 8일(7단계): 갈래(트리 칸을 가장 많이 연 갈래) · 연 칸 수 · 모드를 판마다 남긴다 */
   if ((run.awk || []).length) out.awk = run.awk.slice(); { const ft = (run.rooms || []).filter(x => x.type === 'fate'); if (ft.length) out.fate = ft.map(x => x.took ? (x.ok ? '+' : '-') + x.took : 'skip'); } /* 깨달음 · 운명의 저울 (없으면 칸을 두지 않아 1챕터 결과 파일은 그대로) */
   { const hl = (run.drops || []).filter(x => x.g === 'h' || x.g === 'l').map(x => x.item + ':' + x.g + ':' + (x.ch || 1) + (x.boss ? ':boss' : '')); if (hl.length) out.hl = hl; } /* 영웅 · 전설을 얻은 기록 (없으면 칸을 두지 않아 1챕터 결과 파일은 그대로) */
   if (OPT.detail) { out.cons = (run.consLog || []).length; out.consIds = countBy((run.consLog || []).map(x => x.id)); out.loot = (run.lootLog || []).reduce((a, x) => ({ gold: a.gold + (x.gold || 0), lost: a.lost + (x.lost || 0), n: a.n + Object.values(x.got || {}).reduce((m, v) => m + v, 0) }), { gold: 0, lost: 0, n: 0 }); out.tree = run.tree ? run.tree.open.slice() : null; out.equip = (run.skills || []).slice(); out.flaskLeft = Object.assign({}, run.p.flask); out.pathsTaken = (run.pathLog || []).map(x => x.path); } out.gear = Object.values(run.inv).filter(x => run.eqU && Object.values(run.eqU).includes(x.uid)).map(x => x.tpl + ':' + x.g);
