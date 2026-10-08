@@ -187,7 +187,7 @@ const SKILLS2 = {
     { id: 'h_oneshot', row: 10, b: '저격', tier: '중급', n: '일격필살', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 19 }, { k: 'brk', n: 13 }, { k: 'bigx', mul: 1.5 }] },
     // 상급 (3챕터, 11~13줄 · 10월 8일): 저격을 마무리한다. 왼쪽 기둥은 추적(쌓고 터뜨리고 다시 쌓는다), 오른쪽은 취약과 큰 한 발. 칸마다 스스로 겹과 취약을 건다
     { id: 'h_zeal', row: 11, b: '저격', tier: '상급', n: '집념의 화살', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'focusx', per: 0.25 }, { k: 'focusAdd', n: 1 }, { k: 'bigx', mul: 1.3 }] },
-    { id: 'h_nail', row: 11, b: '저격', tier: '상급', n: '급소 꿰기', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'vuln', n: 3 }, { k: 'vulnPer', per: 3 }, { k: 'bigx', mul: 1.3 }] },
+    { id: 'h_nail', row: 11, b: '저격', tier: '상급', n: '급소 박기', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'vuln', n: 3 }, { k: 'vulnPer', per: 3 }, { k: 'bigx', mul: 1.3 }] },
     { id: 'h_unend', row: 12, b: '저격', tier: '상급', n: '끝없는 사냥', tgt: 'ranged', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 3 }, { k: 'focusBurst', n: 10 }, { k: 'focusAdd', n: 2 }] },
     { id: 'h_delve', row: 12, b: '저격', tier: '상급', n: '약점 파고들기', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'vuln', n: 2 }, { k: 'vulnGrow', mul: 2 }, { k: 'vulnPer', per: 3 }] },
     { id: 'h_doom', row: 13, b: '저격', tier: '상급', n: '추격의 종말', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 3 }, { k: 'focusBurst', n: 13 }, { k: 'lowx', hp: 0.3, mul: 1.5 }, { k: 'bigx', mul: 1.4 }, { k: 'hasteSpend', mul: 1.5 }] },
@@ -215,11 +215,11 @@ const SKILLS2 = {
     { id: 'h_skysplit', row: 10, b: '연사', tier: '중급', n: '하늘 가르기', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 1 }, { k: 'hastex', mul: 1.6 }] }, /* 10월 7일: 학살의 비(9줄)와 모든 값이 같던 칸. 연속 행동 라운드에 크게 */
     // 상급 (3챕터, 11~13줄 · 10월 8일): 연사를 마무리한다. 왼쪽 기둥은 표적 바꾸기와 연발, 오른쪽은 모든 적 화살비와 출혈. 큰 적 배수는 없다(거구가 약점)
     { id: 'h_cross', row: 11, b: '연사', tier: '상급', n: '엇갈린 사격', tgt: 'ranged', time: 'fast', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 6 }, { k: 'swapx', mul: 1.5 }, { k: 'hasten', n: 1 }] },
-    { id: 'h_thornrain', row: 11, b: '연사', tier: '상급', n: '가시 폭우', tgt: 'front', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 4 }, { k: 'st', s: 'weak', n: 1 }] },
+    { id: 'h_thornrain', row: 11, b: '연사', tier: '상급', n: '가시 폭우', tgt: 'front', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 5 }] },
     { id: 'h_rapid', row: 12, b: '연사', tier: '상급', n: '속사', tgt: 'ranged', time: 'normal', cd: 8, hits: 4, fx: [{ k: 'dmg', n: 5 }, { k: 'swapx', mul: 1.3 }] },
-    { id: 'h_crimson', row: 12, b: '연사', tier: '상급', n: '붉은 폭우', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'hastex', mul: 1.4 }] },
+    { id: 'h_crimson', row: 12, b: '연사', tier: '상급', n: '붉은 폭우', tgt: 'front', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'bleed', n: 4 }, { k: 'hastex', mul: 1.4 }] },
     { id: 'h_shade', row: 13, b: '연사', tier: '상급', n: '그림자 화살', tgt: 'ranged', time: 'vslow', cd: 6, hits: 5, fx: [{ k: 'dmg', n: 4 }, { k: 'swapx', mul: 1.6 }, { k: 'hasteSpend', mul: 1.5 }] },
-    { id: 'h_bloodstorm', row: 13, b: '연사', tier: '상급', n: '피의 폭풍', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'bleed', n: 4 }, { k: 'st', s: 'weak', n: 1 }, { k: 'hastex', mul: 1.5 }] },
+    { id: 'h_bloodstorm', row: 13, b: '연사', tier: '상급', n: '피바람 화살', tgt: 'front', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 5 }, { k: 'hastex', mul: 1.5 }] },
     // 기동: 먼저 움직이고, 피하고, 늦춘다. 왼쪽 기둥은 쓰는 때가 다른 회피(기본 · 템포 · 표적 바꾸기 · 버티기 · 강타 받아넘기기 · 🔄, 중급은 피하기를 피해로), 오른쪽은 둔화와 끊기. 강타에 강하고 상처 · 무리에 약하다 (10월 5일 2차: 만든 사람 검토)
     { id: 'h_dodge', row: 1, b: '기동', tier: '하급', n: '몸 빼기', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'evade', n: 1 }, { k: 'stam', n: 38 }] }, // 기본 회피
     { id: 'h_hobble', row: 1, b: '기동', tier: '하급', n: '발 묶는 화살', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 16 }, { k: 'st', s: 'chill', n: 2 }] },
