@@ -296,6 +296,13 @@ const SKILLS2 = {
     { id: 'b_glut', row: 9, b: '도륙', tier: '중급', n: '탐식', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 28 }, { k: 'drain', s: 'bleed', eat: 1, per: 2.5, brk: 8 }] },
     { id: 'b_river', row: 10, b: '도륙', tier: '중급', n: '피의 강', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 18 }, { k: 'grow', s: 'bleed', mul: 2 }, { k: 'exploit', s: 'bleed', per: 2.5 }] },
     { id: 'b_banquet', row: 10, b: '도륙', tier: '중급', n: '피의 만찬', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 8 }, { k: 'exploit', s: 'bleed', per: 3 }, { k: 'drain', s: 'bleed', eat: 1, per: 4 }, { k: 'bigx', mul: 1.5 }] },
+    // 상급 11~13줄 (10월 8일 3챕터, 도륙): 왼쪽은 상처를 파고들어 키우며 쓰고, 오른쪽은 먹고 바꾸는 것을 한꺼번에 늘린다
+    { id: 'b_probe', row: 11, b: '도륙', tier: '상급', n: '상처 헤집기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 16 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'grow', s: 'bleed', mul: 1.5, add: 1 }] },
+    { id: 'b_swallow', row: 11, b: '도륙', tier: '상급', n: '피 삼키기', tgt: 'melee', time: 'fast', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'drain', s: 'bleed', eat: 1, per: 2, brk: 14 }, { k: 'st', s: 'bleed', n: 2 }] },
+    { id: 'b_nick', row: 12, b: '도륙', tier: '상급', n: '저며 내기', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'bleed', n: 5 }, { k: 'exploit', s: 'bleed', per: 1.5 }] },
+    { id: 'b_goblet', row: 12, b: '도륙', tier: '상급', n: '붉은 잔', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 23 }, { k: 'drain', s: 'bleed', eat: 1, half: 1, per: 4, emp: 3 }] },
+    { id: 'b_bonefile', row: 13, b: '도륙', tier: '상급', n: '뼈 깎는 칼', tgt: 'melee', time: 'fast', cd: 10, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'brk', n: 19 }, { k: 'exploit', s: 'bleed', per: 3 }, { k: 'bigx', mul: 1.8 }] },
+    { id: 'b_gorge', row: 13, b: '도륙', tier: '상급', n: '게걸스러운 입', tgt: 'melee', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 17 }, { k: 'drain', s: 'bleed', eat: 1, per: 2, brk: 10, weak: 3, emp: 3 }, { k: 'st', s: 'bleed', n: 2 }] },
     // 광기: 맞을수록, 낮을수록 세다. 왼쪽 기둥은 맞받기(받은 피해 되갚기 · 맞을 때 출혈 · 덜 막는 흘리기), 오른쪽 기둥은 핏값(내게 출혈을 걸어 치고, 내 생명력이 낮을 때 크게)
     { id: 'b_retort', row: 1, b: '광기', tier: '하급', n: '앙갚음', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 17 }, { k: 'grudge', per: 0.6, max: 20 }] },
     { id: 'b_reckless', row: 1, b: '광기', tier: '하급', n: '무모한 베기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'meSt', s: 'bleed', n: 2 }, { k: 'dmg', n: 27 }] },
@@ -317,6 +324,13 @@ const SKILLS2 = {
     { id: 'b_lastbreath', row: 9, b: '광기', tier: '중급', n: '마지막 숨', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'drain', s: 'bleed', me: 1, eat: 1, dmg: 5, max: 6 }, { k: 'dmg', n: 13 }, { k: 'brk', n: 40 }, { k: 'bigx', mul: 1.5 }] }, // 10월 7일 검토: 벼랑 끝과 같은 '내 생명력 30% ×2' 대신 내 출혈을 지워 피해로
     { id: 'b_retribution', row: 10, b: '광기', tier: '중급', n: '응징의 도끼', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 12 }, { k: 'grudge', per: 1.5, max: 45, brk: 2, brkMax: 60 }] }, // 10월 7일 검토: 피의 보복과 같은 '받은 피해 + 고정 붕괴'를 받은 피해에 비례하는 붕괴로
     { id: 'b_rampage', row: 10, b: '광기', tier: '중급', n: '피의 광란', tgt: 'melee', time: 'normal', cd: 9, hits: 4, fx: [{ k: 'meSt', s: 'bleed', n: 2 }, { k: 'dmg', n: 6 }, { k: 'exploit', s: 'bleed', me: 1, per: 1.5, max: 6 }] },
+    // 상급 11~13줄 (10월 8일 3챕터, 광기): 왼쪽은 받은 피해를 더 크게 되갚고, 오른쪽은 내 피를 대가로 낮은 생명력의 힘을 끌어낸다
+    { id: 'b_ire', row: 11, b: '광기', tier: '상급', n: '쌓인 원한', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 7 }, { k: 'grudge', per: 0.9, max: 30, bl: 4 }] },
+    { id: 'b_seethe', row: 11, b: '광기', tier: '상급', n: '끓는 핏줄', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'meSt', s: 'bleed', n: 2 }, { k: 'dmg', n: 24 }, { k: 'exploit', s: 'bleed', me: 1, per: 3, max: 6 }, { k: 'lowx', me: 1, hp: 0.5, mul: 1.4 }] },
+    { id: 'b_barbs', row: 12, b: '광기', tier: '상급', n: '가시 돋은 일격', tgt: 'melee', time: 'normal', cd: 8, keep: ['thorn'], fx: [{ k: 'dmg', n: 28 }, { k: 'thorn', times: 2, bleed: 2 }] },
+    { id: 'b_pulse', row: 12, b: '광기', tier: '상급', n: '광기의 맥박', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'meSt', s: 'bleed', n: 2 }, { k: 'dmg', n: 28 }, { k: 'lowx', me: 1, hp: 0.4, mul: 1.6 }] },
+    { id: 'b_reprisal', row: 13, b: '광기', tier: '상급', n: '응보의 도끼질', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 9 }, { k: 'grudge', per: 1.5, max: 60, brk: 2, brkMax: 80 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 'b_abyss', row: 13, b: '광기', tier: '상급', n: '핏빛 심연', tgt: 'melee', time: 'normal', cd: 9, fx: [{ k: 'drain', s: 'bleed', me: 1, eat: 1, dmg: 6, max: 6 }, { k: 'dmg', n: 13 }, { k: 'lowx', me: 1, hp: 0.3, mul: 2 }, { k: 'bigx', mul: 1.5 }] },
     // 학살: 쓰러뜨리며 이어 간다. 왼쪽 기둥은 휩쓸기(전열 광역 + 줄마다 다른 덧붙임), 오른쪽 기둥은 처형(마무리 배수, 처치 보상, 후열에 닿는 칸 하나)
     { id: 'b_sweep', row: 1, b: '학살', tier: '하급', n: '휘둘러 베기', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'bleed', n: 2 }] },
     { id: 'b_throat', row: 1, b: '학살', tier: '하급', n: '목 따기', tgt: 'melee', time: 'normal', cd: 6, killRecharge: 1, fx: [{ k: 'dmg', n: 18 }, { k: 'lowx', hp: 0.3, mul: 2 }] },
@@ -338,6 +352,13 @@ const SKILLS2 = {
     { id: 'b_headsman', row: 9, b: '학살', tier: '중급', n: '망나니', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 29 }, { k: 'lowx', hp: 0.4, mul: 2 }, { k: 'meSt', s: 'empower', n: 2, on: 'kill' }] }, // 10월 7일 검토: 피 냄새 쫓기와 같은 🔄 대신 쓰러뜨리면 나에게 강화 2
     { id: 'b_redtide', row: 10, b: '학살', tier: '중급', n: '붉은 물결', tgt: 'front', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'bleed', n: 4 }, { k: 'spread', s: 'bleed', per: 1, kill: 1 }] },
     { id: 'b_procession', row: 10, b: '학살', tier: '중급', n: '도살 행렬', tgt: 'melee', time: 'normal', cd: 10, fx: [{ k: 'dmg', n: 27 }, { k: 'lowx', hp: 0.35, mul: 2 }, { k: 'quick', n: 1, on: 'kill', next: 1 }, { k: 'hasten', n: 2, on: 'kill' }] }, // 10월 7일 검토: 빠른 칸은 다음 차례에. 보통 행동은 차례를 끝내 이번 차례 빠른 칸이 쓰이지 않았다
+    // 상급 11~13줄 (10월 8일 3챕터, 학살): 왼쪽은 전열을 휩쓸며 쓰러뜨릴 때 이어 가고, 오른쪽은 마무리로 회복과 강화를 챙긴다
+    { id: 'b_hookrain', row: 11, b: '학살', tier: '상급', n: '갈고리 소나기', tgt: 'front', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'bleed', n: 2 }] },
+    { id: 'b_twinaxe', row: 11, b: '학살', tier: '상급', n: '쌍도끼 내리치기', tgt: 'melee', time: 'normal', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 13 }, { k: 'lowx', hp: 0.35, mul: 1.8 }, { k: 'carry' }] },
+    { id: 'b_chainkill', row: 12, b: '학살', tier: '상급', n: '연쇄 도살', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'brk', n: 23 }, { k: 'quick', n: 1, on: 'kill', next: 1 }] },
+    { id: 'b_lastsip', row: 12, b: '학살', tier: '상급', n: '마지막 한 모금', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 16 }, { k: 'lowx', hp: 0.4, mul: 2 }, { k: 'drain', s: 'bleed', eat: 1, kill: 1, per: 5 }] },
+    { id: 'b_massacre', row: 13, b: '학살', tier: '상급', n: '대학살', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'exploit', s: 'bleed', per: 1.5 }] },
+    { id: 'b_guillotine', row: 13, b: '학살', tier: '상급', n: '단두대', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 32 }, { k: 'lowx', hp: 0.4, mul: 2.2 }, { k: 'meSt', s: 'empower', n: 2, on: 'kill' }] },
   ],
   /* 원소술사 (10월 7일, docs/직업/원소술사.md C절): 불로 태우고 얼음으로 묶는다. 한 적에게 화상과 둔화가 함께 있으면 그 행동이 끝날 때 열충격(index.html elemShock).
      새 효과: weave(없는 원소), shockx(이 스킬로 일어난 열충격의 피해 · 붕괴 배수, 번짐 arc, 남기기 keep), rime(나를 친 적에게 상태, 되얼림), burnOut(화상을 모두 태움). hasten on:'shock', cutx chant */
