@@ -5,7 +5,8 @@ const files = process.argv.slice(2); if (!files.length) { console.error('사용:
 const R = files.flatMap(f => JSON.parse(fs.readFileSync(f, 'utf8')));
 const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
 const cleared = (x, ch) => (x.chs || []).some(c => c.ch === ch) || (x.res === 'clear' && (x.ch || 1) === ch);
-const reached = (x, ch) => ch === 1 || cleared(x, ch - 1);
+const startCh = Math.min(...R.map(x => x.ch || 1)); /* DG_FROM=2 · 3 배치는 그 챕터에서 시작한다 */
+const reached = (x, ch) => ch === startCh || (ch > startCh && cleared(x, ch - 1));
 const BOSS_FLOOR = 24;
 const bossReached = (x, ch) => cleared(x, ch) || (((x.ch || 1) === ch) && x.floor >= BOSS_FLOOR);
 const PN = { novice: '초보', casual: '일반', careful: '신중', reckless: '공격적', expert: '숙련', explorer: '탐험가' };
@@ -16,7 +17,7 @@ P('# 검증 결과표 (자동 생성: tools/vreport.js)'); P('');
 P('- 입력: ', files.map(f => '`' + f.split(/[\\/]/).pop() + '`').join(', '), ' · 판 ', R.length, ' · 이상(bugs) ', R.reduce((a, x) => a + x.bugs.length, 0), '건');
 P('- 씨앗: ', Math.min(...R.map(x => x.seed)), ' ~ ', Math.max(...R.map(x => x.seed)), ' · 성향 ', Object.keys(by(R, x => x.pk)).map(k => PN[k] || k).join(' · '), ' · 모드 ', Object.keys(by(R, x => x.mode || 'normal')).join(' · '));
 P('');
-for (let ch = 1; ch <= maxCh; ch++) {
+for (let ch = startCh; ch <= maxCh; ch++) {
   const E = R.filter(x => reached(x, ch)); if (!E.length) continue;
   P('## ', ch, '챕터 (들어간 캐릭터 ', E.length, '명)'); P('');
   P('| 직업 | 들어감 | 보스 도달 | 완주 | 완주율 | 신중 완주율 | 보스 승률 | 강적 방 패배율 |'); P('| --- | --- | --- | --- | --- | --- | --- | --- |');
