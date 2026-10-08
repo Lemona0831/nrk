@@ -256,7 +256,7 @@ function fightCur(pk, r, mem, out) {
   while (!b.over && n++ < 300) {
     useCons(pk, r, b, G.run); if (b.over) break;
     const sr = r() < (P.mech || 0.5) ? sigRule(b, r) : null;
-    let [a, t] = ch2Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look && !(process.env.HUNT_HEUR && b.p.build === 'hunter') ? lookahead(b, P, r) : heuristic(b, P, r, mem));
+    let [a, t] = ch2Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem));
     [a, t] = ch2Post(b, P, r, a, t);
     // 보스를 깎지 못한 채 버티기만 하면 사람은 밀어붙인다 (한 수 앞만 보는 계산이 페이즈 전환을 피하는 것을 막는다)
     const bs = b.en.find(e => e.role === 'boss' && e.alive);
@@ -266,7 +266,7 @@ function fightCur(pk, r, mem, out) {
     if (P.look && r() < P.err) { const L = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); a = L[Math.floor(r() * L.length)].id; t = null; }
     else if (r() < (THINK(pk) ? 0.9 : P.healerFirst)) { // 보스전 기믹에 사람이 하는 대응 (비공개 문서)
       const act = G0.actionList(b).find(x => x.id === a); const monk = G0.alive(b).filter(e => e.monk && act && G0.canTarget(b, e, act)).sort((x, y) => (y.role === 'healer') - (x.role === 'healer'))[0];
-      if (monk && act && act.tgt !== false && !(b.p.build === 'assassin' && (a === 'dodge' || (act.s && act.s.fx.some(f => f.k === 'parry'))))) t = monk.id; /* 암살자(10월 8일): 흘리기는 공격하는 적에게 건다. 치유 수도사로 바꾸면 흘리기가 엉뚱한 적에게 걸린다(비공개 문서 보스 그림자: 강타를 흘리고 원거리로 치유 수도사) */
+      if (monk && act && act.tgt !== false && !(b.p.build === 'assassin' && !process.env.ASN_PARRY_OLD && (a === 'dodge' || (act.s && act.s.fx.some(f => f.k === 'parry'))))) t = monk.id; /* 암살자(10월 8일): 흘리기는 공격하는 적에게 건다. 치유 수도사로 바꾸면 흘리기가 엉뚱한 적에게 걸린다(비공개 문서 보스 그림자: 강타를 흘리고 원거리로 치유 수도사) */
     }
     if (OPT.onTurn) OPT.onTurn(G, n);
     if (stuckN >= 2 && !process.env.NO_STUCK_FIX) { const Lk = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); const gd = Lk.find(x => x.id === 'guard') || Lk[0]; if (gd) { a = gd.id; t = null; } } /* 10월 8일: 같은 행동을 해도 차례가 흐르지 않으면(땅속의 적만 남고 단일 대상 행동뿐일 때) 사람처럼 방어로 차례를 넘긴다 */
