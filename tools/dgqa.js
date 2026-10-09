@@ -410,14 +410,17 @@ function spendTree(pk, r) {
     let br = run.focus; if (run.build === 'hunter' && focus) { if (br === '기동') br = run.focus = r() < 0.5 ? '저격' : '연사'; const opened = b0 => run.tree.open.filter(id => (G0.SK2[id] || {}).b === b0).length; br = opened('기동') <= opened(run.focus) ? '기동' : run.focus; } // 사냥꾼(10월 5일): 피해 갈래 하나와 기동을 번갈아 (한 갈래를 몰아 찍으면 오히려 약하다)
     let pool = focus ? (can.filter(s => s.b === br).length ? can.filter(s => s.b === br) : can) : can;
     if (run.build === 'assassin' && focus && br === '그림자' && !process.env.SH_RANDOM) { /* 암살자 그림자(10월 8일): 왼쪽 기둥(피해 칸)만 내려간다. 문서 C-5: 오른 기둥은 Lv10 보스 22%, 보스 앞에서 흘리기 준비만 끼우면 진다 */ const lp = pool.filter(s => all.filter(x => x.b === s.b && x.row === s.row)[0] === s); if (lp.length) pool = lp; }
-    const root = focus ? pool.filter(x => ROWN(x) === 1 && x.b === br) : []; // 한 갈래를 파는 사람은 그 갈래의 첫 줄 두 칸부터 연다
+    const root = focus && !(run.build === 'hunter' && !process.env.HUNT_ROOT_OLD) ? pool.filter(x => ROWN(x) === 1 && x.b === br) : []; // 한 갈래를 파는 사람은 그 갈래의 첫 줄 두 칸부터 연다. 사냥꾼은 예외(10월 9일): 줄마다 한 칸씩 내려간다(docs/직업/사냥꾼.md C-5의 최소 빌드. 첫 줄 두 칸을 다 열면 5점 가운데 둘이 옆 칸에 묻힌다). HUNT_ROOT_OLD=1이면 전의 규칙
     const sbPref = x => run.build === 'spellblade' && [3, 5].includes(x.row) && x.tgt === 'self' ? 1 : 0; // 마검사(10월 7일): 3 · 5줄에서는 나에게 쓰는 칸(칼에 싣기 · 채우기)
     const bmS = run.build === 'bloodmage' && focus ? bmPathNext(run, br) : null; // 숨겨진 직업 3 (비공개 문서 C5 · F4-11): 갈래마다 정한 주 경로
     const s = bmS ? bmS : root.length ? root[0] : focus ? pool.sort((x, y) => ROWN(y) - ROWN(x) || sbPref(y) - sbPref(x) || r() - 0.5)[0] : pool[Math.floor(r() * pool.length)];
     G0.treeUnlock(run, s.id);
     const eq = run.skills.slice();
     if (eq.length < G0.EQUIP_SLOTS2) eq.push(s.id);
-    else { const lo = eq.map((id, i) => [i, ROWN(G0.SK2[id])]).sort((x, y) => x[1] - y[1])[0]; if (lo[1] < ROWN(s) || r() < 0.3) eq[lo[0]] = s.id; }
+    else {
+      const keepEv = run.build === 'hunter' && process.env.HUNT_DODGE ? (id => { const k = G0.SK2[id]; return k.fx.some(e => e.k === 'evade') && !k.once; }) : null; /* 사냥꾼(10월 9일): 강타는 몸 빼기로 비낀다(docs/직업/사냥꾼.md D-2 · D-3). 끼운 몸 빼기 계열이 하나뿐이면 새 칸으로 갈아 끼울 때도 빼지 않는다. 전에는 낮은 줄부터 갈아 끼워 첫 줄 몸 빼기가 가장 먼저 빠졌다. 기본은 꺼 둔다(HUNT_DODGE=1로 켠다): 켜면 저격이 1 · 2 · 3챕터 모두 합격선 위(32 · 23 · 51%)로 올라 사람 기록 없이는 기본으로 삼지 않는다 */
+      const cand = eq.map((id, i) => [i, ROWN(G0.SK2[id])]).filter(x => !(keepEv && keepEv(eq[x[0]]) && eq.filter(keepEv).length === 1 && !keepEv(s.id)));
+      const lo = (cand.length ? cand : eq.map((id, i) => [i, ROWN(G0.SK2[id])])).sort((x, y) => x[1] - y[1])[0]; if (lo[1] < ROWN(s) || r() < 0.3) eq[lo[0]] = s.id; }
     if (run.build === 'spellblade' && eq.length >= G0.EQUIP_SLOTS2) for (const k of ['spell', 'cut']) if (!eq.some(id => G0.SK2[id].kind === k)) { const c = run.tree.open.filter(id => G0.SK2[id].kind === k && !eq.includes(id)).sort((x, y) => ROWN(G0.SK2[y]) - ROWN(G0.SK2[x]))[0]; if (c) { const lo = eq.map((id, i) => [i, ROWN(G0.SK2[id])]).filter(x => G0.SK2[eq[x[0]]].kind !== k).sort((x, y) => x[1] - y[1])[0]; if (lo) eq[lo[0]] = c; } } // 마검사: 4칸에 ⚔ · ✦를 하나 이상씩
     { const bl = focus ? bmLoad(run, br) : null; if (bl) { eq.length = 0; eq.push(...bl); } } // 숨겨진 직업 3: 갈래마다 정한 보스 장착
     run.skills = eq; run.p.skills = G0.v2Equip(run);
