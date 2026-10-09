@@ -32,7 +32,7 @@ const SKK = {
   /* 수도승 (10월 7일 가설, docs/직업/수도승.md F-3): K 터뜨릴 때 기(하급 · 중급), Kp kiPer를 쓸 때 기, Kg kiGrow를 쓸 때 기, loss 거둔 기 1이 다음 ▶에 줬을 몫의 비율,
      cN 자세 하나에 되받는 횟수, gIn 피해 절반이 막는 값, ctr 직업 되받기 한 번의 기본 값, cS ctrPer를 쓸 때 지난 차례 뒤 되받은 수, ch 쓸 때 대상이 이미 둔화일 몫,
      ride ▶ 공격에 기 ×1.25가 실리는 몫, fast ⚡ 공격이 주는 기 +1의 몫, seal 끊기를 쓸 때 지원 예고가 있을 몫, sealV 끊은 지원 행동의 값 */
-  monk: { K: [2.5, 2.5], Kp: [2, 2.2], loss: 0.5, cN: 0.8, gIn: 5, ctr: 9, cS: 0.8, ch: 0.6, ride: 0.1, fast: 2.5, seal: 0.25, sealV: 12, Kg: 2 }, // 10월 7일 50상황 측정(Lv5 · Lv10, 테스터 v2Pick 수도승 칸): 터뜨릴 때 기 3.6 · 2.5, 기 비례 때 기 2.9 · 2.2, 끌어올리기 때 기 1.6, 자세 하나에 되받기 1.36 · 1.38, 되받기 한 번 피해 12, 되갚기 때 되받은 수 0.8 · 1.0, 거두기 때 대상 둔화 0.9(Lv5). 자세 칸은 측정값으로 다시 맞추면 줄 예산의 2배가 되어(직업 규칙의 되받기 몫이 칸마다 들어간다) 가설 그대로 두고 50상황 점수로 본다. 중급(Lv10)의 K · Kp만 측정값(2.5 · 2.2)으로 내렸다(처음 가설 3.5 · 3: 중급 터뜨리기 칸이 기가 모자라 오른쪽 기둥이 왼쪽보다 15 낮았다)
+  monk: { K: [2.5, 2.5], Kp: [2, 2.2], KpB: { 부동: [0.8, 0.8] }, loss: 0.5, cN: 0.8, ctr: 9, ch: 0.6, ride: 0.1, seal: 0.25, sealV: 12, Kg: 2 }, // 10월 7일 50상황 측정(Lv5 · Lv10, 테스터 v2Pick 수도승 칸): 터뜨릴 때 기 3.6 · 2.5, 기 비례 때 기 2.9 · 2.2, 끌어올리기 때 기 1.6, 자세 하나에 되받기 1.36 · 1.38, 되받기 한 번 피해 12, 되갚기 때 되받은 수 0.8 · 1.0, 거두기 때 대상 둔화 0.9(Lv5). 자세 칸은 측정값으로 다시 맞추면 줄 예산의 2배가 되어(직업 규칙의 되받기 몫이 칸마다 들어간다) 가설 그대로 두고 50상황 점수로 본다. 중급(Lv10)의 K · Kp만 측정값(2.5 · 2.2)으로 내렸다(처음 가설 3.5 · 3: 중급 터뜨리기 칸이 기가 모자라 오른쪽 기둥이 왼쪽보다 15 낮았다)
   hz: 1.5,                      // 🔄 쿨타임 당기기 1번의 값 [가설] (10월 3일 50상황: 평소 싸움에서는 스킬이 늘 3~4개 준비되어 있어 거의 0, 쿨타임이 묶이는 보스전에서만 크다)
   Fmax: 6,                      // 한 스킬을 전투에서 쓰는 횟수의 상한 (실측: 바탕 스킬 독니 5.4)
   /* 마검사 (10월 7일 설계 가설, docs/직업/마검사.md C-0 · F-3): kw 출혈 · 화상 1의 값(사냥꾼 칸은 K.kw에 없어 1로 센다. 측정 뒤 한 값으로 합친다), dl 칼에 실은 원소가 실제로 걸리는 몫,
@@ -85,11 +85,10 @@ function skValue(s, ov) {
       case 'pull': v += K.ward.pull; break;
       case 'vulnGrow': v += K.ward.vuln * (e.mul - 1) * K.kw.vuln; break; // 쓸 때 대상의 취약을 키운다
       case 'chillx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * (ov && ov.chx != null ? ov.chx : (mk ? M.ch : K.ward.chill)) * (s.tgt === 'front' || s.tgt === 'all' ? tm : 1); break; } // 둔화된 적에게 × (수도승 혈도는 스스로 둔화를 걸어 몫이 크다)
-      case 'stance': v += (e.half === 0 ? 0 : M.gIn) + M.cN * (M.ctr + (e.dmg || 0) + (e.brk || 0) * K.brk + (e.ki || 0) * K.kw.empower + (e.chill || 0) * K.kw.chill + (e.weak || 0) * K.kw.weak) * (e.far ? 1.25 : 1) + (e.max ? 0.15 * e.max * (M.ctr + (e.dmg || 0)) : 0); break; // 수도승 자세: 막기(▶) + 되받기 몫
+      case 'stance': v += M.cN * (M.ctr + (e.dmg || 0) + (e.brk || 0) * K.brk + (e.ki || 0) * K.kw.empower + (e.chill || 0) * K.kw.chill + (e.weak || 0) * K.kw.weak) * (e.far ? 1.25 : 1); break; // 수도승 자세: 되받기 몫 (10월 10일 단순화: 막기 몫과 상한 몫을 뺐다)
       case 'kiBurst': { const t = Math.min(e.max || 5, M.K[hi] + (e.pre ? e.pre * M.ch : 0)); v += t * (e.per + (e.brk || 0) * K.brk) * mt - Math.min(e.max || 5, M.K[hi]) * K.kw.empower * M.loss + (e.keep ? Math.floor(M.K[hi] * e.keep) * K.kw.empower * M.loss : 0); break; } // 기 터뜨리기: 거둔 기 × per, 거둔 기가 다음 ▶에 줬을 몫을 뺀다
-      case 'kiPer': v += e.per * M.Kp[hi] * hits * mt; break; // 쓰기 전의 기 1마다 타격마다
+      case 'kiPer': v += e.per * (M.KpB && M.KpB[s.b] ? M.KpB[s.b][hi] : M.Kp[hi]) * hits * mt; break; // 쓰기 전의 기 1마다 타격마다 (갈래마다 평균 기)
       case 'kiGrow': { const k0 = M.Kg - 1; v += (Math.min(5, (k0 + (e.add || 0)) * e.mul) - k0) * K.kw.empower * 0.8; break; }
-      case 'ctrPer': v += e.per * M.cS * mt; break; // 지난 내 차례 뒤 되받은 수
       case 'sealx': v += M.seal * (M.sealV * 0.8 + e.brk * K.brk * 0.2) * mt; break; // 지원 행동 끊기
       case 'focusx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * e.per * K.hunt.F; break; } // 추적 1겹마다 피해 +per
       case 'focusBurst': v += e.n * K.hunt.F; break; // 추적을 터뜨린다: 1겹마다 피해 +n
@@ -116,7 +115,7 @@ function skValue(s, ov) {
       case 'hasten': if (e.on === 'ctr') { v += (e.n || 1) * K.hz * 0.9; break; } if (e.on === 'alt' || e.on === 'kill') { v += (e.n || 1) * K.hz * (e.on === 'alt' ? SB.alt : SB.kill); break; } if (e.on === 'evade') { v += (e.n || 1) * K.hz * K.hunt.ctr * ((s.fx.find(x => x.k === 'evade') || { n: 1 }).n); break; } { const pb = s.fx.find(x => x.k === 'parryBuff'); v += (e.n || 1) * K.hz * (e.on === 'parry' ? K.pOk * (pb ? (pb.times || 1) : 1) : 1); break; } // 🔄 다른 같은 갈래 스킬 쿨타임 당기기
     }
   }
-  if (mk && s.tgt !== 'self') { const d = s.fx.find(x => x.k === 'dmg'); const kb = s.fx.find(x => x.k === 'kiBurst'); if (d) { if (s.time === 'fast') v += M.fast; else if (!(kb && !kb.max)) v += d.n * hits * mt * M.ride; } } // 수도승: ⚡ 공격의 기 +1, ▶ 공격에 실리는 기 (모두 거두는 칸 제외)
+  if (mk && s.tgt !== 'self') { const d = s.fx.find(x => x.k === 'dmg'); const kb = s.fx.find(x => x.k === 'kiBurst'); if (d) { if (s.time !== 'fast' && !(kb && !kb.max)) v += d.n * hits * mt * M.ride; } } // 수도승: ▶ 공격에 실리는 기 (모두 거두는 칸 제외. 10월 10일 단순화로 ⚡ 공격의 기 +1은 없다)
   const gx = s.fx.find(e => e.k === 'bigx'); if (gx) v *= 1 + (gx.mul - 1) * 0.3; // 큰 적에게 ×: 열에 셋쯤 큰 적 (10월 3일 50상황으로 넣음)
   return v;
 }
@@ -423,13 +422,12 @@ function skBody(s) {
       case 'hastex': out.push(`가속으로 두 번 움직이는 라운드면 피해 ×${e.mul}.`); break;
       case 'hasteSpend': out.push(`가속이 있으면 1을 써서 피해 ×${e.mul}. 그 대신 다음 라운드에 연속 행동을 하지 못한다.`); break;
       case 'meSt': out.push(e.if === 'chill' ? (s.tgt === 'front' || s.tgt === 'all' ? `이미 둔화되어 있던 적 하나마다 나에게 ${skKw(s, e.s)} +${e.n}.` : `대상이 이미 둔화되어 있었으면 때린 뒤 나에게 ${skKw(s, e.s)} +${e.n}.`) : e.s === 'empower' && String(s.id).slice(0, 2) === 'm_' ? `때린 뒤 나에게 ${skKw(s, e.s)} +${e.n}.` : `나에게 ${SK_KWN[e.s] || e.s} ${e.n}.`); break; // "때린 뒤"는 수도승(m_)만: 엔진이 수도승의 기만 피해 뒤에 준다(b.kiPend). 다른 직업의 강화는 먼저 걸린다
-      case 'stance': { const blk = e.half !== 0; const ex = [e.dmg ? '피해 +' + e.dmg : '', e.brk ? '붕괴 +' + e.brk : '', e.ki ? '기 +' + e.ki : ''].filter(Boolean); const on = [e.chill ? '둔화 ' + e.chill : '', e.weak ? '약화 ' + e.weak : ''].filter(Boolean);
-        out.push((s.tgt === 'self' ? '' : '친 뒤 ') + (blk ? '방어 자세를 잡는다. 내 다음 차례까지 받는 피해가 절반이고 스태미나가 들지 않는다. ' : '내 다음 차례까지 ') + (e.far ? '전열 적의 직접 공격과 후열 적이 직접 쏘는 공격을 되받는다. 화형은 되받지 못한다.' : '전열 적의 직접 공격을 되받는다.') + (blk ? '' : ' 받는 피해는 줄지 않는다.')
-          + (ex.length ? ` 되받을 때마다 ${ex.join(', ')}.` : '') + (on.length ? ` 되받은 적에게 ${on.join(', ')}.` : '') + (e.max ? ` 이 자세는 ${3 + e.max}번까지 되받는다.` : '')); break; }
+      case 'stance': { const ex = [e.dmg ? '피해 +' + e.dmg : '', e.brk ? '붕괴 +' + e.brk : '', e.ki ? '기 +' + e.ki : ''].filter(Boolean); const on = [e.chill ? '둔화 ' + e.chill : '', e.weak ? '약화 ' + e.weak : ''].filter(Boolean);
+        out.push((s.tgt === 'self' ? '' : '친 뒤 ') + '자세를 잡는다. 내 다음 차례까지 ' + (e.far ? '전열 적과 후열에서 직접 쏘는 적의 공격을 되받는다. 화형은 되받지 못한다.' : '전열 적의 직접 공격을 되받는다.') + ' 받는 피해는 줄지 않는다.'
+          + (ex.length ? ` 되받을 때마다 ${ex.join(', ')}.` : '') + (on.length ? ` 되받은 적에게 ${on.join(', ')}.` : '')); break; }
       case 'kiBurst': out.push((e.pre ? `대상이 이미 둔화되어 있으면 먼저 기 +${e.pre}. ` : '') + `기를 ${e.max ? e.max + '까지' : '모두'} 터뜨려 ${s.tgt === 'front' || s.tgt === 'all' ? '맞은 적마다 기 1당 ' : '기 1마다 '}피해 +${e.per}${e.brk ? ', 붕괴 +' + e.brk : ''}.` + (e.keep ? ' 터뜨린 뒤 기가 절반(내림) 남는다.' : '')); break;
-      case 'kiPer': out.push(`내 기 1마다 피해 +${e.per}${hits > 1 ? '(타격마다)' : ''}. 기는 이 공격이 쓰는 1만 줄어든다.`); break;
+      case 'kiPer': out.push(`내 기 1마다 피해 +${e.per}${hits > 1 ? '(타격마다)' : ''}.` + (s.time === 'fast' ? '' : ' 이 공격은 기 1만 쓴다.')); break;
       case 'kiGrow': out.push(`때린 뒤 남은 기에 ${e.add}${skJo(e.add)} 더해 ${e.mul}배로 만든다(상한 5).`); break;
-      case 'ctrPer': out.push(`지난 내 차례 뒤 되받은 1번마다 피해 +${e.per}(3번까지).`); break;
       case 'sealx': out.push((s.tgt === 'front' || s.tgt === 'all' ? '치유 · 축복 · 소환 · 저주 · 지키기 같은 지원 행동을 하려는 적은 그 행동이 끊긴다.' : '대상이 치유 · 축복 · 소환 · 저주 · 지키기 같은 지원 행동을 하려는 중이면 그 행동을 끊는다.') + ` 강적 · 보스는 끊기지 않고 붕괴 +${e.brk}.`); break;
       case 'bigx': out.push(`정예 · 강적 · 보스에게는 피해 ×${e.mul}.`); break;
       case 'cutx': out.push(e.chant ? `대상이 영창 중이면 붕괴 +${e.brk}.` : `대상이 강타나 영창을 모으는 중이면 붕괴 +${e.brk}.`); break;
