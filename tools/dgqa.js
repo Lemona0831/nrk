@@ -10,13 +10,11 @@ const Q = require('./qa.js');
 const { PERSONAS, heuristic, lookahead, sigRule, rng } = Q;
 
 function loadGame() {
-  const dir = path.join(__dirname, '..', DIR);
-  const html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
-  const data = [...html.matchAll(/<script src="(data\/[^"]+\.js)"><\/script>/g)].map(m => fs.readFileSync(path.join(dir, m[1]), 'utf8')).join('\n');
-  const i = html.indexOf('<script>'); const j = html.indexOf('</script>', i);
+  const dir = path.resolve(__dirname, '..', DIR);
+  const PS = require('./pagesrc.js'); const data = PS.pageData(dir), script = PS.pageScript(dir); // 한 파일 · 나눈 파일 모두 같은 글자
   const ctx = { console, setTimeout: () => 0, clearTimeout: () => { }, setInterval: () => 0, clearInterval: () => { }, module: { exports: {} } };
   vm.createContext(ctx);
-  vm.runInContext(data + '\n' + html.slice(i + 8, j) + '\n;this.__G = G;', ctx, { filename: 'next/index.html' });
+  vm.runInContext(data + '\n' + script + '\n;this.__G = G;', ctx, { filename: 'next/index.html' });
   // 화면·저장·소리는 끈다
   vm.runInContext('Object.assign(this, { bagUsed: typeof bagUsed !== "undefined" ? bagUsed : null, BAG_MAX: typeof BAG_MAX !== "undefined" ? BAG_MAX : 12, CHAPTERS: typeof CHAPTERS !== "undefined" ? CHAPTERS : null, CONS: typeof CONS !== "undefined" ? CONS : null, UNLOCK: typeof UNLOCK !== "undefined" ? UNLOCK : {}, LOOT: typeof LOOT !== "undefined" ? LOOT : null, STAT_KEYS: typeof STAT_KEYS !== "undefined" ? STAT_KEYS : null, LV_XP_: typeof LV_XP !== "undefined" ? LV_XP : null, poolOk_: typeof poolOk !== "undefined" ? poolOk : () => true, STAT_REC: typeof STAT_REC !== "undefined" ? STAT_REC : null, STAT_START: typeof STAT_START !== "undefined" ? STAT_START : null, LV_POINTS: typeof LV_POINTS !== "undefined" ? LV_POINTS : 2, isLower, chOf: typeof chOf !== "undefined" ? chOf : null, ITEMS, EVENTS, ROOM_TYPES, BUILDS, tplKind, SKILLS2: typeof SKILLS2 !== "undefined" ? SKILLS2 : null, TREE2: typeof TREE2 !== "undefined" ? TREE2 : null, SK2: typeof SK2 !== "undefined" ? SK2 : null, EQUIP_SLOTS2: typeof EQUIP_SLOTS2 !== "undefined" ? EQUIP_SLOTS2 : 4 });', ctx); // const 값은 밖에서 읽을 수 있게 꺼내 둔다
   vm.runInContext(`toast = () => {}; scheduleSync = () => {}; syncRun = async () => false; pushRank = async () => {}; saveLocal = () => true; sfx = () => {};`, ctx);

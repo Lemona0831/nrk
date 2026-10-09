@@ -4,11 +4,9 @@
    실행: DGDIR=06a2 node tools/gamblesim.js [꾸러미 수=20000] */
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const DIR = process.env.DGDIR || '06a2'; const N = +(process.argv[2] || 20000);
-const dir = path.join(__dirname, '..', DIR); const html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
-const data = [...html.matchAll(/<script src="(data\/[^"]+\.js)"><\/script>/g)].map(m => fs.readFileSync(path.join(dir, m[1]), 'utf8')).join('\n');
-const i = html.indexOf('<script>'), j = html.indexOf('</script>', i);
+const dir = path.resolve(__dirname, '..', DIR); const PS = require('./pagesrc.js'); const data = PS.pageData(dir), script = PS.pageScript(dir); // 한 파일 · 나눈 파일 모두 같은 글자
 const ctx = { console, setTimeout: () => 0, clearTimeout: () => { }, setInterval: () => 0, clearInterval: () => { }, module: { exports: {} } };
-vm.createContext(ctx); vm.runInContext(data + '\n' + html.slice(i + 8, j) + '\n;this.__G = G;', ctx, { filename: 'index.html' });
+vm.createContext(ctx); vm.runInContext(data + '\n' + script + '\n;this.__G = G;', ctx, { filename: 'index.html' });
 const R = c => vm.runInContext(c, ctx);
 let seed = 12345; const rnd = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
 ctx.Math = Object.create(Math); ctx.Math.random = rnd; /* 고정 씨앗 */
