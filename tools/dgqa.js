@@ -393,6 +393,25 @@ function bmLoad(run, br) {
   for (const id of open.slice().sort((a, b) => ROWN(G0.SK2[b]) - ROWN(G0.SK2[a]))) { if (eq.length >= G0.EQUIP_SLOTS2) break; if (!eq.includes(id)) eq.push(id); }
   return eq;
 }
+/* 암살자 격발 장착 (10월 9일, docs/직업/암살자.md D-2 격발 "가장 위협이 큰 적 하나에 심고, 강타 예고가 뜨면 붕괴 칸으로 끊은 뒤 터뜨린다", C-5 격발 장착, F-2 "독을 쓰는 칸을 끼웠으면 독을 거는 칸도 하나는 끼운다").
+   테스터는 연 칸 가운데 줄이 깊은 넷을 끼워서 독 사냥 · 거두기 · 급소 터뜨리기처럼 독이 있어야 크게 때리는 칸만 남고, 독을 거는 칸도 큰 적용 터뜨리기(독 격발 · 터뜨리는 일격)도 빠졌다.
+   심고(독을 거는 칸: 중독 5 이상, 터뜨리기가 아닌 것, 쿨타임이 짧은 것 먼저) · 끊고(붕괴 칸: 무너뜨리는 독 · 붕괴 독침 · 끊어 내기 · 붕괴 뇌관, 줄이 깊은 것) · 터뜨리는(터뜨리기 칸 가운데 큰 적 배수가 있는 것, 줄이 깊은 것 둘) 넷으로 채운다.
+   실제 세기 재의 여왕 · 지하묘지의 군주(장비 없음)에서 같은 연 칸으로 테스터 장착은 0~50%, 이 장착은 87~100%다(근거: docs/직업/암살자.md F-5 10월 9일). 난수를 쓰지 않는다. ASN_LOAD_OLD=1이면 끈다 */
+function asnLoad(run, eq) {
+  if (process.env.ASN_LOAD_OLD || run.build !== 'assassin' || run.focus !== '격발') return;
+  const S = id => G0.SK2[id]; const has = (id, f) => S(id).fx.some(f); const open = run.tree.open.slice();
+  const src = id => has(id, e => e.k === 'poison' && e.n >= 5) && !has(id, e => e.k === 'burst');
+  const brk = id => has(id, e => e.k === 'brkPer' || (e.k === 'brk' && e.n >= 50) || e.k === 'cutx') && !has(id, e => e.k === 'burst');
+  const bur = id => has(id, e => e.k === 'burst') && has(id, e => e.k === 'bigx');
+  const pick = [];
+  const add = (ids) => { for (const id of ids) { if (pick.length >= G0.EQUIP_SLOTS2) break; if (!pick.includes(id)) pick.push(id); } };
+  add(open.filter(src).sort((a, c) => S(a).cd - S(c).cd || S(c).fx.find(e => e.k === 'poison').n - S(a).fx.find(e => e.k === 'poison').n).slice(0, 1));
+  add(open.filter(brk).sort((a, c) => ROWN(S(c)) - ROWN(S(a))).slice(0, 1));
+  add(open.filter(bur).sort((a, c) => ROWN(S(c)) - ROWN(S(a))).slice(0, 2));
+  add(eq.slice().sort((a, c) => ROWN(S(c)) - ROWN(S(a)))); // 빈 칸은 지금 끼운 칸 가운데 줄이 깊은 것으로
+  add(open.slice().sort((a, c) => ROWN(S(c)) - ROWN(S(a))));
+  eq.length = 0; eq.push(...pick);
+}
 function bmPathNext(run, br) {
   if (!process.env.BM_LOAD_OLD && BM_PATH2[br]) { for (const id of BM_PATH2[br]) if (!run.tree.open.includes(id)) return G0.SK2[id] && !G0.treeWhy(run, id) ? G0.SK2[id] : null; return null; }
   const L = (BM_PATH[br] || []).slice(); if (process.env.BM_VAR && br !== '포식' && run.tree.open.length === 4 && !run.tree.open.includes('v_reap')) return G0.SK2.v_reap && !G0.treeWhy(run, 'v_reap') ? G0.SK2.v_reap : null;
@@ -424,6 +443,7 @@ function spendTree(pk, r) {
       const lo = (cand.length ? cand : eq.map((id, i) => [i, ROWN(G0.SK2[id])])).sort((x, y) => x[1] - y[1])[0]; if (lo[1] < ROWN(s) || r() < 0.3) eq[lo[0]] = s.id; }
     if (run.build === 'spellblade' && eq.length >= G0.EQUIP_SLOTS2) for (const k of ['spell', 'cut']) if (!eq.some(id => G0.SK2[id].kind === k)) { const c = run.tree.open.filter(id => G0.SK2[id].kind === k && !eq.includes(id)).sort((x, y) => ROWN(G0.SK2[y]) - ROWN(G0.SK2[x]))[0]; if (c) { const lo = eq.map((id, i) => [i, ROWN(G0.SK2[id])]).filter(x => G0.SK2[eq[x[0]]].kind !== k).sort((x, y) => x[1] - y[1])[0]; if (lo) eq[lo[0]] = c; } } // 마검사: 4칸에 ⚔ · ✦를 하나 이상씩
     { const bl = focus ? bmLoad(run, br) : null; if (bl) { eq.length = 0; eq.push(...bl); } } // 숨겨진 직업 3: 갈래마다 정한 보스 장착
+    asnLoad(run, eq); // 암살자 격발: 심고 · 끊고 · 터뜨리는 넷
     run.skills = eq; run.p.skills = G0.v2Equip(run);
   }
 }
