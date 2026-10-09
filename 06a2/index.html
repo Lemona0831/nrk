@@ -709,6 +709,27 @@ html.rm *,html.rm *::before{transition:none!important;scroll-behavior:auto!impor
  .qc{position:relative}
  .qbag{flex:none;min-height:34px;min-width:0;padding:1px 6px;font-size:calc(12px*var(--fs,1));line-height:1.2;gap:0}.qbag small{line-height:1.2}
 }
+/* 전투 화면 표시 (10월 9일 UI-simple): 모듈 표시 값에 따른 숨김. 숨겨도 읽는 글은 남긴다(.sr) */
+.hudm{display:contents}
+.hud-danger{display:flex;flex-wrap:wrap;gap:1px 12px;align-items:baseline;margin:0 0 6px;padding:4px 8px;border:1px solid var(--bad);border-left-width:4px;border-radius:6px;background:rgba(200,60,50,.1);font-size:calc(13px*var(--fs,1));font-weight:600;line-height:1.35}
+.hud-danger .dgi{color:var(--bad)}
+.hl-noflk .flk{display:none}
+.hl-noedet .lanect,.hl-noedet .rlhint,.hl-noedet .reach.ok,.hl-noedet .lane.empty{display:none}
+.hl-noaux .ab .ax,.hl-noaux .ab .spd,.hl-noaux .dockhead .slots,.hl-noaux .dockhead .pacesel,.hl-noaux .dockhead>span .mini,.hl-noaux .qcn{display:none}
+.hl-noagl .agl{display:none}
+.ord.sr{overflow:hidden !important}
+.bmid .order.osum .axhead{display:flex;gap:10px}
+.qcons.tlz{display:none}.qcons.qoff .qc,.qcons.qoff .qcn{display:none}
+.abgrid .agp.agtools:not(.open){display:none}
+.ab.tooltog b{display:flex;align-items:center;gap:4px}.tcnt{margin-left:auto;background:var(--gold);color:#1a1206;border-radius:9px;padding:0 6px;font-size:.85em;font-weight:800;line-height:1.4}
+.ordnx{color:var(--muted);font-size:calc(13px*var(--fs,1))}
+.stsn{display:inline-block;color:var(--muted);font-size:calc(12px*var(--fs,1));padding:0 4px}
+.hudg{margin-top:6px}.hudg h5{margin:6px 0 2px;font-size:calc(13px*var(--fs,1));color:var(--muted)}.hudlk{font-size:calc(12px*var(--fs,1));color:var(--muted)}.hudpre{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.hcalm .ab.g-atk,.hcalm .ab.g-sk,.hcalm .ab.g-def,.hcalm .ab.g-sig,.hcalm .ab.g-etc{--c:var(--line);--bls:solid}
+.hcalm .lane{--lc:var(--line);--lbg:transparent}.hcalm .lanehd b{color:var(--ink)}
+.hcalm .fstat,.hcalm .me{border-left-color:var(--line)}
+.hcalm .focusln,.hcalm .focusln.lk{color:var(--gold)}
+@media (min-width:1100px){.bgrid.hl-nopanel{grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "field" "dock"}.bgrid.hl-nopanel .side:not(.open){display:none}.bgrid.hl-nopanel .onlym{display:inline-block}}
 </style>
 </head>
 <body>
@@ -4052,7 +4073,7 @@ const HELP = [
     '키보드: 숫자 키 1~9가 행동 버튼 앞의 번호와 같습니다(설정에서 끌 수 있음). 적 차례 진행을 "한 단계씩"으로 두면 Space가 적의 다음 행동을 넘깁니다. Esc는 설명 창을 먼저 닫고, 한 번 더 누르면 열린 창을 닫습니다.',
     'Tab: 전투 화면에서 처음 누르면 "행동판으로 건너뛰기" 버튼이 나옵니다. 행동 순서 줄은 Tab 한 번으로 들어가 좌우 화살표로 옮깁니다.',
     '미리보기: 행동 버튼에 초점을 두거나 마우스를 올리면(휴대폰은 길게 누르면) 맞을 적의 생명력 막대에 예상 피해가, 붕괴 막대에 오를 양이 빗금으로 보이고 카드 위에는 숫자가 뜹니다. 내 생명력 막대의 점 칸은 내 다음 차례 전에 받을 피해 어림이고, 숫자는 막대 아래 줄에 있습니다. 행동이 스태미나나 생명력을 쓰면 그 막대에도 점 칸과 "−40 70 → 30" 같은 숫자가 보입니다.',
-    '"정보" 버튼은 능력치, 속도, 장비, 직업 규칙을 펼칩니다. 창이 짧아 전장이 모자라면 전투 화면이 위아래로 스크롤됩니다.',
+    '"자세히" 버튼은 능력치, 속도, 장비, 직업 규칙과 숨겨 둔 표시를 모두 펼칩니다. 무엇을 보일지는 설정의 "전투 화면 표시"에서 고릅니다. 창이 짧아 전장이 모자라면 전투 화면이 위아래로 스크롤됩니다.',
     '설정에서 글자 크기(90%부터 130%까지)와 움직임 줄이기를 고릅니다.'] },
   { k: 'cons', n: '소모품', t: [
     '소모품은 행동판 위 소모품 줄에서 바로 씁니다. 지금 쓸 만한 것 셋이 보이고 Q W E 키로도 씁니다. 전부 보려면 가방 버튼을 누릅니다. 차례 칸을 쓰지 않고 한 차례에 ' + CONS_TURN + '개까지 쓰며, 같은 효과는 겹치지 않습니다.',
@@ -4834,32 +4855,113 @@ function heatHtml(b) {
   const rise = heatRise(b); const warn = b.heatWarn != null && b.heatWarn <= (b.round || 0); const left = rise > 0 ? Math.max(1, Math.ceil((100 - b.heat) / rise)) : 0;
   return `<div class="gimmick heat${b.heat >= HEAT.warn || warn ? ' hot' : ''}" data-info="heat" tabindex="0" role="status"><span aria-hidden="true">🌡️</span> 열기 <b>${Math.round(b.heat)}</b>/100 · +${rise}/라운드 · ${warn ? '<b>' + (queenOf(b) ? '🌪️' : '🌡️') + ' 이번 라운드 끝에 ' + heatName(b) + ' ' + r1(heatStormEst(b)) + '</b>' : left ? '약 ' + left + '라운드' : '오르지 않음'}<span class="heatbar" aria-hidden="true"><i style="width:${Math.min(100, b.heat)}%"></i></span></div>`;
 }
-function vBattle() {
-  const b = G.b; const p = b.p; const B = BUILDS[p.build]; const pops = hpPops(b); const fdo = !!G.data.fdet;
-  const tg = G.sel ? b.en.find(e => e.id === G.sel && e.alive) : null;
-  // 1) 내 상태
+/* ===== 전투 화면 표시 (10월 9일 0.6a.2-UI-simple) =====
+   HUD 모듈마다 감싸는 요소 하나(data-hud)와 그리는 함수 하나를 둔다. 보일지 말지는 이 표 하나로 정한다.
+   d = [간단, 보통, 자세히]. lock이면 끌 수 없고 설정에는 "항상 보임"으로만 나온다. 자세히는 지금까지 화면과 같다 */
+const HUD_DEFAULT = 'simple'; /* 새 플레이어 · 값이 없는 옛 저장본의 기본 묶음. 여기 한 곳만 바꾸면 된다 */
+const HUD_NAMES = ['simple', 'normal', 'full'];
+const HUD_LAB = { simple: '간단', normal: '보통', full: '자세히', custom: '사용자 지정' };
+const HUD_MODS = [
+  { id: 'hud-player', n: '내 상태', fn: 'vHudPlayer' },
+  { id: 'hud-classchip', n: '직업 칩', fn: 'vHudClass' },
+  { id: 'hud-danger', n: '지금 위험', fn: 'vHudDanger' },
+  { id: 'hud-order', n: '순서', fn: 'vOrder' },
+  { id: 'hud-log', n: '기록', fn: 'vRecent' },
+  { id: 'hud-field', n: '적', fn: 'vHudField' },
+  { id: 'hud-quick', n: '소모품', fn: 'consQuick' },
+  { id: 'hud-actions', n: '행동', fn: 'vHudActions' },
+];
+const HUD_ITEMS = [
+  { k: 'hpst', mod: 'hud-player', n: '내 생명력과 스태미나', lock: 1 },
+  { k: 'ehp', mod: 'hud-field', n: '적의 생명력과 다음 행동 예고', lock: 1 },
+  { k: 'abtn', mod: 'hud-actions', n: '행동 버튼(비용과 쿨타임)', lock: 1 },
+  { k: 'danger', mod: 'hud-danger', n: '지금 위험 줄', lock: 1 },
+  { k: 'sts', mod: 'hud-player', n: '상태 칩', d: ['bad', 'few', 'all'], opts: [['bad', '해로운 것만 3개'], ['few', '3개까지'], ['all', '모두']], desc: '내게 걸린 상태와 적에게 걸린 상태를 칩으로 보입니다. 넘치는 것은 "+N"으로 접힙니다' },
+  { k: 'prev', mod: 'hud-player', n: '막대 미리보기', d: [0, 1, 1], desc: '행동에 올리면 생명력 · 스태미나 · 적 막대에 예상 변화를 겹쳐 보입니다' },
+  { k: 'inc', mod: 'hud-player', n: '예상 피해 줄', d: [1, 1, 1], desc: '내 다음 차례 전에 받을 피해를 한 줄로 보입니다' },
+  { k: 'flk', mod: 'hud-player', n: '플라스크 줄', d: [0, 1, 1], desc: '남은 플라스크 수. 행동 버튼에도 같은 수가 있습니다' },
+  { k: 'cls', mod: 'hud-classchip', n: '직업 전용 칩', d: [1, 1, 1], desc: '직업 규칙의 자원과 표시(분노, 교대, 추적 등)' },
+  { k: 'edet', mod: 'hud-field', n: '적 카드 상세', d: [0, 1, 1], desc: '붕괴 줄, 움직이는 순번, 레벨, 역할, 작은 표시. 적 카드를 누르면 그 카드만 펼쳐집니다' },
+  { k: 'iaux', mod: 'hud-field', n: '예고 보조 숫자', d: [0, 1, 1], desc: '예고 옆의 "×2" 같은 행동 횟수' },
+  { k: 'ord', mod: 'hud-order', n: '순서 줄', d: [0, 1, 1], desc: '이번 라운드와 다음 라운드의 행동 순서 전체. 끄면 "내 차례 · 다음 누구"만 보입니다' },
+  { k: 'rlog', mod: 'hud-log', n: '최근 기록 띠', d: [1, 1, 1], desc: '방금 일어난 일을 한 줄로 보입니다. 누르면 전체 기록이 열립니다' },
+  { k: 'logpanel', mod: 'hud-log', n: '전체 기록 칸', d: [0, 1, 1], desc: '넓은 화면에서 오른쪽에 기록 칸을 늘 보입니다. 끄면 📜 버튼으로 엽니다' },
+  { k: 'why', mod: 'hud-log', n: '결과 이유 줄', d: [0, 1, 1], desc: '피해 숫자 아래에 왜 이 숫자인지 한 줄을 붙입니다' },
+  { k: 'qcons', mod: 'hud-quick', n: '소모품 빠른 줄', d: [0, 1, 1], desc: '지금 쓸 만한 소모품을 한 번에 누르는 줄. 끄면 도구 칸이나 가방에서 씁니다. Q W E 키는 그대로입니다' },
+  { k: 'abaux', mod: 'hud-actions', n: '행동 버튼 보조 글', d: [0, 1, 1], desc: '버튼의 빠르기 표시, 대상, 남은 칸, 진행 속도' },
+  { k: 'agl', mod: 'hud-actions', n: '행동 묶음 이름', d: [0, 1, 1], desc: '공격 · 스킬 · 지키기 · 도구 같은 묶음 제목' },
+  { k: 'tools', mod: 'hud-actions', n: '도구 칸 접기', d: [1, 0, 0], desc: '플라스크, 소모품, 도망을 한 칸 "도구"로 모읍니다. 누르면 펼쳐집니다' },
+];
+const HUD_GROUPS = [['항상 보임', ['hpst', 'ehp', 'abtn', 'danger']], ['내 상태', ['sts', 'prev', 'inc', 'flk', 'cls']], ['적', ['edet', 'iaux']], ['순서와 기록', ['ord', 'rlog', 'logpanel', 'why']], ['행동', ['qcons', 'abaux', 'agl', 'tools']]];
+let HUDNOW = null; /* 지금 그리는 전투의 표시 값(whyHtml이 읽는다) */
+function hudRaw() { const h = G.data && G.data.hud; const p = h && (HUD_NAMES.includes(h.p) || h.p === 'custom') ? h.p : HUD_DEFAULT; return { p, o: (h && h.o) || {} }; }
+function hudFlags(p, o) {
+  const f = { p }; const i = HUD_NAMES.indexOf(p);
+  for (const it of HUD_ITEMS) if (!it.lock) f[it.k] = p === 'custom' && o[it.k] != null ? o[it.k] : it.d[i < 0 ? 2 : i];
+  return f;
+}
+function hudCfg() { const h = hudRaw(); return hudFlags(h.p, h.o); }
+/* 자세히 칸이 열려 있으면 늘 전부 보인다(숨긴 것에 닿는 길) */
+function hudEff(fdo) { return fdo ? hudFlags('full', {}) : hudCfg(); }
+function hudPreset(n) { if (!HUD_NAMES.includes(n)) return; G.data.hud = { p: n }; saveLocal(); }
+function hudSet(k, v) { const c = hudCfg(); const o = {}; for (const it of HUD_ITEMS) if (!it.lock) o[it.k] = c[it.k]; o[k] = v; G.data.hud = { p: 'custom', o }; saveLocal(); }
+const hudQuiet = h => String(h || '').replace(/ tabindex="-?\d+"/g, '').replace(/ data-info="[^"]*"/g, '');
+function hudSettings() {
+  const h = hudRaw(), f = hudFlags(h.p, h.o);
+  const sw = (k, on, lab) => `<button class="sw" role="switch" aria-checked="${on ? 'true' : 'false'}" data-a="hudtog" data-k="${k}" aria-label="${esc(lab)}">${on ? '켜짐' : '꺼짐'}</button>`;
+  let o = `<section class="setg" id="hudset"><h4>전투 화면 표시</h4><p class="mini">전투 화면에 무엇을 보일지 고릅니다. 처음에는 꼭 필요한 것만 보입니다. 전투 중에도 바로 바뀝니다.</p>`;
+  o += `<div class="setrow hudpre" role="group" aria-label="표시 묶음">${HUD_NAMES.map(n => `<button class="sm${h.p === n ? ' gold' : ''}" data-a="hudpre" data-k="${n}" aria-pressed="${h.p === n}">${HUD_LAB[n]}</button>`).join('')}<span class="mini hudcur" role="status">${h.p === 'custom' ? '사용자 지정' : ''}</span></div>`;
+  for (const [gn, ks] of HUD_GROUPS) {
+    o += `<div class="hudg" role="group" aria-label="${gn}"><h5>${gn}</h5>`;
+    for (const k of ks) {
+      const it = HUD_ITEMS.find(x => x.k === k);
+      if (it.lock) o += `<div class="setrow"><span class="lab">${it.n}</span><span></span><span class="hudlk">항상 보임</span></div>`;
+      else if (it.opts) o += `<div class="setrow"><label for="hudsts">${it.n}</label><span class="mini">${it.desc}</span><select id="hudsts">${it.opts.map(([v, t]) => `<option value="${v}"${f[k] === v ? ' selected' : ''}>${t}</option>`).join('')}</select></div>`;
+      else o += `<div class="setrow"><span class="lab">${it.n}</span><span class="mini">${it.desc}</span>${sw(k, !!f[k], it.n)}</div>`;
+    }
+    o += `</div>`;
+  }
+  return o + `</section>`;
+}
+/* 지금 위험: 이번 차례에 답이 필요한 일만. 적의 예고 문장을 그대로 옮기고 무엇을 하라고는 말하지 않는다 */
+function vHudDanger(b) {
+  if (b.over || !b.p) return '';
+  const ls = []; const x = incomingEst(b);
+  if (x.n && x.sum >= b.p.hp) ls.push('다음 차례 전 예상 피해 −' + r1(x.sum) + ', 남은 생명력 ' + shownHp(b.p.hp) + '. 쓰러질 수 있습니다');
+  for (const e of alive(b)) {
+    if (e.role === 'root' || e.role === 'crown') continue;
+    if (e.demand && e.demand.turn === b.turnIdx) { ls.push(e.n + ': ' + (e.demand.k === 'rest' ? '고해를 기다린다' : '심문한다')); continue; }
+    const k = (e.intent || {}).k; const it = intentText(b, e); if (it && it.hv && it.t && (DMG_K.includes(k) || ['charge', 'chant', 'seal', 'surgeprep', 'dig', 'reap'].includes(k))) ls.push(e.n + ': ' + it.t);
+  }
+  if (!ls.length) return '';
+  return `<div class="hud-danger" data-hud="hud-danger" role="note" aria-label="지금 위험"><span class="dgi" aria-hidden="true">⚠</span>${ls.slice(0, 2).map(t => `<span>${esc(fixJosa(t))}</span>`).join('')}</div>`;
+}
+/* 직업 칩 모듈: 직업마다 한 줄씩. 끄면 눈에는 안 보이고 읽기만 된다 */
+function vHudClass(b, hud) {
+  const h = buildRes(b.p) + focusLine(b) + sbLine(b) + cfLine(b); if (!h) return '';
+  return hud.cls ? `<div class="hudm" data-hud="hud-classchip">${h}</div>` : `<div class="sr" data-hud="hud-classchip">${hudQuiet(h)}</div>`;
+}
+const AGROUP4 = [['공격', ['basic', 'heavy']], ['스킬', null], ['지키기', ['guard', 'dodge']], ['도구', ['flaskL', 'flaskM', 'flaskS', 'flee']]];
+function consUsefulN(b) {
+  const run = G.run; if (!run || !Array.isArray(run.cons) || b.over || !b.p) return 0;
+  const bq = Object.assign({}, b, { consN: 0, queue: ['p'] }); let n = 0;
+  run.cons.forEach(c => { const D = CONS[c.id]; if (!D || D.use === 'none' || D.use === 'out' || consWhyNot(bq, run, c, G.sel)) return; if (consScore(b, c, D) > 0) n++; });
+  return Math.min(n, 3);
+}
+function vHudPlayer(b, hud, pops, fdo) {
+  const p = b.p; const B = BUILDS[p.build];
   const extra = [];
   extra.push(`<span data-info="stats" tabindex="0">${STAT_KEYS.map(k => STATN[k] + ' ' + stat(p, k)).join(' · ')}</span>`);
   extra.push(`<span data-info="speed" tabindex="0">속도 ${r1(pSpeed(b))}</span>`);
   const eq = Object.values(p.eq).filter(Boolean); if (eq.length) extra.push(eq.map(k => `<span class="gr-${ITEMS[k].g || 'n'}">${inm(k, ITEMS[k].g || 'n')}</span>`).join(', '));
   const scen = G.scr === 'scen' ? `<div class="scenline"><b>${SCEN[G.scen.i].id}. ${esc(SCEN[G.scen.i].n)}</b> ${esc(SCEN[G.scen.i].d)} 최대 10행동 중 ${b.pActs || 0}행동.</div>` : '';
-  const status = `<section class="fstat" aria-label="내 상태">${scen}<div class="mehead"><b data-info="buildrule" tabindex="0">${B.ico} ${esc(B.n)}</b><span class="flk" data-info="flask" tabindex="0">플라스크 <span aria-hidden="true">❤️</span><span class="sr">생명력 </span>${p.flask.life} ${isV2(p) ? '<span aria-hidden="true">🧪</span><span class="sr">정화 </span>' : '<span aria-hidden="true">💧</span><span class="sr">마나 </span>'}${p.flask.mana} <span aria-hidden="true">⚡</span><span class="sr">스태미나 </span>${p.flask.stam || 0} <small><span class="sr">, 최대 </span>/${p.flaskMax}</small></span><button class="sm fdtog" data-a="fdet" aria-expanded="${fdo}" aria-controls="fdet"><span aria-hidden="true">${fdo ? '▴' : '▾'}</span> 정보</button></div>
-    <div class="mbars">${pops.p ? popHtml(pops.p) : ''}${mbar('hp', p.hp, p.hpMax, '생명력', b.over ? 0 : incomingEst(b).sum)}${p.mpMax > 0 ? mbar('mp', p.mp, p.mpMax, '마나') : ''}${mbar('st', p.st, p.stMax, '스태미나')}</div>${buildRes(p)}
-    ${incHtml(b)}${focusLine(b)}${sbLine(b)}${cfLine(b)}${isCh3(b) && st(p, 'ignite') ? `<div class="mini ignln" data-info="ign" tabindex="0">🔥 내 화상 ${st(p, 'ignite')}: 다음 피격 +${st(p, 'ignite')}</div>` : ''}${b.seal && b.seal.length ? `<div class="sealln" data-info="seal" tabindex="0">🔏 봉인: ${b.seal.map(x => esc(x.n)).join(', ')}</div>` : ''}${stsHtml(p, b)}<div class="fdet" id="fdet"${fdo ? '' : ' hidden'}><div class="mini">${extra.join(' · ')}</div><div><button class="sm rulebtn" data-a="help" data-k="row">전투 규칙 보기</button></div><div class="rule" data-info="buildrule" tabindex="0">${esc(BUILDS[p.build].rule)}</div>${incWhy(b)}</div></section>`;
-  // 2) 시간 축 + 기믹
-  let gim = '';
-  const boss = b.en.find(e => e.role === 'boss' && e.alive);
-  if (boss) {
-    let g = b.enrage ? '광폭화 중' : `광폭화까지 ${myTurnsUntil(b, (ENRAGE.byBoss || {})[boss.boss] || ENRAGE.boss)}라운드`;
-    if (boss.boss === 'mother') g += ` · 내 중독 ${st(p, 'poison')}/10 (10이면 부화) · ${boss.phase >= 2 ? '거울 활성' : '2페이즈부터 거울'}`;
-    if (boss.boss === 'tree') { const roots = alive(b).filter(e => e.role === 'root').length; g += ` · 뿌리 때문에 라운드마다 약 +${rootRegen(b)} 회복 · 계절 ${SEASONS[b.season]} → ${SEASONS[(b.season + 1) % 4]} (${myTurnsUntil(b, (Math.floor(b.tick / 4) + 1) * 4)}라운드 뒤) · 뿌리 ${roots}/3`; }
-    gim = `<div class="gimmick" data-info="gim" tabindex="0">${esc(g)}</div>`;
-    if (boss.demand && boss.demand.turn === b.turnIdx) gim += `<div class="gimmick dmd" data-info="edemand" tabindex="0">${boss.demand.k === 'rest' ? '🤲 수도원장이 고해를 기다린다' : '⚖️ 수도원장이 심문한다'}</div>`; // 10월 4일: 휴대폰에서 카드의 표시가 잘려 따로 한 줄
-  }
-  if (b.heat != null) gim += heatHtml(b); // 3챕터 열기 칸
-  const last = b.log[b.log.length - 1];
-  const lastl = G.banner ? `<div class="turnban ${G.banner.phase}"><span class="ic">${G.banner.ico}</span><b>${esc(G.banner.who)}</b><span>${esc(G.banner.phase === 'post' && last ? last.m : G.banner.what)}</span></div>` : G.myTurnFlash ? '<div class="turnban me"><b>내 차례</b><span>무엇을 할지 고르세요</span></div>' : '';
-  // 3) 전장
+  const status = `<section class="fstat" data-hud="hud-player" aria-label="내 상태">${scen}${hud.flk ? '' : `<span class="sr">플라스크 생명력 ${p.flask.life}, ${isV2(p) ? '정화' : '마나'} ${p.flask.mana}, 스태미나 ${p.flask.stam || 0}, 최대 ${p.flaskMax}</span>`}<div class="mehead"><b data-info="buildrule" tabindex="0">${B.ico} ${esc(B.n)}</b><span class="flk" data-info="flask" tabindex="0">플라스크 <span aria-hidden="true">❤️</span><span class="sr">생명력 </span>${p.flask.life} ${isV2(p) ? '<span aria-hidden="true">🧪</span><span class="sr">정화 </span>' : '<span aria-hidden="true">💧</span><span class="sr">마나 </span>'}${p.flask.mana} <span aria-hidden="true">⚡</span><span class="sr">스태미나 </span>${p.flask.stam || 0} <small><span class="sr">, 최대 </span>/${p.flaskMax}</small></span><button class="sm fdtog" data-a="fdet" aria-expanded="${fdo}" aria-controls="fdet"><span aria-hidden="true">${fdo ? '▴' : '▾'}</span> 자세히</button></div>
+    <div class="mbars">${pops.p ? popHtml(pops.p) : ''}${mbar('hp', p.hp, p.hpMax, '생명력', b.over || !hud.prev ? 0 : incomingEst(b).sum)}${p.mpMax > 0 ? mbar('mp', p.mp, p.mpMax, '마나') : ''}${mbar('st', p.st, p.stMax, '스태미나')}</div>${vHudClass(b, hud)}
+    ${hud.inc ? (hud.abaux || incomingEst(b).n ? incHtml(b) : '') : '<div class="sr">' + hudQuiet(incHtml(b)) + '</div>'}${isCh3(b) && st(p, 'ignite') ? `<div class="mini ignln" data-info="ign" tabindex="0">🔥 내 화상 ${st(p, 'ignite')}: 다음 피격 +${st(p, 'ignite')}</div>` : ''}${b.seal && b.seal.length ? `<div class="sealln" data-info="seal" tabindex="0">🔏 봉인: ${b.seal.map(x => esc(x.n)).join(', ')}</div>` : ''}${stsHtml(p, b, 0, { mode: hud.sts })}<div class="fdet" id="fdet"${fdo ? '' : ' hidden'}><div class="mini">${extra.join(' · ')}</div><div><button class="sm rulebtn" data-a="help" data-k="row">전투 규칙 보기</button></div><div class="rule" data-info="buildrule" tabindex="0">${esc(BUILDS[p.build].rule)}</div>${incWhy(b)}</div></section>`;
+  return status;
+}
+function vHudField(b, hud, pops) {
+  const p = b.p;
   const acts1 = {}; for (const x of previewAfter(b, 1)) acts1[x.e.id] = x.n;
   const ecard = e => {
     const it = intentText(b, e); const ib = intentBadge(b, e); const sel = G.sel === e.id; const pop = pops[e.id];
@@ -4891,22 +4993,28 @@ function vBattle() {
     if (e.foe === 'sundial') fl.push(['<span class="nr gd' + ((e.clock || 0) <= 1 ? ' hv' : '') + '">☀️ 해시계 ' + (e.clock != null ? e.clock : FOE_X.sundial.clock) + '</span>', '해시계 ' + (e.clock != null ? e.clock : FOE_X.sundial.clock)]);
     if (e.stkExp > 0 || (e.role === 'lurker' && e.s.vuln && !e.under && e.intent && e.intent.k === 'exposed')) fl.push(['<span class="nr gd">😵</span>', '드러남: 숨을 고르는 중']);
     if (e.boss === 'tree' && rootRegen(b) > 0) fl.push([`<span class="nr rg2" data-info="regen">🌱 +${rootRegen(b)}/라운드</span>`, '라운드마다 ' + rootRegen(b) + ' 회복']);
+    const ed = hud.edet || sel; /* 카드를 눌러 고르면 그 카드는 상세가 모두 보인다 */
+    const KEEP = /data-info="(guarded|ebraced|ecounter|eevade|eguard|echant|edemand|ehaze|ewrap|ectr|efocus)"|땅속|모래 속|후열 보호|🧱½/;
+    const flv = ed ? fl : fl.filter(x => KEEP.test(x[0]));
     const wall = wallUp(b, e) ? 'ewall' : wallFrontUp(b, e) ? 'ewallf' : '';
     const sw = stsWords(e, b);
     const lab = [e.n + (e.role === 'boss' ? ' ' + e.phase + '페이즈' : '') + (e.lv ? ' Lv' + e.lv : '') + (e.rn && e.n.indexOf(e.rn) < 0 ? ' ' + e.rn : '') + (e.tough ? ' 강인' : ''),
       '생명력 ' + shownHp(e.hp) + '/' + Math.round(e.hpMax)].concat(e.role !== 'root' && e.role !== 'crown' ? [eordText(b, e), '붕괴 ' + Math.round(e.brk) + '/' + e.brkMax] : [])
       .concat(sw.length ? ['상태: ' + sw.join(', ')] : []).concat(wall || fl.length ? ['표시: ' + (wall ? ['방패벽'] : []).concat(fl.map(x => x[1])).join(', ')] : [])
       .concat(e.role !== 'root' && e.role !== 'crown' ? ['예고: ' + it.t] : ['움직이지 않는다']).join(', ');
-    return `<button class="en${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(lab)}">${eordHtml(b, e)}<span class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wall ? `<span class="wallm" data-info="${wall}">🛡️</span>` : ''}${e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" data-info="etough">강인</small>' : ''}${e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${fl.map(x => x[0]).join('')}</span>${ehpBar(e)}${e.role !== 'root' && e.role !== 'crown' ? `<span class="bkline" data-info="bar:bk"><small>붕괴<span class="bkl"> 게이지</span></small><span class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></span></span>` : ''}${stsHtml(e, b, 1)}${e.role !== 'root' && e.role !== 'crown' ? `<span class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${acts1[e.id] > 1 ? `<span class="ix">×${acts1[e.id]}</span>` : ''}</span>` : '<span class="mini emv">움직이지 않는다</span>'}${pop ? popHtml(pop) : ''}</button>`;
+    return `<button class="en${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(lab)}">${ed ? eordHtml(b, e) : ''}<span class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wall ? `<span class="wallm" data-info="${wall}">🛡️</span>` : ''}${ed && e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" data-info="etough">강인</small>' : ''}${ed && e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${flv.map(x => x[0]).join('')}</span>${ehpBar(e)}${ed && e.role !== 'root' && e.role !== 'crown' ? `<span class="bkline" data-info="bar:bk"><small>붕괴<span class="bkl"> 게이지</span></small><span class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></span></span>` : ''}${stsHtml(e, b, 1, { mode: sel ? 'all' : hud.sts })}${e.role !== 'root' && e.role !== 'crown' ? `<span class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${(hud.iaux || sel) && acts1[e.id] > 1 ? `<span class="ix">×${acts1[e.id]}</span>` : ''}</span>` : '<span class="mini emv">움직이지 않는다</span>'}${pop ? popHtml(pop) : ''}</button>`;
   };
   const bk = b.en.filter(e => e.alive && e.row === 'back'), fr = b.en.filter(e => e.alive && e.row === 'front');
   /* 전열 · 후열 띠 (10월 3일 만든 사람: 한눈에 안 들어온다): 줄마다 색 띠와 머리글, 머리에 근접 공격이 닿는지.
      후열이 먼저다(휴대폰은 위, PC는 왼쪽, 만든 사람: 후열이 위가 낫다). PC 폭에서는 두 줄을 나란히 놓아 함께 보인다. 규칙 버튼은 전장 밖(순서 줄 옆)에 둔다 */
   const blocked = frontBlocked(b);
   const lane = (k, nm, list, reach, extra) => `<div class="lane ${k}${list.length ? '' : ' empty'}" role="group" aria-label="${nm}" style="--n:${Math.max(1, list.length)}"><div class="lanehd"><b>${nm}</b><span class="lanect">${list.length ? list.length + '명' : '비어 있음'}</span>${list.length ? `<span class="reach ${reach[0]}">${reach[1]}</span>` : ''}${extra || ''}</div>${list.length ? `<div class="enemies">${list.map(ecard).join('')}</div>` : ''}</div>`;
-  const field = `<section class="field" aria-label="전장">${G.scr === 'tut' ? vTutGoal(b) : ''}
+  const field = `<section class="field" data-hud="hud-field" aria-label="전장">${G.scr === 'tut' ? vTutGoal(b) : ''}${vHudDanger(b)}
     <div class="lanes">${lane('back', '후열', bk, blocked ? ['no', '근접 불가<span class="rlhint"> · 전열이 막는 중</span>'] : ['ok', '근접 닿음<span class="rlhint"> · 전열이 비었거나 무너짐</span>'])}${lane('front', '전열', fr, ['ok', '근접 닿음'])}</div></section>`;
-  // 4) 행동판
+  return field;
+}
+function vHudActions(b, hud, tg) {
+  const p = b.p;
   let dock;
   if (b.over) {
     const msg = b.over === 'win' ? '승리했습니다.' : b.over === 'lose' ? '쓰러졌습니다.' : b.over === 'flee' ? '물러났습니다. 이 방은 다시 이겨야 합니다.' : '이 상황은 여기까지입니다.';
@@ -4916,10 +5024,13 @@ function vBattle() {
     const L = actionList(b);
     let btns = '';
     let kn = 0;
-    for (const [lab, ids] of AGROUP) {
-      const list = ids ? L.filter(a => ids.includes(a.id)) : L.filter(a => a.skill);
+    const AG = hud.tools ? AGROUP4 : AGROUP; const toolsN = hud.tools ? consUsefulN(b) + L.filter(a => a.ok && ((a.id === 'flaskL' && p.hp < p.hpMax * 0.5) || (a.id === 'flaskS' && p.st < p.stMax * 0.3))).length : 0;
+    for (const [lab, ids] of AG) {
+      const list = ids ? L.filter(a => ids.includes(a.id)) : L.filter(a => a.skill || (hud.tools && a.id === 'sig'));
       if (!list.length) continue;
-      btns += `<div class="agp" role="group" aria-label="${esc(lab)}" style="--c:${Math.ceil(list.length / 3)}"><span class="agl" aria-hidden="true">${esc(lab)}</span>`; // PC: 묶음마다 3줄을 넘지 않게 칸을 늘린다(10월 3일: 스킬 6개가 세로로 쌓여 전장이 눌렸다)
+      const tl = lab === '도구' && hud.tools; const tlo = tl && G.toolsOpen;
+      if (tl) btns += `<button class="ab g-etc tooltog${tlo ? ' on' : ''}" data-a="tools" aria-expanded="${!!tlo}" aria-controls="agtools" aria-label="도구, 플라스크와 소모품과 도망${toolsN ? ', 쓸 만한 것 ' + toolsN + '개' : ''}"><b><span aria-hidden="true">🧰</span> <span class="anl">도구</span>${toolsN ? `<span class="tcnt" aria-hidden="true">${toolsN}</span>` : ''}</b><small aria-hidden="true">${tlo ? '접기' : '플라스크 · 소모품'}</small></button>`;
+      btns += `<div class="agp${tl ? ' agtools' + (tlo ? ' open' : '') : ''}"${tl ? ' id="agtools"' : ''} role="group" aria-label="${esc(lab)}" style="--c:${Math.ceil(list.length / 3)}"><span class="agl" aria-hidden="true">${esc(lab)}</span>`; // PC: 묶음마다 3줄을 넘지 않게 칸을 늘린다(10월 3일: 스킬 6개가 세로로 쌓여 전장이 눌렸다)
       for (const a of list) {
         let why = '';
         if (!a.ok) why = a.why || (a.id === 'heavy' || a.id === 'guard' || a.id === 'dodge' ? '스태미나 부족' : a.skill ? '마나 부족' : '플라스크 없음');
@@ -4932,14 +5043,36 @@ function vBattle() {
       }
       btns += '</div>';
     }
-    dock = `<section class="dock" aria-label="행동">${G.scr === 'tut' ? '' : vCoach()}<div class="dockhead">${G.busy ? `<span class="busy">적이 움직이는 중</span>${G.stepResolve ? '<button class="sm gold" data-a="stepnext" data-focus>다음 <kbd>Space</kbd></button>' : ''}<button class="sm" data-a="skip">끝까지 넘기기</button>` : `<span>대상 <b>${tg ? esc(tg.n) : '행동마다 자동'}</b> <span class="mini">적 카드를 누르면 고정됩니다</span></span>${slotHtml(b)}`}<label class="pacesel">진행 <select id="pace" aria-label="적 차례 진행 속도">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></label></div>
+    dock = `<section class="dock" data-hud="hud-actions" aria-label="행동">${G.scr === 'tut' ? '' : vCoach()}<div class="dockhead">${G.busy ? `<span class="busy">적이 움직이는 중</span>${G.stepResolve ? '<button class="sm gold" data-a="stepnext" data-focus>다음 <kbd>Space</kbd></button>' : ''}<button class="sm" data-a="skip">끝까지 넘기기</button>` : `${tg || hud.abaux ? `<span>대상 <b>${tg ? esc(tg.n) : '행동마다 자동'}</b> <span class="mini">적 카드를 누르면 고정됩니다</span></span>` : ''}${slotHtml(b)}`}<label class="pacesel">진행 <select id="pace" aria-label="적 차례 진행 속도">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></label></div>
       
-      ${consQuick(b)}<div class="abgrid">${btns}</div></section>`;
+      ${consQuick(b, hud)}<div class="abgrid">${btns}</div></section>`;
   }
+  return dock;
+}
+function vBattle() {
+  const b = G.b; const p = b.p; const pops = hpPops(b); const fdo = !!G.data.fdet; const hud = hudEff(fdo); HUDNOW = hud;
+  const tg = G.sel ? b.en.find(e => e.id === G.sel && e.alive) : null;
+  const status = vHudPlayer(b, hud, pops, fdo);
+  // 2) 시간 축 + 기믹
+  let gim = '';
+  const boss = b.en.find(e => e.role === 'boss' && e.alive);
+  if (boss) {
+    let g = b.enrage ? '광폭화 중' : `광폭화까지 ${myTurnsUntil(b, (ENRAGE.byBoss || {})[boss.boss] || ENRAGE.boss)}라운드`;
+    if (boss.boss === 'mother') g += ` · 내 중독 ${st(p, 'poison')}/10 (10이면 부화) · ${boss.phase >= 2 ? '거울 활성' : '2페이즈부터 거울'}`;
+    if (boss.boss === 'tree') { const roots = alive(b).filter(e => e.role === 'root').length; g += ` · 뿌리 때문에 라운드마다 약 +${rootRegen(b)} 회복 · 계절 ${SEASONS[b.season]} → ${SEASONS[(b.season + 1) % 4]} (${myTurnsUntil(b, (Math.floor(b.tick / 4) + 1) * 4)}라운드 뒤) · 뿌리 ${roots}/3`; }
+    gim = `<div class="gimmick" data-info="gim" tabindex="0">${esc(g)}</div>`;
+    if (boss.demand && boss.demand.turn === b.turnIdx) gim += `<div class="gimmick dmd" data-info="edemand" tabindex="0">${boss.demand.k === 'rest' ? '🤲 수도원장이 고해를 기다린다' : '⚖️ 수도원장이 심문한다'}</div>`; // 10월 4일: 휴대폰에서 카드의 표시가 잘려 따로 한 줄
+  }
+  if (b.heat != null) gim += heatHtml(b); // 3챕터 열기 칸
+  const last = b.log[b.log.length - 1];
+  const lastl = G.banner ? `<div class="turnban ${G.banner.phase}"><span class="ic">${G.banner.ico}</span><b>${esc(G.banner.who)}</b><span>${esc(G.banner.phase === 'post' && last ? last.m : G.banner.what)}</span></div>` : G.myTurnFlash ? '<div class="turnban me"><b>내 차례</b><span>무엇을 할지 고르세요</span></div>' : '';
+  const field = vHudField(b, hud, pops);
+  const dock = vHudActions(b, hud, tg);
   const groups = []; for (const x of b.log) { const g = x.g || 0; if (!groups.length || groups[groups.length - 1].g !== g) groups.push({ g, items: [] }); groups[groups.length - 1].items.push(x); }
-  const glog = groups.slice(-14).reverse().map((G2, gi) => `<div class="lgrp${gi === 0 ? ' now' : ''}"><div class="lgh">${G2.g ? G2.g + '번째 차례' : '전투 시작'}</div>${G2.items.map(x => `<p class="${x.c}">${numB(x.m)}${whyHtml(b, x)}</p>`).join('')}</div>`).join('');
+  const glog = groups.slice(-14).reverse().map((G2, gi) => `<div class="lgrp${gi === 0 ? ' now' : ''}"><div class="lgh">${G2.g ? G2.g + '번째 차례' : '전투 시작'}</div>${G2.items.map(x => `<p class="${x.c}">${numB(x.m)}${whyHtml(b, x, true)}</p>`).join('')}</div>`).join('');
   const side = `<section class="side${G.logOpen ? ' open' : ''}"${G.logOpen ? ' role="dialog" aria-modal="true" aria-labelledby="logttl"' : ' aria-label="전투 기록"'}><div class="sidehead"><h3 id="logttl">전투 기록</h3><button class="sm onlym" data-a="logclose"${G.logOpen ? ' data-focus="1"' : ''}>닫기</button></div><div class="blog" role="log">${glog}</div><div class="mini">맨 위가 가장 최근 차례입니다. 한 차례 안에서는 위에서 아래로 읽습니다.</div></section>`;
-  return `<div class="bgrid"><div class="btop">${status}<div class="bmid">${vOrder(b)}<button class="sm onlym logbtn rlbtn" data-a="logopen" aria-label="전체 기록">📜<span class="lbt"> 기록</span></button>${gim}${lastl ? `<div class="logrow">${lastl}</div>` : ''}${vRecent(b)}</div></div>${field}${dock}${side}</div>`;
+  const hcls = ['bgrid', 'hp-' + hud.p, hud.p === 'simple' ? 'hcalm' : '', hud.flk ? '' : 'hl-noflk', hud.edet ? '' : 'hl-noedet', hud.abaux ? '' : 'hl-noaux', hud.agl ? '' : 'hl-noagl', hud.logpanel ? '' : 'hl-nopanel', hud.tools ? 'hl-tools' : ''].filter(Boolean).join(' ');
+  return `<div class="${hcls}"><div class="btop">${status}<div class="bmid">${vOrder(b, hud)}<button class="sm onlym logbtn rlbtn" data-a="logopen" aria-label="전체 기록">📜<span class="lbt"> 기록</span></button>${gim}${lastl ? `<div class="logrow">${lastl}</div>` : ''}${vRecent(b, hud)}</div></div>${field}${dock}${side}</div>`;
 }
 
 /* ===== 전투 화면: 최근 기록 · 까닭 줄 · 소모품 바로 쓰기 (10월 9일 UI) ===== */
@@ -4950,14 +5083,15 @@ function whyText(b, x) {
   const w = x.s ? (b.why || []).find(y => y.s === x.s) : null; if (!w) return '';
   return (Math.abs(w.f - w.d) >= 0.05 ? (w.side === 'in' ? '원래 ' : '계산 ') + w.f + ' → ' + w.d + ' · ' : '') + w.m.join(', ');
 }
-function whyHtml(b, x) { const t = whyText(b, x); return t ? `<span class="rwhy"><span aria-hidden="true">↳ </span><span class="sr">까닭: </span>${numB(t)}</span>` : ''; }
+function whyHtml(b, x, force) { const t = whyText(b, x); if (t && !force && HUDNOW && !HUDNOW.why) return `<span class="sr">까닭: ${numB(t)}</span>`; return t ? `<span class="rwhy"><span aria-hidden="true">↳ </span><span class="sr">까닭: </span>${numB(t)}</span>` : ''; }
 const PHONE_W = 480; /* 이 폭 이하는 최근 기록을 가장 새 한 줄로 줄이고 소모품 줄을 한 줄로 만든다(10월 9일 UI-phone) */
 const isPhoneW = () => typeof window !== 'undefined' && window.innerWidth <= PHONE_W;
-function vRecent(b) {
-  if (isPhoneW()) {
+function vRecent(b, hud) {
+  if (hud && !hud.rlog) return '';
+  if (isPhoneW() || (hud && !hud.logpanel)) {
     const x = b.log.filter(y => y.m).slice(-1)[0]; const m = x ? /([0-9]+(?:\.[0-9]+)?) 피해/.exec(x.m) : null;
     const plain = x ? fixJosa(String(x.m)) + (whyText(b, x) ? '. ' + fixJosa(whyText(b, x)) : '') : '전투가 시작되었습니다';
-    return `<button class="rlog rls${x ? ' ' + x.c : ''}${x && x.w === 'p' ? ' me' : ''}" data-a="logopen" aria-label="전체 기록 열기. 최근: ${esc(plain)}"><span class="rli" aria-hidden="true">${x ? rlIco(b, x) : '·'}</span><span class="rlt" aria-hidden="true">${x ? numB(x.m) : '전투가 시작되었습니다'}</span>${m ? `<b class="rln" aria-hidden="true">−${m[1]}</b>` : ''}</button>`;
+    return `<button data-hud="hud-log" class="rlog rls${x ? ' ' + x.c : ''}${x && x.w === 'p' ? ' me' : ''}" data-a="logopen" aria-label="전체 기록 열기. 최근: ${esc(plain)}"><span class="rli" aria-hidden="true">${x ? rlIco(b, x) : '·'}</span><span class="rlt" aria-hidden="true">${x ? numB(x.m) : '전투가 시작되었습니다'}</span>${m ? `<b class="rln" aria-hidden="true">−${m[1]}</b>` : ''}</button>`;
   }
   const n = 3;
   const tail = b.log.filter(x => x.m).slice(-n); let h = '', pr = null;
@@ -4967,7 +5101,7 @@ function vRecent(b) {
     h += `<li class="rl ${x.c}${x.w === 'p' ? ' me' : ''}"><span class="rli" aria-hidden="true">${rlIco(b, x)}</span><span class="rlt">${numB(x.m)}${whyHtml(b, x)}</span>${m ? `<b class="rln" aria-hidden="true">−${m[1]}</b>` : '<span></span>'}</li>`;
   }
   if (!h) h = '<li class="rl sys"><span></span><span class="rlt">전투가 시작되었습니다</span><span></span></li>';
-  return `<section class="rlog" aria-label="최근 기록"><div class="rlh"><b>최근 기록</b></div><ul class="rlist">${h}</ul></section>`;
+  return `<section class="rlog" data-hud="hud-log" aria-label="최근 기록"><div class="rlh"><b>최근 기록</b></div><ul class="rlist">${h}</ul></section>`;
 }
 /* 소모품: 지금 상황에 맞는 것 셋을 행동판 안에 둔다. 규칙은 그대로(차례 칸을 쓰지 않고 한 차례에 consTurnOf개까지) */
 function consScore(b, c, D) {
@@ -5004,7 +5138,7 @@ function consReason(b, D) {
     default: return D.sit;
   }
 }
-function consQuick(b) {
+function consQuick(b, hud) {
   const run = G.run; if (!run || !Array.isArray(run.cons) || !run.cons.length || b.over || !b.p) return '';
   const p = b.p, lim = consTurnOf(p), used = b.consN || 0, ready = !G.busy && myTurn(b);
   const bq = Object.assign({}, b, { consN: 0, queue: ['p'] }); /* 차례 · 개수 조건을 뺀 사본으로 쓸 만한 것을 고른다 */
@@ -5017,7 +5151,8 @@ function consQuick(b) {
     const rs = why || consReason(b, x.D);
     return `<button class="qc${why ? ' dis' : ''}" data-a="consuse" data-k="${x.i}" data-q="${k + 1}" aria-disabled="${!!why}" title="${esc((keys ? 'QWE'[k] + ': ' : '') + nm + ' · ' + rs)}"><b>${keys ? '<kbd>' + 'QWE'[k] + '</kbd>' : ''}<span class="qi" aria-hidden="true">${x.D.ico}</span> <span class="qnm">${esc(nm)}</span> <span class="qn">×${x.c.n}</span></b><small>${esc(rs)}</small></button>`;
   }).join('');
-  return `<div class="qcons" role="group" aria-label="소모품 바로 쓰기">${btns || '<p class="mini qcn">지금 쓸 만한 소모품이 없습니다</p>'}<button class="qbag" data-a="consopen" aria-label="소모품 가방, 전부 ${tot}개. 이번 차례 ${used}/${lim}개 씀"><span aria-hidden="true">🎒 가방 ${tot}</span><small aria-hidden="true">이번 차례 ${used}/${lim}</small></button></div>`;
+  const qz = hud && hud.tools && !G.toolsOpen ? ' tlz' : hud && !hud.qcons && !(hud.tools && G.toolsOpen) ? ' qoff' : '';
+  return `<div class="qcons${qz}" data-hud="hud-quick" role="group" aria-label="소모품 바로 쓰기">${btns || '<p class="mini qcn">지금 쓸 만한 소모품이 없습니다</p>'}<button class="qbag" data-a="consopen" aria-label="소모품 가방, 전부 ${tot}개. 이번 차례 ${used}/${lim}개 씀"><span aria-hidden="true">🎒 가방 ${tot}</span><small aria-hidden="true">이번 차례 ${used}/${lim}</small></button></div>`;
 }
 
 /* 설명 줄: 가리키거나 포커스하면 갱신 (재렌더 없이) */
@@ -5203,7 +5338,7 @@ function previewText(b, time) {
 function leftTurns(b, x) { const n = myTurnsUntil(b, x.until); return n; }
 
 /* 상태 표시: 숫자 = 끝날 때까지 남은 내 차례 수, 가는 막대 = 남은 비율 */
-function stsHtml(u, b, inCard) {
+function stsHtml(u, b, inCard, opt) {
   const out = [];
   const who = u === b.p ? 'p' : u.id;
   for (const k in u.s) {
@@ -5239,6 +5374,16 @@ function stsHtml(u, b, inCard) {
   /* 10월 7일: 이로움 ▲ · 해로움 ▼를 칩 앞에 붙인다(색만으로 가르지 않는다). 적 카드 안(inCard)에서는 칩이 따로 초점을 받지 않는다 */
   const mk = c => c === 'b' ? '<span class="sgn" aria-hidden="true">▲</span><span class="sr">이로움 </span>' : '<span class="sgn" aria-hidden="true">▼</span><span class="sr">해로움 </span>';
   const L = out.map(h => h.replace(/^<i class="(b|d)"([^>]*)>/, (m, c, rest) => '<i class="' + c + '"' + (inCard ? rest.replace(' tabindex="0"', '') : rest) + '>' + mk(c)));
+  if (opt && opt.mode && opt.mode !== 'all') { /* 10월 9일 UI-simple: 간단 · 보통은 셋까지, 나머지는 +N */
+    const isBad = h => h.indexOf('<i class="d"') === 0;
+    const Ls = u === b.p ? L.filter(isBad).concat(L.filter(h => !isBad(h))) : L;
+    const base = (opt.mode === 'bad' && u === b.p ? Ls.filter(isBad) : Ls).slice(0, inCard && opt.mode === 'bad' ? 2 : 3);
+    const more = !!(!inCard && G.stsMore) && Ls.length > base.length; const vis = more ? Ls : base; const hid = Ls.filter(h => !vis.includes(h));
+    if (!Ls.length) return '';
+    if (inCard) return `<span class="sts">${vis.join('')}${hid.length ? `<span class="stsn" aria-hidden="true">+${hid.length}</span>` : ''}</span>`;
+    const txt = Ls.filter(h => !base.includes(h)).map(h => h.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()).join(', ');
+    return `<div class="sts">${vis.join('')}${more ? '<button class="sm stsmore" data-a="stsmore" aria-expanded="true">접기</button>' : hid.length ? `<button class="sm stsmore" data-a="stsmore" aria-expanded="false" aria-label="나머지 상태 ${hid.length}개 보기: ${esc(txt)}">+${hid.length} 더 보기</button>` : ''}</div>`;
+  }
   if (!inCard && u === b.p && L.length > 5) { const L2 = L.filter(h => h.indexOf('<i class="d"') === 0).concat(L.filter(h => h.indexOf('<i class="d"') !== 0)); return G.stsMore ? `<div class="sts">${L2.join('')}<button class="sm stsmore" data-a="stsmore" aria-expanded="true">접기</button></div>` : `<div class="sts">${L2.slice(0, 4).join('')}<button class="sm stsmore" data-a="stsmore" aria-expanded="false">+${L.length - 4} 더 보기</button></div>`; } /* 10월 9일 UI: 상태 칩이 많으면 해로운 것부터 넷만 */
   return L.length ? (inCard ? `<span class="sts">${L.join('')}</span>` : `<div class="sts">${L.join('')}</div>`) : '';
 }
@@ -5277,7 +5422,7 @@ function slotHtml(b) {
 function spdIco(t) { return t <= 0.6 ? '<span class="spd sf" role="img" aria-label="빠른 행동">⚡</span>' : t >= 1.25 ? '<span class="spd ss" role="img" aria-label="느린 행동, 두 칸">⏳</span>' : '<span class="spd sn" role="img" aria-label="주 행동">▶</span>'; } // 버튼 둘째 줄의 빠르기 글자를 뺀 대신 읽어 주는 이름을 단다
 
 /* 순서표 (숫자 없이) */
-function vOrder(b) {
+function vOrder(b, hud) {
   const tl = preview(b); const rN = b.round || 1;
   const all = b.roundAll || [], q0 = b.queue || []; const dn = all.length >= q0.length && all.slice(all.length - q0.length).join() === q0.join() ? all.slice(0, all.length - q0.length) : [];
   const dnLis = dn.map(id => { const e = id === 'p' ? null : b.en.find(y => y.id === id); return id === 'p' || e ? `<li class="dn${id === 'p' ? ' me' : ''}" aria-label="${esc(id === 'p' ? '나' : e.n)}: 이번 라운드에 움직임 끝">✓ ${e ? e.ico + ' ' + esc(e.n) : '나'}</li>` : ''; }).join('');
@@ -5287,7 +5432,11 @@ function vOrder(b) {
     const e = x.me ? null : b.en.find(y => y.id === x.id);
     lis += `<li class="${[x.me ? 'me' : '', x.now ? 'now' : '', x.r > rN ? 'nx' : ''].filter(Boolean).join(' ')}" data-info="tl:${i}" tabindex="${i === 0 ? 0 : -1}">${e ? e.ico + ' ' : ''}${esc(x.me ? '나' : x.n)}</li>`;
   });
-  return `<div class="order"><div class="axhead"><span><b>${rN}라운드</b></span><span class="axdef">모두 한 번씩, 왼쪽부터 움직입니다</span></div><ol class="ord" aria-label="행동 순서, 좌우 화살표로 옮겨 봅니다">${lis}</ol></div>`;
+  if (hud && !hud.ord) {
+    const cur = tl.filter(x => x.r === rN); const nx = cur.find((x, i) => i > 0 && !x.me);
+    return `<div class="order osum" data-hud="hud-order"><div class="axhead"><span><b>${rN}라운드</b></span><span class="ordnx">${cur[0] && cur[0].me ? '내 차례' : '적 차례'}${nx ? ' · 다음 ' + esc(nx.n) : ''}</span></div><ol class="ord sr" aria-label="행동 순서">${hudQuiet(lis)}</ol></div>`;
+  }
+  return `<div class="order" data-hud="hud-order"><div class="axhead"><span><b>${rN}라운드</b></span><span class="axdef">모두 한 번씩, 왼쪽부터 움직입니다</span></div><ol class="ord" aria-label="행동 순서, 좌우 화살표로 옮겨 봅니다">${lis}</ol></div>`;
 }
 
 /* ---------- 설명 창 내용 ---------- */
@@ -5489,7 +5638,7 @@ function pvOwn(sel, now, delta, max) {
   const sp = bar.querySelector('span'); if (sp && !sp.dataset.o) { sp.dataset.o = sp.innerHTML; sp.innerHTML = `<b class="pvx ${delta < 0 ? 'neg' : 'pos'}">${delta < 0 ? '−' : '+'}${r1(w)}</b> ${shownHp(now)} → ${shownHp(after)}`; }
 }
 function pvShow(btn) {
-  pvHide(); const b = G.b; if (!b || !btn || !btn.isConnected || btn.getAttribute('aria-disabled') === 'true') return;
+  pvHide(); if (HUDNOW && !HUDNOW.prev) return; const b = G.b; if (!b || !btn || !btn.isConnected || btn.getAttribute('aria-disabled') === 'true') return;
   const sim = actSim(b, btn.dataset.id); if (!sim) return;
   const say = [];
   for (const id in sim.en) {
@@ -7209,7 +7358,7 @@ function vSettings() {
 <div class="setrow"><span class="lab">설명 창</span><span class="mini">마우스를 올리거나 길게 누르면 뜹니다</span>${sw('infotoggle', G.infoOn, '설명 창')}</div>
 <div class="setrow"><label for="setfs">글자 크기</label><span class="mini">화면 글자의 크기</span><select id="setfs">${FS_OPTS.map(v => `<option value="${v}"${(FS_OPTS.includes(+G.data.fs) ? +G.data.fs : 1) === v ? ' selected' : ''}>${Math.round(v * 100)}%</option>`).join('')}</select></div>
 <div class="setrow"><span class="lab">움직임 줄이기</span><span class="mini">적 카드 확대, 버튼 빛남, 부드러운 스크롤, 알림이 미끄러져 나오는 것을 끕니다</span>${sw('rmotion', !!G.data.rm, '움직임 줄이기')}</div>
-<div class="setrow"><label for="setpace">적 차례</label><span class="mini">적이 움직이는 빠르기</span><select id="setpace">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></div></section>`;
+<div class="setrow"><label for="setpace">적 차례</label><span class="mini">적이 움직이는 빠르기</span><select id="setpace">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></div></section>` + hudSettings();
 }
 function render() {
   if (typeof document === 'undefined') return;
@@ -7474,6 +7623,9 @@ function onClick(ev) {
     case 'stepnext': if (G.stepResolve) { const r = G.stepResolve; G.stepResolve = null; r(); } break;
     case 'rmotion': G.data.rm = !G.data.rm; saveLocal(); applyPrefs(); toast(G.data.rm ? '움직임을 줄였습니다' : '움직임을 되돌렸습니다'); render(); break;
     case 'fdet': G.data.fdet = !G.data.fdet; saveLocal(); render(); break;
+    case 'tools': G.toolsOpen = !G.toolsOpen; render(); { const x = document.querySelector('[data-a="tools"]'); if (x) x.focus(); } break;
+    case 'hudpre': hudPreset(el.dataset.k); render(); { const x = document.querySelector('[data-a="hudpre"][data-k="' + el.dataset.k + '"]'); if (x) x.focus(); } break;
+    case 'hudtog': { const k = el.dataset.k; hudSet(k, !hudCfg()[k]); render(); const x = document.querySelector('[data-a="hudtog"][data-k="' + k + '"]'); if (x) x.focus(); break; }
     case 'stsmore': G.stsMore = !G.stsMore; render(); { const x = document.querySelector('[data-a="stsmore"]'); if (x) x.focus(); } break;
     case 'numkeys': G.data.numKeys = G.data.numKeys === false; saveLocal(); toast(G.data.numKeys ? '숫자 키로 행동합니다' : '숫자 키 행동을 껐습니다'); render(); break;
     case 'infotoggle': G.infoOn = !G.infoOn; G.data.infoOn = G.infoOn; saveLocal(); hidePop(); toast(G.infoOn ? '설명 창을 켰습니다' : '설명 창을 껐습니다'); if (G.sheet && G.sheet.kind === 'settings') render(); break;
@@ -7602,7 +7754,7 @@ if (typeof document !== 'undefined') {
   document.addEventListener('input', ev => { if (ev.target && ev.target.dataset && ev.target.dataset.cdx) { codexMeet(ev.target.dataset.cdx); G.data.codex[ev.target.dataset.cdx].note = ev.target.value.slice(0, 400); saveLocal(); return; } if (ev.target && ev.target.id === 'eqnote') { G.eqWhy = Object.assign({}, G.eqWhy, { note: ev.target.value }); return; } const id = ev.target && ev.target.id; if (id !== 'volm' && id !== 'vols') return; const v = +ev.target.value / 100; sndSet(id === 'volm' ? { music: v } : { sfx: v }); const o = document.getElementById(id + 'v'); if (o) o.textContent = Math.round(v * 100) + '%'; });
   document.addEventListener('click', onClick);
   document.addEventListener('keydown', onKey);
-  document.addEventListener('change', ev => { if (ev.target && ev.target.name === 'eqrs') { G.eqWhy = Object.assign({}, G.eqWhy, { reason: ev.target.value }); return; } if (ev.target && ev.target.id === 'setfs') { G.data.fs = FS_OPTS.includes(+ev.target.value) ? +ev.target.value : 1; saveLocal(); applyPrefs(); render(); return; } if (ev.target && (ev.target.id === 'pace' || ev.target.id === 'setpace')) { G.pace = ev.target.value; G.data.pace = G.pace; saveLocal(); if (G.stepResolve && G.pace !== 'step') { const r = G.stepResolve; G.stepResolve = null; r(); } } });
+  document.addEventListener('change', ev => { if (ev.target && ev.target.name === 'eqrs') { G.eqWhy = Object.assign({}, G.eqWhy, { reason: ev.target.value }); return; } if (ev.target && ev.target.id === 'hudsts') { hudSet('sts', ev.target.value); render(); const x = document.getElementById('hudsts'); if (x) x.focus(); return; } if (ev.target && ev.target.id === 'setfs') { G.data.fs = FS_OPTS.includes(+ev.target.value) ? +ev.target.value : 1; saveLocal(); applyPrefs(); render(); return; } if (ev.target && (ev.target.id === 'pace' || ev.target.id === 'setpace')) { G.pace = ev.target.value; G.data.pace = G.pace; saveLocal(); if (G.stepResolve && G.pace !== 'step') { const r = G.stepResolve; G.stepResolve = null; r(); } } });
   G.infoOn = G.data.infoOn !== false; G.pace = G.data.pace || 'normal'; initPop(); initPv(); document.addEventListener('pointerover', treeHover);
   window.addEventListener('hashchange', () => { if (location.hash === '#admin' && G.scr !== 'admin') { G.adminLink = true; if (!PAGES.includes(G.scr)) G.back = G.scr; G.scr = 'admin'; render(); } });
   if (window.visualViewport) window.visualViewport.addEventListener('resize', () => document.documentElement.style.setProperty('--app-h', window.visualViewport.height + 'px'));
