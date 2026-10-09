@@ -690,6 +690,25 @@ html.rm *,html.rm *::before{transition:none!important;scroll-behavior:auto!impor
 .qc.dis{opacity:.6}.qc kbd{display:inline-block;font:600 calc(10.5px*var(--fs,1))/1 ui-monospace,monospace;border:1px solid var(--line);border-radius:3px;padding:2px 4px;margin-right:4px;color:var(--muted)}
 @media (pointer:coarse){.qc kbd{display:none}}
 @media (max-width:719px){.bmid>.rlbtn{grid-column:2;grid-row:1}.bmid>.rlog{grid-column:1/-1;margin-top:0}.rlh{display:none}.rlist{margin-top:0}.qcons{padding:4px 5px;gap:4px}.qc{padding:3px 5px}.qbag{min-width:68px;padding:3px 5px}.rlog{padding:5px 6px}}
+/* ===== 10월 9일 UI-phone: 휴대폰(480px 이하)에서 전장 높이를 되찾는다. 넓은 화면은 그대로 ===== */
+@media (max-width:719px){
+ .rls{display:flex;align-items:center;gap:6px;width:100%;min-height:0;padding:2px 8px;text-align:left;border:1px solid var(--line);border-left:3px solid var(--line2);border-radius:6px;background:var(--panel2);font-size:calc(13px*var(--fs,1));line-height:1.3;font-weight:400}
+ .rls.bad{border-left-color:var(--bad)}.rls.good{border-left-color:var(--good)}.rls.crit{border-left-color:var(--gold)}
+ .rls .rli{flex:none;min-width:20px;text-align:center}.rls .rme{display:inline-block;min-width:20px;border-radius:4px;background:var(--gold);color:var(--gold-ink);font-size:calc(11px*var(--fs,1));font-weight:800;line-height:1.3;padding:0 2px}
+ .rls .rlt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rls .rln{flex:none;font-weight:800;color:var(--bad);white-space:nowrap}.rls.me .rln,.rls.good .rln{color:var(--gold)}
+ .rls b{font-weight:800}
+}
+@media (max-width:480px){
+ .qcons{display:flex;padding:2px 3px;gap:4px;margin:0 0 4px}.qcn{flex:1}
+ .qc{flex:1 1 0;flex-direction:column;align-items:flex-start;justify-content:center;gap:0;min-height:34px;padding:1px 6px}
+ .qc b{display:flex;flex-wrap:wrap;align-items:center;column-gap:4px;min-width:0;width:100%;max-width:100%;white-space:nowrap;-webkit-line-clamp:unset;font-size:calc(12.5px*var(--fs,1));line-height:1.2}
+ .qc .qnm{order:1;flex:1 0 100%;min-width:0;overflow:hidden;text-overflow:ellipsis}.qc .qi{order:2;line-height:1;font-size:calc(12px*var(--fs,1))}.qc .qn{order:3;line-height:1.2}
+ .qc kbd{display:none}
+ .bgrid{padding-bottom:2px}.bmid{row-gap:3px}
+ .qc small{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+ .qc{position:relative}
+ .qbag{flex:none;min-height:34px;min-width:0;padding:1px 6px;font-size:calc(12px*var(--fs,1));line-height:1.2;gap:0}.qbag small{line-height:1.2}
+}
 </style>
 </head>
 <body>
@@ -4929,7 +4948,14 @@ function whyText(b, x) {
   return (Math.abs(w.f - w.d) >= 0.05 ? (w.side === 'in' ? '원래 ' : '계산 ') + w.f + ' → ' + w.d + ' · ' : '') + w.m.join(', ');
 }
 function whyHtml(b, x) { const t = whyText(b, x); return t ? `<span class="rwhy"><span aria-hidden="true">↳ </span><span class="sr">까닭: </span>${numB(t)}</span>` : ''; }
+const PHONE_W = 480; /* 이 폭 이하는 최근 기록을 가장 새 한 줄로 줄이고 소모품 줄을 한 줄로 만든다(10월 9일 UI-phone) */
+const isPhoneW = () => typeof window !== 'undefined' && window.innerWidth <= PHONE_W;
 function vRecent(b) {
+  if (isPhoneW()) {
+    const x = b.log.filter(y => y.m).slice(-1)[0]; const m = x ? /([0-9]+(?:\.[0-9]+)?) 피해/.exec(x.m) : null;
+    const plain = x ? fixJosa(String(x.m)) + (whyText(b, x) ? '. ' + fixJosa(whyText(b, x)) : '') : '전투가 시작되었습니다';
+    return `<button class="rlog rls${x ? ' ' + x.c : ''}${x && x.w === 'p' ? ' me' : ''}" data-a="logopen" aria-label="전체 기록 열기. 최근: ${esc(plain)}"><span class="rli" aria-hidden="true">${x ? rlIco(b, x) : '·'}</span><span class="rlt" aria-hidden="true">${x ? numB(x.m) : '전투가 시작되었습니다'}</span>${m ? `<b class="rln" aria-hidden="true">−${m[1]}</b>` : ''}</button>`;
+  }
   const n = 3;
   const tail = b.log.filter(x => x.m).slice(-n); let h = '', pr = null;
   for (const x of tail) {
@@ -4985,7 +5011,8 @@ function consQuick(b) {
   const keys = G.data.numKeys !== false;
   const btns = cand.slice(0, 3).map((x, k) => {
     const why = ready ? consWhyNot(b, run, x.c, G.sel) : '적이 움직이는 중'; const nm = x.D.n + (x.c.g === 'm' ? ' (고급)' : '');
-    return `<button class="qc${why ? ' dis' : ''}" data-a="consuse" data-k="${x.i}" data-q="${k + 1}" aria-disabled="${!!why}"><b>${keys ? '<kbd>' + 'QWE'[k] + '</kbd>' : ''}<span aria-hidden="true">${x.D.ico}</span> ${esc(nm)} <span class="qn">×${x.c.n}</span></b><small>${esc(why || consReason(b, x.D))}</small></button>`;
+    const rs = why || consReason(b, x.D);
+    return `<button class="qc${why ? ' dis' : ''}" data-a="consuse" data-k="${x.i}" data-q="${k + 1}" aria-disabled="${!!why}" title="${esc((keys ? 'QWE'[k] + ': ' : '') + nm + ' · ' + rs)}"><b>${keys ? '<kbd>' + 'QWE'[k] + '</kbd>' : ''}<span class="qi" aria-hidden="true">${x.D.ico}</span> <span class="qnm">${esc(nm)}</span> <span class="qn">×${x.c.n}</span></b><small>${esc(rs)}</small></button>`;
   }).join('');
   return `<div class="qcons" role="group" aria-label="소모품 바로 쓰기">${btns || '<p class="mini qcn">지금 쓸 만한 소모품이 없습니다</p>'}<button class="qbag" data-a="consopen" aria-label="소모품 가방, 전부 ${tot}개. 이번 차례 ${used}/${lim}개 씀"><span aria-hidden="true">🎒 가방 ${tot}</span><small aria-hidden="true">이번 차례 ${used}/${lim}</small></button></div>`;
 }
