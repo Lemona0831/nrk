@@ -59,7 +59,7 @@
 
 ## index.html 구조 (스크립트 안의 표시)
 
-- **분리 예정 (10월 9일):** 06a2/index.html은 두 작업이 합쳐진 뒤 `js/NN-이름.js` 30개와 `css/NN-이름.css` 7개로 나눈다(글자는 그대로, 순서도 그대로). 계획·자를 곳·증명 절차는 docs/기록/index-분리-계획.md. 나누기 전후 모두 도구는 `tools/pagesrc.js`(`pageScript` · `pageData` · `pageCss`)로 스크립트를 읽으므로 그 일 때문에 따로 할 것은 없다. 자를 곳 표식은 tools/splitplan.js, 지도는 `node tools/splitmap.js 06a2`
+- **분리 완료 (10월 10일):** 06a2/index.html은 머리말 · 본문 · 태그만 남았다. 스크립트는 `06a2/js/NN-이름.js` 30개(`config.js` · `data/*.js` 뒤에 번호 순서로 읽히고 둘째 파일부터 `'use strict';`), 스타일은 `06a2/css/NN-이름.css` 7개다. 나눌 때 글자는 바꾸지 않았고 `tools/splitcheck.js`가 이은 글자가 원본과 한 자도 다르지 않음을 증명했다. 아래 "index.html 구조"의 엔진 · 화면 · 텍스트층은 이제 파일 안에서 찾는다: 이름이 어느 파일에 있는지는 `node tools/splitmap.js 06a2 --names=이름`, 지도는 `node tools/splitmap.js 06a2`. 새 작업은 파일 단위로 고친다. 불러올 때 바로 실행되는 코드는 80 · 90번대에만 두고, 함수 밖에서 뒤 파일의 이름을 읽지 않는다(`splitmap`이 위험을 본다). 계획 · 절차 · 결과는 docs/기록/index-분리-계획.md. 도구는 `tools/pagesrc.js`로 스크립트를 읽는다
 
 - 엔진: 파일 앞부분부터 `/* ===== 가이드` 직전까지. BUILDS(직업), EXCL(직업 전용 스킬), SIG(직업 기술), ITEMS, FREE_POOL, itemFits, ROOMS, BOSSES, 전투 계산(hurtPlayer, hurtEnemy, outDmg, playerAct, genSkill)
 - 표시 규칙: `/* ===== 표시 규칙` ~ `/* 상태 표시`. 예고 문장, 행동 미리보기
