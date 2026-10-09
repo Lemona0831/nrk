@@ -382,7 +382,19 @@ const TIER_N = { 기본: 0, 하급: 0, 중급: 1, 상급: 2, 궁극: 3 };
 const ROWN = s => s.row || TIER_N[s.tier] + 1; // 0.6a.2 사다리: 줄이 깊을수록 높다
 /* 숨겨진 직업 3의 주 경로 (C5): 줄마다 연다. BM_VAR=1이면 역병 · 혈약은 다섯째 칸으로 포식 1줄 왼쪽(피 거두기)을 연다(변형 판) */
 const BM_PATH = { 역병: ['v_spill', 'v_host', 'v_gust', 'v_marsh', 'v_veil', 'v_carry', 'v_vector', 'v_pollen', 'v_black', 'v_pandemic'], 포식: ['v_reap', 'v_plant', 'v_replant', 'v_nibble', 'v_swarm', 'v_supper', 'v_deepreap', 'v_gather', 'v_teat', 'v_hunger'], 혈약: ['v_spear', 'v_cut', 'v_thorn', 'v_heart', 'v_oath', 'v_rupture', 'v_impale', 'v_covenant', 'v_burstheart', 'v_last'] };
+/* 숨겨진 직업 3 보스 장착 (비공개 문서 D3 "대안 장착은 측정에서 주 장착이 보스 50%에 못 미칠 때 먼저 본다" · F4-10 "보스는 붕괴 칸 하나, 약화 비례 · 퍼뜨리기는 약화를 거는 칸과 짝").
+   실제 세기(수도원장 ×10 · 지하묘지 군주 ×10, 장비 없음)에서 주 경로(역병 오른쪽 퍼뜨리기 · 혈약 왼쪽 붕괴)는 보스를 거의 못 이긴다: 1챕터 혈약 0% · 역병 47%, 2챕터 역병 0%.
+   문서의 대안 기둥(역병 독 안개 · 핏빛 안개 쪽, 혈약 약화 쪽)과 짝 규칙으로 고른 경로 · 장착이다. BM_LOAD_OLD=1이면 예전 경로 · 장착 */
+const BM_PATH2 = { 역병: ['v_fog', 'v_mist', 'v_host', 'v_gust', 'v_marsh', 'v_veil', 'v_choke', 'v_cloud', 'v_pollen', 'v_black', 'v_rotland'], 혈약: ['v_curse', 'v_cut', 'v_fervor', 'v_creep', 'v_oath', 'v_fade', 'v_offering', 'v_covenant', 'v_witherall', 'v_pact'] };
+function bmLoad(run, br) {
+  if (process.env.BM_LOAD_OLD || run.build !== 'bloodmage' || (run.ch || 1) >= 3) return null; const open = run.tree.open;
+  const pref = br === '혈약' ? (open.includes('v_fade') ? ['v_curse', 'v_creep', 'v_fade', 'v_covenant', 'v_oath'] : ['v_curse', 'v_cut', 'v_fervor', 'v_oath', 'v_creep']) : br === '역병' ? ['v_fog', 'v_mist', 'v_host', 'v_cloud', 'v_veil', 'v_gust', 'v_marsh'] : null;
+  if (!pref) return null; const eq = pref.filter(id => open.includes(id)).slice(0, G0.EQUIP_SLOTS2);
+  for (const id of open.slice().sort((a, b) => ROWN(G0.SK2[b]) - ROWN(G0.SK2[a]))) { if (eq.length >= G0.EQUIP_SLOTS2) break; if (!eq.includes(id)) eq.push(id); }
+  return eq;
+}
 function bmPathNext(run, br) {
+  if (!process.env.BM_LOAD_OLD && BM_PATH2[br]) { for (const id of BM_PATH2[br]) if (!run.tree.open.includes(id)) return G0.SK2[id] && !G0.treeWhy(run, id) ? G0.SK2[id] : null; return null; }
   const L = (BM_PATH[br] || []).slice(); if (process.env.BM_VAR && br !== '포식' && run.tree.open.length === 4 && !run.tree.open.includes('v_reap')) return G0.SK2.v_reap && !G0.treeWhy(run, 'v_reap') ? G0.SK2.v_reap : null;
   for (const id of L) if (!run.tree.open.includes(id)) return G0.SK2[id] && !G0.treeWhy(run, id) ? G0.SK2[id] : null;
   return null;
@@ -407,6 +419,7 @@ function spendTree(pk, r) {
     if (eq.length < G0.EQUIP_SLOTS2) eq.push(s.id);
     else { const lo = eq.map((id, i) => [i, ROWN(G0.SK2[id])]).sort((x, y) => x[1] - y[1])[0]; if (lo[1] < ROWN(s) || r() < 0.3) eq[lo[0]] = s.id; }
     if (run.build === 'spellblade' && eq.length >= G0.EQUIP_SLOTS2) for (const k of ['spell', 'cut']) if (!eq.some(id => G0.SK2[id].kind === k)) { const c = run.tree.open.filter(id => G0.SK2[id].kind === k && !eq.includes(id)).sort((x, y) => ROWN(G0.SK2[y]) - ROWN(G0.SK2[x]))[0]; if (c) { const lo = eq.map((id, i) => [i, ROWN(G0.SK2[id])]).filter(x => G0.SK2[eq[x[0]]].kind !== k).sort((x, y) => x[1] - y[1])[0]; if (lo) eq[lo[0]] = c; } } // 마검사: 4칸에 ⚔ · ✦를 하나 이상씩
+    { const bl = focus ? bmLoad(run, br) : null; if (bl) { eq.length = 0; eq.push(...bl); } } // 숨겨진 직업 3: 갈래마다 정한 보스 장착
     run.skills = eq; run.p.skills = G0.v2Equip(run);
   }
 }
