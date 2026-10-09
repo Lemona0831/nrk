@@ -46,7 +46,7 @@ const AWK_LIST = [
   { id: 'k_sb2', g: 'cls', cls: 'spellblade', br: '불칼', n: '밴 불씨', d: '내가 건 지속 피해가 10% 늘어납니다.' },
   { id: 'k_sb3', g: 'cls', cls: 'spellblade', br: '주문갑', n: '겹친 갑주', d: '얻는 보호막이 12% 늘어납니다.' },
   { id: 'k_mk1', g: 'cls', cls: 'monk', br: '철권', n: '굳은 주먹', d: '강공격의 피해가 8% 늘어납니다.' },
-  { id: 'k_mk2', g: 'cls', cls: 'monk', br: '부동', n: '뿌리 내림', d: '방어 자세인 동안 받는 피해가 4% 줄어듭니다.' },
+  { id: 'k_mk2', g: 'cls', cls: 'monk', br: '부동', n: '뿌리 내림', d: '방어하는 동안 받는 피해가 4% 줄어듭니다.' },
   { id: 'k_mk3', g: 'cls', cls: 'monk', br: '혈도', n: '막힌 혈', d: '둔화된 적에게 주는 직접 피해가 6% 늘어납니다.' },
   { id: 'k_bu1', g: 'cls', cls: 'butcher', br: '도륙', n: '피 냄새', d: '출혈된 적에게 주는 직접 피해가 6% 늘어납니다.' },
   { id: 'k_bu2', g: 'cls', cls: 'butcher', br: '광기', n: '벼랑 끝', d: '생명력이 절반 이하이면 주는 직접 피해가 8% 늘어납니다.' },

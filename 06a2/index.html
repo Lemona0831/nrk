@@ -818,9 +818,8 @@ function runSkill2(b, act, tgt) {
   const ccut = F('chillCut'), csh = F('chillShatter'), csp = F('chillSpread'), frz = F('freeze'), ocb = F('onCutBreak'); const big = e => !!(e.strong || e.role === 'boss'); // 사냥꾼 기동 오른쪽 (10월 5일)
   const preCh = {}, preStop = {}, preBrk = {}; for (const e of targets) { preCh[e.id] = st(e, 'chill'); preStop[e.id] = isStopTarget(e); preBrk[e.id] = !!e.s.broken; }
   const kwxF = F('kwx'), ksp = F('killSpread'), edx = F('edgeX'); const preKw = {}; for (const e of targets) preKw[e.id] = { bleed: st(e, 'bleed'), ignite: st(e, 'ignite'), chill: st(e, 'chill') }; // 마검사: 쓰기 직전 기록 (kwx · exploit의 s · killSpread)
-  const kb = F('kiBurst'), kpr = F('kiPer'), cpr = F('ctrPer'), slx = F('sealx'); const kiNow = st(p, 'empower'); const meIf = s.fx.some(x => x.k === 'meSt' && x.if === 'chill'); let kiTake = 0, kiBack = 0, kiHit = !kb, kiIf = 0; // 수도승 (10월 7일): 기 터뜨리기 · 기 비례 · 되받은 수 비례 · 지원 끊기
+  const kb = F('kiBurst'), kpr = F('kiPer'), slx = F('sealx'); const kiNow = st(p, 'empower'); const meIf = s.fx.some(x => x.k === 'meSt' && x.if === 'chill'); let kiTake = 0, kiBack = 0, kiHit = !kb, kiIf = 0; // 수도승 (10월 7일): 기 터뜨리기 · 기 비례 · 지원 끊기
   if (kb) { let got = 0; const t0 = targets[0]; if (kb.pre && t0 && preCh[t0.id] > 0) got = addS(b, p, 'empower', kb.pre) || 0; const K0 = st(p, 'empower'); kiTake = Math.min(kb.max || KW.empower, K0); kiBack = K0 - got; setKi(p, kb.keep ? Math.floor(K0 * kb.keep) : K0 - kiTake); logp(b, kiTake > 0 ? 'good' : 'sys', kiTake > 0 ? (got ? '늦춘 적에게서 기 +' + got + '. ' : '') + '기 ' + kiTake + ' 터뜨림' + (st(p, 'empower') ? ' (남은 기 ' + st(p, 'empower') + ')' : '') : '터뜨릴 기가 없다'); } // 피해 앞에서 거둔다(pre: 대상이 이미 둔화면 먼저 기)
-  if (cpr && (p.ctrSince || 0) > 0) logp(b, 'good', '되받은 ' + Math.min(MONK.ctrPerMax, p.ctrSince) + '번만큼 되갚는다. 피해 +' + cpr.per * Math.min(MONK.ctrPerMax, p.ctrSince));
   const hsp = F('hasteSpend'); let hspOn = false; if (hsp && p.s.haste > 0 && targets.length) { kwDec(p, 'haste'); hspOn = true; logp(b, 'good', s.n + '. 가속 1을 써서 피해 ×' + hsp.mul); } // 가속 쓰기: 다음 라운드의 연속 행동 대신 지금 큰 한 방
   const gru = BU ? F('grudge') : null, cr = BU ? F('carry') : null, eat = BU ? s.fx.find(e => e.k === 'drain' && e.s === 'bleed' && !e.me) : null, spK = BU ? s.fx.find(e => e.k === 'spread' && e.s === 'bleed' && e.kill) : null; // 숨겨진 직업 1
   const preBl = {}; const preBlOf = e => (e.id in preBl ? preBl[e.id] : (preBl[e.id] = stk(e, 'bleed'))); for (const e of targets) preBlOf(e); // 이 스킬을 쓰기 전 대상의 출혈 (출혈 비례 · 먹기 · 튀기기)
@@ -857,7 +856,7 @@ function runSkill2(b, act, tgt) {
     if (spV && spV.mark && h === 0) e.mark = { per: spV.per || 1, by: s.id }; // 표식: 피해보다 먼저 단다
     let base = (dm ? dm.n : 0) + (ex ? ex.per * (BU && ex.s === 'bleed' ? (ex.me ? Math.min(ex.max || 10, stk(p, 'bleed')) : preBlOf(e)) : ex.s ? preKw[e.id][ex.s] : st(e, 'poison')) : 0) + (wb && h === 0 ? burn * wb.mul : 0) + (wdm ? wdm.per * wardNow : 0) + (vp ? vp.per * st(e, 'vuln') : 0);
     if (BU) { if (gru) base += Math.min(gru.max || 999, gru.per * (p.grudge || 0)); base += meDrainDmg; } // 받은 피해 · 지운 내 출혈
-    if (kb && h === 0) base += kiTake * kb.per; if (kpr) base += kpr.per * kiNow; if (cpr) base += cpr.per * Math.min(MONK.ctrPerMax, p.ctrSince || 0); // 수도승: 터뜨린 기(첫 타) · 쓰기 전의 기(타격마다) · 되받은 수
+    if (kb && h === 0) base += kiTake * kb.per; if (kpr) base += kpr.per * kiNow; // 수도승: 터뜨린 기(첫 타) · 쓰기 전의 기(타격마다)
     if (CF) { if (cfPd && cfPd.per) base += cfPd.per * cfTX(e); if (b.cfOffer && h === 0) base += b.cfOffer.c * b.cfOffer.dmg; if (cfPd && cfPd.of !== 'prot' && cfPd.of !== 'burden' && cfPd.of !== 'clean' && h === 0) b.rec.push({ k: 'cfper', id: s.id, of: cfPd.of, x: cfTX(e) }); } // 숨겨진 직업 2: 비례 · 사함 피해 (배수는 아래에서 곱한다)
     if (BM) base += eatAdd + (pdF ? pdF.per * st(e, 'weak') : 0) + (bdF ? bdF.per * Math.min(BLOOD.dmgCount, b.paidTurn || 0) : 0); // 먹은 만큼 · 약화된 만큼(이 스킬의 약화 전) · 이번 차례에 낸 피만큼
     if (bo && h === 0) base += bo.per * preI[e.id] * dotMul(p); // 불태우기: 태운 화상 1마다 (지능 반영)
@@ -934,7 +933,6 @@ function runSkill2(b, act, tgt) {
   p.lastSkillDmg = multi ? tot / Math.max(1, targets.length) : tot;
   if (p.build === 'hunter' && s.b !== '시작') p.lastBr = s.b; // 사냥꾼 연계: 쓴 갈래
   if (p.build === 'elementalist') b.shockCtx = { id: s.id, br: s.b, ids: targets.map(e => e.id), multi, sx: F('shockx') || null, hz: hzOn === 'shock' ? (hz.n || 1) : 0 }; // 원소술사: 이 행동 끝의 열충격에 붙일 것 (finishPlayer가 쓰고 지운다)
-  if (p.build === 'monk' && s.time === 'fast' && s.tgt !== 'self' && tot > 0) b.kiFastHit = 1; // 수도승: 차례의 첫 ⚡ 공격이 맞으면 기 +1 (finishPlayer)
   b.curSkill = null; b.focusKey = null;
 }
 /* ===== 마검사 (10월 7일, docs/직업/마검사.md B절) =====
@@ -971,13 +969,13 @@ function sbEnd(b, act) {
   if (b.sbAlt && b.sbAltTurn !== b.turnIdx && !b.over) { b.sbAltTurn = b.turnIdx; const g = addWard(b, p, (BUILDS[p.build] || {}).altWard || 0); b.rec.push({ k: 'alt', g: r1(g) }); logp(b, 'good', '⇄ 교대: 보호막 +' + Math.round(g) + ' (' + Math.round(p.ward || 0) + '/' + wardMax(p) + ')'); fxRun(p, 'onAlt', b, p, k, b.sbRunNow); }
   p.sbLast = k; p.sbRun = b.sbRun2 ? 0 : b.sbRunNow; b.sbAlt = false; b.sbRun2 = 0;
 }
-/* 수도승 자세 (stance): ▶ 자세(half가 0이 아니면)는 방어와 같고 스태미나가 들지 않는다. ⚡ 자세(half: 0)는 되받기만 한다. 덤은 겹치면 칸마다 큰 값. 내 다음 차례의 첫 행동에서 지워진다.
-   검은 서기관의 "방어와 흘리기" 봉인 중에는 공격에 붙은 자세가 막기 없이 되받기만 선다(▶ 자세 스킬은 actionList가 막는다) */
+/* 수도승 자세 (stance, 10월 10일 단순화): 자세는 하나뿐이다. 내 다음 차례까지 전열 적의 직접 공격을 되받는다(받는 피해는 줄지 않는다. 줄이려면 방어). 덤은 겹치면 칸마다 큰 값.
+   내 다음 차례의 첫 행동에서 지워진다. 옛 저장본의 half · max는 읽지 않는다 */
 function monkStance(b, s, x, hz) {
-  const p = b.p; const sealed = (b.seal || []).some(q => q.k === 'prep'); const blk = x.half !== 0 && !sealed; if (blk) p.guard = 1;
+  const p = b.p;
   const o = p.stance || {}; const mx = k => Math.max(o[k] || 0, x[k] || 0);
-  p.stance = { dmg: mx('dmg'), brk: mx('brk'), ki: mx('ki'), chill: mx('chill'), weak: mx('weak'), max: mx('max'), far: o.far || x.far ? 1 : 0, hz: hz ? { n: hz.n || 1, br: s.b, id: s.id, used: 0 } : (o.hz || null) };
-  logp(b, 'good', s.n + '. ' + (blk ? '방어 자세. 받는 피해 절반, ' : '') + '내 다음 차례까지 ' + (p.stance.far ? '전열과 후열' : '전열') + ' 적의 직접 공격을 되받는다 (' + (p.ctrN || 0) + '/' + (MONK.ctrMax + p.stance.max) + ')');
+  p.stance = { dmg: mx('dmg'), brk: mx('brk'), ki: mx('ki'), chill: mx('chill'), weak: mx('weak'), far: o.far || x.far ? 1 : 0, hz: hz ? { n: hz.n || 1, br: s.b, id: s.id, used: 0 } : (o.hz || null) };
+  logp(b, 'good', s.n + '. 내 다음 차례까지 ' + (p.stance.far ? '전열과 후열' : '전열') + ' 적의 직접 공격을 되받는다');
 }
 function allSkillNames() { const m = allSkills(); for (const k in EXCL) for (const s of exclOf(k)) m[s.id] = s; return m; }
 function isMeleeAct(p, id) { if ((rngCls(p) || isCaster(p)) && (id === 'basic' || id === 'heavy')) return false; if (id === 'basic' || id === 'heavy') return true; const s = skillMap(p.build)[id]; return !!(s && s.melee); }
@@ -1307,10 +1305,9 @@ function elemRime(b, src) {
   for (const k of Object.keys(p.rime)) { const r = p.rime[k]; if (!r || !(r.times > 0) || !src.alive) continue; const g = addS(b, src, k, r.n); r.times--; if (r.times <= 0) delete p.rime[k]; logp(b, 'good', (k === 'ignite' ? '불꽃이 ' : '서리가 ') + src.n + '에게 옮겨 간다. ' + KW_N[k] + ' ' + g + (r.times > 0 ? ' (남은 ' + r.times + '번)' : '')); }
   if (!Object.keys(p.rime).length) p.rime = null;
 }
-/* 수도승 (10월 7일, docs/직업/수도승.md B절): 방어하거나 자세를 잡은 동안 전열 적이 나를 직접 치면 되받는다(monkCounter). 피해 = 무기 피해 × ctr + 자세 덤, 붕괴 ctrBrk(강타면 +ctrBig), 기 +kiCtr.
-   내 차례 하나 사이에 ctrMax(+ 자세의 max)번까지(p.ctrN, 내 차례의 첫 행동에서 0). 기 = 강화이고, ⚡ 공격에는 실리지 않는다(b.curFast). 차례의 첫 ⚡ 공격이 맞으면 기 +kiFast.
-   ctrPer는 지난 내 차례가 끝난 뒤 되받은 수(p.ctrSince)를 ctrPerMax까지 센다 */
-const MONK = { ctr: 0.8, ctrBrk: 10, ctrBig: 25, ctrMax: 3, kiCtr: 1, kiFast: 1, ctrPerMax: 3 }; // ctr 10월 7일 0.5 → 0.8: 던전 보스 승률 1% (다른 직업 12~25%), 0.8에서 10%
+/* 수도승 (10월 7일, docs/직업/수도승.md B절; 10월 10일 단순화): 방어하거나 자세를 잡은 동안 전열 적이 나를 직접 치면 되받는다(monkCounter). 피해 = 무기 피해 × ctr + 자세 덤, 붕괴 ctrBrk(강타면 +ctrBig), 기 +kiCtr.
+   내 차례 하나 사이에 ctrMax번까지(p.ctrN, 내 차례의 첫 행동에서 0). 기 = 강화이고 되받을 때(와 스킬이 주는 것)만 쌓인다. ▶ 공격이 1을 써서 +25%, ⚡ 공격에는 실리지 않는다(b.curFast) */
+const MONK = { ctr: 0.8, ctrBrk: 10, ctrBig: 25, ctrMax: 3, kiCtr: 1 }; // ctr 10월 7일 0.5 → 0.8: 던전 보스 승률 1% (다른 직업 12~25%), 0.8에서 10%
 const SEAL_K = ['heal', 'bless', 'summon', 'raise', 'curse', 'hexcurse', 'guard', 'mend', 'build', 'mourn', 'tune', 'seal', 'call']; // 혈도 sealx가 끊는 지원 행동 (일반 · 정예는 평소 공격으로 바뀌고, 강적 · 보스는 붕괴)
 const CTR_SHOW = ['attack', 'heavy', 'brand', 'mirror', 'reflect', 'erupt', 'hand', 'constrict']; // ↩ 표시: 나를 직접 치는 예고 (화형 · 폭발은 되받지 못해 빠진다)
 const monkCtrOk = (b, e) => !!(b.p.build === 'monk' && e && e.alive && realFoe(e) && e.role !== 'candle' && (e.row === 'front' || (b.p.stance && b.p.stance.far)));
@@ -2418,7 +2415,7 @@ function newBattle(player, enemies, ctx) {
     turnIdx: 0, rec: [], idc: 100,
   };
   for (const e of enemies) { if (!e.intent) decideIntent(b, e); } // 0.6a.2 라운드: 첫 라운드는 runUntilPlayer가 연다
-  player.guard = 0; player.dodge = 0; player.stun = 0; player.fxDodged = 0; if (player.build === 'monk') { player.stance = null; player.ctrN = 0; player.ctrSince = 0; }
+  player.guard = 0; player.dodge = 0; player.stun = 0; player.fxDodged = 0; if (player.build === 'monk') { player.stance = null; player.ctrN = 0; }
   if (isV2(player)) resetCharges(player);
   if (isBu(player)) { player.hpFight = player.hp; player.tookAcc = 0; player.grudge = 0; player.selfBl = 0; } // 숨겨진 직업 1: 되찾기 한도 · 받은 피해 · 나에게 건 출혈
   if (player.rime) player.rime = null; // 원소술사 되얼림은 전투마다
@@ -2788,7 +2785,7 @@ function hurtPlayer(b, raw, o) {
   if (!o.silent && wardAll) logp(b, 'good', (o.label || '공격') + '. 보호막이 모두 받아냈다');
   else if (!o.silent) logp(b, 'bad', o.dot ? (o.label || '피해') + '이(가) 나를 갉아먹는다. ' + r1(d) + ' 피해' : (o.label || '공격') + '. ' + r1(d) + ' 피해' + (p.guard ? ', 방어로 절반' : ''));
   const sLine = b.logN || 0; /* 이 피해 줄의 순번 */
-  if (p.build === 'monk' && (p.guard || p.stance) && !b.cur && !b.over && p.hp > 0 && o.src && !o.dot && !o.aoe && !o.spell && !o.judgment && monkCtrOk(b, o.src) && (p.ctrN || 0) < MONK.ctrMax + ((p.stance && p.stance.max) || 0)) monkCounter(b, o); // 수도승 되받기 (의도 키가 아니라 공격의 성질로 가린다. 피해 · 가시 처리와 기록 줄 다음)
+  if (p.build === 'monk' && (p.guard || p.stance) && !b.cur && !b.over && p.hp > 0 && o.src && !o.dot && !o.aoe && !o.spell && !o.judgment && monkCtrOk(b, o.src) && (p.ctrN || 0) < MONK.ctrMax) monkCounter(b, o); // 수도승 되받기 (의도 키가 아니라 공격의 성질로 가린다. 피해 · 가시 처리와 기록 줄 다음)
   b.rec.push({ k: 'hit', t: r1(b.t), d: r1(d), dot: !!o.dot, charged: !!o.charged, src: o.src ? o.src.role : null, guard: !!p.guard, parried: o.parried ? 1 : 0 });
   if (p.rime && o.src && o.src.alive && !o.dot && p.hp > 0) elemRime(b, o.src); // 원소술사 되얼림 · 불꽃 외투 (그 공격의 기록 뒤)
   { const m = []; if (hx) { if (hx.vu) m.push('취약 ' + hx.vu + '(으)로 +25%'); if (hx.pr) m.push('보호 ' + hx.pr + '(으)로 −25%'); if (hx.ig) m.push('화상 ' + hx.ig + '만큼 더함'); if (hx.ex) m.push('탈진으로 +20%'); if (hx.gd) m.push('방어로 줄어듦'); }
@@ -2802,8 +2799,8 @@ const HIT_N = { explode: '폭발', burn: '화형', brand: '죄를 읽는다', er
 /* 수도승 되받기 (10월 7일, docs/직업/수도승.md B-3): 적의 차례에만(b.cur 없음) 나간다. 내 행동이 아니라 기를 쓰지 않고, 장비의 다음 공격 몫(분노의 반지 · 인내의 흉갑 · 분노의 사슬)도 쓰지 않는다.
    반격 태세를 부르지 않고(melee 없음), 수도원장의 요구 · 장비 onHit에 끼지 않는다(가시와 같은 급). 되받은 적에게 거는 약화는 그 적의 공격이 끝난 뒤에 건다(e.ctrWeak) */
 function monkCounter(b, o) {
-  const p = b.p, e = o.src, S = p.stance || {}; p.ctrN = (p.ctrN || 0) + 1; p.ctrSince = (p.ctrSince || 0) + 1;
-  logp(b, 'good', '되받기 (' + p.ctrN + '/' + (MONK.ctrMax + (S.max || 0)) + '): ' + e.n + '에게 되받아친다');
+  const p = b.p, e = o.src, S = p.stance || {}; p.ctrN = (p.ctrN || 0) + 1;
+  logp(b, 'good', '되받기 (' + p.ctrN + '/' + MONK.ctrMax + '): ' + e.n + '에게 되받아친다');
   const d = hurtEnemy(b, e, outDmg(b, wpnDmg(p) * MONK.ctr + (S.dmg || 0), { weapon: 1, ctr: 1 }), { single: 1, ctr: 1, label: '되받기' });
   let bk = 0; if (e.alive) { bk = MONK.ctrBrk + (o.charged ? MONK.ctrBig : 0) + (S.brk || 0); addBreak(b, e, bk); }
   const k0 = st(p, 'empower'); addS(b, p, 'empower', MONK.kiCtr + (S.ki || 0)); const kg = st(p, 'empower') - k0;
@@ -3524,7 +3521,7 @@ function actionList(b) {
   const SKM = skillMap(p.build);
   if (isV2(p)) for (const sid of skillsOf(p)) { // 0.6a.2: 재사용 대기
     const s = SK2[sid]; if (!s) continue; const w = (p.cd && p.cd[sid]) || 0;
-    const needPoison = !s.fx.some(e => ['dmg', 'poison', 'brk', 'st', 'parry', 'parryBuff', 'stam', 'cutx', 'ward', 'wardFill', 'wardBurn', 'wardDmg', 'thorn', 'pull', 'vulnPer', 'vulnGrow', 'shieldx', 'chillx', 'evade', 'evadeCtr', 'quick', 'quickTurns', 'foresee', 'meSt', 'focusAdd', 'focusBurst', 'focusx', 'swapx', 'hastex', 'chillCut', 'chillShatter', 'chillSpread', 'freeze', 'onCutBreak', 'hasteSpend', 'grudge', 'carry', 'weave', 'shockx', 'rime', 'burnOut', 'imbue', 'edgeX', 'kwx', 'alt', 'killSpread', 'stance', 'kiBurst', 'kiPer', 'kiGrow', 'ctrPer', 'sealx', 'cleanse', 'transfer', 'perDmg', 'dispel', 'hpCost', 'bloodDmg', 'payCut'].includes(e.k) || (e.k === 'drain' && e.eat) || (e.k === 'burst' && e.pre) || (e.k === 'grow' && e.add) || (['drain', 'exploit', 'grow', 'spread'].includes(e.k) && e.s === 'bleed') || (e.k === 'exploit' && e.s)); // 중독 없이는 아무 일도 없는 스킬만 잠근다 (10월 3일: 피해를 주는 터뜨리는 일격, 중독 4를 거는 독 응축도 잠겼다)
+    const needPoison = !s.fx.some(e => ['dmg', 'poison', 'brk', 'st', 'parry', 'parryBuff', 'stam', 'cutx', 'ward', 'wardFill', 'wardBurn', 'wardDmg', 'thorn', 'pull', 'vulnPer', 'vulnGrow', 'shieldx', 'chillx', 'evade', 'evadeCtr', 'quick', 'quickTurns', 'foresee', 'meSt', 'focusAdd', 'focusBurst', 'focusx', 'swapx', 'hastex', 'chillCut', 'chillShatter', 'chillSpread', 'freeze', 'onCutBreak', 'hasteSpend', 'grudge', 'carry', 'weave', 'shockx', 'rime', 'burnOut', 'imbue', 'edgeX', 'kwx', 'alt', 'killSpread', 'stance', 'kiBurst', 'kiPer', 'kiGrow', 'sealx', 'cleanse', 'transfer', 'perDmg', 'dispel', 'hpCost', 'bloodDmg', 'payCut'].includes(e.k) || (e.k === 'drain' && e.eat) || (e.k === 'burst' && e.pre) || (e.k === 'grow' && e.add) || (['drain', 'exploit', 'grow', 'spread'].includes(e.k) && e.s === 'bleed') || (e.k === 'exploit' && e.s)); // 중독 없이는 아무 일도 없는 스킬만 잠근다 (10월 3일: 피해를 주는 터뜨리는 일격, 중독 4를 거는 독 응축도 잠겼다)
     if (isBm(p)) { // 숨겨진 직업 3: 생명력을 내는 칸의 잠금과 피로 당기기 (값은 남은 쿨타임 1턴마다 최대 생명력 4%, 내고 나서 생명력 1 아래면 잠긴다)
       const hc = bmHpCost(p, s); let other = null, whyB = null, blood = 0;
       if (needPoison && !alive(b).some(e => e.s.poison)) other = '중독된 적 없음';
@@ -3578,7 +3575,7 @@ function actionList(b) {
   L.push({ id: 'flaskM', n: isV2(p) ? '정화 플라스크' : '마나 플라스크', self: 1, cost: '남은 ' + p.flask.mana, time: 0.5, ok: p.flask.mana > 0 });
   L.push({ id: 'flaskS', n: '스태미나 플라스크', self: 1, cost: '남은 ' + (p.flask.stam || 0), time: 0.5, ok: (p.flask.stam || 0) > 0 });
   if (!b.ctx.boss && !b.ctx.scen && !b.ctx.tut) L.push({ id: 'flee', n: '도망', self: 1, cost: '성공 ' + Math.round(fleeChance(b) * 100) + '%', time: 1, ok: true });
-  for (const sl of b.seal || []) for (const a of L) if (a.ok && ((sl.k === 'skill' && a.id === sl.id) || (sl.k === 'flask' && /^flask/.test(a.id)) || (sl.k === 'prep' && (a.id === 'guard' || a.id === 'dodge' || (a.v2 && a.s.tgt === 'self' && a.s.fx.some(e => e.k === 'stance' && e.half !== 0)))))) { a.ok = false; a.why = '봉인됨'; } // 검은 서기관
+  for (const sl of b.seal || []) for (const a of L) if (a.ok && ((sl.k === 'skill' && a.id === sl.id) || (sl.k === 'flask' && /^flask/.test(a.id)) || (sl.k === 'prep' && (a.id === 'guard' || a.id === 'dodge')))) { a.ok = false; a.why = '봉인됨'; } // 검은 서기관
   if (b.bonusUsed) for (const a of L) if (a.time >= 1.25 && a.ok) { a.ok = false; a.why = '빠른 행동을 써서 이번 차례엔 느린 행동 불가'; } // 느린 행동은 두 칸
   return b.ctx.allow ? L.filter(a => b.ctx.allow.includes(a.id)) : L; // 수련장: 그 장면에서 배우는 행동만
 }
@@ -3831,15 +3828,14 @@ function finishPlayer(b, time, lost) {
   }
   const extraNow = !!b.extraTurn; b.extraTurn = 0; if (!extraNow) { chargeEv(b, 'turn'); if (b.carve && --b.carve.left <= 0) { b.carve = null; logp(b, 'good', '새긴 이름이 흐려진다'); } } b.bonusUsed = 0; // 사냥꾼 연속 행동: 두 번째 차례는 쿨타임이 줄지 않는다 // fxQuickNext(성인의 성배·수확자의 손)는 지우지 않는다: 주 행동으로 쓰러뜨려도 다음 빠른 행동 한 번이 빠른 칸을 쓰지 않게
   if (b.queue && b.queue[0] === 'p') { b.queue.shift(); if (b.queue[0] === 'p') { b.extraTurn = 1; logp(b, 'good', '가속: 한 번 더 움직인다'); } }
-  abbotDemand(b); if (p.build === 'monk') p.ctrSince = 0; // 수도승: 되받은 수는 내 차례가 끝날 때 0
+  abbotDemand(b);
   b.turnIdx++; if (b.extraTurn && b.prepTurn === b.turnIdx - 1) b.prepTurn = b.turnIdx; /* 10월 7일: 연속 두 행동 사이에는 적이 움직이지 않으므로 첫 차례의 준비(방어 · 흘리기)가 두 번째 차례까지 남는다 */ b.consN = 0; b.extraQuick = 0; if (p.quickTurns > 0) { b.extraQuick = 1; p.quickTurns--; } if (fxFlag(p, 'quick2')) b.extraQuick = 1; // 사냥꾼 그림자 질주
   if (b.stepMode) { b.waiting = true; return; }
   runUntilPlayer(b);
 }
-/* 행동 끝의 강화(기): meSt 강화 · 수도승 첫 ⚡ 공격 +1(b.kiPend)을 더하고, 기 끌어올리기(kiGrow: (남은 기 + add) × mul, 상한 5) */
+/* 행동 끝의 강화(기): meSt 강화(b.kiPend)를 더하고, 기 끌어올리기(kiGrow: (남은 기 + add) × mul, 상한 5) */
 function kiSettle(b) {
   const p = b.p;
-  if (b.kiFastHit) { b.kiFastHit = 0; if (b.kiFastTurn !== b.turnIdx) { b.kiFastTurn = b.turnIdx; b.kiPend = (b.kiPend || 0) + MONK.kiFast; logp(b, 'good', '차례의 첫 ⚡ 공격. 기 +' + MONK.kiFast); } }
   if (b.kiPend) { const n = b.kiPend; b.kiPend = 0; addS(b, p, 'empower', n); }
   if (b.kiGrow) { const g = b.kiGrow; b.kiGrow = null; const cur = st(p, 'empower'); const nv = Math.min(KW.empower, (cur + (g.add || 0)) * (g.mul || 1)); if (nv > cur) addS(b, p, 'empower', nv - cur); logp(b, 'good', '기를 끌어올린다. 기 ' + cur + ' → ' + st(p, 'empower')); }
 }
@@ -3979,7 +3975,7 @@ function endBattleCarry(p) {
   p.bt = {}; p.rcN = 0; p.mk = null; p.fxSpell = 0; p.fxScar = 0; p.fxPen = 0; p.fxHunt = null; p.fxHeavyDisc = 0; p.fxImmune = 0; p.fxQuick = 0; p.fxQuickNext = 0; p.fxCond = 0; p.fxFlaskDmg = 0; p.brace = 0; p.tookSince = 0; p.tookLast = 0;
   p.ward = 0; p.thorn = null; p.evade = 0; p.lastBr = null; p.evadeCtr = null; p.evadeHz = null; p.quickTurns = 0; p.foresee = null; p.focus = null; p.lastSkillId = null; p.echoN = 0; p.furyNext = 0; p.retal = 0; p.sigCd = 0; p.focusRes = 0;
   // 방 사이 이월 (4.2): 생명력·마나·플라스크 유지, 스태미나는 50%까지 회복, 전투 상태 해제
-  if (p.build === 'monk') { p.stance = null; p.ctrN = 0; p.ctrSince = 0; }
+  if (p.build === 'monk') { p.stance = null; p.ctrN = 0; }
   p.st = Math.max(p.st, 50); p.exhaust = 0; p.s = {}; p.guard = 0; p.dodge = 0; p.stun = 0; p.counter = 0; p.reflux = null; p.rage = 0;
   if (p.build === 'spellblade') { p.edge = null; p.sbLast = null; p.sbRun = 0; } // 마검사: 칼은 전투가 끝나면 빈다
   if (p.build === 'confessor') { p.selfN = {}; p.selfBad = null; } // 숨겨진 직업 2
@@ -4017,9 +4013,10 @@ const HELP = [
     '서리 무게: 둔화된 적이 원소술사를 치는 평소 공격은 피해가 ' + Math.round(ELEM.guard * 100) + '% 줄어듭니다(적 카드의 ❄️무뎌짐). 강타 · 겨눈 한 발 · 화형 · 큰 한 방은 줄지 않습니다. 둔화로 라운드 맨 뒤에 선 적은 둔화가 다 줄어도 그 라운드 공격이 무뎌지고, 열충격으로 둔화가 깨지면 무뎌짐도 사라집니다.',
     '마검사: 베기(⚔ 기본 공격 · 강공격 · 베기 스킬)와 주문(✦ 주문 스킬)을 번갈아 쓰는 것을 교대라 합니다. 교대한 행동 뒤 보호막 +4(내 차례마다 한 번, 최대 생명력의 15%까지). 방어 · 흘리기 · 플라스크는 순서를 끊지 않습니다. 교대가 두 번 이어지면 켜지는 스킬(⇄⇄)은 쓰면 이어진 교대가 0이 됩니다.',
     '칼: 몇몇 주문은 칼에 출혈이나 화상을 싣습니다. 다음 베기의 첫 타격이 고른 적에게 피해를 주면 그 적에게 걸리고, 빗나가거나 적이 쓰러지면 칼에 남습니다. 주문 스킬은 후열에 닿습니다.',
-    '되받기: 방어하거나 자세를 잡은 동안 전열 적이 나를 직접 치면 되받아칩니다. 피해는 무기 피해의 ' + Math.round(MONK.ctr * 100) + '%, 붕괴 +' + MONK.ctrBrk + '이고, 강타를 되받으면 붕괴 +' + MONK.ctrBig + '가 더해집니다. 내 차례와 다음 차례 사이에 ' + MONK.ctrMax + '번까지이고 자세를 겹쳐도 늘지 않습니다. 화형 · 광역 · 지속 피해, 방어로 줄지 않는 공격, 후열 적의 공격은 되받지 못합니다. 되받기는 내 행동이 아니라 기를 쓰지 않습니다.',
-    '기: 수도승의 강화입니다. 되받을 때와 차례의 첫 ⚡ 공격을 맞힐 때 1씩 모입니다(상한 5). ▶ 공격 한 번이 1을 써서 피해 +25%입니다. ⚡ 공격에는 실리지 않고 약화와는 서로 깎으며, 이번 행동으로 얻은 기는 다음 행동부터 듭니다.',
-    '자세: 수도승 스킬이 잡는 방어로, 내 다음 차례까지 이어집니다. ▶ 자세는 방어와 같고(받는 피해 절반) 스태미나가 들지 않습니다. ⚡ 자세는 피해를 줄이지 않고 되받기만 합니다. 적 카드의 🥋↩는 내 다음 차례 전에 나를 직접 쳐서 되받을 수 있는 적입니다.'] },
+    '수도승의 한 줄: 자세를 잡고 맞아서 되받으면 기가 쌓이고, 기가 있으면 ▶ 공격이 세집니다.',
+    '되받기: 방어하거나 자세를 잡은 동안 전열 적이 나를 직접 치면 되받아칩니다. 피해는 무기 피해의 ' + Math.round(MONK.ctr * 100) + '%에 자세의 덤을 더하고 붕괴 +' + MONK.ctrBrk + '이며, 강타를 되받으면 붕괴 +' + MONK.ctrBig + '가 더해집니다. 한 차례에 ' + MONK.ctrMax + '번까지입니다. 화형 · 광역 · 지속 피해, 방어로 줄지 않는 공격, 후열 적의 공격은 되받지 못합니다.',
+    '기: 되받을 때마다 ' + MONK.kiCtr + '씩 쌓입니다(상한 5). ▶ 공격 한 번이 기 1을 써서 피해 +25%입니다. ⚡ 공격은 기를 쓰지 않습니다. 기를 터뜨리거나 기에 비례하는 스킬은 설명에 적혀 있습니다.',
+    '자세: 수도승 스킬이 잡는 자세로, 내 다음 차례까지 이어집니다. 받는 피해는 줄지 않으니 줄이려면 방어를 씁니다. 적 카드의 🥋↩는 내 다음 차례 전에 나를 직접 쳐서 되받을 수 있는 적입니다.'] },
   { k: 'stats', n: '능력치', t: [
     '능력치는 힘, 민첩, 지능, 체력, 의지 다섯입니다. 만들 때 ' + STAT_START + '점, 레벨마다 ' + LV_POINTS + '점을 나눕니다. 나눌 때 "다음 1점"의 효과가 보이고, "추천 배분"은 직업에 맞게 나눠 줍니다.',
     '힘은 1점마다 생명력 +1, 기본 공격과 강공격 피해 +1%, 내가 채우는 붕괴 게이지 +1%입니다.',
@@ -5257,11 +5254,10 @@ function skillHint0(b, a) {
   if (a.id === 'purge') { let n = 0; for (const k of ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln', 'brand']) if (p.s[k]) n += (k === 'poison' || k === 'chill') ? p.s[k].stacks : 1; return n ? `해제 ${n} → ${r1(n * 5 * dotMul(p) * dmgMult(p))}` : '해제할 것 없음'; }
   if (a.v2 && a.s) { const wb = a.s.fx.find(e => e.k === 'wardBurn'), wd = a.s.fx.find(e => e.k === 'wardDmg'); if (wb) { const take = Math.min(p.ward || 0, wb.max || Infinity); return take > 0 ? '보호막 ' + Math.round(take) + ' 태움 → 피해 ' + r1(take * wb.mul) : '보호막 없음: 태우기 피해 0'; } if (wd) return '보호막 비례 +' + r1((p.ward || 0) * wd.per); } // 파수꾼 (10월 4일: 보호막이 0이어도 다른 효과는 들어가 버튼은 쓸 수 있다)
   if (a.v2 && a.s && p.build === 'elementalist' && a.s.tgt !== 'self') return elemHint(b, a); // 원소술사: 열충격 미리 보기
-  if (a.v2 && a.s && p.build === 'monk') { const fx = k => a.s.fx.find(e => e.k === k); const ki = st(p, 'empower'); const t = actTarget(b, a); const out = []; // 수도승 (10월 7일): 터뜨리기 · 기 비례 · 되받은 수 · 거두기 · 끊기 미리보기
+  if (a.v2 && a.s && p.build === 'monk') { const fx = k => a.s.fx.find(e => e.k === k); const ki = st(p, 'empower'); const t = actTarget(b, a); const out = []; // 수도승 (10월 7일): 터뜨리기 · 기 비례 · 거두기 · 끊기 미리보기
     const kb = fx('kiBurst'); if (kb) { const pre = kb.pre && t && st(t, 'chill') > 0 ? kb.pre : 0; const tk = Math.min(kb.max || KW.empower, ki + pre); out.push(tk ? '기 ' + tk + ' 터뜨림 → 피해 +' + tk * kb.per + (kb.brk ? ' · 붕괴 +' + tk * kb.brk : '') : '터뜨릴 기 없음'); }
     const kp = fx('kiPer'); if (kp) out.push('기 ' + ki + ' → 피해 +' + kp.per * ki + ((a.s.hits || 1) > 1 ? '씩' : ''));
     const kg = fx('kiGrow'); if (kg) out.push('기 → ' + Math.min(KW.empower, (Math.max(0, ki - 1) + (kg.add || 0)) * (kg.mul || 1)));
-    const cp = fx('ctrPer'); if (cp) { const n = Math.min(MONK.ctrPerMax, p.ctrSince || 0); out.push(n ? '되받음 ' + n + ' → 피해 +' + n * cp.per : '되받은 것 없음'); }
     const mi = a.s.fx.find(e => e.k === 'meSt' && e.if === 'chill'); if (mi) { const n = a.aoe ? alive(b).filter(e => e.row === 'front' && st(e, 'chill') > 0).length : t && st(t, 'chill') > 0 ? 1 : 0; out.push(n ? (a.aoe ? '둔화된 적 ' + n : '대상 둔화 ' + st(t, 'chill')) + ' → 기 +' + mi.n * n : '둔화 없음'); }
     const sx = fx('sealx'); if (sx && t && t.intent && SEAL_K.includes(t.intent.k)) out.push(t.strong || t.role === 'boss' ? '강적: 붕괴 +' + sx.brk : '지원을 끊음');
     if (out.length) return out.join(' · '); }
@@ -5374,7 +5370,7 @@ function stsHtml(u, b, inCard, opt) {
       const paid = b.prepTurn === b.turnIdx ? (b.paidTurn || 0) : 0; if (paid > 0 && skillsOf(u).some(id => SK2[id] && SK2[id].fx.some(e => e.k === 'bloodDmg'))) out.push(`<i class="b" data-info="bmpaid" tabindex="0">🩸 낸 피 <b>${Math.round(paid)}</b></i>`);
       const pc = u.payCut || []; const nh = pc.filter(x => x.mul != null).length, no = pc.filter(x => x.off != null); if (nh) out.push(`<i class="b" data-info="bmcut" tabindex="0">🩸½ ×${nh}</i>`); if (no.length) out.push(`<i class="b" data-info="bmcut" tabindex="0">🩸−${no[0].off}턴 ×${no.length}</i>`); }
     if (u.rime) for (const k in u.rime) if (u.rime[k] && u.rime[k].times > 0) out.push(`<i class="b" data-info="rime" tabindex="0">${k === 'ignite' ? '🔥' : '❄️'}↩ <b>${u.rime[k].times}</b><small>·${u.rime[k].n}</small></i>`); // 원소술사 되얼림 · 불꽃 외투
-    if (u.build === 'monk' && (u.stance || u.guard)) { const S = u.stance || {}; const ex = [S.dmg ? '피해 +' + S.dmg : '', S.brk ? '붕괴 +' + S.brk : '', S.ki ? '기 +' + S.ki : '', S.chill ? '둔화 ' + S.chill : '', S.weak ? '약화 ' + S.weak : '', S.far ? '후열도' : ''].filter(Boolean); out.push(`<i class="b" data-info="mstance" tabindex="0"><span class="sic" aria-hidden="true">🥋</span>되받기 <b>${u.ctrN || 0}/${MONK.ctrMax + (S.max || 0)}</b>${ex.length ? '<small> · ' + ex.join(' · ') + '</small>' : ''}</i>`); } // 수도승 자세 칩
+    if (u.build === 'monk' && (u.stance || u.guard)) out.push(`<i class="b" data-info="mstance" tabindex="0"><span class="sic" aria-hidden="true">🥋</span>자세</i>`); // 수도승: 자세 칩 하나(숫자와 덤은 설명 창)
     if (u.counter > 0) out.push(`<i class="b" data-info="counter" tabindex="0">반격 +${r1(u.counter)}</i>`);
     if (u.reflux) out.push('<i class="b" data-info="reflux" tabindex="0">되돌릴 독</i>');
   }
@@ -5534,7 +5530,7 @@ function infoHtml(key) {
   if (parts[0] === 'st' && b) {
     const u = parts[1] === 'p' ? b.p : b.en.find(x => x.id === parts[1]); const k = parts[2]; if (!u || !u.s[k]) return '';
     if (k === 'poison') { const v = u.s.poison.stacks; return H('중독 ' + v, P(SDESC.poison) + P('다음 피해 ' + v + ', 그다음 ' + Math.max(0, v - 1) + '… 이대로 두면 앞으로 총 ' + poisonTotal(v) + ' 피해.')); }
-    if (KW[k]) { const v = u.s[k].stacks; const ki = k === 'empower' && u === b.p && u.build === 'monk'; return H((ki ? '기' : SNAMES[k] || k) + ' ' + v, P((ki ? '기는 수도승의 강화입니다. ⚡ 공격에는 실리지 않습니다. ' : '') + (SDESC[k] || '')) + ((k === 'bleed' || k === 'ignite') ? P('이대로 두면 앞으로 ' + v + ' + ' + Math.max(0, v - 1) + ' + … = 총 ' + poisonTotal(v) + ' 피해.') : P('앞으로 ' + v + '번 더 발동합니다.')) + (k === 'bleed' && isBu(b.p) ? (u === b.p ? P('내 출혈은 내 행동마다 들어가고 1 줍니다.') + ((u.selfBl || 0) > 0 ? P('내가 나에게 건 출혈이 남아 있어 출혈로는 생명력 1에서 멈춥니다.') : '') : P('흡혈 ' + Math.round(Math.min(BUTCH.leechMax, BUTCH.leech * v) * 100) + '%: 이 적을 근접으로 치면 준 피해의 그만큼 생명력을 되찾습니다. 맞힌 순간의 출혈로 셉니다.')) : '')); }
+    if (KW[k]) { const v = u.s[k].stacks; const ki = k === 'empower' && u === b.p && u.build === 'monk'; return H((ki ? '기' : SNAMES[k] || k) + ' ' + v, P((ki ? '되받을 때마다 쌓입니다. ▶ 공격 한 번이 기 1을 써서 피해 +25%입니다. ⚡ 공격은 기를 쓰지 않습니다.' : (SDESC[k] || ''))) + ((k === 'bleed' || k === 'ignite') ? P('이대로 두면 앞으로 ' + v + ' + ' + Math.max(0, v - 1) + ' + … = 총 ' + poisonTotal(v) + ' 피해.') : P('앞으로 ' + v + '번 더 발동합니다.')) + (k === 'bleed' && isBu(b.p) ? (u === b.p ? P('내 출혈은 내 행동마다 들어가고 1 줍니다.') + ((u.selfBl || 0) > 0 ? P('내가 나에게 건 출혈이 남아 있어 출혈로는 생명력 1에서 멈춥니다.') : '') : P('흡혈 ' + Math.round(Math.min(BUTCH.leechMax, BUTCH.leech * v) * 100) + '%: 이 적을 근접으로 치면 준 피해의 그만큼 생명력을 되찾습니다. 맞힌 순간의 출혈로 셉니다.')) : '')); }
     const n = leftTurns(b, u.s[k]);
     return H(SNAMES[k] || k, P(SDESC[k] || '') + P(n > 0 ? '내 차례가 ' + n + '번 더 오기 전에 끝납니다.' : '내 다음 차례 전에 끝납니다.'));
   }
@@ -5856,7 +5852,7 @@ const INFO2 = {
   ehymn: ['노래', '조율자의 노래가 겹마다 이 적의 피해를 ' + Math.round(FOE_X.cantor.hymn * 100) + '% 올립니다.'],
   seal: ['봉인', '적힌 행동은 쓸 수 없습니다.'],
   ebraced: ['버팀', '이 적이 다음 행동까지 받는 피해가 절반입니다. 지속 피해는 그대로 들어갑니다.', '무너뜨리면 풀립니다.'],
-  mstance: ['수도승 자세', '내 다음 차례까지 이 자세가 이어집니다. 전열 적이 나를 직접 치면 되받아칩니다. 숫자는 이번에 되받은 수와 되받을 수 있는 수입니다.', '되받기 피해는 무기 피해의 ' + Math.round(MONK.ctr * 100) + '%에 자세의 덤을 더합니다. 붕괴 +' + MONK.ctrBrk + '이고, 강타를 되받으면 붕괴 +' + MONK.ctrBig + '를 더합니다. 되받을 때마다 기 +' + MONK.kiCtr + '입니다.', '화형 · 광역 · 지속 피해, 방어로 줄지 않는 공격, 후열 적의 공격은 되받지 못합니다.'],
+  mstance: ['자세', '내 다음 차례까지 이어집니다. 전열 적이 나를 직접 치면 되받아칩니다. 방어하는 동안에도 같습니다. 받는 피해는 줄지 않습니다.', '되받기 피해는 무기 피해의 ' + Math.round(MONK.ctr * 100) + '%에 자세의 덤을 더합니다. 붕괴 +' + MONK.ctrBrk + '이고, 강타를 되받으면 붕괴 +' + MONK.ctrBig + '를 더합니다. 되받을 때마다 기 +' + MONK.kiCtr + '입니다. 한 차례에 ' + MONK.ctrMax + '번까지입니다.', '화형 · 광역 · 지속 피해, 방어로 줄지 않는 공격, 후열 적의 공격은 되받지 못합니다.'],
   ectr: ['되받을 수 있는 공격', '이 적은 내 다음 차례 전에 나를 직접 칩니다. 방어하거나 자세를 잡고 있으면 되받아칩니다.'],
   ecounter: ['반격 태세', '이 적만 노리는 근접 공격으로 치면 평소 공격만큼 되받아칩니다. 한 번 되받으면 풀립니다.', '원거리, 광역, 지속 피해로 치거나, 무너뜨리면 풀립니다.'],
   eevade: ['몸 낮춤', '다음에 맞는 공격 하나를 피합니다.', '여럿을 함께 치는 공격과 지속 피해는 피하지 못합니다.'],
@@ -6329,10 +6325,12 @@ function commitAct(id, tid) {
   const c = G.data.cur; if (!c || !c.battle || c.battle.b.over || G.scr !== 'run') return;
   c.battle.commit = { id, tid: tid || null }; saveLocal();
 }
+function monkFix(b) { const p = b.p; delete p.ctrSince; delete b.kiFastHit; delete b.kiFastTurn; if (p.stance) { delete p.stance.max; delete p.stance.half; } }
 function restoreBattle(cur) {
   const bt = cur.battle; delete cur.battle;
   G.run = cur; statFix(G.run); const b = bt.b; b.p = G.run.p; b.rngF = battleRng(b); b.stepMode = true;
   if (G.run.tree && isV2(b.p)) { treeFix(G.run); b.p.skills = v2Equip(G.run); if (!b.p.cd) resetCharges(b.p); } // 개편 전 저장본: 바뀐 스킬과 재사용 대기
+  if (b.p.build === 'monk') monkFix(b); // 수도승 단순화 전 저장본: 쓰지 않는 칸을 비운다
   if (!b.queue) { b.round = b.tick || 1; b.queue = ['p']; b.bonusUsed = 0; } // 라운드 전 저장본: 지금이 내 차례
   G.b = b; G.scr = 'run'; G.sel = null; G.busy = false; G.banner = null; render();
   if (bt.commit && !b.over) { toast('누른 행동을 이어서 처리합니다'); setTimeout(() => doAct(bt.commit.id, bt.commit.tid), 60); }
