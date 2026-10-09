@@ -7,7 +7,7 @@
 ## 1. 한눈에
 
 - 방식: 모듈을 쓰지 않는 평범한 스크립트(`<script src="js/NN-이름.js">`)와 `<link rel="stylesheet" href="css/NN-이름.css">`. file://와 GitHub Pages에서 지금처럼 돌고, 전역을 지금처럼 공유한다.
-- 파일 수: js 30개(10 ~ 90번대), css 7개.
+- 파일 수: js 30개(10 ~ 90번대), css 7개. (10월 10일 전투 화면 편집이 `js/56-hud-editor.js`와 `css/72-hud-layout.css`를 더해 지금은 js 31개, css 8개다. 새 파일은 첫 줄 `'use strict';`와 `node tools/splitmap.js 06a2` 위험 0을 지킨다.)
 - **순서는 바꾸지 않는다.** 파일을 순서대로 이으면 원래 `<script>` 글자와 한 자도 다르지 않아야 하기 때문이다(3절). 그래서 "비슷한 것끼리 모으기"는 이번에 하지 않는다. 나눈 뒤에 문장 단위로 옮기는 일은 별도 작업이다(8절).
 - 증명 도구: `tools/splitcheck.js`가 이은 글자가 원본과 같은지 본다. 자르는 도구는 `tools/splitsite.js`다. 둘 다 이 브랜치에서 시험을 마쳤다(10절).
 - 읽는 도구: 모든 도구는 `tools/pagesrc.js`(`pageScript` · `pageData` · `pageCss`)로 스크립트를 읽는다. 한 파일이든 나눈 파일이든 같은 글자를 얻는다(9절).

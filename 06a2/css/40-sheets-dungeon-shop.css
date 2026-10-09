@@ -33,7 +33,7 @@
  .bgrid{grid-template-rows:auto auto auto}
  .app{padding:0 8px calc(env(safe-area-inset-bottom,0px) + 48px)}
  .card{padding:10px}
- .fstat,.bmid,.field,.dock{padding:6px 7px}
+ .hmod.hm,.fstat,.field,.dock{padding:6px 7px}
 }
 
 /* ===== 던전: 진행 바, 문 ===== */
