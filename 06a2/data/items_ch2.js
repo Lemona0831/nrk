@@ -15,7 +15,7 @@ const ITEMS_CH2 = {
   mossstaff: { n: '이끼 낀 지팡이', slot: 'weapon', g: 'n', act: '둔화된 적에게 주는 피해 +5%.', cost: '', lore: '젖은 벽에 기대 두었더니 이끼가 올랐다.', t: '서리 혈도 기동' },
   scorchrod: { n: '그을린 홀', slot: 'weapon', g: 'n', act: '화상 3 이상인 적에게 주는 피해 +5%.', cost: '', lore: '화장터의 재를 휘젓던 홀.', t: '불꽃 불칼 공명' },
   wardhammer: { n: '방패 깨는 망치', slot: 'weapon', g: 'n', act: '보호막이 있으면 강공격 붕괴 +4.', cost: '', lore: '방패 뒤에 선 자가 쓰라고 자루를 짧게 잘랐다.', t: '성벽 파쇄 주문갑' },
-  skinknife: { n: '사냥칼', slot: 'weapon', g: 'n', act: '추적 2겹 이상인 적에게 기본 공격 피해 +2.', cost: '', lore: '짐승을 쫓던 칼이 망자를 쫓는다.', t: '저격 연사', fits: ['hunter'] },
+  skinknife: { n: '사냥칼', slot: 'weapon', g: 'n', act: '정예 · 강적 · 보스에게 주는 피해 +10%.', cost: '', lore: '짐승을 쫓던 칼이 망자를 쫓는다.', t: '저격 연사', fits: ['hunter'] },
   trainrod: { n: '수련 봉', slot: 'weapon', g: 'n', act: '기 3 이상이면 강공격 붕괴 +5.', cost: '', lore: '손때가 묻어 가운데만 반들반들하다.', t: '철권 혈도', fits: ['monk'] },
   confrod: { n: '고해 지팡이', slot: 'weapon', g: 'n', act: '해로운 상태를 지우면 다음 기본 공격 피해 +15%.', cost: '', lore: '고해소 문에 걸려 있던 지팡이.', t: '속죄 전가' },
   sextonbar: { n: '무덤지기의 쇠막대', slot: 'weapon', g: 'n', act: '강공격 피해 +4%.', cost: '', lore: '무겁고 곧다. 다른 쓸모는 없다.', t: 'all', plain: 1 },
@@ -52,7 +52,7 @@ const ITEMS_CH2 = {
   knotshroud: { n: '매듭 푼 수의', slot: 'armor', g: 'n', act: '조이기에 받는 피해 −12%.', cost: '', lore: '망자를 묶던 끈을 모두 풀어 두었다.', t: 'all', vs: 'hexer' },
   wallcloak: { n: '납골 회랑 외투', slot: 'armor', g: 'n', act: '적의 뼈벽이 서 있는 동안 받는 피해 −6%.', cost: '', lore: '두개골 사이를 지나며 먼지를 뒤집어썼다.', t: 'all', vs: 'wall' },
   wardlining: { n: '보호막 안감 갑옷', slot: 'armor', g: 'n', act: '보호막이 최대치의 절반 이상이면 받는 강타 피해 −8%.', cost: '', lore: '안감에 수놓은 글이 막을 붙잡아 둔다.', t: '성벽 주문갑' },
-  huntvest: { n: '사냥꾼 가죽 조끼', slot: 'armor', g: 'n', act: '몸 빼기로 공격을 피하면 스태미나 +6.', cost: '', lore: '몸을 비틀기 좋게 옆구리를 텄다.', t: '기동', fits: ['hunter'] },
+  huntvest: { n: '사냥꾼 가죽 조끼', slot: 'armor', g: 'n', act: '추적 중인 적을 맞히면 보호막 +3(행동마다 한 번). 몸 빼기로 공격을 피하면 스태미나 +6.', cost: '', lore: '몸을 비틀기 좋게 옆구리를 텄다.', t: '저격 연사 기동', fits: ['hunter'] },
   trainrobe: { n: '수련 도복', slot: 'armor', g: 'n', act: '되받아칠 때마다 생명력 +1.', cost: '', lore: '깃이 닳아 하얗게 바랬다.', t: '부동', fits: ['monk'] },
   confrobe: { n: '고해복', slot: 'armor', g: 'n', act: '해로운 상태를 지우면 스태미나 +4.', cost: '', lore: '무릎이 닿던 자리만 해졌다.', t: '속죄 전가' },
   monkmantle: { n: '두꺼운 수도사 망토', slot: 'armor', g: 'n', act: '최대 생명력 +8.', cost: '', lore: '두꺼운 양모 망토. 지하의 냉기도 뚫지 못한다.', t: 'all', plain: 1 },
@@ -160,7 +160,7 @@ const ITEMS_CH2 = {
   firemark: { n: '불 표식 부적', slot: 'amulet', g: 'n', act: '화상이 걸린 채 쓰러진 적마다 스태미나 +5.', cost: '', lore: '재로 그은 표식.', t: '불꽃 불칼' },
   shieldcharm: { n: '막 부적', slot: 'amulet', g: 'n', act: '전투가 시작되면 보호막 +4.', cost: '', lore: '얇은 막이 먼저 첫 칼을 받는다.', t: '성벽 주문갑' },
   boneicon: { n: '작은 뼈 성상', slot: 'amulet', g: 'n', act: '최대 생명력 +6.', cost: '', lore: '누구의 뼈인지 몰라 성인이라 불렀다.', t: 'all', plain: 1 },
-  trackcharm: { n: '추적자 부적', slot: 'amulet', g: 'n', act: '추적이 3겹이 되면 스태미나 +8.', cost: '', lore: '세 번 맞히면 숨이 고른다.', t: '저격', fits: ['hunter'] },
+  trackcharm: { n: '추적자 부적', slot: 'amulet', g: 'n', act: '추적이 3겹이 되면 스태미나 +8. 추적 중인 적이 있으면 받는 피해 −5%.', cost: '', lore: '세 번 맞히면 숨이 고른다.', t: '저격', fits: ['hunter'] },
   mournbeads: { n: '곡하는 자의 묵주', slot: 'amulet', g: 'm', act: '뼈 더미가 있는 동안 주는 광역 피해 +15%.', cost: '', lore: '알마다 이름이 하나씩 새겨져 있다.', t: '전열_장악 연사 공명 학살', vs: 'pile bonepile' },
   wallcharm: { n: '뼈벽 허무는 부적', slot: 'amulet', g: 'm', act: '뼈벽이 무너지면 그 벽을 쌓은 적의 붕괴 +20.', cost: '', lore: '벽이 무너지면 쌓은 자의 무릎도 꺾인다.', t: '파쇄', vs: 'wall' },
   mirrorcharm: { n: '조임 거울 부적', slot: 'amulet', g: 'm', act: '조이기에 맞으면 그 주술사에게 약화 2를 건다.', cost: '', lore: '거울 조각이 실을 되비춘다.', t: '전가 혈도', vs: 'hexer' },
@@ -212,10 +212,6 @@ const ITEMS_CH2 = {
   lordgrail: { n: '군주의 성배', slot: 'flask', g: 'h', act: '생명력 플라스크로 회복한 만큼 보호막도 얻는다.', cost: '생명력 플라스크 최대 충전 −1', lore: '왕이 마지막으로 든 잔.', t: 'all' },
   blackspring: { n: '검은 샘 물병', slot: 'flask', g: 'h', act: '플라스크를 마시면 모든 적에게 취약 1을 건다.', cost: '정화 · 스태미나 플라스크 최대 충전 −1', lore: '검은 샘에서 길어 온 물. 병 안쪽이 흐리다.', t: 'all' },
   baptism: { n: '마르지 않는 세례 잔', slot: 'flask', g: 'l', act: '방을 이길 때마다 생명력 플라스크 1이 찬다.', cost: '생명력 플라스크 최대 충전 1, 회복 −10%p', lore: '물이 빠진 세례조에서 이 잔만은 늘 젖어 있었다.', t: 'all' },
-  // 사냥꾼 전용 (10월 9일 CLS-ch2-hunter)
-  bigbow: { n: '거인 잡이 활', slot: 'weapon', g: 'r', act: '정예 · 강적 · 보스에게 주는 피해 +15%.', cost: '', lore: '시위가 팔뚝만 하다.', t: '저격 연사', fits: ['hunter'] },
-  wardvest: { n: '추적자의 덧옷', slot: 'armor', g: 'r', act: '추적 중인 적을 맞히면 보호막 +4(행동마다 한 번).', cost: '', lore: '쫓는 동안은 몸이 가볍다.', t: '저격 연사 기동', fits: ['hunter'] },
-  steadyring: { n: '버티는 반지', slot: 'ring1', g: 'r', act: '추적 중인 적이 있으면 받는 피해 −8%.', cost: '', lore: '시선을 거두지 않는 동안 반지가 차갑다.', t: '저격 연사 기동', fits: ['hunter'] },
 };
 for (const k in ITEMS_CH2) ITEMS[k] = Object.assign({ kind: 'free', ch2: 1 }, ITEMS_CH2[k]);
 /* 2챕터 장비 풀. 챕터 풀은 CH_POOLS[챕터]로 읽는다(index.html poolOf). 2챕터 드롭의 10%는 이전 챕터 풀에서 나온다(dropKey) */
