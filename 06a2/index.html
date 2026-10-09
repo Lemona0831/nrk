@@ -2048,6 +2048,7 @@ const IFX_AWK = {
   k_cf1: { onCleanse: (b, p, n) => { if (!(n > 0)) return; return fxHeal(p, p.hpMax * 0.02) > 0 ? 1 : 0; } },
   k_cf2: { hitP: (b, p, e) => badKinds(e) >= 1 ? 0.06 : 0 },
   k_cf3: { inP: (b, p) => badKinds(p) >= 1 ? 0.04 : 0 },
+  g_cf2: { onSkill: (b, p) => ((b.ctx && b.ctx.ch) || 1) === 2 && fxHeal(p, p.hpMax * 0.012) > 0 ? 1 : 0 }, /* 챕터 선물(CH_GIFT): 2챕터에서만 일한다 */
   k_bm1: { hitP: (b, p, e) => st(e, 'poison') > 0 ? 0.06 : 0 },
   k_bm2: { bHealP: () => 0.10 },
   k_bm3: { hitP: (b, p) => p.hp <= p.hpMax * 0.7 ? 0.06 : 0 },
@@ -4660,7 +4661,7 @@ function awkTake(run, id) {
   (run.awk = run.awk || []).push(id); run.p.awk = run.awk.slice(); (run.awkLog = run.awkLog || []).push({ id, ch: run.ch || 1, room: run.room, t: Date.now() });
   run.awkPending--; run.awkOffer = null; applyGear(run); return true;
 }
-function awkCard(id, extra) { const a = AWK_MAP[id]; if (!a) return ''; const tag = a.g === 'cls' ? esc((BUILDS[a.cls] || {}).n || '') + ' · ' + esc(a.br) : '공용'; return `<div class="awkc"><div class="awkh"><b>${esc(a.n)}</b><span class="chip">${tag}</span></div><p>${esc(a.d)}</p>${extra || ''}</div>`; }
+function awkCard(id, extra) { const a = AWK_MAP[id]; if (!a) return ''; const tag = a.g === 'cls' ? esc((BUILDS[a.cls] || {}).n || '') + ' · ' + esc(a.br) : a.g === 'gift' ? '선물' : '공용'; return `<div class="awkc"><div class="awkh"><b>${esc(a.n)}</b><span class="chip">${tag}</span></div><p>${esc(a.d)}</p>${extra || ''}</div>`; }
 function vGamble(run) {
   if (!gambleOn(run)) return '';
   const S = run.shop, ch = S.ch || 1, price = gamblePrice(ch), gold = run.gold || 0, full = bagUsed(run) >= BAG_MAX; const pct = v => (Math.round(v * 10) / 10) + '%';
@@ -4700,11 +4701,17 @@ function shopCmp(run, it) {
   return slots.map(sl => (slots.length > 1 ? `<p class="mini">${EQ_SLOT_N[sl]} 대신 끼면</p>` : '') + compareHtml(fake, '__shop', sl)).join('');
 }
 /* 다음 챕터로 (10월 5일, 1~3챕터 작업): 정산 · 상점 · 설문을 지난 캐릭터가 장비 · 골드 · 레벨 · 트리를 그대로 들고 다음 챕터 1층으로 */
+/* 챕터에 들어설 때 직업마다 받는 선물 (data/awakening.js CH_GIFT). quiet이면 알리지 않는다(이어하기에서 옛 저장본을 채울 때) */
+function chGift(run, ch, quiet) {
+  const id = CH_GIFT[ch] && CH_GIFT[ch][run.build]; if (!id || (run.awk || []).includes(id)) return false;
+  (run.awk = run.awk || []).push(id); run.p.awk = run.awk.slice(); (run.awkLog = run.awkLog || []).push({ id, ch, room: run.room, gift: 1, t: Date.now() });
+  if (!quiet) toast('깨달음을 얻었습니다: ' + AWK_MAP[id].n); return true;
+}
 function enterChapter(run) {
   const nx = (run.ch || 1) + 1; if (!CHAPTERS[nx]) return false;
   const keepDoors = run.doorLog || []; run.ch = nx; run.boss = chData(nx).boss; run.phase = null; run.settle = null; run.shop = null; run.result = null;
-  delete run.dg; dgInit(run); run.doorLog = keepDoors; (run.chLog = run.chLog || []).push({ ch: nx, lv: run.lv, gold: run.gold, t: Date.now() });
-  G.scr = 'run'; G.b = null; G.sel = null; saveRunLocal(); saveCur(); render(); toast(nx + '챕터 · ' + chData(nx).n); if (chData(nx).enterLore) toast(chData(nx).enterLore); return true;
+  delete run.dg; dgInit(run); chGift(run, nx, true); run.doorLog = keepDoors; (run.chLog = run.chLog || []).push({ ch: nx, lv: run.lv, gold: run.gold, t: Date.now() });
+  G.scr = 'run'; G.b = null; G.sel = null; saveRunLocal(); saveCur(); render(); toast(nx + '챕터 · ' + chData(nx).n); if (chData(nx).enterLore) toast(chData(nx).enterLore); if ((run.awkLog || []).some(x => x.gift && x.ch === nx)) toast('깨달음을 얻었습니다: ' + AWK_MAP[run.awkLog.filter(x => x.gift && x.ch === nx)[0].id].n); return true;
 }
 function vWait() {
   const run = G.run; const ch = run.ch || 1, nx = ch + 1;
@@ -6273,6 +6280,7 @@ function dgFix(run) {
   if (run && !run.mode) run.mode = 'normal'; /* 가혹 모드: 옛 저장본은 일반 */
   if (run && !run.legSeen) run.legSeen = []; /* 2챕터 장비: 이 런에서 나온 전설 (같은 전설은 한 번만) */
   if (run && !run.awk) run.awk = []; /* 깨달음: 옛 저장본은 없음 (p.awk는 깨달음을 얻을 때 맞춘다) */
+  if (run && run.p && (run.ch || 1) >= 2) for (let c = 2; c <= run.ch; c++) chGift(run, c, true); /* 챕터 선물: 이미 그 챕터에 들어선 옛 저장본도 받는다 */
   if (!run || !run.dg || run.dgv === 2) return;
   const m = f => f <= 8 ? f : f === 9 ? FLOOR_CAMP : f <= 17 ? f + 3 : f === 18 ? FLOOR_BOSS - 1 : FLOOR_BOSS;
   run.room = m(run.room || 1); if (run.cur && run.cur.floor) run.cur.floor = m(run.cur.floor); for (const d of run.doors || []) if (d.floor) d.floor = m(d.floor);
