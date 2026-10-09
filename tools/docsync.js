@@ -3,11 +3,9 @@
 //   node tools/docsync.js --check  : 고치지 않고 블록이 코드와 같은지만 본다(다르면 종료 코드 1)
 const fs = require('fs'), vm = require('vm'), path = require('path');
 const ROOT = path.join(__dirname, '..'); const dir = path.join(ROOT, '06a2');
-const html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
-const data = [...html.matchAll(/<script src="(data\/[^"]+\.js)"><\/script>/g)].map(m => fs.readFileSync(path.join(dir, m[1]), 'utf8')).join('\n');
-const i = html.indexOf('<script>'), j = html.indexOf('</script>', i);
+const PS = require('./pagesrc.js'); const data = PS.pageData(dir), script = PS.pageScript(dir); // 한 파일 · 나눈 파일 모두 같은 글자
 const ctx = { console, setTimeout() { }, clearTimeout() { }, setInterval() { }, clearInterval() { }, module: { exports: {} } }; vm.createContext(ctx);
-vm.runInContext(data + '\n' + html.slice(i + 8, j) + '\n;this.__X = { BUILDS, LV_GAIN, TREE2, SKILLS2, STAT_REC, STAT_KEYS, CANTRIP: typeof CANTRIP !== "undefined" ? CANTRIP : {} };', ctx, { filename: 'x' });
+vm.runInContext(data + '\n' + script + '\n;this.__X = { BUILDS, LV_GAIN, TREE2, SKILLS2, STAT_REC, STAT_KEYS, CANTRIP: typeof CANTRIP !== "undefined" ? CANTRIP : {} };', ctx, { filename: 'x' });
 const X = ctx.__X;
 const SN = { str: '힘', dex: '민첩', int: '지능', con: '체력', wil: '의지' };
 const DOCS = { assassin: 'docs/직업/암살자.md', warden: 'docs/직업/파수꾼.md', hunter: 'docs/직업/사냥꾼.md', elementalist: 'docs/직업/원소술사.md', spellblade: 'docs/직업/마검사.md', monk: 'docs/직업/수도승.md',

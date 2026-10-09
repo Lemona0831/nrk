@@ -7,7 +7,8 @@ s = open(os.path.join(NEXT, 'index.html'), encoding='utf-8').read()
 s = s.replace('src="../config.js"', 'src="config.js"').replace('href="../privacy.html"', 'href="privacy.html"')
 assert '../' not in re.sub(r'//[^\n]*', '', s.split('<script>')[0]) , '머리말에 ../ 경로가 남았습니다'
 open(os.path.join(ROOT, 'index.html'), 'w', encoding='utf-8', newline='').write(s)
-for d in ['data', 'audio']:
+for d in ['data', 'audio', 'js', 'css']:
+    if not os.path.isdir(os.path.join(NEXT, d)): continue  # js/ · css/는 index.html을 나눈 뒤에만 있다
     dst = os.path.join(ROOT, d)
     if os.path.isdir(dst): shutil.rmtree(dst)
     shutil.copytree(os.path.join(NEXT, d), dst)
