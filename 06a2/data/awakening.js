@@ -58,6 +58,12 @@ const AWK_LIST = [
   { id: 'k_bm2', g: 'cls', cls: 'bloodmage', br: '포식', n: '삼키는 입', d: '흡혈과 먹기로 얻는 회복이 10% 늘어납니다.' },
   { id: 'k_bm3', g: 'cls', cls: 'bloodmage', br: '혈약', n: '값 치른 피', d: '생명력이 70% 이하이면 주는 직접 피해가 6% 늘어납니다.' },
 ];
-const AWK_MAP = Object.fromEntries(AWK_LIST.map(a => [a.id, a]));
+/* 챕터에 들어설 때 직업마다 받는 선물 (고르지 않고, 제시 목록 AWK_LIST에는 들지 않는다. 10월 9일 2챕터 숨겨진 직업 2: 군주 앞 생명력이 모자라 보스 승률이 합격선 아래였다)
+   효과는 IFX_AWK의 같은 id이고, 그 챕터에서만 일한다. 받는 표는 CH_GIFT[챕터][직업 키] */
+const AWK_GIFT = [
+  { id: 'g_cf2', g: 'gift', cls: 'confessor', n: '묘지의 기도', d: '2챕터에서 스킬을 쓸 때마다 최대 생명력의 1.2%를 회복합니다.' },
+];
+const CH_GIFT = { 2: { confessor: 'g_cf2' } };
+const AWK_MAP = Object.fromEntries(AWK_LIST.concat(AWK_GIFT).map(a => [a.id, a]));
 /* 얻는 때: 정산을 확정한 뒤(마지막 챕터가 아니면)와 2챕터부터의 야영지. 세 개를 보여 주고 하나를 고른다 */
 const AWK = { offer: 3, campFrom: 2, settleFrom: 1, openCh: { c2: 2, c3: 3, cls: 1 } };
