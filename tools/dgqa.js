@@ -410,6 +410,7 @@ function spendTree(pk, r) {
     let br = run.focus; if (run.build === 'hunter' && focus) { if (br === '기동') br = run.focus = r() < 0.5 ? '저격' : '연사'; const opened = b0 => run.tree.open.filter(id => (G0.SK2[id] || {}).b === b0).length; br = opened('기동') <= opened(run.focus) ? '기동' : run.focus; } // 사냥꾼(10월 5일): 피해 갈래 하나와 기동을 번갈아 (한 갈래를 몰아 찍으면 오히려 약하다)
     let pool = focus ? (can.filter(s => s.b === br).length ? can.filter(s => s.b === br) : can) : can;
     if (run.build === 'assassin' && focus && br === '그림자' && !process.env.SH_RANDOM) { /* 암살자 그림자(10월 8일): 왼쪽 기둥(피해 칸)만 내려간다. 문서 C-5: 오른 기둥은 Lv10 보스 22%, 보스 앞에서 흘리기 준비만 끼우면 진다 */ const lp = pool.filter(s => all.filter(x => x.b === s.b && x.row === s.row)[0] === s); if (lp.length) pool = lp; }
+    if (run.build === 'elementalist' && focus && br === '공명' && !process.env.ELEM_PATH_OLD) { /* 원소술사 공명(10월 9일): 기둥을 섞지 않고 왼쪽 엮기 기둥만 내려간다. 문서 C-4-1·D-4의 장착(엮기 칸)이고, 실제 세기 보스에서 엮기 기둥은 Lv5 30-63% · Lv8 87-93%인데 두 기둥을 섞은 장착은 0%였다. ELEM_PATH_OLD=1로 끔 */ const lp = pool.filter(s => all.filter(x => x.b === s.b && x.row === s.row)[0] === s); if (lp.length) pool = lp; }
     const root = focus ? pool.filter(x => ROWN(x) === 1 && x.b === br) : []; // 한 갈래를 파는 사람은 그 갈래의 첫 줄 두 칸부터 연다
     const sbPref = x => run.build === 'spellblade' && [3, 5].includes(x.row) && x.tgt === 'self' ? 1 : 0; // 마검사(10월 7일): 3 · 5줄에서는 나에게 쓰는 칸(칼에 싣기 · 채우기)
     const bmS = run.build === 'bloodmage' && focus ? bmPathNext(run, br) : null; // 숨겨진 직업 3 (비공개 문서 C5 · F4-11): 갈래마다 정한 주 경로
