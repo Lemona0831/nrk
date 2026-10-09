@@ -2479,11 +2479,13 @@ function treeFix(run) {
 }
 /* 장착: 시작 스킬(늘) + 트리에서 끼운 스킬(run.skills, 4칸까지) */
 function v2Equip(run) { const T = TREE2[run.build]; return (T ? T.starters : []).concat((run.skills || []).filter(id => !(T && T.starters.includes(id)))).slice(0, (T ? T.starters.length : 0) + EQUIP_SLOTS2); }
+/* 사냥꾼 상급 줄 문턱(10월 9일 결정 59 나): 칸에 skip이 있으면 이어진 앞 칸 말고도 같은 갈래의 skip줄 이상 칸을 하나 열었을 때 열 수 있다. skip이 없는 칸(다른 직업)은 아무것도 달라지지 않는다 */
+const treeSkipOk = (open, s) => !!(s.skip && open.some(x => SK2[x] && SK2[x].b === s.b && SK2[x].row >= s.skip && SK2[x].row < s.row));
 function treeWhy(run, id) {
   const t = run.tree, s = SK2[id]; if (!t || !s) return '없는 스킬';
   if (s.start) return '시작 스킬';
   if (t.open.includes(id)) return '이미 열림';
-  if (s.par && !s.par.some(x => t.open.includes(x))) return '이어진 앞 칸을 먼저 열어야 합니다';
+  if (s.par && !s.par.some(x => t.open.includes(x)) && !treeSkipOk(t.open, s)) return '이어진 앞 칸을 먼저 열어야 합니다';
   const chN = (typeof TREE_CH !== 'undefined' ? TREE_CH : {})[s.tier]; if (!chN) return '아직 열 수 없는 등급입니다'; if ((run.ch || 1) < chN) return `${chN}챕터부터 열립니다`; // 10월 3일 만든 사람 결정: 상급 3챕터, 궁극 5챕터. TREE_CH에 없는 등급은 잠근다(설정을 빠뜨려도 1챕터에 열리지 않게)
   const need = TREE_GATE[s.tier] || 0; const sp = t.spent[s.b] || 0;
   if (sp < need) return `${s.b} 갈래에 포인트 ${need}점을 먼저 써야 합니다 (지금 ${sp}점)`;
@@ -2493,7 +2495,7 @@ function treeWhy(run, id) {
 /* 보이는 범위: full(다 보임), name(이름만), hidden(?). 기본과 부모가 열린 칸은 다 보이고, 궁극(tease)은 이름만 먼저 보인다 */
 function treeVis(run, id) {
   const t = run.tree, s = SK2[id]; if (!t || !s) return 'hidden';
-  if (s.start || t.open.includes(id) || !s.par || s.par.some(x => t.open.includes(x))) return 'full';
+  if (s.start || t.open.includes(id) || !s.par || s.par.some(x => t.open.includes(x)) || treeSkipOk(t.open, s)) return 'full';
   return s.tease ? 'name' : 'hidden';
 }
 /* 되돌리기 (10월 3일 만든 사람 요청: 캐릭터를 만드는 동안에는 연 칸을 다시 뺄 수 있다). 남은 칸이 앞 칸·등급 조건을 그대로 지켜야 한다 */
@@ -2502,7 +2504,7 @@ function treeRefundWhy(run, id) {
   if (!G.creating) return '캐릭터를 만드는 동안에만 되돌릴 수 있습니다';
   const rest = t.open.filter(x => x !== id);
   for (const o of rest) { const so = SK2[o]; if (!so) continue;
-    if (so.par && so.par.length && !so.par.some(x => rest.includes(x))) return so.n + '이(가) 이 칸에 이어져 있어 먼저 되돌려야 합니다';
+    if (so.par && so.par.length && !so.par.some(x => rest.includes(x)) && !treeSkipOk(rest, so)) return so.n + '이(가) 이 칸에 이어져 있어 먼저 되돌려야 합니다';
     if (rest.filter(x => x !== o && SK2[x] && SK2[x].b === so.b).length < (TREE_GATE[so.tier] || 0)) return so.n + '의 등급 조건 때문에 먼저 되돌려야 합니다'; }
   return null;
 }

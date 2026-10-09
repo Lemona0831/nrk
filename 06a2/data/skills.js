@@ -207,8 +207,8 @@ const SKILLS2 = {
     { id: 'h_endhunt', row: 10, b: '저격', tier: '중급', n: '사냥의 끝', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 2 }, { k: 'focusBurst', n: 14 }, { k: 'lowx', hp: 0.3, mul: 1.5 }, { k: 'hasteSpend', mul: 1.5 }] },
     { id: 'h_oneshot', row: 10, b: '저격', tier: '중급', n: '일격필살', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 19 }, { k: 'brk', n: 13 }, { k: 'bigx', mul: 1.5 }] },
     // 상급 (3챕터, 11~13줄 · 10월 8일): 저격을 마무리한다. 왼쪽 기둥은 추적(쌓고 터뜨리고 다시 쌓는다), 오른쪽은 취약과 큰 한 발. 칸마다 스스로 겹과 취약을 건다
-    { id: 'h_zeal', row: 11, b: '저격', tier: '상급', n: '집념의 화살', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'focusx', per: 0.25 }, { k: 'focusAdd', n: 1 }, { k: 'bigx', mul: 1.3 }] },
-    { id: 'h_nail', row: 11, b: '저격', tier: '상급', n: '급소 박기', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'vuln', n: 3 }, { k: 'vulnPer', per: 3 }, { k: 'bigx', mul: 1.3 }] },
+    { id: 'h_zeal', skip: 6, row: 11, b: '저격', tier: '상급', n: '집념의 화살', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'focusx', per: 0.25 }, { k: 'focusAdd', n: 1 }, { k: 'bigx', mul: 1.3 }] },
+    { id: 'h_nail', skip: 6, row: 11, b: '저격', tier: '상급', n: '급소 박기', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'vuln', n: 3 }, { k: 'vulnPer', per: 3 }, { k: 'bigx', mul: 1.3 }] },
     { id: 'h_unend', row: 12, b: '저격', tier: '상급', n: '끝없는 사냥', tgt: 'ranged', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 3 }, { k: 'focusBurst', n: 10 }, { k: 'focusAdd', n: 2 }] },
     { id: 'h_delve', row: 12, b: '저격', tier: '상급', n: '약점 파고들기', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'vuln', n: 2 }, { k: 'vulnGrow', mul: 2 }, { k: 'vulnPer', per: 3 }] },
     { id: 'h_doom', row: 13, b: '저격', tier: '상급', n: '추격의 종말', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 3 }, { k: 'focusBurst', n: 13 }, { k: 'lowx', hp: 0.3, mul: 1.5 }, { k: 'bigx', mul: 1.4 }, { k: 'hasteSpend', mul: 1.5 }] },
@@ -235,8 +235,8 @@ const SKILLS2 = {
     { id: 'h_thousand', row: 10, b: '연사', tier: '중급', n: '천 개의 화살', tgt: 'ranged', time: 'vslow', cd: 6, hits: 5, fx: [{ k: 'dmg', n: 4 }, { k: 'hasteSpend', mul: 1.5 }] },
     { id: 'h_skysplit', row: 10, b: '연사', tier: '중급', n: '하늘 가르기', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 1 }, { k: 'hastex', mul: 1.6 }] }, /* 10월 7일: 학살의 비(9줄)와 모든 값이 같던 칸. 연속 행동 라운드에 크게 */
     // 상급 (3챕터, 11~13줄 · 10월 8일): 연사를 마무리한다. 왼쪽 기둥은 표적 바꾸기와 연발, 오른쪽은 모든 적 화살비와 출혈. 큰 적 배수는 없다(거구가 약점)
-    { id: 'h_cross', row: 11, b: '연사', tier: '상급', n: '엇갈린 사격', tgt: 'ranged', time: 'fast', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 6 }, { k: 'swapx', mul: 1.5 }, { k: 'hasten', n: 1 }] },
-    { id: 'h_thornrain', row: 11, b: '연사', tier: '상급', n: '가시 폭우', tgt: 'front', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 5 }] },
+    { id: 'h_cross', skip: 6, row: 11, b: '연사', tier: '상급', n: '엇갈린 사격', tgt: 'ranged', time: 'fast', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 6 }, { k: 'swapx', mul: 1.5 }, { k: 'hasten', n: 1 }] },
+    { id: 'h_thornrain', skip: 6, row: 11, b: '연사', tier: '상급', n: '가시 폭우', tgt: 'front', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 5 }] },
     { id: 'h_rapid', row: 12, b: '연사', tier: '상급', n: '속사', tgt: 'ranged', time: 'normal', cd: 8, hits: 4, fx: [{ k: 'dmg', n: 5 }, { k: 'swapx', mul: 1.3 }] },
     { id: 'h_crimson', row: 12, b: '연사', tier: '상급', n: '붉은 폭우', tgt: 'front', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'bleed', n: 4 }, { k: 'hastex', mul: 1.4 }] },
     { id: 'h_shade', row: 13, b: '연사', tier: '상급', n: '그림자 화살', tgt: 'ranged', time: 'vslow', cd: 6, hits: 5, fx: [{ k: 'dmg', n: 4 }, { k: 'swapx', mul: 1.6 }, { k: 'hasteSpend', mul: 1.5 }] },
@@ -263,8 +263,8 @@ const SKILLS2 = {
     { id: 'h_shadowrun', row: 10, b: '기동', tier: '중급', n: '그림자 질주', tgt: 'self', time: 'fast', cd: 10, once: 1, fx: [{ k: 'evade', n: 1 }, { k: 'evadeCtr', dmg: 12, rounds: 3 }, { k: 'quickTurns', n: 3 }] }, // 피할수록 세지는 마무리 (빠른 칸 +1은 내 차례 3번 내내: 측정 때 따로 본다)
     { id: 'h_icecage', row: 10, b: '기동', tier: '중급', n: '얼음 감옥', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 18 }, { k: 'freeze', chill: 3, brk: 40 }] }, // 한 적을 확실히 멈추는 마무리(강적 · 보스는 둔화 3 + 붕괴)
     // 상급 (3챕터, 11~13줄 · 10월 8일): 기동을 마무리한다. 왼쪽 기둥은 피하기가 피해와 반격이 되는 길, 오른쪽은 둔화를 걸고 깨고 끊는 길. 칸마다 스스로 재료를 건다
-    { id: 'h_void', row: 11, b: '기동', tier: '상급', n: '허공 사격', tgt: 'ranged', time: 'fast', cd: 8, fx: [{ k: 'dmg', n: 7 }, { k: 'evade', n: 1 }, { k: 'evadeCtr', dmg: 7 }] },
-    { id: 'h_wedge', row: 11, b: '기동', tier: '상급', n: '얼음 쐐기', tgt: 'ranged', time: 'fast', cd: 7, fx: [{ k: 'dmg', n: 5 }, { k: 'chillShatter', dmg: 4, brk: 20 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'h_void', skip: 6, row: 11, b: '기동', tier: '상급', n: '허공 사격', tgt: 'ranged', time: 'fast', cd: 8, fx: [{ k: 'dmg', n: 7 }, { k: 'evade', n: 1 }, { k: 'evadeCtr', dmg: 7 }] },
+    { id: 'h_wedge', skip: 6, row: 11, b: '기동', tier: '상급', n: '얼음 쐐기', tgt: 'ranged', time: 'fast', cd: 7, fx: [{ k: 'dmg', n: 5 }, { k: 'chillShatter', dmg: 4, brk: 20 }, { k: 'st', s: 'chill', n: 2 }] },
     { id: 'h_dance', row: 12, b: '기동', tier: '상급', n: '반격의 춤', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'evade', n: 1 }, { k: 'evadeCtr', dmg: 10, chill: 1 }, { k: 'stam', n: 30 }] },
     { id: 'h_snare', row: 12, b: '기동', tier: '상급', n: '붙잡는 화살', tgt: 'ranged', time: 'fast', cd: 8, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'chill', n: 2 }, { k: 'cutx', brk: 60 }, { k: 'chillCut', brk: 40 }] },
     { id: 'h_mirage', row: 13, b: '기동', tier: '상급', n: '환영 질주', tgt: 'self', time: 'fast', cd: 10, fx: [{ k: 'evade', n: 1 }, { k: 'st', s: 'haste', n: 1 }, { k: 'evadeCtr', dmg: 4, rounds: 3 }, { k: 'stam', n: 10 }] },
