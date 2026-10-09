@@ -7,8 +7,8 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const args = process.argv.slice(2);
-const file = args.find(a => !a.startsWith('--') && a !== args[args.indexOf('--base') + 1]);
 const bi = args.indexOf('--base'); const base = bi >= 0 ? args[bi + 1] : 'HEAD';
+const file = args.find((a, i) => !a.startsWith('--') && !(bi >= 0 && i === bi + 1));
 const whole = args.includes('--file');
 if (!file) { console.error('사용: node tools/textnum.js <파일> [--base 커밋] [--file]'); process.exit(2); }
 let old; try { old = execSync('git show ' + base + ':' + file.replace(/\\/g, '/'), { encoding: 'utf8', maxBuffer: 1 << 28, stdio: ['ignore', 'pipe', 'ignore'] }); } catch (e) { console.error('기준 판을 읽지 못함: ' + base + ':' + file); process.exit(2); }
