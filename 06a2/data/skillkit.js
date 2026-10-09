@@ -263,7 +263,7 @@ function skScore(s) { const E = skValue(s) * (SKK.brAdj[s.b] || 1) * ((SKK.clsAd
 /* 설명 문장. 키워드(중독, 붕괴, 터뜨리기, 흘리기)의 뜻은 설명창의 키워드 칸이 맡고, 스킬 문장은 숫자만 말한다 */
 /* 쿨타임: 쓰고 나면 cd만큼 내 턴을 기다린다(내 턴이 끝날 때마다 1 준다). 갈래 규칙(TREE2.haste)은 10월 3일에 없앴다: 아래 SK_HS는 다시 쓸 때를 위해 남긴다 */
 const SK_HS = { poison: '독을 걸면', kill: '적을 쓰러뜨리면', parry: '흘려 내면', break: '정예 이상을 무너뜨리면' };
-const SK_HSL = { poison: '독을 건 행동마다', kill: '적을 쓰러뜨린 행동마다', parry: '흘리기에 성공할 때마다', break: '정예·강적·보스를 무너뜨린 행동마다' };
+const SK_HSL = { poison: '독을 건 행동마다', kill: '적을 쓰러뜨린 행동마다', parry: '흘리기에 성공할 때마다', break: '정예 · 강적 · 보스를 무너뜨린 행동마다' };
 for (const k in TREE2) for (const x of (SKILLS2[k] || [])) x.hs = (TREE2[k].haste || {})[x.b] || null; // 스킬마다 갈래 규칙을 붙여 둔다
 function skCd(s) { return s.once ? '전투마다 1번' : `쿨타임 ${s.cd}턴` + (s.hs ? ` · ${SK_HS[s.hs]} −1` : ''); } // 갈래 규칙(hs)은 지금 없다
 const skCharge = skCd; // 옛 이름
@@ -279,13 +279,13 @@ const skPer = (per, what) => per >= 1 ? `대상의 중독 1마다 ${what} +${per
 /* 숨겨진 직업 1 ('b_' 칸)의 효과 문장. null이면 공통 문장, ''이면 문장 없음 */
 const skPct = v => v >= 1 ? (v === 1 ? '' : v + '배') : Math.round(v * 100) + '%';
 function skBodyBu(s, e, late) {
-  const hits = s.hits || 1; const each = hits > 1 ? '한 번마다, ' : ''; const many = s.tgt === 'front' || s.tgt === 'all';
+  const hits = s.hits || 1; const each = hits > 1 ? '한 번에 ' : ''; const many = s.tgt === 'front' || s.tgt === 'all';
   switch (e.k) {
     case 'meSt': if (e.s === 'bleed') return ''; if (e.on === 'kill') return `이 스킬로 적을 쓰러뜨리면 나에게 ${SK_KWN[e.s] || e.s} ${e.n}.`; return null;
     case 'drain': if (e.s !== 'bleed') return null; if (e.me) return '';
       { const st = s.fx.find(x => x.k === 'st' && x.s === 'bleed'); const noHit = !s.fx.some(x => x.k === 'dmg');
         const amt = e.max ? `최대 ${e.max}까지` : e.half ? '절반(올림)만' : '모두';
-        let t = e.kill ? '이 스킬로 쓰러뜨린 적의 출혈을 모두 먹는다.' : (noHit ? '' : '그 뒤 ') + (many ? '저마다 ' : '대상의 ') + `출혈을 ${amt} 먹는다.`;
+        let t = e.kill ? '이 스킬로 쓰러뜨린 적의 출혈을 모두 먹는다.' : (noHit ? '' : '그 뒤 ') + (many ? '적마다 그 적의 ' : '대상의 ') + `출혈을 ${amt} 먹는다.`;
         t += ` 먹은 출혈 1마다 생명력 +${e.per}` + (e.brk ? `, 붕괴 +${e.brk}` : '') + '.';
         if (e.weak) t += ` 먹은 출혈 ${e.weak}마다 약화 1(최대 3).`; if (e.emp) t += ` 먹은 출혈 ${e.emp}마다 나에게 강화 1(최대 3).`;
         if (e.keep) t += ` 먹은 뒤 그 ${e.keep === 0.5 ? '절반' : Math.round(e.keep * 100) + '%'}(내림)이 대상에게 남는다.`;
@@ -293,9 +293,9 @@ function skBodyBu(s, e, late) {
         if (noHit) t += ' 피해는 주지 않는다. 출혈된 적에게만 쓸 수 있다.';
         return t; }
     case 'exploit': if (e.s !== 'bleed') return null;
-      return e.me ? `내 출혈 1마다 피해 +${e.per}(${each}내 출혈은 ${e.max || 10}까지 센다).` : `${many ? '저마다 ' : ''}대상의 출혈 1마다 피해 +${e.per}. 출혈은 줄지 않는다.`;
+      return e.me ? `내 출혈 1마다 피해 +${e.per}(${each}내 출혈은 ${e.max || 10}까지 센다).` : `${many ? '적마다 그 적의 출혈 1당' : '대상의 출혈 1마다'} 피해 +${e.per}. 출혈은 줄지 않는다.`;
     case 'grow': if (e.s !== 'bleed') return null; return ''; // 출혈 키우기는 피해 뒤에 일어나 문장 끝에 둔다 (skBody)
-    case 'grudge': { const p = skPct(e.per); let t = `지난 내 차례 뒤로 적에게 맞아 잃은 생명력${p ? '의 ' + p : ''}만큼 피해가 늘어난다(${each}최대 +${e.max}).`;
+    case 'grudge': { const p = skPct(e.per); let t = `지난 내 차례 뒤 적에게 맞아 잃은 생명력${p ? '의 ' + p : ''}만큼 피해가 늘어난다(${each}최대 +${e.max}).`;
       if (e.bl) t += ` 그 잃은 생명력 ${e.bl}마다 출혈 1을 건다(최대 6).`; if (e.vu) t += ` 그 잃은 생명력 ${e.vu}마다 취약 1을 건다(최대 3).`; if (e.brk) t += ` 그 잃은 생명력 1마다 붕괴 +${e.brk}(최대 +${e.brkMax}).`; return t; }
     case 'lowx': return e.me ? `내 생명력이 ${Math.round(e.hp * 100)}% 이하면 피해 ×${e.mul}.` : null;
     case 'spread': if (e.s !== 'bleed') return null; return '이 스킬로 쓰러뜨리면 그 적에게 있던 출혈과 이 스킬의 출혈을 더한 만큼 다른 적 모두에게 출혈을 건다(한 번에 최대 6).';
@@ -315,8 +315,8 @@ function skBodyConfPre(s) { // 피해 문장보다 먼저 일어나는 것 (옮�
     if (e.k === 'transfer') { const w = cfList(e.only); out.push(`내 ${w}${skJoW(w, '을', '를')} 모두 ${many ? '거두어 맞힌 적에게 나눠 건다' : '대상에게 옮긴다'}.`); if (e.add) { const a = SK_KWN[e.addK || (e.only || [])[0]] || ''; out.push(`그 뒤 ${many ? '맞힌 적마다 ' : ''}${a} ${e.add}${skJo(e.add)} 더 건다.`); } }
     if (e.k === 'dispel') out.push(many ? `모든 적의 강화를 ${e.n || 5}씩 벗긴다.` : `대상의 강화를 ${e.n ? e.n + '까지' : '모두'} 벗긴다.`);
     if (e.k === 'cleanse' && !e.after) { const w = cfList(e.only); const amt = e.n ? e.n : '모두';
-      if (e.offer) { out.push(`내 ${w}${e.only ? '만' : '를'} ${amt} 바친다(사함).`); const g = [e.dmg ? '피해 +' + e.dmg : '', e.brk ? '붕괴 +' + e.brk : ''].filter(Boolean).join(', '); if (g) out.push(`바친 1마다 ${g}${many ? '(맞힌 적마다)' : ''}.`); }
-      else { out.push(`내 ${w}${e.only ? '만' : '를'} ${amt} 지운다(정화).`); if (e.heal) out.push(`지운 1마다 생명력 +${e.heal}.`); if (e.stam) out.push(`지운 1마다 스태미나 +${e.stam}.`); if (e.quick) out.push('하나라도 지우면 이번 차례에 빠른 칸 +1.'); if (e.haste) out.push('하나라도 지우면 나에게 가속 1.'); } }
+      if (e.offer) { out.push(`내 ${w}${e.only ? '만' : '를'} ${amt} 바친다(사함).`); const g = [e.dmg ? '피해 +' + e.dmg : '', e.brk ? '붕괴 +' + e.brk : ''].filter(Boolean).join(', '); if (g) out.push(`바친 상태 1마다 ${g}${many ? '(맞힌 적마다)' : ''}.`); }
+      else { out.push(`내 ${w}${e.only ? '만' : '를'} ${amt} 지운다(정화).`); if (e.heal) out.push(`지운 상태 1마다 생명력 +${e.heal}.`); if (e.stam) out.push(`지운 상태 1마다 스태미나 +${e.stam}.`); if (e.quick) out.push('하나라도 지우면 이번 차례에 빠른 칸 +1.'); if (e.haste) out.push('하나라도 지우면 나에게 가속 1.'); } }
   }
   const ms = s.fx.filter(e => e.k === 'meSt' && CF_BAD.includes(e.s)); if (ms.length && s.tgt === 'self') out.push(`나에게 ${ms.map(e => (SK_KWN[e.s] || e.s) + ' ' + e.n).join(', ')}(고행).`);
   return out;
@@ -326,9 +326,9 @@ function skBodyConf(s, e) { // null이면 공통 문장, ''이면 문장 없음
     case 'transfer': case 'dispel': return '';
     case 'cleanse': return e.after ? `친 뒤 내 ${cfList(e.only)}${e.only ? '만' : '를'} ${e.n || '모두'} 지운다(정화).` : '';
     case 'perDmg': { const g = [e.per ? '피해 +' + e.per : '', e.brk ? '붕괴 +' + e.brk : ''].filter(Boolean).join(', ');
-      if (e.of === 'prot') return e.spend ? `내 보호를 모두 써서 1마다 ${g}.` : `내 보호 1마다 ${g}. 보호는 줄지 않는다.`;
+      if (e.of === 'prot') return e.spend ? `내 보호를 모두 써서, 쓴 보호 1마다 ${g}.` : `내 보호 1마다 ${g}. 보호는 줄지 않는다.`;
       if (e.of === 'burden') return `내 짐 1마다 ${g}. 짐은 줄지 않는다.`;
-      if (e.of === 'clean') return `이 스킬 앞서 이번 차례에 지우거나 바친 숫자 1마다 ${g}.`;
+      if (e.of === 'clean') return `이번 차례에 이 스킬 앞서 지우거나 바친 수 1마다 ${g}.`;
       if (e.of === 'tbad') return `대상의 해로운 상태 1마다 ${g}.`;
       { const w = SK_KWN[e.of] || e.of; return `대상의 ${w} 1마다 ${g}. ${w}${skJoW(w, '은', '는')} 줄지 않는다.`; } }
     case 'meSt': if (!CF_BAD.includes(e.s)) return null; if (s.tgt === 'self') return ''; { const ms = s.fx.filter(x => x.k === 'meSt' && CF_BAD.includes(x.s)); return ms[0] === e ? `행동이 끝나면 나에게 ${ms.map(x => (SK_KWN[x.s] || x.s) + ' ' + x.n).join(', ')}(고행).` : ''; }
@@ -342,13 +342,13 @@ function skBodyBm(s, e) {
   switch (e.k) {
     case 'hpCost': case 'drain': return e.k === 'drain' && !e.eat ? null : ''; // 앞에서 먼저 적는다
     case 'bloodDmg': return e.per >= 1 ? `이번 차례에 낸 생명력 1마다 피해 +${e.per}(20까지 센다).` : `이번 차례에 낸 생명력 ${Math.round(1 / e.per)}마다 피해 +1(20까지 센다).`;
-    case 'payCut': return e.off != null ? `이번 전투에서 다음 피로 당기기 ${e.n}번은 남은 쿨타임 ${e.off}턴 몫까지 생명력이 들지 않는다.` : `이번 전투에서 다음 피로 당기기 ${e.n}번은 값이 ${e.mul === 0.5 ? '절반' : Math.round(e.mul * 100) + '%'}이다.`;
+    case 'payCut': return e.off != null ? `이번 전투에서 다음 피로 당기기 ${e.n}번은 남은 쿨타임 ${e.off}턴 몫까지 생명력이 들지 않는다.` : `이번 전투에서 다음 피로 당기기 ${e.n}번은 드는 생명력이 ${e.mul === 0.5 ? '절반' : Math.round(e.mul * 100) + '%'}이다.`;
     case 'spread':
       if (e.mark) return '이번 전투에서 이 적이 무엇으로든 쓰러지면, 그때 남아 있던 중독만큼(최대 6) 다른 적 모두에게 중독을 건다.';
       if (e.kill) return many ? '이 스킬로 쓰러뜨린 적마다 남아 있던 중독만큼(최대 6) 다른 적 모두에게 중독을 건다. 한 번 쓸 때 적 하나가 받는 번진 중독은 6까지다.' : '이 스킬로 적을 쓰러뜨리면 그 적에게 남아 있던 중독만큼(최대 6) 다른 적 모두에게 중독을 건다.';
       if (e.s === 'weak') return `대상의 약화${(e.per || 1) === 1 ? '만큼' : ' × ' + e.per + '만큼'} 다른 적 모두에게 약화를 건다. 대상의 약화는 그대로다.`;
       return null;
-    case 'perDmg': return many ? `적마다 그 적의 약화 1마다 피해 +${e.per}. 이 스킬의 약화를 걸기 전 숫자로 센다. 약화는 줄지 않는다.` : `대상의 약화 1마다 피해 +${e.per}. 약화는 줄지 않는다.`;
+    case 'perDmg': return many ? `적마다 그 적의 약화 1당 피해 +${e.per}. 이 스킬의 약화를 걸기 전 숫자로 센다. 약화는 줄지 않는다.` : `대상의 약화 1마다 피해 +${e.per}. 약화는 줄지 않는다.`;
   }
   return null;
 }
@@ -372,7 +372,7 @@ function skBody(s) {
     if (e.k === 'st' && !eMulti) { const t = `${s.tgt === 'self' ? '나에게 ' : ''}${skKw(s, e.s)} ${e.n}`; if (bu && ((eatT && e.s === 'bleed') || hits > 1)) late.push(e); else (s.kind && hits > 1 && s.tgt !== 'self' ? first : parts).push(t); }
     if (e.k === 'ward' && !((s.kind || String(s.id).slice(0, 2) === 'w_') && burnWard)) parts.push(`${s.tgt === 'self' ? '' : '나에게 '}보호막 +${e.n}`);
   }
-  if (parts.length) out.push((hits > 1 ? `${hits}번 ${(cf || String(s.id).slice(0, 2) === 'm_') ? '친다' : s.tgt === 'ranged' || s.tgt === 'all' ? '쏜다' : (bu || s.kind) ? '벤다' : '찌른다'}. 한 번마다 ` : '') + (s.tgt === 'front' && bu ? '전열 모두에게 ' : '') + parts.join(', ') + '.');;
+  if (parts.length) out.push((hits > 1 ? `${hits}번 ${(cf || String(s.id).slice(0, 2) === 'm_') ? '친다' : s.tgt === 'ranged' || s.tgt === 'all' ? '쏜다' : (bu || s.kind) ? '벤다' : '찌른다'}. 한 번에 ` : '') + (s.tgt === 'front' && bu ? '전열 모두에게 ' : '') + parts.join(', ') + '.');;
   if (bu && hits > 1 && late.length) out.push('첫 타격 뒤 ' + late.map(e => (SK_KWN[e.s] || e.s) + ' ' + e.n).join(', ') + '.');
   if (first.length) { const l = first[first.length - 1]; out.push(`${s.tgt === 'ranged' || s.tgt === 'all' ? '첫 발' : '첫 칼'}에 ${first.join(', ')}${skJo(l.slice(-1))} 건다.`); }
   if (eMulti) for (const e of s.fx) if (e.k === 'st') out.push(`첫 발이 ${SK_KWN[e.s] || e.s} ${e.n}${skJo(e.n)} 걸고, 다음 발부터 그 ${SK_KWN[e.s] || e.s}${e.s === 'ignite' ? '을 태운다' : '를 쓴다'}.`);
@@ -406,12 +406,12 @@ function skBody(s) {
         out.push((buf.length ? `다음 흘리기 ${t}번은 ${buf.join('. ')}.` : '') + (hit ? ` ${t > 1 ? '흘리기에 성공할 때마다' : '다음 흘리기에 성공하면'} 그 적에게 ${hit}.` : '')); break; }
       case 'execute': out.push(`대상의 생명력이 ${Math.round(e.hp * 100)}% 이하면 터뜨린 피해 ×${e.mul}.`); break;
       case 'stam': out.push(`스태미나 +${e.n}.`); break;
-      case 'focusx': out.push(`대상의 추적 1겹마다 피해 +${Math.round(e.per * 100)}% 더.`); break;
+      case 'focusx': out.push(`대상의 추적 1겹마다 피해 +${Math.round(e.per * 100)}%.`); break;
       case 'focusBurst': out.push(`대상의 추적을 모두 터뜨린다. 1겹마다 피해 +${e.n}. 추적은 사라진다.`); break;
-      case 'focusAdd': out.push(`대상에게 추적 +${e.n}겹. 이 효과로는 2겹까지만 오르고, 3겹은 같은 적을 다시 맞혀야 된다.`); break;
+      case 'focusAdd': out.push(`대상에게 추적 +${e.n}겹. 이 효과로는 2겹까지만 쌓이고, 3겹째는 같은 적을 다시 맞혀야 쌓인다.`); break;
       case 'swapx': out.push(`직전에 친 적과 다른 적이면 피해 ×${e.mul}.`); break;
-      case 'evade': out.push(`다음에 맞는 공격 ${e.n}번을 피한다. 화형 · 지속 피해처럼 피할 수 없는 것은 빼고.`); break;
-      case 'evadeCtr': out.push((e.charged ? '피한 공격이 강타나 겨눈 한 발이면' : (e.rounds ? e.rounds + '라운드 동안 ' : '') + '공격을 피할 때마다') + ` 그 적에게 반격 사격: 피해 ${e.dmg}${e.chill ? ', 둔화 ' + e.chill : ''}.`); break;
+      case 'evade': out.push(`다음에 맞는 공격 ${e.n}번을 피한다. 화형과 지속 피해는 피할 수 없다.`); break;
+      case 'evadeCtr': out.push((e.charged ? '피한 공격이 강타나 겨눈 한 발이면' : (e.rounds ? e.rounds + '라운드 동안 ' : '') + '공격을 피할 때마다') + ` 그 적에게 반격 사격을 한다(피해 ${e.dmg}${e.chill ? ', 둔화 ' + e.chill : ''}).`); break;
       case 'quick': out.push('이번 차례에 빠른 칸 +1.'); break;
       case 'chillCut': out.push(`대상이 둔화된 채 강타 · 영창 · 겨누기를 모으는 중이면 그 공격을 끊는다. 강적 · 보스는 끊기지 않고 붕괴 +${e.brk}.`); break;
       case 'chillShatter': out.push(`대상의 둔화를 모두 깨뜨린다. 둔화 1마다 피해 +${e.dmg}, 붕괴 +${e.brk}.`); break;
@@ -419,19 +419,19 @@ function skBody(s) {
       case 'freeze': out.push(`일반 · 정예 적은 다음 행동을 놓친다(얼어붙음). 강적 · 보스는 둔화 ${e.chill}, 붕괴 +${e.brk}.`); break;
       case 'onCutBreak': out.push(`모으던 적을 이 스킬로 무너뜨리면 나에게 가속 ${e.haste}${e.hasten ? ', 다른 ' + s.b + ' 스킬 쿨타임 −' + e.hasten : ''}.`); break;
       case 'quickTurns': out.push(`이번 차례부터 내 차례 ${e.n}번 동안 빠른 칸 +1.`); break;
-      case 'foresee': out.push(`${e.rounds}라운드 동안 강타 · 겨눈 한 발 · 화형의 피해 −${Math.round(e.red * 100)}%. 피할 수 없는 화형에도 든다.`); break;
+      case 'foresee': out.push(`${e.rounds}라운드 동안 강타 · 겨눈 한 발 · 화형의 피해가 ${Math.round(e.red * 100)}% 줄어든다. 피할 수 없는 화형도 줄어든다.`); break;
       case 'hastex': out.push(`가속으로 두 번 움직이는 라운드면 피해 ×${e.mul}.`); break;
-      case 'hasteSpend': out.push(`가속이 있으면 1을 써서 피해 ×${e.mul}(다음 라운드의 연속 행동 대신).`); break;
+      case 'hasteSpend': out.push(`가속이 있으면 1을 써서 피해 ×${e.mul}. 그 대신 다음 라운드에 연속 행동을 하지 못한다.`); break;
       case 'meSt': out.push(e.if === 'chill' ? (s.tgt === 'front' || s.tgt === 'all' ? `이미 둔화되어 있던 적 하나마다 나에게 ${skKw(s, e.s)} +${e.n}.` : `대상이 이미 둔화되어 있었으면 때린 뒤 나에게 ${skKw(s, e.s)} +${e.n}.`) : e.s === 'empower' && String(s.id).slice(0, 2) === 'm_' ? `때린 뒤 나에게 ${skKw(s, e.s)} +${e.n}.` : `나에게 ${SK_KWN[e.s] || e.s} ${e.n}.`); break; // "때린 뒤"는 수도승(m_)만: 엔진이 수도승의 기만 피해 뒤에 준다(b.kiPend). 다른 직업의 강화는 먼저 걸린다
       case 'stance': { const blk = e.half !== 0; const ex = [e.dmg ? '피해 +' + e.dmg : '', e.brk ? '붕괴 +' + e.brk : '', e.ki ? '기 +' + e.ki : ''].filter(Boolean); const on = [e.chill ? '둔화 ' + e.chill : '', e.weak ? '약화 ' + e.weak : ''].filter(Boolean);
         out.push((s.tgt === 'self' ? '' : '친 뒤 ') + (blk ? '방어 자세를 잡는다. 내 다음 차례까지 받는 피해가 절반이고 스태미나가 들지 않는다. ' : '내 다음 차례까지 ') + (e.far ? '전열 적의 직접 공격과 후열 적이 직접 쏘는 공격을 되받는다. 화형은 되받지 못한다.' : '전열 적의 직접 공격을 되받는다.') + (blk ? '' : ' 받는 피해는 줄지 않는다.')
-          + (ex.length ? ` 되받을 때마다 ${ex.join(', ')}.` : '') + (on.length ? ` 되받은 적에게 ${on.join(', ')}.` : '') + (e.max ? ` 이번에는 ${3 + e.max}번까지 되받는다.` : '')); break; }
-      case 'kiBurst': out.push((e.pre ? `대상이 이미 둔화되어 있으면 먼저 기 +${e.pre}. ` : '') + `기를 ${e.max ? e.max + '까지' : '모두'} 터뜨려 기 1마다 ${s.tgt === 'front' || s.tgt === 'all' ? '맞은 적마다 ' : ''}피해 +${e.per}${e.brk ? ', 붕괴 +' + e.brk : ''}.` + (e.keep ? ' 터뜨린 뒤 기가 절반(내림) 남는다.' : '')); break;
-      case 'kiPer': out.push(`내 기 1마다 ${hits > 1 ? '한 번마다 ' : ''}피해 +${e.per}. 기는 이 공격이 쓰는 1만 줄어든다.`); break;
+          + (ex.length ? ` 되받을 때마다 ${ex.join(', ')}.` : '') + (on.length ? ` 되받은 적에게 ${on.join(', ')}.` : '') + (e.max ? ` 이 자세는 ${3 + e.max}번까지 되받는다.` : '')); break; }
+      case 'kiBurst': out.push((e.pre ? `대상이 이미 둔화되어 있으면 먼저 기 +${e.pre}. ` : '') + `기를 ${e.max ? e.max + '까지' : '모두'} 터뜨려 ${s.tgt === 'front' || s.tgt === 'all' ? '맞은 적마다 기 1당 ' : '기 1마다 '}피해 +${e.per}${e.brk ? ', 붕괴 +' + e.brk : ''}.` + (e.keep ? ' 터뜨린 뒤 기가 절반(내림) 남는다.' : '')); break;
+      case 'kiPer': out.push(`내 기 1마다 피해 +${e.per}${hits > 1 ? '(타격마다)' : ''}. 기는 이 공격이 쓰는 1만 줄어든다.`); break;
       case 'kiGrow': out.push(`때린 뒤 남은 기에 ${e.add}${skJo(e.add)} 더해 ${e.mul}배로 만든다(상한 5).`); break;
       case 'ctrPer': out.push(`지난 내 차례 뒤 되받은 1번마다 피해 +${e.per}(3번까지).`); break;
       case 'sealx': out.push((s.tgt === 'front' || s.tgt === 'all' ? '치유 · 축복 · 소환 · 저주 · 지키기 같은 지원 행동을 하려는 적은 그 행동이 끊긴다.' : '대상이 치유 · 축복 · 소환 · 저주 · 지키기 같은 지원 행동을 하려는 중이면 그 행동을 끊는다.') + ` 강적 · 보스는 끊기지 않고 붕괴 +${e.brk}.`); break;
-      case 'bigx': out.push(`정예·강적·보스에게는 피해 ×${e.mul}.`); break;
+      case 'bigx': out.push(`정예 · 강적 · 보스에게는 피해 ×${e.mul}.`); break;
       case 'cutx': out.push(e.chant ? `대상이 영창 중이면 붕괴 +${e.brk}.` : `대상이 강타나 영창을 모으는 중이면 붕괴 +${e.brk}.`); break;
       case 'weave': out.push(`${s.tgt === 'all' || s.tgt === 'front' ? '적마다' : '대상에게'} 없는 원소를 건다. 둔화가 있으면 화상 ${e.ign}, 화상이 있으면 둔화 ${e.chill}, 둘 다 없으면 화상 ${e.ign}.`); break;
       case 'shockx': {
@@ -439,8 +439,8 @@ function skBody(s) {
         if (m.length) out.push(`이 스킬로 일어난 열충격은 ${m.join(', ')}.`);
         if (e.arc) out.push(`이 스킬로 일어난 열충격 피해의 ${Math.round(e.arc * 100)}%가 다른 적 모두에게 번진다(광역처럼 줄고, 붕괴는 없다).`);
         if (e.keep) out.push(`이 스킬로 일어난 열충격 뒤에 대상에게 ${SK_KWN[e.keep.s] || e.keep.s} ${e.keep.n}${skJo(e.keep.n)} 남긴다.`); break; }
-      case 'rime': out.push(`다음 ${e.times}번, 나를 직접 친 적에게 ${SK_KWN[e.s || 'chill']} ${e.n}. 이미 있으면 횟수를 더한다(최대 8번).`); break;
-      case 'burnOut': out.push(`대상의 화상을 모두 태운다. 태운 화상 1마다 피해 +${e.per}, 붕괴 +${e.brk}. 화상이 없으면 이 몫은 0이다.`); break;
+      case 'rime': out.push(`나를 직접 친 적에게 다음 ${e.times}번 ${SK_KWN[e.s || 'chill']} ${e.n}${skJo(e.n)} 건다. 이미 있으면 횟수를 더한다(최대 8번).`); break;
+      case 'burnOut': out.push(`대상의 화상을 모두 태운다. 태운 화상 1마다 피해 +${e.per}, 붕괴 +${e.brk}. 화상이 없으면 이 추가 피해와 붕괴는 0이다.`); break;
       case 'drain': out.push(`대상의 중독 1마다 생명력 +${e.per}. 중독은 그대로다.`); break;
       case 'lowx': out.push(`대상의 생명력이 ${Math.round(e.hp * 100)}% 이하면 피해 ×${e.mul}.`); break;
       case 'brokenx': out.push(`대상이 붕괴 상태면 피해 ×${e.mul}.`); break;
@@ -449,7 +449,7 @@ function skBody(s) {
       case 'wardFill': out.push(e.to && e.to < 1 ? `보호막을 상한의 ${Math.round(e.to * 100)}%까지 채운다. 이미 그만큼 있으면 늘지 않는다.` : '보호막을 상한까지 채운다.'); break;
       case 'wardBurn': { const wd = (s.kind || String(s.id).slice(0, 2) === 'w_') && s.fx.find(x => x.k === 'ward'); out.push(`보호막을 ${e.max ? '최대 ' + e.max + '까지' : '모두'} 태운다. 태운 보호막 1마다 ${s.tgt === 'front' ? '전열 모두에게 ' : s.tgt === 'all' ? '모든 적에게 ' : ''}피해 ${e.mul}. 보호막이 없으면 ${s.fx.some(x => x.k === 'dmg') ? '더하는 피해는' : '이 피해는'} 0이다.` + (wd ? ` 태운 뒤 나에게 보호막 +${wd.n}.` : '')); break; }
       case 'wardDmg': out.push(`${e.per >= 1 ? '내 보호막 1마다 피해 +' + e.per : '내 보호막 ' + Math.round(1 / e.per) + '마다 피해 +1'}. 보호막은 줄지 않는다.`); break;
-      case 'thorn': out.push(`가시 ${e.times}번: 맞을 때마다 때린 적에게 피해 ${e.dmg}. 이미 있으면 횟수를 더한다(최대 8번).`); break;
+      case 'thorn': out.push(`가시 ${e.times}번을 얻는다. 맞을 때마다 때린 적에게 피해 ${e.dmg}. 이미 있으면 횟수를 더한다(최대 8번).`); break;
       case 'vulnPer': out.push(`대상의 취약 1마다 피해 +${e.per}. 취약은 줄지 않는다.`); break;
       case 'shieldx': out.push(`방패병에게는 붕괴 ×${e.mul}.`); break;
       case 'pull': out.push('대상이 후열이면 전열로 끌어낸다.'); break;
@@ -463,6 +463,6 @@ function skBody(s) {
   { const g = bu && s.fx.find(e => e.k === 'grow' && e.s === 'bleed'); if (g) out.push(`그 뒤 대상의 출혈을 ${g.mul}배${Number.isInteger(g.mul) ? '' : '(올림)'}로 만${g.add ? `들고 ${g.add}${skJo(g.add)} 더한다` : '든다'}(최대 10).`); }
   if (s.fx.filter(e => ['lowx', 'brokenx', 'bigx', 'chillx', 'kwx'].includes(e.k)).length >= 2) out.push('조건이 겹치면 배수를 곱한다.'); // 10월 4일: 박살(붕괴한 정예 · 보스에게 ×2.5 × 1.5) 등
   if (s.killRecharge) out.push(s.once ? '이 스킬로 적을 쓰러뜨리면 한 번 더 쓸 수 있다.' : bu ? '이 스킬로 적을 쓰러뜨리면 쿨타임이 돌지 않아 다음 차례에 다시 쓸 수 있다.' : '이 스킬로 적을 쓰러뜨리면 기다리지 않고 바로 다시 쓸 수 있다.');
-  if (bu && (s.tgt === 'ranged' || s.tgt === 'all') && s.fx.some(e => e.k === 'dmg')) out.push((s.tgt === 'all' ? '후열에도 닿는다. ' : '') + '근접이 아니라 흡혈은 들지 않는다.');
+  if (bu && (s.tgt === 'ranged' || s.tgt === 'all') && s.fx.some(e => e.k === 'dmg')) out.push((s.tgt === 'all' ? '후열에도 닿는다. ' : '') + '근접 공격이 아니라 흡혈은 일어나지 않는다.');
   return out.join(' ').replace(/\s+/g, ' ').trim();
 }
