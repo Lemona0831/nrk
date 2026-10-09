@@ -212,6 +212,10 @@ const ITEMS_CH2 = {
   lordgrail: { n: '군주의 성배', slot: 'flask', g: 'h', act: '생명력 플라스크로 회복한 만큼 보호막도 얻는다.', cost: '생명력 플라스크 최대 충전 −1', lore: '왕이 마지막으로 든 잔.', t: 'all' },
   blackspring: { n: '검은 샘 물병', slot: 'flask', g: 'h', act: '플라스크를 마시면 모든 적에게 취약 1을 건다.', cost: '정화 · 스태미나 플라스크 최대 충전 −1', lore: '검은 샘에서 길어 온 물. 병 안쪽이 흐리다.', t: 'all' },
   baptism: { n: '마르지 않는 세례 잔', slot: 'flask', g: 'l', act: '방을 이길 때마다 생명력 플라스크 1이 찬다.', cost: '생명력 플라스크 최대 충전 1, 회복 −10%p', lore: '물이 빠진 세례조에서 이 잔만은 늘 젖어 있었다.', t: 'all' },
+  // 사냥꾼 전용 (10월 9일 CLS-ch2-hunter)
+  bigbow: { n: '거인 잡이 활', slot: 'weapon', g: 'm', act: '정예 · 강적 · 보스에게 주는 피해 +15%.', cost: '', lore: '시위가 팔뚝만 하다.', t: '저격 연사', fits: ['hunter'] },
+  wardvest: { n: '추적자의 덧옷', slot: 'armor', g: 'm', act: '추적 중인 적을 맞히면 보호막 +4(행동마다 한 번).', cost: '', lore: '쫓는 동안은 몸이 가볍다.', t: '저격 연사 기동', fits: ['hunter'] },
+  steadyring: { n: '버티는 반지', slot: 'ring1', g: 'n', act: '추적 중인 적이 있으면 받는 피해 −8%.', cost: '', lore: '시선을 거두지 않는 동안 반지가 차갑다.', t: '저격 연사 기동', fits: ['hunter'] },
 };
 for (const k in ITEMS_CH2) ITEMS[k] = Object.assign({ kind: 'free', ch2: 1 }, ITEMS_CH2[k]);
 /* 2챕터 장비 풀. 챕터 풀은 CH_POOLS[챕터]로 읽는다(index.html poolOf). 2챕터 드롭의 10%는 이전 챕터 풀에서 나온다(dropKey) */
