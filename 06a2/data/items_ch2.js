@@ -128,7 +128,7 @@ const ITEMS_CH2 = {
   untie: { n: '조이기 푸는 반지', slot: 'ring1', g: 'm', act: '내 해로운 상태가 세 가지 이상이면 라운드가 끝날 때 가장 작은 것 하나를 지운다(전투마다 세 번).', cost: '', lore: '매듭은 가장 느슨한 곳부터 푼다.', t: '속죄', vs: 'hexer' },
   wadering: { n: '물 위 걷는 반지', slot: 'ring1', g: 'm', act: '물에 잠긴 방에서는 행동할 때마다 스태미나 +4.', cost: '', lore: '물이 무거울수록 걸음이 단단해진다.', t: 'all', vs: 'flooded' },
   rotring: { n: '썩은 숨 반지', slot: 'ring1', g: 'm', act: '썩은 공기 방에서 내가 건 중독 피해 +15%.', cost: '', lore: '고인 공기를 들이마시면 돌이 검어진다.', t: '독사', vs: 'rotair' },
-  trackring: { n: '추적의 반지', slot: 'ring1', g: 'm', act: '추적 3겹인 적을 맞히면 쿨타임이 가장 많이 남은 다른 스킬 하나가 1 짧아진다(전투마다 두 번).', cost: '', lore: '세 번째 발자국에서 길이 보인다.', t: '저격 연사 기동', fits: ['hunter'] },
+  trackring: { n: '추적의 반지', slot: 'ring1', g: 'm', act: '추적 3겹인 적을 맞히면 쿨타임이 가장 많이 남은 다른 스킬 하나가 1 짧아진다(전투마다 두 번). 정예 · 강적 · 보스에게 주는 피해 +8%.', cost: '', lore: '세 번째 발자국에서 길이 보인다.', t: '저격 연사 기동', fits: ['hunter'] },
   ctrring: { n: '되받는 반지', slot: 'ring1', g: 'm', act: '되받기로 적을 쓰러뜨리면 기 +2.', cost: '', lore: '받아친 주먹에 끼워 두는 반지.', t: '부동 철권', fits: ['monk'] },
   shockring: { n: '열충격 반지', slot: 'ring1', g: 'm', act: '열충격 피해 +12%.', cost: '', lore: '붉은 돌과 푸른 돌이 맞붙어 있다.', t: '공명 서리 불꽃', fits: ['elementalist'] },
   leechring: { n: '흡혈 반지', slot: 'ring1', g: 'm', act: '흡혈로 되찾는 생명력 +25%.', cost: '', lore: '안쪽에 이빨 자국이 있다.', t: '도륙 학살', fits: ['butcher'] },
@@ -212,10 +212,6 @@ const ITEMS_CH2 = {
   lordgrail: { n: '군주의 성배', slot: 'flask', g: 'h', act: '생명력 플라스크로 회복한 만큼 보호막도 얻는다.', cost: '생명력 플라스크 최대 충전 −1', lore: '왕이 마지막으로 든 잔.', t: 'all' },
   blackspring: { n: '검은 샘 물병', slot: 'flask', g: 'h', act: '플라스크를 마시면 모든 적에게 취약 1을 건다.', cost: '정화 · 스태미나 플라스크 최대 충전 −1', lore: '검은 샘에서 길어 온 물. 병 안쪽이 흐리다.', t: 'all' },
   baptism: { n: '마르지 않는 세례 잔', slot: 'flask', g: 'l', act: '방을 이길 때마다 생명력 플라스크 1이 찬다.', cost: '생명력 플라스크 최대 충전 1, 회복 −10%p', lore: '물이 빠진 세례조에서 이 잔만은 늘 젖어 있었다.', t: 'all' },
-  // 사냥꾼 전용 (10월 9일 CLS-ch2-hunter)
-  bigbow: { n: '거인 잡이 활', slot: 'weapon', g: 'r', act: '정예 · 강적 · 보스에게 주는 피해 +15%.', cost: '', lore: '시위가 팔뚝만 하다.', t: '저격 연사', fits: ['hunter'] },
-  wardvest: { n: '추적자의 덧옷', slot: 'armor', g: 'r', act: '추적 중인 적을 맞히면 보호막 +4(행동마다 한 번).', cost: '', lore: '쫓는 동안은 몸이 가볍다.', t: '저격 연사 기동', fits: ['hunter'] },
-  steadyring: { n: '버티는 반지', slot: 'ring1', g: 'r', act: '추적 중인 적이 있으면 받는 피해 −8%.', cost: '', lore: '시선을 거두지 않는 동안 반지가 차갑다.', t: '저격 연사 기동', fits: ['hunter'] },
 };
 for (const k in ITEMS_CH2) ITEMS[k] = Object.assign({ kind: 'free', ch2: 1 }, ITEMS_CH2[k]);
 /* 2챕터 장비 풀. 챕터 풀은 CH_POOLS[챕터]로 읽는다(index.html poolOf). 2챕터 드롭의 10%는 이전 챕터 풀에서 나온다(dropKey) */
