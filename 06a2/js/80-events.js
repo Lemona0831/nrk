@@ -145,6 +145,8 @@ function onClick(ev) {
     case 'tools': G.toolsOpen = !G.toolsOpen; render(); { const x = document.querySelector('[data-a="tools"]'); if (x) x.focus(); } break;
     case 'hudpre': hudPreset(el.dataset.k); render(); { const x = document.querySelector('[data-a="hudpre"][data-k="' + el.dataset.k + '"]'); if (x) x.focus(); } break;
     case 'hudtog': { const k = el.dataset.k; hudSet(k, !hudCfg()[k]); render(); const x = document.querySelector('[data-a="hudtog"][data-k="' + k + '"]'); if (x) x.focus(); break; }
+    case 'hudmv': case 'hudmod': case 'huddev': case 'hudreset': case 'hudsheetpos': hudEditClick(a, el); break;
+    case 'hudgrip': case 'hudsz': case 'hudzone': break;
     case 'stsmore': G.stsMore = !G.stsMore; render(); { const x = document.querySelector('[data-a="stsmore"]'); if (x) x.focus(); } break;
     case 'numkeys': G.data.numKeys = G.data.numKeys === false; saveLocal(); toast(G.data.numKeys ? '숫자 키로 행동합니다' : '숫자 키 행동을 껐습니다'); render(); break;
     case 'infotoggle': G.infoOn = !G.infoOn; G.data.infoOn = G.infoOn; saveLocal(); hidePop(); toast(G.infoOn ? '설명 창을 켰습니다' : '설명 창을 껐습니다'); if (G.sheet && G.sheet.kind === 'settings') render(); break;

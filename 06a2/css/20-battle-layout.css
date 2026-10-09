@@ -32,9 +32,8 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .fit .hdr .hl .hname{font-size:calc(15px*var(--fs,1))}
 .bgrid{flex:1;min-height:0;display:grid;gap:8px;padding-bottom:8px;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"top" "field" "dock"}
 .btop{grid-area:top;display:grid;gap:8px;grid-template-columns:minmax(0,1fr)}
-.fstat,.bmid,.field,.dock{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
-.field{grid-area:field;overflow-y:auto;min-height:0}
-.dock{grid-area:dock}
+.hmod.hm,.fstat,.field,.dock{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+.field{min-height:0}
 .side{grid-area:log;display:none}
 .side.open{display:flex;flex-direction:column;position:fixed;inset:0;z-index:70;background:var(--bg);padding:calc(12px + env(safe-area-inset-top,0px)) 14px calc(14px + env(safe-area-inset-bottom,0px))}
 .side .blog{flex:1;min-height:0;max-height:none;overflow-y:auto}
@@ -104,7 +103,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
  .fit .hdr button{min-height:40px;padding:4px 10px}
  .axis .tl{display:none}.axdef{display:none}.legend,.adesc{display:none}
  .ab{min-height:42px;padding:3px 6px}.ab small{font-size:calc(11px*var(--fs,1))}
- .fstat,.bmid,.field,.dock{padding:6px 8px}.bgrid{gap:6px}
+ .hmod.hm,.fstat,.field,.dock{padding:6px 8px}.bgrid{gap:6px}
  .track{margin-top:20px}.tm{height:16px;line-height:calc(14px*var(--fs,1));font-size:calc(11px*var(--fs,1))}
  .qm{min-height:34px;padding:1px 8px}
 }

@@ -36,7 +36,7 @@ function sndSet(patch) { G.data.audio = Object.assign({}, G.data.audio || {}, pa
 function vSettings() {
   const c = sndCfg(); const pct = v => Math.round(v * 100); const off = c.on ? '' : ' disabled';
   const sw = (a, on, lab) => `<button class="sw" role="switch" aria-checked="${on ? 'true' : 'false'}" data-a="${a}" aria-label="${lab}">${on ? '켜짐' : '꺼짐'}</button>`;
-  return `<section class="setg"><h4>소리</h4>
+  const snd = `<section class="setg"><h4>소리</h4>
 <div class="setrow"><span class="lab">소리</span><span></span>${sw('sndtoggle', c.on, '소리')}</div>
 <div class="setrow"><label for="volm">음악</label><input id="volm" type="range" min="0" max="100" step="5" value="${pct(c.music)}"${off}><output id="volmv" for="volm">${pct(c.music)}%</output></div>
 <div class="setrow"><label for="vols">효과음</label><input id="vols" type="range" min="0" max="100" step="5" value="${pct(c.sfx)}"${off}><button class="sm" data-a="sfxtest"${off} aria-label="효과음 들어 보기">들어 보기</button><small>효과음 <output id="volsv" for="vols">${pct(c.sfx)}%</output>. 소리는 처음에 꺼져 있고, 화면 위 🔇 버튼이나 여기서 켭니다. 음악은 화면에 따라 바뀝니다.</small></div></section>
@@ -45,7 +45,8 @@ function vSettings() {
 <div class="setrow"><span class="lab">설명 창</span><span class="mini">마우스를 올리거나 길게 누르면 뜹니다</span>${sw('infotoggle', G.infoOn, '설명 창')}</div>
 <div class="setrow"><label for="setfs">글자 크기</label><span class="mini">화면 글자의 크기</span><select id="setfs">${FS_OPTS.map(v => `<option value="${v}"${(FS_OPTS.includes(+G.data.fs) ? +G.data.fs : 1) === v ? ' selected' : ''}>${Math.round(v * 100)}%</option>`).join('')}</select></div>
 <div class="setrow"><span class="lab">움직임 줄이기</span><span class="mini">적 카드 확대, 버튼 빛남, 부드러운 스크롤, 알림이 미끄러져 나오는 것을 끕니다</span>${sw('rmotion', !!G.data.rm, '움직임 줄이기')}</div>
-<div class="setrow"><label for="setpace">적 차례</label><span class="mini">적이 움직이는 빠르기</span><select id="setpace">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></div></section>` + hudSettings();
+<div class="setrow"><label for="setpace">적 차례</label><span class="mini">적이 움직이는 빠르기</span><select id="setpace">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></div></section>`;
+  return hudLiveSheet() ? hudSettings() + snd : snd + hudSettings(); /* 전투 중에 연 설정 창은 전투 화면 표시와 편집을 맨 위에 둔다 */
 }
 function render() {
   if (typeof document === 'undefined') return;
@@ -78,7 +79,7 @@ function render() {
   document.documentElement.classList.toggle('fitmode', !!fit);
   document.documentElement.style.setProperty('--app-h', (window.visualViewport ? window.visualViewport.height : window.innerHeight) + 'px');
   const y = window.scrollY;
-  const fld = document.querySelector('.field'); const fy = fld ? fld.scrollTop : 0;
+  const fld = document.querySelector('.hz-mid'); const fy = fld ? fld.scrollTop : 0; const shEl = document.querySelector('.sheet'); const shy = shEl ? shEl.scrollTop : 0; const shk = G.sheet ? G.sheet.kind : '';
   const lg = document.querySelector('.side .blog'); const ly = lg ? lg.scrollTop : 0;
   const fk = focusKey(), hadSheet = !!G.shownSheet; /* 10월 7일: 다시 그려도 초점을 잃지 않게, 시트는 연 요소로 돌아가게 */
   const tail = `${vSheet()}`; const ine = tail ? ' inert' : ''; /* 시트가 열리면 뒤 화면은 inert */
@@ -91,7 +92,8 @@ function render() {
   if (!G.sheet && G.dropQ && G.dropQ.length && G.scr === 'run' && !G.b) setTimeout(nextDrop, 0); // 전리품 창을 닫기로 닫아도 남은 전리품을 이어서 건넨다
   fitDecide(fit);
   document.querySelectorAll('.tbl').forEach(d => { const c = d.querySelector('caption'); d.tabIndex = 0; d.setAttribute('role', 'region'); d.setAttribute('aria-label', (c && c.textContent) || '표'); }); /* 가로로 스크롤되는 표 영역은 키보드로 닿고 이름이 있어야 한다(10월 8일 axe: scrollable-region-focusable) */
-  const f2 = document.querySelector('.field'); if (f2) f2.scrollTop = fy;
+  const f2 = document.querySelector('.hz-mid'); if (f2) f2.scrollTop = fy;
+  if (shk === 'settings') { const sh2 = document.querySelector('.sheet'); if (sh2 && hadSheet) sh2.scrollTop = shy; } /* 설정 창은 항목을 바꿔도 보던 자리에 둔다 */
   const l2 = document.querySelector('.side .blog'); if (l2) l2.scrollTop = ly;
   const same = G.lastScr === G.scr; G.lastScr = G.scr; // 화면이 바뀌면 맨 위에서 시작한다
   if (!G.sheet && !fit) window.scrollTo(0, same ? y : 0);
@@ -105,12 +107,12 @@ function fitDecide(fit) {
   const de = document.documentElement;
   if (!fit) { de.classList.remove('fitscroll'); G.fitS = false; G.fitK = null; G.fitB = null; G.fitNew = false; return; }
   const ah = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-  const k = window.innerWidth + 'x' + Math.round(ah) + ':' + (G.data.fs || 1) + ':' + (G.data.fdet ? 1 : 0);
+  const k = window.innerWidth + 'x' + Math.round(ah) + ':' + (G.data.fs || 1) + ':' + (G.data.fdet ? 1 : 0) + ':' + hudLayJson();
   G.fitNew = G.fitB !== G.b;
   if (G.fitK === k && !G.fitNew) { de.classList.toggle('fitscroll', !!G.fitS); return; }
   const h = sel => { const e = document.querySelector(sel); return e ? e.getBoundingClientRect().height : 0; };
-  const fld = document.querySelector('.field'); const want = Math.min(fld ? fld.scrollHeight : 0, FIT_FIELD);
-  const need = h('.fit > .hdr') + h('.btop') + h('.dock') + want + 24;
+  const fld = document.querySelector('.hz-mid'); const want = Math.min(fld ? fld.scrollHeight : 0, FIT_FIELD);
+  const need = h('.fit > .hdr') + h('.btop') + h('.hz-bot') + want + 24;
   G.fitS = need > ah; G.fitK = k; G.fitB = G.b; de.classList.toggle('fitscroll', G.fitS);
 }
 /* 설정: 글자 크기(--fs)와 움직임 줄이기(html.rm) */

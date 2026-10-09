@@ -27,7 +27,7 @@
 .qc small{font-size:calc(12px*var(--fs,1));color:var(--muted);line-height:1.25;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .qc.dis{opacity:.6}.qc kbd{display:inline-block;font:600 calc(10.5px*var(--fs,1))/1 ui-monospace,monospace;border:1px solid var(--line);border-radius:3px;padding:2px 4px;margin-right:4px;color:var(--muted)}
 @media (pointer:coarse){.qc kbd{display:none}}
-@media (max-width:719px){.bmid>.rlbtn{grid-column:2;grid-row:1}.bmid>.rlog{grid-column:1/-1;margin-top:0}.rlh{display:none}.rlist{margin-top:0}.qcons{padding:4px 5px;gap:4px}.qc{padding:3px 5px}.qbag{min-width:68px;padding:3px 5px}.rlog{padding:5px 6px}}
+@media (max-width:719px){.rlh{display:none}.rlist{margin-top:0}.qcons{padding:4px 5px;gap:4px}.qc{padding:3px 5px}.qbag{min-width:68px;padding:3px 5px}.rlog{padding:5px 6px}}
 /* ===== 10월 9일 UI-phone: 휴대폰(480px 이하)에서 전장 높이를 되찾는다. 넓은 화면은 그대로 ===== */
 @media (max-width:719px){
  .rls{display:flex;align-items:center;gap:6px;width:100%;min-height:0;padding:2px 8px;text-align:left;border:1px solid var(--line);border-left:3px solid var(--line2);border-radius:6px;background:var(--panel2);font-size:calc(13px*var(--fs,1));line-height:1.3;font-weight:400}
@@ -42,7 +42,7 @@
  .qc b{display:flex;flex-wrap:wrap;align-items:center;column-gap:4px;min-width:0;width:100%;max-width:100%;white-space:nowrap;-webkit-line-clamp:unset;font-size:calc(12.5px*var(--fs,1));line-height:1.2}
  .qc .qnm{order:1;flex:1 0 100%;min-width:0;overflow:hidden;text-overflow:ellipsis}.qc .qi{order:2;line-height:1;font-size:calc(12px*var(--fs,1))}.qc .qn{order:3;line-height:1.2}
  .qc kbd{display:none}
- .bgrid{padding-bottom:2px}.bmid{row-gap:3px}
+ .bgrid{padding-bottom:2px}
  .qc small{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
  .qc{position:relative}
  .qbag{flex:none;min-height:34px;min-width:0;padding:1px 6px;font-size:calc(12px*var(--fs,1));line-height:1.2;gap:0}.qbag small{line-height:1.2}
@@ -56,7 +56,7 @@
 .hl-noaux .ab .ax,.hl-noaux .ab .spd,.hl-noaux .dockhead .slots,.hl-noaux .dockhead .pacesel,.hl-noaux .dockhead>span .mini,.hl-noaux .qcn{display:none}
 .hl-noagl .agl{display:none}
 .ord.sr{overflow:hidden !important}
-.bmid .order.osum .axhead{display:flex;gap:10px}
+.hmod .order.osum .axhead{display:flex;gap:10px}
 .qcons.tlz{display:none}.qcons.qoff .qc,.qcons.qoff .qcn{display:none}
 .abgrid .agp.agtools:not(.open){display:none}
 .ab.tooltog b{display:flex;align-items:center;gap:4px}.tcnt{margin-left:auto;background:var(--gold);color:#1a1206;border-radius:9px;padding:0 6px;font-size:.85em;font-weight:800;line-height:1.4}
@@ -65,6 +65,6 @@
 .hudg{margin-top:6px}.hudg h5{margin:6px 0 2px;font-size:calc(13px*var(--fs,1));color:var(--muted)}.hudlk{font-size:calc(12px*var(--fs,1));color:var(--muted)}.hudpre{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .hcalm .ab.g-atk,.hcalm .ab.g-sk,.hcalm .ab.g-def,.hcalm .ab.g-sig,.hcalm .ab.g-etc{--c:var(--line);--bls:solid}
 .hcalm .lane{--lc:var(--line);--lbg:transparent}.hcalm .lanehd b{color:var(--ink)}
-.hcalm .fstat,.hcalm .me{border-left-color:var(--line)}
+.hcalm .fstat,.hcalm .me,.hcalm .hmod.mine{border-left-color:var(--line)}
 .hcalm .focusln,.hcalm .focusln.lk{color:var(--gold)}
 @media (min-width:1100px){.bgrid.hl-nopanel{grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "field" "dock"}.bgrid.hl-nopanel .side:not(.open){display:none}.bgrid.hl-nopanel .onlym{display:inline-block}}
