@@ -1,5 +1,7 @@
 // 7단계 검증 결과표: node tools/vreport.js <결과.json ...> > 표.md
 // 입력은 dgqa 결과 파일(여러 개면 이어 붙임). 직업 · 갈래 · 챕터 · 성향으로 나눠 완주 · 보스 · 사망 원인을 낸다.
+/* 숨겨진 직업은 공개 문서에 코드 키 대신 해금 1 · 2 · 3으로 나온다(10월 9일). 이름 대응은 ../nrk-private/숨김직업-키.md */
+{ const _log = console.log; const _H = s => typeof s === 'string' ? s.replace(/butcher/g, '해금 1').replace(/confessor/g, '해금 2').replace(/bloodmage/g, '해금 3') : s; console.log = (...a) => _log(...a.map(_H)); }
 const fs = require('fs');
 const files = process.argv.slice(2); if (!files.length) { console.error('사용: node tools/vreport.js a.json [b.json ...]'); process.exit(1); }
 const R = files.flatMap(f => JSON.parse(fs.readFileSync(f, 'utf8')));
