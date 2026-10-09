@@ -1,0 +1,92 @@
+/* ===== 10월 7일 접근성 · 가독성 (docs/조사/D-UI-접근성.md 고친 기록) ===== */
+/* 막대 숫자: 채운 곳과 빈 곳 어디에 걸려도 읽히게 어두운 바탕을 깐다(흰 글자 4.5:1 이상) */
+.bar span,.xpbar span{left:50%;right:auto;transform:translateX(-50%);width:max-content;max-width:100%;padding:0 5px;background:rgba(13,11,10,.72);border-radius:3px;white-space:nowrap;overflow:hidden}
+.bar.hp.lo{border-color:var(--bad)}.bar.hp.lo i{background:#a8362b}.bar .dz{color:#ffd9d2;font-weight:800}
+/* 적 카드: 버튼 안은 span만 쓴다 */
+.en .bar,.en .emv{display:block}
+/* 상태 칩: 이로움 ▲ · 해로움 ▼ (색만으로 가르지 않는다) */
+.sts .sgn{font-size:.78em;margin-right:2px;vertical-align:.05em}
+/* 장비 칸 등급 글자 */
+.eqg{display:inline-block;font-size:calc(11px*var(--fs,1));font-weight:700;border:1px solid currentColor;border-radius:3px;padding:0 3px;margin-right:5px;line-height:1.35;vertical-align:1px}
+/* 시트 머리: 제목과 닫기 버튼을 나눈다 */
+.sheet .shead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}.sheet .shead h3{margin:0;flex:1;min-width:0}
+/* 전투 화면의 main */
+.fit>.bmain{flex:1;min-height:0;display:flex;flex-direction:column}.sidehead h3{font-size:calc(15px*var(--fs,1))}
+/* 전투 화면 맨 앞의 건너뛰기(초점을 받을 때만 보임), 헤더 소리 버튼 */
+.skip{position:absolute;left:8px;top:-80px;z-index:100;min-height:40px;background:var(--gold);color:var(--gold-ink);border-color:var(--gold);font-weight:700}.skip:focus{top:8px}.hardtag{margin-left:8px;border-color:var(--bad);color:var(--bad);font-weight:700}.tlog{margin:6px 0 0;padding-left:18px}.tlog li{margin:0 0 6px;white-space:pre-line}#main:focus{outline:none}
+.sndb{flex:none;min-height:36px;min-width:40px;padding:2px 8px;border-radius:999px;font-size:calc(15px*var(--fs,1));line-height:1}
+/* 판단에 쓰는 글: 줄임표 대신 두 줄까지, 13px 이상 */
+.ab b,.ab small,.intent .itx{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:clip;word-break:keep-all;overflow-wrap:anywhere}
+.ab b,.ab small{line-height:1.3}.ab small{font-size:calc(13px*var(--fs,1))}.intent,.field .intent{font-size:calc(13px*var(--fs,1))}.sts i,.field .sts i,.field .en .sts i{font-size:calc(13px*var(--fs,1))}.lastlog{font-size:calc(13px*var(--fs,1))}
+@media (max-width:719px){
+ .app>.hdr{margin:0 -8px 10px;padding-left:8px;padding-right:8px}
+ .app main>.stickbar{margin-left:-8px;margin-right:-8px}
+ .ab b{font-size:calc(13px*var(--fs,1))}
+ .field .intent{font-size:calc(13px*var(--fs,1));padding:1px 5px}
+ .en .eord{font-size:calc(12px*var(--fs,1))}.field .nr{font-size:calc(12px*var(--fs,1))}
+ .logrow .lastlog,.logrow .turnban{font-size:calc(13px*var(--fs,1));white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:clip}
+}
+
+/* ===== 10월 7일 2차 (docs/조사/D-UI-접근성.md 고친 기록 2) ===== */
+/* 짧은 창: 창 높이에 맞춘 고정 배치로는 전장이 모자라면 고정을 풀고 페이지를 스크롤한다(fitDecide) */
+html.fitmode.fitscroll,html.fitmode.fitscroll body{overflow-y:auto;height:auto}
+html.fitmode.fitscroll #root{height:auto}
+html.fitscroll .fit{height:auto;min-height:var(--app-h,100dvh)}
+html.fitscroll .fit>.bmain{flex:none}
+html.fitscroll .bgrid{flex:none;grid-template-rows:auto auto auto}
+html.fitscroll .field{overflow:visible}
+html.fitscroll .side{position:sticky;top:8px;max-height:calc(var(--app-h,100dvh) - 16px);align-self:start}
+/* 내 상태의 자세한 정보(능력치 · 속도 · 장비 · 직업 규칙 · 예상 피해의 뜻)는 숨기지 않고 접는다 */
+button.fdtog{flex:none;min-height:30px;padding:1px 8px;font-size:calc(12.5px*var(--fs,1));margin-left:4px;line-height:1.2}
+.fdet{border-top:1px dashed var(--line);margin-top:5px;padding-top:4px;display:grid;gap:3px}.fdet[hidden]{display:none}.fdet .rule{white-space:normal;overflow:visible;margin:0}.fdet p{margin:0}
+.incoming{line-height:1.35}
+/* 막대: 글자 크기 설정에 맞춰 높이도 늘린다 */
+.bar{height:calc(16px*var(--fs,1))}.en .bar.ehp,.field .en .bar.ehp{height:calc(20px*var(--fs,1))}.xpbar{height:calc(14px*var(--fs,1))}.bkb{height:calc(7px*var(--fs,1))}
+.bar span{z-index:1}.bkline small{font-size:calc(12px*var(--fs,1))}
+/* 행동 미리보기: 빗금 무늬(색만이 아니라 무늬로) */
+.bar .pvg,.bar .pvi,.bar .pvh,.bkb .pvk{position:absolute;top:0;bottom:0;z-index:0;pointer-events:none}
+.bar .pvg{background:repeating-linear-gradient(135deg,rgba(255,226,220,.95) 0 3px,rgba(140,30,22,.95) 3px 6px);box-shadow:inset 0 0 0 1px #ffd9d2}
+.bar .pvi{background:repeating-linear-gradient(45deg,rgba(13,11,10,.85) 0 3px,rgba(255,217,210,.5) 3px 5px)}
+.bar .pvh{background:repeating-linear-gradient(135deg,rgba(134,197,111,.95) 0 3px,rgba(13,40,10,.9) 3px 6px)}
+.bkb{position:relative}.bkb .pvk{background:repeating-linear-gradient(135deg,#e6dcff 0 2px,#5b3d9e 2px 4px)}
+.en .pvt{position:absolute;right:6px;top:-9px;z-index:3;font-size:calc(12px*var(--fs,1));font-weight:800;line-height:calc(16px*var(--fs,1));background:#1a1206;color:#ffd9d2;border:1px solid #ffd9d2;border-radius:9px;padding:0 6px;white-space:nowrap;pointer-events:none}
+.fstat .pvt{display:inline-block;font-size:calc(12px*var(--fs,1));font-weight:700;margin-left:6px;color:var(--good)}
+/* 쓰러짐 화면의 결정타 */
+.killb{border-left:3px solid var(--blood);padding:6px 10px;background:var(--panel2);border-radius:6px;margin:8px 0}.killb b.kd{font-size:calc(18px*var(--fs,1));color:var(--bad)}
+.lasthits{margin:4px 0 0;padding-left:18px}.lasthits li{margin:2px 0}
+/* 쓸 수 없는 버튼(초점은 간다): 상점 · 다시 나누기 */
+button.adis{cursor:not-allowed;color:var(--muted);background:var(--panel);border-style:dashed}
+/* 갈래길 · 문 */
+.dr-nums{font-size:calc(13px*var(--fs,1));margin:2px 0 0;font-variant-numeric:tabular-nums}.dr-nums b{color:var(--ink)}.dr-w{font-size:calc(12px*var(--fs,1));color:var(--muted);margin:0}
+.dr-risk .rw{font-size:calc(12px*var(--fs,1));letter-spacing:0;margin-left:4px;font-weight:700}
+/* 상점 비교 */
+.sitem .cmp{margin:0}.sitem .cmph{font-size:calc(12.5px*var(--fs,1))}
+.cmpv{font-weight:700;font-size:calc(14.5px*var(--fs,1));padding:5px 10px;border-radius:6px;border-left:4px solid var(--line2);background:var(--panel);margin-bottom:6px}.cmpv.good{border-left-color:var(--good);color:var(--good)}.cmpv.bad{border-left-color:var(--bad);color:var(--bad)}.cmpv.mix{border-left-color:var(--gold);color:var(--gold)}.cmpv.same{color:var(--muted)}
+.cmpl{list-style:none;margin:4px 0;padding:0}.cmpl li{padding:3px 0 3px 22px;position:relative}.cmpl .ar{position:absolute;left:2px;font-size:.85em;top:5px}.cmpl .up .ar{color:var(--good)}.cmpl .dn .ar{color:var(--bad)}.cmpl small{color:var(--muted);margin-left:4px}
+.idet .act{font-size:calc(14px*var(--fs,1));font-weight:600}.idet .cost{font-size:calc(13.5px*var(--fs,1));color:var(--bad)}.idet-base b{font-size:calc(15px*var(--fs,1))}
+.winsum{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:0 0 10px}.wsl{display:block;font-size:calc(12.5px*var(--fs,1));color:var(--muted);margin-bottom:4px}.wsc{display:flex;flex-wrap:wrap;gap:6px}.lchip{display:inline-block;font-size:calc(13.5px*var(--fs,1));padding:3px 10px;border-radius:999px;border:1px solid var(--line2);background:var(--panel)}.lchip.bad{border-color:var(--bad);color:var(--bad)}
+.actbar{display:flex;gap:8px;margin:10px 0 6px}.actbar button{flex:1;min-height:52px;font-size:calc(16px*var(--fs,1));font-weight:700}.dropfoot{justify-content:space-between;flex-wrap:nowrap}.dropfoot .mini{flex:1}.dropfoot button{flex:none}
+.lead{margin:0 0 10px}.bfh{margin:14px 0 4px;font-size:calc(14px*var(--fs,1))}.nowl{margin:6px 0 4px}
+.sheet button.wide{width:100%;margin:6px 0}.bossloot{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;justify-content:center;margin:10px 0}
+.sitem .cmpv{font-size:calc(13.5px*var(--fs,1));padding:3px 8px}
+/* 움직임 줄이기 (설정, OS 설정과 같은 결과) */
+@media (prefers-reduced-motion:reduce){.en.acting{animation:none}}
+html.rm .en.acting,html.rm .toast,html.rm .ab.tnew,html.rm .sgold div{animation:none}
+html.rm .ab.tnew{box-shadow:0 0 0 2px var(--gold)}
+html.rm .dpop{animation:popfade 1.4s linear forwards}
+@keyframes popfade{0%,70%{opacity:1}100%{opacity:0}}
+html.rm *,html.rm *::before{transition:none!important;scroll-behavior:auto!important}
+@media (max-width:719px){
+ /* 전장 높이를 되찾는다: 헤더 두 줄을 한 덩이로, 머리 버튼 낮게, 행동판 머리와 남은 칸을 한 줄로 */
+ .fit .hdr .hl{display:block}.fit .hdr .hl .hname{display:block;line-height:1.2}.fit .hdr .hl .mini{display:block;font-size:calc(12px*var(--fs,1));line-height:1.25}
+ .fit .hdr .sndb,.fit .hdr .mtog{min-height:34px;padding:2px 10px}
+ .fit .logbtns button.sm{min-height:36px}
+ .slotrow{display:none}.dockhead .slots{font-size:calc(12px*var(--fs,1))}.dockhead .slot{padding:1px 8px}
+ .fstat .bar span{font-size:calc(12px*var(--fs,1));line-height:calc(14px*var(--fs,1))}.fstat .bar{height:calc(16px*var(--fs,1))}
+ .field .en .bar.ehp span{font-size:calc(12px*var(--fs,1))}
+ .field .nr{line-height:calc(16px*var(--fs,1))}
+}
+@media (max-width:360px){.fstat .mehead{flex-wrap:wrap;row-gap:2px}}
+/* 판단에 쓰는 작은 글자: 12px 아래로 내리지 않는다 */
+.en .eord,.nr,.reach,.ord li.rsep,.bar span,.en .bar.ehp span,.field .en .bar.ehp span,.bkline small{font-size:calc(12px*var(--fs,1))}
+.awkc{background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:10px 12px;margin:8px 0}.awkh{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between}.awkc p{margin:6px 0 8px}.odds{display:flex;flex-wrap:wrap;gap:6px 14px;list-style:none;padding:0;margin:8px 0}.gres{border-top:1px dashed var(--line2);margin-top:10px;padding-top:8px}.gamble .row{flex-wrap:wrap}

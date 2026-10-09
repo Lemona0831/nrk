@@ -1,0 +1,70 @@
+/* ===== 10월 9일 UI: 전투 화면 (미리보기 · 최근 기록 · 소모품 줄) ===== */
+.bar .pvc,.bar .pvi{background-color:#150e0c;background-image:radial-gradient(circle,#ffe08a 0 1.2px,transparent 1.7px);background-size:5px 5px;box-shadow:inset 0 0 0 2px #ffe08a;z-index:0}
+.bar .pvi{background-image:radial-gradient(circle,#ff9d8f 0 1.2px,transparent 1.7px);box-shadow:inset 0 0 0 2px #ff9d8f}
+.bar .pvh{box-shadow:inset 0 0 0 2px #b9e8a3}
+.bar .pvx{display:inline-block;padding:0 4px;margin-right:3px;border-radius:3px;background:#ffe08a;color:#1a1206;font-weight:800;text-shadow:none}
+.bar .pvx.pos{background:#b9e8a3}
+.incoming .swd{display:inline-block;width:13px;height:13px;margin-right:6px;vertical-align:-2px;border-radius:2px;background-color:#150e0c;background-image:radial-gradient(circle,#ff9d8f 0 1.2px,transparent 1.7px);background-size:4px 4px;box-shadow:inset 0 0 0 1.5px #ff9d8f}
+.incoming .inca{color:var(--muted);margin-left:4px;white-space:nowrap}
+.incoming.bad{border-color:var(--bad)}
+.sts .stsmore{min-height:28px;padding:1px 8px;font-size:calc(12px*var(--fs,1));vertical-align:middle}
+.rlog{margin-top:6px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)}
+.rlh{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:calc(13px*var(--fs,1))}
+.rlh .rlb{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}.rlh .sm{min-height:30px;padding:1px 9px;font-size:calc(12px*var(--fs,1))}
+.rlist{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:2px}
+.rl{display:grid;grid-template-columns:22px minmax(0,1fr) auto;column-gap:6px;align-items:baseline;font-size:calc(13px*var(--fs,1));line-height:1.35;border-left:3px solid var(--line2);padding-left:6px}
+.rl.bad{border-left-color:var(--bad)}.rl.good{border-left-color:var(--good)}.rl.crit{border-left-color:var(--gold)}.rl.sys{color:var(--muted)}
+.rl .rli{text-align:center}.rl .rme{display:inline-block;min-width:20px;border-radius:4px;background:var(--gold);color:var(--gold-ink);font-size:calc(11px*var(--fs,1));font-weight:800;line-height:1.3;padding:0 2px}.rl .rln{font-weight:800;color:var(--bad);white-space:nowrap}.rl.me .rln,.rl.good .rln{color:var(--gold)}
+.rl b,.blog b{font-weight:800}
+.rwhy{display:block;font-size:calc(12px*var(--fs,1));color:var(--muted);line-height:1.3}
+.rrd{font-size:calc(12px*var(--fs,1));color:var(--muted);font-weight:700;padding-top:3px;border-top:1px dashed var(--line)}.rrd:first-child{border-top:0;padding-top:0}
+.qcons{margin:2px 0 6px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)}
+.qcons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:5px;align-items:stretch}
+.qcn{grid-column:1/4;margin:0;align-self:center}
+.qbag{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:1px;min-height:44px;padding:3px 7px;min-width:76px;font-size:calc(12.5px*var(--fs,1));font-weight:600}.qbag small{font-size:calc(12px*var(--fs,1));color:var(--muted);font-weight:400}
+.qc{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-height:44px;padding:4px 7px;text-align:left;border-left:3px solid var(--good);min-width:0}
+.qc b{font-size:calc(12.5px*var(--fs,1));line-height:1.25;max-width:100%;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;word-break:keep-all}.qc .qn{color:var(--muted);font-weight:600}
+.qc small{font-size:calc(12px*var(--fs,1));color:var(--muted);line-height:1.25;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qc.dis{opacity:.6}.qc kbd{display:inline-block;font:600 calc(10.5px*var(--fs,1))/1 ui-monospace,monospace;border:1px solid var(--line);border-radius:3px;padding:2px 4px;margin-right:4px;color:var(--muted)}
+@media (pointer:coarse){.qc kbd{display:none}}
+@media (max-width:719px){.bmid>.rlbtn{grid-column:2;grid-row:1}.bmid>.rlog{grid-column:1/-1;margin-top:0}.rlh{display:none}.rlist{margin-top:0}.qcons{padding:4px 5px;gap:4px}.qc{padding:3px 5px}.qbag{min-width:68px;padding:3px 5px}.rlog{padding:5px 6px}}
+/* ===== 10월 9일 UI-phone: 휴대폰(480px 이하)에서 전장 높이를 되찾는다. 넓은 화면은 그대로 ===== */
+@media (max-width:719px){
+ .rls{display:flex;align-items:center;gap:6px;width:100%;min-height:0;padding:2px 8px;text-align:left;border:1px solid var(--line);border-left:3px solid var(--line2);border-radius:6px;background:var(--panel2);font-size:calc(13px*var(--fs,1));line-height:1.3;font-weight:400}
+ .rls.bad{border-left-color:var(--bad)}.rls.good{border-left-color:var(--good)}.rls.crit{border-left-color:var(--gold)}
+ .rls .rli{flex:none;min-width:20px;text-align:center}.rls .rme{display:inline-block;min-width:20px;border-radius:4px;background:var(--gold);color:var(--gold-ink);font-size:calc(11px*var(--fs,1));font-weight:800;line-height:1.3;padding:0 2px}
+ .rls .rlt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rls .rln{flex:none;font-weight:800;color:var(--bad);white-space:nowrap}.rls.me .rln,.rls.good .rln{color:var(--gold)}
+ .rls b{font-weight:800}
+}
+@media (max-width:480px){
+ .qcons{display:flex;padding:2px 3px;gap:4px;margin:0 0 4px}.qcn{flex:1}
+ .qc{flex:1 1 0;flex-direction:column;align-items:flex-start;justify-content:center;gap:0;min-height:34px;padding:1px 6px}
+ .qc b{display:flex;flex-wrap:wrap;align-items:center;column-gap:4px;min-width:0;width:100%;max-width:100%;white-space:nowrap;-webkit-line-clamp:unset;font-size:calc(12.5px*var(--fs,1));line-height:1.2}
+ .qc .qnm{order:1;flex:1 0 100%;min-width:0;overflow:hidden;text-overflow:ellipsis}.qc .qi{order:2;line-height:1;font-size:calc(12px*var(--fs,1))}.qc .qn{order:3;line-height:1.2}
+ .qc kbd{display:none}
+ .bgrid{padding-bottom:2px}.bmid{row-gap:3px}
+ .qc small{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+ .qc{position:relative}
+ .qbag{flex:none;min-height:34px;min-width:0;padding:1px 6px;font-size:calc(12px*var(--fs,1));line-height:1.2;gap:0}.qbag small{line-height:1.2}
+}
+/* 전투 화면 표시 (10월 9일 UI-simple): 모듈 표시 값에 따른 숨김. 숨겨도 읽는 글은 남긴다(.sr) */
+.hudm{display:contents}
+.hud-danger{display:flex;flex-wrap:wrap;gap:1px 12px;align-items:baseline;margin:0 0 6px;padding:4px 8px;border:1px solid var(--bad);border-left-width:4px;border-radius:6px;background:rgba(200,60,50,.1);font-size:calc(13px*var(--fs,1));font-weight:600;line-height:1.35}
+.hud-danger .dgi{color:var(--bad)}
+.hl-noflk .flk{display:none}
+.hl-noedet .lanect,.hl-noedet .rlhint,.hl-noedet .reach.ok,.hl-noedet .lane.empty{display:none}
+.hl-noaux .ab .ax,.hl-noaux .ab .spd,.hl-noaux .dockhead .slots,.hl-noaux .dockhead .pacesel,.hl-noaux .dockhead>span .mini,.hl-noaux .qcn{display:none}
+.hl-noagl .agl{display:none}
+.ord.sr{overflow:hidden !important}
+.bmid .order.osum .axhead{display:flex;gap:10px}
+.qcons.tlz{display:none}.qcons.qoff .qc,.qcons.qoff .qcn{display:none}
+.abgrid .agp.agtools:not(.open){display:none}
+.ab.tooltog b{display:flex;align-items:center;gap:4px}.tcnt{margin-left:auto;background:var(--gold);color:#1a1206;border-radius:9px;padding:0 6px;font-size:.85em;font-weight:800;line-height:1.4}
+.ordnx{color:var(--muted);font-size:calc(13px*var(--fs,1))}
+.stsn{display:inline-block;color:var(--muted);font-size:calc(12px*var(--fs,1));padding:0 4px}
+.hudg{margin-top:6px}.hudg h5{margin:6px 0 2px;font-size:calc(13px*var(--fs,1));color:var(--muted)}.hudlk{font-size:calc(12px*var(--fs,1));color:var(--muted)}.hudpre{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.hcalm .ab.g-atk,.hcalm .ab.g-sk,.hcalm .ab.g-def,.hcalm .ab.g-sig,.hcalm .ab.g-etc{--c:var(--line);--bls:solid}
+.hcalm .lane{--lc:var(--line);--lbg:transparent}.hcalm .lanehd b{color:var(--ink)}
+.hcalm .fstat,.hcalm .me{border-left-color:var(--line)}
+.hcalm .focusln,.hcalm .focusln.lk{color:var(--gold)}
+@media (min-width:1100px){.bgrid.hl-nopanel{grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "field" "dock"}.bgrid.hl-nopanel .side:not(.open){display:none}.bgrid.hl-nopanel .onlym{display:inline-block}}
