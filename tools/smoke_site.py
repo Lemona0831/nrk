@@ -67,4 +67,21 @@ with sync_playwright() as p:
     t=pg2.inner_text('main'); i=t.find('테스터별 진행'); print('결과 보기:', t[i:i+160].replace('\n',' ') if i>=0 else t[:200])
     t2=t.find('0.6 캐릭터'); print('0.6 요약:', t[t2:t2+60].replace(chr(10),' ') if t2>=0 else '없음')
     print('랭킹(지인 판):', pg2.evaluate("async()=>{ G.board=null; await loadBoard(); return rankRows().map(e=>[e.nick,e.cname,e.build,rankProg(e)]) }"))
+    # 관리자: 테스터 기록 지우기 (고르기 → 확인 문장 → 백업 → 지우기). 지우기 함수가 없을 때는 아무것도 지우지 않고 안내한다
+    n0 = pg2.evaluate("()=>G.dashRaw.length")
+    pg2.evaluate("()=>{window.__noDeleteFn=1}")
+    pg2.check('input[data-a=deltick]'); pg2.click('[data-a=delask]'); pg2.fill('#delword', '지우기')
+    with pg2.expect_download(timeout=4000) as dl:
+        pg2.click('[data-a=delgo]')
+    pg2.wait_for_timeout(800)
+    print('지우기(함수 없음):', pg2.evaluate("()=>[G.dashRaw.length, G.delMsg.slice(0,28)]"), '| 백업 파일:', dl.value.suggested_filename[:24])
+    pg2.evaluate("()=>{window.__noDeleteFn=0}")
+    pg2.click('[data-a=dash]'); pg2.wait_for_timeout(1200)
+    pg2.check('input[data-a=deltick]'); pg2.click('[data-a=delask]'); pg2.fill('#delword', '아니오'); pg2.click('[data-a=delgo]'); pg2.wait_for_timeout(300)
+    print('확인 문장이 틀리면:', pg2.evaluate("()=>[G.dashRaw.length, G.delMsg.slice(0,18)]"))
+    pg2.fill('#delword', '지우기')
+    with pg2.expect_download(timeout=4000):
+        pg2.click('[data-a=delgo]')
+    pg2.wait_for_timeout(800); pg2.click('[data-a=dash]'); pg2.wait_for_timeout(1200)
+    print('지운 뒤 테스터 수:', n0, '->', pg2.evaluate("()=>G.dashRaw.length"), '|', pg2.evaluate("()=>G.delMsg.slice(0,20)"))
     print('errs', errs); br.close()

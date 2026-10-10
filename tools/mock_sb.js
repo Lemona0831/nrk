@@ -32,6 +32,7 @@
         const s=load();
         if(name==='admin_dump') return {data:Object.values(s.docs).map(r=>({path:r.path,parent:parent(r.path),id:idOf(r.path),data:r.data})),error:null};
         if(name==='admin_put'){ s.docs[args.p]={path:args.p,data:args.d}; save(s); return {data:null,error:null}; }
+        if(name==='admin_delete'){ if(window.__noDeleteFn) return {data:null,error:{message:'Could not find the function public.admin_delete',code:'PGRST202'}}; let n=0; for(const k of Object.keys(s.docs)){ if((args.paths||[]).some(p=>k===p||k.startsWith(p+'/'))){ delete s.docs[k]; n++; } } save(s); return {data:n,error:null}; }
         return {data:null,error:{message:'unknown rpc'}};
       }
     };

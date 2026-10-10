@@ -213,6 +213,10 @@ function onClick(ev) {
     case 'coachoff': G.data.seenCoach = true; saveLocal(); render(); break;
     case 'skip': G.skip = true; if (G.stepResolve) { const r = G.stepResolve; G.stepResolve = null; r(); } break;
     case 'pace': G.pace = el.dataset.v; G.data.pace = G.pace; saveLocal(); render(); break;
+    case 'deltick': { const u = el.dataset.k; const a = G.delSel || []; G.delSel = el.checked ? a.concat(a.includes(u) ? [] : [u]) : a.filter(x => x !== u); G.delAsk = false; G.delMsg = ''; render(); break; }
+    case 'delask': G.delAsk = true; G.delMsg = ''; render(); break;
+    case 'delno': G.delAsk = false; render(); break;
+    case 'delgo': { const w = (val('delword') || '').trim(); if (w !== '지우기') { G.delMsg = '"지우기"라고 정확히 써야 지웁니다. 아무것도 지우지 않았습니다.'; render(); break; } delTesters(); break; }
     case 'dashjson': saveFile('nrk-' + VERSION + '-전체기록-' + new Date().toISOString().slice(0, 10) + '.json', dashJson()); break;
     case 'notescsv': saveFile('nrk-' + VERSION + '-의견-' + new Date().toISOString().slice(0, 10) + '.csv', notesCsv()); break;
     case 'archive': archiveAll(); break;
