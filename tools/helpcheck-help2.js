@@ -6,7 +6,8 @@ module.exports = function (api) {
   const has = s => SRC.includes(s);
   const src = fn => E(fn + '.toString()');
 
-  add('help', '패널에는 배열 칸 1~4', '상수: HUD_SLOT_N=' + E('HUD_SLOT_N') + '(저장 칸 수)', E => E('HUD_SLOT_N') === 4);
+  add('help', '패널에는 배치 방식, 배열 칸 1~4', '상수: HUD_SLOT_N=' + E('HUD_SLOT_N') + '(저장 칸 수)', E => E('HUD_SLOT_N') === 4);
+  add('help', '가로 열(12열 격자), 세로 행, 폭(3열에서 12열)', '상수: FREE_COLS=' + E('FREE_COLS') + ' · FREE_MINW=' + E('FREE_MINW') + ', 소스: hudFreeNorm이 폭을 FREE_MINW에서 FREE_COLS로 맞춘다', E => E('FREE_COLS') === 12 && E('FREE_MINW') === 3 && has('w = Math.min(FREE_COLS, Math.max(FREE_MINW, w))'));
   note('ui-huddirect', '끌어서 옮기거나', 'HUD 배열 패널의 안내 문장(처음 표시 100%는 기본 크기를 뜻하는 라벨, 규칙 값 아님)');
 
   /* ===== 직업 규칙 (뒤) ===== */

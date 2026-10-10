@@ -49,9 +49,10 @@ const HUD_ITEMS = [
   { k: 'ehp', mod: 'hud-field', n: '적의 생명력과 다음 행동 예고', lock: 1 },
   { k: 'abtn', mod: 'hud-actions', n: '행동 버튼(비용과 쿨타임)', lock: 1 },
   { k: 'danger', mod: 'hud-danger', n: '지금 위험 줄', lock: 1 },
-  { k: 'sts', mod: 'hud-player', n: '상태 칩', d: ['bad', 'few', 'all'], opts: [['bad', '해로운 것만 3개'], ['few', '3개까지'], ['all', '모두']], desc: '내게 걸린 상태와 적에게 걸린 상태를 칩으로 보입니다. 넘치는 것은 "+N"으로 접힙니다. "해로운 것만"은 내 상태에만 걸리고, 적 카드에는 두 개까지 보입니다' },
+  { k: 'sts', mod: 'hud-status', n: '상태 칩', d: ['bad', 'few', 'all'], opts: [['bad', '해로운 것만 3개'], ['few', '3개까지'], ['all', '모두']], desc: '내게 걸린 상태와 적에게 걸린 상태를 칩으로 보입니다. 넘치는 것은 "+N"으로 접힙니다. "해로운 것만"은 내 상태에만 걸리고, 적 카드에는 두 개까지 보입니다' },
   { k: 'prev', mod: 'hud-player', n: '막대 미리보기', d: [0, 1, 1], desc: '행동에 올리면 생명력 · 스태미나 · 적 막대에 예상 변화를 겹쳐 보입니다' },
-  { k: 'inc', mod: 'hud-player', n: '예상 피해 줄', d: [1, 1, 1], desc: '내 다음 차례 전에 받을 피해를 한 줄로 보입니다' },
+  { k: 'inc', mod: 'hud-incoming', n: '예상 피해 줄', d: [1, 1, 1], desc: '내 다음 차례 전에 받을 피해를 한 줄로 보입니다' },
+  { k: 'incx', mod: 'hud-incoming', n: '예상 피해의 생명력 변화', d: [1, 1, 1], desc: '예상 피해 줄에 "생명력 40 → 30" 같은 변화를 덧붙입니다. 끄면 피해 숫자만 보이고, 변화는 읽는 글에 남습니다' },
   { k: 'flk', mod: 'hud-player', n: '플라스크 줄', d: [0, 1, 1], desc: '남은 플라스크 수. 행동 버튼에도 같은 수가 있습니다' },
   { k: 'cls', mod: 'hud-classchip', n: '직업 전용 칩', d: [1, 1, 1], desc: '직업 규칙의 자원과 표시(분노, 교대, 추적 등)' },
   { k: 'edet', mod: 'hud-field', n: '적 카드 상세', d: [0, 1, 1], desc: '붕괴 줄, 움직이는 순번, 레벨, 역할, 작은 표시. 적 카드를 누르면 그 카드만 펼쳐집니다' },
@@ -65,7 +66,7 @@ const HUD_ITEMS = [
   { k: 'agl', mod: 'hud-actions', n: '행동 묶음 이름', d: [0, 1, 1], desc: '공격 · 스킬 · 지키기 · 도구 같은 묶음 제목' },
   { k: 'tools', mod: 'hud-actions', n: '도구 칸 접기', d: [1, 0, 0], desc: '플라스크, 소모품, 도망을 한 칸 "도구"로 모읍니다. 누르면 펼쳐집니다' },
 ];
-const HUD_GROUPS = [['항상 보임', ['hpst', 'ehp', 'abtn', 'danger']], ['내 상태', ['sts', 'prev', 'inc', 'flk', 'cls']], ['적', ['edet', 'iaux']], ['순서와 기록', ['ord', 'rlog', 'logpanel', 'why']], ['행동', ['qcons', 'abaux', 'agl', 'tools']]];
+const HUD_GROUPS = [['항상 보임', ['hpst', 'ehp', 'abtn', 'danger']], ['내 상태', ['sts', 'prev', 'inc', 'incx', 'flk', 'cls']], ['적', ['edet', 'iaux']], ['순서와 기록', ['ord', 'rlog', 'logpanel', 'why']], ['행동', ['qcons', 'abaux', 'agl', 'tools']]];
 let HUDNOW = null; /* 지금 그리는 전투의 표시 값(whyHtml이 읽는다) */
 function hudRaw() { const h = G.data && G.data.hud; const p = h && (HUD_NAMES.includes(h.p) || h.p === 'custom') ? h.p : HUD_DEFAULT; return { p, o: (h && h.o && typeof h.o === 'object' && h.o) || {}, lay: h && h.lay && typeof h.lay === 'object' ? h.lay : null }; }
 function hudFlags(p, o) {
@@ -73,11 +74,11 @@ function hudFlags(p, o) {
   for (const it of HUD_ITEMS) if (!it.lock) f[it.k] = p === 'custom' && o[it.k] != null ? o[it.k] : it.d[i < 0 ? 2 : i];
   return f;
 }
-function hudCfg() { const h = hudRaw(); return hudFlags(h.p, h.o); }
+function hudCfg() { if (G.hudEd && G.hudEd.fo) return hudFlags('custom', G.hudEd.fo); /* 편집 중 표시 형태를 고른 값(저장 전) */ const h = hudRaw(); return hudFlags(h.p, h.o); }
 /* 자세히 칸이 열려 있으면 늘 전부 보인다(숨긴 것에 닿는 길) */
 function hudEff(fdo) { return fdo ? hudFlags('full', {}) : hudCfg(); }
 function hudPreset(n) { if (!HUD_NAMES.includes(n)) return; G.data.hud = Object.assign({ p: n }, hudSlotKeep()); saveLocal(); }
-function hudSet(k, v) { const c = hudCfg(); const o = {}; for (const it of HUD_ITEMS) if (!it.lock) o[it.k] = c[it.k]; o[k] = v; G.data.hud = Object.assign({ p: 'custom', o, lay: { pc: hudLayFor('pc'), ph: hudLayFor('ph') } }, hudSlotKeep()); saveLocal(); }
+function hudSet(k, v) { const c = hudCfg(); const o = {}; for (const it of HUD_ITEMS) if (!it.lock) o[it.k] = c[it.k]; o[k] = v; G.data.hud = Object.assign({ p: 'custom', o, lay: hudLayAll() }, hudSlotKeep()); saveLocal(); }
 const hudQuiet = h => String(h || '').replace(/ tabindex="-?\d+"/g, '').replace(/ data-info="[^"]*"/g, '');
 function hudSettings() {
   const h = hudRaw(), f = hudFlags(h.p, h.o); const live = !!(G.b && hudLiveSheet()); const sl = hudSlots();
@@ -85,6 +86,8 @@ function hudSettings() {
   let o = `<section class="setg" id="hudset0"><h4>전투 화면 배치</h4><p class="mini">처음에는 꼭 필요한 것만 보입니다. 묶음을 고르면 보이는 항목이 함께 바뀝니다. ${live ? '바꾸면 뒤의 전투 화면에 바로 보입니다.' : '전투 중에 열어도 바로 바뀝니다.'}</p>`;
   o += `<div class="setrow hudpre" role="group" aria-label="표시 묶음">${HUD_NAMES.map(n => `<button class="sm${h.p === n ? ' gold' : ''}" data-a="hudpre" data-k="${n}" aria-pressed="${h.p === n}">${HUD_LAB[n]}</button>`).join('')}<span class="mini hudcur" role="status">${h.p === 'custom' ? '사용자 지정' : ''}</span></div>`;
   o += `<div class="setrow hudpre"><button class="gold" data-a="hedstart">화면에서 편집</button><span class="mini">실제 전투 화면 위에서 칸을 끌어 옮기고 크기를 정합니다${live ? '. 전투는 멈춰 있습니다' : '. 전투 중이 아니면 견본 전투를 보여 줍니다'}</span></div>`;
+  const md = hudModeFor(hudDev());
+  o += `<div class="setrow hudpre" role="group" aria-label="배치 방식"><span class="lab">배치 방식</span>${['align', 'free'].map(k => `<button class="sm${md === k ? ' gold' : ''}" data-a="hudmode" data-k="${k}" aria-pressed="${md === k}">${HUD_MODE_N[k]}</button>`).join('')}<span class="mini">지금 ${HUD_DEV_N[hudDev()]} 화면의 방식입니다. 정렬 배치는 구역과 순서, 자유 배치는 칸마다 위치와 폭을 정합니다. 두 값은 따로 저장됩니다</span></div>`;
   o += `<div class="hslots" role="group" aria-label="내 배열 불러오기"><span class="lab">내 배열</span>${sl.map((s, i) => `<button class="sm${(G.data.hud && G.data.hud.slot === i && h.p === 'custom') ? ' gold' : ''}" data-a="hudslotload" data-n="${i}" aria-label="배열 칸 ${i + 1} 불러오기, ${s ? s.t + ' 저장' : '비어 있음'}"${s ? '' : ' aria-disabled="true"'}>${i + 1}${s ? '' : '<span class="mini"> 비어 있음</span>'}</button>`).join('')}</div><p class="mini">배열은 편집 화면에서 저장합니다. 칸 번호를 누르면 저장해 둔 배치를 불러옵니다. 지금 배치와 다르면 먼저 묻습니다.</p><div class="setrow"><span class="lab">배열 칸 불러올 때 확인</span><span class="mini">끄면 지금 배치가 바뀌어도 묻지 않고 불러옵니다</span><button type="button" class="sw" role="switch" aria-checked="${!G.data.hudNoAsk}" data-a="hudasktog" aria-label="배열 칸 불러올 때 확인">${G.data.hudNoAsk ? '꺼짐' : '켜짐'}</button></div>`;
   if (live) o += `<div class="setrow hudpre"><button class="sm" data-a="hudsheetpos" aria-pressed="${!!G.hudTop}">창을 ${G.hudTop ? '아래로' : '위로'} 옮기기</button><span class="mini">설정 창이 전투 화면을 가릴 때 씁니다</span></div>`;
   o += `</section><details class="setg hdet" id="hudset"${G.hudItemsOpen ? ' open' : ''}><summary>표시할 항목 고르기</summary><p class="mini">전투 화면에 무엇을 보일지 항목마다 정합니다.</p>`;
@@ -271,7 +274,8 @@ function vBattle() {
   const groups = []; for (const x of b.log) { const g = x.g || 0; if (!groups.length || groups[groups.length - 1].g !== g) groups.push({ g, items: [] }); groups[groups.length - 1].items.push(x); }
   const glog = groups.slice(-14).reverse().map((G2, gi) => `<div class="lgrp${gi === 0 ? ' now' : ''}"><div class="lgh">${G2.g ? G2.g + '번째 차례' : '전투 시작'}</div>${G2.items.map(x => `<p class="${x.c}">${numB(x.m)}${whyHtml(b, x, true)}</p>`).join('')}</div>`).join('');
   const side = `<section class="side${G.logOpen ? ' open' : ''}"${G.logOpen ? ' role="dialog" aria-modal="true" aria-labelledby="logttl"' : ' aria-label="전투 기록"'}><div class="sidehead"><h3 id="logttl">전투 기록</h3><button class="sm onlym" data-a="logclose"${G.logOpen ? ' data-focus="1"' : ''}>닫기</button></div><div class="blog" role="log">${glog}</div><div class="mini">맨 위가 가장 최근 차례입니다. 한 차례 안에서는 위에서 아래로 읽습니다.</div></section>`;
-  const hcls = ['bgrid', 'hp-' + hud.p, hud.p === 'simple' ? 'hcalm' : '', hud.flk ? '' : 'hl-noflk', hud.edet ? '' : 'hl-noedet', hud.abaux ? '' : 'hl-noaux', hud.agl ? '' : 'hl-noagl', hud.logpanel ? '' : 'hl-nopanel', hud.tools ? 'hl-tools' : ''].filter(Boolean).join(' ');
+  const hcls = ['bgrid', 'hp-' + hud.p, hud.p === 'simple' ? 'hcalm' : '', hud.flk ? '' : 'hl-noflk', hud.incx ? '' : 'hl-noincx', hudFreeActive() ? 'bfree' : '', hud.edet ? '' : 'hl-noedet', hud.abaux ? '' : 'hl-noaux', hud.agl ? '' : 'hl-noagl', hud.logpanel ? '' : 'hl-nopanel', hud.tools ? 'hl-tools' : ''].filter(Boolean).join(' ');
+  if (hudFreeActive()) return `<div class="${hcls}">${hudFreeCanvas(html)}${side}</div>`; /* 자유 배치: 칸은 논리 순서 그대로 두고 화면 위치만 정한다(55-hud-free.js) */
   const Z = hudZonesHtml(html);
   return `<div class="${hcls}"><div class="btop">${Z.top1}${Z.top2}</div>${Z.mid}${Z.bot}${side}</div>`;
 }

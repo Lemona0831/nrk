@@ -43,7 +43,7 @@ function hudLayJson(dev) { return JSON.stringify(hudLayFor(dev || hudDev())); }
 /* 배치를 바꾼다: 지금 묶음의 항목 값과 두 배치를 모두 '사용자 지정'으로 굳힌 뒤 fn이 한 배치를 고친다 */
 function hudEditLay(dev, fn) {
   const h = hudRaw(); const f = hudFlags(h.p, h.o); const o = {}; for (const it of HUD_ITEMS) if (!it.lock) o[it.k] = f[it.k];
-  const lay = { pc: hudLayFor('pc'), ph: hudLayFor('ph') }; fn(lay[dev]); G.data.hud = Object.assign({ p: 'custom', o, lay }, hudSlotKeep()); saveLocal();
+  const lay = hudLayAll(); fn(lay[dev]); G.data.hud = Object.assign({ p: 'custom', o, lay }, hudSlotKeep()); saveLocal();
 }
 /* 배열 칸(저장 칸) 4개: G.data.hud.slots = [ { t: 저장한 때, lay: { pc, ph } } | null ], 마지막으로 쓴 칸 G.data.hud.slot. 옛 저장본에는 없고 비어 있는 것으로 읽는다 */
 const HUD_SLOT_N = 4;
@@ -53,10 +53,18 @@ function hudSlots() {
   for (let i = 0; i < HUD_SLOT_N; i++) { const s = a[i]; out.push(s && typeof s === 'object' && s.lay && typeof s.lay === 'object' ? s : null); }
   return out;
 }
-function hudSlotLay(s) { return { pc: hudLayNorm(s.lay.pc, hudBaseLay(HUD_DEFAULT, 'pc')), ph: hudLayNorm(s.lay.ph, hudBaseLay(HUD_DEFAULT, 'ph')) }; }
+function hudSlotLay(s) {
+  const pc = hudLayNorm(s.lay.pc, hudBaseLay(HUD_DEFAULT, 'pc')), ph = hudLayNorm(s.lay.ph, hudBaseLay(HUD_DEFAULT, 'ph')); const md = s.lay.md && typeof s.lay.md === 'object' ? s.lay.md : {}; const fr = s.lay.fr && typeof s.lay.fr === 'object' ? s.lay.fr : {};
+  return { pc, ph, md: { pc: md.pc === 'free' ? 'free' : 'align', ph: md.ph === 'free' ? 'free' : 'align' }, fr: { pc: hudFreeNorm(fr.pc, hudFreeDefault('pc', pc)), ph: hudFreeNorm(fr.ph, hudFreeDefault('ph', ph)) } }; /* 배열 칸에는 배치 방식과 자유 배치 값도 담긴다(옛 칸은 정렬 배치) */
+}
 /* 두 배치가 같은 모양인지(끈 칸의 차례는 따지지 않는다). 배열 칸을 불러오기 전에 지금 배치가 바뀌는지 알아볼 때 쓴다 */
 function hudLayKey(L) { return JSON.stringify({ z: HUD_ZONES.map(k => L.z[k]), s: HUD_MODS.map(m => L.s[m.id]), off: L.off.slice().sort() }); }
-function hudLaySame(a, b) { return hudLayKey(a.pc) === hudLayKey(b.pc) && hudLayKey(a.ph) === hudLayKey(b.ph); }
+const hudFrKey = L => JSON.stringify({ m: HUD_MODS.map(m => L.m[m.id]), s: HUD_MODS.map(m => L.s[m.id]), off: L.off.slice().sort(), pk: L.pk });
+function hudLaySame(a, b) {
+  if (hudLayKey(a.pc) !== hudLayKey(b.pc) || hudLayKey(a.ph) !== hudLayKey(b.ph)) return false;
+  for (const d of ['pc', 'ph']) { const ma = a.md ? a.md[d] : 'align', mb = b.md ? b.md[d] : 'align'; if (ma !== mb) return false; if (ma === 'free' && hudFrKey(a.fr[d]) !== hudFrKey(b.fr[d])) return false; }
+  return true;
+}
 const HUD_SLOT_ASK = '지금 배치가 바뀝니다. 불러올까요?';
 /* 배열 칸 불러오기 확인 창. 확인 상자 "다음부터 표시하지 않기"를 켜고 불러오면 G.data.hudNoAsk가 켜져 이후 묻지 않는다(설정의 스위치로 되돌린다).
    따로 그리는 창이라 설정 창 위에서도, 화면에서 편집 중에도 같은 모양으로 뜬다. 열리면 뒷화면을 inert로 막고, Tab은 창 안에서만 돌며, Esc는 취소, 닫으면 불러온 단추로 초점이 돌아간다 */
@@ -79,7 +87,7 @@ function hudSlotAsk(opener, needs, onYes) {
   });
   bg.querySelector('#hudaskcancel').focus();
 }
-function hudSlotNeedsAsk(i) { const s = hudSlots()[i]; return !!s && !hudLaySame({ pc: hudLayFor('pc'), ph: hudLayFor('ph') }, hudSlotLay(s)); }
+function hudSlotNeedsAsk(i) { const s = hudSlots()[i]; return !!s && !hudLaySame(hudLayAll(), hudSlotLay(s)); }
 function hudSlotStamp() { const d = new Date(); return (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
 function hudSlotWrite(i, lay) { const sl = hudSlots(); sl[i] = { t: hudSlotStamp(), lay: JSON.parse(JSON.stringify(lay)) }; G.data.hud = Object.assign({}, G.data.hud || {}, { slots: sl, slot: i }); saveLocal(); }
 /* 설정 창에서 저장해 둔 배열을 지금 배치로 불러온다 */
@@ -133,6 +141,7 @@ function hudEditHtml() {
   let o = `<details class="setg hdet" id="hudedit"${G.hudListOpen ? ' open' : ''}><summary>목록으로 편집</summary><p class="mini">끌기가 어려우면 여기서 칸마다 크기와 구역, 순서를 고릅니다. ${live ? '바꾸면 뒤의 전투 화면에 바로 보입니다.' : ''} 휴대폰과 PC 배치는 따로 저장됩니다.</p>
   <div class="setrow hudpre" role="group" aria-label="편집할 배치">${['ph', 'pc'].map(d => `<button class="sm${dev === d ? ' gold' : ''}" data-a="huddev" data-k="${d}" aria-pressed="${dev === d}">${HUD_DEV_N[d]} 배치</button>`).join('')}<button class="sm" data-a="hudreset">처음으로 되돌리기</button></div>`;
   if (dev !== cur) o += `<p class="mini">지금 화면 폭에는 ${HUD_DEV_N[cur]} 배치가 쓰입니다. ${HUD_DEV_N[dev]} 배치는 그 폭의 화면에서 적용됩니다.</p>`;
+  if (hudModeFor(dev) === 'free') o += `<p class="mini">이 화면은 자유 배치를 쓰고 있어 이 목록은 정렬 배치 값만 고칩니다. 자유 배치의 자리 · 폭 · 크기는 "화면에서 편집"에서 정합니다.</p>`;
   o += `<p class="mini" id="hudkeyhelp">⠿ 단추를 끌면 옮겨집니다. 키보드는 ⠿ 단추에서 위 · 아래 화살표를 누르고, 위로 · 아래로 단추와 구역 목록도 씁니다.</p><p class="sr" role="status" id="hudlive">${esc(G.hudMsg || '')}</p>`;
   for (const zn of HUD_ZONES) {
     const ids = L.z[zn];
