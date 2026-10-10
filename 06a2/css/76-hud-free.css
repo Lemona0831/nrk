@@ -25,14 +25,7 @@ html.fitscroll .bgrid.bfree{flex:none}
 .hbox.ovl .htag::after{content:' 겹침';font-weight:700}
 .hnum{display:none;min-width:20px;height:20px;margin-right:4px;border-radius:10px;background:var(--gold);color:var(--gold-ink);font-size:calc(13px*var(--fs,1));font-weight:700;line-height:20px;text-align:center}
 html.hnums .hnum{display:inline-block}
-#hedbar .hpfree label{font-size:calc(13px*var(--fs,1));font-weight:600}
-#hedbar .hpfree input[type=number]{min-height:44px;width:72px;flex:none;padding:4px 6px;font-size:calc(16px*var(--fs,1));text-align:center}
-#hedbar .hpfree[hidden],#hedbar p.hpfree[hidden]{display:none}
-#hedbar .hpmode .sm{flex:1 1 0}
 .hl-noincx .incoming .inca{display:none}
-@media (min-width:720px){#hedbar{max-height:42vh}}
-@media (min-width:1000px){#hedbar .hpbody{grid-template-columns:1fr 1fr 1fr;gap:2px 20px}#hedbar .hpbody>#hedorder,#hedbar .hpbody>#hedvard{grid-column:auto;min-height:1.4em}#hedbar .hpbody>.hpvar{grid-column:auto}}
-#hedbar .hedbtns{flex-wrap:wrap}#hedbar .hedbtns button{white-space:nowrap}
 html.fitscroll .bgrid.bfree{grid-template-rows:auto}
 /* 격자 보기: 자유 배치에서는 12열 선과 한 행(16px) 선을 캔버스 위에 그린다(칸 위에서도 보이고, 눌림은 막지 않는다) */
 html.hgrid.hedit .fit:has(.fcanvas){background-image:none}

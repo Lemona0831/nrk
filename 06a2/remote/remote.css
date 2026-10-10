@@ -1,0 +1,87 @@
+/* ===== HUD 리모콘 (10월 10일 0.6a.2-113): 떠 있는 패널(.float)과 별도 페이지(.page)가 함께 쓴다 =====
+   색은 게임의 CSS 토큰을 읽고, 없으면 같은 값을 쓴다(별도 페이지에는 토큰이 없다). 바탕의 투명도는 --hr-mix(70~100%)이고 글자는 늘 그대로다. */
+.hrem{--hr-bg:var(--panel,#17120f);--hr-bg2:var(--panel2,#211a15);--hr-ink:var(--ink,#e6dccb);--hr-mut:var(--muted,#a39380);--hr-gold:var(--gold,#c9a24b);--hr-gink:var(--gold-ink,#1a1206);--hr-line:var(--line,#3a2c22);--hr-line2:var(--line2,#7a6550);--hr-bad:var(--bad,#ea6a55);
+  box-sizing:border-box;display:flex;flex-direction:column;min-width:0;color:var(--hr-ink);font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;font-size:calc(14px*var(--fs,1));line-height:1.45;text-align:left;
+  background:color-mix(in srgb,var(--hr-bg) var(--hr-mix,100%),transparent);border:2px solid var(--hr-gold);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.6);overflow:hidden}
+.hrem *{box-sizing:border-box;min-width:0}
+.hrem .sr{position:absolute;left:0;top:0;width:1px;height:1px;margin:0;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.hrem p{margin:0}
+.hrem button{font:inherit;color:var(--hr-ink);background:var(--hr-bg2);border:1px solid var(--hr-line2);border-radius:8px;padding:4px 8px;min-height:36px;min-width:36px;cursor:pointer;text-align:center;line-height:1.25;margin:0}
+.hrem button:hover:not(:disabled){border-color:var(--hr-gold)}
+.hrem button:disabled{cursor:not-allowed;color:var(--hr-mut);border-style:dashed;background:transparent}
+.hrem button.gold{background:var(--hr-gold);color:var(--hr-gink);border-color:var(--hr-gold);font-weight:700}
+.hrem :focus-visible{outline:3px solid var(--hr-ink);outline-offset:1px}
+.hrem button.gold:focus-visible{outline-color:var(--hr-ink)}
+.hrem select,.hrem input[type=number]{font:inherit;color:var(--hr-ink);background:var(--hr-bg);border:1px solid var(--hr-line2);border-radius:8px;padding:4px 8px;min-height:36px;margin:0;width:100%}
+.hrem select:disabled,.hrem input:disabled{color:var(--hr-mut);border-style:dashed}
+.hrem input[type=range]{width:100%;flex:1 1 90px;min-height:32px;margin:0;accent-color:#f2993a}
+.hrem input[type=checkbox]{width:24px;height:24px;margin:0;accent-color:var(--hr-gold);flex:none}
+.hrem fieldset{border:0;margin:0;padding:0}
+.hrem legend{padding:0;color:var(--hr-gold);font-size:calc(13px*var(--fs,1));font-weight:600}
+/* 머리줄 */
+.hr-head{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;padding:6px 8px;border-bottom:1px solid var(--hr-line);flex:none}
+.hr-grip{flex:none;font-size:calc(18px*var(--fs,1));line-height:1;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.hr-grip:active{cursor:grabbing}
+.hr-title{flex:1 1 auto;min-width:3.6em;color:var(--hr-gold);font-weight:700;font-size:calc(15px*var(--fs,1));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.hr-conn{flex:none;font-size:calc(13px*var(--fs,1));font-weight:600}
+.hr-conn[data-k=ok]{color:var(--good,#86c56f)}
+.hr-conn[data-k=lost]{color:var(--hr-bad)}
+.hr-hbtns{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px;flex:0 1 auto}
+.hr-hb{padding:2px 6px;font-size:calc(13px*var(--fs,1));white-space:nowrap}
+.hr-hb[hidden],.hr-grip[hidden],.hr-conn[hidden]{display:none}
+.hr-status{padding:4px 10px;min-height:3.2em;font-size:calc(13px*var(--fs,1));font-weight:600;color:var(--hr-ink);border-bottom:1px solid var(--hr-line);flex:none;overflow-wrap:anywhere;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hrem.fold .hr-status{min-height:1.4em;-webkit-line-clamp:1}
+/* 탭과 내용 */
+.hr-dyn{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+.hr-main{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+.hr-main[hidden]{display:none}
+.hr-tabs{display:flex;gap:2px;padding:6px 8px 0;flex:none;border-bottom:1px solid var(--hr-line)}
+.hr-tabs [role=tab]{flex:1 1 0;border-radius:8px 8px 0 0;border-bottom:0;background:transparent;color:var(--hr-mut);font-weight:600}
+.hr-tabs [role=tab][aria-selected=true]{background:var(--hr-bg2);color:var(--hr-gold);border-color:var(--hr-gold)}
+.hr-pan{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;padding:8px 10px 10px;overscroll-behavior:contain}
+.hr-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0}
+.hr-row>label,.hr-sl{flex:none;font-size:calc(13px*var(--fs,1));font-weight:600;color:var(--hr-gold)}
+.hr-row>select{flex:1 1 140px}
+.hr-sel{margin:4px 0;font-weight:600;overflow-wrap:anywhere}
+.hr-hint{margin:4px 0;font-size:calc(13px*var(--fs,1));color:var(--hr-mut);overflow-wrap:anywhere}
+.hr-foot-note{margin-top:8px}
+.hr-size output{flex:none;min-width:3.4em;text-align:right;font-variant-numeric:tabular-nums;font-size:calc(13px*var(--fs,1))}
+.hr-seg{flex:1 1 0}
+.hr-seg.on{background:var(--hr-gold);color:var(--hr-gink);border-color:var(--hr-gold);font-weight:700}
+.hr-mv{display:grid;grid-template-columns:1fr 1fr}
+.hr-steps{display:grid;grid-template-columns:1fr;gap:4px;margin:6px 0}
+.hr-step{display:grid;grid-template-columns:5.5em 36px minmax(0,1fr) 36px;align-items:center;gap:4px}
+.hr-step input[type=number]{text-align:center;-moz-appearance:textfield;appearance:textfield}
+.hr-ck{display:flex;align-items:center;gap:8px;min-height:32px;font-size:calc(13.5px*var(--fs,1));margin:2px 0}
+.hr-ck small{color:var(--hr-mut)}
+.hr-grp{margin-top:10px;border-top:1px solid var(--hr-line);padding-top:6px}
+.hr-sw{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:2px 12px 2px 6px}
+.hr-sw::before{content:'';width:34px;height:20px;border-radius:10px;background:radial-gradient(circle at 10px 50%,var(--hr-mut) 6px,transparent 7px),var(--track,#2a1f1a);box-shadow:inset 0 0 0 1px var(--hr-line)}
+.hr-sw[aria-checked=true]::before{background:radial-gradient(circle at 24px 50%,#1a1206 6px,transparent 7px),var(--hr-gold);box-shadow:none}
+.hr-sw[aria-checked=false]{color:var(--hr-mut)}
+.hr-help{margin:0;padding-left:1.2em;font-size:calc(13.5px*var(--fs,1))}
+.hr-help li{margin:4px 0}
+.hr-ask{flex:none;padding:6px 10px;border-top:1px solid var(--hr-gold);background:var(--hr-bg2)}
+.hr-ask .hr-row{margin:4px 0}
+.hr-ask .hr-row>button{flex:1 1 0}
+.hr-foot{flex:none;display:flex;gap:6px;padding:6px 8px;border-top:1px solid var(--hr-line);padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))}
+.hr-foot button{flex:1 1 0;min-height:44px;font-weight:600}
+.hr-note{padding:14px 12px}
+.hr-note p{margin-bottom:10px}
+/* 떠 있는 패널 */
+.hrem.float{position:fixed;z-index:95;width:var(--hr-w,340px);max-width:calc(100vw - 16px);max-height:min(580px,calc(100dvh - 16px))}
+.hrem.float.fold{max-height:none}
+@media (max-width:719px){
+  .hrem.float{left:0!important;right:0;top:auto!important;bottom:0;width:auto;max-width:none;max-height:50dvh;border-radius:12px 12px 0 0;border-width:2px 0 0}
+  .hrem.float .hr-grip{display:none}
+  .hrem.float .hr-title{cursor:default}
+  .hrem.float .hr-status{min-height:2.7em}
+  .hrem.float.fold .hr-status{min-height:1.4em}
+  .hrem.float .hr-foot{padding-bottom:calc(4px + env(safe-area-inset-bottom,0px))}
+  .hrem.float .hr-hb{min-width:44px}
+}
+@media (prefers-reduced-motion:reduce){.hrem *{transition:none!important;animation:none!important}}
+/* 별도 페이지 */
+.hrem.page{max-width:560px;margin:0 auto;min-height:100dvh;border-radius:0;border-width:0 2px;box-shadow:none;background:var(--hr-bg)}
+.hrem.page .hr-pan{max-height:none}
+.hrem.page .hr-dyn{flex:1 1 auto}

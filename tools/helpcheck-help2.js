@@ -6,9 +6,10 @@ module.exports = function (api) {
   const has = s => SRC.includes(s);
   const src = fn => E(fn + '.toString()');
 
-  add('help', '패널에는 배치 방식, 배열 칸 1~4', '상수: HUD_SLOT_N=' + E('HUD_SLOT_N') + '(저장 칸 수)', E => E('HUD_SLOT_N') === 4);
+  add('help', '"배열"에서는 배열 칸 1~4를 불러오고', '상수: HUD_SLOT_N=' + E('HUD_SLOT_N') + '(저장 칸 수), 소스: 리모콘 상태가 slots를 HUD_SLOT_N칸만큼 만든다', E => E('HUD_SLOT_N') === 4 && has('slots: sl.map((s, i) =>'));
+  const OPS = require('fs').readFileSync(require('path').join(api.ROOT, '06a2', 'remote', 'ui.js'), 'utf8');
+  add('help', '투명도(100 · 90 · 80 · 70%)', '소스: remote/ui.js const OPS = [100, 90, 80, 70](투명도 단추가 차례로 돈다. 바탕 색만 섞이고 글자는 그대로)', E => OPS.includes('const OPS = [100, 90, 80, 70];'));
   add('help', '가로 열(12열 격자), 세로 행, 폭(3열에서 12열)', '상수: FREE_COLS=' + E('FREE_COLS') + ' · FREE_MINW=' + E('FREE_MINW') + ', 소스: hudFreeNorm이 폭을 FREE_MINW에서 FREE_COLS로 맞춘다', E => E('FREE_COLS') === 12 && E('FREE_MINW') === 3 && has('w = Math.min(FREE_COLS, Math.max(FREE_MINW, w))'));
-  note('ui-huddirect', '끌어서 옮기거나', 'HUD 배열 패널의 안내 문장(처음 표시 100%는 기본 크기를 뜻하는 라벨, 규칙 값 아님)');
 
   /* ===== 직업 규칙 (뒤) ===== */
   add('help', '겹마다 피해 +5%', '상수: HUNT.focusPer 5% · focusBig 10% · focusMax 3, 소스: 3겹이면 몸 낮추기 · 버티기를 꿰뚫음', E => pct(E('HUNT.focusPer')) === 5 && pct(E('HUNT.focusBig')) === 10 && E('HUNT.focusMax') === 3 && has('b.p.focus.n >= HUNT.focusMax') && has('e.braced && !o.dot && !fullF'));

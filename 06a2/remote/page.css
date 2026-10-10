@@ -1,0 +1,10 @@
+/* HUD 리모콘 별도 페이지의 바탕. 게임의 css/10-base.css와 같은 어두운 색을 따로 정의한다(게임 CSS를 읽지 않는다) */
+:root{color-scheme:dark;--bg:#0d0b0a;--panel:#17120f;--panel2:#211a15;--line:#3a2c22;--line2:#7a6550;--ink:#e6dccb;--muted:#a39380;--gold:#c9a24b;--gold-ink:#1a1206;--good:#86c56f;--bad:#ea6a55;--track:#2a1f1a}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',system-ui,sans-serif;font-size:15px;line-height:1.5;min-height:100dvh}
+.pg-head{max-width:560px;margin:0 auto;padding:10px 14px 6px}
+.pg-head h1{margin:0 0 2px;font-size:18px;color:var(--gold)}
+.pg-head p{margin:0;font-size:13px;color:var(--muted)}
+main{max-width:560px;margin:0 auto}
+.pg-ns{padding:12px 14px}

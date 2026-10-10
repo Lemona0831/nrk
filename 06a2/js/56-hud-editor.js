@@ -47,7 +47,7 @@ function hudEditLay(dev, fn) {
 }
 /* 배열 칸(저장 칸) 4개: G.data.hud.slots = [ { t: 저장한 때, lay: { pc, ph } } | null ], 마지막으로 쓴 칸 G.data.hud.slot. 옛 저장본에는 없고 비어 있는 것으로 읽는다 */
 const HUD_SLOT_N = 4;
-function hudSlotKeep() { const h = G.data && G.data.hud; const o = {}; if (h && Array.isArray(h.slots)) o.slots = h.slots; if (h && Number.isInteger(h.slot)) o.slot = h.slot; return o; }
+function hudSlotKeep() { const h = G.data && G.data.hud; const o = {}; if (h && Array.isArray(h.slots)) o.slots = h.slots; if (h && Number.isInteger(h.slot)) o.slot = h.slot; if (h && h.remote && typeof h.remote === 'object') o.remote = h.remote; return o; } /* remote: 리모콘 패널의 자리 · 접힘 · 투명도(js/57-hud-remote.js). 배치와 상관없이 늘 남는다 */
 function hudSlots() {
   const h = G.data && G.data.hud; const a = h && Array.isArray(h.slots) ? h.slots : []; const out = [];
   for (let i = 0; i < HUD_SLOT_N; i++) { const s = a[i]; out.push(s && typeof s === 'object' && s.lay && typeof s.lay === 'object' ? s : null); }
@@ -73,7 +73,7 @@ function hudSlotAsk(opener, needs, onYes) {
   if (document.getElementById('hudask')) return;
   const bg = document.createElement('div'); bg.id = 'hudask'; bg.className = 'askbg';
   bg.innerHTML = `<div class="askbox" role="alertdialog" aria-modal="true" aria-labelledby="hudasktxt"><p id="hudasktxt">${esc(fixJosa(HUD_SLOT_ASK))}</p><label class="askck" for="hudaskno"><input type="checkbox" id="hudaskno"> 다음부터 표시하지 않기</label><div class="askbtn"><button type="button" id="hudaskcancel">취소</button><button type="button" class="gold" id="hudaskok">불러오기</button></div></div>`;
-  const blocked = [document.getElementById('root'), document.getElementById('hedbar')].filter(Boolean); blocked.forEach(x => x.setAttribute('inert', ''));
+  const blocked = [document.getElementById('root'), document.getElementById('hremote')].filter(Boolean); blocked.forEach(x => x.setAttribute('inert', ''));
   document.body.appendChild(bg);
   const done = yes => {
     const no = bg.querySelector('#hudaskno').checked; bg.remove(); blocked.forEach(x => x.removeAttribute('inert'));
