@@ -39,14 +39,14 @@ function vSettings() {
   const snd = `<section class="setg"><h4>소리</h4>
 <div class="setrow"><span class="lab">소리</span><span></span>${sw('sndtoggle', c.on, '소리')}</div>
 <div class="setrow"><label for="volm">음악</label><input id="volm" type="range" min="0" max="100" step="5" value="${pct(c.music)}"${off}><output id="volmv" for="volm">${pct(c.music)}%</output></div>
-<div class="setrow"><label for="vols">효과음</label><input id="vols" type="range" min="0" max="100" step="5" value="${pct(c.sfx)}"${off}><button class="sm" data-a="sfxtest"${off} aria-label="효과음 들어 보기">들어 보기</button><small>효과음 <output id="volsv" for="vols">${pct(c.sfx)}%</output>. 소리는 처음에 꺼져 있고, 화면 위 🔇 버튼이나 여기서 켭니다. 음악은 화면에 따라 바뀝니다.</small></div></section>
-<section class="setg"><h4>화면</h4>
+<div class="setrow"><label for="vols">효과음</label><input id="vols" type="range" min="0" max="100" step="5" value="${pct(c.sfx)}"${off}><button class="sm" data-a="sfxtest"${off} aria-label="효과음 들어 보기">들어 보기</button><small>효과음 <output id="volsv" for="vols">${pct(c.sfx)}%</output>. 소리는 처음에 꺼져 있고, 화면 위 🔇 버튼이나 여기서 켭니다. 음악은 화면에 따라 바뀝니다.</small></div></section>`;
+  const scr = `<section class="setg"><h4>화면</h4>
 <div class="setrow"><span class="lab">숫자 키</span><span class="mini">숫자 키 1부터 9까지로 행동 버튼을 누릅니다</span>${sw('numkeys', G.data.numKeys !== false, '숫자 키로 행동')}</div>
 <div class="setrow"><span class="lab">설명 창</span><span class="mini">마우스를 올리거나 길게 누르면 뜹니다</span>${sw('infotoggle', G.infoOn, '설명 창')}</div>
 <div class="setrow"><label for="setfs">글자 크기</label><span class="mini">화면 글자의 크기</span><select id="setfs">${FS_OPTS.map(v => `<option value="${v}"${(FS_OPTS.includes(+G.data.fs) ? +G.data.fs : 1) === v ? ' selected' : ''}>${Math.round(v * 100)}%</option>`).join('')}</select></div>
 <div class="setrow"><span class="lab">움직임 줄이기</span><span class="mini">적 카드 확대, 버튼 빛남, 부드러운 스크롤, 알림이 미끄러져 나오는 것을 끕니다</span>${sw('rmotion', !!G.data.rm, '움직임 줄이기')}</div>
 <div class="setrow"><label for="setpace">적 차례</label><span class="mini">적이 움직이는 빠르기</span><select id="setpace">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></div></section>`;
-  return hudLiveSheet() ? hudSettings() + snd : snd + hudSettings(); /* 전투 중에 연 설정 창은 전투 화면 표시와 편집을 맨 위에 둔다 */
+  return setTabsHtml({ sound: snd, screen: scr, battle: hudSettings() }); /* 전투 중에 연 설정 창은 '전투 화면' 탭이 먼저 열린다 */
 }
 function render() {
   if (typeof document === 'undefined') return;
