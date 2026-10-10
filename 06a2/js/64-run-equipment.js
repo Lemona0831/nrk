@@ -211,7 +211,7 @@ function reviveRun(r) {
     phase: 'wait', surveys: r.surveys || null, discards: r.discards || [], revivedAt: Date.now() };
   run.syncedActs = run.acts.length; // 행동 기록은 이미 올라가 있다
   // 기록에는 캐릭터 상태가 없어, 이벤트·제단이 바꾼 최대 생명력을 지나온 방에서 다시 센다
-  for (const x of run.rooms) { if (x.type === 'event' && ((x.event === 'chalice' && x.took === 'drink') || (x.event === 'nameless' && x.took === 'carve'))) p.hpBonus = (p.hpBonus || 0) + 5; if (x.type === 'altar' && x.took === 'blood') p.hpPen = (p.hpPen || 0) + 0.05; }
+  for (const x of run.rooms) { if (x.type === 'event' && ((x.event === 'chalice' && x.took === 'drink') || (x.event === 'tomb' && x.took === 'carve'))) p.hpBonus = (p.hpBonus || 0) + 5; if (x.type === 'altar' && x.took === 'blood') p.hpPen = (p.hpPen || 0) + 0.05; if (x.type === 'altar' && x.took === 'scale') p.hpPen = (p.hpPen || 0) + 0.03; }
   p.skills = run.skills.slice(); p.lv = run.lv; applyStats(p, run.stats);
   run.inv = {}; run.eqU = {}; for (const sl of EQ_SLOTS) run.eqU[sl] = null;
   const items = r.inv.filter(x => ITEMS[x.tpl]).map(x => mkItem(x.tpl, { g: x.g, b: x.b, ch: x.ch || 1 }));
