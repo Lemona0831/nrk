@@ -150,7 +150,7 @@ function hudEditHtml() {
   return o + `</details>`;
 }
 /* 전투 중 설정 창은 뒤 화면이 보이도록 작게 연다 */
-function hudLiveSheet() { return !!(G.sheet && G.sheet.kind === 'settings' && G.b && (G.scr === 'run' || G.scr === 'scen' || G.scr === 'tut' || G.scr === 'test')); }
+function hudLiveSheet() { return !!(G.sheet && G.sheet.kind === 'settings' && G.b && (G.scr === 'run' || G.scr === 'scen' || G.scr === 'tut' || G.scr === 'hudsample')); }
 function hudEditMove(dev, id, fn) { hudEditLay(dev, L => { fn(L); hudSay(dev, L, id); }); }
 function hudEditFocus(sel) { const x = document.querySelector(sel); if (x) x.focus(); }
 const hudEditDev = () => (G.hudDev === 'ph' || G.hudDev === 'pc' ? G.hudDev : hudDev());

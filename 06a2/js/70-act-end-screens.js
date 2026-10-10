@@ -14,6 +14,7 @@ function doAct(id, tid) {
   const b = G.b; if (!b || b.over || G.busy) return;
   const acts = actionList(b); const a = acts.find(x => x.id === id);
   if (!a || !a.ok) return;
+  if (!riskAsk(b, a)) return;
   const t = tid ? b.en.find(e => e.id === tid && e.alive) : actTarget(b, a);
   G.liveMk = { b, x: b.log[b.log.length - 1] };
   commitAct(id, t ? t.id : null);

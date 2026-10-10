@@ -14,7 +14,7 @@ const SKILL_SLOTS = 3;
 /* 직업 전용 스킬 (시작부터, 그 직업만). type: melee | ranged | aoe | front(전열 전체) | self */
 /* 직업 기술: 스킬 칸과 별도로 늘 쓸 수 있는 직업 고유 행동 */
 function exclOf(build) { return (EXCL[build] || []).map(s => Object.assign({ excl: build, gen: 1, melee: s.type === 'melee' ? 1 : 0, ranged: s.type === 'ranged' ? 1 : 0, aoe: s.type === 'aoe' || s.type === 'front' ? 1 : 0, self: s.type === 'self' ? 1 : 0 }, s)); }
-function skillMap(build) { const m = allSkills(); for (const s of exclOf(build)) m[s.id] = s; for (const s of (SKILLS2[build] || [])) m[s.id] = v2Static(s); return m; }
+function skillMap(build) { const m = allSkills(); for (const s of exclOf(build)) m[s.id] = s; for (const s of (SKILLS2[build] || [])) m[s.id] = v2Static(s); if (build === 'novice') for (const s of TUT_SKILLS) m[s.id] = v2Static(s); return m; }
 /* 0.6a.2 스킬 한 줄 → 행동 목록이 쓰는 꼴 (대상 종류, 근접 여부, 빠르기) */
 function v2Static(s) { return { id: s.id, n: s.n, v2: 1, s, skill: 1, melee: s.tgt === 'melee' ? 1 : 0, ranged: s.tgt === 'ranged' ? 1 : 0, dodge: s.tgt === 'pick' ? 1 : 0, aoe: s.tgt === 'front' || s.tgt === 'all' ? 1 : 0, self: s.tgt === 'self' ? 1 : 0, front: s.tgt === 'front' ? 1 : 0, time: SKK.T[s.time], d: skBody(s) }; }
 /* 흘리기를 건다: 고른 적의 다음 공격을 줄이고, 흘려 내면 on의 효과를 그 적에게. 흘리기 준비(pbuf)가 있으면 얹고 1 쓴다 */

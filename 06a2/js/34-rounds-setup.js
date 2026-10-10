@@ -113,7 +113,7 @@ function scenBattle(build, sc) {
 }
 /* 0.6a.2 수련장 (data/tutorial.js): 직업 없는 견습생, 장면마다 정해진 적과 쓸 수 있는 행동 */
 function tutBattle(L) {
-  const p = mkPlayer('novice', {}); const P0 = L.p || {};
+  const p = mkPlayer('novice', {}, null, L.sk); const P0 = L.p || {};
   if (P0.hp) p.hp = Math.round(p.hpMax * P0.hp);
   if (P0.fl) Object.assign(p.flask, P0.fl);
   const en = L.en.map((x, i) => mkEnemy(x[0], x[1], i, x[2]));
@@ -129,6 +129,7 @@ const TUT_CHECK = {
   t3: b => b.rec.some(x => x.k === 'break' && x.cut),
   t4: b => !b.en.some(e => e.role === 'archer' && e.alive),
   t5: b => b.rec.some(x => x.k === 'block'),
+  tsk: b => b.rec.filter(x => x.k === 'act' && x.a === 'n_cleave').length >= 2,
   t6: b => b.over === 'win',
 };
 function endBattleCarry(p) {

@@ -15,20 +15,21 @@ function hudEdPosText(L, id) { if (L.m) return hfPos(L, id); const dev = hudDev(
 
 /* ---------- 들어가고 나오기 ---------- */
 function hudEdSampleBattle() {
-  const T = { build: testClasses()[0], lv: 5, floor: 'low', ch: 1 }; T.foe = testFoes(1)[0].id;
-  const st = statRecommend(T.build, {}, STAT_START + LV_POINTS * (T.lv - 1));
-  const p = mkPlayer(T.build, {}, st, (TREE2[T.build] ? TREE2[T.build].starters : [])); p.lv = T.lv; applyStats(p, st); p.hp = p.hpMax; p.st = p.stMax;
-  const room = testRoom(T); const b = roomBattle(p, room, null, 4242); b.ctx.test = 1; b.stepMode = true;
+  const cls = Object.keys(BUILDS).filter(k => BUILDS[k].v2 && !BUILDS[k].tut && unlOpen(k))[0]; const lv = 5;
+  const st = statRecommend(cls, {}, STAT_START + LV_POINTS * (lv - 1));
+  const p = mkPlayer(cls, {}, st, (TREE2[cls] ? TREE2[cls].starters : [])); p.lv = lv; applyStats(p, st); p.hp = p.hpMax; p.st = p.stMax;
+  const q = SQUADS.filter(x => inCh(x, 1))[0]; const fl = FLOOR_CAMP + 3;
+  const room = { lv: mlvOf(fl, 1), floor: fl, ch: 1, names: ENEMY_NAMES[1], path: 'main', en: JSON.parse(JSON.stringify(q.low)), squad: q.id }; const b = roomBattle(p, room, null, 4242); b.ctx.test = 1; b.stepMode = true;
   try { b.log.push({ m: '내가 적에게 9.4 피해', c: 'good', w: 'p', r: 1, g: 1 }, { m: '적이 나에게 6.2 피해', c: 'bad', w: b.en[0].id, r: 1, g: 1 }); } catch (e) { }
   return b;
 }
 function hudEdBegin() {
   if (G.hudEd || typeof document === 'undefined') return;
   hidePop(); G.menuOpen = false;
-  const real = !!(G.b && (G.scr === 'run' || G.scr === 'scen' || G.scr === 'tut' || G.scr === 'test'));
+  const real = !!(G.b && (G.scr === 'run' || G.scr === 'scen' || G.scr === 'tut' || G.scr === 'hudsample'));
   const ed = { draft: hudLayAll(), fo: null, hist: null, nums: false, read: [], ovl: [], norm: false, announce: false, sel: null, msg: HUD_ED_DEFAULT_MSG, ret: null, sample: !real, focus: null, help: false, slot: Number.isInteger(G.data.hud && G.data.hud.slot) ? G.data.hud.slot : null, fold: window.innerWidth <= HUD_PHONE_MAX, grid: false, keep: false };
   ed.init = JSON.stringify(ed.draft); ed.o0 = JSON.stringify(hudOMap());
-  if (!real) { ed.ret = { scr: G.scr, run: G.run, b: G.b, sel: G.sel, back: G.back, sheet: null }; G.run = null; G.b = hudEdSampleBattle(); G.scr = 'test'; G.sel = null; }
+  if (!real) { ed.ret = { scr: G.scr, run: G.run, b: G.b, sel: G.sel, back: G.back, sheet: null }; G.run = null; G.b = hudEdSampleBattle(); G.scr = 'hudsample'; G.sel = null; }
   G.sheet = null; G.hudEd = ed; hudEdBarMake(); document.documentElement.classList.add('hedit'); render();
   ed.focus = '[data-hbox]'; hudEdPost();
 }

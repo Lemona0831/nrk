@@ -46,7 +46,7 @@ function vSettings() {
 <div class="setrow"><label for="setfs">글자 크기</label><span class="mini">화면 글자의 크기</span><select id="setfs">${FS_OPTS.map(v => `<option value="${v}"${(FS_OPTS.includes(+G.data.fs) ? +G.data.fs : 1) === v ? ' selected' : ''}>${Math.round(v * 100)}%</option>`).join('')}</select></div>
 <div class="setrow"><span class="lab">움직임 줄이기</span><span class="mini">적 카드 확대, 버튼 빛남, 부드러운 스크롤, 알림이 미끄러져 나오는 것을 끕니다</span>${sw('rmotion', !!G.data.rm, '움직임 줄이기')}</div>
 <div class="setrow"><label for="setpace">적 차례</label><span class="mini">적이 움직이는 빠르기</span><select id="setpace">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></div>${vfxSettingRow()}</section>`;
-  return setTabsHtml({ sound: snd, screen: scr, battle: hudSettings() }); /* 전투 중에 연 설정 창은 '전투 화면' 탭이 먼저 열린다 */
+  return setTabsHtml({ sound: snd, screen: scr, battle: hudSettings(), access: vAccessPane() }); /* 전투 중에 연 설정 창은 '전투 화면' 탭이 먼저 열린다 */
 }
 function render() {
   if (typeof document === 'undefined') return;
@@ -72,10 +72,9 @@ function render() {
   else if (G.scr === 'survey') main = vSurvey();
   else if (G.scr === 'final') main = vFinal();
   else if (G.scr === 'scen') main = '';
-  else if (G.scr === 'test') main = G.b ? '' : vTestSetup();
   else if (G.scr === 'tut') main = G.b ? '' : vTutHub();
   else if (G.scr === 'tutoffer') main = vTutOffer();
-  const fit = (G.scr === 'run' && G.b) || (G.scr === 'scen' && G.b) || (G.scr === 'tut' && G.b) || (G.scr === 'test' && G.b);
+  const fit = (G.scr === 'run' && G.b) || (G.scr === 'scen' && G.b) || (G.scr === 'tut' && G.b) || (G.scr === 'hudsample' && G.b);
   document.documentElement.classList.toggle('fitmode', !!fit);
   document.documentElement.style.setProperty('--app-h', (window.visualViewport ? window.visualViewport.height : window.innerHeight) + 'px');
   const y = window.scrollY; const ef0 = G.hudEd ? document.querySelector('#root > .fit') : null; const efy = ef0 ? ef0.scrollTop : 0; /* 편집 중에는 .fit이 스크롤 칸 */
@@ -130,13 +129,13 @@ function fitDecide(fit) {
 }
 /* 설정: 글자 크기(--fs)와 움직임 줄이기(html.rm) */
 const FS_OPTS = [0.9, 1, 1.15, 1.3];
-function applyPrefs() { if (typeof document === 'undefined' || !G.data) return; const de = document.documentElement; const fs = FS_OPTS.includes(+G.data.fs) ? +G.data.fs : 1; de.style.setProperty('--fs', String(fs)); de.classList.toggle('rm', !!G.data.rm); }
+function applyPrefs() { if (typeof document === 'undefined' || !G.data) return; const de = document.documentElement; const fs = FS_OPTS.includes(+G.data.fs) ? +G.data.fs : 1; de.style.setProperty('--fs', String(fs)); de.classList.toggle('rm', !!G.data.rm); for (const k of ['hc', 'sym', 'tsp', 'tap']) de.classList.toggle(k, !!optGet(k)); vibSync(); wakeSync(); }
 const smoothB = () => (G.data && G.data.rm) || (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
 /* 화면 이름: 브라우저 탭 제목과 숨은 h2 */
 const SCR_N = { guide: '처음 안내', create: '캐릭터 만들기', settle: '정산', shop: '상점', wait: '챕터 돌파', rank: '랭킹', records: '기록', goals: '계정 목표', mark: '표식 도전', admin: '관리자', tree: '스킬 트리', dead: '쓰러짐', survey: '설문', final: '마무리', scen: '고정 상황', tutoffer: '수련장 안내' };
 function scrName() {
   if (G.scr === 'run') return G.b ? (G.b.ctx && G.b.ctx.boss ? '보스 전투' : '전투') : '던전';
-  if (G.scr === 'test') return G.b ? '시험 전투' : '시험 전투 설정';
+  if (G.scr === 'hudsample') return '전투 화면 편집';
   if (G.scr === 'tut') return G.b ? '수련장 전투' : '수련장';
   return SCR_N[G.scr] || '';
 }

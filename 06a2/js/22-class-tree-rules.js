@@ -29,6 +29,7 @@ function unlAdd(b, key, n) {
 function unlNewsHtml() { const U = G.data && G.data.unl; if (!U || !U.news || !U.news.length) return ''; return U.news.filter(k => UNLOCK[k] && BUILDS[k]).map(k => `<p class="unlnews">🔓 ${esc(UNLOCK[k].open || '')} 새 직업 ${esc(BUILDS[k].n)}을(를) 고를 수 있습니다.</p>`).join(''); }
 function unlNewsSeen() { const U = G.data && G.data.unl; if (U && U.news && U.news.length) { U.news = []; saveLocal(); } }
 const SK2 = {}; for (const k in SKILLS2) for (const s of SKILLS2[k]) SK2[s.id] = s;
+for (const s of TUT_SKILLS) SK2[s.id] = s; // 수련장 견습생의 스킬(data/tutorial.js)
 /* 사라진 규칙(마나, 주문·캔트립, 옛 점화·냉각의 시간당 피해, 옛 직업 스킬)에 묶여 v2 직업에게 효과가 없는 장비 (npm run items, 10월 3일 06a2에서 발동 0).
    아이템 손보기(개편 기획 1절) 전까지 드롭과 상점에서 뺀다. 장비 점검(tools/itemcheck.js)은 그대로 이 장비들을 시험해 실패로 보인다 */
 const V2_OFF = ['pilgstaff', 'candlestaff', 'acolyterelic', 'confwand', 'penwhip', 'monkrobe', 'oathplate', 'candlegloves', 'archerbracer', 'poisoner', 'viperskin', 'woodsymbol', 'worrybeads', 'ashmedal', 'obsidianring', 'lapisring', 'oathbreaker', 'thornrod', 'candlewick', 'hereticstaff', 'belllongbow', 'crowfeather', 'abysseye', 'tinring', 'siegering',
