@@ -15,7 +15,7 @@ module.exports = function (api) {
   add(D, '일반 적 25%, 정예 35%, 보스 45%', '소스: hurtPlayer 한 번 피해 상한', E => E('hurtPlayer.toString()').includes('o.src.role === \'boss\' ? 0.45 : o.src.elite ? 0.35 : 0.25'));
   add(D, '샘(50%), 야영지(전부), 정산(전부)', '소스: 샘 0.5, 야영지 · 정산 hpMax', E => E('onClick.toString()').includes('const sp = 0.5 *'));
   add(D, '몬스터 레벨 1~4', '실행: mlvOf 1챕터 1~4, 2챕터 5~8, 3챕터 9~12 (1층 · 23층)', E => E('[1,2,3].map(c => mlvOf(1, c) + "-" + mlvOf(23, c)).join()') === '1-4,5-8,9-12');
-  add(D, '처음 15점, 레벨마다 2점', '상수: STAT_START · LV_POINTS', E => E('STAT_START') === 15 && E('LV_POINTS') === 2);
+  add(D, '처음 15점, 레벨마다 3점', '상수: STAT_START · LV_POINTS', E => E('STAT_START') === 15 && E('LV_POINTS') === 3);
   add(D, '트리 78칸', '데이터: 아홉 직업 모두 시작 2 + 78칸, 하급 · 중급 60 · 상급 18', E => E(`Object.keys(TREE2).every(k => SKILLS2[k].length === 80 && SKILLS2[k].filter(s => s.tier === "상급").length === 18 && SKILLS2[k].filter(s => s.row && s.row <= 10).length === 60)`));
   add(D, '줄 예산 55 · 56.5 · 58.5', '상수: SKK.rowB 11 · 12 · 13줄', E => E('SKK.rowB[11]') === 55 && E('SKK.rowB[12]') === 56.5 && E('SKK.rowB[13]') === 58.5);
   add(D, '연 칸 수 × 25 × 챕터 배율', '상수: TREE_RESET.cell=25', E => E('TREE_RESET.cell') === 25);

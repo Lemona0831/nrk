@@ -35,8 +35,12 @@ def build():
         pass  # 다른 드라이브면 저장소 밖
     a = set(os.listdir(os.path.join(REPO, 'audio')))
     b = set(os.listdir(os.path.join(REPO, '06a2', 'audio')))
+    # 개발판의 효과음 목록에 명시한 파일은 공개판 음원을 교체하는 업데이트다.
+    # 배경 음악 등 그 밖의 서로 다른 동명 파일은 계속 충돌로 막는다.
+    managed = set(re.findall(r"src:\s*'audio/(sfx_[^']+\.mp3)'",
+        open(os.path.join(REPO, '06a2', 'data', 'audio.js'), encoding='utf-8').read()))
     both = sorted(f for f in a & b if not filecmp.cmp(
-        os.path.join(REPO, 'audio', f), os.path.join(REPO, '06a2', 'audio', f), shallow=False))
+        os.path.join(REPO, 'audio', f), os.path.join(REPO, '06a2', 'audio', f), shallow=False) and f not in managed)
     if both:
         sys.exit('루트 audio/와 06a2/audio/에 같은 이름이 있어 중단합니다: ' + ', '.join(both))
     if os.path.isdir(OUT):

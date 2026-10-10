@@ -7,4 +7,4 @@ V("SFXB.last={};sfxPlay('b_slash');sfxPlay('b_slash');sfxPlay('b_slash2');sfxPla
 plays.slice(1).forEach(a=>a.handlers.ended());assert.equal(V('SFXB.live'),0);
 AudioMock.fail=true;V("SFXB.last={};sfxPlay('b_slash')");assert.equal(V('SFXB.live'),0);AudioMock.fail=false;
 const n=plays.length;V("G.data.audio.bfx=false;sfxPlay('b_big')");assert.equal(plays.length,n);
-console.log('효과음: 암살자 교체·타 직업 유지·0 음량·80ms·동시 3개·오류 회수·끄기 통과');
+console.log('효과음: 암살자 검음·둔기 강타·0 음량·80ms·동시 3개·오류 회수·끄기 통과');

@@ -188,6 +188,7 @@ function giveChCons(run, ch) { const ids = Object.keys(CONS).filter(k => (CONS[k
 function refundDeepest(run) { const t = run.tree; if (!t || !t.open.length) return null; const isPar = id => t.open.some(o => SK2[o] && (SK2[o].par || []).includes(id) && !(SK2[o].par || []).some(x => x !== id && t.open.includes(x))); const c = t.open.filter(id => SK2[id] && !isPar(id)).sort((a, b) => (SK2[b].row || 0) - (SK2[a].row || 0))[0]; if (!c) return null; t.open = t.open.filter(x => x !== c); t.pts++; t.spent[SK2[c].b] = Math.max(0, (t.spent[SK2[c].b] || 0) - 1); run.skills = (run.skills || []).filter(x => x !== c); if (run.p) run.p.skills = v2Equip(run); (run.treeLog = run.treeLog || []).push({ room: run.room, id: c, refund: 'master', t: Date.now() }); return c; }
 function enterRoom() {
   const run = G.run; const R = roomDef(); const p = run.p; if (!R.type) return;
+  if (run.statPending) { openSheet('stats', { pts: run.statPending, pending: 1, why: '남은 능력치 포인트' }); return; }
   if (!ROOM_TYPES[R.type] || !ROOM_TYPES[R.type].fight) { if (R.type !== 'boss') return; }
   const nx = run.next || {}; const room = Object.assign({}, R, { buffs: Object.assign({}, run.buffs), pre: nx.pre || null, mode: run.mode || 'normal' });
   if (run.marks && run.marks.length) room.marks = run.marks; // 표식 도전
@@ -257,7 +258,7 @@ function battleContinue() {
   const q = []; if (t === 'treasure') { const a = dropKey(run, rollGradeCh(run.ch, 'big')), b2 = dropKey(run, pg(rollGradeCh(run.ch, 'room')), [a]); q.push({ chest: [a, b2], room: run.room - 1 }); }
   q.push(...drops);
   if (lvUp && typeof sfx === 'function') sfx('b_levelup'); if (xpGot) toast('경험치 +' + xpGot + (lvUp ? ' · 레벨 ' + run.lv + ' 달성' : ''));
-  if (lvUp) { G.dropQ = (G.dropQ || []).concat(q); openSheet('stats', { pts: LV_POINTS * lvUp, why: '레벨 ' + run.lv + ' · 능력치 ' + LV_POINTS * lvUp + '점' }); saveRunLocal(); saveCur(); return; }
+  if (lvUp || run.statPending) { run.statPending = (run.statPending || 0) + LV_POINTS * lvUp; G.dropQ = (G.dropQ || []).concat(q); openSheet('stats', { pts: run.statPending, pending: 1, why: '레벨 ' + run.lv + ' · 능력치 ' + run.statPending + '점' }); saveRunLocal(); saveCur(); return; }
   queueDrops(q);
 }
 
@@ -303,7 +304,7 @@ function saveRunLocal() {
   saveLocal();
 }
 function runRecord(run) {
-  return Object.assign({ discards: run.discards || [], inv: run.inv ? Object.values(run.inv).map(x => ({ tpl: x.tpl, g: x.g, b: x.b })) : null, id: run.id, v: VERSION, build: run.build, boss: run.boss, startedAt: run.startedAt, endedAt: run.endedAt || null, result: run.result, roomReached: run.room, deaths: run.deaths, rooms: run.rooms, acts: run.acts.slice(-900), swaps: run.swaps, blockPicked: run.blockPicked, drops: run.drops, survey: run.survey, stats: run.stats || null, statLog: run.statLog || [], choices: run.choices || [], skills: run.skills || null, skillLog: run.skillLog || [], cname: run.cname || '', ch: run.ch || 1, clears: run.clears || 0, lv: run.lv || 1, xp: Math.round(run.xp || 0), gold: run.gold || 0, playMs: Math.round(run.playMs || 0), doorLog: run.doorLog || [], settle: run.settle || null, shop: run.shop ? { log: run.shop.log, stock: run.shop.stock.map(x => ({ tpl: x.it.tpl, g: x.it.g, price: x.price, sold: x.sold })) } : null, eq7: run.eqU ? EQ_SLOTS.map(sl => { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; return it ? it.tpl + ':' + it.g : null; }) : null, phase: run.phase || '', surveys: run.surveys || null, awk: run.awk || [], awkLog: run.awkLog || [], gambleN: run.gambleN || 0 }, run.markCh ? { marks: run.marks || [], markCh: run.markCh, markPts: run.markPts || 0, mode: run.mode || 'normal' } : null);
+  return Object.assign({ discards: run.discards || [], inv: run.inv ? Object.values(run.inv).map(x => ({ tpl: x.tpl, g: x.g, b: x.b })) : null, id: run.id, v: VERSION, build: run.build, boss: run.boss, startedAt: run.startedAt, endedAt: run.endedAt || null, result: run.result, roomReached: run.room, deaths: run.deaths, rooms: run.rooms, acts: run.acts.slice(-900), swaps: run.swaps, blockPicked: run.blockPicked, drops: run.drops, survey: run.survey, stats: run.stats || null, statGrowth: run.statGrowth, statPending: run.statPending || 0, statLog: run.statLog || [], choices: run.choices || [], skills: run.skills || null, skillLog: run.skillLog || [], cname: run.cname || '', ch: run.ch || 1, clears: run.clears || 0, lv: run.lv || 1, xp: Math.round(run.xp || 0), gold: run.gold || 0, playMs: Math.round(run.playMs || 0), doorLog: run.doorLog || [], settle: run.settle || null, shop: run.shop ? { log: run.shop.log, stock: run.shop.stock.map(x => ({ tpl: x.it.tpl, g: x.it.g, price: x.price, sold: x.sold })) } : null, eq7: run.eqU ? EQ_SLOTS.map(sl => { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; return it ? it.tpl + ':' + it.g : null; }) : null, phase: run.phase || '', surveys: run.surveys || null, awk: run.awk || [], awkLog: run.awkLog || [], gambleN: run.gambleN || 0 }, run.markCh ? { marks: run.marks || [], markCh: run.markCh, markPts: run.markPts || 0, mode: run.mode || 'normal' } : null);
 }
 async function finishSurvey(ans) {
   const run = G.run;

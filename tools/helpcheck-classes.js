@@ -6,7 +6,7 @@ module.exports = function (api) {
   const has = s => SRC.includes(s);
   const C = 'classes';
 
-  add(C, '흘리기가 피해를 70% 줄이고', '실행: parryRed(암살자)=0.7, dodgeCost(암살자)=25', E => E(`(() => { const b = __mk("assassin"); return parryRed(b.p) === 0.7 && dodgeCost(b.p) === 25; })()`));
+  add(C, '흘리기는 피해를 70% 줄이고', '실행: parryRed(암살자)=0.7, dodgeCost(암살자)=25', E => E(`(() => { const b = __mk("assassin"); return parryRed(b.p) === 0.7 && dodgeCost(b.p) === 25; })()`));
   add(C, '방어하면 보호막 +6', '상수: WARD.guard=' + E('WARD.guard') + ' · cap=' + E('WARD.cap'), E => E('WARD.guard') === 6 && pct(E('WARD.cap')) === 30);
   add(C, '대신 활은 무기 피해의 55%', '상수: BUILDS.hunter.wpnMul=' + E('BUILDS.hunter.wpnMul'), E => pct(E('BUILDS.hunter.wpnMul')) === 55);
   add(C, '전투를 시작하면 가속 1을', '상수: BUILDS.hunter.openHaste=' + E('BUILDS.hunter.openHaste'), E => E('BUILDS.hunter.openHaste') === 1);

@@ -68,9 +68,15 @@ function treeInit(run) { const T = TREE2[run.build]; if (!T) return; run.tree = 
 /* 저장본 고치기: 스킬 데이터에서 빠진 칸(10월 3일 재사용 대기 개편: 짧은 격발 → 독 심기, 시작 스킬 바뀜)은 연 칸에서 지우고 포인트를 돌려준다 */
 /* 능력치 다섯 전 저장본 (10월 4일): 체력 · 의지를 0으로 더하고, 처음 점수가 6 → 15로 는 몫(9점)을 다음 능력치 창에서 나누게 한다 */
 function consFix(run) { if (run && !run.cons) run.cons = []; }
-function statFix(run) { consFix(run); if (!run || !run.stats || run.stats.con != null) return; run.stats.con = 0; run.stats.wil = 0; run.statPending = (run.statPending || 0) + (STAT_START - 6); if (run.p) applyStats(run.p, run.stats); }
+function statFix(run) {
+  consFix(run); if (!run || !run.stats) return;
+  if (run.stats.con == null) { run.stats.con = 0; run.stats.wil = 0; run.statPending = (run.statPending || 0) + (STAT_START - 6); if (run.p) applyStats(run.p, run.stats); }
+  if (run.statGrowth !== LV_POINTS) { const old = run.statGrowth == null ? 2 : run.statGrowth; run.statPending = (run.statPending || 0) + Math.max(0, LV_POINTS - old) * Math.max(0, (run.lv || 1) - 1); run.statGrowth = LV_POINTS; }
+}
 function treeFix(run) {
   const t = run.tree; if (!t) return;
+  // 갈래 이름이 바뀌어도 기존 저장본의 투자 포인트를 이어받습니다.
+  if (run.build === 'spellblade') { for (const [old, current] of [['피칼날', '혈인'], ['불칼', '염검'], ['주문갑', '마갑']]) { if (t.spent && Object.prototype.hasOwnProperty.call(t.spent, old)) { t.spent[current] = (t.spent[current] || 0) + t.spent[old]; delete t.spent[old]; } } }
   const ok = t.open.filter(id => SK2[id] && !SK2[id].start); const lost = t.open.length - ok.length;
   if (lost > 0) { t.open = ok; t.pts += lost; t.spent = {}; for (const id of ok) t.spent[SK2[id].b] = (t.spent[SK2[id].b] || 0) + 1; }
   run.skills = (run.skills || []).filter(id => ok.includes(id));

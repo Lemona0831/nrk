@@ -87,7 +87,7 @@ module.exports = function (api) {
 
   /* ===== 장비 · 레벨 · 골드 · 도박 · 방 ===== */
   add('help', '열기를 내리는 장비는 한 전투에 합쳐 20까지', '상수: FX_HEAT_CUT=' + E('FX_HEAT_CUT'), E => E('FX_HEAT_CUT') === 20);
-  add('help', '능력치 2점을 나누고', '상수: LV_POINTS=2, 소스: gainXp가 올라간 레벨 수만큼 tree.pts를 더한다', E => E('LV_POINTS') === 2 && has('if (run.tree) run.tree.pts += up;'));
+  add('help', '능력치 3점을 나누고', '상수: LV_POINTS=3, 소스: gainXp가 올라간 레벨 수만큼 tree.pts를 더한다', E => E('LV_POINTS') === 3 && has('if (run.tree) run.tree.pts += up;'));
   add('help', '산 값의 25%에 팔고', '실행: sellOf(고급 1챕터) = floor(가격 × 0.25), 전설은 sellOf = LEG_SELL=' + E('LEG_SELL'), E => E('sellOf({g:"m",ch:1})') === Math.floor(E('priceOf("m",1)') * 0.25) && E('sellOf({g:"l",ch:2})') === 150);
   add('help', '값은 그 챕터 고급 장비의 1.3배', '상수: GAMBLE.mul=' + E('GAMBLE.mul') + ', 실행: gamblePrice(2) = round(고급 가격 × 1.3)', E => E('GAMBLE.mul') === 1.3 && E('gamblePrice(2)') === Math.round(E('priceOf("m",2)') * 1.3));
   add('help', '평범은 70%, 고급은 45%, 희귀는 20%', '상수: FATE.up', E => pct(E('FATE.up.n')) === 70 && pct(E('FATE.up.m')) === 45 && pct(E('FATE.up.r')) === 20);
@@ -105,7 +105,7 @@ module.exports = function (api) {
   add('help', '0이 되면 쓰러지고', '소스: hurtPlayer가 생명력이 0 이하이면 쓰러짐 처리', E => has('p.hp <= 0') || has('p.hp = Math.max(0, p.hp - d)'));
   add('help', '회복은 생명력 플라스크, 소모품, 샘(50%)', '소스: 샘은 최대 생명력 × 0.5, 야영지 · 정산은 p.hp = p.hpMax', E => has('const sp = 0.5 * (1 + fxVal(p, \'spring\'') && has('p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax;'));
   note('help', '1챕터를 끝까지 가면 Lv5 안팎', '측정값: 던전 테스터 216판(DGDIR=06a2 node tools/dgqa.js 6), 보스층에 닿은 74판의 레벨 4~6 평균 5.1, 완주 17판 5~6 평균 5.8. 규칙이 아닌 결과 문장이라 코드와 대조하지 않는다');
-  add('help', '스킬 포인트는 레벨만큼, 능력치는 15점에', '상수: STAT_START=15 · LV_POINTS=2, 소스: markSetup이 트리 포인트 += 레벨 − 1, markStat = LV_POINTS × (레벨 − 1)', E => E('STAT_START') === 15 && E('LV_POINTS') === 2 && has('if (run.tree) run.tree.pts += up; run.markStat = LV_POINTS * up;'));
+  add('help', '스킬 포인트는 레벨만큼, 능력치는 15점에', '상수: STAT_START=15 · LV_POINTS=3, 소스: markSetup이 트리 포인트 += 레벨 − 1, markStat = LV_POINTS × (레벨 − 1)', E => E('STAT_START') === 15 && E('LV_POINTS') === 3 && has('if (run.tree) run.tree.pts += up; run.markStat = LV_POINTS * up;'));
   /* ===== 도움말 정리(0.7.0): 묶음 · 일곱 장면 · 기본 표시 ===== */
   add('help', '일곱 장면으로 연습합니다', '데이터: TUT.length=' + E('TUT.length'), E => E('TUT.length') === 7);
   add('help', '처음에는 간단입니다', '상수: HUD_NAMES, HUD_DEFAULT=' + E('HUD_DEFAULT'), E => E('HUD_NAMES.join()') === 'simple,normal,full' && E('HUD_DEFAULT') === 'simple');

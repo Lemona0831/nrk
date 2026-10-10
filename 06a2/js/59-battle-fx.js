@@ -228,17 +228,18 @@ function vfxAreaShake(X, power) {
 }
 /* ---- 효과음: 사건 하나에 소리 하나(파일은 06a2/audio/sfx_*.mp3, 출처는 docs/조사/효과음-출처.md) ---- */
 const VFX_SP_EL = { fire: 'sp_fire', frost: 'sp_frost', venom: 'sp_venom', blood: 'sp_blood', shock: 'sp_shock' };
-const VFX_SND_VOL = { ppr: 0.7, sp_fire: 0.7, dot_fire: 0.6, dot_frost: 0.7, dot: 0.55, dot_venom: 0.6, dot_blood: 0.6, phit: 0.8, buff: 0.6, debuff: 0.7, miss: 0.7, wgain: 0.8 };
+const VFX_SND_VOL = { ppr: 0.7, sp_fire: 0.7, dot_fire: 0.6, dot_frost: 0.7, dot: 0.55, dot_venom: 0.6, dot_blood: 0.6, phit: 0.8, buff: 0.6, debuff: 0.7, miss: 0.7, wgain: 0.35, heal: 0.45, pwd: 0.65, brk: 0.65, pgd: 0.65, blunt: 0.75, big: 0.8, phit_big: 0.7, sp_arcane: 0.6, sp_venom: 0.55, sp_blood: 0.65, sp_shock: 0.6 };
 function vfxSfxKey(x) {
   switch (x.k) {
     case 'hit':
       if (x.st === 'spell') return VFX_SP_EL[x.el] || 'sp_arcane';
       if (x.st === 'ctr') return 'ctr';
-      if (x.build === 'assassin' && (x.st === 'pierce' || x.st === 'blunt')) return x.big || x.st === 'blunt' ? 'slash2' : 'slash';
-      if (x.big) return 'big';
+      if (['assassin', 'spellblade', 'butcher'].includes(x.build) && (x.st === 'pierce' || x.st === 'blunt' || x.st === 'slash')) return x.big || x.st === 'blunt' ? 'slash2' : 'slash';
+      // 피해 크기보다 무기 종류를 먼저 판별합니다. 검과 활에 주먹 소리를 붙이지 않습니다.
       if (x.st === 'slash') return (x.seq || 0) % 2 ? 'slash' : 'slash2';
+      if (x.st === 'blunt' && x.big) return 'big';
       return { pierce: 'pierce', blunt: 'blunt', arrow: 'arrow' }[x.st] || 'slash';
-    case 'dot': return x.el === 'fire' ? 'dot_fire' : x.el === 'frost' ? 'dot_frost' : x.el === 'venom' ? 'dot_venom' : x.el === 'blood' ? 'dot_blood' : 'dot';
+    case 'dot': return x.el === 'fire' ? 'dot_fire' : x.el === 'frost' ? 'dot_frost' : x.el === 'venom' ? 'dot_venom' : x.el === 'blood' ? 'dot_blood' : null;
     case 'miss': case 'pev': return 'miss';
     case 'brk': return 'brk';
     case 'kill': return 'kill';
@@ -248,7 +249,7 @@ function vfxSfxKey(x) {
     case 'ppr': return 'ppr';
     case 'heal': return 'heal';
     case 'wgain': return 'wgain';
-    case 'st': return typeof BUFFS !== 'undefined' && BUFFS[x.st] ? 'buff' : 'debuff';
+    case 'st': return null; // 상태마다 메뉴 알림음을 반복하지 않습니다.
   }
   return null;
 }
