@@ -52,7 +52,11 @@ with sync_playwright() as p:
     pg3.goto(SITE); pg3.wait_for_timeout(600)
     pg3.click('[data-a=menu]'); pg3.click('.mnav [data-a=login][data-k=google]'); pg3.wait_for_timeout(900)
     print('이미 쓰는 계정 안내:', bool(pg3.query_selector('button[data-a=loginswitch]')), '| 주소 정리:', '#' not in pg3.url)
-    pg3.click('button[data-a=loginswitch]'); pg3.wait_for_timeout(900)
+    if pg3.query_selector('button[data-a=loginswitch]'):
+        pg3.click('button[data-a=loginswitch]'); pg3.wait_for_timeout(900)
+    else:
+        # 기록 없는 손님은 새 로그인 흐름에서 구글 계정으로 바로 들어갑니다.
+        assert pg3.evaluate('G.acct && !G.acct.anon && G.acct.provider === "google"')
     print('그 계정으로 들어감:', pg3.evaluate("()=>[G.acct.anon, G.uid===%r, G.data.name]" % uid0))
     pg3.on('dialog', lambda d: d.accept()); pg3.click('[data-a=menu]'); pg3.click('.mnav [data-a=logout]'); pg3.wait_for_timeout(900)
     print('로그아웃 뒤 익명:', pg3.evaluate("()=>[G.acct.anon, G.uid!==%r, G.data.name]" % uid0)); pg3.close()

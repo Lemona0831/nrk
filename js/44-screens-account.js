@@ -240,22 +240,22 @@ function vDash06() {
 function classRuleHtml(build) {
   const B = BUILDS[build], pct = n => Math.round(n * 100);
   const rows = {
-    assassin: [['중독', '독을 쌓고 격발해 큰 피해를 줍니다.'], ['흘리기', '선택한 적의 공격 피해 −70% · 스태미나 25.']],
+    assassin: [['중독', '적에게 독을 쌓은 뒤, 격발 스킬로 쌓인 독을 터뜨립니다.'], ['흘리기', '선택한 적의 공격 피해 −70% · 스태미나 25.']],
     warden: [['방어', `방어하면 보호막 +${WARD.guard}.`], ['보호막', `상한: 최대 생명력의 ${pct(WARD.cap)}%. 후열 공격은 피해의 절반만 흡수합니다.`]],
-    hunter: [['원거리', '후열 공격 가능 · 기본 공격은 무기 피해의 55%.'], ['가속', '전투 시작 시 1. 라운드 맨 앞에서 2회 연속 행동.'], ['추적과 연계', '같은 적을 맞힐수록 강화. 다른 갈래 스킬을 이어 쓰면 피해 +30%.']],
-    elementalist: [['원거리', '기본 공격 50% · 집중 주문 75%. 후열에 닿고 방패병을 통과합니다.'], ['열충격', '한 적에게 화상 + 둔화 → 행동 끝에 두 상태를 소모해 폭발.'], ['둔화로 피해 감소', `둔화된 적에게 받는 일반 공격 피해가 ${pct(ELEM.guard)}% 줄어듭니다. 강한 공격은 그대로 받습니다.`]],
-    spellblade: [['교대', `베기 ⚔ ↔ 주문 ✦: 보호막 +${B.altWard}. 내 차례당 1회.`], ['보호막', `상한: 최대 생명력의 ${pct(B.wardCap)}%. 방어·흘리기·플라스크는 교대를 끊지 않습니다.`], ['칼에 싣기', '실은 출혈·화상은 다음 베기에 적용. 주문은 후열 공격 가능.']],
-    monk: [['되받기', '방어·자세 중 전열의 직접 공격에 반격.'], ['기', `반격마다 기 +${MONK.kiCtr}. ▶ 공격은 기 1을 써서 피해 +25%. ⚡ 공격은 소모하지 않습니다.`]],
-    butcher: [['흡혈', '출혈된 적을 근접 공격하면 회복. 출혈을 거는 타격부터 적용.'], ['피 수확', `출혈된 적 처치·출혈 처치 시 최대 생명력 ${pct(BUTCH.harvest)}% 회복. 전투당 ${pct(BUTCH.harvestFight)}%까지.`], ['갈증', '생명력이 낮을수록 직접 피해 증가. 먹기는 출혈을 회복으로 바꿉니다.']],
-    confessor: [['짐', '중독을 제외한 해로운 상태. 최대 5까지 계산.'], ['정화', `적이 건 상태를 지우면 보호 획득. 방어로 ${CONF.guard} 지움.`], ['고행', '스스로 건 상태는 바치거나 안고 공격. 지워도 보호를 얻지 못합니다.']],
-    bloodmage: [['원거리', '후열 공격 가능 · 기본 공격은 무기 피해의 80%.'], ['피로 당기기', '생명력을 내고 대기 중인 스킬을 즉시 사용. 내 차례당 1회.'], ['먹기', '중독을 소모해 회복. 한 번에 최대 생명력의 25%까지.']]
+    hunter: [['원거리', '후열 공격 가능 · 기본 공격은 무기 피해의 55%.'], ['가속', '전투 시작 시 1. 라운드 맨 앞에서 2회 연속 행동.'], ['추적과 연계', '같은 적을 연속으로 맞히면 추적이 쌓여 피해가 늘어납니다. 다른 갈래 스킬을 이어 쓰면 피해 +30%.']],
+    elementalist: [['원거리', '기본 공격 50% · 집중 주문 75%. 후열에 닿고 방패병을 통과합니다.'], ['열충격', '같은 적에게 화상과 둔화가 함께 있으면, 내 행동이 끝날 때 두 상태를 모두 소모해 열충격을 일으킵니다.'], ['둔화로 피해 감소', `둔화된 적에게 받는 일반 공격 피해가 ${pct(ELEM.guard)}% 줄어듭니다. 강한 공격은 그대로 받습니다.`]],
+    spellblade: [['교대', `베기 ⚔ ↔ 주문 ✦: 보호막 +${B.altWard}. 내 차례당 1회.`], ['보호막', `상한: 최대 생명력의 ${pct(B.wardCap)}%. 방어·흘리기·플라스크는 교대를 끊지 않습니다.`], ['칼에 싣기', '주문으로 칼에 실은 출혈·화상은 다음 베기로 적을 맞히면 적용됩니다. 주문은 후열의 적도 공격합니다.']],
+    monk: [['되받기', '방어하거나 자세를 잡은 동안, 전열 적에게 직접 공격을 받으면 반격합니다.'], ['기', `반격마다 기 +${MONK.kiCtr}. ▶ 공격은 기 1을 써서 피해 +25%. ⚡ 공격은 소모하지 않습니다.`]],
+    butcher: [['흡혈', '출혈 상태의 적을 근접 공격하면 생명력을 회복합니다. 출혈을 처음 거는 타격에도 적용됩니다.'], ['피 수확', `출혈된 적 처치·출혈 처치 시 최대 생명력 ${pct(BUTCH.harvest)}% 회복. 전투당 ${pct(BUTCH.harvestFight)}%까지.`], ['갈증', '생명력이 낮을수록 직접 공격 피해가 늘어납니다. 먹기 스킬은 적의 출혈을 소모해 생명력을 회복합니다.']],
+    confessor: [['짐', '내 출혈·화상·약화·취약·둔화 겹수의 합입니다. 최대 5까지 계산.'], ['정화', `적이 나에게 건 해로운 상태를 지우면 보호를 얻습니다. 방어하면 해로운 상태 ${CONF.guard}겹을 지웁니다.`], ['고행', '내 스킬이 나에게 거는 해로운 상태입니다. 일부 스킬은 이 상태를 소모하거나, 남아 있는 짐에 비례해 피해를 더합니다. 지워도 보호를 얻지 못하며 적에게 옮길 수 없습니다.']],
+    bloodmage: [['원거리', '후열 공격 가능 · 기본 공격은 무기 피해의 80%.'], ['피로 당기기', '생명력을 소모해 쿨타임이 남은 스킬을 바로 사용합니다. 내 차례당 1회.'], ['먹기', '적의 중독을 소모해 생명력을 회복합니다. 한 번에 최대 생명력의 25%까지.']]
   }[build] || [];
   const math = {
     hunter: [`추적 보너스 = 공격 전 추적 × ${pct(HUNT.focusPer)}% (정예·강적·보스: × ${pct(HUNT.focusBig)}%)`, `추적 상한 ${HUNT.focusMax}겹 · 3겹: 몸 낮추기·버티기 관통`],
     elementalist: [`원소 합계 = 화상 겹수 + (둔화 겹수 × ${ELEM.Cw}) [상한 ${ELEM.cap}]`, `열충격 기본 피해 = 원소 합계 × ${ELEM.D}`, `열충격 붕괴 = 둔화 겹수 × ${ELEM.Bk}`],
     monk: [`반격 기본 피해 = 무기 피해 × ${pct(MONK.ctr)}% + 자세 보너스`, `반격 상한: 내 차례당 ${MONK.ctrMax}회`],
     butcher: [`흡혈률 = 출혈 × ${pct(BUTCH.leech)}% [상한 ${pct(BUTCH.leechMax)}%]`, `흡혈 기본 회복 = 실제로 깎은 생명력 × 흡혈률`, `흡혈 상한: 내 차례당 최대 생명력의 ${pct(BUTCH.leechTurn)}%`, `갈증: 잃은 생명력 10%마다 피해 +${pct(BUTCH.thirst)}% [상한 +${pct(BUTCH.thirstMax)}%]`],
-    confessor: [`보호 = 지운 적의 상태 수 ÷ ${CONF.per} [올림 · 상한 ${CONF.protMax}]`],
+    confessor: [`보호 = 지운 상태 중 적이 나에게 건 겹수 ÷ ${CONF.per} [올림 · 상한 ${CONF.protMax}]`],
     bloodmage: [`기본 비용 = 최대 생명력 × ${pct(BLOOD.per)}% × 남은 쿨타임`, '비용 감소를 적용한 뒤 최종 값을 올림']
   }[build] || [];
   const extras = {
@@ -268,5 +268,5 @@ function classRuleHtml(build) {
     bloodmage: ['먹기·비용 감소·전투당 1회 스킬은 당길 수 없습니다. 비용을 낸 뒤 생명력 1 미만이면 사용할 수 없습니다.']
   }[build] || [];
   const mathHtml = math.length ? `<div class="rule-math" aria-label="${build === 'elementalist' ? '열충격 계산식' : '계산식'}">${math.map(t => `<p>${esc(t)}</p>`).join('')}</div>` : '';
-  return `<div class="class-rules" aria-label="직업 규칙"><b class="class-rules-title">직업 규칙</b>${rows.map(([title, text], i) => `<section class="class-rule"><h4>${esc(title)}</h4><p>${esc(text)}</p></section>${build === 'elementalist' && i === 1 ? mathHtml : ''}`).join('')}${build !== 'elementalist' ? mathHtml : ''}<details class="rule-details"><summary>자세한 조건과 예외</summary>${B.rule.split('. ').map(t => `<p>${esc(t)}</p>`).join('')}${extras.map(t => `<p>${esc(t)}</p>`).join('')}</details><p class="mini rule-cooldown">쿨타임은 내 차례마다 1 감소합니다. 사용한 차례는 제외합니다.</p></div>`;
+  return `<div class="class-rules" aria-label="직업 규칙"><b class="class-rules-title">직업 규칙</b>${rows.map(([title, text], i) => `<section class="class-rule"><h4>${esc(title)}</h4><p>${esc(text)}</p></section>${['elementalist', 'confessor'].includes(build) && i === 1 ? mathHtml : ''}`).join('')}${!['elementalist', 'confessor'].includes(build) ? mathHtml : ''}<details class="rule-details"><summary>자세한 조건과 예외</summary>${B.rule.split('. ').map(t => `<p>${esc(t)}</p>`).join('')}${extras.map(t => `<p>${esc(t)}</p>`).join('')}</details><p class="mini rule-cooldown">쿨타임은 내 차례마다 1 감소합니다. 사용한 차례는 제외합니다.</p></div>`;
 }
