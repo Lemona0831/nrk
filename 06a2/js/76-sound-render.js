@@ -45,7 +45,7 @@ function vSettings() {
 <div class="setrow"><span class="lab">설명 창</span><span class="mini">마우스를 올리거나 길게 누르면 뜹니다</span>${sw('infotoggle', G.infoOn, '설명 창')}</div>
 <div class="setrow"><label for="setfs">글자 크기</label><span class="mini">화면 글자의 크기</span><select id="setfs">${FS_OPTS.map(v => `<option value="${v}"${(FS_OPTS.includes(+G.data.fs) ? +G.data.fs : 1) === v ? ' selected' : ''}>${Math.round(v * 100)}%</option>`).join('')}</select></div>
 <div class="setrow"><span class="lab">움직임 줄이기</span><span class="mini">적 카드 확대, 버튼 빛남, 부드러운 스크롤, 알림이 미끄러져 나오는 것을 끕니다</span>${sw('rmotion', !!G.data.rm, '움직임 줄이기')}</div>
-<div class="setrow"><label for="setpace">적 차례</label><span class="mini">적이 움직이는 빠르기</span><select id="setpace">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></div></section>`;
+<div class="setrow"><label for="setpace">적 차례</label><span class="mini">적이 움직이는 빠르기</span><select id="setpace">${Object.keys(PACE).map(k => `<option value="${k}"${(G.pace || 'normal') === k ? ' selected' : ''}>${PACEN[k]}</option>`).join('')}</select></div>${vfxSettingRow()}</section>`;
   return setTabsHtml({ sound: snd, screen: scr, battle: hudSettings() }); /* 전투 중에 연 설정 창은 '전투 화면' 탭이 먼저 열린다 */
 }
 function render() {
@@ -102,6 +102,7 @@ function render() {
   if (fit && G.fitS) window.scrollTo(0, G.fitNew ? 0 : y); /* 짧은 창의 전투: 다시 그려도 보던 자리 */
   focusBack(tail ? (hadSheet ? fk : null) : (hadSheet ? G.sheetRet || fk : fk), !!tail && !hadSheet, fit);
   if (G.hudEd) { const ef = document.querySelector('#root > .fit'); if (ef) ef.scrollTop = efy; hudEdPost(); } /* 편집 중: 보던 자리를 지키고 틀을 실제 요소에 붙인다 */
+  if (typeof vfxFlush === 'function') vfxFlush(); /* 전투 이펙트(59번): 그리기가 끝난 화면 위에 덮개로 얹는다. 게임 값은 건드리지 않는다 */
 }
 /* 10월 7일 2차: 전투 화면은 창 높이에 맞춰 한 화면에 두되, 그러면 전장이 모자란 창(확대 · 가로 휴대폰 · 짧은 휴대폰)에서는
    고정을 풀고 페이지를 스크롤한다(10월 2일의 원래 뜻). 같은 창 크기 · 같은 전투 · 같은 글자 크기에서는 한 번 정한 대로 둔다(차례마다 바뀌지 않게) */
