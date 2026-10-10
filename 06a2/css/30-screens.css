@@ -144,6 +144,7 @@
 .ctag{display:inline-block;min-width:44px;text-align:center;font-size:calc(13px*var(--fs,1));font-weight:700;border-radius:4px;padding:0 5px;margin-right:6px;border:1px solid;vertical-align:1px}
 .ck-new{color:var(--good);border-color:var(--good)}.ck-chg{color:var(--gold);border-color:var(--gold)}.ck-fix{color:#7fb3ff;border-color:#7fb3ff}
 .news .chg{padding:4px 0}.chgmore{border-top:1px solid var(--line);padding:6px 0;font-size:calc(13px*var(--fs,1))}.chgmore b{color:var(--gold);font-weight:600}.chgmore .chgd{display:inline;margin-left:6px}
+.chg li,.chg h4,.news li{word-break:keep-all;overflow-wrap:break-word}.chg .chgh{font-size:calc(16px*var(--fs,1));color:var(--gold);letter-spacing:0;font-weight:600;margin:14px 0 2px}.chgdev{border-top:1px solid var(--line);margin-top:12px;padding-top:4px}.chgdev>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--gold);font-weight:600}.chgdev[open]>summary{margin-bottom:4px}
 
 @media (max-width:640px){
   .hdr{gap:4px 8px;padding-top:6px;padding-bottom:6px}

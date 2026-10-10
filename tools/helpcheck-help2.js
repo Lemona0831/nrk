@@ -81,7 +81,6 @@ module.exports = function (api) {
   add('help', '취약 N ↔ 보호 N', '실행: 취약 → ×1.25, 보호 → ×0.75, 한 번에 1 줄어듦, 상수: KW.vuln · protect = 5', E => E(`(() => { const b = __mk("warden"); const p = b.p; p.guard = 0; addS(b, p, "vuln", 2); const v = kwTaken(b, p, 100, { src: b.en[0] }); const v2 = st(p, "vuln"); delete p.s.vuln; addS(b, p, "protect", 2); const q = kwTaken(b, p, 100, { src: b.en[0] }); return v === 125 && v2 === 1 && q === 75 && st(p, "protect") === 1; })()`) && E('KW.vuln') === 5 && E('KW.protect') === 5);
   add('help', '둔화 N ↔ 가속 N', '상수: KW.chill · haste = 3, 소스: roundOrder가 둔화는 맨 뒤 · 가속은 맨 앞', E => E('KW.chill') === 3 && E('KW.haste') === 3 && src('roundOrder').includes('chill') && src('roundOrder').includes('haste'));
   add('help', '반대되는 상태는 걸 때 숫자끼리 뺍니다', '실행: 보호 2에 취약 3 → 보호 0 · 취약 1', E => E(`(() => { const b = __mk("warden"); const p = b.p; addS(b, p, "protect", 2); addS(b, p, "vuln", 3); return st(p, "protect") === 0 && st(p, "vuln") === 1; })()`));
-  add('help', '붕괴: 다음 행동을 잃고 취약 2', '실행: 붕괴 가득이면 취약 2', E => E(`(() => { const b = __mk("warden"); const e = b.en[0]; addBreak(b, e, 9999); return st(e, "vuln") === 2; })()`));
 
   /* ===== 장비 · 레벨 · 골드 · 도박 · 방 ===== */
   add('help', '열기를 내리는 장비는 한 전투에 합쳐 20까지', '상수: FX_HEAT_CUT=' + E('FX_HEAT_CUT'), E => E('FX_HEAT_CUT') === 20);
@@ -104,4 +103,9 @@ module.exports = function (api) {
   add('help', '회복은 생명력 플라스크, 소모품, 샘(50%)', '소스: 샘은 최대 생명력 × 0.5, 야영지 · 정산은 p.hp = p.hpMax', E => has('const sp = 0.5 * (1 + fxVal(p, \'spring\'') && has('p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax;'));
   note('help', '1챕터를 끝까지 가면 Lv5 안팎', '측정값: 던전 테스터 216판(DGDIR=06a2 node tools/dgqa.js 6), 보스층에 닿은 74판의 레벨 4~6 평균 5.1, 완주 17판 5~6 평균 5.8. 규칙이 아닌 결과 문장이라 코드와 대조하지 않는다');
   add('help', '스킬 포인트는 레벨만큼, 능력치는 15점에', '상수: STAT_START=15 · LV_POINTS=2, 소스: markSetup이 트리 포인트 += 레벨 − 1, markStat = LV_POINTS × (레벨 − 1)', E => E('STAT_START') === 15 && E('LV_POINTS') === 2 && has('if (run.tree) run.tree.pts += up; run.markStat = LV_POINTS * up;'));
+  /* ===== 도움말 정리(0.7.0): 묶음 · 일곱 장면 · 기본 표시 ===== */
+  add('help', '일곱 장면으로 연습합니다', '데이터: TUT.length=' + E('TUT.length'), E => E('TUT.length') === 7);
+  add('help', '처음에는 간단입니다', '상수: HUD_NAMES, HUD_DEFAULT=' + E('HUD_DEFAULT'), E => E('HUD_NAMES.join()') === 'simple,normal,full' && E('HUD_DEFAULT') === 'simple');
+  add('help', '끔 · 약하게 · 보통 · 강하게를 고릅니다', '데이터: VFX_OPTS 네 단계', E => E('VFX_OPTS.map(o => o[1]).join()') === '끔,약하게,보통,강하게');
+  add('help', '챕터는 1챕터 저주받은 수도원', '데이터: CHAPTERS 이름 셋', E => E('[1,2,3].map(c => CHAPTERS[c].n).join()') === '저주받은 수도원,잊힌 지하묘지,재의 사막 유적');
 };

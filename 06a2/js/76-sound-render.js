@@ -85,7 +85,7 @@ function render() {
   const edUi = G.hudEd ? hudEdUi() : '';
   const tail = `${vSheet()}`; const ine = tail ? ' inert' : ''; /* 시트가 열리면 뒤 화면은 inert */
   if (tail && !hadSheet) G.sheetRet = fk; G.shownSheet = !!tail;
-  const nm = scrName(); document.title = nm ? nm + ' · 나락의 유산' : '나락의 유산 · 0.6a.2 스킬 시험판';
+  const nm = scrName(); document.title = nm ? nm + ' · 나락의 유산' : '나락의 유산 · ' + VERSION;
   const h2 = `<h2 class="sr">${esc(nm || '처음 화면')}</h2>`;
   if (fit) root.innerHTML = `<div class="fit"${ine}><button class="skip" data-a="skipacts">행동판으로 건너뛰기</button>${vHeader()}${G.hudEd ? '<div class="bmain">' : '<main class="bmain">'}${h2}${vBattle()}${G.hudEd ? '</div>' : '</main>'}${edUi}</div>${tail}`;
   else root.innerHTML = `<div class="app scr-${G.scr}"${ine}><button class="skip" data-a="skipmain">본문으로 건너뛰기</button>${vHeader()}<main id="main" tabindex="-1">${h2}${main}</main></div>${tail}`;

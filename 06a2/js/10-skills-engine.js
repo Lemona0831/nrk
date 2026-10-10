@@ -1,7 +1,7 @@
 
 /* ===== 나락의 유산 B0 전투 프로토타입 — 엔진 (기획서 v2, 4.1~4.8 / 6.8 / 10.2) ===== */
 'use strict';
-const VERSION = '0.6a.2';
+const VERSION = '0.7.0';
 const BHP = 22, BDMG = 2.3;            // 역할 기준값 B (4.6 역할 배율에 곱함) [B0 가설]
 const r1 = v => Math.round(v * 10) / 10;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));

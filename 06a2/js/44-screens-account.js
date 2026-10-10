@@ -22,7 +22,7 @@ function chgEntry(c, latest, brief) {
 function curDesc(c) { const ch = c.ch || 1; return c.phase === 'wait' || c.phase === 'clearsv' ? ch + '챕터 돌파 · ' + (CHAPTERS[ch + 1] ? (ch + 1) + '챕터로 갈 준비' : (ch + 1) + '챕터 준비 중') : c.phase === 'shop' ? ch + '챕터 돌파 · 상점' : c.phase === 'settle' ? ch + '챕터 돌파 · 정산' : ch + '챕터 · ' + floorName(c.room); }
 function vTitle() {
   const d = G.data; const c = d.cur && !runOver(d.cur) && BUILDS[d.cur.build] ? d.cur : null;
-  let h = `<div class="title-scr"><div class="tlogo"><span class="ver">0.6a.2</span><p class="tlh" aria-hidden="true">나락의 유산</p><p class="lore">무너진 수도원 아래, 빛이 닿지 않는 곳까지 계단이 이어진다.</p></div><div class="tmenu">`;
+  let h = `<div class="title-scr"><div class="tlogo"><span class="ver">${esc(VERSION)}</span><p class="tlh" aria-hidden="true">나락의 유산</p><p class="lore">무너진 수도원 아래, 빛이 닿지 않는 곳까지 계단이 이어진다.</p></div><div class="tmenu">`;
   if (c) { const B = BUILDS[c.build]; h += `<div class="tcur"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(c.cname || B.n)}</b><small>${esc(B.n)} · Lv ${c.lv || 1} · ${esc(curDesc(c))}</small></div></div><button class="gold" data-a="resume" data-focus>이어하기</button><button data-a="restart">처음부터</button>`; }
   else h += `<button class="gold" data-a="newchar" data-focus>시작</button>`;
   h += `<div class="row tgoal"><button data-a="goals">📋 계정 목표</button>${markOpen() ? '<button data-a="mark">🎖️ 표식 도전</button>' : ''}</div>`;
@@ -33,8 +33,8 @@ function vTitle() {
   if (G.sync) h += `<div class="banner" role="status">${esc(G.sync)}</div>`;
   if (G.conn && G.conn !== 'ok' && !G.owner) h += `<section class="card warncard"><h3>기록이 자동으로 모이지 않고 있습니다</h3><p>${esc(CONN_MSG[G.conn] || CONN_MSG.nodb)}</p><button class="gold" data-a="code">기록 보내기 코드</button></section>`;
   h += vAcct();
-  if (d.seenVer !== CHANGE_VER) { const seen = CHANGELOG.findIndex(c => c.v === d.seenVer); const nw = CHANGELOG.slice(0, seen > 0 ? Math.min(seen, 3) : 1); // 아직 안 본 업데이트만(최대 3개)
-    h += `<section class="card news"><h3>새로 바뀐 것${seen > 1 ? ` <span class="newtag">업데이트 ${seen}개</span>` : ''}</h3>${nw.map((c, i) => i === 0 ? chgEntry(c, false, true) : `<div class="chgmore"><b>${esc(c.v)}${c.t ? ' · ' + esc(c.t) : ''}</b> <span class="chgd">${esc(c.d || '')}</span></div>`).join('')}<button data-a="changes">업데이트 내역 전체 보기</button></section>`; }
+  if (d.seenVer !== CHANGE_VER) { const seen = CHANGELOG.findIndex(c => c.v === d.seenVer); const mj = CHANGELOG.findIndex(c => c.groups); const first = mj >= 0 && (seen < 0 || seen > mj); const nw = first ? [CHANGELOG[mj]] : CHANGELOG.slice(0, Math.max(1, Math.min(seen, 3))); // 아직 안 본 업데이트만(최대 3개). 통합 항목을 아직 안 봤다면(처음이거나 옛 판) 통합 항목 하나만
+    h += `<section class="card news"><h3>새로 바뀐 것${!first && seen > 1 ? ` <span class="newtag">업데이트 ${seen}개</span>` : ''}</h3>${nw.map((c, i) => i === 0 ? chgEntry(c, false, true) : `<div class="chgmore"><b>${esc(c.v)}${c.t ? ' · ' + esc(c.t) : ''}</b> <span class="chgd">${esc(c.d || '')}</span></div>`).join('')}<button data-a="changes">업데이트 내역 전체 보기</button></section>`; }
   if (G.site) h += '<p class="mini tfoot"><a href="../privacy.html" target="_blank" rel="noopener">개인정보처리방침<span aria-hidden="true"> ↗</span><span class="sr"> 새 창에서 열림</span></a></p>';
   return h + '</div>';
 }
@@ -200,7 +200,7 @@ function vAdmin() {
   }
   if (typeof UNLOCK !== 'undefined' && Object.keys(UNLOCK).length) h += `<div class="row"><button data-a="unlall" aria-pressed="${!!G.data.unlAll}">숨겨진 직업 · 표식 도전 ${G.data.unlAll ? '잠그기' : '모두 열기'} (이 기기에서만, 시험용)</button></div>`;
   if (!G.dash && !G.dashReq && (G.conn || !siteMode)) { G.dashReq = 1; setTimeout(loadDash, 0); }
-  return h + '<p class="mini">0.6a.2 스킬 시험판 기록만 모았습니다. 지인 주소(0.6a) 기록은 지인 주소의 결과 보기에서, B0.5 기록은 b05에서 봅니다.</p></section>' + (G.dash ? vDash06() : '') + vDash();
+  return h + '<p class="mini">' + esc(VERSION) + ' 기록만 모았습니다. 0.6a와 B0.5 기록은 따로 있습니다.</p></section>' + (G.dash ? vDash06() : '') + vDash();
 }
 /* 0.6 요약: 직업별 완주, 쓰러진 층, 문 고르기, 방 결과, 상점 */
 function vDash06() {
