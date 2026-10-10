@@ -9,7 +9,7 @@
   const OPS = [100, 90, 80, 70];
   function mount(el, o) {
     o = o || {}; const kind = o.kind === 'page' ? 'page' : 'float';
-    const st = { S: null, key: '', tab: 'cell', conn: { k: 'wait', t: '' }, ask: null, fold: false, op: 100, hold: false, askFrom: null };
+    const st = { S: null, key: '', tab: 'cell', conn: { k: 'wait', t: '' }, ask: null, fold: false, op: 100, hold: false, askFrom: null, step: 1 };
     const send = c => { if (typeof o.send === 'function') o.send(c); };
     el.classList.add('hrem', kind);
     el.setAttribute('role', 'region'); el.setAttribute('aria-label', 'HUD 리모콘');
@@ -49,15 +49,26 @@
       return h;
     }
     function pLay(S) {
-      const s = S.sel; const free = S.mode === 'free'; const dis = s ? '' : ' disabled';
+      const s = S.sel; const free = S.mode === 'free'; const dis = s ? '' : ' disabled'; const nm = s ? esc(s.n) : '고른 칸'; const stp = st.step;
       let h = `<div class="hr-row" role="group" aria-label="배치 방식"><span class="hr-sl">배치 방식</span>${['align', 'free'].map(k => `<button type="button" class="hr-seg${S.mode === k ? ' on' : ''}" data-act="mode" data-k="${k}" data-fk="m-${k}" aria-pressed="${S.mode === k}">${k === 'free' ? '자유 배치' : '정렬 배치'}</button>`).join('')}</div>`;
-      h += `<div class="hr-row hr-mv" role="group" aria-label="${s ? esc(s.n) + ' 자리 옮기기' : '고른 칸 자리 옮기기'}"><button type="button" data-act="move" data-d="up" data-fk="mu" aria-label="${s ? esc(s.n) : '고른 칸'} ${free ? '위로 1행' : '위로'}"${dis}>▲ 위로</button><button type="button" data-act="move" data-d="down" data-fk="md" aria-label="${s ? esc(s.n) : '고른 칸'} ${free ? '아래로 1행' : '아래로'}"${dis}>▼ 아래로</button><button type="button" data-act="move" data-d="left" data-fk="ml" aria-label="${s ? esc(s.n) : '고른 칸'} ${free ? '왼쪽으로 1열' : '앞 구역으로'}"${dis}>◀ ${free ? '왼쪽' : '앞 구역'}</button><button type="button" data-act="move" data-d="right" data-fk="mr" aria-label="${s ? esc(s.n) : '고른 칸'} ${free ? '오른쪽으로 1열' : '다음 구역으로'}"${dis}>${free ? '오른쪽' : '다음 구역'} ▶</button></div>`;
+      if (free) h += `<div class="hr-row" role="group" aria-label="이동 단위"><span class="hr-sl">이동 단위</span>${[1, 10].map(n => `<button type="button" class="hr-seg${stp === n ? ' on' : ''}" data-act="stepn" data-n="${n}" data-fk="st${n}" aria-pressed="${stp === n}">${n}px</button>`).join('')}</div>`;
+      h += `<div class="hr-row hr-mv" role="group" aria-label="${nm} 자리 옮기기"><button type="button" data-act="move" data-d="up" data-fk="mu" aria-label="${nm} ${free ? '위로 ' + stp + 'px' : '위로'}"${dis}>▲ 위로</button><button type="button" data-act="move" data-d="down" data-fk="md" aria-label="${nm} ${free ? '아래로 ' + stp + 'px' : '아래로'}"${dis}>▼ 아래로</button><button type="button" data-act="move" data-d="left" data-fk="ml" aria-label="${nm} ${free ? '왼쪽으로 ' + stp + 'px' : '앞 구역으로'}"${dis}>◀ ${free ? '왼쪽' : '앞 구역'}</button><button type="button" data-act="move" data-d="right" data-fk="mr" aria-label="${nm} ${free ? '오른쪽으로 ' + stp + 'px' : '다음 구역으로'}"${dis}>${free ? '오른쪽' : '다음 구역'} ▶</button></div>`;
       if (free) {
-        const q = s || {}; const ok = !!s;
-        h += `<div class="hr-steps">${stepper('x', '가로 열', ok ? q.x : '', 1, S.lim.cols, !ok)}${stepper('y', '세로 행', ok ? q.y : '', 1, S.lim.rows, !ok)}${stepper('w', '폭(열)', ok ? q.w : '', S.lim.minw, S.lim.cols, !ok)}</div>`;
-        h += `<div class="hr-row"><span class="hr-sl" id="hr-pushl">겹치는 칸 자동으로 밀기</span>${sw('push', 'push', '겹치는 칸 자동으로 밀기', S.free.pk)}</div>`;
-        h += `<div class="hr-row">${ck('nums', 'nums', '읽는 순서 보기', S.free.nums)}</div><p class="hr-hint">${esc(S.free.readText)}</p>`;
-      } else h += `<p class="hr-hint">정렬 배치는 칸을 구역에 놓고 순서를 정합니다. 가로 열과 세로 행으로 놓으려면 자유 배치로 바꿉니다.</p>`;
+        const q = s || {}; const ok = !!s; const F = S.free; const L = S.lim;
+        h += `<div class="hr-steps">${stepper('x', '가로 위치(px)', ok ? q.x : '', -L.ext, L.ext, !ok)}${stepper('y', '세로 위치(px)', ok ? q.y : '', -L.ext, L.ext, !ok)}${stepper('w', '폭(px)', ok ? q.w : '', L.minw, L.ext, !ok)}${stepper('h', '높이(px)', ok ? q.h : '', L.minh, L.ext, !ok)}</div>`;
+        h += `<div class="hr-row" role="group" aria-label="높이 방식"><span class="hr-sl">높이 방식</span>${[['auto', '자동'], ['fix', '고정']].map(([k, n]) => `<button type="button" class="hr-seg${ok && q.hm === k ? ' on' : ''}" data-act="hmode" data-k="${k}" data-fk="hm-${k}" aria-pressed="${ok && q.hm === k}"${dis}>${n}</button>`).join('')}</div><p class="hr-hint">자동은 내용에 맞추고, 고정은 정한 높이 안에서 스크롤합니다.</p>`;
+        h += `<fieldset class="hr-fs"><legend>겹침 순서${ok ? ' · ' + q.z + '번째(뒤에서)' : ''}</legend><div class="hr-row hr-mv">${[['front', '맨 앞으로'], ['up', '앞으로'], ['down', '뒤로'], ['back', '맨 뒤로']].map(([k, n]) => `<button type="button" data-act="z" data-d="${k}" data-fk="z-${k}" aria-label="${nm} ${n}"${dis}>${n}</button>`).join('')}</div></fieldset>`;
+        h += `<fieldset class="hr-fs"><legend>여러 칸 · ${S.multi}개 선택</legend><div class="hr-row">${btn('selall', 'selall', '', '모두 고르기')}${btn('selnone', 'selnone', '', '선택 풀기')}</div>`;
+        const mdis = S.multi >= 2 ? '' : ' disabled'; const ddis = S.multi >= 3 ? '' : ' disabled';
+        h += `<div class="hr-row hr-al">${[['l', '왼쪽 맞춤'], ['c', '가로 가운데'], ['r', '오른쪽 맞춤'], ['t', '위쪽 맞춤'], ['m', '세로 가운데'], ['b', '아래쪽 맞춤'], ['sw', '같은 폭'], ['sh', '같은 높이']].map(([k, n]) => `<button type="button" data-act="align" data-d="${k}" data-fk="al-${k}"${mdis}>${n}</button>`).join('')}${[['dh', '가로 균등'], ['dv', '세로 균등']].map(([k, n]) => `<button type="button" data-act="align" data-d="${k}" data-fk="al-${k}"${ddis}>${n}</button>`).join('')}</div></fieldset>`;
+        h += `<fieldset class="hr-fs"><legend>캔버스</legend><div class="hr-row"><label for="hr-sn">붙이기</label><select id="hr-sn" data-act="snap" data-fk="sn">${L.snaps.map(v => `<option value="${v}"${F.sn === v ? ' selected' : ''}>${v ? v + 'px' : '꺼짐'}</option>`).join('')}</select></div>`;
+        h += `<div class="hr-row"><label for="hr-ch">캔버스 높이</label><select id="hr-ch" data-act="chh" data-fk="chh">${L.chs.map(v => `<option value="${v}"${F.ch === v ? ' selected' : ''}>화면의 ${v}배</option>`).join('')}</select></div>`;
+        h += `<div class="hr-row">${ck('guide', 'guide', '정렬선 보기(다른 칸 · 가장자리 · 가운데에 붙음)', F.gd)}</div>`;
+        h += `<div class="hr-row"><span class="hr-sl" id="hr-pushl">겹치는 칸 자동으로 밀기</span>${sw('push', 'push', '겹치는 칸 자동으로 밀기', F.pk)}</div>`;
+        h += `<div class="hr-row">${ck('nums', 'nums', '읽는 순서 보기', F.nums)}</div><p class="hr-hint">${esc(F.readText)}</p>`;
+        if (F.ovl.length) h += `<p class="hr-hint">겹친 칸: ${esc(F.ovl.join(', '))}</p>`;
+        h += `<div class="hr-row">${btn('gather', 'gather', '', '화면 안으로 모으기')}${btn('fromalign', 'fromalign', '', '정렬 배치에서 가져오기')}${F.legacy ? btn('legacy', 'legacy', '', '옛 격자 값으로 다시') : ''}</div></fieldset>`;
+      } else h += `<p class="hr-hint">정렬 배치는 칸을 구역에 놓고 순서를 정합니다. 칸을 캔버스 어디에든 놓으려면 자유 배치로 바꿉니다.</p>`;
       h += `<div class="hr-row">${ck('grid', 'grid', '격자 보기', S.grid)}</div>`;
       return h;
     }
@@ -88,13 +99,13 @@
       const tabs = `<div class="hr-tabs" role="tablist" aria-label="리모콘 탭">${TABS.map(([k, n]) => `<button type="button" role="tab" id="hr-t-${k}" aria-selected="${st.tab === k}" aria-controls="hr-p-${k}" tabindex="${st.tab === k ? 0 : -1}" data-act="tab" data-k="${k}" data-fk="t-${k}">${n}</button>`).join('')}</div>`;
       const body = { cell: pCell, lay: pLay, set: pSet, help: pHelp }[st.tab](S);
       const pan = `<div class="hr-main"${st.fold ? ' hidden' : ''}>${tabs}<div class="hr-pan" role="tabpanel" id="hr-p-${st.tab}" aria-labelledby="hr-t-${st.tab}" tabindex="0">${body}<p class="hr-hint hr-foot-note">${esc(S.note || '')}</p></div></div>`;
-      const foot = `<div class="hr-foot" role="group" aria-label="저장과 취소">${btn('undo', 'undo', '', S.redo ? '다시 하기' : '되돌리기', S.canUndo ? '' : ' disabled')}${btn('cancel', 'cancel', '취소, 편집 전으로 돌아가기', '취소')}${btn('save', 'save', '', '저장', ' class="gold"')}</div>`;
+      const foot = `<div class="hr-foot" role="group" aria-label="저장과 취소">${btn('undo', 'undo', '', '되돌리기', S.canUndo ? '' : ' disabled')}${btn('redo', 'redo', '', '다시 실행', S.canRedo ? '' : ' disabled')}${btn('cancel', 'cancel', '취소, 편집 전으로 돌아가기', '취소')}${btn('save', 'save', '', '저장', ' class="gold"')}</div>`;
       return pan + ask(S) + foot;
     }
 
     /* ---------- 다시 그리기 ---------- */
     function draw(force) {
-      const S = st.S; const key = JSON.stringify([S, st.tab, st.conn, st.ask, st.fold]);
+      const S = st.S; const key = JSON.stringify([S, st.tab, st.conn, st.ask, st.fold, st.step]);
       if (!force && key === st.key) return; st.key = key;
       if (st.hold) { st.dirty = true; return; }
       const act = document.activeElement; const inside = act && dyn.contains(act); const fk = inside ? act.getAttribute('data-fk') : null;
@@ -126,15 +137,21 @@
       if (a === 'list') { if (S.dirty) { st.ask = { kind: 'list' }; st.askFrom = 'list'; draw(true); } else send({ c: 'list', force: 1 }); return; }
       if (a === 'save') send({ c: 'save' });
       else if (a === 'undo') send({ c: 'undo' });
+      else if (a === 'redo') send({ c: 'redo' });
+      else if (a === 'selall' || a === 'selnone' || a === 'gather' || a === 'fromalign' || a === 'legacy') send({ c: a });
+      else if (a === 'hmode') send({ c: 'hmode', v: t.dataset.k });
+      else if (a === 'z') send({ c: 'z', d: t.dataset.d });
+      else if (a === 'align') send({ c: 'align', d: t.dataset.d });
+      else if (a === 'stepn') { st.step = +t.dataset.n === 10 ? 10 : 1; st.key = ''; draw(true); }
       else if (a === 'toggle') send({ c: 'toggle' });
       else if (a === 'resetone') send({ c: 'resetone' });
       else if (a === 'reset') send({ c: 'reset' });
       else if (a === 'sizestep') send({ c: 'sizestep', d: +t.dataset.d < 0 ? -1 : 1 });
       else if (a === 'mode') send({ c: 'mode', k: t.dataset.k === 'free' ? 'free' : 'align' });
-      else if (a === 'move') send({ c: 'move', d: t.dataset.d });
+      else if (a === 'move') send({ c: 'move', d: t.dataset.d, n: st.step });
       else if (a === 'push') send({ c: 'push' });
       else if (a === 'preset') send({ c: 'preset', k: t.dataset.k });
-      else if (a === 'num') { const f = t.dataset.f; const v = numVal(f); if (isFinite(v)) send({ c: 'num', f, v: v + (+t.dataset.d) }); }
+      else if (a === 'num') { const f = t.dataset.f; const v = numVal(f); if (isFinite(v)) send({ c: 'num', f, v: v + (+t.dataset.d) * (S.mode === 'free' ? st.step : 1) }); }
     }
     function change(ev) {
       const t = ev.target; if (!t || !t.dataset || !el.contains(t)) return; const a = t.dataset.act; const S = st.S; if (!a || !S || !S.active) return;
@@ -144,6 +161,9 @@
       else if (a === 'grp') send({ c: 'group', gi: +t.dataset.fk.slice(1) });
       else if (a === 'nums') send({ c: 'nums', on: !!t.checked });
       else if (a === 'grid') send({ c: 'grid', on: !!t.checked });
+      else if (a === 'snap') send({ c: 'snap', v: +t.value });
+      else if (a === 'chh') send({ c: 'chh', v: +t.value });
+      else if (a === 'guide') send({ c: 'guide', on: !!t.checked });
     }
     function input(ev) { const t = ev.target; if (t && t.dataset && t.dataset.act === 'size' && st.S) { const v = st.S.sizes[+t.value]; if (v) send({ c: 'size', v }); } }
     function key(ev) {

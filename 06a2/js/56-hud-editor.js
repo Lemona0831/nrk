@@ -59,7 +59,7 @@ function hudSlotLay(s) {
 }
 /* 두 배치가 같은 모양인지(끈 칸의 차례는 따지지 않는다). 배열 칸을 불러오기 전에 지금 배치가 바뀌는지 알아볼 때 쓴다 */
 function hudLayKey(L) { return JSON.stringify({ z: HUD_ZONES.map(k => L.z[k]), s: HUD_MODS.map(m => L.s[m.id]), off: L.off.slice().sort() }); }
-const hudFrKey = L => JSON.stringify({ m: HUD_MODS.map(m => L.m[m.id]), s: HUD_MODS.map(m => L.s[m.id]), off: L.off.slice().sort(), pk: L.pk });
+const hudFrKey = L => JSON.stringify({ m: HUD_MODS.map(m => L.m[m.id]), zo: L.zo, s: HUD_MODS.map(m => L.s[m.id]), off: L.off.slice().sort(), pk: L.pk, sn: L.sn, gd: L.gd, ch: L.ch });
 function hudLaySame(a, b) {
   if (hudLayKey(a.pc) !== hudLayKey(b.pc) || hudLayKey(a.ph) !== hudLayKey(b.ph)) return false;
   for (const d of ['pc', 'ph']) { const ma = a.md ? a.md[d] : 'align', mb = b.md ? b.md[d] : 'align'; if (ma !== mb) return false; if (ma === 'free' && hudFrKey(a.fr[d]) !== hudFrKey(b.fr[d])) return false; }

@@ -339,9 +339,11 @@ module.exports = function (api) {
   texts['ui-extra'] = extra.map(x => x.text); api.source('ui-extra', extra);
   api.note('ui-hud', '생명력 40 → 30', '예상 피해 줄의 예시 문장(숫자는 예시, 규칙 값 아님)');
   // 자유 배치(55-hud-free.js)의 안내 문장
-  A('어느 칸이든 24px 이상은 조작할 수 있게 남깁니다', 'FREE_OK = 24: 가려진 칸에 24px 네모가 남는지 본다(hudFreeHasSquare)', () => E('FREE_OK') === 24 && has('55-hud-free.js', 'hudFreeHasSquare(R, hi, FREE_OK)'));
-  /* 리모콘의 숫자 칸 이름("가로 열, 1에서 12")은 상태 S.lim(= FREE_COLS · FREE_ROWS_MAX + 1 · FREE_MINW)에서 만들어 낸다. 글자로 적힌 숫자가 없다 */
-  /* 단추 이름 "위로 1행" 같은 글은 리모콘(remote/ui.js)의 템플릿 안에 있다: 한 번에 한 행(한 열)씩 옮긴다(hudRemoteCmd move). */
+  A('24px 이상 조작할 수 있게 남깁니다', 'FREE_OK = 24: 가려진 칸에 24px 네모가 남는지 본다(hudFreeGuard · hudFreeHasSquare)', () => E('FREE_OK') === 24 && has('55-hud-free.js', 'hudFreeHasSquare(R, obs, FREE_OK)'));
+  A('옛 12열 격자 값에서 다시 만들었습니다', 'FREE_OLD_COLS = 12: hfFromOld가 12열 값을 퍼센트로 바꾼다(hudFreeLegacy)', () => E('FREE_OLD_COLS') === 12 && has('55-hud-free.js', 'x / FREE_OLD_COLS * 100') && has('55-hud-free.js', 'function hudFreeLegacy'));
+  A('화살표 키는 1px, Shift와 함께 누르면 10px 옮깁니다.', 'hudEdKey: const st = ev.shiftKey ? 10 : 1(화살표 키 1px, Shift 10px)', () => has('57-hud-direct.js', "const st = ev.shiftKey ? 10 : 1; hudFreeMoveBy(hudEdTargets(id)"));
+  A('누를 자리가 24px도 남지 않아', 'FREE_OK = 24: 놓은 직후 hudFreeGuard가 어긴 칸을 찾으면 hudEdRevert로 되돌린다', () => E('FREE_OK') === 24 && has('55-hud-free.js', 'hudEdRevert(); const b = bad[0]'));
+  /* 리모콘의 숫자 칸 이름은 "가로 위치(px)" 같은 글이고 범위(-L.ext..L.ext · minw · minh)는 상태 S.lim에서 만들어 낸다. 단추 이름 "위로 1px"의 숫자는 이동 단위(st.step 1 또는 10)다(remote/ui.js, hudRemoteCmd move의 n). */
   api.note('ui-hudfree', '1번이 Tab으로 가장 먼저', '읽는 순서 보기: 번호는 논리 순서(HUD_MODS) 번호');
   api.note('ui-hudfree', '"생명력 40 → 30"이 붙습니다', '표시 형태 설명의 예시 문장(숫자는 예시)');
   A('2페이즈부터 거울', '늪의 어머니: 2페이즈는 체력 70% 아래(bossPhase)', () => has('30-enemy-ai.js', 'f > 0.7 ? 1 : f > 0.35 ? 2 : 3') && has('24-clock-damage.js', "boss.boss === 'mother'"));
