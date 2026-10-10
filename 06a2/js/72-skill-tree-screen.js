@@ -60,22 +60,14 @@ function vTreeDetail(run, id, preview) {
 // 사냥꾼의 연계는 장착한 갈래 스킬끼리만 만듭니다.
 function hunterLoadoutHint(run) {
   if (run.build !== 'hunter') return '';
-  const skills = (run.skills || []).map(id => SK2[id]).filter(s => s && !s.start && s.b !== '시작');
-  const branches = [...new Set(skills.map(s => s.b))];
-  const ready = branches.length >= 2;
-  const first = skills[0], next = skills.find(s => first && s.b !== first.b);
-  const state = ready ? `연계 가능 · ${branches.map(esc).join(' / ')}` : branches.length ? `연계 불가 · ${esc(branches[0])}만 장착` : '다른 갈래 스킬을 함께 장착하면 연계합니다';
-  const detail = ready ? `예: ${esc(first.n)} → ${esc(next.n)}. 뒤에 쓰는 스킬의 피해 +${Math.round(HUNT.link * 100)}%.` : '한 갈래만 장착하면 연계가 발동하지 않습니다. 다음 포인트로 다른 갈래 스킬을 열고 함께 장착해 보세요.';
-  const others = ready ? [] : TREE2.hunter.branches.filter(br => !branches.includes(br));
-  return `<aside class="loadout-hint" aria-label="사냥꾼 연계 안내"><b>${state}</b><p>${detail}</p><p class="mini">시작 스킬·기본 공격은 연계를 만들거나 끊지 않습니다.</p>${others.length ? `<div class="row">${others.map(br => `<button class="sm" data-a="tbr" data-k="${esc(br)}">${esc(br)} 살펴보기</button>`).join('')}</div>` : ''}</aside>`;
+  return `<p class="mini loadout-hint" data-info="elink" tabindex="0">연계: 다른 갈래 스킬을 이어 쓰면 피해 +${Math.round(HUNT.link * 100)}%.</p>`;
 }
 function vTreeView(mode) {
   const run = G.run, T = TREE2[run.build], t = run.tree, eqd = run.skills || [];
   const brs = T.branches; const tab = brs.includes(G.tbr) ? G.tbr : brs[0];
   const st = T.starters.map(id => `<button class="tstart${G.tsel === id ? ' sel' : ''}" data-a="tsel" data-k="${id}" data-info="tn:${id}"><span class="tc">✓</span>${esc(SK2[id].n)}</button>`).join('');
   const slots = Array.from({ length: EQUIP_SLOTS2 }, (_, i) => eqd[i] ? `<button class="tslot on" data-a="tsel" data-k="${eqd[i]}" data-info="tn:${eqd[i]}">${esc(SK2[eqd[i]].n)}</button>` : `<span class="tslot">빈 칸</span>`).join('');
-  let h = `<div class="tsum"><div><span class="mini">시작 스킬 · 항상 장착</span><div class="trow">${st}</div></div><div><span class="mini">장착 ${eqd.length}/${EQUIP_SLOTS2}</span><div class="trow">${slots}</div></div><div class="tpts">포인트 <b>${t.pts}</b><small>레벨마다 +1 (Lv${run.ch >= 3 ? 15 : 10}에 ${run.ch >= 3 ? 15 : 10}점)</small></div></div>`;
-  h += hunterLoadoutHint(run);
+  let h = `<div class="tsum"><div><span class="mini">시작 스킬 · 항상 장착</span><div class="trow">${st}</div></div><div><span class="mini">장착 ${eqd.length}/${EQUIP_SLOTS2}</span><div class="trow">${slots}</div>${hunterLoadoutHint(run)}</div><div class="tpts">포인트 <b>${t.pts}</b><small>레벨마다 +1 (Lv${run.ch >= 3 ? 15 : 10}에 ${run.ch >= 3 ? 15 : 10}점)</small></div></div>`;
   if (!treeCanEdit()) h += `<p class="mini">${G.run && !G.creating && runOver(G.run) ? '끝난 캐릭터의 트리는 볼 수만 있습니다.' : '전투 중에는 볼 수만 있습니다. 방과 방 사이에 열고 바꿉니다.'}</p>`;
   const menu = `<nav class="tbmenu" aria-label="스킬 트리 갈래">${brs.map(br => { const ns0 = SKILLS2[run.build].filter(x => x.b === br && !x.start); const tiersN = treeTiersOf(run, ns0); const ns = ns0.filter(x => tiersN.includes(x.tier)); const op = ns.filter(x => t.open.includes(x.id)).length; const can = ns.some(x => !t.open.includes(x.id) && !treeWhy(run, x.id)); return `<button class="tseg${tab === br ? ' on' : ''}" data-a="tbr" data-k="${br}" aria-pressed="${tab === br}"><b>${esc(br)}${can ? ' <i class="tcan"><span aria-hidden="true">+</span><span class="sr">열 수 있는 칸 있음</span></i>' : ''}</b><small>${esc(T.bd[br])}</small><span>포인트 ${t.spent[br] || 0} · ${op}/${ns.length}칸</span></button>`; }).join('')}</nav>`;
   return h + `<div class="tlay treev">${menu}<div class="tmain">${vTreeBranch(run, tab)}</div><div class="tside"><div id="tdet" class="tdet">${vTreeDetail(run, G.tsel)}</div></div></div>`;

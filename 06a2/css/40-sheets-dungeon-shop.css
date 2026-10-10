@@ -124,4 +124,4 @@
 
 .cstep>.stickbar{position:static;margin-top:12px}.class-kit summary{cursor:pointer;color:var(--gold);padding:6px 0}
 
-.loadout-hint{border:1px solid var(--gold);border-radius:8px;padding:10px;margin:10px 0;background:var(--panel2)}.loadout-hint p,.equip-burden p{margin:5px 0}.equip-burden,.idet .cost{border:1px solid var(--bad);border-radius:6px;padding:8px;color:var(--ink);background:var(--panel2)}.equip-burden{margin-bottom:8px}.equip-burden b,.idet .cost b{color:var(--bad)}
+.loadout-hint{margin:4px 0 0;font-weight:400;cursor:help}

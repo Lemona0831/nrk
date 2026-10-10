@@ -19,16 +19,16 @@ const r={build:'hunter',p:E.mkPlayer('hunter',{}),bag:[],swaps:[]};E.initGear(r)
 for(const tpl of ['twinblades','saintgrail']) {
  const it=E.mkItem(tpl,{b:0});r.inv[it.uid]=it;r.bag.push(it.uid);const slot=E.tplKind(tpl);E.__cmpRun=r;E.__cmpId=it.uid;E.__cmpSlot=slot;
  const original=JSON.stringify(r),html=V('compareHtml(__cmpRun,__cmpId,__cmpSlot)');assert.equal(JSON.stringify(r),original);
- assert(html.includes('사용 부담이 늘어납니다'));
+ assert(!html.includes('equip-burden'));
  if(tpl==='twinblades')assert(/class="dn"[^]*강공격 스태미나 비용 <b>\+10<\/b>/.test(html));
- else {assert(html.includes('생명력 플라스크 최대 충전 3 → 2회'));assert(html.includes('장착 즉시 남은 생명력 플라스크 3 → 2회'));}
+ else {assert(html.includes('생명력 플라스크 최대 충전 <b>−1회</b> <small>3회 → 2회</small>'));assert(html.includes('장착 후 남은 생명력 플라스크 3 → 2회'));}
  const old=r.eqU[slot];E.equipUid(r,it.uid,slot);E.__cmpId=old;const reverse=V('compareHtml(__cmpRun,__cmpId,__cmpSlot)');
  if(tpl==='twinblades')assert(/class="up"[^]*강공격 스태미나 비용 <b>−10<\/b>/.test(reverse));
  assert(!reverse.includes('사용 부담이 늘어납니다'));
 }
 for(const ids of [[],['h_double'],['h_double','h_triple'],['h_double','h_mark']]) {
  E.__hintRun={build:'hunter',skills:ids};const original=JSON.stringify(E.__hintRun),html=V('hunterLoadoutHint(__hintRun)');assert.equal(JSON.stringify(E.__hintRun),original);
- assert(html.includes(ids.includes('h_mark')?'연계 가능':'한 갈래만 장착하면 연계가 발동하지 않습니다'));
+ assert(html.includes('다른 갈래 스킬을 이어 쓰면 피해 +30%'));assert(!html.includes('<button'));assert(!html.includes('연계 불가'));assert(html.includes('data-info="elink"'));
  if(ids.includes('h_mark'))assert(html.includes('피해 +30%'));
 }
 assert.equal(V('hunterLoadoutHint({build:"warden",skills:[]})'),'');

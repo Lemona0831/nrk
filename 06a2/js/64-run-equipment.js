@@ -107,24 +107,18 @@ function compareHtml(run, uid, slot) {
     if (better) up++; else down++;
     rows.push(`<li class="${better ? 'up' : 'dn'}"><span class="ar" aria-hidden="true">${better ? '▲' : '▼'}</span><span class="sr">${better ? '좋아짐 ' : '나빠짐 '}</span>${lab} <b>${dd}</b> <small>${fmt(a[k])} → ${fmt(b[k])}</small></li>`);
   }
-  const burden = [];
-  if (b.heavyCost > a.heavyCost) burden.push(`강공격 스태미나 ${r1(a.heavyCost)} → ${r1(b.heavyCost)}`);
   for (const [k, fk, label] of [['lifeCap', 'life', '생명력'], ['manaCap', 'mana', '정화'], ['stamCap', 'stam', '스태미나']]) {
-    if (b[k] < a[k]) {
-      burden.push(`${label} 플라스크 최대 충전 ${a[k]} → ${b[k]}회`);
-      const left = (run.p.flask || {})[fk] || 0;
-      if (left > b[k]) burden.push(`장착 즉시 남은 ${label} 플라스크 ${left} → ${b[k]}회`);
-    }
+    const left = (run.p.flask || {})[fk] || 0;
+    if (b[k] < a[k] && left > b[k]) rows.push(`<li class="mini">장착 후 남은 ${label} 플라스크 ${left} → ${b[k]}회</li>`);
   }
-  const burdenHtml = burden.length ? `<div class="equip-burden"><b>사용 부담이 늘어납니다</b>${burden.map(t => `<p>${esc(t)}</p>`).join('')}</div>` : '';
   const v = up && !down ? ['good', '비교한 수치가 올라갑니다'] : down && !up ? ['bad', '비교한 수치가 내려갑니다'] : up && down ? ['mix', '오르는 수치와 내려가는 수치가 있습니다'] : ['same', '비교한 수치는 그대로입니다'];
   rows.sort((x, y) => Number(y.includes('class="dn"')) - Number(x.includes('class="dn"')));
-  return `<div class="cmp">${burdenHtml}<div class="cmpv ${v[0]}">${v[1]}</div><div class="cmph">${cur ? `지금 낀 <b class="gr-${cur.g}">${inm(cur.tpl, cur.g)}</b>과 비교` : '이 칸은 비어 있습니다'}</div>${rows.length ? `<ul class="cmpl" aria-label="바뀌는 것">${rows.join('')}</ul>` : ''}</div>`;
+  return `<div class="cmp"><div class="cmpv ${v[0]}">${v[1]}</div><div class="cmph">${cur ? `지금 낀 <b class="gr-${cur.g}">${inm(cur.tpl, cur.g)}</b>과 비교` : '이 칸은 비어 있습니다'}</div>${rows.length ? `<ul class="cmpl" aria-label="바뀌는 것">${rows.join('')}</ul>` : ''}</div>`;
 }
 function itemDetail(it, opt) {
   const I = ITEMS[it.tpl]; const R = GRADE[it.g] || GRADE.n; const o = opt || {};
   return `<div class="idet grb-${it.g}"><div class="idet-h"><b class="gr-${it.g}">${inm(it.tpl, it.g)}</b>${gradeTag(it.g)}<span class="mini">${EQ_SLOT_N[kindOf(I.slot) === 'ring' ? 'ring1' : I.slot].replace(' 1', '')}</span></div>
-<div class="idet-base"><b>${baseText(it)}</b>${o.compact ? '' : ` <span class="mini">${I.kind === 'start' ? '시작 장비' : it.rollV===2 ? `${R.n} 범위 +${R.lo}~${R.hi}% 중 +${it.b}%` : `보유 보너스 +${it.b}%`}</span>`}</div>${I.act ? `<div class="l act">${esc(I.act)}</div>` : ''}${I.cost ? `<div class="l cost"><b>장착 시 대가</b><br>${esc(I.cost)}</div>` : ''}${I.lore && !o.compact ? `<p class="lore">${esc(I.lore)}</p>` : ''}</div>`;
+<div class="idet-base"><b>${baseText(it)}</b>${o.compact ? '' : ` <span class="mini">${I.kind === 'start' ? '시작 장비' : it.rollV===2 ? `${R.n} 범위 +${R.lo}~${R.hi}% 중 +${it.b}%` : `보유 보너스 +${it.b}%`}</span>`}</div>${I.act ? `<div class="l act">${esc(I.act)}</div>` : ''}${I.cost ? `<div class="l cost">대가: ${esc(I.cost)}</div>` : ''}${I.lore && !o.compact ? `<p class="lore">${esc(I.lore)}</p>` : ''}</div>`;
 }
 /* 지금 낀 장비 한 줄 (고르기 창: 아직 얻지 않은 장비는 비교할 수 없어 낀 것을 보인다) */
 function curLine(run, k) {
@@ -148,7 +142,7 @@ function vEquip() {
   const sel = G.eqSel || (G.eqSel = { slot: 'weapon' });
   const filter = G.eqFilter || 'all', order = G.eqOrder || 'recent';
   const a = gearStats(p);
-  let h = `<div class="eqsum" role="group" aria-label="지금 수치">${GSTAT.filter(x => x[0] !== 'mp' || !isV2(p)).map(([k, lab, fmt]) => `<span><small>${lab}</small><b>${fmt(a[k])}</b></span>`).join('')}</div>`;
+  let h = `<div class="eqsum" role="group" aria-label="지금 수치">${GSTAT.filter(x => !['heavyCost', 'lifeCap', 'manaCap', 'stamCap'].includes(x[0]) && (x[0] !== 'mp' || !isV2(p))).map(([k, lab, fmt]) => `<span><small>${lab}</small><b>${fmt(a[k])}</b></span>`).join('')}</div>`;
   if (inFight) h += `<p class="warn">전투 중에는 보기만 합니다. 전투가 끝나면 바꿉니다.</p>`;
   h += `<div class="eqcols"><section class="eqslots" aria-label="장비 칸">`;
   for (const sl of EQ_SLOTS) {

@@ -28,10 +28,11 @@ with sync_playwright() as p:
     pg.evaluate('G.run.tree.pts=2')
     pg.click('.tbmenu [data-a=tbr][data-k=연사]')
     pg.click('[data-a=tsel][data-k=h_double]');pg.click('[data-a=tunlock]')
-    assert '연계 불가' in pg.locator('.loadout-hint').inner_text()
-    pg.locator('.loadout-hint [data-a=tbr][data-k=저격]').click()
+    assert '피해 +30%' in pg.locator('.tsum .loadout-hint').inner_text()
+    assert pg.locator('.loadout-hint button').count()==0
+    pg.locator('.tbmenu [data-a=tbr][data-k=저격]').click()
     pg.click('[data-a=tsel][data-k=h_mark]');pg.click('[data-a=tunlock]')
-    assert '연계 가능' in pg.locator('.loadout-hint').inner_text()
+    assert '연계 불가' not in pg.locator('.loadout-hint').inner_text()
     assert '피해 +30%' in pg.locator('.loadout-hint').inner_text()
     assert pg.evaluate('document.documentElement.scrollWidth<=innerWidth')
     pg.click('button[data-a=skillok]')
@@ -43,15 +44,16 @@ with sync_playwright() as p:
     out=Path(__file__).resolve().parent.parent/'output/playwright/equipment-comfort';out.mkdir(parents=True,exist_ok=True)
     for width in [390,1280]:
         pg.set_viewport_size({'width':width,'height':844})
-        assert '강공격 스태미나' in pg.locator('.equip-burden').inner_text()
+        assert pg.locator('.equip-burden').count()==0
+        assert '강공격 스태미나 비용' in pg.locator('.cmp').inner_text()
         assert '새 대가' in pg.locator('.cmp').inner_text()
         assert '얻는 효과' in pg.locator('.cmp').inner_text()
         assert pg.evaluate('document.documentElement.scrollWidth<=innerWidth')
         pg.locator('.eqdet').scroll_into_view_if_needed()
         pg.screenshot(path=str(out/f'equipment-{width}.png'),full_page=True)
     pg.evaluate("()=>{const it=mkItem('saintgrail',{b:0});G.run.inv[it.uid]=it;G.run.bag.push(it.uid);G.run.p.flask.life=3;G.run.p.flask.mana=3;G.run.p.flask.stam=3;G.eqSel={uid:it.uid};render()}")
-    assert '장착 즉시 남은 생명력 플라스크 3 → 2회' in pg.locator('.equip-burden').inner_text()
-    assert '정화 플라스크 최대 충전 3 → 2회' in pg.locator('.equip-burden').inner_text()
+    assert '장착 후 남은 생명력 플라스크 3 → 2회' in pg.locator('.cmp').inner_text()
+    assert '정화 플라스크 최대 충전' in pg.locator('.cmp').inner_text()
     assert pg.evaluate('G.run.p.flask.life')==3
     assert not errs,errs
     print('장비 화면 효과·대가·화면 너비 390·1280 통과, errs',errs);br.close()
