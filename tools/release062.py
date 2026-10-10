@@ -5,7 +5,7 @@
 #            privacy.html(저장소 루트)은 그대로 복사, config.js는 빈 파일(시험이 진짜 Supabase에 기록을 보내지 않게).
 # 경로 치환: ../config.js -> config.js, ../audio/ -> audio/, ../privacy.html -> privacy.html (index.html, js/, css/, data/ 안의 글자)
 # 저장 키와 저장소 경로는 바꾸지 않는다(nrk_062_v1, runs62 · scen62 · survey62 · best62 · rank62). 이관 여부는 만든 사람 결정이다.
-import os, re, shutil, sys, tempfile
+import os, re, shutil, sys, tempfile, filecmp
 
 try:
     sys.stdout.reconfigure(encoding='utf-8')
@@ -35,7 +35,8 @@ def build():
         pass  # 다른 드라이브면 저장소 밖
     a = set(os.listdir(os.path.join(REPO, 'audio')))
     b = set(os.listdir(os.path.join(REPO, '06a2', 'audio')))
-    both = sorted(a & b)
+    both = sorted(f for f in a & b if not filecmp.cmp(
+        os.path.join(REPO, 'audio', f), os.path.join(REPO, '06a2', 'audio', f), shallow=False))
     if both:
         sys.exit('루트 audio/와 06a2/audio/에 같은 이름이 있어 중단합니다: ' + ', '.join(both))
     if os.path.isdir(OUT):

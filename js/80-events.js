@@ -82,7 +82,7 @@ function onClick(ev) {
     case 'gamble': { const run = G.run; if (!run || run.phase !== 'shop') break; const r = gambleDraw(run, el.dataset.k); if (r.why) { toast(r.why); break; } sfx('coin'); toast(`${(GRADE[r.it.g] || GRADE.n).n} ${(ITEMS[r.it.tpl] || {}).n || ''}이(가) 나왔습니다. 가방에 넣었습니다`); saveRunLocal(); saveCur(); render(); break; }
     case 'fate': { const run = G.run, R = run && run.cur; if (!R || R.type !== 'fate') break; const r = fateRun(run, el.dataset.k); if (!r) { toast('올릴 수 없는 장비입니다'); break; } advanceFloor(); openSheet('fateres', r); break; }
     case 'fateskip': { const run = G.run, R = run && run.cur; if (!R || R.type !== 'fate') break; run.rooms.push({ room: run.room, type: 'fate', took: null }); advanceFloor(); render(); break; }
-    case 'awkpick': { const run = G.run; if (!run || !awkTake(run, el.dataset.k)) break; G.sheet = null; toast('깨달음: ' + AWK_MAP[el.dataset.k].n); saveRunLocal(); saveCur(); if (!awkOpen()) render(); break; }
+    case 'awkpick': { const run = G.run; if (!run || !awkTake(run, el.dataset.k)) break; G.sheet = null; toast('각인: ' + AWK_MAP[el.dataset.k].n); saveRunLocal(); saveCur(); if (!awkOpen()) render(); break; }
     case 'awkview': if (!runLive()) break; hidePop(); openSheet('awkview'); break;
     case 'offerpick': { const run = G.run, it = run.inv[el.dataset.k]; if (!it) break; const up = it.g === 'n' ? 'm' : it.g === 'm' || it.g === 'r' ? 'r' : 'h'; const k2 = dropKey(run, up, [it.tpl]); discardUid(run, it.uid); G.sheet = null; run.rooms.push({ room: run.room, type: 'altar', took: 'offer', gave: it.tpl }); advanceFloor(); queueDrops([mkItem(k2)]); break; }
     case 'event': { const run = G.run, p = run.p, R = roomDef(), o = el.dataset.k; const drops = []; run.next = run.next || {};
@@ -204,6 +204,7 @@ function onClick(ev) {
     case 'loginno': G.acct.conflict = ''; render(); break;
     case 'settings': openSheet('settings'); break;
     case 'sndtoggle': sndSet({ on: !sndCfg().on }); render(); break;
+    case 'bfxtoggle': sndSet({ bfx: !sndCfg().bfx }); render(); break;
     case 'sfxtest': sfx('coin'); break;
     case 'logout': if (ask('로그아웃하면 이 기기는 새 익명 계정으로 돌아갑니다. 지금까지의 기록은 구글 계정에 남습니다. 로그아웃할까요?')) socialLogout(); break;
     case 'namesave': { G.data.name = (val('pname') || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 16); saveLocal(); toast('이름을 저장했습니다'); pushName(); render(); break; }
@@ -212,6 +213,10 @@ function onClick(ev) {
     case 'coachoff': G.data.seenCoach = true; saveLocal(); render(); break;
     case 'skip': G.skip = true; if (G.stepResolve) { const r = G.stepResolve; G.stepResolve = null; r(); } break;
     case 'pace': G.pace = el.dataset.v; G.data.pace = G.pace; saveLocal(); render(); break;
+    case 'deltick': { const u = el.dataset.k; const a = G.delSel || []; G.delSel = el.checked ? a.concat(a.includes(u) ? [] : [u]) : a.filter(x => x !== u); G.delAsk = false; G.delMsg = ''; render(); break; }
+    case 'delask': G.delAsk = true; G.delMsg = ''; render(); break;
+    case 'delno': G.delAsk = false; render(); break;
+    case 'delgo': { const w = (val('delword') || '').trim(); if (w !== '지우기') { G.delMsg = '"지우기"라고 정확히 써야 지웁니다. 아무것도 지우지 않았습니다.'; render(); break; } delTesters(); break; }
     case 'dashjson': saveFile('nrk-' + VERSION + '-전체기록-' + new Date().toISOString().slice(0, 10) + '.json', dashJson()); break;
     case 'notescsv': saveFile('nrk-' + VERSION + '-의견-' + new Date().toISOString().slice(0, 10) + '.csv', notesCsv()); break;
     case 'archive': archiveAll(); break;

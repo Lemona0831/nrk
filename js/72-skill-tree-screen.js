@@ -154,11 +154,11 @@ function sheetParts(S) {
     for (const k of S.data.offer) body += itemCard(k, curLine(run, k) + `<button class="gold" data-a="choose" data-k="${k}">이것을 가진다</button>`);
     body += `<button data-a="choose" data-k="">둘 다 두고 간다</button>`;
   } else if (S.kind === 'awk') {
-    title = '깨달음을 얻을 때입니다'; const offer = run.awkOffer || [];
-    body = `<p class="mini">셋 가운데 하나를 고릅니다. 이번 여정 동안만 지니고 대가는 없습니다. 같은 깨달음은 한 번만 얻습니다. 지금까지 ${(run.awk || []).length}개를 얻었습니다.</p><div class="awklist">${offer.map(id => awkCard(id, `<button class="gold" data-a="awkpick" data-k="${id}">이것을 깨닫는다</button>`)).join('')}</div>`;
+    title = '각인을 얻을 때입니다'; const offer = run.awkOffer || [];
+    body = `<p class="mini">셋 가운데 하나를 고릅니다. 던전이 끝나면 소멸되고 대가는 없습니다. 같은 각인은 한 번만 얻습니다. 지금까지 ${(run.awk || []).length}개를 얻었습니다.</p><div class="awklist">${offer.map(id => awkCard(id, `<button class="gold" data-a="awkpick" data-k="${id}">이것을 새긴다</button>`)).join('')}</div>`;
   } else if (S.kind === 'awkview') {
-    title = '얻은 깨달음'; const own = run && run.awk || [];
-    body = `<p class="mini">런 안에서만 남는 작은 힘입니다. 정산을 확정한 뒤와 2챕터부터의 야영지에서 하나씩 얻습니다. 대가는 없습니다.</p><div class="awklist">${own.length ? own.map(id => awkCard(id)).join('') : '<p class="mini">아직 얻은 깨달음이 없습니다.</p>'}</div>`;
+    title = '얻은 각인'; const own = run && run.awk || [];
+    body = `<p class="mini">던전이 끝나면 소멸되는 작은 힘입니다. 정산을 확정한 뒤와 2챕터부터의 야영지에서 하나씩 얻습니다. 대가는 없습니다.</p><div class="awklist">${own.length ? own.map(id => awkCard(id)).join('') : '<p class="mini">아직 얻은 각인이 없습니다.</p>'}</div>`;
   } else if (S.kind === 'fateres') {
     const r = S.data; title = r.ok ? '저울이 기웁니다' : '저울이 기울지 않았습니다';
     body = `<p class="mini">올린 장비</p><div class="idet"><b class="gr-${r.from.g}">${inm(r.from.tpl, r.from.g)}</b></div>${r.ok ? `<p>한 단계 위 장비로 바뀌었습니다. 가방에 넣었습니다.</p>${itemDetail(r.to)}` : '<p>올린 장비는 사라졌습니다.</p>'}<button class="gold wide" data-a="close" data-focus>확인</button>`;

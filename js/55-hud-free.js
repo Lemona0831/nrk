@@ -9,7 +9,7 @@
    m.f가 1인 칸은 처음 모양을 굳힐 때 비어 있어 높이 0으로 친 자리표였던 칸이다. 전투 중 그 칸이 나타나면 겹치는 아래 칸들만 밀려 내려가고(굳은 모양이 겹치지 않게), 사용자가 그 칸을 직접 옮기면 f가 0이 된다.
    읽는 순서와 Tab 순서는 늘 논리 순서(HUD_MODS)이고 화면 위치만 CSS로 바꾼다. 화면 순서와 크게 어긋나면 편집기가 알린다(hudFreeReading).
    표시 형태(HUD_VARIANTS)는 칸 하나의 항목 스위치(HUD_ITEMS)를 묶어 정한 것이라 따로 저장하지 않는다(G.data.hud.o를 읽어 어느 형태인지 알아낸다). */
-const FREE_OK = 24, FREE_GAP = 6, FREE_MINW = 96, FREE_MINH = 32, FREE_SNAP_R = 6;
+const FREE_OK = 24, FREE_GRAB = 44, FREE_GAP = 6, FREE_MINW = 96, FREE_MINH = 32, FREE_SNAP_R = 6;
 const FREE_OLD_COLS = 12, FREE_OLD_ROW = 16;
 const FREE_SNAPS = [0, 1, 4, 8, 16], FREE_SNAP_DEF = 4, FREE_CHS = [1, 1.5, 2, 2.5, 3];
 const FREE_YMAX = 300;
@@ -529,7 +529,7 @@ function hfDragStep(D) {
     const sx = hfSnap1([p.l + dx, p.l + p.w / 2 + dx, p.l + p.w + dx], D.tx, L, noSnap); const sxg = sx.g; if (sxg == null && L.sn > 0 && !noSnap) dx = Math.round((p.l + dx) / L.sn) * L.sn - p.l; else dx += sx.d;
     const sy = hfSnap1([p.t + dy, p.t + p.h / 2 + dy, p.t + p.h + dy], D.ty, L, noSnap); if (sy.g == null && L.sn > 0 && !noSnap) dy = Math.round((p.t + dy) / L.sn) * L.sn - p.t; else dy += sy.d;
     if (sx.g != null) gl.push({ k: 'v', p: sx.g }); if (sy.g != null) gl.push({ k: 'h', p: sy.g });
-    const nl = hfClamp(p.l + dx, FREE_OK - p.w, Math.max(FREE_OK - p.w, D.W - FREE_OK)), nt = hfClamp(p.t + dy, FREE_OK - p.h, Math.max(FREE_OK - p.h, D.Hc - FREE_OK)); dx = nl - p.l; dy = nt - p.t;
+    const nl = hfClamp(p.l + dx, FREE_GRAB - p.w, Math.max(FREE_GRAB - p.w, D.W - FREE_GRAB)), nt = hfClamp(p.t + dy, FREE_GRAB - p.h, Math.max(FREE_GRAB - p.h, D.Hc - FREE_GRAB)); /* 끌 때는 44px(손가락 크기)가 남게 막아 잡을 조각을 남긴다. 검사 기준 FREE_OK 24px는 그대로 */ dx = nl - p.l; dy = nt - p.t;
     D.ids.forEach(id => { const e = D.els[id]; const s = 'translate(' + dx + 'px,' + dy + 'px)'; if (e.fm) e.fm.style.transform = s; if (e.box) e.box.style.transform = s; });
     res = { dx, dy }; D.read = hfName(D.id) + ' 가로 ' + Math.round(p.l + dx) + ' 세로 ' + Math.round(p.t + dy) + 'px' + (D.ids.length > 1 ? ' 외 ' + (D.ids.length - 1) + '칸' : '');
   } else { /* 크기: 잡은 가장자리(들)만 움직인다. Shift 비율 유지, Alt 가운데 기준 */

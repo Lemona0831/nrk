@@ -116,7 +116,7 @@ function choosePath(id) {
 function dgFix(run) {
   if (run && !run.mode) run.mode = 'normal'; /* 가혹 모드: 옛 저장본은 일반 */
   if (run && !run.legSeen) run.legSeen = []; /* 2챕터 장비: 이 런에서 나온 전설 (같은 전설은 한 번만) */
-  if (run && !run.awk) run.awk = []; /* 깨달음: 옛 저장본은 없음 (p.awk는 깨달음을 얻을 때 맞춘다) */
+  if (run && !run.awk) run.awk = []; /* 각인: 옛 저장본은 없음 (p.awk는 각인을 얻을 때 맞춘다) */
   if (run && run.p && (run.ch || 1) >= 2) for (let c = 2; c <= run.ch; c++) chGift(run, c, true); /* 챕터 선물: 이미 그 챕터에 들어선 옛 저장본도 받는다 */
   if (!run || !run.dg || run.dgv === 2) return;
   const m = f => f <= 8 ? f : f === 9 ? FLOOR_CAMP : f <= 17 ? f + 3 : f === 18 ? FLOOR_BOSS - 1 : FLOOR_BOSS;
@@ -255,7 +255,7 @@ function battleContinue() {
   advanceFloor();
   const q = []; if (t === 'treasure') { const a = dropKey(run, rollGradeCh(run.ch, 'big')), b2 = dropKey(run, pg(rollGradeCh(run.ch, 'room')), [a]); q.push({ chest: [a, b2], room: run.room - 1 }); }
   q.push(...drops);
-  if (xpGot) toast('경험치 +' + xpGot + (lvUp ? ' · 레벨 ' + run.lv + ' 달성' : ''));
+  if (lvUp && typeof sfx === 'function') sfx('b_levelup'); if (xpGot) toast('경험치 +' + xpGot + (lvUp ? ' · 레벨 ' + run.lv + ' 달성' : ''));
   if (lvUp) { G.dropQ = (G.dropQ || []).concat(q); openSheet('stats', { pts: LV_POINTS * lvUp, why: '레벨 ' + run.lv + ' · 능력치 ' + LV_POINTS * lvUp + '점' }); saveRunLocal(); saveCur(); return; }
   queueDrops(q);
 }

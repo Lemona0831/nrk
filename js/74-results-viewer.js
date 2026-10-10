@@ -67,7 +67,7 @@ function collectNotes(testers) {
 function testerRows(testers) {
   return testers.map((T, ti) => {
     const runs = T.runs || [];
-    return { who: testerLabel(T, ti), started: runs.length, done: runs.filter(r => r.status === 'done' || r.survey).length, scen: (T.scen || []).length, final: !!T.final, last: Math.max(0, ...runs.map(r => r.updatedAt || r.endedAt || r.startedAt || 0)) };
+    return { uid: T.uid, who: testerLabel(T, ti), started: runs.length, done: runs.filter(r => r.status === 'done' || r.survey).length, scen: (T.scen || []).length, final: !!T.final, last: Math.max(0, ...runs.map(r => r.updatedAt || r.endedAt || r.startedAt || 0)) };
   });
 }
 function csvCell(s) { s = String(s == null ? '' : s); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
@@ -161,13 +161,36 @@ function vNotes() {
   else h += `<div class="notes">${shown.map(n => `<article class="note"><div class="nh"><b>${esc(n.who)}</b><span>${n.build ? esc(BUILDS[n.build].n) + ' · ' + esc(n.run) : ''}</span><span>${esc(n.where)}</span><span class="mini">${n.at ? esc(new Date(n.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })) : ''}</span></div><div class="nl">${esc(n.label)}</div>${n.text ? `<p class="nt">${esc(n.text)}</p>` : ''}</article>`).join('')}</div>`;
   return h + '</section>';
 }
+/* 테스터 기록 지우기: 고르고, 확인 문장을 쓰면 먼저 백업 파일을 내려받은 뒤 지운다 */
+function vDelBox(TR) {
+  const sel = (G.delSel || []).filter(u => TR.some(t => t.uid === u)); const names = TR.filter(t => sel.includes(t.uid)).map(t => t.who);
+  let h = `<div class="row"><button class="sm" data-a="delask"${sel.length ? '' : ' disabled'}>고른 테스터 기록 지우기 (${sel.length}명)</button></div>`;
+  if (G.delMsg) h += `<div class="banner" role="status">${esc(G.delMsg)}</div>`;
+  if (G.delAsk && sel.length) h += `<div class="banner info" role="alertdialog" aria-labelledby="delq"><p id="delq"><b>${esc(names.join(', '))}</b>의 기록 ${TR.filter(t => sel.includes(t.uid)).reduce((a, t) => a + t.started, 0)}판을 저장소에서 지웁니다. 지운 기록은 되살릴 수 없습니다. 지우기 전에 백업 파일을 내려받습니다.</p><label for="delword">계속하려면 "지우기"라고 쓰세요</label><input id="delword" autocomplete="off"><div class="row"><button class="sm" data-a="delgo">백업을 받고 지우기</button><button class="sm" data-a="delno">취소</button></div></div>`;
+  return h;
+}
+async function delTesters() {
+  const sel = (G.delSel || []).slice(); const raw = (G.dashRaw || []).filter(T => sel.includes(T.uid));
+  if (!sel.length || !G.sb || !G.adminPass) return;
+  G.delMsg = '백업을 받고 지우는 중…'; render();
+  try {
+    await saveFile('nrk-' + VERSION + '-지우기전-백업-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify({ v: VERSION, exportedAt: Date.now(), testers: raw.map(T => Object.assign({ label: testerLabel(T, 0) }, T)) }, null, 1));
+    const paths = []; sel.forEach(u => { paths.push('playtest/' + u, 'board/' + u); });
+    const { data, error } = await G.sb.rpc('admin_delete', { pass: G.adminPass, paths });
+    if (error) throw Object.assign(new Error(error.message), { code: error.code || '' });
+    G.delMsg = raw.length + '명의 기록을 지웠습니다(문서 ' + (data == null ? '?' : data) + '개). 백업 파일은 내려받은 폴더에 있습니다.'; G.delSel = []; G.delAsk = false; G.dash = null; G.dashReq = 0; render();
+  } catch (e) {
+    const missing = e && (e.code === 'PGRST202' || /admin_delete|Could not find/i.test(e.message || ''));
+    G.delMsg = missing ? '저장소에 지우기 함수가 아직 없습니다. docs/검증/관리자-지우기.sql을 Supabase의 SQL Editor에서 한 번 실행한 뒤 다시 눌러 주세요. 아무것도 지우지 않았습니다.' : '지우지 못했습니다(' + ((e && (e.code || e.message)) || '오류') + '). 아무것도 지우지 않았을 수 있으니 새로 고쳐 확인하세요.'; G.delAsk = false; render();
+  }
+}
 function vDash() {
   let h = `<section class="card"><h3>결과 보기</h3>${G.dashErr ? `<div class="banner info">${esc(G.dashErr)}</div>` : ''}${G.archMsg ? `<div class="banner" role="status">${esc(G.archMsg)}</div>` : ''}${G.dash ? '' : '<p>불러오는 중…</p>'}
   <div class="row"><button class="sm gold" data-a="import">지인 기록 넣기</button><button class="sm" data-a="dash">새로 고침</button><button class="sm" data-a="dashjson"${G.dash ? '' : ' disabled'}>전체 기록 내려받기 (JSON)</button><button class="sm" data-a="notescsv"${G.dash ? '' : ' disabled'}>의견만 내려받기 (CSV)</button>${G.site ? '' : `<button class="sm gold" data-a="archive"${G.dash && G.db ? '' : ' disabled'}>전체 기록 저장</button>`}</div>
   <p class="mini">저장소에 연결되지 않은 지인은 첫 화면의 "기록 보내기 코드"를 메신저로 보내 줍니다. 그 코드를 "지인 기록 넣기"에 붙여 넣으면 여기에 함께 모입니다. 자동 기록은 테스터가 방을 끝낼 때마다, 쓰러질 때, 처음으로 나갈 때, 판을 끝낼 때 자동으로 들어옵니다. "전체 기록 저장"은 지금 시점의 모든 테스터 기록을 소유자만 읽는 보관 공간에 날짜별로 남깁니다.</p></section>`;
   const D = G.dash; if (!D) return h;
-  const TR = testerRows(G.dashRaw || []);
-  h += `<section class="card"><h4>테스터별 진행</h4><div class="tbl"><table class="st2"><caption class="sr">테스터별 진행</caption><thead><tr><th scope="col">테스터</th><th scope="col">시작한 판</th><th scope="col">끝낸 판</th><th scope="col">고정 상황</th><th scope="col">마지막 질문</th><th scope="col">마지막 기록</th></tr></thead><tbody>${TR.map(t => `<tr><td>${esc(t.who)}</td><td>${t.started}</td><td>${t.done}</td><td>${t.scen}/3</td><td>${t.final ? '✓' : '—'}</td><td>${t.last ? esc(new Date(t.last).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })) : '—'}</td></tr>`).join('') || '<tr><td colspan="6">아직 없음</td></tr>'}</tbody></table></div></section>`;
+  const TR = testerRows(G.dashRaw || []); const delOn = !!(G.site && G.owner && G.adminPass); /* 지우기는 사이트의 관리자 암호가 있을 때만 */
+  h += `<section class="card"><h4>테스터별 진행</h4><div class="tbl"><table class="st2"><caption class="sr">테스터별 진행</caption><thead><tr>${delOn ? '<th scope="col">지울 기록 고르기</th>' : ''}<th scope="col">테스터</th><th scope="col">시작한 판</th><th scope="col">끝낸 판</th><th scope="col">고정 상황</th><th scope="col">마지막 질문</th><th scope="col">마지막 기록</th></tr></thead><tbody>${TR.map(t => `<tr>${delOn ? `<td><input type="checkbox" data-a="deltick" data-k="${esc(t.uid)}" aria-label="${esc(t.who)} 기록 지우기에 포함"${(G.delSel || []).includes(t.uid) ? ' checked' : ''}></td>` : ''}<td>${esc(t.who)}</td><td>${t.started}</td><td>${t.done}</td><td>${t.scen}/3</td><td>${t.final ? '✓' : '—'}</td><td>${t.last ? esc(new Date(t.last).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })) : '—'}</td></tr>`).join('') || '<tr><td colspan="7">아직 없음</td></tr>'}</tbody></table></div>${delOn ? vDelBox(TR) : ''}</section>`;
   h += vNotes();
   const bn = CLASS_KEYS();
   h += `<section class="card"><h4>테스터 ${D.testerN}명</h4><p class="mini">질문 5 자발적 시험: 막히지 않았는데 아이템을 장착해 본 테스터 ${D.freeTry}명 (${D.testerN ? Math.round(D.freeTry / D.testerN * 100) : 0}%), 그중 "재미있어 보여서" 교체 ${D.freeCurious}회. 목표: 50% 이상, "재미있어 보여서" 1회 이상.</p>

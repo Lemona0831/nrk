@@ -111,13 +111,13 @@ function rcRunDetail(id) {
     const hp = rm.filter(y => y.res === 'win' && y.hpOut != null).sort((a, b) => a.hpOut - b.hpOut)[0];
     h += `<section class="rcsec"><h4>방별 결과</h4><div class="tbl"><table class="st2"><caption class="sr">방 종류별 결과</caption><thead><tr><th scope="col">방</th><th scope="col">지난 수</th><th scope="col">이김</th><th scope="col">쓰러짐</th><th scope="col">물러남</th></tr></thead><tbody>${Object.keys(T).map(t => `<tr><th scope="row">${esc(tn(t))}</th><td>${T[t].n}</td><td>${T[t].win || 0}</td><td>${T[t].lose || 0}</td><td>${T[t].flee || 0}</td></tr>`).join('')}</tbody></table></div>${hp ? `<p class="mini">가장 아슬아슬했던 방은 ${hp.room}층입니다. 이기고 나서 생명력이 ${Math.round(hp.hpOut * 100)}% 남았습니다.</p>` : ''}</section>`;
   } else h += '<section class="rcsec"><h4>방별 결과</h4><p class="mini">기록 없음</p></section>';
-  /* 장비 · 스킬 · 깨달음 */
+  /* 장비 · 스킬 · 각인 */
   const eq = (r.eq7 || []).map((s, i) => s ? { sl: EQ_SLOTS[i], t: s.split(':') } : null).filter(Boolean);
   h += `<section class="rcsec"><h4>장비</h4>${eq.length ? `<ul class="rcplain">${eq.map(e => `<li><span class="mini">${esc(EQ_SLOT_N[e.sl] || e.sl || '')}</span> <span class="gr-${e.t[1] || 'n'}">${ITEMS[e.t[0]] ? inm(e.t[0], e.t[1] || 'n') : esc(e.t[0])}</span></li>`).join('')}</ul>` : '<p class="mini">기록 없음</p>'}</section>`;
   const SM = skillMap(x.build), starters = (TREE2[x.build] && TREE2[x.build].starters) || [], sk = (r.skills || []).filter(s => SM[s]);
   h += `<section class="rcsec"><h4>스킬</h4>${starters.length || sk.length ? `<p>${starters.filter(s => SM[s]).map(s => esc(SM[s].n)).concat(sk.map(s => esc(SM[s].n))).join(', ')}</p>` : '<p class="mini">기록 없음</p>'}</section>`;
   const aw = (r.awk || []).filter(a => AWK_MAP[a]);
-  h += `<section class="rcsec"><h4>깨달음</h4>${aw.length ? `<ul class="rcplain">${aw.map(a => `<li><b>${esc(AWK_MAP[a].n)}</b> <span class="mini">${esc(AWK_MAP[a].d)}</span></li>`).join('')}</ul>` : '<p class="mini">얻은 깨달음이 없습니다.</p>'}</section>`;
+  h += `<section class="rcsec"><h4>각인</h4>${aw.length ? `<ul class="rcplain">${aw.map(a => `<li><b>${esc(AWK_MAP[a].n)}</b> <span class="mini">${esc(AWK_MAP[a].d)}</span></li>`).join('')}</ul>` : '<p class="mini">얻은 각인이 없습니다.</p>'}</section>`;
   if (x.st === 'dead' || x.st === 'clear') h += `<section class="rcsec"><h4>설문</h4><p>${rcSurveyDone(r) ? '답했습니다.' : '아직 답하지 않았습니다.'}</p></section>`;
   return h;
 }
