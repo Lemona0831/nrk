@@ -14,7 +14,7 @@ function treeLayout(build, br, tiers) {
   rows.forEach((row, ri) => row.forEach((s, i) => { pos[s.id] = { x: row.length === 1 ? 50 : (i === 0 ? 30 : 70), y: ri }; }));
   return { rows, pos };
 }
-const treeCanEdit = () => !(G.b && !G.b.over);
+const treeCanEdit = () => !(G.b && !G.b.over) && !(G.run && !G.creating && runOver(G.run));
 function vTreeBranch(run, br) {
   const ch = run.ch || 1; const T = TREE2[run.build] || {};
   const all = SKILLS2[run.build].filter(x => x.b === br && !x.start);
@@ -63,7 +63,7 @@ function vTreeView(mode) {
   const st = T.starters.map(id => `<button class="tstart${G.tsel === id ? ' sel' : ''}" data-a="tsel" data-k="${id}" data-info="tn:${id}"><span class="tc">✓</span>${esc(SK2[id].n)}</button>`).join('');
   const slots = Array.from({ length: EQUIP_SLOTS2 }, (_, i) => eqd[i] ? `<button class="tslot on" data-a="tsel" data-k="${eqd[i]}" data-info="tn:${eqd[i]}">${esc(SK2[eqd[i]].n)}</button>` : `<span class="tslot">빈 칸</span>`).join('');
   let h = `<div class="tsum"><div><span class="mini">시작 스킬 · 늘 끼움</span><div class="trow">${st}</div></div><div><span class="mini">장착 ${eqd.length}/${EQUIP_SLOTS2}</span><div class="trow">${slots}</div></div><div class="tpts">포인트 <b>${t.pts}</b><small>레벨마다 +1 (Lv${run.ch >= 3 ? 15 : 10}에 ${run.ch >= 3 ? 15 : 10}점)</small></div></div>`;
-  if (!treeCanEdit()) h += `<p class="mini">전투 중에는 볼 수만 있습니다. 방과 방 사이에 열고 바꿉니다.</p>`;
+  if (!treeCanEdit()) h += `<p class="mini">${G.run && !G.creating && runOver(G.run) ? '끝난 캐릭터의 트리는 볼 수만 있습니다.' : '전투 중에는 볼 수만 있습니다. 방과 방 사이에 열고 바꿉니다.'}</p>`;
   const menu = `<nav class="tbmenu" aria-label="스킬 트리 갈래">${brs.map(br => { const ns0 = SKILLS2[run.build].filter(x => x.b === br && !x.start); const tiersN = treeTiersOf(run, ns0); const ns = ns0.filter(x => tiersN.includes(x.tier)); const op = ns.filter(x => t.open.includes(x.id)).length; const can = ns.some(x => !t.open.includes(x.id) && !treeWhy(run, x.id)); return `<button class="tseg${tab === br ? ' on' : ''}" data-a="tbr" data-k="${br}" aria-pressed="${tab === br}"><b>${esc(br)}${can ? ' <i class="tcan"><span aria-hidden="true">+</span><span class="sr">열 수 있는 칸 있음</span></i>' : ''}</b><small>${esc(T.bd[br])}</small><span>포인트 ${t.spent[br] || 0} · ${op}/${ns.length}칸</span></button>`; }).join('')}</nav>`;
   return h + `<div class="tlay treev">${menu}<div class="tmain">${vTreeBranch(run, tab)}</div><div class="tside"><div id="tdet" class="tdet">${vTreeDetail(run, G.tsel)}</div></div></div>`;
 }
