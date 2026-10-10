@@ -1,0 +1,45 @@
+// docs/현행-통합-기획서.md의 숫자 든 문장을 코드 값과 대조한다. 측정 결과(판 수, 승률, 완주율)는 코드에 없는 값이라 "규칙 아님(측정)"으로 닫고,
+// 규칙 · 구성 수치(칸 수, 풀 크기, 배율, 층)는 코드에서 센다. 직업 문서의 "코드 기준 값" 블록은 tools/docsync.js --check가 맡는다.
+module.exports = function (api) {
+  const { E, add, note } = api; const fs = require('fs'), path = require('path');
+  const pct = v => Math.round(v * 100);
+  const text = fs.readFileSync(path.join(api.ROOT, 'docs/현행-통합-기획서.md'), 'utf8');
+  api.source('doc-current', text.split(/\r?\n/).map((l, i) => ({ id: 'L' + (i + 1), text: l.replace(/^[-|#>*\s]+/, '').replace(/\*\*/g, '').replace(/`/g, '') })).filter(x => /\d/.test(x.text)));
+  const D = 'doc-current';
+  const poolStat = ch => E(`(() => { const s = {}, g = {}; for (const k of poolOf(${ch})) { const sl = tplKind(k), gr = ITEMS[k].g || "n"; s[sl] = (s[sl] || 0) + 1; g[gr] = (g[gr] || 0) + 1; } return { n: poolOf(${ch}).length, s, g }; })()`);
+  add(D, '기준일 · 판:', '상수: VERSION(CHANGE_VER)', E => /0\.6a\.2-\d+/.test(E('CHANGE_VER')) && text.includes(E('CHANGE_VER')));
+  add(D, '속도 1.5 이상 적은 끝에 한 번 더', '상수: RND_TWICE=1.5', E => E('RND_TWICE') === 1.5);
+  add(D, '스킬 쿨타임(3~10턴', '데이터: 쿨타임 최소 3 최대 10, 시작 스킬 5(사냥꾼 7)', E => E(`(() => { const c = []; for (const k of Object.keys(SKILLS2)) for (const s of SKILLS2[k]) c.push(s.cd); const st = k => TREE2[k].starters.map(i => SK2[i].cd).join(); return Math.min(...c.filter(x => x > 0)) === 3 && Math.max(...c) === 10 && Object.keys(TREE2).every(k => st(k) === (k === "hunter" ? "7,7" : "5,5")); })()`));
+  add(D, '방어(스태미나 20', '실행: 방어 20 · 흘리기 30 · 감소 60% · 암살자 70% · 강적 20%p', E => E('guardCost(__mk("warden").p)') === 20 && E('dodgeCost(__mk("warden").p)') === 30 && E('parryRed(__mk("warden").p)') === 0.6 && E('parryRed(__mk("assassin").p)') === 0.7 && E('PARRY_BIG') === 0.2);
+  add(D, '키워드 10개', '상수: Object.keys(KW).length', E => E('Object.keys(KW).length') === 10);
+  add(D, '일반 적 25%, 정예 35%, 보스 45%', '소스: hurtPlayer 한 번 피해 상한', E => E('hurtPlayer.toString()').includes('o.src.role === \'boss\' ? 0.45 : o.src.elite ? 0.35 : 0.25'));
+  add(D, '샘(50%), 야영지(전부), 정산(전부)', '소스: 샘 0.5, 야영지 · 정산 hpMax', E => E('onClick.toString()').includes('const sp = 0.5 *'));
+  add(D, '몬스터 레벨 1~4', '실행: mlvOf 1챕터 1~4, 2챕터 5~8, 3챕터 9~12 (1층 · 23층)', E => E('[1,2,3].map(c => mlvOf(1, c) + "-" + mlvOf(23, c)).join()') === '1-4,5-8,9-12');
+  add(D, '처음 15점, 레벨마다 2점', '상수: STAT_START · LV_POINTS', E => E('STAT_START') === 15 && E('LV_POINTS') === 2);
+  add(D, '트리 78칸', '데이터: 아홉 직업 모두 시작 2 + 78칸, 하급 · 중급 60 · 상급 18', E => E(`Object.keys(TREE2).every(k => SKILLS2[k].length === 80 && SKILLS2[k].filter(s => s.tier === "상급").length === 18 && SKILLS2[k].filter(s => s.row && s.row <= 10).length === 60)`));
+  add(D, '줄 예산 55 · 56.5 · 58.5', '상수: SKK.rowB 11 · 12 · 13줄', E => E('SKK.rowB[11]') === 55 && E('SKK.rowB[12]') === 56.5 && E('SKK.rowB[13]') === 58.5);
+  add(D, '연 칸 수 × 25 × 챕터 배율', '상수: TREE_RESET.cell=25', E => E('TREE_RESET.cell') === 25);
+  add(D, '궁극은 5챕터', '상수: TREE_CH.궁극', E => E('TREE_CH.궁극') === 5);
+  add(D, '아홉 직업 모두 시작 스킬 2 + 트리 78칸', '데이터: 80칸', E => E('Object.keys(TREE2).length') === 9 && E('Object.values(SKILLS2).every(a => a.length === 80)'));
+  add(D, '챕터마다 24층', '상수: FLOORS · FLOOR_CAMP · PATH_AT', E => E('FLOORS') === 24 && E('FLOOR_CAMP') === 12 && E('PATH_AT.join()') === '4,8,13,17,21' && E('isLower(13,1)') && !E('isLower(11,1)'));
+  add(D, '큰 한 방은 기준 생명력 × 0.46', '상수: STRONG.big=0.46, 챕터마다 강적 다섯', E => E('STRONG.big') === 0.46 && [1, 2, 3].every(c => E(`STRONG_FOES.filter(f => (f.ch || 1) === ${c}).length`) === 5));
+  add(D, '1~4 | 타락한 수도원장', '표: 챕터 이름 · 몬스터 레벨 · 보스', E => E('mlvOf(23,1)') === 4 && E('CHAPTERS[1].n').includes('수도원') && E('CHAPTERS[2].n').includes('지하묘지') && E('CHAPTERS[3].n').includes('재의'));
+  add(D, '가방은 장비 + 소모품 겹 합쳐 20칸', '상수: BAG_MAX', E => E('BAG_MAX') === 20);
+  add(D, '풀: 1챕터 149종', '코드 poolOf(챕터)를 칸 · 등급별로 센 값', E => { const a = poolStat(1), b = poolStat(2), c = poolStat(3); return a.n === 149 && b.n === 203 && b.s.weapon === 39 && b.s.armor === 33 && b.s.gloves === 30 && b.s.ring === 39 && b.s.amulet === 34 && b.s.flask === 28 && b.g.n === 71 && b.g.m === 64 && b.g.r === 44 && b.g.h === 18 && b.g.l === 6 && c.n === 200 && c.s.weapon === 38 && c.s.armor === 32 && c.s.gloves === 30 && c.s.ring === 38 && c.s.amulet === 34 && c.s.flask === 28 && c.g.n === 60 && c.g.m === 62 && c.g.r === 48 && c.g.h === 22 && c.g.l === 8; });
+  add(D, '±60%에서 멈춘다', '상수: FX_CAP=0.6', E => E('FX_CAP') === 0.6);
+  add(D, '소모품: 53종, 한 차례 3개까지', '상수: CONS 53 · CONS_TURN', E => E('Object.keys(CONS).length') === 53 && E('CONS_TURN') === 3);
+  add(D, '영웅 칸 하나가 40%로 나온다', '상수: SHOP_HERO · GAMBLE.pity · FATE.from · 깨달음 51종(공용 24 + 직업 27) + 선물 1', E => E('SHOP_HERO') === 0.4 && E('GAMBLE.pity') === 10 && E('FATE.from') === 2 && E('AWK_LIST.length') === 51 && E('AWK_LIST.filter(a => a.g !== "cls").length') === 24 && E('AWK_LIST.filter(a => a.g === "cls").length') === 27 && E('Object.keys(AWK_MAP).length') === 52);
+  add(D, '적 · 보스 직접 피해 ×1.3', '상수: MODES.hard', E => E('MODES.hard.dmg') === 1.3 && E('MODES.hard.loot') === 1.25 && E('MODES.hard.gold') === 1.2 && E('MODES.hard.xp') === 1.2 && E('MODES.hard.hero') === 1.5);
+  add(D, '칭호 넷', '상수: TITLES · MARKS · MARK_START', E => E('Object.keys(TITLES).length') === 4 && E('Object.keys(MARKS).length') === 9 && E('MARK_START[2].lv') === 5 && E('MARK_START[3].lv') === 10 && E('Math.min(...Object.values(MARKS).map(m => m.pt))') === 1 && E('Math.max(...Object.values(MARKS).map(m => m.pt))') === 3);
+  add(D, '크기(50 · 75 · 100 · 150 · 200%)', '상수: HUD_SIZES · HUD_MODS 12 · HUD_PHONE_MAX 719', E => E('HUD_SIZES.join()') === '50,75,100,150,200' && E('HUD_MODS.length') === 12 && E('HUD_PHONE_MAX') === 719);
+  add(D, '브라우저 저장 키', '상수: SKEY', E => E('SKEY') === 'nrk_062_v1');
+  add(D, '102 (+5)', '코드 기준 값 블록과 같은 값(암살자 ~ 수도승 생명력 · 레벨당)', E => E(`[["assassin",102,5],["warden",122,6],["hunter",92,4],["elementalist",110,4],["spellblade",100,5],["monk",120,5]].every(([k,h,g]) => BUILDS[k].hp === h && LV_GAIN[k].hp === g)`));
+  add(D, '110~118', '숨겨진 직업 생명력 범위', E => E(`["butcher","confessor","bloodmage"].map(k => BUILDS[k].hp).sort().join()`) === '110,112,118');
+  add(D, '추적 · 연계(다른 갈래로 이으면 피해 +30%)', '상수: HUNT.link', E => E('HUNT.link') === 0.3);
+  add(D, '흘리기는 큰 공격이면 그 적의 붕괴 +25', '소스: hurtPlayer 강타를 흘리면 addBreak 25', E => E('hurtPlayer.toString()').includes('if (o.charged) { addBreak(b, o.src, 25);'));
+  add(D, '쿨타임은 내 턴이 끝날 때마다 1 줄고', '소스: chargeEv(turn)이 p.cd[id]--', E => E('chargeEv.toString()').includes('p.cd[id]--'));
+  add(D, '장착은 트리 칸 4개', '상수: EQUIP_SLOTS2', E => E('EQUIP_SLOTS2') === 4);
+  add(D, '포인트는 레벨과 같다', '실행: treeFix 포인트 = 레벨(Lv15면 15)', E => E(`(() => { const run = { build: "assassin", lv: 15, tree: { pts: 99, open: [], spent: {} } }; treeFix(run); return run.tree.pts; })()`) === 15);
+  add(D, '3챕터에 상급 줄 11~13줄이 열린다', '상수: TREE_CH.상급=3, 칸 18개(기둥마다 3칸 × 6)', E => E('TREE_CH.상급') === 3 && E('SKILLS2.assassin.filter(s => s.tier === "상급").length') === 18);
+  api.noteRest(D, '측정값(판 수, 승률, 완주율), 날짜 · 이력, 구판 표기, 문서 번호. 코드에 없는 값이라 대조하지 않는다');
+};

@@ -49,7 +49,7 @@ const HUD_ITEMS = [
   { k: 'ehp', mod: 'hud-field', n: '적의 생명력과 다음 행동 예고', lock: 1 },
   { k: 'abtn', mod: 'hud-actions', n: '행동 버튼(비용과 쿨타임)', lock: 1 },
   { k: 'danger', mod: 'hud-danger', n: '지금 위험 줄', lock: 1 },
-  { k: 'sts', mod: 'hud-player', n: '상태 칩', d: ['bad', 'few', 'all'], opts: [['bad', '해로운 것만 3개'], ['few', '3개까지'], ['all', '모두']], desc: '내게 걸린 상태와 적에게 걸린 상태를 칩으로 보입니다. 넘치는 것은 "+N"으로 접힙니다' },
+  { k: 'sts', mod: 'hud-player', n: '상태 칩', d: ['bad', 'few', 'all'], opts: [['bad', '해로운 것만 3개'], ['few', '3개까지'], ['all', '모두']], desc: '내게 걸린 상태와 적에게 걸린 상태를 칩으로 보입니다. 넘치는 것은 "+N"으로 접힙니다. "해로운 것만"은 내 상태에만 걸리고, 적 카드에는 두 개까지 보입니다' },
   { k: 'prev', mod: 'hud-player', n: '막대 미리보기', d: [0, 1, 1], desc: '행동에 올리면 생명력 · 스태미나 · 적 막대에 예상 변화를 겹쳐 보입니다' },
   { k: 'inc', mod: 'hud-player', n: '예상 피해 줄', d: [1, 1, 1], desc: '내 다음 차례 전에 받을 피해를 한 줄로 보입니다' },
   { k: 'flk', mod: 'hud-player', n: '플라스크 줄', d: [0, 1, 1], desc: '남은 플라스크 수. 행동 버튼에도 같은 수가 있습니다' },
