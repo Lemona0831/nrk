@@ -93,7 +93,8 @@ function sheetParts(S) {
     body = winSumHtml() + `<p class="lead">새 장비를 받으려면 가방에서 하나를 버립니다. 버린 장비는 사라집니다.${nc ? ` 가방 ${BAG_MAX}칸 중 소모품이 ${nc}칸입니다.` : ''}</p>${itemDetail(it)}${shopCmp(run, it)}<button class="wide" data-a="bfskip">새 장비를 버리기</button><h4 class="bfh">또는 가방에서 하나를 버리고 새 장비를 받기</h4><div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${inm(x.tpl, x.g)}</span>${gradeTag(x.g)}<br><small class="mini">${EQ_SLOT_N[kindOf(ITEMS[x.tpl].slot) === 'ring' ? 'ring1' : ITEMS[x.tpl].slot].replace(' 1', '')} · ${baseText(x)}</small></div><button class="sm" data-a="bfdrop" data-k="${u}">이것을 버리기</button></div>`; }).join('')}</div>`;
   } else if (S.kind === 'changes') {
     title = '업데이트 내역';
-    body = CHANGELOG.map((c, i) => chgEntry(c, i === 0)).join('');
+    const mj = CHANGELOG.findIndex(c => c.groups), cut = mj >= 0 ? mj + 1 : CHANGELOG.length; /* 통합 항목(groups)까지는 펼치고, 그 아래 개발 중 항목과 옛 판은 접어 둔다 */
+    body = CHANGELOG.slice(0, cut).map((c, i) => chgEntry(c, i === 0)).join('') + (cut < CHANGELOG.length ? `<details class="chgdev"><summary>개발 중 변경 내역 (이전 판 포함 ${CHANGELOG.length - cut}개)</summary>${CHANGELOG.slice(cut).map(c => chgEntry(c, false)).join('')}</details>` : '');
   } else if (S.kind === 'bossinfo' && S.data.foe) {
     const F = FOE_INTRO[S.data.foe]; title = F.n + '을(를) 처음 만났습니다';
     body = `<p class="lore">${esc(F.lore)}</p>${F.see.map(t => `<p>${esc(t)}</p>`).join('')}<p class="mini">무엇을 하는지는 직접 겪어 보아야 압니다. 처음 겪은 일은 보스 도감에 적힙니다. 이 창은 한 번만 뜹니다.</p><button class="gold wide" data-a="close" data-focus>싸우러 간다</button>`;

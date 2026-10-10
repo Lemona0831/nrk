@@ -270,12 +270,10 @@ module.exports = function (api) {
   A('챕터 1층으로 내려갑니다', 'enterChapter → dgInit: run.room = 1', () => has('66-dungeon-flow.js', 'run.room = 1; run.cur = null; run.path'));
 
   // ───────── 계정 · 캐릭터 만들기 (44) ─────────
-  A('0.6a.2 나락의 유산', '타이틀 판 이름 0.6a.2 = CHANGE_VER 앞부분', () => E('CHANGE_VER').startsWith('0.6a.2'));
   A('(12자까지)', '이름 12자: cnok slice(0, 12), maxlength=12', () => has('80-events.js', ".slice(0, 12)") && has('44-screens-account.js', 'maxlength="12"'));
-  N('0.6a.2 스킬 시험판 기록만', '판 이름(0.6a.2 시험판 · 0.6a 지인 주소 · B0.5), 규칙이 아님');
+  N('0.6a와 B0.5 기록은', '판 이름(0.6a · B0.5), 규칙이 아님');
   N('0.6 캐릭터', '판 이름(0.6), 규칙이 아님');
   N('아직 0.6 판이 없습니다', '판 이름(0.6), 규칙이 아님');
-  N('지인 주소(0.6a) 기록은', '판 이름(0.6a 지인 주소), 규칙이 아님');
   A('계정 목표', '1 · 2 · 3챕터 보스 = CHAPTERS 1~3', () => E('Object.keys(CHAPTERS).map(Number).join(",")') === '1,2,3');
 
   // ───────── 수련장 (48 · tutorial.js) ─────────
@@ -319,7 +317,6 @@ module.exports = function (api) {
 
   // ───────── 설정 (76) ─────────
   A('숫자 키 1부터 9까지와 Q · W · E 키로 행동 버튼을 누릅니다', 'battle HUD: 숫자 키 1~9 (kn <= 9)', () => has('52-battle-hud.js', 'kn <= 9 && G.data.numKeys !== false'));
-  A('나락의 유산 · 0.6a.2 스킬 시험판', '판 이름(0.6a.2) = CHANGE_VER 앞부분', () => E('CHANGE_VER').startsWith('0.6a.2'));
 
   // ───────── 따옴표 글 읽기가 놓치는 곳(템플릿 속 템플릿 · 삼항 안의 글)과 만들어 내는 글 ─────────
   // 소스를 직접 읽어 따로 적은 문장이다. 화면에 닿는 글만 담았다(주석 제외).

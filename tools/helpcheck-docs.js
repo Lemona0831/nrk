@@ -7,7 +7,7 @@ module.exports = function (api) {
   api.source('doc-current', text.split(/\r?\n/).map((l, i) => ({ id: 'L' + (i + 1), text: l.replace(/^[-|#>*\s]+/, '').replace(/\*\*/g, '').replace(/`/g, '') })).filter(x => /\d/.test(x.text)));
   const D = 'doc-current';
   const poolStat = ch => E(`(() => { const s = {}, g = {}; for (const k of poolOf(${ch})) { const sl = tplKind(k), gr = ITEMS[k].g || "n"; s[sl] = (s[sl] || 0) + 1; g[gr] = (g[gr] || 0) + 1; } return { n: poolOf(${ch}).length, s, g }; })()`);
-  add(D, '기준일 · 판:', '상수: VERSION(CHANGE_VER)', E => /0\.6a\.2-\d+/.test(E('CHANGE_VER')) && text.includes(E('CHANGE_VER')));
+  add(D, '기준일 · 판:', '상수: VERSION(CHANGE_VER)', E => /^0\.7\.0(-\d+)?$/.test(E('CHANGE_VER')) && text.includes(E('CHANGE_VER')));
   add(D, '속도 1.5 이상 적은 끝에 한 번 더', '상수: RND_TWICE=1.5', E => E('RND_TWICE') === 1.5);
   add(D, '스킬 쿨타임(3~10턴', '데이터: 쿨타임 최소 3 최대 10, 시작 스킬 5(사냥꾼 7)', E => E(`(() => { const c = []; for (const k of Object.keys(SKILLS2)) for (const s of SKILLS2[k]) c.push(s.cd); const st = k => TREE2[k].starters.map(i => SK2[i].cd).join(); return Math.min(...c.filter(x => x > 0)) === 3 && Math.max(...c) === 10 && Object.keys(TREE2).every(k => st(k) === (k === "hunter" ? "7,7" : "5,5")); })()`));
   add(D, '방어(스태미나 20', '실행: 방어 20 · 흘리기 30 · 감소 60% · 암살자 70% · 강적 20%p', E => E('guardCost(__mk("warden").p)') === 20 && E('dodgeCost(__mk("warden").p)') === 30 && E('parryRed(__mk("warden").p)') === 0.6 && E('parryRed(__mk("assassin").p)') === 0.7 && E('PARRY_BIG') === 0.2);
