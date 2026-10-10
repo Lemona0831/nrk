@@ -142,12 +142,13 @@ function infoHtml(key) {
 
 /* ---------- 설명 창 동작 (올리면 뜨고, 휴대폰은 길게 누르기) ---------- */
 const POP = { el: null, t: 0, touchT: 0, suppress: false, cur: null };
-function popEl() { if (!POP.el) { POP.el = document.createElement('div'); POP.el.id = 'pop'; POP.el.className = 'pop'; POP.el.setAttribute('role', 'tooltip'); document.body.appendChild(POP.el); } return POP.el; }
+/* 설명 창은 보일 때만 이름 있는 랜드마크 안에 둔다(흩어진 내용이 랜드마크 밖에 남지 않게, axe region). 상자는 자리를 차지하지 않는다 */
+function popEl() { if (!POP.el) { const box = document.createElement('div'); box.id = 'popbox'; box.setAttribute('role', 'complementary'); box.setAttribute('aria-label', '설명 창'); box.style.display = 'none'; POP.el = document.createElement('div'); POP.el.id = 'pop'; POP.el.className = 'pop'; POP.el.setAttribute('role', 'tooltip'); box.appendChild(POP.el); document.body.appendChild(box); POP.box = box; } return POP.el; }
 function showPop(target, force) {
   if (!G.infoOn && !force) return; /* force: 쓸 수 없는 행동을 눌렀을 때는 설명 창을 꺼 두어도 이유를 보인다 */
   const key = target.dataset.info; const html = infoHtml(key); if (!html) return hidePop();
   if (POP.cur && POP.cur !== target) descDel(POP.cur, 'pop');
-  clearTimeout(POP.h); const el = popEl(); el.innerHTML = html; el.style.display = 'block'; POP.cur = target; descAdd(target, 'pop');
+  clearTimeout(POP.h); const el = popEl(); el.innerHTML = html; POP.box.style.display = 'block'; el.style.display = 'block'; POP.cur = target; descAdd(target, 'pop');
   const r = target.getBoundingClientRect(); const pw = Math.min(320, window.innerWidth - 16);
   el.style.width = pw + 'px';
   const ph = el.offsetHeight;
@@ -155,7 +156,7 @@ function showPop(target, force) {
   let top = r.top - ph - 8; if (top < 8) top = Math.min(window.innerHeight - ph - 8, r.bottom + 8);
   el.style.left = left + 'px'; el.style.top = top + 'px';
 }
-function hidePop() { clearTimeout(POP.t); clearTimeout(POP.h); if (POP.el) POP.el.style.display = 'none'; if (POP.cur) descDel(POP.cur, 'pop'); POP.cur = null; }
+function hidePop() { clearTimeout(POP.t); clearTimeout(POP.h); if (POP.el) { POP.el.style.display = 'none'; POP.box.style.display = 'none'; } if (POP.cur) descDel(POP.cur, 'pop'); POP.cur = null; }
 /* aria-describedby에 설명 창(pop)과 미리보기 문장(pvdesc)을 함께 단다 */
 function descAdd(el, id) { if (!el || !el.getAttribute) return; const L = (el.getAttribute('aria-describedby') || '').split(' ').filter(Boolean); if (!L.includes(id)) L.push(id); el.setAttribute('aria-describedby', L.join(' ')); }
 function descDel(el, id) { if (!el || !el.getAttribute) return; const L = (el.getAttribute('aria-describedby') || '').split(' ').filter(x => x && x !== id); if (L.length) el.setAttribute('aria-describedby', L.join(' ')); else el.removeAttribute('aria-describedby'); }

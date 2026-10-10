@@ -82,7 +82,7 @@
 .tbranch{border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:8px 6px 4px}
 .tbh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;padding:0 4px}.tbh b{color:var(--gold);font-size:calc(16px*var(--fs,1))}.tbh small{flex-basis:100%;color:var(--muted);font-size:calc(12px*var(--fs,1))}.tbp{margin-left:auto;font-size:calc(12px*var(--fs,1));color:var(--muted)}
 .tcanvas{position:relative;margin-top:4px}.tcanvas svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.tcanvas line{stroke:var(--line);stroke-width:2;vector-effect:non-scaling-stroke}.tcanvas line.lit{stroke:var(--gold)}
+.tcanvas line{stroke:var(--line);stroke-width:2}.tcanvas line.lit{stroke:var(--gold)}
 .tnode{position:absolute;transform:translate(-50%,-50%);width:76px;min-height:0;padding:0;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;z-index:1}
 .tnode .tc{width:38px;height:38px;border-radius:50%;border:2px solid var(--line);background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:calc(16px*var(--fs,1));font-weight:700;color:var(--muted)}
 .tnode small{font-size:calc(11.5px*var(--fs,1));line-height:1.2;text-align:center;color:var(--muted);max-width:76px;word-break:keep-all}

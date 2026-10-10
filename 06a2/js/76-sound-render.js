@@ -35,13 +35,13 @@ function sndUnlock() { if (SND.unlocked) return; SND.unlocked = true; sndSync();
 function sndSet(patch) { G.data.audio = Object.assign({}, G.data.audio || {}, patch); saveLocal(); sndSync(); }
 function vSettings() {
   const c = sndCfg(); const pct = v => Math.round(v * 100); const off = c.on ? '' : ' disabled';
-  const sw = (a, on, lab) => `<button class="sw" role="switch" aria-checked="${on ? 'true' : 'false'}" data-a="${a}" aria-label="${lab}">${on ? '켜짐' : '꺼짐'}</button>`;
+  const sw = (a, on, lab) => `<button type="button" class="sw" role="switch" aria-checked="${on ? 'true' : 'false'}" data-a="${a}" aria-label="${lab}">${on ? '켜짐' : '꺼짐'}</button>`;
   const snd = `<section class="setg"><h4>소리</h4>
 <div class="setrow"><span class="lab">소리</span><span></span>${sw('sndtoggle', c.on, '소리')}</div>
 <div class="setrow"><label for="volm">음악</label><input id="volm" type="range" min="0" max="100" step="5" value="${pct(c.music)}"${off}><output id="volmv" for="volm">${pct(c.music)}%</output></div>
 <div class="setrow"><label for="vols">효과음</label><input id="vols" type="range" min="0" max="100" step="5" value="${pct(c.sfx)}"${off}><button class="sm" data-a="sfxtest"${off} aria-label="효과음 들어 보기">들어 보기</button><small>효과음 <output id="volsv" for="vols">${pct(c.sfx)}%</output>. 소리는 처음에 꺼져 있고, 화면 위 🔇 버튼이나 여기서 켭니다. 음악은 화면에 따라 바뀝니다.</small></div></section>`;
   const scr = `<section class="setg"><h4>화면</h4>
-<div class="setrow"><span class="lab">숫자 키</span><span class="mini">숫자 키 1부터 9까지로 행동 버튼을 누릅니다</span>${sw('numkeys', G.data.numKeys !== false, '숫자 키로 행동')}</div>
+<div class="setrow"><span class="lab">숫자 키</span><span class="mini">숫자 키 1부터 9까지와 Q · W · E 키로 행동 버튼을 누릅니다</span>${sw('numkeys', G.data.numKeys !== false, '숫자 키로 행동')}</div>
 <div class="setrow"><span class="lab">설명 창</span><span class="mini">마우스를 올리거나 길게 누르면 뜹니다</span>${sw('infotoggle', G.infoOn, '설명 창')}</div>
 <div class="setrow"><label for="setfs">글자 크기</label><span class="mini">화면 글자의 크기</span><select id="setfs">${FS_OPTS.map(v => `<option value="${v}"${(FS_OPTS.includes(+G.data.fs) ? +G.data.fs : 1) === v ? ' selected' : ''}>${Math.round(v * 100)}%</option>`).join('')}</select></div>
 <div class="setrow"><span class="lab">움직임 줄이기</span><span class="mini">적 카드 확대, 버튼 빛남, 부드러운 스크롤, 알림이 미끄러져 나오는 것을 끕니다</span>${sw('rmotion', !!G.data.rm, '움직임 줄이기')}</div>
@@ -88,11 +88,11 @@ function render() {
   if (tail && !hadSheet) G.sheetRet = fk; G.shownSheet = !!tail;
   const nm = scrName(); document.title = nm ? nm + ' · 나락의 유산' : '나락의 유산 · 0.6a.2 스킬 시험판';
   const h2 = `<h2 class="sr">${esc(nm || '처음 화면')}</h2>`;
-  if (fit) root.innerHTML = `<div class="fit"${ine}><button class="skip" data-a="skipacts">행동판으로 건너뛰기</button>${vHeader()}<main class="bmain">${h2}${vBattle()}</main>${edUi}</div>${tail}`;
+  if (fit) root.innerHTML = `<div class="fit"${ine}><button class="skip" data-a="skipacts">행동판으로 건너뛰기</button>${vHeader()}${G.hudEd ? '<div class="bmain">' : '<main class="bmain">'}${h2}${vBattle()}${G.hudEd ? '</div>' : '</main>'}${edUi}</div>${tail}`;
   else root.innerHTML = `<div class="app scr-${G.scr}"${ine}><button class="skip" data-a="skipmain">본문으로 건너뛰기</button>${vHeader()}<main id="main" tabindex="-1">${h2}${main}</main></div>${tail}`;
   if (POP.cur && !document.body.contains(POP.cur)) hidePop(); // 설명 창의 기준이 된 요소가 사라졌으면 닫는다
   if (!G.sheet && G.dropQ && G.dropQ.length && G.scr === 'run' && !G.b) setTimeout(nextDrop, 0); // 전리품 창을 닫기로 닫아도 남은 전리품을 이어서 건넨다
-  fitDecide(fit);
+  fitDecide(fit); scrollPad();
   document.querySelectorAll('.tbl').forEach(d => { const c = d.querySelector('caption'); d.tabIndex = 0; d.setAttribute('role', 'region'); d.setAttribute('aria-label', (c && c.textContent) || '표'); }); /* 가로로 스크롤되는 표 영역은 키보드로 닿고 이름이 있어야 한다(10월 8일 axe: scrollable-region-focusable) */
   const f2 = document.querySelector('.hz-mid'); if (f2) f2.scrollTop = fy;
   if (shk === 'settings') { const sh2 = document.querySelector('.sheet'); if (sh2 && hadSheet) sh2.scrollTop = shy; } /* 설정 창은 항목을 바꿔도 보던 자리에 둔다 */
@@ -106,6 +106,14 @@ function render() {
 /* 10월 7일 2차: 전투 화면은 창 높이에 맞춰 한 화면에 두되, 그러면 전장이 모자란 창(확대 · 가로 휴대폰 · 짧은 휴대폰)에서는
    고정을 풀고 페이지를 스크롤한다(10월 2일의 원래 뜻). 같은 창 크기 · 같은 전투 · 같은 글자 크기에서는 한 번 정한 대로 둔다(차례마다 바뀌지 않게) */
 const FIT_FIELD = 200;
+/* 붙어 있는 머리줄과 아래 단추 줄에 초점이 가려지지 않게 한다(WCAG 2.2 2.4.11): 키보드로 옮긴 초점이 그 줄 아래로 스크롤되지 않도록 높이만큼 여백을 둔다 */
+function scrollPad() {
+  const de = document.documentElement; const sticky = e => !!e && getComputedStyle(e).position === 'sticky';
+  const hd = document.querySelector('.app > .hdr'); const bar = document.querySelector('.app .stickbar, .app .shopbar');
+  de.style.setProperty('--sp-top', (sticky(hd) ? Math.ceil(hd.getBoundingClientRect().height) : 0) + 'px');
+  de.style.setProperty('--sp-bot', (sticky(bar) ? Math.ceil(bar.getBoundingClientRect().height) : 0) + 'px');
+}
+if (typeof window !== 'undefined') window.addEventListener('resize', () => { try { scrollPad(); } catch (e) { } });
 function fitDecide(fit) {
   const de = document.documentElement;
   if (fit && G.hudEd) { de.classList.add('fitscroll'); return; } /* 편집 중에는 모든 모듈이 보이도록 페이지가 스크롤된다 */
@@ -124,7 +132,7 @@ const FS_OPTS = [0.9, 1, 1.15, 1.3];
 function applyPrefs() { if (typeof document === 'undefined' || !G.data) return; const de = document.documentElement; const fs = FS_OPTS.includes(+G.data.fs) ? +G.data.fs : 1; de.style.setProperty('--fs', String(fs)); de.classList.toggle('rm', !!G.data.rm); }
 const smoothB = () => (G.data && G.data.rm) || (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
 /* 화면 이름: 브라우저 탭 제목과 숨은 h2 */
-const SCR_N = { guide: '처음 안내', create: '캐릭터 만들기', settle: '정산', shop: '상점', wait: '챕터 돌파', rank: '랭킹', records: '기록', admin: '관리자', tree: '스킬 트리', dead: '쓰러짐', survey: '설문', final: '마무리', scen: '고정 상황', tutoffer: '수련장 안내' };
+const SCR_N = { guide: '처음 안내', create: '캐릭터 만들기', settle: '정산', shop: '상점', wait: '챕터 돌파', rank: '랭킹', records: '기록', goals: '계정 목표', mark: '표식 도전', admin: '관리자', tree: '스킬 트리', dead: '쓰러짐', survey: '설문', final: '마무리', scen: '고정 상황', tutoffer: '수련장 안내' };
 function scrName() {
   if (G.scr === 'run') return G.b ? (G.b.ctx && G.b.ctx.boss ? '보스 전투' : '전투') : '던전';
   if (G.scr === 'test') return G.b ? '시험 전투' : '시험 전투 설정';

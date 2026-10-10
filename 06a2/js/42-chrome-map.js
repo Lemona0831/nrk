@@ -35,7 +35,7 @@ function mbar(cls, v, max, lab, inc) { const ik = { hp: 'bar:hp', mp: 'bar:mp', 
 function vPlayerPanel(p, b) {
   const B = BUILDS[p.build];
   const run0 = G.run; const lvTxt = run0 && run0.lv ? `<span class="lvtag" title="경험치 ${Math.round(run0.xp || 0)}/${LV_XP[run0.lv] || '최대'}">Lv ${run0.lv}</span>` : '';
-  let h = `<section class="me"><div class="mehead"><b>${B.ico} ${esc(B.n)}</b>${lvTxt}${q('build', '빌드')}<span class="flk" data-info="flask" tabindex="0"><span class="flw">플라스크 </span><span aria-hidden="true">❤️</span><span class="sr">생명력 </span>${p.flask.life} · ${isV2(p) ? '<span aria-hidden="true">🧪</span><span class="sr">정화 </span>' : '<span aria-hidden="true">💧</span><span class="sr">마나 </span>'}${p.flask.mana} · <span aria-hidden="true">⚡</span><span class="sr">스태미나 </span>${p.flask.stam || 0} <small><span class="sr">, 최대 </span>/${p.flaskMax}</small></span>${q('flask', '플라스크')}${q('st', '스태미나')}${run0 && run0.cons && !b ? `<button class="sm consbtn" data-a="consopen" aria-label="소모품 ${run0.cons.reduce((a, c) => a + c.n, 0)}개">🎒 ${run0.cons.reduce((a, c) => a + c.n, 0)}</button>` : ''}</div>`;
+  let h = `<div class="me"><div class="mehead"><b>${B.ico} ${esc(B.n)}</b>${lvTxt}${q('build', '빌드')}<span class="flk" data-info="flask" tabindex="0"><span class="flw">플라스크 </span><span aria-hidden="true">❤️</span><span class="sr">생명력 </span>${p.flask.life} · ${isV2(p) ? '<span aria-hidden="true">🧪</span><span class="sr">정화 </span>' : '<span aria-hidden="true">💧</span><span class="sr">마나 </span>'}${p.flask.mana} · <span aria-hidden="true">⚡</span><span class="sr">스태미나 </span>${p.flask.stam || 0} <small><span class="sr">, 최대 </span>/${p.flaskMax}</small></span>${q('flask', '플라스크')}${q('st', '스태미나')}${run0 && run0.cons && !b ? `<button class="sm consbtn" data-a="consopen" aria-label="소모품 ${run0.cons.reduce((a, c) => a + c.n, 0)}개">🎒 ${run0.cons.reduce((a, c) => a + c.n, 0)}</button>` : ''}</div>`;
   h += `<div class="mbars">${mbar('hp', p.hp, p.hpMax, '생명력')}${p.mpMax > 0 ? mbar('mp', p.mp, p.mpMax, '마나') : ''}${mbar('st', p.st, p.stMax, '스태미나')}</div>${buildRes(p)}`;
   if (run0 && run0.lv && !b) { const lo = LV_XP[run0.lv - 1] || 0, hi = LV_XP[run0.lv]; h += hi ? `<div class="xpbar" role="progressbar" aria-label="경험치" aria-valuemin="0" aria-valuemax="${hi - lo}" aria-valuenow="${Math.round(run0.xp - lo)}"><i style="width:${Math.max(0, Math.min(100, (run0.xp - lo) / (hi - lo) * 100))}%"></i><span>경험치 ${Math.round(run0.xp)}/${hi} · 다음 레벨까지 ${Math.max(0, Math.ceil(hi - run0.xp))}</span></div>` : '<p class="mini">가장 높은 레벨입니다.</p>'; }
   const extra = [];
@@ -45,7 +45,7 @@ function vPlayerPanel(p, b) {
   if (extra.length) h += `<div class="mini">${extra.join(' · ')}</div>`;
   if (b) h += stsHtml(p, b);
   if (b && b.seal && b.seal.length) h += `<div class="mini sealln" data-info="seal" tabindex="0">🔏 봉인: ${b.seal.map(x => esc(x.n)).join(', ')}</div>`;
-  return h + `</section>`;
+  return h + `</div>`;
 }
 
 /* ---------- 전투 ---------- */
@@ -70,7 +70,7 @@ function dgBar(run) {
   }
   h += '</ol>';
   const bl = Object.keys(run.buffs || {}).map(k => { const S = SHRINES.find(x => x.id === k); return `<span class="chip" data-info="buff:${k}" tabindex="0">${esc(S ? S.n : (EVBUFF[k] || [k])[0])} ${run.buffs[k]}</span>`; }).join('');
-  return `<section class="card dgtop"><div class="dghead"><b>${run.ch || 1}챕터 · ${esc(floorName(run.room))}</b>${run.mode === 'hard' ? '<span class="chip hardtag">가혹</span>' : ''}${run.markCh ? `<span class="chip hardtag">표식 ${run.markPts || 0}점</span>` : ''}<span class="mini">${run.room < FLOOR_CAMP ? '상층' : run.room > FLOOR_CAMP && run.room < FLOOR_BOSS ? '하층' : ''}${run.path && PATHS[run.path] ? ' · ' + PATHS[run.path].ico + ' ' + PATHS[run.path].n : ''} · 남은 층 ${Math.max(0, FLOORS - run.room)}</span><span class="gold-n">골드 ${run.gold || 0}</span></div>${h}${bl ? `<div class="bufs">${bl}</div>` : ''}</section>`;
+  return `<div class="card dgtop"><div class="dghead"><b>${run.ch || 1}챕터 · ${esc(floorName(run.room))}</b>${run.mode === 'hard' ? '<span class="chip hardtag">가혹</span>' : ''}${run.markCh ? `<span class="chip hardtag">표식 ${run.markPts || 0}점</span>` : ''}<span class="mini">${run.room < FLOOR_CAMP ? '상층' : run.room > FLOOR_CAMP && run.room < FLOOR_BOSS ? '하층' : ''}${run.path && PATHS[run.path] ? ' · ' + PATHS[run.path].ico + ' ' + PATHS[run.path].n : ''} · 남은 층 ${Math.max(0, FLOORS - run.room)}</span><span class="gold-n">골드 ${run.gold || 0}</span></div>${h}${bl ? `<div class="bufs">${bl}</div>` : ''}</div>`;
 }
 function doorCard(r, i) {
   const T = ROOM_TYPES[r.type]; const stars = T.fight ? '★'.repeat(r.risk || 1) + '☆'.repeat(4 - (r.risk || 1)) : '';
