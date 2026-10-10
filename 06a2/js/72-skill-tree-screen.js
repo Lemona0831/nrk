@@ -101,7 +101,7 @@ function sheetParts(S) {
     title = '업데이트 내역';
     const mj = CHANGELOG.findIndex(c => c.v === '0.7.0'), cut = mj >= 0 ? mj + 1 : CHANGELOG.length;
     const folded = c => `<details class="chgarchive"><summary><span><b>${esc(c.v)} · ${esc(c.t || '업데이트')}</b><small class="chgd">${esc(c.d || '')}</small></span></summary>${chgEntry(c, false)}</details>`;
-    body = `<p class="mini">최근 변경부터 읽습니다. 이전 내역은 제목을 눌러 펼칩니다.</p>` + CHANGELOG.slice(0, cut).map((c, i) => i === 0 ? chgEntry(c, true) : folded(c)).join('') + (cut < CHANGELOG.length ? `<details class="chgdev"><summary>개발 기록과 이전 판</summary>${CHANGELOG.slice(cut).map(folded).join('')}</details>` : '');
+    body = `<p class="mini">최근 변경부터 읽습니다. 이전 내역은 제목을 눌러 펼칩니다.</p>` + CHANGELOG.slice(0, cut).map((c, i) => i === 0 ? chgEntry(c, true) : folded(c)).join('') + (cut < CHANGELOG.length ? `<details class="chgdev"><summary>이전 공개판</summary>${CHANGELOG.slice(cut).map(folded).join('')}</details>` : '');
   } else if (S.kind === 'bossinfo' && S.data.foe) {
     const F = FOE_INTRO[S.data.foe]; title = F.n + '을(를) 처음 만났습니다';
     body = `<p class="lore">${esc(F.lore)}</p>${F.see.map(t => `<p>${esc(t)}</p>`).join('')}<p class="mini">무엇을 하는지는 직접 겪어 보아야 압니다. 처음 겪은 일은 보스 도감에 적힙니다. 이 창은 한 번만 뜹니다.</p><button class="gold wide" data-a="close" data-focus>싸우러 간다</button>`;
