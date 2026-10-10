@@ -23,10 +23,10 @@ function vTreeBranch(run, br) {
   const yp = r => (TREE_TOP + r * TREE_ROW_H) / H * 100; let lines = '', nodes = '';
   const rowOpen = ri => rows[ri].some(x => run.tree.open.includes(x.id));
   rows.forEach((row, ri) => {
-    if (row.length === 2) lines += `<line class="rung${rowOpen(ri) ? ' lit' : ''}" x1="30" y1="${yp(ri)}" x2="70" y2="${yp(ri)}"/>`; // 한 줄: 두 칸 가운데 하나를 고른다
+    if (row.length === 2) lines += `<line vector-effect="non-scaling-stroke" class="rung${rowOpen(ri) ? ' lit' : ''}" x1="30" y1="${yp(ri)}" x2="70" y2="${yp(ri)}"/>`; // 한 줄: 두 칸 가운데 하나를 고른다
     if (ri > 0) { const lit = rowOpen(ri - 1) ? ' class="lit"' : ''; const up = rows[ri - 1];
-      if (row.length === 2 && up.length === 2) lines += `<line${lit} x1="30" y1="${yp(ri - 1)}" x2="30" y2="${yp(ri)}"/><line${lit} x1="70" y1="${yp(ri - 1)}" x2="70" y2="${yp(ri)}"/>`;
-      else for (const a of up) for (const c of row) lines += `<line${lit} x1="${pos[a.id].x}" y1="${yp(ri - 1)}" x2="${pos[c.id].x}" y2="${yp(ri)}"/>`; }
+      if (row.length === 2 && up.length === 2) lines += `<line vector-effect="non-scaling-stroke"${lit} x1="30" y1="${yp(ri - 1)}" x2="30" y2="${yp(ri)}"/><line vector-effect="non-scaling-stroke"${lit} x1="70" y1="${yp(ri - 1)}" x2="70" y2="${yp(ri)}"/>`;
+      else for (const a of up) for (const c of row) lines += `<line vector-effect="non-scaling-stroke"${lit} x1="${pos[a.id].x}" y1="${yp(ri - 1)}" x2="${pos[c.id].x}" y2="${yp(ri)}"/>`; }
   });
   for (const row of rows) for (const s of row) {
     const p = pos[s.id]; const vis = treeVis(run, s.id); const open = run.tree.open.includes(s.id); const eq = (run.skills || []).includes(s.id); const can = !open && !treeWhy(run, s.id);

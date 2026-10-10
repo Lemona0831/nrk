@@ -83,7 +83,7 @@ function hudEditHtml() {
   const live = !!(G.b && hudLiveSheet());
   const row = id => {
     const m = hudModDef(id); const off = L.off.includes(id);
-    const sw = m.lock ? `<span class="hudlk">끌 수 없음</span>` : `<button class="sw" role="switch" aria-checked="${!off}" data-a="hudmod" data-k="${id}" aria-label="${esc(m.n)} 보이기">${off ? '꺼짐' : '켜짐'}</button>`;
+    const sw = m.lock ? `<span class="hudlk">끌 수 없음</span>` : `<button type="button" class="sw" role="switch" aria-checked="${!off}" data-a="hudmod" data-k="${id}" aria-label="${esc(m.n)} 보이기">${off ? '꺼짐' : '켜짐'}</button>`;
     return `<li class="hrow${off ? ' hoff' : ''}" data-hid="${id}"><div class="hr1"><button class="hdrag" type="button" data-a="hudgrip" data-k="${id}" aria-label="${esc(m.n)} 옮기기. 끌거나 위 · 아래 화살표 키를 누릅니다" aria-describedby="hudkeyhelp"><span aria-hidden="true">⠿</span></button><span class="hnm"><b>${esc(m.n)}</b><small class="mini">${esc(m.d)}</small></span>${sw}</div>
 <div class="hr2"><label class="hsel">크기 <select data-a="hudsz" data-k="${id}" aria-label="${esc(m.n)} 크기">${HUD_SIZES.map(v => `<option value="${v}"${L.s[id] === v ? ' selected' : ''}>${v}%</option>`).join('')}</select></label><label class="hsel">구역 <select data-a="hudzone" data-k="${id}" aria-label="${esc(m.n)} 구역">${HUD_ZONES.map(k => `<option value="${k}"${hudZoneOf(L, id) === k ? ' selected' : ''}>${ZN[k]}</option>`).join('')}</select></label><button class="sm" data-a="hudmv" data-k="${id}" data-d="-1" aria-label="${esc(m.n)} 위로">▲ 위로</button><button class="sm" data-a="hudmv" data-k="${id}" data-d="1" aria-label="${esc(m.n)} 아래로">▼ 아래로</button></div></li>`;
   };

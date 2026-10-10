@@ -12,14 +12,14 @@ function chgEntry(c, latest, brief) {
 function curDesc(c) { const ch = c.ch || 1; return c.phase === 'wait' || c.phase === 'clearsv' ? ch + '챕터 돌파 · ' + (CHAPTERS[ch + 1] ? (ch + 1) + '챕터로 갈 준비' : (ch + 1) + '챕터 준비 중') : c.phase === 'shop' ? ch + '챕터 돌파 · 상점' : c.phase === 'settle' ? ch + '챕터 돌파 · 정산' : ch + '챕터 · ' + floorName(c.room); }
 function vTitle() {
   const d = G.data; const c = d.cur && !d.cur.endedAt && BUILDS[d.cur.build] ? d.cur : null;
-  let h = `<section class="title-scr"><div class="tlogo"><span class="ver">0.6a.2</span><p class="tlh" aria-hidden="true">나락의 유산</p><p class="lore">무너진 수도원 아래, 빛이 닿지 않는 곳까지 계단이 이어진다.</p></div><div class="tmenu">`;
+  let h = `<div class="title-scr"><div class="tlogo"><span class="ver">0.6a.2</span><p class="tlh" aria-hidden="true">나락의 유산</p><p class="lore">무너진 수도원 아래, 빛이 닿지 않는 곳까지 계단이 이어진다.</p></div><div class="tmenu">`;
   if (c) { const B = BUILDS[c.build]; h += `<div class="tcur"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(c.cname || B.n)}</b><small>${esc(B.n)} · Lv ${c.lv || 1} · ${esc(curDesc(c))}</small></div></div><button class="gold" data-a="resume" data-focus>이어하기</button><button data-a="restart">처음부터</button>`; }
   else h += `<button class="gold" data-a="newchar" data-focus>시작</button>`;
   h += `<div class="row tgoal"><button data-a="goals">📋 계정 목표</button>${markOpen() ? '<button data-a="mark">🎖️ 표식 도전</button>' : ''}</div>`;
   if (d.tutSeen || c) h += `<button class="tutbtn" data-a="tut">🎯 수련장${d.tutDone ? ' <small>수료</small>' : ''}</button>`;
   const kept = (d.kept || []).filter(k => !k.endedAt && BUILDS[k.build]);
   if (kept.length) h += `<div class="tkept"><p class="mini">기다리는 캐릭터 ${kept.length}</p>${kept.map(k => { const B = BUILDS[k.build]; return `<div class="tcur sm"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(k.cname || B.n)}</b><small>${esc(B.n)} · Lv ${k.lv || 1} · ${esc(curDesc(k))}</small></div><button class="sm" data-a="resumekept" data-k="${esc(k.id)}">이어하기</button></div>`; }).join('')}</div>`;
-  h += `</div></section><div class="tbelow">`;
+  h += `</div></div><div class="tbelow">`;
   if (G.sync) h += `<div class="banner" role="status">${esc(G.sync)}</div>`;
   if (G.conn && G.conn !== 'ok' && !G.owner) h += `<section class="card warncard"><h3>기록이 자동으로 모이지 않고 있습니다</h3><p>${esc(CONN_MSG[G.conn] || CONN_MSG.nodb)}</p><button class="gold" data-a="code">기록 보내기 코드</button></section>`;
   h += vAcct();

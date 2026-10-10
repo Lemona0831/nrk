@@ -137,7 +137,7 @@ function vEquip() {
     const u = run.eqU[sl], it = u && run.inv[u]; const on = !sel.uid && sel.slot === sl;
     h += `<button class="eqrow${on ? ' on' : ''}${it ? ' grb-' + it.g : ''}" data-a="eqsel" data-k="${sl}" aria-pressed="${on}"><span class="eqsl">${EQ_SLOT_N[sl]}</span>${it ? `<span class="eqn gr-${it.g}"><span class="eqg" aria-hidden="true">${(GRADE[it.g] || GRADE.n).n[0]}</span><span class="sr">${(GRADE[it.g] || GRADE.n).n} </span>${it.g === 'l' ? '<span aria-hidden="true">✦ </span>' : ''}${esc(ITEMS[it.tpl].n)}</span><span class="eqb">${baseText(it)}</span>` : '<span class="eqn empty">비어 있음</span>'}</button>`;
   }
-  h += `</section><section class="eqdet" aria-live="polite">`;
+  h += `</section><div class="eqdet" aria-live="polite">`;
   if (sel.uid && run.inv[sel.uid]) {
     const it = run.inv[sel.uid]; const kind = tplKind(it.tpl);
     const slots = kind === 'ring' ? ['ring1', 'ring2'] : [kind];
@@ -151,7 +151,7 @@ function vEquip() {
     const fit = run.bag.filter(x => run.inv[x] && kindOf(sel.slot) === tplKind(run.inv[x].tpl));
     h += fit.length ? `<p class="mini">가방에서 이 칸에 낄 수 있는 장비 ${fit.length}개. 아래 가방에서 고르세요.</p>` : '<p class="mini">가방에 이 칸에 낄 장비가 없습니다.</p>';
   }
-  h += `</section></div>`;
+  h += `</div></div>`;
   h += `<section class="eqbag" aria-label="가방"><h4>가방 <span class="mini">${bagUsed(run)}/${BAG_MAX}${(run.cons || []).length ? ' · 소모품 ' + run.cons.length + '칸' : ''}${bagUsed(run) >= BAG_MAX ? ' · 가득 참' : ''}</span></h4><div class="baggrid">`;
   for (let i = 0; i < BAG_MAX; i++) {
     const u = run.bag[i], it = u && run.inv[u];

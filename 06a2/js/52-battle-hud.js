@@ -81,7 +81,7 @@ function hudSet(k, v) { const c = hudCfg(); const o = {}; for (const it of HUD_I
 const hudQuiet = h => String(h || '').replace(/ tabindex="-?\d+"/g, '').replace(/ data-info="[^"]*"/g, '');
 function hudSettings() {
   const h = hudRaw(), f = hudFlags(h.p, h.o);
-  const sw = (k, on, lab) => `<button class="sw" role="switch" aria-checked="${on ? 'true' : 'false'}" data-a="hudtog" data-k="${k}" aria-label="${esc(lab)}">${on ? '켜짐' : '꺼짐'}</button>`;
+  const sw = (k, on, lab) => `<button type="button" class="sw" role="switch" aria-checked="${on ? 'true' : 'false'}" data-a="hudtog" data-k="${k}" aria-label="${esc(lab)}">${on ? '켜짐' : '꺼짐'}</button>`;
   let o = `<section class="setg" id="hudset"><h4>전투 화면 표시</h4><p class="mini">전투 화면에 무엇을 보일지 고릅니다. 묶음을 고르면 항목과 크기 · 놓는 자리가 함께 정해집니다. 처음에는 꼭 필요한 것만 보입니다. 전투 중에도 바로 바뀝니다.</p>`;
   o += `<div class="setrow hudpre" role="group" aria-label="표시 묶음">${HUD_NAMES.map(n => `<button class="sm${h.p === n ? ' gold' : ''}" data-a="hudpre" data-k="${n}" aria-pressed="${h.p === n}">${HUD_LAB[n]}</button>`).join('')}<span class="mini hudcur" role="status">${h.p === 'custom' ? '사용자 지정' : ''}</span></div>`;
   for (const [gn, ks] of HUD_GROUPS) {
