@@ -119,3 +119,7 @@
 
 /* 직업 규칙 항목 */
 .class-rules{margin:12px 0;line-height:1.65;overflow-wrap:anywhere}.class-rules-title{display:block;margin-bottom:6px;color:var(--gold)}.class-rule{padding:8px 0;border-top:1px solid var(--line)}.class-rule h4{margin:0 0 3px;font-size:1em;color:var(--gold)}.class-rule p{margin:0;font-size:calc(15px*var(--fs,1))}.class-rules .class-rule:last-child p{color:var(--muted)}
+
+.rule-math{padding:9px 11px;margin:8px 0;background:var(--bg);border:1px solid var(--line);border-radius:6px;font-variant-numeric:tabular-nums}.rule-math p{margin:3px 0;font-size:calc(14px*var(--fs,1))}.rule-details summary{cursor:pointer;color:var(--gold);padding:6px 0;min-height:32px}.rule-details p{margin:8px 0;font-size:calc(14px*var(--fs,1))}.class-rules .rule-cooldown{margin:8px 0 0}.class-rules .class-rule:last-child p{color:inherit}
+
+.cstep>.stickbar{position:static;margin-top:12px}.class-kit summary{cursor:pointer;color:var(--gold);padding:6px 0}

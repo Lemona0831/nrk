@@ -36,8 +36,8 @@ const TELE = { heavy: 1.75, boss: 3.5 }; // 적 강타 = 평소 공격 × heavy,
 const HUNT = { focusMax: 3, focusPer: 0.05, focusBig: 0.1, addMax: 2, focusHaste: 0, link: 0.3 }; // 10월 5일: 3겹 가속은 저격 혼자 도는 고리를 만들어 껐다(가속은 기동이 공급). 3겹 효과는 몸 낮추기 · 버티기를 꿰뚫기 // link: 연계(직전에 쓴 스킬과 다른 갈래의 스킬) 피해 배율 (10월 5일 만든 사람 결정: 섞어 쓸 때 제 힘을 낸다)
 const linkOn = (b, a) => !!(b && b.p.build === 'hunter' && a && a.v2 && a.s && a.s.b !== '시작' && b.p.lastBr && b.p.lastBr !== a.s.b); // 사냥꾼 연계: 시작 스킬 · 기본 공격은 연계를 만들지도 끊지도 않는다 // focusHaste: 추적이 3겹이 되는 순간 얻는 가속
 /* 숨겨진 직업 1 (10월 7일, butcher): 흡혈(출혈된 적을 근접으로 칠 때, 출혈 1마다 leech, 최대 leechMax, 한 차례 leechTurn), 갈증(잃은 생명력 10%마다 thirst, 최대 thirstMax),
-   되찾기 한도(흡혈 · 먹기는 이 전투를 시작할 때의 생명력까지, 먹기는 한 전투 eatFight까지), 받은 피해 상한 grudgeCap, 한 차례 killRecharge 다시 쓰기 krTurn [가설] */
-const BUTCH = { leech: 0.04, leechMax: 0.4, leechTurn: 0.08, thirst: 0.03, thirstMax: 0.18, eatFight: 0.4, grudgeCap: 0.3, krTurn: 2 };
+   회복은 최대 생명력까지. 먹기는 전투당 eatFight, 피 수확은 적 하나당 harvest · 전투당 harvestFight까지. 받은 피해 상한 grudgeCap, 한 차례 killRecharge 다시 쓰기 krTurn */
+const BUTCH = { leech: 0.04, leechMax: 0.4, leechTurn: 0.08, harvest: 0.03, harvestFight: 0.12, thirst: 0.03, thirstMax: 0.18, eatFight: 0.4, grudgeCap: 0.3, krTurn: 2 };
 const isBu = p => !!(p && p.build === 'butcher');
 const buThirst = p => isBu(p) && p.hpMax > 0 ? Math.min(BUTCH.thirstMax, BUTCH.thirst * Math.max(0, Math.floor((1 - p.hp / p.hpMax) * 10 + 1e-9))) : 0;
 const buEatOnly = s => !!(s && s.fx.some(e => e.k === 'drain' && e.s === 'bleed' && !e.me) && !s.fx.some(e => e.k === 'dmg')); // 피해 없이 먹는 칸 (피 들이켜기)
@@ -45,14 +45,22 @@ const buGrudgeNow = b => { const p = b.p; return b.prepTurn === b.turnIdx ? (p.g
 const buEatLeft = b => Math.max(0, b.p.hpMax * BUTCH.eatFight - (b.eatGot || 0));
 /* 도살자의 회복(흡혈 · 먹기)은 모두 여기를 지난다. 플라스크 · 소모품 · 장비 회복은 따르지 않는다 */
 function bHeal(b, x, why) {
-  const p = b.p; if (!(x > 0) || b.over) return 0; const v = x * healMul(p) * (1 + Math.min(FX_CAP, fxAdd(p, 'bHealP', b, p, why)));
-  let room = Math.max(0, Math.min(p.hpMax, p.hpFight != null ? p.hpFight : p.hpMax) - p.hp);
+  const p = b.p; if (!(x > 0) || !(p.hp > 0) || (b.over && b.over !== 'win')) return 0; const v = x * healMul(p) * (1 + Math.min(FX_CAP, fxAdd(p, 'bHealP', b, p, why)));
+  let room = Math.max(0, p.hpMax - p.hp);
   if (why === 'eat') room = Math.min(room, buEatLeft(b));
   if (why === 'leech') { if (b.leechTurn !== b.turnIdx) { b.leechTurn = b.turnIdx; b.leechGot = 0; } room = Math.min(room, Math.max(0, p.hpMax * BUTCH.leechTurn - (b.leechGot || 0))); }
+  if (why === 'harvest') room = Math.min(room, Math.max(0, p.hpMax * BUTCH.harvestFight - (b.harvestGot || 0)));
   const got = Math.max(0, Math.min(v, room)); p.hp += got;
   if (why === 'eat') b.eatGot = (b.eatGot || 0) + got; if (why === 'leech') b.leechGot = (b.leechGot || 0) + got;
+  if (why === 'harvest') b.harvestGot = (b.harvestGot || 0) + got;
   b.rec.push({ k: 'bheal', why, got: r1(got), cut: r1(v - got) });
   return got;
+}
+function buHarvest(b, e) {
+  if (!isBu(b.p) || e.bloodHarvested || e.summoned || e.pile || ['root', 'candle', 'bonewall', 'crown'].includes(e.role)) return;
+  e.bloodHarvested = 1;
+  const g = bHeal(b, b.p.hpMax * BUTCH.harvest, 'harvest');
+  if (g > 0) logp(b, 'good', '피 수확. 생명력 +' + r1(g));
 }
 /* 다음 놈(carry): 대상이 쓰러지면 남은 타격을 근접으로 닿는 적 가운데 생명력이 가장 낮은 적에게 (지키기 · 방패를 다시 본다) */
 function buCarry(b, act, from) {

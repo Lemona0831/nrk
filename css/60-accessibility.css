@@ -92,3 +92,7 @@ html.rm *,html.rm *::before{transition:none!important;scroll-behavior:auto!impor
 .awkc{background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:10px 12px;margin:8px 0}.awkh{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between}.awkc p{margin:6px 0 8px}.odds{display:flex;flex-wrap:wrap;gap:6px 14px;list-style:none;padding:0;margin:8px 0}.gres{border-top:1px dashed var(--line2);margin-top:10px;padding-top:8px}.gamble .row{flex-wrap:wrap}
 /* 시험 전투 설정: 긴 목록 위에 붙는 아래 막대는 스킬 칸 단추를 반쯤 가려 누를 자리가 24px 아래로 줄었다(WCAG 2.5.8). 이 화면의 막대는 목록 끝에 흐르게 둔다 */
 .app main>.stickbar.flow{position:static;margin:12px 0 0;padding:0;background:none;border-radius:0}
+
+html.focus :is(button,input,select,textarea,[tabindex]):focus{outline:3px solid var(--gold)!important;outline-offset:3px;box-shadow:0 0 0 2px var(--bg)}.class-rules summary:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+#setpan-access .setrow{grid-template-columns:minmax(0,1fr) auto;align-items:start;row-gap:3px;padding:8px 0}#setpan-access .setrow>label,#setpan-access .setrow>.lab{grid-column:1;grid-row:1}#setpan-access .setrow>.mini{grid-column:1;grid-row:2}#setpan-access .setrow>:last-child{grid-column:2;grid-row:1/span 2;align-self:center;max-width:140px}

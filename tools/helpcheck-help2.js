@@ -26,7 +26,7 @@ module.exports = function (api) {
   add('help', '한 차례에 3번까지입니다', '상수: MONK.ctrMax=' + E('MONK.ctrMax') + ', 소스: hurtPlayer가 ctrN < MONK.ctrMax를 본다', E => E('MONK.ctrMax') === 3 && has('(p.ctrN || 0) < MONK.ctrMax'));
   add('help', '▶ 공격 한 번이 기 1을 써서', '소스: 강화 ×1.25(수도승 ⚡ 제외), 실행: 강화 1 → ×1.25', E => has("if (p.s.empower && !(p.build === 'monk' && b.curFast)) { d *= 1.25;") && E(`(() => { const b = __mk("monk"); addS(b, b.p, "empower", 1); return outDmg(b, 100, {}) === 125; })()`));
   add('help', '힘은 강공격 붕괴 +5', '소스: 강공격 붕괴 35 + 5 × floor(힘/10), 실행: 민첩 20이면 흘리기 스태미나 −2', E => has("(isCaster(p) && !isV2(p) ? 30 : 35) + 5 * Math.floor(stat(p, 'str') / 10)") && E(`(() => { const b = __mk("warden"); const p = b.p; const c0 = dodgeCost(p); p.stat.dex = 20; return c0 - dodgeCost(p) === 2; })()`));
-  add('help', '두 상태를 지우고', '상수: ELEM.Cw=' + E('ELEM.Cw') + ' · D=' + E('ELEM.D') + ' · Bk=' + E('ELEM.Bk') + ', 소스: elemShock가 세 상수를 쓴다', E => E('ELEM.Cw') === 2 && E('ELEM.D') === 3 && E('ELEM.Bk') === 12 && src('elemShock').includes('ELEM.D') && src('elemShock').includes('ELEM.Bk') && src('elemShock').includes('ELEM.Cw'));
+  add('help', '기본 피해 = 원소 합계', '상수: ELEM.Cw=' + E('ELEM.Cw') + ' · D=' + E('ELEM.D') + ' · Bk=' + E('ELEM.Bk') + ', 소스: elemShock가 세 상수를 쓴다', E => E('ELEM.Cw') === 2 && E('ELEM.D') === 3 && E('ELEM.Bk') === 12 && src('elemShock').includes('ELEM.D') && src('elemShock').includes('ELEM.Bk') && src('elemShock').includes('ELEM.Cw'));
 
   /* ===== 쿨타임 · 스태미나 · 플라스크 · 행동 ===== */
   add('help', '한 번에 20판씩 보입니다', '상수: RC_PAGE=' + E('RC_PAGE') + '(기록 목록이 한 번에 보이는 판 수)', E => E('RC_PAGE') === 20);
@@ -105,7 +105,7 @@ module.exports = function (api) {
   add('help', '0이 되면 쓰러지고', '소스: hurtPlayer가 생명력이 0 이하이면 쓰러짐 처리', E => has('p.hp <= 0') || has('p.hp = Math.max(0, p.hp - d)'));
   add('help', '회복은 생명력 플라스크, 소모품, 샘(50%)', '소스: 샘은 최대 생명력 × 0.5, 야영지 · 정산은 p.hp = p.hpMax', E => has('const sp = 0.5 * (1 + fxVal(p, \'spring\'') && has('p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax;'));
   note('help', '1챕터를 끝까지 가면 Lv5 안팎', '측정값: 던전 테스터 216판(DGDIR=06a2 node tools/dgqa.js 6), 보스층에 닿은 74판의 레벨 4~6 평균 5.1, 완주 17판 5~6 평균 5.8. 규칙이 아닌 결과 문장이라 코드와 대조하지 않는다');
-  add('help', '스킬 포인트는 레벨만큼, 능력치는 15점에', '상수: STAT_START=15 · LV_POINTS=3, 소스: markSetup이 트리 포인트 += 레벨 − 1, markStat = LV_POINTS × (레벨 − 1)', E => E('STAT_START') === 15 && E('LV_POINTS') === 3 && has('if (run.tree) run.tree.pts += up; run.markStat = LV_POINTS * up;'));
+  add('help', '스킬 포인트는 레벨만큼, 능력치는 20점에', '상수: STAT_START=15 · LV_POINTS=3, 소스: markSetup이 트리 포인트 += 레벨 − 1, markStat = LV_POINTS × (레벨 − 1)', E => E('STAT_START') === 20 && E('LV_POINTS') === 3 && has('if (run.tree) run.tree.pts += up; run.markStat = LV_POINTS * up;'));
   /* ===== 도움말 정리(0.7.0): 묶음 · 일곱 장면 · 기본 표시 ===== */
   add('help', '일곱 장면으로 연습합니다', '데이터: TUT.length=' + E('TUT.length'), E => E('TUT.length') === 7);
   add('help', '처음에는 간단입니다', '상수: HUD_NAMES, HUD_DEFAULT=' + E('HUD_DEFAULT'), E => E('HUD_NAMES.join()') === 'simple,normal,full' && E('HUD_DEFAULT') === 'simple');

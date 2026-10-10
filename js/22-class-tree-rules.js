@@ -70,7 +70,8 @@ function treeInit(run) { const T = TREE2[run.build]; if (!T) return; run.tree = 
 function consFix(run) { if (run && !run.cons) run.cons = []; }
 function statFix(run) {
   consFix(run); if (!run || !run.stats) return;
-  if (run.stats.con == null) { run.stats.con = 0; run.stats.wil = 0; run.statPending = (run.statPending || 0) + (STAT_START - 6); if (run.p) applyStats(run.p, run.stats); }
+  if (run.stats.con == null) { run.stats.con = 0; run.stats.wil = 0; run.statPending = (run.statPending || 0) + (STAT_START - 6); run.statBase = STAT_START; if (run.p) applyStats(run.p, run.stats); }
+  if (run.statBase !== STAT_START) { const old = run.statBase == null ? 15 : run.statBase; run.statPending = (run.statPending || 0) + Math.max(0, STAT_START - old); run.statBase = STAT_START; }
   if (run.statGrowth !== LV_POINTS) { const old = run.statGrowth == null ? 2 : run.statGrowth; run.statPending = (run.statPending || 0) + Math.max(0, LV_POINTS - old) * Math.max(0, (run.lv || 1) - 1); run.statGrowth = LV_POINTS; }
 }
 function treeFix(run) {

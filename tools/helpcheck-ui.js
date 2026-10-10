@@ -285,7 +285,7 @@ module.exports = function (api) {
   A('사수의 예고에 "출혈 2"가 보이면', 'EKW.archerBleed = 2', () => E('EKW.archerBleed') === 2);
   A('막음 2가 다음 해로운 상태 두 번을 튕겨 냅니다', '정화 플라스크: 막음 2 (2 + blockAdd), 상태마다 1 소모', () => has('32-player-action.js', 'const nb = 2 + fxAdd(p, \'blockAdd\', p)') && E('KW.block') >= 2);
   A('정해진 때가 오면 효과가 나고 1 줄어듭니다', 'kwDec는 기본 1씩 줄인다', () => has('20-battle-state.js', 'x.stacks -= (n || 1)'));
-  A('시작 스킬 쿨타임은 5턴입니다', '시작 스킬 쿨타임 5턴(암살자 a_vital · a_slip)', () => E('SKILLS2.assassin.filter(s => s.start).every(s => s.cd === 5)'));
+  A('시작 스킬 쿨타임은 4~6턴입니다', '전체 직업 시작 스킬 최소 4, 최대 6', () => E('(()=>{const cds=Object.values(SKILLS2).flat().filter(s=>s.start).map(s=>s.cd);return Math.min(...cds)===4&&Math.max(...cds)===6;})()'));
   A('내 턴이 끝날 때마다 1 줄어듭니다', '수련장 스킬 장면: 쿨타임은 내 턴이 끝날 때마다 1 줄고 쓴 턴에는 줄지 않는다(도움말 쿨타임과 같은 규칙, 견습생도 같은 코드)', () => has('32-player-action.js', 'const w = (p.cd && p.cd[sid]) || 0'));
   A('연 스킬은 4칸까지 더 끼웁니다', '장착 칸 EQUIP_SLOTS2 = 4(시작 스킬은 따로)', () => E('EQUIP_SLOTS2') === 4);
   A('1챕터 보스를 이기면 더 위험하고', '가혹 모드는 1챕터 보스를 한 번 이기면 열린다(G.data.hardOpen, 66-dungeon-flow 보스 승리)', () => has('66-dungeon-flow.js', 'hardOpen') && E('MODES.hard.dmg') > 1);
@@ -353,6 +353,30 @@ module.exports = function (api) {
   A('능력치 1점 빼기', "stat+ · stat-: 한 번에 al[k]를 1씩 바꾼다", () => has('80-events.js', 'if (a === \'stat+\' && left > 0) al[k]++; if (a === \'stat-\' && al[k] > 0) al[k]--;'));
   A('전투 화면 편집 크기 50% 75% 100% 150% 200%', 'HUD_SIZES = [50, 75, 100, 150, 200], 기본 100', () => q(E('HUD_SIZES')) === '[50,75,100,150,200]' && has('56-hud-editor.js', ': 100); });'));
   A('글자 크기 90% 100% 115% 130%', 'FS_OPTS = [0.9, 1, 1.15, 1.3] (도움말의 90%부터 130%까지와 같다)', () => q(E('FS_OPTS')) === '[0.9,1,1.15,1.3]');
+
+
+  const comfort = [
+    ['선택한 적의 공격 피해 −70%', 'parryRed(mkPlayer("assassin",{}))===0.7 && dodgeCost(mkPlayer("assassin",{}))===25'],
+    ['기본 공격은 무기 피해의 55%', 'BUILDS.hunter.wpnMul===0.55'],
+    ['전투 시작 시 1', 'BUILDS.hunter.openHaste===1'],
+    ['2회 연속 행동', 'roundOrder.toString().includes("pDouble")'],
+    ['다른 갈래 스킬을 이어 쓰면 피해 +30%', 'HUNT.link===0.3'],
+    ['기본 공격 50% · 집중 주문 75%', 'BUILDS.elementalist.wpnMul===0.5 && HEAVY_V2===1.5'],
+    ['내 차례당 1회', 'BUILDS.spellblade.altWard===4 && BLOOD.perTurn===1'],
+    ['▶ 공격은 기 1을 써서 피해 +25%', 'MONK.kiCtr===1 && outDmg.toString().includes("d *= 1.25")'],
+    ['최대 5까지 계산', 'CONF.cap===5'],
+    ['기본 공격은 무기 피해의 80%', 'BUILDS.bloodmage.wpnMul===0.8'],
+    ['한 번에 최대 생명력의 25%', 'BLOOD.eatCap===0.25'],
+    ['3겹: 몸 낮추기·버티기 관통', 'HUNT.focusMax===3 && hurtEnemy.toString().includes("fullF")'],
+    ['잃은 생명력 10%마다', 'buThirst({build:"butcher",hpMax:100,hp:70})===0.09'],
+    ['가속은 라운드당 1회', 'roundOrder.toString().includes("pDouble")'],
+    ['다른 적을 치면 1겹부터', 'hurtEnemy.toString().includes("Math.min(HUNT.focusMax, pre + 1)")'],
+    ['먹기·비용 감소·전투당 1회', 'bmNoPull(SK2.v_drink)!==null'],
+    ['생명력 1 미만이면', 'bmPullCost({hpMax:100,eq:{}},2)===8'],
+    ['쿨타임은 내 차례마다 1 감소', 'chargeEv.toString().includes("p.cd[id]--")']
+  ];
+  for(const [find,expr] of comfort) api.add('ui-account',find,'직업 핵심 설명: '+expr,()=>E(expr));
+  api.add('ui-text','피 수확은 출혈 상태의 적 처치','피 수확 3%, 전투당 12%, 소환물 제외',()=>E('BUTCH.harvest===0.03 && BUTCH.harvestFight===0.12 && buHarvest.toString().includes("e.summoned")'));
 
   if (MISS.length) throw new Error('helpcheck-ui: 찾을글이 어느 문장에도 없다: ' + MISS.join(' | '));
 };

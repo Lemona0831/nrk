@@ -23,6 +23,7 @@ function curDesc(c) { const ch = c.ch || 1; return c.phase === 'wait' || c.phase
 function vTitle() {
   const d = G.data; const c = d.cur && !runOver(d.cur) && BUILDS[d.cur.build] ? d.cur : null;
   let h = `<div class="title-scr"><div class="tlogo"><span class="ver">${esc(VERSION)}</span><p class="tlh" aria-hidden="true">나락의 유산</p><p class="lore">무너진 수도원 아래, 빛이 닿지 않는 곳까지 계단이 이어진다.</p></div><div class="tmenu">`;
+  if (G.conn === 'ok' && G.acct && G.acct.anon) h += '<button data-a="login" data-k="google">구글로 로그인</button>';
   if (c) { const B = BUILDS[c.build]; h += `<div class="tcur"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(c.cname || B.n)}</b><small>${esc(B.n)} · Lv ${c.lv || 1} · ${esc(curDesc(c))}</small></div></div><button class="gold" data-a="resume" data-focus>이어하기</button><button data-a="restart">처음부터</button>`; }
   else h += `<button class="gold" data-a="newchar" data-focus>시작</button>`;
   h += `<div class="row tgoal"><button data-a="goals">📋 계정 목표</button>${markOpen() ? '<button data-a="mark">🎖️ 표식 도전</button>' : ''}</div>`;
@@ -62,7 +63,7 @@ function vCreate() {
   h += `</div>`;
   if (pk) {
     const B = BUILDS[pk];
-    h += `<div class="clsdet" style="--c:${CLS_COLOR[pk] || 'var(--gold)'}"><div class="clsdet-h"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(B.n)}</b><div class="mini">생명력 ${B.hp + SLOT_BASE.armor.v[0]}${B.v2 ? '' : ', 마나 ' + B.mp}</div></div></div>${B.intro ? `<p>${esc(B.intro)}</p>` : ''}<p class="lore">${esc(B.lore || '')}</p>${classRuleHtml(pk)}${B.v2 ? `<p class="mini">시작 스킬 · 항상 장착</p><ul class="exl">${TREE2[pk].starters.map(id => `<li><b>${esc(SK2[id].n)}</b> <span class="mini">${esc(skBody(SK2[id]))}</span></li>`).join('')}</ul><p class="mini">스킬 트리 세 갈래: ${TREE2[pk].branches.map(br => `<br><b>${esc(br)}</b> · ${esc(TREE2[pk].bd[br])}`).join('')}<br>다음 단계에서 스킬 트리를 확인합니다.</p>` : `<p class="mini"><b>직업 기술 ${esc(SIG[pk].n)}</b>: ${esc(SIG[pk].d)}</p><ul class="exl">${exclOf(pk).map(x => `<li><b>${esc(x.n)}</b> <span class="mini">${esc(x.d)}</span></li>`).join('')}</ul>`}</div>`;
+    h += `<div class="clsdet" style="--c:${CLS_COLOR[pk] || 'var(--gold)'}"><div class="clsdet-h"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(B.n)}</b><div class="mini">생명력 ${B.hp + SLOT_BASE.armor.v[0]}${B.v2 ? '' : ', 마나 ' + B.mp}</div></div></div>${B.intro ? `<p>${esc(B.intro)}</p>` : ''}<p class="lore">${esc(B.lore || '')}</p>${classRuleHtml(pk)}${B.v2 ? `<p class="mini">시작 스킬 · 항상 장착</p><ul class="exl">${TREE2[pk].starters.map(id => `<li><b>${esc(SK2[id].n)}</b> <span class="mini">${esc(skBody(SK2[id]))}</span></li>`).join('')}</ul><details class="class-kit"><summary>스킬 트리 세 갈래</summary><p class="mini"> ${TREE2[pk].branches.map(br => `<br><b>${esc(br)}</b> · ${esc(TREE2[pk].bd[br])}`).join('')}<br>다음 단계에서 스킬 트리를 확인합니다.</p></details>` : `<p class="mini"><b>직업 기술 ${esc(SIG[pk].n)}</b>: ${esc(SIG[pk].d)}</p><ul class="exl">${exclOf(pk).map(x => `<li><b>${esc(x.n)}</b> <span class="mini">${esc(x.d)}</span></li>`).join('')}</ul>`}</div>`;
   } else h += `<p class="mini clsdet-empty">직업을 하나 누르세요.</p>`;
   if (C.mark) h += markCreateCard(C); else { const hd = C.mode === 'hard' && G.data.hardOpen; h += `<section class="card cstep"><h3>모드</h3><div class="row" role="group" aria-label="모드"><button class="chip${hd ? '' : ' on'}" data-a="cmode" data-k="normal" aria-pressed="${!hd}">일반</button><button class="chip${hd ? ' on' : ''}" data-a="cmode" data-k="hard" aria-pressed="${hd}"${G.data.hardOpen ? '' : ' aria-disabled="true"'}>가혹${G.data.hardOpen ? '' : ' (잠김)'}</button></div>${G.data.hardOpen ? '' : '<p class="mini">1챕터 보스를 한 번 이기면 가혹 모드가 열립니다.</p>'}${hd ? `<ul class="mini">${MODES.hard.why.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="mini">일반: 기본 난이도로 도전합니다.</p>'}</section>`; }
   return h + `<div class="stickbar">${pk ? `<button class="gold wide" data-a="start" data-b="${pk}" data-focus>${esc(BUILDS[pk].n + '(으)로 정하기')}</button>` : ''}<div class="row"><button data-a="cback" data-k="name">이전: 이름</button><button data-a="createcancel">그만두기</button></div></div></section>`;
@@ -235,23 +236,36 @@ function vDash06() {
   return h + '</section>';
 }
 
-// 원문을 항목별로 나눠 보여 줍니다. 수치와 예외는 원문 그대로 유지합니다.
+// 핵심 규칙은 짧게, 계산식과 예외는 별도로 표시합니다.
 function classRuleHtml(build) {
-  const B = BUILDS[build];
-  const groups = {
-    hunter: [['사거리와 활', 2], ['가속 · 연속 행동', 4], ['추적 · 같은 적을 집중 공격', 2], ['연계 · 다른 갈래로 이어 쓰기', 1]],
-    elementalist: [['사거리와 마력 화살', 3], ['열충격 · 화상과 둔화', 3], ['서리 무게 · 적의 공격 약화', 2]],
-    spellblade: [['교대 · 베기와 주문', 4], ['칼에 실은 출혈과 화상', 2], ['주문의 사거리', 1]],
-    monk: [['되받기 · 방어 중 반격', 2], ['기 · 공격 강화', 1]],
-    butcher: [['흡혈 · 상처 난 적에게서 회복', 2], ['갈증 · 잃은 생명력으로 강화', 1], ['회복 한도와 출혈', 2]],
-    confessor: [['짐 · 내가 짊어진 상태', 2], ['정화 · 상태를 지워 보호 획득', 3], ['고행 · 스스로 짊어진 상태', 3]],
-    bloodmage: [['사거리와 기본 공격', 2], ['피로 당기기 · 스킬을 즉시 사용', 4], ['먹기 · 중독을 회복으로', 2]]
-  }[build];
-  if (!groups) return `<p class="crule">직업 규칙: ${esc(B.rule)}</p>`;
-  const sentences = B.rule.split('. ');
-  let offset = 0;
-  return `<div class="class-rules" aria-label="직업 규칙"><b class="class-rules-title">직업 규칙</b>${groups.concat([['스킬 재사용', 1]]).map(([title, count]) => {
-    const text = sentences.slice(offset, offset += count).join('. ');
-    return `<section class="class-rule"><h4>${esc(title)}</h4><p>${esc(text)}${offset < sentences.length ? '.' : ''}</p></section>`;
-  }).join('')}</div>`;
+  const B = BUILDS[build], pct = n => Math.round(n * 100);
+  const rows = {
+    assassin: [['중독', '독을 쌓고 격발해 큰 피해를 줍니다.'], ['흘리기', '선택한 적의 공격 피해 −70% · 스태미나 25.']],
+    warden: [['방어', `방어하면 보호막 +${WARD.guard}.`], ['보호막', `상한: 최대 생명력의 ${pct(WARD.cap)}%. 후열 공격은 피해의 절반만 흡수합니다.`]],
+    hunter: [['원거리', '후열 공격 가능 · 기본 공격은 무기 피해의 55%.'], ['가속', '전투 시작 시 1. 라운드 맨 앞에서 2회 연속 행동.'], ['추적과 연계', '같은 적을 맞힐수록 강화. 다른 갈래 스킬을 이어 쓰면 피해 +30%.']],
+    elementalist: [['원거리', '기본 공격 50% · 집중 주문 75%. 후열에 닿고 방패병을 통과합니다.'], ['열충격', '한 적에게 화상 + 둔화 → 행동 끝에 두 상태를 소모해 폭발.'], ['서리 무게', `둔화된 적의 평소 공격 피해 −${pct(ELEM.guard)}%. 강한 공격에는 적용되지 않습니다.`]],
+    spellblade: [['교대', `베기 ⚔ ↔ 주문 ✦: 보호막 +${B.altWard}. 내 차례당 1회.`], ['보호막', `상한: 최대 생명력의 ${pct(B.wardCap)}%. 방어·흘리기·플라스크는 교대를 끊지 않습니다.`], ['칼에 싣기', '실은 출혈·화상은 다음 베기에 적용. 주문은 후열 공격 가능.']],
+    monk: [['되받기', '방어·자세 중 전열의 직접 공격에 반격.'], ['기', `반격마다 기 +${MONK.kiCtr}. ▶ 공격은 기 1을 써서 피해 +25%. ⚡ 공격은 소모하지 않습니다.`]],
+    butcher: [['흡혈', '출혈된 적을 근접 공격하면 회복. 출혈을 거는 타격부터 적용.'], ['피 수확', `출혈된 적 처치·출혈 처치 시 최대 생명력 ${pct(BUTCH.harvest)}% 회복. 전투당 ${pct(BUTCH.harvestFight)}%까지.`], ['갈증', '생명력이 낮을수록 직접 피해 증가. 먹기는 출혈을 회복으로 바꿉니다.']],
+    confessor: [['짐', '중독을 제외한 해로운 상태. 최대 5까지 계산.'], ['정화', `적이 건 상태를 지우면 보호 획득. 방어로 ${CONF.guard} 지움.`], ['고행', '스스로 건 상태는 바치거나 안고 공격. 지워도 보호를 얻지 못합니다.']],
+    bloodmage: [['원거리', '후열 공격 가능 · 기본 공격은 무기 피해의 80%.'], ['피로 당기기', '생명력을 내고 대기 중인 스킬을 즉시 사용. 내 차례당 1회.'], ['먹기', '중독을 소모해 회복. 한 번에 최대 생명력의 25%까지.']]
+  }[build] || [];
+  const math = {
+    hunter: [`추적 보너스 = 공격 전 추적 × ${pct(HUNT.focusPer)}% (정예·강적·보스: × ${pct(HUNT.focusBig)}%)`, `추적 상한 ${HUNT.focusMax}겹 · 3겹: 몸 낮추기·버티기 관통`],
+    elementalist: [`원소 합계 = 화상 + (둔화 × ${ELEM.Cw}) [상한 ${ELEM.cap}]`, `기본 피해 = 원소 합계 × ${ELEM.D}`, `붕괴 = 둔화 × ${ELEM.Bk}`],
+    monk: [`반격 기본 피해 = 무기 피해 × ${pct(MONK.ctr)}% + 자세 보너스`, `반격 상한: 내 차례당 ${MONK.ctrMax}회`],
+    butcher: [`흡혈률 = 출혈 × ${pct(BUTCH.leech)}% [상한 ${pct(BUTCH.leechMax)}%]`, `흡혈 기본 회복 = 실제로 깎은 생명력 × 흡혈률`, `흡혈 상한: 내 차례당 최대 생명력의 ${pct(BUTCH.leechTurn)}%`, `갈증: 잃은 생명력 10%마다 피해 +${pct(BUTCH.thirst)}% [상한 +${pct(BUTCH.thirstMax)}%]`],
+    confessor: [`보호 = 지운 적의 상태 수 ÷ ${CONF.per} [올림 · 상한 ${CONF.protMax}]`],
+    bloodmage: [`기본 비용 = 최대 생명력 × ${pct(BLOOD.per)}% × 남은 쿨타임`, '비용 감소를 적용한 뒤 최종 값을 올림']
+  }[build] || [];
+  const extras = {
+    assassin: ['예고된 강한 공격은 흘리기의 피해 감소율을 낮춥니다.'],
+    hunter: ['가속은 라운드당 1회. 두 번째 차례에는 쿨타임이 줄지 않습니다. 방어·흘리기는 유지됩니다.', '추적은 단일 직접 공격으로만 쌓이며, 다른 적을 치면 1겹부터 시작합니다. 연계는 시작 스킬·기본 공격으로 만들거나 끊지 않습니다.'],
+    elementalist: ['공식은 기본값입니다. 지능·장비·스킬·광역 보정으로 최종 피해가 달라집니다. 열충격은 몸 낮추기를 통과하고 피해 감소는 절반만 적용됩니다.'],
+    spellblade: ['베기가 빗나가거나 첫 타격에 적이 쓰러지면 칼에 실은 상태는 남습니다.'],
+    monk: ['광역·주문·지속 피해와 방어로 줄지 않는 공격은 반격하지 못합니다. 기본 자세는 후열 적을 반격하지 못합니다.'],
+    butcher: ['회복은 최대 생명력까지 가능합니다. 회복 보정은 공식 뒤에 적용하고, 흡혈·먹기·피 수확의 상한은 보정 뒤 실제 회복량에 적용합니다. 피 수확은 적 하나당 한 번이며 소환물·구조물은 제외합니다.'],
+    bloodmage: ['먹기·비용 감소·전투당 1회 스킬은 당길 수 없습니다. 비용을 낸 뒤 생명력 1 미만이면 사용할 수 없습니다.']
+  }[build] || [];
+  return `<div class="class-rules" aria-label="직업 규칙"><b class="class-rules-title">직업 규칙</b>${rows.map(([title, text]) => `<section class="class-rule"><h4>${esc(title)}</h4><p>${esc(text)}</p></section>`).join('')}${math.length ? `<div class="rule-math" aria-label="계산식">${math.map(t => `<p>${esc(t)}</p>`).join('')}</div>` : ''}<details class="rule-details"><summary>자세한 조건과 예외</summary>${B.rule.split('. ').map(t => `<p>${esc(t)}</p>`).join('')}${extras.map(t => `<p>${esc(t)}</p>`).join('')}</details><p class="mini rule-cooldown">쿨타임은 내 차례마다 1 감소합니다. 사용한 차례는 제외합니다.</p></div>`;
 }

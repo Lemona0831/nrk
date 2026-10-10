@@ -367,7 +367,7 @@ const IFX2 = {
   bonedust: { heal: -0.05, onFlask: (b, p, k) => { if (k !== 'life') return; const ps = fPiles(b); if (!ps.length) return; for (const e of ps) fxPileKill(b, e); fxHeal(p, p.hpMax * 0.03 * ps.length); return 1; } },
   dirtflask: { blockAdd: () => -1, onFlask: (b, p, k) => { if (k !== 'mana') return; const xs = alive(b).filter(e => e.under); for (const e of xs) fxUnearth(b, e, 2); return xs.length ? 1 : 0; } },
   poisoneater: { heal: -0.1, onFlask: (b, p, k) => { if (k !== 'life') return; const n = Math.min(8, st(p, 'poison')); if (!n) return; delete p.s.poison; p.fxPe = n; logp(b, 'good', '삼킨 독 ' + n + '을(를) 칼끝에 모은다'); return 1; }, onHit: (b, p, e) => { if (!p.fxPe || !e.alive || !realFoe(e)) return; addPoison(b, e, p.fxPe, 1); p.fxPe = 0; return 1; } },
-  hungerflask: { onFlask: (b, p, k) => { if (k !== 'life' || p.hpFight == null || p.hp <= p.hpFight) return; p.hpFight = p.hp; return 1; }, bHealP: (b, p, why) => why === 'leech' ? 0.1 : 0 },
+  hungerflask: { onFlask: (b, p, k) => { if (k !== 'life' || p.hp >= p.hpMax) return; const g = Math.min(p.hpMax - p.hp, p.hpMax * 0.03 * healMul(p)); p.hp += g; return g > 0; }, bHealP: (b, p, why) => why === 'leech' ? 0.1 : 0 },
   blessbasin: { heal: -0.05, onFlask: (b, p, k) => { if (k !== 'life') return; const cur = stk(p, 'block'); p.s.block = { stacks: Math.min(KW.block, cur + 3), until: KW_FOREVER, dur: KW_FOREVER }; return 1; } },
   dantianflask: { onFlask: (b, p, k) => { if (k !== 'life') return; addS(b, p, 'empower', 2); if (st(p, 'empower') >= 3) fxHeal(p, p.hpMax * 0.05); return 1; } },
   lordgrail: { cap: { life: -1 }, onFlask: (b, p, k) => { if (k !== 'life') return; return addWard(b, p, p.hpMax * flaskHealFrac(p) * healMul(p)) > 0 ? 1 : 0; } },

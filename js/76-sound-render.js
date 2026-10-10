@@ -136,7 +136,7 @@ function scrollPad() {
 if (typeof window !== 'undefined') window.addEventListener('resize', () => { try { scrollPad(); } catch (e) { } });
 function fitDecide(fit) {
   const de = document.documentElement;
-  if (fit && (G.hudEd || hudFreeActive())) { de.classList.add('fitscroll'); if (!G.hudEd) { G.fitS = true; G.fitK = null; G.fitB = G.b; } return; } /* 자유 배치는 높이가 내용을 따라 자라므로 쪽 스크롤 */ /* 편집 중에는 모든 모듈이 보이도록 페이지가 스크롤된다 */
+  if (fit && (optGet('scroll') || G.hudEd || hudFreeActive())) { de.classList.add('fitscroll'); if (!G.hudEd) { G.fitS = true; G.fitK = null; G.fitB = G.b; } return; } /* 큰 글자·작은 화면에서는 페이지 전체를 스크롤 */
   if (!fit) { de.classList.remove('fitscroll'); G.fitS = false; G.fitK = null; G.fitB = null; G.fitNew = false; return; }
   const ah = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   const k = window.innerWidth + 'x' + Math.round(ah) + ':' + (G.data.fs || 1) + ':' + (G.data.fdet ? 1 : 0) + ':' + hudLayJson();
@@ -149,7 +149,7 @@ function fitDecide(fit) {
 }
 /* 설정: 글자 크기(--fs)와 움직임 줄이기(html.rm) */
 const FS_OPTS = [0.9, 1, 1.15, 1.3];
-function applyPrefs() { if (typeof document === 'undefined' || !G.data) return; const de = document.documentElement; const fs = FS_OPTS.includes(+G.data.fs) ? +G.data.fs : 1; de.style.setProperty('--fs', String(fs)); de.classList.toggle('rm', !!G.data.rm); for (const k of ['hc', 'sym', 'tsp', 'tap']) de.classList.toggle(k, !!optGet(k)); vibSync(); wakeSync(); }
+function applyPrefs() { if (typeof document === 'undefined' || !G.data) return; const de = document.documentElement; const fs = FS_OPTS.includes(+G.data.fs) ? +G.data.fs : 1; de.style.setProperty('--fs', String(fs)); de.classList.toggle('rm', !!G.data.rm); for (const k of ['hc', 'sym', 'tsp', 'tap', 'focus']) de.classList.toggle(k, !!optGet(k)); vibSync(); wakeSync(); }
 const smoothB = () => (G.data && G.data.rm) || (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
 /* 화면 이름: 브라우저 탭 제목과 숨은 h2 */
 const SCR_N = { guide: '처음 안내', create: '캐릭터 만들기', settle: '정산', shop: '상점', wait: '챕터 돌파', rank: '랭킹', records: '기록', goals: '계정 목표', mark: '표식 도전', admin: '관리자', tree: '스킬 트리', dead: '쓰러짐', survey: '설문', final: '마무리', scen: '고정 상황', tutoffer: '수련장 안내' };

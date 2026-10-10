@@ -6,7 +6,7 @@
 const SKILLS2 = {
   assassin: [
     // 시작 스킬: 트리 밖. 늘 끼워져 있고 장착 칸을 차지하지 않는다. 어느 갈래에도 치우치지 않는 공격 하나(주 행동), 방어 하나(빠른 행동) (10월 3일 만든 사람 결정: 독 없음)
-    { id: 'a_vital', b: '시작', tier: '시작', start: 1, n: '급소 찌르기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 16 }, { k: 'brk', n: 23 }] },
+    { id: 'a_vital', b: '시작', tier: '시작', start: 1, n: '급소 찌르기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 16 }, { k: 'brk', n: 23 }] },
     { id: 'a_slip', b: '시작', tier: '시작', start: 1, n: '몸 빼기', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'st', s: 'protect', n: 4 }, { k: 'stam', n: 44 }] },
     // 독사: 작은 독을 자주, 넓게 걸고 키운다. 무리·장기전에 강하고 후열에 약하다
     { id: 'a_fang', row: 1, b: '독사', tier: '하급', n: '독니', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 1 }, { k: 'poison', n: 6 }] },
@@ -93,7 +93,7 @@ const SKILLS2 = {
   ],
   warden: [
     // 시작 스킬: 트리 밖. 어느 갈래에도 치우치지 않는 공격 하나(주 행동), 방어 하나(빠른 행동). 보호막은 쓰지 않는다 (10월 3일 초안)
-    { id: 'w_bash', b: '시작', tier: '시작', start: 1, n: '방패 치기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 36 }] },
+    { id: 'w_bash', b: '시작', tier: '시작', start: 1, n: '방패 치기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 36 }] },
     { id: 'w_brace', b: '시작', tier: '시작', start: 1, n: '굳히기', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'st', s: 'protect', n: 4 }, { k: 'stam', n: 44 }] },
     // 성벽: 막으며 보호막을 쌓고, 쌓인 보호막을 소모해 공격합니다. 왼쪽 기둥은 버티기(보호막 · 가시 · 보호막 비례 피해), 오른쪽은 태우기(보호막을 모아 태워 친다). 장기전 · 폭발에 강하고 지원에 약하다
     { id: 'w_raise', row: 1, b: '성벽', tier: '하급', n: '방패 세우기', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 22 }] },
@@ -182,8 +182,8 @@ const SKILLS2 = {
   ],
   hunter: [
     // 시작 스킬: 트리 밖. 추적을 쌓는 사격 하나(주 행동), 물러서며 가속을 얻는 사격 하나(빠른 행동) (10월 5일 초안)
-    { id: 'h_aim', b: '시작', tier: '시작', start: 1, n: '겨눠 쏘기', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 13 }, { k: 'focusAdd', n: 1 }] },
-    { id: 'h_step', b: '시작', tier: '시작', start: 1, n: '물러서며 쏘기', tgt: 'ranged', time: 'fast', cd: 7, fx: [{ k: 'dmg', n: 4 }, { k: 'evade', n: 1 }] }, // 10월 5일: 가속이 연속 행동이 되어 시작 스킬은 가속 대신 몸 빼기
+    { id: 'h_aim', b: '시작', tier: '시작', start: 1, n: '겨눠 쏘기', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'focusAdd', n: 1 }] },
+    { id: 'h_step', b: '시작', tier: '시작', start: 1, n: '물러서며 쏘기', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 4 }, { k: 'evade', n: 1 }] }, // 10월 5일: 가속이 연속 행동이 되어 시작 스킬은 가속 대신 몸 빼기
     // 10월 5일 만든 사람 결정: 가속(사냥꾼 전용) = 라운드 맨 앞에서 두 번 연달아. 기동이 가속을 만들고, 저격 · 연사는 가속에서 세지거나(하급 hastex) 가속을 써서 큰 한 방(중급 hasteSpend). 한 갈래만 몰아 찍으면 오히려 약하게(작은 육각형)
     // 저격: 한 적에게 추적과 취약을 쌓고 큰 한 발로 끝낸다. 왼쪽 기둥은 추적(쌓기 · 터뜨리기), 오른쪽은 취약과 무거운 한 발. 거구에 강하고 무리에 약하다
     { id: 'h_mark', row: 1, b: '저격', tier: '하급', n: '조준 사격', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 14 }, { k: 'focusx', per: 0.1 }] },
@@ -273,8 +273,8 @@ const SKILLS2 = {
   /* 숨겨진 직업 1 (10월 7일, key butcher). 새 효과 키 grudge · carry, 넓힌 인자(st/exploit/grow/drain/spread s: 'bleed', exploit · drain me, lowx me, hasten · quick · meSt on: 'kill', thorn · onParry bleed)는 index.html runSkill2, 점수는 skillkit.js SKK.butch */
   butcher: [
     // 시작 스킬 (트리 밖, 늘 끼움): 출혈을 거는 공격 하나(주 행동), 피해 없이 먹는 방어 하나(빠른 행동)
-    { id: 'b_hook', b: '시작', tier: '시작', start: 1, n: '갈고리 베기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'bleed', n: 3 }] },
-    { id: 'b_lap', b: '시작', tier: '시작', start: 1, n: '피 들이켜기', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'drain', s: 'bleed', eat: 1, max: 5, per: 4 }, { k: 'stam', n: 39 }] },
+    { id: 'b_hook', b: '시작', tier: '시작', start: 1, n: '갈고리 베기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'bleed', n: 3 }] },
+    { id: 'b_lap', b: '시작', tier: '시작', start: 1, n: '피 들이켜기', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'drain', s: 'bleed', eat: 1, max: 5, per: 4 }, { k: 'stam', n: 39 }] },
     // 도륙: 한 적에게 출혈을 깊게 새기고 먹는다. 왼쪽 기둥은 새기기 · 이용(걸기, 출혈 비례, 키우기, 붕괴), 오른쪽 기둥은 먹기(먹는 양 · 바꾸는 것이 줄마다 다르다)
     { id: 'b_gash', row: 1, b: '도륙', tier: '하급', n: '살 가르기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'bleed', n: 5 }] },
     { id: 'b_bite', row: 1, b: '도륙', tier: '하급', n: '물어뜯기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'drain', s: 'bleed', eat: 1, per: 3 }, { k: 'st', s: 'bleed', n: 3 }] },
@@ -365,7 +365,7 @@ const SKILLS2 = {
   elementalist: [
     // 시작 스킬: 불 하나(주 행동), 얼음 하나(빠른 행동). 어느 갈래 하나만 골라도 둘로 열충격이 돈다
     { id: 'e_ember', b: '시작', tier: '시작', start: 1, n: '불씨 화살', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'st', s: 'ignite', n: 3 }] },
-    { id: 'e_touch', b: '시작', tier: '시작', start: 1, n: '서리 손길', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'chill', n: 2 }, { k: 'stam', n: 24 }] },
+    { id: 'e_touch', b: '시작', tier: '시작', start: 1, n: '서리 손길', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'chill', n: 2 }, { k: 'stam', n: 24 }] },
     // 불꽃: 왼쪽 불씨(쌓기 · 연타 · 남기기), 오른쪽 큰 불(큰 한 방 · 불태우기 · 마무리). 큰 적에 강하고 무리에 약하다
     { id: 'e_kindle', row: 1, b: '불꽃', tier: '하급', n: '불붙이기', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'ignite', n: 5 }] },
     { id: 'e_firebolt', row: 1, b: '불꽃', tier: '하급', n: '화염탄', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 29 }] },
@@ -453,7 +453,7 @@ const SKILLS2 = {
        새 효과: imbue(칼에 싣기) · edgeX(칼 ×) · kwx(쓰기 직전 그 상태였던 적에게 ×) · alt(교대 보상, run 2) · killSpread(쓰러뜨려 출혈 퍼뜨리기), exploit의 s · take, hasten on 'alt' · 'kill' */
     // 시작
     { id: 'sb_edge', b: '시작', tier: '시작', start: 1, n: '마검 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 29 }] },
-    { id: 'sb_aegis', b: '시작', tier: '시작', start: 1, n: '주문 방패', kind: 'spell', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 7 }, { k: 'st', s: 'protect', n: 2 }, { k: 'stam', n: 27 }] },
+    { id: 'sb_aegis', b: '시작', tier: '시작', start: 1, n: '주문 방패', kind: 'spell', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'ward', n: 7 }, { k: 'st', s: 'protect', n: 2 }, { k: 'stam', n: 27 }] },
     // 혈인
     { id: 'sb_bleedcut', row: 1, b: '혈인', tier: '하급', n: '혈흔 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 4 }] },
     { id: 'sb_sweepcut', row: 1, b: '혈인', tier: '하급', n: '가로 베기', kind: 'cut', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'bleed', n: 2 }] },
@@ -540,7 +540,7 @@ const SKILLS2 = {
     // 수도승 (10월 7일 구현, docs/직업/수도승.md): 시작 스킬 둘 + 철권 · 부동 · 혈도 60칸. 새 효과 stance · kiBurst · kiPer · kiGrow · sealx, meSt if: chill, hasten on: ctr (index.html runSkill2 · monkCounter)
     // 시작 스킬: 트리 밖. 기의 첫 출구가 되는 공격 하나(주 행동), 빠른 자세 하나. "⚡로 자세를 잡고, ▶로 공격"을 Lv1부터 가르친다
     { id: 'm_palm', b: '시작', tier: '시작', start: 1, n: '정권 지르기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 26 }, { k: 'kiBurst', per: 3, max: 3 }] },
-    { id: 'm_brace', b: '시작', tier: '시작', start: 1, n: '받아칠 자세', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'stance', dmg: 6 }, { k: 'stam', n: 31 }] },
+    { id: 'm_brace', b: '시작', tier: '시작', start: 1, n: '받아칠 자세', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'stance', dmg: 6 }, { k: 'stam', n: 31 }] },
 
     // 철권: 빠른 연타로 기를 쌓고, 모은 기를 한 주먹에 몰아친다. 왼쪽 기둥은 연타(⚡ 연타 · 기 하나로 모든 타격이 세지는 ▶ 연타), 오른쪽은 기공(모으기 · 키우기 · 터뜨리기). 거구에 강하고 무리에 약하다
     { id: 'm_jab', row: 1, b: '철권', tier: '하급', n: '짧은 지르기', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 17 }] },
@@ -634,7 +634,7 @@ const SKILLS2 = {
     /* 숨겨진 직업 2 (10월 7일, UNLOCK.confessor). 설계 · 까닭은 비공개 문서. 새 효과: cleanse(정화 · 사함 offer · after) · transfer(옮기기) · perDmg(of: prot · burden · clean · weak · bleed · tbad) · dispel(강화 벗기기), meSt의 해로운 상태는 행동 뒤 고행(p.selfN), hasten on 'clean' */
     // 시작
     { id: 'c_mace', b: '시작', tier: '시작', start: 1, n: '고해의 철퇴', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 26 }] },
-    { id: 'c_confess', b: '시작', tier: '시작', start: 1, n: '고해', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'cleanse', n: 3 }, { k: 'stam', n: 57 }] },
+    { id: 'c_confess', b: '시작', tier: '시작', start: 1, n: '고해', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'cleanse', n: 3 }, { k: 'stam', n: 57 }] },
     // 속죄 (왼쪽 정결 · 오른쪽 용서)
     { id: 'c_wash', row: 1, b: '속죄', tier: '하급', n: '씻어 내는 일격', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'cleanse', n: 2 }, { k: 'dmg', n: 23 }] },
     { id: 'c_holywater', row: 1, b: '속죄', tier: '하급', n: '성수 뿌리기', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'cleanse', n: 1, heal: 3 }, { k: 'dmg', n: 24 }] },
@@ -722,8 +722,8 @@ const SKILLS2 = {
   ],
   /* 숨겨진 직업 3 (10월 7일, UNLOCK.bloodmage). 설계 · 까닭은 비공개 문서. 엔진 값은 index.html BLOOD */
   bloodmage: [
-    { id: 'v_taint', b: '시작', tier: '시작', start: 1, n: '오염된 피', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 9 }, { k: 'poison', n: 3 }] },
-    { id: 'v_drink', b: '시작', tier: '시작', start: 1, n: '독 마시기', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'drain', eat: 1, per: 9 }, { k: 'meSt', s: 'protect', n: 2 }, { k: 'payCut', mul: 0.5, n: 1 }] },
+    { id: 'v_taint', b: '시작', tier: '시작', start: 1, n: '오염된 피', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'poison', n: 3 }] },
+    { id: 'v_drink', b: '시작', tier: '시작', start: 1, n: '독 마시기', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'drain', eat: 1, per: 9 }, { k: 'meSt', s: 'protect', n: 2 }, { k: 'payCut', mul: 0.5, n: 1 }] },
     // 역병: 왼쪽 안개(넓게 걸기, 줄마다 덧붙임이 다르다) · 오른쪽 옮김(한 적의 독을 무리로, 쓰러뜨리면 번짐, 표식). 무리에 강하고 거구에 약하다
     { id: 'v_fog', row: 1, b: '역병', tier: '하급', n: '독 안개', tgt: 'all', time: 'normal', cd: 6, fx: [{ k: 'poison', n: 3 }] },
     { id: 'v_spill', row: 1, b: '역병', tier: '하급', n: '번지는 피', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 7 }, { k: 'spread', per: 0.5 }] },

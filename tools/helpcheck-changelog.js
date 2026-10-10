@@ -29,7 +29,7 @@ module.exports = function (api) {
   note(S, '만들 때 15점을 나누고 레벨마다 2점', '0.7.0 출시 이력. 0.7.0-5부터 능력치 지급량 3점이며 현재 도움말과 성장 시험에서 대조');
   add(S, '포인트는 만들 때 1점이고', 'TREE2 pts=1, 레벨마다 +1', E => E('Object.values(TREE2).every(T => T.pts === 1)') && E(`(() => { const run = { build: "assassin", lv: 10, tree: { pts: 0, open: [], spent: {} } }; treeFix(run); return run.tree.pts; })()`) === 0 && E(`(() => { const run = { build: "assassin", lv: 10, tree: { pts: 30, open: [], spent: {} } }; treeFix(run); return run.tree.pts; })()`) === 10);
   add(S, '순서 줄에서 차례를 미리 봅니다', '소스: 순서 줄 vOrder', E => E('typeof vOrder') === 'function');
-  add(S, '능력치는 힘, 민첩, 지능, 체력, 의지 다섯입니다', '상수: STAT_KEYS=' + E('STAT_KEYS.join()') + ', STAT_START=' + E('STAT_START') + ', LV_POINTS=' + E('LV_POINTS'), E => E('STAT_KEYS.join()') === 'str,dex,int,con,wil' && E('STAT_START') === 15 && E('LV_POINTS') === 3);
+  add(S, '능력치는 힘, 민첩, 지능, 체력, 의지 다섯입니다', '상수: STAT_KEYS=' + E('STAT_KEYS.join()') + ', STAT_START=' + E('STAT_START') + ', LV_POINTS=' + E('LV_POINTS'), E => E('STAT_KEYS.join()') === 'str,dex,int,con,wil' && E('STAT_START') === 20 && E('LV_POINTS') === 3);
   add(S, '2챕터 장비 203종과 3챕터 장비 200종', '데이터: poolOf(2).length=' + E('poolOf(2).length') + ', poolOf(3).length=' + E('poolOf(3).length'), E => E('poolOf(2).length') === 203 && E('poolOf(3).length') === 200);
   add(S, '영웅과 전설 등급은 2챕터부터', '데이터: DROP_G에 1챕터 칸이 없고 2챕터 영웅 · 전설 확률 > 0', E => E('DROP_G[1]') === undefined && E('DROP_G[2].room.h') > 0 && E('DROP_G[2].room.l') > 0);
   add(S, '2챕터부터 상점의 봉인된 꾸러미', '상수: GAMBLE.from · FATE.from · AWK.campFrom = 2', E => E('GAMBLE.from') === 2 && E('FATE.from') === 2 && E('AWK.campFrom') === 2);

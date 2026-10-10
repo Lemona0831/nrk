@@ -118,6 +118,7 @@ async function initSite(cfg) {
     let { data: { session } } = await sb.auth.getSession();
     if (!session) { const r = await sb.auth.signInAnonymously(); if (r.error) throw r.error; session = r.data.session; }
     G.sb = sb; G.uid = session.user.id; G.db = sbDb(sb, G.uid); G.conn = 'ok';
+    accountLocal(G.uid);
     await readAcct(session.user);
     if (G.data.adminPass) { const { data: ok } = await sb.rpc('admin_check', { pass: G.data.adminPass }); if (ok) { G.owner = true; G.adminPass = G.data.adminPass; } }
   } catch (e) { G.conn = 'sitefail'; G.siteErr = (e && e.message) || String(e); }
@@ -130,12 +131,27 @@ async function initSite(cfg) {
    그 구글 계정이 이미 다른 기기의 계정에 붙어 있으면, 그 계정으로 바꿔 들어갈지 묻는다. */
 const PROVIDER_N = { google: '구글' };
 const AUTH_BACK = () => location.href.split('#')[0].split('?')[0];
+// 계정을 바꿔도 다른 사람의 기록을 현재 계정으로 보내지 않습니다.
+function accountLocal(uid) {
+  const old = G.data.accountId;
+  let archived = null;
+  try { const raw = localStorage.getItem(SKEY + ':account:' + uid); if (raw) archived = JSON.parse(raw); } catch (e) { }
+  if (old && old !== uid) {
+    try { localStorage.setItem(SKEY + ':account:' + old, JSON.stringify(G.data)); } catch (e) { }
+    const prefs = {}; for (const k of ['audio','opt','fs','rm','infoOn','numKeys','pace','hud']) if (G.data[k] != null) prefs[k] = G.data[k];
+    G.data = archived || Object.assign(blankData(), prefs);
+    G.run = null; G.b = null; G.sheet = null; G.creating = false; if (G.scr !== 'admin') G.scr = 'title';
+    curSweep(); reviveLocal();
+  } else if (!old && archived) { G.data = archived; curSweep(); reviveLocal(); }
+  G.data.accountId = uid; saveLocal();
+}
 async function readAcct(user) {
   const ids = (user.identities || []).map(x => x.provider).filter(p => PROVIDER_N[p]);
   const anon = user.is_anonymous !== false && !ids.length;
   G.acct = { anon, provider: anon ? '' : ids[0] || (user.app_metadata && user.app_metadata.provider) || '' };
   const back = new URLSearchParams(location.hash.slice(1) + '&' + location.search.slice(1));
   const tried = sessionStorage.getItem('nrkLogin'); sessionStorage.removeItem('nrkLogin');
+  const loginName = sessionStorage.getItem('nrkLoginName'); sessionStorage.removeItem('nrkLoginName');
   if (back.get('error_code') || back.get('error')) {
     const code = back.get('error_code') || back.get('error');
     if (code === 'identity_already_exists' && tried) G.acct.conflict = tried;
@@ -147,21 +163,32 @@ async function readAcct(user) {
   let saved = '';
   try { const cur = await G.db.doc('playtest/' + G.uid).get(); if (cur.exists) { const cd = cur.data() || {}; saved = cd.name || ''; if (cd.unl62) { const U = unlData(); for (const [k, v] of Object.entries(cd.unl62.c || {})) U.c[k] = Math.max(U.c[k] || 0, v || 0); for (const [k, v] of Object.entries(cd.unl62.open || {})) if (v && !U.open[k]) U.open[k] = v; saveLocal(); } if (cd.goals62) goalsMerge(cd.goals62); } } catch (e) { } // 해금 · 목표는 기기와 계정 가운데 큰 값(합집합)을 남긴다
   const md = user.user_metadata || {};
-  const nick = saved || G.data.name || md.name || md.full_name || md.nickname || md.preferred_username || md.user_name || '';
+  const nick = saved || loginName || G.data.name || md.name || md.full_name || md.nickname || md.preferred_username || md.user_name || '';
   if (nick && nick !== G.data.name) { G.data.name = String(nick).trim().slice(0, 16); saveLocal(); }
   if (tried || !saved) pushName();
 }
 async function socialLogin(provider, switchAcct) {
   if (!G.sb || !PROVIDER_N[provider]) return;
   sessionStorage.setItem('nrkLogin', provider);
+  sessionStorage.setItem('nrkLoginName', G.data.name || '');
   const opts = { provider, options: { redirectTo: AUTH_BACK() } };
-  const r = G.acct && G.acct.anon && !switchAcct ? await G.sb.auth.linkIdentity(opts) : await G.sb.auth.signInWithOAuth(opts);
-  if (r && r.error) { sessionStorage.removeItem('nrkLogin'); G.acct.err = /manual linking/i.test(r.error.message || '') ? '사이트 설정에서 계정 연결이 아직 켜지지 않았습니다. 만든 사람에게 알려 주세요.' : '로그인을 시작하지 못했습니다(' + (r.error.message || '오류') + ').'; render(); }
+  try {
+    const hasGuestRecords = G.data.cur || (G.data.runs || []).length || Object.keys(G.data.scen || {}).length;
+    const r = G.acct && G.acct.anon && !switchAcct && hasGuestRecords ? await G.sb.auth.linkIdentity(opts) : await G.sb.auth.signInWithOAuth(opts);
+    if (r && r.error) {
+      sessionStorage.removeItem('nrkLogin');
+      if (/manual linking|identity_already_exists/i.test(r.error.message || '') || r.error.code === 'identity_already_exists') { G.acct.conflict = provider; G.acct.err = '이 기기의 손님 기록을 계정에 바로 연결할 수 없습니다. 아래 버튼으로 구글 계정에 로그인할 수 있습니다.'; }
+      else G.acct.err = '로그인을 시작하지 못했습니다(' + (r.error.message || '오류') + ').';
+      render();
+    }
+  } catch (e) { sessionStorage.removeItem('nrkLogin'); G.acct.err = '로그인 연결에 실패했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.'; render(); }
 }
 async function socialLogout() {
   if (!G.sb) return;
-  await G.sb.auth.signOut();
-  G.data.name = ''; saveLocal();
+  const r = await G.sb.auth.signOut(); if (r && r.error) { toast('로그아웃하지 못했습니다. 다시 시도해 주세요.'); return; }
+  if (G.uid) { try { localStorage.setItem(SKEY + ':account:' + G.uid, JSON.stringify(G.data)); } catch (e) { } }
+  const prefs = {}; for (const k of ['audio','opt','fs','rm','infoOn','numKeys','pace','hud']) if (G.data[k] != null) prefs[k] = G.data[k];
+  G.data = Object.assign(blankData(), prefs); saveLocal();
   location.replace(AUTH_BACK());
 }
 /* 상단 버튼: 로그인 전에는 "로그인", 로그인 뒤에는 "로그아웃"(닉네임은 설명 창에). 판 도중에는 상단이 길어지지 않게 숨긴다 */
@@ -172,18 +199,18 @@ function vAcctBtn() {
 }
 /* 첫 화면 카드: 오류나 "이미 쓰는 계정" 선택처럼 알릴 것이 있을 때만 */
 function vAcct() {
-  if (!G.site || G.conn !== 'ok' || !G.acct || !(G.acct.err || (G.acct.anon && G.acct.conflict))) return '';
+  if (!G.site || G.conn !== 'ok' || !G.acct) return '';
   const A = G.acct; let h = '<section class="card"><h3>로그인</h3>';
   if (A.err) h += `<p class="mini" role="alert">${esc(A.err)}</p>`;
   if (!A.anon) {
-    h += `<p class="mini">${esc(PROVIDER_N[A.provider] || A.provider)} 계정으로 로그인했습니다. 닉네임은 ${esc(G.data.name || '아직 없음')}입니다. 기록판에서 바꿉니다.</p><button class="sm" data-a="logout">로그아웃</button>`;
+    h += `<p role="status"><b>${esc(G.data.name || '이름을 정해 주세요')}</b> · ${esc(PROVIDER_N[A.provider] || A.provider)} 로그인</p><p class="mini">같은 구글 계정으로 로그인하면 다른 기기에서도 기록을 이어갑니다.</p><button class="sm" data-a="logout">로그아웃</button>`;
   } else if (A.conflict) {
     const pn = PROVIDER_N[A.conflict];
-    h += `<p class="mini">이 ${esc(pn)} 계정은 다른 기기에서 이미 쓰고 있습니다. 그 계정으로 들어가면 앞으로 하는 판은 그 계정에 쌓입니다. 이 기기에서 지금까지 한 판은 따로 남습니다.</p><div class="row"><button class="gold" data-a="loginswitch" data-k="${esc(A.conflict)}">${esc(pn)} 계정으로 들어가기</button><button data-a="loginno">이대로 두기</button></div>`;
+    h += `<p class="mini">${esc(pn)} 계정으로 로그인합니다. 손님 기록은 이 기기에 따로 보관합니다. 필요한 기록은 로그인 전에 기록 파일로 받아 두세요.</p><div class="row"><button class="gold" data-a="loginswitch" data-k="${esc(A.conflict)}">${esc(pn)} 계정으로 로그인</button><button data-a="dl">손님 기록 파일 받기</button><button data-a="loginno">손님으로 계속</button></div>`;
   } else {
-    h += `<p class="mini">로그인하지 않아도 플레이는 됩니다. 로그인하면 닉네임이 계정에 고정되고, 만든 사람이 누구의 기록인지 바로 압니다. 이 기기에 쌓인 기록도 그 계정으로 이어집니다.</p><div class="row"><button data-a="login" data-k="google">구글로 로그인</button></div>`;
+    h += `<p>구글 계정으로 로그인해 플레이어 이름과 기록을 연결하세요.</p><p class="mini">현재는 손님으로 접속했습니다. 먼저 플레이어 이름을 정하면 관리자도 기록을 구분할 수 있습니다.</p><div class="row"><button class="gold" data-a="login" data-k="google">구글로 로그인</button></div>`;
   }
-  return h + '</section>';
+  return h + `<div class="setg"><label for="pname">플레이어 이름</label><div class="row nowrap"><input id="pname" maxlength="16" autocomplete="nickname" placeholder="관리자가 알아볼 이름" value="${esc(G.data.name || '')}"><button class="sm" data-a="namesave">저장</button></div><p class="mini">모든 캐릭터에 함께 표시합니다. 플레이어 ID: ${esc((G.uid || '').slice(0, 8))}</p></div></section>`;
 }
 async function initCaps() {
   { const cfg = siteCfg(); if (cfg && !(window.claude && window.claude.use)) { await initSite(cfg); return; } }

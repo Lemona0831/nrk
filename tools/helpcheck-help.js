@@ -28,14 +28,14 @@ module.exports = function (api) {
   add('help', '추적: 같은 적을', 'HUNT.focusMax=3 · focusPer 5% · focusBig 10%', E => E('HUNT.focusMax') === 3 && pct(E('HUNT.focusPer')) === 5 && pct(E('HUNT.focusBig')) === 10);
   add('help', '스킬 한 번은 연타라도', 'HUNT.addMax=' + E('HUNT.addMax'), E => E('HUNT.addMax') === 2 && E('HUNT.focusMax') === 3);
   add('help', '대신 피해는 무기 피해의', 'BUILDS.elementalist.wpnMul=' + E('BUILDS.elementalist.wpnMul'), E => pct(E('BUILDS.elementalist.wpnMul')) === 50);
-  add('help', '두 상태를 지우고', 'ELEM.Cw · D · Bk (문장은 상수로 만든다)', E => E('ELEM.Cw') === 2 && E('ELEM.D') === 3 && E('ELEM.Bk') === 12 && src('elemShock').includes('ELEM.D') && src('elemShock').includes('ELEM.Bk') && src('elemShock').includes('ELEM.Cw'));
+  add('help', '기본 피해 = 원소 합계', 'ELEM.Cw · D · Bk (문장은 상수로 만든다)', E => E('ELEM.Cw') === 2 && E('ELEM.D') === 3 && E('ELEM.Bk') === 12 && src('elemShock').includes('ELEM.D') && src('elemShock').includes('ELEM.Bk') && src('elemShock').includes('ELEM.Cw'));
   add('help', '서리 무게', 'ELEM.guard=' + E('ELEM.guard'), E => pct(E('ELEM.guard')) === 30 && src('hurtPlayer').includes('ELEM.guard'));
   add('help', '교대한 행동 뒤 보호막', 'BUILDS.spellblade.altWard=4, wardCap=0.15', E => E('BUILDS.spellblade.altWard') === 4 && pct(E('BUILDS.spellblade.wardCap')) === 15 && E(`(() => { const b = __mk("spellblade", 5); return Math.abs(wardMax(b.p) - b.p.hpMax * 0.15) < 1; })()`));
   add('help', '피해는 무기 피해의 80%', 'MONK.ctr=' + E('MONK.ctr') + ', ctrBrk=' + E('MONK.ctrBrk') + ', ctrBig=' + E('MONK.ctrBig') + ', ctrMax=' + E('MONK.ctrMax'), E => pct(E('MONK.ctr')) === 80 && E('MONK.ctrBrk') === 10 && E('MONK.ctrBig') === 25 && E('MONK.ctrMax') === 3);
   add('help', '되받을 때마다 1씩 쌓입니다', 'MONK.kiCtr=1, KW.empower=5 (기 = 강화), 강화 ×1.25(outDmg)', E => E('MONK.kiCtr') === 1 && E('KW.empower') === 5 && src('outDmg').includes('d *= 1.25'));
 
   /* ===== 능력치 ===== */
-  add('help', '캐릭터 생성 시 15점, 레벨마다 3점', 'STAT_START=' + E('STAT_START') + ', LV_POINTS=' + E('LV_POINTS') + ', STAT_KEYS 다섯', E => E('STAT_START') === 15 && E('LV_POINTS') === 3 && E('STAT_KEYS.length') === 5);
+  add('help', '캐릭터 생성 시 20점, 레벨마다 3점', 'STAT_START=' + E('STAT_START') + ', LV_POINTS=' + E('LV_POINTS') + ', STAT_KEYS 다섯', E => E('STAT_START') === 20 && E('LV_POINTS') === 3 && E('STAT_KEYS.length') === 5);
   add('help', '힘은 1점마다 생명력', 'calcHpMax 힘 +1 · 체력 +3, 무기 피해 +1%(outDmg), 붕괴 +1%(addBreak)', E => E(`(() => { const b = __mk("warden", 5); const p = b.p, h0 = calcHpMax(p); p.stat.str = 10; const h1 = calcHpMax(p); p.stat.str = 0; p.stat.con = 10; const h2 = calcHpMax(p); return h1 - h0 === 10 && h2 - h0 === 30; })()`) && src('outDmg').includes("0.01 * stat(p, 'str')") && src('addBreak').includes("0.01 * stat(b.p, 'str')"));
   add('help', '민첩은 1점마다 스태미나', 'calcStMax +1, parryRed +0.005, 속도 +0.005', E => E(`(() => { const b = __mk("warden", 5); const p = b.p, s0 = calcStMax(p), r0 = parryRed(p); p.stat.dex = 10; return calcStMax(p) - s0 === 10 && Math.abs(parryRed(p) - r0 - 0.05) < 1e-9; })()`) && src('pSpeed').includes("0.005 * stat(p, 'dex')"));
   add('help', '지능은 1점마다', 'dotMul = 1 + 0.02 × 지능, 터뜨리는 피해(poisonTotal 쪽)도 dotMul', E => E(`(() => { const b = __mk("assassin", 5); b.p.stat.int = 10; return Math.abs(dotMul(b.p) - 1.2) < 1e-9; })()`));
@@ -57,7 +57,7 @@ module.exports = function (api) {
   add('help', '절반 이상을 연 갈래', 'goalBranch: 연 칸이 가장 많은 갈래이고 절반 이상', E => /\/\s*2|0\.5|>=\s*base|\* 2/.test(E('goalBranch.toString()')));
 
   /* ===== 쿨타임 · 스태미나 · 플라스크 · 행동 ===== */
-  add('help', '(예: 쿨타임 5턴)', '시작 스킬 쿨타임 5턴(암살자 독 찌르기)', E => E('SK2.a_vital.cd') === 5);
+  add('help', '(예: 쿨타임 4턴)', '시작 스킬 쿨타임 5턴(암살자 독 찌르기)', E => E('SK2.a_vital.cd') === 4);
   add('help', '스태미나는 강공격(40)', 'heavyCost=40, guardCost=20, dodgeCost=30(암살자 25)', E => E(`(() => { const b = __mk("warden"); const p = b.p; return heavyCost(p) === 40 && guardCost(p) === 20 && dodgeCost(p) === 30; })()`));
   add('help', '라운드가 끝날 때마다 10씩 차고', 'ST_REGEN=' + E('ST_REGEN'), E => E('ST_REGEN') === 10);
   add('help', '0이 되면 탈진해서', '탈진: 피해 ×1.2, 30에서 풀림, 전투 끝 최소 50', E => src('hurtPlayer').includes('if (p.st <= 0 || p.exhaust) d *= 1.2') && src('finishPlayer').includes('if (p.exhaust && p.st >= 30) p.exhaust = 0') && src('endBattleCarry').includes('Math.max(p.st, 50)'));
@@ -71,4 +71,5 @@ module.exports = function (api) {
   add('help', '스태미나 30(암살자 25)', 'dodgeCost', E => E(`(() => { const a = __mk("assassin"), w = __mk("hunter"); return dodgeCost(a.p) === 25 && dodgeCost(w.p) === 30; })()`));
   add('help', '강타를 흘리면 그 적의 붕괴 게이지가 25', 'src: 강타를 흘리면 붕괴 25', E => src('hurtPlayer').includes('if (o.charged) { addBreak(b, o.src, 25);'));
   add('help', '줄이는 몫이 20%p 작습니다', 'PARRY_BIG=' + E('PARRY_BIG'), E => pct(E('PARRY_BIG')) === 20);
+  add('help', '원소 합계 = 화상', '원소 합계 상한 ELEM.cap=16', E => E('ELEM.cap')===16 && src('elemShock').includes('Math.min(ELEM.cap'));
 };

@@ -25,13 +25,13 @@ with sync_playwright() as p:
     from pathlib import Path
     out=Path('output/playwright/player-text');out.mkdir(parents=True,exist_ok=True)
     pg.fill('#cname','문구점검');pg.click('[data-a=cnok]')
-    assert pg.evaluate('()=>ALL_CLASS_KEYS().every(k=>{const el=document.createElement("div");el.innerHTML=classRuleHtml(k);const text=Array.from(el.querySelectorAll("p")).map(p=>p.textContent).join(" ");return text===(k==="assassin"||k==="warden"?"직업 규칙: ":"")+BUILDS[k].rule})')
+    assert pg.evaluate('()=>ALL_CLASS_KEYS().every(k=>classRuleHtml(k).includes("rule-details"))')
     for width in [390,1280]:
         pg.set_viewport_size({'width':width,'height':844})
-        for build in ['hunter','elementalist','spellblade','monk']:
+        for build in ['assassin','warden','hunter','elementalist','spellblade','monk']:
             pg.click(f'[data-a=clspick][data-k={build}]')
             assert pg.locator('.class-rules').count()==1
-            assert pg.evaluate('(build)=>{const original=BUILDS[build].rule;const rendered=document.querySelector(".class-rules");return Array.from(rendered.querySelectorAll("p")).map(p=>p.textContent).join(" ")==original}',build)
+            assert pg.evaluate('(build)=>{const original=BUILDS[build].rule;const rendered=document.querySelector(".class-rules");return Array.from(rendered.querySelectorAll(".rule-details p")).slice(0,original.split(". ").length).map(p=>p.textContent).join(". ")==original}',build)
             assert pg.evaluate('document.documentElement.scrollWidth<=innerWidth')
             pg.screenshot(path=str(out/f'rules-{build}-{width}.png'),full_page=True)
     pg.click('[data-a=clspick][data-k=spellblade]')
@@ -49,7 +49,7 @@ with sync_playwright() as p:
             assert branch in pg.locator('.tbmenu').inner_text()
             pg.screenshot(path=str(out/f'tree-{branch}-{width}.png'),full_page=True)
     pg.click('button[data-a=skillok]');pg.click('button[data-a=statrec]');pg.click('button[data-a=statok]')
-    assert pg.evaluate('statSum(G.run.stats)')==15
+    assert pg.evaluate('statSum(G.run.stats)')==20
     pg.click('button[data-a=door][data-k="0"]')
     pg.evaluate("()=>{G.run.lv=5;G.run.statGrowth=2;G.run.statPending=2;statFix(G.run)}")
     assert pg.evaluate('G.run.statPending')==6
@@ -59,7 +59,7 @@ with sync_playwright() as p:
     pg.screenshot(path=str(out/'stat-backfill.png'),full_page=True)
     pg.click('button[data-a=statrec]');pg.click('button[data-a=statok]')
     assert pg.evaluate('G.run.statPending')==0
-    assert pg.evaluate('statSum(G.run.stats)')==21
+    assert pg.evaluate('statSum(G.run.stats)')==26
     assert pg.evaluate('G.data.cur.statGrowth')==3
     pg.click('button[data-a=enter]')
     assert pg.evaluate('!!G.b')
@@ -72,6 +72,6 @@ with sync_playwright() as p:
     result=pg.evaluate("""async()=>{const ac=new AudioContext();const out=[];for(const [k,a] of window.__audioBytes){const bytes=Uint8Array.from(atob(a),x=>x.charCodeAt(0));const buf=await ac.decodeAudioData(bytes.buffer);out.push([k,buf.duration]);}await ac.close();return out;}""")
     assert len(result)==31
     assert all(0<d<4 for k,d in result)
-    print('직업 소개·세 갈래·초기 15점·능력치 보충 6점 배분·전투 진입·음원 31개 디코딩',result)
+    print('직업 소개·세 갈래·초기 20점·능력치 보충 6점 배분·전투 진입·음원 31개 디코딩',result)
     assert not errs,errs
     br.close()

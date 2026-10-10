@@ -8,7 +8,7 @@ function startRun(build, boss) {
   G.run = {
     id: 'r' + Date.now().toString(36), build, boss, startedAt: Date.now(), room: 0, p, bag: [], swaps: [], rooms: [], acts: [],
     deaths: [], result: null, blockPicked: null, entry: null, survey: null, drops: [], legSeen: [], awk: [],
-    stats: { str: 0, dex: 0, int: 0, con: 0, wil: 0 }, statGrowth: LV_POINTS, statLog: [], pool: shuffleSeeded(FREE_POOL, seed), choices: [], seed,
+    stats: { str: 0, dex: 0, int: 0, con: 0, wil: 0 }, statGrowth: LV_POINTS, statBase: STAT_START, statLog: [], pool: shuffleSeeded(FREE_POOL, seed), choices: [], seed,
   };
   G.run.skills = isV2(p) ? [] : DEFAULT_SKILLS[build].slice(); G.run.bag = []; G.run.cons = []; initGear(G.run); dgInit(G.run); G.run.skillLog = []; treeInit(G.run); if (isV2(p)) p.skills = v2Equip(G.run);
   G.run.mode = G.cre && G.cre.mode === 'hard' && G.data.hardOpen ? 'hard' : 'normal'; G.run.cname = (G.cre && G.cre.name) || ''; G.run.ch = 1; G.run.playMs = 0; G.run.tut = G.data.tutDone ? 1 : 0; // 수련장을 마친 뒤 만든 캐릭터인가
@@ -214,7 +214,7 @@ const revivable = r => !!(r && r.result === 'abandon' && (r.clears || 0) > 0 && 
 function reviveRun(r) {
   const p = mkPlayer(r.build, {});
   const run = { id: r.id, build: r.build, boss: r.boss, startedAt: r.startedAt, room: r.roomReached || 0, p, bag: [], swaps: r.swaps || [], rooms: r.rooms || [], acts: r.acts || [], deaths: r.deaths || [], result: null, blockPicked: null, entry: null, survey: r.survey || null, drops: r.drops || [],
-    stats: Object.assign({ str: 0, dex: 0, int: 0, con: 0, wil: 0 }, r.stats || {}), statGrowth: r.statGrowth, statPending: r.statPending || 0, statLog: r.statLog || [], pool: shuffleSeeded(FREE_POOL, 1), choices: r.choices || [], seed: 1, skills: (r.skills || []).slice(), skillLog: r.skillLog || [],
+    stats: Object.assign({ str: 0, dex: 0, int: 0, con: 0, wil: 0 }, r.stats || {}), statGrowth: r.statGrowth, statBase: r.statBase, statPending: r.statPending || 0, statLog: r.statLog || [], pool: shuffleSeeded(FREE_POOL, 1), choices: r.choices || [], seed: 1, skills: (r.skills || []).slice(), skillLog: r.skillLog || [],
     cname: r.cname || '', ch: r.ch || 1, clears: r.clears || 0, lv: r.lv || 1, xp: r.xp || 0, gold: r.phase === 'settle' && r.settle ? r.settle.total : (r.gold || 0), playMs: r.playMs || 0, doorLog: r.doorLog || [], settle: r.settle || null, shop: null,
     phase: 'wait', surveys: r.surveys || null, discards: r.discards || [], revivedAt: Date.now() };
   run.syncedActs = run.acts.length; // 행동 기록은 이미 올라가 있다

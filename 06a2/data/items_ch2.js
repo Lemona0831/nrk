@@ -206,7 +206,7 @@ const ITEMS_CH2 = {
   bonedust: { n: '뼈 가루 플라스크', slot: 'flask', g: 'r', act: '생명력 플라스크를 마시면 뼈 더미를 모두 흩고, 흩은 하나마다 생명력 3% 더.', cost: '생명력 플라스크 회복 −5%p', lore: '갈아 낸 뼈는 다시 맞춰지지 않는다.', t: 'all', vs: 'pile bonepile' },
   dirtflask: { n: '무덤 흙 플라스크', slot: 'flask', g: 'r', act: '정화 플라스크를 마시면 땅속의 적을 모두 끌어내고 취약 2를 건다.', cost: '정화 플라스크 막음 −1', lore: '흙을 마시면 흙 속이 훤하다.', t: 'all', vs: 'under' },
   poisoneater: { n: '독 먹는 플라스크', slot: 'flask', g: 'r', act: '생명력 플라스크를 마시면 내 중독을 모두 지우고, 지운 숫자만큼 다음 공격이 대상에게 중독을 건다(최대 8).', cost: '생명력 플라스크 회복 −10%p', lore: '삼킨 독을 칼끝으로 뱉는다.', t: '독사 격발 bloodmage', vs: 'bloat rotair' },
-  hungerflask: { n: '피 값 플라스크', slot: 'flask', g: 'r', act: '생명력 플라스크를 마시면 이번 전투에서 흡혈 · 먹기로 오를 수 있는 생명력의 한도가 지금 생명력까지 오른다. 흡혈 회복 +10%.', cost: '', lore: '마시면 갈증이 더 짙어진다.', t: '도륙 학살 광기', fits: ['butcher'] },
+  hungerflask: { n: '피 값 플라스크', slot: 'flask', g: 'r', act: '생명력 플라스크 회복에 최대 생명력의 3%를 추가한다. 흡혈 회복 +10%.', cost: '', lore: '마시면 갈증이 더 짙어진다.', t: '도륙 학살 광기', fits: ['butcher'] },
   blessbasin: { n: '세례조 물', slot: 'flask', g: 'r', act: '생명력 플라스크를 마시면 막음 3을 얻는다.', cost: '생명력 플라스크 회복 −5%p', lore: '마른 세례조 바닥을 긁어 모은 물.', t: '속죄 all', vs: 'hexer bloat' },
   dantianflask: { n: '단전 물병', slot: 'flask', g: 'r', act: '생명력 플라스크를 마시면 기 +2. 기가 3 이상이면 생명력 5% 더.', cost: '', lore: '배꼽 아래가 뜨거워진다.', t: '철권 부동 혈도', fits: ['monk'] },
   lordgrail: { n: '군주의 성배', slot: 'flask', g: 'h', act: '생명력 플라스크로 회복한 만큼 보호막도 얻는다.', cost: '생명력 플라스크 최대 충전 −1', lore: '왕이 마지막으로 든 잔.', t: 'all' },

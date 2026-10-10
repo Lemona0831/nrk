@@ -15,7 +15,7 @@ async function readTester(id) {
   return { uid: id, name: meta.name || (bs.exists ? (bs.data() || {}).name : '') || '', login: meta.login || '', runs, scen: ss.docs.map(x => x.data()), final: fs.exists ? fs.data() : null };
 }
 /* 결과 보기의 테스터 이름: 로그인한 사람은 닉네임과 로그인 방식, 아니면 기록판 이름에 (익명), 둘 다 없으면 순번 */
-function testerLabel(T, i) { return !T.name ? '테스터 ' + (i + 1) : T.login ? T.name + ' · ' + (PROVIDER_N[T.login] || T.login) : T.name + ' (익명)'; }
+function testerLabel(T, i) { const name = T.name || '이름 미등록'; const login = T.login ? (PROVIDER_N[T.login] || T.login) : '손님'; return name + ' · ' + login + ' · ID ' + (T.uid || '').slice(0, 8); }
 async function loadDash() {
   G.dash = null; G.dashErr = ''; G.dashReq = 1; if (!PAGES.includes(G.scr)) G.back = G.scr; G.scr = 'admin'; render();
   if (!G.db && siteCfg() && G.conn !== 'sitefail') { G.dashReq = 0; G.dashErr = '저장소에 연결하는 중입니다. 연결되면 자동으로 불러옵니다.'; render(); return; } // 접속 전에는 이 브라우저 기록으로 대신하지 않는다

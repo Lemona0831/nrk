@@ -39,7 +39,8 @@ function setTabGo(k, focusTab) {
 /* ===== 접근성 · 입력 설정 (10월 10일 0.6a.2-113) =====
    G.data.opt에 모아 저장한다(없으면 기본값). 게임 규칙에는 닿지 않는 화면 · 입력 설정이다.
    hc 고대비 · sym 글자와 모양으로도 표시 · tsp 글 간격 넓게 · tap 누르는 칸 크게(html 클래스, css/78) · toast 알림이 남는 시간 · ask 위험한 행동 앞에서 묻기 · vib 진동 · wake 화면 켜 두기 */
-const OPT_DEF = { hc: false, sym: false, tsp: false, tap: false, toast: 'normal', ask: false, vib: false, wake: false };
+const OPT_DEF = { hc: false, sym: false, tsp: false, tap: false, focus: false, scroll: false, noHover: false, hold: 'normal', toast: 'normal', ask: false, vib: false, wake: false };
+const HOLD_MS = { short: 250, normal: 450, long: 800 };
 const TOAST_MS = { normal: 2400, long: 5000, xlong: 10000 };
 const TOAST_N = { normal: '보통', long: '길게', xlong: '아주 길게' };
 function optGet(k) { const o = (G.data && G.data.opt) || {}; return o[k] == null ? OPT_DEF[k] : o[k]; }
@@ -78,9 +79,13 @@ function vAccessPane() {
 ${row('hc', '고대비', '배경은 더 어둡게, 글자와 테두리는 더 밝게 합니다', sw('hc', '고대비'))}
 ${row('sym', '모양으로도 표시', '기록 줄 앞에 ▲ ▼ 모양을 붙여 색을 몰라도 구분됩니다', sw('sym', '색 말고 모양으로도 표시'))}
 ${row('tsp', '글 간격 넓게', '글자 사이와 줄 사이를 넓힙니다', sw('tsp', '글 간격 넓게'))}
-${row('tap', '누르는 칸 크게', '버튼과 목록의 누르는 칸을 키웁니다', sw('tap', '누르는 칸 크게'))}</section>`;
+${row('tap', '누르는 칸 크게', '버튼과 목록의 누르는 칸을 키웁니다', sw('tap', '누르는 칸 크게'))}
+${row('focus', '선택 위치 강조', '현재 초점을 둔 버튼과 입력칸에 굵은 테두리를 표시합니다', sw('focus', '선택 위치 강조'))}
+${row('scroll', '전투 화면 스크롤', '전투 화면을 세로로 펼칩니다. 큰 글자와 작은 화면에서 정보를 읽기 편합니다', sw('scroll', '전투 화면 스크롤'))}</section>`;
   const inp = `<section class="setg"><h4>입력과 알림</h4>
 <div class="setrow"><label for="opttoast">알림 시간</label><span class="mini">화면 아래 알림이 남는 시간입니다. 지난 알림은 메뉴에서 다시 봅니다</span><select id="opttoast">${Object.keys(TOAST_MS).map(k => `<option value="${k}"${optGet('toast') === k ? ' selected' : ''}>${TOAST_N[k]}</option>`).join('')}</select></div>
+${row('noHover', '자동 설명 끄기', '마우스를 올려도 설명이 뜨지 않습니다. 키보드 초점이나 길게 누르기로 확인합니다', sw('noHover', '자동 설명 끄기'))}
+<div class="setrow"><label for="opthold">길게 누르기</label><span class="mini">설명 창이 열릴 때까지 누르는 시간입니다</span><select id="opthold">${[['short','짧게 (0.25초)'],['normal','보통 (0.45초)'],['long','길게 (0.8초)']].map(([k,n])=>`<option value="${k}"${optGet('hold')===k?' selected':''}>${n}</option>`).join('')}</select></div>
 ${row('ask', '위험할 때 확인', '도망 앞에서, 그리고 받을 피해 어림이 생명력 이상일 때 방어 · 흘리기 · 생명력 플라스크가 아닌 행동 앞에서 묻습니다', sw('ask', '위험할 때 확인'))}
 ${row('vib', '진동', '전투에서 맞으면 짧게 울립니다' + dis(vibOk(), '이 기기는 진동을 지원하지 않습니다.'), vibOk() ? sw('vib', '진동') : '<span class="mini">지원 안 함</span>')}
 ${row('wake', '화면 켜 두기', '이 게임을 보는 동안 화면이 꺼지지 않게 합니다' + dis(wakeOk(), '이 기기는 지원하지 않습니다.'), wakeOk() ? sw('wake', '화면 켜 두기') : '<span class="mini">지원 안 함</span>')}</section>`;
@@ -88,7 +93,7 @@ ${row('wake', '화면 켜 두기', '이 게임을 보는 동안 화면이 꺼지
 }
 (function initAccessOpts() {
   if (typeof document === 'undefined') return;
-  const LAB = { hc: '고대비', sym: '모양으로도 표시', tsp: '글 간격 넓게', tap: '누르는 칸 크게', ask: '위험할 때 확인', vib: '진동', wake: '화면 켜 두기' };
+  const LAB = { hc: '고대비', sym: '모양으로도 표시', tsp: '글 간격 넓게', tap: '누르는 칸 크게', focus: '선택 위치 강조', scroll: '전투 화면 스크롤', noHover: '자동 설명 끄기', ask: '위험할 때 확인', vib: '진동', wake: '화면 켜 두기' };
   document.addEventListener('click', ev => {
     const el = ev.target && ev.target.closest ? ev.target.closest('[data-a="optsw"]') : null; if (!el || G.hudEd) return;
     const k = el.dataset.k; const on = !optGet(k); optSet(k, on);
@@ -96,6 +101,7 @@ ${row('wake', '화면 켜 두기', '이 게임을 보는 동안 화면이 꺼지
     render(); const x = document.querySelector('[data-a="optsw"][data-k="' + k + '"]'); if (x) x.focus();
   });
   document.addEventListener('change', ev => {
+    if (ev.target && ev.target.id === 'opthold') { optSet('hold', HOLD_MS[ev.target.value] ? ev.target.value : 'normal'); return; }
     const t = ev.target; if (!t || t.id !== 'opttoast') return; optSet('toast', TOAST_MS[t.value] ? t.value : 'normal'); toast('알림 시간: ' + TOAST_N[optGet('toast')]);
   });
   document.addEventListener('visibilitychange', wakeSync);

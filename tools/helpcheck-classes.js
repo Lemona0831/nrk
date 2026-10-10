@@ -18,7 +18,9 @@ module.exports = function (api) {
   add(C, '먹기는 한 전투에 최대 생명력의 40%', '상수: BUTCH.eatFight=' + E('BUTCH.eatFight'), E => pct(E('BUTCH.eatFight')) === 40);
   add(C, '생명력 1에서 멈춥니다', '소스: 자해 출혈이 남아 있으면 출혈 피해가 생명력 1을 남긴다(bleedFloor)', E => has('b.bleedFloor = 1') && has('b.bleedFloor = 0'));
   add(C, '대신 무기 피해의 50%(집중 주문은 75%)', '상수: wpnMul=' + E('BUILDS.elementalist.wpnMul') + ' × HEAVY_V2=' + E('HEAVY_V2') + ' = 집중 주문', E => pct(E('BUILDS.elementalist.wpnMul')) === 50 && pct(E('BUILDS.elementalist.wpnMul') * E('HEAVY_V2')) === 75);
-  add(C, '대신 (화상 + 둔화 × 2) × 3의 피해', '상수: ELEM.Cw · D · Bk', E => E('ELEM.Cw') === 2 && E('ELEM.D') === 3 && E('ELEM.Bk') === 12);
+  add(C, '원소 합계는 화상', '상한 ELEM.cap=16', E => E('ELEM.cap') === 16);
+  add(C, '출혈 상태의 적을 처치하거나', '피 수확 3%, 전투당 12%', E => E('BUTCH.harvest')===0.03 && E('BUTCH.harvestFight')===0.12);
+  add(C, '기본 피해는 원소 합계 × 3', '상수: ELEM.Cw · D · Bk', E => E('ELEM.Cw') === 2 && E('ELEM.D') === 3 && E('ELEM.Bk') === 12);
   add(C, '서리 무게: 둔화된 적이 나를 치는', '상수: ELEM.guard=' + E('ELEM.guard'), E => pct(E('ELEM.guard')) === 30);
   add(C, '교대하면 그 행동이 끝난 뒤 보호막 +4', '상수: BUILDS.spellblade.altWard=' + E('BUILDS.spellblade.altWard'), E => E('BUILDS.spellblade.altWard') === 4);
   add(C, '보호막은 최대 생명력의 15%까지', '실행: wardMax(마검사) = 최대 생명력 × 0.15', E => E(`(() => { const b = __mk("spellblade", 5); return Math.abs(wardMax(b.p) - b.p.hpMax * 0.15) < 1 && BUILDS.spellblade.wardCap === 0.15; })()`));

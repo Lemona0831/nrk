@@ -183,7 +183,7 @@ function vMark() {
   const M = G.mk = G.mk || { ch: 3, mode: 'normal', ids: [] }; const pts = markPts(M.ids);
   h += `<p class="mini">깬 챕터 하나를 새 캐릭터로 다시 치릅니다. 표식을 걸수록 어렵고, 표식 점수가 기록이 됩니다. 챕터의 보스를 넘으면 끝나고, 쓰러지면 점수가 남지 않습니다. 랭킹에는 오르지 않고 기록 화면에 따로 남습니다.</p>`;
   h += rcGroup('mkc', '챕터', [1, 2, 3].map(c => `<button type="button" class="rcchip" data-a="mkch" data-k="${c}" aria-pressed="${M.ch === c}">${c}챕터${c > 1 ? ' · 레벨 ' + MARK_START[c].lv : ' · 처음부터'}</button>`).join(''));
-  h += `<p class="mini">${M.ch > 1 ? `레벨 ${MARK_START[M.ch].lv}에서 시작하고, 스킬 포인트는 레벨만큼, 능력치는 15점에 레벨마다 3점을 더해 직접 나눕니다. 이전 챕터의 평범 · 고급 장비 꾸러미와 약초 묶음을 받습니다.` : '다른 캐릭터와 똑같이 처음부터 만듭니다.'}</p>`;
+  h += `<p class="mini">${M.ch > 1 ? `레벨 ${MARK_START[M.ch].lv}에서 시작하고, 스킬 포인트는 레벨만큼, 능력치는 20점에 레벨마다 3점을 더해 직접 나눕니다. 이전 챕터의 평범 · 고급 장비 꾸러미와 약초 묶음을 받습니다.` : '다른 캐릭터와 똑같이 처음부터 만듭니다.'}</p>`;
   h += rcGroup('mkm', '모드', `<button type="button" class="rcchip" data-a="mkmode" data-k="normal" aria-pressed="${M.mode === 'normal'}">일반</button><button type="button" class="rcchip" data-a="mkmode" data-k="hard" aria-pressed="${M.mode === 'hard'}"${G.data.hardOpen ? '' : ' aria-disabled="true"'}>가혹${G.data.hardOpen ? '' : ' (잠김)'}</button>`);
   h += `<h4>표식</h4><ul class="rcgrid" aria-label="표식">${Object.keys(MARKS).map(k => { const m = MARKS[k], on = M.ids.includes(k); return `<li><button type="button" class="rctitle rcmk" data-a="mktog" data-k="${k}" aria-pressed="${on}"><span class="rcpt">${m.pt}점</span><b><span aria-hidden="true">${m.ico}</span> ${esc(m.n)}</b><small>${esc(m.d)}</small></button></li>`; }).join('')}</ul>`;
   h += `<p class="rcme" role="status" aria-live="polite">고른 표식 ${M.ids.length}개 · 표식 점수 <b>${pts}점</b></p>${M.ids.length ? '' : '<p class="mini">표식을 하나 이상 고르세요.</p>'}`;

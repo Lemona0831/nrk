@@ -16,11 +16,11 @@ function buHint(b, a) {
   const md = f.find(e => e.k === 'drain' && e.s === 'bleed' && e.me); if (md) out.push(bl(p) ? '내 출혈 ' + bl(p) + ' 거둠' : '거둘 내 출혈 없음');
   const ms = f.find(e => e.k === 'meSt' && e.s === 'bleed'); if (ms) out.push('나에게 출혈 ' + ms.n);
   const dr = f.find(e => e.k === 'drain' && e.s === 'bleed' && !e.me && !e.kill);
-  if (dr && !a.aoe) { const n0 = bl(t); const n = dr.max ? Math.min(dr.max, n0) : dr.half ? Math.ceil(n0 / 2) : n0; if (!n) out.push('먹을 출혈 없음'); else { const v = n * dr.per * healMul(p); const room = Math.min(Math.max(0, Math.min(p.hpMax, p.hpFight != null ? p.hpFight : p.hpMax) - p.hp), buEatLeft(b)); out.push('출혈 ' + n + ' 먹음 → +' + r1(v) + (room < v ? '(한도까지 ' + r1(room) + ')' : '')); } }
+  if (dr && !a.aoe) { const n0 = bl(t); const n = dr.max ? Math.min(dr.max, n0) : dr.half ? Math.ceil(n0 / 2) : n0; if (!n) out.push('먹을 출혈 없음'); else { const v = n * dr.per * healMul(p); const room = Math.min(Math.max(0, p.hpMax - p.hp), buEatLeft(b)); out.push('출혈 ' + n + ' 먹음 → +' + r1(v) + (room < v ? '(한도까지 ' + r1(room) + ')' : '')); } }
   const ex = f.find(e => e.k === 'exploit' && e.s === 'bleed'); if (ex && (ex.me || !a.aoe)) { const n = ex.me ? Math.min(ex.max || 10, bl(p)) : bl(t); out.push((ex.me ? '내 출혈 ' : '출혈 ') + n + ' → +' + r1(n * ex.per)); }
   const gr = f.find(e => e.k === 'grudge'); if (gr) { const g = buGrudgeNow(b); out.push(g > 0 ? '받은 피해 ' + Math.round(g) + ' → +' + r1(Math.min(gr.max || 999, gr.per * g)) : '맞은 피해 없음'); }
   const lx = f.find(e => e.k === 'lowx' && e.me); if (lx) out.push(p.hp <= p.hpMax * lx.hp ? '×' + lx.mul + ' 듦' : '안 듦(내 생명력 ' + Math.round(p.hp / p.hpMax * 100) + '%)');
-  if (t && !a.self && isMeleeAct(p, a.id) && bl(t) > 0 && f.some(e => e.k === 'dmg')) out.push('흡혈 ' + Math.round(Math.min(BUTCH.leechMax, BUTCH.leech * bl(t)) * 100) + '%');
+  const wound = f.find(e => e.k === 'st' && e.s === 'bleed'); const leechBl = Math.min(KW.bleed, bl(t) + (a.s.tgt === 'melee' && wound ? wound.n : 0)); if (t && !a.self && isMeleeAct(p, a.id) && leechBl > 0 && f.some(e => e.k === 'dmg')) out.push('흡혈 ' + Math.round(Math.min(BUTCH.leechMax, BUTCH.leech * leechBl) * 100) + '%');
   return out.join(' · ');
 }
 /* 마검사 버튼 아랫줄: 교대면 "⇄ +4"(이번 차례 직업 보호막 전) · "⇄", run 2가 켜지면 "⇄⇄", 칼이 실린 베기는 "칼: 출혈 5", 상태 조건 · 비례 미리보기 */

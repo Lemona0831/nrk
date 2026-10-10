@@ -263,7 +263,9 @@ function hurtEnemy(b, e, raw, o) {
   if (!o.dot && b.p.build === 'berserker') addRage(b, 1);
   if (!o.silent && d > 0) logp(b, o.dot ? 'sys' : 'good', o.dot ? (o.label || '피해') + '이(가) ' + e.n + '을(를) 갉아먹는다. ' + r1(d) + ' 피해' : e.n + '에게 ' + r1(d) + ' 피해');
   if (W0 && d > 0) { const m = []; if (W0.wk) m.push('약화 ' + W0.wk + '로 내 피해 −25%'); if (W0.em) m.push((b.p.build === 'monk' ? '기 ' : '강화 ') + W0.em + '로 +25%'); if (W0.vu) m.push('취약 ' + W0.vu + '로 +25%'); if (W0.pr) m.push('보호 ' + W0.pr + '로 −25%'); if (W0.br && !fullF && !o.shock) m.push('버티는 중이라 ' + Math.round((1 - EKW.braceRed) * 100) + '% 줄어듦'); if (W0.wr) m.push('붕대로 −' + Math.round(WRAP.cut * 100) + '%'); if (W0.bw) m.push('뼈벽 뒤라 줄어듦'); if (W0.ig) m.push('화상 ' + W0.ig + '이 터져 더해짐'); if (m.length) whyPush(b, { side: 'out', n: e.n, f: W0.f, d: r1(d), m }); }
-  if (isBu(b.p) && !o.dot && o.melee && b.cur && d > 0 && stk(e, 'bleed') > 0) { const g = bHeal(b, Math.min(d, Math.max(0, hp0)) * Math.min(BUTCH.leechMax, BUTCH.leech * stk(e, 'bleed')), 'leech'); if (g > 0) logp(b, 'good', e.n + '의 피를 마신다. 생명력 +' + r1(g)); } // 흡혈 (숨겨진 직업 1): 맞힌 그 순간의 출혈로
+  const leechBleed = Math.min(KW.bleed, stk(e, 'bleed') + (o.leechBleed || 0));
+  if (isBu(b.p) && !o.dot && o.melee && b.cur && d > 0 && leechBleed > 0) { const g = bHeal(b, Math.max(0, hp0 - Math.max(0, e.hp)) * Math.min(BUTCH.leechMax, BUTCH.leech * leechBleed), 'leech'); if (g > 0) logp(b, 'good', e.n + '의 피를 마신다. 생명력 +' + r1(g)); }
+  if (e.hp <= 0 && d > 0 && (leechBleed > 0 || (o.dot && o.label === '출혈'))) buHarvest(b, e);
   if (e.hp <= 0) { if (o.dot && o.label === '중독' && !e.pile && !e.summoned && e.role !== 'root') unlAdd(b, 'poisonKill'); killEnemy(b, e); } // 해금 셈: 중독이 마지막 피해
   checkEnd(b);
   return d;

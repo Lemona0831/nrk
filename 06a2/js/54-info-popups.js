@@ -232,7 +232,7 @@ function initPv() {
 }
 function initPop() {
   document.addEventListener('pointerover', ev => {
-    if (ev.pointerType === 'touch') return;
+    if (ev.pointerType === 'touch' || optGet('noHover')) return;
     if (ev.target.closest && ev.target.closest('#pop')) { clearTimeout(POP.h); return; } /* 10월 7일: 설명 창 위로 마우스를 옮겨도 닫히지 않는다 */
     const t = ev.target.closest && ev.target.closest('[data-info]'); if (!t) return;
     if (t.closest('.treev, .tsum') && window.innerWidth >= 900) return; // 스킬 트리: PC는 오른쪽 설명 칸이 맡는다
@@ -251,7 +251,7 @@ function initPop() {
     if (ev.pointerType !== 'touch') { return; }
     const t = ev.target.closest && ev.target.closest('[data-info]'); hidePop(); if (!(t && t.closest('.ab[data-a=act]'))) pvHide(); if (!t) return;
     POP.suppress = false; clearTimeout(POP.touchT);
-    POP.touchT = setTimeout(() => { POP.suppress = true; showPop(t); if (t.matches('.ab[data-a=act]')) pvShow(t); }, 450);
+    POP.touchT = setTimeout(() => { POP.suppress = true; showPop(t); if (t.matches('.ab[data-a=act]')) pvShow(t); }, HOLD_MS[optGet('hold')] || HOLD_MS.normal);
   });
   const cancel = () => clearTimeout(POP.touchT);
   document.addEventListener('pointerup', cancel); document.addEventListener('pointercancel', cancel);

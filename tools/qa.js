@@ -324,7 +324,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   if (L.some(a => a.v2 && buFx(a))) {
     const hpf = p.hp / p.hpMax, bl = e => psn2(e, 'bleed'), big = e => !!(e.elite || e.strong || e.role === 'boss'); const F = (a, k) => a.s.fx.find(e => e.k === k);
     const thirst = 1 + Math.min(0.18, 0.03 * Math.max(0, Math.floor((1 - hpf) * 10 + 1e-9))); const grN = b.prepTurn === b.turnIdx ? (p.grudge || 0) : Math.min(p.tookAcc || 0, p.hpMax * 0.3);
-    const room = Math.max(0, Math.min(p.hpFight != null ? p.hpFight : p.hpMax, p.hpMax) - p.hp); const eatLeft = Math.max(0, p.hpMax * 0.4 - (b.eatGot || 0));
+    const room = Math.max(0, p.hpMax - p.hp); const eatLeft = Math.max(0, p.hpMax * 0.4 - (b.eatGot || 0));
     const dmgOf = (a, e) => { let v = (F(a, 'dmg') || { n: 0 }).n; const ex = a.s.fx.find(x => x.k === 'exploit' && x.s === 'bleed'); if (ex) v += ex.per * (ex.me ? Math.min(ex.max || 10, bl(p)) : bl(e)); const g = F(a, 'grudge'); if (g) v += Math.min(g.max || 99, g.per * grN); const md = a.s.fx.find(x => x.k === 'drain' && x.me && x.dmg); if (md) v += Math.min(md.max || 10, bl(p)) * md.dmg;
       const lx = F(a, 'lowx'); if (lx && (lx.me ? hpf <= lx.hp : e.hp <= e.hpMax * lx.hp)) v *= lx.mul; const gx = F(a, 'bigx'); if (gx && big(e)) v *= gx.mul; return v * (a.s.hits || 1) * thirst * (p.s.weak ? 0.75 : 1) * (p.s.empower ? 1.25 : 1); };
     const bigIn = !!(hv || pv1.some(x => x.e.intent && (x.e.intent.aimed || ['burn', 'explode'].includes(x.e.intent.k))));
