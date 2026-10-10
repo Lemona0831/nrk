@@ -1,0 +1,55 @@
+/* ===== 전투 화면 편집 (10월 10일 0.6a.2-92): 구역 · 모듈 · 크기 · 편집 칸 ===== */
+/* 구역: 위쪽 둘(.btop 안), 가운데(남는 높이), 아래 */
+.hz{display:flex;flex-direction:column;min-width:0}
+.hz:empty{display:none}
+.hz-mid{grid-area:field;overflow-y:auto;min-height:0}
+.hz-bot{grid-area:dock}
+.hz-mid>.field{flex:1 0 auto}
+html.fitscroll .hz-mid{overflow:visible}
+.btop:has(>.hz-top1:empty),.btop:has(>.hz-top2:empty){grid-template-columns:minmax(0,1fr)}
+@media (max-width:719px){.hz-bot{padding-bottom:env(safe-area-inset-bottom,0px)}}
+/* 모듈: 크기는 zoom으로 정한다(칸 폭 안에서 다시 흐른다) */
+.hmod{min-width:0}
+.hmod:has(>.qcons.tlz){display:none}
+.hmod+.hmod{margin-top:6px}
+.hmod.hm+.hmod.hm{margin-top:0;border-top-width:0;border-top-left-radius:0;border-top-right-radius:0}
+.hmod.hm:has(+.hmod.hm){border-bottom-left-radius:0;border-bottom-right-radius:0}
+.hmod.mine{border-left:5px solid var(--cls,transparent)}
+.hmod.hm>.fstat,.hmod.hm>.dock{background:none;border:0;border-radius:0;padding:0;margin:0}
+.hmod .incoming,.hmod .rlog,.hmod .qcons,.hmod .hud-danger,.hmod .gimmick,.hmod .logrow,.hmod .turnban{margin-top:0;margin-bottom:0}
+.hmod .gimmick+.gimmick{margin-top:4px}
+.hmod .rlog{margin:0}
+.hmod .order .ord{margin:0}
+.ordrow{display:flex;align-items:center;gap:6px}.ordrow>.order{flex:1;min-width:0}.ordrow>.logbtn{flex:none}
+.hmod[data-hmod="hud-status"] .sts{margin-top:0}
+.hmod[data-hmod="hud-classchip"] .hudm{display:block}
+@media (max-width:719px){.hmod+.hmod{margin-top:4px}.hmod.hm+.hmod.hm{margin-top:0}}
+/* 편집 창: 전투 중에 열면 뒤 화면이 보이게 작게 연다 */
+.sheet-bg.live{background:transparent;backdrop-filter:none;pointer-events:none}
+.sheet-bg.live .sheet{pointer-events:auto;max-height:50%;box-shadow:0 -8px 28px rgba(0,0,0,.55)}
+.sheet-bg.live.ltop{align-items:flex-start}
+.sheet-bg.live.ltop .sheet{border-top:0;border-bottom:2px solid var(--gold);border-radius:0 0 14px 14px;box-shadow:0 8px 28px rgba(0,0,0,.55)}
+@media (min-width:720px){
+ .sheet-bg.live{align-items:stretch;justify-content:flex-end;padding:0}
+ .sheet-bg.live.ltop{justify-content:flex-start;align-items:stretch}
+ .sheet-bg.live .sheet,.sheet-bg.live.ltop .sheet{margin:0;max-height:none;height:100%;max-width:460px;border-radius:0;border:0;border-left:2px solid var(--gold);box-shadow:0 0 28px rgba(0,0,0,.55)}
+ .sheet-bg.live.ltop .sheet{border-left:0;border-right:2px solid var(--gold)}
+}
+/* 편집 칸 */
+#hudedit .hzg{margin-top:8px}
+#hudedit h5{margin:6px 0 4px;font-size:calc(16px*var(--fs,1));color:var(--gold)}
+.hlist{list-style:none;margin:0;padding:0;display:grid;gap:6px;min-height:36px}
+.hlist.hdrop-in{outline:2px dashed var(--gold);outline-offset:2px}
+.hrow{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--panel)}
+.hrow.hoff{border-style:dashed}
+.hrow.hdraging{opacity:.55;outline:2px solid var(--gold)}
+.hrow.hdrop-b{box-shadow:0 -3px 0 0 var(--gold)}.hrow.hdrop-a{box-shadow:0 3px 0 0 var(--gold)}
+.hr1{display:flex;align-items:center;gap:8px}
+.hr1 .hnm{flex:1;min-width:0;display:flex;flex-direction:column}.hr1 .hnm small{line-height:1.3}
+.hr2{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px}
+.hr2 .sm{min-height:36px}
+.hsel{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;font-size:calc(13px*var(--fs,1))}
+.hsel select{min-height:36px}
+.hdrag{flex:none;min-width:44px;min-height:44px;font-size:calc(20px*var(--fs,1));line-height:1;cursor:grab;touch-action:none;user-select:none}
+.hdrag:active{cursor:grabbing}
+.hempty{padding:8px;border:1px dashed var(--line);border-radius:8px}

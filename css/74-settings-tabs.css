@@ -1,0 +1,32 @@
+/* ===== 설정 창 탭과 HUD 배열 패널 (10월 10일 0.6a.2-95) ===== */
+/* 탭 */
+.settabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:0 0 8px}
+.settab{flex:1 1 0;min-height:44px;padding:6px 8px;border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;background:var(--panel);color:var(--muted);font-size:calc(14px*var(--fs,1));font-weight:600}
+.settab.on{background:var(--panel2);color:var(--gold);border-color:var(--gold);box-shadow:inset 0 -3px 0 var(--gold)}
+.setpan:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.setpan[hidden]{display:none}
+.hdet>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:calc(14px*var(--fs,1));font-weight:600;color:var(--ink)}
+.hdet[open]>summary{color:var(--gold)}
+.hdet>summary::before{content:'▸';display:inline-block;width:18px;color:var(--gold)}
+.hdet[open]>summary::before{content:'▾'}
+.hslots{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0}
+.hslots .lab{font-size:calc(14px*var(--fs,1));margin-right:4px}
+.hslots .sm{min-height:44px;min-width:44px}
+
+/* 칸 틀: 안 고른 칸은 옅은 점선, 고른 칸만 주황 */
+.hbox{border-color:rgba(230,220,203,.8)}
+.hbox.on{border-color:#f2993a;background:rgba(242,153,58,.16);box-shadow:0 0 0 2px var(--bg),0 0 12px rgba(242,153,58,.55)}
+.hbox.on .htag{background:#f2993a;color:#1a1206;border-color:#f2993a}
+.hbox.on .htag small,.hbox.on .hgrip{color:#1a1206}
+/* 격자 */
+html.hgrid.hedit .fit{background-image:linear-gradient(rgba(230,220,203,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(230,220,203,.1) 1px,transparent 1px);background-size:24px 24px;background-attachment:local}
+
+/* HUD 배열 패널(#hedbar)은 0.6a.2-113에서 떠 있는 리모콘(remote/remote.css)으로 바뀌었다 */
+
+/* 배열 칸 불러오기 확인 창 */
+.askbg{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.6)}
+.askbox{width:min(100%,360px);padding:16px;border:2px solid var(--gold);border-radius:12px;background:var(--panel);box-shadow:0 10px 30px rgba(0,0,0,.7)}
+.askbox p{margin:0 0 10px;font-size:calc(15px*var(--fs,1));font-weight:600}
+.askck{display:flex;align-items:center;gap:8px;min-height:44px;font-size:calc(14px*var(--fs,1))}
+.askck input{width:24px;height:24px;margin:0;accent-color:var(--gold)}
+.askbtn{display:flex;gap:8px;margin-top:8px}.askbtn button{flex:1;min-height:44px}

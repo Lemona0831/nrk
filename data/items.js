@@ -1,34 +1,34 @@
 /* 나락의 유산 데이터: 아이템(6.8절, 11.5절), 슬롯 이름, 자발 시험용 풀
    index.html보다 먼저 읽힌다. 값만 두고, 계산은 index.html에서 한다. */
 const ITEMS = {
-  hook:     { n: '끌어내는 갈고리', slot: 'weapon', kind: 'block', act: '강공격이 후열 적 1기를 전열로 끌어낸다(전열이 막고 있어도 후열을 노릴 수 있음)', cost: '무기 피해 -15%' },
-  plate:    { n: '인내의 흉갑', slot: 'armor', kind: 'block', act: '방어 중 받은 피해의 30%를 다음 공격 피해에 더한다', cost: '최대 생명력 -10%' },
-  witness:  { n: '증인의 부적', slot: 'amulet', kind: 'block', act: '적의 충전 기술(강타)을 흘리면 그 적에게 취약(보통 행동 약 2번 동안)', cost: '흘리기 스태미나 +10' },
-  chalice:  { n: '역류의 성배', slot: 'flask', kind: 'free', act: '생명력 플라스크로 정화한 디버프 중첩만큼 다음 공격이 대상에게 같은 디버프를 건다', cost: '생명력 플라스크 회복량 -10%' },
-  pulse:    { n: '느린 맥박', slot: 'ring1', kind: 'free', act: '내 차례가 덜 자주 온다(적이 더 자주 끼어든다). 대신 행동당 직접 피해 +35%. 중독 같은 지속 피해는 시간에 따라 흐르므로 그대로', cost: '적이 상대적으로 더 자주 행동' },
-  twin:     { n: '쌍날 단검', slot: 'weapon', kind: 'free', act: '기본 공격이 두 번 친다(한 번에 50%)', cost: '강공격 피해 -20%' },
-  maul:     { n: '무거운 망치', slot: 'weapon', kind: 'free', act: '강공격의 붕괴 게이지 +20', cost: '강공격이 더 느려진다' },
-  thorns:   { n: '가시 갑옷', slot: 'armor', kind: 'free', act: '방어하는 동안 근접 공격을 받으면 그 적에게 피해 2', cost: '최대 생명력 -5%' },
-  cloak:    { n: '그림자 망토', slot: 'armor', kind: 'free', act: '흘리기로 줄이는 피해 +15%p', cost: '최대 생명력 -5%' },
-  bloodpact:{ n: '피의 서약', slot: 'amulet', kind: 'free', act: '생명력이 절반 아래면 주는 피해 +20%', cost: '모든 회복 -15%' },
-  sigil:    { n: '정화의 성표', slot: 'amulet', kind: 'free', act: '디버프가 걸릴 때마다 마나 +4', cost: '최대 마나 -15' },
-  fury:     { n: '분노의 반지', slot: 'ring1', kind: 'free', act: '강타를 맞으면 다음 공격 피해 +10%', cost: '받는 강타 피해 +10%' },
-  focusring:{ n: '수렴의 반지', slot: 'ring1', kind: 'free', act: '단일 대상 공격 피해 +7%', cost: '광역 공격 피해 -30%' },
-  venomring:{ n: '독침 반지', slot: 'ring1', kind: 'free', act: '기본 공격이 중독 +1을 건다', cost: '기본 공격 피해 -10%' },
-  boilflask:{ n: '끓는 플라스크', slot: 'flask', kind: 'free', act: '생명력 플라스크를 마시면 모든 적에게 피해 5', cost: '생명력 플라스크 회복량 -25%' },
-  chaingl:  { n: '사슬 장갑', slot: 'gloves', kind: 'free', act: '근접 스킬의 붕괴 게이지 +20', cost: '최대 스태미나 -10' },
-  ragechain:{ n: '분노의 사슬', slot: 'gloves', kind: 'free', act: '맞을 때마다 다음 공격 피해 +4%(최대 +20%), 공격하면 사라진다', cost: '방어로 줄이는 피해 50% → 40%' },
-  markamu:  { n: '추적자의 표식', slot: 'amulet', kind: 'free', act: '같은 적을 세 번 이어 치면 그 적이 취약해진다', cost: '대상을 바꾼 첫 공격 피해 -10%' },
-  resostone:{ n: '공명석', slot: 'ring1', kind: 'free', act: '직전과 다른 스킬을 쓰면 피해 +6%', cost: '같은 스킬을 이어 쓰면 마나 +2' },
-  wardcrest:{ n: '수호의 문장', slot: 'armor', kind: 'free', act: '보호막이 남아 있는 동안 받는 피해 -15%', cost: '최대 생명력 -5%' },
-  vpouch:   { n: '독 주머니', slot: 'gloves', kind: 'free', act: '중독된 적에게 주는 직접 피해 +15%', cost: '최대 마나 -10' },
-  bloodoil: { n: '피의 성유', slot: 'flask', kind: 'free', act: '생명력으로 치르는 비용 -30%', cost: '생명력 플라스크 회복량 -20%' },
-  rosary:   { n: '정화의 묵주', slot: 'amulet', kind: 'free', act: '디버프를 지울 때마다 지운 수만큼 마나 +3', cost: '최대 생명력 -3%' },
-  scarcharm:{ n: '흉터 부적', slot: 'ring1', kind: 'free', act: '상흔이 있으면 근접 공격에 상흔의 15%(최대 10)를 더한다', cost: '상흔 저장률 -5%p' },
-  echo:     { n: '메아리 반지', slot: 'ring1', kind: 'free', act: '같은 스킬을 이어 쓸 때마다 그 스킬의 피해 +4%(최대 3번, +12%)', cost: '다른 스킬을 쓰면 쌓인 메아리가 사라진다' },
-  vanguard: { n: '선봉의 깃발', slot: 'amulet', kind: 'free', act: '전투의 첫 공격이 빠른 행동이 되고 붕괴 게이지 +20', cost: '최대 스태미나 −20' },
-  knot:     { n: '잔향의 매듭', slot: 'gloves', kind: 'free', act: '독 격발과 상흔 방출 뒤 쓴 양의 절반을 남긴다', cost: '독 격발·상흔 방출 마나 +2' },
-  ledger:   { n: '피의 계산서', slot: 'ring2', kind: 'free', act: '스태미나가 모자라면 강공격 비용을 생명력 4%로 치른다', cost: '생명력 소모' },
+  hook:     { n: '끌어내는 갈고리', slot: 'weapon', kind: 'block', act: '강공격이 후열 적 하나를 전열로 끌어낸다. 전열이 막고 있어도 닿는다.', cost: '무기 피해 −15%' },
+  plate:    { n: '인내의 흉갑', slot: 'armor', kind: 'block', act: '방어 중 받은 피해의 30%를 다음 공격 피해에 더한다.', cost: '최대 생명력 −10%' },
+  witness:  { n: '증인의 부적', slot: 'amulet', kind: 'block', act: '적의 강타를 흘리면 그 적이 잠시 취약해진다.', cost: '흘리기 스태미나 +10' },
+  chalice:  { n: '역류의 성배', slot: 'flask', kind: 'free', act: '생명력 플라스크로 지운 해로운 상태를 다음 공격이 대상에게 그대로 건다.', cost: '생명력 플라스크 회복 −10%' },
+  pulse:    { n: '느린 맥박', slot: 'ring1', kind: 'free', act: '공격 한 번의 직접 피해 +35%. 중독 같은 지속 피해는 그대로다.', cost: '내 차례에 빠른 칸이 없다(플라스크, 빠른 스킬 같은 빠른 행동도 차례를 끝낸다)' },
+  twin:     { n: '쌍날 단검', slot: 'weapon', kind: 'free', act: '기본 공격이 두 번 친다. 한 번에 50%, 합쳐 100%다. 중독이나 반격처럼 맞을 때마다 일어나는 효과는 두 번 걸린다.', cost: '강공격 피해 −20%' },
+  maul:     { n: '무거운 망치', slot: 'weapon', kind: 'free', act: '강공격의 붕괴 +20.', cost: '강공격 스태미나 +10' },
+  thorns:   { n: '가시 갑옷', slot: 'armor', kind: 'free', act: '방어하는 동안 전열 적에게 맞으면 그 적에게 피해 2를 되돌린다.', cost: '최대 생명력 −5%' },
+  cloak:    { n: '그림자 망토', slot: 'armor', kind: 'free', act: '흘리기로 줄이는 피해 +15%p(최대 90%).', cost: '최대 생명력 −5%' },
+  bloodpact:{ n: '피의 서약', slot: 'amulet', kind: 'free', act: '생명력이 절반 아래면 주는 피해 +20%.', cost: '플라스크와 스킬로 되찾는 생명력 −15%' },
+  sigil:    { n: '정화의 성표', slot: 'amulet', kind: 'free', act: '약화, 취약, 출혈, 화상, 둔화, 중독이 내게 걸릴 때마다 마나 +4.', cost: '최대 마나 −15' },
+  fury:     { n: '분노의 반지', slot: 'ring1', kind: 'free', act: '강타를 맞으면 다음 공격 피해 +10%.', cost: '받는 강타 피해 +10%' },
+  focusring:{ n: '수렴의 반지', slot: 'ring1', kind: 'free', act: '한 적 대상 공격 피해 +7%.', cost: '광역 공격 피해 −30%' },
+  venomring:{ n: '독침 반지', slot: 'ring1', kind: 'free', act: '기본 공격이 맞을 때마다 중독 1을 건다.', cost: '기본 공격 피해 −10%' },
+  boilflask:{ n: '끓는 플라스크', slot: 'flask', kind: 'free', act: '생명력 플라스크를 마시면 모든 적에게 화염 피해 5를 준다.', cost: '생명력 플라스크 회복 −25%' },
+  chaingl:  { n: '사슬 장갑', slot: 'gloves', kind: 'free', act: '근접 스킬로 때리면 붕괴 +20.', cost: '최대 스태미나 −10' },
+  ragechain:{ n: '분노의 사슬', slot: 'gloves', kind: 'free', act: '맞을 때마다 다음 공격 피해 +4%가 쌓인다(최대 +20%). 공격하면 쌓인 것이 모두 실리고 사라진다.', cost: '방어로 줄이는 피해 50% → 40%' },
+  markamu:  { n: '추적자의 표식', slot: 'amulet', kind: 'free', act: '같은 적을 세 번 이어 치면 그 적에게 취약 2를 건다.', cost: '대상을 바꾼 첫 공격 피해 −10%' },
+  resostone:{ n: '공명석', slot: 'ring1', kind: 'free', act: '직전과 다른 스킬을 쓰면 그 스킬 피해 +6%.', cost: '같은 스킬을 이어 쓰면 마나 +2' },
+  wardcrest:{ n: '수호의 문장', slot: 'armor', kind: 'free', act: '보호막이 남아 있는 동안 받는 피해 −15%.', cost: '최대 생명력 −5%' },
+  vpouch:   { n: '독 주머니', slot: 'gloves', kind: 'free', act: '중독된 적에게 주는 직접 피해 +15%.', cost: '최대 마나 −10' },
+  bloodoil: { n: '피의 성유', slot: 'flask', kind: 'free', act: '피의 기술, 피의 계산서, 피의 대가처럼 생명력으로 치르는 비용 −30%.', cost: '생명력 플라스크 회복 −20%' },
+  rosary:   { n: '정화의 묵주', slot: 'amulet', kind: 'free', act: '플라스크나 스킬로 해로운 상태를 하나 지울 때마다 마나 +3.', cost: '최대 생명력 −3%' },
+  scarcharm:{ n: '흉터 부적', slot: 'ring1', kind: 'free', act: '상흔이 쌓여 있으면 근접 공격 한 번에 상흔의 15%(최대 10)를 더한다. 상흔은 쓰지 않는다.', cost: '상흔 저장률 −5%p' },
+  echo:     { n: '메아리 반지', slot: 'ring1', kind: 'free', act: '같은 스킬을 이어 쓸 때마다 그 스킬의 피해 +4%(최대 세 번, +12%). 마나는 그대로 든다.', cost: '다른 스킬을 쓰면 쌓인 메아리가 사라진다' },
+  vanguard: { n: '선봉의 깃발', slot: 'amulet', kind: 'free', act: '전투가 시작되면 첫 공격이 빠른 행동이 되고, 그 공격의 붕괴 +20.', cost: '최대 스태미나 −20' },
+  knot:     { n: '잔향의 매듭', slot: 'gloves', kind: 'free', act: '독 격발이나 상흔 방출 뒤, 쓴 양의 절반이 사라지지 않고 남는다.', cost: '독 격발 · 상흔 방출 마나 +2' },
+  ledger:   { n: '피의 계산서', slot: 'ring2', kind: 'free', act: '스태미나가 모자라면 강공격 비용을 생명력 4%로 치른다(얼마나 모자라든 같다).', cost: '생명력이 깎인다' },
 };
 
 const SLOT_N = { weapon: '무기', armor: '갑옷', amulet: '목걸이', flask: '플라스크', ring1: '반지', ring2: '반지', gloves: '장갑' };
@@ -37,7 +37,7 @@ const FREE_POOL = ['ragechain', 'markamu', 'resostone', 'wardcrest', 'vpouch', '
 
 /* ===== 0.6 장비 (기획서 11.5절) ===== */
 /* 등급: 기본 수치에 붙는 보너스(%) 범위 */
-const GRADE = { n: { n: '평범', lo: 1, hi: 5 }, m: { n: '고급', lo: 5, hi: 10 }, r: { n: '희귀', lo: 10, hi: 15 } };
+const GRADE = { n: { n: '평범', lo: 1, hi: 5 }, m: { n: '고급', lo: 5, hi: 10 }, r: { n: '희귀', lo: 10, hi: 15 }, h: { n: '영웅', lo: 15, hi: 20 }, l: { n: '전설', lo: 20, hi: 25 } }; /* 영웅 · 전설은 2챕터부터 (docs/아이템/장비-경제.md 2절) */
 /* 슬롯마다 기본 수치. v는 1·2·3챕터 값 */
 const SLOT_BASE = {
   weapon: { k: 'wpn', lab: '무기 피해', v: [8, 11, 15] },
@@ -47,9 +47,16 @@ const SLOT_BASE = {
   ring: { k: 'hp', lab: '최대 생명력', v: [5, 8, 12] },
   flask: { k: 'flask', lab: '생명력 플라스크 회복', v: [0.3, 0.3, 0.3] },
 };
-const BAG_MAX = 12;
+const BAG_MAX = 20; // 10월 4일: 소모품이 생기며 12 → 20 (장비 하나 = 한 칸, 소모품 한 겹 = 한 칸)
 /* 시작 장비 (평범, 보너스 없음). 시작 장비만 낀 캐릭터는 B0.5와 수치가 같다 */
 const START_WPN = { berserker: ['녹슨 도끼', '날이 무뎌졌지만 아직 무겁다.'], hunter: ['사냥 활', '시위에 오래된 피가 말라붙어 있다.'], arcanist: ['견습 지팡이', '끝에 박힌 돌이 희미하게 떨린다.'], templar: ['철퇴', '성구를 녹여 다시 두드린 쇠.'], warlock: ['뼈 지팡이', '누구의 뼈인지는 묻지 않는다.'], assassin: ['단검', '손에 익은 짧은 칼.'], priest: ['성구 지팡이', '기도문이 새겨진 손잡이.'], scar: ['톱날 검', '베는 것보다 찢는 데 가깝다.'] };
+START_WPN.warden = ['짧은 철퇴', '방패 뒤에서 휘두르기 좋게 자루를 줄였다.']; // 파수꾼 (0.6a.2)
+START_WPN.butcher = ['갈고리 식칼', '고기를 걸던 갈고리를 손잡이에 동여맸다.']; // 숨겨진 직업 1 (0.6a.2)
+START_WPN.bloodmage = ['사혈 바늘', '피를 뽑던 쇠바늘 묶음. 끝이 늘 젖어 있다.']; // 숨겨진 직업 3 (0.6a.2)
+START_WPN.elementalist = ['갈라진 지팡이', '끝에 그을음과 서리가 함께 앉아 있다.']; // 원소술사 (0.6a.2)
+START_WPN.spellblade = ['글 새긴 장검', '날을 따라 옅은 글자가 새겨져 있다.']; // 마검사 (0.6a.2)
+START_WPN.monk = ['손목 붕대', '무기를 버린 손에 감은 낡은 천.']; // 수도승 (0.6a.2): 맨손
+START_WPN.confessor = ['향로 철퇴', '재와 향이 함께 배어 있는 쇠머리.']; // 숨겨진 직업 2 (0.6a.2)
 for (const k in START_WPN) ITEMS['start_wpn_' + k] = { n: START_WPN[k][0], slot: 'weapon', kind: 'start', g: 'n', act: '', cost: '', lore: START_WPN[k][1] };
 ITEMS.start_armor = { n: '낡은 갑옷', slot: 'armor', kind: 'start', g: 'n', act: '', cost: '', lore: '여러 주인을 거친 가죽과 쇠.' };
 ITEMS.start_flask = { n: '낡은 플라스크', slot: 'flask', kind: 'start', g: 'n', act: '', cost: '', lore: '금이 갔지만 새지는 않는다.' };
@@ -66,10 +73,17 @@ for (const k in ITEM_GRADE) if (ITEMS[k]) ITEMS[k].g = ITEM_GRADE[k];
 const CLASS_FIT = {
   berserker: ['분노', '격노', '강공격', '생명력이 절반', '맞을 때마다', '강타를 맞으면', '근접', '쓰러뜨리면', '방패병'],
   hunter: ['원거리', '후열', '같은 적', '기본 공격', '출혈'],
-  arcanist: ['주문', '캔트립', '마나', '점화', '같은 스킬', '스킬로', '광역'],
+  arcanist: ['주문', '캔트립', '마나', '화상', '같은 스킬', '스킬로', '광역'],
   templar: ['방어', '보호', '강타', '최대 생명력'],
-  warlock: ['마나가 모자라면', '약화', '디버프가 셋', '생명력을', '마나 +', '저주'],
+  warlock: ['마나가 모자라면', '약화', '해로운 상태가 셋', '생명력을', '마나 +', '저주'],
   assassin: ['중독', '독', '흘리기'],
+  warden: ['방어', '보호막', '보호', '붕괴', '강타', '최대 생명력', '방패병'],
+  confessor: ['지우면', '지운', '정화', '보호', '약화'],
+  butcher: ['근접', '출혈', '강공격', '생명력이 절반', '맞을 때마다'],
+  elementalist: ['원거리', '화상', '둔화', '지능', '붕괴'],
+  spellblade: ['근접', '후열', '출혈', '화상', '보호막', '강공격'],
+  monk: ['방어', '붕괴', '강타를 맞으면', '근접', '맞을 때마다'], // 느린 맥박은 넣지 않는다(⚡ 칸이 없어 수도승에게 늘 손해)
+  bloodmage: ['원거리', '중독', '생명력으로', '회복'],
   scar: ['상흔', '맞을 때마다', '잃으면', '생명력이 절반', '강타를 맞으면', '받는 피해'],
-  priest: ['디버프', '지우면', '지운', '정화', '보호'],
+  priest: ['해로운 상태', '지우면', '지운', '정화', '보호'],
 };

@@ -1,0 +1,110 @@
+/* 전투 시각 이펙트 (10월 10일, 0.6a.2-108 · 다시 만듦 0.6a.2-114): js/59-battle-fx.js가 만든 덮개 #vfx 안의 .vf 상자들.
+   장식이다(aria-hidden, pointer-events:none). 움직임은 transform · opacity만 쓴다.
+   --s 강도 배율(약하게 .5 · 보통 1 · 강하게 1.4), --tm 길이 배율, --dur 상자 길이, --c 속성색, --fo 번쩍임 세기.
+   번쩍임은 흰색 → 속성색 한 번(카드 한 장 넓이)이고 붉은 면 번쩍임은 없다: 맞은 내 칸은 안쪽 윤곽이 번진다.
+   움직임 줄이기(.rm)에서는 색 윤곽의 불투명도만 바뀐다: 이동 · 확대 · 흔들림 없음 */
+#vfx{position:fixed;inset:0;z-index:30;pointer-events:none;overflow:hidden;contain:layout paint}
+.vf{position:fixed;pointer-events:none;border-radius:8px;overflow:visible;--c:#fff1d0;--dur:600ms;--s:1;--tm:1;--fo:.42;contain:layout style}
+.vf>i,.vf>svg,.vf>b,.vf>span{position:absolute;pointer-events:none;display:block;will-change:transform,opacity}
+.vf-hit{position:absolute;inset:0}.vf-hit>i{position:absolute;pointer-events:none;will-change:transform,opacity;animation-delay:var(--dl,0ms)}
+/* 번쩍임: 흰색이 확 켜졌다가 속성색으로 가라앉는다(한 번) */
+.vf-fl,.vf-fl2{inset:0;border-radius:inherit;opacity:0}
+.vf-fl{background:#fff;animation:vffl 110ms ease-out both}
+.vf-fl2{background:var(--c);animation:vffl2 260ms ease-out 40ms both}
+@keyframes vffl{0%{opacity:0}35%{opacity:var(--fo)}100%{opacity:0}}
+@keyframes vffl2{0%{opacity:0}25%{opacity:calc(var(--fo)*.8)}100%{opacity:0}}
+/* 글자표: 카드 아래 가장자리에 걸려 올라간다(종류를 모양과 글자로도 알린다) */
+.vf-lb{left:50%;bottom:-9px;translate:-50% 0;white-space:nowrap;font-size:12px;font-weight:900;line-height:1;padding:3px 7px;border-radius:9px;background:rgba(10,8,6,.88);color:#fff;border:1px solid var(--lc,var(--c));text-shadow:0 0 4px var(--lc,var(--c));opacity:0;animation:vflb var(--dur) ease-out both}
+@keyframes vflb{0%{opacity:0;transform:translateY(6px) scale(.8)}14%{opacity:1;transform:translateY(0) scale(1.12)}26%{transform:scale(1)}78%{opacity:1}100%{opacity:0;transform:translateY(-6px)}}
+/* 윤곽 */
+.vf-ol{inset:0;border-radius:inherit;border:calc(3px*var(--s)) solid var(--c);opacity:0;animation:vfol var(--dur) ease-out both}
+@keyframes vfol{0%{opacity:0}12%{opacity:1}55%{opacity:.7}100%{opacity:0}}
+.k-phit .vf-ol{border-width:0;box-shadow:inset 0 0 calc(22px*var(--s)) calc(5px*var(--s)) var(--c),0 0 calc(10px*var(--s)) var(--c)}.k-phit.big .vf-ol{box-shadow:inset 0 0 calc(34px*var(--s)) calc(9px*var(--s)) var(--c),0 0 calc(18px*var(--s)) var(--c)}
+.k-brk .vf-ol{border-style:dashed}
+.k-pgd .vf-ol,.k-pwd .vf-ol{box-shadow:inset 0 0 calc(16px*var(--s)) var(--c),0 0 calc(12px*var(--s)) var(--c)}
+/* 베기: 카드 폭을 넘어 가로지르는 굵은 빛줄기와 잔상 */
+.vf-bm{left:-22%;top:calc(50% - 6px*var(--s));width:144%;height:calc(12px*var(--s));border-radius:6px;background:linear-gradient(90deg,transparent,var(--c) 22%,#fff 50%,var(--c) 78%,transparent);box-shadow:0 0 calc(14px*var(--s)) var(--c);opacity:0;transform-origin:0 50%;rotate:var(--rot,-30deg);animation:vfbm calc(var(--dur)*.7) cubic-bezier(.15,.8,.25,1) both}
+.vf-bm.t2{height:calc(5px*var(--s));top:calc(50% - 2px*var(--s) + 9px);animation-delay:55ms;opacity:0;filter:none}
+.vf-bm.t3{top:calc(50% - 4px*var(--s) - 11px);height:calc(7px*var(--s));animation-delay:110ms}
+@keyframes vfbm{0%{opacity:1;transform:scaleX(0)}28%{opacity:1;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1.06)}}
+.k-hit.s-ctr .vf-bm{rotate:-18deg;height:calc(14px*var(--s))}
+/* 찌르기: 옆에서 굵은 창끝이 꽂힌다 */
+.vf-st{left:-30%;top:calc(50% - 5px*var(--s));width:96%;height:calc(10px*var(--s));background:linear-gradient(90deg,transparent,var(--c) 45%,#fff);clip-path:polygon(0 30%,86% 30%,100% 50%,86% 70%,0 70%);filter:drop-shadow(0 0 calc(6px*var(--s)) var(--c));opacity:0;animation:vfst calc(var(--dur)*.55) cubic-bezier(.05,.9,.2,1) both}
+.vf-st.t2{top:calc(50% - 2px*var(--s) + 12px);height:calc(4px*var(--s));animation-delay:50ms;width:70%}
+@keyframes vfst{0%{opacity:1;transform:translateX(-60%)}34%{opacity:1;transform:translateX(34%)}100%{opacity:0;transform:translateX(40%)}}
+/* 고리: 충격 · 막음 · 흘리기 · 회복에 쓴다 */
+.vf-rg{left:50%;top:50%;width:min(130%,calc(150px*var(--s)));aspect-ratio:1;translate:-50% -50%;border-radius:50%;border:calc(5px*var(--s)) solid var(--c);box-shadow:0 0 calc(12px*var(--s)) var(--c);opacity:0;animation:vfrg calc(var(--dur)*.62) cubic-bezier(.1,.7,.3,1) both}
+.vf-rg.r2{animation-delay:90ms;border-width:calc(3px*var(--s))}
+.vf-rg.r3{animation-delay:170ms;border-width:calc(2px*var(--s))}
+@keyframes vfrg{0%{opacity:1;transform:scale(.15)}100%{opacity:0;transform:scale(1)}}
+.vf-dust{left:50%;top:60%;width:min(150%,170px);height:calc(46px*var(--s));translate:-50% -50%;border-radius:50%;background:radial-gradient(ellipse,rgba(255,240,210,.7),transparent 70%);opacity:0;animation:vfdust calc(var(--dur)*.6) ease-out both}
+@keyframes vfdust{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(1.3)}}
+/* 주문: 환한 원이 터지고 원소 입자가 튄다 */
+.vf-bu{left:50%;top:50%;width:calc(170px*var(--s));height:calc(170px*var(--s));margin:calc(-85px*var(--s)) 0 0 calc(-85px*var(--s));border-radius:50%;background:radial-gradient(circle,#fff 0,var(--c) 26%,transparent 66%);opacity:0;animation:vfbu calc(var(--dur)*.6) ease-out both}
+@keyframes vfbu{0%{opacity:.95;transform:scale(.2)}100%{opacity:0;transform:scale(1.2)}}
+.vf-p,.vf-sp{left:50%;top:50%;width:calc(8px*var(--s));height:calc(8px*var(--s));margin:calc(-4px*var(--s)) 0 0 calc(-4px*var(--s));border-radius:2px;background:var(--c);box-shadow:0 0 6px var(--c);opacity:0;animation:vfp calc(var(--dur)*.8) ease-out both}
+.vf-sp{width:calc(3px*var(--s));height:calc(16px*var(--s));border-radius:2px;background:linear-gradient(var(--c),#fff);animation-name:vfsp}
+.pf-fire{width:calc(11px*var(--s));height:calc(15px*var(--s));border-radius:50% 50% 50% 50%/65% 65% 35% 35%;background:radial-gradient(circle at 50% 70%,#fff3b0,#ff8a3d 55%,#e0442b);box-shadow:0 0 8px #ff8a3d}
+.pf-frost{width:calc(10px*var(--s));height:calc(16px*var(--s));border-radius:0;background:linear-gradient(135deg,#fff,#9fdcff);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);box-shadow:none;filter:drop-shadow(0 0 4px #9fdcff)}
+.pf-drop{width:calc(9px*var(--s));height:calc(12px*var(--s));border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:#7ed957;box-shadow:0 0 6px #7ed957}
+.pf-blood{background:#c8302a;box-shadow:0 0 6px #e0483b}
+.pf-star{clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);border-radius:0;background:var(--c)}
+@keyframes vfp{0%{opacity:1;transform:translate(0,0) rotate(0) scale(1)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) rotate(var(--rot)) scale(.4)}}
+@keyframes vfsp{0%{opacity:1;transform:translate(0,0) rotate(var(--rot))}100%{opacity:0;transform:translate(var(--tx),var(--ty)) rotate(var(--rot))}}
+.vf-zz{left:10%;top:-14%;width:80%;height:128%;color:var(--c);filter:drop-shadow(0 0 calc(7px*var(--s)) var(--c));opacity:0;animation:vfzz calc(var(--dur)*.5) steps(4,end) both}
+@keyframes vfzz{0%{opacity:1;transform:scaleY(.2)}20%{opacity:1;transform:scaleY(1)}45%{opacity:.3}60%{opacity:1}100%{opacity:0}}
+/* 화살 · 반격 선: 내 칸에서 맞은 카드로 날아가 박힌다 */
+.vf-ar{left:var(--x0);top:var(--y0);width:calc(64px*var(--s));height:calc(4px*var(--s));margin-top:calc(-2px*var(--s));background:linear-gradient(90deg,transparent,var(--c));filter:drop-shadow(0 0 4px var(--c));transform-origin:0 50%;opacity:0;animation:vfar var(--fly,200ms) linear both}
+.vf-ar::after{content:'';position:absolute;right:-3px;top:-5px;border-left:calc(12px*var(--s)) solid #fff;border-top:calc(7px*var(--s)) solid transparent;border-bottom:calc(7px*var(--s)) solid transparent}
+.k-hit.s-ctr .vf-ar{height:calc(8px*var(--s));margin-top:calc(-4px*var(--s));width:calc(120px*var(--s))}
+@keyframes vfar{0%{opacity:0;transform:rotate(var(--ang)) translateX(0)}10%{opacity:1}100%{opacity:1;transform:rotate(var(--ang)) translateX(var(--len))}}
+.vf-stuck{left:calc(50% - 22px);top:calc(50% - 2px);width:calc(44px*var(--s));height:calc(4px*var(--s));background:linear-gradient(90deg,transparent,var(--c) 30%,#fff);rotate:-20deg;opacity:0;animation:vfstuck 420ms ease-out both;animation-delay:var(--dl,0ms)}
+@keyframes vfstuck{0%{opacity:1;transform:translateX(-30px)}25%{opacity:1;transform:translateX(0)}70%{opacity:1}100%{opacity:0}}
+/* 회피 · 스침: 잔상이 남으며 옆으로 빠진다 */
+.vf-gz{inset:0;background:linear-gradient(115deg,transparent 40%,rgba(235,235,235,.85) 49%,transparent 58%);opacity:0;animation:vfgz calc(var(--dur)*.5) ease-out both}
+@keyframes vfgz{0%{opacity:1;transform:translateX(-80%)}100%{opacity:0;transform:translateX(80%)}}
+.vf-gx{inset:0;border-radius:inherit;border:calc(2px*var(--s)) solid rgba(235,235,235,.8);background:rgba(235,235,235,.14);opacity:0;animation:vfgx calc(var(--dur)*.8) ease-out both}
+.vf-gx.g2{animation-delay:70ms;opacity:0;background:rgba(235,235,235,.08)}
+@keyframes vfgx{0%{opacity:.9;transform:translateX(0)}100%{opacity:0;transform:translateX(calc(34px*var(--s)))}}
+/* 붕괴: 금이 가고 조각이 튄다 / 처치: 흐려지며 흩어진다 */
+.vf-sh{left:50%;top:50%;width:calc(16px*var(--s));height:calc(12px*var(--s));margin:calc(-6px*var(--s)) 0 0 calc(-8px*var(--s));background:var(--c);clip-path:polygon(0 100%,50% 0,100% 80%);opacity:0;animation:vfp calc(var(--dur)*.8) cubic-bezier(.2,.7,.3,1) both}
+.vf-crack{inset:0;background:linear-gradient(115deg,transparent 47%,#fff 49%,transparent 51%),linear-gradient(60deg,transparent 47%,var(--c) 49%,transparent 51%);opacity:0;animation:vfcr calc(var(--dur)*.7) ease-out both}
+@keyframes vfcr{0%{opacity:1;transform:scale(.7)}40%{opacity:1;transform:scale(1.03)}100%{opacity:0;transform:scale(1.08)}}
+.vf-gh{inset:0;border-radius:inherit;background:linear-gradient(180deg,var(--c),transparent);opacity:0;animation:vfgh calc(var(--dur)*.9) ease-out both}
+@keyframes vfgh{0%{opacity:.4;transform:scale(1)}100%{opacity:0;transform:scale(1.12) translateY(-12px)}}
+.k-kill .vf-p{top:60%}
+/* 맞은 내 칸: 할퀸 자국 */
+.vf-cl{left:20%;top:-8%;width:60%;height:116%;background:repeating-linear-gradient(115deg,transparent 0 9px,rgba(255,120,100,.95) 9px 12px,transparent 12px 20px);clip-path:inset(0 100% 0 0);opacity:0;animation:vfcl calc(var(--dur)*.55) cubic-bezier(.2,.7,.2,1) both}
+.vf-cl.c2{animation-delay:70ms;left:38%;width:50%}
+@keyframes vfcl{0%{opacity:1;clip-path:inset(0 100% 0 0)}35%{opacity:1;clip-path:inset(0 0 0 0)}100%{opacity:0;clip-path:inset(0 0 0 0)}}
+/* 방패(받아냄): 크게 부딪히며 자리 잡는다 */
+.vf-sv{left:50%;top:50%;height:max(min(110%,calc(96px*var(--s))),calc(64px*var(--s)));width:auto;aspect-ratio:40/46;translate:-50% -50%;color:var(--c);opacity:0;filter:drop-shadow(0 0 calc(8px*var(--s)) var(--c));animation:vfsv calc(var(--dur)*.9) cubic-bezier(.2,1.4,.4,1) both}
+@keyframes vfsv{0%{opacity:0;transform:scale(2)}20%{opacity:1;transform:scale(.94)}34%{transform:scale(1.06)}52%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1)}}
+/* 회복 · 보호막 얻기: 빛이 올라온다 */
+.vf-gl{inset:0;border-radius:inherit;background:radial-gradient(ellipse at 50% 100%,var(--c),transparent 74%);opacity:0;animation:vfgl var(--dur) ease-out both}
+@keyframes vfgl{0%{opacity:0}30%{opacity:.62}100%{opacity:0}}
+.vf-up{left:var(--ux);bottom:6%;width:calc(8px*var(--s));height:calc(8px*var(--s));border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c);opacity:0;animation:vfup calc(var(--dur)*.85) ease-out both}
+@keyframes vfup{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(calc(-56px*var(--s))) scale(.5)}}
+.k-heal .vf-rg,.k-wgain .vf-rg{top:80%;width:min(140%,calc(120px*var(--s)))}
+.vf-dt{left:10%;bottom:8%;width:calc(34px*var(--s));height:calc(34px*var(--s));border-radius:50%;background:radial-gradient(circle,var(--c),transparent 70%);opacity:0;animation:vfdt calc(var(--dur)*.7) ease-out both}
+.vf-dt.d2{left:auto;right:10%;animation-delay:90ms}
+@keyframes vfdt{0%{opacity:.9;transform:scale(.4)}100%{opacity:0;transform:scale(1.3)}}
+/* 상태 부여: 카드 위에 아이콘이 톡 튄다 */
+.vf-sti{left:50%;top:-6%;translate:-50% 0;font-size:calc(26px*var(--s));line-height:1;filter:drop-shadow(0 0 6px var(--c)) drop-shadow(0 1px 2px #000);opacity:0;animation:vfsti var(--dur) cubic-bezier(.2,1.5,.4,1) both}
+@keyframes vfsti{0%{opacity:0;transform:translateY(14px) scale(.3)}22%{opacity:1;transform:translateY(-10px) scale(1.35)}40%{transform:translateY(-4px) scale(1)}78%{opacity:1}100%{opacity:0;transform:translateY(-16px) scale(1)}}
+/* 피해 숫자: 크게, 튀어 오르고, 큰 타격은 더 크게(10-base의 .dpop을 덮는다) */
+.dpop{font-size:calc(24px*var(--fs,1));-webkit-text-stroke:.5px rgba(0,0,0,.7);text-shadow:0 2px 3px #000,0 0 8px rgba(0,0,0,.75);animation:popup 1.5s ease-out forwards,dpb .38s cubic-bezier(.2,2.1,.4,1) both}
+.dpop.big{font-size:calc(34px*var(--fs,1));text-shadow:0 2px 3px #000,0 0 10px rgba(0,0,0,.8),0 0 14px currentColor}
+@keyframes dpb{0%{scale:.4}60%{scale:1.5}100%{scale:1}}
+/* 약하게: 입자 · 번쩍임 · 글자표를 줄이고 옅게 */
+#vfx.low .vf{opacity:.75}#vfx.low .vf-p,#vfx.low .vf-sp,#vfx.low .vf-sh,#vfx.low .vf-fl,#vfx.low .vf-fl2,#vfx.low .vf-lb{display:none}
+/* 움직임 줄이기: 색 윤곽(과 정지한 방패 · 아이콘)의 불투명도만 바뀐다 */
+.vf.rm>i,.vf.rm>svg{animation-name:vfop!important;animation-duration:560ms!important;animation-delay:0s!important;animation-timing-function:linear!important;transform:none!important;clip-path:none!important;filter:none!important}
+.vf.rm .vf-ol{border-width:3px!important;box-shadow:none!important}
+.vf.rm.k-phit .vf-ol{border-color:var(--c)}
+.vf.rm .vf-gh{background:rgba(0,0,0,.4)}
+.vf.rm .vf-lb{animation-name:vfop!important;animation-duration:640ms!important;transform:none!important}
+.vf.rm .vf-sti{animation-name:vfop!important;animation-duration:640ms!important;transform:none!important}
+@keyframes vfop{0%{opacity:0}25%{opacity:.9}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.dpop{animation:none}.dpop.big{animation:none}}
+html.rm .dpop{animation:popfade 1.4s linear forwards}

@@ -1,0 +1,41 @@
+/* ===== 전투 화면 자유 캔버스 (10월 11일 0.6a.2-120) ===== */
+/* 캔버스: 칸마다 왼쪽 --fx(폭의 %), 위 --fy(화면 높이 --ch0의 %), 폭 --fw(%), 고정 높이 --fh(%). 위치는 값이 정하고 JS(hudFreePlace)는 밀기와 화면 안 지키기만 다듬는다 */
+.bgrid.bfree{grid-template-columns:minmax(0,1fr);grid-template-rows:auto;grid-template-areas:"canvas"}
+@media (min-width:1100px){.bgrid.bfree{grid-template-columns:minmax(0,1fr) 320px;grid-template-areas:"canvas log"}.bgrid.bfree.hl-nopanel{grid-template-columns:minmax(0,1fr);grid-template-areas:"canvas"}}
+.fcanvas{grid-area:canvas;position:relative;min-width:0;height:var(--ch0,100vh);overflow-x:clip}
+.fm{position:absolute;box-sizing:border-box;margin:0;left:calc(var(--fx,0)*1%);top:calc(var(--fy,0)*.01*var(--ch0,800px));width:max(calc(var(--fw,100)*1%),96px);min-width:96px;z-index:1}
+.fm.fh{height:calc(var(--fh,10)*.01*var(--ch0,800px))}
+.fm.fh>.hmod{height:calc(var(--fh,10)*.01*var(--ch0,800px)/var(--zm,1));overflow:auto;box-sizing:border-box}
+/* 안전망: 가려진 잠긴 칸은 전투 중 맨 위로 올린다 */
+.fm.fz{z-index:90!important}
+/* 겹침을 허용한 배치에서 키보드로 닿은 칸은 맨 위로 올라와 초점이 가려지지 않는다(WCAG 2.4.11) */
+.fm:focus-within{z-index:60!important}
+.fm>.hmod{margin:0}
+/* 이어 그리는 칸(hm)이 바로 이어 놓이면 전처럼 한 판으로 보인다 */
+.fm.fj>.hmod{border-top-width:0;border-top-left-radius:0;border-top-right-radius:0}
+.fm.fn>.hmod{border-bottom-left-radius:0;border-bottom-right-radius:0}
+html.fitscroll .bgrid.bfree{flex:none;grid-template-rows:auto}
+/* 편집: 정렬선, 영역 고르기, 손잡이, 겹침, 읽는 순서 번호 */
+.hguide{position:absolute;background:#f2993a;pointer-events:none;z-index:85}
+.hguide.v{width:2px}.hguide.h{height:2px}
+.hmarq{position:fixed;border:2px dashed #f2993a;background:rgba(242,153,58,.12);pointer-events:none;z-index:96}
+.hbox .hrh{position:absolute;display:none;width:24px;height:24px;border-radius:6px;background:var(--panel2);border:2px solid #f2993a;box-sizing:border-box;touch-action:none;z-index:2}
+.hbox.hh .hrh{display:block}
+.hrh-nw{left:-12px;top:-12px;cursor:nwse-resize}.hrh-ne{right:-12px;top:-12px;cursor:nesw-resize}.hrh-se{right:-12px;bottom:-12px;cursor:nwse-resize}.hrh-sw{left:-12px;bottom:-12px;cursor:nesw-resize}
+.hrh-n{left:50%;top:-12px;margin-left:-22px;width:44px!important;cursor:ns-resize}.hrh-s{left:50%;bottom:-12px;margin-left:-22px;width:44px!important;cursor:ns-resize}
+.hrh-w{top:50%;left:-12px;margin-top:-22px;height:44px!important;cursor:ew-resize}.hrh-e{top:50%;right:-12px;margin-top:-22px;height:44px!important;cursor:ew-resize}
+.hov[data-free] .hbox{cursor:move}
+.hov[data-free] .hbox.on{touch-action:none;background:rgba(242,153,58,.12);border-color:#f2993a}
+.hov[data-free] .hbox.lp{outline:3px solid #f2993a}
+.hov[data-free] .htag{min-height:24px;opacity:.92}
+.hbox.ovl{border-color:var(--bad);background:rgba(200,60,50,.12)}
+.hbox.ovl .htag{background:var(--bad);color:#1a1206;border-color:var(--bad)}.hbox.ovl .htag small,.hbox.ovl .hgrip{color:#1a1206}
+.hbox.ovl .htag::after{content:' 겹침';font-weight:700}
+.hnum{display:none;min-width:20px;height:20px;margin-right:4px;border-radius:10px;background:var(--gold);color:var(--gold-ink);font-size:calc(13px*var(--fs,1));font-weight:700;line-height:20px;text-align:center}
+html.hnums .hnum{display:inline-block}
+.hl-noincx .incoming .inca{display:none}
+/* 격자 보기: 붙이기 간격(--hgs, 없으면 16px)의 선을 캔버스 위에 그린다(칸 위에서도 보이고, 눌림은 막지 않는다) */
+html.hgrid.hedit .fit:has(.fcanvas){background-image:none}
+html.hgrid.hedit .fcanvas::before{content:'';position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none;z-index:50;background-image:linear-gradient(90deg,rgba(230,220,203,.22) 1px,transparent 1px),linear-gradient(rgba(230,220,203,.22) 1px,transparent 1px);background-size:var(--hgs,16px) var(--hgs,16px)}
+.fm>.hmod.hstub{justify-content:flex-end;text-align:right}
+.hov .hbox.on{z-index:3}.hov .hbox.hh{z-index:4}

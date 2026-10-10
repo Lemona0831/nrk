@@ -1,0 +1,28 @@
+/* ===== 가독성 정리 (0.6a.2-113, docs/조사/UI-근거.md 가독성 절) =====
+   글자는 세 단계로 쓴다: 보조 13px · 본문 16px · 제목 18px (글자 크기 설정이 곱해진다). 10~12.5px 글자는 없앴고(앞 파일에서 일괄),
+   보조 글자색 --muted는 어두운 칸 위에서도 7:1 이상으로 올렸다. 이 파일은 그 위에 얹는 공통 규칙만 모은다. */
+/* 숫자는 폭이 같게 맞춘다(생명력 · 피해 · 골드가 바뀌어도 자리가 흔들리지 않는다) */
+body{font-variant-numeric:tabular-nums}
+/* 긴 설명 글은 한 줄이 너무 길어지지 않게 38em(한글 40자 안팎)까지만 늘린다 */
+:where(.card,.sheet,.news,.chg,.tdet,.coach,.banner,.lead,.note) :where(p,li,dd){max-width:38em}
+:where(.card,.sheet,.news,.chg,.tdet) :where(.mini,.lore){max-width:38em}
+.hero p,.hero .lore{margin-left:auto;margin-right:auto}
+/* 브라우저 기본 small(83%)이 13px 아래로 내려가지 않게 한다 */
+small{font-size:calc(13px*var(--fs,1))}
+.sts .sgn,.cmpl .ar{font-size:1em}
+/* 흐리게 만든 글자는 투명도로 대비가 깨지지 않게 높인다 */
+.ord li.nx,.ord li.dn{opacity:.9}.ab .spd.sn{opacity:.8}.tnode.t-hidden .tc{opacity:1}
+.lane.front{--lc:#ef9677}.lane.back{--lc:#93b8f0}
+.newdot,.en .eord.soon{background:#8f2b21;border-color:#8f2b21}
+/* 숫자는 굵게 */
+.bar span,.inum,.dr-nums b,.gold-n,.tpts b,.sgold dd,output{font-weight:700}
+/* 버튼 위계: 주 행동은 금색 채움, 보조는 기본 윤곽, 되돌릴 수 없는 행동은 붉은 윤곽 */
+button[data-a=giveup]:not(.gold),button[data-a=logout]:not(.gold),button[data-a=treereset]:not(.gold){border-color:var(--bad);color:var(--bad)}
+/* 전투 카드: 적 이름 · 예고 문장은 굵게, 생명력 숫자는 굵게 13px(전장 높이를 지키려고 크기는 올리지 않았다) */
+.en .nm,.field .enh .nm{font-weight:700;line-height:1.25}
+.intent,.field .intent{font-weight:600;line-height:1.3}.intent .itx{font-weight:600}
+.bar span{font-size:calc(13px*var(--fs,1))}
+/* 카드 사이 간격은 12px로 일정하게, 카드 안 여백은 넉넉하게 */
+.card{padding:14px;margin-bottom:12px}button{line-height:1.3}
+/* 터치 대상: 머리줄 단추 · 도움말 단추 · 트리 칸은 손가락 크기(44px)로, 전투 화면 머리줄은 전장 높이를 지키려고 40px */
+.hdr .mtog,.hdr .sndb,.qm,.tstart,.tslot{min-height:44px}.fit .hdr .sndb,.fit .hdr .mtog{min-height:40px}button.sm.fdtog{min-height:40px}.qm{min-width:44px}

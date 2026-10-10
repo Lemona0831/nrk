@@ -1,10 +1,10 @@
 # 나락의 유산 — Claude Code 작업 안내
 
-텍스트형 다크 판타지 턴제 ARPG다. 지금 지인 주소는 0.6a(1챕터)다. 지인과 함께 노는 개인 프로젝트이며, 지인 테스트 기록을 읽고 고치는 일을 반복한다. 사이트는 GitHub Pages(https://lemona0831.github.io/nrk/), 기록은 Supabase에 모인다.
+텍스트형 다크 판타지 턴제 ARPG다. 지금 지인 주소는 0.7.0(1~3챕터, 10월 11일 06a2를 내보낸 판)이고, 옛 0.6a(1챕터)는 `b06a/`에 보관한다. 지인과 함께 노는 개인 프로젝트이며, 지인 테스트 기록을 읽고 고치는 일을 반복한다. 사이트는 GitHub Pages(https://lemona0831.github.io/nrk/), 기록은 Supabase에 모인다.
 
 ## 주소와 개발 흐름 (10월 2일 0.6a 공개)
 
-- 지인 주소(루트 `index.html`, `data/`, `audio/`) = 0.6a 안정판. **루트를 직접 고치지 않는다.**
+- **10월 11일 06a2를 루트로 내보냈다(0.7.0, 만든 사람 승인).** 지인 주소(루트 `index.html` · `remote.html` · `data/` · `js/` · `css/` · `remote/` · `audio/`) = 06a2의 사본이다. **루트를 직접 고치지 않는다**: 개발은 `06a2/`에서 하고, 내보낼 때 `python tools/release062.py`로 사본을 만들어 `rehearse062.py` · `smoke_site.py`로 점검한 뒤 루트에 복사한다(절차 · 되돌리는 법 docs/검증/06a2-루트교체-점검표.md. `config.js` · `privacy.html`은 루트 것을 그대로 둔다). 옛 루트(0.6a, 1챕터)는 `b06a/`에 읽기 전용으로 보관한다(경로만 `../config.js` · `../privacy.html` · `../audio/`로 고쳤고 제목만 "0.6a (이전 판)", 저장 키 `nrk_06_v1`이 같아 옛 캐릭터가 그대로 열린다). 루트(0.7.0)는 06a2와 같은 키 `nrk_062_v1` · 경로 runs62 · rank62를 써서 지인의 0.7.0 기록은 새로 시작한다. 교체 직전 루트 커밋은 6591361c7a80816ea0ef1db6d4a13302ed4f3a08
 - 지인 사이트(루트)를 직접 고치는 것은 만든 사람이 승인한 고침만, next/와 같은 문장으로 한다(10월 2일: 기록 내려받기, 방패병, 기다리는 캐릭터, 포기된 깬 캐릭터 되살리기). 0.6b를 공개할 때 next/가 그대로 덮으므로 next/에도 반드시 같은 고침이 있어야 한다
 - 개발은 `next/`에서 한다(미리보기 https://lemona0831.github.io/nrk/next/). 지금은 0.6b(2챕터와 성장 시스템, docs/기록/0.6b-구현계획.md, 기획서 11.12절)를 만든다. 지인에게 내보낼 때 `python tools/release.py`로 next/를 루트에 복사하고(`../` 경로를 고침), `python tools/smoke_site.py .`로 루트를 점검한 뒤 커밋한다. 내보낼 때 next/의 `VERSION`과 타이틀 표시를 맞춘다
 - B0.5는 `b05/index.html`에 보관(https://lemona0831.github.io/nrk/b05/). 고치지 않는다. B0.5 기록(runs·best 등)은 저장소에 그대로 있고, B0.5 결과 보기도 b05에서 연다
