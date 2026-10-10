@@ -37,7 +37,7 @@ html.fitscroll .hz-mid{overflow:visible}
 }
 /* 편집 칸 */
 #hudedit .hzg{margin-top:8px}
-#hudedit h5{margin:6px 0 4px;font-size:calc(14px*var(--fs,1));color:var(--gold)}
+#hudedit h5{margin:6px 0 4px;font-size:calc(16px*var(--fs,1));color:var(--gold)}
 .hlist{list-style:none;margin:0;padding:0;display:grid;gap:6px;min-height:36px}
 .hlist.hdrop-in{outline:2px dashed var(--gold);outline-offset:2px}
 .hrow{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--panel)}
