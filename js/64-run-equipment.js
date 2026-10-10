@@ -30,7 +30,7 @@ function rollBonus(g) { const R = GRADE[g] || GRADE.n; return Math.round((R.lo +
 function poolOf(ch) { return (typeof CH_POOLS !== 'undefined' && CH_POOLS[ch]) || CH1_POOL; }
 /* 장비의 챕터(기본 수치의 챕터): 지금 챕터 풀에 없고 이전 챕터 풀에 있으면 그 챕터 (장비-경제.md 3절 옛 장비) */
 function itemChOf(k) { const c = (typeof G !== 'undefined' && G.run && G.run.ch) || 1; if (c >= 2 && typeof CH_POOLS !== 'undefined' && CH_POOLS[c] && !CH_POOLS[c].includes(k)) for (let x = c - 1; x >= 1; x--) if (CH_POOLS[x] && CH_POOLS[x].includes(k)) return x; return c; }
-function mkItem(k, o) { o = o || {}; const g = o.g || ITEMS[k].g || 'n'; return { uid: 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tpl: k, g, ch: o.ch || itemChOf(k), /* 10월 5일: 기본값이 늘 1이라 2챕터 드롭이 1챕터 수치로 나올 뻔했다 */ b: o.b != null ? o.b : rollBonus(g) }; }
+function mkItem(k, o) { o = o || {}; const g = o.g || ITEMS[k].g || 'n'; return { rollV: 2, foundAt: Date.now(), uid: 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tpl: k, g, ch: o.ch || itemChOf(k), /* 10월 5일: 기본값이 늘 1이라 2챕터 드롭이 1챕터 수치로 나올 뻔했다 */ b: o.b != null ? o.b : rollBonus(g) }; }
 function itemBase(it) { const sb = SLOT_BASE[tplKind(it.tpl)]; const v = sb.v[(it.ch || 1) - 1] * (1 + (it.b || 0) / 100); return { k: sb.k, lab: sb.lab, v }; }
 function baseText(it) { const x = itemBase(it); return x.k === 'flask' ? `${x.lab} ${Math.round(x.v * 1000) / 10}%` : x.k === 'wpn' ? `${x.lab} ${r1(x.v)}` : `${x.lab} +${Math.round(x.v)}`; }
 /* 장비 이름: 등급 글자(평 · 고 · 희 · 영 · 전, 색과 함께 글자로도 보인다)와 전설의 ✦. 색은 부르는 쪽의 gr-g가 입힌다 */
@@ -113,7 +113,7 @@ function compareHtml(run, uid, slot) {
 function itemDetail(it, opt) {
   const I = ITEMS[it.tpl]; const R = GRADE[it.g] || GRADE.n; const o = opt || {};
   return `<div class="idet grb-${it.g}"><div class="idet-h"><b class="gr-${it.g}">${inm(it.tpl, it.g)}</b>${gradeTag(it.g)}<span class="mini">${EQ_SLOT_N[kindOf(I.slot) === 'ring' ? 'ring1' : I.slot].replace(' 1', '')}</span></div>
-<div class="idet-base"><b>${baseText(it)}</b>${o.compact ? '' : ` <span class="mini">${I.kind === 'start' ? '시작 장비' : `${R.n} 범위 +${R.lo}~${R.hi}% 중 +${it.b}%`}</span>`}</div>${I.act ? `<div class="l act">${esc(I.act)}</div>` : ''}${I.cost ? `<div class="l cost">대가: ${esc(I.cost)}</div>` : ''}${I.lore && !o.compact ? `<p class="lore">${esc(I.lore)}</p>` : ''}</div>`;
+<div class="idet-base"><b>${baseText(it)}</b>${o.compact ? '' : ` <span class="mini">${I.kind === 'start' ? '시작 장비' : it.rollV===2 ? `${R.n} 범위 +${R.lo}~${R.hi}% 중 +${it.b}%` : `보유 보너스 +${it.b}%`}</span>`}</div>${I.act ? `<div class="l act">${esc(I.act)}</div>` : ''}${I.cost ? `<div class="l cost">대가: ${esc(I.cost)}</div>` : ''}${I.lore && !o.compact ? `<p class="lore">${esc(I.lore)}</p>` : ''}</div>`;
 }
 /* 지금 낀 장비 한 줄 (고르기 창: 아직 얻지 않은 장비는 비교할 수 없어 낀 것을 보인다) */
 function curLine(run, k) {
@@ -131,9 +131,11 @@ function winSumHtml() {
 }
 /* 휴대폰: 고른 장비의 설명이 화면 밖이면 보이게 굴린다 */
 function eqReveal() { setTimeout(() => { const d = document.querySelector('.sheet .eqdet'); if (!d) return; const r = d.getBoundingClientRect(); if (r.top < 0 || r.top > window.innerHeight - 120) d.scrollIntoView({ block: 'start', behavior: smoothB() }); }, 20); }
+function eqBagReveal(){setTimeout(()=>{const e=document.querySelector('.sheet .eqbag');if(e)e.scrollIntoView({block:'start',behavior:smoothB()});},20);}
 function vEquip() {
   const run = G.run; initGear(run); const p = run.p; const inFight = !!G.b && !G.b.over;
   const sel = G.eqSel || (G.eqSel = { slot: 'weapon' });
+  const filter = G.eqFilter || 'all', order = G.eqOrder || 'recent';
   const a = gearStats(p);
   let h = `<div class="eqsum" role="group" aria-label="지금 수치">${GSTAT.filter(x => x[0] !== 'mp' || !isV2(p)).map(([k, lab, fmt]) => `<span><small>${lab}</small><b>${fmt(a[k])}</b></span>`).join('')}</div>`;
   if (inFight) h += `<p class="warn">전투 중에는 보기만 합니다. 전투가 끝나면 바꿉니다.</p>`;
@@ -144,25 +146,32 @@ function vEquip() {
   }
   h += `</section><div class="eqdet" aria-live="polite">`;
   if (sel.uid && run.inv[sel.uid]) {
+    h += '<button class="sm" data-a="eqback">가방 목록으로</button>';
     const it = run.inv[sel.uid]; const kind = tplKind(it.tpl);
-    const slots = kind === 'ring' ? ['ring1', 'ring2'] : [kind];
+    const slots = kind === 'ring' ? (sel.slot==='ring2'?['ring2','ring1']:['ring1','ring2']) : [kind];
     h += itemDetail(it);
     for (const sl of slots) { const ew = equipWhy(run, it.uid, sl); h += compareHtml(run, it.uid, sl) + (ew && !inFight ? `<button class="gold wide adis" data-a="eqon" data-k="${it.uid}" data-s="${sl}" aria-disabled="true" data-why="${esc(ew)}" aria-label="${esc((slots.length > 1 ? EQ_SLOT_N[sl] + '에 끼기' : '끼기') + ', 낄 수 없음: ' + ew)}">${slots.length > 1 ? EQ_SLOT_N[sl] + '에 끼기' : '끼기'}</button><p class="mini">${esc(ew)}</p>` : `<button class="gold wide" data-a="eqon" data-k="${it.uid}" data-s="${sl}"${inFight ? ' disabled' : ''}>${slots.length > 1 ? EQ_SLOT_N[sl] + '에 끼기' : '끼기'}</button>`); }
     h += `<div class="row"><button class="sm" data-a="eqdrop" data-k="${it.uid}"${inFight ? ' disabled' : ''}>버리기</button></div>`;
   } else {
     const u = run.eqU[sel.slot], it = u && run.inv[u];
-    if (it) { h += itemDetail(it); if (sel.slot !== 'weapon') h += `<div class="row"><button data-a="eqoff" data-k="${sel.slot}"${inFight || run.bag.length >= BAG_MAX ? ' disabled' : ''}>가방에 넣기</button></div>`; else h += '<p class="mini">무기는 다른 무기로만 바꿉니다.</p>'; }
+    if (it) { h += itemDetail(it); if (sel.slot !== 'weapon') h += `<div class="row"><button data-a="eqoff" data-k="${sel.slot}"${inFight || bagUsed(run) >= BAG_MAX ? ' disabled' : ''}>가방에 넣기</button></div>`; else h += '<p class="mini">무기는 다른 무기로만 바꿉니다.</p>'; }
     else h += `<p class="mini">${EQ_SLOT_N[sel.slot]} 칸이 비어 있습니다.</p>`;
     const fit = run.bag.filter(x => run.inv[x] && kindOf(sel.slot) === tplKind(run.inv[x].tpl));
     h += fit.length ? `<p class="mini">가방에서 이 칸에 낄 수 있는 장비 ${fit.length}개. 아래 가방에서 고르세요.</p>` : '<p class="mini">가방에 이 칸에 낄 장비가 없습니다.</p>';
   }
   h += `</div></div>`;
-  h += `<section class="eqbag" aria-label="가방"><h4>가방 <span class="mini">${bagUsed(run)}/${BAG_MAX}${(run.cons || []).length ? ' · 소모품 ' + run.cons.length + '칸' : ''}${bagUsed(run) >= BAG_MAX ? ' · 가득 참' : ''}</span></h4><div class="baggrid">`;
-  for (let i = 0; i < BAG_MAX; i++) {
-    const u = run.bag[i], it = u && run.inv[u];
+  h += `<section class="eqbag" aria-label="가방"><h4>가방 <span class="mini">${bagUsed(run)}/${BAG_MAX}${(run.cons || []).length ? ' · 소모품 ' + run.cons.length + '칸' : ''}${bagUsed(run) >= BAG_MAX ? ' · 가득 참' : ''}</span></h4>`;
+  h += `<div class="invtools" role="group" aria-label="장비 찾기">${[['all','전체'],['slot','선택한 칸']].map(([k,n])=>`<button class="sm" data-a="eqfilter" data-k="${k}" aria-pressed="${filter===k}">${n}</button>`).join('')}<button class="sm" data-a="eqorder" data-k="${order==='recent'?'grade':'recent'}">${order==='recent'?'최근 획득순':'등급순'}</button><button class="sm" data-a="consopen">소모품 보기</button></div>`;
+  let bag = run.bag.filter(u=>run.inv[u] && (filter!=='slot'||tplKind(run.inv[u].tpl)===kindOf(sel.slot || 'weapon'))).slice().reverse();
+  if(order==='recent') bag.sort((a,b)=>(run.inv[b].foundAt||0)-(run.inv[a].foundAt||0));
+  if(order==='grade') bag.sort((a,b)=>'nmrhl'.indexOf(run.inv[b].g)-'nmrhl'.indexOf(run.inv[a].g)||run.inv[b].ch-run.inv[a].ch);
+  if(!bag.length) h += '<p class="mini">이 분류에 장비가 없습니다.</p>';
+  h += '<div class="baggrid">';
+  for (let i = 0; i < bag.length; i++) {
+    const u = bag[i], it = u && run.inv[u];
     if (!it) { h += `<div class="bagc empty" aria-hidden="true"></div>`; continue; }
     const fits = kindOf(sel.slot) === tplKind(it.tpl) && !sel.uid; const on = sel.uid === u;
-    h += `<button class="bagc grb-${it.g}${on ? ' on' : ''}${fits ? ' fits' : ''}" data-a="eqpick" data-k="${u}" aria-pressed="${on}"><span class="gr-${it.g}">${inm(it.tpl, it.g)}</span><small>${EQ_SLOT_N[kindOf(ITEMS[it.tpl].slot) === 'ring' ? 'ring1' : ITEMS[it.tpl].slot].replace(' 1', '')} · ${(GRADE[it.g] || GRADE.n).n}</small></button>`;
+    h += `<button class="bagc grb-${it.g}${on ? ' on' : ''}${fits ? ' fits' : ''}" data-a="eqpick" data-k="${u}" aria-pressed="${on}"><span class="gr-${it.g}">${inm(it.tpl, it.g)}</span><small>${EQ_SLOT_N[kindOf(ITEMS[it.tpl].slot) === 'ring' ? 'ring1' : ITEMS[it.tpl].slot].replace(' 1', '')} · ${it.ch || 1}챕터</small><small>${baseText(it)}</small></button>`;
   }
   h += `</div></section>`;
   const w = G.eqWhy || {};
@@ -260,7 +269,7 @@ function commitAct(id, tid) {
 function monkFix(b) { const p = b.p; delete p.ctrSince; delete b.kiFastHit; delete b.kiFastTurn; if (p.stance) { delete p.stance.max; delete p.stance.half; } }
 function restoreBattle(cur) {
   const bt = cur.battle; delete cur.battle;
-  G.run = cur; statFix(G.run); const b = bt.b; b.p = G.run.p; b.rngF = battleRng(b); b.stepMode = true;
+  G.run = cur; statFix(G.run); applyGear(G.run); const b = bt.b; b.p = G.run.p; b.rngF = battleRng(b); b.stepMode = true;
   if (G.run.tree && isV2(b.p)) { treeFix(G.run); b.p.skills = v2Equip(G.run); if (!b.p.cd) resetCharges(b.p); } // 개편 전 저장본: 바뀐 스킬과 재사용 대기
   if (b.p.build === 'monk') monkFix(b); // 수도승 단순화 전 저장본: 쓰지 않는 칸을 비운다
   if (!b.queue) { b.round = b.tick || 1; b.queue = ['p']; b.bonusUsed = 0; } // 라운드 전 저장본: 지금이 내 차례
@@ -276,4 +285,4 @@ const runLive = () => !!(G.run && !runOver(G.run));
 function curSweep() { const d = G.data; let n = 0; if (d.cur && runOver(d.cur)) { delete d.cur; n++; } if (d.kept) { const k = d.kept.filter(x => !runOver(x)); n += d.kept.length - k.length; d.kept = k; } if (n) saveLocal(); return n; }
 function saveCur() { if (!G.run || runOver(G.run)) return; try { G.data.cur = JSON.parse(JSON.stringify(G.run)); saveLocal(); } catch (e) { } }
 function clearCur() { delete G.data.cur; saveLocal(); }
-function resumeRun() { curSweep(); if (!G.data.cur) { render(); return; } dgFix(G.data.cur); if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); statFix(G.run); if (G.run.tree && isV2(G.run.p)) { treeFix(G.run); G.run.p.skills = v2Equip(G.run); } /* 0.6a.2: 시작 스킬이 생기기 전 저장본도 시작 스킬을 끼운다 */ G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); awkOpen(); }
+function resumeRun() { curSweep(); if (!G.data.cur) { render(); return; } dgFix(G.data.cur); if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); statFix(G.run); applyGear(G.run); if (G.run.tree && isV2(G.run.p)) { treeFix(G.run); G.run.p.skills = v2Equip(G.run); } /* 0.6a.2: 시작 스킬이 생기기 전 저장본도 시작 스킬을 끼운다 */ G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); awkOpen(); }

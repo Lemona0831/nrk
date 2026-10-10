@@ -47,6 +47,14 @@ function onClick(ev) {
       genShop(run); run.phase = 'shop'; G.scr = 'shop'; if ((run.ch || 1) >= AWK.settleFrom && CHAPTERS[(run.ch || 1) + 1]) awkGrant(run); saveRunLocal(); saveCur(); window.scrollTo(0, 0);
       if (run.statPending) { openSheet('stats', { pts: run.statPending, pending: 1, why: '레벨 ' + run.lv + ' · 능력치 ' + run.statPending + '점' }); } else { render(); awkOpen(); } break; }
     case 'consopen': hidePop(); openSheet('cons'); break;
+    case 'consfilter': if(G.sheet && G.sheet.kind==='cons'){G.sheet.data.filter=el.dataset.k;render();} break;
+    case 'consonly': if(G.sheet && G.sheet.kind==='cons'){G.sheet.data.only=!G.sheet.data.only;render();} break;
+    case 'conssearch': if(G.sheet && G.sheet.kind==='cons'){G.sheet.data.query=val('consquery').trim();render();} break;
+    case 'consdiscard': {if(G.b&&!G.b.over){toast('전투 밖에서 정리합니다');break;}const r=G.run,i=+el.dataset.k,c=(r.cons||[])[i];if(c&&ask(consName(c)+' '+c.n+'개를 모두 버릴까요?')){r.cons.splice(i,1);saveRunLocal();saveCur();render();}break;}
+    case 'constarget': G.sel=el.dataset.k;render();break;
+    case 'eqfilter': G.eqFilter=el.dataset.k;render();break;
+    case 'eqorder': G.eqOrder=el.dataset.k;render();break;
+    case 'eqback': G.eqSel={slot:(G.eqSel||{}).slot||'weapon'};render();eqBagReveal();break;
     case 'consuse': { const run = G.run, b = G.b && !G.b.over ? G.b : null; const why = consUse(b, run, +el.dataset.k, G.sel); if (why) { toast(why); break; } if (b && b.over) { G.sheet = null; afterTurn(b); break; } if (!b) { saveRunLocal(); saveCur(); } render(); break; }
     case 'consbuy': { const run = G.run, S = run.shop, x = S && S.cons && S.cons[+el.dataset.k]; if (!x || run.phase !== 'shop') break; if ((run.gold || 0) < x.price) { toast('골드가 모자랍니다'); break; } if (consAdd(run, x.id, 'n', 1)) { toast('가방이 가득 찼습니다. 먼저 팔거나 버려 주세요'); break; } run.gold -= x.price; S.log.push({ a: 'consbuy', id: x.id, price: x.price, t: Date.now() }); sfx('coin'); saveRunLocal(); saveCur(); render(); break; }
     case 'conssell': { const run = G.run, S = run.shop, c = (run.cons || [])[+el.dataset.k]; if (!c || !S) break; const v = consSell(c); c.n--; if (c.n <= 0) run.cons.splice(+el.dataset.k, 1); run.gold = (run.gold || 0) + v; S.log.push({ a: 'conssell', id: c.id, g: c.g, price: v, t: Date.now() }); sfx('coin'); saveRunLocal(); saveCur(); render(); break; }
@@ -232,16 +240,18 @@ function onClick(ev) {
     case 'dropequip': { const run = G.run; const msg = equipUid(run, el.dataset.k, el.dataset.s, 'free'); G.sheet = null; saveRunLocal(); saveCur(); toast(msg || '끼웠습니다'); nextDrop(); break; }
     case 'bfdrop': { const run = G.run; const S = G.sheet; discardUid(run, el.dataset.k); const it = S.data.item, then = S.data.then; G.sheet = null; giveItem(it, then); break; }
     case 'bfskip': { const run = G.run; const S = G.sheet; (run.discards = run.discards || []).push({ room: run.room, item: S.data.item.tpl, g: S.data.item.g, t: Date.now(), new: 1 }); G.sheet = null; saveRunLocal(); saveCur(); nextDrop(); break; }
-    case 'eqsel': G.eqSel = { slot: el.dataset.k }; render(); eqReveal(); break;
-    case 'eqpick': { const u = el.dataset.k; G.eqSel = G.eqSel && G.eqSel.uid === u ? { slot: G.eqSel.slot } : { slot: (G.eqSel || {}).slot || 'weapon', uid: u }; render(); eqReveal(); break; }
-    case 'eqon': { const run = G.run; const msg = equipUid(run, el.dataset.k, el.dataset.s, 'free'); if (!msg) { G.eqSel = { slot: el.dataset.s }; saveRunLocal(); saveCur(); toast('끼웠습니다'); } else toast(msg); render(); break; }
+    case 'eqsel': G.eqSel = { slot: el.dataset.k }; G.eqFilter='slot'; render(); eqReveal(); break;
+    case 'eqpick': { const u = el.dataset.k,it=G.run.inv[u];if(!it)break;const kind=tplKind(it.tpl),prev=(G.eqSel||{}).slot,slot=kind==='ring'?(kindOf(prev)==='ring'?prev:'ring1'):kind; G.eqSel = G.eqSel && G.eqSel.uid === u ? { slot } : { slot, uid: u }; render(); eqReveal(); break; }
+    case 'eqon': { const run = G.run; const msg = equipUid(run, el.dataset.k, el.dataset.s, 'free'); if (!msg) { G.eqSel = { slot: el.dataset.s }; saveRunLocal(); saveCur(); toast('끼웠습니다'); } else toast(msg); render(); if(!msg)eqBagReveal(); break; }
     case 'eqoff': { const run = G.run; const msg = unequipUid(run, el.dataset.k, 'free'); if (!msg) { saveRunLocal(); saveCur(); toast('가방에 넣었습니다'); } else toast(msg); render(); break; }
     case 'eqdrop': { const run = G.run; const it = run.inv[el.dataset.k]; if (!it || !ask(ITEMS[it.tpl].n + '을(를) 버릴까요? 버린 장비는 사라집니다.')) break; discardUid(run, it.uid); G.eqSel = { slot: (G.eqSel || {}).slot || 'weapon' }; saveRunLocal(); saveCur(); toast('버렸습니다'); render(); break; }
     case 'dropkeep': G.sheet = null; nextDrop(); break;
+    case 'droporganize': G.sheet=null;nextDrop();if(!G.sheet){G.eqSel=null;G.eqFilter='all';openSheet('equip');eqBagReveal();}break;
     case 'dropdiscard': { const run = G.run; const it = run.inv[el.dataset.k]; if (!it || !ask(ITEMS[it.tpl].n + '을(를) 버릴까요? 버린 장비는 사라집니다.')) break; discardUid(run, it.uid); G.sheet = null; saveRunLocal(); saveCur(); toast('버렸습니다'); nextDrop(); break; }
   }
 }
 function onKey(ev) {
+  if(ev.key==='Enter' && ev.target && ev.target.id==='consquery'){ev.preventDefault();const btn=document.querySelector('[data-a=conssearch]');if(btn)btn.click();return;}
   if (G.hudEd && hudEdKey(ev)) return;
   if (ev.key === 'Tab' && G.sheet) sheetTrap(ev);
   const typing = ev.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ev.target.tagName);

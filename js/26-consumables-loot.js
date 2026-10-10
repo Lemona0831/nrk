@@ -5,6 +5,11 @@ const consSell = c => { const D = CONS[c.id]; return D.use === 'none' ? D.sell :
 const bagUsed = run => (run.bag ? run.bag.length : 0) + ((run.cons || []).length);
 const consVal = c => { const D = CONS[c.id]; return c.g === 'm' && D.vm != null ? D.vm : D.v; };
 const consName = c => CONS[c.id].n + (c.g === 'm' ? ' (고급)' : '');
+function consGroup(D){return ['heal','healcure','stam','cure','trim'].includes(D.k)?'restore':D.use==='none'||D.use==='out'?'other':'battle';}
+function consRows(run,b,filter,only,query,tgt){
+  const q=String(query||'').toLocaleLowerCase();
+  return (run.cons||[]).map((c,i)=>({c,i,D:CONS[c.id]})).filter(x=>x.D).map(x=>Object.assign(x,{why:consWhyNot(b,run,x.c,tgt)})).filter(x=>(!filter||filter==='all'||consGroup(x.D)===filter)&&(!only||!x.why)&&(!q||(consName(x.c)+' '+x.D.sit+' '+x.D.d(consVal(x.c))).toLocaleLowerCase().includes(q))).sort((a,b)=>Number(!!a.why)-Number(!!b.why)||a.i-b.i);
+}
 const consLvMul = b => 1 + 0.15 * (((b && b.ctx && b.ctx.lv) || 1) - 1);
 function consAdd(run, id, g, n) {
   run.cons = run.cons || []; const D = CONS[id]; if (!D) return n; g = g === 'm' && D.vm != null ? 'm' : 'n'; let left = n || 1;

@@ -22,6 +22,7 @@
 .eqwhy{margin-top:10px;font-size:calc(13px*var(--fs,1))}.eqwhy summary{cursor:pointer;color:var(--muted)}.eqwhy input[type=text]{width:100%;margin-top:6px}
 .eqskills{margin-top:10px}
 .baglist{display:flex;flex-direction:column;gap:4px;margin:8px 0}.bagline{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px;padding:4px 0;border-top:1px solid var(--line)}
+.invtools{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.invtools button[aria-pressed=true]{outline:2px solid var(--gold);outline-offset:-2px;background:var(--panel2)}.invsearch{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:center;margin:8px 0}.invsearch label{grid-column:1/-1;font-size:13px;color:var(--muted)}.invsearch input{min-width:0;width:100%}.bagline>div{min-width:0;overflow-wrap:anywhere}.bagline p{margin:4px 0}.bagline button{min-height:44px}.bagactions{display:flex;flex-direction:column;gap:6px}.eqbag{scroll-margin-top:12px}
 @media (min-width:720px){.eqcols{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}.baggrid{grid-template-columns:repeat(4,minmax(0,1fr))}.eqsum{grid-template-columns:repeat(6,minmax(0,1fr))}.sheet.sh-equip{max-width:860px}}
 /* 휴대폰: 전투 화면이 한 화면에 다 들어가지 않으면(앱 안 브라우저처럼 화면이 짧을 때) 스크롤로 내려 볼 수 있게 하고,
    맨 아래에 휴대폰 하단 막대만큼 여백을 둔다. 좌우 여백은 줄여 내용 폭을 넓힌다 (지인 의견, 10월 2일) */
