@@ -125,3 +125,5 @@
 .cstep>.stickbar{position:static;margin-top:12px}.class-kit summary{cursor:pointer;color:var(--gold);padding:6px 0}
 
 .loadout-hint{margin:4px 0 0;font-weight:400;cursor:help}
+/* 획득 표시와 보관 설정 */
+.bagc,.idet,.bagline{position:relative}.has-new{padding-top:24px!important}.item-new{position:absolute;right:6px;top:4px;color:var(--gold);font-size:11px;line-height:16px;font-weight:700;pointer-events:none}.bagline button.item-new{pointer-events:auto;min-height:20px;padding:0 4px;border:0;background:transparent;font-size:11px;line-height:20px}.item-lock{font-size:12px;margin-right:3px}.bagactions [aria-pressed=true],button[data-a=eqlock][aria-pressed=true]{border-color:var(--gold);color:var(--gold)}

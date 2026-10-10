@@ -60,7 +60,10 @@ function applyGear(run, full) {
 function slotOfUid(run, uid) { return EQ_SLOTS.find(sl => run.eqU[sl] === uid) || null; }
 function gearCheck(run) { const seen = {}; for (const u of run.bag.concat(EQ_SLOTS.map(sl => run.eqU[sl]).filter(Boolean))) { if (seen[u] || !run.inv[u]) return false; seen[u] = 1; } return Object.keys(run.inv).length === Object.keys(seen).length; }
 function logSwap(run, it, on, ctx) { const r = G.eqWhy || {}; run.swaps.push({ room: run.room, item: it.tpl, uid: it.uid, g: it.g, b: it.b, on: on ? 1 : 0, reason: r.reason || '', note: r.note || '', ctx: ctx || 'free', t: Date.now() }); }
-function addItem(run, it) { if (bagUsed(run) >= BAG_MAX) return false; run.inv[it.uid] = it; run.bag.push(it.uid); return true; }
+function newBadge(x) { return x && x.fresh ? '<span class="item-new"><span class="sr">새로 획득 </span><span aria-hidden="true">new!</span></span>' : ''; }
+function lockButton(it) { return `<button class="sm" data-a="eqlock" data-k="${it.uid}" aria-pressed="${!!it.locked}" aria-label="${esc(ITEMS[it.tpl].n)} ${it.locked ? '잠금 해제' : '잠금'}">${it.locked ? '잠금 해제' : '잠금'}</button>`; }
+function itemRemoveWhy(run, uid) { return run.inv[uid] && run.inv[uid].locked ? '잠긴 장비입니다. 먼저 잠금을 해제하세요' : ''; }
+function addItem(run, it) { if (bagUsed(run) >= BAG_MAX) return false; it.fresh = true; run.inv[it.uid] = it; run.bag.push(it.uid); return true; }
 /* 가방의 장비를 낀다. 그 칸에 있던 장비는 같은 자리로 가방에 들어간다(가방 칸 수는 그대로) */
 function equipUid(run, uid, slot, ctx) {
   const it = run.inv[uid]; const bi = run.bag.indexOf(uid); if (!it || bi < 0) return '가방에 없는 장비입니다';
@@ -71,7 +74,7 @@ function equipUid(run, uid, slot, ctx) {
   const prev = run.eqU[slot];
   run.eqU[slot] = uid; if (prev) run.bag[bi] = prev; else run.bag.splice(bi, 1);
   if (prev) logSwap(run, run.inv[prev], false, ctx); logSwap(run, it, true, ctx);
-  applyGear(run); return '';
+  it.fresh = false; applyGear(run); return '';
 }
 /* 낄 수 없는 까닭 (장비-경제.md 4.2절): 전설은 한 번에 하나만 (같은 칸의 전설을 바꾸는 것은 된다) */
 function equipWhy(run, uid, slot) { const it = run.inv[uid]; if (!it || it.g !== 'l') return ''; return EQ_SLOTS.some(sl => sl !== slot && run.eqU[sl] && run.inv[run.eqU[sl]] && run.inv[run.eqU[sl]].g === 'l') ? '전설은 하나만 낄 수 있습니다.' : ''; }
@@ -81,7 +84,7 @@ function unequipUid(run, slot, ctx) {
   if (bagUsed(run) >= BAG_MAX) return '가방이 가득 찼습니다';
   run.eqU[slot] = null; run.bag.push(uid); logSwap(run, run.inv[uid], false, ctx); applyGear(run); return '';
 }
-function discardUid(run, uid) { const bi = run.bag.indexOf(uid); if (bi < 0) return '가방에 없는 장비입니다'; run.bag.splice(bi, 1); const it = run.inv[uid]; delete run.inv[uid]; (run.discards = run.discards || []).push({ room: run.room, item: it.tpl, g: it.g, t: Date.now() }); return ''; }
+function discardUid(run, uid) { const why = itemRemoveWhy(run, uid); if (why) return why; const bi = run.bag.indexOf(uid); if (bi < 0) return '가방에 없는 장비입니다'; run.bag.splice(bi, 1); const it = run.inv[uid]; delete run.inv[uid]; (run.discards = run.discards || []).push({ room: run.room, item: it.tpl, g: it.g, t: Date.now() }); return ''; }
 /* 비교: 그 장비를 slot에 꼈을 때의 엔진 값 */
 function gearStats(p) { return { hp: p.hpMax, mp: p.mpMax, st: p.stMax, basic: basicBase(p), heavy: heavyBase(p), flask: flaskHealFrac(p), heavyCost: heavyCost(p), lifeCap: flaskCap(p, 'life'), manaCap: flaskCap(p, 'mana'), stamCap: flaskCap(p, 'stam') }; }
 // 영구 수치만 비교합니다. 공격 기준은 무기·직업 배율·힘이며 적과 전투 중 보정은 제외합니다.
@@ -133,7 +136,7 @@ function compareHtml(run, uid, slot) {
 }
 function itemDetail(it, opt) {
   const I = ITEMS[it.tpl]; const R = GRADE[it.g] || GRADE.n; const o = opt || {};
-  return `<div class="idet grb-${it.g}"><div class="idet-h"><b class="gr-${it.g}">${inm(it.tpl, it.g)}</b>${gradeTag(it.g)}<span class="mini">${EQ_SLOT_N[kindOf(I.slot) === 'ring' ? 'ring1' : I.slot].replace(' 1', '')}</span></div>
+  return `<div class="idet grb-${it.g}${it.fresh ? ' has-new' : ''}">${newBadge(it)}<div class="idet-h"><b class="gr-${it.g}">${inm(it.tpl, it.g)}</b>${gradeTag(it.g)}<span class="mini">${EQ_SLOT_N[kindOf(I.slot) === 'ring' ? 'ring1' : I.slot].replace(' 1', '')}</span></div>
 <div class="idet-base"><b>${baseText(it)}</b>${o.compact ? '' : ` <span class="mini">${I.kind === 'start' ? '시작 장비' : it.rollV===2 ? `${R.n} 범위 +${R.lo}~${R.hi}% 중 +${it.b}%` : `보유 보너스 +${it.b}%`}</span>`}</div>${I.act ? `<div class="l act">${esc(I.act)}</div>` : ''}${I.cost ? `<div class="l cost">대가: ${esc(I.cost)}</div>` : ''}${I.lore && !o.compact ? `<p class="lore">${esc(I.lore)}</p>` : ''}</div>`;
 }
 /* 지금 낀 장비 한 줄 (고르기 창: 아직 얻지 않은 장비는 비교할 수 없어 낀 것을 보인다) */
@@ -172,10 +175,10 @@ function vEquip() {
     const slots = kind === 'ring' ? (sel.slot==='ring2'?['ring2','ring1']:['ring1','ring2']) : [kind];
     h += itemDetail(it);
     for (const sl of slots) { const ew = equipWhy(run, it.uid, sl); h += compareHtml(run, it.uid, sl) + (ew && !inFight ? `<button class="gold wide adis" data-a="eqon" data-k="${it.uid}" data-s="${sl}" aria-disabled="true" data-why="${esc(ew)}" aria-label="${esc((slots.length > 1 ? EQ_SLOT_N[sl] + '에 끼기' : '끼기') + ', 낄 수 없음: ' + ew)}">${slots.length > 1 ? EQ_SLOT_N[sl] + '에 끼기' : '끼기'}</button><p class="mini">${esc(ew)}</p>` : `<button class="gold wide" data-a="eqon" data-k="${it.uid}" data-s="${sl}"${inFight ? ' disabled' : ''}>${slots.length > 1 ? EQ_SLOT_N[sl] + '에 끼기' : '끼기'}</button>`); }
-    h += `<div class="row"><button class="sm" data-a="eqdrop" data-k="${it.uid}"${inFight ? ' disabled' : ''}>버리기</button></div>`;
+    h += `<div class="row"><button class="sm" data-a="eqdrop" data-k="${it.uid}"${inFight || it.locked ? ' disabled' : ''}>버리기</button>${lockButton(it)}</div>`;
   } else {
     const u = run.eqU[sel.slot], it = u && run.inv[u];
-    if (it) { h += itemDetail(it); if (sel.slot !== 'weapon') h += `<div class="row"><button data-a="eqoff" data-k="${sel.slot}"${inFight || bagUsed(run) >= BAG_MAX ? ' disabled' : ''}>가방에 넣기</button></div>`; else h += '<p class="mini">무기는 다른 무기로만 바꿉니다.</p>'; }
+    if (it) { h += itemDetail(it) + lockButton(it); if (sel.slot !== 'weapon') h += `<div class="row"><button data-a="eqoff" data-k="${sel.slot}"${inFight || bagUsed(run) >= BAG_MAX ? ' disabled' : ''}>가방에 넣기</button></div>`; else h += '<p class="mini">무기는 다른 무기로만 바꿉니다.</p>'; }
     else h += `<p class="mini">${EQ_SLOT_N[sel.slot]} 칸이 비어 있습니다.</p>`;
     const fit = run.bag.filter(x => run.inv[x] && kindOf(sel.slot) === tplKind(run.inv[x].tpl));
     h += fit.length ? `<p class="mini">가방에서 이 칸에 낄 수 있는 장비 ${fit.length}개. 아래 가방에서 고르세요.</p>` : '<p class="mini">가방에 이 칸에 낄 장비가 없습니다.</p>';
@@ -192,7 +195,7 @@ function vEquip() {
     const u = bag[i], it = u && run.inv[u];
     if (!it) { h += `<div class="bagc empty" aria-hidden="true"></div>`; continue; }
     const fits = kindOf(sel.slot) === tplKind(it.tpl) && !sel.uid; const on = sel.uid === u;
-    h += `<button class="bagc grb-${it.g}${on ? ' on' : ''}${fits ? ' fits' : ''}" data-a="eqpick" data-k="${u}" aria-pressed="${on}"><span class="gr-${it.g}">${inm(it.tpl, it.g)}</span><small>${EQ_SLOT_N[kindOf(ITEMS[it.tpl].slot) === 'ring' ? 'ring1' : ITEMS[it.tpl].slot].replace(' 1', '')} · ${it.ch || 1}챕터</small><small>${baseText(it)}</small></button>`;
+    h += `<button class="bagc grb-${it.g}${on ? ' on' : ''}${fits ? ' fits' : ''}${it.fresh ? ' has-new' : ''}" data-a="eqpick" data-k="${u}" aria-pressed="${on}">${newBadge(it)}${it.locked ? '<span class="item-lock" aria-label="잠김">🔒</span>' : ''}<span class="gr-${it.g}">${inm(it.tpl, it.g)}</span><small>${EQ_SLOT_N[kindOf(ITEMS[it.tpl].slot) === 'ring' ? 'ring1' : ITEMS[it.tpl].slot].replace(' 1', '')} · ${it.ch || 1}챕터</small><small>${baseText(it)}</small></button>`;
   }
   h += `</div></section>`;
   const w = G.eqWhy || {};

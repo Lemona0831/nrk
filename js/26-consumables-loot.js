@@ -5,16 +5,24 @@ const consSell = c => { const D = CONS[c.id]; return D.use === 'none' ? D.sell :
 const bagUsed = run => (run.bag ? run.bag.length : 0) + ((run.cons || []).length);
 const consVal = c => { const D = CONS[c.id]; return c.g === 'm' && D.vm != null ? D.vm : D.v; };
 const consName = c => CONS[c.id].n + (c.g === 'm' ? ' (고급)' : '');
+const consKey = c => c.id + ':' + c.g;
+const consFavorite = (run,c) => (run.consFav || []).includes(consKey(c));
+function toggleConsFavorite(run,c) {
+  if (!c || !CONS[c.id] || ['none','out'].includes(CONS[c.id].use)) return '빠른 사용이 가능한 소모품만 고릅니다';
+  const keys=run.consFav || (run.consFav=[]),key=consKey(c),i=keys.indexOf(key);
+  if(i>=0)keys.splice(i,1);else if(keys.length<3)keys.push(key);else return '즐겨찾기는 세 종류까지 고릅니다';
+  c.fresh=false;return '';
+}
 function consGroup(D){return ['heal','healcure','stam','cure','trim'].includes(D.k)?'restore':D.use==='none'||D.use==='out'?'other':'battle';}
 function consRows(run,b,filter,only,query,tgt){
   const q=String(query||'').toLocaleLowerCase();
-  return (run.cons||[]).map((c,i)=>({c,i,D:CONS[c.id]})).filter(x=>x.D).map(x=>Object.assign(x,{why:consWhyNot(b,run,x.c,tgt)})).filter(x=>(!filter||filter==='all'||consGroup(x.D)===filter)&&(!only||!x.why)&&(!q||(consName(x.c)+' '+x.D.sit+' '+x.D.d(consVal(x.c))).toLocaleLowerCase().includes(q))).sort((a,b)=>Number(!!a.why)-Number(!!b.why)||a.i-b.i);
+  return (run.cons||[]).map((c,i)=>({c,i,D:CONS[c.id]})).filter(x=>x.D).map(x=>Object.assign(x,{why:consWhyNot(b,run,x.c,tgt)})).filter(x=>(!filter||filter==='all'||(filter==='fav'?consFavorite(run,x.c):consGroup(x.D)===filter))&&(!only||!x.why)&&(!q||(consName(x.c)+' '+x.D.sit+' '+x.D.d(consVal(x.c))).toLocaleLowerCase().includes(q))).sort((a,b)=>Number(!!a.why)-Number(!!b.why)||a.i-b.i);
 }
 const consLvMul = b => 1 + 0.15 * (((b && b.ctx && b.ctx.lv) || 1) - 1);
 function consAdd(run, id, g, n) {
   run.cons = run.cons || []; const D = CONS[id]; if (!D) return n; g = g === 'm' && D.vm != null ? 'm' : 'n'; let left = n || 1;
-  for (const c of run.cons) if (left > 0 && c.id === id && c.g === g && c.n < D.max) { const t = Math.min(left, D.max - c.n); c.n += t; left -= t; }
-  while (left > 0 && bagUsed(run) < BAG_MAX) { const t = Math.min(left, D.max); run.cons.push({ id, g, n: t }); left -= t; }
+  for (const c of run.cons) if (left > 0 && c.id === id && c.g === g && c.n < D.max) { const t = Math.min(left, D.max - c.n); c.n += t; c.fresh=true; left -= t; }
+  while (left > 0 && bagUsed(run) < BAG_MAX) { const t = Math.min(left, D.max); run.cons.push({ id, g, n: t, fresh:true }); left -= t; }
   return left;
 }
 const myTurn = b => !!(b && !b.over && b.queue && b.queue[0] === 'p');
@@ -123,7 +131,7 @@ function consApply(b, run, c, tgt) {
 function consUse(b, run, idx, tgtId) {
   const c = (run.cons || [])[idx]; if (!c) return '없는 소모품입니다'; const why = consWhyNot(b, run, c, tgtId); if (why) return why;
   const D = CONS[c.id]; const tgt = D.tgt === 'enemy' ? consTarget(b, D, tgtId) : null; const msg = consApply(b, run, c, tgt);
-  c.n--; if (c.n <= 0) run.cons.splice(idx, 1);
+  c.fresh=false;c.n--; if (c.n <= 0) run.cons.splice(idx, 1);
   if (b && !b.over) { b.consN = (b.consN || 0) + 1; logp(b, 'good', '🎒 ' + consName(c) + '. ' + msg); b.rec.push({ k: 'cons', id: c.id, g: c.g }); checkEnd(b); }
   else if (b && b.over === 'flee') logp(b, 'good', '🎒 ' + consName(c) + '. ' + msg);
   else toast(consName(c) + '. ' + msg);

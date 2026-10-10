@@ -348,16 +348,17 @@ function consQuick(b, hud) {
   const p = b.p, lim = consTurnOf(p), used = b.consN || 0, ready = !G.busy && myTurn(b);
   const bq = Object.assign({}, b, { consN: 0, queue: ['p'] }); /* 차례 · 개수 조건을 뺀 사본으로 쓸 만한 것을 고른다 */
   const tot = run.cons.reduce((a, c) => a + c.n, 0), cand = [];
+  const favorites=run.consFav||[];
   run.cons.forEach((c, i) => { const D = CONS[c.id]; if (!D || D.use === 'none' || D.use === 'out' || consWhyNot(bq, run, c, G.sel)) return; const sc = consScore(b, c, D); if (sc > 0) cand.push({ c, i, D, sc }); });
-  cand.sort((x, y) => y.sc - x.sc);
+  if(favorites.length){cand.length=0;for(const key of favorites){const i=run.cons.findIndex(c=>consKey(c)===key&&c.n>0);if(i>=0){const c=run.cons[i],D=CONS[c.id];if(D&&!['none','out'].includes(D.use))cand.push({c,i,D,sc:0,qSlot:favorites.indexOf(key)});}}}else cand.sort((x, y) => y.sc - x.sc);
   const keys = G.data.numKeys !== false;
   const btns = cand.slice(0, 3).map((x, k) => {
     const why = ready ? consWhyNot(b, run, x.c, G.sel) : '적이 움직이는 중'; const nm = x.D.n + (x.c.g === 'm' ? ' (고급)' : '');
-    const rs = why || consReason(b, x.D);
-    return `<button class="qc${why ? ' dis' : ''}" data-a="consuse" data-k="${x.i}" data-q="${k + 1}" aria-disabled="${!!why}" title="${esc((keys ? 'QWE'[k] + ': ' : '') + nm + ' · ' + rs)}"><b>${keys ? '<kbd>' + 'QWE'[k] + '</kbd>' : ''}<span class="qi" aria-hidden="true">${x.D.ico}</span> <span class="qnm">${esc(nm)}</span> <span class="qn">×${x.c.n}</span></b><small>${esc(rs)}</small></button>`;
+    const rs = why || consReason(b, x.D), shortcut=x.qSlot == null ? k : x.qSlot;
+    return `<button class="qc${why ? ' dis' : ''}" data-a="consuse" data-k="${x.i}" data-q="${shortcut + 1}" aria-disabled="${!!why}" title="${esc((keys ? 'QWE'[shortcut] + ': ' : '') + nm + ' · ' + rs)}"><b>${keys ? '<kbd>' + 'QWE'[shortcut] + '</kbd>' : ''}<span class="qi" aria-hidden="true">${x.D.ico}</span> <span class="qnm">${esc(nm)}</span> <span class="qn">×${x.c.n}</span></b><small>${esc(rs)}</small></button>`;
   }).join('');
   const qz = hud && hud.tools && !G.toolsOpen ? ' tlz' : hud && !hud.qcons && !(hud.tools && G.toolsOpen) ? ' qoff' : '';
-  return `<div class="qcons${qz}" data-hud="hud-quick" role="group" aria-label="소모품 바로 쓰기">${btns || '<p class="mini qcn">지금 쓸 만한 소모품이 없습니다</p>'}<button class="qbag" data-a="consopen" aria-label="소모품 가방, 전부 ${tot}개. 이번 차례 ${used}/${lim}개 씀"><span aria-hidden="true">🎒 가방 ${tot}</span><small aria-hidden="true">이번 차례 ${used}/${lim}</small></button></div>`;
+  return `<div class="qcons${qz}" data-hud="hud-quick" role="group" aria-label="소모품 바로 쓰기">${btns || `<p class="mini qcn">${favorites.length ? '즐겨찾기 소모품이 없습니다' : '지금 쓸 만한 소모품이 없습니다'}</p>`}<button class="qbag" data-a="consopen" aria-label="소모품 가방, 전부 ${tot}개. 이번 차례 ${used}/${lim}개 씀"><span aria-hidden="true">🎒 가방 ${tot}</span><small aria-hidden="true">이번 차례 ${used}/${lim}</small></button></div>`;
 }
 
 /* 설명 줄: 가리키거나 포커스하면 갱신 (재렌더 없이) */
