@@ -78,15 +78,17 @@ function render() {
   const fit = (G.scr === 'run' && G.b) || (G.scr === 'scen' && G.b) || (G.scr === 'tut' && G.b) || (G.scr === 'test' && G.b);
   document.documentElement.classList.toggle('fitmode', !!fit);
   document.documentElement.style.setProperty('--app-h', (window.visualViewport ? window.visualViewport.height : window.innerHeight) + 'px');
-  const y = window.scrollY;
+  const y = window.scrollY; const ef0 = G.hudEd ? document.querySelector('#root > .fit') : null; const efy = ef0 ? ef0.scrollTop : 0; /* 편집 중에는 .fit이 스크롤 칸 */
   const fld = document.querySelector('.hz-mid'); const fy = fld ? fld.scrollTop : 0; const shEl = document.querySelector('.sheet'); const shy = shEl ? shEl.scrollTop : 0; const shk = G.sheet ? G.sheet.kind : '';
   const lg = document.querySelector('.side .blog'); const ly = lg ? lg.scrollTop : 0;
   const fk = focusKey(), hadSheet = !!G.shownSheet; /* 10월 7일: 다시 그려도 초점을 잃지 않게, 시트는 연 요소로 돌아가게 */
+  if (G.hudEd && !fit) hudEdEnd('lost'); /* 편집 중 전투 화면이 없어지면 편집을 닫는다 */
+  const edUi = G.hudEd ? hudEdUi() : '';
   const tail = `${vSheet()}`; const ine = tail ? ' inert' : ''; /* 시트가 열리면 뒤 화면은 inert */
   if (tail && !hadSheet) G.sheetRet = fk; G.shownSheet = !!tail;
   const nm = scrName(); document.title = nm ? nm + ' · 나락의 유산' : '나락의 유산 · 0.6a.2 스킬 시험판';
   const h2 = `<h2 class="sr">${esc(nm || '처음 화면')}</h2>`;
-  if (fit) root.innerHTML = `<div class="fit"${ine}><button class="skip" data-a="skipacts">행동판으로 건너뛰기</button>${vHeader()}<main class="bmain">${h2}${vBattle()}</main></div>${tail}`;
+  if (fit) root.innerHTML = `<div class="fit"${ine}><button class="skip" data-a="skipacts">행동판으로 건너뛰기</button>${vHeader()}<main class="bmain">${h2}${vBattle()}</main>${edUi}</div>${tail}`;
   else root.innerHTML = `<div class="app scr-${G.scr}"${ine}><button class="skip" data-a="skipmain">본문으로 건너뛰기</button>${vHeader()}<main id="main" tabindex="-1">${h2}${main}</main></div>${tail}`;
   if (POP.cur && !document.body.contains(POP.cur)) hidePop(); // 설명 창의 기준이 된 요소가 사라졌으면 닫는다
   if (!G.sheet && G.dropQ && G.dropQ.length && G.scr === 'run' && !G.b) setTimeout(nextDrop, 0); // 전리품 창을 닫기로 닫아도 남은 전리품을 이어서 건넨다
@@ -99,12 +101,14 @@ function render() {
   if (!G.sheet && !fit) window.scrollTo(0, same ? y : 0);
   if (fit && G.fitS) window.scrollTo(0, G.fitNew ? 0 : y); /* 짧은 창의 전투: 다시 그려도 보던 자리 */
   focusBack(tail ? (hadSheet ? fk : null) : (hadSheet ? G.sheetRet || fk : fk), !!tail && !hadSheet, fit);
+  if (G.hudEd) { const ef = document.querySelector('#root > .fit'); if (ef) ef.scrollTop = efy; hudEdPost(); } /* 편집 중: 보던 자리를 지키고 틀을 실제 요소에 붙인다 */
 }
 /* 10월 7일 2차: 전투 화면은 창 높이에 맞춰 한 화면에 두되, 그러면 전장이 모자란 창(확대 · 가로 휴대폰 · 짧은 휴대폰)에서는
    고정을 풀고 페이지를 스크롤한다(10월 2일의 원래 뜻). 같은 창 크기 · 같은 전투 · 같은 글자 크기에서는 한 번 정한 대로 둔다(차례마다 바뀌지 않게) */
 const FIT_FIELD = 200;
 function fitDecide(fit) {
   const de = document.documentElement;
+  if (fit && G.hudEd) { de.classList.add('fitscroll'); return; } /* 편집 중에는 모든 모듈이 보이도록 페이지가 스크롤된다 */
   if (!fit) { de.classList.remove('fitscroll'); G.fitS = false; G.fitK = null; G.fitB = null; G.fitNew = false; return; }
   const ah = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   const k = window.innerWidth + 'x' + Math.round(ah) + ':' + (G.data.fs || 1) + ':' + (G.data.fdet ? 1 : 0) + ':' + hudLayJson();

@@ -35,6 +35,7 @@ function hudLayNorm(raw, base) {
   return { z, s, off };
 }
 function hudLayFor(dev) {
+  if (G.hudEd && G.hudEd.draft && G.hudEd.draft[dev]) return G.hudEd.draft[dev]; /* 화면에서 편집하는 동안은 저장 전 임시 배치(57-hud-direct.js) */
   const h = hudRaw(); const custom = h.p === 'custom';
   return hudLayNorm(custom && h.lay ? h.lay[dev] : null, hudBaseLay(custom ? HUD_DEFAULT : h.p, dev));
 }
@@ -62,6 +63,7 @@ function hudSay(dev, L, id) {
 }
 /* 전투 화면: 구역마다 모듈을 놓는다. 끈 모듈은 그리지 않고, 읽는 글(.sr)만 있는 모듈은 구역 끝에 모아 읽히게 둔다 */
 function hudZonesHtml(html) {
+  if (G.hudEd) return hudEdZones(html);
   const L = hudLayFor(hudDev()); const Z = {};
   for (const zn of HUD_ZONES) {
     let out = '', quiet = '';
@@ -86,7 +88,8 @@ function hudEditHtml() {
 <div class="hr2"><label class="hsel">크기 <select data-a="hudsz" data-k="${id}" aria-label="${esc(m.n)} 크기">${HUD_SIZES.map(v => `<option value="${v}"${L.s[id] === v ? ' selected' : ''}>${v}%</option>`).join('')}</select></label><label class="hsel">구역 <select data-a="hudzone" data-k="${id}" aria-label="${esc(m.n)} 구역">${HUD_ZONES.map(k => `<option value="${k}"${hudZoneOf(L, id) === k ? ' selected' : ''}>${ZN[k]}</option>`).join('')}</select></label><button class="sm" data-a="hudmv" data-k="${id}" data-d="-1" aria-label="${esc(m.n)} 위로">▲ 위로</button><button class="sm" data-a="hudmv" data-k="${id}" data-d="1" aria-label="${esc(m.n)} 아래로">▼ 아래로</button></div></li>`;
   };
   let o = `<section class="setg" id="hudedit"><h4>전투 화면 편집</h4><p class="mini">항목마다 크기와 놓을 곳을 정하고 켜고 끕니다. ${live ? '바꾸면 뒤의 전투 화면에 바로 보입니다.' : '전투 중에 이 창을 열면 바꾼 것이 뒤 화면에 바로 보입니다.'} 휴대폰과 PC 배치는 따로 저장됩니다.</p>`;
-  o += `<div class="setrow hudpre" role="group" aria-label="편집할 배치">${['ph', 'pc'].map(d => `<button class="sm${dev === d ? ' gold' : ''}" data-a="huddev" data-k="${d}" aria-pressed="${dev === d}">${HUD_DEV_N[d]} 배치</button>`).join('')}<button class="sm" data-a="hudreset">처음으로 되돌리기</button>${live ? `<button class="sm" data-a="hudsheetpos" aria-pressed="${!!G.hudTop}">창을 ${G.hudTop ? '아래로' : '위로'} 옮기기</button>` : ''}</div>`;
+  o += `<div class="setrow hudpre"><button class="gold" data-a="hedstart">화면에서 편집</button><span class="mini">실제 전투 화면 위에서 끌어 옮기고 크기를 정합니다${live ? '. 전투는 멈춰 있습니다' : '. 전투 중이 아니면 견본 전투를 보여 줍니다'}</span></div>
+  <div class="setrow hudpre" role="group" aria-label="편집할 배치">${['ph', 'pc'].map(d => `<button class="sm${dev === d ? ' gold' : ''}" data-a="huddev" data-k="${d}" aria-pressed="${dev === d}">${HUD_DEV_N[d]} 배치</button>`).join('')}<button class="sm" data-a="hudreset">처음으로 되돌리기</button>${live ? `<button class="sm" data-a="hudsheetpos" aria-pressed="${!!G.hudTop}">창을 ${G.hudTop ? '아래로' : '위로'} 옮기기</button>` : ''}</div>`;
   if (dev !== cur) o += `<p class="mini">지금 화면 폭에는 ${HUD_DEV_N[cur]} 배치가 쓰입니다. ${HUD_DEV_N[dev]} 배치는 그 폭의 화면에서 적용됩니다.</p>`;
   o += `<p class="mini" id="hudkeyhelp">⠿ 단추를 끌면 옮겨집니다. 키보드는 ⠿ 단추에서 위 · 아래 화살표를 누르고, 위로 · 아래로 단추와 구역 목록도 씁니다.</p><p class="sr" role="status" id="hudlive">${esc(G.hudMsg || '')}</p>`;
   for (const zn of HUD_ZONES) {
