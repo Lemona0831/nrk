@@ -1,7 +1,7 @@
 # 06a2를 "루트처럼 배치한" 사이트 사본을 저장소 밖 임시 폴더에 만들고 점검한다. 루트(index.html, data/, audio/, config.js)에는 쓰지 않는 리허설이다.
 # 실행: python tools/release062.py [출력폴더]   (기본 $TEMP/nrk-release062/)
 #   --no-build  이미 만든 사본만 점검한다
-# 사본 배치: 06a2/index.html -> index.html, 06a2/data|js|css -> data|js|css, 루트 audio/ + 06a2/audio/ -> audio/,
+# 사본 배치: 06a2/index.html -> index.html, 06a2/remote.html(HUD 리모콘 별도 페이지, config.js를 읽지 않음) -> remote.html, 06a2/data|js|css|remote -> data|js|css|remote, 루트 audio/ + 06a2/audio/ -> audio/,
 #            privacy.html(저장소 루트)은 그대로 복사, config.js는 빈 파일(시험이 진짜 Supabase에 기록을 보내지 않게).
 # 경로 치환: ../config.js -> config.js, ../audio/ -> audio/, ../privacy.html -> privacy.html (index.html, js/, css/, data/ 안의 글자)
 # 저장 키와 저장소 경로는 바꾸지 않는다(nrk_062_v1, runs62 · scen62 · survey62 · best62 · rank62). 이관 여부는 만든 사람 결정이다.
@@ -42,7 +42,8 @@ def build():
         shutil.rmtree(OUT)
     os.makedirs(OUT)
     shutil.copy2(os.path.join(REPO, '06a2', 'index.html'), os.path.join(OUT, 'index.html'))
-    for d in ['data', 'js', 'css']:
+    shutil.copy2(os.path.join(REPO, '06a2', 'remote.html'), os.path.join(OUT, 'remote.html'))
+    for d in ['data', 'js', 'css', 'remote']:
         shutil.copytree(os.path.join(REPO, '06a2', d), os.path.join(OUT, d))
     os.makedirs(os.path.join(OUT, 'audio'))
     for src in [os.path.join(REPO, 'audio'), os.path.join(REPO, '06a2', 'audio')]:
@@ -94,6 +95,15 @@ def check():
     print('index.html 참조', len(refs), '개 | 없는 파일', len(miss))
     for m in miss:
         fail('없는 파일 ' + m)
+    # 2b) remote.html(HUD 리모콘 별도 페이지)의 script src · link href, config.js를 읽지 않는지
+    rhtml = readall(os.path.join(OUT, 'remote.html'))
+    rrefs = re.findall(r'<script[^>]*\ssrc="([^"]+)"', rhtml) + re.findall(r'<link[^>]*\shref="([^"]+)"', rhtml)
+    rmiss = [r for r in rrefs if not re.match(r'https?:', r) and not os.path.isfile(os.path.join(OUT, r))]
+    print('remote.html 참조', len(rrefs), '개 | 없는 파일', len(rmiss))
+    for m in rmiss:
+        fail('remote.html: 없는 파일 ' + m)
+    if 'config.js' in rhtml or 'supabase' in rhtml.lower():
+        fail('remote.html이 config.js나 Supabase를 읽음')
     # 3) 음악 · 효과음 src
     srcs = re.findall(r"src:\s*'([^']+)'", readall(os.path.join(OUT, 'data', 'audio.js')))
     amiss = [s for s in srcs if not os.path.isfile(os.path.join(OUT, s))]
