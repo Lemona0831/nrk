@@ -10,7 +10,7 @@ function onClick(ev) {
   if (a === 'closebg') { if (ev.target !== el) return; if (G.sheet && !['block', 'stats', 'choice', 'awk'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } return; }
   switch (a) {
     case 'home': case 'title': if (G.creating) { cancelCreate(); break; } if (G.run && !G.run.endedAt) { saveRunLocal(); if (G.run.phase && runLive()) saveCur(); clearTimeout(syncT); syncRun(G.run, 'left').then(render); if (G.run.result !== 'lose') pushRank(G.run); } G.scr = 'title'; G.back = null; G.b = null; G.sheet = null; render(); break;
-    case 'menu': if ((G.scr === 'run' || G.scr === 'scen' || G.scr === 'tut' || G.scr === 'test') && G.b || window.innerWidth < 720) G.menuOpen = !G.menuOpen; else { G.data.menuFold = !G.data.menuFold; saveLocal(); } render(); break;
+    case 'menu': if ((G.scr === 'run' || G.scr === 'scen' || G.scr === 'tut' || G.scr === 'hudsample') && G.b || window.innerWidth < 720) G.menuOpen = !G.menuOpen; else { G.data.menuFold = !G.data.menuFold; saveLocal(); } render(); break;
     case 'rank': case 'records': case 'admin': case 'goals': case 'mark': if (a === 'mark' && !markOpen()) { toast('3챕터 보스를 한 번 이기면 열립니다'); break; } if (!PAGES.includes(G.scr)) G.back = G.scr; G.scr = a; G.sheet = null; G.adminMsg = ''; if (a === 'rank') G.board = null; render(); window.scrollTo(0, 0); break;
     case 'back': G.scr = G.back || 'title'; G.back = null; render(); break;
     case 'rtab': G.rankTab = el.dataset.k; render(); break;
@@ -155,21 +155,6 @@ function onClick(ev) {
     case 'infotoggle': G.infoOn = !G.infoOn; G.data.infoOn = G.infoOn; saveLocal(); hidePop(); toast(G.infoOn ? '설명 창을 켰습니다' : '설명 창을 껐습니다'); if (G.sheet && G.sheet.kind === 'settings') render(); break;
     case 'bcont': battleContinue(); break;
     case 'scennext': scenNext(); break;
-    case 'test': hidePop(); G.menuOpen = false; if (G.scr === 'run' && G.b && !G.b.over) { if (!ask('시험 전투로 갑니다. 진행 중인 전투는 타이틀의 이어하기로 돌아올 수 있습니다.')) break; } if (G.scr === 'test' && G.b && !G.b.over && !ask('이 시험 전투를 그만두고 설정으로 갑니다.')) break; if (G.scr !== 'test') { G.testRun = G.run; G.run = null; } G.b = null; G.scr = 'test'; render(); break;
-    case 'testcls': testCfg().build = el.dataset.k; render(); break;
-    case 'testlv': testCfg().lv = +el.dataset.k; render(); break;
-    case 'testsk': { const T = testCfg(); const id = el.dataset.k; const i = T.sk.indexOf(id); if (i >= 0) T.sk.splice(i, 1); else if (T.sk.length < EQUIP_SLOTS2) T.sk.push(id); else toast('4칸이 찼습니다. 하나를 빼고 고르세요'); render(); break; }
-    case 'testfill': { const T = testCfg(); T.sk = SKILLS2[T.build].filter(x => x.b === el.dataset.k && x.row <= T.lv).sort((a, c) => c.row - a.row).filter((x, i, a) => a.findIndex(y => y.row === x.row) === i).slice(0, EQUIP_SLOTS2).map(x => x.id); render(); break; }
-    case 'testclear': testCfg().sk = []; render(); break;
-    case 'testbr': testCfg().br = el.dataset.k; render(); break;
-    case 'testelite': { const T = testCfg(); T.elite = !T.elite; render(); break; }
-    case 'testfoe': testCfg().foe = el.dataset.k; render(); break;
-    case 'testfloor': testCfg().floor = el.dataset.k; render(); break;
-    case 'testch': { const T = testCfg(); T.ch = +el.dataset.k; T.foe = testFoes(T.ch)[0].id; render(); break; }
-    case 'testamb': { const T = testCfg(); T.amb = !T.amb; render(); break; }
-    case 'teststart': testStart(); break;
-    case 'testsetup': G.b = null; render(); break;
-    case 'testleave': testLeave(); break;
     case 'retry': retryRoom(); break;
     case 'endrun': endRun('lose'); break;
     case 'survey': {

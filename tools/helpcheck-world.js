@@ -254,7 +254,6 @@ module.exports = function (api) {
     oasisB: lit(S80, /toast\('(물이 무겁게 가라앉는다\. 다음 전투에 둔화 \d+)'\)/),
     library: lit(S80, /why: '(무너진 서고에서 능력치 \d+점)'/),
     archive: lit(S80, /why: '(불타는 서고에서 능력치 \d+점)'/),
-    testfull: lit(S80, /toast\('(\d+칸이 찼습니다\. 하나를 빼고 고르세요)'\)/),
   };
   api.source('world-toasts', Object.entries(tl).map(([id, t]) => ({ id, text: pref(id, t) })));
   const tt = (tag, loc, ev2, fn) => api.add('world-toasts', sentFind(tag, tl[tag], loc), ev2, fn);
@@ -267,7 +266,6 @@ module.exports = function (api) {
   tt('oasisB', '둔화', '80-events.js oasis drink: n3pre chill n', () => tl.oasisB.endsWith('둔화 ' + nx(H('oasis', 'drink'), /n3pre\(run, 'chill', (\d+)\)/)));
   tt('library', '서고', '80-events.js library read: openSheet stats pts', () => tl.library.includes('능력치 ' + nx(H('library', 'read'), /pts: (\d+)/) + '점'));
   tt('archive', '서고', '80-events.js archive pull: openSheet stats pts', () => tl.archive.includes('능력치 ' + nx(H('archive', 'pull'), /pts: (\d+)/) + '점'));
-  tt('testfull', '칸이 찼습니다', 'data/skills.js EQUIP_SLOTS2', () => tl.testfull.startsWith(E('EQUIP_SLOTS2') + '칸이'));
 
   // ===== 옛 B0.5 자리: 06a2에서 고를 길이 없다 =====
   const legacyT = [{ id: 'mother', text: E('BOSSES.mother.d') }, { id: 'tree', text: E('BOSSES.tree.d') }].concat(E('SCEN').map(s => ({ id: s.id, text: s.d }))).concat(E('ROOMS').map((r, i) => ({ id: 'room' + i, text: r.n })));

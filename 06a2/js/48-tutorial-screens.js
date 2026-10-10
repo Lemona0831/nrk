@@ -11,7 +11,7 @@ function tutNew(b, id) { // 이 장면에서 처음 배우는 행동: 한 번 �
   const L = TUT[G.tut.i]; if (!L.allow) return false; const prev = G.tut.i ? (TUT[G.tut.i - 1].allow || []) : [];
   return !prev.includes(id) && !b.rec.some(x => x.k === 'act' && x.a === id);
 }
-const TUT_ACTN = { basic: '기본 공격', heavy: '강공격', guard: '방어', dodge: '흘리기', flaskL: '❤️ 생명력 플라스크', flaskM: '🧪 정화 플라스크', flaskS: '⚡ 스태미나 플라스크' };
+const TUT_ACTN = { basic: '기본 공격', heavy: '강공격', guard: '방어', dodge: '흘리기', flaskL: '❤️ 생명력 플라스크', flaskM: '🧪 정화 플라스크', flaskS: '⚡ 스태미나 플라스크', n_cleave: '스킬 베어 가르기' };
 /* 전장 맨 위 한 줄: 목표와 "설명" (안내는 장면 앞 창이 맡고, 싸우는 동안에는 화면을 가리지 않는다. 10월 3일 만든 사람 요청) */
 function vTutGoal(b) {
   const T = G.tut, L = TUT[T.i], last = T.i === TUT.length - 1;
@@ -37,7 +37,7 @@ function tutSheet(S) {
 }
 function vTutOffer() {
   return `<section class="card tutoff"><h3>🕯️ 나락 입구의 수련장</h3><p class="lore">계단이 시작되는 자리에 먼저 내려간 이들이 남긴 수련장이 있다. 짚 인형과 녹슨 칼, 벽에 새긴 가르침.</p>
-  <p>직업도 스킬도 없는 견습생으로 전투의 기본을 여섯 장면에 나눠 익힙니다. 5분 남짓 걸리고, 쓰러져도 잃는 것이 없습니다.</p>
+  <p>직업도 스킬도 없는 견습생으로 전투의 기본을 일곱 장면에 나눠 익힙니다. 5분 남짓 걸리고, 쓰러져도 잃는 것이 없습니다.</p>
   <ol class="tutlist">${TUT.map(L => `<li><b>${esc(L.n)}</b> <span class="mini">${esc(L.goal)}</span></li>`).join('')}</ol>
   <p class="mini">보상은 없고, 끝내면 수료 표시가 남습니다. 메뉴의 🎯 수련장에서 언제든 다시 할 수 있습니다.</p>
   <div class="row"><button class="gold" data-a="tutgo" data-focus>수련장에 들르기</button><button data-a="tutskip">건너뛰고 캐릭터 만들기</button></div></section>`;
@@ -46,7 +46,7 @@ function vTutHub() {
   const d = G.data, clr = d.tutClear || [], done = !!d.tutDone, hasCur = !!(d.cur && !runOver(d.cur) && BUILDS[d.cur.build]);
   const nx = TUT.findIndex(L => !clr.includes(L.id));
   let h = `<section class="card tuthub"><h3>${done ? '🎓 수련장 수료' : '🕯️ 나락 입구의 수련장'}</h3>`;
-  if (G.tutFin) h += `<p><b>여섯 장면을 모두 마쳤습니다.</b> 수료 표시가 남았습니다.</p><ul class="tutend">${TUT_END.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
+  if (G.tutFin) h += `<p><b>모든 장면을 마쳤습니다.</b> 수료 표시가 남았습니다.</p><ul class="tutend">${TUT_END.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
   else h += `<p class="mini">직업 없는 견습생으로 전투의 기본을 익힙니다. 쓰러져도 잃는 것이 없습니다. ${done ? '마친 장면은 골라서 다시 합니다.' : ''}</p>`;
   h += `<ol class="tutlist">${TUT.map((L, i) => { const ok = clr.includes(L.id); const can = done || ok || i === (nx < 0 ? 0 : nx); return `<li><button class="tutsc${ok ? ' ok' : ''}" data-a="tutsc" data-k="${i}"${can ? '' : ' aria-disabled="true" disabled'}><b>${ok ? '✓' : (i + 1) + '.'} ${esc(L.n)}</b><small>${esc(L.goal)}</small></button></li>`; }).join('')}</ol>`;
   h += `<div class="row">`;

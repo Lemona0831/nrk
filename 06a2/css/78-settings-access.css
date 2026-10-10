@@ -1,0 +1,21 @@
+/* ===== 접근성 설정 (10월 10일 0.6a.2-113): html 클래스 hc · sym · tsp · tap. 설정 창 접근성 탭, js/58 ===== */
+/* 고대비: 색 토큰만 바꾼다. 배경은 더 어둡게, 글자 · 테두리 · 강조색은 더 밝게 */
+html.hc{--bg:#000;--panel:#070605;--panel2:#12100d;--line:#9c8d78;--line2:#d9ccb4;--ink:#fff;--muted:#e3d9c8;--gold:#ffd76a;--gold-ink:#000;--good:#a9f291;--bad:#ff9d8c;--hp:#ff7b68;--mp:#86b6ff;--st:#ffd45a;--bk:#c9b0ff;--track:#3b3028;--blood:#ff7b68}
+html.hc body{background:#000}
+html.hc :focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 5px #000}
+html.hc .card,html.hc .sheet{border-color:var(--line2)}
+html.hc .mini,html.hc small{color:var(--muted)}
+/* 색에만 기대지 않기: 기록 줄 앞에 모양을 붙인다(소리 내어 읽을 때는 건너뛰도록 대체 글을 비운다) */
+html.sym .lgrp p.good::before{content:'▲ ' / ''}
+html.sym .lgrp p.bad::before{content:'▼ ' / ''}
+html.sym .lgrp p.mine::before{content:'● ' / ''}
+html.sym .lgrp p.crit::before{content:'★ ' / ''}
+html.sym .lgrp p.sys::before{content:'· ' / ''}
+/* 글 간격 넓게: 글자 사이 · 낱말 사이 · 줄 사이 */
+html.tsp body{line-height:1.85;letter-spacing:.04em;word-spacing:.12em}
+html.tsp p,html.tsp li{margin-bottom:.5em}
+/* 누르는 칸 크게 */
+html.tap button,html.tap select,html.tap summary,html.tap [role=tab],html.tap [role=switch],html.tap .sw,html.tap .tab,html.tap input[type=checkbox],html.tap input[type=radio]{min-height:56px}
+html.tap button,html.tap [role=switch]{min-width:56px;padding-left:14px;padding-right:14px}
+html.tap input[type=range]{min-height:44px;height:44px}
+html.tap .ab{min-height:64px}

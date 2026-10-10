@@ -232,7 +232,7 @@ function vHudActions(b, hud, tg) {
   if (b.over) {
     const msg = b.over === 'win' ? '승리했습니다.' : b.over === 'lose' ? '쓰러졌습니다.' : b.over === 'flee' ? '물러났습니다. 이 방은 다시 이겨야 합니다.' : '이 상황은 여기까지입니다.';
     const lootL = b.over === 'win' && (b.drops || []).length ? `<p class="lootln">🎁 전리품: ${esc(dropText(b.drops))}</p>` : '';
-    dock = G.scr === 'tut' ? vTutOver(b) : G.scr === 'test' ? `<section class="dock" aria-label="행동"><p><b>${msg}</b> <span class="mini">${b.turnIdx}번째 차례, 남은 생명력 ${Math.round(Math.max(0, b.p.hp) / b.p.hpMax * 100)}%</span></p><div class="row"><button class="gold" data-a="teststart" data-focus>같은 설정으로 다시</button><button data-a="testsetup">설정 바꾸기</button></div></section>` : `<section class="dock" aria-label="행동"><p><b>${msg}</b></p>${lootL}<button class="gold wide" data-a="${G.scr === 'scen' ? 'scennext' : 'bcont'}" data-focus>계속</button></section>`;
+    dock = G.scr === 'tut' ? vTutOver(b) : `<section class="dock" aria-label="행동"><p><b>${msg}</b></p>${lootL}<button class="gold wide" data-a="${G.scr === 'scen' ? 'scennext' : 'bcont'}" data-focus>계속</button></section>`;
   } else {
     const L = actionList(b);
     let btns = '';

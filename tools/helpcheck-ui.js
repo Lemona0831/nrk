@@ -287,7 +287,10 @@ module.exports = function (api) {
   A('사수의 예고에 "출혈 2"가 보이면', 'EKW.archerBleed = 2', () => E('EKW.archerBleed') === 2);
   A('막음 2가 다음 해로운 상태 두 번을 튕겨 냅니다', '정화 플라스크: 막음 2 (2 + blockAdd), 상태마다 1 소모', () => has('32-player-action.js', 'const nb = 2 + fxAdd(p, \'blockAdd\', p)') && E('KW.block') >= 2);
   A('정해진 때가 오면 효과가 나고 1 줄어듭니다', 'kwDec는 기본 1씩 줄인다', () => has('20-battle-state.js', 'x.stacks -= (n || 1)'));
-  A('쿨타임 5턴', '시작 스킬 쿨타임 5턴(암살자 a_vital · a_slip)', () => E('SKILLS2.assassin.filter(s => s.start).every(s => s.cd === 5)'));
+  A('시작 스킬 쿨타임은 5턴입니다', '시작 스킬 쿨타임 5턴(암살자 a_vital · a_slip)', () => E('SKILLS2.assassin.filter(s => s.start).every(s => s.cd === 5)'));
+  A('내 턴이 끝날 때마다 1 줄어듭니다', '수련장 스킬 장면: 쿨타임은 내 턴이 끝날 때마다 1 줄고 쓴 턴에는 줄지 않는다(도움말 쿨타임과 같은 규칙, 견습생도 같은 코드)', () => has('32-player-action.js', 'const w = (p.cd && p.cd[sid]) || 0'));
+  A('연 스킬은 4칸까지 더 끼웁니다', '장착 칸 EQUIP_SLOTS2 = 4(시작 스킬은 따로)', () => E('EQUIP_SLOTS2') === 4);
+  A('1챕터 보스를 이기면 더 위험하고', '가혹 모드는 1챕터 보스를 한 번 이기면 열린다(G.data.hardOpen, 66-dungeon-flow 보스 승리)', () => has('66-dungeon-flow.js', 'hardOpen') && E('MODES.hard.dmg') > 1);
 
   // ───────── 설문 · 결과 보기 (70 · 74) ─────────
   A('1 지루했다', '재미 척도 fun = 1~5 (설문 척도 표)', () => has('70-act-end-screens.js', "fun: { 1: '1 지루했다', 2: '2', 3: '3 보통', 4: '4', 5: '5 아주 재미있었다' }"));
