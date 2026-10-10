@@ -10,7 +10,7 @@ module.exports = function (api) {
     ['ui-info', 'js/54-info-popups.js'], ['ui-text', 'js/60-text-layer.js'], ['ui-hud', 'js/52-battle-hud.js'], ['ui-parts', 'js/53-battle-parts.js'],
     ['ui-hudfree', 'js/55-hud-free.js'], ['ui-hudedit', 'js/56-hud-editor.js'], ['ui-huddirect', 'js/57-hud-direct.js'], ['ui-tree', 'js/72-skill-tree-screen.js'], ['ui-shop', 'js/46-screens-shop.js'],
     ['ui-account', 'js/44-screens-account.js'], ['ui-tut', 'js/48-tutorial-screens.js'], ['ui-end', 'js/70-act-end-screens.js'], ['ui-results', 'js/74-results-viewer.js'], ['ui-tutdata', 'data/tutorial.js'],
-    ['ui-settings', 'js/76-sound-render.js'],
+    ['ui-settings', 'js/76-sound-render.js'], ['ui-records', 'js/78-records-ui.js'],
   ];
   function stripTpl(s) { // ${ ... } 지우기(중첩 괄호 처리)
     let o = '', i = 0;
@@ -344,6 +344,7 @@ module.exports = function (api) {
   api.note('ui-hudfree', '"생명력 40 → 30"이 붙습니다', '표시 형태 설명의 예시 문장(숫자는 예시)');
   A('2페이즈부터 거울', '늪의 어머니: 2페이즈는 체력 70% 아래(bossPhase)', () => has('30-enemy-ai.js', 'f > 0.7 ? 1 : f > 0.35 ? 2 : 3') && has('24-clock-damage.js', "boss.boss === 'mother'"));
   A('생명력 1에서 버팁니다', "수련장: ctx.safe 이면 hp를 1로 둔다(checkEnd)", () => has('24-clock-damage.js', 'if (b.p.hp <= 0 && b.ctx.safe) { b.p.hp = 1;'));
+  A('최근 20명까지 남습니다', '쓰러진 자의 기록: graves.slice(0, 20)', () => has('66-dungeon-flow.js', 'concat(G.data.graves || []).slice(0, 20)'));
   A('포인트 +1', 'treeRefund: t.pts++', () => has('22-class-tree-rules.js', 't.pts++; t.spent[s.b]'));
   A('열기 · 포인트 1', 'treeUnlock: run.tree.pts--', () => has('22-class-tree-rules.js', 'run.tree.pts--; run.tree.open.push(id)'));
   A('이 갈래 스킬 대기 −1', '[도달 불가] TREE2.*.haste(갈래 규칙)가 모든 직업에서 비어 있다', DEAD('Object.values(TREE2).every(t => !Object.keys(t.haste || {}).length)'));

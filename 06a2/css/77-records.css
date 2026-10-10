@@ -1,0 +1,93 @@
+/* 기록 · 랭킹 · 도감 · 계정 목표 · 표식 도전 (0.6a.2-113). 이 화면들만 쓰는 클래스(rc*, rk*, cd*)이고 공통 CSS는 건드리지 않는다 */
+.rcpage h4{margin:16px 0 6px}.rcpage h5{margin:10px 0 4px;font-size:calc(15px*var(--fs,1))}
+.rctabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:10px 0 12px;flex-wrap:wrap}
+.rctab{min-height:44px;padding:8px 16px;border-radius:8px 8px 0 0;border:1px solid var(--line);border-bottom:0;background:var(--panel);color:var(--muted);font-weight:600;font-size:calc(14.5px*var(--fs,1))}
+.rctab[aria-selected=true]{background:var(--panel2);color:var(--gold);border-color:var(--gold);box-shadow:inset 0 -3px 0 var(--gold)}
+.rctab small{font-weight:400;margin-left:2px}
+.rcpanel{min-width:0}
+.rcgrp{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:8px 0}
+.rcgl{color:var(--muted);font-size:calc(13px*var(--fs,1));min-width:3em}
+.rcchips{display:flex;flex-wrap:wrap;gap:6px}
+.rcchip{min-height:36px;padding:4px 12px;border-radius:999px;font-size:calc(13.5px*var(--fs,1));background:var(--panel2);border:1px solid var(--line2);color:var(--ink)}
+.rcchip[aria-pressed=true]{background:var(--gold);color:var(--gold-ink);border-color:var(--gold);font-weight:700}
+.rcchip[aria-disabled=true]{opacity:.7;border-style:dashed}
+.rcfilters{border-top:1px solid var(--line);margin-top:10px;padding-top:4px}
+.rccount{margin:8px 0 4px}
+.rcstats{list-style:none;margin:6px 0 10px;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.rcstat{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:2px;min-width:0}
+.rck{color:var(--muted);font-size:calc(12.5px*var(--fs,1))}
+.rcv{font-size:calc(17px*var(--fs,1));color:var(--gold);overflow-wrap:anywhere}
+.rcstat small{color:var(--muted);font-size:calc(12.5px*var(--fs,1))}
+.rclist{list-style:none;margin:6px 0;padding:0;display:grid;gap:6px}
+.rcrun{margin:0}
+.rccard,.rcgrave{width:100%;display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:4px 10px;align-items:center;text-align:left;padding:10px 12px;min-height:56px;background:var(--panel2);border:1px solid var(--line);border-radius:10px}
+.rcgrave{display:grid}
+.rccard:hover{border-color:var(--gold)}
+.rcico{font-size:calc(22px*var(--fs,1));text-align:center}
+.rcmain,.rcside{display:grid;gap:2px;min-width:0}
+.rcmain b{overflow-wrap:anywhere}.rcside{text-align:right;justify-items:end}
+.rcmain small,.rcside small{color:var(--muted);font-size:calc(12.5px*var(--fs,1))}
+.rckill{color:var(--bad)}
+.rctags{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0}
+.rctag{display:inline-block;border:1px solid var(--line2);border-radius:999px;padding:0 8px;font-size:calc(12px*var(--fs,1));color:var(--ink);background:var(--panel)}
+.rctag.st-clear{border-color:var(--good);color:var(--good)}.rctag.st-dead{border-color:var(--bad);color:var(--bad)}.rctag.warn{border-color:var(--gold);color:var(--gold)}.rctag.hard{border-color:var(--blood);color:var(--bad)}.rctag.me{border-color:var(--gold);color:var(--gold)}
+.rcempty{text-align:center;border:1px dashed var(--line2);border-radius:10px;padding:18px 12px;margin:10px 0}
+.rcempty p{margin:4px 0}
+.rcfacts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px 12px;margin:8px 0}
+.rcfacts div{min-width:0}.rcfacts dt{color:var(--muted);font-size:calc(12.5px*var(--fs,1))}.rcfacts dd{margin:0;overflow-wrap:anywhere}
+.rcsec{border-top:1px solid var(--line);margin-top:8px}
+.rcplain{margin:4px 0;padding-left:18px}.rcplain li{margin:3px 0}
+.rcme{background:rgba(201,162,75,.1);border:1px solid var(--gold);border-radius:10px;padding:8px 12px;margin:8px 0;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.rcme.none{background:var(--panel2);border-color:var(--line);color:var(--muted)}
+/* 랭킹 표: 넓은 화면은 표, 좁은 화면은 카드 */
+.rkwrap{overflow-x:auto;margin:8px 0}
+.rkt{width:100%;border-collapse:collapse;font-size:calc(13.5px*var(--fs,1))}
+.rkt th,.rkt td{padding:8px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.rkt thead th{color:var(--muted);font-weight:600;font-size:calc(12.5px*var(--fs,1))}
+.rkt td small,.rkt td b{display:block}.rkt td .rctag{display:inline-block}.rkt td small{color:var(--muted)}.rkt td.c-name b{display:inline}
+.rkt .rknum{font-family:'Nanum Myeongjo',serif;font-size:calc(18px*var(--fs,1));color:var(--muted)}.rkt tbody tr:nth-child(-n+3) .rknum{color:var(--gold);font-weight:700}
+.rkt tr.me{background:rgba(201,162,75,.1)}
+@media (max-width:719px){
+  .rkt thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .rkt,.rkt tbody{display:block}
+  .rkt tr{display:grid;grid-template-columns:44px minmax(0,1fr) auto;grid-template-areas:"rank name prog" "rank cls res" "rank nick time";gap:2px 8px;padding:8px 6px;border-bottom:1px solid var(--line)}
+  .rkt th,.rkt td{border:0;padding:0}
+  .rkt .c-rank{grid-area:rank;text-align:center;align-self:center}.rkt .c-name{grid-area:name}.rkt .c-prog{grid-area:prog;text-align:right}.rkt .c-cls{grid-area:cls;color:var(--muted)}.rkt .c-res{grid-area:res;text-align:right;color:var(--muted)}.rkt .c-nick{grid-area:nick;color:var(--muted)}.rkt .c-time{grid-area:time;text-align:right}
+  .rcstats{grid-template-columns:1fr 1fr}
+}
+/* 목표 · 칭호 · 표식 */
+.rcgrid{list-style:none;margin:6px 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.rctitle{width:100%;display:grid;gap:3px;text-align:left;padding:10px 12px;min-height:48px;border-radius:10px;background:var(--panel2);border:1px solid var(--line2);position:relative}
+.rctitle small{color:var(--muted);font-size:calc(12.5px*var(--fs,1))}
+.rctitle[aria-pressed=true]{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.rctitle.lock{border-style:dashed;color:var(--muted);background:var(--panel)}
+.rcmk .rcpt{position:absolute;right:10px;top:8px;font-weight:700;color:var(--gold)}.rcmk b{padding-right:3em}
+.rcprog{display:flex;align-items:center;gap:10px;margin:6px 0}
+.rcprog progress{flex:1;height:12px;appearance:none;-webkit-appearance:none;border:1px solid var(--line2);border-radius:999px;background:var(--track);overflow:hidden}
+.rcprog progress::-webkit-progress-bar{background:var(--track)}.rcprog progress::-webkit-progress-value{background:var(--gold)}.rcprog progress::-moz-progress-bar{background:var(--gold)}
+.rcgcards{list-style:none;margin:8px 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.rcgcard{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.rcgcard.locked{border-style:dashed;color:var(--muted)}.rcgcard h5{margin:0 0 6px}.rcgcard h5 small{color:var(--muted);font-weight:400;margin-left:4px}
+.rcbrs{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.rcbr{display:grid;gap:3px}.rcbn{font-size:calc(13.5px*var(--fs,1))}
+.rcpills{list-style:none;margin:0;padding:0;display:flex;gap:4px;flex-wrap:wrap}
+.rcpill{border:1px solid var(--line);border-radius:6px;padding:1px 8px;font-size:calc(12.5px*var(--fs,1));color:var(--muted);background:var(--panel)}
+.rcpill.ok{border-color:var(--good);color:var(--good);font-weight:700}
+/* 도감 */
+.cdgrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.cdcard{width:100%;min-height:120px;display:grid;justify-items:center;align-content:center;gap:4px;padding:10px 8px;border-radius:12px;background:var(--panel2);border:1px solid var(--line2);text-align:center}
+.cdcard small{color:var(--muted);font-size:calc(12.5px*var(--fs,1))}
+.cdcard:hover{border-color:var(--gold)}
+li.cdcard.lock{border-style:dashed;background:var(--panel);color:var(--muted)}
+.cdsil{font-size:calc(30px*var(--fs,1));width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:var(--track);color:var(--muted);border:1px solid var(--line)}
+.cdsil.on{color:var(--ink);border-color:var(--gold)}
+.rcdh{margin:6px 0;font-size:calc(19px*var(--fs,1));color:var(--gold)}#rcdt:focus{outline:2px solid var(--gold);outline-offset:3px}
+@media (max-width:389px){.rcgrid{grid-template-columns:1fr}.cdgrid{grid-template-columns:1fr 1fr}.rcgcards{grid-template-columns:1fr}}
+.rcgcard .rcfacts{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:719px){
+  .rkt tr{padding:8px 6px;gap:1px 8px}
+  .rkt .c-prog small,.rkt .c-time small{display:inline;margin-left:6px}
+  .rkt .c-time,.rkt .c-prog{font-size:calc(12.5px*var(--fs,1))}
+  .rkt .c-prog b{display:inline;font-size:calc(13.5px*var(--fs,1))}
+  .rcgcard .rcfacts{grid-template-columns:1fr}
+}
