@@ -251,8 +251,8 @@ function enemyAct(b, e) {
     case 'attack': { if (e.missNext) { e.missNext = 0; logp(b, 'good', e.n + '의 공격이 연막 속에서 빗나간다'); break; } const x = hurtPlayer(b, d * (i.aimed ? EKW.aimMul : 1), { src: e, single: 1, label: e.n + (i.aimed ? '이(가) 겨눈 한 발을 쏜다' : ({ archer: '이(가) 활을 쏜다', darkmage: '이(가) 어둠 화살을 날린다', pyre: '이(가) 불씨를 던진다' })[e.role] || '이(가) 나를 벤다') }); if (i.bleed && x > 0) addS(b, b.p, 'bleed', i.bleed); if (i.poison && x > 0 && !b.over) addPoison(b, b.p, i.poison, 0); if (isCh3(b)) fireCarry(b, e, 0, x > 0); leech(b, e, x); break; }
     case 'brand': { hurtPlayer(b, d * 0.6, { src: e, single: 1, label: e.n + '이(가) 죄를 읽는다' }); if (!b.over) { const before = st(b.p, 'brand'); addS(b, b.p, 'brand', 999, 1, 3); if (st(b.p, 'brand') > before) logp(b, 'bad', '이름 위에 낙인이 새겨진다. 낙인 ' + st(b.p, 'brand')); codexHit(b, 'abbot', 'brand'); } break; }
     case 'pray': { logp(b, 'sys', e.n + '이(가) 입을 다문 채 기도한다'); break; }
-    case 'challenge': { e.demand = { k: 'atk', turn: b.turnIdx, hit: 0 }; logp(b, 'crit', e.n + '이(가) 심문한다. 다음 차례에 맞서라'); codexHit(b, 'abbot', 'demand'); break; }
-    case 'confess': { e.demand = { k: 'rest', turn: b.turnIdx, hit: 0 }; logp(b, 'crit', e.n + '이(가) 고해를 요구한다. 다음 차례에는 칼을 거두어라'); codexHit(b, 'abbot', 'demand'); break; }
+    case 'challenge': { e.demand = { k: 'atk', turn: b.turnIdx, hit: 0 }; logp(b, 'crit', e.n + '이(가) 다음 차례에 당신을 심문하려 한다'); codexHit(b, 'abbot', 'demand'); break; }
+    case 'confess': { e.demand = { k: 'rest', turn: b.turnIdx, hit: 0 }; logp(b, 'crit', e.n + '이(가) 다음 차례에 고해를 받으려 한다'); codexHit(b, 'abbot', 'demand'); break; }
     case 'sermon': { addS(b, b.p, 'weak', ABBOT.sermonWeak); logp(b, 'bad', e.n + '이(가) 설교한다. 약화 ' + ABBOT.sermonWeak); break; }
     case 'rest': { logp(b, 'sys', e.n + '이(가) 무너진 제단 위에서 숨을 고른다'); break; }
     case 'sacprep': { const m = b.en.find(x => x.id === i.tgt && x.alive); if (m) { e.sacNext = m.id; e.teleTurn = b.turnIdx; logp(b, 'crit', e.n + '이(가) ' + m.n + '을(를) 끌어당긴다'); codexHit(b, 'abbot', 'sacrifice'); } break; }

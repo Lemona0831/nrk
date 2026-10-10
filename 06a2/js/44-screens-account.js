@@ -193,6 +193,8 @@ async function pushRank(run, st) {
     d.name = G.data.name || d.name || ''; await ref.set(d); G.board = null; if (G.scr === 'rank') render();
   } catch (e2) { }
 }
+/* 랭킹의 직업 표시: 아직 열지 않은 숨겨진 직업은 이름 · 아이콘을 숨긴다(내 줄은 그대로). 필터는 e.build를 그대로 쓴다 */
+function rankClassView(e) { const B = BUILDS[e.build]; return e.me || unlOpen(e.build) ? B : { ico: '❔', n: '숨겨진 직업' }; }
 function rankRows() {
   const out = [];
   if (G.db && G.board) { for (const x of G.board) for (const e of Object.values(x.rank62 || {})) out.push(Object.assign({ nick: x.name || '', me: x.uid === G.uid }, e)); }
@@ -208,7 +210,7 @@ function vRank() {
   if (G.db && !G.board) { if (!G.boardLoading) setTimeout(loadBoard, 0); h += '<p class="mini">불러오는 중입니다.</p>'; }
   else {
     const rows = rankRows().filter(e => (tab === 'all' || e.build === tab) && (e.mode === 'hard' ? 'hard' : 'normal') === (G.rankMode === 'hard' ? 'hard' : 'normal')).slice(0, 50);
-    h += rows.length ? `<ol class="rk">${rows.map((e, i) => { const B = BUILDS[e.build]; return `<li class="${e.me ? 'me2' : ''}"><span class="rkn">${i + 1}</span><span class="rkc"><b><span aria-hidden="true">${B.ico}</span> ${esc(e.cname || '이름 없음')}${modeTag(e)}</b><small>${esc(B.n)}${e.title && titleName(e.title) ? ' · 칭호 ' + esc(titleName(e.title)) : ''} · ${esc(e.nick || '이름 없는 방랑자')}${e.me ? ' (나)' : ''}</small></span><span class="rkp"><b>${esc(rankProg(e))}</b><small>Lv ${e.lv || 1} · ${RANK_ST[e.st] || ''} · ${fmtMs(e.ms)}</small></span></li>`; }).join('')}</ol>` : '<p class="mini">아직 기록이 없습니다.</p>';
+    h += rows.length ? `<ol class="rk">${rows.map((e, i) => { const B = rankClassView(e); return `<li class="${e.me ? 'me2' : ''}"><span class="rkn">${i + 1}</span><span class="rkc"><b><span aria-hidden="true">${B.ico}</span> ${esc(e.cname || '이름 없음')}${modeTag(e)}</b><small>${esc(B.n)}${e.title && titleName(e.title) ? ' · 칭호 ' + esc(titleName(e.title)) : ''} · ${esc(e.nick || '이름 없는 방랑자')}${e.me ? ' (나)' : ''}</small></span><span class="rkp"><b>${esc(rankProg(e))}</b><small>Lv ${e.lv || 1} · ${RANK_ST[e.st] || ''} · ${fmtMs(e.ms)}</small></span></li>`; }).join('')}</ol>` : '<p class="mini">아직 기록이 없습니다.</p>';
     if (!G.db) h += '<p class="mini">공유 저장소에 연결되지 않아 이 브라우저의 기록만 보입니다.</p>';
   }
   h += `</section><section class="card"><h4>랭킹에 보일 플레이어 이름</h4><div class="row nowrap"><label for="pname" class="sr">플레이어 이름</label><input id="pname" type="text" maxlength="16" placeholder="플레이어 이름" value="${esc(G.data.name || '')}"><button class="sm" data-a="namesave">저장</button></div><p class="mini">캐릭터 이름은 만들 때 정하고, 플레이어 이름은 모든 캐릭터에 함께 보입니다.${G.site && G.acct && !G.acct.anon ? ' 구글 계정에 고정됩니다.' : ''}</p>${G.db ? '<button class="sm" data-a="boardre">새로 고침</button>' : ''}</section>`;
