@@ -85,14 +85,14 @@
 .stepper li.now{color:var(--gold);border-color:var(--gold);font-weight:600}.stepper li.now span{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
 .stepper li.done{color:var(--ink);border-color:#6b5535}.stepper li.done span{border-color:var(--gold);color:var(--gold)}
 .row.nowrap{flex-wrap:nowrap;align-items:center}.row.nowrap input{margin:0;flex:1;min-width:0}
-.clsgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0}
+.clsgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0;align-items:start}.clscol{display:flex;flex-direction:column;gap:8px;min-width:0}.clscol .clsc{width:100%}
 .clsc{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;min-height:92px;border-top:3px solid var(--c)}.clsc .big{font-size:calc(26px*var(--fs,1));line-height:1.1}.clsc small{font-size:calc(11.5px*var(--fs,1));color:var(--muted)}
 .clsc.on{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold) inset;background:var(--panel)}
 .clsc.locked{border-style:dashed;border-top:3px dashed var(--muted)}.clsc.locked b{letter-spacing:2px}.unlnews{border:1px solid var(--gold);border-radius:8px;padding:8px 10px;color:var(--ink)}
 .clsdet{border:1px solid var(--line);border-left:4px solid var(--c);border-radius:10px;padding:12px;margin:10px 0;background:var(--panel2)}
 .clsdet-h{display:flex;gap:10px;align-items:center}.clsdet-h .big{font-size:calc(34px*var(--fs,1))}.clsdet-h b{font-family:'Nanum Myeongjo',serif;font-size:calc(20px*var(--fs,1));color:var(--gold)}
 .exl{margin:6px 0 10px;padding-left:18px}.exl li{margin:3px 0;font-size:calc(14px*var(--fs,1))}.clsdet-empty{margin:10px 0}
-@media (max-width:640px){.clsgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.stepper li{font-size:calc(12px*var(--fs,1));gap:4px}}
+@media (max-width:640px){.clsgrid{gap:6px}.clsc{padding:8px 2px}.clsc b{font-size:calc(14px*var(--fs,1))}.clsc small{font-size:calc(11px*var(--fs,1))}.stepper li{font-size:calc(12px*var(--fs,1));gap:4px}}
 /* 페이지 */
 .phead{display:flex;align-items:center;gap:10px;margin-bottom:6px}.phead h3{margin:0}.back{min-height:36px}
 .rk{list-style:none;padding:0;margin:8px 0}

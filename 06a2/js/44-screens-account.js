@@ -41,9 +41,14 @@ function vCreate() {
   }
   const pk = C.pick && BUILDS[C.pick] ? C.pick : null;
   h += `<section class="card cstep"><h3>직업을 고르세요${q('build', '직업과 빌드')}</h3><p class="mini"><b>${esc(C.name)}</b>의 직업입니다. 직업을 누르면 규칙과 스킬이 아래에 보입니다.</p><div class="clsgrid" role="group" aria-label="직업">`;
-  for (const k of CLASS_KEYS()) { const B = BUILDS[k]; h += `<button class="clsc${pk === k ? ' on' : ''}" data-a="clspick" data-k="${k}" aria-pressed="${pk === k}" style="--c:${CLS_COLOR[k] || 'var(--gold)'}"><span class="big" aria-hidden="true">${B.ico}</span><b>${esc(B.n)}</b><small>생명력 ${B.hp + SLOT_BASE.armor.v[0]}${B.v2 ? ' · 충전 스킬' : ' · 마나 ' + B.mp}</small></button>`; }
-  for (const k of unlLocked()) { const L = UNLOCK[k]; const U = G.data.unl || { c: {} }; const pr = L.show ? (L.need || []).find(x => x.c === L.show) : null; h += `<button class="clsc locked" aria-disabled="true" data-info="lock:${k}" aria-label="잠긴 숨겨진 직업. ${esc(L.door || '')}${pr ? ', 진행 ' + Math.min(pr.n, U.c[pr.c] || 0) + '/' + pr.n : ''}"><span class="big" aria-hidden="true">${L.ico || '❔'}</span><b>???</b><small>🔒 ${esc(L.door || '숨겨진 직업')}${pr ? ' · ' + Math.min(pr.n, U.c[pr.c] || 0) + '/' + pr.n : ''}</small></button>`; }
-  for (const c of (typeof CLASS_SOON !== 'undefined' ? CLASS_SOON : []).filter(c => !CLASS_KEYS().some(k => BUILDS[k].n === c.n))) h += `<button class="clsc" aria-disabled="true" data-info="soon:${esc(c.n)}"><span class="big" aria-hidden="true">${c.ico}</span><b>${esc(c.n)}</b><small>준비 중</small></button>`;
+  const clsBtn = k => { const B = BUILDS[k]; return `<button class="clsc${pk === k ? ' on' : ''}" data-a="clspick" data-k="${k}" aria-pressed="${pk === k}" style="--c:${CLS_COLOR[k] || 'var(--gold)'}"><span class="big" aria-hidden="true">${B.ico}</span><b>${esc(B.n)}</b><small>생명력 ${B.hp + SLOT_BASE.armor.v[0]}${B.v2 ? ' · 충전 스킬' : ' · 마나 ' + B.mp}</small></button>`; };
+  /* 10월 10일 결정 66: 3열 × 2행(공개 직업 여섯). 숨겨진 직업은 열린 뒤에만 열 아래(세 번째 행)에 생긴다. 잠긴 칸은 그리지 않는다 */
+  const openKeys = CLASS_KEYS(), placed = {};
+  for (const col of CLASS_GRID) for (const k of col) placed[k] = 1;
+  CLASS_GRID.forEach((col, i) => { const ks = col.filter(k => openKeys.includes(k)); if (ks.length) h += `<div class="clscol" role="group" aria-label="직업 묶음 ${i + 1}">${ks.map(clsBtn).join('')}</div>`; });
+  const rest = openKeys.filter(k => !placed[k]);
+  for (const c of (typeof CLASS_SOON !== 'undefined' ? CLASS_SOON : []).filter(c => !openKeys.some(k => BUILDS[k].n === c.n))) h += `<button class="clsc" aria-disabled="true" data-info="soon:${esc(c.n)}"><span class="big" aria-hidden="true">${c.ico}</span><b>${esc(c.n)}</b><small>준비 중</small></button>`;
+  if (rest.length) h += `<div class="clscol">${rest.map(clsBtn).join('')}</div>`;
   h += `</div>`;
   if (pk) {
     const B = BUILDS[pk];
