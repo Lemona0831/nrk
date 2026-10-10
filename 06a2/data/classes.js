@@ -85,13 +85,13 @@ const CLASS_SOON = [
 
 /* 숨겨진 직업 해금 (10월 7일, 목표 3단계). 열리기 전에는 캐릭터 만들기에 ??? 칸만 보이고 이름 · 규칙은 감춘다.
    UNLOCK[직업] = { ico, door(잠긴 칸의 한 줄), hint(설명 창), need: [{ c: 셈 이름, n: 횟수 }, ...](하나라도 채우면 열림),
-                    show(진행 숫자를 보일 셈 이름, 없으면 숨김), open(열리는 순간 문장) }
+                    show(진행 숫자를 보일 셈 이름. 10월 10일 결정으로 셋 모두 쓰지 않아 진행 숫자는 모두 숨김), open(열리는 순간 문장) }
    셈은 계정에 남는다(G.data.unl.c). 엔진이 세는 것의 이름은 아래 UNLOCK의 need에 있고, 뜻은 비공개 문서에 둔다. 수련장 · 시험 전투 · 고정 상황은 세지 않는다.
    조건의 뜻과 까닭은 비공개 문서(nrk-private/직업/)에만 적는다 */
 const UNLOCK = {
-  butcher: { ico: '🚪', door: '피 냄새가 짙은 문', hint: '위태로운 싸움을 이겨 내면 열립니다.', need: [{ c: 'edge', n: 3 }, { c: 'foe:pilgrim', n: 1 }], show: 'edge', open: '피 냄새를 따라온 자가 문을 엽니다.' },
+  butcher: { ico: '🚪', door: '피 냄새가 짙은 문', hint: '위태로운 싸움을 이겨 내면 열립니다.', need: [{ c: 'edge', n: 3 }, { c: 'foe:pilgrim', n: 1 }], open: '피 냄새를 따라온 자가 문을 엽니다.' },
   confessor: { ico: '❔', door: '고해소의 닫힌 문', hint: '죄를 지고도 걸음을 멈추지 않은 자에게 고해소의 문이 열립니다.', need: [{ c: 'sinKill', n: 25 }, { c: 'confess', n: 3 }], open: '고해소의 문이 열렸습니다.' },
-  bloodmage: { ico: '🩸', door: '피에 젖은 문', hint: '피를 바친 이, 또는 독으로 많은 적을 거둔 이에게 열립니다.', need: [{ c: 'poisonKill', n: 12 }, { c: 'bloodBoss:abbot', n: 1 }], show: 'poisonKill', open: '피를 바친 자가 문을 엽니다.' },
+  bloodmage: { ico: '🩸', door: '피에 젖은 문', hint: '피를 바친 이, 또는 독으로 많은 적을 거둔 이에게 열립니다.', need: [{ c: 'poisonKill', n: 12 }, { c: 'bloodBoss:abbot', n: 1 }], open: '피를 바친 자가 문을 엽니다.' },
 };
 
 /* 레벨이 오를 때 오르는 생명력 (11.4절) */
