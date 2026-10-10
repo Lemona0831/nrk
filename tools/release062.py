@@ -48,7 +48,7 @@ def build():
     os.makedirs(OUT)
     shutil.copy2(os.path.join(REPO, '06a2', 'index.html'), os.path.join(OUT, 'index.html'))
     shutil.copy2(os.path.join(REPO, '06a2', 'remote.html'), os.path.join(OUT, 'remote.html'))
-    for d in ['data', 'js', 'css', 'remote']:
+    for d in ['data', 'js', 'css', 'remote', 'images']:
         shutil.copytree(os.path.join(REPO, '06a2', d), os.path.join(OUT, d))
     os.makedirs(os.path.join(OUT, 'audio'))
     for src in [os.path.join(REPO, 'audio'), os.path.join(REPO, '06a2', 'audio')]:
