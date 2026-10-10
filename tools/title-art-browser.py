@@ -22,7 +22,7 @@ with sync_playwright() as p:
     for width in [390,1280]:
         pg.set_viewport_size({'width':width,'height':844})
         pg.evaluate("()=>{G.data.seenVer=CHANGE_VER;G.sheet=null;G.scr='title';render()}")
-        pg.wait_for_function("document.querySelector('.title-art img').naturalWidth>0")
+        pg.wait_for_function("document.querySelector('.title-art img').naturalWidth>0 && document.querySelector('.title-logo').naturalWidth>0")
         assert pg.evaluate('document.documentElement.scrollWidth<=innerWidth')
         assert pg.locator('[data-a=newchar]').is_visible()
         pg.screenshot(path=str(out/f'title-{width}.png'),full_page=True)
@@ -36,6 +36,8 @@ with sync_playwright() as p:
         assert pg.evaluate('document.documentElement.scrollWidth<=innerWidth')
         pg.screenshot(path=str(out/f'resume-scroll-{width}.png'),full_page=True)
     pg.evaluate("()=>{document.documentElement.style.zoom=1;G.data.cur=null;G.scr='title';render();window.scrollTo(0,0)}")
+    pg.evaluate("()=>{G.data.rm=true;render()}")
+    assert pg.evaluate("getComputedStyle(document.querySelector('.title-logo')).animationName==='none'")
     pg.click('[data-a=newchar]')
     assert pg.locator('.title-art').count()==0
     assert not errs,errs
