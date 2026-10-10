@@ -135,7 +135,7 @@ function infoHtml(key) {
   if (parts[0] === 'soon') { const c = (typeof CLASS_SOON !== 'undefined' ? CLASS_SOON : []).find(x => x.n === parts[1]); return c ? H(c.n, P(c.d + '.') + P('아직 준비 중입니다.')) : ''; }
   if (parts[0] === 'floor' && G.run) { const f = +parts[1], run = G.run; const rec = (run.rooms || []).filter(x => x.room === f).pop(); const T = rec && ROOM_TYPES[rec.type]; return H(floorName(f), P(f === FLOOR_CAMP ? '야영지: 쉬면 모두 찹니다.' : f === FLOOR_BOSS ? '보스가 기다립니다.' : f === run.room ? '지금 있는 층입니다.' : f < run.room ? (T ? T.n + ' 방을 지났습니다.' : rec && rec.type === 'camp' ? '야영지에서 쉬었습니다.' : '지나온 층입니다.') : PATH_AT.includes(f) ? '갈래길이 나옵니다.' : '아직 가지 않은 층입니다.')); }
   if (INFO2[key]) return H(INFO2[key][0], INFO2[key].slice(1).map(P).join(''));
-  if (key === 'buildrule' && b) { const B = BUILDS[b.p.build]; const SKM = skillMap(b.p.build); return H(B.n, P('직업 규칙: ' + B.rule) + skillsOf(b.p).map(id => P(SKM[id].n + ' (' + resLabel(SKM[id]) + '): ' + SKM[id].d)).join('')); }
+  if (key === 'buildrule' && b) { const B = BUILDS[b.p.build]; const SKM = skillMap(b.p.build); return H(B.n, classRuleHtml(b.p.build) + skillsOf(b.p).map(id => P(SKM[id].n + ' (' + resLabel(SKM[id]) + '): ' + SKM[id].d)).join('')); }
   if (fixed[key]) return H(fixed[key][0], P(fixed[key][1]));
   return '';
 }

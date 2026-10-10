@@ -62,7 +62,7 @@ function vCreate() {
   h += `</div>`;
   if (pk) {
     const B = BUILDS[pk];
-    h += `<div class="clsdet" style="--c:${CLS_COLOR[pk] || 'var(--gold)'}"><div class="clsdet-h"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(B.n)}</b><div class="mini">생명력 ${B.hp + SLOT_BASE.armor.v[0]}${B.v2 ? '' : ', 마나 ' + B.mp}</div></div></div>${B.intro ? `<p>${esc(B.intro)}</p>` : ''}<p class="lore">${esc(B.lore || '')}</p><p class="crule">직업 규칙: ${esc(B.rule)}</p>${B.v2 ? `<p class="mini">시작 스킬 · 항상 장착</p><ul class="exl">${TREE2[pk].starters.map(id => `<li><b>${esc(SK2[id].n)}</b> <span class="mini">${esc(skBody(SK2[id]))}</span></li>`).join('')}</ul><p class="mini">스킬 트리 세 갈래: ${TREE2[pk].branches.map(br => `<br><b>${esc(br)}</b> · ${esc(TREE2[pk].bd[br])}`).join('')}<br>다음 단계에서 스킬 트리를 확인합니다.</p>` : `<p class="mini"><b>직업 기술 ${esc(SIG[pk].n)}</b>: ${esc(SIG[pk].d)}</p><ul class="exl">${exclOf(pk).map(x => `<li><b>${esc(x.n)}</b> <span class="mini">${esc(x.d)}</span></li>`).join('')}</ul>`}</div>`;
+    h += `<div class="clsdet" style="--c:${CLS_COLOR[pk] || 'var(--gold)'}"><div class="clsdet-h"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(B.n)}</b><div class="mini">생명력 ${B.hp + SLOT_BASE.armor.v[0]}${B.v2 ? '' : ', 마나 ' + B.mp}</div></div></div>${B.intro ? `<p>${esc(B.intro)}</p>` : ''}<p class="lore">${esc(B.lore || '')}</p>${classRuleHtml(pk)}${B.v2 ? `<p class="mini">시작 스킬 · 항상 장착</p><ul class="exl">${TREE2[pk].starters.map(id => `<li><b>${esc(SK2[id].n)}</b> <span class="mini">${esc(skBody(SK2[id]))}</span></li>`).join('')}</ul><p class="mini">스킬 트리 세 갈래: ${TREE2[pk].branches.map(br => `<br><b>${esc(br)}</b> · ${esc(TREE2[pk].bd[br])}`).join('')}<br>다음 단계에서 스킬 트리를 확인합니다.</p>` : `<p class="mini"><b>직업 기술 ${esc(SIG[pk].n)}</b>: ${esc(SIG[pk].d)}</p><ul class="exl">${exclOf(pk).map(x => `<li><b>${esc(x.n)}</b> <span class="mini">${esc(x.d)}</span></li>`).join('')}</ul>`}</div>`;
   } else h += `<p class="mini clsdet-empty">직업을 하나 누르세요.</p>`;
   if (C.mark) h += markCreateCard(C); else { const hd = C.mode === 'hard' && G.data.hardOpen; h += `<section class="card cstep"><h3>모드</h3><div class="row" role="group" aria-label="모드"><button class="chip${hd ? '' : ' on'}" data-a="cmode" data-k="normal" aria-pressed="${!hd}">일반</button><button class="chip${hd ? ' on' : ''}" data-a="cmode" data-k="hard" aria-pressed="${hd}"${G.data.hardOpen ? '' : ' aria-disabled="true"'}>가혹${G.data.hardOpen ? '' : ' (잠김)'}</button></div>${G.data.hardOpen ? '' : '<p class="mini">1챕터 보스를 한 번 이기면 가혹 모드가 열립니다.</p>'}${hd ? `<ul class="mini">${MODES.hard.why.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="mini">일반: 기본 난이도로 도전합니다.</p>'}</section>`; }
   return h + `<div class="stickbar">${pk ? `<button class="gold wide" data-a="start" data-b="${pk}" data-focus>${esc(BUILDS[pk].n + '(으)로 정하기')}</button>` : ''}<div class="row"><button data-a="cback" data-k="name">이전: 이름</button><button data-a="createcancel">그만두기</button></div></div></section>`;
@@ -235,3 +235,23 @@ function vDash06() {
   return h + '</section>';
 }
 
+// 원문을 항목별로 나눠 보여 줍니다. 수치와 예외는 원문 그대로 유지합니다.
+function classRuleHtml(build) {
+  const B = BUILDS[build];
+  const groups = {
+    hunter: [['사거리와 활', 2], ['가속 · 연속 행동', 4], ['추적 · 같은 적을 집중 공격', 2], ['연계 · 다른 갈래로 이어 쓰기', 1]],
+    elementalist: [['사거리와 마력 화살', 3], ['열충격 · 화상과 둔화', 3], ['서리 무게 · 적의 공격 약화', 2]],
+    spellblade: [['교대 · 베기와 주문', 4], ['칼에 실은 출혈과 화상', 2], ['주문의 사거리', 1]],
+    monk: [['되받기 · 방어 중 반격', 2], ['기 · 공격 강화', 1]],
+    butcher: [['흡혈 · 상처 난 적에게서 회복', 2], ['갈증 · 잃은 생명력으로 강화', 1], ['회복 한도와 출혈', 2]],
+    confessor: [['짐 · 내가 짊어진 상태', 2], ['정화 · 상태를 지워 보호 획득', 3], ['고행 · 스스로 짊어진 상태', 3]],
+    bloodmage: [['사거리와 기본 공격', 2], ['피로 당기기 · 스킬을 즉시 사용', 4], ['먹기 · 중독을 회복으로', 2]]
+  }[build];
+  if (!groups) return `<p class="crule">직업 규칙: ${esc(B.rule)}</p>`;
+  const sentences = B.rule.split('. ');
+  let offset = 0;
+  return `<div class="class-rules" aria-label="직업 규칙"><b class="class-rules-title">직업 규칙</b>${groups.concat([['스킬 재사용', 1]]).map(([title, count]) => {
+    const text = sentences.slice(offset, offset += count).join('. ');
+    return `<section class="class-rule"><h4>${esc(title)}</h4><p>${esc(text)}${offset < sentences.length ? '.' : ''}</p></section>`;
+  }).join('')}</div>`;
+}

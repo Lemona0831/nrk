@@ -25,6 +25,15 @@ with sync_playwright() as p:
     from pathlib import Path
     out=Path('output/playwright/player-text');out.mkdir(parents=True,exist_ok=True)
     pg.fill('#cname','문구점검');pg.click('[data-a=cnok]')
+    assert pg.evaluate('()=>ALL_CLASS_KEYS().every(k=>{const el=document.createElement("div");el.innerHTML=classRuleHtml(k);const text=Array.from(el.querySelectorAll("p")).map(p=>p.textContent).join(" ");return text===(k==="assassin"||k==="warden"?"직업 규칙: ":"")+BUILDS[k].rule})')
+    for width in [390,1280]:
+        pg.set_viewport_size({'width':width,'height':844})
+        for build in ['hunter','elementalist','spellblade','monk']:
+            pg.click(f'[data-a=clspick][data-k={build}]')
+            assert pg.locator('.class-rules').count()==1
+            assert pg.evaluate('(build)=>{const original=BUILDS[build].rule;const rendered=document.querySelector(".class-rules");return Array.from(rendered.querySelectorAll("p")).map(p=>p.textContent).join(" ")==original}',build)
+            assert pg.evaluate('document.documentElement.scrollWidth<=innerWidth')
+            pg.screenshot(path=str(out/f'rules-{build}-{width}.png'),full_page=True)
     pg.click('[data-a=clspick][data-k=spellblade]')
     for width in [390,1280]:
         pg.set_viewport_size({'width':width,'height':844})

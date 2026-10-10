@@ -116,3 +116,6 @@
 .wallm{font-size:calc(13px*var(--fs,1));margin-left:3px;opacity:.85}
 .chgh{margin:10px 0 2px;font-size:calc(13px*var(--fs,1));color:var(--muted);letter-spacing:.04em}
 
+
+/* 직업 규칙 항목 */
+.class-rules{margin:12px 0;line-height:1.65;overflow-wrap:anywhere}.class-rules-title{display:block;margin-bottom:6px;color:var(--gold)}.class-rule{padding:8px 0;border-top:1px solid var(--line)}.class-rule h4{margin:0 0 3px;font-size:1em;color:var(--gold)}.class-rule p{margin:0;font-size:calc(15px*var(--fs,1))}.class-rules .class-rule:last-child p{color:var(--muted)}
