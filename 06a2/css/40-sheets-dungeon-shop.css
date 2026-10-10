@@ -134,7 +134,7 @@
 /* 타이틀을 스크롤할 때 상단 메뉴가 제목을 덮지 않게 합니다. */
 .app:has(.title-scr)>.hdr{position:relative;top:auto}
 /* 손으로 그린 제목과 느린 촛불 밝기 변화 */
-.tlogo{width:min(420px,100%)}.tlogo .tlh{margin:8px 0 4px;line-height:0;text-shadow:none}.title-logo{display:block;width:100%;height:auto;animation:title-candle 8s ease-in-out infinite}.tlogo .lore{font-style:normal;font-weight:400;line-height:1.65}
+.tlogo{width:min(620px,100%)}.tlogo .tlh{margin:8px 0 4px;line-height:0;text-shadow:none}.title-logo{display:block;width:min(396px,100%);margin:0 auto;height:auto;animation:title-candle 8s ease-in-out infinite}.tlogo .lore{max-width:none;font-style:normal;font-weight:400;line-height:1.65;word-break:keep-all;overflow-wrap:break-word;text-wrap:balance}
 @keyframes title-candle{0%,100%{opacity:1}24%{opacity:.96}47%{opacity:.99}69%{opacity:.94}83%{opacity:.98}}
 @media(prefers-reduced-motion:reduce){.title-logo{animation:none}}
 .title-logo.no-motion{animation:none}
