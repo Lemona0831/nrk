@@ -123,3 +123,5 @@
 .rule-math{padding:9px 11px;margin:8px 0;background:var(--bg);border:1px solid var(--line);border-radius:6px;font-variant-numeric:tabular-nums}.rule-math p{margin:3px 0;font-size:calc(14px*var(--fs,1))}.rule-details summary{cursor:pointer;color:var(--gold);padding:6px 0;min-height:32px}.rule-details p{margin:8px 0;font-size:calc(14px*var(--fs,1))}.class-rules .rule-cooldown{margin:8px 0 0}.class-rules .class-rule:last-child p{color:inherit}
 
 .cstep>.stickbar{position:static;margin-top:12px}.class-kit summary{cursor:pointer;color:var(--gold);padding:6px 0}
+
+.loadout-hint{border:1px solid var(--gold);border-radius:8px;padding:10px;margin:10px 0;background:var(--panel2)}.loadout-hint p,.equip-burden p{margin:5px 0}.equip-burden,.idet .cost{border:1px solid var(--bad);border-radius:6px;padding:8px;color:var(--ink);background:var(--panel2)}.equip-burden{margin-bottom:8px}.equip-burden b,.idet .cost b{color:var(--bad)}

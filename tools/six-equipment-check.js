@@ -13,3 +13,23 @@ for(const build of V('Object.keys(TREE2)')) {
  }
 }
 console.log('장비 비교 효과·대가·원본 불변:',n,'직업×장비 조건 통과');
+
+// 비용 증가가 나빠짐으로, 감소가 좋아짐으로 표시되고 실제 충전 손실도 안내해야 합니다.
+const r={build:'hunter',p:E.mkPlayer('hunter',{}),bag:[],swaps:[]};E.initGear(r);
+for(const tpl of ['twinblades','saintgrail']) {
+ const it=E.mkItem(tpl,{b:0});r.inv[it.uid]=it;r.bag.push(it.uid);const slot=E.tplKind(tpl);E.__cmpRun=r;E.__cmpId=it.uid;E.__cmpSlot=slot;
+ const original=JSON.stringify(r),html=V('compareHtml(__cmpRun,__cmpId,__cmpSlot)');assert.equal(JSON.stringify(r),original);
+ assert(html.includes('사용 부담이 늘어납니다'));
+ if(tpl==='twinblades')assert(/class="dn"[^]*강공격 스태미나 비용 <b>\+10<\/b>/.test(html));
+ else {assert(html.includes('생명력 플라스크 최대 충전 3 → 2회'));assert(html.includes('장착 즉시 남은 생명력 플라스크 3 → 2회'));}
+ const old=r.eqU[slot];E.equipUid(r,it.uid,slot);E.__cmpId=old;const reverse=V('compareHtml(__cmpRun,__cmpId,__cmpSlot)');
+ if(tpl==='twinblades')assert(/class="up"[^]*강공격 스태미나 비용 <b>−10<\/b>/.test(reverse));
+ assert(!reverse.includes('사용 부담이 늘어납니다'));
+}
+for(const ids of [[],['h_double'],['h_double','h_triple'],['h_double','h_mark']]) {
+ E.__hintRun={build:'hunter',skills:ids};const original=JSON.stringify(E.__hintRun),html=V('hunterLoadoutHint(__hintRun)');assert.equal(JSON.stringify(E.__hintRun),original);
+ assert(html.includes(ids.includes('h_mark')?'연계 가능':'한 갈래만 장착하면 연계가 발동하지 않습니다'));
+ if(ids.includes('h_mark'))assert(html.includes('피해 +30%'));
+}
+assert.equal(V('hunterLoadoutHint({build:"warden",skills:[]})'),'');
+console.log('사냥꾼 단일/복수 갈래 안내·비용 증감 방향·플라스크 즉시 손실·원본 불변 통과');

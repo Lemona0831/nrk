@@ -24,19 +24,34 @@ with sync_playwright() as p:
     pg.evaluate("()=>{G.data.seenCoach=true; G.data.seenBreak=true; G.data.name='민수'}")  # 첫 붕괴 안내 창이 전투 버튼을 가리지 않게
     pg.fill('#cname', '사냥꾼민수'); pg.click('[data-a=cnok]'); cls = 'hunter' if pg.query_selector('[data-a=clspick][data-k=hunter]') else pg.get_attribute('[data-a=clspick]', 'data-k')  # 0.6a.2 시험판(06a2)에는 사냥꾼이 아직 없다
     pg.click(f'[data-a=clspick][data-k={cls}]')
-    pg.click(f'button[data-a=start][data-b={cls}]'); pg.click('button[data-a=skillok]')
+    pg.click(f'button[data-a=start][data-b={cls}]')
+    pg.evaluate('G.run.tree.pts=2')
+    pg.click('.tbmenu [data-a=tbr][data-k=연사]')
+    pg.click('[data-a=tsel][data-k=h_double]');pg.click('[data-a=tunlock]')
+    assert '연계 불가' in pg.locator('.loadout-hint').inner_text()
+    pg.locator('.loadout-hint [data-a=tbr][data-k=저격]').click()
+    pg.click('[data-a=tsel][data-k=h_mark]');pg.click('[data-a=tunlock]')
+    assert '연계 가능' in pg.locator('.loadout-hint').inner_text()
+    assert '피해 +30%' in pg.locator('.loadout-hint').inner_text()
+    assert pg.evaluate('document.documentElement.scrollWidth<=innerWidth')
+    pg.click('button[data-a=skillok]')
     for k in ['dex']*6: pg.click(f'button[data-a="stat+"][data-k={k}]')
     if pg.query_selector('button[data-a=statrec]:not([disabled])'): pg.click('button[data-a=statrec]')  # 06a2 능력치 다섯(15점): 남은 점수는 추천 배분으로
     pg.click('button[data-a=statok]'); pg.click('button[data-a=door][data-k="0"]'); pg.click('button[data-a=enter]'); pg.evaluate("()=>{G.pace='instant'}")  # 휴대폰 폭에서는 진행 속도 고르기가 설정 창에만 있다
-    pg.evaluate("()=>{const k=Object.keys(ITEMS).find(k=>ITEMS[k].cost&&tplKind(k)==='weapon');const it=mkItem(k,{b:0});G.run.inv[it.uid]=it;G.run.bag.push(it.uid);G.eqSel={uid:it.uid};openSheet('equip');render()}")
+    pg.evaluate("()=>{const k='twinblades';const it=mkItem(k,{b:0});G.run.inv[it.uid]=it;G.run.bag.push(it.uid);G.eqSel={uid:it.uid};openSheet('equip');render()}")
     from pathlib import Path
-    out=Path(__file__).resolve().parent.parent/'docs/조사/ui-six';out.mkdir(exist_ok=True)
+    out=Path(__file__).resolve().parent.parent/'output/playwright/equipment-comfort';out.mkdir(parents=True,exist_ok=True)
     for width in [390,1280]:
         pg.set_viewport_size({'width':width,'height':844})
+        assert '강공격 스태미나' in pg.locator('.equip-burden').inner_text()
         assert '새 대가' in pg.locator('.cmp').inner_text()
         assert '얻는 효과' in pg.locator('.cmp').inner_text()
         assert pg.evaluate('document.documentElement.scrollWidth<=innerWidth')
         pg.locator('.eqdet').scroll_into_view_if_needed()
         pg.screenshot(path=str(out/f'equipment-{width}.png'),full_page=True)
+    pg.evaluate("()=>{const it=mkItem('saintgrail',{b:0});G.run.inv[it.uid]=it;G.run.bag.push(it.uid);G.run.p.flask.life=3;G.run.p.flask.mana=3;G.run.p.flask.stam=3;G.eqSel={uid:it.uid};render()}")
+    assert '장착 즉시 남은 생명력 플라스크 3 → 2회' in pg.locator('.equip-burden').inner_text()
+    assert '정화 플라스크 최대 충전 3 → 2회' in pg.locator('.equip-burden').inner_text()
+    assert pg.evaluate('G.run.p.flask.life')==3
     assert not errs,errs
     print('장비 화면 효과·대가·화면 너비 390·1280 통과, errs',errs);br.close()
