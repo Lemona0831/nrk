@@ -79,6 +79,21 @@ function staticCheck(k) {
 }
 const UI_ONLY = { copperjug: '스태미나 플라스크 양', pilgcloak: '샘 회복(화면)', pilgtoken: '샘 회복(화면)', pilgcanteen: '샘 충전(화면)', rustykey: '보물 방 골드(단계 6·9)', tonic: '스태미나 플라스크 양', baptism: '방을 이기면 충전(전투 밖, dgqa)' };
 const res = [];
+/* 무작위 전투에서는 보호막 최대치로 라운드를 끝내기 어렵다.
+   무작위 발동 수와 구분하여, 효과의 명시된 조건과 열기 변화량을 검사한다. */
+function controlledCheck(k) {
+  if (k !== 'bulwarkring') return null;
+  const p = player('warden', k, rng(1));
+  const b = E.roomBattle(p, ROOMS3[4], 'mother', 1);
+  b.heat = 50; p.ward = E.wardMax(p);
+  const fired = IFX[k].onRound(b, p);
+  const positive = fired === 1 && b.heat === 48;
+  b.heat = 50; p.ward = E.wardMax(p) - 1;
+  const belowFull = !IFX[k].onRound(b, p) && b.heat === 50;
+  b.heat = null; p.ward = E.wardMax(p);
+  const noHeat = !IFX[k].onRound(b, p) && b.heat === null;
+  return positive && belowFull && noHeat;
+}
 const t0 = Date.now();
 const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7).split(',').filter(Boolean);
 for (const [ch, POOL] of POOLS) for (const k of POOL.filter(x => !ONLY.length || ONLY.includes(x))) {
@@ -89,9 +104,12 @@ for (const [ch, POOL] of POOLS) for (const k of POOL.filter(x => !ONLY.length ||
   for (const build of CLS) for (let i = 0; i < 4; i++) fight(build, k, seed += 13, ch);
   if (!(FXHIT[k] > 0) && IFX[k]) for (const build of CLS) for (let i = 0; i < 12; i++) fight(build, k, seed += 13, ch); // 조건이 드문 효과는 더 싸워 본다
   const hits = FXHIT[k] || 0; const st = staticCheck(k); const f = IFX[k];
+  const controlled = hits === 0 ? controlledCheck(k) : null;
   const kind = !f ? '예전 아이템(엔진 직접)' : UI_ONLY[k] ? UI_ONLY[k] : (Object.keys(f).every(x => ['st', 'hpMul', 'heal', 'healMul', 'cap', 'cost', 'stamMul', 'flaskCleanse', 'goldMul', 'treasureGold', 'spring', 'springLife', 'manaToHp', 'deathSave'].includes(x)) ? '고정 수치' : '전투 효과');
-  const ok = bad.length === before && (!f || UI_ONLY[k] || hits > 0 || (st && st.length === 0 && kind === '고정 수치')) && !(st && st.length);
+  const ok = bad.length === before && (!f || UI_ONLY[k] || hits > 0 || controlled === true || (st && st.length === 0 && kind === '고정 수치')) && !(st && st.length);
+  if (controlled !== null) console.log('조건 지정 검사: ' + k + ' ' + (controlled ? '통과' : '실패') + ' (무작위 발동 ' + hits + '회, 보호막 최대에서 라운드 끝 열기 50 → 48)');
   res.push({ k, ch, n: ITEMS[k].n, g: ITEMS[k].g, kind, hits, fail: st && st.length ? st.join(', ') : '', ok });
+  if (res.length % 25 === 0) console.log('진행: ' + res.length + '종 점검, 현재 ' + ch + '챕터 (' + ((Date.now() - t0) / 1000).toFixed(1) + '초)');
 }
 const OFF = E.V2_OFF || []; // 0.6a.2(06a2): 사라진 규칙에 묶여 드롭·상점에서 뺀 장비는 실패로 세지 않고 따로 보인다
 const fails = res.filter(x => !x.ok && !OFF.includes(x.k)); const offs = res.filter(x => !x.ok && OFF.includes(x.k));
