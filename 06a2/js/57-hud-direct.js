@@ -95,7 +95,7 @@ function hudEdBarMake() {
 <div class="hprow" role="group" aria-label="배열 칸"><span class="hplab">배열 칸</span>${slots}<span class="mini" id="hedslotcap"></span></div>
 <fieldset class="hprow hpgrp"><legend class="hplab">칸 묶음</legend>${grps}</fieldset>
 <div class="hprow"><label class="hplab" for="hedpick">구성 요소 선택</label><select id="hedpick"><option value="">고르세요</option>${opts}</select></div>
-<div class="hprow hpsel"><span class="hplab" id="hedselname">선택한 칸 없음</span><label for="hedsl" class="sr">크기</label><input type="range" id="hedsl" min="0" max="4" step="1" value="2" disabled><output id="hedslo" for="hedsl">100%</output><button class="sw" role="switch" aria-checked="true" data-a="hedpsw" id="hedpsw" disabled>켜짐</button><button class="sm" data-a="hedone" id="hedone" disabled>개별 초기화</button></div>
+<div class="hprow hpsel"><span class="hplab" id="hedselname">선택한 칸 없음</span><label for="hedsl" class="sr">크기</label><input type="range" id="hedsl" min="0" max="4" step="1" value="2" disabled><output id="hedslo" for="hedsl">100%</output><button type="button" class="sw" role="switch" aria-checked="true" data-a="hedpsw" id="hedpsw" disabled>켜짐</button><button class="sm" data-a="hedone" id="hedone" disabled>개별 초기화</button></div>
 <p class="mini" id="hedlkmsg"></p>
 <p class="mini" id="hednote"></p><p class="mini hedhelp" id="hedhelp" hidden>끌어서 옮기거나, 칸에 초점을 두고 위 · 아래 화살표로 순서를, 왼쪽 · 오른쪽 화살표로 구역을 바꿉니다. +와 −는 크기, Enter나 Space는 고르기와 해제, Delete는 켜기와 끄기, Esc는 취소입니다. 고른 칸 곁의 도구줄 단추도 같은 일을 합니다.</p>
 </div>
