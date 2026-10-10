@@ -76,7 +76,7 @@ function testStart() {
   const st = statRecommend(T.build, {}, STAT_START + LV_POINTS * (lv - 1));
   const p = mkPlayer(T.build, {}, st, (TREE2[T.build] ? TREE2[T.build].starters : []).concat(T.sk)); p.lv = lv; applyStats(p, st); p.hp = p.hpMax; p.st = p.stMax;
   const room = testRoom(T); G.testRun = G.testRun || G.run; G.run = null;
-  G.b = roomBattle(p, room, room.boss ? chData(room.ch).boss : null, Math.floor(Math.random() * 1e6)); G.b.ctx.test = 1; G.b.stepMode = true; G.sel = null; G.scr = 'test'; render();
+  G.b = roomBattle(p, room, room.boss ? chData(room.ch).boss : null, Math.floor(Math.random() * 1e6)); G.b.ctx.test = 1; G.b.stepMode = true; fdetFresh(); G.sel = null; G.scr = 'test'; render();
 }
 function testLeave() { G.b = null; G.scr = 'title'; if (G.testRun) { G.run = G.testRun; G.testRun = null; } render(); }
 function vTestSetup() {
@@ -96,12 +96,12 @@ function vTestSetup() {
   const F = testFoes(T.ch); const grp = {}; for (const f of F) (grp[f.g] = grp[f.g] || []).push(f);
   h += `<section class="card"><h4>적</h4>${Object.keys(grp).map(g => `<h5 class="chgh">${g}${g === '하나' ? ' ' + btn('testelite', 0, !!T.elite, '정예로') : ''}</h5><div class="tgrid">${grp[g].map(f => btn('testfoe', f.id, T.foe === f.id, esc(f.n))).join('')}</div>`).join('')}`;
   h += `<h4>층</h4><div class="tgrid">${btn('testfloor', 'up', T.floor === 'up', '상층 (몬스터 Lv' + mlvOf(5, T.ch) + ')')}${btn('testfloor', 'low', T.floor === 'low', '하층 (몬스터 Lv' + mlvOf(FLOOR_CAMP + 3, T.ch) + ')')}${btn('testamb', 0, !!T.amb, '매복')}</div><p class="mini">보스는 늘 보스층(몬스터 Lv${mlvOf(FLOOR_BOSS, T.ch)})입니다.</p></section>`;
-  h += `<div class="stickbar"><button class="gold wide" data-a="teststart" data-focus>싸우기</button><div class="row"><button data-a="testleave">그만두기</button></div></div>`;
+  h += `<div class="stickbar flow"><button class="gold wide" data-a="teststart" data-focus>싸우기</button><div class="row"><button data-a="testleave">그만두기</button></div></div>`;
   return h;
 }
 /* ---------- 고정 상황 ---------- */
 function startScen(build) { G.scen = { build, i: 0, results: [] }; G.scr = 'scen'; loadScen(); }
-function loadScen() { const S = G.scen; const sc = SCEN[S.i]; G.b = scenBattle(S.build, sc); G.b.stepMode = true; G.b.pActs = 0; G.sel = null; render(); }
+function loadScen() { const S = G.scen; const sc = SCEN[S.i]; G.b = scenBattle(S.build, sc); G.b.stepMode = true; fdetFresh(); G.b.pActs = 0; G.sel = null; render(); }
 function scenAxes(b) {
   const acts = b.rec.filter(x => x.k === 'act');
   const first = (acts.find(x => x.tg && !['guard', 'dodge', 'flaskL', 'flaskM'].includes(x.a)) || {}).tg || null;

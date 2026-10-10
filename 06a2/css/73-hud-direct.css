@@ -1,4 +1,4 @@
-/* ===== 전투 화면에서 직접 편집 (10월 10일 0.6a.2-93): 틀 · 이름표 · 도구줄 · 아래 막대 ===== */
+/* ===== 전투 화면에서 직접 편집 (10월 10일 0.6a.2-93): 틀 · 이름표 · 아래 막대 ===== */
 /* 편집 중에는 전투 화면(.fit)이 아래 막대 위쪽을 채우는 스크롤 칸이다. 틀은 그 안에서 내용과 함께 움직인다 */
 html.hedit,html.hedit body{overflow:hidden!important;height:100%!important}
 html.hedit.fitmode .fit,html.hedit.fitscroll .fit{position:fixed;left:0;right:0;top:0;bottom:var(--hedbar-h,128px);height:auto;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
@@ -24,23 +24,8 @@ html.hedit.fitmode .fit,html.hedit.fitscroll .fit{position:fixed;left:0;right:0;
 .hgrip{display:inline-flex;align-items:center;justify-content:center;min-width:24px;min-height:24px;font-size:calc(16px*var(--fs,1));color:var(--gold)}
 .hghost{position:fixed;z-index:90;padding:6px 12px;border-radius:8px;background:var(--gold);color:var(--gold-ink);font-weight:700;font-size:calc(14px*var(--fs,1));pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.6)}
 .hline{position:fixed;height:4px;border-radius:2px;background:var(--gold);box-shadow:0 0 0 2px var(--bg);pointer-events:none;z-index:88}
-/* 고른 모듈 곁의 도구줄 */
-.hed-tool{position:absolute;z-index:85;pointer-events:auto;display:flex;flex-wrap:wrap;align-items:center;gap:4px;width:max-content;max-width:calc(100vw - 12px);padding:5px;border:2px solid var(--gold);border-radius:10px;background:var(--panel);box-shadow:0 6px 20px rgba(0,0,0,.65)}
-.hed-tool[hidden]{display:none}
-.hed-tool .htname{font-size:calc(13px*var(--fs,1));font-weight:700;color:var(--gold);padding:0 6px}
-.hed-tool .sm{min-height:40px;min-width:40px;padding:4px 8px}
-.hed-tool .sm[aria-disabled="true"]{opacity:.5;border-style:dashed}
-.hed-tool .hsz{min-width:44px;text-align:center;font-size:calc(13px*var(--fs,1));font-variant-numeric:tabular-nums}
-.hed-tool .hudlk{padding:0 6px}
-/* 휴대폰: 도구줄을 한 줄로(글자 덜어 내고 기호만, 이름은 읽는 사람에게만 남김). 단추는 40px 높이 · 34px 너비 이상이라 24px 기준을 넘는다 */
-@media (max-width:719px){
-.hed-tool{gap:3px;padding:4px}
-.hed-tool .htname{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.hed-tool .bt{display:none}
-.hed-tool .sm{min-width:34px;padding:4px 2px;flex:0 0 auto}
-.hed-tool .hsz{min-width:38px}
-.hed-tool .hudlk{padding:0 2px;font-size:calc(11px*var(--fs,1))}
-}
+/* 이름표 띠: 이름표(.htag, 28px)가 칸 내용 위로 겹치지 않게 편집 중에는 모든 칸의 안쪽 위 여백을 이름표 높이만큼 둔다(JS가 zoom으로 나눠 적는다) */
+html.hedit{--htag-h:36px}
 html.hedit.fitmode .fit,html.hedit.fitscroll .fit{scroll-padding:8px 0}
 /* 아래 고정 막대 */
 #hedbar{position:fixed;left:0;right:0;bottom:0;z-index:95;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));background:var(--panel);border-top:2px solid var(--gold);box-shadow:0 -6px 20px rgba(0,0,0,.6)}
@@ -51,5 +36,5 @@ html.hedit.fitmode .fit,html.hedit.fitscroll .fit{scroll-padding:8px 0}
 .hedbtns{display:flex;gap:6px;flex-wrap:wrap}
 .hedbtns button{flex:1 1 0;min-width:64px;min-height:44px;padding:6px 6px;font-size:calc(13.5px*var(--fs,1))}
 @media (min-width:720px){#hedbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding-left:16px;padding-right:16px}#hedbar p{margin:0}#hedstatus{flex:1 1 300px}#hednote{flex:1 1 300px}.hedhelp{flex:1 1 100%}.hedbtns{flex:0 1 auto}.hedbtns button{flex:none;min-width:88px;padding:6px 12px}}
-@media (prefers-reduced-motion:reduce){.hbox,.hed-tool,.hghost{transition:none}}
-html.rm .hbox,html.rm .hed-tool{transition:none}
+@media (prefers-reduced-motion:reduce){.hbox,.hghost{transition:none}}
+html.rm .hbox{transition:none}
