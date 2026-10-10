@@ -1,7 +1,7 @@
-// 소모품 · 깨달음 · 장비 문장의 숫자를 코드 값과 대조한다 (tools/helpcheck.js 모듈, 출처 이름은 items- 로 시작)
+// 소모품 · 각인 · 장비 문장의 숫자를 코드 값과 대조한다 (tools/helpcheck.js 모듈, 출처 이름은 items- 로 시작)
 //   items-cons    : 06a2/data/consumables.js의 소모품 효과 문장(일반 · 고급 값 둘 다). consApply를 실제 전투에서 돌려 얻은 수치와 대조
 //   items-consmsg : consApply가 전투 기록에 남기는 숫자 문장
-//   items-awk     : 06a2/data/awakening.js 깨달음 문장. IFX_AWK 효과 함수를 흉내 낸 상황에서 불러 얻은 값과 대조
+//   items-awk     : 06a2/data/awakening.js 각인 문장. IFX_AWK 효과 함수를 흉내 낸 상황에서 불러 얻은 값과 대조
 //   items-equip   : 장비(ITEMS 전체: items.js 예전 25 + items_ch1 · ch2 · ch3)의 act · cost 문장. 문장의 숫자를 효과 표(IFX)의 숫자에서 찾고(자동),
 //                   IFX 밖 엔진에 박힌 예전 장비 28종은 엔진 소스의 해당 줄을 찾아 대조한다(HAND)
 //   items-ui      : 상점 · 가방 화면의 고정 문장 가운데 장비와 얽힌 숫자
@@ -133,7 +133,7 @@ function __hcBlob(k) { return JSON.stringify(IFX[k], (kk, v) => typeof v === 'fu
   api.add('items-consmsg', '붕괴 +30', 'consApply wallbreak addBreak 30', () => near(CM.pick, 30, 1) && srcHas("addBreak(b, tgt, 30); return tgt.n + '에게 붕괴 +30'"));
   api.add('items-consmsg', '둔화 2', 'consApply slow addS chill 2', () => CM.slow === 2);
 
-  // ---------- 깨달음
+  // ---------- 각인
   const awk = JSON.parse(E('JSON.stringify(AWK_LIST.concat(AWK_GIFT).map(a => ({ id: a.id, d: a.d })))'));
   api.source('items-awk', awk.map(a => ({ id: a.id, text: a.d })));
   const W = (find, ev, fn) => api.add('items-awk', find, ev, fn);

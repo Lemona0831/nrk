@@ -1,7 +1,7 @@
 /* ===== 옛 저장본 → 현재 코드 이어하기 점검 (10월 10일 0.6a.2-95, 완료 조건 7번)
    옛 커밋의 06a2 코드를 꺼내 Node vm에서 돌려 여러 시점의 이어 하기 저장본(G.data.cur)을 만들고, 지금 코드(06a2/)로 이어 가 본다.
    앞서 tools/save_compat*.py(Playwright)는 0.6a.2-51 코드로 방 사이 · 정산 · 상점 · 전투 도중만 다뤘다. 이 도구는 그 밖의 시점을 다룬다:
-   설문 단계, 2챕터 방 사이 · 전투 도중, 3챕터, 해금 2 · 3, 가혹 · 표식, 깨달음 고르는 중 · 도박 뒤 상점 · 운명의 저울.
+   설문 단계, 2챕터 방 사이 · 전투 도중, 3챕터, 해금 2 · 3, 가혹 · 표식, 각인 고르는 중 · 도박 뒤 상점 · 운명의 저울.
    node tools/savecompat.js all [라벨…]   : 옛 커밋을 꺼내(git archive) 저장본을 만들고 현재 코드로 점검한다
    node tools/savecompat.js make <라벨> <옛 06a2 폴더>   : (내부) 옛 코드로 저장본을 만든다
    node tools/savecompat.js check [라벨…] : (내부) 이미 만든 저장본을 현재 코드로 점검한다
@@ -14,8 +14,8 @@ const SPECS = [
   { label: 'ch2', sha: '27ddb58', what: '2챕터 엔진 직후(0.6a.2-44, 10월 7일 02:50)', from: 2, builds: null, kinds: ['walk', 'end'] },
   { label: 'h23', sha: 'fed100b', what: '해금 2 · 3 직업이 들어온 직후(0.6a.2-54, 10월 7일 23:52)', from: 1, builds: ['confessor', 'bloodmage'], kinds: ['walk', 'clear'] },
   { label: 'h23c2', sha: 'fed100b', what: '같은 코드로 2챕터에서 시작', from: 2, builds: ['confessor', 'bloodmage'], kinds: ['walk', 'end'] },
-  { label: 'ch3', sha: 'f221cb1', what: '3챕터 · 도박 · 깨달음 · 가혹이 있던 때(0.6a.2-65, 10월 8일 09:23)', from: 3, builds: null, kinds: ['walk', 'end'] },
-  { label: 'gam', sha: 'f221cb1', what: '같은 코드로 2챕터를 깬 직후 상점 · 깨달음 · 도박 · 운명의 저울', from: 2, builds: ['assassin', 'warden', 'hunter', 'spellblade', 'confessor'], kinds: ['gamble', 'fate'] },
+  { label: 'ch3', sha: 'f221cb1', what: '3챕터 · 도박 · 각인 · 가혹이 있던 때(0.6a.2-65, 10월 8일 09:23)', from: 3, builds: null, kinds: ['walk', 'end'] },
+  { label: 'gam', sha: 'f221cb1', what: '같은 코드로 2챕터를 깬 직후 상점 · 각인 · 도박 · 운명의 저울', from: 2, builds: ['assassin', 'warden', 'hunter', 'spellblade', 'confessor'], kinds: ['gamble', 'fate'] },
   { label: 'hard', sha: '8e3a281', what: '가혹 모드(0.6a.2-68, 10월 8일 13:38)', from: 1, builds: ['assassin', 'monk', 'bloodmage'], kinds: ['walk'], env: { MODE: 'hard' } },
   { label: 'mark', sha: '8e3a281', what: '표식 도전 2 · 3챕터(0.6a.2-68)', from: 2, builds: ['assassin', 'warden', 'hunter'], kinds: ['walk'], env: { MARKCH: '2', MARKS: 'dmg,hp,flask' } },
   { label: 'mark3', sha: '8e3a281', what: '표식 도전 3챕터 가혹', from: 3, builds: ['spellblade', 'monk'], kinds: ['walk'], env: { MARKCH: '3', MARKS: 'elite,boss', MODE: 'hard' } },
@@ -28,7 +28,7 @@ if (process.argv[2] === 'make') {
   const label = process.argv[3]; const spec = SPECS.find(s => s.label === label);
   const D = loadDriver(); const { G0, OPT, playChar, handleSheets, click, rng, run_ } = D; const G = G0.__G;
   const saves = []; const notes = [];
-  if (run_('typeof AWK') === 'undefined') run_('var AWK = { settleFrom: 99, campFrom: 99, offer: 3 }'); // 깨달음이 없던 옛 코드에서도 dgqa의 챕터 건너뛰기가 돌게 한다(없는 기능은 쓰지 않는다)
+  if (run_('typeof AWK') === 'undefined') run_('var AWK = { settleFrom: 99, campFrom: 99, offer: 3 }'); // 각인이 없던 옛 코드에서도 dgqa의 챕터 건너뛰기가 돌게 한다(없는 기능은 쓰지 않는다)
   const clone = x => JSON.parse(JSON.stringify(x));
   const take = why => { try { if (G0.saveCur) G0.saveCur(); } catch (e) { } if (G.data && G.data.cur && G.run) saves.push({ label, why, build: G.run.build, ch: G.run.ch || 1, cur: clone(G.data.cur) }); };
   const KEYS = G0.CLASS_KEYS ? G0.CLASS_KEYS() : Object.keys(G0.BUILDS).filter(k => !G0.BUILDS[k].tut && !G0.BUILDS[k].soon);
@@ -64,9 +64,9 @@ if (process.argv[2] === 'make') {
               const bag = run.bag.map(u => run.inv[u]).filter(Boolean); if (bag.length) { click('fate', bag[0].uid); take('운명의 저울 결과 창'); }
               return;
             }
-            // gamble: 정산 → 깨달음 → 상점 → 도박 → 떠남 → 설문
+            // gamble: 정산 → 각인 → 상점 → 도박 → 떠남 → 설문
             run.rooms.push({ room: 24, type: 'boss', res: 'win', ch: run.ch || 1 }); G0.startSettle(run); take('정산 ' + run.ch + '챕터'); click('settleok');
-            if (G.sheet && G.sheet.kind === 'awk') { take('깨달음 고르는 중'); click('awkpick', (run.awkOffer || [])[0]); take('깨달음 고른 뒤'); }
+            if (G.sheet && G.sheet.kind === 'awk') { take('각인 고르는 중'); click('awkpick', (run.awkOffer || [])[0]); take('각인 고른 뒤'); }
             handleSheets('expert', rng(2)); if (run.phase === 'shop') { take('상점 ' + run.ch + '챕터'); run.gold = Math.max(run.gold || 0, 600); const slot = (run_('GAMBLE.slots') || [])[0]; if (slot) { click('gamble', slot); take('도박 뒤 상점'); handleSheets('expert', rng(3)); take('도박 장비 처리 뒤 상점'); } }
             click('shopleave'); take('챕터 설문 ' + run.ch + '챕터'); G0.finishSurvey({ fun: 4, note: '' }); take('다음 챕터 대기');
           });

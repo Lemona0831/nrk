@@ -1,6 +1,6 @@
-/* ===== 도박 · 깨달음 계산 (10월 8일, docs/아이템/도박-깨달음.md) =====
+/* ===== 도박 · 각인 계산 (10월 8일, docs/아이템/도박-깨달음.md) =====
    게임 코드를 vm에서 그대로 읽어 (1) 봉인된 꾸러미의 등급 분포 · 천장 · 전설 상한 (2) 직업마다 칸을 골랐을 때 실제로 나오는 등급 · 직업에 맞는 비율
-   (3) 값으로 환산한 기대 값 (4) 되팔기 고리 (5) 운명의 저울 기대 값 (6) 깨달음 제안 분포를 낸다. 네트워크 · 파일 쓰기 없음.
+   (3) 값으로 환산한 기대 값 (4) 되팔기 고리 (5) 운명의 저울 기대 값 (6) 각인 제안 분포를 낸다. 네트워크 · 파일 쓰기 없음.
    실행: DGDIR=06a2 node tools/gamblesim.js [꾸러미 수=20000] */
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const DIR = process.env.DGDIR || '06a2'; const N = +(process.argv[2] || 20000);
@@ -46,8 +46,8 @@ console.log(`    진열 장비는 맞는 것을 골라 사므로 같은 값에�
 /* (5) 운명의 저울 */
 { const F = R('FATE'); const rows = ['n', 'm', 'r'].map(g => { const p = F.up[g]; const up = val(F.next[g]); const own = val(g); return `${R('GRADE')[g].n}→${R('GRADE')[F.next[g]].n} ${Math.round(p * 100)}%: 기대 ${(p * up).toFixed(0)} 대 지금 ${own.toFixed(0)} (${(p * up / own).toFixed(2)}배)`; });
   console.log('(5) 운명의 저울 (값 기준, 맞는 장비로 오른다고 보면 이득 / 쓸모없는 장비는 잃어도 아깝지 않다): ' + rows.join(' | ')); }
-/* (6) 깨달음 제안 */
+/* (6) 각인 제안 */
 { const L = R('AWK_LIST'); const c2 = L.filter(a => a.g === 'c2').length, c3 = L.filter(a => a.g === 'c3').length, cl = L.filter(a => a.g === 'cls').length;
-  console.log(`(6) 깨달음 ${L.length}개: 공용 2챕터 ${c2} + 공용 3챕터 ${c3} + 직업 갈래 ${cl}. 직업마다 ${builds.map(b => L.filter(a => a.cls === b).length).join('/')}`);
-  const trials = 4000; const cnt = {}; for (const b of builds) { const run = { build: b, ch: 2, awk: [] }; let cls = 0; for (let k = 0; k < trials; k++) { const o = R('awkOfferMake')(run); if (o.length !== 3) throw new Error('제안이 셋이 아님'); if (o.some(id => R('AWK_MAP')[id].g === 'cls')) cls++; for (const id of o) cnt[id] = (cnt[id] || 0) + 1; } console.log(`    ${b.padEnd(13)} 2챕터 제안에 직업 깨달음이 든 비율 ${pct(cls, trials)}`); }
-  const missing = L.filter(a => R('IFX_AWK')[a.id] === undefined).map(a => a.id); console.log('    효과가 없는 깨달음:', missing.length ? missing.join(', ') : '없음'); }
+  console.log(`(6) 각인 ${L.length}개: 공용 2챕터 ${c2} + 공용 3챕터 ${c3} + 직업 갈래 ${cl}. 직업마다 ${builds.map(b => L.filter(a => a.cls === b).length).join('/')}`);
+  const trials = 4000; const cnt = {}; for (const b of builds) { const run = { build: b, ch: 2, awk: [] }; let cls = 0; for (let k = 0; k < trials; k++) { const o = R('awkOfferMake')(run); if (o.length !== 3) throw new Error('제안이 셋이 아님'); if (o.some(id => R('AWK_MAP')[id].g === 'cls')) cls++; for (const id of o) cnt[id] = (cnt[id] || 0) + 1; } console.log(`    ${b.padEnd(13)} 2챕터 제안에 직업 각인이 든 비율 ${pct(cls, trials)}`); }
+  const missing = L.filter(a => R('IFX_AWK')[a.id] === undefined).map(a => a.id); console.log('    효과가 없는 각인:', missing.length ? missing.join(', ') : '없음'); }

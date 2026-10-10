@@ -1,5 +1,5 @@
 /* 챕터 선물 점검 (10월 10일, 숨겨진 직업 2의 2챕터 보강): 06a2의 게임 코드를 vm에서 돌려 확인한다.
-   직업마다 챕터에 들어설 때 받는 깨달음(data/awakening.js CH_GIFT)이 한 번만 주어지고, 효과가 그 챕터에서만 일하며, 다른 직업은 받지 않는지 본다.
+   직업마다 챕터에 들어설 때 받는 각인(data/awakening.js CH_GIFT)이 한 번만 주어지고, 효과가 그 챕터에서만 일하며, 다른 직업은 받지 않는지 본다.
    실행: node tools/giftcheck.js (실패 0이어야 한다) */
 process.env.DGDIR = process.env.DGDIR || '06a2';
 const D = require('./dgqa.js'); const G0 = D.G0; const run_ = D.run_; const G = G0.__G;
@@ -10,7 +10,7 @@ ok(Object.keys(GIFT).join() === '2' && Object.keys(GIFT[2]).join() === 'confesso
 ok(AWK_MAP.g_cf2 && AWK_MAP.g_cf2.g === 'gift' && !AWK_LIST.some(a => a.id === 'g_cf2'), '선물은 제시 목록 AWK_LIST에 들지 않는다');
 const fresh = build => { G.data = G0.blankData(); G.data.unlAll = 1; G.data.seenCoach = true; G.cre = { name: 'chk' }; G.dropQ = []; G.b = null; G.sheet = null; G0.startRun(build); return G.run; };
 { const run = fresh('confessor'); ok(!(run.awk || []).includes('g_cf2'), '1챕터에는 선물이 없다');
-  ok(!run_('awkAvail')(run).some(a => a.id === 'g_cf2'), '깨달음 제시에는 나오지 않는다');
+  ok(!run_('awkAvail')(run).some(a => a.id === 'g_cf2'), '각인 제시에는 나오지 않는다');
   run.ch = 1; G0.enterChapter(run); ok(run.ch === 2 && run.awk.includes('g_cf2') && run.p.awk.includes('g_cf2'), '2챕터에 들어서면 받는다');
   ok(run.awkLog.filter(x => x.gift).length === 1, '받은 기록 하나');
   G0.enterChapter(run); ok(run.ch === 3 && run.awk.filter(x => x === 'g_cf2').length === 1, '3챕터에 들어서도 더 받지 않는다');

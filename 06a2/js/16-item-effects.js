@@ -375,8 +375,8 @@ const IFX2 = {
   baptism: { cap: { life: -2 }, heal: -0.1, onWin: run => { const p = run.p; if (p.flask.life >= flaskCap(p, 'life')) return; p.flask.life++; return 1; } },
 };
 Object.assign(IFX, IFX2);
-/* ===== 깨달음 효과 (IFX_AWK, 10월 8일, docs/아이템/도박-깨달음.md) =====
-   장비 효과와 같은 모양이고 같은 층에서 더한다(fxList가 p.awk의 깨달음을 장비 뒤에 잇는다). 깨달음이 없으면 아무것도 바꾸지 않는다(1챕터 결과 그대로).
+/* ===== 각인 효과 (IFX_AWK, 10월 8일, docs/아이템/도박-깨달음.md) =====
+   장비 효과와 같은 모양이고 같은 층에서 더한다(fxList가 p.awk의 각인을 장비 뒤에 잇는다). 각인이 없으면 아무것도 바꾸지 않는다(1챕터 결과 그대로).
    이름과 문장은 data/awakening.js, 하나의 무게는 평범 장비 하나 반 */
 const IFX_AWK = {
   a_vial: { cap: { life: 1 } },

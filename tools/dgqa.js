@@ -101,14 +101,14 @@ function handleSheets(pk, r) {
       else for (let i = 0; i < S.data.pts; i++) { const k = pk === 'novice' || r() > 0.65 ? KEYS[Math.floor(r() * KEYS.length)] : pref; S.data.alloc[k]++; }
       click('statok');
     } else if (S.kind === 'offer') { click('offerpick', run.bag[0]); }
-    else if (S.kind === 'awk') { click('awkpick', awkChoice(pk, r, run)); } /* 깨달음 (2챕터 이후에만 뜬다) */
+    else if (S.kind === 'awk') { click('awkpick', awkChoice(pk, r, run)); } /* 각인 (2챕터 이후에만 뜬다) */
     else if (S.kind === 'swap') { click('swapskip'); } // 스킬 바꾸기: 단계 3에서 성향별로
     else { G.sheet = null; }
     while (!G.sheet && G.dropQ && G.dropQ.length) G0.nextDrop();
   }
 }
 
-/* 깨달음 고르기: 지금 파는 갈래의 직업 깨달음 > 다른 직업 깨달음 > 공용(성향 순서). 초보는 무작위 */
+/* 각인 고르기: 지금 파는 갈래의 직업 각인 > 다른 직업 각인 > 공용(성향 순서). 초보는 무작위 */
 const AWK_MAP_ = run_('typeof AWK_MAP !== "undefined" ? AWK_MAP : {}');
 const AWK_COMMON = ['a_eye', 'a_skin', 'a_vial', 'a_stand', 'a_vigor', 'a_breath', 'a_shell', 'a_iron', 'a_ember', 'a_point', 'a_scatter', 'a_smolder', 'a_flow', 'a_gap', 'a_resolve', 'a_pouch', 'a_clear', 'a_gulp', 'a_warmth', 'a_light', 'a_heavyhand', 'a_brew', 'a_purse', 'a_memory'];
 function awkChoice(pk, r, run) {
@@ -331,7 +331,7 @@ function jumpTo(pk, r, ch) {
   const ids = Object.keys(G0.CONS).filter(k => (G0.CONS[k].ch || 1) < ch && G0.CONS[k].use !== 'none'); G0.consAdd(run, 'herb', 'n', 3); for (let k = 0; k < 3; k++) G0.consAdd(run, ids[Math.floor(r() * ids.length)], 'n', 1);
   G0.applyGear(run); run.p.hp = run.p.hpMax; run.p.st = run.p.stMax; run.p.flask.life = run.p.flaskMax; run.p.flask.mana = run.p.flaskMax; run.p.flask.stam = run.p.flaskMax; run.gold = 0;
   spendTree(pk, r);
-  for (let c = 1; c < ch; c++) { run.ch = c; if (c >= run_('AWK.settleFrom') && G0.CHAPTERS[c + 1]) { G0.awkGrant(run); run.awkOffer = G0.awkOfferMake(run); if (run.awkOffer.length) G0.awkTake(run, awkChoice(pk, r, run)); else run.awkPending = 0; } } /* 정산 뒤의 깨달음 (앞 챕터를 깬 캐릭터 흉내) */
+  for (let c = 1; c < ch; c++) { run.ch = c; if (c >= run_('AWK.settleFrom') && G0.CHAPTERS[c + 1]) { G0.awkGrant(run); run.awkOffer = G0.awkOfferMake(run); if (run.awkOffer.length) G0.awkTake(run, awkChoice(pk, r, run)); else run.awkPending = 0; } } /* 정산 뒤의 각인 (앞 챕터를 깬 캐릭터 흉내) */
   run.ch = ch - 1; run.clears = ch - 1; run.phase = 'wait'; G0.enterChapter(run);
 }
 /* 챕터 사이: 정산 확정 → 상점(성향대로 산다) → 설문 → 다음 챕터 */
@@ -475,7 +475,7 @@ function playLoop(pk, r, out) {
   }
   out.floor = run.room; out.ch = run.ch || 1; out.lv = run.lv; out.gold = run.gold;
   if (OPT.detail && run.tree) { const cnt = {}; for (const id of run.tree.open) { const sk = G0.SK2[id]; if (sk) cnt[sk.b] = (cnt[sk.b] || 0) + 1; } const top = Object.entries(cnt).sort((x, y) => y[1] - x[1])[0]; out.branch = run.build === 'hunter' && run.focus ? run.focus : top ? top[0] : null; out.branchN = top ? top[1] : 0; out.branchOf = run.tree.open.length; out.mode = run.mode || 'normal'; } /* 10월 8일(7단계): 갈래(트리 칸을 가장 많이 연 갈래) · 연 칸 수 · 모드를 판마다 남긴다 */
-  if ((run.awk || []).length) out.awk = run.awk.slice(); { const ft = (run.rooms || []).filter(x => x.type === 'fate'); if (ft.length) out.fate = ft.map(x => x.took ? (x.ok ? '+' : '-') + x.took : 'skip'); } /* 깨달음 · 운명의 저울 (없으면 칸을 두지 않아 1챕터 결과 파일은 그대로) */
+  if ((run.awk || []).length) out.awk = run.awk.slice(); { const ft = (run.rooms || []).filter(x => x.type === 'fate'); if (ft.length) out.fate = ft.map(x => x.took ? (x.ok ? '+' : '-') + x.took : 'skip'); } /* 각인 · 운명의 저울 (없으면 칸을 두지 않아 1챕터 결과 파일은 그대로) */
   { const hl = (run.drops || []).filter(x => x.g === 'h' || x.g === 'l').map(x => x.item + ':' + x.g + ':' + (x.ch || 1) + (x.boss ? ':boss' : '')); if (hl.length) out.hl = hl; } /* 영웅 · 전설을 얻은 기록 (없으면 칸을 두지 않아 1챕터 결과 파일은 그대로) */
   if (OPT.detail) { out.cons = (run.consLog || []).length; out.consIds = countBy((run.consLog || []).map(x => x.id)); out.loot = (run.lootLog || []).reduce((a, x) => ({ gold: a.gold + (x.gold || 0), lost: a.lost + (x.lost || 0), n: a.n + Object.values(x.got || {}).reduce((m, v) => m + v, 0) }), { gold: 0, lost: 0, n: 0 }); out.tree = run.tree ? run.tree.open.slice() : null; out.equip = (run.skills || []).slice(); out.flaskLeft = Object.assign({}, run.p.flask); out.pathsTaken = (run.pathLog || []).map(x => x.path); } out.gear = Object.values(run.inv).filter(x => run.eqU && Object.values(run.eqU).includes(x.uid)).map(x => x.tpl + ':' + x.g);
   return out;

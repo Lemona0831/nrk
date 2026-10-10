@@ -91,7 +91,7 @@ with sync_playwright() as p:
         die(pg)
         check('쓰러짐 화면', pg.evaluate("()=>G.scr==='dead'"))
         check('쓰러지면 이어하기 저장본이 지워짐', pg.evaluate("()=>!G.data.cur"))
-        check('쓰러진 판의 메뉴에 스킬 트리 · 장비 · 깨달음이 없음', not any(menu_has(pg, a) for a in ['tree', 'equip', 'awkview']))
+        check('쓰러진 판의 메뉴에 스킬 트리 · 장비 · 각인이 없음', not any(menu_has(pg, a) for a in ['tree', 'equip', 'awkview']))
         if case == 'survey':
             pg.evaluate("()=>{G.menuOpen=false; render();}")
             pg.click('button[data-a=giveupend]')

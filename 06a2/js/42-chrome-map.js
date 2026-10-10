@@ -6,7 +6,7 @@ function menuItems() {
   const it = [];
   if (G.scr !== 'title') it.push(['title', '🏰', '타이틀']);
   if (inRun) it.push(['equip', '🎒', '장비']);
-  if (inRun && G.run.awk && G.run.awk.length) it.push(['awkview', '✨', '깨달음 ' + G.run.awk.length]);
+  if (inRun && G.run.awk && G.run.awk.length) it.push(['awkview', '✨', '각인 ' + G.run.awk.length]);
   if (runLive() && !G.creating && G.run.tree && G.scr !== 'tree' && G.scr !== 'tut') it.push(['tree', '🌳', '스킬 트리' + (G.run.tree.pts ? ' <span class="newdot"><span class="sr">남은 포인트 </span>' + G.run.tree.pts + '</span>' : '')]);
   if (!inRun && !G.creating && G.scr !== 'tut' && G.scr !== 'tutoffer') it.push(['tut', '🎯', '수련장' + (G.data.tutDone ? ' ✓' : '')]);
   it.push(['codex', '📖', '보스 도감'], ['rank', '🏆', '랭킹'], ['records', '📜', '기록'], ['changes', '📰', '업데이트' + (G.data.seenVer !== CHANGE_VER ? ' <span class="newdot"><span aria-hidden="true">새</span><span class="sr">새 소식</span></span>' : '')], ['help', '❔', '도움말'], ['settings', '⚙️', '설정']);

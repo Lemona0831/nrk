@@ -1,5 +1,5 @@
 'use strict';
-const fxList = p => { const out = []; if (!p || !p.eq) return out; for (const sl in p.eq) { const k = p.eq[sl]; if (k && IFX[k]) out.push([k, IFX[k]]); } if (p.awk && p.awk.length) for (const a of p.awk) if (IFX_AWK[a]) out.push(['awk_' + a, IFX_AWK[a]]); /* 깨달음 */ return out; };
+const fxList = p => { const out = []; if (!p || !p.eq) return out; for (const sl in p.eq) { const k = p.eq[sl]; if (k && IFX[k]) out.push([k, IFX[k]]); } if (p.awk && p.awk.length) for (const a of p.awk) if (IFX_AWK[a]) out.push(['awk_' + a, IFX_AWK[a]]); /* 각인 */ return out; };
 /* 배율·더하기 지점: 바뀌면 센다 */
 function fxMul(p, hook, ...a) { let m = 1; for (const [k, f] of fxList(p)) if (f[hook]) { const v = f[hook](...a); if (v !== 1 && v != null) { m *= v; fxHit(k); } } return m; }
 function fxAdd(p, hook, ...a) { let m = 0; for (const [k, f] of fxList(p)) if (f[hook]) { const v = f[hook](...a); if (v) { m += v; fxHit(k); } } return m; }
@@ -7,7 +7,7 @@ function fxFlag(p, key) { for (const [k, f] of fxList(p)) if (f[key]) { fxHit(k)
 function fxRun(p, hook, ...a) { for (const [k, f] of fxList(p)) if (f[hook] && f[hook](...a)) fxHit(k); }
 function fxVal(p, key, init, comb) { let v = init; for (const [k, f] of fxList(p)) if (f[key] != null) { v = comb(v, f[key]); } return v; }
 function fxStat(p, key) { let v = 0; for (const [, f] of fxList(p)) if (f.st && f.st[key]) v += f.st[key]; return v; }
-const consTurnOf = p => CONS_TURN + fxVal(p, 'consTurn', 0, (a, v) => a + v); /* 한 차례에 쓰는 소모품 수 (깨달음 넉넉한 손 +1) */
+const consTurnOf = p => CONS_TURN + fxVal(p, 'consTurn', 0, (a, v) => a + v); /* 한 차례에 쓰는 소모품 수 (각인 넉넉한 손 +1) */
 function flaskCap(p, k) { return Math.max(1, (p.flaskMax || 3) - (p.markFlask || 0) + fxList(p).reduce((a, [, f]) => a + ((f.cap && f.cap[k]) || 0), 0)); }
 function actCost(p, id, base) { return Math.max(0, base + fxAdd(p, 'cost', p, id)); }
 

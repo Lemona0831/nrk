@@ -42,10 +42,10 @@ function genShop(run) {
   if (hero) { const it = mkItem(hero.k, { ch: hero.ch }); run.shop.stock.push({ it, price: priceOf('h', ch), sold: 0, hero: 1 }); }
   { const nx = ch + 1; const usable = Object.keys(CONS).filter(k => CONS[k].use !== 'none' && !SHOP_CONS.always.includes(k) && (CONS[k].ch || 1) <= nx); const pick = SHOP_CONS.always.slice(); const nw = usable.filter(k => (CONS[k].ch || 1) === nx && nx >= 2); if (nw.length) pick.push(usable.splice(usable.indexOf(nw[Math.floor(Math.random() * nw.length)]), 1)[0]); if (nx >= 3) { const nw2 = usable.filter(k => (CONS[k].ch || 1) === nx); if (nw2.length) pick.push(usable.splice(usable.indexOf(nw2[Math.floor(Math.random() * nw2.length)]), 1)[0]); } /* 3챕터 준비: 3챕터 소모품 둘 */ while (pick.length < SHOP_CONS.n + (nx >= 2 ? 1 : 0) && usable.length) pick.push(usable.splice(Math.floor(Math.random() * usable.length), 1)[0]); run.shop.cons = pick.map(id => ({ id, price: Math.round(CONS[id].price * Math.pow(1.5, ch - 1)) })); } // 소모품 다섯 가지 (10월 4일)
 }
-/* ===== 도박 둘과 깨달음 (10월 8일, docs/아이템/도박-깨달음.md · 장비-경제.md 6.3 · 7절) =====
+/* ===== 도박 둘과 각인 (10월 8일, docs/아이템/도박-깨달음.md · 장비-경제.md 6.3 · 7절) =====
    봉인된 꾸러미: 2챕터를 넘은 뒤의 상점. 칸을 골라 등급 모를 장비를 산다. 확률은 모드와 상관없이 늘 같다(가혹 모드의 영웅 가중도 걸지 않는다).
    운명의 저울: 2챕터부터 드문 방. 가방의 장비를 올려 같은 칸의 한 단계 위 장비로 바꾼다. 실패하면 잃는다.
-   깨달음: 런 안에서만 남는 패시브. 정산을 확정한 뒤와 2챕터부터의 야영지에서 셋 가운데 하나. 효과는 IFX_AWK, 이름은 data/awakening.js */
+   각인: 런 안에서만 남는 패시브. 정산을 확정한 뒤와 2챕터부터의 야영지에서 셋 가운데 하나. 효과는 IFX_AWK, 이름은 data/awakening.js */
 const GAMBLE = { from: 2, mul: 1.3, grades: { n: 30, m: 42, r: 22, h: 5.5, l: 0.5 }, fit: 0.7, pity: 10, slots: ['weapon', 'armor', 'gloves', 'ring', 'amulet', 'flask'], slotN: { weapon: '무기', armor: '갑옷', gloves: '장갑', ring: '반지', amulet: '목걸이', flask: '플라스크' } };
 const FATE = { from: 2, p: 0.045, max: 2, up: { n: 0.70, m: 0.45, r: 0.20 }, next: { n: 'm', m: 'r', r: 'h' } };
 const gamblePrice = ch => Math.round(priceOf('m', ch) * GAMBLE.mul);
@@ -102,7 +102,7 @@ function fateRun(run, uid) {
   run.rooms.push({ room: run.room, type: 'fate', took: from.tpl + ':' + from.g, ok: to ? 1 : 0, to: to ? to.tpl + ':' + to.g : null });
   return { ok: !!to, from, to };
 }
-/* 깨달음: 얻을 수 있는 것 · 세 개 보이기 · 고르기 */
+/* 각인: 얻을 수 있는 것 · 세 개 보이기 · 고르기 */
 function awkAvail(run) { const ch = run.ch || 1; return AWK_LIST.filter(a => !(run.awk || []).includes(a.id) && (a.g === 'cls' ? a.cls === run.build : ch >= AWK.openCh[a.g])); }
 function awkOfferMake(run) {
   const pool = awkAvail(run); if (!pool.length) return [];
@@ -168,13 +168,13 @@ function shopCmp(run, it) {
 function chGift(run, ch, quiet) {
   const id = CH_GIFT[ch] && CH_GIFT[ch][run.build]; if (!id || (run.awk || []).includes(id)) return false;
   (run.awk = run.awk || []).push(id); run.p.awk = run.awk.slice(); (run.awkLog = run.awkLog || []).push({ id, ch, room: run.room, gift: 1, t: Date.now() });
-  if (!quiet) toast('깨달음을 얻었습니다: ' + AWK_MAP[id].n); return true;
+  if (!quiet) toast('각인을 얻었습니다: ' + AWK_MAP[id].n); return true;
 }
 function enterChapter(run) {
   const nx = (run.ch || 1) + 1; if (!CHAPTERS[nx]) return false;
   const keepDoors = run.doorLog || []; run.ch = nx; run.boss = chData(nx).boss; run.phase = null; run.settle = null; run.shop = null; run.result = null;
   delete run.dg; dgInit(run); chGift(run, nx, true); run.doorLog = keepDoors; (run.chLog = run.chLog || []).push({ ch: nx, lv: run.lv, gold: run.gold, t: Date.now() });
-  G.scr = 'run'; G.b = null; G.sel = null; saveRunLocal(); saveCur(); render(); toast(nx + '챕터 · ' + chData(nx).n); if (chData(nx).enterLore) toast(chData(nx).enterLore); if ((run.awkLog || []).some(x => x.gift && x.ch === nx)) toast('깨달음을 얻었습니다: ' + AWK_MAP[run.awkLog.filter(x => x.gift && x.ch === nx)[0].id].n); return true;
+  G.scr = 'run'; G.b = null; G.sel = null; saveRunLocal(); saveCur(); render(); toast(nx + '챕터 · ' + chData(nx).n); if (chData(nx).enterLore) toast(chData(nx).enterLore); if ((run.awkLog || []).some(x => x.gift && x.ch === nx)) toast('각인을 얻었습니다: ' + AWK_MAP[run.awkLog.filter(x => x.gift && x.ch === nx)[0].id].n); return true;
 }
 function vWait() {
   const run = G.run; const ch = run.ch || 1, nx = ch + 1;
