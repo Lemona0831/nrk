@@ -2,7 +2,7 @@
 /* ---------- 행동 ---------- */
 const PACE = { step: -1, slow: 1600, normal: 1000, fast: 450, instant: 0 };
 const PACEN = { step: '한 단계씩', slow: '느리게', normal: '보통', fast: '빠르게', instant: '즉시' };
-const sleep = ms => new Promise(r => setTimeout(r, ms));
+const sleep = ms => new Promise(r => setTimeout(function hold() { if (typeof G !== 'undefined' && G.hudEd) setTimeout(hold, 120); else r(); }, ms)); /* 전투 화면 편집 중(G.hudEd)에는 적 차례도 멈춘다 */
 function waitStep() { return new Promise(r => { G.stepResolve = r; render(); }); }
 function actTarget(b, a) {
   if (a.self || a.aoe) return null;

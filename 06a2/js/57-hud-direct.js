@@ -1,0 +1,276 @@
+'use strict';
+/* ===== 전투 화면에서 직접 편집 (10월 10일 0.6a.2-93) =====
+   설정의 "화면에서 편집"을 누르면 실제 전투 화면(전투가 없으면 견본 전투)이 멈춘 채로 뜨고, 그 위에서 모듈을 끌어 옮기고
+   누른 모듈의 크기 · 켜기와 끄기 · 순서와 구역을 고친다. 값은 G.hudEd.draft = { pc, ph } 임시 배치에 쌓이고 "저장"을 눌러야 G.data.hud.lay에 들어간다.
+   모듈 위의 틀과 이름표는 실제 요소가 아니라 겹쳐 놓은 층(.hov)이다: 실제 요소의 위치를 재어 따라붙는다(크기 zoom, 스크롤에도 맞음).
+   전투 화면(.fit)은 inert라 편집 중에는 눌러도 아무 일이 없고, 전투 중이면 적 차례 진행도 sleep에서 멈춘다. 키보드: 모듈에 초점을 두고 화살표(위 · 아래 = 순서, 왼쪽 · 오른쪽 = 구역), + / − 크기, Enter · Space 고르기, Delete 켜기 · 끄기, Esc 취소. */
+const HUD_ED_DEFAULT_MSG = '모듈을 끌어 옮기거나 눌러서 고르세요';
+function hudEdActive() { return !!G.hudEd; }
+function hudEdMsg(m) { if (G.hudEd) G.hudEd.msg = m; const s = typeof document !== 'undefined' ? document.getElementById('hedstatus') : null; if (s) s.textContent = m; }
+function hudEdDirty() { const ed = G.hudEd; return !!ed && JSON.stringify(ed.draft) !== ed.init; }
+function hudEdLayNow() { return G.hudEd.draft[hudDev()]; }
+function hudEdPosText(L, id) { const dev = hudDev(); const zn = hudZoneOf(L, id); return HUD_ZONE_N[dev][zn] + ' ' + (L.z[zn].indexOf(id) + 1) + '번째'; }
+
+/* ---------- 들어가고 나오기 ---------- */
+function hudEdSampleBattle() {
+  const T = { build: testClasses()[0], lv: 5, floor: 'low', ch: 1 }; T.foe = testFoes(1)[0].id;
+  const st = statRecommend(T.build, {}, STAT_START + LV_POINTS * (T.lv - 1));
+  const p = mkPlayer(T.build, {}, st, (TREE2[T.build] ? TREE2[T.build].starters : [])); p.lv = T.lv; applyStats(p, st); p.hp = p.hpMax; p.st = p.stMax;
+  const room = testRoom(T); const b = roomBattle(p, room, null, 4242); b.ctx.test = 1; b.stepMode = true;
+  try { b.log.push({ m: '내가 적에게 9.4 피해', c: 'good', w: 'p', r: 1, g: 1 }, { m: '적이 나에게 6.2 피해', c: 'bad', w: b.en[0].id, r: 1, g: 1 }); } catch (e) { }
+  return b;
+}
+function hudEdBegin() {
+  if (G.hudEd || typeof document === 'undefined') return;
+  hidePop(); G.menuOpen = false;
+  const real = !!(G.b && (G.scr === 'run' || G.scr === 'scen' || G.scr === 'tut' || G.scr === 'test'));
+  const ed = { draft: { pc: hudLayFor('pc'), ph: hudLayFor('ph') }, sel: null, msg: HUD_ED_DEFAULT_MSG, ret: null, sample: !real, focus: null, help: false };
+  ed.init = JSON.stringify(ed.draft);
+  if (!real) { ed.ret = { scr: G.scr, run: G.run, b: G.b, sel: G.sel, back: G.back, sheet: null }; G.run = null; G.b = hudEdSampleBattle(); G.scr = 'test'; G.sel = null; }
+  G.sheet = null; G.hudEd = ed; hudEdBarMake(); document.documentElement.classList.add('hedit'); render();
+  ed.focus = '[data-hbox]'; hudEdPost();
+}
+function hudEdEnd(how) {
+  const ed = G.hudEd; if (!ed) return;
+  G.hudEd = null; const bar = document.getElementById('hedbar'); if (bar) bar.remove(); document.documentElement.classList.remove('hedit'); document.documentElement.style.removeProperty('--hedbar-h');
+  if (ed.ret) { G.b = null; G.scr = ed.ret.scr; G.run = ed.ret.run; G.sel = ed.ret.sel; G.back = ed.ret.back; }
+  if (how === 'list') { openSheet('settings'); setTimeout(() => { const e = document.getElementById('hudedit'); if (e) e.scrollIntoView(); }, 30); }
+  else if (how !== 'lost') render();
+  if (how === 'save') toast('전투 화면 배치를 저장했습니다');
+  else if (how === 'cancel') toast('편집 전 배치로 돌아갔습니다');
+}
+function hudEdCommit() {
+  const ed = G.hudEd; if (!hudEdDirty()) return false;
+  const h = hudRaw(); const f = hudFlags(h.p, h.o); const o = {}; for (const it of HUD_ITEMS) if (!it.lock) o[it.k] = f[it.k];
+  G.data.hud = { p: 'custom', o, lay: { pc: JSON.parse(JSON.stringify(ed.draft.pc)), ph: JSON.parse(JSON.stringify(ed.draft.ph)) } }; saveLocal(); return true;
+}
+function hudEdSave() { hudEdCommit(); hudEdEnd('save'); }
+function hudEdCancel() { if (hudEdDirty() && !ask('고친 내용을 버리고 편집 전 배치로 돌아갈까요?')) return; hudEdEnd('cancel'); }
+function hudEdToList() {
+  if (hudEdDirty()) { if (!ask('고친 내용을 저장하고 목록으로 편집할까요? 취소를 누르면 이 화면에 남습니다.')) return; hudEdCommit(); }
+  hudEdEnd('list');
+}
+function hudEdReset() {
+  const dev = hudDev(); G.hudEd.draft[dev] = hudLayNorm(null, hudBaseLay(HUD_DEFAULT, dev)); G.hudEd.sel = null;
+  hudEdMsg(HUD_DEV_N[dev] + ' 배치를 처음 상태로 되돌렸습니다. 저장하기 전에는 바뀌지 않습니다'); G.hudEd.focus = '[data-a="hedreset"]'; render();
+}
+
+/* ---------- 아래 막대(다시 그리지 않는 고정 요소) ---------- */
+function hudEdBarMake() {
+  let bar = document.getElementById('hedbar'); if (bar) bar.remove();
+  bar = document.createElement('div'); bar.id = 'hedbar'; bar.setAttribute('role', 'region'); bar.setAttribute('aria-label', '전투 화면 편집 막대');
+  bar.innerHTML = `<p id="hedstatus" role="status" aria-live="polite">${esc(G.hudEd.msg)}</p><p class="mini" id="hednote"></p><p class="mini hedhelp" id="hedhelp" hidden>끌어서 옮기거나, 모듈에 초점을 두고 위 · 아래 화살표로 순서를, 왼쪽 · 오른쪽 화살표로 구역을 바꿉니다. +와 −는 크기, Enter나 Space는 고르기와 해제, Delete는 켜기와 끄기, Esc는 취소입니다. 고른 모듈 곁의 도구줄 단추도 같은 일을 합니다.</p>
+<div class="hedbtns"><button class="gold" data-a="hedsave" id="hedsave">저장</button><button data-a="hedcancel" aria-label="취소, 편집 전으로 돌아가기">취소</button><button data-a="hedreset" aria-label="처음으로 되돌리기">처음으로</button><button data-a="hedlist" aria-label="목록으로 편집">목록으로</button><button data-a="hedhelp" aria-expanded="false" aria-controls="hedhelp" aria-label="도움말 보기">도움말</button></div>`;
+  document.body.appendChild(bar); hudEdNote();
+}
+function hudEdNote() {
+  const n = document.getElementById('hednote'); const ed = G.hudEd; if (!n || !ed) return;
+  const d = HUD_DEV_N[hudDev()];
+  n.textContent = (ed.sample ? '견본 전투입니다. 게임에는 영향이 없습니다. ' : '전투가 멈춰 있습니다. ') + '지금 ' + d + ' 배치를 고칩니다' + (hudEdDirty() ? ' · 저장하지 않음' : '') + '.';
+}
+
+/* ---------- 겹쳐 놓는 층 ---------- */
+function hudEdUi() {
+  const ed = G.hudEd; const dev = hudDev(); const L = hudEdLayNow(); let boxes = '', zones = '';
+  for (const zn of HUD_ZONES) {
+    zones += `<div class="hzbox" data-hzbox="${zn}" aria-hidden="true"><span>${HUD_ZONE_N[dev][zn]}</span></div>`;
+    L.z[zn].forEach((id, i) => {
+      const m = hudModDef(id); const off = L.off.includes(id); const sz = L.s[id]; const on = ed.sel === id;
+      const lab = `${m.n}, ${HUD_ZONE_N[dev][zn]} ${i + 1}번째, 크기 ${sz}%, ${off ? '꺼짐' : '켜짐'}${m.lock ? ', 끌 수 없음' : ''}${on ? ', 선택됨' : ''}`;
+      boxes += `<div class="hbox${on ? ' on' : ''}${off ? ' off' : ''}" role="button" tabindex="0" aria-pressed="${on}" aria-label="${esc(lab)}" aria-describedby="hedhelp2" data-a="hedsel" data-k="${id}" data-hbox="${id}" data-zone="${zn}"><span class="htag" aria-hidden="true"><span class="hgrip">⠿</span> ${esc(m.n)}<small>${sz}%${off ? ' · 꺼짐' : ''}</small></span></div>`;
+    });
+  }
+  let tool = '';
+  if (ed.sel) {
+    const id = ed.sel; const m = hudModDef(id); const off = L.off.includes(id); const sz = L.s[id]; const si = HUD_SIZES.indexOf(sz);
+    const btn = (a, d, lab, aria, dis) => `<button class="sm" data-a="${a}"${d != null ? ` data-d="${d}"` : ''} aria-label="${esc(aria)}"${dis ? ' aria-disabled="true"' : ''}>${lab}</button>`;
+    tool = `<div class="hed-tool" role="toolbar" aria-label="${esc(m.n)} 편집 도구" data-tool><span class="htname">${esc(m.n)}</span>${btn('hedsz', -1, '크기 −', m.n + ' 크기 줄이기, 지금 ' + sz + '%', si <= 0)}<output class="hsz" aria-hidden="true">${sz}%</output>${btn('hedsz', 1, '크기 +', m.n + ' 크기 키우기, 지금 ' + sz + '%', si >= HUD_SIZES.length - 1)}${m.lock ? '<span class="hudlk">끌 수 없음</span>' : `<button class="sm${off ? ' gold' : ''}" data-a="hedtog" aria-pressed="${!off}" aria-label="${esc(m.n)} 보이기">${off ? '켜기' : '끄기'}</button>`}${btn('hedmv', -1, '▲ 위로', m.n + ' 위로')}${btn('hedmv', 1, '▼ 아래로', m.n + ' 아래로')}${btn('hedzn', -1, '◀ 구역', m.n + ' 앞 구역으로')}${btn('hedzn', 1, '구역 ▶', m.n + ' 다음 구역으로')}</div>`;
+  }
+  return `<main class="hov" data-hov aria-label="전투 화면 편집"><h1 class="sr">전투 화면 편집</h1><p class="sr" id="hedhelp2">끌어서 옮기거나 위 · 아래 화살표로 순서, 왼쪽 · 오른쪽 화살표로 구역을 바꿉니다. +와 −는 크기, Enter는 고르기, Delete는 켜기와 끄기, Esc는 취소입니다.</p>${zones}${boxes}${tool}</main>`;
+}
+/* 다시 그린 뒤: 틀을 실제 요소 위치에 붙이고, 막대 여백을 맞추고, 초점을 되돌린다 */
+function hudEdPost() {
+  const ed = G.hudEd; if (!ed) return;
+  const fit = document.querySelector('#root > .fit'); if (fit) fit.querySelectorAll(':scope > .hdr, :scope > .skip, :scope > .bmain').forEach(x => x.setAttribute('inert', '')); /* 틀과 도구줄만 눌리고 닿는다 */
+  hudEdPlace(); hudEdNote();
+  const sel = ed.focus; ed.focus = null;
+  if (sel) { const el = document.querySelector('.hov ' + sel) || document.querySelector('.hov [data-hbox]'); if (el) { POP.mute = true; try { el.focus({ preventScroll: false }); } finally { POP.mute = false; } } }
+}
+function hudEdPlace() {
+  const ov = document.querySelector('.hov'); if (!ov) return;
+  const fit = document.querySelector('#root > .fit'); if (!fit) return;
+  const bar = document.getElementById('hedbar'); const bh = bar ? bar.getBoundingClientRect().height : 0;
+  if (bh && document.documentElement.style.getPropertyValue('--hedbar-h') !== Math.ceil(bh) + 'px') document.documentElement.style.setProperty('--hedbar-h', Math.ceil(bh) + 'px');
+  /* 틀은 .fit(편집 중에는 스크롤 칸) 안의 내용 좌표에 놓아 내용과 함께 움직인다 */
+  const fr = fit.getBoundingClientRect(); const ox = fr.left - fit.scrollLeft + fit.clientLeft; const oy = fr.top - fit.scrollTop + fit.clientTop;
+  const put = (el, r, mw, mh) => { el.style.display = ''; el.style.cssText = `left:${r.left - ox}px;top:${r.top - oy}px;width:${Math.max(r.width, mw)}px;height:${Math.max(r.height, mh)}px`; };
+  ov.querySelectorAll('.hzbox').forEach(z => { const t = fit.querySelector('.hz-' + z.dataset.hzbox); if (!t) { z.style.display = 'none'; return; } put(z, t.getBoundingClientRect(), 0, 0); });
+  ov.querySelectorAll('.hbox').forEach(b => {
+    const t = fit.querySelector('[data-hmod="' + b.dataset.hbox + '"]'); const r = t ? t.getBoundingClientRect() : null;
+    if (!r || (!r.width && !r.height)) { b.style.display = 'none'; return; }
+    put(b, r, 24, 24);
+  });
+  const tool = ov.querySelector('.hed-tool'); const de = document.documentElement; const sb = G.hudEd.sel ? ov.querySelector('.hbox[data-hbox="' + G.hudEd.sel + '"]') : null;
+  if (tool && sb) {
+    tool.classList.remove('dock'); tool.style.left = '0px'; tool.style.top = '0px'; de.style.removeProperty('--hedtool-h');
+    const r = sb.getBoundingClientRect(); const tw = tool.offsetWidth; const th = tool.offsetHeight;
+    const vt = fr.top + 4, vb = fr.bottom - 4; /* 스크롤 칸에서 지금 보이는 띠 */
+    const left = Math.max(fr.left + 4, Math.min(r.left, fr.right - tw - 4));
+    /* 다른 모듈의 틀을 조금도 가리지 않는 자리만 쓴다(모듈 아래, 위 순). 모두 가리면 아래 막대 위에 붙인다 */
+    const others = [...ov.querySelectorAll('.hbox')].filter(o => o !== sb && o.style.display !== 'none').map(o => o.getBoundingClientRect());
+    const fits = t => t >= vt && t + th <= vb && others.every(q => Math.min(q.bottom, t + th) - Math.max(q.top, t) <= 0 || Math.min(q.right, left + tw) - Math.max(q.left, left) <= 0);
+    const top = [r.bottom + 4, r.top - th - 4].find(fits);
+    if (top == null) { tool.classList.add('dock'); tool.style.left = ''; tool.style.top = ''; de.style.setProperty('--hedtool-h', tool.offsetHeight + 'px'); }
+    else { tool.style.left = (left - ox) + 'px'; tool.style.top = (top - oy) + 'px'; }
+  } else de.style.removeProperty('--hedtool-h');
+}
+
+/* ---------- 고치는 일 ---------- */
+function hudEdDo(id, fn, msgFn) {
+  const L = hudEdLayNow(); fn(L); G.hudEd.msg = msgFn(L); G.hudEd.focus = G.hudEd.focus || '[data-hbox="' + id + '"]'; render();
+  const s = document.getElementById('hedstatus'); if (s) s.textContent = G.hudEd.msg;
+}
+function hudEdSize(id, d) {
+  const m = hudModDef(id); const L = hudEdLayNow(); const i = HUD_SIZES.indexOf(L.s[id]) + d;
+  if (i < 0 || i >= HUD_SIZES.length) { hudEdMsg(m.n + ': 더 ' + (d < 0 ? '줄일' : '키울') + ' 수 없습니다. 크기 ' + L.s[id] + '%'); return; }
+  hudEdDo(id, L2 => { L2.s[id] = HUD_SIZES[i]; }, () => m.n + ': 크기 ' + HUD_SIZES[i] + '%');
+}
+function hudEdToggle(id) {
+  const m = hudModDef(id); if (m.lock) { hudEdMsg(m.n + ': 끌 수 없는 모듈입니다'); return; }
+  hudEdDo(id, L => { L.off = L.off.includes(id) ? L.off.filter(x => x !== id) : L.off.concat([id]); }, L => m.n + ': ' + (L.off.includes(id) ? '껐습니다' : '켰습니다'));
+}
+function hudEdStep(id, d) {
+  const m = hudModDef(id); const L0 = hudEdLayNow(); const before = hudZoneOf(L0, id) + L0.z[hudZoneOf(L0, id)].indexOf(id);
+  const probe = JSON.parse(JSON.stringify(L0)); hudStepLay(probe, id, d);
+  if (hudZoneOf(probe, id) + probe.z[hudZoneOf(probe, id)].indexOf(id) === before) { hudEdMsg(m.n + ': 더 ' + (d < 0 ? '위로' : '아래로') + ' 갈 수 없습니다'); return; }
+  hudEdDo(id, L => hudStepLay(L, id, d), L => m.n + ': ' + hudEdPosText(L, id) + '에 놓았습니다');
+}
+function hudEdZone(id, d) {
+  const m = hudModDef(id); const L0 = hudEdLayNow(); const zn = hudZoneOf(L0, id); const zi = HUD_ZONES.indexOf(zn) + d;
+  if (zi < 0 || zi >= HUD_ZONES.length) { hudEdMsg(m.n + ': ' + (d < 0 ? '앞' : '다음') + ' 구역이 없습니다'); return; }
+  const idx = L0.z[zn].indexOf(id);
+  hudEdDo(id, L => hudMoveTo(L, id, HUD_ZONES[zi], Math.min(idx, L.z[HUD_ZONES[zi]].length)), L => m.n + ': ' + hudEdPosText(L, id) + '에 놓았습니다');
+}
+function hudEdSelect(id) {
+  const ed = G.hudEd; const m = hudModDef(id); ed.sel = ed.sel === id ? null : id; const L = hudEdLayNow();
+  ed.msg = ed.sel ? m.n + ' 선택. ' + hudEdPosText(L, id) + ', 크기 ' + L.s[id] + '%. 도구줄이나 화살표 키로 고칩니다' : m.n + ' 선택을 풀었습니다';
+  ed.focus = '[data-hbox="' + id + '"]'; render(); const s = document.getElementById('hedstatus'); if (s) s.textContent = ed.msg;
+}
+
+/* ---------- 눌림과 키 ---------- */
+function hudEdClick(a, el) {
+  const ed = G.hudEd; const id = el.dataset.k || ed.sel; const aria = el.getAttribute('aria-disabled') === 'true';
+  if (Date.now() - (ed.dragAt || 0) < 120 && a === 'hedsel') return; /* 끌고 놓은 직후의 click은 고르기가 아니다 */
+  if (a === 'hedsel') hudEdSelect(id);
+  else if (a === 'hedsave') hudEdSave();
+  else if (a === 'hedcancel') hudEdCancel();
+  else if (a === 'hedreset') hudEdReset();
+  else if (a === 'hedlist') hudEdToList();
+  else if (a === 'hedhelp') { ed.help = !ed.help; const h = document.getElementById('hedhelp'); if (h) h.hidden = !ed.help; el.setAttribute('aria-expanded', String(ed.help)); hudEdPlace(); }
+  else if (!ed.sel) return;
+  else if (a === 'hedsz') { ed.focus = '[data-a="hedsz"][data-d="' + el.dataset.d + '"]'; hudEdSize(ed.sel, +el.dataset.d); }
+  else if (a === 'hedtog') { ed.focus = '[data-a="hedtog"]'; hudEdToggle(ed.sel); }
+  else if (a === 'hedmv') { ed.focus = '[data-a="hedmv"][data-d="' + el.dataset.d + '"]'; hudEdStep(ed.sel, +el.dataset.d); }
+  else if (a === 'hedzn') { ed.focus = '[data-a="hedzn"][data-d="' + el.dataset.d + '"]'; hudEdZone(ed.sel, +el.dataset.d); }
+  void aria;
+}
+/* 편집 중 키: 처리했거나 막아야 하면 true. Tab은 그대로 둔다 */
+function hudEdKey(ev) {
+  const ed = G.hudEd; if (!ed) return false;
+  if (ev.key === 'Tab') return true;
+  if (ev.key === 'Escape') { ev.preventDefault(); if (ed.drag) { hudEdDragStop(true); return true; } hudEdCancel(); return true; }
+  const t = ev.target && ev.target.closest ? ev.target.closest('.hbox') : null;
+  if (t) {
+    const id = t.dataset.hbox; const k = ev.key;
+    if (ev.ctrlKey || ev.metaKey || ev.altKey) return true;
+    if (k === 'Enter' || k === ' ') { ev.preventDefault(); hudEdSelect(id); }
+    else if (k === 'ArrowUp' || k === 'ArrowDown') { ev.preventDefault(); hudEdStep(id, k === 'ArrowUp' ? -1 : 1); }
+    else if (k === 'ArrowLeft' || k === 'ArrowRight') { ev.preventDefault(); hudEdZone(id, k === 'ArrowLeft' ? -1 : 1); }
+    else if (k === '+' || k === '=') { ev.preventDefault(); hudEdSize(id, 1); }
+    else if (k === '-' || k === '_') { ev.preventDefault(); hudEdSize(id, -1); }
+    else if (k === 'Delete' || k === 'Backspace') { ev.preventDefault(); hudEdToggle(id); }
+    return true;
+  }
+  return true; /* 막대 단추의 Enter · Space는 브라우저가 click으로 바꿔 주므로 여기서는 게임 키만 막는다 */
+}
+
+/* ---------- 끌기(마우스 · 펜은 모듈 아무 데나, 손가락은 이름표) ---------- */
+function hudEdTarget(x, y, dragId) {
+  const ov = document.querySelector('.hov'); if (!ov) return null;
+  const boxes = [...ov.querySelectorAll('.hbox')].filter(b => b.style.display !== 'none' && b.dataset.hbox !== dragId);
+  const rects = boxes.map(b => ({ id: b.dataset.hbox, zone: b.dataset.zone, r: b.getBoundingClientRect() }));
+  const inZone = zn => rects.filter(q => q.zone === zn);
+  const hit = rects.find(q => x >= q.r.left && x <= q.r.right && y >= q.r.top && y <= q.r.bottom);
+  if (hit) {
+    const after = y > hit.r.top + hit.r.height / 2; const idx = inZone(hit.zone).findIndex(q => q.id === hit.id) + (after ? 1 : 0);
+    return { zone: hit.zone, index: idx, line: { x: hit.r.left, w: hit.r.width, y: after ? hit.r.bottom : hit.r.top } };
+  }
+  const fit = document.querySelector('#root > .fit');
+  for (const zn of HUD_ZONES) {
+    const z = fit && fit.querySelector('.hz-' + zn); if (!z) continue; const r = z.getBoundingClientRect();
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+      const list = inZone(zn); let idx = list.filter(q => q.r.top + q.r.height / 2 < y).length;
+      const ly = list.length === 0 ? r.top + 4 : idx < list.length ? list[idx].r.top : list[list.length - 1].r.bottom;
+      return { zone: zn, index: idx, line: { x: r.left, w: r.width, y: ly } };
+    }
+  }
+  return null;
+}
+function hudEdDragStop(cancel) {
+  const ed = G.hudEd; const D = ed && ed.drag; if (!D) return; ed.drag = null;
+  document.querySelectorAll('.hghost,.hline').forEach(x => x.remove());
+  document.querySelectorAll('.hbox.dragging').forEach(x => x.classList.remove('dragging'));
+  const ov = document.querySelector('.hov'); if (ov) ov.classList.remove('dragon');
+  document.querySelectorAll('.hzbox.tgt').forEach(x => x.classList.remove('tgt'));
+  if (!D.started) return;
+  ed.dragAt = Date.now(); if (cancel || !D.tgt) { hudEdMsg('옮기지 않았습니다'); return; }
+  const m = hudModDef(D.id);
+  hudEdDo(D.id, L => hudMoveTo(L, D.id, D.tgt.zone, D.tgt.index), L => m.n + ': ' + hudEdPosText(L, D.id) + '에 놓았습니다');
+}
+function initHudDirect() {
+  if (typeof document === 'undefined') return;
+  let raf = 0; const again = () => { if (!G.hudEd || raf) return; raf = requestAnimationFrame(() => { raf = 0; hudEdPlace(); }); };
+  window.addEventListener('scroll', again, true);  window.addEventListener('resize', again);
+  document.addEventListener('pointerdown', ev => {
+    const ed = G.hudEd; if (!ed) return; const b = ev.target && ev.target.closest ? ev.target.closest('.hbox') : null; if (!b || (ev.button != null && ev.button > 0) || ev.isPrimary === false) return;
+    const tag = !!ev.target.closest('.htag'); const touch = ev.pointerType === 'touch';
+    ed.drag = { id: b.dataset.hbox, pid: ev.pointerId, x0: ev.clientX, y0: ev.clientY, started: false, tgt: null, can: !touch || tag, b };
+    if (!touch) ev.preventDefault();
+  });
+  document.addEventListener('pointermove', ev => {
+    const ed = G.hudEd; const D = ed && ed.drag; if (!D || ev.pointerId !== D.pid || !D.can) return;
+    if (!D.started) {
+      if (Math.hypot(ev.clientX - D.x0, ev.clientY - D.y0) < 6) return;
+      D.started = true; try { D.b.setPointerCapture(ev.pointerId); } catch (e) { }
+      D.b.classList.add('dragging'); document.querySelector('.hov').classList.add('dragon');
+      const g = document.createElement('div'); g.className = 'hghost'; g.setAttribute('aria-hidden', 'true'); g.textContent = '⠿ ' + hudModDef(D.id).n; document.querySelector('.hov').appendChild(g);
+      const ln = document.createElement('div'); ln.className = 'hline'; ln.setAttribute('aria-hidden', 'true'); ln.style.display = 'none'; document.querySelector('.hov').appendChild(ln);
+    }
+    ev.preventDefault();
+    const g = document.querySelector('.hghost'); if (g) { g.style.left = Math.min(ev.clientX + 10, document.documentElement.clientWidth - 140) + 'px'; g.style.top = (ev.clientY + 10) + 'px'; }
+    const fe = document.querySelector('#root > .fit'); if (fe) { const fr = fe.getBoundingClientRect(); if (ev.clientY < fr.top + 60) fe.scrollTop -= 14; else if (ev.clientY > fr.bottom - 50) fe.scrollTop += 14; }
+    D.tgt = hudEdTarget(ev.clientX, ev.clientY, D.id);
+    const ln = document.querySelector('.hline'); document.querySelectorAll('.hzbox.tgt').forEach(x => x.classList.remove('tgt'));
+    if (D.tgt && ln) { ln.style.display = ''; ln.style.cssText = `left:${D.tgt.line.x}px;width:${D.tgt.line.w}px;top:${D.tgt.line.y - 2}px`; const z = document.querySelector('.hzbox[data-hzbox="' + D.tgt.zone + '"]'); if (z) z.classList.add('tgt'); }
+    else if (ln) ln.style.display = 'none';
+  }, { passive: false });
+  document.addEventListener('pointerup', ev => { const ed = G.hudEd; const D = ed && ed.drag; if (!D || ev.pointerId !== D.pid) return; if (!D.started) { ed.drag = null; return; } hudEdDragStop(false); });
+  document.addEventListener('pointercancel', ev => { const ed = G.hudEd; const D = ed && ed.drag; if (!D || ev.pointerId !== D.pid) return; hudEdDragStop(true); });
+}
+
+/* 편집 중 전투 화면: 끈 모듈 · 비어 있는 모듈 · 읽는 글만 있는 모듈도 틀을 가진 자리로 그린다(옮기고 켤 수 있게). 구역이 비어도 놓을 자리를 둔다 */
+function hudEdZones(html) {
+  const L = hudLayFor(hudDev()); const Z = {};
+  for (const zn of HUD_ZONES) {
+    let out = '';
+    for (const id of L.z[zn]) {
+      const m = hudModDef(id); const h = html[id]; const empty = !h || !String(h).trim(); const sz = L.s[id];
+      const hide = !empty && /class="qcons tlz"/.test(h);
+      const why = L.off.includes(id) ? '꺼져 있습니다' : empty ? '지금은 비어 있습니다. 상황에 따라 나타납니다' : /^\s*<div class="sr"/.test(h) ? '지금은 눈에 보이지 않습니다' : hide ? '도구 칸 안에 접혀 있습니다' : '';
+      if (why) out += `<div class="hmod hstub" data-hmod="${id}"><span>${esc(m.n)}: ${why}</span></div>`;
+      else out += `<div class="hmod${m.hm ? ' hm' : ''}${m.mine ? ' mine' : ''}" data-hmod="${id}"${sz !== 100 ? ` data-hz="${sz}" style="zoom:${sz / 100}"` : ''}>${h}</div>`;
+    }
+    Z[zn] = `<div class="hz hz-${zn}" data-zone="${zn}">${out || '<div class="hzempty">비어 있습니다. 여기에 놓을 수 있습니다</div>'}</div>`;
+  }
+  return Z;
+}

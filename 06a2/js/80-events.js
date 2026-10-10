@@ -2,6 +2,7 @@
 function onClick(ev) {
   const el = ev.target.closest('[data-a]'); if (!el) return;
   const a = el.dataset.a;
+  if (G.hudEd) { hudEdClick(a, el); return; } /* 화면에서 편집하는 동안은 편집 단추만 일한다(전투는 멈춤) */
   if (G.menuOpen && !ev.target.closest('.hdr')) { G.menuOpen = false; render(); if (a === 'closebg') return; } // 펼친 메뉴 밖을 누르면 닫는다
   if (el.closest('.mnav')) G.menuOpen = false;
   playTick();
@@ -147,6 +148,7 @@ function onClick(ev) {
     case 'hudtog': { const k = el.dataset.k; hudSet(k, !hudCfg()[k]); render(); const x = document.querySelector('[data-a="hudtog"][data-k="' + k + '"]'); if (x) x.focus(); break; }
     case 'hudmv': case 'hudmod': case 'huddev': case 'hudreset': case 'hudsheetpos': hudEditClick(a, el); break;
     case 'hudgrip': case 'hudsz': case 'hudzone': break;
+    case 'hedstart': hudEdBegin(); break;
     case 'stsmore': G.stsMore = !G.stsMore; render(); { const x = document.querySelector('[data-a="stsmore"]'); if (x) x.focus(); } break;
     case 'numkeys': G.data.numKeys = G.data.numKeys === false; saveLocal(); toast(G.data.numKeys ? '숫자 키로 행동합니다' : '숫자 키 행동을 껐습니다'); render(); break;
     case 'infotoggle': G.infoOn = !G.infoOn; G.data.infoOn = G.infoOn; saveLocal(); hidePop(); toast(G.infoOn ? '설명 창을 켰습니다' : '설명 창을 껐습니다'); if (G.sheet && G.sheet.kind === 'settings') render(); break;
@@ -249,6 +251,7 @@ function onClick(ev) {
   }
 }
 function onKey(ev) {
+  if (G.hudEd && hudEdKey(ev)) return;
   if (ev.key === 'Tab' && G.sheet) sheetTrap(ev);
   const typing = ev.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ev.target.tagName);
   if (ev.key === 'Enter' && ev.target && ['cname', 'adminpass', 'pname'].includes(ev.target.id)) { ev.preventDefault(); const b = document.querySelector({ cname: '[data-a=cnok]', adminpass: '[data-a=admingo]', pname: '[data-a=namesave]' }[ev.target.id]); if (b) b.click(); return; }
