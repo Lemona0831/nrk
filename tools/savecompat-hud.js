@@ -16,6 +16,15 @@ Object.assign(bag, {
   '자유 범위 밖': { p: 'custom', o: {}, lay: { md: { pc: 'free', ph: 'free' }, fr: { pc: { m: { 'hud-field': { x: 99999, y: 1e9, w: 1 } } }, ph: { m: { 'hud-actions': { x: -4, y: -9, w: 0 } } } } } },
   '자유 프리셋 밖': { p: 'simple', lay: { md: { pc: 'free', ph: 'free' } } },
 });
+/* 자유 캔버스(0.6a.2-120): 옛 12열 격자 값 한 벌(정상), 새 v 2 값(정상 · 깨짐 · 범위 밖), 칸 일부만 있음 */
+const OLD12 = (pc, ph) => ({ p: 'custom', o: {}, lay: { md: { pc: 'free', ph: 'free' }, fr: { pc, ph } } });
+Object.assign(bag, {
+  '옛 12열 격자 한 벌': OLD12({ m: { 'hud-player': { x: 0, y: 0, w: 5 }, 'hud-order': { x: 5, y: 0, w: 7 }, 'hud-field': { x: 1, y: 8, w: 10 }, 'hud-actions': { x: 0, y: 40, w: 12 } }, s: { 'hud-field': 150 }, off: ['hud-log'], pk: 0, au: 0 }, { m: { 'hud-player': { x: 0, y: 0, w: 12 } }, pk: 1, au: 1 }),
+  '옛 12열 격자 칸 일부만 · au': OLD12({ m: { 'hud-player': { x: 3, y: 4, w: 6 } }, au: 1 }, null),
+  '새 v2 정상': OLD12({ v: 2, m: { 'hud-player': { x: 10.5, y: 3.25, w: 40, h: null }, 'hud-field': { x: 0, y: 20, w: 100, h: 30 } }, zo: ['hud-actions', 'hud-player'], s: {}, off: [], pk: 1, sn: 8, gd: 0, ch: 2.5, au: 0, lg: { m: { 'hud-player': { x: 1, y: 1, w: 5 } }, pk: 0, au: 0 } }, null),
+  '새 v2 깨짐': OLD12({ v: 2, m: { 'hud-player': { x: 'a', y: 1e12, w: -4, h: 'z' }, 'hud-field': { x: -1e9, y: NaN, w: 1e9, h: -5 } }, zo: 'x', sn: 7, gd: 5, ch: 9, pk: 'q', lg: 5 }, { v: 2, m: [], zo: [1, 2, 'hud-field', 'hud-field'] }),
+  '새 v2 범위 밖': OLD12({ v: 2, m: { 'hud-actions': { x: 9999, y: 9999, w: 0.001, h: 99999 } }, ch: 3 }, null),
+});
 G.data = G0.blankData(); run_('hudEditLay("pc", L => { L.s[L.z.top1[0]] = 150; })'); bag['새 모양(편집 저장)'] = JSON.parse(JSON.stringify(G.data.hud));
 G.data = G0.blankData(); run_('hudModeLive("free")'); bag['새 모양(자유 배치 저장)'] = JSON.parse(JSON.stringify(G.data.hud));
 const ids = run_('HUD_MODS.map(m => m.id)'); const locks = run_('HUD_MODS.filter(m => m.lock).map(m => m.id)');
@@ -32,7 +41,9 @@ for (const [name, h] of Object.entries(bag)) for (const w of [390, 1280]) {
     for (const dev of ['pc', 'ph']) {
       const F = run_('hudFreeFor("' + dev + '")'); const mode = run_('hudModeFor("' + dev + '")');
       if (!['align', 'free'].includes(mode)) errs.push(dev + ' 방식 이상 ' + mode);
-      for (const id of ids) { const q = F.m[id]; if (!q || !Number.isInteger(q.x) || !Number.isInteger(q.y) || !Number.isInteger(q.w) || q.w < 3 || q.w > 12 || q.x < 0 || q.x + q.w > 12 || q.y < 0) errs.push(dev + ' 자유 값 이상 ' + id + JSON.stringify(q)); }
+      for (const id of ids) { const q = F.m[id]; if (!q || ![q.x, q.y, q.w].every(Number.isFinite) || q.w < 5 || q.w > 100 || q.x < -100 || q.x > 100 || q.y < -50 || q.y > 300 || !(q.h === null || (Number.isFinite(q.h) && q.h >= 3 && q.h <= 300))) errs.push(dev + ' 자유 값 이상 ' + id + JSON.stringify(q)); }
+      if (F.v !== 2 || F.zo.length !== ids.length || new Set(F.zo).size !== ids.length || !ids.every(i => F.zo.includes(i))) errs.push(dev + ' 겹침 순서 이상');
+      if (![0, 1, 4, 8, 16].includes(F.sn) || ![0, 1].includes(F.gd) || ![1, 1.5, 2, 2.5, 3].includes(F.ch) || ![0, 1].includes(F.au)) errs.push(dev + ' 붙이기 · 정렬선 · 캔버스 높이 값 이상');
       if (Object.values(F.s).some(v => ![50, 75, 100, 150, 200].includes(v))) errs.push(dev + ' 자유 크기 값 이상');
       if (F.off.some(id => locks.includes(id))) errs.push(dev + ' 자유: 끌 수 없는 모듈이 꺼짐');
       if (F.pk !== 0 && F.pk !== 1) errs.push(dev + ' pk 이상');

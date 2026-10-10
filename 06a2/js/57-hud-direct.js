@@ -2,6 +2,7 @@
 /* ===== 전투 화면에서 직접 편집 (10월 10일 0.6a.2-93) =====
    설정의 "화면에서 편집"을 누르면 실제 전투 화면(전투가 없으면 견본 전투)이 멈춘 채로 뜨고, 그 위에서 모듈을 끌어 옮기고
    누른 모듈의 크기 · 켜기와 끄기 · 순서와 구역을 고친다(조작판은 떠 있는 리모콘 패널이거나 별도 페이지: js/57-hud-remote.js, remote/ui.js, 10월 10일 0.6a.2-113). 값은 G.hudEd.draft = { pc, ph } 임시 배치에 쌓이고 "저장"을 눌러야 G.data.hud.lay에 들어간다.
+   자유 배치(js/55-hud-free.js)에서는 칸 어디를 잡아도 끌리고, 선택한 칸의 여덟 손잡이로 크기를 바꾸고, Shift 클릭이나 빈 곳 끌기로 여러 칸을 고른다.
    모듈 위의 틀과 이름표는 실제 요소가 아니라 겹쳐 놓은 층(.hov)이다: 실제 요소의 위치를 재어 따라붙는다(크기 zoom, 스크롤에도 맞음).
    전투 화면(.fit)은 inert라 편집 중에는 눌러도 아무 일이 없고, 전투 중이면 적 차례 진행도 sleep에서 멈춘다. 키보드: 모듈에 초점을 두고 화살표(위 · 아래 = 순서, 왼쪽 · 오른쪽 = 구역), + / − 크기, Enter · Space 고르기, Delete 켜기 · 끄기, Esc 취소. */
 const HUD_ED_DEFAULT_MSG = '칸을 끌어 옮기거나 눌러서 고르세요';
@@ -27,7 +28,7 @@ function hudEdBegin() {
   if (G.hudEd || typeof document === 'undefined') return;
   hidePop(); G.menuOpen = false;
   const real = !!(G.b && (G.scr === 'run' || G.scr === 'scen' || G.scr === 'tut' || G.scr === 'hudsample'));
-  const ed = { draft: hudLayAll(), fo: null, hist: null, nums: false, read: [], ovl: [], norm: false, announce: false, sel: null, msg: HUD_ED_DEFAULT_MSG, ret: null, sample: !real, focus: null, help: false, slot: Number.isInteger(G.data.hud && G.data.hud.slot) ? G.data.hud.slot : null, grid: false, keep: false };
+  const ed = { draft: hudLayAll(), fo: null, undo: [], redo: [], ukey: null, uat: 0, chk: null, sels: [], nums: false, read: [], ovl: [], norm: false, announce: false, sel: null, msg: HUD_ED_DEFAULT_MSG, ret: null, sample: !real, focus: null, help: false, slot: Number.isInteger(G.data.hud && G.data.hud.slot) ? G.data.hud.slot : null, grid: false, keep: false };
   ed.init = JSON.stringify(ed.draft); ed.o0 = JSON.stringify(hudOMap());
   if (!real) { ed.ret = { scr: G.scr, run: G.run, b: G.b, sel: G.sel, back: G.back, sheet: null }; G.run = null; G.b = hudEdSampleBattle(); G.scr = 'hudsample'; G.sel = null; }
   G.sheet = null; G.hudEd = ed; hudRemoteMake(); document.documentElement.classList.add('hedit'); render();
@@ -97,14 +98,15 @@ function hudEdNoteText() {
 }
 
 /* ---------- 겹쳐 놓는 층 ---------- */
+const HF_DIRS = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
 function hudEdUiFree() {
-  const ed = G.hudEd; const L = ed.draft.fr[hudDev()]; let boxes = '';
+  const ed = G.hudEd; const L = ed.draft.fr[hudDev()]; let boxes = ''; const sels = ed.sels || [];
   HUD_MODS.forEach((m, i) => {
-    const id = m.id; const off = L.off.includes(id); const sz = L.s[id]; const on = ed.sel === id;
-    const lab = `${m.n}, ${hfPos(L, id)}, 크기 ${sz}%, ${off ? '꺼짐' : '켜짐'}${m.lock ? ', 끌 수 없음' : ''}${on ? ', 선택됨' : ''}`;
-    boxes += `<div class="hbox${on ? ' on' : ''}${off ? ' off' : ''}" role="button" tabindex="0" aria-pressed="${on}" aria-label="${esc(lab)}" aria-describedby="hedhelp2" data-a="hedsel" data-k="${id}" data-hbox="${id}" data-zone="free"><span class="htag" aria-hidden="true"><span class="hnum">${i + 1}</span><span class="hgrip">⠿</span> ${esc(m.n)}<small>${sz}%${off ? ' · 꺼짐' : ''}</small></span><span class="hrh hrl" aria-hidden="true" data-rs="l"></span><span class="hrh hrr" aria-hidden="true" data-rs="r"></span></div>`;
+    const id = m.id; const off = L.off.includes(id); const sz = L.s[id]; const on = ed.sel === id || sels.includes(id); const hh = on && ed.sel === id && sels.length <= 1;
+    const lab = `${m.n}, 크기 ${sz}%, ${off ? '꺼짐' : '켜짐'}${m.lock ? ', 끌 수 없음' : ''}${on ? ', 선택됨' : ''}`;
+    boxes += `<div class="hbox${on ? ' on' : ''}${hh ? ' hh' : ''}${off ? ' off' : ''}" role="button" tabindex="0" aria-pressed="${on}" aria-label="${esc(lab)}" aria-describedby="hedhelp2" data-a="hedsel" data-k="${id}" data-hbox="${id}" data-zone="free"><span class="htag" aria-hidden="true"><span class="hnum">${i + 1}</span><span class="hgrip">⠿</span> ${esc(m.n)}<small>${sz}%${off ? ' · 꺼짐' : ''}</small></span>${HF_DIRS.map(d => `<span class="hrh hrh-${d}" aria-hidden="true" data-rs="${d}"></span>`).join('')}</div>`;
   });
-  return `<main class="hov" data-hov aria-label="전투 화면 편집"><h1 class="sr">전투 화면 편집</h1><p class="sr" id="hedhelp2">자유 배치입니다. 끌어서 옮기고, 양쪽 가장자리를 끌어 폭을 바꿉니다. 화살표 키는 한 칸씩, Shift와 함께 누르면 네 칸씩 옮깁니다. 대괄호 키는 폭, +와 −는 크기, Enter는 고르기, Delete는 켜기와 끄기, Ctrl과 Z는 되돌리기, Esc는 취소입니다.</p>${boxes}</main>`;
+  return `<main class="hov" data-hov data-free aria-label="전투 화면 편집"><h1 class="sr">전투 화면 편집</h1><p class="sr" id="hedhelp2">자유 배치입니다. 칸의 어디를 잡아도 끌어 옮기고, 고른 칸의 모서리와 가장자리 손잡이로 크기를 바꿉니다. Shift를 누른 채 누르거나 빈 곳을 끌면 여러 칸을 고릅니다. 화살표 키는 1px, Shift와 함께 누르면 10px 옮깁니다. 대괄호 키는 폭, 세미콜론과 작은따옴표 키는 높이입니다. Ctrl과 Z는 되돌리기, Ctrl과 Y는 다시 실행, +와 −는 크기, Enter는 고르기, Delete는 켜기와 끄기, Esc는 취소입니다.</p>${boxes}</main>`;
 }
 function hudEdUi() {
   if (hudFreeEd()) return hudEdUiFree();
@@ -153,7 +155,7 @@ function hudEdPlace() {
 
 /* ---------- 고치는 일 ---------- */
 function hudEdDo(id, fn, msgFn) {
-  hudEdUndoPush(); const L = hudEdLayNow(); fn(L); if (L.m) L.au = 0; G.hudEd.msg = msgFn(L); G.hudEd.focus = G.hudEd.keep ? null : (G.hudEd.focus || '[data-hbox="' + id + '"]'); render();
+  hudEdUndoPush(); const L = hudEdLayNow(); fn(L); G.hudEd.msg = msgFn(L); G.hudEd.focus = G.hudEd.keep ? null : (G.hudEd.focus || '[data-hbox="' + id + '"]'); render();
   hudRemoteSync();
 }
 function hudEdSize(id, d) {
@@ -166,21 +168,25 @@ function hudEdToggle(id) {
   hudEdDo(id, L => { L.off = L.off.includes(id) ? L.off.filter(x => x !== id) : L.off.concat([id]); }, L => m.n + ': ' + (L.off.includes(id) ? '껐습니다' : '켰습니다'));
 }
 function hudEdStep(id, d, big) {
-  if (hudFreeEd()) { hudFreeNudge(id, 0, d * (big ? 4 : 1)); return; }
+  if (hudFreeEd()) { hudFreeNudge(hudEdTargets(id), 0, d * (big ? 10 : 1)); return; }
   const m = hudModDef(id); const L0 = hudEdLayNow(); const before = hudZoneOf(L0, id) + L0.z[hudZoneOf(L0, id)].indexOf(id);
   const probe = JSON.parse(JSON.stringify(L0)); hudStepLay(probe, id, d);
   if (hudZoneOf(probe, id) + probe.z[hudZoneOf(probe, id)].indexOf(id) === before) { hudEdMsg(m.n + ': 더 ' + (d < 0 ? '위로' : '아래로') + ' 갈 수 없습니다'); return; }
   hudEdDo(id, L => hudStepLay(L, id, d), L => m.n + ': ' + hudEdPosText(L, id) + '에 놓았습니다');
 }
 function hudEdZone(id, d, big) {
-  if (hudFreeEd()) { hudFreeNudge(id, d * (big ? 4 : 1), 0); return; }
+  if (hudFreeEd()) { hudFreeNudge(hudEdTargets(id), d * (big ? 10 : 1), 0); return; }
   const m = hudModDef(id); const L0 = hudEdLayNow(); const zn = hudZoneOf(L0, id); const zi = HUD_ZONES.indexOf(zn) + d;
   if (zi < 0 || zi >= HUD_ZONES.length) { hudEdMsg(m.n + ': ' + (d < 0 ? '앞' : '다음') + ' 구역이 없습니다'); return; }
   const idx = L0.z[zn].indexOf(id);
   hudEdDo(id, L => hudMoveTo(L, id, HUD_ZONES[zi], Math.min(idx, L.z[HUD_ZONES[zi]].length)), L => m.n + ': ' + hudEdPosText(L, id) + '에 놓았습니다');
 }
-function hudEdSelect(id) {
-  const ed = G.hudEd; const m = hudModDef(id); ed.sel = ed.sel === id ? null : id; const L = hudEdLayNow();
+/* 이 칸을 고른 칸들의 하나로 보고, 여러 칸이 골라져 있으면 모두 */
+function hudEdTargets(id) { const ed = G.hudEd; const s = ed.sels || []; return s.includes(id) && s.length > 1 ? s.slice() : [id]; }
+function hudEdSelect(id, add) {
+  const ed = G.hudEd; const m = hudModDef(id);
+  if (add && hudFreeEd()) { hudFreeSelect([id], 'add'); return; }
+  const only = (ed.sels || []).length > 1; ed.sel = ed.sel === id && !only ? null : id; ed.sels = ed.sel ? [id] : []; const L = hudEdLayNow();
   ed.msg = ed.sel ? m.n + ' 선택. ' + hudEdPosText(L, id) + ', 크기 ' + L.s[id] + '%' : m.n + ' 선택을 풀었습니다';
   ed.focus = ed.keep ? null : '[data-hbox="' + id + '"]'; render(); hudRemoteSync();
 }
@@ -189,7 +195,8 @@ function hudEdSelect(id) {
 function hudEdClick(a, el) {
   const ed = G.hudEd; const id = el.dataset.k;
   if (Date.now() - (ed.dragAt || 0) < 120 && a === 'hedsel') return; /* 끌고 놓은 직후의 click은 고르기가 아니다 */
-  if (a === 'hedsel') hudEdSelect(id);
+  if (a === 'hedsel' && ed.justSel && ed.justSel.id === id && Date.now() - ed.justSel.at < 700 && !ed.shift) { ed.justSel = null; return; } /* 누르는 순간 이미 골랐다 */
+  if (a === 'hedsel') hudEdSelect(id, !!ed.shift);
 }
 /* 편집 중 키: 처리했거나 막아야 하면 true. Tab은 그대로 둔다 */
 function hudEdKey(ev) {
@@ -197,13 +204,22 @@ function hudEdKey(ev) {
   if (ev.key === 'Tab') return true;
   if (ev.key === 'Escape' && ev.target && ev.target.tagName === 'SELECT') return true; /* 목록을 닫는 Esc는 편집을 취소하지 않는다 */
   if (ev.key === 'Escape') { ev.preventDefault(); if (ed.drag) { hudEdDragStop(true); return true; } hudEdCancel(); return true; }
+  const k = ev.key; const typing = ev.target && ev.target.tagName === 'INPUT' && ev.target.type !== 'checkbox' && ev.target.type !== 'range';
+  if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && !typing) {
+    if (k === 'z' || k === 'Z') { ev.preventDefault(); if (ev.shiftKey) hudEdRedo(); else hudEdUndo(); return true; }
+    if (k === 'y' || k === 'Y') { ev.preventDefault(); hudEdRedo(); return true; }
+    if ((k === 'a' || k === 'A') && hudFreeEd()) { ev.preventDefault(); hudFreeSelect(HUD_MODS.map(m => m.id).filter(id => !hudEdLayNow().off.includes(id)), 'set'); return true; }
+  }
   const t = ev.target && ev.target.closest ? ev.target.closest('.hbox') : null;
   if (t) {
-    const id = t.dataset.hbox; const k = ev.key;
-    if ((ev.ctrlKey || ev.metaKey) && (k === 'z' || k === 'Z') && !ev.altKey) { ev.preventDefault(); hudEdUndo(); return true; }
+    const id = t.dataset.hbox;
     if (ev.ctrlKey || ev.metaKey || ev.altKey) return true;
-    if (hudFreeEd() && (k === '[' || k === ']')) { ev.preventDefault(); const q = G.hudEd.draft.fr[hudDev()].m[id]; hudFreeTry(id, { w: q.w + (k === ']' ? 1 : -1) * (ev.shiftKey ? 4 : 1) }); }
-    else if (k === 'Enter' || k === ' ') { ev.preventDefault(); hudEdSelect(id); }
+    if (hudFreeEd() && /^(\[|\]|\{|\}|;|:|'|")$/.test(k)) { /* 폭 [ ]  높이 ; ' (Shift는 10px) */
+      ev.preventDefault(); const st = ev.shiftKey ? 10 : 1; const ids = hudEdTargets(id);
+      if (k === '[' || k === '{') hudFreeSizeBy(ids, -st, 0); else if (k === ']' || k === '}') hudFreeSizeBy(ids, st, 0); else if (k === ';' || k === ':') hudFreeSizeBy(ids, 0, -st); else hudFreeSizeBy(ids, 0, st);
+    }
+    else if (hudFreeEd() && (k === 'ArrowUp' || k === 'ArrowDown' || k === 'ArrowLeft' || k === 'ArrowRight')) { ev.preventDefault(); const st = ev.shiftKey ? 10 : 1; hudFreeMoveBy(hudEdTargets(id), k === 'ArrowLeft' ? -st : k === 'ArrowRight' ? st : 0, k === 'ArrowUp' ? -st : k === 'ArrowDown' ? st : 0); }
+    else if (k === 'Enter' || k === ' ') { ev.preventDefault(); hudEdSelect(id, hudFreeEd() && ev.shiftKey); }
     else if (k === 'ArrowUp' || k === 'ArrowDown') { ev.preventDefault(); hudEdStep(id, k === 'ArrowUp' ? -1 : 1, ev.shiftKey); }
     else if (k === 'ArrowLeft' || k === 'ArrowRight') { ev.preventDefault(); hudEdZone(id, k === 'ArrowLeft' ? -1 : 1, ev.shiftKey); }
     else if (k === '+' || k === '=') { ev.preventDefault(); hudEdSize(id, 1); }
@@ -254,9 +270,12 @@ function initHudDirect() {
   let raf = 0; const again = () => { if (!G.hudEd || raf) return; raf = requestAnimationFrame(() => { raf = 0; hudEdPlace(); }); };
   window.addEventListener('scroll', again, true);  window.addEventListener('resize', again);
   document.addEventListener('pointerdown', ev => {
-    const ed = G.hudEd; if (!ed) return; const b = ev.target && ev.target.closest ? ev.target.closest('.hbox') : null; if (!b || (ev.button != null && ev.button > 0) || ev.isPrimary === false) return;
-    const rsEl = ev.target.closest('.hrh'); const tag = !!ev.target.closest('.htag') || !!rsEl; const touch = ev.pointerType === 'touch';
-    ed.drag = { id: b.dataset.hbox, pid: ev.pointerId, x0: ev.clientX, y0: ev.clientY, started: false, tgt: null, can: !touch || tag, b, rs: rsEl && hudFreeEd() ? rsEl.dataset.rs : null };
+    const ed = G.hudEd; if (!ed) return; ed.shift = !!ev.shiftKey; const b = ev.target && ev.target.closest ? ev.target.closest('.hbox') : null; if (!b || (ev.button != null && ev.button > 0) || ev.isPrimary === false) return;
+    const rsEl = ev.target.closest('.hrh'); const tag = !!ev.target.closest('.htag') || !!rsEl; const touch = ev.pointerType === 'touch'; const free = hudFreeEd(); const id = b.dataset.hbox;
+    const picked = free && (ed.sels || []).includes(id);
+    ed.drag = { id, pid: ev.pointerId, x0: ev.clientX, y0: ev.clientY, started: false, tgt: null, can: !touch || tag || picked, b, rs: rsEl && free ? rsEl.dataset.rs : null };
+    if (free && !picked && !ev.shiftKey) hudFreePressSelect(id, b); /* 누르는 순간 고른다: 손잡이가 바로 나타난다 */
+    if (free && touch && !ed.drag.can) { const D = ed.drag; D.lp = setTimeout(() => { if (ed.drag === D && !D.started) { D.can = true; D.b.classList.add('lp'); } }, 260); } /* 손가락은 길게 누르면 어디서든 끌린다 */
     if (!touch) ev.preventDefault();
   });
   document.addEventListener('pointermove', ev => {
@@ -277,8 +296,8 @@ function initHudDirect() {
     if (D.tgt && ln) { ln.style.display = ''; ln.style.cssText = `left:${D.tgt.line.x}px;width:${D.tgt.line.w}px;top:${D.tgt.line.y - 2}px`; const z = document.querySelector('.hzbox[data-hzbox="' + D.tgt.zone + '"]'); if (z) z.classList.add('tgt'); }
     else if (ln) ln.style.display = 'none';
   }, { passive: false });
-  document.addEventListener('pointerup', ev => { const ed = G.hudEd; const D = ed && ed.drag; if (!D || ev.pointerId !== D.pid) return; if (!D.started) { ed.drag = null; return; } hudEdDragStop(false); });
-  document.addEventListener('pointercancel', ev => { const ed = G.hudEd; const D = ed && ed.drag; if (!D || ev.pointerId !== D.pid) return; hudEdDragStop(true); });
+  document.addEventListener('pointerup', ev => { const ed = G.hudEd; const D = ed && ed.drag; if (!D || ev.pointerId !== D.pid) return; if (D.lp) clearTimeout(D.lp); if (!D.started) { ed.drag = null; D.b.classList.remove('lp'); return; } hudEdDragStop(false); });
+  document.addEventListener('pointercancel', ev => { const ed = G.hudEd; const D = ed && ed.drag; if (!D || ev.pointerId !== D.pid) return; if (D.lp) clearTimeout(D.lp); hudEdDragStop(true); });
 }
 
 /* 편집 중 전투 화면: 끈 모듈 · 비어 있는 모듈 · 읽는 글만 있는 모듈도 틀을 가진 자리로 그린다(옮기고 켤 수 있게). 구역이 비어도 놓을 자리를 둔다 */

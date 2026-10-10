@@ -4,12 +4,18 @@ module.exports = function (api) {
   const pct = v => Math.round(v * 100);
   const PS = require('./pagesrc.js'); const SRC = PS.pageScript(require('path').join(api.ROOT, '06a2'));
   const has = s => SRC.includes(s);
+  const FREECSS = require('fs').readFileSync(require('path').join(api.ROOT, '06a2', 'css', '76-hud-free.css'), 'utf8');
   const src = fn => E(fn + '.toString()');
 
   add('help', '"배열"에서는 배열 칸 1~4를 불러오고', '상수: HUD_SLOT_N=' + E('HUD_SLOT_N') + '(저장 칸 수), 소스: 리모콘 상태가 slots를 HUD_SLOT_N칸만큼 만든다', E => E('HUD_SLOT_N') === 4 && has('slots: sl.map((s, i) =>'));
   const OPS = require('fs').readFileSync(require('path').join(api.ROOT, '06a2', 'remote', 'ui.js'), 'utf8');
   add('help', '투명도(100 · 90 · 80 · 70%)', '소스: remote/ui.js const OPS = [100, 90, 80, 70](투명도 단추가 차례로 돈다. 바탕 색만 섞이고 글자는 그대로)', E => OPS.includes('const OPS = [100, 90, 80, 70];'));
-  add('help', '가로 열(12열 격자), 세로 행, 폭(3열에서 12열)', '상수: FREE_COLS=' + E('FREE_COLS') + ' · FREE_MINW=' + E('FREE_MINW') + ', 소스: hudFreeNorm이 폭을 FREE_MINW에서 FREE_COLS로 맞춘다', E => E('FREE_COLS') === 12 && E('FREE_MINW') === 3 && has('w = Math.min(FREE_COLS, Math.max(FREE_MINW, w))'));
+  add('help', '칸 폭은 96px 아래로 줄지 않습니다', '상수: FREE_MINW=' + E('FREE_MINW') + ', 소스: hudFreeSetRects가 폭을 FREE_MINW 아래로 두지 않고 CSS도 min-width 96px', E => E('FREE_MINW') === 96 && has('Math.max(FREE_MINW, Math.min(W, r.w))') && FREECSS.includes('min-width:96px'));
+  add('help', '화면의 1배에서 3배 가운데 고르고', '상수: FREE_CHS=' + E('FREE_CHS.join()'), E => E('FREE_CHS.join()') === '1,1.5,2,2.5,3');
+  add('help', '누를 자리가 24px도 남지 않거나', '상수: FREE_OK=' + E('FREE_OK') + ', 소스: hudFreeGuard가 hudFreeHasSquare(R, obs, FREE_OK)로 가림을 보고 놓은 직후 어긴 칸이 있으면 hudEdRevert', E => E('FREE_OK') === 24 && has('hudFreeHasSquare(R, obs, FREE_OK)') && has('hudEdRevert(); const b = bad[0]'));
+  add('help', '붙이기(꺼짐 · 1 · 4 · 8 · 16px)', '상수: FREE_SNAPS=' + E('FREE_SNAPS.join()') + '(0은 꺼짐)', E => E('FREE_SNAPS.join()') === '0,1,4,8,16');
+  add('help', '1px씩, Shift와 함께 누르면 10px씩', '소스: hudEdKey가 const st = ev.shiftKey ? 10 : 1로 화살표 · 대괄호 · 세미콜론 키를 처리', E => (PS.pageScript(require('path').join(api.ROOT, '06a2')).match(/const st = ev\.shiftKey \? 10 : 1/g) || []).length >= 2);
+  add('help', '옛 12열 격자 값', '상수: FREE_OLD_COLS=' + E('FREE_OLD_COLS') + ', 소스: hfFromOld가 12열 값을 퍼센트로 바꾼다', E => E('FREE_OLD_COLS') === 12 && has('x / FREE_OLD_COLS * 100'));
 
   /* ===== 직업 규칙 (뒤) ===== */
   add('help', '겹마다 피해 +5%', '상수: HUNT.focusPer 5% · focusBig 10% · focusMax 3, 소스: 3겹이면 몸 낮추기 · 버티기를 꿰뚫음', E => pct(E('HUNT.focusPer')) === 5 && pct(E('HUNT.focusBig')) === 10 && E('HUNT.focusMax') === 3 && has('b.p.focus.n >= HUNT.focusMax') && has('e.braced && !o.dot && !fullF'));
