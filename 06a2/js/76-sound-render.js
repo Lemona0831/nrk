@@ -10,7 +10,7 @@ function musicFor() {
   if (scr === 'run' && G.b && G.b.ctx && G.b.ctx.boss) return chM('boss');
   if (scr === 'run' || scr === 'scen' || (scr === 'tut' && G.b)) return chM('dungeon');
   if (scr === 'dead' || (scr === 'survey' && G.run && G.run.result === 'lose')) return 'failed';
-  if (scr === 'settle' || scr === 'wait' || (scr === 'survey' && G.run && G.run.phase === 'clearsv')) return 'finished';
+  if (scr === 'settle' || scr === 'wait' || (scr === 'survey' && G.run && G.run.phase === 'clearsv')) return MUSIC['ch' + ((G.run && G.run.ch) || 1) + '_finished'] ? 'ch' + G.run.ch + '_finished' : 'finished'; // 정산 중에는 run.ch가 방금 깬 챕터다. 챕터 곡이 없으면 기본 곡
   if (scr === 'shop') return 'shop';
   return 'title';
 }
