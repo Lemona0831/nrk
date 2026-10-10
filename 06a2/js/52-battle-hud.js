@@ -76,14 +76,18 @@ function hudFlags(p, o) {
 function hudCfg() { const h = hudRaw(); return hudFlags(h.p, h.o); }
 /* 자세히 칸이 열려 있으면 늘 전부 보인다(숨긴 것에 닿는 길) */
 function hudEff(fdo) { return fdo ? hudFlags('full', {}) : hudCfg(); }
-function hudPreset(n) { if (!HUD_NAMES.includes(n)) return; G.data.hud = { p: n }; saveLocal(); }
-function hudSet(k, v) { const c = hudCfg(); const o = {}; for (const it of HUD_ITEMS) if (!it.lock) o[it.k] = c[it.k]; o[k] = v; G.data.hud = { p: 'custom', o, lay: { pc: hudLayFor('pc'), ph: hudLayFor('ph') } }; saveLocal(); }
+function hudPreset(n) { if (!HUD_NAMES.includes(n)) return; G.data.hud = Object.assign({ p: n }, hudSlotKeep()); saveLocal(); }
+function hudSet(k, v) { const c = hudCfg(); const o = {}; for (const it of HUD_ITEMS) if (!it.lock) o[it.k] = c[it.k]; o[k] = v; G.data.hud = Object.assign({ p: 'custom', o, lay: { pc: hudLayFor('pc'), ph: hudLayFor('ph') } }, hudSlotKeep()); saveLocal(); }
 const hudQuiet = h => String(h || '').replace(/ tabindex="-?\d+"/g, '').replace(/ data-info="[^"]*"/g, '');
 function hudSettings() {
-  const h = hudRaw(), f = hudFlags(h.p, h.o);
+  const h = hudRaw(), f = hudFlags(h.p, h.o); const live = !!(G.b && hudLiveSheet()); const sl = hudSlots();
   const sw = (k, on, lab) => `<button class="sw" role="switch" aria-checked="${on ? 'true' : 'false'}" data-a="hudtog" data-k="${k}" aria-label="${esc(lab)}">${on ? '켜짐' : '꺼짐'}</button>`;
-  let o = `<section class="setg" id="hudset"><h4>전투 화면 표시</h4><p class="mini">전투 화면에 무엇을 보일지 고릅니다. 묶음을 고르면 항목과 크기 · 놓는 자리가 함께 정해집니다. 처음에는 꼭 필요한 것만 보입니다. 전투 중에도 바로 바뀝니다.</p>`;
+  let o = `<section class="setg" id="hudset0"><h4>전투 화면 배치</h4><p class="mini">처음에는 꼭 필요한 것만 보입니다. 묶음을 고르면 보이는 항목이 함께 바뀝니다. ${live ? '바꾸면 뒤의 전투 화면에 바로 보입니다.' : '전투 중에 열어도 바로 바뀝니다.'}</p>`;
   o += `<div class="setrow hudpre" role="group" aria-label="표시 묶음">${HUD_NAMES.map(n => `<button class="sm${h.p === n ? ' gold' : ''}" data-a="hudpre" data-k="${n}" aria-pressed="${h.p === n}">${HUD_LAB[n]}</button>`).join('')}<span class="mini hudcur" role="status">${h.p === 'custom' ? '사용자 지정' : ''}</span></div>`;
+  o += `<div class="setrow hudpre"><button class="gold" data-a="hedstart">화면에서 편집</button><span class="mini">실제 전투 화면 위에서 칸을 끌어 옮기고 크기를 정합니다${live ? '. 전투는 멈춰 있습니다' : '. 전투 중이 아니면 견본 전투를 보여 줍니다'}</span></div>`;
+  o += `<div class="hslots" role="group" aria-label="내 배열 불러오기"><span class="lab">내 배열</span>${sl.map((s, i) => `<button class="sm${(G.data.hud && G.data.hud.slot === i && h.p === 'custom') ? ' gold' : ''}" data-a="hudslotload" data-n="${i}" aria-label="배열 칸 ${i + 1} 불러오기, ${s ? s.t + ' 저장' : '비어 있음'}"${s ? '' : ' aria-disabled="true"'}>${i + 1}${s ? '' : '<span class="mini"> 비어 있음</span>'}</button>`).join('')}</div><p class="mini">배열은 편집 화면에서 저장합니다. 칸 번호를 누르면 저장해 둔 배치를 불러옵니다.</p>`;
+  if (live) o += `<div class="setrow hudpre"><button class="sm" data-a="hudsheetpos" aria-pressed="${!!G.hudTop}">창을 ${G.hudTop ? '아래로' : '위로'} 옮기기</button><span class="mini">설정 창이 전투 화면을 가릴 때 씁니다</span></div>`;
+  o += `</section><details class="setg hdet" id="hudset"${G.hudItemsOpen ? ' open' : ''}><summary>표시할 항목 고르기</summary><p class="mini">전투 화면에 무엇을 보일지 항목마다 정합니다.</p>`;
   for (const [gn, ks] of HUD_GROUPS) {
     o += `<div class="hudg" role="group" aria-label="${gn}"><h5>${gn}</h5>`;
     for (const k of ks) {
@@ -94,7 +98,7 @@ function hudSettings() {
     }
     o += `</div>`;
   }
-  return o + `</section>` + hudEditHtml();
+  return o + `</details>` + hudEditHtml();
 }
 /* 지금 위험: 이번 차례에 답이 필요한 일만. 적의 예고 문장을 그대로 옮기고 무엇을 하라고는 말하지 않는다 */
 function vHudDanger(b) {

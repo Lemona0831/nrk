@@ -1,0 +1,61 @@
+/* ===== 설정 창 탭과 HUD 배열 패널 (10월 10일 0.6a.2-95) ===== */
+/* 탭 */
+.settabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:0 0 8px}
+.settab{flex:1 1 0;min-height:44px;padding:6px 8px;border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;background:var(--panel);color:var(--muted);font-size:calc(14px*var(--fs,1));font-weight:600}
+.settab.on{background:var(--panel2);color:var(--gold);border-color:var(--gold);box-shadow:inset 0 -3px 0 var(--gold)}
+.setpan:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.setpan[hidden]{display:none}
+.hdet>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:calc(14px*var(--fs,1));font-weight:600;color:var(--ink)}
+.hdet[open]>summary{color:var(--gold)}
+.hdet>summary::before{content:'▸';display:inline-block;width:18px;color:var(--gold)}
+.hdet[open]>summary::before{content:'▾'}
+.hslots{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0}
+.hslots .lab{font-size:calc(14px*var(--fs,1));margin-right:4px}
+.hslots .sm{min-height:44px;min-width:44px}
+
+/* 칸 틀: 안 고른 칸은 옅은 점선, 고른 칸만 주황 */
+.hbox{border-color:rgba(230,220,203,.8)}
+.hbox.on{border-color:#f2993a;background:rgba(242,153,58,.16);box-shadow:0 0 0 2px var(--bg),0 0 12px rgba(242,153,58,.55)}
+.hbox.on .htag{background:#f2993a;color:#1a1206;border-color:#f2993a}
+.hbox.on .htag small,.hbox.on .hgrip{color:#1a1206}
+/* 격자 */
+html.hgrid.hedit .fit{background-image:linear-gradient(rgba(230,220,203,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(230,220,203,.1) 1px,transparent 1px);background-size:24px 24px;background-attachment:local}
+
+/* HUD 배열 패널: 아래에 붙은 도구 패널. 접으면 한 줄 */
+#hedbar{display:block;max-height:60vh;overflow-y:auto}
+#hedbar .hphead{display:flex;align-items:center;gap:10px}
+#hedbar .hptitle{flex:none;color:var(--gold);font-size:calc(15px*var(--fs,1))}
+#hedbar .hphead #hedstatus{flex:1 1 auto;min-width:0;margin:0}
+#hedbar .hphead .sm{flex:none;min-height:44px}
+#hedbar .hpbody{margin-top:6px}
+#hedbar.fold .hpbody{display:none}
+#hedbar.fold .hedbtns{margin-top:6px}
+#hedbar .hprow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:4px 0;border:0;padding:0;min-width:0}
+#hedbar .hplab{flex:none;min-width:96px;font-size:calc(13px*var(--fs,1));font-weight:600;color:var(--gold);padding:0}
+#hedbar .hprow .sm{min-height:44px;min-width:44px}
+#hedbar select{min-height:44px;flex:1 1 160px;min-width:0}
+#hedbar .hpck{display:inline-flex;align-items:center;gap:6px;min-height:44px;font-size:calc(13.5px*var(--fs,1))}
+#hedbar .hpck input{width:24px;height:24px;margin:0;accent-color:var(--gold)}
+#hedbar .hpck small{color:var(--muted)}
+#hedbar input[type=range]{flex:1 1 120px;min-width:100px;height:32px;accent-color:#f2993a}
+#hedbar input[type=range]:disabled{opacity:.6}
+#hedbar output{min-width:44px;text-align:center;font-variant-numeric:tabular-nums;font-size:calc(13px*var(--fs,1))}
+#hedbar .sw{min-height:44px}
+#hedbar .hpsel .hplab{min-width:96px;overflow-wrap:anywhere}
+#hedbar .hedbtns{align-items:center}
+#hedbar .hedbtns .hpck{flex:none;padding:0 6px}
+@media (max-width:719px){
+ #hedbar .hpbody{max-height:42vh;overflow-y:auto}
+ #hedbar .hptitle{font-size:calc(14px*var(--fs,1))}
+ #hedbar .hphead #hedstatus{font-size:calc(13px*var(--fs,1))}
+ #hedbar .hplab{min-width:0;width:100%}
+ #hedbar .hpsel .hplab{width:auto;flex:1 1 100%}
+ .hedbtns button{min-width:56px!important}
+}
+@media (min-width:720px){
+ #hedbar{padding-left:16px;padding-right:16px}
+ #hedbar .hpbody{display:grid;grid-template-columns:1fr 1fr;gap:2px 24px}
+ #hedbar.fold .hpbody{display:none}
+ #hedbar .hpbody>.hedhelp,#hedbar .hpbody>#hednote,#hedbar .hpbody>#hedlkmsg{grid-column:1/-1}
+ #hedbar .hphead #hedstatus{flex:1 1 auto}
+}
