@@ -11,13 +11,13 @@ function chgEntry(c, latest, brief) {
 }
 function curDesc(c) { const ch = c.ch || 1; return c.phase === 'wait' || c.phase === 'clearsv' ? ch + '챕터 돌파 · ' + (CHAPTERS[ch + 1] ? (ch + 1) + '챕터로 갈 준비' : (ch + 1) + '챕터 준비 중') : c.phase === 'shop' ? ch + '챕터 돌파 · 상점' : c.phase === 'settle' ? ch + '챕터 돌파 · 정산' : ch + '챕터 · ' + floorName(c.room); }
 function vTitle() {
-  const d = G.data; const c = d.cur && !d.cur.endedAt && BUILDS[d.cur.build] ? d.cur : null;
+  const d = G.data; const c = d.cur && !runOver(d.cur) && BUILDS[d.cur.build] ? d.cur : null;
   let h = `<div class="title-scr"><div class="tlogo"><span class="ver">0.6a.2</span><p class="tlh" aria-hidden="true">나락의 유산</p><p class="lore">무너진 수도원 아래, 빛이 닿지 않는 곳까지 계단이 이어진다.</p></div><div class="tmenu">`;
   if (c) { const B = BUILDS[c.build]; h += `<div class="tcur"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(c.cname || B.n)}</b><small>${esc(B.n)} · Lv ${c.lv || 1} · ${esc(curDesc(c))}</small></div></div><button class="gold" data-a="resume" data-focus>이어하기</button><button data-a="restart">처음부터</button>`; }
   else h += `<button class="gold" data-a="newchar" data-focus>시작</button>`;
   h += `<div class="row tgoal"><button data-a="goals">📋 계정 목표</button>${markOpen() ? '<button data-a="mark">🎖️ 표식 도전</button>' : ''}</div>`;
   if (d.tutSeen || c) h += `<button class="tutbtn" data-a="tut">🎯 수련장${d.tutDone ? ' <small>수료</small>' : ''}</button>`;
-  const kept = (d.kept || []).filter(k => !k.endedAt && BUILDS[k.build]);
+  const kept = (d.kept || []).filter(k => !runOver(k) && BUILDS[k.build]);
   if (kept.length) h += `<div class="tkept"><p class="mini">기다리는 캐릭터 ${kept.length}</p>${kept.map(k => { const B = BUILDS[k.build]; return `<div class="tcur sm"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(k.cname || B.n)}</b><small>${esc(B.n)} · Lv ${k.lv || 1} · ${esc(curDesc(k))}</small></div><button class="sm" data-a="resumekept" data-k="${esc(k.id)}">이어하기</button></div>`; }).join('')}</div>`;
   h += `</div></div><div class="tbelow">`;
   if (G.sync) h += `<div class="banner" role="status">${esc(G.sync)}</div>`;
@@ -132,7 +132,7 @@ function markWin(run) { // 표식 도전의 보스를 이겼을 때: 최고 점�
   run.markScore = sc; if (!mb[k] || sc > (mb[k].score || 0)) mb[k] = { score: sc, ids: (run.marks || []).slice(), lv: run.lv || 1, cname: run.cname || '', at: Date.now() };
   saveLocal();
 }
-function markFinish(run) { run.phase = null; run.result = 'win'; clearCur(); saveRunLocal(); G.scr = 'survey'; render(); window.scrollTo(0, 0); }
+function markFinish(run) { run.phase = null; run.result = 'win'; run.sealed = 1; clearCur(); saveRunLocal(); G.scr = 'survey'; render(); window.scrollTo(0, 0); }
 function markCreateCard(C) {
   const M = C.mark; const names = M.ids.map(k => MARKS[k].ico + ' ' + MARKS[k].n).join(', ');
   return `<section class="card cstep"><h3>표식 도전</h3><p><b>${M.ch}챕터</b>${M.ch > 1 ? ' · 레벨 ' + MARK_START[M.ch].lv + '에서 시작' : ' · 처음부터'} · ${M.mode === 'hard' ? '가혹 모드' : '일반 모드'}</p><p class="mini">표식: ${esc(names)}</p><p class="mini">표식 점수 ${markPts(M.ids)}점. 이 챕터의 보스를 넘으면 끝납니다.</p></section>`;
@@ -176,7 +176,7 @@ const rankCmp = (a, b) => rankScore(b) - rankScore(a) || (b.lv || 1) - (a.lv || 
 function rankProg(e) { return (e.clears || 0) >= (e.ch || 1) ? `${e.clears}챕터 돌파` : `${e.ch || 1}챕터 ${floorName(e.floor || 1)}`; }
 function fmtMs(ms) { const m = Math.round((ms || 0) / 60000); return m < 60 ? m + '분' : Math.floor(m / 60) + '시간 ' + (m % 60) + '분'; }
 /* 플레이 시간: 누르거나 키를 칠 때마다 지난 시간을 더한다. 한 번에 1분까지만 더해 자리를 비운 시간은 세지 않는다 */
-function playTick() { const run = G.run; if (!run || run.endedAt || G.creating) return; const now = Date.now(); run.playMs = (run.playMs || 0) + Math.min(60000, Math.max(0, now - (run.tick || now))); run.tick = now; }
+function playTick() { const run = G.run; if (!run || runOver(run) || G.creating) return; const now = Date.now(); run.playMs = (run.playMs || 0) + Math.min(60000, Math.max(0, now - (run.tick || now))); run.tick = now; }
 function rankEntry(run, st) {
   const e = { id: run.id, v: VERSION, cname: run.cname || '', build: run.build, ch: run.ch || 1, floor: Math.min(run.room || 1, FLOOR_BOSS), clears: run.clears || 0, mode: run.mode || 'normal', lv: run.lv || 1, st: st || (run.clears ? 'clear' : 'alive'), ms: Math.round(run.playMs || 0), at: Date.now(), eq: run.eqU ? EQ_SLOTS.map(sl => { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; return it ? it.tpl : null; }).filter(Boolean) : [] };
   if (G.data && G.data.title && titleEarned(G.data.title)) e.title = G.data.title; // 칭호(계정 목표)

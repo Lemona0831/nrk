@@ -43,7 +43,7 @@ function vTutOffer() {
   <div class="row"><button class="gold" data-a="tutgo" data-focus>수련장에 들르기</button><button data-a="tutskip">건너뛰고 캐릭터 만들기</button></div></section>`;
 }
 function vTutHub() {
-  const d = G.data, clr = d.tutClear || [], done = !!d.tutDone, hasCur = !!(d.cur && !d.cur.endedAt && BUILDS[d.cur.build]);
+  const d = G.data, clr = d.tutClear || [], done = !!d.tutDone, hasCur = !!(d.cur && !runOver(d.cur) && BUILDS[d.cur.build]);
   const nx = TUT.findIndex(L => !clr.includes(L.id));
   let h = `<section class="card tuthub"><h3>${done ? '🎓 수련장 수료' : '🕯️ 나락 입구의 수련장'}</h3>`;
   if (G.tutFin) h += `<p><b>여섯 장면을 모두 마쳤습니다.</b> 수료 표시가 남았습니다.</p><ul class="tutend">${TUT_END.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;

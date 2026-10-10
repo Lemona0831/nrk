@@ -186,13 +186,13 @@ function beginCreate() { G.cre = { step: 'name', name: '' }; G.abandonOnCreate =
 /* 캐릭터를 포기한 것으로 기록한다 (새 캐릭터를 확정할 때, 또는 직접 포기할 때) */
 function abandonRun(old) {
   if (!old) return;
-  const keep = G.run; G.run = old; old.result = 'abandon'; old.endedAt = Date.now(); saveRunLocal(); syncRun(old, 'abandon'); pushRank(old, 'abandon'); G.run = keep;
+  const keep = G.run; G.run = old; old.result = 'abandon'; old.sealed = 1; old.endedAt = Date.now(); saveRunLocal(); syncRun(old, 'abandon'); pushRank(old, 'abandon'); G.run = keep;
 }
 function abandonCur() { abandonRun(G.data.cur); delete G.data.cur; saveLocal(); }
 /* 기다리는 캐릭터 (10월 2일 만든 사람 결정): 챕터를 깨고 챕터 사이(정산·상점·설문·대기)에 있는 캐릭터는
    새 캐릭터를 만들어도 포기되지 않고 따로 남는다(G.data.kept). 타이틀에서 골라 이어 한다. 던전 안에 있는 캐릭터는 지금처럼 포기된다 */
 const KEPT_MAX = 8;
-const isBetween = c => !!(c && !c.endedAt && (c.clears || 0) > 0 && ['settle', 'shop', 'clearsv', 'wait'].includes(c.phase));
+const isBetween = c => !!(c && !runOver(c) && (c.clears || 0) > 0 && ['settle', 'shop', 'clearsv', 'wait'].includes(c.phase));
 function keepCur() {
   const c = G.data.cur; if (!c) return; const K = G.data.kept = G.data.kept || [];
   K.push(c); delete G.data.cur;
@@ -246,7 +246,7 @@ async function reviveCloud() {
 /* 전투 저장: 내 차례가 올 때마다(그리고 전투가 끝난 순간) 전투 전체를 이어 하기 자료에 넣는다.
    행동을 누르는 순간에는 그 행동을 먼저 적어 둔다. 적의 반응을 보고 창을 닫아도, 돌아오면 같은 행동이 같은 결과로 다시 일어난다 */
 function saveBattle() {
-  const b = G.b; if (!b || !G.run || G.run.endedAt || G.creating || G.scr !== 'run') return;
+  const b = G.b; if (!b || !G.run || runOver(G.run) || G.creating || G.scr !== 'run') return;
   try {
     const snap = JSON.parse(JSON.stringify(G.run));
     const bb = Object.assign({}, b, { rngF: undefined, p: undefined, vanguardTgt: null, chainTgt: null, markTgt: null });
@@ -269,6 +269,12 @@ function restoreBattle(cur) {
   if (bt.commit && !b.over) { toast('누른 행동을 이어서 처리합니다'); setTimeout(() => doAct(bt.commit.id, bt.commit.tid), 60); }
   else toast('싸우던 곳에서 이어 갑니다');
 }
-function saveCur() { if (!G.run || G.run.endedAt) return; try { G.data.cur = JSON.parse(JSON.stringify(G.run)); saveLocal(); } catch (e) { } }
+/* 끝난 판 (10월 10일): 쓰러짐 · 보스 앞 물러남 · 포기 · 표식 도전 마침은 설문을 마치기 전(endedAt이 붙기 전)에도 끝난 판이다.
+   끝난 판은 이어하기 저장본(G.data.cur)에 들어가지 않고, 메뉴에서 고칠 수 없다 */
+const runOver = r => !!(r && (r.endedAt || r.sealed || r.result === 'lose' || r.result === 'flee' || r.result === 'abandon'));
+const runLive = () => !!(G.run && !runOver(G.run));
+/* 옛 저장본에 끝난 판이 이어하기로 들어 있으면 걸러 낸다(기록은 runs에 남아 있다) */
+function curSweep() { const d = G.data; let n = 0; if (d.cur && runOver(d.cur)) { delete d.cur; n++; } if (d.kept) { const k = d.kept.filter(x => !runOver(x)); n += d.kept.length - k.length; d.kept = k; } if (n) saveLocal(); return n; }
+function saveCur() { if (!G.run || runOver(G.run)) return; try { G.data.cur = JSON.parse(JSON.stringify(G.run)); saveLocal(); } catch (e) { } }
 function clearCur() { delete G.data.cur; saveLocal(); }
-function resumeRun() { if (!G.data.cur) return; dgFix(G.data.cur); if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); statFix(G.run); if (G.run.tree && isV2(G.run.p)) { treeFix(G.run); G.run.p.skills = v2Equip(G.run); } /* 0.6a.2: 시작 스킬이 생기기 전 저장본도 시작 스킬을 끼운다 */ G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); awkOpen(); }
+function resumeRun() { curSweep(); if (!G.data.cur) { render(); return; } dgFix(G.data.cur); if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); statFix(G.run); if (G.run.tree && isV2(G.run.p)) { treeFix(G.run); G.run.p.skills = v2Equip(G.run); } /* 0.6a.2: 시작 스킬이 생기기 전 저장본도 시작 스킬을 끼운다 */ G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); awkOpen(); }

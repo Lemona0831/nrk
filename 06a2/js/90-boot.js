@@ -1,6 +1,6 @@
 'use strict';
 if (typeof document !== 'undefined') {
-  G.data = loadLocal(); reviveLocal();
+  G.data = loadLocal(); curSweep(); reviveLocal();
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   if (location.hash === '#admin') { G.adminLink = true; G.scr = 'admin'; G.back = 'title'; } // 관리자 페이지 바로 열기: 주소 끝에 #admin
   document.addEventListener('pointerdown', sndUnlock, { once: false });

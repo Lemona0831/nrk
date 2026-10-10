@@ -9,7 +9,7 @@ function onClick(ev) {
   if (el.getAttribute && el.getAttribute('aria-disabled') === 'true' && el.dataset && el.dataset.why) { toast(el.dataset.why); return; } /* 10월 7일 2차: 상점 등 쓸 수 없는 버튼의 이유 */
   if (a === 'closebg') { if (ev.target !== el) return; if (G.sheet && !['block', 'stats', 'choice', 'awk'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } return; }
   switch (a) {
-    case 'home': case 'title': if (G.creating) { cancelCreate(); break; } if (G.run && !G.run.endedAt) { saveRunLocal(); if (G.run.phase) saveCur(); clearTimeout(syncT); syncRun(G.run, 'left').then(render); if (G.run.result !== 'lose') pushRank(G.run); } G.scr = 'title'; G.back = null; G.b = null; G.sheet = null; render(); break;
+    case 'home': case 'title': if (G.creating) { cancelCreate(); break; } if (G.run && !G.run.endedAt) { saveRunLocal(); if (G.run.phase && runLive()) saveCur(); clearTimeout(syncT); syncRun(G.run, 'left').then(render); if (G.run.result !== 'lose') pushRank(G.run); } G.scr = 'title'; G.back = null; G.b = null; G.sheet = null; render(); break;
     case 'menu': if ((G.scr === 'run' || G.scr === 'scen' || G.scr === 'tut' || G.scr === 'test') && G.b || window.innerWidth < 720) G.menuOpen = !G.menuOpen; else { G.data.menuFold = !G.data.menuFold; saveLocal(); } render(); break;
     case 'rank': case 'records': case 'admin': case 'goals': case 'mark': if (a === 'mark' && !markOpen()) { toast('3챕터 보스를 한 번 이기면 열립니다'); break; } if (!PAGES.includes(G.scr)) G.back = G.scr; G.scr = a; G.sheet = null; G.adminMsg = ''; if (a === 'rank') G.board = null; render(); window.scrollTo(0, 0); break;
     case 'back': G.scr = G.back || 'title'; G.back = null; render(); break;
@@ -31,7 +31,7 @@ function onClick(ev) {
     case 'tutinfo': openSheet('tutintro', { again: 1 }); break;
     case 'tutmake': G.tutFin = false; G.b = null; beginCreate(); break;
     case 'restart': { const c = G.data.cur; if (c && !isBetween(c) && !ask((c.cname || '지금 캐릭터') + '을(를) 두고 처음부터 시작할까요? 새 캐릭터를 끝까지 만들면 지금 캐릭터는 포기한 것으로 기록되고 이어 할 수 없습니다.')) break; if (c && isBetween(c)) toast((c.cname || '지금 캐릭터') + '은(는) 기다리는 캐릭터로 따로 남습니다'); beginCreate(); break; }
-    case 'resumekept': { const d = G.data, i = (d.kept || []).findIndex(k => k.id === el.dataset.k); if (i < 0) break; const cur = d.cur && !d.cur.endedAt ? d.cur : null;
+    case 'resumekept': { const d = G.data, i = (d.kept || []).findIndex(k => k.id === el.dataset.k); if (i < 0) break; const cur = d.cur && !runOver(d.cur) ? d.cur : null;
       if (cur && !isBetween(cur)) { toast((cur.cname || '지금 캐릭터') + '이(가) 던전에 있습니다. 그 캐릭터가 챕터를 깨거나 여정이 끝난 뒤에 바꿔 이어서 합니다'); break; }
       const k = d.kept.splice(i, 1)[0]; if (cur) d.kept.push(cur); d.cur = k; saveLocal(); resumeRun(); break; }
     case 'cnroll': { const cur = val('cname'); let n = pickR(CNAMES); for (let k = 0; k < 5 && n === cur; k++) n = pickR(CNAMES); G.cre.name = n; render(); break; }
@@ -83,7 +83,7 @@ function onClick(ev) {
     case 'fate': { const run = G.run, R = run && run.cur; if (!R || R.type !== 'fate') break; const r = fateRun(run, el.dataset.k); if (!r) { toast('올릴 수 없는 장비입니다'); break; } advanceFloor(); openSheet('fateres', r); break; }
     case 'fateskip': { const run = G.run, R = run && run.cur; if (!R || R.type !== 'fate') break; run.rooms.push({ room: run.room, type: 'fate', took: null }); advanceFloor(); render(); break; }
     case 'awkpick': { const run = G.run; if (!run || !awkTake(run, el.dataset.k)) break; G.sheet = null; toast('깨달음: ' + AWK_MAP[el.dataset.k].n); saveRunLocal(); saveCur(); if (!awkOpen()) render(); break; }
-    case 'awkview': hidePop(); openSheet('awkview'); break;
+    case 'awkview': if (!runLive()) break; hidePop(); openSheet('awkview'); break;
     case 'offerpick': { const run = G.run, it = run.inv[el.dataset.k]; if (!it) break; const up = it.g === 'n' ? 'm' : it.g === 'm' || it.g === 'r' ? 'r' : 'h'; const k2 = dropKey(run, up, [it.tpl]); discardUid(run, it.uid); G.sheet = null; run.rooms.push({ room: run.room, type: 'altar', took: 'offer', gave: it.tpl }); advanceFloor(); queueDrops([mkItem(k2)]); break; }
     case 'event': { const run = G.run, p = run.p, R = roomDef(), o = el.dataset.k; const drops = []; run.next = run.next || {};
       if (R.event === 'confess' && o === 'do') { run.next.pre = Object.assign({}, run.next.pre, { weak: 3, vuln: 3 }); drops.push(mkItem(dropKey(run, 'r'))); }
@@ -133,7 +133,7 @@ function onClick(ev) {
     case 'giveupend': endRun('lose'); break;
     case 'scen': startScen(el.dataset.b); break;
     case 'enter': enterRoom(); break;
-    case 'equip': G.eqSel = null; openSheet('equip'); break;
+    case 'equip': if (!runLive()) break; G.eqSel = null; openSheet('equip'); break;
     case 'close': G.sheet = null; render(); break;
     case 'sel': if (!G.data.seenCoach && !(G.coachI > 0)) G.coachI = 1;
       if (G.busy) { if (G.stepResolve) { const r = G.stepResolve; G.stepResolve = null; r(); } return; } hidePop(); G.sel = G.sel === el.dataset.e ? null : el.dataset.e; render(); break;
@@ -209,7 +209,7 @@ function onClick(ev) {
     case 'tsel': G.tsel = el.dataset.k; render(); break;
     case 'tbr': G.tbr = el.dataset.k; render(); break;
     case 'tunlock': { const run = G.run; const id = el.dataset.k; if (!treeCanEdit()) { toast('전투 중에는 바꿀 수 없습니다'); return; } const why = treeUnlock(run, id); if (why) { toast(why); return; } run.skills = run.skills || []; if (run.skills.length < EQUIP_SLOTS2 && !run.skills.includes(id)) run.skills.push(id); run.p.skills = v2Equip(run); G.tsel = id; if (!G.creating) { saveRunLocal(); saveCur(); } toast('열었습니다: ' + SK2[id].n + (run.skills.includes(id) ? '. 끼웠습니다' : '')); render(); break; }
-    case 'trefund': { const run = G.run; const why = treeRefund(run, el.dataset.k); if (why) { toast(why); break; } run.p.skills = v2Equip(run); toast('되돌렸습니다. 포인트 +1'); render(); break; }
+    case 'trefund': { const run = G.run; if (!treeCanEdit()) { toast('지금은 바꿀 수 없습니다'); return; } const why = treeRefund(run, el.dataset.k); if (why) { toast(why); break; } run.p.skills = v2Equip(run); toast('되돌렸습니다. 포인트 +1'); render(); break; }
     case 'tequip': { const run = G.run; const id = el.dataset.k; if (!treeCanEdit()) { toast('전투 중에는 바꿀 수 없습니다'); return; } run.skills = run.skills || []; const i = run.skills.indexOf(id); if (i >= 0) run.skills.splice(i, 1); else if (run.skills.length < EQUIP_SLOTS2) run.skills.push(id); else { toast('장착 칸이 가득 찼습니다. 먼저 하나를 빼 주세요'); return; } run.p.skills = v2Equip(run); (run.skillLog = run.skillLog || []).push({ room: run.room, to: run.skills.slice(), t: Date.now() }); if (!G.creating) { saveRunLocal(); saveCur(); } render(); break; }
     case 'tree': if (!PAGES.includes(G.scr)) G.back = G.scr; G.scr = 'tree'; G.sheet = null; G.menuOpen = false; render(); window.scrollTo(0, 0); break;
     case 'skillok': { const S = G.sheet; const run = G.run; const prev = (run.skills || []).slice(); if (!isV2(run.p)) run.skills = S.data.pick.slice(); run.p.skills = isV2(run.p) ? v2Equip(run) : run.skills.slice(); run.skillLog = run.skillLog || []; run.skillLog.push({ room: run.room, from: prev, to: run.skills.slice(), first: !!S.data.first, t: Date.now() }); const first = S.data.first; G.sheet = null; if (!first) { saveRunLocal(); saveCur(); } if (first) { openSheet('stats', { pts: statStartPts(run), first: 1, alloc: S.data.alloc }); window.scrollTo(0, 0); } else { toast('스킬을 바꿨습니다'); render(); } break; }
