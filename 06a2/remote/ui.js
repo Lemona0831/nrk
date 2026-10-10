@@ -13,9 +13,9 @@
     const send = c => { if (typeof o.send === 'function') o.send(c); };
     el.classList.add('hrem', kind);
     el.setAttribute('role', 'region'); el.setAttribute('aria-label', 'HUD 리모콘');
-    el.innerHTML = `<div class="hr-head"><button type="button" class="hr-grip" data-fk="grip" aria-label="리모콘 옮기기. 끌거나 방향키를 누릅니다. Shift는 크게, Home은 처음 자리" aria-describedby="hr-gripdesc"><span aria-hidden="true">⠿</span></button><span class="hr-title">HUD 리모콘</span><span class="hr-conn" data-k="wait"></span><span class="hr-hbtns"><button type="button" class="hr-hb" data-act="op" data-fk="op"></button><button type="button" class="hr-hb" data-act="win" data-fk="win">별도 창</button><button type="button" class="hr-hb" data-act="fold" data-fk="fold" aria-controls="hr-dyn"></button></span></div><p class="sr" id="hr-gripdesc">Home을 누르면 처음 자리로 돌아갑니다.</p><p class="hr-status" role="status" aria-live="polite"></p><div class="hr-dyn" id="hr-dyn"></div>`;
+    el.innerHTML = `<div class="hr-head"><button type="button" class="hr-grip" data-fk="grip" aria-label="리모콘 옮기기. 끌거나 방향키를 누릅니다. Shift는 크게, Home은 처음 자리" aria-describedby="hr-gripdesc"><span aria-hidden="true">⠿</span></button><span class="hr-title">HUD 리모콘</span><span class="hr-conn" data-k="wait"></span><span class="hr-hbtns"><button type="button" class="hr-hb" data-act="op" data-fk="op"></button><button type="button" class="hr-hb" data-act="win" data-fk="win">별도 창</button><button type="button" class="hr-hb" data-act="back" data-fk="back" hidden aria-label="게임 안의 패널로 돌아가기">게임 안으로</button><button type="button" class="hr-hb" data-act="fold" data-fk="fold" aria-controls="hr-dyn"></button></span></div><p class="sr" id="hr-gripdesc">Home을 누르면 처음 자리로 돌아갑니다.</p><p class="hr-status" role="status" aria-live="polite"></p><div class="hr-dyn" id="hr-dyn"></div>`;
     const dyn = el.querySelector('.hr-dyn'), statusEl = el.querySelector('.hr-status'), connEl = el.querySelector('.hr-conn');
-    const btnOp = el.querySelector('[data-act="op"]'), btnWin = el.querySelector('[data-act="win"]'), btnFold = el.querySelector('[data-act="fold"]');
+    const btnOp = el.querySelector('[data-act="op"]'), btnWin = el.querySelector('[data-act="win"]'), btnFold = el.querySelector('[data-act="fold"]'), btnBack = el.querySelector('[data-act="back"]');
 
     /* ---------- 머리줄 ---------- */
     function head() {
@@ -24,6 +24,7 @@
       btnOp.textContent = '◐ ' + st.op + '%'; btnOp.setAttribute('aria-label', '뒤 화면 비치기. 지금 ' + st.op + '퍼센트. 누르면 ' + OPS[(OPS.indexOf(st.op) + 1) % OPS.length] + '퍼센트');
       el.classList.toggle('fold', st.fold); el.style.setProperty('--hr-mix', st.op + '%');
       btnWin.hidden = !(kind === 'float' && o.canWin); btnOp.hidden = kind === 'page'; btnFold.hidden = kind === 'page'; el.querySelector('.hr-grip').hidden = kind === 'page';
+      btnBack.hidden = kind !== 'page'; btnBack.disabled = st.conn.k !== 'ok';
       connEl.hidden = kind !== 'page'; connEl.dataset.k = st.conn.k;
       connEl.textContent = { ok: '● 연결됨', wait: '○ 게임 창을 찾는 중', none: '○ 게임 창 없음', idle: '○ 편집 전', lost: '× 끊김', end: '○ 편집 끝' }[st.conn.k] || '';
     }
@@ -126,6 +127,7 @@
       const a = t.dataset.act; const S = st.S;
       if (a === 'fold') { setPrefs({ fold: !st.fold }); if (typeof o.onPrefs === 'function') o.onPrefs({ fold: st.fold, op: st.op }); return; }
       if (a === 'op') { setPrefs({ op: OPS[(OPS.indexOf(st.op) + 1) % OPS.length] }); if (typeof o.onPrefs === 'function') o.onPrefs({ fold: st.fold, op: st.op }); return; }
+      if (a === 'back') { if (typeof o.onBack === 'function') o.onBack(); return; }
       if (a === 'win') { if (typeof o.onWin === 'function') o.onWin(); return; }
       if (a === 'retry') { if (typeof o.onRetry === 'function') o.onRetry(); return; }
       if (a === 'tab') { st.tab = t.dataset.k; st.ask = null; draw(true); const n = dyn.querySelector('#hr-t-' + st.tab); if (n) n.focus(); return; }

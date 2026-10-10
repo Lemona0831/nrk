@@ -7,7 +7,7 @@
   const LOST_MS = 6000, NONE_MS = 3500;
   let gid = null, since = 0, lastAt = 0, seen = false, t0 = Date.now(), state = 'wait';
   const link = HudRemoteLink.open(onMsg);
-  const ui = HudRemoteUI.mount(document.getElementById('app'), { kind: 'page', send: c => { if (gid && state === 'ok') link.post({ t: 'cmd', gid, cmd: c }); }, onRetry: () => { seen = false; t0 = Date.now(); setConn('wait'); hello(); } });
+  const ui = HudRemoteUI.mount(document.getElementById('app'), { kind: 'page', send: c => { if (gid && state === 'ok') link.post({ t: 'cmd', gid, cmd: c }); }, onBack: () => { if (gid && state === 'ok') link.post({ t: 'cmd', gid, cmd: { c: 'undock' } }); setTimeout(() => { try { window.close(); } catch (e) { } }, 150); }, onRetry: () => { seen = false; t0 = Date.now(); setConn('wait'); hello(); } });
   const END_T = { save: '저장하고 편집을 끝냈습니다.', cancel: '취소하고 편집을 끝냈습니다.', list: '목록으로 편집하러 넘어갔습니다.' };
   function setConn(k, t) { if (state === k && !t) return; state = k; ui.setConn({ k, t }); }
   function attach() { if (gid) link.post({ t: 'attach', gid }); } /* 붙어 있는 동안 게임 창이 자기 패널을 숨긴다 */

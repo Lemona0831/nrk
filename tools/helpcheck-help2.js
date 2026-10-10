@@ -14,6 +14,9 @@ module.exports = function (api) {
   add('help', '화면의 1배에서 3배 가운데 고르고', '상수: FREE_CHS=' + E('FREE_CHS.join()'), E => E('FREE_CHS.join()') === '1,1.5,2,2.5,3');
   add('help', '누를 자리가 24px도 남지 않거나', '상수: FREE_OK=' + E('FREE_OK') + ', 소스: hudFreeGuard가 hudFreeHasSquare(R, obs, FREE_OK)로 가림을 보고 놓은 직후 어긴 칸이 있으면 hudEdRevert', E => E('FREE_OK') === 24 && has('hudFreeHasSquare(R, obs, FREE_OK)') && has('hudEdRevert(); const b = bad[0]'));
   add('help', '붙이기(꺼짐 · 1 · 4 · 8 · 16px)', '상수: FREE_SNAPS=' + E('FREE_SNAPS.join()') + '(0은 꺼짐)', E => E('FREE_SNAPS.join()') === '0,1,4,8,16');
+  add('help', 'Ctrl 키를 누르고 있으면 붙이기와 정렬선이 잠시 꺼져', '소스: hfDragMove의 noSnap = ev.ctrlKey || ev.metaKey', E => (PS.pageScript(require('path').join(api.ROOT, '06a2')).match(/const noSnap = ev\.ctrlKey \|\| ev\.metaKey/g) || []).length >= 1);
+  add('help', '손가락 하나 크기(44px)는 화면 안에 남습니다', '상수: FREE_GRAB=' + E('FREE_GRAB'), E => E('FREE_GRAB') === 44);
+  add('help', '"게임 안으로" 단추를 누르거나 창을 닫으면 패널이 돌아옵니다', '소스: remote/ui.js 단추 "게임 안으로", js/57 hudRemoteCmd의 undock', E => (PS.pageScript(require('path').join(api.ROOT, '06a2')).match(/k === 'undock'/g) || []).length >= 1 && require('fs').readFileSync(require('path').join(api.ROOT, '06a2/remote/ui.js'), 'utf8').includes('>게임 안으로<'));
   add('help', '1px씩, Shift와 함께 누르면 10px씩', '소스: hudEdKey가 const st = ev.shiftKey ? 10 : 1로 화살표 · 대괄호 · 세미콜론 키를 처리', E => (PS.pageScript(require('path').join(api.ROOT, '06a2')).match(/const st = ev\.shiftKey \? 10 : 1/g) || []).length >= 2);
   add('help', '옛 12열 격자 값', '상수: FREE_OLD_COLS=' + E('FREE_OLD_COLS') + ', 소스: hfFromOld가 12열 값을 퍼센트로 바꾼다', E => E('FREE_OLD_COLS') === 12 && has('x / FREE_OLD_COLS * 100'));
 
