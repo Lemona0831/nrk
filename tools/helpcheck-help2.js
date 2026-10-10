@@ -19,6 +19,8 @@ module.exports = function (api) {
   add('help', '두 상태를 지우고', '상수: ELEM.Cw=' + E('ELEM.Cw') + ' · D=' + E('ELEM.D') + ' · Bk=' + E('ELEM.Bk') + ', 소스: elemShock가 세 상수를 쓴다', E => E('ELEM.Cw') === 2 && E('ELEM.D') === 3 && E('ELEM.Bk') === 12 && src('elemShock').includes('ELEM.D') && src('elemShock').includes('ELEM.Bk') && src('elemShock').includes('ELEM.Cw'));
 
   /* ===== 쿨타임 · 스태미나 · 플라스크 · 행동 ===== */
+  add('help', '한 번에 20판씩 보입니다', '상수: RC_PAGE=' + E('RC_PAGE') + '(기록 목록이 한 번에 보이는 판 수)', E => E('RC_PAGE') === 20);
+  add('help', '표는 위에서 50개까지 보입니다', '소스: 랭킹 표 all.slice(0, 50)', E => has('rows = all.slice(0, 50)'));
   add('help', '내 턴이 끝날 때마다 1 줄지만', '소스: chargeEv(turn)이 cdJust(이번 차례에 쓴 스킬)를 건너뛰고 1 뺀다', E => has('if (!s || s.once || just.includes(id)) continue; if (p.cd[id] > 0) p.cd[id]--;'));
   add('help', '🔄 스킬은 같은 갈래', '데이터: hasten n은 1이 34칸, 2가 6칸(보통 1)', E => E(`(() => { const c = {}; for (const k of Object.keys(SKILLS2)) for (const s of SKILLS2[k]) for (const f of s.fx || []) if (f.k === "hasten") c[f.n] = (c[f.n] || 0) + 1; return Object.keys(c).join() === "1,2" && c[1] > c[2]; })()`));
   add('help', '30까지 차거나', '소스: p.exhaust && p.st >= 30이면 풀림, 스태미나 플라스크는 exhaust = 0', E => has('if (p.exhaust && p.st >= 30) p.exhaust = 0;') && has('p.st += add; p.exhaust = 0;'));

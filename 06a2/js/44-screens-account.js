@@ -152,36 +152,6 @@ function markCreateCard(C) {
   const M = C.mark; const names = M.ids.map(k => MARKS[k].ico + ' ' + MARKS[k].n).join(', ');
   return `<section class="card cstep"><h3>표식 도전</h3><p><b>${M.ch}챕터</b>${M.ch > 1 ? ' · 레벨 ' + MARK_START[M.ch].lv + '에서 시작' : ' · 처음부터'} · ${M.mode === 'hard' ? '가혹 모드' : '일반 모드'}</p><p class="mini">표식: ${esc(names)}</p><p class="mini">표식 점수 ${markPts(M.ids)}점. 이 챕터의 보스를 넘으면 끝납니다.</p></section>`;
 }
-function vMark() {
-  let h = `<section class="card"><div class="phead">${backBtn()}<h3>표식 도전</h3></div>`;
-  if (!markOpen()) return h + '<p class="mini">3챕터 보스를 한 번 이기면 열립니다.</p></section>';
-  const M = G.mk = G.mk || { ch: 3, mode: 'normal', ids: [] }; const pts = markPts(M.ids);
-  h += `<p class="mini">깬 챕터 하나를 새 캐릭터로 다시 치릅니다. 표식을 걸수록 어렵고, 표식 점수가 기록이 됩니다. 챕터의 보스를 넘으면 끝나고, 쓰러지면 점수가 남지 않습니다. 랭킹에는 오르지 않고 기록 화면에 따로 남습니다.</p>`;
-  h += `<h4>챕터</h4><div class="row" role="group" aria-label="챕터">${[1, 2, 3].map(c => `<button class="chip${M.ch === c ? ' on' : ''}" data-a="mkch" data-k="${c}" aria-pressed="${M.ch === c}">${c}챕터${c > 1 ? ' · 레벨 ' + MARK_START[c].lv : ' · 처음부터'}</button>`).join('')}</div>`;
-  h += `<p class="mini">${M.ch > 1 ? `레벨 ${MARK_START[M.ch].lv}에서 시작하고, 스킬 포인트는 레벨만큼, 능력치는 15점에 레벨마다 2점을 더해 직접 나눕니다. 이전 챕터의 평범 · 고급 장비 꾸러미와 약초 묶음을 받습니다.` : '다른 캐릭터와 똑같이 처음부터 만듭니다.'}</p>`;
-  h += `<h4>모드</h4><div class="row" role="group" aria-label="모드"><button class="chip${M.mode === 'normal' ? ' on' : ''}" data-a="mkmode" data-k="normal" aria-pressed="${M.mode === 'normal'}">일반</button><button class="chip${M.mode === 'hard' ? ' on' : ''}" data-a="mkmode" data-k="hard" aria-pressed="${M.mode === 'hard'}"${G.data.hardOpen ? '' : ' aria-disabled="true"'}>가혹${G.data.hardOpen ? '' : ' (잠김)'}</button></div>`;
-  h += `<h4>표식</h4><ul class="mklist">${Object.keys(MARKS).map(k => { const m = MARKS[k], on = M.ids.includes(k); return `<li><button class="mkb" data-a="mktog" data-k="${k}" aria-pressed="${on}"><span class="mkp">${m.pt}점</span><b><span aria-hidden="true">${m.ico}</span> ${esc(m.n)}</b><span class="mini"> ${esc(m.d)}</span></button></li>`; }).join('')}</ul>`;
-  h += `<p role="status" aria-live="polite">고른 표식 ${M.ids.length}개 · 표식 점수 <b>${pts}점</b></p>${M.ids.length ? '' : '<p class="mini">표식을 하나 이상 고르세요.</p>'}`;
-  return h + `<button class="gold wide" data-a="mkgo"${M.ids.length ? '' : ' aria-disabled="true"'}>다음: 이름과 직업</button></section>`;
-}
-function vMarkBoard() {
-  if (!markOpen()) return '';
-  const mb = markBestData(), ks = ALL_CLASS_KEYS().filter(k => TREE2[k] && unlOpen(k));
-  const cell = (k, c) => ['n', 'h'].map(m => { const x = mb[k + '|' + c + '|' + m]; return x ? (m === 'h' ? '가혹 ' : '일반 ') + x.score + '점' : ''; }).filter(Boolean).join('<br>') || '－<span class="sr"> 기록 없음</span>';
-  return `<section class="card"><h3>표식 도전 기록</h3><p class="mini">직업과 챕터마다 가장 높은 표식 점수입니다.</p><div class="tbl"><table class="st2 gl"><caption class="sr">표식 도전 최고 점수</caption><thead><tr><th scope="col">직업</th><th scope="col">1챕터</th><th scope="col">2챕터</th><th scope="col">3챕터</th></tr></thead><tbody>${ks.map(k => `<tr><th scope="row"><span aria-hidden="true">${BUILDS[k].ico}</span> ${esc(BUILDS[k].n)}</th>${[1, 2, 3].map(c => `<td>${cell(k, c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`;
-}
-function vGoals() {
-  const g = goalsData(), md = G.goalMode === 'hard' ? 'hard' : 'normal', cur = g[md === 'hard' ? 'h' : 'n']; let total = 0, done = 0;
-  const rows = ALL_CLASS_KEYS().filter(k => TREE2[k]).map(k => {
-    if (!unlOpen(k)) return `<tr><th scope="row">???</th><td colspan="3">잠긴 숨겨진 직업</td></tr>`;
-    return TREE2[k].branches.map(br => `<tr><th scope="row"><span aria-hidden="true">${BUILDS[k].ico}</span> ${esc(BUILDS[k].n)} · ${esc(br)}</th>${[1, 2, 3].map(c => { total++; const y = !!cur[goalKey(k, br, c)]; if (y) done++; return y ? '<td class="gy">✓ 깸</td>' : '<td>－<span class="sr"> 못 깸</span></td>'; }).join('')}</tr>`).join('');
-  }).join('');
-  let h = `<section class="card"><div class="phead">${backBtn()}<h3>계정 목표</h3></div><p class="mini">직업과 갈래마다 1 · 2 · 3챕터 보스를 넘었는지 모아 보는 표입니다. 보스를 이긴 판에서 트리 칸의 절반 이상을 연 갈래가 그 갈래의 기록으로 적힙니다. 사냥꾼은 기동을 뺀 피해 갈래를 셉니다.</p>`;
-  h += `<h4>칭호</h4><p class="mini">조건을 채우면 칭호를 얻습니다. 하나를 골라 두면 랭킹의 이름 옆에 보입니다.</p><ul class="mklist"><li><button class="mkb" data-a="mtitle" data-k="" aria-pressed="${!G.data.title}"><b>칭호 없음</b></button></li>${TITLES.map(t => titleEarned(t.id) ? `<li><button class="mkb" data-a="mtitle" data-k="${t.id}" aria-pressed="${G.data.title === t.id}"><b>${esc(t.n)}</b><span class="mini"> ${esc(t.d)}</span></button></li>` : `<li class="mkb"><b>${esc(t.n)}</b><span class="mini"> 아직 얻지 못했습니다. ${esc(t.d)}</span></li>`).join('')}</ul>`;
-  h += `<h4>보스 돌파 표</h4><div class="row" role="group" aria-label="모드"><button class="chip${md === 'normal' ? ' on' : ''}" data-a="gmode" data-k="normal" aria-pressed="${md === 'normal'}">일반</button><button class="chip${md === 'hard' ? ' on' : ''}" data-a="gmode" data-k="hard" aria-pressed="${md === 'hard'}">가혹</button></div>`;
-  h += `<div class="tbl"><table class="st2 gl"><caption>${md === 'hard' ? '가혹' : '일반'} 모드 보스 돌파 ${done}/${total}</caption><thead><tr><th scope="col">직업 · 갈래</th><th scope="col">1챕터</th><th scope="col">2챕터</th><th scope="col">3챕터</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  return h + '</section>';
-}
 
 /* ===== 랭킹 (기획서 11.11절): 가장 멀리 간 캐릭터. 깬 챕터 → 층 → 레벨, 같으면 플레이 시간이 짧은 쪽 ===== */
 const modeTag = o => o && o.mode === 'hard' ? ' <span class="chip hardtag">가혹</span>' : '';
@@ -217,33 +187,8 @@ function rankRows() {
   return out.filter(e => BUILDS[e.build]).sort(rankCmp);
 }
 function backBtn() { return `<button class="sm back" data-a="back">← 돌아가기</button>`; }
-function vRank() {
-  const tab = G.rankTab || 'all';
-  let h = `<section class="card"><div class="phead">${backBtn()}<h3>랭킹</h3></div><p class="mini">가장 멀리 간 캐릭터 순서입니다. 깬 챕터, 도달한 층, 레벨 순으로 높고, 같으면 플레이 시간이 짧은 쪽이 위입니다. 쓰러진 캐릭터도 남습니다.</p>`;
-  { const rm = G.rankMode === 'hard' ? 'hard' : 'normal'; h += `<div class="row" role="group" aria-label="모드"><button class="chip${rm === 'normal' ? ' on' : ''}" data-a="rmode" data-k="normal" aria-pressed="${rm === 'normal'}">일반</button><button class="chip${rm === 'hard' ? ' on' : ''}" data-a="rmode" data-k="hard" aria-pressed="${rm === 'hard'}">가혹</button></div><p class="mini">일반과 가혹은 따로 셉니다. 지금은 ${rm === 'hard' ? '가혹' : '일반'}의 순위입니다.</p>`; }
-  h += `<div class="wrap" role="group" aria-label="직업">${['all'].concat(CLASS_KEYS()).map(k => `<button class="chip${tab === k ? ' on' : ''}" aria-pressed="${tab === k}" data-a="rtab" data-k="${k}">${k === 'all' ? '전체' : BUILDS[k].ico + ' ' + esc(BUILDS[k].n)}</button>`).join('')}</div>`;
-  if (G.db && !G.board) { if (!G.boardLoading) setTimeout(loadBoard, 0); h += '<p class="mini">불러오는 중입니다.</p>'; }
-  else {
-    const rows = rankRows().filter(e => (tab === 'all' || e.build === tab) && (e.mode === 'hard' ? 'hard' : 'normal') === (G.rankMode === 'hard' ? 'hard' : 'normal')).slice(0, 50);
-    h += rows.length ? `<ol class="rk">${rows.map((e, i) => { const B = rankClassView(e); return `<li class="${e.me ? 'me2' : ''}"><span class="rkn">${i + 1}</span><span class="rkc"><b><span aria-hidden="true">${B.ico}</span> ${esc(e.cname || '이름 없음')}${modeTag(e)}</b><small>${esc(B.n)}${e.title && titleName(e.title) ? ' · 칭호 ' + esc(titleName(e.title)) : ''} · ${esc(e.nick || '이름 없는 방랑자')}${e.me ? ' (나)' : ''}</small></span><span class="rkp"><b>${esc(rankProg(e))}</b><small>Lv ${e.lv || 1} · ${RANK_ST[e.st] || ''} · ${fmtMs(e.ms)}</small></span></li>`; }).join('')}</ol>` : '<p class="mini">아직 기록이 없습니다.</p>';
-    if (!G.db) h += '<p class="mini">공유 저장소에 연결되지 않아 이 브라우저의 기록만 보입니다.</p>';
-  }
-  h += `</section><section class="card"><h4>랭킹에 보일 플레이어 이름</h4><div class="row nowrap"><label for="pname" class="sr">플레이어 이름</label><input id="pname" type="text" maxlength="16" placeholder="플레이어 이름" value="${esc(G.data.name || '')}"><button class="sm" data-a="namesave">저장</button></div><p class="mini">캐릭터 이름은 만들 때 정하고, 플레이어 이름은 모든 캐릭터에 함께 보입니다.${G.site && G.acct && !G.acct.anon ? ' 구글 계정에 고정됩니다.' : ''}</p>${G.db ? '<button class="sm" data-a="boardre">새로 고침</button>' : ''}</section>`;
-  return h;
-}
 
 /* ===== 기록: 내 캐릭터들, 쓰러진 자의 기록, 보내기 ===== */
-function vRecords() {
-  const d = G.data; const mine = Object.values(d.rank62 || {}).filter(e => BUILDS[e.build]).sort((a, b) => (b.at || 0) - (a.at || 0));
-  let h = `<section class="card"><div class="phead">${backBtn()}<h3>기록</h3></div><h4>내 캐릭터</h4>`;
-  h += mine.length ? `<ul class="graves">${mine.slice(0, 20).map(e => `<li>${BUILDS[e.build].ico} <b>${esc(e.cname || BUILDS[e.build].n)}</b> <span class="mini">${esc(BUILDS[e.build].n)} · ${esc(rankProg(e))}${e.mode === 'hard' ? ' · 가혹' : ''} · Lv ${e.lv || 1} · ${RANK_ST[e.st] || ''} · ${new Date(e.at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}</span></li>`).join('')}</ul>` : '<p class="mini">아직 없습니다.</p>';
-  const gv = d.graves || [];
-  if (gv.length) h += `<h4>쓰러진 자의 기록</h4><ul class="graves">${gv.slice(0, 8).map(g => `<li>${(BUILDS[g.build] || {}).ico || ''} <b>${esc(g.cname || (BUILDS[g.build] || { n: g.build }).n)}</b> <span class="mini">${esc(g.roomN || '')}에서 · Lv ${g.lv || 1} · 장비 ${(g.eq || []).length}개 · ${new Date(g.at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}</span></li>`).join('')}</ul>`;
-  h += `</section><section class="card"><h3>계정 목표</h3><p class="mini">직업과 갈래마다 보스를 어디까지 넘었는지, 얻은 칭호를 모아 봅니다.${d.title && titleName(d.title) ? ' 지금 칭호는 ' + esc(titleName(d.title)) + '입니다.' : ''}</p><div class="row"><button data-a="goals">계정 목표 보기</button>${markOpen() ? '<button data-a="mark">표식 도전</button>' : ''}</div></section>${vMarkBoard()}<section class="card"><h3>마지막 질문</h3><p class="mini">${d.final ? '이미 답했습니다. 다시 답하면 새 답으로 바뀝니다.' : '여러 캐릭터를 해 본 뒤에 답해 주세요.'}</p><button data-a="final">질문에 답하기</button></section>`;
-  h += `<section class="card"><h3>기록 보내기${q('record', '기록에 대해')}</h3><p class="mini">끝낸 판 ${d.runs.filter(r => r.endedAt).length}개${G.site && G.conn === 'ok' ? '. 기록은 이 사이트의 저장소에 자동으로 모입니다' : ''}.</p><div class="row"><button data-a="code">기록 보내기 코드</button><button data-a="dl">기록 파일 받기</button><button data-a="guide">처음 안내 다시 보기</button></div></section>`;
-  h += `<p class="mini tfoot">${G.site ? '<a href="../privacy.html" target="_blank" rel="noopener">개인정보처리방침<span aria-hidden="true"> ↗</span><span class="sr"> 새 창에서 열림</span></a> · ' : ''}<button class="linkbtn" data-a="admin">관리자</button></p>`;
-  return h;
-}
 
 /* ===== 관리자 페이지: 암호(사이트) → 결과 보기 ===== */
 function vAdmin() {

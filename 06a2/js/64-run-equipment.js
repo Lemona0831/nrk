@@ -174,12 +174,6 @@ function codexMerge(b) {
   for (const k in b.codex) { const [id, key] = k.split('.'); codexMeet(id); const c = G.data.codex[id]; if (!c.seen[key]) { c.seen[key] = Date.now(); fresh.push((FOE_INTRO[id] || {}).n); } }
   if (fresh.length) { saveLocal(); toast('보스 도감에 새로 적혔습니다: ' + Array.from(new Set(fresh)).join(', ')); }
 }
-function vCodex() {
-  const c = G.data.codex || {}; const ids = Object.keys(FOE_INTRO).filter(id => c[id]);
-  if (!ids.length) return '<p>아직 만난 강적이나 보스가 없습니다.</p>';
-  return ids.map(id => { const F = FOE_INTRO[id], X = c[id], E = CODEX[id] || {}; const seen = Object.keys(E).filter(k => X.seen[k]); const unseen = Object.keys(E).length - seen.length;
-    return `<section class="cdx"><h4>${esc(F.n)}</h4><p class="lore">${esc(F.lore)}</p>${seen.length ? `<ul>${seen.map(k => `<li>${esc(E[k])}</li>`).join('')}</ul>` : '<p class="mini">아직 겪은 일이 없습니다.</p>'}${unseen ? `<p class="mini">아직 겪지 못한 일 ${unseen}가지</p>` : ''}<label for="cdx-${id}" class="mini">내 메모</label><textarea id="cdx-${id}" data-cdx="${id}" rows="2" placeholder="어떻게 상대했는지 적어 두세요">${esc(X.note || '')}</textarea></section>`; }).join('');
-}
 /* 캐릭터 만들기를 그만두면 아무것도 남기지 않는다 */
 function cancelCreate() { G.run = null; G.sheet = null; G.creating = false; G.abandonOnCreate = false; G.cre = null; G.scr = 'title'; render(); toast('캐릭터 만들기를 그만두었습니다'); }
 function beginCreate() { G.cre = { step: 'name', name: '' }; G.abandonOnCreate = !!G.data.cur; G.creating = true; G.run = null; G.sheet = null; G.b = null; G.scr = 'create'; render(); setTimeout(() => { const x = document.getElementById('cname'); if (x) x.focus(); }, 0); }
