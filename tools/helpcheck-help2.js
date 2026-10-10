@@ -6,6 +6,9 @@ module.exports = function (api) {
   const has = s => SRC.includes(s);
   const src = fn => E(fn + '.toString()');
 
+  add('help', '패널에는 배열 칸 1~4', '상수: HUD_SLOT_N=' + E('HUD_SLOT_N') + '(저장 칸 수)', E => E('HUD_SLOT_N') === 4);
+  note('ui-huddirect', '끌어서 옮기거나', 'HUD 배열 패널의 안내 문장(처음 표시 100%는 기본 크기를 뜻하는 라벨, 규칙 값 아님)');
+
   /* ===== 직업 규칙 (뒤) ===== */
   add('help', '겹마다 피해 +5%', '상수: HUNT.focusPer 5% · focusBig 10% · focusMax 3, 소스: 3겹이면 몸 낮추기 · 버티기를 꿰뚫음', E => pct(E('HUNT.focusPer')) === 5 && pct(E('HUNT.focusBig')) === 10 && E('HUNT.focusMax') === 3 && has('b.p.focus.n >= HUNT.focusMax') && has('e.braced && !o.dot && !fullF'));
   add('help', '교대가 두 번 이어지면 켜지는', '소스: altF.run === 2는 sbRunNow ≥ 2일 때 켜지고, 쓰면 p.sbRun = 0', E => has('altF.run === 2 ? b.sbRunNow >= 2 : true') && has('p.sbRun = b.sbRun2 ? 0 : b.sbRunNow'));
