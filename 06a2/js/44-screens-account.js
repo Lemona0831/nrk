@@ -1,5 +1,15 @@
 'use strict';
 /* ===== 타이틀 (진행 중인 캐릭터가 없으면 [시작], 있으면 [이어하기]·[처음부터]) ===== */
+/* 직업 격자(.clscol 열마다 위에서 아래로 쌓임)에서 방향키가 가려는 칸. 없으면 null(끝에서는 돌지 않는다). 숨겨진 직업은 열리기 전에는 칸이 없어 건너뛴다 */
+function clsGridNext(btn, key) {
+  const col = btn.closest('.clscol'); const grid = col && col.parentElement; if (!grid) return null;
+  const cols = [...grid.querySelectorAll(':scope > .clscol')].map(c => [...c.querySelectorAll(':scope > .clsc[data-a="clspick"]')]);
+  const ci = [...grid.querySelectorAll(':scope > .clscol')].indexOf(col); const ri = cols[ci].indexOf(btn); if (ci < 0 || ri < 0) return null;
+  if (key === 'ArrowUp') return cols[ci][ri - 1] || null;
+  if (key === 'ArrowDown') return cols[ci][ri + 1] || null;
+  const nc = ci + (key === 'ArrowRight' ? 1 : key === 'ArrowLeft' ? -1 : 0);
+  return nc === ci ? null : (cols[nc] && cols[nc][ri]) || null;
+}
 /* 업데이트 항목 하나: 판 이름 · 제목, 날짜와 시각, 줄마다 종류 표(새 기능·바뀜·고침). 옛 항목은 top·groups 글 묶음 */
 const CHG_K = { '새 기능': 'new', '바뀜': 'chg', '고침': 'fix' };
 function chgEntry(c, latest, brief) {

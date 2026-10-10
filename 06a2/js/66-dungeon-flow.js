@@ -197,7 +197,7 @@ function enterRoom() {
   if (nx.block && R.type !== 'boss') room.en = (room.en || []).concat([['bruiser']]); // 장례 행렬을 막아섰다
   run.entry = JSON.parse(JSON.stringify(p));
   run.entryHp = p.hp / p.hpMax; run.entryFl = p.flask.life + p.flask.mana + (p.flask.stam || 0);
-  G.b = roomBattle(p, room, run.boss, run.room * 7 + 3); G.b.stepMode = true;
+  G.b = roomBattle(p, room, run.boss, run.room * 7 + 3); G.b.stepMode = true; fdetFresh();
   { run.dg.intro = run.dg.intro || {}; G.data.seenRole = G.data.seenRole || {}; for (const e of G.b.en.concat((R.mods || []).map(m => ({ role: m })))) { const k = e.swift ? 'swift' : e.fire ? 'fire' : e.role; run.dg.intro[e.role] = 1; for (const kk of [e.role, k]) if (typeof ROLE_INTRO !== 'undefined' && ROLE_INTRO[kk] && !G.data.seenRole[kk]) { G.data.seenRole[kk] = 1; logp(G.b, 'sys', '처음 만남 · ' + ((ENEMY_NAMES[run.ch || 1] || {})[kk] || (ROOM_MODS[kk] || {}).n || { swift: '신속', fire: '화염 강화' }[kk] || kk) + '. ' + ROLE_INTRO[kk][0] + ' ' + ROLE_INTRO[kk][1]); if (typeof toast === 'function') toast(ROLE_INTRO[kk][1]); } } } // 2챕터 새 역할을 처음 만나면 한 번 알린다
   if (nx.chase) { const e = G.b.en[G.b.en.length - 1]; if (e) e.n = '굶주린 수도사'; }
   run.nextUsed = nx; run.next = {}; saveBattle();

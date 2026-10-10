@@ -54,6 +54,32 @@ function hudSlots() {
   return out;
 }
 function hudSlotLay(s) { return { pc: hudLayNorm(s.lay.pc, hudBaseLay(HUD_DEFAULT, 'pc')), ph: hudLayNorm(s.lay.ph, hudBaseLay(HUD_DEFAULT, 'ph')) }; }
+/* 두 배치가 같은 모양인지(끈 칸의 차례는 따지지 않는다). 배열 칸을 불러오기 전에 지금 배치가 바뀌는지 알아볼 때 쓴다 */
+function hudLayKey(L) { return JSON.stringify({ z: HUD_ZONES.map(k => L.z[k]), s: HUD_MODS.map(m => L.s[m.id]), off: L.off.slice().sort() }); }
+function hudLaySame(a, b) { return hudLayKey(a.pc) === hudLayKey(b.pc) && hudLayKey(a.ph) === hudLayKey(b.ph); }
+const HUD_SLOT_ASK = '지금 배치가 바뀝니다. 불러올까요?';
+/* 배열 칸 불러오기 확인 창. 확인 상자 "다음부터 표시하지 않기"를 켜고 불러오면 G.data.hudNoAsk가 켜져 이후 묻지 않는다(설정의 스위치로 되돌린다).
+   따로 그리는 창이라 설정 창 위에서도, 화면에서 편집 중에도 같은 모양으로 뜬다. 열리면 뒷화면을 inert로 막고, Tab은 창 안에서만 돌며, Esc는 취소, 닫으면 불러온 단추로 초점이 돌아간다 */
+function hudSlotAsk(opener, needs, onYes) {
+  if (!needs || (G.data && G.data.hudNoAsk) || typeof document === 'undefined') { onYes(); return; }
+  if (document.getElementById('hudask')) return;
+  const bg = document.createElement('div'); bg.id = 'hudask'; bg.className = 'askbg';
+  bg.innerHTML = `<div class="askbox" role="alertdialog" aria-modal="true" aria-labelledby="hudasktxt"><p id="hudasktxt">${esc(fixJosa(HUD_SLOT_ASK))}</p><label class="askck" for="hudaskno"><input type="checkbox" id="hudaskno"> 다음부터 표시하지 않기</label><div class="askbtn"><button type="button" id="hudaskcancel">취소</button><button type="button" class="gold" id="hudaskok">불러오기</button></div></div>`;
+  const blocked = [document.getElementById('root'), document.getElementById('hedbar')].filter(Boolean); blocked.forEach(x => x.setAttribute('inert', ''));
+  document.body.appendChild(bg);
+  const done = yes => {
+    const no = bg.querySelector('#hudaskno').checked; bg.remove(); blocked.forEach(x => x.removeAttribute('inert'));
+    if (yes) { if (no) { G.data.hudNoAsk = true; saveLocal(); } onYes(); } else if (opener && opener.isConnected && opener.focus) opener.focus();
+  };
+  bg.addEventListener('click', ev => { const b = ev.target.closest && ev.target.closest('button'); if (!b) return; done(b.id === 'hudaskok'); });
+  bg.addEventListener('keydown', ev => {
+    if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); done(false); return; }
+    if (ev.key === 'Tab') { const f = [...bg.querySelectorAll('input,button')]; const i = f.indexOf(document.activeElement); const n = ev.shiftKey ? (i <= 0 ? f.length - 1 : i - 1) : (i < 0 || i === f.length - 1 ? 0 : i + 1); ev.preventDefault(); f[n].focus(); }
+    ev.stopPropagation();
+  });
+  bg.querySelector('#hudaskcancel').focus();
+}
+function hudSlotNeedsAsk(i) { const s = hudSlots()[i]; return !!s && !hudLaySame({ pc: hudLayFor('pc'), ph: hudLayFor('ph') }, hudSlotLay(s)); }
 function hudSlotStamp() { const d = new Date(); return (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
 function hudSlotWrite(i, lay) { const sl = hudSlots(); sl[i] = { t: hudSlotStamp(), lay: JSON.parse(JSON.stringify(lay)) }; G.data.hud = Object.assign({}, G.data.hud || {}, { slots: sl, slot: i }); saveLocal(); }
 /* 설정 창에서 저장해 둔 배열을 지금 배치로 불러온다 */

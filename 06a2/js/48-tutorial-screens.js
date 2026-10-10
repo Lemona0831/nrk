@@ -55,7 +55,7 @@ function vTutHub() {
   h += `<button data-a="title"${G.tutFin && hasCur ? ' class="gold" data-focus' : ''}>타이틀로</button></div></section>`;
   return h;
 }
-function startTut(i) { G.tut = { i, met: false }; G.tutFin = false; G.scr = 'tut'; G.menuOpen = false; G.b = tutBattle(TUT[i]); G.b.stepMode = true; G.sel = null; G.sheet = null; openSheet('tutintro', {}); }
+function startTut(i) { G.tut = { i, met: false }; G.tutFin = false; G.scr = 'tut'; G.menuOpen = false; G.b = tutBattle(TUT[i]); G.b.stepMode = true; fdetFresh(); G.sel = null; G.sheet = null; openSheet('tutintro', {}); }
 /* 행동이 끝날 때마다 목표를 본다. 이루면 수료 기록에 그 장면을 남긴다 */
 function tutCheck(b) {
   const T = G.tut; if (!T || T.met || G.b !== b) return; const L = TUT[T.i];

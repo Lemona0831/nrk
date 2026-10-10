@@ -17,10 +17,12 @@ function setTabGo(k, focusTab) {
 (function initSettingsTabs() {
   if (typeof document === 'undefined') return;
   document.addEventListener('click', ev => {
-    const el = ev.target && ev.target.closest ? ev.target.closest('[data-a="settab"],[data-a="hudslotload"]') : null; if (!el || G.hudEd) return;
+    const el = ev.target && ev.target.closest ? ev.target.closest('[data-a="settab"],[data-a="hudslotload"],[data-a="hudasktog"]') : null; if (!el || G.hudEd) return;
     if (el.dataset.a === 'settab') { setTabGo(el.dataset.k, true); return; }
-    if (el.getAttribute('aria-disabled') === 'true') { toast('비어 있는 칸입니다. 화면에서 편집하고 저장하면 담깁니다'); return; }
-    const i = +el.dataset.n; if (hudSlotLoadLive(i)) { toast('배열 칸 ' + (i + 1) + '을 불러왔습니다'); render(); const x = document.querySelector('[data-a="hudslotload"][data-n="' + i + '"]'); if (x) x.focus(); }
+    if (el.getAttribute('aria-disabled') === 'true') { toast('비어 있는 칸은 불러올 수 없습니다. 화면에서 편집하고 저장하면 담깁니다'); return; }
+    if (el.dataset.a === 'hudasktog') { G.data.hudNoAsk = !G.data.hudNoAsk; saveLocal(); render(); const x = document.querySelector('[data-a="hudasktog"]'); if (x) x.focus(); return; }
+    const i = +el.dataset.n; /* 지금 배치와 다르면 먼저 묻는다. 같으면 바로 불러온다 */
+    hudSlotAsk(el, hudSlotNeedsAsk(i), () => { if (hudSlotLoadLive(i)) { toast('배열 칸 ' + (i + 1) + '을 불러왔습니다'); render(); const x = document.querySelector('[data-a="hudslotload"][data-n="' + i + '"]'); if (x) x.focus(); } });
   });
   document.addEventListener('keydown', ev => {
     const t = ev.target && ev.target.closest ? ev.target.closest('.settab') : null; if (!t || ev.ctrlKey || ev.metaKey || ev.altKey) return;

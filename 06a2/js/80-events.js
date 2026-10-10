@@ -262,6 +262,9 @@ function onKey(ev) {
     if (n && n !== ev.target) { ev.preventDefault(); L.forEach(x => { x.tabIndex = -1; }); n.tabIndex = 0; n.focus(); }
     return;
   }
+  if (!typing && ev.key.indexOf('Arrow') === 0 && !ev.ctrlKey && !ev.metaKey && !ev.altKey && !ev.shiftKey && ev.target && ev.target.closest && ev.target.closest('.clsc[data-a="clspick"]')) { /* 직업 고르기 격자: 위 · 아래는 같은 열, 왼쪽 · 오른쪽은 같은 행의 이웃 칸. Tab 순서와 aria-pressed는 그대로 */
+    ev.preventDefault(); const n = clsGridNext(ev.target.closest('.clsc'), ev.key); if (n) n.focus(); return;
+  }
   if (!typing && G.b && !G.sheet) {
     if ((ev.key === ' ' || ev.key === 'Enter') && G.stepResolve && !(ev.target && ev.target.tagName === 'BUTTON' && ev.target.getAttribute('aria-disabled') !== 'true')) { ev.preventDefault(); const r = G.stepResolve; G.stepResolve = null; r(); return; }
     if (/^[qwe]$/i.test(ev.key) && G.data.numKeys !== false && !ev.ctrlKey && !ev.metaKey && !ev.altKey && !G.busy && !G.b.over) { const btn = document.querySelector('.qc[data-q="' + ({ q: 1, w: 2, e: 3 })[ev.key.toLowerCase()] + '"]'); if (btn) { ev.preventDefault(); btn.click(); } return; } /* 소모품 바로 쓰기 */
