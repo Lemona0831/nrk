@@ -84,7 +84,7 @@ function hudEdUi() {
   if (ed.sel) {
     const id = ed.sel; const m = hudModDef(id); const off = L.off.includes(id); const sz = L.s[id]; const si = HUD_SIZES.indexOf(sz);
     const btn = (a, d, lab, aria, dis) => `<button class="sm" data-a="${a}"${d != null ? ` data-d="${d}"` : ''} aria-label="${esc(aria)}"${dis ? ' aria-disabled="true"' : ''}>${lab}</button>`;
-    tool = `<div class="hed-tool" role="toolbar" aria-label="${esc(m.n)} 편집 도구" data-tool><span class="htname">${esc(m.n)}</span>${btn('hedsz', -1, '크기 −', m.n + ' 크기 줄이기, 지금 ' + sz + '%', si <= 0)}<output class="hsz" aria-hidden="true">${sz}%</output>${btn('hedsz', 1, '크기 +', m.n + ' 크기 키우기, 지금 ' + sz + '%', si >= HUD_SIZES.length - 1)}${m.lock ? '<span class="hudlk">끌 수 없음</span>' : `<button class="sm${off ? ' gold' : ''}" data-a="hedtog" aria-pressed="${!off}" aria-label="${esc(m.n)} 보이기">${off ? '켜기' : '끄기'}</button>`}${btn('hedmv', -1, '▲ 위로', m.n + ' 위로')}${btn('hedmv', 1, '▼ 아래로', m.n + ' 아래로')}${btn('hedzn', -1, '◀ 구역', m.n + ' 앞 구역으로')}${btn('hedzn', 1, '구역 ▶', m.n + ' 다음 구역으로')}</div>`;
+    tool = `<div class="hed-tool" role="toolbar" aria-label="${esc(m.n)} 편집 도구" data-tool><span class="htname">${esc(m.n)}</span>${btn('hedsz', -1, '<span class="bt">크기 </span>−', m.n + ' 크기 줄이기, 지금 ' + sz + '%', si <= 0)}<output class="hsz" aria-hidden="true">${sz}%</output>${btn('hedsz', 1, '<span class="bt">크기 </span>+', m.n + ' 크기 키우기, 지금 ' + sz + '%', si >= HUD_SIZES.length - 1)}${m.lock ? '<span class="hudlk">끌 수 없음</span>' : `<button class="sm${off ? ' gold' : ''}" data-a="hedtog" aria-pressed="${!off}" aria-label="${esc(m.n)} 보이기">${off ? '켜기' : '끄기'}</button>`}${btn('hedmv', -1, '▲<span class="bt"> 위로</span>', m.n + ' 위로')}${btn('hedmv', 1, '▼<span class="bt"> 아래로</span>', m.n + ' 아래로')}${btn('hedzn', -1, '◀<span class="bt"> 구역</span>', m.n + ' 앞 구역으로')}${btn('hedzn', 1, '<span class="bt">구역 </span>▶', m.n + ' 다음 구역으로')}</div>`;
   }
   return `<main class="hov" data-hov aria-label="전투 화면 편집"><h1 class="sr">전투 화면 편집</h1><p class="sr" id="hedhelp2">끌어서 옮기거나 위 · 아래 화살표로 순서, 왼쪽 · 오른쪽 화살표로 구역을 바꿉니다. +와 −는 크기, Enter는 고르기, Delete는 켜기와 끄기, Esc는 취소입니다.</p>${zones}${boxes}${tool}</main>`;
 }
@@ -93,14 +93,15 @@ function hudEdPost() {
   const ed = G.hudEd; if (!ed) return;
   const fit = document.querySelector('#root > .fit'); if (fit) fit.querySelectorAll(':scope > .hdr, :scope > .skip, :scope > .bmain').forEach(x => x.setAttribute('inert', '')); /* 틀과 도구줄만 눌리고 닿는다 */
   hudEdPlace(); hudEdNote();
+  if (ed.reveal) { /* 고르거나 고친 직후 도구줄이 스크롤 칸 밖이면 최소한만 밀어 보이게 한다 */
+    ed.reveal = false; const tl = document.querySelector('.hed-tool');
+    if (fit && tl && !tl.hidden) { const fr = fit.getBoundingClientRect(); const q = tl.getBoundingClientRect(); if (q.bottom > fr.bottom - 4) fit.scrollTop += q.bottom - fr.bottom + 8; else if (q.top < fr.top + 4) fit.scrollTop -= fr.top + 8 - q.top; hudEdPlace(); }
+  }
   const sel = ed.focus; ed.focus = null;
   if (sel) { const el = document.querySelector('.hov ' + sel) || document.querySelector('.hov [data-hbox]'); if (el) { POP.mute = true; try { el.focus({ preventScroll: false }); } finally { POP.mute = false; } } }
 }
-function hudEdPlace() {
-  const ov = document.querySelector('.hov'); if (!ov) return;
-  const fit = document.querySelector('#root > .fit'); if (!fit) return;
-  const bar = document.getElementById('hedbar'); const bh = bar ? bar.getBoundingClientRect().height : 0;
-  if (bh && document.documentElement.style.getPropertyValue('--hedbar-h') !== Math.ceil(bh) + 'px') document.documentElement.style.setProperty('--hedbar-h', Math.ceil(bh) + 'px');
+/* 틀 · 구역 상자를 실제 요소에 붙인다(스크롤 칸의 지금 크기로 잰다). 도구줄이 아래 막대 위에 붙어 칸이 줄면 한 번 더 부른다 */
+function hudEdPlaceBoxes(ov, fit) {
   /* 틀은 .fit(편집 중에는 스크롤 칸) 안의 내용 좌표에 놓아 내용과 함께 움직인다 */
   const fr = fit.getBoundingClientRect(); const ox = fr.left - fit.scrollLeft + fit.clientLeft; const oy = fr.top - fit.scrollTop + fit.clientTop;
   const put = (el, r, mw, mh) => { el.style.display = ''; el.style.cssText = `left:${r.left - ox}px;top:${r.top - oy}px;width:${Math.max(r.width, mw)}px;height:${Math.max(r.height, mh)}px`; };
@@ -108,26 +109,35 @@ function hudEdPlace() {
   ov.querySelectorAll('.hbox').forEach(b => {
     const t = fit.querySelector('[data-hmod="' + b.dataset.hbox + '"]'); const r = t ? t.getBoundingClientRect() : null;
     if (!r || (!r.width && !r.height)) { b.style.display = 'none'; return; }
-    put(b, r, 24, 24);
+    /* 스크롤 칸 가장자리에 24px보다 얇은 조각만 걸린 틀은 누를 수 있는 자리가 못 된다(WCAG 2.5.8). 걸친 쪽을 가장자리 밖으로 물려
+       조각을 틀에서 빼고(모듈은 스크롤하거나 초점을 두면 틀째 들어온다), 보이는 부분이 있는 틀은 늘 24px 이상이 되게 한다 */
+    const vt = fr.top, vb = fr.bottom; let top = r.top; let bot = r.top + Math.max(r.height, 24); const vis = Math.min(bot, vb) - Math.max(top, vt);
+    if (vis > 0 && vis < 24) { if (bot > vb && top >= vt) { top = vb; bot = Math.max(bot, vb + 24); } else { bot = vt; top = Math.min(top, vt - 24); } }
+    put(b, { left: r.left, top, width: r.width, height: bot - top }, 24, 24);
   });
-  const tool = ov.querySelector('.hed-tool'); const de = document.documentElement; const sb = G.hudEd.sel ? ov.querySelector('.hbox[data-hbox="' + G.hudEd.sel + '"]') : null;
-  if (tool && sb) {
-    tool.classList.remove('dock'); tool.style.left = '0px'; tool.style.top = '0px'; de.style.removeProperty('--hedtool-h');
-    const r = sb.getBoundingClientRect(); const tw = tool.offsetWidth; const th = tool.offsetHeight;
-    const vt = fr.top + 4, vb = fr.bottom - 4; /* 스크롤 칸에서 지금 보이는 띠 */
-    const left = Math.max(fr.left + 4, Math.min(r.left, fr.right - tw - 4));
-    /* 다른 모듈의 틀을 조금도 가리지 않는 자리만 쓴다(모듈 아래, 위 순). 모두 가리면 아래 막대 위에 붙인다 */
-    const others = [...ov.querySelectorAll('.hbox')].filter(o => o !== sb && o.style.display !== 'none').map(o => o.getBoundingClientRect());
-    const fits = t => t >= vt && t + th <= vb && others.every(q => Math.min(q.bottom, t + th) - Math.max(q.top, t) <= 0 || Math.min(q.right, left + tw) - Math.max(q.left, left) <= 0);
-    const top = [r.bottom + 4, r.top - th - 4].find(fits);
-    if (top == null) { tool.classList.add('dock'); tool.style.left = ''; tool.style.top = ''; de.style.setProperty('--hedtool-h', tool.offsetHeight + 'px'); }
-    else { tool.style.left = (left - ox) + 'px'; tool.style.top = (top - oy) + 'px'; }
-  } else de.style.removeProperty('--hedtool-h');
+}
+function hudEdPlace() {
+  const ov = document.querySelector('.hov'); if (!ov) return;
+  const fit = document.querySelector('#root > .fit'); if (!fit) return;
+  const bar = document.getElementById('hedbar'); const bh = bar ? bar.getBoundingClientRect().height : 0;
+  if (bh && document.documentElement.style.getPropertyValue('--hedbar-h') !== Math.ceil(bh) + 'px') document.documentElement.style.setProperty('--hedbar-h', Math.ceil(bh) + 'px');
+  /* 도구줄 자리: 고른 모듈 바로 아래 비워 둔 자리(모듈의 margin-bottom, 변수 --hedtool-slot)에 얹는다. 도구줄이 다른 틀이나 스크롤 칸을 가리지 않는다 */
+  const tool = ov.querySelector('.hed-tool'); const de = document.documentElement; const sel = G.hudEd.sel;
+  if (tool) tool.hidden = false;
+  if (tool && sel) { const slot = Math.ceil(tool.offsetHeight) + 8; if (de.style.getPropertyValue('--hedtool-slot') !== slot + 'px') de.style.setProperty('--hedtool-slot', slot + 'px'); }
+  else de.style.removeProperty('--hedtool-slot');
+  hudEdPlaceBoxes(ov, fit); /* 자리를 바꾸면 모듈 자리도 바뀌므로 그 뒤에 잰다 */
+  const mod = tool && sel ? fit.querySelector('[data-hmod="' + sel + '"]') : null;
+  if (tool && mod) {
+    const fr = fit.getBoundingClientRect(); const ox = fr.left - fit.scrollLeft + fit.clientLeft; const oy = fr.top - fit.scrollTop + fit.clientTop;
+    const r = mod.getBoundingClientRect(); const tw = tool.offsetWidth; const left = Math.max(fr.left + 4, Math.min(r.left, fr.right - tw - 4));
+    tool.style.left = (left - ox) + 'px'; tool.style.top = (r.bottom + 4 - oy) + 'px'; tool.hidden = false;
+  } else if (tool) tool.hidden = true;
 }
 
 /* ---------- 고치는 일 ---------- */
 function hudEdDo(id, fn, msgFn) {
-  const L = hudEdLayNow(); fn(L); G.hudEd.msg = msgFn(L); G.hudEd.focus = G.hudEd.focus || '[data-hbox="' + id + '"]'; render();
+  const L = hudEdLayNow(); fn(L); G.hudEd.msg = msgFn(L); G.hudEd.focus = G.hudEd.focus || '[data-hbox="' + id + '"]'; G.hudEd.reveal = true; render();
   const s = document.getElementById('hedstatus'); if (s) s.textContent = G.hudEd.msg;
 }
 function hudEdSize(id, d) {
@@ -154,7 +164,7 @@ function hudEdZone(id, d) {
 function hudEdSelect(id) {
   const ed = G.hudEd; const m = hudModDef(id); ed.sel = ed.sel === id ? null : id; const L = hudEdLayNow();
   ed.msg = ed.sel ? m.n + ' 선택. ' + hudEdPosText(L, id) + ', 크기 ' + L.s[id] + '%. 도구줄이나 화살표 키로 고칩니다' : m.n + ' 선택을 풀었습니다';
-  ed.focus = '[data-hbox="' + id + '"]'; render(); const s = document.getElementById('hedstatus'); if (s) s.textContent = ed.msg;
+  ed.focus = '[data-hbox="' + id + '"]'; ed.reveal = !!ed.sel; render(); const s = document.getElementById('hedstatus'); if (s) s.textContent = ed.msg;
 }
 
 /* ---------- 눌림과 키 ---------- */
@@ -267,8 +277,9 @@ function hudEdZones(html) {
       const m = hudModDef(id); const h = html[id]; const empty = !h || !String(h).trim(); const sz = L.s[id];
       const hide = !empty && /class="qcons tlz"/.test(h);
       const why = L.off.includes(id) ? '꺼져 있습니다' : empty ? '지금은 비어 있습니다. 상황에 따라 나타납니다' : /^\s*<div class="sr"/.test(h) ? '지금은 눈에 보이지 않습니다' : hide ? '도구 칸 안에 접혀 있습니다' : '';
-      if (why) out += `<div class="hmod hstub" data-hmod="${id}"><span>${esc(m.n)}: ${why}</span></div>`;
-      else out += `<div class="hmod${m.hm ? ' hm' : ''}${m.mine ? ' mine' : ''}" data-hmod="${id}"${sz !== 100 ? ` data-hz="${sz}" style="zoom:${sz / 100}"` : ''}>${h}</div>`;
+      const slot = G.hudEd && G.hudEd.sel === id ? `margin-bottom:calc(var(--hedtool-slot,54px)/${sz / 100});` : ''; /* 고른 모듈 아래에 도구줄 자리를 비운다(zoom에 맞춰 나눈다) */
+      if (why) out += `<div class="hmod hstub" data-hmod="${id}"${slot ? ` style="${slot}"` : ''}><span>${esc(m.n)}: ${why}</span></div>`;
+      else out += `<div class="hmod${m.hm ? ' hm' : ''}${m.mine ? ' mine' : ''}" data-hmod="${id}"${sz !== 100 || slot ? ` ${sz !== 100 ? `data-hz="${sz}" ` : ''}style="${sz !== 100 ? `zoom:${sz / 100};` : ''}${slot}"` : ''}>${h}</div>`;
     }
     Z[zn] = `<div class="hz hz-${zn}" data-zone="${zn}">${out || '<div class="hzempty">비어 있습니다. 여기에 놓을 수 있습니다</div>'}</div>`;
   }
