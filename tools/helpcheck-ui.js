@@ -8,7 +8,7 @@ module.exports = function (api) {
   const dir = path.join(ROOT, '06a2');
   const FILES = [
     ['ui-info', 'js/54-info-popups.js'], ['ui-text', 'js/60-text-layer.js'], ['ui-hud', 'js/52-battle-hud.js'], ['ui-parts', 'js/53-battle-parts.js'],
-    ['ui-hudedit', 'js/56-hud-editor.js'], ['ui-huddirect', 'js/57-hud-direct.js'], ['ui-tree', 'js/72-skill-tree-screen.js'], ['ui-shop', 'js/46-screens-shop.js'],
+    ['ui-hudfree', 'js/55-hud-free.js'], ['ui-hudedit', 'js/56-hud-editor.js'], ['ui-huddirect', 'js/57-hud-direct.js'], ['ui-tree', 'js/72-skill-tree-screen.js'], ['ui-shop', 'js/46-screens-shop.js'],
     ['ui-account', 'js/44-screens-account.js'], ['ui-tut', 'js/48-tutorial-screens.js'], ['ui-end', 'js/70-act-end-screens.js'], ['ui-results', 'js/74-results-viewer.js'], ['ui-tutdata', 'data/tutorial.js'],
     ['ui-settings', 'js/76-sound-render.js'],
   ];
@@ -334,6 +334,14 @@ module.exports = function (api) {
     { id: '76-so:46', text: '글자 크기 ' + E('FS_OPTS').map(v => Math.round(v * 100) + '%').join(' ') },
   ];
   texts['ui-extra'] = extra.map(x => x.text); api.source('ui-extra', extra);
+  api.note('ui-hud', '생명력 40 → 30', '예상 피해 줄의 예시 문장(숫자는 예시, 규칙 값 아님)');
+  // 자유 배치(55-hud-free.js)의 안내 문장
+  A('어느 칸이든 24px 이상은 조작할 수 있게 남깁니다', 'FREE_OK = 24: 가려진 칸에 24px 네모가 남는지 본다(hudFreeHasSquare)', () => E('FREE_OK') === 24 && has('55-hud-free.js', 'hudFreeHasSquare(R, hi, FREE_OK)'));
+  A('가로 열 1에서 12', 'FREE_COLS = 12(열은 1부터 보인다)', () => E('FREE_COLS') === 12);
+  A('폭 열 3에서 12', 'FREE_MINW = 3, FREE_COLS = 12', () => E('FREE_MINW') === 3 && E('FREE_COLS') === 12);
+  for (const t of ['위로 1행', '아래로 1행', '왼쪽으로 1열', '오른쪽으로 1열']) api.note('ui-hudfree', t, '단추 이름: 한 번에 한 행(한 열)씩 옮긴다(Shift는 4칸)');
+  api.note('ui-hudfree', '1번이 Tab으로 가장 먼저', '읽는 순서 보기: 번호는 논리 순서(HUD_MODS) 번호');
+  api.note('ui-hudfree', '"생명력 40 → 30"이 붙습니다', '표시 형태 설명의 예시 문장(숫자는 예시)');
   A('2페이즈부터 거울', '늪의 어머니: 2페이즈는 체력 70% 아래(bossPhase)', () => has('30-enemy-ai.js', 'f > 0.7 ? 1 : f > 0.35 ? 2 : 3') && has('24-clock-damage.js', "boss.boss === 'mother'"));
   A('생명력 1에서 버팁니다', "수련장: ctx.safe 이면 hp를 1로 둔다(checkEnd)", () => has('24-clock-damage.js', 'if (b.p.hp <= 0 && b.ctx.safe) { b.p.hp = 1;'));
   A('포인트 +1', 'treeRefund: t.pts++', () => has('22-class-tree-rules.js', 't.pts++; t.spent[s.b]'));

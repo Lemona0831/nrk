@@ -92,7 +92,7 @@ function render() {
   else root.innerHTML = `<div class="app scr-${G.scr}"${ine}><button class="skip" data-a="skipmain">본문으로 건너뛰기</button>${vHeader()}<main id="main" tabindex="-1">${h2}${main}</main></div>${tail}`;
   if (POP.cur && !document.body.contains(POP.cur)) hidePop(); // 설명 창의 기준이 된 요소가 사라졌으면 닫는다
   if (!G.sheet && G.dropQ && G.dropQ.length && G.scr === 'run' && !G.b) setTimeout(nextDrop, 0); // 전리품 창을 닫기로 닫아도 남은 전리품을 이어서 건넨다
-  fitDecide(fit); scrollPad();
+  fitDecide(fit); scrollPad(); if (fit) hudFreeAfter(); /* 자유 배치: 칸 높이를 재서 자리를 정한다(55-hud-free.js) */
   document.querySelectorAll('.tbl').forEach(d => { const c = d.querySelector('caption'); d.tabIndex = 0; d.setAttribute('role', 'region'); d.setAttribute('aria-label', (c && c.textContent) || '표'); }); /* 가로로 스크롤되는 표 영역은 키보드로 닿고 이름이 있어야 한다(10월 8일 axe: scrollable-region-focusable) */
   const f2 = document.querySelector('.hz-mid'); if (f2) f2.scrollTop = fy;
   if (shk === 'settings') { const sh2 = document.querySelector('.sheet'); if (sh2 && hadSheet) sh2.scrollTop = shy; } /* 설정 창은 항목을 바꿔도 보던 자리에 둔다 */
@@ -117,7 +117,7 @@ function scrollPad() {
 if (typeof window !== 'undefined') window.addEventListener('resize', () => { try { scrollPad(); } catch (e) { } });
 function fitDecide(fit) {
   const de = document.documentElement;
-  if (fit && G.hudEd) { de.classList.add('fitscroll'); return; } /* 편집 중에는 모든 모듈이 보이도록 페이지가 스크롤된다 */
+  if (fit && (G.hudEd || hudFreeActive())) { de.classList.add('fitscroll'); if (!G.hudEd) { G.fitS = true; G.fitK = null; G.fitB = G.b; } return; } /* 자유 배치는 높이가 내용을 따라 자라므로 쪽 스크롤 */ /* 편집 중에는 모든 모듈이 보이도록 페이지가 스크롤된다 */
   if (!fit) { de.classList.remove('fitscroll'); G.fitS = false; G.fitK = null; G.fitB = null; G.fitNew = false; return; }
   const ah = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   const k = window.innerWidth + 'x' + Math.round(ah) + ':' + (G.data.fs || 1) + ':' + (G.data.fdet ? 1 : 0) + ':' + hudLayJson();
