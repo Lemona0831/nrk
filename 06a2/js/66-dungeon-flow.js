@@ -255,7 +255,7 @@ function battleContinue() {
   advanceFloor();
   const q = []; if (t === 'treasure') { const a = dropKey(run, rollGradeCh(run.ch, 'big')), b2 = dropKey(run, pg(rollGradeCh(run.ch, 'room')), [a]); q.push({ chest: [a, b2], room: run.room - 1 }); }
   q.push(...drops);
-  if (xpGot) toast('경험치 +' + xpGot + (lvUp ? ' · 레벨 ' + run.lv + ' 달성' : ''));
+  if (lvUp && typeof sfx === 'function') sfx('b_levelup'); if (xpGot) toast('경험치 +' + xpGot + (lvUp ? ' · 레벨 ' + run.lv + ' 달성' : ''));
   if (lvUp) { G.dropQ = (G.dropQ || []).concat(q); openSheet('stats', { pts: LV_POINTS * lvUp, why: '레벨 ' + run.lv + ' · 능력치 ' + LV_POINTS * lvUp + '점' }); saveRunLocal(); saveCur(); return; }
   queueDrops(q);
 }

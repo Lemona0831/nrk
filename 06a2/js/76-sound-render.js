@@ -3,7 +3,7 @@
    브라우저는 사람이 누르거나 키를 입력하기 전에는 소리를 내지 못하게 한다. 첫 입력에서 시작한다.
    음악은 미리 내려받지 않고(preload none) 듣는 만큼만 받는다. */
 const SND = { el: null, cur: '', want: '', unlocked: false, fadeT: 0 };
-function sndCfg() { const a = (G.data && G.data.audio) || {}; return { on: a.on !== false, music: a.music == null ? 0.45 : a.music, sfx: a.sfx == null ? 0.7 : a.sfx }; }
+function sndCfg() { const a = (G.data && G.data.audio) || {}; return { on: a.on !== false, music: a.music == null ? 0.45 : a.music, sfx: a.sfx == null ? 0.7 : a.sfx, bfx: a.bfx !== false }; }
 function musicFor() {
   const scr = PAGES.includes(G.scr) ? G.back || 'title' : G.scr; // 랭킹·기록·관리자 페이지는 원래 화면의 곡을 이어 간다
   const chM = k => { const c = (G.run && G.run.ch) || 1; return MUSIC['ch' + c + '_' + k] ? 'ch' + c + '_' + k : 'ch1_' + k; }; // 챕터 곡이 없으면 1챕터 곡
@@ -31,7 +31,24 @@ function sfx(k) {
   const c = sndCfg(); if (!c.on || !SND.unlocked || typeof Audio === 'undefined' || !SFX[k]) return;
   try { const a = new Audio(SFX[k].src); a.volume = c.sfx; a.play().catch(() => { }); } catch (e) { }
 }
-function sndUnlock() { if (SND.unlocked) return; SND.unlocked = true; sndSync(); }
+/* 전투 효과음(59번이 부른다): 파일을 한 번 받아 두고 복제해 쓴다. 동시에 3개까지, 같은 소리는 80ms에 한 번. 사람이 누른 뒤에만(SND.unlocked) */
+const SFXB = { cache: {}, live: 0, last: {}, pre: false };
+function sfxPreload() {
+  if (SFXB.pre || typeof Audio === 'undefined') return; SFXB.pre = true;
+  for (const k of Object.keys(SFX)) if (k.startsWith('b_')) { try { const a = new Audio(); a.preload = 'auto'; a.src = SFX[k].src; SFXB.cache[k] = a; } catch (e) { } }
+}
+function sfxPlay(k, o) {
+  const c = sndCfg(); if (!c.on || !c.bfx || !SND.unlocked || typeof Audio === 'undefined' || !SFX[k]) return;
+  try {
+    const now = Date.now(); if (SFXB.last[k] && now - SFXB.last[k] < 80) return; if (SFXB.live >= 3) return; SFXB.last[k] = now;
+    sfxPreload(); const base = SFXB.cache[k]; const a = base && base.cloneNode ? base.cloneNode(true) : new Audio(SFX[k].src);
+    a.volume = Math.max(0, Math.min(1, c.sfx * ((o && o.vol) || 1))); SFXB.live++; let done = false;
+    const end = () => { if (!done) { done = true; SFXB.live = Math.max(0, SFXB.live - 1); } };
+    a.addEventListener('ended', end); a.addEventListener('error', end); setTimeout(end, 1600);
+    const r = a.play(); if (r && r.catch) r.catch(end);
+  } catch (e) { }
+}
+function sndUnlock() { if (SND.unlocked) return; SND.unlocked = true; sndSync(); setTimeout(() => { try { sfxPreload(); } catch (e) { } }, 1500); }
 function sndSet(patch) { G.data.audio = Object.assign({}, G.data.audio || {}, patch); saveLocal(); sndSync(); }
 function vSettings() {
   const c = sndCfg(); const pct = v => Math.round(v * 100); const off = c.on ? '' : ' disabled';
@@ -39,7 +56,8 @@ function vSettings() {
   const snd = `<section class="setg"><h4>소리</h4>
 <div class="setrow"><span class="lab">소리</span><span></span>${sw('sndtoggle', c.on, '소리')}</div>
 <div class="setrow"><label for="volm">음악</label><input id="volm" type="range" min="0" max="100" step="5" value="${pct(c.music)}"${off}><output id="volmv" for="volm">${pct(c.music)}%</output></div>
-<div class="setrow"><label for="vols">효과음</label><input id="vols" type="range" min="0" max="100" step="5" value="${pct(c.sfx)}"${off}><button class="sm" data-a="sfxtest"${off} aria-label="효과음 들어 보기">들어 보기</button><small>효과음 <output id="volsv" for="vols">${pct(c.sfx)}%</output>. 소리는 처음에 꺼져 있고, 화면 위 🔇 버튼이나 여기서 켭니다. 음악은 화면에 따라 바뀝니다.</small></div></section>`;
+<div class="setrow"><label for="vols">효과음</label><input id="vols" type="range" min="0" max="100" step="5" value="${pct(c.sfx)}"${off}><button class="sm" data-a="sfxtest"${off} aria-label="효과음 들어 보기">들어 보기</button><small>효과음 <output id="volsv" for="vols">${pct(c.sfx)}%</output>. 소리는 처음에 꺼져 있고, 화면 위 🔇 버튼이나 여기서 켭니다. 음악은 화면에 따라 바뀝니다.</small></div>
+<div class="setrow"><span class="lab">전투 효과음</span><span class="mini">때리고 맞고 막는 순간에 짧은 소리가 납니다. 크기는 위의 효과음 크기를 따릅니다</span>${sw('bfxtoggle', c.bfx, '전투 효과음')}</div></section>`;
   const scr = `<section class="setg"><h4>화면</h4>
 <div class="setrow"><span class="lab">숫자 키</span><span class="mini">숫자 키 1부터 9까지와 Q · W · E 키로 행동 버튼을 누릅니다</span>${sw('numkeys', G.data.numKeys !== false, '숫자 키로 행동')}</div>
 <div class="setrow"><span class="lab">설명 창</span><span class="mini">마우스를 올리거나 길게 누르면 뜹니다</span>${sw('infotoggle', G.infoOn, '설명 창')}</div>

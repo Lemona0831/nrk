@@ -23,14 +23,16 @@ function vfxMode() { const m = vfxDoc() && G.data && G.data.fx; return m === 'of
 function vfxRm() { return !!((typeof G !== 'undefined' && G.data && G.data.rm) || (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches)); }
 /* 진행 속도에 비례한 길이 배율: 빠를수록 짧게(전투 진행을 늦추지 않는다) */
 function vfxPaceT() { const v = typeof PACE !== 'undefined' && G && !G.skip ? PACE[G.pace || 'normal'] : 0; return v > 0 ? Math.max(0.75, Math.min(1.25, v / 1000)) : 0.75; }
-const vfxLive = b => !!(vfxDoc() && b && b === G.b && vfxMode() !== 'off');
+/* 효과음(10월 11일): 그림 효과를 끈 판에서도 효과음이 켜져 있으면 사건을 읽는다. 시험 전투(견본 · 화면 편집)는 소리를 내지 않는다 */
+const vfxSndOn = () => !!(vfxDoc() && typeof sndCfg === 'function' && G.scr !== 'hudsample' && !G.hudEd && (() => { const c = sndCfg(); return c.on && c.bfx && c.sfx > 0; })());
+const vfxLive = b => !!(vfxDoc() && b && b === G.b && (vfxMode() !== 'off' || vfxSndOn()));
 const vfxSelEnemy = id => { const c = document.querySelectorAll('.en[data-e]'); for (const x of c) if (x.dataset.e === id) return x; return null; };
 const vfxSelMe = () => document.querySelector('.fstat[data-hud="hud-player"]') || document.querySelector('.me') || document.querySelector('.mbars');
 const vfxEl = who => who === 'p' ? vfxSelMe() : vfxSelEnemy(who);
 function vfxRectOf(who) { const el = who ? vfxEl(who) : null; if (!el) return null; const r = el.getBoundingClientRect(); return r.width > 4 && r.height > 4 ? { l: r.left, t: r.top, w: r.width, h: r.height } : null; }
 /* 사건 하나를 큐에 쌓는다. 엔진을 건드리지 않는다 */
 function vfxEmit(k, who, info) {
-  if (!vfxDoc()) return; const m = vfxMode(); if (m === 'off' || (m === 'low' && !VFX_LOW_KINDS.includes(k))) return;
+  if (!vfxDoc()) return; const m = vfxMode(); if ((m === 'off' || (m === 'low' && !VFX_LOW_KINDS.includes(k))) && !vfxSndOn()) return;
   VFX.q.push(Object.assign({ k, who, seq: info && info.seq || ++VFX.seq, t: Date.now(), r0: vfxRectOf(who) }, info || {}));
   if (VFX.q.length > 40) VFX.q.shift();
 }
@@ -224,13 +226,43 @@ function vfxAreaShake(X, power) {
     el.animate && vfxAnim(el, [{ translate: '0 0' }, { translate: `${-m}px ${m * 0.5}px`, offset: 0.2 }, { translate: `${m}px ${-m * 0.4}px`, offset: 0.45 }, { translate: `${-m * 0.5}px 0`, offset: 0.7 }, { translate: '0 0' }], 220);
   });
 }
+/* ---- 효과음: 사건 하나에 소리 하나(파일은 06a2/audio/sfx_*.mp3, 출처는 docs/조사/효과음-출처.md) ---- */
+const VFX_SP_EL = { fire: 'sp_fire', frost: 'sp_frost', venom: 'sp_venom', blood: 'sp_blood', shock: 'sp_shock' };
+const VFX_SND_VOL = { ppr: 0.7, sp_fire: 0.7, dot_fire: 0.6, dot_frost: 0.7, dot: 0.55, dot_venom: 0.6, dot_blood: 0.6, phit: 0.8, buff: 0.6, debuff: 0.7, miss: 0.7, wgain: 0.8 };
+function vfxSfxKey(x) {
+  switch (x.k) {
+    case 'hit':
+      if (x.st === 'spell') return VFX_SP_EL[x.el] || 'sp_arcane';
+      if (x.st === 'ctr') return 'ctr';
+      if (x.big) return 'big';
+      if (x.st === 'slash') return (x.seq || 0) % 2 ? 'slash' : 'slash2';
+      return { pierce: 'pierce', blunt: 'blunt', arrow: 'arrow' }[x.st] || 'slash';
+    case 'dot': return x.el === 'fire' ? 'dot_fire' : x.el === 'frost' ? 'dot_frost' : x.el === 'venom' ? 'dot_venom' : x.el === 'blood' ? 'dot_blood' : 'dot';
+    case 'miss': case 'pev': return 'miss';
+    case 'brk': return 'brk';
+    case 'kill': return 'kill';
+    case 'phit': return x.big ? 'phit_big' : 'phit';
+    case 'pgd': return 'pgd';
+    case 'pwd': return 'pwd';
+    case 'ppr': return 'ppr';
+    case 'heal': return 'heal';
+    case 'wgain': return 'wgain';
+    case 'st': return typeof BUFFS !== 'undefined' && BUFFS[x.st] ? 'buff' : 'debuff';
+  }
+  return null;
+}
+function vfxSound(x) {
+  if (!vfxSndOn() || typeof sfxPlay !== 'function') return;
+  const k = vfxSfxKey(x); if (k) sfxPlay('b_' + k, { lim: 1, vol: VFX_SND_VOL[k] });
+}
 /* render()가 끝날 때마다 부른다. 쌓인 사건을 순서대로 조금씩 어긋나게 보여 준다(진행 속도는 건드리지 않는다) */
 function vfxFlush() {
   if (!vfxDoc()) return;
   const b = G.b, q = VFX.q; VFX.q = [];
   /* 나의 생명력 · 보호막이 늘었으면 빛을 낸다(다시 그려 사이의 차이를 본다) */
   const ev2 = [];
-  if (b && b.p && vfxMode() !== 'off') {
+  const snd = vfxSndOn(), mode0 = vfxMode();
+  if (b && b.p && (mode0 !== 'off' || snd)) {
     const p = b.p, bs = VFX.base;
     if (bs && bs.b === b) {
       if (p.hp - bs.hp >= 0.5 && p.hp > 0) ev2.push({ k: 'heal', who: 'p', seq: ++VFX.seq, t: Date.now() });
@@ -238,9 +270,10 @@ function vfxFlush() {
     }
     VFX.base = { b, hp: p.hp, ward: p.ward || 0 };
   } else VFX.base = null;
-  if (!b || vfxMode() === 'off' || G.sheet || G.hudEd || document.hidden) { if (!b) vfxClear(); return; }
-  const m = vfxMode(), lv = VFX_LV[m], low = m === 'low';
-  const list = q.concat(ev2.filter(x => !low)).filter(x => Date.now() - x.t < 3000).sort((a, c) => a.seq - c.seq);
+  if (!b || (mode0 === 'off' && !snd) || G.sheet || G.hudEd || document.hidden) { if (!b) vfxClear(); return; }
+  if (snd && typeof sfxPreload === 'function') sfxPreload();
+  const m = mode0 === 'off' ? 'normal' : mode0, lv = VFX_LV[m], low = m === 'low', vis = mode0 !== 'off';
+  const list = q.concat(ev2.filter(x => !low || snd)).filter(x => Date.now() - x.t < 3000).sort((a, c) => a.seq - c.seq);
   if (!list.length) return;
   /* 같은 자리의 같은 이펙트가 겹쳐 쌓이지 않게 둘까지만(상태는 하나씩) */
   const seen = {}; const play = [];
@@ -248,6 +281,8 @@ function vfxFlush() {
   const rm = vfxRm(), T = lv.t * vfxPaceT(), step = Math.round(95 * T), lunged = {}; let nplay = 0;
   play.slice(0, 12).forEach((x, i) => {
     const delay = Math.min(i * step, 600);
+    const visK = vis && !(low && !VFX_LOW_KINDS.includes(x.k));
+    if (!visK) { setTimeout(() => { if (G.b === b && !G.sheet && !G.hudEd) vfxSound(x); }, delay); nplay++; return; }
     const melee = x.k === 'hit' && x.st !== 'arrow' && x.st !== 'spell' && x.st !== 'ctr';
     const lungeFrom = x.k === 'hit' ? x.from : (x.k === 'phit' || x.k === 'pgd' || x.k === 'pwd' || x.k === 'ppr' || x.k === 'pev') ? x.from : null;
     const prep = !rm && !low && lungeFrom && (melee || x.k !== 'hit' || x.st === 'spell' || x.st === 'arrow');
@@ -260,7 +295,7 @@ function vfxFlush() {
         if (G.b !== b || G.sheet || G.hudEd) return;
         const now = Date.now(); VFX.flashAt = VFX.flashAt.filter(t => now - t < 1000);
         X.flashOk = VFX.flashAt.length < VFX_FLASH_PER_SEC; const L = document.getElementById('vfx');
-        const dur = vfxPlay(x, X);
+        const dur = vfxPlay(x, X); vfxSound(x);
         if (dur && X.flashOk && !rm && !low && ['hit', 'brk', 'kill', 'ppr'].includes(x.k)) VFX.flashAt.push(now);
         if (dur) {
           if (x.k === 'hit' && x.st !== 'arrow' && x.st !== 'ctr') vfxKnock(x.who, 'p', X, x.big);
