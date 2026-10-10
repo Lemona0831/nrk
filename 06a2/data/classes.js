@@ -92,7 +92,7 @@ const CLASS_SOON = [
 const UNLOCK = {
   butcher: { ico: '🚪', door: '피 냄새가 짙은 문', hint: '위태로운 싸움을 이겨 내면 열립니다.', need: [{ c: 'edge', n: 3 }, { c: 'foe:pilgrim', n: 1 }], show: 'edge', open: '피 냄새를 따라온 자가 문을 엽니다.' },
   confessor: { ico: '❔', door: '고해소의 닫힌 문', hint: '죄를 지고도 걸음을 멈추지 않은 자에게 고해소의 문이 열립니다.', need: [{ c: 'sinKill', n: 25 }, { c: 'confess', n: 3 }], open: '고해소의 문이 열렸습니다.' },
-  bloodmage: { ico: '🩸', door: '피에 젖은 문', hint: '피를 바친 이, 또는 독으로 열둘을 거둔 이에게 열립니다.', need: [{ c: 'poisonKill', n: 12 }, { c: 'bloodBoss:abbot', n: 1 }], show: 'poisonKill', open: '피를 바친 자가 문을 엽니다.' },
+  bloodmage: { ico: '🩸', door: '피에 젖은 문', hint: '피를 바친 이, 또는 독으로 많은 적을 거둔 이에게 열립니다.', need: [{ c: 'poisonKill', n: 12 }, { c: 'bloodBoss:abbot', n: 1 }], show: 'poisonKill', open: '피를 바친 자가 문을 엽니다.' },
 };
 
 /* 레벨이 오를 때 오르는 생명력 (11.4절) */
