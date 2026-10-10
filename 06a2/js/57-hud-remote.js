@@ -6,7 +6,7 @@
    (3) 떠 있는 패널(#hremote): 머리줄을 끌어 옮기고, 방향키로도 옮기고, 접고, 바탕 투명도를 고른다. 자리 · 접힘 · 투명도는 G.data.hud.remote[pc | ph]에 저장한다(옛 저장본에는 없고 기본값).
    (4) 별도 페이지(remote.html)와의 연결: remote/link.js의 BroadcastChannel(없으면 storage 이벤트). 게임 창만 G를 고친다. 페이지는 상태를 받아 그리고 명령만 보낸다.
        메시지: hello(페이지 → 게임) · state / idle / end(게임 → 페이지, gid 포함) · cmd(페이지 → 게임, gid가 같을 때만). 편집 중에는 2초마다 상태를 다시 보내 끊김을 알린다. */
-const HUDR = { ui: null, el: null, link: null, gid: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), since: 0, seq: 0, hb: 0, pend: 0, cmd: false, pos: null, corner: 'br', win: null, S: null, remoteAt: 0 };
+const HUDR = { ui: null, el: null, link: null, gid: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), since: 0, seq: 0, hb: 0, pend: 0, winAt: 0, docked: false, cmd: false, pos: null, corner: 'br', win: null, S: null, remoteAt: 0 };
 const HUDR_M = 12;
 
 /* ---------- 상태 ---------- */
@@ -116,9 +116,20 @@ function hudRemoteMake() {
   HUDR.ui.setPrefs({ fold: pf.fold != null ? pf.fold : window.innerWidth <= HUD_PHONE_MAX, op: pf.op });
   hudRemoteGrip(el);
   HUDR.ui.setState(hudRemoteState()); HUDR.ui.setStatus(G.hudEd.msg || '');
-  if (HUDR.hb) clearInterval(HUDR.hb); HUDR.hb = setInterval(() => { if (G.hudEd) hudRemotePub(true); }, 2000);
+  if (HUDR.hb) clearInterval(HUDR.hb); HUDR.hb = setInterval(() => { if (G.hudEd) hudRemotePub(true); if (HUDR.docked && !hudRemoteWinOn()) hudRemoteDock(false); }, 2000);
   hudRemotePub(true);
+  HUDR.docked = false; if (hudRemoteWinOn()) hudRemoteDock(true, true);
 }
+/* 별도 창이 붙으면 떠 있는 패널은 숨기고(리모콘은 한 곳에만), 창이 닫히면 패널을 다시 띄운다 */
+function hudRemoteDock(on, quiet) {
+  if (!on) HUDR.winAt = 0;
+  if (HUDR.docked === !!on) return; HUDR.docked = !!on;
+  if (HUDR.el) { HUDR.el.hidden = !!on; HUDR.el.style.display = on ? 'none' : ''; }
+  hudRemoteInsets();
+  if (HUDR.el && !on) hudRemotePlace();
+  if (!quiet && G.hudEd) hudEdMsg(on ? '별도 창의 리모콘으로 옮겼습니다. 창을 닫으면 떠 있는 패널이 다시 나옵니다.' : '별도 창이 닫혀 떠 있는 패널로 돌아왔습니다.');
+}
+const hudRemoteWinOn = () => (HUDR.winAt && Date.now() - HUDR.winAt < 8000) || !!(HUDR.win && !HUDR.win.closed);
 function hudRemoteEnd(how, quiet) {
   if (HUDR.hb) { clearInterval(HUDR.hb); HUDR.hb = 0; } if (HUDR.pend) { clearTimeout(HUDR.pend); HUDR.pend = 0; }
   if (HUDR.ui) { HUDR.ui.destroy(); HUDR.ui = null; } if (HUDR.el) { HUDR.el.remove(); HUDR.el = null; }
@@ -148,7 +159,7 @@ function hudRemotePlace() {
 /* 휴대폰은 아래에서 올라오는 시트라 전투 화면 칸이 그 위에서 끝나게 높이를 알려 준다. PC는 떠 있어 필요 없다 */
 function hudRemoteInsets() {
   const el = HUDR.el; const root = document.documentElement; const ph = window.innerWidth <= HUD_PHONE_MAX;
-  const v = ph && el ? Math.ceil(el.getBoundingClientRect().height) + 'px' : '0px';
+  const v = ph && el && !HUDR.docked ? Math.ceil(el.getBoundingClientRect().height) + 'px' : '0px';
   if (root.style.getPropertyValue('--hedbar-h') !== v) root.style.setProperty('--hedbar-h', v);
 }
 function hudRemoteGrip(el) {
@@ -177,10 +188,12 @@ function hudRemoteOpenWin() {
 function hudRemoteOnMsg(m) {
   if (!m || typeof m.t !== 'string') return;
   if (m.t === 'hello') { HUDR.remoteAt = Date.now(); if (G.hudEd) hudRemotePub(true); else if (HUDR.link) HUDR.link.post({ t: 'idle', gid: HUDR.gid, ts: Date.now() }); }
+  else if (m.t === 'attach') { if (m.gid === HUDR.gid && G.hudEd) { HUDR.winAt = Date.now(); HUDR.remoteAt = HUDR.winAt; hudRemoteDock(true); } }
+  else if (m.t === 'detach') { if (m.gid === HUDR.gid) hudRemoteDock(false); }
   else if (m.t === 'cmd') {
     if (m.gid !== HUDR.gid) return; HUDR.remoteAt = Date.now();
     if (!G.hudEd) { if (HUDR.link) HUDR.link.post({ t: 'idle', gid: HUDR.gid, ts: Date.now() }); return; }
-    hudRemoteCmd(m.cmd);
+    HUDR.winAt = Date.now(); hudRemoteCmd(m.cmd);
   }
 }
 function initHudRemote() {
