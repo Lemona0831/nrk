@@ -75,7 +75,7 @@ function vfxStyle(b, o) {
         if (r > 0.05 || hp0 - e.hp > 0.05) {
           const big = !o.dot && (r >= e.hpMax * 0.22 || (b.cur && b.cur.id === 'heavy') || !!o.charged);
           if (o.dot) vfxEmit('dot', e.id, { seq, el: vfxElem(b, o) });
-          else { const sy = vfxStyle(b, o); vfxEmit('hit', e.id, { seq, st: sy.st, el: sy.el, big, from: 'p', amt: Math.round(r) }); }
+          else { const sy = vfxStyle(b, o); vfxEmit('hit', e.id, { seq, st: sy.st, el: sy.el, build: b.p.build, big, from: 'p', amt: Math.round(r) }); }
         } else if (!o.dot && (b.cur || o.ctr) && (ev0 || o.single || o.melee)) vfxEmit('miss', e.id, { seq, from: 'p' });
       }
     } catch (x) { }
@@ -234,6 +234,7 @@ function vfxSfxKey(x) {
     case 'hit':
       if (x.st === 'spell') return VFX_SP_EL[x.el] || 'sp_arcane';
       if (x.st === 'ctr') return 'ctr';
+      if (x.build === 'assassin' && (x.st === 'pierce' || x.st === 'blunt')) return x.big || x.st === 'blunt' ? 'slash2' : 'slash';
       if (x.big) return 'big';
       if (x.st === 'slash') return (x.seq || 0) % 2 ? 'slash' : 'slash2';
       return { pierce: 'pierce', blunt: 'blunt', arrow: 'arrow' }[x.st] || 'slash';

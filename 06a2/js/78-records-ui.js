@@ -97,7 +97,7 @@ function rcRunDetail(id) {
   if (x.lite) return h + '<p class="mini">이 판은 랭킹 줄만 남아 있어 방과 장비 기록이 없습니다.</p>';
   /* 어떻게 끝났나 */
   let why = '';
-  if (x.st === 'dead') { why = `<p>${esc(g ? g.roomN || rcFloor(x.ch, x.floor) : rcFloor(x.ch, x.floor))}에서 쓰러졌습니다.</p>${g && g.kill ? graveKill(g) : '<p class="mini">결정타 기록 없음</p>'}`; }
+  if (x.st === 'dead') { why = `<p>${esc(g ? g.roomN || rcFloor(x.ch, x.floor) : rcFloor(x.ch, x.floor))}에서 쓰러졌습니다.</p>${g ? graveKill(g) + graveContext(g) : '<p class="mini">결정타 기록 없음</p>'}`; }
   else if (x.st === 'abandon') why = '<p>캐릭터를 포기해 여정을 끝냈습니다.</p>';
   else if (x.st === 'clear') why = `<p>${x.clears}챕터의 보스를 넘었습니다.${r.settle && r.settle.total != null ? ' 정산 골드 ' + r.settle.total + '.' : ''}</p>`;
   else if (x.st === 'alive') why = '<p>아직 이어서 하는 캐릭터입니다.</p>';

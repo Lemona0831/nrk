@@ -67,7 +67,7 @@ function infoHtml(key) {
     const a = actionList(b).find(x => x.id === parts[1]); if (!a) return '';
     const s = skillMap(b.p.build)[a.id];
     let body = (a.v2 ? P(skHead(a.s)) + P(skBody(a.s)) + cfKwHtml(a.s) + (a.wait > 0 && !a.s.once ? P('쿨타임 ' + a.wait + '턴 남음' + (a.ok && a.pull ? '. 지금 누르면 피로 당겨 바로 씁니다. 내는 생명력 ' + a.blood : '')) : P('사용 가능')) : P(a.id === 'sig' ? '직업 기술. ' + (SIG[b.p.build].cd ? SIG[b.p.build].cd + '차례에 한 번. ' : '') + SIG[b.p.build].d : (s ? resLabel(s, a.mana) + '. ' + s.d : actInfo(b.p, a.id)))) + (a.v2 ? '' : P('빠르기: ' + speedWord(a.time)));
-    if (a.id !== 'flee') body += `<p class="pv">${esc(previewText(b, a.time))}</p>`;
+    if (a.id !== 'flee') body += `<p class="pv">${esc(previewText(b, a.time))}</p>` + P('예상 수치' + '는 내 행동의 즉시 결과입니다. 이후 적 차례와 라운드 끝 피해는 포함하지 않습니다.');
     if (a.id === 'dodge') {
       const sel = G.sel ? b.en.find(e => e.id === G.sel && e.alive && e.role !== 'root') : null; const dt = sel || pickDodge(b);
       if (dt) { const moves = previewAfter(b, 1).some(x => x.e === dt); body += moves ? `<p>흘릴 적: <b>${esc(dt.n)}</b> (${esc(intentText(b, dt).t)})</p>` : `<p class="no">${esc(dt.n)}은(는) 내 다음 차례 전에 움직이지 않아 흘리기가 헛됩니다.</p>`; }
@@ -219,7 +219,7 @@ function pvShow(btn) {
     if (sim.p) { const up = sim.p.hi > 0; pvOwn('.fstat .bar.hp', p.hp, up ? sim.p.hi : sim.p.lo, p.hpMax); say.push('내 생명력 ' + (sim.p.hi > 0 ? '+' + pvNum(sim.p.lo, sim.p.hi) : '−' + pvNum(-sim.p.hi, -sim.p.lo))); }
     if (Math.abs(sim.st || 0) > 0.05) { pvOwn('.fstat .bar.st', p.st, sim.st, p.stMax); say.push('내 스태미나 ' + (sim.st > 0 ? '+' : '−') + r1(Math.abs(sim.st))); }
     if (Math.abs(sim.mp || 0) > 0.05 && p.mpMax > 0) { pvOwn('.fstat .bar.mp', p.mp, sim.mp, p.mpMax); say.push('내 마나 ' + (sim.mp > 0 ? '+' : '−') + r1(Math.abs(sim.mp))); } }
-  const d = document.getElementById('pvdesc'); if (d) d.textContent = say.length ? '이 행동의 예상: ' + say.join('. ') : '';
+  const d = document.getElementById('pvdesc'); if (d) d.textContent = say.length ? '이 행동의 예상: ' + say.join('. ') + '. 내 행동의 즉시 결과이며, 이후 적 차례와 라운드 끝 피해는 포함하지 않습니다.' : '';
   if (say.length) descAdd(btn, 'pvdesc'); PV.btn = btn;
 }
 function pvHide() { if (typeof document === 'undefined') return; document.querySelectorAll('.pvg:not(.pvi),.pvk,.pvh,.pvc,.pvx,.en .pvt').forEach(x => x.remove()); document.querySelectorAll('.bar span[data-o]').forEach(sp => { sp.innerHTML = sp.dataset.o; delete sp.dataset.o; }); if (PV.btn) descDel(PV.btn, 'pvdesc'); PV.btn = null; }

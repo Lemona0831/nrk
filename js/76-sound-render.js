@@ -39,14 +39,16 @@ function sfxPreload() {
 }
 function sfxPlay(k, o) {
   const c = sndCfg(); if (!c.on || !c.bfx || !SND.unlocked || typeof Audio === 'undefined' || !SFX[k]) return;
+  let release = () => {};
   try {
     const now = Date.now(); if (SFXB.last[k] && now - SFXB.last[k] < 80) return; if (SFXB.live >= 3) return; SFXB.last[k] = now;
     sfxPreload(); const base = SFXB.cache[k]; const a = base && base.cloneNode ? base.cloneNode(true) : new Audio(SFX[k].src);
-    a.volume = Math.max(0, Math.min(1, c.sfx * ((o && o.vol) || 1))); SFXB.live++; let done = false;
+    a.volume = Math.max(0, Math.min(1, c.sfx * (o && Number.isFinite(o.vol) ? o.vol : 1))); SFXB.live++; let done = false;
     const end = () => { if (!done) { done = true; SFXB.live = Math.max(0, SFXB.live - 1); } };
+    release = end;
     a.addEventListener('ended', end); a.addEventListener('error', end); setTimeout(end, 1600);
     const r = a.play(); if (r && r.catch) r.catch(end);
-  } catch (e) { }
+  } catch (e) { release(); }
 }
 function sndUnlock() { if (SND.unlocked) return; SND.unlocked = true; sndSync(); setTimeout(() => { try { sfxPreload(); } catch (e) { } }, 1500); }
 function sndSet(patch) { G.data.audio = Object.assign({}, G.data.audio || {}, patch); saveLocal(); sndSync(); }

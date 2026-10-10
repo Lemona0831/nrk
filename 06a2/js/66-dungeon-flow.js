@@ -221,6 +221,7 @@ function battleContinue() {
   if (b.over === 'lose') {
     const acts = b.rec.filter(x => x.k === 'act').slice(-3).map(x => x.a); const hl = (b.hits3 || []).slice(-3);
     run.grave = { kill: hl.length ? hl[hl.length - 1] : null, hits: hl, id: run.id, cname: run.cname || '', lv: run.lv || 1, room: run.room, roomN: floorName(run.room) + (run.cur && ROOM_TYPES[run.cur.type] ? ' ' + ROOM_TYPES[run.cur.type].n + ' 방' : ''), build: run.build, name: G.data.name || '', eq: Object.values(run.p.eq).filter(Boolean), last: acts, stats: Object.assign({}, run.stats), at: Date.now() };
+    run.grave.resources = { st: r1(run.p.st), life: run.p.flask.life, cleanse: run.p.flask.mana };
     if (b.heatLog && b.ctx.bossKind === 'queen') run.grave.heat = Object.assign({}, b.heatLog); if ((run.ch || 1) >= 3) run.grave.ch = run.ch;
     G.data.graves = [run.grave].concat(G.data.graves || []).slice(0, 20);
     run.result = 'lose'; run.sealed = 1; clearCur(); pushRank(run, 'dead');

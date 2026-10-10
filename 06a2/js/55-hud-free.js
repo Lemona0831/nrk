@@ -463,7 +463,7 @@ function hudFreeGather() {
   const ed = G.hudEd; const dev = hudDev(); const L = ed.draft.fr[dev]; const { cv, W } = hfDims(); if (!cv) return;
   const Hc = cv.offsetHeight; const out = HUD_MODS.map(m => m.id).filter(id => { const g = hfGeo(id); return g && (g.l < -0.5 || g.l + g.w > W + 0.5 || g.t < -0.5 || g.t > Hc - FREE_OK); });
   if (!out.length) { hudEdMsg('화면 밖으로 나간 칸이 없습니다'); return; }
-  hudEdUndoPush(); const spots = hfDefaultSpots(dev); if (!spots) return;
+  const spots = hfDefaultSpots(dev); if (!spots) return; hudEdUndoPush();
   out.forEach(id => { L.m[id] = Object.assign({}, spots[id]); }); L.au = 0; ed.chk = { ids: out }; ed.announce = true;
   ed.msg = '화면 밖으로 나간 칸 ' + out.length + '개를 기본 자리로 돌렸습니다: ' + out.map(hfName).join(', '); render(); hudRemoteSync();
 }

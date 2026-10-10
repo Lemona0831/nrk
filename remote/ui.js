@@ -41,7 +41,8 @@
       h += `<p class="hr-sel" id="hr-selname">${s ? esc(s.n) + ': ' + esc(s.pos) : '선택한 칸 없음. 화면의 칸을 누르거나 위에서 고르세요.'}</p>`;
       h += `<fieldset class="hr-fs"${dis}><legend class="sr">${s ? esc(s.n) + ' 설정' : '고른 칸 설정'}</legend>`;
       h += `<div class="hr-row hr-size"><span class="hr-sl" id="hr-szl">크기</span><button type="button" data-act="sizestep" data-d="-1" data-fk="sz-" aria-label="크기 줄이기"${dis}>−</button><input type="range" id="hr-sz" data-act="size" data-fk="sz" min="0" max="${S.sizes.length - 1}" step="1" value="${idx < 0 ? 2 : idx}" aria-labelledby="hr-szl" aria-valuetext="${s ? s.size : 100}%"${dis}><button type="button" data-act="sizestep" data-d="1" data-fk="sz+" aria-label="크기 늘리기"${dis}>+</button><output for="hr-sz">${s ? s.size : 100}%</output></div>`;
-      h += `<div class="hr-row">${sw('toggle', 'tog', (s ? s.n + ' ' : '') + '보이기', !(s && s.off), (s && s.lock ? ' aria-disabled="true" aria-describedby="hr-lk"' : '') + dis)}${btn('resetone', 'one', (s ? s.n + ' ' : '') + '개별 초기화', '개별 초기화', dis)}</div>`;
+      h += `<div class="hr-row">${sw('toggle', 'tog', (s ? s.n + ' ' : '') + '보이기', !(s && s.off), (s && s.lock ? ' aria-disabled="true" aria-describedby="hr-lk"' : '') + dis)}${btn('resetone', 'one', (s ? s.n + ' ' : '') + '개별 초기화', '이 칸 복구', dis)}</div>`;
+      h += '<p class="hr-hint">찾기 어려운 칸은 위 목록에서 고릅니다. 이 칸 복구는 선택한 칸의 자리와 크기, 켜짐을 기본값으로 돌립니다. 되돌리기로 복구 전 배치에 돌아갑니다.</p>';
       if (s && s.lock) h += `<p class="hr-hint" id="hr-lk">게임에 꼭 필요한 칸이라 끌 수 없습니다. 크기와 자리는 바꿀 수 있습니다.</p>`;
       const vs = s && s.vars;
       h += `<div class="hr-row"><label for="hr-var">표시 형태</label><select id="hr-var" data-act="var" data-fk="var"${vs ? '' : ' disabled'}>${!s ? '<option value="">칸을 먼저 고르세요</option>' : !vs ? '<option value="">하나뿐입니다</option>' : vs.map(v => `<option value="${esc(v.k)}"${s.varKey === v.k ? ' selected' : ''}>${esc(v.n)}</option>`).join('') + (s.varKey === 'x' ? '<option value="x" selected>직접 고른 항목</option>' : '')}</select></div>`;
@@ -83,7 +84,7 @@
       return h;
     }
     function pHelp() {
-      return `<ul class="hr-help"><li>화면의 칸을 눌러 고릅니다. 끌어서 옮기고, 키보드는 칸에서 방향키입니다.</li><li>칸 탭에서 크기 · 켜기와 끄기 · 표시 형태를 정합니다.</li><li>배치 탭에서 정렬과 자유를 바꾸고 자리를 숫자로 정합니다.</li><li>저장을 눌러야 게임에 적용됩니다. 취소하면 편집 전으로 돌아갑니다.</li><li>패널은 머리줄 ⠿을 끌어 옮기고, 방향키로도 옮깁니다.</li></ul>`;
+      return `<ul class="hr-help"><li>화면의 칸을 눌러 고릅니다. 끌어서 옮기고, 키보드는 칸에서 방향키입니다.</li><li>칸 탭에서 크기 · 켜기와 끄기 · 표시 형태를 정합니다.</li><li>배치 탭에서 정렬과 자유를 바꾸고 자리를 숫자로 정합니다.</li><li>칸이 안 보이면 칸 탭 목록에서 골라 이 칸 복구를 누릅니다. 캔버스 밖으로 나간 칸은 배치 탭의 화면 안으로 모으기로 돌립니다.</li><li>저장을 눌러야 게임에 적용됩니다. 취소하면 편집 전으로 돌아갑니다.</li><li>패널은 머리줄 ⠿을 끌어 옮기고, 방향키로도 옮깁니다.</li></ul>`;
     }
     function notice() {
       const k = st.conn.k; const t = st.conn.t || { wait: '게임 창을 찾는 중입니다.', none: '게임 창을 찾지 못했습니다. 게임을 같은 주소에서 열어 두세요.', idle: '게임 창을 찾았습니다. 게임에서 설정의 전투 화면 탭을 열고 화면에서 편집을 누르면 여기서 조작할 수 있습니다.', lost: '게임 창과 연결이 끊겼습니다. 게임 창이 멈췄거나 닫혔을 수 있습니다.', end: '편집이 끝났습니다. 게임에서 화면에서 편집을 다시 시작하면 이어서 조작합니다.' }[k] || '';

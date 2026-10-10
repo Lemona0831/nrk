@@ -66,11 +66,11 @@ const shownHp = v => v > 0 && v < 1 ? 1 : Math.round(v);
 function bar(cls, v, max, label) { const w = max > 0 ? Math.max(0, Math.min(100, v / max * 100)) : 0; return `<div class="bar ${cls}" role="progressbar" aria-label="${esc(label)}" aria-valuemin="0" aria-valuemax="${Math.round(max)}" aria-valuenow="${shownHp(v)}"><i style="width:${w}%"></i><span>${esc(label)} ${shownHp(v)}/${Math.round(max)}</span></div>`; }
 function vDead() {
   const run = G.run, g = run.grave || {}; const SKM = skillMap(run.build);
-  const actN = id => ({ basic: '기본 공격', heavy: '강공격', guard: '방어', dodge: '흘리기', flaskL: '생명력 플라스크', flaskM: isV2(run.p) ? '정화 플라스크' : '마나 플라스크', flee: '도망', sig: '직업 기술' })[id] || (SKM[id] && SKM[id].n) || id;
+
   const c3 = (run.ch || 1) >= 3; const hz = g.heat ? Object.entries(g.heat).filter(x => x[1] > 0).sort((x, y) => y[1] - x[1]).map(([k, v]) => k + ' ' + Math.round(v)).join(' · ') : '';
   return vPlayerPanel(run.p, null) + `<section class="card grave"><h3>쓰러졌습니다${modeTag(run)}${run.markCh ? ' <span class="chip hardtag">표식 도전</span>' : ''}</h3>${unlNewsHtml()}<p class="lore">${c3 ? esc(chData(3).deathLine) : '돌바닥이 차갑다. 이 이름은 더 내려가지 못한다.'}</p>${hz ? `<p class="mini">열기가 오른 곳: ${esc(hz)}</p>` : ''}
 <p>${esc(run.cname || BUILDS[run.build].n)}(${esc(BUILDS[run.build].n)}, Lv ${run.lv || 1})의 여정은 ${esc(g.roomN || '')}에서 끝났습니다. 쓰러진 캐릭터는 돌아오지 않습니다. 새 캐릭터로 다시 시작합니다.</p>
-${graveKill(g)}<dl class="gdl"><dt>마지막 행동</dt><dd>${(g.last || []).map(a => esc(actN(a))).join(' → ') || '없음'}</dd><dt>장비</dt><dd>${(g.eq || []).map(k => esc((ITEMS[k] || { n: k }).n)).join(', ') || '없음'}</dd><dt>능력치</dt><dd>${STAT_KEYS.map(k => STATN[k] + ' ' + (g.stats ? g.stats[k] || 0 : 0)).join(' · ')}</dd></dl>
+${graveKill(g)}${graveContext(g)}<dl class="gdl"><dt>장비</dt><dd>${(g.eq || []).map(k => esc((ITEMS[k] || { n: k }).n)).join(', ') || '없음'}</dd><dt>능력치</dt><dd>${STAT_KEYS.map(k => STATN[k] + ' ' + (g.stats ? g.stats[k] || 0 : 0)).join(' · ')}</dd></dl>
 <button class="gold wide" data-a="giveupend" data-focus>기록을 남기고 마치기</button></section>`;
 }
 
@@ -80,8 +80,15 @@ const hitMods = h => h.m && h.m.length ? ` <span class="mini">(${esc(h.m.join(',
 function graveKill(g) {
   const k = g.kill; if (!k) return '';
   const hs = g.hits || [];
-  return `<div class="killb"><p class="mini">${k.left > 0 ? '마지막으로 받은 피해' : '결정타'}</p><p>${esc(hitWho(k))} <b class="kd">${k.d}</b> 피해${hitMods(k)}</p>${hs.length > 1 ? `<p class="mini">마지막 ${hs.length}번 받은 피해 (먼저 받은 것부터)</p><ol class="lasthits">${hs.map(h => `<li>${esc(hitWho(h))} <b>${h.d}</b> 피해${hitMods(h)}${h.big ? ' <span class="mini">· 예고된 큰 공격</span>' : ''}</li>`).join('')}</ol>` : ''}</div>`;
+  return `<div class="killb"><p class="mini">${k.left > 0 ? '마지막으로 받은 피해' : '결정타'}</p><p>${esc(hitWho(k))} <b class="kd">${k.d}</b> 피해${hitMods(k)}${Number.isFinite(k.left) ? ` <span class="mini">· 남은 생명력 ${k.left}</span>` : ''}</p>${hs.length > 1 ? `<p class="mini">마지막 ${hs.length}번 받은 피해 (먼저 받은 것부터)</p><ol class="lasthits">${hs.map(h => `<li>${esc(hitWho(h))} <b>${h.d}</b> 피해${hitMods(h)}${h.big ? ' <span class="mini">· 예고된 큰 공격</span>' : ''}${Number.isFinite(h.left) ? ` <span class="mini">· 남은 생명력 ${h.left}</span>` : ''}</li>`).join('')}</ol>` : ''}</div>`;
 }
+/* 패배 분석은 남아 있는 사실만 읽는다. 없는 옛 기록은 추정하지 않는다. */
+function graveContext(g) {
+  const SKM = skillMap(g.build), names = { basic: '기본 공격', heavy: '강공격', guard: '방어', dodge: '흘리기', flaskL: '생명력 플라스크', flaskM: '정화 플라스크', flee: '도망', sig: '직업 기술' };
+  const r = g.resources;
+  return `<div class="gravecontext"><h4>마지막 선택과 남은 자원</h4><dl class="gdl"><dt>마지막 행동</dt><dd>${(g.last || []).map(id => esc(names[id] || (SKM[id] && SKM[id].n) || id)).join(' → ') || '기록 없음'}</dd>${r ? `<dt>쓰러졌을 때</dt><dd>스태미나 ${r.st} · 생명력 플라스크 ${r.life} · 정화 플라스크 ${r.cleanse}</dd>` : '<dt>남은 자원</dt><dd>기록 없음</dd>'}</dl><p class="mini">다음 판에서 살펴볼 규칙</p><div class="wrap">${q('intent')}${q('st')}${q('flask')}</div></div>`;
+}
+
 const SV = {
   fun: { 1: '1 지루했다', 2: '2', 3: '3 보통', 4: '4', 5: '5 아주 재미있었다' },
   skw: { curious: '직업 전용 스킬이 궁금해서', strong: '강해 보여서', default: '처음 끼워진 그대로', combo: '조합을 시험해 보려고', other: '기타' },

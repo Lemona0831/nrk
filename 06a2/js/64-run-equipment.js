@@ -94,15 +94,20 @@ function compareHtml(run, uid, slot) {
   const it = run.inv[uid]; const curU = run.eqU[slot]; const cur = curU && run.inv[curU];
   const a = gearStats(run.p), b = simEquip(run, uid, slot);
   const rows = []; let up = 0, down = 0;
-  if (cur && ITEMS[cur.tpl].act && cur.tpl !== it.tpl) { down++; rows.push(`<li class="dn"><span class="ar" aria-hidden="true">▼</span><span class="sr">나빠짐 </span>효과가 사라집니다: ${esc(ITEMS[cur.tpl].act)}</li>`); }
-  if (ITEMS[it.tpl].act && (!cur || cur.tpl !== it.tpl)) up++;
+  if (cur && ITEMS[cur.tpl].act && cur.tpl !== it.tpl) { rows.push(`<li class="dn"><span class="ar" aria-hidden="true">▼</span><span class="sr">나빠짐 </span>효과가 사라집니다: ${esc(ITEMS[cur.tpl].act)}</li>`); }
+  const effectChanged = !cur || cur.tpl !== it.tpl;
+  if (effectChanged && cur && ITEMS[cur.tpl].cost) rows.push(`<li>없어지는 대가: ${esc(ITEMS[cur.tpl].cost)}</li>`);
+  if (effectChanged && ITEMS[it.tpl].act) rows.push(`<li class="up">얻는 효과: ${esc(ITEMS[it.tpl].act)}</li>`);
+  if (effectChanged && ITEMS[it.tpl].cost) rows.push(`<li class="dn">새 대가: ${esc(ITEMS[it.tpl].cost)}</li>`);
   for (const [k, lab, fmt] of GSTAT) {
+    if (k === 'mp' && isV2(run.p)) continue;
     const d = b[k] - a[k]; if (Math.abs(d) < 0.05) continue;
     const dd = (d > 0 ? '+' : '−') + fmt(Math.abs(d));
     if (d > 0) up++; else down++;
     rows.push(`<li class="${d > 0 ? 'up' : 'dn'}"><span class="ar" aria-hidden="true">${d > 0 ? '▲' : '▼'}</span><span class="sr">${d > 0 ? '좋아짐 ' : '나빠짐 '}</span>${lab} <b>${dd}</b> <small>${fmt(a[k])} → ${fmt(b[k])}</small></li>`);
   }
-  const v = up && !down ? ['good', '끼면 더 좋아집니다'] : down && !up ? ['bad', '끼면 더 나빠집니다'] : up && down ? ['mix', '얻는 것도 잃는 것도 있습니다'] : ['same', '끼어도 수치는 그대로입니다'];
+  const v = up && !down ? ['good', '비교한 수치가 올라갑니다'] : down && !up ? ['bad', '비교한 수치가 내려갑니다'] : up && down ? ['mix', '오르는 수치와 내려가는 수치가 있습니다'] : ['same', '비교한 수치는 그대로입니다'];
+  rows.sort((x, y) => Number(y.includes('class="dn"')) - Number(x.includes('class="dn"')));
   return `<div class="cmp"><div class="cmpv ${v[0]}">${v[1]}</div><div class="cmph">${cur ? `지금 낀 <b class="gr-${cur.g}">${inm(cur.tpl, cur.g)}</b>과 비교` : '이 칸은 비어 있습니다'}</div>${rows.length ? `<ul class="cmpl" aria-label="바뀌는 것">${rows.join('')}</ul>` : ''}</div>`;
 }
 function itemDetail(it, opt) {
