@@ -204,6 +204,7 @@ function onClick(ev) {
     case 'loginno': G.acct.conflict = ''; render(); break;
     case 'settings': openSheet('settings'); break;
     case 'sndtoggle': sndSet({ on: !sndCfg().on }); render(); break;
+    case 'bfxtoggle': sndSet({ bfx: !sndCfg().bfx }); render(); break;
     case 'sfxtest': sfx('coin'); break;
     case 'logout': if (ask('로그아웃하면 이 기기는 새 익명 계정으로 돌아갑니다. 지금까지의 기록은 구글 계정에 남습니다. 로그아웃할까요?')) socialLogout(); break;
     case 'namesave': { G.data.name = (val('pname') || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 16); saveLocal(); toast('이름을 저장했습니다'); pushName(); render(); break; }
