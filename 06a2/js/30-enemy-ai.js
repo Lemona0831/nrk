@@ -355,7 +355,14 @@ function abbotTick(b, e, T) {
   if (e.phase === 2) {
     if (e.vow && T - (e.vowTick || 0) >= ABBOT.vowR) {
       const cs = b.en.filter(x => x.role === 'candle' && x.alive); for (const c of cs) { c.alive = false; c.hp = 0; }
-      if (cs.length) { e.hp = Math.min(e.hpMax, e.hp + e.hpMax * ABBOT.candleHeal * cs.length); addS(b, e, 'empower', cs.length); logp(b, 'bad', '남은 촛불 ' + cs.length + '개가 ' + e.n + '에게 스며든다. 생명력 +' + Math.round(ABBOT.candleHeal * cs.length * 100) + '%, 강화 ' + cs.length); }
+      if (cs.length) {
+        // 첫 회복은 유지하고 반복 회복만 감쇠해 장기전의 진척을 보존합니다.
+        const before = e.hp, n = Math.max(0, (e.vowN || 1) - 1);
+        const heal = e.hpMax * ABBOT.candleHeal * cs.length * Math.pow(ABBOT.candleDecay, n);
+        e.hp = Math.min(e.hpMax, e.hp + heal); addS(b, e, 'empower', cs.length);
+        b.rec.push({ k: 'bossheal', t: r1(b.t), role: e.role, phase: e.phase, source: 'candle', cycle: n + 1, d: r1(e.hp - before) });
+        logp(b, 'bad', '남은 촛불 ' + cs.length + '개가 ' + e.n + '에게 스며든다. 생명력 +' + r1(e.hp - before) + ', 강화 ' + cs.length);
+      }
       e.vow = 0; e.vowTick = T; e.serN = 0; e.intent = null; decideIntent(b, e); logp(b, 'sys', e.n + '이(가) 입을 열어 설교를 시작한다');
     } else if (!e.vow && T - (e.vowTick || 0) >= ABBOT.sermonR) { e.vow = 1; e.vowTick = T; e.intent = { k: 'pray' }; logp(b, 'sys', e.n + '이(가) 다시 입을 다문다'); abbotCandles(b, e); }
   }

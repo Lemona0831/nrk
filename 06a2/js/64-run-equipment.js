@@ -84,6 +84,22 @@ function unequipUid(run, slot, ctx) {
 function discardUid(run, uid) { const bi = run.bag.indexOf(uid); if (bi < 0) return '가방에 없는 장비입니다'; run.bag.splice(bi, 1); const it = run.inv[uid]; delete run.inv[uid]; (run.discards = run.discards || []).push({ room: run.room, item: it.tpl, g: it.g, t: Date.now() }); return ''; }
 /* 비교: 그 장비를 slot에 꼈을 때의 엔진 값 */
 function gearStats(p) { return { hp: p.hpMax, mp: p.mpMax, st: p.stMax, basic: basicBase(p), heavy: heavyBase(p), flask: flaskHealFrac(p), heavyCost: heavyCost(p), lifeCap: flaskCap(p, 'life'), manaCap: flaskCap(p, 'mana'), stamCap: flaskCap(p, 'stam') }; }
+// 영구 수치만 비교합니다. 공격 기준은 무기·직업 배율·힘이며 적과 전투 중 보정은 제외합니다.
+function growthSnapshot(p) {
+  return { attack: r1(basicBase(p) * (1 + 0.01 * stat(p, 'str'))), hp: p.hpMax, st: p.stMax,
+    str: stat(p, 'str'), int: stat(p, 'int') * 2, wil: stat(p, 'wil') * 2,
+    parry: Math.round(parryRed(p) * 1000) / 10, flask: Math.round(flaskHealFrac(p) * 1000) / 10,
+    cost: heavyCost(p), life: flaskCap(p, 'life'), mana: flaskCap(p, 'mana'), stam: flaskCap(p, 'stam') };
+}
+function growthText(before, p, label) {
+  const after = growthSnapshot(p), changes = [];
+  const fields = [['attack', '기본 공격 기준', ''], ['hp', '최대 생명력', ''], ['st', '최대 스태미나', ''],
+    ['str', '무기 공격 보너스', '%'], ['int', '지속·정화 피해 보너스', '%'], ['wil', '회복 보너스', '%'],
+    ['parry', '흘리기 감소율', '%'], ['flask', '생명력 플라스크 회복', '%'], ['cost', '강공격 스태미나', ''],
+    ['life', '생명력 플라스크 최대 충전', '회'], ['mana', '정화 플라스크 최대 충전', '회'], ['stam', '스태미나 플라스크 최대 충전', '회']];
+  for (const [key, name, unit] of fields) if (before[key] !== after[key]) changes.push(`${name} ${before[key]}${unit} → ${after[key]}${unit}`);
+  return label + (changes.length ? ' · ' + changes.slice(0, 2).join(' · ') : '');
+}
 const GSTAT = [['hp', '최대 생명력', v => Math.round(v)], ['mp', '최대 마나', v => Math.round(v)], ['st', '최대 스태미나', v => Math.round(v)], ['basic', '기본 공격 피해', r1], ['heavy', '강공격 피해', r1], ['flask', '생명력 플라스크 회복', v => Math.round(v * 1000) / 10 + '%'], ['heavyCost', '강공격 스태미나 비용', r1, -1], ['lifeCap', '생명력 플라스크 최대 충전', v => v + '회'], ['manaCap', '정화 플라스크 최대 충전', v => v + '회'], ['stamCap', '스태미나 플라스크 최대 충전', v => v + '회']];
 function simEquip(run, uid, slot) {
   const t = { p: JSON.parse(JSON.stringify(run.p)), inv: run.inv, eqU: Object.assign({}, run.eqU), bag: run.bag.slice() };

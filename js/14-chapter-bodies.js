@@ -345,4 +345,4 @@ const PRIEST = { heal: 0.4 };
 const SUMMON = { n: 1, cap: 3 };
 const heavyMulOf = (e, b) => e.role === 'boss' ? TELE.boss : e.strong && e.bigMul ? e.bigMul * foeBigMul(b, e) : TELE.heavy; // 강적의 강타는 기준 생명력 × STRONG.big (e.bigMul) // explodeMul: 자폭병 폭발 = 평소 공격 × 3 (10월 3일: 폭발이 평소 공격과 같아 "터지기 전에 끊는다"는 판단이 없었다)
 const ENRAGE = { boss: 45, room: 40, step: 10, byBoss: { queen: 50 } }; // byBoss: 보스마다 다른 광폭화 시각 (3챕터 재의 여왕) // 광폭화 시각(시간 단위)과 짙어지는 간격
-const ABBOT = { brand: 0.2, vowTaken: 0.6, monkHeal: 0.05, monkDecay: 0.85, healHp: 0.10, shieldHp: 0.18, candleHp: 0.04, candles: [2, 3, 4], candleHeal: 0.03, vowR: 3, sermonR: 3, sermonWeak: 2, stoneEvery: 3, stoneP: 0.06, stoneM: 0.10, altar: 0.08, sacHp: 0.15, sacHeal: 0.20, sacCool: 3 }; // 10월 4일 고해의 밤 (상세는 비공개 문서)
+const ABBOT = { brand: 0.2, vowTaken: 0.6, monkHeal: 0.05, monkDecay: 0.85, healHp: 0.10, shieldHp: 0.18, candleHp: 0.04, candles: [2, 3, 4], candleHeal: 0.03, candleDecay: 0.65, vowR: 3, sermonR: 3, sermonWeak: 2, stoneEvery: 3, stoneP: 0.06, stoneM: 0.10, altar: 0.08, sacHp: 0.15, sacHeal: 0.20, sacCool: 3 }; // 10월 4일 고해의 밤 (상세는 비공개 문서)
