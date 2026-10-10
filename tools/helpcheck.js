@@ -77,9 +77,11 @@ if (process.argv.includes('--md')) {
   const L = ['# 화면 문장 숫자 대조표 (자동 생성)', '', '`node tools/helpcheck.js --md`가 쓴 파일이다. 손으로 고치지 않는다. 숫자가 든 문장마다 근거 코드와 판정을 적는다. 설명은 [화면-도움말-일치.md](화면-도움말-일치.md).', '',
     '| 출처 | 문장 수 | 숫자 든 문장 | 대조함 | 일치 | 규칙 대조 | 규칙 아님 | 미대조 |', '| --- | --- | --- | --- | --- | --- | --- | --- |'];
   for (const x of sum.concat([Object.assign({ n: '합계' }, T)])) L.push('| ' + x.n + ' | ' + x.all + ' | ' + x.num + ' | ' + x.cov + ' | ' + x.ok + ' | ' + x.rule + ' | ' + x.note + ' | ' + x.unc + ' |');
+  const HIDDEN_ROW = /^(butcher|confessor|bloodmage):/; // 숨겨진 직업 규칙 문장은 공개 표에 싣지 않는다(10월 10일)
   for (const n of names) {
     L.push('', '## ' + n, '', '| 위치 | 문장 | 근거 | 판정 |', '| --- | --- | --- | --- |');
-    for (const r of bySrc(n).filter(r => r.num)) L.push('| ' + esc(r.id) + ' | ' + esc(r.s) + ' | ' + esc(r.by.join(' ; ') || '(없음)') + ' | ' + (!r.by.length ? '미대조' : r.res.every(Boolean) ? (r.rest ? '미대조(측정 · 이력)' : r.note ? '규칙 아님' : '일치') : '불일치') + ' |');
+    for (const r of bySrc(n).filter(r => r.num && !HIDDEN_ROW.test(r.id))) L.push('| ' + esc(r.id) + ' | ' + esc(r.s) + ' | ' + esc(r.by.join(' ; ') || '(없음)') + ' | ' + (!r.by.length ? '미대조' : r.res.every(Boolean) ? (r.rest ? '미대조(측정 · 이력)' : r.note ? '규칙 아님' : '일치') : '불일치') + ' |');
+    { const hid = bySrc(n).filter(r => r.num && HIDDEN_ROW.test(r.id)).length; if (hid) L.push('', '숨겨진 직업 규칙 문장 ' + hid + '개는 이 표에서 뺐다(대조 결과는 모두 일치, 문장은 비공개 문서에 있다).'); }
   }
   fs.mkdirSync(path.join(ROOT, 'docs/검증'), { recursive: true });
   fs.writeFileSync(path.join(ROOT, 'docs/검증/화면-도움말-일치-표.md'), L.join('\n') + '\n');

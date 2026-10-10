@@ -1,7 +1,7 @@
 // 7단계 검증 결과 문서를 만든다: node tools/vresult.js <결과 폴더(par)> > docs/검증/검증-결과.md
 // 입력 파일 이름은 scratchpad verify.sh의 태그(v_learn · v_held · v_from2 · v_from3 · v_hard · v_path_* · v_f_<직업>_<번호>)다.
-/* 숨겨진 직업은 공개 문서에 코드 키 대신 해금 1 · 2 · 3으로 나온다(10월 9일). 이름 대응은 ../nrk-private/숨김직업-키.md */
-{ const _log = console.log; const _H = s => typeof s === 'string' ? s.replace(/butcher/g, '해금 1').replace(/confessor/g, '해금 2').replace(/bloodmage/g, '해금 3') : s; console.log = (...a) => _log(...a.map(_H)); }
+/* 숨겨진 직업은 공개 문서에 코드 키 대신 해금 1 · 2 · 3으로 나온다(10월 9일). 이름 대응은 ../nrk-private/숨김직업-키.md 갈래 이름도 해금 N 갈래 k로 바꾼다(10월 10일) */
+{ const _log = console.log; const BR = { 도륙: 1, 광기: 2, 학살: 3, 속죄: 1, 전가: 2, 고행: 3, 역병: 1, 포식: 2, 혈약: 3 }; const _H = s => typeof s === 'string' ? s.replace(/\bbutcher\b/g, '해금 1').replace(/\bconfessor\b/g, '해금 2').replace(/\bbloodmage\b/g, '해금 3').replace(/(해금 [123] \| )(도륙|광기|학살|속죄|전가|고행|역병|포식|혈약)/g, (m, pre, w) => pre + '갈래 ' + BR[w]) : s; console.log = (...a) => _log(...a.map(_H)); }
 const fs = require('fs'), path = require('path'), cp = require('child_process');
 const dir = process.argv[2]; if (!dir) { console.error('사용: node tools/vresult.js <par 폴더>'); process.exit(1); }
 const load = f => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
