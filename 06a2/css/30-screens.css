@@ -154,3 +154,13 @@
   .hdr .hi{max-width:34%;font-size:calc(13px*var(--fs,1))}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* 업데이트: 최신 요약과 개별 이전 내역 */
+.chglatest{border:1px solid var(--gold);border-radius:8px;padding:14px;margin:10px 0}
+.chgsummary{border-left:3px solid var(--gold);padding:2px 12px;margin:12px 0;color:var(--text)}
+.chgsummary p{margin:4px 0;line-height:1.6}
+.chgl li{padding:6px 0;line-height:1.65}
+.chgarchive{border-top:1px solid var(--line);padding:4px 0}
+.chgarchive>summary{cursor:pointer;min-height:48px;padding:8px 4px;line-height:1.5;overflow-wrap:anywhere}
+.chgarchive>summary .chgd{display:block;margin:3px 0 0}
+.chgarchive>.chg{padding:8px 12px;border-top:0}

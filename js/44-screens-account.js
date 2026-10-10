@@ -17,7 +17,7 @@ function chgEntry(c, latest, brief) {
   const ul = a => `<ul class="chgl">${a.map(li).join('')}</ul>`;
   const head = `<h4>${esc(c.v)}${c.t ? ' · ' + esc(c.t) : ''}${latest ? ' <span class="newtag">최신</span>' : ''}</h4>${c.d ? `<div class="chgd">${esc(c.d)}</div>` : ''}`;
   const body = c.groups && !brief ? c.groups.map(g => `<h5 class="chgh">${esc(g.h)}</h5>${ul(g.items)}`).join('') : ul((brief && c.top) || c.items || c.top || []);
-  return `<section class="chg">${head}${body}</section>`;
+  return `<section class="chg${latest ? ' chglatest' : ''}">${head}${!brief && c.top && c.items ? `<div class="chgsummary">${c.top.map(t => `<p>${esc(t)}</p>`).join('')}</div>` : ''}${body}</section>`;
 }
 function curDesc(c) { const ch = c.ch || 1; return c.phase === 'wait' || c.phase === 'clearsv' ? ch + '챕터 돌파 · ' + (CHAPTERS[ch + 1] ? (ch + 1) + '챕터로 갈 준비' : (ch + 1) + '챕터 준비 중') : c.phase === 'shop' ? ch + '챕터 돌파 · 상점' : c.phase === 'settle' ? ch + '챕터 돌파 · 정산' : ch + '챕터 · ' + floorName(c.room); }
 function vTitle() {
