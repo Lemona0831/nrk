@@ -523,7 +523,7 @@ const SKILLS2 = {
     { id: 'sb_sunder', row: 6, b: '마갑', tier: '하급', n: '균열 주문', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 6 }, { k: 'alt', run: 2, brk: 30 }] },
     { id: 'sb_armor', row: 7, b: '마갑', tier: '중급', n: '마갑 연성', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'wardFill', to: 0.5 }, { k: 'dmg', n: 12 }, { k: 'brk', n: 16 }] },
     { id: 'sb_weave', row: 7, b: '마갑', tier: '중급', n: '마검 교직', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 8 }, { k: 'alt', run: 2, brk: 35, ward: 4 }] },
-    { id: 'sb_spellguard', row: 8, b: '마갑', tier: '중급', n: '방벽 공명', kind: 'spell', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 7 }, { k: 'wardDmg', per: 0.5, spend: 1, drainAll: true, cap: 16 }] },
+    { id: 'sb_spellguard', row: 8, b: '마갑', tier: '중급', n: '마갑 방출', kind: 'spell', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 7 }, { k: 'wardDmg', per: 0.5, spend: 1, drainAll: true, cap: 16 }] },
     { id: 'sb_reverse', row: 8, b: '마갑', tier: '중급', n: '역영창', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 8 }, { k: 'alt', run: 2, ward: 6, protect: 2 }] },
     { id: 'sb_embershell', row: 9, b: '마갑', tier: '중급', n: '잔화 방벽', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'wardBurn', mul: 3, max: 9 }, { k: 'ward', n: 5 }] },
     { id: 'sb_rhythm', row: 9, b: '마갑', tier: '중급', n: '마검 연무', kind: 'cut', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 10 }, { k: 'brk', n: 9 }, { k: 'alt', ward: 4 }, { k: 'hasten', n: 1, on: 'alt' }] },
