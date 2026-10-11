@@ -1,9 +1,10 @@
 // 성장 배율은 dmg 기본 피해에만 적용한다. 비례·지속 피해에는 중복 적용하지 않는다.
+const SKILL_STAT_PCT = 4;
 function skillGrowthStat(s) { return s.kind === 'spell' || /^(e_|v_)/.test(s.id) ? 'int' : /^(a_|h_)/.test(s.id) ? 'dex' : 'str'; }
 function skillBaseDamage(p, s, n) {
   if (!n || s.id === 'tut_bash' || p.build === 'novice') return n || 0;
-  const k=skillGrowthStat(s), weapon=k==='int'?0:Math.max(0,gearOf(p).wpn-START_GEAR.wpn)*0.025;
-  return n*0.8*(1+stat(p,k)*0.01+weapon);
+  const k=skillGrowthStat(s), weapon=k==='int'?0:Math.max(0,gearOf(p).wpn-START_GEAR.wpn)*0.02;
+  return n*(1+stat(p,k)*SKILL_STAT_PCT/100+weapon);
 }
 function skillDamageHint(p, s) {
   const dm=s.fx.find(e=>e.k==='dmg');

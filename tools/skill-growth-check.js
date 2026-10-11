@@ -9,15 +9,16 @@ for(const [build,id,key] of cases){
  const src=E.SK2[id],n=src.fx.find(f=>f.k==='dmg').n;
  const s={...src,hits:2,fx:[{k:'dmg',n}]};
  const p=E.mkPlayer(build,{},{}),e=E.mkEnemy('bruiser',false,0);e.hp=e.hpMax=10000;
- near(E.skillBaseDamage(p,s,n),n*.8);
- p.stat={con:100,wil:100};near(E.skillBaseDamage(p,s,n),n*.8);
- p.stat={[key]:25};near(E.skillBaseDamage(p,s,n),n);
- p.stat={[key]:50};near(E.skillBaseDamage(p,s,n),n*1.2);
+ near(E.skillBaseDamage(p,s,n),n);
+ p.stat={con:100,wil:100};near(E.skillBaseDamage(p,s,n),n);
+ for(const points of [5,10,15,20,25]){p.stat={[key]:points};near(E.skillBaseDamage(p,s,n),n*(1+points*.04));}
+ p.stat={[key]:5};const beforeLevel=E.skillBaseDamage(p,s,n);p.stat[key]+=3;near(E.skillBaseDamage(p,s,n)-beforeLevel,n*.12);
+ p.stat={[key]:50};near(E.skillBaseDamage(p,s,n),n*3);
  const oldHurt=E.hurtEnemy,values=[];
  try{E.hurtEnemy=(b,e,d)=>{values.push(d);return d;};E.runSkill2(E.newBattle(p,[e],{}),E.v2Static(s),e);}finally{E.hurtEnemy=oldHurt;}
- assert.equal(values.length,2);for(const v of values)near(v,n*1.2);
+ assert.equal(values.length,2);for(const v of values)near(v,n*3);
  assert(E.skillDamageHint(p,s).includes('× 2타'));
- const before=E.skillBaseDamage(p,s,n);p.gear={wpn:20};near(E.skillBaseDamage(p,s,n),before+(key==='int'?0:n*.8*.3));
+ const before=E.skillBaseDamage(p,s,n);p.gear={wpn:20};near(E.skillBaseDamage(p,s,n),before+(key==='int'?0:n*.24));
 }
 for(const id of ['sb_rebound','sb_sunder']){assert.equal(E.SK2[id].time,'normal');assert.equal(E.v2Static(E.SK2[id]).time,1);assert.equal(E.SK2[id].cd,5);}
 assert.equal(E.SK2.sb_bolt.time,'fast');
@@ -29,9 +30,10 @@ for(const id of ['sb_bolt','sb_spellguard']){
  const es=[0,1].map(i=>{const e=E.mkEnemy('bruiser',false,i);e.hp=e.hpMax=10000;return e;});
  const values=[],oldHurt=E.hurtEnemy;
  try{E.hurtEnemy=(b,e,d)=>{values.push(d);return d;};E.runSkill2(E.newBattle(p,es,{}),E.v2Static(s),es[0]);}finally{E.hurtEnemy=oldHurt;}
- near(p.ward,10);for(const v of values)near(v,s.fx.find(f=>f.k==='dmg').n*1.2+5);
+ near(p.ward,10);for(const v of values)near(v,s.fx.find(f=>f.k==='dmg').n*3+5);
  assert.equal(values.length,id==='sb_spellguard'?2:1);
 }
 const p=E.mkPlayer('elementalist',{},{});p.stat={int:30};near(E.dotMul(p),1.6);
 near(E.skillBaseDamage({...p,build:'novice'},{id:'tut_bash'},12),12);
+for(const boss of D.run_('Object.keys(BOSSES)'))for(let lv=1;lv<=15;lv++){const e=E.mkBoss(boss,1,lv);assert.equal(e.hp,e.hpMax);}
 console.log('스킬 성장 검증 통과: 힘·민첩·지능·무기·방어 투자 구분, 실제 다중 타격, 보호막 추가 피해 배율 제외·광역 1회 소모, 행동 시간·쿨타임, 지속 피해·수련장 유지');

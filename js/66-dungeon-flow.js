@@ -159,11 +159,11 @@ function gainGold(run, n, why) { const m = fxVal(run.p, 'goldMul', 1, (a, v) => 
 function roomDef() { const run = G.run; return run.cur || fixedRoom(run.room) || {}; }
 function statNext(p, k) {
   const s = stat(p, k), B = BUILDS[p.build]; const up = Object.assign({}, p, { stat: Object.assign({}, p.stat, { [k]: s + 1 }) });
-  if (k === 'str') return `생명력 ${calcHpMax(p)} → ${calcHpMax(up)}, 무기 공격·힘 기반 스킬 성장 +${s}% → +${s + 1}%, 내가 채우는 붕괴 +${s}% → +${s + 1}%` + ((s + 1) % 10 === 0 ? '. 10점: 강공격 붕괴 +5' : '');
-  if (k === 'dex') return `스태미나 ${calcStMax(p)} → ${calcStMax(up)}, 암살자·사냥꾼 스킬 성장 +${s}% → +${s + 1}%, 흘리기 감소 ${Math.round(parryRed(p) * 1000) / 10}% → ${Math.round(parryRed(up) * 1000) / 10}%, 빠르기 +${(s * 0.5).toFixed(1)}% → +${((s + 1) * 0.5).toFixed(1)}%` + ((s + 1) % 10 === 0 ? '. 10점: 흘리기 스태미나 −1' : '');
+  if (k === 'str') return `생명력 ${calcHpMax(p)} → ${calcHpMax(up)}, 무기 공격 피해 +${s}% → +${s + 1}%, 힘 기반 스킬 피해 +${s * SKILL_STAT_PCT}% → +${(s + 1) * SKILL_STAT_PCT}%, 내가 채우는 붕괴 +${s}% → +${s + 1}%` + ((s + 1) % 10 === 0 ? '. 10점: 강공격 붕괴 +5' : '');
+  if (k === 'dex') return `스태미나 ${calcStMax(p)} → ${calcStMax(up)}, 암살자·사냥꾼 스킬 피해 +${s * SKILL_STAT_PCT}% → +${(s + 1) * SKILL_STAT_PCT}%, 흘리기 감소 ${Math.round(parryRed(p) * 1000) / 10}% → ${Math.round(parryRed(up) * 1000) / 10}%, 빠르기 +${(s * 0.5).toFixed(1)}% → +${((s + 1) * 0.5).toFixed(1)}%` + ((s + 1) % 10 === 0 ? '. 10점: 흘리기 스태미나 −1' : '');
   if (k === 'con') return `생명력 ${calcHpMax(p)} → ${calcHpMax(up)}`;
   if (k === 'wil') return `보호막으로 얻는 양과 회복 +${s * 2}% → +${(s + 1) * 2}%, 해로운 상태를 버틸 확률 ${Math.min(25, s)}% → ${Math.min(25, s + 1)}%`;
-  return `주문 기본 피해 성장 +${s}% → +${s + 1}%, ` + (isV2(p) ? '' : `마나 ${calcMpMax(p)} → ${calcMpMax(up)}, `) + `${p.build === 'elementalist' ? '상태 효과(중독·출혈·화상)·열충격·화상 소모 추가 피해' : isV2(p) ? '중독·출혈·화상 피해' : '지속 피해와 정화 피해'} +${s * 2}% → +${(s + 1) * 2}%` + ((s + 1) % 10 === 0 && !isV2(p) ? '. 10점: 독 격발 붕괴 +5' : '');
+  return `주문 기본 피해 +${s * SKILL_STAT_PCT}% → +${(s + 1) * SKILL_STAT_PCT}%, ` + (isV2(p) ? '' : `마나 ${calcMpMax(p)} → ${calcMpMax(up)}, `) + `${p.build === 'elementalist' ? '상태 효과(중독·출혈·화상)·열충격·화상 소모 추가 피해' : isV2(p) ? '중독·출혈·화상 피해' : '지속 피해와 정화 피해'} +${s * 2}% → +${(s + 1) * 2}%` + ((s + 1) % 10 === 0 && !isV2(p) ? '. 10점: 독 격발 붕괴 +5' : '');
 }
 /* 3챕터 이벤트의 "다음 전투" (11.1절): 다음 일반 · 매복 전투에만 붙는다 */
 function next3Room(room, n3) {

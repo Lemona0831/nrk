@@ -68,7 +68,7 @@ function mkEnemy(role, elite, idx, opt) {
 function xpOf(e) { if (e.summoned) return 0; const base = e.role === 'boss' ? XP_BASE.boss : e.strong ? XP_BASE.strong : e.elite ? XP_BASE.elite : XP_BASE.normal; return base * (1 + XP_LV * ((e.lv || 1) - 1)) * (e.xpCh || 1); }
 function mkBoss(kind, hpFrac, lv) {
   const B = BOSSES[kind]; lv = lv || 1;
-  const hpMax = BHP * B.mult * Math.pow(1 + MLV_HP, lv - 1);
+  const hpMax = Math.round(BHP * B.mult * Math.pow(1 + MLV_HP, lv - 1));
   return {
     id: 'boss', role: 'boss', boss: kind, n: B.n, ico: B.ico, elite: false, row: 'front',
     hpMax, hp: Math.round(hpMax * (hpFrac || 1)), dmg: B.hit != null ? HIT_REF(lv) * B.hit : BDMG * (B.dmgMul || 1.5) * Math.pow(1 + MLV_DMG, lv - 1), spd: 1.0, brkMax: 150, brk: 0, lv,

@@ -73,7 +73,7 @@ try:
   assert '마갑탄' in page.inner_text('body') and '현재 보호막의 50%' in page.inner_text('body')
   assert page.evaluate("rcRunDetail('statdone').includes(AWK_MAP[Object.keys(AWK_MAP)[0]].n)")
   assert page.evaluate("()=>{const r=G.data.runs.find(r=>r.id==='statdone');return r.eqDetails.length>0 && rcRunDetail(r.id).includes(r.eqDetails[0].base) && Number.isFinite(r.combatStats.hp) && rcRunDetail(r.id).includes('전투 수치');}")
-  assert page.evaluate("()=>{const old=G.run,s=SK2.sb_bolt;G.run={...old,build:'spellblade',p:mkPlayer('spellblade',{}, {int:25}),tree:{...old.tree,open:[s.id]}};const html=infoHtml('tn:'+s.id);G.run=old;return html.includes('현재 기본 피해 11') && html.includes('현재 보호막의 50%');}")
+  assert page.evaluate("()=>{const old=G.run,s=SK2.sb_bolt;G.run={...old,build:'spellblade',p:mkPlayer('spellblade',{}, {int:5}),tree:{...old.tree,open:[s.id]}};const html=infoHtml('tn:'+s.id);G.run=old;return html.includes('현재 기본 피해 10.8') && html.includes('현재 보호막의 50%');}")
   assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth')
   assert page.evaluate("statReadHtml(null).includes('기록이 없습니다') && statReadHtml({con:30}).includes('기록 없음')")
   assert not errors,errors
