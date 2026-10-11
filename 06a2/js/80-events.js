@@ -12,7 +12,7 @@ function onClick(ev) {
     case 'cpkeep': case 'cpskip': case 'cpreplace': {
       const run=G.run;
       if (!run || !G.sheet || G.sheet.kind!=='consfull' || !(run.consPending || []).length || G.b) break;
-      if (a==='cpskip') run.consPending.shift();
+      if (a==='cpskip') { const c=run.consPending.shift(); (run.consGainLog || (run.consGainLog=[])).push({ch:run.ch || 1,room:run.room,id:c.id,g:c.g,n:c.n,discarded:c.n,t:Date.now()}); }
       if (a==='cpreplace') {
         if (el.dataset.s==='cons') {
           const i=+el.dataset.k,c=run.cons[i];

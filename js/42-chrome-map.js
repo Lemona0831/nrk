@@ -95,6 +95,7 @@ function crossCard(id) {
 function vRunMap() {
   const run = G.run, p = run.p; dgInit(run);
   let h = vPlayerPanel(p, null) + dgBar(run);
+  h += `<p class="mini recovery-stock">생명력 플라스크 ${p.flask.life || 0}/${flaskCap(p,'life')}회${p.flask.life ? '' : ' · 남은 충전 없음'}</p>`;
   const R = run.cur;
   if (!R && run.cross) {
     h += `<section class="card"><h3>갈래길${q('rooms', '방과 보스')}</h3><p class="mini">다음 갈래길까지 걸을 길을 고릅니다. 층마다 문을 고르는 것은 그대로입니다.</p><div class="doors">${Object.keys(PATHS).filter(id => !(id === 'quiet' && markOn(run, 'noquiet'))).map(crossCard).join('')}</div>${markOn(run, 'noquiet') ? '<p class="mini">표식 때문에 샛길은 막혀 있습니다.</p>' : ''}</section>`;

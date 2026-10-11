@@ -128,7 +128,7 @@ const FOE_X = {
 const SQUAD_VARY = 0.5;
 // 가중치(w)는 직업 사이도 맞춘다: 저주 의식 · 광신 돌격 · 성가 행렬은 파수꾼에게, 문지기 · 혼성 순찰 · 화형 의식 · 도둑 떼는 암살자에게 상대적으로 무겁다 (10월 4일 잼)
 const SQUADS = [
-  { id: 'wall', n: '방패벽', w: 1, up: [['shield'], ['shield'], ['minion']], low: [['shield', 1], ['shield'], ['archer']], vary: [2, ['minion', 'archer']] },
+  { id: 'wall', from: 4, n: '방패벽', w: 1, up: [['shield'], ['shield'], ['minion']], low: [['shield', 1], ['shield'], ['archer']], vary: [2, ['minion', 'archer']] },
   { id: 'hymn', n: '성가 행렬', w: 1.4, up: [['bruiser'], ['bruiser'], ['healer']], low: [['bruiser', 1], ['bruiser'], ['healer']], vary: [1, ['bruiser', 'thief']] },
   { id: 'pyre', n: '화형 의식', w: 0.8, press: 1, up: [['bruiser'], ['pyre']], low: [['shield'], ['bruiser'], ['pyre', 1]], vary: [0, ['bruiser', 'shield', 'minion']] }, // 10월 5일: 자폭 행렬을 바꿨다
   { id: 'thieves', n: '도둑 떼', w: 0.8, up: [['thief'], ['thief'], ['archer']], low: [['thief'], ['thief'], ['archer', 1]], vary: [2, ['archer', 'darkmage']] },
@@ -194,7 +194,7 @@ const ENEMY_NAMES = {
    n 이름, boss 보스, settleLore 정산 분위기 문장, nextLore 다음 챕터를 내다보는 문장, diff 던전 세기(없으면 DIFF), names 적 이름(없으면 ENEMY_NAMES[1]).
    SQUADS · STRONG_FOES · EVENTS의 ch(없으면 1)와 ROOM_MODS의 chs(없으면 모든 챕터)로 챕터를 가른다 */
 const CHAPTERS = {
-  1: { n: '저주받은 수도원', boss: 'abbot', settleLore: '수도원장의 종이 멎었다. 계단은 더 아래로 이어진다.', nextLore: '수도원보다 더 깊은 곳에서 찬 바람이 올라온다.' },
+  1: { strongFrom: 4, n: '저주받은 수도원', boss: 'abbot', settleLore: '수도원장의 종이 멎었다. 계단은 더 아래로 이어진다.', nextLore: '수도원보다 더 깊은 곳에서 찬 바람이 올라온다.' },
 };
 const chData = ch => CHAPTERS[ch] || CHAPTERS[1];
 const diffOf = ch => chData(ch).diff || DIFF;

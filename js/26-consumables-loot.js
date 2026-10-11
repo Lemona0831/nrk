@@ -35,12 +35,14 @@ function consGrant(run, id, g, n) {
     const c = q.find(x => x.id === id && x.g === grade);
     if (c) c.n += left; else q.push({id, g: grade, n: left});
   }
+  if (CONS[id]) (run.consGainLog || (run.consGainLog=[])).push({ch:run.ch || 1,room:run.room,id,g:g === 'm' && CONS[id].vm != null ? 'm':'n',n:n || 1,received:(n || 1)-left,pending:left,t:Date.now()});
   return left;
 }
 function consPendingTry(run) {
   const q = run.consPending || [];
   while (q.length) {
     const c = q[0], left = consAdd(run, c.id, c.g, c.n);
+    if (c.n > left) (run.consGainLog || (run.consGainLog=[])).push({ch:run.ch || 1,room:run.room,id:c.id,g:c.g,n:c.n-left,received:c.n-left,pending:0,fromPending:true,t:Date.now()});
     if (left) { c.n = left; return false; }
     q.shift();
   }
