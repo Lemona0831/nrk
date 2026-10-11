@@ -95,6 +95,8 @@ function onClick(ev) {
     case 'door': chooseDoor(+el.dataset.k); break;
     case 'path': choosePath(el.dataset.k); break;
     case 'codex': openSheet('codex'); break;
+    case 'itembook': openSheet('itembook', {type:'gear',q:'',ch:'all',group:'all',grade:'all',page:0}); break;
+    case 'ibopen': case 'ibback': case 'ibpage': case 'ibtype': case 'ibreset': itemBookClick(a,el); break;
     case 'toasts': openSheet('toasts'); break;
     case 'rest': { const run = G.run, p = run.p, R = roomDef();
       if (R.type === 'camp') { p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax; for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = Math.min(flaskCap(p, fk), (p.flask[fk] || 0) + 1); run.rooms.push({ room: run.room, type: 'camp' }); if ((run.ch || 1) >= AWK.campFrom) awkGrant(run); advanceFloor(); toast('불가에서 쉬었습니다. 모두 찼습니다'); render(); awkOpen(); break; }

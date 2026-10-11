@@ -91,3 +91,12 @@ li.cdcard.lock{border-style:dashed;background:var(--panel);color:var(--muted)}
   .rkt .c-prog b{display:inline;font-size:calc(13.5px*var(--fs,1))}
   .rcgcard .rcfacts{grid-template-columns:1fr}
 }
+/* 아이템 도감 */
+.sh-itembook{width:min(960px,calc(100vw - 20px))}
+.ibfilters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}
+.ibfilters label{display:grid;gap:5px;font-size:.88em}.ibfilters select{width:100%;min-width:0}
+.ibgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.ibcard{display:flex;flex-direction:column;align-items:stretch;gap:6px;text-align:left;padding:12px;min-width:0;white-space:normal;overflow-wrap:anywhere}
+.ibcard small{font-size:.8em;color:var(--muted)}.ibcard span{font-size:.88em;line-height:1.5}.ibcard .cost{color:#e5a18a}
+.ibpages{display:flex;justify-content:center;align-items:center;gap:15px;margin:16px 0 4px}
+@media(max-width:500px){.ibfilters{grid-template-columns:1fr}.ibgrid{grid-template-columns:1fr}}

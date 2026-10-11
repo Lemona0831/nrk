@@ -256,3 +256,78 @@ function rcKey(ev) {
 }
 function rcInit() { document.addEventListener('click', rcClick); document.addEventListener('keydown', rcKey); }
 try { if (typeof document !== 'undefined' && document.addEventListener) rcInit(); } catch (e) { }
+
+/* 아이템 도감: 실제 장비 풀과 소모품 데이터를 읽고, 캐릭터 상태는 변경하지 않는다. */
+const IB_SIZE = 24;
+const IB_GEAR_GROUPS = {all:'모든 부위',weapon:'무기',armor:'갑옷',gloves:'장갑',amulet:'목걸이',ring:'반지',flask:'플라스크'};
+const IB_CONS_GROUPS = {all:'모든 용도',restore:'회복·해제',battle:'전투',other:'기타·판매'};
+function itemBookEntries(type) {
+  if (type === 'cons') return Object.keys(CONS).map(id=>({id,type:'cons',D:CONS[id],ch:CONS[id].ch || 1,group:consGroup(CONS[id]),grade:'n'}));
+  const chapters = {};
+  for (const ch of [1,2,3]) for (const id of CH_POOLS[ch] || []) {
+    if (ITEMS[id] && ITEMS[id].kind !== 'start') (chapters[id] || (chapters[id]=[])).push(ch);
+  }
+  return Object.keys(chapters).map(id=>({id,type:'gear',D:ITEMS[id],ch:chapters[id][0],chapters:chapters[id],group:tplKind(id),grade:ITEMS[id].g || 'n'}));
+}
+function itemBookRows(S) {
+  const q=String(S.q || '').trim().toLocaleLowerCase();
+  return itemBookEntries(S.type).filter(x=>
+    (S.ch==='all' || x.ch===+S.ch) && (S.group==='all' || x.group===S.group) &&
+    (S.grade==='all' || (x.type==='cons' ? S.grade==='n' || S.grade==='m' && x.D.vm!=null : x.grade===S.grade)) &&
+    (!q || [x.D.n,x.D.act,x.D.cost,x.D.lore,x.D.sit,x.type==='cons' ? x.D.d(x.D.v) + (x.D.vm!=null ? ' '+x.D.d(x.D.vm) : '') : ''].join(' ').toLocaleLowerCase().includes(q))
+  ).sort((a,b)=>a.ch-b.ch || a.D.n.localeCompare(b.D.n,'ko'));
+}
+function itemBookRange(x,g,ch) {
+  const sb=SLOT_BASE[x.group],R=GRADE[g] || GRADE.n,b=sb.v[ch-1];
+  const fmt=v=>sb.k==='flask' ? r1(v*100)+'%' : sb.k==='wpn' ? String(r1(v)) : '+'+Math.round(v);
+  return sb.lab+' '+fmt(b*(1+R.lo/100))+' ~ '+fmt(b*(1+R.hi/100));
+}
+function itemBookDetail(x) {
+  const D=x.D;
+  let h=`<div class="phead"><button type="button" class="sm" data-a="ibback" data-k="${esc(x.id)}">← 목록으로</button></div><h4 id="ibdetail" tabindex="-1">${esc(D.n)}</h4><p class="mini">첫 등장 ${x.ch}챕터 · ${esc(x.type==='gear' ? IB_GEAR_GROUPS[x.group] : IB_CONS_GROUPS[x.group])}</p>`;
+  if (x.type==='gear') {
+    h+=`<p>${gradeTag(x.grade)} <span class="mini">기본 등장 등급</span></p>${D.act ? `<p><b>효과</b> ${esc(D.act)}</p>` : ''}<p class="${D.cost ? 'cost' : 'mini'}"><b>대가</b> ${esc(D.cost || '없음')}</p>`;
+    h+=`<div class="tbl"><table class="st2"><caption>${x.ch}챕터 장비 기본 수치 범위</caption><thead><tr><th scope="col">등급</th><th scope="col">범위</th></tr></thead><tbody>${Object.keys(GRADE).map(g=>`<tr><th scope="row">${esc(GRADE[g].n)}</th><td>${esc(itemBookRange(x,g,x.ch))}</td></tr>`).join('')}</tbody></table></div><p class="mini">등급별 보너스를 적용한 범위입니다. 실제 획득 수치는 범위 안에서 정해집니다. 표에 등급이 있어도 해당 등급으로 바로 등장한다는 뜻은 아닙니다.</p>`;
+    if (D.lore) h+=`<p class="lore">${esc(D.lore)}</p>`;
+  } else {
+    const use={fight:'전투 중',out:'전투 밖',any:'전투 중·밖',none:'사용 불가 · 판매용'};
+    h+=`<p class="lore">${esc(D.sit || '')}</p><h5>일반 효과</h5><p>${esc(D.d(D.v))}</p>${D.vm!=null ? `<h5>고급 효과</h5><p>${esc(D.d(D.vm))}</p>` : '<p class="mini">고급 효과가 따로 없는 소모품입니다.</p>'}<dl class="rcfacts"><div><dt>사용</dt><dd>${esc(use[D.use] || D.use)}</dd></div><div><dt>대상</dt><dd>${D.tgt==='enemy' ? '선택한 적 한 명' : '효과 설명 참조'}</dd></div><div><dt>한 칸 최대</dt><dd>${D.max}개</dd></div><div><dt>판매 가격</dt><dd>${consSell({id:x.id,g:'n'})}골드${D.vm!=null ? ' · 고급 '+consSell({id:x.id,g:'m'})+'골드' : ''}</dd></div></dl>`;
+    if (D.use==='fight' || D.use==='any') h+=`<p class="mini">전투 중에는 행동 칸을 쓰지 않습니다. 기본 사용 한도는 내 차례마다 ${CONS_TURN}개입니다. 대상·상태·보스 제외 조건은 효과 설명을 따릅니다.</p>`;
+  }
+  return h;
+}
+function itemBookResults(S) {
+  const rows=itemBookRows(S),pages=Math.max(1,Math.ceil(rows.length/IB_SIZE));
+  S.page=Math.max(0,Math.min(pages-1,S.page || 0));
+  const page=rows.slice(S.page*IB_SIZE,(S.page+1)*IB_SIZE);
+  return `<p class="mini" role="status" aria-live="polite">${rows.length}종 · ${S.page+1}/${pages}페이지</p><div class="ibgrid">${page.map(x=>`<button type="button" class="ibcard" data-a="ibopen" data-k="${esc(x.id)}"><b class="${x.type==='gear' ? 'gr-'+x.grade : ''}">${x.type==='cons' ? `<span aria-hidden="true">${x.D.ico}</span> ` : ''}${esc(x.D.n)}</b><small>${x.ch}챕터 · ${esc(x.type==='gear' ? IB_GEAR_GROUPS[x.group]+' · '+GRADE[x.grade].n : IB_CONS_GROUPS[x.group])}</small><span>${esc(x.type==='gear' ? x.D.act || '기본 수치 장비' : x.D.sit || x.D.d(x.D.v))}</span>${x.type==='gear' && x.D.cost ? `<small class="cost">대가: ${esc(x.D.cost)}</small>` : ''}</button>`).join('')}</div>${rows.length ? `<nav class="ibpages" aria-label="아이템 도감 페이지"><button type="button" class="sm" data-a="ibpage" data-k="-1"${S.page===0?' disabled':''}>이전</button><span>${S.page+1} / ${pages}</span><button type="button" class="sm" data-a="ibpage" data-k="1"${S.page>=pages-1?' disabled':''}>다음</button></nav>` : '<p>조건에 맞는 아이템이 없습니다.</p><button type="button" class="sm" data-a="ibreset">검색·필터 초기화</button>'}`;
+}
+function vItemBook() {
+  const S=G.sheet.data;
+  if (S.selected) { const x=itemBookEntries(S.type).find(x=>x.id===S.selected); if(x)return itemBookDetail(x);S.selected=null; }
+  const select=(key,label,opts)=>`<label>${label}<select data-ibfilter="${key}">${Object.entries(opts).map(([v,n])=>`<option value="${v}"${S[key]===v?' selected':''}>${esc(n)}</option>`).join('')}</select></label>`;
+  return `<p class="mini">장비와 소모품의 현재 효과를 찾아봅니다. 아직 얻지 않은 아이템도 볼 수 있으며, 도감 열람으로 아이템을 얻지는 않습니다.</p><div class="wrap" role="group" aria-label="아이템 종류">${[['gear','장비'],['cons','소모품']].map(([k,n])=>`<button type="button" class="chip${S.type===k?' on':''}" data-a="ibtype" data-k="${k}" aria-pressed="${S.type===k}">${n}</button>`).join('')}</div><label for="ibquery">이름·효과 검색</label><input type="search" id="ibquery" maxlength="80" value="${esc(S.q || '')}" placeholder="흡혈, 생명력, 보스 제외…"><div class="ibfilters">${select('ch','첫 등장 챕터',{all:'모든 챕터',1:'1챕터',2:'2챕터',3:'3챕터'})}${select('group',S.type==='gear'?'부위':'용도',S.type==='gear'?IB_GEAR_GROUPS:IB_CONS_GROUPS)}${select('grade',S.type==='gear'?'기본 등장 등급':'효과 등급',Object.assign({all:'모든 등급'},S.type==='cons'?{n:'일반',m:'고급 있음'}:Object.fromEntries(Object.entries(GRADE).map(([k,v])=>[k,v.n]))))}</div><div id="ibresults">${itemBookResults(S)}</div>`;
+}
+function itemBookRefresh() {
+  if (!G.sheet || G.sheet.kind!=='itembook') return;
+  const el=document.getElementById('ibresults');if(el)el.innerHTML=itemBookResults(G.sheet.data);
+}
+function itemBookInput(el) {
+  if (!G.sheet || G.sheet.kind!=='itembook') return;
+  G.sheet.data.q=el.value.slice(0,80);G.sheet.data.page=0;itemBookRefresh();
+}
+function itemBookFilter(el) {
+  if (!G.sheet || G.sheet.kind!=='itembook') return;
+  const S=G.sheet.data;S[el.dataset.ibfilter]=el.value;S.page=0;itemBookRefresh();
+}
+function itemBookClick(a,el) {
+  if (!G.sheet || G.sheet.kind!=='itembook') return;
+  const S=G.sheet.data;
+  if (a==='ibopen') S.selected=el.dataset.k;
+  if (a==='ibback') S.selected=null;
+  if (a==='ibpage') S.page+=(+el.dataset.k || 0);
+  if (a==='ibtype') Object.assign(S,{type:el.dataset.k==='cons'?'cons':'gear',group:'all',grade:'all',page:0,selected:null});
+  if (a==='ibreset') Object.assign(S,{q:'',ch:'all',group:'all',grade:'all',page:0,selected:null});
+  render();
+  setTimeout(()=>{const target=a==='ibopen'?document.getElementById('ibdetail'):a==='ibback'?document.querySelector('.ibcard[data-k="'+el.dataset.k+'"]'):a==='ibpage'?document.querySelector('.ibpages [data-k="'+el.dataset.k+'"]'):document.getElementById('ibquery');if(target)target.focus();},0);
+}

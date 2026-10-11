@@ -10,7 +10,7 @@ function menuItems() {
   if (inRun) it.push(['awkview', '✨', '각인 ' + (G.run.awk || []).length]);
   if (runLive() && !G.creating && G.run.tree && G.scr !== 'tree' && G.scr !== 'tut') it.push(['tree', '🌳', '스킬 트리' + (G.run.tree.pts ? ' <span class="newdot"><span class="sr">남은 포인트 </span>' + G.run.tree.pts + '</span>' : '')]);
   if (!inRun && !G.creating && G.scr !== 'tut' && G.scr !== 'tutoffer') it.push(['tut', '🎯', '수련장' + (G.data.tutDone ? ' ✓' : '')]);
-  it.push(['codex', '📖', '보스 도감'], ['rank', '🏆', '랭킹'], ['records', '📜', '기록'], ['changes', '📰', '업데이트' + (G.data.seenVer !== CHANGE_VER ? ' <span class="newdot"><span aria-hidden="true">새</span><span class="sr">새 소식</span></span>' : '')], ['help', '❔', '도움말'], ['settings', '⚙️', '설정']);
+  it.push(['codex', '📖', '보스 도감'], ['itembook', '📚', '아이템 도감'], ['rank', '🏆', '랭킹'], ['records', '📜', '기록'], ['changes', '📰', '업데이트' + (G.data.seenVer !== CHANGE_VER ? ' <span class="newdot"><span aria-hidden="true">새</span><span class="sr">새 소식</span></span>' : '')], ['help', '❔', '도움말'], ['settings', '⚙️', '설정']);
   if (G.site && G.conn === 'ok' && G.acct) it.push(G.acct.anon ? ['login', '🔑', '구글 로그인', 'google'] : ['logout', '🚪', '로그아웃']);
   if (G.toastLog && G.toastLog.length) it.push(['toasts', '🔔', '지난 알림']);
   if (G.owner || G.adminLink) it.push(['admin', '🛠️', '관리자']);

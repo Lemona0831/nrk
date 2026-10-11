@@ -191,6 +191,8 @@ function sheetParts(S) {
     body = `<p class="mini">고른 장비는 사라지고, 한 등급 위의 장비 하나를 받습니다(희귀는 다시 희귀, 영웅 · 전설은 영웅).</p><div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${inm(x.tpl, x.g)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${baseText(x)}</small></div><button class="sm" data-a="offerpick" data-k="${u}"${x.locked ? ' disabled' : ''}>${x.locked ? '잠김' : '바친다'}</button></div>`; }).join('')}</div>`;
   } else if (S.kind === 'codex') {
     title = '보스 도감'; body = vCodex(); /* 78-records-ui.js */
+  } else if (S.kind === 'itembook') {
+    title = '아이템 도감'; body = vItemBook();
   } else if (S.kind === 'toasts') {
     const L = (G.toastLog || []).slice().reverse(); const hm = t => { const d = new Date(t); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
     title = '지난 알림'; body = `<p class="mini">이번 접속에서 뜬 알림 가운데 최근 ${L.length}개입니다. 위가 가장 최근입니다.</p><ul class="tlog">${L.map(x => `<li><span class="mini">${hm(x.at)}</span> ${esc(x.m)}</li>`).join('')}</ul>`;
