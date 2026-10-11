@@ -17,7 +17,7 @@ const G = {
 /* ---------- 저장 ---------- */
 function blankData() { return { v: VERSION, runs: [], scen: {}, final: null, prog: {}, audio: { on: false } }; } /* 10월 7일: 소리는 꺼진 채 시작한다(첫 입력에 음악이 저절로 나지 않게) */
 function loadLocal() { try { const s = localStorage.getItem(SKEY); if (s) return JSON.parse(s); } catch (e) { } return blankData(); }
-function saveLocal() { try { localStorage.setItem(SKEY, JSON.stringify(G.data)); return true; } catch (e) { return false; } }
+function saveLocal() { try { cloudTrack(); localStorage.setItem(SKEY, JSON.stringify(G.data)); cloudSchedule(); return true; } catch (e) { return false; } }
 /* 결과 보기에서 누구 기록인지 바로 알 수 있게, 기록마다 닉네임과 로그인 방식을 함께 남긴다 */
 function testerMeta() { const m = { v: VERSION, updatedAt: Date.now(), runs: G.data.runs.length, name: G.data.name || '', login: G.acct && !G.acct.anon ? G.acct.provider : '' }; if (G.data.unl) m.unl62 = { c: G.data.unl.c || {}, open: G.data.unl.open || {} }; if (G.data.goals || G.data.markOpen || G.data.title || G.data.markBest) m.goals62 = { g: G.data.goals || { n: {}, h: {} }, markOpen: G.data.markOpen ? 1 : 0, title: G.data.title || '', mb: G.data.markBest || {} }; return m; }
 async function pushDb(path, obj) {
@@ -128,6 +128,7 @@ async function initSite(cfg) {
     G.sb = sb; G.uid = session.user.id; G.db = sbDb(sb, G.uid); G.conn = 'ok';
     accountLocal(G.uid);
     await readAcct(session.user);
+    await cloudLoad();
     await refreshAdminAuth();
   } catch (e) { G.conn = 'sitefail'; G.siteErr = (e && e.message) || String(e); }
   if (G.conn === 'ok') reviveCloud(); // 다른 브라우저에서 들어와도 저장소 기록으로 되살린다
@@ -193,6 +194,7 @@ async function socialLogin(provider, switchAcct) {
 }
 async function socialLogout() {
   if (!G.sb) return;
+  if (G.cloud && G.cloud.ready && !(await cloudFlush())) { toast('계정 세이브를 보내지 못했습니다. 인터넷 연결을 확인한 뒤 로그아웃해 주세요.'); return; }
   const r = await G.sb.auth.signOut(); if (r && r.error) { toast('로그아웃하지 못했습니다. 다시 시도해 주세요.'); return; }
   if (G.uid) { try { localStorage.setItem(SKEY + ':account:' + G.uid, JSON.stringify(G.data)); } catch (e) { } }
   const prefs = {}; for (const k of ['audio','opt','fs','rm','infoOn','numKeys','pace','hud']) if (G.data[k] != null) prefs[k] = G.data[k];
@@ -234,3 +236,112 @@ async function initCaps() {
   render();
 }
 
+
+/* 계정 세이브: 기기별 문서와 슬롯별 벡터 시계. 서로의 문서를 덮어쓰지 않는다. */
+function cloudDevice() {
+  let id = sessionStorage.getItem('nrkSaveDevice');
+  if (!id) { id = 'd' + (globalThis.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)); sessionStorage.setItem('nrkSaveDevice', id); }
+  return id;
+}
+function cloudSig(run) {
+  const s = JSON.stringify(run); let a = 2166136261, b = 5381;
+  for (let i = 0; i < s.length; i++) { a = Math.imul(a ^ s.charCodeAt(i), 16777619); b = Math.imul(b, 33) ^ s.charCodeAt(i); }
+  return s.length + ':' + (a >>> 0) + ':' + (b >>> 0);
+}
+function cloudLive() { return [G.data.cur, ...(G.data.kept || [])].filter(r => r && r.id && !runOver(r)); }
+function cloudTrack(force) {
+  const c = G.cloud; if (!c || (!c.ready && !force) || c.uid !== G.uid || G.data.accountId !== G.uid) return;
+  const meta = G.data.saveCloud = G.data.saveCloud || {}; const live = new Map(cloudLive().map(r => [r.id, r]));
+  for (const id of new Set([...Object.keys(meta), ...live.keys()])) {
+    const run = live.get(id); const sig = run ? cloudSig(run) : 'deleted'; const old = meta[id];
+    if (old && old.sig === sig) continue;
+    const clock = Object.assign({}, old && old.clock); clock[c.device] = (clock[c.device] || 0) + 1;
+    meta[id] = { clock, sig, at: Date.now() }; c.dirty = true; G.saveSync = '계정 세이브 저장 대기 중…';
+  }
+}
+function cloudSchedule() {
+  const c = G.cloud; if (!c || !c.ready || !c.dirty) return;
+  clearTimeout(c.timer); c.timer = setTimeout(() => cloudFlush(), 1000);
+}
+function cloudSnapshot() {
+  const live = new Map(cloudLive().map(r => [r.id, r]));
+  return { v: 1, active: G.data.cur && G.data.cur.id, slots: Object.entries(G.data.saveCloud || {}).map(([id,m]) => ({ id, clock: m.clock, at: m.at, run: live.has(id) ? clone(live.get(id)) : null })) };
+}
+function cloudDominates(a, b) {
+  return Object.keys(b || {}).every(k => (a[k] || 0) >= b[k]) && Object.keys(a || {}).some(k => (a[k] || 0) > (b[k] || 0));
+}
+function cloudHeads(entries) {
+  const unique = [];
+  for (const e of entries) if (!unique.some(x => JSON.stringify(Object.entries(x.clock).sort()) === JSON.stringify(Object.entries(e.clock).sort()))) unique.push(e);
+  return unique.filter(e => !unique.some(o => o !== e && cloudDominates(o.clock, e.clock)));
+}
+async function cloudFlush() {
+  const c = G.cloud; if (!c || !c.ready || c.uid !== G.uid) return true;
+  cloudTrack(); if (c.writing) { await c.writing; return c.dirty ? cloudFlush() : !c.error; }
+  if (!c.dirty) return !c.error;
+  clearTimeout(c.timer); const snapshot = cloudSnapshot(); c.dirty = false;
+  c.writing = (async () => {
+    try {
+      await G.db.doc('playtest/' + c.uid + '/saves62/' + c.device).set(snapshot);
+      c.error = ''; G.saveSync = '계정 세이브 저장 완료'; return true;
+    } catch (e) { c.dirty = true; c.error = '계정 세이브를 보내지 못했습니다. 이 기기의 저장본은 유지됩니다.'; G.saveSync = c.error; return false; }
+  })();
+  const ok = await c.writing; c.writing = null;
+  if (ok && c.dirty) cloudSchedule();
+  if (G.scr === 'title') render(); return ok;
+}
+async function cloudLoad() {
+  if (!G.db || !G.acct || G.acct.anon || G.conn !== 'ok') return;
+  if (G.cloud && G.cloud.loading) return;
+  if (G.cloud && G.cloud.writing) await G.cloud.writing;
+  const c = G.cloud = { uid: G.uid, device: cloudDevice(), ready: false, dirty: false, loading: true };
+  G.saveSync = '계정 세이브 연결 중…'; render();
+  cloudTrack(true); // 오프라인 중 변경된 로컬 저장본도 별도 가지로 보존한다.
+  try {
+    let timer;
+    const read = Promise.all([G.db.collection('playtest/' + c.uid + '/saves62').get(), G.db.collection('playtest/' + c.uid + '/' + COL.runs).get()]);
+    const [ss, rs] = await Promise.race([read, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('세이브 연결 시간 초과')), 15000); })]).finally(() => clearTimeout(timer));
+    cloudTrack(true);
+    const local = cloudSnapshot(), by = new Map();
+    for (const doc of [...ss.docs.map(d => d.data()), local]) {
+      if (!doc || doc.v !== 1 || !Array.isArray(doc.slots)) continue;
+      for (const e of doc.slots) if (e && e.id && e.clock && (!e.run || (e.run.id === e.id && BUILDS[e.run.build]))) {
+        if (!by.has(e.id)) by.set(e.id, []); by.get(e.id).push(e);
+      }
+    }
+    const chosen = [];
+    for (const [id, entries] of by) {
+      const heads = cloudHeads(entries); let pick = heads[0];
+      if (heads.length > 1) {
+        // 선택 전에 양쪽 원본을 서버에 따로 보관한다. 백업 실패 시 선택·반영을 진행하지 않는다.
+        await G.db.doc('playtest/' + c.uid + '/saveBackups62/' + c.device + '-' + Date.now() + '-' + chosen.length).set({ id, versions: heads });
+        const mine = local.slots.find(e => e.id === id);
+        pick = heads.find(e => mine && JSON.stringify(e.clock) === JSON.stringify(mine.clock)) || heads[0];
+        for (const other of heads.filter(e => e !== pick)) {
+          const label = e => e.run ? (e.run.cname || '캐릭터') + ' · Lv ' + (e.run.lv || 1) + ' · ' + (e.run.ch || 1) + '챕터 · 방 ' + (e.run.room || 0) : '삭제된 세이브';
+          if (confirm('같은 캐릭터를 여러 기기에서 진행했습니다.\n현재 선택: ' + label(pick) + '\n다른 저장본: ' + label(other) + '\n\n확인: 다른 저장본으로 변경\n취소: 현재 선택 유지\n양쪽 원본은 계정에 백업됩니다.')) pick = other;
+        }
+        const clock = {}; for (const h of heads) for (const [k,v] of Object.entries(h.clock)) clock[k] = Math.max(clock[k] || 0, v);
+        clock[c.device] = (clock[c.device] || 0) + 1; pick = Object.assign({}, pick, {clock, at: Date.now()});
+      }
+      if (pick) chosen.push(pick);
+    }
+    const live = chosen.filter(e => e.run && !runOver(e.run));
+    const activeId = G.data.cur && G.data.cur.id || ss.docs.map(d => d.data()).find(d => d && d.active)?.active;
+    const active = live.find(e => e.id === activeId) || live[0];
+    G.data.cur = active ? clone(active.run) : undefined;
+    G.data.kept = live.filter(e => e !== active).map(e => clone(e.run));
+    G.data.saveCloud = Object.fromEntries(chosen.map(e => [e.id, { clock: e.clock, sig: e.run && !runOver(e.run) ? cloudSig(e.run) : 'deleted', at: e.at }]));
+    const runs = new Map((G.data.runs || []).map(r => [r.id, r]));
+    for (const doc of rs.docs) { const r = doc.data(); const old = runs.get(r.id); if (r.id && (!old || (r.updatedAt || 0) > (old.updatedAt || 0))) runs.set(r.id, Object.assign({}, r, old && old.acts ? {acts:old.acts} : {})); }
+    G.data.runs = [...runs.values()];
+    c.ready = true; c.dirty = true; G.saveSync = '계정 세이브를 불러왔습니다';
+    // 초기 접속 중 화면에서 캐릭터를 이미 연 경우, 반영된 저장본을 타이틀에서 다시 선택한다.
+    if (G.run && !G.creating) { G.run = null; G.b = null; G.scr = 'title'; G.sheet = null; }
+    saveLocal(); await cloudFlush();
+  } catch (e) {
+    c.ready = false; G.saveSync = '계정 세이브를 불러오지 못했습니다. 이 기기의 저장본으로 플레이하며, 새로고침하면 다시 연결합니다.';
+    saveLocal(); // 불러오기 실패 때는 서버로 빈 저장본을 올리지 않는다.
+  }
+  c.loading = false;
+}

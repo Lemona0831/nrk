@@ -2,6 +2,7 @@
 function onClick(ev) {
   const el = ev.target.closest('[data-a]'); if (!el) return;
   const a = el.dataset.a;
+  if (G.cloud && G.cloud.loading && !['menu', 'help', 'changes', 'settings', 'sndtoggle', 'close', 'closebg'].includes(a)) { toast('계정 세이브를 불러오는 중입니다. 잠시 기다려 주세요.'); return; }
   if (G.hudEd) { hudEdClick(a, el); return; } /* 화면에서 편집하는 동안은 편집 단추만 일한다(전투는 멈춤) */
   if (G.menuOpen && !ev.target.closest('.hdr')) { G.menuOpen = false; render(); if (a === 'closebg') return; } // 펼친 메뉴 밖을 누르면 닫는다
   if (el.closest('.mnav')) G.menuOpen = false;
@@ -232,6 +233,7 @@ function onClick(ev) {
     }
     case 'resume': resumeRun(); break;
     case 'admingo': { const pw = val('adminpass'); if (!G.sb) { G.adminMsg = '저장소에 연결된 뒤에 다시 해 주세요'; render(); break; } G.sb.rpc('admin_check', { pass: pw }).then(({ data: ok, error }) => { if (ok && !error) { G.owner = true; G.adminPass = pw; G.data.adminPass = pw; G.adminMsg = ''; saveLocal(); toast('관리자로 열었습니다'); loadDash(); } else { G.adminMsg = '암호가 맞지 않습니다'; render(); } }); break; }
+    case 'cloudrefresh': if (!G.cloudLoading) { G.cloudLoading = true; cloudLoad().finally(() => { G.cloudLoading = false; render(); }); } break;
     case 'changes': G.data.seenVer = CHANGE_VER; saveLocal(); openSheet('changes', {}); break;
     case 'code': openSheet('code', {}); break;
     case 'codeshare': { const tb = document.getElementById('codebox'); const txt = tb ? tb.value : ''; navigator.share({ title: '나락의 유산 기록', text: txt }).then(() => toast('보냈습니다'), () => {}); break; }
