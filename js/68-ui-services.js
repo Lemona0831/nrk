@@ -7,7 +7,9 @@ function closeSheet() { G.sheet = null; render(); }
 function openBlock(retry) { openSheet('block', { retry: !!retry }); }
 function giveItem(it, then) {
   const run = G.run;
-  if (!addItem(run, it)) { openSheet('bagfull', { item: it, then: then || 'drop' }); return; }
+  if (!addItem(run, it)) { run.gearPending = { item: it, then: then || 'drop' }; saveRunLocal(); saveCur(); openSheet('bagfull', run.gearPending); return; }
+  if (run.gearPending && run.gearPending.then === 'boss' && run.settle && run.settle.loot) run.settle.loot.pending = 0;
+  delete run.gearPending;
   saveRunLocal(); saveCur();
   if (then === 'equip') { equipUid(run, it.uid, null, 'block'); saveRunLocal(); saveCur(); return; }
   openSheet('drop', { uid: it.uid });

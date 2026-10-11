@@ -7,7 +7,7 @@ function onClick(ev) {
   if (el.closest('.mnav')) G.menuOpen = false;
   playTick();
   if (el.getAttribute && el.getAttribute('aria-disabled') === 'true' && el.dataset && el.dataset.why) { toast(el.dataset.why); return; } /* 10월 7일 2차: 상점 등 쓸 수 없는 버튼의 이유 */
-  if (a === 'closebg') { if (ev.target !== el) return; if (G.sheet && !['block', 'stats', 'choice', 'awk'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } return; }
+  if (a === 'closebg') { if (ev.target !== el) return; if (G.sheet && !['block', 'stats', 'choice', 'awk', 'bagfull'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } return; }
   switch (a) {
     case 'cpkeep': case 'cpskip': case 'cpreplace': {
       const run=G.run;
@@ -59,7 +59,7 @@ function onClick(ev) {
     case 'cmode': { if (el.dataset.k === 'hard' && !G.data.hardOpen) { toast('1챕터 보스를 한 번 이기면 열립니다'); break; } G.cre = G.cre || {}; G.cre.mode = el.dataset.k; render(); break; }
     case 'start': startRun(el.dataset.b); window.scrollTo(0, 0); break;
     case 'unlall': G.data.unlAll = G.data.unlAll ? 0 : 1; saveLocal(); render(); break;
-    case 'settleok': { unlNewsSeen(); const run = G.run, p = run.p, S = run.settle; if (!S || run.phase !== 'settle') break;
+    case 'settleok': { unlNewsSeen(); const run = G.run, p = run.p, S = run.settle; if (!S || run.phase !== 'settle') break; if(run.gearPending){nextDrop();break;}
       if (run.markCh) { markFinish(run); break; } // 표식 도전은 보스에서 끝난다
       run.gold = S.total; p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax; for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = flaskCap(p, fk); sfx('coin');
       genShop(run); run.phase = 'shop'; G.scr = 'shop'; if ((run.ch || 1) >= AWK.settleFrom && CHAPTERS[(run.ch || 1) + 1]) awkGrant(run); saveRunLocal(); saveCur(); window.scrollTo(0, 0);
@@ -261,7 +261,15 @@ function onClick(ev) {
     }
     case 'dropequip': { const run = G.run; const before = growthSnapshot(run.p); const msg = equipUid(run, el.dataset.k, el.dataset.s, 'free'); G.sheet = null; saveRunLocal(); saveCur(); toast(msg || growthText(before, run.p, '장비 교체')); nextDrop(); break; }
     case 'bfdrop': { const run = G.run; const S = G.sheet; const why=discardUid(run, el.dataset.k);if(why){toast(why);break;} const it = S.data.item, then = S.data.then; G.sheet = null; giveItem(it, then); break; }
-    case 'bfskip': { const run = G.run; const S = G.sheet; (run.discards = run.discards || []).push({ room: run.room, item: S.data.item.tpl, g: S.data.item.g, t: Date.now(), new: 1 }); G.sheet = null; saveRunLocal(); saveCur(); nextDrop(); break; }
+    case 'bfequip': {
+      const run=G.run,S=G.sheet;if(!run || !S || S.kind!=='bagfull' || (G.b&&!G.b.over))break;
+      const it=S.data.item,slot=el.dataset.s,why=rewardEquipWhy(run,it,slot);if(why){toast(why);break;}
+      const old=run.inv[run.eqU[slot]];
+      if(old && bagUsed(run)>=BAG_MAX && !ask(ITEMS[old.tpl].n+'을(를) 버리고 '+ITEMS[it.tpl].n+'을(를) 장착할까요? 버린 장비는 사라집니다.'))break;
+      const before=growthSnapshot(run.p),msg=equipReward(run,it,slot);if(msg){toast(msg);break;}
+      if(S.data.then==='boss' && run.settle && run.settle.loot)run.settle.loot.pending=0;delete run.gearPending;G.sheet=null;saveRunLocal();saveCur();toast(growthText(before,run.p,'장비 교체'));nextDrop();break;
+    }
+    case 'bfskip': { const run = G.run; const S = G.sheet; if(!ask(ITEMS[S.data.item.tpl].n+'을(를) 두고 갈까요? 이 장비는 사라집니다.'))break; (run.discards = run.discards || []).push({ room: run.room, item: S.data.item.tpl, g: S.data.item.g, t: Date.now(), new: 1 }); if(S.data.then==='boss' && run.settle && run.settle.loot){run.settle.loot.pending=0;run.settle.loot.lost=1;} delete run.gearPending; G.sheet = null; saveRunLocal(); saveCur(); nextDrop(); break; }
     case 'eqsel': {const it=G.run.inv[G.run.eqU[el.dataset.k]];if(it){it.fresh=false;saveRunLocal();saveCur();}} G.eqSel = { slot: el.dataset.k }; G.eqFilter='slot'; render(); eqReveal(); break;
     case 'eqpick': { const u = el.dataset.k,it=G.run.inv[u];if(!it)break;it.fresh=false;saveRunLocal();saveCur();const kind=tplKind(it.tpl),prev=(G.eqSel||{}).slot,slot=kind==='ring'?(kindOf(prev)==='ring'?prev:'ring1'):kind; G.eqSel = G.eqSel && G.eqSel.uid === u ? { slot } : { slot, uid: u }; render(); eqReveal(); break; }
     case 'eqon': { const run = G.run; const before = growthSnapshot(run.p); const msg = equipUid(run, el.dataset.k, el.dataset.s, 'free'); if (!msg) { G.eqSel = { slot: el.dataset.s }; saveRunLocal(); saveCur(); toast(growthText(before, run.p, '장비 교체')); } else toast(msg); render(); if(!msg)eqBagReveal(); break; }
@@ -293,5 +301,5 @@ function onKey(ev) {
     if (/^[qwe]$/i.test(ev.key) && G.data.numKeys !== false && !ev.ctrlKey && !ev.metaKey && !ev.altKey && !G.busy && !G.b.over) { const btn = document.querySelector('.qc[data-q="' + ({ q: 1, w: 2, e: 3 })[ev.key.toLowerCase()] + '"]'); if (btn) { ev.preventDefault(); btn.click(); } return; } /* 소모품 바로 쓰기 */
     if (/^[1-9]$/.test(ev.key) && G.data.numKeys !== false && !ev.ctrlKey && !ev.metaKey && !ev.altKey && !G.busy && !G.b.over) { const btn = document.querySelector('.ab[data-k="' + ev.key + '"]'); if (btn) { ev.preventDefault(); if (btn.getAttribute('aria-disabled') !== 'true') { hidePop(); doAct(btn.dataset.id, btn.dataset.t || null); } else showPop(btn, true); } return; } /* 10월 7일: 설정에서 끌 수 있고, 쓸 수 없는 행동이면 이유를 보인다 */
   }
-  if (ev.key !== 'Escape') return; if (POP.cur || (POP.el && POP.el.style.display === 'block')) { hidePop(); return; } /* Esc는 설명 창부터 닫는다 */ if (typing) { ev.target.blur(); return; } /* 입력칸에서는 칸만 벗어난다 */ if (G.menuOpen) { G.menuOpen = false; render(); return; } if (G.logOpen) { G.logOpen = false; render(); return; } /* 휴대폰 기록 창 */ if (G.scr === 'create' && !(G.sheet && !G.sheet.data.first)) { if (ask('캐릭터 만들기를 그만둘까요? 고른 것은 남지 않습니다.')) cancelCreate(); return; } /* 10월 8일: 묻지 않고 그만두던 것 */ if (G.sheet && !['block', 'stats', 'choice', 'awk'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } else if (G.logOpen) { G.logOpen = false; render(); } }
+  if (ev.key !== 'Escape') return; if (POP.cur || (POP.el && POP.el.style.display === 'block')) { hidePop(); return; } /* Esc는 설명 창부터 닫는다 */ if (typing) { ev.target.blur(); return; } /* 입력칸에서는 칸만 벗어난다 */ if (G.menuOpen) { G.menuOpen = false; render(); return; } if (G.logOpen) { G.logOpen = false; render(); return; } /* 휴대폰 기록 창 */ if (G.scr === 'create' && !(G.sheet && !G.sheet.data.first)) { if (ask('캐릭터 만들기를 그만둘까요? 고른 것은 남지 않습니다.')) cancelCreate(); return; } /* 10월 8일: 묻지 않고 그만두던 것 */ if (G.sheet && !['block', 'stats', 'choice', 'awk', 'bagfull'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } else if (G.logOpen) { G.logOpen = false; render(); } }
 

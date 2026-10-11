@@ -140,10 +140,10 @@ function dropKey(run, g, not) {
   return k;
 }
 /* 챕터 보스를 이기면 장비 하나 (표가 있는 챕터만, 정산 화면에 보인다) */
-function bossLoot(run) { if (!DROP_G[run.ch || 1]) return null; const it = mkItem(dropKey(run, rollGradeCh(run.ch, 'boss'))); it.g = ITEMS[it.tpl].g || 'n'; if (!addItem(run, it)) return { tpl: it.tpl, g: it.g, lost: 1 }; run.drops.push({ room: run.room, item: it.tpl, g: it.g, b: it.b, boss: 1, ch: run.ch || 1 }); return { tpl: it.tpl, g: it.g }; }
+function bossLoot(run) { if (!DROP_G[run.ch || 1]) return null; const it = mkItem(dropKey(run, rollGradeCh(run.ch, 'boss'))); it.g = ITEMS[it.tpl].g || 'n'; if (!addItem(run, it)) { run.gearPending = { item: it, then: 'boss' }; return { tpl: it.tpl, g: it.g, pending: 1 }; } run.drops.push({ room: run.room, item: it.tpl, g: it.g, b: it.b, boss: 1, ch: run.ch || 1 }); return { tpl: it.tpl, g: it.g }; }
 function queueDrops(list) { G.dropQ = (G.dropQ || []).concat(list); nextDrop(); }
 function nextDrop() {
-  const run = G.run; if (G.winSumShown) { G.winSum = null; G.winSumShown = false; }
+  const run = G.run; if (run && run.gearPending) { openSheet('bagfull', run.gearPending); return; } if (G.winSumShown) { G.winSum = null; G.winSumShown = false; }
   if (run && (run.consPending || []).length) { saveRunLocal(); saveCur(); openSheet('consfull'); return; }
   if (!run || !G.dropQ || !G.dropQ.length) { G.winSum = null; render(); return; }
   const it = G.dropQ.shift(); if (it.chest) { openSheet('choice', { offer: it.chest, room: it.room, chest: 1 }); if (G.winSum) G.winSumShown = true; return; } run.drops.push({ room: run.room, item: it.tpl, g: it.g, b: it.b, ch: run.ch || 1 }); giveItem(it); if (G.winSum) G.winSumShown = true;
@@ -232,7 +232,7 @@ function battleContinue() {
   endBattleCarry(run.p);
   G.b = null;
   if (b.over === 'flee') { saveRunLocal(); saveCur(); toast('방 밖으로 물러났습니다. 이 방을 이겨야 앞으로 갈 수 있습니다'); render(); return; }
-  if (R.boss && b.over === 'win') { grantDrops(run, b); const up = gainXp(run, Math.round(b.xp || 0)); if (up) run.statPending = (run.statPending || 0) + LV_POINTS * up; run.clears = (run.clears || 0) + 1; G.data.hardOpen = 1; run.result = 'win'; /* 0.6a.2: 챕터 돌파 포인트 2는 없앴다(레벨마다 1점, Lv10에 10점) */ run.rooms.push({ room: run.room, type: 'boss', res: 'win' }); if (run.markCh) markWin(run); else run.goalNews = goalsRecord(run); const bl = bossLoot(run); startSettle(run); if (bl) run.settle.loot = bl; G.scr = 'settle'; saveRunLocal(); saveCur(); pushRank(run, 'clear'); render(); return; } // 정산부터는 이어 하기가 정산 화면으로 돌아온다(보스를 다시 싸우지 않는다)
+  if (R.boss && b.over === 'win') { grantDrops(run, b); const up = gainXp(run, Math.round(b.xp || 0)); if (up) run.statPending = (run.statPending || 0) + LV_POINTS * up; run.clears = (run.clears || 0) + 1; G.data.hardOpen = 1; run.result = 'win'; /* 0.6a.2: 챕터 돌파 포인트 2는 없앴다(레벨마다 1점, Lv10에 10점) */ run.rooms.push({ room: run.room, type: 'boss', res: 'win' }); if (run.markCh) markWin(run); else run.goalNews = goalsRecord(run); const bl = bossLoot(run); startSettle(run); if (bl) run.settle.loot = bl; G.scr = 'settle'; saveRunLocal(); saveCur(); pushRank(run, 'clear'); nextDrop(); return; } // 정산부터는 이어 하기가 정산 화면으로 돌아온다(보스를 다시 싸우지 않는다)
   if (R.boss) { run.result = 'flee'; run.sealed = 1; clearCur(); G.scr = 'survey'; saveRunLocal(); render(); return; }
   // 승리 보상 (11.3절): 골드, 장비
   const nu = run.nextUsed || {}; run.nextUsed = null;

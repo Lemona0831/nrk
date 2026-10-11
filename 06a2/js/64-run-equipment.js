@@ -65,6 +65,34 @@ function newBadge(x) { return x && x.fresh ? '<span class="item-new"><span class
 function lockButton(it) { return `<button class="sm" data-a="eqlock" data-k="${it.uid}" aria-pressed="${!!it.locked}" aria-label="${esc(ITEMS[it.tpl].n)} ${it.locked ? '잠금 해제' : '잠금'}">${it.locked ? '잠금 해제' : '잠금'}</button>`; }
 function itemRemoveWhy(run, uid) { return run.inv[uid] && run.inv[uid].locked ? '잠긴 장비입니다. 먼저 잠금을 해제하세요' : ''; }
 function addItem(run, it) { if (bagUsed(run) >= BAG_MAX) return false; it.fresh = true; run.inv[it.uid] = it; run.bag.push(it.uid); return true; }
+function rewardEquipSlots(it) { const kind = tplKind(it.tpl); return kind === 'ring' ? ['ring1', 'ring2'] : [kind]; }
+function rewardEquipWhy(run, it, slot) {
+  if (!it || !rewardEquipSlots(it).includes(slot)) return '이 칸에 낄 수 없는 장비입니다';
+  if (run.inv[it.uid]) return '이미 받은 장비입니다';
+  const prev = run.eqU[slot];
+  if (prev && bagUsed(run) >= BAG_MAX && run.inv[prev].locked) return '잠긴 장비는 버릴 수 없습니다';
+  if (it.g === 'l' && EQ_SLOTS.some(sl => sl !== slot && run.inv[run.eqU[sl]]?.g === 'l')) return '전설은 하나만 낄 수 있습니다';
+  return '';
+}
+function equipReward(run, it, slot) {
+  const why = rewardEquipWhy(run, it, slot); if (why) return why;
+  const prev = run.eqU[slot], old = prev && run.inv[prev];
+  if (old) {
+    logSwap(run, old, false, 'reward');
+    if (bagUsed(run) >= BAG_MAX) {
+      (run.discards = run.discards || []).push({ room: run.room, item: old.tpl, g: old.g, t: Date.now(), replaced: 1 });
+      delete run.inv[prev];
+    } else run.bag.push(prev);
+  }
+  run.inv[it.uid] = it; run.eqU[slot] = it.uid; it.fresh = false;
+  logSwap(run, it, true, 'reward'); applyGear(run); return '';
+}
+function rewardEquipButtons(run, it) {
+  return '<div class="row">' + rewardEquipSlots(it).map(sl => {
+    const old = run.inv[run.eqU[sl]], why = rewardEquipWhy(run, it, sl);
+    return `<button class="gold" data-a="bfequip" data-s="${sl}"${why ? ' disabled' : ''}>${old && bagUsed(run) >= BAG_MAX ? '기존 장비를 버리고 교체' : '바로 장착'}${tplKind(it.tpl) === 'ring' ? ' · ' + EQ_SLOT_N[sl] : ''}</button>${why ? `<span class="mini">${esc(why)}</span>` : ''}`;
+  }).join('') + '</div><p class="mini">빈 장비 칸에는 바로 장착합니다. 가방이 가득 찬 채 교체하면 기존 장비가 사라집니다. 교체 전에 확인합니다.</p>';
+}
 /* 가방의 장비를 낀다. 그 칸에 있던 장비는 같은 자리로 가방에 들어간다(가방 칸 수는 그대로) */
 function equipUid(run, uid, slot, ctx) {
   const it = run.inv[uid]; const bi = run.bag.indexOf(uid); if (!it || bi < 0) return '가방에 없는 장비입니다';
@@ -310,4 +338,4 @@ const runLive = () => !!(G.run && !runOver(G.run));
 function curSweep() { const d = G.data; let n = 0; if (d.cur && runOver(d.cur)) { delete d.cur; n++; } if (d.kept) { const k = d.kept.filter(x => !runOver(x)); n += d.kept.length - k.length; d.kept = k; } if (n) saveLocal(); return n; }
 function saveCur() { if (!G.run || runOver(G.run)) return; try { G.data.cur = JSON.parse(JSON.stringify(G.run)); saveLocal(); } catch (e) { } }
 function clearCur() { delete G.data.cur; saveLocal(); }
-function resumeRun() { curSweep(); if (!G.data.cur) { render(); return; } dgFix(G.data.cur); if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); statFix(G.run); applyGear(G.run); if (G.run.tree && isV2(G.run.p)) { treeFix(G.run); G.run.p.skills = v2Equip(G.run); } /* 0.6a.2: 시작 스킬이 생기기 전 저장본도 시작 스킬을 끼운다 */ G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); awkOpen(); }
+function resumeRun() { curSweep(); if (!G.data.cur) { render(); return; } dgFix(G.data.cur); if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); statFix(G.run); applyGear(G.run); if (G.run.tree && isV2(G.run.p)) { treeFix(G.run); G.run.p.skills = v2Equip(G.run); } /* 0.6a.2: 시작 스킬이 생기기 전 저장본도 시작 스킬을 끼운다 */ G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); if(G.run.gearPending)nextDrop();else awkOpen(); }

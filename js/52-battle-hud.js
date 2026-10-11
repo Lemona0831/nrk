@@ -192,7 +192,7 @@ function vHudField(b, hud, pops) {
     if (e.hymn) fl.push(['<span class="nr gd" data-info="ehymn">🎵' + e.hymn + '</span>', '노래 ' + e.hymn + '겹']);
     if (e.demand && e.demand.turn === b.turnIdx) fl.push(['<span class="nr gd hv" data-info="edemand">' + (e.demand.k === 'rest' ? '🤲 고해' : '⚖️ 심문') + '</span>', e.demand.k === 'rest' ? '고해' : '심문']);
     if (e.loot) fl.push(['<span class="nr gd" data-info="eloot">🫳</span>', '훔친 것: ' + e.loot.n]);
-    if (e.pile) fl.push(['<span class="nr gd hv">🦴 ' + e.pile.wait + '</span>', '뼈 더미, 일어서기까지 ' + e.pile.wait + '라운드']);
+    if (e.pile) fl.push(['<span class="nr gd hv" data-info="epile:' + e.id + '">🦴 ' + e.pile.wait + '</span>', '뼈 더미, 일어서기까지 ' + e.pile.wait + '라운드']);
     if (e.under) fl.push(isCh3(b) ? ['<span class="nr gd">🏜️ 모래 속</span>', '모래 속: 한 적 대상으로 고를 수 없음'] : ['<span class="nr gd">🕳️ 땅속</span>', '땅속: 한 적 대상으로 고를 수 없음']);
     if (e.swift) fl.push(['<span class="nr gd">⚡신속</span>', '신속: 라운드마다 가속 1']);
     if (e.role === 'bonewall') fl.push(['<span class="nr gd">🧱 후열 보호</span>', '뼈벽: 후열이 받는 한 적 대상 피해 절반, 붕괴에 약함']);
