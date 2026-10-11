@@ -181,8 +181,8 @@ function sheetParts(S) {
     title = '각인을 얻을 때입니다'; const offer = run.awkOffer || [];
     body = `<p class="mini">셋 가운데 하나를 고릅니다. 던전이 끝나면 소멸되고 대가는 없습니다. 같은 각인은 한 번만 얻습니다. 지금까지 ${(run.awk || []).length}개를 얻었습니다.</p><div class="awklist">${offer.map(id => awkCard(id, `<button class="gold" data-a="awkpick" data-k="${id}">이것을 새긴다</button>`)).join('')}</div>`;
   } else if (S.kind === 'awkview') {
-    title = '얻은 각인'; const own = run && run.awk || [];
-    body = `<p class="mini">던전이 끝나면 소멸되는 작은 힘입니다. 정산을 확정한 뒤와 2챕터부터의 야영지에서 하나씩 얻습니다. 대가는 없습니다.</p><div class="awklist">${own.length ? own.map(id => awkCard(id)).join('') : '<p class="mini">아직 얻은 각인이 없습니다.</p>'}</div>`;
+    title = '적용 중인 각인'; const own = run && run.awk || [];
+    body = `<p class="mini">던전이 끝나면 소멸되는 작은 힘입니다. 정산을 확정한 뒤와 2챕터부터의 야영지에서 하나씩 얻습니다. 대가는 없습니다.</p><div class="awklist">${own.length ? own.map(id => awkCard(id)).join('') : '<p class="mini">아직 얻은 각인이 없습니다.</p>'}</div>${S.data && S.data.from === 'equip' ? '<button class="wide" data-a="equip">장비로 돌아가기</button>' : ''}`;
   } else if (S.kind === 'fateres') {
     const r = S.data; title = r.ok ? '저울이 기웁니다' : '저울이 기울지 않았습니다';
     body = `<p class="mini">올린 장비</p><div class="idet"><b class="gr-${r.from.g}">${inm(r.from.tpl, r.from.g)}</b></div>${r.ok ? `<p>한 단계 위 장비로 바뀌었습니다. 가방에 넣었습니다.</p>${itemDetail(r.to)}` : '<p>올린 장비는 사라졌습니다.</p>'}<button class="gold wide" data-a="close" data-focus>확인</button>`;

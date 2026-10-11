@@ -37,6 +37,12 @@ try:
   page.fill('#cname','갱신 점검');page.click('[data-a=cnok]')
   page.click('[data-a=clspick][data-k=spellblade]');page.click('button[data-a=start][data-b=spellblade]');page.click('button[data-a=skillok]')
   page.click('button[data-a=statrec]');page.click('button[data-a=statok]')
+  page.evaluate("openSheet('changes')");assert '0.7.0 최근 업데이트' in page.inner_text('.sheet') and '스태미나 회복 25 → 10' in page.inner_text('.sheet');page.click('.sheet [data-a=close]')
+  page.click('[data-a=menu]');page.click('.mnav [data-a=awkview]');assert '아직 얻은 각인이 없습니다' in page.inner_text('.sheet')
+  page.click('.sheet [data-a=close]');page.evaluate("G.run.awk=['k_sb3','a_eye'];G.run.p.awk=G.run.awk")
+  page.evaluate("openSheet('equip')");page.click('.sheet [data-a=awkview]')
+  assert '겹친 갑주' in page.inner_text('.sheet') and '벼린 눈' in page.inner_text('.sheet') and '12%' in page.inner_text('.sheet')
+  page.click('.sheet [data-a=equip]');assert page.query_selector('.eqsum');page.click('.sheet [data-a=close]')
   page.evaluate("()=>{const r=G.run;r.cons=[];while(bagUsed(r)<BAG_MAX)addItem(r,mkItem('bloodblade'));window.testOld=r.eqU.weapon;window.testItem=mkItem('bloodblade');testItem.g='h';giveItem(testItem)}")
   page.once('dialog',lambda d:d.dismiss());page.click('[data-a=bfequip][data-s=weapon]')
   assert page.evaluate('G.run.eqU.weapon===testOld && !!G.run.gearPending')
@@ -52,7 +58,6 @@ try:
   page.mouse.move(0,0);page.evaluate('G.infoOn=true');page.hover('[data-info^="epile:"]');page.wait_for_selector('#pop',state='visible',timeout=1500)
   assert '1라운드' in page.inner_text('#pop') and '석회 가루' in page.inner_text('#pop')
   assert not errors,errors
-  print('실제 브라우저: 가득 찬 가방 영웅 교체·취소·새로고침 후 보상 복원·뼈 아이콘 설명 표시 통과')
+  print('실제 브라우저: 가득 찬 가방 영웅 교체·취소·새로고침 후 보상 복원·뼈 아이콘 설명·각인 메뉴와 장비 복귀·최근 업데이트 표시 통과')
   browser.close()
 finally:server.shutdown();server.server_close()
-
