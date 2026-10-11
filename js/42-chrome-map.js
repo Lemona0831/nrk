@@ -94,7 +94,7 @@ function crossCard(id) {
 }
 function vRunMap() {
   const run = G.run, p = run.p; dgInit(run);
-  let h = vPlayerPanel(p, null) + dgBar(run);
+  let h = vPlayerPanel(p, null) + dgBar(run) + altarReceiptHtml(run);
   h += `<p class="mini recovery-stock">생명력 플라스크 ${p.flask.life || 0}/${flaskCap(p,'life')}회${p.flask.life ? '' : ' · 남은 충전 없음'}</p>`;
   const R = run.cur;
   if (!R && run.cross) {
@@ -116,7 +116,7 @@ function vRoom(run, R) {
   if (R.type === 'shrine') { const S = SHRINES.find(x => x.id === R.shrine); return h + `<h3>🕯️ ${esc(S.n)}</h3><p>${esc(S.d)} 다음 3개 방 동안 이어집니다.</p><div class="row"><button class="gold" data-a="shrine" data-k="1" data-focus>기도한다</button><button data-a="shrine" data-k="0">지나친다</button></div></section>`; }
   if (R.type === 'altar') {
     const A = ALTARS.find(x => x.id === R.altar); const gc = altarGold(run); const useC = (run.cons || []).filter(c => CONS[c.id].use !== 'none').reduce((a, c) => a + c.n, 0); const can = A.id === 'gold' ? (run.gold || 0) >= gc : A.id === 'offer' ? run.bag.length > 0 : A.id === 'bone' ? useC >= 3 : A.id === 'ash' ? (run.cons || []).filter(ashOk).reduce((a, c) => a + c.n, 0) >= 4 : true;
-    return h + `<h3>🩸 ${esc(A.n)}</h3><p>${esc(A.id === 'gold' ? A.d.replace('40', gc) : A.d)}</p>${A.id === 'gold' ? `<p class="mini">가진 골드 ${run.gold || 0}</p>` : ''}<div class="row"><button class="gold" data-a="altar" data-k="1"${can ? '' : ' disabled'} data-focus>${A.id === 'offer' ? '바칠 장비 고르기' : '거래한다'}</button><button data-a="altar" data-k="0">지나친다</button></div>${!can ? `<p class="mini">${A.id === 'gold' ? '골드가 모자랍니다.' : A.id === 'ash' ? '태울 소모품이 넷 모자랍니다.' : A.id === 'bone' ? '바칠 소모품이 셋 모자랍니다.' : '바칠 장비가 가방에 없습니다.'}</p>` : ''}</section>`;
+    return h + `<h3>🩸 ${esc(A.n)}</h3><p>${esc(A.id === 'gold' ? A.d.replace('40', gc) : A.d)}</p>${A.id === 'gold' ? `<p class="mini">가진 골드 ${run.gold || 0}</p>` : ''}${['bone','ash'].includes(A.id) && can ? `<p class="mini"><b>바칠 소모품</b>: ${altarConsCost(run,A.id).map(esc).join(', ')}</p>` : ''}<div class="row"><button class="gold" data-a="altar" data-k="1"${can ? '' : ' disabled'} data-focus>${A.id === 'offer' ? '바칠 장비 고르기' : '거래한다'}</button><button data-a="altar" data-k="0">지나친다</button></div>${!can ? `<p class="mini">${A.id === 'gold' ? '골드가 모자랍니다.' : A.id === 'ash' ? '태울 소모품이 넷 모자랍니다.' : A.id === 'bone' ? '바칠 소모품이 셋 모자랍니다.' : '바칠 장비가 가방에 없습니다.'}</p>` : ''}</section>`;
   }
   if (R.type === 'event') {
     const E0 = EVENTS.find(x => x.id === R.event);

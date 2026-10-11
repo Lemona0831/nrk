@@ -179,6 +179,22 @@ function firstGift3(run, b, R) {
   for (const k of keys) if (FIRST_GIFT3[k] && !run.dg.gift[k]) { run.dg.gift[k] = 1; if (k === 'haze') run.dg.gift.mirage = 1; if (k === 'mirage') run.dg.gift.haze = 1; if (!consGrant(run, FIRST_GIFT3[k], 'n', 1)) toast('처음 겪은 것의 답: ' + CONS[FIRST_GIFT3[k]].ico + ' ' + CONS[FIRST_GIFT3[k]].n); }
 }
 const ashOk = c => CONS[c.id].use !== 'none' && CONS[c.id].price > 6; // 재의 제단에 태울 수 있는 것 (파는 것 · 돌멩이 제외)
+function altarConsCost(run, id) {
+  let left = id === 'ash' ? 4 : 3; const out = [];
+  for (const c of run.cons || []) {
+    if (!(id === 'ash' ? ashOk(c) : CONS[c.id].use !== 'none')) continue;
+    const n = Math.min(left, c.n); if(n)out.push(consName(c) + ' ×' + n); left -= n; if(!left)break;
+  }
+  return left ? [] : out;
+}
+function altarReceipt(run, id, paid, received) {
+  const receipt = { room: run.room, ch: run.ch || 1, name: (ALTARS.find(a=>a.id===id)||{}).n || '제단', paid, received };
+  run.lastAltar = receipt; return receipt;
+}
+function altarReceiptHtml(run) {
+  const x=run.lastAltar;if(!x)return '';
+  return `<details class="card"${run.room===x.room+1?' open':''}><summary>${esc(x.name)} · ${x.ch}챕터 ${x.room}층 거래 결과</summary><p><b>바친 것</b>: ${x.paid.map(esc).join(', ') || '없음'}</p><p><b>받은 것</b>: ${x.received.map(esc).join(', ') || '없음'}</p></details>`;
+}
 function burnCons(run, n) { if ((run.cons || []).filter(ashOk).reduce((a, c) => a + c.n, 0) < n) return false; for (let k = 0; k < n; k++) { const c = run.cons.find(ashOk); c.n--; if (c.n <= 0) run.cons.splice(run.cons.indexOf(c), 1); } return true; }
 /* 2챕터 이벤트 · 제단 도우미 (10월 5일) */
 const EVBUFF = { snuff: ['꺼진 촛불', '받는 화상 피해 0, 대신 주는 피해 −5%.'], procession: ['장례 행렬', '받는 직접 피해 −10%, 주는 피해 −10%.'], ashcover: ['재를 덮어 주었다', '받는 직접 피해 −5%.'], herald: ['전령에게 무릎 꿇었다', '받는 화상 피해 0, 대신 주는 피해 −5%.'] }; // 이벤트로 얻는 몇 방 동안의 효과
