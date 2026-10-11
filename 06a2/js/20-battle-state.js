@@ -29,7 +29,7 @@ const PARRY_BIG = 0.2;
    파수꾼은 방어할 때마다 +6. 옛 직업(0.6a)의 상한 40은 그대로 둔다 */
 const WARD = { cap: 0.3, guard: 6, thornMax: 8, back: 0.5 }; // back: 후열 적의 공격은 보호막이 이만큼만 받아낸다 (10월 4일 만든 사람 결정: 파수꾼의 약점은 후열)
 function wardMax(p) { return isV2(p) ? Math.round(p.hpMax * ((BUILDS[p.build] || {}).wardCap || WARD.cap)) : 40; } // wardCap: 직업마다 상한 (마검사 15%)
-function addWard(b, p, n, cap) { n *= 1 + 0.02 * stat(p, 'wil'); { const wp = p.eq ? fxAdd(p, 'wardP', b, p) : 0; if (wp) n *= 1 + Math.min(FX_CAP, wp); } if (b && b.carve && b.cur && b.cur.grp) n *= carveMul(b, b.cur.grp); /* 의지 1점마다 보호막 +2% */ const m = Math.min(cap != null ? cap : Infinity, wardMax(p)); const w0 = p.ward || 0; p.ward = Math.max(w0, Math.min(m, w0 + n)); if (w0 + n > m && p.eq) fxRun(p, 'onWardOver', b, p, w0 + n - Math.max(m, w0)); return p.ward - w0; }
+function addWard(b, p, n, cap, fixed) { if (!fixed) { n *= 1 + 0.02 * stat(p, 'wil'); const wp = p.eq ? fxAdd(p, 'wardP', b, p) : 0; if (wp) n *= 1 + Math.min(FX_CAP, wp); if (b && b.carve && b.cur && b.cur.grp) n *= carveMul(b, b.cur.grp); } /* 고정 교대는 생성 보정을 적용하지 않는다 */ const m = Math.min(cap != null ? cap : Infinity, wardMax(p)); const w0 = p.ward || 0; p.ward = Math.max(w0, Math.min(m, w0 + n)); if (w0 + n > m && p.eq) fxRun(p, 'onWardOver', b, p, w0 + n - Math.max(m, w0)); return p.ward - w0; }
 const parryBig = e => (e && (e.strong || e.role === 'boss') ? PARRY_BIG : 0);
 function dotMul(p) { return 1 + 0.02 * stat(p, 'int'); }
 function applyStats(p, stats) {

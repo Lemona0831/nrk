@@ -60,6 +60,7 @@ function runSkill2(b, act, tgt) {
   const wv = F('weave'), bo = F('burnOut'); const preI = {}; if (bo) for (const e of targets) preI[e.id] = st(e, 'ignite'); // 원소술사: 엮기, 불태우기(첫 타격 전의 화상)
   const wb = F('wardBurn'); let burn = 0; if (wb) { burn = Math.min(p.ward || 0, wb.max || Infinity); p.ward = (p.ward || 0) - burn; logp(b, burn > 0 ? 'good' : 'sys', burn > 0 ? '보호막 ' + Math.round(burn) + '을(를) 태운다' : '태울 보호막이 없다'); } // 파수꾼: 태운 만큼 × 배수 피해
   const wdm = F('wardDmg'), vp = F('vulnPer'), shx = F('shieldx'), pl = F('pull'), vg = F('vulnGrow'), chx = F('chillx'); const wardNow = wdm && wdm.spend ? wardBeforeSkill : p.ward || 0;
+  if (wdm && wdm.drainAll) b.sbWardSpentAll = true;
   const wardHit = wdm ? wardDamageInfo(wdm, wardNow) : { take: 0, bonus: 0 };
   if (wardHit.take > 0 && targets.length) { p.ward = Math.max(0, (p.ward || 0) - wardHit.take); logp(b, 'sys', '보호막 ' + r1(wardHit.take) + ' 소모. 추가 피해 +' + r1(wardHit.bonus)); b.rec.push({ k: 'wardSpend', id: s.id, n: r1(wardHit.take), bonus: r1(wardHit.bonus) }); }
   const dm = F('dmg'), ex = F('exploit'), po = F('poison'), bk = F('brk'), bp = F('brkPer'); const stx = s.tgt === 'self' ? [] : s.fx.filter(e => e.k === 'st'); const lx = F('lowx'), bx = F('brokenx'), sp = F('spread'), cx = F('cutx'), dr = F('drain'), gx = F('bigx'); const isBig = e => !!(e.elite || e.strong || e.role === 'boss');
@@ -190,7 +191,7 @@ function runSkill2(b, act, tgt) {
    칼(p.edge = { s, n }): 주문이 싣고, 다음 베기의 첫 타격이 고른 적에게 피해를 주고 그 적이 살아 있으면 건다. 빗나가거나 그 타격에 쓰러지면 칼에 남는다 */
 function sbKindOf(p, id, act) { if (p.build !== 'spellblade') return null; if (id === 'basic' || id === 'heavy') return 'cut'; return act && act.v2 && act.s && act.s.kind || null; }
 function sbBegin(b, id, act, tgt) {
-  const p = b.p; const k = sbKindOf(p, id, act); b.sbK = k; b.sbAlt = false; b.sbRunNow = 0; b.sbRun2 = 0; b.sbAltFx = null; b.sbEdgeDone = 0; if (!k) return;
+  const p = b.p; const k = sbKindOf(p, id, act); b.sbK = k; b.sbAlt = false; b.sbRunNow = 0; b.sbRun2 = 0; b.sbAltFx = null; b.sbEdgeDone = 0; b.sbWardSpentAll = false; if (!k) return;
   b.sbAlt = !!p.sbLast && k !== p.sbLast; b.sbRunNow = b.sbAlt ? (p.sbRun || 0) + 1 : 0;
 }
 function sbEdgeApply(b, e, mul) {
@@ -215,7 +216,7 @@ function sbEnd(b, act) {
   const af = b.sbAltFx; b.sbAltFx = null;
   if (af && !b.over) { const g = []; if (af.ward) g.push('보호막 +' + Math.round(addWard(b, p, af.ward))); if (af.protect) { addS(b, p, 'protect', af.protect); g.push('보호 ' + af.protect); } if (af.stam) { p.st = Math.min(p.stMax, p.st + af.stam); if (p.exhaust && p.st >= 30) p.exhaust = 0; g.push('스태미나 +' + af.stam); } if (g.length) logp(b, 'good', (af.run === 2 ? '⇄⇄ 이어진 교대: ' : '⇄ 교대: ') + g.join(', ')); }
   if (k === 'spell' && act && act.v2) { const im = act.s.fx.find(e => e.k === 'imbue'); if (im) { if (p.edge && p.edge.s === im.s) p.edge.n = Math.max(p.edge.n, im.n); else p.edge = { s: im.s, n: im.n }; logp(b, 'good', '칼에 ' + KW_N[im.s] + ' ' + p.edge.n + '을(를) 싣는다'); } }
-  if (b.sbAlt && b.sbAltTurn !== b.turnIdx && !b.over) { b.sbAltTurn = b.turnIdx; const g = addWard(b, p, (BUILDS[p.build] || {}).altWard || 0); b.rec.push({ k: 'alt', g: r1(g) }); logp(b, 'good', '⇄ 교대: 보호막 +' + Math.round(g) + ' (' + Math.round(p.ward || 0) + '/' + wardMax(p) + ')'); fxRun(p, 'onAlt', b, p, k, b.sbRunNow); }
+  if (b.sbAlt && b.sbAltTurn !== b.turnIdx && !b.over && !b.sbWardSpentAll) { b.sbAltTurn = b.turnIdx; const g = addWard(b, p, (BUILDS[p.build] || {}).altWard || 0, undefined, true); b.rec.push({ k: 'alt', g: r1(g) }); logp(b, 'good', '⇄ 교대: 보호막 +' + Math.round(g) + ' (' + Math.round(p.ward || 0) + '/' + wardMax(p) + ')'); fxRun(p, 'onAlt', b, p, k, b.sbRunNow); }
   p.sbLast = k; p.sbRun = b.sbRun2 ? 0 : b.sbRunNow; b.sbAlt = false; b.sbRun2 = 0;
 }
 /* 수도승 자세 (stance, 10월 10일 단순화): 자세는 하나뿐이다. 내 다음 차례까지 전열 적의 직접 공격을 되받는다(받는 피해는 줄지 않는다. 줄이려면 방어). 덤은 겹치면 칸마다 큰 값.

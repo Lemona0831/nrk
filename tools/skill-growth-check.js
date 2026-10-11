@@ -24,13 +24,13 @@ for(const id of ['sb_rebound','sb_sunder']){assert.equal(E.SK2[id].time,'normal'
 assert.equal(E.SK2.sb_bolt.time,'fast');
 for(const id of ['sb_bolt','sb_spellguard']){
  const s=E.SK2[id],f=s.fx.find(f=>f.k==='wardDmg');
- near(E.wardDamageInfo(f,20).take,10);near(E.wardDamageInfo(f,20).bonus,5);
- near(E.wardDamageInfo(f,10000).take,f.cap/f.per);
+ near(E.wardDamageInfo(f,20).take,f.drainAll?20:10);near(E.wardDamageInfo(f,20).bonus,f.drainAll?10:5);
+ near(E.wardDamageInfo(f,10000).take,f.drainAll?10000:f.cap/f.per);
  const p=E.mkPlayer('spellblade',{},{});p.stat={int:50};p.ward=20;
  const es=[0,1].map(i=>{const e=E.mkEnemy('bruiser',false,i);e.hp=e.hpMax=10000;return e;});
  const values=[],oldHurt=E.hurtEnemy;
  try{E.hurtEnemy=(b,e,d)=>{values.push(d);return d;};E.runSkill2(E.newBattle(p,es,{}),E.v2Static(s),es[0]);}finally{E.hurtEnemy=oldHurt;}
- near(p.ward,10);for(const v of values)near(v,s.fx.find(f=>f.k==='dmg').n*3+5);
+ near(p.ward,f.drainAll?0:10);for(const v of values)near(v,s.fx.find(f=>f.k==='dmg').n*3+(f.drainAll?10:5));
  assert.equal(values.length,id==='sb_spellguard'?2:1);
 }
 const p=E.mkPlayer('elementalist',{},{});p.stat={int:30};near(E.dotMul(p),1.6);

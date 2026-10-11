@@ -45,7 +45,10 @@ try:
   pc.evaluate("()=>{G.run.gold=123;G.run.cons=[{id:'herb',g:'n',n:2}];G.b=newBattle(G.run.p,[mkEnemy('skeleton',false,0)],{ch:2});G.b.queue=['p'];G.b.turnIdx=7;saveBattle();}")
   title(pc);create(pc,'두 번째','hunter');second=pc.evaluate('G.run.id');title(pc)
   pc.evaluate("async()=>{saveLocal();await cloudFlush();await pushName();await syncRun(G.data.cur,'progress');}")
+  pc.evaluate("async()=>{G.data.hardOpen=1;G.data.codex={abbot:{met:10,seen:{charge:11},note:'관찰'}};G.data.graves=[{id:'dead-local',build:'spellblade',cname:'쓰러진 캐릭터',at:10,kill:{src:'bruiser',d:20},eq:[],stats:{}}];saveLocal();await cloudFlush();await G.db.doc('playtest/'+G.uid+'/'+COL.runs+'/dead-legacy').set({id:'dead-legacy',build:'spellblade',result:'lose',endedAt:20,roomReached:7,lv:2,eq7:[]});}")
   mobctx,mob=device('cloud-owner',390)
+  assert mob.evaluate("G.data.hardOpen===1 && G.data.codex.abbot.note==='관찰'")
+  assert mob.evaluate("G.data.graves.length===2 && G.data.graves.find(g=>g.id==='dead-local').kill.d===20 && G.data.graves.find(g=>g.id==='dead-legacy').kill===null")
   assert mob.evaluate('saveCount()===2 && G.data.name==="ㅤ" && G.data.runs.length>0')
   mob.click(f'[data-a=resumekept][data-k="{first}"]')
   assert mob.evaluate('G.b.turnIdx===7 && G.run.gold===123 && G.run.cons[0].n===2')
@@ -72,7 +75,10 @@ try:
   assert mob.evaluate('G.data.cur.gold===444 && G.cloud.dirty')
   deny=False;assert mob.evaluate('cloudFlush()');pc.evaluate('cloudLoad()');assert pc.evaluate('G.data.cur.gold===444')
   assert mob.evaluate('document.documentElement.scrollWidth<=innerWidth')
+  store['docs']['playtest/legacy-owner/runs62/clear']={'path':'playtest/legacy-owner/runs62/clear','data':{'id':'clear','build':'spellblade','clears':3,'ch':3,'result':'win'}}
+  legacyctx,legacy=device('legacy-owner',390)
+  assert legacy.evaluate('G.data.hardOpen===1 && G.data.markOpen===1')
   assert not errors,errors
-  print('PASS: PC/mobile two saves, battle restore, blank nickname, remote records, descendant merge, conflicting edits, deletion, account isolation, failed upload/retry, mobile layout')
+  print('PASS: PC/mobile two saves, battle restore, blank nickname, remote records, graves and legacy deaths, hard/mark unlocks and codex, descendant merge, conflicting edits, deletion, account isolation, failed upload/retry, mobile layout')
   browser.close()
 finally:server.shutdown()

@@ -27,7 +27,7 @@ function buHint(b, a) {
 function sbHint(b, a) {
   const p = b.p; if (p.build !== 'spellblade' || !a) return ''; const k = sbKindOf(p, a.id, a); if (!k) return ''; const out = [];
   const alt = !!p.sbLast && k !== p.sbLast; const run = alt ? (p.sbRun || 0) + 1 : 0; const F = kk => a.v2 && a.s ? a.s.fx.find(e => e.k === kk) : null; const af = F('alt');
-  if (af && af.run === 2 && run >= 2) out.push('⇄⇄'); else if (alt) out.push(b.sbAltTurn !== b.turnIdx ? '⇄ +' + ((BUILDS.spellblade || {}).altWard || 0) : '⇄');
+  if (af && af.run === 2 && run >= 2) out.push('⇄⇄'); else if (alt && !(F('wardDmg') && F('wardDmg').drainAll)) out.push(b.sbAltTurn !== b.turnIdx ? '⇄ +' + ((BUILDS.spellblade || {}).altWard || 0) : '⇄');
   if (k === 'cut' && p.edge) { const ex = F('edgeX'); out.push('칼: ' + KW_N[p.edge.s] + ' ' + Math.min(KW[p.edge.s] || 10, Math.round(p.edge.n * (ex ? ex.mul : 1)))); }
   const t = !a.self && !a.aoe ? actTarget(b, a) : null;
   if (t) { const kx = F('kwx'), ex = F('exploit'); if (kx && st(t, kx.s) > 0) out.push(KW_N[kx.s] + ' ×' + kx.mul); if (ex && ex.s && st(t, ex.s) > 0) out.push('+' + r1(ex.per * st(t, ex.s)) + ' (' + KW_N[ex.s] + ' ' + st(t, ex.s) + ')'); }

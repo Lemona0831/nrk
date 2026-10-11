@@ -249,9 +249,23 @@ function cloudSig(run) {
   return s.length + ':' + (a >>> 0) + ':' + (b >>> 0);
 }
 function cloudLive() { return [G.data.cur, ...(G.data.kept || [])].filter(r => r && r.id && !runOver(r)); }
+function cloudAccount() { const d=G.data; return { hardOpen:!!d.hardOpen, markOpen:!!d.markOpen, tutDone:!!d.tutDone, goals:d.goals || {n:{},h:{}}, markBest:d.markBest || {}, unl:d.unl || {c:{},open:{}}, codex:d.codex || {} }; }
+function cloudMergeAccount(s) {
+  if (!s) return;
+  for (const k of ['hardOpen','markOpen','tutDone']) if (s[k]) G.data[k]=1;
+  const u=unlData(); for(const [k,v] of Object.entries(s.unl && s.unl.c || {})) u.c[k]=Math.max(u.c[k] || 0,v || 0);
+  for(const [k,v] of Object.entries(s.unl && s.unl.open || {})) if(v && !u.open[k])u.open[k]=v;
+  const g=goalsData(); for(const m of ['n','h'])for(const [k,v] of Object.entries(s.goals && s.goals[m] || {}))if(v && !g[m][k])g[m][k]=v;
+  const mb=markBestData();for(const [k,v] of Object.entries(s.markBest || {}))if(v && (!mb[k] || (v.score || 0)>(mb[k].score || 0)))mb[k]=v;
+  const codex=G.data.codex=G.data.codex || {}; for(const [k,v] of Object.entries(s.codex || {})) {
+    if(!v)continue; const cur=codex[k];codex[k]=cur ? {met:cur.met || v.met,seen:Object.assign({},v.seen,cur.seen),note:cur.note || v.note || ''} : clone(v);
+  }
+}
 function cloudTrack(force) {
   const c = G.cloud; if (!c || (!c.ready && !force) || c.uid !== G.uid || G.data.accountId !== G.uid) return;
   const meta = G.data.saveCloud = G.data.saveCloud || {}; const live = new Map(cloudLive().map(r => [r.id, r]));
+  const profileSig = cloudSig({graves:G.data.graves || [], account:cloudAccount()});
+  if (G.data.saveGravesSig !== profileSig) { G.data.saveGravesSig = profileSig; c.dirty = true; }
   for (const id of new Set([...Object.keys(meta), ...live.keys()])) {
     const run = live.get(id); const sig = run ? cloudSig(run) : 'deleted'; const old = meta[id];
     if (old && old.sig === sig) continue;
@@ -265,7 +279,7 @@ function cloudSchedule() {
 }
 function cloudSnapshot() {
   const live = new Map(cloudLive().map(r => [r.id, r]));
-  return { v: 1, active: G.data.cur && G.data.cur.id, slots: Object.entries(G.data.saveCloud || {}).map(([id,m]) => ({ id, clock: m.clock, at: m.at, run: live.has(id) ? clone(live.get(id)) : null })) };
+  return { v: 1, account:clone(cloudAccount()), graves: clone(G.data.graves || []), active: G.data.cur && G.data.cur.id, slots: Object.entries(G.data.saveCloud || {}).map(([id,m]) => ({ id, clock: m.clock, at: m.at, run: live.has(id) ? clone(live.get(id)) : null })) };
 }
 function cloudDominates(a, b) {
   return Object.keys(b || {}).every(k => (a[k] || 0) >= b[k]) && Object.keys(a || {}).some(k => (a[k] || 0) > (b[k] || 0));
@@ -335,6 +349,19 @@ async function cloudLoad() {
     const runs = new Map((G.data.runs || []).map(r => [r.id, r]));
     for (const doc of rs.docs) { const r = doc.data(); const old = runs.get(r.id); if (r.id && (!old || (r.updatedAt || 0) > (old.updatedAt || 0))) runs.set(r.id, Object.assign({}, r, old && old.acts ? {acts:old.acts} : {})); }
     G.data.runs = [...runs.values()];
+    for(const doc of ss.docs) cloudMergeAccount(doc.data().account);
+    // 연동 전 기록으로 이미 달성한 모드 해금도 복원한다.
+    for(const r of [...G.data.runs,...cloudLive()]) {
+      if((r.clears || 0)>0 && !r.markCh && !r.marks)G.data.hardOpen=1;
+      if((r.clears || 0)>=3 && !r.markCh && !r.marks)G.data.markOpen=1;
+    }
+    const graves = new Map();
+    for (const g of [...ss.docs.flatMap(d => d.data().graves || []), ...(G.data.graves || [])]) if (g && g.id && BUILDS[g.build]) graves.set(g.id, g);
+    for (const r of G.data.runs) if ((!graves.has(r.id) || (graves.get(r.id).recovered && r.grave)) && r.result === 'lose' && BUILDS[r.build]) {
+      // 구기록에는 결정타 자료가 없을 수 있다. 확인 가능한 정보만 복원한다.
+      graves.set(r.id, r.grave || { recovered:true, id:r.id, cname:r.cname, build:r.build, ch:r.ch || 1, lv:r.lv, room:r.roomReached, roomN:r.roomReached ? floorName(r.roomReached) : '', stats:r.stats, eq:(r.eq7 || []).filter(Boolean).map(s=>s.split(':')[0]), at:r.endedAt || r.updatedAt || r.startedAt, kill:null, hits:[], last:[] });
+    }
+    G.data.graves = [...graves.values()].sort((a,b)=>(b.at || 0)-(a.at || 0)).slice(0,20);
     c.ready = true; c.dirty = true; G.saveSync = '계정 세이브를 불러왔습니다';
     // 초기 접속 중 화면에서 캐릭터를 이미 연 경우, 반영된 저장본을 타이틀에서 다시 선택한다.
     if (G.run && !G.creating) { G.run = null; G.b = null; G.scr = 'title'; G.sheet = null; }

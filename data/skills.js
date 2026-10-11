@@ -513,7 +513,7 @@ const SKILLS2 = {
     { id: 'sb_counter', row: 1, b: '마갑', tier: '하급', n: '맞받아 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 16 }, { k: 'alt', ward: 4 }] },
     { id: 'sb_bolt', row: 2, b: '마갑', tier: '하급', n: '마갑탄', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'wardDmg', per: 0.5, spend: 0.5, cap: 12 }] },
     { id: 'sb_unravel', row: 2, b: '마갑', tier: '하급', n: '마력 교란', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'weak', n: 2 }, { k: 'alt', protect: 2 }] },
-    { id: 'sb_shell', row: 3, b: '마갑', tier: '하급', n: '마갑 전개', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'ward', n: 18 }, { k: 'st', s: 'protect', n: 1 }, { k: 'stam', n: 15 }] },
+    { id: 'sb_shell', row: 3, b: '마갑', tier: '하급', n: '마갑 전개', kind: 'spell', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'ward', n: 18 }, { k: 'st', s: 'protect', n: 1 }] },
     { id: 'sb_beatcut', row: 3, b: '마갑', tier: '하급', n: '교차참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 8 }, { k: 'alt', run: 2, brk: 30 }] },
     { id: 'sb_rebuke', row: 4, b: '마갑', tier: '하급', n: '마갑 파쇄', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 5 }, { k: 'wardBurn', mul: 2.5, max: 6 }, { k: 'brk', n: 21 }] },
     { id: 'sb_rebound', row: 4, b: '마갑', tier: '하급', n: '반향 주문', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 10 }, { k: 'cutx', brk: 41 }, { k: 'alt', stam: 10 }] },
@@ -523,7 +523,7 @@ const SKILLS2 = {
     { id: 'sb_sunder', row: 6, b: '마갑', tier: '하급', n: '균열 주문', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 6 }, { k: 'alt', run: 2, brk: 30 }] },
     { id: 'sb_armor', row: 7, b: '마갑', tier: '중급', n: '마갑 연성', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'wardFill', to: 0.5 }, { k: 'dmg', n: 12 }, { k: 'brk', n: 16 }] },
     { id: 'sb_weave', row: 7, b: '마갑', tier: '중급', n: '마검 교직', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 8 }, { k: 'alt', run: 2, brk: 35, ward: 4 }] },
-    { id: 'sb_spellguard', row: 8, b: '마갑', tier: '중급', n: '방벽 공명', kind: 'spell', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 7 }, { k: 'wardDmg', per: 0.5, spend: 0.5, cap: 16 }] },
+    { id: 'sb_spellguard', row: 8, b: '마갑', tier: '중급', n: '방벽 공명', kind: 'spell', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 7 }, { k: 'wardDmg', per: 0.5, spend: 1, drainAll: true, cap: 16 }] },
     { id: 'sb_reverse', row: 8, b: '마갑', tier: '중급', n: '역영창', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 8 }, { k: 'alt', run: 2, ward: 6, protect: 2 }] },
     { id: 'sb_embershell', row: 9, b: '마갑', tier: '중급', n: '잔화 방벽', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'wardBurn', mul: 3, max: 9 }, { k: 'ward', n: 5 }] },
     { id: 'sb_rhythm', row: 9, b: '마갑', tier: '중급', n: '마검 연무', kind: 'cut', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 10 }, { k: 'brk', n: 9 }, { k: 'alt', ward: 4 }, { k: 'hasten', n: 1, on: 'alt' }] },
@@ -856,7 +856,7 @@ const TREE2 = {
   },
   spellblade: {
     branches: ['혈인', '염검', '마갑'],
-    bd: { 혈인: '베어서 출혈을 걸고, 쓰러뜨리면 다음 베기의 쿨타임을 초기화합니다. 무리에 강하고, 뒤에 선 적에게 약합니다', 염검: '주문으로 화상을 걸고, 화상 걸린 적을 베어 거둡니다. 영창하는 적에 강하고, 무리에 약합니다', 마갑: '베기와 주문을 번갈아 쓰며 보호막을 두르고, 이어진 박자로 자세를 무너뜨립니다. 강타에 강하고, 치유 · 소환하는 적에게 약합니다' },
+    bd: { 혈인: '베어서 출혈을 걸고, 쓰러뜨리면 다음 베기의 쿨타임을 초기화합니다. 무리에 강하고, 뒤에 선 적에게 약합니다', 염검: '주문으로 화상을 걸고, 화상 걸린 적을 베어 거둡니다. 영창하는 적에 강하고, 무리에 약합니다', 마갑: '검과 주문을 교대하며 보호막을 두릅니다. 보호막을 남겨 버티거나, 공명으로 소모해 적을 압박합니다' },
     haste: {},
     // 갈래 성격 (10월 7일 설계, docs/직업/마검사.md D-1): 직업 약점은 거구(큰 적 배수 칸이 없고 보호막 상한 15%)
     profile: { 혈인: { strong: ['무리'], weak: ['후열'] }, 염검: { strong: ['영창'], weak: ['무리'] }, 마갑: { strong: ['강타'], weak: ['지원'] }, 직업: { strong: [], weak: ['거구'] } },
