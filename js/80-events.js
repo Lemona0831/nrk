@@ -38,7 +38,7 @@ function onClick(ev) {
     case 'mkch': { G.mk = G.mk || { ch: 3, mode: 'normal', ids: [] }; G.mk.ch = Math.max(1, Math.min(3, +el.dataset.k || 3)); render(); break; }
     case 'mkmode': { G.mk = G.mk || { ch: 3, mode: 'normal', ids: [] }; if (el.dataset.k === 'hard' && !G.data.hardOpen) { toast('1챕터 보스를 한 번 이기면 열립니다'); break; } G.mk.mode = el.dataset.k === 'hard' ? 'hard' : 'normal'; render(); break; }
     case 'mktog': { G.mk = G.mk || { ch: 3, mode: 'normal', ids: [] }; const k = el.dataset.k; if (!MARKS[k]) break; G.mk.ids = G.mk.ids.includes(k) ? G.mk.ids.filter(x => x !== k) : G.mk.ids.concat([k]); render(); break; }
-    case 'mkgo': { if (!markOpen() || !G.mk || !G.mk.ids.length) { toast('표식을 하나 이상 고르세요'); break; } const mk = { ch: G.mk.ch, ids: G.mk.ids.slice(), mode: G.mk.mode === 'hard' && G.data.hardOpen ? 'hard' : 'normal' }; beginCreate(); G.cre.mark = mk; G.cre.mode = mk.mode; render(); window.scrollTo(0, 0); break; }
+    case 'mkgo': { if (!markOpen() || !G.mk || !G.mk.ids.length) { toast('표식을 하나 이상 고르세요'); break; } const mk = { ch: G.mk.ch, ids: G.mk.ids.slice(), mode: G.mk.mode === 'hard' && G.data.hardOpen ? 'hard' : 'normal' }; if(!beginCreate())break; G.cre.mark = mk; G.cre.mode = mk.mode; render(); window.scrollTo(0, 0); break; }
     case 'newchar': if (!G.data.tutSeen) { G.scr = 'tutoffer'; render(); window.scrollTo(0, 0); } else newcharGo(); break; // 0.6a.2: 처음 시작할 때 수련장을 권한다(한 번)
     case 'tutgo': G.data.tutSeen = 1; saveLocal(); startTut(0); break;
     case 'tutskip': G.data.tutSeen = 1; saveLocal(); newcharGo(); break;
@@ -48,10 +48,11 @@ function onClick(ev) {
     case 'tutretry': startTut(G.tut.i); break;
     case 'tutinfo': openSheet('tutintro', { again: 1 }); break;
     case 'tutmake': G.tutFin = false; G.b = null; beginCreate(); break;
-    case 'restart': { const c = G.data.cur; if (c && !isBetween(c) && !ask((c.cname || '지금 캐릭터') + '을(를) 두고 처음부터 시작할까요? 새 캐릭터를 끝까지 만들면 지금 캐릭터는 포기한 것으로 기록되고 이어 할 수 없습니다.')) break; if (c && isBetween(c)) toast((c.cname || '지금 캐릭터') + '은(는) 기다리는 캐릭터로 따로 남습니다'); beginCreate(); break; }
+    case 'restart': beginCreate(); break;
     case 'resumekept': { const d = G.data, i = (d.kept || []).findIndex(k => k.id === el.dataset.k); if (i < 0) break; const cur = d.cur && !runOver(d.cur) ? d.cur : null;
-      if (cur && !isBetween(cur)) { toast((cur.cname || '지금 캐릭터') + '이(가) 던전에 있습니다. 그 캐릭터가 챕터를 깨거나 여정이 끝난 뒤에 바꿔 이어서 합니다'); break; }
-      const k = d.kept.splice(i, 1)[0]; if (cur) d.kept.push(cur); d.cur = k; saveLocal(); resumeRun(); break; }
+      const oldKept=d.kept.slice(),oldCur=d.cur;const k = d.kept.splice(i, 1)[0]; if (cur) d.kept.push(cur); d.cur = k;
+      if(!saveLocal()){d.kept=oldKept;d.cur=oldCur;toast('저장하지 못해 캐릭터를 바꾸지 않았습니다.');break;} resumeRun(); break; }
+    case 'saveabandon': {const d=G.data,k=d.cur&&d.cur.id===el.dataset.k?d.cur:(d.kept||[]).find(c=>c.id===el.dataset.k);if(!k||!ask((k.cname||'이 캐릭터')+'의 여정을 포기할까요? 이 캐릭터는 다시 이어할 수 없습니다.'))break;abandonRun(k);if(d.cur&&d.cur.id===k.id)delete d.cur;d.kept=(d.kept||[]).filter(c=>c.id!==k.id);if(G.run&&G.run.id===k.id){G.run=null;G.b=null;}saveLocal();render();break;}
     case 'cnroll': { const cur = val('cname'); let n = pickR(CNAMES); for (let k = 0; k < 5 && n === cur; k++) n = pickR(CNAMES); G.cre.name = n; render(); break; }
     case 'cnok': { const n = (val('cname') || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 12); if (!n) { toast('이름을 적거나 주사위를 눌러 주세요'); const x = document.getElementById('cname'); if (x) x.focus(); break; } G.cre.name = n; G.cre.step = 'cls'; render(); window.scrollTo(0, 0); break; }
     case 'cback': { if (el.dataset.k === 'name') { G.cre.step = 'name'; } else { G.run = null; G.sheet = null; G.cre.step = 'cls'; } render(); break; }
@@ -219,7 +220,7 @@ function onClick(ev) {
     case 'statrec': { const S = G.sheet; const al = S.data.alloc; const left = S.data.pts - statSum(al); const add = statRecommend(G.run.build, Object.fromEntries(STAT_KEYS.map(k => [k, stat(G.run.p, k) + (al[k] || 0)])), left); for (const k of STAT_KEYS) al[k] = (al[k] || 0) + add[k]; render(); break; }
     case 'statclear': { const S = G.sheet; S.data.alloc = Object.assign({}, { str: 0, dex: 0, int: 0, con: 0, wil: 0 }); render(); break; }
     case 'stat+': case 'stat-': { const S = G.sheet; const al = S.data.alloc; const k = el.dataset.k; const left = S.data.pts - statSum(al); if (a === 'stat+' && left > 0) al[k]++; if (a === 'stat-' && al[k] > 0) al[k]--; render(); break; }
-    case 'statok': { const S = G.sheet; const al = S.data.alloc; const run = G.run; const before = growthSnapshot(run.p); for (const k in al) run.stats[k] = (run.stats[k] || 0) + al[k]; applyStats(run.p, run.stats); run.statLog.push({ room: run.room, add: Object.assign({}, al), t: Date.now() }); const made = S.data.first; if (S.data.pending) run.statPending = 0; G.sheet = null; if (made) { if (G.abandonOnCreate) { if (isBetween(G.data.cur)) keepCur(); else abandonCur(); } G.creating = false; G.abandonOnCreate = false; G.cre = null; G.scr = 'run'; run.tick = Date.now(); } saveRunLocal(); saveCur(); if (made) toast('캐릭터를 만들었습니다. 첫 방 앞입니다'); else toast(growthText(before, run.p, '능력치 배분')); render(); if (!made) awkOpen(); break; }
+    case 'statok': { const S = G.sheet; const al = S.data.alloc; const run = G.run; if(S.data.first && G.abandonOnCreate && !keepCur())break; const before = growthSnapshot(run.p); for (const k in al) run.stats[k] = (run.stats[k] || 0) + al[k]; applyStats(run.p, run.stats); run.statLog.push({ room: run.room, add: Object.assign({}, al), t: Date.now() }); const made = S.data.first; if (S.data.pending) run.statPending = 0; G.sheet = null; if (made) { G.creating = false; G.abandonOnCreate = false; G.cre = null; G.scr = 'run'; run.tick = Date.now(); } saveRunLocal(); saveCur(); if (made) toast('캐릭터를 만들었습니다. 첫 방 앞입니다'); else toast(growthText(before, run.p, '능력치 배분')); render(); if (!made) awkOpen(); break; }
     case 'choose': {
       const k = el.dataset.k; const run = G.run; const S = G.sheet;
       run.choices.push({ room: S.data.room, offered: S.data.offer, picked: k || null, t: Date.now() }); run.declined = (run.declined || []).concat(S.data.offer.filter(x => x !== k)); G.sheet = null;

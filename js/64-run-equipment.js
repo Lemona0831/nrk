@@ -244,22 +244,23 @@ function codexMerge(b) {
 }
 /* 캐릭터 만들기를 그만두면 아무것도 남기지 않는다 */
 function cancelCreate() { G.run = null; G.sheet = null; G.creating = false; G.abandonOnCreate = false; G.cre = null; G.scr = 'title'; render(); toast('캐릭터 만들기를 그만두었습니다'); }
-function beginCreate() { G.cre = { step: 'name', name: '' }; G.abandonOnCreate = !!G.data.cur; G.creating = true; G.run = null; G.sheet = null; G.b = null; G.scr = 'create'; render(); setTimeout(() => { const x = document.getElementById('cname'); if (x) x.focus(); }, 0); }
+function beginCreate() { curSweep(); if (saveCount() >= SAVE_MAX) { toast('세이브 슬롯이 가득 찼습니다. 타이틀에서 보관 중인 캐릭터를 확인하세요.'); return false; } G.cre = { step: 'name', name: '' }; G.abandonOnCreate = !!G.data.cur; G.creating = true; G.run = null; G.sheet = null; G.b = null; G.scr = 'create'; render(); setTimeout(() => { const x = document.getElementById('cname'); if (x) x.focus(); }, 0); return true; }
 /* 캐릭터를 포기한 것으로 기록한다 (새 캐릭터를 확정할 때, 또는 직접 포기할 때) */
 function abandonRun(old) {
   if (!old) return;
   const keep = G.run; G.run = old; old.result = 'abandon'; old.sealed = 1; old.endedAt = Date.now(); saveRunLocal(); syncRun(old, 'abandon'); pushRank(old, 'abandon'); G.run = keep;
 }
 function abandonCur() { abandonRun(G.data.cur); delete G.data.cur; saveLocal(); }
-/* 기다리는 캐릭터 (10월 2일 만든 사람 결정): 챕터를 깨고 챕터 사이(정산·상점·설문·대기)에 있는 캐릭터는
-   새 캐릭터를 만들어도 포기되지 않고 따로 남는다(G.data.kept). 타이틀에서 골라 이어 한다. 던전 안에 있는 캐릭터는 지금처럼 포기된다 */
+/* 여러 캐릭터 세이브: 진행 위치와 전투 저장본을 그대로 보관한다. 한도 초과로 자동 포기하지 않는다. */
 const KEPT_MAX = 8;
+const SAVE_MAX = 8;
+const saveCount = () => (G.data.cur && !runOver(G.data.cur) ? 1 : 0) + (G.data.kept || []).filter(c=>!runOver(c)).length;
 const isBetween = c => !!(c && !runOver(c) && (c.clears || 0) > 0 && ['settle', 'shop', 'clearsv', 'wait'].includes(c.phase));
 function keepCur() {
-  const c = G.data.cur; if (!c) return; const K = G.data.kept = G.data.kept || [];
-  K.push(c); delete G.data.cur;
-  while (K.length > KEPT_MAX) abandonRun(K.shift()); // 너무 많으면 가장 오래된 캐릭터부터 포기
-  saveLocal();
+  const c = G.data.cur; if (!c) return true; const old = G.data.kept || [];
+  G.data.kept = old.filter(k=>k.id!==c.id).concat([c]); delete G.data.cur;
+  if (!saveLocal()) { G.data.cur=c;G.data.kept=old;toast('저장 공간이 부족해 새 캐릭터를 만들지 못했습니다. 기존 세이브는 유지됩니다.');return false; }
+  return true;
 }
 /* 되살리기 (10월 2일 만든 사람 요청): 기다리는 캐릭터 규칙이 생기기 전, 챕터를 깬 뒤 새 캐릭터를 만들어 포기된 캐릭터를
    판 기록(이 브라우저의 기록, 없으면 저장소)으로 다시 세워 기다리는 캐릭터에 넣는다. 같은 번호를 써서 랭킹의 "포기"도 돌아온다 */
