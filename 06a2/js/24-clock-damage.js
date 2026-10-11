@@ -254,7 +254,7 @@ function hurtEnemy(b, e, raw, o) {
   if (e.mimicOn && !o.dot && b.cur && d > e.mimicOn.max) e.mimicOn.max = d; // 메아리 망령: 본뜨는 동안 내가 고른 행동이 준 가장 큰 한 방
   if (e.boss === 'queen') queenThresh(b, e);
   if (e.hazeHit && !o.dot && d > 0) e.hazeHit = 0;
-  if (e.boss === 'cryptlord') { const th = LORD.ph[(e.phase || 1) - 1]; if (th != null && e.hp <= e.hpMax * th) { e.hp = Math.max(1, Math.round(e.hpMax * th)); if (!e.lordNext) { e.lordNext = (e.phase || 1) === 1 ? 'throne' : 'collapse'; e.intent = { k: e.lordNext }; if (e.lordNext === 'collapse') e.teleTurn = b.turnIdx; } } } // 페이즈 문턱은 한 번에 하나: 넘친 피해는 버린다
+  if (e.boss === 'cryptlord') { const th = LORD.ph[(e.phase || 1) - 1]; if (th != null && e.hp <= e.hpMax * th) { e.hp = Math.max(1, Math.round(e.hpMax * th)); if (!e.lordNext) { e.lordNext = (e.phase || 1) === 1 ? 'throne' : 'collapse'; } } } // 페이즈 문턱은 한 번에 하나: 넘친 피해는 버린다
   if (e.chant && d > 0 && e.hp > 0) { e.chant.taken += d; if (e.chant.taken >= e.chant.need) chantBreak(b, e, '쌓인 상처에'); } // 화형 사제: 영창 중 받은 피해
   if (!o.dot && b.cur) fxRun(b.p, 'onHit', b, b.p, e, o, b.cur, d, Math.max(0, hp0 - Math.max(0, e.hp)));
   if (e.countering && e.hp > 0 && !o.dot && o.melee && o.single && b.p.decoy) { e.countering = 0; b.p.decoy = 0; logp(b, 'good', e.n + '의 반격이 미끼 인형을 친다'); }

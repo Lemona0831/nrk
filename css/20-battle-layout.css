@@ -148,3 +148,5 @@ html.fitmode,html.fitmode body{overflow:hidden}
 [data-info]{cursor:help}.ab[data-info],.en[data-info]{cursor:pointer}.ab.dis{cursor:not-allowed}
 
 
+
+.en.pile{border-style:dashed}.en.pile .enh{flex-wrap:wrap}.en.pile .nr{margin-left:0}

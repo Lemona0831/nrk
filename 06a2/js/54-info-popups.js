@@ -84,6 +84,7 @@ function infoHtml(key) {
     const reach = e.row === 'front' || !frontBlocked(b);
     return H(e.n, P(e.info || RINFO[e.role] || '') + P('다음 행동: ' + intentText(b, e).t) + (e.role !== 'root' ? P('붕괴 게이지 ' + Math.round(e.brk) + '/' + e.brkMax + '. 가득 차면 모으던 강타가 끊기고 다음 행동을 놓칩니다.') : '') + (reach ? '' : '<p class="no">지금은 근접 공격이 닿지 않습니다.</p>') + P('누르면 대상으로 고릅니다.'));
   }
+  if (key === 'floorbones' && b) { const piles=alive(b).filter(e=>e.pile); return H('바닥의 뼈', P('뼈 더미 '+piles.length+'개가 남아 있습니다.') + piles.map(e=>P('부활까지 '+e.pile.wait+'라운드 · 생명력 '+shownHp(e.hp)+'/'+Math.round(e.hpMax))).join('') + P('더미를 없애면 부활하지 않습니다. 남은 적이 뼈 더미뿐이면 전투가 끝납니다.')); }
   if (parts[0] === 'epile' && b) { const e = b.en.find(x => String(x.id) === parts[1]); if (!e || !e.pile) return ''; return H('뼈 더미', P('앞으로 ' + e.pile.wait + '라운드 뒤 해골이 한 번 다시 일어섭니다. 그 전에 더미를 없애면 부활하지 않습니다.') + P('석회 가루나 기름 단지로도 없앨 수 있습니다. 남은 적이 뼈 더미뿐이면 전투가 끝납니다.')); }
   if (parts[0] === 'st' && b) {
     const u = parts[1] === 'p' ? b.p : b.en.find(x => x.id === parts[1]); const k = parts[2]; if (!u || !u.s[k]) return '';

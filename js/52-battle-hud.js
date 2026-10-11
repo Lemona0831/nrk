@@ -164,6 +164,8 @@ function vHudClock(b) {
     gim = `<div class="gimmick" data-info="gim" tabindex="0">${esc(g)}</div>`;
     if (boss.demand && boss.demand.turn === b.turnIdx) gim += `<div class="gimmick dmd" data-info="edemand" tabindex="0">${boss.demand.k === 'rest' ? '🤲 수도원장이 고해를 기다린다' : '⚖️ 수도원장이 심문한다'}</div>`; // 10월 4일: 휴대폰에서 카드의 표시가 잘려 따로 한 줄
   }
+  const piles=alive(b).filter(e=>e.pile);
+  if(piles.length)gim += `<div class="gimmick" data-info="floorbones" tabindex="0">🦴 바닥의 뼈 ${piles.length}더미 · 가장 빠른 부활까지 ${Math.min(...piles.map(e=>e.pile.wait))}라운드</div>`;
   if (b.heat != null) gim += heatHtml(b); // 3챕터 열기 칸
   return gim;
 }
@@ -192,7 +194,7 @@ function vHudField(b, hud, pops) {
     if (e.hymn) fl.push(['<span class="nr gd" data-info="ehymn">🎵' + e.hymn + '</span>', '노래 ' + e.hymn + '겹']);
     if (e.demand && e.demand.turn === b.turnIdx) fl.push(['<span class="nr gd hv" data-info="edemand">' + (e.demand.k === 'rest' ? '🤲 고해' : '⚖️ 심문') + '</span>', e.demand.k === 'rest' ? '고해' : '심문']);
     if (e.loot) fl.push(['<span class="nr gd" data-info="eloot">🫳</span>', '훔친 것: ' + e.loot.n]);
-    if (e.pile) fl.push(['<span class="nr gd hv" data-info="epile:' + e.id + '">🦴 ' + e.pile.wait + '</span>', '뼈 더미, 일어서기까지 ' + e.pile.wait + '라운드']);
+    if (e.pile) fl.push(['<span class="nr gd hv" data-info="epile:' + e.id + '">🦴 부활 ' + e.pile.wait + '라운드</span>', '뼈 더미, 일어서기까지 ' + e.pile.wait + '라운드']);
     if (e.under) fl.push(isCh3(b) ? ['<span class="nr gd">🏜️ 모래 속</span>', '모래 속: 한 적 대상으로 고를 수 없음'] : ['<span class="nr gd">🕳️ 땅속</span>', '땅속: 한 적 대상으로 고를 수 없음']);
     if (e.swift) fl.push(['<span class="nr gd">⚡신속</span>', '신속: 라운드마다 가속 1']);
     if (e.role === 'bonewall') fl.push(['<span class="nr gd">🧱 후열 보호</span>', '뼈벽: 후열이 받는 한 적 대상 피해 절반, 붕괴에 약함']);
@@ -211,11 +213,11 @@ function vHudField(b, hud, pops) {
     const flv = ed ? fl : fl.filter(x => KEEP.test(x[0]));
     const wall = wallUp(b, e) ? 'ewall' : wallFrontUp(b, e) ? 'ewallf' : '';
     const sw = stsWords(e, b);
-    const lab = [e.n + (e.role === 'boss' ? ' ' + e.phase + '페이즈' : '') + (e.lv ? ' Lv' + e.lv : '') + (e.rn && e.n.indexOf(e.rn) < 0 ? ' ' + e.rn : '') + (e.tough ? ' 강인' : ''),
+    const lab = [(e.pile ? '뼈 더미' : e.n) + (e.role === 'boss' ? ' ' + e.phase + '페이즈' : '') + (e.lv ? ' Lv' + e.lv : '') + (e.rn && e.n.indexOf(e.rn) < 0 ? ' ' + e.rn : '') + (e.tough ? ' 강인' : ''),
       '생명력 ' + shownHp(e.hp) + '/' + Math.round(e.hpMax)].concat(e.role !== 'root' && e.role !== 'crown' ? [eordText(b, e), '붕괴 ' + Math.round(e.brk) + '/' + e.brkMax] : [])
       .concat(sw.length ? ['상태: ' + sw.join(', ')] : []).concat(wall || fl.length ? ['표시: ' + (wall ? ['방패벽'] : []).concat(fl.map(x => x[1])).join(', ')] : [])
       .concat(e.role !== 'root' && e.role !== 'crown' ? ['예고: ' + it.t] : ['움직이지 않는다']).join(', ');
-    return `<button class="en${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(lab)}">${ed ? eordHtml(b, e) : ''}<span class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wall ? `<span class="wallm" data-info="${wall}">🛡️</span>` : ''}${ed && e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" data-info="etough">강인</small>' : ''}${ed && e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${flv.map(x => x[0]).join('')}</span>${ehpBar(e)}${ed && e.role !== 'root' && e.role !== 'crown' ? `<span class="bkline" data-info="bar:bk"><small>붕괴<span class="bkl"> 게이지</span></small><span class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></span></span>` : ''}${stsHtml(e, b, 1, { mode: sel ? 'all' : hud.sts })}${e.role !== 'root' && e.role !== 'crown' ? `<span class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${(hud.iaux || sel) && acts1[e.id] > 1 ? `<span class="ix">×${acts1[e.id]}</span>` : ''}</span>` : '<span class="mini emv">움직이지 않는다</span>'}${pop ? popHtml(pop) : ''}</button>`;
+    return `<button class="en${e.pile ? ' pile' : ''}${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(lab)}">${ed ? eordHtml(b, e) : ''}<span class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.pile ? '뼈 더미' : e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wall ? `<span class="wallm" data-info="${wall}">🛡️</span>` : ''}${ed && e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" data-info="etough">강인</small>' : ''}${ed && e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${flv.map(x => x[0]).join('')}</span>${ehpBar(e)}${ed && e.role !== 'root' && e.role !== 'crown' ? `<span class="bkline" data-info="bar:bk"><small>붕괴<span class="bkl"> 게이지</span></small><span class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></span></span>` : ''}${stsHtml(e, b, 1, { mode: sel ? 'all' : hud.sts })}${e.role !== 'root' && e.role !== 'crown' ? `<span class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${(hud.iaux || sel) && acts1[e.id] > 1 ? `<span class="ix">×${acts1[e.id]}</span>` : ''}</span>` : '<span class="mini emv">움직이지 않는다</span>'}${pop ? popHtml(pop) : ''}</button>`;
   };
   const bk = b.en.filter(e => e.alive && e.row === 'back'), fr = b.en.filter(e => e.alive && e.row === 'front');
   /* 전열 · 후열 띠 (10월 3일 만든 사람: 한눈에 안 들어온다): 줄마다 색 띠와 머리글, 머리에 근접 공격이 닿는지.

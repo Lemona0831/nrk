@@ -86,6 +86,7 @@ function decideIntent(b, e) {
   e.intentPrev = e.intent && e.intent.k;
   if (e.intent && e.intent.k === 'charge') it = { k: 'heavy' };
   if (e.intent && e.intent.k === 'fuse') it = { k: 'explode' };
+  if (it && it.k === 'collapse' && (!e.intent || e.intent.k !== 'collapse')) e.teleTurn = b.turnIdx;
   e.intent = it;
 }
 /* 어둠 방 특성 (10월 5일 고침: 문장대로 후열 적의 예고를 가린다. 등잔 기름으로 걷어 낸다) */
