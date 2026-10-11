@@ -88,13 +88,21 @@ const SB_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/um
 function siteCfg() { const c = window.NRK_CONFIG; return c && /^https:\/\//.test(c.supabaseUrl || '') && (c.anonKey || '').length > 20 ? c : null; }
 function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('스크립트를 불러오지 못했습니다')); document.head.appendChild(s); }); }
 const clone = o => o == null ? o : JSON.parse(JSON.stringify(o));
+async function refreshAdminAuth() {
+  G.superAdmin = false; G.owner = false; G.adminPass = '';
+  if (!G.sb) return;
+  try { const {data:ok,error} = await G.sb.rpc('nrk_super_admin_check'); if (!error && ok === true) { G.superAdmin=true; G.owner=true; } } catch (e) { }
+  if (!G.superAdmin && G.data.adminPass) {
+    try { const {data:ok,error} = await G.sb.rpc('admin_check',{pass:G.data.adminPass}); if (!error && ok === true) {G.owner=true;G.adminPass=G.data.adminPass;} } catch(e) { }
+  }
+}
 function sbDb(sb, uid) {
   const own = path => path === 'playtest/' + uid || path.startsWith('playtest/' + uid + '/') || path === 'board/' + uid;
   return {
     doc: path => ({
       get: async () => { const { data, error } = await sb.from('docs').select('id,data').eq('path', path).maybeSingle(); if (error) throw Object.assign(new Error(error.message), { code: error.code }); return { exists: !!data, id: data && data.id, data: () => data ? clone(data.data) : undefined }; },
       set: async obj => {
-        if (!own(path)) { if (!G.adminPass) throw Object.assign(new Error('관리자만 쓸 수 있는 경로입니다'), { code: 'not_granted' }); const { error } = await sb.rpc('admin_put', { pass: G.adminPass, p: path, d: obj }); if (error) throw Object.assign(new Error(error.message), { code: error.code }); return; }
+        if (!own(path)) { if (!G.superAdmin && !G.adminPass) throw Object.assign(new Error('관리자만 쓸 수 있는 경로입니다'), { code: 'not_granted' }); const { error } = await sb.rpc('admin_put', { pass: G.adminPass || '', p: path, d: obj }); if (error) throw Object.assign(new Error(error.message), { code: error.code }); return; }
         const { error } = await sb.from('docs').upsert({ path, data: obj, updated_at: new Date().toISOString() }, { onConflict: 'path' }); if (error) throw Object.assign(new Error(error.message), { code: error.code });
       },
     }),
@@ -120,7 +128,7 @@ async function initSite(cfg) {
     G.sb = sb; G.uid = session.user.id; G.db = sbDb(sb, G.uid); G.conn = 'ok';
     accountLocal(G.uid);
     await readAcct(session.user);
-    if (G.data.adminPass) { const { data: ok } = await sb.rpc('admin_check', { pass: G.data.adminPass }); if (ok) { G.owner = true; G.adminPass = G.data.adminPass; } }
+    await refreshAdminAuth();
   } catch (e) { G.conn = 'sitefail'; G.siteErr = (e && e.message) || String(e); }
   if (G.conn === 'ok') reviveCloud(); // 다른 브라우저에서 들어와도 저장소 기록으로 되살린다
   if (G.scr === 'admin' && G.db && G.owner && (!G.dash || G.dashErr)) { G.dash = null; G.dashErr = ''; G.dashReq = 0; } // 접속 전에 열린 관리자 화면은 접속 뒤 다시 불러온다

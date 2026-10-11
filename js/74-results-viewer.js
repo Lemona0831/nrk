@@ -171,12 +171,12 @@ function vDelBox(TR) {
 }
 async function delTesters() {
   const sel = (G.delSel || []).slice(); const raw = (G.dashRaw || []).filter(T => sel.includes(T.uid));
-  if (!sel.length || !G.sb || !G.adminPass) return;
+  if (!sel.length || !G.sb || !G.owner || (!G.superAdmin && !G.adminPass)) return;
   G.delMsg = '백업을 받고 지우는 중…'; render();
   try {
     await saveFile('nrk-' + VERSION + '-지우기전-백업-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify({ v: VERSION, exportedAt: Date.now(), testers: raw.map(T => Object.assign({ label: testerLabel(T, 0) }, T)) }, null, 1));
     const paths = []; sel.forEach(u => { paths.push('playtest/' + u, 'board/' + u); });
-    const { data, error } = await G.sb.rpc('admin_delete', { pass: G.adminPass, paths });
+    const { data, error } = await G.sb.rpc('admin_delete', { pass: G.adminPass || '', paths });
     if (error) throw Object.assign(new Error(error.message), { code: error.code || '' });
     G.delMsg = raw.length + '명의 기록을 지웠습니다(문서 ' + (data == null ? '?' : data) + '개). 백업 파일은 내려받은 폴더에 있습니다.'; G.delSel = []; G.delAsk = false; G.dash = null; G.dashReq = 0; render();
   } catch (e) {
@@ -189,7 +189,7 @@ function vDash() {
   <div class="row"><button class="sm gold" data-a="import">지인 기록 넣기</button><button class="sm" data-a="dash">새로 고침</button><button class="sm" data-a="dashjson"${G.dash ? '' : ' disabled'}>전체 기록 내려받기 (JSON)</button><button class="sm" data-a="notescsv"${G.dash ? '' : ' disabled'}>의견만 내려받기 (CSV)</button>${G.site ? '' : `<button class="sm gold" data-a="archive"${G.dash && G.db ? '' : ' disabled'}>전체 기록 저장</button>`}</div>
   <p class="mini">저장소에 연결되지 않은 지인은 첫 화면의 "기록 보내기 코드"를 메신저로 보내 줍니다. 그 코드를 "지인 기록 넣기"에 붙여 넣으면 여기에 함께 모입니다. 자동 기록은 테스터가 방을 끝낼 때마다, 쓰러질 때, 처음으로 나갈 때, 판을 끝낼 때 자동으로 들어옵니다. "전체 기록 저장"은 지금 시점의 모든 테스터 기록을 소유자만 읽는 보관 공간에 날짜별로 남깁니다.</p></section>`;
   const D = G.dash; if (!D) return h;
-  const TR = testerRows(G.dashRaw || []); const delOn = !!(G.site && G.owner && G.adminPass); /* 지우기는 사이트의 관리자 암호가 있을 때만 */
+  const TR = testerRows(G.dashRaw || []); const delOn = !!(G.site && G.owner && (G.superAdmin || G.adminPass)); /* 서버가 확인한 관리자 계정 또는 기존 관리자 암호 */
   h += `<section class="card"><h4>테스터별 진행</h4><div class="tbl"><table class="st2"><caption class="sr">테스터별 진행</caption><thead><tr>${delOn ? '<th scope="col">지울 기록 고르기</th>' : ''}<th scope="col">테스터</th><th scope="col">시작한 판</th><th scope="col">끝낸 판</th><th scope="col">고정 상황</th><th scope="col">마지막 질문</th><th scope="col">마지막 기록</th></tr></thead><tbody>${TR.map(t => `<tr>${delOn ? `<td><input type="checkbox" data-a="deltick" data-k="${esc(t.uid)}" aria-label="${esc(t.who)} 기록 지우기에 포함"${(G.delSel || []).includes(t.uid) ? ' checked' : ''}></td>` : ''}<td>${esc(t.who)}</td><td>${t.started}</td><td>${t.done}</td><td>${t.scen}/3</td><td>${t.final ? '✓' : '—'}</td><td>${t.last ? esc(new Date(t.last).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })) : '—'}</td></tr>`).join('') || '<tr><td colspan="7">아직 없음</td></tr>'}</tbody></table></div>${delOn ? vDelBox(TR) : ''}</section>`;
   h += vNotes();
   const bn = CLASS_KEYS();
