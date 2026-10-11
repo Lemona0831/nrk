@@ -453,7 +453,7 @@ const SKILLS2 = {
        새 효과: imbue(칼에 싣기) · edgeX(칼 ×) · kwx(쓰기 직전 그 상태였던 적에게 ×) · alt(교대 보상, run 2) · killSpread(쓰러뜨려 출혈 퍼뜨리기), exploit의 s · take, hasten on 'alt' · 'kill' */
     // 시작
     { id: 'sb_edge', b: '시작', tier: '시작', start: 1, n: '마검 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 29 }] },
-    { id: 'sb_aegis', b: '시작', tier: '시작', start: 1, n: '주문 방패', kind: 'spell', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'ward', n: 7 }, { k: 'st', s: 'protect', n: 2 }, { k: 'stam', n: 27 }] },
+    { id: 'sb_aegis', b: '시작', tier: '시작', start: 1, n: '주문 방패', kind: 'spell', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 7 }, { k: 'st', s: 'protect', n: 1 }] },
     // 혈인
     { id: 'sb_bleedcut', row: 1, b: '혈인', tier: '하급', n: '혈흔 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 4 }] },
     { id: 'sb_sweepcut', row: 1, b: '혈인', tier: '하급', n: '가로 베기', kind: 'cut', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'bleed', n: 2 }] },
@@ -516,7 +516,7 @@ const SKILLS2 = {
     { id: 'sb_shell', row: 3, b: '마갑', tier: '하급', n: '마갑 전개', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'ward', n: 18 }, { k: 'st', s: 'protect', n: 1 }, { k: 'stam', n: 15 }] },
     { id: 'sb_beatcut', row: 3, b: '마갑', tier: '하급', n: '교차참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 8 }, { k: 'alt', run: 2, brk: 30 }] },
     { id: 'sb_rebuke', row: 4, b: '마갑', tier: '하급', n: '마갑 파쇄', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 6 }, { k: 'wardBurn', mul: 2.5, max: 6 }, { k: 'brk', n: 21 }] },
-    { id: 'sb_rebound', row: 4, b: '마갑', tier: '하급', n: '반향 주문', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'cutx', brk: 41 }, { k: 'alt', stam: 25 }] },
+    { id: 'sb_rebound', row: 4, b: '마갑', tier: '하급', n: '반향 주문', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'cutx', brk: 41 }, { k: 'alt', stam: 10 }] },
     { id: 'sb_wardbolt', row: 5, b: '마갑', tier: '하급', n: '방벽 포격', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 19 }, { k: 'wardDmg', per: 1, spend: 0.5, cap: 18 }] },
     { id: 'sb_turn', row: 5, b: '마갑', tier: '하급', n: '회류참', kind: 'cut', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'alt', ward: 4 }, { k: 'hasten', n: 1, on: 'alt' }] },
     { id: 'sb_wardburst', row: 6, b: '마갑', tier: '하급', n: '방벽 해방', kind: 'spell', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'wardBurn', mul: 1.5, max: 8 }, { k: 'st', s: 'weak', n: 1 }] },
