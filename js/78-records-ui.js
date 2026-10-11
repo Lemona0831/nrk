@@ -202,16 +202,17 @@ function rcFoes(ch) {
   return Array.from(new Set(ids)).map(id => ({ id, boss: id === boss }));
 }
 function vCodex() {
-  const S = rcS(), c = G.data.codex || {}, ch = [1, 2, 3].includes(S.cch) ? S.cch : 1;
+  const full = G.superAdmin === true;
+  const S = rcS(), actual = G.data.codex || {}, c = full ? Object.fromEntries(Object.keys(FOE_INTRO).map(id => [id, Object.assign({},actual[id],{seen:Object.fromEntries(Object.keys(CODEX[id] || {}).map(k=>[k,true]))})])) : actual, ch = [1, 2, 3].includes(S.cch) ? S.cch : 1;
   if (S.cdx && FOE_INTRO[S.cdx] && c[S.cdx]) { const id = S.cdx, F = FOE_INTRO[id], X = c[id], E = CODEX[id] || {}, ks = Object.keys(E), seen = ks.filter(k => X.seen && X.seen[k]);
-    return `<div class="phead"><button type="button" class="sm back" data-a="rc" data-k="cback:${id}">← 도감 목록</button></div><h4 id="rcdt" tabindex="-1" class="rcdh">${esc(F.n)}</h4><p class="lore">${esc(F.lore)}</p><p class="mini">처음 만난 날 ${rcDate(X.met)}</p>${(F.see || []).length ? `<h5>처음 만났을 때</h5>${F.see.map(t => `<p>${esc(t)}</p>`).join('')}` : ''}<h5>겪은 일 <small>${seen.length}/${ks.length}</small></h5>${seen.length ? `<ul class="rcplain">${seen.map(k => `<li>${esc(E[k])}</li>`).join('')}</ul>` : '<p class="mini">아직 겪은 일이 없습니다.</p>'}${ks.length > seen.length ? `<p class="mini">아직 겪지 못한 일 ${ks.length - seen.length}가지</p>` : ''}<label for="cdx-${id}" class="mini">내 메모</label><textarea id="cdx-${id}" data-cdx="${id}" rows="3" placeholder="어떻게 상대했는지 적어 두세요">${esc(X.note || '')}</textarea>`; }
+    return `<div class="phead"><button type="button" class="sm back" data-a="rc" data-k="cback:${id}">← 도감 목록</button></div><h4 id="rcdt" tabindex="-1" class="rcdh">${esc(F.n)}</h4><p class="lore">${esc(F.lore)}</p><p class="mini">${full ? '관리자 전체 열람 · 발견 기록에는 반영되지 않습니다' : '처음 만난 날 ' + rcDate(X.met)}</p>${(F.see || []).length ? `<h5>처음 만났을 때</h5>${F.see.map(t => `<p>${esc(t)}</p>`).join('')}` : ''}<h5>겪은 일 <small>${seen.length}/${ks.length}</small></h5>${seen.length ? `<ul class="rcplain">${seen.map(k => `<li>${esc(E[k])}</li>`).join('')}</ul>` : '<p class="mini">아직 겪은 일이 없습니다.</p>'}${ks.length > seen.length ? `<p class="mini">아직 겪지 못한 일 ${ks.length - seen.length}가지</p>` : ''}<label for="cdx-${id}" class="mini"${full ? ' hidden' : ''}>내 메모</label><textarea${full ? ' hidden disabled' : ''} id="cdx-${id}" data-cdx="${id}" rows="3" placeholder="어떻게 상대했는지 적어 두세요">${esc(X.note || '')}</textarea>`; }
   S.cdx = null;
   const kind = S.ckind, all = rcFoes(ch), list = all.filter(f => kind === 'all' || (kind === 'boss') === f.boss);
   const met = f => !!c[f.id], seenN = f => Object.keys(CODEX[f.id] || {}).filter(k => c[f.id] && c[f.id].seen && c[f.id].seen[k]).length, totN = f => Object.keys(CODEX[f.id] || {}).length;
   const chMet = [1, 2, 3].map(x => rcFoes(x).filter(met).length + '/' + rcFoes(x).length);
-  let h = `<p class="mini">강적과 보스를 만나 처음 겪은 일만 적힙니다. 쓰러져도 도감은 남습니다. 일반 적은 도감에 적히지 않습니다.</p>`;
+  let h = `${full ? '<p class="mini">관리자 전체 열람입니다. 아직 만나지 않은 보스와 강적, 모든 도감 설명을 확인합니다. 실제 발견 기록은 바뀌지 않습니다.</p>' : ''}<p class="mini">강적과 보스를 만나 처음 겪은 일만 적힙니다. 쓰러져도 도감은 남습니다. 일반 적은 도감에 적히지 않습니다.</p>`;
   h += rcTabs('cdch', '챕터', [1, 2, 3].map((x, i) => ({ a: 'rc', k: 'cch:' + x, t: x + '챕터', n: chMet[i], on: ch === x })));
-  let body = `<p class="mini">${esc((CHAPTERS[ch] || {}).n || '')}</p>${rcBar(all.filter(met).length, all.length, ch + '챕터 만난 강적과 보스')}<p class="mini">만난 보스와 강적 ${all.filter(met).length}명, 겪은 일 ${all.reduce((a, f) => a + seenN(f), 0)}/${all.reduce((a, f) => a + totN(f), 0)}가지</p>`;
+  let body = `<p class="mini">${esc((CHAPTERS[ch] || {}).n || '')}</p>${rcBar(all.filter(met).length, all.length, ch + '챕터 만난 강적과 보스')}<p class="mini">${full ? '열람 가능한 보스와 강적' : '만난 보스와 강적'} ${all.filter(met).length}명, ${full ? '도감 설명' : '겪은 일'} ${all.reduce((a, f) => a + seenN(f), 0)}/${all.reduce((a, f) => a + totN(f), 0)}가지</p>`;
   body += rcGroup('cdk', '종류', rcChip('ckind:all', '전체', kind === 'all') + rcChip('ckind:boss', '보스', kind === 'boss') + rcChip('ckind:strong', '강적', kind === 'strong'));
   body += `<ul class="rcgrid cdgrid" aria-label="${ch}챕터 도감">${list.map(f => { const F = FOE_INTRO[f.id];
     if (!met(f)) return `<li class="cdcard lock"><span class="cdsil" aria-hidden="true">?</span><b>???</b><small>아직 만나지 못했습니다</small><span class="sr">${f.boss ? '보스' : '강적'}</span></li>`;
