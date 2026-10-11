@@ -171,14 +171,15 @@ function chGift(run, ch, quiet) {
   if (!quiet) toast('각인을 얻었습니다: ' + AWK_MAP[id].n); return true;
 }
 function enterChapter(run) {
-  const nx = (run.ch || 1) + 1; if (!CHAPTERS[nx]) return false;
+  const nx = (run.ch || 1) + 1; if (!CHAPTERS[nx] || run.markCh) return false;
+  const mode = run.mode === 'hard' ? 'hard' : 'normal'; run.mode = mode;
   const keepDoors = run.doorLog || []; run.ch = nx; run.boss = chData(nx).boss; run.phase = null; run.settle = null; run.shop = null; run.result = null;
-  delete run.dg; dgInit(run); chGift(run, nx, true); run.doorLog = keepDoors; (run.chLog = run.chLog || []).push({ ch: nx, lv: run.lv, gold: run.gold, t: Date.now() });
+  delete run.dg; dgInit(run); chGift(run, nx, true); run.doorLog = keepDoors; (run.chLog = run.chLog || []).push({ ch: nx, mode, lv: run.lv, gold: run.gold, t: Date.now() });
   G.scr = 'run'; G.b = null; G.sel = null; saveRunLocal(); saveCur(); render(); toast(nx + '챕터 · ' + chData(nx).n); if (chData(nx).enterLore) toast(chData(nx).enterLore); if ((run.awkLog || []).some(x => x.gift && x.ch === nx)) toast('각인을 얻었습니다: ' + AWK_MAP[run.awkLog.filter(x => x.gift && x.ch === nx)[0].id].n); return true;
 }
 function vWait() {
   const run = G.run; const ch = run.ch || 1, nx = ch + 1;
-  if (CHAPTERS[nx]) return `<section class="card hero waitc"><p class="mini">${esc(run.cname || '')} · ${ch}챕터 돌파</p><h2>${nx}챕터 · ${esc(chData(nx).n)}</h2><p class="lore">${esc(chData(nx).enterLore || chData(ch).nextLore || '')}</p><p>장비 · 골드 · 레벨 · 스킬 트리를 그대로 들고 ${nx}챕터 1층으로 내려갑니다. 적은 더 거세고, 처음 보는 적과 강적이 기다립니다.</p><div class="row waitbtn"><button class="gold" data-a="nextch" data-focus>${nx}챕터로 내려간다</button><button data-a="equip">장비</button><button data-a="tree">스킬 트리</button><button data-a="title">타이틀로</button></div></section>`;
+  if (CHAPTERS[nx]) return `<section class="card hero waitc"><p class="mini">${esc(run.cname || '')} · ${ch}챕터 돌파</p><h2>${nx}챕터 · ${esc(chData(nx).n)}${modeTag(run)}</h2><p class="lore">${esc(chData(nx).enterLore || chData(ch).nextLore || '')}</p><p>장비 · 골드 · 레벨 · 스킬 트리를 그대로 들고 ${nx}챕터 ${run.mode === 'hard' ? '가혹' : '일반'} 1층으로 내려갑니다. 적은 더 거세고, 처음 보는 적과 강적이 기다립니다.</p><div class="row waitbtn"><button class="gold" data-a="nextch" data-focus>${nx}챕터 ${run.mode === 'hard' ? '가혹' : '일반'}으로 내려간다</button><button data-a="equip">장비</button><button data-a="tree">스킬 트리</button><button data-a="title">타이틀로</button></div></section>`;
   return `<section class="card hero waitc"><p class="mini">${esc(run.cname || '')} · ${ch}챕터 돌파</p><h2>${nx}챕터 준비 중</h2><p class="lore">${esc(chData(ch).nextLore || '')}</p><p>${nx}챕터는 아직 준비 중입니다. 이 캐릭터는 여기에서 기다리고, ${nx}챕터가 열리면 지금 장비와 골드 그대로 이어서 내려갑니다. 랭킹에는 "${ch}챕터 돌파"로 올라갔습니다.</p><div class="row waitbtn"><button class="gold" data-a="title">타이틀로</button><button data-a="rank">랭킹 보기</button><button data-a="equip">장비</button></div></section>`;
 }
 

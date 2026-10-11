@@ -42,7 +42,22 @@ try:
   page.evaluate("window.originalSaveLocal=saveLocal;saveLocal=()=>false")
   before=page.evaluate('JSON.stringify([G.data.cur,G.data.kept])');page.click(f'[data-a=resumekept][data-k="{first}"]');assert page.evaluate('JSON.stringify([G.data.cur,G.data.kept])')==before
   page.evaluate('saveLocal=originalSaveLocal')
+  for ch,boss in [(1,'abbot'),(2,'cryptlord'),(3,'queen'),(1,'mother'),(1,'tree')]:
+   page.evaluate("([ch,boss])=>{G.run.ch=ch;G.run.mode='normal';G.sheet=null;G.b=roomBattle(G.run.p,{ch,lv:10,floor:24,names:ENEMY_NAMES[ch],boss:1},boss,300);G.scr='run';render();}",[ch,boss])
+   assert page.query_selector('.boss-mechanics') and '다음 행동' in page.inner_text('.boss-mechanics')
+   page.click('.boss-mechanics summary');assert page.query_selector('.boss-mechanics details[open]')
+   assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth')
+  page.evaluate("()=>{G.run.ch=1;G.run.mode='hard';G.run.phase='wait';G.b=null;G.scr='wait';render();}")
+  gear=page.evaluate('JSON.stringify(G.run.eqU)')
+  assert '2챕터 가혹으로 내려간다' in page.inner_text('[data-a=nextch]')
+  page.click('[data-a=nextch]');assert page.evaluate('G.run.ch===2 && G.run.mode==="hard" && runRecord(G.run).mode==="hard" && G.run.chLog.at(-1).mode==="hard"')
+  assert page.evaluate('JSON.stringify(G.run.eqU)')==gear
+  page.evaluate('G.run.cur=G.run.doors[0];enterRoom()');assert page.evaluate('G.b.ctx.mode==="hard"')
+  page.evaluate("G.run.phase='wait';G.sheet=null;G.b=null;G.scr='wait';render()")
+  page.click('[data-a=nextch]');assert page.evaluate('G.run.ch===3 && G.run.mode==="hard"')
+  title();page.reload();page.wait_for_function('SITE_UPDATE.started');page.click('[data-a=resume]');assert page.evaluate('G.run.ch===3 && G.run.mode==="hard"')
   assert not errors,errors
   print('세이브 검증 통과: 생성 취소·서로 다른 캐릭터 보관·새로고침·전투 복원·8칸 한도·포기 확인·저장 실패 시 교체 취소')
+  print('보스 5종의 기믹·다음 행동 표시와 모바일 설명, 1→2→3챕터 가혹 이동·장비 유지·저장 복원 통과')
   browser.close()
 finally:server.shutdown();server.server_close()

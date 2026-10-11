@@ -154,6 +154,48 @@ function vHudOrder(b, hud) {
   return `<div class="ordrow">${vOrder(b, hud)}<button class="sm onlym logbtn rlbtn" data-a="logopen" aria-label="전체 기록">📜<span class="lbt"> 기록</span></button></div>`;
 }
 /* 보스 시계와 열기 모듈 */
+function bossMechanicsHtml(b, boss) {
+  const state = [], why = [], ph = boss.phase || 1;
+  const it = intentText(b, boss);
+  if (boss.boss === 'abbot') {
+    state.push('낙인 ' + st(b.p, 'brand') + '/3');
+    why.push('낙인이 쌓일수록 수도원장의 강타 피해가 증가합니다.');
+    if (boss.demand && boss.demand.turn === b.turnIdx) {
+      const rest = boss.demand.k === 'rest';
+      state.push(rest ? '고해: 수도원장에게 피해 주지 않기' : '심문: 이번 차례 수도원장에게 피해 주기');
+      why.push(rest ? '수도원장에게 피해를 주지 않으면 낙인 1 감소. 피해를 주면 낙인이 늘고 수도원장이 강화됩니다.' : '수도원장에게 피해를 주면 낙인 1 감소. 피해를 주지 않으면 낙인이 늘어납니다.');
+    }
+    if (boss.vow) {
+      state.push('서원 중 · 촛불 ' + alive(b).filter(e => e.role === 'candle').length + '개');
+      why.push('서원 중에는 직접 피해가 줄어듭니다. 붕괴시키면 서원이 깨지고 촛불이 꺼집니다. 서원이 끝날 때 남은 촛불은 수도원장을 강화합니다.');
+    }
+  } else if (boss.boss === 'cryptlord') {
+    why.push('군주의 새김은 행동 갈래를 약화시킵니다. 적용 중인 새김과 남은 시간은 위에 표시됩니다.');
+    if (b.carve) {
+      state.push('새김: ' + Object.keys(b.carve.g).map(k => CARVE_N[k] + ' −' + Math.round((1-b.carve.g[k])*100) + '%').join(' · ') + ' · 내 차례 ' + b.carve.left + '번');
+      why.push('새겨진 행동 갈래의 효과가 약해집니다. 남은 내 차례가 지나거나 군주를 붕괴시키면 새김이 사라집니다.');
+    } else state.push('새김 없음');
+    const walls = alive(b).filter(e => e.role === 'bonewall').length;
+    if (walls) { state.push('뼈벽 ' + walls + '개'); why.push('뼈벽 뒤 후열은 단일 공격 피해가 줄어듭니다. 뼈벽을 없애면 보호가 사라집니다.'); }
+  } else if (boss.boss === 'queen') {
+    const crown = alive(b).find(e => e.role === 'crown');
+    state.push(crown ? '왕관 생명력 ' + shownHp(crown.hp) + '/' + Math.round(crown.hpMax) : '왕관 없음');
+    if (crown) why.push('왕관을 공격하면 열기가 내려갑니다. 왕관을 깨면 열기가 크게 내려가고 여왕이 휘청입니다.');
+    if (b.crownBack) state.push('왕관 재생까지 ' + Math.max(0,b.crownBack-(b.round||0)) + '라운드');
+    const maids = alive(b).filter(e => e.role === 'maid');
+    if (maids.length) { state.push('시녀 ' + maids.length + '명'); why.push('시녀의 영창이 끝나면 열기가 올라갑니다. 적 카드에서 영창 준비 상태를 확인할 수 있습니다.'); }
+    if (boss.under) { state.push(boss.qPrep ? '솟구침 준비 완료' : '모래 속 잠복'); why.push('잠복 중에는 단일 공격이 닿지 않습니다. 솟구침은 큰 피해와 출혈을 줍니다.'); }
+    why.push('열기 100에서 재폭풍이 발생합니다. 발동 시점과 예상 피해는 열기 막대에 표시됩니다.');
+  } else if (boss.boss === 'mother') {
+    state.push('내 중독 ' + st(b.p,'poison') + '/10'); why.push('내 중독이 10에 닿으면 부화가 일어납니다.');
+    if(ph>=2)state.push('거울 활성');
+  } else if (boss.boss === 'tree') {
+    state.push('계절 ' + SEASONS[b.season] + ' · 뿌리 ' + alive(b).filter(e=>e.role==='root').length + '개');
+    why.push('뿌리가 남아 있는 동안 수호목이 라운드마다 회복합니다. 계절이 바뀌면 전투 규칙도 달라집니다.');
+  }
+  const pending = !!(boss.qNext || boss.lordNext);
+  return `<section class="boss-mechanics" aria-label="보스 기믹 상태"><div class="boss-state"><b>${esc(boss.n)} · ${ph}단계</b>${pending ? '<span>단계 전환 대기 · 현재 예고를 마친 뒤 전환</span>' : ''}</div>${state.length ? '<div class="boss-state">' + state.map(s=>'<span>'+esc(s)+'</span>').join('') + '</div>' : ''}<div class="boss-next"><b>다음 행동</b> ${esc(fixJosa(it && it.t || '예고 없음'))}</div>${why.length ? '<details><summary>현재 기믹 설명</summary>' + why.map(s=>'<p>'+esc(s)+'</p>').join('') + '</details>' : ''}</section>`;
+}
 function vHudClock(b) {
   let gim = '';
   const boss = b.en.find(e => e.role === 'boss' && e.alive);
@@ -162,6 +204,7 @@ function vHudClock(b) {
     if (boss.boss === 'mother') g += ` · 내 중독 ${st(b.p, 'poison')}/10 (10이면 부화) · ${boss.phase >= 2 ? '거울 활성' : '2페이즈부터 거울'}`;
     if (boss.boss === 'tree') { const roots = alive(b).filter(e => e.role === 'root').length; g += ` · 뿌리 때문에 라운드마다 약 +${rootRegen(b)} 회복 · 계절 ${SEASONS[b.season]} → ${SEASONS[(b.season + 1) % 4]} (${myTurnsUntil(b, (Math.floor(b.tick / 4) + 1) * 4)}라운드 뒤) · 뿌리 ${roots}/3`; }
     gim = `<div class="gimmick" data-info="gim" tabindex="0">${esc(g)}</div>`;
+    gim += bossMechanicsHtml(b, boss);
     if (boss.demand && boss.demand.turn === b.turnIdx) gim += `<div class="gimmick dmd" data-info="edemand" tabindex="0">${boss.demand.k === 'rest' ? '🤲 수도원장이 고해를 기다린다' : '⚖️ 수도원장이 심문한다'}</div>`; // 10월 4일: 휴대폰에서 카드의 표시가 잘려 따로 한 줄
   }
   const piles=alive(b).filter(e=>e.pile);
