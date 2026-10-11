@@ -56,8 +56,23 @@ try:
   page.evaluate("G.run.phase='wait';G.sheet=null;G.b=null;G.scr='wait';render()")
   page.click('[data-a=nextch]');assert page.evaluate('G.run.ch===3 && G.run.mode==="hard"')
   title();page.reload();page.wait_for_function('SITE_UPDATE.started');page.click('[data-a=resume]');assert page.evaluate('G.run.ch===3 && G.run.mode==="hard"')
+  page.evaluate("G.run.stats={str:0,dex:0,int:0,con:30,wil:33};applyStats(G.run.p,G.run.stats);saveCur();render()")
+  unchanged=page.evaluate('JSON.stringify([G.run.p,G.run.stats])')
+  page.click('[data-a=menu]');page.click('.mnav [data-a=statview]')
+  assert page.locator('.sheet .stat-read dd').all_text_contents()==['0','0','0','30','33']
+  assert page.locator('.sheet [data-a="stat+"]').count()==0
+  page.click('.sheet [data-a=close]');assert page.evaluate('JSON.stringify([G.run.p,G.run.stats])')==unchanged
+  page.evaluate("openSheet('equip')");unchanged=page.evaluate('JSON.stringify([G.run.p,G.run.stats])');page.click('.sheet [data-a=statview]')
+  assert page.evaluate('JSON.stringify([G.run.p,G.run.stats])')==unchanged
+  page.click('.sheet [data-a=equip]');assert page.query_selector('.eqsum')
+  page.click('.sheet [data-a=close]');assert page.evaluate('JSON.stringify(G.run.stats)')=='{"str":0,"dex":0,"int":0,"con":30,"wil":33}'
+  page.evaluate("()=>{G.data.runs.push({...runRecord(G.run),id:'statdone',endedAt:Date.now(),result:'win',ch:3,clears:3});G.scr='records';G.rc={...rcS(),open:'statdone'};render();}")
+  assert page.locator('.rcsec .stat-read dd').all_text_contents()==['0','0','0','30','33']
+  assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth')
+  assert page.evaluate("statReadHtml(null).includes('기록이 없습니다') && statReadHtml({con:30}).includes('기록 없음')")
   assert not errors,errors
   print('세이브 검증 통과: 생성 취소·서로 다른 캐릭터 보관·새로고침·전투 복원·8칸 한도·포기 확인·저장 실패 시 교체 취소')
   print('보스 5종의 기믹·다음 행동 표시와 모바일 설명, 1→2→3챕터 가혹 이동·장비 유지·저장 복원 통과')
+  print('능력치 확인: 메뉴·장비 창·완주 기록 30/33 표시, 0과 누락 구분, 읽기 중 상태 유지·모바일 화면 통과')
   browser.close()
 finally:server.shutdown();server.server_close()

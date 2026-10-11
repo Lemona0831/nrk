@@ -94,6 +94,7 @@ function rcRunDetail(id) {
   h += `<p class="rctags"><span class="rctag st-${x.st}">${x.st === 'clear' ? x.clears + '챕터 돌파' : RC_STL[x.st]}</span>${x.mode === 'hard' ? '<span class="rctag hard">가혹</span>' : ''}${x.marks ? `<span class="rctag">표식 도전 ${x.marks}챕터</span>` : ''}${rcNoSurvey(x) ? '<span class="rctag warn">설문 전</span>' : ''}</p>`;
   const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
   h += `<dl class="rcfacts">${row('직업', esc(B.n))}${row('도달', esc(rcProg(x)))}${row('레벨', 'Lv ' + x.lv)}${row('플레이 시간', rcMs(x.ms))}${row('시작', x.at ? rcDate(x.at) + ' ' + rcClock(x.at) : '기록 없음')}${row('끝', x.end ? rcDate(x.end) + ' ' + rcClock(x.end) : x.st === 'alive' ? '아직 진행 중' : '기록 없음')}${row('골드', r.gold != null ? r.gold : '기록 없음')}</dl>`;
+  h += `<section class="rcsec"><h4>능력치</h4>${statReadHtml(r.stats)}<p class="mini">마지막으로 저장된 배분 수치입니다.</p></section>`;
   if (x.lite) return h + '<p class="mini">이 판은 랭킹 줄만 남아 있어 방과 장비 기록이 없습니다.</p>';
   /* 어떻게 끝났나 */
   let why = '';

@@ -177,6 +177,7 @@ function onClick(ev) {
     case 'giveupend': endRun('lose'); break;
     case 'scen': startScen(el.dataset.b); break;
     case 'enter': enterRoom(); break;
+    case 'statview': if (!G.run || !G.run.p || G.creating) break; hidePop(); openSheet('statview', { from: el.dataset.from || '' }); break;
     case 'equip': if (!runLive()) break; G.eqSel = null; openSheet('equip'); break;
     case 'close': G.sheet = null; render(); break;
     case 'sel': if (!G.data.seenCoach && !(G.coachI > 0)) G.coachI = 1;

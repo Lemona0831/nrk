@@ -94,6 +94,7 @@ function rcRunDetail(id) {
   h += `<p class="rctags"><span class="rctag st-${x.st}">${x.st === 'clear' ? x.clears + '챕터 돌파' : RC_STL[x.st]}</span>${x.mode === 'hard' ? '<span class="rctag hard">가혹</span>' : ''}${x.marks ? `<span class="rctag">표식 도전 ${x.marks}챕터</span>` : ''}${rcNoSurvey(x) ? '<span class="rctag warn">설문 전</span>' : ''}</p>`;
   const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
   h += `<dl class="rcfacts">${row('직업', esc(B.n))}${row('도달', esc(rcProg(x)))}${row('레벨', 'Lv ' + x.lv)}${row('플레이 시간', rcMs(x.ms))}${row('시작', x.at ? rcDate(x.at) + ' ' + rcClock(x.at) : '기록 없음')}${row('끝', x.end ? rcDate(x.end) + ' ' + rcClock(x.end) : x.st === 'alive' ? '아직 진행 중' : '기록 없음')}${row('골드', r.gold != null ? r.gold : '기록 없음')}</dl>`;
+  h += `<section class="rcsec"><h4>능력치</h4>${statReadHtml(r.stats)}<p class="mini">마지막으로 저장된 배분 수치입니다.</p></section>`;
   if (x.lite) return h + '<p class="mini">이 판은 랭킹 줄만 남아 있어 방과 장비 기록이 없습니다.</p>';
   /* 어떻게 끝났나 */
   let why = '';
@@ -134,7 +135,7 @@ function vRecords() {
   if (open) return h;
   h += `<section class="card"><h3>계정 목표</h3><p class="mini">직업과 갈래마다 보스를 어디까지 넘었는지, 얻은 칭호를 모아 봅니다.${d.title && titleName(d.title) ? ' 지금 칭호는 ' + esc(titleName(d.title)) + '입니다.' : ''}</p><div class="row"><button data-a="goals">계정 목표 보기</button>${markOpen() ? '<button data-a="mark">표식 도전</button>' : ''}</div></section>${vMarkBoard()}<section class="card"><h3>마지막 질문</h3><p class="mini">${d.final ? '이미 답했습니다. 다시 답하면 새 답으로 바뀝니다.' : '여러 캐릭터를 해 본 뒤에 답해 주세요.'}</p><button data-a="final">질문에 답하기</button></section>`;
   h += `<section class="card"><h3>기록 보내기${q('record', '기록에 대해')}</h3><p class="mini">끝낸 판 ${d.runs.filter(r => r && r.endedAt).length}개${G.site && G.conn === 'ok' ? '. 기록은 이 사이트의 저장소에 자동으로 모입니다' : ''}.</p><div class="row"><button data-a="code">기록 보내기 코드</button><button data-a="dl">기록 파일 받기</button><button data-a="guide">처음 안내 다시 보기</button></div></section>`;
-  h += `<p class="mini tfoot">${G.site ? '<a href="../privacy.html" target="_blank" rel="noopener">개인정보처리방침<span aria-hidden="true"> ↗</span><span class="sr"> 새 창에서 열림</span></a> · ' : ''}<button class="linkbtn" data-a="admin">관리자</button></p>`;
+  h += `<p class="mini tfoot">${G.site ? '<a href="privacy.html" target="_blank" rel="noopener">개인정보처리방침<span aria-hidden="true"> ↗</span><span class="sr"> 새 창에서 열림</span></a> · ' : ''}<button class="linkbtn" data-a="admin">관리자</button></p>`;
   return h;
 }
 

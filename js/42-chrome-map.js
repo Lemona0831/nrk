@@ -6,6 +6,7 @@ function menuItems() {
   const it = [];
   if (G.scr !== 'title') it.push(['title', '🏰', '타이틀']);
   if (inRun) it.push(['equip', '🎒', '장비']);
+  if (inRun || (G.scr === 'dead' && G.run && G.run.p)) it.push(['statview', '📊', '능력치']);
   if (inRun) it.push(['awkview', '✨', '각인 ' + (G.run.awk || []).length]);
   if (runLive() && !G.creating && G.run.tree && G.scr !== 'tree' && G.scr !== 'tut') it.push(['tree', '🌳', '스킬 트리' + (G.run.tree.pts ? ' <span class="newdot"><span class="sr">남은 포인트 </span>' + G.run.tree.pts + '</span>' : '')]);
   if (!inRun && !G.creating && G.scr !== 'tut' && G.scr !== 'tutoffer') it.push(['tut', '🎯', '수련장' + (G.data.tutDone ? ' ✓' : '')]);
@@ -31,6 +32,11 @@ function vHeader() {
 
 /* ---------- 내 상태 한 줄 ---------- */
 function mbar(cls, v, max, lab, inc) { const ik = { hp: 'bar:hp', mp: 'bar:mp', st: 'bar:st' }[cls]; const w = max > 0 ? Math.max(0, Math.min(100, v / max * 100)) : 0; const lo = cls === 'hp' && v > 0 && v < max * 0.35; /* 10월 7일: 낮은 생명력은 색만이 아니라 "위험" 글자로 */ return `<div class="mb" data-info="${ik}" tabindex="0"><span class="ml">${lab}</span><div class="bar ${cls}${lo ? ' lo' : ''}" role="progressbar" aria-label="${esc(lab)}" aria-valuemin="0" aria-valuemax="${Math.round(max)}" aria-valuenow="${shownHp(v)}"${lo ? ` aria-valuetext="${shownHp(v)}/${Math.round(max)}, 위험"` : ''}><i style="width:${w}%"></i>${inc > 0 && v > 0 && max > 0 ? `<b class="pvi" aria-hidden="true" style="left:${Math.max(0, v - inc) / max * 100}%;width:${Math.min(inc, v) / max * 100}%"></b>` : ''}<span>${lo ? '<b class="dz">위험</b> ' : lab + ' '}${shownHp(v)}/${Math.round(max)}</span></div></div>`; } /* 10월 7일 2차: inc = 내 다음 차례 전 받을 피해 어림(incomingEst, 예상 피해 줄과 같은 값). 빗금으로 겹친다 */
+function statReadHtml(values) {
+  const has = k => values && Number.isFinite(values[k]) && values[k] >= 0;
+  if (!STAT_KEYS.some(has)) return '<p class="mini">능력치 기록이 없습니다.</p>';
+  return `<dl class="stat-read" aria-label="능력치">${STAT_KEYS.map(k=>`<div><dt>${esc(STATN[k])}</dt><dd>${has(k) ? values[k] : '기록 없음'}</dd></div>`).join('')}</dl>`;
+}
 function vPlayerPanel(p, b) {
   const B = BUILDS[p.build];
   const run0 = G.run; const lvTxt = run0 && run0.lv ? `<span class="lvtag" title="경험치 ${Math.round(run0.xp || 0)}/${LV_XP[run0.lv] || '최대'}">Lv ${run0.lv}</span>` : '';

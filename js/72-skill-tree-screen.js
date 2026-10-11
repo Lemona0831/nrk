@@ -198,6 +198,9 @@ function sheetParts(S) {
     title = '설정'; body = vSettings();
   } else if (S.kind === 'help') {
     title = S.data.first ? '방금 적이 무너졌습니다' : '도움말'; body = (S.data.first ? '<p class="mini">처음 보는 규칙이라 잠깐 설명합니다. 이 창은 한 번만 뜹니다.</p>' : '') + vHelpBody(S.data.k);
+  } else if (S.kind === 'statview') {
+    title = '능력치'; const run = G.run;
+    body = run && run.p ? `<p><b>${esc(run.cname || BUILDS[run.build].n)}</b> · ${esc(BUILDS[run.build].n)} · Lv ${run.lv || 1}</p>${statReadHtml(run.p.stat || run.stats)}<p class="mini">현재 배분된 능력치입니다.${run.statPending ? ' 미배분 ' + run.statPending + '점.' : ''}</p>${S.data.from === 'equip' ? '<button data-a="equip">장비로 돌아가기</button>' : ''}` : '<p>캐릭터 정보가 없습니다.</p>';
   } else if (S.kind === 'equip') {
     title = '장비'; body = vEquip();
   }

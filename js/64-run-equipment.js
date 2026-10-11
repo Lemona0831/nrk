@@ -191,7 +191,7 @@ function vEquip() {
   const filter = G.eqFilter || 'all', order = G.eqOrder || 'recent';
   const a = gearStats(p);
   let h = `<div class="eqsum" role="group" aria-label="지금 수치">${GSTAT.filter(x => !['heavyCost', 'lifeCap', 'manaCap', 'stamCap'].includes(x[0]) && (x[0] !== 'mp' || !isV2(p))).map(([k, lab, fmt]) => `<span><small>${lab}</small><b>${fmt(a[k])}</b></span>`).join('')}</div>`;
-  h += `<div class="row"><button class="sm" data-a="awkview" data-from="equip">✨ 각인 ${(run.awk || []).length}개 보기</button></div>`;
+  h += `<div class="row"><button class="sm" data-a="statview" data-from="equip">능력치 보기</button><button class="sm" data-a="awkview" data-from="equip">✨ 각인 ${(run.awk || []).length}개 보기</button></div>`;
   if (inFight) h += `<p class="warn">전투 중에는 보기만 합니다. 전투가 끝나면 바꿉니다.</p>`;
   h += `<div class="eqcols"><section class="eqslots" aria-label="장비 칸">`;
   for (const sl of EQ_SLOTS) {
