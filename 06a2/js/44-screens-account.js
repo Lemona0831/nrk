@@ -201,7 +201,7 @@ function vAdmin() {
   }
   if (typeof UNLOCK !== 'undefined' && Object.keys(UNLOCK).length) h += `<div class="row"><button data-a="unlall" aria-pressed="${!!G.data.unlAll}">숨겨진 직업 · 표식 도전 ${G.data.unlAll ? '잠그기' : '모두 열기'} (이 기기에서만, 시험용)</button></div>`;
   if (!G.dash && !G.dashReq && (G.conn || !siteMode)) { G.dashReq = 1; setTimeout(loadDash, 0); }
-  return h + '<p class="mini">' + esc(VERSION) + ' 기록만 모았습니다. 0.6a와 B0.5 기록은 따로 있습니다.</p></section>' + (G.dash ? vDash06() : '') + vDash();
+  return h + '<p class="mini">' + esc(VERSION) + ' 기록만 모았습니다. 0.6a와 B0.5 기록은 따로 있습니다.</p></section>' + vDash() + (G.dash ? vDash06() : '');
 }
 /* 0.6 요약: 직업별 완주, 쓰러진 층, 문 고르기, 방 결과, 상점 */
 function vDash06() {
