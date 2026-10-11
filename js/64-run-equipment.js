@@ -98,7 +98,7 @@ function growthSnapshot(p) {
 function growthText(before, p, label) {
   const after = growthSnapshot(p), changes = [];
   const fields = [['attack', '기본 공격 기준', ''], ['hp', '최대 생명력', ''], ['st', '최대 스태미나', ''],
-    ['str', '무기 공격 보너스', '%'], ['int', '지속·정화 피해 보너스', '%'], ['wil', '회복 보너스', '%'],
+    ['str', '무기 공격 보너스', '%'], ['int', p.build === 'elementalist' ? '상태 효과·열충격·화상 소모 피해 보너스' : '지능 피해 보너스', '%'], ['wil', '회복 보너스', '%'],
     ['parry', '흘리기 감소율', '%'], ['flask', '생명력 플라스크 회복', '%'], ['cost', '강공격 스태미나', ''],
     ['life', '생명력 플라스크 최대 충전', '회'], ['mana', '정화 플라스크 최대 충전', '회'], ['stam', '스태미나 플라스크 최대 충전', '회']];
   for (const [key, name, unit] of fields) if (before[key] !== after[key]) changes.push(`${name} ${before[key]}${unit} → ${after[key]}${unit}`);
