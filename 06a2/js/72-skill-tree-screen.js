@@ -106,7 +106,7 @@ function sheetParts(S) {
       const D = CONS[c.id];
       body = `<div class="idet"><b>${D.ico} ${esc(consName(c))} ×${c.n}</b><p>${esc(D.d(consVal(c)))}</p></div><p class="mini">가방 ${bagUsed(run)}/${BAG_MAX}. 공간이 부족하면 기존 소모품 묶음이나 장비 하나를 버리고 챙깁니다.</p><div class="row"><button class="gold" data-a="cpkeep"${bagUsed(run)>=BAG_MAX && !(run.cons || []).some(x=>x.id===c.id && x.g===c.g && x.n<D.max) ? ' disabled' : ''}>가방에 넣기</button><button data-a="cpskip">이 소모품을 두고 가기</button></div><h4>가방에서 비울 것</h4><div class="baglist">`;
       body += (run.cons || []).map((x,i) => `<div class="bagline"><div><b>${CONS[x.id].ico} ${esc(consName(x))} ×${x.n}</b><br><small class="mini">${esc(CONS[x.id].d(consVal(x)))}</small></div><button class="sm" data-a="cpreplace" data-k="${i}" data-s="cons">묶음 버리고 챙기기</button></div>`).join('');
-      body += run.bag.map(u => { const x=run.inv[u]; return `<div class="bagline"><div><b>${esc(inm(x.tpl,x.g))}</b><br><small class="mini">${esc(baseText(x))}</small></div><button class="sm" data-a="cpreplace" data-k="${u}" data-s="gear"${x.locked?' disabled':''}>${x.locked?'잠김':'버리고 챙기기'}</button></div>`; }).join('') + '</div>';
+      body += run.bag.map(u => { const x=run.inv[u]; return `<div class="bagline"><div><b class="gr-${x.g}">${inm(x.tpl,x.g)}</b><br><small class="mini">${esc(baseText(x))}</small></div><button class="sm" data-a="cpreplace" data-k="${u}" data-s="gear"${x.locked?' disabled':''}>${x.locked?'잠김':'버리고 챙기기'}</button></div>`; }).join('') + '</div>';
     }
   } else if (S.kind === 'changes') {
     title = '업데이트 내역';

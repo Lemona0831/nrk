@@ -21,7 +21,7 @@ function onClick(ev) {
         } else {
           const u=el.dataset.k,x=run.inv[u],why=itemRemoveWhy(run,u);
           if (!x || why) { if(why)toast(why); break; }
-          if (!ask(inm(x.tpl,x.g)+'을(를) 버리고 새 소모품을 챙길까요?')) break;
+          if (!ask((ITEMS[x.tpl] || {}).n+'을(를) 버리고 새 소모품을 챙길까요?')) break;
           if(discardUid(run,u))break;
         }
       }
