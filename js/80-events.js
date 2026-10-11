@@ -220,11 +220,19 @@ function onClick(ev) {
     case 'gdone': G.data.seenGuide = true; saveLocal(); if (G.afterGuide === 'create') { G.afterGuide = null; beginCreate(); } else { G.scr = 'title'; render(); } break;
     case 'logopen': G.logOpen = true; render(); setTimeout(() => { const c = document.querySelector('[data-a="logclose"]'); if (c) c.focus(); }, 0); break; /* 휴대폰 기록 창: 초점을 창 안으로 */
     case 'logclose': G.logOpen = false; render(); setTimeout(() => { const c = document.querySelector('[data-a="logopen"]'); if (c && c.getClientRects().length) c.focus(); }, 0); break;
+    case 'runperson': G.rf = { uid: el.dataset.k }; G.rfPage = 0; G.rfOpen = null; render(); break;
+    case 'runfilter': G.rf = { uid: val('runperson'), q: val('runquery'), b: val('runbuild'), result: val('runresult'), from: val('runfrom'), to: val('runto') }; G.rfPage = 0; G.rfOpen = null; render(); break;
+    case 'runreset': G.rf = {}; G.rfPage = 0; G.rfOpen = null; render(); break;
+    case 'runpage': G.rfPage = Math.max(0, +el.dataset.v || 0); G.rfOpen = null; render(); break;
+    case 'runopen': G.rfOpen = el.dataset.k; G.raPage = 0; render(); break;
+    case 'runclose': G.rfOpen = null; render(); break;
+    case 'runactpage': G.raPage = Math.max(0, +el.dataset.v || 0); render(); break;
+    case 'runscsv': saveFile('nrk-플레이로그-' + new Date().toISOString().slice(0, 10) + '.csv', dashRunsCsv()); break;
     case 'dash': loadDash(); break;
     case 'statrec': { const S = G.sheet; const al = S.data.alloc; const left = S.data.pts - statSum(al); const add = statRecommend(G.run.build, Object.fromEntries(STAT_KEYS.map(k => [k, stat(G.run.p, k) + (al[k] || 0)])), left); for (const k of STAT_KEYS) al[k] = (al[k] || 0) + add[k]; render(); break; }
     case 'statclear': { const S = G.sheet; S.data.alloc = Object.assign({}, { str: 0, dex: 0, int: 0, con: 0, wil: 0 }); render(); break; }
     case 'stat+': case 'stat-': { const S = G.sheet; const al = S.data.alloc; const k = el.dataset.k; const left = S.data.pts - statSum(al); if (a === 'stat+' && left > 0) al[k]++; if (a === 'stat-' && al[k] > 0) al[k]--; render(); break; }
-    case 'statok': { const S = G.sheet; const al = S.data.alloc; const run = G.run; if(S.data.first && G.abandonOnCreate && !keepCur())break; const before = growthSnapshot(run.p); for (const k in al) run.stats[k] = (run.stats[k] || 0) + al[k]; applyStats(run.p, run.stats); run.statLog.push({ room: run.room, add: Object.assign({}, al), t: Date.now() }); const made = S.data.first; if (S.data.pending) run.statPending = 0; G.sheet = null; if (made) { G.creating = false; G.abandonOnCreate = false; G.cre = null; G.scr = 'run'; run.tick = Date.now(); } saveRunLocal(); saveCur(); if (made) toast('캐릭터를 만들었습니다. 첫 방 앞입니다'); else toast(growthText(before, run.p, '능력치 배분')); render(); if (!made) awkOpen(); break; }
+    case 'statok': { const S = G.sheet; const al = S.data.alloc; const run = G.run; if(S.data.first && G.abandonOnCreate && !keepCur())break; const before = growthSnapshot(run.p); for (const k in al) run.stats[k] = (run.stats[k] || 0) + al[k]; applyStats(run.p, run.stats); run.statLog.push({ ch: run.ch || 1, lv: run.lv, room: run.room, add: Object.assign({}, al), t: Date.now() }); const made = S.data.first; if (S.data.pending) run.statPending = 0; G.sheet = null; if (made) { G.creating = false; G.abandonOnCreate = false; G.cre = null; G.scr = 'run'; run.tick = Date.now(); } saveRunLocal(); saveCur(); if (made) toast('캐릭터를 만들었습니다. 첫 방 앞입니다'); else toast(growthText(before, run.p, '능력치 배분')); render(); if (!made) awkOpen(); break; }
     case 'choose': {
       const k = el.dataset.k; const run = G.run; const S = G.sheet;
       run.choices.push({ room: S.data.room, offered: S.data.offer, picked: k || null, t: Date.now() }); run.declined = (run.declined || []).concat(S.data.offer.filter(x => x !== k)); G.sheet = null;
@@ -304,7 +312,7 @@ function onKey(ev) {
   if (G.hudEd && hudEdKey(ev)) return;
   if (ev.key === 'Tab' && G.sheet) sheetTrap(ev);
   const typing = ev.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ev.target.tagName);
-  if (ev.key === 'Enter' && ev.target && ['cname', 'adminpass', 'pname'].includes(ev.target.id)) { ev.preventDefault(); const b = document.querySelector({ cname: '[data-a=cnok]', adminpass: '[data-a=admingo]', pname: '[data-a=namesave]' }[ev.target.id]); if (b) b.click(); return; }
+  if (ev.key === 'Enter' && ev.target && ['cname', 'adminpass', 'pname', 'runquery'].includes(ev.target.id)) { ev.preventDefault(); const b = document.querySelector({ cname: '[data-a=cnok]', adminpass: '[data-a=admingo]', pname: '[data-a=namesave]', runquery: '[data-a=runfilter]' }[ev.target.id]); if (b) b.click(); return; }
   if (!typing) playTick();
   if (!typing && (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') && ev.target && ev.target.closest && ev.target.closest('.ord, .dgbar')) { /* 순서 줄 · 던전 진행 막대: 한 칸씩 옮긴다 */
     const L = [...ev.target.closest('.ord, .dgbar').querySelectorAll('li[data-info]')]; const i = L.indexOf(ev.target);

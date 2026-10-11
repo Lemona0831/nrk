@@ -157,7 +157,7 @@ function consUse(b, run, idx, tgtId) {
   if (b && !b.over) { b.consN = (b.consN || 0) + 1; logp(b, 'good', '🎒 ' + consName(c) + '. ' + msg); b.rec.push({ k: 'cons', id: c.id, g: c.g }); checkEnd(b); }
   else if (b && b.over === 'flee') logp(b, 'good', '🎒 ' + consName(c) + '. ' + msg);
   else toast(consName(c) + '. ' + msg);
-  run.consLog = run.consLog || []; run.consLog.push({ id: c.id, room: run.room, fight: !!b, t: Date.now() });
+  run.consLog = run.consLog || []; run.consLog.push({ ch: run.ch || 1, g: c.g, name: consName(c), id: c.id, room: run.room, fight: !!b, t: Date.now() });
   return '';
 }
 /* 전리품: 적 하나마다 (LOOT). 소환된 적 · 수련장 · 시험 상황은 떨구지 않는다. 전투를 이기면 받는다(grantDrops) */

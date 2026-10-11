@@ -60,7 +60,14 @@ function applyGear(run, full) {
 }
 function slotOfUid(run, uid) { return EQ_SLOTS.find(sl => run.eqU[sl] === uid) || null; }
 function gearCheck(run) { const seen = {}; for (const u of run.bag.concat(EQ_SLOTS.map(sl => run.eqU[sl]).filter(Boolean))) { if (seen[u] || !run.inv[u]) return false; seen[u] = 1; } return Object.keys(run.inv).length === Object.keys(seen).length; }
-function logSwap(run, it, on, ctx) { const r = G.eqWhy || {}; run.swaps.push({ room: run.room, item: it.tpl, uid: it.uid, g: it.g, b: it.b, on: on ? 1 : 0, reason: r.reason || '', note: r.note || '', ctx: ctx || 'free', t: Date.now() }); }
+/* 저장 시점의 장비 실물 수치와 설명을 보존한다. 조회 시 재계산하지 않는다. */
+function adminItemSnapshot(it, sl) {
+  const d = it && ITEMS[it.tpl]; if (!d) return null;
+  return { sl: sl || '', uid: it.uid || '', tpl: it.tpl, name: d.n, g: it.g, ch: it.ch || 1, b: it.b == null ? null : it.b, base: baseText(it), baseValue: itemBase(it).v, effect: d.act || '', cost: d.cost || '' };
+}
+function adminGearSnapshot(run) { return run.eqU && run.inv ? EQ_SLOTS.map(sl => adminItemSnapshot(run.inv[run.eqU[sl]], sl)).filter(Boolean) : []; }
+
+function logSwap(run, it, on, ctx) { const r = G.eqWhy || {}; run.swaps.push({ ch: run.ch || 1, detail: adminItemSnapshot(it), room: run.room, item: it.tpl, uid: it.uid, g: it.g, b: it.b, on: on ? 1 : 0, reason: r.reason || '', note: r.note || '', ctx: ctx || 'free', t: Date.now() }); }
 function newBadge(x) { return x && x.fresh ? '<span class="item-new"><span class="sr">새로 획득 </span><span aria-hidden="true">new!</span></span>' : ''; }
 function lockButton(it) { return `<button class="sm" data-a="eqlock" data-k="${it.uid}" aria-pressed="${!!it.locked}" aria-label="${esc(ITEMS[it.tpl].n)} ${it.locked ? '잠금 해제' : '잠금'}">${it.locked ? '잠금 해제' : '잠금'}</button>`; }
 function itemRemoveWhy(run, uid) { return run.inv[uid] && run.inv[uid].locked ? '잠긴 장비입니다. 먼저 잠금을 해제하세요' : ''; }

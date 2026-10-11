@@ -122,11 +122,11 @@ function treeRefundWhy(run, id) {
 function treeRefund(run, id) {
   const why = treeRefundWhy(run, id); if (why) return why; const s = SK2[id], t = run.tree;
   t.open = t.open.filter(x => x !== id); t.pts++; t.spent[s.b] = Math.max(0, (t.spent[s.b] || 0) - 1); run.skills = (run.skills || []).filter(x => x !== id);
-  (run.treeLog = run.treeLog || []).push({ room: run.room, id, refund: 1, t: Date.now() }); return null;
+  (run.treeLog = run.treeLog || []).push({ ch: run.ch || 1, room: run.room, id, refund: 1, t: Date.now() }); return null;
 }
 /* 트리 초기화 (10월 3일 만든 사람 결정: 상점에서 늘 살 수 있다. 능력치 다시 나누기보다 비싸게): 연 칸을 모두 닫고 포인트를 돌려준다. 끼운 트리 스킬도 빠진다(시작 스킬은 그대로).
    값 = 연 칸 수 × TREE_RESET.cell × 챕터 가격 배율(상점 장비 값과 같은 1.5^(챕터−1)). 되돌리는 칸만큼 내고, 칸 하나가 스킬 하나라 능력치 다시 나누기(레벨 × 10)보다 무겁다 */
 const TREE_RESET = { cell: 25 };
 function treeResetCost(run) { const n = (run.tree && run.tree.open.length) || 0; return Math.round(n * TREE_RESET.cell * Math.pow(1.5, (run.ch || 1) - 1)); }
-function treeReset(run) { const t = run.tree; if (!t) return 0; const n = t.open.length; t.pts += n; t.open = []; t.spent = {}; run.skills = []; if (run.p) run.p.skills = v2Equip(run); (run.treeLog = run.treeLog || []).push({ room: run.room, reset: n, lv: run.lv, t: Date.now() }); return n; }
-function treeUnlock(run, id) { const why = treeWhy(run, id); if (why) return why; const s = SK2[id]; run.tree.pts--; run.tree.open.push(id); run.tree.spent[s.b] = (run.tree.spent[s.b] || 0) + 1; (run.treeLog = run.treeLog || []).push({ room: run.room, id, lv: run.lv, t: Date.now() }); return null; }
+function treeReset(run) { const t = run.tree; if (!t) return 0; const n = t.open.length; t.pts += n; t.open = []; t.spent = {}; run.skills = []; if (run.p) run.p.skills = v2Equip(run); (run.treeLog = run.treeLog || []).push({ ch: run.ch || 1, room: run.room, reset: n, lv: run.lv, t: Date.now() }); return n; }
+function treeUnlock(run, id) { const why = treeWhy(run, id); if (why) return why; const s = SK2[id]; run.tree.pts--; run.tree.open.push(id); run.tree.spent[s.b] = (run.tree.spent[s.b] || 0) + 1; (run.treeLog = run.treeLog || []).push({ ch: run.ch || 1, room: run.room, id, lv: run.lv, t: Date.now() }); return null; }
