@@ -29,7 +29,7 @@ function scan(html) {
   return out;
 }
 
-function readText(dir, rel) { return fs.readFileSync(path.join(siteDir(dir), rel), 'utf8'); }
+function readText(dir, rel) { return fs.readFileSync(path.join(siteDir(dir), rel.split('?')[0]), 'utf8'); }
 
 function pageLayout(dir, htmlText) {
   const html = htmlText != null ? htmlText : readText(dir, 'index.html');

@@ -14,7 +14,7 @@ if (typeof document !== 'undefined') {
   if (window.visualViewport) window.visualViewport.addEventListener('resize', () => document.documentElement.style.setProperty('--app-h', window.visualViewport.height + 'px'));
   let rz = 0; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (G.b && window.innerWidth >= 1100) G.logOpen = false; render(); }, 120); });
   render();
-  initCaps();
+  Promise.resolve(initCaps()).then(initSiteUpdates, initSiteUpdates);
 }
 if (typeof module !== 'undefined') module.exports.UI = { G, vTitle, vBattle, vRunMap, vDash, aggregate, blankData, startRun, enterRoom, battleContinue, doAct, vSheet, scenAxes };
 
