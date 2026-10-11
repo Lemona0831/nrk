@@ -289,6 +289,14 @@ function cloudHeads(entries) {
   for (const e of entries) if (!unique.some(x => JSON.stringify(Object.entries(x.clock).sort()) === JSON.stringify(Object.entries(e.clock).sort()))) unique.push(e);
   return unique.filter(e => !unique.some(o => o !== e && cloudDominates(o.clock, e.clock)));
 }
+async function cloudReadDevices(uid) {
+  if (!G.sb) return G.db.collection('playtest/' + uid + '/saves62').get();
+  // 진행 세이브는 실제 문서 경로로 찾는다. 서버의 parent 파생 값에 의존하지 않는다.
+  const prefix = 'playtest/' + uid + '/saves62/';
+  const {data,error} = await G.sb.from('docs').select('path,data').like('path',prefix+'%');
+  if(error) throw Object.assign(new Error(error.message),{code:error.code});
+  return {docs:(data || []).filter(r=>r.path && !r.path.slice(prefix.length).includes('/')).map(r=>({id:r.path.slice(prefix.length),data:()=>clone(r.data)}))};
+}
 async function cloudFlush() {
   const c = G.cloud; if (!c || !c.ready || c.uid !== G.uid) return true;
   cloudTrack(); if (c.writing) { await c.writing; return c.dirty ? cloudFlush() : !c.error; }
@@ -297,8 +305,13 @@ async function cloudFlush() {
   c.writing = (async () => {
     try {
       await G.db.doc('playtest/' + c.uid + '/saves62/' + c.device).set(snapshot);
-      c.error = ''; G.saveSync = '계정 세이브 저장 완료'; return true;
-    } catch (e) { c.dirty = true; c.error = '계정 세이브를 보내지 못했습니다. 이 기기의 저장본은 유지됩니다.'; G.saveSync = c.error; return false; }
+      const saved = await G.db.doc('playtest/' + c.uid + '/saves62/' + c.device).get();
+      if(!saved.exists || cloudSig(saved.data()) !== cloudSig(snapshot)) throw Object.assign(new Error('저장본 확인 실패'),{code:'save_readback'});
+      const visible = await cloudReadDevices(c.uid);
+      if(!visible.docs.some(d=>d.id===c.device && cloudSig(d.data())===cloudSig(snapshot))) throw Object.assign(new Error('기기 간 조회 확인 실패'),{code:'save_discovery'});
+      c.error = ''; const count=snapshot.slots.filter(e=>e.run && !runOver(e.run)).length;
+      G.saveSync = count ? '계정 세이브 저장 완료 · 캐릭터 '+count+'개 확인' : '계정에 보낼 진행 중인 캐릭터가 없습니다'; return true;
+    } catch (e) { c.dirty = true; c.error = '계정 세이브를 저장·확인하지 못했습니다'+(e && e.code ? ' ('+String(e.code).replace(/[^a-zA-Z0-9_-]/g,'').slice(0,40)+')' : '')+'. 이 기기의 저장본은 유지됩니다.'; G.saveSync = c.error; return false; }
   })();
   const ok = await c.writing; c.writing = null;
   if (ok && c.dirty) cloudSchedule();
@@ -313,7 +326,7 @@ async function cloudLoad() {
   cloudTrack(true); // 오프라인 중 변경된 로컬 저장본도 별도 가지로 보존한다.
   try {
     let timer;
-    const read = Promise.all([G.db.collection('playtest/' + c.uid + '/saves62').get(), G.db.collection('playtest/' + c.uid + '/' + COL.runs).get()]);
+    const read = Promise.all([cloudReadDevices(c.uid), G.db.collection('playtest/' + c.uid + '/' + COL.runs).get()]);
     const [ss, rs] = await Promise.race([read, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('세이브 연결 시간 초과')), 15000); })]).finally(() => clearTimeout(timer));
     cloudTrack(true);
     const local = cloudSnapshot(), by = new Map();

@@ -3,7 +3,7 @@ from pathlib import Path
 import os,json,threading,http.server,functools
 from playwright.sync_api import sync_playwright
 root=Path(__file__).resolve().parent.parent
-store={'docs':{}};deny=False
+store={'docs':{}};deny=False;silent=False
 class Server(http.server.SimpleHTTPRequestHandler):
  def log_message(self,*args):pass
  def do_GET(self):
@@ -15,11 +15,13 @@ class Server(http.server.SimpleHTTPRequestHandler):
   if self.path!='/__cloudtest':self.send_error(404);return
   raw=self.rfile.read(int(self.headers['Content-Length']))
   if deny:self.send_error(503);return
-  store=json.loads(raw);self.send_response(200);self.end_headers();self.wfile.write(b'{}')
+  if not silent:store=json.loads(raw)
+  self.send_response(200);self.end_headers();self.wfile.write(b'{}')
 server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(Server,directory=str(root)))
 threading.Thread(target=server.serve_forever,daemon=True).start()
 mock=(root/'tools/mock_sb.js').read_text(encoding='utf-8')
 mock=mock.replace("const load=()=>JSON.parse(localStorage.getItem(LS)||'{\"docs\":{}}'); const save=s=>localStorage.setItem(LS,JSON.stringify(s));", "const load=()=>{const x=new XMLHttpRequest();x.open('GET','/__cloudtest',false);x.send();return JSON.parse(x.responseText)};const save=s=>{const x=new XMLHttpRequest();x.open('POST','/__cloudtest',false);x.send(JSON.stringify(s));if(x.status!==200)throw Error('offline')};")
+mock=mock.replace("c==='parent'?parent(r.path)","c==='parent'?(r.path.includes('/saves62/')?'wrong-parent':parent(r.path))")
 assert 'XMLHttpRequest' in mock
 errors=[]
 try:
@@ -49,6 +51,7 @@ try:
   mobctx,mob=device('cloud-owner',390)
   assert mob.evaluate("G.data.hardOpen===1 && G.data.codex.abbot.note==='관찰'")
   assert mob.evaluate("G.data.graves.length===2 && G.data.graves.find(g=>g.id==='dead-local').kill.d===20 && G.data.graves.find(g=>g.id==='dead-legacy').kill===null")
+  assert mob.evaluate("G.saveSync.includes('캐릭터 2개 확인')")
   assert mob.evaluate('saveCount()===2 && G.data.name==="ㅤ" && G.data.runs.length>0')
   mob.click(f'[data-a=resumekept][data-k="{first}"]')
   assert mob.evaluate('G.b.turnIdx===7 && G.run.gold===123 && G.run.cons[0].n===2')
@@ -74,6 +77,9 @@ try:
   deny=True;mob.evaluate('G.data.cur.gold=444;saveLocal()');assert not mob.evaluate('cloudFlush()')
   assert mob.evaluate('G.data.cur.gold===444 && G.cloud.dirty')
   deny=False;assert mob.evaluate('cloudFlush()');pc.evaluate('cloudLoad()');assert pc.evaluate('G.data.cur.gold===444')
+  silent=True;mob.evaluate('G.data.cur.gold=555;saveLocal()');assert not mob.evaluate('cloudFlush()')
+  assert mob.evaluate("G.saveSync.includes('save_readback') && !G.saveSync.includes('저장 완료')")
+  silent=False;assert mob.evaluate('cloudFlush()')
   assert mob.evaluate('document.documentElement.scrollWidth<=innerWidth')
   store['docs']['playtest/legacy-owner/runs62/clear']={'path':'playtest/legacy-owner/runs62/clear','data':{'id':'clear','build':'spellblade','clears':3,'ch':3,'result':'win'}}
   legacyctx,legacy=device('legacy-owner',390)

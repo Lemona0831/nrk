@@ -21,7 +21,8 @@
       from:(t)=>{
         const q={filters:[],
           select(){return q;}, eq(c,v){q.filters.push([c,v]);return q;},
-          _rows(){ const s=load(); return Object.values(s.docs).filter(r=>canRead(r.path)&&q.filters.every(([c,v])=>(c==='path'?r.path:c==='parent'?parent(r.path):r[c])===v)).map(r=>({id:idOf(r.path),data:r.data,path:r.path})); },
+          like(c,v){q.filters.push([c,{prefix:v.replace(/%$/,'')}]);return q;},
+          _rows(){ const s=load(); return Object.values(s.docs).filter(r=>canRead(r.path)&&q.filters.every(([c,v])=>typeof v==='object'?String(r[c]||'').startsWith(v.prefix):(c==='path'?r.path:c==='parent'?parent(r.path):r[c])===v)).map(r=>({id:idOf(r.path),data:r.data,path:r.path})); },
           async maybeSingle(){ const rows=q._rows(); return {data: rows[0]||null, error:null}; },
           then(res,rej){ return Promise.resolve({data:q._rows(),error:null}).then(res,rej); },
           async upsert(row){ if(!own(row.path)) { window.__denied=(window.__denied||0)+1; return {error:{message:'new row violates row-level security policy',code:'42501'}}; } const s=load(); s.docs[row.path]={path:row.path,data:row.data}; save(s); window.__mockWrites=(window.__mockWrites||0)+1; return {error:null}; }
