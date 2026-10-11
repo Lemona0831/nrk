@@ -83,7 +83,7 @@ function newBattle(player, enemies, ctx) {
   const b = {
     t: 0, p: player, en: enemies, log: [], over: null, ctx: ctx || {}, seq: 0,
     round: 0, queue: null, bonusUsed: 0, tick: 0, season: 0, enrage: false, mirrorCount: 0, hatchLock: false, missToggle: false,
-    turnIdx: 0, rec: [], idc: 100,
+    turnIdx: 0, rec: [], idc: 100, damageStats: { v: 1, dealt: 0, taken: 0 },
   };
   for (const e of enemies) { if (!e.intent) decideIntent(b, e); } // 0.6a.2 라운드: 첫 라운드는 runUntilPlayer가 연다
   player.guard = 0; player.dodge = 0; player.stun = 0; player.fxDodged = 0; if (player.build === 'monk') { player.stance = null; player.ctrN = 0; }

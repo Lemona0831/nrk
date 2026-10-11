@@ -70,7 +70,7 @@ function testerRows(testers) {
     return { uid: T.uid, who: testerLabel(T, ti), started: runs.length, done: runs.filter(r => r.status === 'done' || r.survey).length, scen: (T.scen || []).length, final: !!T.final, last: Math.max(0, ...runs.map(r => r.updatedAt || r.endedAt || r.startedAt || 0)) };
   });
 }
-function csvCell(s) { s = String(s == null ? '' : s); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+function csvCell(s) { s = String(s == null ? '' : s); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
 /* 파일 내려받기: 아티팩트 화면이면 그 기능으로, 일반 웹사이트(지인 주소)면 브라우저 내려받기로 */
 async function saveFile(name, data) {
   if (G.downloads) { try { await G.downloads.save({ filename: name, data }); toast('내려받았습니다'); } catch (e) { toast('내려받기를 취소했습니다'); } return; }
@@ -86,7 +86,7 @@ function dashJson() { return JSON.stringify({ v: VERSION, exportedAt: Date.now()
 function notesCsv() {
   const rows = [['테스터', '빌드', '회차', '위치', '내용', '메모', '시각']];
   for (const n of collectNotes(G.dashRaw || [])) rows.push([n.who, n.build ? BUILDS[n.build].n : '', n.run, n.where, n.label, n.text, n.at ? new Date(n.at).toLocaleString('ko-KR') : '']);
-  return '\ufeff' + rows.map(r => r.map(csvCell).join(',')).join('\n');
+  return adminCsv(rows);
 }
 async function archiveAll() {
   if (!G.db || !G.dashRaw) { toast('공유 저장소에 연결되어야 저장됩니다'); return; }
@@ -196,74 +196,112 @@ function dashRunRows() {
     .filter(x => (!f.uid || x.uid === f.uid) && (!q || [x.who, x.uid, x.r.cname, x.r.id].join(' ').toLocaleLowerCase().includes(q)) && (!f.b || f.b === 'all' || x.r.build === f.b) && (!f.result || f.result === 'all' || dashRunResult(x.r) === f.result) && dashRunTime(x.r) >= from && dashRunTime(x.r) < until)
     .sort((a, b) => dashRunTime(b.r) - dashRunTime(a.r));
 }
+function dashCombatStats(r) {
+  const rooms = (r.rooms || []).filter(x => x.res), recorded = rooms.filter(x => x.damageStats), acts = r.acts || [];
+  const complete = rooms.length > 0 && recorded.length === rooms.length && recorded.every(x=>x.damageStats.v === 1);
+  const sum = k => recorded.reduce((n,x)=>n+(Number(x.damageStats[k]) || 0),0);
+  const hits = acts.filter(x=>x.k==='hit'), dealt = acts.filter(x=>x.k==='dealt');
+  const byAction = {};for(const a of acts.filter(x=>x.k==='act')) byAction[a.a || '행동'] = (byAction[a.a || '행동'] || 0) + 1;
+  return { dealt: recorded.length ? sum('dealt') : dealt.length ? dealt.reduce((n,a)=>n+(Number(a.d)||0),0) : null,
+    taken: complete ? sum('taken') : hits.length ? hits.reduce((n,a)=>n+(Number(a.actual == null ? a.d : a.actual)||0),0) : recorded.length ? sum('taken') : null,
+    complete, coverage: recorded.length + '/' + rooms.length, actions: Object.values(byAction).reduce((a,b)=>a+b,0), kills: acts.filter(x=>x.k==='kill').length,
+    byAction, truncated: r.actsN > acts.length, rooms };
+}
+function adminCsv(rows) { return '\ufeff' + rows.map(r=>r.map(v=>csvCell(typeof v === 'string' && /^[\s]*[=+@-]/.test(v) ? "'" + v : v)).join(',')).join('\r\n'); }
 function dashRunsCsv() {
-  const rows = [['테스터', '계정 ID', '판 ID', '캐릭터', '직업', '결과', '챕터', '도달 층', '레벨', '마지막 기록']];
-  for (const x of dashRunRows()) { const r = x.r; rows.push([x.who, x.uid, r.id, r.cname, (BUILDS[r.build] || {}).n || r.build, DASH_RESULTS[dashRunResult(r)] || dashRunResult(r), r.ch || 1, r.roomReached == null ? '' : r.roomReached, r.lv || '', dashRunTime(r) ? new Date(dashRunTime(r)).toLocaleString('ko-KR') : '']); }
-  return '\ufeff' + rows.map(r => r.map(csvCell).join(',')).join('\n');
+  const rows = [['플레이어','캐릭터','직업','결과','레벨','챕터','도달 층','가한 피해','받은 피해','피해 집계 범위','행동 기록 수','처치 기록 수','행동 기록 범위','힘','민첩','지능','체력','의지','마지막 기록','계정 ID','판 ID']];
+  for(const x of dashRunRows()) { const r=x.r,c=dashCombatStats(r),st=r.stats || {};rows.push([x.who,r.cname,(BUILDS[r.build]||{}).n || r.build,DASH_RESULTS[dashRunResult(r)] || dashRunResult(r),r.lv,r.ch || 1,r.roomReached,c.dealt,c.taken,c.complete ? '완료된 전투 전체' : '일부 기록 ('+c.coverage+' 전투)',c.actions,c.kills,c.truncated ? '일부 보관 기록' : '보관된 행동 기록',st.str,st.dex,st.int,st.con,st.wil,dashRunTime(r) ? new Date(dashRunTime(r)).toLocaleString('ko-KR') : '',x.uid,r.id]); }
+  return adminCsv(rows);
+}
+function dashSelectedRun() { return dashRunRows().find(x=>x.key===G.rfOpen); }
+function dashRoomCsv() {
+  const x=dashSelectedRun();if(!x)return adminCsv([['기록 없음']]);
+  const rows=[['플레이어','캐릭터','챕터','층','방 종류','결과','가한 피해','받은 피해','집계 상태','전투 시간(초)','종료 생명력(%)','착용 장비']];
+  for(const r of x.r.rooms || [])rows.push([x.who,x.r.cname,r.ch,r.room,(ROOM_TYPES[r.type]||{}).n || r.type,DASH_RESULTS[r.res] || r.res,r.damageStats ? r1(r.damageStats.dealt) : null,r.damageStats ? r1(r.damageStats.taken) : null,r.damageStats ? r.damageStats.v===1 ? '전체' : '일부' : '미기록',r.t,r.hpOut==null ? null : Math.round(r.hpOut*100),(r.gearDetails || []).map(e=>(e.name || (ITEMS[e.tpl]||{}).n || e.tpl)+' / '+(e.base || '')).join(' · ')]);
+  return adminCsv(rows);
 }
 
 function dashItemCard(e) {
   const known = !!e.base, name = e.name || (ITEMS[e.tpl] || {}).n || e.tpl || '장비';
   return '<article class="note"><b>' + esc((EQ_SLOT_N[e.sl] || '') + ' · ' + name) + '</b><p class="mini">' + esc((GRADE[e.g] || {}).n || e.g || '') + (e.ch ? ' · ' + e.ch + '챕터 장비' : '') + (e.b != null ? ' · 기본 수치 보너스 ' + esc(e.b) + '%' : '') + '</p><p>' + esc(e.base || '실제 수치 미기록') + '</p><p>' + esc(e.effect || (known ? '추가 효과 없음' : '당시 효과 미기록')) + '</p>' + (e.cost ? '<p>대가: ' + esc(e.cost) + '</p>' : '') + '</article>';
 }
-function dashHistory(title, rows) { return '<details><summary>' + esc(title) + ' (' + rows.length + '건)</summary>' + (rows.length ? '<ol>' + rows.map(x => '<li>' + x + '</li>').join('') + '</ol>' : '<p class="mini">저장된 기록이 없습니다.</p>') + '</details>'; }
+function dashHistory(title, rows) { return '<details class="admin-fold"><summary>' + esc(title) + ' (' + rows.length + '건)</summary>' + (rows.length ? '<ol>' + rows.map(x => '<li>' + x + '</li>').join('') + '</ol>' : '<p class="mini">저장된 기록이 없습니다.</p>') + '</details>'; }
 function dashWhere(x) { return esc((x.ch ? x.ch + '챕터 · ' : '챕터 미기록 · ') + (x.room || x.r || '—') + '층' + (x.lv ? ' · Lv' + x.lv : '') + (x.t ? ' · ' + new Date(x.t).toLocaleString('ko-KR') : '')); }
-function vAdminBuild(r) {
-  const SN = {str:'힘',dex:'민첩',int:'지능',con:'체력',wil:'의지'}, stats = r.stats || {}, max = Math.max(1,...Object.values(stats));
-  let h = '<h4>장비 세부 내용</h4><p class="mini">마지막 저장 당시의 착용 장비입니다. 새 기록은 실제 기본 수치·등급·보너스·효과·대가를 보존합니다.</p><div class="notes">';
-  const eq = r.eqDetails || (r.eq7 || []).map((v,i) => v ? {sl:EQ_SLOTS[i],tpl:v.split(':')[0],g:v.split(':')[1]} : null).filter(Boolean);
-  h += eq.length ? eq.map(dashItemCard).join('') : '<p>장비 기록 없음</p>';h += '</div>';
-  h += '<details><summary>보유 장비 전체 (' + (r.inv || []).length + '개)</summary><div class="notes">' + (r.inv || []).map(dashItemCard).join('') + '</div></details>';
-  h += dashHistory('장비 교체 순서',(r.swaps || []).map(x => dashWhere(x) + ' · ' + (x.on ? '장착' : '해제') + (x.detail ? dashItemCard(x.detail) : '<p>' + esc((ITEMS[x.item] || {}).n || x.item) + ' · 실제 수치 미기록</p>') + (x.note ? '<p>' + esc(x.note) + '</p>' : '')));
-  h += dashHistory('소모품 사용',(r.consLog || []).map(x => dashWhere(x) + ' · ' + esc(x.name || (CONS[x.id] || {}).n || x.id) + ' · ' + (x.fight ? '전투 중' : '전투 밖')));
-  h += '<h4>스탯 배분</h4><p class="mini">배분한 포인트입니다. 장비와 일시 효과로 변한 전투 수치와는 다릅니다.</p>';
-  if (!r.stats) h += '<p>스탯 미기록</p>';
-  else h += Object.entries(SN).map(([k,n]) => '<div style="display:grid;grid-template-columns:55px 1fr 50px;gap:8px;align-items:center;margin:8px 0"><span>' + n + '</span><meter aria-label="' + n + ' 배분" min="0" max="' + max + '" value="' + (stats[k] || 0) + '" style="width:100%">' + (stats[k] || 0) + '</meter><b>' + (stats[k] || 0) + '점</b></div>').join('');
-  h += dashHistory('스탯 배분 순서',(r.statLog || []).map(x => dashWhere(x) + ' · ' + esc(Object.entries(x.add || {}).filter(([,v])=>v).map(([k,v])=>(SN[k] || k)+' +'+v).join(', '))));
-  const skills = allSkillNames(), nodes = r.treeNodes || (SKILLS2[r.build] || []).map(x => ({...x,head:skHead(x),body:skBody(x)}));
-  const learned = r.tree ? r.tree.open || [] : [], equipped = r.skills || [], logs = r.treeLog || [];
-  h += '<h4>스킬 트리</h4><p class="mini">' + (r.tree ? '● 배움 · ✓ 장착 · ○ 미취득 · 남은 포인트 ' + (r.tree.pts || 0) : '과거 기록에는 트리 전체가 저장되지 않았습니다. 장착한 스킬만 확인됩니다.') + (r.treeNodes ? ' · 저장 당시 설명' : ' · 스킬 설명은 현재 규칙 기준') + '</p>';
-  const branches = [...new Set(nodes.filter(n=>!n.start).map(n=>n.b))];
-  h += '<div style="display:flex;flex-wrap:wrap;gap:16px">' + branches.map(br => {
-    const ns = nodes.filter(n=>n.b===br && !n.start), rows = [...new Set(ns.map(n=>n.row))].sort((a,b)=>a-b);
-    return '<details style="flex:1 1 260px;min-width:0"' + (br === branches[0] ? ' open' : '') + '><summary><b>' + esc(br) + '</b> · 배움 ' + ns.filter(n=>learned.includes(n.id)).length + '칸</summary>' + rows.map((row,i) => (i ? '<div aria-hidden="true" style="text-align:center">↓</div>' : '') + '<div style="display:flex;gap:6px">' + ns.filter(n=>n.row===row).map(n=>{
-      const on=learned.includes(n.id), eq=equipped.includes(n.id), step=logs.findIndex(x=>x.id===n.id&&!x.refund);
-      return '<details style="flex:1;min-width:0;padding:8px;border:1px solid ' + (eq ? '#d8b56d' : on ? '#759b69' : '#666') + ';border-radius:6px;background:' + (eq ? '#40351f' : on ? '#243020' : 'transparent') + '"><summary>' + (eq ? '✓ ' : on ? '● ' : r.tree ? '○ ' : '? ') + esc(n.n) + '</summary><p class="mini">' + esc(n.tier || '') + (step>=0 ? ' · 취득 기록 순서 ' + (step+1) : '') + '</p><p>' + esc(n.head || '') + '</p><p>' + esc(n.body || '') + '</p><p class="mini">앞줄에서 하나를 배워 다음 줄로 진행</p></details>';
-    }).join('') + '</div>').join('') + '</section>';
-  }).join('') + '</div>';
-  const skillName = id => (nodes.find(n=>n.id===id) || skills[id] || {}).n || id;
-  h += dashHistory('트리 취득·환불 순서',logs.map(x=>dashWhere(x)+' · '+esc(x.reset != null ? '전체 초기화 ('+x.reset+'칸)' : (x.refund ? '환불: ' : '취득: ')+skillName(x.id))));
-  h += dashHistory('장착 스킬 변경',(r.skillLog || []).map(x=>dashWhere(x)+' · '+esc((x.to || []).map(skillName).join(' · ') || '모두 해제')));
-  h += dashHistory('방별 장비·전투 결과',(r.rooms || []).map(x=>dashWhere(x)+' · '+esc((ROOM_TYPES[x.type] || {}).n || x.type || '전투')+' · '+esc(DASH_RESULTS[x.res] || x.res || '')+(x.hpOut != null ? ' · 종료 생명력 '+Math.round(x.hpOut*100)+'%' : '')+(x.gearDetails ? '<div class="notes">'+x.gearDetails.map(dashItemCard).join('')+'</div>' : '<p>'+esc((x.gear || []).filter(Boolean).map(v=>(ITEMS[v.split(':')[0]] || {}).n || v).join(', ') || '장비 미기록')+' · 실제 수치 미기록</p>')));
+function vAdminGear(r) {
+  const eq=r.eqDetails || (r.eq7 || []).map((v,i)=>v ? {sl:EQ_SLOTS[i],tpl:v.split(':')[0],g:v.split(':')[1]} : null).filter(Boolean);
+  let h='<h4>장비 세부 내용</h4><p class="mini">마지막 저장 시점의 실제 수치·등급·보너스·효과·대가입니다. 미기록 수치는 추정하지 않습니다.</p><div class="admin-items">'+(eq.length ? eq.map(dashItemCard).join('') : '<p>장비 기록 없음</p>')+'</div>';
+  h += '<details class="admin-fold"><summary>보유 장비 전체 ('+(r.inv || []).length+'개)</summary><div class="admin-items">'+(r.inv || []).map(dashItemCard).join('')+'</div></details>';
+  h += dashHistory('장비 교체 순서',(r.swaps || []).map(x=>dashWhere(x)+' · '+(x.on ? '장착' : '해제')+(x.detail ? dashItemCard(x.detail) : '<p>'+esc((ITEMS[x.item]||{}).n || x.item)+' · 실제 수치 미기록</p>')));
+  h += dashHistory('소모품 사용',(r.consLog || []).map(x=>dashWhere(x)+' · '+esc(x.name || (CONS[x.id]||{}).n || x.id)+' · '+(x.fight ? '전투 중' : '전투 밖')));
   return h;
+}
+function vAdminBuild(r) {
+  const SN={str:'힘',dex:'민첩',int:'지능',con:'체력',wil:'의지'}, stats=r.stats || {},max=Math.max(1,...Object.values(stats));
+  let h='<h4>스탯 배분</h4><p class="mini">직접 배분한 포인트입니다. 장비·일시 효과는 제외합니다.</p><div class="admin-stat-bars">';
+  h += r.stats ? Object.entries(SN).map(([k,n])=>'<div><span>'+n+'</span><meter aria-label="'+n+' 배분" min="0" max="'+max+'" value="'+(stats[k]||0)+'">'+(stats[k]||0)+'</meter><b>'+(stats[k]||0)+'점</b></div>').join('') : '<p>스탯 미기록</p>';h+='</div>';
+  h += dashHistory('스탯 배분 순서',(r.statLog || []).map(x=>dashWhere(x)+' · '+esc(Object.entries(x.add || {}).filter(([,v])=>v).map(([k,v])=>(SN[k]||k)+' +'+v).join(', '))));
+  const nodes=r.treeNodes || (SKILLS2[r.build] || []).map(x=>({...x,head:skHead(x),body:skBody(x)})),learned=r.tree ? r.tree.open || [] : [],equipped=r.skills || [],logs=r.treeLog || [];
+  h += '<h4>스킬 트리</h4><p class="mini">'+(r.tree ? '● 배움 · ✓ 장착 · ○ 미취득 · 남은 포인트 '+(r.tree.pts || 0) : '과거 기록: 취득한 칸은 미기록입니다. ✓ 장착한 스킬만 확인됩니다.')+(r.treeNodes ? ' · 저장 당시 설명' : ' · 설명은 현재 규칙 기준')+'</p>';
+  const branches=[...new Set(nodes.filter(n=>!n.start).map(n=>n.b))];
+  h += '<div class="admin-tree-grid">'+branches.map(br=>{
+    const ns=nodes.filter(n=>n.b===br&&!n.start), rows=[...new Set(ns.map(n=>n.row))].sort((a,b)=>a-b);
+    return '<details class="admin-branch" open><summary>'+esc(br)+' <span class="mini">'+(r.tree ? '배움 '+ns.filter(n=>learned.includes(n.id)).length+'칸' : '취득 미기록')+'</span></summary><div class="admin-tree-rows">'+rows.map((row,i)=>(i ? '<div class="admin-tree-arrow" aria-hidden="true">↓</div>' : '')+'<div class="admin-tree-row">'+ns.filter(n=>n.row===row).map(n=>{
+      const on=learned.includes(n.id),eq=equipped.includes(n.id),step=logs.findIndex(x=>x.id===n.id&&!x.refund);
+      return '<details class="admin-node'+(eq ? ' equipped' : on ? ' learned' : '')+'"><summary>'+(eq ? '✓ ' : on ? '● ' : r.tree ? '○ ' : '? ')+esc(n.n)+'</summary><p class="mini">'+esc(n.tier || '')+(step>=0 ? ' · 취득 기록 '+(step+1)+'번째' : '')+'</p><p>'+esc(n.head || '')+'</p><p>'+esc(n.body || '')+'</p></details>';
+    }).join('')+'</div>').join('')+'</div></details>';
+  }).join('')+'</div>';
+  const names=allSkillNames(),nm=id=>(nodes.find(n=>n.id===id)||names[id]||{}).n || id;
+  h += dashHistory('트리 취득·환불 순서',logs.map(x=>dashWhere(x)+' · '+esc(x.reset!=null ? '전체 초기화 ('+x.reset+'칸)' : (x.refund ? '환불: ' : '취득: ')+nm(x.id))));
+  h += dashHistory('장착 스킬 변경',(r.skillLog || []).map(x=>dashWhere(x)+' · '+esc((x.to || []).map(nm).join(' · ') || '모두 해제')));
+  return h;
+}
+function adminNum(v) { return v == null ? '미기록' : r1(v).toLocaleString('ko-KR'); }
+function vAdminCombat(r) {
+  const c=dashCombatStats(r), skills=allSkillNames();
+  let h='<h4>전투 통계</h4><div class="admin-metrics">'+[['가한 피해',c.dealt],['받은 피해',c.taken],['행동 기록',c.actions],['처치 기록',c.kills]].map(([n,v])=>'<div><span>'+n+'</span><strong>'+adminNum(v)+'</strong></div>').join('')+'</div><p class="mini">'+(c.complete ? '피해는 완료된 전투 전체의 실제 생명력 감소량입니다. 초과 피해·보호막 흡수·스킬 생명력 비용은 제외합니다.' : '과거 기록은 가한 피해가 없거나 일부만 남아 있습니다. 받은 피해는 보관된 피격 기록 합계이며 초과 피해가 포함될 수 있습니다. 0은 미기록을 뜻하지 않습니다.')+(c.truncated ? ' 행동·처치 수는 일부 보관 기록입니다.' : ' 진행 중인 전투는 종료 후 반영됩니다.')+'</p>';
+  h += '<h4>자주 한 행동</h4><div class="admin-action-bars">'+Object.entries(c.byAction).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([k,n])=>'<div><span>'+esc(ANAME[k] || (skills[k]||{}).n || k)+'</span><meter aria-label="'+esc(ANAME[k] || (skills[k]||{}).n || k)+' 사용 횟수" min="0" max="'+Math.max(1,c.actions)+'" value="'+n+'">'+n+'</meter><b>'+n+'회</b></div>').join('')+'</div>';
+  h += '<h4>방별 전투 통계</h4><div class="tbl"><table class="st2"><caption class="sr">방별 전투 피해</caption><thead><tr><th>챕터·층</th><th>결과</th><th>가한 피해</th><th>받은 피해</th><th>전투 시간</th><th>장비</th></tr></thead><tbody>';
+  h += c.rooms.map(x=>'<tr><td>'+esc((x.ch ? x.ch+'챕터 · ' : '')+x.room+'층')+'</td><td>'+esc(DASH_RESULTS[x.res] || x.res)+'</td><td>'+adminNum(x.damageStats ? x.damageStats.dealt : null)+'</td><td>'+adminNum(x.damageStats ? x.damageStats.taken : null)+'</td><td>'+esc(x.t==null ? '—' : x.t+'초')+'</td><td><details><summary>장비 보기</summary><div class="admin-items">'+(x.gearDetails ? x.gearDetails.map(dashItemCard).join('') : '<p>'+esc((x.gear||[]).filter(Boolean).map(v=>(ITEMS[v.split(':')[0]]||{}).n || v).join(', ') || '미기록')+'</p>')+'</div></details></td></tr>').join('') || '<tr><td colspan="6">완료된 전투 기록이 없습니다.</td></tr>';
+  return h+'</tbody></table></div>';
 }
 
 function vRunDetail(x) {
   const r = x.r, acts = r.acts || [], page = Math.max(0, Math.min(G.raPage || 0, Math.ceil(acts.length / 100) - 1));
-  const names = { act: '행동', hit: '피격', break: '붕괴', kill: '처치', dead: '사망', heal: '회복', dodge: '흘리기' };
+  const names = { act: '행동', hit: '피격', break: '붕괴', kill: '처치', dead: '사망', heal: '회복', dodge: '흘리기', dealt: '가한 피해', eact: '적 행동', cons: '소모품' };
   const skills = allSkillNames();
-  let h = '<section class="card"><h4>' + esc(r.cname || '이름 없는 캐릭터') + ' 상세 기록</h4><p>' + esc(x.who) + '</p><p class="mini">판 ID: ' + esc(r.id || '없음') + ' · 행동 기록 ' + acts.length + '건</p><button class="sm" data-a="runclose">상세 닫기</button>';
-  h += vAdminBuild(r);
+  let h = '<section class="card admin-detail" id="admin-run-detail"><h4>' + esc(r.cname || '이름 없는 캐릭터') + ' 상세 기록</h4><p>' + esc(x.who) + '</p><p class="mini">판 ID: ' + esc(r.id || '없음') + ' · 행동 기록 ' + acts.length + '건</p><button class="sm" data-a="runclose">상세 닫기</button>';
+  const tab=G.rdTab || 'summary';
+  h += '<div class="admin-tabs" role="group" aria-label="개인 상세 보기">'+[['summary','요약'],['gear','장비·아이템'],['growth','스탯·스킬 트리'],['battle','행동 기록']].map(([k,n])=>'<button class="chip'+(tab===k ? ' on' : '')+'" data-a="runtab" data-k="'+k+'" aria-pressed="'+(tab===k)+'">'+n+'</button>').join('')+'</div><div class="row"><button class="sm" data-a="runroomcsv">이 판의 방별 통계 CSV</button></div>';
+  if(tab==='summary') return h+vAdminCombat(r)+'</section>';
+  if(tab==='gear') return h+vAdminGear(r)+'</section>';
+  if(tab==='growth') return h+vAdminBuild(r)+'</section>';
+
   h += '<h4>전투 행동 흐름</h4><p class="mini">생명력·마나는 최대치 대비 비율이며, 행동 직전 상태입니다. 행동 기록은 전투가 끝난 뒤 저장됩니다.</p>';
   if (r.actsN > acts.length) h += '<p class="mini">전체 ' + r.actsN + '건 중 보관된 ' + acts.length + '건을 표시합니다.</p>';
   if (!acts.length) h += '<p class="mini">저장된 행동 기록이 없습니다.</p>';
   else {
     h += '<div class="tbl"><table class="st2"><caption class="sr">행동 흐름</caption><thead><tr><th>순서</th><th>층</th><th>전투 시간</th><th>종류</th><th>내용</th></tr></thead><tbody>';
     h += acts.slice(page * 100, (page + 1) * 100).map((a, i) => {
-      const text = [a.a ? (ANAME[a.a] || (skills[a.a] || {}).n || a.a) : '', a.id && a.k === 'cons' ? ((CONS[a.id] || {}).n || a.id) : '', a.tg ? '대상: ' + ((ROLES[a.tg] || {}).n || a.tg) : '', a.role ? '적: ' + ((ROLES[a.role] || {}).n || a.role) : '', a.i ? '적 행동: ' + a.i : '', a.st != null ? '스태미나 ' + a.st : '', a.heavyIn ? '강타 예고 중' : '', a.healIn ? '치유 예고 중' : '', a.d != null ? '피해 ' + a.d : '', a.hp != null ? '생명력 ' + Math.round(a.hp * 100) + '%' : '', a.mp != null ? '마나 ' + Math.round(a.mp * 100) + '%' : '', a.charged ? '강타' : '', a.parried ? '흘리기 성공' : '', a.guard ? '방어 중' : ''].filter(Boolean).join(' · ');
+      const text = [typeof a.a === 'string' ? (ANAME[a.a] || (skills[a.a] || {}).n || a.a) : '', a.id && a.k === 'cons' ? ((CONS[a.id] || {}).n || a.id) : '', a.tg ? '대상: ' + ((ROLES[a.tg] || {}).n || a.tg) : '', a.role ? '적: ' + ((ROLES[a.role] || {}).n || a.role) : '', a.i ? '적 행동: ' + a.i : '', a.st != null ? '스태미나 ' + a.st : '', a.heavyIn ? '강타 예고 중' : '', a.healIn ? '치유 예고 중' : '', a.d != null ? (a.k==='dealt' ? '가한 피해 ' : a.k==='hit' ? '받은 피해 ' : '피해 ') + a.d : '', a.hp != null ? '생명력 ' + Math.round(a.hp * 100) + '%' : '', a.mp != null ? '마나 ' + Math.round(a.mp * 100) + '%' : '', a.charged ? '강타' : '', a.parried ? '흘리기 성공' : '', a.guard ? '방어 중' : ''].filter(Boolean).join(' · ');
       return '<tr><td>' + (page * 100 + i + 1) + '</td><td>' + esc((a.ch ? a.ch + '챕터 · ' : '') + (a.r == null ? '—' : floorName(a.r))) + '</td><td>' + esc(a.t == null ? '—' : a.t + '초') + '</td><td>' + esc(names[a.k] || a.k || '기록') + '</td><td>' + esc(text || '원본 기록에서 확인') + '</td></tr>';
     }).join('') + '</tbody></table></div><div class="row"><button class="sm" data-a="runactpage" data-v="' + (page - 1) + '"' + (page ? '' : ' disabled') + '>이전 행동</button><span>' + (page + 1) + '/' + Math.ceil(acts.length / 100) + '</span><button class="sm" data-a="runactpage" data-v="' + (page + 1) + '"' + ((page + 1) * 100 < acts.length ? '' : ' disabled') + '>다음 행동</button></div>';
   }
   return h + '<details><summary>이 판의 원본 기록 보기</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:400px;overflow:auto">' + esc(JSON.stringify(r, null, 2)) + '</pre></details></section>';
 }
+function vAdminOverview(rows) {
+  const by = {};for(const x of rows){const k=x.r.build || 'unknown',c=dashCombatStats(x.r),o=by[k] || (by[k]={runs:0,measured:0,dealt:0,taken:0,received:0});o.runs++;if(c.dealt!=null){o.measured++;o.dealt+=c.dealt;}if(c.taken!=null){o.received++;o.taken+=c.taken;}}
+  return '<details class="admin-fold" open><summary>검색 결과 전투 통계 · '+rows.length+'판</summary><p class="mini">집계 가능한 기록만 합산합니다. 미기록은 평균에서 제외합니다. 일부 기록은 해당 기록 범위의 값입니다.</p><div class="tbl"><table class="st2"><caption class="sr">직업별 전투 통계</caption><thead><tr><th>직업</th><th>판 수</th><th>가한 피해 합계</th><th>판당 평균</th><th>받은 피해 합계</th><th>판당 평균</th><th>집계 가능한 판 (가함/받음)</th></tr></thead><tbody>'+Object.entries(by).map(([k,o])=>'<tr><td>'+esc((BUILDS[k]||{}).n || k)+'</td><td>'+o.runs+'</td><td>'+adminNum(o.measured ? o.dealt : null)+'</td><td>'+adminNum(o.measured ? o.dealt/o.measured : null)+'</td><td>'+adminNum(o.received ? o.taken : null)+'</td><td>'+adminNum(o.received ? o.taken/o.received : null)+'</td><td>'+o.measured+'/'+o.received+'</td></tr>').join('')+'</tbody></table></div></details>';
+}
+
 function vRunLogs() {
   const f = G.rf || {}, rows = dashRunRows(), pages = Math.max(1, Math.ceil(rows.length / 25));
   const page = Math.max(0, Math.min(G.rfPage || 0, pages - 1));
-  let h = '<section class="card"><h4>플레이 로그 찾기</h4><p class="mini">마지막 기록이 최신인 순서입니다. 검색 조건을 고른 뒤 적용을 누르세요.</p><div class="wrap"><label>플레이어 <select id="runperson"><option value="">전체 플레이어</option>' + (G.dashRaw || []).map((T,i)=>'<option value="' + esc(T.uid) + '"' + (f.uid === T.uid ? ' selected' : '') + '>' + esc(testerLabel(T,i)) + '</option>').join('') + '</select></label><label>이름·ID 검색 <input id="runquery" type="search" value="' + esc(f.q || '') + '" placeholder="플레이어, 캐릭터, 계정·판 ID"></label><label>직업 <select id="runbuild"><option value="all">전체 직업</option>' + CLASS_KEYS().map(k => '<option value="' + k + '"' + (f.b === k ? ' selected' : '') + '>' + esc(BUILDS[k].n) + '</option>').join('') + '</select></label><label>결과 <select id="runresult"><option value="all">전체 결과</option>' + Object.entries(DASH_RESULTS).map(([k, n]) => '<option value="' + k + '"' + (f.result === k ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></label><label>시작일 <input id="runfrom" type="date" value="' + esc(f.from || '') + '"></label><label>종료일 <input id="runto" type="date" value="' + esc(f.to || '') + '"></label></div><div class="row"><button class="sm gold" data-a="runfilter">검색 적용</button><button class="sm" data-a="runreset">초기화</button><button class="sm" data-a="runscsv">검색 결과 CSV 받기</button></div><p role="status">검색 결과 ' + rows.length + '판 · ' + (page + 1) + '/' + pages + '페이지 (25판씩)</p>';
+  let h = '<section class="card"><h4>플레이 로그 찾기</h4><p class="mini">마지막 기록이 최신인 순서입니다. 검색 조건을 고른 뒤 적용을 누르세요.</p><div class="admin-filters"><label>플레이어 <select id="runperson"><option value="">전체 플레이어</option>' + (G.dashRaw || []).map((T,i)=>'<option value="' + esc(T.uid) + '"' + (f.uid === T.uid ? ' selected' : '') + '>' + esc(testerLabel(T,i)) + '</option>').join('') + '</select></label><label>이름·ID 검색 <input id="runquery" type="search" value="' + esc(f.q || '') + '" placeholder="플레이어, 캐릭터, 계정·판 ID"></label><label>직업 <select id="runbuild"><option value="all">전체 직업</option>' + CLASS_KEYS().map(k => '<option value="' + k + '"' + (f.b === k ? ' selected' : '') + '>' + esc(BUILDS[k].n) + '</option>').join('') + '</select></label><label>결과 <select id="runresult"><option value="all">전체 결과</option>' + Object.entries(DASH_RESULTS).map(([k, n]) => '<option value="' + k + '"' + (f.result === k ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></label><label>시작일 <input id="runfrom" type="date" value="' + esc(f.from || '') + '"></label><label>종료일 <input id="runto" type="date" value="' + esc(f.to || '') + '"></label></div><div class="row"><button class="sm gold" data-a="runfilter">검색 적용</button><button class="sm" data-a="runreset">초기화</button><button class="sm" data-a="runscsv">검색 결과 CSV 받기</button></div><p role="status">검색 결과 ' + rows.length + '판 · ' + (page + 1) + '/' + pages + '페이지 (25판씩)</p>';
+  h += vAdminOverview(rows);
   h += '<div class="tbl"><table class="st2"><caption class="sr">검색된 플레이 로그</caption><thead><tr><th>플레이어</th><th>캐릭터·직업</th><th>결과</th><th>도달</th><th>마지막 기록</th><th>상세</th></tr></thead><tbody>';
   h += rows.slice(page * 25, (page + 1) * 25).map(x => { const r = x.r; return '<tr><td>' + esc(x.who) + '</td><td>' + esc(r.cname || '—') + '<br>' + esc((BUILDS[r.build] || {}).n || r.build || '—') + '</td><td>' + esc(DASH_RESULTS[dashRunResult(r)] || dashRunResult(r)) + '</td><td>' + esc(rankProg({ ch: r.ch, clears: r.clears, floor: r.roomReached })) + '</td><td>' + esc(dashRunTime(r) ? new Date(dashRunTime(r)).toLocaleString('ko-KR') : '—') + '</td><td><button class="sm" data-a="runopen" data-k="' + x.key + '" aria-expanded="' + (G.rfOpen === x.key) + '">기록 보기</button></td></tr>'; }).join('') || '<tr><td colspan="6">조건에 맞는 기록이 없습니다.</td></tr>';
   h += '</tbody></table></div><div class="row"><button class="sm" data-a="runpage" data-v="' + (page - 1) + '"' + (page ? '' : ' disabled') + '>이전</button><button class="sm" data-a="runpage" data-v="' + (page + 1) + '"' + (page + 1 < pages ? '' : ' disabled') + '>다음</button></div></section>';
-  const opened = rows.find(x => x.key === G.rfOpen); return h + (opened ? vRunDetail(opened) : '');
+  const opened = rows.find(x => x.key === G.rfOpen); return (opened ? vRunDetail(opened) : '') + h;
 }
 
 function vDash() {

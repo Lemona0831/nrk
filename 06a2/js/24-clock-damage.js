@@ -168,6 +168,8 @@ function hurtPlayer(b, raw, o) {
   if (p.ward > 0 && d > 0) { const bk = o.src && !o.dot && o.src.row === 'back' && !o.wardAll; const a = Math.min(p.ward, bk ? d * WARD.back : d); p.ward -= a; d -= a; wardA = a; wardBk = !!bk; if (d <= 0) wardAll = true; else logp(b, 'good', '보호막이 ' + r1(a) + '을(를) 받아낸다' + (bk ? '. 멀리서 온 공격이라 절반만 막는다' : '')); }
   if (o.dot && b.bleedFloor && d >= p.hp && p.hp > 0) { d = Math.max(0, p.hp - 1); logp(b, 'good', '내가 낸 피로는 쓰러지지 않는다. 생명력 1에서 멈춘다'); b.rec.push({ k: 'bu', w: 'floor' }); } // 출혈 바닥 (숨겨진 직업 1): 나에게 건 출혈이 남아 있는 동안
   if (d >= p.hp && p.hp > 0 && fxList(p).some(([, f]) => f.deathSave) && !p.fxSaved) { d = p.hp - 1; p.fxSaved = 1; fxHit('deadrosary'); logp(b, 'crit', '망자의 묵주가 한 번 붙잡아 준다. 생명력 1'); }
+  const actualTaken = Math.max(0, Math.min(p.hp, d));
+  const damageStats = b.damageStats || (b.damageStats = { v: 0, dealt: 0, taken: 0 }); damageStats.taken += actualTaken;
   p.hp -= d;
   if (d > 0 && o.src && !o.dot && isBu(p)) p.tookAcc = (p.tookAcc || 0) + d; // 받은 피해 (숨겨진 직업 1): 적의 직접 공격으로 실제로 잃은 생명력
   if (d > 0) fxRun(p, 'onHurt', b, p, o, d);
@@ -185,7 +187,7 @@ function hurtPlayer(b, raw, o) {
   else if (!o.silent) logp(b, 'bad', o.dot ? (o.label || '피해') + '이(가) 나를 갉아먹는다. ' + r1(d) + ' 피해' : (o.label || '공격') + '. ' + r1(d) + ' 피해' + (p.guard ? ', 방어로 절반' : ''));
   const sLine = b.logN || 0; /* 이 피해 줄의 순번 */
   if (p.build === 'monk' && (p.guard || p.stance) && !b.cur && !b.over && p.hp > 0 && o.src && !o.dot && !o.aoe && !o.spell && !o.judgment && monkCtrOk(b, o.src) && (p.ctrN || 0) < MONK.ctrMax) monkCounter(b, o); // 수도승 되받기 (의도 키가 아니라 공격의 성질로 가린다. 피해 · 가시 처리와 기록 줄 다음)
-  b.rec.push({ k: 'hit', t: r1(b.t), d: r1(d), dot: !!o.dot, charged: !!o.charged, src: o.src ? o.src.role : null, guard: !!p.guard, parried: o.parried ? 1 : 0 });
+  b.rec.push({ k: 'hit', t: r1(b.t), d: r1(d), actual: r1(actualTaken), dot: !!o.dot, charged: !!o.charged, src: o.src ? o.src.role : null, guard: !!p.guard, parried: o.parried ? 1 : 0 });
   if (p.rime && o.src && o.src.alive && !o.dot && p.hp > 0) elemRime(b, o.src); // 원소술사 되얼림 · 불꽃 외투 (그 공격의 기록 뒤)
   { const m = []; if (hx) { if (hx.vu) m.push('취약 ' + hx.vu + '(으)로 +25%'); if (hx.pr) m.push('보호 ' + hx.pr + '(으)로 −25%'); if (hx.ig) m.push('화상 ' + hx.ig + '만큼 더함'); if (hx.ex) m.push('탈진으로 +20%'); if (hx.gd) m.push('방어로 줄어듦'); }
     if (o.parried) m.push('흘리기로 줄어듦'); if (nr0) m.push('부적으로 −' + Math.round(nr0 * 100) + '%'); if (br0 && !o.dot) m.push('버티기로 −35%'); if (wardA > 0) m.push('보호막이 ' + r1(wardA) + ' 받아냄' + (wardBk ? '(먼 곳에서 온 공격이라 절반만)' : '')); if (b.enrage && o.src && !o.dot) m.push('광폭화');
@@ -255,6 +257,9 @@ function hurtEnemy(b, e, raw, o) {
   if (e.boss === 'queen') queenThresh(b, e);
   if (e.hazeHit && !o.dot && d > 0) e.hazeHit = 0;
   if (e.boss === 'cryptlord') { const th = LORD.ph[(e.phase || 1) - 1]; if (th != null && e.hp <= e.hpMax * th) { e.hp = Math.max(1, Math.round(e.hpMax * th)); if (!e.lordNext) { e.lordNext = (e.phase || 1) === 1 ? 'throne' : 'collapse'; } } } // 페이즈 문턱은 한 번에 하나: 넘친 피해는 버린다
+  const actualDealt = Math.max(0, hp0 - Math.max(0, e.hp));
+  const damageStats = b.damageStats || (b.damageStats = { v: 0, dealt: 0, taken: 0 }); damageStats.dealt += actualDealt;
+  b.rec.push({ k: 'dealt', t: r1(b.t), d: r1(actualDealt), role: e.role, a: o.label || b.curSkill || (b.cur && b.cur.id) || '공격', dot: !!o.dot });
   if (e.chant && d > 0 && e.hp > 0) { e.chant.taken += d; if (e.chant.taken >= e.chant.need) chantBreak(b, e, '쌓인 상처에'); } // 화형 사제: 영창 중 받은 피해
   if (!o.dot && b.cur) fxRun(b.p, 'onHit', b, b.p, e, o, b.cur, d, Math.max(0, hp0 - Math.max(0, e.hp)));
   if (e.countering && e.hp > 0 && !o.dot && o.melee && o.single && b.p.decoy) { e.countering = 0; b.p.decoy = 0; logp(b, 'good', e.n + '의 반격이 미끼 인형을 친다'); }

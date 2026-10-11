@@ -164,3 +164,28 @@
 .chgarchive>summary{cursor:pointer;min-height:48px;padding:8px 4px;line-height:1.5;overflow-wrap:anywhere}
 .chgarchive>summary .chgd{display:block;margin:3px 0 0}
 .chgarchive>.chg{padding:8px 12px;border-top:0}
+
+/* 관리자 상세: 통계, 장비, 성장, 행동을 분리하고 긴 내용은 칸 안에서 줄바꿈한다. */
+.admin-detail{scroll-margin-top:80px;min-width:0;overflow-wrap:anywhere}
+.admin-detail h4{margin:18px 0 10px}.admin-detail>h4:first-child{margin-top:0}
+.admin-detail p{margin:8px 0;line-height:1.65}.admin-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}.admin-tabs button{min-height:40px}
+.admin-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;margin:14px 0}
+.admin-filters label{display:grid;gap:5px;min-width:0}.admin-filters input,.admin-filters select{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+.admin-items{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px;margin:12px 0}
+.admin-items .note{min-width:0;overflow-wrap:anywhere}.admin-items .note b{display:block;font-size:calc(15px*var(--fs,1))}
+.admin-fold{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:12px 0;min-width:0}
+.admin-fold>summary{cursor:pointer;min-height:28px;font-weight:600}.admin-fold ol{padding-left:24px}.admin-fold li{padding:8px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.admin-stat-bars,.admin-action-bars{display:grid;gap:12px;margin:16px 0;max-width:650px}
+.admin-stat-bars>div,.admin-action-bars>div{display:grid;grid-template-columns:55px minmax(0,1fr) 55px;align-items:center;gap:12px}
+.admin-action-bars>div{grid-template-columns:minmax(80px,160px) minmax(0,1fr) 55px}
+.admin-stat-bars meter,.admin-action-bars meter{width:100%;min-width:0;height:18px}.admin-stat-bars b,.admin-action-bars b{text-align:right;font-variant-numeric:tabular-nums}
+.admin-tree-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px;align-items:start;margin:16px 0}
+.admin-branch{border:1px solid var(--line);border-radius:8px;padding:12px;min-width:0;background:var(--panel2)}
+.admin-branch>summary{font-weight:700;cursor:pointer;padding-bottom:8px;overflow-wrap:anywhere}.admin-branch>summary span{display:block}
+.admin-tree-rows{max-height:560px;overflow-y:auto;padding:4px 4px 4px 0;scrollbar-gutter:stable}
+.admin-tree-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.admin-tree-row>.admin-node:only-child{grid-column:1/-1}
+.admin-tree-arrow{text-align:center;color:var(--muted);padding:5px}.admin-node{border:1px solid var(--line);border-radius:6px;padding:8px;min-width:0;font-size:calc(13px*var(--fs,1));overflow-wrap:anywhere}
+.admin-node summary{cursor:pointer;line-height:1.5}.admin-node.learned{border-color:#759b69;background:#243020}.admin-node.equipped{border-color:var(--gold);background:#40351f}
+.admin-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}.admin-metrics>div{border:1px solid var(--line);border-radius:8px;background:var(--panel2);padding:12px;min-width:0}
+.admin-metrics span{display:block;color:var(--muted);font-size:calc(13px*var(--fs,1))}.admin-metrics strong{display:block;font-size:calc(23px*var(--fs,1));margin-top:8px;font-variant-numeric:tabular-nums}
+@media(max-width:600px){.admin-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-tabs button{flex:1 1 40%}.admin-tree-rows{max-height:420px}.admin-action-bars>div{grid-template-columns:100px minmax(0,1fr) 45px}}

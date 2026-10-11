@@ -224,7 +224,9 @@ function onClick(ev) {
     case 'runfilter': G.rf = { uid: val('runperson'), q: val('runquery'), b: val('runbuild'), result: val('runresult'), from: val('runfrom'), to: val('runto') }; G.rfPage = 0; G.rfOpen = null; render(); break;
     case 'runreset': G.rf = {}; G.rfPage = 0; G.rfOpen = null; render(); break;
     case 'runpage': G.rfPage = Math.max(0, +el.dataset.v || 0); G.rfOpen = null; render(); break;
-    case 'runopen': G.rfOpen = el.dataset.k; G.raPage = 0; render(); break;
+    case 'runopen': G.rfOpen = el.dataset.k; G.raPage = 0; G.rdTab = 'summary'; render(); document.getElementById('admin-run-detail')?.scrollIntoView({ block: 'start' }); break;
+    case 'runtab': G.rdTab = el.dataset.k; render(); document.getElementById('admin-run-detail')?.scrollIntoView({ block: 'start' }); break;
+    case 'runroomcsv': saveFile('nrk-방별통계.csv', dashRoomCsv()); break;
     case 'runclose': G.rfOpen = null; render(); break;
     case 'runactpage': G.raPage = Math.max(0, +el.dataset.v || 0); render(); break;
     case 'runscsv': saveFile('nrk-플레이로그-' + new Date().toISOString().slice(0, 10) + '.csv', dashRunsCsv()); break;
