@@ -14,6 +14,8 @@ for(const dir of ['.','06a2']) {
  ctx.__G.rfOpen='0:0';assert(ctx.vRunLogs().includes('스킬 트리'));
  for(const build of Object.keys(vm.runInContext('SKILLS2',ctx))){vm.runInContext('startRun('+JSON.stringify(build)+')',ctx);const r=ctx.runRecord(ctx.__G.run);assert(ctx.vAdminBuild(r).includes('스킬 트리'));}
 
+ for(const id of ['sb_aegis','sb_bladeward','sb_edge','sb_unravel','sb_shell'])assert.notEqual(ctx.dashActionName(id),id);
+ assert.equal(ctx.dashActionName('flaskS'),'스태미나 플라스크');assert.equal(ctx.dashActionName('flaskM',{build:'spellblade'}),'정화 플라스크');
  const combat=ctx.dashCombatStats({rooms:[{res:'win',damageStats:{v:1,dealt:100,taken:25}}],acts:[{k:'act',a:'basic'}]});assert(combat.complete);assert.equal(combat.dealt,100);assert.equal(combat.taken,25);
  const old=ctx.dashCombatStats({rooms:[{res:'win'}],acts:[{k:'hit',d:9},{k:'hit',d:5}]});assert.equal(old.dealt,null);assert.equal(old.taken,14);assert(!old.complete);
  assert.equal(ctx.dashCombatStats({}).taken,null);assert(ctx.adminCsv([['a,b','"quote"','line\rbreak','=SUM(1)',100]]).includes("'=SUM(1)"));assert(ctx.adminCsv([[1],[2]]).includes('\r\n'));

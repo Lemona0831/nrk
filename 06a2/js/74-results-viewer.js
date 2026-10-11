@@ -196,6 +196,13 @@ function dashRunRows() {
     .filter(x => (!f.uid || x.uid === f.uid) && (!q || [x.who, x.uid, x.r.cname, x.r.id].join(' ').toLocaleLowerCase().includes(q)) && (!f.b || f.b === 'all' || x.r.build === f.b) && (!f.result || f.result === 'all' || dashRunResult(x.r) === f.result) && dashRunTime(x.r) >= from && dashRunTime(x.r) < until)
     .sort((a, b) => dashRunTime(b.r) - dashRunTime(a.r));
 }
+function dashActionName(id, r) {
+  if(id==='flaskS')return '스태미나 플라스크';
+  if(id==='flaskM' && r && BUILDS[r.build] && BUILDS[r.build].v2)return '정화 플라스크';
+  const saved=r && (r.treeNodes || []).find(n=>n.id===id);
+  return (saved && saved.n) || (SK2[id] && SK2[id].n) || ANAME[id] || (allSkillNames()[id] || {}).n || id;
+}
+
 function dashCombatStats(r) {
   const rooms = (r.rooms || []).filter(x => x.res), recorded = rooms.filter(x => x.damageStats), acts = r.acts || [];
   const complete = rooms.length > 0 && recorded.length === rooms.length && recorded.every(x=>x.damageStats.v === 1);
@@ -259,7 +266,7 @@ function adminNum(v) { return v == null ? '미기록' : r1(v).toLocaleString('ko
 function vAdminCombat(r) {
   const c=dashCombatStats(r), skills=allSkillNames();
   let h='<h4>전투 통계</h4><div class="admin-metrics">'+[['가한 피해',c.dealt],['받은 피해',c.taken],['행동 기록',c.actions],['처치 기록',c.kills]].map(([n,v])=>'<div><span>'+n+'</span><strong>'+adminNum(v)+'</strong></div>').join('')+'</div><p class="mini">'+(c.complete ? '피해는 완료된 전투 전체의 실제 생명력 감소량입니다. 초과 피해·보호막 흡수·스킬 생명력 비용은 제외합니다.' : '과거 기록은 가한 피해가 없거나 일부만 남아 있습니다. 받은 피해는 보관된 피격 기록 합계이며 초과 피해가 포함될 수 있습니다. 0은 미기록을 뜻하지 않습니다.')+(c.truncated ? ' 행동·처치 수는 일부 보관 기록입니다.' : ' 진행 중인 전투는 종료 후 반영됩니다.')+'</p>';
-  h += '<h4>자주 한 행동</h4><div class="admin-action-bars">'+Object.entries(c.byAction).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([k,n])=>'<div><span>'+esc(ANAME[k] || (skills[k]||{}).n || k)+'</span><meter aria-label="'+esc(ANAME[k] || (skills[k]||{}).n || k)+' 사용 횟수" min="0" max="'+Math.max(1,c.actions)+'" value="'+n+'">'+n+'</meter><b>'+n+'회</b></div>').join('')+'</div>';
+  h += '<h4>자주 한 행동</h4><div class="admin-action-bars">'+Object.entries(c.byAction).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([k,n])=>'<div><span>'+esc(dashActionName(k,r))+'</span><meter aria-label="'+esc(ANAME[k] || (skills[k]||{}).n || k)+' 사용 횟수" min="0" max="'+Math.max(1,c.actions)+'" value="'+n+'">'+n+'</meter><b>'+n+'회</b></div>').join('')+'</div>';
   h += '<h4>방별 전투 통계</h4><div class="tbl"><table class="st2"><caption class="sr">방별 전투 피해</caption><thead><tr><th>챕터·층</th><th>결과</th><th>가한 피해</th><th>받은 피해</th><th>전투 시간</th><th>장비</th></tr></thead><tbody>';
   h += c.rooms.map(x=>'<tr><td>'+esc((x.ch ? x.ch+'챕터 · ' : '')+x.room+'층')+'</td><td>'+esc(DASH_RESULTS[x.res] || x.res)+'</td><td>'+adminNum(x.damageStats ? x.damageStats.dealt : null)+'</td><td>'+adminNum(x.damageStats ? x.damageStats.taken : null)+'</td><td>'+esc(x.t==null ? '—' : x.t+'초')+'</td><td><details><summary>장비 보기</summary><div class="admin-items">'+(x.gearDetails ? x.gearDetails.map(dashItemCard).join('') : '<p>'+esc((x.gear||[]).filter(Boolean).map(v=>(ITEMS[v.split(':')[0]]||{}).n || v).join(', ') || '미기록')+'</p>')+'</div></details></td></tr>').join('') || '<tr><td colspan="6">완료된 전투 기록이 없습니다.</td></tr>';
   return h+'</tbody></table></div>';
@@ -282,7 +289,7 @@ function vRunDetail(x) {
   else {
     h += '<div class="tbl"><table class="st2"><caption class="sr">행동 흐름</caption><thead><tr><th>순서</th><th>층</th><th>전투 시간</th><th>종류</th><th>내용</th></tr></thead><tbody>';
     h += acts.slice(page * 100, (page + 1) * 100).map((a, i) => {
-      const text = [typeof a.a === 'string' ? (ANAME[a.a] || (skills[a.a] || {}).n || a.a) : '', a.id && a.k === 'cons' ? ((CONS[a.id] || {}).n || a.id) : '', a.tg ? '대상: ' + ((ROLES[a.tg] || {}).n || a.tg) : '', a.role ? '적: ' + ((ROLES[a.role] || {}).n || a.role) : '', a.i ? '적 행동: ' + a.i : '', a.st != null ? '스태미나 ' + a.st : '', a.heavyIn ? '강타 예고 중' : '', a.healIn ? '치유 예고 중' : '', a.d != null ? (a.k==='dealt' ? '가한 피해 ' : a.k==='hit' ? '받은 피해 ' : '피해 ') + a.d : '', a.hp != null ? '생명력 ' + Math.round(a.hp * 100) + '%' : '', a.mp != null ? '마나 ' + Math.round(a.mp * 100) + '%' : '', a.charged ? '강타' : '', a.parried ? '흘리기 성공' : '', a.guard ? '방어 중' : ''].filter(Boolean).join(' · ');
+      const text = [typeof a.a === 'string' ? (dashActionName(a.a,r)) : '', a.id && a.k === 'cons' ? ((CONS[a.id] || {}).n || a.id) : '', a.tg ? '대상: ' + ((ROLES[a.tg] || {}).n || a.tg) : '', a.role ? '적: ' + ((ROLES[a.role] || {}).n || a.role) : '', a.i ? '적 행동: ' + a.i : '', a.st != null ? '스태미나 ' + a.st : '', a.heavyIn ? '강타 예고 중' : '', a.healIn ? '치유 예고 중' : '', a.d != null ? (a.k==='dealt' ? '가한 피해 ' : a.k==='hit' ? '받은 피해 ' : '피해 ') + a.d : '', a.hp != null ? '생명력 ' + Math.round(a.hp * 100) + '%' : '', a.mp != null ? '마나 ' + Math.round(a.mp * 100) + '%' : '', a.charged ? '강타' : '', a.parried ? '흘리기 성공' : '', a.guard ? '방어 중' : ''].filter(Boolean).join(' · ');
       return '<tr><td>' + (page * 100 + i + 1) + '</td><td>' + esc((a.ch ? a.ch + '챕터 · ' : '') + (a.r == null ? '—' : floorName(a.r))) + '</td><td>' + esc(a.t == null ? '—' : a.t + '초') + '</td><td>' + esc(names[a.k] || a.k || '기록') + '</td><td>' + esc(text || '원본 기록에서 확인') + '</td></tr>';
     }).join('') + '</tbody></table></div><div class="row"><button class="sm" data-a="runactpage" data-v="' + (page - 1) + '"' + (page ? '' : ' disabled') + '>이전 행동</button><span>' + (page + 1) + '/' + Math.ceil(acts.length / 100) + '</span><button class="sm" data-a="runactpage" data-v="' + (page + 1) + '"' + ((page + 1) * 100 < acts.length ? '' : ' disabled') + '>다음 행동</button></div>';
   }
@@ -323,7 +330,7 @@ function vDash() {
   h += row('2회차 승리/시도 (질문 3)', B => B.wins.tree + '/' + B.tries.tree);
   h += row('가장 많이 쓰러진 방 (질문 2)', B => { const t = topShare(B.deathRoom); return t ? esc(floorName(+t.k)) + ' ' + Math.round(t.p * 100) + '%' : '—'; });
   h += row('가장 어렵다고 답한 방', B => { const t = topShare(B.hardRoom); return t ? esc(floorName(+t.k)) : '—'; });
-  h += row('강타 예고 때 가장 많이 한 행동 (질문 6)', B => { const t = topShare(B.heavyResp); return t ? esc(ANAME[t.k] || t.k) + ' ' + Math.round(t.p * 100) + '%' + (t.p > 0.5 ? ' ⚠' : '') : '—'; });
+  h += row('강타 예고 때 가장 많이 한 행동 (질문 6)', B => { const t = topShare(B.heavyResp); return t ? esc(dashActionName(t.k)) + ' ' + Math.round(t.p * 100) + '%' + (t.p > 0.5 ? ' ⚠' : '') : '—'; });
   h += row('치유 예고 때 가장 많이 한 행동', B => { const t = topShare(B.healResp); return t ? esc(ANAME[t.k] || t.k) + ' ' + Math.round(t.p * 100) + '%' : '—'; });
   h += row('그냥 맞은 강타 (흘리기 가능했음)', B => B.deliberate);
   h += row('흘린 강타', B => B.dodgedCharged);
@@ -342,7 +349,7 @@ function vDash() {
   h += row('방 5 선택 아이템', B => Object.entries(B.block).map(([k, v]) => esc(ITEMS[k] ? ITEMS[k].n : k) + ' ' + v).join(', ') || '—');
   h += `</tbody></table></div></section>`;
   h += `<section class="card"><h4>방 5: 고른 아이템별 행동 (질문 4)</h4><div class="tbl"><table class="st2"><caption class="sr">고른 아이템별 행동</caption><thead><tr><th scope="col">빌드</th><th scope="col">아이템</th><th scope="col">많이 쓴 행동 3개</th></tr></thead><tbody>`;
-  for (const k of bn) for (const [it, m] of Object.entries(D.byB[k].room5)) { const top = Object.entries(m).sort((a, c) => c[1] - a[1]).slice(0, 3).map(([a, n]) => esc(ANAME[a] || a) + ' ' + n).join(', '); h += `<tr><td>${esc(BUILDS[k].n)}</td><td>${esc(ITEMS[it] ? ITEMS[it].n : it)}</td><td>${top}</td></tr>`; }
+  for (const k of bn) for (const [it, m] of Object.entries(D.byB[k].room5)) { const top = Object.entries(m).sort((a, c) => c[1] - a[1]).slice(0, 3).map(([a, n]) => esc(dashActionName(a)) + ' ' + n).join(', '); h += `<tr><td>${esc(BUILDS[k].n)}</td><td>${esc(ITEMS[it] ? ITEMS[it].n : it)}</td><td>${top}</td></tr>`; }
   h += `</tbody></table></div></section>`;
   h += `<section class="card"><h4>고정 상황 의사결정 (질문 1)</h4><p class="mini">결정 축: 먼저 공격한 대상, 일부러 맞은 강타 수, 처음 공격을 멈춘 행동. 상황마다 빌드 간 두 축 이상이 다르면 차이로 봅니다. 아이템 교체 축은 방 기록에서 봅니다.</p><div class="tbl"><table class="st2"><caption class="sr">고정 상황 의사결정</caption><thead><tr><th scope="col">상황</th><th scope="col">축</th>${bn.map(k => `<th scope="col">${esc(BUILDS[k].n)}</th>`).join('')}<th scope="col">다른 축</th></tr></thead><tbody>`;
   let pass = 0;
@@ -351,7 +358,7 @@ function vDash() {
     const f = bn.map(k => S[k] ? modeOf(S[k].first) : '—'); const dl = bn.map(k => S[k] ? (S[k].delib / S[k].n > 0.5 ? '있음' : '없음') : '—'); const sp = bn.map(k => S[k] ? modeOf(S[k].stop) : '—');
     const diff = [f, dl, sp].filter(a => a.every(x => x !== '—') && new Set(a).size > 1).length;
     if (diff >= 2) pass++;
-    h += `<tr><td rowspan="3">${sc.id} ${esc(sc.n)}</td><td>먼저 공격</td>${f.map(x => `<td>${esc(ROLES[x] ? ROLES[x].n : x === 'boss' ? '보스' : x)}</td>`).join('')}<td rowspan="3">${diff}</td></tr><tr><td>일부러 맞음</td>${dl.map(x => `<td>${x}</td>`).join('')}</tr><tr><td>처음 멈춤</td>${sp.map(x => `<td>${esc(ANAME[x] || x)}</td>`).join('')}</tr>`;
+    h += `<tr><td rowspan="3">${sc.id} ${esc(sc.n)}</td><td>먼저 공격</td>${f.map(x => `<td>${esc(ROLES[x] ? ROLES[x].n : x === 'boss' ? '보스' : x)}</td>`).join('')}<td rowspan="3">${diff}</td></tr><tr><td>일부러 맞음</td>${dl.map(x => `<td>${x}</td>`).join('')}</tr><tr><td>처음 멈춤</td>${sp.map(x => `<td>${esc(dashActionName(x))}</td>`).join('')}</tr>`;
   }
   h += `</tbody></table></div><p><b>두 축 이상 다른 상황: ${pass}/5</b> (목표 3 이상)</p></section>`;
   return h;
