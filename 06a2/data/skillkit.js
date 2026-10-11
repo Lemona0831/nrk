@@ -1,3 +1,9 @@
+// 보호막 추가 피해와 소모량: 설명·미리보기·전투가 같은 계산을 사용한다.
+function wardDamageInfo(e, ward) {
+  const available = Math.max(0, Number(ward) || 0);
+  const take = e.spend ? Math.min(available * e.spend, (e.cap ?? Infinity) / e.per) : 0;
+  return { take, bonus: Math.min(e.cap ?? Infinity, (e.spend ? take : available) * e.per) };
+}
 /* 0.6a.2 개편: 스킬 점수제 v0와 설명 문장 생성기 (docs/기록/0.6a.2-암살자-스킬.md 2절)
    data/skills.js의 스킬 한 줄에서 화면 설명 문장과 점수를 같은 데이터로 만든다. 게임(설명 창, 트리)과 도구(tools/skillscore.js)가 함께 쓴다.
    data 폴더의 예외: 값이 아니라 문장·점수 계산이지만, 게임과 도구가 한 벌만 쓰도록 여기 둔다. 기준값(SKK)은 모두 가설이다.
@@ -78,7 +84,7 @@ function skValue(s, ov) {
       case 'ward': v += e.n * K.ward.v; break; // 나에게 보호막 (공격 스킬에 붙어도 나에게)
       case 'wardFill': v += (e.to || 1) * W.cap[hi] * K.ward.v; break; // 쓸 때 거의 비어 있어 상한의 to만큼 찬다 (10월 4일 측정)
       case 'wardBurn': { const take = burnTake(e); v += take * e.mul * (s.tgt === 'front' || s.tgt === 'all' ? tm : 1) - take * K.ward.v * K.ward.loss; break; } // 태운 만큼 × 배수, 태운 보호막이 막았을 몫을 뺀다
-      case 'wardDmg': v += e.per * W.S[hi] * (s.tgt === 'front' || s.tgt === 'all' ? tm : 1); break; // 쌓인 보호막 1마다 피해 (보호막은 그대로, 보유량은 레벨에 달렸다)
+      case 'wardDmg': { const w = wardDamageInfo(e, W.S[hi]); v += w.bonus * (s.tgt === 'front' || s.tgt === 'all' ? tm : 1) - w.take * K.ward.v * K.ward.loss; break; } // 보호막 추가 피해 상한과 소모로 잃는 방어 가치
       case 'thorn': v += e.times * e.dmg * K.ward.thorn; break;
       case 'vulnPer': v += e.per * K.ward.vuln; break;
       case 'shieldx': { const bk = s.fx.find(x => x.k === 'brk'); v += (bk ? bk.n : 0) * (e.mul - 1) * K.brk * K.ward.shield; break; }
@@ -446,7 +452,7 @@ function skBody(s) {
       case 'capOver': out.push(`이 스킬로 거는 중독은 상한을 넘어 ${e.cap}까지 쌓인다.`); break;
       case 'wardFill': out.push(e.to && e.to < 1 ? `보호막을 상한의 ${Math.round(e.to * 100)}%까지 채운다. 이미 그만큼 있으면 늘지 않는다.` : '보호막을 상한까지 채운다.'); break;
       case 'wardBurn': { const wd = (s.kind || String(s.id).slice(0, 2) === 'w_') && s.fx.find(x => x.k === 'ward'); out.push(`보호막을 ${e.max ? '최대 ' + e.max + '까지' : '모두'} 태운다. 태운 보호막 1마다 ${s.tgt === 'front' ? '전열 모두에게 ' : s.tgt === 'all' ? '모든 적에게 ' : ''}피해 ${e.mul}. 보호막이 없으면 ${s.fx.some(x => x.k === 'dmg') ? '더하는 피해는' : '이 피해는'} 0이다.` + (wd ? ` 태운 뒤 나에게 보호막 +${wd.n}.` : '')); break; }
-      case 'wardDmg': out.push(`${e.per >= 1 ? '내 보호막 1마다 피해 +' + e.per : '내 보호막 ' + Math.round(1 / e.per) + '마다 피해 +1'}. 보호막은 줄지 않는다.`); break;
+      case 'wardDmg': out.push(e.spend ? `현재 보호막의 ${e.spend * 100}%를 소모합니다(최대 ${e.cap / e.per}). 추가 피해 = 소모한 보호막 × ${e.per}(최대 ${e.cap}).` : `${e.per >= 1 ? '내 보호막 1마다 피해 +' + e.per : '내 보호막 ' + Math.round(1 / e.per) + '마다 피해 +1'}${e.cap != null ? '(최대 ' + e.cap + ')' : ''}. 보호막은 줄지 않습니다.`); break;
       case 'thorn': out.push(`가시 ${e.times}번을 얻는다. 맞을 때마다 때린 적에게 피해 ${e.dmg}. 이미 있으면 횟수를 더한다(최대 8번).`); break;
       case 'vulnPer': out.push(`대상의 취약 1마다 피해 +${e.per}. 취약은 줄지 않는다.`); break;
       case 'shieldx': out.push(`방패병에게는 붕괴 ×${e.mul}.`); break;
