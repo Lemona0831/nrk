@@ -251,9 +251,9 @@ function playerAct(b, id, tgtId) {
     case 'flaskL': {
       p.flask.life--; const heal = p.hpMax * flaskHealFrac(p) * healMul(p);
       if (p.eq.flask === 'boilflask') { for (const e of alive(b).slice()) hurtEnemy(b, e, outDmg(b, 5, {}), { aoe: 1, fire: 1, label: '끓는 플라스크' }); }
-      p.hp = Math.min(p.hpMax, p.hp + heal); smiteHeal(b, heal);
+      const hpBeforeFlask = p.hp; p.hp = Math.min(p.hpMax, p.hp + heal); const actualFlaskHeal = p.hp - hpBeforeFlask; smiteHeal(b, heal);
       const before = { poison: st(p, 'poison'), bleed: st(p, 'bleed'), ignite: st(p, 'ignite'), chill: st(p, 'chill') };
-      const n = cleanse(b, (isV2(p) ? [] : ['poison', 'bleed', 'ignite', 'chill']).concat(fxVal(p, 'flaskCleanse', [], (a, v) => a.concat(v))), true); fxRun(p, 'onFlask', b, p, 'life'); // 0.6a.2: 생명력 플라스크는 회복만(지우는 장비 효과는 그대로)
+      const n = cleanse(b, (isV2(p) ? [] : ['poison', 'bleed', 'ignite', 'chill']).concat(fxVal(p, 'flaskCleanse', [], (a, v) => a.concat(v))), true); fxRun(p, 'onFlask', b, p, 'life', actualFlaskHeal); // 0.6a.2: 생명력 플라스크는 회복만(지우는 장비 효과는 그대로)
       logp(b, 'good', '플라스크를 비운다. 생명력 +' + r1(heal) + (n ? ', 디버프 ' + n + ' 지움' : ''));
       const boss = alive(b).find(e => e.boss === 'mother');
       if (boss && n > 0) hurtEnemy(b, boss, boss.hpMax * 0.01 * n, { dot: 1, label: '역류' });

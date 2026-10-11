@@ -108,7 +108,7 @@ const ITEMS_CH2 = {
   runegauntlet: { n: '주문 새긴 건틀릿', slot: 'gloves', g: 'r', act: '칼에 실은 상태가 스밀 때 1 더 스민다.', cost: '칼에 실은 상태가 없을 때 베기 피해 −5%', lore: '손등의 글이 칼날로 흘러간다.', t: '혈인 염검', fits: ['spellblade'] },
   deadkinghand: { n: '죽은 왕의 손', slot: 'gloves', g: 'h', act: '적을 쓰러뜨리면 쿨타임이 가장 많이 남은 스킬 하나가 1 짧아진다(행동마다 한 번).', cost: '받는 피해 +8%', lore: '반지를 빼려다 손째 가져왔다.', t: 'all' },
   fourthfinger: { n: '네 번째 손가락', slot: 'gloves', g: 'h', act: '빠른 행동 뒤 같은 차례의 주 행동 피해 +15%. 주 행동을 하면 다음 차례 첫 빠른 행동 붕괴 +10.', cost: '최대 생명력 −8%', lore: '장갑에 손가락이 하나 더 있다.', t: 'all' },
-  secondhand: { n: '두 번째 손', slot: 'gloves', g: 'l', act: '내 차례마다 빠른 칸이 하나 더 있다(빠른 행동 둘과 주 행동 하나).', cost: '주 행동 피해 −15%', lore: '장갑 안에서 다른 손이 먼저 움직인다.', t: 'all' },
+  secondhand: { n: '두 번째 손', slot: 'gloves', g: 'l', act: '내 차례마다 빠른 칸이 하나 더 있다(빠른 행동 둘과 주 행동 하나).', cost: '직접 피해 −15%', lore: '장갑 안에서 다른 손이 먼저 움직인다.', t: 'all' },
   // 반지 38 (평범 13 · 고급 12 · 희귀 8 · 영웅 4 · 전설 1)
   knucklering: { n: '뼈 마디 반지', slot: 'ring1', g: 'n', act: '해골 병사에게 주는 피해 +6%.', cost: '', lore: '손가락뼈 하나를 깎아 만들었다.', t: 'all', vs: 'pile' },
   hexbane: { n: '주술 끊는 반지', slot: 'ring1', g: 'n', act: '무덤 주술사에게 주는 피해 +10%.', cost: '', lore: '실을 끊는 날이 안쪽에 숨어 있다.', t: 'all', vs: 'hexer' },
@@ -146,7 +146,7 @@ const ITEMS_CH2 = {
   kingseal: { n: '왕의 인장', slot: 'ring1', g: 'h', act: '적을 쓰러뜨리면 보호막 +5. 정예 · 강적이면 +15.', cost: '생명력 플라스크 회복 −20%', lore: '찍는 자리마다 무릎이 꿇렸다.', t: 'all' },
   twicering: { n: '두 번 사는 반지', slot: 'ring1', g: 'h', act: '쓰러질 피해를 받으면 생명력 1로 한 번 버티고 가속 1을 얻는다(전투마다 한 번).', cost: '최대 생명력 −12%', lore: '묻힌 뒤에 한 번 더 일어난 자의 반지.', t: 'all' },
   mirrorring: { n: '검은 물 반지', slot: 'ring1', g: 'h', act: '해로운 상태가 걸리면 모든 적에게 같은 상태 1을 건다(라운드마다 한 번).', cost: '내게 걸리는 해로운 상태 +1', lore: '검은 물은 비친 것을 돌려준다.', t: 'all', vs: 'hexer' },
-  voidring: { n: '공허의 반지', slot: 'ring1', g: 'h', act: '스킬을 쓰면 그 쿨타임이 1 짧아진다(2 아래로는 줄지 않는다).', cost: '스킬 피해 −15%', lore: '가운데가 비어 있는 반지는 시간을 흘린다.', t: 'all' },
+  voidring: { n: '공허의 반지', slot: 'ring1', g: 'h', act: '스킬을 쓰면 그 쿨타임이 1 짧아집니다(내 차례마다 한 번, 최소 2).', cost: '스킬 피해 −15%', lore: '가운데가 비어 있는 반지는 시간을 흘린다.', t: 'all' },
   firstring: { n: '앞서 걷는 자의 반지', slot: 'ring1', g: 'l', act: '라운드마다 맨 앞에서 움직인다. 둔화가 걸려 있으면 평소처럼 맨 뒤다.', cost: '받는 피해 +10%', lore: '행렬의 맨 앞에서 관을 끌던 자의 반지.', t: 'all' },
   // 목걸이 34 (평범 12 · 고급 10 · 희귀 8 · 영웅 3 · 전설 1)
   limecharm: { n: '석회 부적', slot: 'amulet', g: 'n', act: '뼈 더미가 일어서기까지 1라운드 더 걸린다.', cost: '', lore: '하얀 가루를 뿌리면 뼈가 늦게 맞춰진다.', t: 'all', vs: 'pile bonepile' },
@@ -209,7 +209,7 @@ const ITEMS_CH2 = {
   hungerflask: { n: '피 값 플라스크', slot: 'flask', g: 'r', act: '생명력 플라스크 회복에 최대 생명력의 3%를 추가한다. 흡혈 회복 +10%.', cost: '', lore: '마시면 갈증이 더 짙어진다.', t: '도륙 학살 광기', fits: ['butcher'] },
   blessbasin: { n: '세례조 물', slot: 'flask', g: 'r', act: '생명력 플라스크를 마시면 막음 3을 얻는다.', cost: '생명력 플라스크 회복 −5%p', lore: '마른 세례조 바닥을 긁어 모은 물.', t: '속죄 all', vs: 'hexer bloat' },
   dantianflask: { n: '단전 물병', slot: 'flask', g: 'r', act: '생명력 플라스크를 마시면 기 +2. 기가 3 이상이면 생명력 5% 더.', cost: '', lore: '배꼽 아래가 뜨거워진다.', t: '철권 부동 혈도', fits: ['monk'] },
-  lordgrail: { n: '군주의 성배', slot: 'flask', g: 'h', act: '생명력 플라스크로 회복한 만큼 보호막도 얻는다.', cost: '생명력 플라스크 최대 충전 −1', lore: '왕이 마지막으로 든 잔.', t: 'all' },
+  lordgrail: { n: '군주의 성배', slot: 'flask', g: 'h', act: '생명력 플라스크로 실제 회복한 양만큼 기본 보호막을 생성합니다. 의지와 장비의 생성 보너스가 적용됩니다.', cost: '생명력 플라스크 최대 충전 −1', lore: '왕이 마지막으로 든 잔.', t: 'all' },
   blackspring: { n: '검은 샘 물병', slot: 'flask', g: 'h', act: '플라스크를 마시면 모든 적에게 취약 1을 건다.', cost: '정화 · 스태미나 플라스크 최대 충전 −1', lore: '검은 샘에서 길어 온 물. 병 안쪽이 흐리다.', t: 'all' },
   baptism: { n: '마르지 않는 세례 잔', slot: 'flask', g: 'l', act: '방을 이길 때마다 생명력 플라스크 1이 찬다.', cost: '생명력 플라스크 최대 충전 1, 회복 −10%p', lore: '물이 빠진 세례조에서 이 잔만은 늘 젖어 있었다.', t: 'all' },
   // 사냥꾼 전용 (10월 9일 CLS-ch2-hunter)

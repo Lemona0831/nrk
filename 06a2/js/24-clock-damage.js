@@ -280,7 +280,7 @@ const ST_COST = { grudge: 15, judgment: 14, lacerate: 12, crush: 18, cleave: 18,
 function skillRes(s) { if (ST_COST[s.id] != null) return 'st'; if (!s.mana && s.hpCost) return 'hp'; return 'mp'; }
 function resLabel(s, mana) { const r = skillRes(s); if (r === 'st') return '스태미나 ' + ST_COST[s.id]; if (r === 'hp') return '생명력 ' + Math.round(s.hpCost * 100) + '%'; return '마나 ' + (mana != null ? mana : s.mana); }
 const hpCostMul = p => p.eq && p.eq.flask === 'bloodoil' ? 0.7 : 1;
-function ledgerCost(p, lack) { return lack > 0 ? p.hpMax * 0.04 * hpCostMul(p) : 0; }
+function ledgerCost(p, lack) { return lack > 0 ? p.hpMax * 0.06 * hpCostMul(p) : 0; }
 function skillCost(p, id, base) { return base + (p.eq.gloves === 'knot' && (id === 'burst' || id === 'release') ? 2 : 0) + (hasIt(p, 'resostone') && id === p.lastSkillId ? 2 : 0); }
 const hasEcho = p => p.eq.ring1 === 'echo' || p.eq.ring2 === 'echo';
 function payMana(b, cost) {

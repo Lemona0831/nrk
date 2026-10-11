@@ -28,7 +28,7 @@ const ITEMS = {
   echo:     { n: '메아리 반지', slot: 'ring1', kind: 'free', act: '같은 스킬을 이어 쓸 때마다 그 스킬의 피해 +4%(최대 세 번, +12%). 마나는 그대로 든다.', cost: '다른 스킬을 쓰면 쌓인 메아리가 사라진다' },
   vanguard: { n: '선봉의 깃발', slot: 'amulet', kind: 'free', act: '전투가 시작되면 첫 공격이 빠른 행동이 되고, 그 공격의 붕괴 +20.', cost: '최대 스태미나 −20' },
   knot:     { n: '잔향의 매듭', slot: 'gloves', kind: 'free', act: '독 격발이나 상흔 방출 뒤, 쓴 양의 절반이 사라지지 않고 남는다.', cost: '독 격발 · 상흔 방출 마나 +2' },
-  ledger:   { n: '피의 계산서', slot: 'ring2', kind: 'free', act: '스태미나가 모자라면 강공격 비용을 생명력 4%로 치른다(얼마나 모자라든 같다).', cost: '생명력이 깎인다' },
+  ledger:   { n: '피의 계산서', slot: 'ring2', kind: 'free', act: '스태미나가 모자라면 남은 스태미나를 모두 쓰고, 최대 생명력의 6%를 내서 강공격합니다.', cost: '강공격에 최대 생명력의 6% 소모' },
 };
 
 const SLOT_N = { weapon: '무기', armor: '갑옷', amulet: '목걸이', flask: '플라스크', ring1: '반지', ring2: '반지', gloves: '장갑' };

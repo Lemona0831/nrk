@@ -22,7 +22,7 @@ const ITEMS_CH1 = {
   bonedagger: { n: '뼈 손잡이 단검', slot: 'weapon', g: 'm', act: '중독 4 이상인 적에게 강공격 피해 +20%.', cost: '', lore: '손잡이는 갈비뼈를 깎아 만들었다.' },
   silverwand: { n: '은빛 마법봉', slot: 'weapon', g: 'm', act: '스킬로 적을 쓰러뜨리면 마나 +5.', cost: '', lore: '은을 입힌 끝이 늘 차갑다.' },
   twinblades: { n: '고해자의 쌍검', slot: 'weapon', g: 'r', act: '강공격이 두 번 친다(한 번에 60%).', cost: '강공격 스태미나 +10', lore: '칼집 하나에 칼 두 자루가 들어간다.' },
-  bloodblade: { n: '피를 마시는 칼', slot: 'weapon', g: 'r', act: '근접 공격으로 실제 깎은 생명력의 10%를 회복합니다.', cost: '생명력 플라스크 회복 −20%', lore: '칼이 마신 피가 손잡이를 타고 올라온다.' },
+  bloodblade: { n: '피를 마시는 칼', slot: 'weapon', g: 'r', act: '근접 공격으로 실제 깎은 생명력의 10%를 회복합니다. 내 차례마다 최대 생명력의 2%까지 회복합니다.', cost: '생명력 플라스크 회복 −20%', lore: '칼이 마신 피가 손잡이를 타고 올라온다.' },
   // 갑옷
   quilted: { n: '누빈 갑옷', slot: 'armor', g: 'n', act: '방어 중 받는 피해 추가 −5%.', cost: '', lore: '여러 겹 누빈 천. 칼끝이 미끄러진다.' },
   monkrobe: { n: '수도사의 로브', slot: 'armor', g: 'n', act: '최대 마나 +5.', cost: '', lore: '기도문을 수놓은 소매.' },
@@ -87,7 +87,7 @@ const ITEMS_CH1 = {
   wideflask: { n: '넓은 플라스크', slot: 'flask', g: 'm', act: '생명력 플라스크 최대 충전 +1.', cost: '생명력 플라스크 회복 −5%p', lore: '더 담기지만 더 묽다.' },
   tonic: { n: '진한 강장제', slot: 'flask', g: 'm', act: '스태미나 플라스크 회복 +20%.', cost: '', lore: '혀가 저릴 만큼 진하다.' },
   doubleflask: { n: '두 겹 플라스크', slot: 'flask', g: 'm', act: '정화 플라스크가 생명력 10%도 회복한다.', cost: '', lore: '안쪽 병에 무엇이 들었는지는 묻지 않는다.' },
-  saintgrail: { n: '성인의 성배', slot: 'flask', g: 'r', act: '플라스크를 마셔도 빠른 칸이 남는다(그 차례에 빠른 행동을 한 번 더).', cost: '모든 플라스크 최대 충전 −1', lore: '한 모금에 시간이 느려진다.' },
+  saintgrail: { n: '성인의 성배', slot: 'flask', g: 'r', act: '플라스크를 마시면 빠른 행동을 한 번 더 합니다(내 차례마다 한 번).', cost: '모든 플라스크 최대 충전 −1', lore: '한 모금에 시간이 느려진다.' },
   // 10월 2일 추가 50종 (기획서 11.5절 101~150번)
   ironmace: { n: '쇠 철퇴', slot: 'weapon', g: 'n', act: '전열 적에게 주는 피해 +4%.', cost: '', lore: '머리가 무거워 휘두르기보다 떨어뜨린다.' },
   thornrod: { n: '가시 지팡이', slot: 'weapon', g: 'n', act: '주문 붕괴 +2.', cost: '', lore: '가시가 손바닥을 찔러 정신이 든다.' },
@@ -96,7 +96,7 @@ const ITEMS_CH1 = {
   wallbreaker: { n: '성벽 망치', slot: 'weapon', g: 'm', act: '방패병을 강공격으로 치면 붕괴 +15.', cost: '', lore: '방패는 막으라고 있는 것이고, 망치는 그 반대다.' },
   hereticstaff: { n: '이단자의 홀', slot: 'weapon', g: 'm', act: '광역 주문 피해 +12%.', cost: '', lore: '파문당한 사제가 끝까지 놓지 않은 홀.' },
   belllongbow: { n: '종탑 장궁', slot: 'weapon', g: 'm', act: '후열 적에게 원거리 공격 피해 +12%.', cost: '', lore: '종탑 꼭대기에서 마당 끝까지 닿던 활.' },
-  penancepike: { n: '참회의 장창', slot: 'weapon', g: 'r', act: '근접 한 적 대상 공격이 전열 적을 꿰뚫어, 뒤에 선 후열 적 하나에게 준 피해의 40%를 더 준다.', cost: '강공격 스태미나 +5', lore: '앞사람의 죄와 뒷사람의 죄를 한 번에 묻는다.' },
+  penancepike: { n: '참회의 장창', slot: 'weapon', g: 'r', act: '근접 한 적 대상 공격이 전열 적을 꿰뚫어, 후열 적 하나에게 실제 깎은 생명력의 25%만큼 피해를 줍니다(행동마다 한 번).', cost: '강공격 스태미나 +5', lore: '앞사람의 죄와 뒷사람의 죄를 한 번에 묻는다.' },
   brokencenser: { n: '부서진 향로', slot: 'weapon', g: 'r', act: '광역 공격이 방패벽을 무시한다.', cost: '한 적 대상 주문 피해 −15%', lore: '연기는 방패 틈으로도 스민다.' },
   thickhabit: { n: '두꺼운 수도복', slot: 'armor', g: 'n', act: '광역 공격에 받는 피해 −8%.', cost: '', lore: '겨울 수도원의 바람을 막던 옷.' },
   linenwrap: { n: '아마포 감개', slot: 'armor', g: 'n', act: '최대 스태미나 +4, 최대 생명력 +2.', cost: '', lore: '몸에 감으면 숨이 덜 찬다.' },

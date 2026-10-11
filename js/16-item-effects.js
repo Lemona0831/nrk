@@ -23,7 +23,7 @@ const IFX = {
   bonedagger: { hit: (b, p, e, o, c) => c.id === 'heavy' && e.s.poison && e.s.poison.stacks >= 4 ? 1.2 : 1 },
   silverwand: { onKill: (b, p) => { if (b.cur && b.cur.skill) { p.mp = Math.min(p.mpMax, p.mp + 5); return 1; } } },
   twinblades: { cost: (p, id) => id === 'heavy' ? 10 : 0 },
-  bloodblade: { onHit: (b, p, e, o, c, d, actual) => { const dealt = actual ?? d; if (o.melee && dealt > 0) { p.hp = Math.min(p.hpMax, p.hp + dealt * 0.1); return 1; } }, healMul: 0.8 },
+  bloodblade: { onHit: (b, p, e, o, c, d, actual) => { const dealt = actual ?? d; if (!o.melee || !(dealt > 0)) return; if (b.fxBloodTurn !== b.turnIdx) { b.fxBloodTurn = b.turnIdx; b.fxBloodGot = 0; } const g = Math.min(p.hpMax - p.hp, dealt * 0.1, Math.max(0, p.hpMax * 0.02 - (b.fxBloodGot || 0))); if (!(g > 0)) return; p.hp += g; b.fxBloodGot = (b.fxBloodGot || 0) + g; return 1; }, healMul: 0.8 },
   quilted: { inMul: (b, p, o) => p.guard && !o.dot ? 0.95 : 1 },
   monkrobe: { st: { mp: 5 } },
   leathervest: { cost: (p, id) => id === 'dodge' ? -3 : 0 },
@@ -83,7 +83,7 @@ const IFX = {
   wideflask: { heal: -0.05, cap: { life: 1 } },
   tonic: { stamMul: 1.2 },
   doubleflask: { onFlask: (b, p, k) => { if (k === 'mana') { p.hp = Math.min(p.hpMax, p.hp + p.hpMax * 0.1); return 1; } } },
-  saintgrail: { cap: { life: -1, mana: -1, stam: -1 }, onFlask: (b, p) => { p.fxQuickNext = 1; return 1; } },
+  saintgrail: { cap: { life: -1, mana: -1, stam: -1 }, onFlask: (b, p) => { if (b.fxSaintTurn === b.turnIdx) return; b.fxSaintTurn = b.turnIdx; p.fxQuickNext = 1; return 1; } },
   // 10월 2일 추가 50종
   ironmace: { hit: (b, p, e) => e.row === 'front' ? 1.04 : 1 },
   thornrod: { brk: (b, p, e, c) => isSpell(c) ? 2 : 0 },
@@ -92,7 +92,7 @@ const IFX = {
   wallbreaker: { brk: (b, p, e, c) => c.id === 'heavy' && e.role === 'shield' ? 15 : 0 },
   hereticstaff: { hit: (b, p, e, o, c) => o.aoe && isSpell(c) ? 1.12 : 1 },
   belllongbow: { hit: (b, p, e, o, c) => e.row === 'back' && c.ranged ? 1.12 : 1 },
-  penancepike: { onHit: (b, p, e, o, c, d) => { if (!o.melee || !o.single || e.row !== 'front' || !(d > 0)) return; const t = alive(b).find(x => x.row === 'back' && x.role !== 'root'); if (!t) return; hurtEnemy(b, t, d * 0.4, { label: '참회의 장창' }); return 1; }, cost: (p, id) => id === 'heavy' ? 5 : 0 },
+  penancepike: { onHit: (b, p, e, o, c, d, actual) => { if (!o.melee || !o.single || e.row !== 'front' || !(d > 0)) return; const t = alive(b).find(x => x.row === 'back' && x.role !== 'root'); if (!t || !fxOnce(b, 'penancepike')) return; hurtEnemy(b, t, Math.max(0, actual ?? d) * 0.25, { label: '참회의 장창' }); return 1; }, cost: (p, id) => id === 'heavy' ? 5 : 0 },
   brokencenser: { aoeWall: 1, hit: (b, p, e, o, c) => o.single && isSpell(c) ? 0.85 : 1 },
   thickhabit: { inMul: (b, p, o) => o.aoe && !o.dot ? 0.92 : 1 },
   linenwrap: { st: { st: 4, hp: 2 } },
@@ -269,7 +269,7 @@ const IFX2 = {
   runegauntlet: { edgeAdd: () => 1, hitP: (b, p) => b.sbK === 'cut' && !p.edge ? -0.05 : 0 },
   deadkinghand: { onKill: (b, p) => fxCdMax(b, p) ? 1 : 0, inP: (b, p, o) => o.dot ? 0 : -0.08 },
   fourthfinger: { hpMul: 0.92, onAct: (b, p, id, act) => { if (!act || ['flee'].includes(id)) return; const q = act.time <= 0.6; p.fxFfMain = !q; if (q) { p.fxFfQ = b.turnIdx; p.fxFfFirst = p.fxFfNext === b.turnIdx && b.fxFfUsed !== b.turnIdx; if (p.fxFfFirst) b.fxFfUsed = b.turnIdx; } else p.fxFfNext = b.turnIdx + 1; }, hitP: (b, p) => p.fxFfMain && p.fxFfQ === b.turnIdx ? 0.15 : 0, brk: (b, p) => !p.fxFfMain && p.fxFfFirst ? 10 : 0 },
-  secondhand: { quick2: 1, onStart: b => { b.extraQuick = 1; return 1; }, onAct: (b, p, id, act) => { if (act) p.fxShMain = act.time > 0.6; }, hitP: (b, p) => p.fxShMain ? -0.15 : 0 },
+  secondhand: { quick2: 1, onStart: b => { b.extraQuick = 1; return 1; }, onAct: (b, p, id, act) => { if (act) p.fxShMain = act.time > 0.6; }, hitP: () => -0.15 },
   // 반지
   knucklering: { hitP: (b, p, e) => e.role === 'skeleton' && !e.pile ? 0.06 : 0 },
   hexbane: { hitP: (b, p, e) => e.role === 'hexer' ? 0.1 : 0 },
@@ -307,7 +307,7 @@ const IFX2 = {
   kingseal: { healMul: 0.8, onKill: (b, p, e) => { if (e.pile || e.summoned) return; return addWard(b, p, e.elite || e.strong ? 15 : 5) > 0 ? 1 : 0; } },
   twicering: { hpMul: 0.88, onHurt: (b, p) => { if (p.hp > 0 || b.fxTw) return; b.fxTw = 1; p.hp = 1; addS(b, p, 'haste', 1); logp(b, 'crit', '반지가 한 번 더 일으킨다. 생명력 1, 가속 1'); return 1; } },
   mirrorring: { onDebuff: (b, u, k) => { if (!KW_BAD.includes(k) || b.fxMrR === b.round) return; b.fxMrR = b.round; let n = 0; for (const x of fFoes(b)) n += fxApplyKw(b, x, k, 1) ? 1 : 0; if (n) logp(b, 'good', '검은 물이 ' + KW_N[k] + '을(를) 되비춘다. 적 모두 ' + KW_N[k] + ' 1'); return n ? 1 : 0; }, dur: k => KW_BAD.includes(k) ? 1 : 0 },
-  voidring: { onSkill: (b, p, act) => { if (!p.cd || !(p.cd[act.id] > 2)) return; p.cd[act.id]--; return 1; }, hitP: (b, p, e, o, c) => c && c.skill ? -0.15 : 0 },
+  voidring: { onSkill: (b, p, act) => { if (!p.cd || !(p.cd[act.id] > 2) || b.fxVoidTurn === b.turnIdx) return; b.fxVoidTurn = b.turnIdx; p.cd[act.id]--; return 1; }, hitP: (b, p, e, o, c) => c && c.skill ? -0.15 : 0 },
   firstring: { first: 1, onRound: () => 1, inP: (b, p, o) => o.src && !o.dot ? -0.1 : 0 },
   // 목걸이
   limecharm: { onPile: (b, p, e) => { e.pile.wait++; return 1; }, onStart: b => { let n = 0; for (const e of b.en) if (e.alive && e.pile) { e.pile.wait++; n++; } return n ? 1 : 0; } },
@@ -370,7 +370,7 @@ const IFX2 = {
   hungerflask: { onFlask: (b, p, k) => { if (k !== 'life' || p.hp >= p.hpMax) return; const g = Math.min(p.hpMax - p.hp, p.hpMax * 0.03 * healMul(p)); p.hp += g; return g > 0; }, bHealP: (b, p, why) => why === 'leech' ? 0.1 : 0 },
   blessbasin: { heal: -0.05, onFlask: (b, p, k) => { if (k !== 'life') return; const cur = stk(p, 'block'); p.s.block = { stacks: Math.min(KW.block, cur + 3), until: KW_FOREVER, dur: KW_FOREVER }; return 1; } },
   dantianflask: { onFlask: (b, p, k) => { if (k !== 'life') return; addS(b, p, 'empower', 2); if (st(p, 'empower') >= 3) fxHeal(p, p.hpMax * 0.05); return 1; } },
-  lordgrail: { cap: { life: -1 }, onFlask: (b, p, k) => { if (k !== 'life') return; return addWard(b, p, p.hpMax * flaskHealFrac(p) * healMul(p)) > 0 ? 1 : 0; } },
+  lordgrail: { cap: { life: -1 }, onFlask: (b, p, k, healed) => { if (k !== 'life' || !(healed > 0)) return; return addWard(b, p, healed) > 0 ? 1 : 0; } },
   blackspring: { cap: { mana: -1, stam: -1 }, onFlask: b => { let n = 0; for (const e of fFoes(b)) { addS(b, e, 'vuln', 1); n++; } return n ? 1 : 0; } },
   baptism: { cap: { life: -2 }, heal: -0.1, onWin: run => { const p = run.p; if (p.flask.life >= flaskCap(p, 'life')) return; p.flask.life++; return 1; } },
 };
@@ -635,7 +635,7 @@ const IFX3 = {
   sunbind: { onRound: (b, p) => { if (!(b.heat >= 40)) return; let n = 0; for (const e of fFoes(b)) if (!e.under) { addS(b, e, 'ignite', 1); n++; } heatAdd(b, 3, '해 묶는 목걸이'); return n ? 1 : 0; } },
   merchantcharm: { goldMul: 1.25, treasureGold: 20, hpMul: 0.94 },
   doublebrand: { stOut: () => 1, psnIn: () => 1, dur: k => KW_BAD.includes(k) && k !== 'poison' ? 1 : 0 },
-  afterglow: { psnIn: () => 1, dur: k => KW_BAD.includes(k) && k !== 'poison' ? 1 : 0, onKill: (b, p, e) => { const others = fFoes(b).filter(x => x !== e && !x.under); if (!others.length) return; let moved = 0; for (const k of KW_BAD) { const v = st(e, k); if (!v) continue; const n = Math.min(6, Math.ceil(v / 2)); for (const x of others) moved += fxApplyKw(b, x, k, n) ? 1 : 0; } if (moved) logp(b, 'good', e.n + '에게 걸렸던 상처의 절반이 남은 적에게 번진다'); return moved ? 1 : 0; } },
+  afterglow: { psnIn: () => 1, dur: k => KW_BAD.includes(k) && k !== 'poison' ? 1 : 0, onKill: (b, p, e) => { if (e.summoned || e.pile || !realFoe(e)) return; const others = fFoes(b).filter(x => x !== e && !x.under); if (!others.length || !KW_BAD.some(k => st(e, k) > 0) || !fxOnce(b, 'afterglow')) return; let moved = 0; for (const k of KW_BAD) { const v = st(e, k); if (!v) continue; const n = Math.min(6, Math.ceil(v / 2)); for (const x of others) moved += fxApplyKw(b, x, k, n) ? 1 : 0; } if (moved) logp(b, 'good', e.n + '에게 걸렸던 상처의 절반이 남은 적에게 번진다'); return moved ? 1 : 0; } },
   // 플라스크
   hazewater: { onFlask: (b, p, k) => { if (k !== 'mana') return; const e = fFoes(b).find(x => x.haze > 0); if (!e) return; hazePeel(b, e); return 1; } },
   wrapwater: { onFlask: (b, p, k) => { if (k !== 'life') return; const e = fFoes(b).find(wrE); if (!e) return; wrapWear(b, e, '닳아'); return 1; } },
