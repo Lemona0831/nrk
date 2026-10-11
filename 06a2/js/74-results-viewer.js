@@ -263,9 +263,24 @@ function vAdminBuild(r) {
   return h;
 }
 function adminNum(v) { return v == null ? '미기록' : r1(v).toLocaleString('ko-KR'); }
+function dashResource(label, value, max, ratio) {
+  const known=Number.isFinite(value), pct=Number.isFinite(max) && max>0 && known ? Math.max(0,Math.min(100,value/max*100)) : Number.isFinite(ratio) ? Math.max(0,Math.min(100,ratio*100)) : null;
+  const text=known ? adminNum(value)+(Number.isFinite(max) ? ' / '+adminNum(max) : ' (최대값 미기록)') : pct!=null ? Math.round(pct)+'% (수치 미기록)' : '미기록';
+  return '<div class="admin-resource"><span>'+label+'</span><b>'+esc(text)+'</b>'+(pct!=null ? '<meter aria-label="'+label+' 남은 비율" min="0" max="100" value="'+pct+'">'+Math.round(pct)+'%</meter>' : '')+'</div>';
+}
+function vAdminResources(r) {
+  const state=r.playerState, last=(r.acts || []).filter(a=>a.k==='act'&&(a.hp!=null || a.st!=null)).slice(-1)[0];
+  return '<h4>HP·스태미나 상태</h4><p class="mini">'+(state ? '마지막 저장 시점의 상태입니다.' : last ? '과거 기록: 마지막으로 보관된 행동 시점입니다. 현재 상태와 다를 수 있습니다.' : '상태 기록이 없습니다.')+'</p><div class="admin-resources">'+dashResource('HP',state ? state.hp : last && last.hpNow,state ? state.hpMax : last && last.hpMax,last && last.hp)+dashResource('스태미나',state ? state.st : last && last.st,state ? state.stMax : last && last.stMax)+'</div>';
+}
+function dashActionCsv() {
+  const x=dashSelectedRun(), rows=[['순서','챕터','층','전투 시간(초)','행동','HP','최대 HP','HP 비율(%)','스태미나','최대 스태미나']];
+  if(x)(x.r.acts || []).forEach((a,i)=>{if(a.k==='act')rows.push([i+1,a.ch,a.r,a.t,dashActionName(a.a,x.r),a.hpNow,a.hpMax,a.hpMax>0 && a.hpNow!=null ? r1(a.hpNow/a.hpMax*100) : a.hp==null ? null : Math.round(a.hp*100),a.st,a.stMax]);});
+  return adminCsv(rows);
+}
+
 function vAdminCombat(r) {
   const c=dashCombatStats(r), skills=allSkillNames();
-  let h='<h4>전투 통계</h4><div class="admin-metrics">'+[['가한 피해',c.dealt],['받은 피해',c.taken],['행동 기록',c.actions],['처치 기록',c.kills]].map(([n,v])=>'<div><span>'+n+'</span><strong>'+adminNum(v)+'</strong></div>').join('')+'</div><p class="mini">'+(c.complete ? '피해는 완료된 전투 전체의 실제 생명력 감소량입니다. 초과 피해·보호막 흡수·스킬 생명력 비용은 제외합니다.' : '과거 기록은 가한 피해가 없거나 일부만 남아 있습니다. 받은 피해는 보관된 피격 기록 합계이며 초과 피해가 포함될 수 있습니다. 0은 미기록을 뜻하지 않습니다.')+(c.truncated ? ' 행동·처치 수는 일부 보관 기록입니다.' : ' 진행 중인 전투는 종료 후 반영됩니다.')+'</p>';
+  let h=vAdminResources(r)+'<h4>전투 통계</h4><div class="admin-metrics">'+[['가한 피해',c.dealt],['받은 피해',c.taken],['행동 기록',c.actions],['처치 기록',c.kills]].map(([n,v])=>'<div><span>'+n+'</span><strong>'+adminNum(v)+'</strong></div>').join('')+'</div><p class="mini">'+(c.complete ? '피해는 완료된 전투 전체의 실제 생명력 감소량입니다. 초과 피해·보호막 흡수·스킬 생명력 비용은 제외합니다.' : '과거 기록은 가한 피해가 없거나 일부만 남아 있습니다. 받은 피해는 보관된 피격 기록 합계이며 초과 피해가 포함될 수 있습니다. 0은 미기록을 뜻하지 않습니다.')+(c.truncated ? ' 행동·처치 수는 일부 보관 기록입니다.' : ' 진행 중인 전투는 종료 후 반영됩니다.')+'</p>';
   h += '<h4>자주 한 행동</h4><div class="admin-action-bars">'+Object.entries(c.byAction).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([k,n])=>'<div><span>'+esc(dashActionName(k,r))+'</span><meter aria-label="'+esc(ANAME[k] || (skills[k]||{}).n || k)+' 사용 횟수" min="0" max="'+Math.max(1,c.actions)+'" value="'+n+'">'+n+'</meter><b>'+n+'회</b></div>').join('')+'</div>';
   h += '<h4>방별 전투 통계</h4><div class="tbl"><table class="st2"><caption class="sr">방별 전투 피해</caption><thead><tr><th>챕터·층</th><th>결과</th><th>가한 피해</th><th>받은 피해</th><th>전투 시간</th><th>장비</th></tr></thead><tbody>';
   h += c.rooms.map(x=>'<tr><td>'+esc((x.ch ? x.ch+'챕터 · ' : '')+x.room+'층')+'</td><td>'+esc(DASH_RESULTS[x.res] || x.res)+'</td><td>'+adminNum(x.damageStats ? x.damageStats.dealt : null)+'</td><td>'+adminNum(x.damageStats ? x.damageStats.taken : null)+'</td><td>'+esc(x.t==null ? '—' : x.t+'초')+'</td><td><details><summary>장비 보기</summary><div class="admin-items">'+(x.gearDetails ? x.gearDetails.map(dashItemCard).join('') : '<p>'+esc((x.gear||[]).filter(Boolean).map(v=>(ITEMS[v.split(':')[0]]||{}).n || v).join(', ') || '미기록')+'</p>')+'</div></details></td></tr>').join('') || '<tr><td colspan="6">완료된 전투 기록이 없습니다.</td></tr>';
@@ -283,14 +298,15 @@ function vRunDetail(x) {
   if(tab==='gear') return h+vAdminGear(r)+'</section>';
   if(tab==='growth') return h+vAdminBuild(r)+'</section>';
 
-  h += '<h4>전투 행동 흐름</h4><p class="mini">생명력·마나는 최대치 대비 비율이며, 행동 직전 상태입니다. 행동 기록은 전투가 끝난 뒤 저장됩니다.</p>';
+  h += '<h4>전투 행동 흐름</h4><p class="mini">HP·스태미나는 행동을 기록한 시점의 상태입니다. 과거 기록에 최대값이 없으면 비율 또는 남은 값만 표시합니다. 행동 기록은 전투가 끝난 뒤 저장됩니다.</p>';
+  h += '<button class="sm" data-a="runactioncsv">행동별 HP·스태미나 CSV</button>';
   if (r.actsN > acts.length) h += '<p class="mini">전체 ' + r.actsN + '건 중 보관된 ' + acts.length + '건을 표시합니다.</p>';
   if (!acts.length) h += '<p class="mini">저장된 행동 기록이 없습니다.</p>';
   else {
-    h += '<div class="tbl"><table class="st2"><caption class="sr">행동 흐름</caption><thead><tr><th>순서</th><th>층</th><th>전투 시간</th><th>종류</th><th>내용</th></tr></thead><tbody>';
+    h += '<div class="tbl"><table class="st2"><caption class="sr">행동 흐름</caption><thead><tr><th>순서</th><th>층</th><th>전투 시간</th><th>종류</th><th>HP</th><th>스태미나</th><th>내용</th></tr></thead><tbody>';
     h += acts.slice(page * 100, (page + 1) * 100).map((a, i) => {
       const text = [typeof a.a === 'string' ? (dashActionName(a.a,r)) : '', a.id && a.k === 'cons' ? ((CONS[a.id] || {}).n || a.id) : '', a.tg ? '대상: ' + ((ROLES[a.tg] || {}).n || a.tg) : '', a.role ? '적: ' + ((ROLES[a.role] || {}).n || a.role) : '', a.i ? '적 행동: ' + a.i : '', a.st != null ? '스태미나 ' + a.st : '', a.heavyIn ? '강타 예고 중' : '', a.healIn ? '치유 예고 중' : '', a.d != null ? (a.k==='dealt' ? '가한 피해 ' : a.k==='hit' ? '받은 피해 ' : '피해 ') + a.d : '', a.hp != null ? '생명력 ' + Math.round(a.hp * 100) + '%' : '', a.mp != null ? '마나 ' + Math.round(a.mp * 100) + '%' : '', a.charged ? '강타' : '', a.parried ? '흘리기 성공' : '', a.guard ? '방어 중' : ''].filter(Boolean).join(' · ');
-      return '<tr><td>' + (page * 100 + i + 1) + '</td><td>' + esc((a.ch ? a.ch + '챕터 · ' : '') + (a.r == null ? '—' : floorName(a.r))) + '</td><td>' + esc(a.t == null ? '—' : a.t + '초') + '</td><td>' + esc(names[a.k] || a.k || '기록') + '</td><td>' + esc(text || '원본 기록에서 확인') + '</td></tr>';
+      return '<tr><td>' + (page * 100 + i + 1) + '</td><td>' + esc((a.ch ? a.ch + '챕터 · ' : '') + (a.r == null ? '—' : floorName(a.r))) + '</td><td>' + esc(a.t == null ? '—' : a.t + '초') + '</td><td>' + esc(names[a.k] || a.k || '기록') + '</td><td>' + dashResource('HP',a.hpNow,a.hpMax,a.hp) + '</td><td>' + dashResource('스태미나',a.st,a.stMax) + '</td><td>' + esc(text || '원본 기록에서 확인') + '</td></tr>';
     }).join('') + '</tbody></table></div><div class="row"><button class="sm" data-a="runactpage" data-v="' + (page - 1) + '"' + (page ? '' : ' disabled') + '>이전 행동</button><span>' + (page + 1) + '/' + Math.ceil(acts.length / 100) + '</span><button class="sm" data-a="runactpage" data-v="' + (page + 1) + '"' + ((page + 1) * 100 < acts.length ? '' : ' disabled') + '>다음 행동</button></div>';
   }
   return h + '<details><summary>이 판의 원본 기록 보기</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:400px;overflow:auto">' + esc(JSON.stringify(r, null, 2)) + '</pre></details></section>';

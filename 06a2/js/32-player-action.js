@@ -124,7 +124,7 @@ function snapshotFor(b, act, tgt) {
   const incoming = alive(b).map(e => e.intent && e.intent.k).filter(Boolean);
   return {
     t: r1(b.t), a: act, tg: tgt ? tgt.role : null, tgHp: tgt ? r1(tgt.hp / tgt.hpMax) : null,
-    hp: r1(p.hp / p.hpMax), mp: p.mpMax ? r1(p.mp / p.mpMax) : 0, st: Math.round(p.st), fl: p.flask.life, fm: p.flask.mana,
+    hpNow: r1(Math.max(0, p.hp)), hpMax: p.hpMax, stMax: p.stMax, hp: r1(p.hp / p.hpMax), mp: p.mpMax ? r1(p.mp / p.mpMax) : 0, st: Math.round(p.st), fl: p.flask.life, fm: p.flask.mana,
     heavyIn: incoming.includes('heavy') ? 1 : 0, healIn: incoming.includes('heal') ? 1 : 0, explodeIn: incoming.includes('explode') ? 1 : 0,
     canDodge: p.st >= dodgeCost(p) ? 1 : 0, canGuard: p.st >= guardCost(p) ? 1 : 0,
     poison: st(p, 'poison'), scar: Math.round(p.scar), en: alive(b).length,

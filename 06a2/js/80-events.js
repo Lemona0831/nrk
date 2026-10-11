@@ -226,6 +226,7 @@ function onClick(ev) {
     case 'runpage': G.rfPage = Math.max(0, +el.dataset.v || 0); G.rfOpen = null; render(); break;
     case 'runopen': G.rfOpen = el.dataset.k; G.raPage = 0; G.rdTab = 'summary'; render(); document.getElementById('admin-run-detail')?.scrollIntoView({ block: 'start' }); break;
     case 'runtab': G.rdTab = el.dataset.k; render(); document.getElementById('admin-run-detail')?.scrollIntoView({ block: 'start' }); break;
+    case 'runactioncsv': saveFile('nrk-행동별상태.csv', dashActionCsv()); break;
     case 'runroomcsv': saveFile('nrk-방별통계.csv', dashRoomCsv()); break;
     case 'runclose': G.rfOpen = null; render(); break;
     case 'runactpage': G.raPage = Math.max(0, +el.dataset.v || 0); render(); break;

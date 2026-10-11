@@ -13,6 +13,7 @@ for(const dir of ['.','06a2'])for(const width of [1280,390]){
  await pg.getByRole('heading',{name:'전투 통계',exact:true}).waitFor();
  const actionText=await pg.locator('.admin-action-bars').innerText();for(const raw of ['sb_aegis','sb_bladeward','sb_edge','sb_unravel','sb_shell','flaskS'])if(actionText.includes(raw))throw Error('internal action code: '+raw);
  if(!actionText.includes('마갑참') || !actionText.includes('스태미나 플라스크'))throw Error('action labels missing');
+ if(await pg.locator('.admin-resources .admin-resource').count()!==2)throw Error('HP stamina summary missing');
  if(!(await pg.locator('.admin-metrics').innerText()).includes('123'))throw Error('combat total');
  await pg.locator('[data-a=runtab][data-k=gear]').click();await pg.getByRole('heading',{name:'장비 세부 내용'}).waitFor();
  await pg.locator('[data-a=runtab][data-k=growth]').click();await pg.getByRole('heading',{name:'스킬 트리',exact:true}).waitFor();
@@ -24,6 +25,6 @@ for(const dir of ['.','06a2'])for(const width of [1280,390]){
  if(!await pg.locator('.admin-branch').last().locator('.admin-node[open]').count())throw Error('armor node inaccessible');
  const overflow=await pg.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2);if(overflow)throw Error('page overflow '+width);
  fs.mkdirSync(path.resolve('output/playwright/admin-details'),{recursive:true});await pg.locator('.admin-detail').screenshot({path:path.resolve('output/playwright/admin-details/'+(dir==='.'?'public':'dev')+'-'+width+'.png')});
- await pg.locator('[data-a=runtab][data-k=battle]').click();if(!(await pg.locator('body').innerText()).includes('생명력 50%'))throw Error('HP ratio');
+ await pg.locator('[data-a=runtab][data-k=battle]').click();if(await pg.locator('.admin-detail th').filter({hasText:'스태미나'}).count()!==1)throw Error('stamina column missing');if(!(await pg.locator('body').innerText()).includes('생명력 50%'))throw Error('HP ratio');
  await ctx.close();console.log(dir+' '+width+': 개인 선택·장비 상세·스탯·트리·행동·가로 넘침 점검 통과');
 }await browser.close();if(errors.length)throw Error(errors.join('\n'));})().catch(e=>{console.error(e);process.exitCode=1;});
