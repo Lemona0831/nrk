@@ -22,7 +22,7 @@ const ITEMS_CH1 = {
   bonedagger: { n: '뼈 손잡이 단검', slot: 'weapon', g: 'm', act: '중독 4 이상인 적에게 강공격 피해 +20%.', cost: '', lore: '손잡이는 갈비뼈를 깎아 만들었다.' },
   silverwand: { n: '은빛 마법봉', slot: 'weapon', g: 'm', act: '스킬로 적을 쓰러뜨리면 마나 +5.', cost: '', lore: '은을 입힌 끝이 늘 차갑다.' },
   twinblades: { n: '고해자의 쌍검', slot: 'weapon', g: 'r', act: '강공격이 두 번 친다(한 번에 60%).', cost: '강공격 스태미나 +10', lore: '칼집 하나에 칼 두 자루가 들어간다.' },
-  bloodblade: { n: '피를 마시는 칼', slot: 'weapon', g: 'r', act: '근접 공격으로 실제 깎은 생명력의 10%를 회복합니다. 내 차례마다 최대 생명력의 2%까지 회복합니다.', cost: '생명력 플라스크 회복 −20%', lore: '칼이 마신 피가 손잡이를 타고 올라온다.' },
+  bloodblade: { n: '피를 마시는 칼', slot: 'weapon', g: 'r', act: '근접 공격으로 실제 깎은 생명력의 10%를 회복합니다.', cost: '최대 생명력 −10%, 생명력 플라스크 회복 −20%', lore: '칼이 마신 피가 손잡이를 타고 올라온다.' },
   // 갑옷
   quilted: { n: '누빈 갑옷', slot: 'armor', g: 'n', act: '방어 중 받는 피해 추가 −5%.', cost: '', lore: '여러 겹 누빈 천. 칼끝이 미끄러진다.' },
   monkrobe: { n: '수도사의 로브', slot: 'armor', g: 'n', act: '최대 마나 +5.', cost: '', lore: '기도문을 수놓은 소매.' },

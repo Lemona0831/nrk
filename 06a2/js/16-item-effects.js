@@ -23,7 +23,7 @@ const IFX = {
   bonedagger: { hit: (b, p, e, o, c) => c.id === 'heavy' && e.s.poison && e.s.poison.stacks >= 4 ? 1.2 : 1 },
   silverwand: { onKill: (b, p) => { if (b.cur && b.cur.skill) { p.mp = Math.min(p.mpMax, p.mp + 5); return 1; } } },
   twinblades: { cost: (p, id) => id === 'heavy' ? 10 : 0 },
-  bloodblade: { onHit: (b, p, e, o, c, d, actual) => { const dealt = actual ?? d; if (!o.melee || !(dealt > 0)) return; if (b.fxBloodTurn !== b.turnIdx) { b.fxBloodTurn = b.turnIdx; b.fxBloodGot = 0; } const g = Math.min(p.hpMax - p.hp, dealt * 0.1, Math.max(0, p.hpMax * 0.02 - (b.fxBloodGot || 0))); if (!(g > 0)) return; p.hp += g; b.fxBloodGot = (b.fxBloodGot || 0) + g; return 1; }, healMul: 0.8 },
+  bloodblade: { hpMul: 0.9, onHit: (b, p, e, o, c, d, actual) => { const dealt = actual ?? d; if (!o.melee || !(dealt > 0)) return; const g = Math.min(p.hpMax - p.hp, dealt * 0.1); if (!(g > 0)) return; p.hp += g; return 1; }, healMul: 0.8 },
   quilted: { inMul: (b, p, o) => p.guard && !o.dot ? 0.95 : 1 },
   monkrobe: { st: { mp: 5 } },
   leathervest: { cost: (p, id) => id === 'dodge' ? -3 : 0 },
