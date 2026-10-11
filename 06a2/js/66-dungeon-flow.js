@@ -144,6 +144,7 @@ function bossLoot(run) { if (!DROP_G[run.ch || 1]) return null; const it = mkIte
 function queueDrops(list) { G.dropQ = (G.dropQ || []).concat(list); nextDrop(); }
 function nextDrop() {
   const run = G.run; if (G.winSumShown) { G.winSum = null; G.winSumShown = false; }
+  if (run && (run.consPending || []).length) { saveRunLocal(); saveCur(); openSheet('consfull'); return; }
   if (!run || !G.dropQ || !G.dropQ.length) { G.winSum = null; render(); return; }
   const it = G.dropQ.shift(); if (it.chest) { openSheet('choice', { offer: it.chest, room: it.room, chest: 1 }); if (G.winSum) G.winSumShown = true; return; } run.drops.push({ room: run.room, item: it.tpl, g: it.g, b: it.b, ch: run.ch || 1 }); giveItem(it); if (G.winSum) G.winSumShown = true;
 }
@@ -175,7 +176,7 @@ function next3Room(room, n3) {
 /* 3챕터: 처음 만난 위협의 방을 이기면 그 상황을 푸는 소모품 하나 (5.1절 5번) */
 function firstGift3(run, b, R) {
   run.dg.gift = run.dg.gift || {}; const keys = b.en.map(e => e.role).concat(R.mods || []);
-  for (const k of keys) if (FIRST_GIFT3[k] && !run.dg.gift[k]) { run.dg.gift[k] = 1; if (k === 'haze') run.dg.gift.mirage = 1; if (k === 'mirage') run.dg.gift.haze = 1; if (!consAdd(run, FIRST_GIFT3[k], 'n', 1)) toast('처음 겪은 것의 답: ' + CONS[FIRST_GIFT3[k]].ico + ' ' + CONS[FIRST_GIFT3[k]].n); }
+  for (const k of keys) if (FIRST_GIFT3[k] && !run.dg.gift[k]) { run.dg.gift[k] = 1; if (k === 'haze') run.dg.gift.mirage = 1; if (k === 'mirage') run.dg.gift.haze = 1; if (!consGrant(run, FIRST_GIFT3[k], 'n', 1)) toast('처음 겪은 것의 답: ' + CONS[FIRST_GIFT3[k]].ico + ' ' + CONS[FIRST_GIFT3[k]].n); }
 }
 const ashOk = c => CONS[c.id].use !== 'none' && CONS[c.id].price > 6; // 재의 제단에 태울 수 있는 것 (파는 것 · 돌멩이 제외)
 function burnCons(run, n) { if ((run.cons || []).filter(ashOk).reduce((a, c) => a + c.n, 0) < n) return false; for (let k = 0; k < n; k++) { const c = run.cons.find(ashOk); c.n--; if (c.n <= 0) run.cons.splice(run.cons.indexOf(c), 1); } return true; }
@@ -184,7 +185,7 @@ const EVBUFF = { snuff: ['꺼진 촛불', '받는 화상 피해 0, 대신 주는
 const altarGold = run => { const A = ALTARS.find(x => x.id === 'gold'); const v = A && A.cost ? A.cost[Math.min(A.cost.length, run.ch || 1) - 1] : 40; return v; };
 function n3pre(run, k, n) { run.next3 = run.next3 || {}; run.next3.pre = Object.assign({}, run.next3.pre); run.next3.pre[k] = (run.next3.pre[k] || 0) + n; } // 3챕터 이벤트: 다음 일반 · 매복 전투의 시작 상태
 function takeCons(run, n) { const pool = (run.cons || []).filter(c => CONS[c.id].use !== 'none'); if (pool.reduce((a, c) => a + c.n, 0) < n) return false; for (let k = 0; k < n; k++) { const c = run.cons.find(x => CONS[x.id].use !== 'none'); c.n--; if (c.n <= 0) run.cons.splice(run.cons.indexOf(c), 1); } return true; }
-function giveChCons(run, ch) { const ids = Object.keys(CONS).filter(k => (CONS[k].ch || 1) === ch && CONS[k].use !== 'none'); if (!ids.length) return; const id = pickR(ids); consAdd(run, id, 'n', 1); }
+function giveChCons(run, ch) { const ids = Object.keys(CONS).filter(k => (CONS[k].ch || 1) === ch && CONS[k].use !== 'none'); if (!ids.length) return; const id = pickR(ids); consGrant(run, id, 'n', 1); }
 function refundDeepest(run) { const t = run.tree; if (!t || !t.open.length) return null; const isPar = id => t.open.some(o => SK2[o] && (SK2[o].par || []).includes(id) && !(SK2[o].par || []).some(x => x !== id && t.open.includes(x))); const c = t.open.filter(id => SK2[id] && !isPar(id)).sort((a, b) => (SK2[b].row || 0) - (SK2[a].row || 0))[0]; if (!c) return null; t.open = t.open.filter(x => x !== c); t.pts++; t.spent[SK2[c].b] = Math.max(0, (t.spent[SK2[c].b] || 0) - 1); run.skills = (run.skills || []).filter(x => x !== c); if (run.p) run.p.skills = v2Equip(run); (run.treeLog = run.treeLog || []).push({ room: run.room, id: c, refund: 'master', t: Date.now() }); return c; }
 function enterRoom() {
   const run = G.run; const R = roomDef(); const p = run.p; if (!R.type) return;

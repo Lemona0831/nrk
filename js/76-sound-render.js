@@ -70,6 +70,7 @@ function vSettings() {
 }
 function render() {
   if (typeof document === 'undefined') return;
+  if (!G.sheet && !G.b && G.run && (G.run.consPending || []).length && ['run','settle','shop'].includes(G.scr)) G.sheet = {kind:'consfull',data:{}};
   sndSync(); applyPrefs();
   { const bd = (G.b && G.b.p && G.b.p.build) || (G.run && G.run.build) || ''; document.documentElement.style.setProperty('--cls', CLS_COLOR[bd] || 'transparent'); }
   const root = document.getElementById('root');

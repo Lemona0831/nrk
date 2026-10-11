@@ -9,6 +9,24 @@ function onClick(ev) {
   if (el.getAttribute && el.getAttribute('aria-disabled') === 'true' && el.dataset && el.dataset.why) { toast(el.dataset.why); return; } /* 10월 7일 2차: 상점 등 쓸 수 없는 버튼의 이유 */
   if (a === 'closebg') { if (ev.target !== el) return; if (G.sheet && !['block', 'stats', 'choice', 'awk'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } return; }
   switch (a) {
+    case 'cpkeep': case 'cpskip': case 'cpreplace': {
+      const run=G.run;
+      if (!run || !G.sheet || G.sheet.kind!=='consfull' || !(run.consPending || []).length || G.b) break;
+      if (a==='cpskip') run.consPending.shift();
+      if (a==='cpreplace') {
+        if (el.dataset.s==='cons') {
+          const i=+el.dataset.k,c=run.cons[i];
+          if (!c || !ask(consName(c)+' ×'+c.n+' 묶음을 버리고 새 소모품을 챙길까요?')) break;
+          run.cons.splice(i,1);
+        } else {
+          const u=el.dataset.k,x=run.inv[u],why=itemRemoveWhy(run,u);
+          if (!x || why) { if(why)toast(why); break; }
+          if (!ask(inm(x.tpl,x.g)+'을(를) 버리고 새 소모품을 챙길까요?')) break;
+          if(discardUid(run,u))break;
+        }
+      }
+      consPendingTry(run); G.sheet=null;saveRunLocal();saveCur();nextDrop();break;
+    }
     case 'home': case 'title': if (G.creating) { cancelCreate(); break; } if (G.run && !G.run.endedAt) { saveRunLocal(); if (G.run.phase && runLive()) saveCur(); clearTimeout(syncT); syncRun(G.run, 'left').then(render); if (G.run.result !== 'lose') pushRank(G.run); } G.scr = 'title'; G.back = null; G.b = null; G.sheet = null; render(); break;
     case 'menu': if ((G.scr === 'run' || G.scr === 'scen' || G.scr === 'tut' || G.scr === 'hudsample') && G.b || window.innerWidth < 720) G.menuOpen = !G.menuOpen; else { G.data.menuFold = !G.data.menuFold; saveLocal(); } render(); break;
     case 'rank': case 'records': case 'admin': case 'goals': case 'mark': if (a === 'mark' && !markOpen()) { toast('3챕터 보스를 한 번 이기면 열립니다'); break; } if (!PAGES.includes(G.scr)) G.back = G.scr; G.scr = a; G.sheet = null; G.adminMsg = ''; if (a === 'rank') G.board = null; render(); window.scrollTo(0, 0); break;
@@ -86,7 +104,7 @@ function onClick(ev) {
     case 'altar': { const run = G.run, p = run.p, R = roomDef(); const yes = el.dataset.k === '1';
       if (yes && R.altar === 'offer') { openSheet('offer', {}); break; }
       if (yes && R.altar === 'blood') { p.hpPen = (p.hpPen || 0) + 0.05; applyGear(run); queueDrops([mkItem(dropKey(run, 'r'))]); }
-      if (yes && R.altar === 'ash') { if (burnCons(run, 4)) { for (let k = 0; k < 2; k++) { const ids = Object.keys(CONS).filter(x => CONS[x].ch === 3 && CONS[x].use !== 'none'); consAdd(run, pickR(ids), 'm', 1); } toast('재의 제단이 소모품 넷을 태우고 둘을 내준다'); } }
+      if (yes && R.altar === 'ash') { if (burnCons(run, 4)) { for (let k = 0; k < 2; k++) { const ids = Object.keys(CONS).filter(x => CONS[x].ch === 3 && CONS[x].use !== 'none'); consGrant(run, pickR(ids), 'm', 1); } toast('재의 제단이 소모품 넷을 태우고 둘을 내준다'); } }
       if (yes && R.altar === 'scale') { p.hpPen = (p.hpPen || 0) + 0.03; applyGear(run); run.rooms.push({ room: run.room, type: 'altar', took: 'scale' }); advanceFloor(); openSheet('stats', { pts: 1, why: '유리 저울에서 능력치 1점' }); break; }
       if (yes && R.altar === 'bone') { if (takeCons(run, 3)) { for (let k = 0; k < 2; k++) giveChCons(run, run.ch || 1); toast('뼈 제단이 소모품 셋을 받아 가고 둘을 내준다'); } }
       if (yes && R.altar === 'gold' && run.gold >= altarGold(run)) { run.gold -= altarGold(run); for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = Math.min(flaskCap(p, fk), (p.flask[fk] || 0) + 1); toast('플라스크가 하나씩 찼습니다'); }
@@ -119,10 +137,10 @@ function onClick(ev) {
       if (R.event === 'robber' && o === 'loot') { if (Math.random() < 0.5) gainGold(run, 30, '자루에서 골드가 나왔습니다'); else drops.push(mkItem(dropKey(run, rollGradeCh(run.ch, 'room')))); run.next.pre = Object.assign({}, run.next.pre, { poison: ((run.next.pre || {}).poison || 0) + 3 }); }
       if (R.event === 'robber' && o === 'bury') p.flask.life = Math.min(flaskCap(p, 'life'), p.flask.life + 1);
       if (R.event === 'blackwell' && o === 'drink') { p.flask.mana = Math.min(flaskCap(p, 'mana'), p.flask.mana + 1); p.flask.stam = Math.min(flaskCap(p, 'stam'), (p.flask.stam || 0) + 1); run.next.pre = Object.assign({}, run.next.pre, { vuln: 2 }); }
-      if (R.event === 'camel' && o === 'loot') { const ids = Object.keys(CONS).filter(k => (CONS[k].ch || 1) <= 3 && CONS[k].use !== 'none'); for (let k = 0; k < 3; k++) consAdd(run, pickR(ids), 'n', 1); n3pre(run, 'ignite', 2); toast('짐에서 소모품 셋을 찾았습니다. 다음 전투에 화상 2'); }
-      if (R.event === 'camel' && o === 'bury') consAdd(run, 'sap', 'n', 1);
+      if (R.event === 'camel' && o === 'loot') { const ids = Object.keys(CONS).filter(k => (CONS[k].ch || 1) <= 3 && CONS[k].use !== 'none'); for (let k = 0; k < 3; k++) consGrant(run, pickR(ids), 'n', 1); n3pre(run, 'ignite', 2); toast('짐에서 소모품 셋을 찾았습니다. 다음 전투에 화상 2'); }
+      if (R.event === 'camel' && o === 'bury') consGrant(run, 'sap', 'n', 1);
       if (R.event === 'oasis' && o === 'drink') { if (Math.random() < 0.5) { p.hp = Math.min(p.hpMax, p.hp + p.hpMax * 0.3); toast('샘물이 상처를 씻어 낸다. 생명력 30%'); } else { n3pre(run, 'chill', 2); toast('물이 무겁게 가라앉는다. 다음 전투에 둔화 2'); } }
-      if (R.event === 'oasis' && o === 'fill') consAdd(run, 'coldwater', 'n', 1);
+      if (R.event === 'oasis' && o === 'fill') consGrant(run, 'coldwater', 'n', 1);
       if (R.event === 'sundial' && o === 'turn') { run.dg.reveal = (run.dg.reveal || []).concat([run.room + 1]); run.next3 = Object.assign(run.next3 || {}, { noon: 50 }); }
       if (R.event === 'sundial' && o === 'hasten') { run.dg.force = 'strong'; gainGold(run, 25, '해가 기운다'); }
       if (R.event === 'archive' && o === 'pull') n3pre(run, 'ignite', 4);

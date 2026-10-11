@@ -26,6 +26,26 @@ function consAdd(run, id, g, n) {
   return left;
 }
 const myTurn = b => !!(b && !b.over && b.queue && b.queue[0] === 'p');
+// 보상은 공간이 없더라도 플레이어가 선택할 때까지 저장합니다.
+function consGrant(run, id, g, n) {
+  const left = consAdd(run, id, g, n);
+  if (left && CONS[id]) {
+    const grade = g === 'm' && CONS[id].vm != null ? 'm' : 'n';
+    const q = run.consPending || (run.consPending = []);
+    const c = q.find(x => x.id === id && x.g === grade);
+    if (c) c.n += left; else q.push({id, g: grade, n: left});
+  }
+  return left;
+}
+function consPendingTry(run) {
+  const q = run.consPending || [];
+  while (q.length) {
+    const c = q[0], left = consAdd(run, c.id, c.g, c.n);
+    if (left) { c.n = left; return false; }
+    q.shift();
+  }
+  return true;
+}
 function consTargets(b, D) {
   const al = alive(b).filter(e => e.role !== 'root');
   switch (D.k) {
@@ -163,13 +183,13 @@ function grantDrops(run, b) {
   const D = (b && b.drops) || []; if (!D.length) return; const p = run.p; let gold = 0, lost = 0; const got = {};
   for (const d of D) {
     if (d.gold) gold += d.gold;
-    if (d.cons) { const left = consAdd(run, d.cons, d.g, 1); if (left) lost++; else { const nm = consName({ id: d.cons, g: d.g }); got[nm] = (got[nm] || 0) + 1; } }
+    if (d.cons) { const left = consGrant(run, d.cons, d.g, 1); if (!left) { const nm = consName({ id: d.cons, g: d.g }); got[nm] = (got[nm] || 0) + 1; } }
     if (d.flask) { if ((p.flask[d.flask] || 0) < flaskCap(p, d.flask)) { p.flask[d.flask] = (p.flask[d.flask] || 0) + 1; got['플라스크 한 칸'] = (got['플라스크 한 칸'] || 0) + 1; } }
   }
   if (gold) gainGold(run, gold, '전리품');
   const txt = Object.entries(got).map(([k, n]) => k + (n > 1 ? ' ×' + n : '')).join(', ');
-  if (txt || lost) toast('전리품: ' + (txt || '없음') + (lost ? '. 가방이 가득 차 ' + lost + '개를 두고 왔습니다' : ''));
-  run.lootLog = run.lootLog || []; run.lootLog.push({ room: run.room, gold, got, lost });
+  if (txt || (run.consPending || []).length) toast('전리품: ' + (txt || '가방에 넣을 소모품을 골라 주세요') + ((run.consPending || []).length && txt ? '. 공간이 부족한 소모품은 직접 골라 챙깁니다' : ''));
+  run.lootLog = run.lootLog || []; run.lootLog.push({ room: run.room, gold, got, lost, pending: (run.consPending || []).map(c => Object.assign({}, c)) });
   b.drops = [];
 }
 function loseLoot(o) { if (o.k === 'item' && o.run && o.run.inv) delete o.run.inv[o.u]; }
