@@ -36,12 +36,14 @@ console.log('보호막 상한·0/부족/소수·실제 소모·광역 한 번 �
 const original=Object.fromEntries(Object.keys(limits).map(id=>[id,JSON.parse(JSON.stringify(E.SK2[id].fx))]));
 const shellTime=E.SK2.sb_shell.time,shellCd=E.SK2.sb_shell.cd;
 function version(old){E.SK2.sb_shell.time=old?'fast':shellTime;E.SK2.sb_shell.cd=old?6:shellCd;for(const id of Object.keys(limits)){E.SK2[id].fx=JSON.parse(JSON.stringify(original[id]));if(old){const f=E.SK2[id].fx.find(x=>x.k==='wardDmg');delete f.cap;delete f.spend;f.per=.5;}}}
-function trial(ch,seed,respond){
+function trial(ch,seed,respond,weapon="bloodblade"){
  const lv=[6,10,14][ch-1],stats={con:25+(lv-6)*2,dex:0,int:0,str:0,wil:11+(lv-6)};
  const skills=['sb_edge','sb_aegis','sb_shell','sb_rebound','sb_wardbolt','sb_bolt'];
- const p=E.mkPlayer('spellblade',{weapon:'bloodblade',armor:'shroud',gloves:'hookgloves',amulet:'brotherbeads',ring1:'loner',flask:'start_flask'},stats,skills);
+ const p=E.mkPlayer('spellblade',{weapon:weapon==='bloodblade-noheal'?'bloodblade':weapon,armor:'shroud',gloves:'hookgloves',amulet:'brotherbeads',ring1:'loner',flask:'start_flask'},stats,skills);
  p.lv=lv;E.applyStats(p,stats);p.hp=p.hpMax;p.st=p.stMax;p.mp=p.mpMax;
  const room={ch,lv:[5,10,14][ch-1],floor:24,names:V('ENEMY_NAMES['+ch+']'),path:'main',en:[],boss:1};
+ const bloodFx=V('IFX.bloodblade'),hit=bloodFx.onHit;
+ if(weapon==='bloodblade-noheal')bloodFx.onHit=()=>0;
  const b=E.roomBattle(p,room,['abbot','cryptlord','queen'][ch-1],seed);b.rngF=require('./qa.js').rng(seed);
  let n=0;while(!b.over&&n++<250){
   const L=E.actionList(b).filter(a=>a.ok&&a.id!=='flee');
@@ -51,7 +53,34 @@ function trial(ch,seed,respond){
   a=a||['sb_shell','sb_wardbolt','sb_bolt','sb_rebound','sb_aegis','sb_edge','heavy','basic','flaskS','guard'].map(id=>L.find(x=>x.id===id)).find(Boolean)||L[0];
   if(!a)break;const t=E.alive(b).find(e=>E.canTarget(b,e,a));E.playerAct(b,a.id,t&&t.id);
  }
+ bloodFx.onHit=hit;
  return {win:b.over==='win',hp:p.hp/p.hpMax,zero:b.rec.filter(x=>x.k==='hit'&&x.d===0).length,hits:b.rec.filter(x=>x.k==='hit').length};
 }
-for(const old of [true,false]){version(old);for(let ch=1;ch<=3;ch++)for(const respond of [false,true]){const rows=Array.from({length:12},(_,i)=>trial(ch,300+i,respond));console.log(JSON.stringify({version:old?'before':'after',ch,respond,wins:rows.filter(x=>x.win).length,hp:+(rows.reduce((s,x)=>s+x.hp,0)/rows.length).toFixed(3),zero:rows.reduce((s,x)=>s+x.zero,0),hits:rows.reduce((s,x)=>s+x.hits,0)}));}}
 version(false);
+for(let ch=1;ch<=3;ch++)for(const respond of [false,true]){const rows=Array.from({length:12},(_,i)=>trial(ch,300+i,respond));console.log(JSON.stringify({ch,respond,wins:rows.filter(x=>x.win).length,hp:+(rows.reduce((s,x)=>s+x.hp,0)/rows.length).toFixed(3)}));}
+
+
+// 10월 11일 정량 충전 전후와 흡혈 무기의 효과를 분리한다.
+const shellFx=JSON.parse(JSON.stringify(E.SK2.sb_shell.fx));
+for(const fill of [true,false]){
+ E.SK2.sb_shell.fx=fill?shellFx.map(f=>f.k==='ward'?{k:'wardFill',to:1}:f):shellFx;
+ for(let ch=1;ch<=3;ch++)for(const weapon of ['bloodblade','bloodblade-noheal']){
+  const rows=Array.from({length:12},(_,i)=>trial(ch,300+i,false,weapon));
+  console.log(JSON.stringify({fill:fill?'full':'fixed18',ch,weapon,wins:rows.filter(x=>x.win).length,hp:+(rows.reduce((s,x)=>s+x.hp,0)/rows.length).toFixed(3)}));
+ }
+}
+E.SK2.sb_shell.fx=shellFx;
+for(const wil of [0,11,30]){
+ const p=E.mkPlayer('spellblade',{}, {con:50,wil});p.ward=0;
+ const b=E.newBattle(p,[E.mkEnemy('bruiser',false,0)],{});
+ E.runSkill2(b,E.v2Static(E.SK2.sb_shell),null);
+ assert(Math.abs(p.ward-Math.min(E.wardMax(p),18*(1+.02*wil)))<1e-6);
+}
+for(const [hp,d,melee] of [[1,100,true],[100,20,true],[100,20,false]]){
+ const p=E.mkPlayer('spellblade',{weapon:'bloodblade'});p.hp=20;
+ const e=E.mkEnemy('bruiser',false,0);e.hp=hp;e.hpMax=1000;
+ const b=E.newBattle(p,[e],{});b.cur={id:'basic'};const before=p.hp;
+ E.hurtEnemy(b,e,d,{melee,single:1});const actual=hp-Math.max(0,e.hp);
+ assert(Math.abs(p.hp-before-(melee?actual*.1:0))<1e-6,'흡혈 실제 피해');
+}
+console.log('정량 보호막·의지 증가·흡혈 초과 피해 제외·원거리 제외 통과');

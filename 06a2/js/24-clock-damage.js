@@ -256,7 +256,7 @@ function hurtEnemy(b, e, raw, o) {
   if (e.hazeHit && !o.dot && d > 0) e.hazeHit = 0;
   if (e.boss === 'cryptlord') { const th = LORD.ph[(e.phase || 1) - 1]; if (th != null && e.hp <= e.hpMax * th) { e.hp = Math.max(1, Math.round(e.hpMax * th)); if (!e.lordNext) { e.lordNext = (e.phase || 1) === 1 ? 'throne' : 'collapse'; e.intent = { k: e.lordNext }; if (e.lordNext === 'collapse') e.teleTurn = b.turnIdx; } } } // 페이즈 문턱은 한 번에 하나: 넘친 피해는 버린다
   if (e.chant && d > 0 && e.hp > 0) { e.chant.taken += d; if (e.chant.taken >= e.chant.need) chantBreak(b, e, '쌓인 상처에'); } // 화형 사제: 영창 중 받은 피해
-  if (!o.dot && b.cur) fxRun(b.p, 'onHit', b, b.p, e, o, b.cur, d);
+  if (!o.dot && b.cur) fxRun(b.p, 'onHit', b, b.p, e, o, b.cur, d, Math.max(0, hp0 - Math.max(0, e.hp)));
   if (e.countering && e.hp > 0 && !o.dot && o.melee && o.single && b.p.decoy) { e.countering = 0; b.p.decoy = 0; logp(b, 'good', e.n + '의 반격이 미끼 인형을 친다'); }
   if (e.countering && e.hp > 0 && !o.dot && o.melee && o.single) { e.countering = 0; hurtPlayer(b, enemyHitEst(b, e), { src: e, single: 1, label: e.n + '이(가) 되받아친다' }); } // 반격 태세
   if (e.foe === 'pilgrim' && !e.frenzy && e.hp < e.hpMax * 0.5 && e.hp > 0) { e.frenzy = 1; logp(b, 'bad', e.n + '의 눈이 번들거린다. 더 빨라진다'); codexHit(b, 'pilgrim', 'frenzy'); }
