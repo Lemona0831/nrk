@@ -2,6 +2,7 @@
 /* ---------- 런 ---------- */
 function shuffleSeeded(arr, seed) { const a = arr.slice(); const r = mulberry(seed); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function startRun(build, boss) {
+  G.tsel = null; G.tbr = null;
   boss = boss || chData(1).boss; // 1챕터 보스: 타락한 수도원장 (기믹 상세는 비공개 문서). 챕터를 넘으면 enterChapter가 바꾼다
   const p = mkPlayer(build, {});
   const seed = Date.now() % 100000;

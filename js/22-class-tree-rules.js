@@ -65,6 +65,7 @@ function hastenBranch(b, br, n, exceptId) {
 const HS_WHY = { poison: '독을 걸었다', kill: '적을 쓰러뜨렸다', parry: '흘려 냈다', break: '정예 이상을 무너뜨렸다' };
 /* 스킬 트리 (개편 기획 4절): 포인트 1로 한 칸을 연다. 깊은 등급은 그 갈래에 먼저 쓴 포인트가 있어야 열린다(TREE_GATE). 연 스킬 가운데 4칸을 장착 */
 function treeInit(run) { const T = TREE2[run.build]; if (!T) return; run.tree = run.tree || { pts: T.pts || 0, open: [], spent: {} }; }
+const treeOwns = (run,id) => !!(run && (SKILLS2[run.build] || []).some(s => s.id === id));
 /* 저장본 고치기: 스킬 데이터에서 빠진 칸(10월 3일 재사용 대기 개편: 짧은 격발 → 독 심기, 시작 스킬 바뀜)은 연 칸에서 지우고 포인트를 돌려준다 */
 /* 능력치 다섯 전 저장본 (10월 4일): 체력 · 의지를 0으로 더하고, 처음 점수가 6 → 15로 는 몫(9점)을 다음 능력치 창에서 나누게 한다 */
 function consFix(run) { if (run && !run.cons) run.cons = []; }
@@ -78,19 +79,21 @@ function treeFix(run) {
   const t = run.tree; if (!t) return;
   // 갈래 이름이 바뀌어도 기존 저장본의 투자 포인트를 이어받습니다.
   if (run.build === 'spellblade') { for (const [old, current] of [['피칼날', '혈인'], ['불칼', '염검'], ['주문갑', '마갑']]) { if (t.spent && Object.prototype.hasOwnProperty.call(t.spent, old)) { t.spent[current] = (t.spent[current] || 0) + t.spent[old]; delete t.spent[old]; } } }
-  const ok = t.open.filter(id => SK2[id] && !SK2[id].start); const lost = t.open.length - ok.length;
+  const ok = [...new Set(t.open.filter(id => treeOwns(run,id) && !SK2[id].start))]; const lost = t.open.length - ok.length;
   if (lost > 0) { t.open = ok; t.pts += lost; t.spent = {}; for (const id of ok) t.spent[SK2[id].b] = (t.spent[SK2[id].b] || 0) + 1; }
   run.skills = (run.skills || []).filter(id => ok.includes(id));
   // 포인트 = 레벨(만들 때 1 + 레벨마다 1, 기획서 12.2절). 0.6a.2-9까지는 1챕터를 깨면 2점을 더 주었다: 아직 쓰지 않은 포인트에서 넘친 몫을 거둔다
   const T = TREE2[run.build]; const over = t.pts + t.open.length - ((T && T.pts) || 1) - ((run.lv || 1) - 1);
   if (over > 0) t.pts = Math.max(0, t.pts - over);
+  if (run.p) run.p.skills = v2Equip(run);
 }
 /* 장착: 시작 스킬(늘) + 트리에서 끼운 스킬(run.skills, 4칸까지) */
-function v2Equip(run) { const T = TREE2[run.build]; return (T ? T.starters : []).concat((run.skills || []).filter(id => !(T && T.starters.includes(id)))).slice(0, (T ? T.starters.length : 0) + EQUIP_SLOTS2); }
+function v2Equip(run) { const T = TREE2[run.build]; return (T ? T.starters : []).concat((run.skills || []).filter(id => treeOwns(run,id) && run.tree && run.tree.open.includes(id) && !(T && T.starters.includes(id)))).slice(0, (T ? T.starters.length : 0) + EQUIP_SLOTS2); }
 /* 사냥꾼 상급 줄 문턱(10월 9일 결정 59 나): 칸에 skip이 있으면 이어진 앞 칸 말고도 같은 갈래의 skip줄 이상 칸을 하나 열었을 때 열 수 있다. skip이 없는 칸(다른 직업)은 아무것도 달라지지 않는다 */
 const treeSkipOk = (open, s) => !!(s.skip && open.some(x => SK2[x] && SK2[x].b === s.b && SK2[x].row >= s.skip && SK2[x].row < s.row));
 function treeWhy(run, id) {
   const t = run.tree, s = SK2[id]; if (!t || !s) return '없는 스킬';
+  if (!treeOwns(run,id)) return '이 직업의 스킬이 아닙니다';
   if (s.start) return '시작 스킬';
   if (t.open.includes(id)) return '이미 열림';
   if (s.par && !s.par.some(x => t.open.includes(x)) && !treeSkipOk(t.open, s)) return '이어진 앞 칸을 먼저 열어야 합니다';
@@ -102,7 +105,7 @@ function treeWhy(run, id) {
 }
 /* 보이는 범위: full(다 보임), name(이름만), hidden(?). 기본과 부모가 열린 칸은 다 보이고, 궁극(tease)은 이름만 먼저 보인다 */
 function treeVis(run, id) {
-  const t = run.tree, s = SK2[id]; if (!t || !s) return 'hidden';
+  const t = run.tree, s = SK2[id]; if (!t || !s || !treeOwns(run,id)) return 'hidden';
   if (s.start || t.open.includes(id) || !s.par || s.par.some(x => t.open.includes(x)) || treeSkipOk(t.open, s)) return 'full';
   return s.tease ? 'name' : 'hidden';
 }

@@ -63,6 +63,8 @@ function hunterLoadoutHint(run) {
   return `<p class="mini loadout-hint" data-info="elink" tabindex="0">연계: 다른 갈래 스킬을 이어 쓰면 피해 +${Math.round(HUNT.link * 100)}%.</p>`;
 }
 function vTreeView(mode) {
+  treeFix(G.run);
+  if (!treeOwns(G.run,G.tsel)) G.tsel = null;
   const run = G.run, T = TREE2[run.build], t = run.tree, eqd = run.skills || [];
   const brs = T.branches; const tab = brs.includes(G.tbr) ? G.tbr : brs[0];
   const st = T.starters.map(id => `<button class="tstart${G.tsel === id ? ' sel' : ''}" data-a="tsel" data-k="${id}" data-info="tn:${id}"><span class="tc">✓</span>${esc(SK2[id].n)}</button>`).join('');
