@@ -50,7 +50,7 @@ function vTreeDetail(run, id, preview) {
   const vis = treeVis(run, id); const open = s.start || run.tree.open.includes(id); const eq = (run.skills || []).includes(id); const why = open ? null : treeWhy(run, id); const edit = treeCanEdit();
   if (vis === 'hidden') return `<b class="tdn">?</b><p class="mini">아직 보이지 않는 칸입니다. 선으로 이어진 앞 칸을 열면 드러납니다.</p>`;
   let h = `<b class="tdn">${esc(s.n)}</b><div class="mini">${esc(s.start ? '시작 스킬 · 항상 장착' : s.b + ' · ' + s.tier + (open ? ' · 열림' : '') + (eq ? ' · 장착' : ''))}</div>`;
-  h += vis === 'name' ? `<p class="mini">이 갈래의 궁극입니다. 이어진 앞 칸을 열면 자세히 드러납니다.</p>` : `<p class="tdh">${esc(skHead(s))}</p><p>${esc(skBody(s))}</p>`;
+  h += vis === 'name' ? `<p class="mini">이 갈래의 궁극입니다. 이어진 앞 칸을 열면 자세히 드러납니다.</p>` : `<p class="tdh">${esc(skHead(s))}</p><p>${esc(skBody(s))}</p>${run.p && skillDamageHint(run.p,s) ? `<p class="mini">${esc(skillDamageHint(run.p,s))}</p>` : ''}`;
   if (preview) return h + (s.start ? '' : `<p class="mini tdp">눌러서 고르면 ${open ? '장착하거나 해제합니다' : '엽니다'}.</p>`);
   if (s.start) h += `<p class="mini">시작 스킬은 항상 장착되어 있으며 장착 칸을 차지하지 않습니다.</p>`;
   else if (open) { const rw = G.creating ? treeRefundWhy(run, id) : 'x'; h += `<div class="tdb">${edit ? `<button class="${eq ? '' : 'gold'}" data-a="tequip" data-k="${id}">${eq ? '해제' : '장착'}</button>` : ''}${G.creating ? `<button data-a="trefund" data-k="${id}"${rw ? ' aria-disabled="true"' : ''}>되돌리기 · 포인트 +1</button>` : ''}${edit ? '' : '<span class="mini">전투 중에는 바꿀 수 없습니다.</span>'}</div>${G.creating ? `<p class="mini">${rw ? esc(rw) : '캐릭터를 만드는 동안에는 연 칸을 되돌려 다른 칸을 열 수 있습니다. 만든 뒤에는 되돌릴 수 없습니다.'}</p>` : ''}`; }

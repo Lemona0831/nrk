@@ -27,8 +27,8 @@ try {
   const b=E.newBattle(p,[e],{});const values=[];
   E.hurtEnemy=(b,e,d)=>{values.push(d);return d};
   E.runSkill2(b,E.v2Static(s),e);
-  assert.equal(values[0],s.fx.find(x=>x.k==='dmg').n+w.bonus,id+' 실제 피해');
-  assert.equal(b.rec.find(x=>x.k==='wardSpend')?.bonus||0,f.spend?w.bonus:0);
+  assert(Math.abs(values[0]-(E.skillBaseDamage(p,s,s.fx.find(x=>x.k==='dmg').n)+w.bonus))<1e-9,id+' 실제 피해');
+  assert.equal(b.rec.find(x=>x.k==='wardSpend')?.bonus||0,f.spend?Math.round(w.bonus*10)/10:0);
  }
 } finally {E.hurtEnemy=hurt;}
 console.log('보호막 상한·0/부족/소수·실제 소모·광역 한 번 소모·파수꾼 기존 동작 통과');

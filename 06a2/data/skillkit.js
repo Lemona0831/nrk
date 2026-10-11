@@ -1,3 +1,14 @@
+// 성장 배율은 dmg 기본 피해에만 적용한다. 비례·지속 피해에는 중복 적용하지 않는다.
+function skillGrowthStat(s) { return s.kind === 'spell' || /^(e_|v_)/.test(s.id) ? 'int' : /^(a_|h_)/.test(s.id) ? 'dex' : 'str'; }
+function skillBaseDamage(p, s, n) {
+  if (!n || s.id === 'tut_bash' || p.build === 'novice') return n || 0;
+  const k=skillGrowthStat(s), weapon=k==='int'?0:Math.max(0,gearOf(p).wpn-START_GEAR.wpn)*0.025;
+  return n*0.8*(1+stat(p,k)*0.01+weapon);
+}
+function skillDamageHint(p, s) {
+  const dm=s.fx.find(e=>e.k==='dmg');
+  return dm ? '현재 기본 피해 ' + r1(skillBaseDamage(p,s,dm.n)) + ((s.hits||1)>1?' × '+s.hits+'타':'') + ' · 추가 효과와 피해 증감 적용 전' : '';
+}
 // 보호막 추가 피해와 소모량: 설명·미리보기·전투가 같은 계산을 사용한다.
 function wardDamageInfo(e, ward) {
   const available = Math.max(0, Number(ward) || 0);
@@ -371,7 +382,7 @@ function skBody(s) {
     if (bu && e.k === 'drain' && e.s === 'bleed' && e.me) out.push('먼저 내 출혈을 모두 지운다. ' + (e.dmg ? `지운 출혈 1마다 이 스킬의 피해 +${e.dmg}(${e.max || 10}까지 센다).` : `지운 출혈 1마다 나에게 강화 ${e.emp || 1}(최대 4).`));
   }
   for (const e of s.fx) {
-    if (e.k === 'dmg') parts.push(`피해 ${e.n}`);
+    if (e.k === 'dmg') parts.push(s.id==='tut_bash' ? `피해 ${e.n}` : `기준 피해 ${e.n}(${skillGrowthStat(s)==='int'?'지능':skillGrowthStat(s)==='dex'?'민첩·무기':'힘·무기'}로 성장)`);
     if (e.k === 'poison') parts.push(`중독 ${e.n}`);
     if (e.k === 'brk') parts.push(`붕괴 +${e.n}`);
     if (e.k === 'st' && !eMulti) { const t = `${s.tgt === 'self' ? '나에게 ' : ''}${skKw(s, e.s)} ${e.n}`; if (bu && ((eatT && e.s === 'bleed') || hits > 1)) late.push(e); else (s.kind && hits > 1 && s.tgt !== 'self' ? first : parts).push(t); }

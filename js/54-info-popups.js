@@ -61,12 +61,12 @@ function infoHtml(key) {
     if (vis === 'hidden') return H('?', P('아직 보이지 않는 칸입니다. 이어진 앞 칸을 열면 드러납니다.'));
     if (vis === 'name') return H(s.n, P(s.b + ' · ' + s.tier + '. 이어진 앞 칸을 열면 자세히 드러납니다.'));
     const open = s.start || G.run.tree.open.includes(s.id); const why = open ? null : treeWhy(G.run, s.id);
-    return H(s.n, P((s.start ? '시작 스킬 · 늘 끼움' : s.b + ' · ' + s.tier + (open ? ' · 열림' : '')) + '. ' + skHead(s)) + P(skBody(s)) + cfKwHtml(s) + (why ? `<p class="no">${esc(why)}</p>` : ''));
+    return H(s.n, P((s.start ? '시작 스킬 · 늘 끼움' : s.b + ' · ' + s.tier + (open ? ' · 열림' : '')) + '. ' + skHead(s)) + P(skBody(s)) + (G.run && G.run.p && skillDamageHint(G.run.p,s) ? P(skillDamageHint(G.run.p,s)) : '') + cfKwHtml(s) + (why ? `<p class="no">${esc(why)}</p>` : ''));
   }
   if (parts[0] === 'act' && b) {
     const a = actionList(b).find(x => x.id === parts[1]); if (!a) return '';
     const s = skillMap(b.p.build)[a.id];
-    let body = (a.v2 ? P(skHead(a.s)) + P(skBody(a.s)) + cfKwHtml(a.s) + (a.wait > 0 && !a.s.once ? P('쿨타임 ' + a.wait + '턴 남음' + (a.ok && a.pull ? '. 지금 누르면 피로 당겨 바로 씁니다. 내는 생명력 ' + a.blood : '')) : P('사용 가능')) : P(a.id === 'sig' ? '직업 기술. ' + (SIG[b.p.build].cd ? SIG[b.p.build].cd + '차례에 한 번. ' : '') + SIG[b.p.build].d : (s ? resLabel(s, a.mana) + '. ' + s.d : actInfo(b.p, a.id)))) + (a.v2 ? '' : P('빠르기: ' + speedWord(a.time)));
+    let body = (a.v2 ? P(skHead(a.s)) + P(skBody(a.s)) + (skillDamageHint(b.p,a.s) ? P(skillDamageHint(b.p,a.s)) : '') + cfKwHtml(a.s) + (a.wait > 0 && !a.s.once ? P('쿨타임 ' + a.wait + '턴 남음' + (a.ok && a.pull ? '. 지금 누르면 피로 당겨 바로 씁니다. 내는 생명력 ' + a.blood : '')) : P('사용 가능')) : P(a.id === 'sig' ? '직업 기술. ' + (SIG[b.p.build].cd ? SIG[b.p.build].cd + '차례에 한 번. ' : '') + SIG[b.p.build].d : (s ? resLabel(s, a.mana) + '. ' + s.d : actInfo(b.p, a.id)))) + (a.v2 ? '' : P('빠르기: ' + speedWord(a.time)));
     if (a.id !== 'flee') body += `<p class="pv">${esc(previewText(b, a.time))}</p>` + P('예상 수치' + '는 내 행동의 즉시 결과입니다. 이후 적 차례와 라운드 끝 피해는 포함하지 않습니다.');
     if (a.id === 'dodge') {
       const sel = G.sel ? b.en.find(e => e.id === G.sel && e.alive && e.role !== 'root') : null; const dt = sel || pickDodge(b);

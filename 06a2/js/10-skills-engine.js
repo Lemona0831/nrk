@@ -103,7 +103,7 @@ function runSkill2(b, act, tgt) {
     if (!e.alive || b.over) continue;
     let eatAdd = 0; if (eatF && h === 0) { const n0 = st(e, 'poison'); const t = Math.min(eatF.max || Infinity, n0); if (t > 0) { kwDec(e, 'poison', t); eatHeal += t * eatF.per; eatN += t; eatAdd = t * (eatF.dmg || 0); logp(b, 'good', e.n + '의 중독 ' + t + '을(를) 먹는다'); } else if (!dm) logp(b, 'sys', e.n + '에게 먹을 중독이 없다'); } // 먹기: 피해 앞에서, 먹기 자체는 피해가 아니다
     if (spV && spV.mark && h === 0) e.mark = { per: spV.per || 1, by: s.id }; // 표식: 피해보다 먼저 단다
-    let base = (dm ? dm.n : 0) + (ex ? ex.per * (BU && ex.s === 'bleed' ? (ex.me ? Math.min(ex.max || 10, stk(p, 'bleed')) : preBlOf(e)) : ex.s ? preKw[e.id][ex.s] : st(e, 'poison')) : 0) + (wb && h === 0 ? burn * wb.mul : 0) + wardHit.bonus + (vp ? vp.per * st(e, 'vuln') : 0);
+    let base = (dm ? skillBaseDamage(p,s,dm.n) : 0) + (ex ? ex.per * (BU && ex.s === 'bleed' ? (ex.me ? Math.min(ex.max || 10, stk(p, 'bleed')) : preBlOf(e)) : ex.s ? preKw[e.id][ex.s] : st(e, 'poison')) : 0) + (wb && h === 0 ? burn * wb.mul : 0) + wardHit.bonus + (vp ? vp.per * st(e, 'vuln') : 0);
     if (BU) { if (gru) base += Math.min(gru.max || 999, gru.per * (p.grudge || 0)); base += meDrainDmg; } // 받은 피해 · 지운 내 출혈
     if (kb && h === 0) base += kiTake * kb.per; if (kpr) base += kpr.per * kiNow; // 수도승: 터뜨린 기(첫 타) · 쓰기 전의 기(타격마다)
     if (CF) { if (cfPd && cfPd.per) base += cfPd.per * cfTX(e); if (b.cfOffer && h === 0) base += b.cfOffer.c * b.cfOffer.dmg; if (cfPd && cfPd.of !== 'prot' && cfPd.of !== 'burden' && cfPd.of !== 'clean' && h === 0) b.rec.push({ k: 'cfper', id: s.id, of: cfPd.of, x: cfTX(e) }); } // 숨겨진 직업 2: 비례 · 사함 피해 (배수는 아래에서 곱한다)

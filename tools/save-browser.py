@@ -66,13 +66,19 @@ try:
   assert page.evaluate('JSON.stringify([G.run.p,G.run.stats])')==unchanged
   page.click('.sheet [data-a=equip]');assert page.query_selector('.eqsum')
   page.click('.sheet [data-a=close]');assert page.evaluate('JSON.stringify(G.run.stats)')=='{"str":0,"dex":0,"int":0,"con":30,"wil":33}'
-  page.evaluate("()=>{G.data.runs.push({...runRecord(G.run),id:'statdone',endedAt:Date.now(),result:'win',ch:3,clears:3});G.scr='records';G.rc={...rcS(),open:'statdone'};render();}")
+  page.evaluate("()=>{G.data.runs.push({...runRecord(G.run),id:'statdone',build:'spellblade',skills:['sb_bolt'],awk:[Object.keys(AWK_MAP)[0]],endedAt:Date.now(),result:'win',ch:3,clears:3});G.scr='records';G.rc={...rcS(),open:'statdone'};render();}")
   assert page.locator('.rcsec .stat-read dd').all_text_contents()==['0','0','0','30','33']
+  assert '최종 장비' in page.inner_text('body')
+  page.locator('.rcsec details summary').filter(has_text='마갑탄').click()
+  assert '마갑탄' in page.inner_text('body') and '현재 보호막의 50%' in page.inner_text('body')
+  assert page.evaluate("rcRunDetail('statdone').includes(AWK_MAP[Object.keys(AWK_MAP)[0]].n)")
+  assert page.evaluate("()=>{const r=G.data.runs.find(r=>r.id==='statdone');return r.eqDetails.length>0 && rcRunDetail(r.id).includes(r.eqDetails[0].base) && Number.isFinite(r.combatStats.hp) && rcRunDetail(r.id).includes('전투 수치');}")
+  assert page.evaluate("()=>{const old=G.run,s=SK2.sb_bolt;G.run={...old,build:'spellblade',p:mkPlayer('spellblade',{}, {int:25}),tree:{...old.tree,open:[s.id]}};const html=infoHtml('tn:'+s.id);G.run=old;return html.includes('현재 기본 피해 11') && html.includes('현재 보호막의 50%');}")
   assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth')
   assert page.evaluate("statReadHtml(null).includes('기록이 없습니다') && statReadHtml({con:30}).includes('기록 없음')")
   assert not errors,errors
   print('세이브 검증 통과: 생성 취소·서로 다른 캐릭터 보관·새로고침·전투 복원·8칸 한도·포기 확인·저장 실패 시 교체 취소')
   print('보스 5종의 기믹·다음 행동 표시와 모바일 설명, 1→2→3챕터 가혹 이동·장비 유지·저장 복원 통과')
-  print('능력치 확인: 메뉴·장비 창·완주 기록 30/33 표시, 0과 누락 구분, 읽기 중 상태 유지·모바일 화면 통과')
+  print('능력치·완주 빌드: 메뉴·장비 창·완주 기록 30/33, 전투 수치·장비 실수치·스킬 펼침·각인, 현재 스킬 피해 설명·모바일 화면 통과')
   browser.close()
 finally:server.shutdown();server.server_close()
