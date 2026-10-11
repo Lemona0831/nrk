@@ -183,10 +183,10 @@ function crownBreak(b, c) {
   if (q) { addS(b, q, 'vuln', 2); if (q.crownStagPh !== (q.phase || 1)) { q.crownStagPh = q.phase || 1; q.stun = Math.max(q.stun || 0, 1); logp(b, 'good', q.n + '이(가) 휘청인다. 다음 행동을 놓친다'); } if ((q.phase || 1) < 3) b.crownBack = (b.round || 0) + QUEEN.crownRegrow; }
 }
 function maidSpawn(b, q) { const m = mkEnemy('maid', 0, b.idc++, { lv: q.lv || 1, name: (ENEMY_NAMES[3] || {}).maid }); m.hpMax = Math.max(1, Math.round(q.hpMax * QUEEN.maidHp)); m.hp = m.hpMax; m.dmg = q.dmg * QUEEN.maidHit; m.summoned = true; m.xpCh = 0; decideIntent(b, m); b.en.push(m); return m; }
-function queenThresh(b, e) { const th = QUEEN.ph[(e.phase || 1) - 1]; if (th != null && e.hp <= e.hpMax * th && e.hp > 0) { e.hp = Math.max(1, Math.round(e.hpMax * th)); if (!e.qNext) { e.qNext = (e.phase || 1) === 1 ? 'qrise' : 'qmelt'; e.intent = { k: e.qNext }; e.teleTurn = null; e.under = 0; e.qPrep = 0; } } } // 페이즈 문턱은 한 번에 하나: 넘친 피해는 버린다
+function queenThresh(b, e) { const th = QUEEN.ph[(e.phase || 1) - 1]; if (th != null && e.hp <= e.hpMax * th) { e.hp = Math.max(1, Math.round(e.hpMax * th)); if (!e.qNext) e.qNext = (e.phase || 1) === 1 ? 'qrise' : 'qmelt'; } } // 현재 예고를 마친 뒤 전환한다. 문턱을 넘친 피해는 버린다
 function queenIntent(b, e, n) {
-  if (e.qNext) return { k: e.qNext };
   if (e.under) return e.qPrep ? { k: 'erupt' } : { k: 'surgeprep' };
+  if (e.qNext) return { k: e.qNext };
   const c = (e.pn = (e.pn || 0) + 1) - 1, ph = e.phase || 1;
   if (ph === 2) { const s = c % QUEEN.p2Cycle; return s === QUEEN.p2Cycle - 2 ? { k: 'burrow' } : s === QUEEN.p2Cycle - 1 ? { k: 'ash' } : { k: 'attack' }; } // 공격(×p2Cycle−2) → 잠복 → 솟구칠 준비 → 솟구침 → 재 뿌리기
   const stormSoon = b.heat != null && ((b.heatWarn != null && b.heatWarn >= (b.round || 0)) || b.heat + heatRise(b) >= 100);
