@@ -1,5 +1,6 @@
 // 기본 피해 성장과 선택한 자원 추가 피해 성장은 따로 계산한다. 지속·보호막 피해에는 중복 적용하지 않는다.
 const SKILL_STAT_PCT = 4;
+const FOCUS_STAT_PCT = 2;
 function skillGrowthStat(s) { return s.kind === 'spell' || /^(e_|v_)/.test(s.id) ? 'int' : /^(a_|h_)/.test(s.id) ? 'dex' : 'str'; }
 function skillBaseDamage(p, s, n) {
   if (!n || s.id === 'tut_bash' || p.build === 'novice') return n || 0;
@@ -8,15 +9,17 @@ function skillBaseDamage(p, s, n) {
 }
 function skillResourceGrows(s, e) {
   return /^m_/.test(s.id) && ['kiBurst', 'kiPer'].includes(e.k)
+    || /^h_/.test(s.id) && e.k === 'focusBurst'
     || /^c_/.test(s.id) && (e.k === 'perDmg' && ['burden', 'clean'].includes(e.of) || e.k === 'cleanse' && e.offer && !!e.dmg);
 }
-function skillResourceDamage(p, s, e, n) { return n * (skillResourceGrows(s, e) ? 1 + stat(p, 'str') * .01 : 1); }
+function skillResourceDamage(p, s, e, n) { return n * (skillResourceGrows(s, e) ? 1 + (/^h_/.test(s.id) ? stat(p, 'dex') * FOCUS_STAT_PCT / 100 : stat(p, 'str') * .01) : 1); }
 function skillDamageHint(p, s) {
   const dm=s.fx.find(e=>e.k==='dmg'), out=[];
   if(dm) out.push('현재 기본 피해 ' + r1(skillBaseDamage(p,s,dm.n)) + ((s.hits||1)>1?' × '+s.hits+'타':''));
+  if(s.fx.some(e=>e.k==='burst')) out.push('현재 독 격발 배율 '+r1(dotMul(p))+'배 (지능)');
   for(const e of s.fx.filter(e=>skillResourceGrows(s,e))) {
-    const label=e.k==='kiBurst'||e.k==='kiPer'?'기':e.k==='cleanse'?'바친 상태':e.of==='burden'?'짐':'앞서 정화·바친 상태';
-    out.push(label+' 1당 추가 피해 '+r1(skillResourceDamage(p,s,e,e.k==='cleanse'?e.dmg:e.per))+(e.k==='kiPer'&&(s.hits||1)>1?' (타격마다)':''));
+    const label=e.k==='focusBurst'?'추적':e.k==='kiBurst'||e.k==='kiPer'?'기':e.k==='cleanse'?'바친 상태':e.of==='burden'?'짐':'앞서 정화·바친 상태';
+    out.push(label+(e.k==='focusBurst'?' 1겹당':' 1당')+' 추가 피해 '+r1(skillResourceDamage(p,s,e,e.k==='cleanse'?e.dmg:e.k==='focusBurst'?e.n:e.per))+(e.k==='kiPer'&&(s.hits||1)>1?' (타격마다)':''));
   }
   return out.length ? out.join(' · ') + ' · 피해 증감 적용 전' : '';
 }
@@ -414,7 +417,7 @@ function skBody(s) {
         out.push((e.pre ? `중독 ${e.pre}${skJo(e.pre)} 건 뒤 ` : '') + (s.tgt === 'all' ? '모든 적의 중독을 모두 터뜨린다.' : e.half ? '대상의 중독을 절반(올림)만 터뜨린다.' : e.top ? `대상의 중독을 ${e.top}만 터뜨린다.` : '대상의 중독을 모두 터뜨린다.')
           + (e.mul && e.mul !== 1 ? ` 터뜨린 피해 ×${e.mul}.` : '')
           + (e.brkPer ? ` 터뜨린 중독 1마다 붕괴 +${e.brkPer}.` : '')
-          + (e.keep ? ` 터뜨린 뒤 중독이 ${e.keep === 0.5 ? '절반' : Math.round(e.keep * 100) + '%'} 남는다.` : '')); break;
+          + (e.keep ? ` 터뜨린 뒤 중독이 ${e.keep === 0.5 ? '절반' : Math.round(e.keep * 100) + '%'} 남는다.` : '') + ' 독 격발 피해는 지능 1점마다 2% 증가한다.'); break;
       case 'exploit': if (e.s) { const w = SK_KWN[e.s]; out.push(e.take ? `대상의 ${w}${skJoW(w, '을', '를')} 모두 거둬 1마다 피해 +${e.per}. ${w}${skJoW(w, '은', '는')} 사라진다.` : `대상의 ${w} 1마다 피해 +${e.per}.` + (e.s === 'bleed' ? ` ${w}${skJoW(w, '은', '는')} 줄지 않는다.` : '')); break; } out.push(`${skPer(e.per, '피해')}. 중독은 줄지 않는다.`); break;
       case 'imbue': out.push(`칼에 ${SK_KWN[e.s]} ${e.n}${skJo(e.n)} 싣는다.`); break;
       case 'edgeX': out.push(`이 베기가 칼에 실린 원소를 걸면 그 숫자가 ${e.mul}배다(상한 10).`); break;
@@ -434,7 +437,7 @@ function skBody(s) {
       case 'execute': out.push(`대상의 생명력이 ${Math.round(e.hp * 100)}% 이하면 터뜨린 피해 ×${e.mul}.`); break;
       case 'stam': out.push(`스태미나 +${e.n}.`); break;
       case 'focusx': out.push(`대상의 추적 1겹마다 피해 +${Math.round(e.per * 100)}%.`); break;
-      case 'focusBurst': out.push(`대상의 추적을 모두 터뜨린다. 1겹마다 피해 +${e.n}. 추적은 사라진다.`); break;
+      case 'focusBurst': out.push(`대상의 추적을 모두 터뜨린다. 1겹마다 기준 추가 피해 ${e.n}(민첩 1점마다 ${FOCUS_STAT_PCT}% 증가). 추적은 사라진다.`); break;
       case 'focusAdd': out.push(`대상에게 추적 +${e.n}겹. 이 효과로는 2겹까지만 쌓이고, 3겹째는 같은 적을 다시 맞혀야 쌓인다.`); break;
       case 'swapx': out.push(`직전에 친 적과 다른 적이면 피해 ×${e.mul}.`); break;
       case 'evade': out.push(`다음에 맞는 공격 ${e.n}번을 피한다. 화형과 지속 피해는 피할 수 없다.`); break;
@@ -490,6 +493,6 @@ function skBody(s) {
   if (s.fx.filter(e => ['lowx', 'brokenx', 'bigx', 'chillx', 'kwx'].includes(e.k)).length >= 2) out.push('조건이 겹치면 배수를 곱한다.'); // 10월 4일: 박살(붕괴한 정예 · 보스에게 ×2.5 × 1.5) 등
   if (s.killRecharge) out.push(s.once ? '이 스킬로 적을 쓰러뜨리면 한 번 더 쓸 수 있다.' : bu ? '이 스킬로 적을 쓰러뜨리면 쿨타임이 돌지 않아 다음 차례에 다시 쓸 수 있다.' : '이 스킬로 적을 쓰러뜨리면 기다리지 않고 바로 다시 쓸 수 있다.');
   if (bu && (s.tgt === 'ranged' || s.tgt === 'all') && s.fx.some(e => e.k === 'dmg')) out.push((s.tgt === 'all' ? '후열에도 닿는다. ' : '') + '근접 공격이 아니라 흡혈은 일어나지 않는다.');
-  if (s.fx.some(e => skillResourceGrows(s, e))) out.push((/^m_/.test(s.id) ? '이 기 추가 피해' : '이 자원 추가 피해') + '는 힘 1점마다 기준값의 1%씩 증가한다.');
+  if (s.fx.some(e => skillResourceGrows(s, e) && e.k !== 'focusBurst')) out.push((/^m_/.test(s.id) ? '이 기 추가 피해' : '이 자원 추가 피해') + '는 힘 1점마다 기준값의 1%씩 증가한다.');
   return out.join(' ').replace(/\s+/g, ' ').trim();
 }

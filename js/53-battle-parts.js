@@ -83,6 +83,7 @@ function skillHint0(b, a) {
   if (a.v2 && a.s && isBu(p)) return buHint(b, a);
   if (a.v2 && a.s && isCf(p)) return cfHint(b, a); // 숨겨진 직업 2
   if (a.v2 && a.s && isBm(p)) return bmHint(b, a);
+  if (a.v2 && a.s && p.build === 'hunter') { const f = a.s.fx.find(e => e.k === 'focusBurst'); if (f) { const t = actTarget(b, a), n = t && p.focus && p.focus.id === t.id ? p.focus.n : 0; return n ? '추적 ' + n + '겹 소모 → 추가 피해 +' + r1(skillResourceDamage(p, a.s, f, f.n * n)) + ' (피해 증감 전)' : '소모할 추적 없음'; } }
   if (a.id === 'release') return p.scar < 1 ? '상흔 없음' : `상흔 ${Math.round(p.scar)} → 적마다 ${r1(p.scar * 0.8 * dmgMult(p))}`;
   if (a.id === 'scarcut') return p.scar < 1 ? '상흔 없음' : `상흔 추가 ${r1(p.scar * 0.5 * 1.5 * dmgMult(p))}`;
   if (a.id === 'purge') { let n = 0; for (const k of ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln', 'brand']) if (p.s[k]) n += (k === 'poison' || k === 'chill') ? p.s[k].stacks : 1; return n ? `해제 ${n} → ${r1(n * 5 * dotMul(p) * dmgMult(p))}` : '해제할 것 없음'; }

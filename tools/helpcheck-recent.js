@@ -3,6 +3,10 @@
 module.exports = function ({ E, add, note, source }) {
   const growth = (points, weapon = 8, spell = true) => E(`(() => { const p=mkPlayer('spellblade',{},{}); p.stat={str:${points},int:${points}}; p.gear={wpn:${weapon}}; return skillBaseDamage(p,{id:'sb_check',kind:'${spell ? 'spell' : 'cut'}'},10); })()`);
   const close = (a, b) => Math.abs(a - b) < 1e-9;
+  const focusGrowth = dex => E(`(() => { const p=mkPlayer('hunter',{}, {dex:${dex}}),s=SK2.h_burst,f=s.fx.find(e=>e.k==='focusBurst'); return skillResourceDamage(p,s,f,f.n); })()`);
+  add('help', '추적을 소모하는 추가 피해는 민첩 1점마다', 'FOCUS_STAT_PCT=2, 추적 소모 피해 helper: 1점당 기준의2%', () => E('FOCUS_STAT_PCT')===2 && close(focusGrowth(1)-focusGrowth(0),focusGrowth(0)*.02) && E('runSkill2.toString()').includes('skillResourceDamage(p, s, fb, fb.n * fOf(e))'));
+  add('help', '추적 1겹당 기준 추가 피해 8이면', '실제 추적 소모 helper: 민첩0/10/20 → 8/9.6/11.2', () => [0,10,20].every((dex,i)=>close(focusGrowth(dex),[8,9.6,11.2][i])));
+  add('help', '스킬 기본 피해의 4% 성장과 따로 계산하며', '기본4%와 추적 소모2% 분리, focusAdd·추적 상한 유지', () => E('SKILL_STAT_PCT')===4 && E('FOCUS_STAT_PCT')===2 && E('HUNT.focusMax')===3 && E('HUNT.addMax')===2 && E('runSkill2.toString()').includes('Math.min(HUNT.addMax, cur + fa.n)'));
   add('help', '캐릭터를 최대 8개 보관', 'SAVE_MAX=8', E => E('SAVE_MAX') === 8);
   add('help', '원소술사는 열충격과 화상을 소모해 주는 추가 피해도 2%', 'dotMul: 지능 10 → 1.2, 열충격·화상 소모 추가 피해에 적용', E => E(`(() => { const p=mkPlayer('elementalist',{},{}); p.stat={int:10}; return Math.abs(dotMul(p)-1.2)<1e-9; })()`) && E('elemShock.toString()').includes('dotMul(b.p)') && E('runSkill2.toString()').includes('bo.per * preI[e.id] * dotMul(p)'));
   add('help', '공격 능력치 1점마다 기준 피해의 4%', 'SKILL_STAT_PCT=4, 기준 10에 1점 → 10.4', E => E('SKILL_STAT_PCT') === 4 && close(growth(1), 10.4));
