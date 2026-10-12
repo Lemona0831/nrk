@@ -512,7 +512,7 @@ const SKILLS2 = {
     { id: 'sb_bladeward', row: 1, b: '마갑', tier: '하급', n: '마갑참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'ward', n: 6 }] },
     { id: 'sb_counter', row: 1, b: '마갑', tier: '하급', n: '맞받아 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 16 }, { k: 'alt', ward: 4 }] },
     { id: 'sb_bolt', row: 2, b: '마갑', tier: '하급', n: '마갑탄', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'wardDmg', per: 0.5, spend: 0.5, cap: 12 }] },
-    { id: 'sb_unravel', row: 2, b: '마갑', tier: '하급', n: '마력 교란', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'weak', n: 2 }, { k: 'alt', protect: 2 }] },
+    { id: 'sb_unravel', row: 2, b: '마갑', tier: '하급', n: '마력 교란', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'weak', n: 2 }, { k: 'alt', protect: 1 }] },
     { id: 'sb_shell', row: 3, b: '마갑', tier: '하급', n: '마갑 전개', kind: 'spell', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'ward', n: 18 }, { k: 'st', s: 'protect', n: 1 }] },
     { id: 'sb_beatcut', row: 3, b: '마갑', tier: '하급', n: '교차참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 8 }, { k: 'alt', run: 2, brk: 30 }] },
     { id: 'sb_rebuke', row: 4, b: '마갑', tier: '하급', n: '마갑 파쇄', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 5 }, { k: 'wardBurn', mul: 2.5, max: 6 }, { k: 'brk', n: 21 }] },
