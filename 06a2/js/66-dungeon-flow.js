@@ -162,7 +162,7 @@ const STAT_BRANCH_GUIDE = {
   assassin: [
     '민첩은 베기 기본 피해, 지능은 독 피해와 독 격발을 높입니다. 독 흡수의 회복은 의지에 영향을 받습니다.',
     '독을 터뜨리는 피해는 지능으로 성장합니다. 민첩은 함께 쓰는 베기와 흘리기를, 체력은 생존을 보강합니다.',
-    '베기 기본 피해는 민첩으로 성장합니다. 민첩은 흘리기 피해 감소와 최대 스태미나도 높입니다.'
+    '민첩은 베기와 기본·강공격 피해, 흘리기 피해 감소와 최대 스태미나를 높입니다. 기본·강공격은 힘이 더 높으면 힘을 사용합니다.'
   ],
   warden: [
     '의지는 일반 보호막 생성, 체력은 생명력과 보호막 상한을 높입니다. 비율 채우기는 정해진 목표까지만 채웁니다.',
@@ -170,8 +170,8 @@ const STAT_BRANCH_GUIDE = {
     '힘은 기본 피해와 붕괴를 높입니다. 체력으로 버틸 힘을 보강하고, 민첩은 흘리기와 최대 스태미나에 투자할 때 씁니다.'
   ],
   hunter: [
-    '민첩은 스킬 기본 피해, 힘은 기본·강공격을 높입니다. 추적 비례 추가 피해에는 기본 피해의 성장 배율이 붙지 않습니다.',
-    '민첩은 각 타격의 기본 피해를 높입니다. 출혈 피해는 지능, 기본·강공격은 힘으로 성장합니다.',
+    '민첩은 기본·강공격과 스킬 기본 피해를 높입니다. 기본·강공격은 힘이 더 높으면 힘을 사용합니다. 추적 추가 피해는 별도입니다.',
+    '민첩은 각 타격의 기본 피해를 높입니다. 출혈 피해는 지능, 기본·강공격은 힘과 민첩 중 높은 값으로 성장합니다.',
     '민첩은 스킬 기본 피해·흘리기·최대 스태미나를 높입니다. 빠르기는 행동 순서에 영향을 주며 가속 자원과는 별도입니다.'
   ],
   butcher: [
@@ -228,19 +228,20 @@ function statGrowthPreview(p, k, points = 3) {
   const range = values => { const a = Math.min(...values), b = Math.max(...values); return a === b ? a + '%' : a + '~' + b + '%'; };
   if (damage.length) out.push('장착 스킬 기본 피해 +' + range(damage));
   if (resource.length) out.push('장착 스킬 자원 추가 피해 +' + range(resource));
-  if (k === 'str') out.push('무기 공격의 힘 배율 +' + pct(1 + stat(p, k) * .01, 1 + stat(up, k) * .01) + '%');
+  if (k === 'str' || k === weaponGrowthStat(p)) out.push('기본·강공격 피해 +' + pct(1 + weaponStatBonus(p), 1 + weaponStatBonus(up)) + '%');
   if (k === 'dex') out.push('흘리기 감소 ' + r1(parryRed(p) * 100) + '% → ' + r1(parryRed(up) * 100) + '%');
   if (k === 'int') out.push('중독·출혈·화상 배율 +' + pct(dotMul(p), dotMul(up)) + '%');
   if (k === 'wil') out.push('일반 보호막 생성·회복 배율 +' + pct(healMul(p), healMul(up)) + '% (상한에 닿기 전)', '상태 저항 ' + Math.min(25, stat(p, k)) + '% → ' + Math.min(25, stat(up, k)) + '%');
   return out.join(' · ');
 }
 function statNext(p, k) {
-  const s = stat(p, k), B = BUILDS[p.build]; const up = Object.assign({}, p, { stat: Object.assign({}, p.stat, { [k]: s + 1 }) });
-  if (k === 'str') return `생명력 ${calcHpMax(p)} → ${calcHpMax(up)}, 무기 공격 피해 +${s}% → +${s + 1}%, 힘 기반 스킬 피해 +${s * SKILL_STAT_PCT}% → +${(s + 1) * SKILL_STAT_PCT}%, 내가 채우는 붕괴 +${s}% → +${s + 1}%` + ((s + 1) % 10 === 0 ? '. 10점: 강공격 붕괴 +5' : '');
-  if (k === 'dex') return `스태미나 ${calcStMax(p)} → ${calcStMax(up)}, 암살자·사냥꾼 스킬 피해 +${s * SKILL_STAT_PCT}% → +${(s + 1) * SKILL_STAT_PCT}%, 흘리기 감소 ${Math.round(parryRed(p) * 1000) / 10}% → ${Math.round(parryRed(up) * 1000) / 10}%, 빠르기 +${(s * 0.5).toFixed(1)}% → +${((s + 1) * 0.5).toFixed(1)}%` + ((s + 1) % 10 === 0 ? '. 10점: 흘리기 스태미나 −1' : '');
+  const s = stat(p, k); const up = Object.assign({}, p, { stat: Object.assign({}, p.stat, { [k]: s + 1 }) });
+  const weapon = k === 'str' || k === weaponGrowthStat(p) ? `기본·강공격 피해 보너스 +${r1(weaponStatBonus(p) * 100)}% → +${r1(weaponStatBonus(up) * 100)}%, ` : '';
+  if (k === 'str') return `생명력 ${calcHpMax(p)} → ${calcHpMax(up)}, ${weapon}힘 기반 스킬 피해 +${s * SKILL_STAT_PCT}% → +${(s + 1) * SKILL_STAT_PCT}%, 내가 채우는 붕괴 +${s}% → +${s + 1}%` + ((s + 1) % 10 === 0 ? '. 10점: 강공격 붕괴 +5' : '');
+  if (k === 'dex') return `스태미나 ${calcStMax(p)} → ${calcStMax(up)}, ${weapon}암살자·사냥꾼 스킬 피해 +${s * SKILL_STAT_PCT}% → +${(s + 1) * SKILL_STAT_PCT}%, 흘리기 감소 ${Math.round(parryRed(p) * 1000) / 10}% → ${Math.round(parryRed(up) * 1000) / 10}%, 빠르기 +${(s * 0.5).toFixed(1)}% → +${((s + 1) * 0.5).toFixed(1)}%` + ((s + 1) % 10 === 0 ? '. 10점: 흘리기 스태미나 −1' : '');
   if (k === 'con') return `생명력 ${calcHpMax(p)} → ${calcHpMax(up)}`;
   if (k === 'wil') return `일반 보호막 생성과 회복 +${s * 2}% → +${(s + 1) * 2}% (상한까지), 해로운 상태를 버틸 확률 ${Math.min(25, s)}% → ${Math.min(25, s + 1)}%`;
-  return `주문 기본 피해 +${s * SKILL_STAT_PCT}% → +${(s + 1) * SKILL_STAT_PCT}%, ` + (isV2(p) ? '' : `마나 ${calcMpMax(p)} → ${calcMpMax(up)}, `) + `${p.build === 'elementalist' ? '상태 효과(중독·출혈·화상)·열충격·화상 소모 추가 피해' : isV2(p) ? '중독·출혈·화상 피해' : '지속 피해와 정화 피해'} +${s * 2}% → +${(s + 1) * 2}%` + ((s + 1) % 10 === 0 && !isV2(p) ? '. 10점: 독 격발 붕괴 +5' : '');
+  return weapon + `주문 기본 피해 +${s * SKILL_STAT_PCT}% → +${(s + 1) * SKILL_STAT_PCT}%, ` + (isV2(p) ? '' : `마나 ${calcMpMax(p)} → ${calcMpMax(up)}, `) + `${p.build === 'elementalist' ? '상태 효과(중독·출혈·화상)·열충격·화상 소모 추가 피해' : isV2(p) ? '중독·출혈·화상 피해' : '지속 피해와 정화 피해'} +${s * 2}% → +${(s + 1) * 2}%` + ((s + 1) % 10 === 0 && !isV2(p) ? '. 10점: 독 격발 붕괴 +5' : '');
 }
 /* 3챕터 이벤트의 "다음 전투" (11.1절): 다음 일반 · 매복 전투에만 붙는다 */
 function next3Room(room, n3) {

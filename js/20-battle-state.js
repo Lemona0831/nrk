@@ -15,6 +15,9 @@ const ST_REGEN = 10; // 스태미나 자연 회복 (라운드가 끝날 때마�
 const gearOf = p => p.gear || START_GEAR;
 function wpnDmg(p) { return gearOf(p).wpn * ((BUILDS[p.build] || {}).wpnMul || 1); } // wpnMul: 직업마다 무기 피해 배율 (사냥꾼 활 55%: 후열에 바로 닿는 물리직, 10월 5일)
 function basicBase(p) { return wpnDmg(p) * (isCaster(p) && !isV2(p) ? 0.9 : 1) * (hasIt(p, 'venomring') ? 0.9 : 1); }
+// 기본·강공격은 한 능력치만 사용한다. 기존 힘 투자도 보존한다.
+function weaponGrowthStat(p) { return p.build === 'assassin' || p.build === 'hunter' ? 'dex' : p.build === 'elementalist' || p.build === 'bloodmage' ? 'int' : 'str'; }
+function weaponStatBonus(p) { return .01 * Math.max(stat(p, 'str'), stat(p, weaponGrowthStat(p))); }
 const HEAVY_V2 = 1.5; // 0.6a.2 직업의 강공격 배율 (도움말·설명 창도 이 값을 쓴다)
 function heavyBase(p) { return wpnDmg(p) * (isCaster(p) && !isV2(p) ? 1.6 : isV2(p) ? HEAVY_V2 : 1.8) * (p.eq.weapon === 'twin' ? 0.8 : 1); } // 0.6a.2: 강공격 180% → 150% (10월 3일: 공통 행동이 갈래 스킬보다 세서 갈래 성격이 묻혔다)
 function flaskHealFrac(p) { return (gearOf(p).flask + (hasBt(p, 'mercy') ? 0.1 : 0) + fxVal(p, 'heal', 0, (a, v) => a + v)) * fxVal(p, 'healMul', 1, (a, v) => a * v) * (p.eq.flask === 'chalice' ? 0.9 : p.eq.flask === 'boilflask' ? 0.75 : p.eq.flask === 'bloodoil' ? 0.8 : 1); }

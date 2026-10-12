@@ -97,7 +97,7 @@ function outDmg(b, base, o) {
   if (b.cur) d *= fxMul(p, 'out', b, p, b.cur);
   if (hasBt(p, 'wrath')) d *= 1.1; if (hasBt(p, 'snuff')) d *= 0.95; if (hasBt(p, 'procession')) d *= 0.9; if (hasBt(p, 'herald')) d *= 0.95;
   if (p.eq.weapon === 'hook' && o.weapon) d *= 0.85;
-  if (o.weapon) d *= 1 + 0.01 * stat(p, 'str');
+  if (o.weapon) d *= 1 + weaponStatBonus(p);
   if (p.eq.amulet === 'bloodpact' && p.hp < p.hpMax * 0.5) d *= 1.2;
   if (p.furyNext && !o.ctr) { d *= 1.1; p.furyNext = 0; } // ctr: 수도승 되받기는 다음 공격 몫을 쓰지 않는다
   if (p.rcN && p.eq.gloves === 'ragechain' && !o.ctr) { d *= 1 + 0.04 * p.rcN; b.rcUsed = 1; }

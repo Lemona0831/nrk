@@ -6,6 +6,8 @@ module.exports = function (api) {
   const text = fs.readFileSync(path.join(api.ROOT, 'docs/현행-통합-기획서.md'), 'utf8');
   api.source('doc-current', text.split(/\r?\n/).map((l, i) => ({ id: 'L' + (i + 1), text: l.replace(/^[-|#>*\s]+/, '').replace(/\*\*/g, '').replace(/`/g, '') })).filter(x => /\d/.test(x.text)));
   const D = 'doc-current';
+  add(D, '기본·강공격 보너스 = 사용하는 능력치', '실제 outDmg: 네 직업은 힘/주 능력치 중 높은 값, 나머지 힘', E => E(`(() => {const primary={assassin:'dex',hunter:'dex',elementalist:'int',bloodmage:'int'};for(const build of Object.keys(TREE2))for(const str of [0,10,30])for(const attack of [0,20]){const p=mkPlayer(build,{}, {str,dex:attack,int:attack}),b=newBattle(p,[mkEnemy('bruiser',false,0)],{}),expected=10*(1+.01*(primary[build]?Math.max(str,attack):str));if(Math.abs(outDmg(b,10,{weapon:1})-expected)>1e-7)return false;}return true;})()`));
+  add(D, '힘 10·민첩 20인 사냥꾼의 보너스', '실제 기준 피해 10: 12→12.3, 현재 대비2.5%', E => E(`(() => {const p=mkPlayer('hunter',{}, {str:10,dex:20}),b=newBattle(p,[mkEnemy('bruiser',false,0)],{}),a=outDmg(b,10,{weapon:1});p.stat.dex+=3;const c=outDmg(b,10,{weapon:1});return Math.abs(a-12)<1e-7&&Math.abs(c-12.3)<1e-7&&Math.abs((c/a-1)*100-2.5)<1e-7;})()`));
   const poolStat = ch => E(`(() => { const s = {}, g = {}; for (const k of poolOf(${ch})) { const sl = tplKind(k), gr = ITEMS[k].g || "n"; s[sl] = (s[sl] || 0) + 1; g[gr] = (g[gr] || 0) + 1; } return { n: poolOf(${ch}).length, s, g }; })()`);
   add(D, '기준일 · 판:', '상수: VERSION, CHANGE_VER는 해당 버전의 안내 제목', E => E('VERSION') === '0.7.0' && E('CHANGE_VER').startsWith(E('VERSION')) && text.includes(E('VERSION')));
   add(D, '속도 1.5 이상 적은 끝에 한 번 더', '상수: RND_TWICE=1.5', E => E('RND_TWICE') === 1.5);

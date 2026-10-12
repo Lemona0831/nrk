@@ -123,10 +123,10 @@ function unequipUid(run, slot, ctx) {
 function discardUid(run, uid) { const why = itemRemoveWhy(run, uid); if (why) return why; const bi = run.bag.indexOf(uid); if (bi < 0) return '가방에 없는 장비입니다'; run.bag.splice(bi, 1); const it = run.inv[uid]; delete run.inv[uid]; (run.discards = run.discards || []).push({ room: run.room, item: it.tpl, g: it.g, t: Date.now() }); return ''; }
 /* 비교: 그 장비를 slot에 꼈을 때의 엔진 값 */
 function gearStats(p) { return { hp: p.hpMax, mp: p.mpMax, st: p.stMax, basic: basicBase(p), heavy: heavyBase(p), flask: flaskHealFrac(p), heavyCost: heavyCost(p), lifeCap: flaskCap(p, 'life'), manaCap: flaskCap(p, 'mana'), stamCap: flaskCap(p, 'stam') }; }
-// 영구 수치만 비교합니다. 공격 기준은 무기·직업 배율·힘이며 적과 전투 중 보정은 제외합니다.
+// 영구 수치만 비교합니다. 공격 기준은 무기·직업 배율·공격 능력치이며 적과 전투 중 보정은 제외합니다.
 function growthSnapshot(p) {
-  return { attack: r1(basicBase(p) * (1 + 0.01 * stat(p, 'str'))), hp: p.hpMax, st: p.stMax,
-    str: stat(p, 'str'), int: stat(p, 'int') * 2, wil: stat(p, 'wil') * 2,
+  return { attack: r1(basicBase(p) * (1 + weaponStatBonus(p))), hp: p.hpMax, st: p.stMax,
+    str: r1(weaponStatBonus(p) * 100), int: stat(p, 'int') * 2, wil: stat(p, 'wil') * 2,
     parry: Math.round(parryRed(p) * 1000) / 10, flask: Math.round(flaskHealFrac(p) * 1000) / 10,
     cost: heavyCost(p), life: flaskCap(p, 'life'), mana: flaskCap(p, 'mana'), stam: flaskCap(p, 'stam') };
 }
