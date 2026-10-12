@@ -33,6 +33,7 @@ function setTabGo(k, focusTab) {
   document.addEventListener('toggle', ev => {
     const d = ev.target; if (!d || !d.isConnected) return;
     if (d.id === 'statgrowth' && G.sheet && G.sheet.kind === 'stats') { G.sheet.data.growthOpen = d.open; return; }
+    if (d.id === 'statbranches' && G.sheet && G.sheet.kind === 'stats') { G.sheet.data.branchGuideOpen = d.open; return; }
     if (!d.classList || !d.classList.contains('hdet')) return;
     if (d.id === 'hudset') G.hudItemsOpen = d.open; else if (d.id === 'hudedit') G.hudListOpen = d.open;
   }, true);
