@@ -171,7 +171,7 @@ function hurtPlayer(b, raw, o) {
   const actualTaken = Math.max(0, Math.min(p.hp, d));
   const damageStats = b.damageStats || (b.damageStats = { v: 0, dealt: 0, taken: 0 }); damageStats.taken += actualTaken;
   p.hp -= d;
-  if (d > 0 && o.src && !o.dot && isBu(p)) p.tookAcc = (p.tookAcc || 0) + d; // 받은 피해 (숨겨진 직업 1): 적의 직접 공격으로 실제로 잃은 생명력
+  if (actualTaken > 0 && o.src && !o.dot && isBu(p)) p.tookAcc = (p.tookAcc || 0) + actualTaken; // 남은 생명력을 넘는 초과 피해는 자원에 넣지 않는다.
   if (d > 0) fxRun(p, 'onHurt', b, p, o, d);
   if (d > 0 && !o.dot && p.eq.gloves === 'ragechain') p.rcN = Math.min(5, (p.rcN || 0) + 1);
   if (d > 0 && o.charged && hasIt(p, 'fury')) { p.furyNext = 1; logp(b, 'good', '분노의 반지가 달아오른다. 다음 공격 +10%'); }

@@ -79,10 +79,15 @@ module.exports = function (api) {
   // ===== 제단 =====
   const ALT = E('ALTARS.map(a => ({ id: a.id, d: a.d }))');
   api.source('world-altars', ALT.map(a => ({ id: a.id, text: pref(a.id, a.d) })));
-  const altH = k => L80.filter(l => l.includes("R.altar === '" + k + "'")).join('\n');
-  api.add('world-altars', '[blood] ', '80-events.js altar blood hpPen', () => E('ALTARS.find(a => a.id === "blood").d').includes('최대 생명력 ' + Math.round(nx(altH('blood'), /p\.hpPen \|\| 0\) \+ ([\d.]+)/) * 100) + '%를'));
-  api.add('world-altars', '[gold] ', '66-dungeon-flow.js altarGold · ALTARS.gold.cost[0]', () => E('ALTARS.find(a => a.id === "gold").d').includes('골드 ' + E('altarGold({ ch: 1 })') + '을 내면') && E('ALTARS.find(a => a.id === "gold").cost[0]') === E('altarGold({ ch: 1 })') && /run\.gold -= altarGold\(run\)/.test(altH('gold')));
-  api.add('world-altars', '[scale] 최대 생명력', '80-events.js altar scale hpPen', () => { const t = E('ALTARS.find(a => a.id === "scale").d'); return t.includes('최대 생명력 ' + Math.round(nx(altH('scale'), /p\.hpPen \|\| 0\) \+ ([\d.]+)/) * 100) + '%를') && t.includes('능력치 ' + nx(altH('scale'), /pts: (\d+)/) + '점'); });
+  const altH = k => {
+    const blocks = [], re = new RegExp("if\\s*\\([^\\n]*?R\\.altar\\s*===\\s*'" + k + "'[^\\n]*?\\)\\s*\\{", 'g');
+    for (const m of S80.matchAll(re)) { let i=m.index+m[0].length, depth=1; while(i<S80.length&&depth) { if(S80[i]==='{') depth++; if(S80[i]==='}') depth--; i++; } blocks.push(S80.slice(m.index,i)); }
+    return blocks.join('\n');
+  };
+  api.add('world-altars', '[blood] ', '80-events.js altar blood hpPen', () => E('ALTARS.find(a => a.id === "blood").d').includes('최대 생명력 ' + Math.round(nx(altH('blood'), /p\.hpPen\s*\|\|\s*0\)\s*\+\s*([\d.]+)/) * 100) + '%를'));
+  const paysGold = () => /const\s+cost\s*=\s*altarGold\(run\)/.test(altH('gold')) && /run\.gold\s*-=\s*cost/.test(altH('gold'));
+  api.add('world-altars', '[gold] ', '66-dungeon-flow.js altarGold · ALTARS.gold.cost[0]', () => E('ALTARS.find(a => a.id === "gold").d').includes('골드 ' + E('altarGold({ ch: 1 })') + '을 내면') && E('ALTARS.find(a => a.id === "gold").cost[0]') === E('altarGold({ ch: 1 })') && paysGold());
+  api.add('world-altars', '[scale] 최대 생명력', '80-events.js altar scale hpPen', () => { const t = E('ALTARS.find(a => a.id === "scale").d'); return t.includes('최대 생명력 ' + Math.round(nx(altH('scale'), /p\.hpPen\s*\|\|\s*0\)\s*\+\s*([\d.]+)/) * 100) + '%를') && t.includes('능력치 ' + nx(altH('scale'), /pts:\s*(\d+)/) + '점'); });
 
   // 화면에 그려지는 제단 카드: 챕터마다 황금 촛대의 값이 다르다 (A.d의 40을 실제 값으로 바꿔 보인다)
   const altUi = [];
@@ -90,7 +95,7 @@ module.exports = function (api) {
   const withRun = (ch, body) => E('(function(){ const o = G.run; G.run = ' + FAKE.replace('CH', ch) + '; try { ' + body + ' } finally { G.run = o; } })()');
   for (const ch of [1, 2, 3]) altUi.push({ id: 'gold.ch' + ch, text: strip(withRun(ch, "return vRoom(G.run, { type: 'altar', altar: 'gold' });")).replace(/가진 골드 \d+/, '') });
   api.source('world-altars-ui', altUi);
-  for (const ch of [1, 2, 3]) api.add('world-altars-ui', '골드 ' + E('altarGold({ ch: ' + ch + ' })') + '을 내면', '66-dungeon-flow.js altarGold(ch' + ch + ') = ALTARS.gold.cost', () => E('altarGold({ ch: ' + ch + ' })') === E('ALTARS.find(a => a.id === "gold").cost[' + (ch - 1) + ']') && /run\.gold -= altarGold\(run\)/.test(altH('gold')));
+  for (const ch of [1, 2, 3]) api.add('world-altars-ui', '골드 ' + E('altarGold({ ch: ' + ch + ' })') + '을 내면', '66-dungeon-flow.js altarGold(ch' + ch + ') = ALTARS.gold.cost', () => E('altarGold({ ch: ' + ch + ' })') === E('ALTARS.find(a => a.id === "gold").cost[' + (ch - 1) + ']') && paysGold());
 
   // ===== 성소 =====
   const SH = E('SHRINES.map(s => ({ id: s.id, d: s.d }))');
@@ -246,7 +251,7 @@ module.exports = function (api) {
   // ===== 이벤트 · 성소 · 제단 처리 중 알림(toast)과 시트 제목에 찍히는 글 (80-events.js의 글을 그대로 읽는다) =====
   const tl = {
     shrine: lit(S80, /toast\('(성소의 힘이 \d+개 방 동안 함께합니다)'\)/),
-    scale: lit(S80, /why: '(유리 저울에서 능력치 \d+점)'/),
+    scale: lit(S80, /why:\s*'(유리 저울에서 능력치 \d+점)'/),
     refundA: lit(S80, /SK2\[c\]\.n \+ '( 칸을 되돌렸습니다\. 포인트 \+\d+)'/).trim(),
     refundB: lit(S80, /case 'trefund'[^\n]*toast\('(되돌렸습니다\. 포인트 \+\d+)'\)/),
     camel: lit(S80, /toast\('(짐에서 소모품 셋을 찾았습니다\. 다음 전투에 화상 \d+)'\)/),
@@ -258,7 +263,7 @@ module.exports = function (api) {
   api.source('world-toasts', Object.entries(tl).map(([id, t]) => ({ id, text: pref(id, t) })));
   const tt = (tag, loc, ev2, fn) => api.add('world-toasts', sentFind(tag, tl[tag], loc), ev2, fn);
   tt('shrine', '성소의 힘이', '80-events.js run.buffs[R.shrine] = 4 → 방 수 = 값 − 1', () => durOk && tl.shrine.includes(shrineRooms + '개 방 동안'));
-  tt('scale', '유리 저울', '80-events.js altar scale: openSheet stats pts', () => tl.scale.includes('능력치 ' + nx(altH('scale'), /pts: (\d+)/) + '점'));
+  tt('scale', '유리 저울', '80-events.js altar scale: openSheet stats pts', () => tl.scale.includes('능력치 ' + nx(altH('scale'), /pts:\s*(\d+)/) + '점'));
   tt('refundA', '포인트', '66-dungeon-flow.js refundDeepest: t.pts++ (포인트 1 돌려줌)', () => tl.refundA.endsWith('+' + (/t\.pts\+\+/.test(S66) ? 1 : NaN)));
   tt('refundB', '포인트', '22-class-tree-rules.js treeRefund: t.pts++ (포인트 1 돌려줌)', () => tl.refundB.endsWith('+' + (/t\.open = t\.open\.filter\(x => x !== id\); t\.pts\+\+;/.test(S22) ? 1 : NaN)));
   tt('camel', '화상', '80-events.js camel loot: n3pre ignite n', () => tl.camel.endsWith('화상 ' + nx(H('camel', 'loot'), /n3pre\(run, 'ignite', (\d+)\)/)));

@@ -7,7 +7,7 @@ module.exports = function (api) {
   api.source('doc-current', text.split(/\r?\n/).map((l, i) => ({ id: 'L' + (i + 1), text: l.replace(/^[-|#>*\s]+/, '').replace(/\*\*/g, '').replace(/`/g, '') })).filter(x => /\d/.test(x.text)));
   const D = 'doc-current';
   const poolStat = ch => E(`(() => { const s = {}, g = {}; for (const k of poolOf(${ch})) { const sl = tplKind(k), gr = ITEMS[k].g || "n"; s[sl] = (s[sl] || 0) + 1; g[gr] = (g[gr] || 0) + 1; } return { n: poolOf(${ch}).length, s, g }; })()`);
-  add(D, '기준일 · 판:', '상수: VERSION(CHANGE_VER)', E => /^0\.7\.0(-\d+)?$/.test(E('CHANGE_VER')) && text.includes(E('CHANGE_VER')));
+  add(D, '기준일 · 판:', '상수: VERSION, CHANGE_VER는 해당 버전의 안내 제목', E => E('VERSION') === '0.7.0' && E('CHANGE_VER').startsWith(E('VERSION')) && text.includes(E('VERSION')));
   add(D, '속도 1.5 이상 적은 끝에 한 번 더', '상수: RND_TWICE=1.5', E => E('RND_TWICE') === 1.5);
   add(D, '스킬 쿨타임(3~10턴', '전체 스킬 3~10턴, 시작 스킬 4~6턴', E => E(`(()=>{const all=Object.values(SKILLS2).flat(), a=all.map(s=>s.cd), b=all.filter(s=>s.start).map(s=>s.cd);return Math.min(...a.filter(x=>x>0))===3&&Math.max(...a)===10&&Math.min(...b)===4&&Math.max(...b)===6;})()`));
   add(D, '방어(스태미나 20', '실행: 방어 20 · 흘리기 30 · 감소 60% · 암살자 70% · 강적 20%p', E => E('guardCost(__mk("warden").p)') === 20 && E('dodgeCost(__mk("warden").p)') === 30 && E('parryRed(__mk("warden").p)') === 0.6 && E('parryRed(__mk("assassin").p)') === 0.7 && E('PARRY_BIG') === 0.2);

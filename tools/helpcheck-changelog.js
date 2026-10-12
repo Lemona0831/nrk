@@ -26,7 +26,8 @@ module.exports = function (api) {
   add(S, '일곱 장면', '데이터: TUT.length=' + E('TUT.length'), E => E('TUT.length') === 7);
   add(S, '쿨타임으로 씁니다', '상수: EQUIP_SLOTS2=' + E('EQUIP_SLOTS2') + ' (4칸), BUILDS.assassin.v2는 마나 없음', E => E('EQUIP_SLOTS2') === 4 && !!E('BUILDS.assassin.v2') && !E('BUILDS.assassin.mp'));
   add(S, '연 스킬 중 4칸을 끼워', '상수: EQUIP_SLOTS2=' + E('EQUIP_SLOTS2'), E => E('EQUIP_SLOTS2') === 4);
-  note(S, '만들 때 15점을 나누고 레벨마다 2점', '0.7.0 출시 이력. 0.7.0-5부터 능력치 지급량 3점이며 현재 도움말과 성장 시험에서 대조');
+  add(S, '만들 때 20점을 나누고 레벨마다 3점', 'STAT_START=20, LV_POINTS=3', E => E('STAT_START') === 20 && E('LV_POINTS') === 3);
+  add(S, '시작 능력치 포인트는 20점', 'STAT_START=20, LV_POINTS=3', E => E('STAT_START') === 20 && E('LV_POINTS') === 3);
   add(S, '포인트는 만들 때 1점이고', 'TREE2 pts=1, 레벨마다 +1', E => E('Object.values(TREE2).every(T => T.pts === 1)') && E(`(() => { const run = { build: "assassin", lv: 10, tree: { pts: 0, open: [], spent: {} } }; treeFix(run); return run.tree.pts; })()`) === 0 && E(`(() => { const run = { build: "assassin", lv: 10, tree: { pts: 30, open: [], spent: {} } }; treeFix(run); return run.tree.pts; })()`) === 10);
   add(S, '순서 줄에서 차례를 미리 봅니다', '소스: 순서 줄 vOrder', E => E('typeof vOrder') === 'function');
   add(S, '능력치는 힘, 민첩, 지능, 체력, 의지 다섯입니다', '상수: STAT_KEYS=' + E('STAT_KEYS.join()') + ', STAT_START=' + E('STAT_START') + ', LV_POINTS=' + E('LV_POINTS'), E => E('STAT_KEYS.join()') === 'str,dex,int,con,wil' && E('STAT_START') === 20 && E('LV_POINTS') === 3);

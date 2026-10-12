@@ -112,12 +112,12 @@ function __hcBlob(k) { return JSON.stringify(IFX[k], (kk, v) => typeof v === 'fu
   C('한 적에게 피해 20.', 'dart 고급: −' + CM.dagger[1], () => near(CM.dagger[1], 20, 0.01));
   C('한 적에게 붕괴 +30.', 'consApply brk: 섬광 가루 붕괴 +' + CM.flash[0].toFixed(1) + '(스탯 배율 포함)', () => near(CM.flash[0], 30, 30 * 0.03));
   C('한 적에게 붕괴 +45.', 'brk 고급: 붕괴 +' + CM.flash[1].toFixed(1), () => near(CM.flash[1], 45, 45 * 0.03));
-  C('다음 공격 피해 +25%.', 'p.whet=0.25 · hurtEnemy d *= 1 + p.whet', () => near(CM.whet, 0.25) && srcHas('if (!o.dot && b.cur && b.p.whet) { d *= 1 + b.p.whet; b.p.whet = 0; }'));
-  C('한 적이 받는 다음 피해 +30%.', 'e.markDmg=0.3 · hurtEnemy d *= 1 + e.markDmg', () => near(CM.chalk, 0.3) && srcHas('if (!o.dot && e.markDmg) { d *= 1 + e.markDmg; e.markDmg = 0; }'));
+  C('다음 직접 피해 한 번 +25%.', 'p.whet=0.25 · hurtEnemy d *= 1 + p.whet', () => near(CM.whet, 0.25) && srcHas('if (!o.dot && b.cur && b.p.whet) { d *= 1 + b.p.whet; b.p.whet = 0; }'));
+  C('한 적이 받는 다음 직접 피해 한 번 +30%.', 'e.markDmg=0.3 · hurtEnemy d *= 1 + e.markDmg', () => near(CM.chalk, 0.3) && srcHas('if (!o.dot && e.markDmg) { d *= 1 + e.markDmg; e.markDmg = 0; }'));
   C('다음에 받는 공격 하나의 피해 −40%.', 'p.nextRed=0.4 · hurtPlayer d *= 1 − p.nextRed', () => near(CM.charm, 0.4) && srcHas('if (!o.dot && o.src && p.nextRed) { d *= 1 - p.nextRed; p.nextRed = 0; }'));
   C('적 모두에게 화상 2를 겁니다.', 'burnpiles: 적 모두 화상 ' + CM.oil.join(','), () => CM.oil.length > 0 && CM.oil.every(x => x === 2));
   C('종류마다 1씩 줄어듭니다.', 'trim: 약화 3→' + CM.mug[0] + ', 출혈 2→' + CM.mug[1], () => CM.mug[0] === 2 && CM.mug[1] === 1);
-  C('끌려 나온 적은 취약 1을 받습니다.', 'unearth: 취약 ' + CM.tamper.join(','), () => CM.tamper.every(x => x === 1));
+  C('공격 준비를 끊고 취약 1을 겁니다.', 'unearth: 취약 ' + CM.tamper.join(','), () => CM.tamper.every(x => x === 1));
   C('뼈벽 하나에 붕괴 30을 줍니다.', 'wallbreak addBreak 30 → 붕괴 +' + CM.pick.toFixed(1), () => near(CM.pick, 30, 30 * 0.03));
   C('한 적에게 둔화 2를 겁니다.', 'slow: 둔화 ' + CM.slow, () => CM.slow === 2);
   C('이 전투의 열기를 30 내립니다.', 'cool: 열기 60 → ' + (60 - CM.cool), () => CM.cool === 30 && E('CONS.awning.v') === 30);
@@ -226,7 +226,7 @@ function __hcBlob(k) { return JSON.stringify(IFX[k], (kk, v) => typeof v === 'fu
     echo: ["b.echoMul = 1 + 0.04 * p.echoN", "Math.min(3, (p.echoN"],
     vanguard: ["addBreak(b, b.vanguardTgt, 20)", "(p.eq.amulet === 'vanguard' ? 20 : 0)"],
     knot: ["p.eq.gloves === 'knot' && (id === 'burst' || id === 'release') ? 2 : 0", "const keep = knot ? Math.floor(n / 2) : 0"],
-    ledger: ["p.hpMax * 0.04 * hpCostMul(p)"],
+    ledger: ["p.hpMax * 0.06 * hpCostMul(p)"],
   };
   const PL = {};
   const verify = (k, s) => {

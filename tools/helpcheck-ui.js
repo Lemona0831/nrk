@@ -204,7 +204,7 @@ module.exports = function (api) {
   A('그 스킬의 피해 +4%(최대 세 번, +12%)', '메아리 반지(echo): echoN 최대 3 × 0.04 (v2에서는 풀에서 뺌)', () => has('32-player-action.js', 'Math.min(3, (p.echoN || 0) + 1)') && has('32-player-action.js', 'b.echoMul = 1 + 0.04 * p.echoN') && E('V2_OFF.includes("echo")'));
   A('전투가 시작되면 첫 공격이 빠른 행동이 되고, 그 공격의 붕괴 +20', '선봉의 깃발(vanguard): time ×0.5, vanguardTgt addBreak 20', () => has('32-player-action.js', 'time *= 0.5') && has('32-player-action.js', 'addBreak(b, b.vanguardTgt, 20)'));
   A('독 격발 · 상흔 방출 마나 +2', '잔향의 매듭(knot): skillCost +2 (v2에서는 풀에서 뺌)', () => has('24-clock-damage.js', "(id === 'burst' || id === 'release') ? 2 : 0") && E('V2_OFF.includes("knot")'));
-  A('강공격 비용을 생명력 4%로 치른다', '피의 장부(ledger): ledgerCost = hpMax × 0.04', () => has('24-clock-damage.js', 'p.hpMax * 0.04 * hpCostMul(p)'));
+  A('생명력의 6%를 내서 강공격', '피의 계산서(ledger): 스태미나 부족 시 ledgerCost = hpMax × 0.06', () => E('ledgerCost({hpMax:100,eq:{}},1)') === 6 && E('ledgerCost({hpMax:100,eq:{}},0)') === 0);
 
   // ───────── 늪의 어머니 · 나락의 나무 · 시험 상황 ─────────
   A('내게 중독을 2씩 건다', '늪의 어머니: addPoison(p, PSN.swampN) PSN.swampN = 2, 방어 중에는 안 건다', () => E('PSN.swampN') === 2 && has('24-clock-damage.js', 'if (!p.guard) { addPoison(b, p, PSN.swampN); }'));
@@ -267,7 +267,7 @@ module.exports = function (api) {
   // ───────── 상점 (46) ─────────
   A('살 때 값의 25%를 받습니다', 'sellOf = floor(priceOf × 0.25) (전설만 LEG_SELL 150 고정, 전설은 팔지 않음)', () => has('46-screens-shop.js', 'Math.floor(priceOf(it.g, it.ch) * 0.25)'));
   A('값은 레벨 × 10골드입니다', 'respec: cost = lv × 10 (80-events)', () => has('80-events.js', 'const cost = (run.lv || 1) * 10'));
-  A('챕터 1층으로 내려갑니다', 'enterChapter → dgInit: run.room = 1', () => has('66-dungeon-flow.js', 'run.room = 1; run.cur = null; run.path'));
+  A('1층으로 내려갑니다', 'enterChapter → dgInit: run.room = 1', () => has('66-dungeon-flow.js', 'run.room = 1; run.cur = null; run.path'));
 
   // ───────── 계정 · 캐릭터 만들기 (44) ─────────
   A('(12자까지)', '이름 12자: cnok slice(0, 12), maxlength=12', () => has('80-events.js', ".slice(0, 12)") && has('44-screens-account.js', 'maxlength="12"'));

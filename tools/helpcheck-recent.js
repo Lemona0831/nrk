@@ -1,0 +1,29 @@
+'use strict';
+// 최근 성장·세이브·보스 안내와 최신 업데이트의 숫자를 실제 규칙과 대조한다.
+module.exports = function ({ E, add, note, source }) {
+  const growth = (points, weapon = 8, spell = true) => E(`(() => { const p=mkPlayer('spellblade',{},{}); p.stat={str:${points},int:${points}}; p.gear={wpn:${weapon}}; return skillBaseDamage(p,{id:'sb_check',kind:'${spell ? 'spell' : 'cut'}'},10); })()`);
+  const close = (a, b) => Math.abs(a - b) < 1e-9;
+  add('help', '캐릭터를 최대 8개 보관', 'SAVE_MAX=8', E => E('SAVE_MAX') === 8);
+  add('help', '원소술사는 열충격과 화상을 소모해 주는 추가 피해도 2%', 'dotMul: 지능 10 → 1.2, 열충격·화상 소모 추가 피해에 적용', E => E(`(() => { const p=mkPlayer('elementalist',{},{}); p.stat={int:10}; return Math.abs(dotMul(p)-1.2)<1e-9; })()`) && E('elemShock.toString()').includes('dotMul(b.p)') && E('runSkill2.toString()').includes('bo.per * preI[e.id] * dotMul(p)'));
+  add('help', '공격 능력치 1점마다 기준 피해의 4%', 'SKILL_STAT_PCT=4, 기준 10에 1점 → 10.4', E => E('SKILL_STAT_PCT') === 4 && close(growth(1), 10.4));
+  add('help', '기준 피해 10인 스킬은 공격 능력치', '실제 skillBaseDamage(0/5/10/15/20)', () => [0,5,10,15,20].every((p,i) => close(growth(p), 10+i*2)));
+  add('help', '무기 피해가 8을 넘는 1마다 기준 피해의 2%', '시작 무기8, 무기9/13, 주문은 제외', () => close(growth(0,9,false),10.2) && close(growth(0,13,false),11) && close(growth(0,13,true),10));
+  add('help', '기준 피해 10에 무기 피해 13이면 피해 +1', '실제 무기 추가분 11−10', () => close(growth(0,13,false)-growth(0,8,false),1));
+  add('help', '계산: 능력치 피해 =', '실제 기준10·공격0/5/10/20점 성장', () => [0,5,10,20].every(p => close(growth(p),10*(1+p*.04))));
+  add('help', '무기 추가 피해 =', '무기7/8/9/13: 음수 보정 없음, 주문 제외', () => [7,8,9,13].every(w => close(growth(0,w,false),10*(1+Math.max(0,w-8)*.02)) && close(growth(0,w,true),10)));
+  add('items-cons', '해시계 +2(최대 6)', 'consApply rewind: 해시계 +2/상한6, 열·불씨−2', E => { const s=E('consApply.toString()'); return E('FOE_X.sundial.clock') === 6 && E('FOE_X.sundial.glassBack') === 2 && s.includes('Math.min(FOE_X.sundial.clock, (tgt.clock || 0) + FOE_X.sundial.glassBack)') && /Math\.max\(0, tgt\.glow - 2\)/.test(s) && /Math\.max\(0, tgt\.embers - 2\)/.test(s); });
+  add('ui-text', '강공격에 최대 생명력의 6% 소모', '실제 ledgerCost(100, 부족1)=6', E => E('ledgerCost({hpMax:100,eq:{}},1)') === 6);
+  const demand = (kind, hit) => E(`(() => { const p=mkPlayer('warden',{},{}), e=mkEnemy('bruiser',false,0), b=newBattle(p,[e],{}); addS(b,p,'brand',999,2,3); e.demand={turn:b.turnIdx,k:'${kind}',hit:${hit}}; abbotDemand(b); return st(p,'brand'); })()`);
+  add('ui-hud', '수도원장에게 피해를 주지 않으면 낙인 1 감소', 'abbotDemand 휴식 요구: 공격하지 않았을 때 2→1', () => demand('rest',false) === 1 && demand('rest',true) === 3);
+  add('ui-hud', '수도원장에게 피해를 주면 낙인 1 감소', 'abbotDemand 공격 요구: 공격했을 때 2→1', () => demand('atk',true) === 1 && demand('atk',false) === 3);
+  add('ui-hud', '열기 100에서 재폭풍', 'ch3Tick: 100 이상에서 예고·발동', E => E('ch3Tick.toString()').includes('b.heat >= 100'));
+  add('ui-hud', '내 중독이 10에 닿으면 부화', 'tickOnce: 중독10 이상이면 부화 처리', E => E('tickOnce.toString()').includes("st(p, 'poison') >= 10"));
+  for (const text of ['배분" min="0" max="', '남은 비율" min="0" max="100" value="', '사용 횟수" min="0" max="', '0은 미기록을 뜻하지 않습니다.']) note('ui-results',text,'관리자 입력 범위·기록 필드 설명. 게임 능력치·효과 수치 아님');
+  add('ui-results', '페이지 (25판씩)', 'vRunLogs: 한 페이지25판, ceil(rows/25)', E => E('vRunLogs.toString()').includes('Math.ceil(rows.length / 25)') && E('vRunLogs.toString()').includes('rows.slice(page * 25, (page + 1) * 25)'));
+  const latest=E('CHANGELOG[0]');
+  source('changelog-latest',latest.items.map((x,i)=>({id:String(i),text:x.k+': '+x.t})));
+  add('changelog-latest','스킬 6개의 효과','hasteSpend 스킬6개, 모두 ×1.5, 가속 겹 읽기·전체 타격 적용', E => E('SKILLS2.hunter.filter(s=>s.fx.some(f=>f.k==="hasteSpend")).length') === 6 && E('SKILLS2.hunter.filter(s=>s.fx.some(f=>f.k==="hasteSpend")).every(s=>s.fx.find(f=>f.k==="hasteSpend").mul===1.5)') && E('runSkill2.toString()').includes("st(p, 'haste') > 0") && E('runSkill2.toString()').includes('if (hspOn) base *= hsp.mul'));
+  add('changelog-latest','가속 1을 소모하며','kwDec 1회, 모든 타격에 ×1.5', E => E('runSkill2.toString()').includes("kwDec(p, 'haste'); hspOn = true"));
+  add('changelog-latest','기본 교대 보호막 4','BUILDS.spellblade.altWard=4', E => E('BUILDS.spellblade.altWard') === 4);
+  note('changelog-latest','해금 1 · 피해 자원','직업 공개 명칭의 번호. 효과 수치 아님');
+};
