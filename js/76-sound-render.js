@@ -115,7 +115,7 @@ function render() {
   fitDecide(fit); scrollPad(); if (fit) hudFreeAfter(); /* 자유 배치: 칸 높이를 재서 자리를 정한다(55-hud-free.js) */
   document.querySelectorAll('.tbl').forEach(d => { const c = d.querySelector('caption'); d.tabIndex = 0; d.setAttribute('role', 'region'); d.setAttribute('aria-label', (c && c.textContent) || '표'); }); /* 가로로 스크롤되는 표 영역은 키보드로 닿고 이름이 있어야 한다(10월 8일 axe: scrollable-region-focusable) */
   const f2 = document.querySelector('.hz-mid'); if (f2) f2.scrollTop = fy;
-  if (shk === 'settings') { const sh2 = document.querySelector('.sheet'); if (sh2 && hadSheet) sh2.scrollTop = shy; } /* 설정 창은 항목을 바꿔도 보던 자리에 둔다 */
+  if (shk === 'settings' || shk === 'stats') { const sh2 = document.querySelector('.sheet'); if (sh2 && hadSheet) sh2.scrollTop = shy; } /* 설정·능력치 창은 항목을 바꿔도 보던 자리에 둔다 */
   const l2 = document.querySelector('.side .blog'); if (l2) l2.scrollTop = ly;
   const same = G.lastScr === G.scr; G.lastScr = G.scr; // 화면이 바뀌면 맨 위에서 시작한다
   if (!G.sheet && !fit) window.scrollTo(0, same ? y : 0);

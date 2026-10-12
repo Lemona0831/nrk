@@ -42,12 +42,12 @@ function cfHint(b, a) {
   if (dp) { const n = a.aoe ? alive(b).reduce((m, e) => m + Math.min(dp.n || CONF.cap, stk(e, 'empower')), 0) : t ? Math.min(dp.n || CONF.cap, stk(t, 'empower')) : 0; out.push(n ? '벗김: 강화 ' + n : '벗길 강화 없음'); }
   let gain = 0;
   if (cl) { const r = cfTake(p, cl.only, cl.n, 'clean', 1);
-    if (cl.offer) out.push(r.c ? '바침 ' + r.c + ' → ' + [cl.dmg ? '피해 +' + r.c * cl.dmg : '', cl.brk ? '붕괴 +' + r.c * cl.brk : ''].filter(Boolean).join(' · ') : '바칠 짐 없음');
+    if (cl.offer) out.push(r.c ? '바침 ' + r.c + ' → ' + [cl.dmg ? '피해 +' + r1(skillResourceDamage(p,a.s,cl,r.c * cl.dmg)) : '', cl.brk ? '붕괴 +' + r.c * cl.brk : ''].filter(Boolean).join(' · ') : '바칠 짐 없음');
     else if (!r.c) out.push('지울 짐 없음'); else if (!r.e) out.push('고행 몫: 보호 없음');
     else { gain = Math.min(CONF.protMax, Math.ceil(r.e / CONF.per)); const L = [(cl.after ? '친 뒤 ' : '') + '지움 ' + r.c + ' → 보호 +' + gain]; if (cl.heal) L.push('생명력 +' + r1(r.e * cl.heal * healMul(p))); if (cl.stam) L.push('스태미나 +' + r.e * cl.stam); out.push(L.join(' · ')); if (cl.after) gain = 0; } }
   if (pd) { const X = pd.of === 'prot' ? Math.min(CONF.cap, stk(p, 'protect') + gain) : pd.of === 'burden' ? cfBurden(p) : pd.of === 'clean' ? Math.min(CONF.cap, b.cleanTurn && b.prepTurn === b.turnIdx ? b.cleanTurn : 0) : !t ? 0 : pd.of === 'tbad' ? Math.min(CONF.cap, CONF.kinds.reduce((m, k) => m + stk(t, k), 0)) : Math.min(CONF.cap, stk(t, pd.of));
     const W = { prot: '보호', burden: '짐', clean: '앞서 지운', weak: '약화', bleed: '출혈', tbad: '대상의 짐' }[pd.of];
-    if (!(pd.of === 'clean' && !X)) out.push([pd.per ? '+' + pd.per * X : '', pd.brk ? '붕괴 +' + pd.brk * X : ''].filter(Boolean).join(' · ') + ' (' + W + ' ' + X + ')' + (pd.spend && X ? ' · 보호를 씀' : '')); }
+    if (!(pd.of === 'clean' && !X)) out.push([pd.per ? '+' + r1(skillResourceDamage(p,a.s,pd,pd.per * X)) : '', pd.brk ? '붕괴 +' + pd.brk * X : ''].filter(Boolean).join(' · ') + ' (' + W + ' ' + X + ')' + (pd.spend && X ? ' · 보호를 씀' : '')); }
   const ms = f.filter(e => e.k === 'meSt' && CONF.kinds.includes(e.s)); if (ms.length) out.push('행동 뒤 ' + ms.map(e => KW_N[e.s] + ' ' + e.n).join(', '));
   if ((F('quick') || (cl && cl.quick)) && b.extraQuick) out.push('빠른 칸 덤은 이번 차례에 이미 받음');
   return out.join(' · ');
@@ -89,8 +89,8 @@ function skillHint0(b, a) {
   if (a.v2 && a.s) { const wb = a.s.fx.find(e => e.k === 'wardBurn'), wd = a.s.fx.find(e => e.k === 'wardDmg'); if (wb) { const take = Math.min(p.ward || 0, wb.max || Infinity); return take > 0 ? '보호막 ' + Math.round(take) + ' 태움 → 피해 ' + r1(take * wb.mul) : '보호막 없음: 태우기 피해 0'; } if (wd) { const w = wardDamageInfo(wd, p.ward); return (wd.spend ? '보호막 ' + r1(w.take) + ' 소모 → ' : '보호막 비례 ') + '추가 피해 +' + r1(w.bonus) + (wd.cap != null ? ' / 상한 ' + wd.cap : ''); } } // 파수꾼 (10월 4일: 보호막이 0이어도 다른 효과는 들어가 버튼은 쓸 수 있다)
   if (a.v2 && a.s && p.build === 'elementalist' && a.s.tgt !== 'self') return elemHint(b, a); // 원소술사: 열충격 미리 보기
   if (a.v2 && a.s && p.build === 'monk') { const fx = k => a.s.fx.find(e => e.k === k); const ki = st(p, 'empower'); const t = actTarget(b, a); const out = []; // 수도승 (10월 7일): 터뜨리기 · 기 비례 · 거두기 · 끊기 미리보기
-    const kb = fx('kiBurst'); if (kb) { const pre = kb.pre && t && st(t, 'chill') > 0 ? kb.pre : 0; const tk = Math.min(kb.max || KW.empower, ki + pre); out.push(tk ? '기 ' + tk + ' 터뜨림 → 피해 +' + tk * kb.per + (kb.brk ? ' · 붕괴 +' + tk * kb.brk : '') : '터뜨릴 기 없음'); }
-    const kp = fx('kiPer'); if (kp) out.push('기 ' + ki + ' → 피해 +' + kp.per * ki + ((a.s.hits || 1) > 1 ? '씩' : ''));
+    const kb = fx('kiBurst'); if (kb) { const pre = kb.pre && t && st(t, 'chill') > 0 ? kb.pre : 0; const tk = Math.min(kb.max || KW.empower, ki + pre); out.push(tk ? '기 ' + tk + ' 터뜨림 → 피해 +' + r1(skillResourceDamage(p,a.s,kb,tk * kb.per)) + (kb.brk ? ' · 붕괴 +' + tk * kb.brk : '') : '터뜨릴 기 없음'); }
+    const kp = fx('kiPer'); if (kp) out.push('기 ' + ki + ' → 피해 +' + r1(skillResourceDamage(p,a.s,kp,kp.per * ki)) + ((a.s.hits || 1) > 1 ? '씩' : ''));
     const kg = fx('kiGrow'); if (kg) out.push('기 → ' + Math.min(KW.empower, (Math.max(0, ki - 1) + (kg.add || 0)) * (kg.mul || 1)));
     const mi = a.s.fx.find(e => e.k === 'meSt' && e.if === 'chill'); if (mi) { const n = a.aoe ? alive(b).filter(e => e.row === 'front' && st(e, 'chill') > 0).length : t && st(t, 'chill') > 0 ? 1 : 0; out.push(n ? (a.aoe ? '둔화된 적 ' + n : '대상 둔화 ' + st(t, 'chill')) + ' → 기 +' + mi.n * n : '둔화 없음'); }
     const sx = fx('sealx'); if (sx && t && t.intent && SEAL_K.includes(t.intent.k)) out.push(t.strong || t.role === 'boss' ? '강적: 붕괴 +' + sx.brk : '지원을 끊음');

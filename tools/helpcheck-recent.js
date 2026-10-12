@@ -20,8 +20,13 @@ module.exports = function ({ E, add, note, source }) {
   add('ui-hud', '내 중독이 10에 닿으면 부화', 'tickOnce: 중독10 이상이면 부화 처리', E => E('tickOnce.toString()').includes("st(p, 'poison') >= 10"));
   for (const text of ['배분" min="0" max="', '남은 비율" min="0" max="100" value="', '사용 횟수" min="0" max="', '0은 미기록을 뜻하지 않습니다.']) note('ui-results',text,'관리자 입력 범위·기록 필드 설명. 게임 능력치·효과 수치 아님');
   add('ui-results', '페이지 (25판씩)', 'vRunLogs: 한 페이지25판, ceil(rows/25)', E => E('vRunLogs.toString()').includes('Math.ceil(rows.length / 25)') && E('vRunLogs.toString()').includes('rows.slice(page * 25, (page + 1) * 25)'));
-  const latest=E('CHANGELOG[0]');
-  source('changelog-latest',latest.items.map((x,i)=>({id:String(i),text:x.k+': '+x.t})));
+  const recent=E('CHANGELOG.filter(c=>["0.7.0 전투 자원 계산 수정","0.7.0 능력치 성장·비교 개선"].includes(c.v))');
+  source('changelog-latest',recent.flatMap(c=>c.items.map((x,i)=>({id:c.v+':'+i,text:x.k+': '+x.t}))));
+  add('changelog-latest','힘 1점마다 기준값의 1%','실제 기·짐 추가 피해의 힘0/1/10/20점 계수', E=>E(`(() => {const samples=[SK2.m_kifist,SKILLS2.confessor.find(s=>s.fx.some(f=>f.k==='perDmg'&&f.of==='burden'))];return samples.every(s=>{const f=s.fx.find(f=>skillResourceGrows(s,f));return [0,1,10,20].every(n=>Math.abs(skillResourceDamage(mkPlayer(s.id.startsWith('m_')?'monk':'confessor',{}, {str:n}),s,f,10)-10*(1+n*.01))<1e-9);});})()`));
+  add('changelog-latest','힘 10점은 기준 추가 피해의 110%','힘 10/20점의 실제 추가 피해는 기준 100에서 110/120', E=>E(`(() => {const s=SK2.m_kifist,f=s.fx.find(f=>f.k==='kiPer');return Math.abs(skillResourceDamage(mkPlayer('monk',{}, {str:10}),s,f,100)-110)<1e-9&&Math.abs(skillResourceDamage(mkPlayer('monk',{}, {str:20}),s,f,100)-120)<1e-9;})()`));
+  add('changelog-latest','3점 투자 시 성장 비교','9직업 모두 표시 함수가 3점 비교를 생성', E=>E(`Object.keys(TREE2).every(build=>STAT_KEYS.every(k=>{const p=mkPlayer(build,{},{});return typeof statGrowthPreview(p,k)==='string'&&statGrowthPreview(p,k).length>0;}))`));
+  add('ui-tree','3점 투자 시 성장 비교','실제 체력 3점 투자로 9직업 최대 생명력 +9를 표시', E=>E(`Object.keys(TREE2).every(build=>{const p=mkPlayer(build,{},{}),hp=calcHpMax(p);return statGrowthPreview(p,'con').includes('최대 생명력 '+hp+' → '+(hp+9));})`));
+  note('changelog-latest','해금 2 · 자원 피해','직업 공개 명칭의 번호. 효과 수치 아님');
   add('changelog-latest','스킬 6개의 효과','hasteSpend 스킬6개, 모두 ×1.5, 가속 겹 읽기·전체 타격 적용', E => E('SKILLS2.hunter.filter(s=>s.fx.some(f=>f.k==="hasteSpend")).length') === 6 && E('SKILLS2.hunter.filter(s=>s.fx.some(f=>f.k==="hasteSpend")).every(s=>s.fx.find(f=>f.k==="hasteSpend").mul===1.5)') && E('runSkill2.toString()').includes("st(p, 'haste') > 0") && E('runSkill2.toString()').includes('if (hspOn) base *= hsp.mul'));
   add('changelog-latest','가속 1을 소모하며','kwDec 1회, 모든 타격에 ×1.5', E => E('runSkill2.toString()').includes("kwDec(p, 'haste'); hspOn = true"));
   add('changelog-latest','기본 교대 보호막 4','BUILDS.spellblade.altWard=4', E => E('BUILDS.spellblade.altWard') === 4);

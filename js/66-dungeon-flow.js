@@ -157,12 +157,38 @@ function gainXp(run, n) {
 function gainGold(run, n, why) { const m = fxVal(run.p, 'goldMul', 1, (a, v) => a * v); const g = Math.round(n * m); run.gold = (run.gold || 0) + g; sfx('coin'); toast((why ? why + '. ' : '') + '골드 +' + g); return g; }
 
 function roomDef() { const run = G.run; return run.cur || fixedRoom(run.room) || {}; }
+// 표시 전용: 장착 스킬과 장비를 유지한 채 같은 능력치에 3점을 더한 비교.
+// 전투 실행·회복·보호막 생성 함수를 호출하지 않는다.
+function statGrowthPreview(p, k, points = 3) {
+  const up = Object.assign({}, p, { stat: Object.assign({}, p.stat, { [k]: stat(p, k) + points }) });
+  const hp = calcHpMax(p); up.hpMax = calcHpMax(up);
+  const out = [], pct = (a, b) => r1((b / a - 1) * 100);
+  if (hp !== up.hpMax) out.push('최대 생명력 ' + hp + ' → ' + up.hpMax);
+  const st0 = calcStMax(p), st1 = calcStMax(up);
+  if (st0 !== st1) out.push('최대 스태미나 ' + st0 + ' → ' + st1);
+  const skills = (p.skills || []).map(id => SK2[id]).filter(Boolean), damage = [], resource = [];
+  for (const s of skills) {
+    const dm = s.fx.find(e => e.k === 'dmg');
+    if (dm) { const a = skillBaseDamage(p, s, dm.n), b = skillBaseDamage(up, s, dm.n); if (a > 0 && b > a) damage.push(pct(a, b)); }
+    for (const e of s.fx.filter(e => skillResourceGrows(s, e))) {
+      const a = skillResourceDamage(p, s, e, 1), b = skillResourceDamage(up, s, e, 1); if (b > a) resource.push(pct(a, b));
+    }
+  }
+  const range = values => { const a = Math.min(...values), b = Math.max(...values); return a === b ? a + '%' : a + '~' + b + '%'; };
+  if (damage.length) out.push('장착 스킬 기본 피해 +' + range(damage));
+  if (resource.length) out.push('장착 스킬 자원 추가 피해 +' + range(resource));
+  if (k === 'str') out.push('무기 공격의 힘 배율 +' + pct(1 + stat(p, k) * .01, 1 + stat(up, k) * .01) + '%');
+  if (k === 'dex') out.push('흘리기 감소 ' + r1(parryRed(p) * 100) + '% → ' + r1(parryRed(up) * 100) + '%');
+  if (k === 'int') out.push('중독·출혈·화상 배율 +' + pct(dotMul(p), dotMul(up)) + '%');
+  if (k === 'wil') out.push('일반 보호막 생성·회복 배율 +' + pct(healMul(p), healMul(up)) + '% (상한에 닿기 전)', '상태 저항 ' + Math.min(25, stat(p, k)) + '% → ' + Math.min(25, stat(up, k)) + '%');
+  return out.join(' · ');
+}
 function statNext(p, k) {
   const s = stat(p, k), B = BUILDS[p.build]; const up = Object.assign({}, p, { stat: Object.assign({}, p.stat, { [k]: s + 1 }) });
   if (k === 'str') return `생명력 ${calcHpMax(p)} → ${calcHpMax(up)}, 무기 공격 피해 +${s}% → +${s + 1}%, 힘 기반 스킬 피해 +${s * SKILL_STAT_PCT}% → +${(s + 1) * SKILL_STAT_PCT}%, 내가 채우는 붕괴 +${s}% → +${s + 1}%` + ((s + 1) % 10 === 0 ? '. 10점: 강공격 붕괴 +5' : '');
   if (k === 'dex') return `스태미나 ${calcStMax(p)} → ${calcStMax(up)}, 암살자·사냥꾼 스킬 피해 +${s * SKILL_STAT_PCT}% → +${(s + 1) * SKILL_STAT_PCT}%, 흘리기 감소 ${Math.round(parryRed(p) * 1000) / 10}% → ${Math.round(parryRed(up) * 1000) / 10}%, 빠르기 +${(s * 0.5).toFixed(1)}% → +${((s + 1) * 0.5).toFixed(1)}%` + ((s + 1) % 10 === 0 ? '. 10점: 흘리기 스태미나 −1' : '');
   if (k === 'con') return `생명력 ${calcHpMax(p)} → ${calcHpMax(up)}`;
-  if (k === 'wil') return `보호막으로 얻는 양과 회복 +${s * 2}% → +${(s + 1) * 2}%, 해로운 상태를 버틸 확률 ${Math.min(25, s)}% → ${Math.min(25, s + 1)}%`;
+  if (k === 'wil') return `일반 보호막 생성과 회복 +${s * 2}% → +${(s + 1) * 2}% (상한까지), 해로운 상태를 버틸 확률 ${Math.min(25, s)}% → ${Math.min(25, s + 1)}%`;
   return `주문 기본 피해 +${s * SKILL_STAT_PCT}% → +${(s + 1) * SKILL_STAT_PCT}%, ` + (isV2(p) ? '' : `마나 ${calcMpMax(p)} → ${calcMpMax(up)}, `) + `${p.build === 'elementalist' ? '상태 효과(중독·출혈·화상)·열충격·화상 소모 추가 피해' : isV2(p) ? '중독·출혈·화상 피해' : '지속 피해와 정화 피해'} +${s * 2}% → +${(s + 1) * 2}%` + ((s + 1) % 10 === 0 && !isV2(p) ? '. 10점: 독 격발 붕괴 +5' : '');
 }
 /* 3챕터 이벤트의 "다음 전투" (11.1절): 다음 일반 · 매복 전투에만 붙는다 */

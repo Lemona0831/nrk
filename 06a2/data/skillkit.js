@@ -1,4 +1,4 @@
-// 성장 배율은 dmg 기본 피해에만 적용한다. 비례·지속 피해에는 중복 적용하지 않는다.
+// 기본 피해 성장과 선택한 자원 추가 피해 성장은 따로 계산한다. 지속·보호막 피해에는 중복 적용하지 않는다.
 const SKILL_STAT_PCT = 4;
 function skillGrowthStat(s) { return s.kind === 'spell' || /^(e_|v_)/.test(s.id) ? 'int' : /^(a_|h_)/.test(s.id) ? 'dex' : 'str'; }
 function skillBaseDamage(p, s, n) {
@@ -6,9 +6,19 @@ function skillBaseDamage(p, s, n) {
   const k=skillGrowthStat(s), weapon=k==='int'?0:Math.max(0,gearOf(p).wpn-START_GEAR.wpn)*0.02;
   return n*(1+stat(p,k)*SKILL_STAT_PCT/100+weapon);
 }
+function skillResourceGrows(s, e) {
+  return /^m_/.test(s.id) && ['kiBurst', 'kiPer'].includes(e.k)
+    || /^c_/.test(s.id) && (e.k === 'perDmg' && ['burden', 'clean'].includes(e.of) || e.k === 'cleanse' && e.offer && !!e.dmg);
+}
+function skillResourceDamage(p, s, e, n) { return n * (skillResourceGrows(s, e) ? 1 + stat(p, 'str') * .01 : 1); }
 function skillDamageHint(p, s) {
-  const dm=s.fx.find(e=>e.k==='dmg');
-  return dm ? '현재 기본 피해 ' + r1(skillBaseDamage(p,s,dm.n)) + ((s.hits||1)>1?' × '+s.hits+'타':'') + ' · 추가 효과와 피해 증감 적용 전' : '';
+  const dm=s.fx.find(e=>e.k==='dmg'), out=[];
+  if(dm) out.push('현재 기본 피해 ' + r1(skillBaseDamage(p,s,dm.n)) + ((s.hits||1)>1?' × '+s.hits+'타':''));
+  for(const e of s.fx.filter(e=>skillResourceGrows(s,e))) {
+    const label=e.k==='kiBurst'||e.k==='kiPer'?'기':e.k==='cleanse'?'바친 상태':e.of==='burden'?'짐':'앞서 정화·바친 상태';
+    out.push(label+' 1당 추가 피해 '+r1(skillResourceDamage(p,s,e,e.k==='cleanse'?e.dmg:e.per))+(e.k==='kiPer'&&(s.hits||1)>1?' (타격마다)':''));
+  }
+  return out.length ? out.join(' · ') + ' · 피해 증감 적용 전' : '';
 }
 // 보호막 추가 피해와 소모량: 설명·미리보기·전투가 같은 계산을 사용한다.
 function wardDamageInfo(e, ward) {
@@ -345,7 +355,7 @@ function skBodyConf(s, e) { // null이면 공통 문장, ''이면 문장 없음
     case 'perDmg': { const g = [e.per ? '피해 +' + e.per : '', e.brk ? '붕괴 +' + e.brk : ''].filter(Boolean).join(', ');
       if (e.of === 'prot') return e.spend ? `내 보호를 모두 써서, 쓴 보호 1마다 ${g}.` : `내 보호 1마다 ${g}. 보호는 줄지 않는다.`;
       if (e.of === 'burden') return `내 짐 1마다 ${g}. 짐은 줄지 않는다.`;
-      if (e.of === 'clean') return `이번 차례에 이 스킬 앞서 지우거나 바친 수 1마다 ${g}.`;
+      if (e.of === 'clean') return `이번 차례에 이 스킬 앞서 정화하거나 바친 적이 건 상태 1마다 ${g}. 고행으로 얻은 상태는 세지 않는다.`;
       if (e.of === 'tbad') return `대상의 해로운 상태 1마다 ${g}.`;
       { const w = SK_KWN[e.of] || e.of; return `대상의 ${w} 1마다 ${g}. ${w}${skJoW(w, '은', '는')} 줄지 않는다.`; } }
     case 'meSt': if (!CF_BAD.includes(e.s)) return null; if (s.tgt === 'self') return ''; { const ms = s.fx.filter(x => x.k === 'meSt' && CF_BAD.includes(x.s)); return ms[0] === e ? `행동이 끝나면 나에게 ${ms.map(x => (SK_KWN[x.s] || x.s) + ' ' + x.n).join(', ')}(고행).` : ''; }
@@ -480,5 +490,6 @@ function skBody(s) {
   if (s.fx.filter(e => ['lowx', 'brokenx', 'bigx', 'chillx', 'kwx'].includes(e.k)).length >= 2) out.push('조건이 겹치면 배수를 곱한다.'); // 10월 4일: 박살(붕괴한 정예 · 보스에게 ×2.5 × 1.5) 등
   if (s.killRecharge) out.push(s.once ? '이 스킬로 적을 쓰러뜨리면 한 번 더 쓸 수 있다.' : bu ? '이 스킬로 적을 쓰러뜨리면 쿨타임이 돌지 않아 다음 차례에 다시 쓸 수 있다.' : '이 스킬로 적을 쓰러뜨리면 기다리지 않고 바로 다시 쓸 수 있다.');
   if (bu && (s.tgt === 'ranged' || s.tgt === 'all') && s.fx.some(e => e.k === 'dmg')) out.push((s.tgt === 'all' ? '후열에도 닿는다. ' : '') + '근접 공격이 아니라 흡혈은 일어나지 않는다.');
+  if (s.fx.some(e => skillResourceGrows(s, e))) out.push((/^m_/.test(s.id) ? '이 기 추가 피해' : '이 자원 추가 피해') + '는 힘 1점마다 기준값의 1%씩 증가한다.');
   return out.join(' ').replace(/\s+/g, ' ').trim();
 }

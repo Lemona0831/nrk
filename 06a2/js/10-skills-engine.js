@@ -106,8 +106,8 @@ function runSkill2(b, act, tgt) {
     if (spV && spV.mark && h === 0) e.mark = { per: spV.per || 1, by: s.id }; // 표식: 피해보다 먼저 단다
     let base = (dm ? skillBaseDamage(p,s,dm.n) : 0) + (ex ? ex.per * (BU && ex.s === 'bleed' ? (ex.me ? Math.min(ex.max || 10, stk(p, 'bleed')) : preBlOf(e)) : ex.s ? preKw[e.id][ex.s] : st(e, 'poison')) : 0) + (wb && h === 0 ? burn * wb.mul : 0) + wardHit.bonus + (vp ? vp.per * st(e, 'vuln') : 0);
     if (BU) { if (gru) base += Math.min(gru.max || 999, gru.per * (p.grudge || 0)); base += meDrainDmg; } // 받은 피해 · 지운 내 출혈
-    if (kb && h === 0) base += kiTake * kb.per; if (kpr) base += kpr.per * kiNow; // 수도승: 터뜨린 기(첫 타) · 쓰기 전의 기(타격마다)
-    if (CF) { if (cfPd && cfPd.per) base += cfPd.per * cfTX(e); if (b.cfOffer && h === 0) base += b.cfOffer.c * b.cfOffer.dmg; if (cfPd && cfPd.of !== 'prot' && cfPd.of !== 'burden' && cfPd.of !== 'clean' && h === 0) b.rec.push({ k: 'cfper', id: s.id, of: cfPd.of, x: cfTX(e) }); } // 숨겨진 직업 2: 비례 · 사함 피해 (배수는 아래에서 곱한다)
+    if (kb && h === 0) base += skillResourceDamage(p, s, kb, kiTake * kb.per); if (kpr) base += skillResourceDamage(p, s, kpr, kpr.per * kiNow); // 기 추가 피해는 힘 1%/점. 수급·소모·붕괴는 별도.
+    if (CF) { if (cfPd && cfPd.per) base += skillResourceDamage(p, s, cfPd, cfPd.per * cfTX(e)); if (b.cfOffer && h === 0) base += skillResourceDamage(p, s, cfCl, b.cfOffer.c * b.cfOffer.dmg); if (cfPd && cfPd.of !== 'prot' && cfPd.of !== 'burden' && cfPd.of !== 'clean' && h === 0) b.rec.push({ k: 'cfper', id: s.id, of: cfPd.of, x: cfTX(e) }); } // 짐·정화·사함 피해만 힘 성장. 보호와 적 상태 비례는 고정.
     if (BM) base += eatAdd + (pdF ? pdF.per * st(e, 'weak') : 0) + (bdF ? bdF.per * Math.min(BLOOD.dmgCount, b.paidTurn || 0) : 0); // 먹은 만큼 · 약화된 만큼(이 스킬의 약화 전) · 이번 차례에 낸 피만큼
     if (bo && h === 0) base += bo.per * preI[e.id] * dotMul(p); // 불태우기: 태운 화상 1마다 (지능 반영)
     if (csh && h === 0 && preCh[e.id] > 0) { base += csh.dmg * preCh[e.id]; delete e.s.chill; } // 얼음 깨기: 둔화를 모두 깨뜨린다
