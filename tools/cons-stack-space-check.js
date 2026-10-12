@@ -22,6 +22,6 @@ for(const [id,C] of Object.entries(E.CONS)){
 const herbs=run('herb',Array.from({length:5},()=>({id:'herb',g:'n',n:5})),15);assert.equal(E.bagUsed(herbs),5,'약초25개는5칸');
 const last=run('herb',[{id:'herb',g:'n',n:5}],1);for(let i=0;i<5;i++)buy(last);assert.equal(last.cons[1].n,5);assert.equal(last.shop.log.length,5);
 last.consPending=[{id:'herb',g:'n',n:1}];last.cons[1].n--;assert(E.consPendingTry(last));assert.equal(last.cons[1].n,5);assert.equal(last.consPending.length,0);
-const legacyFav=run('herb',[{id:'herb',n:1}]);legacyFav.consFav=['herb:undefined'];buy(legacyFav);assert(E.consFavorite(legacyFav,legacyFav.cons[0]));assert.equal(legacyFav.consFav[0],'herb:n');
+const legacyFav=run('herb',[{id:'herb',n:1}]);legacyFav.consFav=['herb:undefined'];buy(legacyFav);assert(D.run_('consFavorite(__G.run,__G.run.cons[0])'));assert.equal(legacyFav.consFav[0],'herb:n');
 const saved=JSON.parse(JSON.stringify(last));saved.bag=[];saved.inv={};saved.cons=Array.from({length:E.BAG_MAX},()=>({id:'herb',g:'n',n:5}));G.run=saved;const html=E.vShop();assert(html.includes('가방 20/20칸'));assert(html.includes('일반 묶음 빈 자리 없음'));assert(!html.includes('몇 개든 삽니다'));assert(!html.includes('가득 차 더 살 수 없습니다'));
 console.log(JSON.stringify({passed:true,items:Object.keys(E.CONS).length,cases}));
