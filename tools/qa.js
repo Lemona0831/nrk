@@ -5,6 +5,7 @@ const { BUILDS, ROOMS, ITEMS, SCEN } = E;
 function qaSkillBase(p,a){const dm=a?.s?.fx.find(f=>f.k==='dmg');return dm?(E.skillBaseDamage?E.skillBaseDamage(p,a.s,dm.n):dm.n):0;}
 function qaWeaponBase(p,a){const n=a.id==='basic'?E.basicBase(p):E.heavyBase(p);return n*(E.weaponStatBonus?1+E.weaponStatBonus(p):1)*(p.eq?.weapon==='hook'?.85:1);}
 function qaResource(p,a,f,n){return E.skillResourceDamage&&a?.s?E.skillResourceDamage(p,a.s,f,n):n;}
+function qaBurnDamage(p,a,n){const f=a?.s?.fx.find(f=>f.k==='burnOut');return f?f.per*n*(E.dotMul?E.dotMul(p):1):0;}
 function qaPoisonBurst(p,a,n){const f=a.s.fx.find(f=>f.k==='burst'),over=a.s.fx.find(f=>f.k==='capOver');n=Math.min(n,(E.KW?.poison??Infinity)+(over?.cap||0));const take=f.half?Math.ceil(n/2):f.top?Math.min(f.top,n):n;return (E.poisonTotal(n)-E.poisonTotal(n-take))*(f.mul||1)*(E.dotMul?E.dotMul(p):1);}
 function qaWardBonus(f,ward){return E.wardDamageInfo?E.wardDamageInfo(f,ward).bonus:f.per*ward;}
 // 수도승의 기본·기 피해만 비교한다. 장비 발동·적의 방어·가로막기는 별도다.
@@ -203,7 +204,7 @@ function elemPick(b, P, r, okS, reach, pv1) {
     const v = E.elemPreview(b, a.s, e, multi); const d0 = fxOf(a, 'dmg'); const bo = fxOf(a, 'burnOut');
     let m = 1; const lx = fxOf(a, 'lowx'), gx = fxOf(a, 'bigx'), bx = fxOf(a, 'brokenx'), cx = fxOf(a, 'chillx');
     if (lx && e.hp <= e.hpMax * lx.hp) m *= lx.mul; if (gx && isBig(e)) m *= gx.mul; if (bx && e.s.broken) m *= bx.mul; if (cx && e.s.chill) m *= cx.mul;
-    const dd = ((d0 ? qaSkillBase(p,a) * (a.s.hits || 1) : 0) + (bo ? bo.per * v.burn : 0)) * m * (multi ? 0.8 : 1) * (e.evading && !multi ? 0 : 1) * (e.braced ? 0.5 : 1);
+    const dd = ((d0 ? qaSkillBase(p,a) * (a.s.hits || 1) : 0) + qaBurnDamage(p,a,v.burn)) * m * (multi ? 0.8 : 1) * (e.evading && !multi ? 0 : 1) * (e.braced ? 0.5 : 1);
     const tot = dd + (v.shock ? v.d : 0); const kill = tot >= e.hp;
     const cut = a.s.fx.find(x => x.k === 'cutx'); const cutOn = cut && e.intent && (cut.chant ? ['chant', 'chanting', 'burn'] : ['charge', 'heavy', 'fuse', 'explode', 'chant', 'chanting', 'burn']).includes(e.intent.k);
     const brk = a.s.fx.reduce((s0, x) => s0 + (x.k === 'brk' ? x.n : 0), 0) + (cutOn ? cut.brk : 0) + (v.shock ? v.brk : 0) + (bo ? bo.brk * v.burn : 0);
@@ -839,4 +840,4 @@ if (require.main === module) {
   require('fs').writeFileSync(require('path').join(__dirname, 'qa.json'), JSON.stringify({ runs, scen }));
   console.log('runs', runs.length, 'sec', ((Date.now() - t0) / 1000).toFixed(1));
 }
-module.exports = { qaMonkHit, qaPoisonBurst, qaWeaponBase, qaSkillBase, qaResource, qaWardBonus, playRun, PERSONAS, heuristic, lookahead, sigRule, invariants, wasted, rng };
+module.exports = { qaBurnDamage, qaMonkHit, qaPoisonBurst, qaWeaponBase, qaSkillBase, qaResource, qaWardBonus, playRun, PERSONAS, heuristic, lookahead, sigRule, invariants, wasted, rng };
