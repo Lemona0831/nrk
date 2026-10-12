@@ -5,7 +5,15 @@ const consSell = c => { const D = CONS[c.id]; return D.use === 'none' ? D.sell :
 const bagUsed = run => (run.bag ? run.bag.length : 0) + ((run.cons || []).length);
 const consVal = c => { const D = CONS[c.id]; return c.g === 'm' && D.vm != null ? D.vm : D.v; };
 const consName = c => CONS[c.id].n + (c.g === 'm' ? ' (고급)' : '');
+const consGrade = (id, g) => g === 'm' && CONS[id] && CONS[id].vm != null ? 'm' : 'n';
 const consKey = c => c.id + ':' + c.g;
+// 기존 묶음의 빈 자리와 새 가방 칸을 함께 계산한다. 조회 중 저장본은 바꾸지 않는다.
+function consSpace(run, id, g) {
+  const D = CONS[id]; if (!D) return { existing: 0, capacity: 0, free: 0 };
+  const grade = consGrade(id, g), free = Math.max(0, BAG_MAX - bagUsed(run));
+  const existing = (run.cons || []).filter(c => c.id === id && consGrade(id, c.g) === grade).reduce((n, c) => n + Math.max(0, D.max - c.n), 0);
+  return { existing, free, capacity: existing + free * D.max };
+}
 const consFavorite = (run,c) => (run.consFav || []).includes(consKey(c));
 function toggleConsFavorite(run,c) {
   if (!c || !CONS[c.id] || ['none','out'].includes(CONS[c.id].use)) return '빠른 사용이 가능한 소모품만 고릅니다';
@@ -20,8 +28,8 @@ function consRows(run,b,filter,only,query,tgt){
 }
 const consLvMul = b => 1 + 0.15 * (((b && b.ctx && b.ctx.lv) || 1) - 1);
 function consAdd(run, id, g, n) {
-  run.cons = run.cons || []; const D = CONS[id]; if (!D) return n; g = g === 'm' && D.vm != null ? 'm' : 'n'; let left = n || 1;
-  for (const c of run.cons) if (left > 0 && c.id === id && c.g === g && c.n < D.max) { const t = Math.min(left, D.max - c.n); c.n += t; c.fresh=true; left -= t; }
+  run.cons = run.cons || []; const D = CONS[id]; if (!D) return n; g = consGrade(id, g); let left = n || 1;
+  for (const c of run.cons) if (left > 0 && c.id === id && consGrade(id, c.g) === g && c.n < D.max) { const t = Math.min(left, D.max - c.n), oldKey = consKey(c); c.g = g; if ((run.consFav || []).includes(oldKey)) run.consFav = run.consFav.map(k => k === oldKey ? consKey(c) : k); c.n += t; c.fresh=true; left -= t; }
   while (left > 0 && bagUsed(run) < BAG_MAX) { const t = Math.min(left, D.max); run.cons.push({ id, g, n: t, fresh:true }); left -= t; }
   return left;
 }
@@ -32,7 +40,7 @@ function consGrant(run, id, g, n) {
   if (left && CONS[id]) {
     const grade = g === 'm' && CONS[id].vm != null ? 'm' : 'n';
     const q = run.consPending || (run.consPending = []);
-    const c = q.find(x => x.id === id && x.g === grade);
+    const c = q.find(x => x.id === id && consGrade(id, x.g) === grade);
     if (c) c.n += left; else q.push({id, g: grade, n: left});
   }
   if (CONS[id]) (run.consGainLog || (run.consGainLog=[])).push({ch:run.ch || 1,room:run.room,id,g:g === 'm' && CONS[id].vm != null ? 'm':'n',n:n || 1,received:(n || 1)-left,pending:left,t:Date.now()});
