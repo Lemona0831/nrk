@@ -35,6 +35,7 @@ function gearScore(st) { return st.hp * 0.6 + st.mp * 0.25 + st.st * 0.25 + st.b
 
 /* 문 고르기 (성향별) */
 function pickDoor(pk, run, r) {
+  if (OPT.policy?.pickDoor) return OPT.policy.pickDoor(run, r);
   const P = PERSONAS[pk]; const p = run.p; const h = p.hp / p.hpMax; const fl = p.flask.life;
   const low = G0.isLower(run.room, run.ch);
   const loss = { normal: 0.22, ambush: 0.3, treasure: 0.3, trial: 0.45, strong: low ? 0.75 : 0.5 };
@@ -59,7 +60,7 @@ function pickDoor(pk, run, r) {
 }
 
 /* 갈래길 고르기 (0.6a.2, 10월 4일): 험한 길 · 큰 길 · 샛길. 생명력과 플라스크를 보고 성향대로 */
-function pickPath(pk, run, r) { const k = pickPath0(pk, run, r); return k === 'quiet' && (run.marks && run.marks.includes('noquiet')) ? 'main' : k; } /* 표식 noquiet이면 샛길은 막혀 있다 */
+function pickPath(pk, run, r) { const k = OPT.policy?.pickPath ? OPT.policy.pickPath(run, r) : pickPath0(pk, run, r); return k === 'quiet' && (run.marks && run.marks.includes('noquiet')) ? 'main' : k; } /* 표식 noquiet이면 샛길은 막혀 있다 */
 function pickPath0(pk, run, r) {
   if (process.env.PATH_FIX) return process.env.PATH_FIX; /* 10월 8일(7단계): 길 고정(rough · main · quiet). 없으면 아래 그대로 */
   const p = run.p; const h = p.hp / p.hpMax; const fl = p.flask.life;
@@ -78,6 +79,10 @@ function handleSheets(pk, r) {
   const G = G0.__G; const P = PERSONAS[pk];
   for (let n = 0; n < 40 && G.sheet; n++) {
     const S = G.sheet, run = G.run;
+    if (OPT.policy?.sheet && OPT.policy.sheet(S, run, r)) {
+      while (!G.sheet && G.dropQ && G.dropQ.length) G0.nextDrop();
+      continue;
+    }
     if (S.kind === 'drop') {
       const it = run.inv[S.data.uid]; const kind = G0.tplKind(it.tpl); const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind;
       const d = gearScore(G0.simEquip(run, it.uid, sl)) - gearScore(G0.gearStats(run.p));
@@ -126,6 +131,7 @@ function fatePick(pk, run, r) {
 }
 /* 이벤트·제단·성소 고르기 */
 function restRoom(pk, run, r) {
+  if (OPT.policy?.restRoom && OPT.policy.restRoom(run, r)) return;
   const R = run.cur; const p = run.p; const h = p.hp / p.hpMax;
   if (R.type === 'camp' || R.type === 'spring') return click('rest');
   if (R.type === 'shrine') return click('shrine', pk === 'novice' ? (r() < 0.5 ? 1 : 0) : 1);
@@ -147,9 +153,10 @@ function restRoom(pk, run, r) {
   }
 }
 
-const OPT = { snap: false, onStep: null, onTurn: null, chapters: 1 }; // chapters: 몇 챕터까지 이어 갈지 (2면 1챕터를 깬 뒤 정산·상점·설문을 지나 2챕터로) // onStep(G): 방과 방 사이마다, onTurn(G, n): 전투 행동마다 (저장본 점검)
+const OPT = { snap: false, onStep: null, onTurn: null, chapters: 1, policy: null }; // policy는 기록 기반 시험의 선택 훅. null이면 기존 성향·난수·판단을 그대로 사용한다.
 /* 소모품 (0.6a.2, 10월 4일): 사람처럼 상황에 맞는 것을 쓴다(초보는 거의 쓰지 않는다). 한 차례 최대 수는 엔진이 막는다 */
 function useCons(pk, r, b, run) {
+  if (OPT.policy?.useCons) return OPT.policy.useCons(b, run, r);
   if (!G0.consUse || !G0.CONS || !run.cons || !run.cons.length) return;
   const aware = THINK(pk) ? 0.9 : pk === 'novice' ? 0.15 : 0.5; const p = run.p; const al = G0.alive(b).filter(e => e.role !== 'root'); const sk = (u, k) => (u.s[k] ? u.s[k].stacks : 0);
   const it = (e, ...k) => e.intent && (k.includes(e.intent.k) || (k.includes('aimed') && e.intent.aimed));
@@ -193,6 +200,7 @@ function useCons(pk, r, b, run) {
   for (let k = 0; k < 3; k++) { const i = run.cons.findIndex(c => G0.CONS[c.id].use !== 'none' && !G0.consWhyNot(b, run, c, null) && r() < aware && want(c)); if (i < 0) break; G0.consUse(b, run, i, null); if (b.over) break; }
 }
 function useConsOut(pk, run, r) {
+  if (OPT.policy?.useConsOut) return OPT.policy.useConsOut(run, r);
   if (!G0.consUse || !G0.CONS || !run.cons) return; const p = run.p;
   for (let k = 0; k < 6 && p.hp < p.hpMax * 0.6 && (pk !== 'novice' || r() < 0.3); k++) { const i = run.cons.findIndex(c => G0.CONS[c.id].k === 'heal' && !G0.consWhyNot(null, run, c, null)); if (i < 0) break; G0.consUse(null, run, i, null); }
 }
@@ -252,10 +260,15 @@ function fightCur(pk, r, mem, out) {
   G0.enterRoom(); const b = G.b; b.stepMode = false; let n = 0; let stall = 0, lastHp = Infinity; let stuckN = 0;
   // 10월 5일: 전투 난수를 테스터 판단 난수와 나눈다(판단 규칙 하나를 바꿔도 전투 운은 그대로 남아 비교가 깨끗하다). LEGACY_RNG=1이면 예전처럼 같은 난수
   b.rngF = process.env.LEGACY_RNG ? r : rng(((out.seed || 1) * 7919 + (G.run.room || 0) * 131 + (G.run.ch || 1) * 100003 + (out.acts || 0)) | 0);
+  if (OPT.policy?.battleStart) OPT.policy.battleStart(b, G.run);
   while (!b.over && n++ < 300) {
     useCons(pk, r, b, G.run); if (b.over) break;
+    let a, t;
+    if (OPT.policy?.chooseAction) {
+      [a, t] = OPT.policy.chooseAction(b, G.run, n);
+    } else {
     const sr = r() < (P.mech || 0.5) ? sigRule(b, r) : null;
-    let [a, t] = ch2Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem));
+    [a, t] = ch2Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem));
     [a, t] = ch2Post(b, P, r, a, t);
     // 보스를 깎지 못한 채 버티기만 하면 사람은 밀어붙인다 (한 수 앞만 보는 계산이 페이즈 전환을 피하는 것을 막는다)
     const bs = b.en.find(e => e.role === 'boss' && e.alive);
@@ -267,14 +280,17 @@ function fightCur(pk, r, mem, out) {
       const act = G0.actionList(b).find(x => x.id === a); const monk = G0.alive(b).filter(e => e.monk && act && G0.canTarget(b, e, act)).sort((x, y) => (y.role === 'healer') - (x.role === 'healer'))[0];
       if (monk && act && act.tgt !== false && !(b.p.build === 'assassin' && !process.env.ASN_PARRY_OLD && (a === 'dodge' || (act.s && act.s.fx.some(f => f.k === 'parry'))))) t = monk.id; /* 암살자(10월 8일): 흘리기는 공격하는 적에게 건다. 치유 수도사로 바꾸면 흘리기가 엉뚱한 적에게 걸린다(출처: 비공개 문서 보스, 암살자 그림자 칸). ASN_PARRY_OLD=1이면 끈다 */
     }
-    if (OPT.onTurn) OPT.onTurn(G, n);
     if (stuckN >= 2 && !process.env.NO_STUCK_FIX) { const Lk = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); const gd = Lk.find(x => x.id === 'guard') || Lk[0]; if (gd) { a = gd.id; t = null; } } /* 10월 8일: 같은 행동을 해도 차례가 흐르지 않으면(땅속의 적만 남고 단일 대상 행동뿐일 때) 사람처럼 방어로 차례를 넘긴다 */
+    }
+    if (OPT.onTurn) OPT.onTurn(G, n);
     const progKey = b.turnIdx + ':' + (b.round || 0) + ':' + b.log.length;
     try { G0.playerAct(b, a, t); } catch (e) { out.bugs.push('예외 ' + e.message + ' @' + a); b.over = 'lose'; }
     stuckN = progKey === b.turnIdx + ':' + (b.round || 0) + ':' + b.log.length ? stuckN + 1 : 0;
     out.acts++;
+    if (OPT.policy?.afterAction) OPT.policy.afterAction(b, G.run, a, t);
   }
   if (!b.over) { out.bugs.push('300행동 안에 끝나지 않음 ' + G.run.room); b.over = 'lose'; }
+  if (OPT.policy?.battleEnd) OPT.policy.battleEnd(b, G.run);
   return b;
 }
 /* 보스 앞 저장본으로 보스전만 다시 한다 */
@@ -306,6 +322,7 @@ function playChar(pk, build, seed) {
     const n0 = (G0.STAT_START || 6) + (run.markStat || 0); const rec = G0.statRecommend(build, st, n0); for (const k of KEYS) st[k] = rec[k] || 0; for (let i = 0; i < n0; i++) if (pk === 'novice' || r() > 0.75) { const from = KEYS.filter(k => st[k] > 0)[Math.floor(r() * KEYS.filter(k => st[k] > 0).length)]; st[from]--; st[KEYS[Math.floor(r() * KEYS.length)]]++; }
   } else for (let i = 0; i < 6; i++) st[pk === 'novice' || r() > 0.6 ? ['str', 'dex', 'int'][Math.floor(r() * 3)] : pref]++;
   run.stats = st; G0.applyStats(run.p, st); run.p.hp = run.p.hpMax; run.p.mp = run.p.mpMax; run.p.st = run.p.stMax;
+  if (OPT.policy?.start) OPT.policy.start(run, r);
   const out = { pk, build, seed, res: 'lose', floor: 0, lv: 1, rooms: [], bossHp: null, bugs: [], acts: 0, fights: [] };
   if (MARKCH) { out.marks = (run.marks || []).slice(); out.markCh = run.markCh; out.markPts = run.markPts || 0; }
   if (FROM > 1 && !MARKCH) jumpTo(pk, r, FROM);
@@ -363,6 +380,7 @@ function gamblePhase(pk, r) {
 }
 /* 상점: 끼우면 나아지는 장비를 골드 안에서 산다. 신중·숙련·탐험가는 가장 나은 것부터, 나머지는 무작위로 */
 function shopPhase(pk, r) {
+  if (OPT.policy?.shop) return OPT.policy.shop(G0.__G.run, r);
   const G = G0.__G, run = G.run, S = run.shop; if (!S) return;
   const delta = it => { const kind = G0.tplKind(it.tpl); const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind; const had = !!run.inv[it.uid]; run.inv[it.uid] = it; const d = gearScore(G0.simEquip(run, it.uid, sl)) - gearScore(G0.gearStats(run.p)); if (!had) delete run.inv[it.uid]; return { d: d + (G0.classFit(run.p, it.tpl) && G0.ITEMS[it.tpl].act ? 2 : 0), sl }; };
   for (let n = 0; n < 6; n++) {
@@ -417,6 +435,7 @@ function bmPathNext(run, br) {
   return null;
 }
 function spendTree(pk, r) {
+  if (OPT.policy?.spendTree) return OPT.policy.spendTree(G0.__G.run, r);
   const G = G0.__G, run = G.run; if (!run.tree || !(run.tree.pts > 0)) return;
   const all = G0.SKILLS2[run.build]; const T = G0.TREE2[run.build];
   run.focus = run.focus || (process.env.FOCUS && T.branches.includes(process.env.FOCUS) ? process.env.FOCUS : T.branches[Math.floor(r() * T.branches.length)]); // FOCUS=갈래 이름으로 고정해 잴 수 있다

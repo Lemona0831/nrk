@@ -20,7 +20,8 @@ function invariants(b, bugs, ctx) {
   if (p.mp > p.mpMax + 1e-6 || p.mp < -1e-6) bad('마나 범위 밖 ' + p.mp);
   if (p.st > p.stMax + 1e-6 || p.st < -1e-6) bad('스태미나 범위 밖 ' + p.st);
   if (p.scar > p.hpMax * 0.5 + 1e-6) bad('상흔 한도 초과');
-  if (p.flask.life < 0 || p.flask.mana < 0 || p.flask.life > p.flaskMax || p.flask.mana > p.flaskMax || (p.flask.stam || 0) < 0 || (p.flask.stam || 0) > p.flaskMax) bad('플라스크 범위 밖');
+  // 장비·표식으로 종류별 최대 충전이 바뀐다. 기본 flaskMax와 비교하면 정상 장비 판을 오류로 잡는다.
+  if (['life', 'mana', 'stam'].some(k => { const n = p.flask[k] ?? 0; return !Number.isInteger(n) || n < 0 || n > E.flaskCap(p, k); })) bad('플라스크 범위 밖');
   for (const e of b.en) {
     if (!Number.isFinite(e.hp) || !Number.isFinite(e.next)) bad(e.n + ' 수치가 숫자가 아님');
     if (e.alive && e.hp > e.hpMax + 1e-6) bad(e.n + ' 생명력 최대치 초과');
