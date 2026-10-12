@@ -1,6 +1,13 @@
 /* ===== 사람처럼 생각하는 QA 테스터 (엔진 직접 구동) ===== */
 const E = require('./eng.gen.js');
 const { BUILDS, ROOMS, ITEMS, SCEN } = E;
+// 현재 스탯·장비의 기본 피해. 전투 상태·적 보정·추가 피해까지의 최종 예측은 아니다.
+function qaSkillBase(p,a){const dm=a?.s?.fx.find(f=>f.k==='dmg');return dm?(E.skillBaseDamage?E.skillBaseDamage(p,a.s,dm.n):dm.n):0;}
+function qaWeaponBase(p,a){const n=a.id==='basic'?E.basicBase(p):E.heavyBase(p);return n*(E.weaponStatBonus?1+E.weaponStatBonus(p):1)*(p.eq?.weapon==='hook'?.85:1);}
+function qaResource(p,a,f,n){return E.skillResourceDamage&&a?.s?E.skillResourceDamage(p,a.s,f,n):n;}
+function qaPoisonBurst(p,a,n){const f=a.s.fx.find(f=>f.k==='burst'),over=a.s.fx.find(f=>f.k==='capOver');n=Math.min(n,(E.KW?.poison??Infinity)+(over?.cap||0));const take=f.half?Math.ceil(n/2):f.top?Math.min(f.top,n):n;return (E.poisonTotal(n)-E.poisonTotal(n-take))*(f.mul||1)*(E.dotMul?E.dotMul(p):1);}
+function qaWardBonus(f,ward){return E.wardDamageInfo?E.wardDamageInfo(f,ward).bonus:f.per*ward;}
+
 function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
 const PERSONAS = {
@@ -118,7 +125,7 @@ const bmEatOnlyQ = a => bmEatQ(a) && !a.s.fx.some(e => e.k === 'dmg');
 const BM_CHG = ['charge', 'heavy', 'fuse', 'explode', 'chant', 'chanting', 'burn'];
 function bmDmg(b, a, e) { // 사람의 어림: 버튼에 보이는 피해 숫자
   const p = b.p, f = a.s ? a.s.fx : []; const F = k => f.find(x => x.k === k); const hits = (a.s && a.s.hits) || 1; const ps = psn2(e, 'poison');
-  let v = a.id === 'basic' ? E.basicBase(p) : a.id === 'heavy' ? E.heavyBase(p) : ((F('dmg') || {}).n || 0) * hits;
+  let v = a.id === 'basic' || a.id === 'heavy' ? qaWeaponBase(p,a) : qaSkillBase(p,a) * hits;
   const dr = f.find(x => x.k === 'drain' && x.eat); if (dr && dr.dmg) v += Math.min(dr.max || 99, ps) * dr.dmg;
   const bd = F('bloodDmg'); if (bd) v += bd.per * Math.min(20, (b.prepTurn === b.turnIdx ? b.paidTurn || 0 : 0) + (a.blood || 0) + (a.hpCost || 0));
   const pd = F('perDmg'); if (pd) v += pd.per * psn2(e, 'weak');
@@ -181,7 +188,7 @@ function elemPick(b, P, r, okS, reach, pv1) {
     const v = E.elemPreview(b, a.s, e, multi); const d0 = fxOf(a, 'dmg'); const bo = fxOf(a, 'burnOut');
     let m = 1; const lx = fxOf(a, 'lowx'), gx = fxOf(a, 'bigx'), bx = fxOf(a, 'brokenx'), cx = fxOf(a, 'chillx');
     if (lx && e.hp <= e.hpMax * lx.hp) m *= lx.mul; if (gx && isBig(e)) m *= gx.mul; if (bx && e.s.broken) m *= bx.mul; if (cx && e.s.chill) m *= cx.mul;
-    const dd = ((d0 ? d0.n * (a.s.hits || 1) : 0) + (bo ? bo.per * v.burn : 0)) * m * (multi ? 0.8 : 1) * (e.evading && !multi ? 0 : 1) * (e.braced ? 0.5 : 1);
+    const dd = ((d0 ? qaSkillBase(p,a) * (a.s.hits || 1) : 0) + (bo ? bo.per * v.burn : 0)) * m * (multi ? 0.8 : 1) * (e.evading && !multi ? 0 : 1) * (e.braced ? 0.5 : 1);
     const tot = dd + (v.shock ? v.d : 0); const kill = tot >= e.hp;
     const cut = a.s.fx.find(x => x.k === 'cutx'); const cutOn = cut && e.intent && (cut.chant ? ['chant', 'chanting', 'burn'] : ['charge', 'heavy', 'fuse', 'explode', 'chant', 'chanting', 'burn']).includes(e.intent.k);
     const brk = a.s.fx.reduce((s0, x) => s0 + (x.k === 'brk' ? x.n : 0), 0) + (cutOn ? cut.brk : 0) + (v.shock ? v.brk : 0) + (bo ? bo.brk * v.burn : 0);
@@ -326,7 +333,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     const hpf = p.hp / p.hpMax, bl = e => psn2(e, 'bleed'), big = e => !!(e.elite || e.strong || e.role === 'boss'); const F = (a, k) => a.s.fx.find(e => e.k === k);
     const thirst = 1 + Math.min(0.18, 0.03 * Math.max(0, Math.floor((1 - hpf) * 10 + 1e-9))); const grN = b.prepTurn === b.turnIdx ? (p.grudge || 0) : Math.min(p.tookAcc || 0, p.hpMax * 0.3);
     const room = Math.max(0, p.hpMax - p.hp); const eatLeft = Math.max(0, p.hpMax * 0.4 - (b.eatGot || 0));
-    const dmgOf = (a, e) => { let v = (F(a, 'dmg') || { n: 0 }).n; const ex = a.s.fx.find(x => x.k === 'exploit' && x.s === 'bleed'); if (ex) v += ex.per * (ex.me ? Math.min(ex.max || 10, bl(p)) : bl(e)); const g = F(a, 'grudge'); if (g) v += Math.min(g.max || 99, g.per * grN); const md = a.s.fx.find(x => x.k === 'drain' && x.me && x.dmg); if (md) v += Math.min(md.max || 10, bl(p)) * md.dmg;
+    const dmgOf = (a, e) => { let v = qaSkillBase(p,a); const ex = a.s.fx.find(x => x.k === 'exploit' && x.s === 'bleed'); if (ex) v += ex.per * (ex.me ? Math.min(ex.max || 10, bl(p)) : bl(e)); const g = F(a, 'grudge'); if (g) v += Math.min(g.max || 99, g.per * grN); const md = a.s.fx.find(x => x.k === 'drain' && x.me && x.dmg); if (md) v += Math.min(md.max || 10, bl(p)) * md.dmg;
       const lx = F(a, 'lowx'); if (lx && (lx.me ? hpf <= lx.hp : e.hp <= e.hpMax * lx.hp)) v *= lx.mul; const gx = F(a, 'bigx'); if (gx && big(e)) v *= gx.mul; return v * (a.s.hits || 1) * thirst * (p.s.weak ? 0.75 : 1) * (p.s.empower ? 1.25 : 1); };
     const bigIn = !!(hv || pv1.some(x => x.e.intent && (x.e.intent.aimed || ['burn', 'explode'].includes(x.e.intent.k))));
     const atkN = pv1.filter(x => x.e.intent && ['attack', 'heavy', 'brand'].includes(x.e.intent.k)).reduce((m, x) => m + x.n, 0);
@@ -456,16 +463,16 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
       if (harv && chf && !reach(harv).some(e => psn2(e, 'chill') > 0)) { const t = best(chf, (x, y) => y.hp - x.hp); if (t && E.canTarget(b, t, harv)) return [chf.id, t.id]; }
       const cg = E.alive(b).filter(e => chg(e)); if (cg.length) { const wk = fa.find(a => a.s.fx.some(e => (e.k === 'st' && e.s === 'weak') || (e.k === 'brk' && e.n >= 25) || e.k === 'cutx')); if (wk) { const t = cg.find(e => E.canTarget(b, e, wk) && !enemyAvoid(e, wk)); if (t) return [wk.id, t.id]; } }
       const sx = fa.find(a => has(a, 'sealx')); if (sx) { const t = reach(sx).find(e => e.intent && E.SEAL_K.includes(e.intent.k)); if (t) return [sx.id, t.id]; }
-      if ((MONK_OLD ? b.kiFastTurn !== b.turnIdx : true) && fa.length) { const a = fa.slice().sort((x, y) => ((fxOf(y, 'dmg') || { n: 0 }).n * (y.s.hits || 1) - (fxOf(x, 'dmg') || { n: 0 }).n * (x.s.hits || 1)))[0]; const t = best(a, (x, y) => x.hp - y.hp); if (t) return [a.id, t.id]; }
+      if ((MONK_OLD ? b.kiFastTurn !== b.turnIdx : true) && fa.length) { const a = fa.slice().sort((x, y) => (qaSkillBase(p,y) * (y.s.hits || 1) - qaSkillBase(p,x) * (x.s.hits || 1)))[0]; const t = best(a, (x, y) => x.hp - y.hp); if (t) return [a.id, t.id]; }
       if (br && ki <= 2) return [br.id];
     }
     // 3. 터뜨리기: 기 4 이상, 기 3이고 쓰러뜨릴 수 있음, 약화 예고 앞, 붕괴형은 모으는 적을 무너뜨릴 때, 상한이 있는 칸은 상한만큼 찼을 때
     for (const a of okS.filter(a => kbOf(a) && !a.self)) {
-      const k = kbOf(a); const d0 = (fxOf(a, 'dmg') || { n: 0 }).n;
+      const k = kbOf(a); const d0 = qaSkillBase(p,a);
       if (a.aoe) { const tk = Math.min(k.max || 5, ki); if (tk >= 3 && reach(a).length >= 2) return [a.id]; continue; }
       const t = best(a, (x, y) => (chg(y) - chg(x)) || ((k.pre ? psn2(y, 'chill') > 0 : 0) - (k.pre ? psn2(x, 'chill') > 0 : 0)) || (y.hp - x.hp)); if (!t) continue;
       const tk = Math.min(k.max || 5, ki + (k.pre && psn2(t, 'chill') > 0 ? k.pre : 0)); const big = !!(t.elite || t.strong || t.role === 'boss'); const gx = fxOf(a, 'bigx');
-      const dmg = (d0 + tk * k.per) * (gx && big ? gx.mul : 1); const kill = dmg >= t.hp;
+      const dmg = (d0 + qaResource(p,a,k,tk * k.per)) * (gx && big ? gx.mul : 1); const kill = dmg >= t.hp;
       const brkIt = k.brk && chg(t) && t.brk + tk * k.brk >= t.brkMax;
       if (tk <= 1 && !(k.max && k.max <= 3)) continue;
       if (tk >= 4 || (tk >= 3 && kill) || (weakIn && tk >= 2) || brkIt || (k.max && tk >= k.max)) return [a.id, t.id];
@@ -474,8 +481,8 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     if (ki >= 3 && M >= 1 && !gdNow && L.some(a => a.v2 && kbOf(a) && !kbOf(a).max && (a.wait || 0) <= 1)) { const bs = okS.filter(blockSt).sort((x, y) => stVal(y) - stVal(x))[0]; if (bs) return [bs.id]; }
     // 5. 기 비례(기 3 이상) · 기 끌어올리기(기 1~2)
     { const bigBurst = (p.skills || []).some(id => E.SK2[id] && E.SK2[id].fx.some(e => e.k === 'kiBurst' && !e.max)); // 모두 터뜨리는 칸을 끼웠으면 기를 아껴 둔다
-      const kiOk = a => MONK_OLD || bigBurst ? ki >= 3 : fxOf(a, 'kiPer').per * ki >= 0.3 * (fxOf(a, 'dmg') || { n: 0 }).n; // 규칙 문장: "모두 터뜨리는 칸이 없으면 기에 비례하는 공격은 기로 늘어나는 피해가 기본 피해의 30% 이상일 때 쓴다. 있으면 기 3 이상일 때 쓴다" 
-      const kpv = a => ((fxOf(a, 'dmg') || { n: 0 }).n + fxOf(a, 'kiPer').per * ki) * (a.s.hits || 1) * (a.aoe ? reach(a).length : 1);
+      const kiOk = a => MONK_OLD || bigBurst ? ki >= 3 : qaResource(p,a,fxOf(a,'kiPer'),fxOf(a,'kiPer').per * ki) >= 0.3 * qaSkillBase(p,a); // 규칙 문장: "모두 터뜨리는 칸이 없으면 기에 비례하는 공격은 기로 늘어나는 피해가 기본 피해의 30% 이상일 때 쓴다. 있으면 기 3 이상일 때 쓴다"
+      const kpv = a => (qaSkillBase(p,a) + qaResource(p,a,fxOf(a,'kiPer'),fxOf(a,'kiPer').per * ki)) * (a.s.hits || 1) * (a.aoe ? reach(a).length : 1);
       const cs = okS.filter(a => has(a, 'kiPer') && a.time > 0.6 && (!a.aoe || reach(a).length >= 2) && kiOk(a)).sort((x, y) => kpv(y) - kpv(x))[0];
       if (cs) { const t = cs.aoe ? null : best(cs, (x, y) => y.hp - x.hp); if (cs.aoe) return [cs.id]; if (t) return [cs.id, t.id]; } }
     for (const a of okS.filter(a => has(a, 'kiGrow'))) if (ki >= 1 && ki <= 2) { const t = best(a, (x, y) => x.hp - y.hp); if (t) return [a.id, t.id]; }
@@ -486,7 +493,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     { const sp = e => e.intent ? ['heal', 'bless', 'summon', 'curse', 'guard'].indexOf(e.intent.k) : -1; for (const a of okS.filter(a => has(a, 'sealx') && a.time > 0.6)) { const ts = reach(a).filter(e => e.intent && E.SEAL_K.includes(e.intent.k)); if (!ts.length) continue; if (a.aoe) return [a.id]; return [a.id, ts.sort((x, y) => ((sp(x) < 0 ? 9 : sp(x)) - (sp(y) < 0 ? 9 : sp(y))))[0].id]; } }
     { const cg = E.alive(b).filter(e => chg(e)); if (cg.length) for (const a of okS.filter(a => a.time > 0.6 && !a.self && a.s.fx.some(e => e.k === 'cutx' || (e.k === 'st' && e.s === 'weak')))) { const t = cg.find(e => E.canTarget(b, e, a) && !enemyAvoid(e, a)); if (t) return [a.id, t.id]; } }
     // 그 밖의 판단(광역, 끊기 붕괴, 무작위 공격)에서 지금 쓸모가 적은 칸은 뺀다: 기가 1 이하인 큰 터뜨리기, 되받은 것이 없는 되갚기, 둔화된 적이 없는 거두기, 되받을 예고가 없는 자세
-    const weakNow = a => { const k = kbOf(a); if (k && !(k.max && k.max <= 3) && ki + (k.pre ? 1 : 0) <= 1) return true; if (has(a, 'kiPer') && (MONK_OLD || (p.skills || []).some(id => E.SK2[id] && E.SK2[id].fx.some(e => e.k === 'kiBurst' && !e.max)) ? ki <= 1 : fxOf(a, 'kiPer').per * ki < 0.3 * (fxOf(a, 'dmg') || { n: 0 }).n)) return true; if (has(a, 'kiGrow') && ki === 0) return true; if (has(a, 'chillx') && !hitL(a).some(e => psn2(e, 'chill') > 0)) return true; if (a.s.fx.some(e => e.k === 'meSt' && e.if === 'chill') && !hitL(a).some(e => psn2(e, 'chill') > 0)) return true; if (a.self && stOf(a) && M === 0) return true; return false; };
+    const weakNow = a => { const k = kbOf(a); if (k && !(k.max && k.max <= 3) && ki + (k.pre ? 1 : 0) <= 1) return true; if (has(a, 'kiPer') && (MONK_OLD || (p.skills || []).some(id => E.SK2[id] && E.SK2[id].fx.some(e => e.k === 'kiBurst' && !e.max)) ? ki <= 1 : qaResource(p,a,fxOf(a,'kiPer'),fxOf(a,'kiPer').per * ki) < 0.3 * qaSkillBase(p,a))) return true; if (has(a, 'kiGrow') && ki === 0) return true; if (has(a, 'chillx') && !hitL(a).some(e => psn2(e, 'chill') > 0)) return true; if (a.s.fx.some(e => e.k === 'meSt' && e.if === 'chill') && !hitL(a).some(e => psn2(e, 'chill') > 0)) return true; if (a.self && stOf(a) && M === 0) return true; return false; };
     for (const a of okS.slice()) if (weakNow(a)) okS.splice(okS.indexOf(a), 1); // 큰 터뜨리기는 기가 찰 때까지 아껴 둔다(그동안 기본 공격)
   }
   // 강타 예고: 흘리기형 스킬(스태미나 없이) → 흘리기 준비 → 스태미나 흘리기. 이번 차례에 빠른 행동으로 이미 그 적을 흘릴 준비를 했으면 다시 걸지 않는다(덮어쓰면 붙은 효과를 잃는다)
@@ -511,13 +518,13 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     if (bigIn && ward < cap * 0.5) { const ws = okS.filter(a => a.self && wardGain(a) >= 6).sort((x, y) => wardGain(y) - wardGain(x))[0]; if (ws && r() < 0.8) return [ws.id]; }
     const value = (a, t) => {
       const k = kindOf(a); const hits = (a.s && a.s.hits) || 1; const multi = !!a.aoe; const ts = a.self ? [] : multi ? reach(a).filter(e => !a.s || a.s.tgt !== 'front' || e.row === 'front') : t ? [t] : [];
-      const dm = a.id === 'basic' ? E.basicBase(p) : a.id === 'heavy' ? E.heavyBase(p) : ((fx(a, 'dmg') || {}).n || 0);
+      const dm = a.id === 'basic' || a.id === 'heavy' ? qaWeaponBase(p,a) : qaSkillBase(p,a);
       const ex = fx(a, 'exploit'), kx = fx(a, 'kwx'), lx = fx(a, 'lowx'), bx = fx(a, 'brokenx'), wb = fx(a, 'wardBurn'), wd = fx(a, 'wardDmg'), bk = fx(a, 'brk'), cx = fx(a, 'cutx'), ks = fx(a, 'killSpread'), ed = fx(a, 'edgeX'), im = fx(a, 'imbue'), al = fx(a, 'alt');
       const altNow = !!(want && k === want); const run2 = altNow && runIf >= 2;
       const altOn = al && altNow && (al.run === 2 ? run2 : true);
       let v = 0, i = 0;
       for (const e of ts) {
-        let x = dm * hits + (ex ? ex.per * psn2(e, ex.s || 'poison') : 0) + (wb && i === 0 ? Math.min(ward, wb.max || 99) * wb.mul : 0) + (wd ? wd.per * ward : 0);
+        let x = dm * hits + (ex ? ex.per * psn2(e, ex.s || 'poison') : 0) + (wb && i === 0 ? Math.min(ward, wb.max || 99) * wb.mul : 0) + (wd ? qaWardBonus(wd,ward) : 0);
         if (kx && psn2(e, kx.s) > 0) x *= kx.mul; if (lx && e.hp <= e.hpMax * lx.hp) x *= lx.mul; if (bx && e.s.broken) x *= bx.mul;
         if (e.braced) x *= 0.5; if (e.evading && !multi) x = 0; if (multi && e.row === 'back') x *= 0.7;
         if (x > 0) { const ig = psn2(e, 'ignite'); for (let h = 0; h < hits && ig - h > 0; h++) x += ig - h; } // 화상은 맞을 때마다 더 든다
@@ -543,7 +550,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
       return a.time >= 1.25 ? v * 0.8 : v;
     };
     const tgtFor = a => { if (a.self || a.aoe) return null; const ex = fx(a, 'exploit'), kx = fx(a, 'kwx'), cx = fx(a, 'cutx');
-      const sc = e => (cx && chg(e) ? 30 : 0) + (kx && psn2(e, kx.s) > 0 ? 12 : 0) + (ex ? psn2(e, ex.s || 'poison') * 3 : 0) + (kindOf(a) === 'cut' && p.edge ? (e.hp / e.hpMax) * 6 : 0) + (a.s && a.s.killRecharge ? (e.hp <= ((fx(a, 'dmg') || {}).n || 0) ? 10 : 0) : 0) - e.hp / 20;
+      const sc = e => (cx && chg(e) ? 30 : 0) + (kx && psn2(e, kx.s) > 0 ? 12 : 0) + (ex ? psn2(e, ex.s || 'poison') * 3 : 0) + (kindOf(a) === 'cut' && p.edge ? (e.hp / e.hpMax) * 6 : 0) + (a.s && a.s.killRecharge ? (e.hp <= qaSkillBase(p,a) ? 10 : 0) : 0) - e.hp / 20;
       return best(a, (x, y) => sc(y) - sc(x)); };
     const cand = okS.concat(L.filter(a => a.ok && (a.id === 'basic' || (a.id === 'heavy' && p.st >= 70)))).map(a => { const t = tgtFor(a); return (a.self || a.aoe || t) ? { a, t, v: value(a, t) + (r() - 0.5) * 10 } : null; }).filter(Boolean); // 사람의 어림: 버튼의 숫자를 정확히 더하지 않는다(값에 ±5 흔들림)
     const fastC = cand.filter(c => c.a.time <= 0.6).sort((x, y) => y.v - x.v)[0];
@@ -584,7 +591,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     if (a.aoe) { if (E.alive(b).filter(e => psn(e) >= 3).length >= 2) return [a.id]; continue; }
     const exe = a.s.fx.find(e => e.k === 'execute'); const pre = (a.s.fx.find(e => e.k === 'burst') || {}).pre || 0;
     const t = best(a, (x, y) => psn(y) - psn(x)); if (!t || !(psn(t) + pre)) continue;
-    const bf = a.s.fx.find(e => e.k === 'burst') || {}; const dmg = E.poisonTotal(psn(t) + pre) * (bf.mul || 1); // 터뜨리면 나올 피해 (사람은 버튼의 숫자를 보고 누른다)
+    const dmg = qaPoisonBurst(p,a,psn(t)+pre); // 터뜨리면 나올 피해 (사람은 버튼의 숫자를 보고 누른다)
     const kill = dmg >= t.hp; const low = exe && t.hp <= t.hpMax * exe.hp;
     const big = !!(t.elite || t.strong || t.role === 'boss');
     if (kill || low || psn(t) + pre >= th || dmg >= 15 || (big && psn(t) + pre >= 3) || (t.intent && t.intent.k === 'heavy')) return [a.id, t.id]; // 큰 적은 독이 조금만 쌓여도 터뜨린다(큰 적 배수)
@@ -818,4 +825,4 @@ if (require.main === module) {
   require('fs').writeFileSync(require('path').join(__dirname, 'qa.json'), JSON.stringify({ runs, scen }));
   console.log('runs', runs.length, 'sec', ((Date.now() - t0) / 1000).toFixed(1));
 }
-module.exports = { playRun, PERSONAS, heuristic, lookahead, sigRule, invariants, wasted, rng };
+module.exports = { qaPoisonBurst, qaWeaponBase, qaSkillBase, qaResource, qaWardBonus, playRun, PERSONAS, heuristic, lookahead, sigRule, invariants, wasted, rng };
