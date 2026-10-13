@@ -161,7 +161,7 @@ function useCons(pk, r, b, run) {
   const aware = THINK(pk) ? 0.9 : pk === 'novice' ? 0.15 : 0.5; const p = run.p; const al = G0.alive(b).filter(e => e.role !== 'root'); const sk = (u, k) => (u.s[k] ? u.s[k].stacks : 0);
   const it = (e, ...k) => e.intent && (k.includes(e.intent.k) || (k.includes('aimed') && e.intent.aimed));
   const want = c => { const D = G0.CONS[c.id]; switch (D.k) {
-    case 'heal': return p.hp < p.hpMax * 0.35 && (!p.flask.life || r() < 0.5);
+    case 'heal': return c.id === 'herb' ? p.hp < p.hpMax * 0.2 && !p.flask.life : p.hp < p.hpMax * 0.35 && (!p.flask.life || r() < 0.5); // 10월 14일 개편 3단계: 약초는 플라스크 재료라 위급할 때만
     case 'stam': return p.st < 30;
     case 'cure': return sk(p, D.s) >= ({ bleed: 4, poison: 6, ignite: 3, weak: 2, vuln: 2, chill: 1 }[D.s] || 3) || (D.s === 'poison' && sk(p, 'poison') >= 3 && al.some(e => e.foe === 'well' && it(e, 'charge', 'heavy'))); // 2챕터: 우물이 열리기 전에는 중독 3부터 지운다
     case 'interrupt': return (al.some(e => e.role !== 'boss' && it(e, 'heavy', 'aimed')) && !p.dodge) || al.some(e => it(e, 'noon'));
@@ -203,7 +203,7 @@ function useConsOut(pk, run, r) {
   if (OPT.policy?.useConsOut) return OPT.policy.useConsOut(run, r);
   if (!G0.consUse || !G0.CONS || !run.cons) return; const p = run.p;
   if (G0.consBrew) for (const id of ['herb', 'leaf']) for (let k = 0; k < 6 && (pk !== 'novice' || r() < 0.3); k++) if (G0.consBrew(run, id)) break; // 10월 14일 개편 3단계: 약초 · 각성 잎은 플라스크 재료
-  for (let k = 0; k < 6 && p.hp < p.hpMax * 0.6 && (pk !== 'novice' || r() < 0.3); k++) { const i = run.cons.findIndex(c => G0.CONS[c.id].k === 'heal' && !G0.consWhyNot(null, run, c, null)); if (i < 0) break; G0.consUse(null, run, i, null); }
+  for (let k = 0; k < 6 && p.hp < p.hpMax * 0.6 && (pk !== 'novice' || r() < 0.3); k++) { const i = run.cons.findIndex(c => G0.CONS[c.id].k === 'heal' && !(c.id === 'herb' && G0.consBrewOf && p.flask.life < G0.flaskCap(p, 'life')) && !G0.consWhyNot(null, run, c, null)); if (i < 0) break; G0.consUse(null, run, i, null); } // 약초는 플라스크가 가득 찼을 때만 바로 먹는다
 }
 const countBy = a => a.reduce((m, k) => (m[k] = (m[k] || 0) + 1, m), {});
 /* 전투 한 번의 기록 (10월 5일, 목표 7단계 지표: 사망 원인 · 예고 뒤 대응 · 받은 피해 출처 · 행동 종류 · 스킬 사용) */
