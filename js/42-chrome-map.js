@@ -128,7 +128,7 @@ function vRoom(run, R) {
   const T = ROOM_TYPES[R.type]; let h = `<section class="card room t-${R.type}">`;
   if (R.type === 'boss') { const B = BOSSES[run.boss]; return h + `<h3>보스</h3><p><b>${B.ico} ${esc(B.n)}</b></p><p class="lore">${esc(B.lore || '')}</p><p class="mini">보스전은 도망칠 수 없고, 너무 오래 끌면 보스가 광폭해집니다.</p><button class="gold" data-a="enter" data-focus>보스와 싸우기</button></section>`; }
   if (R.type === 'fate') return vFateRoom(run, h);
-  if (R.type === 'camp') return h + `<h3>⛺ 야영지</h3><p class="lore">무너진 예배당 한쪽에 아직 따뜻한 재가 남아 있다.</p><p>쉬면 생명력과 스태미나가 모두 차고, 플라스크가 하나씩 찹니다. 여기서부터 하층이라 적이 더 거셉니다.</p><button class="gold" data-a="rest" data-focus>쉬고 내려간다</button></section>`;
+  if (R.type === 'camp') return h + vCamp(run) + '</section>'; // 10월 14일 개편 5단계: 정비 시간(46-screens-shop.js)
   if (R.type === 'spring') return h + `<h3>💧 샘</h3><p>샘에서 쉬면 생명력이 50% 차고, 플라스크가 하나씩 찹니다.</p><button class="gold" data-a="rest" data-focus>샘에서 쉬기</button></section>`;
   if (R.type === 'shrine') { const S = SHRINES.find(x => x.id === R.shrine); return h + `<h3>🕯️ ${esc(S.n)}</h3><p>${esc(S.d)} 다음 3개 방 동안 이어집니다.</p><div class="row"><button class="gold" data-a="shrine" data-k="1" data-focus>기도한다</button><button data-a="shrine" data-k="0">지나친다</button></div></section>`; }
   if (R.type === 'altar') {

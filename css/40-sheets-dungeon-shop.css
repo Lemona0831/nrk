@@ -145,3 +145,4 @@
 body:has(.sheet-bg) .toast{top:calc(env(safe-area-inset-top,0px) + 6px)}
 .cacts{display:flex;gap:4px;align-items:center}.cline .cbrew{min-height:44px;white-space:nowrap}.cbrewl{color:var(--good)}
 .cstat{font-size:13px;color:var(--good);white-space:nowrap}.cstat.warn{color:var(--muted)}
+.bagline.consrow{grid-template-columns:1fr}.bagline.consrow>.row{justify-content:flex-end;flex-wrap:wrap}

@@ -134,7 +134,8 @@ function fatePick(pk, run, r) {
 function restRoom(pk, run, r) {
   if (OPT.policy?.restRoom && OPT.policy.restRoom(run, r)) return;
   const R = run.cur; const p = run.p; const h = p.hp / p.hpMax;
-  if (R.type === 'camp' || R.type === 'spring') return click('rest');
+  if (R.type === 'camp') { click('rest'); handleSheets(pk, r); const C = G0.campInit(G0.__G.run); const hx = C.cons.findIndex(x => x.id === 'herb'); if (pk !== 'novice' && hx >= 0) for (let k = 0; k < 3; k++) click('consbuy', String(hx), { s: 'camp' }); return click('campleave'); } // 10월 14일 개편 5단계: 정비 시간
+  if (R.type === 'spring') return click('rest');
   if (R.type === 'shrine') return click('shrine', pk === 'novice' ? (r() < 0.5 ? 1 : 0) : 1);
   if (R.type === 'fate') return fatePick(pk, run, r);
   if (R.type === 'altar') {
