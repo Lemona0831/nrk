@@ -287,7 +287,7 @@ function reviveRun(r) {
   const p = mkPlayer(r.build, {});
   const run = { id: r.id, build: r.build, boss: r.boss, startedAt: r.startedAt, room: r.roomReached || 0, p, bag: [], swaps: r.swaps || [], rooms: r.rooms || [], acts: r.acts || [], deaths: r.deaths || [], result: null, blockPicked: null, entry: null, survey: r.survey || null, drops: r.drops || [],
     stats: Object.assign({ str: 0, dex: 0, int: 0, con: 0, wil: 0 }, r.stats || {}), statGrowth: r.statGrowth, statBase: r.statBase, statPending: r.statPending || 0, statLog: r.statLog || [], pool: shuffleSeeded(FREE_POOL, 1), choices: r.choices || [], seed: 1, skills: (r.skills || []).slice(), skillLog: r.skillLog || [],
-    cname: r.cname || '', ch: r.ch || 1, clears: r.clears || 0, lv: r.lv || 1, xp: r.xp || 0, gold: r.phase === 'settle' && r.settle ? r.settle.total : (r.gold || 0), playMs: r.playMs || 0, doorLog: r.doorLog || [], settle: r.settle || null, shop: null,
+    cname: r.cname || '', ch: r.ch || 1, clears: r.clears || 0, lv: r.lv || 1, xp: r.xp || 0, gold: r.phase === 'settle' && r.settle ? r.settle.total : (r.gold || 0), playMs: r.playMs || 0, doorLog: r.doorLog || [], shopHist: r.shopHist || [], settle: r.settle || null, shop: null,
     phase: 'wait', surveys: r.surveys || null, discards: r.discards || [], revivedAt: Date.now() };
   run.syncedActs = run.acts.length; // 행동 기록은 이미 올라가 있다
   // 기록에는 캐릭터 상태가 없어, 이벤트·제단이 바꾼 최대 생명력을 지나온 방에서 다시 센다

@@ -185,6 +185,7 @@ function chGift(run, ch, quiet) {
 function enterChapter(run) {
   const nx = (run.ch || 1) + 1; if (!CHAPTERS[nx] || run.markCh) return false;
   const mode = run.mode === 'hard' ? 'hard' : 'normal'; run.mode = mode;
+  if (run.shop) (run.shopHist = run.shopHist || []).push({ ch: run.shop.ch, gold: run.gold || 0, log: run.shop.log || [], stock: run.shop.stock.map(x => ({ tpl: x.it.tpl, g: x.it.g, price: x.price, sold: x.sold })), cons: (run.shop.cons || []).map(x => ({ id: x.id, price: x.price })) }); // 다음 챕터 상점이 열려도 지난 방문 기록은 남긴다
   const keepDoors = run.doorLog || []; run.ch = nx; run.boss = chData(nx).boss; run.phase = null; run.settle = null; run.shop = null; run.result = null;
   delete run.dg; dgInit(run); chGift(run, nx, true); run.doorLog = keepDoors; (run.chLog = run.chLog || []).push({ ch: nx, mode, lv: run.lv, gold: run.gold, t: Date.now() });
   G.scr = 'run'; G.b = null; G.sel = null; saveRunLocal(); saveCur(); render(); toast(nx + '챕터 · ' + chData(nx).n); if (chData(nx).enterLore) toast(chData(nx).enterLore); if ((run.awkLog || []).some(x => x.gift && x.ch === nx)) toast('각인을 얻었습니다: ' + AWK_MAP[run.awkLog.filter(x => x.gift && x.ch === nx)[0].id].n); return true;
