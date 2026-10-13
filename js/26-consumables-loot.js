@@ -44,6 +44,12 @@ function consRows(run,b,filter,only,query,tgt){
   const q=String(query||'').toLocaleLowerCase();
   return (run.cons||[]).map((c,i)=>({c,i,D:CONS[c.id]})).filter(x=>x.D).map(x=>Object.assign(x,{why:consWhyNot(b,run,x.c,tgt)})).filter(x=>(!filter||filter==='all'||(filter==='fav'?consFavorite(run,x.c):consGroup(x.D)===filter))&&(!only||!x.why)&&(!q||(consName(x.c)+' '+x.D.sit+' '+x.D.d(consVal(x.c))).toLocaleLowerCase().includes(q))).sort((a,b)=>Number(!!a.why)-Number(!!b.why)||a.i-b.i);
 }
+/* 소모품 창에서 같은 종류·등급의 묶음을 한 줄로 합친다(10월 14일). slots는 칸마다 든 수, idx는 쓸 때 먼저 덜어 낼 칸(가장 적게 든 칸이라 칸이 빨리 빈다) */
+function consGroups(rows){
+  const m=new Map();
+  for(const r of rows){const k=r.c.id+':'+consGrade(r.c.id,r.c.g);let g=m.get(k);if(!g)m.set(k,g={key:k,c:r.c,D:r.D,why:r.why,rows:[]});g.rows.push(r);}
+  return [...m.values()].map(g=>Object.assign(g,{n:g.rows.reduce((a,r)=>a+r.c.n,0),slots:g.rows.map(r=>r.c.n),idx:g.rows.reduce((a,r)=>r.c.n<a.c.n?r:a).i,fresh:g.rows.some(r=>r.c.fresh)}));
+}
 const consLvMul = b => 1 + 0.15 * (((b && b.ctx && b.ctx.lv) || 1) - 1);
 function consAdd(run, id, g, n) {
   run.cons = run.cons || []; const D = CONS[id]; if (!D) return n; if (D.use === 'none') { pouchAdd(run, id, n || 1); return 0; } g = consGrade(id, g); let left = n || 1;

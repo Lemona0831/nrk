@@ -163,18 +163,35 @@ function sheetParts(S) {
     if (guides.length) body += `<details id="statbranches" class="invreason"${S.data.branchGuideOpen?' open':''}><summary>갈래별 투자 안내</summary><p class="mini">추천 배분은 직업 공통 기준입니다. 갈래와 장착 스킬에 맞춰 직접 조정할 수 있습니다.</p>${guides.map(x=>`<p class="mini"><b>${esc(x.branch)}</b>: ${esc(x.text)}</p>`).join('')}</details>`;
     body += `<div class="stickbar"><button class="gold wide" data-a="statok" ${left ? 'disabled' : ''} data-focus>${left ? '점수를 모두 나눠 주세요 (남은 ' + left + '점)' : S.data.first ? '이 캐릭터로 시작하기' : '이대로 정하기'}</button>${S.data.first ? '<div class="row"><button data-a="createback">이전: 스킬 고르기</button><button data-a="createcancel">그만두기</button></div>' : ''}</div>`;
   } else if (S.kind === 'cons') {
+    /* 10월 14일 개편: 같은 종류는 한 줄로 합치고, 칸 수는 맨 위 가방 칸 그림과 줄마다의 "N칸 · 5/5 · 3/5"로 보인다. 즐겨찾기·버리기·대상 바꾸기는 줄을 눌러 펼칠 때만 */
     const run = G.run, b = G.b && !G.b.over ? G.b : null; const L = run.cons || [];
     title = '소모품';
-    body = `<p class="mini">${b ? '차례 칸을 쓰지 않습니다. 이번 차례 ' + (b.consN || 0) + '/' + consTurnOf(run.p) + '개. 적을 고르는 소모품은 지금 고른 적(없으면 알맞은 적)에게 씁니다.' : '전투 밖에서는 회복과 해제를 씁니다.'} 소모품 가방 ${consUsed(run)}/${CONS_BAG}칸.</p>`;
+    const cells = L.map(c => { const D = CONS[c.id]; return D ? `<span class="cc${c.g === 'm' ? ' m' : ''}"><span aria-hidden="true">${D.ico}</span><small>${c.n}/${D.max}</small></span>` : ''; }).join('') + '<span class="cc e"><small>빈 칸</small></span>'.repeat(Math.max(0, CONS_BAG - L.length));
+    const said = L.map(c => CONS[c.id] ? consName(c) + ' ' + c.n + '개' : '').filter(Boolean).concat(CONS_BAG > L.length ? ['빈 칸 ' + (CONS_BAG - L.length)] : []).join(', ');
+    body = `<div class="cbagh"><b>가방 ${consUsed(run)}/${CONS_BAG}칸</b>${b ? `<span class="mini">이번 차례 ${b.consN || 0}/${consTurnOf(run.p)}개 · 차례 칸을 쓰지 않습니다</span>` : '<span class="mini">전투 밖에서는 회복과 해제를 씁니다</span>'}</div><div class="cbagm" role="img" aria-label="소모품 가방 칸: ${esc(said)}">${cells}</div>`;
     if (!L.length) body += '<p class="mini">소모품이 없습니다. 쓰러뜨린 적이 떨구거나 상점에서 삽니다.</p>';
-    body += '<p class="mini">★로 고른 세 종류를 빠른 사용 줄에 둡니다. 고르지 않으면 자동으로 표시합니다.</p><div class="invtools" aria-label="빠른 사용 즐겨찾기">'+(run.consFav||[]).map(key=>{const [id,g]=key.split(':');return CONS[id] ? `<button class="sm" data-a="consfavremove" data-k="${esc(key)}" aria-label="${esc(consName({id,g}))} 즐겨찾기 해제">★ ${esc(consName({id,g}))} ×</button>` : '';}).join('')+'</div>';
-    const filter=S.data.filter||'all',only=!!S.data.only,query=S.data.query||'';
-    body += `<div class="invtools" role="group" aria-label="소모품 분류">${[['all','전체'],['fav','즐겨찾기'],['restore','회복·해제'],['battle','전투'],['other','탐색·판매']].map(([k,n])=>`<button class="sm" data-a="consfilter" data-k="${k}" aria-pressed="${filter===k}">${n}</button>`).join('')}<button class="sm" data-a="consonly" aria-pressed="${only}">지금 사용 가능</button><button class="sm" data-a="equip">장비 보기</button></div><div class="invsearch"><label for="consquery">이름·효과 찾기</label><input id="consquery" type="search" value="${esc(query)}" maxlength="60"><button class="sm" data-a="conssearch">찾기</button></div>`;
-    if(b)body+=`<div class="invtools" role="group" aria-label="소모품 대상">${alive(b).filter(e=>e.role!=='root').map(e=>`<button class="sm" data-a="constarget" data-k="${e.id}" aria-pressed="${G.sel===e.id}">${esc(e.n)}</button>`).join('')}</div>`;
-    const rows=consRows(run,b,filter,only,query,G.sel);
-    if(L.length&&!rows.length)body+='<p class="mini">조건에 맞는 소모품이 없습니다. 전체 분류를 선택하거나 검색어·사용 가능 필터를 해제하세요.</p>';
-    body += '<div class="baglist">' + rows.map(({c,i,D,why}) => { const target=b&&D.tgt==='enemy'&&consTarget(b,D,G.sel);return `<div class="bagline${c.fresh ? ' has-new' : ''}">${c.fresh ? `<button class="item-new" data-a="consseen" data-k="${i}" aria-label="${esc(consName(c))} 새 획득 확인">new!</button>` : ''}<div><b>${D.ico} ${esc(consName(c))} ×${c.n}</b><br><small class="mini">${esc(D.sit)} · ${esc(D.d(consVal(c)))}</small>${target?`<p class="mini">사용 대상: ${esc(target.n)}</p>`:''}${why?`<p class="mini">${esc(why)}</p>`:''}</div><div class="bagactions">${['none','out'].includes(D.use) ? '' : `<button class="sm" data-a="consfav" data-k="${i}" aria-pressed="${consFavorite(run,c)}" aria-label="${esc(consName(c))} 즐겨찾기 ${consFavorite(run,c)?'해제':'추가'}">${consFavorite(run,c)?'★':'☆'} 즐겨찾기</button>`}${D.use === 'none' ? '' : `<button class="sm${why ? '' : ' gold'}" data-a="consuse" data-k="${i}" aria-label="${esc(consName(c)+(target?' · '+target.n:'')+' 쓰기')}"${why ? ' disabled' : ''}>쓰기</button>`}<button class="sm" data-a="consdiscard" data-k="${i}"${b?' disabled':''} aria-label="${esc(consName(c))} ${c.n}개 모두 버리기">버리기</button></div></div>`; }).join('') + '</div>';
-    body += `<div class="stickbar"><button class="wide" data-a="close">닫기</button></div>`;
+    const filter = S.data.filter || 'all', query = S.data.query || '', find = !!(S.data.find || query);
+    const tabs = [['all', '전체'], ['restore', '회복·해제'], ['battle', '전투']].concat(L.some(c => CONS[c.id] && consGroup(CONS[c.id]) === 'other') ? [['other', '탐색']] : []).concat([['fav', '★ ' + (run.consFav || []).length + '/3']]);
+    if (L.length) body += `<div class="invtools ctabs" role="group" aria-label="소모품 분류">${tabs.map(([k, n]) => `<button class="sm" data-a="consfilter" data-k="${k}" aria-pressed="${filter === k}">${n}</button>`).join('')}<button class="sm" data-a="consfind" aria-pressed="${find}" aria-label="이름·효과 찾기">🔍</button></div>${find ? `<div class="invsearch"><label for="consquery">이름·효과 찾기</label><input id="consquery" type="search" value="${esc(query)}" maxlength="60"><button class="sm" data-a="conssearch">찾기</button></div>` : ''}`;
+    const gone = (run.consFav || []).filter(key => { const [id] = key.split(':'); return CONS[id] && !L.some(c => consKey(c) === key); });
+    if (gone.length) body += `<p class="mini">가방에 없는 즐겨찾기: ${gone.map(key => { const [id, g] = key.split(':'); return `<button class="sm" data-a="consfavremove" data-k="${esc(key)}" aria-label="${esc(consName({ id, g }))} 즐겨찾기 해제">★ ${esc(consName({ id, g }))} ×</button>`; }).join(' ')}</p>`;
+    const groups = consGroups(consRows(run, b, filter, false, query, G.sel));
+    if (L.length && !groups.length) body += '<p class="mini">조건에 맞는 소모품이 없습니다. 전체 분류를 고르거나 검색어를 지우세요.</p>';
+    body += '<div class="clist">' + groups.map(g => {
+      const { c, D, why, key } = g, open = S.data.open === key, name = consName(c);
+      const target = b && D.tgt === 'enemy' && consTarget(b, D, G.sel), ts = b && D.tgt === 'enemy' ? consTargets(b, D) : [];
+      const slots = `${g.slots.length}칸 · ${g.slots.map(n => n + '/' + D.max).join(' · ')}`;
+      let h = `<div class="cline${why ? ' off' : ''}${open ? ' open' : ''}"><button class="cmain" data-a="consrow" data-k="${esc(key)}" aria-expanded="${open}"><span class="cn"><b>${D.ico} ${esc(name)} ×${g.n}</b>${g.fresh ? ' <span class="cnew">새로 얻음</span>' : ''}${consFavorite(run, c) ? ' <span aria-label="즐겨찾기">★</span>' : ''}</span><span class="cs">${slots}</span><small class="mini">${esc(D.d(consVal(c)))}${target ? ' → ' + esc(target.n) : ''}${why ? ' · ' + esc(why) : ''}</small></button>`;
+      h += D.use === 'none' ? '' : `<button class="sm cuse${why ? '' : ' gold'}" data-a="consuse" data-k="${g.idx}" aria-label="${esc(name + (target ? ' · ' + target.n : '') + ' 쓰기')}"${why ? ' disabled' : ''}>쓰기</button>`;
+      if (open) {
+        h += `<div class="cmore"><p class="mini">${esc(D.sit)} · ${esc(D.d(consVal(c)))}</p>`;
+        if (ts.length > 1) h += `<div class="invtools" role="group" aria-label="${esc(name)} 사용 대상">${ts.map(e => `<button class="sm" data-a="constarget" data-k="${e.id}" aria-pressed="${target && target.id === e.id}">${esc(e.n)}</button>`).join('')}</div>`;
+        if (!['none', 'out'].includes(D.use)) h += `<div class="row"><button class="sm" data-a="consfav" data-k="${g.rows[0].i}" aria-pressed="${consFavorite(run, c)}">${consFavorite(run, c) ? '★ 빠른 사용 줄에서 빼기' : '☆ 빠른 사용 줄에 두기 (3종까지)'}</button></div>`;
+        h += `<div class="cslotl">${g.rows.map((r, k) => `<div><span class="mini">${k + 1}번 칸 · ${r.c.n}/${D.max}개</span><button class="sm" data-a="consdiscard" data-k="${r.i}"${b ? ' disabled' : ''} aria-label="${esc(name)} ${r.c.n}개 든 칸 비우기">이 칸 버리기</button></div>`).join('')}${b ? '<p class="mini">버리기는 전투 밖에서 합니다.</p>' : ''}</div></div>`;
+      }
+      return h + '</div>';
+    }).join('') + '</div>';
+    body += `<div class="stickbar"><div class="row"><button data-a="equip">장비 보기</button><button class="wide" data-a="close">닫기</button></div></div>`;
   } else if (S.kind === 'choice') {
     title = S.data.chest ? '상자를 열었습니다' : '둘 중 하나만 가져갑니다';
     body = winSumHtml() + `<p class="lead">하나만 가져갑니다. 고르지 않은 쪽은 이 방에 남습니다. 고른 뒤 바로 끼울지 정합니다.</p>`;

@@ -69,6 +69,8 @@ function onClick(ev) {
     case 'consopen': hidePop(); openSheet('cons'); break;
     case 'consfilter': if(G.sheet && G.sheet.kind==='cons'){G.sheet.data.filter=el.dataset.k;render();} break;
     case 'consonly': if(G.sheet && G.sheet.kind==='cons'){G.sheet.data.only=!G.sheet.data.only;render();} break;
+    case 'consfind': if(G.sheet && G.sheet.kind==='cons'){const d=G.sheet.data;d.find=!(d.find||d.query);if(!d.find)d.query='';render();if(d.find&&typeof document!=='undefined'){const q=document.getElementById('consquery');if(q)q.focus();}} break;
+    case 'consrow': if(G.sheet && G.sheet.kind==='cons'){const d=G.sheet.data,k=el.dataset.k;d.open=d.open===k?null:k;let seen=false;for(const c of G.run.cons||[])if(c.id+':'+consGrade(c.id,c.g)===k&&c.fresh){c.fresh=false;seen=true;}if(seen){saveRunLocal();saveCur();}render();} break;
     case 'conssearch': if(G.sheet && G.sheet.kind==='cons'){G.sheet.data.query=val('consquery').trim();render();} break;
     case 'consdiscard': {if(G.b&&!G.b.over){toast('전투 밖에서 정리합니다');break;}const r=G.run,i=+el.dataset.k,c=(r.cons||[])[i];if(c&&ask(consName(c)+' '+c.n+'개를 모두 버릴까요?')){r.cons.splice(i,1);saveRunLocal();saveCur();render();}break;}
     case 'constarget': G.sel=el.dataset.k;render();break;
