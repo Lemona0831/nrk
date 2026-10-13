@@ -181,6 +181,29 @@ function consApply(b, run, c, tgt) {
   }
   return '';
 }
+/* 소모품이 적에게 남긴 효과(10월 14일): 적 카드 칩 [키, 아이콘, 짧은 글]과 설명. 다음 행동·공격에 쓰이면 사라진다 */
+function consMarks(e) {
+  const L = [];
+  if (e.markDmg) L.push(['mark', '🖍️', '표식 +' + Math.round(e.markDmg * 100) + '%']);
+  if (e.redNext) L.push(['red', '💫', '다음 공격 −' + Math.round(e.redNext * 100) + '%']);
+  if (e.missNext) L.push(['miss', '🌫️', '다음 공격 빗나감']);
+  if (e.noHeal) L.push(['noheal', '🚫', '다음 치유 막힘']);
+  if (e.noSummon) L.push(['nosummon', '🚫', '다음 소환 막힘']);
+  if (e.stuck) L.push(['stuck', '🍯', '끈끈이']);
+  if (e.unguard) L.push(['unguard', '🪝', '지키기 풀림']);
+  if (e.norise && e.role === 'skeleton' && !e.pile) L.push(['norise', '⚪', '다시 일어서지 못함']);
+  return L;
+}
+const CONS_MARK_D = {
+  mark: e => '이 적이 받는 다음 직접 피해 한 번이 ' + Math.round(e.markDmg * 100) + '% 커집니다. 맞으면 사라집니다.',
+  red: e => '이 적의 다음 공격 하나가 주는 피해가 ' + Math.round(e.redNext * 100) + '% 줄어듭니다. 화상 같은 지속 피해에는 쓰이지 않습니다.',
+  miss: () => '이 적의 다음 공격 하나가 빗나갑니다.',
+  noheal: () => '이 적의 다음 치유 한 번이 막힙니다.',
+  nosummon: () => '이 적의 다음 소환 한 번이 막힙니다.',
+  stuck: () => '이 적이 다음에 달아나려 하면 끈끈이에 걸려 달아나지 못합니다.',
+  unguard: () => '이 적은 다음 행동까지 동료를 지키지 못합니다.',
+  norise: () => '이 해골은 쓰러져도 다시 일어서지 않습니다.',
+};
 function consUse(b, run, idx, tgtId) {
   const c = (run.cons || [])[idx]; if (!c) return '없는 소모품입니다'; const why = consWhyNot(b, run, c, tgtId); if (why) return why;
   const D = CONS[c.id]; const tgt = D.tgt === 'enemy' ? consTarget(b, D, tgtId) : null; const msg = consApply(b, run, c, tgt);
