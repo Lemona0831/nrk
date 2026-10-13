@@ -4,7 +4,7 @@
   'use strict';
   const $ = (h) => { const d = document.createElement('div'); d.innerHTML = h.trim(); return d.firstChild; };
   const css = `
-#tm-btn{position:fixed;right:0;top:42%;z-index:100000;width:34px;height:34px;padding:0;font:16px sans-serif;border-radius:17px 0 0 17px;border:1px solid #888;border-right:0;background:rgba(34,34,34,.75);color:#fff;cursor:pointer}
+#tm-btn{position:fixed;right:0;top:30%;z-index:100000;width:20px;height:44px;padding:0;font:12px sans-serif;border-radius:10px 0 0 10px;border:1px solid #888;border-right:0;background:rgba(34,34,34,.55);color:#fff;cursor:pointer;opacity:.6}#tm-btn:hover,#tm-btn[aria-expanded=true]{opacity:1}
 #tm{position:fixed;right:40px;top:12%;z-index:100000;width:min(360px,calc(100vw - 16px));max-height:70vh;overflow:auto;background:#1b1b1f;color:#eee;border:1px solid #666;border-radius:10px;padding:10px;font:13px/1.45 sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.5)}
 #tm h4{margin:10px 0 4px;font-size:13px;color:#f5c542}#tm .row{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0}
 #tm button{font:12px sans-serif;padding:4px 7px;border-radius:6px;border:1px solid #555;background:#2d2d33;color:#eee;cursor:pointer}
