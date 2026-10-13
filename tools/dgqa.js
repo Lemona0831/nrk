@@ -107,7 +107,8 @@ function handleSheets(pk, r) {
       click('statok');
     } else if (S.kind === 'offer') { click('offerpick', run.bag[0]); }
     else if (S.kind === 'awk') { click('awkpick', awkChoice(pk, r, run)); } /* 각인 (2챕터 이후에만 뜬다) */
-    else if (S.kind === 'swap') { click('swapskip'); } // 스킬 바꾸기: 단계 3에서 성향별로
+    else if (S.kind === 'swap') { click('swapskip'); }
+    else if (S.kind === 'consfull') { run_('ask = () => true'); click('cptake'); } // 10월 14일 개편 5단계: 전리품 화면(자리가 없는 것은 두고 간다) // 스킬 바꾸기: 단계 3에서 성향별로
     else { G.sheet = null; }
     while (!G.sheet && G.dropQ && G.dropQ.length) G0.nextDrop();
   }

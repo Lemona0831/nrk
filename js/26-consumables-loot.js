@@ -275,7 +275,7 @@ function dropText(L) { const m = {}; let g = 0; for (const d of L) { if (d.gold)
 function cons3W(b, k, vsR) { const D = CONS[k]; const base = D.dw3 != null ? D.dw3 : (D.dw != null ? D.dw : D.use === 'none' ? 0.5 : 1) * (D.ch === 3 ? 2 : 1); const vs = (D.vs && vsR.includes(D.vs)) || (D.vs3 && vsR.includes(D.vs3)) || (D.vsMod && hasMod(b, D.vsMod)); return base * (vs ? 2 : 1); }
 function rollDrops0(b, e) {
   const L = e.role === 'boss' ? LOOT.big : e.strong ? (LOOT.strong || LOOT.big) : e.elite ? LOOT.elite : LOOT.normal; const rr = b.rngF || Math.random;
-  const chN = (b.ctx && b.ctx.ch) || 1; const noCure = !!(b.ctx && b.ctx.marks && b.ctx.marks.indexOf('nocure') >= 0); const ids = Object.keys(CONS).filter(k => (CONS[k].ch || 1) <= chN && !(CONS[k].only && CONS[k].only !== chN) && !(noCure && (CONS[k].k === 'heal' || CONS[k].k === 'healcure'))); /* 표식 도전 nocure: 생명력을 되찾는 소모품은 떨어지지 않는다 */ const vsR = b.vsRoles || (b.vsRoles = b.en.map(x => x.role)); const pick = () => { const w = ids.map(k => chN >= 3 ? cons3W(b, k, vsR) : (chN >= 2 && CONS[k].dw2 != null ? CONS[k].dw2 : CONS[k].ch === chN && chN >= 2 ? 1.5 : CONS[k].dw != null ? CONS[k].dw : CONS[k].use === 'none' ? 0.5 : 1) * (CONS[k].vs && vsR.includes(CONS[k].vs) ? 1.5 : 1)); /* 10월 5일: 챕터 소모품, 방금 싸운 역할의 답(vs) ×1.5 */ let x = rr() * w.reduce((a, c) => a + c, 0); for (let i = 0; i < ids.length; i++) { x -= w[i]; if (x <= 0) return ids[i]; } return ids[0]; };
+  const chN = (b.ctx && b.ctx.ch) || 1; const noCure = !!(b.ctx && b.ctx.marks && b.ctx.marks.indexOf('nocure') >= 0); const ids = Object.keys(CONS).filter(k => (CONS[k].ch || 1) <= chN && !(CONS[k].only && CONS[k].only !== chN) && !(noCure && (CONS[k].k === 'heal' || CONS[k].k === 'healcure'))); /* 표식 도전 nocure: 생명력을 되찾는 소모품은 떨어지지 않는다 */ const vsR = b.vsRoles || (b.vsRoles = b.en.map(x => x.role)); const pick = () => { const seen = b.dropSeen || (b.dropSeen = []); const P = ids.filter(k => k === 'herb' || !seen.includes(k)); const Q = P.length ? P : ids; const w = Q.map(k => chN >= 3 ? cons3W(b, k, vsR) : (chN >= 2 && CONS[k].dw2 != null ? CONS[k].dw2 : CONS[k].ch === chN && chN >= 2 ? 1.5 : CONS[k].dw != null ? CONS[k].dw : CONS[k].use === 'none' ? 0.5 : 1) * (CONS[k].vs && vsR.includes(CONS[k].vs) ? 1.5 : 1)); /* 10월 5일: 챕터 소모품, 방금 싸운 역할의 답(vs) ×1.5 */ let x = rr() * w.reduce((a, c) => a + c, 0); let id = Q[0]; for (let i = 0; i < Q.length; i++) { x -= w[i]; if (x <= 0) { id = Q[i]; break; } } seen.push(id); return id; }; /* 10월 14일 개편 5단계: 한 전투에서 같은 소모품은 한 번만 나온다(약초 빼고) */
   b.drops = b.drops || [];
   if (rr() < Math.min(0.01, L.flask * (b.lootMul || 1) * (b.lootX || 1))) b.drops.push({ flask: ['life', 'mana', 'stam'][Math.floor(rr() * 3)] }); // 플라스크 한 칸: 1% 이하
   for (let k = 0; k < L.rolls; k++) {
@@ -285,16 +285,26 @@ function rollDrops0(b, e) {
     else { const n = L.n[0] + Math.floor(rr() * (L.n[1] - L.n[0] + 1)); for (let i = 0; i < n; i++) { const id = pick(); b.drops.push({ cons: id, g: CONS[id].vm != null && rr() < L.hi + (b.ctx.lower ? LOOT.lowerHi : 0) ? 'm' : 'n' }); } }
   }
 }
+/* 전리품 고르기(10월 14일 개편 5단계, 설계안 5절): 떨어진 소모품은 보류(consPending)에 모으고, 전리품 화면에서 뺄 것을 고른 뒤 챙긴다 */
+function lootPend(run, id, g) { g = consGrade(id, g); const q = run.consPending || (run.consPending = []); const x = q.find(y => y.id === id && y.g === g); if (x) x.n++; else q.push({ id, g, n: 1, loot: 1 }); }
+/* 보류 목록을 순서대로 넣어 보면 몇 개씩 들어가는가(skip은 빼는 번호). 저장본은 바꾸지 않는다 */
+function consFitPlan(run, list, skip) { const sim = { cons: JSON.parse(JSON.stringify(run.cons || [])) }; return list.map((c, i) => (skip || []).includes(i) || !CONS[c.id] ? 0 : c.n - consAdd(sim, c.id, c.g, c.n)); }
+/* 고른 것을 챙기고 나머지(뺀 것 · 자리가 없는 것)는 두고 간다 */
+function consTakePending(run, skip) {
+  const q = run.consPending || []; let took = 0, left = 0; const log = run.consGainLog || (run.consGainLog = []);
+  q.forEach((c, i) => { if (!CONS[c.id]) return; const off = (skip || []).includes(i); const l = off ? c.n : consAdd(run, c.id, c.g, c.n); const got = c.n - l; took += got; left += l; log.push({ ch: run.ch || 1, room: run.room, id: c.id, g: c.g, n: c.n, received: got, discarded: l, skipped: off ? 1 : 0, fromPending: true, t: Date.now() }); });
+  run.consPending = []; return { took, left };
+}
 function grantDrops(run, b) {
   const D = (b && b.drops) || []; if (!D.length) return; const p = run.p; let gold = 0, lost = 0; const got = {};
   for (const d of D) {
     if (d.gold) gold += d.gold;
-    if (d.cons) { const left = consGrant(run, d.cons, d.g, 1); if (!left) { const nm = consName({ id: d.cons, g: d.g }); got[nm] = (got[nm] || 0) + 1; } }
+    if (d.cons && CONS[d.cons]) { const nm = consName({ id: d.cons, g: d.g }); if (CONS[d.cons].use === 'none') { pouchAdd(run, d.cons, 1); got[nm] = (got[nm] || 0) + 1; } else lootPend(run, d.cons, d.g); }
     if (d.flask) { if ((p.flask[d.flask] || 0) < flaskCap(p, d.flask)) { p.flask[d.flask] = (p.flask[d.flask] || 0) + 1; got['플라스크 한 칸'] = (got['플라스크 한 칸'] || 0) + 1; } }
   }
   if (gold) gainGold(run, gold, '전리품');
   const txt = Object.entries(got).map(([k, n]) => k + (n > 1 ? ' ×' + n : '')).join(', ');
-  if (txt || (run.consPending || []).length) toast('전리품: ' + (txt || '가방에 넣을 소모품을 골라 주세요') + ((run.consPending || []).length && txt ? '. 공간이 부족한 소모품은 직접 골라 챙깁니다' : ''));
+  if (txt) toast('전리품: ' + txt + ((run.consPending || []).length ? '. 소모품은 골라서 챙깁니다' : ''));
   run.lootLog = run.lootLog || []; run.lootLog.push({ room: run.room, gold, got, lost, pending: (run.consPending || []).map(c => Object.assign({}, c)) });
   b.drops = [];
 }

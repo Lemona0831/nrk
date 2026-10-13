@@ -10,6 +10,8 @@ function onClick(ev) {
   if (el.getAttribute && el.getAttribute('aria-disabled') === 'true' && el.dataset && el.dataset.why) { toast(el.dataset.why); return; } /* 10월 7일 2차: 상점 등 쓸 수 없는 버튼의 이유 */
   if (a === 'closebg') { if (ev.target !== el) return; if (G.sheet && !['block', 'stats', 'choice', 'awk', 'bagfull'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } return; }
   switch (a) {
+    case 'cptoggle': { if (!G.sheet || G.sheet.kind !== 'consfull') break; const d = G.sheet.data, i = +el.dataset.k; d.skip = d.skip || []; d.skip = d.skip.includes(i) ? d.skip.filter(x => x !== i) : d.skip.concat([i]); render(); break; }
+    case 'cptake': { const run = G.run; if (!run || !G.sheet || G.sheet.kind !== 'consfull' || G.b) break; const skip = G.sheet.data.skip || [], Q = run.consPending || [], plan = consFitPlan(run, Q, skip); const lost = Q.reduce((a, c, i) => a + (skip.includes(i) ? 0 : c.n - plan[i]), 0); if (lost && !ask('자리가 없어 ' + lost + '개를 두고 갑니다. 계속할까요?')) break; consTakePending(run, skip); G.sheet = null; saveRunLocal(); saveCur(); nextDrop(); break; }
     case 'cpkeep': case 'cpskip': case 'cpreplace': {
       const run=G.run;
       if (!run || !G.sheet || G.sheet.kind!=='consfull' || !(run.consPending || []).length || G.b) break;
@@ -17,8 +19,9 @@ function onClick(ev) {
       if (a==='cpreplace') {
         if (el.dataset.s==='cons') {
           const i=+el.dataset.k,c=run.cons[i];
-          if (!c || !ask(consName(c)+' ×'+c.n+' 묶음을 버리고 새 소모품을 챙길까요?')) break;
+          if (!c || !ask(consName(c)+' ×'+c.n+' 묶음을 버릴까요?')) break;
           run.cons.splice(i,1);
+          saveRunLocal(); saveCur(); render(); break; // 10월 14일 개편 5단계: 버리기는 자리만 만들고 전리품 화면에 남는다. 챙기기는 [챙기기]로
         } else break; // 10월 14일: 소모품 가방이 나뉘어 장비를 버려도 소모품 칸이 생기지 않는다(장비만 잃는 것을 막는다)
       }
       consPendingTry(run); G.sheet=null;saveRunLocal();saveCur();nextDrop();break;

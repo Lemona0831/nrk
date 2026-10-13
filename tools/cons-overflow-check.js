@@ -1,11 +1,12 @@
 'use strict';
 /* 소모품이 넘칠 때(보류 보상) 점검. 10월 14일 개편 1단계로 다시 썼다: 소모품 가방(5칸)이 장비 가방과 나뉘어,
    넘친 소모품은 기존 소모품 묶음을 버리거나 두고 가는 것으로만 해결한다. 장비를 버리는 경로는 막혀 있어야 한다.
+   개편 5단계: 보류는 전리품 화면(consfull)에서 고른다. 묶음 버리기는 자리만 만들고 화면에 남으며, [챙기기]가 고른 것을 넣는다.
    실행: node tools/cons-overflow-check.js */
 process.env.DGDIR = process.env.DGDIR || '.';
 const assert = require('assert/strict'), D = require('./dgqa.js'), E = D.G0, G = E.__G;
 D.run_('Object.assign(this, { CONS_BAG, consUsed })');
-E.render = () => { }; E.saveRunLocal = () => { }; E.saveCur = () => { }; E.ask = () => true;
+E.render = () => { }; E.saveRunLocal = () => { }; E.saveCur = () => { }; E.ask = () => true; E.nextDrop = () => { };
 const run = { build: 'hunter', p: E.mkPlayer('hunter', {}), bag: [], cons: [], consV: 3, pouch: {}, swaps: [], rooms: [], drops: [] };
 E.initGear(run); G.run = run; G.data = {}; G.b = null;
 for (const id of ['charm', 'knot', 'hookrope', 'chalk', 'hinder']) E.consAdd(run, id, 'n', E.CONS[id].max);
@@ -19,10 +20,14 @@ assert.equal(run.bag.length, gear0 + 1, '장비가 그대로'); assert.equal(run
 G.run = JSON.parse(JSON.stringify(run)); G.sheet = { kind: 'consfull', data: {} };
 E.ask = () => false; D.click('cpreplace', '0', { s: 'cons' }); assert.equal(G.run.cons[0].id, 'charm', '확인을 취소하면 그대로');
 E.ask = () => true; D.click('cpreplace', '0', { s: 'cons' });
-assert(G.run.cons.some(c => c.id === 'herb' && c.n === 2), '묶음을 버리고 약초를 챙김'); assert(!G.run.cons.some(c => c.id === 'charm')); assert.equal(G.run.consPending.length, 0);
+assert(!G.run.cons.some(c => c.id === 'charm'), '묶음을 버린다'); assert.equal(G.run.consPending.length, 1, '버리기만으로는 챙기지 않는다'); assert.equal(G.sheet.kind, 'consfull', '전리품 화면에 남는다');
+D.click('cptake'); assert(G.run.cons.some(c => c.id === 'herb' && c.n === 2), '챙기기로 약초를 넣는다'); assert.equal(G.run.consPending.length, 0); assert.equal(G.sheet, null);
 assert.equal(E.consGrant(G.run, 'herb', 'n', 1), 0); assert(G.run.cons.some(c => c.id === 'herb' && c.n === 3), '가득 차도 같은 묶음에 합친다');
-E.consGrant(G.run, 'cleanse', 'n', 1); G.sheet = { kind: 'consfull', data: {} }; D.click('cpskip');
+// 뺀 것은 두고 간다
+E.consGrant(G.run, 'cleanse', 'n', 1); G.sheet = { kind: 'consfull', data: {} }; D.click('cptoggle', '0'); assert.equal(JSON.stringify(G.sheet.data.skip), '[0]'); D.click('cptake');
 assert.equal(G.run.consPending.length, 0); assert(!G.run.cons.some(c => c.id === 'cleanse'), '두고 가기');
+// 자리가 없으면 묻고, 취소하면 그대로
+E.consGrant(G.run, 'cleanse', 'n', 1); G.sheet = { kind: 'consfull', data: {} }; E.ask = () => false; D.click('cptake'); assert.equal(G.run.consPending.length, 1, '취소하면 그대로'); E.ask = () => true; D.click('cptake'); assert.equal(G.run.consPending.length, 0);
 // 판매품은 넘치지 않고 주머니로
 assert.equal(E.consGrant(G.run, 'silver', 'n', 3), 0); assert.equal(G.run.pouch.silver, 3); assert.equal(G.run.consPending.length, 0);
-console.log('소모품 보류·저장 복원·장비 버리기 차단·확인 취소·묶음 교체·합치기·두고 가기·판매품 주머니 통과');
+console.log('소모품 보류·저장 복원·장비 버리기 차단·확인 취소·묶음 버리기 뒤 챙기기·합치기·빼고 두고 가기·자리 없음 확인·판매품 주머니 통과');

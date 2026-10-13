@@ -82,6 +82,13 @@ function treeHover(ev) {
   box.innerHTML = vTreeDetail(G.run, id, !!pv); box.dataset.k = id; box.dataset.pv = pv;
 }
 function vTreePage() { return `<section class="card"><div class="phead">${backBtn()}<h3>스킬 트리</h3></div>${G.run && G.run.tree ? vTreeView('page') : '<p class="mini">진행 중인 캐릭터가 없습니다.</p>'}</section>`; }
+/* 소모품 가방 칸 그림(10월 14일): 칸마다 아이콘과 든 수, 빈 칸은 점선 */
+function consBagStrip(run, sub) {
+  const L = run.cons || [];
+  const cells = L.map(c => { const D = CONS[c.id]; return D ? `<span class="cc${c.g === 'm' ? ' m' : ''}"><span aria-hidden="true">${D.ico}</span><small>${c.n}/${D.max}</small></span>` : ''; }).join('') + '<span class="cc e"><small>빈 칸</small></span>'.repeat(Math.max(0, CONS_BAG - L.length));
+  const said = L.map(c => CONS[c.id] ? consName(c) + ' ' + c.n + '개' : '').filter(Boolean).concat(CONS_BAG > L.length ? ['빈 칸 ' + (CONS_BAG - L.length)] : []).join(', ');
+  return `<div class="cbagh"><b>가방 ${consUsed(run)}/${CONS_BAG}칸</b>${sub ? `<span class="mini">${sub}</span>` : ''}</div><div class="cbagm" role="img" aria-label="소모품 가방 칸: ${esc(said)}">${cells}</div>`;
+}
 function sheetParts(S) {
   const run = G.run; let body = '', title = '';
   if (S.kind === 'tutintro' || S.kind === 'tutdone') return tutSheet(S);
@@ -100,14 +107,13 @@ function sheetParts(S) {
     const it = S.data.item; title = '가방이 가득 찼습니다'; const nc = (run.cons || []).length;
     body = winSumHtml() + `<p class="lead">새 장비를 바로 장착하거나, 가방에서 하나를 비워 챙길 수 있습니다.</p>${itemDetail(it)}${shopCmp(run, it)}${rewardEquipButtons(run, it)}<button class="wide" data-a="bfskip">새 장비를 버리기</button><h4 class="bfh">또는 가방에서 하나를 버리고 새 장비를 받기</h4><div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${inm(x.tpl, x.g)}</span>${gradeTag(x.g)}<br><small class="mini">${EQ_SLOT_N[kindOf(ITEMS[x.tpl].slot) === 'ring' ? 'ring1' : ITEMS[x.tpl].slot].replace(' 1', '')} · ${baseText(x)}</small></div><button class="sm" data-a="bfdrop" data-k="${u}"${x.locked ? ' disabled' : ''}>${x.locked ? '잠김' : '이것을 버리기'}</button></div>`; }).join('')}</div>`;
   } else if (S.kind === 'consfull') {
-    title = '챙길 소모품을 고르세요';
-    const c = (run.consPending || [])[0];
-    if (c) {
-      const D = CONS[c.id];
-      body = `<div class="idet"><b>${D.ico} ${esc(consName(c))} ×${c.n}</b><p>${esc(D.d(consVal(c)))}</p></div><p class="mini">소모품 가방 ${consUsed(run)}/${CONS_BAG}칸. 공간이 부족하면 기존 소모품 묶음 하나를 버리고 챙깁니다.</p><div class="row"><button class="gold" data-a="cpkeep"${consSpace(run,c.id,c.g).capacity < 1 ? ' disabled' : ''}>가방에 넣기</button><button data-a="cpskip">이 소모품을 두고 가기</button></div><h4>가방에서 비울 것</h4><div class="baglist">`;
-      body += (run.cons || []).map((x,i) => `<div class="bagline"><div><b>${CONS[x.id].ico} ${esc(consName(x))} ×${x.n}</b><br><small class="mini">${esc(CONS[x.id].d(consVal(x)))}</small></div><button class="sm" data-a="cpreplace" data-k="${i}" data-s="cons">묶음 버리고 챙기기</button></div>`).join('');
-      body += '</div>'; // 10월 14일: 소모품 가방이 나뉘어 장비를 버려도 소모품 칸이 생기지 않는다
-    }
+    title = '전리품을 고르세요';
+    /* 10월 14일 개편 5단계: 나온 소모품을 모두 보여 주고 뺄 것을 고른다. 자리가 모자라면 가방의 묶음을 버릴 수 있다 */
+    const Q = run.consPending || [], skip = S.data.skip || [], plan = consFitPlan(run, Q, skip);
+    const takeN = plan.reduce((a, n) => a + n, 0), lostN = Q.reduce((a, c, i) => a + (skip.includes(i) ? 0 : c.n - plan[i]), 0);
+    body = winSumHtml() + consBagStrip(run) + '<p class="mini">눌러서 뺄 것을 고르세요. 뺀 것과 자리가 없는 것은 이 방에 두고 갑니다.</p><div class="clist">' + Q.map((c, i) => { const D = CONS[c.id]; if (!D) return ''; const off = skip.includes(i), got = plan[i]; const st = off ? '두고 감' : got >= c.n ? '챙김' : got > 0 ? got + '개만 들어감' : '자리 없음'; return `<div class="cline${off ? ' off' : ''}"><button class="cmain" data-a="cptoggle" data-k="${i}" aria-pressed="${!off}"><span class="cn"><b><span aria-hidden="true">${off ? '☐' : '☑'}</span> ${D.ico} ${esc(consName(c))} ×${c.n}</b></span><small class="mini">${esc(D.d(consVal(c)))}</small></button><span class="cstat${off || got < c.n ? ' warn' : ''}">${st}</span></div>`; }).join('') + '</div>';
+    body += (run.cons || []).length ? '<details class="invreason"' + (lostN ? ' open' : '') + '><summary>가방에서 비울 것' + (lostN ? ' (자리가 ' + lostN + '개 모자랍니다)' : '') + '</summary><div class="baglist">' + run.cons.map((x, i) => `<div class="bagline"><div><b>${CONS[x.id] ? CONS[x.id].ico : ''} ${esc(consName(x))} ×${x.n}</b></div><button class="sm" data-a="cpreplace" data-k="${i}" data-s="cons" aria-label="${esc(consName(x))} ${x.n}개 묶음 버리기">묶음 버리기</button></div>`).join('') + '</div></details>' : '';
+    body += `<div class="stickbar"><div class="row"><button class="gold wide" data-a="cptake" data-focus>${takeN ? '챙기기 (' + takeN + '개)' : '모두 두고 가기'}</button></div></div>`;
   } else if (S.kind === 'changes') {
     title = '업데이트 내역';
     const mj = CHANGELOG.findIndex(c => c.v === '0.7.0'), cut = mj >= 0 ? mj + 1 : CHANGELOG.length;
@@ -166,9 +172,7 @@ function sheetParts(S) {
     /* 10월 14일 개편: 같은 종류는 한 줄로 합치고, 칸 수는 맨 위 가방 칸 그림과 줄마다의 "N칸 · 5/5 · 3/5"로 보인다. 즐겨찾기·버리기·대상 바꾸기는 줄을 눌러 펼칠 때만 */
     const run = G.run, b = G.b && !G.b.over ? G.b : null; const L = run.cons || [];
     title = '소모품';
-    const cells = L.map(c => { const D = CONS[c.id]; return D ? `<span class="cc${c.g === 'm' ? ' m' : ''}"><span aria-hidden="true">${D.ico}</span><small>${c.n}/${D.max}</small></span>` : ''; }).join('') + '<span class="cc e"><small>빈 칸</small></span>'.repeat(Math.max(0, CONS_BAG - L.length));
-    const said = L.map(c => CONS[c.id] ? consName(c) + ' ' + c.n + '개' : '').filter(Boolean).concat(CONS_BAG > L.length ? ['빈 칸 ' + (CONS_BAG - L.length)] : []).join(', ');
-    body = `<div class="cbagh"><b>가방 ${consUsed(run)}/${CONS_BAG}칸</b>${b ? `<span class="mini">이번 차례 ${b.consN || 0}/${consTurnOf(run.p)}개 · 이번 전투 ${b.consF || 0}/${consFightOf(run.p, run)}개 · 차례 칸을 쓰지 않습니다</span>` : '<span class="mini">전투 밖에서는 회복과 해제를 씁니다</span>'}</div><div class="cbagm" role="img" aria-label="소모품 가방 칸: ${esc(said)}">${cells}</div>`;
+    body = consBagStrip(run, b ? `이번 차례 ${b.consN || 0}/${consTurnOf(run.p)}개 · 이번 전투 ${b.consF || 0}/${consFightOf(run.p, run)}개 · 차례 칸을 쓰지 않습니다` : '전투 밖에서는 회복과 해제를 씁니다');
     if (!L.length) body += '<p class="mini">소모품이 없습니다. 쓰러뜨린 적이 떨구거나 상점에서 삽니다.</p>';
     const filter = S.data.filter || 'all', query = S.data.query || '', find = !!(S.data.find || query);
     const tabs = [['all', '전체'], ['restore', '회복·해제'], ['battle', '전투']].concat(L.some(c => CONS[c.id] && consGroup(CONS[c.id]) === 'other') ? [['other', '탐색']] : []).concat([['fav', '★ ' + (run.consFav || []).length + '/3']]);
