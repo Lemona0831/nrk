@@ -66,7 +66,7 @@ const hash = s => crypto.createHash('sha256').update(s).digest('hex');
   const index = path.join(OUT, 'index.html');
   let html = fs.readFileSync(index, 'utf8').replace(/<meta name="nrk-release" content="[a-f0-9]+">\r?\n/g, '').replace(/\?v=[a-f0-9]+/g, '');
   const assets = {};
-  html = html.replace(/((?:src|href)=")((?:data|js|css)\/[^"?]+)(")/g, (_, a, file, z) => { const d = hash(fs.readFileSync(path.join(OUT, file))); assets[file] = d; return a + file + '?v=' + d.slice(0, 16) + z; });
+  html = html.replace(/((?:src|href)=")((?:data|js|css|test)\/[^"?]+)(")/g, (_, a, file, z) => { const d = hash(fs.readFileSync(path.join(OUT, file))); assets[file] = d; return a + file + '?v=' + d.slice(0, 16) + z; });
   const revision = hash(html + JSON.stringify(assets));
   html = html.replace(/(<meta charset="utf-8">\r?\n)/, '$1<meta name="nrk-release" content="' + revision + '">\n');
   fs.writeFileSync(index, html); fs.writeFileSync(path.join(OUT, 'release.json'), JSON.stringify({ revision }, null, 2) + '\n');
