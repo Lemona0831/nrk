@@ -1,17 +1,17 @@
 /* 테스트 메뉴 (10월 14일). tools/build-test-site.js가 테스트 사이트에만 넣는다. 공개 게임에는 들어가지 않는다.
-   화면 왼쪽 아래 🧪 단추로 연다. 게임의 전역 이름(const로 선언된 G·CONS·ITEMS 등은 window에 붙지 않으므로 이름으로 직접 읽는다. 함수는 window에 붙는다: gainXp, advanceFloor, startSettle, consGrant, mkItem, addItem …)를 그대로 부른다. */
+   화면 오른쪽 가장자리의 🧪 단추로 연다. 게임의 전역 이름(const로 선언된 G·CONS·ITEMS 등은 window에 붙지 않으므로 이름으로 직접 읽는다. 함수는 window에 붙는다: gainXp, advanceFloor, startSettle, consGrant, mkItem, addItem …)를 그대로 부른다. */
 (function () {
   'use strict';
   const $ = (h) => { const d = document.createElement('div'); d.innerHTML = h.trim(); return d.firstChild; };
   const css = `
-#tm-btn{position:fixed;left:8px;bottom:28px;z-index:100000;font:14px sans-serif;padding:6px 10px;border-radius:8px;border:1px solid #888;background:#222;color:#fff;cursor:pointer}
-#tm{position:fixed;left:8px;bottom:64px;z-index:100000;width:min(360px,calc(100vw - 16px));max-height:70vh;overflow:auto;background:#1b1b1f;color:#eee;border:1px solid #666;border-radius:10px;padding:10px;font:13px/1.45 sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+#tm-btn{position:fixed;right:0;top:42%;z-index:100000;width:34px;height:34px;padding:0;font:16px sans-serif;border-radius:17px 0 0 17px;border:1px solid #888;border-right:0;background:rgba(34,34,34,.75);color:#fff;cursor:pointer}
+#tm{position:fixed;right:40px;top:12%;z-index:100000;width:min(360px,calc(100vw - 16px));max-height:70vh;overflow:auto;background:#1b1b1f;color:#eee;border:1px solid #666;border-radius:10px;padding:10px;font:13px/1.45 sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.5)}
 #tm h4{margin:10px 0 4px;font-size:13px;color:#f5c542}#tm .row{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0}
 #tm button{font:12px sans-serif;padding:4px 7px;border-radius:6px;border:1px solid #555;background:#2d2d33;color:#eee;cursor:pointer}
 #tm button:hover{background:#3b3b44}#tm select,#tm input{font:12px sans-serif;background:#111;color:#eee;border:1px solid #555;border-radius:5px;padding:3px;max-width:100%}
 #tm .st{white-space:pre-wrap;background:#111;border-radius:6px;padding:6px;font:12px monospace}#tm .warn{color:#ff9b7a}`;
   document.head.appendChild($('<style>' + css + '</style>'));
-  const btn = $('<button id="tm-btn" type="button" aria-expanded="false">🧪 테스트</button>');
+  const btn = $('<button id="tm-btn" type="button" aria-expanded="false" aria-label="테스트 메뉴" title="테스트 메뉴">🧪</button>'); // 화면 오른쪽 가장자리: 게임의 아래쪽 행동 버튼을 가리지 않게
   document.body.appendChild(btn);
   let panel = null;
   const has = (n) => typeof window[n] === 'function';
