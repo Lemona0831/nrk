@@ -235,7 +235,6 @@ function consMarks(e) {
   if (e.redNext) L.push(['red', '💫', '다음 공격 −' + Math.round(e.redNext * 100) + '%']);
   if (e.missNext) L.push(['miss', '🌫️', '다음 공격 빗나감']);
   if (e.bigRed) L.push(['big', '🔔', '큰 공격 −' + Math.round(e.bigRed * 100) + '%']);
-  if (e.limeDelay && !e.pile) L.push(['lime', '⚪', '쓰러지면 부활 +' + e.limeDelay + '라운드']);
   if (e.noHeal) L.push(['noheal', '🚫', '다음 치유 −' + Math.round(CONS.hinder.v * 100) + '%']);
   if (e.noSummon) L.push(['nosummon', '🚫', '다음 소환 막힘']);
   if (e.stuck) L.push(['stuck', '🍯', '끈끈이']);
@@ -249,7 +248,6 @@ const CONS_MARK_D = {
   miss: () => '이 적의 다음 공격 하나가 빗나갑니다.',
   noheal: () => '이 적의 다음 치유량이 ' + Math.round(CONS.hinder.v * 100) + '% 줄어듭니다.',
   big: e => '이 적이 모으는 큰 공격(강타 · 겨누기 · 영창)의 피해가 ' + Math.round(e.bigRed * 100) + '% 줄어듭니다. 그 공격이 나가면 사라집니다.',
-  lime: e => '이 해골이 쓰러져 뼈 더미가 되면 부활까지 ' + e.limeDelay + '라운드가 더 걸립니다.',
   nosummon: () => '이 적의 다음 소환 한 번이 막힙니다.',
   stuck: () => '이 적이 다음에 달아나려 하면 끈끈이에 걸려 달아나지 못합니다.',
   unguard: () => '이 적은 다음 행동까지 동료를 지키지 못합니다.',

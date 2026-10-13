@@ -190,6 +190,7 @@ function stsHtml(u, b, inCard, opt) {
   }
   if (u !== b.p && u.mark && isBm(b.p)) out.push(`<i class="d" data-info="bmmark" tabindex="0">☠️ 표식<small> · 쓰러지면 중독 ${Math.min(BLOOD.spreadKillMax, Math.ceil(st(u, 'poison') * (u.mark.per || 1)))} 번짐</small></i>`); // 숨겨진 직업 3
   if (u.stun > 0) out.push(`<i class="d" data-info="stun" tabindex="0"><span class="sic" aria-hidden="true">😵</span>기절</i>`);
+  if (u !== b.p) { const r = skelRise(b, u); if (r) out.unshift(r.no ? `<i class="d" data-info="skrise:${u.id}" tabindex="0"><span class="sic" aria-hidden="true">🦴</span>지금 쓰러지면 부활 못 함</i>` : `<i class="b" data-info="skrise:${u.id}" tabindex="0"><span class="sic" aria-hidden="true">🦴</span>쓰러지면 ${r.wait}라운드 뒤 부활${r.lime ? ' (석회 +' + r.lime + ')' : ''}</i>`); } // 해골 부활 예고(개편 4-3)
   if (u !== b.p) for (const [k, ico, t] of consMarks(u)) out.push(`<i class="d" data-info="cmark:${u.id}:${k}" tabindex="0"><span class="sic" aria-hidden="true">${ico}</span>${t}</i>`); // 10월 14일: 소모품이 이 적에게 남긴 효과
   if (u === b.p) {
     if (u.guard) out.push('<i class="b" data-info="guardon" tabindex="0">막는 중</i>');

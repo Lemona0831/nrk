@@ -10,6 +10,13 @@ function buildWall(b, e) {
   w.hpMax = Math.max(1, Math.round(e.hpMax * BWALL.hp)); w.hp = w.hpMax; w.brkMax = BWALL.brk; w.summoned = true; w.wallOf = e.id; w.intent = { k: 'none' }; b.en.push(w);
   logp(b, 'bad', e.n + '이(가) 뼈벽을 쌓는다. 후열이 받는 한 적 대상 피해가 절반이 된다');
 }
+/* 서 있는 해골의 부활 예고(10월 14일 개편 4-3): 쓰러지면 뼈 더미가 되어 몇 라운드 뒤 일어서는지, 지금 쓰러지면 일어서지 못하는지 */
+function skelRise(b, e) {
+  if (e.role !== 'skeleton' || e.pile || !e.alive || e.rose || e.norise || hasBt(b.p, 'rest')) return null;
+  if (st(e, 'ignite') || e.s.broken) return { no: 1, why: st(e, 'ignite') ? '화상' : '무너짐' };
+  const lime = e.limeDelay || 0, charm = hasIt(b.p, 'limecharm') ? 1 : 0;
+  return { wait: RISE.wait + lime + charm, lime, charm };
+}
 function makePile(b, e) { // 해골이 쓰러지면 뼈 더미가 된다 (경험치 · 전리품은 마지막에 한 번)
   e.pile = { wait: RISE.wait + (e.limeDelay || 0), born: b.tick }; if (e.limeDelay) { logp(b, 'good', e.n + '의 뼈에 석회가 배어 있다. 부활 +' + e.limeDelay + '라운드'); e.limeDelay = 0; } e.hp = Math.max(1, Math.round(e.hpMax * RISE.pile)); e.intent = { k: 'none' }; e.braced = 0; e.countering = 0; e.evading = 0; e.guarding = null; e.stun = 0; e.brk = 0;
   for (const k of Object.keys(e.s)) if (!['poison', 'bleed'].includes(k)) delete e.s[k];
