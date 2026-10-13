@@ -2,7 +2,9 @@
    index.html보다 먼저 읽힌다. 소모품 하나는 한 상황을 푼다. 가방에서 바로 쓰고 차례 칸을 쓰지 않는다(한 차례에 CONS_TURN개까지).
    k: 효과 종류(엔진 consApply), v: 수치(vm = 고급 수치, 있으면 고급이 나온다), max: 한 칸에 겹치는 수, price: 상점 값, use: fight(전투 중) · any(언제나) · out(전투 밖), tgt: enemy(적 하나를 고른다)
    sit: 푸는 상황(설명 창 머리), d: 효과 문장(합니다체), dw: 전리품으로 나오는 무게(없으면 1, 파는 것은 0.5). 10월 4일: 플라스크가 차지 않으므로 회복 소모품이 자주 나온다 */
-const CONS_TURN = 3; // 한 차례에 쓸 수 있는 소모품 수
+const CONS_TURN = 1; // 한 차례에 쓸 수 있는 소모품 수 (10월 14일 개편 2단계: 3 → 1)
+const CONS_FIGHT = { normal: 5, hard: 3 }; // 한 전투에 쓸 수 있는 소모품 수 (각인 넉넉한 손 +2)
+const CONS_CH = { unmod: { normal: 3, hard: 2 }, lootx: { normal: 3, hard: 2 }, escape: { normal: 2, hard: 1 } }; // 챕터당 사용 횟수(효과 종류 k별: 방 특성 끄기 · 전리품 늘리기 · 물러나기)
 const CONS = {
   herb:      { n: '약초 묶음', ico: '🌿', sit: '생명력이 낮다', k: 'heal', v: 0.12, vm: 0.2, max: 5, price: 12, dw: 6, use: 'any', d: v => '최대 생명력의 ' + Math.round(v * 100) + '%를 회복합니다.' },
   bread:     { n: '마른 빵', ico: '🍞', sit: '방 사이에 쉬고 싶다', k: 'heal', v: 0.2, vm: 0.3, max: 5, price: 10, dw: 4, use: 'out', d: v => '전투 밖에서만 씁니다. 최대 생명력의 ' + Math.round(v * 100) + '%를 회복합니다.' },

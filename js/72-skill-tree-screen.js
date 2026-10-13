@@ -168,7 +168,7 @@ function sheetParts(S) {
     title = '소모품';
     const cells = L.map(c => { const D = CONS[c.id]; return D ? `<span class="cc${c.g === 'm' ? ' m' : ''}"><span aria-hidden="true">${D.ico}</span><small>${c.n}/${D.max}</small></span>` : ''; }).join('') + '<span class="cc e"><small>빈 칸</small></span>'.repeat(Math.max(0, CONS_BAG - L.length));
     const said = L.map(c => CONS[c.id] ? consName(c) + ' ' + c.n + '개' : '').filter(Boolean).concat(CONS_BAG > L.length ? ['빈 칸 ' + (CONS_BAG - L.length)] : []).join(', ');
-    body = `<div class="cbagh"><b>가방 ${consUsed(run)}/${CONS_BAG}칸</b>${b ? `<span class="mini">이번 차례 ${b.consN || 0}/${consTurnOf(run.p)}개 · 차례 칸을 쓰지 않습니다</span>` : '<span class="mini">전투 밖에서는 회복과 해제를 씁니다</span>'}</div><div class="cbagm" role="img" aria-label="소모품 가방 칸: ${esc(said)}">${cells}</div>`;
+    body = `<div class="cbagh"><b>가방 ${consUsed(run)}/${CONS_BAG}칸</b>${b ? `<span class="mini">이번 차례 ${b.consN || 0}/${consTurnOf(run.p)}개 · 이번 전투 ${b.consF || 0}/${consFightOf(run.p, run)}개 · 차례 칸을 쓰지 않습니다</span>` : '<span class="mini">전투 밖에서는 회복과 해제를 씁니다</span>'}</div><div class="cbagm" role="img" aria-label="소모품 가방 칸: ${esc(said)}">${cells}</div>`;
     if (!L.length) body += '<p class="mini">소모품이 없습니다. 쓰러뜨린 적이 떨구거나 상점에서 삽니다.</p>';
     const filter = S.data.filter || 'all', query = S.data.query || '', find = !!(S.data.find || query);
     const tabs = [['all', '전체'], ['restore', '회복·해제'], ['battle', '전투']].concat(L.some(c => CONS[c.id] && consGroup(CONS[c.id]) === 'other') ? [['other', '탐색']] : []).concat([['fav', '★ ' + (run.consFav || []).length + '/3']]);
@@ -180,7 +180,7 @@ function sheetParts(S) {
     body += '<div class="clist">' + groups.map(g => {
       const { c, D, why, key } = g, open = S.data.open === key, name = consName(c);
       const target = b && D.tgt === 'enemy' && consTarget(b, D, G.sel), ts = b && D.tgt === 'enemy' ? consTargets(b, D) : [];
-      const slots = `${g.slots.length}칸 · ${g.slots.map(n => n + '/' + D.max).join(' · ')}`;
+      const chl = consChLim(run, D), slots = `${g.slots.length}칸 · ${g.slots.map(n => n + '/' + D.max).join(' · ')}${chl ? ` · 이번 챕터 ${consChUsed(run, D)}/${chl}번` : ''}`;
       let h = `<div class="cline${why ? ' off' : ''}${open ? ' open' : ''}"><button class="cmain" data-a="consrow" data-k="${esc(key)}" aria-expanded="${open}"><span class="cn"><b>${D.ico} ${esc(name)} ×${g.n}</b>${g.fresh ? ' <span class="cnew">새로 얻음</span>' : ''}${consFavorite(run, c) ? ' <span aria-label="즐겨찾기">★</span>' : ''}</span><span class="cs">${slots}</span><small class="mini">${esc(D.d(consVal(c)))}${target ? ' → ' + esc(target.n) : ''}${why ? ' · ' + esc(why) : ''}</small></button>`;
       h += D.use === 'none' ? '' : `<button class="sm cuse${why ? '' : ' gold'}" data-a="consuse" data-k="${g.idx}" aria-label="${esc(name + (target ? ' · ' + target.n : '') + ' 쓰기')}"${why ? ' disabled' : ''}>쓰기</button>`;
       if (open) {

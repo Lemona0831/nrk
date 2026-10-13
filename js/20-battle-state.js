@@ -7,7 +7,8 @@ function fxFlag(p, key) { for (const [k, f] of fxList(p)) if (f[key]) { fxHit(k)
 function fxRun(p, hook, ...a) { for (const [k, f] of fxList(p)) if (f[hook] && f[hook](...a)) fxHit(k); }
 function fxVal(p, key, init, comb) { let v = init; for (const [k, f] of fxList(p)) if (f[key] != null) { v = comb(v, f[key]); } return v; }
 function fxStat(p, key) { let v = 0; for (const [, f] of fxList(p)) if (f.st && f.st[key]) v += f.st[key]; return v; }
-const consTurnOf = p => CONS_TURN + fxVal(p, 'consTurn', 0, (a, v) => a + v); /* 한 차례에 쓰는 소모품 수 (각인 넉넉한 손 +1) */
+const consTurnOf = p => CONS_TURN + fxVal(p, 'consTurn', 0, (a, v) => a + v); /* 한 차례에 쓰는 소모품 수 */
+const consFightOf = (p, run) => CONS_FIGHT[run && run.mode === 'hard' ? 'hard' : 'normal'] + fxVal(p, 'consFight', 0, (a, v) => a + v); /* 한 전투에 쓰는 소모품 수 (10월 14일, 각인 넉넉한 손 +2) */
 function flaskCap(p, k) { return Math.max(1, (p.flaskMax || 3) - (p.markFlask || 0) + fxList(p).reduce((a, [, f]) => a + ((f.cap && f.cap[k]) || 0), 0)); }
 function actCost(p, id, base) { return Math.max(0, base + fxAdd(p, 'cost', p, id)); }
 

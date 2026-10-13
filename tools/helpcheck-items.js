@@ -48,7 +48,7 @@ function __hcAwk() {
   const f = fn => { const X = __hcMk(); X.b.actN = 1; return fn(X.b, X.p, X.b.en[0], X); };
   o.breath = f((b, p) => { A.a_breath.onStart(b, p); return st(p, 'protect'); });
   o.vigor = f((b, p, e, X) => { p.hp = 1; A.a_vigor.onWin(X.run); return (p.hp - 1) / p.hpMax; });
-  o.pouch = f((b, p) => { const a = consTurnOf(p); p.awk = ['a_pouch']; return [a, consTurnOf(p)]; });
+  o.pouch = f((b, p) => { const a = consFightOf(p, null); p.awk = ['a_pouch']; return [a, consFightOf(p, null)]; });
   o.gap = f((b, p, e) => { A.a_gap.onStart(b, p); const z = A.a_gap.brk(b, p); A.a_gap.onKill(b, p, e); return [z, A.a_gap.brk(b, p)]; });
   o.flow = f((b, p) => { const id = p.skills[0]; p.cd = {}; p.cd[id] = 3; A.a_flow.onParry(b, p, { intent: { k: 'heavy' } }); return 3 - p.cd[id]; });
   o.flowSmall = f((b, p) => { const id = p.skills[0]; p.cd = {}; p.cd[id] = 3; A.a_flow.onParry(b, p, { intent: { k: 'attack' } }); return 3 - p.cd[id]; });
@@ -138,7 +138,7 @@ function __hcBlob(k) { return JSON.stringify(IFX[k], (kk, v) => typeof v === 'fu
   const A = AM;
   W('보호 1을 얻습니다', 'a_breath onStart addS protect 1 → ' + A.breath, () => A.breath === 1);
   W('방을 이기면 최대 생명력의 4%를 회복', 'a_vigor onWin 0.04 → ' + A.vigor.toFixed(3), () => near(A.vigor, 0.04));
-  W('한 차례에 4개까지', 'consTurnOf: CONS_TURN ' + E('CONS_TURN') + ' → a_pouch 후 ' + A.pouch[1], () => A.pouch[0] === E('CONS_TURN') && A.pouch[1] === 4);
+  W('2개 늘어납니다.', 'consFightOf: ' + A.pouch[0] + ' → a_pouch 후 ' + A.pouch[1], () => A.pouch[1] - A.pouch[0] === 2);
   W('붕괴가 5 늘어납니다', 'a_gap onKill awkBrk 5 → brk() ' + A.gap[1], () => A.gap[0] === 0 && A.gap[1] === 5);
   W('쿨타임이 가장 많이 남은 스킬 하나가 1 짧아집니다', 'a_flow onParry fxCdMax: 큰 공격 −' + A.flow + ', 평소 공격 −' + A.flowSmall, () => A.flow === 1 && A.flowSmall === 0);
   W('받는 피해가 4% 줄어듭니다', 'a_skin inP 0.04', () => near(A.skin, 0.04));

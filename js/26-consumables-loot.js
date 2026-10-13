@@ -111,6 +111,8 @@ function consWhyNot(b, run, c, tgtId) {
   if (!inFight && D.use === 'fight') return '전투 중에만 씁니다';
   if (inFight && !myTurn(b)) return '내 차례에 씁니다';
   if (inFight && (b.consN || 0) >= consTurnOf(p)) return '이번 차례에 ' + consTurnOf(p) + '개를 썼습니다';
+  if (inFight && (b.consF || 0) >= consFightOf(p, run)) return '이번 전투에 ' + consFightOf(p, run) + '개를 모두 썼습니다';
+  { const lim = consChLim(run, D); if (lim && consChUsed(run, D) >= lim) return '이번 챕터에 ' + lim + '번을 모두 썼습니다'; }
   switch (D.k) {
     case 'heal': return p.hp >= p.hpMax ? '생명력이 가득합니다' : '';
     case 'stam': return p.st >= p.stMax ? '스태미나가 가득합니다' : '';
@@ -118,7 +120,7 @@ function consWhyNot(b, run, c, tgtId) {
     case 'cure': return p.s[D.s] ? '' : '그 상태가 없습니다';
     case 'block': return st(p, 'block') > 0 ? '이미 막음이 있습니다' : '';
     case 'halfboom': return b.halfBoom === b.round ? '이미 효과가 있습니다' : '';
-    case 'scatter': { const al = alive(b).filter(e => e.role !== 'root'); return al.every(e => e.redNext) ? '이미 효과가 있습니다' : ''; }
+    case 'scatter': { const al = alive(b).filter(e => e.role !== 'root' && !e.pile); return al.every(e => e.redNext) ? '이미 효과가 있습니다' : ''; }
     case 'blind': { const bk = alive(b).filter(e => e.row === 'back' && e.role !== 'root'); return !bk.length ? '후열 적이 없습니다' : bk.every(e => e.missNext) ? '이미 효과가 있습니다' : ''; }
     case 'decoy': return p.decoy ? '이미 효과가 있습니다' : '';
     case 'guard1': return p.nextRed ? '이미 효과가 있습니다' : '';
@@ -158,7 +160,7 @@ function consApply(b, run, c, tgt) {
     case 'nosummon': tgt.noSummon = 1; return tgt.n + '의 다음 소환을 막는다';
     case 'antisteal': b.antiSteal = 1; return '쇠붙이를 흘려 둔다';
     case 'sticky': tgt.stuck = 1; return tgt.n + '의 발에 끈끈이가 붙는다';
-    case 'scatter': for (const e of alive(b)) if (e.role !== 'root') e.redNext = v; return '적 모두의 다음 공격 피해 −' + Math.round(v * 100) + '%';
+    case 'scatter': for (const e of alive(b)) if (e.role !== 'root' && !e.pile) e.redNext = v; return '적 모두의 다음 공격 피해 −' + Math.round(v * 100) + '%';
     case 'brk': addBreak(b, tgt, v); return tgt.n + '에게 붕괴 +' + v;
     case 'whet': p.whet = v; return '다음 공격 피해 +' + Math.round(v * 100) + '%';
     case 'mark': tgt.markDmg = v; return tgt.n + '에게 표식';
@@ -181,6 +183,10 @@ function consApply(b, run, c, tgt) {
   }
   return '';
 }
+/* 챕터당 사용 횟수(10월 14일 개편 2단계): CONS_CH의 효과 종류별로 센다. run.consCh = { ch, [k]: 쓴 수 }, 챕터가 바뀌면 처음부터 */
+const consChLim = (run, D) => { const L = CONS_CH[D.k]; return L ? L[run && run.mode === 'hard' ? 'hard' : 'normal'] : 0; };
+const consChUsed = (run, D) => { const u = run && run.consCh; return u && u.ch === (run.ch || 1) ? (u[D.k] || 0) : 0; };
+function consChAdd(run, D) { if (!CONS_CH[D.k]) return; if (!run.consCh || run.consCh.ch !== (run.ch || 1)) run.consCh = { ch: run.ch || 1 }; run.consCh[D.k] = (run.consCh[D.k] || 0) + 1; }
 /* 소모품이 적에게 남긴 효과(10월 14일): 적 카드 칩 [키, 아이콘, 짧은 글]과 설명. 다음 행동·공격에 쓰이면 사라진다 */
 function consMarks(e) {
   const L = [];
@@ -207,7 +213,8 @@ const CONS_MARK_D = {
 function consUse(b, run, idx, tgtId) {
   const c = (run.cons || [])[idx]; if (!c) return '없는 소모품입니다'; const why = consWhyNot(b, run, c, tgtId); if (why) return why;
   const D = CONS[c.id]; const tgt = D.tgt === 'enemy' ? consTarget(b, D, tgtId) : null; const msg = consApply(b, run, c, tgt);
-  c.fresh=false;c.n--; if (c.n <= 0) run.cons.splice(idx, 1);
+  c.fresh=false;c.n--; if (c.n <= 0) run.cons.splice(idx, 1); consChAdd(run, D);
+  if (b) b.consF = (b.consF || 0) + 1; // 한 전투에 쓴 수 (물러나기로 끝난 전투도 센다)
   if (b && !b.over) { b.consN = (b.consN || 0) + 1; logp(b, 'good', '🎒 ' + consName(c) + '. ' + msg); b.rec.push({ k: 'cons', id: c.id, g: c.g }); checkEnd(b); }
   else if (b && b.over === 'flee') logp(b, 'good', '🎒 ' + consName(c) + '. ' + msg);
   else toast(consName(c) + '. ' + msg);

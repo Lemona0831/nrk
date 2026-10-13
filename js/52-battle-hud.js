@@ -124,7 +124,7 @@ function vHudClass(b, hud) {
 const AGROUP4 = [['공격', ['basic', 'heavy']], ['스킬', null], ['지키기', ['guard', 'dodge']], ['도구', ['flaskL', 'flaskM', 'flaskS', 'flee']]];
 function consUsefulN(b) {
   const run = G.run; if (!run || !Array.isArray(run.cons) || b.over || !b.p) return 0;
-  const bq = Object.assign({}, b, { consN: 0, queue: ['p'] }); let n = 0;
+  const bq = Object.assign({}, b, { consN: 0, consF: 0, queue: ['p'] }); let n = 0;
   run.cons.forEach(c => { const D = CONS[c.id]; if (!D || D.use === 'none' || D.use === 'out' || consWhyNot(bq, run, c, G.sel)) return; if (consScore(b, c, D) > 0) n++; });
   return Math.min(n, 3);
 }
@@ -391,8 +391,8 @@ function consReason(b, D) {
 }
 function consQuick(b, hud) {
   const run = G.run; if (!run || !Array.isArray(run.cons) || !run.cons.length || b.over || !b.p) return '';
-  const p = b.p, lim = consTurnOf(p), used = b.consN || 0, ready = !G.busy && myTurn(b);
-  const bq = Object.assign({}, b, { consN: 0, queue: ['p'] }); /* 차례 · 개수 조건을 뺀 사본으로 쓸 만한 것을 고른다 */
+  const p = b.p, lim = consTurnOf(p), used = b.consN || 0, ready = !G.busy && myTurn(b), flim = consFightOf(p, run), fused = b.consF || 0;
+  const bq = Object.assign({}, b, { consN: 0, consF: 0, queue: ['p'] }); /* 차례 · 개수 조건을 뺀 사본으로 쓸 만한 것을 고른다 */
   const tot = run.cons.reduce((a, c) => a + c.n, 0), cand = [];
   const favorites=run.consFav||[];
   run.cons.forEach((c, i) => { const D = CONS[c.id]; if (!D || D.use === 'none' || D.use === 'out' || consWhyNot(bq, run, c, G.sel)) return; const sc = consScore(b, c, D); if (sc > 0) cand.push({ c, i, D, sc }); });
@@ -404,7 +404,7 @@ function consQuick(b, hud) {
     return `<button class="qc${why ? ' dis' : ''}" data-a="consuse" data-k="${x.i}" data-q="${shortcut + 1}" aria-disabled="${!!why}" title="${esc((keys ? 'QWE'[shortcut] + ': ' : '') + nm + ' · ' + rs)}"><b>${keys ? '<kbd>' + 'QWE'[shortcut] + '</kbd>' : ''}<span class="qi" aria-hidden="true">${x.D.ico}</span> <span class="qnm">${esc(nm)}</span> <span class="qn">×${x.c.n}</span></b><small>${esc(rs)}</small></button>`;
   }).join('');
   const qz = hud && hud.tools && !G.toolsOpen ? ' tlz' : hud && !hud.qcons && !(hud.tools && G.toolsOpen) ? ' qoff' : '';
-  return `<div class="qcons${qz}" data-hud="hud-quick" role="group" aria-label="소모품 바로 쓰기">${btns || `<p class="mini qcn">${favorites.length ? '즐겨찾기 소모품이 없습니다' : '지금 쓸 만한 소모품이 없습니다'}</p>`}<button class="qbag" data-a="consopen" aria-label="소모품 가방, 전부 ${tot}개. 이번 차례 ${used}/${lim}개 씀"><span aria-hidden="true">🎒 가방 ${tot}</span><small aria-hidden="true">이번 차례 ${used}/${lim}</small></button></div>`;
+  return `<div class="qcons${qz}" data-hud="hud-quick" role="group" aria-label="소모품 바로 쓰기">${btns || `<p class="mini qcn">${favorites.length ? '즐겨찾기 소모품이 없습니다' : '지금 쓸 만한 소모품이 없습니다'}</p>`}<button class="qbag" data-a="consopen" aria-label="소모품 가방, 전부 ${tot}개. 이번 차례 ${used}/${lim}개, 이번 전투 ${fused}/${flim}개 씀"><span aria-hidden="true">🎒 가방 ${tot}</span><small aria-hidden="true">차례 ${used}/${lim} · 전투 ${fused}/${flim}</small></button></div>`;
 }
 
 /* 설명 줄: 가리키거나 포커스하면 갱신 (재렌더 없이) */

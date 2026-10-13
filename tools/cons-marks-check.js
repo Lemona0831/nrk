@@ -16,6 +16,7 @@ const blind = Object.keys(E.CONS).find(k => E.CONS[k].k === 'blind'); E.consAppl
 ok.push('칩 생김');
 const info = E.infoHtml('cmark:' + front.id + ':red'); assert(info.includes('10% 줄어듭니다') && info.includes('소모품으로 건 효과'), '설명 창');
 assert.equal(E.infoHtml('cmark:' + front.id + ':nosuch'), ''); ok.push('설명 창');
+{ front.redNext = 0; back.pile = { wait: 2 }; back.redNext = 0; E.consApply(b, run, { id: 'relic', g: 'n' }, null); assert(!back.redNext, '뼈 더미에는 성물이 붙지 않는다'); assert(front.redNext); back.pile = null; ok.push('뼈 더미 제외'); }
 E.hurtPlayer(b, 50, { src: front, single: 1 }); assert(!card(front).includes('다음 공격 −'), '공격에 쓰이면 사라짐');
 E.hurtEnemy(b, front, 1, { single: 1 }); assert(!card(front).includes('표식 +'), '맞으면 표식이 사라짐'); ok.push('쓰이면 사라짐');
 console.log('소모품 효과 표시 점검 통과: ' + ok.join(' · '));
