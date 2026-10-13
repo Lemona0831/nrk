@@ -18,7 +18,7 @@ function siteUpdateSave() {
   try {
     if (G.run) { if (runLive()) G.data.cur = JSON.parse(JSON.stringify(G.run)); saveRunLocal(); }
     if (!saveLocal()) return false;
-    return localStorage.getItem(SKEY) === JSON.stringify(G.data);
+    return localSaveText(localStorage.getItem(SKEY)) === JSON.stringify(G.data);
   } catch (e) { return false; }
 }
 async function siteUpdateApply() {

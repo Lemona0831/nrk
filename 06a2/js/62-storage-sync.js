@@ -16,8 +16,63 @@ const G = {
 
 /* ---------- 저장 ---------- */
 function blankData() { return { v: VERSION, runs: [], scen: {}, final: null, prog: {}, audio: { on: false } }; } /* 10월 7일: 소리는 꺼진 채 시작한다(첫 입력에 음악이 저절로 나지 않게) */
-function loadLocal() { try { const s = localStorage.getItem(SKEY); if (s) return JSON.parse(s); } catch (e) { } return blankData(); }
-function saveLocal() { try { cloudTrack(); localStorage.setItem(SKEY, JSON.stringify(G.data)); cloudSchedule(); return true; } catch (e) { return false; } }
+const LOCAL_SAVE_PACK = 'NRK-LZ1:';
+function localSaveText(raw) {
+  if (!raw || !raw.startsWith(LOCAL_SAVE_PACK)) return raw;
+  const text = LZString.decompressFromUTF16(raw.slice(LOCAL_SAVE_PACK.length));
+  if (!text) throw new Error('save_decode');
+  return text;
+}
+function localSaveRead(raw) {
+  const data = JSON.parse(localSaveText(raw));
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('save_format');
+  return data;
+}
+function localQuota(e) { return !!(e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22 || e.code === 1014)); }
+/* 기존 JSON은 그대로 읽는다. 용량에 걸릴 때만 전체 내용을 무손실 압축하며, 실패한 쓰기는 기존 키를 지우지 않는다. */
+function localSaveWrite(key, json) {
+  let stored = json;
+  try { localStorage.setItem(key, stored); }
+  catch (e) {
+    if (!localQuota(e)) throw e;
+    stored = LOCAL_SAVE_PACK + LZString.compressToUTF16(json);
+    if (stored.length >= json.length) throw e;
+    if (localSaveText(stored) !== json) throw new Error('save_encode');
+    localStorage.setItem(key, stored);
+  }
+  if (localStorage.getItem(key) !== stored) throw new Error('save_readback');
+  return { chars: json.length, storedChars: stored.length, packed: stored.startsWith(LOCAL_SAVE_PACK) };
+}
+function localSaveIssue(stage, e, chars) {
+  G.localSaveError = { stage, name: String(e && e.name || 'Error').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40), quota: localQuota(e), chars: chars || 0 };
+}
+function localSaveReason() {
+  const e = G.localSaveError;
+  return e && e.quota ? '브라우저 저장 용량이 부족합니다.' : e && e.stage === 'read' ? '기존 저장본을 읽지 못했습니다.' : '이 브라우저에 저장하지 못했습니다.';
+}
+function vLocalSaveError() {
+  const e = G.localSaveError; if (!e) return '';
+  return `<p class="mini" role="alert">${esc(localSaveReason())} 기존 저장본은 삭제하지 않았습니다.</p><details class="mini"><summary>저장 오류 정보</summary><p>${esc(e.stage)} · ${esc(e.name)}${e.chars ? ' · 저장 자료 약 ' + (e.chars * 2 / 1048576).toFixed(2) + ' MiB' : ''}</p>${!G.localReadBlocked ? '<button class="sm" data-a="localsaveretry">저장 다시 시도</button><button class="sm" data-a="dl">저장 자료 내려받기</button>' : ''}</details>`;
+}
+function loadLocal() {
+  try { const s = localStorage.getItem(SKEY); if (s) return localSaveRead(s); }
+  catch (e) { G.localReadBlocked = true; localSaveIssue('read', e); }
+  return blankData();
+}
+function cloudSaveIssue(e) {
+  if (G.cloud) { G.cloud.dirty = true; G.cloud.error = '계정 전송을 준비하지 못했습니다. 이 기기의 저장본은 유지됩니다.'; }
+  G.saveSync = '계정 전송을 준비하지 못했습니다. 이 기기의 저장본은 유지됩니다.';
+}
+function saveLocal() {
+  if (G.localReadBlocked) return false;
+  // 계정 추적·전송 예약 오류는 완료된 로컬 저장을 실패로 되돌리지 않는다.
+  try { cloudTrack(); } catch (e) { cloudSaveIssue(e); }
+  let json; try { json = JSON.stringify(G.data); if (typeof json !== 'string') throw new Error('save_format'); } catch (e) { localSaveIssue('serialize', e); return false; }
+  try { G.localSaveInfo = localSaveWrite(SKEY, json); G.localSaveError = null; }
+  catch (e) { localSaveIssue('write', e, json.length); return false; }
+  try { cloudSchedule(); } catch (e) { cloudSaveIssue(e); }
+  return true;
+}
 /* 결과 보기에서 누구 기록인지 바로 알 수 있게, 기록마다 닉네임과 로그인 방식을 함께 남긴다 */
 function testerMeta() { const m = { v: VERSION, updatedAt: Date.now(), runs: G.data.runs.length, name: G.data.name || '', login: G.acct && !G.acct.anon ? G.acct.provider : '' }; if (G.data.unl) m.unl62 = { c: G.data.unl.c || {}, open: G.data.unl.open || {} }; if (G.data.goals || G.data.markOpen || G.data.title || G.data.markBest) m.goals62 = { g: G.data.goals || { n: {}, h: {} }, markOpen: G.data.markOpen ? 1 : 0, title: G.data.title || '', mb: G.data.markBest || {} }; return m; }
 async function pushDb(path, obj) {
@@ -144,9 +199,11 @@ const AUTH_BACK = () => location.href.split('#')[0].split('?')[0];
 function accountLocal(uid) {
   const old = G.data.accountId;
   let archived = null;
-  try { const raw = localStorage.getItem(SKEY + ':account:' + uid); if (raw) archived = JSON.parse(raw); } catch (e) { }
+  try { const raw = localStorage.getItem(SKEY + ':account:' + uid); if (raw) archived = localSaveRead(raw); }
+  catch (e) { localSaveIssue('account-read', e); throw e; }
   if (old && old !== uid) {
-    try { localStorage.setItem(SKEY + ':account:' + old, JSON.stringify(G.data)); } catch (e) { }
+    try { localSaveWrite(SKEY + ':account:' + old, JSON.stringify(G.data)); }
+    catch (e) { localSaveIssue('account-write', e); throw e; } // 보관 실패 시 현재 계정 자료를 비우지 않는다.
     const prefs = {}; for (const k of ['audio','opt','fs','rm','infoOn','numKeys','pace','hud']) if (G.data[k] != null) prefs[k] = G.data[k];
     G.data = archived || Object.assign(blankData(), prefs);
     G.run = null; G.b = null; G.sheet = null; G.creating = false; if (G.scr !== 'admin') G.scr = 'title';
@@ -195,8 +252,9 @@ async function socialLogin(provider, switchAcct) {
 async function socialLogout() {
   if (!G.sb) return;
   if (G.cloud && G.cloud.ready && !(await cloudFlush())) { toast('계정 세이브를 보내지 못했습니다. 인터넷 연결을 확인한 뒤 로그아웃해 주세요.'); return; }
+  if (G.uid) { try { localSaveWrite(SKEY + ':account:' + G.uid, JSON.stringify(G.data)); }
+    catch (e) { localSaveIssue('account-write', e); render(); toast(localSaveReason()+' 저장 자료를 보관한 뒤 로그아웃해 주세요.'); return; } }
   const r = await G.sb.auth.signOut(); if (r && r.error) { toast('로그아웃하지 못했습니다. 다시 시도해 주세요.'); return; }
-  if (G.uid) { try { localStorage.setItem(SKEY + ':account:' + G.uid, JSON.stringify(G.data)); } catch (e) { } }
   const prefs = {}; for (const k of ['audio','opt','fs','rm','infoOn','numKeys','pace','hud']) if (G.data[k] != null) prefs[k] = G.data[k];
   G.data = Object.assign(blankData(), prefs); saveLocal();
   location.replace(AUTH_BACK());
@@ -275,7 +333,7 @@ function cloudTrack(force) {
 }
 function cloudSchedule() {
   const c = G.cloud; if (!c || !c.ready || !c.dirty) return;
-  clearTimeout(c.timer); c.timer = setTimeout(() => cloudFlush(), 1000);
+  clearTimeout(c.timer); c.timer = setTimeout(() => cloudFlush().catch(cloudSaveIssue), 1000);
 }
 function cloudSnapshot() {
   const live = new Map(cloudLive().map(r => [r.id, r]));
@@ -299,9 +357,12 @@ async function cloudReadDevices(uid) {
 }
 async function cloudFlush() {
   const c = G.cloud; if (!c || !c.ready || c.uid !== G.uid) return true;
-  cloudTrack(); if (c.writing) { await c.writing; return c.dirty ? cloudFlush() : !c.error; }
+  try { cloudTrack(); } catch (e) { cloudSaveIssue(e); return false; }
+  if (c.writing) { await c.writing; return c.dirty ? cloudFlush() : !c.error; }
   if (!c.dirty) return !c.error;
-  clearTimeout(c.timer); const snapshot = cloudSnapshot(); c.dirty = false;
+  clearTimeout(c.timer); let snapshot;
+  try { snapshot = cloudSnapshot(); } catch (e) { cloudSaveIssue(e); return false; }
+  c.dirty = false;
   c.writing = (async () => {
     try {
       await G.db.doc('playtest/' + c.uid + '/saves62/' + c.device).set(snapshot);
@@ -318,6 +379,7 @@ async function cloudFlush() {
   if (G.scr === 'title') render(); return ok;
 }
 async function cloudLoad() {
+  if (G.localReadBlocked) { G.saveSync = '기존 브라우저 저장본을 읽지 못해 계정 연동을 중단했습니다.'; return; }
   if (!G.db || !G.acct || G.acct.anon || G.conn !== 'ok') return;
   if (G.cloud && G.cloud.loading) return;
   if (G.cloud && G.cloud.writing) await G.cloud.writing;

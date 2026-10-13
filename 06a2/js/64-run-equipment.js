@@ -263,11 +263,21 @@ const KEPT_MAX = 8;
 const SAVE_MAX = 8;
 const saveCount = () => (G.data.cur && !runOver(G.data.cur) ? 1 : 0) + (G.data.kept || []).filter(c=>!runOver(c)).length;
 const isBetween = c => !!(c && !runOver(c) && (c.clears || 0) > 0 && ['settle', 'shop', 'clearsv', 'wait'].includes(c.phase));
-function keepCur() {
-  const c = G.data.cur; if (!c) return true; const old = G.data.kept || [];
-  G.data.kept = old.filter(k=>k.id!==c.id).concat([c]); delete G.data.cur;
-  if (!saveLocal()) { G.data.cur=c;G.data.kept=old;toast('저장 공간이 부족해 새 캐릭터를 만들지 못했습니다. 기존 세이브는 유지됩니다.');return false; }
-  return true;
+function keepCur(next) {
+  const d = G.data, c = d.cur; if (!c && !next) return true;
+  if (next && saveCount() >= SAVE_MAX) { toast('세이브 슬롯이 가득 찼습니다.'); return false; }
+  const old = d.kept, oldRuns = d.runs;
+  try {
+    d.kept = c ? (old || []).filter(k=>k.id!==c.id).concat([c]) : (old || []);
+    if (next) { d.cur = clone(next); d.runs = (oldRuns || []).filter(r=>r.id!==next.id).concat([runRecord(next)]); }
+    else delete d.cur;
+    if (saveLocal()) return true;
+  } catch (e) { localSaveIssue('serialize', e); }
+  if (c === undefined) delete d.cur; else d.cur = c;
+  if (old === undefined) delete d.kept; else d.kept = old;
+  d.runs = oldRuns;
+  toast(localSaveReason()+' 새 캐릭터를 만들지 않았습니다. 기존 세이브는 유지됩니다.');
+  return false;
 }
 /* 되살리기 (10월 2일 만든 사람 요청): 기다리는 캐릭터 규칙이 생기기 전, 챕터를 깬 뒤 새 캐릭터를 만들어 포기된 캐릭터를
    판 기록(이 브라우저의 기록, 없으면 저장소)으로 다시 세워 기다리는 캐릭터에 넣는다. 같은 번호를 써서 랭킹의 "포기"도 돌아온다 */

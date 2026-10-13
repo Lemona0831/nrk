@@ -7,7 +7,8 @@ E.document={hidden:false,activeElement:null,baseURI:'https://example.invalid/nrk
 E.DOMParser=class{parseFromString(){return{querySelector:()=>({content:indexRevision})}}};
 E.fetch=async()=>{if(offline)throw Error('offline');return{ok:true,text:async()=>JSON.stringify({revision:next})}};
 E.setTimeout=fn=>{timers.push(fn);return timers.length};E.clearTimeout=()=>{};
-V(fs.readFileSync('06a2/js/62-storage-sync.js','utf8').match(/function saveLocal\(\) [^\n]+/)[0]);
+const storageSource=fs.readFileSync('06a2/js/62-storage-sync.js','utf8'),saveStart=storageSource.indexOf('function saveLocal()');
+V(storageSource.slice(saveStart,storageSource.indexOf('/* 결과 보기',saveStart)));
 g.data=E.blankData();g.scr='title';U.current=meta;
 async function main(){
  for(const [key,value] of [['busy',true],['creating',true],['b',{}],['sheet',{}],['menuOpen',true]]){g[key]=value;assert.equal(E.siteUpdateSafe(),false,key);g[key]=null;}
