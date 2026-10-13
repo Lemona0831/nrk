@@ -2,6 +2,7 @@
 /* 테스트 사이트 만들기 (10월 14일). 지금 작업 트리의 게임 파일을 복사해, 실제 게임과 섞이지 않는 시험용 사이트를 만든다.
    - 브라우저 저장소 키·리모컨 채널 이름을 테스트용으로 바꾼다(같은 github.io 주소라 바꾸지 않으면 실제 세이브와 섞인다)
    - 클라우드(계정·랭킹·클라우드 저장·관리자 기록)를 끈다: config.js를 빈 설정으로 둔다
+   - 테스트 메뉴(tools/testsite/devtools.js, 화면 왼쪽 아래 🧪)를 넣는다
    - 검색 차단(noindex)과 "테스트 서버" 띠를 넣고, 릴리스 지문을 이 사본 기준으로 다시 계산한다
    실행: node tools/build-test-site.js <출력 폴더>   (출력 폴더의 .git은 남기고 나머지는 지운 뒤 다시 만든다) */
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
@@ -50,6 +51,14 @@ for (const page of ['index.html', 'remote.html', 'privacy.html']) {
   if (page === 'index.html') h = h.replace(/<\/body>/, BANNER + '\n</body>');
   h = h.replace(/<title>([^<]*)<\/title>/, '<title>[테스트] $1</title>');
   fs.writeFileSync(p, h);
+}
+// 5-1. 테스트 메뉴(tools/testsite/devtools.js)를 테스트 사이트에만 넣는다
+{
+  const src = path.join(__dirname, 'testsite', 'devtools.js'); const dst = path.join(OUT, 'test', 'devtools.js');
+  fs.mkdirSync(path.dirname(dst), { recursive: true }); fs.copyFileSync(src, dst);
+  const v = crypto.createHash('sha256').update(fs.readFileSync(dst)).digest('hex').slice(0, 16);
+  const index = path.join(OUT, 'index.html'); let h = fs.readFileSync(index, 'utf8');
+  h = h.replace('</body>', '<script src="test/devtools.js?v=' + v + '"></script>\n</body>'); fs.writeFileSync(index, h);
 }
 // 6. 릴리스 지문(tools/stamp-release.js와 같은 방식)을 사본 기준으로
 const hash = s => crypto.createHash('sha256').update(s).digest('hex');
