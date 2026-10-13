@@ -77,13 +77,24 @@ function dgBar(run) {
   const bl = Object.keys(run.buffs || {}).map(k => { const S = SHRINES.find(x => x.id === k); return `<span class="chip" data-info="buff:${k}" tabindex="0">${esc(S ? S.n : (EVBUFF[k] || [k])[0])} ${run.buffs[k]}</span>`; }).join('');
   return `<div class="card dgtop"><div class="dghead"><b>${run.ch || 1}챕터 · ${esc(floorName(run.room))}</b>${run.mode === 'hard' ? '<span class="chip hardtag">가혹</span>' : ''}${run.markCh ? `<span class="chip hardtag">표식 ${run.markPts || 0}점</span>` : ''}<span class="mini">${run.room < FLOOR_CAMP ? '상층' : run.room > FLOOR_CAMP && run.room < FLOOR_BOSS ? '하층' : ''}${run.path && PATHS[run.path] ? ' · ' + PATHS[run.path].ico + ' ' + PATHS[run.path].n : ''} · 남은 층 ${Math.max(0, FLOORS - run.room)}</span><span class="gold-n">골드 ${run.gold || 0}</span></div>${h}${bl ? `<div class="bufs">${bl}</div>` : ''}</div>`;
 }
+function roomEnemyName(r, x, i) {
+  if (i === 0 && r.strong) return r.strong + ' (강적)';
+  const affix = [['tough', '강인'], ['swift', '신속'], ['fire', '화염 강화']].filter(([k]) => (r[k] || []).includes(i)).map(([, n]) => '[' + n + '] ').join('');
+  return affix + (x[1] ? '정예 ' : '') + ((r.names && r.names[x[0]]) || ROLES[x[0]].n);
+}
+function roomExpectedXp(r, mode) {
+  const mul = roomXpMul(r, mode);
+  return Math.round((r.en || []).reduce((n, x, i) => n + xpOf({ role: x[0], elite: !!x[1], strong: !!(i === 0 && r.strong), lv: r.lv || 1, xpCh: mul }), 0));
+}
+function roomXpHint(r, mode) { return `<span class="mini dr-xp" title="표시된 적을 모두 쓰러뜨렸을 때의 경험치입니다. 추가로 합류하는 적은 제외합니다. 소환된 적은 경험치가 없습니다.">기본 경험치 ${roomExpectedXp(r, mode)}</span>`; }
 function doorCard(r, i) {
   const T = ROOM_TYPES[r.type]; const stars = T.fight ? '★'.repeat(r.risk || 1) + '☆'.repeat(4 - (r.risk || 1)) : '';
   let body = '';
   if (T.fight) {
-    const rep0 = r.en && r.en[0]; const R0 = rep0 && ROLES[rep0[0]];
     const SQ = r.squad && SQUADS.find(x => x.id === r.squad); if (SQ) body += `<span class="mini dr-sq">${esc(SQ.n)}</span>`;
-    body += r.strong ? `<span class="dr-what">강적 <b>${esc(r.strong)}</b> <span class="mini">Lv${r.lv}</span></span>` : R0 ? `<span class="dr-what">${R0.ico} ${rep0[1] ? '정예 ' : ''}${esc((r.names && r.names[rep0[0]]) || R0.n)}${r.en.length > 1 ? ' 외 ' + (r.en.length - 1) : ''} <span class="mini">Lv${r.lv}</span></span>` : '';
+    body += `<span class="dr-what">${(r.en || []).map((x, k) => esc(roomEnemyName(r, x, k))).join(' · ')} <span class="mini">Lv${r.lv || 1}</span></span>`;
+    if (r.ambush) body += `<span class="mini">적 선공 · 생명력 ×${AMBUSH.hp} · 피해 ×${AMBUSH.dmg}</span>`;
+    body += roomXpHint(r, G.run && G.run.mode);
   }
   if (r.shrine) { const S = SHRINES.find(x => x.id === r.shrine); body += `<span class="dr-what">${esc(S.n)}</span><span class="mini">${esc(S.d)} 3개 방 동안.</span>`; }
   if (r.mods && r.mods.length) body += `<span class="dr-mods">${r.mods.map(m => `<span class="chip mod" data-info="mod:${m}">${esc(ROOM_MODS[m].n)}</span>`).join('')}</span><span class="mini">${r.mods.map(m => esc(ROOM_MODS[m].d)).join(' ')}</span>`;
@@ -133,7 +144,7 @@ function vRoom(run, R) {
   h += `<h3>${T.ico} ${esc(T.n)}${R.strong ? ' · ' + esc(R.strong) : R.squad && SQUADS.find(x => x.id === R.squad) ? ' · ' + esc(SQUADS.find(x => x.id === R.squad).n) : ''}${q('rooms', '방과 보스')}</h3>`;
   if (R.ambush) h += `<p class="warn">매복입니다. 적이 먼저 움직이고 더 거셉니다. 대신 쓰러뜨린 적이 전리품을 더 자주 떨굽니다.</p>`;
   if (R.mods && R.mods.length) h += R.mods.map(m => `<p class="mini"><b>${esc(ROOM_MODS[m].n)}</b>: ${esc(ROOM_MODS[m].d)}</p>`).join('');
-  h += `<p>이 방의 적 <span class="mini">Lv${R.lv || 1}</span></p><ul class="elist">${R.en.map((x, i) => `<li>${ROLES[x[0]].ico} ${i === 0 && R.strong ? esc(R.strong) + ' (강적)' : (R.tough && R.tough.includes(i) ? '[강인] ' : '') + (x[1] ? '정예 ' : '') + esc((R.names && R.names[x[0]]) || ROLES[x[0]].n)} <span class="mini">${ROLES[x[0]].n} · ${ROLES[x[0]].row === 'front' ? '전열' : '후열'}</span></li>`).join('')}${run.next && run.next.chase ? '<li>굶주린 수도사 <span class="mini">전열</span></li>' : ''}</ul>${q('roles', '적의 역할')}`;
+  h += `<p>이 방의 적 <span class="mini">Lv${R.lv || 1}</span></p><ul class="elist">${R.en.map((x, i) => `<li>${ROLES[x[0]].ico} ${esc(roomEnemyName(R, x, i))} <span class="mini">${ROLES[x[0]].n} · ${ROLES[x[0]].row === 'front' ? '전열' : '후열'}</span></li>`).join('')}${run.next && run.next.chase ? '<li>굶주린 수도사 <span class="mini">전열</span></li>' : ''}</ul>${q('roles', '적의 역할')}${roomXpHint(R, run.mode)}`;
   const nx = run.next || {};
   { const n3 = run.next3 || {}; if (['normal', 'ambush'].includes(R.type) && Object.keys(n3).length) h += `<p class="mini warn">${n3.pre ? Object.keys(n3.pre).map(k => KW_N[k] + ' ' + n3.pre[k]).join(' · ') + '을(를) 안고 들어갑니다. ' : ''}${n3.ambush ? '모래 매복입니다. ' : ''}${n3.herald ? '여왕의 전령이 보낸 정예가 기다립니다. ' : ''}${n3.noon ? '작열하는 한낮, 열기 ' + n3.noon + '에서 시작합니다.' : ''}</p>`; } // 3챕터 이벤트가 붙인 것
   if (nx.pre) h += `<p class="mini warn">${nx.pre.weak ? '약화·취약을 안고 ' : ''}${nx.pre.poison ? '중독 ' + nx.pre.poison + '을 안고 ' : ''}들어갑니다.</p>`;

@@ -174,8 +174,12 @@ const MLV_HP = 0.12, MLV_DMG = 0.10;
 /* 난이도 (10월 2일, 만든 사람 결정: 1챕터 완주 자동 테스터 평균 20%, 숙련·탐험가 40%. 1층부터 실전) 던전 방의 적 체력·피해 배율 */
 const DIFF = { upper: { hp: 0.72, dmg: 0.57 }, lower: { hp: 0.9, dmg: 0.58 } }; // 10월 4일 강적 다섯 · 테마 무리 뒤: AI 테스터 완주 암살자 9 · 파수꾼 13%. 이전: 상층 0.75 · 0.6, 하층 1.0 · 0.68 (1차 0.8 · 0.65, 1.05 · 0.7. 개편 전 0.9 · 0.85, 1.2 · 0.9)
 function mlvOf(f, ch) { return (f >= FLOOR_BOSS ? 4 : f <= 6 ? 1 : f <= FLOOR_CAMP ? 2 : f <= 18 ? 3 : 4) + 4 * (((ch || (typeof G !== 'undefined' && G.run && G.run.ch)) || 1) - 1); } // 24층: 6층마다 한 단계. 챕터마다 +4 (1챕터 1~4, 2챕터 5~8, 3챕터 9~12, 기획서 11.4)
-/* 경험치: 일반 5, 정예 12, 강적 30, 보스 100 × (1 + 0.15 × (몬스터 레벨 − 1)). 소환된 적은 0 */
+/* 경험치: 일반 5, 정예 12, 강적 40, 보스 100 × (1 + 0.15 × (몬스터 레벨 − 1)). 소환된 적은 0 */
 const XP_BASE = { normal: 5, elite: 12, strong: 40, boss: 100 }; // 강적 30 → 40 (10월 4일 하이 리스크 하이 리턴) // 보스 150이면 챕터 끝 Lv6으로 목표(4~5)를 넘어 100으로 (10월 2일)
+const CH1_NORMAL_XP = 1.5; // 첫 챕터 일반 전투의 성장 보상. 강적 호위·다른 전투 유형에는 적용하지 않는다.
+function roomXpMul(room, mode) {
+  return (chData(room.ch).xp || 1) * ((mode || room.mode) === 'hard' ? MODES.hard.xp : 1) * (!room.boss && (room.ch || 1) === 1 && room.type === 'normal' ? CH1_NORMAL_XP : 1);
+}
 /* 보스에서 오른 능력치는 다음 챕터 준비에서 나눈다(run.statPending, 단계 9) */
 const XP_LV = 0.15;
 /* 레벨 n이 되는 데 필요한 누적 경험치 (LV_XP[n-1]) */
