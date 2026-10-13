@@ -2,7 +2,7 @@
 /* 테스트 사이트 만들기 (10월 14일). 지금 작업 트리의 게임 파일을 복사해, 실제 게임과 섞이지 않는 시험용 사이트를 만든다.
    - 브라우저 저장소 키·리모컨 채널 이름을 테스트용으로 바꾼다(같은 github.io 주소라 바꾸지 않으면 실제 세이브와 섞인다)
    - 클라우드(계정·랭킹·클라우드 저장·관리자 기록)를 끈다: config.js를 빈 설정으로 둔다
-   - 테스트 메뉴(tools/testsite/devtools.js, 화면 왼쪽 아래 🧪)를 넣는다
+   - 테스트 메뉴(tools/testsite/devtools.js, 화면 오른쪽 가장자리 🧪)를 넣는다
    - 검색 차단(noindex)과 "테스트 서버" 띠를 넣고, 릴리스 지문을 이 사본 기준으로 다시 계산한다
    실행: node tools/build-test-site.js <출력 폴더>   (출력 폴더의 .git은 남기고 나머지는 지운 뒤 다시 만든다) */
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
@@ -43,7 +43,7 @@ if (left.length) { console.error('원래 저장소 이름이 남았습니다:\n'
 // 4. 클라우드 끄기
 fs.writeFileSync(path.join(OUT, 'config.js'), '/* 테스트 사이트: 클라우드(계정·랭킹·클라우드 저장·관리자 기록)를 쓰지 않는다 */\nwindow.NRK_CONFIG = {};\n');
 // 5. 검색 차단과 테스트 표시
-const BANNER = '<div id="test-banner" style="position:fixed;left:0;right:0;bottom:0;z-index:99999;padding:3px 8px;font:12px/1.4 sans-serif;text-align:center;color:#111;background:#f5c542;pointer-events:none">테스트 서버 · 실제 게임과 기록이 분리됩니다 · 계정·랭킹 꺼짐</div>';
+const BANNER = '<div id="test-banner" title="테스트 서버: 실제 게임과 기록이 분리됩니다. 계정·랭킹 꺼짐" style="position:fixed;left:0;top:0;z-index:99999;padding:1px 6px;font:bold 10px/1.4 sans-serif;color:#111;background:#f5c542;border-radius:0 0 6px 0;pointer-events:none;opacity:.9">TEST</div>'; // 아래쪽 행동 버튼을 가리지 않게 왼쪽 위 작은 표시로
 for (const page of ['index.html', 'remote.html', 'privacy.html']) {
   const p = path.join(OUT, page); if (!fs.existsSync(p)) continue;
   let h = fs.readFileSync(p, 'utf8');
