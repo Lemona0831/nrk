@@ -1,6 +1,9 @@
 // 기본 피해 성장과 선택한 자원 추가 피해 성장은 따로 계산한다. 지속·보호막 피해에는 중복 적용하지 않는다.
 const SKILL_STAT_PCT = 4;
 const FOCUS_STAT_PCT = 2;
+// 상태를 준비해 소모하는 피해. 지속 피해와 화상 소모의 dotMul은 따로 유지한다.
+const TRIGGER_STAT_PCT = 3;
+function triggerDamageMul(p) { return 1 + stat(p, 'int') * TRIGGER_STAT_PCT / 100; }
 function skillGrowthStat(s) { return s.kind === 'spell' || /^(e_|v_)/.test(s.id) ? 'int' : /^(a_|h_)/.test(s.id) ? 'dex' : 'str'; }
 function skillBaseDamage(p, s, n) {
   if (!n || s.id === 'tut_bash' || p.build === 'novice') return n || 0;
@@ -16,7 +19,8 @@ function skillResourceDamage(p, s, e, n) { return n * (skillResourceGrows(s, e) 
 function skillDamageHint(p, s) {
   const dm=s.fx.find(e=>e.k==='dmg'), out=[];
   if(dm) out.push('현재 기본 피해 ' + r1(skillBaseDamage(p,s,dm.n)) + ((s.hits||1)>1?' × '+s.hits+'타':''));
-  if(s.fx.some(e=>e.k==='burst')) out.push('현재 독 격발 배율 '+r1(dotMul(p))+'배 (지능)');
+  if(s.fx.some(e=>e.k==='burst')) out.push('현재 독 격발 배율 '+r1(triggerDamageMul(p))+'배 (지능)');
+  if(p.build==='elementalist' && s.tgt!=='self') out.push('현재 열충격 배율 '+r1(triggerDamageMul(p))+'배 (지능)');
   for(const e of s.fx.filter(e=>skillResourceGrows(s,e))) {
     const label=e.k==='focusBurst'?'추적':e.k==='kiBurst'||e.k==='kiPer'?'기':e.k==='cleanse'?'바친 상태':e.of==='burden'?'짐':'앞서 정화·바친 상태';
     out.push(label+(e.k==='focusBurst'?' 1겹당':' 1당')+' 추가 피해 '+r1(skillResourceDamage(p,s,e,e.k==='cleanse'?e.dmg:e.k==='focusBurst'?e.n:e.per))+(e.k==='kiPer'&&(s.hits||1)>1?' (타격마다)':''));
@@ -417,7 +421,7 @@ function skBody(s) {
         out.push((e.pre ? `중독 ${e.pre}${skJo(e.pre)} 건 뒤 ` : '') + (s.tgt === 'all' ? '모든 적의 중독을 모두 터뜨린다.' : e.half ? '대상의 중독을 절반(올림)만 터뜨린다.' : e.top ? `대상의 중독을 ${e.top}만 터뜨린다.` : '대상의 중독을 모두 터뜨린다.')
           + (e.mul && e.mul !== 1 ? ` 터뜨린 피해 ×${e.mul}.` : '')
           + (e.brkPer ? ` 터뜨린 중독 1마다 붕괴 +${e.brkPer}.` : '')
-          + (e.keep ? ` 터뜨린 뒤 중독이 ${e.keep === 0.5 ? '절반' : Math.round(e.keep * 100) + '%'} 남는다.` : '') + ' 독 격발 피해는 지능 1점마다 2% 증가한다.'); break;
+          + (e.keep ? ` 터뜨린 뒤 중독이 ${e.keep === 0.5 ? '절반' : Math.round(e.keep * 100) + '%'} 남는다.` : '') + ' 독 격발 피해는 지능 1점마다 '+TRIGGER_STAT_PCT+'% 증가한다.'); break;
       case 'exploit': if (e.s) { const w = SK_KWN[e.s]; out.push(e.take ? `대상의 ${w}${skJoW(w, '을', '를')} 모두 거둬 1마다 피해 +${e.per}. ${w}${skJoW(w, '은', '는')} 사라진다.` : `대상의 ${w} 1마다 피해 +${e.per}.` + (e.s === 'bleed' ? ` ${w}${skJoW(w, '은', '는')} 줄지 않는다.` : '')); break; } out.push(`${skPer(e.per, '피해')}. 중독은 줄지 않는다.`); break;
       case 'imbue': out.push(`칼에 ${SK_KWN[e.s]} ${e.n}${skJo(e.n)} 싣는다.`); break;
       case 'edgeX': out.push(`이 베기가 칼에 실린 원소를 걸면 그 숫자가 ${e.mul}배다(상한 10).`); break;

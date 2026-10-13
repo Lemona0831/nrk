@@ -159,7 +159,7 @@ function runSkill2(b, act, tgt) {
       const n = st(e, 'poison'); if (n <= 0) { logp(b, 'sys', e.n + '에게 터뜨릴 중독이 없다'); continue; }
       const take = bu.half ? Math.ceil(n / 2) : bu.top ? Math.min(bu.top, n) : n;
       const low = exe && e.hp <= e.hpMax * exe.hp; const mul = (low ? exe.mul : (bu.mul || 1)) * (gx && isBig(e) ? gx.mul : 1);
-      const total = (poisonTotal(n) - poisonTotal(n - take)) * mul * dotMul(p);
+      const total = (poisonTotal(n) - poisonTotal(n - take)) * mul * triggerDamageMul(p);
       const left = (bu.top || bu.half) ? n - take : Math.floor(n * (bu.keep || 0));
       if (left > 0) e.s.poison.stacks = left; else delete e.s.poison;
       logp(b, 'crit', (low ? '숨통을 끊으러 든다. ' : '') + e.n + '의 독이 터진다. 중독 ' + take + (left ? ' (남은 중독 ' + left + ')' : ''));

@@ -172,7 +172,7 @@ const chantDmg = (b, e) => HIT_REF(e.lv || 1) * CHANT.big * ((b && b.ctx && b.ct
 const CHANT_K = ['chant', 'chanting', 'burn'];
 /* ===== 원소술사 (10월 7일, docs/직업/원소술사.md B절) =====
    열충격: 원소술사가 싸우는 동안 한 적에게 화상(1 이상)과 둔화(1 이상)가 함께 있으면 그 행동이 끝날 때(내 행동은 finishPlayer 첫 줄, 적 행동은 stepWorld의 enemyAct 뒤) 깨진다.
-   T = min(cap, 화상 + Cw × 둔화), 피해 T × D × 지능(dotMul) (× 이 행동 스킬 대상이면 shockx.dmg, × 여럿 대상 행동이면 aoeCut), 붕괴 둔화 × Bk (× shockx.brk).
+   T = min(cap, 화상 + Cw × 둔화), 피해 T × D × 지능(triggerDamageMul) (× 이 행동 스킬 대상이면 shockx.dmg, × 여럿 대상 행동이면 aoeCut), 붕괴 둔화 × Bk (× shockx.brk).
    열충격은 몸 낮추기를 지나가고 버티기 · 서원(보스 고유 감소)은 감소 몫의 half만 받는다. 취약 · 보호 · 화상 · 장비 타격 배율은 쓰지도 받지도 않는다. 두 상태는 피해 뒤에 지운다(쓰러지면 화상이 남은 채 쓰러진다).
    서리 무게: 둔화된 적(또는 이번 라운드 둔화로 맨 뒤에 선 적, e.chillR)이 나를 치는 평소 공격은 피해 ×(1 − guard). 큰 공격(bigHit)과 지속 피해는 그대로.
    되얼림(rime): 나를 직접 친 적에게 상태 n, 횟수 상한 rimeMax */
@@ -198,7 +198,7 @@ function elemPreview(b, s, e, multi) {
   }
   const sx = s.fx.find(x => x.k === 'shockx'); const shock = I >= 1 && C >= 1 && !e.under;
   const T = shock ? Math.min(ELEM.cap, I + ELEM.Cw * C) : 0;
-  return { I0, C0, I, C, shock, T, d: T * ELEM.D * dotMul(b.p) * ((sx && sx.dmg) || 1) * (multi ? aoeCut(b, e, 1) : 1), brk: shock ? C * ELEM.Bk * ((sx && sx.brk) || 1) : 0, wv: wvAdd, burn: bo ? I0 : 0 };
+  return { I0, C0, I, C, shock, T, d: T * ELEM.D * triggerDamageMul(b.p) * ((sx && sx.dmg) || 1) * (multi ? aoeCut(b, e, 1) : 1), brk: shock ? C * ELEM.Bk * ((sx && sx.brk) || 1) : 0, wv: wvAdd, burn: bo ? I0 : 0 };
 }
 /* 열충격 처리 (by: 'me' 내 행동 끝, 'enemy' 적 행동 끝). 내 행동이면 b.shockCtx(runSkill2가 싣는다)의 대상에게 shockx를 붙인다 */
 function elemShock(b, by) {
@@ -209,7 +209,7 @@ function elemShock(b, by) {
     if (!e.alive || e.under || e.role === 'root' || e.shockAct === b.actN) continue; // 땅속이면 상태를 남긴다
     const I = st(e, 'ignite'), C = st(e, 'chill'); if (!(I >= 1 && C >= 1)) continue;
     e.shockAct = b.actN; const tgt = !!(ctx && ctx.ids.includes(e.id)); const sx = tgt ? ctx.sx : null; if (tgt) tgtN++;
-    const T = Math.min(ELEM.cap, I + ELEM.Cw * C); const base = T * ELEM.D * dotMul(b.p) * ((sx && sx.dmg) || 1); const multi = !!(ctx && ctx.multi);
+    const T = Math.min(ELEM.cap, I + ELEM.Cw * C); const base = T * ELEM.D * triggerDamageMul(b.p) * ((sx && sx.dmg) || 1); const multi = !!(ctx && ctx.multi);
     const big = !!(e.intent && (['heavy', 'charge', 'chant', 'chanting', 'burn', 'aim', 'reflect', 'erupt'].includes(e.intent.k) || e.intent.aimed)); const preB = !!e.s.broken; const red = !!(e.braced || e.vow);
     logp(b, 'crit', ''); const ent = b.log[b.log.length - 1];
     const dealt = hurtEnemy(b, e, base * (multi ? aoeCut(b, e) : 1), { dot: 1, shock: 1, shockAoe: multi ? 1 : 0, silent: 1, label: '열충격' });

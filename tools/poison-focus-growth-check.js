@@ -5,7 +5,8 @@ const assert=require('assert/strict'),cp=require('child_process'),path=require('
 const D=require('./dgqa.js'),E=D.G0,rate=Number(process.env.FOCUS_RATE||.02);
 const old=cp.execFileSync('git',['show','d82245f:js/10-skills-engine.js'],{cwd:path.resolve(__dirname,'..'),encoding:'utf8'});
 const start=old.indexOf('function runSkill2('),end=old.indexOf('\nfunction sbKindOf(',start);assert(start>=0&&end>start);
-D.run_(old.slice(start,end).replace('function runSkill2(', 'function focusBaseline('));
+// 사냥꾼 성장만 비교하므로 독 격발은 현재 성장식을 대조 엔진에도 적용한다.
+D.run_(old.slice(start,end).replace('(poisonTotal(n) - poisonTotal(n - take)) * mul * dotMul(p)', '(poisonTotal(n) - poisonTotal(n - take)) * mul * triggerDamageMul(p)').replace('function runSkill2(', 'function focusBaseline('));
 const close=(a,b,m)=>assert(Math.abs(a-b)<1e-7,m+': '+a+'/'+b);
 function compare(a,b,m){if(typeof a==='number'&&typeof b==='number')return close(a,b,m);if(a&&b&&typeof a==='object'&&typeof b==='object'){assert.deepEqual(Object.keys(a),Object.keys(b),m+' 필드');for(const k of Object.keys(a))compare(a[k],b[k],m+'/'+k);}else assert.deepEqual(a,b,m);}
 function trial(build,s,points,resource,track,haste,evade,impl){
@@ -39,5 +40,5 @@ for(const s of E.SKILLS2.hunter.filter(s=>s.fx.some(f=>f.k==='focusBurst'))){
  assert(E.statGrowthPreview(p,'dex').includes('장착 스킬 자원 추가 피해'),s.id+' 3점 비교');
  assert.equal(JSON.stringify(p),snapshot,'안내가 자원을 소모하지 않음');
 }
-for(const s of E.SKILLS2.assassin.filter(s=>s.fx.some(f=>f.k==='burst'))){const p=E.mkPlayer('assassin',{}, {int:20});assert(E.skillDamageHint(p,s).includes('독 격발 배율 1.4배'));assert(E.skBody(s).includes('지능 1점마다 2%'));}
+for(const s of E.SKILLS2.assassin.filter(s=>s.fx.some(f=>f.k==='burst'))){const p=E.mkPlayer('assassin',{}, {int:20});assert(E.skillDamageHint(p,s).includes('독 격발 배율 1.6배'));assert(E.skBody(s).includes('지능 1점마다 3%'));}
 console.log(JSON.stringify({passed:true,rate,hunterCases:hunter,poisonCases:poison,pureCases:pure}));
