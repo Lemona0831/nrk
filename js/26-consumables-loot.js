@@ -95,16 +95,17 @@ function consTargets(b, D) {
   switch (D.k) {
     case 'unevade': return al.filter(e => e.evading || e.haze > 0);
     case 'unbrace': return al.filter(e => e.braced);
-    case 'unguard': return al.filter(e => e.guarding || (e.role === 'shield' && hasShield(b, null) === e));
+    case 'unguard': return al.filter(e => e.guarding || (e.role === 'shield' && hasShield(b, null) === e && !e.unguard) || e.evading || e.braced);
     case 'unbless': return al.filter(e => e.s.empower || e.fireNext);
     case 'noheal': return al.filter(e => e.role === 'healer' && !e.noHeal);
     case 'hinder': return al.filter(e => (e.role === 'healer' && !e.noHeal) || (e.role === 'summoner' && !e.noSummon));
     case 'nosummon': return al.filter(e => e.role === 'summoner' && !e.noSummon);
     case 'sticky': return al.filter(e => e.role === 'thief' && !e.stuck);
-    case 'norise': return al.filter(e => e.role === 'skeleton' && !e.rose && !e.norise);
+    case 'norise': return al.filter(e => e.pile || (e.role === 'skeleton' && !e.rose && !e.norise && !e.limeDelay));
     case 'wallbreak': return al.filter(e => e.role === 'bonewall');
     case 'slow': return al.filter(e => !e.pile && e.role !== 'bonewall');
-    case 'interrupt': return al.filter(e => e.intent && (['charge', 'heavy', 'aim', 'chant', 'chanting', 'burn', 'noon', 'mchant', 'mchanting', 'msong'].includes(e.intent.k) || e.intent.aimed) && e.role !== 'boss' && !e.under);
+    case 'interrupt': return al.filter(e => e.intent && (['charge', 'heavy', 'aim', 'chant', 'chanting', 'burn', 'noon', 'mchant', 'mchanting', 'msong'].includes(e.intent.k) || e.intent.aimed) && !e.under && !e.bigRed);
+    case 'unhaze': return al.filter(e => e.haze > 0);
     case 'rewind': return al.filter(e => e.foe === 'sundial' || e.glow > 0 || e.embers > 0 || e.chant);
     default: return al;
   }
@@ -132,8 +133,8 @@ function consWhyNot(b, run, c, tgtId) {
     case 'block': return st(p, 'block') > 0 ? '이미 막음이 있습니다' : '';
     case 'halfboom': return b.halfBoom === b.round ? '이미 효과가 있습니다' : '';
     case 'scatter': { const al = alive(b).filter(e => e.role !== 'root' && !e.pile); return al.every(e => e.redNext) ? '이미 효과가 있습니다' : ''; }
-    case 'blind': { const bk = alive(b).filter(e => e.row === 'back' && e.role !== 'root'); return !bk.length ? '후열 적이 없습니다' : bk.every(e => e.missNext) ? '이미 효과가 있습니다' : ''; }
-    case 'decoy': return p.decoy ? '이미 효과가 있습니다' : '';
+    case 'blind': { const bk = alive(b).filter(e => e.row === 'back' && e.role !== 'root' && !e.pile); return !bk.length ? '후열 적이 없습니다' : bk.every(e => (e.redNext || 0) >= consVal(c)) ? '이미 효과가 있습니다' : ''; }
+    case 'decoy': return p.decoy && p.decoy.round === b.round ? '이미 효과가 있습니다' : '';
     case 'guard1': return p.nextRed ? '이미 효과가 있습니다' : '';
     case 'whet': return p.whet ? '이미 효과가 있습니다' : '';
     case 'antisteal': return b.antiSteal ? '이미 효과가 있습니다' : '';
@@ -160,13 +161,13 @@ function consApply(b, run, c, tgt) {
     case 'quick': b.extraQuick = 1; return '이번 차례에 빠른 칸이 하나 더 생긴다';
     case 'cure': delete p.s[D.s]; return (KW_N[D.s] || D.s) + '이(가) 사라진다';
     case 'block': addS(b, p, 'block', 1); return '다음 해로운 상태 하나를 막는다';
-    case 'interrupt': { const was = tgt.intent.k, aimed = !!tgt.intent.aimed; tgt.intent = { k: 'attack' }; tgt.teleTurn = null; if (tgt.chant) { tgt.chant = null; tgt.pyreRest = 1; } if (was === 'noon') { tgt.noonNext = 0; tgt.clock = Math.max(tgt.clock || 0, FOE_X.sundial.bellBack); return tgt.n + '의 정오의 빛이 흩어진다. 해시계 ' + tgt.clock; } if (MCH_K.includes(was)) return tgt.n + '의 영창을 끊는다'; return tgt.n + '이(가) 모으던 ' + (was === 'aim' || aimed ? '겨누기' : CHANT_K.includes(was) ? '영창' : '강타') + '를 놓친다'; }
+    case 'interrupt': tgt.bigRed = v; return tgt.n + '의 큰 공격 피해 −' + Math.round(v * 100) + '%';
     case 'halfboom': b.halfBoom = b.round; return '이번 라운드 화형 피해 절반';
-    case 'blind': for (const e of alive(b)) if (e.row === 'back' && e.role !== 'root') e.missNext = 1; return '후열 적들의 다음 공격이 빗나간다';
+    case 'blind': for (const e of alive(b)) if (e.row === 'back' && e.role !== 'root' && !e.pile) e.redNext = Math.max(e.redNext || 0, v); return '후열 적들의 다음 공격 피해 −' + Math.round(v * 100) + '%';
     case 'unevade': if (!tgt.evading && tgt.haze > 0) { tgt.haze--; if (!tgt.haze) tgt.hazeSrc = null; return tgt.n + '의 허상 한 겹이 깨진다'; } tgt.evading = 0; return tgt.n + '이(가) 몸을 일으킨다';
     case 'unbrace': tgt.braced = 0; return tgt.n + '의 버티기가 풀린다';
-    case 'decoy': p.decoy = 1; return '미끼 인형을 세운다';
-    case 'unguard': tgt.guarding = null; tgt.unguard = 1; return tgt.n + '이(가) 동료를 지키지 못한다';
+    case 'decoy': p.decoy = { round: b.round, v }; return '미끼 인형을 세운다. 이번 라운드 반격 · 후열 사격 피해 −' + Math.round(v * 100) + '%';
+    case 'unguard': if (tgt.guarding || (tgt.role === 'shield' && hasShield(b, null) === tgt)) { tgt.guarding = null; tgt.unguard = 1; return tgt.n + '이(가) 동료를 지키지 못한다'; } if (tgt.evading) { tgt.evading = 0; return tgt.n + '을(를) 끌어내 몸 낮추기를 푼다'; } tgt.braced = 0; return tgt.n + '의 버티기를 푼다';
     case 'unbless': delete tgt.s.empower; if (tgt.fireNext) { tgt.fireNext = 0; return tgt.n + '이(가) 받은 불씨가 꺼진다'; } return tgt.n + '의 축복이 꺼진다';
     case 'noheal': tgt.noHeal = 1; return tgt.n + '의 다음 치유를 막는다';
     case 'hinder': if (tgt.role === 'healer') { tgt.noHeal = 1; return tgt.n + '의 다음 치유를 막는다'; } tgt.noSummon = 1; return tgt.n + '의 다음 소환을 막는다';
@@ -181,13 +182,13 @@ function consApply(b, run, c, tgt) {
     case 'guard1': p.nextRed = v; return '다음 공격 피해 −' + Math.round(v * 100) + '%';
     case 'unmod': { const m = D.mods.find(x => hasMod(b, x)); b.ctx.mods = b.ctx.mods.filter(x => x !== m); if (m === 'haze') for (const e of alive(b)) if (!e.hazeSrc) e.haze = 0; return (ROOM_MODS[m] ? ROOM_MODS[m].n : m) + '을(를) 끈다'; }
     case 'escape': b.over = 'flee'; return '연기 속으로 물러난다';
-    case 'lootx': b.lootX = 2; return '이 전투의 전리품 확률 두 배';
-    case 'norise': if (tgt.pile) { tgt.norise = 1; tgt.hp = 0; killEnemy(b, tgt); return '뼈 더미가 흩어진다'; } tgt.norise = 1; return tgt.n + '은(는) 다시 일어서지 못한다';
+    case 'lootx': b.lootX = v; return '이 전투의 전리품 확률 ×' + v;
+    case 'norise': if (tgt.pile) { tgt.pile.wait += v; return tgt.n + '의 뼈 더미가 굳는다. 부활까지 ' + tgt.pile.wait + '라운드'; } tgt.limeDelay = v; return tgt.n + '이(가) 쓰러지면 부활이 ' + v + '라운드 늦어진다';
     case 'burnpiles': { let n = 0; for (const e of alive(b).filter(x => x.pile)) { e.norise = 1; e.hp = 0; killEnemy(b, e); n++; } return '뼈 더미 ' + n + '개를 태운다'; }
     case 'trim': { for (const k of HEX.kinds.concat(['chill'])) if (p.s[k]) kwDec(p, k); return '해로운 상태가 종류마다 1씩 준다'; }
     case 'unearth': { for (const e of alive(b).filter(x => x.under && x.role !== 'boss')) { e.under = 0; e.stkPrep = 0; e.intent = { k: 'attack' }; e.teleTurn = null; addS(b, e, 'vuln', 1); } return '땅속의 적을 끌어낸다'; }
     case 'cool': { const d = heatAdd(b, -v, D.n); return '열기 ' + Math.round(d); }
-    case 'unhaze': { for (const e of alive(b)) if (e.haze > 0) { e.haze = 0; e.hazeSrc = null; } return '모든 적의 허상이 걷힌다'; }
+    case 'unhaze': { tgt.haze = Math.max(0, (tgt.haze || 0) - 1); if (!tgt.haze) tgt.hazeSrc = null; return tgt.n + '의 허상 한 겹이 걷힌다' + (tgt.haze ? ' (남은 ' + tgt.haze + ')' : ''); }
     case 'healcure': { const h = Math.min(p.hpMax - p.hp, p.hpMax * v * healMul(p)); p.hp += h; delete p.s.ignite; return '생명력 +' + r1(h) + ', 화상이 사라진다'; }
     case 'reveal': { for (const d of run.doors || []) d.hide = 0; run.dg.reveal = (run.dg.reveal || []).concat([run.room + 1]); return '이 층과 다음 층 문의 보상이 보인다'; }
     case 'rewind': { if (tgt.foe === 'sundial') { tgt.clock = Math.min(FOE_X.sundial.clock, (tgt.clock || 0) + FOE_X.sundial.glassBack); if (tgt.noonNext) { tgt.noonNext = 0; tgt.teleTurn = null; tgt.intent = { k: 'attack' }; } return tgt.n + '의 해시계 +' + FOE_X.sundial.glassBack; } if (tgt.chant) { tgt.chant = null; tgt.teleTurn = null; tgt.pyreRest = 0; tgt.intent = { k: tgt.role === 'maid' ? 'mchant' : 'chant' }; return tgt.n + '의 영창이 처음으로 돌아간다'; } if (tgt.glow > 0) { tgt.glow = Math.max(0, tgt.glow - 2); if (tgt.intent && tgt.intent.k === 'charge') { tgt.intent = { k: 'attack' }; tgt.teleTurn = null; } return tgt.n + '의 달아오름 ' + tgt.glow; } if (tgt.embers > 0) { tgt.embers = Math.max(0, tgt.embers - 2); return tgt.n + '의 불씨 ' + tgt.embers; } return '되돌릴 것이 없다'; }
@@ -216,6 +217,13 @@ function consBrew(run, id) {
   (run.brewLog || (run.brewLog = [])).push({ ch: run.ch || 1, room: run.room, id, n: s.need, flask: s.flask, t: Date.now() });
   return '';
 }
+/* 챕터 전용 소모품(only)은 다른 챕터로 넘어가면 판매가만큼 골드로 바뀐다(10월 14일 개편 4단계) */
+function consChRefund(run) {
+  let gold = 0; const names = []; const keep = c => { const D = CONS[c.id]; if (!D || !D.only || D.only === (run.ch || 1)) return true; gold += consSell(c) * c.n; names.push(D.n + ' ×' + c.n); return false; };
+  run.cons = (run.cons || []).filter(keep); if (run.consPending) run.consPending = run.consPending.filter(keep);
+  if (gold) { run.gold = (run.gold || 0) + gold; (run.consRetireLog || (run.consRetireLog = [])).push({ items: names, gold, ch: run.ch, t: Date.now() }); }
+  return { gold, names };
+}
 /* 챕터당 사용 횟수(10월 14일 개편 2단계): CONS_CH의 효과 종류별로 센다. run.consCh = { ch, [k]: 쓴 수 }, 챕터가 바뀌면 처음부터 */
 const consChLim = (run, D) => { const L = CONS_CH[D.k]; return L ? L[run && run.mode === 'hard' ? 'hard' : 'normal'] : 0; };
 const consChUsed = (run, D) => { const u = run && run.consCh; return u && u.ch === (run.ch || 1) ? (u[D.k] || 0) : 0; };
@@ -226,7 +234,9 @@ function consMarks(e) {
   if (e.markDmg) L.push(['mark', '🖍️', '표식 +' + Math.round(e.markDmg * 100) + '%']);
   if (e.redNext) L.push(['red', '💫', '다음 공격 −' + Math.round(e.redNext * 100) + '%']);
   if (e.missNext) L.push(['miss', '🌫️', '다음 공격 빗나감']);
-  if (e.noHeal) L.push(['noheal', '🚫', '다음 치유 막힘']);
+  if (e.bigRed) L.push(['big', '🔔', '큰 공격 −' + Math.round(e.bigRed * 100) + '%']);
+  if (e.limeDelay && !e.pile) L.push(['lime', '⚪', '쓰러지면 부활 +' + e.limeDelay + '라운드']);
+  if (e.noHeal) L.push(['noheal', '🚫', '다음 치유 −' + Math.round(CONS.hinder.v * 100) + '%']);
   if (e.noSummon) L.push(['nosummon', '🚫', '다음 소환 막힘']);
   if (e.stuck) L.push(['stuck', '🍯', '끈끈이']);
   if (e.unguard) L.push(['unguard', '🪝', '지키기 풀림']);
@@ -237,7 +247,9 @@ const CONS_MARK_D = {
   mark: e => '이 적이 받는 다음 직접 피해 한 번이 ' + Math.round(e.markDmg * 100) + '% 커집니다. 맞으면 사라집니다.',
   red: e => '이 적의 다음 공격 하나가 주는 피해가 ' + Math.round(e.redNext * 100) + '% 줄어듭니다. 화상 같은 지속 피해에는 쓰이지 않습니다.',
   miss: () => '이 적의 다음 공격 하나가 빗나갑니다.',
-  noheal: () => '이 적의 다음 치유 한 번이 막힙니다.',
+  noheal: () => '이 적의 다음 치유량이 ' + Math.round(CONS.hinder.v * 100) + '% 줄어듭니다.',
+  big: e => '이 적이 모으는 큰 공격(강타 · 겨누기 · 영창)의 피해가 ' + Math.round(e.bigRed * 100) + '% 줄어듭니다. 그 공격이 나가면 사라집니다.',
+  lime: e => '이 해골이 쓰러져 뼈 더미가 되면 부활까지 ' + e.limeDelay + '라운드가 더 걸립니다.',
   nosummon: () => '이 적의 다음 소환 한 번이 막힙니다.',
   stuck: () => '이 적이 다음에 달아나려 하면 끈끈이에 걸려 달아나지 못합니다.',
   unguard: () => '이 적은 다음 행동까지 동료를 지키지 못합니다.',

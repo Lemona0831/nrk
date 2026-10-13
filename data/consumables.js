@@ -23,18 +23,18 @@ const CONS = {
   dagger:    { n: '올가미', ico: '➰', sit: '적이 너무 빠르다', k: 'slow', tgt: 'enemy', v: 1, vm: 2, max: 2, price: 10, dw: 2, use: 'fight', d: v => '한 적에게 둔화 +' + v + '. 후열에도 닿습니다. 뼈 더미와 뼈벽은 제외하고, 피해는 주지 않습니다.' }, // 옛 투척 단검. 저장본 호환을 위해 id는 그대로
   relic:     { n: '흩뿌리는 성물', ico: '💫', sit: '적이 많다', k: 'scatter', v: 0.1, vm: 0.15, max: 2, price: 15, use: 'fight', d: v => '적 모두의 다음 공격 피해 −' + Math.round(v * 100) + '%. 피해는 주지 않습니다.' }, // 옛 깨진 성물
   // 기믹 완화
-  bellshard: { n: '종 조각', ico: '🔔', sit: '적이 강타 · 겨누기 · 영창을 모은다', k: 'interrupt', tgt: 'enemy', max: 2, price: 20, use: 'fight', d: () => '한 적의 강타·겨누기·영창을 끊고 평소 공격으로 바꿉니다. 보스와 땅속에 숨은 적은 제외합니다.' },
-  smoke:     { n: '연막', ico: '🌫️', sit: '사수가 겨누고 있다', k: 'blind', max: 2, price: 14, use: 'fight', d: () => '후열 적들의 다음 공격 하나가 빗나갑니다.' },
-  hinder:    { n: '방해 부적', ico: '📜', sit: '사제가 치유하거나 소환사가 부르려 한다', k: 'hinder', tgt: 'enemy', max: 2, price: 12, use: 'fight', d: () => '치유하는 적의 다음 치유, 또는 소환하는 적의 다음 소환을 막습니다. 보스는 고를 수 없습니다.' }, // 옛 침묵의 재 · 소금 원
-  hookrope:  { n: '갈고리 줄', ico: '🪝', sit: '적이 동료를 지킨다', k: 'unguard', tgt: 'enemy', max: 2, price: 12, use: 'fight', d: () => '한 적이 다음 행동까지 동료를 지키지 못합니다(방패병의 가로막기, 하수인의 지키기).' },
-  dummy:     { n: '미끼 인형', ico: '🪆', sit: '적이 반격 태세다', k: 'decoy', max: 2, price: 12, use: 'fight', d: () => '다음에 받는 반격 하나를 인형이 대신 맞습니다.' },
+  bellshard: { n: '종 조각', ico: '🔔', sit: '적이 강타 · 겨누기 · 영창을 모은다', k: 'interrupt', tgt: 'enemy', v: 0.2, max: 2, price: 20, use: 'fight', d: v => '강타·겨누기·영창을 모으는 한 적의 그 큰 공격 피해 −' + Math.round(v * 100) + '%. 끊지는 않습니다. 보스에게도 씁니다.' }, // 4-2: 끊기 → 피해 감소(기믹 완화 0.4배까지)
+  smoke:     { n: '연막', ico: '🌫️', sit: '사수가 겨누고 있다', k: 'blind', v: 0.2, max: 2, price: 14, use: 'fight', d: v => '후열 적들의 다음 공격 하나의 피해 −' + Math.round(v * 100) + '%.' }, // 4-2: 빗나감 → −20%
+  hinder:    { n: '방해 부적', ico: '📜', sit: '사제가 치유하거나 소환사가 부르려 한다', k: 'hinder', tgt: 'enemy', v: 0.5, max: 2, price: 12, use: 'fight', d: v => '치유하는 적의 다음 치유량 −' + Math.round(v * 100) + '%, 또는 소환하는 적의 다음 소환 한 번을 막습니다. 보스는 고를 수 없습니다.' }, // 옛 침묵의 재 · 소금 원
+  hookrope:  { n: '갈고리 줄', ico: '🪝', sit: '적이 동료를 지킨다', k: 'unguard', tgt: 'enemy', max: 2, price: 12, use: 'fight', d: () => '한 적의 지키기·가로막기·몸 낮추기·버티기 가운데 하나를 한 번 풉니다.' }, // 4-2: 돌멩이 · 쇠 지렛대를 합쳤다
+  dummy:     { n: '미끼 인형', ico: '🪆', sit: '적이 반격 태세다', k: 'decoy', v: 0.2, max: 2, price: 12, use: 'fight', d: v => '이번 라운드에 반격과 후열 사격으로 받는 피해 −' + Math.round(v * 100) + '%.' }, // 4-2: 반격 하나 대신 맞기 → −20%
   smokebomb: { n: '연기 폭탄', ico: '💨', sit: '질 것 같다', k: 'escape', max: 1, price: 25, dw: 0.5, use: 'fight', d: () => '보스전이 아니면 반드시 물러납니다. 그 방은 다시 이겨야 합니다.' },
   // 횟수 제한 (CONS_CH)
   sandbag:   { n: '모래 주머니', ico: '👝', sit: '방 특성이 괴롭다', k: 'unmod', mods: ['dark', 'bloodpool', 'candle', 'ceiling', 'bell', 'narrow', 'bonepile', 'rotair', 'flooded', 'alley', 'pillar', 'shade', 'brazier', 'drums', 'haze', 'sandstorm'], max: 1, price: 14, dw: 0.5, use: 'fight', d: () => '이 전투에서 방 특성 하나(어둠, 피 웅덩이, 촛불 제단, 무너지는 천장, 종소리, 좁은 회랑, 무너진 납골벽, 썩은 공기, 물에 잠긴 바닥, 무너진 골목, 무너지는 기둥, 오아시스 그늘, 불씨 화로, 북소리, 아지랑이, 모래폭풍)를 끕니다. 작열하는 한낮은 끄지 못합니다.' }, // 옛 등잔 기름(어둠)을 합쳤다
-  reliq:     { n: '빈 성물함', ico: '📦', sit: '전리품을 더 원한다', k: 'lootx', max: 1, price: 18, dw: 0.5, use: 'fight', d: () => '이 전투에서 쓰러뜨린 적의 전리품 확률이 두 배입니다.' },
+  reliq:     { n: '빈 성물함', ico: '📦', sit: '전리품을 더 원한다', k: 'lootx', v: 1.5, max: 1, price: 18, dw: 0.5, use: 'fight', d: v => '이 전투에서 쓰러뜨린 적의 전리품 확률 ×' + v + '.' }, // 4-2: ×2 → ×1.5
   // 챕터 전용 (only: 그 챕터에서만 나온다)
-  lime:      { n: '석회 가루', ico: '⚪', ch: 2, only: 2, vs: 'skeleton', sit: '해골이 다시 일어선다', k: 'norise', tgt: 'enemy', max: 2, price: 10, dw: 2, use: 'fight', d: () => '아직 부활하지 않은 해골 하나의 부활을 막습니다. 그 해골의 뼈 더미에 쓰면 바로 없앱니다.' },
-  mirror:    { n: '거울 조각', ico: '🪞', ch: 3, only: 3, vs: 'mirage', vsMod: 'haze', sit: '허상이 겹쳐 있다', k: 'unhaze', max: 2, price: 12, dw: 2, use: 'fight', d: () => '모든 적의 허상을 걷어 냅니다.' },
+  lime:      { n: '석회 가루', ico: '⚪', ch: 2, only: 2, vs: 'skeleton', sit: '해골이 다시 일어선다', k: 'norise', tgt: 'enemy', v: 2, max: 2, price: 10, dw: 2, use: 'fight', d: v => '해골 하나의 부활을 ' + v + '라운드 늦춥니다. 뼈 더미에 쓰면 바로, 아직 서 있는 해골에 쓰면 쓰러질 때 적용됩니다.' }, // 4-2: 부활 막기 → 2라운드 늦추기
+  mirror:    { n: '거울 조각', ico: '🪞', ch: 3, only: 3, vs: 'mirage', vsMod: 'haze', sit: '허상이 겹쳐 있다', k: 'unhaze', tgt: 'enemy', max: 2, price: 12, dw: 2, use: 'fight', d: () => '한 적의 허상 한 겹을 걷어 냅니다.' }, // 4-2: 모든 적 · 모든 겹 → 한 적 · 한 겹
   // 판매품: 전리품 주머니에 들어가 상점에 들어갈 때 골드로 바뀐다
   silver:    { n: '은화 주머니', ico: '💰', sit: '팔아서 골드로', k: 'sell', sell: 15, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
   goblet:    { n: '녹슨 성배', ico: '🏆', sit: '팔아서 골드로', k: 'sell', sell: 25, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },

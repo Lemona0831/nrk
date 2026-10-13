@@ -11,7 +11,7 @@ function buildWall(b, e) {
   logp(b, 'bad', e.n + '이(가) 뼈벽을 쌓는다. 후열이 받는 한 적 대상 피해가 절반이 된다');
 }
 function makePile(b, e) { // 해골이 쓰러지면 뼈 더미가 된다 (경험치 · 전리품은 마지막에 한 번)
-  e.pile = { wait: RISE.wait, born: b.tick }; e.hp = Math.max(1, Math.round(e.hpMax * RISE.pile)); e.intent = { k: 'none' }; e.braced = 0; e.countering = 0; e.evading = 0; e.guarding = null; e.stun = 0; e.brk = 0;
+  e.pile = { wait: RISE.wait + (e.limeDelay || 0), born: b.tick }; if (e.limeDelay) { logp(b, 'good', e.n + '의 뼈에 석회가 배어 있다. 부활 +' + e.limeDelay + '라운드'); e.limeDelay = 0; } e.hp = Math.max(1, Math.round(e.hpMax * RISE.pile)); e.intent = { k: 'none' }; e.braced = 0; e.countering = 0; e.evading = 0; e.guarding = null; e.stun = 0; e.brk = 0;
   for (const k of Object.keys(e.s)) if (!['poison', 'bleed'].includes(k)) delete e.s[k];
   logp(b, 'good', e.n + '이(가) 무너진다. 뼈가 아직 꿈틀거린다');
   fxRun(b.p, 'onPile', b, b.p, e);

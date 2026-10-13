@@ -142,7 +142,9 @@ function hurtPlayer(b, raw, o) {
   }
   let d = raw;
   if (!o.dot && o.src && p.nextRed) { d *= 1 - p.nextRed; p.nextRed = 0; } // 소모품 나무 부적
-  if (!o.dot && o.src && o.src.redNext) { d *= 1 - o.src.redNext; o.src.redNext = 0; } // 소모품 흩뿌리는 성물: 그 적의 다음 공격 하나
+  if (!o.dot && o.src && o.src.redNext) { d *= 1 - o.src.redNext; o.src.redNext = 0; } // 소모품 흩뿌리는 성물 · 연막: 그 적의 다음 공격 하나
+  if (!o.dot && o.src && o.src.bigRed) { d *= 1 - o.src.bigRed; o.src.bigRed = 0; } // 소모품 종 조각: 큰 공격을 모으는 적의 다음 공격(그 큰 공격)
+  if (!o.dot && o.src && p.decoy && p.decoy.round === b.round && (o.counter || o.src.row === 'back')) d *= 1 - p.decoy.v; // 소모품 미끼 인형: 이번 라운드 반격 · 후열 사격
   if (p.guard && !o.judgment) d *= 1 - (1 - (p.eq.gloves === 'ragechain' ? 0.6 : 0.5)) * carveMul(b, 'prep'); // 준비가 새겨지면 방어가 덜 줄인다 // 심판은 방어로 줄지 않는다
   if (p.ward > 0 && p.eq.armor === 'wardcrest') d *= 0.85;
   if (p.retal) d *= 0.7;
@@ -264,8 +266,7 @@ function hurtEnemy(b, e, raw, o) {
   b.rec.push({ k: 'dealt', t: r1(b.t), d: r1(actualDealt), role: e.role, a: o.label || b.curSkill || (b.cur && b.cur.id) || '공격', dot: !!o.dot });
   if (e.chant && d > 0 && e.hp > 0) { e.chant.taken += d; if (e.chant.taken >= e.chant.need) chantBreak(b, e, '쌓인 상처에'); } // 화형 사제: 영창 중 받은 피해
   if (!o.dot && b.cur) fxRun(b.p, 'onHit', b, b.p, e, o, b.cur, d, Math.max(0, hp0 - Math.max(0, e.hp)));
-  if (e.countering && e.hp > 0 && !o.dot && o.melee && o.single && b.p.decoy) { e.countering = 0; b.p.decoy = 0; logp(b, 'good', e.n + '의 반격이 미끼 인형을 친다'); }
-  if (e.countering && e.hp > 0 && !o.dot && o.melee && o.single) { e.countering = 0; hurtPlayer(b, enemyHitEst(b, e), { src: e, single: 1, label: e.n + '이(가) 되받아친다' }); } // 반격 태세
+  if (e.countering && e.hp > 0 && !o.dot && o.melee && o.single) { e.countering = 0; hurtPlayer(b, enemyHitEst(b, e), { src: e, single: 1, counter: 1, label: e.n + '이(가) 되받아친다' }); } // 반격 태세
   if (e.foe === 'pilgrim' && !e.frenzy && e.hp < e.hpMax * 0.5 && e.hp > 0) { e.frenzy = 1; logp(b, 'bad', e.n + '의 눈이 번들거린다. 더 빨라진다'); codexHit(b, 'pilgrim', 'frenzy'); }
   if (!o.dot && b.p.build === 'berserker') addRage(b, 1);
   if (!o.silent && d > 0) logp(b, o.dot ? 'sys' : 'good', o.dot ? (o.label || '피해') + '이(가) ' + e.n + '을(를) 갉아먹는다. ' + r1(d) + ' 피해' : e.n + '에게 ' + r1(d) + ' 피해');

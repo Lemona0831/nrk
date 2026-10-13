@@ -386,7 +386,7 @@ function consReason(b, D) {
     case 'heal': case 'healcure': return '생명력 ' + Math.round(p.hp / p.hpMax * 100) + '%';
     case 'stam': return '스태미나 ' + Math.round(p.st);
     case 'cure': return (SNAMES[D.s] || D.s) + ' ' + st(p, D.s) + ' 지움';
-    case 'interrupt': { const t = consTarget(b, D, G.sel); return t ? t.n + ' 끊기' : D.sit; }
+    case 'interrupt': { const t = consTarget(b, D, G.sel); return t ? t.n + ' 큰 공격 −' + Math.round(consVal(c) * 100) + '%' : D.sit; }
     default: return D.sit;
   }
 }

@@ -164,11 +164,11 @@ function useCons(pk, r, b, run) {
     case 'heal': return c.id === 'herb' ? p.hp < p.hpMax * 0.2 && !p.flask.life : p.hp < p.hpMax * 0.35 && (!p.flask.life || r() < 0.5); // 10월 14일 개편 3단계: 약초는 플라스크 재료라 위급할 때만
     case 'stam': return p.st < 30;
     case 'cure': return sk(p, D.s) >= ({ bleed: 4, poison: 6, ignite: 3, weak: 2, vuln: 2, chill: 1 }[D.s] || 3) || (D.s === 'poison' && sk(p, 'poison') >= 3 && al.some(e => e.foe === 'well' && it(e, 'charge', 'heavy'))); // 2챕터: 우물이 열리기 전에는 중독 3부터 지운다
-    case 'interrupt': return (al.some(e => e.role !== 'boss' && it(e, 'heavy', 'aimed')) && !p.dodge) || al.some(e => it(e, 'noon'));
+    case 'interrupt': return (al.some(e => it(e, 'heavy', 'aimed')) && !p.dodge) || al.some(e => it(e, 'noon'));
     case 'blind': return al.some(e => e.row === 'back' && it(e, 'aimed'));
     case 'unevade': { const f = al.filter(e => e.row === 'front'); return f.length > 0 && f.every(e => e.evading); }
     case 'decoy': return al.some(e => e.countering);
-    case 'unguard': return al.some(e => e.guarding);
+    case 'unguard': return al.some(e => e.guarding || e.evading || e.braced);
     case 'unbless': return al.some(e => e.s.empower && it(e, 'attack', 'heavy'));
     case 'noheal': return al.some(e => e.role === 'healer' && it(e, 'heal'));
     case 'hinder': return al.some(e => (e.role === 'healer' && it(e, 'heal')) || (e.role === 'summoner' && it(e, 'summon')));
@@ -186,7 +186,7 @@ function useCons(pk, r, b, run) {
     case 'unmod': return true;
     case 'escape': return p.hp < p.hpMax * 0.15 && !p.flask.life;
     case 'lootx': return al.length >= 3 && r() < 0.5;
-    case 'norise': return al.some(e => e.pile && !e.norise) && (al.some(e => e.foe === 'collector') || al.some(e => e.pile && e.pile.wait <= 1));
+    case 'norise': return al.some(e => e.pile && e.pile.wait <= 1);
     case 'burnpiles': return al.filter(e => e.pile).length >= 2;
     case 'trim': return ['poison', 'bleed', 'ignite', 'weak', 'vuln'].filter(k => sk(p, k) > 0).length >= 2 && al.some(e => e.role === 'hexer' || e.foe === 'knight');
     case 'unearth': return al.some(e => e.under);
@@ -194,7 +194,7 @@ function useCons(pk, r, b, run) {
     case 'slow': return al.some(e => e.swift || ((e.strong || e.role === 'boss') && it(e, 'charge'))) && r() < 0.5;
     case 'nobloat': return al.some(e => e.role === 'bloat');
     case 'cool': return b.heat != null && (b.heat >= 70 || (b.heatWarn != null && b.heatWarn <= (b.round || 0))); // 3챕터 (10월 7일)
-    case 'unhaze': return al.reduce((a, e) => a + (e.haze || 0), 0) >= 3 || al.some(e => e.foe === 'dancer' && e.haze >= 2 && it(e, 'charge'));
+    case 'unhaze': return al.some(e => e.foe === 'dancer' && e.haze >= 1 && it(e, 'charge')) || al.reduce((a, e) => a + (e.haze || 0), 0) >= 3;
     case 'rewind': return al.some(e => (e.foe === 'sundial' && (e.clock || 0) <= 1) || (e.foe === 'colossus' && e.glow >= 2) || (e.foe === 'reaper' && e.embers >= 4) || (e.chant && it(e, 'chanting', 'mchanting')));
     case 'healcure': return (p.hp < p.hpMax * 0.45 && (!p.flask.life || r() < 0.5)) || sk(p, 'ignite') >= 4;
     default: return false; } };

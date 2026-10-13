@@ -12,7 +12,7 @@ const ok = [];
 assert(!card(front).includes('cmark'), '처음에는 칩 없음');
 E.consApply(b, run, { id: 'chalk', g: 'n' }, front); assert(card(front).includes('표식 +'), '표식 칩');
 E.consApply(b, run, { id: 'relic', g: 'n' }, null); assert(card(front).includes('다음 공격 −10%') && card(back).includes('다음 공격 −10%'), '성물 칩(모든 적)');
-const blind = Object.keys(E.CONS).find(k => E.CONS[k].k === 'blind'); E.consApply(b, run, { id: blind, g: 'n' }, null); assert(card(back).includes('빗나감') && !card(front).includes('빗나감'), '연막은 후열만');
+const blind = Object.keys(E.CONS).find(k => E.CONS[k].k === 'blind'); E.consApply(b, run, { id: blind, g: 'n' }, null); assert(card(back).includes('다음 공격 −20%') && card(front).includes('다음 공격 −10%'), '연막은 후열만 −20%(성물 −10%보다 큰 쪽)');
 ok.push('칩 생김');
 const info = E.infoHtml('cmark:' + front.id + ':red'); assert(info.includes('10% 줄어듭니다') && info.includes('소모품으로 건 효과'), '설명 창');
 assert.equal(E.infoHtml('cmark:' + front.id + ':nosuch'), ''); ok.push('설명 창');
