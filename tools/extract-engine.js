@@ -1,7 +1,7 @@
 // 게임 엔진 부분만 떼어 tools/eng.gen.js로 만든다. 테스트(qa.js)가 이 파일을 쓴다.
 // 0.6 개발 중에는 next/를 읽는다. data/*.js(값)를 index.html의 <script src> 순서대로 먼저 붙이고, 그 뒤에 엔진을 붙인다.
 const fs = require('fs'), path = require('path');
-const dir = path.resolve(__dirname, '..', process.argv[2] || 'next'); // 폴더는 저장소 루트 기준 이름이거나 절대 경로
+const dir = path.resolve(__dirname, '..', process.argv[2] || '.'); // 폴더는 저장소 루트 기준 이름이거나 절대 경로
 const P = require('./pagesrc.js'); // 한 파일(<script> 하나)이든 나눈 파일(js/NN-이름.js)이든 같은 글자를 돌려준다
 const data = P.pageData(dir);
 const s = P.pageScript(dir);
