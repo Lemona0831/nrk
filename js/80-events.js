@@ -32,7 +32,7 @@ function onClick(ev) {
     case 'menu': if ((G.scr === 'run' || G.scr === 'scen' || G.scr === 'tut' || G.scr === 'hudsample') && G.b || window.innerWidth < 720) G.menuOpen = !G.menuOpen; else { G.data.menuFold = !G.data.menuFold; saveLocal(); } render(); break;
     case 'rank': case 'records': case 'admin': case 'goals': case 'mark': if (a === 'mark' && !markOpen()) { toast('3챕터 보스를 한 번 이기면 열립니다'); break; } if (!PAGES.includes(G.scr)) G.back = G.scr; G.scr = a; G.sheet = null; G.adminMsg = ''; if (a === 'rank') G.board = null; render(); window.scrollTo(0, 0); break;
     case 'back': G.scr = G.back || 'title'; G.back = null; render(); break;
-    case 'rkdead': G.rankDeadOnly = el.dataset.k === 'dead'; render(); break;
+    case 'rkdeadinclude': G.rankIncludeDead = el.checked; render(); break;
     case 'rtab': G.rankTab = el.dataset.k; render(); break;
     case 'rmode': G.rankMode = el.dataset.k === 'hard' ? 'hard' : 'normal'; render(); break;
     case 'gmode': G.goalMode = el.dataset.k === 'hard' ? 'hard' : 'normal'; render(); break;

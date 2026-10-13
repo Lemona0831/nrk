@@ -146,7 +146,7 @@ function rankDisplayRows() {
   if(G.db && G.board){for(const T of G.board)for(const e of Object.values(T.rank62 || {}))out.push(Object.assign({},e,{uid:T.uid,nick:T.name || '',me:T.uid===G.uid}));}
   else for(const e of Object.values(G.data.rank62 || {}))out.push(Object.assign({},e,{uid:G.uid || 'local',nick:G.data.name || '',me:true}));
   const tab=G.rankTab || 'all',mode=G.rankMode==='hard' ? 'hard' : 'normal';
-  return out.filter(e=>BUILDS[e.build]&&(tab==='all'||e.build===tab)&&(e.mode==='hard'?'hard':'normal')===mode&&(!G.rankDeadOnly||e.st==='dead')).sort(rankCmp);
+  return out.filter(e=>BUILDS[e.build]&&(tab==='all'||e.build===tab)&&(e.mode==='hard'?'hard':'normal')===mode&&(G.rankIncludeDead!==false||e.st!=='dead')).sort(rankCmp);
 }
 function rankBestPlayers(records) {const seen=new Set();return records.filter(e=>{if(seen.has(e.uid))return false;seen.add(e.uid);return true;});}
 function vRank() {
@@ -155,7 +155,7 @@ function vRank() {
   h+=rcTabs('rkmode','모드',[{a:'rmode',k:'normal',t:'일반',on:rm==='normal'},{a:'rmode',k:'hard',t:'가혹',on:rm==='hard'}]);
   let body='<p class="mini">'+(tab==='all'?'모든 직업 중':'선택한 직업에서')+' 플레이어마다 가장 높은 기록 한 개만 표시합니다. 깬 챕터 → 도달 층 → 레벨 → 짧은 플레이 시간 순입니다.</p>';
   body+=rcGroup('rkc','직업',['all'].concat(CLASS_KEYS()).map(k=>'<button type="button" class="rcchip" aria-pressed="'+(tab===k)+'" data-a="rtab" data-k="'+k+'">'+(k==='all'?'통합':esc(BUILDS[k].n))+'</button>').join(''));
-  body+='<div class="row"><button class="chip'+(!G.rankDeadOnly?' on':'')+'" data-a="rkdead" data-k="all">전체 최고 기록</button><button class="chip'+(G.rankDeadOnly?' on':'')+'" data-a="rkdead" data-k="dead">쓰러진 최고 기록</button></div>';
+  body+='<label class="chk"><input type="checkbox" data-a="rkdeadinclude"'+(G.rankIncludeDead!==false?' checked':'')+'> 쓰러진 기록 포함</label>';
   if(G.db&&!G.board){if(!G.boardLoading)setTimeout(loadBoard,0);body+='<p role="status">불러오는 중입니다.</p>';}
   else {
     const records=rankDisplayRows(),all=rankBestPlayers(records),rows=all.slice(0,50),mi=all.findIndex(e=>e.me);
