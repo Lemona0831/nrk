@@ -70,7 +70,7 @@ const LOOT = {
   goldPer: lv => 4 + 2 * lv, // 골드 한 번 = 4 + 2 × 몬스터 레벨 (방 보상 10~40과 견줌)
   lowerHi: 0.15, // 하층에서 고급 확률 더
 };
-const SHOP_CONS = { n: 5, always: ['herb'] }; // 상점은 소모품 다섯 가지를 판다(약초 묶음은 늘)
+const SHOP_CONS = { n: 5, always: ['herb'], herb: { normal: 5, hard: 3 }, stock: 2 }; // 상점은 약초와 다른 소모품 네 가지를 판다. 10월 14일 개편 5단계: 약초 재고 5개(가혹 3개), 다른 소모품은 종류마다 2개
 /* 소모품 가방 (10월 14일 개편 1단계, docs/제안/소모품-개편-설계안-v2-2026-10-14.md 2절): 장비 가방과 따로 CONS_BAG칸.
    칸마다 무게 한도 CONS_SLOT_W, 한 칸에 담기는 수(max) = ⌊무게 한도 / 무게⌋. 판매품(use none)은 가방이 아니라 전리품 주머니(run.pouch)에 들어가 상점에서 골드로 바뀐다 */
 const CONS_BAG = 5, CONS_SLOT_W = 5;
