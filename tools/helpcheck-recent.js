@@ -15,7 +15,6 @@ module.exports = function ({ E, add, note, source }) {
   add('help', '기준 피해 10에 무기 피해 13이면 피해 +1', '실제 무기 추가분 11−10', () => close(growth(0,13,false)-growth(0,8,false),1));
   add('help', '계산: 능력치 피해 =', '실제 기준10·공격0/5/10/20점 성장', () => [0,5,10,20].every(p => close(growth(p),10*(1+p*.04))));
   add('help', '무기 추가 피해 =', '무기7/8/9/13: 음수 보정 없음, 주문 제외', () => [7,8,9,13].every(w => close(growth(0,w,false),10*(1+Math.max(0,w-8)*.02)) && close(growth(0,w,true),10)));
-  add('items-cons', '해시계 +2(최대 6)', 'consApply rewind: 해시계 +2/상한6, 열·불씨−2', E => { const s=E('consApply.toString()'); return E('FOE_X.sundial.clock') === 6 && E('FOE_X.sundial.glassBack') === 2 && s.includes('Math.min(FOE_X.sundial.clock, (tgt.clock || 0) + FOE_X.sundial.glassBack)') && /Math\.max\(0, tgt\.glow - 2\)/.test(s) && /Math\.max\(0, tgt\.embers - 2\)/.test(s); });
   add('ui-text', '강공격에 최대 생명력의 6% 소모', '실제 ledgerCost(100, 부족1)=6', E => E('ledgerCost({hpMax:100,eq:{}},1)') === 6);
   const demand = (kind, hit) => E(`(() => { const p=mkPlayer('warden',{},{}), e=mkEnemy('bruiser',false,0), b=newBattle(p,[e],{}); addS(b,p,'brand',999,2,3); e.demand={turn:b.turnIdx,k:'${kind}',hit:${hit}}; abbotDemand(b); return st(p,'brand'); })()`);
   add('ui-hud', '수도원장에게 피해를 주지 않으면 낙인 1 감소', 'abbotDemand 휴식 요구: 공격하지 않았을 때 2→1', () => demand('rest',false) === 1 && demand('rest',true) === 3);

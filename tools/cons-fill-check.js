@@ -8,7 +8,7 @@ const assert = require('assert/strict'), D = require('./dgqa'), E = D.G0, G = E.
 D.run_('Object.assign(this, { CONS_BAG, consUsed })');
 E.render = () => { }; E.saveRunLocal = () => { }; E.saveCur = () => { }; G.data = {}; G.busy = false;
 const PRICE = 12;
-function run(id, stacks, free = 0, gold = 10000) { const filler = id === 'stone' ? 'crowbar' : 'stone'; const fillers = Array(Math.max(0, E.CONS_BAG - stacks.length - free)).fill(0).map(() => ({ id: filler, g: 'n', n: E.CONS[filler].max })); return { build: 'hunter', p: E.mkPlayer('hunter', {}), phase: 'shop', bag: [], inv: {}, cons: stacks.concat(fillers), consV: 2, pouch: {}, gold, stats: {}, shop: { stock: [], cons: [{ id, price: PRICE }], log: [] } }; }
+function run(id, stacks, free = 0, gold = 10000) { const filler = id === 'charm' ? 'knot' : 'charm'; const fillers = Array(Math.max(0, E.CONS_BAG - stacks.length - free)).fill(0).map(() => ({ id: filler, g: 'n', n: E.CONS[filler].max })); return { build: 'hunter', p: E.mkPlayer('hunter', {}), phase: 'shop', bag: [], inv: {}, cons: stacks.concat(fillers), consV: 3, pouch: {}, gold, stats: {}, shop: { stock: [], cons: [{ id, price: PRICE }], log: [] } }; }
 const mine = (r, id) => r.cons.filter(c => c.id === id);
 const state = r => JSON.stringify({ cons: r.cons, bag: r.bag, gold: r.gold, shop: r.shop });
 const fill = r => { G.run = r; D.click('consbuyfill', '0'); };

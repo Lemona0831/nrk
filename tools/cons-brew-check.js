@@ -7,7 +7,7 @@ const assert = require('assert/strict'), D = require('./dgqa'), E = D.G0, G = E.
 D.run_('Object.assign(this, { CONS, CONS_BREW, consBrewOf, consBrew })');
 E.render = () => { }; E.saveRunLocal = () => { }; E.saveCur = () => { }; D.run_('toast = () => {}'); G.data = {};
 const ok = [];
-const mk = (mode) => { const p = E.mkPlayer('warden', {}); const run = { build: 'warden', mode, ch: 1, p, cons: [], consV: 2, pouch: {}, bag: [], inv: {}, room: 1 }; G.run = run; G.b = null; return run; };
+const mk = (mode) => { const p = E.mkPlayer('warden', {}); const run = { build: 'warden', mode, ch: 1, p, cons: [], consV: 3, pouch: {}, bag: [], inv: {}, room: 1 }; G.run = run; G.b = null; return run; };
 const tot = (run, id) => run.cons.filter(c => c.id === id).reduce((a, c) => a + c.n, 0);
 // 1. 수치
 assert.equal(E.CONS.herb.v, 0.03); assert.equal(E.CONS.leaf.v, 12);
@@ -26,11 +26,8 @@ ok.push('일반 4/3개, 가혹 5/4개');
   p.flask.life = 0; G.b = { over: false }; assert.equal(E.consBrew(run, 'herb'), '전투 밖에서 채웁니다'); G.b = null; assert.equal(E.consBrew(run, 'herb'), ''); }
 ok.push('가득·전투 중 막힘');
 // 4. 고급은 2개로 센다, 일반부터 쓴다, 빈 묶음은 칸에서 빠진다
-{ const run = mk('normal'), p = run.p; p.flask.life = 0; E.consAdd(run, 'herb', 'm', 2); E.consAdd(run, 'herb', 'n', 1);
-  assert.equal(E.consBrewOf(run, 'herb').have, 5); assert.equal(E.consBrew(run, 'herb'), '');
-  assert.equal(run.cons.filter(c => c.id === 'herb' && c.g === 'n').length, 0, '일반부터'); assert.equal(tot(run, 'herb'), 0, '일반 1 + 고급 2(=4) 가운데 고급 2개를 넘겨 쓴다'); }
-{ const run = mk('normal'), p = run.p; p.flask.life = 0; E.consAdd(run, 'herb', 'm', 3); assert.equal(E.consBrew(run, 'herb'), ''); assert.equal(tot(run, 'herb'), 1, '고급 2개 = 4'); assert(run.cons.every(c => c.n > 0)); }
-ok.push('고급 2개로 셈, 일반부터, 빈 묶음 정리');
+{ const run = mk('normal'), p = run.p; p.flask.life = 0; E.consAdd(run, 'herb', 'm', 2); assert(run.cons.every(c => c.g === 'n'), '4단계: 고급 약초는 없다(일반으로 들어온다)'); E.consAdd(run, 'herb', 'n', 4); assert.equal(E.consBrew(run, 'herb'), ''); assert.equal(tot(run, 'herb'), 2); assert(run.cons.every(c => c.n > 0)); }
+ok.push('고급 약초 없음, 빈 묶음 정리');
 // 5. 소모품 창: 전투 밖에서 채우기 버튼, 전투 중에는 없음
 { const run = mk('normal'); run.p.flask.life = 0; E.consAdd(run, 'herb', 'n', 4); G.sheet = { kind: 'cons', data: {} };
   let h = E.sheetParts(G.sheet)[1]; assert(/data-a="consbrew" data-k="herb"[^>]*>🧪 채우기/.test(h), '채우기 버튼'); assert(h.includes('4개 → 생명력 플라스크 한 칸'));

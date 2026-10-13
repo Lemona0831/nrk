@@ -61,7 +61,7 @@
       P.gear.forEach((g, i) => { if (!g || /^start_/.test(g.tpl)) return; if (!ITEMS[g.tpl]) { miss.push(g.tpl); return; } const it = mkItem(g.tpl, { g: g.g, b: g.b, ch: g.ch }); addItem(r, it); const w = equipUid(r, it.uid, EQ_SLOTS[i]); if (w) miss.push(g.tpl + ': ' + w); });
       applyGear(r, true);
       r.awk = P.awk.filter(x => AWK_MAP[x]); p.awk = r.awk.slice();
-      r.cons = []; for (const [k, n] of Object.entries(P.cons || {})) { const [cid, g] = k.split(':'); if (CONS[cid]) consAdd(r, cid, g, n); }
+      r.cons = []; for (const [k, n] of Object.entries(P.cons || {})) { let [cid, g] = k.split(':'), m = n; if (cid === 'herb' && g === 'm') { g = 'n'; m = n * 2; } if (!CONS[cid] && typeof CONS_GONE !== 'undefined' && CONS_GONE[cid] && CONS_GONE[cid][1]) { m = n * CONS_GONE[cid][2]; cid = CONS_GONE[cid][1]; g = 'n'; } if (CONS[cid]) consAdd(r, cid, g, m); } r.consV = 3; // 개편 4단계: 없앤 소모품은 저장본 이전과 같은 규칙으로
       r.gold = P.gold || 0; for (const k of ['life', 'mana', 'stam']) p.flask[k] = flaskCap(p, k); p.hp = p.hpMax; p.st = p.stMax;
       G.scr = 'run'; G.b = null; G.sheet = null;
       done(P.label + ' 불러옴' + (miss.length ? ' (없는 장비: ' + miss.join(', ') + ')' : ''));

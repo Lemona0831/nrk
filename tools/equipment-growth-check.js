@@ -9,7 +9,7 @@ for(const [kind,base] of Object.entries(slots)){
 const run={build:'assassin',p:E.mkPlayer('assassin',{}),bag:[],swaps:[],cons:[],room:0};E.initGear(run);
 const st0=run.p.stMax,amu=Object.keys(E.ITEMS).find(k=>E.tplKind(k)==='amulet'&&!V('IFX')[k]?.st&&!V('IFX')[k]?.cost&&E.ITEMS[k].kind!=='start');
 const it=E.mkItem(amu,{ch:2,b:0});E.addItem(run,it);assert.equal(E.equipUid(run,it.uid,'amulet'),'');assert.equal(run.p.stMax-st0,9);assert.equal(run.p.mpMax,0);
-run.p.hp=1;run.cons=[{id:'stone',g:'n',n:1},{id:'herb',g:'n',n:2},{id:'bandage',g:'n',n:1}];
+run.p.hp=1;run.cons=[{id:'charm',g:'n',n:1},{id:'herb',g:'n',n:2},{id:'cleanse',g:'n',n:1}];
 let rows=E.consRows(run,null,'restore',true,'',null);assert.deepEqual(Array.from(rows,x=>x.i),[1]);assert.equal(E.consRows(run,null,'all',false,'중독',null).length,0);
 assert.equal(E.consRows(run,null,'all',false,'약초',null)[0].i,1);const old=JSON.stringify(run.cons);E.consRows(run,null,'all',false,'',null);assert.equal(JSON.stringify(run.cons),old);
 const legacy=JSON.parse(JSON.stringify(run));legacy.dg={};legacy.dgv=2;legacy.stats={str:0,dex:0,int:0,con:0,wil:0};legacy.ch=1;

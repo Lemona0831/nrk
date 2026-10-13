@@ -10,7 +10,7 @@ const ok = [];
 assert.equal(E.CONS_TURN, 1); assert.equal(JSON.stringify(E.CONS_FIGHT), JSON.stringify({ normal: 5, hard: 3 }));
 function setup(mode, awk) {
   const p = E.mkPlayer('warden', {}); p.hp = p.hpMax = 9999; p.awk = awk || [];
-  const run = { build: 'warden', mode, ch: 1, p, cons: [], consV: 2, pouch: {}, bag: [], inv: {}, room: 1 };
+  const run = { build: 'warden', mode, ch: 1, p, cons: [], consV: 3, pouch: {}, bag: [], inv: {}, room: 1 };
   E.consAdd(run, 'flash', 'n', 2); E.consAdd(run, 'flash', 'n', 2); E.consAdd(run, 'flash', 'n', 2); E.consAdd(run, 'flash', 'n', 2); E.consAdd(run, 'flash', 'n', 2);
   const b = E.roomBattle(p, { ch: 1, lv: 1, en: [['bruiser', 0], ['bruiser', 0]] }, null, 3); b.queue = ['p']; G.b = b; G.run = run;
   return { p, run, b };
@@ -38,7 +38,7 @@ for (const [mode, lim] of [['normal', 3], ['hard', 2]]) {
 ok.push('전리품 늘리기 챕터당 3/2, 챕터 초기화');
 // 4. 연기 폭탄 2/1, 방 특성 끄기는 종류(모래 주머니 · 등잔 기름)를 합쳐 센다
 assert.equal(E.consChLim({ mode: 'normal' }, E.CONS.smokebomb), 2); assert.equal(E.consChLim({ mode: 'hard' }, E.CONS.smokebomb), 1);
-{ const run = { mode: 'normal', ch: 1, consCh: { ch: 1, unmod: 3 } }; assert.equal(E.consChUsed(run, E.CONS.lampoil), 3); assert.equal(E.consChUsed(run, E.CONS.sandbag), 3); }
+{ const run = { mode: 'normal', ch: 1, consCh: { ch: 1, unmod: 3 } }; assert.equal(E.consChUsed(run, E.CONS.sandbag), 3); assert(E.CONS.sandbag.mods.includes('dark'), '어둠도 모래 주머니로'); }
 assert.equal(E.consChLim({}, E.CONS.herb), 0, '약초는 챕터 제한 없음'); ok.push('연기 폭탄 2/1, 방 특성 끄기 합산');
 // 5. 화면: 소모품 창 머리와 빠른 사용 줄
 { const { b, run } = setup('hard'); run.cons.pop(); G.sheet = { kind: 'cons', data: {} }; const h = E.sheetParts(G.sheet)[1]; assert(h.includes('이번 차례 0/1개') && h.includes('이번 전투 0/3개'));

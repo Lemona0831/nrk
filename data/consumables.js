@@ -6,44 +6,59 @@ const CONS_TURN = 1; // 한 차례에 쓸 수 있는 소모품 수 (10월 14일 
 const CONS_FIGHT = { normal: 5, hard: 3 }; // 한 전투에 쓸 수 있는 소모품 수 (각인 넉넉한 손 +2)
 const CONS_BREW = { herb: { flask: 'life', normal: 4, hard: 5 }, leaf: { flask: 'stam', normal: 3, hard: 4 } }; // 전투 밖에서 N개로 플라스크 한 칸(고급은 2개로 센다). 10월 14일 개편 3단계
 const CONS_CH = { unmod: { normal: 3, hard: 2 }, lootx: { normal: 3, hard: 2 }, escape: { normal: 2, hard: 1 } }; // 챕터당 사용 횟수(효과 종류 k별: 방 특성 끄기 · 전리품 늘리기 · 물러나기)
+/* 10월 14일 개편 4단계: 53종 → 20종(+ 판매품). docs/제안/소모품-개편-설계안-v2-2026-10-14.md 3절.
+   피해를 주지 않고 기회를 만든다. 성능은 장비 · 플라스크 · 막기의 0.2에서 0.3배(심하면 0.1배). only: 그 챕터에서만 나오는 챕터 전용 */
 const CONS = {
-  herb:      { n: '약초 묶음', ico: '🌿', sit: '생명력이 낮다', k: 'heal', v: 0.03, vm: 0.05, max: 5, price: 12, dw: 6, use: 'any', d: v => '최대 생명력의 ' + Math.round(v * 100) + '%를 회복합니다. 생명력 플라스크 재료입니다.' }, // 10월 14일 개편 3단계: 12% → 3%, 플라스크 재료(CONS_BREW)
-  bread:     { n: '마른 빵', ico: '🍞', sit: '방 사이에 쉬고 싶다', k: 'heal', v: 0.2, vm: 0.3, max: 5, price: 10, dw: 4, use: 'out', d: v => '전투 밖에서만 씁니다. 최대 생명력의 ' + Math.round(v * 100) + '%를 회복합니다.' },
-  leaf:      { n: '각성 잎', ico: '🍃', sit: '스태미나가 바닥났다', k: 'stam', v: 12, max: 5, price: 8, use: 'fight', d: v => '스태미나 +' + v + '. 스태미나 플라스크 재료입니다.' }, // 10월 14일 개편 3단계: 30 → 12, 플라스크 재료
-  incense:   { n: '향 한 줌', ico: '🪔', sit: '이번 차례에 손이 모자란다', k: 'quick', max: 3, price: 20, use: 'fight', d: () => '이번 차례에 빠른 칸이 하나 더 생깁니다.' },
-  bandage:   { n: '붕대', ico: '🩹', sit: '출혈이 쌓였다', k: 'cure', s: 'bleed', max: 5, price: 8, use: 'any', d: () => '출혈을 모두 지웁니다.' },
-  antidote:  { n: '해독초', ico: '🌱', sit: '중독이 쌓였다', k: 'cure', s: 'poison', max: 5, price: 8, use: 'any', d: () => '중독을 모두 지웁니다.' },
-  coldwater: { n: '찬물 한 병', ico: '🧊', sit: '화상이 쌓였다', k: 'cure', s: 'ignite', max: 5, price: 8, use: 'any', d: () => '화상을 모두 지웁니다.' },
-  bittertea: { n: '쓴 차', ico: '🍵', sit: '저주 · 폭발로 약해졌다', k: 'cure', s: 'weak', max: 5, price: 10, use: 'any', d: () => '약화를 모두 지웁니다.' },
-  salve:     { n: '굳은 연고', ico: '🫙', sit: '강타를 맞아 취약해졌다', k: 'cure', s: 'vuln', max: 5, price: 10, use: 'any', d: () => '취약을 모두 지웁니다.' },
-  saltcrys:  { n: '소금 결정', ico: '🧂', sit: '둔화로 늦어졌다', k: 'cure', s: 'chill', max: 5, price: 10, use: 'any', d: () => '둔화를 모두 지웁니다.' },
-  knot:      { n: '기도 매듭', ico: '🪢', sit: '곧 해로운 상태가 걸린다', k: 'block', max: 3, price: 15, use: 'fight', d: () => '다음에 걸리는 해로운 상태 하나를 막습니다.' },
-  bellshard: { n: '종 조각', ico: '🔔', sit: '적이 강타 · 겨누기 · 영창을 모은다', k: 'interrupt', tgt: 'enemy', max: 2, price: 20, use: 'fight', d: () => '한 적이 모으던 강타, 겨눈 한 발, 영창을 끊어 평소 공격으로 바꿉니다.' },
-  wetcloth:  { n: '젖은 천', ico: '🧣', sit: '화형이 온다', k: 'halfboom', max: 3, price: 12, use: 'fight', d: () => '이번 라운드에 받는 화형 피해가 절반입니다.' },
-  smoke:     { n: '연막', ico: '🌫️', sit: '사수가 겨누고 있다', k: 'blind', max: 3, price: 14, use: 'fight', d: () => '후열 적들의 다음 공격 하나가 빗나갑니다.' },
-  stone:     { n: '돌멩이', ico: '🪨', sit: '적이 몸을 낮췄다', k: 'unevade', tgt: 'enemy', max: 5, price: 6, use: 'fight', d: () => '한 적의 몸 낮추기를 풉니다.' },
-  crowbar:   { n: '쇠 지렛대', ico: '🔧', sit: '적이 버틴다', k: 'unbrace', tgt: 'enemy', max: 5, price: 8, use: 'fight', d: () => '한 적의 버티기를 풉니다.' },
-  dummy:     { n: '미끼 인형', ico: '🪆', sit: '적이 반격 태세다', k: 'decoy', max: 3, price: 12, use: 'fight', d: () => '다음에 받는 반격 하나를 인형이 대신 맞습니다.' },
-  hookrope:  { n: '갈고리 줄', ico: '🪝', sit: '적이 동료를 지킨다', k: 'unguard', tgt: 'enemy', max: 3, price: 12, use: 'fight', d: () => '한 적이 다음 행동까지 동료를 지키지 못합니다(방패병의 가로막기, 하수인의 지키기).' },
-  blackinc:  { n: '검은 향', ico: '🕯️', sit: '적이 축복을 받았다', k: 'unbless', tgt: 'enemy', max: 3, price: 10, use: 'fight', d: () => '한 적의 축복(강화)을 지웁니다.' },
-  silash:    { n: '침묵의 재', ico: '⚱️', sit: '사제가 치유하려 한다', k: 'noheal', tgt: 'enemy', max: 3, price: 12, use: 'fight', d: () => '한 적의 다음 치유 하나가 실패합니다.' },
-  saltring:  { n: '소금 원', ico: '⭕', sit: '소환사가 부르려 한다', k: 'nosummon', tgt: 'enemy', max: 3, price: 12, use: 'fight', d: () => '소환하는 적 하나의 다음 소환을 막습니다. 보스는 고를 수 없습니다.' },
-  scrapbait: { n: '쇠붙이 미끼', ico: '🥫', sit: '도둑이 훔치려 한다', k: 'antisteal', max: 2, price: 10, use: 'fight', d: () => '이 전투에서 도둑은 쇠붙이만 훔쳐 갑니다.' },
-  birdlime:  { n: '끈끈이', ico: '🍯', sit: '도둑이 달아나려 한다', k: 'sticky', tgt: 'enemy', max: 2, price: 12, use: 'fight', d: () => '도둑 하나의 다음 달아나기를 막습니다.' },
-  relic:     { n: '흩뿌리는 성물', ico: '💫', sit: '적이 많다', k: 'scatter', v: 0.1, vm: 0.15, max: 3, price: 15, use: 'fight', d: v => '적 모두의 다음 공격 피해 −' + Math.round(v * 100) + '%. 피해는 주지 않습니다.' }, // 10월 14일: 피해를 주는 소모품을 없앴다(옛 깨진 성물)
-  dagger:    { n: '올가미', ico: '➰', sit: '적이 너무 빠르다', k: 'slow', tgt: 'enemy', v: 1, vm: 2, max: 5, price: 10, use: 'fight', d: v => '한 적에게 둔화 +' + v + '. 후열에도 닿습니다. 뼈 더미와 뼈벽은 제외하고, 피해는 주지 않습니다.' }, // 10월 14일: 옛 투척 단검(피해 12). 저장본 호환을 위해 id는 그대로
-  flash:     { n: '섬광 가루', ico: '✨', sit: '붕괴 게이지가 크다', k: 'brk', tgt: 'enemy', v: 30, vm: 45, max: 3, price: 14, use: 'fight', d: v => '한 적에게 붕괴 +' + v + '.' },
-  whet:      { n: '숫돌', ico: '🪓', sit: '한 방이 모자란다', k: 'whet', v: 0.25, max: 3, price: 12, use: 'fight', d: v => '다음 직접 피해 한 번 +' + Math.round(v * 100) + '%.' },
-  chalk:     { n: '표식 분필', ico: '🖍️', sit: '한 적을 빨리 잡아야 한다', k: 'mark', tgt: 'enemy', v: 0.3, max: 3, price: 12, use: 'fight', d: v => '한 적이 받는 다음 직접 피해 한 번 +' + Math.round(v * 100) + '%.' },
-  charm:     { n: '나무 부적', ico: '🧿', sit: '큰 공격을 받아야 한다', k: 'guard1', v: 0.4, max: 3, price: 12, use: 'fight', d: v => '다음에 받는 공격 하나의 피해 −' + Math.round(v * 100) + '%.' },
-  lampoil:   { n: '등잔 기름', ico: '🛢️', sit: '어둠 속이라 예고가 보이지 않는다', k: 'unmod', mods: ['dark'], max: 2, price: 10, use: 'fight', d: () => '이 전투에서 어둠을 걷어 냅니다.' },
-  sandbag:   { n: '모래 주머니', ico: '👝', sit: '방 특성이 괴롭다', k: 'unmod', mods: ['bloodpool', 'candle', 'ceiling', 'bell', 'narrow'], max: 2, price: 14, use: 'fight', d: () => '이 전투에서 방 특성 하나(피 웅덩이, 촛불 제단, 무너지는 천장, 종소리, 좁은 회랑)를 끕니다.' },
-  smokebomb: { n: '연기 폭탄', ico: '💨', sit: '질 것 같다', k: 'escape', max: 2, price: 25, use: 'fight', d: () => '보스전이 아니면 반드시 물러납니다. 그 방은 다시 이겨야 합니다.' },
-  reliq:     { n: '빈 성물함', ico: '📦', sit: '전리품을 더 원한다', k: 'lootx', max: 2, price: 18, use: 'fight', d: () => '이 전투에서 쓰러뜨린 적의 전리품 확률이 두 배입니다.' },
+  // 보급
+  herb:      { n: '약초 묶음', ico: '🌿', sit: '생명력이 낮다', k: 'heal', v: 0.03, max: 5, price: 12, dw: 6, use: 'any', d: v => '최대 생명력의 ' + Math.round(v * 100) + '%를 회복합니다. 생명력 플라스크 재료입니다.' },
+  leaf:      { n: '각성 잎', ico: '🍃', sit: '스태미나가 바닥났다', k: 'stam', v: 12, max: 5, price: 8, dw: 3, use: 'fight', d: v => '스태미나 +' + v + '. 스태미나 플라스크 재료입니다.' },
+  // 해제 · 방어
+  cleanse:   { n: '정화 약', ico: '🧴', sit: '해로운 상태가 쌓였다', k: 'cleanse', v: 2, max: 2, price: 10, dw: 3, use: 'any', d: v => '가장 많이 쌓인 내 해로운 상태 하나를 ' + v + ' 줄입니다.' },
+  mugwort:   { n: '쑥 다발', ico: '🌾', vs: 'hexer', sit: '해로운 상태가 한꺼번에 걸렸다', k: 'trim', max: 2, price: 12, use: 'any', d: () => '내 해로운 상태가 종류마다 1씩 줄어듭니다.' },
+  charm:     { n: '나무 부적', ico: '🧿', sit: '큰 공격을 받아야 한다', k: 'guard1', v: 0.15, max: 2, price: 12, use: 'fight', d: v => '다음에 받는 공격 하나의 피해 −' + Math.round(v * 100) + '%.' },
+  knot:      { n: '기도 매듭', ico: '🪢', sit: '곧 해로운 상태가 걸린다', k: 'block', max: 2, price: 15, use: 'fight', d: () => '다음에 걸리는 해로운 상태 하나를 막습니다.' },
+  // 기회 만들기 (피해 없음)
+  flash:     { n: '섬광 가루', ico: '✨', sit: '붕괴 게이지가 크다', k: 'brk', tgt: 'enemy', v: 10, vm: 15, max: 2, price: 14, use: 'fight', d: v => '한 적에게 붕괴 +' + v + '.' },
+  chalk:     { n: '표식 분필', ico: '🖍️', sit: '한 적을 빨리 잡아야 한다', k: 'mark', tgt: 'enemy', v: 0.1, max: 2, price: 12, use: 'fight', d: v => '한 적이 받는 다음 직접 피해 한 번 +' + Math.round(v * 100) + '%.' },
+  dagger:    { n: '올가미', ico: '➰', sit: '적이 너무 빠르다', k: 'slow', tgt: 'enemy', v: 1, vm: 2, max: 2, price: 10, dw: 2, use: 'fight', d: v => '한 적에게 둔화 +' + v + '. 후열에도 닿습니다. 뼈 더미와 뼈벽은 제외하고, 피해는 주지 않습니다.' }, // 옛 투척 단검. 저장본 호환을 위해 id는 그대로
+  relic:     { n: '흩뿌리는 성물', ico: '💫', sit: '적이 많다', k: 'scatter', v: 0.1, vm: 0.15, max: 2, price: 15, use: 'fight', d: v => '적 모두의 다음 공격 피해 −' + Math.round(v * 100) + '%. 피해는 주지 않습니다.' }, // 옛 깨진 성물
+  // 기믹 완화
+  bellshard: { n: '종 조각', ico: '🔔', sit: '적이 강타 · 겨누기 · 영창을 모은다', k: 'interrupt', tgt: 'enemy', max: 2, price: 20, use: 'fight', d: () => '한 적의 강타·겨누기·영창을 끊고 평소 공격으로 바꿉니다. 보스와 땅속에 숨은 적은 제외합니다.' },
+  smoke:     { n: '연막', ico: '🌫️', sit: '사수가 겨누고 있다', k: 'blind', max: 2, price: 14, use: 'fight', d: () => '후열 적들의 다음 공격 하나가 빗나갑니다.' },
+  hinder:    { n: '방해 부적', ico: '📜', sit: '사제가 치유하거나 소환사가 부르려 한다', k: 'hinder', tgt: 'enemy', max: 2, price: 12, use: 'fight', d: () => '치유하는 적의 다음 치유, 또는 소환하는 적의 다음 소환을 막습니다. 보스는 고를 수 없습니다.' }, // 옛 침묵의 재 · 소금 원
+  hookrope:  { n: '갈고리 줄', ico: '🪝', sit: '적이 동료를 지킨다', k: 'unguard', tgt: 'enemy', max: 2, price: 12, use: 'fight', d: () => '한 적이 다음 행동까지 동료를 지키지 못합니다(방패병의 가로막기, 하수인의 지키기).' },
+  dummy:     { n: '미끼 인형', ico: '🪆', sit: '적이 반격 태세다', k: 'decoy', max: 2, price: 12, use: 'fight', d: () => '다음에 받는 반격 하나를 인형이 대신 맞습니다.' },
+  smokebomb: { n: '연기 폭탄', ico: '💨', sit: '질 것 같다', k: 'escape', max: 1, price: 25, dw: 0.5, use: 'fight', d: () => '보스전이 아니면 반드시 물러납니다. 그 방은 다시 이겨야 합니다.' },
+  // 횟수 제한 (CONS_CH)
+  sandbag:   { n: '모래 주머니', ico: '👝', sit: '방 특성이 괴롭다', k: 'unmod', mods: ['dark', 'bloodpool', 'candle', 'ceiling', 'bell', 'narrow', 'bonepile', 'rotair', 'flooded', 'alley', 'pillar', 'shade', 'brazier', 'drums', 'haze', 'sandstorm'], max: 1, price: 14, dw: 0.5, use: 'fight', d: () => '이 전투에서 방 특성 하나(어둠, 피 웅덩이, 촛불 제단, 무너지는 천장, 종소리, 좁은 회랑, 무너진 납골벽, 썩은 공기, 물에 잠긴 바닥, 무너진 골목, 무너지는 기둥, 오아시스 그늘, 불씨 화로, 북소리, 아지랑이, 모래폭풍)를 끕니다. 작열하는 한낮은 끄지 못합니다.' }, // 옛 등잔 기름(어둠)을 합쳤다
+  reliq:     { n: '빈 성물함', ico: '📦', sit: '전리품을 더 원한다', k: 'lootx', max: 1, price: 18, dw: 0.5, use: 'fight', d: () => '이 전투에서 쓰러뜨린 적의 전리품 확률이 두 배입니다.' },
+  // 챕터 전용 (only: 그 챕터에서만 나온다)
+  lime:      { n: '석회 가루', ico: '⚪', ch: 2, only: 2, vs: 'skeleton', sit: '해골이 다시 일어선다', k: 'norise', tgt: 'enemy', max: 2, price: 10, dw: 2, use: 'fight', d: () => '아직 부활하지 않은 해골 하나의 부활을 막습니다. 그 해골의 뼈 더미에 쓰면 바로 없앱니다.' },
+  mirror:    { n: '거울 조각', ico: '🪞', ch: 3, only: 3, vs: 'mirage', vsMod: 'haze', sit: '허상이 겹쳐 있다', k: 'unhaze', max: 2, price: 12, dw: 2, use: 'fight', d: () => '모든 적의 허상을 걷어 냅니다.' },
+  // 판매품: 전리품 주머니에 들어가 상점에 들어갈 때 골드로 바뀐다
   silver:    { n: '은화 주머니', ico: '💰', sit: '팔아서 골드로', k: 'sell', sell: 15, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
   goblet:    { n: '녹슨 성배', ico: '🏆', sit: '팔아서 골드로', k: 'sell', sell: 25, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
   candlest:  { n: '촛대', ico: '🕎', sit: '팔아서 골드로', k: 'sell', sell: 35, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
   beads:     { n: '묵주 구슬', ico: '📿', sit: '팔아서 골드로', k: 'sell', sell: 10, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
+  goldtooth: { n: '금니', ico: '🦷', ch: 2, sit: '팔아서 골드로', k: 'sell', sell: 20, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
+  ring:      { n: '부장품 반지', ico: '💍', ch: 2, sit: '팔아서 골드로', k: 'sell', sell: 30, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
+  earring:   { n: '금 귀걸이', ico: '🪙', ch: 3, sit: '팔아서 골드로', k: 'sell', sell: 40, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
+  glassbead: { n: '유리 구슬', ico: '🫧', ch: 3, sit: '팔아서 골드로', k: 'sell', sell: 15, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
+};
+/* 3챕터 전리품 무게: 1 · 2챕터의 판매품은 3챕터 것과 바꾼다 */
+for (const k of ['silver', 'goblet', 'candlest', 'beads', 'goldtooth', 'ring']) CONS[k].dw3 = 0;
+/* 없앤 소모품(10월 14일 개편 4단계, 설계안 8절): [이름, 바뀌는 소모품, 개수 배율] 또는 [이름, null, 옛 가격](판매가만큼 골드).
+   이름은 지난 기록 화면에서 쓴다. 고급 약초는 약초 2개(consBagFix) */
+const CONS_GONE = {
+  bread: ['마른 빵', 'herb', 1], incense: ['향 한 줌', null, 20],
+  bandage: ['붕대', 'cleanse', 1], antidote: ['해독초', 'cleanse', 1], coldwater: ['찬물 한 병', 'cleanse', 1], bittertea: ['쓴 차', 'cleanse', 1], salve: ['굳은 연고', 'cleanse', 1], saltcrys: ['소금 결정', 'cleanse', 1],
+  wetcloth: ['젖은 천', null, 12], blackinc: ['검은 향', null, 10],
+  stone: ['돌멩이', 'hookrope', 1], crowbar: ['쇠 지렛대', 'hookrope', 1],
+  silash: ['침묵의 재', 'hinder', 1], saltring: ['소금 원', 'hinder', 1],
+  scrapbait: ['쇠붙이 미끼', 'dummy', 1], birdlime: ['끈끈이', 'dummy', 1],
+  whet: ['숫돌', 'chalk', 1], lampoil: ['등잔 기름', 'sandbag', 1],
+  oiljar: ['기름 단지', null, 18], tamper: ['흙 다지개', null, 14], pick: ['곡괭이', null, 12], frostmoss: ['찬 이끼', null, 12], charcloth: ['숯 천', null, 10],
+  awning: ['차양 천', null, 16], hourglass: ['작은 모래시계', null, 18], sap: ['선인장 수액', null, 14], compass: ['사막 나침반', null, 12],
 };
 /* 전리품 (적 하나마다): p 무언가 떨어질 확률, rolls 굴리는 수, gold · cons 나뉘는 몫, n 소모품 개수 [최소, 최대], hi 고급 확률.
    flask: 플라스크 한 칸을 따로 떨굴 확률. 10월 4일 만든 사람 결정: 1% 이하의 아주 드문 확률(방을 이길 때 차던 규칙은 없앴다) */
@@ -55,47 +70,12 @@ const LOOT = {
   goldPer: lv => 4 + 2 * lv, // 골드 한 번 = 4 + 2 × 몬스터 레벨 (방 보상 10~40과 견줌)
   lowerHi: 0.15, // 하층에서 고급 확률 더
 };
-/* 2챕터 소모품 (10월 5일, docs/챕터/2챕터.md 11절). ch: 그 챕터부터 전리품에 나온다(상점은 다음 챕터 것까지 판다). vs: 그 역할과 싸운 뒤 전리품 무게 ×1.5 */
-Object.assign(CONS, {
-  lime:      { n: '석회 가루', ico: '⚪', ch: 2, vs: 'skeleton', sit: '해골이 다시 일어선다', k: 'norise', tgt: 'enemy', max: 5, price: 10, use: 'fight', d: () => '아직 부활하지 않은 해골 하나의 부활을 막습니다. 그 해골의 뼈 더미에 쓰면 바로 없앱니다.' },
-  oiljar:    { n: '기름 단지', ico: '🏺', ch: 2, vs: 'skeleton', sit: '뼈 더미가 여럿이다', k: 'burnpiles', max: 2, price: 18, use: 'fight', d: () => '뼈 더미를 모두 태워 없앱니다. 뼈 더미가 있을 때만 씁니다.' }, // 10월 14일: 적 모두 화상 2를 뺐다(피해를 주는 소모품 없애기)
-  mugwort:   { n: '쑥 다발', ico: '🌾', ch: 2, vs: 'hexer', sit: '해로운 상태가 한꺼번에 걸렸다', k: 'trim', max: 5, price: 12, use: 'any', d: () => '내 해로운 상태가 종류마다 1씩 줄어듭니다.' },
-  tamper:    { n: '흙 다지개', ico: '🔨', ch: 2, vs: 'burrower', sit: '적이 땅속에 숨었다', k: 'unearth', max: 3, price: 14, use: 'fight', d: () => '땅속의 적을 모두 끌어내 공격 준비를 끊고 취약 1을 겁니다. 보스는 제외합니다.' },
-  pick:      { n: '곡괭이', ico: '⛏️', ch: 2, vs: 'mason', sit: '뼈벽이 후열을 가린다', k: 'wallbreak', tgt: 'enemy', max: 3, price: 12, use: 'fight', d: () => '뼈벽 하나에 붕괴 30을 줍니다.' },
-  frostmoss: { n: '찬 이끼', ico: '❄️', ch: 2, sit: '적이 너무 빠르다', k: 'slow', tgt: 'enemy', max: 3, price: 12, use: 'fight', d: () => '한 적에게 둔화 2를 겁니다. 뼈 더미와 뼈벽은 제외합니다.' },
-  charcloth: { n: '숯 천', ico: '😷', ch: 2, vs: 'bloat', sit: '시체가 터지려 한다', k: 'nobloat', max: 2, price: 10, use: 'fight', d: () => '이 전투에서 터지는 시체의 중독이 나에게 오지 않습니다.' },
-  goldtooth: { n: '금니', ico: '🦷', ch: 2, sit: '팔아서 골드로', k: 'sell', sell: 20, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
-  ring:      { n: '부장품 반지', ico: '💍', ch: 2, sit: '팔아서 골드로', k: 'sell', sell: 30, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
-});
-/* 2챕터에서 무게가 바뀌는 1챕터 소모품 (11.3절): 상황이 드문 것은 낮추고, 조이기 · 썩은 화살 · 부푼 시체의 답은 높인다 */
-for (const [k, w] of [['coldwater', 0.6], ['blackinc', 0.6], ['hookrope', 0.6], ['birdlime', 0.6], ['bittertea', 1.5], ['salve', 1.5], ['antidote', 1.5]]) CONS[k].dw2 = w;
-CONS.silash.d = () => '치유하는 적 하나의 다음 치유·곡하기를 막습니다. 보스는 고를 수 없습니다.';
-CONS.wetcloth.d = () => '이번 라운드에 받는 영창의 큰 한 방(화형 · 장송곡) 피해가 절반입니다.';
-CONS.sandbag.mods.push('bonepile', 'rotair', 'flooded'); CONS.sandbag.d = () => '이 전투에서 방 특성 하나(피 웅덩이, 촛불 제단, 무너지는 천장, 종소리, 좁은 회랑, 무너진 납골벽, 썩은 공기, 물에 잠긴 바닥)를 끕니다.';
-/* 3챕터 소모품 (10월 7일, docs/챕터/3챕터.md 12절). vsMod: 그 방 특성과 싸운 뒤 전리품 무게 ×2. vs3: 3챕터에서 그 역할과 싸운 뒤 ×2. dw3: 3챕터 전리품 무게 */
-Object.assign(CONS, {
-  awning:    { n: '차양 천', ico: '⛱️', ch: 3, vsMod: 'noon', sit: '열기가 차오른다', k: 'cool', v: 30, max: 3, price: 16, use: 'fight', d: v => '이 전투의 열기를 ' + v + ' 내립니다.' },
-  mirror:    { n: '거울 조각', ico: '🪞', ch: 3, vs: 'mirage', vsMod: 'haze', sit: '허상이 겹쳐 있다', k: 'unhaze', max: 3, price: 12, use: 'fight', d: () => '모든 적의 허상을 걷어 냅니다.' },
-  hourglass: { n: '작은 모래시계', ico: '⏳', ch: 3, sit: '적이 세는 숫자가 다 되어 간다', k: 'rewind', tgt: 'enemy', max: 2, price: 18, dw: 0.5, use: 'fight', d: () => '한 적의 해시계 +2(최대 6), 달아오름·불씨 −2, 또는 영창을 처음으로 되돌립니다. 이 중 해당하는 효과 하나만 적용합니다.' },
-  sap:       { n: '선인장 수액', ico: '🌵', ch: 3, vs: 'ember', sit: '화상을 안고 다쳤다', k: 'healcure', s: 'ignite', v: 0.08, vm: 0.12, max: 5, price: 14, dw: 3, use: 'any', d: v => '최대 생명력의 ' + Math.round(v * 100) + '%를 회복하고 화상을 모두 지웁니다.' },
-  compass:   { n: '사막 나침반', ico: '🧭', ch: 3, sit: '문 뒤를 알 수 없다', k: 'reveal', max: 2, price: 12, dw: 0.5, use: 'out', d: () => '3챕터부터 전투 밖의 문 앞에서 씁니다. 이 층과 다음 층 문의 숨은 보상을 밝힙니다.' },
-  earring:   { n: '금 귀걸이', ico: '🪙', ch: 3, sit: '팔아서 골드로', k: 'sell', sell: 40, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
-  glassbead: { n: '유리 구슬', ico: '🫧', ch: 3, sit: '팔아서 골드로', k: 'sell', sell: 15, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
-});
-/* 3챕터에서 무게가 바뀌는 것 (12.3절): 1 · 2챕터의 파는 것은 3챕터 것과 바꾸고, 화상의 답은 높인다. 2챕터 소모품은 3챕터 상황의 답(vs3) */
-for (const [k, w] of [['silver', 0], ['goblet', 0], ['candlest', 0], ['beads', 0], ['goldtooth', 0], ['ring', 0], ['coldwater', 1.5], ['blackinc', 1], ['lime', 0.5], ['pick', 0.3], ['charcloth', 0.3], ['mugwort', 0.8]]) CONS[k].dw3 = w;
-CONS.tamper.vs3 = 'lurker'; CONS.oiljar.vs3 = 'wrapped'; CONS.coldwater.vs3 = 'ember';
-CONS.wetcloth.d = () => '이번 라운드에 받는 화형·장송곡·열풍·재폭풍 피해가 절반입니다.';
-CONS.stone.sit = '적이 몸을 낮췄다 · 허상이 있다'; CONS.stone.d = () => '한 적의 몸 낮추기나 허상 한 겹을 풉니다.';
-CONS.bellshard.d = () => '한 적의 강타·겨누기·영창을 끊고 평소 공격으로 바꿉니다. 보스와 땅속에 숨은 적은 제외합니다.';
-CONS.blackinc.d = () => '한 적의 축복(강화)이나 받은 불씨를 지웁니다.';
-CONS.sandbag.mods.push('alley', 'pillar', 'shade', 'brazier', 'drums', 'haze', 'sandstorm'); CONS.sandbag.d = () => '이 전투에서 방 특성 하나(피 웅덩이, 촛불 제단, 무너지는 천장, 종소리, 좁은 회랑, 무너진 납골벽, 썩은 공기, 물에 잠긴 바닥, 무너진 골목, 무너지는 기둥, 오아시스 그늘, 불씨 화로, 북소리, 아지랑이, 모래폭풍)를 끕니다. 작열하는 한낮은 끄지 못합니다.';
 const SHOP_CONS = { n: 5, always: ['herb'] }; // 상점은 소모품 다섯 가지를 판다(약초 묶음은 늘)
 /* 소모품 가방 (10월 14일 개편 1단계, docs/제안/소모품-개편-설계안-v2-2026-10-14.md 2절): 장비 가방과 따로 CONS_BAG칸.
    칸마다 무게 한도 CONS_SLOT_W, 한 칸에 담기는 수(max) = ⌊무게 한도 / 무게⌋. 판매품(use none)은 가방이 아니라 전리품 주머니(run.pouch)에 들어가 상점에서 골드로 바뀐다 */
 const CONS_BAG = 5, CONS_SLOT_W = 5;
 for (const k of Object.keys(CONS)) CONS[k].w = CONS[k].use === 'none' ? 0 : 2;
-for (const k of ['herb', 'bread', 'leaf', 'sap']) CONS[k].w = 1; // 보급: 한 칸에 5개
-for (const k of ['sandbag', 'reliq', 'lampoil', 'oiljar']) CONS[k].w = 3; // 한 칸에 1개
+for (const k of ['herb', 'leaf']) CONS[k].w = 1; // 보급: 한 칸에 5개
+for (const k of ['sandbag', 'reliq']) CONS[k].w = 3; // 한 칸에 1개
 CONS.smokebomb.w = 5; // 한 칸에 1개
 for (const k of Object.keys(CONS)) if (CONS[k].w > 0) CONS[k].max = Math.max(1, Math.floor(CONS_SLOT_W / CONS[k].w));

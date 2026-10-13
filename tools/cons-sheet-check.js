@@ -6,7 +6,7 @@ process.env.DGDIR = process.env.DGDIR || '.';
 const assert = require('assert/strict'), D = require('./dgqa'), E = D.G0, G = E.__G;
 D.run_('Object.assign(this, { CONS_BAG, CONS })');
 E.render = () => { }; E.saveRunLocal = () => { }; E.saveCur = () => { }; E.ask = () => true; D.run_('toast = () => {}');
-const run = { build: 'hunter', p: E.mkPlayer('hunter', {}), bag: [], inv: {}, cons: [], consV: 2, pouch: {}, gold: 0, stats: {}, rooms: [] };
+const run = { build: 'hunter', p: E.mkPlayer('hunter', {}), bag: [], inv: {}, cons: [], consV: 3, pouch: {}, gold: 0, stats: {}, rooms: [] };
 E.initGear(run); G.run = run; G.data = {}; G.b = null;
 E.consAdd(run, 'herb', 'n', 8); E.consAdd(run, 'flash', 'n', 2); run.p.hp = 1;
 const sheet = () => E.sheetParts(G.sheet)[1];

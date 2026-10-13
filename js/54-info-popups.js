@@ -87,7 +87,7 @@ function infoHtml(key) {
   }
   if (key === 'floorbones' && b) { const piles=alive(b).filter(e=>e.pile); return H('바닥의 뼈', P('뼈 더미 '+piles.length+'개가 남아 있습니다.') + piles.map(e=>P('부활까지 '+e.pile.wait+'라운드 · 생명력 '+shownHp(e.hp)+'/'+Math.round(e.hpMax))).join('') + P('더미를 없애면 부활하지 않습니다. 남은 적이 뼈 더미뿐이면 전투가 끝납니다.')); }
   if (parts[0] === 'cmark' && b) { const e = b.en.find(x => String(x.id) === parts[1]), m = e && consMarks(e).find(x => x[0] === parts[2]); if (!m) return ''; return H(m[1] + ' ' + m[2], P(CONS_MARK_D[m[0]](e)) + (m[0] === 'norise' ? '' : P('소모품으로 건 효과입니다.'))); }
-  if (parts[0] === 'epile' && b) { const e = b.en.find(x => String(x.id) === parts[1]); if (!e || !e.pile) return ''; return H('뼈 더미', P('앞으로 ' + e.pile.wait + '라운드 뒤 해골이 한 번 다시 일어섭니다. 그 전에 더미를 없애면 부활하지 않습니다.') + P('석회 가루나 기름 단지로도 없앨 수 있습니다. 남은 적이 뼈 더미뿐이면 전투가 끝납니다.')); }
+  if (parts[0] === 'epile' && b) { const e = b.en.find(x => String(x.id) === parts[1]); if (!e || !e.pile) return ''; return H('뼈 더미', P('앞으로 ' + e.pile.wait + '라운드 뒤 해골이 한 번 다시 일어섭니다. 그 전에 더미를 없애면 부활하지 않습니다.') + P('석회 가루로도 없앨 수 있습니다. 남은 적이 뼈 더미뿐이면 전투가 끝납니다.')); }
   if (parts[0] === 'st' && b) {
     const u = parts[1] === 'p' ? b.p : b.en.find(x => x.id === parts[1]); const k = parts[2]; if (!u || !u.s[k]) return '';
     if (k === 'poison') { const v = u.s.poison.stacks; return H('중독 ' + v, P(SDESC.poison) + P('다음 피해 ' + v + ', 그다음 ' + Math.max(0, v - 1) + '… 이대로 두면 앞으로 총 ' + poisonTotal(v) + ' 피해.')); }

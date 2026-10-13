@@ -155,9 +155,9 @@ function onClick(ev) {
       if (R.event === 'robber' && o === 'bury') p.flask.life = Math.min(flaskCap(p, 'life'), p.flask.life + 1);
       if (R.event === 'blackwell' && o === 'drink') { p.flask.mana = Math.min(flaskCap(p, 'mana'), p.flask.mana + 1); p.flask.stam = Math.min(flaskCap(p, 'stam'), (p.flask.stam || 0) + 1); run.next.pre = Object.assign({}, run.next.pre, { vuln: 2 }); }
       if (R.event === 'camel' && o === 'loot') { const ids = Object.keys(CONS).filter(k => (CONS[k].ch || 1) <= 3 && CONS[k].use !== 'none'); for (let k = 0; k < 3; k++) consGrant(run, pickR(ids), 'n', 1); n3pre(run, 'ignite', 2); toast('짐에서 소모품 셋을 찾았습니다. 다음 전투에 화상 2'); }
-      if (R.event === 'camel' && o === 'bury') consGrant(run, 'sap', 'n', 1);
+      if (R.event === 'camel' && o === 'bury') consGrant(run, 'herb', 'n', 2); // 10월 14일: 선인장 수액을 없앴다
       if (R.event === 'oasis' && o === 'drink') { if (Math.random() < 0.5) { p.hp = Math.min(p.hpMax, p.hp + p.hpMax * 0.3); toast('샘물이 상처를 씻어 낸다. 생명력 30%'); } else { n3pre(run, 'chill', 2); toast('물이 무겁게 가라앉는다. 다음 전투에 둔화 2'); } }
-      if (R.event === 'oasis' && o === 'fill') consGrant(run, 'coldwater', 'n', 1);
+      if (R.event === 'oasis' && o === 'fill') consGrant(run, 'cleanse', 'n', 1); // 10월 14일: 찬물 한 병 → 정화 약
       if (R.event === 'sundial' && o === 'turn') { run.dg.reveal = (run.dg.reveal || []).concat([run.room + 1]); run.next3 = Object.assign(run.next3 || {}, { noon: 50 }); }
       if (R.event === 'sundial' && o === 'hasten') { run.dg.force = 'strong'; gainGold(run, 25, '해가 기운다'); }
       if (R.event === 'archive' && o === 'pull') n3pre(run, 'ignite', 4);

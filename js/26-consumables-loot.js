@@ -10,18 +10,26 @@ function pouchAdd(run, id, n) { const P = run.pouch || (run.pouch = {}); P[id] =
 function pouchSell(run) { const P = run.pouch || {}; let g = 0, n = 0; for (const [id, k] of Object.entries(P)) { if (CONS[id]) { g += (CONS[id].sell || 0) * k; n += k; } } run.pouch = {}; if (g) { run.gold = (run.gold || 0) + g; (run.pouchLog = run.pouchLog || []).push({ ch: run.ch || 1, n, gold: g, t: Date.now() }); } return { n, gold: g }; }
 /* 옛 저장본(한 가방 20칸 공유)을 새 소모품 가방으로 옮긴다. 판매품은 주머니로, 나머지는 새 묶음 크기로 다시 담고, 다섯 칸을 넘는 몫은 보류 보상(consPending)으로 보내 플레이어가 고르게 한다 */
 function consBagFix(run) {
-  if (!run || run.consV === 2) return; run.cons = run.cons || [];
-  const tot = new Map(); const add = (id, g, n) => { if (!CONS[id] || !(n > 0)) return; if (CONS[id].use === 'none') { pouchAdd(run, id, n); return; } const k = id + ':' + consGrade(id, g); tot.set(k, (tot.get(k) || 0) + n); };
+  if (!run || run.consV === 3) return; run.cons = run.cons || [];
+  /* 10월 14일 개편 4단계(consV 3): 없앤 소모품은 합쳐지는 소모품으로, 갈 곳이 없으면 판매가만큼 골드로. 고급 약초는 약초 2개 */
+  let refund = 0; const gone = [];
+  const map = (id, g, n) => { if (CONS[id]) return id === 'herb' && g === 'm' ? ['herb', 'n', n * 2] : [id, g, n]; const G0 = CONS_GONE[id]; if (!G0) return null; gone.push(G0[0] + ' ×' + n); if (G0[1]) return [G0[1], 'n', n * G0[2]]; refund += Math.max(1, Math.round(G0[2] * 0.1 * (g === 'm' ? 1.6 : 1))) * n; return null; };
+  const tot = new Map(); const add = (id0, g0, n0) => { const m = map(id0, g0, n0); if (!m) return; const [id, g, n] = m; if (!CONS[id] || !(n > 0)) return; if (CONS[id].use === 'none') { pouchAdd(run, id, n); return; } const k = id + ':' + consGrade(id, g); tot.set(k, (tot.get(k) || 0) + n); };
   for (const c of run.cons) add(c.id, c.g, c.n);
   const pend = run.consPending || []; run.consPending = [];
   run.cons = []; const over = [];
   for (const [k, n] of tot) { const [id, g] = k.split(':'); const left = consAdd(run, id, g, n); if (left) over.push({ id, g, n: left }); }
-  for (const c of pend) { if (CONS[c.id] && CONS[c.id].use === 'none') pouchAdd(run, c.id, c.n); else if (CONS[c.id]) over.push({ id: c.id, g: consGrade(c.id, c.g), n: c.n }); }
+  for (const c0 of pend) { const m = map(c0.id, c0.g, c0.n); if (!m) continue; const c = { id: m[0], g: m[1], n: m[2] }; if (CONS[c.id] && CONS[c.id].use === 'none') pouchAdd(run, c.id, c.n); else if (CONS[c.id]) over.push({ id: c.id, g: consGrade(c.id, c.g), n: c.n }); }
   for (const o of over) { const q = run.consPending; const x = q.find(y => y.id === o.id && y.g === o.g); if (x) x.n += o.n; else q.push(o); }
-  run.consV = 2;
+  for (const id of Object.keys(run.pouch || {})) if (!CONS[id]) delete run.pouch[id];
+  if (run.consFav) run.consFav = [...new Set(run.consFav.map(k => { const [id, g] = k.split(':'); const m = CONS[id] ? [id, g] : CONS_GONE[id] && CONS_GONE[id][1] ? [CONS_GONE[id][1], 'n'] : null; return m && CONS[m[0]] ? m[0] + ':' + consGrade(m[0], m[1]) : null; }).filter(Boolean))].slice(0, 3);
+  if (run.shop && Array.isArray(run.shop.cons)) run.shop.cons = run.shop.cons.filter(x => x && CONS[x.id]);
+  if (refund) run.gold = (run.gold || 0) + refund;
+  if (gone.length) (run.consRetireLog || (run.consRetireLog = [])).push({ items: gone, gold: refund, t: Date.now() });
+  run.consV = 3;
 }
 const consVal = c => { const D = CONS[c.id]; return c.g === 'm' && D.vm != null ? D.vm : D.v; };
-const consName = c => CONS[c.id].n + (c.g === 'm' ? ' (고급)' : '');
+const consName = c => CONS[c.id] ? CONS[c.id].n + (c.g === 'm' && CONS[c.id].vm != null ? ' (고급)' : '') : (CONS_GONE[c.id] ? CONS_GONE[c.id][0] : c.id); // 없앤 소모품(10월 14일 개편 4단계)은 옛 이름
 const consGrade = (id, g) => g === 'm' && CONS[id] && CONS[id].vm != null ? 'm' : 'n';
 const consKey = c => c.id + ':' + c.g;
 // 기존 묶음의 빈 자리와 새 가방 칸을 함께 계산한다. 조회 중 저장본은 바꾸지 않는다.
@@ -39,7 +47,9 @@ function toggleConsFavorite(run,c) {
   if(i>=0)keys.splice(i,1);else if(keys.length<3)keys.push(key);else return '즐겨찾기는 세 종류까지 고릅니다';
   c.fresh=false;return '';
 }
-function consGroup(D){return ['heal','healcure','stam','cure','trim'].includes(D.k)?'restore':D.use==='none'||D.use==='out'?'other':'battle';}
+/* 정화 약이 줄일 상태: 가장 많이 쌓인 내 해로운 상태(같으면 KW_BAD 순서) */
+function consWorst(p) { let best = null, n = 0; for (const k of KW_BAD) { const s = stk(p, k); if (s > n) { n = s; best = k; } } return best; }
+function consGroup(D){return ['heal','healcure','stam','cure','trim','cleanse'].includes(D.k)?'restore':D.use==='none'||D.use==='out'?'other':'battle';}
 function consRows(run,b,filter,only,query,tgt){
   const q=String(query||'').toLocaleLowerCase();
   return (run.cons||[]).map((c,i)=>({c,i,D:CONS[c.id]})).filter(x=>x.D).map(x=>Object.assign(x,{why:consWhyNot(b,run,x.c,tgt)})).filter(x=>(!filter||filter==='all'||(filter==='fav'?consFavorite(run,x.c):consGroup(x.D)===filter))&&(!only||!x.why)&&(!q||(consName(x.c)+' '+x.D.sit+' '+x.D.d(consVal(x.c))).toLocaleLowerCase().includes(q))).sort((a,b)=>Number(!!a.why)-Number(!!b.why)||a.i-b.i);
@@ -88,6 +98,7 @@ function consTargets(b, D) {
     case 'unguard': return al.filter(e => e.guarding || (e.role === 'shield' && hasShield(b, null) === e));
     case 'unbless': return al.filter(e => e.s.empower || e.fireNext);
     case 'noheal': return al.filter(e => e.role === 'healer' && !e.noHeal);
+    case 'hinder': return al.filter(e => (e.role === 'healer' && !e.noHeal) || (e.role === 'summoner' && !e.noSummon));
     case 'nosummon': return al.filter(e => e.role === 'summoner' && !e.noSummon);
     case 'sticky': return al.filter(e => e.role === 'thief' && !e.stuck);
     case 'norise': return al.filter(e => e.role === 'skeleton' && !e.rose && !e.norise);
@@ -131,6 +142,7 @@ function consWhyNot(b, run, c, tgtId) {
     case 'escape': return b.ctx.boss || b.ctx.scen || b.ctx.tut ? '보스전에서는 쓰지 못합니다' : '';
     case 'burnpiles': return alive(b).some(e => e.pile) ? '' : '뼈 더미가 없습니다';
     case 'trim': return HEX.kinds.concat(['chill']).some(k => p.s[k]) ? '' : '해로운 상태가 없습니다';
+    case 'cleanse': return consWorst(p) ? '' : '해로운 상태가 없습니다';
     case 'unearth': return alive(b).some(e => e.under && e.role !== 'boss') ? '' : '땅속의 적이 없습니다';
     case 'nobloat': return b.noBloat ? '이미 효과가 있습니다' : !alive(b).some(e => e.role === 'bloat') ? '부푼 시체가 없습니다' : '';
     case 'cool': return b.heat == null ? '열기가 없습니다' : b.heat <= 0 ? '열기가 0입니다' : '';
@@ -157,6 +169,8 @@ function consApply(b, run, c, tgt) {
     case 'unguard': tgt.guarding = null; tgt.unguard = 1; return tgt.n + '이(가) 동료를 지키지 못한다';
     case 'unbless': delete tgt.s.empower; if (tgt.fireNext) { tgt.fireNext = 0; return tgt.n + '이(가) 받은 불씨가 꺼진다'; } return tgt.n + '의 축복이 꺼진다';
     case 'noheal': tgt.noHeal = 1; return tgt.n + '의 다음 치유를 막는다';
+    case 'hinder': if (tgt.role === 'healer') { tgt.noHeal = 1; return tgt.n + '의 다음 치유를 막는다'; } tgt.noSummon = 1; return tgt.n + '의 다음 소환을 막는다';
+    case 'cleanse': { const k = consWorst(p); if (!k) return '지울 상태가 없다'; kwDec(p, k, v); return (KW_N[k] || k) + ' −' + v; }
     case 'nosummon': tgt.noSummon = 1; return tgt.n + '의 다음 소환을 막는다';
     case 'antisteal': b.antiSteal = 1; return '쇠붙이를 흘려 둔다';
     case 'sticky': tgt.stuck = 1; return tgt.n + '의 발에 끈끈이가 붙는다';
@@ -251,7 +265,7 @@ function dropText(L) { const m = {}; let g = 0; for (const d of L) { if (d.gold)
 function cons3W(b, k, vsR) { const D = CONS[k]; const base = D.dw3 != null ? D.dw3 : (D.dw != null ? D.dw : D.use === 'none' ? 0.5 : 1) * (D.ch === 3 ? 2 : 1); const vs = (D.vs && vsR.includes(D.vs)) || (D.vs3 && vsR.includes(D.vs3)) || (D.vsMod && hasMod(b, D.vsMod)); return base * (vs ? 2 : 1); }
 function rollDrops0(b, e) {
   const L = e.role === 'boss' ? LOOT.big : e.strong ? (LOOT.strong || LOOT.big) : e.elite ? LOOT.elite : LOOT.normal; const rr = b.rngF || Math.random;
-  const chN = (b.ctx && b.ctx.ch) || 1; const noCure = !!(b.ctx && b.ctx.marks && b.ctx.marks.indexOf('nocure') >= 0); const ids = Object.keys(CONS).filter(k => (CONS[k].ch || 1) <= chN && !(noCure && (CONS[k].k === 'heal' || CONS[k].k === 'healcure'))); /* 표식 도전 nocure: 생명력을 되찾는 소모품은 떨어지지 않는다 */ const vsR = b.vsRoles || (b.vsRoles = b.en.map(x => x.role)); const pick = () => { const w = ids.map(k => chN >= 3 ? cons3W(b, k, vsR) : (chN >= 2 && CONS[k].dw2 != null ? CONS[k].dw2 : CONS[k].ch === chN && chN >= 2 ? 1.5 : CONS[k].dw != null ? CONS[k].dw : CONS[k].use === 'none' ? 0.5 : 1) * (CONS[k].vs && vsR.includes(CONS[k].vs) ? 1.5 : 1)); /* 10월 5일: 챕터 소모품, 방금 싸운 역할의 답(vs) ×1.5 */ let x = rr() * w.reduce((a, c) => a + c, 0); for (let i = 0; i < ids.length; i++) { x -= w[i]; if (x <= 0) return ids[i]; } return ids[0]; };
+  const chN = (b.ctx && b.ctx.ch) || 1; const noCure = !!(b.ctx && b.ctx.marks && b.ctx.marks.indexOf('nocure') >= 0); const ids = Object.keys(CONS).filter(k => (CONS[k].ch || 1) <= chN && !(CONS[k].only && CONS[k].only !== chN) && !(noCure && (CONS[k].k === 'heal' || CONS[k].k === 'healcure'))); /* 표식 도전 nocure: 생명력을 되찾는 소모품은 떨어지지 않는다 */ const vsR = b.vsRoles || (b.vsRoles = b.en.map(x => x.role)); const pick = () => { const w = ids.map(k => chN >= 3 ? cons3W(b, k, vsR) : (chN >= 2 && CONS[k].dw2 != null ? CONS[k].dw2 : CONS[k].ch === chN && chN >= 2 ? 1.5 : CONS[k].dw != null ? CONS[k].dw : CONS[k].use === 'none' ? 0.5 : 1) * (CONS[k].vs && vsR.includes(CONS[k].vs) ? 1.5 : 1)); /* 10월 5일: 챕터 소모품, 방금 싸운 역할의 답(vs) ×1.5 */ let x = rr() * w.reduce((a, c) => a + c, 0); for (let i = 0; i < ids.length; i++) { x -= w[i]; if (x <= 0) return ids[i]; } return ids[0]; };
   b.drops = b.drops || [];
   if (rr() < Math.min(0.01, L.flask * (b.lootMul || 1) * (b.lootX || 1))) b.drops.push({ flask: ['life', 'mana', 'stam'][Math.floor(rr() * 3)] }); // 플라스크 한 칸: 1% 이하
   for (let k = 0; k < L.rolls; k++) {

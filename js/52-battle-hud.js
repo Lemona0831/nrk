@@ -369,10 +369,11 @@ function consScore(b, c, D) {
     case 'decoy': return alive(b).some(e => e.countering) ? 70 : 0;
     case 'guard1': return hit >= p.hp * 0.4 ? 55 : 0;
     case 'cool': return b.heat != null && b.heat >= 60 ? 60 : 0;
-    case 'unevade': case 'unbrace': case 'unguard': case 'unbless': case 'noheal': case 'nosummon': case 'sticky': case 'norise': case 'wallbreak': case 'rewind': return 60;
+    case 'unevade': case 'unbrace': case 'unguard': case 'unbless': case 'noheal': case 'nosummon': case 'hinder': case 'sticky': case 'norise': case 'wallbreak': case 'rewind': return 60;
     case 'unhaze': case 'unearth': case 'nobloat': case 'unmod': return 45;
     case 'burnpiles': return 40;
     case 'whet': case 'mark': case 'brk': case 'slow': return 22;
+    case 'cleanse': { const k = consWorst(b.p); return k ? 20 + 8 * stk(b.p, k) : 0; }
     case 'scatter': return alive(b).filter(e => e.intent && (e.intent.k === 'attack' || e.intent.aimed)).length >= 2 ? 30 : 0;
     case 'block': return 20;
     case 'quick': return 15;

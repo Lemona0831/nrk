@@ -392,7 +392,7 @@ ENC.treasure3 = [[['shield', 1], ['bruiser']], [['bruiser', 1], ['archer']], [['
 const NEWR3 = ['lurker', 'ember', 'wrapped', 'mirage', 'haze'];
 const INTRO_AT3 = { lurker: 2, wrapped: 5, ember: 7, noon: 9, haze: 13, mirage: 14 };
 const INTRO_SQ3 = { lurker: 'sandtrap', wrapped: 'tomb', ember: 'firebrand', noon: 'zeal3', mirage: 'mirages' };
-const FIRST_GIFT3 = { lurker: 'tamper', ember: 'coldwater', wrapped: 'oiljar', mirage: 'mirror', haze: 'mirror', noon: 'awning' }; // 처음 만난 방을 이기면 그 상황을 푸는 소모품 하나 (5.1절 5번)
+const FIRST_GIFT3 = { ember: 'cleanse', mirage: 'mirror', haze: 'mirror' }; // 10월 14일 개편 4단계: 없앤 소모품(흙 다지개 · 기름 단지 · 차양 천)의 보상은 뺐다 // 처음 만난 방을 이기면 그 상황을 푸는 소모품 하나 (5.1절 5번)
 Object.assign(ROLE_INTRO, {
   lurker: ['발밑 모래가 숨을 쉰다.', '모래 속의 적은 땅속의 적처럼 고를 수 없습니다. 광역 공격은 더 아프게, 지속 피해는 그대로 들어갑니다. 솟구치기 한 행동 전에 예고합니다.'],
   wrapped: ['마른 붕대 사이로 모래가 흘러내린다.', '붕대는 받는 직접 피해를 줄입니다. 지속 피해는 줄이지 않습니다. 붕대는 화상이 걸리거나 무너지거나 세 번 맞으면 벗겨집니다.'],

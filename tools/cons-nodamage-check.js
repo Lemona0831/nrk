@@ -38,6 +38,6 @@ for (const [g, r] of [['n', 0.1], ['m', 0.15]]) {
 assert.equal(E.CONS.relic.n, '흩뿌리는 성물'); ok.push('흩뿌리는 성물 −10%/−15% 한 번, 지속 피해 제외, 겹쳐 쓰기 막음');
 // 4. 기름 단지: 화상 없음
 { const { b, run } = mk([['skeleton', 0], ['bruiser', 0]]); const s = b.en.find(e => e.role === 'skeleton'); if (s) { s.pile = { wait: 2 }; }
-  E.consApply(b, run, { id: 'oiljar', g: 'n', n: 1 }, null); for (const e of b.en) assert.equal(E.st(e, 'ignite'), 0, '화상 없음'); }
-ok.push('기름 단지 화상 없음');
+  assert.equal(E.CONS.oiljar, undefined, '기름 단지는 4단계에서 없앴다'); }
+ok.push('기름 단지 없음');
 console.log('피해 소모품 없애기 점검 통과: ' + ok.join(' · '));

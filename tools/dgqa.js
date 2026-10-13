@@ -171,13 +171,14 @@ function useCons(pk, r, b, run) {
     case 'unguard': return al.some(e => e.guarding);
     case 'unbless': return al.some(e => e.s.empower && it(e, 'attack', 'heavy'));
     case 'noheal': return al.some(e => e.role === 'healer' && it(e, 'heal'));
+    case 'hinder': return al.some(e => (e.role === 'healer' && it(e, 'heal')) || (e.role === 'summoner' && it(e, 'summon')));
+    case 'cleanse': { const k = G0.consWorst(p); return !!k && sk(p, k) >= 3; }
     case 'nosummon': return al.some(e => e.role === 'summoner' && it(e, 'summon'));
     case 'antisteal': return al.some(e => e.role === 'thief' && it(e, 'steal'));
     case 'sticky': return al.some(e => e.role === 'thief' && it(e, 'flee'));
     case 'aoe': return al.length >= 3 && r() < 0.4;
     case 'dart': return al.some(e => e.row === 'back' && ['healer', 'summoner'].includes(e.role)) && G0.frontBlocked(b) && r() < 0.5;
     case 'brk': return al.some(e => (e.elite || e.strong || e.role === 'boss') && it(e, 'charge', 'heavy'));
-    case 'whet': return r() < 0.15;
     case 'mark': return r() < 0.1;
     case 'guard1': return al.some(e => it(e, 'heavy', 'explode', 'burn')) && p.hp < p.hpMax * 0.6;
     case 'halfboom': return al.some(e => it(e, 'explode', 'burn')) || (b.heatWarn != null && b.heatWarn <= (b.round || 0));

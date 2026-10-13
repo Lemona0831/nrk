@@ -10,9 +10,9 @@ E.render = () => { }; E.saveRunLocal = () => { }; E.saveCur = () => { }; G.data 
 const PRICE = 12;
 // 소모품 가방에서 free칸만 비워 둔다(나머지는 다른 소모품으로 채운다). 장비 가방은 늘 비어 있다
 function run(id, stacks, free = 0, gold = 10000) {
-  const filler = id === 'stone' ? 'crowbar' : 'stone';
+  const filler = id === 'charm' ? 'knot' : 'charm';
   const fill = Array(Math.max(0, E.CONS_BAG - stacks.length - free)).fill(0).map(() => ({ id: filler, g: 'n', n: E.CONS[filler].max }));
-  return { build: 'hunter', p: E.mkPlayer('hunter', {}), phase: 'shop', bag: [], inv: {}, cons: stacks.concat(fill), consV: 2, pouch: {}, gold, stats: {}, shop: { stock: [], cons: [{ id, price: PRICE }], log: [] } };
+  return { build: 'hunter', p: E.mkPlayer('hunter', {}), phase: 'shop', bag: [], inv: {}, cons: stacks.concat(fill), consV: 3, pouch: {}, gold, stats: {}, shop: { stock: [], cons: [{ id, price: PRICE }], log: [] } };
 }
 const state = r => JSON.stringify({ cons: r.cons, gold: r.gold, shop: r.shop, pend: r.consPending || [] });
 const buy = r => { G.run = r; D.click('consbuy', '0'); };

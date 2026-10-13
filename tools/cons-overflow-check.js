@@ -6,9 +6,9 @@ process.env.DGDIR = process.env.DGDIR || '.';
 const assert = require('assert/strict'), D = require('./dgqa.js'), E = D.G0, G = E.__G;
 D.run_('Object.assign(this, { CONS_BAG, consUsed })');
 E.render = () => { }; E.saveRunLocal = () => { }; E.saveCur = () => { }; E.ask = () => true;
-const run = { build: 'hunter', p: E.mkPlayer('hunter', {}), bag: [], cons: [], consV: 2, pouch: {}, swaps: [], rooms: [], drops: [] };
+const run = { build: 'hunter', p: E.mkPlayer('hunter', {}), bag: [], cons: [], consV: 3, pouch: {}, swaps: [], rooms: [], drops: [] };
 E.initGear(run); G.run = run; G.data = {}; G.b = null;
-for (const id of ['stone', 'crowbar', 'hookrope', 'blackinc', 'silash']) E.consAdd(run, id, 'n', E.CONS[id].max);
+for (const id of ['charm', 'knot', 'hookrope', 'chalk', 'hinder']) E.consAdd(run, id, 'n', E.CONS[id].max);
 assert.equal(E.consUsed(run), E.CONS_BAG);
 const gear0 = run.bag.length; E.addItem(run, E.mkItem('cloak')); const lockedGear = run.bag[run.bag.length - 1];
 assert.equal(E.consGrant(run, 'herb', 'n', 2), 2, '가방이 차면 보류'); assert.equal(run.consPending[0].n, 2);
@@ -17,12 +17,12 @@ G.sheet = { kind: 'consfull', data: {} }; D.click('cpreplace', lockedGear, { s: 
 assert.equal(run.bag.length, gear0 + 1, '장비가 그대로'); assert.equal(run.consPending[0].n, 2);
 // 이어 하기에서도 보류가 남는다
 G.run = JSON.parse(JSON.stringify(run)); G.sheet = { kind: 'consfull', data: {} };
-E.ask = () => false; D.click('cpreplace', '0', { s: 'cons' }); assert.equal(G.run.cons[0].id, 'stone', '확인을 취소하면 그대로');
+E.ask = () => false; D.click('cpreplace', '0', { s: 'cons' }); assert.equal(G.run.cons[0].id, 'charm', '확인을 취소하면 그대로');
 E.ask = () => true; D.click('cpreplace', '0', { s: 'cons' });
-assert(G.run.cons.some(c => c.id === 'herb' && c.n === 2), '묶음을 버리고 약초를 챙김'); assert(!G.run.cons.some(c => c.id === 'stone')); assert.equal(G.run.consPending.length, 0);
+assert(G.run.cons.some(c => c.id === 'herb' && c.n === 2), '묶음을 버리고 약초를 챙김'); assert(!G.run.cons.some(c => c.id === 'charm')); assert.equal(G.run.consPending.length, 0);
 assert.equal(E.consGrant(G.run, 'herb', 'n', 1), 0); assert(G.run.cons.some(c => c.id === 'herb' && c.n === 3), '가득 차도 같은 묶음에 합친다');
-E.consGrant(G.run, 'bandage', 'n', 1); G.sheet = { kind: 'consfull', data: {} }; D.click('cpskip');
-assert.equal(G.run.consPending.length, 0); assert(!G.run.cons.some(c => c.id === 'bandage'), '두고 가기');
+E.consGrant(G.run, 'cleanse', 'n', 1); G.sheet = { kind: 'consfull', data: {} }; D.click('cpskip');
+assert.equal(G.run.consPending.length, 0); assert(!G.run.cons.some(c => c.id === 'cleanse'), '두고 가기');
 // 판매품은 넘치지 않고 주머니로
 assert.equal(E.consGrant(G.run, 'silver', 'n', 3), 0); assert.equal(G.run.pouch.silver, 3); assert.equal(G.run.consPending.length, 0);
 console.log('소모품 보류·저장 복원·장비 버리기 차단·확인 취소·묶음 교체·합치기·두고 가기·판매품 주머니 통과');
