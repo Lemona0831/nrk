@@ -19,12 +19,7 @@ function onClick(ev) {
           const i=+el.dataset.k,c=run.cons[i];
           if (!c || !ask(consName(c)+' ×'+c.n+' 묶음을 버리고 새 소모품을 챙길까요?')) break;
           run.cons.splice(i,1);
-        } else {
-          const u=el.dataset.k,x=run.inv[u],why=itemRemoveWhy(run,u);
-          if (!x || why) { if(why)toast(why); break; }
-          if (!ask((ITEMS[x.tpl] || {}).n+'을(를) 버리고 새 소모품을 챙길까요?')) break;
-          if(discardUid(run,u))break;
-        }
+        } else break; // 10월 14일: 소모품 가방이 나뉘어 장비를 버려도 소모품 칸이 생기지 않는다(장비만 잃는 것을 막는다)
       }
       consPendingTry(run); G.sheet=null;saveRunLocal();saveCur();nextDrop();break;
     }

@@ -98,15 +98,15 @@ function sheetParts(S) {
     if(!(G.dropQ||[]).length)body += '<button class="wide" data-a="droporganize">가방에 두고 정리하기</button>';
   } else if (S.kind === 'bagfull') {
     const it = S.data.item; title = '가방이 가득 찼습니다'; const nc = (run.cons || []).length;
-    body = winSumHtml() + `<p class="lead">새 장비를 바로 장착하거나, 가방에서 하나를 비워 챙길 수 있습니다.${nc ? ` 가방 ${BAG_MAX}칸 중 소모품이 ${nc}칸입니다.` : ''}</p>${itemDetail(it)}${shopCmp(run, it)}${rewardEquipButtons(run, it)}<button class="wide" data-a="bfskip">새 장비를 버리기</button><h4 class="bfh">또는 가방에서 하나를 버리고 새 장비를 받기</h4><div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${inm(x.tpl, x.g)}</span>${gradeTag(x.g)}<br><small class="mini">${EQ_SLOT_N[kindOf(ITEMS[x.tpl].slot) === 'ring' ? 'ring1' : ITEMS[x.tpl].slot].replace(' 1', '')} · ${baseText(x)}</small></div><button class="sm" data-a="bfdrop" data-k="${u}"${x.locked ? ' disabled' : ''}>${x.locked ? '잠김' : '이것을 버리기'}</button></div>`; }).join('')}</div>`;
+    body = winSumHtml() + `<p class="lead">새 장비를 바로 장착하거나, 가방에서 하나를 비워 챙길 수 있습니다.</p>${itemDetail(it)}${shopCmp(run, it)}${rewardEquipButtons(run, it)}<button class="wide" data-a="bfskip">새 장비를 버리기</button><h4 class="bfh">또는 가방에서 하나를 버리고 새 장비를 받기</h4><div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${inm(x.tpl, x.g)}</span>${gradeTag(x.g)}<br><small class="mini">${EQ_SLOT_N[kindOf(ITEMS[x.tpl].slot) === 'ring' ? 'ring1' : ITEMS[x.tpl].slot].replace(' 1', '')} · ${baseText(x)}</small></div><button class="sm" data-a="bfdrop" data-k="${u}"${x.locked ? ' disabled' : ''}>${x.locked ? '잠김' : '이것을 버리기'}</button></div>`; }).join('')}</div>`;
   } else if (S.kind === 'consfull') {
     title = '챙길 소모품을 고르세요';
     const c = (run.consPending || [])[0];
     if (c) {
       const D = CONS[c.id];
-      body = `<div class="idet"><b>${D.ico} ${esc(consName(c))} ×${c.n}</b><p>${esc(D.d(consVal(c)))}</p></div><p class="mini">가방 ${bagUsed(run)}/${BAG_MAX}. 공간이 부족하면 기존 소모품 묶음이나 장비 하나를 버리고 챙깁니다.</p><div class="row"><button class="gold" data-a="cpkeep"${consSpace(run,c.id,c.g).capacity < 1 ? ' disabled' : ''}>가방에 넣기</button><button data-a="cpskip">이 소모품을 두고 가기</button></div><h4>가방에서 비울 것</h4><div class="baglist">`;
+      body = `<div class="idet"><b>${D.ico} ${esc(consName(c))} ×${c.n}</b><p>${esc(D.d(consVal(c)))}</p></div><p class="mini">소모품 가방 ${consUsed(run)}/${CONS_BAG}칸. 공간이 부족하면 기존 소모품 묶음 하나를 버리고 챙깁니다.</p><div class="row"><button class="gold" data-a="cpkeep"${consSpace(run,c.id,c.g).capacity < 1 ? ' disabled' : ''}>가방에 넣기</button><button data-a="cpskip">이 소모품을 두고 가기</button></div><h4>가방에서 비울 것</h4><div class="baglist">`;
       body += (run.cons || []).map((x,i) => `<div class="bagline"><div><b>${CONS[x.id].ico} ${esc(consName(x))} ×${x.n}</b><br><small class="mini">${esc(CONS[x.id].d(consVal(x)))}</small></div><button class="sm" data-a="cpreplace" data-k="${i}" data-s="cons">묶음 버리고 챙기기</button></div>`).join('');
-      body += run.bag.map(u => { const x=run.inv[u]; return `<div class="bagline"><div><b class="gr-${x.g}">${inm(x.tpl,x.g)}</b><br><small class="mini">${esc(baseText(x))}</small></div><button class="sm" data-a="cpreplace" data-k="${u}" data-s="gear"${x.locked?' disabled':''}>${x.locked?'잠김':'버리고 챙기기'}</button></div>`; }).join('') + '</div>';
+      body += '</div>'; // 10월 14일: 소모품 가방이 나뉘어 장비를 버려도 소모품 칸이 생기지 않는다
     }
   } else if (S.kind === 'changes') {
     title = '업데이트 내역';

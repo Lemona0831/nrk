@@ -88,3 +88,11 @@ CONS.bellshard.d = () => '한 적의 강타·겨누기·영창을 끊고 평소 
 CONS.blackinc.d = () => '한 적의 축복(강화)이나 받은 불씨를 지웁니다.';
 CONS.sandbag.mods.push('alley', 'pillar', 'shade', 'brazier', 'drums', 'haze', 'sandstorm'); CONS.sandbag.d = () => '이 전투에서 방 특성 하나(피 웅덩이, 촛불 제단, 무너지는 천장, 종소리, 좁은 회랑, 무너진 납골벽, 썩은 공기, 물에 잠긴 바닥, 무너진 골목, 무너지는 기둥, 오아시스 그늘, 불씨 화로, 북소리, 아지랑이, 모래폭풍)를 끕니다. 작열하는 한낮은 끄지 못합니다.';
 const SHOP_CONS = { n: 5, always: ['herb'] }; // 상점은 소모품 다섯 가지를 판다(약초 묶음은 늘)
+/* 소모품 가방 (10월 14일 개편 1단계, docs/제안/소모품-개편-설계안-v2-2026-10-14.md 2절): 장비 가방과 따로 CONS_BAG칸.
+   칸마다 무게 한도 CONS_SLOT_W, 한 칸에 담기는 수(max) = ⌊무게 한도 / 무게⌋. 판매품(use none)은 가방이 아니라 전리품 주머니(run.pouch)에 들어가 상점에서 골드로 바뀐다 */
+const CONS_BAG = 5, CONS_SLOT_W = 5;
+for (const k of Object.keys(CONS)) CONS[k].w = CONS[k].use === 'none' ? 0 : 2;
+for (const k of ['herb', 'bread', 'leaf', 'sap']) CONS[k].w = 1; // 보급: 한 칸에 5개
+for (const k of ['sandbag', 'reliq', 'lampoil', 'oiljar']) CONS[k].w = 3; // 한 칸에 1개
+CONS.smokebomb.w = 5; // 한 칸에 1개
+for (const k of Object.keys(CONS)) if (CONS[k].w > 0) CONS[k].max = Math.max(1, Math.floor(CONS_SLOT_W / CONS[k].w));

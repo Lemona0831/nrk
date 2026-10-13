@@ -11,7 +11,7 @@ function startRun(build, boss) {
     deaths: [], result: null, blockPicked: null, entry: null, survey: null, drops: [], legSeen: [], awk: [],
     stats: { str: 0, dex: 0, int: 0, con: 0, wil: 0 }, statGrowth: LV_POINTS, statBase: STAT_START, statLog: [], pool: shuffleSeeded(FREE_POOL, seed), choices: [], seed,
   };
-  G.run.skills = isV2(p) ? [] : DEFAULT_SKILLS[build].slice(); G.run.bag = []; G.run.cons = []; initGear(G.run); dgInit(G.run); G.run.skillLog = []; treeInit(G.run); if (isV2(p)) p.skills = v2Equip(G.run);
+  G.run.skills = isV2(p) ? [] : DEFAULT_SKILLS[build].slice(); G.run.bag = []; G.run.cons = []; G.run.consV = 2; G.run.pouch = {}; initGear(G.run); dgInit(G.run); G.run.skillLog = []; treeInit(G.run); if (isV2(p)) p.skills = v2Equip(G.run);
   G.run.mode = G.cre && G.cre.mode === 'hard' && G.data.hardOpen ? 'hard' : 'normal'; G.run.cname = (G.cre && G.cre.name) || ''; G.run.ch = 1; G.run.playMs = 0; G.run.tut = G.data.tutDone ? 1 : 0; // 수련장을 마친 뒤 만든 캐릭터인가
   if (G.cre && G.cre.mark) markSetup(G.run, G.cre.mark); // 표식 도전: 챕터 시작 레벨 · 꾸러미 · 표식
   G.scr = 'create'; G.b = null; G.sel = null; G.creating = true;
@@ -221,7 +221,7 @@ function vEquip() {
     h += fit.length ? `<p class="mini">가방에서 이 칸에 낄 수 있는 장비 ${fit.length}개. 아래 가방에서 고르세요.</p>` : '<p class="mini">가방에 이 칸에 낄 장비가 없습니다.</p>';
   }
   h += `</div></div>`;
-  h += `<section class="eqbag" aria-label="가방"><h4>가방 <span class="mini">${bagUsed(run)}/${BAG_MAX}${(run.cons || []).length ? ' · 소모품 ' + run.cons.length + '칸' : ''}${bagUsed(run) >= BAG_MAX ? ' · 가득 참' : ''}</span></h4>`;
+  h += `<section class="eqbag" aria-label="가방"><h4>가방 <span class="mini">장비 ${bagUsed(run)}/${BAG_MAX}${bagUsed(run) >= BAG_MAX ? ' · 가득 참' : ''} · 소모품 ${consUsed(run)}/${CONS_BAG}${pouchN(run) ? ' · 전리품 주머니 ' + pouchN(run) + '개' : ''}</span></h4>`;
   h += `<div class="invtools" role="group" aria-label="장비 찾기">${[['all','전체'],['slot','선택한 칸']].map(([k,n])=>`<button class="sm" data-a="eqfilter" data-k="${k}" aria-pressed="${filter===k}">${n}</button>`).join('')}<button class="sm" data-a="eqorder" data-k="${order==='recent'?'grade':'recent'}">${order==='recent'?'최근 획득순':'등급순'}</button><button class="sm" data-a="consopen">소모품 보기</button></div>`;
   let bag = run.bag.filter(u=>run.inv[u] && (filter!=='slot'||tplKind(run.inv[u].tpl)===kindOf(sel.slot || 'weapon'))).slice().reverse();
   if(order==='recent') bag.sort((a,b)=>(run.inv[b].foundAt||0)-(run.inv[a].foundAt||0));

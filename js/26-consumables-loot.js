@@ -1,8 +1,25 @@
 'use strict';
 /* ===== 소모품 (10월 4일, data/consumables.js) =====
-   run.cons = [{ id, g, n }] 겹. 가방 칸 = 장비 수 + 소모품 겹 수(bagUsed). 전투 중에는 차례 칸을 쓰지 않고, 한 차례에 CONS_TURN개까지. 같은 효과는 겹치지 않는다(이미 걸린 강화 · 없는 상태면 버튼이 잠긴다) */
-const consSell = c => { const D = CONS[c.id]; return D.use === 'none' ? D.sell : Math.max(1, Math.round(D.price * 0.4 * (c.g === 'm' ? 1.6 : 1))); }; // 소모품 팔 때 값
-const bagUsed = run => (run.bag ? run.bag.length : 0) + ((run.cons || []).length);
+   run.cons = [{ id, g, n }] 겹. 10월 14일 개편 1단계: 소모품은 장비 가방과 따로 CONS_BAG칸(consUsed), 한 칸에 무게로 정한 수(max)만큼 겹친다. 판매품은 전리품 주머니(run.pouch). 전투 중에는 차례 칸을 쓰지 않고, 한 차례에 CONS_TURN개까지. 같은 효과는 겹치지 않는다(이미 걸린 강화 · 없는 상태면 버튼이 잠긴다) */
+const consSell = c => { const D = CONS[c.id]; return D.use === 'none' ? D.sell : Math.max(1, Math.round(D.price * 0.1 * (c.g === 'm' ? 1.6 : 1))); }; // 소모품 팔 때 값
+const bagUsed = run => (run.bag ? run.bag.length : 0); // 장비 가방 (BAG_MAX칸)
+const consUsed = run => (run.cons || []).length; // 소모품 가방 (CONS_BAG칸)
+const pouchN = run => Object.values(run.pouch || {}).reduce((a, n) => a + n, 0); // 전리품 주머니에 든 판매품 수
+/* 전리품 주머니: 판매품은 칸을 차지하지 않고, 상점에 들어갈 때 골드로 바뀐다 */
+function pouchAdd(run, id, n) { const P = run.pouch || (run.pouch = {}); P[id] = (P[id] || 0) + (n || 1); }
+function pouchSell(run) { const P = run.pouch || {}; let g = 0, n = 0; for (const [id, k] of Object.entries(P)) { if (CONS[id]) { g += (CONS[id].sell || 0) * k; n += k; } } run.pouch = {}; if (g) { run.gold = (run.gold || 0) + g; (run.pouchLog = run.pouchLog || []).push({ ch: run.ch || 1, n, gold: g, t: Date.now() }); } return { n, gold: g }; }
+/* 옛 저장본(한 가방 20칸 공유)을 새 소모품 가방으로 옮긴다. 판매품은 주머니로, 나머지는 새 묶음 크기로 다시 담고, 다섯 칸을 넘는 몫은 보류 보상(consPending)으로 보내 플레이어가 고르게 한다 */
+function consBagFix(run) {
+  if (!run || run.consV === 2) return; run.cons = run.cons || [];
+  const tot = new Map(); const add = (id, g, n) => { if (!CONS[id] || !(n > 0)) return; if (CONS[id].use === 'none') { pouchAdd(run, id, n); return; } const k = id + ':' + consGrade(id, g); tot.set(k, (tot.get(k) || 0) + n); };
+  for (const c of run.cons) add(c.id, c.g, c.n);
+  const pend = run.consPending || []; run.consPending = [];
+  run.cons = []; const over = [];
+  for (const [k, n] of tot) { const [id, g] = k.split(':'); const left = consAdd(run, id, g, n); if (left) over.push({ id, g, n: left }); }
+  for (const c of pend) { if (CONS[c.id] && CONS[c.id].use === 'none') pouchAdd(run, c.id, c.n); else if (CONS[c.id]) over.push({ id: c.id, g: consGrade(c.id, c.g), n: c.n }); }
+  for (const o of over) { const q = run.consPending; const x = q.find(y => y.id === o.id && y.g === o.g); if (x) x.n += o.n; else q.push(o); }
+  run.consV = 2;
+}
 const consVal = c => { const D = CONS[c.id]; return c.g === 'm' && D.vm != null ? D.vm : D.v; };
 const consName = c => CONS[c.id].n + (c.g === 'm' ? ' (고급)' : '');
 const consGrade = (id, g) => g === 'm' && CONS[id] && CONS[id].vm != null ? 'm' : 'n';
@@ -10,7 +27,8 @@ const consKey = c => c.id + ':' + c.g;
 // 기존 묶음의 빈 자리와 새 가방 칸을 함께 계산한다. 조회 중 저장본은 바꾸지 않는다.
 function consSpace(run, id, g) {
   const D = CONS[id]; if (!D) return { existing: 0, capacity: 0, free: 0 };
-  const grade = consGrade(id, g), free = Math.max(0, BAG_MAX - bagUsed(run));
+  if (D.use === 'none') return { existing: 0, free: CONS_BAG, capacity: 1e9 }; // 판매품은 주머니로
+  const grade = consGrade(id, g), free = Math.max(0, CONS_BAG - consUsed(run));
   const existing = (run.cons || []).filter(c => c.id === id && consGrade(id, c.g) === grade).reduce((n, c) => n + Math.max(0, D.max - c.n), 0);
   return { existing, free, capacity: existing + free * D.max };
 }
@@ -28,9 +46,9 @@ function consRows(run,b,filter,only,query,tgt){
 }
 const consLvMul = b => 1 + 0.15 * (((b && b.ctx && b.ctx.lv) || 1) - 1);
 function consAdd(run, id, g, n) {
-  run.cons = run.cons || []; const D = CONS[id]; if (!D) return n; g = consGrade(id, g); let left = n || 1;
+  run.cons = run.cons || []; const D = CONS[id]; if (!D) return n; if (D.use === 'none') { pouchAdd(run, id, n || 1); return 0; } g = consGrade(id, g); let left = n || 1;
   for (const c of run.cons) if (left > 0 && c.id === id && consGrade(id, c.g) === g && c.n < D.max) { const t = Math.min(left, D.max - c.n), oldKey = consKey(c); c.g = g; if ((run.consFav || []).includes(oldKey)) run.consFav = run.consFav.map(k => k === oldKey ? consKey(c) : k); c.n += t; c.fresh=true; left -= t; }
-  while (left > 0 && bagUsed(run) < BAG_MAX) { const t = Math.min(left, D.max); run.cons.push({ id, g, n: t, fresh:true }); left -= t; }
+  while (left > 0 && consUsed(run) < CONS_BAG) { const t = Math.min(left, D.max); run.cons.push({ id, g, n: t, fresh:true }); left -= t; }
   return left;
 }
 const myTurn = b => !!(b && !b.over && b.queue && b.queue[0] === 'p');

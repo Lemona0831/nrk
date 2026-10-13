@@ -29,7 +29,8 @@
       '레벨 ' + (r.lv || 1) + ' · 경험치 ' + Math.round(r.xp || 0) + ' · 골드 ' + (r.gold || 0),
       '생명력 ' + Math.round(p.hp || 0) + '/' + (p.hpMax || 0) + ' · 스태미나 ' + Math.round(p.st || 0) + '/' + (p.stMax || 0),
       '플라스크 생명 ' + (f.life || 0) + ' · 정화 ' + (f.mana || 0) + ' · 스태미나 ' + (f.stam || 0),
-      '소모품: ' + cons,
+      '소모품' + (typeof consUsed === 'function' && typeof CONS_BAG !== 'undefined' ? ' 가방 ' + consUsed(r) + '/' + CONS_BAG + '칸' : '') + ': ' + cons,
+      (typeof pouchN === 'function' && pouchN(r) ? '전리품 주머니: ' + Object.entries(r.pouch || {}).map(([k, n]) => ((typeof CONS !== 'undefined' && CONS[k] && CONS[k].n) || k) + '×' + n).join(', ') : '전리품 주머니: 비어 있음'),
       inBattle() ? '전투 중' + (window.TM_GOD ? ' · 무적 켬' : '') : '전투 밖',
     ].join('\n');
   }

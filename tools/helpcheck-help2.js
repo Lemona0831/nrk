@@ -48,7 +48,8 @@ module.exports = function (api) {
   add('help', '크기(50 · 75 · 100 · 150 · 200%)', '상수: HUD_SIZES=' + E('HUD_SIZES.join()'), E => E('HUD_SIZES.join()') === '50,75,100,150,200');
   add('help', '글자 크기(90%부터 130%까지)', '상수: FS_OPTS=' + E('FS_OPTS.join()'), E => E('Math.min(...FS_OPTS)') === 0.9 && E('Math.max(...FS_OPTS)') === 1.3);
   add('help', '한 차례에 3개까지', '상수: CONS_TURN=' + E('CONS_TURN'), E => E('CONS_TURN') === 3);
-  add('help', '가방은 20칸이고 장비와', '상수: BAG_MAX=' + E('BAG_MAX') + ', 소스: bagUsed가 장비 + 소모품 겹', E => E('BAG_MAX') === 20 && src('bagUsed').includes('cons'));
+  add('help', '장비 가방은 20칸, 소모품 가방은 따로 5칸', '상수: BAG_MAX=' + E('BAG_MAX') + ', CONS_BAG=' + E('CONS_BAG') + ', 소스: bagUsed는 장비만(10월 14일 개편 1단계)', E => E('BAG_MAX') === 20 && E('CONS_BAG') === 5 && !src('bagUsed').includes('cons'));
+  add('help', '판매품은 칸을 차지하지 않고 상점에 들어갈 때 골드로', '소스: consAdd가 판매품을 pouchAdd로, genShop이 pouchSell', E => src('consAdd').includes('pouchAdd') && src('genShop').includes('pouchSell'));
   add('help', '가방은 20칸이고 가득 차면', '상수: BAG_MAX=' + E('BAG_MAX'), E => E('BAG_MAX') === 20);
   add('help', '(예: "공격 4 · 출혈 2")', '소스: 공격 예고 문장이 "공격 N · 출혈 N" 꼴 (enemyIntent)', E => has("'공격 ' + est + (i.bleed ? ' · 출혈 ' + i.bleed"));
 
