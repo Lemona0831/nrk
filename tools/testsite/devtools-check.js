@@ -8,6 +8,7 @@ const D = require('../dgqa.js'); const E = D.G0, G = E.__G;
 const el = () => { const o = { style: {}, dataset: {}, children: [], value: '', textContent: '', set innerHTML(v) { }, get firstChild() { return o; }, appendChild() { }, addEventListener() { }, setAttribute() { }, querySelector() { return el(); }, click() { } }; return o; };
 vm.runInContext('var document = { createElement: () => (' + el.toString() + ')(), head: { appendChild() {} }, body: { appendChild() {} } }; var setInterval = () => 0; var confirm = () => false; var location = { reload() {} }; var localStorage = { removeItem() {} }; this.scrollTo = function () {}; this.innerWidth = 1280; this.innerHeight = 800; this.scrollY = 0; this.addEventListener = function () {}; window = this; /* 던전 테스터의 가짜 window 대신 브라우저처럼 전역을 쓴다 */', E);
 const toasts = []; vm.runInContext('toast = m => __toasts.push(m); saveRunLocal = () => true; saveCur = () => true; render = () => {}; openSheet = () => {};', Object.assign(E, { __toasts: toasts }));
+vm.runInContext('window.TM_PRESETS = ' + fs.readFileSync(path.join(__dirname, 'presets.json'), 'utf8'), E);
 vm.runInContext(fs.readFileSync(path.join(__dirname, 'devtools.js'), 'utf8'), E, { filename: 'devtools.js' });
 const TM = vm.runInContext('window.TM', E); assert(TM, '메뉴 동작 객체가 없음');
 // 캐릭터 하나 만들기
@@ -28,4 +29,18 @@ run.phase = null; G.scr = 'run'; const p = E.mkPlayer('warden', {}, {}); p.hp = 
 G.b = E.roomBattle(p, { en: [['bruiser'], ['archer']], lv: 3, floor: 5 }, null, 7);
 TM.weaken(); assert(G.b.en.every(e => !e.alive || e.hp <= 1)); ok.push('적 생명력 1');
 TM.god(); const hp0 = G.b.p.hp; vm.runInContext('hurtPlayer(G.b, 50, { src: G.b.en[0], label: "시험" })', E); assert.equal(G.b.p.hp, hp0, '무적인데 피해를 받음'); TM.god(); ok.push('무적');
+// 프리셋: 기록대로 챕터·능력치·연 칸·장착 스킬·장비가 들어간다
+G.b = null; vm.runInContext('confirm = () => true', E);
+const PS = vm.runInContext('window.TM_PRESETS', E); assert(PS.length >= 1, '프리셋이 없음');
+for (const P of PS) {
+  toasts.length = 0; TM.preset(P.id); const r = G.run;
+  assert.equal(r.build, P.build); assert.equal(r.ch, P.ch); assert.equal(r.mode, P.mode); assert.equal(r.room, 1, P.id + ' 1층에서 시작');
+  for (const k of ['str', 'dex', 'int', 'con', 'wil']) assert.equal(r.stats[k] || 0, P.stats[k] || 0, P.id + ' 능력치 ' + k);
+  assert.deepEqual(r.tree.open.slice().sort(), P.treeOpen.slice().sort(), P.id + ' 연 칸');
+  for (const s of P.skills) assert(r.p.skills.includes(s), P.id + ' 장착 ' + s);
+  const want = P.gear.filter(g => g && !/^start_/.test(g.tpl)).length; const have = vm.runInContext('EQ_SLOTS', E).filter(sl => r.eqU[sl] && !/^start_/.test(r.inv[r.eqU[sl]].tpl)).length;
+  assert.equal(have, want, P.id + ' 장비 ' + have + '/' + want + ' ' + JSON.stringify(toasts.slice(-1)));
+  assert.equal(r.p.hp, r.p.hpMax); assert(r.lv >= 1 && r.lv <= vm.runInContext('LV_XP.length', E));
+}
+ok.push('프리셋 ' + PS.length + '개');
 console.log('테스트 메뉴 점검 통과: ' + ok.join(', '));

@@ -1,0 +1,688 @@
+[
+ {
+  "id": "elementalistnormal1",
+  "label": "원소술사 · 일반 · 1챕터 보스 직전 · Lv6",
+  "build": "elementalist",
+  "mode": "normal",
+  "ch": 1,
+  "lv": 6,
+  "stats": {
+   "con": 10,
+   "dex": 0,
+   "int": 25,
+   "str": 0,
+   "wil": 1
+  },
+  "treeOpen": [
+   "e_kindle",
+   "e_sparks",
+   "e_spread",
+   "e_chantburn",
+   "e_ash",
+   "e_conflag"
+  ],
+  "skills": [
+   "e_spread",
+   "e_chantburn",
+   "e_ash",
+   "e_conflag"
+  ],
+  "gear": [
+   {
+    "tpl": "wallbreaker",
+    "g": "m",
+    "b": 9.2,
+    "ch": 1
+   },
+   {
+    "tpl": "plate",
+    "g": "r",
+    "b": 19.1,
+    "ch": 1
+   },
+   {
+    "tpl": "reaperhands",
+    "g": "r",
+    "b": 18.9,
+    "ch": 1
+   },
+   {
+    "tpl": "vanguard",
+    "g": "r",
+    "b": 19.3,
+    "ch": 1
+   },
+   {
+    "tpl": "focusring",
+    "g": "m",
+    "b": 13,
+    "ch": 1
+   },
+   {
+    "tpl": "venomring",
+    "g": "m",
+    "b": 13.8,
+    "ch": 1
+   },
+   {
+    "tpl": "holywater",
+    "g": "r",
+    "b": 20.1,
+    "ch": 1
+   }
+  ],
+  "awk": [
+   "k_el1"
+  ],
+  "cons": {
+   "herb:n": 10
+  },
+  "gold": 200
+ },
+ {
+  "id": "elementalisthard1",
+  "label": "원소술사 · 가혹 · 1챕터 보스 직전 · Lv6",
+  "build": "elementalist",
+  "mode": "hard",
+  "ch": 1,
+  "lv": 6,
+  "stats": {
+   "con": 0,
+   "dex": 0,
+   "int": 35,
+   "str": 0,
+   "wil": 0
+  },
+  "treeOpen": [
+   "e_bind",
+   "e_crack",
+   "e_hail",
+   "e_numb",
+   "e_snap",
+   "e_shell"
+  ],
+  "skills": [
+   "e_hail",
+   "e_numb",
+   "e_snap",
+   "e_shell"
+  ],
+  "gear": [
+   {
+    "tpl": "maul",
+    "g": "r",
+    "b": 19.5,
+    "ch": 1
+   },
+   {
+    "tpl": "start_armor",
+    "g": "n",
+    "b": 0,
+    "ch": 1
+   },
+   {
+    "tpl": "reaperhands",
+    "g": "r",
+    "b": 23,
+    "ch": 1
+   },
+   {
+    "tpl": "deadrosary",
+    "g": "r",
+    "b": 19,
+    "ch": 1
+   },
+   null,
+   null,
+   {
+    "tpl": "holywater",
+    "g": "r",
+    "b": 24.3,
+    "ch": 1
+   }
+  ],
+  "awk": [
+   "k_el2"
+  ],
+  "cons": {
+   "herb:n": 10,
+   "chalk:n": 1,
+   "knot:n": 1,
+   "dagger:n": 1,
+   "dagger:m": 1
+  },
+  "gold": 200
+ },
+ {
+  "id": "elementalistnormal2",
+  "label": "원소술사 · 일반 · 2챕터 보스 직전 · Lv11",
+  "build": "elementalist",
+  "mode": "normal",
+  "ch": 2,
+  "lv": 11,
+  "stats": {
+   "con": 10,
+   "dex": 0,
+   "int": 36,
+   "str": 0,
+   "wil": 5
+  },
+  "treeOpen": [
+   "e_kindle",
+   "e_sparks",
+   "e_spread",
+   "e_chantburn",
+   "e_ash",
+   "e_conflag",
+   "e_hellfire",
+   "e_spear",
+   "e_cinders",
+   "e_phoenix"
+  ],
+  "skills": [
+   "e_chantburn",
+   "e_hellfire",
+   "e_cinders",
+   "e_phoenix"
+  ],
+  "gear": [
+   {
+    "tpl": "bonemaul",
+    "g": "r",
+    "b": 22.2,
+    "ch": 2
+   },
+   {
+    "tpl": "plate",
+    "g": "r",
+    "b": 19.1,
+    "ch": 1
+   },
+   {
+    "tpl": "reaperhands",
+    "g": "r",
+    "b": 18.9,
+    "ch": 1
+   },
+   {
+    "tpl": "vanguard",
+    "g": "r",
+    "b": 19.3,
+    "ch": 1
+   },
+   {
+    "tpl": "focusring",
+    "g": "m",
+    "b": 13,
+    "ch": 1
+   },
+   {
+    "tpl": "twicering",
+    "g": "h",
+    "b": 30.4,
+    "ch": 2
+   },
+   {
+    "tpl": "holywater",
+    "g": "r",
+    "b": 20.1,
+    "ch": 1
+   }
+  ],
+  "awk": [
+   "k_el1",
+   "a_breath",
+   "a_vial"
+  ],
+  "cons": {
+   "herb:n": 10
+  },
+  "gold": 400
+ },
+ {
+  "id": "elementalistnormal3",
+  "label": "원소술사 · 일반 · 3챕터 보스 직전 · Lv17",
+  "build": "elementalist",
+  "mode": "normal",
+  "ch": 3,
+  "lv": 17,
+  "stats": {
+   "con": 10,
+   "dex": 0,
+   "int": 52,
+   "str": 0,
+   "wil": 5
+  },
+  "treeOpen": [
+   "e_kindle",
+   "e_sparks",
+   "e_spread",
+   "e_chantburn",
+   "e_ash",
+   "e_conflag",
+   "e_hellfire",
+   "e_spear",
+   "e_cinders",
+   "e_phoenix",
+   "e_scorchshot",
+   "e_judgefire",
+   "e_hellblaze",
+   "e_weave",
+   "e_twin",
+   "e_bind"
+  ],
+  "skills": [
+   "e_chantburn",
+   "e_hellfire",
+   "e_cinders",
+   "e_hellblaze"
+  ],
+  "gear": [
+   {
+    "tpl": "bonemaul",
+    "g": "r",
+    "b": 22.2,
+    "ch": 2
+   },
+   {
+    "tpl": "plate",
+    "g": "r",
+    "b": 19.1,
+    "ch": 1
+   },
+   {
+    "tpl": "flamehands",
+    "g": "r",
+    "b": 18.8,
+    "ch": 2
+   },
+   {
+    "tpl": "vanguard",
+    "g": "r",
+    "b": 19.3,
+    "ch": 1
+   },
+   {
+    "tpl": "firstring",
+    "g": "l",
+    "b": 50.9,
+    "ch": 2
+   },
+   {
+    "tpl": "twicering",
+    "g": "h",
+    "b": 30.4,
+    "ch": 2
+   },
+   {
+    "tpl": "holywater",
+    "g": "r",
+    "b": 20.1,
+    "ch": 1
+   }
+  ],
+  "awk": [
+   "k_el1",
+   "a_breath",
+   "a_vial",
+   "a_skin"
+  ],
+  "cons": {
+   "herb:n": 10
+  },
+  "gold": 600
+ },
+ {
+  "id": "hunterhard1",
+  "label": "사냥꾼 · 가혹 · 1챕터 보스 직전 · Lv7",
+  "build": "hunter",
+  "mode": "hard",
+  "ch": 1,
+  "lv": 7,
+  "stats": {
+   "con": 5,
+   "dex": 28,
+   "int": 0,
+   "str": 5,
+   "wil": 0
+  },
+  "treeOpen": [
+   "h_weak",
+   "h_pierce",
+   "h_prey",
+   "h_heavy",
+   "h_chase",
+   "h_through",
+   "h_giant"
+  ],
+  "skills": [
+   "h_weak",
+   "h_pierce",
+   "h_prey",
+   "h_heavy"
+  ],
+  "gear": [
+   {
+    "tpl": "penancepike",
+    "g": "r",
+    "b": 25.7,
+    "ch": 1
+   },
+   {
+    "tpl": "cloak",
+    "g": "r",
+    "b": 25,
+    "ch": 1
+   },
+   {
+    "tpl": "reaperhands",
+    "g": "r",
+    "b": 20.1,
+    "ch": 1
+   },
+   {
+    "tpl": "witness",
+    "g": "r",
+    "b": 18.9,
+    "ch": 1
+   },
+   {
+    "tpl": "loner",
+    "g": "m",
+    "b": 12.7,
+    "ch": 1
+   },
+   {
+    "tpl": "jetring",
+    "g": "n",
+    "b": 4.9,
+    "ch": 1
+   },
+   {
+    "tpl": "boilflask",
+    "g": "r",
+    "b": 24.8,
+    "ch": 1
+   }
+  ],
+  "awk": [
+   "k_hn1"
+  ],
+  "cons": {
+   "herb:n": 10,
+   "dagger:m": 1,
+   "blackinc:n": 1
+  },
+  "gold": 200
+ },
+ {
+  "id": "spellbladehard1",
+  "label": "마검사 · 가혹 · 1챕터 보스 직전 · Lv5",
+  "build": "spellblade",
+  "mode": "hard",
+  "ch": 1,
+  "lv": 5,
+  "stats": {
+   "con": 10,
+   "dex": 0,
+   "int": 10,
+   "str": 10,
+   "wil": 3
+  },
+  "treeOpen": [
+   "sb_bladeward",
+   "sb_unravel",
+   "sb_shell",
+   "sb_rebound",
+   "sb_turn"
+  ],
+  "skills": [
+   "sb_bladeward",
+   "sb_unravel",
+   "sb_rebound",
+   "sb_turn"
+  ],
+  "gear": [
+   {
+    "tpl": "brokencenser",
+    "g": "r",
+    "b": 24.4,
+    "ch": 1
+   },
+   {
+    "tpl": "butcherhide",
+    "g": "m",
+    "b": 12.7,
+    "ch": 1
+   },
+   {
+    "tpl": "clothgloves",
+    "g": "n",
+    "b": 3.5,
+    "ch": 1
+   },
+   {
+    "tpl": "witness",
+    "g": "r",
+    "b": 25.8,
+    "ch": 1
+   },
+   {
+    "tpl": "jetring",
+    "g": "n",
+    "b": 1,
+    "ch": 1
+   },
+   {
+    "tpl": "huntring",
+    "g": "m",
+    "b": 12.6,
+    "ch": 1
+   },
+   {
+    "tpl": "emberflask",
+    "g": "r",
+    "b": 25.3,
+    "ch": 1
+   }
+  ],
+  "awk": [
+   "k_sb3"
+  ],
+  "cons": {
+   "herb:n": 1,
+   "chalk:n": 2,
+   "blackinc:n": 1,
+   "flash:m": 1,
+   "knot:n": 1,
+   "whet:n": 1
+  },
+  "gold": 200
+ },
+ {
+  "id": "spellbladehard2",
+  "label": "마검사 · 가혹 · 2챕터 보스 직전 · Lv11",
+  "build": "spellblade",
+  "mode": "hard",
+  "ch": 2,
+  "lv": 11,
+  "stats": {
+   "con": 10,
+   "dex": 0,
+   "int": 16,
+   "str": 16,
+   "wil": 9
+  },
+  "treeOpen": [
+   "sb_bladeward",
+   "sb_unravel",
+   "sb_shell",
+   "sb_rebound",
+   "sb_turn",
+   "sb_sunder",
+   "sb_armor",
+   "sb_reverse",
+   "sb_rhythm",
+   "sb_finale"
+  ],
+  "skills": [
+   "sb_unravel",
+   "sb_rebound",
+   "sb_turn",
+   "sb_rhythm"
+  ],
+  "gear": [
+   {
+    "tpl": "hook",
+    "g": "r",
+    "b": 23.1,
+    "ch": 1
+   },
+   {
+    "tpl": "butcherhide",
+    "g": "m",
+    "b": 12.7,
+    "ch": 1
+   },
+   {
+    "tpl": "bonesetter",
+    "g": "r",
+    "b": 18,
+    "ch": 2
+   },
+   {
+    "tpl": "swallowname",
+    "g": "l",
+    "b": 45.2,
+    "ch": 2
+   },
+   {
+    "tpl": "ashring",
+    "g": "r",
+    "b": 24.7,
+    "ch": 2
+   },
+   {
+    "tpl": "threadring",
+    "g": "r",
+    "b": 22.2,
+    "ch": 2
+   },
+   {
+    "tpl": "blessbasin",
+    "g": "r",
+    "b": 18.5,
+    "ch": 2
+   }
+  ],
+  "awk": [
+   "k_sb3",
+   "a_breath",
+   "a_gap"
+  ],
+  "cons": {
+   "herb:n": 10,
+   "mugwort:n": 1,
+   "herb:m": 1
+  },
+  "gold": 400
+ },
+ {
+  "id": "spellbladehard3",
+  "label": "마검사 · 가혹 · 3챕터 보스 직전 · Lv16",
+  "build": "spellblade",
+  "mode": "hard",
+  "ch": 3,
+  "lv": 16,
+  "stats": {
+   "con": 10,
+   "dex": 0,
+   "int": 22,
+   "str": 22,
+   "wil": 12
+  },
+  "treeOpen": [
+   "sb_counter",
+   "sb_unravel",
+   "sb_shell",
+   "sb_rebound",
+   "sb_turn",
+   "sb_sunder",
+   "sb_armor",
+   "sb_reverse",
+   "sb_rhythm",
+   "sb_finale",
+   "sb_bulwark",
+   "sb_twin",
+   "sb_coda",
+   "sb_ember",
+   "sb_flare",
+   "sb_ring"
+  ],
+  "skills": [
+   "sb_unravel",
+   "sb_turn",
+   "sb_sunder",
+   "sb_rhythm"
+  ],
+  "gear": [
+   {
+    "tpl": "hook",
+    "g": "r",
+    "b": 23.1,
+    "ch": 1
+   },
+   {
+    "tpl": "wrapbreakermail",
+    "g": "r",
+    "b": 18.9,
+    "ch": 3
+   },
+   {
+    "tpl": "kindlerglove",
+    "g": "h",
+    "b": 39.3,
+    "ch": 3
+   },
+   {
+    "tpl": "swallowname",
+    "g": "l",
+    "b": 45.2,
+    "ch": 2
+   },
+   {
+    "tpl": "furnaceband",
+    "g": "r",
+    "b": 25.9,
+    "ch": 3
+   },
+   {
+    "tpl": "lowtide",
+    "g": "h",
+    "b": 35.9,
+    "ch": 3
+   },
+   {
+    "tpl": "blessbasin",
+    "g": "r",
+    "b": 18.5,
+    "ch": 2
+   }
+  ],
+  "awk": [
+   "k_sb3",
+   "a_breath",
+   "a_gap",
+   "a_vigor"
+  ],
+  "cons": {
+   "herb:n": 1,
+   "flash:n": 2,
+   "dagger:m": 1,
+   "frostmoss:n": 1,
+   "relic:n": 1,
+   "awning:n": 3
+  },
+  "gold": 600
+ }
+]

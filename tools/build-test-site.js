@@ -54,11 +54,13 @@ for (const page of ['index.html', 'remote.html', 'privacy.html']) {
 }
 // 5-1. 테스트 메뉴(tools/testsite/devtools.js)를 테스트 사이트에만 넣는다
 {
+  const pj = path.join(__dirname, 'testsite', 'presets.json'); fs.mkdirSync(path.join(OUT, 'test'), { recursive: true });
+  fs.writeFileSync(path.join(OUT, 'test', 'presets.js'), '/* 테스트 메뉴 프리셋(실제 플레이 기록의 보스전 직전 상태, 개인 정보 없음) */\nwindow.TM_PRESETS = ' + (fs.existsSync(pj) ? fs.readFileSync(pj, 'utf8').trim() : '[]') + ';\n');
   const src = path.join(__dirname, 'testsite', 'devtools.js'); const dst = path.join(OUT, 'test', 'devtools.js');
   fs.mkdirSync(path.dirname(dst), { recursive: true }); fs.copyFileSync(src, dst);
   const v = crypto.createHash('sha256').update(fs.readFileSync(dst)).digest('hex').slice(0, 16);
   const index = path.join(OUT, 'index.html'); let h = fs.readFileSync(index, 'utf8');
-  h = h.replace('</body>', '<script src="test/devtools.js?v=' + v + '"></script>\n</body>'); fs.writeFileSync(index, h);
+  h = h.replace('</body>', '<script src="test/presets.js"></script>\n<script src="test/devtools.js?v=' + v + '"></script>\n</body>'); fs.writeFileSync(index, h);
 }
 // 6. 릴리스 지문(tools/stamp-release.js와 같은 방식)을 사본 기준으로
 const hash = s => crypto.createHash('sha256').update(s).digest('hex');

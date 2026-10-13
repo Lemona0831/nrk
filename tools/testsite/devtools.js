@@ -47,6 +47,24 @@
     weaken: () => { if (!need(inBattle(), '전투 중에 쓰세요')) return; for (const e of G.b.en) if (e.alive && e.hp > 1) e.hp = 1; done('적 모두 생명력 1'); },
     god: () => { if (!window.TM_HURT && has('hurtPlayer')) { window.TM_HURT = window.hurtPlayer; window.hurtPlayer = function () { if (window.TM_GOD) return 0; return window.TM_HURT.apply(this, arguments); }; } window.TM_GOD = !window.TM_GOD; done('무적 ' + (window.TM_GOD ? '켬' : '끔')); },
     exportRun: () => { const r = run(); if (!need(r, '캐릭터가 없습니다')) return; const rec = has('runRecord') ? runRecord(r) : r; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(rec, null, 1)], { type: 'application/json' })); a.download = 'nrk-test-run-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); },
+    preset: (id) => {
+      const P = (window.TM_PRESETS || []).find(x => x.id === id); if (!need(P, '프리셋을 고르세요') || !need(!inBattle(), '전투 밖에서 쓰세요')) return;
+      if (run() && !confirm('지금 판을 버리고 "' + P.label + '" 캐릭터로 새로 시작할까요?')) return;
+      G.cre = { name: '프리셋', mode: P.mode }; if (G.data) G.data.hardOpen = 1;
+      startRun(P.build); const r = G.run, p = r.p, miss = [];
+      r.mode = P.mode; r.ch = P.ch; r.boss = chData(P.ch).boss; r.clears = P.ch - 1; delete r.dg; dgInit(r); for (let c = 2; c <= P.ch; c++) chGift(r, c, true);
+      r.lv = Math.min(P.lv, LV_XP.length); p.lv = r.lv; r.xp = LV_XP[r.lv - 1] || 0;
+      r.stats = Object.assign({ str: 0, dex: 0, int: 0, con: 0, wil: 0 }, P.stats); r.statPending = 0; applyStats(p, r.stats);
+      treeInit(r); r.tree.open = P.treeOpen.filter(x => SK2[x]); r.tree.pts = Math.max(0, ((TREE2[P.build] || {}).pts || 1) + r.lv - 1 - r.tree.open.length);
+      r.skills = P.skills.filter(x => r.tree.open.includes(x)); p.skills = v2Equip(r);
+      P.gear.forEach((g, i) => { if (!g || /^start_/.test(g.tpl)) return; if (!ITEMS[g.tpl]) { miss.push(g.tpl); return; } const it = mkItem(g.tpl, { g: g.g, b: g.b, ch: g.ch }); addItem(r, it); const w = equipUid(r, it.uid, EQ_SLOTS[i]); if (w) miss.push(g.tpl + ': ' + w); });
+      applyGear(r, true);
+      r.awk = P.awk.filter(x => AWK_MAP[x]); p.awk = r.awk.slice();
+      r.cons = []; for (const [k, n] of Object.entries(P.cons || {})) { const [cid, g] = k.split(':'); if (CONS[cid]) consAdd(r, cid, g, n); }
+      r.gold = P.gold || 0; for (const k of ['life', 'mana', 'stam']) p.flask[k] = flaskCap(p, k); p.hp = p.hpMax; p.st = p.stMax;
+      G.scr = 'run'; G.b = null; G.sheet = null;
+      done(P.label + ' 불러옴' + (miss.length ? ' (없는 장비: ' + miss.join(', ') + ')' : ''));
+    },
     wipe: () => { if (!confirm('테스트 사이트의 세이브를 모두 지우고 새로 시작할까요? (실제 게임 세이브는 건드리지 않습니다)')) return; for (const k of Object.keys(localStorage)) if (/^nrk_test|^nrkTest|^nrktest/.test(k)) localStorage.removeItem(k); location.reload(); },
   };
 
@@ -56,6 +74,7 @@
     panel = $(`<div id="tm" role="dialog" aria-label="테스트 메뉴">
 <b>🧪 테스트 메뉴</b> <small>(테스트 사이트 전용)</small>
 <div class="st"></div>
+<h4>프리셋 캐릭터 (실제 플레이 기록의 보스전 직전 상태)</h4><div class="row"><select id="tm-preset">${(window.TM_PRESETS || []).map(x => '<option value="' + x.id + '">' + x.label + '</option>').join('')}</select><button data-x="preset">불러오기</button></div>
 <h4>자원</h4><div class="row"><button data-x="gold" data-n="100">골드 +100</button><button data-x="gold" data-n="1000">골드 +1000</button><button data-x="flask">플라스크 가득</button></div>
 <div class="row"><button data-x="hp" data-n="1">생명력 가득</button><button data-x="hp" data-n="0.3">생명력 30%</button><button data-x="hp" data-n="0.1">생명력 10%</button></div>
 <h4>성장·진행</h4><div class="row"><button data-x="level">레벨 +1</button><button data-x="settle">보스 깬 것으로 → 정산·상점</button></div>
@@ -75,6 +94,7 @@
         if (x === 'gold') A.gold(n); else if (x === 'hp') A.hp(n); else if (x === 'floor') A.floor(+panel.querySelector('#tm-floor').value); else if (x === 'floorTo') A.floor(n);
         else if (x === 'cons') A.cons(panel.querySelector('#tm-cons').value, panel.querySelector('#tm-cg').value, Math.max(1, +panel.querySelector('#tm-cn').value || 1));
         else if (x === 'item') A.item(sel.value, panel.querySelector('#tm-ig').value);
+        else if (x === 'preset') A.preset(panel.querySelector('#tm-preset').value);
         else A[x]();
       } catch (e) { if (has('toast')) toast('🧪 오류: ' + e.message); console.error(e); }
     });
