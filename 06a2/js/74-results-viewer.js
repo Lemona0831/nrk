@@ -73,14 +73,14 @@ function testerRows(testers) {
 function csvCell(s) { s = String(s == null ? '' : s); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
 /* 파일 내려받기: 아티팩트 화면이면 그 기능으로, 일반 웹사이트(지인 주소)면 브라우저 내려받기로 */
 async function saveFile(name, data) {
-  if (G.downloads) { try { await G.downloads.save({ filename: name, data }); toast('내려받았습니다'); } catch (e) { toast('내려받기를 취소했습니다'); } return; }
+  if (G.downloads) { try { await G.downloads.save({ filename: name, data }); toast('내려받았습니다'); return true; } catch (e) { toast('내려받기를 취소했습니다'); return false; } }
   try {
     const type = /\.csv$/.test(name) ? 'text/csv;charset=utf-8' : 'application/json;charset=utf-8';
     const url = URL.createObjectURL(new Blob([data], { type }));
     const a = document.createElement('a'); a.href = url; a.download = name; a.rel = 'noopener'; a.style.display = 'none';
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
     toast('내려받았습니다');
-  } catch (e) { toast('이 브라우저에서는 내려받기를 할 수 없습니다'); }
+  } catch (e) { toast('이 브라우저에서는 내려받기를 할 수 없습니다'); return false; }
 }
 function dashJson() { return JSON.stringify({ v: VERSION, exportedAt: Date.now(), testers: (G.dashRaw || []).map((T, i) => Object.assign({ label: testerLabel(T, i) }, T)) }, null, 1); }
 function notesCsv() {
@@ -287,11 +287,37 @@ function vAdminCombat(r) {
   return h+'</tbody></table></div>';
 }
 
+function canDeleteRun() { return !!(G.site && G.sb && G.owner && (G.superAdmin || G.adminPass)); }
+function vRunDelete(x) {
+  if(!canDeleteRun() || !x.uid || !x.r.id)return '';
+  const target=G.runDelTarget, asking=target && target.uid===x.uid && target.id===x.r.id;
+  return '<div class="admin-fold"><button class="sm" data-a="rundelask"'+(G.runDelBusy ? ' disabled' : '')+'>이 판의 기록만 삭제</button>'+(G.runDelMsg ? '<p role="status">'+esc(G.runDelMsg)+'</p>' : '')+(asking ? '<div role="alertdialog" aria-labelledby="rundel-title"><h4 id="rundel-title">이 플레이 기록을 삭제할까요?</h4><p>'+esc(x.who)+' · '+esc(x.r.cname || '이름 없는 캐릭터')+' · 판 ID '+esc(x.r.id)+'</p><p>이 판과 그 행동 기록만 삭제합니다. 먼저 백업 파일을 받습니다. 다른 판·계정·랭킹·캐릭터 세이브는 유지됩니다. 진행 중인 판은 플레이어가 이어하면 기록이 다시 올라올 수 있습니다.</p><label for="rundelword">삭제하려면 “지우기”를 입력하세요</label><input id="rundelword" autocomplete="off"'+(G.runDelBusy ? ' disabled' : '')+'><div class="row"><button class="sm" data-a="rundelgo"'+(G.runDelBusy ? ' disabled' : '')+'>백업 받고 이 판 삭제</button><button class="sm" data-a="rundelno"'+(G.runDelBusy ? ' disabled' : '')+'>취소</button></div></div>' : '')+'</div>';
+}
+async function deleteOneRun(word) {
+  if(G.runDelBusy || !canDeleteRun())return;
+  if(word!=='지우기'){G.runDelMsg='“지우기”를 정확히 입력하세요. 삭제하지 않았습니다.';render();return;}
+  const target=G.runDelTarget;if(!target)return;
+  const T=(G.dashRaw || []).find(t=>t.uid===target.uid),r=T && (T.runs || []).find(r=>r.id===target.id);
+  if(!r || !/^[a-zA-Z0-9_-]+$/.test(target.uid) || !/^[a-zA-Z0-9_-]+$/.test(target.id)){G.runDelMsg='삭제할 기록을 다시 선택하세요.';render();return;}
+  G.runDelBusy=true;G.runDelMsg='백업을 받는 중…';render();
+  try {
+    const backed=await saveFile('nrk-한판-삭제전-'+r.id+'.json',JSON.stringify({v:VERSION,exportedAt:Date.now(),testers:[Object.assign({},T,{runs:[r],scen:[],final:null})]},null,2));
+    if(!backed){G.runDelMsg='백업을 받지 못해 삭제를 중단했습니다.';return;}
+    if(!canDeleteRun()){G.runDelMsg='관리자 권한을 다시 확인하세요. 삭제하지 않았습니다.';return;}
+    const path='playtest/'+target.uid+'/'+COL.runs+'/'+target.id;
+    const {data,error}=await G.sb.rpc('admin_delete',{pass:G.adminPass || '',paths:[path]});if(error)throw error;
+    if(!data){G.runDelMsg='저장소에 해당 기록이 없습니다. 새로 고침해 확인하세요.';return;}
+    for(const tester of G.dashRaw || [])if(tester.uid===target.uid)tester.runs=(tester.runs || []).filter(x=>x.id!==target.id);G.dash=aggregate(G.dashRaw);G.rfOpen=null;G.runDelTarget=null;G.runDelMsg='이 판의 기록을 삭제했습니다. 백업 파일은 다운로드 폴더에서 확인하세요.';toast(G.runDelMsg);
+  }catch(e){G.runDelMsg='삭제하지 못했습니다. '+(e.code==='PGRST202' ? '저장소의 관리자 삭제 함수 설정을 확인하세요.' : '새로 고침 후 다시 확인하세요.');}
+  finally{G.runDelBusy=false;render();}
+}
+
 function vRunDetail(x) {
   const r = x.r, acts = r.acts || [], page = Math.max(0, Math.min(G.raPage || 0, Math.ceil(acts.length / 100) - 1));
   const names = { act: '행동', hit: '피격', break: '붕괴', kill: '처치', dead: '사망', heal: '회복', dodge: '흘리기', dealt: '가한 피해', eact: '적 행동', cons: '소모품' };
   const skills = allSkillNames();
   let h = '<section class="card admin-detail" id="admin-run-detail"><h4>' + esc(r.cname || '이름 없는 캐릭터') + ' 상세 기록</h4><p>' + esc(x.who) + '</p><p class="mini">판 ID: ' + esc(r.id || '없음') + ' · 행동 기록 ' + acts.length + '건</p><button class="sm" data-a="runclose">상세 닫기</button>';
+  h += vRunDelete(x);
   const tab=G.rdTab || 'summary';
   h += '<div class="admin-tabs" role="group" aria-label="개인 상세 보기">'+[['summary','요약'],['gear','장비·아이템'],['growth','스탯·스킬 트리'],['battle','행동 기록']].map(([k,n])=>'<button class="chip'+(tab===k ? ' on' : '')+'" data-a="runtab" data-k="'+k+'" aria-pressed="'+(tab===k)+'">'+n+'</button>').join('')+'</div><div class="row"><button class="sm" data-a="runroomcsv">이 판의 방별 통계 CSV</button></div>';
   if(tab==='summary') return h+vAdminCombat(r)+'</section>';
@@ -319,7 +345,7 @@ function vAdminOverview(rows) {
 function vRunLogs() {
   const f = G.rf || {}, rows = dashRunRows(), pages = Math.max(1, Math.ceil(rows.length / 25));
   const page = Math.max(0, Math.min(G.rfPage || 0, pages - 1));
-  let h = '<section class="card"><h4>플레이 로그 찾기</h4><p class="mini">마지막 기록이 최신인 순서입니다. 검색 조건을 고른 뒤 적용을 누르세요.</p><div class="admin-filters"><label>플레이어 <select id="runperson"><option value="">전체 플레이어</option>' + (G.dashRaw || []).map((T,i)=>'<option value="' + esc(T.uid) + '"' + (f.uid === T.uid ? ' selected' : '') + '>' + esc(testerLabel(T,i)) + '</option>').join('') + '</select></label><label>이름·ID 검색 <input id="runquery" type="search" value="' + esc(f.q || '') + '" placeholder="플레이어, 캐릭터, 계정·판 ID"></label><label>직업 <select id="runbuild"><option value="all">전체 직업</option>' + CLASS_KEYS().map(k => '<option value="' + k + '"' + (f.b === k ? ' selected' : '') + '>' + esc(BUILDS[k].n) + '</option>').join('') + '</select></label><label>결과 <select id="runresult"><option value="all">전체 결과</option>' + Object.entries(DASH_RESULTS).map(([k, n]) => '<option value="' + k + '"' + (f.result === k ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></label><label>시작일 <input id="runfrom" type="date" value="' + esc(f.from || '') + '"></label><label>종료일 <input id="runto" type="date" value="' + esc(f.to || '') + '"></label></div><div class="row"><button class="sm gold" data-a="runfilter">검색 적용</button><button class="sm" data-a="runreset">초기화</button><button class="sm" data-a="runscsv">검색 결과 CSV 받기</button></div><p role="status">검색 결과 ' + rows.length + '판 · ' + (page + 1) + '/' + pages + '페이지 (25판씩)</p>';
+  let h = '<section class="card">'+(G.runDelMsg ? '<p class="banner" role="status">'+esc(G.runDelMsg)+'</p>' : '')+'<h4>플레이 로그 찾기</h4><p class="mini">마지막 기록이 최신인 순서입니다. 검색 조건을 고른 뒤 적용을 누르세요.</p><div class="admin-filters"><label>플레이어 <select id="runperson"><option value="">전체 플레이어</option>' + (G.dashRaw || []).map((T,i)=>'<option value="' + esc(T.uid) + '"' + (f.uid === T.uid ? ' selected' : '') + '>' + esc(testerLabel(T,i)) + '</option>').join('') + '</select></label><label>이름·ID 검색 <input id="runquery" type="search" value="' + esc(f.q || '') + '" placeholder="플레이어, 캐릭터, 계정·판 ID"></label><label>직업 <select id="runbuild"><option value="all">전체 직업</option>' + CLASS_KEYS().map(k => '<option value="' + k + '"' + (f.b === k ? ' selected' : '') + '>' + esc(BUILDS[k].n) + '</option>').join('') + '</select></label><label>결과 <select id="runresult"><option value="all">전체 결과</option>' + Object.entries(DASH_RESULTS).map(([k, n]) => '<option value="' + k + '"' + (f.result === k ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></label><label>시작일 <input id="runfrom" type="date" value="' + esc(f.from || '') + '"></label><label>종료일 <input id="runto" type="date" value="' + esc(f.to || '') + '"></label></div><div class="row"><button class="sm gold" data-a="runfilter">검색 적용</button><button class="sm" data-a="runreset">초기화</button><button class="sm" data-a="runscsv">검색 결과 CSV 받기</button></div><p role="status">검색 결과 ' + rows.length + '판 · ' + (page + 1) + '/' + pages + '페이지 (25판씩)</p>';
   h += vAdminOverview(rows);
   h += '<div class="tbl"><table class="st2"><caption class="sr">검색된 플레이 로그</caption><thead><tr><th>플레이어</th><th>캐릭터·직업</th><th>결과</th><th>도달</th><th>마지막 기록</th><th>상세</th></tr></thead><tbody>';
   h += rows.slice(page * 25, (page + 1) * 25).map(x => { const r = x.r; return '<tr><td>' + esc(x.who) + '</td><td>' + esc(r.cname || '—') + '<br>' + esc((BUILDS[r.build] || {}).n || r.build || '—') + '</td><td>' + esc(DASH_RESULTS[dashRunResult(r)] || dashRunResult(r)) + '</td><td>' + esc(rankProg({ ch: r.ch, clears: r.clears, floor: r.roomReached })) + '</td><td>' + esc(dashRunTime(r) ? new Date(dashRunTime(r)).toLocaleString('ko-KR') : '—') + '</td><td><button class="sm" data-a="runopen" data-k="' + x.key + '" aria-expanded="' + (G.rfOpen === x.key) + '">기록 보기</button></td></tr>'; }).join('') || '<tr><td colspan="6">조건에 맞는 기록이 없습니다.</td></tr>';

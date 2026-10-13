@@ -52,7 +52,7 @@ function onClick(ev) {
     case 'restart': beginCreate(); break;
     case 'resumekept': { const d = G.data, i = (d.kept || []).findIndex(k => k.id === el.dataset.k); if (i < 0) break; const cur = d.cur && !runOver(d.cur) ? d.cur : null;
       const oldKept=d.kept.slice(),oldCur=d.cur;const k = d.kept.splice(i, 1)[0]; if (cur) d.kept.push(cur); d.cur = k;
-      if(!saveLocal()){d.kept=oldKept;d.cur=oldCur;toast('저장하지 못해 캐릭터를 바꾸지 않았습니다.');break;} resumeRun(); break; }
+      if(!saveLocal()){d.kept=oldKept;d.cur=oldCur;toast(localSaveReason()+' 캐릭터를 바꾸지 않았습니다.');break;} resumeRun(); break; }
     case 'saveabandon': {const d=G.data,k=d.cur&&d.cur.id===el.dataset.k?d.cur:(d.kept||[]).find(c=>c.id===el.dataset.k);if(!k||!ask((k.cname||'이 캐릭터')+'의 여정을 포기할까요? 이 캐릭터는 다시 이어할 수 없습니다.'))break;abandonRun(k);if(d.cur&&d.cur.id===k.id)delete d.cur;d.kept=(d.kept||[]).filter(c=>c.id!==k.id);if(G.run&&G.run.id===k.id){G.run=null;G.b=null;}saveLocal();render();break;}
     case 'cnroll': { const cur = val('cname'); let n = pickR(CNAMES); for (let k = 0; k < 5 && n === cur; k++) n = pickR(CNAMES); G.cre.name = n; render(); break; }
     case 'cnok': { const n = (val('cname') || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 12); if (!n) { toast('이름을 적거나 주사위를 눌러 주세요'); const x = document.getElementById('cname'); if (x) x.focus(); break; } G.cre.name = n; G.cre.step = 'cls'; render(); window.scrollTo(0, 0); break; }
@@ -224,6 +224,9 @@ function onClick(ev) {
     case 'runfilter': G.rf = { uid: val('runperson'), q: val('runquery'), b: val('runbuild'), result: val('runresult'), from: val('runfrom'), to: val('runto') }; G.rfPage = 0; G.rfOpen = null; render(); break;
     case 'runreset': G.rf = {}; G.rfPage = 0; G.rfOpen = null; render(); break;
     case 'runpage': G.rfPage = Math.max(0, +el.dataset.v || 0); G.rfOpen = null; render(); break;
+    case 'rundelask': {const x=dashSelectedRun();if(x && canDeleteRun()){G.runDelTarget={uid:x.uid,id:x.r.id};G.runDelMsg='';render();}break;}
+    case 'rundelno': if(!G.runDelBusy){G.runDelTarget=null;G.runDelMsg='';render();}break;
+    case 'rundelgo': deleteOneRun((val('rundelword') || '').trim()); break;
     case 'runopen': G.rfOpen = el.dataset.k; G.raPage = 0; G.rdTab = 'summary'; render(); document.getElementById('admin-run-detail')?.scrollIntoView({ block: 'start' }); break;
     case 'runtab': G.rdTab = el.dataset.k; render(); document.getElementById('admin-run-detail')?.scrollIntoView({ block: 'start' }); break;
     case 'runactioncsv': saveFile('nrk-행동별상태.csv', dashActionCsv()); break;
