@@ -5,7 +5,7 @@
 const fs = require('fs'), path = require('path');
 module.exports = function (api) {
   const { E, ROOT } = api;
-  const dir = path.join(ROOT, '06a2');
+  const dir = ROOT;
   const FILES = [
     ['ui-info', 'js/54-info-popups.js'], ['ui-text', 'js/60-text-layer.js'], ['ui-hud', 'js/52-battle-hud.js'], ['ui-parts', 'js/53-battle-parts.js'],
     ['ui-hudfree', 'js/55-hud-free.js'], ['ui-hudedit', 'js/56-hud-editor.js'], ['ui-huddirect', 'js/57-hud-direct.js'], ['ui-hudremote', 'js/57-hud-remote.js'], ['ui-remoteui', 'remote/ui.js'], ['ui-remotepage', 'remote/page.js'], ['ui-tree', 'js/72-skill-tree-screen.js'], ['ui-shop', 'js/46-screens-shop.js'],

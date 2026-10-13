@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR=process.env.DGDIR||'06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa.js'),E=D.G0,V=D.run_,F=V('IFX');
 const near=(a,b)=>assert(Math.abs(a-b)<1e-6,`${a} != ${b}`);
 function battle(items={}){const p=E.mkPlayer('spellblade',items,{con:25,wil:0});p.hp=20;const en=[E.mkEnemy('bruiser',false,0),E.mkEnemy('archer',false,1)];for(const e of en)e.hp=e.hpMax=10000;const b=E.newBattle(p,en,{});b.actN=1;b.turnIdx=1;b.cur={id:'basic'};return b;}

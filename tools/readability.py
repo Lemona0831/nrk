@@ -152,7 +152,7 @@ MOCK = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mock_sb.js
 def main():
     global SITE
     ap = argparse.ArgumentParser()
-    ap.add_argument('--site', default='06a2'); ap.add_argument('--out', default=None); ap.add_argument('--shots', default=None)
+    ap.add_argument('--site', default='.'); ap.add_argument('--out', default=None); ap.add_argument('--shots', default=None)
     ap.add_argument('--fs', default='1'); ap.add_argument('--axe', default=None); ap.add_argument('--only', default=None); ap.add_argument('--widths', default='390,1280')
     a = ap.parse_args()
     SITE = 'file://' + os.path.join(ROOT, a.site, 'index.html').replace(os.sep, '/')  # --site에는 절대 경로도 된다(전 판을 git archive로 풀어 둔 곳)

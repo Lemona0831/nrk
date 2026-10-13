@@ -6,7 +6,7 @@
    - 모드 normal: 생존 그대로. immortal: 생명력을 크게 늘려 죽지 않게 하고 순수한 처치 속도(잠재력)를 본다
    실행: SIT_CLS=hunter SIT_CH=1 node tools/boss-pace.js [조합 수=24] [DGDIR=. | 06a2]  → JSON 한 줄씩
    지표: acts(처치까지 내 행동 수), cum4·cum5(행동 4·5번째까지 보스 생명력을 깎은 비율), tele(보스가 예고한 강타 수), resp(내가 막거나 피하거나 끊은 수) */
-process.env.DGDIR = process.env.DGDIR || '06a2'; process.env.SIT_REAL = '1';
+process.env.DGDIR = process.env.DGDIR || '.'; process.env.SIT_REAL = '1';
 const S = require('./sitqa.js'); const D = require('./dgqa.js'); const Q = require('./qa.js'); const SITS = require('./situations.js');
 const G0 = S.G0, run_ = D.run_;
 const CLS = process.env.SIT_CLS, CH = +(process.env.SIT_CH || 1), REPS = +(process.argv[2] || 24), PK = process.env.PK || 'careful';

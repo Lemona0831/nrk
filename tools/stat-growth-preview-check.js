@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR=process.env.DGDIR||'06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa.js'),E=D.G0;
 const pct=(a,b)=>Math.round((b/a-1)*1000)/10;
 let cases=0,skillCases=0,capCases=0;

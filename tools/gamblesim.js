@@ -3,7 +3,7 @@
    (3) 값으로 환산한 기대 값 (4) 되팔기 고리 (5) 운명의 저울 기대 값 (6) 각인 제안 분포를 낸다. 네트워크 · 파일 쓰기 없음.
    실행: DGDIR=06a2 node tools/gamblesim.js [꾸러미 수=20000] */
 const fs = require('fs'), path = require('path'), vm = require('vm');
-const DIR = process.env.DGDIR || '06a2'; const N = +(process.argv[2] || 20000);
+const DIR = process.env.DGDIR || '.'; const N = +(process.argv[2] || 20000);
 const dir = path.resolve(__dirname, '..', DIR); const PS = require('./pagesrc.js'); const data = PS.pageData(dir), script = PS.pageScript(dir); // 한 파일 · 나눈 파일 모두 같은 글자
 const ctx = { console, setTimeout: () => 0, clearTimeout: () => { }, setInterval: () => 0, clearInterval: () => { }, module: { exports: {} } };
 vm.createContext(ctx); vm.runInContext(data + '\n' + script + '\n;this.__G = G;', ctx, { filename: 'index.html' });

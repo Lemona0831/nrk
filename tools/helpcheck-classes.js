@@ -2,7 +2,7 @@
 module.exports = function (api) {
   const { E, add } = api;
   const pct = v => Math.round(v * 100);
-  const PS = require('./pagesrc.js'); const SRC = PS.pageScript(require('path').join(api.ROOT, '06a2'));
+  const PS = require('./pagesrc.js'); const SRC = PS.pageScript(require('path').join(api.ROOT));
   const has = s => SRC.includes(s);
   const C = 'classes';
 

@@ -1,5 +1,5 @@
 'use strict';
-const fs=require('fs'),assert=require('assert/strict');process.env.DGDIR=process.env.DGDIR||'06a2';
+const fs=require('fs'),assert=require('assert/strict');process.env.DGDIR=process.env.DGDIR || '.';
 const D=require('./dgqa.js'),E=D.G0,V=D.run_,U=V('SITE_UPDATE'),g=E.__G,meta='a'.repeat(64),next='b'.repeat(64);
 const store=new Map(),timers=[];let destination='',indexRevision=next,fail=false,offline=false;
 E.URL=URL;E.AbortController=AbortController;E.localStorage={setItem:(k,v)=>{if(fail)throw Error('quota');store.set(k,v)},getItem:k=>store.get(k)||null};E.sessionStorage={setItem:()=>{},getItem:()=>null,removeItem:()=>{}};
@@ -7,7 +7,7 @@ E.document={hidden:false,activeElement:null,baseURI:'https://example.invalid/nrk
 E.DOMParser=class{parseFromString(){return{querySelector:()=>({content:indexRevision})}}};
 E.fetch=async()=>{if(offline)throw Error('offline');return{ok:true,text:async()=>JSON.stringify({revision:next})}};
 E.setTimeout=fn=>{timers.push(fn);return timers.length};E.clearTimeout=()=>{};
-const storageSource=fs.readFileSync('06a2/js/62-storage-sync.js','utf8'),saveStart=storageSource.indexOf('function saveLocal()');
+const storageSource=fs.readFileSync('js/62-storage-sync.js','utf8'),saveStart=storageSource.indexOf('function saveLocal()');
 V(storageSource.slice(saveStart,storageSource.indexOf('/* 결과 보기',saveStart)));
 g.data=E.blankData();g.scr='title';U.current=meta;
 async function main(){

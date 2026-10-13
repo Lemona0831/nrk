@@ -1,4 +1,4 @@
-'use strict';process.env.DGDIR='06a2';const assert=require('assert/strict'),D=require('./dgqa.js'),E=D.G0,V=D.run_;const plays=[];
+'use strict';process.env.DGDIR = process.env.DGDIR || '.';const assert=require('assert/strict'),D=require('./dgqa.js'),E=D.G0,V=D.run_;const plays=[];
 class AudioMock {constructor(src){this.src=src;this.handlers={}}cloneNode(){return new AudioMock(this.src)}addEventListener(k,f){this.handlers[k]=f}play(){plays.push(this);if(AudioMock.fail)throw Error('test');return {catch(){}}}}
 E.__Audio=AudioMock;V('var Audio=__Audio;SND.unlocked=true;G.data={audio:{on:true,bfx:true,sfx:.7}};SFXB.pre=false');
 assert.equal(V("vfxSfxKey({k:'hit',st:'pierce',build:'assassin'})"),'slash');assert.equal(V("vfxSfxKey({k:'hit',st:'blunt',build:'assassin',big:true})"),'slash2');assert.equal(V("vfxSfxKey({k:'hit',st:'blunt',build:'warden',big:true})"),'big');

@@ -1,6 +1,6 @@
 'use strict';
 // 상태 객체·연속 타격·비율 채우기·초과 피해가 실제 자원 계산에 연결되는지 검사.
-process.env.DGDIR = process.env.DGDIR || '06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const assert = require('assert/strict');
 const D = require('./dgqa.js'), E = D.G0;
 const close = (a, b, msg) => assert(Math.abs(a - b) < 1e-7, msg + ': ' + a + '/' + b);

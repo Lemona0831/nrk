@@ -26,7 +26,7 @@ const P = require('./pagesrc.js');
 const PLAN = require('./splitplan.js');
 
 const args = process.argv.slice(2); const flags = args.filter(a => a.startsWith('--')); const pos = args.filter(a => !a.startsWith('--'));
-const DIR = pos[0] || '06a2';
+const DIR = pos[0] || '.';
 const flag = k => flags.find(f => f === '--' + k || f.startsWith('--' + k + '='));
 const flagVal = k => { const f = flag(k); return f && f.includes('=') ? f.slice(k.length + 3) : null; };
 

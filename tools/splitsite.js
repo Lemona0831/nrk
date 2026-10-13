@@ -14,7 +14,7 @@ const PLAN = require('./splitplan.js');
 
 const args = process.argv.slice(2); const pos = args.filter(a => !a.startsWith('--'));
 const opt = k => { const f = args.find(a => a.startsWith('--' + k + '=')); return f ? f.slice(k.length + 3) : null; };
-const DIR = pos[0] || '06a2'; const REV = opt('rev'); const OUT = opt('out');
+const DIR = pos[0] || '.'; const REV = opt('rev'); const OUT = opt('out');
 if (!OUT) { console.error('--out=쓸 폴더 가 필요합니다'); process.exit(2); }
 
 const srcDir = P.siteDir(DIR); const outDir = path.isAbsolute(OUT) ? OUT : path.join(P.ROOT, OUT);

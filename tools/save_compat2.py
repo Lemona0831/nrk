@@ -3,7 +3,7 @@ import pathlib, json
 from playwright.sync_api import sync_playwright
 R = pathlib.Path(r'C:\Users\ardwi\Downloads\나락의 심연\nrk')
 S = pathlib.Path(r'C:\Users\ardwi\AppData\Local\Temp\claude\c--Users-ardwi-Downloads--------nrk\11bb231f-de11-4691-95a0-6521bc309beb\scratchpad')
-OLD = (S / 'oldsite' / '06a2' / 'index.html').as_uri(); NEW = (R / '06a2' / 'index.html').as_uri()
+OLD = (S / 'oldsite' / '06a2' / 'index.html').as_uri(); NEW = (R / 'index.html').as_uri()
 mock = (R / 'tools' / 'mock_sb.js').read_text(encoding='utf-8')
 CFG = "window.NRK_CONFIG={supabaseUrl:'https://demo.supabase.co',anonKey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.demo'};"
 errs = []

@@ -1,7 +1,7 @@
 /* 3챕터 규칙 점검 (10월 7일, docs/챕터/3챕터.md 19.2절 도구): 06a2의 게임 코드를 vm에서 그대로 돌려, 3챕터 몸 · 게이지 · 강적 · 보스 · 소모품이 설계대로 움직이는지 장면마다 확인한다.
    강적 · 보스의 값은 비공개 문서와 data/dungeon.js의 FOE_X · QUEEN을 읽는다(여기에 대처를 적지 않는다). 실패 0이어야 한다.
    실행: node tools/ch3check.js */
-process.env.DGDIR = process.env.DGDIR || '06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const D = require('./dgqa.js'); const G0 = D.G0; const run_ = D.run_;
 let fail = 0, pass = 0; const ok = (c, m) => { if (c) pass++; else { fail++; console.log('실패:', m); } };
 const V = k => run_(k);

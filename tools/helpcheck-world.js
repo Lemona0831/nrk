@@ -4,7 +4,7 @@
 const fs = require('fs'), path = require('path');
 module.exports = function (api) {
   const E = api.E;
-  const J = f => fs.readFileSync(path.join(api.ROOT, '06a2/js', f), 'utf8');
+  const J = f => fs.readFileSync(path.join(api.ROOT, 'js', f), 'utf8');
   const S80 = J('80-events.js'), S66 = J('66-dungeon-flow.js'), S24 = J('24-clock-damage.js'), S20 = J('20-battle-state.js'), S32 = J('32-player-action.js'),
     S34 = J('34-rounds-setup.js'), S14 = J('14-chapter-bodies.js'), S30 = J('30-enemy-ai.js'), S42 = J('42-chrome-map.js'), S22 = J('22-class-tree-rules.js');
   const L80 = S80.split('\n');

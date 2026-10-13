@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR='06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa.js'),E=D.G0,V=D.run_,G=E.__G;
 const run={build:'hunter',p:E.mkPlayer('hunter',{}),bag:[],cons:[],swaps:[],rooms:[],gold:100,shop:{log:[]}};
 E.initGear(run);G.run=run;G.data={};G.busy=false;E.render=()=>{};E.saveRunLocal=()=>{};E.saveCur=()=>{}; // 실제 저장·복원은 브라우저 점검에서 검증합니다.

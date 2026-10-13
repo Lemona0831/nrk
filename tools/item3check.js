@@ -1,7 +1,7 @@
 /* 3챕터 장비 효과 점검 (10월 8일, docs/아이템/3챕터-장비.md 8절): 06a2의 게임 코드를 vm에서 그대로 돌려, 장비의 새 지점과 핵심 효과가 문장대로 일어나는지 장면마다 확인한다.
    itemcheck는 "발동했는가"를 세고, 이 점검은 "문장대로 바뀌었는가"를 본다. 실패 0이어야 한다.
    실행: DGDIR=06a2 node tools/item3check.js */
-process.env.DGDIR = process.env.DGDIR || '06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const D = require('./dgqa.js'); const G0 = D.G0; const run_ = D.run_;
 let fail = 0, pass = 0; const ok = (c, m) => { if (c) pass++; else { fail++; console.log('실패:', m); } };
 const V = k => run_(k);

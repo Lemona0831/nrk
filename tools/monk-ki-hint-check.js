@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR=process.env.DGDIR||'06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa'),E=D.G0,G=E.__G,r1=D.run_('r1');
 G.data={};let cases=0;
 for(const s of E.SKILLS2.monk.filter(s=>s.fx.some(f=>['kiBurst','kiPer'].includes(f.k))))for(const str of [0,10,30])for(const ki of [0,1,3,5])for(const chill of [0,2]){

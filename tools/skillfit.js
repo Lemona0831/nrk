@@ -3,7 +3,7 @@
    06a2/data/skills.js의 그 직업 줄만 바꾼다(줄 모양은 그대로). 맞춘 뒤에는 node tools/skillscore.js <직업>으로 확인하고 50상황으로 잰다.
    사용: node tools/skillfit.js <직업> [--dry] [--cdfree] [--only=id,id] */
 const fs = require('fs'), vm = require('vm'), path = require('path');
-const ROOT = path.join(__dirname, '..', process.env.SKDIR || '06a2', 'data') + '/';
+const ROOT = path.join(__dirname, '..', process.env.SKDIR || '.', 'data') + '/';
 const args = process.argv.slice(2); const CLS = args[0]; const DRY = args.includes('--dry'); const CDFREE = args.includes('--cdfree');
 const ONLY = (args.find(a => a.startsWith('--only=')) || '').slice(7).split(',').filter(Boolean);
 const skText = fs.readFileSync(ROOT + 'skills.js', 'utf8'); const kitText = fs.readFileSync(ROOT + 'skillkit.js', 'utf8');

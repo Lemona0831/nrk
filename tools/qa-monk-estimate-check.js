@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR=process.env.DGDIR||'06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa'),E=D.G0,Q=require('./qa');
 const selected=E.SKILLS2.monk.filter(s=>s.fx.some(f=>['kiBurst','kiPer'].includes(f.k)));
 let cases=0;

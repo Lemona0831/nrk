@@ -3,7 +3,7 @@
    double = 지금 엔진(가속이면 라운드 맨 앞에서 두 번), order = 가속이 순서만 앞으로(다른 직업과 같은 가속)
    지표: 승률 · 점수(sitqa와 같은 식), 라운드당 준 피해 · 내 행동 수, 선제(아직 움직이지 않은 적을 그 라운드 행동 전에 쓰러뜨리거나 큰 공격을 끊음) */
 const cls = process.argv[2] || 'hunter', variant = process.argv[3] || 'double', N = +(process.argv[4] || 4), MIX = process.argv[5] === 'mix';
-process.env.SIT_CLS = cls; process.env.DGDIR = process.env.DGDIR || '06a2';
+process.env.SIT_CLS = cls; process.env.DGDIR = process.env.DGDIR || '.';
 const root = require('path').join(__dirname, '..');
 const Sq = require(root + '/tools/sitqa.js'); const Q = require(root + '/tools/qa.js'); const D = require(root + '/tools/dgqa.js');
 const { SIT } = require(root + '/tools/situations.js');

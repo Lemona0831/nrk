@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR = '06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const assert = require('assert/strict'), D = require('./dgqa.js'), E = D.G0, V = D.run_;
 assert.equal(V('STAT_START'), 20);
 for (const lv of [1,5,10,15]) {

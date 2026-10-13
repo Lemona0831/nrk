@@ -2,7 +2,7 @@
 /* 상점 소모품 "N개 사기" 점검 (10월 14일): 부분 묶음의 빈자리 또는 한 묶음을 한 번에 사되,
    골드·가방 공간을 넘지 않고, 실패하면 아무것도 바뀌지 않으며, 구매 기록은 한 개씩 남는지 본다.
    실행: DGDIR=. node tools/cons-fill-check.js   (DGDIR=06a2 로 개발본) */
-process.env.DGDIR = process.env.DGDIR || '06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const assert = require('assert/strict'), D = require('./dgqa'), E = D.G0, G = E.__G;
 E.render = () => { }; E.saveRunLocal = () => { }; E.saveCur = () => { }; G.data = {}; G.busy = false;
 const PRICE = 12;

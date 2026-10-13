@@ -8,7 +8,7 @@ module.exports = function (api) {
   (ent.top || []).forEach((t, i) => rows.push({ id: 'top:' + i, text: t }));
   ent.groups.forEach((g, gi) => g.items.forEach((t, i) => rows.push({ id: 'g' + gi + ':' + i, text: t })));
   api.source(S, rows);
-  const has = (f, s) => fs.readFileSync(path.join(api.ROOT, '06a2', f), 'utf8').includes(s);
+  const has = (f, s) => fs.readFileSync(path.join(api.ROOT, f), 'utf8').includes(s);
 
   /* ===== 판 이름: 화면에 보이는 모든 판 표시가 VERSION과 CHANGE_VER에서 나온다 ===== */
   api.source('version', [{ id: 'title', text: E('VERSION') + ' 나락의 유산' }]);

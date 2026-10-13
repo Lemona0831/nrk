@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('assert/strict'),vm=require('vm'),PS=require('./pagesrc');
-(async()=>{for(const dir of ['.','06a2']){
+(async()=>{for(const dir of ['.']){
 const c={console,setTimeout:()=>0,clearTimeout(){},setInterval:()=>0,clearInterval(){}};vm.createContext(c);vm.runInContext(PS.pageData(dir)+'\n'+PS.pageScript(dir)+'\nthis.__G=G;',c);const G=c.__G;
 vm.runInContext('render=()=>{};toast=()=>{};',c);const calls=[];G.site=true;G.owner=true;G.superAdmin=true;G.sb={rpc:async(n,args)=>{calls.push([n,args]);return {data:3,error:null};}};
 const setup=()=>{G.dashRaw=[{uid:'player-1',runs:[{id:'run-1',build:'monk'},{id:'run-2',build:'monk'}]},{uid:'player-2',runs:[{id:'run-1',build:'monk'}]}];G.runDelTarget={uid:'player-1',id:'run-1'};G.rfOpen='0:0';};setup();

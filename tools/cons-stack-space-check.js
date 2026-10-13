@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR=process.env.DGDIR||'06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa'),E=D.G0,G=E.__G;
 E.render=()=>{};E.saveRunLocal=()=>{};E.saveCur=()=>{};G.data={};G.busy=false;
 function run(id,stacks,free=0){return {build:'hunter',p:E.mkPlayer('hunter',{}),phase:'shop',bag:Array(E.BAG_MAX-stacks.length-free).fill('gear'),cons:stacks,gold:10000,stats:{},shop:{stock:[],cons:[{id,price:12}],log:[]}};}

@@ -3,7 +3,7 @@
    큰 피해 한 번이 단계를 건너뛰거나 단계 전환 없이 보스를 쓰러뜨리지 않아야 한다.
    문턱을 넘친 피해는 버리고, 보스가 예고한 행동을 마친 뒤 한 단계씩만 넘어간다. (2·3챕터 보스는 이미 같은 규칙: tools/queen-transition-check.js)
    실행: DGDIR=. node tools/abbot-transition-check.js   (DGDIR=06a2 로 개발본) */
-process.env.DGDIR = process.env.DGDIR || '06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const assert = require('assert/strict'), { G0: E, run_: V } = require('./dgqa.js');
 function setup(phase) {
   const p = E.mkPlayer('warden', {}, {}); p.hp = p.hpMax = 100000;

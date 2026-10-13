@@ -1,6 +1,6 @@
 'use strict';
 // 선택 정책이 기본 QA 판단을 섞지 않고 실제 던전·자원 처리를 사용하는지 확인.
-process.env.DGDIR = process.env.DGDIR || '06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const assert = require('assert/strict'), D = require('./dgqa.js'), E = D.G0, Q = require('./qa.js');
 E.render = E.saveRunLocal = E.saveCur = () => {};
 const counts = { starts: 0, before: 0, after: 0, battles: 0, ended: 0, cons: 0, doors: 0, paths: 0 };

@@ -13,7 +13,7 @@
      4) 직업 전체 약점은 직업 전체 평균보다 −4 이하
      5) 보스전 이길 수단 (10월 3일 만든 사람 원칙): 갈래마다 보스를 이기는 장착이 하나는 있다(두 기둥 가운데 하나라도 승률 50% 이상).
         난도가 높아도 이길 수단이 정해져 있으면 플레이어는 그 수단을 찾아 움직일 수 있다. 기본 장착이 문턱 아래면 연 스킬 4칸의 모든 조합을 싸워 본다 */
-process.env.DGDIR = process.env.DGDIR || '06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const D = require('./dgqa.js');
 const Q = require('./qa.js');
 const SITS = require('./situations.js'); const SIT_CH = +(process.env.SIT_CH || 1); const SIT = (SIT_CH >= 3 ? SITS.SIT3 : SIT_CH >= 2 ? SITS.SIT2 : SITS.SIT).filter(x => !process.env.SIT_ONLY || process.env.SIT_ONLY.split(',').includes(String(x.id))); /* SIT_ONLY=128 등: 몇 상황만 (보스 이길 수단만 다시 잴 때) */ const SIT_CATS = SITS.SIT_CATS; // 10월 7일: SIT_CH=2면 2챕터 50상황

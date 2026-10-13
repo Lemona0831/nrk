@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR='06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const assert=require('assert/strict');const D=require('./dgqa.js');const E=D.G0,V=D.run_;let n=0;
 for(const build of V('Object.keys(TREE2)')) for(const ch of [1,2,3]) for(const id of ['basic','heavy']) {
  const p=E.mkPlayer(build,{},E.statRecommend(build,{},15),V(`TREE2['${build}'].starters`));

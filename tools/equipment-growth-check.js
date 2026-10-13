@@ -1,4 +1,4 @@
-'use strict';process.env.DGDIR='06a2';const D=require('./dgqa.js'),E=D.G0,V=D.run_,assert=require('assert/strict');
+'use strict';process.env.DGDIR = process.env.DGDIR || '.';const D=require('./dgqa.js'),E=D.G0,V=D.run_,assert=require('assert/strict');
 const slots=V('SLOT_BASE'),grades=V('GRADE');let n=0;
 for(const [kind,base] of Object.entries(slots)){
  const tpl=Object.keys(E.ITEMS).find(k=>E.tplKind(k)===kind);

@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR='06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa.js'),E=D.G0,V=D.run_;
 const p=E.mkPlayer('hunter',{}),e=E.mkEnemy('bruiser',0,1,{lv:4});
 e.boss='abbot';e.hpMax=1000;e.hp=100;e.phase=2;

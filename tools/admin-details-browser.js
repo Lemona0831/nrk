@@ -2,7 +2,7 @@
 const fs=require('fs'),path=require('path'),{pathToFileURL}=require('url');
 const {chromium}=require('C:/Users/ardwi/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 (async()=>{const browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE});const errors=[];
-for(const dir of ['.','06a2'])for(const width of [1280,390]){
+for(const dir of ['.'])for(const width of [1280,390]){
  const ctx=await browser.newContext({viewport:{width,height:900}});await ctx.addInitScript('window.__cfgOverride=1');
  await ctx.route('**/supabase.js',r=>r.fulfill({contentType:'application/javascript',body:fs.readFileSync(path.join(__dirname,'mock_sb.js'),'utf8')}));
  await ctx.route('**/config.js',r=>r.fulfill({contentType:'application/javascript',body:"window.NRK_CONFIG={supabaseUrl:'https://demo.supabase.co',anonKey:'demo'};"}));

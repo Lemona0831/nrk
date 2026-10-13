@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR=process.env.DGDIR||'06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa'),E=D.G0;
 let wardCases=0,costCases=0,nextCases=0;
 const close=(a,b,m)=>assert(Math.abs(a-b)<1e-8,m+': '+a+'/'+b);

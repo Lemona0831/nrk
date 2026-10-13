@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('assert/strict'),vm=require('vm'),PS=require('./pagesrc.js');
-for(const dir of ['.','06a2']) {
+for(const dir of ['.']) {
  const ctx={console,setTimeout:()=>0,clearTimeout(){},setInterval:()=>0,clearInterval(){}};vm.createContext(ctx);
  vm.runInContext(PS.pageData(dir)+'\n'+PS.pageScript(dir)+'\nthis.__G=G;',ctx);
  vm.runInContext("G.data={runs:[],scen:{},seenRole:{}}; saveLocal=()=>true; scheduleSync=()=>{}; render=()=>{}; sfx=()=>{}; startRun('monk');",ctx);

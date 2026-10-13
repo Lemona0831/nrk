@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR=process.env.DGDIR || '06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa.js'),E=D.G0;
 const all=E.itemBookEntries('gear'),cons=E.itemBookEntries('cons');
 assert.equal(new Set(all.map(x=>x.id)).size,all.length);

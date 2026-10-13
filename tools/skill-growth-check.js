@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR=process.env.DGDIR||'06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa.js'),E=D.G0;
 const near=(a,b)=>assert(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 const cases=[['spellblade','sb_edge','str'],['spellblade','sb_bolt','int'],['assassin','a_stab','dex'],['hunter','h_burst','dex'],['elementalist','e_ember','int']];

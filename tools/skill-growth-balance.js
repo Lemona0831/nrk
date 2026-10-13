@@ -1,6 +1,6 @@
 'use strict';
 // 같은 예산·장비·행동 정책으로 후보를 비교한다. 실제 플레이 승률이 아니다.
-process.env.DGDIR=process.env.DGDIR || '06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const D=require('./dgqa.js'),E=D.G0,Q=require('./qa.js');
 const builds=['assassin','warden','hunter','elementalist','spellblade','monk'];
 const coefficients=process.argv.includes('--current') ? ['current'] : ['old',.02,.03,.04];

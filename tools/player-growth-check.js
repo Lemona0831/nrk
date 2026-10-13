@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR = '06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const assert = require('assert/strict'), fs = require('fs'), vm = require('vm');
 const {execFileSync} = require('child_process');
 const D = require('./dgqa.js'), E = D.G0, V = D.run_;
@@ -27,7 +27,7 @@ const r=fresh(); const target=V('LV_XP')[4]; E.gainXp(r,target);
 assert.equal(r.lv,5);assert.equal(r.tree.pts,5);E.treeFix(r);assert.equal(r.tree.pts,5);
 for (const ch of [2,3]) {const r=fresh();E.__G.data={}; E.markSetup(r,{ch,ids:[]});assert.equal(r.tree.pts,r.lv);assert.equal(r.markStat,3*(r.lv-1));E.treeFix(r);assert.equal(r.tree.pts,r.lv);}
 // 이름과 표시 문장 이외의 전투 데이터를 비교합니다.
-function data(old){const c={};vm.createContext(c);for(const f of ['classes.js','skills.js']){const text=old?execFileSync('git',['show','HEAD:06a2/data/'+f],{encoding:'utf8'}):fs.readFileSync('06a2/data/'+f,'utf8');vm.runInContext(text,c);}return JSON.parse(vm.runInContext('JSON.stringify({BUILDS,SKILLS2,TREE2})',c));}
+function data(old){const c={};vm.createContext(c);for(const f of ['classes.js','skills.js']){const text=old?execFileSync('git',['show','HEAD:data/'+f],{encoding:'utf8'}):fs.readFileSync('data/'+f,'utf8');vm.runInContext(text,c);}return JSON.parse(vm.runInContext('JSON.stringify({BUILDS,SKILLS2,TREE2})',c));}
 function normalize(x){for(const b of Object.values(x.BUILDS)){delete b.lore;delete b.rule;delete b.intro;}for(const list of Object.values(x.SKILLS2))for(const s of list){delete s.n;if(s.start)delete s.cd;}for(const t of Object.values(x.TREE2))delete t.bd;return JSON.stringify(x).replaceAll('피칼날','혈인').replaceAll('불칼','염검').replaceAll('주문갑','마갑');}
 assert.equal(normalize(data(false)),normalize(data(true)));
 assert.equal(V("vfxSfxKey({k:'hit',st:'slash',build:'warden',big:true,seq:1})"),'slash');

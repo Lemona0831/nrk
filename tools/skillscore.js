@@ -3,7 +3,7 @@
    실행: node tools/skillscore.js [직업=assassin]        점수표 (줄 예산 ±8% 밖이면 표시, 기획서 12.6절)
          node tools/skillscore.js [직업] md             문서용 마크다운 표 */
 const fs = require('fs'), path = require('path'), vm = require('vm');
-const DIR = path.join(__dirname, '..', process.env.SKDIR || '06a2', 'data');
+const DIR = path.join(__dirname, '..', process.env.SKDIR || '.', 'data');
 const ctx = {}; vm.createContext(ctx);
 vm.runInContext(['skills.js', 'skillkit.js'].map(f => fs.readFileSync(path.join(DIR, f), 'utf8')).join('\n') + '\n;this.SKILLS2 = SKILLS2; this.skScore = skScore; this.skHead = skHead; this.skBody = skBody;', ctx);
 const args = process.argv.slice(2); const md = args.includes('md'); const build = args.find(a => a !== 'md') || 'assassin';

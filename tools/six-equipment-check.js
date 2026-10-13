@@ -1,4 +1,4 @@
-'use strict';process.env.DGDIR='06a2';const assert=require('assert/strict'),D=require('./dgqa.js'),E=D.G0,V=D.run_;let n=0;
+'use strict';process.env.DGDIR = process.env.DGDIR || '.';const assert=require('assert/strict'),D=require('./dgqa.js'),E=D.G0,V=D.run_;let n=0;
 for(const build of V('Object.keys(TREE2)')) {
  const run={build,p:E.mkPlayer(build,{}),bag:[]};E.initGear(run);
  for(const [tpl,I] of Object.entries(E.ITEMS)) {

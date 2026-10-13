@@ -1,6 +1,6 @@
 'use strict';
 // 현재 전투를 고정한 변경 전 엔진과 비교한다. 자원 수급·소모·행동 보상은 그대로여야 한다.
-process.env.DGDIR=process.env.DGDIR||'06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),cp=require('child_process'),path=require('path');
 const D=require('./dgqa.js'),E=D.G0,rate=Number(process.env.FOCUS_RATE||.02);
 const old=cp.execFileSync('git',['show','d82245f:js/10-skills-engine.js'],{cwd:path.resolve(__dirname,'..'),encoding:'utf8'});

@@ -22,7 +22,7 @@ const BATCH = [
 const all = files.flatMap(f => load(f).map(x => Object.assign({ _f: f }, x)));
 const bugs = all.reduce((a, x) => a + x.bugs.length, 0);
 P('# 검증 결과 (7단계, 자동 생성: tools/vresult.js)'); P('');
-P('- **생성일:** ', date, ' · 코드: 06a2(저장소 커밋 기준, 판 번호는 변경 내역 맨 위) · 도구: `tools/dgqa.js`(던전 자동 테스터) · 표 도구 `tools/vreport.js`');
+P('- **생성일:** ', date, ' · 코드: 루트(저장소 커밋 기준, 판 번호는 변경 내역 맨 위) · 도구: `tools/dgqa.js`(던전 자동 테스터) · 표 도구 `tools/vreport.js`');
 P('- **누적 던전 판:** ', all.length, '판(1만 회 기준 ', all.length >= 10000 ? '충족' : '미달', '), 이상(bugs) ', bugs, '건');
 P('- **재현:** 판은 고정 씨앗이라 같은 코드 · 같은 환경 변수면 결과가 판 단위로 같다. 병렬 실행은 `SHARD=i/n`으로 나누고 합쳐도 한 번에 돌린 것과 같다(10월 8일 확인). 배치 정의는 아래 표, 구동 스크립트는 docs/검증/검증-계획.md 6절.');
 P('- **읽는 법:** 완주 = 그 챕터 보스를 이긴 판. 보스 승률 = 보스에 닿은 판 가운데 이긴 판. 갈래 = 트리 칸을 가장 많이 연 갈래. 시작 흉내(L3 · L4)는 앞 챕터를 깬 캐릭터를 그 챕터 1층에서 시작시킨다.');

@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 from playwright.sync_api import sync_playwright
 root=Path(__file__).resolve().parent.parent
-site=(root/(sys.argv[1] if len(sys.argv)>1 else '06a2')/'index.html').as_uri()
+site=(root/(sys.argv[1] if len(sys.argv)>1 else '.')/'index.html').as_uri()
 mock=(root/'tools/mock_sb.js').read_text(encoding='utf-8')
 out=root/'output/playwright/account-access';out.mkdir(parents=True,exist_ok=True)
 with sync_playwright() as p:

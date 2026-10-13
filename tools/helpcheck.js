@@ -12,7 +12,7 @@
 //   api.note(출처이름, 찾을글, 이유)    숫자는 있지만 규칙이 아닌 문장(장면 이름, 연출)을 대조 없이 닫는다. 표에는 "규칙 아님"으로 적힌다
 // 숫자로 세는 것: 아라비아 숫자. 다만 "1챕터" 같은 챕터 이름의 숫자는 센 뒤에서 뺀다.
 const fs = require('fs'), vm = require('vm'), path = require('path');
-const ROOT = path.join(__dirname, '..'); const dir = path.join(ROOT, '06a2');
+const ROOT = path.join(__dirname, '..'); const dir = ROOT;
 const PS = require('./pagesrc.js');
 const ctx = { console, setTimeout() { }, clearTimeout() { }, setInterval() { }, clearInterval() { }, module: { exports: {} } }; vm.createContext(ctx);
 vm.runInContext(PS.pageData(dir) + '\n' + PS.pageScript(dir), ctx, { filename: 'x' });

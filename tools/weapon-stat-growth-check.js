@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR=process.env.DGDIR||'06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),cp=require('child_process'),D=require('./dgqa.js'),E=D.G0;
 const primary={assassin:'dex',hunter:'dex',elementalist:'int',bloodmage:'int'};
 const old=cp.execFileSync('git',['show','980af39:js/32-player-action.js'],{cwd:require('path').resolve(__dirname,'..'),encoding:'utf8'});

@@ -5,7 +5,7 @@
    소모품은 전투 시작 직전에 가진 것을 보스에게 모두 쓴다(실제 플레이어는 도중에 썼다. 대략의 근사).
    구성 파일은 로그에서 뽑은 JSON이라 숨겨진 직업 정보가 들어 있을 수 있다. 공개 저장소에 두지 않는다.
    실행: DGDIR=. node tools/boss-replica.js <구성.json> [시드 수=8]   (REPLAYALL=1이면 모든 변형이 관측된 행동 순서를 재생한다. ONLY=replay,full 처럼 변형을 골라 돌릴 수 있다. +가득은 생명력 가득 시작) */
-process.env.DGDIR = process.env.DGDIR || '06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const fs = require('fs'), D = require('./dgqa.js'), Q = require('./qa.js');
 const G0 = D.G0, G = G0.__G, run_ = D.run_;
 const CFG = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')), NS = +(process.argv[3] || 8), PK = process.env.PK || 'careful';

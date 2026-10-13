@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR=process.env.DGDIR||'06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa'),E=D.G0;
 const Q=require(process.env.QA_CALIBRATED||'./qa');
 let damage=0,ward=0,resource=0,weapon=0,poison=0;

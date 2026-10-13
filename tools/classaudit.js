@@ -11,7 +11,7 @@
 // 문서가 코드와 다르면 코드가 현행이다. 게임 코드는 읽기만 한다.
 // 비공개 직업 문서(저장소 밖 nrk-private/직업/)는 첫 줄의 "(해금 직업 N)"으로 찾고, 출력에는 이름을 쓰지 않고 해금 1 · 2 · 3으로만 부른다.
 const fs = require('fs'), vm = require('vm'), path = require('path');
-const ROOT = path.join(__dirname, '..'); const dir = path.join(ROOT, '06a2');
+const ROOT = path.join(__dirname, '..'); const dir = ROOT;
 const PS = require('./pagesrc.js');
 const ctx = { console, setTimeout() { }, clearTimeout() { }, setInterval() { }, clearInterval() { }, module: { exports: {} } }; vm.createContext(ctx);
 const CONST_NAMES = ['WARD', 'HUNT', 'ELEM', 'MONK', 'BUTCH', 'CONF', 'BLOOD', 'HEAVY_V2', 'PARRY_BIG', 'START_GEAR', 'CANTRIP', 'SBALT', 'MODES'];

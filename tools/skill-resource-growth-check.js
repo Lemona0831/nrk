@@ -1,6 +1,6 @@
 'use strict';
 // 실제 자원·연속 타격·광역·회피와 설명을 검증된 후보 구현에 대조한다.
-process.env.DGDIR=process.env.DGDIR||'06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),cp=require('child_process'),path=require('path');
 const D=require('./dgqa.js'),E=D.G0;
 const baseline=cp.execFileSync('git',['show','fc12dad:js/10-skills-engine.js'],{cwd:path.resolve(__dirname,'..'),encoding:'utf8'});

@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR=process.env.DGDIR||'06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa'),E=D.G0;
 // 같은 현재 엔진에서 두 소모 피해의 성장 계수만 이전 2%로 되돌려 대조한다.
 D.run_('var oldTriggerSkill = '+E.runSkill2.toString().replaceAll('triggerDamageMul(p)','dotMul(p)')+';');

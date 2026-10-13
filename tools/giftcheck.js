@@ -1,7 +1,7 @@
 /* 챕터 선물 점검 (10월 10일, 숨겨진 직업 2의 2챕터 보강): 06a2의 게임 코드를 vm에서 돌려 확인한다.
    직업마다 챕터에 들어설 때 받는 각인(data/awakening.js CH_GIFT)이 한 번만 주어지고, 효과가 그 챕터에서만 일하며, 다른 직업은 받지 않는지 본다.
    실행: node tools/giftcheck.js (실패 0이어야 한다) */
-process.env.DGDIR = process.env.DGDIR || '06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const D = require('./dgqa.js'); const G0 = D.G0; const run_ = D.run_; const G = G0.__G;
 let fail = 0, pass = 0; const ok = (c, m) => { if (c) pass++; else { fail++; console.log('실패:', m); } };
 G0.__rnd = D.rng(41); run_('Math.random = __rnd');

@@ -4,7 +4,7 @@ const fs=require('fs'),path=require('path'),crypto=require('crypto');
 const root=path.resolve(__dirname,'..'),check=process.argv.includes('--check');
 const hash=s=>crypto.createHash('sha256').update(s).digest('hex');
 let bad=false;
-for(const dir of ['.','06a2']){
+for(const dir of ['.']){
  const base=path.join(root,dir),index=path.join(base,'index.html');
  const before=fs.readFileSync(index,'utf8');
  let html=before.replace(/<meta name="nrk-release" content="[a-f0-9]+">\r?\n/g,'').replace(/\?v=[a-f0-9]+/g,'');

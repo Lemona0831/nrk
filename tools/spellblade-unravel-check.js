@@ -1,6 +1,6 @@
 'use strict';
 // 교대 주문의 공격·약화·보호와 실제 피격 소모를 함께 확인한다.
-process.env.DGDIR=process.env.DGDIR||'06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa.js'),E=D.G0;
 assert.match(E.skBody(E.SK2.sb_unravel),/교대.*보호 1/,'설명도 실제 보호1을 표시');
 const latest=D.run_('CHANGELOG[0]');assert.match(latest.v,/마갑 교대/);assert.match(latest.items[0].t,/2에서 1/);

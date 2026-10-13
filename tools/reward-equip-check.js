@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR=process.env.DGDIR||'06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),{G0:E,run_:V}=require('./dgqa.js');
 function make(){const r={build:'spellblade',p:E.mkPlayer('spellblade',{},{}),bag:[],swaps:[],room:4,cons:[]};E.initGear(r);for(let i=0;i<E.BAG_MAX;i++){const it=E.mkItem('bloodblade');assert(E.addItem(r,it));}return r;}
 let r=make(),it=E.mkItem('bloodblade'),prev=r.eqU.weapon;

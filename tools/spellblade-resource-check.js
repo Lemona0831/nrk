@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR=process.env.DGDIR||'06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa.js'),E=D.G0,V=D.run_;
 const aegis=E.SK2.sb_aegis,rebound=E.SK2.sb_rebound;
 assert.equal(aegis.cd,5);assert.equal(aegis.time,'fast');assert(!aegis.fx.some(f=>f.k==='stam'));

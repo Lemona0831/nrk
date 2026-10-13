@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 import os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 mock = open(os.path.join(HERE, 'mock_sb.js'), encoding='utf-8').read()
-arg = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, '..', '06a2', 'index.html')
+arg = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, '..', 'index.html')
 SITE = 'file://' + os.path.abspath(arg).replace(os.sep, '/')
 errs, fails = [], []
 JS = """() => {

@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR='06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa.js'),E=D.G0,Q=require('./qa.js');
 for(const wil of [0,27,50]){
  const p=E.mkPlayer('spellblade',{}, {con:100,wil});p.ward=0;

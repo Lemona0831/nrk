@@ -8,7 +8,7 @@
    점수 = 이기면 40 + 남은 생명력 40 + 빠르기 20 (sitqa와 같은 자). 판 6의 오차는 ±2쯤이라 delta ±2 안은 잡음으로 본다 */
 const fs = require('fs'), path = require('path'), cp = require('child_process'), os = require('os');
 if (process.argv[2] === '--job') {
-  process.env.DGDIR = process.env.DGDIR || '06a2'; process.env.SIT_CH = '3';
+  process.env.DGDIR = process.env.DGDIR || '.'; process.env.SIT_CH = '3';
   const [, , , cls, br, colS, lvS, NS, cap] = process.argv; process.env.SIT_CLS = cls;
   const S = require(path.join(process.cwd(), 'tools', 'sitqa.js')); const SITS = require(path.join(process.cwd(), 'tools', 'situations.js')); const G0 = S.G0; const SIT = SITS.SIT3;
   const N = +NS; const bd = S.buildOf(br, +colS, +lvS); if (cap) bd.open = bd.open.filter(id => G0.SK2[id].row <= +cap);
@@ -23,10 +23,10 @@ if (process.argv[2] === '--job') {
 const cls = process.argv[2]; if (!cls) { console.error('사용: node tools/sitloo.js <직업> [Lv=15] [판=6] [--cap=10]'); process.exit(1); }
 const lv = process.argv[3] && !process.argv[3].startsWith('--') ? process.argv[3] : '15'; const N = process.argv[4] && !process.argv[4].startsWith('--') ? process.argv[4] : '6';
 const cap = (process.argv.find(a => a.startsWith('--cap=')) || '').slice(6);
-const ROOT = path.join(__dirname, '..'); const TREE = JSON.parse(cp.execFileSync('node', ['-e', `const vm=require('vm'),fs=require('fs');const c={};vm.createContext(c);vm.runInContext(fs.readFileSync(${JSON.stringify(path.join(ROOT, '06a2/data/skills.js'))},'utf8')+';this.T=TREE2',c);console.log(JSON.stringify(c.T[${JSON.stringify(cls)}].branches))`], { encoding: 'utf8' }));
+const ROOT = path.join(__dirname, '..'); const TREE = JSON.parse(cp.execFileSync('node', ['-e', `const vm=require('vm'),fs=require('fs');const c={};vm.createContext(c);vm.runInContext(fs.readFileSync(${JSON.stringify(path.join(ROOT, 'data/skills.js'))},'utf8')+';this.T=TREE2',c);console.log(JSON.stringify(c.T[${JSON.stringify(cls)}].branches))`], { encoding: 'utf8' }));
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sitloo-')); const jobs = []; let k = 0;
 for (const br of TREE) for (const col of [0, 1]) {
-  const D = path.join(tmp, String(k++)); fs.mkdirSync(D); fs.cpSync(path.join(ROOT, 'tools'), path.join(D, 'tools'), { recursive: true }); fs.cpSync(path.join(ROOT, '06a2'), path.join(D, '06a2'), { recursive: true }); fs.copyFileSync(path.join(ROOT, 'package.json'), path.join(D, 'package.json'));
+  const D = path.join(tmp, String(k++)); fs.mkdirSync(D); fs.cpSync(path.join(ROOT, 'tools'), path.join(D, 'tools'), { recursive: true }); fs.cpSync(ROOT, path.join(D, '06a2'), { recursive: true }); fs.copyFileSync(path.join(ROOT, 'package.json'), path.join(D, 'package.json'));
   jobs.push(new Promise(res => { const c = cp.spawn('node', [path.join(D, 'tools', 'sitloo.js'), '--job', cls, br, String(col), lv, N].concat(cap ? [cap] : []), { cwd: D, env: Object.assign({}, process.env, { DGDIR: '06a2' }) }); let out = ''; c.stdout.on('data', d => out += d); c.stderr.on('data', d => out += d); c.on('close', () => res(out.trim().split('\n').pop())); }));
 }
 Promise.all(jobs).then(rs => {

@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR=process.env.DGDIR||'06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),{G0:E,run_:V}=require('./dgqa.js');
 function setup(phase,k){const p=E.mkPlayer('spellblade',{},{});p.hp=p.hpMax=10000;const b=E.roomBattle(p,{ch:2,lv:10,floor:24,names:V('ENEMY_NAMES[2]'),boss:1},'cryptlord',300);const e=b.en.find(x=>x.boss==='cryptlord');e.phase=phase;e.hp=e.hpMax*V('LORD.ph['+(phase-1)+']')+1;e.intent={k};e.teleTurn=1;b.turnIdx=5;b.lordHist=['skill','wpn'];return {b,e};}
 for(const phase of [1,2])for(const k of ['carve','call','heavy','charge']){

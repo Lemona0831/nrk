@@ -9,7 +9,7 @@
 const vm = require('vm'), path = require('path');
 module.exports = function (api) {
   const E = api.E, ctx = api.ctx;
-  const PS = require('./pagesrc.js'); const SRC = PS.pageScript(path.join(api.ROOT, '06a2'));
+  const PS = require('./pagesrc.js'); const SRC = PS.pageScript(api.ROOT);
   const split = t => String(t).split(/(?<=[.?!])\s+(?=\S)/).map(s => s.trim()).filter(Boolean);
   const hasNum = s => /\d/.test(s.replace(/[1-3]\s*챕터/g, '').replace(/[1-3]\s*·\s*[1-3]\s*챕터/g, ''));
   const rd = v => Math.round(v * 1e6) / 1e6;

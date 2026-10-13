@@ -2,7 +2,7 @@
 /* 각인이 실제로 회복에 반영되는지 (10월 14일). 숨겨진 직업 3의 "먹기 회복 +10%" 각인이 독 먹기 회복을 늘리고,
    장비 피 짜는 손(출혈 먹기 +20%, 다른 직업용)는 이 직업의 먹기에 끼어들지 않는지 본다.
    실행: DGDIR=. node tools/awk-heal-check.js   (DGDIR=06a2 로 개발본) */
-process.env.DGDIR = process.env.DGDIR || '06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const assert = require('assert/strict'), { G0: E } = require('./dgqa.js');
 function healOnce(awk, eq) {
   const p = E.mkPlayer('bloodmage', eq || {}, {}, ['v_taint', 'v_drink']); p.awk = awk; p.hp = Math.round(p.hpMax * 0.3);

@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR=process.env.DGDIR||'06a2';
+process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa.js'),E=D.G0,V=D.run_;
 const limits={sb_bolt:12,sb_wardbolt:18,sb_spellguard:16,sb_barrage:22};
 for(const [id,cap] of Object.entries(limits)){

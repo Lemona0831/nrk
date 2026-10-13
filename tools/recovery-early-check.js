@@ -1,5 +1,5 @@
 'use strict';
-process.env.DGDIR='06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa.js'),E=D.G0,G=E.__G;
 E.render=()=>{};E.saveRunLocal=()=>{};E.saveCur=()=>{};E.saveBattle=()=>{};
 G.data={seenRole:{},seenFoe:{},seenBoss:{}};E.startRun('spellblade');G.creating=false;G.sheet=null;

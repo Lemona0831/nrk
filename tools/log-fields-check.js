@@ -1,6 +1,7 @@
 /* 판 기록 보강 점검 (10월 14일): 방 기록에 약초·빵·골드·가방·배포 식별자가 들어가고,
    챕터를 넘어가도 지난 상점 방문이 shopHist에 남는지 본다. 게임 코드를 vm에서 그대로 돌린다.
    실행: DGDIR=. node tools/log-fields-check.js   (DGDIR=06a2 로 개발본도 확인) */
+process.env.DGDIR = process.env.DGDIR || '.';
 const D = require('./dgqa.js');
 const { G0, OPT, PERSONAS } = D;
 OPT.chapters = 2; OPT.detail = false;

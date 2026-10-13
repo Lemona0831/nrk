@@ -1,7 +1,7 @@
 /* 계정 데이터의 전투 화면 배치(G.data.hud) 점검 (10월 10일 0.6a.2-95): 옛 모양(0.6a.2-89 묶음만 · 항목만), 값이 없음, 깨진 값, 새 모양(편집 저장)을
    휴대폰 · PC 폭에서 읽어 본다. 모든 모듈이 한 번씩 있고, 크기는 정해진 값이고, 끌 수 없는 모듈이 켜져 있어야 한다.
    실행: node tools/savecompat-hud.js */
-process.env.DGDIR = process.env.DGDIR || '06a2';
+process.env.DGDIR = process.env.DGDIR || '.';
 const D = require('./dgqa.js'); const { G0, run_ } = D; const G = G0.__G; let bad = 0, n = 0;
 const win = w => run_('window.innerWidth = ' + w);
 const bag = {
