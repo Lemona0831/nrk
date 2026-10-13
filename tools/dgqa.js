@@ -202,6 +202,7 @@ function useCons(pk, r, b, run) {
 function useConsOut(pk, run, r) {
   if (OPT.policy?.useConsOut) return OPT.policy.useConsOut(run, r);
   if (!G0.consUse || !G0.CONS || !run.cons) return; const p = run.p;
+  if (G0.consBrew) for (const id of ['herb', 'leaf']) for (let k = 0; k < 6 && (pk !== 'novice' || r() < 0.3); k++) if (G0.consBrew(run, id)) break; // 10월 14일 개편 3단계: 약초 · 각성 잎은 플라스크 재료
   for (let k = 0; k < 6 && p.hp < p.hpMax * 0.6 && (pk !== 'novice' || r() < 0.3); k++) { const i = run.cons.findIndex(c => G0.CONS[c.id].k === 'heal' && !G0.consWhyNot(null, run, c, null)); if (i < 0) break; G0.consUse(null, run, i, null); }
 }
 const countBy = a => a.reduce((m, k) => (m[k] = (m[k] || 0) + 1, m), {});

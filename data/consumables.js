@@ -4,11 +4,12 @@
    sit: 푸는 상황(설명 창 머리), d: 효과 문장(합니다체), dw: 전리품으로 나오는 무게(없으면 1, 파는 것은 0.5). 10월 4일: 플라스크가 차지 않으므로 회복 소모품이 자주 나온다 */
 const CONS_TURN = 1; // 한 차례에 쓸 수 있는 소모품 수 (10월 14일 개편 2단계: 3 → 1)
 const CONS_FIGHT = { normal: 5, hard: 3 }; // 한 전투에 쓸 수 있는 소모품 수 (각인 넉넉한 손 +2)
+const CONS_BREW = { herb: { flask: 'life', normal: 4, hard: 5 }, leaf: { flask: 'stam', normal: 3, hard: 4 } }; // 전투 밖에서 N개로 플라스크 한 칸(고급은 2개로 센다). 10월 14일 개편 3단계
 const CONS_CH = { unmod: { normal: 3, hard: 2 }, lootx: { normal: 3, hard: 2 }, escape: { normal: 2, hard: 1 } }; // 챕터당 사용 횟수(효과 종류 k별: 방 특성 끄기 · 전리품 늘리기 · 물러나기)
 const CONS = {
-  herb:      { n: '약초 묶음', ico: '🌿', sit: '생명력이 낮다', k: 'heal', v: 0.12, vm: 0.2, max: 5, price: 12, dw: 6, use: 'any', d: v => '최대 생명력의 ' + Math.round(v * 100) + '%를 회복합니다.' },
+  herb:      { n: '약초 묶음', ico: '🌿', sit: '생명력이 낮다', k: 'heal', v: 0.03, vm: 0.05, max: 5, price: 12, dw: 6, use: 'any', d: v => '최대 생명력의 ' + Math.round(v * 100) + '%를 회복합니다. 생명력 플라스크 재료입니다.' }, // 10월 14일 개편 3단계: 12% → 3%, 플라스크 재료(CONS_BREW)
   bread:     { n: '마른 빵', ico: '🍞', sit: '방 사이에 쉬고 싶다', k: 'heal', v: 0.2, vm: 0.3, max: 5, price: 10, dw: 4, use: 'out', d: v => '전투 밖에서만 씁니다. 최대 생명력의 ' + Math.round(v * 100) + '%를 회복합니다.' },
-  leaf:      { n: '각성 잎', ico: '🍃', sit: '스태미나가 바닥났다', k: 'stam', v: 30, max: 5, price: 8, use: 'fight', d: v => '스태미나 +' + v + '.' },
+  leaf:      { n: '각성 잎', ico: '🍃', sit: '스태미나가 바닥났다', k: 'stam', v: 12, max: 5, price: 8, use: 'fight', d: v => '스태미나 +' + v + '. 스태미나 플라스크 재료입니다.' }, // 10월 14일 개편 3단계: 30 → 12, 플라스크 재료
   incense:   { n: '향 한 줌', ico: '🪔', sit: '이번 차례에 손이 모자란다', k: 'quick', max: 3, price: 20, use: 'fight', d: () => '이번 차례에 빠른 칸이 하나 더 생깁니다.' },
   bandage:   { n: '붕대', ico: '🩹', sit: '출혈이 쌓였다', k: 'cure', s: 'bleed', max: 5, price: 8, use: 'any', d: () => '출혈을 모두 지웁니다.' },
   antidote:  { n: '해독초', ico: '🌱', sit: '중독이 쌓였다', k: 'cure', s: 'poison', max: 5, price: 8, use: 'any', d: () => '중독을 모두 지웁니다.' },

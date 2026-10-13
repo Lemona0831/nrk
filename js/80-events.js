@@ -69,6 +69,7 @@ function onClick(ev) {
     case 'consopen': hidePop(); openSheet('cons'); break;
     case 'consfilter': if(G.sheet && G.sheet.kind==='cons'){G.sheet.data.filter=el.dataset.k;render();} break;
     case 'consonly': if(G.sheet && G.sheet.kind==='cons'){G.sheet.data.only=!G.sheet.data.only;render();} break;
+    case 'consbrew': { const run = G.run, id = el.dataset.k, s = consBrewOf(run, id), why = consBrew(run, id); if (why) { toast(why); break; } toast(CONS[id].n + ' ' + s.need + '개로 ' + s.name + ' 한 칸을 채웠습니다 (' + (s.cur + 1) + '/' + s.cap + ')'); saveRunLocal(); saveCur(); render(); break; }
     case 'consfind': if(G.sheet && G.sheet.kind==='cons'){const d=G.sheet.data;d.find=!(d.find||d.query);if(!d.find)d.query='';render();if(d.find&&typeof document!=='undefined'){const q=document.getElementById('consquery');if(q)q.focus();}} break;
     case 'consrow': if(G.sheet && G.sheet.kind==='cons'){const d=G.sheet.data,k=el.dataset.k;d.open=d.open===k?null:k;let seen=false;for(const c of G.run.cons||[])if(c.id+':'+consGrade(c.id,c.g)===k&&c.fresh){c.fresh=false;seen=true;}if(seen){saveRunLocal();saveCur();}render();} break;
     case 'conssearch': if(G.sheet && G.sheet.kind==='cons'){G.sheet.data.query=val('consquery').trim();render();} break;

@@ -183,6 +183,25 @@ function consApply(b, run, c, tgt) {
   }
   return '';
 }
+/* 플라스크 채우기(10월 14일 개편 3단계): 전투 밖에서 약초 · 각성 잎 N개로 플라스크 한 칸. 고급은 2개로 세고, 일반부터 쓴다 */
+const FLASK_N = { life: '생명력 플라스크', stam: '스태미나 플라스크' };
+const consUnits = c => c.g === 'm' ? 2 : 1;
+function consBrewOf(run, id) {
+  const B = CONS_BREW[id]; if (!B || !run || !run.p) return null; const p = run.p;
+  const need = B[run.mode === 'hard' ? 'hard' : 'normal'], have = (run.cons || []).filter(c => c.id === id).reduce((a, c) => a + c.n * consUnits(c), 0);
+  const cur = (p.flask && p.flask[B.flask]) || 0, cap = flaskCap(p, B.flask);
+  const why = G.b && !G.b.over ? '전투 밖에서 채웁니다' : cur >= cap ? FLASK_N[B.flask] + '가 가득 찼습니다' : have < need ? CONS[id].n + ' ' + need + '개가 필요합니다(지금 ' + have + '개)' : '';
+  return { flask: B.flask, name: FLASK_N[B.flask], need, have, cur, cap, why };
+}
+function consBrew(run, id) {
+  const s = consBrewOf(run, id); if (!s) return '채울 수 없는 소모품입니다'; if (s.why) return s.why;
+  let left = s.need; const L = run.cons.map((c, i) => ({ c, i })).filter(x => x.c.id === id).sort((a, b) => consUnits(a.c) - consUnits(b.c) || a.c.n - b.c.n);
+  for (const { c } of L) { while (left > 0 && c.n > 0) { c.n--; left -= consUnits(c); } if (left <= 0) break; }
+  run.cons = run.cons.filter(c => c.n > 0);
+  run.p.flask[s.flask] = s.cur + 1;
+  (run.brewLog || (run.brewLog = [])).push({ ch: run.ch || 1, room: run.room, id, n: s.need, flask: s.flask, t: Date.now() });
+  return '';
+}
 /* 챕터당 사용 횟수(10월 14일 개편 2단계): CONS_CH의 효과 종류별로 센다. run.consCh = { ch, [k]: 쓴 수 }, 챕터가 바뀌면 처음부터 */
 const consChLim = (run, D) => { const L = CONS_CH[D.k]; return L ? L[run && run.mode === 'hard' ? 'hard' : 'normal'] : 0; };
 const consChUsed = (run, D) => { const u = run && run.consCh; return u && u.ch === (run.ch || 1) ? (u[D.k] || 0) : 0; };

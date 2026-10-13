@@ -102,10 +102,11 @@ function __hcBlob(k) { return JSON.stringify(IFX[k], (kk, v) => typeof v === 'fu
   api.source('items-cons', consRows);
   const C = (find, ev, fn) => api.add('items-cons', find, ev, fn);
   const lvM = CM.lv, lvK = CM.lvMul; // 1레벨 전투에서 consLvMul은 1
-  C('최대 생명력의 12%를 회복합니다.', 'consApply heal: 약초 v 0.12 → 생명력 비율 ' + CM.herb[0].toFixed(3), () => near(CM.herb[0], 0.12) && E('CONS.herb.v') === 0.12);
-  C('최대 생명력의 20%를 회복합니다.', 'heal: 약초 고급 vm와 마른 빵 v (소수 비율 0.2)', () => near(CM.herb[1], 0.2) && near(CM.bread[0], 0.2));
+  C('최대 생명력의 3%를 회복합니다.', 'consApply heal: 약초 v 0.03 → 생명력 비율 ' + CM.herb[0].toFixed(3), () => near(CM.herb[0], 0.03) && E('CONS.herb.v') === 0.03); // 10월 14일 개편 3단계
+  C('최대 생명력의 5%를 회복합니다.', 'heal: 약초 고급 vm 0.05 → ' + CM.herb[1].toFixed(3), () => near(CM.herb[1], 0.05));
+  C('최대 생명력의 20%를 회복합니다.', 'heal: 마른 빵 v 0.2', () => near(CM.bread[0], 0.2));
   C('최대 생명력의 30%를 회복합니다.', 'heal: 마른 빵 고급 vm 0.3', () => near(CM.bread[1], 0.3));
-  C('스태미나 +30.', 'consApply stam: 각성 잎 v 30 → 스태미나 +' + CM.leaf, () => CM.leaf === 30);
+  C('스태미나 +12.', 'consApply stam: 각성 잎 v 12 → 스태미나 +' + CM.leaf, () => CM.leaf === 12);
   C('적 모두의 다음 공격 피해 −10%.', 'consApply scatter: 적마다 [피해, redNext] ' + JSON.stringify(CM.relic[0]), () => CM.relic[0].every(([d, r]) => d === 0 && near(r, 0.1)) && srcHas('if (!o.dot && o.src && o.src.redNext) { d *= 1 - o.src.redNext; o.src.redNext = 0; }'));
   C('적 모두의 다음 공격 피해 −15%.', 'scatter 고급: ' + JSON.stringify(CM.relic[1]), () => CM.relic[1].every(([d, r]) => d === 0 && near(r, 0.15)));
   C('한 적에게 둔화 +1.', 'consApply slow(올가미): [피해, 둔화] ' + CM.dagger[0], () => CM.dagger[0][0] === 0 && CM.dagger[0][1] === 1);
