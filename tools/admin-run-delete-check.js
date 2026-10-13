@@ -9,5 +9,6 @@ c.saveFile=async()=>true;await c.deleteOneRun('틀림');assert.equal(calls.lengt
 G.owner=false;await c.deleteOneRun('지우기');assert.equal(calls.length,0);G.owner=true;
 await c.deleteOneRun('지우기');assert.equal(calls.length,1);assert.equal(calls[0][0],'admin_delete');assert.equal(calls[0][1].paths.length,1);assert(calls[0][1].paths[0].endsWith('/run-1'));assert(calls[0][1].paths[0].startsWith('playtest/player-1/'));assert.equal(G.dashRaw[0].runs[0].id,'run-2');assert.equal(G.dashRaw[1].runs.length,1);
 setup();G.sb.rpc=async()=>({error:{code:'denied'}});await c.deleteOneRun('지우기');assert.equal(G.dashRaw[0].runs.length,2);assert(!G.runDelBusy);
+setup();G.runDelTargets=[{uid:'player-1',id:'run-1'},{uid:'player-2',id:'run-1'}];let backups=0;c.saveFile=async()=>{backups++;return true;};let batchPaths;G.sb.rpc=async(n,a)=>{batchPaths=a.paths;return {data:2,error:null};};await c.deleteOneRun('지우기',false);assert.equal(backups,0);assert.equal(batchPaths.length,2);assert.equal(G.dashRaw[0].runs.length,1);assert.equal(G.dashRaw[1].runs.length,0);
 console.log(dir+': 백업 실패·잘못된 확인·권한 차단·한 판 경로·다른 판/계정 유지·서버 실패 통과');
 }})().catch(e=>{console.error(e);process.exitCode=1});

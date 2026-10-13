@@ -8,7 +8,7 @@ for(const dir of ['.','06a2'])for(const width of [1280,390]){
  await ctx.route('**/config.js',r=>r.fulfill({contentType:'application/javascript',body:"window.NRK_CONFIG={supabaseUrl:'https://demo.supabase.co',anonKey:'demo'};"}));
  await ctx.route('**/fonts.googleapis.com/**',r=>r.abort());const pg=await ctx.newPage();pg.on('pageerror',e=>errors.push(String(e)));
  await pg.goto(pathToFileURL(path.resolve(__dirname,'..',dir,'index.html')).href);await pg.waitForTimeout(500);
- await pg.evaluate(()=>{startRun('spellblade');const r=G.run;r.cname='검증 캐릭터';r.stats={str:10,dex:5,int:0,con:5,wil:0};const node=SKILLS2.spellblade.find(n=>!n.start);r.tree.open=[node.id];r.skills=[node.id];r.treeLog=[{id:node.id,room:1,lv:1,t:Date.now()}];r.statLog=[{add:r.stats,room:1,t:Date.now()}];r.rooms=[{room:1,ch:1,res:'win',damageStats:{v:1,dealt:123,taken:45},t:3}];r.acts=['sb_aegis','sb_bladeward','sb_edge','sb_unravel','sb_shell','flaskS'].map(a=>({k:'act',a,r:1})).concat([{k:'act',a:'basic',r:1,t:1,hp:.5,mp:0,st:20}]);G.dashRaw=[{uid:'one',name:'검증 플레이어',runs:[runRecord(r)]},{uid:'two',name:'다른 플레이어',runs:[runRecord(r)]}];G.dash=aggregate(G.dashRaw);G.owner=true;G.scr='admin';G.sheet=null;G.creating=false;render();});
+ await pg.evaluate(()=>{startRun('spellblade');const r=G.run;r.cname='검증 캐릭터';r.stats={str:10,dex:5,int:0,con:5,wil:0};const node=SKILLS2.spellblade.find(n=>!n.start);r.tree.open=[node.id];r.skills=[node.id];r.treeLog=[{id:node.id,room:1,lv:1,t:Date.now()}];r.statLog=[{add:r.stats,room:1,t:Date.now()}];r.rooms=[{room:1,ch:1,res:'win',damageStats:{v:1,dealt:123,taken:45},t:3}];r.acts=['sb_aegis','sb_bladeward','sb_edge','sb_unravel','sb_shell','flaskS'].map(a=>({k:'act',a,r:1})).concat([{k:'act',a:'basic',r:1,t:1,hp:.5,mp:0,st:20}]);G.dashRaw=[{uid:'one',name:'검증 플레이어',runs:[runRecord(r)]},{uid:'two',name:'다른 플레이어',runs:[runRecord(r)]}];G.dash=aggregate(G.dashRaw);G.site=true;G.sb={rpc:async()=>({data:[],error:null})};G.owner=true;G.superAdmin=true;G.scr='admin';G.sheet=null;G.creating=false;render();});
  await pg.locator('[data-a=runperson]').first().click();await pg.locator('[data-a=runopen]').first().click();
  await pg.getByRole('heading',{name:'전투 통계',exact:true}).waitFor();
  const actionText=await pg.locator('.admin-action-bars').innerText();for(const raw of ['sb_aegis','sb_bladeward','sb_edge','sb_unravel','sb_shell','flaskS'])if(actionText.includes(raw))throw Error('internal action code: '+raw);
@@ -26,5 +26,12 @@ for(const dir of ['.','06a2'])for(const width of [1280,390]){
  const overflow=await pg.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2);if(overflow)throw Error('page overflow '+width);
  fs.mkdirSync(path.resolve('output/playwright/admin-details'),{recursive:true});await pg.locator('.admin-detail').screenshot({path:path.resolve('output/playwright/admin-details/'+(dir==='.'?'public':'dev')+'-'+width+'.png')});
  await pg.locator('[data-a=runtab][data-k=battle]').click();if(await pg.locator('.admin-detail th').filter({hasText:'스태미나'}).count()!==1)throw Error('stamina column missing');if(!(await pg.locator('body').innerText()).includes('생명력 50%'))throw Error('HP ratio');
+ await pg.locator('[data-a=runclose]').click();await pg.locator('[data-a=runreset]').click();
+ await pg.locator('[data-a=rundeltick]').nth(0).check();await pg.locator('[data-a=rundeltick]').nth(1).check();await pg.locator('[data-a=runbatchask]').click();
+ await pg.locator('#rundelbackup').uncheck();await pg.locator('#rundelword').fill('지우기');
+ await pg.evaluate(()=>{window._deletePaths=[];G.sb.rpc=async(n,a)=>{window._deletePaths=a.paths;return {data:2,error:null};};saveFile=async()=>{throw Error('backup must be skipped');};});
+ await pg.locator('[data-a=rundelgo]').click();await pg.waitForTimeout(100);
+ if(await pg.evaluate(()=>window._deletePaths.length)!==2)throw Error('batch deletion paths');
+ if(await pg.evaluate(()=>G.dashRaw.reduce((n,t)=>n+t.runs.length,0))!==0)throw Error('batch records remain');
  await ctx.close();console.log(dir+' '+width+': 개인 선택·장비 상세·스탯·트리·행동·가로 넘침 점검 통과');
 }await browser.close();if(errors.length)throw Error(errors.join('\n'));})().catch(e=>{console.error(e);process.exitCode=1;});

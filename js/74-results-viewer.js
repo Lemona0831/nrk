@@ -291,23 +291,31 @@ function canDeleteRun() { return !!(G.site && G.sb && G.owner && (G.superAdmin |
 function vRunDelete(x) {
   if(!canDeleteRun() || !x.uid || !x.r.id)return '';
   const target=G.runDelTarget, asking=target && target.uid===x.uid && target.id===x.r.id;
-  return '<div class="admin-fold"><button class="sm" data-a="rundelask"'+(G.runDelBusy ? ' disabled' : '')+'>이 판의 기록만 삭제</button>'+(G.runDelMsg ? '<p role="status">'+esc(G.runDelMsg)+'</p>' : '')+(asking ? '<div role="alertdialog" aria-labelledby="rundel-title"><h4 id="rundel-title">이 플레이 기록을 삭제할까요?</h4><p>'+esc(x.who)+' · '+esc(x.r.cname || '이름 없는 캐릭터')+' · 판 ID '+esc(x.r.id)+'</p><p>이 판과 그 행동 기록만 삭제합니다. 먼저 백업 파일을 받습니다. 다른 판·계정·랭킹·캐릭터 세이브는 유지됩니다. 진행 중인 판은 플레이어가 이어하면 기록이 다시 올라올 수 있습니다.</p><label for="rundelword">삭제하려면 “지우기”를 입력하세요</label><input id="rundelword" autocomplete="off"'+(G.runDelBusy ? ' disabled' : '')+'><div class="row"><button class="sm" data-a="rundelgo"'+(G.runDelBusy ? ' disabled' : '')+'>백업 받고 이 판 삭제</button><button class="sm" data-a="rundelno"'+(G.runDelBusy ? ' disabled' : '')+'>취소</button></div></div>' : '')+'</div>';
+  return '<div class="admin-fold"><button class="sm" data-a="rundelask"'+(G.runDelBusy ? ' disabled' : '')+'>이 판의 기록만 삭제</button>'+(G.runDelMsg ? '<p role="status">'+esc(G.runDelMsg)+'</p>' : '')+(asking ? '<div role="alertdialog" aria-labelledby="rundel-title"><h4 id="rundel-title">이 플레이 기록을 삭제할까요?</h4><p>'+esc(x.who)+' · '+esc(x.r.cname || '이름 없는 캐릭터')+' · 판 ID '+esc(x.r.id)+'</p><p>이 판과 그 행동 기록만 삭제합니다. 백업 여부를 선택할 수 있습니다. 다른 판·계정·랭킹·캐릭터 세이브는 유지됩니다. 진행 중인 판은 플레이어가 이어하면 기록이 다시 올라올 수 있습니다.</p><label><input id="rundelbackup" type="checkbox" checked> 삭제 전 백업 받기</label><p class="mini">백업을 해제하면 복구할 파일 없이 삭제합니다.</p><label for="rundelword">삭제하려면 “지우기”를 입력하세요</label><input id="rundelword" autocomplete="off"'+(G.runDelBusy ? ' disabled' : '')+'><div class="row"><button class="sm" data-a="rundelgo"'+(G.runDelBusy ? ' disabled' : '')+'>이 판 삭제</button><button class="sm" data-a="rundelno"'+(G.runDelBusy ? ' disabled' : '')+'>취소</button></div></div>' : '')+'</div>';
 }
-async function deleteOneRun(word) {
+function vBatchRunDelete() {
+  if(!canDeleteRun())return '';
+  const sel=G.runDeleteSel || [], targets=G.runDelTargets || [];
+  return '<div class="admin-fold"><button class="sm" data-a="runbatchask"'+(!sel.length || G.runDelBusy ? ' disabled' : '')+'>선택한 '+sel.length+'판 삭제</button>'+(targets.length ? '<div role="alertdialog"><h4>선택한 '+targets.length+'판을 삭제할까요?</h4><ul>'+targets.map(t=>'<li>'+esc(t.name)+' · '+esc(t.id)+'</li>').join('')+'</ul><p>선택한 판과 행동 기록만 삭제합니다. 진행 중인 판은 플레이를 이어하면 다시 올라올 수 있습니다.</p><label><input id="rundelbackup" type="checkbox" checked> 삭제 전 백업 받기</label><p class="mini">백업을 해제하면 복구할 파일 없이 삭제합니다.</p><label for="rundelword">“지우기”를 입력하세요</label><input id="rundelword" autocomplete="off"><div class="row"><button class="sm" data-a="rundelgo"'+(G.runDelBusy ? ' disabled' : '')+'>선택한 판 삭제</button><button class="sm" data-a="rundelno"'+(G.runDelBusy ? ' disabled' : '')+'>취소</button></div></div>' : '')+'</div>';
+}
+async function deleteOneRun(word, backup=true) {
   if(G.runDelBusy || !canDeleteRun())return;
   if(word!=='지우기'){G.runDelMsg='“지우기”를 정확히 입력하세요. 삭제하지 않았습니다.';render();return;}
-  const target=G.runDelTarget;if(!target)return;
-  const T=(G.dashRaw || []).find(t=>t.uid===target.uid),r=T && (T.runs || []).find(r=>r.id===target.id);
-  if(!r || !/^[a-zA-Z0-9_-]+$/.test(target.uid) || !/^[a-zA-Z0-9_-]+$/.test(target.id)){G.runDelMsg='삭제할 기록을 다시 선택하세요.';render();return;}
-  G.runDelBusy=true;G.runDelMsg='백업을 받는 중…';render();
+  const targets=G.runDelTargets && G.runDelTargets.length ? G.runDelTargets.slice() : G.runDelTarget ? [G.runDelTarget] : [];
+  if(!targets.length)return;
+  const valid=targets.every(t=>/^[a-zA-Z0-9_-]+$/.test(t.uid)&&/^[a-zA-Z0-9_-]+$/.test(t.id)&&(G.dashRaw || []).some(T=>T.uid===t.uid&&(T.runs || []).some(r=>r.id===t.id)));
+  if(!valid){G.runDelMsg='삭제할 기록을 다시 선택하세요.';render();return;}
+  const raw=(G.dashRaw || []).filter(T=>targets.some(t=>t.uid===T.uid)).map(T=>Object.assign({},T,{runs:(T.runs || []).filter(r=>targets.some(t=>t.uid===T.uid&&t.id===r.id)),scen:[],final:null}));
+  G.runDelBusy=true;G.runDelMsg=backup ? '백업을 받는 중…' : '선택한 기록을 삭제하는 중…';render();
   try {
-    const backed=await saveFile('nrk-한판-삭제전-'+r.id+'.json',JSON.stringify({v:VERSION,exportedAt:Date.now(),testers:[Object.assign({},T,{runs:[r],scen:[],final:null})]},null,2));
-    if(!backed){G.runDelMsg='백업을 받지 못해 삭제를 중단했습니다.';return;}
+    if(backup){const backed=await saveFile('nrk-플레이기록-삭제전-'+Date.now()+'.json',JSON.stringify({v:VERSION,exportedAt:Date.now(),testers:raw},null,2));if(!backed){G.runDelMsg='백업을 받지 못해 삭제를 중단했습니다.';return;}}
     if(!canDeleteRun()){G.runDelMsg='관리자 권한을 다시 확인하세요. 삭제하지 않았습니다.';return;}
-    const path='playtest/'+target.uid+'/'+COL.runs+'/'+target.id;
-    const {data,error}=await G.sb.rpc('admin_delete',{pass:G.adminPass || '',paths:[path]});if(error)throw error;
+    const paths=[...new Set(targets.map(t=>'playtest/'+t.uid+'/'+COL.runs+'/'+t.id))];
+    const {data,error}=await G.sb.rpc('admin_delete',{pass:G.adminPass || '',paths});if(error)throw error;
     if(!data){G.runDelMsg='저장소에 해당 기록이 없습니다. 새로 고침해 확인하세요.';return;}
-    for(const tester of G.dashRaw || [])if(tester.uid===target.uid)tester.runs=(tester.runs || []).filter(x=>x.id!==target.id);G.dash=aggregate(G.dashRaw);G.rfOpen=null;G.runDelTarget=null;G.runDelMsg='이 판의 기록을 삭제했습니다. 백업 파일은 다운로드 폴더에서 확인하세요.';toast(G.runDelMsg);
+    for(const T of G.dashRaw || [])T.runs=(T.runs || []).filter(r=>!targets.some(t=>t.uid===T.uid&&t.id===r.id));
+    G.dash=aggregate(G.dashRaw);G.rfOpen=null;G.runDelTarget=null;G.runDelTargets=null;G.runDeleteSel=[];
+    G.runDelMsg=targets.length+'판의 기록을 삭제했습니다.'+(backup ? ' 백업 파일을 다운로드 폴더에서 확인하세요.' : ' 백업 없이 삭제했습니다.');toast(G.runDelMsg);
   }catch(e){G.runDelMsg='삭제하지 못했습니다. '+(e.code==='PGRST202' ? '저장소의 관리자 삭제 함수 설정을 확인하세요.' : '새로 고침 후 다시 확인하세요.');}
   finally{G.runDelBusy=false;render();}
 }
@@ -346,9 +354,10 @@ function vRunLogs() {
   const f = G.rf || {}, rows = dashRunRows(), pages = Math.max(1, Math.ceil(rows.length / 25));
   const page = Math.max(0, Math.min(G.rfPage || 0, pages - 1));
   let h = '<section class="card">'+(G.runDelMsg ? '<p class="banner" role="status">'+esc(G.runDelMsg)+'</p>' : '')+'<h4>플레이 로그 찾기</h4><p class="mini">마지막 기록이 최신인 순서입니다. 검색 조건을 고른 뒤 적용을 누르세요.</p><div class="admin-filters"><label>플레이어 <select id="runperson"><option value="">전체 플레이어</option>' + (G.dashRaw || []).map((T,i)=>'<option value="' + esc(T.uid) + '"' + (f.uid === T.uid ? ' selected' : '') + '>' + esc(testerLabel(T,i)) + '</option>').join('') + '</select></label><label>이름·ID 검색 <input id="runquery" type="search" value="' + esc(f.q || '') + '" placeholder="플레이어, 캐릭터, 계정·판 ID"></label><label>직업 <select id="runbuild"><option value="all">전체 직업</option>' + CLASS_KEYS().map(k => '<option value="' + k + '"' + (f.b === k ? ' selected' : '') + '>' + esc(BUILDS[k].n) + '</option>').join('') + '</select></label><label>결과 <select id="runresult"><option value="all">전체 결과</option>' + Object.entries(DASH_RESULTS).map(([k, n]) => '<option value="' + k + '"' + (f.result === k ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></label><label>시작일 <input id="runfrom" type="date" value="' + esc(f.from || '') + '"></label><label>종료일 <input id="runto" type="date" value="' + esc(f.to || '') + '"></label></div><div class="row"><button class="sm gold" data-a="runfilter">검색 적용</button><button class="sm" data-a="runreset">초기화</button><button class="sm" data-a="runscsv">검색 결과 CSV 받기</button></div><p role="status">검색 결과 ' + rows.length + '판 · ' + (page + 1) + '/' + pages + '페이지 (25판씩)</p>';
+  h += vBatchRunDelete();
   h += vAdminOverview(rows);
   h += '<div class="tbl"><table class="st2"><caption class="sr">검색된 플레이 로그</caption><thead><tr><th>플레이어</th><th>캐릭터·직업</th><th>결과</th><th>도달</th><th>마지막 기록</th><th>상세</th></tr></thead><tbody>';
-  h += rows.slice(page * 25, (page + 1) * 25).map(x => { const r = x.r; return '<tr><td>' + esc(x.who) + '</td><td>' + esc(r.cname || '—') + '<br>' + esc((BUILDS[r.build] || {}).n || r.build || '—') + '</td><td>' + esc(DASH_RESULTS[dashRunResult(r)] || dashRunResult(r)) + '</td><td>' + esc(rankProg({ ch: r.ch, clears: r.clears, floor: r.roomReached })) + '</td><td>' + esc(dashRunTime(r) ? new Date(dashRunTime(r)).toLocaleString('ko-KR') : '—') + '</td><td><button class="sm" data-a="runopen" data-k="' + x.key + '" aria-expanded="' + (G.rfOpen === x.key) + '">기록 보기</button></td></tr>'; }).join('') || '<tr><td colspan="6">조건에 맞는 기록이 없습니다.</td></tr>';
+  h += rows.slice(page * 25, (page + 1) * 25).map(x => { const r = x.r; return '<tr><td>' + (canDeleteRun() ? '<label><input type="checkbox" data-a="rundeltick" data-k="'+esc(JSON.stringify({uid:x.uid,id:r.id}))+'"'+((G.runDeleteSel || []).some(t=>t.uid===x.uid&&t.id===r.id) ? ' checked' : '')+(G.runDelBusy ? ' disabled' : '')+' aria-label="'+esc((r.cname || r.id)+' 삭제 선택')+'"> 선택</label><br>' : '') + esc(x.who) + '</td><td>' + esc(r.cname || '—') + '<br>' + esc((BUILDS[r.build] || {}).n || r.build || '—') + '</td><td>' + esc(DASH_RESULTS[dashRunResult(r)] || dashRunResult(r)) + '</td><td>' + esc(rankProg({ ch: r.ch, clears: r.clears, floor: r.roomReached })) + '</td><td>' + esc(dashRunTime(r) ? new Date(dashRunTime(r)).toLocaleString('ko-KR') : '—') + '</td><td><button class="sm" data-a="runopen" data-k="' + x.key + '" aria-expanded="' + (G.rfOpen === x.key) + '">기록 보기</button></td></tr>'; }).join('') || '<tr><td colspan="6">조건에 맞는 기록이 없습니다.</td></tr>';
   h += '</tbody></table></div><div class="row"><button class="sm" data-a="runpage" data-v="' + (page - 1) + '"' + (page ? '' : ' disabled') + '>이전</button><button class="sm" data-a="runpage" data-v="' + (page + 1) + '"' + (page + 1 < pages ? '' : ' disabled') + '>다음</button></div></section>';
   const opened = rows.find(x => x.key === G.rfOpen); return (opened ? vRunDetail(opened) : '') + h;
 }
