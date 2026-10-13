@@ -372,7 +372,8 @@ function consScore(b, c, D) {
     case 'unevade': case 'unbrace': case 'unguard': case 'unbless': case 'noheal': case 'nosummon': case 'sticky': case 'norise': case 'wallbreak': case 'rewind': return 60;
     case 'unhaze': case 'unearth': case 'nobloat': case 'unmod': return 45;
     case 'burnpiles': return 40;
-    case 'whet': case 'mark': case 'brk': case 'dart': case 'aoe': case 'slow': return 22;
+    case 'whet': case 'mark': case 'brk': case 'slow': return 22;
+    case 'scatter': return alive(b).filter(e => e.intent && (e.intent.k === 'attack' || e.intent.aimed)).length >= 2 ? 30 : 0;
     case 'block': return 20;
     case 'quick': return 15;
     default: return 0;

@@ -27,8 +27,8 @@ const CONS = {
   saltring:  { n: '소금 원', ico: '⭕', sit: '소환사가 부르려 한다', k: 'nosummon', tgt: 'enemy', max: 3, price: 12, use: 'fight', d: () => '소환하는 적 하나의 다음 소환을 막습니다. 보스는 고를 수 없습니다.' },
   scrapbait: { n: '쇠붙이 미끼', ico: '🥫', sit: '도둑이 훔치려 한다', k: 'antisteal', max: 2, price: 10, use: 'fight', d: () => '이 전투에서 도둑은 쇠붙이만 훔쳐 갑니다.' },
   birdlime:  { n: '끈끈이', ico: '🍯', sit: '도둑이 달아나려 한다', k: 'sticky', tgt: 'enemy', max: 2, price: 12, use: 'fight', d: () => '도둑 하나의 다음 달아나기를 막습니다.' },
-  relic:     { n: '깨진 성물', ico: '💥', sit: '적이 많다', k: 'aoe', v: 8, vm: 13, max: 3, price: 15, use: 'fight', d: v => '적 모두에게 피해 ' + v + '. 레벨이 오를수록 커집니다.' },
-  dagger:    { n: '투척 단검', ico: '🗡️', sit: '후열에 손이 닿지 않는다', k: 'dart', tgt: 'enemy', v: 12, vm: 20, max: 5, price: 10, use: 'fight', d: v => '한 적에게 피해 ' + v + '. 후열에도 닿고, 레벨이 오를수록 커집니다.' },
+  relic:     { n: '흩뿌리는 성물', ico: '💫', sit: '적이 많다', k: 'scatter', v: 0.1, vm: 0.15, max: 3, price: 15, use: 'fight', d: v => '적 모두의 다음 공격 피해 −' + Math.round(v * 100) + '%. 피해는 주지 않습니다.' }, // 10월 14일: 피해를 주는 소모품을 없앴다(옛 깨진 성물)
+  dagger:    { n: '올가미', ico: '➰', sit: '적이 너무 빠르다', k: 'slow', tgt: 'enemy', v: 1, vm: 2, max: 5, price: 10, use: 'fight', d: v => '한 적에게 둔화 +' + v + '. 후열에도 닿습니다. 뼈 더미와 뼈벽은 제외하고, 피해는 주지 않습니다.' }, // 10월 14일: 옛 투척 단검(피해 12). 저장본 호환을 위해 id는 그대로
   flash:     { n: '섬광 가루', ico: '✨', sit: '붕괴 게이지가 크다', k: 'brk', tgt: 'enemy', v: 30, vm: 45, max: 3, price: 14, use: 'fight', d: v => '한 적에게 붕괴 +' + v + '.' },
   whet:      { n: '숫돌', ico: '🪓', sit: '한 방이 모자란다', k: 'whet', v: 0.25, max: 3, price: 12, use: 'fight', d: v => '다음 직접 피해 한 번 +' + Math.round(v * 100) + '%.' },
   chalk:     { n: '표식 분필', ico: '🖍️', sit: '한 적을 빨리 잡아야 한다', k: 'mark', tgt: 'enemy', v: 0.3, max: 3, price: 12, use: 'fight', d: v => '한 적이 받는 다음 직접 피해 한 번 +' + Math.round(v * 100) + '%.' },
@@ -55,7 +55,7 @@ const LOOT = {
 /* 2챕터 소모품 (10월 5일, docs/챕터/2챕터.md 11절). ch: 그 챕터부터 전리품에 나온다(상점은 다음 챕터 것까지 판다). vs: 그 역할과 싸운 뒤 전리품 무게 ×1.5 */
 Object.assign(CONS, {
   lime:      { n: '석회 가루', ico: '⚪', ch: 2, vs: 'skeleton', sit: '해골이 다시 일어선다', k: 'norise', tgt: 'enemy', max: 5, price: 10, use: 'fight', d: () => '아직 부활하지 않은 해골 하나의 부활을 막습니다. 그 해골의 뼈 더미에 쓰면 바로 없앱니다.' },
-  oiljar:    { n: '기름 단지', ico: '🏺', ch: 2, vs: 'skeleton', sit: '뼈 더미가 여럿이다', k: 'burnpiles', max: 2, price: 18, use: 'fight', d: () => '뼈 더미를 모두 없애고, 남은 적 모두에게 화상 2를 겁니다. 뼈 더미가 있을 때만 씁니다.' },
+  oiljar:    { n: '기름 단지', ico: '🏺', ch: 2, vs: 'skeleton', sit: '뼈 더미가 여럿이다', k: 'burnpiles', max: 2, price: 18, use: 'fight', d: () => '뼈 더미를 모두 태워 없앱니다. 뼈 더미가 있을 때만 씁니다.' }, // 10월 14일: 적 모두 화상 2를 뺐다(피해를 주는 소모품 없애기)
   mugwort:   { n: '쑥 다발', ico: '🌾', ch: 2, vs: 'hexer', sit: '해로운 상태가 한꺼번에 걸렸다', k: 'trim', max: 5, price: 12, use: 'any', d: () => '내 해로운 상태가 종류마다 1씩 줄어듭니다.' },
   tamper:    { n: '흙 다지개', ico: '🔨', ch: 2, vs: 'burrower', sit: '적이 땅속에 숨었다', k: 'unearth', max: 3, price: 14, use: 'fight', d: () => '땅속의 적을 모두 끌어내 공격 준비를 끊고 취약 1을 겁니다. 보스는 제외합니다.' },
   pick:      { n: '곡괭이', ico: '⛏️', ch: 2, vs: 'mason', sit: '뼈벽이 후열을 가린다', k: 'wallbreak', tgt: 'enemy', max: 3, price: 12, use: 'fight', d: () => '뼈벽 하나에 붕괴 30을 줍니다.' },

@@ -26,9 +26,9 @@ function __hcCons() {
   o.herb = [heal('herb', 'n'), heal('herb', 'm')]; o.bread = [heal('bread', 'n'), heal('bread', 'm')]; o.sap = [heal('sap', 'n'), heal('sap', 'm')]; o.sapIgn = (() => { X = __hcMk(); X.p.hp = 1; __hcS(X.p, 'ignite', 3); consApply(X.b, X.run, { id: 'sap', g: 'n' }, null); return st(X.p, 'ignite'); })();
   o.healMul = (() => { X = __hcMk(); return healMul(X.p); })();
   o.leaf = (() => { X = __hcMk(); X.p.st = 0; consApply(X.b, X.run, { id: 'leaf', g: 'n' }, null); return X.p.st; })();
-  const aoe = g => { X = __hcMk(); const h0 = X.b.en.map(e => e.hp); consApply(X.b, X.run, { id: 'relic', g }, null); return X.b.en.map((e, i) => h0[i] - e.hp); };
+  const aoe = g => { X = __hcMk(); const h0 = X.b.en.map(e => e.hp); consApply(X.b, X.run, { id: 'relic', g }, null); return X.b.en.map((e, i) => [h0[i] - e.hp, e.redNext || 0]); }; // 흩뿌리는 성물: 피해 없이 적마다 다음 공격 피해 감소
   o.relic = [aoe('n'), aoe('m')]; o.lv = (() => { X = __hcMk(); return X.b.ctx.lv || 1; })(); o.lvMul = (() => { X = __hcMk(); return consLvMul(X.b); })();
-  const dart = g => { X = __hcMk(); const t = X.b.en[0]; const h = t.hp; consApply(X.b, X.run, { id: 'dagger', g }, t); return h - t.hp; };
+  const dart = g => { X = __hcMk(); const t = X.b.en[0]; const h = t.hp; consApply(X.b, X.run, { id: 'dagger', g }, t); return [h - t.hp, st(t, 'chill')]; }; // 올가미: 피해 없이 둔화
   o.dagger = [dart('n'), dart('m')];
   const brk = (id, g) => { X = __hcMk(); const t = X.b.en[0]; const b0 = t.brk; consApply(X.b, X.run, { id, g }, t); return t.brk - b0; };
   o.flash = [brk('flash', 'n'), brk('flash', 'm')]; o.pick = brk('pick', 'n');
@@ -106,16 +106,15 @@ function __hcBlob(k) { return JSON.stringify(IFX[k], (kk, v) => typeof v === 'fu
   C('최대 생명력의 20%를 회복합니다.', 'heal: 약초 고급 vm와 마른 빵 v (소수 비율 0.2)', () => near(CM.herb[1], 0.2) && near(CM.bread[0], 0.2));
   C('최대 생명력의 30%를 회복합니다.', 'heal: 마른 빵 고급 vm 0.3', () => near(CM.bread[1], 0.3));
   C('스태미나 +30.', 'consApply stam: 각성 잎 v 30 → 스태미나 +' + CM.leaf, () => CM.leaf === 30);
-  C('적 모두에게 피해 8.', 'consApply aoe: 1레벨 전투에서 적마다 −' + CM.relic[0].join(','), () => lvK === 1 && CM.relic[0].every(x => near(x, 8, 0.01)));
-  C('적 모두에게 피해 13.', 'aoe 고급: 적마다 −' + CM.relic[1].join(','), () => lvK === 1 && CM.relic[1].every(x => near(x, 13, 0.01)));
-  C('한 적에게 피해 12.', 'consApply dart: 투척 단검 −' + CM.dagger[0], () => near(CM.dagger[0], 12, 0.01));
-  C('한 적에게 피해 20.', 'dart 고급: −' + CM.dagger[1], () => near(CM.dagger[1], 20, 0.01));
+  C('적 모두의 다음 공격 피해 −10%.', 'consApply scatter: 적마다 [피해, redNext] ' + JSON.stringify(CM.relic[0]), () => CM.relic[0].every(([d, r]) => d === 0 && near(r, 0.1)) && srcHas('if (!o.dot && o.src && o.src.redNext) { d *= 1 - o.src.redNext; o.src.redNext = 0; }'));
+  C('적 모두의 다음 공격 피해 −15%.', 'scatter 고급: ' + JSON.stringify(CM.relic[1]), () => CM.relic[1].every(([d, r]) => d === 0 && near(r, 0.15)));
+  C('한 적에게 둔화 +1.', 'consApply slow(올가미): [피해, 둔화] ' + CM.dagger[0], () => CM.dagger[0][0] === 0 && CM.dagger[0][1] === 1);
+  C('한 적에게 둔화 +2.', 'slow 고급: ' + CM.dagger[1], () => CM.dagger[1][0] === 0 && CM.dagger[1][1] === 2);
   C('한 적에게 붕괴 +30.', 'consApply brk: 섬광 가루 붕괴 +' + CM.flash[0].toFixed(1) + '(스탯 배율 포함)', () => near(CM.flash[0], 30, 30 * 0.03));
   C('한 적에게 붕괴 +45.', 'brk 고급: 붕괴 +' + CM.flash[1].toFixed(1), () => near(CM.flash[1], 45, 45 * 0.03));
   C('다음 직접 피해 한 번 +25%.', 'p.whet=0.25 · hurtEnemy d *= 1 + p.whet', () => near(CM.whet, 0.25) && srcHas('if (!o.dot && b.cur && b.p.whet) { d *= 1 + b.p.whet; b.p.whet = 0; }'));
   C('한 적이 받는 다음 직접 피해 한 번 +30%.', 'e.markDmg=0.3 · hurtEnemy d *= 1 + e.markDmg', () => near(CM.chalk, 0.3) && srcHas('if (!o.dot && e.markDmg) { d *= 1 + e.markDmg; e.markDmg = 0; }'));
   C('다음에 받는 공격 하나의 피해 −40%.', 'p.nextRed=0.4 · hurtPlayer d *= 1 − p.nextRed', () => near(CM.charm, 0.4) && srcHas('if (!o.dot && o.src && p.nextRed) { d *= 1 - p.nextRed; p.nextRed = 0; }'));
-  C('적 모두에게 화상 2를 겁니다.', 'burnpiles: 적 모두 화상 ' + CM.oil.join(','), () => CM.oil.length > 0 && CM.oil.every(x => x === 2));
   C('종류마다 1씩 줄어듭니다.', 'trim: 약화 3→' + CM.mug[0] + ', 출혈 2→' + CM.mug[1], () => CM.mug[0] === 2 && CM.mug[1] === 1);
   C('공격 준비를 끊고 취약 1을 겁니다.', 'unearth: 취약 ' + CM.tamper.join(','), () => CM.tamper.every(x => x === 1));
   C('뼈벽 하나에 붕괴 30을 줍니다.', 'wallbreak addBreak 30 → 붕괴 +' + CM.pick.toFixed(1), () => near(CM.pick, 30, 30 * 0.03));
@@ -123,15 +122,14 @@ function __hcBlob(k) { return JSON.stringify(IFX[k], (kk, v) => typeof v === 'fu
   C('이 전투의 열기를 30 내립니다.', 'cool: 열기 60 → ' + (60 - CM.cool), () => CM.cool === 30 && E('CONS.awning.v') === 30);
   C('최대 생명력의 8%를 회복하고 화상을 모두 지웁니다.', 'healcure: 선인장 수액 v 0.08, 화상 3 → ' + CM.sapIgn, () => near(CM.sap[0], 0.08) && CM.sapIgn === 0);
   C('최대 생명력의 12%를 회복하고 화상을 모두 지웁니다.', 'healcure 고급 vm 0.12', () => near(CM.sap[1], 0.12));
-  api.note('items-cons', '레벨이 오를수록', '레벨 배율은 1.15 꼴이 아닌 설명(숫자 없음)');
 
   // 전투 기록 문장 (consApply가 남김)
-  const msgs = [['burnpiles', '적 모두 화상 2'], ['trim', '해로운 상태가 종류마다 1씩 준다'], ['wallbreak', '에게 붕괴 +30'], ['slow', '에게 둔화 2']];
+  const msgs = [['trim', '해로운 상태가 종류마다 1씩 준다'], ['wallbreak', '에게 붕괴 +30'], ['slow', "'에게 둔화 ' + (v || 2)"]];
   api.source('items-consmsg', msgs.map(([k, t]) => ({ id: k, text: SRC.includes(t) ? t : '(소스에 없음) ' + t })));
-  api.add('items-consmsg', '적 모두 화상 2', 'consApply burnpiles addS ignite 2', () => CM.oil.every(x => x === 2) && srcHas("addS(b, e, 'ignite', 2); return '뼈 더미 '"));
+  api.add('items-cons', '뼈 더미를 모두 태워 없앱니다.', '기름 단지는 화상을 걸지 않는다: 적 화상 ' + CM.oil.join(','), () => CM.oil.every(x => x === 0)); // 10월 14일: 피해를 주는 소모품 없애기
   api.add('items-consmsg', '종류마다 1씩 준다', 'consApply trim kwDec 1', () => CM.mug[0] === 2 && CM.mug[1] === 1);
   api.add('items-consmsg', '붕괴 +30', 'consApply wallbreak addBreak 30', () => near(CM.pick, 30, 1) && srcHas("addBreak(b, tgt, 30); return tgt.n + '에게 붕괴 +30'"));
-  api.add('items-consmsg', '둔화 2', 'consApply slow addS chill 2', () => CM.slow === 2);
+  api.add('items-consmsg', "'에게 둔화 ' + (v || 2)", 'consApply slow addS chill (v || 2)', () => CM.slow === 2);
 
   // ---------- 각인
   const awk = JSON.parse(E('JSON.stringify(AWK_LIST.concat(AWK_GIFT).map(a => ({ id: a.id, d: a.d })))'));

@@ -100,7 +100,6 @@ function consTargets(b, D) {
 }
 function consTarget(b, D, tgtId) {
   const ts = consTargets(b, D); const sel = tgtId && ts.find(e => e.id === tgtId); if (sel) return sel;
-  if (D.k === 'dart') return ts.slice().sort((x, y) => ((y.row === 'back') - (x.row === 'back')) || (x.hp - y.hp))[0];
   if (D.k === 'brk') return ts.slice().sort((x, y) => (y.brk / y.brkMax) - (x.brk / x.brkMax))[0];
   if (D.k === 'mark') return ts.slice().sort((x, y) => x.hp - y.hp)[0];
   return ts[0];
@@ -119,6 +118,7 @@ function consWhyNot(b, run, c, tgtId) {
     case 'cure': return p.s[D.s] ? '' : '그 상태가 없습니다';
     case 'block': return st(p, 'block') > 0 ? '이미 막음이 있습니다' : '';
     case 'halfboom': return b.halfBoom === b.round ? '이미 효과가 있습니다' : '';
+    case 'scatter': { const al = alive(b).filter(e => e.role !== 'root'); return al.every(e => e.redNext) ? '이미 효과가 있습니다' : ''; }
     case 'blind': { const bk = alive(b).filter(e => e.row === 'back' && e.role !== 'root'); return !bk.length ? '후열 적이 없습니다' : bk.every(e => e.missNext) ? '이미 효과가 있습니다' : ''; }
     case 'decoy': return p.decoy ? '이미 효과가 있습니다' : '';
     case 'guard1': return p.nextRed ? '이미 효과가 있습니다' : '';
@@ -158,8 +158,7 @@ function consApply(b, run, c, tgt) {
     case 'nosummon': tgt.noSummon = 1; return tgt.n + '의 다음 소환을 막는다';
     case 'antisteal': b.antiSteal = 1; return '쇠붙이를 흘려 둔다';
     case 'sticky': tgt.stuck = 1; return tgt.n + '의 발에 끈끈이가 붙는다';
-    case 'aoe': { const d = v * consLvMul(b); for (const e of alive(b)) if (e.role !== 'root') hurtEnemy(b, e, d, { aoe: 1, label: D.n }); return '적 모두에게 피해'; }
-    case 'dart': hurtEnemy(b, tgt, v * consLvMul(b), { single: 1, label: D.n }); return tgt.n + '에게 던진다';
+    case 'scatter': for (const e of alive(b)) if (e.role !== 'root') e.redNext = v; return '적 모두의 다음 공격 피해 −' + Math.round(v * 100) + '%';
     case 'brk': addBreak(b, tgt, v); return tgt.n + '에게 붕괴 +' + v;
     case 'whet': p.whet = v; return '다음 공격 피해 +' + Math.round(v * 100) + '%';
     case 'mark': tgt.markDmg = v; return tgt.n + '에게 표식';
@@ -168,7 +167,7 @@ function consApply(b, run, c, tgt) {
     case 'escape': b.over = 'flee'; return '연기 속으로 물러난다';
     case 'lootx': b.lootX = 2; return '이 전투의 전리품 확률 두 배';
     case 'norise': if (tgt.pile) { tgt.norise = 1; tgt.hp = 0; killEnemy(b, tgt); return '뼈 더미가 흩어진다'; } tgt.norise = 1; return tgt.n + '은(는) 다시 일어서지 못한다';
-    case 'burnpiles': { let n = 0; for (const e of alive(b).filter(x => x.pile)) { e.norise = 1; e.hp = 0; killEnemy(b, e); n++; } for (const e of alive(b)) if (e.role !== 'root') addS(b, e, 'ignite', 2); return '뼈 더미 ' + n + '개를 태운다. 적 모두 화상 2'; }
+    case 'burnpiles': { let n = 0; for (const e of alive(b).filter(x => x.pile)) { e.norise = 1; e.hp = 0; killEnemy(b, e); n++; } return '뼈 더미 ' + n + '개를 태운다'; }
     case 'trim': { for (const k of HEX.kinds.concat(['chill'])) if (p.s[k]) kwDec(p, k); return '해로운 상태가 종류마다 1씩 준다'; }
     case 'unearth': { for (const e of alive(b).filter(x => x.under && x.role !== 'boss')) { e.under = 0; e.stkPrep = 0; e.intent = { k: 'attack' }; e.teleTurn = null; addS(b, e, 'vuln', 1); } return '땅속의 적을 끌어낸다'; }
     case 'cool': { const d = heatAdd(b, -v, D.n); return '열기 ' + Math.round(d); }
@@ -177,7 +176,7 @@ function consApply(b, run, c, tgt) {
     case 'reveal': { for (const d of run.doors || []) d.hide = 0; run.dg.reveal = (run.dg.reveal || []).concat([run.room + 1]); return '이 층과 다음 층 문의 보상이 보인다'; }
     case 'rewind': { if (tgt.foe === 'sundial') { tgt.clock = Math.min(FOE_X.sundial.clock, (tgt.clock || 0) + FOE_X.sundial.glassBack); if (tgt.noonNext) { tgt.noonNext = 0; tgt.teleTurn = null; tgt.intent = { k: 'attack' }; } return tgt.n + '의 해시계 +' + FOE_X.sundial.glassBack; } if (tgt.chant) { tgt.chant = null; tgt.teleTurn = null; tgt.pyreRest = 0; tgt.intent = { k: tgt.role === 'maid' ? 'mchant' : 'chant' }; return tgt.n + '의 영창이 처음으로 돌아간다'; } if (tgt.glow > 0) { tgt.glow = Math.max(0, tgt.glow - 2); if (tgt.intent && tgt.intent.k === 'charge') { tgt.intent = { k: 'attack' }; tgt.teleTurn = null; } return tgt.n + '의 달아오름 ' + tgt.glow; } if (tgt.embers > 0) { tgt.embers = Math.max(0, tgt.embers - 2); return tgt.n + '의 불씨 ' + tgt.embers; } return '되돌릴 것이 없다'; }
     case 'wallbreak': addBreak(b, tgt, 30); return tgt.n + '에게 붕괴 +30';
-    case 'slow': addS(b, tgt, 'chill', 2); return tgt.n + '에게 둔화 2';
+    case 'slow': addS(b, tgt, 'chill', v || 2); return tgt.n + '에게 둔화 ' + (v || 2);
     case 'nobloat': b.noBloat = 1; return '숯 천으로 코와 입을 막는다';
   }
   return '';
