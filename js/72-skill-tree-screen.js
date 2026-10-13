@@ -165,7 +165,7 @@ function sheetParts(S) {
   } else if (S.kind === 'cons') {
     const run = G.run, b = G.b && !G.b.over ? G.b : null; const L = run.cons || [];
     title = '소모품';
-    body = `<p class="mini">${b ? '차례 칸을 쓰지 않습니다. 이번 차례 ' + (b.consN || 0) + '/' + consTurnOf(run.p) + '개. 적을 고르는 소모품은 지금 고른 적(없으면 알맞은 적)에게 씁니다.' : '전투 밖에서는 회복과 해제를 씁니다.'} 가방 ${bagUsed(run)}/${BAG_MAX}.</p>`;
+    body = `<p class="mini">${b ? '차례 칸을 쓰지 않습니다. 이번 차례 ' + (b.consN || 0) + '/' + consTurnOf(run.p) + '개. 적을 고르는 소모품은 지금 고른 적(없으면 알맞은 적)에게 씁니다.' : '전투 밖에서는 회복과 해제를 씁니다.'} 소모품 가방 ${consUsed(run)}/${CONS_BAG}칸.</p>`;
     if (!L.length) body += '<p class="mini">소모품이 없습니다. 쓰러뜨린 적이 떨구거나 상점에서 삽니다.</p>';
     body += '<p class="mini">★로 고른 세 종류를 빠른 사용 줄에 둡니다. 고르지 않으면 자동으로 표시합니다.</p><div class="invtools" aria-label="빠른 사용 즐겨찾기">'+(run.consFav||[]).map(key=>{const [id,g]=key.split(':');return CONS[id] ? `<button class="sm" data-a="consfavremove" data-k="${esc(key)}" aria-label="${esc(consName({id,g}))} 즐겨찾기 해제">★ ${esc(consName({id,g}))} ×</button>` : '';}).join('')+'</div>';
     const filter=S.data.filter||'all',only=!!S.data.only,query=S.data.query||'';
