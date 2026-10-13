@@ -33,4 +33,9 @@ for (const id of Object.values(E.FIRST_GIFT3)) assert(E.CONS[id], '처음 만난
 for (const [id, [, to]] of Object.entries(E.CONS_GONE)) { assert(!E.CONS[id], '없앤 소모품이 남아 있음: ' + id); if (to) assert(E.CONS[to], id + ' → 없는 소모품 ' + to); }
 assert(E.CONS.herb.vm == null, '고급 약초 없음');
 ok.push('이름 참조 · 보상 표 · 행선지');
+// 5. 상점: 챕터 전용은 다음 챕터 것만, 모래 주머니는 드물게(만든 사람 결정: 끄기는 두고 등장률을 낮춘다)
+{ let sand = 0, lime3 = 0, N = 400; for (let i = 0; i < N; i++) for (const ch of [1, 2]) { const run = { ch, mode: 'normal', p: E.mkPlayer('hunter', {}), build: 'hunter', bag: [], inv: {}, cons: [], eqU: {}, gold: 0, pouch: {} }; G.run = run; E.genShop(run); const ids = run.shop.cons.map(x => x.id); if (ids.includes('sandbag')) sand++; if (ch === 2 && ids.includes('lime')) lime3++; }
+  assert.equal(lime3, 0, '2챕터 끝 상점(다음은 3챕터)은 석회 가루를 팔지 않는다'); const rate = sand / (N * 2); assert(rate > 0.05 && rate < 0.4, '모래 주머니 상점 진열률 ' + rate); }
+assert.equal(E.CONS.sandbag.dw, 0.2); for (const k of ['lurker', 'wrapped', 'noon', 'ember', 'mirage', 'haze']) assert(E.CONS[E.FIRST_GIFT3[k]], k + ' 처음 만난 방 보상');
+ok.push('상점 진열 · 모래 주머니 등장률 · 처음 만난 방 보상 6곳');
 console.log('소모품 20종 정리 점검 통과: ' + ok.join(' · '));
