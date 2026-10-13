@@ -141,29 +141,36 @@ function vRecords() {
 }
 
 /* ===== 랭킹 ===== */
+function rankDisplayRows() {
+  const out=[];
+  if(G.db && G.board){for(const T of G.board)for(const e of Object.values(T.rank62 || {}))out.push(Object.assign({},e,{uid:T.uid,nick:T.name || '',me:T.uid===G.uid}));}
+  else for(const e of Object.values(G.data.rank62 || {}))out.push(Object.assign({},e,{uid:G.uid || 'local',nick:G.data.name || '',me:true}));
+  const tab=G.rankTab || 'all',mode=G.rankMode==='hard' ? 'hard' : 'normal';
+  return out.filter(e=>BUILDS[e.build]&&(tab==='all'||e.build===tab)&&(e.mode==='hard'?'hard':'normal')===mode&&(!G.rankDeadOnly||e.st==='dead')).sort(rankCmp);
+}
+function rankBestPlayers(records) {const seen=new Set();return records.filter(e=>{if(seen.has(e.uid))return false;seen.add(e.uid);return true;});}
 function vRank() {
-  const tab = G.rankTab || 'all', rm = G.rankMode === 'hard' ? 'hard' : 'normal';
-  let h = `<section class="card rcpage"><div class="phead">${backBtn()}<h3>랭킹</h3></div>`;
-  h += rcTabs('rkmode', '모드', [{ a: 'rmode', k: 'normal', t: '일반', on: rm === 'normal' }, { a: 'rmode', k: 'hard', t: '가혹', on: rm === 'hard' }]);
-  let body = `<p class="mini">깬 챕터, 도달한 층, 레벨 순으로 높고, 모두 같으면 플레이 시간이 짧은 쪽이 위입니다. 쓰러진 캐릭터도 남습니다. 일반과 가혹은 따로 셉니다.</p>`;
-  body += rcGroup('rkc', '직업', ['all'].concat(CLASS_KEYS()).map(k => `<button type="button" class="rcchip" aria-pressed="${tab === k}" data-a="rtab" data-k="${k}">${k === 'all' ? '전체' : `<span aria-hidden="true">${BUILDS[k].ico}</span> ${esc(BUILDS[k].n)}`}</button>`).join(''));
-  if (G.db && !G.board) { if (!G.boardLoading) setTimeout(loadBoard, 0); body += '<p class="mini" role="status">불러오는 중입니다.</p>'; }
+  const tab=G.rankTab || 'all',rm=G.rankMode==='hard'?'hard':'normal';
+  let h='<section class="card rcpage"><div class="phead">'+backBtn()+'<h3>랭킹</h3></div>';
+  h+=rcTabs('rkmode','모드',[{a:'rmode',k:'normal',t:'일반',on:rm==='normal'},{a:'rmode',k:'hard',t:'가혹',on:rm==='hard'}]);
+  let body='<p class="mini">'+(tab==='all'?'모든 직업 중':'선택한 직업에서')+' 플레이어마다 가장 높은 기록 한 개만 표시합니다. 깬 챕터 → 도달 층 → 레벨 → 짧은 플레이 시간 순입니다.</p>';
+  body+=rcGroup('rkc','직업',['all'].concat(CLASS_KEYS()).map(k=>'<button type="button" class="rcchip" aria-pressed="'+(tab===k)+'" data-a="rtab" data-k="'+k+'">'+(k==='all'?'통합':esc(BUILDS[k].n))+'</button>').join(''));
+  body+='<div class="row"><button class="chip'+(!G.rankDeadOnly?' on':'')+'" data-a="rkdead" data-k="all">전체 최고 기록</button><button class="chip'+(G.rankDeadOnly?' on':'')+'" data-a="rkdead" data-k="dead">쓰러진 최고 기록</button></div>';
+  if(G.db&&!G.board){if(!G.boardLoading)setTimeout(loadBoard,0);body+='<p role="status">불러오는 중입니다.</p>';}
   else {
-    const all = rankRows().filter(e => (tab === 'all' || e.build === tab) && (e.mode === 'hard' ? 'hard' : 'normal') === rm), rows = all.slice(0, 50);
-    const mi = all.findIndex(e => e.me), mine = mi >= 0 ? all[mi] : null;
-    if (mine) body += `<p class="rcme" role="status"><b>내 최고 순위 ${mi + 1}위</b> <span>${esc(mine.cname || '이름 없음')} · ${esc(rcProg(mine))} · Lv ${mine.lv || 1}</span>${mi >= 50 ? ' <span class="mini">(표는 50위까지 보입니다)</span>' : ''}</p>`;
-    else body += '<p class="rcme none" role="status">이 조건에는 내 기록이 아직 없습니다.</p>';
-    if (!rows.length) body += `<div class="rcempty"><p><b>아직 기록이 없습니다.</b></p><p class="mini">${rm === 'hard' ? '가혹 모드로 던전을 돌면 여기에 오릅니다.' : '캐릭터를 만들어 던전에 들어가면 여기에 오릅니다.'}</p></div>`;
-    else body += `<div class="rkwrap"><table class="rkt" role="table"><caption class="sr">${rm === 'hard' ? '가혹' : '일반'} 모드 ${tab === 'all' ? '전체 직업' : esc(BUILDS[tab].n)} 순위, 위에서부터 ${rows.length}개</caption><thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">순위</th><th scope="col" role="columnheader">캐릭터</th><th scope="col" role="columnheader">직업</th><th scope="col" role="columnheader">도달</th><th scope="col" role="columnheader">결과</th><th scope="col" role="columnheader">시간과 날짜</th><th scope="col" role="columnheader">플레이어</th></tr></thead><tbody role="rowgroup">${rows.map((e, i) => { const B = rankClassView(e);
-      return `<tr role="row" class="${e.me ? 'me' : ''}"><th scope="row" role="rowheader" class="c-rank" data-l="순위"><span class="rknum">${i + 1}</span><span class="sr">위</span></th><td role="cell" class="c-name" data-l="캐릭터"><b>${esc(e.cname || '이름 없음')}</b>${modeTag(e)}${e.title && titleName(e.title) ? ` <span class="rctag">${esc(titleName(e.title))}</span>` : ''}</td><td role="cell" class="c-cls" data-l="직업"><span aria-hidden="true">${B.ico}</span> ${esc(B.n)}</td><td role="cell" class="c-prog" data-l="도달"><b>${esc(rcProg(e))}</b><small>Lv ${e.lv || 1}</small></td><td role="cell" class="c-res" data-l="결과">${RANK_ST[e.st] || '기록 없음'}</td><td role="cell" class="c-time" data-l="시간">${e.ms > 0 ? fmtMs(e.ms) : '기록 없음'}<small>${rcDate(e.at)}</small></td><td role="cell" class="c-nick" data-l="플레이어">${esc(e.nick || '이름 없는 방랑자')}${e.me ? ' <span class="rctag me">나</span>' : ''}</td></tr>`; }).join('')}</tbody></table></div>${all.length > 50 ? `<p class="mini">위에서 50개까지 보입니다. 전체 ${all.length}개.</p>` : ''}`;
-    if (!G.db) body += '<p class="mini">공유 저장소에 연결되지 않아 이 브라우저의 기록만 보입니다.</p>';
+    const records=rankDisplayRows(),all=rankBestPlayers(records),rows=all.slice(0,50),mi=all.findIndex(e=>e.me);
+    body+=mi>=0?'<p class="rcme">내 최고 순위 <b>'+(mi+1)+'위</b> · '+esc(rcProg(all[mi]))+'</p>':'<p class="mini">이 조건에는 내 기록이 없습니다.</p>';
+    body+='<div class="rkwrap"><table class="rkt"><caption class="sr">플레이어별 최고 기록</caption><thead><tr><th>순위</th><th>플레이어·캐릭터</th><th>직업</th><th>도달</th><th>상세</th></tr></thead><tbody>';
+    body+=rows.map((e,i)=>{const B=rankClassView(e),other=records.filter(x=>x.uid===e.uid);
+      return '<tr class="'+(e.me?'me':'')+'"><th class="c-rank" scope="row" data-l="순위">'+(i+1)+'</th><td class="c-name" data-l="플레이어·캐릭터"><b>'+esc(e.nick || '이름 없는 방랑자')+(e.me?' · 나':'')+'</b><small>'+esc(e.cname || '이름 없음')+'</small></td><td class="c-cls" data-l="직업">'+esc(B.n)+'</td><td class="c-prog" data-l="도달"><b>'+esc(rcProg(e))+'</b><small>'+esc(RANK_ST[e.st] || '기록 없음')+'</small></td><td class="c-time" data-l="상세"><details><summary>상세 · '+other.length+'판</summary><p>대표 기록: Lv '+(e.lv || 1)+' · '+(e.ms>0?fmtMs(e.ms):'시간 미기록')+' · '+esc(rcDate(e.at))+'</p><ol>'+other.map(x=>'<li>'+esc(x.cname || '이름 없음')+' · '+esc(rankClassView(x).n)+' · '+esc(rcProg(x))+' · Lv '+(x.lv || 1)+' · '+esc(RANK_ST[x.st] || '기록 없음')+' · '+(x.ms>0?fmtMs(x.ms):'시간 미기록')+'</li>').join('')+'</ol></details></td></tr>';
+    }).join('') || '<tr><td colspan="5">아직 기록이 없습니다.</td></tr>';
+    body+='</tbody></table></div><p class="mini">'+all.length+'명의 최고 기록 중 50위까지 표시합니다. 상세에는 현재 조건의 보관된 랭킹 기록이 표시됩니다. 분석용 플레이 로그는 그대로 유지됩니다.</p>';
   }
-  h += rcPanel('rkmode', rm, body) + '</section>';
-  h += `<section class="card"><h4>랭킹에 보일 플레이어 이름</h4><div class="row nowrap"><label for="pname" class="sr">플레이어 이름</label><input id="pname" type="text" maxlength="16" placeholder="플레이어 이름" value="${esc(G.data.name || '')}"><button class="sm" data-a="namesave">저장</button></div><p class="mini">캐릭터 이름은 만들 때 정하고, 플레이어 이름은 모든 캐릭터에 함께 보입니다.${G.site && G.acct && !G.acct.anon ? ' 구글 계정에 고정됩니다.' : ''}</p>${G.db ? '<button class="sm" data-a="boardre">새로 고침</button>' : ''}</section>`;
+  h+=rcPanel('rkmode',rm,body)+'</section><details class="card"><summary>내 표시 이름 설정</summary><label for="pname">플레이어 이름</label><div class="row"><input id="pname" maxlength="16" value="'+esc(G.data.name || '')+'"><button class="sm" data-a="namesave">저장</button></div></details>';
+  if(G.db)h+='<button class="sm" data-a="boardre">새로 고침</button>';
   return h;
 }
 
-/* ===== 계정 목표 · 칭호 ===== */
 function vGoals() {
   const g = goalsData(), md = G.goalMode === 'hard' ? 'hard' : 'normal', cur = g[md === 'hard' ? 'h' : 'n']; let total = 0, done = 0;
   const cards = ALL_CLASS_KEYS().filter(k => TREE2[k]).map(k => {

@@ -32,6 +32,7 @@ function onClick(ev) {
     case 'menu': if ((G.scr === 'run' || G.scr === 'scen' || G.scr === 'tut' || G.scr === 'hudsample') && G.b || window.innerWidth < 720) G.menuOpen = !G.menuOpen; else { G.data.menuFold = !G.data.menuFold; saveLocal(); } render(); break;
     case 'rank': case 'records': case 'admin': case 'goals': case 'mark': if (a === 'mark' && !markOpen()) { toast('3챕터 보스를 한 번 이기면 열립니다'); break; } if (!PAGES.includes(G.scr)) G.back = G.scr; G.scr = a; G.sheet = null; G.adminMsg = ''; if (a === 'rank') G.board = null; render(); window.scrollTo(0, 0); break;
     case 'back': G.scr = G.back || 'title'; G.back = null; render(); break;
+    case 'rkdead': G.rankDeadOnly = el.dataset.k === 'dead'; render(); break;
     case 'rtab': G.rankTab = el.dataset.k; render(); break;
     case 'rmode': G.rankMode = el.dataset.k === 'hard' ? 'hard' : 'normal'; render(); break;
     case 'gmode': G.goalMode = el.dataset.k === 'hard' ? 'hard' : 'normal'; render(); break;
@@ -212,6 +213,7 @@ function onClick(ev) {
     }
     case 'final': G.scr = 'final'; render(); break;
     case 'finalsave': { G.data.final = { diff: radio('fd'), note: val('fnote'), fav: val('ffav'), again: +(radio('again') || 0) || null, board: radio('fb') || '', want: radio('want') || '', itemWhy: val('fitem'), at: Date.now() }; saveLocal(); G.scr = 'records'; render(); toast('답을 저장했습니다'); pushDb(COL.survey + '/final', G.data.final).then(render); break; }
+    case 'localsaveretry': { const ok = saveLocal(); render(); toast(ok ? '이 브라우저에 저장했습니다.' : localSaveReason()); break; }
     case 'dl': download(); break;
     case 'help': { const k = el.dataset.k || ''; if (G.sheet && G.sheet.kind === 'help') { G.sheet.data.k = k; render(); } else openSheet('help', { k }); break; }
     case 'guide': G.guideI = 0; G.afterGuide = null; G.scr = 'guide'; render(); break;
