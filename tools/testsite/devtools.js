@@ -4,14 +4,14 @@
   'use strict';
   const $ = (h) => { const d = document.createElement('div'); d.innerHTML = h.trim(); return d.firstChild; };
   const css = `
-#tm-btn{position:fixed;right:0;top:30%;z-index:100000;width:20px;height:44px;padding:0;font:12px sans-serif;border-radius:10px 0 0 10px;border:1px solid #888;border-right:0;background:rgba(34,34,34,.55);color:#fff;cursor:pointer;opacity:.6}#tm-btn:hover,#tm-btn[aria-expanded=true]{opacity:1}
+#tm-btn{position:fixed;right:0;top:30%;z-index:100000;width:26px;padding:6px 0;font:bold 12px/1.15 sans-serif;writing-mode:vertical-rl;letter-spacing:.1em;border-radius:10px 0 0 10px;border:1px solid #b8892e;border-right:0;background:#f5c542;color:#111;cursor:pointer;opacity:.92;box-shadow:-2px 2px 8px rgba(0,0,0,.45)}#tm-btn:hover,#tm-btn[aria-expanded=true]{opacity:1}
 #tm{position:fixed;right:40px;top:12%;z-index:100000;width:min(360px,calc(100vw - 16px));max-height:70vh;overflow:auto;background:#1b1b1f;color:#eee;border:1px solid #666;border-radius:10px;padding:10px;font:13px/1.45 sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.5)}
 #tm h4{margin:10px 0 4px;font-size:13px;color:#f5c542}#tm .row{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0}
 #tm button{font:12px sans-serif;padding:4px 7px;border-radius:6px;border:1px solid #555;background:#2d2d33;color:#eee;cursor:pointer}
 #tm button:hover{background:#3b3b44}#tm select,#tm input{font:12px sans-serif;background:#111;color:#eee;border:1px solid #555;border-radius:5px;padding:3px;max-width:100%}
 #tm .st{white-space:pre-wrap;background:#111;border-radius:6px;padding:6px;font:12px monospace}#tm .warn{color:#ff9b7a}`;
   document.head.appendChild($('<style>' + css + '</style>'));
-  const btn = $('<button id="tm-btn" type="button" aria-expanded="false" aria-label="테스트 메뉴" title="테스트 메뉴">🧪</button>'); // 화면 오른쪽 가장자리: 게임의 아래쪽 행동 버튼을 가리지 않게
+  const btn = $('<button id="tm-btn" type="button" aria-expanded="false" aria-label="테스트 메뉴" title="테스트 메뉴">🧪 테스트</button>'); // 화면 오른쪽 가장자리: 게임의 아래쪽 행동 버튼을 가리지 않게
   document.body.appendChild(btn);
   let panel = null;
   const has = (n) => typeof window[n] === 'function';
