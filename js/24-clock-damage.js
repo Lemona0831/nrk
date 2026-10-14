@@ -263,6 +263,7 @@ function hurtEnemy(b, e, raw, o) {
   if (e.boss === "abbot") { const th = ABBOT.ph[(e.phase || 1) - 1]; if (th != null && e.hp <= e.hpMax * th) { e.hp = Math.max(1, Math.round(e.hpMax * th)); e.abNext = 1; } } // 페이즈 문턱은 한 번에 하나: 넘친 피해는 버린다. 보스가 행동을 마친 뒤 한 단계만 넘어간다
   if (e.role === 'boss' && e.hp <= 0) { const w = bossDwell(e); if (w && w.last && w.left) { e.hp = 1; if (!e.dwellLog) { e.dwellLog = 1; logp(b, 'sys', e.n + '이(가) 쓰러지지 않고 버틴다. 마지막 단계에서 ' + w.left + '번 더 움직인 뒤에야 쓰러뜨릴 수 있다'); } } } // 단계 최소 체류(10월 14일)
   const actualDealt = Math.max(0, hp0 - Math.max(0, e.hp));
+  const held = e.role === 'boss' && e.hp > 0 && e.hp > hp0 - d + 0.001 ? Math.max(0, d - actualDealt) : 0; // 보스 단계 문턱 · 최소 체류로 막힌 몫(10월 15일: 전투 기록에 따로 보인다)
   const damageStats = b.damageStats || (b.damageStats = { v: 0, dealt: 0, taken: 0 }); damageStats.dealt += actualDealt;
   b.rec.push({ k: 'dealt', t: r1(b.t), d: r1(actualDealt), role: e.role, a: o.label || b.curSkill || (b.cur && b.cur.id) || '공격', dot: !!o.dot });
   if (e.chant && d > 0 && e.hp > 0) { e.chant.taken += d; if (e.chant.taken >= e.chant.need) chantBreak(b, e, '쌓인 상처에'); } // 화형 사제: 영창 중 받은 피해
@@ -270,7 +271,7 @@ function hurtEnemy(b, e, raw, o) {
   if (e.countering && e.hp > 0 && !o.dot && o.melee && o.single) { e.countering = 0; hurtPlayer(b, enemyHitEst(b, e), { src: e, single: 1, counter: 1, label: e.n + '이(가) 되받아친다' }); } // 반격 태세
   if (e.foe === 'pilgrim' && !e.frenzy && e.hp < e.hpMax * 0.5 && e.hp > 0) { e.frenzy = 1; logp(b, 'bad', e.n + '의 눈이 번들거린다. 더 빨라진다'); codexHit(b, 'pilgrim', 'frenzy'); }
   if (!o.dot && b.p.build === 'berserker') addRage(b, 1);
-  if (!o.silent && d > 0) logp(b, o.dot ? 'sys' : 'good', o.dot ? (o.label || '피해') + '이(가) ' + e.n + '을(를) 갉아먹는다. ' + r1(d) + ' 피해' : e.n + '에게 ' + r1(d) + ' 피해');
+  if (!o.silent && d > 0) { const hw = held >= 0.05 ? ' (막힘 ' + r1(held) + ' · ' + ((bossDwell(e) || {}).last ? '버티는 중' : '단계 문턱') + ')' : ''; const shown = held >= 0.05 ? actualDealt : d; logp(b, o.dot ? 'sys' : 'good', o.dot ? (o.label || '피해') + '이(가) ' + e.n + '을(를) 갉아먹는다. ' + r1(shown) + ' 피해' + hw : e.n + '에게 ' + r1(shown) + ' 피해' + hw); }
   if (W0 && d > 0) { const m = []; if (W0.wk) m.push('약화 ' + W0.wk + '로 내 피해 −25%'); if (W0.em) m.push((b.p.build === 'monk' ? '기 ' : '강화 ') + W0.em + '로 +25%'); if (W0.vu) m.push('취약 ' + W0.vu + '로 +25%'); if (W0.pr) m.push('보호 ' + W0.pr + '로 −25%'); if (W0.br && !fullF && !o.shock) m.push('버티는 중이라 ' + Math.round((1 - EKW.braceRed) * 100) + '% 줄어듦'); if (W0.wr) m.push('붕대로 −' + Math.round(WRAP.cut * 100) + '%'); if (W0.bw) m.push('뼈벽 뒤라 줄어듦'); if (W0.ig) m.push('화상 ' + W0.ig + '이 터져 더해짐'); if (m.length) whyPush(b, { side: 'out', n: e.n, f: W0.f, d: r1(d), m }); }
   const leechBleed = Math.min(KW.bleed, stk(e, 'bleed') + (o.leechBleed || 0));
   if (isBu(b.p) && !o.dot && o.melee && b.cur && d > 0 && leechBleed > 0) { const g = bHeal(b, Math.max(0, hp0 - Math.max(0, e.hp)) * Math.min(BUTCH.leechMax, BUTCH.leech * leechBleed), 'leech'); if (g > 0) logp(b, 'good', e.n + '의 피를 마신다. 생명력 +' + r1(g)); }

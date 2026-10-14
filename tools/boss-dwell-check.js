@@ -34,3 +34,9 @@ for (const boss of ['abbot', 'cryptlord', 'queen']) {
 // 수도원장 · 군주는 1 · 2단계 체류가 없다(지금과 같다)
 assert.equal(V('BOSS_DWELL.abbot.mid'), 0); assert.equal(V('BOSS_DWELL.cryptlord.mid'), 0);
 console.log('보스 단계 최소 체류 점검 통과: ' + ok.join(' · ') + ' · 숨 고르기 제외 · 수도원장/군주 중간 단계는 그대로');
+// 전투 기록: 막힌 피해는 따로 보인다(10월 15일). 기록 줄의 숫자(첫 "N 피해")는 실제로 들어간 피해
+{ const { b, e } = setup('cryptlord', 3); const hp0 = e.hp; E.hurtEnemy(b, e, 5000, { single: 1 }); const m = b.log.filter(x => /막힘/.test(x.m)).pop();
+  assert(m && /에게 [0-9.]+ 피해 \(막힘 [0-9.]+ · 버티는 중\)/.test(m.m), '기록: ' + (m && m.m)); assert.equal(+(/([0-9.]+) 피해/.exec(m.m)[1]), Math.round((hp0 - 1) * 10) / 10, '앞 숫자는 들어간 피해');
+  const { b: b2, e: e2 } = setup('cryptlord', 1); e2.hp = Math.round(e2.hpMax * 0.6) + 50; E.hurtEnemy(b2, e2, 5000, { single: 1 }); assert(b2.log.some(x => /\(막힘 [0-9.]+ · 단계 문턱\)/.test(x.m)), '문턱');
+  const { b: b3, e: e3 } = setup('cryptlord', 1); E.hurtEnemy(b3, e3, 10, { single: 1 }); assert(!b3.log.some(x => /막힘/.test(x.m)), '보통 피해에는 붙지 않는다');
+  console.log('전투 기록 막힌 피해 표시 통과'); }
