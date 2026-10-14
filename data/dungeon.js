@@ -339,7 +339,7 @@ const BANDS3 = [
 ];
 CHAPTERS[3] = {
   n: '재의 사막 유적', boss: 'queen', names: ENEMY_NAMES[3], strongFrom: 3, xp: 1.9, gold: 2.1, settleStrong: 45, bands: BANDS3,
-  diff: { upper: { hp: 0.50, dmg: 0.66 }, lower: { hp: 0.62, dmg: 0.68 } }, // 3.1절 [가설]: 1챕터와 같은 체감에서 출발
+  diff: { upper: { hp: 0.625, dmg: 0.66 }, lower: { hp: 0.93, dmg: 0.68 } }, // 3.1절 [가설]: 1챕터와 같은 체감에서 출발. 10월 15일(만든 사람 결정): 생명력 상층 ×1.25(0.50 → 0.625) · 하층 ×1.5(0.62 → 0.93). 측정은 비공개 검증 문서
   modChance: { upper: 0.35, lower: 0.55 }, roomW: { normal: 40, ambush: 19, trial: 5, shrine: 5 }, roomMax: { ambush: 6 }, // 흔들리는 문은 넣지 않았다(만든 사람이 정할 것 1). 그 무게는 매복 · 시련에 나눴다
   enterLore: '지하묘지의 바닥이 무너진다. 아래에는 하늘이 있었다. 검은 해 아래로 모래가 끝없이 이어진다.',
   settleLore: '왕관이 식은 재 속으로 떨어진다. 왕좌 밑에서 금이 간 문이 숨을 쉰다. 금 너머로 성벽이 보인다.',
