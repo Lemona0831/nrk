@@ -3,7 +3,7 @@
 module.exports = function (api) {
   const { E, add, note } = api; const fs = require('fs'), path = require('path');
   const S = 'changelog';
-  const ent = E('CHANGELOG.find(c => c.groups)');
+  const ent = E("CHANGELOG.find(c => c.v === '0.7.0')"); // 10월 14일: 소모품 개편도 통합 항목이라, 0.7.0 본편을 이름으로 찾는다
   const rows = [];
   (ent.top || []).forEach((t, i) => rows.push({ id: 'top:' + i, text: t }));
   ent.groups.forEach((g, gi) => g.items.forEach((t, i) => rows.push({ id: 'g' + gi + ':' + i, text: t })));
