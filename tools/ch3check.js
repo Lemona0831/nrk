@@ -68,8 +68,8 @@ const act = (b, id, t) => G0.playerAct(b, id, t || null);
   cr.hp = 1; b.actN = 901; G0.hurtEnemy(b, cr, 5, { single: 1 }); ok(!cr.alive && q.stun === 1 && b.crownBack, '왕관이 깨지면 여왕이 휘청이고 다시 씌워질 라운드가 정해진다');
   ok(!G0.checkEnd(b) && !b.over, '왕관만 깨져도 전투는 이어진다');
   q.intent = { k: 'attack' }; q.hp = q.hpMax * 0.71; G0.hurtEnemy(b, q, q.hpMax * 0.2, { single: 1 }); ok(Math.abs(q.hp - q.hpMax * 0.7) <= 1 && q.qNext === 'qrise' && q.intent.k === 'attack', '여왕 70%: 문턱에서 멈추고 현재 행동 유지');
-  q.stun = 0; b.turnIdx++; G0.enemyAct(b, q); ok(q.phase === 1 && q.intent.k === 'qrise', '현재 행동을 마친 뒤 전환 예고'); G0.enemyAct(b, q); ok(q.phase === 2 && al(b).filter(e => e.role === 'maid').length === V('QUEEN.maidMax'), '2페이즈: 시녀 둘');
-  q.hp = 1; q.phase = 3; G0.hurtEnemy(b, q, 50, { single: 1 }); ok(b.over === 'win' && !al(b).length, '여왕이 쓰러지면 시녀 · 왕관도 흩어지고 이긴다');
+  q.stun = 0; for (let k = 0; k < 8 && q.intent.k !== 'qrise'; k++) { b.turnIdx++; G0.enemyAct(b, q); } ok(q.phase === 1 && q.intent.k === 'qrise' && (q.phAct || {})[1] >= V('BOSS_DWELL.queen.mid'), '현재 행동을 마치고 단계 최소 체류(' + V('BOSS_DWELL.queen.mid') + '번) 뒤 전환 예고'); G0.enemyAct(b, q); ok(q.phase === 2 && al(b).filter(e => e.role === 'maid').length === V('QUEEN.maidMax'), '2페이즈: 시녀 둘');
+  q.hp = 1; q.phase = 3; q.phAct = Object.assign({}, q.phAct, { 3: V('BOSS_DWELL.queen.last') }); G0.hurtEnemy(b, q, 50, { single: 1 }); ok(b.over === 'win' && !al(b).length, '여왕이 쓰러지면 시녀 · 왕관도 흩어지고 이긴다');
 }
 /* 7. 소모품 */
 { const b = battle({ en: [['bruiser', 0], ['mirage', 0]], mods: ['noon', 'haze'] }); const run = { p: b.p, cons: [], ch: 3, room: 5, dg: {} };

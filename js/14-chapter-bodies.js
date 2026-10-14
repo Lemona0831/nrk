@@ -35,7 +35,7 @@ function lordCarve(b, e, two) {
   logp(b, 'bad', e.n + '이(가) 당신의 ' + Object.keys(b.carve.g).map(g => CARVE_N[g] + '(−' + Math.round((1 - b.carve.g[g]) * 100) + '%)').join(' · ') + '에 이름을 새긴다. 내 차례 ' + LORD.turns + '번 동안'); codexHit(b, 'cryptlord', two ? 'twoname' : 'carve');
 }
 function cryptIntent(b, e, n) {
-  if (e.lordNext) return { k: e.lordNext };
+  if (e.lordNext && !bossWait(e)) return { k: e.lordNext };
   const c = (e.pn = (e.pn || 0) + 1) - 1, ph = e.phase || 1;
   if (ph === 1) { const s = c % 6; return s === 0 ? { k: 'carve' } : s === 2 ? { k: 'call' } : s === 3 && !b.carve ? { k: 'charge' } : { k: 'attack' }; } // 새김 → 공격 → 부름 → 강타 준비 → 왕의 철퇴 → 공격
   if (ph === 2) { const s = c % 5; return s === 0 ? { k: 'carve' } : s === 1 ? { k: 'hand' } : s === 2 ? { k: 'mend' } : s === 3 && !b.carve ? { k: 'charge' } : { k: 'hand' }; } // 새김 → 무덤의 손 → 벽 보수 → 강타 준비 → 무덤 무너뜨리기
@@ -193,7 +193,7 @@ function maidSpawn(b, q) { const m = mkEnemy('maid', 0, b.idc++, { lv: q.lv || 1
 function queenThresh(b, e) { const th = QUEEN.ph[(e.phase || 1) - 1]; if (th != null && e.hp <= e.hpMax * th) { e.hp = Math.max(1, Math.round(e.hpMax * th)); if (!e.qNext) e.qNext = (e.phase || 1) === 1 ? 'qrise' : 'qmelt'; } } // 현재 예고를 마친 뒤 전환한다. 문턱을 넘친 피해는 버린다
 function queenIntent(b, e, n) {
   if (e.under) return e.qPrep ? { k: 'erupt' } : { k: 'surgeprep' };
-  if (e.qNext) return { k: e.qNext };
+  if (e.qNext && !bossWait(e)) return { k: e.qNext }; // 단계 최소 체류: 이 단계에서 정한 수만큼 행동한 뒤 전환
   const c = (e.pn = (e.pn || 0) + 1) - 1, ph = e.phase || 1;
   if (ph === 2) { const s = c % QUEEN.p2Cycle; return s === QUEEN.p2Cycle - 2 ? { k: 'burrow' } : s === QUEEN.p2Cycle - 1 ? { k: 'ash' } : { k: 'attack' }; } // 공격(×p2Cycle−2) → 잠복 → 솟구칠 준비 → 솟구침 → 재 뿌리기
   const stormSoon = b.heat != null && ((b.heatWarn != null && b.heatWarn >= (b.round || 0)) || b.heat + heatRise(b) >= 100);

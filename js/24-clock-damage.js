@@ -261,6 +261,7 @@ function hurtEnemy(b, e, raw, o) {
   if (e.hazeHit && !o.dot && d > 0) e.hazeHit = 0;
   if (e.boss === 'cryptlord') { const th = LORD.ph[(e.phase || 1) - 1]; if (th != null && e.hp <= e.hpMax * th) { e.hp = Math.max(1, Math.round(e.hpMax * th)); if (!e.lordNext) { e.lordNext = (e.phase || 1) === 1 ? 'throne' : 'collapse'; } } } // 페이즈 문턱은 한 번에 하나: 넘친 피해는 버린다
   if (e.boss === "abbot") { const th = ABBOT.ph[(e.phase || 1) - 1]; if (th != null && e.hp <= e.hpMax * th) { e.hp = Math.max(1, Math.round(e.hpMax * th)); e.abNext = 1; } } // 페이즈 문턱은 한 번에 하나: 넘친 피해는 버린다. 보스가 행동을 마친 뒤 한 단계만 넘어간다
+  if (e.role === 'boss' && e.hp <= 0) { const w = bossDwell(e); if (w && w.last && w.left) { e.hp = 1; if (!e.dwellLog) { e.dwellLog = 1; logp(b, 'sys', e.n + '이(가) 쓰러지지 않고 버틴다. 마지막 단계에서 ' + w.left + '번 더 움직인 뒤에야 쓰러뜨릴 수 있다'); } } } // 단계 최소 체류(10월 14일)
   const actualDealt = Math.max(0, hp0 - Math.max(0, e.hp));
   const damageStats = b.damageStats || (b.damageStats = { v: 0, dealt: 0, taken: 0 }); damageStats.dealt += actualDealt;
   b.rec.push({ k: 'dealt', t: r1(b.t), d: r1(actualDealt), role: e.role, a: o.label || b.curSkill || (b.cur && b.cur.id) || '공격', dot: !!o.dot });

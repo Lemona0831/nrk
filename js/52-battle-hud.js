@@ -193,8 +193,9 @@ function bossMechanicsHtml(b, boss) {
     state.push('계절 ' + SEASONS[b.season] + ' · 뿌리 ' + alive(b).filter(e=>e.role==='root').length + '개');
     why.push('뿌리가 남아 있는 동안 수호목이 라운드마다 회복합니다. 계절이 바뀌면 전투 규칙도 달라집니다.');
   }
-  const pending = !!(boss.qNext || boss.lordNext || boss.abNext);
-  return `<section class="boss-mechanics" aria-label="보스 기믹 상태"><div class="boss-state"><b>${esc(boss.n)} · ${ph}단계</b>${pending ? '<span>단계 전환 대기 · 현재 예고를 마친 뒤 전환</span>' : ''}</div>${state.length ? '<div class="boss-state">' + state.map(s=>'<span>'+esc(s)+'</span>').join('') + '</div>' : ''}<div class="boss-next"><b>다음 행동</b> ${esc(fixJosa(it && it.t || '예고 없음'))}</div>${why.length ? '<details><summary>현재 기믹 설명</summary>' + why.map(s=>'<p>'+esc(s)+'</p>').join('') + '</details>' : ''}</section>`;
+  const pending = !!(boss.qNext || boss.lordNext || boss.abNext), dw = bossDwell(boss);
+  const hold = pending ? (dw && !dw.last && dw.left ? `버티는 중 · 이 단계에서 ${dw.left}번 더 움직인 뒤 전환` : '단계 전환 대기 · 현재 예고를 마친 뒤 전환') : dw && dw.last && dw.left ? `버티는 중 · 마지막 단계에서 ${dw.left}번 움직이기 전에는 쓰러지지 않음` : '';
+  return `<section class="boss-mechanics" aria-label="보스 기믹 상태"><div class="boss-state"><b>${esc(boss.n)} · ${ph}단계</b>${hold ? '<span>' + hold + '</span>' : ''}</div>${state.length ? '<div class="boss-state">' + state.map(s=>'<span>'+esc(s)+'</span>').join('') + '</div>' : ''}<div class="boss-next"><b>다음 행동</b> ${esc(fixJosa(it && it.t || '예고 없음'))}</div>${why.length ? '<details><summary>현재 기믹 설명</summary>' + why.map(s=>'<p>'+esc(s)+'</p>').join('') + '</details>' : ''}</section>`;
 }
 function vHudClock(b) {
   let gim = '';

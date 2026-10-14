@@ -29,9 +29,12 @@ for (const dot of [false, true]) {
   assert.equal(e.phase, 2);
   E.enemyAct(b, e);
   assert.equal(e.phase, 3, '2단계 → 3단계');
-  // 3단계는 정상적으로 쓰러진다
+  // 3단계: 휴식이 아닌 행동을 한 번 하기 전에는 쓰러지지 않는다(단계 최소 체류, 10월 14일). 한 번 움직인 뒤에는 쓰러진다
+  E.hurtEnemy(b, e, 100000, { aoe: 1 }); assert(!b.over && e.hp === 1, '3단계 첫 행동 전에는 버틴다');
+  for (let k = 0; k < 4 && !((e.phAct || {})[3] > 0); k++) { b.turnIdx++; E.enemyAct(b, e); }
+  assert(e.phAct[3] >= 1, '휴식이 아닌 행동을 했다');
   E.hurtEnemy(b, e, 100000, { aoe: 1 });
-  assert.equal(b.over, 'win', '3단계에서는 쓰러져야 한다');
+  assert.equal(b.over, 'win', '3단계에서 한 번 움직인 뒤에는 쓰러져야 한다');
   n++;
 }
 // 1단계에서 한 번에 두 문턱을 넘는 피해: 2단계를 거쳐야 한다

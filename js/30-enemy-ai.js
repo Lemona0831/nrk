@@ -246,6 +246,7 @@ function enemyAct(b, e) {
   const i = e.intent || { k: 'attack' }; const d = enemyHitEst(b, e);
   if ((i.k === 'heavy' || i.k === 'explode' || i.k === 'burn' || i.aimed || i.k === 'sacrifice' || i.k === 'erupt' || i.k === 'reflect' || i.k === 'collapse' || i.k === 'noon') && e.teleTurn === b.turnIdx) { logp(b, 'sys', e.n + '이(가) 힘을 모은 채 노려본다'); return; } // 10월 4일: 예고한 큰 공격은 내 차례가 한 번 지난 뒤에 나간다 (한 라운드에 두 번 움직이는 적이 모은 바로 그 라운드에 내리쳤다)
   b.rec.push({ k: 'eact', t: r1(b.t), role: e.role, i: i.k });
+  if (e.role === 'boss' && !BOSS_TR.includes(i.k)) { const ph = e.phase || 1; e.phAct = e.phAct || {}; e.phAct[ph] = (e.phAct[ph] || 0) + 1; } // 단계 최소 체류 셈
   if (i.k === 'heavy' || i.k === 'explode' || i.k === 'burn' || i.aimed || i.k === 'sacrifice' || i.k === 'erupt' || i.k === 'reflect' || i.k === 'collapse' || i.k === 'noon') b.rec.push({ k: 'bigfire', role: e.role, foe: e.foe || null, i: i.k, gap: e.teleTurn == null ? -1 : b.turnIdx - e.teleTurn }); // 10월 5일: 예고된 큰 공격이 나갈 때 예고 뒤 내 차례가 몇 번 있었는지 (-1은 예고 없이 나감)
   if (isCh3(b) && ch3Act(b, e, i, d)) { } // 3챕터 행동
   else switch (i.k) {
@@ -381,7 +382,11 @@ function abbotAltar(b, e) {
   b.en.push(hm, sm); decideIntent(b, hm); decideIntent(b, sm);
   logp(b, 'crit', '무너진 제단에서 수도사들이 일어선다'); codexHit(b, 'abbot', 'monks');
 }
+/* 보스 단계 최소 체류: 지금 단계에서 한 행동 수와 남은 수. last = 마지막 단계 */
+function bossDwell(e) { const D = e && e.role === 'boss' && BOSS_DWELL[e.boss]; if (!D) return null; const ph = e.phase || 1, last = ph >= 3, need = last ? D.last : D.mid, n = (e.phAct || {})[ph] || 0; return { ph, n, need, left: Math.max(0, need - n), last }; }
+const bossWait = e => { const w = bossDwell(e); return !!(w && !w.last && w.left); }; // 단계 전환을 아직 미룬다
 function bossPhase(b, e) {
+  if (e.boss === 'abbot' && e.abNext && bossWait(e)) return; // 최소 체류 전에는 전환하지 않는다
   if (e.boss === 'cryptlord' || e.boss === 'queen') return; // 군주의 페이즈는 문턱에서 lordThrone · lordFall이 넘긴다
   const f = e.hp / e.hpMax; const ph0 = Math.max(e.phase || 1, e.boss === 'abbot' && e.abNext ? (e.phase || 1) + 1 : 0, e.boss === 'abbot' ? (f > 0.65 ? 1 : f > 0.3 ? 2 : 3) : f > 0.7 ? 1 : f > 0.35 ? 2 : 3); // 페이즈는 되돌아가지 않는다(회복해도 수도사가 다시 일어서지 않게)
   const ph = e.boss === 'abbot' ? Math.min(ph0, (e.phase || 1) + 1) : ph0; // 수도원장은 한 번에 한 단계만 넘어간다

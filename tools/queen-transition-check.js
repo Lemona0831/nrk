@@ -7,12 +7,13 @@ for(const phase of [1,2])for(const k of ['attack','ash','heavy','charge',...(pha
  E.hurtEnemy(b,e,100000,{aoe:1,dot});
  assert.equal(e.phase,phase);assert.equal(e.intent.k,k);assert.equal(e.qNext,next);assert(e.hp>0&&e.alive);assert(!b.over);
  let steps=0;
- while(e.intent.k!==next&&steps++<5){b.turnIdx++;E.enemyAct(b,e);assert.equal(e.phase,phase);}
+ while(e.intent.k!==next&&steps++<8){b.turnIdx++;E.enemyAct(b,e);assert.equal(e.phase,phase);}
+ assert(((e.phAct||{})[phase]||0)>=V('BOSS_DWELL.queen.mid'),'단계 최소 체류: 전환 예고 전에 '+V('BOSS_DWELL.queen.mid')+'번 움직인다');
  assert.equal(e.intent.k,next);assert.equal(e.under||0,0);assert.equal(e.qPrep||0,0);
  if(k==='charge'||k==='heavy')assert(b.rec.some(x=>x.k==='bigfire'&&x.i==='heavy'&&x.gap>=1));
  if(['burrow','surgeprep','erupt'].includes(k))assert(b.rec.some(x=>x.k==='bigfire'&&x.i==='erupt'&&x.gap>=1));
  E.enemyAct(b,e);assert.equal(e.phase,phase+1);assert.equal(e.qNext,null);
  if(phase===1)assert.equal(E.alive(b).filter(x=>x.role==='maid').length,V('QUEEN.maidMax'));
- else{assert.equal(b.crownBack,null);assert(!E.alive(b).some(x=>x.role==='crown'));E.hurtEnemy(b,e,100000,{aoe:1});assert.equal(b.over,'win');assert.equal(E.alive(b).length,0);}
+ else{assert.equal(b.crownBack,null);assert(!E.alive(b).some(x=>x.role==='crown'));E.hurtEnemy(b,e,100000,{aoe:1});assert(!b.over&&e.hp===1,'3단계 최소 체류 전에는 버틴다');for(let k=0;k<12&&((e.phAct||{})[3]||0)<V('BOSS_DWELL.queen.last');k++){b.turnIdx++;E.enemyAct(b,e);if(e.under){e.under=0;e.qPrep=0;}}assert(((e.phAct||{})[3]||0)>=V('BOSS_DWELL.queen.last'));E.hurtEnemy(b,e,100000,{aoe:1});assert.equal(b.over,'win');assert.equal(E.alive(b).length,0);}
 }
-console.log('여왕 단계별 공격·태양창·잠복·솟구침 유지, 큰 직격 및 지속 피해의 단계 건너뛰기 방지, 시녀 소환·왕관 소멸·최종 승리 통과');
+console.log('여왕 단계별 공격·태양창·잠복·솟구침 유지, 큰 직격 및 지속 피해의 단계 건너뛰기 방지, 단계 최소 체류(전환 전 3번 · 마지막 단계 3번), 시녀 소환·왕관 소멸·최종 승리 통과');
