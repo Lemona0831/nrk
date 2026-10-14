@@ -47,8 +47,10 @@ module.exports = function (api) {
   add('help', '"−40 70 → 30" 같은 숫자', '실행: 강공격 스태미나 40, 70 − 40 = 30', E => 70 - E('heavyCost(__mk("warden").p)') === 30);
   add('help', '크기(50 · 75 · 100 · 150 · 200%)', '상수: HUD_SIZES=' + E('HUD_SIZES.join()'), E => E('HUD_SIZES.join()') === '50,75,100,150,200');
   add('help', '글자 크기(90%부터 130%까지)', '상수: FS_OPTS=' + E('FS_OPTS.join()'), E => E('Math.min(...FS_OPTS)') === 0.9 && E('Math.max(...FS_OPTS)') === 1.3);
-  add('help', '한 차례에 3개까지', '상수: CONS_TURN=' + E('CONS_TURN'), E => E('CONS_TURN') === 3);
-  add('help', '가방은 20칸이고 장비와', '상수: BAG_MAX=' + E('BAG_MAX') + ', 소스: bagUsed가 장비 + 소모품 겹', E => E('BAG_MAX') === 20 && src('bagUsed').includes('cons'));
+  add('help', '한 차례에 1개, 한 전투에 5개(가혹 3개)까지', '상수: CONS_TURN=' + E('CONS_TURN') + ' · CONS_FIGHT=' + E('JSON.stringify(CONS_FIGHT)'), E => E('CONS_TURN') === 1 && E('CONS_FIGHT.normal') === 5 && E('CONS_FIGHT.hard') === 3);
+  add('help', '각각 챕터마다 3번(가혹 2번), 연기 폭탄은 2번(가혹 1번)', '상수: CONS_CH=' + E('JSON.stringify(CONS_CH)'), E => E('CONS_CH.unmod.normal') === 3 && E('CONS_CH.lootx.hard') === 2 && E('CONS_CH.escape.normal') === 2 && E('CONS_CH.escape.hard') === 1);
+  add('help', '장비 가방은 20칸, 소모품 가방은 따로 5칸', '상수: BAG_MAX=' + E('BAG_MAX') + ', CONS_BAG=' + E('CONS_BAG') + ', 소스: bagUsed는 장비만(10월 14일 개편 1단계)', E => E('BAG_MAX') === 20 && E('CONS_BAG') === 5 && !src('bagUsed').includes('cons'));
+  add('help', '판매품은 칸을 차지하지 않고 상점에 들어갈 때 골드로', '소스: consAdd가 판매품을 pouchAdd로, genShop이 pouchSell', E => src('consAdd').includes('pouchAdd') && src('genShop').includes('pouchSell'));
   add('help', '가방은 20칸이고 가득 차면', '상수: BAG_MAX=' + E('BAG_MAX'), E => E('BAG_MAX') === 20);
   add('help', '(예: "공격 4 · 출혈 2")', '소스: 공격 예고 문장이 "공격 N · 출혈 N" 꼴 (enemyIntent)', E => has("'공격 ' + est + (i.bleed ? ' · 출혈 ' + i.bleed"));
 

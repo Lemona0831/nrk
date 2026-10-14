@@ -107,7 +107,8 @@ function handleSheets(pk, r) {
       click('statok');
     } else if (S.kind === 'offer') { click('offerpick', run.bag[0]); }
     else if (S.kind === 'awk') { click('awkpick', awkChoice(pk, r, run)); } /* 각인 (2챕터 이후에만 뜬다) */
-    else if (S.kind === 'swap') { click('swapskip'); } // 스킬 바꾸기: 단계 3에서 성향별로
+    else if (S.kind === 'swap') { click('swapskip'); }
+    else if (S.kind === 'consfull') { run_('ask = () => true'); click('cptake'); } // 10월 14일 개편 5단계: 전리품 화면(자리가 없는 것은 두고 간다) // 스킬 바꾸기: 단계 3에서 성향별로
     else { G.sheet = null; }
     while (!G.sheet && G.dropQ && G.dropQ.length) G0.nextDrop();
   }
@@ -133,7 +134,8 @@ function fatePick(pk, run, r) {
 function restRoom(pk, run, r) {
   if (OPT.policy?.restRoom && OPT.policy.restRoom(run, r)) return;
   const R = run.cur; const p = run.p; const h = p.hp / p.hpMax;
-  if (R.type === 'camp' || R.type === 'spring') return click('rest');
+  if (R.type === 'camp') { click('rest'); handleSheets(pk, r); const C = G0.campInit(G0.__G.run); const hx = C.cons.findIndex(x => x.id === 'herb'); if (pk !== 'novice' && hx >= 0) for (let k = 0; k < 3; k++) click('consbuy', String(hx), { s: 'camp' }); return click('campleave'); } // 10월 14일 개편 5단계: 정비 시간
+  if (R.type === 'spring') return click('rest');
   if (R.type === 'shrine') return click('shrine', pk === 'novice' ? (r() < 0.5 ? 1 : 0) : 1);
   if (R.type === 'fate') return fatePick(pk, run, r);
   if (R.type === 'altar') {
@@ -161,23 +163,24 @@ function useCons(pk, r, b, run) {
   const aware = THINK(pk) ? 0.9 : pk === 'novice' ? 0.15 : 0.5; const p = run.p; const al = G0.alive(b).filter(e => e.role !== 'root'); const sk = (u, k) => (u.s[k] ? u.s[k].stacks : 0);
   const it = (e, ...k) => e.intent && (k.includes(e.intent.k) || (k.includes('aimed') && e.intent.aimed));
   const want = c => { const D = G0.CONS[c.id]; switch (D.k) {
-    case 'heal': return p.hp < p.hpMax * 0.35 && (!p.flask.life || r() < 0.5);
+    case 'heal': return c.id === 'herb' ? p.hp < p.hpMax * 0.2 && !p.flask.life : p.hp < p.hpMax * 0.35 && (!p.flask.life || r() < 0.5); // 10월 14일 개편 3단계: 약초는 플라스크 재료라 위급할 때만
     case 'stam': return p.st < 30;
     case 'cure': return sk(p, D.s) >= ({ bleed: 4, poison: 6, ignite: 3, weak: 2, vuln: 2, chill: 1 }[D.s] || 3) || (D.s === 'poison' && sk(p, 'poison') >= 3 && al.some(e => e.foe === 'well' && it(e, 'charge', 'heavy'))); // 2챕터: 우물이 열리기 전에는 중독 3부터 지운다
-    case 'interrupt': return (al.some(e => e.role !== 'boss' && it(e, 'heavy', 'aimed')) && !p.dodge) || al.some(e => it(e, 'noon'));
+    case 'interrupt': return (al.some(e => it(e, 'heavy', 'aimed')) && !p.dodge) || al.some(e => it(e, 'noon'));
     case 'blind': return al.some(e => e.row === 'back' && it(e, 'aimed'));
     case 'unevade': { const f = al.filter(e => e.row === 'front'); return f.length > 0 && f.every(e => e.evading); }
     case 'decoy': return al.some(e => e.countering);
-    case 'unguard': return al.some(e => e.guarding);
+    case 'unguard': return al.some(e => e.guarding || e.evading || e.braced);
     case 'unbless': return al.some(e => e.s.empower && it(e, 'attack', 'heavy'));
     case 'noheal': return al.some(e => e.role === 'healer' && it(e, 'heal'));
+    case 'hinder': return al.some(e => (e.role === 'healer' && it(e, 'heal')) || (e.role === 'summoner' && it(e, 'summon')));
+    case 'cleanse': { const k = G0.consWorst(p); return !!k && sk(p, k) >= 3; }
     case 'nosummon': return al.some(e => e.role === 'summoner' && it(e, 'summon'));
     case 'antisteal': return al.some(e => e.role === 'thief' && it(e, 'steal'));
     case 'sticky': return al.some(e => e.role === 'thief' && it(e, 'flee'));
     case 'aoe': return al.length >= 3 && r() < 0.4;
     case 'dart': return al.some(e => e.row === 'back' && ['healer', 'summoner'].includes(e.role)) && G0.frontBlocked(b) && r() < 0.5;
     case 'brk': return al.some(e => (e.elite || e.strong || e.role === 'boss') && it(e, 'charge', 'heavy'));
-    case 'whet': return r() < 0.15;
     case 'mark': return r() < 0.1;
     case 'guard1': return al.some(e => it(e, 'heavy', 'explode', 'burn')) && p.hp < p.hpMax * 0.6;
     case 'halfboom': return al.some(e => it(e, 'explode', 'burn')) || (b.heatWarn != null && b.heatWarn <= (b.round || 0));
@@ -185,7 +188,7 @@ function useCons(pk, r, b, run) {
     case 'unmod': return true;
     case 'escape': return p.hp < p.hpMax * 0.15 && !p.flask.life;
     case 'lootx': return al.length >= 3 && r() < 0.5;
-    case 'norise': return al.some(e => e.pile && !e.norise) && (al.some(e => e.foe === 'collector') || al.some(e => e.pile && e.pile.wait <= 1));
+    case 'norise': return al.some(e => e.pile && e.pile.wait <= 1);
     case 'burnpiles': return al.filter(e => e.pile).length >= 2;
     case 'trim': return ['poison', 'bleed', 'ignite', 'weak', 'vuln'].filter(k => sk(p, k) > 0).length >= 2 && al.some(e => e.role === 'hexer' || e.foe === 'knight');
     case 'unearth': return al.some(e => e.under);
@@ -193,7 +196,7 @@ function useCons(pk, r, b, run) {
     case 'slow': return al.some(e => e.swift || ((e.strong || e.role === 'boss') && it(e, 'charge'))) && r() < 0.5;
     case 'nobloat': return al.some(e => e.role === 'bloat');
     case 'cool': return b.heat != null && (b.heat >= 70 || (b.heatWarn != null && b.heatWarn <= (b.round || 0))); // 3챕터 (10월 7일)
-    case 'unhaze': return al.reduce((a, e) => a + (e.haze || 0), 0) >= 3 || al.some(e => e.foe === 'dancer' && e.haze >= 2 && it(e, 'charge'));
+    case 'unhaze': return al.some(e => e.foe === 'dancer' && e.haze >= 1 && it(e, 'charge')) || al.reduce((a, e) => a + (e.haze || 0), 0) >= 3;
     case 'rewind': return al.some(e => (e.foe === 'sundial' && (e.clock || 0) <= 1) || (e.foe === 'colossus' && e.glow >= 2) || (e.foe === 'reaper' && e.embers >= 4) || (e.chant && it(e, 'chanting', 'mchanting')));
     case 'healcure': return (p.hp < p.hpMax * 0.45 && (!p.flask.life || r() < 0.5)) || sk(p, 'ignite') >= 4;
     default: return false; } };
@@ -202,7 +205,8 @@ function useCons(pk, r, b, run) {
 function useConsOut(pk, run, r) {
   if (OPT.policy?.useConsOut) return OPT.policy.useConsOut(run, r);
   if (!G0.consUse || !G0.CONS || !run.cons) return; const p = run.p;
-  for (let k = 0; k < 6 && p.hp < p.hpMax * 0.6 && (pk !== 'novice' || r() < 0.3); k++) { const i = run.cons.findIndex(c => G0.CONS[c.id].k === 'heal' && !G0.consWhyNot(null, run, c, null)); if (i < 0) break; G0.consUse(null, run, i, null); }
+  if (G0.consBrew) for (const id of ['herb', 'leaf']) for (let k = 0; k < 6 && (pk !== 'novice' || r() < 0.3); k++) if (G0.consBrew(run, id)) break; // 10월 14일 개편 3단계: 약초 · 각성 잎은 플라스크 재료
+  for (let k = 0; k < 6 && p.hp < p.hpMax * 0.6 && (pk !== 'novice' || r() < 0.3); k++) { const i = run.cons.findIndex(c => G0.CONS[c.id].k === 'heal' && !(c.id === 'herb' && G0.consBrewOf && p.flask.life < G0.flaskCap(p, 'life')) && !G0.consWhyNot(null, run, c, null)); if (i < 0) break; G0.consUse(null, run, i, null); } // 약초는 플라스크가 가득 찼을 때만 바로 먹는다
 }
 const countBy = a => a.reduce((m, k) => (m[k] = (m[k] || 0) + 1, m), {});
 /* 전투 한 번의 기록 (10월 5일, 목표 7단계 지표: 사망 원인 · 예고 뒤 대응 · 받은 피해 출처 · 행동 종류 · 스킬 사용) */

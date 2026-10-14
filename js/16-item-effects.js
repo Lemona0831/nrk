@@ -383,7 +383,7 @@ const IFX_AWK = {
   a_breath: { onStart: (b, p) => { addS(b, p, 'protect', 1); return 1; } },
   a_resolve: { onStart: (b, p) => { if (!(b.ctx.boss || b.en.some(e => e.elite)) || p.st >= p.stMax) return; fxStam(p, p.stMax); return 1; } },
   a_vigor: { onWin: run => { const p = run.p; const v = Math.min(p.hpMax - p.hp, p.hpMax * 0.04); if (!(v > 0)) return; p.hp += v; return 1; } },
-  a_pouch: { consTurn: 1 },
+  a_pouch: { consFight: 2 }, // 10월 14일: 한 차례 +1 → 한 전투 +2
   a_gap: { onStart: (b, p) => { p.awkBrk = 0; }, onKill: (b, p, e) => { if (e.pile) return; p.awkBrk = 5; return 1; }, brk: (b, p) => p.awkBrk || 0, onHit: (b, p) => { if (!p.awkBrk) return; p.awkBrk = 0; return 1; } },
   a_flow: { onParry: (b, p, src) => { if (!(src && src.intent && (src.intent.aimed || src.intent.k === 'heavy' || src.intent.k === 'charge'))) return; return fxCdMax(b, p) ? 1 : 0; } },
   a_skin: { inP: () => 0.04 },

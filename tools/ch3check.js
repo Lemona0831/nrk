@@ -75,10 +75,8 @@ const act = (b, id, t) => G0.playerAct(b, id, t || null);
 { const b = battle({ en: [['bruiser', 0], ['mirage', 0]], mods: ['noon', 'haze'] }); const run = { p: b.p, cons: [], ch: 3, room: 5, dg: {} };
   const use = (id, t) => { run.cons = [{ id, g: 'n', n: 1 }]; b.consN = 0; b.queue = ['p']; return G0.consUse(b, run, 0, t || null); };
   ok(b.en[0].haze === 1 && b.en[1].haze === 1, '아지랑이: 모든 적 허상 1');
-  b.heat = 70; ok(use('awning') === '' && b.heat === 40, '차양 천: 열기 −30');
   ok(use('mirror') === '' && !b.en[0].haze, '거울 조각: 허상을 걷는다');
-  G0.addS(b, b.p, 'ignite', 3); b.p.hp = b.p.hpMax * 0.5; ok(use('sap') === '' && !b.p.s.ignite && b.p.hp > b.p.hpMax * 0.5, '선인장 수액');
-  b.en[1].chant = { taken: 0, need: 9 }; b.en[1].intent = { k: 'chanting' }; ok(use('hourglass', b.en[1].id) === '' && !b.en[1].chant, '작은 모래시계: 영창을 되돌린다');
+  ok(!G0.CONS.awning && !G0.CONS.sap && !G0.CONS.hourglass, '차양 천 · 선인장 수액 · 작은 모래시계는 개편 4단계에서 없앴다');
 }
 console.log(`3챕터 점검: 통과 ${pass}, 실패 ${fail}`);
 process.exitCode = fail ? 1 : 0;

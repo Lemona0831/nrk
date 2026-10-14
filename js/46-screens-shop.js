@@ -28,7 +28,7 @@ function shopHero(run, ch, owned) {
   const c = CH_POOLS[src].filter(k => ITEMS[k].g === 'h' && !owned.includes(k) && poolOk(run.p, k)); if (!c.length) return null;
   const fit = c.filter(k => classFit(run.p, k)); return { k: pickR(fit.length && Math.random() < 0.5 ? fit : c), ch: src };
 }
-function genShop(run) {
+function genShop(run) { { const s = pouchSell(run); if (s.n) toast('전리품 주머니의 ' + s.n + '개를 팔았습니다. 골드 +' + s.gold); } // 10월 14일: 판매품은 상점에 들어갈 때 골드로
   const ch = run.ch || 1; const owned = Object.values(run.inv).map(x => x.tpl);
   const pool = poolOf(ch).filter(k => ITEMS[k] && ITEMS[k].kind !== 'start' && !owned.includes(k) && poolOk(run.p, k) && 'nmr'.includes(ITEMS[k].g || 'n'));
   const hero = shopHero(run, ch, owned);
@@ -40,7 +40,7 @@ function genShop(run) {
   take.sort((a, b) => 'nmr'.indexOf(gOf(a)) - 'nmr'.indexOf(gOf(b)));
   run.shop = { ch, stock: take.map(k => { const it = mkItem(k, { ch }); return { it, price: priceOf(it.g, ch), sold: 0 }; }), log: [] };
   if (hero) { const it = mkItem(hero.k, { ch: hero.ch }); run.shop.stock.push({ it, price: priceOf('h', ch), sold: 0, hero: 1 }); }
-  { const nx = ch + 1; const usable = Object.keys(CONS).filter(k => CONS[k].use !== 'none' && !SHOP_CONS.always.includes(k) && (CONS[k].ch || 1) <= nx); const pick = SHOP_CONS.always.slice(); const nw = usable.filter(k => (CONS[k].ch || 1) === nx && nx >= 2); if (nw.length) pick.push(usable.splice(usable.indexOf(nw[Math.floor(Math.random() * nw.length)]), 1)[0]); if (nx >= 3) { const nw2 = usable.filter(k => (CONS[k].ch || 1) === nx); if (nw2.length) pick.push(usable.splice(usable.indexOf(nw2[Math.floor(Math.random() * nw2.length)]), 1)[0]); } /* 3챕터 준비: 3챕터 소모품 둘 */ while (pick.length < SHOP_CONS.n + (nx >= 2 ? 1 : 0) && usable.length) pick.push(usable.splice(Math.floor(Math.random() * usable.length), 1)[0]); run.shop.cons = pick.map(id => ({ id, price: Math.round(CONS[id].price * Math.pow(1.5, ch - 1)) })); } // 소모품 다섯 가지 (10월 4일)
+  { const nx = ch + 1; const usable = Object.keys(CONS).filter(k => CONS[k].use !== 'none' && !SHOP_CONS.always.includes(k) && (CONS[k].ch || 1) <= nx && !(CONS[k].only && CONS[k].only !== nx) && (CONS[k].shopP == null || Math.random() < CONS[k].shopP)); /* 10월 14일: 챕터 전용은 다음 챕터 것만, 모래 주머니는 드물게 */ const pick = SHOP_CONS.always.slice(); const nw = usable.filter(k => (CONS[k].ch || 1) === nx && nx >= 2); if (nw.length) pick.push(usable.splice(usable.indexOf(nw[Math.floor(Math.random() * nw.length)]), 1)[0]); if (nx >= 3) { const nw2 = usable.filter(k => (CONS[k].ch || 1) === nx); if (nw2.length) pick.push(usable.splice(usable.indexOf(nw2[Math.floor(Math.random() * nw2.length)]), 1)[0]); } /* 3챕터 준비: 3챕터 소모품 둘 */ while (pick.length < SHOP_CONS.n && usable.length) pick.push(usable.splice(Math.floor(Math.random() * usable.length), 1)[0]); run.shop.cons = pick.map(id => ({ id, price: Math.round(CONS[id].price * Math.pow(1.5, ch - 1)), left: id === 'herb' ? SHOP_CONS.herb[run.mode === 'hard' ? 'hard' : 'normal'] : SHOP_CONS.stock })); } // 소모품 다섯 가지 (10월 4일)
 }
 /* ===== 도박 둘과 각인 (10월 8일, docs/아이템/도박-깨달음.md · 장비-경제.md 6.3 · 7절) =====
    봉인된 꾸러미: 2챕터를 넘은 뒤의 상점. 칸을 골라 등급 모를 장비를 산다. 확률은 모드와 상관없이 늘 같다(가혹 모드의 영웅 가중도 걸지 않는다).
@@ -139,25 +139,47 @@ function vFateRoom(run, h) {
   const rows = run.bag.map(u => run.inv[u]).filter(Boolean);
   return h + `<h3>⚖️ 운명의 저울</h3><p class="lore">녹슨 저울 한쪽에 접시가 비어 있다. 무언가를 올려야 기운다.</p><p>가방의 장비 하나를 올리면 같은 칸의 한 단계 위 장비로 바뀝니다. 저울이 기울지 않으면 올린 장비를 잃습니다. 골드는 걸지 않습니다.</p><ul class="odds" aria-label="올릴 때의 확률">${['n', 'm', 'r'].map(g => `<li><span class="gtag gr-${g}">${GRADE[g].n}</span> → ${GRADE[FATE.next[g]].n} ${Math.round(FATE.up[g] * 100)}%</li>`).join('')}</ul><p class="mini">영웅 이상은 올리지 못합니다. 낀 장비는 먼저 벗어야 합니다.</p>${rows.length ? `<div class="baglist">${rows.map(x => { const why = fateCan(run, x); const pr = FATE.up[x.g]; return `<div class="bagline"><div><span class="gr-${x.g}">${inm(x.tpl, x.g)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${why ? esc(why) : '올리면 ' + GRADE[FATE.next[x.g]].n + ' ' + Math.round(pr * 100) + '%, 못 올리면 ' + Math.round((1 - pr) * 100) + '%로 잃습니다'}</small></div>${adisBtn(why, 'sm', 'fate', x.uid, '올린다', '올릴 수 없음')}</div>`; }).join('')}</div>` : '<p class="mini">가방에 올릴 장비가 없습니다.</p>'}<button data-a="fateskip" data-focus>지나친다</button></section>`;
 }
+const campHas = (run, x) => !!(run && run.camp && (run.camp.cons || []).includes(x)); // 야영지 진열의 소모품인가
 function consBuyWhy(run, x) {
-  if (!run || run.phase !== 'shop' || !x || !CONS[x.id]) return '지금은 살 수 없습니다';
+  if (!run || !x || !CONS[x.id] || (run.phase !== 'shop' && !campHas(run, x))) return '지금은 살 수 없습니다';
+  if (x.left != null && x.left <= 0) return '다 팔렸습니다';
   if ((run.gold || 0) < x.price) return '골드가 ' + (x.price - (run.gold || 0)) + ' 모자랍니다';
   return consSpace(run, x.id, 'n').capacity < 1 ? '같은 등급의 묶음도 가득 찼습니다. 가방 한 칸을 비워 주세요' : '';
 }
 function consBuy(run, x) {
   const why = consBuyWhy(run, x); if (why) return why;
   if (consAdd(run, x.id, 'n', 1)) return '가방에 넣을 공간이 없습니다';
-  run.gold -= x.price;
-  (run.shop.log || (run.shop.log = [])).push({ a: 'consbuy', id: x.id, price: x.price, t: Date.now() });
+  run.gold -= x.price; if (x.left != null) x.left--;
+  { const at = campHas(run, x) ? run.camp : run.shop; (at.log || (at.log = [])).push({ a: 'consbuy', id: x.id, price: x.price, t: Date.now() }); }
   return '';
 }
 /* 한 번에 사기 (10월 14일): 부분 묶음이 있으면 그 빈자리, 없으면 한 묶음. 골드와 가방 공간이 허락하는 만큼. 구매는 한 개씩 하는 consBuy를 그대로 되풀이한다 */
 function consFillN(run, x) {
-  if (!run || !x || !CONS[x.id] || run.phase !== "shop") return 0;
+  if (!run || !x || !CONS[x.id] || (run.phase !== "shop" && !campHas(run, x))) return 0;
   const D = CONS[x.id], sp = consSpace(run, x.id, "n"), want = sp.existing > 0 ? Math.min(sp.existing, D.max) : D.max;
-  return Math.max(0, Math.min(want, sp.capacity, Math.floor((run.gold || 0) / Math.max(1, x.price))));
+  return Math.max(0, Math.min(want, sp.capacity, Math.floor((run.gold || 0) / Math.max(1, x.price)), x.left != null ? x.left : 1e9));
 }
-function consFillBtn(run, x, i) { const n = consFillN(run, x); return n >= 2 ? `<button class="sm gold" data-a="consbuyfill" data-k="${i}">${n}개 사기 · ${n * x.price} 골드</button>` : ""; }
+function consFillBtn(run, x, i, s) { const n = consFillN(run, x); return n >= 2 ? `<button class="sm gold" data-a="consbuyfill" data-k="${i}"${s ? ` data-s="${s}"` : ''}>${n}개 사기 · ${n * x.price} 골드</button>` : ""; }
+/* 야영지 정비(10월 14일 개편 5단계): 쉬기 · 상인 · 각인을 한 화면에서 하고 직접 떠난다. 들어갈 때 한 번 진열을 만들고 판매품을 판다 */
+function campInit(run) {
+  const ch = run.ch || 1; if (run.camp && run.camp.room === run.room && run.camp.ch === ch) return run.camp;
+  const steps = Math.round((CAMP_SHOP.mul[1] - CAMP_SHOP.mul[0]) * 10), mul = Math.round((CAMP_SHOP.mul[0] + 0.1 * Math.floor(Math.random() * (steps + 1))) * 10) / 10;
+  const usable = Object.keys(CONS).filter(k => CONS[k].use !== 'none' && !SHOP_CONS.always.includes(k) && (CONS[k].ch || 1) <= ch && !(CONS[k].only && CONS[k].only !== ch) && (CONS[k].shopP == null || Math.random() < CONS[k].shopP));
+  const pick = SHOP_CONS.always.slice(); while (pick.length < SHOP_CONS.always.length + CAMP_SHOP.n && usable.length) pick.push(usable.splice(Math.floor(Math.random() * usable.length), 1)[0]);
+  const price = id => Math.round(CONS[id].price * Math.pow(1.5, ch - 1) * mul);
+  run.camp = { room: run.room, ch, mul, rested: 0, log: [], cons: pick.map(id => ({ id, price: price(id), left: id === 'herb' ? SHOP_CONS.herb[run.mode === 'hard' ? 'hard' : 'normal'] : CAMP_SHOP.stock })) };
+  const ps = pouchSell(run); if (ps.n) run.camp.sold = ps;
+  return run.camp;
+}
+function vCamp(run) {
+  const C = campInit(run);
+  const rows = C.cons.map((x, i) => { const D = CONS[x.id]; if (!D) return ''; const why = consBuyWhy(run, x); return `<div class="bagline consrow"><div><b>${D.ico} ${esc(D.n)}</b> <span class="mini">남은 ${x.left}개</span><br><small class="mini">${esc(D.d(D.v))}</small></div><div class="row">${adisBtn(why, 'sm' + (why ? '' : ' gold'), 'consbuy', i, x.price + ' 골드에 사기').replace('data-a="consbuy"', 'data-a="consbuy" data-s="camp"')}${consFillBtn(run, x, i, 'camp')}</div></div>`; }).join('');
+  return `<h3>⛺ 야영지</h3><p class="lore">무너진 예배당 한쪽에 아직 따뜻한 재가 남아 있다. 떠돌이 상인이 불가에 짐을 풀었다.</p><p>정비를 마치면 직접 떠납니다. 여기서부터 하층이라 적이 더 거셉니다.</p>`
+    + (C.sold ? `<p class="mini">전리품 주머니의 판매품 ${C.sold.n}개를 골드 ${C.sold.gold}로 바꿨습니다.</p>` : '')
+    + '<h4>불가</h4>' + (C.rested ? '<p class="mini">불가에서 쉬었습니다. 생명력 · 스태미나가 찼고 플라스크가 하나씩 찼습니다.</p>' : '<p class="mini">쉬면 생명력과 스태미나가 모두 차고, 플라스크가 하나씩 찹니다.</p><button class="gold" data-a="rest" data-focus>쉬기</button>')
+    + `<h4>떠돌이 상인 <span class="mini">물가 ×${C.mul.toFixed(1)}</span></h4><p class="mini">골드 ${run.gold || 0} · 소모품 가방 ${consUsed(run)}/${CONS_BAG}칸. 챕터 끝 상점보다 비쌉니다.</p><div class="baglist">${rows}</div>`
+    + `<button class="wide${C.rested ? ' gold' : ''}" data-a="campleave">${C.rested ? '정비를 마치고 내려간다' : '쉬지 않고 내려간다'}</button>`;
+}
 function vShop() {
   const run = G.run, S = run.shop; const cost = (run.lv || 1) * 10; const pts = statSum(run.stats);
   const tOpen = run.tree ? run.tree.open.length : 0; const tCost = treeResetCost(run);
@@ -167,10 +189,10 @@ function vShop() {
     const why = x.sold ? '이미 샀습니다' : (run.gold || 0) < x.price ? '골드가 ' + (x.price - (run.gold || 0)) + ' 모자랍니다' : bagUsed(run) >= BAG_MAX ? '가방이 가득 찼습니다' : '';
     h += `<div class="sitem${x.sold ? ' sold' : ''}">${itemDetail(x.it, { compact: 1 })}${!x.sold && classFit(run.p, x.it.tpl) ? '<span class="tag cfit">' + esc(BUILDS[run.build].n) + '에게 맞음</span>' : ''}${x.sold ? '' : shopCmp(run, x.it)}${adisBtn(why, why ? '' : 'gold', 'buy', i, x.sold ? '샀습니다' : x.price + ' 골드에 사기')}${why && !x.sold ? `<p class="mini" aria-hidden="true">${esc(why)}</p>` : ''}</div>`;
   });
-  h += `</div></section>${vGamble(run)}<section class="card"><h4>소모품</h4><p class="mini">같은 종류·등급은 기존 묶음부터 채웁니다. 가방이 가득 차도 묶음에 자리가 있으면 살 수 있습니다. 가방 ${bagUsed(run)}/${BAG_MAX}칸.</p><div class="baglist">${(S.cons || []).map((x, i) => { const D = CONS[x.id], space = consSpace(run, x.id, 'n'), owned = (run.cons || []).filter(c => c.id === x.id); const why = consBuyWhy(run, x); return `<div class="bagline"><div><b>${D.ico} ${esc(D.n)}</b><br><small class="mini">${esc(D.sit)} · ${esc(D.d(D.v))}</small><br><small class="mini">보유 ${owned.reduce((n,c)=>n+c.n,0)}개 · ${owned.length}칸 · 묶음당 최대 ${D.max}개<br>${space.existing ? `일반 묶음에 ${space.existing}개 더 담을 수 있음 · 추가 칸 없음` : space.free ? `구매하면 새 묶음 한 칸 사용` : `일반 묶음 빈 자리 없음 · 새 칸 필요`}</small></div><div class="row">${adisBtn(why, 'sm' + (why ? '' : ' gold'), 'consbuy', i, x.price + ' 골드에 사기')}${consFillBtn(run, x, i)}</div></div>`; }).join('')}</div>${(run.cons || []).length ? `<h4>가방의 소모품 팔기</h4><div class="baglist">${run.cons.map((c, i) => `<div class="bagline"><div><b>${CONS[c.id].ico} ${esc(consName(c))} ×${c.n}</b></div><button class="sm" data-a="conssell" data-k="${i}">하나 ${consSell(c)} 골드에 팔기</button></div>`).join('')}</div>` : ''}</section>`;
+  h += `</div></section>${vGamble(run)}<section class="card"><h4>소모품</h4><p class="mini">같은 종류·등급은 기존 묶음부터 채웁니다. 소모품 가방은 장비 가방과 따로 ${CONS_BAG}칸이고, 한 칸에 담기는 수는 소모품마다 다릅니다. 소모품 가방 ${consUsed(run)}/${CONS_BAG}칸.</p><div class="baglist">${(S.cons || []).map((x, i) => { const D = CONS[x.id], space = consSpace(run, x.id, 'n'), owned = (run.cons || []).filter(c => c.id === x.id); const why = consBuyWhy(run, x); return `<div class="bagline consrow"><div><b>${D.ico} ${esc(D.n)}</b>${x.left != null ? ` <span class="mini">남은 ${x.left}개</span>` : ''}<br><small class="mini">${esc(D.sit)} · ${esc(D.d(D.v))}</small><br><small class="mini">보유 ${owned.reduce((n,c)=>n+c.n,0)}개 · ${owned.length}칸 · 묶음당 최대 ${D.max}개<br>${space.existing ? `일반 묶음에 ${space.existing}개 더 담을 수 있음 · 추가 칸 없음` : space.free ? `구매하면 새 묶음 한 칸 사용` : `일반 묶음 빈 자리 없음 · 새 칸 필요`}</small></div><div class="row">${adisBtn(why, 'sm' + (why ? '' : ' gold'), 'consbuy', i, x.price + ' 골드에 사기')}${consFillBtn(run, x, i)}</div></div>`; }).join('')}</div>${(run.cons || []).length ? `<h4>가방의 소모품 팔기</h4><div class="baglist">${run.cons.map((c, i) => `<div class="bagline"><div><b>${CONS[c.id].ico} ${esc(consName(c))} ×${c.n}</b></div><button class="sm" data-a="conssell" data-k="${i}">하나 ${consSell(c)} 골드에 팔기</button></div>`).join('')}</div>` : ''}</section>`;
   h += `<section class="card"><h4>가방의 장비 팔기</h4><p class="mini">살 때 값의 25%를 받습니다. 낀 장비는 먼저 빼야 팝니다.</p>`;
   h += run.bag.length ? `<div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${inm(x.tpl, x.g)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${baseText(x)}</small></div><button class="sm" data-a="sell" data-k="${u}"${x.locked ? ' disabled' : ''}>${x.locked ? '잠김' : sellOf(x)+' 골드에 팔기'}</button>${lockButton(x)}</div>`; }).join('')}</div>` : '<p class="mini">가방이 비어 있습니다.</p>';
-  h += `</section><section class="card"><h4>떠나기 전에</h4><div class="row"><button data-a="equip">장비 바꾸기</button>${adisBtn(!pts ? '나눈 능력치가 없습니다' : (run.gold || 0) < cost ? '골드가 ' + (cost - (run.gold || 0)) + ' 모자랍니다' : '', '', 'respec', null, '능력치 다시 나누기 (' + cost + ' 골드)')}${run.tree ? adisBtn(!tOpen ? '연 칸이 없습니다' : (run.gold || 0) < tCost ? '골드가 ' + (tCost - (run.gold || 0)) + ' 모자랍니다' : '', '', 'treereset', null, '트리 초기화 (' + tCost + ' 골드)') : ''}</div><p class="mini">능력치 다시 나누기: 나눈 ${pts}점을 거두어 처음부터 다시 나눕니다. 값은 레벨 × 10골드입니다.</p>${run.tree ? `<p class="mini">트리 초기화: 연 칸 ${tOpen}개를 모두 닫고 포인트를 돌려줍니다. 끼운 트리 스킬도 빠집니다. 값은 연 칸 하나에 ${Math.round(TREE_RESET.cell * Math.pow(1.5, (run.ch || 1) - 1))}골드입니다.</p>` : ''}<p class="mini">남은 골드는 다음 챕터로 가져갑니다.</p></section><div class="stickbar shopbar"><span class="gold-n">골드 ${run.gold || 0}</span><span class="mini">가방 ${bagUsed(run)}/${BAG_MAX}칸</span><button class="gold" data-a="shopleave">상점을 나선다</button></div>`;
+  h += `</section><section class="card"><h4>떠나기 전에</h4><div class="row"><button data-a="equip">장비 바꾸기</button>${adisBtn(!pts ? '나눈 능력치가 없습니다' : (run.gold || 0) < cost ? '골드가 ' + (cost - (run.gold || 0)) + ' 모자랍니다' : '', '', 'respec', null, '능력치 다시 나누기 (' + cost + ' 골드)')}${run.tree ? adisBtn(!tOpen ? '연 칸이 없습니다' : (run.gold || 0) < tCost ? '골드가 ' + (tCost - (run.gold || 0)) + ' 모자랍니다' : '', '', 'treereset', null, '트리 초기화 (' + tCost + ' 골드)') : ''}</div><p class="mini">능력치 다시 나누기: 나눈 ${pts}점을 거두어 처음부터 다시 나눕니다. 값은 레벨 × 10골드입니다.</p>${run.tree ? `<p class="mini">트리 초기화: 연 칸 ${tOpen}개를 모두 닫고 포인트를 돌려줍니다. 끼운 트리 스킬도 빠집니다. 값은 연 칸 하나에 ${Math.round(TREE_RESET.cell * Math.pow(1.5, (run.ch || 1) - 1))}골드입니다.</p>` : ''}<p class="mini">남은 골드는 다음 챕터로 가져갑니다.</p></section><div class="stickbar shopbar"><span class="gold-n">골드 ${run.gold || 0}</span><span class="mini">장비 ${bagUsed(run)}/${BAG_MAX} · 소모품 ${consUsed(run)}/${CONS_BAG}</span><button class="gold" data-a="shopleave">상점을 나선다</button></div>`;
   return h;
 }
 /* 쓸 수 없어도 초점이 가는 버튼 (10월 7일 2차): disabled 대신 aria-disabled, 이유는 읽는 이름에 넣고 누르면 알림으로 */
@@ -193,7 +215,7 @@ function enterChapter(run) {
   const nx = (run.ch || 1) + 1; if (!CHAPTERS[nx] || run.markCh) return false;
   const mode = run.mode === 'hard' ? 'hard' : 'normal'; run.mode = mode;
   if (run.shop) (run.shopHist = run.shopHist || []).push({ ch: run.shop.ch, gold: run.gold || 0, log: run.shop.log || [], stock: run.shop.stock.map(x => ({ tpl: x.it.tpl, g: x.it.g, price: x.price, sold: x.sold })), cons: (run.shop.cons || []).map(x => ({ id: x.id, price: x.price })) }); // 다음 챕터 상점이 열려도 지난 방문 기록은 남긴다
-  const keepDoors = run.doorLog || []; run.ch = nx; run.boss = chData(nx).boss; run.phase = null; run.settle = null; run.shop = null; run.result = null;
+  const keepDoors = run.doorLog || []; run.ch = nx; { const rf = consChRefund(run); if (rf.gold && typeof toast === 'function') toast('챕터 전용 소모품 ' + rf.names.join(', ') + '을(를) 골드 ' + rf.gold + '로 바꿨습니다'); } run.boss = chData(nx).boss; run.phase = null; run.settle = null; run.shop = null; run.result = null;
   delete run.dg; dgInit(run); chGift(run, nx, true); run.doorLog = keepDoors; (run.chLog = run.chLog || []).push({ ch: nx, mode, lv: run.lv, gold: run.gold, t: Date.now() });
   G.scr = 'run'; G.b = null; G.sel = null; saveRunLocal(); saveCur(); render(); toast(nx + '챕터 · ' + chData(nx).n); if (chData(nx).enterLore) toast(chData(nx).enterLore); if ((run.awkLog || []).some(x => x.gift && x.ch === nx)) toast('각인을 얻었습니다: ' + AWK_MAP[run.awkLog.filter(x => x.gift && x.ch === nx)[0].id].n); return true;
 }

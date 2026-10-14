@@ -10,6 +10,8 @@ function onClick(ev) {
   if (el.getAttribute && el.getAttribute('aria-disabled') === 'true' && el.dataset && el.dataset.why) { toast(el.dataset.why); return; } /* 10월 7일 2차: 상점 등 쓸 수 없는 버튼의 이유 */
   if (a === 'closebg') { if (ev.target !== el) return; if (G.sheet && !['block', 'stats', 'choice', 'awk', 'bagfull'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } return; }
   switch (a) {
+    case 'cptoggle': { if (!G.sheet || G.sheet.kind !== 'consfull') break; const d = G.sheet.data, i = +el.dataset.k; d.skip = d.skip || []; d.skip = d.skip.includes(i) ? d.skip.filter(x => x !== i) : d.skip.concat([i]); render(); break; }
+    case 'cptake': { const run = G.run; if (!run || !G.sheet || G.sheet.kind !== 'consfull' || G.b) break; const skip = G.sheet.data.skip || [], Q = run.consPending || [], plan = consFitPlan(run, Q, skip); const lost = Q.reduce((a, c, i) => a + (skip.includes(i) ? 0 : c.n - plan[i]), 0); if (lost && !ask('자리가 없어 ' + lost + '개를 두고 갑니다. 계속할까요?')) break; consTakePending(run, skip); G.sheet = null; saveRunLocal(); saveCur(); nextDrop(); break; }
     case 'cpkeep': case 'cpskip': case 'cpreplace': {
       const run=G.run;
       if (!run || !G.sheet || G.sheet.kind!=='consfull' || !(run.consPending || []).length || G.b) break;
@@ -17,14 +19,10 @@ function onClick(ev) {
       if (a==='cpreplace') {
         if (el.dataset.s==='cons') {
           const i=+el.dataset.k,c=run.cons[i];
-          if (!c || !ask(consName(c)+' ×'+c.n+' 묶음을 버리고 새 소모품을 챙길까요?')) break;
+          if (!c || !ask(consName(c)+' ×'+c.n+' 묶음을 버릴까요?')) break;
           run.cons.splice(i,1);
-        } else {
-          const u=el.dataset.k,x=run.inv[u],why=itemRemoveWhy(run,u);
-          if (!x || why) { if(why)toast(why); break; }
-          if (!ask((ITEMS[x.tpl] || {}).n+'을(를) 버리고 새 소모품을 챙길까요?')) break;
-          if(discardUid(run,u))break;
-        }
+          saveRunLocal(); saveCur(); render(); break; // 10월 14일 개편 5단계: 버리기는 자리만 만들고 전리품 화면에 남는다. 챙기기는 [챙기기]로
+        } else break; // 10월 14일: 소모품 가방이 나뉘어 장비를 버려도 소모품 칸이 생기지 않는다(장비만 잃는 것을 막는다)
       }
       consPendingTry(run); G.sheet=null;saveRunLocal();saveCur();nextDrop();break;
     }
@@ -74,6 +72,9 @@ function onClick(ev) {
     case 'consopen': hidePop(); openSheet('cons'); break;
     case 'consfilter': if(G.sheet && G.sheet.kind==='cons'){G.sheet.data.filter=el.dataset.k;render();} break;
     case 'consonly': if(G.sheet && G.sheet.kind==='cons'){G.sheet.data.only=!G.sheet.data.only;render();} break;
+    case 'consbrew': { const run = G.run, id = el.dataset.k, s = consBrewOf(run, id), why = consBrew(run, id); if (why) { toast(why); break; } toast(CONS[id].n + ' ' + s.need + '개로 ' + s.name + ' 한 칸을 채웠습니다 (' + (s.cur + 1) + '/' + s.cap + ')'); saveRunLocal(); saveCur(); render(); break; }
+    case 'consfind': if(G.sheet && G.sheet.kind==='cons'){const d=G.sheet.data;d.find=!(d.find||d.query);if(!d.find)d.query='';render();if(d.find&&typeof document!=='undefined'){const q=document.getElementById('consquery');if(q)q.focus();}} break;
+    case 'consrow': if(G.sheet && G.sheet.kind==='cons'){const d=G.sheet.data,k=el.dataset.k;d.open=d.open===k?null:k;let seen=false;for(const c of G.run.cons||[])if(c.id+':'+consGrade(c.id,c.g)===k&&c.fresh){c.fresh=false;seen=true;}if(seen){saveRunLocal();saveCur();}render();} break;
     case 'conssearch': if(G.sheet && G.sheet.kind==='cons'){G.sheet.data.query=val('consquery').trim();render();} break;
     case 'consdiscard': {if(G.b&&!G.b.over){toast('전투 밖에서 정리합니다');break;}const r=G.run,i=+el.dataset.k,c=(r.cons||[])[i];if(c&&ask(consName(c)+' '+c.n+'개를 모두 버릴까요?')){r.cons.splice(i,1);saveRunLocal();saveCur();render();}break;}
     case 'constarget': G.sel=el.dataset.k;render();break;
@@ -81,8 +82,9 @@ function onClick(ev) {
     case 'eqorder': G.eqOrder=el.dataset.k;render();break;
     case 'eqback': G.eqSel={slot:(G.eqSel||{}).slot||'weapon'};render();eqBagReveal();break;
     case 'consuse': { const run = G.run, b = G.b && !G.b.over ? G.b : null; const why = consUse(b, run, +el.dataset.k, G.sel); if (why) { toast(why); break; } if (b && b.over) { G.sheet = null; afterTurn(b); break; } if (!b) { saveRunLocal(); saveCur(); } render(); break; }
-    case 'consbuyfill': { const run = G.run, S = run.shop, x = S && S.cons && S.cons[+el.dataset.k]; const n = consFillN(run, x); let got = 0, why = ''; for (let j = 0; j < n; j++) { why = consBuy(run, x); if (why) break; got++; } if (!got) { toast(why || '지금은 살 수 없습니다'); break; } sfx('coin'); toast(CONS[x.id].n + ' ' + got + '개를 샀습니다'); saveRunLocal(); saveCur(); render(); break; }
-    case 'consbuy': { const run = G.run, S = run.shop, x = S && S.cons && S.cons[+el.dataset.k]; const why = consBuy(run, x); if (why) { toast(why); break; } sfx('coin'); saveRunLocal(); saveCur(); render(); break; }
+    case 'campleave': { const run = G.run, R = roomDef(); if (!run || R.type !== 'camp') break; const C = campInit(run); if (!C.rested && !ask('쉬지 않고 내려갈까요? 생명력과 플라스크를 채우지 못합니다.')) break; run.rooms.push({ room: run.room, type: 'camp', rested: C.rested, bought: (C.log || []).length, mul: C.mul }); (run.campHist || (run.campHist = [])).push(C); run.camp = null; advanceFloor(); render(); break; }
+    case 'consbuyfill': { const run = G.run, S = el.dataset.s === 'camp' ? run.camp : run.shop, x = S && S.cons && S.cons[+el.dataset.k]; const n = consFillN(run, x); let got = 0, why = ''; for (let j = 0; j < n; j++) { why = consBuy(run, x); if (why) break; got++; } if (!got) { toast(why || '지금은 살 수 없습니다'); break; } sfx('coin'); toast(CONS[x.id].n + ' ' + got + '개를 샀습니다'); saveRunLocal(); saveCur(); render(); break; }
+    case 'consbuy': { const run = G.run, S = el.dataset.s === 'camp' ? run.camp : run.shop, x = S && S.cons && S.cons[+el.dataset.k]; const why = consBuy(run, x); if (why) { toast(why); break; } sfx('coin'); saveRunLocal(); saveCur(); render(); break; }
     case 'conssell': { const run = G.run, S = run.shop, c = (run.cons || [])[+el.dataset.k]; if (!c || !S) break; const v = consSell(c); c.n--; if (c.n <= 0) run.cons.splice(+el.dataset.k, 1); run.gold = (run.gold || 0) + v; S.log.push({ a: 'conssell', id: c.id, g: c.g, price: v, t: Date.now() }); sfx('coin'); saveRunLocal(); saveCur(); render(); break; }
     case 'buy': { const run = G.run, S = run.shop, x = S && S.stock[+el.dataset.k]; if (!x || x.sold || run.phase !== 'shop') break; if ((run.gold || 0) < x.price) { toast('골드가 모자랍니다'); break; } if (!addItem(run, x.it)) { toast('가방이 가득 찼습니다. 먼저 팔거나 버려 주세요'); break; }
       run.gold -= x.price; x.sold = 1; S.log.push({ a: 'buy', tpl: x.it.tpl, g: x.it.g, b: x.it.b, price: x.price, t: Date.now() }); sfx('coin'); toast(ITEMS[x.it.tpl].n + '을(를) 샀습니다. 가방에 넣었습니다'); saveRunLocal(); saveCur(); render(); break; }
@@ -102,7 +104,7 @@ function onClick(ev) {
     case 'ibopen': case 'ibback': case 'ibpage': case 'ibtype': case 'ibreset': itemBookClick(a,el); break;
     case 'toasts': openSheet('toasts'); break;
     case 'rest': { const run = G.run, p = run.p, R = roomDef();
-      if (R.type === 'camp') { p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax; for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = Math.min(flaskCap(p, fk), (p.flask[fk] || 0) + 1); run.rooms.push({ room: run.room, type: 'camp' }); if ((run.ch || 1) >= AWK.campFrom) awkGrant(run); advanceFloor(); toast('불가에서 쉬었습니다. 모두 찼습니다'); render(); awkOpen(); break; }
+      if (R.type === 'camp') { const C = campInit(run); if (C.rested) break; C.rested = 1; p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax; for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = Math.min(flaskCap(p, fk), (p.flask[fk] || 0) + 1); if ((run.ch || 1) >= AWK.campFrom) awkGrant(run); saveRunLocal(); saveCur(); toast('불가에서 쉬었습니다. 모두 찼습니다'); render(); awkOpen(); break; } // 10월 14일 개편 5단계: 쉬어도 야영지에 남는다(떠나기는 campleave)
       const sp = 0.5 * (1 + fxVal(p, 'spring', 0, (a, v) => a + v)); p.hp = Math.min(p.hpMax, p.hp + p.hpMax * sp); p.mp = Math.min(p.mpMax, p.mp + p.mpMax * sp);
       p.flask.life = Math.min(flaskCap(p, 'life'), p.flask.life + 1 + fxVal(p, 'springLife', 0, (a, v) => a + v)); p.flask.mana = Math.min(flaskCap(p, 'mana'), p.flask.mana + 1); p.flask.stam = Math.min(flaskCap(p, 'stam'), (p.flask.stam || 0) + 1);
       run.rooms.push({ room: run.room, type: 'spring', spring: 1 }); advanceFloor(); toast('샘물로 상처를 씻었습니다'); render(); break; }
@@ -157,9 +159,9 @@ function onClick(ev) {
       if (R.event === 'robber' && o === 'bury') p.flask.life = Math.min(flaskCap(p, 'life'), p.flask.life + 1);
       if (R.event === 'blackwell' && o === 'drink') { p.flask.mana = Math.min(flaskCap(p, 'mana'), p.flask.mana + 1); p.flask.stam = Math.min(flaskCap(p, 'stam'), (p.flask.stam || 0) + 1); run.next.pre = Object.assign({}, run.next.pre, { vuln: 2 }); }
       if (R.event === 'camel' && o === 'loot') { const ids = Object.keys(CONS).filter(k => (CONS[k].ch || 1) <= 3 && CONS[k].use !== 'none'); for (let k = 0; k < 3; k++) consGrant(run, pickR(ids), 'n', 1); n3pre(run, 'ignite', 2); toast('짐에서 소모품 셋을 찾았습니다. 다음 전투에 화상 2'); }
-      if (R.event === 'camel' && o === 'bury') consGrant(run, 'sap', 'n', 1);
+      if (R.event === 'camel' && o === 'bury') consGrant(run, 'herb', 'n', 2); // 10월 14일: 선인장 수액을 없앴다
       if (R.event === 'oasis' && o === 'drink') { if (Math.random() < 0.5) { p.hp = Math.min(p.hpMax, p.hp + p.hpMax * 0.3); toast('샘물이 상처를 씻어 낸다. 생명력 30%'); } else { n3pre(run, 'chill', 2); toast('물이 무겁게 가라앉는다. 다음 전투에 둔화 2'); } }
-      if (R.event === 'oasis' && o === 'fill') consGrant(run, 'coldwater', 'n', 1);
+      if (R.event === 'oasis' && o === 'fill') consGrant(run, 'cleanse', 'n', 1); // 10월 14일: 찬물 한 병 → 정화 약
       if (R.event === 'sundial' && o === 'turn') { run.dg.reveal = (run.dg.reveal || []).concat([run.room + 1]); run.next3 = Object.assign(run.next3 || {}, { noon: 50 }); }
       if (R.event === 'sundial' && o === 'hasten') { run.dg.force = 'strong'; gainGold(run, 25, '해가 기운다'); }
       if (R.event === 'archive' && o === 'pull') n3pre(run, 'ignite', 4);

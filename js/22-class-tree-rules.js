@@ -68,7 +68,7 @@ function treeInit(run) { const T = TREE2[run.build]; if (!T) return; run.tree = 
 const treeOwns = (run,id) => !!(run && (SKILLS2[run.build] || []).some(s => s.id === id));
 /* 저장본 고치기: 스킬 데이터에서 빠진 칸(10월 3일 재사용 대기 개편: 짧은 격발 → 독 심기, 시작 스킬 바뀜)은 연 칸에서 지우고 포인트를 돌려준다 */
 /* 능력치 다섯 전 저장본 (10월 4일): 체력 · 의지를 0으로 더하고, 처음 점수가 6 → 15로 는 몫(9점)을 다음 능력치 창에서 나누게 한다 */
-function consFix(run) { if (run && !run.cons) run.cons = []; }
+function consFix(run) { if (run && !run.cons) run.cons = []; if (run && typeof consBagFix === 'function') consBagFix(run); } // 10월 14일: 소모품 가방 분리 이전
 function statFix(run) {
   consFix(run); if (!run || !run.stats) return;
   if (run.stats.con == null) { run.stats.con = 0; run.stats.wil = 0; run.statPending = (run.statPending || 0) + (STAT_START - 6); run.statBase = STAT_START; if (run.p) applyStats(run.p, run.stats); }

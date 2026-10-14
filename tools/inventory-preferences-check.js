@@ -11,7 +11,7 @@ G.sheet={kind:'bagfull',data:{item:E.mkItem('cloak'),then:'drop'}};D.click('bfdr
 assert.equal(E.equipUid(run,it.uid,'weapon'), '');assert(it.locked);assert(!it.fresh);assert(E.gearCheck(run));
 const old=run.bag[0];E.equipUid(run,old,'weapon');assert(run.inv[it.uid].locked);
 it.locked=false;assert.equal(E.discardUid(run,it.uid),'');assert(E.gearCheck(run));
-for(const id of ['herb','bandage','chalk','dart'])E.consAdd(run,id,'n',1);
+for(const id of ['herb','cleanse','chalk','dagger'])E.consAdd(run,id,'n',1);
 assert(run.cons.every(c=>c.fresh));
 for(const c of run.cons.slice(0,3))assert.equal(E.toggleConsFavorite(run,c),'');
 assert(E.toggleConsFavorite(run,run.cons[3]));assert.equal(run.consFav.length,3);
