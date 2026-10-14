@@ -4,7 +4,7 @@ const assert=require('assert/strict'),{G0:E,run_:V}=require('./dgqa.js');
 function setup(phase,k){const p=E.mkPlayer('warden',{},{});p.hp=p.hpMax=10000;const b=E.roomBattle(p,{ch:3,lv:12,floor:24,names:V('ENEMY_NAMES[3]'),boss:1},'queen',300);const e=b.en.find(x=>x.boss==='queen');e.phase=phase;e.hp=e.hpMax*V('QUEEN.ph['+(phase-1)+']')+1;e.intent={k};e.teleTurn=1;b.turnIdx=5;if(k==='surgeprep'||k==='erupt')e.under=1;if(k==='erupt')e.qPrep=1;return {b,e};}
 for(const phase of [1,2])for(const k of ['attack','ash','heavy','charge',...(phase===2?['burrow','surgeprep','erupt']:[])])for(const dot of [false,true]){
  const {b,e}=setup(phase,k),next=phase===1?'qrise':'qmelt';
- E.hurtEnemy(b,e,100000,{aoe:1,dot});
+ E.hurtEnemy(b,e,100000,{aoe:1,dot});e.bank=0; // 쌓인 피해는 boss-dwell-check에서 본다
  assert.equal(e.phase,phase);assert.equal(e.intent.k,k);assert.equal(e.qNext,next);assert(e.hp>0&&e.alive);assert(!b.over);
  let steps=0;
  while(e.intent.k!==next&&steps++<8){b.turnIdx++;E.enemyAct(b,e);assert.equal(e.phase,phase);}

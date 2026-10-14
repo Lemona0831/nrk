@@ -237,7 +237,8 @@ CHAPTERS[1].xp = 1; CHAPTERS[1].gold = 1; CHAPTERS[1].settleStrong = 20;
 /* 새 역할의 행동 수치 (docs/챕터/2챕터.md 5절) */
 /* 보스 단계 최소 체류(10월 14일, 만든 사람 결정): mid = 1 · 2단계에서 전환이 아닌 행동을 이만큼 한 뒤에 전환을 예고한다, last = 마지막 단계에서 이만큼 행동하기 전에는 쓰러지지 않는다.
    문턱에서 멈추기(넘친 피해는 버림)는 그대로. 측정 근거는 비공개 검증 문서 */
-const BOSS_DWELL = { abbot: { mid: 0, last: 1 }, cryptlord: { mid: 0, last: 1 }, queen: { mid: 3, last: 3 } };
+const BOSS_DWELL = { abbot: { mid: 1, last: 1 }, cryptlord: { mid: 2, last: 1 }, queen: { mid: 3, last: 1 } }; // 10월 15일: 쌓인 피해가 들어가도 단계를 건너뛰지 않게 1 · 2단계도 체류(군주 2번은 측정으로 정함: 1번이면 2단계 대표 행동 노출 67%) // 10월 15일: 여왕 마지막 단계 3 → 1(생명력 1로 여러 번 버티는 억울함을 줄인다)
+const BOSS_BANK = 1; // 막힌 피해 가운데 쌓아 두는 몫(10월 15일)
 const BOSS_TR = ['throne', 'collapse', 'qrise', 'qmelt', 'rest']; // 체류 횟수에 넣지 않는 행동: 단계를 넘기는 행동과 숨 고르기(수도원장 3단계 첫 행동)
 const RISE = { pile: 0.15, wait: 2, hp: 0.5 };   // 해골: 쓰러지면 뼈 더미(최대의 15%), 2라운드 뒤 50%로 한 번만 일어선다
 const HEX = { base: 0.04, per: 0.04, cap: 0.24, kinds: ['poison', 'bleed', 'ignite', 'weak', 'vuln'] }; // 무덤 주술사 조이기 = 기준 × (base + per × 내 해로운 상태 가짓수)

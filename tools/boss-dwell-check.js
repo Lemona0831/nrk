@@ -32,11 +32,20 @@ for (const boss of ['abbot', 'cryptlord', 'queen']) {
   assert.equal(e.intent.k, 'qrise'); assert(acts >= mid, '전환 예고 전 행동 ' + acts); assert.equal(e.phase, 1);
   ok.push('여왕 전환 전 ' + mid + '번'); }
 // 수도원장 · 군주는 1 · 2단계 체류가 없다(지금과 같다)
-assert.equal(V('BOSS_DWELL.abbot.mid'), 0); assert.equal(V('BOSS_DWELL.cryptlord.mid'), 0);
-console.log('보스 단계 최소 체류 점검 통과: ' + ok.join(' · ') + ' · 숨 고르기 제외 · 수도원장/군주 중간 단계는 그대로');
+// 10월 15일: 쌓인 피해가 들어가도 단계를 건너뛰지 않게 1 · 2단계에도 체류가 있다. 문턱에 닿아도 mid번 움직이기 전에는 전환하지 않는다
+for (const boss of ['abbot', 'cryptlord']) { const mid = V('BOSS_DWELL.' + boss + '.mid'); assert(mid >= 1, boss + ' 중간 체류'); const { b, e } = setup(boss, 2); E.hurtEnemy(b, e, 1e7, { aoe: 1 }); assert.equal(e.phase, 2); let k = 0; while (e.phase === 2 && k++ < 12) { b.turnIdx++; e.stun = 0; E.enemyAct(b, e); if (e.phase === 2) continue; } assert.equal(e.phase, 3, boss + ' 전환'); assert(((e.phAct || {})[2] || 0) >= mid, boss + ' 2단계에서 ' + mid + '번 움직인 뒤 전환: ' + JSON.stringify(e.phAct)); }
+console.log('보스 단계 최소 체류 점검 통과: ' + ok.join(' · ') + ' · 숨 고르기 제외 · 수도원장/군주 중간 단계 체류');
 // 전투 기록: 막힌 피해는 따로 보인다(10월 15일). 기록 줄의 숫자(첫 "N 피해")는 실제로 들어간 피해
-{ const { b, e } = setup('cryptlord', 3); const hp0 = e.hp; E.hurtEnemy(b, e, 5000, { single: 1 }); const m = b.log.filter(x => /막힘/.test(x.m)).pop();
-  assert(m && /에게 [0-9.]+ 피해 \(막힘 [0-9.]+ · 버티는 중\)/.test(m.m), '기록: ' + (m && m.m)); assert.equal(+(/([0-9.]+) 피해/.exec(m.m)[1]), Math.round((hp0 - 1) * 10) / 10, '앞 숫자는 들어간 피해');
-  const { b: b2, e: e2 } = setup('cryptlord', 1); e2.hp = Math.round(e2.hpMax * 0.6) + 50; E.hurtEnemy(b2, e2, 5000, { single: 1 }); assert(b2.log.some(x => /\(막힘 [0-9.]+ · 단계 문턱\)/.test(x.m)), '문턱');
-  const { b: b3, e: e3 } = setup('cryptlord', 1); E.hurtEnemy(b3, e3, 10, { single: 1 }); assert(!b3.log.some(x => /막힘/.test(x.m)), '보통 피해에는 붙지 않는다');
+{ const { b, e } = setup('cryptlord', 3); const hp0 = e.hp; E.hurtEnemy(b, e, 5000, { single: 1 }); const m = b.log.filter(x => /쌓임/.test(x.m)).pop();
+  assert(m && /에게 [0-9.]+ 피해 \(쌓임 [0-9.]+ · 버티는 중\)/.test(m.m), '기록: ' + (m && m.m)); assert.equal(+(/([0-9.]+) 피해/.exec(m.m)[1]), Math.round((hp0 - 1) * 10) / 10, '앞 숫자는 들어간 피해');
+  const { b: b2, e: e2 } = setup('cryptlord', 1); e2.hp = Math.round(e2.hpMax * 0.6) + 50; E.hurtEnemy(b2, e2, 5000, { single: 1 }); assert(b2.log.some(x => /\(쌓임 [0-9.]+ · 단계 문턱\)/.test(x.m)), '문턱');
+  const { b: b3, e: e3 } = setup('cryptlord', 1); E.hurtEnemy(b3, e3, 10, { single: 1 }); assert(!b3.log.some(x => /쌓임/.test(x.m)), '보통 피해에는 붙지 않는다');
   console.log('전투 기록 막힌 피해 표시 통과'); }
+// 쌓인 피해(10월 15일, 만든 사람 결정): 막힌 피해는 버리지 않고 쌓였다가, 보스가 차례를 마쳐 문이 열리면 들어간다. 피해 배율은 다시 붙지 않고 다음 문턱에서 다시 멈춘다
+{ const { b, e } = setup('cryptlord', 3); E.hurtEnemy(b, e, 5000, { single: 1 }); assert(e.bank > 4000, '쌓임 ' + e.bank); assert(E.stsHtml(e, b, true).includes('쌓인 피해'), '카드 표시');
+  b.turnIdx++; e.stun = 0; E.enemyAct(b, e); assert.equal(b.over, 'win', '마지막 단계: 한 번 움직이면 쌓인 피해로 쓰러진다'); assert(b.log.some(x => /쌓였던 피해가/.test(x.m))); }
+{ const { b, e } = setup('cryptlord', 1); e.hp = Math.round(e.hpMax * 0.6) + 10; e.s.vuln = { stacks: 3, until: 9999, dur: 9999 }; E.hurtEnemy(b, e, e.hpMax, { single: 1 }); const bank0 = e.bank; assert(bank0 > 0); assert.equal(e.lordNext, 'throne');
+  for (let k = 0; k < 6 && e.phase === 1; k++) { b.turnIdx++; e.stun = 0; E.enemyAct(b, e); }
+  assert.equal(e.phase, 2, '전환'); assert(Math.abs(e.hp - Math.round(e.hpMax * 0.3)) <= 1, '쌓인 피해가 들어가 다음 문턱(30%)에서 다시 멈춘다: ' + e.hp / e.hpMax); assert(e.bank > 0 && e.bank < bank0, '남은 몫은 다시 쌓인다'); assert.equal(e.lordNext, 'collapse');
+  const dealt = b.rec.filter(x => x.bank).reduce((a, x) => a + x.d, 0); assert(Math.abs(dealt + e.bank - bank0) <= 1, '배율이 다시 붙지 않는다(들어간 몫 + 남은 몫 = 쌓였던 몫)'); }
+console.log('쌓인 피해: 표시 · 문이 열리면 들어감 · 다음 문턱에서 다시 쌓임 · 배율 중복 없음 통과');

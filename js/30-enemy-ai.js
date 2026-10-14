@@ -318,6 +318,7 @@ function enemyAct(b, e) {
   if (e.alive) kwBleed(b, e);
   e.acts++;
   if (e.role === 'boss' && e.alive) bossPhase(b, e);
+  if (e.role === 'boss' && e.alive && e.bank > 0 && !e.qNext && !e.lordNext && !e.abNext) { const w = bossDwell(e); if (!(w && w.last && w.left)) bossBankApply(b, e); } // 10월 15일: 쌓인 피해
   if (e.alive) decideIntent(b, e);
 }
 /* 굶주린 순례자: 준 피해의 절반을 마신다 */
