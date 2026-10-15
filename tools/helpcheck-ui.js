@@ -286,7 +286,7 @@ module.exports = function (api) {
   A('막음 2가 다음 해로운 상태 두 번을 튕겨 냅니다', '정화 플라스크: 막음 2 (2 + blockAdd), 상태마다 1 소모', () => has('32-player-action.js', 'const nb = 2 + fxAdd(p, \'blockAdd\', p)') && E('KW.block') >= 2);
   A('정해진 때가 오면 효과가 나고 1 줄어듭니다', 'kwDec는 기본 1씩 줄인다', () => has('20-battle-state.js', 'x.stacks -= (n || 1)'));
   A('시작 스킬은 유산 2를 씁니다', '전체 직업 시작 스킬 skCost 2 (10월 15일 유산 1차 시제품)', () => E('Object.values(SKILLS2).flat().filter(s=>s.start).every(s=>skCost(s)===2)'));
-  A('내 차례가 끝날 때마다 1 찹니다', '수련장 스킬 장면: 유산은 내 차례가 끝날 때 1 찬다(도움말 유산과 같은 규칙, 견습생도 같은 코드, 10월 15일 유산 1차 시제품)', () => has('22-class-tree-rules.js', "if (kind === 'turn') ysAdd(b, YUSAN.turn, 'turn', '차례')") && E('YUSAN.turn') === 1);
+  A('내 차례가 끝날 때마다 1 찹니다', '수련장 스킬 장면: 유산은 내 차례가 끝날 때 1 찬다(도움말 유산과 같은 규칙, 견습생도 같은 코드, 10월 15일 유산 1차 시제품)', () => has('22-class-tree-rules.js', "ysAdd(b, YUSAN.turn + (long ? 1 : 0), 'turn'") && E('YUSAN.turn') === 1);
   A('연 스킬은 4칸까지 더 끼웁니다', '장착 칸 EQUIP_SLOTS2 = 4(시작 스킬은 따로)', () => E('EQUIP_SLOTS2') === 4);
   A('1챕터 보스를 이기면 더 위험하고', '가혹 모드는 1챕터 보스를 한 번 이기면 열린다(G.data.hardOpen, 66-dungeon-flow 보스 승리)', () => has('66-dungeon-flow.js', 'hardOpen') && E('MODES.hard.dmg') > 1);
 

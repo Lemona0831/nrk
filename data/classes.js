@@ -12,7 +12,7 @@ const SIG = {};    // 옛 직업 기술 (v2 시범에는 없다. docs/기록/0.6
 const YUSAN = { cap: 5, start: 5, turn: 1, resp: 1, refund: 1, item: 1, flask: 1, heavyTele: 20,
   /* 1차-b 스위치 (10월 15일, 측정해서 기본값을 고른다): cheap 1이면 빠른 스킬과 쿨타임 4 이하는 비용 1(바닥 1, 0은 없다) · longFrom N이면 그 전투의 N번째 내 차례부터 차례 충전 +2(0은 끔) ·
      convex 1이면 비용 3 · 4 스킬의 피해 · 붕괴 · 상태 수치를 직업마다 한 배율로 키운다(비용 2 대비 한 번의 값 3.3/2 · 4.8/2를 목표로, 최대 convexCap배) */
-  cheap: 0, longFrom: 0, convex: 0, convexCap: 1.25 };
+  cheap: 0, longFrom: 8, convex: 0, convexCap: 1.25 }; // 1차-b 측정(10월 15일)으로 고른 기본: B8만 켠다 (docs/검증/유산-1차-시제품-2026-10-15.md)
 /* 먼저 치우기로 세는 예고 (10월 15일 수정: 큰 예고만): 모으기 · 강타 · 도화선 · 폭발 · 영창(화형 · 재의 시녀) · 겨누기(겨눈 한 발 aimed 포함) · 제사 · 저주 되돌리기 · 본뜨기 · 되비추기 · 솟구침 · 정오의 빛 · 옥좌 붕괴. 평소 공격 · 지키기 · 치유 같은 예고는 세지 않는다 */
 const YS_PRE_K = ['charge', 'heavy', 'fuse', 'explode', 'chant', 'chanting', 'burn', 'mchant', 'mchanting', 'msong', 'aim', 'sacprep', 'sacrifice', 'retprep', 'return', 'mimic', 'reflect', 'erupt', 'surgeprep', 'noon', 'collapse'];
 

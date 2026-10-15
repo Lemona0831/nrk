@@ -74,4 +74,5 @@ const setInt = (es, k) => { for (const e of es) e.intent = Object.assign({ k: 'a
   ok(all.filter(s => E.skCost(s) <= 2).every(s => !s._fx0), 'C: 비용 1 · 2는 그대로');
   ok(sc.every(s => s.fx.every((e, i) => { const o = s._fx0[i]; return ['dmg', 'brk', 'poison', 'st'].includes(e.k) && o.n > 0 ? e.n >= o.n && e.n <= Math.ceil(o.n * Y.convexCap) : JSON.stringify(e) === JSON.stringify(o); })), 'C: 피해 · 붕괴 · 중독 · 상태 수치만, 최대 ' + Y.convexCap + '배');
   reset(); ok(all.every(s => !!s._fx0 === !!(Y.convex && s.ysMul)), '스위치 되돌림'); }
+ok(Y.longFrom === 8 && !Y.cheap && !Y.convex, '기본값: 1차-b 측정으로 고른 B8 (8번째 내 차례부터 +2), A · C 꺼짐');
 console.log('yusan-check: ' + n + '개 통과');
