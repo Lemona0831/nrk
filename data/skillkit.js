@@ -300,7 +300,7 @@ const SK_HS = { poison: '독을 걸면', kill: '적을 쓰러뜨리면', parry: 
 const SK_HSL = { poison: '독을 건 행동마다', kill: '적을 쓰러뜨린 행동마다', parry: '흘리기에 성공할 때마다', break: '정예 · 강적 · 보스를 무너뜨린 행동마다' };
 for (const k in TREE2) for (const x of (SKILLS2[k] || [])) x.hs = (TREE2[k].haste || {})[x.b] || null; // 스킬마다 갈래 규칙을 붙여 둔다
 /* 10월 15일 유산 1차 시제품: 스킬 비용은 데이터의 cd에서 기계적으로 만든다(설계안 4-1). 시작 스킬과 cd 3–5 → 2, 6–8 → 3, 9–10과 전투마다 1번 → 4. cd는 다른 도구가 읽으므로 데이터에 남긴다 */
-function skCost(s) { if (!s) return 0; if (s.once) return 4; if (s.start || !(s.cd > 5)) return 2; return s.cd <= 8 ? 3 : 4; }
+function skCost(s) { if (!s) return 0; if (s.once) return 4; if (YUSAN.cheap && (s.time === 'fast' || s.cd <= 4)) return 1; if (s.start || !(s.cd > 5)) return 2; return s.cd <= 8 ? 3 : 4; } // 1차-b A: 빠른 칸 · 쿨타임 4 이하는 1 (YUSAN.cheap)
 function skCd(s) { return '유산 ' + skCost(s) + (s.once ? ' · 전투마다 1번' : ''); }
 const skCharge = skCd; // 옛 이름
 const skHz = s => !!(s && s.fx && s.fx.some(e => e.k === 'hasten')); // 🔄 표시를 붙일 스킬

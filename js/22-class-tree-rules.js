@@ -50,7 +50,7 @@ const ysNow = p => p.ys == null ? YUSAN.start : p.ys;
 /* 유산 더하기 (상한까지). src: turn · resp · refund · item · flask. g = 실제로 든 양(0이면 상한에 막혀 버려짐) */
 function ysAdd(b, n, src, why) {
   const p = b.p; if (!isV2(p) || b.over) return 0; p.ys = ysNow(p); const g = Math.max(0, Math.min(n, YUSAN.cap - p.ys)); p.ys += g;
-  if (b.rec) b.rec.push({ k: 'ys', t: r1(b.t), src, why, g, ys: p.ys, r: b.ysR || 0 });
+  if (b.rec) b.rec.push({ k: 'ys', t: r1(b.t), src, why, n, g, ys: p.ys, r: b.ysR || 0 });
   if (g > 0 && src !== 'turn') logp(b, 'good', '유산 +' + g + ' (' + why + ')');
   return g;
 }
@@ -75,9 +75,24 @@ function ysPreKill(b, e) { // 먼저 치우기 (10월 15일 수정): 내 행동 
   ysResp(b, '먼저 치우기');
 }
 /* 내 차례 끝: 유산 +1 (상한에 막힌 양은 기록에 g 0으로 남는다) */
-function chargeEv(b, kind) { if (kind === 'turn') ysAdd(b, YUSAN.turn, 'turn', '차례'); } // 갈래 규칙(TREE2.haste)은 10월 3일에 없앴다. 다른 kind는 아무 일도 하지 않는다
+function chargeEv(b, kind) { if (kind !== 'turn') return; b.ysTurnN = (b.ysTurnN || 0) + 1; const long = YUSAN.longFrom > 0 && b.ysTurnN >= YUSAN.longFrom; ysAdd(b, YUSAN.turn + (long ? 1 : 0), 'turn', long ? '긴 전투' : '차례'); } // 1차-b B: 그 전투의 longFrom번째 내 차례부터 +2 // 갈래 규칙(TREE2.haste)은 10월 3일에 없앴다. 다른 kind는 아무 일도 하지 않는다
 /* 🔄 쿨타임 당기기 → 유산 +1 (라운드에 한 번). 부르는 곳은 그대로 두고 여기서 바꾼다 (10월 15일 1차 시제품 변환, n은 쓰지 않는다) */
 function hastenBranch(b, br, n, exceptId) { return ysRefund(b, '🔄 ' + (br || '')); }
+/* 1차-b C: 볼록한 비용당 값. 직업마다 비용 2 스킬의 한 번 값(skScore E 평균, 전투마다 1번 칸 제외)에 대한 비용 3 · 4의 비를 재고, 목표(3.3/2 · 4.8/2)에 모자라면
+   그 직업의 비용 3 · 4 스킬 전부의 피해(dmg) · 붕괴(brk) · 중독(poison) · 적에게 거는 상태(st) 수치에 한 배율(1에서 convexCap)을 곱한다. 원래 fx는 s._fx0에 두고 다시 부르면 되돌린 뒤 다시 잰다 */
+const YS_CONVEX_T = { 3: 3.3 / 2, 4: 4.8 / 2 };
+function ysConvexApply() {
+  for (const k in SKILLS2) for (const s of SKILLS2[k]) if (s._fx0) { s.fx = s._fx0; delete s._fx0; delete s.ysMul; }
+  if (!YUSAN.convex) return;
+  const sc = (e, m) => { const o = Object.assign({}, e); if (['dmg', 'brk', 'poison'].includes(e.k) && e.n > 0) o.n = Math.round(e.n * m); else if (e.k === 'st' && e.n > 0) o.n = Math.max(e.n, Math.round(e.n * m)); return o; };
+  for (const k in SKILLS2) {
+    const v = {}; for (const s of SKILLS2[k]) { if (s.once) continue; const c = skCost(s); (v[c] = v[c] || []).push(skScore(s).E); }
+    const av = c => v[c] && v[c].length ? v[c].reduce((a, x) => a + x, 0) / v[c].length : NaN; const v2 = av(2); const mul = {};
+    for (const c of [3, 4]) { const r = av(c) / v2; mul[c] = Number.isFinite(r) && r > 0 ? clamp(YS_CONVEX_T[c] / r, 1, YUSAN.convexCap) : 1; }
+    for (const s of SKILLS2[k]) { const m = mul[skCost(s)]; if (!(m > 1)) continue; s._fx0 = s.fx; s.ysMul = Math.round(m * 1000) / 1000; s.fx = s.fx.map(e => sc(e, m)); }
+  }
+}
+if (YUSAN.convex) ysConvexApply();
 const HS_WHY = { poison: '독을 걸었다', kill: '적을 쓰러뜨렸다', parry: '흘려 냈다', break: '정예 이상을 무너뜨렸다' };
 /* 스킬 트리 (개편 기획 4절): 포인트 1로 한 칸을 연다. 깊은 등급은 그 갈래에 먼저 쓴 포인트가 있어야 열린다(TREE_GATE). 연 스킬 가운데 4칸을 장착 */
 function treeInit(run) { const T = TREE2[run.build]; if (!T) return; run.tree = run.tree || { pts: T.pts || 0, open: [], spent: {} }; }

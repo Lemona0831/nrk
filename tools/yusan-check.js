@@ -18,7 +18,7 @@ const setInt = (es, k) => { for (const e of es) e.intent = Object.assign({ k: 'a
 { const { p, b, es } = fight(); setInt(es); E.playerAct(b, 'basic', es[0].id); ok(p.ys === 5, '가득일 때 차례 끝 +1은 넘친다'); const t = ysRec(b, 'turn'); ok(t.length === 1 && t[0].g === 0, '넘친 차례 충전은 g 0으로 기록');
   setInt(es); E.playerAct(b, 'sb_edge', es[0].id); ok(p.ys === 4, '비용 2를 쓰고 차례 끝 +1 → 4'); const sp = b.rec.filter(x => x.k === 'yspend'); ok(sp.length === 1 && sp[0].cost === 2 && sp[0].id === 'sb_edge', 'yspend 기록'); }
 // 3) 비용표: 시작 · cd 3–5 → 2, 6–8 → 3, 9–10 · 전투마다 1번 → 4 (9직업 모두 같은 함수)
-{ let k = 0; for (const id in E.SK2) { const s = E.SK2[id]; if (!s.cd && !s.once) continue; const c = E.skCost(s); const want = s.once ? 4 : s.start ? 2 : s.cd <= 5 ? 2 : s.cd <= 8 ? 3 : 4; assert.equal(c, want, id); k++; }
+{ let k = 0; for (const id in E.SK2) { const s = E.SK2[id]; if (!s.cd && !s.once) continue; const c = E.skCost(s); const want = s.once ? 4 : (Y.cheap && (s.time === 'fast' || s.cd <= 4)) ? 1 : s.start ? 2 : s.cd <= 5 ? 2 : s.cd <= 8 ? 3 : 4; assert.equal(c, want, id); k++; }
   ok(k > 700, '720칸 안팎을 모두 셈 (' + k + ')'); ok(E.skCost(E.SK2.h_step) === 2, '시작 스킬(cd 6)도 2'); }
 // 4) 모자라면 못 쓴다 · 누르면 아무 일도 없다
 { const { p, b, es } = fight(); p.ys = 1; const a = E.actionList(b).find(x => x.id === 'sb_edge'); ok(!a.ok && /유산 2 필요/.test(a.why) && a.cost === '유산 2', '모자라면 비활성, 비용 표시');
@@ -61,4 +61,17 @@ const setInt = (es, k) => { for (const e of es) e.intent = Object.assign({ k: 'a
 { const { p, b, es } = fight(); setInt(es); es[0].brkMax = 999; es[0].brk = 0; p.st = 100; E.playerAct(b, 'heavy', es[0].id); const base = 35 + 5 * Math.floor(E.stat(p, 'str') / 10); ok(Math.abs(es[0].brk - base * (1 + 0.01 * E.stat(p, 'str'))) < 1e-6, '예고가 없으면 기본 붕괴'); ok(base > 10, '강공격 붕괴가 기본 공격(10)보다 높다'); }
 // 15) 침묵의 종 · 독 거두는 손: 유산 −1, 0 아래로 내려가지 않음
 { const { p, b } = fight(); p.ys = 0; const l = E.ysLose(b, 1, '침묵의 종'); ok(l === 0 && p.ys === 0, '0 아래로 내려가지 않음'); p.ys = 3; ok(E.ysLose(b, 1, '침묵의 종') === 1 && p.ys === 2, '유산 −1'); }
+// 16) 1차-b 스위치 (10월 15일): A 싼 칸 1, B 긴 전투 차례 충전 +2, C 볼록한 비용당 값. 기본값을 바꾸지 않고 켜고 끄며 본다
+{ const S0 = Object.assign({}, Y); const reset = () => { Object.assign(Y, S0); D.run_('ysConvexApply()'); };
+  Y.cheap = 1; Y.convex = 0; D.run_('ysConvexApply()'); const all = Object.values(E.SK2);
+  for (const s of all) { if (!s.cd && !s.once) continue; const c = E.skCost(s); const want = s.once ? 4 : (s.time === 'fast' || s.cd <= 4) ? 1 : s.start || s.cd <= 5 ? 2 : s.cd <= 8 ? 3 : 4; assert.equal(c, want, 'A ' + s.id); assert(c >= 1, '바닥 1'); }
+  ok(true, 'A: 빠른 칸 · 쿨타임 4 이하 1, 전투마다 1번 4, 0 없음');
+  Y.cheap = 0; ok(E.skCost(E.SK2.sb_edge) === 2, 'A 끄면 시작 스킬 2');
+  Y.longFrom = 3; { const { p, b, es } = fight(); setInt(es); p.ys = 0; for (let i = 0; i < 4; i++) { setInt(es); E.playerAct(b, 'basic', es[0].id); } const t = ysRec(b, 'turn'); ok(t.length === 4 && t[0].n === 1 && t[1].n === 1 && t[2].n === 2 && t[3].n === 2, 'B: 3번째 내 차례부터 차례 충전 +2'); }
+  Y.longFrom = 0; { const { p, b, es } = fight(); setInt(es); p.ys = 0; for (let i = 0; i < 4; i++) { setInt(es); E.playerAct(b, 'basic', es[0].id); } ok(ysRec(b, 'turn').every(x => x.n === 1), 'B 끄면 늘 +1'); }
+  Y.cheap = 1; Y.convex = 1; D.run_('ysConvexApply()');
+  const sc = all.filter(s => s._fx0); ok(sc.length > 100 && sc.every(s => E.skCost(s) >= 3 && s.ysMul > 1 && s.ysMul <= Y.convexCap), 'C: 비용 3 · 4만, 배율 1에서 ' + Y.convexCap);
+  ok(all.filter(s => E.skCost(s) <= 2).every(s => !s._fx0), 'C: 비용 1 · 2는 그대로');
+  ok(sc.every(s => s.fx.every((e, i) => { const o = s._fx0[i]; return ['dmg', 'brk', 'poison', 'st'].includes(e.k) && o.n > 0 ? e.n >= o.n && e.n <= Math.ceil(o.n * Y.convexCap) : JSON.stringify(e) === JSON.stringify(o); })), 'C: 피해 · 붕괴 · 중독 · 상태 수치만, 최대 ' + Y.convexCap + '배');
+  reset(); ok(all.every(s => !!s._fx0 === !!(Y.convex && s.ysMul)), '스위치 되돌림'); }
 console.log('yusan-check: ' + n + '개 통과');
