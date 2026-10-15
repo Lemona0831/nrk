@@ -10,6 +10,8 @@ const SIG = {};    // 옛 직업 기술 (v2 시범에는 없다. docs/기록/0.6
    cap 상한 · start 전투 시작 값(가득) · turn 내 차례가 끝날 때 · resp 대응(라운드당 1번) · refund 🔄 · 처치 다시 쓰기(라운드당 1번) · item 장비(라운드당 1번) · flask 스태미나 플라스크(전투당 1번)
    heavyTele: 예고 중인(모으기 · 강타 · 영창 · 도화선 · 폭발 · 겨누기) 적을 강공격으로 맞히면 더하는 붕괴 */
 const YUSAN = { cap: 5, start: 5, turn: 1, resp: 1, refund: 1, item: 1, flask: 1, heavyTele: 20 };
+/* 먼저 치우기로 세는 예고 (10월 15일 수정: 큰 예고만): 모으기 · 강타 · 도화선 · 폭발 · 영창(화형 · 재의 시녀) · 겨누기(겨눈 한 발 aimed 포함) · 제사 · 저주 되돌리기 · 본뜨기 · 되비추기 · 솟구침 · 정오의 빛 · 옥좌 붕괴. 평소 공격 · 지키기 · 치유 같은 예고는 세지 않는다 */
+const YS_PRE_K = ['charge', 'heavy', 'fuse', 'explode', 'chant', 'chanting', 'burn', 'mchant', 'mchanting', 'msong', 'aim', 'sacprep', 'sacrifice', 'retprep', 'return', 'mimic', 'reflect', 'erupt', 'surgeprep', 'noon', 'collapse'];
 
 /* 시작 스킬: v2 직업은 트리 밖의 시작 스킬 둘 (data/skills.js의 TREE2.starters와 같다) */
 const DEFAULT_SKILLS = { assassin: ['a_vital', 'a_slip'], warden: ['w_bash', 'w_brace'], hunter: ['h_aim', 'h_step'], butcher: ['b_hook', 'b_lap'], elementalist: ['e_ember', 'e_touch'], spellblade: ['sb_edge', 'sb_aegis'], monk: ['m_palm', 'm_brace'], confessor: ['c_mace', 'c_confess'], bloodmage: ['v_taint', 'v_drink'] };

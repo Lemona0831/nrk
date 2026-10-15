@@ -23,7 +23,7 @@ const setInt = (es, k) => { for (const e of es) e.intent = Object.assign({ k: 'a
 // 4) 모자라면 못 쓴다 · 누르면 아무 일도 없다
 { const { p, b, es } = fight(); p.ys = 1; const a = E.actionList(b).find(x => x.id === 'sb_edge'); ok(!a.ok && /유산 2 필요/.test(a.why) && a.cost === '유산 2', '모자라면 비활성, 비용 표시');
   const hp0 = es[0].hp; E.playerAct(b, 'sb_edge', es[0].id); ok(p.ys === 1 && es[0].hp === hp0, '못 쓰는 스킬을 눌러도 아무 일 없음');
-  ok(!E.actionList(b).some(x => x.id === 'flaskM') && E.flaskCap(p, 'mana') === 0, '정화(옛 마나) 플라스크 없음'); }
+  ok(E.actionList(b).some(x => x.id === 'flaskM') && E.flaskCap(p, 'mana') === 3 && p.flask.mana === 3, '정화 플라스크는 그대로 (10월 15일 수정: 되살림)'); }
 // 5) 대응: 막기
 { const { p, b, es } = fight(); setInt(es); p.ys = 1; E.playerAct(b, 'guard'); const r = ysRec(b, 'resp'); ok(r.length === 1 && r[0].why === '막기' && r[0].g === 1, '방어 중 받아 내면 막기 +1'); ok(p.ys === 3, '차례 +1, 막기 +1 → 3');
   ok(b.log.some(x => /유산 \+1 \(막기\)/.test(typeof x === 'string' ? x : (x.t || x.m || ''))), '기록에 "유산 +1 (막기)"'); }
@@ -34,8 +34,12 @@ const setInt = (es, k) => { for (const e of es) e.intent = Object.assign({ k: 'a
   const R = b.ysR; ok(E.ysResp(b, '막기') === 0, '같은 라운드의 두 번째 대응은 0'); ok(ysRec(b, 'resp').filter(x => x.r === R).length === 1, '라운드마다 한 번'); }
 // 8) 대응: 끊기 (모으는 적을 무너뜨림)
 { const { p, b, es } = fight(); setInt(es, 'heavy'); p.ys = 1; es[0].brk = es[0].brkMax - 1; E.playerAct(b, 'basic', es[0].id); const r = ysRec(b, 'resp'); ok(r.length >= 1 && r[0].why === '끊기', '강타 예고를 무너뜨리면 끊기 +1'); ok(b.rec.some(x => x.k === 'break' && x.cut), 'break cut 기록'); }
-// 9) 대응: 먼저 치우기 (이번 라운드에 아직 움직이지 않은 예고 중인 적)
-{ const { p, b, es } = fight('spellblade', ['bruiser', 'bruiser']); setInt(es); p.ys = 1; ok(b.queue.includes(es[0].id), '적이 아직 순서에 남아 있음'); es[0].hp = 1; es[0].brk = 0; E.playerAct(b, 'basic', es[0].id); const r = ysRec(b, 'resp'); ok(r.length >= 1 && r[0].why === '먼저 치우기', '움직이기 전에 쓰러뜨리면 먼저 치우기 +1'); }
+// 9) 대응: 먼저 치우기 (10월 15일 수정: 이번 라운드에 아직 움직이지 않았고 큰 예고 YS_PRE_K · 겨눈 한 발일 때만)
+{ const { p, b, es } = fight('spellblade', ['bruiser', 'bruiser']); setInt(es, 'heavy'); p.ys = 1; ok(b.queue.includes(es[0].id), '적이 아직 순서에 남아 있음'); es[0].hp = 1; es[0].brk = 0; E.playerAct(b, 'basic', es[0].id); const r = ysRec(b, 'resp'); ok(r.length >= 1 && r[0].why === '먼저 치우기', '강타를 모으는 적을 움직이기 전에 쓰러뜨리면 먼저 치우기 +1'); }
+{ const { p, b, es } = fight('spellblade', ['bruiser', 'bruiser']); setInt(es); p.ys = 1; es[0].hp = 1; es[0].brk = 0; E.playerAct(b, 'basic', es[0].id); ok(!ysRec(b, 'resp').some(x => x.why === '먼저 치우기'), '평소 공격 예고인 적을 쓰러뜨리면 먼저 치우기 아님'); }
+{ const { p, b, es } = fight('spellblade', ['bruiser', 'bruiser']); setInt(es); es[0].intent.aimed = 1; p.ys = 1; es[0].hp = 1; es[0].brk = 0; E.playerAct(b, 'basic', es[0].id); ok(ysRec(b, 'resp').some(x => x.why === '먼저 치우기'), '겨눈 한 발도 큰 예고'); }
+{ const { p, b, es } = fight('spellblade', ['bruiser', 'bruiser']); setInt(es, 'heavy'); b.queue = b.queue.filter(id => id !== es[0].id); p.ys = 1; es[0].hp = 1; es[0].brk = 0; E.playerAct(b, 'basic', es[0].id); ok(!ysRec(b, 'resp').some(x => x.why === '먼저 치우기'), '이번 라운드에 이미 움직인 적은 아님'); }
+{ const K = D.run_('YS_PRE_K'); ok(['charge', 'heavy', 'fuse', 'explode', 'chant', 'chanting', 'burn'].every(k => K.includes(k)) && !K.includes('attack') && !K.includes('guard'), 'YS_PRE_K: 끊기 계열은 들고 평소 공격 · 지키기는 없음'); }
 // 10) 🔄 · 처치 다시 쓰기 환급: 라운드에 한 번
 { const { p, b, es } = fight(); setInt(es); E.playerAct(b, 'basic', es[0].id); p.ys = 1; ok(E.hastenBranch(b, '혈인', 2, null) === 1 && p.ys === 2, '🔄 → 유산 +1 (n과 상관없이 1)'); ok(E.ysRefund(b, '숨통 끊기') === 0 && p.ys === 2, '같은 라운드 두 번째 환급은 없음');
   E.playerAct(b, 'basic', es[0].id); const ys0 = p.ys; ok(E.ysRefund(b, 'x') === 1 && p.ys === ys0 + 1, '다음 라운드에는 다시 환급'); }

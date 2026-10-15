@@ -9,7 +9,7 @@ function fxVal(p, key, init, comb) { let v = init; for (const [k, f] of fxList(p
 function fxStat(p, key) { let v = 0; for (const [, f] of fxList(p)) if (f.st && f.st[key]) v += f.st[key]; return v; }
 const consTurnOf = p => CONS_TURN + fxVal(p, 'consTurn', 0, (a, v) => a + v); /* 한 차례에 쓰는 소모품 수 */
 const consFightOf = (p, run) => CONS_FIGHT[run && run.mode === 'hard' ? 'hard' : 'normal'] + fxVal(p, 'consFight', 0, (a, v) => a + v); /* 한 전투에 쓰는 소모품 수 (10월 14일, 각인 넉넉한 손 +2) */
-function flaskCap(p, k) { if (k === 'mana' && noManaFlask(p)) return 0; /* 10월 15일 유산 1차 시제품: v2 직업은 정화(옛 마나) 플라스크가 없다(수련장 견습생은 정화 플라스크 단계가 있어 남긴다). 옛 저장본의 충전은 applyGear가 0으로 줄인다 */ return Math.max(1, (p.flaskMax || 3) - (p.markFlask || 0) + fxList(p).reduce((a, [, f]) => a + ((f.cap && f.cap[k]) || 0), 0)); }
+function flaskCap(p, k) { return Math.max(1, (p.flaskMax || 3) - (p.markFlask || 0) + fxList(p).reduce((a, [, f]) => a + ((f.cap && f.cap[k]) || 0), 0)); }
 function actCost(p, id, base) { return Math.max(0, base + fxAdd(p, 'cost', p, id)); }
 
 const ST_REGEN = 10; // 스태미나 자연 회복 (라운드가 끝날 때마다). B0.5의 8에서 올림: 기본 공격이 스태미나를 채우지 않게 되면서 3,840판 비교로 정함 (11.6절)
@@ -53,7 +53,6 @@ function mkPlayer(build, items, stats, skills) {
     s: {}, guard: 0, dodge: 0, counter: 0, reflux: null, lastSkillDmg: 0, stun: 0,
   };
   p.hpMax = calcHpMax(p); p.hp = p.hpMax; p.mpMax = calcMpMax(p); p.mp = p.mpMax; p.stMax = calcStMax(p); p.st = p.stMax;
-  if (noManaFlask(p)) p.flask.mana = 0; // 10월 15일 유산 1차 시제품: 정화 플라스크 없음
   return p;
 }
 function mkEnemy(role, elite, idx, opt) {

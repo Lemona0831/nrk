@@ -350,7 +350,7 @@ function jumpTo(pk, r, ch) {
   for (const k of (process.env.DG_GIVE || '').split(',').filter(Boolean)) { const kind = G0.tplKind(k); const sl = kind === 'ring' ? 'ring2' : kind; const it = G0.mkItem(k, { ch }); run.inv[it.uid] = it; run.bag.push(it.uid); G0.equipUid(run, it.uid, sl); } // 통제 시험(DG_GIVE=장비id,…): 정한 장비를 처음부터 끼워 같은 씨앗의 안 낀 판과 짝지어 잰다(장비마다 효과 재기, 선택 편향 없음)
   for (const u of run.bag.slice()) G0.discardUid(run, u); // 뺀 시작 장비는 버린다
   const ids = Object.keys(G0.CONS).filter(k => (G0.CONS[k].ch || 1) < ch && G0.CONS[k].use !== 'none'); G0.consAdd(run, 'herb', 'n', 3); for (let k = 0; k < 3; k++) G0.consAdd(run, ids[Math.floor(r() * ids.length)], 'n', 1);
-  G0.applyGear(run); run.p.hp = run.p.hpMax; run.p.st = run.p.stMax; run.p.flask.life = run.p.flaskMax; run.p.flask.mana = G0.flaskCap(run.p, 'mana'); run.p.flask.stam = run.p.flaskMax; run.gold = 0;
+  G0.applyGear(run); run.p.hp = run.p.hpMax; run.p.st = run.p.stMax; run.p.flask.life = run.p.flaskMax; run.p.flask.mana = run.p.flaskMax; run.p.flask.stam = run.p.flaskMax; run.gold = 0;
   spendTree(pk, r);
   for (let c = 1; c < ch; c++) { run.ch = c; if (c >= run_('AWK.settleFrom') && G0.CHAPTERS[c + 1]) { G0.awkGrant(run); run.awkOffer = G0.awkOfferMake(run); if (run.awkOffer.length) G0.awkTake(run, awkChoice(pk, r, run)); else run.awkPending = 0; } } /* 정산 뒤의 각인 (앞 챕터를 깬 캐릭터 흉내) */
   run.ch = ch - 1; run.clears = ch - 1; run.phase = 'wait'; G0.enterChapter(run);

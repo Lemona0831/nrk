@@ -118,7 +118,7 @@ module.exports = function (api) {
   A('라운드가 끝날 때마다 10씩 차고, 스태미나 플라스크로 60을 채웁니다', 'ST_REGEN = 10 · STAM_FLASK = 60', () => E('ST_REGEN') === 10 && E('STAM_FLASK') === 60);
   A('0이 되면 탈진합니다', 'finishPlayer: p.st <= 0 → exhaust', () => has('32-player-action.js', 'if (p.st <= 0) { p.st = 0; p.exhaust = 1; }'));
   A('기본 공격 10, 강공격 35, 강타 흘리기 25씩 찹니다', 'addBreak: 기본 10 · 강공격 35(힘 10마다 +5) · 강타 흘리기 25', () => BRK10() && has('32-player-action.js', /\? 30 : 35\) \+ 5 \* Math\.floor/) && has('24-clock-damage.js', "addBreak(b, o.src, 25)"));
-  A('방을 이겨도 차지 않고, 샘과 야영지에서 둘 다 1씩 찹니다', '야영지(80-events)와 샘: flask life · mana · stam 각각 +1(정화는 상한 0)', () => has('80-events.js', /for \(const fk of \['life', 'mana', 'stam'\]\) p\.flask\[fk\] = Math\.min\(flaskCap\(p, fk\), \(p\.flask\[fk\] \|\| 0\) \+ 1\)/) && has('80-events.js', "p.flask.stam = Math.min(flaskCap(p, 'stam'), (p.flask.stam || 0) + 1)"));
+  A('방을 이겨도 차지 않고, 샘과 야영지에서 셋 다 1씩 찹니다', '야영지(80-events)와 샘: flask life · mana · stam 각각 +1', () => has('80-events.js', /for \(const fk of \['life', 'mana', 'stam'\]\) p\.flask\[fk\] = Math\.min\(flaskCap\(p, fk\), \(p\.flask\[fk\] \|\| 0\) \+ 1\)/) && has('80-events.js', "p.flask.stam = Math.min(flaskCap(p, 'stam'), (p.flask.stam || 0) + 1)"));
   A('받는 피해가 20% 늘어납니다', 'hurtPlayer: p.st <= 0 || p.exhaust → ×1.2', () => has('24-clock-damage.js', 'if (p.st <= 0 || p.exhaust) d *= 1.2'));
   A('받는 피해 +20%', 'hurtPlayer: p.st <= 0 || p.exhaust → ×1.2', () => has('24-clock-damage.js', 'if (p.st <= 0 || p.exhaust) d *= 1.2'));
   A('30까지 차면 풀립니다', 'finishPlayer: p.exhaust && p.st >= 30 → 0', () => has('32-player-action.js', 'if (p.exhaust && p.st >= 30) p.exhaust = 0'));

@@ -37,8 +37,8 @@ const V2_OFF = ['pilgstaff', 'candlestaff', 'acolyterelic', 'confwand', 'penwhip
   // 재사용 대기 때문에 같은 스킬을 이어 쓸 수 없는 메아리 반지, 출혈을 거는 수단이 쇠못 장갑뿐인 굽은 낫(출혈을 거는 직업이 들어오면 되돌린다)
   'silverwand', 'bonenecklace', 'bonecharm', 'herbflask', 'knot', 'chalice', 'echo', 'sickle'];
 const V2_ON = { butcher: ['sickle'] }; // V2_OFF 가운데 그 직업에게는 되돌리는 장비 (굽은 낫: 출혈을 거는 직업)
-/* 10월 15일 유산 1차 시제품: 정화(옛 마나) 플라스크를 없애 그 플라스크에만 붙는 장비와, 유산으로 옮기면 차례 충전을 두 배로 만드는 공허의 반지를 드롭 · 상점에서 뺀다 */
-const YS_OFF = ['doubleflask', 'wardwater', 'emberwater', 'confwater', 'dirtflask', 'hazewater', 'emberbottle', 'mirrorflask', 'scapeflask', 'wrapsolvent', 'hazebottle', 'wardfont', 'purgingchalice', 'voidring'];
+/* 10월 15일 유산 1차 시제품: 유산으로 옮기면 차례 충전을 두 배로 만드는 공허의 반지를 드롭 · 상점에서 뺀다 (정화 플라스크는 같은 날 되살렸다) */
+const YS_OFF = ['voidring'];
 const poolOk = (p, k) => !(isV2(p) && YS_OFF.includes(k)) && !(isV2(p) && V2_OFF.includes(k) && !(V2_ON[p.build] || []).includes(k)) && !(ITEMS[k] && ITEMS[k].fits && !ITEMS[k].fits.includes(p.build)); /* fits: 그 직업에서만 일어나는 2챕터 장비 */
 /* 10월 15일 유산 1차 시제품 (쿨타임을 대신한다, 설계안 2절 · data/classes.js YUSAN): 스킬은 유산(p.ys)을 쓴다. 전투를 가득 찬 채 시작하고,
    내 차례가 끝날 때 +1(가속 두 번째 차례는 빼고), 대응(막기 · 흘리기 · 무너뜨리기 · 끊기 · 먼저 치우기)에 성공하면 +1을 라운드에 한 번 받는다.
@@ -47,7 +47,6 @@ const poolOk = (p, k) => !(isV2(p) && YS_OFF.includes(k)) && !(isV2(p) && V2_OFF
 const CD_USED = 999;
 function resetCharges(p) { p.cd = {}; p.cdJust = null; p.hsAt = {}; p.ys = YUSAN.start; p.pbuf = null; p.dodgeRed = 0; p.dodgeOn = null; if (p.build === 'spellblade') { p.sbLast = null; p.sbRun = 0; p.edge = null; } if (p.build === 'bloodmage') p.payCut = []; } // 마검사: 직전 종류 · 이어진 교대 · 칼은 전투마다 새로. 숨겨진 직업 3: 값 깎기도
 const ysNow = p => p.ys == null ? YUSAN.start : p.ys;
-const noManaFlask = p => isV2(p) && !(BUILDS[p.build] || {}).tut; // 정화(옛 마나) 플라스크가 없는 직업 (수련장 견습생은 정화 플라스크 단계가 있어 남긴다)
 /* 유산 더하기 (상한까지). src: turn · resp · refund · item · flask. g = 실제로 든 양(0이면 상한에 막혀 버려짐) */
 function ysAdd(b, n, src, why) {
   const p = b.p; if (!isV2(p) || b.over) return 0; p.ys = ysNow(p); const g = Math.max(0, Math.min(n, YUSAN.cap - p.ys)); p.ys += g;
@@ -67,12 +66,11 @@ function ysLose(b, n, why) { const p = b.p; if (!isV2(p)) return 0; p.ys = ysNow
 function ysSpend(b, s) { const p = b.p; const c = skCost(s); p.ys = Math.max(0, ysNow(p) - c); if (s.once) p.cd[s.id] = CD_USED; if (b.rec) b.rec.push({ k: 'yspend', t: r1(b.t), id: s.id, cost: c, ys: p.ys, r: b.ysR || 0 }); }
 const ysShort = (p, s) => Math.max(0, skCost(s) - ysNow(p)); // 모자란 유산
 const ysUsed = (p, s) => !!(s.once && p.cd && p.cd[s.id] > 0); // 전투마다 1번 스킬을 이미 썼는가
-/* 대응 판정에 쓰는 예고: 끊기 · 강공격 붕괴는 큰 행동(모으기 · 강타 · 영창 · 도화선 · 폭발 · 겨누기), 먼저 치우기는 보이는 예고 행동이면 모두(쉬기 · 기도 · 땅속 울림 등은 빼고) */
+/* 강공격 붕괴를 더하는 예고: 큰 행동(모으기 · 강타 · 영창 · 도화선 · 폭발 · 겨누기). 먼저 치우기는 data/classes.js YS_PRE_K */
 const YS_BIG_K = ['charge', 'heavy', 'chant', 'chanting', 'burn', 'fuse', 'explode', 'aim'];
 const ysBigTele = e => !!(e && e.alive && e.intent && (YS_BIG_K.includes(e.intent.k) || e.intent.aimed));
-const YS_IDLE_K = ['none', 'rest', 'pray', 'rumble', 'exposed', 'brace', 'throne'];
-function ysPreKill(b, e) { // 먼저 치우기: 내 행동 중에, 이번 라운드 순서에 아직 남은(행동하지 않은) 적이 보이는 예고를 한 채 쓰러짐
-  if (!b.cur || !e.intent || YS_IDLE_K.includes(e.intent.k) || e.summoned && e.role === 'candle' || e.pile || e.role === 'root' || e.role === 'bonewall') return;
+function ysPreKill(b, e) { // 먼저 치우기 (10월 15일 수정): 내 행동 중에, 이번 라운드 순서에 아직 남은(행동하지 않은) 적이 큰 예고(YS_PRE_K, 겨눈 한 발)를 한 채 쓰러짐
+  if (!b.cur || !e.intent || !(YS_PRE_K.includes(e.intent.k) || e.intent.aimed) || e.pile || e.role === 'root' || e.role === 'bonewall') return;
   if (!(b.queue || []).includes(e.id) || (typeof darkHid === 'function' && darkHid(b, e))) return;
   ysResp(b, '먼저 치우기');
 }

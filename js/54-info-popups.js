@@ -55,7 +55,7 @@ function infoHtml(key) {
   const b = G.b; const parts = key.split(':');
   const H = (t, body) => `<b class="pt">${esc(t)}</b>${body}`;
   const P = s => `<p>${esc(s)}</p>`;
-  if (key === 'bar:ys' && b) { const p = b.p; return H('유산 ' + ysNow(p) + '/' + YUSAN.cap, P('스킬은 유산을 씁니다(비용 2 · 3 · 4). 전투를 가득 찬 채 시작하고, 내 차례가 끝날 때 +1 찹니다.') + P('대응에 성공하면 +1, 라운드에 한 번: 방어로 받아 내기 · 흘리기 성공 · 적을 무너뜨리기 · 모으기와 영창 끊기 · 아직 움직이지 않은 적을 먼저 쓰러뜨리기.') + P('스태미나 플라스크는 전투에 한 번 유산 +1을 더 줍니다.')); } // 10월 15일 유산 1차 시제품
+  if (key === 'bar:ys' && b) { const p = b.p; return H('유산 ' + ysNow(p) + '/' + YUSAN.cap, P('스킬은 유산을 씁니다(비용 2 · 3 · 4). 전투를 가득 찬 채 시작하고, 내 차례가 끝날 때 +1 찹니다.') + P('대응에 성공하면 +1, 라운드에 한 번: 방어로 받아 내기 · 흘리기 성공 · 적을 무너뜨리기 · 모으기와 영창 끊기 · 큰 공격을 모으는 적을 움직이기 전에 쓰러뜨리기.') + P('스태미나 플라스크는 전투에 한 번 유산 +1을 더 줍니다.')); } // 10월 15일 유산 1차 시제품
   if (key === 'bar:st' && b) { const p = b.p; return H('스태미나', P('지금 강공격 ' + heavyCost(p) + ', 방어 ' + guardCost(p) + ', 흘리기 ' + dodgeCost(p) + '이 듭니다. 라운드가 끝날 때마다 10씩 차고, 스태미나 플라스크로 60을 채웁니다. 기본 공격은 스태미나를 채우지 않습니다. 0이 되면 탈진합니다.')); } /* 10월 7일: 직업마다 다른 흘리기 비용을 그대로 */
   if (parts[0] === 'tn' && G.run && G.run.tree) {
     const s = SK2[parts[1]]; if (!s) return ''; const vis = treeVis(G.run, s.id);
