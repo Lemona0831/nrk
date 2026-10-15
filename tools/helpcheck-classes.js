@@ -30,7 +30,7 @@ module.exports = function (api) {
   add(C, '지운 숫자 2마다 보호 1을 얻습니다', '상수: CONF.per=' + E('CONF.per') + ' · protMax=' + E('CONF.protMax'), E => E('CONF.per') === 2 && E('CONF.protMax') === 3);
   add(C, '방어하면 해로운 상태를 2 지웁니다', '상수: CONF.guard=' + E('CONF.guard'), E => E('CONF.guard') === 2);
   add(C, '대신 기본 공격은 무기 피해의 80%', '상수: BUILDS.bloodmage.wpnMul=' + E('BUILDS.bloodmage.wpnMul'), E => pct(E('BUILDS.bloodmage.wpnMul')) === 80);
-  add(C, '남은 쿨타임 1턴마다 최대 생명력의 4%', '상수: BLOOD.per=' + E('BLOOD.per') + ', 실행: bmPullCost = ceil(최대 생명력 × 4% × 남은 턴)', E => pct(E('BLOOD.per')) === 4 && E(`(() => { const p = { hpMax: 100, eq: {} }; return bmPullCost(p, 2) === 8; })()`));
+  add(C, '모자란 유산 1마다 최대 생명력의 4%', '상수: BLOOD.per=' + E('BLOOD.per') + ', 실행: bmPullCost = ceil(최대 생명력 × 4% × 모자란 유산) (10월 15일 유산 1차 시제품)', E => pct(E('BLOOD.per')) === 4 && E(`(() => { const p = { hpMax: 100, eq: {} }; return bmPullCost(p, 2) === 8; })()`));
   add(C, '내 차례마다 한 번이며', '상수: BLOOD.perTurn=' + E('BLOOD.perTurn') + ', 소스: 내고 나서 생명력이 1 아래면 막음(p.hp - 1)', E => E('BLOOD.perTurn') === 1 && has('Math.max(0, p.hp - 1 - bmHpCost(p, s))'));
   add(C, '먹기 스킬, 값을 깎는 스킬, 전투마다 1번인 스킬은', '소스: bmNoPull은 once · 먹기 · payCut 스킬을 막는다', E => has("const bmNoPull = s => s.once ? '전투마다 1번' : bmEats(s) ? '먹기는 피로 당길 수 없음'"));
   add(C, '한 번에 최대 생명력의 25%까지이고', '상수: BLOOD.eatCap=' + E('BLOOD.eatCap'), E => pct(E('BLOOD.eatCap')) === 25);

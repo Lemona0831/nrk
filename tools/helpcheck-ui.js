@@ -118,15 +118,15 @@ module.exports = function (api) {
   A('라운드가 끝날 때마다 10씩 차고, 스태미나 플라스크로 60을 채웁니다', 'ST_REGEN = 10 · STAM_FLASK = 60', () => E('ST_REGEN') === 10 && E('STAM_FLASK') === 60);
   A('0이 되면 탈진합니다', 'finishPlayer: p.st <= 0 → exhaust', () => has('32-player-action.js', 'if (p.st <= 0) { p.st = 0; p.exhaust = 1; }'));
   A('기본 공격 10, 강공격 35, 강타 흘리기 25씩 찹니다', 'addBreak: 기본 10 · 강공격 35(힘 10마다 +5) · 강타 흘리기 25', () => BRK10() && has('32-player-action.js', /\? 30 : 35\) \+ 5 \* Math\.floor/) && has('24-clock-damage.js', "addBreak(b, o.src, 25)"));
-  A('방을 이겨도 차지 않고, 샘과 야영지에서 셋 다 1씩 찹니다', '야영지(80-events)와 샘: flask life · mana · stam 각각 +1', () => has('80-events.js', /for \(const fk of \['life', 'mana', 'stam'\]\) p\.flask\[fk\] = Math\.min\(flaskCap\(p, fk\), \(p\.flask\[fk\] \|\| 0\) \+ 1\)/) && has('80-events.js', "p.flask.stam = Math.min(flaskCap(p, 'stam'), (p.flask.stam || 0) + 1)"));
+  A('방을 이겨도 차지 않고, 샘과 야영지에서 둘 다 1씩 찹니다', '야영지(80-events)와 샘: flask life · mana · stam 각각 +1(정화는 상한 0)', () => has('80-events.js', /for \(const fk of \['life', 'mana', 'stam'\]\) p\.flask\[fk\] = Math\.min\(flaskCap\(p, fk\), \(p\.flask\[fk\] \|\| 0\) \+ 1\)/) && has('80-events.js', "p.flask.stam = Math.min(flaskCap(p, 'stam'), (p.flask.stam || 0) + 1)"));
   A('받는 피해가 20% 늘어납니다', 'hurtPlayer: p.st <= 0 || p.exhaust → ×1.2', () => has('24-clock-damage.js', 'if (p.st <= 0 || p.exhaust) d *= 1.2'));
   A('받는 피해 +20%', 'hurtPlayer: p.st <= 0 || p.exhaust → ×1.2', () => has('24-clock-damage.js', 'if (p.st <= 0 || p.exhaust) d *= 1.2'));
   A('30까지 차면 풀립니다', 'finishPlayer: p.exhaust && p.st >= 30 → 0', () => has('32-player-action.js', 'if (p.exhaust && p.st >= 30) p.exhaust = 0'));
   A('방어 중 받은 피해의 30%', "인내의 흉갑(plate): p.counter += d × 0.3", () => has('24-clock-damage.js', "p.eq.armor === 'plate' && !o.dot) p.counter += d * 0.3"));
   A('받은 피해의 30%가 다음 공격에 실립니다', "인내의 흉갑(plate): p.counter += d × 0.3", () => has('24-clock-damage.js', "p.counter += d * 0.3"));
-  A('쿨타임이 남은 스킬은 남은 쿨타임 1턴마다 최대 생명력의 4%', 'BLOOD.per = 0.04, bmPullCost: 남은 쿨타임 n × per', () => E('BLOOD.per') === 0.04);
+  A('유산이 모자란 스킬은 모자란 유산 1마다 최대 생명력의 4%', 'BLOOD.per = 0.04, bmPullCost: 모자란 유산 n × per (10월 15일 유산 1차 시제품)', () => E('BLOOD.per') === 0.04 && has('12-state-class-rules.js', 'const w = ysShort(p, s)'));
   A('20까지 셉니다', 'BLOOD.dmgCount = 20', () => E('BLOOD.dmgCount') === 20);
-  A('−3턴은 남은 쿨타임 3턴 몫까지', '값 깎기 payCut off 3(스킬 데이터의 off 값 예시, 마나 없는 직업 H3)', () => E('SKILLS2.bloodmage.some(s => s.fx.some(f => f.k === "payCut" && f.off === 3))'));
+  A('−3은 모자란 유산 3 몫까지', '값 깎기 payCut off 3(스킬 데이터의 off 값 예시, 마나 없는 직업 H3)', () => E('SKILLS2.bloodmage.some(s => s.fx.some(f => f.k === "payCut" && f.off === 3))'));
   A('3개까지 쌓이고', 'BLOOD.payCutMax = 3', () => E('BLOOD.payCutMax') === 3);
   A('한 적에게 6까지입니다', 'BLOOD.spreadKillMax = 6', () => E('BLOOD.spreadKillMax') === 6);
   A('또 걸면 횟수를 더합니다(최대 8번)', 'WARD.thornMax = 8 (맞으면 출혈도 같은 상한)', () => E('WARD.thornMax') === 8);
@@ -285,8 +285,8 @@ module.exports = function (api) {
   A('사수의 예고에 "출혈 2"가 보이면', 'EKW.archerBleed = 2', () => E('EKW.archerBleed') === 2);
   A('막음 2가 다음 해로운 상태 두 번을 튕겨 냅니다', '정화 플라스크: 막음 2 (2 + blockAdd), 상태마다 1 소모', () => has('32-player-action.js', 'const nb = 2 + fxAdd(p, \'blockAdd\', p)') && E('KW.block') >= 2);
   A('정해진 때가 오면 효과가 나고 1 줄어듭니다', 'kwDec는 기본 1씩 줄인다', () => has('20-battle-state.js', 'x.stacks -= (n || 1)'));
-  A('시작 스킬 쿨타임은 4~6턴입니다', '전체 직업 시작 스킬 최소 4, 최대 6', () => E('(()=>{const cds=Object.values(SKILLS2).flat().filter(s=>s.start).map(s=>s.cd);return Math.min(...cds)===4&&Math.max(...cds)===6;})()'));
-  A('내 턴이 끝날 때마다 1 줄어듭니다', '수련장 스킬 장면: 쿨타임은 내 턴이 끝날 때마다 1 줄고 쓴 턴에는 줄지 않는다(도움말 쿨타임과 같은 규칙, 견습생도 같은 코드)', () => has('32-player-action.js', 'const w = (p.cd && p.cd[sid]) || 0'));
+  A('시작 스킬은 유산 2를 씁니다', '전체 직업 시작 스킬 skCost 2 (10월 15일 유산 1차 시제품)', () => E('Object.values(SKILLS2).flat().filter(s=>s.start).every(s=>skCost(s)===2)'));
+  A('내 차례가 끝날 때마다 1 찹니다', '수련장 스킬 장면: 유산은 내 차례가 끝날 때 1 찬다(도움말 유산과 같은 규칙, 견습생도 같은 코드, 10월 15일 유산 1차 시제품)', () => has('22-class-tree-rules.js', "if (kind === 'turn') ysAdd(b, YUSAN.turn, 'turn', '차례')") && E('YUSAN.turn') === 1);
   A('연 스킬은 4칸까지 더 끼웁니다', '장착 칸 EQUIP_SLOTS2 = 4(시작 스킬은 따로)', () => E('EQUIP_SLOTS2') === 4);
   A('1챕터 보스를 이기면 더 위험하고', '가혹 모드는 1챕터 보스를 한 번 이기면 열린다(G.data.hardOpen, 66-dungeon-flow 보스 승리)', () => has('66-dungeon-flow.js', 'hardOpen') && E('MODES.hard.dmg') > 1);
 
@@ -373,7 +373,7 @@ module.exports = function (api) {
     ['다른 적을 치면 1겹부터', 'hurtEnemy.toString().includes("Math.min(HUNT.focusMax, pre + 1)")'],
     ['먹기·비용 감소·전투당 1회', 'bmNoPull(SK2.v_drink)!==null'],
     ['생명력 1 미만이면', 'bmPullCost({hpMax:100,eq:{}},2)===8'],
-    ['쿨타임은 내 차례마다 1 감소', 'chargeEv.toString().includes("p.cd[id]--")']
+    ['유산은 내 차례가 끝날 때마다 1 차고', 'chargeEv.toString().includes("YUSAN.turn") && YUSAN.resp===1']
   ];
   for(const [find,expr] of comfort) api.add('ui-account',find,'직업 핵심 설명: '+expr,()=>E(expr));
   api.add('ui-text','피 수확은 출혈 상태의 적 처치','피 수확 3%, 전투당 12%, 소환물 제외',()=>E('BUTCH.harvest===0.03 && BUTCH.harvestFight===0.12 && buHarvest.toString().includes("e.summoned")'));

@@ -88,9 +88,11 @@ T('triplering', () => { const mk = it => { const b = battle({ en: [['bruiser', 0
 T('eyeofnoon', () => { const mk = it => { const b = battle({ en: [['bruiser', 0]] }, 'assassin', 13, it); b.en[0].intent = { k: 'heavy' }; return hit(b, b.en[0], 100); }; const r = mk(['eyeofnoon']) / mk([]); ok(near(r, 1.2, 0.02), '정오의 눈: 큰 공격이 예고되면 +20% (' + r.toFixed(3) + ')'); });
 T('soloring', () => { const mk = it => { const b = battle({ en: [['bruiser', 0]] }, 'assassin', 13, it); return hit(b, b.en[0], 100); }; const r = mk(['soloring']) / mk([]); ok(near(r, 1.1, 0.01), '마지막 한 명의 반지: 적이 하나면 +10% (' + r.toFixed(3) + ')'); });
 T('oasis_gourd', () => { const b = battle({ en: [['bruiser', 0]] }, 'warden', 13, ['oasis_gourd']); b.p.flask.life = G0.flaskCap(b.p, 'life'); const c0 = b.p.flask.life; b.p.hp = b.p.hpMax * 0.5; G0.playerAct(b, 'flaskL', null); const c1 = b.p.flask.life; ok(c1 === c0, '오아시스 호리병: 첫 모금은 충전을 쓰지 않는다 (' + c0 + ' → ' + c1 + ')'); b.p.st = b.p.stMax; G0.playerAct(b, 'flaskL', null); ok(b.p.flask.life === c1 - 1 || b.over, '두 번째는 쓴다 (' + b.p.flask.life + ')'); });
-T('hazebottle', () => { const b = battle({ en: [['bruiser', 0], ['bruiser', 0]], mods: ['haze'] }, 'warden', 13, ['hazebottle']); G0.playerAct(b, 'flaskM', null); ok(b.en.every(e => !(e.haze > 0)), '신기루 병: 정화 플라스크가 허상을 모두 걷는다'); });
-T('wardfont', () => { const b = battle({ en: [['bruiser', 0]] }, 'warden', 13, ['wardfont']); b.p.ward = 0; G0.playerAct(b, 'flaskM', null); ok(b.p.ward >= G0.wardMax(b.p) * 0.45, '보호막 샘: 정화 플라스크가 보호막을 절반까지 채운다 (' + Math.round(b.p.ward) + '/' + G0.wardMax(b.p) + ')'); });
-T('scapeflask', () => { const b = battle({ en: [['bruiser', 0], ['archer', 0]] }, 'warden', 13, ['scapeflask']); G0.addS(b, b.p, 'ignite', 4); G0.playerAct(b, 'flaskM', null); ok(!G0.st(b.p, 'ignite') && b.en.every(e => G0.st(e, 'ignite') >= 2), '속죄양 병: 내 화상을 적에게 절반씩 나눠 건다'); });
+/* 10월 15일 유산 1차 시제품: 정화 플라스크를 없애 그 플라스크에만 붙는 장비는 v2 직업의 드롭 · 상점에서 빠진다(YS_OFF). 효과 대신 꺼졌는지를 본다 */
+const ysOff = (k, name) => { const b = battle({ en: [['bruiser', 0]] }, 'warden', 13, [k]); ok(!run_('poolOk')(b.p, k) && !G0.actionList(b).some(a => a.id === 'flaskM') && G0.flaskCap(b.p, 'mana') === 0, name + ': 1차 시제품에서 정화 플라스크와 함께 꺼짐'); };
+T('hazebottle', () => ysOff('hazebottle', '신기루 병'));
+T('wardfont', () => ysOff('wardfont', '보호막 샘'));
+T('scapeflask', () => ysOff('scapeflask', '속죄양 병'));
 T('mirrorshock', () => { const b = battle({ en: [['bruiser', 0]] }, 'elementalist', 13, ['mirrorshock']); const e = b.en[0]; e.haze = 1; G0.fxRun(b.p, 'onShock', b, b.p, e); ok(e.haze === 0, '거울 충격 반지: 열충격이 허상을 한 겹 걷는다'); const k0 = e.brk; G0.fxRun(b.p, 'onShock', b, b.p, e); ok(e.brk > k0, '허상이 없으면 붕괴 +4'); });
 T('stormbeads', () => { const b = battle({ en: [['bruiser', 0], ['archer', 0]], mods: ['sandstorm'] }, 'warden', 13, ['stormbeads']); b.p.ward = 0; const e = b.en[0]; e.hp = 1; hit(b, e, 50); ok(b.p.ward >= 10, '폭풍 묵주: 전열이 모두 쓰러지면 보호막 +10 (' + b.p.ward + ')'); });
 T('kilnring', () => { const mk = it => { const b = battle({ en: [['bruiser', 0]], mods: ['brazier'] }, 'assassin', 13, it); G0.addS(b, b.en[0], 'ignite', 4); return hit(b, b.en[0], 10); }; const a = mk(['kilnring']), z = mk([]); ok(near((a - 10) / (z - 10), 1.2, 0.02), '가마 반지: 불씨 화로 방에서 화상 추가 피해 +20% (' + z.toFixed(2) + ' → ' + a.toFixed(2) + ')'); });
@@ -144,20 +146,20 @@ T('transferamulet', () => { const b = battle({ en: [['bruiser', 0]], mods: ['noo
 T('afterglow-poison', () => { const b = battle({ en: [['bruiser', 0], ['archer', 0]] }, 'assassin', 13, ['afterglow']); G0.addPoison(b, b.en[0], 6, 1); b.en[0].hp = 1; hit(b, b.en[0], 50); ok(G0.st(b.en[1], 'poison') === 3, '잔광의 목걸이: 중독도 절반 (' + G0.st(b.en[1], 'poison') + ')'); });
 /* 플라스크 */
 const flask = (items, id, setup, room) => { const b = battle(room || { en: [['bruiser', 0], ['wrapped', 0]] }, 'warden', 13, items); b.p.ward = 0; b.p.hp = b.p.hpMax * 0.5; b.p.flask = { life: 3, mana: 3, stam: 3 }; if (setup) setup(b); G0.playerAct(b, id, null); return b; };
-T('hazewater', () => { const b = flask(['hazewater'], 'flaskM', b => { b.en[0].haze = 2; }); ok(b.en[0].haze === 1, '투명한 물병: 정화 플라스크 → 허상 한 겹 (' + b.en[0].haze + ')'); });
+T('hazewater', () => ysOff('hazewater', '투명한 물병'));
 T('wrapwater', () => { const b = flask(['wrapwater'], 'flaskL', null); ok(b.en[1].wrap === 2 || b.en[1].wrap === 3 && false, '기름 먹은 물병: 붕대가 한 번 닳는다 (' + b.en[1].wrap + ')'); });
 T('coolwater', () => { const b = flask(['coolwater'], 'flaskS', b => { b.heat = 50; }, { en: [['bruiser', 0]], mods: ['noon'] }); ok(b.heat <= 50 - 8 + 10, '찬 샘물: 스태미나 플라스크 → 열기 −8'); });
 T('sapflask', () => { const b = flask(['sapflask'], 'flaskL', b => { b.p.s.ignite = { stacks: 3, until: 9999, dur: 9999 }; }); ok(!G0.st(b.p, 'ignite'), '수액 플라스크: 화상이 모두 꺼진다'); });
-T('emberbottle', () => { const b = flask(['emberbottle'], 'flaskM', b => { b.p.s.ignite = { stacks: 3, until: 9999, dur: 9999 }; }); ok(G0.st(b.p, 'ignite') <= 2 && b.p.ward > 0, '불씨 담은 병: 화상 1 지우고 보호막 (' + G0.st(b.p, 'ignite') + ', ' + b.p.ward + ')'); });
+T('emberbottle', () => ysOff('emberbottle', '불씨 담은 병'));
 T('dustwater', () => { const b = flask(['dustwater'], 'flaskL', null, { en: [['bruiser', 0]], mods: ['sandstorm'] }); const b0 = flask([], 'flaskL', null, { en: [['bruiser', 0]], mods: ['sandstorm'] }); ok(b.p.hp > b0.p.hp, '모래 거른 물: 모래폭풍 방에서 생명력 5% 더'); });
 T('tollwater', () => { const b = battle({ en: [['bruiser', 0]] }, 'warden', 13, ['tollwater']); b.p.st = 10; G0.fxRun(b.p, 'onFlask', b, b.p, 'life'); ok(G0.st(b.p, 'bleed') === 1 && b.p.st === 20, '통행료 물병: 스태미나 +10, 출혈 1 (' + b.p.st + ')'); });
 T('windwater', () => { const b = flask(['windwater'], 'flaskS', b => { b.p.st = 10; }); ok(G0.st(b.p, 'haste') >= 1, '바람 물병: 가속 1'); });
-T('mirrorflask', () => { const b = flask(['mirrorflask'], 'flaskM', b => { b.en[0].haze = 1; b.en[1].haze = 1; }); ok(b.en.every(e => !e.haze) && b.p.ward >= 6, '거울 물병: 허상 모두 걷고 하나마다 보호막 +3 (' + b.p.ward + ')'); });
+T('mirrorflask', () => ysOff('mirrorflask', '거울 물병'));
 T('oilflask', () => { const b = flask(['oilflask'], 'flaskL', null); ok(!b.en[1].wrap, '기름 플라스크: 붕대 감긴 적에게 화상 → 붕대가 탄다'); });
 T('stormflask', () => { const b = flask(['stormflask'], 'flaskL', null, { en: [['bruiser', 0], ['archer', 0]], mods: ['sandstorm'] }); ok(b.en[1].brk > 0, '폭풍 병: 후열 적 붕괴 (' + b.en[1].brk + ')'); });
 T('chillflask', () => { const b = flask(['chillflask'], 'flaskL', b => { b.heat = 60; }, { en: [['bruiser', 0]], mods: ['noon'] }); ok(b.heat <= 60 - 10 + 10, '서늘한 병: 열기 −10'); });
 T('soakedflask', () => { const b = flask(['soakedflask'], 'flaskL', null); b.p.ward = 0; const h0 = b.p.hp; G0.hurtPlayer(b, 40, { label: '열풍', aoe: 1, spell: 1, charged: 1 }); const b2 = flask([], 'flaskL', null); b2.p.ward = 0; const g0 = b2.p.hp; G0.hurtPlayer(b2, 40, { label: '열풍', aoe: 1, spell: 1, charged: 1 }); ok((h0 - b.p.hp) < (g0 - b2.p.hp) * 0.6, '적신 천 병: 마신 라운드 열풍 절반'); });
-T('wrapsolvent', () => { const b = flask(['wrapsolvent'], 'flaskM', null); ok(b.en[1].wrap === 2, '붕대 녹이는 병: 붕대가 한 번 닳는다 (' + b.en[1].wrap + ')'); });
+T('wrapsolvent', () => ysOff('wrapsolvent', '붕대 녹이는 병'));
 T('gritwater', () => { const b = flask(['gritwater'], 'flaskL', null); b.p.s.ignite = { stacks: 4, until: 9999, dur: 9999 }; const x = G0.kwTaken(b, b.p, 10, { single: 1 }); ok(near(x, 12, 0.01), '오기 물병: 다음 라운드까지 화상 추가 피해 −50% (' + x + ')'); });
 T('veinwater', () => { const b = flask(['veinwater'], 'flaskL', b => { G0.addS(b, b.en[0], 'bleed', 2); G0.addS(b, b.en[1], 'bleed', 2); b.p.st = 10; }); ok(b.p.st >= 20, '핏줄 물병: 출혈된 적 둘 → 스태미나 +10 (' + b.p.st + ')'); });
 T('plaguewater', () => { const b = flask(['plaguewater'], 'flaskL', b => { G0.addPoison(b, b.en[0], 2, 1); }); ok(G0.st(b.en[0], 'poison') >= 4, '역병 물병: 중독 +2 (' + G0.st(b.en[0], 'poison') + ')'); });
@@ -165,7 +167,7 @@ T('furnacebottle', () => { const b = flask(['furnacebottle'], 'flaskS', b => { b
 T('emberwell', () => { const b = flask(['emberwell'], 'flaskL', b => { b.p.s.ignite = { stacks: 3, until: 9999, dur: 9999 }; }); const b0 = flask([], 'flaskL', null); ok(!G0.st(b.p, 'ignite') && b.p.hp > 0, '불씨 우물: 화상을 모두 지운다'); });
 T('sandsea', () => { const b = flask(['sandsea'], 'flaskL', null, { en: [['bruiser', 0], ['archer', 0]], mods: ['sandstorm'] }); ok(G0.st(b.en[1], 'chill') === 1, '모래 바다 병: 모래폭풍 방 후열 둔화 1'); });
 T('kibreath', () => { const b = flask(['kibreath'], 'flaskS', b => { b.p.st = 10; }); ok(G0.st(b.p, 'empower') >= 2, '호흡 병: 기 +2'); });
-T('purgingchalice', () => { const b = flask(['purgingchalice'], 'flaskM', b => { b.p.s.ignite = { stacks: 2, until: 9999, dur: 9999 }; b.p.s.weak = { stacks: 1, until: 9999, dur: 9999 }; }); ok(b.en.every(e => G0.st(e, 'weak') >= 2) && !G0.st(b.p, 'ignite'), '정화의 잔: 지운 종류마다 적 약화 (' + G0.st(b.en[0], 'weak') + ')'); });
+T('purgingchalice', () => ysOff('purgingchalice', '정화의 잔'));
 
 /* 셋째 묶음: 남은 효과 */
 const dmgRatio = (items, room, bd, prep, raw) => { const f = it => { const b = battle(room, bd || 'assassin', 13, it); const e = b.en[0]; if (prep) prep(b, e); return hit(b, e, raw || 100); }; return f(items) / f([]); };
@@ -248,6 +250,6 @@ T('emberring', () => { const f = it => { const b = battle({ en: [['ember', 0]] }
 T('plain-stats', () => { const hp = it => G0.calcHpMax(battle({ en: [['bruiser', 0]] }, 'warden', 13, it).p); const st = it => G0.calcStMax(battle({ en: [['bruiser', 0]] }, 'warden', 13, it).p); ok(hp(['thickhide']) - hp([]) === 9 && hp(['sandband']) - hp([]) === 8 && hp(['dunebeads']) - hp([]) === 7, '숫자만 올리는 장비: 최대 생명력 +9 · +8 · +7'); ok(st(['sandglove']) - st([]) === 7, '낙타 가죽 장갑: 최대 스태미나 +7'); const r = dmgRatio(['sandiron'], { en: [['bruiser', 0]] }); ok(near(r, 1.04, 0.005), '모래쇠 막대: 기본 공격 +4% (' + r.toFixed(3) + ')'); });
 T('merchantcharm', () => { const b = battle({ en: [['bruiser', 0]] }, 'assassin', 13, ['merchantcharm']); const run = { p: b.p, gold: 0 }; ok(G0.calcHpMax(b.p) < G0.calcHpMax(battle({ en: [['bruiser', 0]] }, 'assassin', 13, []).p), '상인의 부적: 대가로 최대 생명력 −6%'); });
 
-T('sandtimer', () => { const mk = () => { const b = battle({ en: [['bruiser', 0]] }, 'assassin', 13, ['sandtimer']); const ids = G0.TREE2.assassin.starters; b.p.skills = ids.slice(); b.p.cd = {}; b.p.cd[ids[0]] = 3; b.actN = 5; b.round = 2; return [b, ids]; }; let [b, ids] = mk(); G0.fxRun(b.p, 'onRound', b, b.p); ok(b.p.cd[ids[0]] === 2, '모래시계 반지: 피해 없는 라운드 → 쿨타임 −1 (' + b.p.cd[ids[0]] + ')'); [b, ids] = mk(); b.p.ward = 0; G0.hurtPlayer(b, 10, { src: b.en[0], single: 1, label: '시험' }); G0.fxRun(b.p, 'onRound', b, b.p); ok(b.p.cd[ids[0]] === 3, '피해를 받은 라운드에는 당기지 않는다'); });
+T('sandtimer', () => { const mk = () => { const b = battle({ en: [['bruiser', 0]] }, 'assassin', 13, ['sandtimer']); b.p.ys = 2; b.actN = 5; b.round = 2; b.ysR = 3; return b; }; let b = mk(); G0.fxRun(b.p, 'onRound', b, b.p); ok(b.p.ys === 3, '모래시계 반지: 피해 없는 라운드 → 유산 +1 (' + b.p.ys + ')'); b = mk(); b.p.ward = 0; G0.hurtPlayer(b, 10, { src: b.en[0], single: 1, label: '시험' }); G0.fxRun(b.p, 'onRound', b, b.p); ok(b.p.ys === 2, '피해를 받은 라운드에는 주지 않는다'); }); // 10월 15일 유산 1차 시제품: 쿨타임 −1 → 유산 +1
 T('copperjug', () => { const b = battle({ en: [['bruiser', 0]] }, 'warden', 13, ['copperjug']); ok(near(G0.fxVal(b.p, 'stamMul', 1, (a, v) => a * v), 1.1, 0.0001), '구리 물동이: 스태미나 플라스크 회복 +10%'); });
 console.log('3챕터 장비 점검: 통과 ' + pass + ', 실패 ' + fail); process.exitCode = fail ? 1 : 0;

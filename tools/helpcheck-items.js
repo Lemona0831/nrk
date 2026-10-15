@@ -46,8 +46,8 @@ function __hcAwk() {
   o.vigor = f((b, p, e, X) => { p.hp = 1; A.a_vigor.onWin(X.run); return (p.hp - 1) / p.hpMax; });
   o.pouch = f((b, p) => { const a = consFightOf(p, null); p.awk = ['a_pouch']; return [a, consFightOf(p, null)]; });
   o.gap = f((b, p, e) => { A.a_gap.onStart(b, p); const z = A.a_gap.brk(b, p); A.a_gap.onKill(b, p, e); return [z, A.a_gap.brk(b, p)]; });
-  o.flow = f((b, p) => { const id = p.skills[0]; p.cd = {}; p.cd[id] = 3; A.a_flow.onParry(b, p, { intent: { k: 'heavy' } }); return 3 - p.cd[id]; });
-  o.flowSmall = f((b, p) => { const id = p.skills[0]; p.cd = {}; p.cd[id] = 3; A.a_flow.onParry(b, p, { intent: { k: 'attack' } }); return 3 - p.cd[id]; });
+  o.flow = f((b, p) => { p.ys = 2; b.ysItemR = null; A.a_flow.onParry(b, p, { intent: { k: 'heavy' } }); return p.ys - 2; }); // 10월 15일 유산 1차 시제품: 쿨타임 −1 → 유산 +1
+  o.flowSmall = f((b, p) => { p.ys = 2; b.ysItemR = null; A.a_flow.onParry(b, p, { intent: { k: 'attack' } }); return p.ys - 2; });
   o.skin = A.a_skin.inP(); o.eye = A.a_eye.hitP(); o.smolder = A.a_smolder.dotP(); o.shell = A.a_shell.wardP(); o.clear = A.a_clear.blockAdd();
   o.gulp = A.a_gulp.stamMul; o.iron = A.a_iron.hpMul; o.light = A.a_light.regen; o.purse = A.a_purse.goldMul; o.heavyhand = A.a_heavyhand.brkMul(); o.brew = A.a_brew.heal; o.memory = A.a_memory.spring;
   o.warmth = f((b, p, e) => { p.hp = 1; A.a_warmth.onKill(b, p, e); return (p.hp - 1) / p.hpMax; });
@@ -126,7 +126,7 @@ function __hcBlob(k) { return JSON.stringify(IFX[k], (kk, v) => typeof v === 'fu
   W('방을 이기면 최대 생명력의 4%를 회복', 'a_vigor onWin 0.04 → ' + A.vigor.toFixed(3), () => near(A.vigor, 0.04));
   W('2개 늘어납니다.', 'consFightOf: ' + A.pouch[0] + ' → a_pouch 후 ' + A.pouch[1], () => A.pouch[1] - A.pouch[0] === 2);
   W('붕괴가 5 늘어납니다', 'a_gap onKill awkBrk 5 → brk() ' + A.gap[1], () => A.gap[0] === 0 && A.gap[1] === 5);
-  W('쿨타임이 가장 많이 남은 스킬 하나가 1 짧아집니다', 'a_flow onParry fxCdMax: 큰 공격 −' + A.flow + ', 평소 공격 −' + A.flowSmall, () => A.flow === 1 && A.flowSmall === 0);
+  W('큰 공격을 흘리면 유산 +1', 'a_flow onParry fxCdMax(10월 15일 유산 1차 시제품: 유산 +1): 큰 공격 ' + A.flow + ', 평소 공격 ' + A.flowSmall, () => A.flow === 1 && A.flowSmall === 0);
   W('받는 피해가 4% 줄어듭니다', 'a_skin inP 0.04', () => near(A.skin, 0.04));
   W('주는 직접 피해가 5% 늘어납니다', 'a_eye hitP 0.05', () => near(A.eye, 0.05));
   W('내가 건 지속 피해가 10% 늘어납니다', 'a_smolder · k_sb2 dotP 0.10', () => near(A.smolder, 0.1) && near(A.sb2, 0.1));

@@ -64,6 +64,9 @@ function cloneB(b) {
   const c = JSON.parse(JSON.stringify(Object.assign({}, b, { log: [], rec: [], rngF: null })));
   c.rngF = () => 0.99; c.stepMode = false; c.waiting = false; return c;
 }
+const YS_V = +(process.env.YS_V || 1); // 유산 1의 값 (한 수 앞 계산)
+/* 10월 15일 유산 1차 시제품: 스킬을 아끼는 값. 예전 쿨타임 × 0.25(긴 쿨타임은 아낀다)를 비용으로 옮겼다(2 → 1, 3 → 1.75, 4 → 2.5). 유산이 가득이면 차례 충전이 넘치므로 아끼지 않는다 */
+const ysPen = (b, a, k) => !a.s || !E.skCost ? (a.s ? (a.s.cd || 0) * k : 0) : E.ysNow(b.p) >= E.YUSAN.cap ? 0 : (E.skCost(a.s) * 0.75 - 0.5) * k / 0.25;
 function evalState(b0, b1, risk) {
   if (b1.over === 'lose') return -1e4;
   if (b1.over === 'win') return 1e4 - (b0.p.hp - b1.p.hp);
@@ -81,7 +84,8 @@ function evalState(b0, b1, risk) {
   const healers = E.alive(b1).filter(e => e.role === 'healer' || e.role === 'summoner').length;
   const poison = p1.s.poison ? p1.s.poison.stacks : 0;
   const scarKeep = p1.build === 'scar' ? p1.scar * 0.15 : 0;
-  return dealt * 1.0 + kills * 6 - hpLoss * (40 + 80 * (1 - risk)) - flasks * 7 - lowHp - threat * 1.5 - roots * 3 - healers * 3 - poison * 0.6 + scarKeep + (p1.st - p0.st) * 0.03;
+  const ysV = v2 && E.ysNow ? (E.ysNow(p1) - E.ysNow(p0)) * YS_V : 0; // 10월 15일 유산 1차 시제품: 쓴 유산 · 번 유산(대응 · 차례)의 값. 상한에서 넘친 몫은 값이 없어 가득일 때는 쓰는 편이 낫다
+  return dealt * 1.0 + kills * 6 - hpLoss * (40 + 80 * (1 - risk)) - flasks * 7 - lowHp - threat * 1.5 - roots * 3 - healers * 3 - poison * 0.6 + scarKeep + (p1.st - p0.st) * 0.03 + ysV;
 }
 function lookahead(b, P, r) {
   { const dmd = E.alive(b).find(e => e.demand && e.demand.turn === b.turnIdx); if (dmd && r() < (P.mech || 0.5) + 0.1) { const L = E.actionList(b); if (dmd.demand.k === 'rest') { if (b.p.build === 'bloodmage') { const q = bmRest(b, L); if (q) return q; } const eo = L.find(a => a.v2 && a.ok && buEatOnlyQ(a)); if (eo) return [eo.id, (E.alive(b).filter(e => psn2(e, 'bleed') > 0 && E.canTarget(b, e, eo)).sort((x, y) => psn2(y, 'bleed') - psn2(x, 'bleed'))[0] || {}).id]; const g = (b.p.build === 'spellblade' && L.find(a => a.ok && a.v2 && a.self && a.s.kind === 'spell')) || cfRest(b, L) || L.find(a => a.id === 'guard' && a.ok) || L.find(a => a.id === 'dodge' && a.ok); if (g) return [g.id, g.id === 'dodge' ? dmd.id : null]; } else if (!dmd.demand.hit) { const a = L.find(x => x.id === 'basic' && x.ok); if (a && E.canTarget(b, dmd, a)) return ['basic', dmd.id]; } } } // 0.6a.2 수도원장의 요구(심문 · 고해)를 사람처럼 따른다 (10월 4일)
@@ -233,7 +237,7 @@ function elemPick(b, P, r, okS, reach, pv1) {
       if (a.aoe) { for (const e of al) if (a.s.tgt === 'all' || e.row === 'front') val += evalOn(a, e, true); }
       else { let bv = -1e9; for (const e of reach(a)) { const v = evalOn(a, e, false); if (v > bv) { bv = v; tid = e.id; } } if (tid == null) continue; val += bv; }
     }
-    val -= (a.s.cd || 0) * 0.25 + (a.time > 1.25 ? 4 : 0); if (a.time <= 0.6 && !b.bonusUsed) val += 2; // 긴 쿨타임 · 느린 칸은 아끼고, 빠른 칸은 차례를 잇는다
+    val -= ysPen(b, a, 0.25) + (a.time > 1.25 ? 4 : 0); if (a.time <= 0.6 && !b.bonusUsed) val += 2; // 비싼 칸(예전 긴 쿨타임) · 느린 칸은 아끼고, 빠른 칸은 차례를 잇는다
     if (!best || val > best.v) best = { a, t: tid, v: val };
   }
   { const hvA = E.actionList(b).find(x => x.id === 'heavy' && x.ok); if (hvA && p.st >= 60) for (const e of al) if (urgent(e) && !e.s.broken && E.canTarget(b, e, hvA) && e.brk + 35 >= e.brkMax && (!best || best.v < 30)) best = { a: hvA, t: e.id, v: 30 }; } // 집중 주문(붕괴 +35)으로 큰 공격을 끊을 수 있으면 (그 밖에는 스태미나를 방어 · 흘리기에 남긴다)
@@ -286,6 +290,10 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     { const lk = okS.filter(a => !a.self && a.s.b !== '시작' && p.lastBr && a.s.b !== p.lastBr && has(a, 'dmg')).sort((x, y) => (y.s.row || 0) - (x.s.row || 0)); if (lk.length && r() < 0.55 + 0.35 * (P.mech || 0.5)) return [lk[0].id, tgtOf(lk[0])]; } // 연계: 방금과 다른 갈래의 공격 스킬 (사람은 버튼의 🔗를 보고 고른다)
     for (const a of okS.filter(a => has(a, 'focusAdd') && !a.s.start)) { const t = fe && E.canTarget(b, fe, a) ? fe : best(a, (x, y) => y.hp - x.hp); if (t && (t !== fe || fn < 2)) return [a.id, t.id]; }
   }
+  // 10월 15일 유산 1차 시제품: 강타 · 겨눈 한 발이 오고 이번 라운드에 대응 충전이 아직 없으면, 스태미나가 넉넉할 때 방어 · 흘리기를 조금 더 자주 고른다(대응 +1)
+  if (E.ysNow && !nf) { const big = pv1.find(x => x.e.intent && (x.e.intent.k === 'heavy' || x.e.intent.aimed)); const rNow = b.prepTurn === b.turnIdx ? (b.ysR || 0) : (b.ysR || 0) + 1;
+    if (big && b.ysRespR !== rNow && !v2Ready(b, big.e.id) && E.ysNow(p) <= E.YUSAN.cap - 2 && r() < 0.25 + 0.25 * (P.mech || 0.5)) { const d = L.find(a => a.id === 'dodge' && a.ok), g = L.find(a => a.id === 'guard' && a.ok);
+      if (d && p.st >= E.dodgeCost(p) + 20 && !(big.e.strong || big.e.role === 'boss')) return ['dodge', big.e.id]; if (g && p.st >= E.guardCost(p) + 20) return ['guard']; } }
   // 10월 8일: 강타 예고 대응을 직업 판단보다 먼저 (고해사 · 해금 1 · 해금 3 · 원소술사 · 수도승). 전에는 이 직업들의 판단이 먼저 행동을 돌려줘 예고된 큰 공격을 흘리지도 막지도 않았다(1챕터 보스전 받은 큰 공격 96–338, 다른 직업 63–87). 사람은 예고를 보고 대응한다
   if (hv && ['confessor', 'butcher', 'bloodmage', 'elementalist', 'monk'].includes(p.build) && !v2Ready(b, hv.e.id) && r() < Math.max(P.parry, 0.35) + 0.2) {
     const ps = okS.find(a => has(a, 'parry')); if (ps) return [ps.id, hv.e.id];
@@ -438,7 +446,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     // 8) 값 깎기: 강적 · 보스 · 영창자 싸움에서 큰 칸이 쿨타임일 때 (수도원장 종 직전에는 쓰지 않는다)
     { const pc = okS.find(a => a.self && F(a, 'payCut')); const hard = foes.some(e => e.strong || e.role === 'boss' || e.chant || e.elite);
       const bell = foes.some(e => e.boss === 'abbot' && (e.phase || 1) === 1 && e.hp < e.hpMax * 0.75);
-      const cdBig = (p.skills || []).some(id => { const s = E.SK2[id]; return s && !s.once && s.fx.some(x => x.k === 'dmg' || x.k === 'brk') && ((p.cd || {})[id] || 0) >= 2; });
+      const cdBig = (p.skills || []).some(id => { const s = E.SK2[id]; return s && !s.once && s.fx.some(x => x.k === 'dmg' || x.k === 'brk') && (E.ysShort ? E.ysShort(p, s) : ((p.cd || {})[id] || 0)) >= 2; }); // 10월 15일 유산: 큰 칸에 유산이 2 이상 모자랄 때
       if (pc && hard && !bell && cdBig && (p.payCut || []).length < 2 && r() < 0.7) return [pc.id]; }
     }
     // 9) 사혈(나에게 쓰는 생명력 내기)은 위의 순서에서만 쓴다
@@ -560,7 +568,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
       if (al && al.run === 2 && !run2) v -= 2; // 박자가 안 맞으면 아낀다
       if (fx(a, 'hasten') && fx(a, 'hasten').on === 'alt' && altNow) v += 1.5;
       if (want && k === want) v += altFree ? 5 : 1.5; else if (want && k && k !== want) v -= (p.sbRun || 0) >= 1 ? 2 : 0.5;
-      if (a.s) v -= a.s.cd * 0.35; if (a.id === 'heavy') v -= 6; // 쿨타임 · 스태미나 값
+      if (a.s) v -= ysPen(b, a, 0.35); if (a.id === 'heavy') v -= 6; // 유산(예전 쿨타임) · 스태미나 값
       if (wb && fx(a, 'lowx') && E.alive(b).some(e => big(e) && e.hp > e.hpMax * fx(a, 'lowx').hp) && !ts.some(e => e.hp <= e.hpMax * fx(a, 'lowx').hp)) v -= 30; // 마무리 태우기는 큰 적이 높을 때 아낀다
       return a.time >= 1.25 ? v * 0.8 : v;
     };

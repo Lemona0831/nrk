@@ -31,12 +31,12 @@ module.exports = function (api) {
   /* ===== 쿨타임 · 스태미나 · 플라스크 · 행동 ===== */
   add('help', '한 번에 20판씩 보입니다', '상수: RC_PAGE=' + E('RC_PAGE') + '(기록 목록이 한 번에 보이는 판 수)', E => E('RC_PAGE') === 20);
   add('help', '표는 위에서 50개까지 보입니다', '소스: 랭킹 표 all.slice(0, 50)', E => has('rows = all.slice(0, 50)'));
-  add('help', '내 턴이 끝날 때마다 1 줄지만', '소스: chargeEv(turn)이 cdJust(이번 차례에 쓴 스킬)를 건너뛰고 1 뺀다', E => has('if (!s || s.once || just.includes(id)) continue; if (p.cd[id] > 0) p.cd[id]--;'));
-  add('help', '🔄 스킬은 같은 갈래', '데이터: hasten n은 1이 34칸, 2가 6칸(보통 1)', E => E(`(() => { const c = {}; for (const k of Object.keys(SKILLS2)) for (const s of SKILLS2[k]) for (const f of s.fx || []) if (f.k === "hasten") c[f.n] = (c[f.n] || 0) + 1; return Object.keys(c).join() === "1,2" && c[1] > c[2]; })()`));
+  add('help', '내 차례가 끝날 때마다 1 찹니다', '소스: chargeEv(turn)이 유산 +1 (10월 15일 유산 1차 시제품)', E => has("if (kind === 'turn') ysAdd(b, YUSAN.turn, 'turn', '차례')"));
+  add('help', '🔄 스킬은 조건을 이루면 유산 +1을 돌려줍니다(차례마다 한 번)', '10월 15일 유산 1차 시제품: hastenBranch → ysRefund(라운드에 한 번, YUSAN.refund=' + E('YUSAN.refund') + ')', E => E('hastenBranch.toString()').includes('ysRefund') && E('YUSAN.refund') === 1);
   add('help', '30까지 차거나', '소스: p.exhaust && p.st >= 30이면 풀림, 스태미나 플라스크는 exhaust = 0', E => has('if (p.exhaust && p.st >= 30) p.exhaust = 0;') && has('p.st += add; p.exhaust = 0;'));
   add('help', '전투가 끝나면 최소 50까지', '소스: endBattleCarry p.st = max(p.st, 50)', E => has('p.st = Math.max(p.st, 50); p.exhaust = 0;'));
-  add('help', '"출혈 2"처럼 걸 상태', '상수: EKW.archerBleed=' + E('EKW.archerBleed') + '(사수 예고 예시)', E => E('EKW.archerBleed') === 2);
-  add('help', '샘과 야영지에서 셋 다 1씩', '소스: 샘은 life + 1 · mana + 1 · stam + 1, 야영지는 세 플라스크 각 +1', E => has("p.flask.mana = Math.min(flaskCap(p, 'mana'), p.flask.mana + 1); p.flask.stam = Math.min(flaskCap(p, 'stam'), (p.flask.stam || 0) + 1)") && has("for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = Math.min(flaskCap(p, fk), (p.flask[fk] || 0) + 1)"));
+  add('help', '스태미나 플라스크는 전투에 한 번 유산 +1을 줍니다', '10월 15일 유산 1차 시제품: 스태미나 플라스크 b.ysFlask, YUSAN.flask=' + E('YUSAN.flask'), E => has('if (isV2(p) && !b.ysFlask) { b.ysFlask = 1; ysAdd(b, YUSAN.flask') && E('YUSAN.flask') === 1);
+  add('help', '샘과 야영지에서 둘 다 1씩', '소스: 샘은 life + 1 · mana + 1 · stam + 1, 야영지는 세 플라스크 각 +1(정화는 상한 0이라 차지 않는다)', E => has("p.flask.mana = Math.min(flaskCap(p, 'mana'), p.flask.mana + 1); p.flask.stam = Math.min(flaskCap(p, 'stam'), (p.flask.stam || 0) + 1)") && has("for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = Math.min(flaskCap(p, fk), (p.flask[fk] || 0) + 1)"));
   add('help', '무기 피해만큼 치고 붕괴 게이지를 10', '실행: 기본 공격 한 번에 붕괴 +10', E => E(`(() => { const b = __mk("warden"); const e = b.en[0]; const k0 = e.brk || 0; playerAct(b, "basic", e.id); return (e.brk || 0) - k0 === 10; })()`));
   add('help', '150% 피해, 붕괴 35', '상수: HEAVY_V2=' + E('HEAVY_V2') + ', 실행: 강공격 한 번에 붕괴 +35', E => pct(E('HEAVY_V2')) === 150 && E(`(() => { const b = __mk("warden"); const e = b.en[0]; const k0 = e.brk || 0; playerAct(b, "heavy", e.id); return (e.brk || 0) - k0 === 35; })()`));
   add('help', '파수꾼은 보호막 6을 얻습니다', '상수: WARD.guard=' + E('WARD.guard') + ' · cap=30%, 소스: 방어가 addWard(WARD.guard), 전투가 끝나면 p.ward = 0', E => E('WARD.guard') === 6 && pct(E('WARD.cap')) === 30 && has("if (p.build === 'warden') { const g = addWard(b, p, WARD.guard);") && has('p.ward = 0; p.thorn = null;'));
@@ -102,7 +102,7 @@ module.exports = function (api) {
   /* 숫자는 있지만 규칙이 아닌 문장, 또는 아래에서 따로 증명하는 문장 */
   note('help', '"다음 1점"의 효과가 보이고', '화면 이름 예시 ("다음 1점")');
   note('help', '1 · 2 · 3챕터 보스를 넘었는지', '챕터 이름');
-  note('help', '버튼에 "쿨타임 2턴 남음"', '표기 예시');
+  note('help', '버튼에 "유산 3"처럼 보입니다', '표기 예시');
   note('help', '"전투마다 1번"인 스킬은', '표기 이름 (once 스킬은 전투가 끝나야 다시 쓴다: chargeEv가 once를 건너뛴다)');
   add('help', '0이 되면 쓰러지고', '소스: hurtPlayer가 생명력이 0 이하이면 쓰러짐 처리', E => has('p.hp <= 0') || has('p.hp = Math.max(0, p.hp - d)'));
   add('help', '회복은 생명력 플라스크, 소모품, 샘(50%)', '소스: 샘은 최대 생명력 × 0.5, 야영지 · 정산은 p.hp = p.hpMax', E => has('const sp = 0.5 * (1 + fxVal(p, \'spring\'') && has('p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax;'));
