@@ -31,6 +31,7 @@ fieldset label{display:inline-flex;align-items:center;min-height:44px;margin-rig
 .bar{position:relative;height:16px;background:var(--track);border-radius:4px;overflow:hidden;border:1px solid var(--line);margin:2px 0}
 .bar i{display:block;height:100%}.bar span{position:absolute;inset:0;text-align:center;font-size:calc(13px*var(--fs,1));line-height:calc(16px*var(--fs,1));color:var(--hi);text-shadow:0 1px 2px #000}
 .bar.hp i{background:var(--hp)}.bar.mp i{background:var(--mp)}.bar.st i{background:var(--st)}.bar.bk i{background:var(--bk)}
+.bar.ys .ysl{font-weight:600}.bar.ys .ysp{color:#e8c66a;letter-spacing:.06em;font-weight:400}
 .bars3{display:grid;gap:3px;margin:8px 0}
 .tl{display:flex;gap:4px;overflow-x:auto;padding:2px 0 8px}.tl span{flex:none;font-size:calc(13px*var(--fs,1));border:1px solid var(--line);border-radius:6px;padding:3px 7px;background:var(--panel)}.tl span.me{border-color:var(--gold);color:var(--gold);font-weight:700}
 .gimmick{font-size:calc(13px*var(--fs,1));background:var(--panel);border:1px dashed var(--gold);border-radius:8px;padding:6px 9px;margin-bottom:8px}

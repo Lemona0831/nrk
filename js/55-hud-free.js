@@ -57,7 +57,7 @@ const HUD_VARIANTS = {
   ],
   'hud-actions': [
     { k: 'core', n: '핵심만(도구 접음)', d: '플라스크 · 소모품 · 도망을 도구 한 칸에 모읍니다', set: { abaux: 0, agl: 0, tools: 1 } },
-    { k: 'cost', n: '묶음 이름 + 비용', d: '공격 · 스킬 같은 묶음 제목과 비용 · 쿨타임', set: { abaux: 0, agl: 1, tools: 0 } },
+    { k: 'cost', n: '묶음 이름 + 비용', d: '공격 · 스킬 같은 묶음 제목과 비용', set: { abaux: 0, agl: 1, tools: 0 } },
     { k: 'aux', n: '보조 글자 포함', d: '빠르기 표시, 대상, 남은 칸, 진행 속도까지', set: { abaux: 1, agl: 1, tools: 0 } },
   ],
 };

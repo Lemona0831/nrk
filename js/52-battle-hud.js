@@ -47,7 +47,7 @@ const HUD_MODS = [
 const HUD_ITEMS = [
   { k: 'hpst', mod: 'hud-player', n: '내 생명력과 스태미나', lock: 1 },
   { k: 'ehp', mod: 'hud-field', n: '적의 생명력과 다음 행동 예고', lock: 1 },
-  { k: 'abtn', mod: 'hud-actions', n: '행동 버튼(비용과 쿨타임)', lock: 1 },
+  { k: 'abtn', mod: 'hud-actions', n: '행동 버튼(비용)', lock: 1 },
   { k: 'danger', mod: 'hud-danger', n: '지금 위험 줄', lock: 1 },
   { k: 'sts', mod: 'hud-status', n: '상태 칩', d: ['bad', 'few', 'all'], opts: [['bad', '해로운 것만 3개'], ['few', '3개까지'], ['all', '모두']], desc: '내게 걸린 상태와 적에게 걸린 상태를 칩으로 보입니다. 넘치는 것은 "+N"으로 접힙니다. "해로운 것만"은 내 상태에만 걸리고, 적 카드에는 두 개까지 보입니다' },
   { k: 'prev', mod: 'hud-player', n: '막대 미리보기', d: [0, 1, 1], desc: '행동에 올리면 생명력 · 스태미나 · 적 막대에 예상 변화를 겹쳐 보입니다' },
@@ -128,6 +128,8 @@ function consUsefulN(b) {
   run.cons.forEach(c => { const D = CONS[c.id]; if (!D || D.use === 'none' || D.use === 'out' || consWhyNot(bq, run, c, G.sel)) return; if (consScore(b, c, D) > 0) n++; });
   return Math.min(n, 3);
 }
+/* 10월 15일 유산 1차 시제품: 유산 칸(◆ 찬 칸, ◇ 빈 칸). 생명력 · 스태미나 막대 옆 세 번째 칸 */
+function ysPips(p) { const n = ysNow(p), c = YUSAN.cap; const t = '◆'.repeat(Math.max(0, Math.min(c, n))) + '◇'.repeat(Math.max(0, c - n)); return `<div class="mb" data-info="bar:ys" tabindex="0"><span class="ml">유산</span><div class="bar ys" role="meter" aria-label="유산" aria-valuemin="0" aria-valuemax="${c}" aria-valuenow="${n}" aria-valuetext="유산 ${n}/${c}"><span><b class="ysl">유산</b> <b class="ysp" aria-hidden="true">${t}</b></span></div></div>`; }
 function vHudPlayer(b, hud, pops, fdo) {
   const p = b.p; const B = BUILDS[p.build];
   const extra = [];
@@ -135,8 +137,8 @@ function vHudPlayer(b, hud, pops, fdo) {
   extra.push(`<span data-info="speed" tabindex="0">속도 ${r1(pSpeed(b))}</span>`);
   const eq = Object.values(p.eq).filter(Boolean); if (eq.length) extra.push(eq.map(k => `<span class="gr-${ITEMS[k].g || 'n'}">${inm(k, ITEMS[k].g || 'n')}</span>`).join(', '));
   const scen = G.scr === 'scen' ? `<div class="scenline"><b>${SCEN[G.scen.i].id}. ${esc(SCEN[G.scen.i].n)}</b> ${esc(SCEN[G.scen.i].d)} 최대 10행동 중 ${b.pActs || 0}행동.</div>` : '';
-  const status = `<section class="fstat" data-hud="hud-player" aria-label="내 상태">${scen}${hud.flk ? '' : `<span class="sr">플라스크 생명력 ${p.flask.life}, ${isV2(p) ? '정화' : '마나'} ${p.flask.mana}, 스태미나 ${p.flask.stam || 0}, 최대 ${p.flaskMax}</span>`}<div class="mehead"><b data-info="buildrule" tabindex="0">${B.ico} ${esc(B.n)}</b><span class="flk" data-info="flask" tabindex="0">플라스크 <span aria-hidden="true">❤️</span><span class="sr">생명력 </span>${p.flask.life} ${isV2(p) ? '<span aria-hidden="true">🧪</span><span class="sr">정화 </span>' : '<span aria-hidden="true">💧</span><span class="sr">마나 </span>'}${p.flask.mana} <span aria-hidden="true">⚡</span><span class="sr">스태미나 </span>${p.flask.stam || 0} <small><span class="sr">, 최대 </span>/${p.flaskMax}</small></span><button class="sm fdtog" data-a="fdet" aria-expanded="${fdo}" aria-controls="fdet"><span aria-hidden="true">${fdo ? '▴' : '▾'}</span> 자세히</button></div>
-    <div class="mbars">${pops.p ? popHtml(pops.p) : ''}${mbar('hp', p.hp, p.hpMax, '생명력', b.over || !hud.prev ? 0 : incomingEst(b).sum)}${p.mpMax > 0 ? mbar('mp', p.mp, p.mpMax, '마나') : ''}${mbar('st', p.st, p.stMax, '스태미나')}</div><div class="fdet" id="fdet"${fdo ? '' : ' hidden'}><div class="mini">${extra.join(' · ')}</div><div><button class="sm rulebtn" data-a="help" data-k="row">전투 규칙 보기</button></div><div class="rule" data-info="buildrule" tabindex="0">${classRuleHtml(p.build)}</div>${incWhy(b)}</div></section>`;
+  const status = `<section class="fstat" data-hud="hud-player" aria-label="내 상태">${scen}${hud.flk ? '' : `<span class="sr">플라스크 생명력 ${p.flask.life}, ${noManaFlask(p) ? '' : (isV2(p) ? '정화 ' : '마나 ') + p.flask.mana + ', '}스태미나 ${p.flask.stam || 0}, 최대 ${p.flaskMax}</span>`}<div class="mehead"><b data-info="buildrule" tabindex="0">${B.ico} ${esc(B.n)}</b><span class="flk" data-info="flask" tabindex="0">플라스크 <span aria-hidden="true">❤️</span><span class="sr">생명력 </span>${p.flask.life} ${noManaFlask(p) ? '' : (isV2(p) ? '<span aria-hidden="true">🧪</span><span class="sr">정화 </span>' : '<span aria-hidden="true">💧</span><span class="sr">마나 </span>') + p.flask.mana + ' '}<span aria-hidden="true">⚡</span><span class="sr">스태미나 </span>${p.flask.stam || 0} <small><span class="sr">, 최대 </span>/${p.flaskMax}</small></span><button class="sm fdtog" data-a="fdet" aria-expanded="${fdo}" aria-controls="fdet"><span aria-hidden="true">${fdo ? '▴' : '▾'}</span> 자세히</button></div>
+    <div class="mbars">${pops.p ? popHtml(pops.p) : ''}${mbar('hp', p.hp, p.hpMax, '생명력', b.over || !hud.prev ? 0 : incomingEst(b).sum)}${p.mpMax > 0 ? mbar('mp', p.mp, p.mpMax, '마나') : ''}${mbar('st', p.st, p.stMax, '스태미나')}${isV2(p) ? ysPips(p) : ''}</div><div class="fdet" id="fdet"${fdo ? '' : ' hidden'}><div class="mini">${extra.join(' · ')}</div><div><button class="sm rulebtn" data-a="help" data-k="row">전투 규칙 보기</button></div><div class="rule" data-info="buildrule" tabindex="0">${classRuleHtml(p.build)}</div>${incWhy(b)}</div></section>`;
   return status;
 }
 /* 예상 피해 모듈: 끄면 읽는 글만 남긴다 */
