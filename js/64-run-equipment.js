@@ -342,7 +342,7 @@ function monkFix(b) { const p = b.p; delete p.ctrSince; delete b.kiFastHit; dele
 function restoreBattle(cur) {
   const bt = cur.battle; delete cur.battle;
   G.run = cur; statFix(G.run); applyGear(G.run); const b = bt.b; b.p = G.run.p; b.rngF = battleRng(b); b.stepMode = true;
-  if (G.run.tree && isV2(b.p)) { treeFix(G.run); b.p.skills = v2Equip(G.run); if (!b.p.cd) resetCharges(b.p); } // 개편 전 저장본: 바뀐 스킬과 재사용 대기
+  if (G.run.tree && isV2(b.p)) { treeFix(G.run); b.p.skills = v2Equip(G.run); if (!b.p.cd) resetCharges(b.p); if (b.p.ys == null) b.p.ys = YUSAN.start; } // 개편 전 저장본: 바뀐 스킬과 재사용 대기. 10월 15일 유산 1차 시제품 전 저장본의 전투는 유산 가득으로 이어 간다
   if (b.p.build === 'monk') monkFix(b); // 수도승 단순화 전 저장본: 쓰지 않는 칸을 비운다
   if (!b.queue) { b.round = b.tick || 1; b.queue = ['p']; b.bonusUsed = 0; } // 라운드 전 저장본: 지금이 내 차례
   G.b = b; G.scr = 'run'; G.sel = null; G.busy = false; G.banner = null; render();

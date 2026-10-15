@@ -37,31 +37,49 @@ const V2_OFF = ['pilgstaff', 'candlestaff', 'acolyterelic', 'confwand', 'penwhip
   // 재사용 대기 때문에 같은 스킬을 이어 쓸 수 없는 메아리 반지, 출혈을 거는 수단이 쇠못 장갑뿐인 굽은 낫(출혈을 거는 직업이 들어오면 되돌린다)
   'silverwand', 'bonenecklace', 'bonecharm', 'herbflask', 'knot', 'chalice', 'echo', 'sickle'];
 const V2_ON = { butcher: ['sickle'] }; // V2_OFF 가운데 그 직업에게는 되돌리는 장비 (굽은 낫: 출혈을 거는 직업)
-const poolOk = (p, k) => !(isV2(p) && V2_OFF.includes(k) && !(V2_ON[p.build] || []).includes(k)) && !(ITEMS[k] && ITEMS[k].fits && !ITEMS[k].fits.includes(p.build)); /* fits: 그 직업에서만 일어나는 2챕터 장비 */
-/* 재사용 대기 (10월 3일 만든 사람 결정, 충전을 대신한다): 전투를 모두 준비된 채 시작한다. 스킬을 쓰면 cd만큼 내 차례를 기다리고(p.cd),
-   내 차례가 지날 때마다 1 준다(쓴 그 차례는 빼고). 전투마다 1번(once)인 스킬은 쓰면 그 전투 동안 CD_USED로 남는다.
-   갈래 규칙(TREE2.haste): 그 일(독을 걸기, 적을 쓰러뜨리기, 흘리기 성공)이 일어난 행동마다 한 번, 그 갈래 스킬의 남은 대기가 1 준다.
-   10월 3일 3차 결정(만든 사람): 모든 직업이 쿨타임 하나만 쓴다. TREE2.haste는 비어 있고, 쿨타임을 당기는 일은 🔄 스킬(hastenBranch)만 한다 */
+/* 10월 15일 유산 1차 시제품: 정화(옛 마나) 플라스크를 없애 그 플라스크에만 붙는 장비와, 유산으로 옮기면 차례 충전을 두 배로 만드는 공허의 반지를 드롭 · 상점에서 뺀다 */
+const YS_OFF = ['doubleflask', 'wardwater', 'emberwater', 'confwater', 'dirtflask', 'hazewater', 'emberbottle', 'mirrorflask', 'scapeflask', 'wrapsolvent', 'hazebottle', 'wardfont', 'purgingchalice', 'voidring'];
+const poolOk = (p, k) => !(isV2(p) && YS_OFF.includes(k)) && !(isV2(p) && V2_OFF.includes(k) && !(V2_ON[p.build] || []).includes(k)) && !(ITEMS[k] && ITEMS[k].fits && !ITEMS[k].fits.includes(p.build)); /* fits: 그 직업에서만 일어나는 2챕터 장비 */
+/* 10월 15일 유산 1차 시제품 (쿨타임을 대신한다, 설계안 2절 · data/classes.js YUSAN): 스킬은 유산(p.ys)을 쓴다. 전투를 가득 찬 채 시작하고,
+   내 차례가 끝날 때 +1(가속 두 번째 차례는 빼고), 대응(막기 · 흘리기 · 무너뜨리기 · 끊기 · 먼저 치우기)에 성공하면 +1을 라운드에 한 번 받는다.
+   라운드(b.ysR) = 내 차례 시작부터 다음 내 차례 시작 전까지(playerAct가 차례의 첫 행동에서 센다). 전투마다 1번(once)인 스킬은 쓰면 그 전투 동안 p.cd[id] = CD_USED로 남는다(p.cd는 이 표시에만 쓴다).
+   🔄 쿨타임 당기기 · 처치 다시 쓰기는 "유산 +1, 라운드에 한 번"으로 바꿨다(1차 시제품 변환, ysRefund). 장비의 쿨타임 효과는 ysItem(라운드에 한 번) */
 const CD_USED = 999;
-function resetCharges(p) { p.cd = {}; p.cdJust = null; p.hsAt = {}; p.pbuf = null; p.dodgeRed = 0; p.dodgeOn = null; if (p.build === 'spellblade') { p.sbLast = null; p.sbRun = 0; p.edge = null; } if (p.build === 'bloodmage') p.payCut = []; } // 마검사: 직전 종류 · 이어진 교대 · 칼은 전투마다 새로. 숨겨진 직업 3: 값 깎기도
-function chargeEv(b, kind) {
-  const p = b.p; if (!p.cd) return;
-  if (kind === 'turn') { const just = [].concat(p.cdJust || []); for (const id of p.skills || []) { const s = SK2[id]; if (!s || s.once || just.includes(id)) continue; if (p.cd[id] > 0) p.cd[id]--; } p.cdJust = null; return; } // cdJust: 이번 차례에 쓴 스킬 목록 (예전 저장본은 id 하나)
-  const H = (TREE2[p.build] || {}).haste; if (!H) return;
-  for (const br in H) {
-    if (H[br] !== kind || p.hsAt[br] === b.actN) continue;
-    const ids = (p.skills || []).filter(id => SK2[id] && SK2[id].b === br && !SK2[id].once && p.cd[id] > 0);
-    if (!ids.length) continue;
-    p.hsAt[br] = b.actN; for (const id of ids) p.cd[id]--;
-    logp(b, 'good', br + ' 스킬 대기 −1 (' + HS_WHY[kind] + ')');
-  }
+function resetCharges(p) { p.cd = {}; p.cdJust = null; p.hsAt = {}; p.ys = YUSAN.start; p.pbuf = null; p.dodgeRed = 0; p.dodgeOn = null; if (p.build === 'spellblade') { p.sbLast = null; p.sbRun = 0; p.edge = null; } if (p.build === 'bloodmage') p.payCut = []; } // 마검사: 직전 종류 · 이어진 교대 · 칼은 전투마다 새로. 숨겨진 직업 3: 값 깎기도
+const ysNow = p => p.ys == null ? YUSAN.start : p.ys;
+const noManaFlask = p => isV2(p) && !(BUILDS[p.build] || {}).tut; // 정화(옛 마나) 플라스크가 없는 직업 (수련장 견습생은 정화 플라스크 단계가 있어 남긴다)
+/* 유산 더하기 (상한까지). src: turn · resp · refund · item · flask. g = 실제로 든 양(0이면 상한에 막혀 버려짐) */
+function ysAdd(b, n, src, why) {
+  const p = b.p; if (!isV2(p) || b.over) return 0; p.ys = ysNow(p); const g = Math.max(0, Math.min(n, YUSAN.cap - p.ys)); p.ys += g;
+  if (b.rec) b.rec.push({ k: 'ys', t: r1(b.t), src, why, g, ys: p.ys, r: b.ysR || 0 });
+  if (g > 0 && src !== 'turn') logp(b, 'good', '유산 +' + g + ' (' + why + ')');
+  return g;
 }
-/* 🔄 쿨타임 당기기 (D): 같은 갈래의 다른 끼운 스킬의 남은 쿨타임을 n 줄인다(0 아래로 내려가지 않는다) */
-function hastenBranch(b, br, n, exceptId) {
-  const p = b.p; if (!p.cd || !br) return; let k = 0;
-  for (const id of p.skills || []) { const s = SK2[id]; if (!s || s.b !== br || id === exceptId || s.once || !(p.cd[id] > 0)) continue; p.cd[id] = Math.max(0, p.cd[id] - n); k++; }
-  if (k) logp(b, 'good', '🔄 다른 ' + br + ' 스킬 쿨타임 −' + n);
+/* 대응 +1: 라운드에 한 번(다섯 수단이 한도를 함께 쓴다). 상한에 막혀도 그 라운드의 대응으로 센다 */
+function ysResp(b, why) { if (!b || !isV2(b.p) || b.over) return 0; const R = b.ysR || 0; if (b.ysRespR === R) return 0; b.ysRespR = R; return ysAdd(b, YUSAN.resp, 'resp', why); }
+/* 🔄 · 처치 다시 쓰기 → 유산 +1, 라운드에 한 번 (10월 15일 1차 시제품 변환: 같은 갈래 쿨타임 −n · 바로 다시 쓰기를 대신한다) */
+function ysRefund(b, why) { if (!b || !isV2(b.p) || b.over) return 0; const R = b.ysR || 0; if (b.ysRefR === R) return 0; b.ysRefR = R; return ysAdd(b, YUSAN.refund, 'refund', why); }
+/* 장비의 "쿨타임이 가장 많이 남은 스킬 −1" → 유산 +1, 라운드에 한 번 (모든 장비가 한도를 함께 쓴다). 든 것이 없으면 0 */
+function ysItem(b, why) { if (!b || !isV2(b.p) || b.over) return 0; const R = b.ysR || 0; if (b.ysItemR === R) return 0; const g = ysAdd(b, YUSAN.item, 'item', why || '장비'); if (g) b.ysItemR = R; return g; }
+/* 유산을 깎는 효과(침묵의 종 · 독 거두는 손의 대가): 0 아래로 내려가지 않는다 */
+function ysLose(b, n, why) { const p = b.p; if (!isV2(p)) return 0; p.ys = ysNow(p); const l = Math.min(n, p.ys); p.ys -= l; if (b.rec) b.rec.push({ k: 'ys', t: r1(b.t), src: 'lose', why, g: -l, ys: p.ys, r: b.ysR || 0 }); if (l) logp(b, 'bad', '유산 −' + l + ' (' + why + ')'); return l; }
+/* 스킬 쓰기: 비용을 낸다(숨겨진 직업 3의 피로 당기기는 bmPull이 모자란 몫을 먼저 채운다) */
+function ysSpend(b, s) { const p = b.p; const c = skCost(s); p.ys = Math.max(0, ysNow(p) - c); if (s.once) p.cd[s.id] = CD_USED; if (b.rec) b.rec.push({ k: 'yspend', t: r1(b.t), id: s.id, cost: c, ys: p.ys, r: b.ysR || 0 }); }
+const ysShort = (p, s) => Math.max(0, skCost(s) - ysNow(p)); // 모자란 유산
+const ysUsed = (p, s) => !!(s.once && p.cd && p.cd[s.id] > 0); // 전투마다 1번 스킬을 이미 썼는가
+/* 대응 판정에 쓰는 예고: 끊기 · 강공격 붕괴는 큰 행동(모으기 · 강타 · 영창 · 도화선 · 폭발 · 겨누기), 먼저 치우기는 보이는 예고 행동이면 모두(쉬기 · 기도 · 땅속 울림 등은 빼고) */
+const YS_BIG_K = ['charge', 'heavy', 'chant', 'chanting', 'burn', 'fuse', 'explode', 'aim'];
+const ysBigTele = e => !!(e && e.alive && e.intent && (YS_BIG_K.includes(e.intent.k) || e.intent.aimed));
+const YS_IDLE_K = ['none', 'rest', 'pray', 'rumble', 'exposed', 'brace', 'throne'];
+function ysPreKill(b, e) { // 먼저 치우기: 내 행동 중에, 이번 라운드 순서에 아직 남은(행동하지 않은) 적이 보이는 예고를 한 채 쓰러짐
+  if (!b.cur || !e.intent || YS_IDLE_K.includes(e.intent.k) || e.summoned && e.role === 'candle' || e.pile || e.role === 'root' || e.role === 'bonewall') return;
+  if (!(b.queue || []).includes(e.id) || (typeof darkHid === 'function' && darkHid(b, e))) return;
+  ysResp(b, '먼저 치우기');
 }
+/* 내 차례 끝: 유산 +1 (상한에 막힌 양은 기록에 g 0으로 남는다) */
+function chargeEv(b, kind) { if (kind === 'turn') ysAdd(b, YUSAN.turn, 'turn', '차례'); } // 갈래 규칙(TREE2.haste)은 10월 3일에 없앴다. 다른 kind는 아무 일도 하지 않는다
+/* 🔄 쿨타임 당기기 → 유산 +1 (라운드에 한 번). 부르는 곳은 그대로 두고 여기서 바꾼다 (10월 15일 1차 시제품 변환, n은 쓰지 않는다) */
+function hastenBranch(b, br, n, exceptId) { return ysRefund(b, '🔄 ' + (br || '')); }
 const HS_WHY = { poison: '독을 걸었다', kill: '적을 쓰러뜨렸다', parry: '흘려 냈다', break: '정예 이상을 무너뜨렸다' };
 /* 스킬 트리 (개편 기획 4절): 포인트 1로 한 칸을 연다. 깊은 등급은 그 갈래에 먼저 쓴 포인트가 있어야 열린다(TREE_GATE). 연 스킬 가운데 4칸을 장착 */
 function treeInit(run) { const T = TREE2[run.build]; if (!T) return; run.tree = run.tree || { pts: T.pts || 0, open: [], spent: {} }; }

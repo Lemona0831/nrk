@@ -143,7 +143,7 @@ const IFX = {
    일 지점: onAct(행동을 시작할 때) onSkill(스킬을 쓴 뒤) onRound(라운드가 끝날 때) onPile(해골이 뼈 더미가 될 때) onRise(뼈 더미가 일어설 때) onBloat(부푼 시체가 터지기 전)
             onBreak(적이 무너질 때) onShock(열충격) onCounter(되받기) onEvade(몸 빼기로 피함) onAlt(교대) onProt(보호를 얻음) onWardOver(보호막이 상한을 넘침) onWin(방을 이김, 전투 밖)
    규칙 표시: quick2(내 차례마다 빠른 칸 하나 더) first(라운드 맨 앞) condCost(조건이 붙은 비용이라 점검의 고정 비용 비교를 건너뛴다)
-   쿨타임을 당기는 효과는 한 행동에 1까지(fxCdMax) */
+   쿨타임을 당기는 효과는 한 행동에 1까지(fxCdMax). 10월 15일 유산 1차 시제품: fxCdMax는 "유산 +1, 라운드에 한 번(모든 장비가 함께)"으로 바뀌었다(ysItem) */
 const FX_CAP = 0.6;
 const fxHas = (c, k) => { const s = c && (c.s || SK2[c.id]); return !!(s && s.fx && s.fx.some(x => x.k === k)); };
 const fxBr = c => { const s = c && (c.s || SK2[c.id]); return (s && s.b) || null; };
@@ -158,7 +158,7 @@ const fxHeal = (p, x) => { const v = Math.max(0, Math.min(p.hpMax - p.hp, x)); p
 const fxStam = (p, x) => { p.st = Math.min(p.stMax, p.st + x); if (p.exhaust && p.st >= 30) p.exhaust = 0; };
 const fxOnce = (b, key) => { b.fxOn = b.fxOn || {}; if (b.fxOn[key] === b.actN) return false; b.fxOn[key] = b.actN; return true; };
 const fxCnt = (b, key, max) => { b.fxN = b.fxN || {}; if ((b.fxN[key] || 0) >= max) return false; b.fxN[key] = (b.fxN[key] || 0) + 1; return true; };
-function fxCdMax(b, p, not) { if (!p.cd || b.fxCdAct === b.actN) return null; let best = null; for (const id of p.skills || []) { const s = SK2[id]; if (!s || s.once || id === not || !(p.cd[id] > 0)) continue; if (!best || p.cd[id] > p.cd[best]) best = id; } if (best) { p.cd[best]--; b.fxCdAct = b.actN; logp(b, 'good', SK2[best].n + ' 쿨타임 −1'); } return best; }
+function fxCdMax(b, p, not) { return ysItem(b, '장비') || null; } // 10월 15일 유산 1차 시제품 변환: 쿨타임이 가장 많이 남은 스킬 −1 → 유산 +1(라운드에 한 번)
 function fxUnearth(b, e, vuln) { if (e.foe === 'stalker') return; e.under = 0; e.intent = { k: 'attack' }; e.teleTurn = null; if (vuln) addS(b, e, 'vuln', vuln); logp(b, 'good', e.n + '이(가) 땅 위로 끌려 나온다'); }
 function fxPileKill(b, e) { e.norise = 1; e.hp = 0; killEnemy(b, e); checkEnd(b); }
 const fxBig = o => !!(o.charged || (o.src && o.src.intent && o.src.intent.aimed && !o.dot));
@@ -198,7 +198,8 @@ const IFX2 = {
   altblades: { hitP: (b, p) => b.sbAlt && b.sbK === 'cut' ? 0.15 : 0, brk: (b, p) => b.sbAlt && b.sbK === 'spell' ? 8 : 0 },
   swiftbow: { onHit: (b, p, e) => { if (!e.alive || !e.swift || !fxOnce(b, 'swiftbow')) return; addS(b, e, 'chill', 1); logp(b, 'good', e.n + '의 발이 묶인다. 둔화 1'); return 1; }, hitP: (b, p, e) => st(e, 'chill') ? 0.08 : 0 },
   censer: { onSkill: (b, p, act) => { if (!fxHas(act, 'transfer')) return; p.fxCens = 1; return 1; }, hitP: (b, p, e, o, c) => { if (!p.fxCens || !isAtkC(c) || fxHas(c, 'transfer')) return 0; p.fxCens = 0; return 0.06 * badKinds(e); } },
-  graverobber: { onKill: (b, p, e) => { if (!e.pile && e.role !== 'bonewall') return; p.fxCdNext = 1; return 1; }, onSkill: (b, p, act) => { if (!p.fxCdNext || !p.cd || !(p.cd[act.id] > 1)) return; p.cd[act.id]--; p.fxCdNext = 0; logp(b, 'good', act.n + ' 쿨타임 −1'); return 1; }, hitP: (b, p, e) => e.pile || e.role === 'bonewall' ? 0 : -0.06 },
+  graverobber: { onKill: (b, p, e) => { if (!e.pile && e.role !== 'bonewall') return; return ysItem(b, '도굴왕의 곡괭이') ? 1 : 0; }, // 10월 15일 유산 1차 시제품 변환: 다음 스킬 쿨타임 −1 → 유산 +1(라운드에 한 번)
+    hitP: (b, p, e) => e.pile || e.role === 'bonewall' ? 0 : -0.06 },
   blackwaterblade: { st: { st: -15 }, hitP: (b, p, e) => st(e, 'chill') ? 0.15 : 0, onKill: (b, p, e) => { if (!st(e, 'chill')) return; let n = 0; for (const x of fFoes(b)) if (x !== e) { addS(b, x, 'chill', 1); n++; } if (n) logp(b, 'good', '검은 물이 번진다. 남은 적 모두 둔화 1'); return n ? 1 : 0; } },
   bloodash: { hpMul: 0.92, hitP: (b, p, e) => stk(e, 'bleed') && st(e, 'ignite') ? 0.2 : 0, onHit: (b, p, e) => { if (!e.alive || !fxOnce(b, 'bloodash')) return; const bl = stk(e, 'bleed'), ig = st(e, 'ignite'); if (!!bl === !!ig) return; addS(b, e, bl ? 'ignite' : 'bleed', 1); return 1; } },
   kingsaxe: { onHit: (b, p, e, o, c, d) => { if (c.id !== 'heavy' || !(d > 0) || !fxOnce(b, 'kingsaxe')) return; const xs = fFoes(b).filter(x => x !== e && x.row === 'front' && !x.under); for (const x of xs) hurtEnemy(b, x, d * 0.5, { label: '수문장의 도끼' }); return xs.length ? 1 : 0; }, hitP: (b, p, e, o, c) => c && c.id === 'basic' ? -0.1 : 0, cost: (p, id) => id === 'heavy' ? 10 : 0 },
@@ -262,7 +263,7 @@ const IFX2 = {
   bloodcost: { condCost: 1, cost: (p, id) => id === 'heavy' && p.s && stk(p, 'bleed') ? -10 : 0 },
   bonesetter: { onKill: (b, p, e) => { if (!e.pile) return; const t = fOther(b, e); if (!t) return; addBreak(b, t, 15); return 1; }, onRise: (b, p) => { addS(b, p, 'haste', 1); return 1; } },
   breakfist: { condCost: 1, onKill: (b, p, e) => { if (!e.s.broken) return; let n = 0; for (const x of fFoes(b)) if (x !== e) { addBreak(b, x, 10); n++; } return n ? 1 : 0; }, onBreak: (b, p) => { p.fxBf = 1; return 1; }, onAct: (b, p, id) => { if (id === 'heavy') p.fxBf = 0; }, cost: (p, id) => id === 'heavy' && p.fxBf ? -15 : 0 },
-  poisonreaper: { onAct: (b, p, id, act) => { if (!act || !act.v2 || !(fxHas(act, 'burst') || fxHas(act, 'drain'))) return; p.fxPr = alive(b).reduce((a, e) => a + st(e, 'poison'), 0); }, onSkill: (b, p, act) => { if (fxHas(act, 'poison') && p.cd && p.cd[act.id] > 0) { p.cd[act.id]++; fxHit('poisonreaper'); } if (!(fxHas(act, 'burst') || fxHas(act, 'drain')) || p.fxPr == null) return; const d = p.fxPr - alive(b).reduce((a, e) => a + st(e, 'poison'), 0); p.fxPr = null; const g = d > 0 ? fxHeal(p, d / 2) : 0; if (g > 0) logp(b, 'good', '거둔 독이 손바닥으로 스민다. 생명력 +' + r1(g)); return g > 0 ? 1 : 0; } },
+  poisonreaper: { onAct: (b, p, id, act) => { if (!act || !act.v2 || !(fxHas(act, 'burst') || fxHas(act, 'drain'))) return; p.fxPr = alive(b).reduce((a, e) => a + st(e, 'poison'), 0); }, onSkill: (b, p, act) => { if (fxHas(act, 'poison') && act.v2 && b.fxPrR !== b.ysR) { b.fxPrR = b.ysR; if (ysLose(b, 1, '독 거두는 손')) fxHit('poisonreaper'); } /* 10월 15일 유산 1차 시제품 변환: 독을 거는 스킬 쿨타임 +1 → 유산 −1(라운드에 한 번) */ if (!(fxHas(act, 'burst') || fxHas(act, 'drain')) || p.fxPr == null) return; const d = p.fxPr - alive(b).reduce((a, e) => a + st(e, 'poison'), 0); p.fxPr = null; const g = d > 0 ? fxHeal(p, d / 2) : 0; if (g > 0) logp(b, 'good', '거둔 독이 손바닥으로 스민다. 생명력 +' + r1(g)); return g > 0 ? 1 : 0; } },
   frostgrip: { onHit: (b, p, e) => { if (!e.alive || st(e, 'chill') < 3) return; delete e.s.chill; addBreak(b, e, 15); logp(b, 'good', e.n + '의 언 몸이 깨진다. 붕괴 +15'); return 1; } },
   trackmark: { onKill: (b, p, e) => { if (!p.focus || p.focus.id !== e.id || p.focus.n < 3) return; p.fxCarry = 1; return 1; }, onHit: (b, p, e) => { if (!p.fxCarry || !p.focus || p.focus.id !== e.id || p.focus.n >= 2 || !e.alive) return; p.focus.n = 2; p.fxCarry = 0; logp(b, 'good', e.n + '에게 표식을 옮긴다. 추적 2겹'); return 1; }, hitP: (b, p, e, o) => !o.aoe && p.focus && p.focus.id === e.id && p.focus.n === 1 ? -0.1 : 0 },
   flamehands: { onHit: (b, p, e, o, c) => { if (!c.skill || st(e, 'ignite') < 5 || !fxOnce(b, 'flamehands')) return; const t = fOther(b, e); if (!t) return; addS(b, t, 'ignite', 2); return 1; } },
@@ -307,7 +308,7 @@ const IFX2 = {
   kingseal: { healMul: 0.8, onKill: (b, p, e) => { if (e.pile || e.summoned) return; return addWard(b, p, e.elite || e.strong ? 15 : 5) > 0 ? 1 : 0; } },
   twicering: { hpMul: 0.88, onHurt: (b, p) => { if (p.hp > 0 || b.fxTw) return; b.fxTw = 1; p.hp = 1; addS(b, p, 'haste', 1); logp(b, 'crit', '반지가 한 번 더 일으킨다. 생명력 1, 가속 1'); return 1; } },
   mirrorring: { onDebuff: (b, u, k) => { if (!KW_BAD.includes(k) || b.fxMrR === b.round) return; b.fxMrR = b.round; let n = 0; for (const x of fFoes(b)) n += fxApplyKw(b, x, k, 1) ? 1 : 0; if (n) logp(b, 'good', '검은 물이 ' + KW_N[k] + '을(를) 되비춘다. 적 모두 ' + KW_N[k] + ' 1'); return n ? 1 : 0; }, dur: k => KW_BAD.includes(k) ? 1 : 0 },
-  voidring: { onSkill: (b, p, act) => { if (!p.cd || !(p.cd[act.id] > 2) || b.fxVoidTurn === b.turnIdx) return; b.fxVoidTurn = b.turnIdx; p.cd[act.id]--; return 1; }, hitP: (b, p, e, o, c) => c && c.skill ? -0.15 : 0 },
+  voidring: { /* 10월 15일 유산 1차 시제품: 쓴 스킬 쿨타임 −1(차례마다)은 유산으로 옮기면 차례 충전을 두 배로 만들어 껐다. 드롭에서도 뺀다(YS_OFF) */ hitP: (b, p, e, o, c) => c && c.skill ? -0.15 : 0 },
   firstring: { first: 1, onRound: () => 1, inP: (b, p, o) => o.src && !o.dot ? -0.1 : 0 },
   // 목걸이
   limecharm: { onPile: (b, p, e) => { e.pile.wait++; return 1; }, onStart: b => { let n = 0; for (const e of b.en) if (e.alive && e.pile) { e.pile.wait++; n++; } return n ? 1 : 0; } },

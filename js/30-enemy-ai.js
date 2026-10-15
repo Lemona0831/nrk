@@ -26,7 +26,7 @@ function hymnReset(b) { let n = 0; for (const x of b.en) if (x.hymn) { x.hymn = 
 /* 봉인 (검은 서기관): 스킬 하나 · 플라스크 · 방어와 흘리기 가운데 하나를 쓸 수 없게 한다. 큰 한 방이나 서기관이 무너지거나 쓰러지면 풀린다 */
 function sealPick(b) {
   const p = b.p, S = b.seal || [], rr = b.rngF || Math.random; const opts = [];
-  for (const sid of skillsOf(p)) if (SK2[sid] && !S.some(x => x.k === 'skill' && x.id === sid)) opts.push({ k: 'skill', id: sid, n: SK2[sid].n, w: p.cd && p.cd[sid] ? 0.5 : 1 });
+  for (const sid of skillsOf(p)) if (SK2[sid] && !S.some(x => x.k === 'skill' && x.id === sid)) opts.push({ k: 'skill', id: sid, n: SK2[sid].n, w: ysUsed(p, SK2[sid]) || ysShort(p, SK2[sid]) > 0 ? 0.5 : 1 }); // 10월 15일 유산: 지금 못 쓰는 스킬은 덜 고른다
   if (!S.some(x => x.k === 'flask') && p.flask.life + p.flask.mana + (p.flask.stam || 0) > 0) opts.push({ k: 'flask', n: '플라스크', w: 1.5 });
   if (!S.some(x => x.k === 'prep')) opts.push({ k: 'prep', n: '방어와 흘리기', w: 1.5 });
   if (!opts.length) return null; let x = rr() * opts.reduce((a, o) => a + o.w, 0); for (const o of opts) { x -= o.w; if (x <= 0) return o; } return opts[opts.length - 1];
@@ -350,7 +350,7 @@ function abbotCandles(b, e) {
 }
 function abbotBell(b, e) {
   const p = b.p; for (const k of ['protect', 'rage', 'empower', 'haste', 'block']) delete p.s[k]; p.whet = 0; p.nextRed = 0; p.decoy = 0; if (p.rime) p.rime = null; if (p.payCut) p.payCut = []; // 원소술사 되얼림도 흩어진다
-  for (const k in (p.cd || {})) if (p.cd[k] > 0) p.cd[k]++;
+  ysLose(b, 1, '침묵의 종'); // 10월 15일 유산 1차 시제품: 쿨타임 +1 대신 유산 −1(0 아래로 내려가지 않는다)
   logp(b, 'crit', e.n + '이(가) 침묵의 종을 울린다. 몸에 두른 기운이 흩어지고, 손이 무거워진다'); codexHit(b, 'abbot', 'bell');
   e.vow = 1; e.vowTick = b.tick; e.serN = 0; e.intent = { k: 'pray' }; logp(b, 'crit', e.n + '이(가) 입을 다문다'); codexHit(b, 'abbot', 'vow'); abbotCandles(b, e);
 }

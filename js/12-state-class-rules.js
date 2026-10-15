@@ -126,7 +126,7 @@ function cfSelfApply(b) {
   for (const x of L) { const s0 = cfSelf(p, x.s); const g = addS(b, p, x.s, x.n) || 0; p.selfN[x.s] = Math.min(stk(p, x.s), s0 + g); parts.push(KW_N[x.s] + ' ' + x.n); b.rec.push({ k: 'self', s: x.s, n: x.n, g }); }
   b.selfSt = 0; logp(b, 'bad', '행동이 끝나고 나에게 ' + parts.join(', ') + '(고행)');
 }
-/* 숨겨진 직업 3 (10월 7일, bloodmage. 설계 · 까닭은 비공개 문서): 피로 당기기(남은 쿨타임 1턴마다 최대 생명력 × per, 내 차례마다 한 번, 생명력 1 아래로는 낼 수 없다),
+/* 숨겨진 직업 3 (10월 7일, bloodmage. 설계 · 까닭은 비공개 문서): 피로 당기기(모자란 유산 1마다 최대 생명력 × per (10월 15일 유산 1차 시제품: 예전 남은 쿨타임 1턴마다), 내 차례마다 한 번, 생명력 1 아래로는 낼 수 없다),
    낸 피 칸이 세는 상한 dmgCount, 먹기 한 번 상한 eatCap(모든 배수 뒤), 쓰러뜨리면 번짐 · 표식이 적 하나에게 거는 중독 상한 spreadKillMax(한 행동에서 받는 쪽마다 합쳐), 값 깎기 보관 payCutMax [가설]
    낸 피는 피해가 아니다: hurtPlayer를 지나지 않는다(보호막 · 보호 · 취약 · 방어 · 망자의 묵주 · 가시 · 받은 피해 기록에 들지 않는다) */
 const BLOOD = { per: 0.04, perTurn: 1, dmgCount: 20, eatCap: 0.25, spreadKillMax: 6, payCutMax: 3 };
@@ -135,7 +135,7 @@ const bmHpCost = (p, s) => { const h = s && s.fx.find(e => e.k === 'hpCost'); re
 const bmEats = s => !!(s && s.fx.some(e => e.k === 'drain' && e.eat));
 const bmEatOnly = s => bmEats(s) && !s.fx.some(e => e.k === 'dmg');
 const bmNoPull = s => s.once ? '전투마다 1번' : bmEats(s) ? '먹기는 피로 당길 수 없음' : s.fx.some(e => e.k === 'payCut') ? '피로 당길 수 없음' : null;
-/* 피로 당기기 값: 남은 값 깎기 가운데 이번 값이 가장 싸지는 것 하나를 쓴다(mul: 값 × mul, off: 남은 쿨타임에서 off턴을 빼고). 올림은 마지막에 한 번. pick이면 { c, i } */
+/* 피로 당기기 값: 남은 값 깎기 가운데 이번 값이 가장 싸지는 것 하나를 쓴다(mul: 값 × mul, off: 모자란 유산에서 off를 빼고). 올림은 마지막에 한 번. pick이면 { c, i } */
 function bmPullCost(p, w, pick) {
   const raw = (ww, m) => Math.ceil(p.hpMax * BLOOD.per * Math.max(0, ww) * hpCostMul(p) * m - 1e-9);
   let best = { c: raw(w, 1), i: -1 };
@@ -149,11 +149,11 @@ function bmPay(b, c, s, why) {
   if (why === 'pull') logp(b, 'bad', '피로 ' + s.n + '을(를) 당긴다. 생명력 −' + c); else logp(b, 'bad', s.n + '. 먼저 생명력 ' + c + '을(를) 낸다');
   return c;
 }
-function bmPull(b, act) {
-  const p = b.p, s = act.s; const w = (p.cd && p.cd[s.id]) || 0; if (!(w > 0) || bmNoPull(s)) return;
+function bmPull(b, act) { // 10월 15일 유산 1차 시제품: 모자란 유산(w)을 생명력으로 채운다. 1마다 최대 생명력 × per, 내 차례마다 한 번, 생명력 1 아래로는 내지 않는다
+  const p = b.p, s = act.s; const w = ysShort(p, s); if (!(w > 0) || bmNoPull(s) || ysUsed(p, s)) return;
   const pc = bmPullCost(p, w, 1); const c = Math.min(pc.c, Math.max(0, p.hp - 1 - bmHpCost(p, s)));
   if (pc.i >= 0) p.payCut.splice(pc.i, 1);
-  b.bloodTurn = b.turnIdx; p.cd[s.id] = 0;
+  b.bloodTurn = b.turnIdx; p.ys = ysNow(p) + w; // 채운 유산은 곧바로 ysSpend가 쓴다
   if (c > 0) bmPay(b, c, s, 'pull'); else { logp(b, 'good', '피로 ' + s.n + '을(를) 당긴다. 깎은 값이라 생명력이 들지 않는다'); b.rec.push({ k: 'blood', w: 'pull', id: s.id, n: 0 }); }
   b.rec.push({ k: 'bmpull', id: s.id, cd: w, n: c, cut: pc.i >= 0 ? 1 : 0, hp: r1(p.hp / p.hpMax), round: b.round || 0 });
 }
