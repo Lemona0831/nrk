@@ -4,7 +4,8 @@
    - 클라우드(계정·랭킹·클라우드 저장·관리자 기록)를 끈다: config.js를 빈 설정으로 둔다
    - 테스트 메뉴(tools/testsite/devtools.js, 화면 오른쪽 가장자리 🧪)를 넣는다
    - 검색 차단(noindex)과 "테스트 서버" 띠를 넣고, 릴리스 지문을 이 사본 기준으로 다시 계산한다
-   실행: node tools/build-test-site.js <출력 폴더>   (출력 폴더의 .git은 남기고 나머지는 지운 뒤 다시 만든다) */
+   실행: node tools/build-test-site.js <출력 폴더>   (출력 폴더의 .git은 남기고 나머지는 지운 뒤 다시 만든다)
+   시제품 사이트(10월 15일): SITE=proto 를 주면 저장소 키를 test 대신 proto로 바꾸고 띠 · 제목을 "시제품"으로 단다. 같은 github.io 주소라 테스트 사이트와도 세이브를 나눈다 */
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
 const ROOT = path.join(__dirname, '..');
 const OUT = process.argv[2] && path.resolve(process.argv[2]);
@@ -12,6 +13,7 @@ if (!OUT) { console.error('출력 폴더를 주세요'); process.exit(1); }
 if (OUT === ROOT || OUT.startsWith(ROOT + path.sep)) { console.error('출력 폴더는 저장소 밖이어야 합니다'); process.exit(1); }
 
 const COPY = ['index.html', 'remote.html', 'privacy.html', 'css', 'js', 'data', 'audio', 'images', 'remote'];
+const SITE = process.env.SITE === 'proto' ? { tag: 'proto', Tag: 'Proto', label: '시제품', title: '시제품 서버: 유산(쿨타임 대신 행동력) 시험판. 실제 게임 · 테스트 서버와 기록이 분리됩니다. 계정 · 랭킹 꺼짐', readme: '# 나락의 유산 시제품 서버\n\n유산(스킬 행동력) 개편 시험판입니다. 실제 게임은 https://lemona0831.github.io/nrk/ 입니다.\n이 사이트는 실제 게임 · 테스트 서버와 브라우저 저장소가 분리되어 있고, 계정 · 랭킹 · 클라우드 저장을 쓰지 않습니다.\n' } : null;
 const RENAME = [ // [원래, 테스트용] — 원래 이름이 사본에 남으면 실패
   ['nrk_062_v1', 'nrk_test_v1'],
   ['nrkLoginName', 'nrkTestLoginName'],
@@ -22,6 +24,7 @@ const RENAME = [ // [원래, 테스트용] — 원래 이름이 사본에 남으
   ['nrk062-hud-remote', 'nrktest-hud-remote'],
   ['nrk062', 'nrktest'], // 남은 리모컨 창 이름·메시지 꼬리표(위의 구체적인 이름을 먼저 바꾼 뒤)
 ];
+if (SITE) for (const r of RENAME) r[1] = r[1].replace('test', SITE.tag).replace('Test', SITE.Tag); // 시제품: nrk_proto_v1 · nrkProtoLogin · nrkproto ...
 
 // 1. 출력 폴더 비우기(.git은 보존)
 fs.mkdirSync(OUT, { recursive: true });
@@ -48,8 +51,8 @@ for (const page of ['index.html', 'remote.html', 'privacy.html']) {
   const p = path.join(OUT, page); if (!fs.existsSync(p)) continue;
   let h = fs.readFileSync(p, 'utf8');
   h = h.replace(/(<meta charset="utf-8">\r?\n)/, '$1<meta name="robots" content="noindex,nofollow">\n');
-  if (page === 'index.html') h = h.replace(/<\/body>/, BANNER + '\n</body>');
-  h = h.replace(/<title>([^<]*)<\/title>/, '<title>[테스트] $1</title>');
+  if (page === 'index.html') h = h.replace(/<\/body>/, (SITE ? BANNER.replace(/title="[^"]*"/, 'title="' + SITE.title + '"').replace('>TEST<', '>PROTO · 유산<').replace('background:#f5c542', 'background:#b48ef0') : BANNER) + '\n</body>');
+  h = h.replace(/<title>([^<]*)<\/title>/, '<title>[' + (SITE ? SITE.label : '테스트') + '] $1</title>');
   fs.writeFileSync(p, h);
 }
 // 5-1. 테스트 메뉴(tools/testsite/devtools.js)를 테스트 사이트에만 넣는다
@@ -74,5 +77,5 @@ const hash = s => crypto.createHash('sha256').update(s).digest('hex');
   fs.writeFileSync(index, html); fs.writeFileSync(path.join(OUT, 'release.json'), JSON.stringify({ revision }, null, 2) + '\n');
 }
 fs.writeFileSync(path.join(OUT, '.nojekyll'), '');
-fs.writeFileSync(path.join(OUT, 'README.md'), '# 나락의 유산 테스트 서버\n\n공개 전 시험용 사본입니다. 실제 게임은 https://lemona0831.github.io/nrk/ 입니다.\n이 사이트는 실제 게임과 브라우저 저장소가 분리되어 있고 계정·랭킹을 쓰지 않습니다.\n\n만드는 법: 게임 저장소에서 `node tools/build-test-site.js <이 폴더>`\n');
+if (SITE) fs.writeFileSync(path.join(OUT, 'README.md'), SITE.readme); else fs.writeFileSync(path.join(OUT, 'README.md'), '# 나락의 유산 테스트 서버\n\n공개 전 시험용 사본입니다. 실제 게임은 https://lemona0831.github.io/nrk/ 입니다.\n이 사이트는 실제 게임과 브라우저 저장소가 분리되어 있고 계정·랭킹을 쓰지 않습니다.\n\n만드는 법: 게임 저장소에서 `node tools/build-test-site.js <이 폴더>`\n');
 console.log('테스트 사이트: ' + OUT + ' · 이름 바꾼 파일 ' + renamed + '개 · 저장소 키 ' + RENAME.length + '종 분리 · 클라우드 꺼짐');

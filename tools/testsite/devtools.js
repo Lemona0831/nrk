@@ -66,7 +66,7 @@
       G.scr = 'run'; G.b = null; G.sheet = null;
       done(P.label + ' 불러옴' + (miss.length ? ' (없는 장비: ' + miss.join(', ') + ')' : ''));
     },
-    wipe: () => { if (!confirm('테스트 사이트의 세이브를 모두 지우고 새로 시작할까요? (실제 게임 세이브는 건드리지 않습니다)')) return; for (const k of Object.keys(localStorage)) if (/^nrk_test|^nrkTest|^nrktest/.test(k)) localStorage.removeItem(k); location.reload(); },
+    wipe: () => { if (!confirm('테스트 사이트의 세이브를 모두 지우고 새로 시작할까요? (실제 게임 세이브는 건드리지 않습니다)')) return; for (const k of Object.keys(localStorage)) if (/^nrk_(test|proto)|^nrk(Test|Proto)|^nrk(test|proto)/.test(k)) localStorage.removeItem(k); location.reload(); },
   };
 
   function build() {
