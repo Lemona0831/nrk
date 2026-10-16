@@ -7,8 +7,8 @@ function menuItems() {
   if (G.scr !== 'title') it.push(['title', '🏰', '타이틀']);
   if (inRun) it.push(['equip', '🎒', '장비']);
   if (inRun || (G.scr === 'dead' && G.run && G.run.p)) it.push(['statview', '📊', '능력치']);
-  if (inRun) it.push(['awkview', '✨', '각인 ' + (G.run.awk || []).length]);
-  if (runLive() && !G.creating && G.run.tree && G.scr !== 'tree' && G.scr !== 'tut') it.push(['tree', '🌳', '스킬 트리' + (G.run.tree.pts ? ' <span class="newdot"><span class="sr">남은 포인트 </span>' + G.run.tree.pts + '</span>' : '')]);
+  if (inRun) it.push(['awkview', '✨', '큰 각인 ' + (G.run.ptree ? G.run.ptree.ks.length : 0)]);
+  if (runLive() && !G.creating && G.run.ptree && G.scr !== 'tree' && G.scr !== 'tut') { const tp = G.run.ptree.pts + G.run.atree.pts; it.push(['tree', '🌳', '트리' + (tp ? ' <span class="newdot"><span class="sr">남은 포인트 </span>' + tp + '</span>' : '')]); } // 10월 16일 0.8.0 2단계: 패시브 · 액티브 두 트리
   if (!inRun && !G.creating && G.scr !== 'tut' && G.scr !== 'tutoffer') it.push(['tut', '🎯', '수련장' + (G.data.tutDone ? ' ✓' : '')]);
   it.push(['codex', '📖', '보스 도감'], ['itembook', '📚', '아이템 도감'], ['rank', '🏆', '랭킹'], ['records', '📜', '기록'], ['changes', '📰', '업데이트' + (G.data.seenVer !== CHANGE_VER ? ' <span class="newdot"><span aria-hidden="true">새</span><span class="sr">새 소식</span></span>' : '')], ['help', '❔', '도움말'], ['settings', '⚙️', '설정']);
   if (G.site && G.conn === 'ok' && G.acct) it.push(G.acct.anon ? ['login', '🔑', '구글 로그인', 'google'] : ['logout', '🚪', '로그아웃']);
@@ -119,7 +119,7 @@ function vRunMap() {
   } else if (!R && run.doors) {
     h += `<section class="card"><h3>갈림길${q('rooms', '방과 보스')}</h3><p class="mini">문 하나를 고릅니다. 경험치는 전투 방에서만 얻습니다. 고르기 전에도 장비를 바꿔도 됩니다.</p><div class="doors">${run.doors.map(doorCard).join('')}</div></section>`;
   } else if (R) h += vRoom(run, R);
-  if (run.tree) h += `<section class="card"><h4>스킬 트리${run.tree.pts ? ` <span class="newtag">포인트 ${run.tree.pts}</span>` : ''}</h4><p class="mini">시작: ${TREE2[run.build].starters.map(id => esc(SK2[id].n)).join(', ')} · 장착 ${(run.skills || []).length}/${EQUIP_SLOTS2}: ${(run.skills || []).map(id => esc(SK2[id] ? SK2[id].n : id)).join(', ') || '없음'}. 방과 방 사이에 스킬을 열고 바꿉니다.</p><button data-a="tree"${run.tree.pts ? ' class="gold"' : ''}>트리 열기</button></section>`;
+  if (run.ptree) h += `<section class="card"><h4>트리${run.ptree.pts + run.atree.pts ? ` <span class="newtag">패시브 ${run.ptree.pts} · 액티브 ${run.atree.pts}</span>` : ''}</h4><p class="mini">시작: ${TREE2[run.build].starters.map(id => esc(SK2[id].n)).join(', ')} · 장착 ${(run.skills || []).length}/${EQUIP_SLOTS2}: ${(run.skills || []).map(id => esc(SK2[id] ? SK2[id].n : id)).join(', ') || '없음'}. 방과 방 사이에 노드를 찍고 스킬을 바꿉니다.</p><button data-a="tree"${run.ptree.pts + run.atree.pts ? ' class="gold"' : ''}>트리 열기</button></section>`;
   const past = (run.rooms || []).filter(x => x.room);
   h += `<section class="card"><h4>지나온 길</h4><p class="mini">${past.map(x => floorName(x.room) + ' ' + (ROOM_TYPES[x.type] ? ROOM_TYPES[x.type].n : x.type === 'camp' ? '야영' : '') + (x.res ? ', ' + (x.res === 'win' ? '승리' : x.res === 'flee' ? '물러남' : '패배') : '')).join(' / ') || '아직 없습니다'}</p></section>`;
   return h;

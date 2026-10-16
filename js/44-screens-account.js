@@ -45,8 +45,8 @@ function vTitle() {
 const CNAMES = ['아르덴', '베일', '카엘', '로웬', '세린', '이렌', '모르간', '하엘', '테오', '엘다', '미르', '오웬', '리안', '세라', '단테', '노아', '에반', '루카', '시엘', '하린', '바엘', '유리엘', '케인', '마렌'];
 function vCreate() {
   const C = G.cre || { step: 'name' }; const S = G.sheet && G.sheet.data.first ? G.sheet : null;
-  const step = S ? S.kind : C.step; const si = { name: 0, cls: 1, skills: 2, stats: 3 }[step] || 0;
-  let h = `<ol class="stepper" aria-label="캐릭터 만들기">${['이름', '직업', '스킬', '능력치'].map((x, i) => `<li class="${i < si ? 'done' : i === si ? 'now' : ''}"${i === si ? ' aria-current="step"' : ''}><span>${i + 1}</span>${x}</li>`).join('')}</ol>`;
+  const step = S ? (S.kind === 'alloc' && G.run && G.run.alloc ? (G.run.alloc.step === 'a' ? 'act' : 'pas') : S.kind) : C.step; const si = { name: 0, cls: 1, pas: 2, act: 3 }[step] || 0; // 10월 16일 0.8.0 2단계: 이름 → 직업 → 패시브(큰 각인) → 액티브
+  let h = `<ol class="stepper" aria-label="캐릭터 만들기">${['이름', '직업', '패시브', '액티브'].map((x, i) => `<li class="${i < si ? 'done' : i === si ? 'now' : ''}"${i === si ? ' aria-current="step"' : ''}><span>${i + 1}</span>${x}</li>`).join('')}</ol>`;
   if (S) { const [t, body] = sheetParts(S); return h + `<section class="card cstep"><h3>${esc(t)}</h3>${body}</section>`; }
   if (step === 'name') {
     return h + `<section class="card cstep"><h3>이름을 정하세요</h3><p class="lore">수도원 아래로 내려갈 사람의 이름. 쓰러지면 이 이름은 돌아오지 않는다.</p><label for="cname">캐릭터 이름 (12자까지)</label><div class="row nowrap"><input id="cname" type="text" maxlength="12" autocomplete="off" value="${esc(C.name || '')}" placeholder="이름을 적거나 주사위를 누르세요"><button data-a="cnroll" aria-label="이름 추천 받기" title="이름 추천">🎲</button></div><p class="mini">랭킹에는 이 이름과 함께 플레이어 이름${G.data.name ? ' "' + esc(G.data.name) + '"' : '(랭킹 화면에서 정함)'}이 보입니다.</p>${G.abandonOnCreate ? '<p class="warn">기존 캐릭터는 보관됩니다. 타이틀에서 골라 이어할 수 있습니다.</p>' : ''}<div class="row"><button class="gold" data-a="cnok">다음: 직업 고르기</button><button data-a="createcancel">그만두기</button></div></section>`;
@@ -78,12 +78,12 @@ const markOpen = () => !!(G.data && (G.data.markOpen || G.data.unlAll));
 function goalsData() { const d = G.data; if (!d.goals) d.goals = { n: {}, h: {} }; if (!d.goals.n) d.goals.n = {}; if (!d.goals.h) d.goals.h = {}; return d.goals; }
 function markBestData() { const d = G.data; if (!d.markBest) d.markBest = {}; return d.markBest; }
 const goalKey = (build, br, ch) => build + '|' + br + '|' + ch;
-const statStartPts = run => STAT_START + (run && run.markStat ? run.markStat : 0);
 function goalBranch(run) {
-  const T = TREE2[run.build], t = run.tree; if (!T || !t || !t.open.length) return null;
-  const cnt = {}; for (const id of t.open) { const sk = SK2[id]; if (sk && sk.b) cnt[sk.b] = (cnt[sk.b] || 0) + 1; }
+  const T = TREE2[run.build], open = run.atree ? run.atree.own : run.tree ? run.tree.open : []; if (!T || !open.length) return null; // 10월 16일 0.8.0 2단계: 액티브 트리의 연 노드(강화 포함)를 갈래별로 센다
+  const A = run.atree ? atBuild(run.build) : null; const brOf = id => A ? (A.nodes[id] || {}).br : (SK2[id] || {}).b;
+  const cnt = {}; for (const id of open) { const b0 = brOf(id); if (b0) cnt[b0] = (cnt[b0] || 0) + 1; }
   const by = list => list.slice().sort((x, y) => (cnt[y] || 0) - (cnt[x] || 0))[0];
-  let main, base = t.open.length;
+  let main, base = open.length;
   if (run.build === 'hunter') { // 사냥꾼: 기동은 피해 갈래와 함께 여는 갈래라, 기동을 뺀 피해 갈래를 주로 센다
     const dm = T.branches.filter(b => b !== '기동'); const tot = dm.reduce((a, b) => a + (cnt[b] || 0), 0);
     if ((cnt['기동'] || 0) > tot) main = '기동'; else { main = by(dm); base = tot; }
@@ -91,7 +91,7 @@ function goalBranch(run) {
   return main && base > 0 && (cnt[main] || 0) * 2 >= base ? main : null;
 }
 function goalsRecord(run) { // 보스를 이겼을 때(표식 도전 판은 제외). 새로 적힌 칸의 이름을 돌려준다
-  if (!run || run.markCh || !run.tree) return '';
+  if (!run || run.markCh || !(run.atree || run.tree)) return '';
   const br = goalBranch(run), g = goalsData(), m = run.mode === 'hard' ? 'h' : 'n', ch = run.ch || 1; let news = '';
   if (br) { const k = goalKey(run.build, br, ch); if (!g[m][k]) { g[m][k] = Date.now(); news = BUILDS[run.build].n + ' ' + br + ' ' + ch + '챕터' + (m === 'h' ? ' 가혹' : ''); } }
   if (ch >= 3) G.data.markOpen = 1;
@@ -121,8 +121,9 @@ function markSetup(run, M) {
   if (markOn(run, 'flask')) run.p.markFlask = 1;
   if (ch > 1) {
     const lv = MARK_START[ch].lv, up = lv - 1;
-    run.lv = lv; run.xp = LV_XP[lv - 1]; run.p.lv = lv; if (run.tree) run.tree.pts += up; run.markStat = LV_POINTS * up;
+    run.lv = lv; run.xp = LV_XP[lv - 1]; run.p.lv = lv; void up;
     run.ch = ch; run.boss = chData(ch).boss;
+    if (run.ptree) { ptFix(run); for (let c = 1; c < ch; c++) ksGrant(run, 'b' + c); treeSync(run); } // 10월 16일 0.8.0 2단계: 시작 레벨의 포인트와 시작 챕터 앞 큰 각인(markCh − 1)
   }
   delete run.dg; dgInit(run); // 표식이 정해진 뒤에 첫 문을 만든다
   if (ch > 1) markKit(run, ch);

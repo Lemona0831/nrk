@@ -9,13 +9,13 @@ function startRun(build, boss) {
   G.run = {
     id: 'r' + Date.now().toString(36), build, boss, startedAt: Date.now(), room: 0, p, bag: [], swaps: [], rooms: [], acts: [],
     deaths: [], result: null, blockPicked: null, entry: null, survey: null, drops: [], legSeen: [], awk: [],
-    stats: { str: 0, dex: 0, int: 0, con: 0, wil: 0 }, statGrowth: LV_POINTS, statBase: STAT_START, statLog: [], pool: shuffleSeeded(FREE_POOL, seed), choices: [], seed,
+    stats: { str: 0, dex: 0, int: 0, con: 0, wil: 0 }, statLog: [], pool: shuffleSeeded(FREE_POOL, seed), choices: [], seed, tv: TV,
   };
-  G.run.skills = isV2(p) ? [] : DEFAULT_SKILLS[build].slice(); G.run.bag = []; G.run.cons = []; G.run.consV = 3; G.run.pouch = {}; initGear(G.run); dgInit(G.run); G.run.skillLog = []; treeInit(G.run); if (isV2(p)) p.skills = v2Equip(G.run);
+  G.run.skills = isV2(p) ? [] : DEFAULT_SKILLS[build].slice(); G.run.bag = []; G.run.cons = []; G.run.consV = 3; G.run.pouch = {}; initGear(G.run); dgInit(G.run); G.run.skillLog = []; if (isV2(p)) { ptInit(G.run); treeSync(G.run); p.hp = p.hpMax; p.st = p.stMax; } // 10월 16일 0.8.0 2단계: 두 트리(시작 노드 능력치 12점)
   G.run.mode = G.cre && G.cre.mode === 'hard' && G.data.hardOpen ? 'hard' : 'normal'; G.run.cname = (G.cre && G.cre.name) || ''; G.run.ch = 1; G.run.playMs = 0; G.run.tut = G.data.tutDone ? 1 : 0; // 수련장을 마친 뒤 만든 캐릭터인가
   if (G.cre && G.cre.mark) markSetup(G.run, G.cre.mark); // 표식 도전: 챕터 시작 레벨 · 꾸러미 · 표식
   G.scr = 'create'; G.b = null; G.sel = null; G.creating = true;
-  openSheet('skills', { first: 1, pick: G.run.skills.slice() });
+  if (isV2(p)) allocBegin(G.run, 'create'); else openSheet('skills', { first: 1, pick: G.run.skills.slice() }); // 배분 흐름: 패시브 → (큰 각인) → 액티브 · 장착 → 시작
 }
 /* 이어 하기: 방과 방 사이마다 판을 통째로 저장 */
 /* ===== 장비 (기획서 11.5절) =====
@@ -198,7 +198,7 @@ function vEquip() {
   const filter = G.eqFilter || 'all', order = G.eqOrder || 'recent';
   const a = gearStats(p);
   let h = `<div class="eqsum" role="group" aria-label="지금 수치">${GSTAT.filter(x => !['heavyCost', 'lifeCap', 'manaCap', 'stamCap'].includes(x[0]) && (x[0] !== 'mp' || !isV2(p))).map(([k, lab, fmt]) => `<span><small>${lab}</small><b>${fmt(a[k])}</b></span>`).join('')}</div>`;
-  h += `<div class="row"><button class="sm" data-a="statview" data-from="equip">능력치 보기</button><button class="sm" data-a="awkview" data-from="equip">✨ 각인 ${(run.awk || []).length}개 보기</button></div>`;
+  h += `<div class="row"><button class="sm" data-a="statview" data-from="equip">능력치 보기</button><button class="sm" data-a="awkview" data-from="equip">✨ 큰 각인 ${run.ptree ? run.ptree.ks.length : 0}개 보기</button></div>`;
   if (inFight) h += `<p class="warn">전투 중에는 보기만 합니다. 전투가 끝나면 바꿉니다.</p>`;
   h += `<div class="eqcols"><section class="eqslots" aria-label="장비 칸">`;
   for (const sl of EQ_SLOTS) {
@@ -341,8 +341,8 @@ function commitAct(id, tid) {
 function monkFix(b) { const p = b.p; delete p.ctrSince; delete b.kiFastHit; delete b.kiFastTurn; if (p.stance) { delete p.stance.max; delete p.stance.half; } }
 function restoreBattle(cur) {
   const bt = cur.battle; delete cur.battle;
-  G.run = cur; statFix(G.run); applyGear(G.run); const b = bt.b; b.p = G.run.p; b.rngF = battleRng(b); b.stepMode = true;
-  if (G.run.tree && isV2(b.p)) { treeFix(G.run); b.p.skills = v2Equip(G.run); if (!b.p.cd) resetCharges(b.p); if (b.p.ys == null) b.p.ys = YUSAN.start; } // 개편 전 저장본: 바뀐 스킬과 재사용 대기. 10월 15일 유산 1차 시제품 전 저장본의 전투는 유산 가득으로 이어 간다
+  G.run = cur; consFix(G.run); applyGear(G.run); const b = bt.b; b.p = G.run.p; b.rngF = battleRng(b); b.stepMode = true;
+  if (isV2(b.p)) { treeSync(G.run); applyGear(G.run); if (!b.p.cd) resetCharges(b.p); if (b.p.ys == null) b.p.ys = YUSAN.start; } // 10월 16일 0.8.0 2단계: 트리에서 능력치 · 장착을 다시 셈 // 개편 전 저장본: 바뀐 스킬과 재사용 대기. 10월 15일 유산 1차 시제품 전 저장본의 전투는 유산 가득으로 이어 간다
   if (b.p.build === 'monk') monkFix(b); // 수도승 단순화 전 저장본: 쓰지 않는 칸을 비운다
   if (!b.queue) { b.round = b.tick || 1; b.queue = ['p']; b.bonusUsed = 0; } // 라운드 전 저장본: 지금이 내 차례
   G.b = b; G.scr = 'run'; G.sel = null; G.busy = false; G.banner = null; render();
@@ -357,4 +357,4 @@ const runLive = () => !!(G.run && !runOver(G.run));
 function curSweep() { const d = G.data; let n = 0; if (d.cur && runOver(d.cur)) { delete d.cur; n++; } if (d.kept) { const k = d.kept.filter(x => !runOver(x)); n += d.kept.length - k.length; d.kept = k; } if (n) saveLocal(); return n; }
 function saveCur() { if (!G.run || runOver(G.run)) return; try { G.data.cur = JSON.parse(JSON.stringify(G.run)); saveLocal(); } catch (e) { } }
 function clearCur() { delete G.data.cur; saveLocal(); }
-function resumeRun() { curSweep(); if (!G.data.cur) { render(); return; } dgFix(G.data.cur); if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); statFix(G.run); applyGear(G.run); if (G.run.tree && isV2(G.run.p)) { treeFix(G.run); G.run.p.skills = v2Equip(G.run); } /* 0.6a.2: 시작 스킬이 생기기 전 저장본도 시작 스킬을 끼운다 */ G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); if(G.run.gearPending)nextDrop();else awkOpen(); }
+function resumeRun() { curSweep(); if (!G.data.cur) { render(); return; } dgFix(G.data.cur); if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (isV2(G.data.cur.p) && G.data.cur.tv !== TV && BUILDS[G.data.cur.build]) { migBegin(JSON.parse(JSON.stringify(G.data.cur))); return; } /* 10월 16일 0.8.0 2단계: 옛 판은 배분 화면을 거친다(확정할 때 저장) */ if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); consFix(G.run); applyGear(G.run); if (isV2(G.run.p)) { treeSync(G.run); applyGear(G.run); } G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); if(G.run.gearPending)nextDrop();else ksOpen(); }

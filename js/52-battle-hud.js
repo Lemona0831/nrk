@@ -133,7 +133,7 @@ function consUsefulN(b) {
    스킬 버튼에 올리거나(PC) 길게 누르면(휴대폰) 쓸 칸이 깜빡이고 "5 → 2"를 보인다(ysPv). 모자라면 모자란 칸과 "1 모자람" */
 const YS_LAB = x => x.src === 'turn' ? '차례' : x.src === 'resp' ? x.why : x.src === 'refund' ? '🔄' : x.src === 'item' ? '장비' : x.src === 'flask' ? '플라스크' : (x.why || '');
 function ysRow(b) {
-  const p = b.p, n = ysNow(p), c = YUSAN.cap, now = Date.now();
+  const p = b.p, n = ysNow(p), c = ysCapOf(p), now = Date.now(); // 10월 16일 0.8.0 2단계: 큰 각인으로 상한이 오른다
   if (!b.ysUi) b.ysUi = { seen: b.rec.length, fl: [] }; const U = b.ysUi;
   for (; U.seen < b.rec.length; U.seen++) { const x = b.rec[U.seen]; let t = null, cl = 'pos';
     if (x.k === 'yspend') { t = '−' + x.cost; cl = 'neg'; } else if (x.k === 'ys' && x.g) { t = (x.g > 0 ? '+' + x.g : '−' + (-x.g)) + ' ' + YS_LAB(x); cl = x.g > 0 ? 'pos' : 'neg'; }

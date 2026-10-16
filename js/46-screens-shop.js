@@ -45,7 +45,7 @@ function genShop(run) { { const s = pouchSell(run); if (s.n) toast('전리품 �
 /* ===== 도박 둘과 각인 (10월 8일, docs/아이템/도박-깨달음.md · 장비-경제.md 6.3 · 7절) =====
    봉인된 꾸러미: 2챕터를 넘은 뒤의 상점. 칸을 골라 등급 모를 장비를 산다. 확률은 모드와 상관없이 늘 같다(가혹 모드의 영웅 가중도 걸지 않는다).
    운명의 저울: 2챕터부터 드문 방. 가방의 장비를 올려 같은 칸의 한 단계 위 장비로 바꾼다. 실패하면 잃는다.
-   각인: 런 안에서만 남는 패시브. 정산을 확정한 뒤와 2챕터부터의 야영지에서 셋 가운데 하나. 효과는 IFX_AWK, 이름은 data/awakening.js */
+   큰 각인(10월 16일 0.8.0 2단계): 1 · 2챕터 정산을 확정한 뒤와 3챕터 야영지에 들어설 때 셋 가운데 하나(js/23-tree-engine.js). 챕터 선물은 옛 각인 꼴(IFX_AWK)로 남는다 */
 const GAMBLE = { from: 2, mul: 1.3, grades: { n: 30, m: 42, r: 22, h: 5.5, l: 0.5 }, fit: 0.7, pity: 10, slots: ['weapon', 'armor', 'gloves', 'ring', 'amulet', 'flask'], slotN: { weapon: '무기', armor: '갑옷', gloves: '장갑', ring: '반지', amulet: '목걸이', flask: '플라스크' } };
 const FATE = { from: 2, p: 0.045, max: 2, up: { n: 0.70, m: 0.45, r: 0.20 }, next: { n: 'm', m: 'r', r: 'h' } };
 const gamblePrice = ch => Math.round(priceOf('m', ch) * GAMBLE.mul);
@@ -102,27 +102,12 @@ function fateRun(run, uid) {
   run.rooms.push({ room: run.room, type: 'fate', took: from.tpl + ':' + from.g, ok: to ? 1 : 0, to: to ? to.tpl + ':' + to.g : null });
   return { ok: !!to, from, to };
 }
-/* 각인: 얻을 수 있는 것 · 세 개 보이기 · 고르기 */
-function awkAvail(run) { const ch = run.ch || 1; return AWK_LIST.filter(a => !(run.awk || []).includes(a.id) && (a.g === 'cls' ? a.cls === run.build : ch >= AWK.openCh[a.g])); }
-function awkOfferMake(run) {
-  const pool = awkAvail(run); if (!pool.length) return [];
-  const cls = pool.filter(a => a.g === 'cls'); const out = [];
-  if (cls.length) out.push(cls[Math.floor(Math.random() * cls.length)]);
-  const rest = pool.filter(a => !out.includes(a));
-  while (out.length < AWK.offer && rest.length) out.push(rest.splice(Math.floor(Math.random() * rest.length), 1)[0]);
-  for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
-  return out.map(a => a.id);
-}
-function awkGrant(run) { run.awkPending = (run.awkPending || 0) + 1; }
-function awkOpen() {
-  const run = G.run; if (!run || !(run.awkPending > 0) || G.b || G.sheet) return false;
-  if (!run.awkOffer || !run.awkOffer.length) { run.awkOffer = awkOfferMake(run); if (!run.awkOffer.length) { run.awkPending = 0; run.awkOffer = null; return false; } saveRunLocal(); saveCur(); }
-  openSheet('awk', {}); return true;
-}
-function awkTake(run, id) {
-  if (!(run.awkPending > 0) || !(run.awkOffer || []).includes(id) || (run.awk || []).includes(id)) return false;
-  (run.awk = run.awk || []).push(id); run.p.awk = run.awk.slice(); (run.awkLog = run.awkLog || []).push({ id, ch: run.ch || 1, room: run.room, t: Date.now() });
-  run.awkPending--; run.awkOffer = null; applyGear(run); return true;
+/* 10월 16일 0.8.0 2단계: 옛 각인 제시(정산 · 야영지)는 큰 각인 제시(js/23-tree-engine.js ksGrant · ksOfferMake · ksTake)로 바뀌었다. 옛 각인 카드는 기록 보기용으로 남긴다 */
+/* 큰 각인 고르기 창: 받을 것이 있고 다른 창 · 전투가 없을 때 연다 */
+function ksOpen() {
+  const run = G.run; if (!run || !(run.ksPending > 0) || G.b || G.sheet || run.alloc || !run.ptree) return false;
+  const had = (run.ksOffer || []).join(); ksEnsureOffer(run); if (!run.ksOffer) return false; if (run.ksOffer.join() !== had) { saveRunLocal(); saveCur(); }
+  openSheet('ks', {}); return true;
 }
 function awkCard(id, extra) { const a = AWK_MAP[id]; if (!a) return ''; const tag = a.g === 'cls' ? esc((BUILDS[a.cls] || {}).n || '') + ' · ' + esc(a.br) : a.g === 'gift' ? '선물' : '공용'; return `<div class="awkc"><div class="awkh"><b>${esc(a.n)}</b><span class="chip">${tag}</span></div><p>${esc(a.d)}</p>${extra || ''}</div>`; }
 function vGamble(run) {
@@ -181,8 +166,8 @@ function vCamp(run) {
     + `<button class="wide${C.rested ? ' gold' : ''}" data-a="campleave">${C.rested ? '정비를 마치고 내려간다' : '쉬지 않고 내려간다'}</button>`;
 }
 function vShop() {
-  const run = G.run, S = run.shop; const cost = (run.lv || 1) * 10; const pts = statSum(run.stats);
-  const tOpen = run.tree ? run.tree.open.length : 0; const tCost = treeResetCost(run);
+  const run = G.run, S = run.shop; const cost = run.ptree ? ptResetCost(run) : 0; const pOwn = run.ptree ? run.ptree.own.length : 0; // 10월 16일 0.8.0 2단계: 상점 되돌리기 둘
+  const tOpen = run.atree ? run.atree.own.length : 0; const tCost = run.atree ? atResetCost(run) : 0;
   let h = vPlayerPanel(run.p, null);
   h += `<section class="card shop"><div class="dghead"><h3 style="margin:0">떠돌이 상인</h3><span class="gold-n">골드 ${run.gold || 0}</span></div><p class="lore">무너진 계단참에 등불 하나. 상인은 묻지 않고 값만 부른다.</p><p class="mini">진열은 챕터마다 새로 바뀝니다. 산 것은 가방에 들어갑니다. 가방 ${bagUsed(run)}/${BAG_MAX}${bagUsed(run) >= BAG_MAX ? '. 새 장비를 사려면 한 칸을 비워 주세요' : ''}.</p><div class="shopgrid">`;
   S.stock.forEach((x, i) => {
@@ -192,7 +177,7 @@ function vShop() {
   h += `</div></section>${vGamble(run)}<section class="card"><h4>소모품</h4><p class="mini">같은 종류·등급은 기존 묶음부터 채웁니다. 소모품 가방은 장비 가방과 따로 ${CONS_BAG}칸이고, 한 칸에 담기는 수는 소모품마다 다릅니다. 소모품 가방 ${consUsed(run)}/${CONS_BAG}칸.</p><div class="baglist">${(S.cons || []).map((x, i) => { const D = CONS[x.id], space = consSpace(run, x.id, 'n'), owned = (run.cons || []).filter(c => c.id === x.id); const why = consBuyWhy(run, x); return `<div class="bagline consrow"><div><b>${D.ico} ${esc(D.n)}</b>${x.left != null ? ` <span class="mini">남은 ${x.left}개</span>` : ''}<br><small class="mini">${esc(D.sit)} · ${esc(D.d(D.v))}</small><br><small class="mini">보유 ${owned.reduce((n,c)=>n+c.n,0)}개 · ${owned.length}칸 · 묶음당 최대 ${D.max}개<br>${space.existing ? `일반 묶음에 ${space.existing}개 더 담을 수 있음 · 추가 칸 없음` : space.free ? `구매하면 새 묶음 한 칸 사용` : `일반 묶음 빈 자리 없음 · 새 칸 필요`}</small></div><div class="row">${adisBtn(why, 'sm' + (why ? '' : ' gold'), 'consbuy', i, x.price + ' 골드에 사기')}${consFillBtn(run, x, i)}</div></div>`; }).join('')}</div>${(run.cons || []).length ? `<h4>가방의 소모품 팔기</h4><div class="baglist">${run.cons.map((c, i) => `<div class="bagline"><div><b>${CONS[c.id].ico} ${esc(consName(c))} ×${c.n}</b></div><button class="sm" data-a="conssell" data-k="${i}">하나 ${consSell(c)} 골드에 팔기</button></div>`).join('')}</div>` : ''}</section>`;
   h += `<section class="card"><h4>가방의 장비 팔기</h4><p class="mini">살 때 값의 25%를 받습니다. 낀 장비는 먼저 빼야 팝니다.</p>`;
   h += run.bag.length ? `<div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${inm(x.tpl, x.g)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${baseText(x)}</small></div><button class="sm" data-a="sell" data-k="${u}"${x.locked ? ' disabled' : ''}>${x.locked ? '잠김' : sellOf(x)+' 골드에 팔기'}</button>${lockButton(x)}</div>`; }).join('')}</div>` : '<p class="mini">가방이 비어 있습니다.</p>';
-  h += `</section><section class="card"><h4>떠나기 전에</h4><div class="row"><button data-a="equip">장비 바꾸기</button>${adisBtn(!pts ? '나눈 능력치가 없습니다' : (run.gold || 0) < cost ? '골드가 ' + (cost - (run.gold || 0)) + ' 모자랍니다' : '', '', 'respec', null, '능력치 다시 나누기 (' + cost + ' 골드)')}${run.tree ? adisBtn(!tOpen ? '연 칸이 없습니다' : (run.gold || 0) < tCost ? '골드가 ' + (tCost - (run.gold || 0)) + ' 모자랍니다' : '', '', 'treereset', null, '트리 초기화 (' + tCost + ' 골드)') : ''}</div><p class="mini">능력치 다시 나누기: 나눈 ${pts}점을 거두어 처음부터 다시 나눕니다. 값은 레벨 × 10골드입니다.</p>${run.tree ? `<p class="mini">트리 초기화: 연 칸 ${tOpen}개를 모두 닫고 포인트를 돌려줍니다. 끼운 트리 스킬도 빠집니다. 값은 연 칸 하나에 ${Math.round(TREE_RESET.cell * Math.pow(1.5, (run.ch || 1) - 1))}골드입니다.</p>` : ''}<p class="mini">남은 골드는 다음 챕터로 가져갑니다.</p></section><div class="stickbar shopbar"><span class="gold-n">골드 ${run.gold || 0}</span><span class="mini">장비 ${bagUsed(run)}/${BAG_MAX} · 소모품 ${consUsed(run)}/${CONS_BAG}</span><button class="gold" data-a="shopleave">상점을 나선다</button></div>`;
+  h += `</section><section class="card"><h4>떠나기 전에</h4><div class="row"><button data-a="equip">장비 바꾸기</button>${run.ptree ? adisBtn(!pOwn ? '찍은 패시브 노드가 없습니다' : (run.gold || 0) < cost ? '골드가 ' + (cost - (run.gold || 0)) + ' 모자랍니다' : '', '', 'respec', null, '패시브 되돌리기 (' + cost + ' 골드)') : ''}${run.atree ? adisBtn(!tOpen ? '연 액티브 노드가 없습니다' : (run.gold || 0) < tCost ? '골드가 ' + (tCost - (run.gold || 0)) + ' 모자랍니다' : '', '', 'treereset', null, '액티브 되돌리기 (' + tCost + ' 골드)') : ''}</div><p class="mini">패시브 되돌리기: 포인트로 찍은 노드 ${pOwn}개를 모두 되돌려 다시 찍습니다. 큰 각인과 길 덤 노드는 남습니다. 값은 레벨 × 10골드입니다.</p>${run.atree ? `<p class="mini">액티브 되돌리기: 연 노드 ${tOpen}개를 모두 닫고 포인트를 돌려줍니다. 끼운 트리 스킬도 빠집니다. 값은 연 노드 하나에 ${Math.round(TREE_RESET.cell * Math.pow(1.5, (run.ch || 1) - 1))}골드입니다.</p>` : ''}<p class="mini">남은 골드는 다음 챕터로 가져갑니다.</p></section><div class="stickbar shopbar"><span class="gold-n">골드 ${run.gold || 0}</span><span class="mini">장비 ${bagUsed(run)}/${BAG_MAX} · 소모품 ${consUsed(run)}/${CONS_BAG}</span><button class="gold" data-a="shopleave">상점을 나선다</button></div>`;
   return h;
 }
 /* 쓸 수 없어도 초점이 가는 버튼 (10월 7일 2차): disabled 대신 aria-disabled, 이유는 읽는 이름에 넣고 누르면 알림으로 */

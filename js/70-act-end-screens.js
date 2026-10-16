@@ -143,7 +143,7 @@ function itemCard(k, extra) {
 
 function reasonPicker() { return `<fieldset class="reasons"><legend>왜 바꾸나요?</legend>${REASONS.map((r, i) => `<label><input type="radio" name="rs" value="${r[0]}"${i === 0 ? '' : ''}> ${r[1]}</label>`).join(' ')}</fieldset><label for="rnote">메모. 적지 않아도 됩니다.</label><input id="rnote" type="text">`; }
 function vSheet() {
-  const S = G.sheet; if (!S || (S.data.first && (S.kind === 'skills' || S.kind === 'stats'))) return ''; // 캐릭터 만들기의 스킬·능력치는 창이 아니라 만들기 화면 안에 그린다
+  const S = G.sheet; if (!S || (S.data.first && (S.kind === 'skills' || S.kind === 'alloc'))) return ''; // 캐릭터 만들기의 스킬·능력치는 창이 아니라 만들기 화면 안에 그린다
   const [title, body] = sheetParts(S);
   return `<div class="sheet-bg${hudLiveSheet() ? ' live' + (G.hudTop ? ' ltop' : '') : ''}" data-a="closebg"><div class="sheet sh-${S.kind}" role="dialog" aria-modal="true" aria-labelledby="shtitle"><div class="shead"><h3 id="shtitle">${esc(title)}</h3>${S.kind === 'equip' || S.kind === 'drop' || S.kind === 'help' || S.kind === 'settings' || S.kind === 'toasts' || S.kind === 'offer' || S.kind === 'awkview' || S.kind === 'statview' || S.kind === 'codex' || S.kind === 'itembook' || S.kind === 'changes' ? '<button class="sm" data-a="close">닫기</button>' : ''}</div>${body}</div></div>`;
 }
