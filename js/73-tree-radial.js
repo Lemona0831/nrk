@@ -257,13 +257,21 @@ function vStatTable(run) {
   return `<table class="trd-tbl"><caption class="sr">능력치 합계</caption><tbody>${rows}</tbody></table><p class="mini">작은 노드 효과: 주는 붕괴 +${Math.round((Math.pow(1 + PT.smallBrk, sm.brk) - 1) * 100)}% (제어 ${sm.brk}칸) · 스태미나 +${sm.st * PT.smallSt} (계승 ${sm.st}칸)</p>`;
 }
 const trdWide = () => typeof matchMedia !== 'undefined' && matchMedia('(min-width: 900px)').matches;
+/* 그림 읽는 법 (10월 17일 다듬기: 만든 사람 "읽는 법이 눈에 안 들어온다"): 모양 · 상태 두 묶음, 큰 그림 · 굵은 이름 · 한 줄 풀이, 조작은 따로 */
 function trdLegend(mode) {
-  const ic = (cls, inner) => `<svg class="trd-li" viewBox="-12 -12 24 24" aria-hidden="true"><g class="tn ${cls}">${inner}</g></svg>`, c = r => `<circle class="bd" r="${r}"/>`, dm = s => `<path class="bd" d="M0 ${-s}L${s} 0L0 ${s}L${-s} 0Z"/>`;
-  const it = (i, t) => `<li>${i}<span>${t}</span></li>`;
-  let L = [];
-  if (mode === 'a') L = [it(ic('tn-skill st-own eq', `<circle class="eqr" r="10.5"/>${c(8)}`), '장착한 스킬(굵은 테)'), it(ic('tn-skill st-own', c(8)), '연 스킬'), it(ic('tn-upgrade st-own', c(5)), '강화(스킬 곁의 작은 노드)'), it(ic('tn-upgrade st-own idle', c(5)), '연 강화 · 스킬을 끼우면 일함'), it(ic('tn-skill st-can', c(8)), '열 수 있음'), it(ic('tn-skill st-lock', c(8)), '잠김'), it(ic('tn-skill st-lock rlk', c(8)), '고리 잠김')];
-  else L = [it(ic('tn-small st-own', c(5)), '찍음'), it(ic('tn-small st-free', c(5) + '<circle class="fm" cx="4" cy="-4" r="2.4"/>'), '길 덤(큰 각인 덤 · 되돌려도 남음)'), it(ic('tn-small st-can', c(5)), '찍을 수 있음'), it(ic('tn-small st-near', c(5)), '포인트가 없음'), it(ic('tn-small st-lock', c(5)), '잠김'), it(ic('tn-notable st-lock', c(8)), '중간 노드'), it(ic('tn-keystone st-lock', dm(9)), '큰 각인'), it(ic('tn-small st-lock rlk', c(5)), '고리 잠김')].concat(mode === 'k' ? [it(ic('tn-keystone cand', dm(9)), '후보'), it('<svg class="trd-li" viewBox="-12 -12 24 24" aria-hidden="true"><path class="kp on" d="M-10 6L0 -2L10 6"/></svg>', '덤으로 열릴 길')] : []);
-  return `<details class="trd-leg"${trdWide() ? ' open' : ''}><summary>그림 읽는 법</summary><ul>${L.join('')}</ul><p class="mini">끌어서 옮기고, Ctrl(⌘) + 휠 · 터치패드 오므리기 · 두 손가락 · ＋ － 단추로 확대합니다. 노드를 누르면 설명이 나옵니다. 키보드: 화살표로 옮겨 다니고 Enter로 고르거나 찍고, Esc로 설명을 닫습니다. + · − 키로 확대합니다.</p></details>`;
+  const ic = (cls, inner) => `<svg class="trd-li" viewBox="-13 -13 26 26" aria-hidden="true"><g class="tn ${cls}">${inner}</g></svg>`, c = r => `<circle class="bd" r="${r}"/>`, dm = s => `<path class="bd" d="M0 ${-s}L${s} 0L0 ${s}L${-s} 0Z"/>`;
+  const it = (i, n, d) => `<li>${i}<span><b>${n}</b>${d ? '<small>' + d + '</small>' : ''}</span></li>`;
+  const grp = (h, xs) => `<section><h5>${h}</h5><ul>${xs.join('')}</ul></section>`;
+  let shape, state, extra = [];
+  if (mode === 'a') {
+    shape = [it(ic('tn-skill st-own', c(9)), '스킬', '큰 원. 숫자는 유산 비용, ⚔ 베기 · ✦ 주문'), it(ic('tn-upgrade st-own', c(5.5)), '강화', '스킬 곁의 작은 노드. 그 스킬을 바꾼다')];
+    state = [it(ic('tn-skill st-own eq', `<circle class="eqr" r="11.5"/>${c(9)}`), '장착함', '굵은 테'), it(ic('tn-skill st-own', c(9)), '열림', '밝은 금색'), it(ic('tn-skill st-can', c(9)), '열 수 있음', '테가 빛남'), it(ic('tn-upgrade st-own idle', c(5.5)), '쉬는 강화', '그 스킬을 끼우면 일함'), it(ic('tn-skill st-lock', c(9)), '잠김', '앞 노드를 먼저'), it(ic('tn-skill st-lock rlk', c(9)), '고리 잠김', '챕터를 넘기면 열림')];
+  } else {
+    shape = [it(ic('tn-small st-own', c(5.5)), '작은 노드', '능력치 +2 같은 작은 몫'), it(ic('tn-notable st-own', c(9)), '중간 노드', '효과가 붙은 노드'), it(ic('tn-keystone st-own', dm(10)), '큰 각인', '챕터를 깨면 셋 중 하나를 고름')];
+    state = [it(ic('tn-notable st-own', c(9)), '찍음', '밝은 금색 · 금빛 선'), it(ic('tn-notable st-can', c(9)), '찍을 수 있음', '테가 빛남'), it(ic('tn-notable st-free', c(9) + '<circle class="fm" cx="6" cy="-6" r="3"/>'), '길 덤', '큰 각인을 고를 때 무료로 열림. 되돌려도 남음'), it(ic('tn-notable st-near', c(9)), '포인트 부족', '이웃이지만 포인트가 없음'), it(ic('tn-notable st-lock', c(9)), '잠김', '찍은 노드와 이어지지 않음'), it(ic('tn-notable st-lock rlk', c(9)), '고리 잠김', '챕터를 넘기면 열림')];
+    if (mode === 'k') extra = [grp('큰 각인 고르기', [it(ic('tn-keystone cand', dm(10)), '후보', '빛나는 ◆ 셋'), it('<svg class="trd-li" viewBox="-13 -13 26 26" aria-hidden="true"><path class="kp on" d="M-11 6L0 -3L11 6"/></svg>', '덤으로 열릴 길', '고르면 포인트 없이 열림')])];
+  }
+  return `<details class="trd-leg"${trdWide() ? ' open' : ''}><summary>그림 읽는 법 · 모양과 상태</summary><div class="trd-lg">${grp('모양', shape)}${grp('상태', state)}${extra.join('')}</div><p class="trd-lgk"><b>조작</b> 끌어서 옮기기 · 확대는 Ctrl(⌘) + 휠, 터치패드 오므리기, 두 손가락, ＋ － 단추 · 노드를 누르면 설명 · 키보드: 화살표로 옮기고 Enter로 고르기와 찍기, Esc로 닫기</p></details>`;
 }
 /* 한 장: 지도(그림 + 확대 단추) · 설명 칸 · 능력치(패시브) · 읽는 법 */
 function trdView(run, mode, opt) {

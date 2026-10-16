@@ -15,9 +15,11 @@
 .trd-stats{grid-area:stats;border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--panel2)}
 .trd-stats summary,.trd-leg summary{cursor:pointer;color:var(--gold);min-height:36px;display:flex;align-items:center;font-weight:600}
 .trd-tbl{width:100%;border-collapse:collapse;margin:4px 0}.trd-tbl th{text-align:left;font-weight:400;color:var(--muted);padding:3px 6px 3px 0;white-space:nowrap}.trd-tbl td{padding:3px 4px}.trd-tbl td b{color:var(--gold);font-size:calc(17px*var(--fs,1))}.trd-tbl tr+tr{border-top:1px solid var(--line)}
-.trd-leg{grid-area:leg;font-size:calc(13px*var(--fs,1))}
-.trd-leg ul{list-style:none;margin:4px 0;padding:0;display:flex;flex-wrap:wrap;gap:4px 14px}.trd-leg li{display:flex;align-items:center;gap:6px;color:var(--muted)}
-.trd-li{width:22px;height:22px;flex:none;overflow:visible}
+.trd-leg{grid-area:leg;font-size:calc(14px*var(--fs,1));border:1px solid var(--line);border-radius:10px;padding:6px 12px 10px;background:var(--panel2)}
+.trd-lg{display:grid;gap:10px}.trd-lg h5{margin:4px 0 6px;font-size:calc(13px*var(--fs,1));color:var(--gold);letter-spacing:.04em}
+.trd-leg ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:8px 16px}.trd-leg li{display:flex;align-items:center;gap:10px;min-width:0}.trd-leg li span{min-width:0;line-height:1.35}.trd-leg li b{display:block;font-weight:600}.trd-leg li small{display:block;color:var(--muted);font-size:calc(12px*var(--fs,1))}
+.trd-lgk{margin:10px 0 0;padding-top:8px;border-top:1px solid var(--line);color:var(--muted);font-size:calc(12.5px*var(--fs,1));line-height:1.5}.trd-lgk b{color:var(--gold);margin-right:6px}
+.trd-li{width:32px;height:32px;flex:none;overflow:visible}
 .trd-lt{margin-left:auto}
 @media (min-width:900px){
  .trd{grid-template-columns:minmax(0,1fr) 300px;grid-template-rows:auto auto 1fr auto;grid-template-areas:"map info" "map stats" "map ." "leg leg"}
@@ -64,56 +66,56 @@
 .trd-svg .kp.on{stroke-width:4;opacity:1;stroke-dasharray:8 5}
 /* 노드 */
 .trd-svg .tn{cursor:pointer;outline:none}
-.trd-svg .tn .hit{fill:transparent;stroke:none}
-.trd-svg .tn .bd{fill:#1b1511;stroke:var(--tr-lock);stroke-width:1.6;vector-effect:non-scaling-stroke}
-.trd-svg .tn .in{fill:none;stroke:var(--tr-lock);stroke-width:1;opacity:.8;vector-effect:non-scaling-stroke}
-.trd-svg .tn .gy{color:#8b7558}
-.trd-svg .tn .fr{fill:none;stroke:var(--hi);stroke-width:2;stroke-dasharray:3 3;opacity:0;vector-effect:non-scaling-stroke}
-.trd-svg .tn:focus-visible .fr,.trd-svg .tn.sel .fr{opacity:1}
-.trd-svg .tn.sel .fr{stroke:var(--tr-can);stroke-dasharray:none}
-.trd-svg .tn .gl{fill:none;stroke:var(--tr-can);stroke-width:1.4;opacity:.25;vector-effect:non-scaling-stroke;animation:trglow 2.4s ease-in-out infinite}
+:is(.trd-svg,.trd-li) .tn .hit{fill:transparent;stroke:none}
+:is(.trd-svg,.trd-li) .tn .bd{fill:#1b1511;stroke:var(--tr-lock);stroke-width:1.6;vector-effect:non-scaling-stroke}
+:is(.trd-svg,.trd-li) .tn .in{fill:none;stroke:var(--tr-lock);stroke-width:1;opacity:.8;vector-effect:non-scaling-stroke}
+:is(.trd-svg,.trd-li) .tn .gy{color:#8b7558}
+:is(.trd-svg,.trd-li) .tn .fr{fill:none;stroke:var(--hi);stroke-width:2;stroke-dasharray:3 3;opacity:0;vector-effect:non-scaling-stroke}
+:is(.trd-svg,.trd-li) .tn:focus-visible .fr,:is(.trd-svg,.trd-li) .tn.sel .fr{opacity:1}
+:is(.trd-svg,.trd-li) .tn.sel .fr{stroke:var(--tr-can);stroke-dasharray:none}
+:is(.trd-svg,.trd-li) .tn .gl{fill:none;stroke:var(--tr-can);stroke-width:1.4;opacity:.25;vector-effect:non-scaling-stroke;animation:trglow 2.4s ease-in-out infinite}
 @keyframes trglow{50%{opacity:.75}}
-.trd-svg .tn.st-near .bd,.trd-svg .tn.st-view .bd{stroke:#9c7e45;stroke-dasharray:2.5 2}
-.trd-svg .tn.st-can .bd{stroke:var(--tr-can);stroke-width:2.2;fill:#2a2016}
-.trd-svg .tn.st-can .gy{color:var(--tr-can)}
-.trd-svg .tn.st-own .bd,.trd-svg .tn.st-open .bd,.trd-svg .tn.st-ks .bd{fill:url(#trg-gold);stroke:#f6e2a2;stroke-width:1.6}
-.trd-svg .tn.st-own .gy,.trd-svg .tn.st-open .gy,.trd-svg .tn.st-ks .gy{color:#2a1b08}
-.trd-svg .tn.st-own .in,.trd-svg .tn.st-open .in,.trd-svg .tn.st-ks .in{stroke:#2a1b08;opacity:.6}
-.trd-svg .tn.st-free .bd{fill:url(#trg-free);stroke:var(--tr-free);stroke-width:2.6;stroke-dasharray:4 2}
-.trd-svg .tn.st-free .gy{color:#13231c}
-.trd-svg .tn .fm{fill:var(--tr-free);stroke:#0b0907;stroke-width:1}
-.trd-svg .tn.st-ks .bd{filter:drop-shadow(0 0 4px rgba(246,226,162,.7))}
-.trd-svg .tn.tn-keystone.st-lock .bd{stroke:#7a6040;stroke-width:1.8}
-.trd-svg .tn.tn-keystone.st-lock .gy{color:#7a6040}
-.trd-svg .tn.rlk{opacity:.42}
-.trd-svg .tn.rlk .bd{stroke-dasharray:2 2}
-.trd-svg .tn.cand{opacity:1}
-.trd-svg .tn.cand .bd{fill:#2a2016;stroke:var(--tr-can);stroke-width:2.6}
-.trd-svg .tn.cand .gy{color:var(--tr-can)}
-.trd-svg .tn.cand .gl{stroke-width:3;opacity:.85}
-.trd-svg .tn .cb{font-size:11px;font-weight:700;text-anchor:middle;fill:var(--tr-can);paint-order:stroke;stroke:#0b0907;stroke-width:3px}
-.trd-svg .tn.will .bd{stroke:var(--tr-free);stroke-width:2.6;stroke-dasharray:3 2}
-.trd-svg .tn .sn{font-size:8px;text-anchor:middle;fill:#2a1b08;font-weight:700;pointer-events:none}
-.trd-svg .tn .sn2{font-size:6.5px;font-weight:600}
+:is(.trd-svg,.trd-li) .tn.st-near .bd,:is(.trd-svg,.trd-li) .tn.st-view .bd{stroke:#9c7e45;stroke-dasharray:2.5 2}
+:is(.trd-svg,.trd-li) .tn.st-can .bd{stroke:var(--tr-can);stroke-width:2.2;fill:#2a2016}
+:is(.trd-svg,.trd-li) .tn.st-can .gy{color:var(--tr-can)}
+:is(.trd-svg,.trd-li) .tn.st-own .bd,:is(.trd-svg,.trd-li) .tn.st-open .bd,:is(.trd-svg,.trd-li) .tn.st-ks .bd{fill:url(#trg-gold);stroke:#f6e2a2;stroke-width:1.6}
+:is(.trd-svg,.trd-li) .tn.st-own .gy,:is(.trd-svg,.trd-li) .tn.st-open .gy,:is(.trd-svg,.trd-li) .tn.st-ks .gy{color:#2a1b08}
+:is(.trd-svg,.trd-li) .tn.st-own .in,:is(.trd-svg,.trd-li) .tn.st-open .in,:is(.trd-svg,.trd-li) .tn.st-ks .in{stroke:#2a1b08;opacity:.6}
+:is(.trd-svg,.trd-li) .tn.st-free .bd{fill:url(#trg-free);stroke:var(--tr-free);stroke-width:2.6;stroke-dasharray:4 2}
+:is(.trd-svg,.trd-li) .tn.st-free .gy{color:#13231c}
+:is(.trd-svg,.trd-li) .tn .fm{fill:var(--tr-free);stroke:#0b0907;stroke-width:1}
+:is(.trd-svg,.trd-li) .tn.st-ks .bd{filter:drop-shadow(0 0 4px rgba(246,226,162,.7))}
+:is(.trd-svg,.trd-li) .tn.tn-keystone.st-lock .bd{stroke:#7a6040;stroke-width:1.8}
+:is(.trd-svg,.trd-li) .tn.tn-keystone.st-lock .gy{color:#7a6040}
+:is(.trd-svg,.trd-li) .tn.rlk{opacity:.42}
+:is(.trd-svg,.trd-li) .tn.rlk .bd{stroke-dasharray:2 2}
+:is(.trd-svg,.trd-li) .tn.cand{opacity:1}
+:is(.trd-svg,.trd-li) .tn.cand .bd{fill:#2a2016;stroke:var(--tr-can);stroke-width:2.6}
+:is(.trd-svg,.trd-li) .tn.cand .gy{color:var(--tr-can)}
+:is(.trd-svg,.trd-li) .tn.cand .gl{stroke-width:3;opacity:.85}
+:is(.trd-svg,.trd-li) .tn .cb{font-size:11px;font-weight:700;text-anchor:middle;fill:var(--tr-can);paint-order:stroke;stroke:#0b0907;stroke-width:3px}
+:is(.trd-svg,.trd-li) .tn.will .bd{stroke:var(--tr-free);stroke-width:2.6;stroke-dasharray:3 2}
+:is(.trd-svg,.trd-li) .tn .sn{font-size:8px;text-anchor:middle;fill:#2a1b08;font-weight:700;pointer-events:none}
+:is(.trd-svg,.trd-li) .tn .sn2{font-size:6.5px;font-weight:600}
 /* 액티브: 스킬은 큰 원(유산 비용 · ⚔/✦), 장착은 굵은 테, 강화는 곁의 작은 위성 */
-.trd-svg .tn .yc{font-size:11px;font-weight:700;text-anchor:middle;fill:#c8b494;pointer-events:none}
-.trd-svg .tn.st-own .yc,.trd-svg .tn.st-open .yc{fill:#2a1b08}
-.trd-svg .tn.st-can .yc{fill:var(--tr-can)}
-.trd-svg .tn .eqr{fill:none;stroke:var(--gold);stroke-width:3.5;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 3px rgba(240,207,114,.6))}
-.trd-svg .tn.tn-skill.eq .bd{stroke:#2a1b08;stroke-width:2}
-.trd-svg .tn .up{fill:none;stroke:#8b7558;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.trd-svg .tn.st-own .up{stroke:#2a1b08}.trd-svg .tn.st-can .up{stroke:var(--tr-can)}
-.trd-svg .tn.tn-upgrade.idle .bd{fill:#3a2e1c;stroke:var(--gold);stroke-dasharray:2 1.6}
-.trd-svg .tn.tn-upgrade.idle .up{stroke:var(--gold)}
+:is(.trd-svg,.trd-li) .tn .yc{font-size:11px;font-weight:700;text-anchor:middle;fill:#c8b494;pointer-events:none}
+:is(.trd-svg,.trd-li) .tn.st-own .yc,:is(.trd-svg,.trd-li) .tn.st-open .yc{fill:#2a1b08}
+:is(.trd-svg,.trd-li) .tn.st-can .yc{fill:var(--tr-can)}
+:is(.trd-svg,.trd-li) .tn .eqr{fill:none;stroke:var(--gold);stroke-width:3.5;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 3px rgba(240,207,114,.6))}
+:is(.trd-svg,.trd-li) .tn.tn-skill.eq .bd{stroke:#2a1b08;stroke-width:2}
+:is(.trd-svg,.trd-li) .tn .up{fill:none;stroke:#8b7558;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+:is(.trd-svg,.trd-li) .tn.st-own .up{stroke:#2a1b08}:is(.trd-svg,.trd-li) .tn.st-can .up{stroke:var(--tr-can)}
+:is(.trd-svg,.trd-li) .tn.tn-upgrade.idle .bd{fill:#3a2e1c;stroke:var(--gold);stroke-dasharray:2 1.6}
+:is(.trd-svg,.trd-li) .tn.tn-upgrade.idle .up{stroke:var(--gold)}
 .trd-li .tn .bd{vector-effect:none}
 .trd-li .kp.on{stroke-width:2.5}
 /* 방금 연 노드: 짧게 빛남 */
-.trd-svg .tn-new .bd{animation:trnew .6s ease-out}
+:is(.trd-svg,.trd-li) .tn-new .bd{animation:trnew .6s ease-out}
 @keyframes trnew{0%{filter:drop-shadow(0 0 8px rgba(246,226,162,1))}100%{filter:none}}
-html.rm .trd-svg .tn .gl,html.rm .trd-svg .tn-new .bd{animation:none}
+html.rm :is(.trd-svg,.trd-li) .tn .gl,html.rm :is(.trd-svg,.trd-li) .tn-new .bd{animation:none}
 html.rm .trd-svg .lk-new{animation:none;stroke-dashoffset:0}
-@media (prefers-reduced-motion:reduce){.trd-svg .tn .gl,.trd-svg .tn-new .bd{animation:none}.trd-svg .lk-new{animation:none;stroke-dashoffset:0}}
-html.hc .trd-svg .lk{stroke:#7a6550}html.hc .trd-svg .tn .bd{stroke-width:2.2}html.hc .trd-svg .tn.st-lock .bd{stroke:#9a8468}
+@media (prefers-reduced-motion:reduce){:is(.trd-svg,.trd-li) .tn .gl,:is(.trd-svg,.trd-li) .tn-new .bd{animation:none}.trd-svg .lk-new{animation:none;stroke-dashoffset:0}}
+html.hc .trd-svg .lk{stroke:#7a6550}html.hc :is(.trd-svg,.trd-li) .tn .bd{stroke-width:2.2}html.hc :is(.trd-svg,.trd-li) .tn.st-lock .bd{stroke:#9a8468}
 @media (max-width:899px){.trd-map{height:clamp(320px,60vh,640px)}.sheet .trd-map{height:clamp(300px,54vh,560px)}}
 .trd-bar{flex-wrap:wrap;margin:4px 0}.trd-bar>p{flex:1 1 240px;margin:0}.trd-bar>.trd-lt,.row>.trd-lt{flex:0 0 auto}
 .trd-svg .trd-lk path.lk-new{vector-effect:none}
