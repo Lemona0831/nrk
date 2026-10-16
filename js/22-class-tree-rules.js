@@ -41,7 +41,7 @@ const V2_ON = { butcher: ['sickle'] }; // V2_OFF 가운데 그 직업에게는 �
 const YS_OFF = ['voidring'];
 const poolOk = (p, k) => !(isV2(p) && YS_OFF.includes(k)) && !(isV2(p) && V2_OFF.includes(k) && !(V2_ON[p.build] || []).includes(k)) && !(ITEMS[k] && ITEMS[k].fits && !ITEMS[k].fits.includes(p.build)); /* fits: 그 직업에서만 일어나는 2챕터 장비 */
 /* 10월 15일 유산 1차 시제품 (쿨타임을 대신한다, 설계안 2절 · data/classes.js YUSAN): 스킬은 유산(p.ys)을 쓴다. 전투를 가득 찬 채 시작하고,
-   내 차례가 끝날 때 +1(가속 두 번째 차례는 빼고), 대응(막기 · 흘리기 · 무너뜨리기 · 끊기 · 먼저 치우기)에 성공하면 +1을 라운드에 한 번 받는다.
+   내 차례가 끝날 때 +1(가속 두 번째 차례는 빼고. 10월 16일부터 그 +1은 다음 내 차례가 시작될 때 들어온다: YUSAN.turnAtStart), 대응(막기 · 흘리기 · 무너뜨리기 · 끊기 · 먼저 치우기)에 성공하면 +1을 라운드에 한 번 받는다.
    라운드(b.ysR) = 내 차례 시작부터 다음 내 차례 시작 전까지(playerAct가 차례의 첫 행동에서 센다). 전투마다 1번(once)인 스킬은 쓰면 그 전투 동안 p.cd[id] = CD_USED로 남는다(p.cd는 이 표시에만 쓴다).
    🔄 쿨타임 당기기 · 처치 다시 쓰기는 "유산 +1, 라운드에 한 번"으로 바꿨다(1차 시제품 변환, ysRefund). 장비의 쿨타임 효과는 ysItem(라운드에 한 번) */
 const CD_USED = 999;
@@ -49,9 +49,9 @@ function resetCharges(p) { p.cd = {}; p.cdJust = null; p.hsAt = {}; p.ys = YUSAN
 const ysNow = p => p.ys == null ? YUSAN.start : p.ys;
 /* 유산 더하기 (상한까지). src: turn · resp · refund · item · flask. g = 실제로 든 양(0이면 상한에 막혀 버려짐) */
 function ysAdd(b, n, src, why) {
-  const p = b.p; if (!isV2(p) || b.over) return 0; p.ys = ysNow(p); const g = Math.max(0, Math.min(n, YUSAN.cap - p.ys)); p.ys += g;
+  const p = b.p; if (!isV2(p) || b.over) return 0; p.ys = ysNow(p); const y0 = p.ys; const g = Math.max(0, Math.min(n, YUSAN.cap - p.ys)); p.ys += g;
   if (b.rec) b.rec.push({ k: 'ys', t: r1(b.t), src, why, n, g, ys: p.ys, r: b.ysR || 0 });
-  if (g > 0 && src !== 'turn') logp(b, 'good', '유산 +' + g + ' (' + why + ')');
+  if (g > 0) logp(b, 'good', '유산 ' + y0 + ' → ' + p.ys + ' (+' + g + ', ' + why + ')'); // 10월 16일: 앞 → 뒤 값으로 (차례 충전도 적는다)
   return g;
 }
 /* 대응 +1: 라운드에 한 번(다섯 수단이 한도를 함께 쓴다). 상한에 막혀도 그 라운드의 대응으로 센다 */
@@ -61,9 +61,10 @@ function ysRefund(b, why) { if (!b || !isV2(b.p) || b.over) return 0; const R = 
 /* 장비의 "쿨타임이 가장 많이 남은 스킬 −1" → 유산 +1, 라운드에 한 번 (모든 장비가 한도를 함께 쓴다). 든 것이 없으면 0 */
 function ysItem(b, why) { if (!b || !isV2(b.p) || b.over) return 0; const R = b.ysR || 0; if (b.ysItemR === R) return 0; const g = ysAdd(b, YUSAN.item, 'item', why || '장비'); if (g) b.ysItemR = R; return g; }
 /* 유산을 깎는 효과(침묵의 종 · 독 거두는 손의 대가): 0 아래로 내려가지 않는다 */
-function ysLose(b, n, why) { const p = b.p; if (!isV2(p)) return 0; p.ys = ysNow(p); const l = Math.min(n, p.ys); p.ys -= l; if (b.rec) b.rec.push({ k: 'ys', t: r1(b.t), src: 'lose', why, g: -l, ys: p.ys, r: b.ysR || 0 }); if (l) logp(b, 'bad', '유산 −' + l + ' (' + why + ')'); return l; }
+function ysLose(b, n, why) { const p = b.p; if (!isV2(p)) return 0; p.ys = ysNow(p); const l = Math.min(n, p.ys); p.ys -= l; if (b.rec) b.rec.push({ k: 'ys', t: r1(b.t), src: 'lose', why, g: -l, ys: p.ys, r: b.ysR || 0 }); if (l) logp(b, 'bad', '유산 ' + (p.ys + l) + ' → ' + p.ys + ' (−' + l + ', ' + why + ')'); return l; }
 /* 스킬 쓰기: 비용을 낸다(숨겨진 직업 3의 피로 당기기는 bmPull이 모자란 몫을 먼저 채운다) */
-function ysSpend(b, s) { const p = b.p; const c = skCost(s); p.ys = Math.max(0, ysNow(p) - c); if (s.once) p.cd[s.id] = CD_USED; if (b.rec) b.rec.push({ k: 'yspend', t: r1(b.t), id: s.id, cost: c, ys: p.ys, r: b.ysR || 0 }); }
+function ysSpend(b, s) { const p = b.p; const c = skCost(s); const w = b.ysPullW || 0; b.ysPullW = 0; const y0 = ysNow(p) - w; p.ys = Math.max(0, ysNow(p) - c); if (s.once) p.cd[s.id] = CD_USED; if (b.rec) b.rec.push({ k: 'yspend', t: r1(b.t), id: s.id, cost: c, ys: p.ys, r: b.ysR || 0 });
+  logp(b, 'sys', '유산 ' + y0 + ' → ' + p.ys + ' (−' + (c - w) + (w ? ', 모자란 ' + w + '은(는) 피로' : '') + ', ' + s.n + ')'); } // 10월 16일: 쓴 유산도 앞 → 뒤로 적는다
 const ysShort = (p, s) => Math.max(0, skCost(s) - ysNow(p)); // 모자란 유산
 const ysUsed = (p, s) => !!(s.once && p.cd && p.cd[s.id] > 0); // 전투마다 1번 스킬을 이미 썼는가
 /* 강공격 붕괴를 더하는 예고: 큰 행동(모으기 · 강타 · 영창 · 도화선 · 폭발 · 겨누기). 먼저 치우기는 data/classes.js YS_PRE_K */
@@ -74,8 +75,18 @@ function ysPreKill(b, e) { // 먼저 치우기 (10월 15일 수정): 내 행동 
   if (!(b.queue || []).includes(e.id) || (typeof darkHid === 'function' && darkHid(b, e))) return;
   ysResp(b, '먼저 치우기');
 }
-/* 내 차례 끝: 유산 +1 (상한에 막힌 양은 기록에 g 0으로 남는다) */
-function chargeEv(b, kind) { if (kind !== 'turn') return; b.ysTurnN = (b.ysTurnN || 0) + 1; const long = YUSAN.longFrom > 0 && b.ysTurnN >= YUSAN.longFrom; ysAdd(b, YUSAN.turn + (long ? 1 : 0), 'turn', long ? '긴 전투' : '차례'); } // 1차-b B: 그 전투의 longFrom번째 내 차례부터 +2 // 갈래 규칙(TREE2.haste)은 10월 3일에 없앴다. 다른 kind는 아무 일도 하지 않는다
+/* 내 차례 끝: 유산 +1 (상한에 막힌 양은 기록에 g 0으로 남는다). 10월 16일: turnAtStart면 그 +1(긴 전투는 +2)을 b.ysPend에 두었다가 다음 내 차례가 시작될 때 준다(ysTurnStart).
+   유산은 내 차례에만 쓰므로 쓸 수 있는 양은 같다. 적 차례의 대응 충전은 그때 바로 든다(상한 5) */
+function chargeEv(b, kind) { if (kind !== 'turn') return; b.ysTurnN = (b.ysTurnN || 0) + 1; const long = YUSAN.longFrom > 0 && b.ysTurnN >= YUSAN.longFrom; const n = YUSAN.turn + (long ? 1 : 0); if (YUSAN.turnAtStart) b.ysPend = n; else ysAdd(b, n, 'turn', '차례'); }
+function ysTurnStart(b) { const n = b && b.ysPend; if (!n) return; b.ysPend = 0; ysAdd(b, n, 'turn', '차례'); } // 34-rounds-setup stepWorld가 내 차례에 닿을 때, playerAct 첫머리에서도(두 번 주지 않는다)
+/* 전투 하나의 유산 요약 (판 기록 rooms[].ys, 기록 보내기 코드에도 남는다): s 시작 · e 끝 · use 쓴 합 · sp 비용별 횟수 · ids 스킬별 횟수 · ch 충전 출처별 든 양 · w 상한에 막힌 양 · pull 피로 당긴 유산 */
+function ysSum(b) {
+  if (!b || !b.p || !isV2(b.p) || !b.rec) return undefined; const o = { s: YUSAN.start, e: ysNow(b.p), use: 0, sp: {}, ids: {}, ch: {}, w: 0 };
+  for (const x of b.rec) { if (x.k === 'yspend') { o.use += x.cost; o.sp[x.cost] = (o.sp[x.cost] || 0) + 1; o.ids[x.id] = (o.ids[x.id] || 0) + 1; }
+    else if (x.k === 'ys') { const key = x.src === 'resp' ? x.why : x.src; o.ch[key] = (o.ch[key] || 0) + (x.g || 0); if (x.n > 0) o.w += Math.max(0, x.n - Math.max(0, x.g || 0)); }
+    else if (x.k === 'bmpull') o.pull = (o.pull || 0) + (x.cd || 0); }
+  return o;
+} // 1차-b B: 그 전투의 longFrom번째 내 차례부터 +2 // 갈래 규칙(TREE2.haste)은 10월 3일에 없앴다. 다른 kind는 아무 일도 하지 않는다
 /* 🔄 쿨타임 당기기 → 유산 +1 (라운드에 한 번). 부르는 곳은 그대로 두고 여기서 바꾼다 (10월 15일 1차 시제품 변환, n은 쓰지 않는다) */
 function hastenBranch(b, br, n, exceptId) { return ysRefund(b, '🔄 ' + (br || '')); }
 /* 1차-b C: 볼록한 비용당 값. 직업마다 비용 2 스킬의 한 번 값(skScore E 평균, 전투마다 1번 칸 제외)에 대한 비용 3 · 4의 비를 재고, 목표(3.3/2 · 4.8/2)에 모자라면

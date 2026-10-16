@@ -153,7 +153,7 @@ function bmPull(b, act) { // 10월 15일 유산 1차 시제품: 모자란 유산
   const p = b.p, s = act.s; const w = ysShort(p, s); if (!(w > 0) || bmNoPull(s) || ysUsed(p, s)) return;
   const pc = bmPullCost(p, w, 1); const c = Math.min(pc.c, Math.max(0, p.hp - 1 - bmHpCost(p, s)));
   if (pc.i >= 0) p.payCut.splice(pc.i, 1);
-  b.bloodTurn = b.turnIdx; p.ys = ysNow(p) + w; // 채운 유산은 곧바로 ysSpend가 쓴다
+  b.bloodTurn = b.turnIdx; p.ys = ysNow(p) + w; b.ysPullW = w; // 채운 유산은 곧바로 ysSpend가 쓴다(기록 줄에는 피로 낸 몫을 따로 적는다)
   if (c > 0) bmPay(b, c, s, 'pull'); else { logp(b, 'good', '피로 ' + s.n + '을(를) 당긴다. 깎은 값이라 생명력이 들지 않는다'); b.rec.push({ k: 'blood', w: 'pull', id: s.id, n: 0 }); }
   b.rec.push({ k: 'bmpull', id: s.id, cd: w, n: c, cut: pc.i >= 0 ? 1 : 0, hp: r1(p.hp / p.hpMax), round: b.round || 0 });
 }

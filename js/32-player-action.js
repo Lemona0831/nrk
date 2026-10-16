@@ -131,7 +131,7 @@ function snapshotFor(b, act, tgt) {
   };
 }
 function playerAct(b, id, tgtId) {
-  const p = b.p; if (b.over) return; b.actN = (b.actN || 0) + 1; // 갈래 규칙은 한 행동에 한 번
+  const p = b.p; if (b.over) return; ysTurnStart(b); b.actN = (b.actN || 0) + 1; // 갈래 규칙은 한 행동에 한 번 · 남은 차례 충전이 있으면 먼저 (10월 16일)
   const L = actionList(b); const act = L.find(x => x.id === id);
   if (!act || !act.ok) return;
   if (act.stCost) p.st = Math.max(0, p.st - act.stCost);

@@ -26,7 +26,7 @@ const setInt = (es, k) => { for (const e of es) e.intent = Object.assign({ k: 'a
   ok(E.actionList(b).some(x => x.id === 'flaskM') && E.flaskCap(p, 'mana') === 3 && p.flask.mana === 3, '정화 플라스크는 그대로 (10월 15일 수정: 되살림)'); }
 // 5) 대응: 막기
 { const { p, b, es } = fight(); setInt(es); p.ys = 1; E.playerAct(b, 'guard'); const r = ysRec(b, 'resp'); ok(r.length === 1 && r[0].why === '막기' && r[0].g === 1, '방어 중 받아 내면 막기 +1'); ok(p.ys === 3, '차례 +1, 막기 +1 → 3');
-  ok(b.log.some(x => /유산 \+1 \(막기\)/.test(typeof x === 'string' ? x : (x.t || x.m || ''))), '기록에 "유산 +1 (막기)"'); }
+  const L = b.log.map(x => x.m || ''); ok(L.some(m => /유산 1 → 2 \(\+1, 막기\)/.test(m)), '기록에 "유산 1 → 2 (+1, 막기)"'); ok(L.some(m => /유산 2 → 3 \(\+1, 차례\)/.test(m)), '차례 충전도 앞 → 뒤로 (다음 내 차례가 시작될 때)'); ok(!L.some(m => /유산 \+1 \(/.test(m)), '옛 "유산 +1 (막기)" 줄은 없다(두 번 적지 않음)'); }
 // 6) 대응: 흘리기
 { const { p, b, es } = fight(); setInt(es); p.ys = 1; E.playerAct(b, 'dodge', es[0].id); const r = ysRec(b, 'resp'); ok(r.length === 1 && r[0].why === '흘리기', '흘리기 성공 +1'); ok(p.ys === 3, '흘리기 뒤 3'); }
 // 7) 대응: 무너뜨리기 · 라운드에 한 번
@@ -75,4 +75,16 @@ const setInt = (es, k) => { for (const e of es) e.intent = Object.assign({ k: 'a
   ok(sc.every(s => s.fx.every((e, i) => { const o = s._fx0[i]; return ['dmg', 'brk', 'poison', 'st'].includes(e.k) && o.n > 0 ? e.n >= o.n && e.n <= Math.ceil(o.n * Y.convexCap) : JSON.stringify(e) === JSON.stringify(o); })), 'C: 피해 · 붕괴 · 중독 · 상태 수치만, 최대 ' + Y.convexCap + '배');
   reset(); ok(all.every(s => !!s._fx0 === !!(Y.convex && s.ysMul)), '스위치 되돌림'); }
 ok(Y.longFrom === 8 && !Y.cheap && !Y.convex, '기본값: 1차-b 측정으로 고른 B8 (8번째 내 차례부터 +2), A · C 꺼짐');
+// 17) 10월 16일 화면 정리: 차례 충전을 다음 내 차례 시작으로 옮겨도 내 차례마다 쓸 수 있는 양은 같다 (같은 각본을 두 규칙으로 돌려 비교, 긴 전투 +2 포함)
+{ const runSeq = atStart => { const S0 = Object.assign({}, Y); Y.turnAtStart = atStart; Y.longFrom = 3; const { p, b, es } = fight('spellblade', ['bruiser', 'archer']); const seen = [];
+    const plan = ['sb_aegis', 'sb_edge', 'sb_edge', 'sb_aegis', 'sb_edge', 'guard', 'sb_edge', 'sb_aegis', 'sb_edge', 'dodge', 'sb_edge', 'sb_aegis', 'sb_edge', 'basic', 'sb_edge', 'sb_edge'];
+    for (const a of plan) { if (b.over) break; seen.push(p.ys); const L = E.actionList(b); const x = L.find(y => y.id === a && y.ok) ? a : 'basic'; E.playerAct(b, x, a === 'dodge' ? es[0].id : es[0].id); }
+    seen.push(p.ys); const tot = ysRec(b).reduce((q, x) => q + (x.g || 0), 0); Object.assign(Y, S0); return { seen, tot, log: b.log.map(x => x.m || '') }; };
+  const A0 = runSeq(0), A1 = runSeq(1); if (process.env.YS_SHOW) console.log(A0.seen.join(','), '|', A1.seen.join(','), A0.tot);
+  ok(JSON.stringify(A0.seen) === JSON.stringify(A1.seen), '내 차례마다 남은 유산이 두 규칙에서 같다 ' + A1.seen.join(','));
+  ok(A0.tot === A1.tot, '충전 합이 같다 (' + A0.tot + ')');
+  ok(A1.log.some(m => /유산 \d → \d \(−2, /.test(m)), '쓰는 줄: 유산 5 → 3 (−2, 스킬 이름)');
+  ok(A1.log.some(m => /\(\+2, 차례\)/.test(m)), '긴 전투 차례 충전 +2 줄'); }
+// 18) 판 기록 요약 rooms[].ys
+{ const { p, b, es } = fight(); setInt(es); E.playerAct(b, 'sb_edge', es[0].id); setInt(es); E.playerAct(b, 'guard'); const o = E.ysSum(b); ok(o && o.s === 5 && o.use === 2 && o.sp[2] === 1 && o.ids.sb_edge === 1 && o.ch.turn >= 1 && typeof o.w === 'number', '전투 요약 ysSum: ' + JSON.stringify(o)); }
 console.log('yusan-check: ' + n + '개 통과');

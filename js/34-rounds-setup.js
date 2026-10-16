@@ -31,7 +31,7 @@ function stepWorld(b) {
   for (let n = 0; n < 200; n++) {
     if (!b.queue.length) { endRound(b); if (b.over) { b.waiting = false; return 'over'; } startRound(b); }
     const id = b.queue[0];
-    if (id === 'p') { b.waiting = false; b.lastActor = null; return 'player'; }
+    if (id === 'p') { b.waiting = false; b.lastActor = null; ysTurnStart(b); return 'player'; } // 10월 16일: 차례 충전은 내 차례가 시작될 때
     b.queue.shift();
     const e = b.en.find(x => x.id === id);
     if (!e || !e.alive || e.role === 'root' || e.pile || e.role === 'bonewall' || e.role === 'crown') continue;
