@@ -32,7 +32,7 @@ function actionList(b) {
   ];
   const SKM = skillMap(p.build);
   if (isV2(p)) for (const sid of skillsOf(p)) { // 10월 15일 유산 1차 시제품: 쿨타임 대신 유산 비용(skCost). wait = 모자란 유산(차례마다 +1이므로 기다릴 차례 수와 같다), 전투마다 1번을 썼으면 CD_USED
-    const s = SK2[sid]; if (!s) continue; const used = ysUsed(p, s), cost = skCost(s), lack = ysShort(p, s); const w = used ? CD_USED : lack;
+    const s = skOf(p, sid); if (!s) continue; const used = ysUsed(p, s), cost = skCostAt(b, s).c, lack = Math.max(0, cost - ysNow(p)); const w = used ? CD_USED : lack; // 10월 16일 0.8.0 2단계: 강화를 적용한 실제 스킬 · 조건부 할인
     const needPoison = !s.fx.some(e => ['dmg', 'poison', 'brk', 'st', 'parry', 'parryBuff', 'stam', 'cutx', 'ward', 'wardFill', 'wardBurn', 'wardDmg', 'thorn', 'pull', 'vulnPer', 'vulnGrow', 'shieldx', 'chillx', 'evade', 'evadeCtr', 'quick', 'quickTurns', 'foresee', 'meSt', 'focusAdd', 'focusBurst', 'focusx', 'swapx', 'hastex', 'chillCut', 'chillShatter', 'chillSpread', 'freeze', 'onCutBreak', 'hasteSpend', 'grudge', 'carry', 'weave', 'shockx', 'rime', 'burnOut', 'imbue', 'edgeX', 'kwx', 'alt', 'killSpread', 'stance', 'kiBurst', 'kiPer', 'kiGrow', 'sealx', 'cleanse', 'transfer', 'perDmg', 'dispel', 'hpCost', 'bloodDmg', 'payCut'].includes(e.k) || (e.k === 'drain' && e.eat) || (e.k === 'burst' && e.pre) || (e.k === 'grow' && e.add) || (['drain', 'exploit', 'grow', 'spread'].includes(e.k) && e.s === 'bleed') || (e.k === 'exploit' && e.s)); // 중독 없이는 아무 일도 없는 스킬만 잠근다 (10월 3일: 피해를 주는 터뜨리는 일격, 중독 4를 거는 독 응축도 잠겼다)
     if (isBm(p)) { // 숨겨진 직업 3: 생명력을 내는 칸의 잠금과 피로 당기기 (10월 15일 유산 1차 시제품: 값은 모자란 유산 1마다 최대 생명력 4%, 내 차례마다 한 번, 내고 나서 생명력 1 아래면 잠긴다)
       const hc = bmHpCost(p, s); let other = null, whyB = null, blood = 0;
@@ -45,6 +45,7 @@ function actionList(b) {
       continue;
     }
     let why = used ? '이번 전투에 이미 씀' : lack > 0 ? '유산 ' + cost + ' 필요' : null;
+    if (!why && s.fx.some(e => e.k === 'parry' || e.k === 'parryBuff') && fxFlag(p, 'noParry')) why = '무거운 갑주: 흘리기를 쓸 수 없습니다';
     if (!why && needPoison && !alive(b).some(e => e.s.poison)) why = '중독된 적 없음';
     if (!why && /^c_/.test(sid) && s.fx.every(e => e.k === 'cleanse' || e.k === 'hasten')) { const cl = s.fx.find(e => e.k === 'cleanse'); if (cl && !cfTake(p, cl.only, cl.n, 'clean', 1).c) why = '지울 짐 없음'; } // 숨겨진 직업 2: 정화만 하는 칸
     if (!why && buEatOnly(s) && !alive(b).some(e => stk(e, 'bleed') > 0 && canTarget(b, e, v2Static(s)))) why = '출혈된 적 없음'; // 피해 없이 먹는 칸
@@ -82,7 +83,7 @@ function actionList(b) {
     L.push({ id: 'sig', n: S.n, sig: 1, self: S.tgt ? 0 : 1, ranged: S.tgt ? 1 : 0, cost: S.cd ? S.cd + '차례마다' : '분노 5', time: S.time, ok: !why, why });
   } }
   L.push({ id: 'guard', n: '방어', self: 1, cost: '스태미나 ' + guardCost(p), time: 1, ok: p.st >= guardCost(p) });
-  L.push({ id: 'dodge', n: '흘리기', dodge: 1, cost: '스태미나 ' + dodgeCost(p), time: 1, ok: p.st >= dodgeCost(p) });
+  { const np = fxFlag(p, 'noParry'); L.push({ id: 'dodge', n: '흘리기', dodge: 1, cost: '스태미나 ' + dodgeCost(p), time: 1, ok: !np && p.st >= dodgeCost(p), why: np ? '무거운 갑주: 흘리기를 쓸 수 없습니다' : null }); } // 큰 각인 무거운 갑주
   L.push({ id: 'flaskL', n: p.eq.flask === 'chalice' ? '역류의 성배' : '생명력 플라스크', self: 1, cost: '남은 ' + p.flask.life, time: 0.5, ok: p.flask.life > 0 });
   L.push({ id: 'flaskM', n: isV2(p) ? '정화 플라스크' : '마나 플라스크', self: 1, cost: '남은 ' + p.flask.mana, time: 0.5, ok: p.flask.mana > 0 });
   L.push({ id: 'flaskS', n: '스태미나 플라스크', self: 1, cost: '남은 ' + (p.flask.stam || 0), time: 0.5, ok: (p.flask.stam || 0) > 0 });
@@ -147,6 +148,7 @@ function playerAct(b, id, tgtId) {
     if (!tgt || !canTarget(b, tgt, act)) tgt = alive(b).find(e => canTarget(b, e, act) && e.role !== 'root') || alive(b).find(e => canTarget(b, e, act));
     if (!tgt) return;
   }
+  if (act.v2 && act.s.cond && !act.pull && ysNow(p) < skCostAt(b, act.s, tgt).c) { if (act.self || act.aoe) return; const t2 = alive(b).find(e => canTarget(b, e, act) && e.role !== 'root' && ysNow(p) >= skCostAt(b, act.s, e).c); if (!t2) return; tgt = t2; } // 10월 16일 0.8.0 2단계: 대상 조건 할인(불길 잇기)은 고른 대상 기준
   b.logGroup = (b.logGroup || 0) + 1;
   if (b.ctx.boss && b.ctx.bossKind === 'cryptlord') { const g = actGroup(p, id, act); if (g) { (b.lordHist = b.lordHist || []).push(g); if (b.lordHist.length > LORD.read) b.lordHist.shift(); } }
   b.cur = { grp: actGroup(p, id, act), id, tgt: tgt ? tgt.id : null, skill: !!act.skill, spell: !!(act.skill && !act.v2 && skillRes(act) === 'mp'), cantrip: id === 'basic' && isCaster(p), ranged: !!(act.ranged || act.aoe || (['basic', 'heavy'].includes(id) && !isMeleeAct(p, id))) };
@@ -174,7 +176,7 @@ function playerAct(b, id, tgtId) {
   let time = act.time;
   if (p.vanguard && !act.self && !['guard', 'dodge', 'flaskL', 'flaskM', 'flee'].includes(id)) { p.vanguard = 0; time *= 0.5; if (tgt) b.vanguardTgt = tgt; logp(b, 'crit', '깃발을 앞세워 먼저 뛰어든다'); }
   if (act.skill && act.melee && tgt && hasIt(p, 'chaingl')) b.chainTgt = tgt;
-  if (act.v2) { if (act.pull && isBm(p)) bmPull(b, act); ysSpend(b, act.s); runSkill2(b, act, tgt); if (b.sbK) sbEnd(b, act); fxRun(p, 'onSkill', b, p, act, tgt); if (b.markTgt) { if (b.markTgt.alive) addS(b, b.markTgt, 'vuln', 2); b.markTgt = null; } if (b.rcUsed) { p.rcN = 0; b.rcUsed = 0; } if (b.chainTgt) { if (b.chainTgt.alive) addBreak(b, b.chainTgt, 20); b.chainTgt = null; } if (b.vanguardTgt) { if (b.vanguardTgt.alive) addBreak(b, b.vanguardTgt, 20); b.vanguardTgt = null; } b.resonate = false; b.resoBig = 0; b.echoMul = 1; if (p.hp <= 0) checkEnd(b); if (!b.over) finishPlayer(b, time); return; }
+  if (act.v2) { if (act.pull && isBm(p)) bmPull(b, act); ysSpend(b, act.s, tgt); runSkill2(b, act, tgt); if (b.sbK) sbEnd(b, act); fxRun(p, 'onSkill', b, p, act, tgt); if (b.markTgt) { if (b.markTgt.alive) addS(b, b.markTgt, 'vuln', 2); b.markTgt = null; } if (b.rcUsed) { p.rcN = 0; b.rcUsed = 0; } if (b.chainTgt) { if (b.chainTgt.alive) addBreak(b, b.chainTgt, 20); b.chainTgt = null; } if (b.vanguardTgt) { if (b.vanguardTgt.alive) addBreak(b, b.vanguardTgt, 20); b.vanguardTgt = null; } b.resonate = false; b.resoBig = 0; b.echoMul = 1; if (p.hp <= 0) checkEnd(b); if (!b.over) finishPlayer(b, time); return; }
   if (act.gen) { genSkill(b, act, tgt); if (b.markTgt) { if (b.markTgt.alive) { addS(b, b.markTgt, 'vuln', 2); logp(b, 'good', '표식이 ' + b.markTgt.n + '의 빈틈을 드러낸다. 취약'); } b.markTgt = null; } if (b.rcUsed) { p.rcN = 0; b.rcUsed = 0; } if (b.chainTgt) { if (b.chainTgt.alive) addBreak(b, b.chainTgt, 20); b.chainTgt = null; } if (b.vanguardTgt) { if (b.vanguardTgt.alive) addBreak(b, b.vanguardTgt, 20); b.vanguardTgt = null; } if (b.resonate) logp(b, 'crit', '서로 다른 주문이 공명한다. 피해 +15%'); b.resonate = false; b.resoBig = 0; b.echoMul = 1; if (p.hp <= 0) checkEnd(b); if (!b.over) finishPlayer(b, time); return; }
   switch (id) {
     case 'basic': {
@@ -293,7 +295,7 @@ function playerAct(b, id, tgtId) {
 }
 /* 단죄: 내가 생명력을 회복하면 단죄된 적 모두가 회복량의 60%만큼 피해 */
 function smiteHeal(b, hl) { if (!(hl > 0) || b.over) return; for (const e of alive(b)) if (e.s.smite) hurtEnemy(b, e, hl * 0.6, { label: '단죄' }); }
-function healMul(p) { return (p.eq.amulet === 'bloodpact' ? 0.85 : 1) * (1 + 0.02 * stat(p, 'wil')); } // 의지 1점마다 회복 +2%
+function healMul(p) { return (p.eq.amulet === 'bloodpact' ? 0.85 : 1) * (1 + 0.02 * stat(p, 'wil')) * (p.eq ? fxVal(p, 'healAll', 1, (a, v) => a * v) : 1); } // 10월 16일 0.8.0 2단계: 큰 각인 샘 없는 길(받는 회복 +30%) // 의지 1점마다 회복 +2%
 function cleanse(b, keys, isFlask) {
   const p = b.p; let n = 0;
   for (const k of keys) if (p.s[k]) { n += (k === 'poison' || k === 'chill') ? st(p, k) : 1; delete p.s[k]; }

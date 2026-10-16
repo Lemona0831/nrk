@@ -45,17 +45,19 @@ const poolOk = (p, k) => !(isV2(p) && YS_OFF.includes(k)) && !(isV2(p) && V2_OFF
    라운드(b.ysR) = 내 차례 시작부터 다음 내 차례 시작 전까지(playerAct가 차례의 첫 행동에서 센다). 전투마다 1번(once)인 스킬은 쓰면 그 전투 동안 p.cd[id] = CD_USED로 남는다(p.cd는 이 표시에만 쓴다).
    🔄 쿨타임 당기기 · 처치 다시 쓰기는 "유산 +1, 라운드에 한 번"으로 바꿨다(1차 시제품 변환, ysRefund). 장비의 쿨타임 효과는 ysItem(라운드에 한 번) */
 const CD_USED = 999;
-function resetCharges(p) { p.cd = {}; p.cdJust = null; p.hsAt = {}; p.ys = YUSAN.start; p.pbuf = null; p.dodgeRed = 0; p.dodgeOn = null; if (p.build === 'spellblade') { p.sbLast = null; p.sbRun = 0; p.edge = null; } if (p.build === 'bloodmage') p.payCut = []; } // 마검사: 직전 종류 · 이어진 교대 · 칼은 전투마다 새로. 숨겨진 직업 3: 값 깎기도
+function resetCharges(p) { p.cd = {}; p.cdJust = null; p.hsAt = {}; p.ys = ysStartOf(p); p.pbuf = null; p.dodgeRed = 0; p.dodgeOn = null; if (p.build === 'spellblade') { p.sbLast = null; p.sbRun = 0; p.edge = null; } if (p.build === 'bloodmage') p.payCut = []; } // 마검사: 직전 종류 · 이어진 교대 · 칼은 전투마다 새로. 숨겨진 직업 3: 값 깎기도
 const ysNow = p => p.ys == null ? YUSAN.start : p.ys;
 /* 유산 더하기 (상한까지). src: turn · resp · refund · item · flask. g = 실제로 든 양(0이면 상한에 막혀 버려짐) */
 function ysAdd(b, n, src, why) {
-  const p = b.p; if (!isV2(p) || b.over) return 0; p.ys = ysNow(p); const y0 = p.ys; const g = Math.max(0, Math.min(n, YUSAN.cap - p.ys)); p.ys += g;
+  const p = b.p; if (!isV2(p) || b.over) return 0; p.ys = ysNow(p); const y0 = p.ys; const g = Math.max(0, Math.min(n, ysCapOf(p) - p.ys)); p.ys += g;
   if (b.rec) b.rec.push({ k: 'ys', t: r1(b.t), src, why, n, g, ys: p.ys, r: b.ysR || 0 });
   if (g > 0) logp(b, 'good', '유산 ' + y0 + ' → ' + p.ys + ' (+' + g + ', ' + why + ')'); // 10월 16일: 앞 → 뒤 값으로 (차례 충전도 적는다)
   return g;
 }
 /* 대응 +1: 라운드에 한 번(다섯 수단이 한도를 함께 쓴다). 상한에 막혀도 그 라운드의 대응으로 센다 */
-function ysResp(b, why) { if (!b || !isV2(b.p) || b.over) return 0; const R = b.ysR || 0; if (b.ysRespR === R) return 0; b.ysRespR = R; return ysAdd(b, YUSAN.resp, 'resp', why); }
+function ysResp(b, why) { if (!b || !isV2(b.p) || b.over) return 0; const p = b.p, R = b.ysR || 0; const mx = 1 + fxVal(p, 'ysRespMax', 0, (a, v) => a + v); // 10월 16일 0.8.0 2단계: 큰 각인 겹 대응(라운드에 2번) · 빈손의 맹세(+2) · 넘친 숨(버려지면 다음 차례 +1)
+  if (b.ysRespR === R && (b.ysRespC || 1) >= mx) return 0; if (b.ysRespR !== R) { b.ysRespR = R; b.ysRespC = 0; } b.ysRespC = (b.ysRespC || 0) + 1; b.ysRespLast = R;
+  const n = YUSAN.resp + fxVal(p, 'ysRespPer', 0, (a, v) => a + v); const g = ysAdd(b, n, 'resp', why); if (g < n && !b.ysOvfUsed && fxFlag(p, 'ysOverflowBack')) { b.ysOvfUsed = 1; b.ysOvfPend = 1; } return g; }
 /* 🔄 · 처치 다시 쓰기 → 유산 +1, 라운드에 한 번 (10월 15일 1차 시제품 변환: 같은 갈래 쿨타임 −n · 바로 다시 쓰기를 대신한다) */
 function ysRefund(b, why) { if (!b || !isV2(b.p) || b.over) return 0; const R = b.ysR || 0; if (b.ysRefR === R) return 0; b.ysRefR = R; return ysAdd(b, YUSAN.refund, 'refund', why); }
 /* 장비의 "쿨타임이 가장 많이 남은 스킬 −1" → 유산 +1, 라운드에 한 번 (모든 장비가 한도를 함께 쓴다). 든 것이 없으면 0 */
@@ -63,9 +65,9 @@ function ysItem(b, why) { if (!b || !isV2(b.p) || b.over) return 0; const R = b.
 /* 유산을 깎는 효과(침묵의 종 · 독 거두는 손의 대가): 0 아래로 내려가지 않는다 */
 function ysLose(b, n, why) { const p = b.p; if (!isV2(p)) return 0; p.ys = ysNow(p); const l = Math.min(n, p.ys); p.ys -= l; if (b.rec) b.rec.push({ k: 'ys', t: r1(b.t), src: 'lose', why, g: -l, ys: p.ys, r: b.ysR || 0 }); if (l) logp(b, 'bad', '유산 ' + (p.ys + l) + ' → ' + p.ys + ' (−' + l + ', ' + why + ')'); return l; }
 /* 스킬 쓰기: 비용을 낸다(숨겨진 직업 3의 피로 당기기는 bmPull이 모자란 몫을 먼저 채운다) */
-function ysSpend(b, s) { const p = b.p; const c = skCost(s); const w = b.ysPullW || 0; b.ysPullW = 0; const y0 = ysNow(p) - w; p.ys = Math.max(0, ysNow(p) - c); if (s.once) p.cd[s.id] = CD_USED; if (b.rec) b.rec.push({ k: 'yspend', t: r1(b.t), id: s.id, cost: c, ys: p.ys, r: b.ysR || 0 });
+function ysSpend(b, s, tgt) { const p = b.p; const ca = skCostAt(b, s, tgt), c = ca.c; if (ca.by) { (b.condUsed = b.condUsed || {})[ca.by] = b.ysR || 0; logp(b, 'good', s.n + ': 조건이 맞아 유산 비용 −' + (skCost(s) - c)); } /* 10월 16일 0.8.0 2단계: 강화 노드의 조건부 할인 */ const w = b.ysPullW || 0; b.ysPullW = 0; const y0 = ysNow(p) - w; p.ys = Math.max(0, ysNow(p) - c); if (s.once) p.cd[s.id] = CD_USED; if (b.rec) b.rec.push({ k: 'yspend', t: r1(b.t), id: s.id, cost: c, ys: p.ys, r: b.ysR || 0 });
   logp(b, 'sys', '유산 ' + y0 + ' → ' + p.ys + ' (−' + (c - w) + (w ? ', 모자란 ' + w + '은(는) 피로' : '') + ', ' + s.n + ')'); } // 10월 16일: 쓴 유산도 앞 → 뒤로 적는다
-const ysShort = (p, s) => Math.max(0, skCost(s) - ysNow(p)); // 모자란 유산
+const ysShort = (p, s, b) => Math.max(0, (b ? skCostAt(b, s).c : skCost(s)) - ysNow(p)); // 모자란 유산
 const ysUsed = (p, s) => !!(s.once && p.cd && p.cd[s.id] > 0); // 전투마다 1번 스킬을 이미 썼는가
 /* 강공격 붕괴를 더하는 예고: 큰 행동(모으기 · 강타 · 영창 · 도화선 · 폭발 · 겨누기). 먼저 치우기는 data/classes.js YS_PRE_K */
 const YS_BIG_K = ['charge', 'heavy', 'chant', 'chanting', 'burn', 'fuse', 'explode', 'aim'];
@@ -77,8 +79,8 @@ function ysPreKill(b, e) { // 먼저 치우기 (10월 15일 수정): 내 행동 
 }
 /* 내 차례 끝: 유산 +1 (상한에 막힌 양은 기록에 g 0으로 남는다). 10월 16일: turnAtStart면 그 +1(긴 전투는 +2)을 b.ysPend에 두었다가 다음 내 차례가 시작될 때 준다(ysTurnStart).
    유산은 내 차례에만 쓰므로 쓸 수 있는 양은 같다. 적 차례의 대응 충전은 그때 바로 든다(상한 5) */
-function chargeEv(b, kind) { if (kind !== 'turn') return; b.ysTurnN = (b.ysTurnN || 0) + 1; const long = YUSAN.longFrom > 0 && b.ysTurnN >= YUSAN.longFrom; const n = YUSAN.turn + (long ? 1 : 0); if (YUSAN.turnAtStart) b.ysPend = n; else ysAdd(b, n, 'turn', '차례'); }
-function ysTurnStart(b) { const n = b && b.ysPend; if (!n) return; b.ysPend = 0; ysAdd(b, n, 'turn', '차례'); } // 34-rounds-setup stepWorld가 내 차례에 닿을 때, playerAct 첫머리에서도(두 번 주지 않는다)
+function chargeEv(b, kind) { if (kind !== 'turn') return; b.ysTurnN = (b.ysTurnN || 0) + 1; const long = YUSAN.longFrom > 0 && b.ysTurnN >= YUSAN.longFrom; const n = b.p && b.ysTurnN % 2 === 1 && fxFlag(b.p, 'ysTurnEven') ? 0 : YUSAN.turn + (long ? 1 : 0); /* 큰 각인 넘치는 그릇: 짝수 번째 내 차례에만 */ if (YUSAN.turnAtStart) b.ysPend = n; else ysAdd(b, n, 'turn', '차례'); }
+function ysTurnStart(b) { if (!b) return; const n = b.ysPend; if (n) { b.ysPend = 0; ysAdd(b, n, 'turn', '차례'); } if (b.ysOvfPend) { b.ysOvfPend = 0; ysAdd(b, 1, 'overflow', '넘친 숨'); } } // 34-rounds-setup stepWorld가 내 차례에 닿을 때, playerAct 첫머리에서도(두 번 주지 않는다)
 /* 전투 하나의 유산 요약 (판 기록 rooms[].ys, 기록 보내기 코드에도 남는다): s 시작 · e 끝 · use 쓴 합 · sp 비용별 횟수 · ids 스킬별 횟수 · ch 충전 출처별 든 양 · w 상한에 막힌 양 · pull 피로 당긴 유산 */
 function ysSum(b) {
   if (!b || !b.p || !isV2(b.p) || !b.rec) return undefined; const o = { s: YUSAN.start, e: ysNow(b.p), use: 0, sp: {}, ids: {}, ch: {}, w: 0 };
@@ -105,70 +107,7 @@ function ysConvexApply() {
 }
 if (YUSAN.convex) ysConvexApply();
 const HS_WHY = { poison: '독을 걸었다', kill: '적을 쓰러뜨렸다', parry: '흘려 냈다', break: '정예 이상을 무너뜨렸다' };
-/* 스킬 트리 (개편 기획 4절): 포인트 1로 한 칸을 연다. 깊은 등급은 그 갈래에 먼저 쓴 포인트가 있어야 열린다(TREE_GATE). 연 스킬 가운데 4칸을 장착 */
-function treeInit(run) { const T = TREE2[run.build]; if (!T) return; run.tree = run.tree || { pts: T.pts || 0, open: [], spent: {} }; }
-const treeOwns = (run,id) => !!(run && (SKILLS2[run.build] || []).some(s => s.id === id));
-/* 저장본 고치기: 스킬 데이터에서 빠진 칸(10월 3일 재사용 대기 개편: 짧은 격발 → 독 심기, 시작 스킬 바뀜)은 연 칸에서 지우고 포인트를 돌려준다 */
-/* 능력치 다섯 전 저장본 (10월 4일): 체력 · 의지를 0으로 더하고, 처음 점수가 6 → 15로 는 몫(9점)을 다음 능력치 창에서 나누게 한다 */
+/* 10월 16일 0.8.0 2단계: 옛 스킬 트리(run.tree) · 능력치 나누기(statPending) · 트리 초기화는 두 트리 엔진(js/23-tree-engine.js)으로 바뀌었다. 옛 판은 treeMigrate08이 옮긴다 */
+const treeOwns = (run, id) => !!(run && run.atree && atBuild(run.build).nodes[id] && atBuild(run.build).nodes[id].kind === 'skill');
 function consFix(run) { if (run && !run.cons) run.cons = []; if (run && typeof consBagFix === 'function') consBagFix(run); } // 10월 14일: 소모품 가방 분리 이전
-function statFix(run) {
-  consFix(run); if (!run || !run.stats) return;
-  if (run.stats.con == null) { run.stats.con = 0; run.stats.wil = 0; run.statPending = (run.statPending || 0) + (STAT_START - 6); run.statBase = STAT_START; if (run.p) applyStats(run.p, run.stats); }
-  if (run.statBase !== STAT_START) { const old = run.statBase == null ? 15 : run.statBase; run.statPending = (run.statPending || 0) + Math.max(0, STAT_START - old); run.statBase = STAT_START; }
-  if (run.statGrowth !== LV_POINTS) { const old = run.statGrowth == null ? 2 : run.statGrowth; run.statPending = (run.statPending || 0) + Math.max(0, LV_POINTS - old) * Math.max(0, (run.lv || 1) - 1); run.statGrowth = LV_POINTS; }
-}
-function treeFix(run) {
-  const t = run.tree; if (!t) return;
-  // 갈래 이름이 바뀌어도 기존 저장본의 투자 포인트를 이어받습니다.
-  if (run.build === 'spellblade') { for (const [old, current] of [['피칼날', '혈인'], ['불칼', '염검'], ['주문갑', '마갑']]) { if (t.spent && Object.prototype.hasOwnProperty.call(t.spent, old)) { t.spent[current] = (t.spent[current] || 0) + t.spent[old]; delete t.spent[old]; } } }
-  const ok = [...new Set(t.open.filter(id => treeOwns(run,id) && !SK2[id].start))]; const lost = t.open.length - ok.length;
-  if (lost > 0) { t.open = ok; t.pts += lost; t.spent = {}; for (const id of ok) t.spent[SK2[id].b] = (t.spent[SK2[id].b] || 0) + 1; }
-  run.skills = (run.skills || []).filter(id => ok.includes(id));
-  // 포인트 = 레벨(만들 때 1 + 레벨마다 1, 기획서 12.2절). 0.6a.2-9까지는 1챕터를 깨면 2점을 더 주었다: 아직 쓰지 않은 포인트에서 넘친 몫을 거둔다
-  const T = TREE2[run.build]; const over = t.pts + t.open.length - ((T && T.pts) || 1) - ((run.lv || 1) - 1);
-  if (over > 0) t.pts = Math.max(0, t.pts - over);
-  if (run.p) run.p.skills = v2Equip(run);
-}
-/* 장착: 시작 스킬(늘) + 트리에서 끼운 스킬(run.skills, 4칸까지) */
-function v2Equip(run) { const T = TREE2[run.build]; return (T ? T.starters : []).concat((run.skills || []).filter(id => treeOwns(run,id) && run.tree && run.tree.open.includes(id) && !(T && T.starters.includes(id)))).slice(0, (T ? T.starters.length : 0) + EQUIP_SLOTS2); }
-/* 사냥꾼 상급 줄 문턱(10월 9일 결정 59 나): 칸에 skip이 있으면 이어진 앞 칸 말고도 같은 갈래의 skip줄 이상 칸을 하나 열었을 때 열 수 있다. skip이 없는 칸(다른 직업)은 아무것도 달라지지 않는다 */
-const treeSkipOk = (open, s) => !!(s.skip && open.some(x => SK2[x] && SK2[x].b === s.b && SK2[x].row >= s.skip && SK2[x].row < s.row));
-function treeWhy(run, id) {
-  const t = run.tree, s = SK2[id]; if (!t || !s) return '없는 스킬';
-  if (!treeOwns(run,id)) return '이 직업의 스킬이 아닙니다';
-  if (s.start) return '시작 스킬';
-  if (t.open.includes(id)) return '이미 열림';
-  if (s.par && !s.par.some(x => t.open.includes(x)) && !treeSkipOk(t.open, s)) return '이어진 앞 칸을 먼저 열어야 합니다';
-  const chN = (typeof TREE_CH !== 'undefined' ? TREE_CH : {})[s.tier]; if (!chN) return '아직 열 수 없는 등급입니다'; if ((run.ch || 1) < chN) return `${chN}챕터부터 열립니다`; // 10월 3일 만든 사람 결정: 상급 3챕터, 궁극 5챕터. TREE_CH에 없는 등급은 잠근다(설정을 빠뜨려도 1챕터에 열리지 않게)
-  const need = TREE_GATE[s.tier] || 0; const sp = t.spent[s.b] || 0;
-  if (sp < need) return `${s.b} 갈래에 포인트 ${need}점을 먼저 써야 합니다 (지금 ${sp}점)`;
-  if (t.pts < 1) return '포인트가 없습니다';
-  return null;
-}
-/* 보이는 범위: full(다 보임), name(이름만), hidden(?). 기본과 부모가 열린 칸은 다 보이고, 궁극(tease)은 이름만 먼저 보인다 */
-function treeVis(run, id) {
-  const t = run.tree, s = SK2[id]; if (!t || !s || !treeOwns(run,id)) return 'hidden';
-  if (s.start || t.open.includes(id) || !s.par || s.par.some(x => t.open.includes(x)) || treeSkipOk(t.open, s)) return 'full';
-  return s.tease ? 'name' : 'hidden';
-}
-/* 되돌리기 (10월 3일 만든 사람 요청: 캐릭터를 만드는 동안에는 연 칸을 다시 뺄 수 있다). 남은 칸이 앞 칸·등급 조건을 그대로 지켜야 한다 */
-function treeRefundWhy(run, id) {
-  const t = run.tree, s = SK2[id]; if (!t || !s || !t.open.includes(id)) return '열리지 않은 칸';
-  if (!G.creating) return '캐릭터를 만드는 동안에만 되돌릴 수 있습니다';
-  const rest = t.open.filter(x => x !== id);
-  for (const o of rest) { const so = SK2[o]; if (!so) continue;
-    if (so.par && so.par.length && !so.par.some(x => rest.includes(x)) && !treeSkipOk(rest, so)) return so.n + '이(가) 이 칸에 이어져 있어 먼저 되돌려야 합니다';
-    if (rest.filter(x => x !== o && SK2[x] && SK2[x].b === so.b).length < (TREE_GATE[so.tier] || 0)) return so.n + '의 등급 조건 때문에 먼저 되돌려야 합니다'; }
-  return null;
-}
-function treeRefund(run, id) {
-  const why = treeRefundWhy(run, id); if (why) return why; const s = SK2[id], t = run.tree;
-  t.open = t.open.filter(x => x !== id); t.pts++; t.spent[s.b] = Math.max(0, (t.spent[s.b] || 0) - 1); run.skills = (run.skills || []).filter(x => x !== id);
-  (run.treeLog = run.treeLog || []).push({ ch: run.ch || 1, room: run.room, id, refund: 1, t: Date.now() }); return null;
-}
-/* 트리 초기화 (10월 3일 만든 사람 결정: 상점에서 늘 살 수 있다. 능력치 다시 나누기보다 비싸게): 연 칸을 모두 닫고 포인트를 돌려준다. 끼운 트리 스킬도 빠진다(시작 스킬은 그대로).
-   값 = 연 칸 수 × TREE_RESET.cell × 챕터 가격 배율(상점 장비 값과 같은 1.5^(챕터−1)). 되돌리는 칸만큼 내고, 칸 하나가 스킬 하나라 능력치 다시 나누기(레벨 × 10)보다 무겁다 */
-const TREE_RESET = { cell: 25 };
-function treeResetCost(run) { const n = (run.tree && run.tree.open.length) || 0; return Math.round(n * TREE_RESET.cell * Math.pow(1.5, (run.ch || 1) - 1)); }
-function treeReset(run) { const t = run.tree; if (!t) return 0; const n = t.open.length; t.pts += n; t.open = []; t.spent = {}; run.skills = []; if (run.p) run.p.skills = v2Equip(run); (run.treeLog = run.treeLog || []).push({ ch: run.ch || 1, room: run.room, reset: n, lv: run.lv, t: Date.now() }); return n; }
-function treeUnlock(run, id) { const why = treeWhy(run, id); if (why) return why; const s = SK2[id]; run.tree.pts--; run.tree.open.push(id); run.tree.spent[s.b] = (run.tree.spent[s.b] || 0) + 1; (run.treeLog = run.treeLog || []).push({ ch: run.ch || 1, room: run.room, id, lv: run.lv, t: Date.now() }); return null; }
+const TREE_RESET = { cell: 25 }; // 액티브 되돌리기 값 = 연 노드 수 × cell × 챕터 가격 배율(1.5^(챕터−1)), 지금 트리 초기화 값 그대로

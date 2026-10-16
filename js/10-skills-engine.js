@@ -37,7 +37,7 @@ function runSkill2(b, act, tgt) {
   const capOver = (F('capOver') || {}).cap || 0;
   let targets = s.tgt === 'front' ? alive(b).filter(e => e.row === 'front' && e.role !== 'root') : s.tgt === 'all' ? alive(b).filter(e => e.role !== 'root') : s.tgt === 'self' ? [] : (tgt ? [tgt] : []);
   const sbOrd = p.build === 'spellblade'; const sbE = sbOrd && s.kind === 'cut' && p.edge ? { st: tgt && targets.includes(tgt) ? 'tgt' : 'any', tgt, apply: null } : null; if (sbE && sbE.st === 'tgt' && targets.length > 1) targets = [tgt].concat(targets.filter(x => x !== tgt)); // 마검사 칼에 싣기: 고른 적부터 친다(전열 베기도 고른 적 하나에게 건다)
-  const altF = F('alt'); const altOn = !!(altF && b.sbAlt && (altF.run === 2 ? b.sbRunNow >= 2 : true)); if (altOn && altF.run === 2) b.sbRun2 = 1; b.sbAltFx = altOn ? altF : null; const altBrk = altOn && altF.brk ? altF.brk : 0; let altBrkLog = 0; // 마검사 교대 보상: 붕괴는 타격 뒤, 나머지는 행동 뒤(sbEnd)
+  const altF = sbAltMerge(s, b); const altOn = !!altF; /* 10월 16일 0.8.0 2단계: 강화가 더한 교대 보상(alt)은 맞는 것끼리 합친다 */ if (altOn && altF.run === 2) b.sbRun2 = 1; b.sbAltFx = altOn ? altF : null; const altBrk = altOn && altF.brk ? altF.brk : 0; let altBrkLog = 0; // 마검사 교대 보상: 붕괴는 타격 뒤, 나머지는 행동 뒤(sbEnd)
   const hz = F('hasten'); const hzOn = hz ? (hz.on || 'use') : null; // 🔄 쿨타임 당기기 (10월 3일 만든 사람 결정 D: 갈래 규칙 대신 스킬에만 적는다)
   const par = F('parry'); if (par && tgt) { setParry(b, tgt, par.red, Object.assign({}, F('onParry') || {}, hzOn === 'parry' ? { hasten: hz.n || 1, hb: s.b } : {})); logp(b, 'sys', tgt.n + '의 다음 공격을 흘릴 준비를 한다'); }
   const sm = F('stam'); if (sm) { p.st = Math.min(p.stMax, p.st + sm.n); if (p.exhaust && p.st >= 30) p.exhaust = 0; }
@@ -188,6 +188,7 @@ function runSkill2(b, act, tgt) {
    행동 종류: ⚔ 베기(기본 공격 · 강공격 · kind 'cut' 스킬), ✦ 주문(kind 'spell' 스킬). 방어 · 흘리기 · 플라스크 · 소모품 · 달아나기 · 기절로 놓친 차례는 종류가 없고 순서를 바꾸지 않는다.
    교대: 종류가 직전 종류(p.sbLast)와 다르면. 교대면 행동이 끝난 뒤 보호막 +altWard(내 차례마다 한 번). 이어진 교대(p.sbRun)가 2 이상이면 run 2 보상이 켜지고, 켜지면 이어진 교대는 0(박자를 쓴다).
    칼(p.edge = { s, n }): 주문이 싣고, 다음 베기의 첫 타격이 고른 적에게 피해를 주고 그 적이 살아 있으면 건다. 빗나가거나 그 타격에 쓰러지면 칼에 남는다 */
+function sbAltMerge(s, b) { const L = s.fx.filter(e => e.k === 'alt' && b.sbAlt && (e.run === 2 ? b.sbRunNow >= 2 : true)); if (!L.length) return null; if (L.length === 1) return L[0]; const o = { k: 'alt' }; for (const e of L) for (const k in e) if (k === 'run') o.run = Math.max(o.run || 0, e.run); else if (k !== 'k') o[k] = (o[k] || 0) + e[k]; return o; }
 function sbKindOf(p, id, act) { if (p.build !== 'spellblade') return null; if (id === 'basic' || id === 'heavy') return 'cut'; return act && act.v2 && act.s && act.s.kind || null; }
 function sbBegin(b, id, act, tgt) {
   const p = b.p; const k = sbKindOf(p, id, act); b.sbK = k; b.sbAlt = false; b.sbRunNow = 0; b.sbRun2 = 0; b.sbAltFx = null; b.sbEdgeDone = 0; b.sbWardSpentAll = false; if (!k) return;
@@ -215,7 +216,8 @@ function sbEnd(b, act) {
   const af = b.sbAltFx; b.sbAltFx = null;
   if (af && !b.over) { const g = []; if (af.ward) g.push('보호막 +' + Math.round(addWard(b, p, af.ward))); if (af.protect) { addS(b, p, 'protect', af.protect); g.push('보호 ' + af.protect); } if (af.stam) { p.st = Math.min(p.stMax, p.st + af.stam); if (p.exhaust && p.st >= 30) p.exhaust = 0; g.push('스태미나 +' + af.stam); } if (g.length) logp(b, 'good', (af.run === 2 ? '⇄⇄ 이어진 교대: ' : '⇄ 교대: ') + g.join(', ')); }
   if (k === 'spell' && act && act.v2) { const im = act.s.fx.find(e => e.k === 'imbue'); if (im) { if (p.edge && p.edge.s === im.s) p.edge.n = Math.max(p.edge.n, im.n); else p.edge = { s: im.s, n: im.n }; logp(b, 'good', '칼에 ' + KW_N[im.s] + ' ' + p.edge.n + '을(를) 싣는다'); } }
-  if (b.sbAlt && b.sbAltTurn !== b.turnIdx && !b.over && !b.sbWardSpentAll) { b.sbAltTurn = b.turnIdx; const g = addWard(b, p, (BUILDS[p.build] || {}).altWard || 0, undefined, true); b.rec.push({ k: 'alt', g: r1(g) }); logp(b, 'good', '⇄ 교대: 보호막 +' + Math.round(g) + ' (' + Math.round(p.ward || 0) + '/' + wardMax(p) + ')'); fxRun(p, 'onAlt', b, p, k, b.sbRunNow); }
+  if (b.sbAlt && b.sbAltTurn !== b.turnIdx && !b.over && !b.sbWardSpentAll && !fxFlag(p, 'noAltWard')) { b.sbAltTurn = b.turnIdx; const g = addWard(b, p, ((BUILDS[p.build] || {}).altWard || 0) + fxVal(p, 'altWardAdd', 0, (a, v) => a + v), undefined, true); if (g > 0) fxRun(p, 'onAltWard', b, p); /* 10월 16일 0.8.0 2단계: 교대의 박자 · 마력 순환 · 마검 과부하 */ b.rec.push({ k: 'alt', g: r1(g) }); logp(b, 'good', '⇄ 교대: 보호막 +' + Math.round(g) + ' (' + Math.round(p.ward || 0) + '/' + wardMax(p) + ')'); fxRun(p, 'onAlt', b, p, k, b.sbRunNow); }
+  if (b.sbAlt && b.sbRunNow >= 3 && !b.over && (b.ys3N || 0) < 2 && fxFlag(p, 'alt3Ys') && ysRefund(b, '세 박자')) b.ys3N = (b.ys3N || 0) + 1; // 노드 세 박자: 이어진 교대 3번째면 유산 +1(전투마다 2번, 환급 한도 공유)
   p.sbLast = k; p.sbRun = b.sbRun2 ? 0 : b.sbRunNow; b.sbAlt = false; b.sbRun2 = 0;
 }
 /* 수도승 자세 (stance, 10월 10일 단순화): 자세는 하나뿐이다. 내 다음 차례까지 전열 적의 직접 공격을 되받는다(받는 피해는 줄지 않는다. 줄이려면 방어). 덤은 겹치면 칸마다 큰 값.

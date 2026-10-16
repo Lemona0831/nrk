@@ -1,5 +1,5 @@
 'use strict';
-const fxList = p => { const out = []; if (!p || !p.eq) return out; for (const sl in p.eq) { const k = p.eq[sl]; if (k && IFX[k]) out.push([k, IFX[k]]); } if (p.awk && p.awk.length) for (const a of p.awk) if (IFX_AWK[a]) out.push(['awk_' + a, IFX_AWK[a]]); /* 각인 */ return out; };
+const fxList = p => { const out = []; if (!p || !p.eq) return out; for (const sl in p.eq) { const k = p.eq[sl]; if (k && IFX[k]) out.push([k, IFX[k]]); } if (p.awk && p.awk.length) for (const a of p.awk) if (IFX_AWK[a]) out.push(['awk_' + a, IFX_AWK[a]]); /* 각인(챕터 선물) */ if (p.pn && p.pn.length) for (const k of p.pn) { const f = IFX_NODE[k] || IFX_AWK[k]; if (f) out.push(['pn_' + k, f]); } if (p.psm && (p.psm.brk || p.psm.st)) out.push(['pn_small', ptSmallFx(p.psm)]); /* 10월 16일 0.8.0 2단계: 패시브 트리 노드 */ return out; };
 /* 배율·더하기 지점: 바뀌면 센다 */
 function fxMul(p, hook, ...a) { let m = 1; for (const [k, f] of fxList(p)) if (f[hook]) { const v = f[hook](...a); if (v !== 1 && v != null) { m *= v; fxHit(k); } } return m; }
 function fxAdd(p, hook, ...a) { let m = 0; for (const [k, f] of fxList(p)) if (f[hook]) { const v = f[hook](...a); if (v) { m += v; fxHit(k); } } return m; }
@@ -32,7 +32,7 @@ const PARRY_BIG = 0.2;
 /* 보호막 (0.6a.2, 10월 3일 만든 사람 결정): 피해를 먼저 대신 받아낸다. v2 직업의 상한은 최대 생명력의 30%이고, 라운드가 지나도 줄지 않으며 전투가 끝나면 사라진다(endBattleCarry).
    파수꾼은 방어할 때마다 +6. 옛 직업(0.6a)의 상한 40은 그대로 둔다 */
 const WARD = { cap: 0.3, guard: 6, thornMax: 8, back: 0.5 }; // back: 후열 적의 공격은 보호막이 이만큼만 받아낸다 (10월 4일 만든 사람 결정: 파수꾼의 약점은 후열)
-function wardMax(p) { return isV2(p) ? Math.round(p.hpMax * ((BUILDS[p.build] || {}).wardCap || WARD.cap)) : 40; } // wardCap: 직업마다 상한 (마검사 15%)
+function wardMax(p) { return isV2(p) ? Math.round(p.hpMax * ((p.eq && fxVal(p, 'wardCap', 0, (a, v) => Math.max(a, v))) || (BUILDS[p.build] || {}).wardCap || WARD.cap)) : 40; } // 10월 16일 0.8.0 2단계: 큰 각인 피를 두른 갑주(마검사 15% → 22%) // wardCap: 직업마다 상한 (마검사 15%)
 function addWard(b, p, n, cap, fixed) { if (!fixed) { n *= 1 + 0.02 * stat(p, 'wil'); const wp = p.eq ? fxAdd(p, 'wardP', b, p) : 0; if (wp) n *= 1 + Math.min(FX_CAP, wp); if (b && b.carve && b.cur && b.cur.grp) n *= carveMul(b, b.cur.grp); } /* 고정 교대는 생성 보정을 적용하지 않는다 */ const m = Math.min(cap != null ? cap : Infinity, wardMax(p)); const w0 = p.ward || 0; p.ward = Math.max(w0, Math.min(m, w0 + n)); if (w0 + n > m && p.eq) fxRun(p, 'onWardOver', b, p, w0 + n - Math.max(m, w0)); return p.ward - w0; }
 const parryBig = e => (e && (e.strong || e.role === 'boss') ? PARRY_BIG : 0);
 function dotMul(p) { return 1 + 0.02 * stat(p, 'int'); }

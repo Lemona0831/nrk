@@ -1,0 +1,288 @@
+'use strict';
+/* ===== 0.8.0 두 트리 엔진 (10월 16일 0.8.0 2단계, docs/제안/0.8.0-1단계-트리설계-2026-10-16.md) =====
+   패시브(run.ptree = { own, free, ks, pts, log }) · 액티브(run.atree = { own, pts, log }) · 장착(run.skills, 4칸) · 큰 각인(run.ksPending · run.ksOffer · run.ksGot).
+   능력치는 시작 노드 + 찍은 노드(길 덤 포함)의 stat 합이고, run.stats에 넣어 applyStats로 쓴다. 중간 노드 · 큰 각인 효과는 p.pn(효과 키)로 fxList에 들어간다.
+   한 칸씩 되돌리기는 배분 흐름(run.alloc: 캐릭터 만들기 · 옛 세이브 옮기기)의 그 단계에서만, 그 밖에는 상점 되돌리기만 */
+const PTREE = {}, ATREE = {};
+const PT_POS = ['1C', '2L', '2R', '3L', '3R', '4L', '4R', '5L', '5R', '6L', '6R', '7L', '7R', '8L', '8R'];
+const ptRingOf = r => r <= 3 ? 1 : r <= 6 ? 2 : 3;
+const PT_STATN = { str: '힘', dex: '민첩', int: '지능', con: '체력', wil: '의지' };
+function ptAtkStat(cls) { return cls === 'assassin' || cls === 'hunter' ? 'dex' : cls === 'elementalist' || cls === 'bloodmage' ? 'int' : 'str'; } // 2-2: 스킬 성장 능력치
+function ptSmallOf(cls, d, lane) {
+  const C = PT_CLS[cls];
+  if (d === 'pw') { if (C && C['pw' + lane]) return { stat: Object.assign({}, C['pw' + lane]) }; return { stat: { [ptAtkStat(cls)]: 2 } }; }
+  if (d === 'sv') return { stat: { con: 2 } }; if (d === 'su') return { stat: { wil: 2 } }; if (d === 'ag') return { stat: { dex: 2 } };
+  if (d === 'ct') return { sm: 'brk' }; return { sm: 'st' };
+}
+const ptSmallTxt = o => o.stat ? Object.entries(o.stat).map(([k, v]) => PT_STATN[k] + ' +' + v).join(' · ') : o.sm === 'brk' ? '주는 붕괴 +' + Math.round(PT.smallBrk * 100) + '%' : '스태미나 +' + PT.smallSt;
+const pnTxt = k => (typeof AWK_MAP !== 'undefined' && AWK_MAP[k]) || PN_TXT[k] || KS_LIST[k] || { n: k, d: '' };
+const ptPoolHas = k => PT.dirs.some(d => PT_POOL[d].r2.includes(k) || PT_POOL[d].r3.includes(k));
+/* 패시브 트리 만들기 (2-3 틀): 방향마다 일반 15 + 큰 각인 자리 2, 다리 R3 → 시계 방향 이웃 L3 · R6 → 이웃 L6 */
+function ptBuild(cls) {
+  if (PTREE[cls]) return PTREE[cls];
+  const C = PT_CLS[cls], tilt = PT_TILT[cls] || {}, N = {}; const tmp = C ? 0 : 1;
+  const add = (id, o) => { N[id] = Object.assign({ id, links: [], cost: 1 }, o); if (tmp) N[id].tmp = 1; return N[id]; };
+  const link = (a, b) => { if (!N[a] || !N[b]) throw new Error('ptree link ' + a + '-' + b); if (!N[a].links.includes(b)) N[a].links.push(b); if (!N[b].links.includes(a)) N[b].links.push(a); };
+  add('S', { kind: 'start', ring: 1, pos: { r: 0, lane: 'C' }, cost: 0, stat: Object.assign({}, PT_START[cls] || {}), n: '시작', d: '직업 기본 능력치' });
+  for (const d of PT.dirs) {
+    const nt = PT_TILT_N[tilt[d] || 'B'].concat(['5L', '5R', '7L', '7R']); const content = {};
+    if (C) { for (const pos of nt) if (C.nodes[d + pos]) content[pos] = C.nodes[d + pos]; }
+    else { // 임시 트리 (10월 16일 0.8.0 2단계): 직업 갈래 각인 → 공용 2고리 → 공용 3고리 순서로 기계적으로 채운다. 없으면 작은 노드
+      const q12 = ((PT_CLSAWK[cls] || {})[d] || []).concat(PT_POOL[d].r2), q3 = PT_POOL[d].r3.slice();
+      for (const pos of nt) { const r = +pos[0]; const k = r >= 7 ? (q3.shift() || q12.shift()) : q12.shift(); if (k) content[pos] = k; }
+    }
+    for (const pos of PT_POS) {
+      const r = +pos[0], lane = pos[1], id = d + pos, k = content[pos];
+      const base = { dir: d, ring: ptRingOf(r), pos: { r, lane } };
+      if (k) { const T = pnTxt(k); add(id, Object.assign(base, { kind: 'notable', fx: k, n: T.n, d: T.d, pool: ptPoolHas(k) ? 'common' : 'class' })); }
+      else { const sm = ptSmallOf(cls, d, lane); add(id, Object.assign(base, { kind: 'small', n: ptSmallTxt(sm), d: ptSmallTxt(sm) + '.' }, sm)); }
+    }
+    const ks = C ? [C.ks[d + 'K5'], C.ks[d + 'K9']] : KS_TMP[d];
+    [5, 9].forEach((r, i) => { const k = ks[i], K = KS_LIST[k]; add(d + 'K' + r, { kind: 'keystone', dir: d, ring: r === 5 ? 2 : 3, pos: { r, lane: 'C' }, cost: 0, fx: k, n: K.n, d: K.d, pay: K.pay || null, pool: K.cls ? 'class' : 'common' }); });
+  }
+  PT.dirs.forEach((d, i) => {
+    const nx = PT.dirs[(i + 1) % PT.dirs.length], x = p => d + p;
+    link('S', x('1C')); link(x('1C'), x('2L')); link(x('1C'), x('2R')); link(x('2L'), x('3L')); link(x('2R'), x('3R')); link(x('3R'), nx + '3L');
+    link(x('3L'), x('4L')); link(x('3R'), x('4R')); link(x('4L'), x('5L')); link(x('4R'), x('5R')); link(x('5L'), x('6L')); link(x('5R'), x('6R')); link(x('K5'), x('4L')); link(x('K5'), x('4R')); link(x('6R'), nx + '6L');
+    link(x('6L'), x('7L')); link(x('6R'), x('7R')); link(x('7L'), x('8L')); link(x('7R'), x('8R')); link(x('K9'), x('8L')); link(x('K9'), x('8R'));
+  });
+  for (const id in N) N[id].links.sort();
+  return (PTREE[cls] = { cls, nodes: N, tmp, kind: 'p' });
+}
+/* 액티브 트리 만들기: 마검사는 ATREE_DEF(8절), 다른 직업은 지금 칸(줄 · par)으로 만든 임시 트리 (스킬 노드만, 하급 1고리 · 중급 2고리 · 상급 3고리) */
+const AT_TIER_RING = { 하급: 1, 중급: 2, 상급: 3, 궁극: 3 };
+function atBuild(cls) {
+  if (ATREE[cls]) return ATREE[cls];
+  const D = ATREE_DEF[cls], N = {}, T2 = TREE2[cls] || { branches: [], starters: [] };
+  const add = (id, o) => { N[id] = Object.assign({ id, links: [], cost: 1 }, o); return N[id]; };
+  const link = (a, b) => { if (!N[a] || !N[b]) throw new Error('atree link ' + a + '-' + b); if (!N[a].links.includes(b)) N[a].links.push(b); if (!N[b].links.includes(a)) N[b].links.push(a); };
+  add('S', { kind: 'start', ring: 1, pos: { r: 0, lane: 'C' }, cost: 0, n: '시작 스킬', d: T2.starters.map(id => SK2[id] ? SK2[id].n : id).join(' · ') });
+  if (D) {
+    for (const [id, br, ring, r, lane, , ys] of D.skills) add(id, { kind: 'skill', br, ring, pos: { r, lane }, ys, n: SK2[id].n });
+    for (const [id, br, ring, r, lane, on, n, d, mod, src] of D.ups) add(id, { kind: 'upgrade', br, ring, pos: { r, lane }, on, n, d, mod, src });
+    for (const [id, , , , , ln] of D.skills) for (const x of ln) link(id, x);
+    for (const u of D.ups) link(u[0], u[5]);
+  } else { // 임시 트리 (10월 16일 0.8.0 2단계): 지금 사다리 그대로. 줄 1은 가운데와, 줄 n은 같은 갈래 줄 n−1(par)과 잇는다. 사냥꾼의 줄 건너뛰기(skip)는 쓰지 않는다
+    for (const s of (SKILLS2[cls] || []).filter(x => !x.start && AT_TIER_RING[x.tier])) { const row = (SKILLS2[cls] || []).filter(x => x.b === s.b && x.row === s.row); add(s.id, { kind: 'skill', br: s.b, ring: AT_TIER_RING[s.tier], pos: { r: s.row || 1, lane: row.length < 2 ? 'C' : row.indexOf(s) === 0 ? 'L' : 'R' }, n: s.n, tmp: 1 }); }
+    for (const id in N) { if (id === 'S') continue; const s = SK2[id]; if ((s.row || 1) === 1) link(id, 'S'); else for (const pa of (s.par || [])) if (N[pa]) link(id, pa); }
+  }
+  for (const id in N) N[id].links.sort();
+  return (ATREE[cls] = { cls, nodes: N, tmp: D ? 0 : 1, kind: 'a', br: T2.branches.slice() });
+}
+/* ---- 공통 규칙 ---- */
+const ptTotal = run => PT.pts.start + PT.pts.lv * Math.max(0, (run.lv || 1) - 1) + ((run.ptree && run.ptree.bonus) || 0); // bonus: 이벤트 · 제단의 패시브 포인트(옛 능력치 1점)
+function ptBonus(run, n, why) { ptInit(run); run.ptree.bonus = (run.ptree.bonus || 0) + n; run.ptree.pts += n; run.ptree.log.push({ bonus: n, why, t: Date.now() }); if (typeof toast === 'function') toast(why + ': 패시브 포인트 +' + n); }
+const atTotal = run => AT_PTS.start + AT_PTS.lv * Math.max(0, (run.lv || 1) - 1);
+const clearsEff = run => (run.clears || 0) + (run.markCh ? run.markCh - 1 : 0); // 표식 도전은 시작 챕터 앞을 깬 것으로 친다(1-5)
+const ringOpen = (run, ring) => clearsEff(run) >= (PT.ring[ring] || 0);
+const RING_WHY = { 2: '2고리는 1챕터 보스를 이기면 열립니다', 3: '3고리는 2챕터 보스를 이기면 열립니다' };
+function ptInit(run) { if (!run.ptree) run.ptree = { own: [], free: [], ks: [], pts: ptTotal(run), log: [] }; if (!run.atree) run.atree = { own: [], pts: atTotal(run), log: [] }; if (!run.ksGot) run.ksGot = {}; if (run.ksPending == null) run.ksPending = 0; return run; }
+const ptOpenIds = run => ['S'].concat(run.ptree.own, run.ptree.free, run.ptree.ks);
+const atOpenIds = run => ['S'].concat(run.atree.own);
+const ptSpent = run => run.ptree.own.reduce((a, id) => a + ((ptBuild(run.build).nodes[id] || {}).cost || 0), 0);
+/* 열린 노드(roots에서 열린 노드만 지나 닿는가) */
+function treeReach(T, open, roots) { const S = new Set(open), seen = new Set(roots.filter(x => S.has(x))), q = [...seen]; while (q.length) { const x = q.shift(); for (const y of T.nodes[x].links) if (S.has(y) && !seen.has(y)) { seen.add(y); q.push(y); } } return seen; }
+function treeWhyBuy(run, T, openIds, pts, id) {
+  const n = T.nodes[id]; if (!n || n.kind === 'start') return '없는 노드입니다';
+  if (openIds.includes(id)) return '이미 열렸습니다';
+  if (n.kind === 'keystone') return '큰 각인은 챕터 보상으로만 얻습니다';
+  if (!ringOpen(run, n.ring)) return RING_WHY[n.ring] || '아직 열 수 없는 고리입니다';
+  if (!n.links.some(x => openIds.includes(x))) return '이웃한 노드를 먼저 열어야 합니다';
+  if (pts < (n.cost || 0)) return '포인트가 없습니다';
+  return null;
+}
+const ptWhy = (run, id) => treeWhyBuy(run, ptBuild(run.build), ptOpenIds(run), run.ptree.pts, id);
+const atWhy = (run, id) => treeWhyBuy(run, atBuild(run.build), atOpenIds(run), run.atree.pts, id);
+function ptBuy(run, id) { const why = ptWhy(run, id); if (why) return why; const n = ptBuild(run.build).nodes[id]; run.ptree.own.push(id); run.ptree.pts -= n.cost; run.ptree.log.push({ id, lv: run.lv || 1, ch: run.ch || 1, room: run.room, t: Date.now() }); ptSync(run); return null; }
+function atBuy(run, id) {
+  const why = atWhy(run, id); if (why) return why; const n = atBuild(run.build).nodes[id]; run.atree.own.push(id); run.atree.pts -= n.cost; run.atree.log.push({ id, lv: run.lv || 1, ch: run.ch || 1, room: run.room, t: Date.now() });
+  if (n.kind === 'skill') { run.skills = run.skills || []; if (run.skills.length < EQUIP_SLOTS2 && !run.skills.includes(id)) run.skills.push(id); } atSync(run); return null;
+}
+/* 한 칸 되돌리기: 배분 흐름(run.alloc)의 그 단계에서만. 남은 찍은 노드가 모두 시작 · 길 덤 · 큰 각인에 이어져 있어야 한다 */
+const allocStep = run => run && run.alloc ? run.alloc.step : null;
+function ptRefundWhy(run, id) {
+  if (allocStep(run) !== 'p') return '캐릭터를 만들거나 포인트를 다시 나누는 화면의 패시브 단계에서만 되돌립니다';
+  if (!run.ptree.own.includes(id)) return '포인트로 찍은 노드만 되돌립니다';
+  const T = ptBuild(run.build), t = run.ptree, rest = t.own.filter(x => x !== id), open = ['S'].concat(rest, t.free, t.ks);
+  const R = treeReach(T, open, ['S'].concat(t.free, t.ks)); const bad = rest.find(x => !R.has(x)); return bad ? T.nodes[bad].n + '이(가) 이 노드에 이어져 있어 먼저 되돌려야 합니다' : null;
+}
+function ptRefund(run, id) { const why = ptRefundWhy(run, id); if (why) return why; run.ptree.own = run.ptree.own.filter(x => x !== id); run.ptree.pts += ptBuild(run.build).nodes[id].cost; run.ptree.log.push({ id, refund: 1, t: Date.now() }); ptSync(run); return null; }
+function atRefundWhy(run, id) {
+  if (allocStep(run) !== 'a') return '캐릭터를 만들거나 포인트를 다시 나누는 화면의 액티브 단계에서만 되돌립니다';
+  if (!run.atree.own.includes(id)) return '연 노드만 되돌립니다';
+  const T = atBuild(run.build), rest = run.atree.own.filter(x => x !== id); const R = treeReach(T, ['S'].concat(rest), ['S']); const bad = rest.find(x => !R.has(x)); return bad ? T.nodes[bad].n + '이(가) 이 노드에 이어져 있어 먼저 되돌려야 합니다' : null;
+}
+function atRefund(run, id) { const why = atRefundWhy(run, id); if (why) return why; atDrop(run, id); run.atree.log.push({ id, refund: 1, t: Date.now() }); atSync(run); return null; }
+function atDrop(run, id) { run.atree.own = run.atree.own.filter(x => x !== id); run.atree.pts += atBuild(run.build).nodes[id].cost; run.skills = (run.skills || []).filter(x => x !== id); }
+/* 끝 노드 하나 (가장 바깥 것부터, 같으면 id 순): 빼도 나머지가 이어져 있는 것 */
+function treeLeaf(T, own, roots) { const c = own.filter(id => { const rest = own.filter(x => x !== id); const R = treeReach(T, roots.concat(rest), roots); return rest.every(x => R.has(x)); }); return c.sort((a, b) => (T.nodes[b].pos.r - T.nodes[a].pos.r) || (T.nodes[b].ring - T.nodes[a].ring) || (a < b ? -1 : 1))[0] || null; }
+/* 상점 되돌리기 (1-4의 5): 포인트로 찍은 노드만 돌려받고, 큰 각인과 길 덤은 남는다. 값은 지금 모델 그대로 */
+const ptResetCost = run => (run.lv || 1) * 10;
+const atResetCost = run => Math.round((run.atree ? run.atree.own.length : 0) * TREE_RESET.cell * Math.pow(1.5, (run.ch || 1) - 1));
+function ptReset(run) { const n = run.ptree.own.length; run.ptree.pts += ptSpent(run); run.ptree.own = []; run.ptree.log.push({ reset: n, lv: run.lv || 1, ch: run.ch || 1, t: Date.now() }); ptSync(run); return n; }
+function atReset(run) { const n = run.atree.own.length; run.atree.pts += n; run.atree.own = []; run.skills = []; run.atree.log.push({ reset: n, lv: run.lv || 1, ch: run.ch || 1, t: Date.now() }); atSync(run); return n; }
+/* 이벤트 "잊힌 스승의 묘비": 액티브 노드 하나를 돌려준다(끝 노드 가운데 가장 바깥 것) */
+function atRefundLeaf(run) { const T = atBuild(run.build); const id = treeLeaf(T, run.atree.own, ['S']); if (!id) return null; atDrop(run, id); run.atree.log.push({ id, refund: 'master', t: Date.now() }); atSync(run); return id; }
+/* 불러올 때 포인트 다시 맞추기 (1-8): 넘치면 가장 바깥의 끝 노드부터 되돌린다. 데이터에서 빠진 노드는 지운다 */
+function ptFix(run) {
+  ptInit(run); const T = ptBuild(run.build), t = run.ptree;
+  t.own = [...new Set(t.own.filter(id => T.nodes[id] && T.nodes[id].kind !== 'keystone' && T.nodes[id].kind !== 'start'))]; t.free = [...new Set(t.free.filter(id => T.nodes[id] && !t.own.includes(id)))]; t.ks = [...new Set(t.ks.filter(id => T.nodes[id] && T.nodes[id].kind === 'keystone'))];
+  t.pts = ptTotal(run) - ptSpent(run);
+  while (t.pts < 0 && t.own.length) { const id = treeLeaf(T, t.own, ['S'].concat(t.free, t.ks)) || t.own[t.own.length - 1]; t.own = t.own.filter(x => x !== id); t.pts += T.nodes[id].cost; t.log.push({ id, refund: 'over', t: Date.now() }); }
+  const A = atBuild(run.build), a = run.atree; a.own = [...new Set(a.own.filter(id => A.nodes[id] && A.nodes[id].kind !== 'start'))]; a.pts = atTotal(run) - a.own.length;
+  while (a.pts < 0 && a.own.length) { const id = treeLeaf(A, a.own, ['S']) || a.own[a.own.length - 1]; atDrop(run, id); a.log.push({ id, refund: 'over', t: Date.now() }); }
+  run.skills = (run.skills || []).filter(id => a.own.includes(id) && A.nodes[id] && A.nodes[id].kind === 'skill').slice(0, EQUIP_SLOTS2);
+}
+/* 능력치 = 시작 노드 + 찍은 노드 · 길 덤의 stat 합 (1-6). 큰 각인은 능력치를 주지 않는다 */
+function ptStats(run) { const T = ptBuild(run.build), o = { str: 0, dex: 0, int: 0, con: 0, wil: 0 }; for (const id of ['S'].concat(run.ptree.own, run.ptree.free)) { const n = T.nodes[id]; if (n && n.stat) for (const k in n.stat) o[k] = (o[k] || 0) + n.stat[k]; } return o; }
+/* 출처별 능력치 (화면): 시작 · 작은 노드 · 길 덤 */
+function ptStatSrc(run) { const T = ptBuild(run.build), src = { start: {}, own: {}, free: {} }; const put = (w, n) => { if (n && n.stat) for (const k in n.stat) src[w][k] = (src[w][k] || 0) + n.stat[k]; }; put('start', T.nodes.S); for (const id of run.ptree.own) put('own', T.nodes[id]); for (const id of run.ptree.free) put('free', T.nodes[id]); return src; }
+function ptFxKeys(run) { const T = ptBuild(run.build); return ['S'].concat(run.ptree.own, run.ptree.free, run.ptree.ks).map(id => T.nodes[id]).filter(n => n && n.fx).map(n => n.fx); }
+function ptSmall(run) { const T = ptBuild(run.build), o = { brk: 0, st: 0 }; for (const id of run.ptree.own.concat(run.ptree.free)) { const n = T.nodes[id]; if (n && n.sm) o[n.sm]++; } return o; }
+/* 트리 → 캐릭터: 능력치 · 노드 효과(p.pn · p.psm) · 생명력 비율 유지 */
+function ptSync(run) { if (!run.ptree) return; run.stats = ptStats(run); const p = run.p; if (!p) return; p.pn = ptFxKeys(run); p.psm = ptSmall(run); p.awk = (run.awk || []).slice(); applyStats(p, run.stats); }
+function atSync(run) { if (!run.atree || !run.p) return; run.p.skills = v2Equip(run); const T = atBuild(run.build), eq = run.p.skills; run.p.aup = run.atree.own.filter(id => T.nodes[id] && T.nodes[id].kind === 'upgrade' && eq.includes(T.nodes[id].on)).sort(); }
+function treeSync(run) { ptInit(run); ptFix(run); ptSync(run); atSync(run); }
+/* 장착: 시작 스킬(늘) + 연 스킬 노드 가운데 run.skills(4칸) */
+function v2Equip(run) { const T = TREE2[run.build]; const A = run.atree ? atBuild(run.build) : null; const own = run.atree ? run.atree.own : []; return (T ? T.starters : []).concat((run.skills || []).filter(id => A && own.includes(id) && A.nodes[id] && A.nodes[id].kind === 'skill' && !(T && T.starters.includes(id)))).slice(0, (T ? T.starters.length : 0) + EQUIP_SLOTS2); }
+function atEquip(run, id) {
+  const A = atBuild(run.build); if (!run.atree.own.includes(id) || !A.nodes[id] || A.nodes[id].kind !== 'skill') return '연 스킬만 장착합니다';
+  run.skills = run.skills || []; const i = run.skills.indexOf(id); if (i >= 0) run.skills.splice(i, 1); else if (run.skills.length < EQUIP_SLOTS2) run.skills.push(id); else return '장착 칸이 가득 찼습니다. 먼저 하나를 빼 주세요';
+  atSync(run); return null;
+}
+const atSkills = run => run.atree ? run.atree.own.filter(id => (atBuild(run.build).nodes[id] || {}).kind === 'skill') : [];
+/* ---- 실제 스킬: 강화를 적용한 스킬 (1-3). 강화는 그 스킬을 끼웠을 때만(p.aup). 패시브 노드의 스킬 바꾸기(PN_SK)도 여기서 ---- */
+const PN_SK = { n_sb_thickaegis: { on: 'sb_aegis', fxSet: [{ k: 'ward', add: 3 }] } }; // 두꺼운 주문 방패: 주문 방패의 보호막 +3
+const SKC = new Map();
+function skMod(s, m) {
+  if (m.set) Object.assign(s, m.set);
+  for (const x of m.fxSet || []) { const e = s.fx.find(f => f.k === x.k && (x.s == null || f.s === x.s)); if (!e) throw new Error('fxSet ' + s.id + ' ' + x.k); for (const k in x) if (k === 'add') e.n = (e.n || 0) + x.add; else if (k !== 'k') e[k] = x[k]; }
+  for (const x of m.fxAdd || []) s.fx.push(Object.assign({}, x));
+  if (m.cond) s.cond = (s.cond || []).concat([Object.assign({}, m.cond)]);
+}
+function skOf(p, id) {
+  const base = SK2[id]; if (!base || !p) return base; const A = ATREE_DEF[p.build] ? atBuild(p.build) : null; const node = A && A.nodes[id];
+  const ups = (p.aup || []).filter(u => A && A.nodes[u] && A.nodes[u].on === id); const pk = (p.pn || []).filter(k => PN_SK[k] && PN_SK[k].on === id);
+  if (!ups.length && !pk.length && !(node && node.ys != null)) return base;
+  const key = p.build + '|' + id + '|' + ups.join(',') + '|' + pk.join(','); if (SKC.has(key)) return SKC.get(key);
+  const s = Object.assign({}, base, { fx: base.fx.map(e => Object.assign({}, e)) }); if (node && node.ys != null) s.ys = node.ys;
+  for (const u of ups) { const m = A.nodes[u].mod; skMod(s, m); if (m.cond) s.cond[s.cond.length - 1].id = u; }
+  for (const k of pk) skMod(s, PN_SK[k]);
+  if (ups.length) s.ups = ups.slice(); SKC.set(key, s); return s;
+}
+/* 조건부 할인 (1-3): 비용 −off, 바닥 1, 그 강화마다 내 차례(라운드)에 한 번 */
+function skCondMet(b, s, c, tgt) {
+  const p = b.p; if (c.when === 'resp') return b.ysRespLast != null && b.ysRespLast >= (b.ysR || 0) - 1;
+  if (c.when === 'alt2') { if (p.build !== 'spellblade' || !s.kind) return false; const alt = !!p.sbLast && s.kind !== p.sbLast; return (alt ? (p.sbRun || 0) + 1 : 0) >= 2; }
+  const m = /^kw:(\w+)>=(\d+)$/.exec(c.when || ''); if (m) { const ok = e => e && e.alive && st(e, m[1]) >= +m[2]; return tgt ? ok(tgt) : alive(b).some(ok); }
+  return false;
+}
+function skCostAt(b, s, tgt) {
+  const c0 = skCost(s); if (!b || !s.cond) return { c: c0, by: null };
+  for (const c of s.cond) { if (b.condUsed && b.condUsed[c.id || s.id] === (b.ysR || 0)) continue; if (skCondMet(b, s, c, tgt)) { const c1 = Math.max(1, c0 - (c.off || 1)); if (c1 < c0) return { c: c1, by: c.id || s.id }; } }
+  return { c: c0, by: null };
+}
+/* ---- 큰 각인 (1-7) ---- */
+const ksHash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+/* 열린 노드 전체에서의 최단 거리와 길 (열린 고리의 노드만, 다른 큰 각인 자리는 지나지 않는다. 이웃은 id 순) */
+function ksPaths(run) {
+  const T = ptBuild(run.build), open = ptOpenIds(run), dist = {}, par = {}, q = [];
+  for (const id of open.slice().sort()) { dist[id] = 0; q.push(id); }
+  while (q.length) { const x = q.shift(); if (T.nodes[x].kind === 'keystone' && !open.includes(x)) continue;
+    for (const y of T.nodes[x].links) { if (dist[y] != null || !ringOpen(run, T.nodes[y].ring)) continue; dist[y] = dist[x] + 1; par[y] = x; q.push(y); } }
+  return { dist, par };
+}
+function ksCands(run) {
+  const T = ptBuild(run.build), { dist, par } = ksPaths(run), ch = run.ch || 1;
+  return Object.values(T.nodes).filter(n => n.kind === 'keystone' && !run.ptree.ks.includes(n.id) && ringOpen(run, n.ring) && dist[n.id] != null).map(n => {
+    const path = []; for (let x = par[n.id]; x != null && dist[x] > 0; x = par[x]) path.unshift(x);
+    return { id: n.id, dir: n.dir, d: dist[n.id], path, rk: ksHash(n.id + ':' + ((run.seed || 0) + ch)) };
+  });
+}
+/* 셋 고르기: 거리 → 이미 고른 후보와 다른 방향 → 시드 순서. 3칸 안이 모자라면 4, 5칸 …에서 같은 순서로 채운다 */
+function ksOfferMake(run) {
+  const C = ksCands(run).sort((a, b) => a.d - b.d || a.rk - b.rk), out = [];
+  while (out.length < PT.ksOffer && C.length) { const d = C[0].d; const grp = C.filter(x => x.d === d); const dirs = out.map(x => x.dir); const pick = grp.find(x => !dirs.includes(x.dir)) || grp[0]; out.push(pick); C.splice(C.indexOf(pick), 1); }
+  return out.map(x => x.id);
+}
+const ksInfo = (run, id) => ksCands(run).find(x => x.id === id) || null;
+/* 받는 때: 1 · 2챕터 정산을 확정한 뒤(b1 · b2), 3챕터 야영지에 들어설 때(c3). 같은 때는 한 번만 */
+function ksGrant(run, key) { ptInit(run); if (run.ksGot[key]) return false; run.ksGot[key] = Date.now(); run.ksPending = (run.ksPending || 0) + 1; (run.ksLog = run.ksLog || []).push({ grant: key, ch: run.ch || 1, room: run.room, t: Date.now() }); return true; }
+function ksEnsureOffer(run) { if (!(run.ksPending > 0)) { run.ksOffer = null; return []; } if (!run.ksOffer || !run.ksOffer.length || run.ksOffer.some(id => run.ptree.ks.includes(id))) run.ksOffer = ksOfferMake(run); if (!run.ksOffer.length) { run.ksPending = 0; run.ksOffer = null; return []; } return run.ksOffer; }
+function ksTake(run, id) {
+  if (!(run.ksPending > 0) || !(run.ksOffer || []).includes(id) || run.ptree.ks.includes(id)) return '고를 수 없는 큰 각인입니다';
+  const c = ksInfo(run, id); if (!c) return '닿을 수 없는 자리입니다';
+  const open = ptOpenIds(run); const free = c.path.filter(x => !open.includes(x)); run.ptree.free.push(...free); run.ptree.ks.push(id);
+  (run.ksLog = run.ksLog || []).push({ id, free, offer: run.ksOffer.slice(), ch: run.ch || 1, room: run.room, t: Date.now() }); run.ksPending--; run.ksOffer = null; ptSync(run); return null;
+}
+/* ---- 옛 세이브 옮기기 (9절): run.tv가 2가 아니면 불러올 때 한 번. 결과는 배분을 확정할 때 저장한다(부르는 쪽) ---- */
+const TV = 2;
+const lvOfXp = xp => { let l = 1; while (l < LV_XP.length && xp >= LV_XP[l]) l++; return l; };
+function treeMigrate08(run) {
+  if (!run || run.tv === TV || !BUILDS[run.build] || !BUILDS[run.build].v2) return false;
+  const lv0 = run.lv || 1, xp0 = run.xp || 0;
+  run.mig08 = { at: Date.now(), lv: lv0, xp: xp0, stats: run.stats || null, tree: run.tree || null, skills: run.skills || null, awk: run.awk || null, statPending: run.statPending || 0, phase: run.phase || null, ch: run.ch || 1, room: run.room, battle: run.battle ? 1 : 0 };
+  const lv = Math.min(LV_XP.length, Math.max(lv0, lvOfXp(xp0))); run.lv = lv; if (lv > lvOfXp(xp0)) run.xp = LV_XP[lv - 1]; if (run.p) run.p.lv = lv;
+  for (const k of ['statPending', 'statBase', 'statGrowth', 'markStat', 'awkPending', 'awkOffer']) delete run[k];
+  const gifts = Object.values(typeof CH_GIFT !== 'undefined' ? CH_GIFT : {}).flatMap(o => Object.values(o));
+  run.awkOld = (run.awk || []).filter(a => !gifts.includes(a)); run.awk = (run.awk || []).filter(a => gifts.includes(a));
+  run.ptree = { own: [], free: [], ks: [], pts: ptTotal(run), log: [] }; run.ksGot = {}; run.ksOffer = null;
+  const ce = clearsEff(run), ch = run.ch || 1; if (ce >= 1) run.ksGot.b1 = 1; if (ce >= 2) run.ksGot.b2 = 1; if (ch >= 3 && (run.room || 0) >= FLOOR_CAMP) run.ksGot.c3 = 1;
+  run.ksPending = Object.keys(run.ksGot).length;
+  run.treeOld = run.tree || null; run.skillsOld = (run.skills || []).slice(); run.skills = []; delete run.tree; run.atree = { own: [], pts: atTotal(run), log: [] };
+  if (run.battle) { // 전투를 버리고 그 방의 처음으로 (생명력 · 스태미나 · 플라스크는 방에 들어설 때 값, 소모품은 저장된 그대로)
+    delete run.battle; if (run.entry) { const keep = run.p; run.p = JSON.parse(JSON.stringify(run.entry)); if (keep) { run.p.lv = lv; } }
+    run.nextUsed = null; run.next3Used = null;
+  }
+  run.stats = ptStats(run); if (run.p) { run.p.pn = []; run.p.psm = {}; run.p.aup = []; }
+  return true;
+}
+/* 확정 (9-2의 10): 트리 판 2, 능력치 · 장착 */
+function treeMigrateDone(run) { run.tv = TV; delete run.alloc; treeSync(run); }
+/* ---- 노드 효과 (IFX_NODE: 장비 효과와 같은 꼴. 옛 각인을 옮긴 노드는 IFX_AWK를 그대로 읽는다) ---- */
+const ysCapOf = p => YUSAN.cap + fxVal(p, 'ysCap', 0, (a, v) => a + v);
+const ysStartOf = p => Math.max(0, YUSAN.start + fxVal(p, 'ysCap', 0, (a, v) => a + v) + fxVal(p, 'ysStart', 0, (a, v) => a + v));
+const skCostOfCur = (p, c) => { if (!c || !c.skill) return 0; const s = skOf(p, c.id); return s ? skCost(s) : 0; };
+const kindOfCur = c => { const s = c && c.skill ? SK2[c.id] : null; return s ? s.kind : null; };
+const IFX_NODE = {
+  n_overflow: { ysOverflowBack: 1 },
+  n_fullvessel: { hitP: (b, p) => ysNow(p) >= ysCapOf(p) ? 0.06 : 0 },
+  n_shaken: { onBreak: (b, p) => { fxStam(p, 8); return 1; } },
+  n_sb_altedge: { hitP: b => b.sbAlt ? 0.06 : 0 },
+  n_sb_finish: { hitP: (b, p, e) => e.hp <= e.hpMax * 0.3 ? 0.12 : 0 },
+  n_sb_beatcut: { brk: b => { if (!(b.sbAlt && b.sbRunNow >= 2) || b.beatCutA === b.actN) return 0; b.beatCutA = b.actN; return 8; } },
+  n_sb_telebrk: { brkMul: (b, p, e) => e && e.intent && (YS_PRE_K.includes(e.intent.k) || e.intent.aimed) ? 1.15 : 1 },
+  n_sb_gap: { hitP: (b, p, e) => e.s && e.s.broken ? 0.08 : 0 },
+  n_sb_stagger: { onBreak: (b, p, e) => { if (b.staggerA === b.actN || !e.alive) return; b.staggerA = b.actN; addS(b, e, 'weak', 1); return 1; } },
+  n_sb_parryspell: { onParry: b => { b.psp = 1; b.pspA = null; }, hitP: (b, p, e, o, c) => { if (!b.psp || kindOfCur(c) !== 'spell') return 0; if (b.pspA == null) b.pspA = b.actN; if (b.pspA !== b.actN) { b.psp = 0; b.pspA = null; return 0; } return 0.15; } },
+  n_sb_lightcut: { onSkill: (b, p, act) => { if (!act || !act.s || act.s.time !== 'fast' || act.s.kind !== 'cut') return; fxStam(p, 5); return 1; } },
+  n_sb_farspell: { onHit: (b, p, e, o, c) => { if (e.row !== 'back' || kindOfCur(c) !== 'spell' || b.farA === b.actN) return; b.farA = b.actN; fxStam(p, 4); return 1; } },
+  n_sb_altbeat: { altWardAdd: 1 },
+  n_sb_edgeadd: { edgeAdd: () => 1 },
+  n_sb_three: { alt3Ys: 1 },
+  n_sb_manaloop: { onAltWard: (b, p) => { fxStam(p, 3); return 1; } },
+  n_sb_remnant: { onWin: run => { const p = run.p; const v = Math.min(p.hpMax * 0.05, (p.wardLeft || 0) / 2, p.hpMax - p.hp); if (!(v > 0)) return; p.hp += v; return 1; } },
+  n_sb_thickaegis: {},
+  n_sb_bloodmail: { onKill: (b, p, e) => { if (e.pile || !(stk(e, 'bleed') || st(e, 'ignite'))) return; return addWard(b, p, 5, undefined, true) > 0 ? 1 : 0; } },
+  n_sb_manamail: { onStart: (b, p) => { addWard(b, p, 6, undefined, true); return 1; } },
+  n_sb_under: { inP: (b, p, o) => p.ward > 0 && !o.dot ? 0.04 : 0 },
+  ks_deep: { ysCap: 1 },
+  ks_brim: { ysCap: 2, ysTurnEven: 1 },
+  ks_double: { ysRespMax: 1, ysStart: -2 },
+  ks_bare: { ysRespPer: 1, hitP: (b, p, e, o, c) => c && c.id === 'basic' ? -0.2 : 0 },
+  ks_crystal: { hitP: (b, p, e, o, c) => skCostOfCur(p, c) === 4 ? 0.25 : 0 },
+  ks_glass: { hitP: () => 0.15, inP: (b, p, o) => !o.dot ? -0.10 : 0 },
+  ks_wall: { hpMul: 1.12 },
+  ks_heavy: { inP: (b, p, o) => !o.dot ? 0.12 : 0, noParry: 1 },
+  ks_cycle: { onKill: (b, p, e) => { if (e.pile) return; const left = p.hpMax * 0.15 - (b.ksCyc || 0); const v = Math.min(p.hpMax * 0.03, left); if (!(v > 0)) return; const g = fxHeal(p, v); b.ksCyc = (b.ksCyc || 0) + v; return g > 0 ? 1 : 0; } },
+  ks_dry: { healAll: 1.3, cap: { life: -1 } },
+  ks_hammer: { brkMul: () => 1.25, hitP: () => -0.08 },
+  ks_breaker: { hitP: (b, p, e) => e.s && e.s.broken ? 0.20 : 0 },
+  ks_first: { onStart: (b, p) => { addS(b, p, 'haste', 1); return 1; } },
+  ks_flow: { onParry: (b, p, src) => { if (!(src && src.intent && (src.intent.aimed || src.intent.k === 'heavy' || src.intent.k === 'charge')) || (b.ksFlowN || 0) >= 2) return; b.ksFlowN = (b.ksFlowN || 0) + 1; return ysAdd(b, 1, 'resp', '흘림새') > 0 ? 1 : 0; } },
+  ks_sb_over: { hitP: b => b.sbAlt ? 0.20 : 0, noAltWard: 1 },
+  ks_sb_beat: { brk: b => { if (!(b.sbAlt && b.sbRunNow >= 3) || b.ksBeatR === (b.ysR || 0)) return 0; b.ksBeatR = b.ysR || 0; return 40; } },
+  ks_sb_blood: { wardCap: 0.22 },
+};
+const PSM_FX = new Map();
+function ptSmallFx(sm) { const key = (sm.brk || 0) + ':' + (sm.st || 0); if (!PSM_FX.has(key)) PSM_FX.set(key, Object.assign(sm.st ? { st: { st: PT.smallSt * sm.st } } : {}, sm.brk ? { brkMul: (() => { const m = Math.pow(1 + PT.smallBrk, sm.brk); return () => m; })() } : {})); return PSM_FX.get(key); }

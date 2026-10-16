@@ -134,7 +134,7 @@ const TUT_CHECK = {
 };
 function endBattleCarry(p) {
   p.bt = {}; p.rcN = 0; p.mk = null; p.fxSpell = 0; p.fxScar = 0; p.fxPen = 0; p.fxHunt = null; p.fxHeavyDisc = 0; p.fxImmune = 0; p.fxQuick = 0; p.fxQuickNext = 0; p.fxCond = 0; p.fxFlaskDmg = 0; p.brace = 0; p.tookSince = 0; p.tookLast = 0;
-  p.ward = 0; p.thorn = null; p.evade = 0; p.lastBr = null; p.evadeCtr = null; p.evadeHz = null; p.quickTurns = 0; p.foresee = null; p.focus = null; p.lastSkillId = null; p.echoN = 0; p.furyNext = 0; p.retal = 0; p.sigCd = 0; p.focusRes = 0;
+  p.wardLeft = p.ward || 0; p.ward = 0; p.thorn = null; p.evade = 0; p.lastBr = null; p.evadeCtr = null; p.evadeHz = null; p.quickTurns = 0; p.foresee = null; p.focus = null; p.lastSkillId = null; p.echoN = 0; p.furyNext = 0; p.retal = 0; p.sigCd = 0; p.focusRes = 0;
   // 방 사이 이월 (4.2): 생명력·마나·플라스크 유지, 스태미나는 50%까지 회복, 전투 상태 해제
   if (p.build === 'monk') { p.stance = null; p.ctrN = 0; }
   p.st = Math.max(p.st, 50); p.exhaust = 0; p.s = {}; p.guard = 0; p.dodge = 0; p.stun = 0; p.counter = 0; p.reflux = null; p.rage = 0;
