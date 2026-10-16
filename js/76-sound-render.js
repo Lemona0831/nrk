@@ -123,6 +123,7 @@ function render() {
   focusBack(tail ? (hadSheet ? fk : null) : (hadSheet ? G.sheetRet || fk : fk), !!tail && !hadSheet, fit);
   if (G.hudEd) { const ef = document.querySelector('#root > .fit'); if (ef) ef.scrollTop = efy; hudEdPost(); } /* 편집 중: 보던 자리를 지키고 틀을 실제 요소에 붙인다 */
   if (typeof vfxFlush === 'function') vfxFlush(); /* 전투 이펙트(59번): 그리기가 끝난 화면 위에 덮개로 얹는다. 게임 값은 건드리지 않는다 */
+  if (typeof trdAfter === 'function') trdAfter(); /* 10월 17일 0.8.0 3단계: 방사형 트리의 글자 크기 · 초점 (73번) */
 }
 /* 10월 7일 2차: 전투 화면은 창 높이에 맞춰 한 화면에 두되, 그러면 전장이 모자란 창(확대 · 가로 휴대폰 · 짧은 휴대폰)에서는
    고정을 풀고 페이지를 스크롤한다(10월 2일의 원래 뜻). 같은 창 크기 · 같은 전투 · 같은 글자 크기에서는 한 번 정한 대로 둔다(차례마다 바뀌지 않게) */

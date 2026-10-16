@@ -1,5 +1,5 @@
 'use strict';
-/* ===== 0.8.0 두 트리 화면 (10월 16일 0.8.0 2단계: 목록형 임시 화면. 3단계에서 방사형 두 장으로 바꾼다) =====
+/* ===== 0.8.0 두 트리 화면 (10월 16일 0.8.0 2단계: 목록형. 10월 17일 3단계: 방사형 그림은 js/73-tree-radial.js, 목록형은 "목록으로 보기"로 남긴다) =====
    패시브: 방향 탭 6개, 고리 · 반지름 순서로 노드 줄. 액티브: 갈래 탭 3개, 스킬 · 강화 노드 줄과 장착 6칸(시작 2 + 4).
    쓰는 곳: 트리 페이지('tree'), 캐릭터 만들기와 옛 세이브 옮기기의 배분 흐름(sheet 'alloc'), 큰 각인 고르기(sheet 'ks'). 전투 중에는 보기만 한다 */
 const treeCanEdit = () => !(G.b && !G.b.over) && !(G.run && !G.creating && runOver(G.run));
@@ -50,9 +50,9 @@ function hunterLoadoutHint(run) {
 }
 function vTreeView() {
   const run = G.run; if (!run.ptree) treeSync(run); const v = G.tview === 'a' ? 'a' : 'p';
-  let h = `<div class="invtools" role="group" aria-label="트리 고르기"><button class="sm" data-a="tview" data-k="p" aria-pressed="${v === 'p'}">패시브 · ${run.ptree.pts}점</button><button class="sm" data-a="tview" data-k="a" aria-pressed="${v === 'a'}">액티브 · ${run.atree.pts}점</button></div>`;
+  let h = `<div class="invtools" role="group" aria-label="트리 고르기"><button class="sm" data-a="tview" data-k="p" aria-pressed="${v === 'p'}">패시브 · ${run.ptree.pts}점</button><button class="sm" data-a="tview" data-k="a" aria-pressed="${v === 'a'}">액티브 · ${run.atree.pts}점</button>${trdListBtn()}</div>`;
   if (!treeCanEdit()) h += `<p class="mini">${G.run && !G.creating && runOver(G.run) ? '끝난 캐릭터의 트리는 볼 수만 있습니다.' : '전투 중에는 볼 수만 있습니다. 방과 방 사이에 찍고 바꿉니다.'}</p>`;
-  return h + (v === 'a' ? vATreeList(run) : vPTreeList(run));
+  return h + (v === 'a' ? vATreeAny(run) : vPTreeAny(run));
 }
 function vTreePage() { return `<section class="card"><div class="phead">${backBtn()}<h3>트리</h3></div>${G.run && G.run.ptree ? vTreeView() : '<p class="mini">진행 중인 캐릭터가 없습니다.</p>'}</section>`; }
 /* 큰 각인 카드: 효과 · 대가 · 길 덤 칸 수와 덤으로 열리는 중간 노드 */
@@ -60,7 +60,10 @@ function ksCard(run, id, btn) {
   const T = ptBuild(run.build), n = T.nodes[id], c = ksInfo(run, id) || { d: 0, path: [] }; const open = ptOpenIds(run); const fr = c.path.filter(x => !open.includes(x)); const nn = fr.filter(x => T.nodes[x].kind === 'notable').map(x => T.nodes[x].n);
   return `<div class="awkc"><div class="awkh"><b>◆ ${esc(n.n)}</b><span class="chip">${esc(PT.dir[n.dir].n)} · ${n.ring}고리</span></div><p>${esc(n.d)}</p>${n.pay ? `<p class="no">대가: ${esc(n.pay)}</p>` : ''}<p class="mini">길 ${fr.length}칸 덤${nn.length ? ' · 덤으로 열리는 중간 노드: ' + nn.map(esc).join(', ') : ''} (찍은 곳에서 ${c.d}칸)</p>${btn || ''}</div>`;
 }
-function vKsPick(run) { const offer = ksEnsureOffer(run); return `<p class="mini">찍은 곳 가까이의 큰 각인 셋 가운데 하나를 고릅니다. 고르면 거기까지의 길이 포인트 없이 열립니다. 남은 고를 것 ${run.ksPending}번.</p><div class="awklist">${offer.map(id => ksCard(run, id, `<button class="gold" data-a="kspick" data-k="${id}">이것을 고른다</button>`)).join('') || '<p class="mini">닿는 큰 각인 자리가 없습니다.</p>'}</div>`; }
+function vKsPick(run) {
+  const offer = ksEnsureOffer(run), list = trdListOn() || !offer.length; // 10월 17일 3단계: 후보 셋을 트리 그림 위에도 보인다(카드 · 그림 어느 쪽에서도 고른다)
+  return `<div class="row trd-bar"><p class="mini">찍은 곳 가까이의 큰 각인 셋 가운데 하나를 고릅니다. 고르면 거기까지의 길이 포인트 없이 열립니다. 남은 고를 것 ${run.ksPending}번.</p>${trdListBtn()}</div>${list ? '' : trdView(run, 'k', { offer })}<div class="awklist">${offer.map((id, i) => ksCard(run, id, `<div class="row"><button class="gold" data-a="kspick" data-k="${id}">이것을 고른다</button>${list ? '' : `<button class="sm" data-a="tsel" data-k="${id}" data-e="k">그림에서 보기 · 후보 ${i + 1}</button>`}</div>`)).join('') || '<p class="mini">닿는 큰 각인 자리가 없습니다.</p>'}</div>`;
+}
 /* ---- 배분 흐름 (캐릭터 만들기 · 옛 세이브 옮기기, 9-3절 + 10-4 단계 잠금) ----
    단계: i 안내(옮기기만) → p 패시브 → k 큰 각인(받을 것이 있으면) → a 액티브 · 장착 → 확정. 다음 단계로 넘어가면 앞 단계는 되돌릴 수 없다. 닫기 버튼이 없다 */
 function allocBegin(run, mode) { run.alloc = { mode, step: mode === 'mig' ? 'i' : 'p' }; G.sheet = null; openSheet('alloc', { first: mode === 'create' ? 1 : 0 }); }
@@ -98,9 +101,9 @@ function vAlloc(run) {
     const old = (run.skillsOld || []).map(id => (SK2[id] ? SK2[id].n : id) + (AT.nodes[id] ? '' : ' (더는 없는 스킬)'));
     return h + `<p>0.8.0에서 능력치 · 스킬 트리 · 각인이 두 트리로 바뀌었습니다. 포인트를 모두 돌려드렸습니다.</p><ul class="rcplain"><li>레벨 ${run.lv}${M.lv && M.lv !== run.lv ? ' (저장된 레벨 ' + M.lv + ')' : ''} · 패시브 <b>${run.ptree.pts}점</b> · 액티브 <b>${run.atree.pts}점</b></li><li>고를 큰 각인 <b>${run.ksPending}번</b></li><li>빠진 옛 각인: ${gone.length ? gone.map(esc).join(', ') : '없음'}</li><li>옛 장착 스킬: ${old.length ? old.map(esc).join(', ') : '없음'} (다시 열면 옛 순서대로 끼웁니다)</li>${M.battle ? '<li>싸우던 전투는 그 방의 처음으로 되돌렸습니다. 확정한 뒤 같은 방을 다시 싸웁니다.</li>' : ''}</ul><p class="mini">패시브 → 큰 각인 → 액티브 순서로 찍습니다. 다음 단계로 넘어가면 앞 단계는 고칠 수 없습니다. 확정해야 저장됩니다. 시작 스킬: ${T2.starters.map(id => esc(SK2[id].n)).join(', ')}.</p><div class="stickbar"><button class="gold wide" data-a="allocgo" data-focus>시작</button></div>`;
   }
-  if (A.step === 'p') return h + vPTreeList(run) + `<div class="stickbar"><button class="gold wide" data-a="allocnext" data-focus>${run.ksPending > 0 ? '다음: 큰 각인 고르기' : '다음: 액티브 트리'}${run.ptree.pts ? ' (남은 ' + run.ptree.pts + '점)' : ''}</button>${A.mode === 'create' ? '<div class="row"><button data-a="cback" data-k="cls">이전: 직업 고르기</button><button data-a="createcancel">그만두기</button></div>' : ''}</div>`;
+  if (A.step === 'p') return h + `<div class="row trd-bar">${trdListBtn()}</div>` + vPTreeAny(run) + `<div class="stickbar"><button class="gold wide" data-a="allocnext" data-focus>${run.ksPending > 0 ? '다음: 큰 각인 고르기' : '다음: 액티브 트리'}${run.ptree.pts ? ' (남은 ' + run.ptree.pts + '점)' : ''}</button>${A.mode === 'create' ? '<div class="row"><button data-a="cback" data-k="cls">이전: 직업 고르기</button><button data-a="createcancel">그만두기</button></div>' : ''}</div>`;
   if (A.step === 'k') return h + vKsPick(run);
-  return h + vATreeList(run) + `<div class="stickbar"><button class="gold wide" data-a="allocok" data-focus>${A.mode === 'create' ? '이 캐릭터로 시작하기' : '확정하고 이어 하기'}${run.atree.pts ? ' (남은 ' + run.atree.pts + '점)' : ''}</button>${A.mode === 'create' ? '<div class="row"><button data-a="createcancel">그만두기</button></div>' : ''}</div>`;
+  return h + `<div class="row trd-bar">${trdListBtn()}</div>` + vATreeAny(run) + `<div class="stickbar"><button class="gold wide" data-a="allocok" data-focus>${A.mode === 'create' ? '이 캐릭터로 시작하기' : '확정하고 이어 하기'}${run.atree.pts ? ' (남은 ' + run.atree.pts + '점)' : ''}</button>${A.mode === 'create' ? '<div class="row"><button data-a="createcancel">그만두기</button></div>' : ''}</div>`;
 }
 /* 소모품 가방 칸 그림(10월 14일): 칸마다 아이콘과 든 수, 빈 칸은 점선 */
 function consBagStrip(run, sub) {
