@@ -15,8 +15,8 @@ const ATREE_DEF = {
       ['sb_turn', '마갑', 2, 3, 'C', ['sb_bladeward'], 2], ['sb_shell', '마갑', 2, 3, 'LL', ['sb_bolt'], 3], ['sb_rebound', '마갑', 2, 3, 'L', ['sb_bolt'], 2], ['sb_sunder', '마갑', 2, 3, 'R', ['sb_unravel'], 2], ['sb_finale', '마갑', 3, 5, 'C', ['sb_turn', 'sb_sunder'], 4],
     ],
     ups: [
-      ['sbu_chain', '혈인', 1, 1, 'LL', 'sb_bleedcut', '혈인 연참', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유).', { set: { killRecharge: 1 } }, ['sb_throat', 'sb_chaincut', 'sb_execchain', 'sb_pathway']],
-      ['sbu_graze', '혈인', 1, 1, 'RR', 'sb_bleedcut', '스치는 칼', '빠른 칸이 됩니다. 피해 8 → 6, 출혈 4 → 3.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'bleed', n: 3 }] }, ['sb_deepline']],
+      ['sbu_chain', '혈인', 1, 1, 'LL', 'sb_bleedcut', '혈인 연참', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유). 생명력 30% 이하인 적에게 피해 ×1.5.', { set: { killRecharge: 1 }, fxAdd: [{ k: 'lowx', hp: 0.3, mul: 1.5 }] }, ['sb_throat', 'sb_chaincut', 'sb_execchain', 'sb_pathway']],
+      ['sbu_graze', '혈인', 1, 1, 'RR', 'sb_bleedcut', '스치는 칼', '빠른 칸이 됩니다. 피해 8 → 7.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 7 }] }, ['sb_deepline']],
       ['sbu_boil', '혈인', 2, 3, 'LL', 'sb_boil', '끓는 피', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, []],
       ['sbu_scarlet', '혈인', 3, 5, 'RR', 'sb_bloodmark', '선홍 표식', '피해 7 → 8, 출혈 2 → 4, 칼에 싣는 출혈 4 → 5.', { fxSet: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 4 }, { k: 'imbue', s: 'bleed', n: 5 }] }, ['sb_scarlet']],
       ['sbu_thirst', '혈인', 3, 5, 'LL', 'sb_taste', '혈갈', '출혈 1마다 피해 +3 → +3.5, 생명력 35% 이하 적에게 ×1.5.', { fxSet: [{ k: 'exploit', s: 'bleed', per: 3.5 }], fxAdd: [{ k: 'lowx', hp: 0.35, mul: 1.5 }] }, ['sb_thirst', 'sb_ledger', 'sb_vein']],
