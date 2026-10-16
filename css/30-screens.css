@@ -191,3 +191,9 @@
 @media(max-width:600px){.admin-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-tabs button{flex:1 1 40%}.admin-tree-rows{max-height:420px}.admin-action-bars>div{grid-template-columns:100px minmax(0,1fr) 45px}}
 
 .admin-resources{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin:12px 0}.admin-resource{display:grid;gap:6px;min-width:110px}.admin-resources>.admin-resource{padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)}.admin-resource span{color:var(--muted);font-size:calc(12px*var(--fs,1))}.admin-resource b{font-variant-numeric:tabular-nums}.admin-resource meter{width:100%;height:18px;min-width:0}
+/* 10월 16일 0.8.0 2단계: 목록형 두 트리 화면(3단계에서 방사형으로 바꾼다) */
+.ptmenu{display:flex;flex-wrap:wrap;gap:6px;position:static;grid-template-columns:none;grid-template-rows:none}.ptmenu .tseg{min-height:0;padding:6px 10px;flex:1 1 90px}.ptmenu .tseg b{font-size:calc(15px*var(--fs,1))}
+.ptlist{display:flex;flex-direction:column;gap:4px;margin-top:8px}.ptring{margin:10px 0 2px;color:var(--gold)}
+.ptnode{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--line);border-radius:8px}.ptnode p{margin:2px 0 0}.ptnode .row{flex-wrap:nowrap}
+.ptnode.pt-own,.ptnode.pt-free,.ptnode.pt-ks{border-color:var(--gold);background:var(--panel)}.ptnode.pt-lock{opacity:.6}.ptnode.pk-keystone b{color:var(--gold)}
+.allocst{margin-bottom:8px}

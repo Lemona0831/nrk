@@ -6,7 +6,7 @@ E.render = E.saveRunLocal = E.saveCur = () => {};
 const counts = { starts: 0, before: 0, after: 0, battles: 0, ended: 0, cons: 0, doors: 0, paths: 0 };
 D.OPT.chapters = 3; D.OPT.detail = true;
 D.OPT.policy = {
-  start(run) { counts.starts++; assert.equal(E.STAT_KEYS.reduce((n,k) => n + (run.stats[k] || 0), 0), 20); },
+  start(run) { counts.starts++; assert.equal(JSON.stringify(run.stats), JSON.stringify(E.ptStats(run))); assert.equal(run.ptree.pts, 0); assert.equal(run.tv, 2); }, // 10월 16일 0.8.0 2단계: 능력치 = 시작 노드 + 찍은 패시브 노드
   pickDoor(run) { counts.doors++; return run.doors.findIndex(d => d.type === 'normal') < 0 ? 0 : run.doors.findIndex(d => d.type === 'normal'); },
   pickPath() { counts.paths++; return 'main'; },
   useCons() { counts.cons++; },

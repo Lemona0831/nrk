@@ -7,7 +7,7 @@ for(const dir of ['.']) {
  const run=ctx.__G.run, rec=ctx.runRecord(run), before=JSON.stringify(rec.eqDetails);
  assert(rec.treeNodes.length);assert(rec.eqDetails.length);assert(rec.eqDetails[0].baseValue>0);
  const it=Object.values(run.inv)[0];it.b+=10;assert.equal(JSON.stringify(rec.eqDetails),before);
- run.tree.open.push(rec.treeNodes.find(n=>!n.start).id);assert.equal(rec.tree.open.length,0);
+ run.atree.own.push(rec.treeNodes.find(n=>!n.start).id);assert.equal(rec.atree.own.length,0); /* 10월 16일 0.8.0 2단계: 액티브 트리 스냅샷 */
  ctx.logSwap(run,it,true,'free');assert(run.swaps[0].detail.baseValue>0);
  assert(ctx.vAdminGear(rec).includes('실제 수치'));assert(ctx.vAdminGear({...rec,tree:null,treeNodes:null,eqDetails:[{tpl:it.tpl,g:it.g}]}).includes('실제 수치 미기록'));
  ctx.__G.dashRaw=[{uid:'one',name:'동명이인',runs:[rec]},{uid:'two',name:'동명이인',runs:[rec]}];ctx.__G.rf={uid:'one'};assert.equal(ctx.dashRunRows().length,1);

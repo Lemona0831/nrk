@@ -266,7 +266,9 @@ function onClick(ev) {
     case 'tree': if (!PAGES.includes(G.scr)) G.back = G.scr; G.scr = 'tree'; G.sheet = null; G.menuOpen = false; render(); window.scrollTo(0, 0); break;
     case 'allocgo': case 'allocnext': allocNext(G.run); break;
     case 'allocok': allocConfirm(G.run); break;
-    case 'skillok': { const S = G.sheet; const run = G.run; const prev = (run.skills || []).slice(); if (!isV2(run.p)) run.skills = S.data.pick.slice(); run.p.skills = isV2(run.p) ? v2Equip(run) : run.skills.slice(); run.skillLog = run.skillLog || []; run.skillLog.push({ room: run.room, from: prev, to: run.skills.slice(), first: !!S.data.first, t: Date.now() }); G.sheet = null; saveRunLocal(); saveCur(); toast('스킬을 바꿨습니다'); render(); break; }
+    case 'statrec': break; // 10월 16일 0.8.0 2단계: 옛 만들기 단추 이름(옛 브라우저 점검용). 능력치 창은 없다
+    case 'statok': if (G.run && G.run.alloc && G.run.alloc.step === 'a') allocConfirm(G.run, 1); break;
+    case 'skillok': { if (G.run && G.run.alloc) { if (G.run.alloc.step === 'i') allocNext(G.run); if (G.run.alloc.step === 'p' || G.run.alloc.step === 'k') { G.run.alloc.step = G.run.ksPending > 0 ? 'k' : 'a'; if (G.run.alloc.step === 'k') { ksEnsureOffer(G.run); while (G.run.ksPending > 0 && G.run.ksOffer) ksTake(G.run, G.run.ksOffer[0]); G.run.alloc.step = 'a'; } render(); } break; } const S = G.sheet; const run = G.run; const prev = (run.skills || []).slice(); if (!isV2(run.p)) run.skills = S.data.pick.slice(); run.p.skills = isV2(run.p) ? v2Equip(run) : run.skills.slice(); run.skillLog = run.skillLog || []; run.skillLog.push({ room: run.room, from: prev, to: run.skills.slice(), first: !!S.data.first, t: Date.now() }); G.sheet = null; saveRunLocal(); saveCur(); toast('스킬을 바꿨습니다'); render(); break; }
     case 'login': socialLogin(el.dataset.k); break;
     case 'loginswitch': socialLogin(el.dataset.k, true); break;
     case 'loginno': G.acct.conflict = ''; render(); break;

@@ -96,7 +96,8 @@ const atWhy = (run, id) => treeWhyBuy(run, atBuild(run.build), atOpenIds(run), r
 function ptBuy(run, id) { const why = ptWhy(run, id); if (why) return why; const n = ptBuild(run.build).nodes[id]; run.ptree.own.push(id); run.ptree.pts -= n.cost; run.ptree.log.push({ id, lv: run.lv || 1, ch: run.ch || 1, room: run.room, t: Date.now() }); ptSync(run); return null; }
 function atBuy(run, id) {
   const why = atWhy(run, id); if (why) return why; const n = atBuild(run.build).nodes[id]; run.atree.own.push(id); run.atree.pts -= n.cost; run.atree.log.push({ id, lv: run.lv || 1, ch: run.ch || 1, room: run.room, t: Date.now() });
-  if (n.kind === 'skill') { run.skills = run.skills || []; if (run.skills.length < EQUIP_SLOTS2 && !run.skills.includes(id)) run.skills.push(id); } atSync(run); return null;
+  const auto = !(run.alloc && run.alloc.mode === 'mig') || (run.skillsOld || []).includes(id); // 옮기기: 옛 장착 스킬만 자동으로 끼우고 나머지 칸은 비워 둔다(9-3)
+  if (n.kind === 'skill' && auto) { run.skills = run.skills || []; if (run.skills.length < EQUIP_SLOTS2 && !run.skills.includes(id)) run.skills.push(id); if (run.alloc && run.alloc.mode === 'mig') { const o = run.skillsOld; run.skills.sort((x, y) => (o.indexOf(x) < 0 ? 99 : o.indexOf(x)) - (o.indexOf(y) < 0 ? 99 : o.indexOf(y))); } } atSync(run); return null;
 }
 /* 한 칸 되돌리기: 배분 흐름(run.alloc)의 그 단계에서만. 남은 찍은 노드가 모두 시작 · 길 덤 · 큰 각인에 이어져 있어야 한다 */
 const allocStep = run => run && run.alloc ? run.alloc.step : null;

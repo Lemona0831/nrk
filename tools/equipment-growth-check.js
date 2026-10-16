@@ -12,12 +12,12 @@ const it=E.mkItem(amu,{ch:2,b:0});E.addItem(run,it);assert.equal(E.equipUid(run,
 run.p.hp=1;run.cons=[{id:'charm',g:'n',n:1},{id:'herb',g:'n',n:2},{id:'cleanse',g:'n',n:1}];
 let rows=E.consRows(run,null,'restore',true,'',null);assert.deepEqual(Array.from(rows,x=>x.i),[1]);assert.equal(E.consRows(run,null,'all',false,'중독',null).length,0);
 assert.equal(E.consRows(run,null,'all',false,'약초',null)[0].i,1);const old=JSON.stringify(run.cons);E.consRows(run,null,'all',false,'',null);assert.equal(JSON.stringify(run.cons),old);
-const legacy=JSON.parse(JSON.stringify(run));legacy.dg={};legacy.dgv=2;legacy.stats={str:0,dex:0,int:0,con:0,wil:0};legacy.ch=1;
+const legacy=JSON.parse(JSON.stringify(run));legacy.dg={};legacy.dgv=2;legacy.stats={str:0,dex:0,int:0,con:0,wil:0};legacy.ch=1;legacy.tv=2;E.treeSync(legacy); /* 10월 16일 0.8.0 2단계: 장비 점검이라 트리 판 2로 둔다(옛 트리 옮기기는 tree-check) */
 for(const item of Object.values(legacy.inv)){delete item.rollV;delete item.foundAt;}
 E.__legacy=legacy;const base=JSON.parse(JSON.stringify(slots));
 V('SLOT_BASE.amulet={k:"mp",lab:"최대 마나",v:[5,8,12]};applyGear(__legacy)');
 legacy.p.st=legacy.p.stMax/2;const beforeSt=legacy.p.stMax,bonus=legacy.inv[it.uid].b;
-Object.assign(slots,base);V('render=()=>{};awkOpen=()=>{}');E.__G.data={cur:JSON.parse(JSON.stringify(legacy))};E.resumeRun();
+Object.assign(slots,base);V('render=()=>{};ksOpen=()=>{}');E.__G.data={cur:JSON.parse(JSON.stringify(legacy))};E.resumeRun();
 assert.equal(E.__G.run.p.stMax,beforeSt+9);assert.equal(E.__G.run.p.st,E.__G.run.p.stMax/2);assert.equal(E.__G.run.inv[it.uid].b,bonus);
 const saved=JSON.parse(JSON.stringify(legacy));saved.battle={b:E.roomBattle(saved.p,V('ROOMS')[0],null,7)};E.restoreBattle(JSON.parse(JSON.stringify(saved)));
 assert.equal(E.__G.b.p,E.__G.run.p);assert.equal(E.__G.b.p.stMax,beforeSt+9);

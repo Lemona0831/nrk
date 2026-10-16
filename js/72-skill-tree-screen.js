@@ -22,10 +22,10 @@ function vPTreeList(run) {
     if (n.ring !== lastRing) { lastRing = n.ring; rows += `<h5 class="ptring">${n.ring}고리${ringOpen(run, n.ring) ? '' : ' 🔒 ' + esc(RING_WHY[n.ring] || '')}</h5>`; }
     const kindN = n.kind === 'keystone' ? '큰 각인 자리' : n.kind === 'notable' ? '중간 노드' + (n.pool === 'common' ? ' · 공용' : ' · 직업') : '작은 노드';
     const btn = stt === 'can' && edit ? `<button class="sm gold" data-a="ptbuy" data-k="${id}">찍기 · 포인트 ${n.cost}</button>` : stt === 'own' && refund ? `<button class="sm" data-a="ptref" data-k="${id}">되돌리기</button>` : '';
-    rows += `<div class="ptnode pt-${stt} pk-${n.kind}"><div><b>${n.kind === 'keystone' ? '◆ ' : n.kind === 'notable' ? '● ' : '○ '}${esc(n.n)}</b> <small class="mini">${esc(id)} · ${kindN} · ${PT_STATE_N[stt]}</small>${n.kind !== 'small' ? `<p class="mini">${esc(n.d || '')}${n.pay ? ` <span class="no">대가: ${esc(n.pay)}</span>` : ''}</p>` : ''}${why && n.kind !== 'keystone' && !/고리/.test(why) ? `<p class="mini">${esc(why)}</p>` : ''}</div>${btn}</div>`;
+    rows += `<div class="ptnode pt-${stt} pk-${n.kind}"><div><b>${n.kind === 'keystone' ? '◆ ' : n.kind === 'notable' ? '● ' : '○ '}${esc(n.n)}</b> <small class="mini">${esc(id)} · ${kindN} · ${PT_STATE_N[stt]}</small>${n.kind !== 'small' ? `<p class="mini">${esc(n.d || '')}${n.pay ? ` <span class="no">대가: ${esc(n.pay)}</span>` : ''}</p>` : ''}${why && n.kind !== 'keystone' && !/고리/.test(why) && why !== '포인트가 없습니다' ? `<p class="mini">${esc(why)}</p>` : ''}</div>${btn}</div>`;
   }
   const ks = t.ks.map(id => T.nodes[id].n);
-  return `<div class="tsum"><div class="tpts">패시브 포인트 <b>${t.pts}</b><small>시작 ${PT.pts.start} + 레벨마다 ${PT.pts.lv}${t.bonus ? ' + 보너스 ' + t.bonus : ''}</small></div><div>${vStatTotals(run)}</div><div><span class="mini">큰 각인 ${t.ks.length}/${PT.ksN}${ks.length ? ': ' + ks.map(esc).join(', ') : ''}${run.ksPending > 0 ? ' · 고를 것 ' + run.ksPending + '번' : ''}</span></div></div>${T.tmp ? '<p class="mini">이 직업의 패시브 트리는 임시 배치입니다(공용 노드를 기울기대로 채움). 직업 노드는 다음 단계에서 들어옵니다.</p>' : ''}<nav class="tbmenu" aria-label="패시브 방향">${tabs}</nav><div class="ptlist">${rows}</div>`;
+  return `<div class="tsum"><div class="tpts">패시브 포인트 <b>${t.pts}</b><small>시작 ${PT.pts.start} + 레벨마다 ${PT.pts.lv}${t.bonus ? ' + 보너스 ' + t.bonus : ''}</small></div><div>${vStatTotals(run)}</div><div><span class="mini">큰 각인 ${t.ks.length}/${PT.ksN}${ks.length ? ': ' + ks.map(esc).join(', ') : ''}${run.ksPending > 0 ? ' · 고를 것 ' + run.ksPending + '번' : ''}</span></div></div>${T.tmp ? '<p class="mini">이 직업의 패시브 트리는 임시 배치입니다(공용 노드를 기울기대로 채움). 직업 노드는 다음 단계에서 들어옵니다.</p>' : ''}<nav class="tbmenu ptmenu" aria-label="패시브 방향">${tabs}</nav><div class="ptlist">${rows}</div>`;
 }
 function vATreeList(run) {
   const A = atBuild(run.build), a = run.atree, brs = A.br, br = brs.includes(G.abr) ? G.abr : brs[0], edit = treeCanEdit(), refund = allocStep(run) === 'a'; const T2 = TREE2[run.build]; const eqd = run.skills || [];
@@ -41,7 +41,12 @@ function vATreeList(run) {
     const btn = (!own && !why && edit ? `<button class="sm gold" data-a="atbuy" data-k="${id}">열기 · 포인트 ${n.cost}</button>` : '') + (own && n.kind === 'skill' && edit ? `<button class="sm${eq ? '' : ' gold'}" data-a="ateq" data-k="${id}">${eq ? '빼기' : '장착'}</button>` : '') + (own && refund ? `<button class="sm" data-a="atref" data-k="${id}">되돌리기</button>` : '');
     rows += `<div class="ptnode pt-${own ? 'own' : why ? 'lock' : 'can'} pk-${n.kind}"><div>${body}${why && !/고리/.test(why) && why !== '포인트가 없습니다' ? `<p class="mini">${esc(why)}</p>` : ''}</div><div class="row">${btn}</div></div>`;
   }
-  return `<div class="tsum"><div class="tpts">액티브 포인트 <b>${a.pts}</b><small>시작 ${AT_PTS.start} + 레벨마다 ${AT_PTS.lv}</small></div><div><span class="mini">시작 스킬 · 항상 장착</span><div class="trow">${st}</div></div><div><span class="mini">장착 ${eqd.length}/${EQUIP_SLOTS2}</span><div class="trow">${slots}</div></div></div>${A.tmp ? '<p class="mini">이 직업의 액티브 트리는 임시 배치입니다(지금 스킬 칸을 갈래 · 줄 순서로 이음, 강화 노드 없음).</p>' : ''}<nav class="tbmenu" aria-label="액티브 갈래">${tabs}</nav><div class="ptlist">${rows}</div>`;
+  return `<div class="tsum"><div class="tpts">액티브 포인트 <b>${a.pts}</b><small>시작 ${AT_PTS.start} + 레벨마다 ${AT_PTS.lv}</small></div><div><span class="mini">시작 스킬 · 항상 장착</span><div class="trow">${st}</div></div><div><span class="mini">장착 ${eqd.length}/${EQUIP_SLOTS2}</span><div class="trow">${slots}</div>${hunterLoadoutHint(run)}</div></div>${A.tmp ? '<p class="mini">이 직업의 액티브 트리는 임시 배치입니다(지금 스킬 칸을 갈래 · 줄 순서로 이음, 강화 노드 없음).</p>' : ''}<nav class="tbmenu ptmenu" aria-label="액티브 갈래">${tabs}</nav><div class="ptlist">${rows}</div>`;
+}
+// 사냥꾼의 연계는 장착한 갈래 스킬끼리만 만듭니다.
+function hunterLoadoutHint(run) {
+  if (run.build !== 'hunter') return '';
+  return `<p class="mini loadout-hint" data-info="elink" tabindex="0">연계: 다른 갈래 스킬을 이어 쓰면 피해 +${Math.round(HUNT.link * 100)}%.</p>`;
 }
 function vTreeView() {
   const run = G.run; if (!run.ptree) treeSync(run); const v = G.tview === 'a' ? 'a' : 'p';
@@ -73,9 +78,9 @@ function allocNext(run) {
 }
 function allocAfterKs(run) { if (!(run.ksPending > 0)) { run.alloc.step = 'a'; if (run.alloc.mode === 'mig') allocOldOrder(run); } render(); }
 const allocOldOrder = run => { const old = run.skillsOld || []; const ix = x => old.indexOf(x) < 0 ? 99 : old.indexOf(x); run.skills = (run.skills || []).slice().sort((x, y) => ix(x) - ix(y)); atSync(run); };
-function allocConfirm(run) {
+function allocConfirm(run, quiet) {
   const A = run && run.alloc; if (!A || A.step !== 'a') return;
-  if (run.atree.pts > 0 && !ask('액티브 포인트 ' + run.atree.pts + '점을 남겨 둘까요? 나중에 트리에서 씁니다.')) return;
+  if (run.atree.pts > 0 && !quiet && !ask('액티브 포인트 ' + run.atree.pts + '점을 남겨 둘까요? 나중에 트리에서 씁니다.')) return;
   if (A.mode === 'create') {
     const original = clone(run); delete run.alloc; treeSync(run); const p = run.p; p.hp = p.hpMax; p.st = p.stMax; run.tick = Date.now();
     if (!keepCur(run)) { G.run = original; render(); return; }
