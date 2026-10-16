@@ -188,7 +188,7 @@ function onClick(ev) {
     case 'close': G.sheet = null; render(); break;
     case 'sel': if (!G.data.seenCoach && !(G.coachI > 0)) G.coachI = 1;
       if (G.busy) { if (G.stepResolve) { const r = G.stepResolve; G.stepResolve = null; r(); } return; } hidePop(); G.sel = G.sel === el.dataset.e ? null : el.dataset.e; render(); break;
-    case 'act': if (el.getAttribute('aria-disabled') === 'true') { showPop(el, true); ysPv(el); return; } // 모자란 유산을 칸에 보인다 hidePop(); doAct(el.dataset.id, el.dataset.t || null); break;
+    case 'act': if (el.getAttribute('aria-disabled') === 'true') { showPop(el, true); ysPv(el); return; } hidePop(); doAct(el.dataset.id, el.dataset.t || null); break; // 막힌 칸이면 설명과 모자란 유산을 칸에 보인다(10월 17일: 주석이 줄 가운데 들어가 doAct가 주석이 되어 있었다)
     case 'skipmain': { const m = document.getElementById('main'); if (m) m.focus(); break; }
     case 'skipacts': { const t = document.querySelector('.ab:not([aria-disabled="true"])') || document.querySelector('.dock [data-focus], .dock button'); if (t) t.focus(); break; }
     case 'stepnext': if (G.stepResolve) { const r = G.stepResolve; G.stepResolve = null; r(); } break;
