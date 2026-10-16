@@ -16,7 +16,7 @@ function loadGame() {
   vm.createContext(ctx);
   vm.runInContext(data + '\n' + script + '\n;this.__G = G;', ctx, { filename: DIR + '/index.html' });
   // 화면·저장·소리는 끈다
-  vm.runInContext('Object.assign(this, { bagUsed: typeof bagUsed !== "undefined" ? bagUsed : null, BAG_MAX: typeof BAG_MAX !== "undefined" ? BAG_MAX : 12, CHAPTERS: typeof CHAPTERS !== "undefined" ? CHAPTERS : null, CONS: typeof CONS !== "undefined" ? CONS : null, UNLOCK: typeof UNLOCK !== "undefined" ? UNLOCK : {}, LOOT: typeof LOOT !== "undefined" ? LOOT : null, STAT_KEYS: typeof STAT_KEYS !== "undefined" ? STAT_KEYS : null, LV_XP_: typeof LV_XP !== "undefined" ? LV_XP : null, poolOk_: typeof poolOk !== "undefined" ? poolOk : () => true, STAT_REC: typeof STAT_REC !== "undefined" ? STAT_REC : null, STAT_START: typeof STAT_START !== "undefined" ? STAT_START : null, LV_POINTS: typeof LV_POINTS !== "undefined" ? LV_POINTS : 2, isLower, chOf: typeof chOf !== "undefined" ? chOf : null, ITEMS, EVENTS, ROOM_TYPES, BUILDS, tplKind, SKILLS2: typeof SKILLS2 !== "undefined" ? SKILLS2 : null, TREE2: typeof TREE2 !== "undefined" ? TREE2 : null, SK2: typeof SK2 !== "undefined" ? SK2 : null, EQUIP_SLOTS2: typeof EQUIP_SLOTS2 !== "undefined" ? EQUIP_SLOTS2 : 4 });', ctx); // const 값은 밖에서 읽을 수 있게 꺼내 둔다
+  vm.runInContext('Object.assign(this, { bagUsed: typeof bagUsed !== "undefined" ? bagUsed : null, BAG_MAX: typeof BAG_MAX !== "undefined" ? BAG_MAX : 12, CHAPTERS: typeof CHAPTERS !== "undefined" ? CHAPTERS : null, CONS: typeof CONS !== "undefined" ? CONS : null, UNLOCK: typeof UNLOCK !== "undefined" ? UNLOCK : {}, LOOT: typeof LOOT !== "undefined" ? LOOT : null, STAT_KEYS: typeof STAT_KEYS !== "undefined" ? STAT_KEYS : null, LV_XP_: typeof LV_XP !== "undefined" ? LV_XP : null, poolOk_: typeof poolOk !== "undefined" ? poolOk : () => true, STAT_REC: typeof STAT_REC !== "undefined" ? STAT_REC : null, STAT_START: typeof STAT_START !== "undefined" ? STAT_START : null, LV_POINTS: typeof LV_POINTS !== "undefined" ? LV_POINTS : 2, isLower, chOf: typeof chOf !== "undefined" ? chOf : null, ITEMS, EVENTS, ROOM_TYPES, BUILDS, tplKind, SKILLS2: typeof SKILLS2 !== "undefined" ? SKILLS2 : null, TREE2: typeof TREE2 !== "undefined" ? TREE2 : null, SK2: typeof SK2 !== "undefined" ? SK2 : null, EQUIP_SLOTS2: typeof EQUIP_SLOTS2 !== "undefined" ? EQUIP_SLOTS2 : 4, PT: typeof PT !== "undefined" ? PT : null, PT_TILT: typeof PT_TILT !== "undefined" ? PT_TILT : null, ptWhy: typeof ptWhy !== "undefined" ? ptWhy : null, atWhy: typeof atWhy !== "undefined" ? atWhy : null, ptOpenIds: typeof ptOpenIds !== "undefined" ? ptOpenIds : null, ringOpen: typeof ringOpen !== "undefined" ? ringOpen : null, ksInfo: typeof ksInfo !== "undefined" ? ksInfo : null, AT_PTS: typeof AT_PTS !== "undefined" ? AT_PTS : null });', ctx); // const 값은 밖에서 읽을 수 있게 꺼내 둔다
   vm.runInContext(`toast = () => {}; scheduleSync = () => {}; syncRun = async () => false; pushRank = async () => {}; saveLocal = () => true; sfx = () => {};`, ctx);
   vm.runInContext('var window = { scrollTo() { }, innerWidth: 1280, innerHeight: 800, scrollY: 0, addEventListener() { } };', ctx); // 정산·상점 버튼이 부르는 창 함수만 둔다
   return ctx;
@@ -99,14 +99,9 @@ function handleSheets(pk, r) {
       const o = S.data.offer; const k = THINK(pk) ? (o.find(x => G0.classFit(run.p, x)) || o[0]) : o[Math.floor(r() * o.length)];
       click('choose', k);
     } else if (S.kind === 'bagfull') { const keep = u => run.inv[u] && ['h', 'l'].includes(run.inv[u].g); click(run.bag.length ? 'bfdrop' : 'bfskip', run.bag.find(u => !keep(u)) || run.bag[0]); } /* 영웅 · 전설은 버리지 않는다 */
-    else if (S.kind === 'stats') {
-      const pref = PREF[run.build];
-      const KEYS = G0.STAT_KEYS || ['str', 'dex', 'int']; S.data.alloc = S.data.alloc || Object.fromEntries(KEYS.map(k => [k, 0]));
-      if (G0.statRecommend && G0.STAT_REC && G0.STAT_REC[run.build] && pk !== 'novice') { const add = G0.statRecommend(run.build, Object.fromEntries(KEYS.map(k => [k, (run.stats[k] || 0)])), S.data.pts); for (const k of KEYS) S.data.alloc[k] += add[k] || 0; }
-      else for (let i = 0; i < S.data.pts; i++) { const k = pk === 'novice' || r() > 0.65 ? KEYS[Math.floor(r() * KEYS.length)] : pref; S.data.alloc[k]++; }
-      click('statok');
-    } else if (S.kind === 'offer') { click('offerpick', run.bag[0]); }
-    else if (S.kind === 'awk') { click('awkpick', awkChoice(pk, r, run)); } /* 각인 (2챕터 이후에만 뜬다) */
+    else if (S.kind === 'alloc') { allocAuto(pk, r, run); } /* 10월 16일 0.8.0 2단계: 배분 흐름(옛 세이브 옮기기 · 만들기) */
+    else if (S.kind === 'offer') { click('offerpick', run.bag[0]); }
+    else if (S.kind === 'ks') { spendPassive(pk, r); click('kspick', ksChoice(pk, r, run)); } /* 큰 각인 (1 · 2챕터 정산 뒤, 3챕터 야영지) */
     else if (S.kind === 'swap') { click('swapskip'); }
     else if (S.kind === 'consfull') { run_('ask = () => true'); click('cptake'); } // 10월 14일 개편 5단계: 전리품 화면(자리가 없는 것은 두고 간다) // 스킬 바꾸기: 단계 3에서 성향별로
     else { G.sheet = null; }
@@ -114,13 +109,40 @@ function handleSheets(pk, r) {
   }
 }
 
-/* 각인 고르기: 지금 파는 갈래의 직업 각인 > 다른 직업 각인 > 공용(성향 순서). 초보는 무작위 */
-const AWK_MAP_ = run_('typeof AWK_MAP !== "undefined" ? AWK_MAP : {}');
-const AWK_COMMON = ['a_eye', 'a_skin', 'a_vial', 'a_stand', 'a_vigor', 'a_breath', 'a_shell', 'a_iron', 'a_ember', 'a_point', 'a_scatter', 'a_smolder', 'a_flow', 'a_gap', 'a_resolve', 'a_pouch', 'a_clear', 'a_gulp', 'a_warmth', 'a_light', 'a_heavyhand', 'a_brew', 'a_purse', 'a_memory'];
-function awkChoice(pk, r, run) {
-  const offer = run.awkOffer || []; if (pk === 'novice') return offer[Math.floor(r() * offer.length)];
-  const sc = id => { const a = AWK_MAP_[id]; return (a.g === 'cls' ? (a.br === run.focus ? 100 : 20) : 40 - AWK_COMMON.indexOf(id)) + r() * 0.5; };
-  return offer.slice().sort((x, y) => sc(y) - sc(x))[0];
+/* 10월 16일 0.8.0 2단계 찍기 정책 =====
+   패시브: 가까운 축(기울기 A) → 보통(B) → 멂(C) 순으로, 아직 없는 중간 노드까지의 최단 길을 한 칸씩 찍는다(점수 = 길 칸 수 + 방향 순위 × 1.5, 같으면 화력 · 생존 · 계승 · 유지력 · 제어 · 기민 순). 초보는 아무 칸이나.
+   큰 각인: KS_PREF 순서에서 가장 앞인 후보(초보는 아무것이나). 되돌리기는 하지 않는다 */
+const DIR_PREF = ['pw', 'sv', 'lg', 'su', 'ct', 'ag'];
+function dirRank(build) { const T = G0.PT_TILT[build] || {}; const tr = { A: 0, B: 1, C: 2 }; return d => (tr[T[d] || 'B']) + DIR_PREF.indexOf(d) * 0.01; }
+function ptPathTo(run, T, target) { // 열린 노드에서 target까지 열린 고리의 노드만 지나는 최단 길 (얻지 않은 큰 각인 자리는 지나지 않는다)
+  const open = new Set(G0.ptOpenIds(run)); const par = {}; const q = [...open].sort(); const seen = new Set(q);
+  while (q.length) { const x = q.shift(); if (x === target) break; if (T.nodes[x].kind === 'keystone' && !open.has(x)) continue; for (const y of T.nodes[x].links) { if (seen.has(y) || !G0.ringOpen(run, T.nodes[y].ring)) continue; seen.add(y); par[y] = x; q.push(y); } }
+  if (!seen.has(target)) return null; const path = []; for (let x = target; !open.has(x); x = par[x]) path.unshift(x); return path;
+}
+function spendPassive(pk, r) {
+  if (OPT.policy?.spendPassive) return OPT.policy.spendPassive(G0.__G.run, r);
+  const run = G0.__G.run; if (!run || !run.ptree) return; const T = G0.ptBuild(run.build); const rk = dirRank(run.build); let n = 0;
+  while (run.ptree.pts > 0 && n++ < 60) {
+    const can = Object.keys(T.nodes).filter(id => !G0.ptWhy(run, id)); if (!can.length) break;
+    if (pk === 'novice') { G0.ptBuy(run, can[Math.floor(r() * can.length)]); continue; }
+    const open = new Set(G0.ptOpenIds(run)); let best = null;
+    for (const id of Object.keys(T.nodes)) { const nd = T.nodes[id]; if (nd.kind !== 'notable' || open.has(id) || !G0.ringOpen(run, nd.ring)) continue; const p = ptPathTo(run, T, id); if (!p || !p.length) continue; const sc = p.length + rk(nd.dir) * 1.5 + r() * 0.3; if (!best || sc < best.sc) best = { sc, p }; }
+    const pick = best && can.includes(best.p[0]) ? best.p[0] : can.sort((a, b) => rk(T.nodes[a].dir) - rk(T.nodes[b].dir) || T.nodes[a].pos.r - T.nodes[b].pos.r)[0];
+    if (G0.ptBuy(run, pick)) break;
+  }
+}
+const KS_PREF = ['ks_deep', 'ks_wall', 'ks_sb_blood', 'ks_cycle', 'ks_crystal', 'ks_breaker', 'ks_first', 'ks_sb_beat', 'ks_glass', 'ks_flow', 'ks_hammer', 'ks_sb_over', 'ks_brim', 'ks_dry', 'ks_heavy', 'ks_double', 'ks_bare'];
+function ksChoice(pk, r, run) {
+  const offer = run.ksOffer || []; if (pk === 'novice') return offer[Math.floor(r() * offer.length)];
+  const T = G0.ptBuild(run.build); const sc = id => { const i = KS_PREF.indexOf(T.nodes[id].fx); return (i < 0 ? 99 : i) + r() * 0.5; };
+  return offer.slice().sort((x, y) => sc(x) - sc(y))[0];
+}
+/* 배분 흐름 시트(옛 세이브 옮기기): 패시브 → 큰 각인 → 액티브를 정책대로 찍고 확정 */
+function allocAuto(pk, r, run) {
+  for (let k = 0; k < 20 && G0.__G.sheet && G0.__G.sheet.kind === 'alloc'; k++) {
+    const st = run.alloc && run.alloc.step; run_('ask = () => true');
+    if (st === 'i') click('allocgo'); else if (st === 'p') { spendPassive(pk, r); click('allocnext'); } else if (st === 'k') { G0.ksEnsureOffer(run); click('kspick', ksChoice(pk, r, run)); } else if (st === 'a') { spendTree(pk, r); click('allocok'); } else break;
+  }
 }
 /* 운명의 저울: 쓸모없는 평범 · 고급(직업에 맞지 않고 끼지 않은 것)만 올린다. 초보는 절반쯤 아무거나 */
 function fatePick(pk, run, r) {
@@ -315,17 +337,8 @@ function playChar(pk, build, seed) {
   if (MARKCH) G0.__G.cre = Object.assign(G0.__G.cre || {}, { mark: { ch: MARKCH, ids: MARK_IDS, mode: process.env.MODE === 'hard' ? 'hard' : 'normal' } }); /* 표식 도전: 화면과 같은 startRun 안의 markSetup이 레벨 · 꾸러미 · 표식을 정한다 */
   G0.startRun(build);
   const run = G.run; G.sheet = null; G.creating = false; G.cre = null; G.scr = 'run';
-  // 스킬과 능력치 (qa.js와 같은 규칙)
-  const SKM = G0.skillMap(build); const ids = Object.keys(SKM); let skills;
-  if (G0.BUILDS[build].v2) skills = run.skills.slice(); // 0.6a.2: 트리의 시작 스킬로 시작하고 포인트로 연다(spendTree)
-  else if (THINK(pk) || pk === 'novice') skills = ids.slice().sort(() => r() - 0.5).slice(0, 3);
-  else { const ex = ids.filter(id => SKM[id].excl).sort(() => r() - 0.5); const home = ids.filter(id => SKM[id].home === build); const other = ids.filter(id => !SKM[id].excl && SKM[id].home !== build).sort(() => r() - 0.5); skills = ex.slice(0, 1 + Math.floor(r() * 2)).concat(home).concat(other).slice(0, 3); }
-  run.skills = skills.slice(); run.p.skills = G0.BUILDS[build].v2 ? G0.v2Equip(run) : skills.slice(); // 0.6a.2: 시작 스킬은 늘 끼운다
-  const pref = PREF[build]; const KEYS = G0.STAT_KEYS || ['str', 'dex', 'int']; const st = Object.fromEntries(KEYS.map(k => [k, 0]));
-  if (G0.statRecommend && G0.STAT_REC && G0.STAT_REC[build]) { // 0.6a.2 능력치 다섯: 추천 배분을 쓰되 초보 · 일부는 아무렇게나
-    const n0 = (G0.STAT_START || 6) + (run.markStat || 0); const rec = G0.statRecommend(build, st, n0); for (const k of KEYS) st[k] = rec[k] || 0; for (let i = 0; i < n0; i++) if (pk === 'novice' || r() > 0.75) { const from = KEYS.filter(k => st[k] > 0)[Math.floor(r() * KEYS.filter(k => st[k] > 0).length)]; st[from]--; st[KEYS[Math.floor(r() * KEYS.length)]]++; }
-  } else for (let i = 0; i < 6; i++) st[pk === 'novice' || r() > 0.6 ? ['str', 'dex', 'int'][Math.floor(r() * 3)] : pref]++;
-  run.stats = st; G0.applyStats(run.p, st); run.p.hp = run.p.hpMax; run.p.mp = run.p.mpMax; run.p.st = run.p.stMax;
+  delete run.alloc; // 10월 16일 0.8.0 2단계: 만들기 배분 흐름 대신 정책으로 바로 찍는다(능력치 = 시작 노드 + 패시브 노드)
+  spendPassive(pk, r); while (run.ksPending > 0) { G0.ksEnsureOffer(run); if (!run.ksOffer) break; G0.ksTake(run, ksChoice(pk, r, run)); spendPassive(pk, r); } spendTree(pk, r); G0.treeSync(run); run.p.hp = run.p.hpMax; run.p.mp = run.p.mpMax; run.p.st = run.p.stMax;
   if (OPT.policy?.start) OPT.policy.start(run, r);
   const out = { pk, build, seed, res: 'lose', floor: 0, lv: 1, rooms: [], bossHp: null, bugs: [], acts: 0, fights: [] };
   if (MARKCH) { out.marks = (run.marks || []).slice(); out.markCh = run.markCh; out.markPts = run.markPts || 0; }
@@ -337,9 +350,8 @@ function playChar(pk, build, seed) {
 const MARKCH = +(process.env.MARKCH || 0); const MARK_IDS = (process.env.MARKS || '').split(',').filter(Boolean); /* 표식 도전(10월 8일): MARKCH=2|3 챕터에서 새 캐릭터로 시작(엔진 startRun이 G.cre.mark로 만든다), MARKS=표식 id 쉼표. 표식 없이 MARKCH만 주면 같은 시작의 대조군 */
 const FROM = +(process.env.DG_FROM || process.env.MARKCH || 1);
 function jumpTo(pk, r, ch) {
-  const G = G0.__G, run = G.run; const lv = ch >= 3 ? 10 : 5; const up = lv - (run.lv || 1);
-  run.lv = lv; run.xp = G0.LV_XP_[lv - 1]; run.p.lv = lv; if (run.tree) run.tree.pts += up;
-  const KEYS = G0.STAT_KEYS; const add = G0.statRecommend(run.build, Object.fromEntries(KEYS.map(k => [k, run.stats[k] || 0])), G0.LV_POINTS * up); for (const k of KEYS) run.stats[k] = (run.stats[k] || 0) + (add[k] || 0); G0.applyStats(run.p, run.stats);
+  const G = G0.__G, run = G.run; const lv = ch >= 3 ? 11 : 6; // 10월 16일 0.8.0 2단계: 새 곡선의 챕터 끝 레벨(Lv6 · Lv11)
+  run.lv = lv; run.xp = G0.LV_XP_[lv - 1]; run.p.lv = lv; run.clears = ch - 1; G0.ptFix(run); G0.treeSync(run);
   G0.initGear(run);
   for (const sl of ['weapon', 'armor', 'gloves', 'amulet', 'ring1', 'ring2']) {
     const kind = sl === 'ring1' || sl === 'ring2' ? 'ring' : sl; const g = sl === 'weapon' || sl === 'armor' ? 'r' : 'm';
@@ -351,9 +363,9 @@ function jumpTo(pk, r, ch) {
   for (const u of run.bag.slice()) G0.discardUid(run, u); // 뺀 시작 장비는 버린다
   const ids = Object.keys(G0.CONS).filter(k => (G0.CONS[k].ch || 1) < ch && G0.CONS[k].use !== 'none'); G0.consAdd(run, 'herb', 'n', 3); for (let k = 0; k < 3; k++) G0.consAdd(run, ids[Math.floor(r() * ids.length)], 'n', 1);
   G0.applyGear(run); run.p.hp = run.p.hpMax; run.p.st = run.p.stMax; run.p.flask.life = run.p.flaskMax; run.p.flask.mana = run.p.flaskMax; run.p.flask.stam = run.p.flaskMax; run.gold = 0;
-  spendTree(pk, r);
-  for (let c = 1; c < ch; c++) { run.ch = c; if (c >= run_('AWK.settleFrom') && G0.CHAPTERS[c + 1]) { G0.awkGrant(run); run.awkOffer = G0.awkOfferMake(run); if (run.awkOffer.length) G0.awkTake(run, awkChoice(pk, r, run)); else run.awkPending = 0; } } /* 정산 뒤의 각인 (앞 챕터를 깬 캐릭터 흉내) */
-  run.ch = ch - 1; run.clears = ch - 1; run.phase = 'wait'; G0.enterChapter(run);
+  for (let c = 1; c < ch; c++) { run.ch = c; spendPassive(pk, r); if (G0.ksGrant(run, 'b' + c)) { G0.ksEnsureOffer(run); if (run.ksOffer) G0.ksTake(run, ksChoice(pk, r, run)); } } /* 정산 뒤의 큰 각인 (앞 챕터를 깬 캐릭터 흉내) */
+  spendPassive(pk, r); spendTree(pk, r); G0.treeSync(run); G0.applyGear(run); run.p.hp = run.p.hpMax; run.p.st = run.p.stMax;
+  run.ch = ch - 1; run.phase = 'wait'; G0.enterChapter(run);
 }
 /* 챕터 사이: 정산 확정 → 상점(성향대로 산다) → 설문 → 다음 챕터 */
 function betweenChapters(pk, r, out) {
@@ -407,7 +419,7 @@ const BM_PATH = { 역병: ['v_spill', 'v_host', 'v_gust', 'v_marsh', 'v_veil', '
    문서의 대안 기둥(역병 독 안개 · 핏빛 안개 쪽, 혈약 약화 쪽)과 짝 규칙으로 고른 경로 · 장착이다. BM_LOAD_OLD=1이면 예전 경로 · 장착 */
 const BM_PATH2 = { 역병: ['v_fog', 'v_mist', 'v_host', 'v_gust', 'v_marsh', 'v_veil', 'v_choke', 'v_cloud', 'v_pollen', 'v_black', 'v_rotland'], 혈약: ['v_curse', 'v_cut', 'v_fervor', 'v_creep', 'v_oath', 'v_fade', 'v_offering', 'v_covenant', 'v_witherall', 'v_pact'] };
 function bmLoad(run, br) {
-  if (process.env.BM_LOAD_OLD || run.build !== 'bloodmage' || (run.ch || 1) >= 3) return null; const open = run.tree.open;
+  if (process.env.BM_LOAD_OLD || run.build !== 'bloodmage' || (run.ch || 1) >= 3) return null; const open = run.atree.own;
   const pref = br === '혈약' ? (open.includes('v_fade') ? ['v_curse', 'v_creep', 'v_fade', 'v_covenant', 'v_oath'] : ['v_curse', 'v_cut', 'v_fervor', 'v_oath', 'v_creep']) : br === '역병' ? ['v_fog', 'v_mist', 'v_host', 'v_cloud', 'v_veil', 'v_gust', 'v_marsh'] : null;
   if (!pref) return null; const eq = pref.filter(id => open.includes(id)).slice(0, G0.EQUIP_SLOTS2);
   for (const id of open.slice().sort((a, b) => ROWN(G0.SK2[b]) - ROWN(G0.SK2[a]))) { if (eq.length >= G0.EQUIP_SLOTS2) break; if (!eq.includes(id)) eq.push(id); }
@@ -419,7 +431,7 @@ function bmLoad(run, br) {
    실제 세기 재의 여왕 · 지하묘지의 군주(장비 없음)에서 같은 연 칸으로 테스터 장착은 0~50%, 이 장착은 87~100%다(근거: docs/직업/암살자.md F-5 10월 9일). 난수를 쓰지 않는다. ASN_LOAD_OLD=1이면 끈다 */
 function asnLoad(run, eq) {
   if (process.env.ASN_LOAD_OLD || run.build !== 'assassin' || run.focus !== '격발') return;
-  const S = id => G0.SK2[id]; const has = (id, f) => S(id).fx.some(f); const open = run.tree.open.slice();
+  const S = id => G0.SK2[id]; const has = (id, f) => S(id).fx.some(f); const open = run.atree.own.slice();
   const src = id => has(id, e => e.k === 'poison' && e.n >= 5) && !has(id, e => e.k === 'burst');
   const brk = id => has(id, e => e.k === 'brkPer' || (e.k === 'brk' && e.n >= 50) || e.k === 'cutx') && !has(id, e => e.k === 'burst');
   const bur = id => has(id, e => e.k === 'burst') && has(id, e => e.k === 'bigx');
@@ -433,40 +445,58 @@ function asnLoad(run, eq) {
   eq.length = 0; eq.push(...pick);
 }
 function bmPathNext(run, br) {
-  if (!process.env.BM_LOAD_OLD && BM_PATH2[br]) { for (const id of BM_PATH2[br]) if (!run.tree.open.includes(id)) return G0.SK2[id] && !G0.treeWhy(run, id) ? G0.SK2[id] : null; return null; }
-  const L = (BM_PATH[br] || []).slice(); if (process.env.BM_VAR && br !== '포식' && run.tree.open.length === 4 && !run.tree.open.includes('v_reap')) return G0.SK2.v_reap && !G0.treeWhy(run, 'v_reap') ? G0.SK2.v_reap : null;
-  for (const id of L) if (!run.tree.open.includes(id)) return G0.SK2[id] && !G0.treeWhy(run, id) ? G0.SK2[id] : null;
+  if (!process.env.BM_LOAD_OLD && BM_PATH2[br]) { for (const id of BM_PATH2[br]) if (!run.atree.own.includes(id)) return G0.SK2[id] && !G0.atWhy(run, id) ? G0.SK2[id] : null; return null; }
+  const L = (BM_PATH[br] || []).slice(); if (process.env.BM_VAR && br !== '포식' && run.atree.own.length === 4 && !run.atree.own.includes('v_reap')) return G0.SK2.v_reap && !G0.atWhy(run, 'v_reap') ? G0.SK2.v_reap : null;
+  for (const id of L) if (!run.atree.own.includes(id)) return G0.SK2[id] && !G0.atWhy(run, id) ? G0.SK2[id] : null;
   return null;
 }
 function spendTree(pk, r) {
   if (OPT.policy?.spendTree) return OPT.policy.spendTree(G0.__G.run, r);
-  const G = G0.__G, run = G.run; if (!run.tree || !(run.tree.pts > 0)) return;
-  const all = G0.SKILLS2[run.build]; const T = G0.TREE2[run.build];
+  const G = G0.__G, run = G.run; spendPassive(pk, r); if (!run.atree || !(run.atree.pts > 0)) return; // 10월 16일 0.8.0 2단계: 패시브를 먼저 찍고 액티브
+  const A = G0.atBuild(run.build); const T = G0.TREE2[run.build];
   run.focus = run.focus || (process.env.FOCUS && T.branches.includes(process.env.FOCUS) ? process.env.FOCUS : T.branches[Math.floor(r() * T.branches.length)]); // FOCUS=갈래 이름으로 고정해 잴 수 있다
-  for (let n = 0; n < 20 && run.tree.pts > 0; n++) {
-    const can = all.filter(s => !G0.treeWhy(run, s.id));
+  if (!A.tmp) return spendTreeUp(pk, r, run, A);
+  const all = G0.SKILLS2[run.build].filter(s => A.nodes[s.id]); // 임시 트리: 지금 사다리 그대로라 옛 정책을 그대로 쓴다
+  for (let n = 0; n < 20 && run.atree.pts > 0; n++) {
+    const can = all.filter(s => !G0.atWhy(run, s.id));
     if (!can.length) break;
     const focus = THINK(pk) || pk === 'careful';
-    let br = run.focus; if (run.build === 'hunter' && focus) { if (br === '기동') br = run.focus = r() < 0.5 ? '저격' : '연사'; const opened = b0 => run.tree.open.filter(id => (G0.SK2[id] || {}).b === b0).length; br = opened('기동') <= opened(run.focus) ? '기동' : run.focus; } // 사냥꾼(10월 5일): 피해 갈래 하나와 기동을 번갈아 (한 갈래를 몰아 찍으면 오히려 약하다)
+    let br = run.focus; if (run.build === 'hunter' && focus) { if (br === '기동') br = run.focus = r() < 0.5 ? '저격' : '연사'; const opened = b0 => run.atree.own.filter(id => (G0.SK2[id] || {}).b === b0).length; br = opened('기동') <= opened(run.focus) ? '기동' : run.focus; } // 사냥꾼(10월 5일): 피해 갈래 하나와 기동을 번갈아 (한 갈래를 몰아 찍으면 오히려 약하다)
     let pool = focus ? (can.filter(s => s.b === br).length ? can.filter(s => s.b === br) : can) : can;
-    if (run.build === 'assassin' && focus && br === '그림자' && !process.env.SH_RANDOM) { /* 암살자 그림자(10월 8일): 왼쪽 기둥(피해 칸)만 내려간다. 문서 C-5: 오른 기둥은 Lv10 보스 22%, 보스 앞에서 흘리기 준비만 끼우면 진다 */ const lp = pool.filter(s => all.filter(x => x.b === s.b && x.row === s.row)[0] === s); if (lp.length) pool = lp; }
-    if (run.build === 'elementalist' && focus && br === '공명' && !process.env.ELEM_PATH_OLD) { /* 원소술사 공명(10월 9일): 기둥을 섞지 않고 왼쪽 엮기 기둥만 내려간다. 문서 C-4-1·D-4의 장착(엮기 칸)이고, 실제 세기 보스에서 엮기 기둥은 Lv5 30-63% · Lv8 87-93%인데 두 기둥을 섞은 장착은 0%였다. ELEM_PATH_OLD=1로 끔 */ const lp = pool.filter(s => all.filter(x => x.b === s.b && x.row === s.row)[0] === s); if (lp.length) pool = lp; }
-    const root = focus && !(run.build === 'hunter' && !process.env.HUNT_ROOT_OLD) ? pool.filter(x => ROWN(x) === 1 && x.b === br) : []; // 한 갈래를 파는 사람은 그 갈래의 첫 줄 두 칸부터 연다. 사냥꾼은 예외(10월 9일): 줄마다 한 칸씩 내려간다(docs/직업/사냥꾼.md C-5의 최소 빌드. 첫 줄 두 칸을 다 열면 5점 가운데 둘이 옆 칸에 묻힌다). HUNT_ROOT_OLD=1이면 전의 규칙
-    const sbPref = x => run.build === 'spellblade' && [3, 5].includes(x.row) && x.tgt === 'self' ? 1 : 0; // 마검사(10월 7일): 3 · 5줄에서는 나에게 쓰는 칸(칼에 싣기 · 채우기)
-    const bmS = run.build === 'bloodmage' && focus ? bmPathNext(run, br) : null; // 숨겨진 직업 3 (비공개 문서 C5 · F4-11): 갈래마다 정한 주 경로
-    const s = bmS ? bmS : root.length ? root[0] : focus ? pool.sort((x, y) => ROWN(y) - ROWN(x) || sbPref(y) - sbPref(x) || r() - 0.5)[0] : pool[Math.floor(r() * pool.length)];
-    G0.treeUnlock(run, s.id);
-    const eq = run.skills.slice();
+    if (run.build === 'assassin' && focus && br === '그림자' && !process.env.SH_RANDOM) { /* 암살자 그림자(10월 8일): 왼쪽 기둥(피해 칸)만 내려간다 */ const lp = pool.filter(s => all.filter(x => x.b === s.b && x.row === s.row)[0] === s); if (lp.length) pool = lp; }
+    if (run.build === 'elementalist' && focus && br === '공명' && !process.env.ELEM_PATH_OLD) { /* 원소술사 공명(10월 9일): 왼쪽 엮기 기둥만 */ const lp = pool.filter(s => all.filter(x => x.b === s.b && x.row === s.row)[0] === s); if (lp.length) pool = lp; }
+    const root = focus && !(run.build === 'hunter' && !process.env.HUNT_ROOT_OLD) ? pool.filter(x => ROWN(x) === 1 && x.b === br) : [];
+    const bmS = run.build === 'bloodmage' && focus ? bmPathNext(run, br) : null;
+    const s = bmS ? bmS : root.length ? root[0] : focus ? pool.sort((x, y) => ROWN(y) - ROWN(x) || r() - 0.5)[0] : pool[Math.floor(r() * pool.length)];
+    if (G0.atBuy(run, s.id)) break;
+    const eq = run.skills.filter(x => x !== s.id); // atBuy가 빈 칸에 끼운 것은 빼고 옛 규칙으로 다시 끼운다
     if (eq.length < G0.EQUIP_SLOTS2) eq.push(s.id);
     else {
-      const keepEv = run.build === 'hunter' && process.env.HUNT_DODGE ? (id => { const k = G0.SK2[id]; return k.fx.some(e => e.k === 'evade') && !k.once; }) : null; /* 사냥꾼(10월 9일): 강타는 몸 빼기로 비낀다(docs/직업/사냥꾼.md D-2 · D-3). 끼운 몸 빼기 계열이 하나뿐이면 새 칸으로 갈아 끼울 때도 빼지 않는다. 전에는 낮은 줄부터 갈아 끼워 첫 줄 몸 빼기가 가장 먼저 빠졌다. 기본은 꺼 둔다(HUNT_DODGE=1로 켠다): 켜면 저격이 1 · 2 · 3챕터 모두 합격선 위(32 · 23 · 51%)로 올라 사람 기록 없이는 기본으로 삼지 않는다 */
+      const keepEv = run.build === 'hunter' && process.env.HUNT_DODGE ? (id => { const k = G0.SK2[id]; return k.fx.some(e => e.k === 'evade') && !k.once; }) : null;
       const cand = eq.map((id, i) => [i, ROWN(G0.SK2[id])]).filter(x => !(keepEv && keepEv(eq[x[0]]) && eq.filter(keepEv).length === 1 && !keepEv(s.id)));
       const lo = (cand.length ? cand : eq.map((id, i) => [i, ROWN(G0.SK2[id])])).sort((x, y) => x[1] - y[1])[0]; if (lo[1] < ROWN(s) || r() < 0.3) eq[lo[0]] = s.id; }
-    if (run.build === 'spellblade' && eq.length >= G0.EQUIP_SLOTS2) for (const k of ['spell', 'cut']) if (!eq.some(id => G0.SK2[id].kind === k)) { const c = run.tree.open.filter(id => G0.SK2[id].kind === k && !eq.includes(id)).sort((x, y) => ROWN(G0.SK2[y]) - ROWN(G0.SK2[x]))[0]; if (c) { const lo = eq.map((id, i) => [i, ROWN(G0.SK2[id])]).filter(x => G0.SK2[eq[x[0]]].kind !== k).sort((x, y) => x[1] - y[1])[0]; if (lo) eq[lo[0]] = c; } } // 마검사: 4칸에 ⚔ · ✦를 하나 이상씩
-    { const bl = focus ? bmLoad(run, br) : null; if (bl) { eq.length = 0; eq.push(...bl); } } // 숨겨진 직업 3: 갈래마다 정한 보스 장착
-    asnLoad(run, eq); // 암살자 격발: 심고 · 끊고 · 터뜨리는 넷
-    run.skills = eq; run.p.skills = G0.v2Equip(run);
+    { const bl = focus ? bmLoad(run, br) : null; if (bl) { eq.length = 0; eq.push(...bl); } }
+    asnLoad(run, eq);
+    run.skills = eq; G0.atSync(run);
   }
+}
+/* 강화 노드가 있는 트리(마검사): 주 갈래의 스킬과, 끼운 스킬의 강화를 먼저. 4칸은 강화가 많이 붙은 스킬 · 깊은 고리부터, ⚔ · ✦를 하나 이상씩 */
+function spendTreeUp(pk, r, run, A) {
+  const focus = THINK(pk) || pk === 'careful';
+  for (let n = 0; n < 20 && run.atree.pts > 0; n++) {
+    const can = Object.keys(A.nodes).filter(id => !G0.atWhy(run, id)); if (!can.length) break;
+    const eqd = G0.v2Equip(run);
+    const sc = id => { const nd = A.nodes[id]; let v = (focus && nd.br === run.focus ? 10 : 0) + nd.ring * 0.5; v += nd.kind === 'skill' ? ((run.skills || []).length < G0.EQUIP_SLOTS2 ? 4 : 1) : (eqd.includes(nd.on) ? 5 : 0.5); return v + r() * (pk === 'novice' ? 20 : 1); };
+    const id = can.sort((a, b) => sc(b) - sc(a))[0]; if (G0.atBuy(run, id)) break;
+    sbEquip(run, A);
+  }
+}
+function sbEquip(run, A) {
+  const own = run.atree.own.filter(id => A.nodes[id].kind === 'skill'); const ups = id => run.atree.own.filter(u => A.nodes[u].on === id).length;
+  const sc = id => ups(id) * 2 + A.nodes[id].ring + (A.nodes[id].br === run.focus ? 1.5 : 0);
+  const eq = own.slice().sort((a, b) => sc(b) - sc(a)).slice(0, G0.EQUIP_SLOTS2);
+  for (const k of ['spell', 'cut']) if (eq.length >= G0.EQUIP_SLOTS2 && !eq.some(id => G0.SK2[id].kind === k)) { const c = own.filter(id => G0.SK2[id].kind === k && !eq.includes(id)).sort((a, b) => sc(b) - sc(a))[0]; if (c) { const lo = eq.filter(id => G0.SK2[id].kind !== k).sort((a, b) => sc(a) - sc(b))[0]; eq[eq.indexOf(lo)] = c; } }
+  run.skills = eq; G0.atSync(run);
 }
 /* 지금 G.run을 성향대로 끝(쓰러짐 또는 정산)까지 진행한다 */
 function playLoop(pk, r, out) {
@@ -497,10 +527,10 @@ function playLoop(pk, r, out) {
     handleSheets(pk, r);
   }
   out.floor = run.room; out.ch = run.ch || 1; out.lv = run.lv; out.gold = run.gold;
-  if (OPT.detail && run.tree) { const cnt = {}; for (const id of run.tree.open) { const sk = G0.SK2[id]; if (sk) cnt[sk.b] = (cnt[sk.b] || 0) + 1; } const top = Object.entries(cnt).sort((x, y) => y[1] - x[1])[0]; out.branch = run.build === 'hunter' && run.focus ? run.focus : top ? top[0] : null; out.branchN = top ? top[1] : 0; out.branchOf = run.tree.open.length; out.mode = run.mode || 'normal'; } /* 10월 8일(7단계): 갈래(트리 칸을 가장 많이 연 갈래) · 연 칸 수 · 모드를 판마다 남긴다 */
-  if ((run.awk || []).length) out.awk = run.awk.slice(); { const ft = (run.rooms || []).filter(x => x.type === 'fate'); if (ft.length) out.fate = ft.map(x => x.took ? (x.ok ? '+' : '-') + x.took : 'skip'); } /* 각인 · 운명의 저울 (없으면 칸을 두지 않아 1챕터 결과 파일은 그대로) */
+  if (OPT.detail && run.atree) { const A = G0.atBuild(run.build); const cnt = {}; for (const id of run.atree.own) { const b0 = (A.nodes[id] || {}).br; if (b0) cnt[b0] = (cnt[b0] || 0) + 1; } const top = Object.entries(cnt).sort((x, y) => y[1] - x[1])[0]; out.branch = run.build === 'hunter' && run.focus ? run.focus : top ? top[0] : null; out.branchN = top ? top[1] : 0; out.branchOf = run.atree.own.length; out.mode = run.mode || 'normal'; } /* 10월 8일(7단계): 갈래(트리 칸을 가장 많이 연 갈래) · 연 칸 수 · 모드를 판마다 남긴다 */
+  if (run.ptree) out.ks = run.ptree.ks.slice(); if ((run.awk || []).length) out.awk = run.awk.slice(); { const ft = (run.rooms || []).filter(x => x.type === 'fate'); if (ft.length) out.fate = ft.map(x => x.took ? (x.ok ? '+' : '-') + x.took : 'skip'); } /* 각인 · 운명의 저울 (없으면 칸을 두지 않아 1챕터 결과 파일은 그대로) */
   { const hl = (run.drops || []).filter(x => x.g === 'h' || x.g === 'l').map(x => x.item + ':' + x.g + ':' + (x.ch || 1) + (x.boss ? ':boss' : '')); if (hl.length) out.hl = hl; } /* 영웅 · 전설을 얻은 기록 (없으면 칸을 두지 않아 1챕터 결과 파일은 그대로) */
-  if (OPT.detail) { out.cons = (run.consLog || []).length; out.consIds = countBy((run.consLog || []).map(x => x.id)); out.loot = (run.lootLog || []).reduce((a, x) => ({ gold: a.gold + (x.gold || 0), lost: a.lost + (x.lost || 0), n: a.n + Object.values(x.got || {}).reduce((m, v) => m + v, 0) }), { gold: 0, lost: 0, n: 0 }); out.tree = run.tree ? run.tree.open.slice() : null; out.equip = (run.skills || []).slice(); out.flaskLeft = Object.assign({}, run.p.flask); out.pathsTaken = (run.pathLog || []).map(x => x.path); } out.gear = Object.values(run.inv).filter(x => run.eqU && Object.values(run.eqU).includes(x.uid)).map(x => x.tpl + ':' + x.g);
+  if (OPT.detail) { out.cons = (run.consLog || []).length; out.consIds = countBy((run.consLog || []).map(x => x.id)); out.loot = (run.lootLog || []).reduce((a, x) => ({ gold: a.gold + (x.gold || 0), lost: a.lost + (x.lost || 0), n: a.n + Object.values(x.got || {}).reduce((m, v) => m + v, 0) }), { gold: 0, lost: 0, n: 0 }); out.tree = run.atree ? run.atree.own.slice() : null; out.ptree = run.ptree ? { own: run.ptree.own.slice(), free: run.ptree.free.slice(), ks: run.ptree.ks.slice() } : null; out.equip = (run.skills || []).slice(); out.flaskLeft = Object.assign({}, run.p.flask); out.pathsTaken = (run.pathLog || []).map(x => x.path); } out.gear = Object.values(run.inv).filter(x => run.eqU && Object.values(run.eqU).includes(x.uid)).map(x => x.tpl + ':' + x.g);
   return out;
 }
 
