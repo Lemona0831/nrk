@@ -9,6 +9,8 @@ const trdXY = (deg, rad) => { const a = deg * Math.PI / 180; return [Math.sin(a)
 const trdAng = (dx, dy) => (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360; // 화면 각도: 위가 0, 시계 방향
 const trdAD = (a, b) => { const d = Math.abs(((a - b) % 360 + 360) % 360); return d > 180 ? 360 - d : d; };
 const TRD_KMIN = 0.6, TRD_KMAX = 6;
+const trdTW = t => Math.round([...String(t)].reduce((a, c) => a + (/[\u3131-\uD79D]/.test(c) ? 11 : c === ' ' ? 3.5 : 6.5), 0)); // 11px 글자의 대략 너비
+const TRD_Q = { q0: 0, q1: 0.5, q15: 0.78, q2: 0.95, q3: 1.9 };
 /* ---- 자리 계산 (직업마다 한 번) ---- */
 /* 패시브: 각도 = 방향 + 칸(L −12° · C 0 · R +12°), 반지름 = r × U. 고리 경계 r 3.5 · 6.5 (설계 2-1). 다리(같은 r, 다른 방향)는 호로 그린다 */
 function trdLayP(cls) {
@@ -70,7 +72,10 @@ function trdView0(run, mode, L, opt) { // 처음 보기: 열린 고리까지(조
   if (mode === 'k' && opt && opt.offer && opt.offer.length) rad = Math.max(...opt.offer.map(id => L.N[id] ? L.N[id].rad : 0)) + 1.4 * L.U;
   const k = rad ? Math.max(1, Math.min(3.2, L.vb / rad)) : 1; return { k, x: 0, y: 0 };
 }
-function trdVw(run, mode, L, opt) { G.tvw = G.tvw || {}; const vk = trdVk(run, mode); if (!G.tvw[vk]) G.tvw[vk] = trdView0(run, mode, L, opt); return G.tvw[vk]; }
+function trdVw(run, mode, L, opt) { // 보이는 고리(또는 큰 각인 후보)가 바뀌면 한 번 다시 맞춘다
+  G.tvw = G.tvw || {}; const vk = trdVk(run, mode), sig = [1, 2, 3].filter(k => ringOpen(run, k)).length + (run.alloc ? ':' + run.alloc.mode : '') + (mode === 'k' && opt && opt.offer ? ':' + opt.offer.join(',') : '');
+  if (!G.tvw[vk] || G.tvw[vk].sig !== sig) G.tvw[vk] = Object.assign(trdView0(run, mode, L, opt), { sig }); return G.tvw[vk];
+}
 function trdSelOf(run, mode, L, opt) {
   G.tsel = G.tsel || {}; let id = G.tsel[mode];
   if (mode === 'k') { const off = (opt && opt.offer) || []; if (!off.includes(id)) id = null; if (id == null && G.tsel.k !== '' && off.length && typeof matchMedia !== 'undefined' && matchMedia('(min-width: 900px)').matches) id = off[0]; }
@@ -125,8 +130,6 @@ function trdNames(run, L) {
   for (const ax of L.axes) {
     const [x, y] = trdXY(ax.a, L.lab); const sub = tilt ? TN[tilt[ax.k] || 'B'] : '';
     h += `<text class="tl dl" x="${trdF(x)}" y="${trdF(y)}">${esc(ax.n)}</text>` + (sub ? `<text class="tl dls" x="${trdF(x)}" y="${trdF(y)}" dy="1.25em">${esc(sub)}</text>` : '');
-    const inner = L.kind === 'p' ? [1, 2].filter(k => L.bounds[k] < L.disc - 30).map(k => L.bounds[k] + 2) : [L.inR]; // 패시브는 고리 경계 위(축에 노드가 없는 자리), 액티브는 시작과 첫 스킬 사이
-    for (const r of inner) { const [ix, iy] = trdXY(ax.a, r); h += `<text class="tl dli q1" x="${trdF(ix)}" y="${trdF(iy)}">${esc(ax.n)}</text>`; }
   }
   for (let k = 1; k <= 3; k++) {
     const r0 = L.bounds[k - 1], r1 = L.bounds[k]; if (!(r1 > r0)) continue; const open = ringOpen(run, k); const mid = k === 1 ? Math.max(r0, r1 * 0.5) : (r0 + r1) / 2; const [x, y] = trdXY(L.ringAng, mid);
@@ -186,8 +189,11 @@ function trdSvg(run, mode, L, v, sel, opt) {
     const n = T.nodes[id], P = L.N[id], ci = offer.indexOf(id), o = { mode, sel: id === sel, tab: id === tabId, cand: ci >= 0, badge: ci >= 0 ? String(ci + 1) : '', will: !!will[id], isNew: id === jn };
     nodes += kind === 'p' ? trdNodeP(run, L, id, ST[id], o) : trdNodeA(run, L, id, ST[id], o);
     if (n.kind === 'start') continue;
-    const q = id === sel || o.cand ? 'q0' : kind === 'p' ? (n.kind === 'small' ? 'q3' : 'q15') : (n.kind === 'skill' ? (L.tmp ? 'q2' : 'q1') : 'q3');
-    labs += `<text class="tl nl ${q}${n.kind === 'keystone' || n.kind === 'skill' ? ' nlk' : ''}${ST[id] === 'lock' && !o.cand ? ' nll' : ''}" x="${trdF(P.x)}" y="${trdF(P.y + P.sz + 4)}">${esc(n.n)}</text>`;
+    // 배율이 낮으면 큰 각인 · 연 중간 노드 · 스킬만, 높을수록 더 (겹치는 것은 trdCull이 숨긴다)
+    const open = ['own', 'free', 'ks'].includes(ST[id]), q = id === sel || o.cand || n.kind === 'keystone' || (n.kind === 'notable' && open) ? 'q0' : kind === 'p' ? (n.kind === 'small' ? (open ? 'q2' : 'q3') : 'q1') : (n.kind === 'skill' ? (L.tmp ? 'q15' : 'q0') : 'q3');
+    // 겹치면 숨길 때의 순서: 고른 노드 · 후보 → 큰 각인 → 연 중간 노드 · 스킬 → 중간 노드 → 연 작은 노드 · 강화 → 나머지
+    const pr = id === sel || o.cand ? 0 : n.kind === 'keystone' ? 1 : (n.kind === 'notable' || n.kind === 'skill') ? (open ? 2 : 3) : open ? 4 : 5;
+    labs += `<text class="tl nl ${q}${n.kind === 'keystone' || n.kind === 'skill' ? ' nlk' : ''}${ST[id] === 'lock' && !o.cand ? ' nll' : ''}" x="${trdF(P.x)}" y="${trdF(P.y + P.sz + 4)}" data-p="${pr}" data-w="${trdTW(n.n)}">${esc(n.n)}</text>`;
   }
   const vk = trdVk(run, mode), nm = kind === 'p' ? '패시브 트리' : '액티브 트리';
   return `<svg class="trd-svg" data-vk="${esc(vk)}" data-e="${mode}" viewBox="${trdF(-L.vb)} ${trdF(-L.vb)} ${trdF(2 * L.vb)} ${trdF(2 * L.vb)}" preserveAspectRatio="xMidYMid meet" role="group" aria-label="${nm} 그림. 화살표 키로 노드를 옮겨 다니고 Enter로 고르거나 찍습니다. Esc는 설명을 닫습니다." style="--tu:1">${trdDefs()}<g class="trd-vp" transform="translate(${trdF(v.x)} ${trdF(v.y)}) scale(${Math.round(v.k * 1000) / 1000})">${trdBoard(run, L)}<g class="trd-lk">${lk}${lkr}</g><g class="trd-kp">${kph}</g><g class="trd-nodes">${nodes}</g><g class="trd-labs" aria-hidden="true">${trdNames(run, L)}${labs}</g></g></svg>`;
@@ -257,7 +263,7 @@ function trdLegend(mode) {
   let L = [];
   if (mode === 'a') L = [it(ic('tn-skill st-own eq', `<circle class="eqr" r="10.5"/>${c(8)}`), '장착한 스킬(굵은 테)'), it(ic('tn-skill st-own', c(8)), '연 스킬'), it(ic('tn-upgrade st-own', c(5)), '강화(스킬 곁의 작은 노드)'), it(ic('tn-upgrade st-own idle', c(5)), '연 강화 · 스킬을 끼우면 일함'), it(ic('tn-skill st-can', c(8)), '열 수 있음'), it(ic('tn-skill st-lock', c(8)), '잠김'), it(ic('tn-skill st-lock rlk', c(8)), '고리 잠김')];
   else L = [it(ic('tn-small st-own', c(5)), '찍음'), it(ic('tn-small st-free', c(5) + '<circle class="fm" cx="4" cy="-4" r="2.4"/>'), '길 덤(큰 각인 덤 · 되돌려도 남음)'), it(ic('tn-small st-can', c(5)), '찍을 수 있음'), it(ic('tn-small st-near', c(5)), '포인트가 없음'), it(ic('tn-small st-lock', c(5)), '잠김'), it(ic('tn-notable st-lock', c(8)), '중간 노드'), it(ic('tn-keystone st-lock', dm(9)), '큰 각인'), it(ic('tn-small st-lock rlk', c(5)), '고리 잠김')].concat(mode === 'k' ? [it(ic('tn-keystone cand', dm(9)), '후보'), it('<svg class="trd-li" viewBox="-12 -12 24 24" aria-hidden="true"><path class="kp on" d="M-10 6L0 -2L10 6"/></svg>', '덤으로 열릴 길')] : []);
-  return `<details class="trd-leg"${trdWide() ? ' open' : ''}><summary>그림 읽는 법</summary><ul>${L.join('')}</ul><p class="mini">끌어서 옮기고, 휠이나 두 손가락으로 확대합니다. 노드를 누르면 설명이 나옵니다. 키보드: 화살표로 옮겨 다니고 Enter로 고르거나 찍고, Esc로 설명을 닫습니다. + · − 키로 확대합니다.</p></details>`;
+  return `<details class="trd-leg"${trdWide() ? ' open' : ''}><summary>그림 읽는 법</summary><ul>${L.join('')}</ul><p class="mini">끌어서 옮기고, Ctrl(⌘) + 휠 · 터치패드 오므리기 · 두 손가락 · ＋ － 단추로 확대합니다. 노드를 누르면 설명이 나옵니다. 키보드: 화살표로 옮겨 다니고 Enter로 고르거나 찍고, Esc로 설명을 닫습니다. + · − 키로 확대합니다.</p></details>`;
 }
 /* 한 장: 지도(그림 + 확대 단추) · 설명 칸 · 능력치(패시브) · 읽는 법 */
 function trdView(run, mode, opt) {
@@ -266,7 +272,15 @@ function trdView(run, mode, opt) {
   const empty = `<p class="mini">${mode === 'k' ? '빛나는 ◆ 셋이 후보입니다. 하나를 누르면 덤으로 열릴 길이 보입니다.' : '노드를 누르면 이름 · 효과 · 상태가 여기에 보입니다.'}</p>`;
   const stats = kind === 'p' && mode !== 'k' ? `<details class="trd-stats"${trdWide() || G.tstatOpen ? ' open' : ''}><summary>능력치 합계</summary>${vStatTable(run)}</details>` : '';
   const ctl = `<div class="trd-ctl" role="group" aria-label="확대와 이동"><button class="sm" data-a="tzoom" data-k="in" data-e="${mode}" aria-label="확대">＋</button><button class="sm" data-a="tzoom" data-k="out" data-e="${mode}" aria-label="축소">－</button><button class="sm" data-a="tzoom" data-k="fit" data-e="${mode}" aria-label="전체 보기">전체</button></div>`;
-  return `<div class="trd trd-${mode}${sel ? ' has-sel' : ''}"><div class="trd-map">${trdSvg(run, mode, L, v, sel, opt)}${ctl}</div><div class="trd-info${sel ? '' : ' empty'}" role="region" aria-label="노드 설명">${info || empty}</div>${stats}${trdLegend(mode)}</div>`;
+  const nt = G.tnote && Date.now() - G.tnote.t < 4000 ? `<div class="trd-note" aria-hidden="true" style="animation-delay:-${Date.now() - G.tnote.t}ms">${esc(G.tnote.m)}</div>` : '';
+  return `<div class="trd trd-${mode}${sel ? ' has-sel' : ''}"><div class="trd-map">${trdSvg(run, mode, L, v, sel, opt)}${ctl}${nt}<div class="trd-hint" aria-hidden="true">Ctrl(⌘) + 휠로 확대합니다</div></div><div class="trd-info${sel ? '' : ' empty'}" role="region" aria-label="노드 설명">${info || empty}</div>${stats}${trdLegend(mode)}</div>`;
+}
+/* 트리 화면(트리 페이지 · 배분 흐름 · 큰 각인 창)의 알림은 그림 구석의 한 줄로 (toast가 부른다). 화면 읽기는 #live가 그대로 읽는다 */
+const trdScreen = () => typeof G !== 'undefined' && (G.scr === 'tree' || !!(G.sheet && ['alloc', 'ks'].includes(G.sheet.kind)));
+function trdToast(m) {
+  if (typeof document === 'undefined' || !trdScreen()) return false; const t = fixJosa(m); liveSay(t); G.toastLog = (G.toastLog || []).concat([{ m: t, at: Date.now() }]).slice(-20); G.tnote = { m: t, t: Date.now() };
+  for (const e of document.querySelectorAll('.trd-map')) { let n = e.querySelector('.trd-note'); if (!n) { n = document.createElement('div'); n.className = 'trd-note'; n.setAttribute('aria-hidden', 'true'); e.appendChild(n); } n.textContent = t; n.style.animation = 'none'; void n.offsetWidth; n.style.animation = ''; n.style.animationDelay = '0ms'; }
+  return true;
 }
 const trdListBtn = () => { const on = !!(G.data && G.data.treeList); return `<button class="sm trd-lt" data-a="tlist" aria-pressed="${on}">목록으로 보기</button>`; };
 const trdListOn = () => !!(G.data && G.data.treeList);
@@ -282,6 +296,19 @@ function trdApply(svg, v) {
 function trdScale(svg, v) { // 글자는 확대와 상관없이 같은 크기, 확대할수록 이름이 더 보인다
   const m = svg.getScreenCTM ? svg.getScreenCTM() : null; const s = (m ? m.a : 1) * v.k; if (!(s > 0)) return;
   svg.style.setProperty('--tu', (1 / s).toFixed(4)); svg.classList.toggle('s1', s >= 0.5); svg.classList.toggle('s15', s >= 0.78); svg.classList.toggle('s2', s >= 0.95); svg.classList.toggle('s3', s >= 1.9);
+  trdCull(svg, s);
+}
+/* 이름 겹침 없애기: 배율에 맞는 이름만 남기고, 앞 순서의 이름 · 방향 이름 · 고리 글자와 겹치는 것은 숨긴다 */
+function trdCull(svg, s) {
+  const L = [...svg.querySelectorAll('.trd-labs .nl')], keep = [], pad = 2 / s, h = 14 / s;
+  for (const t of svg.querySelectorAll('.trd-labs .dl')) { const x = +t.getAttribute('x'), y = +t.getAttribute('y'), w = 70 / s; keep.push([x - w / 2, y - 18 / s, x + w / 2, y + 22 / s]); }
+  for (const t of svg.querySelectorAll('.trd-labs .rl')) { const x = +t.getAttribute('x'), y = +t.getAttribute('y'), w = trdTW(t.textContent) * 1.1 / s, d = t.classList.contains('rls') ? 17 / s : 0; keep.push([x - w / 2, y - 9 / s + d, x + w / 2, y + 9 / s + d]); } // 고리 번호 · 잠김 글자
+  const it = L.map(t => { const q = [...t.classList].find(c => TRD_Q[c] != null) || 'q0'; return { t, ok: s >= TRD_Q[q], p: +t.dataset.p || 0, x: +t.getAttribute('x'), y: +t.getAttribute('y'), w: (+t.dataset.w || 40) / s }; }).sort((a, b) => a.p - b.p || a.y - b.y);
+  for (const o of it) {
+    let show = o.ok; const b = [o.x - o.w / 2 - pad, o.y - pad, o.x + o.w / 2 + pad, o.y + h + pad];
+    if (show && o.p > 0) show = !keep.some(k => b[0] < k[2] && b[2] > k[0] && b[1] < k[3] && b[3] > k[1]);
+    if (show) keep.push(b); o.t.classList.toggle('cull', !show);
+  }
 }
 function trdClientToVb(svg, cx, cy) { const m = svg.getScreenCTM(); if (!m) return { x: 0, y: 0 }; const p = svg.createSVGPoint(); p.x = cx; p.y = cy; const q = p.matrixTransform(m.inverse()); return { x: q.x, y: q.y }; }
 function trdZoomAt(svg, f, cx, cy) {
@@ -299,14 +326,14 @@ function trdReveal(svg, el, lowCut) {
 }
 function trdSelect(mode, id, el) {
   G.tsel = G.tsel || {}; G.tsel[mode] = id;
-  if (el && id) { const svg = trdSvgOf(el); if (svg && !trdWide()) trdReveal(svg, el, 0.55); G.tfocus = { e: mode, k: id }; }
+  if (el && id) { G.tfocus = { e: mode, k: id }; if (!trdWide()) G.tpan = { e: mode, k: id }; }
   render();
 }
 /* 단추 · 노드 누르기 (80-events.js의 onClick이 부른다) */
 function trdClick(a, el) {
   const mode = el.dataset.e || 'p';
   if (a === 'tnode') { trdSelect(mode, el.dataset.k, el); return; }
-  if (a === 'tsel') { const id = el.dataset.k || null; G.tsel = G.tsel || {}; if (!id) { G.tsel[mode] = mode === 'k' ? '' : null; render(); return; } const svg = document.querySelector(`.trd-svg[data-e="${mode}"]`); const n = svg && svg.querySelector(`.tn[data-k="${id}"]`); if (n) trdReveal(svg, n, trdWide() ? 0 : 0.55); G.tsel[mode] = id; G.tfocus = { e: mode, k: id }; render(); const m = document.querySelector('.trd-' + mode + ' .trd-map'); if (m && m.scrollIntoView) m.scrollIntoView({ block: 'nearest', behavior: smoothB() }); return; }
+  if (a === 'tsel') { const id = el.dataset.k || null; G.tsel = G.tsel || {}; if (!id) { G.tsel[mode] = mode === 'k' ? '' : null; render(); return; } const svg = document.querySelector(`.trd-svg[data-e="${mode}"]`); const n = svg && svg.querySelector(`.tn[data-k="${id}"]`); if (n && trdWide()) trdReveal(svg, n, 0); G.tsel[mode] = id; G.tfocus = { e: mode, k: id }; if (!trdWide()) G.tpan = { e: mode, k: id }; render(); const m = document.querySelector('.trd-' + mode + ' .trd-map'); if (m && m.scrollIntoView) m.scrollIntoView({ block: 'nearest', behavior: smoothB() }); return; }
   if (a === 'tzoom') {
     const svg = document.querySelector(`.trd-svg[data-e="${mode}"]`); if (!svg) return; const v = trdCur(svg);
     if (el.dataset.k === 'fit') { v.k = 1; v.x = 0; v.y = 0; trdApply(svg, v); return; }
@@ -319,7 +346,15 @@ function trdAfter() {
   if (typeof document === 'undefined') return;
   document.querySelectorAll('.trd-svg').forEach(svg => { const v = G.tvw && G.tvw[svg.dataset.vk]; if (v) trdScale(svg, v); });
   if (G.tfocus) { const f = G.tfocus; G.tfocus = null; const el = document.querySelector(`.tn[data-e="${f.e}"][data-k="${f.k}"]`); if (el && document.activeElement !== el) { if (typeof POP !== 'undefined') POP.mute = true; try { el.focus({ preventScroll: true }); } finally { if (typeof POP !== 'undefined') POP.mute = false; } } }
+  if (G.tpan) { const f = G.tpan; G.tpan = null; trdCenterAbove(f.e, f.k); }
   G.tjust = null;
+}
+/* 휴대폰: 고른 노드를 설명 칸 위에 보이는 곳의 가운데로 옮긴다(닫을 때는 그대로 둔다) */
+function trdCenterAbove(mode, id) {
+  const svg = document.querySelector(`.trd-svg[data-e="${mode}"]`), el = svg && svg.querySelector(`.tn[data-k="${id}"]`); if (!el) return; const m = svg.getScreenCTM(); if (!m) return;
+  const r = svg.getBoundingClientRect(), box = svg.closest('.trd'), info = box && box.querySelector('.trd-info:not(.empty)'), ir = info ? info.getBoundingClientRect() : null;
+  const bottom = ir && ir.top > r.top && ir.top < r.bottom ? ir.top : r.bottom, n = el.getBoundingClientRect(), v = trdCur(svg);
+  v.x += (r.left + r.width / 2 - (n.left + n.width / 2)) / m.a; v.y += ((r.top + bottom) / 2 - (n.top + n.height / 2)) / m.a; trdApply(svg, v);
 }
 /* 화살표: 그 방향에서 가장 가까운 노드 (화면 자리로) */
 function trdNext(node, key) {
@@ -334,7 +369,7 @@ function trdKey(ev) {
   if (ev.key === 'Escape') { if (G.tsel && G.tsel[mode]) { ev.preventDefault(); ev.stopImmediatePropagation(); const id = G.tsel[mode]; G.tsel[mode] = mode === 'k' ? '' : null; G.tfocus = { e: mode, k: id }; render(); } return; }
   if (!node || ev.ctrlKey || ev.metaKey || ev.altKey) return;
   if (ev.key === '+' || ev.key === '=' || ev.key === '-' || ev.key === '_') { ev.preventDefault(); ev.stopImmediatePropagation(); const [cx, cy] = trdCenterOf(svg); trdZoomAt(svg, ev.key === '-' || ev.key === '_' ? 1 / 1.4 : 1.4, cx, cy); return; }
-  if (ev.key.indexOf('Arrow') === 0) { ev.preventDefault(); ev.stopImmediatePropagation(); const n = trdNext(node, ev.key); if (n) { trdReveal(svg, n, trdWide() ? 0 : 0.55); n.focus({ preventScroll: true }); G.tsel = G.tsel || {}; G.tsel[mode] = n.dataset.k; G.tfocus = { e: mode, k: n.dataset.k }; render(); } return; }
+  if (ev.key.indexOf('Arrow') === 0) { ev.preventDefault(); ev.stopImmediatePropagation(); const n = trdNext(node, ev.key); if (n) { if (trdWide()) trdReveal(svg, n, 0); n.focus({ preventScroll: true }); G.tsel = G.tsel || {}; G.tsel[mode] = n.dataset.k; G.tfocus = { e: mode, k: n.dataset.k }; if (!trdWide()) G.tpan = { e: mode, k: n.dataset.k }; render(); } return; }
   if (ev.key === 'Home') { ev.preventDefault(); ev.stopImmediatePropagation(); const s = svg.querySelector('.tn[data-k="S"]') || svg.querySelector('.tn'); if (s) { s.focus({ preventScroll: true }); trdSelect(mode, s.dataset.k, s); } return; }
   if (ev.key === 'Enter' || ev.key === ' ') {
     ev.preventDefault(); ev.stopImmediatePropagation(); const id = node.dataset.k; G.tsel = G.tsel || {};
@@ -369,7 +404,10 @@ function trdInit() {
     if (Date.now() - TRDP.sup < 400) { ev.stopPropagation(); ev.preventDefault(); return; }
     if (!ev.target.closest('.tn')) { const mode = svg.dataset.e; if (G.tsel && G.tsel[mode]) { ev.stopPropagation(); G.tsel[mode] = mode === 'k' ? '' : null; render(); } }
   }, true);
-  document.addEventListener('wheel', ev => { const svg = trdSvgOf(ev.target); if (!svg) return; ev.preventDefault(); const dy = ev.deltaMode === 1 ? ev.deltaY * 33 : ev.deltaY; trdZoomAt(svg, Math.exp(-Math.max(-300, Math.min(300, dy)) * 0.0016), ev.clientX, ev.clientY); }, { passive: false });
+  document.addEventListener('wheel', ev => { // 10월 17일 다듬기: 그냥 휠은 페이지를 스크롤한다. Ctrl · ⌘ + 휠(터치패드 오므리기 포함)만 확대
+    const svg = trdSvgOf(ev.target); if (!svg) return;
+    if (!ev.ctrlKey && !ev.metaKey) { const mp = svg.closest('.trd-map'); if (mp) { mp.classList.add('hint'); clearTimeout(TRDP.hintT); TRDP.hintT = setTimeout(() => mp.classList.remove('hint'), 1400); } return; }
+    ev.preventDefault(); const dy = ev.deltaMode === 1 ? ev.deltaY * 33 : ev.deltaY; trdZoomAt(svg, Math.exp(-Math.max(-300, Math.min(300, dy)) * 0.0016), ev.clientX, ev.clientY); }, { passive: false });
   document.addEventListener('toggle', ev => { const d = ev.target; if (d && d.classList && d.classList.contains('trd-stats') && !trdWide()) G.tstatOpen = d.open; }, true);
 }
 try { trdInit(); } catch (e) { }

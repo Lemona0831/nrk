@@ -27,6 +27,7 @@ function liveNew(b) {
   G.liveMk = { b, x: L[L.length - 1] }; return L.slice(Math.max(i, L.length - 20)).map(x => { const w = whyText(b, x); return w ? x.m + '. 까닭: ' + w : x.m; });
 }
 function toast(m) {
+  if (typeof trdToast === 'function' && trdToast(m)) return; /* 10월 17일 3단계 다듬기: 트리 화면에서는 그림 구석의 한 줄로 */
   liveSay(fixJosa(m)); G.toastLog = (G.toastLog || []).concat([{ m: fixJosa(m), at: Date.now() }]).slice(-20); /* 10월 8일: 지난 알림(메뉴 '지난 알림') */ let el = document.querySelector('.toast');
   if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('aria-hidden', 'true'); document.body.appendChild(el); } /* 읽는 것은 #live가 맡는다(두 번 읽지 않게) */
   const lines = el.isConnected && G.toastLines && Date.now() - (G.toastAt || 0) < toastBase() ? G.toastLines : []; lines.push(fixJosa(m)); G.toastLines = lines.slice(-4); G.toastAt = Date.now(); el.textContent = G.toastLines.join('\n'); clearTimeout(G.toastT); /* 10월 5일: 전리품 알림이 골드 · 경험치 알림에 덮여 보이지 않았다 */
