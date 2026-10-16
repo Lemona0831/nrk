@@ -22,7 +22,7 @@ module.exports = function (api) {
 
   /* ===== 직업 규칙 (뒤) ===== */
   add('help', '겹마다 피해 +5%', '상수: HUNT.focusPer 5% · focusBig 10% · focusMax 3, 소스: 3겹이면 몸 낮추기 · 버티기를 꿰뚫음', E => pct(E('HUNT.focusPer')) === 5 && pct(E('HUNT.focusBig')) === 10 && E('HUNT.focusMax') === 3 && has('b.p.focus.n >= HUNT.focusMax') && has('e.braced && !o.dot && !fullF'));
-  add('help', '교대가 두 번 이어지면 켜지는', '소스: altF.run === 2는 sbRunNow ≥ 2일 때 켜지고, 쓰면 p.sbRun = 0', E => has('altF.run === 2 ? b.sbRunNow >= 2 : true') && has('p.sbRun = b.sbRun2 ? 0 : b.sbRunNow'));
+  add('help', '교대가 두 번 이어지면 켜지는', '소스: altF.run === 2는 sbRunNow ≥ 2일 때 켜지고, 쓰면 p.sbRun = 0', E => has("(e.run === 2 ? b.sbRunNow >= 2 : true)") && has('p.sbRun = b.sbRun2 ? 0 : b.sbRunNow')); // 10월 16일 0.8.0 2단계: 교대 보상은 sbAltMerge가 맞는 것끼리 합친다(판정은 같다)
   add('help', '한 차례에 3번까지입니다', '상수: MONK.ctrMax=' + E('MONK.ctrMax') + ', 소스: hurtPlayer가 ctrN < MONK.ctrMax를 본다', E => E('MONK.ctrMax') === 3 && has('(p.ctrN || 0) < MONK.ctrMax'));
   add('help', '▶ 공격 한 번이 기 1을 써서', '소스: 강화 ×1.25(수도승 ⚡ 제외), 실행: 강화 1 → ×1.25', E => has("if (p.s.empower && !(p.build === 'monk' && b.curFast)) { d *= 1.25;") && E(`(() => { const b = __mk("monk"); addS(b, b.p, "empower", 1); return outDmg(b, 100, {}) === 125; })()`));
   add('help', '힘은 강공격 붕괴 +5', '소스: 강공격 붕괴 35 + 5 × floor(힘/10), 실행: 민첩 20이면 흘리기 스태미나 −2', E => has("(isCaster(p) && !isV2(p) ? 30 : 35) + 5 * Math.floor(stat(p, 'str') / 10)") && E(`(() => { const b = __mk("warden"); const p = b.p; const c0 = dodgeCost(p); p.stat.dex = 20; return c0 - dodgeCost(p) === 2; })()`));

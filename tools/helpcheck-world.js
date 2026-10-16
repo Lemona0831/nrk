@@ -39,7 +39,7 @@ module.exports = function (api) {
   ev('chalice', 'spill', '정화 플라스크', (t, h) => /mana: '정화 플라스크'/.test(S24) && t.includes('정화 플라스크 +' + heal1(h, 'mana') + '.'));
   ev('candle', 'snuff', '받는 화상 피해가', (t, h) => durOk && t.includes('다음 ' + rooms(nx(h, /run\.buffs\.snuff = (\d+)/)) + '개 방 동안 받는 화상 피해가 ' + (igSnuff0 ? 0 : -1) + '이'));
   ev('candle', 'snuff', '대신 주는 피해', (t, h) => t.includes('주는 피해 −' + pct(nx(S32, /hasBt\(p, 'snuff'\)\) d \*= ([\d.]+)/)) + '%'));
-  ev('library', 'read', '능력치', (t, h) => t.includes('능력치 ' + nx(h, /openSheet\('stats', \{ pts: (\d+)/) + '점'));
+  ev('library', 'read', '패시브 포인트', (t, h) => t.includes('패시브 포인트 ' + nx(h, /ptBonus\(run, (\d+)/))); // 10월 16일 0.8.0 2단계: 능력치 1점 → 패시브 포인트 1
   ev('library', 'sell', '골드', (t, h) => t.includes('골드 ' + gold(h) + '.'));
   ev('monk', 'chase', '이기면 골드', (t, h) => /run\.next\.chase = 1/.test(h) && t.includes('이기면 골드 ' + nx(S66, /nu\.chase \? (\d+)/)));
   ev('bell', 'pull', '골드', (t, h) => /run\.dg\.force = 'strong'/.test(h) && t.includes('골드 ' + gold(h) + '.'));
@@ -57,7 +57,7 @@ module.exports = function (api) {
   ev('oasis', 'drink', '반반 확률로', (t, h) => { const m = mx(h, /n3pre\(run, '(\w+)', (\d+)\)/); return nx(h, /Math\.random\(\) < ([\d.]+)/) === 0.5 && t.includes('생명력 ' + pct(1 + nx(h, /p\.hpMax \* ([\d.]+)/)) + '%') && t.includes(KWN(m[1]) + ' ' + m[2] + '로'); });
   ev('sundial', 'turn', '열기', (t, h) => t.includes('열기 ' + nx(h, /noon: (\d+)/) + '에서') && /room\.heat0 = n3\.noon/.test(S66));
   ev('sundial', 'hasten', '골드', (t, h) => /run\.dg\.force = 'strong'/.test(h) && t.includes('골드 ' + gold(h) + '.'));
-  ev('archive', 'pull', '능력치', (t, h) => t.includes('능력치 ' + nx(L80.filter(l => l.includes("R.event === 'archive' && o === 'pull'")).join('\n'), /openSheet\('stats', \{ pts: (\d+)/) + '점'));
+  ev('archive', 'pull', '패시브 포인트', (t, h) => t.includes('패시브 포인트 ' + nx(L80.filter(l => l.includes("R.event === 'archive' && o === 'pull'")).join('\n'), /ptBonus\(run, (\d+)/)));
   ev('archive', 'pull', '대신 다음 전투를', (t, h) => { const m = mx(h, /n3pre\(run, '(\w+)', (\d+)\)/); return t.includes(KWN(m[1]) + ' ' + m[2] + '로'); });
   ev('archive', 'sweep', '골드', (t, h) => t.includes('골드 ' + gold(h) + '.'));
   ev('names', 'call', '레벨', (t, h) => { const m = mx(h, /Math\.min\((\d+), \(gv\.lv \|\| 1\) \* (\d+)\)/); return t.includes('레벨 × ' + m[2] + ', 최대 ' + m[1]); });
@@ -87,7 +87,7 @@ module.exports = function (api) {
   api.add('world-altars', '[blood] ', '80-events.js altar blood hpPen', () => E('ALTARS.find(a => a.id === "blood").d').includes('최대 생명력 ' + Math.round(nx(altH('blood'), /p\.hpPen\s*\|\|\s*0\)\s*\+\s*([\d.]+)/) * 100) + '%를'));
   const paysGold = () => /const\s+cost\s*=\s*altarGold\(run\)/.test(altH('gold')) && /run\.gold\s*-=\s*cost/.test(altH('gold'));
   api.add('world-altars', '[gold] ', '66-dungeon-flow.js altarGold · ALTARS.gold.cost[0]', () => E('ALTARS.find(a => a.id === "gold").d').includes('골드 ' + E('altarGold({ ch: 1 })') + '을 내면') && E('ALTARS.find(a => a.id === "gold").cost[0]') === E('altarGold({ ch: 1 })') && paysGold());
-  api.add('world-altars', '[scale] 최대 생명력', '80-events.js altar scale hpPen', () => { const t = E('ALTARS.find(a => a.id === "scale").d'); return t.includes('최대 생명력 ' + Math.round(nx(altH('scale'), /p\.hpPen\s*\|\|\s*0\)\s*\+\s*([\d.]+)/) * 100) + '%를') && t.includes('능력치 ' + nx(altH('scale'), /pts:\s*(\d+)/) + '점'); });
+  api.add('world-altars', '[scale] 최대 생명력', '80-events.js altar scale hpPen', () => { const t = E('ALTARS.find(a => a.id === "scale").d'); return t.includes('최대 생명력 ' + Math.round(nx(altH('scale'), /p\.hpPen\s*\|\|\s*0\)\s*\+\s*([\d.]+)/) * 100) + '%를') && t.includes('패시브 포인트 ' + nx(altH('scale'), /ptBonus\(run,\s*(\d+)/) + '을'); });
 
   // 화면에 그려지는 제단 카드: 챕터마다 황금 촛대의 값이 다르다 (A.d의 40을 실제 값으로 바꿔 보인다)
   const altUi = [];
@@ -251,26 +251,22 @@ module.exports = function (api) {
   // ===== 이벤트 · 성소 · 제단 처리 중 알림(toast)과 시트 제목에 찍히는 글 (80-events.js의 글을 그대로 읽는다) =====
   const tl = {
     shrine: lit(S80, /toast\('(성소의 힘이 \d+개 방 동안 함께합니다)'\)/),
-    scale: lit(S80, /why:\s*'(유리 저울에서 능력치 \d+점)'/),
-    refundA: lit(S80, /SK2\[c\]\.n \+ '( 칸을 되돌렸습니다\. 포인트 \+\d+)'/).trim(),
-    refundB: lit(S80, /case 'trefund'[^\n]*toast\('(되돌렸습니다\. 포인트 \+\d+)'\)/),
+    refundA: lit(S80, /\.nodes\[c\]\.n \+ '( 노드를 되돌렸습니다\. 액티브 포인트 \+\d+)'/).trim(),
+    refundB: lit(S80, /case 'ptref': case 'atref'[^\n]*toast\('(되돌렸습니다\. 포인트 \+\d+)'\)/),
     camel: lit(S80, /toast\('(짐에서 소모품 셋을 찾았습니다\. 다음 전투에 화상 \d+)'\)/),
     oasisA: lit(S80, /toast\('(샘물이 상처를 씻어 낸다\. 생명력 \d+%)'\)/),
     oasisB: lit(S80, /toast\('(물이 무겁게 가라앉는다\. 다음 전투에 둔화 \d+)'\)/),
-    library: lit(S80, /why: '(무너진 서고에서 능력치 \d+점)'/),
-    archive: lit(S80, /why: '(불타는 서고에서 능력치 \d+점)'/),
   };
   api.source('world-toasts', Object.entries(tl).map(([id, t]) => ({ id, text: pref(id, t) })));
   const tt = (tag, loc, ev2, fn) => api.add('world-toasts', sentFind(tag, tl[tag], loc), ev2, fn);
   tt('shrine', '성소의 힘이', '80-events.js run.buffs[R.shrine] = 4 → 방 수 = 값 − 1', () => durOk && tl.shrine.includes(shrineRooms + '개 방 동안'));
-  tt('scale', '유리 저울', '80-events.js altar scale: openSheet stats pts', () => tl.scale.includes('능력치 ' + nx(altH('scale'), /pts:\s*(\d+)/) + '점'));
-  tt('refundA', '포인트', '66-dungeon-flow.js refundDeepest: t.pts++ (포인트 1 돌려줌)', () => tl.refundA.endsWith('+' + (/t\.pts\+\+/.test(S66) ? 1 : NaN)));
-  tt('refundB', '포인트', '22-class-tree-rules.js treeRefund: t.pts++ (포인트 1 돌려줌)', () => tl.refundB.endsWith('+' + (/t\.open = t\.open\.filter\(x => x !== id\); t\.pts\+\+;/.test(S22) ? 1 : NaN)));
+  const S23 = J('23-tree-engine.js'); const costOne = E('Object.keys(BUILDS).filter(k => BUILDS[k].v2).every(k => Object.values(atBuild(k).nodes).concat(Object.values(ptBuild(k).nodes)).every(x => x.kind === "start" || x.kind === "keystone" || x.cost === 1))'); // 10월 16일 0.8.0 2단계: 두 트리
+  tt('refundA', '포인트', '23-tree-engine.js atRefundLeaf → atDrop: atree.pts += 노드 비용(모두 1)', () => tl.refundA.endsWith('+' + (/run\.atree\.pts \+= atBuild\(run\.build\)\.nodes\[id\]\.cost/.test(S23) && costOne ? 1 : NaN)));
+  tt('refundB', '포인트', '23-tree-engine.js ptRefund · atRefund: pts += 노드 비용(모두 1)', () => tl.refundB.endsWith('+' + (/run\.ptree\.pts \+= ptBuild\(run\.build\)\.nodes\[id\]\.cost/.test(S23) && costOne ? 1 : NaN)));
   tt('camel', '화상', '80-events.js camel loot: n3pre ignite n', () => tl.camel.endsWith('화상 ' + nx(H('camel', 'loot'), /n3pre\(run, 'ignite', (\d+)\)/)));
   tt('oasisA', '생명력', '80-events.js oasis drink: p.hpMax × 0.3', () => tl.oasisA.endsWith('생명력 ' + pct(1 + nx(H('oasis', 'drink'), /p\.hpMax \* ([\d.]+)/)) + '%'));
   tt('oasisB', '둔화', '80-events.js oasis drink: n3pre chill n', () => tl.oasisB.endsWith('둔화 ' + nx(H('oasis', 'drink'), /n3pre\(run, 'chill', (\d+)\)/)));
-  tt('library', '서고', '80-events.js library read: openSheet stats pts', () => tl.library.includes('능력치 ' + nx(H('library', 'read'), /pts: (\d+)/) + '점'));
-  tt('archive', '서고', '80-events.js archive pull: openSheet stats pts', () => tl.archive.includes('능력치 ' + nx(H('archive', 'pull'), /pts: (\d+)/) + '점'));
+
 
   // ===== 옛 B0.5 자리: 06a2에서 고를 길이 없다 =====
   const legacyT = [{ id: 'mother', text: E('BOSSES.mother.d') }, { id: 'tree', text: E('BOSSES.tree.d') }].concat(E('SCEN').map(s => ({ id: s.id, text: s.d }))).concat(E('ROOMS').map((r, i) => ({ id: 'room' + i, text: r.n })));

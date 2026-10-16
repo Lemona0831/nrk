@@ -228,9 +228,9 @@ function __hcBlob(k) { return JSON.stringify(IFX[k], (kk, v) => typeof v === 'fu
   // ---------- 상점 · 가방 고정 문장
   const ui = [
     ['shop:sell', '살 때 값의 25%를 받습니다. 낀 장비는 먼저 빼야 팝니다.'],
-    ['shop:respec', '능력치 다시 나누기: 나눈 N점을 거두어 처음부터 다시 나눕니다. 값은 레벨 × 10골드입니다.'],
+    ['shop:respec', '패시브 되돌리기: 포인트로 찍은 노드 N개를 모두 되돌려 다시 찍습니다. 큰 각인과 길 덤 노드는 남습니다. 값은 레벨 × 10골드입니다.'], // 10월 16일 0.8.0 2단계
   ];
   api.source('items-ui', ui.map(([id, t]) => ({ id, text: t })));
   api.add('items-ui', '살 때 값의 25%', 'sellOf = floor(priceOf × 0.25), 전설은 LEG_SELL ' + E('LEG_SELL') + ' 고정', () => srcHas("Math.floor(priceOf(it.g, it.ch) * 0.25)"));
-  api.add('items-ui', '레벨 × 10골드', 'vShop cost = lv × 10, respec 값', () => srcHas("const cost = (run.lv || 1) * 10") && /respec[\s\S]{0,400}\(run\.lv \|\| 1\) \* 10|\(run\.lv \|\| 1\) \* 10[\s\S]{0,2000}respec/.test(SRC));
+  api.add('items-ui', '레벨 × 10골드', 'vShop · respec: cost = ptResetCost(run) = lv × 10 (23-tree-engine)', () => srcHas("const ptResetCost = run => (run.lv || 1) * 10") && srcHas("const cost = run.ptree ? ptResetCost(run) : 0") && srcHas("const cost = ptResetCost(run)"));
 };

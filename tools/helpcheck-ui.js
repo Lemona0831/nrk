@@ -261,12 +261,14 @@ module.exports = function (api) {
   N('적이 나에게 6.2 피해', '편집 화면 미리 보기용 가짜 기록 줄(예시 값)');
 
   // ───────── 스킬 트리 화면 (72) ─────────
-  A('레벨마다 +1', '트리 포인트 = 만들 때 1 + 레벨마다 1 (treeFix: pts + lv − 1), Lv10 = 10점 · Lv15 = 15점', () => has('22-class-tree-rules.js', '((T && T.pts) || 1) - ((run.lv || 1) - 1)') && E('TREE2.assassin.pts') === 1);
+  // 10월 16일 0.8.0 2단계: 옛 "레벨마다 +1"(트리 포인트) · 능력치 창 · 옛 트리 칸 문장은 두 트리 화면으로 바뀌었다. 포인트 문장은 ${PT.pts.lv} 꼴로 코드 값을 그대로 쓴다
+  N('0.8.0 트리로', '판 이름(0.8.0)이고 규칙 숫자가 아님');
+  N('0.8.0에서 능력치', '판 이름(0.8.0)이고 규칙 숫자가 아님');
   A('10T마다 더 거세집니다', 'ENRAGE.step = 10 (광폭화 뒤 10마다 한 단계)', () => E('ENRAGE.step') === 10);
 
   // ───────── 상점 (46) ─────────
   A('살 때 값의 25%를 받습니다', 'sellOf = floor(priceOf × 0.25) (전설만 LEG_SELL 150 고정, 전설은 팔지 않음)', () => has('46-screens-shop.js', 'Math.floor(priceOf(it.g, it.ch) * 0.25)'));
-  A('값은 레벨 × 10골드입니다', 'respec: cost = lv × 10 (80-events)', () => has('80-events.js', 'const cost = (run.lv || 1) * 10'));
+  A('값은 레벨 × 10골드입니다', '패시브 되돌리기: ptResetCost = lv × 10 (23-tree-engine)', () => has('23-tree-engine.js', 'const ptResetCost = run => (run.lv || 1) * 10'));
   A('1층으로 내려갑니다', 'enterChapter → dgInit: run.room = 1', () => has('66-dungeon-flow.js', 'run.room = 1; run.cur = null; run.path'));
 
   // ───────── 계정 · 캐릭터 만들기 (44) ─────────
@@ -323,12 +325,6 @@ module.exports = function (api) {
   const extra = [
     { id: '52-ba:155', text: '2페이즈부터 거울' },
     { id: '48-tu:34', text: '이 장면에서는 쓰러지지 않습니다(생명력 1에서 버팁니다).' },
-    { id: '72-sk:56', text: '되돌리기 · 포인트 +1' },
-    { id: '72-sk:57', text: '열기 · 포인트 1' },
-    { id: '72-sk:39', text: '이 갈래 스킬 대기 −1' },
-    { id: '72-sk:139', text: '1점마다 규칙이 하나씩 바뀝니다.' },
-    { id: '72-sk:141', text: '능력치 1점 빼기 · 1점 더하기' },
-    { id: '80-ev:106', text: '칸을 되돌렸습니다. 포인트 +1' },
     // 화면 편집 · 설정의 선택지는 상수에서 만들어 낸다. 만들어 낸 모양 그대로 적는다
     { id: '56-hu:88', text: '전투 화면 편집 크기 ' + E('HUD_SIZES').map(v => v + '%').join(' ') },
     { id: '76-so:46', text: '글자 크기 ' + E('FS_OPTS').map(v => Math.round(v * 100) + '%').join(' ') },
@@ -346,11 +342,6 @@ module.exports = function (api) {
   A('2페이즈부터 거울', '늪의 어머니: 2페이즈는 체력 70% 아래(bossPhase)', () => has('30-enemy-ai.js', 'f > 0.7 ? 1 : f > 0.35 ? 2 : 3') && has('24-clock-damage.js', "boss.boss === 'mother'"));
   A('생명력 1에서 버팁니다', "수련장: ctx.safe 이면 hp를 1로 둔다(checkEnd)", () => has('24-clock-damage.js', 'if (b.p.hp <= 0 && b.ctx.safe) { b.p.hp = 1;'));
   A('최근 20명까지 남습니다', '쓰러진 자의 기록: graves.slice(0, 20)', () => has('66-dungeon-flow.js', 'concat(G.data.graves || []).slice(0, 20)'));
-  A('포인트 +1', 'treeRefund: t.pts++', () => has('22-class-tree-rules.js', 't.pts++; t.spent[s.b]'));
-  A('열기 · 포인트 1', 'treeUnlock: run.tree.pts--', () => has('22-class-tree-rules.js', 'run.tree.pts--; run.tree.open.push(id)'));
-  A('이 갈래 스킬 대기 −1', '[도달 불가] TREE2.*.haste(갈래 규칙)가 모든 직업에서 비어 있다', DEAD('Object.values(TREE2).every(t => !Object.keys(t.haste || {}).length)'));
-  A('1점마다 규칙이 하나씩 바뀝니다', '능력치 1점마다 statNext가 바뀌는 값을 돌려준다(다섯 능력치, 0~14점)', () => E('STAT_KEYS.every(k => { let ok = true; for (let n = 0; n < 15; n++) { const p0 = mkPlayer("assassin", {}); p0.stat[k] = n; if (!statNext(p0, k)) ok = false; } return ok; })'));
-  A('능력치 1점 빼기', "stat+ · stat-: 한 번에 al[k]를 1씩 바꾼다", () => has('80-events.js', 'if (a === \'stat+\' && left > 0) al[k]++; if (a === \'stat-\' && al[k] > 0) al[k]--;'));
   A('전투 화면 편집 크기 50% 75% 100% 150% 200%', 'HUD_SIZES = [50, 75, 100, 150, 200], 기본 100', () => q(E('HUD_SIZES')) === '[50,75,100,150,200]' && has('56-hud-editor.js', ': 100); });'));
   A('글자 크기 90% 100% 115% 130%', 'FS_OPTS = [0.9, 1, 1.15, 1.3] (도움말의 90%부터 130%까지와 같다)', () => q(E('FS_OPTS')) === '[0.9,1,1.15,1.3]');
 
