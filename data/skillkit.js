@@ -8,7 +8,8 @@ function skillGrowthStat(s) { return s.kind === 'spell' || /^(e_|v_)/.test(s.id)
 function skillBaseDamage(p, s, n) {
   if (!n || s.id === 'tut_bash' || p.build === 'novice') return n || 0;
   const k=skillGrowthStat(s), weapon=k==='int'?0:Math.max(0,gearOf(p).wpn-START_GEAR.wpn)*0.02;
-  return n*(1+stat(p,k)*SKILL_STAT_PCT/100+weapon);
+  const x=p.build==='spellblade'&&s.kind&&typeof fxVal==='function'?fxVal(p,'sbCross',0,(a,v)=>a+v):0; // 10월 17일 보완 2 양손의 마검: 베기는 지능, 주문은 힘의 x만큼 더한다
+  return n*(1+(stat(p,k)+(x?x*stat(p,k==='int'?'str':'int'):0))*SKILL_STAT_PCT/100+weapon);
 }
 function skillResourceGrows(s, e) {
   return /^m_/.test(s.id) && ['kiBurst', 'kiPer'].includes(e.k)
@@ -110,7 +111,7 @@ function skValue(s, ov) {
       case 'parryBuff': v += K.ph * e.red * (e.times || 1) + (e.stam || 0) * 0.15 * (e.times || 1) + K.pOk * (e.times || 1) * ((e.dmg || 0) + (e.poison || 0) * K.poison); break;
       case 'execute': v += skTri(Sof('burst') + 2) * (e.mul - 1) * 0.5; break;
       case 'capOver': break;
-      case 'ward': v += e.n * K.ward.v; break; // 나에게 보호막 (공격 스킬에 붙어도 나에게)
+      case 'ward': case 'wardFirst': v += e.n * K.ward.v; break; // 나에게 보호막 (공격 스킬에 붙어도 나에게)
       case 'wardFill': v += (e.to || 1) * W.cap[hi] * K.ward.v; break; // 쓸 때 거의 비어 있어 상한의 to만큼 찬다 (10월 4일 측정)
       case 'wardBurn': { const take = burnTake(e); v += take * e.mul * (s.tgt === 'front' || s.tgt === 'all' ? tm : 1) - take * K.ward.v * K.ward.loss; break; } // 태운 만큼 × 배수, 태운 보호막이 막았을 몫을 뺀다
       case 'wardDmg': { const w = wardDamageInfo(e, W.S[hi]); v += w.bonus * (s.tgt === 'front' || s.tgt === 'all' ? tm : 1) - w.take * K.ward.v * K.ward.loss; break; } // 보호막 추가 피해 상한과 소모로 잃는 방어 가치
@@ -482,6 +483,7 @@ function skBody(s) {
       case 'spread': out.push(`대상의 중독${e.per === 1 ? '' : e.per === 0.5 ? ' 절반(올림)' : ' ' + Math.round(e.per * 100) + '%'}만큼 다른 적 모두에게 중독을 건다. 대상의 중독은 그대로다.`); break;
       case 'capOver': out.push(`이 스킬로 거는 중독은 상한을 넘어 ${e.cap}까지 쌓인다.`); break;
       case 'wardFill': out.push(e.to && e.to < 1 ? `보호막을 상한의 ${Math.round(e.to * 100)}%까지 채운다. 이미 그만큼 있으면 늘지 않는다.` : '보호막을 상한까지 채운다.'); break;
+      case 'wardFirst': out.push(`먼저 보호막 ${e.n}${e.protect ? ' · 보호 ' + e.protect : ''}을(를) 두른다(마갑 전개).`); break; // 10월 17일 보완 5 갑주 해방
       case 'wardBurn': { const wd = (s.kind || String(s.id).slice(0, 2) === 'w_') && s.fx.find(x => x.k === 'ward'); out.push(`보호막을 ${e.max ? '최대 ' + e.max + '까지' : '모두'} 태운다. 태운 보호막 1마다 ${s.tgt === 'front' ? '전열 모두에게 ' : s.tgt === 'all' ? '모든 적에게 ' : ''}피해 ${e.mul}. 보호막이 없으면 ${s.fx.some(x => x.k === 'dmg') ? '더하는 피해는' : '이 피해는'} 0이다.` + (wd ? ` 태운 뒤 나에게 보호막 +${wd.n}.` : '')); break; }
       case 'wardDmg': out.push(e.drainAll ? `현재 보호막을 전부 소모합니다. 추가 피해 = 소모한 보호막 × ${e.per}(최대 ${e.cap}). 이 행동에서는 교대 보호막을 얻지 않습니다.` : e.spend ? `현재 보호막의 ${e.spend * 100}%를 소모합니다(최대 ${e.cap / e.per}). 추가 피해 = 소모한 보호막 × ${e.per}(최대 ${e.cap}).` : `${e.per >= 1 ? '내 보호막 1마다 피해 +' + e.per : '내 보호막 ' + Math.round(1 / e.per) + '마다 피해 +1'}${e.cap != null ? '(최대 ' + e.cap + ')' : ''}. 보호막은 줄지 않습니다.`); break;
       case 'thorn': out.push(`가시 ${e.times}번을 얻는다. 맞을 때마다 때린 적에게 피해 ${e.dmg}. 이미 있으면 횟수를 더한다(최대 8번).`); break;

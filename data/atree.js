@@ -37,7 +37,7 @@ const ATREE_DEF = {
       ['sbu_measure', '마갑', 2, 4, 'R', 'sb_sunder', '교차 일섬', '이어진 교대의 2번째부터면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'alt2' } }, ['sb_beatcut', 'sb_measure']],
       ['sbu_rhythm', '마갑', 2, 4, 'C', 'sb_turn', '마검 연무', '전열 모두를 벱니다. 보통 빠르기, 붕괴 +9.', { set: { tgt: 'front', time: 'normal' }, fxAdd: [{ k: 'brk', n: 9 }] }, ['sb_rhythm']],
       ['sbu_coda', '마갑', 3, 5, 'L', 'sb_turn', '마검 종곡', '이어진 교대면 붕괴 +30.', { fxAdd: [{ k: 'alt', run: 2, brk: 30 }] }, ['sb_coda', 'sb_weave']],
-      ['sbu_release', '마갑', 3, 6, 'C', 'sb_finale', '갑주 해방', '남은 보호막을 모두 태워 피해로 바꿉니다(×1.5).', { fxAdd: [{ k: 'wardBurn', mul: 1.5 }] }, ['sb_shatter', 'sb_rebuke', 'sb_wardburst', 'sb_embershell', 'sb_breakwall']],
+      ['sbu_release', '마갑', 3, 6, 'C', 'sb_finale', '갑주 해방', '먼저 마갑 전개처럼 보호막 18 · 보호 1을 두르고, 남은 보호막을 모두 태워 피해로 바꿉니다(×1.5).', { fxAdd: [{ k: 'wardFirst', n: 18, protect: 1 }, { k: 'wardBurn', mul: 1.5 }] }, ['sb_shatter', 'sb_rebuke', 'sb_wardburst', 'sb_embershell', 'sb_breakwall']],
     ],
   },
 };

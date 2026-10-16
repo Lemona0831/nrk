@@ -1,5 +1,5 @@
 'use strict';
-/* 0.8.0 2단계 트리 엔진 점검 (10월 16일). 실행: node tools/tree-check.js
+/* 0.8.0 2단계 트리 엔진 점검 (10월 16일, 10월 17일 4단계 만든 사람 보완 5가지를 끝에 더함). 실행: node tools/tree-check.js
    1 스키마(9직업 패시브 · 액티브: 양방향 연결, 시작에서 닿음, 고리 잠금 안에서 이어짐, 고아 없음, 비용, 효과 키) · 2 마검사 트리가 1단계 문서 7 · 8절과 같음 ·
    3 찍기 규칙 · 4 능력치 · 5 큰 각인(거리 N, 동점 규칙, 보너스 노드, 때: 1 · 2챕터 정산, 3챕터 야영지) · 6 강화 금지선과 조건부 할인 · 7 상점 되돌리기 · 8 경험치 곡선 · 9 옛 세이브 옮기기(9-5 + 10-4 단계 잠금 · 확정 저장) */
 process.env.DGDIR = process.env.DGDIR || '.';
@@ -189,10 +189,33 @@ ok(true, '9-5 4: 3챕터 13층 3번, 11층 2번, 12층 야영지 3번');
 // 유산 상한 · 큰 각인 훅
 { const run = newRun('spellblade'); run.clears = 2; run.ptree.ks.push('lgK5', 'lgK9'); E.ptSync(run); ok(ysCapOf(run.p) === 8, '유산 상한은 큰 각인으로만, 최대 5 + 3 = 8'); const es = [E.mkEnemy('bruiser', false, 0)]; es[0].hp = es[0].hpMax = 5000; const b = E.newBattle(run.p, es, {}); b.stepMode = false; b.rngF = () => 0.5; E.runUntilPlayer(b); ok(run.p.ys === 8, '전투 시작 값도 상한과 같이'); }
 { const run = newRun('spellblade'); run.clears = 2; run.ptree.ks.push('svK9'); E.ptSync(run); const es = [E.mkEnemy('bruiser', false, 0)]; const b = E.newBattle(run.p, es, {}); b.stepMode = false; E.runUntilPlayer(b); ok(!E.actionList(b).find(x => x.id === 'dodge').ok, '무거운 갑주: 흘리기를 쓸 수 없음'); }
-{ const run = newRun('spellblade'); run.clears = 2; run.ptree.ks.push('suK9'); E.ptSync(run); ok(E.wardMax(run.p) === Math.round(run.p.hpMax * 0.22), '피를 두른 갑주: 보호막 상한 22%'); }
+{ const run = newRun('spellblade'); run.clears = 2; run.ptree.ks.push('suK9'); E.ptSync(run); ok(E.wardMax(run.p) === Math.round(run.p.hpMax * 0.25), '피를 두른 갑주: 보호막 상한 25%(10월 17일 보완 4, 22 → 25)'); }
 // 노드 훅: 교대의 박자(교대 보호막 5) · 마검 과부하(교대 보호막 없음) · 넘친 숨(상한에 막힌 대응을 다음 차례에 +1)
 function nodeFight(keys) { const run = newRun('spellblade'); run.clears = 2; for (const k of keys) { const id = Object.keys(E.ptBuild('spellblade').nodes).find(x => E.ptBuild('spellblade').nodes[x].fx === k); (E.ptBuild('spellblade').nodes[id].kind === 'keystone' ? run.ptree.ks : run.ptree.free).push(id); } E.ptSync(run); const es = ['bruiser', 'bruiser'].map((r, i) => E.mkEnemy(r, false, i)); for (const e of es) { e.hp = e.hpMax = 5000; e.dmg = 0; } const b = E.newBattle(run.p, es, {}); b.rngF = () => 0.5; b.stepMode = false; E.runUntilPlayer(b); return { p: run.p, b, es }; }
 { const { p, b, es } = nodeFight(['n_sb_altbeat']); p.sbLast = 'spell'; E.playerAct(b, 'basic', es[0].id); ok(b.rec.some(x => x.k === 'alt' && Math.abs(x.g - 5) < 0.01), '교대의 박자: 교대 보호막 4 → 5'); }
 { const { p, b, es } = nodeFight(['ks_sb_over']); p.sbLast = 'spell'; E.playerAct(b, 'basic', es[0].id); ok(!b.rec.some(x => x.k === 'alt'), '마검 과부하: 교대 보호막을 얻지 않음'); }
 { const { p, b, es } = nodeFight(['n_overflow']); p.ys = 5; E.ysResp(b, '막기'); ok(b.ysOvfPend === 1, '넘친 숨: 상한에 막힌 대응을 기억'); p.ys = 2; for (const e of es) e.intent = { k: 'attack' }; E.playerAct(b, 'guard'); E.playerAct(b, 'basic', es[0].id); ok(b.rec.some(x => x.k === 'ys' && x.src === 'overflow' && x.g === 1), '다음 내 차례 시작에 유산 +1'); E.ysResp(b, '막기'); ok(!b.ysOvfPend || b.ysOvfUsed, '전투마다 1번'); }
+// 10월 17일 만든 사람 보완 5가지
+{ const skCostAt = f('skCostAt'), skOf = f('skOf');
+  { const { p, b, es } = nodeFight(['n_sb_altbeat']); p.sbLast = 'cut'; p.ys = 5; E.playerAct(b, 'sb_aegis'); E.playerAct(b, 'basic', es[0].id); ok(b.rec.filter(x => x.k === 'alt').length === 1 && b.rec.some(x => x.k === 'alt2x') && b.altDisc === 1, '보완 1: 한 차례 두 번 교대 → 교대 보호막은 한 번, 두 번째에 덤(+3)과 다음 스킬 할인');
+    ok(skCostAt(b, skOf(p, 'sb_edge')).c === 1, '두 번 교대 다음 스킬 비용 −1(2 → 1)'); p.ys = 5; E.playerAct(b, 'sb_edge', es[0].id); ok(!b.altDisc && b.rec.some(x => x.k === 'ysdisc' && x.by === 'altDbl'), '할인은 한 번 쓰면 없어짐'); }
+  { const { p, b, es } = nodeFight([]); p.sbLast = 'cut'; p.ys = 5; E.playerAct(b, 'sb_aegis'); E.playerAct(b, 'basic', es[0].id); ok(!b.rec.some(x => x.k === 'alt2x') && !b.altDisc, '교대의 박자가 없으면 두 번 교대 덤 없음'); } }
+{ const sbd = f('skillBaseDamage'); const run = newRun('spellblade'); const p = run.p; const s0 = sbd(p, E.SK2.sb_edge, 10), sp0 = sbd(p, E.SK2.sb_ember, 10); E.ptBuy(run, 'pw1C'); const st = run.stats;
+  ok(E.ptBuild('spellblade').nodes.pw1C.kind === 'small' && p.pn.includes('n_sb_hybrid'), '보완 2: 양손의 마검은 화력 C1 작은 노드(힘 +1 · 지능 +1)에 붙음, 자리 · 종류 그대로');
+  ok(Math.abs(sbd(p, E.SK2.sb_edge, 10) - 10 * (1 + (st.str + 0.3 * st.int) * 0.04)) < 1e-9 && Math.abs(sbd(p, E.SK2.sb_ember, 10) - 10 * (1 + (st.int + 0.3 * st.str) * 0.04)) < 1e-9 && s0 < sbd(p, E.SK2.sb_edge, 10), '베기는 지능의 30%, 주문은 힘의 30%를 더함'); }
+{ const run = newRun('spellblade'); run.lv = 6; E.ptFix(run); E.ptBuy(run, 'lg1C'); E.ptBuy(run, 'lg2L'); E.ptBuy(run, 'lg3L'); const skOf = f('skOf');
+  for (const id of ['sb_bleedcut', 'sb_boil']) E.atBuy(run, id); E.atBuy(run, 'sb_ember'); E.treeSync(run); ok(run.p.sbLead === '혈인' && skOf(run.p, 'sb_edge').fx.some(e => e.k === 'st' && e.s === 'bleed' && e.n === 1), '보완 3: 혈인이 가장 많으면 마검 베기가 출혈 1');
+  E.atBuy(run, 'sb_kindle'); E.treeSync(run); ok(run.p.sbLead === null && !skOf(run.p, 'sb_edge').fx.some(e => e.k === 'st'), '가장 많은 갈래가 둘이면 없음');
+  E.atBuy(run, 'sb_char'); E.treeSync(run); ok(run.p.sbLead === '염검' && skOf(run.p, 'sb_aegis').fx.some(e => e.k === 'imbue' && e.s === 'ignite' && e.soft), '염검이면 주문 방패가 칼에 화상 1(칼이 비었을 때)');
+  const w0 = E.SK2.sb_aegis.fx.find(e => e.k === 'ward').n; const run2 = newRun('spellblade'); run2.lv = 6; E.ptFix(run2); for (const id of ['lg1C', 'lg2L', 'lg3L']) E.ptBuy(run2, id); for (const id of ['sb_bladeward', 'sb_bolt']) E.atBuy(run2, id); E.treeSync(run2); ok(skOf(run2.p, 'sb_aegis').fx.find(e => e.k === 'ward').n === w0 + 2, '마갑이면 주문 방패 보호막 +2');
+  const run3 = newRun('spellblade'); run3.lv = 6; E.ptFix(run3); for (const id of ['sb_bleedcut', 'sb_boil']) E.atBuy(run3, id); E.treeSync(run3); ok(!skOf(run3.p, 'sb_edge').fx.some(e => e.k === 'st'), '칼에 새긴 주문이 없으면 시작 스킬 그대로'); }
+{ const skCostAt = f('skCostAt'), skOf = f('skOf'); const { p, b, es } = nodeFight(['ks_sb_over']); p.sbLast = 'cut'; const kinds = ['spell', 'cut', 'spell'];
+  for (const k of kinds) { p.ys = 5; E.playerAct(b, k === 'spell' ? 'sb_aegis' : 'basic', k === 'cut' ? es[0].id : undefined); if (b.waiting === false && !b.over) E.runUntilPlayer(b); }
+  ok(b.ovDisc === 1 && b.rec.some(x => x.k === 'ovready'), '보완 4: 마검 과부하, 교대 셋을 이으면 할인 준비'); ok(skCostAt(b, Object.assign({}, E.SK2.sb_finale, { ys: 4 })).c === 1 && skCostAt(b, skOf(p, 'sb_edge')).c === 2, '다음 유산 4 스킬 4 → 1(바닥 1), 다른 비용은 그대로');
+  const hitP = IFX_NODE.ks_sb_over.hitP; ok(hitP({ sbAlt: true }) === 0.35 && hitP({ sbAlt: false }) === 0, '교대한 행동 피해 +35%'); }
+{ const { p } = nodeFight(['ks_sb_blood']); ok(Math.round(p.ward) >= 6, '보완 4: 피를 두른 갑주, 전투 시작 보호막 6'); }
+{ const run = newRun('spellblade'); run.lv = 16; run.clears = 2; E.ptFix(run); const A = E.atBuild('spellblade'); for (const id of ['sb_bladeward', 'sb_turn', 'sb_finale', 'sbu_release']) assert.equal(E.atBuy(run, id), null, id); run.skills = ['sb_finale']; E.treeSync(run);
+  const s = f('skOf')(run.p, 'sb_finale'); ok(s.fx.findIndex(e => e.k === 'wardFirst') >= 0 && s.fx.find(e => e.k === 'wardFirst').n === E.SK2.sb_shell.fx.find(e => e.k === 'ward').n, '보완 5: 갑주 해방은 마갑 전개만큼 먼저 두름');
+  const es = [E.mkEnemy('bruiser', false, 0)]; es[0].hp = es[0].hpMax = 5000; es[0].dmg = 0; const b = E.newBattle(run.p, es, {}); b.rngF = () => 0.5; b.stepMode = false; E.runUntilPlayer(b); run.p.ward = 0; run.p.ys = 5; const hp0 = es[0].hp; E.playerAct(b, 'sb_finale', es[0].id);
+  ok(es[0].hp < hp0 && run.p.ward < 1 && b.log.some(x => /먼저 마갑 전개/.test(x.m)) && b.log.some(x => /보호막 18을 태운다/.test(x.m)), '보호막이 없어도 두르고 나서 모두 태워 친다'); }
 console.log('tree-check: ' + n + '개 통과');
