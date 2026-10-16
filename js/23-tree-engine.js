@@ -233,7 +233,7 @@ function treeMigrate08(run) {
   run.treeOld = run.tree || null; run.skillsOld = (run.skills || []).slice(); run.skills = []; delete run.tree; run.atree = { own: [], pts: atTotal(run), log: [] };
   if (run.battle) { // 전투를 버리고 그 방의 처음으로 (생명력 · 스태미나 · 플라스크는 방에 들어설 때 값, 소모품은 저장된 그대로)
     delete run.battle; if (run.entry) { const keep = run.p; run.p = JSON.parse(JSON.stringify(run.entry)); if (keep) { run.p.lv = lv; } }
-    run.nextUsed = null; run.next3Used = null;
+    if (run.nextUsed) run.next = Object.assign({}, run.nextUsed, run.next); if (run.next3Used) run.next3 = Object.assign({}, run.next3Used, run.next3); run.nextUsed = null; run.next3Used = null; // 방에 들어설 때 쓴 "다음 전투" 효과는 다시 그 방에
   }
   run.stats = ptStats(run); if (run.p) { run.p.pn = []; run.p.psm = {}; run.p.aup = []; }
   return true;
