@@ -1,7 +1,7 @@
 'use strict';
 /* ===== 0.8.0 두 트리 엔진 (10월 16일 0.8.0 2단계, docs/제안/0.8.0-1단계-트리설계-2026-10-16.md) =====
    패시브(run.ptree = { own, free, ks, pts, log }) · 액티브(run.atree = { own, pts, log }) · 장착(run.skills, 4칸) · 큰 각인(run.ksPending · run.ksOffer · run.ksGot).
-   능력치는 시작 노드 + 찍은 노드(길 덤 포함)의 stat 합이고, run.stats에 넣어 applyStats로 쓴다. 중간 노드 · 큰 각인 효과는 p.pn(효과 키)로 fxList에 들어간다.
+   능력치는 시작 노드 + 찍은 노드(보너스 노드 포함)의 stat 합이고, run.stats에 넣어 applyStats로 쓴다. 중간 노드 · 큰 각인 효과는 p.pn(효과 키)로 fxList에 들어간다.
    한 칸씩 되돌리기는 배분 흐름(run.alloc: 캐릭터 만들기 · 옛 세이브 옮기기)의 그 단계에서만, 그 밖에는 상점 되돌리기만 */
 const PTREE = {}, ATREE = {};
 const PT_POS = ['1C', '2L', '2R', '3L', '3R', '4L', '4R', '5L', '5R', '6L', '6R', '7L', '7R', '8L', '8R'];
@@ -99,7 +99,7 @@ function atBuy(run, id) {
   const auto = !(run.alloc && run.alloc.mode === 'mig') || (run.skillsOld || []).includes(id); // 옮기기: 옛 장착 스킬만 자동으로 끼우고 나머지 칸은 비워 둔다(9-3)
   if (n.kind === 'skill' && auto) { run.skills = run.skills || []; if (run.skills.length < EQUIP_SLOTS2 && !run.skills.includes(id)) run.skills.push(id); if (run.alloc && run.alloc.mode === 'mig') { const o = run.skillsOld; run.skills.sort((x, y) => (o.indexOf(x) < 0 ? 99 : o.indexOf(x)) - (o.indexOf(y) < 0 ? 99 : o.indexOf(y))); } } atSync(run); return null;
 }
-/* 한 칸 되돌리기: 배분 흐름(run.alloc)의 그 단계에서만. 남은 찍은 노드가 모두 시작 · 길 덤 · 큰 각인에 이어져 있어야 한다 */
+/* 한 칸 되돌리기: 배분 흐름(run.alloc)의 그 단계에서만. 남은 찍은 노드가 모두 시작 · 보너스 노드 · 큰 각인에 이어져 있어야 한다 */
 const allocStep = run => run && run.alloc ? run.alloc.step : null;
 function ptRefundWhy(run, id) {
   if (allocStep(run) !== 'p') return '캐릭터를 만들거나 포인트를 다시 나누는 화면의 패시브 단계에서만 되돌립니다';
@@ -117,7 +117,7 @@ function atRefund(run, id) { const why = atRefundWhy(run, id); if (why) return w
 function atDrop(run, id) { run.atree.own = run.atree.own.filter(x => x !== id); run.atree.pts += atBuild(run.build).nodes[id].cost; run.skills = (run.skills || []).filter(x => x !== id); }
 /* 끝 노드 하나 (가장 바깥 것부터, 같으면 id 순): 빼도 나머지가 이어져 있는 것 */
 function treeLeaf(T, own, roots) { const c = own.filter(id => { const rest = own.filter(x => x !== id); const R = treeReach(T, roots.concat(rest), roots); return rest.every(x => R.has(x)); }); return c.sort((a, b) => (T.nodes[b].pos.r - T.nodes[a].pos.r) || (T.nodes[b].ring - T.nodes[a].ring) || (a < b ? -1 : 1))[0] || null; }
-/* 상점 되돌리기 (1-4의 5): 포인트로 찍은 노드만 돌려받고, 큰 각인과 길 덤은 남는다. 값은 지금 모델 그대로 */
+/* 상점 되돌리기 (1-4의 5): 포인트로 찍은 노드만 돌려받고, 큰 각인과 보너스 노드은 남는다. 값은 지금 모델 그대로 */
 const ptResetCost = run => (run.lv || 1) * 10;
 const atResetCost = run => Math.round((run.atree ? run.atree.own.length : 0) * TREE_RESET.cell * Math.pow(1.5, (run.ch || 1) - 1));
 function ptReset(run) { const n = run.ptree.own.length; run.ptree.pts += ptSpent(run); run.ptree.own = []; run.ptree.log.push({ reset: n, lv: run.lv || 1, ch: run.ch || 1, t: Date.now() }); ptSync(run); return n; }
@@ -134,9 +134,9 @@ function ptFix(run) {
   while (a.pts < 0 && a.own.length) { const id = treeLeaf(A, a.own, ['S']) || a.own[a.own.length - 1]; atDrop(run, id); a.log.push({ id, refund: 'over', t: Date.now() }); }
   run.skills = (run.skills || []).filter(id => a.own.includes(id) && A.nodes[id] && A.nodes[id].kind === 'skill').slice(0, EQUIP_SLOTS2);
 }
-/* 능력치 = 시작 노드 + 찍은 노드 · 길 덤의 stat 합 (1-6). 큰 각인은 능력치를 주지 않는다 */
+/* 능력치 = 시작 노드 + 찍은 노드 · 보너스 노드의 stat 합 (1-6). 큰 각인은 능력치를 주지 않는다 */
 function ptStats(run) { const T = ptBuild(run.build), o = { str: 0, dex: 0, int: 0, con: 0, wil: 0 }; for (const id of ['S'].concat(run.ptree.own, run.ptree.free)) { const n = T.nodes[id]; if (n && n.stat) for (const k in n.stat) o[k] = (o[k] || 0) + n.stat[k]; } return o; }
-/* 출처별 능력치 (화면): 시작 · 작은 노드 · 길 덤 */
+/* 출처별 능력치 (화면): 시작 · 작은 노드 · 보너스 노드 */
 function ptStatSrc(run) { const T = ptBuild(run.build), src = { start: {}, own: {}, free: {} }; const put = (w, n) => { if (n && n.stat) for (const k in n.stat) src[w][k] = (src[w][k] || 0) + n.stat[k]; }; put('start', T.nodes.S); for (const id of run.ptree.own) put('own', T.nodes[id]); for (const id of run.ptree.free) put('free', T.nodes[id]); return src; }
 function ptFxKeys(run) { const T = ptBuild(run.build); return ['S'].concat(run.ptree.own, run.ptree.free, run.ptree.ks).map(id => T.nodes[id]).filter(n => n && n.fx).map(n => n.fx); }
 function ptSmall(run) { const T = ptBuild(run.build), o = { brk: 0, st: 0 }; for (const id of run.ptree.own.concat(run.ptree.free)) { const n = T.nodes[id]; if (n && n.sm) o[n.sm]++; } return o; }

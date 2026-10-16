@@ -6,11 +6,11 @@ const treeCanEdit = () => !(G.b && !G.b.over) && !(G.run && !G.creating && runOv
 function treeHover() { } // 옛 트리 화면의 설명 미리보기 자리(부팅이 붙인다). 목록형 화면은 설명이 줄 안에 있다
 const PT_LANE_O = { LL: -1, L: 0, C: 1, R: 2, RR: 3 };
 const ptNodeSort = T => (a, b) => (T.nodes[a].ring - T.nodes[b].ring) || (T.nodes[a].pos.r - T.nodes[b].pos.r) || (PT_LANE_O[T.nodes[a].pos.lane] - PT_LANE_O[T.nodes[b].pos.lane]);
-const PT_STATE_N = { own: '찍음', free: '길 덤', ks: '얻은 큰 각인', can: '찍을 수 있음', lock: '잠김' };
+const PT_STATE_N = { own: '찍음', free: '보너스 노드', ks: '얻은 큰 각인', can: '찍을 수 있음', lock: '잠김' };
 function ptStateOf(run, id) { const t = run.ptree; return t.own.includes(id) ? 'own' : t.free.includes(id) ? 'free' : t.ks.includes(id) ? 'ks' : ptWhy(run, id) ? 'lock' : 'can'; }
 function vStatTotals(run) {
   const src = ptStatSrc(run), sm = ptSmall(run); const tot = ptStats(run);
-  const row = k => { const parts = [['시작', src.start[k]], ['노드', src.own[k]], ['길 덤', src.free[k]]].filter(x => x[1]).map(x => x[0] + ' ' + x[1]); return `<div><dt>${esc(STATN[k])}</dt><dd><b>${tot[k] || 0}</b>${parts.length ? ' <small class="mini">(' + parts.join(' + ') + ')</small>' : ''}</dd></div>`; };
+  const row = k => { const parts = [['시작', src.start[k]], ['노드', src.own[k]], ['보너스', src.free[k]]].filter(x => x[1]).map(x => x[0] + ' ' + x[1]); return `<div><dt>${esc(STATN[k])}</dt><dd><b>${tot[k] || 0}</b>${parts.length ? ' <small class="mini">(' + parts.join(' + ') + ')</small>' : ''}</dd></div>`; };
   return `<dl class="stat-read" aria-label="능력치 합계">${STAT_KEYS.map(row).join('')}</dl><p class="mini">작은 노드 효과: 주는 붕괴 +${Math.round((Math.pow(1 + PT.smallBrk, sm.brk) - 1) * 100)}% · 스태미나 +${sm.st * PT.smallSt}</p>`;
 }
 function vPTreeList(run) {
@@ -55,10 +55,10 @@ function vTreeView() {
   return h + (v === 'a' ? vATreeAny(run) : vPTreeAny(run));
 }
 function vTreePage() { return `<section class="card"><div class="phead">${backBtn()}<h3>트리</h3></div>${G.run && G.run.ptree ? vTreeView() : '<p class="mini">진행 중인 캐릭터가 없습니다.</p>'}</section>`; }
-/* 큰 각인 카드: 효과 · 대가 · 길 덤 칸 수와 덤으로 열리는 중간 노드 */
+/* 큰 각인 카드: 효과 · 대가 · 보너스 노드 칸 수와 함께 열리는 중간 노드 */
 function ksCard(run, id, btn) {
   const T = ptBuild(run.build), n = T.nodes[id], c = ksInfo(run, id) || { d: 0, path: [] }; const open = ptOpenIds(run); const fr = c.path.filter(x => !open.includes(x)); const nn = fr.filter(x => T.nodes[x].kind === 'notable').map(x => T.nodes[x].n);
-  return `<div class="awkc"><div class="awkh"><b>◆ ${esc(n.n)}</b><span class="chip">${esc(PT.dir[n.dir].n)} · ${n.ring}고리</span></div><p>${esc(n.d)}</p>${n.pay ? `<p class="no">대가: ${esc(n.pay)}</p>` : ''}<p class="mini">길 ${fr.length}칸 덤${nn.length ? ' · 덤으로 열리는 중간 노드: ' + nn.map(esc).join(', ') : ''} (찍은 곳에서 ${c.d}칸)</p>${btn || ''}</div>`;
+  return `<div class="awkc"><div class="awkh"><b>◆ ${esc(n.n)}</b><span class="chip">${esc(PT.dir[n.dir].n)} · ${n.ring}고리</span></div><p>${esc(n.d)}</p>${n.pay ? `<p class="no">대가: ${esc(n.pay)}</p>` : ''}<p class="mini">보너스 노드 ${fr.length}칸${nn.length ? ' · 함께 열리는 중간 노드: ' + nn.map(esc).join(', ') : ''} (찍은 곳에서 ${c.d}칸)</p>${btn || ''}</div>`;
 }
 function vKsPick(run) {
   const offer = ksEnsureOffer(run), list = trdListOn() || !offer.length; // 10월 17일 3단계: 후보 셋을 트리 그림 위에도 보인다(카드 · 그림 어느 쪽에서도 고른다)

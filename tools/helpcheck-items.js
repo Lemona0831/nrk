@@ -228,7 +228,7 @@ function __hcBlob(k) { return JSON.stringify(IFX[k], (kk, v) => typeof v === 'fu
   // ---------- 상점 · 가방 고정 문장
   const ui = [
     ['shop:sell', '살 때 값의 25%를 받습니다. 낀 장비는 먼저 빼야 팝니다.'],
-    ['shop:respec', '패시브 되돌리기: 포인트로 찍은 노드 N개를 모두 되돌려 다시 찍습니다. 큰 각인과 길 덤 노드는 남습니다. 값은 레벨 × 10골드입니다.'], // 10월 16일 0.8.0 2단계
+    ['shop:respec', '패시브 되돌리기: 포인트로 찍은 노드 N개를 모두 되돌려 다시 찍습니다. 큰 각인과 보너스 노드는 남습니다. 값은 레벨 × 10골드입니다.'], // 10월 16일 0.8.0 2단계
   ];
   api.source('items-ui', ui.map(([id, t]) => ({ id, text: t })));
   api.add('items-ui', '살 때 값의 25%', 'sellOf = floor(priceOf × 0.25), 전설은 LEG_SELL ' + E('LEG_SELL') + ' 고정', () => srcHas("Math.floor(priceOf(it.g, it.ch) * 0.25)"));

@@ -1,7 +1,7 @@
 'use strict';
 /* 0.8.0 2단계 트리 엔진 점검 (10월 16일). 실행: node tools/tree-check.js
    1 스키마(9직업 패시브 · 액티브: 양방향 연결, 시작에서 닿음, 고리 잠금 안에서 이어짐, 고아 없음, 비용, 효과 키) · 2 마검사 트리가 1단계 문서 7 · 8절과 같음 ·
-   3 찍기 규칙 · 4 능력치 · 5 큰 각인(거리 N, 동점 규칙, 길 덤, 때: 1 · 2챕터 정산, 3챕터 야영지) · 6 강화 금지선과 조건부 할인 · 7 상점 되돌리기 · 8 경험치 곡선 · 9 옛 세이브 옮기기(9-5 + 10-4 단계 잠금 · 확정 저장) */
+   3 찍기 규칙 · 4 능력치 · 5 큰 각인(거리 N, 동점 규칙, 보너스 노드, 때: 1 · 2챕터 정산, 3챕터 야영지) · 6 강화 금지선과 조건부 할인 · 7 상점 되돌리기 · 8 경험치 곡선 · 9 옛 세이브 옮기기(9-5 + 10-4 단계 잠금 · 확정 저장) */
 process.env.DGDIR = process.env.DGDIR || '.';
 const assert = require('assert/strict'), D = require('./dgqa.js'), E = D.G0, R_ = D.run_;
 let n = 0; const ok = (c, m) => { assert(c, m); n++; };
@@ -133,8 +133,8 @@ for (const c of CLS) {
 }
 // ===== 7) 상점 되돌리기 =====
 { const run = newRun('spellblade'); run.lv = 5; run.ch = 2; E.ptFix(run); run.clears = 1; for (const id of ['lg1C', 'lg2L', 'lg3L']) E.ptBuy(run, id); E.ksGrant(run, 'b1'); E.ksEnsureOffer(run); E.ksTake(run, 'lgK5'); const fr = run.ptree.free.slice();
-  ok(ptResetCost(run) === 50, '패시브 값 = 레벨 × 10'); E.ptReset(run); ok(run.ptree.own.length === 0 && run.ptree.pts === 14 && run.ptree.ks.includes('lgK5') && JSON.stringify(run.ptree.free) === JSON.stringify(fr), '되돌려도 큰 각인 · 길 덤은 남음');
-  ok(!ptWhy(run, 'lg5L') || !/이웃/.test(ptWhy(run, 'lg5L')), '남은 길 덤 옆을 찍을 수 있음(섬도 열린 노드)');
+  ok(ptResetCost(run) === 50, '패시브 값 = 레벨 × 10'); E.ptReset(run); ok(run.ptree.own.length === 0 && run.ptree.pts === 14 && run.ptree.ks.includes('lgK5') && JSON.stringify(run.ptree.free) === JSON.stringify(fr), '되돌려도 큰 각인 · 보너스 노드은 남음');
+  ok(!ptWhy(run, 'lg5L') || !/이웃/.test(ptWhy(run, 'lg5L')), '남은 보너스 노드 옆을 찍을 수 있음(섬도 열린 노드)');
   E.atBuy(run, 'sb_bleedcut'); E.atBuy(run, 'sb_boil'); ok(atResetCost(run) === Math.round(2 * TREE_RESET.cell * 1.5), '액티브 값 = 연 노드 × 25 × 1.5^(챕터−1)'); E.atReset(run); ok(run.atree.own.length === 0 && run.skills.length === 0 && run.atree.pts === 5, '액티브 되돌리기: 포인트 돌려받고 장착도 빠짐');
   E.atBuy(run, 'sb_ember'); E.atBuy(run, 'sb_kindle'); ok(E.atRefundLeaf(run) === 'sb_kindle' && run.atree.own.join() === 'sb_ember', '잊힌 스승의 묘비: 끝 노드 가운데 가장 바깥 것');
 }
@@ -181,7 +181,7 @@ ok(true, '9-5 4: 3챕터 13층 3번, 11층 2번, 12층 야영지 3번');
 // 큰 각인 단계 잠금 (옮기기: 패시브 → 큰 각인 → 액티브)
 { const run = newRun('spellblade'); Object.assign(run, { lv: 6, xp: 520, ch: 2, clears: 1, room: 2, phase: null, cur: null, doors: null }); delete run.tv; delete run.ptree; delete run.atree; delete run.ksGot; delete run.ksPending; run.tree = { pts: 0, open: [], spent: {} }; G.data.cur = JSON.parse(JSON.stringify(run)); G.run = null; G.sheet = null; E.resumeRun();
   D.click('allocgo'); for (const id of ['lg1C', 'lg2L', 'lg3L']) D.click('ptbuy', id); R_('ask = () => true'); D.click('allocnext'); ok(G.run.alloc.step === 'k' && G.run.ksOffer && G.run.ksOffer.length === 3, '옮기기: 큰 각인 단계에서 셋');
-  ok(/패시브 단계에서만/.test(E.ptRefund(G.run, 'lg3L')), '큰 각인 단계에서 패시브 되돌리기 없음'); D.click('kspick', G.run.ksOffer.includes('lgK5') ? 'lgK5' : G.run.ksOffer[0]); ok(G.run.alloc.step === 'a' && G.run.ptree.ks.length === 1, '고르면 액티브 단계'); ok(/패시브 단계에서만/.test(E.ptRefund(G.run, 'lg3L')), '길 덤을 받은 뒤 패시브 노드를 뺄 수 없음(10-4)'); D.click('allocok'); ok(G.data.cur.tv === 2 && G.data.cur.ptree.ks.length === 1, '확정 저장'); }
+  ok(/패시브 단계에서만/.test(E.ptRefund(G.run, 'lg3L')), '큰 각인 단계에서 패시브 되돌리기 없음'); D.click('kspick', G.run.ksOffer.includes('lgK5') ? 'lgK5' : G.run.ksOffer[0]); ok(G.run.alloc.step === 'a' && G.run.ptree.ks.length === 1, '고르면 액티브 단계'); ok(/패시브 단계에서만/.test(E.ptRefund(G.run, 'lg3L')), '보너스 노드을 받은 뒤 패시브 노드를 뺄 수 없음(10-4)'); D.click('allocok'); ok(G.data.cur.tv === 2 && G.data.cur.ptree.ks.length === 1, '확정 저장'); }
 // 캐릭터 만들기 흐름
 { G.data = E.blankData(); G.data.unlAll = 1; G.cre = { name: 'm' }; G.sheet = null; G.b = null; E.startRun('spellblade'); ok(G.sheet && G.sheet.kind === 'alloc' && G.run.alloc.step === 'p' && G.creating, '만들기: 패시브 단계부터');
   D.click('ptbuy', 'lg1C'); D.click('ptref', 'lg1C'); ok(G.run.ptree.pts === 6, '만드는 동안 한 칸 되돌리기'); D.click('ptbuy', 'lg1C'); R_('ask = () => true'); D.click('allocnext'); D.click('atbuy', 'sb_ember'); D.click('allocok');

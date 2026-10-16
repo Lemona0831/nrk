@@ -61,7 +61,7 @@ function trdStP(run, id, T) {
   const w = ptWhy(run, id); return !w ? (treeCanEdit() ? 'can' : 'near') : w === '포인트가 없습니다' ? 'near' : 'lock';
 }
 function trdStA(run, id) { if (id === 'S') return 'open'; if (run.atree.own.includes(id)) return 'own'; const w = atWhy(run, id); return !w ? (treeCanEdit() ? 'can' : 'near') : w === '포인트가 없습니다' ? 'near' : 'lock'; }
-const TRD_STN = { open: '열림', own: '찍음', free: '길 덤으로 열림', ks: '얻은 큰 각인', can: '찍을 수 있음', near: '이웃이 열림 · 포인트가 없음', view: '찍을 수 있음 · 이 창에서는 큰 각인만 고릅니다', lock: '잠김' };
+const TRD_STN = { open: '열림', own: '찍음', free: '보너스로 열림', ks: '얻은 큰 각인', can: '찍을 수 있음', near: '이웃이 열림 · 포인트가 없음', view: '찍을 수 있음 · 이 창에서는 큰 각인만 고릅니다', lock: '잠김' };
 const TRD_STA = { open: '시작 스킬', own: '열림', can: '열 수 있음', near: '이웃이 열림 · 포인트가 없음', lock: '잠김' };
 const trdRingShort = r => r === 2 ? '2챕터부터' : r === 3 ? '3챕터부터' : '';
 /* ---- 보기 상태 ---- */
@@ -211,12 +211,12 @@ function trdInfoP(run, id, mode, opt) {
   else h += `<p>${esc(n.d || n.n)}</p>`;
   if (cand) {
     const c = ksInfo(run, id) || { d: 0, path: [] }, open = ptOpenIds(run), fr = c.path.filter(x => !open.includes(x)), nn = fr.filter(x => T.nodes[x].kind === 'notable').map(x => T.nodes[x].n);
-    h += `<p class="trd-st st-cand">고를 수 있는 큰 각인 후보</p><p class="mini">길 ${fr.length}칸 덤${nn.length ? ' · 덤으로 열리는 중간 노드: ' + nn.map(esc).join(', ') : ''} (찍은 곳에서 ${c.d}칸)</p>` + trdBtnRow(`<button class="gold" data-a="kspick" data-k="${id}">이것을 고른다</button>`);
+    h += `<p class="trd-st st-cand">고를 수 있는 큰 각인 후보</p><p class="mini">보너스 노드 ${fr.length}칸${nn.length ? ' · 함께 열리는 중간 노드: ' + nn.map(esc).join(', ') : ''} (찍은 곳에서 ${c.d}칸)</p>` + trdBtnRow(`<button class="gold" data-a="kspick" data-k="${id}">이것을 고른다</button>`);
     return h;
   }
   h += `<p class="trd-st st-${st}">${TRD_STN[st]}${!ringOpen(run, n.ring) ? ' · ' + trdRingShort(n.ring) : ''}</p>`;
   if (why && !(st === 'near' && !edit)) h += `<p class="mini">${esc(why)}</p>`;
-  if (st === 'free') h += '<p class="mini">큰 각인을 고를 때 길 덤으로 열렸습니다. 포인트를 쓰지 않았고, 상점 되돌리기에도 남습니다.</p>';
+  if (st === 'free') h += '<p class="mini">큰 각인을 고를 때 보너스 노드로 열렸습니다. 포인트를 쓰지 않았고, 상점 되돌리기에도 남습니다.</p>';
   if (st === 'ks') h += '<p class="mini">챕터 보상으로 얻었습니다. 상점 되돌리기에도 남습니다.</p>';
   if (!edit && n.kind !== 'start' && st !== 'own' && st !== 'free' && st !== 'ks') h += `<p class="mini">${G.run && !G.creating && runOver(G.run) ? '끝난 캐릭터의 트리는 볼 수만 있습니다.' : '전투 중에는 볼 수만 있습니다.'}</p>`;
   let b = '';
@@ -253,7 +253,7 @@ function trdInfoA(run, id) {
 /* 능력치 합계 (패시브, 옆 칸 또는 아래 접는 칸) */
 function vStatTable(run) {
   const src = ptStatSrc(run), sm = ptSmall(run), tot = ptStats(run);
-  const rows = STAT_KEYS.map(k => { const parts = [['시작', src.start[k]], ['노드', src.own[k]], ['길 덤', src.free[k]]].filter(x => x[1]).map(x => x[0] + ' ' + x[1]); return `<tr><th scope="row">${esc(STATN[k])}</th><td><b>${tot[k] || 0}</b></td><td class="mini">${parts.join(' + ') || '없음'}</td></tr>`; }).join('');
+  const rows = STAT_KEYS.map(k => { const parts = [['시작', src.start[k]], ['노드', src.own[k]], ['보너스', src.free[k]]].filter(x => x[1]).map(x => x[0] + ' ' + x[1]); return `<tr><th scope="row">${esc(STATN[k])}</th><td><b>${tot[k] || 0}</b></td><td class="mini">${parts.join(' + ') || '없음'}</td></tr>`; }).join('');
   return `<table class="trd-tbl"><caption class="sr">능력치 합계</caption><tbody>${rows}</tbody></table><p class="mini">작은 노드 효과: 주는 붕괴 +${Math.round((Math.pow(1 + PT.smallBrk, sm.brk) - 1) * 100)}% (제어 ${sm.brk}칸) · 스태미나 +${sm.st * PT.smallSt} (계승 ${sm.st}칸)</p>`;
 }
 const trdWide = () => typeof matchMedia !== 'undefined' && matchMedia('(min-width: 900px)').matches;
@@ -268,8 +268,8 @@ function trdLegend(mode) {
     state = [it(ic('tn-skill st-own eq', `<circle class="eqr" r="11.5"/>${c(9)}`), '장착함', '굵은 테'), it(ic('tn-skill st-own', c(9)), '열림', '밝은 금색'), it(ic('tn-skill st-can', c(9)), '열 수 있음', '테가 빛남'), it(ic('tn-upgrade st-own idle', c(5.5)), '쉬는 강화', '그 스킬을 끼우면 일함'), it(ic('tn-skill st-lock', c(9)), '잠김', '앞 노드를 먼저'), it(ic('tn-skill st-lock rlk', c(9)), '고리 잠김', '챕터를 넘기면 열림')];
   } else {
     shape = [it(ic('tn-small st-own', c(5.5)), '작은 노드', '능력치 +2 같은 작은 몫'), it(ic('tn-notable st-own', c(9)), '중간 노드', '효과가 붙은 노드'), it(ic('tn-keystone st-own', dm(10)), '큰 각인', '챕터를 깨면 셋 중 하나를 고름')];
-    state = [it(ic('tn-notable st-own', c(9)), '찍음', '밝은 금색 · 금빛 선'), it(ic('tn-notable st-can', c(9)), '찍을 수 있음', '테가 빛남'), it(ic('tn-notable st-free', c(9) + '<circle class="fm" cx="6" cy="-6" r="3"/>'), '길 덤', '큰 각인을 고를 때 무료로 열림. 되돌려도 남음'), it(ic('tn-notable st-near', c(9)), '포인트 부족', '이웃이지만 포인트가 없음'), it(ic('tn-notable st-lock', c(9)), '잠김', '찍은 노드와 이어지지 않음'), it(ic('tn-notable st-lock rlk', c(9)), '고리 잠김', '챕터를 넘기면 열림')];
-    if (mode === 'k') extra = [grp('큰 각인 고르기', [it(ic('tn-keystone cand', dm(10)), '후보', '빛나는 ◆ 셋'), it('<svg class="trd-li" viewBox="-13 -13 26 26" aria-hidden="true"><path class="kp on" d="M-11 6L0 -3L11 6"/></svg>', '덤으로 열릴 길', '고르면 포인트 없이 열림')])];
+    state = [it(ic('tn-notable st-own', c(9)), '찍음', '밝은 금색 · 금빛 선'), it(ic('tn-notable st-can', c(9)), '찍을 수 있음', '테가 빛남'), it(ic('tn-notable st-free', c(9) + '<circle class="fm" cx="6" cy="-6" r="3"/>'), '보너스 노드', '큰 각인을 고르면 거기까지 이어지는 노드가 공짜로 열림. 되돌려도 남음'), it(ic('tn-notable st-near', c(9)), '포인트 부족', '이웃이지만 포인트가 없음'), it(ic('tn-notable st-lock', c(9)), '잠김', '찍은 노드와 이어지지 않음'), it(ic('tn-notable st-lock rlk', c(9)), '고리 잠김', '챕터를 넘기면 열림')];
+    if (mode === 'k') extra = [grp('큰 각인 고르기', [it(ic('tn-keystone cand', dm(10)), '후보', '빛나는 ◆ 셋'), it('<svg class="trd-li" viewBox="-13 -13 26 26" aria-hidden="true"><path class="kp on" d="M-11 6L0 -3L11 6"/></svg>', '보너스로 열릴 노드', '고르면 포인트 없이 열림')])];
   }
   return `<details class="trd-leg"${trdWide() ? ' open' : ''}><summary>그림 읽는 법 · 모양과 상태</summary><div class="trd-lg">${grp('모양', shape)}${grp('상태', state)}${extra.join('')}</div><p class="trd-lgk"><b>조작</b> 끌어서 옮기기 · 확대는 Ctrl(⌘) + 휠, 터치패드 오므리기, 두 손가락, ＋ － 단추 · 노드를 누르면 설명 · 키보드: 화살표로 옮기고 Enter로 고르기와 찍기, Esc로 닫기</p></details>`;
 }
@@ -277,7 +277,7 @@ function trdLegend(mode) {
 function trdView(run, mode, opt) {
   const kind = mode === 'a' ? 'a' : 'p', L = kind === 'p' ? trdLayP(run.build) : trdLayA(run.build), v = trdVw(run, mode, L, opt), sel = trdSelOf(run, mode, L, opt);
   const info = sel ? (kind === 'p' ? trdInfoP(run, sel, mode, opt) : trdInfoA(run, sel)) : '';
-  const empty = `<p class="mini">${mode === 'k' ? '빛나는 ◆ 셋이 후보입니다. 하나를 누르면 덤으로 열릴 길이 보입니다.' : '노드를 누르면 이름 · 효과 · 상태가 여기에 보입니다.'}</p>`;
+  const empty = `<p class="mini">${mode === 'k' ? '빛나는 ◆ 셋이 후보입니다. 하나를 누르면 보너스로 열릴 노드가 보입니다.' : '노드를 누르면 이름 · 효과 · 상태가 여기에 보입니다.'}</p>`;
   const stats = kind === 'p' && mode !== 'k' ? `<details class="trd-stats"${trdWide() || G.tstatOpen ? ' open' : ''}><summary>능력치 합계</summary>${vStatTable(run)}</details>` : '';
   const ctl = `<div class="trd-ctl" role="group" aria-label="확대와 이동"><button class="sm" data-a="tzoom" data-k="in" data-e="${mode}" aria-label="확대">＋</button><button class="sm" data-a="tzoom" data-k="out" data-e="${mode}" aria-label="축소">－</button><button class="sm" data-a="tzoom" data-k="fit" data-e="${mode}" aria-label="전체 보기">전체</button></div>`;
   const nt = G.tnote && Date.now() - G.tnote.t < 4000 ? `<div class="trd-note" aria-hidden="true" style="animation-delay:-${Date.now() - G.tnote.t}ms">${esc(G.tnote.m)}</div>` : '';
