@@ -44,7 +44,7 @@ const left = [];
 for (const f of textFiles) { const t = fs.readFileSync(f, 'utf8'); for (const [a] of RENAME) if (t.includes(a)) left.push(path.relative(OUT, f) + ': ' + a); }
 if (left.length) { console.error('원래 저장소 이름이 남았습니다:\n' + left.join('\n')); process.exit(1); }
 // 4. 클라우드 끄기
-fs.writeFileSync(path.join(OUT, 'config.js'), '/* 테스트 사이트: 클라우드(계정·랭킹·클라우드 저장·관리자 기록)를 쓰지 않는다 */\nwindow.NRK_CONFIG = {};\n');
+fs.writeFileSync(path.join(OUT, 'config.js'), '/* 테스트 사이트: 클라우드(계정·랭킹·클라우드 저장·관리자 기록)를 쓰지 않는다 */\nwindow.NRK_CONFIG = {};\n' + (SITE ? '/* 시제품 사이트(10월 16일): 가혹을 처음부터 연다 */\nwindow.NRK_SITE = { proto: 1, hardOpen: 1 };\n' : ''));
 // 5. 검색 차단과 테스트 표시
 const BANNER = '<div id="test-banner" title="테스트 서버: 실제 게임과 기록이 분리됩니다. 계정·랭킹 꺼짐" style="position:fixed;left:0;top:0;z-index:99999;padding:1px 6px;font:bold 10px/1.4 sans-serif;color:#111;background:#f5c542;border-radius:0 0 6px 0;pointer-events:none;opacity:.9">TEST</div>'; // 아래쪽 행동 버튼을 가리지 않게 왼쪽 위 작은 표시로
 for (const page of ['index.html', 'remote.html', 'privacy.html']) {

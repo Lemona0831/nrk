@@ -1,6 +1,6 @@
 'use strict';
 if (typeof document !== 'undefined') {
-  G.data = loadLocal(); curSweep(); reviveLocal();
+  G.data = loadLocal(); if ((window.NRK_SITE || {}).hardOpen) G.data.hardOpen = 1; curSweep(); reviveLocal(); // 시제품 사이트(10월 16일): 빌드가 정한 사이트 설정으로 가혹을 처음부터 연다
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   if (location.hash === '#admin') { G.adminLink = true; G.scr = 'admin'; G.back = 'title'; } // 관리자 페이지 바로 열기: 주소 끝에 #admin
   document.addEventListener('pointerdown', sndUnlock, { once: false });
