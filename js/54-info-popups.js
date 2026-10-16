@@ -55,7 +55,7 @@ function infoHtml(key) {
   const b = G.b; const parts = key.split(':');
   const H = (t, body) => `<b class="pt">${esc(t)}</b>${body}`;
   const P = s => `<p>${esc(s)}</p>`;
-  if (key === 'bar:ys' && b) { const p = b.p; return H('유산 ' + ysNow(p) + '/' + YUSAN.cap, P('스킬은 유산을 씁니다(비용 2 · 3 · 4). 전투를 가득 찬 채 시작하고, 내 차례가 끝날 때 +1 찹니다' + (YUSAN.longFrom ? '(그 전투의 ' + YUSAN.longFrom + '번째 내 차례부터는 +2)' : '') + '.') + P('대응에 성공하면 +1, 라운드에 한 번: 방어로 받아 내기 · 흘리기 성공 · 적을 무너뜨리기 · 모으기와 영창 끊기 · 큰 공격을 모으는 적을 움직이기 전에 쓰러뜨리기.') + P('스태미나 플라스크는 전투에 한 번 유산 +1을 더 줍니다.')); } // 10월 15일 유산 1차 시제품
+  if (key === 'bar:ys' && b) { const p = b.p; return H('유산 ' + ysNow(p) + '/' + YUSAN.cap, P('스킬은 유산을 씁니다(비용 2 · 3 · 4). 전투를 가득 찬 채 시작하고, 둘째 차례부터 내 차례가 시작될 때 +1 찹니다' + (YUSAN.longFrom ? '(' + (YUSAN.longFrom + 1) + '번째 차례부터는 +2)' : '') + '. 유산은 내 차례에만 씁니다.') + P('대응에 성공하면 +1, 라운드에 한 번: 방어로 받아 내기 · 흘리기 성공 · 적을 무너뜨리기 · 모으기와 영창 끊기 · 큰 공격을 모으는 적을 움직이기 전에 쓰러뜨리기.') + P('스태미나 플라스크는 전투에 한 번 유산 +1을 더 줍니다.')); } // 10월 15일 유산 1차 시제품
   if (key === 'bar:st' && b) { const p = b.p; return H('스태미나', P('지금 강공격 ' + heavyCost(p) + ', 방어 ' + guardCost(p) + ', 흘리기 ' + dodgeCost(p) + '이 듭니다. 라운드가 끝날 때마다 10씩 차고, 스태미나 플라스크로 60을 채웁니다. 기본 공격은 스태미나를 채우지 않습니다. 0이 되면 탈진합니다.')); } /* 10월 7일: 직업마다 다른 흘리기 비용을 그대로 */
   if (parts[0] === 'tn' && G.run && G.run.tree) {
     const s = SK2[parts[1]]; if (!s) return ''; const vis = treeVis(G.run, s.id);
@@ -67,7 +67,7 @@ function infoHtml(key) {
   if (parts[0] === 'act' && b) {
     const a = actionList(b).find(x => x.id === parts[1]); if (!a) return '';
     const s = skillMap(b.p.build)[a.id];
-    let body = (a.v2 ? P(skHead(a.s)) + P(skBody(a.s)) + (skillDamageHint(b.p,a.s) ? P(skillDamageHint(b.p,a.s)) : '') + cfKwHtml(a.s) + (a.wait > 0 && a.wait < CD_USED ? P('유산 ' + a.yc + ' 필요, 지금 ' + ysNow(b.p) + '. 차례가 끝날 때 +1, 대응에 성공하면 +1' + (a.ok && a.pull ? '. 지금 누르면 모자란 ' + a.wait + '을(를) 피로 당겨 바로 씁니다. 내는 생명력 ' + a.blood : '')) : a.wait >= CD_USED ? P('이번 전투에 이미 썼습니다') : P('사용 가능. 유산 ' + a.yc + '을(를) 씁니다(지금 ' + ysNow(b.p) + ')')) : P(a.id === 'sig' ? '직업 기술. ' + (SIG[b.p.build].cd ? SIG[b.p.build].cd + '차례에 한 번. ' : '') + SIG[b.p.build].d : (s ? resLabel(s, a.mana) + '. ' + s.d : actInfo(b.p, a.id)))) + (a.v2 ? '' : P('빠르기: ' + speedWord(a.time)));
+    let body = (a.v2 ? P(skHead(a.s)) + P(skBody(a.s)) + (skillDamageHint(b.p,a.s) ? P(skillDamageHint(b.p,a.s)) : '') + cfKwHtml(a.s) + (a.wait > 0 && a.wait < CD_USED ? P('유산 ' + a.yc + ' 필요, 지금 ' + ysNow(b.p) + '. 내 차례가 시작될 때 +1, 대응에 성공하면 +1' + (a.ok && a.pull ? '. 지금 누르면 모자란 ' + a.wait + '을(를) 피로 당겨 바로 씁니다. 내는 생명력 ' + a.blood : '')) : a.wait >= CD_USED ? P('이번 전투에 이미 썼습니다') : P('사용 가능. 유산 ' + a.yc + '을(를) 씁니다(지금 ' + ysNow(b.p) + ')')) : P(a.id === 'sig' ? '직업 기술. ' + (SIG[b.p.build].cd ? SIG[b.p.build].cd + '차례에 한 번. ' : '') + SIG[b.p.build].d : (s ? resLabel(s, a.mana) + '. ' + s.d : actInfo(b.p, a.id)))) + (a.v2 ? '' : P('빠르기: ' + speedWord(a.time)));
     if (a.v2 && b.p.build === 'monk') { const now = skillHint0(b,a); if (now) body += P('지금: ' + now); }
     if (a.id !== 'flee') body += `<p class="pv">${esc(previewText(b, a.time))}</p>` + P('예상 수치' + '는 내 행동의 즉시 결과입니다. 이후 적 차례와 라운드 끝 피해는 포함하지 않습니다.');
     if (a.id === 'dodge') {
@@ -206,7 +206,7 @@ function pvOwn(sel, now, delta, max) {
   const sp = bar.querySelector('span'); if (sp && !sp.dataset.o) { sp.dataset.o = sp.innerHTML; sp.innerHTML = `<b class="pvx ${delta < 0 ? 'neg' : 'pos'}">${delta < 0 ? '−' : '+'}${r1(w)}</b> ${shownHp(now)} → ${shownHp(after)}`; }
 }
 function pvShow(btn) {
-  pvHide(); if (HUDNOW && !HUDNOW.prev) return; const b = G.b; if (!b || !btn || !btn.isConnected || btn.getAttribute('aria-disabled') === 'true') return;
+  pvHide(); ysPv(btn); if (HUDNOW && !HUDNOW.prev) return; // 유산 칸 미리 보기는 비활성 버튼(모자람)에도 보인다 const b = G.b; if (!b || !btn || !btn.isConnected || btn.getAttribute('aria-disabled') === 'true') return;
   const sim = actSim(b, btn.dataset.id); if (!sim) return;
   const say = [];
   for (const id in sim.en) {
@@ -229,7 +229,7 @@ function pvShow(btn) {
   const d = document.getElementById('pvdesc'); if (d) d.textContent = say.length ? '이 행동의 예상: ' + say.join('. ') + '. 내 행동의 즉시 결과이며, 이후 적 차례와 라운드 끝 피해는 포함하지 않습니다.' : '';
   if (say.length) descAdd(btn, 'pvdesc'); PV.btn = btn;
 }
-function pvHide() { if (typeof document === 'undefined') return; document.querySelectorAll('.pvg:not(.pvi),.pvk,.pvh,.pvc,.pvx,.en .pvt').forEach(x => x.remove()); document.querySelectorAll('.bar span[data-o]').forEach(sp => { sp.innerHTML = sp.dataset.o; delete sp.dataset.o; }); if (PV.btn) descDel(PV.btn, 'pvdesc'); PV.btn = null; }
+function pvHide() { if (typeof document === 'undefined') return; ysPvOff(); document.querySelectorAll('.pvg:not(.pvi),.pvk,.pvh,.pvc,.pvx,.en .pvt').forEach(x => x.remove()); document.querySelectorAll('.bar span[data-o]').forEach(sp => { sp.innerHTML = sp.dataset.o; delete sp.dataset.o; }); if (PV.btn) descDel(PV.btn, 'pvdesc'); PV.btn = null; }
 function initPv() {
   const ab = t => t && t.closest ? t.closest('.ab[data-a=act]') : null;
   document.addEventListener('focusin', ev => { const t = ab(ev.target); if (t) pvShow(t); else if (PV.btn && !PV.hover) pvHide(); });

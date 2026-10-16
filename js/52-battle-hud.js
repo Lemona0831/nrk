@@ -129,7 +129,31 @@ function consUsefulN(b) {
   return Math.min(n, 3);
 }
 /* 10월 15일 유산 1차 시제품: 유산 칸(◆ 찬 칸, ◇ 빈 칸). 생명력 · 스태미나 막대 옆 세 번째 칸 */
-function ysPips(p) { const n = ysNow(p), c = YUSAN.cap; const t = '◆'.repeat(Math.max(0, Math.min(c, n))) + '◇'.repeat(Math.max(0, c - n)); return `<div class="mb" data-info="bar:ys" tabindex="0"><span class="ml">유산</span><div class="bar ys" role="meter" aria-label="유산" aria-valuemin="0" aria-valuemax="${c}" aria-valuenow="${n}" aria-valuetext="유산 ${n}/${c}"><span><b class="ysl">유산</b> <b class="ysp" aria-hidden="true">${t}</b></span></div></div>`; }
+/* 유산 줄 (10월 16일 화면 정리): 생명력 · 스태미나 막대 아래 큰 ◆ 다섯 칸 + "2/5". 바뀌면 칸 위에 짧게 −3 · +1 차례 · +1 막기가 떠오른다(기록 b.rec의 ys · yspend를 읽는다, 1.6초).
+   스킬 버튼에 올리거나(PC) 길게 누르면(휴대폰) 쓸 칸이 깜빡이고 "5 → 2"를 보인다(ysPv). 모자라면 모자란 칸과 "1 모자람" */
+const YS_LAB = x => x.src === 'turn' ? '차례' : x.src === 'resp' ? x.why : x.src === 'refund' ? '🔄' : x.src === 'item' ? '장비' : x.src === 'flask' ? '플라스크' : (x.why || '');
+function ysRow(b) {
+  const p = b.p, n = ysNow(p), c = YUSAN.cap, now = Date.now();
+  if (!b.ysUi) b.ysUi = { seen: b.rec.length, fl: [] }; const U = b.ysUi;
+  for (; U.seen < b.rec.length; U.seen++) { const x = b.rec[U.seen]; let t = null, cl = 'pos';
+    if (x.k === 'yspend') { t = '−' + x.cost; cl = 'neg'; } else if (x.k === 'ys' && x.g) { t = (x.g > 0 ? '+' + x.g : '−' + (-x.g)) + ' ' + YS_LAB(x); cl = x.g > 0 ? 'pos' : 'neg'; }
+    if (t) U.fl.push({ t, cl, at: now }); }
+  U.fl = U.fl.filter(f => now - f.at < 1600).slice(-3);
+  const pips = Array.from({ length: c }, (_, i) => `<i class="yp${i < n ? ' on' : ''}"></i>`).join('');
+  const fl = U.fl.map(f => `<span class="ysd ${f.cl}" style="animation-delay:-${now - f.at}ms">${esc(f.t)}</span>`).join('');
+  return `<div class="ysrow${typeof vfxRm === 'function' && vfxRm() ? ' rm' : ''}" data-info="bar:ys" tabindex="0" role="meter" aria-label="유산" aria-valuemin="0" aria-valuemax="${c}" aria-valuenow="${n}" aria-valuetext="유산 ${n}/${c}"><b class="ysl">유산</b><span class="ysp" aria-hidden="true">${pips}</span><b class="ysn" aria-hidden="true">${n}/${c}</b><span class="yspv" aria-hidden="true"></span><span class="ysds" aria-hidden="true">${fl}</span></div>`;
+}
+function ysPvOff() { if (typeof document === 'undefined') return; document.querySelectorAll('.ysrow.pv').forEach(r => { r.classList.remove('pv', 'short'); r.querySelectorAll('.yp').forEach(x => x.classList.remove('spend', 'lack', 'blood')); const t = r.querySelector('.yspv'); if (t) t.textContent = ''; }); }
+function ysPv(btn) {
+  ysPvOff(); const b = G.b; if (!b || b.over || !isV2(b.p) || !btn || !btn.dataset) return; const a = actionList(b).find(x => x.id === btn.dataset.id); if (!a || !a.v2 || !a.yc) return;
+  const row = document.querySelector('.ysrow'); if (!row) return; const P = row.querySelectorAll('.yp'); const n = ysNow(b.p), c = a.yc, lack = Math.max(0, c - n); let t;
+  const mark = (from, to, k) => { for (let i = Math.max(0, from); i < Math.min(P.length, to); i++) P[i].classList.add(k); };
+  if (a.wait >= CD_USED) t = '이번 전투에 이미 씀';
+  else if (lack && a.pull && a.ok) { mark(0, n, 'spend'); mark(n, c, 'blood'); t = n + ' → 0 · 모자란 ' + lack + '은(는) 🩸 ' + a.blood; }
+  else if (lack) { mark(n, c, 'lack'); row.classList.add('short'); t = '유산 ' + c + ' 필요 · ' + lack + ' 모자람'; }
+  else { mark(n - c, n, 'spend'); t = n + ' → ' + (n - c); }
+  row.classList.add('pv'); const tx = row.querySelector('.yspv'); if (tx) tx.textContent = fixJosa(t);
+}
 function vHudPlayer(b, hud, pops, fdo) {
   const p = b.p; const B = BUILDS[p.build];
   const extra = [];
@@ -138,7 +162,7 @@ function vHudPlayer(b, hud, pops, fdo) {
   const eq = Object.values(p.eq).filter(Boolean); if (eq.length) extra.push(eq.map(k => `<span class="gr-${ITEMS[k].g || 'n'}">${inm(k, ITEMS[k].g || 'n')}</span>`).join(', '));
   const scen = G.scr === 'scen' ? `<div class="scenline"><b>${SCEN[G.scen.i].id}. ${esc(SCEN[G.scen.i].n)}</b> ${esc(SCEN[G.scen.i].d)} 최대 10행동 중 ${b.pActs || 0}행동.</div>` : '';
   const status = `<section class="fstat" data-hud="hud-player" aria-label="내 상태">${scen}${hud.flk ? '' : `<span class="sr">플라스크 생명력 ${p.flask.life}, ${isV2(p) ? '정화' : '마나'} ${p.flask.mana}, 스태미나 ${p.flask.stam || 0}, 최대 ${p.flaskMax}</span>`}<div class="mehead"><b data-info="buildrule" tabindex="0">${B.ico} ${esc(B.n)}</b><span class="flk" data-info="flask" tabindex="0">플라스크 <span aria-hidden="true">❤️</span><span class="sr">생명력 </span>${p.flask.life} ${isV2(p) ? '<span aria-hidden="true">🧪</span><span class="sr">정화 </span>' : '<span aria-hidden="true">💧</span><span class="sr">마나 </span>'}${p.flask.mana} <span aria-hidden="true">⚡</span><span class="sr">스태미나 </span>${p.flask.stam || 0} <small><span class="sr">, 최대 </span>/${p.flaskMax}</small></span><button class="sm fdtog" data-a="fdet" aria-expanded="${fdo}" aria-controls="fdet"><span aria-hidden="true">${fdo ? '▴' : '▾'}</span> 자세히</button></div>
-    <div class="mbars">${pops.p ? popHtml(pops.p) : ''}${mbar('hp', p.hp, p.hpMax, '생명력', b.over || !hud.prev ? 0 : incomingEst(b).sum)}${p.mpMax > 0 ? mbar('mp', p.mp, p.mpMax, '마나') : ''}${mbar('st', p.st, p.stMax, '스태미나')}${isV2(p) ? ysPips(p) : ''}</div><div class="fdet" id="fdet"${fdo ? '' : ' hidden'}><div class="mini">${extra.join(' · ')}</div><div><button class="sm rulebtn" data-a="help" data-k="row">전투 규칙 보기</button></div><div class="rule" data-info="buildrule" tabindex="0">${classRuleHtml(p.build)}</div>${incWhy(b)}</div></section>`;
+    <div class="mbars">${pops.p ? popHtml(pops.p) : ''}${mbar('hp', p.hp, p.hpMax, '생명력', b.over || !hud.prev ? 0 : incomingEst(b).sum)}${p.mpMax > 0 ? mbar('mp', p.mp, p.mpMax, '마나') : ''}${mbar('st', p.st, p.stMax, '스태미나')}</div>${isV2(p) ? ysRow(b) : ''}<div class="fdet" id="fdet"${fdo ? '' : ' hidden'}><div class="mini">${extra.join(' · ')}</div><div><button class="sm rulebtn" data-a="help" data-k="row">전투 규칙 보기</button></div><div class="rule" data-info="buildrule" tabindex="0">${classRuleHtml(p.build)}</div>${incWhy(b)}</div></section>`;
   return status;
 }
 /* 예상 피해 모듈: 끄면 읽는 글만 남긴다 */

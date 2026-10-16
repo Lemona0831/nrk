@@ -31,7 +31,7 @@ module.exports = function (api) {
   /* ===== 쿨타임 · 스태미나 · 플라스크 · 행동 ===== */
   add('help', '한 번에 20판씩 보입니다', '상수: RC_PAGE=' + E('RC_PAGE') + '(기록 목록이 한 번에 보이는 판 수)', E => E('RC_PAGE') === 20);
   add('help', '표는 위에서 50개까지 보입니다', '소스: 랭킹 표 all.slice(0, 50)', E => has('rows = all.slice(0, 50)'));
-  add('help', '내 차례가 끝날 때마다 1 찹니다', '소스: chargeEv(turn)이 유산 +1 (10월 15일 유산 1차 시제품)', E => has("ysAdd(b, YUSAN.turn + (long ? 1 : 0), 'turn'"));
+  add('help', '둘째 차례부터 내 차례가 시작될 때마다 1 찹니다', '소스: chargeEv(turn)이 b.ysPend에 두고 ysTurnStart가 내 차례에 준다 (10월 16일)', E => has('function ysTurnStart(b)') && E('YUSAN.turnAtStart') === 1);
   add('help', '🔄 스킬은 조건을 이루면 유산 +1을 돌려줍니다(차례마다 한 번)', '10월 15일 유산 1차 시제품: hastenBranch → ysRefund(라운드에 한 번, YUSAN.refund=' + E('YUSAN.refund') + ')', E => E('hastenBranch.toString()').includes('ysRefund') && E('YUSAN.refund') === 1);
   add('help', '30까지 차거나', '소스: p.exhaust && p.st >= 30이면 풀림, 스태미나 플라스크는 exhaust = 0', E => has('if (p.exhaust && p.st >= 30) p.exhaust = 0;') && has('p.st += add; p.exhaust = 0;'));
   add('help', '전투가 끝나면 최소 50까지', '소스: endBattleCarry p.st = max(p.st, 50)', E => has('p.st = Math.max(p.st, 50); p.exhaust = 0;'));
