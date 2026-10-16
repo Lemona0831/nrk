@@ -112,7 +112,7 @@ for (const c of CLS) {
 { const run = newRun('warden'); R_('ask = () => true');
   run.phase = 'settle'; run.ch = 1; run.clears = 1; E.startSettle(run); G.scr = 'settle'; D.click('settleok'); ok(run.ksGot.b1 && run.ksPending === 1 && G.sheet && G.sheet.kind === 'ks', '1챕터 정산을 확정하면 큰 각인 창');
   D.click('kspick', run.ksOffer[0]); ok(run.ptree.ks.length === 1 && !G.sheet, '고르면 창이 닫힘');
-  run.ch = 3; run.room = FLOOR_CAMP - 1; run.cur = null; E.advanceFloor(); ok(run.ksGot.c3 && run.ksPending === 1, '3챕터 야영지에 들어서면 하나 더');
+  run.ch = 3; run.room = FLOOR_CAMP - 1; run.cur = null; E.advanceFloor(); ok(run.ksGot.c3 && run.ksPending === 1, '3챕터 야영지에 들어서면 하나 더'); G.sheet = null; G.b = null; G.dropQ = []; E.nextDrop(); ok(G.sheet && G.sheet.kind === 'ks', '전리품을 다 받으면 큰 각인 창이 뜸'); G.sheet = null;
   const r3 = newRun('warden'); r3.ch = 2; r3.room = FLOOR_CAMP - 1; E.advanceFloor(); ok(!r3.ksGot.c3 && !r3.ksPending, '2챕터 야영지는 주지 않음');
   const r4 = newRun('warden'); r4.phase = 'settle'; r4.ch = 3; r4.clears = 3; E.startSettle(r4); G.scr = 'settle'; D.click('settleok'); ok(!r4.ksPending, '3챕터 정산은 주지 않음(야영지에서 받음)');
   const r5 = newRun('warden', { mark: { ch: 3, ids: [], mode: 'normal' } }); ok(r5.lv === MARK_START[3].lv && r5.ksPending === 2 && r5.ptree.pts === 6 + 2 * 10, '표식 도전 3챕터: Lv11 · 패시브 26 · 큰 각인 2번');

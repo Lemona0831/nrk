@@ -66,7 +66,7 @@ function cloneB(b) {
 }
 const YS_V = +(process.env.YS_V || 1); // 유산 1의 값 (한 수 앞 계산)
 /* 10월 15일 유산 1차 시제품: 스킬을 아끼는 값. 예전 쿨타임 × 0.25(긴 쿨타임은 아낀다)를 비용으로 옮겼다(2 → 1, 3 → 1.75, 4 → 2.5). 유산이 가득이면 차례 충전이 넘치므로 아끼지 않는다 */
-const ysPen = (b, a, k) => !a.s || !E.skCost ? (a.s ? (a.s.cd || 0) * k : 0) : E.ysNow(b.p) >= E.YUSAN.cap ? 0 : (E.skCost(a.s) * 0.75 - 0.5) * k / 0.25;
+const ysPen = (b, a, k) => !a.s || !E.skCost ? (a.s ? (a.s.cd || 0) * k : 0) : E.ysNow(b.p) >= (E.ysCapOf ? E.ysCapOf(b.p) : E.YUSAN.cap) ? 0 : (E.skCost(a.s) * 0.75 - 0.5) * k / 0.25;
 function evalState(b0, b1, risk) {
   if (b1.over === 'lose') return -1e4;
   if (b1.over === 'win') return 1e4 - (b0.p.hp - b1.p.hp);
@@ -292,7 +292,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   }
   // 10월 15일 유산 1차 시제품: 강타 · 겨눈 한 발이 오고 이번 라운드에 대응 충전이 아직 없으면, 스태미나가 넉넉할 때 방어 · 흘리기를 조금 더 자주 고른다(대응 +1)
   if (E.ysNow && !nf) { const big = pv1.find(x => x.e.intent && (x.e.intent.k === 'heavy' || x.e.intent.aimed)); const rNow = b.prepTurn === b.turnIdx ? (b.ysR || 0) : (b.ysR || 0) + 1;
-    if (big && b.ysRespR !== rNow && !v2Ready(b, big.e.id) && E.ysNow(p) <= E.YUSAN.cap - 2 && r() < 0.25 + 0.25 * (P.mech || 0.5)) { const d = L.find(a => a.id === 'dodge' && a.ok), g = L.find(a => a.id === 'guard' && a.ok);
+    if (big && b.ysRespR !== rNow && !v2Ready(b, big.e.id) && E.ysNow(p) <= (E.ysCapOf ? E.ysCapOf(p) : E.YUSAN.cap) - 2 && r() < 0.25 + 0.25 * (P.mech || 0.5)) { const d = L.find(a => a.id === 'dodge' && a.ok), g = L.find(a => a.id === 'guard' && a.ok);
       if (d && p.st >= E.dodgeCost(p) + 20 && !(big.e.strong || big.e.role === 'boss')) return ['dodge', big.e.id]; if (g && p.st >= E.guardCost(p) + 20) return ['guard']; } }
   // 10월 8일: 강타 예고 대응을 직업 판단보다 먼저 (고해사 · 해금 1 · 해금 3 · 원소술사 · 수도승). 전에는 이 직업들의 판단이 먼저 행동을 돌려줘 예고된 큰 공격을 흘리지도 막지도 않았다(1챕터 보스전 받은 큰 공격 96–338, 다른 직업 63–87). 사람은 예고를 보고 대응한다
   if (hv && ['confessor', 'butcher', 'bloodmage', 'elementalist', 'monk'].includes(p.build) && !v2Ready(b, hv.e.id) && r() < Math.max(P.parry, 0.35) + 0.2) {

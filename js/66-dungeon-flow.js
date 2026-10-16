@@ -146,7 +146,7 @@ function queueDrops(list) { G.dropQ = (G.dropQ || []).concat(list); nextDrop(); 
 function nextDrop() {
   const run = G.run; if (run && run.gearPending) { openSheet('bagfull', run.gearPending); return; } if (G.winSumShown) { G.winSum = null; G.winSumShown = false; }
   if (run && (run.consPending || []).length) { saveRunLocal(); saveCur(); openSheet('consfull'); return; }
-  if (!run || !G.dropQ || !G.dropQ.length) { G.winSum = null; render(); return; }
+  if (!run || !G.dropQ || !G.dropQ.length) { G.winSum = null; render(); if (run) ksOpen(); return; } // 10월 16일 0.8.0 2단계: 3챕터 야영지에 들어서며 받은 큰 각인
   const it = G.dropQ.shift(); if (it.chest) { openSheet('choice', { offer: it.chest, room: it.room, chest: 1 }); if (G.winSum) G.winSumShown = true; return; } run.drops.push({ room: run.room, item: it.tpl, g: it.g, b: it.b, ch: run.ch || 1 }); giveItem(it); if (G.winSum) G.winSumShown = true;
 }
 function gainXp(run, n) {
