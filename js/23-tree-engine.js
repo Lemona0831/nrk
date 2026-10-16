@@ -190,8 +190,8 @@ function skCostAt(b, s, tgt) {
   const c0 = skCost(s); if (!b) return { c: c0, by: null }; let best = { c: c0, by: null };
   for (const c of s.cond || []) { if (b.condUsed && b.condUsed[c.id || s.id] === (b.ysR || 0)) continue; if (skCondMet(b, s, c, tgt)) { const c1 = Math.max(1, c0 - (c.off || 1)); if (c1 < best.c) { best = { c: c1, by: c.id || s.id }; break; } } }
   /* 10월 17일 보완 1 · 4: 두 번 교대의 다음 스킬 −1(b.altDisc), 마검 과부하 교대 셋의 다음 유산 4 스킬 −3(b.ovDisc). 바닥 1, 가장 큰 할인 하나만 */
-  if (b.ovDisc && c0 >= 4) { const c1 = Math.max(1, c0 - 3); if (c1 < best.c) best = { c: c1, by: 'ksOver' }; }
-  if (b.altDisc) { const c1 = Math.max(1, c0 - 1); if (c1 < best.c) best = { c: c1, by: 'altDbl' }; }
+  if (b.ovDisc && c0 >= 4) { const c1 = Math.max(1, c0 - SB_OVER.off); if (c1 < best.c) best = { c: c1, by: 'ksOver' }; }
+  if (b.altDisc && c0 >= (SB_ALT2.min || 1)) { const c1 = Math.max(1, c0 - SB_ALT2.off); if (c1 < best.c) best = { c: c1, by: 'altDbl' }; }
   return best;
 }
 /* ---- 큰 각인 (1-7) ---- */
@@ -293,7 +293,7 @@ const IFX_NODE = {
   ks_breaker: { hitP: (b, p, e) => e.s && e.s.broken ? 0.20 : 0 },
   ks_first: { onStart: (b, p) => { addS(b, p, 'haste', 1); return 1; } },
   ks_flow: { onParry: (b, p, src) => { if (!(src && src.intent && (src.intent.aimed || src.intent.k === 'heavy' || src.intent.k === 'charge')) || (b.ksFlowN || 0) >= 2) return; b.ksFlowN = (b.ksFlowN || 0) + 1; return ysAdd(b, 1, 'resp', '흘림새') > 0 ? 1 : 0; } },
-  ks_sb_over: { hitP: b => b.sbAlt ? 0.35 : 0, noAltWard: 1, ovDisc: 1 }, // 10월 17일 보완 4: +35%, 교대 셋 이으면 다음 유산 4 스킬 −3(바닥 1, 전투마다 1번)
+  ks_sb_over: { hitP: b => b.sbAlt ? SB_OVER.hit : 0, noAltWard: 1, ovDisc: 1 }, // 10월 17일 보완 4: +35%, 교대 셋 이으면 다음 유산 4 스킬 −3(바닥 1, 전투마다 1번)
   ks_sb_beat: { brk: b => { if (!(b.sbAlt && b.sbRunNow >= 3) || b.ksBeatR === (b.ysR || 0)) return 0; b.ksBeatR = b.ysR || 0; return 40; } },
   ks_sb_blood: { wardCap: 0.25, onStart: (b, p) => { addWard(b, p, 6, undefined, true); return 1; } }, // 10월 17일 보완 4: 상한 25%, 전투 시작 보호막 6
 };

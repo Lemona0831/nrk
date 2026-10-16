@@ -220,8 +220,8 @@ function sbEnd(b, act) {
   if (b.sbAlt && b.sbAltTurn !== b.turnIdx && !b.over && !b.sbWardSpentAll && !fxFlag(p, 'noAltWard')) { b.sbAltTurn = b.turnIdx; const g = addWard(b, p, ((BUILDS[p.build] || {}).altWard || 0) + fxVal(p, 'altWardAdd', 0, (a, v) => a + v), undefined, true); if (g > 0) fxRun(p, 'onAltWard', b, p); /* 10월 16일 0.8.0 2단계: 교대의 박자 · 마력 순환 · 마검 과부하 */ b.rec.push({ k: 'alt', g: r1(g) }); logp(b, 'good', '⇄ 교대: 보호막 +' + Math.round(g) + ' (' + Math.round(p.ward || 0) + '/' + wardMax(p) + ')'); fxRun(p, 'onAlt', b, p, k, b.sbRunNow); }
   if (b.sbAlt && !b.over) { /* 10월 17일 보완 1: 한 차례에 두 번째 교대(교대의 박자) → 보호막 +3(마검 과부하면 없음) · 다음 스킬 비용 −1. 보완 4: 마검 과부하는 교대 셋을 이으면 다음 유산 4 스킬 −3(전투마다 1번) */
     if (b.altCntT !== b.turnIdx) { b.altCntT = b.turnIdx; b.altCnt = 0; } b.altCnt++;
-    if (b.altCnt === 2 && fxFlag(p, 'altDouble')) { const g = fxFlag(p, 'noAltWard') ? 0 : addWard(b, p, 3, undefined, true); b.altDisc = 1; b.rec.push({ k: 'alt2x', g: r1(g) }); logp(b, 'good', '⇄⇄ 한 차례 두 번 교대' + (g > 0 ? ': 보호막 +' + Math.round(g) : '') + ', 다음 스킬 유산 −1'); }
-    if (b.sbRunNow >= 3 && !b.ovGot && fxFlag(p, 'ovDisc')) { b.ovGot = 1; b.ovDisc = 1; b.rec.push({ k: 'ovready' }); logp(b, 'good', '마검 과부하: 교대 셋. 다음 유산 4 스킬 비용 −3'); } }
+    if (b.altCnt === 2 && fxFlag(p, 'altDouble')) { const g = fxFlag(p, 'noAltWard') ? 0 : addWard(b, p, SB_ALT2.ward, undefined, true); const dc = SB_ALT2.off > 0 && !(SB_ALT2.max > 0 && (b.altDiscN || 0) >= SB_ALT2.max); if (dc) { b.altDisc = 1; b.altDiscN = (b.altDiscN || 0) + 1; } b.rec.push({ k: 'alt2x', g: r1(g) }); logp(b, 'good', '⇄⇄ 한 차례 두 번 교대' + (g > 0 ? ': 보호막 +' + Math.round(g) : '') + (dc ? ', 다음 스킬 유산 −' + SB_ALT2.off : '')); }
+    if (b.sbRunNow >= SB_OVER.run && !b.ovGot && fxFlag(p, 'ovDisc')) { b.ovGot = 1; b.ovDisc = 1; b.rec.push({ k: 'ovready' }); logp(b, 'good', '마검 과부하: 교대 셋. 다음 유산 4 스킬 비용 −3'); } }
   if (b.sbAlt && b.sbRunNow >= 3 && !b.over && (b.ys3N || 0) < 2 && fxFlag(p, 'alt3Ys') && ysRefund(b, '세 박자')) b.ys3N = (b.ys3N || 0) + 1; // 노드 세 박자: 이어진 교대 3번째면 유산 +1(전투마다 2번, 환급 한도 공유)
   p.sbLast = k; p.sbRun = b.sbRun2 ? 0 : b.sbRunNow; b.sbAlt = false; b.sbRun2 = 0;
 }

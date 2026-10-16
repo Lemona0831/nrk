@@ -12,6 +12,10 @@ const PT = {
   smallBrk: 0.03, smallSt: 6, // 제어 작은 노드 주는 붕괴 +3%(곱), 계승 작은 노드 스태미나 +6
 };
 const AT_PTS = { start: 1, lv: 1 }; // 액티브 포인트: 시작 1 + 레벨마다 1
+/* 마검사 두 번 교대 (10월 17일 만든 사람 보완 1, 교대의 박자): 한 차례 두 번째 교대에 보호막 ward, 다음 스킬 비용 −off(바닥 1). max: 할인이 생기는 횟수의 전투당 한도(0이면 차례마다), min: 할인을 받는 스킬의 최소 유산 비용 */
+const SB_ALT2 = { ward: 3, off: 1, max: 0, min: 3 }; // 4단계 조정: min 1 → 3 (모든 다음 스킬 −1이면 1챕터 넘김이 21% → 33%로 뛰었다. 유산 3 · 4 스킬에만 걸면 24%)
+/* 마검 과부하 (10월 17일 보완 4): 교대한 행동 피해 +hit, 이어진 교대 run번째에 다음 유산 4 스킬 비용 −off(바닥 1, 전투마다 1번) */
+const SB_OVER = { hit: 0.5, run: 3, off: 3 }; // 4단계 조정: hit 0.35 → 0.5 (0.35에서는 같은 자리의 결정의 칼보다 3챕터 완주가 낮았다)
 /* 1고리 기울기 (3절 · 비공개 부록 1절): A 가까움 · B 보통 · C 멂 */
 const PT_TILT = {
   spellblade: { pw: 'B', sv: 'C', su: 'B', ct: 'B', ag: 'B', lg: 'A' },
@@ -26,9 +30,9 @@ const PT_TILT = {
 };
 /* 1고리에서 중간 노드가 되는 자리 (2-4) */
 const PT_TILT_N = { A: ['1C', '3L'], B: ['2L', '3R'], C: ['3L'] };
-/* 시작 노드: 직업 기본 능력치 12점 (STAT_REC × 12 반올림) */
+/* 시작 노드: 직업 기본 능력치 12점 (STAT_REC × 12 반올림). 마검사는 4단계(10월 17일) 초반 피해 점검으로 14점(힘 · 지능 +1, 설계 10-4의 2) */
 const PT_START = {
-  spellblade: { str: 4, int: 4, con: 3, wil: 1 }, warden: { str: 4, con: 4, wil: 4 }, monk: { str: 4, dex: 4, con: 4 }, assassin: { dex: 5, int: 4, con: 3 },
+  spellblade: { str: 5, int: 5, con: 3, wil: 1 }, warden: { str: 4, con: 4, wil: 4 }, monk: { str: 4, dex: 4, con: 4 }, assassin: { dex: 5, int: 4, con: 3 },
   hunter: { dex: 5, con: 4, str: 3 }, elementalist: { int: 5, con: 4, wil: 3 }, butcher: { str: 4, con: 4, wil: 3, int: 1 }, confessor: { con: 4, str: 4, int: 4 }, bloodmage: { int: 5, con: 4, wil: 3 },
 };
 /* 공용 중간 노드 풀 (2-8): r2는 2고리(L5) 후보, r3는 3고리(L7 · R7) 후보 */

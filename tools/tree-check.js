@@ -28,7 +28,7 @@ for (const c of CLS) {
   const fx = ids.map(id => P.nodes[id].fx).filter(Boolean); ok(new Set(fx).size === fx.length, c + ': 같은 효과는 트리에 한 번');
   ok(fx.filter(k => KS_LIST[k] && KS_LIST[k].resp).length <= 2, c + ': 대응 충전을 바꾸는 큰 각인은 둘까지(4-3)');
   ok(!fx.some(k => ['a_purse', 'a_memory', 'a_flow'].includes(k)), c + ': 빠진 옛 각인(불룩한 주머니 · 샘의 기억 · 흘림새 각인)이 없음');
-  const st = Object.values(P.nodes.S.stat).reduce((a, v) => a + v, 0); ok(st === 12, c + ': 시작 노드 능력치 12');
+  const st = Object.values(P.nodes.S.stat).reduce((a, v) => a + v, 0); ok(st === (c === 'spellblade' ? 14 : 12), c + ': 시작 노드 능력치 12(마검사는 4단계 초반 피해 점검으로 14)');
   const tilt = PT_TILT[c]; for (const d of PT.dirs) { const first = Math.min(...['1C', '2L', '2R', '3L', '3R'].filter(p => P.nodes[d + p].kind === 'notable').map(p => dist[d + p])); const want = { A: 1, B: 2, C: 3 }[tilt[d]]; if (!P.tmp) assert.equal(first, want, c + ' 기울기 ' + d); else assert(first === Infinity || first >= want, c + ' 임시 기울기 ' + d); }
   ok(true, c + ': 기울기(첫 중간 노드까지 거리) ' + (P.tmp ? '임시 트리는 그 거리보다 가깝지 않음' : '표대로'));
   for (const id in A.nodes) { const nd = A.nodes[id]; if (nd.kind === 'start') continue; assert(nd.cost === 1 && [1, 2, 3].includes(nd.ring), c + ' 액티브 ' + id); if (nd.kind === 'skill') assert(E.SK2[id] && !E.SK2[id].start, c + ' 스킬 ' + id); else { assert(nd.links.includes(nd.on) && A.nodes[nd.on].kind === 'skill', c + ' 강화가 그 스킬과 이웃 ' + id); } if (nd.links.includes('S')) assert.equal(nd.ring, 1, c + ' 가운데 이웃은 1고리 ' + id); }
@@ -45,7 +45,7 @@ for (const c of CLS) {
   const K7 = { pwK5: '결정의 칼', pwK9: '마검 과부하', ctK5: '망치의 길', ctK9: '끊는 박자', agK5: '먼저 움직임', agK9: '흘림새', lgK5: '깊은 샘', lgK9: '넘치는 그릇', suK5: '피의 순환', suK9: '피를 두른 갑주', svK5: '철벽', svK9: '무거운 갑주' };
   for (const id in K7) assert.equal(nm(id), K7[id], '큰 각인 ' + id); ok(Object.values(P.nodes).filter(x => x.kind === 'keystone' && x.pay).length === 4, '큰 각인 12, 대가 있는 것 4');
   ok(P.nodes.pw2L.stat == null && P.nodes.pw2R.stat.int === 2 && P.nodes.pw3L.stat.str === 2 && P.nodes.pw1C.stat.str === 1 && P.nodes.pw1C.stat.int === 1 && P.nodes.ct1C.sm === 'brk' && P.nodes.lg2L.sm === 'st' && P.nodes.sv1C.stat.con === 2 && P.nodes.su1C.stat.wil === 2 && P.nodes.ag1C.stat.dex === 2, '작은 노드: 화력 L 힘 · R 지능 · C 힘1 지능1, 제어 붕괴, 계승 스태미나, 생존 체력, 유지력 의지, 기민 민첩');
-  ok(JSON.stringify(P.nodes.S.stat) === JSON.stringify({ str: 4, int: 4, con: 3, wil: 1 }), '시작 노드 힘4 지능4 체력3 의지1');
+  ok(JSON.stringify(P.nodes.S.stat) === JSON.stringify({ str: 5, int: 5, con: 3, wil: 1 }), '시작 노드 힘5 지능5 체력3 의지1(4단계: 12 → 14점)');
   const S8 = [['sb_bleedcut', '혈인', 2, 1, 1, 'C', ['S', 'sb_boil', 'sb_bloodmark', 'sbu_chain', 'sbu_graze']], ['sb_boil', '혈인', 2, 1, 2, 'L', ['sb_bleedcut', 'sb_taste', 'sbu_boil']], ['sb_bloodmark', '혈인', 3, 1, 2, 'R', ['sb_bleedcut', 'sb_redwind', 'sbu_scarlet']],
     ['sb_taste', '혈인', 2, 2, 3, 'L', ['sb_boil', 'sb_whirl', 'sbu_thirst']], ['sb_redwind', '혈인', 3, 2, 3, 'R', ['sb_bloodmark', 'sb_deluge', 'sbu_gale']], ['sb_whirl', '혈인', 2, 2, 4, 'L', ['sb_taste', 'sb_deluge', 'sbu_exec']], ['sb_deluge', '혈인', 4, 3, 5, 'C', ['sb_redwind', 'sb_whirl', 'sbu_fog']],
     ['sb_ember', '염검', 2, 1, 1, 'C', ['S', 'sb_kindle', 'sb_char', 'sb_snuff', 'sbu_flare', 'sbu_brand']], ['sb_kindle', '염검', 2, 1, 2, 'L', ['sb_ember', 'sb_heated', 'sbu_whet']], ['sb_char', '염검', 2, 1, 2, 'R', ['sb_ember', 'sb_tome', 'sbu_ash']],
@@ -82,12 +82,12 @@ for (const c of CLS) {
 }
 // ===== 4) 능력치 = 노드 합 =====
 { const run = newRun('spellblade'); const p = run.p; const hp0 = p.hpMax, st0 = p.stMax;
-  ok(JSON.stringify(run.stats) === JSON.stringify({ str: 4, dex: 0, int: 4, con: 3, wil: 1 }) && E.stat(p, 'str') === 4, '시작 능력치 = 시작 노드');
+  ok(JSON.stringify(run.stats) === JSON.stringify({ str: 5, dex: 0, int: 5, con: 3, wil: 1 }) && E.stat(p, 'str') === 5, '시작 능력치 = 시작 노드');
   E.ptBuy(run, 'sv1C'); ok(run.stats.con === 5 && p.hpMax === hp0 + 6, '체력 +2 → 생명력 +6');
   E.ptBuy(run, 'lg1C'); E.ptBuy(run, 'lg2L'); ok(p.stMax === st0 + 6 && E.fxStat(p, 'st') === 6, '계승 작은 노드 스태미나 +6');
   E.ptBuy(run, 'ct1C'); ok(Math.abs(E.fxMul(p, 'brkMul', {}, p, {}, null) - 1.03) < 1e-9, '제어 작은 노드 붕괴 ×1.03');
   ok(p.pn.includes('n_sb_altbeat'), '중간 노드 효과가 p.pn으로 fxList에 들어감');
-  E.ptBuy(run, 'pw1C'); E.ptBuy(run, 'pw2R'); ok(run.stats.str === 5 && run.stats.int === 7, '화력 C1 힘1 지능1, R2 지능 2');
+  E.ptBuy(run, 'pw1C'); E.ptBuy(run, 'pw2R'); ok(run.stats.str === 6 && run.stats.int === 8, '화력 C1 힘1 지능1, R2 지능 2(시작 힘 5 · 지능 5)');
   const run2 = newRun('hunter'); E.ptBuy(run2, 'pw1C'); E.ptBuy(run2, 'pw2L'); ok(run2.stats.dex === 7, '사냥꾼 화력 작은 노드는 공격 능력치(민첩)');
 }
 // ===== 5) 큰 각인 =====
@@ -149,7 +149,7 @@ function oldRun(build, o) { // 0.7 꼴 판: 능력치 · 옛 트리 · 옛 각�
   Object.assign(run, { stats: { str: 10, dex: 5, int: 10, con: 8, wil: 5 }, statPending: 0, statBase: 20, statGrowth: 3, tree: { pts: 0, open: ['sb_bleedcut', 'sb_boil', 'sb_taste', 'sb_sweepcut', 'sb_ember', 'sb_kindle', 'sb_heated'], spent: {} }, skills: ['sb_sweepcut', 'sb_taste', 'sb_bleedcut'], awk: ['a_eye', 'k_sb1'] }, o || {}); return run; }
 { const run = oldRun('spellblade', { lv: 7, xp: 760, ch: 2, clears: 1, room: 3 }); ok(E.treeMigrate08(run), '옮기기 실행');
   ok(run.ptree.pts === 18 && run.atree.pts === 7 && run.ksPending === 1, '9-5 1: Lv7 · 2챕터 → 패시브 18(6 + 2 × 6) · 액티브 7 · 큰 각인 1');
-  ok(run.awk.length === 0 && run.awkOld.join() === 'a_eye,k_sb1' && JSON.stringify(run.stats) === JSON.stringify({ str: 4, dex: 0, int: 4, con: 3, wil: 1 }), '옛 각인 뺌, 능력치 = 시작 노드 12');
+  ok(run.awk.length === 0 && run.awkOld.join() === 'a_eye,k_sb1' && JSON.stringify(run.stats) === JSON.stringify({ str: 5, dex: 0, int: 5, con: 3, wil: 1 }), '옛 각인 뺌, 능력치 = 시작 노드(마검사 14)');
   ok(!run.tree && run.treeOld.open.length === 7 && run.skillsOld.join() === 'sb_sweepcut,sb_taste,sb_bleedcut' && run.skills.length === 0 && run.mig08 && run.mig08.lv === 7, '옛 트리 · 장착은 기록으로');
   ok(!E.treeMigrate08(Object.assign(run, { tv: 2 })), 'tv 2면 다시 옮기지 않음'); }
 { const run = oldRun('spellblade', { lv: 7, xp: 660, ch: 2, clears: 1 }); E.treeMigrate08(run); ok(run.lv === 7 && run.xp === 740, '9-5 2: 옛 Lv7(경험치 660)은 레벨을 지키고 경험치를 새 문턱 740으로'); }
@@ -176,7 +176,7 @@ ok(true, '9-5 4: 3챕터 13층 3번, 11층 2번, 12층 야영지 3번');
   D.click('allocgo'); for (const id of ['lg1C', 'lg2L', 'pw1C']) D.click('ptbuy', id); D.click('allocnext'); D.click('atbuy', 'sb_bleedcut'); D.click('allocok');
   ok(!G.sheet && G.data.cur.tv === 2 && !G.data.cur.battle && G.data.cur.ptree.own.length === 3 && G.data.cur.skills.join() === 'sb_bleedcut', '확정하면 저장(tv 2)');
   ok(G.scr === 'run' && G.run.cur && G.run.cur.type === 'normal' && !G.b, '확정 뒤 같은 방 앞(다시 싸움)');
-  const after = JSON.stringify(G.data.cur); G.run = null; G.sheet = null; E.resumeRun(); ok(!G.sheet && !G.run.alloc && G.run.ptree.own.length === 3 && G.run.stats.dex === 0 && G.run.stats.int === 5, '확정 뒤 다시 불러오면 바뀌지 않음(능력치는 노드로 다시 셈)'); void after;
+  const after = JSON.stringify(G.data.cur); G.run = null; G.sheet = null; E.resumeRun(); ok(!G.sheet && !G.run.alloc && G.run.ptree.own.length === 3 && G.run.stats.dex === 0 && G.run.stats.int === 6, '확정 뒤 다시 불러오면 바뀌지 않음(능력치는 노드로 다시 셈)'); void after;
 }
 // 큰 각인 단계 잠금 (옮기기: 패시브 → 큰 각인 → 액티브)
 { const run = newRun('spellblade'); Object.assign(run, { lv: 6, xp: 520, ch: 2, clears: 1, room: 2, phase: null, cur: null, doors: null }); delete run.tv; delete run.ptree; delete run.atree; delete run.ksGot; delete run.ksPending; run.tree = { pts: 0, open: [], spent: {} }; G.data.cur = JSON.parse(JSON.stringify(run)); G.run = null; G.sheet = null; E.resumeRun();
@@ -198,7 +198,8 @@ function nodeFight(keys) { const run = newRun('spellblade'); run.clears = 2; for
 // 10월 17일 만든 사람 보완 5가지
 { const skCostAt = f('skCostAt'), skOf = f('skOf');
   { const { p, b, es } = nodeFight(['n_sb_altbeat']); p.sbLast = 'cut'; p.ys = 5; E.playerAct(b, 'sb_aegis'); E.playerAct(b, 'basic', es[0].id); ok(b.rec.filter(x => x.k === 'alt').length === 1 && b.rec.some(x => x.k === 'alt2x') && b.altDisc === 1, '보완 1: 한 차례 두 번 교대 → 교대 보호막은 한 번, 두 번째에 덤(+3)과 다음 스킬 할인');
-    ok(skCostAt(b, skOf(p, 'sb_edge')).c === 1, '두 번 교대 다음 스킬 비용 −1(2 → 1)'); p.ys = 5; E.playerAct(b, 'sb_edge', es[0].id); ok(!b.altDisc && b.rec.some(x => x.k === 'ysdisc' && x.by === 'altDbl'), '할인은 한 번 쓰면 없어짐'); }
+    const mk3 = Object.assign({}, E.SK2.sb_bloodmark, { ys: 3 }); ok(skCostAt(b, skOf(p, 'sb_edge')).c === 2 && skCostAt(b, mk3).c === 2, '두 번 교대 다음 유산 3 · 4 스킬 비용 −1(3 → 2), 유산 2 스킬은 그대로(4단계 조정 SB_ALT2.min 3)');
+    b.altDisc = 1; const sp = f('ysSpend'); p.ys = 5; sp(b, mk3); ok(!b.altDisc && b.rec.some(x => x.k === 'ysdisc' && x.by === 'altDbl'), '할인은 한 번 쓰면 없어짐'); }
   { const { p, b, es } = nodeFight([]); p.sbLast = 'cut'; p.ys = 5; E.playerAct(b, 'sb_aegis'); E.playerAct(b, 'basic', es[0].id); ok(!b.rec.some(x => x.k === 'alt2x') && !b.altDisc, '교대의 박자가 없으면 두 번 교대 덤 없음'); } }
 { const sbd = f('skillBaseDamage'); const run = newRun('spellblade'); const p = run.p; const s0 = sbd(p, E.SK2.sb_edge, 10), sp0 = sbd(p, E.SK2.sb_ember, 10); E.ptBuy(run, 'pw1C'); const st = run.stats;
   ok(E.ptBuild('spellblade').nodes.pw1C.kind === 'small' && p.pn.includes('n_sb_hybrid'), '보완 2: 양손의 마검은 화력 C1 작은 노드(힘 +1 · 지능 +1)에 붙음, 자리 · 종류 그대로');
@@ -212,7 +213,7 @@ function nodeFight(keys) { const run = newRun('spellblade'); run.clears = 2; for
 { const skCostAt = f('skCostAt'), skOf = f('skOf'); const { p, b, es } = nodeFight(['ks_sb_over']); p.sbLast = 'cut'; const kinds = ['spell', 'cut', 'spell'];
   for (const k of kinds) { p.ys = 5; E.playerAct(b, k === 'spell' ? 'sb_aegis' : 'basic', k === 'cut' ? es[0].id : undefined); if (b.waiting === false && !b.over) E.runUntilPlayer(b); }
   ok(b.ovDisc === 1 && b.rec.some(x => x.k === 'ovready'), '보완 4: 마검 과부하, 교대 셋을 이으면 할인 준비'); ok(skCostAt(b, Object.assign({}, E.SK2.sb_finale, { ys: 4 })).c === 1 && skCostAt(b, skOf(p, 'sb_edge')).c === 2, '다음 유산 4 스킬 4 → 1(바닥 1), 다른 비용은 그대로');
-  const hitP = IFX_NODE.ks_sb_over.hitP; ok(hitP({ sbAlt: true }) === 0.35 && hitP({ sbAlt: false }) === 0, '교대한 행동 피해 +35%'); }
+  const hitP = IFX_NODE.ks_sb_over.hitP; ok(hitP({ sbAlt: true }) === 0.5 && hitP({ sbAlt: false }) === 0, '교대한 행동 피해 +50%(4단계 조정, 만든 사람 값 35%)'); }
 { const { p } = nodeFight(['ks_sb_blood']); ok(Math.round(p.ward) >= 6, '보완 4: 피를 두른 갑주, 전투 시작 보호막 6'); }
 { const run = newRun('spellblade'); run.lv = 16; run.clears = 2; E.ptFix(run); const A = E.atBuild('spellblade'); for (const id of ['sb_bladeward', 'sb_turn', 'sb_finale', 'sbu_release']) assert.equal(E.atBuy(run, id), null, id); run.skills = ['sb_finale']; E.treeSync(run);
   const s = f('skOf')(run.p, 'sb_finale'); ok(s.fx.findIndex(e => e.k === 'wardFirst') >= 0 && s.fx.find(e => e.k === 'wardFirst').n === E.SK2.sb_shell.fx.find(e => e.k === 'ward').n, '보완 5: 갑주 해방은 마갑 전개만큼 먼저 두름');
