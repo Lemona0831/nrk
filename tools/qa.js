@@ -24,6 +24,14 @@ function qaMonkHit(p,a,t){
   return {damage,take,before,left};
 }
 
+/* 직업 판단 칸 구분 (10월 17일 측정 도구 보완): 직업 전용 판단 칸은 모두 직업(build id)으로 막는다. 스킬 효과(fx)로만 걸던 칸은
+   다른 직업의 비슷한 효과에도 걸렸다(4단계 재검증: 해금 1 칸이 마검사 혈인에게 걸림, 24d2a9f). 칸마다 이름표를 남겨(gt) tools/qa-class-gate-check.js가
+   어느 직업에서 어떤 칸이 걸렸는지 세고, 칸 주인이 아닌 직업에서 걸리면 실패로 본다. 주인 '*'는 모든 직업용(공통 판단).
+   GATE.legacy = true(또는 QA_GATE_LEGACY=1)면 보완 전(24d2a9f) 조건으로 돌아간다: 전후 비교용 */
+const GATE = { legacy: !!process.env.QA_GATE_LEGACY, on: null };
+function gt(p, owner, name) { if (GATE.on) GATE.on(p.build, owner, name); return true; }
+const PRE_PARRY = ['confessor', 'butcher', 'bloodmage', 'elementalist', 'monk']; // 강타 예고 대응을 직업 판단보다 먼저 하는 직업 (10월 8일)
+
 function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
 const PERSONAS = {
@@ -87,13 +95,26 @@ function evalState(b0, b1, risk) {
   const ysV = v2 && E.ysNow ? (E.ysNow(p1) - E.ysNow(p0)) * YS_V : 0; // 10월 15일 유산 1차 시제품: 쓴 유산 · 번 유산(대응 · 차례)의 값. 상한에서 넘친 몫은 값이 없어 가득일 때는 쓰는 편이 낫다
   return dealt * 1.0 + kills * 6 - hpLoss * (40 + 80 * (1 - risk)) - flasks * 7 - lowHp - threat * 1.5 - roots * 3 - healers * 3 - poison * 0.6 + scarKeep + (p1.st - p0.st) * 0.03 + ysV;
 }
+/* 0.6a.2 수도원장의 요구(심문 · 고해)를 사람처럼 따른다 (10월 4일). lookahead · heuristic가 같이 쓴다(전에는 같은 줄이 두 곳에 있었다) */
+function demandPick(b, P, r) {
+  const dmd = E.alive(b).find(e => e.demand && e.demand.turn === b.turnIdx); if (!(dmd && r() < (P.mech || 0.5) + 0.1)) return null;
+  const L = E.actionList(b), p = b.p;
+  if (dmd.demand.k === 'rest') {
+    if (p.build === 'bloodmage' && gt(p, 'bloodmage', 'rest')) { const q = bmRest(b, L); if (q) return q; }
+    const eo = (GATE.legacy || p.build === 'butcher') && L.find(a => a.v2 && a.ok && buEatOnlyQ(a)); // 숨겨진 직업 1 칸 (보완 전에는 직업을 보지 않았다)
+    if (eo && gt(p, 'butcher', 'rest-eat')) return [eo.id, (E.alive(b).filter(e => psn2(e, 'bleed') > 0 && E.canTarget(b, e, eo)).sort((x, y) => psn2(y, 'bleed') - psn2(x, 'bleed'))[0] || {}).id];
+    const sb = p.build === 'spellblade' && L.find(a => a.ok && a.v2 && a.self && a.s.kind === 'spell'); if (sb) gt(p, 'spellblade', 'rest-spell');
+    const g = sb || cfRest(b, L) || L.find(a => a.id === 'guard' && a.ok) || L.find(a => a.id === 'dodge' && a.ok); if (g) return [g.id, g.id === 'dodge' ? dmd.id : null];
+  } else if (!dmd.demand.hit) { const a = L.find(x => x.id === 'basic' && x.ok); if (a && E.canTarget(b, dmd, a)) return ['basic', dmd.id]; }
+  return null;
+}
 function lookahead(b, P, r) {
-  { const dmd = E.alive(b).find(e => e.demand && e.demand.turn === b.turnIdx); if (dmd && r() < (P.mech || 0.5) + 0.1) { const L = E.actionList(b); if (dmd.demand.k === 'rest') { if (b.p.build === 'bloodmage') { const q = bmRest(b, L); if (q) return q; } const eo = L.find(a => a.v2 && a.ok && buEatOnlyQ(a)); if (eo) return [eo.id, (E.alive(b).filter(e => psn2(e, 'bleed') > 0 && E.canTarget(b, e, eo)).sort((x, y) => psn2(y, 'bleed') - psn2(x, 'bleed'))[0] || {}).id]; const g = (b.p.build === 'spellblade' && L.find(a => a.ok && a.v2 && a.self && a.s.kind === 'spell')) || cfRest(b, L) || L.find(a => a.id === 'guard' && a.ok) || L.find(a => a.id === 'dodge' && a.ok); if (g) return [g.id, g.id === 'dodge' ? dmd.id : null]; } else if (!dmd.demand.hit) { const a = L.find(x => x.id === 'basic' && x.ok); if (a && E.canTarget(b, dmd, a)) return ['basic', dmd.id]; } } } // 0.6a.2 수도원장의 요구(심문 · 고해)를 사람처럼 따른다 (10월 4일)
-  const L = E.actionList(b).filter(a => a.ok && a.id !== 'flee' && a.id !== 'sig' && (!a.pull || bmPullOk(b, a, P))); // 숨겨진 직업 3: 피로 당기기는 이유가 있을 때만
+  { const q = demandPick(b, P, r); if (q) return q; }
+  const L = E.actionList(b).filter(a => a.ok && a.id !== 'flee' && a.id !== 'sig' && (!a.pull || ((GATE.legacy || b.p.build === 'bloodmage') && gt(b.p, 'bloodmage', 'pull') && bmPullOk(b, a, P)))); // 숨겨진 직업 3: 피로 당기기는 이유가 있을 때만
   const cands = [];
   for (const a of L) {
     let ts = [null];
-    if (!a.self && !a.aoe) { ts = E.alive(b).filter(e => E.canTarget(b, e, a) && !(a.id === 'dodge' && e.role === 'root')); if (b.p.build === 'hunter' && !process.env.HUNT_CROWN_OLD) { /* 사냥꾼(10월 8일): 열기가 높지 않으면 왕관을 치지 않는다(출처: 비공개 문서 3챕터 2.2–2.3절, 문장은 옮기지 않는다). 한 수 앞 계산은 왕관 피해와 처치를 이득으로 세어 왕관만 쳤다. HUNT_CROWN_OLD=1이면 끈다 */ const nc = ts.filter(e => !(e.role === 'crown' && !e.crownHot)); if (nc.length) ts = nc; } ts = ts.map(e => e.id); }
+    if (!a.self && !a.aoe) { ts = E.alive(b).filter(e => E.canTarget(b, e, a) && !(a.id === 'dodge' && e.role === 'root')); if (b.p.build === 'hunter' && !process.env.HUNT_CROWN_OLD && gt(b.p, 'hunter', 'crown')) { /* 사냥꾼(10월 8일): 열기가 높지 않으면 왕관을 치지 않는다(출처: 비공개 문서 3챕터 2.2–2.3절, 문장은 옮기지 않는다). 한 수 앞 계산은 왕관 피해와 처치를 이득으로 세어 왕관만 쳤다. HUNT_CROWN_OLD=1이면 끈다 */ const nc = ts.filter(e => !(e.role === 'crown' && !e.crownHot)); if (nc.length) ts = nc; } ts = ts.map(e => e.id); }
     for (const t of ts) {
       const c = cloneB(b); E.playerAct(c, a.id, t);
       cands.push({ a: a.id, t, v: evalState(b, c, P.risk) + (r() - 0.5) * 2 });
@@ -133,7 +154,7 @@ const buEatOnlyQ = a => !!(a && a.s && a.s.fx.some(e => e.k === 'drain' && e.s =
 const CF_BAD = ['bleed', 'ignite', 'weak', 'vuln', 'chill'];
 const cfFx = a => !!(a && a.s && a.s.fx.some(e => ['cleanse', 'transfer', 'perDmg', 'dispel'].includes(e.k) || (e.k === 'meSt' && CF_BAD.includes(e.s))));
 /* 수도원장의 고해 요구(칼을 거두어라) 차례: 피해 없는 나에게 쓰는 칸(지울 짐이 있는 정화, 고행) → 방어 */
-const cfRest = (b, L) => b.p.build === 'confessor' && E.cfTake ? (L.find(a => a.v2 && a.ok && a.self && a.s.fx.some(e => e.k === 'cleanse' && !e.offer) && E.cfTake(b.p, a.s.fx.find(e => e.k === 'cleanse').only, a.s.fx.find(e => e.k === 'cleanse').n, 'clean', 1).e > 0) || null) : null;
+const cfRest = (b, L) => b.p.build === 'confessor' && E.cfTake && gt(b.p, 'confessor', 'rest') ? (L.find(a => a.v2 && a.ok && a.self && a.s.fx.some(e => e.k === 'cleanse' && !e.offer) && E.cfTake(b.p, a.s.fx.find(e => e.k === 'cleanse').only, a.s.fx.find(e => e.k === 'cleanse').n, 'clean', 1).e > 0) || null) : null;
 const SB_FX = ['imbue', 'edgeX', 'kwx', 'alt', 'killSpread']; // 마검사 효과 (참고: 마검사 판단은 kind가 있는 스킬이 끼워졌을 때만 걸린다)
 const MONK_OLD = !!process.env.MONK_TEST_OLD; // 1이면 10월 10일 단순화 전의 테스터 판단(자세 · ⚡ 공격)을 쓴다
 const MONK_FX = ['stance', 'kiBurst', 'kiPer', 'kiGrow', 'sealx']; // 수도승 효과 (v2Pick의 수도승 판단이 이 효과를 가진 스킬이 끼워졌을 때만 걸린다)
@@ -177,7 +198,7 @@ function bmPullOk(b, a, P) {
   return u || { why: 'cut', t: null };
 }
 /* 테스터는 피로 당기기를 규칙으로만 고른다: 다른 판단이 우연히 당긴 칸을 누르지 않게 잠가 둔다(a.bmPull에 남긴다) */
-function bmHold(b, L) { if (b.p.build !== 'bloodmage') return L; for (const a of L) if (a.ok && a.pull) { a.ok = false; a.bmPull = 1; a.why = '테스터: 이유 없이 당기지 않음'; } return L; }
+function bmHold(b, L) { if (b.p.build !== 'bloodmage') return L; gt(b.p, 'bloodmage', 'hold'); for (const a of L) if (a.ok && a.pull) { a.ok = false; a.bmPull = 1; a.why = '테스터: 이유 없이 당기지 않음'; } return L; }
 /* 고해 요구(칼을 거두어라): 피해 없는 먹기 → 중독 · 약화만 거는 칸 → 나에게 쓰는 칸 (당기지 않는다) */
 function bmRest(b, L) {
   const ok = L.filter(a => a.v2 && a.ok && !a.pull && !a.s.fx.some(x => x.k === 'dmg' || (x.k === 'drain' && x.dmg) || x.k === 'bloodDmg' || x.k === 'perDmg'));
@@ -262,10 +283,10 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   // 정화 플라스크: 적이 이번에 상태를 걸 예정이면 미리 막는다
   // 정화 플라스크: 출혈이 이미 쌓여 더 걸리면 아프거나, 폭발 약화가 올 때만(사람은 막을 거리가 클 때 마신다)
   const pv1 = E.previewAfter(b, 1); const bleedIn = pv1.some(x => x.e.intent && x.e.intent.k === 'attack' && x.e.intent.bleed); const boomIn = pv1.some(x => x.e.intent && ['explode', 'burn'].includes(x.e.intent.k));
-  if (p.build === 'confessor') { const burnIn = pv1.some(x => x.e.intent && x.e.intent.k === 'burn'); const full = E.cfBurden && E.cfBurden(p) >= 5; if ((burnIn || full || (p.hp < p.hpMax * 0.35 && pv1.some(x => x.e.intent && (x.e.intent.bleed || ['curse', 'heavy', 'burn'].includes(x.e.intent.k))))) && !p.s.block && p.flask.mana > 0 && r() < aware * 0.5) return ['flaskM']; } // 숨겨진 직업 2 (비공개 문서 F-3): 막음은 재료도 막으므로 화형 직전 · 짐 5 · 생명력 35% 미만에만
-  else if (((bleedIn && psn2(p, 'bleed') >= 2) || boomIn) && !p.s.block && p.flask.mana > 0 && r() < aware * 0.5) return ['flaskM'];
+  if (p.build === 'confessor' && gt(p, 'confessor', 'flask')) { const burnIn = pv1.some(x => x.e.intent && x.e.intent.k === 'burn'); const full = E.cfBurden && E.cfBurden(p) >= 5; if ((burnIn || full || (p.hp < p.hpMax * 0.35 && pv1.some(x => x.e.intent && (x.e.intent.bleed || ['curse', 'heavy', 'burn'].includes(x.e.intent.k))))) && !p.s.block && p.flask.mana > 0 && r() < aware * 0.5) return ['flaskM']; } // 숨겨진 직업 2 (비공개 문서 F-3): 막음은 재료도 막으므로 화형 직전 · 짐 5 · 생명력 35% 미만에만
+  else if (((bleedIn && psn2(p, 'bleed') >= 2) || boomIn) && !p.s.block && p.flask.mana > 0 && r() < aware * 0.5 && gt(p, '*', 'flask-cure')) return ['flaskM'];
   // 0.6a.2 사냥꾼 (10월 5일, 흘리기보다 먼저: 사냥꾼은 피하기로 받는다): 예고 대응(피할 수 있는 강타 · 겨눈 한 발은 받아넘기기 · 몸 빼기, 피할 수 없는 화형은 예고 읽기 · 흙먼지 장막), 추적 유지 · 터뜨리기, 표적 바꾸기
-  if (p.build === 'hunter') {
+  if (p.build === 'hunter' && gt(p, 'hunter', 'main')) {
     const fe = p.focus ? E.alive(b).find(e => e.id === p.focus.id) : null; const fn = fe ? p.focus.n : 0;
     const aimedIn = pv1.find(x => x.e.intent && x.e.intent.aimed); const bigIn = hv || aimedIn; const burnIn = pv1.find(x => x.e.intent && x.e.intent.k === 'burn');
     const atkN = pv1.filter(x => x.e.intent && ['attack', 'heavy'].includes(x.e.intent.k)).reduce((m, x) => m + x.n, 0);
@@ -292,16 +313,16 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   }
   // 10월 15일 유산 1차 시제품: 강타 · 겨눈 한 발이 오고 이번 라운드에 대응 충전이 아직 없으면, 스태미나가 넉넉할 때 방어 · 흘리기를 조금 더 자주 고른다(대응 +1)
   if (E.ysNow && !nf) { const big = pv1.find(x => x.e.intent && (x.e.intent.k === 'heavy' || x.e.intent.aimed)); const rNow = b.prepTurn === b.turnIdx ? (b.ysR || 0) : (b.ysR || 0) + 1;
-    if (big && b.ysRespR !== rNow && !v2Ready(b, big.e.id) && E.ysNow(p) <= (E.ysCapOf ? E.ysCapOf(p) : E.YUSAN.cap) - 2 && r() < 0.25 + 0.25 * (P.mech || 0.5)) { const d = L.find(a => a.id === 'dodge' && a.ok), g = L.find(a => a.id === 'guard' && a.ok);
+    if (big && b.ysRespR !== rNow && !v2Ready(b, big.e.id) && E.ysNow(p) <= (E.ysCapOf ? E.ysCapOf(p) : E.YUSAN.cap) - 2 && r() < 0.25 + 0.25 * (P.mech || 0.5) && gt(p, '*', 'ys-resp')) { const d = L.find(a => a.id === 'dodge' && a.ok), g = L.find(a => a.id === 'guard' && a.ok);
       if (d && p.st >= E.dodgeCost(p) + 20 && !(big.e.strong || big.e.role === 'boss')) return ['dodge', big.e.id]; if (g && p.st >= E.guardCost(p) + 20) return ['guard']; } }
   // 10월 8일: 강타 예고 대응을 직업 판단보다 먼저 (고해사 · 해금 1 · 해금 3 · 원소술사 · 수도승). 전에는 이 직업들의 판단이 먼저 행동을 돌려줘 예고된 큰 공격을 흘리지도 막지도 않았다(1챕터 보스전 받은 큰 공격 96–338, 다른 직업 63–87). 사람은 예고를 보고 대응한다
-  if (hv && ['confessor', 'butcher', 'bloodmage', 'elementalist', 'monk'].includes(p.build) && !v2Ready(b, hv.e.id) && r() < Math.max(P.parry, 0.35) + 0.2) {
+  if (hv && PRE_PARRY.includes(p.build) && !v2Ready(b, hv.e.id) && r() < Math.max(P.parry, 0.35) + 0.2 && gt(p, PRE_PARRY, 'pre-parry')) {
     const ps = okS.find(a => has(a, 'parry')); if (ps) return [ps.id, hv.e.id];
     const pb = okS.find(a => has(a, 'parryBuff')); if (pb && !p.pbuf && E.dodgeCost(p) <= p.st) return [pb.id];
     if (L.find(a => a.id === 'dodge' && a.ok) && r() < P.parry + 0.3) return ['dodge', hv.e.id];
   }
   // 숨겨진 직업 2 (10월 7일, 비공개 문서 F-3 4): 짐(적이 건 몫)을 옮길까 · 지울까 · 안고 칠까, 앞서 지운 숫자, 보호 비례, 고행. 이 직업의 효과를 가진 스킬이 끼워졌을 때만
-  if (p.build === 'confessor' && E.cfTake && L.some(a => a.v2 && cfFx(a))) {
+  if (p.build === 'confessor' && E.cfTake && L.some(a => a.v2 && cfFx(a)) && gt(p, 'confessor', 'main')) {
     const C = E.CONF, F = (a, k) => a.s.fx.find(e => e.k === k), hpf = p.hp / p.hpMax, fastFree = !b.bonusUsed && !nf;
     const take = (only, n, mode) => E.cfTake(p, only, n, mode, 1); const en = k => take([k], 5, 'xfer').c; const enAll = take(null, 5, 'xfer').c; const burden = E.cfBurden(p);
     const big = e => !!(e.elite || e.strong || e.role === 'boss'); const chg = e => !!(e.intent && (['charge', 'heavy', 'chant', 'chanting', 'burn', 'aim', 'fuse'].includes(e.intent.k) || e.intent.aimed));
@@ -353,7 +374,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     if (burden < 2) for (const a of okS.filter(a => a.s.fx.some(e => e.k === 'meSt' && CF_BAD.includes(e.s)))) { const v = ret(a, best(a, (x, y) => (big(y) - big(x)) || (x.hp - y.hp))); if (v) return v; }
   }
   // 숨겨진 직업 1 (10월 7일, 비공개 문서 F4): 흡혈 표적 · 먹기 · 받은 피해 · 처치 · 나에게 출혈. 이 직업의 효과를 가진 스킬이 끼워졌을 때만
-  if (p.build !== 'spellblade' && L.some(a => a.v2 && buFx(a))) { // 10월 17일 0.8.0 4단계 재검증: 마검사 혈인의 혈향(출혈 이용) · 혈풍참(처치 시)도 이 효과에 걸려, 신중 · 대충 성향 혈인이 마검사 판단(교대 · 유산) 대신 이 칸으로 골랐다(3챕터 시작 신중 완주 2/60 → 고친 뒤 26/60). 마검사는 아래 자기 칸이 맡는다
+  if ((GATE.legacy ? p.build !== 'spellblade' : p.build === 'butcher') && L.some(a => a.v2 && buFx(a)) && gt(p, 'butcher', 'main')) { // 10월 17일 측정 도구 보완: 해금 1에게만(보완 전에는 마검사만 뺐다: 효과가 비슷한 다른 직업에 걸릴 수 있었다). 10월 17일 0.8.0 4단계 재검증: 마검사 혈인의 혈향(출혈 이용) · 혈풍참(처치 시)도 이 효과에 걸려, 신중 · 대충 성향 혈인이 마검사 판단(교대 · 유산) 대신 이 칸으로 골랐다(3챕터 시작 신중 완주 2/60 → 고친 뒤 26/60). 마검사는 아래 자기 칸이 맡는다
     const hpf = p.hp / p.hpMax, bl = e => psn2(e, 'bleed'), big = e => !!(e.elite || e.strong || e.role === 'boss'); const F = (a, k) => a.s.fx.find(e => e.k === k);
     const thirst = 1 + Math.min(0.18, 0.03 * Math.max(0, Math.floor((1 - hpf) * 10 + 1e-9))); const grN = b.prepTurn === b.turnIdx ? (p.grudge || 0) : Math.min(p.tookAcc || 0, p.hpMax * 0.3);
     const room = Math.max(0, p.hpMax - p.hp); const eatLeft = Math.max(0, p.hpMax * 0.4 - (b.eatGot || 0));
@@ -401,7 +422,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     }
   }
   // 숨겨진 직업 3 (10월 7일, 비공개 문서 F4): 피로 당기기(낼까) · 먹기(거둘까) · 옮기기 · 쓰러뜨리면 번짐 · 표식 · 약화 · 생명력 내기 · 값 깎기. 이 직업의 효과를 가진 스킬이 끼워졌을 때만
-  if (p.build === 'bloodmage' && !process.env.BM_OFF && L.some(a => a.v2 && bmFx(a))) {
+  if (p.build === 'bloodmage' && !process.env.BM_OFF && L.some(a => a.v2 && bmFx(a)) && gt(p, 'bloodmage', 'main')) {
     const hpf = p.hp / p.hpMax, ps = e => psn2(e, 'poison'), F = (a, k) => a.s.fx.find(e => e.k === k), big = e => !!(e.elite || e.strong || e.role === 'boss');
     const bigIn = !!(hv || pv1.some(x => x.e.intent && (x.e.intent.aimed || ['burn', 'explode'].includes(x.e.intent.k))));
     const foes = E.alive(b).filter(e => e.role !== 'root' && !e.pile);
@@ -452,9 +473,9 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     // 9) 사혈(나에게 쓰는 생명력 내기)은 위의 순서에서만 쓴다
     for (const a of okS.slice()) if (a.self && (a.hpCost || 0) > 0) okS.splice(okS.indexOf(a), 1);
   }
-  if (p.build === 'elementalist' && E.elemPreview && useMech && !process.env.ELEM_OFF) { const v = elemPick(b, P, r, okS, reach, pv1); if (v) return v; } // 0.6a.2 원소술사 (10월 7일): 열충격 미리 보기로 고른다
+  if (p.build === 'elementalist' && E.elemPreview && useMech && !process.env.ELEM_OFF && gt(p, 'elementalist', 'main')) { const v = elemPick(b, P, r, okS, reach, pv1); if (v) return v; } // 0.6a.2 원소술사 (10월 7일): 열충격 미리 보기로 고른다
   // 0.6a.2 수도승 (10월 7일, docs/직업/수도승.md F-4): 되받을 직접 공격 예고가 있으면 자세, 차례의 첫 ⚡ 공격, 기를 보고 터뜨리기 · 흘려 쓰기, 늦춘 적에게서 거두기, 되받은 다음 차례의 되갚기, 모으는 적 · 지원하는 적 끊기
-  if (p.build === 'monk' && (p.skills || []).some(id => E.SK2[id] && E.SK2[id].fx.some(e => MONK_FX.includes(e.k)))) { // 끼운 스킬로 본다(지금 쓸 수 있는 칸이 아니라)
+  if (p.build === 'monk' && (p.skills || []).some(id => E.SK2[id] && E.SK2[id].fx.some(e => MONK_FX.includes(e.k))) && gt(p, 'monk', 'main')) { // 끼운 스킬로 본다(지금 쓸 수 있는 칸이 아니라)
     const ki = psn2(p, 'empower'); const fastOk = !b.bonusUsed && !nf; const kbOf = a => a.s.fx.find(e => e.k === 'kiBurst'); const fxOf = (a, k) => a.s.fx.find(e => e.k === k);
     const ctrIn = pv1.filter(x => E.monkShowCtr(b, x.e)); const M = ctrIn.reduce((m, x) => m + x.n, 0);
     const bigCtr = ctrIn.some(x => x.e.intent.k === 'heavy' || x.e.intent.aimed || x.e.intent.k === 'reflect' || x.e.intent.k === 'erupt');
@@ -520,14 +541,14 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     for (const a of okS.slice()) if (weakNow(a)) okS.splice(okS.indexOf(a), 1); // 큰 터뜨리기는 기가 찰 때까지 아껴 둔다(그동안 기본 공격)
   }
   // 강타 예고: 흘리기형 스킬(스태미나 없이) → 흘리기 준비 → 스태미나 흘리기. 이번 차례에 빠른 행동으로 이미 그 적을 흘릴 준비를 했으면 다시 걸지 않는다(덮어쓰면 붙은 효과를 잃는다)
-  if (hv && !['confessor', 'butcher', 'bloodmage', 'elementalist', 'monk'].includes(p.build) && !v2Ready(b, hv.e.id) && r() < Math.max(P.parry, 0.35) + 0.2) { /* 앞의 다섯 직업은 직업 판단 앞에서 같은 대응을 한다 */
+  if (hv && !PRE_PARRY.includes(p.build) && !v2Ready(b, hv.e.id) && r() < Math.max(P.parry, 0.35) + 0.2 && gt(p, '*', 'parry')) { /* 앞의 다섯 직업은 직업 판단 앞에서 같은 대응을 한다 */
     const ps = okS.find(a => has(a, 'parry')); if (ps) return [ps.id, hv.e.id];
     const pb = okS.find(a => has(a, 'parryBuff')); if (pb && !p.pbuf && E.dodgeCost(p) <= p.st) return [pb.id];
     if (L.find(a => a.id === 'dodge' && a.ok) && r() < P.parry + 0.3) return ['dodge', hv.e.id];
   }
   // 0.6a.2 마검사 (10월 7일, docs/직업/마검사.md F-2): 베기(⚔)와 주문(✦)을 번갈아 쓰고(교대 보호막), 칼에 실은 원소를 오래 살 적에게 박는다.
   // 사람처럼 버튼에 보이는 숫자(피해 · 상태 · 교대 표시)를 어림해 가장 나은 행동을 고른다. 빠른 칸이 남아 있으면 빠른 행동을 먼저 본다. 마검사 스킬(kind)이 끼워졌을 때만
-  if (p.build === 'spellblade' && useMech && okS.some(a => a.s.kind)) {
+  if (p.build === 'spellblade' && useMech && okS.some(a => a.s.kind) && gt(p, 'spellblade', 'main')) {
     const cap = E.wardMax(p), ward = p.ward || 0; const last = p.sbLast; const want = last === 'cut' ? 'spell' : last === 'spell' ? 'cut' : null;
     const altFree = b.sbAltTurn !== b.turnIdx; const runIf = (p.sbRun || 0) + 1; const fastFree = !b.bonusUsed && !nf;
     const atkIn = pv1.filter(x => x.e.intent && ['attack', 'heavy', 'explode', 'brand', 'burn'].includes(x.e.intent.k)).length;
@@ -581,7 +602,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     const pickC = cand.filter(c => !fastFree || c.a.time > 0.6).sort((x, y) => y.v - x.v)[0] || fastC; if (pickC && !(hv && pickC.v < 8)) return [pickC.a.id, pickC.t && pickC.t.id]; // 강타가 오는데 마땅한 행동이 없으면 아래(방어)로
   }
   // 0.6a.2 파수꾼 (10월 4일): 보호막 · 가시 · 태우기 · 끌어내기 · 취약 · 둔화 · 붕괴 조건. 새 효과를 가진 스킬에만 걸린다 (마검사는 위의 자기 칸이 맡는다. 수도승의 둔화 배수(chillx)는 수도승 판단이 맡는다)
-  if (E.wardMax && p.build !== 'spellblade' && p.build !== 'monk' && okS.some(a => a.s.fx.some(e => WARDEN_FX.includes(e.k)))) {
+  if ((GATE.legacy ? p.build !== 'spellblade' && p.build !== 'monk' : p.build === 'warden') && E.wardMax && okS.some(a => a.s.fx.some(e => WARDEN_FX.includes(e.k))) && gt(p, 'warden', 'main')) { // 10월 17일 측정 도구 보완: 파수꾼에게만(보완 전에는 마검사 · 수도승만 뺐다: 사냥꾼 · 원소술사 · 해금 1 · 2의 둔화 배수 · 취약 · 가시 칸에도 걸렸다)
     const cap = E.wardMax(p), ward = p.ward || 0; const atk = pv1.filter(x => x.e.intent && ['attack', 'heavy', 'explode', 'brand'].includes(x.e.intent.k)).length;
     const wardGain = a => a.s.fx.reduce((m, e) => m + (e.k === 'ward' ? e.n : e.k === 'wardFill' ? Math.max(0, cap * (e.to || 1) - ward) : 0), 0);
     // 막기: 내 다음 차례 전에 공격이 오는데 보호막이 절반 아래면 보호막을 가장 많이 주는 나에게 쓰는 스킬, 가시가 없으면 가시 (10월 4일: 둘 이상 칠 때만 쓰던 것을 한 적에게도. 보스전에서 막는 스킬을 거의 쓰지 않았다)
@@ -644,7 +665,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   return null;
 }
 function heuristic(b, P, r, mem) {
-  { const dmd = E.alive(b).find(e => e.demand && e.demand.turn === b.turnIdx); if (dmd && r() < (P.mech || 0.5) + 0.1) { const L = E.actionList(b); if (dmd.demand.k === 'rest') { if (b.p.build === 'bloodmage') { const q = bmRest(b, L); if (q) return q; } const eo = L.find(a => a.v2 && a.ok && buEatOnlyQ(a)); if (eo) return [eo.id, (E.alive(b).filter(e => psn2(e, 'bleed') > 0 && E.canTarget(b, e, eo)).sort((x, y) => psn2(y, 'bleed') - psn2(x, 'bleed'))[0] || {}).id]; const g = (b.p.build === 'spellblade' && L.find(a => a.ok && a.v2 && a.self && a.s.kind === 'spell')) || cfRest(b, L) || L.find(a => a.id === 'guard' && a.ok) || L.find(a => a.id === 'dodge' && a.ok); if (g) return [g.id, g.id === 'dodge' ? dmd.id : null]; } else if (!dmd.demand.hit) { const a = L.find(x => x.id === 'basic' && x.ok); if (a && E.canTarget(b, dmd, a)) return ['basic', dmd.id]; } } } // 0.6a.2 수도원장의 요구(심문 · 고해)를 사람처럼 따른다 (10월 4일)
+  { const q = demandPick(b, P, r); if (q) return q; } // 0.6a.2 수도원장의 요구(심문 · 고해)
   const p = b.p, L = bmHold(b, E.actionList(b)), ok = id => { const a = L.find(x => x.id === id); return a && a.ok; }; // 숨겨진 직업 3: 피로 당기기는 v2Pick의 규칙으로만
   const al = E.alive(b).filter(e => e.role !== 'root');
   const hpf = p.hp / p.hpMax;
@@ -655,7 +676,7 @@ function heuristic(b, P, r, mem) {
   if (r() < P.err * (mem.errMul || 1)) { const okL = L.filter(a => a.ok && a.id !== 'flee'); const a = okL[Math.floor(r() * okL.length)]; const ts = E.alive(b).filter(e => E.canTarget(b, e, a)); return [a.id, ts.length ? ts[Math.floor(r() * ts.length)].id : null, 'mistake']; }
   // 플라스크 (기억하고 있을 때만)
   const aware = Math.min(1, P.flaskAware + (mem.flaskLearn || 0));
-  if (hpf < P.flaskAt * (p.build === 'butcher' && !E.previewAfter(b, 1).some(x => x.e.intent && (x.e.intent.k === 'heavy' || x.e.intent.aimed)) ? 0.8 : 1) && ok('flaskL') && r() < aware) return ['flaskL'];
+  if (hpf < P.flaskAt * (p.build === 'butcher' && gt(p, 'butcher', 'flask') && !E.previewAfter(b, 1).some(x => x.e.intent && (x.e.intent.k === 'heavy' || x.e.intent.aimed)) ? 0.8 : 1) && ok('flaskL') && r() < aware) return ['flaskL'];
   // 0.6: 기본 공격이 스태미나를 채우지 않으므로, 강타가 오는데 흘리기·방어할 스태미나가 없거나 바닥나면 스태미나 플라스크
   if (ok('flaskS') && ((hv && p.st < 30 && r() < aware * (P.parry + P.guard + 0.3)) || (p.st < 15 && r() < aware * 0.5))) return ['flaskS'];
   const mother = al.find(e => e.boss === 'mother');
@@ -848,4 +869,4 @@ if (require.main === module) {
   require('fs').writeFileSync(require('path').join(__dirname, 'qa.json'), JSON.stringify({ runs, scen }));
   console.log('runs', runs.length, 'sec', ((Date.now() - t0) / 1000).toFixed(1));
 }
-module.exports = { qaBurnDamage, qaMonkHit, qaPoisonBurst, qaWeaponBase, qaSkillBase, qaResource, qaWardBonus, playRun, PERSONAS, heuristic, lookahead, sigRule, invariants, wasted, rng };
+module.exports = { qaBurnDamage, qaMonkHit, qaPoisonBurst, qaWeaponBase, qaSkillBase, qaResource, qaWardBonus, playRun, PERSONAS, heuristic, lookahead, sigRule, invariants, wasted, rng, GATE, PRE_PARRY, demandPick };

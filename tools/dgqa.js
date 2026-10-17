@@ -24,6 +24,11 @@ function loadGame() {
 const G0 = loadGame();
 const run_ = code => vm.runInContext(code, G0);
 if (process.env.CFG) run_(process.env.CFG); // 시험할 수치: CFG='DIFF[1].upper.dmg=1.3; BOSSES.abbot.mult=7'
+/* 10월 17일 측정 도구 보완: 판 기록마다 꼬리표(out.meta: 게임 · 도구 지문, 시드, 성향, 직업, 시작 챕터, 변형, 행동을 바꾸는 환경 변수)를 남기고,
+   실패 · 중단(out.fails: 예외 · 행동 한도 · 걸음 한도 · 방 없음 · 창 한도)을 글이 아닌 칸으로도 남긴다. tools/measure-validate.js가 읽는다 */
+const MM = require('./measure-meta.js'); const REV = MM.revision(path.resolve(__dirname, '..', DIR));
+const SKE = require('./skeval.js').makeSkEval(G0, run_); // 강화를 반영한 스킬 값 (장착 고르기)
+const failOf = (out, k, o) => { (out.fails = out.fails || []).push(Object.assign({ k }, o || {})); };
 
 const PREF = { assassin: 'int', scar: 'str', priest: 'int', berserker: 'str', hunter: 'dex', arcanist: 'int', templar: 'str', warlock: 'int' };
 const FIGHT = ['normal', 'ambush', 'strong', 'treasure', 'trial'];
@@ -107,6 +112,7 @@ function handleSheets(pk, r) {
     else { G.sheet = null; }
     while (!G.sheet && G.dropQ && G.dropQ.length) G0.nextDrop();
   }
+  if (G.sheet && CUR) { CUR.bugs.push('창 40번 안에 닫히지 않음 ' + G.sheet.kind); failOf(CUR, 'sheetcap', { kind: G.sheet.kind, room: G.run && G.run.room }); } /* 10월 17일: 전에는 말없이 넘어갔다 */
 }
 
 /* 10월 16일 0.8.0 2단계 찍기 정책 =====
@@ -310,12 +316,12 @@ function fightCur(pk, r, mem, out) {
     }
     if (OPT.onTurn) OPT.onTurn(G, n);
     const progKey = b.turnIdx + ':' + (b.round || 0) + ':' + b.log.length;
-    try { G0.playerAct(b, a, t); } catch (e) { out.bugs.push('예외 ' + e.message + ' @' + a); b.over = 'lose'; }
+    try { G0.playerAct(b, a, t); } catch (e) { out.bugs.push('예외 ' + e.message + ' @' + a); failOf(out, 'exception', { msg: String(e.message).slice(0, 200), act: a, room: G.run.room, ch: G.run.ch || 1 }); b.over = 'lose'; }
     stuckN = progKey === b.turnIdx + ':' + (b.round || 0) + ':' + b.log.length ? stuckN + 1 : 0;
     out.acts++;
     if (OPT.policy?.afterAction) OPT.policy.afterAction(b, G.run, a, t);
   }
-  if (!b.over) { out.bugs.push('300행동 안에 끝나지 않음 ' + G.run.room); b.over = 'lose'; }
+  if (!b.over) { out.bugs.push('300행동 안에 끝나지 않음 ' + G.run.room); failOf(out, 'actcap', { room: G.run.room, ch: G.run.ch || 1, t: (G.run.cur || {}).type, rounds: b.round || 0, acted: b.rec.filter(x => x.k === 'act').length, stuck: stuckN }); /* acted: 실제로 받아들여진 행동 수(300보다 훨씬 적으면 멈춤), stuck: 끝에 이어진 '차례가 흐르지 않은 행동' 수 */ b.over = 'lose'; }
   if (OPT.policy?.battleEnd) OPT.policy.battleEnd(b, G.run);
   return b;
 }
@@ -351,6 +357,7 @@ function playChar(pk, build, seed) {
   spendPassive(pk, r); while (run.ksPending > 0) { G0.ksEnsureOffer(run); if (!run.ksOffer) break; G0.ksTake(run, ksChoice(pk, r, run)); spendPassive(pk, r); } spendTree(pk, r); G0.treeSync(run); run.p.hp = run.p.hpMax; run.p.mp = run.p.mpMax; run.p.st = run.p.stMax;
   if (OPT.policy?.start) OPT.policy.start(run, r);
   const out = { pk, build, seed, res: 'lose', floor: 0, lv: 1, rooms: [], bossHp: null, bugs: [], acts: 0, fights: [] };
+  out.meta = MM.rowMeta(REV, { seed, pk, build, from: FROM, chapters: OPT.chapters, variant: OPT.variant, pol: OPT.polId });
   if (MARKCH) { out.marks = (run.marks || []).slice(); out.markCh = run.markCh; out.markPts = run.markPts || 0; }
   if (FROM > 1 && !MARKCH) jumpTo(pk, r, FROM);
   return playLoop(pk, r, out);
@@ -507,17 +514,25 @@ function spendTreeUp(pk, r, run, A) {
     sbEquip(run, A);
   }
 }
+/* 10월 17일 측정 도구 보완: 장착 점수는 강화를 반영한 실제 스킬의 한 차례 값(tools/skeval.js: skScore · 실제 유산 · 조건부 할인 · 처치 환급) + 주 갈래 1.5.
+   전에는 강화 수 × 2 + 고리 + 주 갈래 1.5였다(강화가 스킬을 얼마나 바꾸는지 · 유산 비용을 보지 않았다). EQUIP_OLD=1이면 예전 점수 */
+function sbEquipScore(run, A) {
+  const foc = id => (A.nodes[id].br === run.focus ? 1.5 : 0);
+  if (process.env.EQUIP_OLD) { const ups = id => run.atree.own.filter(u => A.nodes[u].on === id).length; return id => ups(id) * 2 + A.nodes[id].ring + foc(id); }
+  const m = {}; return id => (m[id] != null ? m[id] : (m[id] = SKE.evalRun(run, id).perTurn + foc(id)));
+}
 function sbEquip(run, A) {
-  const own = run.atree.own.filter(id => A.nodes[id].kind === 'skill'); const ups = id => run.atree.own.filter(u => A.nodes[u].on === id).length;
-  const sc = id => ups(id) * 2 + A.nodes[id].ring + (A.nodes[id].br === run.focus ? 1.5 : 0);
+  const own = run.atree.own.filter(id => A.nodes[id].kind === 'skill');
+  const sc = sbEquipScore(run, A);
   const eq = own.slice().sort((a, b) => sc(b) - sc(a)).slice(0, G0.EQUIP_SLOTS2);
-  for (const k of ['spell', 'cut']) if (eq.length >= G0.EQUIP_SLOTS2 && !eq.some(id => G0.SK2[id].kind === k)) { const c = own.filter(id => G0.SK2[id].kind === k && !eq.includes(id)).sort((a, b) => sc(b) - sc(a))[0]; if (c) { const lo = eq.filter(id => G0.SK2[id].kind !== k).sort((a, b) => sc(a) - sc(b))[0]; eq[eq.indexOf(lo)] = c; } }
+  if (run.build === 'spellblade') for (const k of ['spell', 'cut']) if (eq.length >= G0.EQUIP_SLOTS2 && !eq.some(id => G0.SK2[id].kind === k)) { const c = own.filter(id => G0.SK2[id].kind === k && !eq.includes(id)).sort((a, b) => sc(b) - sc(a))[0]; if (c) { const lo = eq.filter(id => G0.SK2[id].kind !== k).sort((a, b) => sc(a) - sc(b))[0]; eq[eq.indexOf(lo)] = c; } }
   run.skills = eq; G0.atSync(run);
 }
 /* 지금 G.run을 성향대로 끝(쓰러짐 또는 정산)까지 진행한다 */
+let CUR = null; // 지금 진행 중인 판의 기록 (창 한도 기록용)
 function playLoop(pk, r, out) {
-  const G = G0.__G, run = G.run; const mem = {};
-  for (let guard = 0; guard < 240; guard++) {
+  const G = G0.__G, run = G.run; const mem = {}; CUR = out; let guard = 0;
+  for (; guard < 240; guard++) {
     if (OPT.onStep) OPT.onStep(G);
     if (G.scr === 'dead') { out.res = 'lose'; break; }
     if (G.scr === 'settle') {
@@ -528,7 +543,7 @@ function playLoop(pk, r, out) {
     handleSheets(pk, r); spendTree(pk, r);
     if (!run.cur && run.cross) { const k = pickPath(pk, run, r); (out.paths = out.paths || []).push(k); G0.choosePath(k); continue; }
     if (!run.cur && run.doors) { const i = pickDoor(pk, run, r); out.rooms.push(run.doors[i].type); G0.chooseDoor(i); continue; }
-    const R = run.cur; if (!R) { out.bugs.push('방이 없음 ' + run.room); break; }
+    const R = run.cur; if (!R) { out.bugs.push('방이 없음 ' + run.room); failOf(out, 'noroom', { room: run.room, ch: run.ch || 1 }); break; }
     if (!G0.ROOM_TYPES[R.type] || !G0.ROOM_TYPES[R.type].fight) { if (R.type !== 'boss') { restRoom(pk, run, r); handleSheets(pk, r); continue; } }
     if (R.type === 'boss') { out.bossHp = Math.round(run.p.hp / run.p.hpMax * 100); out.bossLv = run.lv; }
     useConsOut(pk, run, r);
@@ -542,6 +557,8 @@ function playLoop(pk, r, out) {
     G0.battleContinue();
     handleSheets(pk, r);
   }
+  if (guard >= 240) { out.bugs.push('240걸음 안에 판이 끝나지 않음 ' + run.room); failOf(out, 'stepcap', { room: run.room, ch: run.ch || 1, scr: G.scr }); } /* 10월 17일: 전에는 말없이 쓰러짐(lose)으로 남았다 */
+  out.steps = guard; CUR = null;
   out.floor = run.room; out.ch = run.ch || 1; out.lv = run.lv; out.gold = run.gold;
   if (OPT.detail && run.atree) { const A = G0.atBuild(run.build); const cnt = {}; for (const id of run.atree.own) { const b0 = (A.nodes[id] || {}).br; if (b0) cnt[b0] = (cnt[b0] || 0) + 1; } const top = Object.entries(cnt).sort((x, y) => y[1] - x[1])[0]; out.branch = run.build === 'hunter' && run.focus ? run.focus : top ? top[0] : null; out.branchN = top ? top[1] : 0; out.branchOf = run.atree.own.length; out.mode = run.mode || 'normal'; } /* 10월 8일(7단계): 갈래(트리 칸을 가장 많이 연 갈래) · 연 칸 수 · 모드를 판마다 남긴다 */
   if (run.ptree) out.ks = run.ptree.ks.slice(); if ((run.awk || []).length) out.awk = run.awk.slice(); { const ft = (run.rooms || []).filter(x => x.type === 'fate'); if (ft.length) out.fate = ft.map(x => x.took ? (x.ok ? '+' : '-') + x.took : 'skip'); } /* 각인 · 운명의 저울 (없으면 칸을 두지 않아 1챕터 결과 파일은 그대로) */
@@ -572,7 +589,10 @@ if (require.main === module) {
   // 10월 5일 옵션: SEED(씨앗 시작값, 기본 5000), CLS=암살자 키들(쉼표), PK=성향 키들(쉼표), SHARD=i/n(n조각 가운데 i번째만, 0부터), DETAIL=0이면 전투 기록을 빼고 가볍게
   const SEED0 = +(process.env.SEED || 5000); const CLSF = process.env.CLS ? process.env.CLS.split(',') : null; const PKF = process.env.PK ? process.env.PK.split(',') : null;
   const [SI, SN] = (process.env.SHARD || '0/1').split('/').map(Number); let job = 0;
-  for (const pk of Object.keys(PERSONAS).filter(k => !PKF || PKF.includes(k))) for (const build of Object.keys(G0.BUILDS).filter(k => !G0.BUILDS[k].tut && (!G0.BUILDS[k].soon || process.env.DG_SOON) && (!G0.UNLOCK[k] || process.env.DG_LOCK || (CLSF && CLSF.includes(k))) && (!CLSF || CLSF.includes(k)))) for (let s = 0; s < N; s++) { if ((job++ % SN) !== SI) continue; runs.push(playChar(pk, build, SEED0 + s * 13)); }
+  const want = []; // 10월 17일: 이 조각이 돌릴 판 목록(기대) — 결과 옆 <파일>.manifest.json에 남겨 measure-validate.js가 빠진 판을 찾는다
+  for (const pk of Object.keys(PERSONAS).filter(k => !PKF || PKF.includes(k))) for (const build of Object.keys(G0.BUILDS).filter(k => !G0.BUILDS[k].tut && (!G0.BUILDS[k].soon || process.env.DG_SOON) && (!G0.UNLOCK[k] || process.env.DG_LOCK || (CLSF && CLSF.includes(k))) && (!CLSF || CLSF.includes(k)))) for (let s = 0; s < N; s++) { if ((job++ % SN) !== SI) continue; want.push({ pk, build, seed: SEED0 + s * 13 }); }
+  fs.writeFileSync(file + '.manifest.json', JSON.stringify(manifestOf(want)));
+  for (const w of want) { try { runs.push(playChar(w.pk, w.build, w.seed)); } catch (e) { runs.push(crashRow(w, e)); } } /* 판 밖 예외도 판 하나의 실패로 남기고 다음 판을 돈다 */
   fs.writeFileSync(file, JSON.stringify(runs));
   // 요약: 챕터마다 따로 (2챕터는 1챕터를 깬 캐릭터 기준, 기획서 11.12절)
   const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
@@ -605,5 +625,13 @@ if (require.main === module) {
     console.log(`예고된 큰 공격으로 쓰러짐 ${pct(deaths.filter(d => d.death.big).length, deaths.length)}%, 마지막 세 일격 안에 큰 공격 ${pct(deaths.filter(d => d.death.bigIn3).length, deaths.length)}%, 쓰러질 때 생명력 플라스크가 남음 ${pct(deaths.filter(d => d.death.fl && d.death.fl.life > 0).length, deaths.length)}%`);
   }
   const bugs = runs.flatMap(x => x.bugs); if (bugs.length) console.log('이상 예:', bugs.slice(0, 5));
+  { const V = require('./measure-validate.js'); const rep = V.validate([{ file, rows: runs }], { manifests: [manifestOf(want)] }); console.log(V.summaryText(rep, { short: true })); }
 }
-module.exports = { playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post, ch3Pre, seedWorld };
+/* 기대 판 목록 (measure-validate.js 형식): 묶음(성향 · 직업)마다 시드. 변형 · 시작 챕터 · 챕터 수 · 환경 변수는 조각 전체에 하나 */
+function manifestOf(want) {
+  const g = {}; for (const w of want) { const k = [w.pk, w.build].join('|'); (g[k] = g[k] || { pk: w.pk, build: w.build, seeds: [] }).seeds.push(w.seed); }
+  return { tool: 'dgqa', rev: REV.id, variant: OPT.variant || process.env.DG_VARIANT || 'base', from: FROM, chapters: OPT.chapters, env: REV.env, groups: Object.values(g) };
+}
+/* 판 밖 예외(창 처리 · 트리 찍기 등)로 판이 끝나지 못한 경우의 기록 */
+function crashRow(w, e) { const o = { pk: w.pk, build: w.build, seed: w.seed, res: 'crash', floor: 0, lv: 0, rooms: [], bugs: ['판 밖 예외 ' + e.message], acts: 0, fights: [] }; o.meta = MM.rowMeta(REV, { seed: w.seed, pk: w.pk, build: w.build, from: FROM, chapters: OPT.chapters, variant: OPT.variant, pol: OPT.polId }); failOf(o, 'crash', { msg: String(e.message).slice(0, 200), stack: String(e.stack || '').split('\n').slice(1, 3).join(' | ') }); CUR = null; return o; }
+module.exports = { manifestOf, crashRow, REV, SKE, sbEquip, sbEquipScore, playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post, ch3Pre, seedWorld };
