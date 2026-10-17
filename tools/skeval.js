@@ -22,6 +22,7 @@ function makeSkEval(G0, run_) {
   function evalSkill(pl, id) {
     const s = G0.skOf(pl, id); if (!s) return null; const sc = Object.assign({}, G0.skScore(s)); const cost = G0.skCost(s);
     if (bbE && pl.bD && s.fx.some(e => e.k === 'bbuf')) { const dv = bbE(s, pl.bD) - bbE(s); sc.E += dv; sc.net += dv; } // 0.8.0 5단계 연사(원거리 초안 2-10): 버프 값 = 기간 안 기대 기본 공격 횟수 × 실제 기본 공격 피해 × 덤 (점수표는 피해 8로 본다)
+    if ((pl.pn || []).includes('n_el_student') && s.tgt !== 'self' && s.fx.some(e => e.k === 'dmg' && e.n > 0)) { sc.E += 3; sc.net += 3; } // 10월 18일 0.8.0 5단계 원소술사 불의 학도: 피해를 주는 스킬은 첫 타격 +3(고정 피해, 행동마다 한 번)
     const disc = (s.cond || []).reduce((m, c) => m + (c.off || 1) * condP(c), 0);
     const refund = s.killRecharge ? ((SKK.sb && SKK.sb.kill) || 0.4) * (Y.refund || 1) : 0;
     const costEff = Math.max(1, cost - disc - refund);

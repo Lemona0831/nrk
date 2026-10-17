@@ -68,7 +68,7 @@ function __hcAwk() {
   o.hn3 = f((b, p) => { p.st = 0; A.k_hn3.onEvade(b, p); return p.st; });
   o.el1 = [3, 2].map(n => f((b, p, e) => { stk(e, 'ignite', n); return A.k_el1.hitP(b, p, e); }));
   o.el2 = f((b, p, e) => { stk(e, 'chill', 1); const a = A.k_el2.brk(b, p, e); stk(e, 'chill', 0); return [a, A.k_el2.brk(b, p, e)]; });
-  o.el3 = f((b, p) => { p.st = 0; A.k_el3.onShock(b, p); return p.st; });
+  o.el3 = f((b, p) => A.k_el3.flatAdd(b, p, {}, { dot: 1, shock: 1 }) + ':' + A.k_el3.flatAdd(b, p, {}, { dot: 1, shock: 1, arc: 1 })); // 10월 18일 0.8.0 5단계: 남는 울림 효과 바꿈(열충격 +3, 번진 몫 없음)
   o.sb1 = f((b, p, e) => { stk(e, 'bleed', 2); const a = A.k_sb1.hitP(b, p, e); stk(e, 'bleed', 0); return [a, A.k_sb1.hitP(b, p, e)]; });
   o.sb2 = A.k_sb2.dotP(); o.sb3 = A.k_sb3.wardP();
   o.mk1 = f((b, p, e) => [A.k_mk1.hitP(b, p, e, {}, { id: 'heavy' }), A.k_mk1.hitP(b, p, e, {}, { id: 'basic' })]);
@@ -155,7 +155,7 @@ function __hcBlob(k) { return JSON.stringify(IFX[k], (kk, v) => typeof v === 'fu
   W('몸을 빼 피하면 스태미나가 6 찹니다', 'k_hn3 onEvade fxStam 6 → ' + A.hn3, () => A.hn3 === 6);
   W('화상 3 이상인 적에게 주는 직접 피해가 8%', 'k_el1 화상 3 이상 ' + A.el1.join('/'), () => near(A.el1[0], 0.08) && A.el1[1] === 0);
   W('둔화된 적에게 주는 붕괴가 4 늘어납니다', 'k_el2 brk 4 ' + A.el2.join('/'), () => A.el2[0] === 4 && A.el2[1] === 0);
-  W('열충격이 일어나면 스태미나가 6 찹니다', 'k_el3 onShock fxStam 6 → ' + A.el3, () => A.el3 === 6);
+  W('열충격 피해 +3', 'k_el3 flatAdd 3 (번진 몫 0) → ' + A.el3, () => A.el3 === '3:0');
   W('출혈된 적에게 주는 직접 피해가 6% 늘어납니다', 'k_sb1 · k_bu1 hitP 0.06', () => near(A.sb1[0], 0.06) && A.sb1[1] === 0 && near(A.bu1[0], 0.06) && A.bu1[1] === 0);
   W('강공격의 피해가 8% 늘어납니다', 'k_mk1 heavy 0.08', () => near(A.mk1[0], 0.08) && A.mk1[1] === 0);
   W('방어하는 동안 받는 피해가 4% 줄어듭니다', 'k_mk2 inP 0.04 (방어 중)', () => near(A.mk2[0], 0.04) && A.mk2[1] === 0);

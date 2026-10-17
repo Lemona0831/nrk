@@ -415,7 +415,7 @@ const IFX_AWK = {
   k_hn3: { onEvade: (b, p) => { fxStam(p, 6); return 1; } },
   k_el1: { hitP: (b, p, e) => st(e, 'ignite') >= 3 ? 0.08 : 0 },
   k_el2: { brk: (b, p, e) => st(e, 'chill') ? 4 : 0 },
-  k_el3: { onShock: (b, p) => { fxStam(p, 6); return 1; } },
+  k_el3: { flatAdd: (b, p, e, o) => o.shock && !o.arc ? 3 : 0 }, // 10월 18일 0.8.0 5단계(원거리 초안 3-2 · 결정 10) 남는 울림: 열충격 피해 +3(열충격마다, 배율 뒤 더함). 옛 효과(스태미나 +6)는 이어지는 울림(n_el_echo)
   k_sb1: { hitP: (b, p, e) => stk(e, 'bleed') ? 0.06 : 0 },
   k_sb2: { dotP: () => 0.10 },
   k_sb3: { wardP: () => 0.12 },

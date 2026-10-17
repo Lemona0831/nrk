@@ -427,7 +427,7 @@ const SKILLS2 = {
     { id: 'e_frostwave', row: 2, b: '공명', tier: '하급', n: '냉기 물결', tgt: 'all', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'chill', n: 1 }] },
     { id: 'e_catalyst', row: 3, b: '공명', tier: '하급', n: '촉매', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'weave', ign: 4, chill: 1 }, { k: 'shockx', dmg: 1.5 }] },
     { id: 'e_arc', row: 3, b: '공명', tier: '하급', n: '튀는 충격', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 9 }, { k: 'weave', ign: 4, chill: 1 }, { k: 'shockx', arc: 0.5 }] },
-    { id: 'e_resonate', row: 4, b: '공명', tier: '하급', n: '공명', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'weave', ign: 4, chill: 1 }, { k: 'hasten', n: 1, on: 'shock' }] },
+    { id: 'e_resonate', row: 4, b: '공명', tier: '하급', n: '공명', tgt: 'ranged', time: 'normal', cd: 6, killRecharge: 1, krShock: 1, fx: [{ k: 'dmg', n: 15 }, { k: 'weave', ign: 4, chill: 1 }] }, // 10월 18일 0.8.0 5단계(원거리 초안 1-2 · 3-6): 🔄(열충격이 나면) → 이 행동으로 적을 쓰러뜨리면(행동 끝 열충격 포함, krShock) 유산 +1
     { id: 'e_backdraft', row: 4, b: '공명', tier: '하급', n: '역화', tgt: 'all', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 6 }, { k: 'weave', ign: 3, chill: 1 }] },
     { id: 'e_polar', row: 5, b: '공명', tier: '하급', n: '극성 뒤집기', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'weave', ign: 4, chill: 2 }, { k: 'shockx', brk: 2 }] },
     { id: 'e_steam', row: 5, b: '공명', tier: '하급', n: '증기 폭발', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'chill', n: 1 }, { k: 'shockx', dmg: 1.5 }] },

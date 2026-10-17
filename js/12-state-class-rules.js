@@ -185,6 +185,17 @@ const CHANT_K = ['chant', 'chanting', 'burn'];
    서리 무게: 둔화된 적(또는 이번 라운드 둔화로 맨 뒤에 선 적, e.chillR)이 나를 치는 평소 공격은 피해 ×(1 − guard). 큰 공격(bigHit)과 지속 피해는 그대로.
    되얼림(rime): 나를 직접 친 적에게 상태 n, 횟수 상한 rimeMax */
 const ELEM = { D: 3, Cw: 2, Bk: 12, guard: 0.3, half: 0.5, cap: 16, rimeMax: 8 };
+/* 10월 18일 0.8.0 5단계 원소술사 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 3-3 · 3-5):
+   서리 무게 = guard + elGuard(무뎌진 칼날 +0.05, 얼음 심장 +0.15). 열충격 배수 shockMul(깨진 얼음 · 번지는 울림 · 잿불의 길의 대가, 곱한다): arc 1이면 번진 몫.
+   끊어진 영창(elCutResp): 영창을 끊거나(붕괴 · 쌓인 상처) 열충격으로 적을 무너뜨리면 대응 충전 +1 더(라운드 한도 밖, 전투마다 ELEM_CUT.max번, 흘림새와 같은 장치) */
+const ELEM_CUT = { max: 2 };
+const elGuardOf = p => ELEM.guard + fxVal(p, 'elGuard', 0, (a, v) => a + v);
+const elShockMul = (b, e, arc, quiet) => { let m = 1; for (const [k, f] of fxList(b.p)) if (f.shockMul) { const v = f.shockMul(b, b.p, e, arc); if (v !== 1 && v != null) { m *= v; if (!quiet) fxHit(k); } } return m; };
+function elCutEv(b, e, chant, shock) {
+  if (!b || b.over || b.p.build !== 'elementalist') return; const p = b.p;
+  if (chant) { if (b.cur) b.elCutA = b.actN; fxRun(p, 'onChantCut', b, p, e); } // 원소 장막(이 행동으로 끊음) · 흩어진 주의
+  if ((chant || shock) && fxFlag(p, 'elCutResp') && (b.elCutN || 0) < ELEM_CUT.max) { b.elCutN = (b.elCutN || 0) + 1; ysAdd(b, 1, 'resp', '끊어진 영창'); }
+}
 /* 광역 배율 (hurtEnemy와 열충격이 함께 쓴다): 땅속 · 군주의 뼈벽 · 후열 · 방패벽 · 방패병, 보스는 1. quiet면 장비 효과 발동을 세지 않는다(미리 보기) */
 function aoeApply(b, e, d, quiet) {
   const fl = k => quiet ? fxList(b.p).some(([, f]) => f[k]) : fxFlag(b.p, k);
@@ -199,44 +210,51 @@ const frostOn = (b, e) => !!(b && b.p.build === 'elementalist' && e && (e.s.chil
 function elemPreview(b, s, e, multi) {
   let I = st(e, 'ignite'), C = st(e, 'chill'), H = st(e, 'haste'); const I0 = I, C0 = C;
   const dm = s.fx.find(x => x.k === 'dmg'), bo = s.fx.find(x => x.k === 'burnOut'), wv = s.fx.find(x => x.k === 'weave'); const hit = !!(dm && dm.n > 0) || !!bo; let wvAdd = null;
-  const add = (k, n) => { if (k === 'chill') { const m = Math.min(n, H); H -= m; n -= m; if (n > 0) C = Math.min(Math.max(KW.chill, C), C + n); } else if (k === 'ignite') I = Math.min(Math.max(KW.ignite, I), I + n); };
+  const igCut = b.p.build === 'elementalist' && fxList(b.p).some(([, f]) => f.elIgnCut); // 얼음 심장의 대가: 거는 화상 −1(최소 1)
+  const add = (k, n) => { if (k === 'chill') { const m = Math.min(n, H); H -= m; n -= m; if (n > 0) C = Math.min(Math.max(KW.chill, C), C + n); } else if (k === 'ignite') { if (igCut) n = Math.max(1, n - 1); I = Math.min(Math.max(KW.ignite, I), I + n); } };
   for (let h = 0; h < (s.hits || 1); h++) {
     if (hit && !(bo && h === 0) && I > 0) I--;
     if (h === 0) { if (bo) I = 0; if (s.tgt !== 'self') for (const x of s.fx) if (x.k === 'st') add(x.s, x.n); if (wv) { if (I && !C) { wvAdd = ['chill', wv.chill]; add('chill', wv.chill); } else if (!I) { wvAdd = ['ignite', wv.ign]; add('ignite', wv.ign); } } }
   }
   const sx = s.fx.find(x => x.k === 'shockx'); const shock = I >= 1 && C >= 1 && !e.under;
   const T = shock ? Math.min(ELEM.cap, I + ELEM.Cw * C) : 0;
-  return { I0, C0, I, C, shock, T, d: T * ELEM.D * triggerDamageMul(b.p) * ((sx && sx.dmg) || 1) * (multi ? aoeCut(b, e, 1) : 1), brk: shock ? C * ELEM.Bk * ((sx && sx.brk) || 1) : 0, wv: wvAdd, burn: bo ? I0 : 0 };
+  const el = b.p.build === 'elementalist'; const fl = el && shock ? fxList(b.p).reduce((a, [, f]) => a + (f.flatAdd ? f.flatAdd(b, b.p, e, { dot: 1, shock: 1, pre: 1 }, null) || 0 : 0), 0) : 0; // 0.8.0 5단계: 열충격 배수 노드 · 남는 울림(+3)도 미리 본다(발동 기록은 남기지 않음)
+  return { I0, C0, I, C, shock, T, d: shock ? T * ELEM.D * triggerDamageMul(b.p) * ((sx && sx.dmg) || 1) * (multi ? aoeCut(b, e, 1) : 1) * (el ? elShockMul(b, e, 0, 1) : 1) + fl : 0, brk: shock ? C * ELEM.Bk * ((sx && sx.brk) || 1) : 0, wv: wvAdd, burn: bo ? I0 : 0 };
 }
 /* 열충격 처리 (by: 'me' 내 행동 끝, 'enemy' 적 행동 끝). 내 행동이면 b.shockCtx(runSkill2가 싣는다)의 대상에게 shockx를 붙인다 */
 function elemShock(b, by) {
   if (b.over || b.p.build !== 'elementalist') return;
-  const ctx = by === 'me' ? b.shockCtx : null; let tgtN = 0;
+  const ctx = by === 'me' ? b.shockCtx : null; let tgtN = 0, shKill = 0;
   for (const e of b.en.slice()) {
     if (b.over) break;
     if (!e.alive || e.under || e.role === 'root' || e.shockAct === b.actN) continue; // 땅속이면 상태를 남긴다
     const I = st(e, 'ignite'), C = st(e, 'chill'); if (!(I >= 1 && C >= 1)) continue;
     e.shockAct = b.actN; const tgt = !!(ctx && ctx.ids.includes(e.id)); const sx = tgt ? ctx.sx : null; if (tgt) tgtN++;
-    const T = Math.min(ELEM.cap, I + ELEM.Cw * C); const base = T * ELEM.D * triggerDamageMul(b.p) * ((sx && sx.dmg) || 1); const multi = !!(ctx && ctx.multi);
+    const T = Math.min(ELEM.cap, I + ELEM.Cw * C); const base = T * ELEM.D * triggerDamageMul(b.p) * ((sx && sx.dmg) || 1); const multi = !!(ctx && ctx.multi); const sm = elShockMul(b, e, 0); // 0.8.0 5단계: 열충격 배수 노드 (곱한다)
     const big = !!(e.intent && (['heavy', 'charge', 'chant', 'chanting', 'burn', 'aim', 'reflect', 'erupt'].includes(e.intent.k) || e.intent.aimed)); const preB = !!e.s.broken; const red = !!(e.braced || e.vow);
     logp(b, 'crit', ''); const ent = b.log[b.log.length - 1];
-    const dealt = hurtEnemy(b, e, base * (multi ? aoeCut(b, e) : 1), { dot: 1, shock: 1, shockAoe: multi ? 1 : 0, silent: 1, label: '열충격' });
-    let brk = 0; if (e.alive) { delete e.s.ignite; delete e.s.chill; e.chillR = 0; brk = C * ELEM.Bk * ((sx && sx.brk) || 1); addBreak(b, e, brk); }
+    const dealt = hurtEnemy(b, e, base * sm * (multi ? aoeCut(b, e) : 1), { dot: 1, shock: 1, shockAoe: multi ? 1 : 0, silent: 1, label: '열충격' }); if (!e.alive) shKill++;
+    let brk = 0; if (e.alive) { delete e.s.ignite; delete e.s.chill; e.chillR = 0; brk = C * ELEM.Bk * ((sx && sx.brk) || 1); b.elShockBrk = 1; addBreak(b, e, brk); b.elShockBrk = 0; } // elShockBrk: 끊어진 영창이 열충격으로 무너뜨림을 안다(addBreak)
     const broke = e.alive && !!e.s.broken && !preB;
     fxRun(b.p, 'onShock', b, b.p, e, I, C, dealt, broke);
     ent.m = fixJosa((by === 'enemy' ? '(적 차례) ' : '') + '열충격: ' + e.n + '. 화상 ' + I + ' + 둔화 ' + C + ' × 2 → 피해 ' + r1(dealt) + (brk ? ', 붕괴 +' + Math.round(brk) : ''));
-    let arc = 0; if (sx && sx.arc && !b.over) for (const o of alive(b)) { if (o === e || o.role === 'root') continue; arc += hurtEnemy(b, o, base * sx.arc * aoeCut(b, o), { dot: 1, shock: 1, shockAoe: 1, silent: 1, label: '번진 열충격' }); if (b.over) break; }
+    let arc = 0; if (sx && sx.arc && !b.over) for (const o of alive(b)) { if (o === e || o.role === 'root') continue; arc += hurtEnemy(b, o, base * sx.arc * elShockMul(b, o, 1) * aoeCut(b, o), { dot: 1, shock: 1, shockAoe: 1, arc: 1, silent: 1, label: '번진 열충격' }); if (!o.alive) shKill++; if (b.over) break; } // arc: 번진 몫(남는 울림의 +3은 받지 않는다)
     if (arc > 0) logp(b, 'good', '열충격이 다른 적에게 번진다. 모두 ' + r1(arc) + ' 피해');
     if (sx && sx.keep && e.alive && !b.over) { const g = addS(b, e, sx.keep.s, sx.keep.n); if (g) logp(b, 'good', e.n + '에게 ' + KW_N[sx.keep.s] + ' ' + g + '이(가) 남는다'); }
     b.rec.push({ k: 'shock', by, I, C, T, dmg: r1(dealt), brk: Math.round(brk), broke: broke ? 1 : 0, cut: broke && big ? 1 : 0, kill: e.alive ? 0 : 1, arc: r1(arc), red: red ? 1 : 0, multi: multi ? 1 : 0 });
   }
   if (ctx && ctx.hz && tgtN && !b.over) hastenBranch(b, ctx.br, ctx.hz, ctx.id); // 🔄 이 스킬로 열충격이 일어나면 (행동에 한 번)
+  if (ctx && ctx.kr && shKill) ysRefund(b, ctx.kr); // 10월 18일 0.8.0 5단계 공명(krShock): 행동 끝 열충격으로 쓰러뜨려도 처치 환급(라운드에 한 번, 타격 처치와 한도를 함께 씀)
+  if (ctx && ctx.cutMe && b.elCutA === b.actN && !b.over) elCutMe(b, ctx.cutMe); // 원소 장막: 행동 끝 열충격이 영창을 끊었을 때
 }
+/* 원소 장막 (0.8.0 5단계): 이 행동으로 영창을 끊으면 나에게 상태(행동마다 한 번) */
+function elCutMe(b, L) { if (b.elCutMeA === b.actN) return; b.elCutMeA = b.actN; for (const x of L) { addS(b, b.p, x.s, x.n); logp(b, 'good', '영창을 끊었다. 나에게 ' + (KW_N[x.s] || x.s) + ' ' + x.n); } }
 /* 되얼림 · 불꽃 외투: 나를 직접 친 적에게 상태 (보호막 · 방어 · 흘리기로 0이 되어도 센다. 몸 빼기로 피한 공격은 hurtPlayer가 먼저 끝낸다) */
 function elemRime(b, src) {
   const p = b.p;
-  for (const k of Object.keys(p.rime)) { const r = p.rime[k]; if (!r || !(r.times > 0) || !src.alive) continue; const g = addS(b, src, k, r.n); r.times--; if (r.times <= 0) delete p.rime[k]; logp(b, 'good', (k === 'ignite' ? '불꽃이 ' : '서리가 ') + src.n + '에게 옮겨 간다. ' + KW_N[k] + ' ' + g + (r.times > 0 ? ' (남은 ' + r.times + '번)' : '')); }
+  let fired = 0; for (const k of Object.keys(p.rime)) { const r = p.rime[k]; if (!r || !(r.times > 0) || !src.alive) continue; const g = addS(b, src, k, r.n); r.times--; fired++; if (r.times <= 0) delete p.rime[k]; logp(b, 'good', (k === 'ignite' ? '불꽃이 ' : '서리가 ') + src.n + '에게 옮겨 간다. ' + KW_N[k] + ' ' + g + (r.times > 0 ? ' (남은 ' + r.times + '번)' : '')); }
   if (!Object.keys(p.rime).length) p.rime = null;
+  if (fired) fxRun(p, 'onRime', b, p, src); // 10월 18일 0.8.0 5단계 녹는 서리
 }
 /* 수도승 (10월 7일, docs/직업/수도승.md B절; 10월 10일 단순화): 방어하거나 자세를 잡은 동안 전열 적이 나를 직접 치면 되받는다(monkCounter). 피해 = 무기 피해 × ctr + 자세 덤, 붕괴 ctrBrk(강타면 +ctrBig), 기 +kiCtr.
    내 차례 하나 사이에 ctrMax번까지(p.ctrN, 내 차례의 첫 행동에서 0). 기 = 강화이고 되받을 때(와 스킬이 주는 것)만 쌓인다. ▶ 공격이 1을 써서 +25%, ⚡ 공격에는 실리지 않는다(b.curFast) */

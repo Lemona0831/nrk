@@ -134,7 +134,7 @@ function skValue(s, ov) {
       case 'swapx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n : 0) * (e.mul - 1) * K.hunt.swap; break; } // 직전과 다른 적이면 × (첫 발만)
       case 'evade': v += e.n * K.hunt.ev; break; // 다음에 맞는 공격 n번을 피한다
       case 'hastex': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * K.hunt.hx; break; } // 가속 상태면 ×
-      case 'meSt': v += e.n * (KWv[e.s] || 1) * (e.if === 'chill' ? M.ch * mt : 1); break; // if: 'chill' 대상이 이미 둔화일 때만(수도승 거두기)
+      case 'meSt': v += e.n * (KWv[e.s] || 1) * (e.if === 'chill' ? M.ch * mt : e.on === 'cut' ? 0.25 : 1); break; // if: 'chill' 대상이 이미 둔화일 때만(수도승 거두기). on 'cut'(10월 18일 원소 장막): 영창을 끊을 때만(cutx와 같은 넷 중 하나)
       case 'hasteSpend': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * 0.4; break; } // 가속이 있으면 써서 ×
       case 'chillCut': v += K.hunt.stop * (K.hunt.stopV * 0.8 + e.brk * K.brk * 0.2); break; // 둔화된 적이 모으는 중이면 끊는다(강적 · 보스는 붕괴)
       case 'chillShatter': v += K.hunt.ch * (e.dmg + e.brk * K.brk); break; // 둔화를 깨뜨려 1마다 피해 · 붕괴
@@ -468,7 +468,7 @@ function skBody(s) {
       case 'bbuf': { const til = (e.r || 0) === 0 ? '이번 라운드가 끝날 때까지' : (e.r || 0) === 1 ? (e.s === 'barb' ? '2라운드(이번 + 다음) 동안' : '다음 라운드가 끝날 때까지') : (e.r + 1) + '라운드(이번 라운드부터) 동안'; // 0.8.0 5단계 연사 기본 공격 버프 (2-6a)
         out.push(`${til} 기본 공격이 ` + (e.s === 'swap' ? `직전에 친 적과 다른 적을 치면 피해 ×${e.mul}, 출혈 ${e.bleed}.` : e.s === 'extra' ? `같은 대상에게 덧화살 한 발을 더 쏜다(그 기본 공격 피해의 ${Math.round(e.mul * 100)}%, 출혈은 걸지 않는다).` + (e.turn ? ` 덧화살이 켜진 동안 기본 공격이 직전에 친 적과 다른 적을 치면 ×${e.turn}(덧화살 포함).` : '') : e.s === 'barb' ? `출혈 ${e.bleed}${skJo(e.bleed)} 건다.` : `피해 ×${e.mul}.`) + ' 강공격 · 스킬은 받지 않는다. 다시 걸면 기간만 새로 한다.'); break; }
       case 'hasteSpend': out.push(`가속이 있으면 1을 써서 피해 ×${e.mul}. 그 대신 다음 라운드에 연속 행동을 하지 못한다.`); break;
-      case 'meSt': out.push(e.if === 'chill' ? (s.tgt === 'front' || s.tgt === 'all' ? `이미 둔화되어 있던 적 하나마다 나에게 ${skKw(s, e.s)} +${e.n}.` : `대상이 이미 둔화되어 있었으면 때린 뒤 나에게 ${skKw(s, e.s)} +${e.n}.`) : e.s === 'empower' && String(s.id).slice(0, 2) === 'm_' ? `때린 뒤 나에게 ${skKw(s, e.s)} +${e.n}.` : `나에게 ${SK_KWN[e.s] || e.s} ${e.n}.`); break; // "때린 뒤"는 수도승(m_)만: 엔진이 수도승의 기만 피해 뒤에 준다(b.kiPend). 다른 직업의 강화는 먼저 걸린다
+      case 'meSt': if (e.on === 'cut') { out.push(`이 행동으로 영창을 끊으면 나에게 ${SK_KWN[e.s] || e.s} ${e.n}.`); break; } /* 10월 18일 0.8.0 5단계 원소 장막 */ out.push(e.if === 'chill' ? (s.tgt === 'front' || s.tgt === 'all' ? `이미 둔화되어 있던 적 하나마다 나에게 ${skKw(s, e.s)} +${e.n}.` : `대상이 이미 둔화되어 있었으면 때린 뒤 나에게 ${skKw(s, e.s)} +${e.n}.`) : e.s === 'empower' && String(s.id).slice(0, 2) === 'm_' ? `때린 뒤 나에게 ${skKw(s, e.s)} +${e.n}.` : `나에게 ${SK_KWN[e.s] || e.s} ${e.n}.`); break; // "때린 뒤"는 수도승(m_)만: 엔진이 수도승의 기만 피해 뒤에 준다(b.kiPend). 다른 직업의 강화는 먼저 걸린다
       case 'stance': { const ex = [e.dmg ? '피해 +' + e.dmg : '', e.brk ? '붕괴 +' + e.brk : '', e.ki ? '기 +' + e.ki : ''].filter(Boolean); const on = [e.chill ? '둔화 ' + e.chill : '', e.weak ? '약화 ' + e.weak : ''].filter(Boolean);
         out.push((s.tgt === 'self' ? '' : '친 뒤 ') + '자세를 잡는다. 내 다음 차례까지 ' + (e.far ? '전열 적과 후열에서 직접 쏘는 적의 공격을 되받는다. 화형은 되받지 못한다.' : '전열 적의 직접 공격을 되받는다.') + ' 받는 피해는 줄지 않는다.'
           + (ex.length ? ` 되받을 때마다 ${ex.join(', ')}.` : '') + (on.length ? ` 되받은 적에게 ${on.join(', ')}.` : '')); break; }
@@ -508,7 +508,7 @@ function skBody(s) {
   }
   { const g = bu && s.fx.find(e => e.k === 'grow' && e.s === 'bleed'); if (g) out.push(`그 뒤 대상의 출혈을 ${g.mul}배${Number.isInteger(g.mul) ? '' : '(올림)'}로 만${g.add ? `들고 ${g.add}${skJo(g.add)} 더한다` : '든다'}(최대 10).`); }
   if (s.fx.filter(e => ['lowx', 'brokenx', 'bigx', 'chillx', 'kwx'].includes(e.k)).length >= 2) out.push('조건이 겹치면 배수를 곱한다.'); // 10월 4일: 박살(붕괴한 정예 · 보스에게 ×2.5 × 1.5) 등
-  if (s.killRecharge) out.push(s.once ? '이 스킬로 적을 쓰러뜨리면 한 번 더 쓸 수 있다.' : '이 스킬로 적을 쓰러뜨리면 유산 +1(차례마다 한 번).');
+  if (s.killRecharge) out.push(s.once ? '이 스킬로 적을 쓰러뜨리면 한 번 더 쓸 수 있다.' : s.krShock ? '이 행동으로 적을 쓰러뜨리면(행동 끝 열충격 포함) 유산 +1(차례마다 한 번).' : '이 스킬로 적을 쓰러뜨리면 유산 +1(차례마다 한 번).'); // krShock: 10월 18일 0.8.0 5단계 공명
   if (bu && (s.tgt === 'ranged' || s.tgt === 'all') && s.fx.some(e => e.k === 'dmg')) out.push((s.tgt === 'all' ? '후열에도 닿는다. ' : '') + '근접 공격이 아니라 흡혈은 일어나지 않는다.');
   if (s.fx.some(e => skillResourceGrows(s, e) && e.k !== 'focusBurst')) out.push((/^m_/.test(s.id) ? '이 기 추가 피해' : '이 자원 추가 피해') + '는 힘 1점마다 기준값의 1%씩 증가한다.');
   return out.join(' ').replace(/\s+/g, ' ').trim();

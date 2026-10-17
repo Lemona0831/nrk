@@ -28,12 +28,12 @@ for (const c of CLS) {
   const fx = ids.map(id => P.nodes[id].fx).filter(Boolean); ok(new Set(fx).size === fx.length, c + ': 같은 효과는 트리에 한 번');
   ok(fx.filter(k => KS_LIST[k] && KS_LIST[k].resp).length <= 2, c + ': 대응 충전을 바꾸는 큰 각인은 둘까지(4-3)');
   ok(!fx.some(k => ['a_purse', 'a_memory', 'a_flow'].includes(k)), c + ': 빠진 옛 각인(불룩한 주머니 · 샘의 기억 · 흘림새 각인)이 없음');
-  const st = Object.values(P.nodes.S.stat).reduce((a, v) => a + v, 0); ok(st === (c === 'spellblade' ? 14 : 12), c + ': 시작 노드 능력치 12(마검사는 4단계 초반 피해 점검으로 14)');
+  const st = Object.values(P.nodes.S.stat).reduce((a, v) => a + v, 0); ok(st === (c === 'spellblade' || c === 'elementalist' ? 14 : 12), c + ': 시작 노드 능력치 12(마검사는 4단계 초반 피해 점검으로 14, 원소술사는 원거리 초안 결정 9로 14)'); // 10월 18일 0.8.0 5단계 원소술사 지능 9 · 체력 3 · 의지 2
   const tilt = PT_TILT[c]; for (const d of PT.dirs) { const first = Math.min(...['1C', '2L', '2R', '3L', '3R'].filter(p => P.nodes[d + p].kind === 'notable').map(p => dist[d + p])); const want = { A: 1, B: 2, C: 3 }[tilt[d]]; if (!P.tmp) assert.equal(first, want, c + ' 기울기 ' + d); else assert(first === Infinity || first >= want, c + ' 임시 기울기 ' + d); }
   ok(true, c + ': 기울기(첫 중간 노드까지 거리) ' + (P.tmp ? '임시 트리는 그 거리보다 가깝지 않음' : '표대로'));
   for (const id in A.nodes) { const nd = A.nodes[id]; if (nd.kind === 'start') continue; assert(nd.cost === 1 && [1, 2, 3].includes(nd.ring), c + ' 액티브 ' + id); if (nd.kind === 'skill') assert(E.SK2[id] && !E.SK2[id].start, c + ' 스킬 ' + id); else { assert(nd.links.includes(nd.on) && A.nodes[nd.on].kind === 'skill', c + ' 강화가 그 스킬과 이웃 ' + id); } if (nd.links.includes('S')) assert.equal(nd.ring, 1, c + ' 가운데 이웃은 1고리 ' + id); }
   ok(true, c + ': 액티브 노드(스킬은 지금 칸, 강화는 그 스킬과 이웃, 비용 1)');
-  { const REAL = ['spellblade', 'warden', 'monk', 'hunter']; ok(!!P.tmp === !REAL.includes(c) && !!A.tmp === !REAL.includes(c), c + ': 임시 트리 표시(tmp)는 직업 초안이 들어간 직업(마검사 · 파수꾼 · 수도승 · 사냥꾼)만 없음'); } // 0.8.0 5단계 (사냥꾼: 10월 18일)
+  { const REAL = ['spellblade', 'warden', 'monk', 'hunter', 'elementalist']; ok(!!P.tmp === !REAL.includes(c) && !!A.tmp === !REAL.includes(c), c + ': 임시 트리 표시(tmp)는 직업 초안이 들어간 직업(마검사 · 파수꾼 · 수도승 · 사냥꾼 · 원소술사)만 없음'); } // 0.8.0 5단계 (사냥꾼 · 원소술사: 10월 18일)
 }
 
 // ===== 2) 마검사 = 1단계 문서 7 · 8절 =====

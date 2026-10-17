@@ -368,6 +368,25 @@ const IFX_NODE = {
   n_hn_finale: { hitP: (b, p, e, o, c) => c && c.skill && b.hnLinkA === b.actN && skCostOfCur(p, c) === 4 ? 0.12 : 0 }, // 끝맺는 연계: 연계로 쓴 유산 4 스킬
   ks_hn_solo: { hnSolo: 1 }, // 외길 사냥꾼 (soloOn · skCondMet link)
   ks_hn_chase: { focusCap: 1 }, // 끝까지 쫓는 자 (focusCapOf)
+  /* ---- 10월 18일 0.8.0 5단계 원소술사 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 3-2 · 3-3 · 3-5, 결정 9–11) ----
+     flatAdd: hurtEnemy가 배율을 모두 곱한 뒤 더한다(원소술사만). shockMul: 열충격 배수(elemShock, 곱함). elGuard: 서리 무게 더하기(elGuardOf). onChantCut · elCutResp: elCutEv. onRime: elemRime */
+  n_el_student: { flatAdd: (b, p, e, o, c) => { if (o.dot || !c || !c.skill || b.elStuA === b.actN) return 0; b.elStuA = b.actN; return 3; } }, // 불의 학도: 스킬의 첫 타격 +3(행동마다 한 번)
+  n_el_blaze: { hitP: (b, p, e, o, c) => c && c.skill && !o.dot && b.elBurnPre && (b.elBurnPre[e.id] || 0) >= 5 ? 0.10 : 0 }, // 거센 불길: 불태우기 계열이 화상 5 이상을 지우면 그 공격 +10% (b.elBurnPre는 runSkill2가 싣는다)
+  n_el_frostskin: { inP: (b, p, o) => o.src && !o.dot && (st(o.src, 'chill') > 0 || o.src.chillR === b.round) ? 0.05 : 0 }, // 서리 껍질: 둔화된 적(서리 무게와 같은 판정)에게서 받는 직접 피해 −5%, 큰 공격에도
+  n_el_dull: { elGuard: 0.05 }, // 무뎌진 칼날: 서리 무게 −30% → −35%(평소 공격만)
+  n_el_coolbreath: { onShock: (b, p) => { const left = p.hpMax * 0.05 - (b.elCbH || 0); const v = Math.min(p.hpMax * 0.01, left); if (!(v > 0)) return; const g = fxHeal(p, v); b.elCbH = (b.elCbH || 0) + v; return g > 0 ? 1 : 0; } }, // 식은 숨: 열충격마다 1%, 전투마다 5%까지
+  n_el_melt: { onRime: (b, p) => { const left = p.hpMax * 0.04 - (b.elMeltH || 0); const v = Math.min(p.hpMax * 0.01, left); if (!(v > 0)) return; const g = fxHeal(p, v); b.elMeltH = (b.elMeltH || 0) + v; return g > 0 ? 1 : 0; } }, // 녹는 서리: 되얼림이 발동할 때마다 1%, 전투마다 4%까지
+  n_el_chanthand: { brk: (b, p, e) => e && e.intent && CHANT_K.includes(e.intent.k) ? 10 : 0 }, // 영창 끊는 손: 영창 중(chant · chanting · burn)인 적에게 붕괴 +10
+  n_el_cracked: { shockMul: (b, p, e) => e && e.s && e.s.broken ? 1.2 : 1 }, // 깨진 얼음: 무너진 적에게 열충격 +20%
+  n_el_first: { hitP: (b, p, e, o, c) => c && c.skill && !o.dot && (b.turnIdx || 0) === 0 ? 0.12 : 0 }, // 앞선 주문: 전투 첫 내 차례(가속의 두 번째 차례는 빼고)의 스킬 +12%
+  n_el_light: { onSkill: (b, p, act) => { if (!act || !act.s || act.s.time !== 'fast' || !b.elSt || b.elSt.a !== b.actN || !(b.elSt.ignite || b.elSt.chill)) return; fxStam(p, 4); return 1; } }, // 가벼운 손: ⚡ 스킬로 화상이나 둔화를 걸면 스태미나 +4(행동마다 한 번, b.elSt는 addS가 적는다)
+  n_el_scatter: { onChantCut: (b, p) => { fxStam(p, 10); return 1; } }, // 흩어진 주의: 영창을 끊으면 스태미나 +10
+  n_el_echo: { onShock: (b, p) => { fxStam(p, 6); return 1; } }, // 이어지는 울림: 옛 남는 울림(k_el3)의 효과
+  n_el_spread: { shockMul: (b, p, e, arc) => arc ? 1.15 : 1, hitP: (b, p, e, o, c) => c && c.skill && !o.dot && (skOf(p, c.id) || { fx: [] }).fx.some(f => f.k === 'shockx' && f.arc) ? 0.15 : 0 }, // 번지는 울림: 번진 열충격 · 번짐 칸의 직접 피해 +15%
+  n_el_even: { onSkill: b => { if (!b.elSt || b.elSt.a !== b.actN || !b.elSt.ignite || !b.elSt.chill) return; fxStam(b.p, 6); return 1; } }, // 고른 원소: 한 행동에 화상 · 둔화를 둘 다 걸면 스태미나 +6
+  ks_el_cut: { elCutResp: 1 }, // 끊어진 영창 (elCutEv: 라운드 한도 밖 대응 +1, 전투마다 2번)
+  ks_el_ember: { elBurnPer: 1, shockMul: () => 0.7 }, // 잿불의 길: 태운 화상 1마다 +1 더 · 대가 열충격 −30%
+  ks_el_heart: { elGuard: 0.15, elIgnCut: 1 }, // 얼음 심장: 서리 무게 −45% · 대가 거는 화상 −1(최소 1)
 };
 /* 사냥꾼: 이 타격 전의 추적 겹 (한 적 공격은 hurtEnemy가 겹을 먼저 올리므로 그 전 값, 광역은 올리지 않는다) */
 function hnFocusPre(b, p, e, o) { if (!p.focus || p.focus.id !== e.id) return 0; if (o && o.aoe) return p.focus.n; if (b.curSkill && b.focusKey === b.curSkill + ':' + e.id) return b.focusPre || 0; return Math.max(0, p.focus.n - 1); }

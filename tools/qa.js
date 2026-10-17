@@ -232,7 +232,8 @@ function elemPick(b, P, r, okS, reach, pv1) {
     let m = 1; const lx = fxOf(a, 'lowx'), gx = fxOf(a, 'bigx'), bx = fxOf(a, 'brokenx'), cx = fxOf(a, 'chillx');
     if (lx && e.hp <= e.hpMax * lx.hp) m *= lx.mul; if (gx && isBig(e)) m *= gx.mul; if (bx && e.s.broken) m *= bx.mul; if (cx && e.s.chill) m *= cx.mul;
     const dd = ((d0 ? qaSkillBase(p,a) * (a.s.hits || 1) : 0) + qaBurnDamage(p,a,v.burn)) * m * (multi ? 0.8 : 1) * (e.evading && !multi ? 0 : 1) * (e.braced ? 0.5 : 1);
-    const tot = dd + (v.shock ? v.d : 0); const kill = tot >= e.hp;
+    const flat = d0 && (p.pn || []).includes('n_el_student') && !(e.evading && !multi) ? (multi ? 3 / Math.max(1, al.length) : 3) : 0; // 10월 18일 0.8.0 5단계 불의 학도: 스킬 첫 타격 +3(배율 뒤, 모두 치면 첫 대상 하나라 나눠 본다). 남는 울림 +3 · 열충격 배수 노드는 v.d(elemPreview)에 든다
+    const tot = dd + flat + (v.shock ? v.d : 0); const kill = tot >= e.hp;
     const cut = a.s.fx.find(x => x.k === 'cutx'); const cutOn = cut && e.intent && (cut.chant ? ['chant', 'chanting', 'burn'] : ['charge', 'heavy', 'fuse', 'explode', 'chant', 'chanting', 'burn']).includes(e.intent.k);
     const brk = a.s.fx.reduce((s0, x) => s0 + (x.k === 'brk' ? x.n : 0), 0) + (cutOn ? cut.brk : 0) + (v.shock ? v.brk : 0) + (bo ? bo.brk * v.burn : 0);
     const breaks = !e.s.broken && e.role !== 'root' && e.brk + brk >= e.brkMax;

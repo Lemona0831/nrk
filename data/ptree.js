@@ -33,7 +33,7 @@ const PT_TILT_N = { A: ['1C', '3L'], B: ['2L', '3R'], C: ['3L'] };
 /* 시작 노드: 직업 기본 능력치 12점 (STAT_REC × 12 반올림). 마검사는 4단계(10월 17일) 초반 피해 점검으로 14점(힘 · 지능 +1, 설계 10-4의 2) */
 const PT_START = {
   spellblade: { str: 5, int: 5, con: 3, wil: 1 }, warden: { str: 4, con: 4, wil: 4 }, monk: { str: 4, dex: 4, con: 4 }, assassin: { dex: 5, int: 4, con: 3 },
-  hunter: { dex: 8, con: 4 }, /* 0.8.0 5단계 원거리 초안 8절 결정 3: 민첩 5 · 체력 4 · 힘 3 → 민첩 8 · 체력 4 */ elementalist: { int: 5, con: 4, wil: 3 }, butcher: { str: 4, con: 4, wil: 3, int: 1 }, confessor: { con: 4, str: 4, int: 4 }, bloodmage: { int: 5, con: 4, wil: 3 },
+  hunter: { dex: 8, con: 4 }, /* 0.8.0 5단계 원거리 초안 8절 결정 3: 민첩 5 · 체력 4 · 힘 3 → 민첩 8 · 체력 4 */ elementalist: { int: 9, con: 3, wil: 2 }, /* 10월 18일 0.8.0 5단계 원거리 초안 8절 결정 9: 지능 5 · 체력 4 · 의지 3(12) → 지능 9 · 체력 3 · 의지 2(14) */ butcher: { str: 4, con: 4, wil: 3, int: 1 }, confessor: { con: 4, str: 4, int: 4 }, bloodmage: { int: 5, con: 4, wil: 3 },
 };
 /* 공용 중간 노드 풀 (2-8): r2는 2고리(L5) 후보, r3는 3고리(L7 · R7) 후보 */
 const PT_POOL = {
@@ -118,6 +118,21 @@ const PN_TXT = {
   n_hn_pass: { n: '넘겨받는 추적', d: '추적 3겹 이상인 적을 쓰러뜨리면, 다음에 친 다른 적은 추적 1겹에서 시작합니다(처치마다).' },
   n_hn_linkup: { n: '이어 쏘기 숙련', d: '연계 피해가 30%에서 38%로 늘어납니다.' },
   n_hn_finale: { n: '끝맺는 연계', d: '연계로 쓴 유산 4 스킬의 피해가 12% 늘어납니다.' },
+  /* 10월 18일 0.8.0 5단계 원소술사 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 3-5, 8절 결정 9–11) */
+  n_el_student: { n: '불의 학도', d: '스킬의 첫 타격 피해 +3(행동마다 한 번, 배율을 모두 곱한 뒤 더함).' },
+  n_el_blaze: { n: '거센 불길', d: '화상을 지우며 치는 공격(불태우기 계열)이 화상 5 이상을 지우면 그 공격의 피해가 10% 늘어납니다.' },
+  n_el_frostskin: { n: '서리 껍질', d: '둔화된 적에게서 받는 직접 피해가 5% 줄어듭니다(큰 공격에도).' },
+  n_el_dull: { n: '무뎌진 칼날', d: '서리 무게가 −30%에서 −35%가 됩니다(평소 공격만).' },
+  n_el_coolbreath: { n: '식은 숨', d: '열충격이 일어나면 최대 생명력의 1%를 회복합니다(전투마다 5%까지).' },
+  n_el_melt: { n: '녹는 서리', d: '되얼림이 발동할 때마다 최대 생명력의 1%를 회복합니다(전투마다 4%까지).' },
+  n_el_chanthand: { n: '영창 끊는 손', d: '영창 중인 적에게 주는 붕괴가 10 늘어납니다.' },
+  n_el_cracked: { n: '깨진 얼음', d: '무너진 적에게 열충격 피해가 20% 늘어납니다.' },
+  n_el_first: { n: '앞선 주문', d: '전투 첫 내 차례에 쓰는 스킬의 피해가 12% 늘어납니다.' },
+  n_el_light: { n: '가벼운 손', d: '⚡ 빠른 스킬로 화상이나 둔화를 걸면 스태미나 +4(행동마다 한 번).' },
+  n_el_scatter: { n: '흩어진 주의', d: '영창을 끊으면 스태미나 +10.' },
+  n_el_echo: { n: '이어지는 울림', d: '열충격이 일어나면 스태미나가 6 찹니다.' }, // 옛 남는 울림(k_el3)의 효과 (한 노드 한 효과, 1단계 2-7)
+  n_el_spread: { n: '번지는 울림', d: '열충격의 번짐(다른 적에게 가는 몫)과 번짐 칸(튀는 충격처럼 번짐이 있는 스킬)의 피해가 15% 늘어납니다.' },
+  n_el_even: { n: '고른 원소', d: '한 행동에 화상과 둔화를 둘 다 걸면 스태미나 +6(행동마다 한 번).' },
 };
 /* 큰 각인 (4-1 공용, 4-2 직업). dir은 그 자리의 방향, pay는 대가(빨간 줄) */
 const KS_LIST = {
@@ -145,6 +160,10 @@ const KS_LIST = {
   /* 0.8.0 5단계 사냥꾼 (2-5, 8절 보완 1) */
   ks_hn_solo: { dir: 'pw', cls: 'hunter', n: '외길 사냥꾼', d: '같은 갈래 스킬을 바로 이어 쓰면(기본 공격 · 방어를 사이에 끼워도 됨) 그 스킬의 피해가 20% 늘어납니다. 연계 할인 강화(이어 쏘는 화살 · 이어 쏘는 활 · 이어 묶는 화살)는 같은 갈래를 바로 이어 쓸 때 비용 −1(라운드에 한 번)로 바뀝니다.', pay: '연계 피해 +30%가 사라집니다. 연계 할인은 같은 갈래 이어 쓰기 할인으로 바뀝니다.' },
   ks_hn_chase: { dir: 'lg', cls: 'hunter', n: '끝까지 쫓는 자', d: '추적 상한이 3겹에서 4겹으로 늘어납니다(겹마다 +5% 그대로).' },
+  /* 10월 18일 0.8.0 5단계 원소술사 (3-3 · 3-5, 결정 11) */
+  ks_el_cut: { dir: 'ct', cls: 'elementalist', n: '끊어진 영창', d: '영창을 끊거나 열충격으로 적을 무너뜨리면 대응 충전 +1 더(라운드 한도 밖, 전투마다 2번).', resp: 1 },
+  ks_el_ember: { dir: 'pw', cls: 'elementalist', n: '잿불의 길', d: '화상을 지우며 치는 공격(불태우기 계열)이 지운 화상 1마다 피해 +1 더.', pay: '열충격 피해 −30%.' },
+  ks_el_heart: { dir: 'sv', cls: 'elementalist', n: '얼음 심장', d: '서리 무게가 −30%에서 −45%가 됩니다(평소 공격만, 강타는 그대로).', pay: '내가 거는 화상 −1(최소 1).' },
 };
 /* 임시 트리의 큰 각인 자리 (K5, K9): 공용 큰 각인을 방향마다 목록 순서대로 */
 const KS_TMP = { pw: ['ks_crystal', 'ks_glass'], ct: ['ks_hammer', 'ks_breaker'], ag: ['ks_first', 'ks_flow'], lg: ['ks_deep', 'ks_brim'], su: ['ks_cycle', 'ks_dry'], sv: ['ks_wall', 'ks_heavy'] };
@@ -197,6 +216,19 @@ const PT_CLS = {
       lg2L: 'k_hn1', lg3R: 'n_hn_pass', lg5L: 'n_overflow', lg5R: 'n_hn_linkup', lg7L: 'n_fullvessel', lg7R: 'n_hn_finale',
     },
     ks: { pwK5: 'ks_crystal', pwK9: 'ks_hn_solo', ctK5: 'ks_hammer', ctK9: 'ks_breaker', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_hn_chase', suK5: 'ks_cycle', suK9: 'ks_dry', svK5: 'ks_wall', svK9: 'ks_heavy' },
+  },
+  /* 10월 18일 0.8.0 5단계 원소술사 (결정 9–11 반영): docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 3-5. 작은 노드는 화력 지능 +2(공격 능력치).
+     화력 3고리는 공용 둘만(3-2 인플레이션 막기). 큰 각인: 끊어진 영창(제어 K5) · 잿불의 길(화력 K9, 대가) · 얼음 심장(생존 K9, 대가). 무거운 갑주 · 무너뜨리는 자는 두지 않는다 */
+  elementalist: {
+    nodes: {
+      pw1C: 'k_el1', pw3L: 'n_el_student', pw5L: 'a_smolder', pw5R: 'n_el_blaze', pw7L: 'a_point', pw7R: 'a_scatter',
+      sv3L: 'n_el_frostskin', sv5L: 'a_clear', sv5R: 'n_el_dull', sv7L: 'a_iron', sv7R: 'a_stand',
+      su3L: 'n_el_coolbreath', su5L: 'a_vial', su5R: 'n_el_melt', su7L: 'a_warmth', su7R: 'a_brew',
+      ct1C: 'k_el2', ct3L: 'n_el_chanthand', ct5L: 'a_gap', ct5R: 'n_el_cracked', ct7L: 'a_heavyhand', ct7R: 'n_shaken',
+      ag2L: 'n_el_first', ag3R: 'n_el_light', ag5L: 'a_resolve', ag5R: 'n_el_scatter', ag7L: 'a_light', ag7R: 'a_gulp',
+      lg2L: 'k_el3', lg3R: 'n_el_echo', lg5L: 'n_overflow', lg5R: 'n_el_spread', lg7L: 'n_fullvessel', lg7R: 'n_el_even',
+    },
+    ks: { pwK5: 'ks_crystal', pwK9: 'ks_el_ember', ctK5: 'ks_el_cut', ctK9: 'ks_hammer', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_brim', suK5: 'ks_cycle', suK9: 'ks_dry', svK5: 'ks_wall', svK9: 'ks_el_heart' },
   },
 };
 /* 임시 트리: 직업 갈래 각인(4-4)을 그 방향 1고리 첫 중간 노드 자리에 둔다. 도살자 벼랑 끝(k_bu2)은 6단계 큰 각인으로 합쳐질 것이라 임시 트리에 넣지 않는다 */
