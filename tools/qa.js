@@ -1,16 +1,16 @@
 /* ===== 사람처럼 생각하는 QA 테스터 (엔진 직접 구동) ===== */
 const E = require('./eng.gen.js');
-/* 10월 18일 0.8.0 5단계 측정 변형(원거리 초안 10절 결정 3, 기본 데이터는 그대로): ASN_SHADOW_VAR가 ATREE_DEF.assassin을 불러올 때 메모리에서 바꾼다(dgqa.js도 이 함수로 같은 변형을 넣는다).
-   swap = 후열 기습(2고리 r3 L)과 칼끝 겨누기(1고리 r2 R)의 고리 · 자리 · 연결을 맞바꾼다. 칼끝 겨누기 밑에 달렸던 잔상 · 그늘 숨기는 그 자리(1고리)의 후열 기습에 붙고,
-     연막(칼끝 겨누기 강화)은 칼끝 겨누기를 따라 1고리 r2 RR → 2고리 r4 L. 그림자 추격(후열 기습 강화)은 3고리 그대로. 비용은 그대로(후열 기습 2 · 칼끝 겨누기 2)
-   rush = 그림자 연타(SKILLS2 값 그대로, 유산 3 = skCost 기본값)를 그림자 찌르기 밑 2고리 r4 L 스킬 노드로 되살린다(AT_GONE에서 뺌) */
+/* 10월 18일 0.8.0 5단계 측정 변형(원거리 초안 10절 결정 3): ASN_SHADOW_VAR가 ATREE_DEF.assassin을 불러올 때 메모리에서 바꾼다(dgqa.js도 이 함수로 같은 변형을 넣는다).
+   10월 18일 0.8.0 5단계 마무리(11-4, 만든 사람 승인): 맞바꾸기(swap)가 기본 데이터가 되었다. swap은 이제 아무것도 바꾸지 않는다(예전 측정 명령을 그대로 돌릴 수 있게 둔다).
+   old = 맞바꾸기 전 배치로 되돌린다: 후열 기습 2고리 r3 L(그림자 찌르기 밑) · 칼끝 겨누기 1고리 r2 R(흘려 베기 밑), 잔상 · 그늘 숨기는 칼끝 겨누기 밑, 연막 1고리 r2 RR
+   rush = old 위에 그림자 연타(SKILLS2 값 그대로, 유산 3 = skCost 기본값)를 그림자 찌르기 밑 2고리 r4 L 스킬 노드로 되살린다(AT_GONE에서 뺌). 맞바꾼 배치에서는 그 칸이 연막 자리라 예전 rush와 같은 판이 되게 old를 먼저 넣는다 */
 function asnShadowVar(DEF, GONE, mode) {
-  const A = DEF && DEF.assassin; if (!A || !mode) return 0; const sk = id => A.skills.find(x => x[0] === id);
-  if (mode === 'swap') { const am = sk('a_ambush'), ai = sk('a_aim'); for (const k of [2, 3, 4, 5]) [am[k], ai[k]] = [ai[k], am[k]];
+  const A = DEF && DEF.assassin; if (!A || !mode || mode === 'swap') return 0; const sk = id => A.skills.find(x => x[0] === id);
+  if (mode === 'old' || mode === 'rush') { const am = sk('a_ambush'), ai = sk('a_aim'); for (const k of [2, 3, 4, 5]) [am[k], ai[k]] = [ai[k], am[k]];
     for (const s of A.skills) if (s !== am && s !== ai) s[5] = s[5].map(x => x === 'a_aim' ? 'a_ambush' : x === 'a_ambush' ? 'a_aim' : x);
-    const u = A.ups.find(x => x[0] === 'au_smoke'); u[2] = 2; u[3] = 4; u[4] = 'L'; }
-  else if (mode === 'rush') { if (!sk('a_rush')) A.skills.push(['a_rush', '그림자', 2, 4, 'L', ['a_shadow'], 3]); if (GONE && GONE.assassin) { const i = GONE.assassin.indexOf('a_rush'); if (i >= 0) GONE.assassin.splice(i, 1); } }
-  else throw new Error('ASN_SHADOW_VAR는 swap · rush: ' + mode);
+    const u = A.ups.find(x => x[0] === 'au_smoke'); u[2] = 1; u[3] = 2; u[4] = 'RR'; }
+  else throw new Error('ASN_SHADOW_VAR는 swap(기본, 바꾸지 않음) · old · rush: ' + mode);
+  if (mode === 'rush') { if (!sk('a_rush')) A.skills.push(['a_rush', '그림자', 2, 4, 'L', ['a_shadow'], 3]); if (GONE && GONE.assassin) { const i = GONE.assassin.indexOf('a_rush'); if (i >= 0) GONE.assassin.splice(i, 1); } }
   return 1;
 }
 asnShadowVar(E.ATREE_DEF, null, process.env.ASN_SHADOW_VAR);

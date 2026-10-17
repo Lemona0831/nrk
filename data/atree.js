@@ -233,8 +233,9 @@ const ATREE_DEF = {
       ['a_pouch', '격발', 1, 1, 'C', ['S'], 2], ['a_brkneedle', '격발', 1, 2, 'L', ['a_pouch'], 2], ['a_burst', '격발', 1, 2, 'R', ['a_pouch'], 3],
       ['a_crumble', '격발', 2, 3, 'LL', ['a_brkneedle'], 2], ['a_deepplant', '격발', 2, 3, 'L', ['a_brkneedle'], 3], ['a_burststab', '격발', 2, 3, 'R', ['a_burst'], 2], ['a_chain', '격발', 2, 3, 'RR', ['a_burst'], 3],
       ['a_cataclysm', '격발', 3, 5, 'C', ['a_burst'], 4],
-      ['a_deflect', '그림자', 1, 1, 'C', ['S'], 3], ['a_shadow', '그림자', 1, 2, 'L', ['a_deflect'], 3], ['a_aim', '그림자', 1, 2, 'R', ['a_deflect'], 2], // 흘려 베기 4 → 3 (결정 13)
-      ['a_gap', '그림자', 2, 3, 'LL', ['a_shadow'], 3], ['a_ambush', '그림자', 2, 3, 'L', ['a_shadow'], 2], ['a_after', '그림자', 2, 3, 'R', ['a_aim'], 3], ['a_shade', '그림자', 2, 3, 'RR', ['a_aim'], 2], // 잔상 4 → 3 (결정 13)
+      ['a_deflect', '그림자', 1, 1, 'C', ['S'], 3], ['a_shadow', '그림자', 1, 2, 'L', ['a_deflect'], 3], ['a_aim', '그림자', 2, 3, 'L', ['a_shadow'], 2], // 흘려 베기 4 → 3 (결정 13)
+      ['a_gap', '그림자', 2, 3, 'LL', ['a_shadow'], 3], ['a_ambush', '그림자', 1, 2, 'R', ['a_deflect'], 2], ['a_after', '그림자', 2, 3, 'R', ['a_ambush'], 3], ['a_shade', '그림자', 2, 3, 'RR', ['a_ambush'], 2], // 잔상 4 → 3 (결정 13)
+      // 10월 18일 0.8.0 5단계 마무리(원거리 초안 11-4, 만든 사람 승인): 후열 기습 ↔ 칼끝 겨누기 맞바꾸기. 후열 기습 1고리 r2 R(흘려 베기 밑), 칼끝 겨누기 2고리 r3 L(그림자 찌르기 밑), 잔상 · 그늘 숨기는 후열 기습 밑. 비용은 그대로
       ['a_umbra', '그림자', 3, 5, 'C', ['a_shadow'], 4],
     ],
     ups: [
@@ -262,7 +263,7 @@ const ATREE_DEF = {
       ['au_pierce', '그림자', 2, 4, 'LL', 'a_gap', '급소 꿰기', '무너진 적에게 ×2, 붕괴 28 → 37.', { fxSet: [{ k: 'brk', n: 37 }], fxAdd: [{ k: 'brokenx', mul: 2 }] }, ['a_pierce', 'a_breach', 'a_darkstrike', 'a_trip']],
       ['au_chase', '그림자', 3, 5, 'L', 'a_ambush', '그림자 추격', '큰 적(정예 · 강적 · 보스)에게 ×1.8, 취약 2를 겁니다.', { fxAdd: [{ k: 'bigx', mul: 1.8 }, { k: 'st', s: 'vuln', n: 2 }] }, ['a_chase', 'a_step', 'a_daggerrain']],
       ['au_throat', '그림자', 3, 6, 'C', 'a_umbra', '목을 긋는 그림자', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 라운드에 한 번).', { cond: { off: 1, when: 'resp' } }, []],
-      ['au_smoke', '그림자', 1, 2, 'RR', 'a_aim', '연막', '다음 흘리기의 감소분 +30%p.', { fxSet: [{ k: 'parryBuff', red: 0.3 }] }, ['a_smoke']],
+      ['au_smoke', '그림자', 2, 4, 'L', 'a_aim', '연막', '다음 흘리기의 감소분 +30%p.', { fxSet: [{ k: 'parryBuff', red: 0.3 }] }, ['a_smoke']],
       ['au_reprisal', '그림자', 2, 4, 'R', 'a_after', '그림자 역습', '흘려 내면 붕괴 9 → 20.', { fxSet: [{ k: 'onParry', brk: 20 }] }, ['a_reprisal']],
       ['au_dance', '그림자', 2, 4, 'RR', 'a_shade', '흘림의 춤', '다음 흘리기 1번 → 2번, 흘려 내면 피해 14 → 21.', { fxSet: [{ k: 'parryBuff', times: 2, dmg: 21 }] }, ['a_parrydance', 'a_backstep']],
     ],

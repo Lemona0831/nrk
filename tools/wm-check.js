@@ -272,7 +272,7 @@ const setEl = (b, e, I, C) => { if (I) E.addS(b, e, 'ignite', I); if (C) E.addS(
 // ===== 7) 암살자 (10월 18일 0.8.0 5단계, docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 1-2 · 1-3 · 4-2 · 4-3 · 4-4 · 4-6 · 4-7 · 8절 결정 13–17) =====
 { const A = E.atBuild('assassin'); const N = Object.values(A.nodes); const sk = N.filter(x => x.kind === 'skill'), up = N.filter(x => x.kind === 'upgrade');
   ok(!A.tmp && sk.length === 24 && up.length === 27, '암살자: 직업 트리, 스킬 24 + 강화 27 = 51노드(결정 17)');
-  const rg = { 1: 0, 2: 0, 3: 0 }; for (const x of sk.concat(up)) rg[x.ring]++; ok(rg[1] === 14 && rg[2] === 26 && rg[3] === 11, '암살자: 1고리 14 · 2고리 26 · 3고리 11');
+  const rg = { 1: 0, 2: 0, 3: 0 }; for (const x of sk.concat(up)) rg[x.ring]++; ok(rg[1] === 13 && rg[2] === 27 && rg[3] === 11, '암살자: 1고리 13 · 2고리 27 · 3고리 11'); // 10월 18일 0.8.0 5단계 마무리(11-4 맞바꾸기): 연막이 칼끝 겨누기를 따라 2고리로(14 · 26 → 13 · 27)
   ok(['독사', '격발', '그림자'].every(br => sk.filter(x => x.br === br).length === 8 && up.filter(x => x.br === br).length === 9), '갈래마다 스킬 8 + 강화 9');
   for (const u of up) { const m = u.mod; assert(!(m.set && ('ys' in m.set || 'cd' in m.set || 'cost' in m.set || 'killRecharge' in m.set)), '암살자 무조건 비용 · 환급 바꾸기 금지 ' + u.id);
     if (m.cond) assert(m.cond.off === 1 && /^(resp|kw:poison>=\d+)$/.test(m.cond.when), '암살자 조건 어휘 ' + u.id);
@@ -287,7 +287,7 @@ const setEl = (b, e, I, C) => { if (I) E.addS(b, e, 'ignite', I); if (C) E.addS(
   const c = { 2: 0, 3: 0, 4: 0 }; for (const s of sk) c[s.ys]++; ok(c[2] === 11 && c[3] === 11 && c[4] === 2, '암살자: 트리 비용 2 / 3 / 4 = 11 / 11 / 2칸');
   const p0 = { build: 'assassin', aup: [], pn: [] }; const diff = sk.filter(s => skCost(E.skOf(p0, s.id)) !== skCost(E.SK2[s.id])).map(s => s.id).sort();
   ok(diff.join() === 'a_after,a_deflect' && skCost(E.skOf(p0, 'a_deflect')) === 3 && skCost(E.skOf(p0, 'a_after')) === 3 && skCost(E.SK2.a_deflect) === 4 && skCost(E.SK2.a_after) === 4, '흘려 베기 · 잔상 4 → 3(결정 13), 다른 칸은 쿨타임 변환값 그대로');
-  ok(['a_fang', 'a_hack', 'a_siphon', 'a_pouch', 'a_brkneedle', 'a_burst', 'a_deflect', 'a_shadow', 'a_aim'].map(id => skCost(E.skOf(p0, id))).join() === '3,2,2,2,2,3,3,3,2', '1고리 비용: 독사 3 · 2 · 2, 격발 2 · 2 · 3, 그림자 3 · 3 · 2');
+  ok(['a_fang', 'a_hack', 'a_siphon', 'a_pouch', 'a_brkneedle', 'a_burst', 'a_deflect', 'a_shadow', 'a_ambush'].map(id => skCost(E.skOf(p0, id))).join() === '3,2,2,2,2,3,3,3,2', '1고리 비용: 독사 3 · 2 · 2, 격발 2 · 2 · 3, 그림자 3 · 3 · 2');
   ok(E.SK2.a_chain.killRecharge === 1 && sk.filter(s => E.SK2[s.id].killRecharge).length === 1 && !sk.some(s => E.SK2[s.id].fx.some(f => f.k === 'hasten')), '🔄 정리: 연쇄 격발 처치 환급만, 독무 · 그늘 숨기 🔄 뺌, 흘리기 성공 🔄(연막 · 흘림의 춤 · 되받아치기 · 그림자 역습)은 강화로 합치며 뺌(결정 13)');
   ok(A.nodes.a_cataclysm.ys === 4 && A.nodes.a_umbra.ys === 4 && A.nodes.a_essence.ys === 3 && [A.nodes.a_cataclysm, A.nodes.a_umbra, A.nodes.a_essence].every(x => x.ring === 3), '결정타: 종말의 격발 · 죽음의 그림자 4, 독사 맹독의 정수는 3 그대로(결정 16)');
   ok(R_('AT_GONE').assassin.length === 10 && R_('AT_GONE').assassin.every(id => E.SK2[id] && !A.nodes[id]) && ['a_check', 'a_mark', 'a_strangle', 'a_rush'].every(id => R_('AT_GONE').assassin.includes(id)), '빠진 스킬 열(AT_GONE), 그림자 범용 넷 포함(결정 15)');
@@ -419,8 +419,8 @@ const near = (a, b2) => Math.abs(a - b2) < 1e-6;
   { const fe = fight('assassin', {}); fe.p.ys = 0; ysResp(fe.b, '끊기'); ok(cutN(fe.b) === 0 && fe.p.ys === 1, '다른 직업에는 없음'); }
   ok(/끊기 · 무너뜨리기 · 먼저 치우기/.test(KS.ks_el_cut.d) && KS.ks_el_cut.resp === 1, '설명: 끊기 · 무너뜨리기 · 먼저 치우기 (대응 큰 각인 표시 그대로)');
   ok(/const KS_PREF = \[[^\]]*'ks_crystal', 'ks_el_cut', 'ks_breaker'/.test(require('fs').readFileSync(require('path').join(__dirname, 'dgqa.js'), 'utf8')), '테스터 큰 각인 선호: 끊어진 영창을 제어 큰 각인(무너뜨리는 자) 앞에'); }
-// 결정 3 측정 변형(ASN_SHADOW_VAR, 기본 데이터는 그대로): swap · rush 트리가 유효한지 따로 띄운 프로세스에서 본다
-{ const A0 = E.atBuild('assassin'); ok(!process.env.ASN_SHADOW_VAR ? A0.nodes.a_ambush.ring === 2 && A0.nodes.a_aim.ring === 1 && !A0.nodes.a_rush && Object.keys(A0.nodes).length === 52 : true, '기본 데이터: 후열 기습 2고리 · 칼끝 겨누기 1고리 · 그림자 연타 없음(시작 포함 52)');
+// 결정 3 측정 변형(ASN_SHADOW_VAR): swap · old · rush 트리가 유효한지 따로 띄운 프로세스에서 본다. 10월 18일 0.8.0 5단계 마무리(11-4): swap이 기본 데이터가 되어 swap은 바꾸지 않고, old가 맞바꾸기 전 배치다
+{ const A0 = E.atBuild('assassin'), N0 = A0.nodes; ok(!process.env.ASN_SHADOW_VAR ? N0.a_ambush.ring === 1 && N0.a_aim.ring === 2 && N0.au_smoke.ring === 2 && N0.au_smoke.on === 'a_aim' && N0.a_after.links.includes('a_ambush') && N0.a_shade.links.includes('a_ambush') && N0.a_ambush.links.includes('a_deflect') && N0.a_aim.links.includes('a_shadow') && !N0.a_rush && Object.keys(N0).length === 52 : true, '기본 데이터(맞바꾸기): 후열 기습 1고리(흘려 베기 밑) · 칼끝 겨누기 2고리(그림자 찌르기 밑) · 연막 2고리 · 잔상 · 그늘 숨기는 후열 기습 밑 · 그림자 연타 없음(시작 포함 52)');
   const code = `process.env.DGDIR = '.'; const D = require('./tools/dgqa.js'), E = D.G0, R_ = D.run_; const A = E.atBuild('assassin'), N = A.nodes, skCost = R_('skCost'); const out = {};
     const bfs = ok => { const d = { S: 0 }, q = ['S']; while (q.length) { const x = q.shift(); for (const y of N[x].links) if (d[y] == null && (!ok || ok(N[y]))) { d[y] = 1; q.push(y); } } return d; };
     out.bi = Object.keys(N).every(id => N[id].links.every(y => N[y] && N[y].links.includes(id)) && (id === 'S' || N[id].links.length > 0));
@@ -432,7 +432,7 @@ const near = (a, b2) => Math.abs(a - b2) < 1e-6;
     out.ring = ['a_ambush', 'a_aim', 'au_smoke', 'a_after', 'a_shade', 'a_rush'].map(id => N[id] ? N[id].ring : 0).join(); out.link = ['a_after', 'a_shade', 'a_ambush', 'a_aim', 'a_rush'].map(id => N[id] ? N[id].links.filter(y => (N[y].kind === 'skill' || y === 'S') && N[y].pos.r < N[id].pos.r).join('+') : '').join(); // 위 칸(부모)
     out.n = Object.keys(N).length; out.gone = R_('AT_GONE').assassin.includes('a_rush'); out.smokeOn = N.au_smoke.on;
     const row = D.playChar('careful', 'assassin', 7017); out.bugs = row.bugs.length; out.acts = row.acts > 0; console.log(JSON.stringify(out));`;
-  for (const [v, want] of [['swap', { cost: '2,2,0', ring: '1,2,2,2,2,0', link: 'a_ambush,a_ambush,a_deflect,a_shadow,', n: 52, gone: true }], ['rush', { cost: '2,2,3', ring: '2,1,1,2,2,2', link: 'a_aim,a_aim,a_shadow,a_deflect,a_shadow', n: 53, gone: false }]]) {
+  for (const [v, want] of [['swap', { cost: '2,2,0', ring: '1,2,2,2,2,0', link: 'a_ambush,a_ambush,a_deflect,a_shadow,', n: 52, gone: true }], ['old', { cost: '2,2,0', ring: '2,1,1,2,2,0', link: 'a_aim,a_aim,a_shadow,a_deflect,', n: 52, gone: true }], ['rush', { cost: '2,2,3', ring: '2,1,1,2,2,2', link: 'a_aim,a_aim,a_shadow,a_deflect,a_shadow', n: 53, gone: false }]]) {
     const r = require('child_process').spawnSync(process.execPath, ['-e', code], { cwd: require('path').join(__dirname, '..'), env: Object.assign({}, process.env, { ASN_SHADOW_VAR: v, FOCUS: '그림자', DGDIR: '.' }), encoding: 'utf8', maxBuffer: 1 << 26 });
     const o = JSON.parse((r.stdout || '').trim().split('\n').pop() || '{}');
     ok(o.bi && o.reach && o.conv && o.upOn && o.pos, 'ASN_SHADOW_VAR=' + v + ': 양방향 연결 · 시작에서 고리 잠금 안에서 닿음 · [전환] 스킬마다 하나 · 강화가 스킬에 붙음 · 그림자 자리 겹침 없음 ' + JSON.stringify(o) + (r.stderr || '').slice(-300));
