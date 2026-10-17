@@ -126,14 +126,23 @@ function ptPathTo(run, T, target) { // 열린 노드에서 target까지 열린 �
   while (q.length) { const x = q.shift(); if (x === target) break; if (T.nodes[x].kind === 'keystone' && !open.has(x)) continue; for (const y of T.nodes[x].links) { if (seen.has(y) || !G0.ringOpen(run, T.nodes[y].ring)) continue; seen.add(y); par[y] = x; q.push(y); } }
   if (!seen.has(target)) return null; const path = []; for (let x = target; !open.has(x); x = par[x]) path.unshift(x); return path;
 }
+/* 10월 18일 0.8.0 5단계(원거리 초안 10절 결정 2) 생존 · 유지력 바닥: 직업 트리(임시 트리 아님)에서 가진 중간 노드 가운데 생존 · 유지력(sv · su) 중간 노드가 셋에 하나 밑이면
+   (생존 · 유지력 수 < ⌊가진 중간 노드 수 / 3⌋), 다음 목표를 생존 · 유지력 중간 노드 가운데에서 같은 점수(길 칸 수 + 방향 순위)로 고른다. 닿을 것이 없으면 원래대로.
+   중간 노드 수로 세므로 길 칸을 찍는 동안 목표가 바뀌지 않는다. 큰 각인 길로 공짜로 얻은 중간 노드도 센다. PT_SURV_OLD=1이면 끈다(옛 찍기) */
+const PT_SURV_DIR = ['sv', 'su'];
+function ptSurvNeed(run, T, open) {
+  if (process.env.PT_SURV_OLD || T.tmp) return false; let n = 0, s = 0;
+  for (const id of open) { const nd = T.nodes[id]; if (!nd || nd.kind !== 'notable') continue; n++; if (PT_SURV_DIR.includes(nd.dir)) s++; }
+  return s < Math.floor(n / 3);
+}
 function spendPassive(pk, r) {
   if (OPT.policy?.spendPassive) return OPT.policy.spendPassive(G0.__G.run, r);
   const run = G0.__G.run; if (!run || !run.ptree) return; const T = G0.ptBuild(run.build); const rk = dirRank(run.build); let n = 0;
   while (run.ptree.pts > 0 && n++ < 60) {
     const can = Object.keys(T.nodes).filter(id => !G0.ptWhy(run, id)); if (!can.length) break;
     if (pk === 'novice') { G0.ptBuy(run, can[Math.floor(r() * can.length)]); continue; }
-    const open = new Set(G0.ptOpenIds(run)); let best = null;
-    for (const id of Object.keys(T.nodes)) { const nd = T.nodes[id]; if (nd.kind !== 'notable' || open.has(id) || !G0.ringOpen(run, nd.ring)) continue; const p = ptPathTo(run, T, id); if (!p || !p.length) continue; const sc = p.length + rk(nd.dir) * 1.5 + r() * 0.3; if (!best || sc < best.sc) best = { sc, p }; }
+    const open = new Set(G0.ptOpenIds(run)); let best = null; const sv = ptSurvNeed(run, T, open);
+    for (let pass = sv ? 0 : 1; pass < 2 && !best; pass++) for (const id of Object.keys(T.nodes)) { const nd = T.nodes[id]; if (nd.kind !== 'notable' || open.has(id) || !G0.ringOpen(run, nd.ring) || (pass === 0 && !PT_SURV_DIR.includes(nd.dir))) continue; const p = ptPathTo(run, T, id); if (!p || !p.length) continue; const sc = p.length + rk(nd.dir) * 1.5 + r() * 0.3; if (!best || sc < best.sc) best = { sc, p }; }
     const pick = best && can.includes(best.p[0]) ? best.p[0] : can.sort((a, b) => rk(T.nodes[a].dir) - rk(T.nodes[b].dir) || T.nodes[a].pos.r - T.nodes[b].pos.r)[0];
     if (G0.ptBuy(run, pick)) break;
   }
@@ -661,4 +670,4 @@ function manifestOf(want) {
 }
 /* 판 밖 예외(창 처리 · 트리 찍기 등)로 판이 끝나지 못한 경우의 기록 */
 function crashRow(w, e) { const o = { pk: w.pk, build: w.build, seed: w.seed, res: 'crash', floor: 0, lv: 0, rooms: [], bugs: ['판 밖 예외 ' + e.message], acts: 0, fights: [] }; o.meta = MM.rowMeta(REV, { seed: w.seed, pk: w.pk, build: w.build, from: FROM, chapters: OPT.chapters, variant: OPT.variant, pol: OPT.polId }); failOf(o, 'crash', { msg: String(e.message).slice(0, 200), stack: String(e.stack || '').split('\n').slice(1, 3).join(' | ') }); CUR = null; return o; }
-module.exports = { manifestOf, crashRow, REV, SKE, sbEquip, sbEquipScore, playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post, ch3Pre, seedWorld };
+module.exports = { manifestOf, crashRow, REV, SKE, sbEquip, sbEquipScore, spendPassive, ptSurvNeed, playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post, ch3Pre, seedWorld };
