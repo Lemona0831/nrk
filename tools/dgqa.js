@@ -327,9 +327,19 @@ function replayBoss(pk, snap, seed) {
   const bs = b.en.find(e => e.role === 'boss');
   return { win: b.over === 'win', hp: bs ? Math.max(0, bs.hp) / bs.hpMax : 0, enr: !!b.enrage, turns: b.turnIdx, left: b.p.hp / b.p.hpMax };
 }
+/* 재현성 (10월 17일 0.8.0 4단계 재검증): 판을 만들기 전에 게임 안의 난수와 시계를 시드로 고정한다.
+   startRun은 run.seed = Date.now() % 100000을 쓰고, 큰 각인 제시 순서(ksCands의 ksHash)가 이 값을 읽는다. 시계를 그대로 두면 같은 시드 · 같은 정책이어도
+   판을 돌린 시각에 따라 큰 각인 제시가 달라져 트리 · 장착 · 전투가 갈렸다(같은 시드 두 번 돌리기에서 1챕터부터 판의 29%, 3챕터 시작 판의 100%가 달랐다).
+   게임 안 시계는 시드에서 나온 값부터 부를 때마다 1ms씩 간다(장비 uid · 기록 시각도 이 시계). DG_REALCLOCK=1이면 예전처럼 실제 시각 */
+function seedWorld(seed) {
+  G0.__rnd = rng(seed * 31 + 7); run_('Math.random = __rnd');
+  if (process.env.DG_REALCLOCK) { run_('if (globalThis.__realNow) Date.now = __realNow'); return; }
+  const h = (Math.imul((seed | 0) ^ 0x9e3779b9, 2654435761) >>> 0) % 100000; G0.__t0 = 1767225600000 + h; // 1767225600000은 100000의 배수라 run.seed = h + (startRun 전까지 부른 수)
+  run_('if (!globalThis.__realNow) globalThis.__realNow = Date.now; { let t = __t0; Date.now = () => t++; }');
+}
 function playChar(pk, build, seed) {
   const P = PERSONAS[pk]; const r = rng(seed);
-  G0.__rnd = rng(seed * 31 + 7); run_('Math.random = __rnd');
+  seedWorld(seed);
   const G = G0.__G;
   G.data = G0.blankData(); G.data.seenFoe = { abbot: 1, bellringer: 1, pilgrim: 1 }; G.data.seenBoss = { abbot: 1 }; G.data.seenCoach = true; G.data.unlAll = 1; /* 숨겨진 직업도 고를 수 있게(어느 직업을 잴지는 DG_LOCK이 정한다) */
   G.cre = { name: 'qa' }; G.dropQ = []; G.b = null; G.sheet = null;
@@ -590,4 +600,4 @@ if (require.main === module) {
   }
   const bugs = runs.flatMap(x => x.bugs); if (bugs.length) console.log('이상 예:', bugs.slice(0, 5));
 }
-module.exports = { playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post, ch3Pre };
+module.exports = { playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post, ch3Pre, seedWorld };
