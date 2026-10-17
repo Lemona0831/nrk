@@ -66,7 +66,7 @@ for (const c of CLS) {
 
 // ===== 3) 찍기 규칙 =====
 { const run = newRun('spellblade'); const T = E.ptBuild('spellblade');
-  ok(run.tv === 2 && run.ptree.pts === 6 && run.atree.pts === 1 && run.ptree.own.length === 0, '새 캐릭터: 트리 판 2, 패시브 6 · 액티브 1');
+  ok(run.tv === 2 && run.ptree.pts === 6 && run.atree.pts === 2 && run.ptree.own.length === 0, '새 캐릭터: 트리 판 2, 패시브 6 · 액티브 2');
   ok(!ptWhy(run, 'lg1C') && ptWhy(run, 'lg2L') === '이웃한 노드를 먼저 열어야 합니다', '시작 이웃은 찍고, 떨어진 노드는 못 찍음');
   ok(/챕터 보상/.test(ptWhy(run, 'lgK5')), '큰 각인 자리는 포인트로 못 찍음');
   for (const id of ['lg1C', 'lg2L', 'lg3L']) assert.equal(E.ptBuy(run, id), null, id); ok(/2고리/.test(ptWhy(run, 'lg4L')), '2고리는 1챕터 보스 전에 잠김');
@@ -75,7 +75,7 @@ for (const c of CLS) {
   ok(/패시브 단계에서만/.test(E.ptRefund(run, 'pw2R')), '배분 흐름 밖에서는 한 칸 되돌리기가 없음');
   run.alloc = { mode: 'create', step: 'p' }; ok(/이어져/.test(E.ptRefund(run, 'lg2L')), '되돌리면 끊기는 노드는 못 되돌림'); ok(E.ptRefund(run, 'lg3L') === null && run.ptree.pts === 1, '끝 노드는 되돌림 · 포인트 +1'); delete run.alloc;
   ok(!atWhy(run, 'sb_bleedcut') && atWhy(run, 'sb_boil') === '이웃한 노드를 먼저 열어야 합니다', '액티브도 이웃 규칙');
-  E.atBuy(run, 'sb_bleedcut'); ok(run.atree.pts === 0 && run.skills.includes('sb_bleedcut') && run.p.skills.includes('sb_bleedcut'), '연 스킬은 빈 칸에 장착'); run.atree.pts = 3; E.atBuy(run, 'sb_boil'); ok(/2고리/.test(atWhy(run, 'sb_taste')), '액티브 2고리 잠금');
+  E.atBuy(run, 'sb_bleedcut'); ok(run.atree.pts === 1 && run.skills.includes('sb_bleedcut') && run.p.skills.includes('sb_bleedcut'), '연 스킬은 빈 칸에 장착'); run.atree.pts = 3; E.atBuy(run, 'sb_boil'); ok(/2고리/.test(atWhy(run, 'sb_taste')), '액티브 2고리 잠금');
   E.atBuy(run, 'sbu_graze'); ok(run.p.aup.includes('sbu_graze') && E.skOf(run.p, 'sb_bleedcut').time === 'fast', '강화는 끼운 스킬에 적용');
   E.atEquip(run, 'sb_bleedcut'); ok(!run.p.aup.includes('sbu_graze') && E.skOf(run.p, 'sb_bleedcut').time === 'normal', '스킬을 빼면 강화는 일하지 않음');
   ok(E.v2Equip(run).length === 3, '장착 = 시작 둘 + 끼운 스킬'); run.atree.own.push('sb_bloodmark', 'sb_ember', 'sb_bladeward', 'sb_kindle'); for (const id of ['sb_bleedcut', 'sb_bloodmark', 'sb_ember', 'sb_bladeward']) if (!run.skills.includes(id)) E.atEquip(run, id); ok(/가득/.test(E.atEquip(run, 'sb_kindle')), '장착은 4칸(시작 2 + 4 = 6)'); ok(E.v2Equip(run).length === 6, '6칸');
@@ -135,20 +135,20 @@ for (const c of CLS) {
 { const run = newRun('spellblade'); run.lv = 5; run.ch = 2; E.ptFix(run); run.clears = 1; for (const id of ['lg1C', 'lg2L', 'lg3L']) E.ptBuy(run, id); E.ksGrant(run, 'b1'); E.ksEnsureOffer(run); E.ksTake(run, 'lgK5'); const fr = run.ptree.free.slice();
   ok(ptResetCost(run) === 50, '패시브 값 = 레벨 × 10'); E.ptReset(run); ok(run.ptree.own.length === 0 && run.ptree.pts === 14 && run.ptree.ks.includes('lgK5') && JSON.stringify(run.ptree.free) === JSON.stringify(fr), '되돌려도 큰 각인 · 보너스 노드은 남음');
   ok(!ptWhy(run, 'lg5L') || !/이웃/.test(ptWhy(run, 'lg5L')), '남은 보너스 노드 옆을 찍을 수 있음(섬도 열린 노드)');
-  E.atBuy(run, 'sb_bleedcut'); E.atBuy(run, 'sb_boil'); ok(atResetCost(run) === Math.round(2 * TREE_RESET.cell * 1.5), '액티브 값 = 연 노드 × 25 × 1.5^(챕터−1)'); E.atReset(run); ok(run.atree.own.length === 0 && run.skills.length === 0 && run.atree.pts === 9, '액티브 되돌리기: 포인트 돌려받고 장착도 빠짐');
+  E.atBuy(run, 'sb_bleedcut'); E.atBuy(run, 'sb_boil'); ok(atResetCost(run) === Math.round(2 * TREE_RESET.cell * 1.5), '액티브 값 = 연 노드 × 25 × 1.5^(챕터−1)'); E.atReset(run); ok(run.atree.own.length === 0 && run.skills.length === 0 && run.atree.pts === 6, '액티브 되돌리기: 포인트 돌려받고 장착도 빠짐');
   E.atBuy(run, 'sb_ember'); E.atBuy(run, 'sb_kindle'); ok(E.atRefundLeaf(run) === 'sb_kindle' && run.atree.own.join() === 'sb_ember', '잊힌 스승의 묘비: 끝 노드 가운데 가장 바깥 것');
 }
 // ===== 8) 경험치 곡선 =====
 { ok(JSON.stringify(LV_XP) === JSON.stringify([0, 40, 100, 190, 330, 520, 740, 970, 1210, 1450, 1700, 2000, 2340, 2720, 3120, 3540]), 'LV_XP 새 값 16칸(5-3)');
   ok(MARK_START[2].lv === 6 && MARK_START[3].lv === 11, '표식 도전 시작 레벨 6 · 11');
-  const run = newRun('monk'); const up = E.gainXp(run, 99999); ok(run.lv === 16 && up === 15, '상한 Lv16'); ok(run.ptree.pts === 36 && run.atree.pts === 31, 'Lv16에 패시브 36 · 액티브 31');
-  const r2 = newRun('monk'); E.gainXp(r2, 520); ok(r2.lv === 6 && r2.ptree.pts === 16 && r2.atree.pts === 11, 'Lv6에 패시브 16 · 액티브 11'); }
+  const run = newRun('monk'); const up = E.gainXp(run, 99999); ok(run.lv === 16 && up === 15, '상한 Lv16'); ok(run.ptree.pts === 36 && run.atree.pts === 17, 'Lv16에 패시브 36 · 액티브 17');
+  const r2 = newRun('monk'); E.gainXp(r2, 520); ok(r2.lv === 6 && r2.ptree.pts === 16 && r2.atree.pts === 7, 'Lv6에 패시브 16 · 액티브 7'); }
 // ===== 9) 옛 세이브 옮기기 =====
 function oldRun(build, o) { // 0.7 꼴 판: 능력치 · 옛 트리 · 옛 각인, tv 없음
   const run = newRun(build); delete run.tv; delete run.ptree; delete run.atree; delete run.ksGot; delete run.ksPending; run.p.pn = []; run.p.psm = {}; run.p.aup = [];
   Object.assign(run, { stats: { str: 10, dex: 5, int: 10, con: 8, wil: 5 }, statPending: 0, statBase: 20, statGrowth: 3, tree: { pts: 0, open: ['sb_bleedcut', 'sb_boil', 'sb_taste', 'sb_sweepcut', 'sb_ember', 'sb_kindle', 'sb_heated'], spent: {} }, skills: ['sb_sweepcut', 'sb_taste', 'sb_bleedcut'], awk: ['a_eye', 'k_sb1'] }, o || {}); return run; }
 { const run = oldRun('spellblade', { lv: 7, xp: 760, ch: 2, clears: 1, room: 3 }); ok(E.treeMigrate08(run), '옮기기 실행');
-  ok(run.ptree.pts === 18 && run.atree.pts === 13 && run.ksPending === 1, '9-5 1: Lv7 · 2챕터 → 패시브 18(6 + 2 × 6) · 액티브 13(1 + 2 × 6) · 큰 각인 1');
+  ok(run.ptree.pts === 18 && run.atree.pts === 8 && run.ksPending === 1, '9-5 1: Lv7 · 2챕터 → 패시브 18(6 + 2 × 6) · 액티브 8(2 + 6) · 큰 각인 1');
   ok(run.awk.length === 0 && run.awkOld.join() === 'a_eye,k_sb1' && JSON.stringify(run.stats) === JSON.stringify({ str: 5, dex: 0, int: 5, con: 3, wil: 1 }), '옛 각인 뺌, 능력치 = 시작 노드(마검사 14)');
   ok(!run.tree && run.treeOld.open.length === 7 && run.skillsOld.join() === 'sb_sweepcut,sb_taste,sb_bleedcut' && run.skills.length === 0 && run.mig08 && run.mig08.lv === 7, '옛 트리 · 장착은 기록으로');
   ok(!E.treeMigrate08(Object.assign(run, { tv: 2 })), 'tv 2면 다시 옮기지 않음'); }
