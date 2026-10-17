@@ -7,7 +7,7 @@ const fs = require('fs'), path = require('path'), vm = require('vm');
 const DIR = process.env.DGDIR || '.'; // 돌릴 게임 폴더 (저장본 점검은 지인 사이트 코드 '.'로 저장본을 만든다)
 require('child_process').execFileSync(process.execPath, [require('path').join(__dirname, 'extract-engine.js'), DIR]); // 테스터의 판단(qa.js)이 쓰는 엔진 사본을 지금 코드로 새로 만든다
 const Q = require('./qa.js');
-const { PERSONAS, heuristic, lookahead, sigRule, rng } = Q;
+const { PERSONAS, heuristic, lookahead, sigRule, rng, hazePick } = Q;
 
 function loadGame() {
   const dir = path.resolve(__dirname, '..', DIR);
@@ -243,8 +243,9 @@ function fightRec(R, b, run, hpIn, acts) {
   for (const h of hits) { const k = (h.dot ? 'dot:' : '') + (h.src || 'none') + (h.charged ? ':big' : ''); src[k] = Math.round(((src[k] || 0) + h.d) * 10) / 10; }
   const used = countBy(b.rec.filter(x => x.k === 'act').map(x => x.a));
   const rec = { f: run.room, ch: run.ch || 1, t: R.type, sq: R.squad, foe: R.foe, mods: (R.mods || []).join('+') || undefined, path: R.path, res: b.over, hpIn: Math.round(hpIn * 100), hpOut: Math.round(run.p.hp / run.p.hpMax * 100), rounds: b.round || 0, acts, src, used, brk: b.rec.filter(x => x.k === 'break').length, cut: b.rec.filter(x => x.k === 'break' && x.cut).length, blk: b.rec.filter(x => x.k === 'block').length, parried: hits.filter(h => h.parried).length, guarded: hits.filter(h => h.guard).length, cons: b.rec.filter(x => x.k === 'cons').length, big: b.rec.filter(x => x.k === 'bigfire').length, bigNoTurn: b.rec.filter(x => x.k === 'bigfire' && x.gap < 1).map(x => x.role + ':' + x.i + ':' + x.gap) };
+  if (b.mkTr) rec.mkTr = b.mkTr;
   if (b.p.build === 'warden') { const gw = b.log.map(x => /방패를 세운다\. 보호막 \+(\d+)/.exec(x.m || '')).filter(Boolean).map(m => +m[1]); const S = b.wdS || []; const dir = hits.filter(h => !h.dot);
-    rec.wd = { g: gw.length, gw: gw.reduce((a, v) => a + v, 0), held: Math.round(b.rec.filter(x => x.k === 'held').reduce((a, x) => a + (x.n || 0), 0) * 10) / 10, gHit: dir.filter(h => h.guard).length, gTaken: Math.round(dir.filter(h => h.guard).reduce((a, h) => a + h.d, 0) * 10) / 10, oHit: dir.filter(h => !h.guard).length, oTaken: Math.round(dir.filter(h => !h.guard).reduce((a, h) => a + h.d, 0) * 10) / 10, turns: S.length, half: S.filter(v => v >= 50).length, hpMax: b.p.hpMax, wil: G0.stat ? G0.stat(b.p, 'wil') : null }; } // 0.8.0 5단계 방어 측정(2-10): 방어 횟수 · 방어 보호막 합 · 받아낸 몫 · 방어 중/아닐 때 받은 직접 피해 · 보호막 상한 50% 이상인 내 차례
+    rec.wd = { g: gw.length, gw: gw.reduce((a, v) => a + v, 0), held: Math.round(b.rec.filter(x => x.k === 'held').reduce((a, x) => a + (x.n || 0), 0) * 10) / 10, gHit: dir.filter(h => h.guard).length, gTaken: Math.round(dir.filter(h => h.guard).reduce((a, h) => a + h.d, 0) * 10) / 10, oHit: dir.filter(h => !h.guard).length, oTaken: Math.round(dir.filter(h => !h.guard).reduce((a, h) => a + h.d, 0) * 10) / 10, turns: S.length, half: S.filter(v => v >= 50).length, hpMax: b.p.hpMax, wil: G0.stat ? G0.stat(b.p, 'wil') : null, ng: (b.wdSG || []).length, ngW: (b.wdSG || []).reduce((s, x) => s + x[0], 0), ngP: (b.wdSG || []).reduce((s, x) => s + x[1], 0) }; } // 0.8.0 5단계 방어 측정(2-10): 방어 횟수 · 방어 보호막 합 · 받아낸 몫 · 방어 중/아닐 때 받은 직접 피해 · 보호막 상한 50% 이상인 내 차례
   if (b.over === 'lose') { const last = hits[hits.length - 1] || {}; const big = hits.slice(-3).filter(h => h.charged); rec.death = { by: (last.dot ? 'dot:' : '') + (last.src || 'none'), big: !!last.charged, bigIn3: big.length, lastD: last.d, st: Math.round(b.p.st), fl: Object.assign({}, b.p.flask), consLeft: (run.cons || []).reduce((a, c) => a + c.n, 0) }; }
   return rec;
 }
@@ -303,7 +304,7 @@ function fightCur(pk, r, mem, out) {
       [a, t] = OPT.policy.chooseAction(b, G.run, n);
     } else {
     const sr = r() < (P.mech || 0.5) ? sigRule(b, r) : null;
-    [a, t] = ch2Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem));
+    [a, t] = ch2Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look && hazePick(b)) || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem)); // 0.8.0 5단계: 숙련의 신기루 대응(수도승)
     [a, t] = ch2Post(b, P, r, a, t);
     // 보스를 깎지 못한 채 버티기만 하면 사람은 밀어붙인다 (한 수 앞만 보는 계산이 페이즈 전환을 피하는 것을 막는다)
     const bs = b.en.find(e => e.role === 'boss' && e.alive);
@@ -318,7 +319,9 @@ function fightCur(pk, r, mem, out) {
     if (stuckN >= 2 && !process.env.NO_STUCK_FIX) { const Lk = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); const gd = Lk.find(x => x.id === 'guard') || Lk[0]; if (gd) { a = gd.id; t = null; } } /* 10월 8일: 같은 행동을 해도 차례가 흐르지 않으면(땅속의 적만 남고 단일 대상 행동뿐일 때) 사람처럼 방어로 차례를 넘긴다 */
     }
     if (OPT.onTurn) OPT.onTurn(G, n);
-    if (b.p.build === 'warden' && b.wdT !== b.turnIdx && G0.wardMax) { b.wdT = b.turnIdx; (b.wdS = b.wdS || []).push(Math.round(100 * (b.p.ward || 0) / Math.max(1, G0.wardMax(b.p)))); } // 0.8.0 5단계: 내 차례 첫 행동 때 보호막 / 상한(%)
+    if (process.env.MK_TRACE && b.p.build === 'monk') (b.mkTr = b.mkTr || []).push([a, G0.st(b.p, 'empower'), b.p.ys, b.turnIdx]); // 0.8.0 5단계: 수도승 행동 · 기 · 유산 흐름(행동 직전)
+    if (b.p.build === 'warden' && b.wdT !== b.turnIdx && G0.wardMax) { b.wdT = b.turnIdx; (b.wdS = b.wdS || []).push(Math.round(100 * (b.p.ward || 0) / Math.max(1, G0.wardMax(b.p)))); if (b.wdGd) { b.wdGd = 0; (b.wdSG = b.wdSG || []).push([Math.round(b.p.ward || 0), Math.round(100 * (b.p.ward || 0) / Math.max(1, G0.wardMax(b.p)))]); } } // 보조 지표(10월 17일): 방어한 다음 내 차례의 보호막(값 · 상한 %)
+    if (b.p.build === 'warden' && a === 'guard') b.wdGd = 1; // 0.8.0 5단계: 내 차례 첫 행동 때 보호막 / 상한(%)
     const progKey = b.turnIdx + ':' + (b.round || 0) + ':' + b.log.length;
     try { G0.playerAct(b, a, t); } catch (e) { out.bugs.push('예외 ' + e.message + ' @' + a); failOf(out, 'exception', { msg: String(e.message).slice(0, 200), act: a, room: G.run.room, ch: G.run.ch || 1 }); b.over = 'lose'; }
     stuckN = progKey === b.turnIdx + ':' + (b.round || 0) + ':' + b.log.length ? stuckN + 1 : 0;
@@ -524,8 +527,10 @@ function convGain(run, nd) {
 function spendTreeUp(pk, r, run, A) {
   const focus = THINK(pk) || pk === 'careful'; const convJudge = !process.env.CONV_OLD && pk !== 'novice';
   for (let n = 0; n < 20 && run.atree.pts > 0; n++) {
-    const can = Object.keys(A.nodes).filter(id => !G0.atWhy(run, id)); if (!can.length) break;
+    const ban = (process.env.BAN_UP || '').split(',').filter(Boolean), force = (process.env.FORCE_UP || '').split(',').filter(Boolean); // 0.8.0 5단계 측정 변형: 찍지 않을 · 먼저 찍을 액티브 노드(같은 포인트 예산)
+    const can = Object.keys(A.nodes).filter(id => !G0.atWhy(run, id) && !ban.includes(id)); if (!can.length) break;
     const eqd = G0.v2Equip(run);
+    { const fz = can.find(id => force.includes(id) && eqd.includes(A.nodes[id].on)); if (fz) { if (G0.atBuy(run, fz)) break; sbEquip(run, A); continue; } }
     const cv = {}; const convOk = id => (id in cv ? cv[id] : (cv[id] = !!(eqd.includes(A.nodes[id].on) && convGain(run, A.nodes[id])))); // 결정적 판단(난수를 쓰지 않는다)
     const sc = id => { const nd = A.nodes[id]; const rr = r() * (pk === 'novice' ? 20 : 1); if (convJudge && isConv(nd)) return convOk(id) ? 0.3 + nd.ring * 0.1 + rr * 0.1 : -1; let v = (focus && nd.br === run.focus ? 10 : 0) + nd.ring * 0.5; v += nd.kind === 'skill' ? ((run.skills || []).length < G0.EQUIP_SLOTS2 ? 4 : 1) : (eqd.includes(nd.on) ? 5 : 0.5); return v + rr; }; // 난수는 예전과 같이 부를 때마다 한 번
     const id = can.sort((a, b) => sc(b) - sc(a))[0]; if (convJudge && isConv(A.nodes[id]) && !convOk(id)) break; if (G0.atBuy(run, id)) break;

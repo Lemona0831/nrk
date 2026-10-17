@@ -291,6 +291,17 @@ function wdDefend(b, p, L, okS, pv1, hv, r, mem) {
   if (!b.bonusUsed && !(E.noFast && E.noFast(p))) { const fs = okS.filter(a => a.time <= 0.6).sort((x, y) => (y.self ? 1 : 0) - (x.self ? 1 : 0))[0]; if (fs) { mem.wdGuard = b.turnIdx; const t = fs.self || fs.aoe ? null : (E.alive(b).find(e => E.canTarget(b, e, fs)) || {}).id; return [fs.id, t]; } }
   return ['guard'];
 }
+/* 0.8.0 5단계 (10월 17일, 설계 문서 11절): 신기루 행렬(후열 술사가 허상을 거는 무리) 대응. 사람은 술사와 허상 표시를 보고 술사를 먼저 노리고, 전열이 둘 이상이면 광역을 쓴다.
+   숙련(한 수 앞 계산)은 이 판단을 하지 못했다: 같은 전투 시작 상태 · 같은 장착에서 이 판단만 넣으면 숙련 부동 40 → 86%, 철권 85 → 95%(tools/battle-repro.js).
+   술사가 살아 있을 때만, 수도승에게만(다른 직업은 재지 않았다). HAZE_OLD=1이면 끈다 */
+function hazePick(b) {
+  if (process.env.HAZE_OLD || !b.p || b.p.build !== 'monk' || !gt(b.p, 'monk', 'haze')) return null;
+  const al = E.alive(b).filter(e => e.role !== 'root'); const mir = al.find(e => e.role === 'mirage'); if (!mir) return null;
+  const L = E.actionList(b).filter(a => a.ok && a.v2 && !a.self); const front = al.filter(e => e.row === 'front');
+  const rs = L.filter(a => !a.aoe && E.canTarget(b, mir, a)).sort((x, y) => (y.yc || 0) - (x.yc || 0))[0]; if (rs) return [rs.id, mir.id];
+  if (front.length >= 2) { const ao = L.filter(a => a.s && a.s.tgt === 'front').sort((x, y) => (y.yc || 0) - (x.yc || 0))[0]; if (ao) return [ao.id, null]; }
+  return null;
+}
 function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   const p = b.p; const nf = !!(E.noFast && E.noFast(p)); const okS = L.filter(a => a.v2 && a.ok && !(nf && a.time <= 0.6)); const has = (a, k) => a.s.fx.some(e => e.k === k); // 느린 맥박: 빠른 칸이 없어 빠른 스킬도 차례를 끝내므로 사람처럼 빠른 스킬을 고르지 않는다
   const psn = e => (e.s.poison ? e.s.poison.stacks : 0);
@@ -889,4 +900,4 @@ if (require.main === module) {
   require('fs').writeFileSync(require('path').join(__dirname, 'qa.json'), JSON.stringify({ runs, scen }));
   console.log('runs', runs.length, 'sec', ((Date.now() - t0) / 1000).toFixed(1));
 }
-module.exports = { qaBurnDamage, qaMonkHit, qaPoisonBurst, qaWeaponBase, qaSkillBase, qaResource, qaWardBonus, playRun, PERSONAS, heuristic, lookahead, sigRule, invariants, wasted, rng, GATE, PRE_PARRY, demandPick };
+module.exports = { hazePick, qaBurnDamage, qaMonkHit, qaPoisonBurst, qaWeaponBase, qaSkillBase, qaResource, qaWardBonus, playRun, PERSONAS, heuristic, lookahead, sigRule, invariants, wasted, rng, GATE, PRE_PARRY, demandPick };
