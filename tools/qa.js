@@ -353,7 +353,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     if (burden < 2) for (const a of okS.filter(a => a.s.fx.some(e => e.k === 'meSt' && CF_BAD.includes(e.s)))) { const v = ret(a, best(a, (x, y) => (big(y) - big(x)) || (x.hp - y.hp))); if (v) return v; }
   }
   // 숨겨진 직업 1 (10월 7일, 비공개 문서 F4): 흡혈 표적 · 먹기 · 받은 피해 · 처치 · 나에게 출혈. 이 직업의 효과를 가진 스킬이 끼워졌을 때만
-  if (L.some(a => a.v2 && buFx(a))) {
+  if (p.build !== 'spellblade' && L.some(a => a.v2 && buFx(a))) { // 10월 17일 0.8.0 4단계 재검증: 마검사 혈인의 혈향(출혈 이용) · 혈풍참(처치 시)도 이 효과에 걸려, 신중 · 대충 성향 혈인이 마검사 판단(교대 · 유산) 대신 이 칸으로 골랐다(3챕터 시작 신중 완주 2/60 → 고친 뒤 26/60). 마검사는 아래 자기 칸이 맡는다
     const hpf = p.hp / p.hpMax, bl = e => psn2(e, 'bleed'), big = e => !!(e.elite || e.strong || e.role === 'boss'); const F = (a, k) => a.s.fx.find(e => e.k === k);
     const thirst = 1 + Math.min(0.18, 0.03 * Math.max(0, Math.floor((1 - hpf) * 10 + 1e-9))); const grN = b.prepTurn === b.turnIdx ? (p.grudge || 0) : Math.min(p.tookAcc || 0, p.hpMax * 0.3);
     const room = Math.max(0, p.hpMax - p.hp); const eatLeft = Math.max(0, p.hpMax * 0.4 - (b.eatGot || 0));
