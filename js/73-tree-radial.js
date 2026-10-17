@@ -209,6 +209,7 @@ function trdInfoP(run, id, mode, opt) {
   if (n.kind === 'start') h += `<p>${esc(n.d)}: ${Object.entries(n.stat || {}).map(([k, x]) => esc(STATN[k]) + ' ' + x).join(' · ')}</p>`;
   else if (n.kind !== 'small') h += `<p>${esc(n.d || '')}</p>${n.pay ? `<p class="no">대가: ${esc(n.pay)}</p>` : ''}`;
   else h += `<p>${esc(n.d || n.n)}</p>`;
+  if (n.kind !== 'start' && n.stat && run.p && st !== 'own' && st !== 'free') { const L = Object.entries(n.stat).filter(([, v]) => v > 0).map(([k, v]) => { let m = ''; try { m = statGrowthPreview(run.p, k, v); } catch (e) { m = ''; } return `<p class="mini"><b>${esc(STATN[k])} ${stat(run.p, k)} → ${stat(run.p, k) + v}</b>${m ? ': ' + esc(m) : ''}</p>`; }); if (L.length) h += `<p class="trd-lbl">찍으면</p>${L.join('')}`; } // 10월 17일: 능력치 노드가 실제로 올리는 값
   if (cand) {
     const c = ksInfo(run, id) || { d: 0, path: [] }, open = ptOpenIds(run), fr = c.path.filter(x => !open.includes(x)), nn = fr.filter(x => T.nodes[x].kind === 'notable').map(x => T.nodes[x].n);
     h += `<p class="trd-st st-cand">고를 수 있는 큰 각인 후보</p><p class="mini">보너스 노드 ${fr.length}칸${nn.length ? ' · 함께 열리는 중간 노드: ' + nn.map(esc).join(', ') : ''} (찍은 곳에서 ${c.d}칸)</p>` + trdBtnRow(`<button class="gold" data-a="kspick" data-k="${id}">이것을 고른다</button>`);
@@ -251,10 +252,23 @@ function trdInfoA(run, id) {
   return h + trdBtnRow(b);
 }
 /* 능력치 합계 (패시브, 옆 칸 또는 아래 접는 칸) */
+/* 능력치가 하는 일 (10월 17일, 만든 사람 "각 스탯이 뭘 올려주는지 다시 명확하지 않다"): 능력치 배분 화면이 트리로 들어오며 빠진 설명을 되살린다.
+   숫자는 공식 상수에서 읽는다(SKILL_STAT_PCT · TRIGGER_STAT_PCT). 지금 캐릭터 기준 변화는 statGrowthPreview(66-dungeon-flow)가 계산한다 */
+const STAT_DOES = {
+  str: () => '베기(⚔) 스킬 기본 피해 1점마다 +' + SKILL_STAT_PCT + '% · 기본 · 강공격 피해 · 내가 채우는 붕괴 1점마다 +1% · 10점마다 강공격 붕괴 +5 · 생명력 조금',
+  dex: () => '최대 스태미나 1점마다 +1 · 흘리기로 줄이는 피해 · 행동 빠르기 1점마다 +0.5% · 10점마다 흘리기 스태미나 −1 · 일부 직업은 스킬 · 기본 공격 피해',
+  int: () => '주문(✦) 스킬 기본 피해 1점마다 +' + SKILL_STAT_PCT + '% · 중독 · 출혈 · 화상 피해 1점마다 +2% · 열충격 · 독 격발 피해 1점마다 +' + TRIGGER_STAT_PCT + '%',
+  con: () => '최대 생명력 1점마다 +3',
+  wil: () => '보호막 생성 · 회복 1점마다 +2%(상한까지) · 해로운 상태를 버틸 확률 1점마다 +1%(최대 25%)',
+};
 function vStatTable(run) {
-  const src = ptStatSrc(run), sm = ptSmall(run), tot = ptStats(run);
-  const rows = STAT_KEYS.map(k => { const parts = [['시작', src.start[k]], ['노드', src.own[k]], ['보너스', src.free[k]]].filter(x => x[1]).map(x => x[0] + ' ' + x[1]); return `<tr><th scope="row">${esc(STATN[k])}</th><td><b>${tot[k] || 0}</b></td><td class="mini">${parts.join(' + ') || '없음'}</td></tr>`; }).join('');
-  return `<table class="trd-tbl"><caption class="sr">능력치 합계</caption><tbody>${rows}</tbody></table><p class="mini">작은 노드 효과: 주는 붕괴 +${Math.round((Math.pow(1 + PT.smallBrk, sm.brk) - 1) * 100)}% (제어 ${sm.brk}칸) · 스태미나 +${sm.st * PT.smallSt} (계승 ${sm.st}칸)</p>`;
+  const src = ptStatSrc(run), sm = ptSmall(run), tot = ptStats(run), p = run.p;
+  const rows = STAT_KEYS.map(k => {
+    const parts = [['시작', src.start[k]], ['노드', src.own[k]], ['보너스', src.free[k]]].filter(x => x[1]).map(x => x[0] + ' ' + x[1]);
+    let more = ''; try { more = p ? statGrowthPreview(p, k, 2) : ''; } catch (e) { more = ''; }
+    return `<details class="trd-sr"><summary><span class="k">${esc(STATN[k])}</span><b>${tot[k] || 0}</b><span class="mini">${parts.join(' + ') || '없음'}</span></summary><p><span class="lb">하는 일</span>${esc(STAT_DOES[k]())}</p>${more ? `<p><span class="lb">작은 노드 하나(+2) 더</span>${esc(more)}</p>` : ''}</details>`;
+  }).join('');
+  return `<div class="trd-srs">${rows}</div><p class="mini">줄을 누르면 그 능력치가 하는 일과, 2점 더 찍었을 때 지금 캐릭터에서 오르는 값이 보입니다.</p><p class="mini">작은 노드 효과: 주는 붕괴 +${Math.round((Math.pow(1 + PT.smallBrk, sm.brk) - 1) * 100)}% (제어 ${sm.brk}칸) · 스태미나 +${sm.st * PT.smallSt} (계승 ${sm.st}칸)</p>`;
 }
 const trdWide = () => typeof matchMedia !== 'undefined' && matchMedia('(min-width: 900px)').matches;
 /* 그림 읽는 법 (10월 17일 다듬기: 만든 사람 "읽는 법이 눈에 안 들어온다"): 모양 · 상태 두 묶음, 큰 그림 · 굵은 이름 · 한 줄 풀이, 조작은 따로 */

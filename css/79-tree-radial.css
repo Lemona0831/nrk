@@ -128,3 +128,15 @@ html.hc .trd-svg .lk{stroke:#7a6550}html.hc :is(.trd-svg,.trd-li) .tn .bd{stroke
 .trd-map.hint .trd-hint{opacity:1}
 html.rm .trd-note{animation:none}html.rm .trd-hint{transition:none}
 @media (prefers-reduced-motion:reduce){.trd-note{animation:none}.trd-hint{transition:none}}
+
+/* 능력치 합계: 펼치는 줄 (10월 17일) */
+.trd-srs{display:grid;gap:2px;margin:4px 0}
+.trd-sr{border-top:1px solid var(--line)}.trd-sr:first-child{border-top:0}
+.trd-sr summary{display:grid;grid-template-columns:3.2em 2.6em minmax(0,1fr) auto;align-items:baseline;gap:8px;cursor:pointer;padding:5px 0;list-style:none}
+.trd-sr summary::-webkit-details-marker{display:none}
+.trd-sr summary .k{color:var(--muted)}.trd-sr summary b{color:var(--gold);font-size:calc(17px*var(--fs,1))}
+.trd-sr summary::after{content:'＋';color:var(--muted);justify-self:end;grid-column:4;grid-row:1}
+.trd-sr[open] summary::after{content:'－'}
+.trd-sr p{margin:2px 0 8px;font-size:calc(13px*var(--fs,1));line-height:1.5}
+.trd-sr .lb,.trd-lbl{display:block;color:var(--gold);font-size:calc(12px*var(--fs,1));font-weight:600;margin-bottom:2px}
+.trd-lbl{margin:8px 0 2px}

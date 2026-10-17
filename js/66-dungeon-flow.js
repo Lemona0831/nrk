@@ -239,7 +239,7 @@ function statGrowthPreview(p, k, points = 3) {
     }
     if (isBm(p) && ['str', 'con'].includes(k) && s.fx.some(e => e.k === 'hpCost')) costs.push(s.n + ' ' + bmHpCost(p, s) + ' → ' + bmHpCost(up, s));
   }
-  const range = values => { const a = Math.min(...values), b = Math.max(...values); return a === b ? a + '%' : a + '~' + b + '%'; };
+  const range = values => { const a = Math.min(...values), b = Math.max(...values); return a === b ? a + '%' : a + '–' + b + '%'; };
   if (damage.length) out.push('장착 스킬 기본 피해 +' + range(damage));
   if (resource.length) out.push('장착 스킬 자원 추가 피해 +' + range(resource));
   if (wards.length) out.push('보호막 부여량(빈 상태·추가 전투 보정 전): ' + wards.join(', '));
