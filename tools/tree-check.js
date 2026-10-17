@@ -33,7 +33,7 @@ for (const c of CLS) {
   ok(true, c + ': 기울기(첫 중간 노드까지 거리) ' + (P.tmp ? '임시 트리는 그 거리보다 가깝지 않음' : '표대로'));
   for (const id in A.nodes) { const nd = A.nodes[id]; if (nd.kind === 'start') continue; assert(nd.cost === 1 && [1, 2, 3].includes(nd.ring), c + ' 액티브 ' + id); if (nd.kind === 'skill') assert(E.SK2[id] && !E.SK2[id].start, c + ' 스킬 ' + id); else { assert(nd.links.includes(nd.on) && A.nodes[nd.on].kind === 'skill', c + ' 강화가 그 스킬과 이웃 ' + id); } if (nd.links.includes('S')) assert.equal(nd.ring, 1, c + ' 가운데 이웃은 1고리 ' + id); }
   ok(true, c + ': 액티브 노드(스킬은 지금 칸, 강화는 그 스킬과 이웃, 비용 1)');
-  ok(!!P.tmp === (c !== 'spellblade') && !!A.tmp === (c !== 'spellblade'), c + ': 임시 트리 표시(tmp)는 마검사만 없음');
+  { const REAL = ['spellblade', 'warden', 'monk']; ok(!!P.tmp === !REAL.includes(c) && !!A.tmp === !REAL.includes(c), c + ': 임시 트리 표시(tmp)는 직업 초안이 들어간 직업(마검사 · 파수꾼 · 수도승)만 없음'); } // 0.8.0 5단계
 }
 
 // ===== 2) 마검사 = 1단계 문서 7 · 8절 =====
@@ -135,20 +135,20 @@ for (const c of CLS) {
 { const run = newRun('spellblade'); run.lv = 5; run.ch = 2; E.ptFix(run); run.clears = 1; for (const id of ['lg1C', 'lg2L', 'lg3L']) E.ptBuy(run, id); E.ksGrant(run, 'b1'); E.ksEnsureOffer(run); E.ksTake(run, 'lgK5'); const fr = run.ptree.free.slice();
   ok(ptResetCost(run) === 50, '패시브 값 = 레벨 × 10'); E.ptReset(run); ok(run.ptree.own.length === 0 && run.ptree.pts === 14 && run.ptree.ks.includes('lgK5') && JSON.stringify(run.ptree.free) === JSON.stringify(fr), '되돌려도 큰 각인 · 보너스 노드은 남음');
   ok(!ptWhy(run, 'lg5L') || !/이웃/.test(ptWhy(run, 'lg5L')), '남은 보너스 노드 옆을 찍을 수 있음(섬도 열린 노드)');
-  E.atBuy(run, 'sb_bleedcut'); E.atBuy(run, 'sb_boil'); ok(atResetCost(run) === Math.round(2 * TREE_RESET.cell * 1.5), '액티브 값 = 연 노드 × 25 × 1.5^(챕터−1)'); E.atReset(run); ok(run.atree.own.length === 0 && run.skills.length === 0 && run.atree.pts === 5, '액티브 되돌리기: 포인트 돌려받고 장착도 빠짐');
+  E.atBuy(run, 'sb_bleedcut'); E.atBuy(run, 'sb_boil'); ok(atResetCost(run) === Math.round(2 * TREE_RESET.cell * 1.5), '액티브 값 = 연 노드 × 25 × 1.5^(챕터−1)'); E.atReset(run); ok(run.atree.own.length === 0 && run.skills.length === 0 && run.atree.pts === 9, '액티브 되돌리기: 포인트 돌려받고 장착도 빠짐');
   E.atBuy(run, 'sb_ember'); E.atBuy(run, 'sb_kindle'); ok(E.atRefundLeaf(run) === 'sb_kindle' && run.atree.own.join() === 'sb_ember', '잊힌 스승의 묘비: 끝 노드 가운데 가장 바깥 것');
 }
 // ===== 8) 경험치 곡선 =====
 { ok(JSON.stringify(LV_XP) === JSON.stringify([0, 40, 100, 190, 330, 520, 740, 970, 1210, 1450, 1700, 2000, 2340, 2720, 3120, 3540]), 'LV_XP 새 값 16칸(5-3)');
   ok(MARK_START[2].lv === 6 && MARK_START[3].lv === 11, '표식 도전 시작 레벨 6 · 11');
-  const run = newRun('monk'); const up = E.gainXp(run, 99999); ok(run.lv === 16 && up === 15, '상한 Lv16'); ok(run.ptree.pts === 36 && run.atree.pts === 16, 'Lv16에 패시브 36 · 액티브 16');
-  const r2 = newRun('monk'); E.gainXp(r2, 520); ok(r2.lv === 6 && r2.ptree.pts === 16 && r2.atree.pts === 6, 'Lv6에 패시브 16 · 액티브 6'); }
+  const run = newRun('monk'); const up = E.gainXp(run, 99999); ok(run.lv === 16 && up === 15, '상한 Lv16'); ok(run.ptree.pts === 36 && run.atree.pts === 31, 'Lv16에 패시브 36 · 액티브 31');
+  const r2 = newRun('monk'); E.gainXp(r2, 520); ok(r2.lv === 6 && r2.ptree.pts === 16 && r2.atree.pts === 11, 'Lv6에 패시브 16 · 액티브 11'); }
 // ===== 9) 옛 세이브 옮기기 =====
 function oldRun(build, o) { // 0.7 꼴 판: 능력치 · 옛 트리 · 옛 각인, tv 없음
   const run = newRun(build); delete run.tv; delete run.ptree; delete run.atree; delete run.ksGot; delete run.ksPending; run.p.pn = []; run.p.psm = {}; run.p.aup = [];
   Object.assign(run, { stats: { str: 10, dex: 5, int: 10, con: 8, wil: 5 }, statPending: 0, statBase: 20, statGrowth: 3, tree: { pts: 0, open: ['sb_bleedcut', 'sb_boil', 'sb_taste', 'sb_sweepcut', 'sb_ember', 'sb_kindle', 'sb_heated'], spent: {} }, skills: ['sb_sweepcut', 'sb_taste', 'sb_bleedcut'], awk: ['a_eye', 'k_sb1'] }, o || {}); return run; }
 { const run = oldRun('spellblade', { lv: 7, xp: 760, ch: 2, clears: 1, room: 3 }); ok(E.treeMigrate08(run), '옮기기 실행');
-  ok(run.ptree.pts === 18 && run.atree.pts === 7 && run.ksPending === 1, '9-5 1: Lv7 · 2챕터 → 패시브 18(6 + 2 × 6) · 액티브 7 · 큰 각인 1');
+  ok(run.ptree.pts === 18 && run.atree.pts === 13 && run.ksPending === 1, '9-5 1: Lv7 · 2챕터 → 패시브 18(6 + 2 × 6) · 액티브 13(1 + 2 × 6) · 큰 각인 1');
   ok(run.awk.length === 0 && run.awkOld.join() === 'a_eye,k_sb1' && JSON.stringify(run.stats) === JSON.stringify({ str: 5, dex: 0, int: 5, con: 3, wil: 1 }), '옛 각인 뺌, 능력치 = 시작 노드(마검사 14)');
   ok(!run.tree && run.treeOld.open.length === 7 && run.skillsOld.join() === 'sb_sweepcut,sb_taste,sb_bleedcut' && run.skills.length === 0 && run.mig08 && run.mig08.lv === 7, '옛 트리 · 장착은 기록으로');
   ok(!E.treeMigrate08(Object.assign(run, { tv: 2 })), 'tv 2면 다시 옮기지 않음'); }

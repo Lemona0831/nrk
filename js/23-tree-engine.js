@@ -156,7 +156,13 @@ function atEquip(run, id) {
 }
 const atSkills = run => run.atree ? run.atree.own.filter(id => (atBuild(run.build).nodes[id] || {}).kind === 'skill') : [];
 /* ---- 실제 스킬: 강화를 적용한 스킬 (1-3). 강화는 그 스킬을 끼웠을 때만(p.aup). 패시브 노드의 스킬 바꾸기(PN_SK)도 여기서 ---- */
-const PN_SK = { n_sb_thickaegis: { on: 'sb_aegis', fxSet: [{ k: 'ward', add: 3 }] } }; // 두꺼운 주문 방패: 주문 방패의 보호막 +3
+const PN_SK = { n_sb_thickaegis: { on: 'sb_aegis', fxSet: [{ k: 'ward', add: 3 }] }, // 두꺼운 주문 방패: 주문 방패의 보호막 +3
+  /* 0.8.0 5단계 파수꾼 · 수도승: 시작 스킬을 바꾸는 패시브 */
+  n_wd_wide: { on: 'w_bash', set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 10 }, { k: 'brk', n: 24 }] }, // 넓은 방패
+  n_wd_brace6: { on: 'w_brace', fxSet: [{ k: 'st', s: 'protect', n: 6 }] }, // 단단한 자세
+  n_wd_bracewall: { on: 'w_brace', fxAdd: [{ k: 'ward', n: 6 }] }, // 굳은 방패
+  n_mk_prestance: { on: 'm_brace', fxSet: [{ k: 'stance', dmg: 12 }] }, // 먼저 잡은 자세
+};
 /* 칼에 새긴 주문 (10월 17일 보완 3): 이끄는 갈래(p.sbLead)에 따라 시작 스킬을 바꾼다. 화상은 칼이 비어 있을 때만 싣는다(soft) */
 const PN_LEAD = { n_sb_edgeadd: { 혈인: { on: 'sb_edge', fxAdd: [{ k: 'st', s: 'bleed', n: 1 }] }, 염검: { on: 'sb_aegis', fxAdd: [{ k: 'imbue', s: 'ignite', n: 1, soft: 1 }] }, 마갑: { on: 'sb_aegis', fxSet: [{ k: 'ward', add: 2 }] } } };
 const pnLead = (p, id) => (p.pn || []).map(k => PN_LEAD[k] && p.sbLead && PN_LEAD[k][p.sbLead]).filter(m => m && m.on === id);
@@ -164,6 +170,7 @@ const SKC = new Map();
 function skMod(s, m) {
   if (m.set) Object.assign(s, m.set);
   for (const x of m.fxSet || []) { const e = s.fx.find(f => f.k === x.k && (x.s == null || f.s === x.s)); if (!e) throw new Error('fxSet ' + s.id + ' ' + x.k); for (const k in x) if (k === 'add') e.n = (e.n || 0) + x.add; else if (k !== 'k') e[k] = x[k]; }
+  for (const x of m.fxDel || []) s.fx = s.fx.filter(f => !(f.k === x.k && (x.s == null || f.s === x.s))); // 0.8.0 5단계: 효과 빼기 (다시 세우는 벽의 보호)
   for (const x of m.fxAdd || []) s.fx.push(Object.assign({}, x));
   if (m.cond) s.cond = (s.cond || []).concat([Object.assign({}, m.cond)]);
 }
@@ -183,6 +190,10 @@ function skOf(p, id) {
 function skCondMet(b, s, c, tgt) {
   const p = b.p; if (c.when === 'resp') return b.ysRespLast != null && b.ysRespLast >= (b.ysR || 0) - 1;
   if (c.when === 'alt2') { if (p.build !== 'spellblade' || !s.kind) return false; const alt = !!p.sbLast && s.kind !== p.sbLast; return (alt ? (p.sbRun || 0) + 1 : 0) >= 2; }
+  /* 0.8.0 5단계 내 자원 조건 (1-2절): 보유만 본다. 비용을 낼 때의 값 */
+  const mw = /^ward>=(\d+)$/.exec(c.when || ''); if (mw) return (p.ward || 0) >= +mw[1];
+  const mk = /^ki>=(\d+)$/.exec(c.when || ''); if (mk) return st(p, 'empower') >= +mk[1];
+  if (c.when === 'stance') return !!(p.stance || (b.mkStHeld != null && b.mkStHeld === b.turnIdx)); // 직전 적 차례를 자세로 맞았다(내 차례 첫 행동에서 자세가 풀려도 그 차례 동안 참)
   const m = /^kw:(\w+)>=(\d+)$/.exec(c.when || ''); if (m) { const ok = e => e && e.alive && st(e, m[1]) >= +m[2]; return tgt ? ok(tgt) : alive(b).some(ok); }
   return false;
 }
@@ -296,6 +307,46 @@ const IFX_NODE = {
   ks_sb_over: { hitP: b => b.sbAlt ? SB_OVER.hit : 0, noAltWard: 1, ovDisc: 1 }, // 10월 17일 보완 4: +35%, 교대 셋 이으면 다음 유산 4 스킬 −3(바닥 1, 전투마다 1번)
   ks_sb_beat: { brk: b => { if (!(b.sbAlt && b.sbRunNow >= 3) || b.ksBeatR === (b.ysR || 0)) return 0; b.ksBeatR = b.ysR || 0; return 40; } },
   ks_sb_blood: { wardCap: 0.25, onStart: (b, p) => { addWard(b, p, 6, undefined, true); return 1; } }, // 10월 17일 보완 4: 상한 25%, 전투 시작 보호막 6
+  /* ---- 0.8.0 5단계 파수꾼 (docs/제안/0.8.0-5단계-파수꾼-수도승-트리초안-2026-10-17.md 2-5) ---- */
+  n_wd_held: { heldWard: 1 }, // 받아낸 몫 (wdHeld)
+  n_wd_low: { guardLow: 1 }, // 버팀목 (wdGuardWard)
+  n_wd_will: { guardWil: 1 }, // 다진 의지 (wdGuardWard)
+  n_wd_brace6: {}, n_wd_bracewall: {}, n_wd_wide: {}, // 시작 스킬 바꾸기 (PN_SK)
+  n_wd_remnant: { onWin: run => { const p = run.p; const v = Math.min(p.hpMax * 0.05, (p.wardLeft || 0) / 3, p.hpMax - p.hp); if (!(v > 0)) return; p.hp += v; return 1; } }, // 남은 벽
+  n_wd_breath: { cost: (p, id) => id === 'guard' ? -6 : 0 }, // 숨 고르는 방패: 방어 스태미나 20 → 14
+  n_wd_shake: { heldBrk: 1 }, // 흔들리는 방패 (wdHeld)
+  n_wd_breakwall: { onBreak: (b, p) => { if (b.wdBwA === b.actN) return; b.wdBwA = b.actN; return addWard(b, p, 6, undefined, true) > 0 ? 1 : 0; } }, // 무너뜨린 자의 벽
+  n_wd_turn: { inP: (b, p, o) => o.src && !o.dot && o.src.row === 'back' ? 0.06 : 0 }, // 몸 돌리기
+  n_wd_pullhit: { hitP: (b, p, e) => { if (e.pulledA == null || e.pulledA === b.actN) return 0; e.pulledA = null; return 0.15; } }, // 다가서는 방패: 끌어낸 적에게 다음 공격
+  n_wd_stack: { hitP: (b, p, e, o, c) => { // 쌓인 벽 (10월 17일 검토 1-1): 유산 3 이상 공격 스킬(태우기 칸 제외) · 강공격만, 보호막 15 이상이면 5를 써서 +12%. 행동마다 한 번
+    if (!c || o.ctr) return 0; if (b.wdStA === b.actN) return 0.12; if (b.wdStNo === b.actN) return 0;
+    const s = c.skill ? skOf(p, c.id) : null; const ok = c.id === 'heavy' || (s && skCost(s) >= 3 && !s.fx.some(f => f.k === 'wardBurn'));
+    if (!ok || (p.ward || 0) < 15) { b.wdStNo = b.actN; return 0; } p.ward -= 5; b.wdStA = b.actN; logp(b, 'good', '쌓인 벽. 보호막 5를 써서 피해 +12%'); return 0.12; } },
+  n_wd_respward: { respWard: 1 }, // 막아 든 숨 (ysResp)
+  n_wd_ready: { onStart: (b, p) => { addWard(b, p, p.hpMax * 0.06, undefined, true); return 1; } }, // 준비된 방패
+  n_wd_fuel: { onSkill: b => { const n = b.burnLast || 0; b.burnLast = 0; if (n < 10) return; fxStam(b.p, 4 * Math.floor(n / 10)); return 1; } }, // 보호막 연료
+  n_wd_heavy: { hitP: (b, p, e, o, c) => c && c.id === 'heavy' ? 0.10 : 0, brk: (b, p, e, c) => c && c.id === 'heavy' ? 10 : 0 }, // 무거운 방패
+  ks_wd_drop: { hitP: () => 0.15, guardWeak: 1 }, // 방패를 내린 자
+  ks_wd_eternal: { wardCap: 0.4, hitP: (b, p, e, o, c) => c && c.skill && (skOf(p, c.id) || { fx: [] }).fx.some(f => f.k === 'wardBurn') ? -0.3 : 0 }, // 영원한 성벽
+  /* ---- 0.8.0 5단계 수도승 (3-5) ---- */
+  n_mk_loaded: { kiBasic: 1 }, // 실린 주먹 (outDmg)
+  n_mk_burst: { kiBurstPer: 1 }, // 터지는 기
+  n_mk_last: { hitP: (b, p, e, o, c) => c && c.skill && b.kiTookA === b.actN && st(p, 'empower') === 0 ? 0.12 : 0 }, // 마지막 한 방울
+  n_mk_steady: { inP: (b, p, o) => p.stance && o.charged && !o.dot ? 0.15 : 0 }, // 흔들리지 않는 몸
+  n_mk_breath: { onCounter: (b, p) => { fxStam(p, 3); return 1; } }, // 고른 숨
+  n_mk_cycle: { onWin: run => { const p = run.p; const v = Math.min(p.hpMax * 0.01 * (p.kiLeft || 0), p.hpMax - p.hp); if (!(v > 0)) return; p.hp += v; return 1; } }, // 기의 순환
+  n_mk_shake: { ctrBrk: 6 }, // 흔드는 되받기: 되받기 붕괴 10 → 16
+  n_mk_seal: { onSeal: (b, p) => { if (b.mkSealA === b.actN) return; b.mkSealA = b.actN; addS(b, p, 'empower', 1); logp(b, 'good', '끊는 손끝. 기 +1'); return 1; } }, // 끊는 손끝
+  n_mk_parry: { onParry: (b, p) => { const R = b.ysR || 0; if (b.mkParR === R) return; b.mkParR = R; addS(b, p, 'empower', 1); logp(b, 'good', '흘려 받기. 기 +1'); return 1; } }, // 흘려 받기: 적 차례마다 한 번
+  n_mk_prestance: {}, // 먼저 잡은 자세 (PN_SK)
+  n_mk_quick: { hitP: (b, p, e, o, c) => c && c.skill && (skOf(p, c.id) || {}).time === 'fast' ? 0.08 : 0 }, // 날랜 손
+  n_mk_vessel: { kiCap: 1 }, // 기의 그릇 (kiCapOf)
+  n_mk_seed: { onStart: (b, p) => { addS(b, p, 'empower', 1); return 1; } }, // 남은 숨
+  n_mk_double: { ctrKi2: 1 }, // 되받은 기세: 한 적 차례의 두 번째 되받기부터 기 +1 더
+  n_mk_pool: { hitP: (b, p, e, o) => o && o.ctr && st(p, 'empower') >= kiCapOf(p) ? 0.2 : 0 }, // 고인 기
+  n_mk_spill: { kiSpillSt: 4 }, // 넘치는 기운
+  ks_mk_empty: { hitP: (b, p, e, o, c) => c && c.skill && (skOf(p, c.id) || { fx: [] }).fx.some(f => f.k === 'kiBurst') ? 0.3 : 0, ctrKiOnce: 1 }, // 비운 그릇 (10월 17일 검토 2-2: 대가는 되받기 기 한 번)
+  ks_mk_vow: { inP: (b, p, o) => p.stance && !o.dot ? 0.12 : 0, noFastAtk: 1 }, // 부동의 맹세
 };
 const PSM_FX = new Map();
 function ptSmallFx(sm) { const key = (sm.brk || 0) + ':' + (sm.st || 0); if (!PSM_FX.has(key)) PSM_FX.set(key, Object.assign(sm.st ? { st: { st: PT.smallSt * sm.st } } : {}, sm.brk ? { brkMul: (() => { const m = Math.pow(1 + PT.smallBrk, sm.brk); return () => m; })() } : {})); return PSM_FX.get(key); }

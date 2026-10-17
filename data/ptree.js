@@ -11,7 +11,7 @@ const PT = {
   ksN: 3, ksOffer: 3, // 큰 각인 제시: 찍은 곳에서 3칸 안, 셋
   smallBrk: 0.03, smallSt: 6, // 제어 작은 노드 주는 붕괴 +3%(곱), 계승 작은 노드 스태미나 +6
 };
-const AT_PTS = { start: 1, lv: 1 }; // 액티브 포인트: 시작 1 + 레벨마다 1
+const AT_PTS = { start: 1, lv: 2 }; // 액티브 포인트: 시작 1 + 레벨마다 2(10월 17일 만든 사람 결정, 전에는 1)
 /* 마검사 두 번 교대 (10월 17일 만든 사람 보완 1, 교대의 박자): 한 차례 두 번째 교대에 보호막 ward, 다음 스킬 비용 −off(바닥 1). max: 할인이 생기는 횟수의 전투당 한도(0이면 차례마다), min: 할인을 받는 스킬의 최소 유산 비용 */
 const SB_ALT2 = { ward: 3, off: 1, max: 0, min: 3 }; // 4단계 조정: min 1 → 3 (모든 다음 스킬 −1이면 1챕터 넘김이 21% → 33%로 뛰었다. 유산 3 · 4 스킬에만 걸면 24%)
 /* 마검 과부하 (10월 17일 보완 4): 교대한 행동 피해 +hit, 이어진 교대 run번째에 다음 유산 4 스킬 비용 −off(바닥 1, 전투마다 1번) */
@@ -68,6 +68,41 @@ const PN_TXT = {
   n_sb_bloodmail: { n: '피의 갑주', d: '출혈 · 화상이 걸린 적을 쓰러뜨리면 보호막 +5.' },
   n_sb_manamail: { n: '마력 갑주', d: '전투를 시작하면 보호막 6.' },
   n_sb_under: { n: '보호막 아래', d: '보호막이 있으면 받는 직접 피해가 4% 줄어듭니다.' },
+  /* 0.8.0 5단계 파수꾼 (docs/제안/0.8.0-5단계-파수꾼-수도승-트리초안-2026-10-17.md 2-5) */
+  n_wd_wide: { n: '넓은 방패', d: '방패 치기가 전열 모두를 칩니다. 피해 14 → 10, 붕괴 36 → 24.' },
+  n_wd_heavy: { n: '무거운 방패', d: '강공격의 피해가 10%, 붕괴가 10 늘어납니다.' },
+  n_wd_held: { n: '받아낸 몫', d: '방어 중 적의 직접 공격을 받으면, 방어로 줄인 피해의 50%만큼 보호막을 얻습니다(후열 공격이면 그 절반). 적 차례마다 10까지.' },
+  n_wd_low: { n: '버팀목', d: '생명력이 50% 이하일 때 방어로 얻는 보호막이 2배가 됩니다.' },
+  n_wd_brace6: { n: '단단한 자세', d: '굳히기의 보호 4 → 6.' },
+  n_wd_will: { n: '다진 의지', d: '방어로 얻는 보호막이 6에서 6 + 의지 × 0.5가 됩니다.' },
+  n_wd_remnant: { n: '남은 벽', d: '전투가 끝날 때 남은 보호막의 3분의 1만큼 생명력을 회복합니다(최대 생명력의 5%까지).' },
+  n_wd_breath: { n: '숨 고르는 방패', d: '방어의 스태미나 20 → 14.' },
+  n_wd_shake: { n: '흔들리는 방패', d: '방어 중 전열 적의 직접 공격을 받으면 그 적에게 붕괴 +10(적 차례마다 한 번).' },
+  n_wd_breakwall: { n: '무너뜨린 자의 벽', d: '적을 무너뜨리면 보호막 +6(행동마다 한 번).' },
+  n_wd_turn: { n: '몸 돌리기', d: '후열 적에게서 받는 직접 피해가 6% 줄어듭니다.' },
+  n_wd_pullhit: { n: '다가서는 방패', d: '끌어와 치기로 끌어낸 적에게 다음 공격의 피해 +15%.' },
+  n_wd_stack: { n: '쌓인 벽', d: '유산 3 이상인 공격 스킬(보호막을 태우는 스킬 제외)이나 강공격을 쓸 때 보호막이 15 이상이면, 보호막 5를 써서 그 공격 피해 +12%.' },
+  n_wd_respward: { n: '막아 든 숨', d: '대응 충전이 유산 상한에 막혀 버려지면 보호막 +6.' },
+  n_wd_ready: { n: '준비된 방패', d: '전투를 시작하면 최대 생명력 6%만큼 보호막.' },
+  n_wd_fuel: { n: '보호막 연료', d: '보호막을 태우는 공격이 태운 보호막 10마다 스태미나 +4.' },
+  n_wd_bracewall: { n: '굳은 방패', d: '굳히기를 쓰면 보호막 +6.' },
+  /* 0.8.0 5단계 수도승 (3-5) */
+  n_mk_loaded: { n: '실린 주먹', d: '기본 공격 · 강공격에 기가 실리면 피해 ×1.25 → ×1.4.' },
+  n_mk_burst: { n: '터지는 기', d: '기를 거두는 공격(터뜨리기)은 거둔 기 1마다 피해 +1 더.' },
+  n_mk_last: { n: '마지막 한 방울', d: '기를 거둬 0으로 만든 스킬의 피해 +12%.' },
+  n_mk_steady: { n: '흔들리지 않는 몸', d: '자세가 있는 동안 강타에 받는 피해 −15%.' },
+  n_mk_breath: { n: '고른 숨', d: '되받기를 하면 스태미나 +3.' },
+  n_mk_cycle: { n: '기의 순환', d: '전투가 끝날 때 남은 기 1마다 최대 생명력의 1%를 회복합니다.' },
+  n_mk_shake: { n: '흔드는 되받기', d: '되받기 붕괴 10 → 16.' },
+  n_mk_seal: { n: '끊는 손끝', d: '지원 행동(치유 · 축복 · 소환 등)을 끊으면 기 +1.' },
+  n_mk_parry: { n: '흘려 받기', d: '흘리기에 성공하면 기 +1(적 차례마다 한 번).' },
+  n_mk_prestance: { n: '먼저 잡은 자세', d: '받아칠 자세의 되받기 덤 6 → 12.' },
+  n_mk_quick: { n: '날랜 손', d: '⚡ 공격 스킬의 피해 +8%.' },
+  n_mk_vessel: { n: '기의 그릇', d: '기 상한 5 → 6.' },
+  n_mk_seed: { n: '남은 숨', d: '전투를 시작하면 기 1.' },
+  n_mk_double: { n: '되받은 기세', d: '한 적 차례에 두 번째 되받기부터 기 +1 더.' },
+  n_mk_pool: { n: '고인 기', d: '기가 상한일 때 되받기 피해 +20%.' },
+  n_mk_spill: { n: '넘치는 기운', d: '되받기로 얻을 기가 상한에 막혀 버려지면 1마다 스태미나 +4.' },
 };
 /* 큰 각인 (4-1 공용, 4-2 직업). dir은 그 자리의 방향, pay는 대가(빨간 줄) */
 const KS_LIST = {
@@ -88,6 +123,10 @@ const KS_LIST = {
   ks_sb_over: { dir: 'pw', cls: 'spellblade', n: '마검 과부하', d: '교대한 행동의 피해가 35% 늘어납니다. 교대를 세 번 이으면 다음 유산 4 스킬의 비용 −3(바닥 1, 전투마다 1번).', pay: '교대 보호막을 얻지 않습니다.' },
   ks_sb_beat: { dir: 'ct', cls: 'spellblade', n: '끊는 박자', d: '이어진 교대의 3번째 행동은 붕괴 +40(내 차례에 한 번).' },
   ks_sb_blood: { dir: 'su', cls: 'spellblade', n: '피를 두른 갑주', d: '보호막 상한이 최대 생명력의 15%에서 25%로 늘어납니다. 전투를 시작하면 보호막 6.' },
+  ks_wd_drop: { dir: 'pw', cls: 'warden', n: '방패를 내린 자', d: '주는 직접 피해가 15% 늘어납니다.', pay: '방어가 받는 피해를 50%가 아니라 30%만 줄입니다.' },
+  ks_wd_eternal: { dir: 'su', cls: 'warden', n: '영원한 성벽', d: '보호막 상한이 최대 생명력의 30%에서 40%로 늘어납니다.', pay: '보호막을 태우는 스킬의 피해 −30%.' },
+  ks_mk_empty: { dir: 'pw', cls: 'monk', n: '비운 그릇', d: '기를 거두는 스킬(터뜨리기)의 피해가 30% 늘어납니다.', pay: '되받기로 기를 얻는 것은 내 차례 사이 한 번뿐입니다.' },
+  ks_mk_vow: { dir: 'sv', cls: 'monk', n: '부동의 맹세', d: '자세가 있는 동안 받는 직접 피해가 12% 줄어듭니다.', pay: '⚡ 공격 스킬을 쓸 수 없습니다.' },
 };
 /* 임시 트리의 큰 각인 자리 (K5, K9): 공용 큰 각인을 방향마다 목록 순서대로 */
 const KS_TMP = { pw: ['ks_crystal', 'ks_glass'], ct: ['ks_hammer', 'ks_breaker'], ag: ['ks_first', 'ks_flow'], lg: ['ks_deep', 'ks_brim'], su: ['ks_cycle', 'ks_dry'], sv: ['ks_wall', 'ks_heavy'] };
@@ -105,6 +144,29 @@ const PT_CLS = {
       sv3L: 'n_sb_manamail', sv5L: 'a_skin', sv5R: 'n_sb_under', sv7L: 'a_iron', sv7R: 'a_stand',
     },
     ks: { pwK5: 'ks_crystal', pwK9: 'ks_sb_over', ctK5: 'ks_hammer', ctK9: 'ks_sb_beat', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_brim', suK5: 'ks_cycle', suK9: 'ks_sb_blood', svK5: 'ks_wall', svK9: 'ks_heavy' },
+  },
+  /* 0.8.0 5단계 (10월 17일 만든 사람 검토 반영): docs/제안/0.8.0-5단계-파수꾼-수도승-트리초안-2026-10-17.md 2-5 · 3-5 */
+  warden: {
+    nodes: {
+      pw2L: 'k_wd3', pw3R: 'n_wd_wide', pw5L: 'a_eye', pw5R: 'n_wd_heavy', pw7L: 'a_point', pw7R: 'a_scatter',
+      sv1C: 'n_wd_held', sv3L: 'n_wd_low', sv5L: 'a_skin', sv5R: 'n_wd_brace6', sv7L: 'a_iron', sv7R: 'a_stand',
+      su2L: 'n_wd_will', su3R: 'n_wd_remnant', su5L: 'a_shell', su5R: 'n_wd_breath', su7L: 'a_warmth', su7R: 'a_brew',
+      ct1C: 'k_wd2', ct3L: 'n_wd_shake', ct5L: 'a_gap', ct5R: 'n_wd_breakwall', ct7L: 'a_heavyhand', ct7R: 'n_shaken',
+      ag3L: 'n_wd_turn', ag5L: 'a_resolve', ag5R: 'a_light', ag7L: 'a_gulp', ag7R: 'n_wd_pullhit',
+      lg2L: 'n_wd_stack', lg3R: 'n_wd_respward', lg5L: 'n_fullvessel', lg5R: 'n_wd_ready', lg7L: 'n_wd_fuel', lg7R: 'n_wd_bracewall',
+    },
+    ks: { pwK5: 'ks_crystal', pwK9: 'ks_wd_drop', ctK5: 'ks_hammer', ctK9: 'ks_breaker', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_brim', suK5: 'ks_cycle', suK9: 'ks_wd_eternal', svK5: 'ks_wall', svK9: 'ks_heavy' },
+  },
+  monk: {
+    nodes: {
+      pw1C: 'k_mk1', pw3L: 'n_mk_loaded', pw5L: 'a_eye', pw5R: 'n_mk_burst', pw7L: 'a_point', pw7R: 'n_mk_last',
+      sv2L: 'k_mk2', sv3R: 'n_mk_steady', sv5L: 'a_skin', sv5R: 'a_breath', sv7L: 'a_iron', sv7R: 'a_stand',
+      su3L: 'n_mk_breath', su5L: 'a_vigor', su5R: 'n_mk_cycle', su7L: 'a_warmth', su7R: 'a_brew',
+      ct2L: 'k_mk3', ct3R: 'n_mk_shake', ct5L: 'a_gap', ct5R: 'n_mk_seal', ct7L: 'a_heavyhand', ct7R: 'n_shaken',
+      ag2L: 'n_mk_parry', ag3R: 'n_mk_prestance', ag5L: 'a_resolve', ag5R: 'a_light', ag7L: 'a_gulp', ag7R: 'n_mk_quick',
+      lg1C: 'n_mk_vessel', lg3L: 'n_mk_seed', lg5L: 'n_fullvessel', lg5R: 'n_mk_double', lg7L: 'n_mk_pool', lg7R: 'n_mk_spill',
+    },
+    ks: { pwK5: 'ks_crystal', pwK9: 'ks_mk_empty', ctK5: 'ks_hammer', ctK9: 'ks_breaker', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_brim', suK5: 'ks_cycle', suK9: 'ks_dry', svK5: 'ks_wall', svK9: 'ks_mk_vow' },
   },
 };
 /* 임시 트리: 직업 갈래 각인(4-4)을 그 방향 1고리 첫 중간 노드 자리에 둔다. 도살자 벼랑 끝(k_bu2)은 6단계 큰 각인으로 합쳐질 것이라 임시 트리에 넣지 않는다 */

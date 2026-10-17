@@ -46,6 +46,7 @@ function actionList(b) {
     }
     let why = used ? '이번 전투에 이미 씀' : lack > 0 ? '유산 ' + cost + ' 필요' : null;
     if (!why && s.fx.some(e => e.k === 'parry' || e.k === 'parryBuff') && fxFlag(p, 'noParry')) why = '무거운 갑주: 흘리기를 쓸 수 없습니다';
+    if (!why && s.time === 'fast' && s.tgt !== 'self' && fxFlag(p, 'noFastAtk')) why = '부동의 맹세: ⚡ 공격 스킬을 쓸 수 없습니다'; // 0.8.0 5단계 수도승 큰 각인
     if (!why && needPoison && !alive(b).some(e => e.s.poison)) why = '중독된 적 없음';
     if (!why && /^c_/.test(sid) && s.fx.every(e => e.k === 'cleanse' || e.k === 'hasten')) { const cl = s.fx.find(e => e.k === 'cleanse'); if (cl && !cfTake(p, cl.only, cl.n, 'clean', 1).c) why = '지울 짐 없음'; } // 숨겨진 직업 2: 정화만 하는 칸
     if (!why && buEatOnly(s) && !alive(b).some(e => stk(e, 'bleed') > 0 && canTarget(b, e, v2Static(s)))) why = '출혈된 적 없음'; // 피해 없이 먹는 칸
@@ -104,7 +105,7 @@ function outDmg(b, base, o) {
   if (p.rcN && p.eq.gloves === 'ragechain' && !o.ctr) { d *= 1 + 0.04 * p.rcN; b.rcUsed = 1; }
   if ((p.eq.ring1 === 'pulse' || p.eq.ring2 === 'pulse')) d *= 1.35;
   if (p.s.weak) d *= 0.75;
-  if (p.s.empower && !(p.build === 'monk' && b.curFast)) { d *= 1.25; if (b.cur) b.empUsed = 1; } // 10월 7일: 강화는 실제로 곱한 행동만 1 줄어든다(b.empUsed). 수도승의 ⚡ 공격에는 기가 실리지 않는다
+  if (p.s.empower && !(p.build === 'monk' && b.curFast)) { d *= b.cur && (b.cur.id === 'basic' || b.cur.id === 'heavy') && fxFlag(p, 'kiBasic') ? 1.4 : 1.25; if (b.cur) b.empUsed = 1; } // 0.8.0 5단계 실린 주먹: 기본 · 강공격은 ×1.4 // 10월 7일: 강화는 실제로 곱한 행동만 1 줄어든다(b.empUsed). 수도승의 ⚡ 공격에는 기가 실리지 않는다
   if (isBu(p)) d *= 1 + buThirst(p); // 갈증 (숨겨진 직업 1)
   if (b.carve && b.cur && b.cur.grp) d *= carveMul(b, b.cur.grp); // 군주의 새김
   if (b.cur) b.atkUsed = 1;
@@ -168,7 +169,7 @@ function playerAct(b, id, tgtId) {
     if (g) { logp(b, 'sys', g.n + '이(가) 방패를 들어 ' + tgt.n + '을(를) 가로막는다'); b.rec.push({ k: 'redirect', t: r1(b.t), from: tgt.role, to: g.role }); tgt = g; b.cur.tgt = g.id; } // 장비 효과도 바뀐 대상을 본다
   }
   if (tgt && !act.self && !act.aoe && !eatOnly && !bmEO) { const mg = alive(b).find(x => x.guarding === tgt.id && !(x.stun > 0) && !x.s.broken); if (mg) { logp(b, 'sys', mg.n + '이(가) ' + tgt.n + ' 앞을 막아 대신 맞는다'); tgt = mg; b.cur.tgt = mg.id; } } // 하수인의 지키기 (10월 4일)
-  if (b.prepTurn !== b.turnIdx) { b.prepTurn = b.turnIdx; b.ysR = (b.ysR || 0) + 1; p.guard = 0; p.dodge = 0; p.brace = 0; p.dodgeRed = 0; p.dodgeOn = null; if (isBu(p)) { p.grudge = Math.min(p.tookAcc || 0, p.hpMax * BUTCH.grudgeCap); p.tookAcc = 0; b.krTurn = 0; } if (p.build === 'monk') { p.stance = null; p.ctrN = 0; } if (isCf(p)) b.cleanTurn = 0; if (isBm(p)) b.paidTurn = 0; } // 숨겨진 직업 3: 낸 피는 차례마다 // 숨겨진 직업 1: 받은 피해는 차례의 첫 행동에서 정한다 // 준비(방어·흘리기)는 내 다음 차례까지. 수도승 자세와 되받은 횟수도 여기서 지운다. 빠른 행동으로 건 흘리기를 같은 차례의 주 행동이 지우지 않게 차례의 첫 행동에서만 지운다 (10월 3일: 잔상·흘리며 물러서기가 한 번도 발동하지 않았다)
+  if (b.prepTurn !== b.turnIdx) { b.prepTurn = b.turnIdx; b.ysR = (b.ysR || 0) + 1; p.guard = 0; p.dodge = 0; p.brace = 0; p.dodgeRed = 0; p.dodgeOn = null; if (isBu(p)) { p.grudge = Math.min(p.tookAcc || 0, p.hpMax * BUTCH.grudgeCap); p.tookAcc = 0; b.krTurn = 0; } if (p.build === 'monk') { b.mkStHeld = p.stance ? b.turnIdx : null; p.stance = null; p.ctrN = 0; } if (isCf(p)) b.cleanTurn = 0; if (isBm(p)) b.paidTurn = 0; } // 숨겨진 직업 3: 낸 피는 차례마다 // 숨겨진 직업 1: 받은 피해는 차례의 첫 행동에서 정한다 // 준비(방어·흘리기)는 내 다음 차례까지. 수도승 자세와 되받은 횟수도 여기서 지운다. 빠른 행동으로 건 흘리기를 같은 차례의 주 행동이 지우지 않게 차례의 첫 행동에서만 지운다 (10월 3일: 잔상·흘리며 물러서기가 한 번도 발동하지 않았다)
   p.tookLast = p.tookSince || 0; p.tookSince = 0; // 앙갚음: 지난 행동 뒤로 받은 피해
   if (p.stun > 0) { p.stun--; logp(b, 'bad', '몸이 말을 듣지 않는다. 행동을 놓친다'); finishPlayer(b, 1, true); return; }
   fxRun(p, 'onAct', b, p, id, act, tgt);
@@ -252,7 +253,7 @@ function playerAct(b, id, tgtId) {
       p.lastSkillDmg = d; break;
     }
     case 'guard': p.st -= guardCost(p); p.guard = 1; if (isCf(p)) cfCleanse(b, { n: CONF.guard }, '방어', 'guard'); // 숨겨진 직업 2: 방어하면 해로운 상태를 지운다
-      if (p.build === 'warden') { const g = addWard(b, p, WARD.guard); logp(b, 'good', '방패를 세운다. 보호막 +' + Math.round(g) + ' (' + Math.round(p.ward) + '/' + wardMax(p) + ')'); } if (p.build === 'templar') { p.ward = Math.min(30, (p.ward || 0) + 11); logp(b, 'good', '빛의 방패가 몸을 감싼다. 보호막 ' + p.ward); } logp(b, 'sys', '자세를 낮추고 막을 준비를 한다. 다음 차례까지 받는 피해 절반'); break;
+      if (p.build === 'warden') { const g = addWard(b, p, wdGuardWard(p)); logp(b, 'good', '방패를 세운다. 보호막 +' + Math.round(g) + ' (' + Math.round(p.ward) + '/' + wardMax(p) + ')'); } if (p.build === 'templar') { p.ward = Math.min(30, (p.ward || 0) + 11); logp(b, 'good', '빛의 방패가 몸을 감싼다. 보호막 ' + p.ward); } logp(b, 'sys', '자세를 낮추고 막을 준비를 한다. 다음 차례까지 받는 피해 절반'); break;
     case 'dodge': p.st -= dodgeCost(p); setParry(b, tgt, null, null); logp(b, 'sys', tgt.n + '의 다음 공격을 흘릴 준비를 한다' + (p.dodgeRed ? '. 피해 ' + Math.round(p.dodgeRed * 100) + '% 감소' : '')); break;
     case 'flaskL': {
       p.flask.life--; const heal = p.hpMax * flaskHealFrac(p) * healMul(p);
@@ -356,5 +357,5 @@ function finishPlayer(b, time, lost) {
 function kiSettle(b) {
   const p = b.p;
   if (b.kiPend) { const n = b.kiPend; b.kiPend = 0; addS(b, p, 'empower', n); }
-  if (b.kiGrow) { const g = b.kiGrow; b.kiGrow = null; const cur = st(p, 'empower'); const nv = Math.min(KW.empower, (cur + (g.add || 0)) * (g.mul || 1)); if (nv > cur) addS(b, p, 'empower', nv - cur); logp(b, 'good', '기를 끌어올린다. 기 ' + cur + ' → ' + st(p, 'empower')); }
+  if (b.kiGrow) { const g = b.kiGrow; b.kiGrow = null; const cur = st(p, 'empower'); const nv = Math.min(kiCapOf(p), (cur + (g.add || 0)) * (g.mul || 1)); if (nv > cur) addS(b, p, 'empower', nv - cur); logp(b, 'good', '기를 끌어올린다. 기 ' + cur + ' → ' + st(p, 'empower')); }
 }

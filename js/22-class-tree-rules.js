@@ -57,7 +57,7 @@ function ysAdd(b, n, src, why) {
 /* 대응 +1: 라운드에 한 번(다섯 수단이 한도를 함께 쓴다). 상한에 막혀도 그 라운드의 대응으로 센다 */
 function ysResp(b, why) { if (!b || !isV2(b.p) || b.over) return 0; const p = b.p, R = b.ysR || 0; const mx = 1 + fxVal(p, 'ysRespMax', 0, (a, v) => a + v); // 10월 16일 0.8.0 2단계: 큰 각인 겹 대응(라운드에 2번) · 빈손의 맹세(+2) · 넘친 숨(버려지면 다음 차례 +1)
   if (b.ysRespR === R && (b.ysRespC || 1) >= mx) return 0; if (b.ysRespR !== R) { b.ysRespR = R; b.ysRespC = 0; } b.ysRespC = (b.ysRespC || 0) + 1; b.ysRespLast = R;
-  const n = YUSAN.resp + fxVal(p, 'ysRespPer', 0, (a, v) => a + v); const g = ysAdd(b, n, 'resp', why); if (g < n && !b.ysOvfUsed && fxFlag(p, 'ysOverflowBack')) { b.ysOvfUsed = 1; b.ysOvfPend = 1; } return g; }
+  const n = YUSAN.resp + fxVal(p, 'ysRespPer', 0, (a, v) => a + v); const g = ysAdd(b, n, 'resp', why); if (g < n && !b.ysOvfUsed && fxFlag(p, 'ysOverflowBack')) { b.ysOvfUsed = 1; b.ysOvfPend = 1; } if (g < n && fxFlag(p, 'respWard')) { const w = addWard(b, p, 6, undefined, true); if (w > 0) logp(b, 'good', '막아 든 숨. 버려진 대응이 보호막 +' + r1(w)); } return g; } // 0.8.0 5단계 파수꾼 막아 든 숨: 버려지는 대응 충전 → 보호막 6 (라운드 한도는 대응과 같다)
 /* 🔄 · 처치 다시 쓰기 → 유산 +1, 라운드에 한 번 (10월 15일 1차 시제품 변환: 같은 갈래 쿨타임 −n · 바로 다시 쓰기를 대신한다) */
 function ysRefund(b, why) { if (!b || !isV2(b.p) || b.over) return 0; const R = b.ysR || 0; if (b.ysRefR === R) return 0; b.ysRefR = R; return ysAdd(b, YUSAN.refund, 'refund', why); }
 /* 장비의 "쿨타임이 가장 많이 남은 스킬 −1" → 유산 +1, 라운드에 한 번 (모든 장비가 한도를 함께 쓴다). 든 것이 없으면 0 */

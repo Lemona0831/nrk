@@ -14,7 +14,7 @@ function addS(b, u, k, dur, stacks, max) {
     if (u !== b.p && (u.role === 'crown' || (u.hazeHit && b.cur && u.hazeHit === b.actN))) return 0; // 3챕터: 왕관, 허상에 막힌 공격
     if (u === b.p && k === 'ignite' && (b.ctx.ch || 1) >= 3) { n = Math.min(n, IGN_ROUND_CAP - (b.ignR === b.round ? (b.ignN || 0) : 0)); if (n <= 0) return 0; } // 2절 5번: 한 라운드에 새로 붙는 화상
     const opp = KW_OPP[k]; if (opp && u.s[opp]) { const m = Math.min(n, u.s[opp].stacks); kwDec(u, opp, m); n -= m; if (n <= 0) return 0; }
-    const cur = stk(u, k); const nv = Math.min(Math.max(KW[k], cur), cur + n);
+    const cur = stk(u, k); const cap = k === 'empower' && u === b.p ? kiCapOf(u) : KW[k]; const nv = Math.min(Math.max(cap, cur), cur + n);
     if (nv > cur) u.s[k] = { stacks: nv, until: KW_FOREVER, dur: KW_FOREVER };
     if (u === b.p && k === 'protect' && nv > cur && !b.fxProtIn && u.eq) { b.fxProtIn = 1; fxRun(u, 'onProt', b, u, nv - cur); b.fxProtIn = 0; } /* 2챕터 장비 */
     if (nv > cur && (b.ctx.ch || 1) >= 3) ch3OnStatus(b, u, k, nv - cur);
@@ -145,7 +145,9 @@ function hurtPlayer(b, raw, o) {
   if (!o.dot && o.src && o.src.redNext) { d *= 1 - o.src.redNext; o.src.redNext = 0; } // 소모품 흩뿌리는 성물 · 연막: 그 적의 다음 공격 하나
   if (!o.dot && o.src && o.src.bigRed) { d *= 1 - o.src.bigRed; o.src.bigRed = 0; } // 소모품 종 조각: 큰 공격을 모으는 적의 다음 공격(그 큰 공격)
   if (!o.dot && o.src && p.decoy && p.decoy.round === b.round && (o.counter || o.src.row === 'back')) d *= 1 - p.decoy.v; // 소모품 미끼 인형: 이번 라운드 반격 · 후열 사격
-  if (p.guard && !o.judgment) d *= 1 - (1 - (p.eq.gloves === 'ragechain' ? 0.6 : 0.5)) * carveMul(b, 'prep'); // 준비가 새겨지면 방어가 덜 줄인다 // 심판은 방어로 줄지 않는다
+  const dG0 = d; if (p.guard && !o.judgment) d *= 1 - (1 - (p.eq.gloves === 'ragechain' ? 0.6 : fxFlag(p, 'guardWeak') ? 0.7 : 0.5)) * carveMul(b, 'prep'); // 준비가 새겨지면 방어가 덜 줄인다 // 심판은 방어로 줄지 않는다 // 0.8.0 5단계 방패를 내린 자: 방어가 30%만
+  const held = p.guard && !o.judgment && !o.dot && o.src && o.src !== p ? Math.max(0, dG0 - d) : 0; // 방어로 줄인 피해 (받아낸 몫)
+  if (p.build === 'monk' && p.stance && p.stance.red && !o.dot && !o.judgment) d *= 1 - p.stance.red; // 0.8.0 5단계 철산고: 그 자세만 받는 직접 피해를 줄인다
   if (p.ward > 0 && p.eq.armor === 'wardcrest') d *= 0.85;
   if (p.retal) d *= 0.7;
   if (hasBt(p, 'procession') && !o.dot) d *= 0.9; // 장례 행렬을 뒤따랐다
@@ -183,6 +185,7 @@ function hurtPlayer(b, raw, o) {
   if (p.retal && d > 0 && o.src && o.src.alive && !o.dot) hurtEnemy(b, o.src, d, { label: '피의 응답' });
   if (p.thorn && o.src && o.src.alive && !o.dot) { if (p.thorn.dmg > 0 || !p.thorn.bleed) hurtEnemy(b, o.src, p.thorn.dmg, { label: '가시 방패' }); if (p.thorn.bleed && o.src.alive) { addS(b, o.src, 'bleed', p.thorn.bleed); logp(b, 'good', o.src.n + '에게 출혈 ' + p.thorn.bleed); } if (--p.thorn.n <= 0) p.thorn = null; } // 파수꾼 가시: 다음 n번 맞을 때마다
   if (d > 0) p.tookSince = (p.tookSince || 0) + d;
+  if (held > 0 && p.hp > 0 && !b.over) wdHeld(b, p, o, held); // 0.8.0 5단계 파수꾼: 받아낸 몫 · 흔들리는 방패
   if (p.brace && !o.dot && o.src && o.src.alive && o.src.row === 'front') { hurtEnemy(b, o.src, 4, { label: '강철 살갗의 반격' }); if (p.build === 'berserker' && d > 0) addRage(b, 1); }
   if (d > 0 && !o.dot) for (const e of alive(b)) if (e.s.bond) hurtEnemy(b, e, d * 0.5, { label: '피의 연결' });
   if (d > 0 && scarRate(p) > 0) p.scar = Math.min(p.hpMax * 0.5, p.scar + d * scarRate(p));
@@ -207,8 +210,10 @@ function monkCounter(b, o) {
   const p = b.p, e = o.src, S = p.stance || {}; p.ctrN = (p.ctrN || 0) + 1;
   logp(b, 'good', '되받기 (' + p.ctrN + '/' + MONK.ctrMax + '): ' + e.n + '에게 되받아친다');
   const d = hurtEnemy(b, e, outDmg(b, wpnDmg(p) * MONK.ctr + (S.dmg || 0), { weapon: 1, ctr: 1 }), { single: 1, ctr: 1, label: '되받기' });
-  let bk = 0; if (e.alive) { bk = MONK.ctrBrk + (o.charged ? MONK.ctrBig : 0) + (S.brk || 0); addBreak(b, e, bk); }
-  const k0 = st(p, 'empower'); addS(b, p, 'empower', MONK.kiCtr + (S.ki || 0)); const kg = st(p, 'empower') - k0;
+  let bk = 0; if (e.alive) { bk = MONK.ctrBrk + fxVal(p, 'ctrBrk', 0, (a, v) => a + v) + (o.charged ? MONK.ctrBig : 0) + (S.brk || 0); addBreak(b, e, bk); }
+  const kOnce = fxFlag(p, 'ctrKiOnce') && b.ctrKiR === (b.ysR || 0); if (fxFlag(p, 'ctrKiOnce')) b.ctrKiR = b.ysR || 0; // 0.8.0 5단계 비운 그릇: 되받기로 얻는 기는 내 차례 사이 한 번
+  const kWant = kOnce ? 0 : MONK.kiCtr + (S.ki || 0) + (p.ctrN >= 2 ? fxVal(p, 'ctrKi2', 0, (a, v) => a + v) : 0); const k0 = st(p, 'empower'); if (kWant) addS(b, p, 'empower', kWant); const kg = st(p, 'empower') - k0;
+  if (kWant > kg) { const sp = fxVal(p, 'kiSpillSt', 0, (a, v) => a + v); if (sp) fxStam(p, sp * (kWant - kg)); } // 넘치는 기운: 버려지는 기 1마다 스태미나
   if (e.alive && S.chill) addS(b, e, 'chill', S.chill); if (e.alive && S.weak) e.ctrWeak = Math.max(e.ctrWeak || 0, S.weak);
   { const L = [bk ? '붕괴 +' + bk : '', kg > 0 ? '기 +' + kg : '', e.alive && S.chill ? e.n + ' 둔화 ' + S.chill : '', e.alive && S.weak ? e.n + ' 약화 ' + S.weak : ''].filter(Boolean); if (L.length) logp(b, 'good', '되받기. ' + L.join(', ')); }
   if (S.hz && !S.hz.used) { S.hz.used = 1; hastenBranch(b, S.hz.br, S.hz.n, S.hz.id); }
@@ -216,6 +221,16 @@ function monkCounter(b, o) {
   b.rec.push({ k: 'ctr', role: e.role, charged: o.charged ? 1 : 0, d: r1(d) });
   fxRun(p, 'onCounter', b, p, e, d);
 }
+/* 0.8.0 5단계 파수꾼 (docs/제안/0.8.0-5단계-파수꾼-수도승-트리초안-2026-10-17.md 2-5): 방어로 받아낸 직접 공격 하나마다.
+   받아낸 몫: 방어로 줄인 피해의 per만큼 보호막(후열 공격이면 그 back배), 적 차례(내 차례 사이)마다 cap까지. 흔들리는 방패: 전열 적에게 붕괴 brk, 적 차례마다 한 번 */
+const WD_HELD = { per: 0.5, back: 0.5, cap: 10, brk: 10 };
+function wdHeld(b, p, o, held) {
+  const R = b.ysR || 0, e = o.src;
+  if (fxFlag(p, 'heldWard')) { if (b.heldR !== R) { b.heldR = R; b.heldN = 0; } const v = Math.min(held * WD_HELD.per * (e.row === 'back' ? WD_HELD.back : 1), WD_HELD.cap - b.heldN); if (v > 0) { b.heldN += v; const g = addWard(b, p, v, undefined, true); if (g > 0) logp(b, 'good', '받아낸 몫. 보호막 +' + r1(g) + ' (' + Math.round(p.ward) + '/' + wardMax(p) + ')'); b.rec.push({ k: 'held', n: r1(g), want: r1(v) }); } }
+  if (fxFlag(p, 'heldBrk') && e.alive && e.row === 'front' && b.heldBrkR !== R) { b.heldBrkR = R; logp(b, 'good', e.n + '의 공격을 방패로 흔든다. 붕괴 +' + WD_HELD.brk); addBreak(b, e, WD_HELD.brk); }
+}
+/* 방어 보호막: 기본 WARD.guard, 다진 의지면 + 의지 × 0.5, 버팀목이면 생명력 50% 이하에서 2배 (생성 배율은 addWard가 곱한다) */
+function wdGuardWard(p) { let v = WARD.guard + (fxFlag(p, 'guardWil') ? 0.5 * stat(p, 'wil') : 0); if (fxFlag(p, 'guardLow') && p.hp <= p.hpMax * 0.5) v *= 2; return v; }
 /* 화형 사제의 영창이 끊긴다 (쌓인 피해 · 무너짐 · 소모품) */
 function chantBreak(b, e, why) { ysResp(b, '끊기'); e.chant = null; e.pyreRest = 1; e.teleTurn = null; if (e.intent && (CHANT_K.includes(e.intent.k) || MCH_K.includes(e.intent.k))) e.intent = { k: 'attack' }; logp(b, 'good', (why ? why + ' ' : '') + e.n + '의 영창이 끊긴다'); }
 /* 보스 단계 문턱과 마지막 단계 버티기. 넘친 피해는 hurtEnemy가 쌓아 두고(e.bank), 보스가 차례를 마쳐 문이 열리면 bossBankApply가 넣는다 */
