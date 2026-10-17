@@ -361,7 +361,13 @@ const MARKCH = +(process.env.MARKCH || 0); const MARK_IDS = (process.env.MARKS |
 const FROM = +(process.env.DG_FROM || process.env.MARKCH || 1);
 function jumpTo(pk, r, ch) {
   const G = G0.__G, run = G.run; const lv = ch >= 3 ? 11 : 6; // 10월 16일 0.8.0 2단계: 새 곡선의 챕터 끝 레벨(Lv6 · Lv11)
-  run.lv = lv; run.xp = G0.LV_XP_[lv - 1]; run.p.lv = lv; run.clears = ch - 1; G0.ptFix(run); G0.treeSync(run);
+  if (process.env.DG_JUMP === 'chrono' && run.ptree) { /* 10월 17일 4단계 재검증: 레벨을 하나씩 올리며(gainXp) 그때 열린 고리에만 찍고, 앞 챕터 보스를 이긴 레벨(Lv6 · Lv11)에 깬 챕터 +1 · 정산 큰 각인(그 레벨 포인트는 고리가 열린 뒤). 기본(없음)은 Lv를 한 번에 올리고 고리를 모두 연 채 찍는다 */
+    const clrAt = [6, 11].slice(0, ch - 1);
+    for (let L = 2; L <= lv; L++) { G0.gainXp(run, G0.LV_XP_[L - 1] - (run.xp || 0)); const c = clrAt.indexOf(L) + 1;
+      if (c) { run.clears = c; run.ch = c; spendPassive(pk, r); if (G0.ksGrant(run, 'b' + c)) { G0.ksEnsureOffer(run); if (run.ksOffer) G0.ksTake(run, ksChoice(pk, r, run)); } }
+      spendTree(pk, r); }
+    G0.treeSync(run);
+  } else { run.lv = lv; run.xp = G0.LV_XP_[lv - 1]; run.p.lv = lv; run.clears = ch - 1; G0.ptFix(run); G0.treeSync(run); }
   G0.initGear(run);
   for (const sl of ['weapon', 'armor', 'gloves', 'amulet', 'ring1', 'ring2']) {
     const kind = sl === 'ring1' || sl === 'ring2' ? 'ring' : sl; const g = sl === 'weapon' || sl === 'armor' ? 'r' : 'm';
