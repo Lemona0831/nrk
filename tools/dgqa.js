@@ -24,6 +24,7 @@ function loadGame() {
 const G0 = loadGame();
 const run_ = code => vm.runInContext(code, G0);
 if (process.env.CFG) run_(process.env.CFG); // 시험할 수치: CFG='DIFF[1].upper.dmg=1.3; BOSSES.abbot.mult=7'
+if (process.env.HUNT_BRIDGE) run_("{ const u = ATREE_DEF.hunter.ups.find(x => x[0] === 'hu_link3'); u[8].cond.when = 'linkFast'; u[7] = '연계로 쓰거나, 이번 차례에 빠른 기동 스킬을 먼저 썼으면 비용 −1(바닥 1, 라운드에 한 번).'; }"); // 0.8.0 5단계 측정 변형(원거리 초안 8절 보완 2): 이어 묶는 화살 = 연계이거나 이번 차례에 빠른 기동 스킬을 먼저 씀. 기본값 아님
 /* 10월 17일 측정 도구 보완: 판 기록마다 꼬리표(out.meta: 게임 · 도구 지문, 시드, 성향, 직업, 시작 챕터, 변형, 행동을 바꾸는 환경 변수)를 남기고,
    실패 · 중단(out.fails: 예외 · 행동 한도 · 걸음 한도 · 방 없음 · 창 한도)을 글이 아닌 칸으로도 남긴다. tools/measure-validate.js가 읽는다 */
 const MM = require('./measure-meta.js'); const REV = MM.revision(path.resolve(__dirname, '..', DIR));
@@ -246,6 +247,9 @@ function fightRec(R, b, run, hpIn, acts) {
   if (b.mkTr) rec.mkTr = b.mkTr;
   if (b.p.build === 'warden') { const gw = b.log.map(x => /방패를 세운다\. 보호막 \+(\d+)/.exec(x.m || '')).filter(Boolean).map(m => +m[1]); const S = b.wdS || []; const dir = hits.filter(h => !h.dot);
     rec.wd = { g: gw.length, gw: gw.reduce((a, v) => a + v, 0), held: Math.round(b.rec.filter(x => x.k === 'held').reduce((a, x) => a + (x.n || 0), 0) * 10) / 10, gHit: dir.filter(h => h.guard).length, gTaken: Math.round(dir.filter(h => h.guard).reduce((a, h) => a + h.d, 0) * 10) / 10, oHit: dir.filter(h => !h.guard).length, oTaken: Math.round(dir.filter(h => !h.guard).reduce((a, h) => a + h.d, 0) * 10) / 10, turns: S.length, half: S.filter(v => v >= 50).length, hpMax: b.p.hpMax, wil: G0.stat ? G0.stat(b.p, 'wil') : null, ng: (b.wdSG || []).length, ngW: (b.wdSG || []).reduce((s, x) => s + x[0], 0), ngP: (b.wdSG || []).reduce((s, x) => s + x[1], 0) }; } // 0.8.0 5단계 방어 측정(2-10): 방어 횟수 · 방어 보호막 합 · 받아낸 몫 · 방어 중/아닐 때 받은 직접 피해 · 보호막 상한 50% 이상인 내 차례
+  if (b.p.build === 'hunter') { const dl = b.rec.filter(x => x.k === 'dealt' && !x.dot && !x.bank); const hb = b.rec.filter(x => x.k === 'hnb'); const bf = b.rec.filter(x => x.k === 'bbuf'); const by = w => countBy(bf.filter(x => x.w === w).map(x => x.s)); const sum = a => Math.round(a.reduce((m, x) => m + (x.d || 0), 0) * 10) / 10;
+    const end = {}; for (const [k, v] of Object.entries(b.p.bbuf || {})) if (!v.used && v.until >= (b.ysR || 0)) end[k] = 1;
+    rec.hn = { all: sum(dl), basic: sum(dl.filter(x => x.a === '기본 공격')), x2: sum(dl.filter(x => x.x2)), x2basic: sum(dl.filter(x => x.x2 && x.a === '기본 공격')), bbHit: hb.length, bbD: sum(hb), xtra: Math.round(hb.reduce((m, x) => m + (x.x || 0), 0) * 10) / 10, on: by('on'), use: by('use'), waste: by('waste'), re: by('re'), end, link: b.rec.filter(x => x.k === 'ysdisc' && /^hu_link/.test(x.by || '')).length }; } // 0.8.0 5단계 측정(원거리 초안 2-9의 9 · 10, 2-10): 직접 피해 · 기본 공격 피해 · 가속의 두 번째 차례 피해 · 버프 켬/씀/버림/다시 걺/끝에 남음 · 연계 할인
   if (b.over === 'lose') { const last = hits[hits.length - 1] || {}; const big = hits.slice(-3).filter(h => h.charged); rec.death = { by: (last.dot ? 'dot:' : '') + (last.src || 'none'), big: !!last.charged, bigIn3: big.length, lastD: last.d, st: Math.round(b.p.st), fl: Object.assign({}, b.p.flask), consLeft: (run.cons || []).reduce((a, c) => a + c.n, 0) }; }
   return rec;
 }

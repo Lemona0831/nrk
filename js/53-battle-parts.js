@@ -78,11 +78,19 @@ function bmHint(b, a) {
   const pc = f.find(e => e.k === 'payCut'); if (pc) out.push(pc.off != null ? '다음 당기기 −' + pc.off + '턴' : '다음 당기기 절반');
   return out.join(' · ');
 }
+/* 사냥꾼 기본 공격 버튼 아랫줄 (원거리 초안 2-6a 규칙 7): 켜진 버프를 짧게. 예: "⇄×1.5 · +50% · 출혈+2". 대상이 직전에 친 적이면 바꿔 쏘기는 "⇄ 다른 적" */
+function hnBasicHint(b, a) {
+  const p = b.p, t = actTarget(b, a); const o = t ? hnBasicBuf(b, t) : null; if (!o) return ''; const B = p.bbuf, R = hnRound(b), on = k => B[k] && B[k].until >= R; const L = [];
+  if (on('swap')) L.push(o.tag.some(x => /^⇄/.test(x)) ? '⇄×' + B.swap.mul : '⇄ 다른 적'); if (on('extra')) L.push('+' + Math.round(B.extra.mul * 100) + '%' + (B.extra.turn && o.tag.some(x => /^선회/.test(x)) ? ' ×' + B.extra.turn : ''));
+  if (on('sky')) L.push('×' + B.sky.mul); if (o.bleed) L.push('출혈+' + o.bleed);
+  return L.join(' · ');
+}
 function skillHint0(b, a) {
   const p = b.p; const tg = G.sel ? b.en.find(e => e.id === G.sel && e.alive) : null;
   if (a.v2 && a.s && isBu(p)) return buHint(b, a);
   if (a.v2 && a.s && isCf(p)) return cfHint(b, a); // 숨겨진 직업 2
   if (a.v2 && a.s && isBm(p)) return bmHint(b, a);
+  if (a.id === 'basic' && p.build === 'hunter' && p.bbuf) return hnBasicHint(b, a); // 0.8.0 5단계 연사(2-6a 규칙 7): 켜진 기본 공격 버프
   if (a.v2 && a.s && p.build === 'hunter') { const f = a.s.fx.find(e => e.k === 'focusBurst'); if (f) { const t = actTarget(b, a), n = t && p.focus && p.focus.id === t.id ? p.focus.n : 0; return n ? '추적 ' + n + '겹 소모 → 추가 피해 +' + r1(skillResourceDamage(p, a.s, f, f.n * n)) + ' (피해 증감 전)' : '소모할 추적 없음'; } }
   if (a.id === 'release') return p.scar < 1 ? '상흔 없음' : `상흔 ${Math.round(p.scar)} → 적마다 ${r1(p.scar * 0.8 * dmgMult(p))}`;
   if (a.id === 'scarcut') return p.scar < 1 ? '상흔 없음' : `상흔 추가 ${r1(p.scar * 0.5 * 1.5 * dmgMult(p))}`;

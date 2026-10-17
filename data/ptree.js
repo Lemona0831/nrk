@@ -33,7 +33,7 @@ const PT_TILT_N = { A: ['1C', '3L'], B: ['2L', '3R'], C: ['3L'] };
 /* 시작 노드: 직업 기본 능력치 12점 (STAT_REC × 12 반올림). 마검사는 4단계(10월 17일) 초반 피해 점검으로 14점(힘 · 지능 +1, 설계 10-4의 2) */
 const PT_START = {
   spellblade: { str: 5, int: 5, con: 3, wil: 1 }, warden: { str: 4, con: 4, wil: 4 }, monk: { str: 4, dex: 4, con: 4 }, assassin: { dex: 5, int: 4, con: 3 },
-  hunter: { dex: 5, con: 4, str: 3 }, elementalist: { int: 5, con: 4, wil: 3 }, butcher: { str: 4, con: 4, wil: 3, int: 1 }, confessor: { con: 4, str: 4, int: 4 }, bloodmage: { int: 5, con: 4, wil: 3 },
+  hunter: { dex: 8, con: 4 }, /* 0.8.0 5단계 원거리 초안 8절 결정 3: 민첩 5 · 체력 4 · 힘 3 → 민첩 8 · 체력 4 */ elementalist: { int: 5, con: 4, wil: 3 }, butcher: { str: 4, con: 4, wil: 3, int: 1 }, confessor: { con: 4, str: 4, int: 4 }, bloodmage: { int: 5, con: 4, wil: 3 },
 };
 /* 공용 중간 노드 풀 (2-8): r2는 2고리(L5) 후보, r3는 3고리(L7 · R7) 후보 */
 const PT_POOL = {
@@ -103,6 +103,21 @@ const PN_TXT = {
   n_mk_double: { n: '되받은 기세', d: '한 적 차례에 두 번째 되받기부터 기 +1 더.' },
   n_mk_pool: { n: '고인 기', d: '기가 상한일 때 되받기 피해 +20%.' },
   n_mk_spill: { n: '넘치는 기운', d: '되받기로 얻을 기가 상한에 막혀 버려지면 1마다 스태미나 +4.' },
+  /* 0.8.0 5단계 사냥꾼 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 2-5, 10월 18일 결정) */
+  n_hn_pull: { n: '이어 당기는 활', d: '가속의 두 번째 차례에 쓰는 기본 공격의 피해가 15% 늘어나고(덧화살에도 든다), 맞히면 스태미나 +5.' },
+  n_hn_breath: { n: '사냥감의 숨', d: '추적 3겹 이상인 적에게 주는 스킬 피해가 8% 늘어납니다.' },
+  n_hn_tough: { n: '질긴 사냥꾼', d: '생명력이 30% 이하일 때 받는 직접 피해가 8% 줄어듭니다.' },
+  n_hn_unavoid: { n: '피할 수 없는 것', d: '회피할 수 없는 공격(광역 · 주문 · 지속 피해)에 받는 피해가 8% 줄어듭니다.' },
+  n_hn_rest: { n: '숨 고르기', d: '공격을 몸을 빼 피하면 최대 생명력의 2%를 회복합니다(전투마다 3번).' },
+  n_hn_camp: { n: '사냥꾼의 휴식', d: '전투가 끝날 때 남은 유산 1마다 최대 생명력의 1%를 회복합니다(최대 4%).' },
+  n_hn_tele: { n: '예고 읽기', d: '큰 공격(강타 · 영창 · 모으기 · 겨누기 등)을 예고한 적에게 주는 직접 피해가 8% 늘어납니다.' },
+  n_hn_cutarrow: { n: '끊은 화살', d: '붕괴로 적의 예고를 끊으면 스태미나 +12(행동마다 한 번).' },
+  n_hn_stopgap: { n: '멈춰 세운 틈', d: '붕괴로 예고를 끊은 적에게 다음 내 공격의 피해가 15% 늘어납니다(그 적에게 한 번).' },
+  n_hn_aside: { n: '비켜 선 자리', d: '공격을 몸을 빼 피한 다음, 내 첫 공격의 피해가 10% 늘어납니다(한 번).' },
+  n_hn_quick: { n: '날랜 시위', d: '⚡ 공격 스킬의 피해가 8% 늘어납니다.' },
+  n_hn_pass: { n: '넘겨받는 추적', d: '추적 3겹 이상인 적을 쓰러뜨리면, 다음에 친 다른 적은 추적 1겹에서 시작합니다(처치마다).' },
+  n_hn_linkup: { n: '이어 쏘기 숙련', d: '연계 피해가 30%에서 38%로 늘어납니다.' },
+  n_hn_finale: { n: '끝맺는 연계', d: '연계로 쓴 유산 4 스킬의 피해가 12% 늘어납니다.' },
 };
 /* 큰 각인 (4-1 공용, 4-2 직업). dir은 그 자리의 방향, pay는 대가(빨간 줄) */
 const KS_LIST = {
@@ -127,6 +142,9 @@ const KS_LIST = {
   ks_wd_eternal: { dir: 'su', cls: 'warden', n: '영원한 성벽', d: '보호막 상한이 최대 생명력의 30%에서 40%로 늘어납니다.', pay: '보호막을 태우는 스킬의 피해 −30%.' },
   ks_mk_empty: { dir: 'pw', cls: 'monk', n: '비운 그릇', d: '기를 거두는 스킬(터뜨리기)의 피해가 30% 늘어납니다.', pay: '되받기로 기를 얻는 것은 내 차례 사이 한 번뿐입니다.' },
   ks_mk_vow: { dir: 'sv', cls: 'monk', n: '부동의 맹세', d: '자세가 있는 동안 받는 직접 피해가 12% 줄어듭니다.', pay: '⚡ 공격 스킬을 쓸 수 없습니다.' },
+  /* 0.8.0 5단계 사냥꾼 (2-5, 8절 보완 1) */
+  ks_hn_solo: { dir: 'pw', cls: 'hunter', n: '외길 사냥꾼', d: '같은 갈래 스킬을 바로 이어 쓰면(기본 공격 · 방어를 사이에 끼워도 됨) 그 스킬의 피해가 20% 늘어납니다. 연계 할인 강화(이어 쏘는 화살 · 이어 쏘는 활 · 이어 묶는 화살)는 같은 갈래를 바로 이어 쓸 때 비용 −1(라운드에 한 번)로 바뀝니다.', pay: '연계 피해 +30%가 사라집니다. 연계 할인은 같은 갈래 이어 쓰기 할인으로 바뀝니다.' },
+  ks_hn_chase: { dir: 'lg', cls: 'hunter', n: '끝까지 쫓는 자', d: '추적 상한이 3겹에서 4겹으로 늘어납니다(겹마다 +5% 그대로).' },
 };
 /* 임시 트리의 큰 각인 자리 (K5, K9): 공용 큰 각인을 방향마다 목록 순서대로 */
 const KS_TMP = { pw: ['ks_crystal', 'ks_glass'], ct: ['ks_hammer', 'ks_breaker'], ag: ['ks_first', 'ks_flow'], lg: ['ks_deep', 'ks_brim'], su: ['ks_cycle', 'ks_dry'], sv: ['ks_wall', 'ks_heavy'] };
@@ -167,6 +185,18 @@ const PT_CLS = {
       lg1C: 'n_mk_vessel', lg3L: 'n_mk_seed', lg5L: 'n_fullvessel', lg5R: 'n_mk_double', lg7L: 'n_mk_pool', lg7R: 'n_mk_spill',
     },
     ks: { pwK5: 'ks_crystal', pwK9: 'ks_mk_empty', ctK5: 'ks_hammer', ctK9: 'ks_breaker', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_brim', suK5: 'ks_cycle', suK9: 'ks_dry', svK5: 'ks_wall', svK9: 'ks_mk_vow' },
+  },
+  /* 0.8.0 5단계 사냥꾼 (10월 18일 결정 반영): docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 2-5. 작은 노드는 화력 · 기민 민첩 +2(공격 능력치) */
+  hunter: {
+    nodes: {
+      pw1C: 'k_hn2', pw3L: 'n_hn_pull', pw5L: 'a_eye', pw5R: 'n_hn_breath', pw7L: 'a_point', pw7R: 'a_scatter',
+      sv3L: 'n_hn_tough', sv5L: 'a_skin', sv5R: 'n_hn_unavoid', sv7L: 'a_iron', sv7R: 'a_stand',
+      su3L: 'n_hn_rest', su5L: 'a_vial', su5R: 'n_hn_camp', su7L: 'a_warmth', su7R: 'a_brew',
+      ct2L: 'n_hn_tele', ct3R: 'n_hn_cutarrow', ct5L: 'a_gap', ct5R: 'n_hn_stopgap', ct7L: 'a_heavyhand', ct7R: 'n_shaken',
+      ag1C: 'k_hn3', ag3L: 'n_hn_aside', ag5L: 'a_resolve', ag5R: 'n_hn_quick', ag7L: 'a_light', ag7R: 'a_gulp',
+      lg2L: 'k_hn1', lg3R: 'n_hn_pass', lg5L: 'n_overflow', lg5R: 'n_hn_linkup', lg7L: 'n_fullvessel', lg7R: 'n_hn_finale',
+    },
+    ks: { pwK5: 'ks_crystal', pwK9: 'ks_hn_solo', ctK5: 'ks_hammer', ctK9: 'ks_breaker', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_hn_chase', suK5: 'ks_cycle', suK9: 'ks_dry', svK5: 'ks_wall', svK9: 'ks_heavy' },
   },
 };
 /* 임시 트리: 직업 갈래 각인(4-4)을 그 방향 1고리 첫 중간 노드 자리에 둔다. 도살자 벼랑 끝(k_bu2)은 6단계 큰 각인으로 합쳐질 것이라 임시 트리에 넣지 않는다 */

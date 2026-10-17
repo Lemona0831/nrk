@@ -130,7 +130,53 @@ const ATREE_DEF = {
       ['mu_great', '혈도', 3, 6, 'R', 'm_stillpt', '대주천', '기를 거둬 기 1마다 피해 +6.', { fxAdd: [{ k: 'kiBurst', per: 6 }] }, ['m_greatflow', 'm_kingvein', 'm_veinburst']],
     ],
   },
+  /* 0.8.0 5단계 사냥꾼 (10월 18일 만든 사람 결정 반영): docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 2-6 · 2-6a · 8절. 스킬 24 + 강화 27 = 51노드.
+     시작 스킬은 연계 갈래 태그(lb)를 가진다: 겨눠 쏘기 저격, 물러서며 쏘기 기동(data/skills.js). 연계 할인(cond link)은 갈래마다 1고리 유산 3 스킬 하나에만 */
+  hunter: {
+    br: { 저격: 0, 연사: 120, 기동: 240 }, lane: { LL: -36, L: -18, C: 0, R: 18, RR: 36 },
+    skills: [
+      ['h_prey', '저격', 1, 1, 'C', ['S'], 3], ['h_pierce', '저격', 1, 2, 'L', ['h_prey'], 2], ['h_burst', '저격', 1, 2, 'R', ['h_prey'], 3], // 추적 터뜨리기 4 → 3 (결정 4: 1고리 쓰기 칸)
+      ['h_weak', '저격', 2, 3, 'LL', ['h_pierce'], 3], ['h_vital', '저격', 2, 3, 'L', ['h_pierce'], 3], ['h_heavy', '저격', 2, 3, 'C', ['h_pierce'], 3], ['h_chase', '저격', 2, 3, 'RR', ['h_burst'], 3],
+      ['h_doom', '저격', 3, 5, 'C', ['h_burst'], 4],
+      ['h_switch', '연사', 1, 1, 'C', ['S'], 2], ['h_double', '연사', 1, 2, 'L', ['h_switch'], 3], ['h_rain', '연사', 1, 2, 'R', ['h_switch'], 3],
+      ['h_gap', '연사', 2, 3, 'LL', ['h_double'], 3], ['h_triple', '연사', 2, 3, 'L', ['h_double'], 3], ['h_barb', '연사', 2, 3, 'R', ['h_rain'], 3], ['h_tearrain', '연사', 2, 3, 'RR', ['h_rain'], 3],
+      ['h_deluge', '연사', 3, 5, 'C', ['h_rain'], 4],
+      ['h_dodge', '기동', 1, 1, 'C', ['S'], 2], ['h_leg', '기동', 1, 2, 'L', ['h_dodge'], 2], ['h_hobble', '기동', 1, 2, 'R', ['h_dodge'], 3],
+      ['h_stop', '기동', 2, 3, 'LL', ['h_leg'], 3], ['h_shatter', '기동', 2, 3, 'L', ['h_leg'], 3], ['h_counter', '기동', 2, 3, 'R', ['h_dodge'], 3], ['h_side', '기동', 2, 3, 'RR', ['h_dodge'], 3],
+      ['h_icecage', '기동', 3, 5, 'C', ['h_hobble'], 4],
+    ],
+    ups: [
+      ['hu_lock', '저격', 1, 1, 'LL', 'h_prey', '표적 고정', '취약 1 → 2.', { fxSet: [{ k: 'st', s: 'vuln', n: 2 }] }, ['h_lock']],
+      ['hu_through', '저격', 1, 2, 'LL', 'h_pierce', '관통 사격', '붕괴 18 → 25.', { fxSet: [{ k: 'brk', n: 25 }] }, ['h_through']],
+      ['hu_link1', '저격', 1, 2, 'RR', 'h_burst', '이어 쏘는 화살', '연계로 쓰면(직전 갈래가 다르면) 비용 −1(바닥 1, 라운드에 한 번). 외길 사냥꾼이면 같은 갈래 스킬을 바로 이어 쓸 때 −1.', { cond: { off: 1, when: 'link' } }, []],
+      ['hu_throat', '저격', 2, 4, 'R', 'h_burst', '숨통 겨누기', '가속이 있으면 1을 써서 피해 ×1.5. 그 대신 다음 라운드에 연속 행동을 하지 못합니다.', { fxAdd: [{ k: 'hasteSpend', mul: 1.5 }] }, ['h_throat', 'h_endhunt']],
+      ['hu_widen', '저격', 2, 4, 'LL', 'h_weak', '약점 벌리기', '건 뒤 대상의 취약을 2배로(상한 5).', { fxAdd: [{ k: 'vulnGrow', mul: 2 }] }, ['h_widen', 'h_delve', 'h_nail']],
+      ['hu_heart', '저격', 2, 4, 'L', 'h_vital', '심장 꿰뚫기', '취약 1마다 피해 +4 → +5.', { fxSet: [{ k: 'vulnPer', per: 5 }] }, ['h_heart']],
+      ['hu_giant', '저격', 3, 5, 'L', 'h_heavy', '거인 사냥', '큰 적(정예 · 강적 · 보스)에게 ×1.5 → ×1.8.', { fxSet: [{ k: 'bigx', mul: 1.8 }] }, ['h_giant', 'h_killshot', 'h_oneshot']],
+      ['hu_zeal', '저격', 2, 4, 'RR', 'h_chase', '집념의 화살', '큰 적(정예 · 강적 · 보스)에게 ×1.3.', { fxAdd: [{ k: 'bigx', mul: 1.3 }] }, ['h_zeal', 'h_hound', 'h_mark']],
+      ['hu_unend', '저격', 3, 6, 'C', 'h_doom', '끝없는 사냥', '대상의 추적이 3겹 이상이면 비용 −1(바닥 1, 라운드에 한 번).', { cond: { off: 1, when: 'focus>=3' } }, ['h_unend']],
+      ['hu_hound', '연사', 1, 1, 'LL', 'h_switch', '물어뜯는 화살', '바꿔 쏘기(기본 공격 버프)가 다음 라운드가 끝날 때까지 갑니다.', { fxSet: [{ k: 'bbuf', s: 'swap', r: 1 }] }, ['h_houndshot', 'h_cross']],
+      ['hu_link2', '연사', 1, 2, 'LL', 'h_double', '이어 쏘는 활', '연계로 쓰면(직전 갈래가 다르면) 비용 −1(바닥 1, 라운드에 한 번). 외길 사냥꾼이면 같은 갈래 스킬을 바로 이어 쓸 때 −1.', { cond: { off: 1, when: 'link' } }, []],
+      ['hu_turn', '연사', 2, 4, 'LL', 'h_double', '선회 사격', '덧화살이 켜진 동안 기본 공격이 직전에 친 적과 다른 적을 치면 ×1.3(덧화살 포함, 바꿔 쏘기와 곱함).', { fxSet: [{ k: 'bbuf', s: 'extra', turn: 1.3 }] }, ['h_turn', 'h_endless']],
+      ['hu_spray', '연사', 2, 4, 'L', 'h_triple', '난사', '느림이 됩니다. 3타 → 4타.', { set: { time: 'slow', hits: 4 } }, ['h_spray', 'h_rapid', 'h_thousand', 'h_shade', 'h_storm']],
+      ['hu_scatter', '연사', 2, 4, 'R', 'h_rain', '흩뿌리는 화살', '전열 모두를 칩니다(후열에 닿지 않음). 피해 8 → 11.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 11 }] }, ['h_scatter']],
+      ['hu_dull', '연사', 2, 3, 'C', 'h_rain', '쇠약의 비', '약화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'weak', n: 1 }] }, ['h_dull', 'h_bloodrain']],
+      ['hu_rend', '연사', 2, 4, 'RR', 'h_barb', '찢는 화살', '가시(기본 공격 버프)의 출혈 +2 → +3, 기간 2 → 3라운드.', { fxSet: [{ k: 'bbuf', s: 'barb', bleed: 3, r: 2 }] }, ['h_rend', 'h_thornrain']],
+      ['hu_crimson', '연사', 3, 5, 'RR', 'h_tearrain', '붉은 폭우', '전열 모두를 칩니다(후열에 닿지 않음). 출혈 3 → 5.', { set: { tgt: 'front' }, fxSet: [{ k: 'st', s: 'bleed', n: 5 }] }, ['h_crimson', 'h_bloodstorm']],
+      ['hu_sky', '연사', 3, 6, 'C', 'h_deluge', '하늘 가르기', '가속으로 두 번 움직이는 라운드면 피해 ×1.6. 쓴 뒤 이번 라운드 기본 공격 ×1.3.', { fxAdd: [{ k: 'hastex', mul: 1.6 }, { k: 'bbuf', s: 'sky', mul: 1.3, r: 0 }] }, ['h_skysplit', 'h_slaughter']],
+      ['hu_dash', '기동', 2, 3, 'C', 'h_dodge', '질주', '회피 1 대신 나에게 가속 1(다음 라운드 연속 행동, 두 번째 차례는 유산이 차지 않음). 스태미나 38 → 20.', { fxDel: [{ k: 'evade' }], fxSet: [{ k: 'stam', n: 20 }], fxAdd: [{ k: 'meSt', s: 'haste', n: 1 }] }, ['h_dash', 'h_windarrow', 'h_mirage', 'h_shadowrun']],
+      ['hu_ankle', '기동', 1, 2, 'LL', 'h_leg', '발목 끊기', '모으던 적을 이 스킬로 무너뜨리면 나에게 가속 1(유산 환급 없음).', { fxAdd: [{ k: 'onCutBreak', haste: 1 }] }, ['h_ankle', 'h_winterchain']],
+      ['hu_link3', '기동', 1, 2, 'RR', 'h_hobble', '이어 묶는 화살', '연계로 쓰면(직전 갈래가 다르면) 비용 −1(바닥 1, 라운드에 한 번). 외길 사냥꾼이면 같은 갈래 스킬을 바로 이어 쓸 때 −1.', { cond: { off: 1, when: 'link' } }, []], // 8절 보완 2: 측정 스위치 HUNT_BRIDGE=1(tools/dgqa.js)이 when을 linkFast(연계이거나 이번 차례에 빠른 기동 스킬을 먼저 씀)로 바꾼다
+      ['hu_frost', '기동', 2, 4, 'R', 'h_hobble', '얼어붙는 화살', '둔화된 적에게 ×1.5.', { fxAdd: [{ k: 'chillx', mul: 1.5 }] }, ['h_frost']],
+      ['hu_dance', '기동', 2, 4, 'RR', 'h_counter', '반격의 춤', '반격 22 → 28.', { fxSet: [{ k: 'evadeCtr', dmg: 28 }] }, ['h_dance', 'h_after', 'h_wind']],
+      ['hu_void', '기동', 3, 5, 'RR', 'h_side', '허공 사격', '공격을 피할 때마다 그 적에게 반격 사격(피해 7).', { fxAdd: [{ k: 'evadeCtr', dmg: 7 }] }, ['h_void']],
+      ['hu_snare', '기동', 2, 4, 'LL', 'h_stop', '붙잡는 화살', '대상이 강타나 영창을 모으는 중이면 붕괴 +60.', { fxAdd: [{ k: 'cutx', brk: 60 }] }, ['h_snare']],
+      ['hu_wedge', '기동', 3, 5, 'L', 'h_shatter', '얼음 쐐기', '빠른 칸이 됩니다. 피해 8 → 5, 둔화 2를 겁니다.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 5 }], fxAdd: [{ k: 'st', s: 'chill', n: 2 }] }, ['h_wedge', 'h_spread']],
+      ['hu_slow', '기동', 3, 6, 'C', 'h_icecage', '시간 늦추기', '쓴 뒤 나에게 가속 1.', { fxAdd: [{ k: 'meSt', s: 'haste', n: 1 }] }, ['h_timeslow']],
+    ],
+  },
 };
 /* 지금 트리에서 빠진 스킬 (8-4 "뺌"): 옛 세이브 장착 목록에서 "더는 없는 스킬"로 보인다 */
 const AT_GONE = { spellblade: ['sb_sweepcut', 'sb_pour', 'sb_redrain', 'sb_draw', 'sb_crimson', 'sb_feast', 'sb_sparkcut', 'sb_ring', 'sb_flamedown', 'sb_sear', 'sb_flamedance', 'sb_lance', 'sb_chainfire', 'sb_blaze', 'sb_armor', 'sb_spellguard', 'sb_bulwark'],
-  warden: ['w_spikes', 'w_armor', 'w_rampart', 'w_bulwarkhit', 'w_beyond', 's_knee', 'f_push', 'f_scatter'], monk: ['m_endless', 'm_knee', 'm_calm'] }; // 0.8.0 5단계 2-6 · 3-6 "뺌"
+  warden: ['w_spikes', 'w_armor', 'w_rampart', 'w_bulwarkhit', 'w_beyond', 's_knee', 'f_push', 'f_scatter'], monk: ['m_endless', 'm_knee', 'm_calm'],
+  hunter: ['h_steady', 'h_finish', 'h_stance', 'h_slowrain', 'h_veil', 'h_foresee'] }; // 0.8.0 5단계 2-6 · 3-6 "뺌", 사냥꾼은 원거리 초안 2-6 "뺌"

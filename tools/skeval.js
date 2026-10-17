@@ -10,15 +10,18 @@
 function makeSkEval(G0, run_) {
   const SKK = run_('SKK'), Y = run_('YUSAN');
   const COND_P = { resp: 0.5, alt2: (SKK.sb && SKK.sb.run2) || 0.45 };
-  const condP = c => COND_P[c.when] != null ? COND_P[c.when] : /^kw:/.test(c.when || '') ? 0.5 : /^(ward|ki)>=/.test(c.when || '') ? 0.4 : c.when === 'stance' ? 0.4 : 0; // 0.8.0 5단계 내 자원 조건(가설: 4단계 할인 적용 비율 근처)
+  const condP = c => COND_P[c.when] != null ? COND_P[c.when] : /^kw:/.test(c.when || '') ? 0.5 : /^(ward|ki|focus)>=/.test(c.when || '') ? 0.4 : c.when === 'stance' ? 0.4 : c.when === 'link' ? 0.6 : c.when === 'linkFast' ? 0.75 : 0; // 0.8.0 5단계 내 자원 조건(가설: 4단계 할인 적용 비율 근처). 사냥꾼(10월 18일): 대상 추적 focus>=n 0.4, 연계 link 0.6(원거리 초안 2-3: 시작 스킬 다리로 자주 참), linkFast 0.75 [가설]
+  const bbE = (() => { try { return run_('typeof skBbufE !== "undefined" ? skBbufE : null'); } catch (e) { return null; } })(); // 0.8.0 5단계 연사 기본 공격 버프 몫 (data/skillkit.js)
+  const hnD = p => { try { return p && p.build === 'hunter' && p.eq && G0.basicBase ? G0.basicBase(p) * (G0.weaponStatBonus ? 1 + G0.weaponStatBonus(p) : 1) : null; } catch (e) { return null; } }; // 기본 공격 한 번의 피해(qa.js qaWeaponBase와 같은 식)
   const YB = ((Y.start || 0) + SKK.turns * ((Y.turn || 0) + 0.3 * (Y.resp || 0))) / (SKK.turns + 1);
   const atNodes = cls => { try { return G0.atBuild(cls).nodes; } catch (e) { return {}; } };
   /* run이 가진 그 스킬의 강화 노드 (끼웠는지와 상관없이) */
   function upsOf(run, id) { if (!run || !run.atree) return []; const N = atNodes(run.build); return run.atree.own.filter(u => N[u] && N[u].kind === 'upgrade' && N[u].on === id).sort(); }
   /* 그 스킬을 끼웠을 때의 캐릭터 (값 계산용 가짜). ups를 주면 그 강화로 */
-  function pFor(run, id, ups) { const p = (run && run.p) || {}; return { build: run.build, aup: (ups == null ? upsOf(run, id) : ups.slice()).sort(), pn: (p.pn || []).slice(), sbLead: p.sbLead || null }; }
+  function pFor(run, id, ups) { const p = (run && run.p) || {}; const o = { build: run.build, aup: (ups == null ? upsOf(run, id) : ups.slice()).sort(), pn: (p.pn || []).slice(), sbLead: p.sbLead || null }; const d = hnD(p); if (d != null) o.bD = d; return o; } // bD: 사냥꾼 기본 공격 피해(버프 값)
   function evalSkill(pl, id) {
-    const s = G0.skOf(pl, id); if (!s) return null; const sc = G0.skScore(s); const cost = G0.skCost(s);
+    const s = G0.skOf(pl, id); if (!s) return null; const sc = Object.assign({}, G0.skScore(s)); const cost = G0.skCost(s);
+    if (bbE && pl.bD && s.fx.some(e => e.k === 'bbuf')) { const dv = bbE(s, pl.bD) - bbE(s); sc.E += dv; sc.net += dv; } // 0.8.0 5단계 연사(원거리 초안 2-10): 버프 값 = 기간 안 기대 기본 공격 횟수 × 실제 기본 공격 피해 × 덤 (점수표는 피해 8로 본다)
     const disc = (s.cond || []).reduce((m, c) => m + (c.off || 1) * condP(c), 0);
     const refund = s.killRecharge ? ((SKK.sb && SKK.sb.kill) || 0.4) * (Y.refund || 1) : 0;
     const costEff = Math.max(1, cost - disc - refund);
@@ -27,7 +30,7 @@ function makeSkEval(G0, run_) {
   /* run이 가진 강화를 반영한 값 / 기본 스킬의 값 */
   const evalRun = (run, id) => evalSkill(pFor(run, id), id);
   const evalBase = (run, id) => evalSkill(pFor(run, id, []), id);
-  /* 강화 노드가 있는 트리인가 (지금은 마검사뿐. 다른 직업은 임시 트리라 강화가 없어 값이 기본과 같다) */
+  /* 강화 노드가 있는 트리인가 (마검사 · 파수꾼 · 수도승 · 사냥꾼. 다른 직업은 임시 트리라 강화가 없어 값이 기본과 같다) */
   const hasUps = cls => Object.values(atNodes(cls)).some(n => n.kind === 'upgrade');
   return { upsOf, pFor, evalSkill, evalRun, evalBase, hasUps, YB, COND_P };
 }

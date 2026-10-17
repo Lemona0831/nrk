@@ -33,7 +33,7 @@ for (const c of CLS) {
   ok(true, c + ': 기울기(첫 중간 노드까지 거리) ' + (P.tmp ? '임시 트리는 그 거리보다 가깝지 않음' : '표대로'));
   for (const id in A.nodes) { const nd = A.nodes[id]; if (nd.kind === 'start') continue; assert(nd.cost === 1 && [1, 2, 3].includes(nd.ring), c + ' 액티브 ' + id); if (nd.kind === 'skill') assert(E.SK2[id] && !E.SK2[id].start, c + ' 스킬 ' + id); else { assert(nd.links.includes(nd.on) && A.nodes[nd.on].kind === 'skill', c + ' 강화가 그 스킬과 이웃 ' + id); } if (nd.links.includes('S')) assert.equal(nd.ring, 1, c + ' 가운데 이웃은 1고리 ' + id); }
   ok(true, c + ': 액티브 노드(스킬은 지금 칸, 강화는 그 스킬과 이웃, 비용 1)');
-  { const REAL = ['spellblade', 'warden', 'monk']; ok(!!P.tmp === !REAL.includes(c) && !!A.tmp === !REAL.includes(c), c + ': 임시 트리 표시(tmp)는 직업 초안이 들어간 직업(마검사 · 파수꾼 · 수도승)만 없음'); } // 0.8.0 5단계
+  { const REAL = ['spellblade', 'warden', 'monk', 'hunter']; ok(!!P.tmp === !REAL.includes(c) && !!A.tmp === !REAL.includes(c), c + ': 임시 트리 표시(tmp)는 직업 초안이 들어간 직업(마검사 · 파수꾼 · 수도승 · 사냥꾼)만 없음'); } // 0.8.0 5단계 (사냥꾼: 10월 18일)
 }
 
 // ===== 2) 마검사 = 1단계 문서 7 · 8절 =====
@@ -88,7 +88,7 @@ for (const c of CLS) {
   E.ptBuy(run, 'ct1C'); ok(Math.abs(E.fxMul(p, 'brkMul', {}, p, {}, null) - 1.03) < 1e-9, '제어 작은 노드 붕괴 ×1.03');
   ok(p.pn.includes('n_sb_altbeat'), '중간 노드 효과가 p.pn으로 fxList에 들어감');
   E.ptBuy(run, 'pw1C'); E.ptBuy(run, 'pw2R'); ok(run.stats.str === 6 && run.stats.int === 8, '화력 C1 힘1 지능1, R2 지능 2(시작 힘 5 · 지능 5)');
-  const run2 = newRun('hunter'); E.ptBuy(run2, 'pw1C'); E.ptBuy(run2, 'pw2L'); ok(run2.stats.dex === 7, '사냥꾼 화력 작은 노드는 공격 능력치(민첩)');
+  const run2 = newRun('hunter'); E.ptBuy(run2, 'pw1C'); E.ptBuy(run2, 'pw2L'); ok(run2.stats.dex === 10, '사냥꾼 화력 작은 노드는 공격 능력치(민첩)'); // 0.8.0 5단계 원거리 초안 결정 3: 시작 민첩 8 + 화력 L2 작은 노드 2 (C1은 손에 익은 활)
 }
 // ===== 5) 큰 각인 =====
 { const run = newRun('spellblade'); run.lv = 6; E.ptFix(run); run.clears = 1; run.seed = 77; run.ch = 1;

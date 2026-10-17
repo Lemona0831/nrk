@@ -137,6 +137,7 @@ function endBattleCarry(p) {
   p.wardLeft = p.ward || 0; p.ward = 0; p.thorn = null; p.evade = 0; p.lastBr = null; p.evadeCtr = null; p.evadeHz = null; p.quickTurns = 0; p.foresee = null; p.focus = null; p.lastSkillId = null; p.echoN = 0; p.furyNext = 0; p.retal = 0; p.sigCd = 0; p.focusRes = 0;
   // 방 사이 이월 (4.2): 생명력·마나·플라스크 유지, 스태미나는 50%까지 회복, 전투 상태 해제
   if (p.build === 'monk') { p.kiLeft = st(p, 'empower'); p.stance = null; p.ctrN = 0; } // kiLeft: 0.8.0 5단계 기의 순환(onWin)
+  if (p.build === 'hunter') { p.ysLeft = ysNow(p); p.bbuf = null; p.hnLastT = null; p.hnPass = 0; p.hnAside = 0; } // 0.8.0 5단계 사냥꾼: ysLeft 사냥꾼의 휴식(onWin), 기본 공격 버프는 전투가 끝나면 사라진다(2-6a 규칙 6)
   p.st = Math.max(p.st, 50); p.exhaust = 0; p.s = {}; p.guard = 0; p.dodge = 0; p.stun = 0; p.counter = 0; p.reflux = null; p.rage = 0;
   if (p.build === 'spellblade') { p.edge = null; p.sbLast = null; p.sbRun = 0; } // 마검사: 칼은 전투가 끝나면 빈다
   if (p.build === 'confessor') { p.selfN = {}; p.selfBad = null; } // 숨겨진 직업 2

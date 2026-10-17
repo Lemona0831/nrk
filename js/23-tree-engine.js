@@ -195,6 +195,10 @@ function skCondMet(b, s, c, tgt) {
   const mk = /^ki>=(\d+)$/.exec(c.when || ''); if (mk) return st(p, 'empower') >= +mk[1];
   if (c.when === 'stance') return !!(p.stance || (b.mkStHeld != null && b.mkStHeld === b.turnIdx)); // 직전 적 차례를 자세로 맞았다(내 차례 첫 행동에서 자세가 풀려도 그 차례 동안 참)
   const m = /^kw:(\w+)>=(\d+)$/.exec(c.when || ''); if (m) { const ok = e => e && e.alive && st(e, m[1]) >= +m[2]; return tgt ? ok(tgt) : alive(b).some(ok); }
+  /* 0.8.0 5단계 사냥꾼 (원거리 초안 2-2 · 8절 보완 1 · 2, 10월 18일): link = 이 스킬이 연계(직전 갈래 lastBr과 다름, 시작 스킬은 lb). 외길 사냥꾼이면 같은 갈래를 바로 이어 씀으로 바뀐다.
+     linkFast = link이거나 이번 차례에 빠른 기동 스킬을 먼저 씀(보완 2, 측정 스위치 HUNT_BRIDGE만 씀). focus>=n = 대상의 추적 겹(보유) */
+  if (c.when === 'link' || c.when === 'linkFast') { if (p.build !== 'hunter') return false; const br = hnBr(s); const lk = br !== '시작' && !!p.lastBr && (hnSolo(p) ? p.lastBr === br : p.lastBr !== br); return lk || (c.when === 'linkFast' && b.hnFastMob != null && b.hnFastMob === b.turnIdx); }
+  const mf = /^focus>=(\d+)$/.exec(c.when || ''); if (mf) { const ok = e => e && e.alive && p.focus && p.focus.id === e.id && p.focus.n >= +mf[1]; return tgt ? ok(tgt) : alive(b).some(ok); }
   return false;
 }
 function skCostAt(b, s, tgt) {
@@ -347,6 +351,25 @@ const IFX_NODE = {
   n_mk_spill: { kiSpillSt: 4 }, // 넘치는 기운
   ks_mk_empty: { hitP: (b, p, e, o, c) => c && c.skill && (skOf(p, c.id) || { fx: [] }).fx.some(f => f.k === 'kiBurst') ? 0.3 : 0, ctrKiOnce: 1 }, // 비운 그릇 (10월 17일 검토 2-2: 대가는 되받기 기 한 번)
   ks_mk_vow: { inP: (b, p, o) => p.stance && !o.dot ? 0.12 : 0, noFastAtk: 1 }, // 부동의 맹세
+  /* ---- 0.8.0 5단계 사냥꾼 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 2-5, 10월 18일) ---- */
+  n_hn_pull: { hitP: (b, p, e, o, c) => c && c.id === 'basic' && b.extraTurn ? 0.15 : 0, onHit: (b, p, e, o, c, d) => { if (!c || c.id !== 'basic' || !b.extraTurn || !(d > 0) || b.hnPullA === b.actN) return; b.hnPullA = b.actN; fxStam(p, 5); return 1; } }, // 이어 당기는 활: 가속의 두 번째 차례 기본 공격(덧화살 포함) +15%, 맞히면 스태미나 +5
+  n_hn_breath: { hitP: (b, p, e, o, c) => c && c.skill && hnFocusPre(b, p, e, o) >= HUNT.focusMax ? 0.08 : 0 }, // 사냥감의 숨: 맞히기 전 추적 3겹 이상
+  n_hn_tough: { inP: (b, p, o) => !o.dot && p.hp <= p.hpMax * 0.3 ? 0.08 : 0 }, // 질긴 사냥꾼
+  n_hn_unavoid: { inP: (b, p, o) => o.aoe || o.spell || o.dot ? 0.08 : 0 }, // 피할 수 없는 것
+  n_hn_rest: { onEvade: (b, p) => { if ((b.hnRestN || 0) >= 3) return; b.hnRestN = (b.hnRestN || 0) + 1; return fxHeal(p, p.hpMax * 0.02) > 0 ? 1 : 0; } }, // 숨 고르기: 전투마다 3번
+  n_hn_camp: { onWin: run => { const p = run.p; const v = Math.min(p.hpMax * 0.01 * Math.min(4, p.ysLeft || 0), p.hpMax - p.hp); if (!(v > 0)) return; p.hp += v; return 1; } }, // 사냥꾼의 휴식: 남은 유산 1마다 1%(최대 4%)
+  n_hn_tele: { hitP: (b, p, e) => e.intent && (YS_PRE_K.includes(e.intent.k) || e.intent.aimed) ? 0.08 : 0 }, // 예고 읽기: 큰 예고(먼저 치우기와 같은 기준)
+  n_hn_cutarrow: { onBreak: (b, p) => { if (!b.brkCut || !b.cur || b.hnCutA === b.actN) return; b.hnCutA = b.actN; fxStam(p, 12); return 1; } }, // 끊은 화살: 붕괴로 예고를 끊으면(addBreak의 b.brkCut)
+  n_hn_stopgap: { onBreak: (b, p, e) => { if (!b.brkCut || !b.cur) return; e.hnGapA = b.actN; return 1; }, hitP: (b, p, e) => { if (e.hnGapU === b.actN) return 0.15; if (e.hnGapA == null || e.hnGapA === b.actN) return 0; e.hnGapA = null; e.hnGapU = b.actN; return 0.15; } }, // 멈춰 세운 틈: 끊은 적에게 다음 공격(연타는 그 공격 전체)
+  n_hn_aside: { onEvade: (b, p) => { p.hnAside = 1; return 1; }, hitP: (b, p, e, o, c) => { if (b.hnAsideU === b.actN) return 0.1; if (!p.hnAside || !c || o.ctr) return 0; p.hnAside = 0; b.hnAsideU = b.actN; return 0.1; } }, // 비켜 선 자리: 피한 다음 내 첫 공격 한 번
+  n_hn_quick: { hitP: (b, p, e, o, c) => c && c.skill && (skOf(p, c.id) || {}).time === 'fast' ? 0.08 : 0 }, // 날랜 시위
+  n_hn_pass: { onKill: (b, p, e) => { if (e.pile || !p.focus || p.focus.id !== e.id || p.focus.n < HUNT.focusMax) return; p.hnPass = 1; return 1; } }, // 넘겨받는 추적: 다음에 친 다른 적은 추적 1겹에서 (hurtEnemy)
+  n_hn_linkup: { hnLinkUp: 1 }, // 이어 쏘기 숙련: 연계 +30% → +38% (hnLinkMul)
+  n_hn_finale: { hitP: (b, p, e, o, c) => c && c.skill && b.hnLinkA === b.actN && skCostOfCur(p, c) === 4 ? 0.12 : 0 }, // 끝맺는 연계: 연계로 쓴 유산 4 스킬
+  ks_hn_solo: { hnSolo: 1 }, // 외길 사냥꾼 (soloOn · skCondMet link)
+  ks_hn_chase: { focusCap: 1 }, // 끝까지 쫓는 자 (focusCapOf)
 };
+/* 사냥꾼: 이 타격 전의 추적 겹 (한 적 공격은 hurtEnemy가 겹을 먼저 올리므로 그 전 값, 광역은 올리지 않는다) */
+function hnFocusPre(b, p, e, o) { if (!p.focus || p.focus.id !== e.id) return 0; if (o && o.aoe) return p.focus.n; if (b.curSkill && b.focusKey === b.curSkill + ':' + e.id) return b.focusPre || 0; return Math.max(0, p.focus.n - 1); }
 const PSM_FX = new Map();
 function ptSmallFx(sm) { const key = (sm.brk || 0) + ':' + (sm.st || 0); if (!PSM_FX.has(key)) PSM_FX.set(key, Object.assign(sm.st ? { st: { st: PT.smallSt * sm.st } } : {}, sm.brk ? { brkMul: (() => { const m = Math.pow(1 + PT.smallBrk, sm.brk); return () => m; })() } : {})); return PSM_FX.get(key); }

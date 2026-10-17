@@ -34,7 +34,15 @@ const wallFrontUp = (b, e) => e.alive && e.row === 'front' && !['boss', 'shield'
 const TELE = { heavy: 1.75, boss: 3.5 }; // 적 강타 = 평소 공격 × heavy, 보스 강타 × boss (10월 4일: 평소 공격이 기준표로 커져 일반 적의 강타는 1.75배. 한 번 상한은 그대로) // 적 강타 = 평소 공격 × heavy (예고를 읽고 막는 판단의 무게)
 /* 0.6a.2: 적이 거는 상태 (숫자 하나, 발동마다 1 감소). 사수 출혈은 걸린 쪽이 행동할 때마다 터지므로 세 번에 한 번, 2만 건다 */
 const HUNT = { focusMax: 3, focusPer: 0.05, focusBig: 0.1, addMax: 2, focusHaste: 0, link: 0.3 }; // 10월 5일: 3겹 가속은 저격 혼자 도는 고리를 만들어 껐다(가속은 기동이 공급). 3겹 효과는 몸 낮추기 · 버티기를 꿰뚫기 // link: 연계(직전에 쓴 스킬과 다른 갈래의 스킬) 피해 배율 (10월 5일 만든 사람 결정: 섞어 쓸 때 제 힘을 낸다)
-const linkOn = (b, a) => !!(b && b.p.build === 'hunter' && a && a.v2 && a.s && a.s.b !== '시작' && b.p.lastBr && b.p.lastBr !== a.s.b); // 사냥꾼 연계: 시작 스킬 · 기본 공격은 연계를 만들지도 끊지도 않는다 // focusHaste: 추적이 3겹이 되는 순간 얻는 가속
+/* 0.8.0 5단계 사냥꾼 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 1-3 · 2-2 · 2-5 · 8절, 10월 18일): 시작 스킬의 연계 갈래 태그(lb: 겨눠 쏘기 저격 · 물러서며 쏘기 기동)를 갈래로 읽는다.
+   기본 공격 · 강공격 · 방어 · 흘리기 · 플라스크 · 소모품은 lastBr을 읽지도 쓰지도 않는다. 외길 사냥꾼(hnSolo)이면 연계(+30%) 대신 같은 갈래를 바로 이어 쓰면 +20% */
+const HN = { solo: 0.2, linkUp: 0.38 }; // linkUp: 이어 쏘기 숙련(연계 +30% → +38%)
+const hnBr = s => s ? (s.lb || s.b) : null;
+const hnSolo = p => !!(p && p.build === 'hunter' && fxFlag(p, 'hnSolo'));
+const linkOn = (b, a) => !!(b && b.p.build === 'hunter' && a && a.v2 && a.s && hnBr(a.s) !== '시작' && b.p.lastBr && b.p.lastBr !== hnBr(a.s) && !hnSolo(b.p)); // 사냥꾼 연계: 갈래 스킬 · 시작 스킬(lb)만 연계를 만들고 받는다 // focusHaste: 추적이 3겹이 되는 순간 얻는 가속
+const soloOn = (b, a) => !!(b && b.p.build === 'hunter' && a && a.v2 && a.s && hnBr(a.s) !== '시작' && b.p.lastBr && b.p.lastBr === hnBr(a.s) && hnSolo(b.p)); // 외길 사냥꾼: 같은 갈래를 바로 이어 씀
+const hnLinkMul = p => fxFlag(p, 'hnLinkUp') ? HN.linkUp : HUNT.link;
+const focusCapOf = p => HUNT.focusMax + (p && p.build === 'hunter' && fxFlag(p, 'focusCap') ? 1 : 0); // 끝까지 쫓는 자: 추적 상한 3 → 4 (3겹 효과의 문턱은 HUNT.focusMax 그대로)
 /* 숨겨진 직업 1 (10월 7일, butcher): 흡혈(출혈된 적을 근접으로 칠 때, 출혈 1마다 leech, 최대 leechMax, 한 차례 leechTurn), 갈증(잃은 생명력 10%마다 thirst, 최대 thirstMax),
    회복은 최대 생명력까지. 먹기는 전투당 eatFight, 피 수확은 적 하나당 harvest · 전투당 harvestFight까지. 받은 피해 상한 grudgeCap, 한 차례 killRecharge 다시 쓰기 krTurn */
 const BUTCH = { leech: 0.04, leechMax: 0.4, leechTurn: 0.08, harvest: 0.03, harvestFight: 0.12, thirst: 0.03, thirstMax: 0.18, eatFight: 0.4, grudgeCap: 0.3, krTurn: 2 };

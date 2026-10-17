@@ -1,5 +1,6 @@
 /* ===== 사람처럼 생각하는 QA 테스터 (엔진 직접 구동) ===== */
 const E = require('./eng.gen.js');
+if (process.env.HUNT_BRIDGE && E.ATREE_DEF && E.ATREE_DEF.hunter) { const u = E.ATREE_DEF.hunter.ups.find(x => x[0] === 'hu_link3'); if (u) u[8].cond.when = 'linkFast'; } // 0.8.0 5단계 측정 변형(원거리 초안 8절 보완 2): tools/dgqa.js와 같이 바꾼다(한 수 앞 계산의 엔진 사본)
 const { BUILDS, ROOMS, ITEMS, SCEN } = E;
 // 현재 스탯·장비의 기본 피해. 전투 상태·적 보정·추가 피해까지의 최종 예측은 아니다.
 function qaSkillBase(p,a){const dm=a?.s?.fx.find(f=>f.k==='dmg');return dm?(E.skillBaseDamage?E.skillBaseDamage(p,a.s,dm.n):dm.n):0;}
@@ -115,9 +116,10 @@ function lookahead(b, P, r) {
   for (const a of L) {
     let ts = [null];
     if (!a.self && !a.aoe) { ts = E.alive(b).filter(e => E.canTarget(b, e, a) && !(a.id === 'dodge' && e.role === 'root')); if (b.p.build === 'hunter' && !process.env.HUNT_CROWN_OLD && gt(b.p, 'hunter', 'crown')) { /* 사냥꾼(10월 8일): 열기가 높지 않으면 왕관을 치지 않는다(출처: 비공개 문서 3챕터 2.2–2.3절, 문장은 옮기지 않는다). 한 수 앞 계산은 왕관 피해와 처치를 이득으로 세어 왕관만 쳤다. HUNT_CROWN_OLD=1이면 끈다 */ const nc = ts.filter(e => !(e.role === 'crown' && !e.crownHot)); if (nc.length) ts = nc; } ts = ts.map(e => e.id); }
+    const hb = b.p.build === 'hunter' && !process.env.HUNT_BBUF_OLD && a.v2 && a.s && a.s.fx.some(f => f.k === 'bbuf') && gt(b.p, 'hunter', 'bbuf-look') ? huLookBonus(b, a) : 0; // 0.8.0 5단계 연사(2-10): 버프 스킬의 앞으로의 몫
     for (const t of ts) {
       const c = cloneB(b); E.playerAct(c, a.id, t);
-      cands.push({ a: a.id, t, v: evalState(b, c, P.risk) + (r() - 0.5) * 2 });
+      cands.push({ a: a.id, t, v: evalState(b, c, P.risk) + hb + (r() - 0.5) * 2 });
     }
   }
   cands.sort((x, y) => y.v - x.v);
@@ -302,6 +304,49 @@ function hazePick(b) {
   if (front.length >= 2) { const ao = L.filter(a => a.s && a.s.tgt === 'front').sort((x, y) => (y.yc || 0) - (x.yc || 0))[0]; if (ao) return [ao.id, null]; }
   return null;
 }
+/* 0.8.0 5단계 사냥꾼 연사 판단 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 2-10, 10월 18일). 버프 스킬이 끼워졌을 때만(v2Pick 사냥꾼 칸).
+   ① 기본 공격 값 = 무기 피해 × 켜진 버프(직전에 친 적과 다르면 바꿔 쏘기 ×1.5 · 선회 ×1.3, 덧화살 +50%, 하늘 가르기 ×1.3) + 출혈. 유산이 가장 싼 스킬보다 적거나 가속의 두 번째 차례면 버프가 켜진 기본 공격,
+      그 밖에는 그 값으로 공격 스킬의 어림 피해와 겨룬다. ② 바꿔 쏘기 · 선회가 켜져 있으면 대상은 직전에 친 적과 다른 적(같으면 생명력이 낮은 적).
+   ③ 가속 라운드 첫 차례에는 시동 스킬(⚡전환 사격 · ▶연속 사격)을 먼저 켜고 두 번째 차례에 쏟는다. ④ 같은 버프가 이미 켜져 있으면 기간이 늘 때만, 유산이 넉넉할 때 다시 건다.
+   무리(셋 이상)에서는 기본 공격 대신 아래 광역 판단에 맡긴다(2-4). 난수는 쓰지 않는다 */
+function huRound(b) { return b.prepTurn === b.turnIdx ? (b.ysR || 0) : (b.ysR || 0) + 1; } // 이 행동이 들 라운드(차례의 첫 행동이면 +1)
+function huBasicV(b, p, t, Rn) {
+  const base = qaWeaponBase(p, { id: 'basic' }); const B = p.bbuf || {}; const on = k => B[k] && B[k].until >= Rn ? B[k] : null; const diff = !!t && p.hnLastT != null && t.id !== p.hnLastT;
+  let m = 1, x = 0, bl = 0; const sw = on('swap'), ex = on('extra'), bb = on('barb'), sk = on('sky');
+  if (sw && diff) { m *= sw.mul; bl += sw.bleed; } if (ex) { x = ex.mul; if (ex.turn && diff) m *= ex.turn; } if (bb) bl += bb.bleed; if (sk) m *= sk.mul;
+  return { v: base * m * (1 + x) + bl * 2, base, on: !!(sw || ex || bb || sk) };
+}
+function huVolley(b, P, r, okS, L, best, reach) {
+  const p = b.p, Rn = huRound(b), B = p.bbuf || {}; const on = k => !!(B[k] && B[k].until >= Rn); const ys = E.ysNow(p), cap = E.ysCapOf ? E.ysCapOf(p) : 5;
+  const bbOf = a => a && a.v2 && a.s ? a.s.fx.find(f => f.k === 'bbuf') : null; const need = a => { const f = bbOf(a); return !!f && (!on(f.s) || (B[f.s].until < Rn + (f.r || 0) && ys >= cap - 1)); }; // ④ 기간 연장분만
+  const al = E.alive(b).filter(e => e.role !== 'root' && !e.pile); const many = al.length >= 3;
+  const basic = L.find(a => a.id === 'basic' && a.ok); const fastFree = !b.bonusUsed && !(E.noFast && E.noFast(p));
+  const hasteFirst = !b.extraTurn && !!b.queue && b.queue[0] === 'p' && b.queue[1] === 'p'; // ③ 가속 라운드 첫 차례
+  const bTgt = () => { if (!basic) return null; const c = reach(basic); const other = c.filter(e => e.id !== p.hnLastT); return (other.length ? other : c).sort((x, y) => x.hp - y.hp)[0] || null; }; // ②
+  const tgtOf = a => a.self || a.aoe ? null : (best(a, (x, y) => x.hp - y.hp) || {}).id;
+  const sw = okS.find(a => bbOf(a) && bbOf(a).s === 'swap' && a.time <= 0.6);
+  // 빠른 칸: 바꿔 쏘기를 켠다(둘 이상 남았고, 이번 차례에 기본 공격이 이어지거나 가속의 두 번째 차례가 있을 때)
+  if (fastFree && sw && need(sw) && al.length >= 2 && (basic || hasteFirst)) return [sw.id, tgtOf(sw)];
+  const t = bTgt(); const bv = basic && t ? huBasicV(b, p, t, Rn) : null; const bbOn = !!(bv && bv.on);
+  const mainS = okS.filter(a => a.time > 0.6); const minCost = Math.min(99, ...okS.filter(a => !a.self).map(a => a.yc || 99));
+  if (bbOn && (b.extraTurn || ys < minCost)) return ['basic', t.id]; // ① 유산이 없는 차례 · 두 번째 차례: 버프가 켜진 기본 공격
+  if (many && okS.some(a => a.aoe)) return null; // 무리는 광역 판단에
+  // 주 행동: 바꿔 쏘기를 이번 라운드에 아직 쓰지 않았고 두 번째 차례가 없으면 지금 쏟는다. 아니면 덧화살 · 가시 · 하늘 가르기를 켠다(③ 가속 라운드 첫 차례에 먼저)
+  const swNow = on('swap') && !B.swap.used && B.swap.until === Rn && !hasteFirst;
+  if (bbOn && swNow && t.id !== p.hnLastT) return ['basic', t.id];
+  for (const k of ['extra', 'barb', 'sky']) { const a = mainS.find(x => bbOf(x) && bbOf(x).s === k); if (a && need(a)) return [a.id, tgtOf(a)]; }
+  if (bbOn) { const sv = Math.max(0, ...mainS.filter(a => !a.self && !a.aoe && !bbOf(a) && a.s.fx.some(f => f.k === 'dmg')).map(a => qaSkillBase(p, a) * (a.s.hits || 1) * (E.linkOn && E.linkOn(b, a) ? 1.3 : 1))); if (bv.v >= sv) return ['basic', t.id]; } // ① 기본 공격 값으로 공격 스킬과 겨룬다
+  return null;
+}
+/* 숙련(한 수 앞)의 사냥꾼 연사 몫 (2-10 ③ · ④): 버프 스킬의 값에 앞으로 버프를 받을 기본 공격 몫(게임 점수와 같은 꼴, 실제 무기 피해)을 더한다. 한 수 앞 계산은 다음 차례의 기본 공격을 보지 못한다 */
+function huLookBonus(b, a) {
+  const p = b.p; if (!a.v2 || !a.s || !E.skBbufV) return 0; const f = a.s.fx.find(x => x.k === 'bbuf'); if (!f) return 0;
+  const Rn = huRound(b), B = p.bbuf || {}; const D = qaWeaponBase(p, { id: 'basic' }); const al = E.alive(b).filter(e => e.role !== 'root' && !e.pile);
+  if (f.s === 'swap' && al.length < 2) return 0; const cur = B[f.s] && B[f.s].until >= Rn ? B[f.s] : null;
+  let v = E.skBbufV(f, D); if (cur) { const ext = Rn + (f.r || 0) - cur.until; v = ext > 0 ? v * Math.min(1, ext / ((f.r || 0) + 1)) : 0; } // ④ 이미 켜져 있으면 늘어난 기간 몫만
+  const hasteFirst = !b.extraTurn && !!b.queue && b.queue[0] === 'p' && b.queue[1] === 'p'; if (hasteFirst && E.ysNow(p) >= 2 && (f.s === 'swap' || f.s === 'extra')) v += f.s === 'swap' ? D * (f.mul - 1) + (f.bleed || 0) : D * f.mul; // ③ 두 번째 차례 기본 공격 한 번 몫
+  return v;
+}
 function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   const p = b.p; const nf = !!(E.noFast && E.noFast(p)); const okS = L.filter(a => a.v2 && a.ok && !(nf && a.time <= 0.6)); const has = (a, k) => a.s.fx.some(e => e.k === k); // 느린 맥박: 빠른 칸이 없어 빠른 스킬도 차례를 끝내므로 사람처럼 빠른 스킬을 고르지 않는다
   const psn = e => (e.s.poison ? e.s.poison.stacks : 0);
@@ -337,8 +382,9 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
       const many = E.alive(b).filter(e => e.role !== 'root').length >= 3;
       if (many) { const ts = okS.find(a => a.aoe && a.s.fx.some(e => e.k === 'st' && e.s === 'chill')); if (ts && r() < 0.6) return [ts.id]; const spr = okS.find(a => has(a, 'chillSpread')); if (spr) { const t = reach(spr).find(e => chOf(e) >= 1); if (t) return [spr.id, t.id]; } }
     }
-    for (const a of okS.filter(a => has(a, 'focusBurst'))) if (fe && E.canTarget(b, fe, a) && (fn >= 3 || (fn >= 2 && fe.hp < fe.hpMax * 0.35))) return [a.id, fe.id];
-    { const lk = okS.filter(a => !a.self && a.s.b !== '시작' && p.lastBr && a.s.b !== p.lastBr && has(a, 'dmg')).sort((x, y) => (y.s.row || 0) - (x.s.row || 0)); if (lk.length && r() < 0.55 + 0.35 * (P.mech || 0.5)) return [lk[0].id, tgtOf(lk[0])]; } // 연계: 방금과 다른 갈래의 공격 스킬 (사람은 버튼의 🔗를 보고 고른다)
+    if (!process.env.HUNT_BBUF_OLD && okS.concat(L.filter(a => a.v2)).some(a => a.s && a.s.fx.some(f => f.k === 'bbuf')) && gt(p, 'hunter', 'bbuf')) { const v = huVolley(b, P, r, okS, L, best, reach); if (v) return v; } // 0.8.0 5단계 연사 기본 공격 버프(원거리 초안 2-10): 버프 스킬이 끼워졌을 때만. HUNT_BBUF_OLD=1이면 예전 판단
+    { const fc = E.focusCapOf ? E.focusCapOf(p) : 3; for (const a of okS.filter(a => has(a, 'focusBurst'))) if (fe && E.canTarget(b, fe, a) && (fn >= fc || (fn >= fc - 1 && fe.hp < fe.hpMax * 0.35))) return [a.id, fe.id]; } // 0.8.0 5단계: 끝까지 쫓는 자면 4겹까지 (상한 3이면 예전과 같다)
+    { const lkOk = a => E.linkOn ? E.linkOn(b, a) || E.soloOn(b, a) : a.s.b !== '시작' && p.lastBr && a.s.b !== p.lastBr; const lk = okS.filter(a => !a.self && lkOk(a) && has(a, 'dmg')).sort((x, y) => (y.s.row || 0) - (x.s.row || 0)); if (lk.length && r() < 0.55 + 0.35 * (P.mech || 0.5)) return [lk[0].id, tgtOf(lk[0])]; } // 연계: 방금과 다른 갈래의 공격 스킬 (사람은 버튼의 🔗를 보고 고른다). 0.8.0 5단계: 게임의 판정(linkOn: 시작 스킬 태그 lb, 외길 사냥꾼이면 같은 갈래 ⇉)
     for (const a of okS.filter(a => has(a, 'focusAdd') && !a.s.start)) { const t = fe && E.canTarget(b, fe, a) ? fe : best(a, (x, y) => y.hp - x.hp); if (t && (t !== fe || fn < 2)) return [a.id, t.id]; }
   }
   { const wd = p.build === 'warden' && gt(p, 'warden', 'defend') ? wdDefend(b, p, L, okS, pv1, hv, r, mem) : null; if (wd) return wd; } // 0.8.0 5단계 측정 도구 보완 2: 파수꾼 방어 정책

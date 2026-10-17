@@ -182,8 +182,8 @@ const SKILLS2 = {
   ],
   hunter: [
     // 시작 스킬: 트리 밖. 추적을 쌓는 사격 하나(주 행동), 물러서며 가속을 얻는 사격 하나(빠른 행동) (10월 5일 초안)
-    { id: 'h_aim', b: '시작', tier: '시작', start: 1, n: '겨눠 쏘기', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'focusAdd', n: 1 }] },
-    { id: 'h_step', b: '시작', tier: '시작', start: 1, n: '물러서며 쏘기', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 4 }, { k: 'evade', n: 1 }] }, // 10월 5일: 가속이 연속 행동이 되어 시작 스킬은 가속 대신 몸 빼기
+    { id: 'h_aim', b: '시작', lb: '저격', tier: '시작', start: 1, n: '겨눠 쏘기', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'focusAdd', n: 1 }] },
+    { id: 'h_step', b: '시작', lb: '기동', tier: '시작', start: 1, n: '물러서며 쏘기', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 4 }, { k: 'evade', n: 1 }] }, // 10월 5일: 가속이 연속 행동이 되어 시작 스킬은 가속 대신 몸 빼기
     // 10월 5일 만든 사람 결정: 가속(사냥꾼 전용) = 라운드 맨 앞에서 두 번 연달아. 기동이 가속을 만들고, 저격 · 연사는 가속에서 세지거나(하급 hastex) 가속을 써서 큰 한 방(중급 hasteSpend). 한 갈래만 몰아 찍으면 오히려 약하게(작은 육각형)
     // 저격: 한 적에게 추적과 취약을 쌓고 큰 한 발로 끝낸다. 왼쪽 기둥은 추적(쌓기 · 터뜨리기), 오른쪽은 취약과 무거운 한 발. 거구에 강하고 무리에 약하다
     { id: 'h_mark', row: 1, b: '저격', tier: '하급', n: '조준 사격', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 14 }, { k: 'focusx', per: 0.1 }] },
@@ -214,13 +214,13 @@ const SKILLS2 = {
     { id: 'h_doom', row: 13, b: '저격', tier: '상급', n: '추격의 종말', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 3 }, { k: 'focusBurst', n: 13 }, { k: 'lowx', hp: 0.3, mul: 1.5 }, { k: 'bigx', mul: 1.4 }, { k: 'hasteSpend', mul: 1.5 }] },
     { id: 'h_killshot', row: 13, b: '저격', tier: '상급', n: '필살의 한 발', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 21 }, { k: 'vulnPer', per: 2 }, { k: 'bigx', mul: 2 }] },
     // 연사: 표적을 바꿀 때마다 빠른 한 발, 여러 번 쏘고, 화살비와 출혈로 여럿을 깎는다. 왼쪽 기둥은 표적 바꾸기와 연발, 오른쪽은 화살비와 출혈. 무리에 강하고 거구에 약하다
-    { id: 'h_double', row: 1, b: '연사', tier: '하급', n: '연속 사격', tgt: 'ranged', time: 'normal', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 7 }, { k: 'hastex', mul: 1.3 }] },
+    { id: 'h_double', row: 1, b: '연사', tier: '하급', n: '연속 사격', tgt: 'ranged', time: 'normal', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 4 }, { k: 'hastex', mul: 1.3 }, { k: 'bbuf', s: 'extra', mul: 0.5, r: 1 }] }, // 0.8.0 5단계(2-6a · 8절 결정 5): 덧화살, 다음 라운드가 끝날 때까지. 결정 7: +66% → 자체 피해 7 → 4(−9%, 5면 +16%라 가까운 쪽)
     { id: 'h_rain', row: 1, b: '연사', tier: '하급', n: '화살비', tgt: 'all', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 8 }] },
-    { id: 'h_switch', row: 2, b: '연사', tier: '하급', n: '전환 사격', tgt: 'ranged', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 8 }, { k: 'swapx', mul: 1.5 }] },
-    { id: 'h_barb', row: 2, b: '연사', tier: '하급', n: '가시 화살', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'bleed', n: 5 }] },
+    { id: 'h_switch', row: 2, b: '연사', tier: '하급', n: '전환 사격', tgt: 'ranged', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 4 }, { k: 'swapx', mul: 1.5 }, { k: 'bbuf', s: 'swap', mul: 1.5, bleed: 2, r: 0 }] }, // 0.8.0 5단계(원거리 초안 2-6a, 10월 18일): 바꿔 쏘기. 결정 7: 버프 값을 넣은 줄 예산(skillscore) +70% → 자체 피해 8 → 4(−6%)
+    { id: 'h_barb', row: 2, b: '연사', tier: '하급', n: '가시 화살', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 5 }, { k: 'bbuf', s: 'barb', bleed: 2, r: 1 }] }, // 0.8.0 5단계(2-6a): 가시. 결정 7: +38% → 자체 피해 12 → 8(−1%)
     { id: 'h_triple', row: 3, b: '연사', tier: '하급', n: '삼연사', tgt: 'ranged', time: 'normal', cd: 8, hits: 3, fx: [{ k: 'dmg', n: 6 }] },
     { id: 'h_scatter', row: 3, b: '연사', tier: '하급', n: '흩뿌리는 화살', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 1 }] },
-    { id: 'h_gap', row: 4, b: '연사', tier: '하급', n: '빈틈 쏘기', tgt: 'ranged', time: 'fast', cd: 7, fx: [{ k: 'dmg', n: 10 }, { k: 'swapx', mul: 1.5 }, { k: 'hasten', n: 1 }] },
+    { id: 'h_gap', row: 4, b: '연사', tier: '하급', n: '빈틈 쏘기', tgt: 'ranged', time: 'fast', cd: 7, killRecharge: 1, fx: [{ k: 'dmg', n: 10 }, { k: 'swapx', mul: 1.5 }] }, // 0.8.0 5단계(원거리 초안 1-2 · 2-6): 🔄 → 이 스킬로 적을 쓰러뜨리면 유산 +1
     { id: 'h_bloodrain', row: 4, b: '연사', tier: '하급', n: '피의 비', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'hastex', mul: 1.3 }] },
     { id: 'h_spray', row: 5, b: '연사', tier: '하급', n: '난사', tgt: 'ranged', time: 'slow', cd: 10, hits: 4, fx: [{ k: 'dmg', n: 6 }] },
     { id: 'h_dull', row: 5, b: '연사', tier: '하급', n: '쇠약의 화살비', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'weak', n: 1 }] },

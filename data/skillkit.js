@@ -60,7 +60,9 @@ const SKK = {
      v: 보호막 1의 값, loss: 태운 보호막이 막았을 몫, thorn: 가시가 맞는 몫, vuln: 쓸 때 대상의 취약, shield: 방패병이 있는 몫, pull: 끌어내기, chill: 둔화된 적이 있는 몫 [가설] */
   ward: { v: 0.8, S: [8, 12.5], B: [15, 21], cap: [45, 58], loss: 0.5, thorn: 0.85, vuln: 2, shield: 0.3, pull: 6, chill: 0.35, all: [12, 22], fin: 0.9 }, // 10월 5일 4차 측정(적 행동 개편 · 강적 다섯 · 후열 절반 뒤): 보호막 비례 때 보유 하급 7~9 · 중급 12~13, 최후의 성벽이 태운 양 Lv10 23. B는 그대로(태우기 전 보유 하급 16~22 · 중급 16~35, 상한이 먼저 걸린다). // 10월 4일 3차 측정(테스터가 보호막을 얻는 스킬을 태우는 스킬만큼 끼우고, 한 적의 공격에도 막는 스킬을 쓴 뒤): all은 모두 태우는 스킬이 한 번에 태우는 양(지금 10줄 최후의 성벽뿐, Lv10 측정 18), fin은 마무리 태우기를 생명력이 낮은 적에게 쓴 몫(측정 91~100%)
   /* 사냥꾼 (10월 5일 초안, 가설): F 쓸 때 대상의 추적 겹(최대 3), swap 직전과 다른 적을 칠 몫, ev 몸 빼기 한 번이 막는 피해, hx 쓸 때 가속 상태일 몫, fa 추적 한 겹을 더하는 값 */
-  hunt: { F: 1.5, swap: 0.5, ev: 7, hx: 0.5, fa: 1.5, ctr: 0.85, ctrBig: 0.4, q: 6, fs: 8, ch: 1.5, stop: 0.25, stopV: 14, stun: 10, ocb: 0.2 }, // ch: 쓸 때 대상의 둔화, stop: 둔화된 적이 모으는 중일 몫, stopV: 끊은 큰 공격의 값, stun: 적 행동 하나를 놓치게 한 값, ocb: 모으는 적을 무너뜨릴 몫 // ctr: 피한 뒤 반격이 나갈 몫(강타일 때만이면 ctrBig), q: 빠른 칸 하나, fs: 한 라운드에 받는 예고된 큰 공격 피해
+  hunt: { F: 1.5, swap: 0.5, ev: 7, hx: 0.5, fa: 1.5, ctr: 0.85, ctrBig: 0.4, q: 6, fs: 8, ch: 1.5, stop: 0.25, stopV: 14, stun: 10, ocb: 0.2,
+    /* 0.8.0 5단계 연사 기본 공격 버프 (원거리 초안 2-6a · 2-10, 10월 18일) [가설]: n 기간 안 기대 기본 공격 횟수(버프마다, 기본 기간 r0일 때), per 기간이 한 라운드 늘 때 더하는 횟수, sw 기본 공격이 직전과 다른 적을 칠 몫(둘 이상 남은 몫), D 기본 공격 한 번의 피해 값(SKK.B의 무기 피해 8) */
+    bb: { n: { swap: 1, extra: 1.5, barb: 2, sky: 1 }, r0: { swap: 0, extra: 1, barb: 1, sky: 0 }, per: 0.8, sw: 0.75, D: 8 } }, // ch: 쓸 때 대상의 둔화, stop: 둔화된 적이 모으는 중일 몫, stopV: 끊은 큰 공격의 값, stun: 적 행동 하나를 놓치게 한 값, ocb: 모으는 적을 무너뜨릴 몫 // ctr: 피한 뒤 반격이 나갈 몫(강타일 때만이면 ctrBig), q: 빠른 칸 하나, fs: 한 라운드에 받는 예고된 큰 공격 피해
   /* 숨겨진 직업 1 (10월 7일, 'b_' 칸에만): bl 출혈 1의 값(적이 움직일 때마다 약 2 + 흡혈 근원 약 1), S 먹기 · 이용을 쓸 때 대상의 출혈 [하급, 중급], spr 튀길 때 그 적의 출혈,
      hv 먹기 회복이 한도에 잘리지 않는 몫, loss 먹어 없앤 출혈이 앞으로 줬을 몫, took 받은 피해 칸을 쓸 때 받은 피해 [하급, 중급], low 내 생명력 문턱마다 들 몫,
      killP 처치 조건이 일어날 몫 [한 적, 광역], selfHp 나에게 건 출혈 피해의 값, meS 쓸 때 내 출혈, thornHit 맞을 때 출혈이 걸릴 몫, kwEat 먹기로 얻는 약화 · 강화 1의 값 [가설] */
@@ -138,6 +140,7 @@ function skValue(s, ov) {
       case 'chillShatter': v += K.hunt.ch * (e.dmg + e.brk * K.brk); break; // 둔화를 깨뜨려 1마다 피해 · 붕괴
       case 'chillSpread': v += K.hunt.ch * (e.per || 1) * 1.5 * K.kw.chill; break; // 다른 적 평균 1.5
       case 'freeze': v += 0.7 * K.hunt.stun + 0.3 * (e.chill * K.kw.chill + e.brk * K.brk); break; // 일반 · 정예는 행동 하나를 놓친다
+      case 'bbuf': v += skBbufV(e); break; // 0.8.0 5단계 연사: 기간 안 기본 공격에 얹히는 몫
       case 'onCutBreak': v += K.hunt.ocb * (e.haste * K.kw.haste + (e.hasten || 0) * K.hz); break;
       case 'evadeCtr': { const evn = (s.fx.find(x => x.k === 'evade') || { n: 1 }).n; const m = (e.charged ? K.hunt.ctrBig : K.hunt.ctr) * evn; v += m * (e.dmg + (e.chill || 0) * K.kw.chill); break; } // 피할 때마다 반격
       case 'quick': v += e.n * K.hunt.q; break; // 이번 차례 빠른 칸 +n
@@ -293,6 +296,10 @@ SKK.clsMid = { h_: 0.85 }; // 직업마다 중급(7~10줄) 예산 배율 (10월 
 SKK.clsAdj = { h_: 1.4, b_: 1, e_: 1, v_: 1 }; // 직업마다 실제로 버는 몫 (10월 5일 50상황: 사냥꾼 스킬은 조건 없이 바로 들어가는 피해라 점수보다 1.6배쯤 번다. 같은 예산이면 라운드당 피해가 암살자의 1.7배였다) // 직업마다 예산 배율 (10월 5일 만든 사람: 사냥꾼은 후열에 바로 닿는 물리직이라 화력이 암살자를 넘지 않게 90%)
 SKK.brAdj = { 독사: 0.97, 격발: 1.1, 그림자: 0.95, 성벽: 1, 파쇄: 1, '전열 장악': 1, 도륙: 1, 광기: 1, 학살: 1, 서리: 0.9, 공명: 1.1, 마갑: 1.08, 혈도: 0.88, 속죄: 1, 전가: 1.1, 고행: 1, 역병: 1.08, 포식: 0.92, 혈약: 1.15, 기동: 0.85 }; // 혈도 (10월 7일 50상황): 둔화를 걸고 거두는 두 박자라 점수보다 덜 번다(Lv10 갈래 평균이 다른 두 갈래보다 11 낮았다) // 파수꾼 세 갈래는 50상황으로 재기 전이라 1 [가설]
 /* 원소술사 갈래 몫 (10월 7일 50상황 12판, 기준 세기): 서리 0.9 · 공명 1.1 */
+/* 0.8.0 5단계 연사 기본 공격 버프 한 칸의 값 (2-6a): 기간 안 기대 기본 공격 횟수 × 기본 공격 값 × 덤. D를 주면 그 기본 공격 피해로(skeval: 실제 무기 · 능력치) */
+function skBbufV(e, D) { const B = SKK.hunt.bb, d = D || B.D; const n = Math.max(0, (B.n[e.s] || 1) + B.per * ((e.r || 0) - (B.r0[e.s] || 0)));
+  return e.s === 'swap' ? n * B.sw * (d * ((e.mul || 1) - 1) + (e.bleed || 0)) : e.s === 'extra' ? n * (d * (e.mul || 0) + (e.turn ? B.sw * d * (1 + (e.mul || 0)) * (e.turn - 1) : 0)) : e.s === 'barb' ? n * (e.bleed || 0) : n * d * ((e.mul || 1) - 1); }
+const skBbufE = (s, D) => s.fx.filter(e => e.k === 'bbuf').reduce((m, e) => m + skBbufV(e, D), 0) * (SKK.brAdj[s.b] || 1) * ((SKK.clsAdj || {})[String(s.id).slice(0, 2)] || 1); // skScore E 가운데 버프 몫
 function skScore(s) { const E = skValue(s) * (SKK.brAdj[s.b] || 1) * ((SKK.clsAdj || {})[String(s.id).slice(0, 2)] || 1); const net = E - SKK.B * SKK.T[s.time]; const F = skUses(s); return { E, net, F, V: net * F, B: Math.round(((s.row && SKK.rowB[s.row]) || SKK.budget[s.tier]) * ((SKK.clsB || {})[String(s.id).slice(0, 2)] || 1) * ((s.row || 0) >= 7 ? ((SKK.clsMid || {})[String(s.id).slice(0, 2)] || 1) : 1) * 10) / 10 }; }
 
 /* 설명 문장. 키워드(중독, 붕괴, 터뜨리기, 흘리기)의 뜻은 설명창의 키워드 칸이 맡고, 스킬 문장은 숫자만 말한다 */
@@ -458,6 +465,8 @@ function skBody(s) {
       case 'quickTurns': out.push(`이번 차례부터 내 차례 ${e.n}번 동안 빠른 칸 +1.`); break;
       case 'foresee': out.push(`${e.rounds}라운드 동안 강타 · 겨눈 한 발 · 화형의 피해가 ${Math.round(e.red * 100)}% 줄어든다. 피할 수 없는 화형도 줄어든다.`); break;
       case 'hastex': out.push(`가속으로 두 번 움직이는 라운드면 피해 ×${e.mul}.`); break;
+      case 'bbuf': { const til = (e.r || 0) === 0 ? '이번 라운드가 끝날 때까지' : (e.r || 0) === 1 ? (e.s === 'barb' ? '2라운드(이번 + 다음) 동안' : '다음 라운드가 끝날 때까지') : (e.r + 1) + '라운드(이번 라운드부터) 동안'; // 0.8.0 5단계 연사 기본 공격 버프 (2-6a)
+        out.push(`${til} 기본 공격이 ` + (e.s === 'swap' ? `직전에 친 적과 다른 적을 치면 피해 ×${e.mul}, 출혈 ${e.bleed}.` : e.s === 'extra' ? `같은 대상에게 덧화살 한 발을 더 쏜다(그 기본 공격 피해의 ${Math.round(e.mul * 100)}%, 출혈은 걸지 않는다).` + (e.turn ? ` 덧화살이 켜진 동안 기본 공격이 직전에 친 적과 다른 적을 치면 ×${e.turn}(덧화살 포함).` : '') : e.s === 'barb' ? `출혈 ${e.bleed}${skJo(e.bleed)} 건다.` : `피해 ×${e.mul}.`) + ' 강공격 · 스킬은 받지 않는다. 다시 걸면 기간만 새로 한다.'); break; }
       case 'hasteSpend': out.push(`가속이 있으면 1을 써서 피해 ×${e.mul}. 그 대신 다음 라운드에 연속 행동을 하지 못한다.`); break;
       case 'meSt': out.push(e.if === 'chill' ? (s.tgt === 'front' || s.tgt === 'all' ? `이미 둔화되어 있던 적 하나마다 나에게 ${skKw(s, e.s)} +${e.n}.` : `대상이 이미 둔화되어 있었으면 때린 뒤 나에게 ${skKw(s, e.s)} +${e.n}.`) : e.s === 'empower' && String(s.id).slice(0, 2) === 'm_' ? `때린 뒤 나에게 ${skKw(s, e.s)} +${e.n}.` : `나에게 ${SK_KWN[e.s] || e.s} ${e.n}.`); break; // "때린 뒤"는 수도승(m_)만: 엔진이 수도승의 기만 피해 뒤에 준다(b.kiPend). 다른 직업의 강화는 먼저 걸린다
       case 'stance': { const ex = [e.dmg ? '피해 +' + e.dmg : '', e.brk ? '붕괴 +' + e.brk : '', e.ki ? '기 +' + e.ki : ''].filter(Boolean); const on = [e.chill ? '둔화 ' + e.chill : '', e.weak ? '약화 ' + e.weak : ''].filter(Boolean);
