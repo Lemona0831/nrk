@@ -276,7 +276,7 @@ function vOrder(b, hud) {
   });
   if (hud && !hud.ord) {
     const cur = tl.filter(x => x.r === rN); const nx = cur.find((x, i) => i > 0 && !x.me);
-    return `<div class="order osum" data-hud="hud-order"><div class="axhead"><span><b>${rN}라운드</b></span><span class="ordnx">${cur[0] && cur[0].me ? '내 차례' : '적 차례'}${nx ? ' · 다음 ' + esc(nx.n) : ''}</span></div><ol class="ord sr" aria-label="행동 순서">${hudQuiet(lis)}</ol></div>`;
+    return `<div class="order osum" data-hud="hud-order"><div class="axhead"><span><b>${rN}라운드</b></span><span class="ordnx">${b.over ? '전투 끝' : (cur[0] && cur[0].me ? '내 차례' : '적 차례') + (nx ? ' · 다음 ' + esc(nx.n) : '')}</span></div><ol class="ord sr" aria-label="행동 순서">${hudQuiet(lis)}</ol></div>`;
   }
   return `<div class="order" data-hud="hud-order"><div class="axhead"><span><b>${rN}라운드</b></span><span class="axdef">모두 한 번씩, 왼쪽부터 움직입니다</span></div><ol class="ord" aria-label="행동 순서, 좌우 화살표로 옮겨 봅니다">${lis}</ol></div>`;
 }

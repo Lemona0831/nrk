@@ -197,3 +197,6 @@
 .ptnode{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--line);border-radius:8px}.ptnode p{margin:2px 0 0}.ptnode .row{flex-wrap:nowrap}
 .ptnode.pt-own,.ptnode.pt-free,.ptnode.pt-ks{border-color:var(--gold);background:var(--panel)}.ptnode.pt-lock{opacity:.6}.ptnode.pk-keystone b{color:var(--gold)}
 .allocst{margin-bottom:8px}
+/* 휴대폰에서 누르기 쉽게: 랭킹 체크박스, 기록 아래 관리자 링크 */
+.chk input{width:20px;height:20px}
+@media (max-width:719px),(pointer:coarse){.tfoot .linkbtn{display:inline-block;min-height:36px;padding:8px 6px;margin:-8px 0}}

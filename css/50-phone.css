@@ -40,14 +40,14 @@
  /* 행동판: 4열 작은 버튼, 묶음 이름 없이. 길게 누르면 설명 */
  .dock{padding:5px 6px calc(5px + env(safe-area-inset-bottom,0px))}
  .dockhead{font-size:calc(13px*var(--fs,1));gap:4px;margin-bottom:4px;min-height:24px}.dockhead>span .mini,.dockhead .qm,.dockhead .pacesel{display:none}
- .dockhead .sm{min-height:30px;padding:2px 9px;font-size:calc(13px*var(--fs,1))}
+ .dockhead .sm{min-height:40px;padding:2px 9px;font-size:calc(13px*var(--fs,1))}
  .abgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
  .agp{display:contents}.agl{display:none}
  .ab{min-height:44px;padding:3px 5px;border-left-width:3px}
  .ab b{font-size:calc(13px*var(--fs,1));line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ab kbd{display:none}
  .anl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.ans{display:inline}
  .ab small{font-size:calc(13px*var(--fs,1));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ab small .ax{display:none}
- .coach{font-size:calc(13px*var(--fs,1));padding:6px 8px;margin-bottom:5px}.coach p{margin:2px 0 4px}.coach .sm{min-height:30px}
+ .coach{font-size:calc(13px*var(--fs,1));padding:6px 8px;margin-bottom:5px}.coach p{margin:2px 0 4px}.coach .sm{min-height:40px}
  .tutgoal{padding:4px 6px;margin-bottom:5px}.tutgoal .tgt{font-size:calc(13px*var(--fs,1))}.tutgoal .tgt small{display:none}.tutgoal .tgi{font-size:calc(16px*var(--fs,1))}
  /* 긴 화면: 주 버튼을 화면 아래에 붙인다 */
  .stickbar{position:sticky;bottom:0;z-index:15;margin:12px -10px -10px;padding:10px 10px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,rgba(23,18,15,0),var(--panel) 18px);border-radius:0 0 10px 10px}

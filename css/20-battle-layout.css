@@ -151,3 +151,5 @@ html.fitmode,html.fitmode body{overflow:hidden}
 
 .en.pile{border-style:dashed}.en.pile .enh{flex-wrap:wrap}.en.pile .nr{margin-left:0}
 .boss-mechanics{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--panel);margin:6px 0;font-size:calc(13px*var(--fs,1));overflow-wrap:anywhere}.boss-state{display:flex;flex-wrap:wrap;gap:5px 12px;margin-bottom:5px}.boss-state>b{color:var(--gold)}.boss-next{border-top:1px solid var(--line);padding-top:6px;line-height:1.5}.boss-mechanics details{margin-top:6px;color:var(--muted)}.boss-mechanics summary{cursor:pointer}.boss-mechanics p{margin:6px 0;line-height:1.55}
+/* 적이 모두 쓰러진 뒤 빈 전장 칸을 한 줄로 채운다 */
+.fieldclr{margin:2px 0;color:var(--muted);font-size:calc(14px*var(--fs,1))}
