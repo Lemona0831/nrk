@@ -20,7 +20,8 @@ function v2Static(s) { return { id: s.id, n: s.n, v2: 1, s, skill: 1, melee: s.t
 /* 흘리기를 건다: 고른 적의 다음 공격을 줄이고, 흘려 내면 on의 효과를 그 적에게. 흘리기 준비(pbuf)가 있으면 얹고 1 쓴다 */
 function setParry(b, tgt, red, on) {
   const p = b.p; p.dodge = tgt.id; p.fxDodged = 1;
-  let r = red != null ? red : parryRed(p); const o = Object.assign({}, on || {});
+  let r = red != null ? red - asParryCut(p) : parryRed(p); const o = Object.assign({}, on || {});
+  if (p.build === 'assassin') { if (red != null) o.sk = 1; if (p.hp <= p.hpMax * 0.5) r += asSum(p, 'parryLow'); } // 10월 18일 0.8.0 5단계 암살자: 독의 군주의 대가(스킬 흘리기도 −15%p) · 흘리기 스킬 표시(그림자 맹세) · 얇은 그림자(생명력 50% 이하 +5%p, 상한 90%)
   if (p.pbuf) { r += p.pbuf.red; if (p.pbuf.dmg) o.dmg = (o.dmg || 0) + p.pbuf.dmg; if (p.pbuf.poison) o.poison = (o.poison || 0) + p.pbuf.poison; if (p.pbuf.hasten) { o.hasten = (o.hasten || 0) + p.pbuf.hasten; o.hb = p.pbuf.hb; } p.pbuf.n--; if (p.pbuf.n <= 0) p.pbuf = null; }
   p.dodgeRed = Math.min(0.9, r); p.dodgeOn = (o.dmg || o.poison || o.brk || o.hasten || o.bleed) ? o : null;
 }
@@ -137,7 +138,7 @@ function runSkill2(b, act, tgt) {
     if (CF && h === 0 && e.alive) { const cb = (b.cfOffer && b.cfOffer.brk ? b.cfOffer.c * b.cfOffer.brk : 0) + (cfPd && cfPd.brk ? cfPd.brk * cfTX(e) : 0); if (cb > 0) addBreak(b, e, cb); } // 숨겨진 직업 2: 사함 붕괴 · 비례 붕괴 (대상마다 한 번)
     if (altBrk && h === 0 && e.alive) { if (!altBrkLog++) logp(b, 'good', (altF.run === 2 ? '⇄⇄ 이어진 교대' : '⇄ 교대') + ': 붕괴 +' + altBrk); addBreak(b, e, altBrk); }
     if (cx && h === 0 && e.alive && e.intent && (cx.chant ? CHANT_K : ['charge', 'heavy', 'fuse', 'explode', 'chant', 'chanting', 'burn']).includes(e.intent.k)) { logp(b, 'good', e.n + '이(가) 모으던 힘을 노린다. 붕괴 +' + cx.brk); addBreak(b, e, cx.brk); } // 끊어 내기
-    if (dr && !dr.s && !dr.eat && h === 0 && st(e, 'poison') > 0) { const hl = Math.min(p.hpMax - p.hp, st(e, 'poison') * dr.per * healMul(p)); if (hl > 0) { p.hp += hl; logp(b, 'good', e.n + '의 독에서 생명력 +' + r1(hl)); } } // 독 흡수: 중독은 그대로
+    if (dr && !dr.s && !dr.eat && h === 0 && st(e, 'poison') > 0) { const hl = Math.min(p.hpMax - p.hp, st(e, 'poison') * dr.per * healMul(p) * (p.build === 'assassin' ? 1 + asSum(p, 'drainP') : 1)); if (hl > 0) { p.hp += hl; logp(b, 'good', e.n + '의 독에서 생명력 +' + r1(hl)); } } // 독 흡수: 중독은 그대로
     if (bp && h === 0) addBreak(b, e, bp.per * st(e, 'poison'));
     if (h === 0 && !sbOrd) for (const x of stx) if (e.alive) addS(b, e, x.s, x.n); // 적에게 거는 상태 (독무의 약화). 마검사는 위에서 붕괴보다 먼저
     if (slx && h === 0 && hitE && e.alive && e.intent && SEAL_K.includes(e.intent.k)) { if (big(e)) { addBreak(b, e, slx.brk); logp(b, 'good', e.n + '의 혈을 짚는다. 끊기지 않고 붕괴 +' + slx.brk); } else { e.intent = { k: 'attack' }; e.teleTurn = null; logp(b, 'crit', e.n + '의 혈을 짚어 하려던 일을 끊는다'); ysResp(b, '끊기'); fxRun(p, 'onSeal', b, p, e); } b.rec.push({ k: 'seal', big: big(e) ? 1 : 0 }); } // 혈도: 지원 행동 끊기
@@ -167,7 +168,7 @@ function runSkill2(b, act, tgt) {
       const left = (bu.top || bu.half) ? n - take : Math.floor(n * (bu.keep || 0));
       if (left > 0) e.s.poison.stacks = left; else delete e.s.poison;
       logp(b, 'crit', (low ? '숨통을 끊으러 든다. ' : '') + e.n + '의 독이 터진다. 중독 ' + take + (left ? ' (남은 중독 ' + left + ')' : ''));
-      tot += hurtEnemy(b, e, outDmg(b, total, {}), { single: multi ? 0 : 1, aoe: multi ? 1 : 0, melee: s.tgt === 'melee' ? 1 : 0, label: s.n });
+      b.asBurstK = 1; tot += hurtEnemy(b, e, outDmg(b, total, {}), { single: multi ? 0 : 1, aoe: multi ? 1 : 0, melee: s.tgt === 'melee' ? 1 : 0, burst: 1, label: s.n }); b.asBurstK = 0; // 10월 18일 0.8.0 5단계 암살자: 터뜨린 피해(깨진 틈 찌르기 o.burst) · 터뜨려 쓰러뜨림(남은 독의 온기 b.asBurstK)
       if (!e.alive) { killed++; continue; }
       if (bu.brkPer) addBreak(b, e, take * bu.brkPer);
     }
@@ -328,11 +329,14 @@ function addPoison(b, u, n, byMe, capOver) {
   if (u === b.p && u.eq && u.eq.amulet === 'sigil') u.mp = Math.min(u.mpMax, u.mp + 4);
   if (byMe && b.p.build === 'assassin' && !isV2(b.p)) n += 1;
   if (kwBlocked(b, u, 'poison')) return 0;
-  const cur = st(u, 'poison'); const nv = Math.min(Math.max(KW.poison, capOver || 0, cur), cur + n);
+  if (byMe && u !== b.p && b.p.build === 'assassin') n = asPsnIn(b, n); // 10월 18일 0.8.0 5단계 암살자: 독 기억(전투 처음 거는 독 +2) · 그림자 맹세의 대가(−30%, 최소 1)
+  const cur = st(u, 'poison'); const nv = Math.min(Math.max(u !== b.p ? psnCapOf(b.p) : KW.poison, capOver || 0, cur), cur + n); // 10월 18일 0.8.0 5단계: 내가 거는 중독 상한 훅(psnCapOf, 원거리 초안 1-3)
   if (nv > cur) u.s.poison = { stacks: nv, until: POISON_FOREVER, dur: POISON_FOREVER };
   if (byMe && u !== b.p && nv > cur) chargeEv(b, 'poison');
   return nv - cur;
 }
+/* 10월 18일 0.8.0 5단계 암살자 (원거리 초안 4-6): 내가 적에게 거는 독. 독 기억은 전투에서 처음 거는 독 하나에 +2(전투마다 한 번), 그림자 맹세의 대가는 그 뒤 ×0.7 반올림(최소 1) */
+function asPsnIn(b, n) { const p = b.p; if (!b.asPsn1) { b.asPsn1 = 1; const f = asSum(p, 'psnFirst'); if (f) { n += f; fxHit('n_as_mem'); } } const c = asSum(p, 'psnCut'); if (c) { n = Math.max(1, Math.round(n * (1 - c))); fxHit('ks_as_oath'); } return n; }
 /* 남은 독 피해 총합: n + (n-1) + ... + 1 */
 function poisonTotal(n) { return n * (n + 1) / 2; }
 

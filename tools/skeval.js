@@ -23,6 +23,7 @@ function makeSkEval(G0, run_) {
     const s = G0.skOf(pl, id); if (!s) return null; const sc = Object.assign({}, G0.skScore(s)); const cost = G0.skCost(s);
     if (bbE && pl.bD && s.fx.some(e => e.k === 'bbuf')) { const dv = bbE(s, pl.bD) - bbE(s); sc.E += dv; sc.net += dv; } // 0.8.0 5단계 연사(원거리 초안 2-10): 버프 값 = 기간 안 기대 기본 공격 횟수 × 실제 기본 공격 피해 × 덤 (점수표는 피해 8로 본다)
     if ((pl.pn || []).includes('n_el_student') && s.tgt !== 'self' && s.fx.some(e => e.k === 'dmg' && e.n > 0)) { sc.E += 3; sc.net += 3; } // 10월 18일 0.8.0 5단계 원소술사 불의 학도: 피해를 주는 스킬은 첫 타격 +3(고정 피해, 행동마다 한 번)
+    if ((pl.pn || []).includes('ks_as_oath')) { const ad = (SKK.brAdj[s.b] || 1) * ((SKK.clsAdj || {})[String(s.id).slice(0, 2)] || 1); const op = s.fx.find(e => e.k === 'onParry'), dm = s.fx.find(e => e.k === 'dmg'), po = s.fx.filter(e => e.k === 'poison' || (e.k === 'onParry' && e.poison)); let dv = 0; if (s.fx.some(e => e.k === 'parry')) dv += 0.15 * ((dm ? dm.n * (s.hits || 1) : 0) + SKK.pOk * ((op && op.dmg) || 0)); for (const e of po) dv -= 0.3 * (e.k === 'poison' ? e.n * (s.hits || 1) : SKK.pOk * e.poison) * SKK.poison; dv *= ad; sc.E += dv; sc.net += dv; } // 10월 18일 0.8.0 5단계 암살자 그림자 맹세: 흘리기 스킬 피해(쓸 때 · 흘려 낸 칼끝) +15%, 대가 거는 독 −30%(점수표 skValue와 같은 몫)
     const disc = (s.cond || []).reduce((m, c) => m + (c.off || 1) * condP(c), 0);
     const refund = s.killRecharge ? ((SKK.sb && SKK.sb.kill) || 0.4) * (Y.refund || 1) : 0;
     const costEff = Math.max(1, cost - disc - refund);
@@ -31,7 +32,7 @@ function makeSkEval(G0, run_) {
   /* run이 가진 강화를 반영한 값 / 기본 스킬의 값 */
   const evalRun = (run, id) => evalSkill(pFor(run, id), id);
   const evalBase = (run, id) => evalSkill(pFor(run, id, []), id);
-  /* 강화 노드가 있는 트리인가 (마검사 · 파수꾼 · 수도승 · 사냥꾼. 다른 직업은 임시 트리라 강화가 없어 값이 기본과 같다) */
+  /* 강화 노드가 있는 트리인가 (마검사 · 파수꾼 · 수도승 · 사냥꾼 · 원소술사 · 암살자(10월 18일). 다른 직업은 임시 트리라 강화가 없어 값이 기본과 같다) */
   const hasUps = cls => Object.values(atNodes(cls)).some(n => n.kind === 'upgrade');
   return { upsOf, pFor, evalSkill, evalRun, evalBase, hasUps, YB, COND_P };
 }

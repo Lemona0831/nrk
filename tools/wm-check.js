@@ -6,7 +6,9 @@
    5 사냥꾼(10월 18일, docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md): 51노드 · 금지선 · [전환] 하나 · 비용 · 시작 스킬 태그(lb) · 조건 link · focus>=n · linkFast · 외길 사냥꾼 전환 ·
      이어 쏘기 숙련 · 끝까지 쫓는 자 · 넘겨받는 추적 · 끝맺는 연계 · 손에 익은 활 · 이어 당기는 활(두 번째 차례) · 기본 공격 버프(바꿔 쏘기 · 덧화살 · 가시 · 하늘 가르기의 기간 · 겹침 · 다시 걸기 · 버림 · 전투 끝) · 결정 7
    6 원소술사(10월 18일, 같은 문서 3절 · 8절 결정 9–12): 51노드 · 고리 · 금지선 · [전환] 하나 · 비용 · 공명 처치 환급(행동 끝 열충격 포함) · 시작 노드 · 패시브 배치 · 고정 피해(불의 학도 행동마다 한 번 · 남는 울림 열충격마다) ·
-     끊어진 영창(라운드 한도 밖, 전투마다 2번) · 잿불의 길 · 얼음 심장(대가 포함) · 서리 무게 노드 · 열충격 배수 노드 · 회복 · 스태미나 노드 · 원소 장막 · kw 할인 */
+     끊어진 영창(라운드 한도 밖, 전투마다 2번) · 잿불의 길 · 얼음 심장(대가 포함) · 서리 무게 노드 · 열충격 배수 노드 · 회복 · 스태미나 노드 · 원소 장막 · kw 할인
+   7 암살자(10월 18일 0.8.0 5단계, 같은 문서 4절 · 8절 결정 13–17): 51노드 · 고리 · 금지선 · [전환] 다섯이 모두 다른 스킬 · 비용(흘려 베기 · 잔상 3) · resp 할인(라운드에 한 번) · kw:poison 할인 · 🔄 정리 ·
+     중독 상한(20 · 24 · 30) · 독의 군주 · 그림자 맹세(대가 포함) · 흘려 냄 표시와 흘려 낸 틈 · 흘리기 · 회복 · 붕괴 · 스태미나 · 독 노드 · 흘리기 스킬 강화 · 격발 강화 */
 process.env.DGDIR = process.env.DGDIR || '.';
 const assert = require('assert/strict'), D = require('./dgqa.js'), E = D.G0, R_ = D.run_;
 let n = 0; const ok = (c, m) => { assert(c, m); n++; };
@@ -267,4 +269,124 @@ const setEl = (b, e, I, C) => { if (I) E.addS(b, e, 'ignite', I); if (C) E.addS(
 { const { b, es } = efight({ act: ['e_bind', 'e_bite', 'e_maul', 'eu_gap'], eq: ['e_maul'] }); E.addS(b, es[0], 'chill', 1); ok(yc(b, 'e_maul') === 3, '얼어붙은 틈: 둔화 1이면 3'); E.addS(b, es[0], 'chill', 1); ok(yc(b, 'e_maul') === 2, '얼어붙은 틈: 둔화 2 이상이면 3 → 2'); }
 { const { p, b, es } = efight({ act: ['e_weave', 'e_catalyst', 'e_overload', 'eu_pole'], eq: ['e_overload'] }); E.addS(b, es[0], 'chill', 2); ok(yc(b, 'e_overload') === 3, '극점: 둔화 2 이상이면 4 → 3');
   ok(E.skOf(p, 'e_overload').fx.find(x => x.k === 'shockx').dmg === 2 && E.skOf({ build: 'elementalist', aup: ['eu_chain'], pn: [] }, 'e_overload').time === 'normal' && E.skOf({ build: 'elementalist', aup: ['eu_chain'], pn: [] }, 'e_overload').fx.find(x => x.k === 'shockx').dmg === 1.6, '과부하 ×2, 연쇄 충격은 보통 빠르기 ×1.6'); }
+// ===== 7) 암살자 (10월 18일 0.8.0 5단계, docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 1-2 · 1-3 · 4-2 · 4-3 · 4-4 · 4-6 · 4-7 · 8절 결정 13–17) =====
+{ const A = E.atBuild('assassin'); const N = Object.values(A.nodes); const sk = N.filter(x => x.kind === 'skill'), up = N.filter(x => x.kind === 'upgrade');
+  ok(!A.tmp && sk.length === 24 && up.length === 27, '암살자: 직업 트리, 스킬 24 + 강화 27 = 51노드(결정 17)');
+  const rg = { 1: 0, 2: 0, 3: 0 }; for (const x of sk.concat(up)) rg[x.ring]++; ok(rg[1] === 14 && rg[2] === 26 && rg[3] === 11, '암살자: 1고리 14 · 2고리 26 · 3고리 11');
+  ok(['독사', '격발', '그림자'].every(br => sk.filter(x => x.br === br).length === 8 && up.filter(x => x.br === br).length === 9), '갈래마다 스킬 8 + 강화 9');
+  for (const u of up) { const m = u.mod; assert(!(m.set && ('ys' in m.set || 'cd' in m.set || 'cost' in m.set || 'killRecharge' in m.set)), '암살자 무조건 비용 · 환급 바꾸기 금지 ' + u.id);
+    if (m.cond) assert(m.cond.off === 1 && /^(resp|kw:poison>=\d+)$/.test(m.cond.when), '암살자 조건 어휘 ' + u.id);
+    const s = E.skOf({ build: 'assassin', aup: [u.id], pn: [] }, u.on); assert(s !== E.SK2[u.on] && s.ups.includes(u.id), '암살자 실제 스킬 ' + u.id);
+    assert(!s.fx.some(x => x.k === 'hasten'), '암살자 강화가 🔄를 더하지 않음 ' + u.id);
+    for (const x of m.fxSet || []) { const e = s.fx.find(y => y.k === x.k && (x.s == null || y.s === x.s)); for (const k in x) if (k !== 'k' && k !== 's') assert.equal(e[k], x[k], '암살자 fxSet ' + u.id + ' ' + k); } }
+  ok(true, '암살자: 강화 27개가 모두 실제 스킬을 바꾸고, 조건 어휘는 resp · kw:poison>=n뿐, 🔄를 더하는 강화 없음');
+  ok(up.filter(u => u.mod.cond && u.mod.cond.when === 'resp').map(u => u.on).sort().join() === 'a_shadow,a_umbra' && up.filter(u => u.mod.cond && /^kw:poison/.test(u.mod.cond.when)).map(u => u.on + ':' + u.mod.cond.when).sort().join() === 'a_cataclysm:kw:poison>=10,a_essence:kw:poison>=15', 'resp 할인 둘(그림자 찌르기 · 죽음의 그림자, 결정 14) · 독 할인 둘(맹독의 정수 15 · 종말의 격발 10)');
+  const CV = ['au_numb', 'au_cycle', 'au_pop', 'au_boil', 'au_venom']; const cvOn = CV.map(id => A.nodes[id].on); // 4-7 성격 열의 [전환] 다섯
+  const conv = up.filter(u => (u.mod.set && ['time', 'tgt', 'hits'].some(k => k in u.mod.set)) || u.mod.conv).map(u => u.id);
+  ok(new Set(cvOn).size === CV.length && conv.slice().sort().join() === CV.slice().sort().join(), '암살자: [전환] 다섯(둔한 독 · 독의 순환 · 독침 파열 · 끓는 피 · 독 묻은 칼막이)이 모두 다른 스킬 — 같은 스킬에 [전환]은 하나뿐');
+  const c = { 2: 0, 3: 0, 4: 0 }; for (const s of sk) c[s.ys]++; ok(c[2] === 11 && c[3] === 11 && c[4] === 2, '암살자: 트리 비용 2 / 3 / 4 = 11 / 11 / 2칸');
+  const p0 = { build: 'assassin', aup: [], pn: [] }; const diff = sk.filter(s => skCost(E.skOf(p0, s.id)) !== skCost(E.SK2[s.id])).map(s => s.id).sort();
+  ok(diff.join() === 'a_after,a_deflect' && skCost(E.skOf(p0, 'a_deflect')) === 3 && skCost(E.skOf(p0, 'a_after')) === 3 && skCost(E.SK2.a_deflect) === 4 && skCost(E.SK2.a_after) === 4, '흘려 베기 · 잔상 4 → 3(결정 13), 다른 칸은 쿨타임 변환값 그대로');
+  ok(['a_fang', 'a_hack', 'a_siphon', 'a_pouch', 'a_brkneedle', 'a_burst', 'a_deflect', 'a_shadow', 'a_aim'].map(id => skCost(E.skOf(p0, id))).join() === '3,2,2,2,2,3,3,3,2', '1고리 비용: 독사 3 · 2 · 2, 격발 2 · 2 · 3, 그림자 3 · 3 · 2');
+  ok(E.SK2.a_chain.killRecharge === 1 && sk.filter(s => E.SK2[s.id].killRecharge).length === 1 && !sk.some(s => E.SK2[s.id].fx.some(f => f.k === 'hasten')), '🔄 정리: 연쇄 격발 처치 환급만, 독무 · 그늘 숨기 🔄 뺌, 흘리기 성공 🔄(연막 · 흘림의 춤 · 되받아치기 · 그림자 역습)은 강화로 합치며 뺌(결정 13)');
+  ok(A.nodes.a_cataclysm.ys === 4 && A.nodes.a_umbra.ys === 4 && A.nodes.a_essence.ys === 3 && [A.nodes.a_cataclysm, A.nodes.a_umbra, A.nodes.a_essence].every(x => x.ring === 3), '결정타: 종말의 격발 · 죽음의 그림자 4, 독사 맹독의 정수는 3 그대로(결정 16)');
+  ok(R_('AT_GONE').assassin.length === 10 && R_('AT_GONE').assassin.every(id => E.SK2[id] && !A.nodes[id]) && ['a_check', 'a_mark', 'a_strangle', 'a_rush'].every(id => R_('AT_GONE').assassin.includes(id)), '빠진 스킬 열(AT_GONE), 그림자 범용 넷 포함(결정 15)');
+  { const all = new Set(sk.map(s => s.id).concat(up.flatMap(u => u.src), R_('AT_GONE').assassin)); ok(E.SKILLS2.assassin.filter(s => !s.start).every(s => all.has(s.id)) && all.size === 78, '지금 78칸이 모두 스킬 · 강화 출처 · 뺌 가운데 한 곳에(4-7 "지금 78칸이 가는 곳")'); }
+  const sb = id => R_('skBody')(E.skOf({ build: 'assassin', aup: [id], pn: [] }, A.nodes[id].on));
+  ok(/중독 7/.test(sb('au_venom')) && !/피해 14/.test(sb('au_venom')) && /피해 20/.test(sb('au_counter')), '설명 문장: 독 묻은 칼막이(흘려 내면 피해 대신 중독 7) · 되받아치기(피해 20)'); }
+{ const run = newRun('assassin'); const S = run.stats; ok(S.dex === 5 && S.int === 4 && S.con === 3 && (S.str || 0) + (S.wil || 0) === 0, '시작 노드 민첩 5 · 지능 4 · 체력 3 그대로(4-6)');
+  E.ptBuy(run, 'pw1C'); ok(run.stats.dex === 7, '화력 작은 노드는 민첩 +2');
+  const P = E.ptBuild('assassin'), K = R_('KS_LIST'); ok(!P.tmp && P.nodes.pw2L.fx === 'k_as1' && P.nodes.lg1C.fx === 'k_as2' && P.nodes.ag1C.fx === 'k_as3' && P.nodes.pw3R.fx === 'n_as_gap' && P.nodes.lg5R.fx === 'n_as_store' && P.nodes.lg7R.fx === 'n_as_link', '패시브 배치: 깊은 독 · 터지는 독 · 그림자 숨 · 흘려 낸 틈 · 독의 저장고 · 이어진 그림자');
+  ok(P.nodes.pwK9.fx === 'ks_as_lord' && P.nodes.svK9.fx === 'ks_as_oath' && P.nodes.pwK9.ring === 3 && P.nodes.svK9.ring === 3, '직업 큰 각인 둘: 독의 군주(화력 K9) · 그림자 맹세(생존 K9)');
+  const ks = Object.values(P.nodes).filter(n => n.kind === 'keystone'); ok(ks.filter(n => K[n.fx].resp).length === 1 && ks.filter(n => K[n.fx].pay).length === 5 && !ks.some(n => n.fx === 'ks_heavy') && ks.filter(n => K[n.fx].cls === 'assassin').length === 2, '대응 큰 각인은 흘림새 하나, 대가 다섯, 무거운 갑주 없음(그림자 맹세로 바꿈)');
+  const nt = Object.values(P.nodes).filter(n => n.kind === 'notable'); ok(nt.length === 35 && nt.filter(n => n.pool === 'class').length === 18, '중간 노드 35(직업 18 · 공용 17)'); }
+const asR = R_, ysResp = f('ysResp'), parryRed = f('parryRed'), parryBigOf = R_('parryBigOf'), psnCapOf = R_('psnCapOf');
+const afight = o => { const f = fight('assassin', o); for (const e of f.es) e.brkMax = 1000; return f; };
+const aAct = (f, id, e) => { f.b.stepMode = true; f.p.ys = 5; const h = (e || f.es[0]).hp; E.playerAct(f.b, id, (e || f.es[0]).id); return h - (e || f.es[0]).hp; };
+const near = (a, b2) => Math.abs(a - b2) < 1e-6;
+// 비용: resp 할인(라운드에 한 번) · 독 할인
+{ const f = afight({ act: ['a_deflect', 'a_shadow', 'au_step'], eq: ['a_shadow'] }); const { b, p } = f; p.ys = 5;
+  b.ysR = 1; ok(yc(b, 'a_shadow') === 3, '그림자 걸음: 대응이 없으면 3'); ysResp(b, '흘리기'); ok(yc(b, 'a_shadow') === 2, '그림자 걸음: 대응 직후(resp) 3 → 2');
+  aAct(f, 'a_shadow'); ok(b.rec.some(r => r.k === 'ysdisc' && r.by === 'au_step') && yc(b, 'a_shadow') === 3, '할인은 라운드에 한 번(같은 라운드 두 번째는 3)');
+  ysResp(b, '흘리기'); b.ysR++; ok(yc(b, 'a_shadow') === 2, '적 차례에 흘려 내면 다음 내 라운드에 다시 2(지난 라운드 대응)'); b.ysR += 2; ok(yc(b, 'a_shadow') === 3, '대응이 두 라운드 넘게 전이면 3'); }
+{ const f = afight({ act: ['a_deflect', 'a_shadow', 'a_umbra', 'au_throat'], eq: ['a_umbra'] }); ok(yc(f.b, 'a_umbra') === 4, '목을 긋는 그림자: 대응이 없으면 4'); ysResp(f.b, '무너뜨리기'); ok(yc(f.b, 'a_umbra') === 3, '목을 긋는 그림자: resp면 4 → 3(대응 종류는 가리지 않음, 결정 14)'); }
+{ const st0 = o => { const f = afight(Object.assign({ act: ['a_deflect', 'a_shadow', 'au_step'], eq: ['a_shadow'] }, o)); ysResp(f.b, '흘리기'); f.p.st = 10; aAct(f, 'a_shadow'); return f.p.st; };
+  ok(st0({ own: ['lg7R'] }) - st0({}) === 6, '이어진 그림자: resp 할인이 들면 스태미나 +6');
+  const f = afight({ own: ['lg7R'], act: ['a_deflect', 'a_shadow', 'au_step'], eq: ['a_shadow'] }); f.p.st = 10; aAct(f, 'a_shadow'); ok(f.p.st === 10, '이어진 그림자: 할인이 없으면 없음'); }
+{ const f = afight({ act: ['a_fang', 'a_siphon', 'a_essence', 'au_end'], eq: ['a_essence'] }); E.addPoison(f.b, f.es[0], 14, 1); ok(yc(f.b, 'a_essence') === 3, '맹독의 끝: 중독 14면 3'); E.addPoison(f.b, f.es[0], 1, 1); ok(yc(f.b, 'a_essence') === 2, '맹독의 끝: 대상 중독 15 이상이면 3 → 2'); }
+{ const f = afight({ act: ['a_pouch', 'a_burst', 'a_cataclysm', 'au_det'], eq: ['a_cataclysm'] }); E.addPoison(f.b, f.es[0], 9, 1); ok(yc(f.b, 'a_cataclysm') === 4, '맹독 뇌관: 중독 9면 4'); E.addPoison(f.b, f.es[0], 1, 1); ok(yc(f.b, 'a_cataclysm') === 3, '맹독 뇌관: 대상 중독 10 이상이면 4 → 3'); }
+{ const f = afight({ act: ['a_deflect', 'a_aim', 'a_after'], eq: ['a_deflect', 'a_after'] }); ok(yc(f.b, 'a_deflect') === 3 && yc(f.b, 'a_after') === 3, '전투 버튼: 흘려 베기 · 잔상 유산 3'); }
+// 중독 상한 훅
+{ const cap = o => { const f = afight(o); E.addPoison(f.b, f.es[0], 40, 1); return st(f.es[0], 'poison'); };
+  ok(cap({}) === 20 && cap({ own: ['lg5R'] }) === 24 && cap({ ks: ['pwK9'] }) === 30 && cap({ own: ['lg5R'], ks: ['pwK9'] }) === 30 && R_('KW').poison === 20, '중독 상한: 20 · 독의 저장고 24 · 독의 군주 30(둘 다면 30), KW.poison은 20 그대로');
+  const f = afight({ ks: ['pwK9'] }); E.addPoison(f.b, f.p, 40, 0); ok(st(f.p, 'poison') === 20 && psnCapOf(f.p) === 30 && psnCapOf(afight({}).p) === 20, '내가 받는 중독은 20 그대로(내가 거는 독만)');
+  const Q = require('./qa.js'); ok(Q.qaPoisonBurst(f.p, { s: E.SK2.a_cataclysm }, 30) > Q.qaPoisonBurst(afight({}).p, { s: E.SK2.a_cataclysm }, 30), '테스터 터뜨리기 어림(qa.js)도 노드의 상한을 읽음'); }
+// 독의 군주의 대가 · 그림자 맹세
+{ const f0 = afight({ act: ['a_deflect'], eq: ['a_deflect'] }), f1 = afight({ ks: ['pwK9'], act: ['a_deflect'], eq: ['a_deflect'] });
+  ok(near(parryRed(f0.p) - parryRed(f1.p), 0.15) && near(parryRed(f0.p), 0.7 + 0.005 * stat(f0.p, 'dex')), '독의 군주의 대가: 공통 흘리기 감소분 −15%p(70% → 55% + 민첩)');
+  aAct(f0, 'a_deflect'); aAct(f1, 'a_deflect'); ok(near(f0.p.dodgeRed, 0.7) && near(f1.p.dodgeRed, 0.55), '독의 군주의 대가: 흘리기 스킬도 70% → 55%(흘려 베기)'); }
+{ const f0 = afight({}), f1 = afight({ ks: ['svK9'] }), f2 = afight({ own: ['ag3L'] }), f3 = afight({ own: ['ag3L'], ks: ['svK9'] }); const dc = f => E.dodgeCost(f.p);
+  ok(dc(f0) === 25 && dc(f0) - dc(f1) === 10 && dc(f0) - dc(f2) === 4 && dc(f0) - dc(f3) === 14, '흘리기 스태미나: 25, 그림자 맹세 −10, 그림자 발 −4(함께 −14)'); }
+{ const pz = (o, n) => { const f = afight(o); E.addPoison(f.b, f.es[0], n, 1); return st(f.es[0], 'poison'); };
+  ok(pz({ ks: ['svK9'] }, 6) === 4 && pz({ ks: ['svK9'] }, 7) === 5 && pz({ ks: ['svK9'] }, 2) === 1 && pz({ ks: ['svK9'] }, 1) === 1 && pz({}, 6) === 6, '그림자 맹세의 대가: 거는 독 −30% 반올림, 최소 1(6 → 4, 7 → 5, 2 → 1, 1 → 1)');
+  const f = afight({ ks: ['svK9'], act: ['a_fang'], eq: ['a_fang'] }); aAct(f, 'a_fang'); ok(st(f.es[0], 'poison') === 4, '그림자 맹세의 대가: 독니 6 → 4');
+  const g = afight({ ks: ['svK9'] }); E.addPoison(g.b, g.p, 6, 0); ok(st(g.p, 'poison') === 6, '내가 받는 독은 줄지 않음'); }
+{ const dd = o => { const f = afight(Object.assign({ act: ['a_deflect'], eq: ['a_deflect'] }, o)); const d1 = aAct(f, 'a_deflect'); const h = f.es[0].hp; enemyHit(f.b, f.es[0], 10); return [d1, h - f.es[0].hp]; };
+  const a = dd({}), c2 = dd({ ks: ['svK9'] }); ok(a[0] > 0 && a[1] > 0 && near(c2[0] / a[0], 1.15) && near(c2[1] / a[1], 1.15), '그림자 맹세: 흘리기 스킬 피해 +15%(쓸 때 ' + a[0].toFixed(1) + ' → ' + c2[0].toFixed(1) + ', 흘려 낸 칼끝 ' + a[1].toFixed(1) + ' → ' + c2[1].toFixed(1) + ')');
+  const cm = o => { const f = afight(Object.assign({ act: ['a_deflect', 'a_aim'], eq: ['a_aim'] }, o)); f.b.stepMode = true; E.playerAct(f.b, 'a_aim'); f.b.cur = null; E.setParry(f.b, f.es[0], null, null); const h = f.es[0].hp; enemyHit(f.b, f.es[0], 10); return h - f.es[0].hp; };
+  ok(cm({}) > 0 && near(cm({ ks: ['svK9'] }), cm({})), '그림자 맹세: 공통 흘리기(칼끝 겨누기 +19)에는 +15% 없음(흘리기 스킬만)'); }
+// 흘리기 스킬 강화: 되받아치기 · 독 묻은 칼막이([전환]) · 연막 · 흘림의 춤 · 그림자 역습
+{ const par = act => { const f = afight({ act: ['a_deflect', 'a_aim', 'a_after'].concat(act), eq: ['a_deflect'] }); aAct(f, 'a_deflect'); const h = f.es[0].hp, k = f.es[0].brk || 0; enemyHit(f.b, f.es[0], 10); return { d: h - f.es[0].hp, k: (f.es[0].brk || 0) - k, ps: st(f.es[0], 'poison') }; };
+  const p0 = par([]), pc = par(['au_counter']), pv = par(['au_venom']), pcv = par(['au_counter', 'au_venom']);
+  ok(p0.d > 0 && near(pc.d / p0.d, 20 / 14) && near(pc.k, 10) && p0.ps === 0, '되받아치기: 흘려 내면 피해 14 → 20, 붕괴 +10');
+  ok(pv.d === 0 && pv.ps === 7 && pcv.d === 0 && pcv.ps === 7, '독 묻은 칼막이 [전환]: 흘려 내면 피해 대신 중독 7(되받아치기와 함께여도 피해 없음)'); }
+{ const p = { build: 'assassin', pn: [] }; const S = (up, id) => E.skOf(Object.assign({ aup: up }, p), id).fx.find(x => x.k === 'parryBuff');
+  ok(S(['au_smoke'], 'a_aim').red === 0.3 && S(['au_smoke'], 'a_aim').dmg === 19 && (S(['au_smoke'], 'a_aim').times || 1) === 1, '연막: 칼끝 겨누기의 다음 흘리기 감소분 +30%p(흘려 내면 +19 그대로, 1번)');
+  ok(S(['au_dance'], 'a_shade').times === 2 && S(['au_dance'], 'a_shade').dmg === 21, '흘림의 춤: 다음 흘리기 2번, 흘려 내면 14 → 21');
+  ok(E.skOf(Object.assign({ aup: ['au_reprisal'] }, p), 'a_after').fx.find(x => x.k === 'onParry').brk === 20, '그림자 역습: 잔상 흘려 내면 붕괴 9 → 20'); }
+// 흘려 냄 표시 · 흘려 낸 틈
+{ const IFA = R_('IFX_NODE'); const f = afight({ own: ['pw3R'] }); const { b, p, es } = f; E.setParry(b, es[0], null, null); enemyHit(b, es[0], 10); ok(p.asParT === (b.turnIdx || 0), '흘려 내면 흘려 냄 표시(다음 내 차례)를 남김');
+  const h = IFA.n_as_gap.hitP; b.actN = 900; ok(near(h(b, p, es[0], {}, { id: 'basic' }), 0.1) && near(h(b, p, es[1], {}, { id: 'basic' }), 0.1), '흘려 낸 틈: 그 차례 첫 공격 +10%(광역 · 연타는 그 공격 전체)');
+  b.actN = 901; ok(h(b, p, es[0], {}, { id: 'basic' }) === 0, '흘려 낸 틈: 한 번');
+  p.asParT = (b.turnIdx || 0) - 1; ok(h(b, p, es[0], {}, { id: 'basic' }) === 0 && p.asParT != null, '흘려 낸 틈: 다음 내 차례가 지나면 없음');
+  const g = o => { const x = afight(o); E.setParry(x.b, x.es[0], null, null); enemyHit(x.b, x.es[0], 10); return aAct(x, 'basic'); }; ok(near(g({ own: ['pw3R'] }) / g({}), 1.1), '흘려 낸 틈: 흘려 낸 뒤 기본 공격 ×1.1(실제 피해)');
+  const n = afight({}); E.setParry(n.b, n.es[0], null, null); enemyHit(n.b, n.es[0], 10); ok(near(aAct(n, 'basic'), g({})), '노드가 없으면 표시만 남고 피해는 그대로'); }
+// 생존: 얇은 그림자 · 피하는 몸
+{ const f = afight({ own: ['sv3L'], act: ['a_deflect'], eq: ['a_deflect'] }); const { b, p, es } = f; p.hp = p.hpMax * 0.4; b.stepMode = true; E.playerAct(b, 'dodge', es[0].id); ok(near(p.dodgeRed, parryRed(p) + 0.05), '얇은 그림자: 생명력 50% 이하면 공통 흘리기 +5%p');
+  const g = afight({ own: ['sv3L'], act: ['a_deflect'], eq: ['a_deflect'] }); g.p.hp = g.p.hpMax * 0.4; aAct(g, 'a_deflect'); ok(near(g.p.dodgeRed, 0.75), '얇은 그림자: 흘리기 스킬도 70% → 75%');
+  const h2 = afight({ own: ['sv3L'] }); h2.p.hp = h2.p.hpMax * 0.6; h2.b.stepMode = true; E.playerAct(h2.b, 'dodge', h2.es[0].id); ok(near(h2.p.dodgeRed, parryRed(h2.p)), '얇은 그림자: 50% 넘으면 그대로');
+  const cap = afight({ own: ['sv3L'] }); cap.p.eq.armor = 'cloak'; cap.p.hp = cap.p.hpMax * 0.4; E.setParry(cap.b, cap.es[0], 0.88, null); ok(near(cap.p.dodgeRed, 0.9), '얇은 그림자: 상한 90% 그대로'); }
+{ const tk = o => { const f = afight(o); f.es[0].strong = 1; E.setParry(f.b, f.es[0], null, null); const h = f.p.hp; enemyHit(f.b, f.es[0], 20); return [h - f.p.hp, f]; };
+  const [a, fa] = tk({}), [c2, fc] = tk({ own: ['sv5R'] }); const r = parryRed(fa.p);
+  ok(near(parryBigOf(fc.p, { strong: 1 }), 0.15) && near(parryBigOf(fa.p, { strong: 1 }), 0.2) && parryBigOf(fc.p, {}) === 0, '피하는 몸: 강적 · 보스 −20%p → −15%p(보통 적은 0)');
+  ok(near(c2 / a, (1 - (r - 0.15)) / (1 - (r - 0.2))), '피하는 몸: 강적 공격을 흘리면 받는 피해가 그만큼 준다'); }
+// 유지력: 독 마시는 몸 · 흘린 숨 · 남은 독의 온기
+{ const dr = o => { const f = afight(Object.assign({ act: ['a_fang', 'a_siphon'], eq: ['a_siphon'] }, o)); E.addPoison(f.b, f.es[0], 10, 1); f.p.hp = f.p.hpMax * 0.3; const h = f.p.hp; aAct(f, 'a_siphon'); return f.p.hp - h; };
+  ok(dr({}) > 0 && near(dr({ own: ['su2L'] }) / dr({}), 1.15), '독 마시는 몸: 독 흡수 회복 ×1.15'); }
+{ const f = afight({ own: ['su3R'] }); const { b, p, es } = f; p.hp = p.hpMax * 0.5; const h = p.hp; E.setParry(b, es[0], null, null); enemyHit(b, es[0], 0); ok(near(p.hp - h, p.hpMax * 0.01), '흘린 숨: 흘려 내면 최대 생명력 1% 회복');
+  for (let i = 0; i < 6; i++) { E.setParry(b, es[0], null, null); enemyHit(b, es[0], 0); } ok(near(p.hp - h, p.hpMax * 0.04), '흘린 숨: 전투마다 4%까지'); }
+{ const wm = (o, id) => { const f = afight(Object.assign({ act: ['a_pouch', 'a_burst'], eq: ['a_burst'] }, o)); E.addPoison(f.b, f.es[0], 5, 1); f.es[0].hp = 1; f.p.hp = f.p.hpMax * 0.5; const h = f.p.hp; aAct(f, id || 'a_burst'); return [f.p.hp - h, f]; };
+  const [w1, fw] = wm({ own: ['su5R'] }), [w0] = wm({}), [wb] = wm({ own: ['su5R'] }, 'basic');
+  ok(!fw.es[0].alive && near(w1 - w0, fw.p.hpMax * 0.02) && near(wb, 0), '남은 독의 온기: 독을 터뜨려 쓰러뜨리면 2% 회복, 기본 공격 처치는 없음');
+  const IFA = R_('IFX_NODE'); fw.b.asBurstK = 1; for (let i = 0; i < 5; i++) IFA.n_as_warm.onKill(fw.b, fw.p, fw.es[1]); fw.b.asBurstK = 0; ok(near(fw.b.asWarmH, fw.p.hpMax * 0.06), '남은 독의 온기: 전투마다 6%까지'); }
+// 제어: 무너뜨리는 독 · 끊는 칼끝 · 깨진 틈 찌르기
+{ const IFA = R_('IFX_NODE'); const f = afight({ own: ['ct2L'] }); E.addPoison(f.b, f.es[0], 9, 1); ok(IFA.n_as_crush.brkMul(f.b, f.p, f.es[0]) === 1, '무너뜨리는 독: 중독 9면 없음'); E.addPoison(f.b, f.es[0], 1, 1); ok(IFA.n_as_crush.brkMul(f.b, f.p, f.es[0]) === 1.1, '무너뜨리는 독: 중독 10 이상이면 붕괴 ×1.1');
+  const bk = o => { const x = afight(Object.assign({ act: ['a_pouch', 'a_brkneedle'], eq: ['a_brkneedle'] }, o)); E.addPoison(x.b, x.es[0], 10, 1); const k = x.es[0].brk || 0; aAct(x, 'a_brkneedle'); return x.es[0].brk - k; }; ok(near(bk({ own: ['ct2L'] }) / bk({}), 1.1), '무너뜨리는 독: 붕괴 독침(중독 10 이상인 적) 붕괴 ×1.1(실제)'); }
+{ const pk = o => { const f = afight(o); E.setParry(f.b, f.es[0], null, null); const k = f.es[0].brk || 0; enemyHit(f.b, f.es[0], 10, { charged: 1 }); return f.es[0].brk - k; };
+  ok(near(pk({}), 25) && near(pk({ own: ['ct3R'] }), 35), '끊는 칼끝: 강타를 흘려 내면 붕괴 +25 → +35'); }
+{ const cr = (o, brk) => { const f = afight(Object.assign({ act: ['a_pouch', 'a_burst'], eq: ['a_burst'] }, o)); E.addPoison(f.b, f.es[0], 6, 1); if (brk) E.addS(f.b, f.es[0], 'broken', 2); return aAct(f, 'a_burst'); };
+  ok(near(cr({ own: ['ct5R'] }, 1) / cr({}, 1), 1.2) && near(cr({ own: ['ct5R'] }, 0), cr({}, 0)), '깨진 틈 찌르기: 무너진 적에게 터뜨린 피해 ×1.2, 무너지지 않은 적은 그대로');
+  const IFA = R_('IFX_NODE'); const f = afight({}); E.addS(f.b, f.es[0], 'broken', 2); ok(IFA.n_as_crack.hitP(f.b, f.p, f.es[0], {}) === 0, '깨진 틈 찌르기: 터뜨리기가 아닌 타격에는 없음'); }
+// 기민: 연이은 흘림 · 계승: 독 기억
+{ const f = afight({ own: ['ag5R'] }); const { b, p, es } = f; ok(E.dodgeCost(p) === 25, '연이은 흘림: 흘려 내기 전에는 25'); E.setParry(b, es[0], null, null); enemyHit(b, es[0], 10); ok(E.dodgeCost(p) === 15, '연이은 흘림: 흘려 낸 다음 공통 흘리기 25 → 15');
+  p.st = 100; b.stepMode = true; E.playerAct(b, 'dodge', es[1].id); ok(p.st === 85 && E.dodgeCost(p) === 25, '연이은 흘림: 한 번 쓰면 25로'); }
+{ const f = afight({ own: ['lg3L'] }); E.addPoison(f.b, f.es[0], 3, 1); E.addPoison(f.b, f.es[1], 3, 1); E.addPoison(f.b, f.es[0], 3, 1); ok(st(f.es[0], 'poison') === 8 && st(f.es[1], 'poison') === 3, '독 기억: 전투에서 처음 거는 독 +2(전투마다 한 번)');
+  const g = afight({}); E.addPoison(g.b, g.es[0], 3, 1); ok(st(g.es[0], 'poison') === 3, '독 기억이 없으면 그대로'); }
+{ const IFA = R_('IFX_NODE'); const f = afight({ own: ['pw5R'] }); E.addPoison(f.b, f.es[0], 14, 1); ok(IFA.n_as_ripe.hitP(f.b, f.p, f.es[0]) === 0, '무르익은 독: 중독 14면 없음'); E.addPoison(f.b, f.es[0], 1, 1); ok(IFA.n_as_ripe.hitP(f.b, f.p, f.es[0]) === 0.08, '무르익은 독: 중독 15 이상이면 +8%'); }
+// 격발 강화
+{ const p = { build: 'assassin', pn: [] }; const S = (up, id) => E.skOf(Object.assign({ aup: up }, p), id); const bu = (up, id) => S(up, id).fx.find(x => x.k === 'burst');
+  ok(bu(['au_deep'], 'a_burst').mul === 3 && bu(['au_pop'], 'a_burst').pre === 4 && bu(['au_pop'], 'a_burst').top === 2 && S(['au_pop'], 'a_burst').time === 'fast', '깊은 격발 ×3 · 독침 파열 [전환] 빠름, 먼저 독 4, 2만 터뜨림');
+  ok(bu(['au_boil'], 'a_chain').keep === 0.5 && bu(['au_boil'], 'a_chain').mul === 1.6 && S(['au_boil'], 'a_chain').killRecharge === 1, '끓는 피 [전환]: 절반을 남기고 ×1.6, 연쇄 격발 처치 환급은 그대로');
+  ok(S(['au_finale'], 'a_cataclysm').fx.some(x => x.k === 'execute' && x.hp === 0.3 && x.mul === 3.2) && S(['au_reap'], 'a_burststab').fx.some(x => x.k === 'lowx' && x.hp === 0.35 && x.mul === 2), '숨통 터뜨리기(30% 이하 ×3.2) · 거두기(35% 이하 ×2)');
+  ok(S(['au_cycle'], 'a_double').tgt === 'all' && S(['au_cycle'], 'a_double').fx.find(x => x.k === 'grow').mul === 1.6 && !S(['au_numb'], 'a_rot').fx.some(x => x.s === 'vuln') && S(['au_numb'], 'a_rot').fx.some(x => x.k === 'st' && x.s === 'chill' && x.n === 3), '독의 순환 [전환](모든 적 ×1.6) · 둔한 독 [전환](취약 → 둔화 3)'); }
 console.log('wm-check: ' + n + '개 통과');

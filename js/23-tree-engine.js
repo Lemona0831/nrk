@@ -387,6 +387,27 @@ const IFX_NODE = {
   ks_el_cut: { elCutResp: 1 }, // 끊어진 영창 (elCutEv: 라운드 한도 밖 대응 +1, 전투마다 2번)
   ks_el_ember: { elBurnPer: 1, shockMul: () => 0.7 }, // 잿불의 길: 태운 화상 1마다 +1 더 · 대가 열충격 −30%
   ks_el_heart: { elGuard: 0.15, elIgnCut: 1 }, // 얼음 심장: 서리 무게 −45% · 대가 거는 화상 −1(최소 1)
+  /* ---- 10월 18일 0.8.0 5단계 암살자 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 1-3 · 4-6, 결정 13–17) ----
+     값 키는 암살자만 읽는다(asSum · psnCapOf, js/20): psnCap 중독 상한(addPoison) · parryCut 흘리기 감소분 빼기(parryRed · setParry) · parryLow 생명력 50% 이하 흘리기 감소분(setParry) ·
+     parryBigCut 강적 · 보스 −20%p 줄이기(parryBigOf) · parryBrk 강타를 흘려 낸 붕괴(hurtPlayer) · drainP 독 흡수 회복(runSkill2) · psnFirst · psnCut 거는 독(asPsnIn) · parrySkP 흘리기 스킬이 흘려 내고 주는 피해(hurtPlayer).
+     흘려 냄 표시 p.asParT = 흘려 낸 다음 내 차례(hurtPlayer), 연이은 흘림 p.asChain(공통 흘리기에서 지움), 터뜨려 쓰러뜨림 b.asBurstK(runSkill2), onRespDisc는 ysSpend */
+  n_as_gap: { hitP: (b, p, e, o, c) => { if (b.asGapU === b.actN) return 0.1; if (p.asParT == null || p.asParT !== (b.turnIdx || 0) || !isAtkC(c)) return 0; p.asParT = null; b.asGapU = b.actN; return 0.1; } }, // 흘려 낸 틈: 흘려 낸 다음 내 차례 첫 공격(연타 · 광역은 그 공격 전체) +10%, 한 번
+  n_as_ripe: { hitP: (b, p, e) => st(e, 'poison') >= 15 ? 0.08 : 0 }, // 무르익은 독: 중독 15 이상
+  n_as_thin: { parryLow: 0.05 }, // 얇은 그림자: 생명력 50% 이하일 때 거는 흘리기 +5%p(상한 90%)
+  n_as_dodge: { parryBigCut: 0.05 }, // 피하는 몸: 강적 · 보스 −20%p → −15%p
+  n_as_drink: { drainP: 0.15 }, // 독 마시는 몸: 독 흡수 계열 회복 +15%
+  n_as_breath: { onParry: (b, p) => { const left = p.hpMax * 0.04 - (b.asBrH || 0); const v = Math.min(p.hpMax * 0.01, left); if (!(v > 0)) return; const g = fxHeal(p, v); b.asBrH = (b.asBrH || 0) + v; return g > 0 ? 1 : 0; } }, // 흘린 숨: 흘려 내면 1%, 전투마다 4%까지
+  n_as_warm: { onKill: (b, p, e) => { if (!b.asBurstK || e.pile) return; const left = p.hpMax * 0.06 - (b.asWarmH || 0); const v = Math.min(p.hpMax * 0.02, left); if (!(v > 0)) return; const g = fxHeal(p, v); b.asWarmH = (b.asWarmH || 0) + v; return g > 0 ? 1 : 0; } }, // 남은 독의 온기: 터뜨려 쓰러뜨리면 2%, 전투마다 6%까지
+  n_as_crush: { brkMul: (b, p, e) => e && st(e, 'poison') >= 10 ? 1.1 : 1 }, // 무너뜨리는 독: 중독 10 이상인 적에게 붕괴 +10%
+  n_as_edge: { parryBrk: 10 }, // 끊는 칼끝: 강타를 흘려 내면 붕괴 +25 → +35
+  n_as_crack: { hitP: (b, p, e, o) => o && o.burst && e.s && e.s.broken ? 0.2 : 0 }, // 깨진 틈 찌르기: 무너진 적에게 터뜨린 피해 +20%
+  n_as_step: { cost: (p, id) => id === 'dodge' ? -4 : 0 }, // 그림자 발: 흘리기 스태미나 −4
+  n_as_chain: { onParry: (b, p) => { p.asChain = 1; return 1; }, cost: (p, id) => id === 'dodge' && p.asChain ? -10 : 0 }, // 연이은 흘림: 흘려 낸 다음 공통 흘리기 −10(한 번)
+  n_as_mem: { psnFirst: 2 }, // 독 기억: 전투에서 처음 거는 독 +2
+  n_as_store: { psnCap: 24 }, // 독의 저장고: 중독 상한 20 → 24
+  n_as_link: { onRespDisc: (b, p) => { fxStam(p, 6); return 1; } }, // 이어진 그림자: resp 조건 할인이 들면 스태미나 +6
+  ks_as_lord: { psnCap: 30, parryCut: 0.15 }, // 독의 군주: 중독 상한 30 · 대가 흘리기 감소분 70% → 55%(공통 · 스킬)
+  ks_as_oath: { cost: (p, id) => id === 'dodge' ? -10 : 0, parrySkP: 0.15, psnCut: 0.3, hitP: (b, p, e, o, c) => c && c.skill && (skOf(p, c.id) || { fx: [] }).fx.some(f => f.k === 'parry') ? 0.15 : 0 }, // 그림자 맹세: 흘리기 스태미나 −10 · 흘리기 스킬 피해 +15% · 대가 거는 독 −30%(최소 1)
 };
 /* 사냥꾼: 이 타격 전의 추적 겹 (한 적 공격은 hurtEnemy가 겹을 먼저 올리므로 그 전 값, 광역은 올리지 않는다) */
 function hnFocusPre(b, p, e, o) { if (!p.focus || p.focus.id !== e.id) return 0; if (o && o.aoe) return p.focus.n; if (b.curSkill && b.focusKey === b.curSkill + ':' + e.id) return b.focusPre || 0; return Math.max(0, p.focus.n - 1); }

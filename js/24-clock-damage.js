@@ -127,15 +127,18 @@ function hurtPlayer(b, raw, o) {
   if (p.evade > 0 && !o.dot && !o.aoe && !o.spell && o.src && carveMul(b, 'prep') < 1) { p.evade--; raw *= 1 - carveMul(b, 'prep'); logp(b, 'bad', '새겨진 이름 때문에 몸이 둔하다. 일부를 맞는다'); } // 새김: 피하기는 확률이 아니라 받는 몫으로
   else if (p.evade > 0 && !o.dot && !o.aoe && !o.spell && o.src) { p.evade--; logp(b, 'good', (o.src.n || '적') + '의 공격을 몸을 빼 피한다' + (p.evade ? ' (남은 ' + p.evade + '번)' : '')); fxRun(p, 'onEvade', b, p, o.src); const c = p.evadeCtr; if (c && o.src.alive && (!c.charged || bigHit)) { hurtEnemy(b, o.src, outDmg(b, c.dmg, {}), { single: 1, label: '반격 사격' }); if (c.chill && o.src.alive) addS(b, o.src, 'chill', c.chill); } if (p.evadeHz) hastenBranch(b, p.evadeHz.br, p.evadeHz.n, p.evadeHz.id); ysResp(b, '흘리기'); if (!p.evade && !(c && c.until > (b.round || 0))) p.evadeCtr = null; return 0; } // 사냥꾼 몸 빼기 (10월 5일): 실제로 피했을 때만 반격 · 🔄
   if (!o.dot && !o.aoe && p.dodge && o.src && o.src.id === p.dodge) {
-    p.dodge = 0; const red = Math.max(0, (p.dodgeRed || parryRed(p)) - parryBig(o.src)) * carveMul(b, 'prep'); raw *= 1 - red; o.parried = true; logp(b, 'good', (o.src ? o.src.n + '의 ' + (o.charged ? '강타' : '공격') : '공격') + '을(를) 칼날로 흘린다. 피해 ' + Math.round(red * 100) + '% 감소');
+    p.dodge = 0; const red = Math.max(0, (p.dodgeRed || parryRed(p)) - parryBigOf(p, o.src)) * carveMul(b, 'prep'); /* 10월 18일 0.8.0 5단계 피하는 몸: 강적 · 보스 −20%p → −15%p(parryBigOf) */ raw *= 1 - red; o.parried = true; logp(b, 'good', (o.src ? o.src.n + '의 ' + (o.charged ? '강타' : '공격') : '공격') + '을(를) 칼날로 흘린다. 피해 ' + Math.round(red * 100) + '% 감소');
     fxRun(p, 'onParry', b, p, o.src);
+    if (p.build === 'assassin') p.asParT = b.turnIdx || 0; // 10월 18일 0.8.0 5단계 흘려 냄 표시(원거리 초안 1-3): 다음 내 차례(b.turnIdx는 내 주 행동이 끝날 때 오른다)를 적는다. 흘려 낸 틈이 그 차례 첫 공격에 쓴다
     if (o.charged && o.src && o.src.boss === 'abbot' && p.s.brand) { p.s.brand.stacks--; if (p.s.brand.stacks <= 0) delete p.s.brand; logp(b, 'good', '흘려 낸 칼끝이 낙인 하나를 긁어낸다'); }
+    const asBr0 = p.build === 'assassin' && o.charged && !!(o.src && o.src.s && o.src.s.broken); // 10월 18일 0.8.0 5단계 끊는 칼끝: 흘리기 25 전에 이미 무너져 있었는가
     if (o.charged) { addBreak(b, o.src, 25); logp(b, 'good', o.src.n + '의 자세가 흔들린다. 붕괴 게이지 +25'); }
+    if (o.charged && o.src && o.src.alive && p.build === 'assassin') { const xb = asSum(p, 'parryBrk'); if (xb && (asBr0 || !o.src.s.broken)) { addBreak(b, o.src, xb); logp(b, 'good', '끊는 칼끝. 붕괴 게이지 +' + xb + ' 더'); } } // 10월 18일 0.8.0 5단계 끊는 칼끝: 강타를 흘려 낸 붕괴 +25 → +35(앞의 25로 이미 무너졌으면 더하지 않는다)
     if (o.charged && o.src && (p.eq.amulet === 'witness')) { addS(b, o.src, 'vuln', 2); logp(b, 'good', '증인의 부적이 빈틈을 기억한다. ' + o.src.n + ' 취약'); }
     chargeEv(b, 'parry'); ysResp(b, '흘리기'); // 10월 15일 유산 1차 시제품: 대응 충전
     const on = p.dodgeOn; p.dodgeRed = 0; p.dodgeOn = null;
     if (on && o.src && o.src.alive) { // 흘려 되돌리는 효과는 후열에도 닿는다 (암살자 초안 4절)
-      if (on.dmg) hurtEnemy(b, o.src, outDmg(b, on.dmg, {}), { single: 1, label: '흘려 낸 칼끝' });
+      if (on.dmg) hurtEnemy(b, o.src, outDmg(b, on.dmg * (on.sk ? 1 + asSum(p, 'parrySkP') : 1), {}), { single: 1, label: '흘려 낸 칼끝' }); // 10월 18일 0.8.0 5단계 그림자 맹세: 흘리기 스킬이 흘려 내고 주는 피해 +15%(on.sk는 setParry가 단다)
       if (on.poison && o.src.alive) addPoison(b, o.src, on.poison, 1);
       if (on.brk && o.src.alive) addBreak(b, o.src, on.brk);
       if (on.bleed && o.src.alive) addS(b, o.src, 'bleed', on.bleed);

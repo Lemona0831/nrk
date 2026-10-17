@@ -33,7 +33,7 @@ for (const c of CLS) {
   ok(true, c + ': 기울기(첫 중간 노드까지 거리) ' + (P.tmp ? '임시 트리는 그 거리보다 가깝지 않음' : '표대로'));
   for (const id in A.nodes) { const nd = A.nodes[id]; if (nd.kind === 'start') continue; assert(nd.cost === 1 && [1, 2, 3].includes(nd.ring), c + ' 액티브 ' + id); if (nd.kind === 'skill') assert(E.SK2[id] && !E.SK2[id].start, c + ' 스킬 ' + id); else { assert(nd.links.includes(nd.on) && A.nodes[nd.on].kind === 'skill', c + ' 강화가 그 스킬과 이웃 ' + id); } if (nd.links.includes('S')) assert.equal(nd.ring, 1, c + ' 가운데 이웃은 1고리 ' + id); }
   ok(true, c + ': 액티브 노드(스킬은 지금 칸, 강화는 그 스킬과 이웃, 비용 1)');
-  { const REAL = ['spellblade', 'warden', 'monk', 'hunter', 'elementalist']; ok(!!P.tmp === !REAL.includes(c) && !!A.tmp === !REAL.includes(c), c + ': 임시 트리 표시(tmp)는 직업 초안이 들어간 직업(마검사 · 파수꾼 · 수도승 · 사냥꾼 · 원소술사)만 없음'); } // 0.8.0 5단계 (사냥꾼 · 원소술사: 10월 18일)
+  { const REAL = ['spellblade', 'warden', 'monk', 'hunter', 'elementalist', 'assassin']; ok(!!P.tmp === !REAL.includes(c) && !!A.tmp === !REAL.includes(c), c + ': 임시 트리 표시(tmp)는 직업 초안이 들어간 직업(마검사 · 파수꾼 · 수도승 · 사냥꾼 · 원소술사 · 암살자)만 없음'); } // 0.8.0 5단계 (사냥꾼 · 원소술사 · 암살자: 10월 18일)
 }
 
 // ===== 2) 마검사 = 1단계 문서 7 · 8절 =====

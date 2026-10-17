@@ -7,7 +7,7 @@ function qaSkillBase(p,a){const dm=a?.s?.fx.find(f=>f.k==='dmg');return dm?(E.sk
 function qaWeaponBase(p,a){const n=a.id==='basic'?E.basicBase(p):E.heavyBase(p);return n*(E.weaponStatBonus?1+E.weaponStatBonus(p):1)*(p.eq?.weapon==='hook'?.85:1);}
 function qaResource(p,a,f,n){return E.skillResourceDamage&&a?.s?E.skillResourceDamage(p,a.s,f,n):n;}
 function qaBurnDamage(p,a,n){const f=a?.s?.fx.find(f=>f.k==='burnOut');return f?f.per*n*(E.dotMul?E.dotMul(p):1):0;}
-function qaPoisonBurst(p,a,n){const f=a.s.fx.find(f=>f.k==='burst'),over=a.s.fx.find(f=>f.k==='capOver');n=Math.min(n,(E.KW?.poison??Infinity)+(over?.cap||0));const take=f.half?Math.ceil(n/2):f.top?Math.min(f.top,n):n;return (E.poisonTotal(n)-E.poisonTotal(n-take))*(f.mul||1)*(E.triggerDamageMul?E.triggerDamageMul(p):E.dotMul?E.dotMul(p):1);}
+function qaPoisonBurst(p,a,n){const f=a.s.fx.find(f=>f.k==='burst'),over=a.s.fx.find(f=>f.k==='capOver');n=Math.min(n,(E.psnCapOf?E.psnCapOf(p):E.KW?.poison??Infinity)+(over?.cap||0)); /* 10월 18일 0.8.0 5단계 암살자: 중독 상한은 노드를 읽는다(독의 저장고 24 · 독의 군주 30, 다른 직업은 20 그대로) */const take=f.half?Math.ceil(n/2):f.top?Math.min(f.top,n):n;return (E.poisonTotal(n)-E.poisonTotal(n-take))*(f.mul||1)*(E.triggerDamageMul?E.triggerDamageMul(p):E.dotMul?E.dotMul(p):1);}
 function qaWardBonus(f,ward){return E.wardDamageInfo?E.wardDamageInfo(f,ward).bonus:f.per*ward;}
 // 수도승의 기본·기 피해만 비교한다. 장비 발동·적의 방어·가로막기는 별도다.
 function qaMonkHit(p,a,t){

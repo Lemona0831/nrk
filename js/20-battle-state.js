@@ -25,7 +25,7 @@ function flaskHealFrac(p) { return (gearOf(p).flask + (hasBt(p, 'mercy') ? 0.1 :
 function calcMpMax(p) { if (isV2(p)) return 0; return BUILDS[p.build].mp + gearOf(p).mp + fxStat(p, 'mp') + ((p.lv || 1) - 1) * ((LV_GAIN[p.build] || {}).mp || 0) + stat(p, 'int') - (p.eq.amulet === 'sigil' ? 15 : 0) - (p.eq.gloves === 'vpouch' ? 10 : 0); }
 function calcStMax(p) { return 100 + gearOf(p).st + fxStat(p, 'st') + stat(p, 'dex') - (p.eq.amulet === 'vanguard' ? 20 : 0) - (p.eq.gloves === 'chaingl' ? 10 : 0); }
 function calcHpMax(p) { return Math.round(fxVal(p, 'hpMul', 1, (a, v) => a * v) * (1 - (p.hpPen || 0)) * (BUILDS[p.build].hp + gearOf(p).hp + fxStat(p, 'hp') + (p.hpBonus || 0) + ((p.lv || 1) - 1) * ((LV_GAIN[p.build] || {}).hp || 0) + stat(p, 'str') + 3 * stat(p, 'con')) * (p.eq.armor === 'plate' ? 0.9 : p.eq.armor === 'wardcrest' ? 0.95 : p.eq.armor === 'cloak' || p.eq.armor === 'thorns' ? 0.95 : 1) * (p.eq.amulet === 'rosary' ? 0.97 : 1)); }
-function parryRed(p) { return Math.min(0.9, (p.build === 'assassin' && isV2(p) ? 0.7 : 0.6) + 0.005 * stat(p, 'dex') + (p.eq.armor === 'cloak' ? 0.15 : 0)); }
+function parryRed(p) { return Math.min(0.9, (p.build === 'assassin' && isV2(p) ? 0.7 - asParryCut(p) : 0.6) + 0.005 * stat(p, 'dex') + (p.eq.armor === 'cloak' ? 0.15 : 0)); } // 10월 18일 0.8.0 5단계 독의 군주의 대가: 70% → 55%(asParryCut)
 /* 강적·보스의 공격은 흘려도 줄이는 몫이 작다(모든 흘리기, 10월 3일 만든 사람: 거구의 힘은 칼끝으로 다 흘리지 못한다. 흘리기로 싸우는 그림자의 거구 약점).
    50상황 2차 탐색에서 고른 중간 지점: 정예까지 넣으면 독사의 장기전 강점이 깨지고, 25%p면 그림자의 보스전 이길 수단이 문턱 아래로 떨어졌다 */
 const PARRY_BIG = 0.2;
@@ -35,6 +35,13 @@ const WARD = { cap: 0.3, guard: 6, thornMax: 8, back: 0.5 }; // back: 후열 적
 function wardMax(p) { return isV2(p) ? Math.round(p.hpMax * ((p.eq && fxVal(p, 'wardCap', 0, (a, v) => Math.max(a, v))) || (BUILDS[p.build] || {}).wardCap || WARD.cap)) : 40; } // 10월 16일 0.8.0 2단계: 큰 각인 피를 두른 갑주(마검사 15% → 22%) // wardCap: 직업마다 상한 (마검사 15%)
 function addWard(b, p, n, cap, fixed) { if (!fixed) { n *= 1 + 0.02 * stat(p, 'wil'); const wp = p.eq ? fxAdd(p, 'wardP', b, p) : 0; if (wp) n *= 1 + Math.min(FX_CAP, wp); if (b && b.carve && b.cur && b.cur.grp) n *= carveMul(b, b.cur.grp); } /* 고정 교대는 생성 보정을 적용하지 않는다 */ const m = Math.min(cap != null ? cap : Infinity, wardMax(p)); const w0 = p.ward || 0; p.ward = Math.max(w0, Math.min(m, w0 + n)); if (w0 + n > m && p.eq) fxRun(p, 'onWardOver', b, p, w0 + n - Math.max(m, w0)); return p.ward - w0; }
 const parryBig = e => (e && (e.strong || e.role === 'boss') ? PARRY_BIG : 0);
+/* 10월 18일 0.8.0 5단계 암살자 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 1-3 · 4-6): 노드가 읽는 값. 다른 직업은 늘 기본값
+   psnCapOf: 내가 적에게 거는 중독의 상한(KW.poison 20, 독의 저장고 24 · 독의 군주 30, 큰 값). asParryCut: 흘리기 감소분 빼기(독의 군주의 대가, 공통 · 스킬 흘리기 모두).
+   parryBigOf: 강적 · 보스 공격의 흘리기 감소 −20%p를 줄인다(피하는 몸 −15%p). asSum: 노드 값 더하기 */
+const asSum = (p, k) => p && p.build === 'assassin' ? fxVal(p, k, 0, (a, v) => a + v) : 0;
+const psnCapOf = p => p && p.build === 'assassin' ? fxVal(p, 'psnCap', KW.poison, Math.max) : KW.poison;
+const asParryCut = p => asSum(p, 'parryCut');
+const parryBigOf = (p, e) => { const g = parryBig(e); return g && p && p.build === 'assassin' ? Math.max(0, g - asSum(p, 'parryBigCut')) : g; };
 function dotMul(p) { return 1 + 0.02 * stat(p, 'int'); }
 function applyStats(p, stats) {
   const f = { hp: p.hp / p.hpMax, mp: p.mpMax ? p.mp / p.mpMax : 1, st: p.st / p.stMax };

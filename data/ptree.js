@@ -133,6 +133,22 @@ const PN_TXT = {
   n_el_echo: { n: '이어지는 울림', d: '열충격이 일어나면 스태미나가 6 찹니다.' }, // 옛 남는 울림(k_el3)의 효과 (한 노드 한 효과, 1단계 2-7)
   n_el_spread: { n: '번지는 울림', d: '열충격의 번짐(다른 적에게 가는 몫)과 번짐 칸(튀는 충격처럼 번짐이 있는 스킬)의 피해가 15% 늘어납니다.' },
   n_el_even: { n: '고른 원소', d: '한 행동에 화상과 둔화를 둘 다 걸면 스태미나 +6(행동마다 한 번).' },
+  /* 10월 18일 0.8.0 5단계 암살자 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 4-6, 8절 결정 13–17) */
+  n_as_gap: { n: '흘려 낸 틈', d: '흘려 낸 다음 내 차례의 첫 공격 피해가 10% 늘어납니다(한 번).' },
+  n_as_ripe: { n: '무르익은 독', d: '중독 15 이상인 적에게 주는 직접 피해가 8% 늘어납니다.' },
+  n_as_thin: { n: '얇은 그림자', d: '생명력 50% 이하일 때 거는 흘리기의 감소분이 5%p 늘어납니다(상한 90% 그대로).' },
+  n_as_dodge: { n: '피하는 몸', d: '강적 · 보스 공격을 흘릴 때 줄어드는 감소분이 20%p에서 15%p가 됩니다.' },
+  n_as_drink: { n: '독 마시는 몸', d: '독 흡수 계열(중독에서 생명력을 얻는 스킬)의 회복이 15% 늘어납니다.' },
+  n_as_breath: { n: '흘린 숨', d: '흘려 내면 최대 생명력의 1%를 회복합니다(전투마다 4%까지).' },
+  n_as_warm: { n: '남은 독의 온기', d: '독을 터뜨려 적을 쓰러뜨리면 최대 생명력의 2%를 회복합니다(전투마다 6%까지).' },
+  n_as_crush: { n: '무너뜨리는 독', d: '중독 10 이상인 적에게 주는 붕괴가 10% 늘어납니다.' },
+  n_as_edge: { n: '끊는 칼끝', d: '강타를 흘려 내면 그 적의 붕괴 게이지가 25가 아니라 35 찹니다.' },
+  n_as_crack: { n: '깨진 틈 찌르기', d: '무너진 적에게 독을 터뜨리는 피해가 20% 늘어납니다.' },
+  n_as_step: { n: '그림자 발', d: '흘리기의 스태미나가 4 줄어듭니다.' },
+  n_as_chain: { n: '연이은 흘림', d: '흘려 낸 다음 공통 흘리기의 스태미나가 10 줄어듭니다(한 번).' },
+  n_as_mem: { n: '독 기억', d: '전투에서 처음 거는 독이 2 늘어납니다(전투마다 한 번).' },
+  n_as_store: { n: '독의 저장고', d: '내가 거는 중독의 상한이 20에서 24로 늘어납니다.' },
+  n_as_link: { n: '이어진 그림자', d: '대응 직후(resp) 조건으로 비용이 줄면 스태미나 +6.' },
 };
 /* 큰 각인 (4-1 공용, 4-2 직업). dir은 그 자리의 방향, pay는 대가(빨간 줄) */
 const KS_LIST = {
@@ -164,6 +180,9 @@ const KS_LIST = {
   ks_el_cut: { dir: 'ct', cls: 'elementalist', n: '끊어진 영창', d: '영창을 끊거나 열충격으로 적을 무너뜨리면 대응 충전 +1 더(라운드 한도 밖, 전투마다 2번).', resp: 1 },
   ks_el_ember: { dir: 'pw', cls: 'elementalist', n: '잿불의 길', d: '화상을 지우며 치는 공격(불태우기 계열)이 지운 화상 1마다 피해 +1 더.', pay: '열충격 피해 −30%.' },
   ks_el_heart: { dir: 'sv', cls: 'elementalist', n: '얼음 심장', d: '서리 무게가 −30%에서 −45%가 됩니다(평소 공격만, 강타는 그대로).', pay: '내가 거는 화상 −1(최소 1).' },
+  /* 10월 18일 0.8.0 5단계 암살자 (4-6): 거울 짝. 독을 키우면 흘리기가 약해지고, 흘리기를 키우면 독이 약해진다. 생존 K9는 무거운 갑주(흘리기 금지) 대신 그림자 맹세 */
+  ks_as_lord: { dir: 'pw', cls: 'assassin', n: '독의 군주', d: '내가 거는 중독의 상한이 20에서 30으로 늘어납니다.', pay: '흘리기 감소분 −15%p(70% → 55%, 공통 흘리기 · 흘리기 스킬 모두).' },
+  ks_as_oath: { dir: 'sv', cls: 'assassin', n: '그림자 맹세', d: '흘리기의 스태미나가 10 줄고, 흘리기 스킬의 피해(흘려 내고 주는 피해 포함)가 15% 늘어납니다.', pay: '내가 거는 독 −30%(반올림, 최소 1).' },
 };
 /* 임시 트리의 큰 각인 자리 (K5, K9): 공용 큰 각인을 방향마다 목록 순서대로 */
 const KS_TMP = { pw: ['ks_crystal', 'ks_glass'], ct: ['ks_hammer', 'ks_breaker'], ag: ['ks_first', 'ks_flow'], lg: ['ks_deep', 'ks_brim'], su: ['ks_cycle', 'ks_dry'], sv: ['ks_wall', 'ks_heavy'] };
@@ -229,6 +248,19 @@ const PT_CLS = {
       lg2L: 'k_el3', lg3R: 'n_el_echo', lg5L: 'n_overflow', lg5R: 'n_el_spread', lg7L: 'n_fullvessel', lg7R: 'n_el_even',
     },
     ks: { pwK5: 'ks_crystal', pwK9: 'ks_el_ember', ctK5: 'ks_el_cut', ctK9: 'ks_hammer', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_brim', suK5: 'ks_cycle', suK9: 'ks_dry', svK5: 'ks_wall', svK9: 'ks_el_heart' },
+  },
+  /* 10월 18일 0.8.0 5단계 암살자 (결정 13–17 반영): docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 4-6. 시작 노드는 그대로(민첩 5 · 지능 4 · 체력 3), 작은 노드는 화력 · 기민 민첩 +2.
+     큰 각인 12자리: 공용 10 + 암살자 2(독의 군주 화력 K9 · 그림자 맹세 생존 K9, 무거운 갑주 대신). 대가 다섯, 대응 큰 각인은 흘림새 하나 */
+  assassin: {
+    nodes: {
+      pw2L: 'k_as1', pw3R: 'n_as_gap', pw5L: 'a_eye', pw5R: 'n_as_ripe', pw7L: 'a_point', pw7R: 'a_scatter',
+      sv3L: 'n_as_thin', sv5L: 'a_skin', sv5R: 'n_as_dodge', sv7L: 'a_iron', sv7R: 'a_stand',
+      su2L: 'n_as_drink', su3R: 'n_as_breath', su5L: 'a_vigor', su5R: 'n_as_warm', su7L: 'a_warmth', su7R: 'a_brew',
+      ct2L: 'n_as_crush', ct3R: 'n_as_edge', ct5L: 'a_gap', ct5R: 'n_as_crack', ct7L: 'a_heavyhand', ct7R: 'n_shaken',
+      ag1C: 'k_as3', ag3L: 'n_as_step', ag5L: 'a_resolve', ag5R: 'n_as_chain', ag7L: 'a_light', ag7R: 'a_gulp',
+      lg1C: 'k_as2', lg3L: 'n_as_mem', lg5L: 'n_overflow', lg5R: 'n_as_store', lg7L: 'n_fullvessel', lg7R: 'n_as_link',
+    },
+    ks: { pwK5: 'ks_crystal', pwK9: 'ks_as_lord', ctK5: 'ks_hammer', ctK9: 'ks_breaker', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_brim', suK5: 'ks_cycle', suK9: 'ks_dry', svK5: 'ks_wall', svK9: 'ks_as_oath' },
   },
 };
 /* 임시 트리: 직업 갈래 각인(4-4)을 그 방향 1고리 첫 중간 노드 자리에 둔다. 도살자 벼랑 끝(k_bu2)은 6단계 큰 각인으로 합쳐질 것이라 임시 트리에 넣지 않는다 */

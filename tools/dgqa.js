@@ -520,9 +520,9 @@ function spendTree(pk, r) {
    (2) 빠른 칸을 잃으면(빠름 → 보통 · 느림) 한 차례 값이 30% 넘게 올라야, (3) 그 밖에는 5% 넘게 올라야 이득으로 본다(skeval perTurn, 그 스킬의 다른 강화를 낀 채).
    이득이면 다른 노드보다 뒤(점수 0.3 + 고리), 손해면 찍지 않는다. 신중 · 숙련만 판단하고 초보는 예전처럼. CONV_OLD=1이면 예전 점수 */
 const CONV_K = ['time', 'tgt', 'hits'];
-const isConv = nd => nd.kind === 'upgrade' && !!(nd.mod && nd.mod.set && CONV_K.some(k => k in nd.mod.set));
+const isConv = nd => nd.kind === 'upgrade' && !!(nd.mod && ((nd.mod.set && CONV_K.some(k => k in nd.mod.set)) || nd.mod.conv)); // 10월 18일 0.8.0 5단계 암살자: set 없는 [전환](둔한 독 · 끓는 피 · 독 묻은 칼막이)은 데이터의 conv 표시로 안다
 function convGain(run, nd) {
-  const base = G0.SK2[nd.on], set = nd.mod.set;
+  const base = G0.SK2[nd.on], set = nd.mod.set || {};
   if (set.time === 'fast' && base.time !== 'fast') { const fastN = G0.v2Equip(run).filter(id => id !== nd.on && ((G0.skOf(run.p, id) || {}).time === 'fast')).length; if (fastN >= 2) return false; }
   const ups = SKE.upsOf(run, nd.on); const a = SKE.evalSkill(SKE.pFor(run, nd.on, ups), nd.on), c = SKE.evalSkill(SKE.pFor(run, nd.on, ups.concat([nd.id])), nd.on); if (!a || !c) return false;
   const need = base.time === 'fast' && set.time && set.time !== 'fast' ? 1.3 : 1.05;
