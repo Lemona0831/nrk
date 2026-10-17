@@ -10,7 +10,7 @@
 function makeSkEval(G0, run_) {
   const SKK = run_('SKK'), Y = run_('YUSAN');
   const COND_P = { resp: 0.5, alt2: (SKK.sb && SKK.sb.run2) || 0.45 };
-  const condP = c => COND_P[c.when] != null ? COND_P[c.when] : /^kw:/.test(c.when || '') ? 0.5 : 0;
+  const condP = c => COND_P[c.when] != null ? COND_P[c.when] : /^kw:/.test(c.when || '') ? 0.5 : /^(ward|ki)>=/.test(c.when || '') ? 0.4 : c.when === 'stance' ? 0.4 : 0; // 0.8.0 5단계 내 자원 조건(가설: 4단계 할인 적용 비율 근처)
   const YB = ((Y.start || 0) + SKK.turns * ((Y.turn || 0) + 0.3 * (Y.resp || 0))) / (SKK.turns + 1);
   const atNodes = cls => { try { return G0.atBuild(cls).nodes; } catch (e) { return {}; } };
   /* run이 가진 그 스킬의 강화 노드 (끼웠는지와 상관없이) */

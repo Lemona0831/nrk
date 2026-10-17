@@ -243,6 +243,8 @@ function fightRec(R, b, run, hpIn, acts) {
   for (const h of hits) { const k = (h.dot ? 'dot:' : '') + (h.src || 'none') + (h.charged ? ':big' : ''); src[k] = Math.round(((src[k] || 0) + h.d) * 10) / 10; }
   const used = countBy(b.rec.filter(x => x.k === 'act').map(x => x.a));
   const rec = { f: run.room, ch: run.ch || 1, t: R.type, sq: R.squad, foe: R.foe, mods: (R.mods || []).join('+') || undefined, path: R.path, res: b.over, hpIn: Math.round(hpIn * 100), hpOut: Math.round(run.p.hp / run.p.hpMax * 100), rounds: b.round || 0, acts, src, used, brk: b.rec.filter(x => x.k === 'break').length, cut: b.rec.filter(x => x.k === 'break' && x.cut).length, blk: b.rec.filter(x => x.k === 'block').length, parried: hits.filter(h => h.parried).length, guarded: hits.filter(h => h.guard).length, cons: b.rec.filter(x => x.k === 'cons').length, big: b.rec.filter(x => x.k === 'bigfire').length, bigNoTurn: b.rec.filter(x => x.k === 'bigfire' && x.gap < 1).map(x => x.role + ':' + x.i + ':' + x.gap) };
+  if (b.p.build === 'warden') { const gw = b.log.map(x => /방패를 세운다\. 보호막 \+(\d+)/.exec(x.m || '')).filter(Boolean).map(m => +m[1]); const S = b.wdS || []; const dir = hits.filter(h => !h.dot);
+    rec.wd = { g: gw.length, gw: gw.reduce((a, v) => a + v, 0), held: Math.round(b.rec.filter(x => x.k === 'held').reduce((a, x) => a + (x.n || 0), 0) * 10) / 10, gHit: dir.filter(h => h.guard).length, gTaken: Math.round(dir.filter(h => h.guard).reduce((a, h) => a + h.d, 0) * 10) / 10, oHit: dir.filter(h => !h.guard).length, oTaken: Math.round(dir.filter(h => !h.guard).reduce((a, h) => a + h.d, 0) * 10) / 10, turns: S.length, half: S.filter(v => v >= 50).length, hpMax: b.p.hpMax, wil: G0.stat ? G0.stat(b.p, 'wil') : null }; } // 0.8.0 5단계 방어 측정(2-10): 방어 횟수 · 방어 보호막 합 · 받아낸 몫 · 방어 중/아닐 때 받은 직접 피해 · 보호막 상한 50% 이상인 내 차례
   if (b.over === 'lose') { const last = hits[hits.length - 1] || {}; const big = hits.slice(-3).filter(h => h.charged); rec.death = { by: (last.dot ? 'dot:' : '') + (last.src || 'none'), big: !!last.charged, bigIn3: big.length, lastD: last.d, st: Math.round(b.p.st), fl: Object.assign({}, b.p.flask), consLeft: (run.cons || []).reduce((a, c) => a + c.n, 0) }; }
   return rec;
 }
@@ -293,6 +295,7 @@ function fightCur(pk, r, mem, out) {
   // 10월 5일: 전투 난수를 테스터 판단 난수와 나눈다(판단 규칙 하나를 바꿔도 전투 운은 그대로 남아 비교가 깨끗하다). LEGACY_RNG=1이면 예전처럼 같은 난수
   b.rngF = process.env.LEGACY_RNG ? r : rng(((out.seed || 1) * 7919 + (G.run.room || 0) * 131 + (G.run.ch || 1) * 100003 + (out.acts || 0)) | 0);
   if (OPT.policy?.battleStart) OPT.policy.battleStart(b, G.run);
+  if (process.env.PN_OFF) { const off = process.env.PN_OFF.split(','); b.p.pn = (b.p.pn || []).filter(k => !off.includes(k)); } // 0.8.0 5단계 측정 변형: 이 전투에서 끌 노드 효과(예: PN_OFF=n_wd_held,n_wd_will). 찍기 · 길은 그대로
   while (!b.over && n++ < 300) {
     useCons(pk, r, b, G.run); if (b.over) break;
     let a, t;
@@ -315,6 +318,7 @@ function fightCur(pk, r, mem, out) {
     if (stuckN >= 2 && !process.env.NO_STUCK_FIX) { const Lk = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); const gd = Lk.find(x => x.id === 'guard') || Lk[0]; if (gd) { a = gd.id; t = null; } } /* 10월 8일: 같은 행동을 해도 차례가 흐르지 않으면(땅속의 적만 남고 단일 대상 행동뿐일 때) 사람처럼 방어로 차례를 넘긴다 */
     }
     if (OPT.onTurn) OPT.onTurn(G, n);
+    if (b.p.build === 'warden' && b.wdT !== b.turnIdx && G0.wardMax) { b.wdT = b.turnIdx; (b.wdS = b.wdS || []).push(Math.round(100 * (b.p.ward || 0) / Math.max(1, G0.wardMax(b.p)))); } // 0.8.0 5단계: 내 차례 첫 행동 때 보호막 / 상한(%)
     const progKey = b.turnIdx + ':' + (b.round || 0) + ':' + b.log.length;
     try { G0.playerAct(b, a, t); } catch (e) { out.bugs.push('예외 ' + e.message + ' @' + a); failOf(out, 'exception', { msg: String(e.message).slice(0, 200), act: a, room: G.run.room, ch: G.run.ch || 1 }); b.over = 'lose'; }
     stuckN = progKey === b.turnIdx + ':' + (b.round || 0) + ':' + b.log.length ? stuckN + 1 : 0;
@@ -504,13 +508,27 @@ function spendTree(pk, r) {
   }
 }
 /* 강화 노드가 있는 트리(마검사): 주 갈래의 스킬과, 끼운 스킬의 강화를 먼저. 4칸은 강화가 많이 붙은 스킬 · 깊은 고리부터, ⚔ · ✦를 하나 이상씩 */
+/* 0.8.0 5단계 측정 도구 보완 1 (10월 17일): [전환] 강화(빠르기 · 대상 · 타수를 바꾸는 강화)는 손해가 함께 온다. 전에는 장착 스킬의 강화로 점수 5를 받아 먼저 찍혔다
+   (수도승 깊은 호흡: 기 모으기가 주 행동이 됨). 이제 (1) 빠르게 바뀌면 빠른 칸을 다툴 빠른 스킬이 장착에 둘 이상(시작 스킬 포함) 있을 때 손해,
+   (2) 빠른 칸을 잃으면(빠름 → 보통 · 느림) 한 차례 값이 30% 넘게 올라야, (3) 그 밖에는 5% 넘게 올라야 이득으로 본다(skeval perTurn, 그 스킬의 다른 강화를 낀 채).
+   이득이면 다른 노드보다 뒤(점수 0.3 + 고리), 손해면 찍지 않는다. 신중 · 숙련만 판단하고 초보는 예전처럼. CONV_OLD=1이면 예전 점수 */
+const CONV_K = ['time', 'tgt', 'hits'];
+const isConv = nd => nd.kind === 'upgrade' && !!(nd.mod && nd.mod.set && CONV_K.some(k => k in nd.mod.set));
+function convGain(run, nd) {
+  const base = G0.SK2[nd.on], set = nd.mod.set;
+  if (set.time === 'fast' && base.time !== 'fast') { const fastN = G0.v2Equip(run).filter(id => id !== nd.on && ((G0.skOf(run.p, id) || {}).time === 'fast')).length; if (fastN >= 2) return false; }
+  const ups = SKE.upsOf(run, nd.on); const a = SKE.evalSkill(SKE.pFor(run, nd.on, ups), nd.on), c = SKE.evalSkill(SKE.pFor(run, nd.on, ups.concat([nd.id])), nd.on); if (!a || !c) return false;
+  const need = base.time === 'fast' && set.time && set.time !== 'fast' ? 1.3 : 1.05;
+  return c.perTurn > 0 && c.perTurn >= Math.max(0, a.perTurn) * need;
+}
 function spendTreeUp(pk, r, run, A) {
-  const focus = THINK(pk) || pk === 'careful';
+  const focus = THINK(pk) || pk === 'careful'; const convJudge = !process.env.CONV_OLD && pk !== 'novice';
   for (let n = 0; n < 20 && run.atree.pts > 0; n++) {
     const can = Object.keys(A.nodes).filter(id => !G0.atWhy(run, id)); if (!can.length) break;
     const eqd = G0.v2Equip(run);
-    const sc = id => { const nd = A.nodes[id]; let v = (focus && nd.br === run.focus ? 10 : 0) + nd.ring * 0.5; v += nd.kind === 'skill' ? ((run.skills || []).length < G0.EQUIP_SLOTS2 ? 4 : 1) : (eqd.includes(nd.on) ? 5 : 0.5); return v + r() * (pk === 'novice' ? 20 : 1); };
-    const id = can.sort((a, b) => sc(b) - sc(a))[0]; if (G0.atBuy(run, id)) break;
+    const cv = {}; const convOk = id => (id in cv ? cv[id] : (cv[id] = !!(eqd.includes(A.nodes[id].on) && convGain(run, A.nodes[id])))); // 결정적 판단(난수를 쓰지 않는다)
+    const sc = id => { const nd = A.nodes[id]; const rr = r() * (pk === 'novice' ? 20 : 1); if (convJudge && isConv(nd)) return convOk(id) ? 0.3 + nd.ring * 0.1 + rr * 0.1 : -1; let v = (focus && nd.br === run.focus ? 10 : 0) + nd.ring * 0.5; v += nd.kind === 'skill' ? ((run.skills || []).length < G0.EQUIP_SLOTS2 ? 4 : 1) : (eqd.includes(nd.on) ? 5 : 0.5); return v + rr; }; // 난수는 예전과 같이 부를 때마다 한 번
+    const id = can.sort((a, b) => sc(b) - sc(a))[0]; if (convJudge && isConv(A.nodes[id]) && !convOk(id)) break; if (G0.atBuy(run, id)) break;
     sbEquip(run, A);
   }
 }

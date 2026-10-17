@@ -272,6 +272,25 @@ function elemPick(b, P, r, okS, reach, pv1) {
   } // 큰 공격을 끊지 못하면 방어 · 흘리기에 차례를 넘긴다(아래 공통 판단)
   return best && best.v > 4 ? [best.a.id, best.t] : null;
 }
+/* 0.8.0 5단계 측정 도구 보완 2 (10월 17일, docs/제안/0.8.0-5단계-파수꾼-수도승-트리초안-2026-10-17.md 10절): 파수꾼 방어 정책.
+   전에는 방어가 전투당 0.2–0.7번이라 받아낸 몫 · 다진 의지 · 흔들리는 방패를 잴 수 없었다. 사람이 화면에서 보는 것만 쓴다(예고 아이콘 · 예상 피해 줄 · 보호막 막대).
+   막는 때: (가) 내 다음 차례 전에 큰 공격(강타 · 겨눈 한 발)이 오고 그 적이 무너지지 않았으면 WD_DEF.big,
+           (나) 예상 피해가 최대 생명력의 WD_DEF.inc 이상이고 지금 보호막이 그 절반보다 적으면 WD_DEF.often.
+   막지 않는 때: 스태미나가 방어 값 + 10보다 적음, 남은 적이 하나이고 그 적의 생명력이 15% 이하(끝낼 차례).
+   빠른 칸이 비어 있고 쓸 수 있는 빠른 스킬(나에게 쓰는 보호막 · 보호, 또는 공격)이 있으면 그것을 먼저 쓰고 같은 차례에 막는다(mem.wdGuard).
+   WD_DEF_OLD=1이면 끈다(보완 전 정책) */
+const WD_DEF = { big: 0.85, often: 0.6, inc: 0.15 };
+function wdDefend(b, p, L, okS, pv1, hv, r, mem) {
+  if (process.env.WD_DEF_OLD) return null;
+  const g = L.find(a => a.id === 'guard' && a.ok); if (!g || p.st < E.guardCost(p) + 10) return null;
+  if (mem.wdGuard === b.turnIdx) { mem.wdGuard = null; return ['guard']; } // 빠른 칸을 쓴 뒤 같은 차례의 방어
+  const al = E.alive(b).filter(e => e.role !== 'root'); if (al.length === 1 && al[0].hp <= al[0].hpMax * 0.15) return null;
+  const big = pv1.find(x => x.e.intent && (x.e.intent.k === 'heavy' || x.e.intent.aimed) && !x.e.s.broken);
+  const inc = E.incomingEst ? E.incomingEst(b).sum : 0; const ward = p.ward || 0;
+  const want = big ? r() < WD_DEF.big : inc >= p.hpMax * WD_DEF.inc && ward < inc * 0.5 && r() < WD_DEF.often; if (!want) return null;
+  if (!b.bonusUsed && !(E.noFast && E.noFast(p))) { const fs = okS.filter(a => a.time <= 0.6).sort((x, y) => (y.self ? 1 : 0) - (x.self ? 1 : 0))[0]; if (fs) { mem.wdGuard = b.turnIdx; const t = fs.self || fs.aoe ? null : (E.alive(b).find(e => E.canTarget(b, e, fs)) || {}).id; return [fs.id, t]; } }
+  return ['guard'];
+}
 function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   const p = b.p; const nf = !!(E.noFast && E.noFast(p)); const okS = L.filter(a => a.v2 && a.ok && !(nf && a.time <= 0.6)); const has = (a, k) => a.s.fx.some(e => e.k === k); // 느린 맥박: 빠른 칸이 없어 빠른 스킬도 차례를 끝내므로 사람처럼 빠른 스킬을 고르지 않는다
   const psn = e => (e.s.poison ? e.s.poison.stacks : 0);
@@ -311,6 +330,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     { const lk = okS.filter(a => !a.self && a.s.b !== '시작' && p.lastBr && a.s.b !== p.lastBr && has(a, 'dmg')).sort((x, y) => (y.s.row || 0) - (x.s.row || 0)); if (lk.length && r() < 0.55 + 0.35 * (P.mech || 0.5)) return [lk[0].id, tgtOf(lk[0])]; } // 연계: 방금과 다른 갈래의 공격 스킬 (사람은 버튼의 🔗를 보고 고른다)
     for (const a of okS.filter(a => has(a, 'focusAdd') && !a.s.start)) { const t = fe && E.canTarget(b, fe, a) ? fe : best(a, (x, y) => y.hp - x.hp); if (t && (t !== fe || fn < 2)) return [a.id, t.id]; }
   }
+  { const wd = p.build === 'warden' && gt(p, 'warden', 'defend') ? wdDefend(b, p, L, okS, pv1, hv, r, mem) : null; if (wd) return wd; } // 0.8.0 5단계 측정 도구 보완 2: 파수꾼 방어 정책
   // 10월 15일 유산 1차 시제품: 강타 · 겨눈 한 발이 오고 이번 라운드에 대응 충전이 아직 없으면, 스태미나가 넉넉할 때 방어 · 흘리기를 조금 더 자주 고른다(대응 +1)
   if (E.ysNow && !nf) { const big = pv1.find(x => x.e.intent && (x.e.intent.k === 'heavy' || x.e.intent.aimed)); const rNow = b.prepTurn === b.turnIdx ? (b.ysR || 0) : (b.ysR || 0) + 1;
     if (big && b.ysRespR !== rNow && !v2Ready(b, big.e.id) && E.ysNow(p) <= (E.ysCapOf ? E.ysCapOf(p) : E.YUSAN.cap) - 2 && r() < 0.25 + 0.25 * (P.mech || 0.5) && gt(p, '*', 'ys-resp')) { const d = L.find(a => a.id === 'dodge' && a.ok), g = L.find(a => a.id === 'guard' && a.ok);
