@@ -123,7 +123,52 @@ function fight(bd, sit, seed, eqOver) { // eqOver: 장착을 직접 줄 때(보�
   }
   return { win: b.over === 'win' ? 1 : 0, hp: b.p.hp / b.p.hpMax, rounds: b.round || 0, timeout: !b.over, b };
 }
-module.exports = { buildOf, equipFor, statsOf, fight, MLV, G0 };
+/* 트리 직업(0.8.0) 캐릭터를 실제 게임의 길로 만든다 (10월 17일 0.8.0 4단계 재검증).
+   그전 마검사 50상황(비공개 sit4.js)은 mkPlayer + ptSync로 전투 캐릭터를 따로 만들어 이끄는 갈래(p.sbLead → 칼에 새긴 주문의 시작 스킬 덤)가 빠졌고,
+   패시브 포인트를 고리가 닫힌 채(깬 챕터 0) 한 번에 다 찍어 2 · 3고리 패시브가 큰 각인 길 덤으로만 들어왔다.
+   여기서는 화면 · 던전과 같은 함수만 쓴다: seedWorld → startRun → 만들기 배분(정책이 ptBuy · atBuy) → 레벨마다 gainXp(패시브 +2 · 액티브 +1) 뒤 찍기 →
+   보스를 이긴 레벨에 clears +1 · 정산 큰 각인(ksGrant · ksEnsureOffer · ksTake, 그 레벨 포인트는 고리가 열린 뒤 찍는다) → 3챕터 야영지 큰 각인(c3) → treeSync.
+   spec = { cls, lv, clearAt: [챕터 보스를 이긴 레벨, …], c3At: 레벨 | null, seed, spendP(run), spendA(run), ksPick(run) }. 돌려주는 것은 게임 안의 run */
+function treeChar(spec) {
+  D.seedWorld(spec.seed || 1);
+  const G = G0.__G; G.data = G0.blankData(); G.data.unlAll = 1; G.cre = { name: 'sit' }; G.dropQ = []; G.b = null; G.sheet = null;
+  G0.startRun(spec.cls); const run = G.run; delete run.alloc; G.sheet = null; G.creating = false; G.cre = null; G.scr = 'run';
+  const spend = () => { spec.spendP(run); spec.spendA(run); };
+  const ks = key => { if (!G0.ksGrant(run, key)) return; spec.spendP(run); G0.ksEnsureOffer(run); if (run.ksOffer) { const e = G0.ksTake(run, spec.ksPick(run)); if (e) throw new Error('ksTake ' + e); } };
+  spend(); G0.treeSync(run);
+  for (let lv = 2; lv <= spec.lv; lv++) {
+    G0.gainXp(run, G0.LV_XP_[lv - 1] - (run.xp || 0)); if (run.lv !== lv) throw new Error('gainXp ' + run.lv + ' != ' + lv);
+    if ((spec.clearAt || []).includes(lv)) { run.clears = (run.clears || 0) + 1; ks('b' + run.ch); run.ch = (run.ch || 1) + 1; }
+    if (spec.c3At === lv) { run.ch = 3; ks('c3'); }
+    spend();
+  }
+  G0.treeSync(run); return run;
+}
+/* 트리 캐릭터로 상황 하나: 실제 캐릭터 사본의 장착만 상황에 맞게 바꾸고(atEquip → atSync, 화면의 장착과 같다) 그 run.p로 roomBattle */
+function treePlayer(run0, eq) {
+  G0.__x = run0; const run = run_('JSON.parse(JSON.stringify(__x))');
+  run.skills = []; for (const id of eq) { const e = G0.atEquip(run, id); if (e) throw new Error('atEquip ' + id + ' ' + e); } G0.treeSync(run);
+  const p = run.p; p.hp = p.hpMax; p.st = p.stMax; return run;
+}
+function treeFight(run0, sit, seed, eq) {
+  const r = D.rng(seed); G0.__rnd = D.rng(seed * 31 + 7); run_('Math.random = __rnd');
+  const run = treePlayer(run0, eq); const p = run.p;
+  const sp = sit.p || {}; if (sp.hp) p.hp = Math.round(p.hpMax * sp.hp); if (sp.st != null) p.st = sp.st;
+  for (const k in (sp.s || {})) p.s[k] = { stacks: sp.s[k], until: 1e9, dur: 1e9 };
+  const room = JSON.parse(JSON.stringify(sit.room)); const bossKind = room.boss || null; if (room.boss) room.boss = true;
+  room.lv = (sit.lv && sit.lv[run.lv]) || MLV[run.lv]; room.floor = 13; if (SIT_CH >= 2) { room.ch = SIT_CH; room.names = ENAMES[SIT_CH]; } if (!room.en) room.en = [];
+  const b = G0.roomBattle(p, room, bossKind, seed); b.rngF = r; b.stepMode = false;
+  const P = Q.PERSONAS[PK]; const mem = {}; let n = 0;
+  while (!b.over && n++ < 250) {
+    const sr = r() < (P.mech || 0.5) ? Q.sigRule(b, r) : null;
+    let [a, t] = D.ch2Pre(b, P, r) || D.ch3Pre(b, P, r) || sr || (P.look ? Q.lookahead(b, P, r) : Q.heuristic(b, P, r, mem));
+    [a, t] = D.ch2Post(b, P, r, a, t);
+    if (a === 'flee') { const L = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); a = L[0].id; t = null; }
+    try { G0.playerAct(b, a, t); } catch (e) { return { win: 0, bug: e.message }; }
+  }
+  return { win: b.over === 'win' ? 1 : 0, hp: b.p.hp / b.p.hpMax, rounds: b.round || 0, timeout: !b.over, b };
+}
+module.exports = { buildOf, equipFor, statsOf, fight, MLV, G0, treeChar, treePlayer, treeFight };
 if (MAIN) {
 const builds = []; for (const lv of LVS) for (const br of T.branches) for (const col of [0, 1]) builds.push(buildOf(br, col, lv));
 const res = {}; let bugs = 0, touts = 0;
