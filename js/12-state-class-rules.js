@@ -187,14 +187,16 @@ const CHANT_K = ['chant', 'chanting', 'burn'];
 const ELEM = { D: 3, Cw: 2, Bk: 12, guard: 0.3, half: 0.5, cap: 16, rimeMax: 8 };
 /* 10월 18일 0.8.0 5단계 원소술사 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 3-3 · 3-5):
    서리 무게 = guard + elGuard(무뎌진 칼날 +0.05, 얼음 심장 +0.15). 열충격 배수 shockMul(깨진 얼음 · 번지는 울림 · 잿불의 길의 대가, 곱한다): arc 1이면 번진 몫.
-   끊어진 영창(elCutResp): 영창을 끊거나(붕괴 · 쌓인 상처) 열충격으로 적을 무너뜨리면 대응 충전 +1 더(라운드 한도 밖, 전투마다 ELEM_CUT.max번, 흘림새와 같은 장치) */
-const ELEM_CUT = { max: 2 };
+   끊어진 영창(elCutResp): 10월 18일 0.8.0 5단계(원거리 초안 10절 결정 5) 끊기 · 무너뜨리기 · 먼저 치우기 가운데 무엇이든 대응에 성공하면(ysResp의 why가 ELEM_CUT.on) 대응 충전 +1 더
+   (라운드 한도 밖, 전투마다 ELEM_CUT.max번, 흘림새와 같은 장치). 전에는 영창을 끊거나 열충격으로 무너뜨릴 때만이었다 */
+const ELEM_CUT = { max: 2, on: ['끊기', '무너뜨리기', '먼저 치우기'] };
+function elCutResp(b, why) { const p = b.p; if (p.build !== 'elementalist' || !ELEM_CUT.on.includes(why) || !fxFlag(p, 'elCutResp') || (b.elCutN || 0) >= ELEM_CUT.max) return 0; b.elCutN = (b.elCutN || 0) + 1; return ysAdd(b, 1, 'resp', '끊어진 영창'); }
 const elGuardOf = p => ELEM.guard + fxVal(p, 'elGuard', 0, (a, v) => a + v);
 const elShockMul = (b, e, arc, quiet) => { let m = 1; for (const [k, f] of fxList(b.p)) if (f.shockMul) { const v = f.shockMul(b, b.p, e, arc); if (v !== 1 && v != null) { m *= v; if (!quiet) fxHit(k); } } return m; };
 function elCutEv(b, e, chant, shock) {
   if (!b || b.over || b.p.build !== 'elementalist') return; const p = b.p;
   if (chant) { if (b.cur) b.elCutA = b.actN; fxRun(p, 'onChantCut', b, p, e); } // 원소 장막(이 행동으로 끊음) · 흩어진 주의
-  if ((chant || shock) && fxFlag(p, 'elCutResp') && (b.elCutN || 0) < ELEM_CUT.max) { b.elCutN = (b.elCutN || 0) + 1; ysAdd(b, 1, 'resp', '끊어진 영창'); }
+  // 끊어진 영창의 대응 +1은 10월 18일 0.8.0 5단계(결정 5)부터 ysResp → elCutResp가 준다(shock 인자는 쓰지 않는다)
 }
 /* 광역 배율 (hurtEnemy와 열충격이 함께 쓴다): 땅속 · 군주의 뼈벽 · 후열 · 방패벽 · 방패병, 보스는 1. quiet면 장비 효과 발동을 세지 않는다(미리 보기) */
 function aoeApply(b, e, d, quiet) {

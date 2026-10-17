@@ -1,5 +1,19 @@
 /* ===== 사람처럼 생각하는 QA 테스터 (엔진 직접 구동) ===== */
 const E = require('./eng.gen.js');
+/* 10월 18일 0.8.0 5단계 측정 변형(원거리 초안 10절 결정 3, 기본 데이터는 그대로): ASN_SHADOW_VAR가 ATREE_DEF.assassin을 불러올 때 메모리에서 바꾼다(dgqa.js도 이 함수로 같은 변형을 넣는다).
+   swap = 후열 기습(2고리 r3 L)과 칼끝 겨누기(1고리 r2 R)의 고리 · 자리 · 연결을 맞바꾼다. 칼끝 겨누기 밑에 달렸던 잔상 · 그늘 숨기는 그 자리(1고리)의 후열 기습에 붙고,
+     연막(칼끝 겨누기 강화)은 칼끝 겨누기를 따라 1고리 r2 RR → 2고리 r4 L. 그림자 추격(후열 기습 강화)은 3고리 그대로. 비용은 그대로(후열 기습 2 · 칼끝 겨누기 2)
+   rush = 그림자 연타(SKILLS2 값 그대로, 유산 3 = skCost 기본값)를 그림자 찌르기 밑 2고리 r4 L 스킬 노드로 되살린다(AT_GONE에서 뺌) */
+function asnShadowVar(DEF, GONE, mode) {
+  const A = DEF && DEF.assassin; if (!A || !mode) return 0; const sk = id => A.skills.find(x => x[0] === id);
+  if (mode === 'swap') { const am = sk('a_ambush'), ai = sk('a_aim'); for (const k of [2, 3, 4, 5]) [am[k], ai[k]] = [ai[k], am[k]];
+    for (const s of A.skills) if (s !== am && s !== ai) s[5] = s[5].map(x => x === 'a_aim' ? 'a_ambush' : x === 'a_ambush' ? 'a_aim' : x);
+    const u = A.ups.find(x => x[0] === 'au_smoke'); u[2] = 2; u[3] = 4; u[4] = 'L'; }
+  else if (mode === 'rush') { if (!sk('a_rush')) A.skills.push(['a_rush', '그림자', 2, 4, 'L', ['a_shadow'], 3]); if (GONE && GONE.assassin) { const i = GONE.assassin.indexOf('a_rush'); if (i >= 0) GONE.assassin.splice(i, 1); } }
+  else throw new Error('ASN_SHADOW_VAR는 swap · rush: ' + mode);
+  return 1;
+}
+asnShadowVar(E.ATREE_DEF, null, process.env.ASN_SHADOW_VAR);
 if (process.env.HUNT_BRIDGE && E.ATREE_DEF && E.ATREE_DEF.hunter) { const u = E.ATREE_DEF.hunter.ups.find(x => x[0] === 'hu_link3'); if (u) u[8].cond.when = 'linkFast'; } // 0.8.0 5단계 측정 변형(원거리 초안 8절 보완 2): tools/dgqa.js와 같이 바꾼다(한 수 앞 계산의 엔진 사본)
 const { BUILDS, ROOMS, ITEMS, SCEN } = E;
 // 현재 스탯·장비의 기본 피해. 전투 상태·적 보정·추가 피해까지의 최종 예측은 아니다.
@@ -947,4 +961,4 @@ if (require.main === module) {
   require('fs').writeFileSync(require('path').join(__dirname, 'qa.json'), JSON.stringify({ runs, scen }));
   console.log('runs', runs.length, 'sec', ((Date.now() - t0) / 1000).toFixed(1));
 }
-module.exports = { hazePick, qaBurnDamage, qaMonkHit, qaPoisonBurst, qaWeaponBase, qaSkillBase, qaResource, qaWardBonus, playRun, PERSONAS, heuristic, lookahead, sigRule, invariants, wasted, rng, GATE, PRE_PARRY, demandPick };
+module.exports = { asnShadowVar, hazePick, qaBurnDamage, qaMonkHit, qaPoisonBurst, qaWeaponBase, qaSkillBase, qaResource, qaWardBonus, playRun, PERSONAS, heuristic, lookahead, sigRule, invariants, wasted, rng, GATE, PRE_PARRY, demandPick };

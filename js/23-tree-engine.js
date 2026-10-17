@@ -227,8 +227,17 @@ function ksCands(run) {
   });
 }
 /* 셋 고르기: 거리 → 이미 고른 후보와 다른 방향 → 시드 순서. 3칸 안이 모자라면 4, 5칸 …에서 같은 순서로 채운다 */
+/* 10월 18일 0.8.0 5단계(원거리 초안 10절 결정 4, 모든 직업): 연 액티브 스킬(시작 스킬 · 찍은 스킬 노드 · 장착)에 유산 4 스킬이 하나도 없으면 결정의 칼(유산 4 스킬 +25%)은 후보에서 뺀다.
+   비용은 강화 · 노드 비용을 넣은 skCost(skOf). 빠진 자리는 같은 규칙(거리 → 방향 → 시드)으로 다음 후보가 채운다 */
+function ksHasCost4(run) {
+  const A = atBuild(run.build), T2 = TREE2[run.build] || { starters: [] }; const own = (run.atree && run.atree.own) || [];
+  const p = Object.assign({}, run.p || {}, { build: run.build, aup: own.filter(id => A.nodes[id] && A.nodes[id].kind === 'upgrade') });
+  const ids = new Set((T2.starters || []).concat(own.filter(id => A.nodes[id] && A.nodes[id].kind === 'skill'), run.skills || []));
+  for (const id of ids) { const s = SK2[id] ? skOf(p, id) : null; if (s && skCost(s) === 4) return true; } return false;
+}
 function ksOfferMake(run) {
-  const C = ksCands(run).sort((a, b) => a.d - b.d || a.rk - b.rk), out = [];
+  const T = ptBuild(run.build), no4 = !ksHasCost4(run);
+  const C = ksCands(run).filter(x => !(no4 && T.nodes[x.id].fx === 'ks_crystal')).sort((a, b) => a.d - b.d || a.rk - b.rk), out = [];
   while (out.length < PT.ksOffer && C.length) { const d = C[0].d; const grp = C.filter(x => x.d === d); const dirs = out.map(x => x.dir); const pick = grp.find(x => !dirs.includes(x.dir)) || grp[0]; out.push(pick); C.splice(C.indexOf(pick), 1); }
   return out.map(x => x.id);
 }
@@ -369,7 +378,7 @@ const IFX_NODE = {
   ks_hn_solo: { hnSolo: 1 }, // 외길 사냥꾼 (soloOn · skCondMet link)
   ks_hn_chase: { focusCap: 1 }, // 끝까지 쫓는 자 (focusCapOf)
   /* ---- 10월 18일 0.8.0 5단계 원소술사 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 3-2 · 3-3 · 3-5, 결정 9–11) ----
-     flatAdd: hurtEnemy가 배율을 모두 곱한 뒤 더한다(원소술사만). shockMul: 열충격 배수(elemShock, 곱함). elGuard: 서리 무게 더하기(elGuardOf). onChantCut · elCutResp: elCutEv. onRime: elemRime */
+     flatAdd: hurtEnemy가 배율을 모두 곱한 뒤 더한다(원소술사만). shockMul: 열충격 배수(elemShock, 곱함). elGuard: 서리 무게 더하기(elGuardOf). onChantCut: elCutEv, elCutResp: ysResp → elCutResp. onRime: elemRime */
   n_el_student: { flatAdd: (b, p, e, o, c) => { if (o.dot || !c || !c.skill || b.elStuA === b.actN) return 0; b.elStuA = b.actN; return 3; } }, // 불의 학도: 스킬의 첫 타격 +3(행동마다 한 번)
   n_el_blaze: { hitP: (b, p, e, o, c) => c && c.skill && !o.dot && b.elBurnPre && (b.elBurnPre[e.id] || 0) >= 5 ? 0.10 : 0 }, // 거센 불길: 불태우기 계열이 화상 5 이상을 지우면 그 공격 +10% (b.elBurnPre는 runSkill2가 싣는다)
   n_el_frostskin: { inP: (b, p, o) => o.src && !o.dot && (st(o.src, 'chill') > 0 || o.src.chillR === b.round) ? 0.05 : 0 }, // 서리 껍질: 둔화된 적(서리 무게와 같은 판정)에게서 받는 직접 피해 −5%, 큰 공격에도
@@ -384,7 +393,7 @@ const IFX_NODE = {
   n_el_echo: { onShock: (b, p) => { fxStam(p, 6); return 1; } }, // 이어지는 울림: 옛 남는 울림(k_el3)의 효과
   n_el_spread: { shockMul: (b, p, e, arc) => arc ? 1.15 : 1, hitP: (b, p, e, o, c) => c && c.skill && !o.dot && (skOf(p, c.id) || { fx: [] }).fx.some(f => f.k === 'shockx' && f.arc) ? 0.15 : 0 }, // 번지는 울림: 번진 열충격 · 번짐 칸의 직접 피해 +15%
   n_el_even: { onSkill: b => { if (!b.elSt || b.elSt.a !== b.actN || !b.elSt.ignite || !b.elSt.chill) return; fxStam(b.p, 6); return 1; } }, // 고른 원소: 한 행동에 화상 · 둔화를 둘 다 걸면 스태미나 +6
-  ks_el_cut: { elCutResp: 1 }, // 끊어진 영창 (elCutEv: 라운드 한도 밖 대응 +1, 전투마다 2번)
+  ks_el_cut: { elCutResp: 1 }, // 끊어진 영창 (elCutResp: 끊기 · 무너뜨리기 · 먼저 치우기 → 라운드 한도 밖 대응 +1, 전투마다 2번. 10월 18일 0.8.0 5단계 결정 5)
   ks_el_ember: { elBurnPer: 1, shockMul: () => 0.7 }, // 잿불의 길: 태운 화상 1마다 +1 더 · 대가 열충격 −30%
   ks_el_heart: { elGuard: 0.15, elIgnCut: 1 }, // 얼음 심장: 서리 무게 −45% · 대가 거는 화상 −1(최소 1)
   /* ---- 10월 18일 0.8.0 5단계 암살자 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 1-3 · 4-6, 결정 13–17) ----

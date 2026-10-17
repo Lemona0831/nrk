@@ -353,7 +353,7 @@ function addBreak(b, e, v) {
     const hnK = b.p.build === 'hunter'; if (hnK) b.brkCut = cut; fxRun(b.p, 'onBreak', b, b.p, e); if (hnK) b.brkCut = false; // 0.8.0 5단계 사냥꾼 끊은 화살 · 멈춰 세운 틈: 끊기였는가
     b.rec.push({ k: 'break', t: r1(b.t), role: e.role, cut: cut ? 1 : 0 });
     ysResp(b, cut ? '끊기' : '무너뜨리기'); // 10월 15일 유산 1차 시제품: 대응 충전
-    if (b.p.build === 'elementalist') elCutEv(b, e, elChant, !!b.elShockBrk); // 10월 18일 0.8.0 5단계 끊어진 영창: 영창을 끊거나 열충격으로 무너뜨리면 대응 +1 더
+    if (b.p.build === 'elementalist') elCutEv(b, e, elChant, !!b.elShockBrk); // 10월 18일 0.8.0 5단계 영창 끊기 노드(흩어진 주의 · 원소 장막). 끊어진 영창의 대응 +1 더는 위 ysResp가 준다(결정 5)
   }
 }
 function finishPlayer(b, time, lost) {

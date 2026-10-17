@@ -6,7 +6,7 @@
    5 사냥꾼(10월 18일, docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md): 51노드 · 금지선 · [전환] 하나 · 비용 · 시작 스킬 태그(lb) · 조건 link · focus>=n · linkFast · 외길 사냥꾼 전환 ·
      이어 쏘기 숙련 · 끝까지 쫓는 자 · 넘겨받는 추적 · 끝맺는 연계 · 손에 익은 활 · 이어 당기는 활(두 번째 차례) · 기본 공격 버프(바꿔 쏘기 · 덧화살 · 가시 · 하늘 가르기의 기간 · 겹침 · 다시 걸기 · 버림 · 전투 끝) · 결정 7
    6 원소술사(10월 18일, 같은 문서 3절 · 8절 결정 9–12): 51노드 · 고리 · 금지선 · [전환] 하나 · 비용 · 공명 처치 환급(행동 끝 열충격 포함) · 시작 노드 · 패시브 배치 · 고정 피해(불의 학도 행동마다 한 번 · 남는 울림 열충격마다) ·
-     끊어진 영창(라운드 한도 밖, 전투마다 2번) · 잿불의 길 · 얼음 심장(대가 포함) · 서리 무게 노드 · 열충격 배수 노드 · 회복 · 스태미나 노드 · 원소 장막 · kw 할인
+     끊어진 영창(끊기 · 무너뜨리기 · 먼저 치우기, 라운드 한도 밖, 전투마다 2번) · 잿불의 길 · 얼음 심장(대가 포함) · 서리 무게 노드 · 열충격 배수 노드 · 회복 · 스태미나 노드 · 원소 장막 · kw 할인
    7 암살자(10월 18일 0.8.0 5단계, 같은 문서 4절 · 8절 결정 13–17): 51노드 · 고리 · 금지선 · [전환] 다섯이 모두 다른 스킬 · 비용(흘려 베기 · 잔상 3) · resp 할인(라운드에 한 번) · kw:poison 할인 · 🔄 정리 ·
      중독 상한(20 · 24 · 30) · 독의 군주 · 그림자 맹세(대가 포함) · 흘려 냄 표시와 흘려 낸 틈 · 흘리기 · 회복 · 붕괴 · 스태미나 · 독 노드 · 흘리기 스킬 강화 · 격발 강화 */
 process.env.DGDIR = process.env.DGDIR || '.';
@@ -105,7 +105,7 @@ ok(JSON.stringify(E.SK2.w_flare.fx) === JSON.stringify([{ k: 'wardBurn', mul: 3,
   const P = E.ptBuild('hunter'); ok(P.nodes.pw1C.fx === 'k_hn2' && P.nodes.pw3L.fx === 'n_hn_pull' && P.nodes.pwK9.fx === 'ks_hn_solo' && P.nodes.lgK9.fx === 'ks_hn_chase' && P.nodes.ag1C.fx === 'k_hn3' && P.nodes.lg2L.fx === 'k_hn1', '패시브 배치: 손에 익은 활 · 이어 당기는 활 · 외길 사냥꾼 · 끝까지 쫓는 자 · 가벼운 발 · 놓치지 않는 눈'); }
 const linkOn = R_('linkOn'), soloOn = R_('soloOn'), skCondMet = R_('skCondMet'), hnLinkMul = R_('hnLinkMul'), focusCapOf = R_('focusCapOf');
 const actOf = (b, id) => E.actionList(b).find(x => x.id === id);
-const hfight = o => { const f = fight('hunter', o); const q = f.b.queue; if (q && q[0] === 'p' && q[1] === 'p') q.splice(1, 1); delete f.p.s.haste; return f; }; // 개전 가속(1라운드 두 차례)을 뺀 판: 라운드 셈을 단순하게
+const hfight = o => { const f = fight('hunter', o); const q = f.b.queue; if (q && q[0] === 'p' && q[1] === 'p') q.splice(1, 1); delete f.p.s.haste; f.b.pDouble = 0; return f; }; // 개전 가속(1라운드 두 차례)을 뺀 판: 라운드 셈을 단순하게. 10월 18일 0.8.0 5단계 결정 1부터 1라운드가 가속 라운드(pDouble 1)라 그 표시도 지운다
 const hit = (b, id, e) => { b.stepMode = true; const h = e ? e.hp : 0; E.playerAct(b, id, e ? e.id : undefined); const d = e ? h - e.hp : 0; b.stepMode = false; if (b.waiting) E.runUntilPlayer(b); return d; }; // 내 행동의 피해만(적 차례 · 출혈 전)
 const lastHb = b => b.rec.filter(r => r.k === 'hnb').pop() || {};
 { ok(E.SK2.h_aim.lb === '저격' && E.SK2.h_step.lb === '기동' && E.SK2.h_aim.b === '시작', '시작 스킬 태그: 겨눠 쏘기 저격 · 물러서며 쏘기 기동(트리 가운데 자리는 시작 그대로)');
@@ -234,14 +234,14 @@ const setEl = (b, e, I, C) => { if (I) E.addS(b, e, 'ignite', I); if (C) E.addS(
   { const b = f2.b, p = f2.p, e = f2.es[1]; b.stepMode = true; p.ys = 5; E.playerAct(b, 'e_ember', e.id); ok(st(e, 'ignite') === 2, '얼음 심장의 대가: 불씨 화살 화상 3 → 2'); E.addS(b, f2.es[0], 'ignite', 1); ok(st(f2.es[0], 'ignite') === 1, '거는 화상 1은 1(최소 1)');
     ok(E.elemPreview(b, E.SK2.e_kindle, f2.es[0]).I === 4, '미리 보기도 화상 −1(타격이 화상 1을 쓰고 불붙이기 5 → 4)'); }
   { const f = efight({}); f.b.stepMode = true; f.p.ys = 5; E.playerAct(f.b, 'e_ember', f.es[1].id); ok(st(f.es[1], 'ignite') === 3, '얼음 심장이 없으면 화상 3 그대로'); } }
-// 끊어진 영창: 영창을 끊거나 열충격으로 무너뜨리면 대응 +1 더(라운드 한도 밖, 전투마다 2번)
+// 끊어진 영창: 끊기 · 무너뜨리기 · 먼저 치우기에 성공하면 대응 +1 더(라운드 한도 밖, 전투마다 2번). 10월 18일 0.8.0 5단계 결정 5로 넓힘(전에는 영창 끊기 · 열충격 무너뜨리기)
 { const cutN = b => b.rec.filter(r => r.k === 'ys' && r.why === '끊어진 영창').length;
   const chantBrk = (b, e) => { e.intent = { k: 'chanting' }; b.cur = { id: 'basic' }; E.addBreak(b, e, 9999); b.cur = null; };
   { const f = efight({ ks: ['ctK5'] }); const { b, p, es } = f; p.ys = 0; chantBrk(b, es[0]); ok(p.ys === 2 && cutN(b) === 1, '끊어진 영창: 영창을 끊으면 대응 +1(끊기)과 +1 더');
     chantBrk(b, es[1]); ok(p.ys === 3 && cutN(b) === 2, '같은 라운드 두 번째 끊기: 대응 한도에 막혀도 +1 더(라운드 한도 밖)');
     chantBrk(b, es[0]); ok(p.ys === 3 && cutN(b) === 2, '전투마다 2번까지(세 번째는 없음)'); }
   { const f = efight({}); f.p.ys = 0; chantBrk(f.b, f.es[0]); ok(f.p.ys === 1 && cutN(f.b) === 0, '큰 각인이 없으면 대응 +1만'); }
-  { const f = efight({ ks: ['ctK5'] }); const { b, p, es } = f; p.ys = 0; es[0].intent = { k: 'attack' }; b.cur = { id: 'basic' }; E.addBreak(b, es[0], 9999); b.cur = null; ok(p.ys === 1 && cutN(b) === 0, '영창이 아닌 적을 붕괴로 무너뜨리면 +1 더 없음'); }
+  { const f = efight({ ks: ['ctK5'] }); const { b, p, es } = f; p.ys = 0; es[0].intent = { k: 'attack' }; b.cur = { id: 'basic' }; E.addBreak(b, es[0], 9999); b.cur = null; ok(p.ys === 2 && cutN(b) === 1, '영창이 아닌 적을 붕괴로 무너뜨려도 +1 더(10월 18일 결정 5: 무너뜨리기)'); }
   { const f = efight({ ks: ['ctK5'] }); const { b, p, es } = f; p.ys = 0; es[0].intent = { k: 'attack' }; setEl(b, es[0], 3, 2); es[0].brk = es[0].brkMax - 1; b.stepMode = true; E.playerAct(b, 'guard'); ok(es[0].s.broken && p.ys === 2 && cutN(b) === 1, '열충격으로 무너뜨리면 대응 +1(무너뜨리기)과 +1 더'); }
   { const f = efight({ ks: ['ctK5'] }); const { b, p, es } = f; es[0].chant = { taken: 0, need: 1 }; es[0].intent = { k: 'chanting' }; b.stepMode = true; p.ys = 0; E.playerAct(b, 'basic', es[0].id); ok(!es[0].chant && cutN(b) === 1, '쌓인 상처로 영창이 끊겨도 +1 더'); }
   { const f = efight({ own: ['ag5R'] }); f.p.st = 10; const st0 = f.p.st; f.es[0].intent = { k: 'chanting' }; f.b.cur = { id: 'basic' }; E.addBreak(f.b, f.es[0], 9999); f.b.cur = null; ok(f.p.st - st0 === 10, '흩어진 주의: 영창을 끊으면 스태미나 +10');
@@ -389,4 +389,53 @@ const near = (a, b2) => Math.abs(a - b2) < 1e-6;
   ok(bu(['au_boil'], 'a_chain').keep === 0.5 && bu(['au_boil'], 'a_chain').mul === 1.6 && S(['au_boil'], 'a_chain').killRecharge === 1, '끓는 피 [전환]: 절반을 남기고 ×1.6, 연쇄 격발 처치 환급은 그대로');
   ok(S(['au_finale'], 'a_cataclysm').fx.some(x => x.k === 'execute' && x.hp === 0.3 && x.mul === 3.2) && S(['au_reap'], 'a_burststab').fx.some(x => x.k === 'lowx' && x.hp === 0.35 && x.mul === 2), '숨통 터뜨리기(30% 이하 ×3.2) · 거두기(35% 이하 ×2)');
   ok(S(['au_cycle'], 'a_double').tgt === 'all' && S(['au_cycle'], 'a_double').fx.find(x => x.k === 'grow').mul === 1.6 && !S(['au_numb'], 'a_rot').fx.some(x => x.s === 'vuln') && S(['au_numb'], 'a_rot').fx.some(x => x.k === 'st' && x.s === 'chill' && x.n === 3), '독의 순환 [전환](모든 적 ×1.6) · 둔한 독 [전환](취약 → 둔화 3)'); }
+// ===== 8) 10월 18일 0.8.0 5단계 원거리 초안 10절 결정 1 · 3 · 4 · 5 =====
+// 결정 1: 가속 라운드(두 번 움직이는 라운드)는 지금 라운드다(b.pDouble === b.round). 전에는 + 1이라 hastex가 그다음 라운드에 붙었다
+{ const pierce = (f, ys) => { f.b.stepMode = true; f.p.ys = ys || 5; const e = f.es[0]; const h = e.hp; E.playerAct(f.b, 'h_pierce', e.id); return h - e.hp; };
+  const o = { act: ['h_prey', 'h_pierce'], eq: ['h_pierce'] };
+  const fa = fight('hunter', o), r0 = fa.b.round, pd = fa.b.pDouble, q0 = fa.b.queue.slice(0, 2).join(); const da = pierce(fa), d0 = pierce(hfight(o));
+  ok(r0 === 1 && pd === 1 && q0 === 'p,p', '개전 가속: 1라운드에 두 번 움직이고 그 라운드가 가속 라운드(pDouble 1)');
+  ok(Math.abs(da / d0 - 1.3) < 1e-6, '꿰뚫는 화살 ×1.3이 1라운드(실제 가속 라운드)에 붙음: ' + da + ' / ' + d0);
+  E.playerAct(fa.b, 'basic', fa.es[0].id); E.runUntilPlayer(fa.b); ok(fa.b.round === 2 && fa.b.pDouble !== fa.b.round && fa.b.queue.filter(x => x === 'p').length === 1, '2라운드(가속 없음)는 가속 라운드가 아님');
+  const fh = hfight(o); E.addS(fh.b, fh.p, 'haste', 1); fh.b.stepMode = true; E.playerAct(fh.b, 'basic', fh.es[0].id); E.runUntilPlayer(fh.b);
+  ok(fh.b.round === 2 && fh.b.pDouble === 2 && fh.b.queue[0] === 'p' && fh.b.queue[1] === 'p', '라운드 중에 얻은 가속: 다음 라운드(2)가 가속 라운드');
+  const fn = hfight(o); fn.b.stepMode = true; E.playerAct(fn.b, 'basic', fn.es[0].id); E.runUntilPlayer(fn.b);
+  ok(Math.abs(pierce(fh) / pierce(fn) - 1.3) < 1e-6, '그 라운드의 꿰뚫는 화살 ×1.3(가속 없는 2라운드와 비교)'); }
+// 결정 4: 큰 각인 제시 — 연 액티브 스킬(시작 · 찍은 스킬 노드 · 장착)에 유산 4가 없으면 결정의 칼을 뺀다(모든 직업)
+{ const ksHasCost4 = f('ksHasCost4');
+  const mk = (cls, act) => { const run = newRun(cls); run.lv = 16; run.clears = 2; run.seed = 91; run.ch = 2; E.ptFix(run); for (const id of ['pw1C', 'pw2L', 'pw3L', 'pw4L']) assert.equal(E.ptBuy(run, id), null, cls + ' ' + id); run.atree.own = act.slice(); run.skills = act.filter(id => E.atBuild(cls).nodes[id].kind === 'skill').slice(0, 4); E.atSync(run); return run; };
+  for (const [cls, a4, a0] of [['assassin', ['a_pouch', 'a_burst', 'a_cataclysm'], ['a_fang', 'a_hack', 'a_siphon', 'a_essence']], ['hunter', ['h_prey', 'h_pierce', 'h_heavy', 'h_doom'], ['h_prey', 'h_pierce']], ['spellblade', ['sb_deluge'], []]]) {
+    const r4 = mk(cls, a4), r0 = mk(cls, a0); const P = E.ptBuild(cls); const o4 = E.ksOfferMake(r4), o0 = E.ksOfferMake(r0);
+    ok(P.nodes.pwK5.fx === 'ks_crystal' && ksHasCost4(r4) && !ksHasCost4(r0), cls + ': 유산 4 스킬 판정(skCost(skOf))');
+    ok(o4.includes('pwK5') && !o0.includes('pwK5') && o0.length === 3 && JSON.stringify(E.ksOfferMake(r0)) === JSON.stringify(o0), cls + ': 유산 4가 있으면 결정의 칼(1칸) 제시, 없으면 빼고 다음 후보로 셋(같은 시드면 같은 셋) ' + o4.join(' ') + ' / ' + o0.join(' '));
+    ok(E.ksCands(r0).some(c => c.id === 'pwK5'), cls + ': 후보 계산(ksCands · ksInfo)은 그대로, 제시에서만 뺀다'); }
+  { const run = mk('assassin', ['a_pouch', 'a_burst']); run.skills = ['a_pouch', 'a_burst']; E.atSync(run); ok(!ksHasCost4(run), '시작 스킬은 유산 2'); run.atree.own.push('a_cataclysm'); ok(ksHasCost4(run), '찍기만 하고 끼우지 않은 유산 4 스킬도 연 스킬로 셈'); } }
+// 결정 5: 끊어진 영창 — 끊기 · 무너뜨리기 · 먼저 치우기만(막기 · 흘리기는 아님), 대응 한도 밖 +1, 전투마다 2번. 테스터 큰 각인 선호에 있음
+{ const ysResp = f('ysResp'), cutN = b => b.rec.filter(r => r.k === 'ys' && r.why === '끊어진 영창').length; const KS = R_('KS_LIST');
+  for (const why of ['끊기', '무너뜨리기', '먼저 치우기']) { const fe = efight({ ks: ['ctK5'] }); fe.p.ys = 0; ysResp(fe.b, why); ok(fe.p.ys === 2 && cutN(fe.b) === 1, '끊어진 영창: ' + why + ' → 대응 +1과 +1 더'); }
+  for (const why of ['막기', '흘리기']) { const fe = efight({ ks: ['ctK5'] }); fe.p.ys = 0; ysResp(fe.b, why); ok(fe.p.ys === 1 && cutN(fe.b) === 0, '끊어진 영창: ' + why + '은(는) +1 더 없음'); }
+  { const fe = efight({ ks: ['ctK5'] }); fe.p.ys = 0; ysResp(fe.b, '먼저 치우기'); ysResp(fe.b, '끊기'); ysResp(fe.b, '무너뜨리기'); ok(fe.p.ys === 3 && cutN(fe.b) === 2, '같은 라운드 셋: 대응 한도 1 + 전투마다 2번'); }
+  { const fe = efight({ ks: ['ctK5'] }); const { b, p, es } = fe; for (const e of es) e.hp = e.hpMax = 1; es[1].intent = { k: 'heavy' }; b.queue = ['p', es[1].id]; b.stepMode = true; p.ys = 0; E.playerAct(b, 'basic', es[1].id); ok(!es[1].alive && cutN(b) === 1 && b.rec.some(r => r.k === 'ys' && r.why === '먼저 치우기'), '실제 먼저 치우기(강타 예고 적을 그 차례 전에 쓰러뜨림)에도 +1 더'); }
+  { const fe = fight('assassin', {}); fe.p.ys = 0; ysResp(fe.b, '끊기'); ok(cutN(fe.b) === 0 && fe.p.ys === 1, '다른 직업에는 없음'); }
+  ok(/끊기 · 무너뜨리기 · 먼저 치우기/.test(KS.ks_el_cut.d) && KS.ks_el_cut.resp === 1, '설명: 끊기 · 무너뜨리기 · 먼저 치우기 (대응 큰 각인 표시 그대로)');
+  ok(/const KS_PREF = \[[^\]]*'ks_crystal', 'ks_el_cut', 'ks_breaker'/.test(require('fs').readFileSync(require('path').join(__dirname, 'dgqa.js'), 'utf8')), '테스터 큰 각인 선호: 끊어진 영창을 제어 큰 각인(무너뜨리는 자) 앞에'); }
+// 결정 3 측정 변형(ASN_SHADOW_VAR, 기본 데이터는 그대로): swap · rush 트리가 유효한지 따로 띄운 프로세스에서 본다
+{ const A0 = E.atBuild('assassin'); ok(!process.env.ASN_SHADOW_VAR ? A0.nodes.a_ambush.ring === 2 && A0.nodes.a_aim.ring === 1 && !A0.nodes.a_rush && Object.keys(A0.nodes).length === 52 : true, '기본 데이터: 후열 기습 2고리 · 칼끝 겨누기 1고리 · 그림자 연타 없음(시작 포함 52)');
+  const code = `process.env.DGDIR = '.'; const D = require('./tools/dgqa.js'), E = D.G0, R_ = D.run_; const A = E.atBuild('assassin'), N = A.nodes, skCost = R_('skCost'); const out = {};
+    const bfs = ok => { const d = { S: 0 }, q = ['S']; while (q.length) { const x = q.shift(); for (const y of N[x].links) if (d[y] == null && (!ok || ok(N[y]))) { d[y] = 1; q.push(y); } } return d; };
+    out.bi = Object.keys(N).every(id => N[id].links.every(y => N[y] && N[y].links.includes(id)) && (id === 'S' || N[id].links.length > 0));
+    out.reach = Object.keys(bfs()).length === Object.keys(N).length && [1, 2, 3].every(k => { const d = bfs(n => n.ring <= k); return Object.keys(N).every(id => N[id].ring > k || d[id] != null); });
+    const isConv = u => !!(u.mod && ((u.mod.set && ['time', 'tgt', 'hits'].some(k => k in u.mod.set)) || u.mod.conv)); const conv = {}; for (const u of Object.values(N)) if (u.kind === 'upgrade' && isConv(u)) conv[u.on] = (conv[u.on] || 0) + 1; out.conv = Object.values(conv).every(v => v <= 1);
+    out.upOn = Object.values(N).filter(u => u.kind === 'upgrade').every(u => N[u.on] && N[u.on].kind === 'skill' && u.links.includes(u.on));
+    const pos = Object.values(N).filter(x => x.br === '그림자').map(x => x.ring + ':' + x.pos.r + x.pos.lane); out.pos = new Set(pos).size === pos.length;
+    const p = { build: 'assassin', aup: [] }; out.cost = ['a_ambush', 'a_aim', 'a_rush'].map(id => N[id] ? skCost(E.skOf(p, id)) : 0).join();
+    out.ring = ['a_ambush', 'a_aim', 'au_smoke', 'a_after', 'a_shade', 'a_rush'].map(id => N[id] ? N[id].ring : 0).join(); out.link = ['a_after', 'a_shade', 'a_ambush', 'a_aim', 'a_rush'].map(id => N[id] ? N[id].links.filter(y => (N[y].kind === 'skill' || y === 'S') && N[y].pos.r < N[id].pos.r).join('+') : '').join(); // 위 칸(부모)
+    out.n = Object.keys(N).length; out.gone = R_('AT_GONE').assassin.includes('a_rush'); out.smokeOn = N.au_smoke.on;
+    const row = D.playChar('careful', 'assassin', 7017); out.bugs = row.bugs.length; out.acts = row.acts > 0; console.log(JSON.stringify(out));`;
+  for (const [v, want] of [['swap', { cost: '2,2,0', ring: '1,2,2,2,2,0', link: 'a_ambush,a_ambush,a_deflect,a_shadow,', n: 52, gone: true }], ['rush', { cost: '2,2,3', ring: '2,1,1,2,2,2', link: 'a_aim,a_aim,a_shadow,a_deflect,a_shadow', n: 53, gone: false }]]) {
+    const r = require('child_process').spawnSync(process.execPath, ['-e', code], { cwd: require('path').join(__dirname, '..'), env: Object.assign({}, process.env, { ASN_SHADOW_VAR: v, FOCUS: '그림자', DGDIR: '.' }), encoding: 'utf8', maxBuffer: 1 << 26 });
+    const o = JSON.parse((r.stdout || '').trim().split('\n').pop() || '{}');
+    ok(o.bi && o.reach && o.conv && o.upOn && o.pos, 'ASN_SHADOW_VAR=' + v + ': 양방향 연결 · 시작에서 고리 잠금 안에서 닿음 · [전환] 스킬마다 하나 · 강화가 스킬에 붙음 · 그림자 자리 겹침 없음 ' + JSON.stringify(o) + (r.stderr || '').slice(-300));
+    ok(o.cost === want.cost && o.ring === want.ring && o.link === want.link && o.n === want.n && o.gone === want.gone && o.smokeOn === 'a_aim', 'ASN_SHADOW_VAR=' + v + ': 비용 · 고리 · 연결 · 노드 수 · AT_GONE ' + JSON.stringify(o));
+    ok(o.bugs === 0 && o.acts, 'ASN_SHADOW_VAR=' + v + ': 테스터 한 판(그림자 고정) 버그 없음'); } }
 console.log('wm-check: ' + n + '개 통과');

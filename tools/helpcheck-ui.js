@@ -64,7 +64,7 @@ module.exports = function (api) {
   A('그 숫자만큼 피해를 더 받고 1 줄어듭니다(상한 10)', 'KW.ignite = 10, kwTaken: kwDec(ignite) 1', () => E('KW.ignite') === 10 && has('20-battle-state.js', "kwDec(u, 'ignite')"));
   A('맨 뒤로 밀리고 1 줄어듭니다(상한 3)', 'KW.chill = 3, roundOrder: kwDec(chill) 1', () => E('KW.chill') === 3 && has('34-rounds-setup.js', "kwDec(u, 'chill')"));
   A('라운드 맨 앞에서 두 번 연달아 움직이고 1 줄어듭니다', "roundOrder: 사냥꾼 haste 두 번, kwDec(haste) 1", () => has('34-rounds-setup.js', "kwDec(u, 'haste')") && has('34-rounds-setup.js', /p\.s\.haste && p\.build === 'hunter'/));
-  A('한 라운드에 한 번이고 상한 3입니다', 'KW.haste = 3, b.pDouble 라운드마다 한 번', () => E('KW.haste') === 3 && has('34-rounds-setup.js', 'b.pDouble = (b.round || 0) + 1'));
+  A('한 라운드에 한 번이고 상한 3입니다', 'KW.haste = 3, b.pDouble 라운드마다 한 번', () => E('KW.haste') === 3 && has('34-rounds-setup.js', 'b.pDouble = b.round || 0'));
   A('공격할 때마다 그 공격의 피해가 25% 줄고 1 줄어듭니다(상한 5)', 'outDmg weak ×0.75 · KW.weak = 5 · finishPlayer kwDec(weak) 1', () => E('KW.weak') === 5 && has('32-player-action.js', 'if (p.s.weak) d *= 0.75') && has('32-player-action.js', "kwDec(p, 'weak')"));
   A('공격할 때마다 그 공격의 피해가 25% 늘고 1 줄어듭니다(상한 5)', 'outDmg empower ×1.25 · KW.empower = 5 · kwDec(empower) 1', () => E('KW.empower') === 5 && has('32-player-action.js', 'd *= 1.25') && has('32-player-action.js', "kwDec(p, 'empower')"));
   A('직접 피해를 받을 때마다 그 피해가 25% 늘고 1 줄어듭니다(상한 5)', 'kwTaken vuln ×1.25, kwDec(vuln) 1 · KW.vuln = 5', () => E('KW.vuln') === 5 && has('20-battle-state.js', "if (u.s.vuln) { d *= 1.25; kwDec(u, 'vuln'); }"));

@@ -94,6 +94,8 @@ for (const c of CLS) {
 { const run = newRun('spellblade'); run.lv = 6; E.ptFix(run); run.clears = 1; run.seed = 77; run.ch = 1;
   for (const id of ['lg1C', 'lg2L', 'lg3L', 'pw1C', 'pw2R', 'pw3R', 'su1C', 'su2L', 'ct1C', 'ct2L']) assert.equal(E.ptBuy(run, id), null, id);
   ok(E.ksGrant(run, 'b1') && !E.ksGrant(run, 'b1') && run.ksPending === 1, '같은 때는 한 번만 준다');
+  { const o4 = E.ksOfferMake(run); ok(o4.length === 3 && !o4.includes('pwK5'), '유산 4 스킬을 열지 않았으면 결정의 칼(pwK5)은 빠지고 다음 후보가 셋을 채움(10월 18일 0.8.0 5단계 결정 4): ' + o4.join(' ')); }
+  run.atree.own.push('sb_deluge'); // 10월 18일 0.8.0 5단계: 아래 제시 규칙 점검은 유산 4 스킬(혈인 혈우 낙하 sb_deluge)을 연 캐릭터로 본다
   const off = E.ksEnsureOffer(run); const C = off.map(id => ksInfo(run, id)); ok(off.length === 3, '셋을 보인다');
   ok(C.every(c => c.d <= PT.ksN), '모두 3칸 안: ' + C.map(c => c.id + ':' + c.d).join(' '));
   ok(new Set(C.map(c => c.dir)).size === 3, '셋은 서로 다른 방향');

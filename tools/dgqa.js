@@ -24,7 +24,8 @@ function loadGame() {
 const G0 = loadGame();
 const run_ = code => vm.runInContext(code, G0);
 if (process.env.CFG) run_(process.env.CFG); // 시험할 수치: CFG='DIFF[1].upper.dmg=1.3; BOSSES.abbot.mult=7'
-if (process.env.HUNT_BRIDGE) run_("{ const u = ATREE_DEF.hunter.ups.find(x => x[0] === 'hu_link3'); u[8].cond.when = 'linkFast'; u[7] = '연계로 쓰거나, 이번 차례에 빠른 기동 스킬을 먼저 썼으면 비용 −1(바닥 1, 라운드에 한 번).'; }"); // 0.8.0 5단계 측정 변형(원거리 초안 8절 보완 2): 이어 묶는 화살 = 연계이거나 이번 차례에 빠른 기동 스킬을 먼저 씀. 기본값 아님
+if (process.env.HUNT_BRIDGE) run_("{ const u = ATREE_DEF.hunter.ups.find(x => x[0] === 'hu_link3'); u[8].cond.when = 'linkFast'; u[7] = '연계로 쓰거나, 이번 차례에 빠른 기동 스킬을 먼저 썼으면 비용 −1(바닥 1, 라운드에 한 번).'; }");
+if (process.env.ASN_SHADOW_VAR) { Q.asnShadowVar(run_('ATREE_DEF'), run_('AT_GONE'), process.env.ASN_SHADOW_VAR); run_('delete ATREE.assassin; SKC.clear()'); } // 10월 18일 0.8.0 5단계 측정 변형(원거리 초안 10절 결정 3): 암살자 그림자 swap · rush(qa.js asnShadowVar). 기본값 아님 // 0.8.0 5단계 측정 변형(원거리 초안 8절 보완 2): 이어 묶는 화살 = 연계이거나 이번 차례에 빠른 기동 스킬을 먼저 씀. 기본값 아님
 /* 10월 17일 측정 도구 보완: 판 기록마다 꼬리표(out.meta: 게임 · 도구 지문, 시드, 성향, 직업, 시작 챕터, 변형, 행동을 바꾸는 환경 변수)를 남기고,
    실패 · 중단(out.fails: 예외 · 행동 한도 · 걸음 한도 · 방 없음 · 창 한도)을 글이 아닌 칸으로도 남긴다. tools/measure-validate.js가 읽는다 */
 const MM = require('./measure-meta.js'); const REV = MM.revision(path.resolve(__dirname, '..', DIR));
@@ -147,7 +148,7 @@ function spendPassive(pk, r) {
     if (G0.ptBuy(run, pick)) break;
   }
 }
-const KS_PREF = ['ks_deep', 'ks_wall', 'ks_sb_blood', 'ks_cycle', 'ks_crystal', 'ks_breaker', 'ks_first', 'ks_sb_beat', 'ks_glass', 'ks_flow', 'ks_hammer', 'ks_sb_over', 'ks_brim', 'ks_dry', 'ks_heavy', 'ks_double', 'ks_bare'];
+const KS_PREF = ['ks_deep', 'ks_wall', 'ks_sb_blood', 'ks_cycle', 'ks_crystal', 'ks_el_cut', 'ks_breaker', 'ks_first', 'ks_sb_beat', 'ks_glass', 'ks_flow', 'ks_hammer', 'ks_sb_over', 'ks_brim', 'ks_dry', 'ks_heavy', 'ks_double', 'ks_bare']; // 10월 18일 0.8.0 5단계(원거리 초안 10절 결정 5): 끊어진 영창(원소술사 제어 K5)을 제어 큰 각인 무너뜨리는 자 바로 앞에 둔다(전에는 목록에 없어 0/80판)
 function ksChoice(pk, r, run) {
   const offer = run.ksOffer || []; if (pk === 'novice') return offer[Math.floor(r() * offer.length)];
   const T = G0.ptBuild(run.build); const sc = id => { const i = KS_PREF.indexOf(T.nodes[id].fx); return (i < 0 ? 99 : i) + r() * 0.5; };
@@ -406,6 +407,7 @@ function jumpTo(pk, r, ch) {
   for (const u of run.bag.slice()) G0.discardUid(run, u); // 뺀 시작 장비는 버린다
   const ids = Object.keys(G0.CONS).filter(k => (G0.CONS[k].ch || 1) < ch && G0.CONS[k].use !== 'none'); G0.consAdd(run, 'herb', 'n', 3); for (let k = 0; k < 3; k++) G0.consAdd(run, ids[Math.floor(r() * ids.length)], 'n', 1);
   G0.applyGear(run); run.p.hp = run.p.hpMax; run.p.st = run.p.stMax; run.p.flask.life = run.p.flaskMax; run.p.flask.mana = run.p.flaskMax; run.p.flask.stam = run.p.flaskMax; run.gold = 0;
+  if (process.env.DG_JUMP !== 'chrono' && !process.env.KS_ACT_OLD) { run.ch = ch - 1; spendTree(pk, r); G0.treeSync(run); } /* 10월 18일 0.8.0 5단계(원거리 초안 10절 결정 4): 큰 각인 제시가 연 액티브 스킬(유산 4가 있는가)을 보므로, 앞 챕터를 깬 캐릭터처럼 액티브를 먼저 찍고 정산 큰 각인을 받는다. 전에는 Lv1에 찍은 2점만 연 채 받았다. KS_ACT_OLD=1이면 예전 순서 */
   for (let c = 1; c < ch; c++) { run.ch = c; spendPassive(pk, r); if (G0.ksGrant(run, 'b' + c)) { G0.ksEnsureOffer(run); if (run.ksOffer) G0.ksTake(run, ksChoice(pk, r, run)); } } /* 정산 뒤의 큰 각인 (앞 챕터를 깬 캐릭터 흉내) */
   spendPassive(pk, r); spendTree(pk, r); G0.treeSync(run); G0.applyGear(run); run.p.hp = run.p.hpMax; run.p.st = run.p.stMax;
   run.ch = ch - 1; run.phase = 'wait'; G0.enterChapter(run);
