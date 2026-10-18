@@ -12,6 +12,7 @@ function onClick(ev) {
   switch (a) {
     case 'cptoggle': { if (!G.sheet || G.sheet.kind !== 'consfull') break; const d = G.sheet.data, i = +el.dataset.k; d.skip = d.skip || []; d.skip = d.skip.includes(i) ? d.skip.filter(x => x !== i) : d.skip.concat([i]); render(); break; }
     case 'patrolpick': patrolPick(el.dataset.k); break; // 0.8.0 6단계 A-6
+    case 'kitpick': kitPick(el.dataset.s, el.dataset.k); break; // 0.8.0 6단계 C
     case 'cptake': { const run = G.run; if (!run || !G.sheet || G.sheet.kind !== 'consfull' || G.b) break; const skip = G.sheet.data.skip || []; consTakePending(run, skip); G.sheet = null; saveRunLocal(); saveCur(); nextDrop(); break; }
     case 'cpkeep': case 'cpskip': case 'cpreplace': {
       const run=G.run;
@@ -63,7 +64,7 @@ function onClick(ev) {
     case 'unlall': G.data.unlAll = G.data.unlAll ? 0 : 1; saveLocal(); render(); break;
     case 'settleok': { unlNewsSeen(); const run = G.run, p = run.p, S = run.settle; if (!S || run.phase !== 'settle') break; if(run.gearPending){nextDrop();break;}
       if (run.markCh) { markFinish(run); break; } // 표식 도전은 보스에서 끝난다
-      run.gold = S.total; p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax; for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = flaskCap(p, fk); sfx('coin');
+      run.gold = S.total; run.settleGold = S.total; p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax; for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = flaskCap(p, fk); sfx('coin');
       genShop(run); run.phase = 'shop'; G.scr = 'shop'; if (CHAPTERS[(run.ch || 1) + 1] && isV2(p)) ksGrant(run, 'b' + (run.ch || 1)); /* 10월 16일 0.8.0 2단계: 1 · 2챕터 정산 뒤 큰 각인 */ saveRunLocal(); saveCur(); window.scrollTo(0, 0);
       render(); ksOpen(); break; }
     case 'eqlock': { const it=G.run && G.run.inv[el.dataset.k];if(it){it.locked=!it.locked;it.fresh=false;saveRunLocal();saveCur();render();}break; }
@@ -96,7 +97,7 @@ function onClick(ev) {
     case 'treereset': { const run = G.run, S = run.shop; if (!S || run.phase !== 'shop' || !run.atree) break; const cost = atResetCost(run); const n = run.atree.own.length; if (!n || (run.gold || 0) < cost) break; if (!ask(cost + ' 골드를 내고 연 액티브 노드 ' + n + '개를 모두 닫을까요? 포인트 ' + n + '점을 돌려받고, 끼운 트리 스킬도 빠집니다.')) break;
       run.gold -= cost; S.log.push({ a: 'treereset', price: cost, from: run.atree.own.slice(), t: Date.now() }); atReset(run); saveRunLocal(); saveCur(); sfx('coin'); toast('액티브 트리를 되돌렸습니다. 포인트 ' + n + '점을 다시 씁니다'); G.back = G.scr; G.scr = 'tree'; G.tview = 'a'; G.sheet = null; render(); window.scrollTo(0, 0); break; }
     case 'nextch': { const run = G.run; if (!run || run.phase !== 'wait') break; enterChapter(run); break; }
-    case 'shopleave': { const run = G.run; if (run.phase !== 'shop') break; run.phase = 'clearsv'; G.scr = 'survey'; saveRunLocal(); saveCur(); pushRank(run, 'clear'); render(); window.scrollTo(0, 0); break; }
+    case 'shopleave': { const run = G.run; if (run.phase !== 'shop') break; if (run.markShop) { if (run.kitPick) { openSheet('kitpick', {}); break; } run.markShop = 0; run.phase = null; G.scr = 'run'; saveRunLocal(); saveCur(); toast(run.ch + '챕터 · ' + chData(run.ch).n); render(); window.scrollTo(0, 0); break; } /* 0.8.0 6단계 C: 꾸러미 판은 상점에서 바로 그 챕터 1층으로 */ run.phase = 'clearsv'; G.scr = 'survey'; saveRunLocal(); saveCur(); pushRank(run, 'clear'); render(); window.scrollTo(0, 0); break; }
     case 'createcancel': cancelCreate(); break;
     case 'door': chooseDoor(+el.dataset.k); break;
     case 'path': choosePath(el.dataset.k); break;
@@ -105,7 +106,7 @@ function onClick(ev) {
     case 'ibopen': case 'ibback': case 'ibpage': case 'ibtype': case 'ibreset': itemBookClick(a,el); break;
     case 'toasts': openSheet('toasts'); break;
     case 'rest': { const run = G.run, p = run.p, R = roomDef();
-      if (R.type === 'camp') { const C = campInit(run); if (C.rested) break; C.rested = 1; p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax; for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = Math.min(flaskCap(p, fk), (p.flask[fk] || 0) + 1); saveRunLocal(); saveCur(); toast('불가에서 쉬었습니다. 모두 찼습니다'); render(); ksOpen(); break; } // 10월 14일 개편 5단계: 쉬어도 야영지에 남는다(떠나기는 campleave)
+      if (R.type === 'camp') { const C = campInit(run); if (C.rested) break; C.rested = 1; p.hp = Math.min(p.hpMax, p.hp + p.hpMax * CAMP_REST.hp); p.mp = p.mpMax; p.st = p.stMax; for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = Math.min(flaskCap(p, fk), (p.flask[fk] || 0) + 1); saveRunLocal(); saveCur(); toast('불가에서 쉬었습니다. 생명력 +' + Math.round(CAMP_REST.hp * 100) + '%, 스태미나와 플라스크가 찼습니다'); render(); ksOpen(); break; } // 10월 14일 개편 5단계: 쉬어도 야영지에 남는다(떠나기는 campleave)
       const sp = 0.5 * (1 + fxVal(p, 'spring', 0, (a, v) => a + v)); p.hp = Math.min(p.hpMax, p.hp + p.hpMax * sp); p.mp = Math.min(p.mpMax, p.mp + p.mpMax * sp);
       p.flask.life = Math.min(flaskCap(p, 'life'), p.flask.life + 1 + fxVal(p, 'springLife', 0, (a, v) => a + v)); p.flask.mana = Math.min(flaskCap(p, 'mana'), p.flask.mana + 1); p.flask.stam = Math.min(flaskCap(p, 'stam'), (p.flask.stam || 0) + 1);
       run.rooms.push({ room: run.room, type: 'spring', spring: 1 }); advanceFloor(); toast('샘물로 상처를 씻었습니다'); render(); break; }

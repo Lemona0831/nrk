@@ -161,7 +161,7 @@ function vCamp(run) {
   const rows = C.cons.map((x, i) => { const D = CONS[x.id]; if (!D) return ''; const why = consBuyWhy(run, x); return `<div class="bagline consrow"><div><b>${D.ico} ${esc(D.n)}</b> <span class="mini">남은 ${x.left}개</span><br><small class="mini">${esc(D.d(D.v))}</small></div><div class="row">${adisBtn(why, 'sm' + (why ? '' : ' gold'), 'consbuy', i, x.price + ' 골드에 사기').replace('data-a="consbuy"', 'data-a="consbuy" data-s="camp"')}${consFillBtn(run, x, i, 'camp')}</div></div>`; }).join('');
   return `<h3>⛺ 야영지</h3><p class="lore">무너진 예배당 한쪽에 아직 따뜻한 재가 남아 있다. 떠돌이 상인이 불가에 짐을 풀었다.</p><p>정비를 마치면 직접 떠납니다. 여기서부터 하층이라 적이 더 거셉니다.</p>`
     + (C.sold ? `<p class="mini">전리품 주머니의 판매품 ${C.sold.n}개를 골드 ${C.sold.gold}로 바꿨습니다.</p>` : '')
-    + '<h4>불가</h4>' + (C.rested ? '<p class="mini">불가에서 쉬었습니다. 생명력 · 스태미나가 찼고 플라스크가 하나씩 찼습니다.</p>' : '<p class="mini">쉬면 생명력과 스태미나가 모두 차고, 플라스크가 하나씩 찹니다.</p><button class="gold" data-a="rest" data-focus>쉬기</button>')
+    + '<h4>불가</h4>' + (C.rested ? '<p class="mini">불가에서 쉬었습니다. 생명력을 ' + Math.round(CAMP_REST.hp * 100) + '% 되찾고 스태미나가 찼고 플라스크가 하나씩 찼습니다.</p>' : '<p class="mini">쉬면 생명력을 최대 생명력의 ' + Math.round(CAMP_REST.hp * 100) + '%만큼 되찾고, 스태미나가 차고, 플라스크가 하나씩 찹니다.</p><button class="gold" data-a="rest" data-focus>쉬기</button>')
     + `<h4>떠돌이 상인 <span class="mini">물가 ×${C.mul.toFixed(1)}</span></h4><p class="mini">골드 ${run.gold || 0} · 소모품 가방 ${consUsed(run)}/${CONS_BAG}칸. 챕터 끝 상점보다 비쌉니다.</p><div class="baglist">${rows}</div>`
     + `<button class="wide${C.rested ? ' gold' : ''}" data-a="campleave">${C.rested ? '정비를 마치고 내려간다' : '쉬지 않고 내려간다'}</button>`;
 }
@@ -201,7 +201,7 @@ function enterChapter(run) {
   const mode = run.mode === 'hard' ? 'hard' : 'normal'; run.mode = mode;
   if (run.shop) (run.shopHist = run.shopHist || []).push({ ch: run.shop.ch, gold: run.gold || 0, log: run.shop.log || [], stock: run.shop.stock.map(x => ({ tpl: x.it.tpl, g: x.it.g, price: x.price, sold: x.sold })), cons: (run.shop.cons || []).map(x => ({ id: x.id, price: x.price })) }); // 다음 챕터 상점이 열려도 지난 방문 기록은 남긴다
   const keepDoors = run.doorLog || []; run.ch = nx; { const rf = consChRefund(run); if (rf.gold && typeof toast === 'function') toast('챕터 전용 소모품 ' + rf.names.join(', ') + '을(를) 골드 ' + rf.gold + '로 바꿨습니다'); } run.boss = chData(nx).boss; run.phase = null; run.settle = null; run.shop = null; run.result = null;
-  delete run.dg; dgInit(run); chGift(run, nx, true); run.doorLog = keepDoors; (run.chLog = run.chLog || []).push({ ch: nx, mode, lv: run.lv, gold: run.gold, t: Date.now() });
+  delete run.dg; dgInit(run); chGift(run, nx, true); run.doorLog = keepDoors; (run.chLog = run.chLog || []).push({ ch: nx, mode, lv: run.lv, gold: run.gold, settleGold: run.settleGold != null ? run.settleGold : null, gear: Object.keys(run.eqU || {}).map(sl => run.eqU[sl] && run.inv[run.eqU[sl]] ? run.inv[run.eqU[sl]].g : null).filter(Boolean), cons: (run.cons || []).reduce((a, c) => a + (c.n || 0), 0), t: Date.now() }); /* 0.8.0 6단계 C-1: 챕터에 들어설 때의 장비 등급 · 소모품 수 */
   G.scr = 'run'; G.b = null; G.sel = null; saveRunLocal(); saveCur(); render(); toast(nx + '챕터 · ' + chData(nx).n); if (chData(nx).enterLore) toast(chData(nx).enterLore); if ((run.awkLog || []).some(x => x.gift && x.ch === nx)) toast('각인을 얻었습니다: ' + AWK_MAP[run.awkLog.filter(x => x.gift && x.ch === nx)[0].id].n); return true;
 }
 function vWait() {

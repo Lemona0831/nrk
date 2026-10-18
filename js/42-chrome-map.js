@@ -93,7 +93,7 @@ function doorCard(r, i) {
   if (T.fight) {
     const SQ = r.squad && SQUADS.find(x => x.id === r.squad); if (SQ) body += `<span class="mini dr-sq">${esc(SQ.n)}</span>`;
     body += `<span class="dr-what">${(r.en || []).map((x, k) => esc(roomEnemyName(r, x, k))).join(' · ')} <span class="mini">Lv${r.lv || 1}</span></span>`;
-    if (r.ambush) body += `<span class="mini">적 선공 · 생명력 ×${AMBUSH.hp} · 피해 ×${AMBUSH.dmg}</span>`;
+    if (r.ambush) body += `<span class="mini">정예 ${AMBUSH.elite} · 생명력 ×${AMBUSH.hp} · 피해 ×${AMBUSH.dmg}</span>`;
     body += roomXpHint(r, G.run && G.run.mode);
   }
   if (r.shrine) { const S = SHRINES.find(x => x.id === r.shrine); body += `<span class="dr-what">${esc(S.n)}</span><span class="mini">${esc(S.d)} 3개 방 동안.</span>`; }

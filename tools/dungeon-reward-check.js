@@ -19,14 +19,14 @@ for(const build of Object.keys(E.TREE2))for(const ch of [1,2,3])for(const mode o
  E.__G.run={mode};const html=E.doorCard(room,0);
  assert(html.includes('기본 경험치 '+E.roomExpectedXp(room,mode)));
  for(let i=0;i<room.en.length;i++)assert(html.includes(E.roomEnemyName(room,room.en[i],i)));
- assert.equal(html.includes('적 선공'),type==='ambush');
+ assert.equal(html.includes('정예 '+D.run_('AMBUSH.elite')+' · 생명력'),type==='ambush'); // 0.8.0 6단계 A-6: 순찰대는 먼저 덮치지 않고 정예가 둘
  cases++;
 }
 E.roomXpMul=current;
 assert.equal(E.xpOf({role:'minion',lv:1,summoned:true,xpCh:100}),0);
 const hidden={type:'normal',ch:1,lv:1,en:[['minion',0]],hide:1,mods:[],risk:1,gold:123};
 E.__G.run={mode:'normal'};const h=E.doorCard(hidden,0);
-assert(h.includes('기본 경험치 8'));assert(h.includes('보상은 열어 봐야 안다'));assert(!h.includes('123'));
+assert(h.includes('기본 경험치 11')); // 0.8.0 6단계 A-2: 경험치 ×1.5(전에는 8)assert(h.includes('보상은 열어 봐야 안다'));assert(!h.includes('123'));
 for(const ch of [1,2,3])for(const mode of ['normal','hard'])near(E.roomXpMul({ch,mode,type:'normal',boss:1}),D.run_('chData('+ch+').xp')*(mode==='hard'?D.run_('MODES.hard.xp'):1));
 assert.equal(E.roomEnemyName({swift:[0],fire:[0]},['archer',1],0),'[신속] [화염 강화] 정예 사수');
 console.log(JSON.stringify({passed:true,cases,classes:Object.keys(E.TREE2).length,scope:'적 수치 유지, 방 유형·챕터·난이도별 경험치, 표시와 실제 보상, 소환 적 제외, 숨긴 보상 유지'}));

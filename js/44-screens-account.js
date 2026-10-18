@@ -130,11 +130,14 @@ function markSetup(run, M) {
   if (ch > 1) markKit(run, ch);
   else { for (const fk of ['life', 'mana', 'stam']) run.p.flask[fk] = Math.min(run.p.flask[fk], flaskCap(run.p, fk)); }
 }
-/* 챕터 시작 꾸러미: 앞 챕터 풀의 장비. 무기 · 갑옷은 고급, 나머지는 평범(직업에 맞는 첫 장비, 수치는 등급의 가운데), 약초 묶음 셋 */
+/* 챕터 시작 꾸러미 (0.8.0 6단계 C, MARK_KIT): 앞 챕터 풀의 장비, 수치는 등급의 가운데. 무기 · 갑옷은 직업에 맞는 셋 가운데 하나를 상점에 들어설 때 고른다(kitpick).
+   나머지 칸은 직업에 맞는 첫 장비. 골드 · 약초 묶음은 MARK_KIT. 시작 자리는 앞 챕터 정산 뒤 상점(run.markShop) */
+const kitCands = (run, ch, sl, g) => { const p = run.p; const kind = sl === 'ring1' || sl === 'ring2' ? 'ring' : sl; const owned = Object.values(run.inv).map(x => x.tpl); const pool = poolOf(ch - 1).filter(k => ITEMS[k] && ITEMS[k].kind !== 'start' && tplKind(k) === kind && poolOk(p, k) && !owned.includes(k)); const fit = pool.filter(k => itemFits(p, k) && (ITEMS[k].g || 'n') === g), any = pool.filter(k => (ITEMS[k].g || 'n') === g); return fit.length ? fit : any.length ? any : pool; };
 function markKit(run, ch) {
-  const p = run.p;
-  for (const sl of ['weapon', 'armor', 'gloves', 'amulet', 'ring1', 'ring2']) {
-    const kind = sl === 'ring1' || sl === 'ring2' ? 'ring' : sl; const g = sl === 'weapon' || sl === 'armor' ? 'm' : 'n';
+  const p = run.p; const K = MARK_KIT[ch] || MARK_KIT[2];
+  run.kitPick = { ch, opts: {} }; for (const sl of ['weapon', 'armor']) { const L = kitCands(run, ch, sl, K[sl]).slice(); const o = []; while (o.length < 3 && L.length) o.push(L.splice(Math.floor(Math.random() * L.length), 1)[0]); run.kitPick.opts[sl] = { g: K[sl], tpl: o }; }
+  for (const sl of ['gloves', 'amulet', 'ring1', 'ring2']) {
+    const kind = sl === 'ring1' || sl === 'ring2' ? 'ring' : sl; const g = K.rest[sl] || 'n';
     const owned = Object.values(run.inv).map(x => x.tpl);
     const pool = poolOf(ch - 1).filter(k => ITEMS[k] && ITEMS[k].kind !== 'start' && tplKind(k) === kind && poolOk(p, k) && !owned.includes(k));
     const fit = pool.filter(k => itemFits(p, k) && (ITEMS[k].g || 'n') === g), any = pool.filter(k => (ITEMS[k].g || 'n') === g);
@@ -143,9 +146,18 @@ function markKit(run, ch) {
     const it = mkItem(L[0], { g: ig, ch: ch - 1, b: Math.round((R.lo + R.hi) / 2 * 10) / 10 }); run.inv[it.uid] = it; run.bag.push(it.uid); equipUid(run, it.uid, sl);
   }
   for (const u of run.bag.slice()) discardUid(run, u); // 바꾸고 남은 시작 장비
-  consAdd(run, 'herb', 'n', 3);
+  consAdd(run, 'herb', 'n', K.herb); run.gold = K.gold; run.markShop = 1;
   applyGear(run); p.hp = p.hpMax; p.st = p.stMax; for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = flaskCap(p, fk);
 }
+/* 꾸러미 무기 · 갑옷 고르기: 고른 것을 끼우고 시작 장비는 버린다. 둘 다 고르면 창을 닫는다 */
+function kitPick(sl, tpl) {
+  const run = G.run, K = run && run.kitPick; if (!K || !K.opts[sl] || !K.opts[sl].tpl.includes(tpl)) return;
+  const g = K.opts[sl].g, R = GRADE[g] || GRADE.n; const old = run.eqU[sl]; const it = mkItem(tpl, { g, ch: K.ch - 1, b: Math.round((R.lo + R.hi) / 2 * 10) / 10 }); run.inv[it.uid] = it; run.bag.push(it.uid); equipUid(run, it.uid, sl);
+  if (old && run.inv[old] && ITEMS[run.inv[old].tpl].kind === 'start') discardUid(run, old); delete K.opts[sl];
+  if (!Object.keys(K.opts).length) { run.kitPick = null; G.sheet = null; } applyGear(run); run.p.hp = run.p.hpMax; saveRunLocal(); saveCur(); render();
+}
+/* 꾸러미로 시작하는 판(표식 도전 2 · 3챕터): 배분을 마치면 앞 챕터 정산 뒤 상점에 선다. 상점 물건은 앞 챕터 것 */
+function markShopOpen(run) { const c0 = run.ch; run.ch = c0 - 1; genShop(run); run.ch = c0; run.phase = 'shop'; G.scr = 'shop'; if (run.kitPick) openSheet('kitpick', {}); saveRunLocal(); saveCur(); render(); }
 function markWin(run) { // 표식 도전의 보스를 이겼을 때: 최고 점수를 남긴다
   const k = run.build + '|' + run.markCh + '|' + (run.mode === 'hard' ? 'h' : 'n'), mb = markBestData(), sc = run.markPts || 0;
   run.markScore = sc; if (!mb[k] || sc > (mb[k].score || 0)) mb[k] = { score: sc, ids: (run.marks || []).slice(), lv: run.lv || 1, cname: run.cname || '', at: Date.now() };

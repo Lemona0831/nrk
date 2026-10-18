@@ -99,9 +99,10 @@ function mkRoom(run, t, f, opt) {
     else if (t !== 'strong' && Math.random() < MOD_CHANCE[low ? 'lower' : 'upper']) r.mods = rollMods(1, ch);
     else r.mods = [];
     if (markOn(run, 'trait') && t !== 'strong') { const ex = ch >= 3 ? rollMods3(run, 1, f, null) : rollMods(1, ch); for (const k of ex) if (!r.mods.includes(k)) r.mods.push(k); } // 표식 trait: 방 특성 하나 더
+    if (t === 'normal' && f >= NORMAL_ROOM.from) { let k = (f >= NORMAL_ROOM.from2 ? NORMAL_ROOM.elite2 : NORMAL_ROOM.elite) - r.en.filter(x => x[1]).length; for (const x of r.en) if (k > 0 && !x[1] && x[0] !== 'minion' && x[0] !== 'bomber') { x[1] = 1; k--; } } // 0.8.0 6단계 B-5: 일반 방 정예(2층부터 하나 · 4층부터 둘)
     if (t === 'ambush') { r.ambush = 1; let k = AMBUSH.elite; for (const x of r.en) if (k > 0 && !x[1] && x[0] !== 'bomber') { x[1] = 1; k--; } } // 매복: 정예 하나 더
     r.tough = r.en.map((x, k) => x[1] && !(r.strong && k === 0) ? k : -1).filter(k => k >= 0 && Math.random() < TOUGH_CHANCE[low ? 'lower' : 'upper'] * (markOn(run, 'elite') ? MARKS.elite.mul : 1)); // 정예에게 강인 (표식 elite: 접사 확률 배율) (강적 본인은 제외)
-    if (ch >= 3) { if (!r.ambush) { const sw = [], fi = []; r.tough = r.tough.filter(k => { const o = [['tough', AFFIX_W3.tough]].concat(f >= SWIFT.from ? [['swift', AFFIX_W3.swift]] : []).concat(f >= FIRE_AFFIX.from ? [['fire', AFFIX_W3.fire * (run.path === 'rough' ? 1.5 : 1)]] : []); let x = Math.random() * o.reduce((a, c) => a + c[1], 0); let pk = o[0][0]; for (const c of o) { x -= c[1]; if (x <= 0) { pk = c[0]; break; } } if (pk === 'swift') sw.push(k); if (pk === 'fire') fi.push(k); return pk === 'tough'; }); r.swift = sw; r.fire = fi; } } // 3챕터 접사: 강인 · 신속 · 화염 강화(15층부터), 매복은 강인만
+    if (ch >= 3) { if (!r.ambush) { const sw = [], fi = []; r.tough = r.tough.filter(k => { const o = [['tough', AFFIX_W3.tough]].concat(f >= SWIFT.from ? [['swift', AFFIX_W3.swift]] : []).concat(f >= FIRE_AFFIX.from ? [['fire', AFFIX_W3.fire * (run.path === 'rough' ? 1.5 : 1)]] : []); let x = Math.random() * o.reduce((a, c) => a + c[1], 0); let pk = o[0][0]; for (const c of o) { x -= c[1]; if (x <= 0) { pk = c[0]; break; } } if (pk === 'swift') sw.push(k); if (pk === 'fire') fi.push(k); return pk === 'tough'; }); r.swift = sw; r.fire = fi; } } // 3챕터 접사: 강인 · 신속 · 화염 강화(FIRE_AFFIX.from층부터), 순찰대는 강인만
     else if (ch >= 2 && f >= SWIFT.from && !r.ambush) { r.swift = r.tough.filter(() => Math.random() < SWIFT.share); r.tough = r.tough.filter(k => !r.swift.includes(k)); } // 신속 접사: 접사의 절반, 매복은 강인만
     r.gold = Math.round(rint(T.gold[0], T.gold[1]) * P.gold * (chData(ch).gold || 1) * (run.mode === 'hard' ? MODES.hard.gold : 1));
     r.risk = Math.max(1, Math.min(4, T.risk + (low ? 1 : 0) + P.risk));
@@ -161,7 +162,7 @@ function dgFix(run) {
 const floor24to16 = f => f >= 24 ? 16 : f === 12 ? 8 : f <= 11 ? Math.max(1, Math.round(f * 7 / 11)) : 8 + Math.max(1, Math.round((f - 12) * 7 / 11));
 function dgTo16(run) {
   const m = floor24to16; const r0 = run.room || 1; run.room = m(r0); if (run.cur && run.cur.floor) run.cur.floor = m(run.cur.floor);
-  run.dg.strongS = {}; run.segDoors = null; (run.mig16 = run.mig16 || []).push({ from: r0, to: run.room, lv: run.lv || 1, ch: run.ch || 1, t: Date.now() });
+  run.dg = Object.assign({ counts: {}, seen: {}, last: null, events: [], strong: { u: 0, l: 0 }, force: null, foes: [] }, run.dg || {}); run.dg.strongS = {}; run.segDoors = null; (run.mig16 = run.mig16 || []).push({ from: r0, to: run.room, lv: run.lv || 1, ch: run.ch || 1, t: Date.now() });
   if (!run.cur) { if (PATH_AT.includes(run.room)) { run.cross = crossMake(run); run.doors = null; } else { run.cross = null; run.doors = genDoors(run, run.room); } }
   run.dgv = 3;
 }

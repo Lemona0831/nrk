@@ -40,13 +40,13 @@ const MODES = {
 };
 const PATH_AT = [4, 9, 12]; // 이 층의 문을 열기 전에 길을 고른다(1–3층은 큰 길). 0.8.0 6단계: 갈림길에서 길 셋의 다음 구간을 미리 만들고 핵심 문을 보인다
 const PATHS = {
-  rough: { n: '험한 길', ico: '⛰️', hp: 1.15, dmg: 1.12, loot: 1.5, gold: 1.3, up: 0.35, risk: 1, w: { strong: 1.6, ambush: 1.5, trial: 2, treasure: 1.3, spring: 0.5, shrine: 0.6, event: 0.8 }, d: '적이 더 거셉니다. 강적 · 매복 · 시련 문이 자주 나옵니다. 전리품과 골드가 많고, 장비 등급이 자주 한 단계 오릅니다.' },
+  rough: { n: '험한 길', ico: '⛰️', hp: 1.15, dmg: 1.12, loot: 1.5, gold: 1.3, up: 0.35, risk: 1, w: { strong: 1.6, ambush: 1.5, trial: 2, treasure: 1.3, spring: 0.5, shrine: 0.6, event: 0.8 }, d: '적이 더 거셉니다. 강적 · 순찰대 · 시련 문이 자주 나옵니다. 전리품과 골드가 많고, 장비 등급이 자주 한 단계 오릅니다.' },
   main: { n: '큰 길', ico: '🛤️', hp: 1, dmg: 1, loot: 1, gold: 1, risk: 0, w: {}, d: '평소대로입니다.' },
   quiet: { n: '샛길', ico: '🌿', hp: 0.88, dmg: 0.9, loot: 0.7, gold: 0.75, up: -0.3, risk: -1, w: { strong: 0.4, ambush: 0.5, trial: 0.3, shrine: 1.5, event: 1.4, altar: 1.2, spring: 0.8 }, d: '적이 덜 거셉니다. 쉬는 방 문이 자주 나옵니다. 전리품과 골드가 적고, 장비 등급이 가끔 한 단계 내려갑니다.' },
 };
 
 const PATHS_HARD = {
-  rough: Object.assign({}, PATHS.rough, { loot: 1.7, gold: 1.5, up: 0.45, w: { strong: 2.2, ambush: 1.5, trial: 2, treasure: 1.3, spring: 0.5, shrine: 0.6, event: 0.8 }, d: '적이 더 거셉니다. 강적 · 매복 · 시련 문이 아주 자주 나옵니다. 전리품과 골드가 크게 늘고, 장비 등급이 자주 한 단계 오릅니다.' }),
+  rough: Object.assign({}, PATHS.rough, { loot: 1.7, gold: 1.5, up: 0.45, w: { strong: 2.2, ambush: 1.5, trial: 2, treasure: 1.3, spring: 0.5, shrine: 0.6, event: 0.8 }, d: '적이 더 거셉니다. 강적 · 순찰대 · 시련 문이 아주 자주 나옵니다. 전리품과 골드가 크게 늘고, 장비 등급이 자주 한 단계 오릅니다.' }),
   main: Object.assign({}, PATHS.main, { loot: 1.15, w: { strong: 1.3 }, d: '강적 문이 조금 더 자주 나옵니다. 전리품이 조금 늘어납니다.' }),
   quiet: Object.assign({}, PATHS.quiet, { hp: 1, dmg: 1, loot: 0.85, gold: 0.85, up: 0, w: { strong: 0.7, ambush: 0.7, trial: 0.5, shrine: 1.3, event: 1.2, altar: 1.1, spring: 0.8 }, d: '가혹에서도 강적을 덜 만납니다. 적은 큰 길과 같은 세기입니다. 전리품과 골드가 조금 적습니다.' }),
 };
@@ -66,7 +66,14 @@ const MARKS = {
   elite: { ico: '💀', n: '날뛰는 정예', pt: 1, mul: 1.6, d: '정예가 접사를 더 자주 얻습니다.' },
   boss: { ico: '👑', n: '거대한 수호자', pt: 3, hp: 1.25, d: '보스의 생명력이 25% 늘어납니다.' },
 };
-const MARK_START = { 2: { lv: 6 }, 3: { lv: 11 } }; // 10월 16일 0.8.0 2단계: 2챕터는 Lv6, 3챕터는 Lv11에서 시작(새 곡선의 챕터 끝 레벨)
+const MARK_START = { 2: { lv: 6 }, 3: { lv: 11 } };
+/* 0.8.0 6단계 C (10월 18일 만든 사람 승인): 챕터 시작 꾸러미 = 1챕터부터 이어 한 신중 판이 그 챕터에 들어설 때의 중앙값보다 한 등급 아래.
+   2챕터 중앙 희귀 · 희귀 · 고급 · 평범 · 평범 · 평범 → 고급 둘(무기 · 갑옷) · 평범 넷. 3챕터 중앙 영웅 · 희귀 · 희귀 · 고급 · 고급 · 평범 → 희귀(무기) · 고급(갑옷) · 고급 · 평범 셋.
+   무기 · 갑옷은 직업에 맞는 셋 중 하나를 고른다. 골드는 정산 직후 골드의 하위 4분위(측정 4회차: 2챕터 앞 중앙 240 · 하위 4분위 185, 3챕터 앞 553 · 460), 약초 묶음은 소모품 수의 하위 4분위. 시작 자리는 앞 챕터 정산 뒤 상점(측정: docs/제안/0.8.0-6단계-던전개편-설계초안-2026-10-18.md) */
+const MARK_KIT = {
+  2: { weapon: 'm', armor: 'm', rest: { gloves: 'n', amulet: 'n', ring1: 'n', ring2: 'n' }, gold: 185, herb: 6 },
+  3: { weapon: 'r', armor: 'm', rest: { gloves: 'm', amulet: 'n', ring1: 'n', ring2: 'n' }, gold: 460, herb: 7 },
+}; // 10월 16일 0.8.0 2단계: 2챕터는 Lv6, 3챕터는 Lv11에서 시작(새 곡선의 챕터 끝 레벨)
 /* 칭호 (계정 목표, 같은 문서 2절 C): 달성하면 하나를 골라 랭킹 이름 옆에 단다 */
 const TITLES = [
   { id: 'branch', n: '갈래 완주', d: '한 직업의 세 갈래로 모두 3챕터 보스를 넘습니다.' },
@@ -110,7 +117,13 @@ const STRONG = { big: 0.46, hp: 3.7, dmg: 2.7, bellEvery: 3, leech: 0.45, frenzy
 /* 강적의 한 방 (10월 4일 만든 사람 결정: 강적은 보스보다 약하되 생명력의 20~30%를 깎는 한 방이 중심에 있다).
    big: 강적의 강타 = 기준 생명력(HIT_REF) × big. 던전 세기 · 길과 상관없이 늘 같다. 강적은 모두 공격 → 버티기 → 강타 준비 → 강타 */
 /* 매복 (10월 4일 만든 사람 결정: 난이도는 늘 일반과 강적 사이, 강적 쪽에 가깝게). 적 체력 · 피해 배율, elite: 정예로 바꾸는 적 수, loot: 전리품 확률 배율 */
-const AMBUSH = { hp: 1.5, dmg: 1.4, elite: 2, loot: 1.5, ptMax: 2 }; // 0.8.0 6단계 A-6: 정예 둘(1 → 2), 이기면 패시브 포인트 +1(챕터에 ptMax번) 또는 소모품 셋 중 하나 // 방 하나에 잃는 생명력이 일반과 강적 사이의 60~70% 자리(암살자 14 · 30 · 41%, 파수꾼 10 · 26 · 32%)
+/* 0.8.0 6단계 B-5 편성 (측정 1 · 2 · 3 · 4회차)
+   순찰대(내부 키 ambush): 정예 둘, 먼저 덮치지 않음, 이기면 패시브 포인트 +1(챕터에 ptMax번) 또는 소모품 셋 중 하나. 정예 둘에 1.5 · 1.4면 순손실이 옛 매복의 1.44배(목표 1.0–1.1) → 1.3 · 1.2
+   일반 방: 2층부터 정예 하나, 4층부터 둘. 정예 하나만으로는 순손실이 옛 일반의 1.18 · 1.33 · 1.62배(목표 약 2배)
+   야영지 쉬기: 최대 생명력의 60%(전에는 가득). 16층에서는 야영지 → 보스가 7층이라 보스 진입 생명력이 72 · 77%로 높았다(B-7 목표 60–75%). 45%로 더 낮춰도 테스터 결과는 같았다(전투 밖 회복 소모품이 메운다, 측정 5회차) */
+const AMBUSH = { hp: 1.3, dmg: 1.2, elite: 2, loot: 1.5, ptMax: 2 };
+const NORMAL_ROOM = { from: 2, elite: 1, from2: 4, elite2: 2 };
+const CAMP_REST = { hp: 0.6 };
 const STRONG_FOES = [
   { id: 'bellringer', n: '종지기', en: [['shield', 1], ['minion']] }, // 10월 4일: 하수인을 뺐다(강적 다섯 가운데 가장 무거웠다)
   { id: 'pilgrim', n: '굶주린 순례자', en: [['bruiser', 1]], dmg: 0.8 }, // dmg · hp: 강적마다 평소 공격 · 체력 배율(큰 한 방은 그대로). 순례자는 다섯 가운데 가장 무거웠다
@@ -132,7 +145,7 @@ const FOE_X = {
 const SQUAD_VARY = 0.5;
 // 가중치(w)는 직업 사이도 맞춘다: 저주 의식 · 광신 돌격 · 성가 행렬은 파수꾼에게, 문지기 · 혼성 순찰 · 화형 의식 · 도둑 떼는 암살자에게 상대적으로 무겁다 (10월 4일 잼)
 const SQUADS = [
-  { id: 'wall', from: 3, n: '방패벽', w: 1, up: [['shield'], ['shield'], ['minion']], low: [['shield', 1], ['shield'], ['archer']], vary: [2, ['minion', 'archer']] },
+  { id: 'wall', from: 4, n: '방패벽', w: 1, up: [['shield'], ['shield'], ['minion']], low: [['shield', 1], ['shield'], ['archer']], vary: [2, ['minion', 'archer']] },
   { id: 'hymn', n: '성가 행렬', w: 1.4, up: [['bruiser'], ['bruiser'], ['healer']], low: [['bruiser', 1], ['bruiser'], ['healer']], vary: [1, ['bruiser', 'thief']] },
   { id: 'pyre', n: '화형 의식', w: 0.8, press: 1, up: [['bruiser'], ['pyre']], low: [['shield'], ['bruiser'], ['pyre', 1]], vary: [0, ['bruiser', 'shield', 'minion']] }, // 10월 5일: 자폭 행렬을 바꿨다
   { id: 'thieves', n: '도둑 떼', w: 0.8, up: [['thief'], ['thief'], ['archer']], low: [['thief'], ['thief'], ['archer', 1]], vary: [2, ['archer', 'darkmage']] },
@@ -198,7 +211,7 @@ const ENEMY_NAMES = {
   1: { bruiser: '광신 수도사', shield: '문지기 수사', archer: '종탑 궁수', healer: '피 닦는 수녀', summoner: '뼈 부르는 사제', bomber: '불붙은 고행자', pyre: '화형 사제', minion: '일어선 시체', thief: '헌금함 도둑', darkmage: '검은 기도사' },
 };
 
-/* ===== 챕터 (10월 5일, 1~3챕터 작업): 챕터마다 다른 값은 여기서만 읽는다(chData). 층 틀(24층, 12:12, 갈래길)은 모든 챕터가 같다.
+/* ===== 챕터 (10월 5일, 1~3챕터 작업): 챕터마다 다른 값은 여기서만 읽는다(chData). 층 틀(16층, 갈림길 4 · 9 · 12층)은 모든 챕터가 같다.
    n 이름, boss 보스, settleLore 정산 분위기 문장, nextLore 다음 챕터를 내다보는 문장, diff 던전 세기(없으면 DIFF), names 적 이름(없으면 ENEMY_NAMES[1]).
    SQUADS · STRONG_FOES · EVENTS의 ch(없으면 1)와 ROOM_MODS의 chs(없으면 모든 챕터)로 챕터를 가른다 */
 const CHAPTERS = {
@@ -228,7 +241,7 @@ const CODEX = {
 };
 
 /* ===== 2챕터: 잊힌 지하묘지 (10월 5일, docs/챕터/2챕터.md. 강적 · 보스의 기믹과 대처는 비공개 문서) =====
-   틀은 1챕터와 같다(24층, 12:12, 갈래길). 이 칸은 1챕터 배열에 ch: 2 항목을 더하고 CHAPTERS[2]를 채운다. 수치는 모두 [가설] */
+   틀은 1챕터와 같다(16층, 갈림길 4 · 9 · 12층). 이 칸은 1챕터 배열에 ch: 2 항목을 더하고 CHAPTERS[2]를 채운다. 수치는 모두 [가설] */
 ENEMY_NAMES[2] = { bruiser: '무덤지기', shield: '납골당 문지기', archer: '납골당 궁수', healer: '곡하는 사제', summoner: '뼈 엮는 자', minion: '기어 나온 뼈', thief: '도굴꾼', pyre: '장송 영창자', skeleton: '해골 병사', hexer: '무덤 주술사', mason: '뼈 쌓는 자', burrower: '굴 파는 시체', bloat: '부푼 시체', bonewall: '뼈벽' };
 CHAPTERS[2] = {
   n: '잊힌 지하묘지', boss: 'cryptlord', names: ENEMY_NAMES[2], strongFrom: 2, xp: 1.55, gold: 1.35, settleStrong: 30,
@@ -328,7 +341,7 @@ Object.assign(CODEX, {
 });
 
 /* ===== 3챕터: 재의 사막 유적 (10월 7일, docs/챕터/3챕터.md. 강적 · 보스의 기믹과 대처는 비공개 문서) =====
-   틀은 1 · 2챕터와 같다(24층, 12:12, 갈래길). 이 칸은 1챕터 배열에 ch: 3 항목을 더하고 CHAPTERS[3]을 채운다. 수치는 모두 [가설] */
+   틀은 1 · 2챕터와 같다(16층, 갈림길 4 · 9 · 12층). 이 칸은 1챕터 배열에 ch: 3 항목을 더하고 CHAPTERS[3]을 채운다. 수치는 모두 [가설] */
 ENEMY_NAMES[3] = { bruiser: '사막 약탈자', shield: '유적 근위병', archer: '모래 궁수', healer: '재의 무녀', summoner: '모래 부르는 자', pyre: '태양 영창자', minion: '재 인형', thief: '무덤 도굴꾼', darkmage: '검은 해의 주술사', skeleton: '불탄 해골', lurker: '모래 잠복자', ember: '불씨 투척병', wrapped: '붕대 감긴 망자', mirage: '아지랑이 술사', crown: '재의 왕관', maid: '재의 시녀' };
 /* 해의 흐름 (1.2절): 띠마다 층 이름과 들어설 때 한 줄. 특성 무게는 MOD3 */
 const BANDS3 = [
