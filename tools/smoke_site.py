@@ -24,10 +24,13 @@ with sync_playwright() as p:
     pg.evaluate("()=>{G.data.seenCoach=true; G.data.seenBreak=true; G.data.name='민수'}")  # 첫 붕괴 안내 창이 전투 버튼을 가리지 않게
     pg.fill('#cname', '사냥꾼민수'); pg.click('[data-a=cnok]'); cls = 'hunter' if pg.query_selector('[data-a=clspick][data-k=hunter]') else pg.get_attribute('[data-a=clspick]', 'data-k')  # 0.6a.2 시험판(06a2)에는 사냥꾼이 아직 없다
     pg.click(f'[data-a=clspick][data-k={cls}]')
-    pg.click(f'button[data-a=start][data-b={cls}]'); pg.click('button[data-a=skillok]')
-    for k in ['dex']*6: pg.click(f'button[data-a="stat+"][data-k={k}]')
-    if pg.query_selector('button[data-a=statrec]:not([disabled])'): pg.click('button[data-a=statrec]')  # 06a2 능력치 다섯(15점): 남은 점수는 추천 배분으로
-    pg.click('button[data-a=statok]'); pg.click('button[data-a=door][data-k="0"]'); pg.click('button[data-a=enter]'); pg.evaluate("()=>{G.pace='instant'}")  # 휴대폰 폭에서는 진행 속도 고르기가 설정 창에만 있다
+    pg.click(f'button[data-a=start][data-b={cls}]'); pg.evaluate('ask=()=>true')  # 남은 포인트 확인 창은 '예'
+    for _ in range(12):  # 0.8.0 2단계 배분 흐름(패시브 → 큰 각인 → 액티브): 단계 수가 판마다 달라 보이는 다음 버튼을 누른다
+        if pg.evaluate("G.scr==='run' && !G.creating && !G.sheet"): break
+        for s in ['button[data-a=allocgo]','button[data-a=allocnext]','button[data-a=kspick]','button[data-a=allocok]','button[data-a=statok]']:
+            if pg.query_selector(s): pg.click(s+' >> nth=0'); break
+        pg.wait_for_timeout(100)
+    pg.click('button[data-a=door][data-k="0"]'); pg.click('button[data-a=enter]'); pg.evaluate("()=>{G.pace='instant'}")  # 휴대폰 폭에서는 진행 속도 고르기가 설정 창에만 있다
     for i in range(30):
         if pg.query_selector('button[data-a=bcont]'): break
         pg.keyboard.press('1'); pg.wait_for_function("()=>!G.busy")

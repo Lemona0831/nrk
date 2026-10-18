@@ -4,6 +4,11 @@
    node tools/savecheck.js check  → next/ 코드로 저장본마다 이어 하기를 누르고, 성향대로 끝까지 진행한다. 2챕터를 기다리던 캐릭터는 2챕터로 내려가 끝까지 */
 const fs = require('fs'), path = require('path');
 const mode = process.argv[2] || 'check';
+/* 0.8.0 6단계(10월 18일 만든 사람 승인, 질문 5): 24층 → 16층 판 옮기기. 옮긴 판의 보스 진입 레벨이 앵커(6 · 11 · 16) − 1 이상인지 본다.
+   node tools/savecheck.js floor16 make <저장본.json> [--from3]   (DGDIR=<24층 사본>)
+   node tools/savecheck.js floor16 check <저장본.json>
+   실제 일은 tools/floor16-migrate-check.js가 한다 */
+if (mode === 'floor16') { process.argv.splice(2, 1); require('./floor16-migrate-check.js'); return; }
 const FILE = path.join(__dirname, 'saves06a.json');
 if (mode === 'make') process.env.DGDIR = '.';
 const D = require('./dgqa.js');

@@ -5,10 +5,11 @@
       24층 게임으로 판을 돌리며 여러 자리(방 사이 · 갈래길 · 야영지 · 전투 중, 1 · 3챕터)의 이어 하기 저장본을 뜬다
    2) 열기: node tools/floor16-migrate-check.js check <저장본.json>
       지금(16층) 게임으로 저장본마다 이어 하기를 누르고, 테스터로 그 챕터 끝까지 간다. 오류 · 옮긴 층 · 보스에 들어설 때의 레벨을 센다.
-      판정: 오류 0, 보스에 닿은 판의 보스 진입 레벨 ≥ 앵커(6 · 11 · 16) − 1 */
+      판정: 오류 0, 그리고 보스 진입 레벨 ≥ 앵커(6 · 11 · 16) − 1인 판의 비율이 같은 시작 · 같은 시드의 자연 판(지금 게임으로 처음부터)보다 10%p 넘게 낮지 않다.
+      앵커 −1을 판마다 걸면 자연 판도 떨어진다(3챕터 바로 시작 자연 판의 보스 진입 레벨 중앙 15, 평균 15.1). 3챕터 저장본은 check에도 --from3 */
 const fs = require('fs');
 const mode = process.argv[2] || 'check', FILE = process.argv[3] || 'saves24.json';
-if (mode === 'make' && process.argv.includes('--from3')) process.env.DG_FROM = '3';
+if (process.argv.includes('--from3')) process.env.DG_FROM = '3';
 const D = require('./dgqa.js'); const { G0, OPT, playChar, playLoop, handleSheets, rng, run_ } = D;
 const CLS = ['spellblade', 'warden', 'monk', 'assassin', 'hunter', 'elementalist'];
 const ANCHOR = { 1: 6, 2: 11, 3: 16 };
@@ -44,4 +45,13 @@ const bad = rows.filter(r => r.errs.length); const boss = rows.filter(r => r.bos
 for (const r of bad.slice(0, 10)) console.log('✗ ' + r.build + ' ' + r.why + ': ' + r.errs.slice(0, 2).join(' / '));
 console.log('옮긴 층: ' + [...new Set(rows.map(r => r.room0 + '→' + r.room1))].sort((a, b) => parseInt(a) - parseInt(b)).join(' '));
 console.log(`저장본 ${rows.length}개, 오류 ${bad.length}개. 보스에 닿은 판 ${boss.length}개 중 보스 진입 레벨이 앵커 −1 이상 ${okLv.length}개. 보스 진입 레벨: ` + Object.entries(boss.reduce((m, r) => (m[r.ch + '챕터 Lv' + r.bossLv] = (m[r.ch + '챕터 Lv' + r.bossLv] || 0) + 1, m), {})).map(([k, v]) => k + ' ' + v).join(', '));
-process.exitCode = bad.length || okLv.length < boss.length ? 1 : 0;
+{ const g = {}; for (const r of boss) { const k = r.ch + '챕터 ' + r.why.replace(/[0-9]+층$/, '') + r.room0 + '→' + r.room1 + '층'; const s = g[k] = g[k] || { n: 0, ok: 0, lv0: 0, lv: 0 }; s.n++; s.lv0 += r.lv0; s.lv += r.bossLv; if (r.bossLv >= ANCHOR[r.ch] - 1) s.ok++; }
+  console.log('저장 자리별(보스에 닿은 판): ' + Object.entries(g).map(([k, s]) => `${k} ${s.ok}/${s.n} (저장 때 Lv ${(s.lv0 / s.n).toFixed(1)} → 보스 Lv ${(s.lv / s.n).toFixed(1)})`).join(' · ')); }
+// 자연 판: 저장본을 뜬 판과 같은 시작 · 같은 시드를 지금 게임으로 처음부터
+const nat = []; OPT.chapters = 1; const from = +(process.env.DG_FROM || 1);
+CLS.forEach((build, i) => { for (let s = 0; s < 3; s++) { let lv = null; OPT.onStep = G1 => { if (lv == null && G1.run.cur && G1.run.cur.type === 'boss') lv = G1.run.lv; }; try { playChar('careful', build, 31000 + i * 97 + s * 13 + from * 1000); } catch (e) { } if (lv != null) nat.push({ ch: from === 3 ? 3 : 1, lv }); } });
+OPT.onStep = null; let fail = bad.length > 0;
+for (const ch of [...new Set(boss.map(r => r.ch))]) { const m = boss.filter(r => r.ch === ch), n = nat.filter(r => r.ch === ch); const mr = m.filter(r => r.bossLv >= ANCHOR[ch] - 1).length / m.length, nr = n.length ? n.filter(r => r.lv >= ANCHOR[ch] - 1).length / n.length : 0;
+  const ok = mr >= nr - 0.10; if (!ok) fail = true; console.log(`${ch}챕터 앵커 −1 이상: 옮긴 판 ${Math.round(mr * 100)}% (${m.length}판) · 자연 판 ${Math.round(nr * 100)}% (${n.length}판) → ${ok ? '통과' : '미달'}`); }
+console.log('판정: ' + (fail ? '미달' : '통과'));
+process.exitCode = fail ? 1 : 0;

@@ -159,11 +159,16 @@ function dgFix(run) {
 }
 /* 0.8.0 6단계(만든 사람 결정 5): 24층 판을 16층 틀로 비례해 옮긴다. 상층 1–11 → 1–7, 야영지 12 → 8, 하층 13–23 → 9–15, 보스 24 → 16.
    다음 방에 들어설 때의 문 · 갈림길은 새 틀로 다시 만든다(고른 방 · 싸우던 방은 그대로 층 번호만) */
+/* 옮긴 판의 레벨 따라잡기 (10월 18일 만든 사람 승인 질문 5: 옮긴 판의 보스 도달 레벨이 앵커 −1 안). 24층 곡선의 레벨을 그대로 들고 16층 보스 앞에 서면 모자란다(3챕터 늦은 자리 Lv14.1).
+   옮긴 층에서 기대 레벨 = 앞 챕터 끝 앵커 + (이 챕터 끝 앵커 − 앞 앵커) × 층 / 16(내림). 모자라면 그 레벨까지 경험치를 채운다(포인트도 같이) */
+const MIG16_LV = [1, 6, 11, 16];
 const floor24to16 = f => f >= 24 ? 16 : f === 12 ? 8 : f <= 11 ? Math.max(1, Math.round(f * 7 / 11)) : 8 + Math.max(1, Math.round((f - 12) * 7 / 11));
 function dgTo16(run) {
   const m = floor24to16; const r0 = run.room || 1; run.room = m(r0); if (run.cur && run.cur.floor) run.cur.floor = m(run.cur.floor);
   run.dg = Object.assign({ counts: {}, seen: {}, last: null, events: [], strong: { u: 0, l: 0 }, force: null, foes: [] }, run.dg || {}); run.dg.strongS = {}; run.segDoors = null; (run.mig16 = run.mig16 || []).push({ from: r0, to: run.room, lv: run.lv || 1, ch: run.ch || 1, t: Date.now() });
   if (!run.cur) { if (PATH_AT.includes(run.room)) { run.cross = crossMake(run); run.doors = null; } else { run.cross = null; run.doors = genDoors(run, run.room); } }
+  { const A = MIG16_LV, ch = Math.min(3, run.ch || 1); const tgt = Math.min(LV_XP.length, Math.floor(A[ch - 1] + (A[ch] - A[ch - 1]) * run.room / FLOOR_BOSS)); const lv0 = run.lv || 1;
+    if (lv0 < tgt) { gainXp(run, LV_XP[tgt - 1] - (run.xp || 0)); run.mig16[run.mig16.length - 1].lvTo = run.lv; toast('16층 던전으로 옮기며 레벨을 ' + lv0 + ' → ' + run.lv + '로 맞췄습니다. 트리 포인트도 함께 받았습니다'); } }
   run.dgv = 3;
 }
 /* 전리품을 차례로 하나씩 건넨다 (방마다 여러 개일 수 있다) */
