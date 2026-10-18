@@ -129,10 +129,12 @@ function ptPathTo(run, T, target) { // 열린 노드에서 target까지 열린 �
 }
 /* 10월 18일 0.8.0 5단계(원거리 초안 10절 결정 2) 생존 · 유지력 바닥: 직업 트리(임시 트리 아님)에서 가진 중간 노드 가운데 생존 · 유지력(sv · su) 중간 노드가 셋에 하나 밑이면
    (생존 · 유지력 수 < ⌊가진 중간 노드 수 / 3⌋), 다음 목표를 생존 · 유지력 중간 노드 가운데에서 같은 점수(길 칸 수 + 방향 순위)로 고른다. 닿을 것이 없으면 원래대로.
-   중간 노드 수로 세므로 길 칸을 찍는 동안 목표가 바뀌지 않는다. 큰 각인 길로 공짜로 얻은 중간 노드도 센다. PT_SURV_OLD=1이면 끈다(옛 찍기) */
+   중간 노드 수로 세므로 길 칸을 찍는 동안 목표가 바뀌지 않는다. 큰 각인 길로 공짜로 얻은 중간 노드도 센다. PT_SURV_OLD=1이면 끈다(옛 찍기)
+   10월 18일 0.8.0 5단계 마무리(원거리 초안 11-8의 3): 바닥은 2고리가 열린 뒤(1챕터 보스를 넘은 뒤)부터 건다. 1고리만 열린 동안은 옛 찍기와 같다(1챕터 근접 숙련 하락 28 → 21 · 38 → 31을 되돌림).
+     2고리가 열리면 그때까지 가진 중간 노드 전체로 다시 세므로 3챕터 몫(30% 안팎)은 그대로 맞춘다. PT_SURV_RING1=1이면 1고리부터 건다(3da63fd 그대로) */
 const PT_SURV_DIR = ['sv', 'su'];
 function ptSurvNeed(run, T, open) {
-  if (process.env.PT_SURV_OLD || T.tmp) return false; let n = 0, s = 0;
+  if (process.env.PT_SURV_OLD || T.tmp) return false; if (!process.env.PT_SURV_RING1 && !G0.ringOpen(run, 2)) return false; let n = 0, s = 0;
   for (const id of open) { const nd = T.nodes[id]; if (!nd || nd.kind !== 'notable') continue; n++; if (PT_SURV_DIR.includes(nd.dir)) s++; }
   return s < Math.floor(n / 3);
 }

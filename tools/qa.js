@@ -123,6 +123,25 @@ function demandPick(b, P, r) {
   } else if (!dmd.demand.hit) { const a = L.find(x => x.id === 'basic' && x.ok); if (a && E.canTarget(b, dmd, a)) return ['basic', dmd.id]; }
   return null;
 }
+/* 10월 18일 0.8.0 5단계 마무리: 한 수 앞 후보가 적에게 준 몫(evalState의 dealt · 처치와 같은 꼴, 중독 덜기는 뺌) */
+const lkHp = bb => E.alive(bb).filter(e => e.role !== 'root').reduce((m, e) => m + Math.max(0, e.hp) / (e.role === 'boss' ? 4 : 1), 0);
+const lkGain = (b0, b1) => lkHp(b0) - lkHp(b1) + 6 * (E.alive(b0).length - E.alive(b1).length);
+/* 10월 18일 0.8.0 5단계 마무리(원거리 초안 11-7): 숙련(한 수 앞)의 사냥꾼. 기본 공격 버프(하늘 가르기 · 바꿔 쏘기 · 덧화살 · 가시)가 켜진 채 가속의 두 번째 차례이거나 유산이 가장 싼 스킬보다 적으면
+   (2-10 ①과 같은 때), 공격 스킬 · 강공격은 다음 차례로 미뤄도 거의 같은 몫을 내지만 버프는 이번에만 든다. 두 차례로 보면 "스킬 지금 + 버프 없는 기본 공격 다음"과 "버프 기본 공격 지금 + 스킬 다음"의 차이가
+   버프 몫이므로, 미룰 수 있는 후보(적을 쓰러뜨리지 않고 전투를 끝내지 않는 공격 스킬 · 강공격)의 값을 버프 없는 기본 공격의 값까지로 줄인다. 방어 · 흘리기 · 나에게 쓰는 스킬은 그대로 겨룬다.
+   전에는 한 수 앞이 지금 피해만 보아, 하늘 가르기를 켠 뒤 두 번째 차례에 겨눠 쏘기 · 연속 사격을 골랐다(버림 185번 가운데 171번). 난수를 더 쓰지 않는다. HUNT_X2_OLD=1이면 예전 */
+function huX2Look(b, P, L, cands) {
+  const p = b.p, Rn = huRound(b), ys = E.ysNow(p); const minCost = Math.min(99, ...L.filter(a => a.v2 && !a.self).map(a => a.yc || 99));
+  if (!(b.extraTurn || ys < minCost)) return;
+  const bc = cands.filter(c => c.a === 'basic' && c.t != null); if (!bc.length) return;
+  const tg = id => b.en.find(e => e.id === id); if (!bc.some(c => huBasicV(b, p, tg(c.t), Rn).on)) return;
+  let ub = -1e9; for (const c of bc) { const c0 = cloneB(b); c0.p.bbuf = null; E.playerAct(c0, 'basic', c.t); ub = Math.max(ub, evalState(b, c0, P.risk)); }
+  const kb = Math.max(...bc.map(c => E.alive(b).length - E.alive(c.c).length));
+  for (const c of cands) { if (c.a === 'basic' || !c.c || c.c.over === 'win') continue; const a = L.find(x => x.id === c.a); if (!a) continue;
+    const dmgS = c.a === 'heavy' || (a.v2 && a.s && !a.self && a.s.fx.some(f => f.k === 'dmg')); if (!dmgS) continue;
+    if (E.alive(b).length - E.alive(c.c).length > kb) continue; // 버프 기본 공격으로 못 쓰러뜨리는 적을 쓰러뜨리면 미루지 못한다
+    if (c.v > ub) c.v = ub; }
+}
 function lookahead(b, P, r) {
   { const q = demandPick(b, P, r); if (q) return q; }
   const L = E.actionList(b).filter(a => a.ok && a.id !== 'flee' && a.id !== 'sig' && (!a.pull || ((GATE.legacy || b.p.build === 'bloodmage') && gt(b.p, 'bloodmage', 'pull') && bmPullOk(b, a, P)))); // 숨겨진 직업 3: 피로 당기기는 이유가 있을 때만
@@ -131,11 +150,15 @@ function lookahead(b, P, r) {
     let ts = [null];
     if (!a.self && !a.aoe) { ts = E.alive(b).filter(e => E.canTarget(b, e, a) && !(a.id === 'dodge' && e.role === 'root')); if (b.p.build === 'hunter' && !process.env.HUNT_CROWN_OLD && gt(b.p, 'hunter', 'crown')) { /* 사냥꾼(10월 8일): 열기가 높지 않으면 왕관을 치지 않는다(출처: 비공개 문서 3챕터 2.2–2.3절, 문장은 옮기지 않는다). 한 수 앞 계산은 왕관 피해와 처치를 이득으로 세어 왕관만 쳤다. HUNT_CROWN_OLD=1이면 끈다 */ const nc = ts.filter(e => !(e.role === 'crown' && !e.crownHot)); if (nc.length) ts = nc; } ts = ts.map(e => e.id); }
     const hb = b.p.build === 'hunter' && !process.env.HUNT_BBUF_OLD && a.v2 && a.s && a.s.fx.some(f => f.k === 'bbuf') && gt(b.p, 'hunter', 'bbuf-look') ? huLookBonus(b, a) : 0; // 0.8.0 5단계 연사(2-10): 버프 스킬의 앞으로의 몫
+    const boA = b.p.build === 'elementalist' && !process.env.ELEM_BURN_OLD && a.v2 && a.s && a.s.fx.some(f => f.k === 'burnOut') && gt(b.p, 'elementalist', 'burn-look'); // 10월 18일 0.8.0 5단계 마무리(11-6): 불태우기
     for (const t of ts) {
       const c = cloneB(b); E.playerAct(c, a.id, t);
-      cands.push({ a: a.id, t, v: evalState(b, c, P.risk) + hb + (r() - 0.5) * 2 });
+      let v = evalState(b, c, P.risk) + hb;
+      if (boA) { const te = t != null ? b.en.find(e => e.id === t) : null; if (!te || !psn2(te, 'ignite')) v -= c.over === 'win' ? 3 : 0.9 * Math.max(0, lkGain(b, c)); } // 화상이 없는 대상에게는 이 스킬이 준 몫(피해 · 처치)의 90%를 뺀다(거의 0). 전투를 끝내는 한 방이면 다른 마무리가 있을 때 그쪽을 고르게 3만 뺀다. 화상이 많을수록 태운 피해가 커서 그 적을 고른다
+      cands.push({ a: a.id, t, v: v + (r() - 0.5) * 2, c });
     }
   }
+  if (b.p.build === 'hunter' && !process.env.HUNT_X2_OLD && !process.env.HUNT_BBUF_OLD && b.p.bbuf && gt(b.p, 'hunter', 'x2-look')) huX2Look(b, P, L, cands); // 10월 18일 0.8.0 5단계 마무리(11-7): 버프가 켜진 두 번째 차례 · 유산이 모자란 차례
   cands.sort((x, y) => y.v - x.v);
   return cands[0] ? [cands[0].a, cands[0].t] : ['basic', null];
 }
@@ -261,6 +284,7 @@ function elemPick(b, P, r, okS, reach, pv1) {
       if ((soon(e) || urgent(e)) && !v.I0 && !v.C0 && (v.I || v.C)) val += 5; // 큰 공격을 모을 적에게 원소 하나를 미리 깐다
     }
     const wk = a.s.fx.find(x => x.k === 'st' && x.s === 'weak'); if (wk && !kill && (urgent(e) || soon(e))) val += 6; else if (wk && hitter(e) && !kill) val += 2;
+    if (bo && !process.env.ELEM_BURN_OLD && gt(p, 'elementalist', 'burn')) { if (!(v.burn > 0)) return val * 0.1; val += v.burn * 0.3; } // 10월 18일 0.8.0 5단계 마무리(원거리 초안 11-6): 불태우기는 대상의 지금 화상으로 값을 매긴다. 화상이 없으면 거의 0, 있으면 화상이 많은 적. ELEM_BURN_OLD=1이면 예전
     return val + prio(e) * 0.5;
   };
   let best = null;
@@ -719,8 +743,10 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   if ((hv || ex) && r() < P.guard && L.find(a => a.id === 'guard' && a.ok)) return ['guard'];
   // 강공격: 스태미나가 넉넉하고 강타 예고가 없으면 가끔 (흘리기 몫 40은 남긴다)
   if (!hv && p.st >= 80 && p.build !== 'elementalist' && r() < 0.3 + P.risk * 0.3 && L.find(a => a.id === 'heavy' && a.ok)) { const t = best({ id: 'heavy', melee: 1 }, (x, y) => y.hp - x.hp); if (t) return ['heavy', t.id]; }
+  const boNo = a => p.build === 'elementalist' && !process.env.ELEM_BURN_OLD && has(a, 'burnOut') && gt(p, 'elementalist', 'burn') && !reach(a).some(e => psn2(e, 'ignite') > 0); // 10월 18일 0.8.0 5단계 마무리(11-6): 화상이 붙은 적이 없으면 불태우기를 고르지 않는다(사람은 버튼의 "화상이 없으면 0"을 본다)
+  const boT = a => p.build === 'elementalist' && !process.env.ELEM_BURN_OLD && has(a, 'burnOut') ? best(a, (x, y) => (psn2(y, 'ignite') - psn2(x, 'ignite')) || (x.hp - y.hp)) : null; // 불태우기 대상: 화상이 가장 많은 적
   const burnLow = a => has(a, 'wardBurn') && (p.ward || 0) < Math.min(a.s.fx.find(e => e.k === 'wardBurn').max || 99, E.wardMax ? E.wardMax(p) : 99) * 0.5; // 파수꾼: 태울 보호막이 모자라면 태우기를 고르지 않는다 (사람은 버튼의 "보호막 n 태움"을 보고 고른다)
-  if (!useMech) { const pool = okS.filter(a => !has(a, 'parry') && !has(a, 'parryBuff') && !burnLow(a) && !(has(a, 'burst') && !E.alive(b).some(e => psn(e) > 0))); if (pool.length && r() < 0.6) { const a = pool[Math.floor(r() * pool.length)]; const t = a.self || a.aoe ? null : best(a, (x, y) => x.hp - y.hp); return [a.id, t && t.id]; } return null; }
+  if (!useMech) { const pool = okS.filter(a => !has(a, 'parry') && !has(a, 'parryBuff') && !burnLow(a) && !boNo(a) && !(has(a, 'burst') && !E.alive(b).some(e => psn(e) > 0))); if (pool.length && r() < 0.6) { const a = pool[Math.floor(r() * pool.length)]; const t = a.self || a.aoe ? null : boT(a) || best(a, (x, y) => x.hp - y.hp); return [a.id, t && t.id]; } return null; }
   const th = mem.burstTh || (mem.burstTh = 4 + Math.floor(r() * 4));
   // 처형·터뜨리기: 죽일 수 있거나 충분히 쌓였을 때
   for (const a of okS.filter(a => has(a, 'burst'))) {
@@ -752,8 +778,8 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   // 흘리기 준비(자신): 강타가 곧 오면
   const pb = okS.find(a => has(a, 'parryBuff')); if (pb && !p.pbuf && E.alive(b).some(e => e.intent && e.intent.k === 'charge') && r() < 0.6) return [pb.id];
   // 그 밖의 공격 스킬: 아직 중독이 적은 적 / 약한 적
-  const atk = okS.filter(a => !a.self && !has(a, 'parry') && !has(a, 'burst') && !has(a, 'grow') && !burnLow(a));
-  if (atk.length) { const a = atk[Math.floor(r() * atk.length)]; const t = has(a, 'poison') ? best(a, (x, y) => (psn(x) - psn(y)) || (x.hp - y.hp)) : best(a, (x, y) => x.hp - y.hp); if (t) return [a.id, t.id]; }
+  const atk = okS.filter(a => !a.self && !has(a, 'parry') && !has(a, 'burst') && !has(a, 'grow') && !burnLow(a) && !boNo(a));
+  if (atk.length) { const a = atk[Math.floor(r() * atk.length)]; const t = boT(a) || (has(a, 'poison') ? best(a, (x, y) => (psn(x) - psn(y)) || (x.hp - y.hp)) : best(a, (x, y) => x.hp - y.hp)); if (t) return [a.id, t.id]; }
   return null;
 }
 function heuristic(b, P, r, mem) {
