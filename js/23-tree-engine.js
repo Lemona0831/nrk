@@ -263,7 +263,7 @@ function treeMigrate08(run) {
   const gifts = Object.values(typeof CH_GIFT !== 'undefined' ? CH_GIFT : {}).flatMap(o => Object.values(o));
   run.awkOld = (run.awk || []).filter(a => !gifts.includes(a)); run.awk = (run.awk || []).filter(a => gifts.includes(a));
   run.ptree = { own: [], free: [], ks: [], pts: ptTotal(run), log: [] }; run.ksGot = {}; run.ksOffer = null;
-  const ce = clearsEff(run), ch = run.ch || 1; if (ce >= 1) run.ksGot.b1 = 1; if (ce >= 2) run.ksGot.b2 = 1; if (ch >= 3 && (run.room || 0) >= FLOOR_CAMP) run.ksGot.c3 = 1;
+  const ce = clearsEff(run), ch = run.ch || 1; if (ce >= 1) run.ksGot.b1 = 1; if (ce >= 2) run.ksGot.b2 = 1; if (ch >= 3 && (run.dgv === 3 ? (run.room || 0) : floor24to16(run.room || 0)) >= FLOOR_CAMP) run.ksGot.c3 = 1; /* 0.8.0 6단계: 옛 판의 층은 24층 틀이라 16층 틀로 옮겨 견준다 */
   run.ksPending = Object.keys(run.ksGot).length;
   run.treeOld = run.tree || null; run.skillsOld = (run.skills || []).slice(); run.skills = []; delete run.tree; run.atree = { own: [], pts: atTotal(run), log: [] };
   if (run.battle) { // 전투를 버리고 그 방의 처음으로 (생명력 · 스태미나 · 플라스크는 방에 들어설 때 값, 소모품은 저장된 그대로)

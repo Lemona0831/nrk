@@ -11,6 +11,7 @@ function onClick(ev) {
   if (a === 'closebg') { if (ev.target !== el) return; if (G.sheet && !['block', 'choice', 'ks', 'alloc', 'bagfull'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } return; }
   switch (a) {
     case 'cptoggle': { if (!G.sheet || G.sheet.kind !== 'consfull') break; const d = G.sheet.data, i = +el.dataset.k; d.skip = d.skip || []; d.skip = d.skip.includes(i) ? d.skip.filter(x => x !== i) : d.skip.concat([i]); render(); break; }
+    case 'patrolpick': patrolPick(el.dataset.k); break; // 0.8.0 6단계 A-6
     case 'cptake': { const run = G.run; if (!run || !G.sheet || G.sheet.kind !== 'consfull' || G.b) break; const skip = G.sheet.data.skip || []; consTakePending(run, skip); G.sheet = null; saveRunLocal(); saveCur(); nextDrop(); break; }
     case 'cpkeep': case 'cpskip': case 'cpreplace': {
       const run=G.run;

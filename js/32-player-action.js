@@ -331,6 +331,7 @@ function cleanse(b, keys, isFlask) {
   return n;
 }
 function addBreak(b, e, v) {
+  if (b.cur && e.evHitA != null && e.evHitA === b.actN) v *= 2; // 0.8.0 6단계 A-7: 몸 낮춘 적을 친 그 행동의 붕괴 ×2
   if (!e || !e.alive || e.role === 'root' || e.under || e.role === 'crown' || (e.hazeHit && b.cur && e.hazeHit === b.actN)) return;
   if (b.cur) v = (v + fxAdd(b.p, 'brk', b, b.p, e, b.cur)) * fxMul(b.p, 'brkMul', b, b.p, e, b.cur);
   if (e.exposed) v *= FOE_X.sexton.brk; // 솟구친 묘지기: 드러난 동안 붕괴 ×1.5

@@ -71,6 +71,7 @@ function vSettings() {
 function render() {
   if (typeof document === 'undefined') return;
   if (!G.sheet && !G.b && G.run && (G.run.consPending || []).length && ['run','settle','shop'].includes(G.scr)) G.sheet = {kind:'consfull',data:{}};
+  if (!G.sheet && !G.b && G.run && G.run.patrolPend && !(G.dropQ || []).length && G.scr === 'run') G.sheet = { kind: 'patrol', data: {} }; // 0.8.0 6단계 A-6: 순찰대 보상 고르기
   sndSync(); applyPrefs();
   { const bd = (G.b && G.b.p && G.b.p.build) || (G.run && G.run.build) || ''; document.documentElement.style.setProperty('--cls', CLS_COLOR[bd] || 'transparent'); }
   const root = document.getElementById('root');

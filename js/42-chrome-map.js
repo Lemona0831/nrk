@@ -107,7 +107,15 @@ function crossCard(id) {
   const P = pathOf(id, G.run.mode), f = G.run.room; const to = Math.min(f < FLOOR_CAMP ? FLOOR_CAMP : FLOOR_BOSS, PATH_AT.find(x => x > f) || FLOOR_BOSS) - 1;
   const x = v => '×' + v; const W = Object.entries(P.w || {}).filter(([t]) => ROOM_TYPES[t]).map(([t, v]) => ROOM_TYPES[t].n + ' ' + x(v));
   const nums = [P.hp === 1 && P.dmg === 1 ? '적 체력 · 피해 그대로' : `적 체력 <b>${x(P.hp)}</b> · 피해 <b>${x(P.dmg)}</b>`, `전리품 <b>${x(P.loot)}</b> · 골드 <b>${x(P.gold)}</b>`].concat(P.up ? [`장비 등급 ${P.up > 0 ? '오름' : '내림'} <b>${Math.round(Math.abs(P.up) * 100)}%</b>`] : []);
-  return `<button class="door t-path-${id}" data-a="path" data-k="${id}"><span class="dr-h"><span class="dr-ico" aria-hidden="true">${P.ico}</span><b>${esc(P.n)}</b>${P.risk ? `<span class="dr-risk${P.risk < 0 ? ' down' : ''}">${P.risk > 0 ? '위험 ▲' : '위험 ▼'}</span>` : ''}</span><span class="mini">${esc(P.d)}</span><span class="dr-nums">${nums.join(' · ')}</span>${W.length ? `<span class="dr-w">나오는 문(큰 길 대비): ${esc(W.join(', '))}</span>` : ''}<span class="dr-hint">${f}층부터 ${to}층까지</span></button>`; /* 10월 7일 2차: PATHS의 배율을 숫자로 함께 */
+  return `<button class="door t-path-${id}" data-a="path" data-k="${id}"><span class="dr-h"><span class="dr-ico" aria-hidden="true">${P.ico}</span><b>${esc(P.n)}</b>${P.risk ? `<span class="dr-risk${P.risk < 0 ? ' down' : ''}">${P.risk > 0 ? '위험 ▲' : '위험 ▼'}</span>` : ''}</span><span class="mini">${esc(P.d)}</span><span class="dr-nums">${nums.join(' · ')}</span>${W.length ? `<span class="dr-w">나오는 문(큰 길 대비): ${esc(W.join(', '))}</span>` : ''}${crossMap(id)}<span class="dr-hint">${f}층부터 ${to}층까지</span></button>`; /* 10월 7일 2차: PATHS의 배율을 숫자로 함께 */
+}
+/* 0.8.0 6단계 A-3: 이 길의 다음 구간에서 등불이 밝힌 문(강적 · 샘 · 이벤트 · 성소)만. 그 밖의 층은 ?. 구간이 야영지 앞에서 끝나면 야영지 상인 */
+function crossMap(id) {
+  const run = G.run, S = run.cross && run.cross.segs && run.cross.segs[id]; if (!S) return '';
+  const fs = Object.keys(S).map(Number).sort((a, b) => a - b);
+  const one = f => { const ks = S[f].filter(r => MAP_SHOW.includes(r.type)); return `<span class="dm-f">${f}층 ${ks.length ? ks.map(r => `<span aria-label="${esc(ROOM_TYPES[r.type].n)}" title="${esc(ROOM_TYPES[r.type].n)}">${ROOM_TYPES[r.type].ico}</span>`).join('') : '<span aria-label="보이지 않음">?</span>'}</span>`; };
+  const camp = fs[fs.length - 1] + 1 === FLOOR_CAMP ? ` · <span class="dm-f">${FLOOR_CAMP}층 ⛺ 야영지 상인</span>` : '';
+  return `<span class="dr-map"><span class="mini">등불이 밝힌 곳만 보인다</span> ${fs.map(one).join(' · ')}${camp}</span>`;
 }
 function vRunMap() {
   const run = G.run, p = run.p; dgInit(run);
@@ -142,7 +150,7 @@ function vRoom(run, R) {
   }
   // 전투 방
   h += `<h3>${T.ico} ${esc(T.n)}${R.strong ? ' · ' + esc(R.strong) : R.squad && SQUADS.find(x => x.id === R.squad) ? ' · ' + esc(SQUADS.find(x => x.id === R.squad).n) : ''}${q('rooms', '방과 보스')}</h3>`;
-  if (R.ambush) h += `<p class="warn">매복입니다. 적이 먼저 움직이고 더 거셉니다. 대신 쓰러뜨린 적이 전리품을 더 자주 떨굽니다.</p>`;
+  if (R.ambush) h += `<p class="warn">순찰대입니다. 정예가 둘이라 더 거셉니다. 쓰러뜨린 적이 전리품을 더 자주 떨구고, 이기면 패시브 포인트 +1 또는 소모품 하나를 고릅니다.</p>`; // 0.8.0 6단계 A-6
   if (R.mods && R.mods.length) h += R.mods.map(m => `<p class="mini"><b>${esc(ROOM_MODS[m].n)}</b>: ${esc(ROOM_MODS[m].d)}</p>`).join('');
   h += `<p>이 방의 적 <span class="mini">Lv${R.lv || 1}</span></p><ul class="elist">${R.en.map((x, i) => `<li>${ROLES[x[0]].ico} ${esc(roomEnemyName(R, x, i))} <span class="mini">${ROLES[x[0]].n} · ${ROLES[x[0]].row === 'front' ? '전열' : '후열'}</span></li>`).join('')}${run.next && run.next.chase ? '<li>굶주린 수도사 <span class="mini">전열</span></li>' : ''}</ul>${q('roles', '적의 역할')}${roomXpHint(R, run.mode)}`;
   const nx = run.next || {};

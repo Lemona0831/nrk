@@ -8,14 +8,37 @@ const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 function dgInit(run) {
   if (run.dg) return;
   run.dg = { counts: {}, seen: {}, last: null, events: [], strong: { u: 0, l: 0 }, force: null, foes: [] };
-  run.room = 1; run.cur = null; run.path = 'main'; run.dgv = 2; run.gold = run.gold || 0; run.lv = run.lv || 1; run.xp = run.xp || 0; run.p.lv = run.lv; run.buffs = {}; run.next = {}; run.doorLog = [];
-  run.doors = genDoors(run, 1);
+  run.room = 1; run.cur = null; run.path = 'main'; run.dgv = 3; run.gold = run.gold || 0; run.lv = run.lv || 1; run.xp = run.xp || 0; run.p.lv = run.lv; run.buffs = {}; run.next = {}; run.doorLog = [];
+  run.segDoors = genSeg(run, 0, 'main'); run.doors = segDoorsAt(run, 1); // 0.8.0 6단계: 구간 1(큰 길)도 미리 만든다
+}
+/* 0.8.0 6단계 A-1 · A-3 · A-4 (docs/제안/0.8.0-6단계-던전개편-설계초안-2026-10-18.md): 구간 하나(SEGS[si])의 층마다 문 셋을 미리 만든다.
+   갈림길에서 길 셋마다 부르고, 고른 길의 문을 그대로 쓴다(판에 저장되므로 다시 불러와도 같다). 만드는 동안 바뀐 집계(run.dg)와 길은 되돌린다.
+   강적: 1챕터 구간 1은 0, 그 밖의 구간은 강적 문이 있는 층이 하나 이상(만들 수 있으면) · 둘까지. 한 층의 문은 서로 다른 종류라 강적 층에도 다른 문 둘이 있다 */
+function genSeg(run, si, path) {
+  const [a, b] = SEGS[si]; const d0 = JSON.stringify(run.dg), p0 = run.path; const out = {};
+  try {
+    run.path = path; for (let f = a; f <= b; f++) out[f] = genDoors(run, f);
+    const fl = Object.keys(out).map(Number), sf = () => fl.filter(f => out[f].some(r => r.type === 'strong'));
+    const swap = (f, k, t) => { out[f] = out[f].slice(); out[f][k] = mkRoom(run, t, f); };
+    if ((run.ch || 1) === 1 && si === 0) { for (const f of sf()) swap(f, out[f].findIndex(r => r.type === 'strong'), 'normal'); }
+    else {
+      if (!sf().length) { run.dg.strongS = {}; const cand = fl.filter(f => f > 1 && typeOk(run, 'strong', f)); if (cand.length) { const f = cand[Math.floor(Math.random() * cand.length)]; const ds = out[f]; const k = ds.findIndex(r => r.type === 'normal'); swap(f, k >= 0 ? k : ds.length - 1, 'strong'); } }
+      while (sf().length > STRONG_PER_SEG) { const f = sf()[sf().length - 1]; swap(f, out[f].findIndex(r => r.type === 'strong'), 'normal'); }
+    }
+  } finally { run.dg = JSON.parse(d0); run.path = p0; }
+  return out;
+}
+/* 미리 만든 구간의 문(없으면 그 자리에서 만든다). 구간 안에서 생긴 강제 문(종탑의 줄 · 묻힌 문 등)은 그 층의 일반 문 하나를 바꿔 넣는다 */
+function segDoorsAt(run, f) {
+  const s = run.segDoors && run.segDoors[f]; if (!s) return genDoors(run, f);
+  const d = run.dg; let ds = s.slice(); if (d.force && !ds.some(r => r.type === d.force)) { const k = ds.findIndex(r => r.type === 'normal'); ds[k >= 0 ? k : ds.length - 1] = mkRoom(run, d.force, f); } d.force = null;
+  return ds;
 }
 function typeOk(run, t, f) {
   const T = ROOM_TYPES[t], d = run.dg; if (!T || f < T.from) return false;
   if (t === 'fate') return false; /* 운명의 저울은 genDoors가 따로 끼운다 */
   if ((d.counts[t] || 0) >= ((chData(run.ch).roomMax || {})[t] || T.max)) return false; // 3챕터: 매복 최대 6
-  if (t === 'strong' && d.strong[isLower(f) ? 'l' : 'u'] >= STRONG_PER_HALF) return false;
+  if (t === 'strong' && ((d.strongS || {})[segOf(f)] || 0) >= STRONG_PER_SEG) return false; // 0.8.0 6단계: 구간마다 둘까지(전에는 상 · 하층 셋)
   if (t === 'strong' && f < (chData(run.ch).strongFrom || T.from)) return false; // 2챕터는 4층부터
   if (t === 'strong' && !STRONG_FOES.some(x => inCh(x, run.ch))) return false; // 그 챕터 강적이 아직 없으면
   if (t === 'strong' && (run.ch || 1) >= 3 && !STRONG_FOES.some(x => inCh(x, run.ch) && strong3Ok(run, x, f))) return false; // 3챕터: 그 축을 만나기 전에는 강적 문이 나오지 않는다(5.1절 2번)
@@ -37,7 +60,7 @@ function genDoors(run, f) {
   else if (f === FLOOR_CAMP + 1) { types = ['normal']; const t2 = pickType(run, f, types, ['ambush', 'strong']); if (t2) types.push(t2); const t3 = pickType(run, f, types, RESTS); if (t3) types.push(t3); }
   else {
     if (d.force) { need(d.force); d.force = null; } // 종탑의 줄 · 뼈 피리 · 해를 앞당긴다(강적), 묻힌 문(보물)
-    if ((f === 7 && !d.seen.strongu) || (f === FLOOR_CAMP + 7 && !d.seen.strongl)) need('strong'); // 반쯤 왔는데 강적을 못 봤으면 (샘은 억지로 넣지 않는다)
+    // 0.8.0 6단계: "반쯤 왔는데 강적을 못 봤으면"은 구간마다 강적 층을 보장하는 genSeg가 맡는다
   }
   while (types.length < 3) { const t = pickType(run, f, types); if (!t) break; types.push(t); }
   while (types.length < 3) types.push('normal');
@@ -48,11 +71,14 @@ function genDoors(run, f) {
   if ((run.ch || 1) >= FATE.from && f > 1 && (d.counts.fate || 0) < FATE.max && !types.includes('fate') && Math.random() < FATE.p) { const rs = types.map((t, i) => RESTS.includes(t) ? i : -1).filter(i => i >= 0); if (rs.length) types[rs[Math.floor(Math.random() * rs.length)]] = 'fate'; } /* 운명의 저울 (2챕터부터): 쉬는 문 하나를 바꾼다 */
   let used = 0; return types.map(t => mkRoom(run, t, f, t === 'normal' && force && !used++ ? { force } : null));
 }
+/* 0.8.0 6단계 A-5: "누구부터 칠지"가 있는 무리 = 전열과 후열(치유 · 소환 · 사수 · 영창 등 후열 역할)이 함께 있는 무리. 일반 방이 줄어든 만큼 남는 일반 방에 이 판단이 있게 한다 */
+const SQ_PRIO = 1.5;
+const sqPrio = en => !!(en && en.some(x => (ROLES[x[0]] || {}).row === 'back') && en.some(x => (ROLES[x[0]] || {}).row !== 'back'));
 /* 테마 무리 고르기: 지난 방의 무리와 이 층의 다른 문에 나온 무리는 빼고, 압박이 센 무리는 험한 길에서 잦게 */
 function pickSquad(run, f) {
   const d = run.dg; if (!d.fsq || d.fsqF !== f) { d.fsq = []; d.fsqF = f; }
   const pw = { rough: 1.6, quiet: 0.5 }[run.path] || 1;
-  const ws = SQUADS.map(s => !inCh(s, run.ch) || (s.from && f < s.from) || !(isLower(f) ? s.low : s.up) || ((low => low.filter(x => !introOk(run, x[0])).length >= 2)(isLower(f) ? s.low : s.up)) || d.fsq.includes(s.id) || s.id === d.lastSquad ? 0 : s.w * (s.press ? pw : 1)); // 챕터가 다른 무리, 아직 나오지 않을 층, 처음 보는 새 역할이 둘 이상인 조합 무리는 무게 0
+  const ws = SQUADS.map(s => !inCh(s, run.ch) || (s.from && f < s.from) || !(isLower(f) ? s.low : s.up) || ((low => low.filter(x => !introOk(run, x[0])).length >= 2)(isLower(f) ? s.low : s.up)) || d.fsq.includes(s.id) || s.id === d.lastSquad ? 0 : s.w * (s.press ? pw : 1) * (sqPrio(isLower(f) ? s.low : s.up) ? SQ_PRIO : 1)); // 0.8.0 6단계 A-5: 누구부터 칠지가 있는 무리 ×SQ_PRIO // 챕터가 다른 무리, 아직 나오지 않을 층, 처음 보는 새 역할이 둘 이상인 조합 무리는 무게 0
   let x = Math.random() * ws.reduce((a, v) => a + v, 0), pick = SQUADS[0]; for (let i = 0; i < SQUADS.length; i++) { x -= ws[i]; if (x <= 0 && ws[i] > 0) { pick = SQUADS[i]; break; } }
   d.fsq.push(pick.id); return pick;
 }
@@ -91,7 +117,7 @@ function fixedRoom(f) { const ch = (G.run && G.run.ch) || 1; return f === FLOOR_
 function chooseDoor(i) {
   const run = G.run, d = run.dg; const r = run.doors && run.doors[i]; if (!r) return;
   d.counts[r.type] = (d.counts[r.type] || 0) + 1; d.last = r.type; if (r.squad) d.lastSquad = r.squad;
-  if (r.type === 'strong') { d.strong[isLower(r.floor) ? 'l' : 'u']++; d.foes.push(r.foe); }
+  if (r.type === 'strong') { d.strong[isLower(r.floor) ? 'l' : 'u']++; d.strongS = d.strongS || {}; d.strongS[segOf(r.floor)] = (d.strongS[segOf(r.floor)] || 0) + 1; d.foes.push(r.foe); }
   if (r.type === 'event') d.events.push(r.event);
   run.doorLog.push({ floor: run.room, offered: run.doors.map(x => x.type + (x.mods && x.mods.length ? '+' + x.mods.join('+') : '')), picked: i, t: Date.now() });
   run.cur = r; run.doors = null; saveRunLocal(); saveCur(); render();
@@ -102,16 +128,19 @@ function advanceFloor() {
   for (const k in run.buffs) { run.buffs[k]--; if (run.buffs[k] <= 0) delete run.buffs[k]; }
   run.room++; run.cur = fixedRoom(run.room); if (run.cur && run.cur.type === 'camp' && (run.ch || 1) >= 3 && isV2(run.p)) ksGrant(run, 'c3'); // 10월 16일 0.8.0 2단계: 세 번째 큰 각인은 3챕터 야영지에 들어설 때
   if ((run.ch || 1) >= 3 && run.room <= FLOORS) { const bd = floorBand3(run.room), pv = floorBand3(run.room - 1); if (bd !== pv) toast(bd.n + '. ' + bd.line); } // 3챕터: 해의 흐름 띠에 들어설 때 한 줄
-  if (!run.cur && PATH_AT.includes(run.room)) { run.cross = { floor: run.room }; run.doors = null; } // 갈래길: 길을 고른 뒤 문이 나온다
-  else run.doors = run.cur ? null : genDoors(run, run.room);
+  if (!run.cur && PATH_AT.includes(run.room)) { run.cross = crossMake(run); run.doors = null; } // 갈래길: 길을 고른 뒤 문이 나온다. 0.8.0 6단계: 길 셋의 다음 구간을 미리 만든다
+  else run.doors = run.cur ? null : segDoorsAt(run, run.room);
   saveRunLocal(); saveCur();
 }
 function choosePath(id) {
   const run = G.run; if (!run.cross || !PATHS[id]) return;
   if (id === 'quiet' && markOn(run, 'noquiet')) return; // 표식 noquiet
-  run.path = id; (run.pathLog = run.pathLog || []).push({ floor: run.room, path: id, t: Date.now() }); run.cross = null;
-  run.doors = genDoors(run, run.room); saveRunLocal(); saveCur(); render();
+  run.path = id; (run.pathLog = run.pathLog || []).push({ floor: run.room, path: id, t: Date.now() }); run.segDoors = (run.cross.segs && run.cross.segs[id]) || null; run.cross = null;
+  run.doors = segDoorsAt(run, run.room); saveRunLocal(); saveCur(); render();
 }
+const crossMake = run => ({ floor: run.room, segs: Object.fromEntries(Object.keys(PATHS).map(id => [id, genSeg(run, segOf(run.room), id)])) });
+/* 0.8.0 6단계 A-3: 갈림길 지도에 보이는 문(핵심 문). 일반 · 순찰대 · 보물 · 시련 · 제단은 보이지 않는다(만든 사람 결정 2) */
+const MAP_SHOW = ['strong', 'spring', 'event', 'shrine'];
 /* 옛 저장본(19층)을 24층 틀로 옮긴다: 상층 그대로, 야영지 9 → 12, 하층 10~17 → 13~20, 샘 18 → 23, 보스 19 → 24 */
 function dgFix(run) {
   if (run && !run.mode) run.mode = 'normal'; /* 가혹 모드: 옛 저장본은 일반 */
@@ -119,10 +148,22 @@ function dgFix(run) {
   if (run) consBagFix(run); /* 10월 14일: 소모품 가방 분리(옛 저장본 이전) */
   if (run && !run.awk) run.awk = []; /* 각인: 옛 저장본은 없음 (p.awk는 각인을 얻을 때 맞춘다) */
   if (run && run.p && (run.ch || 1) >= 2) for (let c = 2; c <= run.ch; c++) chGift(run, c, true); /* 챕터 선물: 이미 그 챕터에 들어선 옛 저장본도 받는다 */
-  if (!run || !run.dg || run.dgv === 2) return;
-  const m = f => f <= 8 ? f : f === 9 ? FLOOR_CAMP : f <= 17 ? f + 3 : f === 18 ? FLOOR_BOSS - 1 : FLOOR_BOSS;
-  run.room = m(run.room || 1); if (run.cur && run.cur.floor) run.cur.floor = m(run.cur.floor); for (const d of run.doors || []) if (d.floor) d.floor = m(d.floor);
-  run.path = run.path || 'main'; run.dgv = 2;
+  if (!run || !run.dg || run.dgv === 3) return;
+  if (run.dgv !== 2) { // 19층 → 24층 (옛 옮기기)
+    const m = f => f <= 8 ? f : f === 9 ? 12 : f <= 17 ? f + 3 : f === 18 ? 23 : 24;
+    run.room = m(run.room || 1); if (run.cur && run.cur.floor) run.cur.floor = m(run.cur.floor); for (const d of run.doors || []) if (d.floor) d.floor = m(d.floor);
+    run.path = run.path || 'main'; run.dgv = 2;
+  }
+  dgTo16(run);
+}
+/* 0.8.0 6단계(만든 사람 결정 5): 24층 판을 16층 틀로 비례해 옮긴다. 상층 1–11 → 1–7, 야영지 12 → 8, 하층 13–23 → 9–15, 보스 24 → 16.
+   다음 방에 들어설 때의 문 · 갈림길은 새 틀로 다시 만든다(고른 방 · 싸우던 방은 그대로 층 번호만) */
+const floor24to16 = f => f >= 24 ? 16 : f === 12 ? 8 : f <= 11 ? Math.max(1, Math.round(f * 7 / 11)) : 8 + Math.max(1, Math.round((f - 12) * 7 / 11));
+function dgTo16(run) {
+  const m = floor24to16; const r0 = run.room || 1; run.room = m(r0); if (run.cur && run.cur.floor) run.cur.floor = m(run.cur.floor);
+  run.dg.strongS = {}; run.segDoors = null; (run.mig16 = run.mig16 || []).push({ from: r0, to: run.room, lv: run.lv || 1, ch: run.ch || 1, t: Date.now() });
+  if (!run.cur) { if (PATH_AT.includes(run.room)) { run.cross = crossMake(run); run.doors = null; } else { run.cross = null; run.doors = genDoors(run, run.room); } }
+  run.dgv = 3;
 }
 /* 전리품을 차례로 하나씩 건넨다 (방마다 여러 개일 수 있다) */
 function rollGrade(minG) { const x = Math.random() * 100; let g = x < 50 ? 'n' : x < 90 ? 'm' : 'r'; if (minG === 'm' && g === 'n') g = Math.random() < 0.8 ? 'm' : 'r'; if (minG === 'r') g = 'r'; return g; }
@@ -380,7 +421,17 @@ function battleContinue() {
   q.push(...drops);
   if (lvUp && typeof sfx === 'function') sfx('b_levelup'); if (xpGot) toast('경험치 +' + xpGot + (lvUp ? ' · 레벨 ' + run.lv + ' 달성' : ''));
   if (lvUp) toast('레벨 ' + run.lv + ' · 패시브 포인트 +' + PT.pts.lv * lvUp + ' · 액티브 포인트 +' + AT_PTS.lv * lvUp + '. 트리에서 찍습니다'); // 10월 16일 0.8.0 2단계: 능력치 창 대신 트리 포인트(남겨도 된다)
+  if (t === 'ambush') run.patrolPend = { cons: patrolCons(run), room: run.room - 1 }; // 0.8.0 6단계 A-6: 순찰대 보상 고르기(전리품 뒤에 창이 뜬다)
   queueDrops(q);
+}
+/* 순찰대 보상의 소모품 후보 셋: 그 챕터에 나오는 소모품(챙길 수 있는 것) 가운데 서로 다른 셋 */
+function patrolCons(run) { const ch = run.ch || 1; const ids = Object.keys(CONS).filter(k => (CONS[k].ch || 1) <= ch && !(CONS[k].only && CONS[k].only !== ch) && CONS[k].use !== 'none' && (CONS[k].dw == null || CONS[k].dw > 0)); const out = []; while (out.length < 3 && ids.length) out.push(ids.splice(Math.floor(Math.random() * ids.length), 1)[0]); return out; }
+function patrolPick(k) {
+  const run = G.run, P = run && run.patrolPend; if (!P) return; const ch = run.ch || 1; run.patrolPt = run.patrolPt || {};
+  if (k === 'pt') { if ((run.patrolPt[ch] || 0) >= AMBUSH.ptMax) return; run.patrolPt[ch] = (run.patrolPt[ch] || 0) + 1; ptBonus(run, 1, '순찰대'); }
+  else if ((P.cons || []).includes(k)) { consGrant(run, k, 'n', 1); toast(CONS[k].ico + ' ' + consName({ id: k, g: 'n' }) + '을(를) 챙겼습니다'); }
+  else return;
+  (run.patrolLog = run.patrolLog || []).push({ ch, room: P.room, pick: k, t: Date.now() }); run.patrolPend = null; G.sheet = null; saveRunLocal(); saveCur(); render();
 }
 
 function retryRoom() {

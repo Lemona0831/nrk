@@ -272,7 +272,7 @@ function hurtEnemy(b, e, raw, o) {
   if (!o.dot && hasIt(b.p, 'focusring')) d *= o.aoe ? 0.7 : 1.07;
   if (e.vow && !o.dot) d *= ABBOT.vowTaken; else if (e.vow && o.shock) d *= 1 - (1 - ABBOT.vowTaken) * ELEM.half; // 열충격은 서원의 감소를 절반만
   if (e.evading && !o.dot && !o.aoe && fullF) logp(b, 'good', '추적 3겹: ' + e.n + '의 몸 낮추기를 꿰뚫는다');
-  if (e.evading && !o.dot && !o.aoe && !fullF) { e.evading = 0; logp(b, 'sys', e.n + '이(가) 몸을 틀어 피한다'); if (!hasBt(b.p, 'clarity')) return 0; d *= 0.5; } // 3챕터 맑은 눈의 성소: 막힌 공격도 절반 // 몸 낮추기: 다음 한 적 공격을 피한다 (광역 · 지속 피해는 그대로)
+  if (e.evading && !o.dot && !o.aoe && !fullF) { e.evading = 0; e.evHitA = b.actN; logp(b, 'sys', e.n + '이(가) 몸을 틀어 절반만 맞는다. 자세가 흔들려 붕괴 2배'); if (!hasBt(b.p, 'clarity')) d *= 0.5; } // 0.8.0 6단계 A-7: 몸 낮춘 적은 한 적 공격의 피해 −50%(전에는 0), 그 공격의 붕괴 ×2. 3챕터 맑은 눈이면 피해 그대로 // 3챕터 맑은 눈의 성소: 막힌 공격도 절반 // 몸 낮추기: 다음 한 적 공격을 피한다 (광역 · 지속 피해는 그대로)
   if (e.braced && !o.dot && !fullF) d *= EKW.braceRed; else if (e.braced && o.shock) d *= 1 - (1 - EKW.braceRed) * ELEM.half; // 열충격은 버티기의 감소를 절반만
   if (e.demand && e.demand.turn === b.turnIdx && (!o.dot || o.shock) && b.cur) e.demand.hit = 1; // 수도원장의 요구: 이번 차례에 쳤는가
   if (!o.dot && b.cur && b.p.whet) { d *= 1 + b.p.whet; b.p.whet = 0; } // 소모품 숫돌

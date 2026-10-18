@@ -1,19 +1,23 @@
 /* 나락의 유산 데이터: 던전과 갈림길 (기획서 11.3절)
-   한 챕터 = 상층 12층(1~11층, 12층 야영지) + 하층 12층(13~23층, 24층 보스). 10월 4일 만든 사람 결정: 24층, 12:12. 샘은 정해진 층 없이 드문 방이다. 값만 둔다. */
-const FLOORS = 24;
-const FLOOR_CAMP = 12, FLOOR_BOSS = 24;
+   한 챕터 = 16층: 구간 1(1–3층, 큰 길) · 구간 2(4–7) · 8층 야영지 · 구간 3(9–11) · 구간 4(12–15) · 16층 보스. 갈림길 4 · 9 · 12층.
+   0.8.0 6단계(10월 18일 만든 사람 승인, docs/제안/0.8.0-6단계-던전개편-설계초안-2026-10-18.md). 전에는 24층(상층 1–11 · 12 야영지 · 하층 13–23 · 24 보스). 값만 둔다. */
+const FLOORS = 16;
+const FLOOR_CAMP = 8, FLOOR_BOSS = 16;
+const SEGS = [[1, 3], [4, 7], [9, 11], [12, 15]]; // 구간(갈림길에서 다음 구간 전체의 문을 미리 만든다)
+const segOf = f => SEGS.findIndex(([a, b]) => f >= a && f <= b);
+const STRONG_PER_SEG = 2; // A-4: 구간마다 강적 문이 있는 층은 둘까지
 const isLower = f => f > FLOOR_CAMP;
 const chOf = () => ({ boss: FLOOR_BOSS, camp: FLOOR_CAMP, lower: FLOOR_CAMP + 1, spring: 0 }); // 테스터(dgqa)가 읽는 챕터 틀
 
 /* 방 유형: w 가중치, max 챕터당 최대, from 나오는 첫 층, fight 전투 방.
    10월 4일 만든 사람 결정: 보물을 줄이고 일반 · 매복 · 강적을 늘린다. 시련은 드물게. 샘은 문 하나에 2~3%, 한 층의 문 셋 가운데 나올 확률 4~9%(가중치 2). 언제나 1~10% 사이 */
 const ROOM_TYPES = {
-  normal: { n: '일반', ico: '⚔️', w: 44, max: 99, from: 1, fight: 1, risk: 1, gold: [6, 9], hint: '장비 1' },
-  ambush: { n: '매복', ico: '🗡️', w: 15, max: 5, from: 2, fight: 1, risk: 2, gold: [9, 13], hint: '적이 먼저 움직인다 · 적이 거세다 · 전리품 많음 · 장비 1' },
+  normal: { n: '일반', ico: '⚔️', w: 30, max: 99, from: 1, fight: 1, risk: 1, gold: [6, 9], hint: '장비 1' },
+  ambush: { n: '순찰대', ico: '🗡️', w: 15, max: 5, from: 2, fight: 1, risk: 2, gold: [9, 13], hint: '정예 둘 · 이기면 패시브 포인트 +1 또는 소모품 하나 · 전리품 많음 · 장비 1' }, // A-6: 표시 이름 순찰대(내부 키 ambush). 기습(첫 라운드 맨 뒤)은 없앴다
   strong: { n: '강적', ico: '💀', w: 13, max: 6, from: 3, fight: 1, risk: 3, gold: [40, 40], hint: '희귀 장비 · 골드 많음 · 전리품 많음' }, // 10월 4일 하이 리스크 하이 리턴: 희귀 보장, 전리품 LOOT.strong. 골드는 경제 맞춤으로 40
   treasure: { n: '보물', ico: '🗝️', w: 4, max: 2, from: 2, fight: 1, risk: 2, gold: [16, 16], hint: '상자: 장비 둘 중 하나, 희귀 보장' },
-  trial: { n: '시련', ico: '🔥', w: 3, max: 2, from: 5, fight: 1, risk: 4, gold: [25, 25], hint: '방 특성 둘 · 희귀 장비' },
-  spring: { n: '샘', ico: '💧', w: 2, max: 2, from: 3, fight: 0, risk: 0, hint: '생명력 50% 회복, 플라스크 각 1' },
+  trial: { n: '시련', ico: '🔥', w: 3, max: 2, from: 3, fight: 1, risk: 4, gold: [25, 25], hint: '방 특성 둘 · 희귀 장비' },
+  spring: { n: '샘', ico: '💧', w: 2, max: 2, from: 2, fight: 0, risk: 0, hint: '생명력 50% 회복, 플라스크 각 1' },
   shrine: { n: '성소', ico: '🕯️', w: 6, max: 3, from: 1, fight: 0, risk: 0, hint: '3개 방 동안 이로운 효과' },
   altar: { n: '제단', ico: '🩸', w: 5, max: 3, from: 2, fight: 0, risk: 0, hint: '대가 있는 거래' },
   event: { n: '이벤트', ico: '❔', w: 7, max: 5, from: 2, fight: 0, risk: 0, hint: '선택에 따라 다르다' },
@@ -21,7 +25,7 @@ const ROOM_TYPES = {
 };
 /* 방 골드 (10월 4일 경제 맞춤): 24층이 되어 깬 캐릭터의 정산이 평균 464(목표 약 320)라 방 골드를 30%쯤 낮췄다. 정산 평균 368, 험한 길 위주 478, 샛길 위주 313 */
 /* 강적은 상층 3, 하층 3까지 */
-const STRONG_PER_HALF = 3;
+const STRONG_PER_HALF = 3; // 0.8.0 6단계: 쓰지 않는다(구간마다 STRONG_PER_SEG)
 /* 문에 보상이 적혀 있지 않을 확률 (전투 방). 10월 4일 만든 사람 결정: 보상은 일부만 보인다 */
 const HIDE_REWARD = 0.45;
 
@@ -34,7 +38,7 @@ const MODES = {
   hard: { n: '가혹', dmg: 1.3, hp: 1, loot: 1.25, gold: 1.2, xp: 1.2, hero: 1.5,
     why: ['적과 보스가 30% 더 아프게 때립니다. 한 번에 받는 피해의 상한은 같습니다.', '가장 안전한 길도 일반의 큰 길만큼 위험합니다. 강적을 더 자주 만납니다.', '전리품과 골드, 경험치가 늘고 장비 등급이 더 자주 오릅니다.', '기록과 랭킹에 "가혹"이 붙습니다.'] },
 };
-const PATH_AT = [4, 8, 13, 17, 21]; // 이 층의 문을 열기 전에 길을 고른다(1~3층은 큰 길)
+const PATH_AT = [4, 9, 12]; // 이 층의 문을 열기 전에 길을 고른다(1–3층은 큰 길). 0.8.0 6단계: 갈림길에서 길 셋의 다음 구간을 미리 만들고 핵심 문을 보인다
 const PATHS = {
   rough: { n: '험한 길', ico: '⛰️', hp: 1.15, dmg: 1.12, loot: 1.5, gold: 1.3, up: 0.35, risk: 1, w: { strong: 1.6, ambush: 1.5, trial: 2, treasure: 1.3, spring: 0.5, shrine: 0.6, event: 0.8 }, d: '적이 더 거셉니다. 강적 · 매복 · 시련 문이 자주 나옵니다. 전리품과 골드가 많고, 장비 등급이 자주 한 단계 오릅니다.' },
   main: { n: '큰 길', ico: '🛤️', hp: 1, dmg: 1, loot: 1, gold: 1, risk: 0, w: {}, d: '평소대로입니다.' },
@@ -106,7 +110,7 @@ const STRONG = { big: 0.46, hp: 3.7, dmg: 2.7, bellEvery: 3, leech: 0.45, frenzy
 /* 강적의 한 방 (10월 4일 만든 사람 결정: 강적은 보스보다 약하되 생명력의 20~30%를 깎는 한 방이 중심에 있다).
    big: 강적의 강타 = 기준 생명력(HIT_REF) × big. 던전 세기 · 길과 상관없이 늘 같다. 강적은 모두 공격 → 버티기 → 강타 준비 → 강타 */
 /* 매복 (10월 4일 만든 사람 결정: 난이도는 늘 일반과 강적 사이, 강적 쪽에 가깝게). 적 체력 · 피해 배율, elite: 정예로 바꾸는 적 수, loot: 전리품 확률 배율 */
-const AMBUSH = { hp: 1.5, dmg: 1.4, elite: 1, loot: 1.5 }; // 방 하나에 잃는 생명력이 일반과 강적 사이의 60~70% 자리(암살자 14 · 30 · 41%, 파수꾼 10 · 26 · 32%)
+const AMBUSH = { hp: 1.5, dmg: 1.4, elite: 2, loot: 1.5, ptMax: 2 }; // 0.8.0 6단계 A-6: 정예 둘(1 → 2), 이기면 패시브 포인트 +1(챕터에 ptMax번) 또는 소모품 셋 중 하나 // 방 하나에 잃는 생명력이 일반과 강적 사이의 60~70% 자리(암살자 14 · 30 · 41%, 파수꾼 10 · 26 · 32%)
 const STRONG_FOES = [
   { id: 'bellringer', n: '종지기', en: [['shield', 1], ['minion']] }, // 10월 4일: 하수인을 뺐다(강적 다섯 가운데 가장 무거웠다)
   { id: 'pilgrim', n: '굶주린 순례자', en: [['bruiser', 1]], dmg: 0.8 }, // dmg · hp: 강적마다 평소 공격 · 체력 배율(큰 한 방은 그대로). 순례자는 다섯 가운데 가장 무거웠다
@@ -128,7 +132,7 @@ const FOE_X = {
 const SQUAD_VARY = 0.5;
 // 가중치(w)는 직업 사이도 맞춘다: 저주 의식 · 광신 돌격 · 성가 행렬은 파수꾼에게, 문지기 · 혼성 순찰 · 화형 의식 · 도둑 떼는 암살자에게 상대적으로 무겁다 (10월 4일 잼)
 const SQUADS = [
-  { id: 'wall', from: 4, n: '방패벽', w: 1, up: [['shield'], ['shield'], ['minion']], low: [['shield', 1], ['shield'], ['archer']], vary: [2, ['minion', 'archer']] },
+  { id: 'wall', from: 3, n: '방패벽', w: 1, up: [['shield'], ['shield'], ['minion']], low: [['shield', 1], ['shield'], ['archer']], vary: [2, ['minion', 'archer']] },
   { id: 'hymn', n: '성가 행렬', w: 1.4, up: [['bruiser'], ['bruiser'], ['healer']], low: [['bruiser', 1], ['bruiser'], ['healer']], vary: [1, ['bruiser', 'thief']] },
   { id: 'pyre', n: '화형 의식', w: 0.8, press: 1, up: [['bruiser'], ['pyre']], low: [['shield'], ['bruiser'], ['pyre', 1]], vary: [0, ['bruiser', 'shield', 'minion']] }, // 10월 5일: 자폭 행렬을 바꿨다
   { id: 'thieves', n: '도둑 떼', w: 0.8, up: [['thief'], ['thief'], ['archer']], low: [['thief'], ['thief'], ['archer', 1]], vary: [2, ['archer', 'darkmage']] },
@@ -173,9 +177,9 @@ const EVENTS = [
 const MLV_HP = 0.12, MLV_DMG = 0.10;
 /* 난이도 (10월 2일, 만든 사람 결정: 1챕터 완주 자동 테스터 평균 20%, 숙련·탐험가 40%. 1층부터 실전) 던전 방의 적 체력·피해 배율 */
 const DIFF = { upper: { hp: 0.72, dmg: 0.57 }, lower: { hp: 0.9, dmg: 0.58 } }; // 10월 4일 강적 다섯 · 테마 무리 뒤: AI 테스터 완주 암살자 9 · 파수꾼 13%. 이전: 상층 0.75 · 0.6, 하층 1.0 · 0.68 (1차 0.8 · 0.65, 1.05 · 0.7. 개편 전 0.9 · 0.85, 1.2 · 0.9)
-function mlvOf(f, ch) { return (f >= FLOOR_BOSS ? 4 : f <= 6 ? 1 : f <= FLOOR_CAMP ? 2 : f <= 18 ? 3 : 4) + 4 * (((ch || (typeof G !== 'undefined' && G.run && G.run.ch)) || 1) - 1); } // 24층: 6층마다 한 단계. 챕터마다 +4 (1챕터 1~4, 2챕터 5~8, 3챕터 9~12, 기획서 11.4)
+function mlvOf(f, ch) { return (f >= FLOOR_BOSS ? 4 : f <= 4 ? 1 : f <= FLOOR_CAMP ? 2 : f <= 12 ? 3 : 4) + 4 * (((ch || (typeof G !== 'undefined' && G.run && G.run.ch)) || 1) - 1); } // 24층: 6층마다 한 단계. 챕터마다 +4 (1챕터 1~4, 2챕터 5~8, 3챕터 9~12, 기획서 11.4)
 /* 경험치: 일반 5, 정예 12, 강적 40, 보스 100 × (1 + 0.15 × (몬스터 레벨 − 1)). 소환된 적은 0 */
-const XP_BASE = { normal: 5, elite: 12, strong: 40, boss: 100 }; // 강적 30 → 40 (10월 4일 하이 리스크 하이 리턴) // 보스 150이면 챕터 끝 Lv6으로 목표(4~5)를 넘어 100으로 (10월 2일)
+const XP_BASE = { normal: 7.5, elite: 18, strong: 60, boss: 100 }; // 0.8.0 6단계 A-2: 층이 24 → 16이라 전투가 줄어든 만큼 ×1.5(보스는 한 번이라 그대로). 챕터 끝 Lv6 · 11 · 16으로 맞춘다 // 강적 30 → 40 (10월 4일 하이 리스크 하이 리턴) // 보스 150이면 챕터 끝 Lv6으로 목표(4~5)를 넘어 100으로 (10월 2일)
 const CH1_NORMAL_XP = 1.5; // 첫 챕터 일반 전투의 성장 보상. 강적 호위·다른 전투 유형에는 적용하지 않는다.
 function roomXpMul(room, mode) {
   return (chData(room.ch).xp || 1) * ((mode || room.mode) === 'hard' ? MODES.hard.xp : 1) * (!room.boss && (room.ch || 1) === 1 && room.type === 'normal' ? CH1_NORMAL_XP : 1);
@@ -227,7 +231,7 @@ const CODEX = {
    틀은 1챕터와 같다(24층, 12:12, 갈래길). 이 칸은 1챕터 배열에 ch: 2 항목을 더하고 CHAPTERS[2]를 채운다. 수치는 모두 [가설] */
 ENEMY_NAMES[2] = { bruiser: '무덤지기', shield: '납골당 문지기', archer: '납골당 궁수', healer: '곡하는 사제', summoner: '뼈 엮는 자', minion: '기어 나온 뼈', thief: '도굴꾼', pyre: '장송 영창자', skeleton: '해골 병사', hexer: '무덤 주술사', mason: '뼈 쌓는 자', burrower: '굴 파는 시체', bloat: '부푼 시체', bonewall: '뼈벽' };
 CHAPTERS[2] = {
-  n: '잊힌 지하묘지', boss: 'cryptlord', names: ENEMY_NAMES[2], strongFrom: 4, xp: 1.55, gold: 1.35, settleStrong: 30,
+  n: '잊힌 지하묘지', boss: 'cryptlord', names: ENEMY_NAMES[2], strongFrom: 2, xp: 1.55, gold: 1.35, settleStrong: 30,
   diff: { upper: { hp: 0.75, dmg: 0.51 }, lower: { hp: 0.92, dmg: 0.527 } }, // 10월 9일 결정 7 가(2챕터 완주 10~20%): 적 피해 ×0.85. 이전 dmg 0.60 · 0.62(5.1%). 5,400판 처음부터 흐름에서 1챕터를 깬 434명 가운데 61명(14.1%)
   settleLore: '녹슨 왕관이 뼈 더미 위로 굴러떨어졌다. 더 깊은 곳에서 뜨거운 모래바람이 불어온다.',
   nextLore: '계단 아래로 마른 열기가 올라온다. 벽 틈마다 재가 쌓여 있다.',
@@ -245,8 +249,8 @@ const HEX = { base: 0.04, per: 0.04, cap: 0.24, kinds: ['poison', 'bleed', 'igni
 const BWALL = { hp: 1.0, brk: 30, cut: 0.5, mend: 0.5, wait: 2 }; // 뼈벽: 후열이 받는 한 적 대상 피해 ×cut
 const BURROW = { up: 1.6, aoe: 1.3, vuln: 2, chill: 1 }; // 굴 파는 시체: 솟구침 = 평소 × up, 땅속에서 광역 ×aoe, 드러나면 취약
 const BLOAT = { me: 4, foes: 3 };                // 부푼 시체: 쓰러질 때 중독
-const SWIFT = { share: 0.5, hp: 1.15, from: 9 }; // 신속 접사(2챕터부터): 라운드가 시작될 때 둔화가 없으면 가속 1
-const INTRO_AT = { skeleton: 1, hexer: 3, burrower: 5, mason: 7, bloat: 13 }; // 처음 만남 보장 문 (그 층까지 못 봤으면)
+const SWIFT = { share: 0.5, hp: 1.15, from: 6 }; // 신속 접사(2챕터부터): 라운드가 시작될 때 둔화가 없으면 가속 1
+const INTRO_AT = { skeleton: 1, hexer: 2, burrower: 3, mason: 4, bloat: 9 }; // 0.8.0 6단계: 16층 틀(옛 1 · 3 · 5 · 7 · 13층) // 처음 만남 보장 문 (그 층까지 못 봤으면)
 const ROLE_INTRO = {
   skeleton: ['뼈마디가 덜그럭거린다.', '쓰러진 해골은 뼈 더미가 됩니다. 더미 위 숫자는 다시 일어서기까지 남은 라운드입니다. 화상이 걸렸거나 무너진 채 쓰러진 해골은 일어서지 않습니다.'],
   hexer: ['손가락에 감긴 실이 내 쪽으로 뻗어 있다.', '조이기는 내 해로운 상태가 여러 가지일수록 아픕니다.'],
@@ -259,14 +263,14 @@ const ROLE_INTRO = {
 SQUADS.push(
   { id: 'bonepatrol', ch: 2, n: '뼈 순찰', w: 1.2, from: 1, up: [['skeleton'], ['skeleton']], low: [['skeleton', 1], ['skeleton'], ['archer']], vary: [1, ['bruiser', 'shield']] },
   { id: 'diggers', ch: 2, n: '무덤지기 패', w: 1.0, from: 1, up: [['bruiser'], ['skeleton']], low: [['bruiser', 1], ['skeleton'], ['healer']], vary: [1, ['skeleton', 'shield', 'bloat']] },
-  { id: 'weave', ch: 2, n: '뼈 엮기', w: 0.8, from: 2, up: [['skeleton'], ['summoner']], low: [['skeleton', 1], ['summoner'], ['healer']], vary: [0, ['skeleton', 'bruiser']] },
-  { id: 'knot', ch: 2, n: '저주 매듭', w: 1.2, press: 1, from: 3, up: [['bruiser'], ['hexer']], low: [['shield'], ['hexer', 1], ['hexer']], vary: [0, ['bruiser', 'skeleton', 'bloat']] },
-  { id: 'mourn', ch: 2, n: '곡하는 행렬', w: 1.2, from: 4, up: [['skeleton'], ['skeleton'], ['healer']], low: [['skeleton', 1], ['skeleton'], ['healer']], vary: [1, ['skeleton', 'bruiser', 'bloat']] },
-  { id: 'robbers', ch: 2, n: '도굴꾼 떼', w: 0.8, from: 4, up: [['thief'], ['thief'], ['archer']], low: [['thief'], ['burrower'], ['archer', 1]], vary: [2, ['archer', 'hexer']] },
-  { id: 'burrow', ch: 2, n: '굴 무리', w: 1.0, press: 1, from: 5, up: [['burrower'], ['archer']], low: [['burrower', 1], ['burrower'], ['archer']], vary: [1, ['archer', 'skeleton']] },
-  { id: 'dirge', ch: 2, n: '장송 영창', w: 0.8, press: 1, from: 6, up: [['skeleton'], ['pyre']], low: [['shield'], ['skeleton'], ['pyre', 1]], vary: [0, ['bruiser', 'shield', 'skeleton']] },
-  { id: 'masonry', ch: 2, n: '뼈벽 공사', w: 1.0, from: 7, up: [['bruiser'], ['mason']], low: [['skeleton'], ['mason', 1], ['archer']], vary: [0, ['bruiser', 'shield', 'skeleton']] },
-  { id: 'garrison', ch: 2, n: '납골당 수비대', w: 1.2, press: 1, from: 14, up: [['skeleton', 1], ['mason'], ['hexer']], low: [['skeleton', 1], ['mason'], ['hexer']], vary: [0, ['burrower', 'shield', 'bloat']] },
+  { id: 'weave', ch: 2, n: '뼈 엮기', w: 0.8, from: 1, up: [['skeleton'], ['summoner']], low: [['skeleton', 1], ['summoner'], ['healer']], vary: [0, ['skeleton', 'bruiser']] },
+  { id: 'knot', ch: 2, n: '저주 매듭', w: 1.2, press: 1, from: 2, up: [['bruiser'], ['hexer']], low: [['shield'], ['hexer', 1], ['hexer']], vary: [0, ['bruiser', 'skeleton', 'bloat']] },
+  { id: 'mourn', ch: 2, n: '곡하는 행렬', w: 1.2, from: 3, up: [['skeleton'], ['skeleton'], ['healer']], low: [['skeleton', 1], ['skeleton'], ['healer']], vary: [1, ['skeleton', 'bruiser', 'bloat']] },
+  { id: 'robbers', ch: 2, n: '도굴꾼 떼', w: 0.8, from: 3, up: [['thief'], ['thief'], ['archer']], low: [['thief'], ['burrower'], ['archer', 1]], vary: [2, ['archer', 'hexer']] },
+  { id: 'burrow', ch: 2, n: '굴 무리', w: 1.0, press: 1, from: 3, up: [['burrower'], ['archer']], low: [['burrower', 1], ['burrower'], ['archer']], vary: [1, ['archer', 'skeleton']] },
+  { id: 'dirge', ch: 2, n: '장송 영창', w: 0.8, press: 1, from: 4, up: [['skeleton'], ['pyre']], low: [['shield'], ['skeleton'], ['pyre', 1]], vary: [0, ['bruiser', 'shield', 'skeleton']] },
+  { id: 'masonry', ch: 2, n: '뼈벽 공사', w: 1.0, from: 4, up: [['bruiser'], ['mason']], low: [['skeleton'], ['mason', 1], ['archer']], vary: [0, ['bruiser', 'shield', 'skeleton']] },
+  { id: 'garrison', ch: 2, n: '납골당 수비대', w: 1.2, press: 1, from: 9, up: [['skeleton', 1], ['mason'], ['hexer']], low: [['skeleton', 1], ['mason'], ['hexer']], vary: [0, ['burrower', 'shield', 'bloat']] },
 );
 ENC.treasure2 = [[['shield', 1], ['skeleton']], [['skeleton', 1], ['archer']], [['burrower', 1], ['hexer']]];
 /* 방 특성 (9절): 새 셋은 2챕터만, 수도원 주제(성수 · 종소리)는 1챕터만 */
@@ -328,17 +332,17 @@ Object.assign(CODEX, {
 ENEMY_NAMES[3] = { bruiser: '사막 약탈자', shield: '유적 근위병', archer: '모래 궁수', healer: '재의 무녀', summoner: '모래 부르는 자', pyre: '태양 영창자', minion: '재 인형', thief: '무덤 도굴꾼', darkmage: '검은 해의 주술사', skeleton: '불탄 해골', lurker: '모래 잠복자', ember: '불씨 투척병', wrapped: '붕대 감긴 망자', mirage: '아지랑이 술사', crown: '재의 왕관', maid: '재의 시녀' };
 /* 해의 흐름 (1.2절): 띠마다 층 이름과 들어설 때 한 줄. 특성 무게는 MOD3 */
 const BANDS3 = [
-  { to: 6, n: '불탄 성벽', line: '검은 해가 지평선에 걸려 있다. 모래가 아직 차다.' },
-  { to: 11, n: '무너진 시장', line: '그림자가 발밑으로 숨는다. 공기가 일렁인다.' },
-  { to: 12, n: '오아시스 야영지', line: '물 위에 재가 떠 있다. 그래도 물이다.' },
-  { to: 18, n: '왕의 묘실', line: '같은 얼굴이 두 번 보인다.' },
-  { to: 23, n: '유리 사원', line: '모래가 별을 가린다. 어둠 속에서 모래가 숨을 쉰다.' },
-  { to: 24, n: '재의 왕좌', line: '재가 눈처럼 내린다. 왕좌가 따뜻하다.' },
+  { to: 4, n: '불탄 성벽', line: '검은 해가 지평선에 걸려 있다. 모래가 아직 차다.' },
+  { to: 7, n: '무너진 시장', line: '그림자가 발밑으로 숨는다. 공기가 일렁인다.' },
+  { to: 8, n: '오아시스 야영지', line: '물 위에 재가 떠 있다. 그래도 물이다.' },
+  { to: 12, n: '왕의 묘실', line: '같은 얼굴이 두 번 보인다.' },
+  { to: 15, n: '유리 사원', line: '모래가 별을 가린다. 어둠 속에서 모래가 숨을 쉰다.' },
+  { to: 16, n: '재의 왕좌', line: '재가 눈처럼 내린다. 왕좌가 따뜻하다.' },
 ];
 CHAPTERS[3] = {
-  n: '재의 사막 유적', boss: 'queen', names: ENEMY_NAMES[3], strongFrom: 3, xp: 1.9, gold: 2.1, settleStrong: 45, bands: BANDS3,
+  n: '재의 사막 유적', boss: 'queen', names: ENEMY_NAMES[3], strongFrom: 2, xp: 1.9, gold: 2.1, settleStrong: 45, bands: BANDS3,
   diff: { upper: { hp: 0.625, dmg: 0.66 }, lower: { hp: 0.93, dmg: 0.68 } }, // 3.1절 [가설]: 1챕터와 같은 체감에서 출발. 10월 15일(만든 사람 결정): 생명력 상층 ×1.25(0.50 → 0.625) · 하층 ×1.5(0.62 → 0.93). 측정은 비공개 검증 문서
-  modChance: { upper: 0.35, lower: 0.55 }, roomW: { normal: 40, ambush: 19, trial: 5, shrine: 5 }, roomMax: { ambush: 6 }, // 흔들리는 문은 넣지 않았다(만든 사람이 정할 것 1). 그 무게는 매복 · 시련에 나눴다
+  modChance: { upper: 0.35, lower: 0.55 }, roomW: { normal: 27, ambush: 19, trial: 5, shrine: 5 }, /* 0.8.0 6단계 A-5: 일반 40 → 27(1 · 2챕터 44 → 30과 같은 비율) */ roomMax: { ambush: 6 }, // 흔들리는 문은 넣지 않았다(만든 사람이 정할 것 1). 그 무게는 매복 · 시련에 나눴다
   enterLore: '지하묘지의 바닥이 무너진다. 아래에는 하늘이 있었다. 검은 해 아래로 모래가 끝없이 이어진다.',
   settleLore: '왕관이 식은 재 속으로 떨어진다. 왕좌 밑에서 금이 간 문이 숨을 쉰다. 금 너머로 성벽이 보인다.',
   nextLore: '재가 서리처럼 내려앉는다. 금 간 문 너머에서 찬 바람이 분다.',
@@ -352,7 +356,7 @@ const HAZE = { cap: 2, capStrong: 3, give: 2, self: 1 }; // 허상
 const HEAT = { start: 20, mod: 10, ember: 8, burst: 0.10, burstIgn: 2, foeIgn: 2, reset: 30, warn: 80 }; // 작열하는 한낮의 열기
 const IGN_ROUND_CAP = 4;     // 나에게 한 라운드에 새로 붙는 화상 (2절 5번)
 const UNAVOID_CAP = 0.30;    // 피할 수 없는 피해의 상한 = 기준 생명력 × (2절 8번, 광폭만 예외)
-const FIRE_AFFIX = { hit: 1, heavy: 2, from: 15 };   // 정예 접사 화염 강화
+const FIRE_AFFIX = { hit: 1, heavy: 2, from: 10 };   // 정예 접사 화염 강화
 const AFFIX_W3 = { tough: 1, swift: 1, fire: 1 };
 /* 방 특성 (10절): 3챕터 새 셋과 1챕터 특성의 3챕터 판. 어둠 · 고요는 3챕터에 두지 않는다 */
 ROOM_MODS.narrow.chs = [1, 2]; ROOM_MODS.ceiling.chs = [1, 2]; ROOM_MODS.candle.chs = [1, 2]; ROOM_MODS.dark.chs = [1, 2];
@@ -366,9 +370,9 @@ ROOM_MODS.brazier = { n: '불씨 화로', chs: [3], d: '화상 피해가 모두 
 ROOM_MODS.drums = { n: '북소리', chs: [3], d: '적 속도 +10%라 라운드에서 대개 나보다 먼저 움직입니다. 이 방의 골드 +50%.' };
 /* 3챕터 특성 무게 (4.2 · 10.1절): from 첫 층, band 띠마다 배율([층까지, 배율]), path 길마다 배율. 시야 특성(아지랑이 · 모래폭풍)은 한 방에 하나 */
 const MOD3 = {
-  noon: { from: 9, band: [[11, 3], [18, 1.5]], path: { rough: 1.5, quiet: 0.5 } },
-  haze: { from: 13, band: [[18, 3]] },
-  sandstorm: { from: 19, band: [[23, 1.5]] },
+  noon: { from: 6, band: [[7, 3], [12, 1.5]], path: { rough: 1.5, quiet: 0.5 } }, // 0.8.0 6단계: 16층 틀(옛 9 · 11 · 18층)
+  haze: { from: 9, band: [[12, 3]] },
+  sandstorm: { from: 12, band: [[15, 1.5]] },
   shade: { path: { quiet: 2 } },
   alley: {}, pillar: {}, brazier: {}, bloodpool: {}, drums: {},
 };
@@ -380,20 +384,20 @@ SQUADS.push(
   { id: 'zeal3', ch: 3, n: '약탈자 돌격', w: 1.0, from: 1, up: [['bruiser'], ['bruiser']], low: [['bruiser', 1], ['bruiser']], vary: [1, ['bruiser', 'thief']] },
   { id: 'patrol3', ch: 3, n: '사막 순찰', w: 0.8, from: 1, up: [['bruiser'], ['archer'], ['healer']], low: [['bruiser'], ['archer'], ['healer', 1]], vary: [1, ['archer', 'darkmage', 'thief', 'pyre']] },
   { id: 'raid', ch: 3, n: '약탈단', w: 1.0, from: 1, up: [['bruiser'], ['thief'], ['archer']], low: [['bruiser', 1], ['thief'], ['archer']], vary: [2, ['archer', 'ember']] },
-  { id: 'sandtrap', ch: 3, n: '모래 웅덩이', w: 1.1, from: 2, up: [['lurker'], ['bruiser']], low: [['lurker', 1], ['lurker'], ['archer']], vary: [2, ['archer', 'bruiser']] },
-  { id: 'tomb', ch: 3, n: '묘실 파수', w: 1.0, from: 5, up: [['wrapped'], ['healer']], low: [['wrapped', 1], ['wrapped'], ['healer']], vary: [1, ['healer', 'shield']] },
-  { id: 'firebrand', ch: 3, n: '불 지르는 행렬', w: 1.1, press: 1, from: 7, up: [['bruiser'], ['ember']], low: [['bruiser', 1], ['shield'], ['ember']], vary: [0, ['bruiser', 'wrapped']] },
-  { id: 'hunt3', ch: 3, n: '사막 사냥패', w: 0.9, press: 1, from: 9, up: [['lurker'], ['archer'], ['archer']], low: [['lurker', 1], ['archer'], ['archer']], vary: [0, ['lurker', 'minion']] },
-  { id: 'robbers3', ch: 3, n: '도굴꾼 떼', w: 0.8, from: 9, up: [['thief'], ['thief'], ['lurker']], low: [['thief'], ['thief', 1], ['lurker']], vary: [2, ['lurker', 'archer']] },
-  { id: 'ashrite', ch: 3, n: '재 의식', w: 1.1, press: 1, from: 13, up: null, low: [['shield'], ['darkmage', 1], ['ember']], vary: [0, ['bruiser', 'shield']] },
-  { id: 'sunchant', ch: 3, n: '태양 영창', w: 1.0, from: 13, up: null, low: [['shield', 1], ['pyre'], ['healer']], vary: [2, ['healer', 'ember']] },
-  { id: 'mirages', ch: 3, n: '신기루 행렬', w: 1.0, from: 14, up: null, low: [['bruiser', 1], ['bruiser'], ['mirage']], vary: [1, ['bruiser', 'thief']] },
-  { id: 'bones3', ch: 3, n: '불탄 해골 순찰', w: 0.7, from: 13, up: null, low: [['skeleton', 1], ['summoner'], ['skeleton']], vary: [2, ['minion', 'ember']] }, // 10월 7일: 해골 둘 + 소환사는 쓰러짐 43%라 셋째 칸이 하수인 · 투척병으로 바뀔 수 있다
+  { id: 'sandtrap', ch: 3, n: '모래 웅덩이', w: 1.1, from: 1, up: [['lurker'], ['bruiser']], low: [['lurker', 1], ['lurker'], ['archer']], vary: [2, ['archer', 'bruiser']] },
+  { id: 'tomb', ch: 3, n: '묘실 파수', w: 1.0, from: 3, up: [['wrapped'], ['healer']], low: [['wrapped', 1], ['wrapped'], ['healer']], vary: [1, ['healer', 'shield']] },
+  { id: 'firebrand', ch: 3, n: '불 지르는 행렬', w: 1.1, press: 1, from: 4, up: [['bruiser'], ['ember']], low: [['bruiser', 1], ['shield'], ['ember']], vary: [0, ['bruiser', 'wrapped']] },
+  { id: 'hunt3', ch: 3, n: '사막 사냥패', w: 0.9, press: 1, from: 6, up: [['lurker'], ['archer'], ['archer']], low: [['lurker', 1], ['archer'], ['archer']], vary: [0, ['lurker', 'minion']] },
+  { id: 'robbers3', ch: 3, n: '도굴꾼 떼', w: 0.8, from: 6, up: [['thief'], ['thief'], ['lurker']], low: [['thief'], ['thief', 1], ['lurker']], vary: [2, ['lurker', 'archer']] },
+  { id: 'ashrite', ch: 3, n: '재 의식', w: 1.1, press: 1, from: 9, up: null, low: [['shield'], ['darkmage', 1], ['ember']], vary: [0, ['bruiser', 'shield']] },
+  { id: 'sunchant', ch: 3, n: '태양 영창', w: 1.0, from: 9, up: null, low: [['shield', 1], ['pyre'], ['healer']], vary: [2, ['healer', 'ember']] },
+  { id: 'mirages', ch: 3, n: '신기루 행렬', w: 1.0, from: 10, up: null, low: [['bruiser', 1], ['bruiser'], ['mirage']], vary: [1, ['bruiser', 'thief']] },
+  { id: 'bones3', ch: 3, n: '불탄 해골 순찰', w: 0.7, from: 9, up: null, low: [['skeleton', 1], ['summoner'], ['skeleton']], vary: [2, ['minion', 'ember']] }, // 10월 7일: 해골 둘 + 소환사는 쓰러짐 43%라 셋째 칸이 하수인 · 투척병으로 바뀔 수 있다
 );
 ENC.treasure3 = [[['shield', 1], ['bruiser']], [['bruiser', 1], ['archer']], [['archer', 1], ['shield']]];
 /* 가르치는 순서 (5절): 혼자 처음 나오는 층(그 층에서 놓치면 다음 층에 한 번 더). 역할은 그 무리로, 특성(noon · haze)은 그 특성을 붙인 방으로 */
 const NEWR3 = ['lurker', 'ember', 'wrapped', 'mirage', 'haze'];
-const INTRO_AT3 = { lurker: 2, wrapped: 5, ember: 7, noon: 9, haze: 13, mirage: 14 };
+const INTRO_AT3 = { lurker: 1, wrapped: 3, ember: 4, noon: 6, haze: 9, mirage: 10 }; // 0.8.0 6단계: 16층 틀(옛 2 · 5 · 7 · 9 · 13 · 14층)
 const INTRO_SQ3 = { lurker: 'sandtrap', wrapped: 'tomb', ember: 'firebrand', noon: 'zeal3', mirage: 'mirages' };
 const FIRST_GIFT3 = { lurker: 'charm', wrapped: 'flash', ember: 'cleanse', noon: 'knot', mirage: 'mirror', haze: 'mirror' }; // 10월 14일 개편 4단계: 잠복자의 기습 → 나무 부적, 망자의 붕대(무너뜨리면 풀림) → 섬광 가루, 열풍의 화상 → 기도 매듭 // 10월 14일 개편 4단계: 없앤 소모품(흙 다지개 · 기름 단지 · 차양 천)의 보상은 뺐다 // 처음 만난 방을 이기면 그 상황을 푸는 소모품 하나 (5.1절 5번)
 Object.assign(ROLE_INTRO, {
@@ -424,11 +428,11 @@ EVENTS.push(
 );
 /* 3챕터 강적 다섯 · 보스 (14 · 15절). 무엇을 하는지와 대처는 비공개 문서에만 적는다. from: 나오는 첫 층, upper: 0이면 하층에만, needs: 먼저 만나야 하는 것 */
 STRONG_FOES.push(
-  { id: 'stalker', ch: 3, n: '모래 속 사냥꾼', en: [['lurker', 1], ['archer'], ['bruiser']], hp: 0.9, from: 3, needs: ['lurker'] },
-  { id: 'colossus', ch: 3, n: '녹은 유리 거상', en: [['bruiser', 1]], hp: 1.2, from: 5 },
-  { id: 'reaper', ch: 3, n: '불씨 수확자', en: [['bruiser', 1], ['ember']], dmg: 0.75, from: 8, needs: ['ember'] }, // 10월 7일: 평소 0.9 → 0.75, 호위 약탈자를 뺐다 (쓰러짐 44 → 57 → 31%)
-  { id: 'sundial', ch: 3, n: '해시계 사제', en: [['healer', 1], ['shield'], ['bruiser']], dmg: 0.6, from: 13, upper: 0 }, // 10월 7일: 후열에서 늘 때려 0.8 → 0.6 (쓰러짐 63%)
-  { id: 'dancer', ch: 3, n: '아지랑이 무희', en: [['bruiser', 1], ['archer']], hp: 0.8, dmg: 0.85, from: 15, upper: 0, needs: ['haze'] }, // 10월 7일: 허상으로 싸움이 길어 체력 0.8 · 평소 0.85 (쓰러짐 50%, 표본 작음)
+  { id: 'stalker', ch: 3, n: '모래 속 사냥꾼', en: [['lurker', 1], ['archer'], ['bruiser']], hp: 0.9, from: 2, needs: ['lurker'] },
+  { id: 'colossus', ch: 3, n: '녹은 유리 거상', en: [['bruiser', 1]], hp: 1.2, from: 3 },
+  { id: 'reaper', ch: 3, n: '불씨 수확자', en: [['bruiser', 1], ['ember']], dmg: 0.75, from: 5, needs: ['ember'] }, // 10월 7일: 평소 0.9 → 0.75, 호위 약탈자를 뺐다 (쓰러짐 44 → 57 → 31%)
+  { id: 'sundial', ch: 3, n: '해시계 사제', en: [['healer', 1], ['shield'], ['bruiser']], dmg: 0.6, from: 9, upper: 0 }, // 10월 7일: 후열에서 늘 때려 0.8 → 0.6 (쓰러짐 63%)
+  { id: 'dancer', ch: 3, n: '아지랑이 무희', en: [['bruiser', 1], ['archer']], hp: 0.8, dmg: 0.85, from: 10, upper: 0, needs: ['haze'] }, // 10월 7일: 허상으로 싸움이 길어 체력 0.8 · 평소 0.85 (쓰러짐 50%, 표본 작음)
 );
 Object.assign(FOE_X, { // 뜻은 비공개 문서
   stalker: { aoeReveal: 2, surgeBleed: 3, exposedTaken: 0.3, parryRest: 2 },
