@@ -340,6 +340,12 @@ const near = (a, b2) => Math.abs(a - b2) < 1e-6;
   const p0 = par([]), pc = par(['au_counter']), pv = par(['au_venom']), pcv = par(['au_counter', 'au_venom']);
   ok(p0.d > 0 && near(pc.d / p0.d, 20 / 14) && near(pc.k, 10) && p0.ps === 0, '되받아치기: 흘려 내면 피해 14 → 20, 붕괴 +10');
   ok(pv.d === 0 && pv.ps === 7 && pcv.d === 0 && pcv.ps === 7, '독 묻은 칼막이 [전환]: 흘려 내면 피해 대신 중독 7(되받아치기와 함께여도 피해 없음)'); }
+// 10월 18일 0.8.0 5단계 마무리(만든 사람 결정, 쓰러짐 우선): 흘려 낸 칼끝 · 독 · 붕괴 · 출혈은 줄어든 피해를 받은 뒤, 살아 있을 때만 들어간다. 흘리기의 다른 몫(대응 +1 · 흘려 냄 표시 · 강타 붕괴 +25)은 그대로
+{ const last = (hp, raw) => { const f = afight({ act: ['a_deflect'], eq: ['a_deflect'] }); for (const e of f.es.slice(1)) { e.alive = false; e.hp = 0; } aAct(f, 'a_deflect'); const e = f.es[0]; e.hp = 1; f.p.hp = hp; const k0 = e.brk || 0, n0 = f.b.rec.length;
+    enemyHit(f.b, e, raw, { charged: 1 }); const R = f.b.rec.slice(n0); return { over: f.b.over, hp: f.p.hp, alive: e.alive, brk: (e.brk || 0) - k0, resp: R.some(x => x.k === 'ys' && x.why === '흘리기'), mark: f.p.asParT != null, iHit: R.findIndex(x => x.k === 'hit'), iRip: R.findIndex(x => x.k === 'dealt' && x.a === '흘려 낸 칼끝') }; };
+  const L = last(1, 100), W = last(1000, 100);
+  ok(L.over === 'lose' && L.hp === 0 && L.alive && L.iRip < 0 && L.resp && L.mark && L.brk >= 25, '흘려 낸 칼끝이 마지막 적을 쓰러뜨려도 줄어든 피해로 내가 쓰러지면 짐(쓰러짐 우선), 대응 · 표시 · 붕괴는 그대로 ' + JSON.stringify(L));
+  ok(W.over === 'win' && !W.alive && W.iHit >= 0 && W.iRip > W.iHit && W.resp, '살아 있으면 칼끝이 맞은 기록 다음에 들어가 이긴다 ' + JSON.stringify(W)); }
 { const p = { build: 'assassin', pn: [] }; const S = (up, id) => E.skOf(Object.assign({ aup: up }, p), id).fx.find(x => x.k === 'parryBuff');
   ok(S(['au_smoke'], 'a_aim').red === 0.3 && S(['au_smoke'], 'a_aim').dmg === 19 && (S(['au_smoke'], 'a_aim').times || 1) === 1, '연막: 칼끝 겨누기의 다음 흘리기 감소분 +30%p(흘려 내면 +19 그대로, 1번)');
   ok(S(['au_dance'], 'a_shade').times === 2 && S(['au_dance'], 'a_shade').dmg === 21, '흘림의 춤: 다음 흘리기 2번, 흘려 내면 14 → 21');

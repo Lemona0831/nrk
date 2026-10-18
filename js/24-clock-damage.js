@@ -120,7 +120,7 @@ function dmgDot(b, u, amt, label) {
   else { hurtEnemy(b, u, amt, { dot: 1, label }); }
 }
 function hurtPlayer(b, raw, o) {
-  const p = b.p; o = o || {}; const raw0 = raw, nr0 = !o.dot && o.src && p.nextRed ? p.nextRed : 0, br0 = !!p.brace; /* 화면용 까닭(읽기만) */
+  const p = b.p; o = o || {}; let rip = null; const raw0 = raw, nr0 = !o.dot && o.src && p.nextRed ? p.nextRed : 0, br0 = !!p.brace; /* 화면용 까닭(읽기만) */
   const bigHit = !!(o.charged || (o.src && o.src.intent && o.src.intent.aimed && !o.dot)); // 예고된 큰 공격: 강타 · 강적과 보스의 큰 한 방 · 겨눈 한 발 · 화형
   if (p.foresee && (b.round || 0) < p.foresee.until && bigHit) raw *= 1 - p.foresee.red;
   if (bigHit && hasBt(p, 'firm')) raw *= 0.85; // 굳건함의 성소 // 사냥꾼 예고 읽기 (피할 수 없는 화형에도 든다)
@@ -137,12 +137,7 @@ function hurtPlayer(b, raw, o) {
     if (o.charged && o.src && (p.eq.amulet === 'witness')) { addS(b, o.src, 'vuln', 2); logp(b, 'good', '증인의 부적이 빈틈을 기억한다. ' + o.src.n + ' 취약'); }
     chargeEv(b, 'parry'); ysResp(b, '흘리기'); // 10월 15일 유산 1차 시제품: 대응 충전
     const on = p.dodgeOn; p.dodgeRed = 0; p.dodgeOn = null;
-    if (on && o.src && o.src.alive) { // 흘려 되돌리는 효과는 후열에도 닿는다 (암살자 초안 4절)
-      if (on.dmg) hurtEnemy(b, o.src, outDmg(b, on.dmg * (on.sk ? 1 + asSum(p, 'parrySkP') : 1), {}), { single: 1, label: '흘려 낸 칼끝' }); // 10월 18일 0.8.0 5단계 그림자 맹세: 흘리기 스킬이 흘려 내고 주는 피해 +15%(on.sk는 setParry가 단다)
-      if (on.poison && o.src.alive) addPoison(b, o.src, on.poison, 1);
-      if (on.brk && o.src.alive) addBreak(b, o.src, on.brk);
-      if (on.bleed && o.src.alive) addS(b, o.src, 'bleed', on.bleed);
-    }
+    if (on && o.src && o.src.alive) rip = { on, d: on.dmg ? outDmg(b, on.dmg * (on.sk ? 1 + asSum(p, 'parrySkP') : 1), {}) : 0 }; // 흘려 되돌리는 효과는 후열에도 닿는다 (암살자 초안 4절). 10월 18일 0.8.0 5단계 그림자 맹세: 흘리기 스킬이 흘려 내고 주는 피해 +15%(on.sk는 setParry가 단다). 10월 18일 0.8.0 5단계 마무리(만든 사람 결정, 쓰러짐 우선): 피해 값은 여기서(예전과 같은 때) 정하고, 넣는 것은 내가 맞은 뒤로 미룬다
     if (on && on.hasten) hastenBranch(b, on.hb, on.hasten, null); // 🔄 흘려 내면 다른 같은 갈래 스킬 쿨타임 −n
   }
   let d = raw;
@@ -205,6 +200,12 @@ function hurtPlayer(b, raw, o) {
     if (o.parried) m.push('흘리기로 줄어듦'); if (nr0) m.push('부적으로 −' + Math.round(nr0 * 100) + '%'); if (br0 && !o.dot) m.push('버티기로 −35%'); if (wardA > 0) m.push('보호막이 ' + r1(wardA) + ' 받아냄' + (wardBk ? '(먼 곳에서 온 공격이라 절반만)' : '')); if (b.enrage && o.src && !o.dot) m.push('광폭화');
     const ik = o.src && o.src.intent ? o.src.intent.k : ''; const it = o.dot ? '' : /되받아친다/.test(o.label || '') ? '반격' : !o.src ? '' : ik === 'heavy' ? heavyName(o.src) : ik === 'attack' ? (o.src.intent.aimed ? '겨눈 한 발' : '공격') : (HIT_N[ik] || '');
     (b.hits3 = b.hits3 || []).push({ n: o.src ? o.src.n : '', it, l: o.src ? '' : (o.label || ''), d: r1(d), dot: o.dot ? 1 : 0, big: o.charged ? 1 : 0, m, left: r1(Math.max(0, p.hp)), r: b.round || 0 }); if (b.hits3.length > 3) b.hits3.shift(); if (!o.silent && !o.dot && m.length) whyPush(b, { side: 'in', n: o.src ? o.src.n : (o.label || ''), f: r1(raw0), d: r1(d), m, s: sLine }); } /* 10월 7일 2차: 쓰러짐 화면의 결정타 · 마지막 세 번 (기록 b.rec는 그대로) */
+  if (rip && p.hp > 0 && !b.over && o.src && o.src.alive) { const on = rip.on; // 10월 18일 0.8.0 5단계 마무리(만든 사람 결정, 쓰러짐 우선): 흘려 낸 칼끝 · 독 · 붕괴 · 출혈은 줄어든 피해를 받은 뒤, 살아 있을 때만. 전에는 칼끝이 마지막 적을 쓰러뜨려 이김이 정해진 뒤 피해가 들어가 생명력 0 아래로 이기는 일이 있었다
+    if (on.dmg) hurtEnemy(b, o.src, rip.d, { single: 1, label: '흘려 낸 칼끝' });
+    if (on.poison && o.src.alive) addPoison(b, o.src, on.poison, 1);
+    if (on.brk && o.src.alive) addBreak(b, o.src, on.brk);
+    if (on.bleed && o.src.alive) addS(b, o.src, 'bleed', on.bleed);
+  }
   checkEnd(b);
   return d;
 }
