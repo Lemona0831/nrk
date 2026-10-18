@@ -61,6 +61,7 @@ function vCreate() {
   const rest = openKeys.filter(k => !placed[k]);
   for (const c of (typeof CLASS_SOON !== 'undefined' ? CLASS_SOON : []).filter(c => !openKeys.some(k => BUILDS[k].n === c.n))) h += `<button class="clsc" aria-disabled="true" data-info="soon:${esc(c.n)}"><span class="big" aria-hidden="true">${c.ico}</span><b>${esc(c.n)}</b><small>준비 중</small></button>`;
   if (rest.length) h += `<div class="clscol">${rest.map(clsBtn).join('')}</div>`;
+  if (typeof HIDDEN_LOCK !== 'undefined' && HIDDEN_LOCK && typeof UNLOCK !== 'undefined' && Object.keys(UNLOCK).some(k => unlOpen(k))) h += `<div class="clscol"><button class="clsc" aria-disabled="true"><span class="big" aria-hidden="true">🚪</span><b>숨겨진 직업</b><small>준비 중 · 다음 판에서 새로 엽니다</small></button></div>`; // 0.8.0: 옛 숨은 셋 잠금(이름은 보이지 않는다)
   h += `</div>`;
   if (pk) {
     const B = BUILDS[pk];

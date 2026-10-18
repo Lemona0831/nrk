@@ -1,7 +1,7 @@
 'use strict';
 /* 0.6a.2 직업 (v2: 재사용 대기 스킬, 트리, 마나 없음) */
 const isV2 = p => !!(p && BUILDS[p.build] && BUILDS[p.build].v2);
-const CLASS_KEYS = () => Object.keys(BUILDS).filter(k => !BUILDS[k].tut && !BUILDS[k].soon && unlOpen(k)); // 고를 수 있는 직업 (수련장 견습생, 만드는 중인 직업, 아직 열리지 않은 숨겨진 직업 제외)
+const CLASS_KEYS = () => Object.keys(BUILDS).filter(k => !BUILDS[k].tut && !BUILDS[k].soon && unlOpen(k) && !(typeof HIDDEN_LOCK !== 'undefined' && HIDDEN_LOCK && typeof UNLOCK !== 'undefined' && UNLOCK[k])); // 고를 수 있는 직업 (수련장 견습생, 만드는 중인 직업, 아직 열리지 않은 숨겨진 직업 제외)
 const ALL_CLASS_KEYS = () => Object.keys(BUILDS).filter(k => !BUILDS[k].tut && !BUILDS[k].soon); // 기록 · 결과 보기용(잠긴 직업도)
 /* 숨겨진 직업 해금 (10월 7일): 계정 셈과 열림 (data/classes.js UNLOCK) */
 const unlLocked = () => typeof UNLOCK === 'undefined' ? [] : Object.keys(UNLOCK).filter(k => BUILDS[k] && !BUILDS[k].soon && !unlOpen(k));
@@ -21,7 +21,7 @@ function unlAdd(b, key, n) {
   if (b && b.ctx && (b.ctx.tut || b.ctx.scen || b.ctx.test)) return;
   const U = unlData(); U.c[key] = (U.c[key] || 0) + (n || 1);
   for (const k of Object.keys(UNLOCK)) {
-    const L = UNLOCK[k]; if (U.open[k] || !BUILDS[k] || BUILDS[k].soon) continue;
+    const L = UNLOCK[k]; if (U.open[k] || !BUILDS[k] || BUILDS[k].soon || (typeof HIDDEN_LOCK !== 'undefined' && HIDDEN_LOCK)) continue; // 0.8.0: 셈만 쌓고 문은 열지 않는다
     if ((L.need || []).some(x => (U.c[x.c] || 0) >= x.n)) { U.open[k] = Date.now(); (U.news = U.news || []).push(k); if (b) logp(b, 'crit', L.open || '숨겨진 직업이 열렸습니다'); toast(L.open || '숨겨진 직업이 열렸습니다'); }
   }
   saveLocal();
