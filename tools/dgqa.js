@@ -57,7 +57,7 @@ function pickDoor(pk, run, r) {
       else if (pk === 'reckless') v = gain[t] * 1.4 - L * 3;
       else v = gain[t] - L * 6 * (h < 0.4 ? 2.5 : 1);
     } else {
-      v = t === 'spring' ? (1 - h) * 12 + (3 - fl) : gain[t] + (t === 'altar' && d.altar === 'gold' && (run.gold || 0) < 40 ? -3 : 0);
+      v = t === 'spring' ? (1 - h) * 12 + (3 - fl) : gain[t] + (t === 'altar' && d.altar === 'gold' && (run.gold || 0) < altarCost(run) ? -3 : 0);
       if (pk === 'explorer' && (t === 'event' || t === 'altar')) v += 1.5;
       if (pk === 'reckless') v -= 1.5;
     }
@@ -181,7 +181,7 @@ function restRoom(pk, run, r) {
   if (R.type === 'shrine') return click('shrine', pk === 'novice' ? (r() < 0.5 ? 1 : 0) : 1);
   if (R.type === 'fate') return fatePick(pk, run, r);
   if (R.type === 'altar') {
-    const can = R.altar === 'gold' ? (run.gold || 0) >= 40 : R.altar === 'offer' ? run.bag.length > 0 : R.altar === 'ash' ? (run.cons || []).filter(c => G0.CONS[c.id].use !== 'none' && G0.CONS[c.id].price > 6).reduce((a, c) => a + c.n, 0) >= 6 : true;
+    const can = R.altar === 'gold' ? (run.gold || 0) >= altarCost(run) : /* 10월 18일: 전에는 40으로 두어 2 · 3챕터(비용이 더 큼)에서 '골드가 모자랍니다'를 되풀이하다 걸음 한도에 걸렸다 */ R.altar === 'offer' ? run.bag.length > 0 : R.altar === 'ash' ? (run.cons || []).filter(c => G0.CONS[c.id].use !== 'none' && G0.CONS[c.id].price > 6).reduce((a, c) => a + c.n, 0) >= 6 : true;
     const want = R.altar === 'blood' || R.altar === 'scale' ? (THINK(pk) ? h > 0.6 : r() < 0.5) : can; // 3챕터 재의 제단은 태울 것이 넉넉할 때만
     return click('altar', can && want ? 1 : 0);
   }
@@ -449,6 +449,7 @@ function gamblePhase(pk, r) {
   }
 }
 /* 상점: 끼우면 나아지는 장비를 골드 안에서 산다. 신중·숙련·탐험가는 가장 나은 것부터, 나머지는 무작위로 */
+const altarCost = run => { try { return run_('altarGold')(run); } catch (e) { return 40; } }; // 골드 제단 비용(챕터마다 다름)은 게임 값을 읽는다
 function shopPhase(pk, r) {
   if (OPT.policy?.shop) return OPT.policy.shop(G0.__G.run, r);
   const G = G0.__G, run = G.run, S = run.shop; if (!S) return;
