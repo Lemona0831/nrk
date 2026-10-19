@@ -248,7 +248,7 @@ function sbBoundUse(b, s) {
   if (F('sbHeat')) { const w = p.ward || 0; p.ward = 0; p.sbSt.heatNext = 1; logp(b, 'good', '달군 갑주: 보호막 ' + r1(w) + '을 태워 다음 기본 공격 ×' + SB_BOUND.heatMul); }
   if (F('sbFist')) { p.sbSt.bloodFist = 1; logp(b, 'good', '피 묻은 주먹: 이번 전투 동안 기본 공격이 출혈 걸린 적에게 ×' + SB_BOUND.fistMul); } // M5-0 보정 5 P3 결합 칸
   if (F('sbCounterBurn')) { p.sbSt.counterBurn = 1; logp(b, 'good', '되받아 태우기: 이번 전투 동안 흘리기에 성공하면 그 적에게 화상 ' + SB_BOUND.cbIgn); }
-  if (F('sbTricolor')) { p.sbSt.tricolor = 1; logp(b, 'good', '삼색검: 이번 전투 동안 출혈 · 화상이 함께 걸린 적이 있고 보호막이 있으면 베기 스킬 비용 −1'); }
+  if (F('sbTricolor')) { p.sbSt.tricolor = 2; /* 전투에 두 번 */ logp(b, 'good', '삼색검: 이번 전투 동안 출혈 · 화상이 함께 걸린 적이 있고 보호막이 있으면 베기 스킬 비용 −1(두 번)'); }
   if (F('sbEcho')) { p.sbSt.bloodEcho = 1; logp(b, 'good', '피의 반향: 이번 전투 동안 보호막이 있으면 베기가 출혈 +' + SB_BOUND.echoN + ' 더'); }
   if (F('sbShackle')) { p.sbSt.shackle = 1; logp(b, 'good', '피의 족쇄: 이번 전투 동안 출혈 걸린 적의 강타를 막아 내면 그 적에게 붕괴 +' + SB_BOUND.shackleBrk); }
   if (F('sbAshHand')) { p.sbSt.ashHand = SB_BOUND.ashHandK; logp(b, 'good', '재 묻은 손: 다음 기본 공격 ' + SB_BOUND.ashHandK + '번에 화상 ' + SB_BOUND.ashHandIgn); }

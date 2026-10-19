@@ -552,7 +552,7 @@ const SKILLS2 = {
     /* 0.8.0 M5-0 보정 5 P3 결합 칸(꼬리표 조건, 부채꼴 밖) · P4 경계 승부수 후보(판마다 둘 중 하나) */
     { id: 'sb_bloodfist', row: 5, b: '결합', tier: '중급', n: '피 묻은 주먹', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbFist', txt: '이번 전투 동안 기본 공격이 출혈 걸린 적에게 ×1.5.' }] },
     { id: 'sb_counterburn', row: 5, b: '결합', tier: '중급', n: '되받아 태우기', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbCounterBurn', txt: '이번 전투 동안 흘리기에 성공하면 그 적에게 화상 3.' }] },
-    { id: 'sb_tricolor', row: 7, b: '결합', tier: '중급', n: '삼색검', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'sbTricolor', txt: '이번 전투 동안 출혈 · 화상이 함께 걸린 적이 있고 보호막이 있으면 베기 스킬 비용 −1(바닥 1, 내 차례에 한 번).' }] },
+    { id: 'sb_tricolor', row: 7, b: '결합', tier: '중급', n: '삼색검', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'sbTricolor', txt: '이번 전투 동안 출혈 · 화상이 함께 걸린 적이 있고 보호막이 있으면 베기 스킬 비용 −1(바닥 1, 내 차례에 한 번, 전투에 두 번).' }] },
     { id: 'sb_searburst', row: 10, b: '혈염', tier: '중급', n: '혈염 터뜨리기', kind: 'spell', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 6 }, { k: 'searBurst', mul: 3, txt: '혈염 걸린 적마다 그 혈염 × 3 피해(혈염은 남는다).' }] },
     { id: 'sb_atone', row: 10, b: '죄인의 피', tier: '중급', n: '속죄의 칼', kind: 'cut', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 16 }, { k: 'wardBurn', mul: 1 }, { k: 'st', s: 'bleed', n: 4 }] },
     { id: 'sb_ashstorm', row: 10, b: '유산의 불', tier: '중급', n: '잿더미 폭풍', kind: 'spell', tgt: 'front', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'ignite', n: 4 }] },

@@ -87,7 +87,7 @@ const skJo = n => '013678'.includes(String(n).slice(-1)) ? '을' : '를'; // 숫
    wardPer 출혈 걸린 적(평균 1.1) × n × 보호막 값. sbFilm 한 차례에 받아내는 보호막 몫(W.S) × 50%가 출혈. sbSinWall 보호막(최대 생명력 15% × 3, 기준 생명력 SB_HP) − 바친 생명력 + 깨질 때(반쯤) 전열 둘 출혈 4.
    sbHeat 기본 공격 하나 × 0.5 − 태운 보호막. sbEmberMail 보호막이 있는 동안 평타 두 번 화상 2. sbFireBody 남은 유산(평균 1) × 8 보호막 + n차례 평타 ×1.3 · 화상 2 − n차례 스킬을 못 쓰는 몫 */
 const SB_BD_K = ['searMerge', 'sbBlaze', 'wardPer', 'sbFilm', 'sbSinWall', 'sbHeat', 'sbEmberMail', 'sbFireBody', 'sbCross', 'searSpread', 'sbEcho', 'sbShackle', 'sbAshHand', 'sbCinder', 'sbEmberCut', 'sbFist', 'sbCounterBurn', 'sbTricolor', 'searBurst'];
-/* 보정 5 결합 칸 · 승부수 후보(추정): sbFist 전투에 기본 공격 5번 × 출혈 걸린 적일 확률 0.7 × (배율 − 1). sbCounterBurn 흘리기 성공 2번 × 화상. sbTricolor 할인 3번 × 유산 1의 값(갈래 비용 2 평균의 절반 ≈ 8.3). searBurst 대상 1.5 × 혈염 보유(출혈 + 화상 몫 0.6) × 배율 */
+/* 보정 5 결합 칸 · 승부수 후보(추정): sbFist 전투에 기본 공격 5번 × 출혈 걸린 적일 확률 0.7 × (배율 − 1). sbCounterBurn 흘리기 성공 2번 × 화상. sbTricolor 할인 2번(전투에 두 번, 보정 5 2차 답) × 유산 1의 값(갈래 비용 2 평균의 절반 ≈ 8.3). searBurst 대상 1.5 × 혈염 보유(출혈 + 화상 몫 0.6) × 배율 */
 /* M5-0 보정 4 새 칸(추정, 측정 아님): sbCross 대상이 출혈 · 화상 중 하나를 가졌을 확률 0.8씩 × n × 상태 값. searSpread 혈염 걸린 적을 쓰러뜨릴 확률 0.35 × 곁의 적 1.5 × 혈염 보유(출혈 + 화상 몫 0.6) × 혈염 값(×1.5).
    sbEcho 보호막이 있는 동안의 베기 3번 × n. sbShackle 출혈 걸린 적의 강타를 막아 내는 일 전투에 2번 × 붕괴. sbAshHand 기본 공격 k번 × 화상. sbCinder 보호막이 깎이는 일 3번 × 전열 2 × 화상 */
 const SB_HP = 120;
@@ -123,7 +123,7 @@ function skValue(s, ov) {
         case 'sbEmberCut': { const bn = Math.min(U.emberCutBurn, W.S[hi]); v += bn * kw * 0.8 - bn * Wv; break; } // 태운 보호막만큼 화상(상한 10에 걸리는 몫 0.8)
         case 'sbFist': v += 5 * K.B * 0.7 * (U.fistMul - 1); break;
         case 'sbCounterBurn': v += 2 * U.cbIgn * kw; break;
-        case 'sbTricolor': v += 3 * 8.35; break; // 유산 1의 값 = 갈래 비용 2 평균(16.7)의 절반
+        case 'sbTricolor': v += 2 * 8.35; break; // 유산 1의 값 = 갈래 비용 2 평균(16.7)의 절반
         case 'searBurst': v += 1.5 * 0.6 * Sbi * (e.mul || 2); break;
         case 'sbCinder': v += 3 * 2 * U.cinderIgn * kw; break; // 보호막 경계 판은 라운드마다 보호막을 두르고 깎인다(전투 6–8라운드)
       } continue; }

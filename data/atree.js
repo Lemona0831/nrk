@@ -29,7 +29,7 @@ const ATREE_DEF = {
       /* M5-0 보정 5 P4: 경계 승부수 후보 둘 중 하나가 판마다 제시된다(finOf). 같은 자리 */
       ['sb_searburst', '혈염', 3, 6, 'C', ['sb_searcut', 'sb_searspread'], 4, { finOf: 'AB' }], ['sb_atone', '죄인의 피', 3, 6, 'C', ['sb_film', 'sb_shackle'], 4, { finOf: 'BC' }],
       /* M5-0 보정 5 P3 결합 칸: 부채꼴 밖 2고리 둘레(부채꼴 경계선 위), 이웃이 아니라 꼬리표 조건(reqTags)으로 열린다. 판마다 셋 중 둘 */
-      ['sb_counterburn', '결합', 2, 4, 'C', [], 2, { reqTags: { 화상: 2, 흘리기: 1 }, ang: 30 }], ['sb_bloodfist', '결합', 2, 4, 'C', [], 2, { reqTags: { 출혈: 2, 기본공격연동: 1 }, ang: 150 }], ['sb_tricolor', '결합', 2, 4, 'C', [], 3, { reqTags: { 출혈: 1, 화상: 1, 보호막: 1 }, ang: 270 }],
+      ['sb_counterburn', '결합', 2, 4, 'C', [], 2, { reqTags: { 화상: 2, 흘리기: 1 }, ang: 30 }], ['sb_bloodfist', '결합', 2, 4, 'C', [], 2, { reqTags: { 출혈: 2, 기본공격연동: 1 }, ang: 150 }], ['sb_tricolor', '결합', 2, 4, 'C', [], 2, { reqTags: { 출혈: 1, 화상: 1, 보호막: 1 }, ang: 270 }],
       ['sb_heatmail', '유산의 불', 2, 3, 'C', ['sb_bladeward', 'sb_bolt', 'sb_ember', 'sb_flamecut'], 2, { requires: [['sb_bladeward', 'sb_bolt'], ['sb_ember', 'sb_flamecut']] }], ['sb_embercut', '유산의 불', 2, 4, 'C', ['sb_heatmail'], 2],
       ['sb_embermail', '유산의 불', 3, 5, 'L', ['sb_embercut'], 3], ['sb_cindermail', '유산의 불', 3, 5, 'R', ['sb_embercut'], 3], ['sb_firebody', '유산의 불', 3, 6, 'C', ['sb_embermail', 'sb_cindermail'], 4, { finOf: 'CA' }], ['sb_ashstorm', '유산의 불', 3, 6, 'C', ['sb_embermail', 'sb_cindermail'], 4, { finOf: 'CA' }],
     ],
@@ -49,7 +49,7 @@ const ATREE_DEF = {
         ['sbv_drop_kill', '핏방울 거두기', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유).', { set: { killRecharge: 1 } }, ['처치']],
         ['sbv_drop_edge', '피 묻히기', '칼에 출혈 2를 싣습니다.', { fxAdd: [{ k: 'imbue', s: 'bleed', n: 2 }] }, ['싣기']]],
       sb_boil: [
-        ['sbu_boil', '끓는 피', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']],
+        ['sbu_boil', '끓는 피', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']],
         ['sbv_boil_slow', '들끓는 피', '보통 빠르기가 됩니다. 칼에 싣는 출혈 5 → 8.', { set: { time: 'normal' }, fxSet: [{ k: 'imbue', s: 'bleed', n: 8 }] }, []],
         ['sbv_boil_alt', '박자 끓이기', '이어진 교대의 2번째부터면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'alt2' } }, ['교대']]],
       sb_taste: [
@@ -59,11 +59,11 @@ const ATREE_DEF = {
       sb_redwind: [
         ['sbu_gale', '피바람', '쓰러진 적의 출혈이 곁의 적에게 번집니다.', { fxAdd: [{ k: 'killSpread', per: 1 }] }, []],
         ['sbv_wind_front', '붉은 칼바람', '전열만 칩니다. 피해 8 → 11.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 11 }] }, []],
-        ['sbv_wind_resp', '받아낸 바람', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']]],
+        ['sbv_wind_resp', '받아낸 바람', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']]],
       sb_deluge: [
         ['sbv_deluge_slow', '큰비', '느린 행동이 됩니다. 피해 8 → 12.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 12 }] }, []],
         ['sbv_deluge_front', '좁은 비', '전열만 칩니다. 출혈 3 → 5.', { set: { tgt: 'front' }, fxSet: [{ k: 'st', s: 'bleed', n: 5 }] }, []],
-        ['sbv_deluge_resp', '쏟아지는 대응', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']]],
+        ['sbv_deluge_resp', '쏟아지는 대응', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']]],
       sb_ember: [
         ['sbu_flare', '불꽃 탄', '칼에 화상 3을 싣습니다.', { fxAdd: [{ k: 'imbue', s: 'ignite', n: 3 }] }, ['싣기']],
         ['sbu_brand', '불의 표식', '화상 걸린 적에게 ×1.5.', { fxAdd: [{ k: 'kwx', s: 'ignite', mul: 1.5 }] }, []],
@@ -78,7 +78,7 @@ const ATREE_DEF = {
         ['sbv_spark_slow', '느린 불씨', '느린 행동이 됩니다. 피해 8 → 13.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 13 }] }, []]],
       sb_kindle: [
         ['sbv_kindle_slow', '깊은 달굼', '보통 빠르기가 됩니다. 칼에 싣는 화상 5 → 8.', { set: { time: 'normal' }, fxSet: [{ k: 'imbue', s: 'ignite', n: 8 }] }, []],
-        ['sbv_kindle_resp', '받아낸 불', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']],
+        ['sbv_kindle_resp', '받아낸 불', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']],
         ['sbv_kindle_alt', '박자 달굼', '이어진 교대의 2번째부터면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'alt2' } }, ['교대']]],
       sb_char: [
         ['sbv_char_slow', '잔화 일격', '보통 빠르기가 됩니다. 피해 6 → 10, 화상 1마다 피해 +2.5 → +3.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 10 }, { k: 'exploit', s: 'ignite', per: 3 }] }, []],
@@ -91,7 +91,7 @@ const ATREE_DEF = {
       sb_hellfire: [
         ['sbv_hell_normal', '불벼락', '보통 빠르기가 됩니다. 피해 21 → 15.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 15 }] }, []],
         ['sbv_hell_front', '업화 장벽', '전열 모두를 칩니다. 피해 21 → 13.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 13 }] }, ['광역']],
-        ['sbv_hell_resp', '받아낸 업화', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']]],
+        ['sbv_hell_resp', '받아낸 업화', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']]],
       sb_bladeward: [
         ['sbu_counter', '맞받아 베기', '교대면 보호막 +4.', { fxAdd: [{ k: 'alt', ward: 4 }] }, []],
         ['sbv_bw_fast', '날랜 마갑참', '빠른 칸이 됩니다. 피해 12 → 9.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 9 }] }, ['빠름']],
@@ -111,10 +111,10 @@ const ATREE_DEF = {
       sb_turn: [
         ['sbv_turn_front', '마검 연무', '전열 모두를 벱니다. 보통 빠르기, 붕괴 +9.', { set: { tgt: 'front', time: 'normal' }, fxAdd: [{ k: 'brk', n: 9 }] }, ['광역']],
         ['sbv_turn_coda', '마검 종곡', '이어진 교대면 붕괴 +30.', { fxAdd: [{ k: 'alt', run: 2, brk: 30 }] }, ['교대']],
-        ['sbv_turn_resp', '받아 돌기', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']]],
+        ['sbv_turn_resp', '받아 돌기', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']]],
       sb_shell: [
         ['sbv_shell_slow', '두꺼운 전개', '보통 빠르기가 됩니다. 보호막 27 → 36.', { set: { time: 'normal' }, fxSet: [{ k: 'ward', n: 36 }] }, []],
-        ['sbv_shell_resp', '받아낸 갑주', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']],
+        ['sbv_shell_resp', '받아낸 갑주', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']],
         ['sbv_shell_alt', '박자 전개', '이어진 교대의 2번째부터면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'alt2' } }, ['교대']]],
       sb_finale: [
         ['sbu_release', '갑주 해방', '먼저 보호막 18 · 보호 1을 두르고, 남은 보호막을 모두 태워 피해로 바꿉니다(×1.5).', { fxAdd: [{ k: 'wardFirst', n: 18, protect: 1 }, { k: 'wardBurn', mul: 1.5 }] }, []],
@@ -122,7 +122,7 @@ const ATREE_DEF = {
         ['sbv_fin_front', '일섬 휩쓸기', '전열 모두를 칩니다. 피해 26 → 17.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 17 }] }, ['광역']]],
       sb_bloodfire: [
         ['sbu_bf_fast', '번지는 핏불', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름']],
-        ['sbv_bf_resp', '받아낸 핏불', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']],
+        ['sbv_bf_resp', '받아낸 핏불', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']],
         ['sbv_bf_alt', '박자 핏불', '이어진 교대의 2번째부터면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'alt2' } }, ['교대']]],
       sb_hotedge: [
         ['sbv_he_front', '달아오른 칼바람', '전열 모두에게 겁니다.', { set: { tgt: 'front' } }, ['광역']],
@@ -138,19 +138,19 @@ const ATREE_DEF = {
         ['sbv_ss_kill', '핏불 거두기', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유).', { set: { killRecharge: 1 } }, ['처치']]],
       sb_kalpa: [
         ['sbv_kalpa_fast', '순간의 겁화', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름']],
-        ['sbv_kalpa_resp', '받아낸 겁화', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']],
+        ['sbv_kalpa_resp', '받아낸 겁화', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']],
         ['sbv_kalpa_alt', '박자 겁화', '이어진 교대의 2번째부터면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'alt2' } }, ['교대']]],
       sb_searburst: [
         ['sbv_sb_fast', '순간의 터뜨림', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름']],
-        ['sbv_sb_resp', '받아낸 터뜨림', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']],
+        ['sbv_sb_resp', '받아낸 터뜨림', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']],
         ['sbv_sb_alt', '박자 터뜨림', '이어진 교대의 2번째부터면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'alt2' } }, ['교대']]],
       sb_atone: [
         ['sbv_at_normal', '서두른 속죄', '보통 빠르기가 됩니다. 피해 16 → 11.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 11 }] }, []],
         ['sbv_at_front', '속죄의 휩쓸기', '전열 모두를 벱니다. 피해 16 → 10.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 10 }] }, ['광역']],
-        ['sbv_at_resp', '받아친 속죄', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']]],
+        ['sbv_at_resp', '받아친 속죄', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']]],
       sb_ashstorm: [
         ['sbv_as_fast', '순간의 잿더미', '빠른 칸이 됩니다. 피해 13 → 10.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 10 }] }, ['빠름']],
-        ['sbv_as_resp', '받아낸 잿더미', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']],
+        ['sbv_as_resp', '받아낸 잿더미', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']],
         ['sbv_as_ward', '두꺼운 잿더미', '보호막이 10 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'ward>=10' } }, ['보호막']]],
       /* P4 (d) 변종: 판마다 10%로 하나가 그 스킬의 변형 제시에 섞인다. 값 띠 상한 +15%까지, 대가가 크다(mut) */
       sb_mutants: [
@@ -159,28 +159,28 @@ const ATREE_DEF = {
         ['sbm_shell_overheat', '과열 마갑', '보호막 27 → 40. 대가: 나에게 화상 3.', { fxSet: [{ k: 'ward', n: 40 }], fxAdd: [{ k: 'meSt', s: 'ignite', n: 3 }] }, ['보호막'], { mut: 1, on: 'sb_shell' }]],
       sb_bloodmail: [
         ['sbu_bm_fast', '서두른 갑주', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름']],
-        ['sbv_bm_resp', '받아낸 갑주', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']],
+        ['sbv_bm_resp', '받아낸 갑주', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']],
         ['sbv_bm_scent', '피 냄새 갑주', '대상의 출혈이 3 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'kw:bleed>=3' } }, ['출혈']]],
       sb_sinstrike: [
         ['sbv_si_fast', '날랜 일격', '빠른 칸이 됩니다. 피해 8 → 6.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 6 }] }, ['빠름']],
         ['sbv_si_front', '죄인의 휩쓸기', '전열 모두를 칩니다. 피해 8 → 5.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 5 }] }, ['광역']],
-        ['sbv_si_resp', '받아친 일격', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']]],
+        ['sbv_si_resp', '받아친 일격', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']]],
       sb_film: [
-        ['sbu_film_resp', '받아낸 피', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']],
+        ['sbu_film_resp', '받아낸 피', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']],
         ['sbv_film_fast', '서두른 피막', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름']],
         ['sbv_film_ward', '두꺼운 피막', '보호막이 10 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'ward>=10' } }, ['보호막']]],
       sb_shackle: [
         ['sbu_shackle_fast', '서두른 족쇄', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름']],
-        ['sbv_sh_resp', '받아낸 족쇄', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']],
+        ['sbv_sh_resp', '받아낸 족쇄', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']],
         ['sbv_sh_scent', '피 냄새 족쇄', '대상의 출혈이 3 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'kw:bleed>=3' } }, ['출혈']]],
       sb_sinwall: [
         ['sbv_sw_fast', '서두른 벽', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름']],
-        ['sbv_sw_resp', '받아낸 벽', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']],
+        ['sbv_sw_resp', '받아낸 벽', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']],
         ['sbv_sw_scent', '피 냄새 벽', '대상의 출혈이 3 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'kw:bleed>=3' } }, ['출혈']]],
       sb_heatmail: [
         ['sbu_hm_fast', '단숨의 열', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름']],
         ['sbv_hm_ward', '두꺼운 열', '보호막이 10 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'ward>=10' } }, ['보호막']],
-        ['sbv_hm_resp', '받아낸 열', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']]],
+        ['sbv_hm_resp', '받아낸 열', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']]],
       sb_embercut: [
         ['sbu_ash_fast', '털어 낸 재', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름']],
         ['sbv_ec_front', '잿불 휩쓸기', '전열 모두를 칩니다. 피해 9 → 6.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 6 }] }, ['광역']],
@@ -188,14 +188,14 @@ const ATREE_DEF = {
       sb_embermail: [
         ['sbu_em_ward', '두꺼운 잿불', '보호막이 10 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'ward>=10' } }, ['보호막']],
         ['sbv_em_fast', '서두른 잿불', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름']],
-        ['sbv_em_resp', '받아낸 잿불', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']]],
+        ['sbv_em_resp', '받아낸 잿불', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']]],
       sb_cindermail: [
         ['sbv_cm_fast', '서두른 불씨', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름']],
-        ['sbv_cm_resp', '받아낸 불씨', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']],
+        ['sbv_cm_resp', '받아낸 불씨', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']],
         ['sbv_cm_ward', '두꺼운 불씨', '보호막이 10 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'ward>=10' } }, ['보호막']]],
       sb_firebody: [
         ['sbv_fb_fast', '순간의 불', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름']],
-        ['sbv_fb_resp', '받아낸 불', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']],
+        ['sbv_fb_resp', '받아낸 불', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기']],
         ['sbv_fb_alt', '박자의 불', '이어진 교대의 2번째부터면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'alt2' } }, ['교대']]],
     },
   },
