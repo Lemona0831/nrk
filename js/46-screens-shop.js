@@ -152,7 +152,7 @@ function campInit(run) {
   const usable = Object.keys(CONS).filter(k => CONS[k].use !== 'none' && !SHOP_CONS.always.includes(k) && (CONS[k].ch || 1) <= ch && !(CONS[k].only && CONS[k].only !== ch) && (CONS[k].shopP == null || Math.random() < CONS[k].shopP));
   const pick = SHOP_CONS.always.slice(); while (pick.length < SHOP_CONS.always.length + CAMP_SHOP.n && usable.length) pick.push(usable.splice(Math.floor(Math.random() * usable.length), 1)[0]);
   const price = id => Math.round(CONS[id].price * Math.pow(1.5, ch - 1) * mul);
-  run.camp = { room: run.room, ch, mul, rested: 0, log: [], cons: pick.map(id => ({ id, price: price(id), left: id === 'herb' ? SHOP_CONS.herb[run.mode === 'hard' ? 'hard' : 'normal'] : CAMP_SHOP.stock })) };
+  run.camp = { room: run.room, ch, mul, rested: 0, log: [], cons: pick.map(id => ({ id, price: price(id), left: id === 'herb' ? Math.min(SHOP_CONS.herb[run.mode === 'hard' ? 'hard' : 'normal'], chData(ch).campHerb != null ? chData(ch).campHerb : 99) : CAMP_SHOP.stock /* 0.8.0 6단계 마감: 챕터별 야영지 약초 재고(campHerb) */ })) };
   const ps = pouchSell(run); if (ps.n) run.camp.sold = ps;
   return run.camp;
 }
