@@ -34,7 +34,7 @@ function trdLayA(cls) {
   const laneOf = n => lane[n.pos.lane] || 0; // M5-0 보정 4(10월 20일 만든 사람): 여섯 부채꼴 60° 균등(경계 40° 철회), 갈래 · 경계가 같은 칸 각도
   const lane = D ? D.lane : { LL: -26, L: -13, C: 0, R: 13, RR: 26 }, U = D ? 80 : 44, R0 = D ? 0 : 40, SK = D ? 21 : 14, UP = 9;
   const radOf = r => r ? R0 + r * U : 0;
-  for (const id in A.nodes) { const n = A.nodes[id]; if (n.kind === 'upgrade') continue; const a = n.kind === 'start' ? 0 : brA[n.br] + laneOf(n), rad = radOf(n.pos.r), [x, y] = trdXY(a, rad); N[id] = { id, x, y, a, rad, sz: n.kind === 'start' ? (D ? 27 : 22) : SK }; }
+  for (const id in A.nodes) { const n = A.nodes[id]; if (n.kind === 'upgrade') continue; const a = n.kind === 'start' ? 0 : n.ang != null ? n.ang : brA[n.br] + laneOf(n), rad = radOf(n.pos.r), [x, y] = trdXY(a, rad); N[id] = { id, x, y, a, rad, sz: n.kind === 'start' ? (D ? 27 : 22) : SK }; } // 보정 5: 결합 칸은 정해진 각도(ang)
   const placed = Object.values(N);
   for (const id in A.nodes) {
     const n = A.nodes[id]; if (n.kind !== 'upgrade') continue; const P = N[n.on]; if (!P) continue;
@@ -169,7 +169,7 @@ function trdNodeA(run, L, id, st, o) {
   return `<g class="tn tn-${n.kind} st-${st}${rl ? ' rlk' : ''}${reqOff ? ' req' : ''}${o.sel ? ' sel' : ''}${o.idle ? ' idle' : ''}${n.kind === 'skill' && (run.skills || []).includes(id) ? ' eq' : ''}${o.isNew ? ' tn-new' : ''}" data-a="tnode" data-k="${id}" data-e="a" transform="translate(${trdF(P.x)} ${trdF(P.y)})" tabindex="${o.tab ? 0 : -1}" role="button" aria-label="${esc(lab + (rl ? ', ' + trdRingShort(n.ring) : ''))}"><title>${esc(n.n)}</title><circle class="hit" r="${Math.max(sz + 6, 13)}"/>${gl}${in1}<circle class="fr" r="${sz + 7}"/></g>`;
 }
 function trdSvg(run, mode, L, v, sel, opt) {
-  const kind = L.kind, T = L.T, ids = Object.keys(L.N), stOf = id => kind === 'p' ? trdStP(run, id, T) : trdStA(run, id), ST = {}; for (const id of ids) { ST[id] = stOf(id); if (mode === 'k' && ST[id] === 'can') ST[id] = 'view'; } // 큰 각인 고르기에서는 찍지 않는다(배분 흐름의 단계 잠금)
+  const absent = id => kind === 'a' && run.offer && atAbsent(run, id); /* M5-0 보정 5 P4: 이번 판에 없는 칸은 그리지 않는다 */ const kind = L.kind, T = L.T, ids = Object.keys(L.N).filter(id => !absent(id)), stOf = id => kind === 'p' ? trdStP(run, id, T) : trdStA(run, id), ST = {}; for (const id of ids) { ST[id] = stOf(id); if (mode === 'k' && ST[id] === 'can') ST[id] = 'view'; } // 큰 각인 고르기에서는 찍지 않는다(배분 흐름의 단계 잠금)
   const isOpen = id => ['open', 'own', 'free', 'ks'].includes(ST[id]), jn = G.tjust && G.tjust.e === kind ? G.tjust.id : null;
   const offer = mode === 'k' ? ((opt && opt.offer) || []) : [], will = {}, kp = [];
   if (mode === 'k') { // 후보마다 덤으로 열릴 길: 열린 이웃 → 길 → 큰 각인 자리
@@ -177,7 +177,7 @@ function trdSvg(run, mode, L, v, sel, opt) {
     offer.forEach(kid => { const c = ksInfo(run, kid); if (!c) return; const path = c.path.filter(x => !open.includes(x)); const first = path[0] || kid; const st0 = T.nodes[first].links.filter(x => open.includes(x)).sort()[0]; const pts = (st0 ? [st0] : []).concat(path, [kid]); kp.push({ kid, pts, on: kid === sel }); if (kid === sel) for (const x of path) will[x] = 1; });
   }
   let lk = '', lkr = '';
-  for (const l of L.links) {
+  for (const l of L.links) { if (absent(l.a) || absent(l.b)) continue;
     const A = L.N[l.a], B = L.N[l.b], oa = isOpen(l.a), ob = isOpen(l.b), rl = (T.nodes[l.a].ring > 1 && !ringOpen(run, T.nodes[l.a].ring)) || (T.nodes[l.b].ring > 1 && !ringOpen(run, T.nodes[l.b].ring));
     let c = oa && ob ? (ST[l.a] === 'free' || ST[l.b] === 'free' || ST[l.a] === 'ks' || ST[l.b] === 'ks' ? 'lk-fr' : 'lk-on') : (oa && ST[l.b] === 'can') || (ob && ST[l.a] === 'can') ? 'lk-can' : 'lk';
     if (rl && c === 'lk') c += ' lk-rl'; if (l.sat) c += ' lk-sat'; const nw = jn && (l.a === jn || l.b === jn) && oa && ob ? ' lk-new' : '';

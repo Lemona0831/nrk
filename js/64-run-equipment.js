@@ -11,7 +11,7 @@ function startRun(build, boss) {
     deaths: [], result: null, blockPicked: null, entry: null, survey: null, drops: [], legSeen: [], awk: [],
     stats: { str: 0, dex: 0, int: 0, con: 0, wil: 0 }, statLog: [], pool: shuffleSeeded(FREE_POOL, seed), choices: [], seed, tv: TV,
   };
-  G.run.skills = isV2(p) ? [] : DEFAULT_SKILLS[build].slice(); G.run.bag = []; G.run.cons = []; G.run.consV = 3; G.run.pouch = {}; initGear(G.run); dgInit(G.run); G.run.skillLog = []; if (isV2(p)) { ptInit(G.run); treeSync(G.run); p.hp = p.hpMax; p.st = p.stMax; } // 10월 16일 0.8.0 2단계: 두 트리(시작 노드 능력치 12점)
+  G.run.skills = isV2(p) ? [] : DEFAULT_SKILLS[build].slice(); G.run.bag = []; G.run.cons = []; G.run.consV = 3; G.run.pouch = {}; initGear(G.run); dgInit(G.run); G.run.skillLog = []; if (isV2(p)) { ptInit(G.run); atOfferInit(G.run); /* M5-0 보정 5 P4 */ treeSync(G.run); p.hp = p.hpMax; p.st = p.stMax; } // 10월 16일 0.8.0 2단계: 두 트리(시작 노드 능력치 12점)
   G.run.mode = G.cre && G.cre.mode === 'hard' && G.data.hardOpen ? 'hard' : 'normal'; G.run.cname = (G.cre && G.cre.name) || ''; G.run.ch = 1; G.run.playMs = 0; G.run.tut = G.data.tutDone ? 1 : 0; // 수련장을 마친 뒤 만든 캐릭터인가
   if (G.cre && G.cre.mark) markSetup(G.run, G.cre.mark); // 표식 도전: 챕터 시작 레벨 · 꾸러미 · 표식
   G.scr = 'create'; G.b = null; G.sel = null; G.creating = true;

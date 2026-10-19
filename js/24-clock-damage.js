@@ -138,6 +138,7 @@ function hurtPlayer(b, raw, o) {
     if (o.charged && o.src && o.src.alive && p.build === 'assassin') { const xb = asSum(p, 'parryBrk'); if (xb && (asBr0 || !o.src.s.broken)) { addBreak(b, o.src, xb); logp(b, 'good', '끊는 칼끝. 붕괴 게이지 +' + xb + ' 더'); } } // 10월 18일 0.8.0 5단계 끊는 칼끝: 강타를 흘려 낸 붕괴 +25 → +35(앞의 25로 이미 무너졌으면 더하지 않는다)
     if (o.charged && o.src && (p.eq.amulet === 'witness')) { addS(b, o.src, 'vuln', 2); logp(b, 'good', '증인의 부적이 빈틈을 기억한다. ' + o.src.n + ' 취약'); }
     chargeEv(b, 'parry'); ysResp(b, '흘리기'); // 10월 15일 유산 1차 시제품: 대응 충전
+    if (p.sbSt && p.sbSt.counterBurn && o.src && o.src.alive) { addS(b, o.src, 'ignite', SB_BOUND.cbIgn); logp(b, 'good', '되받아 태우기: ' + o.src.n + '에게 화상 ' + SB_BOUND.cbIgn); } // M5-0 보정 5 결합 칸
     const on = p.dodgeOn; p.dodgeRed = 0; p.dodgeOn = null;
     if (on && o.src && o.src.alive) rip = { on, d: on.dmg ? outDmg(b, on.dmg * (on.sk ? 1 + asSum(p, 'parrySkP') : 1), {}) : 0 }; // 흘려 되돌리는 효과는 후열에도 닿는다 (암살자 초안 4절). 10월 18일 0.8.0 5단계 그림자 맹세: 흘리기 스킬이 흘려 내고 주는 피해 +15%(on.sk는 setParry가 단다). 10월 18일 0.8.0 5단계 마무리(만든 사람 결정, 쓰러짐 우선): 피해 값은 여기서(예전과 같은 때) 정하고, 넣는 것은 내가 맞은 뒤로 미룬다
     if (on && on.hasten) hastenBranch(b, on.hb, on.hasten, null); // 🔄 흘려 내면 다른 같은 갈래 스킬 쿨타임 −n

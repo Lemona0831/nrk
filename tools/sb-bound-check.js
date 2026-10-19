@@ -47,6 +47,9 @@ const act = (b, id, t) => { for (const e of b.en) if (e.alive && !e.intent) e.in
   es[1].brk = 0; es[1].brkMax = 1000; R('hurtPlayer')(b, 20, { src: es[1], charged: 1 }); ok(es[1].brk < 1, '출혈이 없으면 그대로'); es[0].brk = 0; R('hurtPlayer')(b, 20, { src: es[0] }); ok(es[0].brk < 1, '강타가 아니면 그대로'); }
 { const { p, b, es } = fight(['sb_embercut']); p.ys = 5; p.ward = 10; delete es[0].s.ignite; act(b, 'sb_embercut', es[0]); ok(p.ward <= 4 + 1 && stk(es[0], 'ignite') >= U.emberCutBurn - 1, '잿불 베기(보정 5): 보호막 6을 태워 화상 6'); const f2 = fight(['sb_embercut']); f2.p.ys = 5; f2.p.ward = 2; act(f2.b, 'sb_embercut', f2.es[0]); ok(stk(f2.es[0], 'ignite') <= 2, '보호막이 적으면 그만큼만'); }
 { const { p, b, es } = fight(['sb_cindermail']); p.ys = 5; act(b, 'sb_cindermail'); ok(p.sbSt.cinderMail, '불씨 갑주: 전투 동안 켜짐'); for (const e of es) delete e.s.ignite; p.ward = 10; R('sbWardHit')(b, p, { src: es[0] }, 5); ok(es.filter(e => e.row === 'front').every(e => stk(e, 'ignite') === U.cinderIgn), '보호막이 깎이면 전열에 화상 2'); }
+// M5-0 보정 5: 경계 승부수 후보 · 변종
+{ const { p, b, es } = fight(['sb_searburst']); for (const e of es) E.addS(b, e, 'sear', 4); const h = es.map(e => e.hp); p.ys = 9; act(b, 'sb_searburst'); ok(es.every((e, i) => h[i] - e.hp >= 12) && es.every(e => stk(e, 'sear') >= 2), '혈염 터뜨리기: 혈염 걸린 적마다 그 혈염 × 3 피해, 혈염은 남음'); }
+{ const { p, b, es } = fight(['sb_kalpa']); p.aup = ['sbm_kalpa_bulgwi']; p.ys = 9; act(b, 'sb_kalpa'); const fx = R('fxAdd'); ok(Math.abs(fx(p, 'hitP', b, p, es[0], {}, { id: 'basic' }) - 0.8) < 1e-9 && Math.abs(fx(p, 'inP', b, p, {}) + 0.6) < 1e-9, '변종 불귀: 겁화 주는 피해 +80%, 받는 피해 +60%'); }
 // 비용 1: 교대 아님
 { const { p, b, es } = fight(['sb_shard', 'sb_ember']); act(b, 'basic', es[0]); ok(p.sbLast === 'cut', '베기 뒤 직전 종류 베기'); p.ys = 5; p.ward = 0; act(b, 'sb_shard', es[0]); ok(p.sbLast === 'cut' && !(p.ward > 0), '마력 파편(비용 1 주문)은 교대가 아님: 직전 종류 그대로, 교대 보호막 없음'); act(b, 'sb_ember', es[0]); ok(p.ward > 0, '그다음 주문(비용 2)은 교대'); }
 // 경계 입구 requires

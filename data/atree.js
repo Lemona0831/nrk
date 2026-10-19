@@ -23,11 +23,15 @@ const ATREE_DEF = {
       ['sb_shell', '마갑', 3, 5, 'L', ['sb_unravel', 'sb_turn'], 3], ['sb_finale', '마갑', 3, 5, 'R', ['sb_unravel', 'sb_turn'], 4],
       /* 경계: 입구(2고리)는 양쪽 갈래에서 첫 스킬을 하나씩(어느 쪽이든) 연 뒤. 둘째(2고리) → 3고리 둘 → 승부수(비용 4). 보정 5: 죄인의 피 둘째 = 죄인의 일격, 유산의 불 둘째 = 잿불 베기(공격 칸) */
       ['sb_bloodfire', '혈염', 2, 3, 'C', ['sb_ember', 'sb_flamecut', 'sb_bleedcut', 'sb_bloodmark'], 2, { requires: [['sb_ember', 'sb_flamecut'], ['sb_bleedcut', 'sb_bloodmark']] }], ['sb_hotedge', '혈염', 2, 4, 'C', ['sb_bloodfire'], 2],
-      ['sb_searcut', '혈염', 3, 5, 'L', ['sb_hotedge'], 3], ['sb_searspread', '혈염', 3, 5, 'R', ['sb_hotedge'], 3], ['sb_kalpa', '혈염', 3, 6, 'C', ['sb_searcut', 'sb_searspread'], 4],
+      ['sb_searcut', '혈염', 3, 5, 'L', ['sb_hotedge'], 3], ['sb_searspread', '혈염', 3, 5, 'R', ['sb_hotedge'], 3], ['sb_kalpa', '혈염', 3, 6, 'C', ['sb_searcut', 'sb_searspread'], 4, { finOf: 'AB' }],
       ['sb_bloodmail', '죄인의 피', 2, 3, 'C', ['sb_bleedcut', 'sb_bloodmark', 'sb_bladeward', 'sb_bolt'], 2, { requires: [['sb_bleedcut', 'sb_bloodmark'], ['sb_bladeward', 'sb_bolt']] }], ['sb_sinstrike', '죄인의 피', 2, 4, 'C', ['sb_bloodmail'], 2],
-      ['sb_film', '죄인의 피', 3, 5, 'L', ['sb_sinstrike'], 3], ['sb_shackle', '죄인의 피', 3, 5, 'R', ['sb_sinstrike'], 3], ['sb_sinwall', '죄인의 피', 3, 6, 'C', ['sb_film', 'sb_shackle'], 4],
+      ['sb_film', '죄인의 피', 3, 5, 'L', ['sb_sinstrike'], 3], ['sb_shackle', '죄인의 피', 3, 5, 'R', ['sb_sinstrike'], 3], ['sb_sinwall', '죄인의 피', 3, 6, 'C', ['sb_film', 'sb_shackle'], 4, { finOf: 'BC' }],
+      /* M5-0 보정 5 P4: 경계 승부수 후보 둘 중 하나가 판마다 제시된다(finOf). 같은 자리 */
+      ['sb_searburst', '혈염', 3, 6, 'C', ['sb_searcut', 'sb_searspread'], 4, { finOf: 'AB' }], ['sb_atone', '죄인의 피', 3, 6, 'C', ['sb_film', 'sb_shackle'], 4, { finOf: 'BC' }],
+      /* M5-0 보정 5 P3 결합 칸: 부채꼴 밖 2고리 둘레(부채꼴 경계선 위), 이웃이 아니라 꼬리표 조건(reqTags)으로 열린다. 판마다 셋 중 둘 */
+      ['sb_counterburn', '결합', 2, 4, 'C', [], 2, { reqTags: { 화상: 2, 흘리기: 1 }, ang: 30 }], ['sb_bloodfist', '결합', 2, 4, 'C', [], 2, { reqTags: { 출혈: 2, 기본공격연동: 1 }, ang: 150 }], ['sb_tricolor', '결합', 2, 4, 'C', [], 3, { reqTags: { 출혈: 1, 화상: 1, 보호막: 1 }, ang: 270 }],
       ['sb_heatmail', '유산의 불', 2, 3, 'C', ['sb_bladeward', 'sb_bolt', 'sb_ember', 'sb_flamecut'], 2, { requires: [['sb_bladeward', 'sb_bolt'], ['sb_ember', 'sb_flamecut']] }], ['sb_embercut', '유산의 불', 2, 4, 'C', ['sb_heatmail'], 2],
-      ['sb_embermail', '유산의 불', 3, 5, 'L', ['sb_embercut'], 3], ['sb_cindermail', '유산의 불', 3, 5, 'R', ['sb_embercut'], 3], ['sb_firebody', '유산의 불', 3, 6, 'C', ['sb_embermail', 'sb_cindermail'], 4],
+      ['sb_embermail', '유산의 불', 3, 5, 'L', ['sb_embercut'], 3], ['sb_cindermail', '유산의 불', 3, 5, 'R', ['sb_embercut'], 3], ['sb_firebody', '유산의 불', 3, 6, 'C', ['sb_embermail', 'sb_cindermail'], 4, { finOf: 'CA' }], ['sb_ashstorm', '유산의 불', 3, 6, 'C', ['sb_embermail', 'sb_cindermail'], 4, { finOf: 'CA' }],
     ],
     vars: {
       /* M5-0 보정 5(10월 20일 만든 사람) P2 변형 강화: 스킬마다 변형 자리 하나(포인트 1), 변형 셋 중 하나를 고른다(판마다 둘이 제시된다). 같은 틀(set · fxSet · fxAdd · cond).
@@ -136,6 +140,23 @@ const ATREE_DEF = {
         ['sbv_kalpa_fast', '순간의 겁화', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름']],
         ['sbv_kalpa_resp', '받아낸 겁화', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']],
         ['sbv_kalpa_alt', '박자 겁화', '이어진 교대의 2번째부터면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'alt2' } }, ['교대']]],
+      sb_searburst: [
+        ['sbv_sb_fast', '순간의 터뜨림', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름']],
+        ['sbv_sb_resp', '받아낸 터뜨림', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']],
+        ['sbv_sb_alt', '박자 터뜨림', '이어진 교대의 2번째부터면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'alt2' } }, ['교대']]],
+      sb_atone: [
+        ['sbv_at_normal', '서두른 속죄', '보통 빠르기가 됩니다. 피해 16 → 11.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 11 }] }, []],
+        ['sbv_at_front', '속죄의 휩쓸기', '전열 모두를 벱니다. 피해 16 → 10.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 10 }] }, ['광역']],
+        ['sbv_at_resp', '받아친 속죄', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']]],
+      sb_ashstorm: [
+        ['sbv_as_fast', '순간의 잿더미', '빠른 칸이 됩니다. 피해 13 → 10.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 10 }] }, ['빠름']],
+        ['sbv_as_resp', '받아낸 잿더미', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']],
+        ['sbv_as_ward', '두꺼운 잿더미', '보호막이 10 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'ward>=10' } }, ['보호막']]],
+      /* P4 (d) 변종: 판마다 10%로 하나가 그 스킬의 변형 제시에 섞인다. 값 띠 상한 +15%까지, 대가가 크다(mut) */
+      sb_mutants: [
+        ['sbm_kalpa_bulgwi', '불귀', '겁화의 주는 피해 +40% → +80%. 대가: 받는 피해 +30% → +60%.', { fxSet: [{ k: 'sbBlaze', hit: 0.8, inc: 0.6 }] }, ['혈염'], { mut: 1, on: 'sb_kalpa' }],
+        ['sbm_bleedcut_frenzy', '피의 폭주', '피해 8 → 13, 출혈 4 → 6. 대가: 나에게 출혈 3.', { fxSet: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'bleed', n: 6 }], fxAdd: [{ k: 'meSt', s: 'bleed', n: 3 }] }, ['출혈'], { mut: 1, on: 'sb_bleedcut' }],
+        ['sbm_shell_overheat', '과열 마갑', '보호막 27 → 40. 대가: 나에게 화상 3.', { fxSet: [{ k: 'ward', n: 40 }], fxAdd: [{ k: 'meSt', s: 'ignite', n: 3 }] }, ['보호막'], { mut: 1, on: 'sb_shell' }]],
       sb_bloodmail: [
         ['sbu_bm_fast', '서두른 갑주', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름']],
         ['sbv_bm_resp', '받아낸 갑주', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응']],

@@ -65,11 +65,12 @@ function atBuild(cls) {
   add('S', { kind: 'start', ring: 1, pos: { r: 0, lane: 'C' }, cost: 0, n: '시작 스킬', d: T2.starters.map(id => SK2[id] ? SK2[id].n : id).join(' · ') });
   const secOf = {}; if (D && D.sec) for (const k in D.sec) secOf[D.sec[k]] = k;
   if (D) {
-    for (const [id, br, ring, r, lane, , ys, ex] of D.skills) add(id, Object.assign({ kind: 'skill', br, ring, pos: { r, lane }, ys, n: SK2[id].n }, secOf[br] ? { sec: secOf[br] } : {}, ex && ex.requires ? { requires: ex.requires.slice() } : {}, ex && ex.excl ? { excl: ex.excl } : {}));
+    for (const [id, br, ring, r, lane, , ys, ex] of D.skills) add(id, Object.assign({ kind: 'skill', br, ring, pos: { r, lane }, ys, n: SK2[id].n }, secOf[br] ? { sec: secOf[br] } : {}, ex && ex.requires ? { requires: ex.requires.slice() } : {}, ex && ex.excl ? { excl: ex.excl } : {}, ex && ex.reqTags ? { reqTags: Object.assign({}, ex.reqTags), ang: ex.ang } : {}, ex && ex.finOf ? { finOf: ex.finOf } : {}));
     for (const [id, br, ring, r, lane, on, n, d, mod, src] of D.ups || []) add(id, Object.assign({ kind: 'upgrade', br, ring, pos: { r, lane }, on, n, d, mod, src }, secOf[br] ? { sec: secOf[br] } : {}));
     for (const [id, , , , , ln] of D.skills) for (const x of ln) link(id, x);
     for (const u of D.ups || []) link(u[0], u[5]);
     /* M5-0 보정 5 P2 변형 강화: 스킬마다 변형 자리 노드(sv_*, 포인트 1)와 변형 셋(V). 고른 변형은 run.atree.vsel[자리] */
+    if (D.vars && D.vars.sb_mutants) for (const [vid, n, d, mod, tags, ex] of D.vars.sb_mutants) V[vid] = Object.assign({ id: vid, slot: 'sv_' + ex.on.slice(3), n, d, mod, tags: tags || [] }, ex); // P4 (d) 변종: 자리의 변형 목록에는 없고 제시에만 섞인다
     if (D.vars) for (const sid in D.vars) { const sk = N[sid]; if (!sk) continue; const slot = 'sv_' + sid.slice(3);
       add(slot, Object.assign({ kind: 'upgrade', slot: 1, br: sk.br, ring: sk.ring, pos: { r: sk.pos.r, lane: sk.pos.lane }, on: sid, n: SK2[sid].n + ' 변형', d: '변형 가운데 하나를 고릅니다. 판마다 둘이 제시되고, 야영지에서 바꿀 수 있습니다(포인트는 그대로).', mod: {}, vars: D.vars[sid].map(v => v[0]) }, sk.sec ? { sec: sk.sec } : {})); link(slot, sid);
       for (const [vid, n, d, mod, tags, ex] of D.vars[sid]) V[vid] = Object.assign({ id: vid, on: sid, slot, n, d, mod, tags: tags || [] }, ex || {}); }
@@ -98,8 +99,10 @@ function treeWhyBuy(run, T, openIds, pts, id) {
   if (openIds.includes(id)) return '이미 열렸습니다';
   if (n.kind === 'keystone') return '큰 각인은 챕터 보상으로만 얻습니다';
   if (!ringOpen(run, n.ring)) return RING_WHY[n.ring] || '아직 열 수 없는 고리입니다';
+  if (T.kind === 'a' && run && run.offer && atAbsent(run, id)) return '이번 판에는 없는 칸입니다'; // M5-0 보정 5 P4
   if (n.excl && openIds.includes(n.excl)) return '같은 자리의 다른 첫 스킬을 이미 골랐습니다'; // M5-0 보정 5: 1고리 갈림(둘 중 하나)
   if (n.requires) { if (!n.requires.every(x => Array.isArray(x) ? x.some(y => openIds.includes(y)) : openIds.includes(x))) return '양쪽 갈래의 첫 노드를 먼저 열어야 합니다'; } // 0.8.0 M5-0: 경계 입구(보정 5: 갈래마다 첫 스킬 둘 중 어느 쪽이든)
+  else if (n.reqTags) { const w = atTagsWhy(run, n); if (w) return w; } // M5-0 보정 5 P3 결합 칸: 이웃이 아니라 꼬리표
   else if (!n.links.some(x => openIds.includes(x))) return '이웃한 노드를 먼저 열어야 합니다';
   if (pts < (n.cost || 0)) return '포인트가 없습니다';
   return null;
@@ -107,6 +110,23 @@ function treeWhyBuy(run, T, openIds, pts, id) {
 const ptWhy = (run, id) => treeWhyBuy(run, ptBuild(run.build), ptOpenIds(run), run.ptree.pts, id);
 const atWhy = (run, id) => treeWhyBuy(run, atBuild(run.build), atOpenIds(run), run.atree.pts, id);
 function ptBuy(run, id) { const why = ptWhy(run, id); if (why) return why; const n = ptBuild(run.build).nodes[id]; run.ptree.own.push(id); run.ptree.pts -= n.cost; run.ptree.log.push({ id, lv: run.lv || 1, ch: run.ch || 1, room: run.room, t: Date.now() }); ptSync(run); return null; }
+/* M5-0 보정 5 P4 판마다 다른 제시(만든 사람 결정 D17): 판 시작 때 run.seed로 정한다. 갈래 스킬은 고정.
+   변형은 자리마다 셋 중 둘, 결합 칸은 셋 중 둘, 경계 승부수는 부채꼴마다 후보 둘 중 하나, 판마다 10%로 변종 하나가 제시에 섞인다. 저장(run.offer) */
+const AT_OFFER = { vars: 2, combos: 2, mut: 0.1 };
+function atRng(seed) { let a = (seed >>> 0) || 1; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function atOfferMake(build, seed) {
+  const D = ATREE_DEF[build]; if (!D || !D.vars) return null; const A = atBuild(build), r = atRng((seed | 0) * 2654435761 + build.length * 97 + 7), pick = (L, k) => { const a = L.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, k); };
+  const o = { v: 1, seed, vars: {}, combos: null, fins: {}, mut: null };
+  for (const id of Object.keys(A.nodes).sort()) { const n = A.nodes[id]; if (n.slot) o.vars[id] = pick(n.vars, AT_OFFER.vars); }
+  const cb = Object.keys(A.nodes).filter(id => A.nodes[id].reqTags).sort(); if (cb.length) o.combos = pick(cb, AT_OFFER.combos).sort();
+  const fg = {}; for (const id of Object.keys(A.nodes).sort()) { const f = A.nodes[id].finOf; if (f) (fg[f] = fg[f] || []).push(id); } for (const f in fg) o.fins[f] = pick(fg[f], 1)[0];
+  const muts = Object.values(A.vars).filter(v => v.mut && o.vars[v.slot]); if (muts.length && r() < AT_OFFER.mut) { const m = pick(muts.map(v => v.id), 1)[0], s = A.vars[m].slot; o.vars[s] = [o.vars[s][0], m]; o.mut = m; }
+  return o; }
+function atOfferInit(run) { if (!run || run.offer || !ATREE_DEF[run.build] || !ATREE_DEF[run.build].vars) return run && run.offer; run.offer = atOfferMake(run.build, run.seed || 1); return run.offer; }
+/* 이번 판에 없는 칸: 제시되지 않은 결합 칸 · 승부수 후보, 그 칸의 변형 자리 */
+function atAbsent(run, id) { const A = atBuild(run.build), n = A.nodes[id], o = run && run.offer; if (!n || !o) return false; const k = n.slot ? A.nodes[n.on] : n; if (!k) return false; if (k.finOf && o.fins && o.fins[k.finOf] !== k.id) return true; if (k.reqTags && o.combos && !o.combos.includes(k.id)) return true; return false; }
+/* 결합 칸 조건: 판의 꼬리표 수(runTags)가 reqTags 이상 */
+function atTagsWhy(run, n) { if (!n.reqTags) return null; const c = runTags(run); const miss = Object.entries(n.reqTags).filter(([k, v]) => (c[k] || 0) < v); return miss.length ? '꼬리표가 모자랍니다: ' + miss.map(([k, v]) => k + ' ' + (c[k] || 0) + '/' + v).join(' · ') : null; }
 /* M5-0 보정 5: 제시된 변형(판마다 둘, run.offer.vars). 제시가 없으면 셋 모두 */
 function atVarsOffered(run, slot) { const A = atBuild(run.build), n = A.nodes[slot]; if (!n || !n.slot) return []; const o = run.offer && run.offer.vars && run.offer.vars[slot]; return (o || n.vars).filter(v => A.vars[v]); }
 function atVarWhy(run, slot, vid) { const A = atBuild(run.build), n = A.nodes[slot]; if (!n || !n.slot) return '변형 자리가 아닙니다'; if (!atVarsOffered(run, slot).includes(vid)) return '이번 판에 제시되지 않은 변형입니다'; return null; }
@@ -164,7 +184,7 @@ function ptSync(run) { if (!run.ptree) return; run.stats = ptStats(run); const p
 function atSync(run) { if (!run.atree || !run.p) return; run.p.skills = v2Equip(run); const T = atBuild(run.build), eq = run.p.skills; run.p.aup = run.atree.own.filter(id => T.nodes[id] && T.nodes[id].kind === 'upgrade' && eq.includes(T.nodes[id].on)).map(id => T.nodes[id].slot ? (run.atree.vsel || {})[id] : id).filter(Boolean).sort(); /* M5-0 보정 5: 변형 자리는 고른 변형으로(안 고른 자리는 일하지 않음) */ run.p.sbLead = atLead(run); }
 /* 이끄는 갈래 (10월 17일 보완 3, 칼에 새긴 주문): 액티브 포인트를 가장 많이 쓴 갈래. 가장 많은 갈래가 둘 이상이거나 없으면 null */
 function atLead(run) { if (run.build !== 'spellblade' || !run.atree) return null; const A = atBuild(run.build), c = {}; for (const id of run.atree.own) { const br = (A.nodes[id] || {}).br; if (br) c[br] = (c[br] || 0) + 1; } const E = Object.entries(c).sort((a, b) => b[1] - a[1]); return E.length && (E.length < 2 || E[0][1] > E[1][1]) ? E[0][0] : null; }
-function treeSync(run) { ptInit(run); ptFix(run); ptSync(run); atSync(run); }
+function treeSync(run) { ptInit(run); atOfferInit(run); /* M5-0 보정 5 P4: 제시가 없던 판(옛 판)은 시드로 만든다 */ ptFix(run); ptSync(run); atSync(run); }
 /* 장착: 시작 스킬(늘) + 연 스킬 노드 가운데 run.skills(4칸) */
 function v2Equip(run) { const T = TREE2[run.build]; const A = run.atree ? atBuild(run.build) : null; const own = run.atree ? run.atree.own : []; return (T ? T.starters : []).concat((run.skills || []).filter(id => A && own.includes(id) && A.nodes[id] && A.nodes[id].kind === 'skill' && !(T && T.starters.includes(id)))).slice(0, (T ? T.starters.length : 0) + EQUIP_SLOTS2); }
 function atEquip(run, id) {
@@ -224,6 +244,7 @@ function skCostAt(b, s, tgt) {
   const c0 = skCost(s); if (!b) return { c: c0, by: null }; let best = { c: c0, by: null };
   for (const c of s.cond || []) { if (b.condUsed && b.condUsed[c.id || s.id] === (b.ysR || 0)) continue; if (skCondMet(b, s, c, tgt)) { const c1 = Math.max(1, c0 - (c.off || 1)); if (c1 < best.c) { best = { c: c1, by: c.id || s.id }; break; } } }
   /* 10월 17일 보완 1 · 4: 두 번 교대의 다음 스킬 −1(b.altDisc), 마검 과부하 교대 셋의 다음 유산 4 스킬 −3(b.ovDisc). 바닥 1, 가장 큰 할인 하나만 */
+  if (b.p && b.p.sbSt && b.p.sbSt.tricolor && s.kind === 'cut' && (b.p.ward || 0) > 0 && !(b.condUsed && b.condUsed.tricolor === (b.ysR || 0)) && alive(b).some(e => stk(e, 'bleed') > 0 && stk(e, 'ignite') > 0)) { const c1 = Math.max(1, c0 - 1); if (c1 < best.c) best = { c: c1, by: 'tricolor' }; } // M5-0 보정 5 결합 칸 삼색검(내 차례에 한 번)
   if (b.ovDisc && c0 >= 4) { const c1 = Math.max(1, c0 - SB_OVER.off); if (c1 < best.c) best = { c: c1, by: 'ksOver' }; }
   if (b.altDisc && c0 >= (SB_ALT2.min || 1)) { const c1 = Math.max(1, c0 - SB_ALT2.off); if (c1 < best.c) best = { c: c1, by: 'altDbl' }; }
   return best;
@@ -281,7 +302,7 @@ function atMigrateM5(run) {
   if (!run || !run.atree || run.atree.atv >= 4) return 0; const why = run.atree.atv === 3 ? '빌드 규격 2판' : run.atree.atv === 2 ? '부채꼴 칸 정리' : '임시 트리 폐기'; run.atree.atv = 4; // M5-0 보정 5: atv 4(경계 둘째 칸 교체 · 1고리 갈림)
   const A = atBuild(run.build); const own0 = run.atree.own || []; const keep0 = [];
   for (const id0 of own0) { const id = !A.nodes[id0] && A.vars && A.vars[id0] ? A.vars[id0].slot : id0; const n = A.nodes[id]; if (!n || keep0.includes(id)) continue; if (n.excl && keep0.includes(n.excl)) continue; keep0.push(id); } // 1고리 갈림에서 둘 다 찍힌 옛 판은 먼저 찍은 쪽을 남긴다. 옛 강화(이제 변형)는 그 스킬의 변형 자리를 연 채 변형은 고르지 않음(야영지에서 고름)
-  const reach = treeReach(A, ['S'].concat(keep0), ['S']); const keep = keep0.filter(id => reach.has(id));
+  const reach = treeReach(A, ['S'].concat(keep0), ['S']); const keep = keep0.filter(id => reach.has(id) || A.nodes[id].reqTags || (A.nodes[id].slot && A.nodes[A.nodes[id].on].reqTags && keep0.includes(A.nodes[id].on)));
   const slotOf = id => !A.nodes[id] && A.vars && A.vars[id] ? A.vars[id].slot : id; const gone = own0.filter(id => !keep.includes(slotOf(id))); if (!gone.length) { run.atree.own = keep; return 0; }
   run.atree.own = keep; run.atree.pts = (run.atree.pts || 0) + gone.length; (run.atree.log = run.atree.log || []).push({ refund: gone.length, why, gone: gone.slice(), t: Date.now() });
   const T2 = TREE2[run.build] || { starters: [] }; run.skills = (run.skills || []).filter(id => keep.includes(id) || T2.starters.includes(id)); return gone.length;

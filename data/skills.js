@@ -549,6 +549,13 @@ const SKILLS2 = {
     { id: 'sb_sinstrike', row: 5, b: '죄인의 피', tier: '중급', n: '죄인의 일격', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 8 }, { k: 'wardDmg', per: 0.5, spend: 0, cap: 12 }, { k: 'st', s: 'bleed', n: 2 }] }, // M5-0 보정 5: 막아 낸 만큼 되갚는 칼(지금 보호막에 비례한 피해 + 출혈, 보호막은 쓰지 않음)
     { id: 'sb_shackle', row: 8, b: '죄인의 피', tier: '중급', n: '피의 족쇄', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'sbShackle', txt: '이번 전투 동안 출혈 걸린 적의 강타를 막아 내면 그 적에게 붕괴 +90.' }] },
     { id: 'sb_embercut', row: 5, b: '유산의 불', tier: '중급', n: '잿불 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 9 }, { k: 'sbEmberCut', txt: '보호막을 6까지 태워 그만큼 화상을 건다.' }] }, // M5-0 보정 5: 보호막을 조금 태워 그만큼 화상
+    /* 0.8.0 M5-0 보정 5 P3 결합 칸(꼬리표 조건, 부채꼴 밖) · P4 경계 승부수 후보(판마다 둘 중 하나) */
+    { id: 'sb_bloodfist', row: 5, b: '결합', tier: '중급', n: '피 묻은 주먹', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbFist', txt: '이번 전투 동안 기본 공격이 출혈 걸린 적에게 ×1.5.' }] },
+    { id: 'sb_counterburn', row: 5, b: '결합', tier: '중급', n: '되받아 태우기', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbCounterBurn', txt: '이번 전투 동안 흘리기에 성공하면 그 적에게 화상 3.' }] },
+    { id: 'sb_tricolor', row: 7, b: '결합', tier: '중급', n: '삼색검', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'sbTricolor', txt: '이번 전투 동안 출혈 · 화상이 함께 걸린 적이 있고 보호막이 있으면 베기 스킬 비용 −1(바닥 1, 내 차례에 한 번).' }] },
+    { id: 'sb_searburst', row: 10, b: '혈염', tier: '중급', n: '혈염 터뜨리기', kind: 'spell', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 6 }, { k: 'searBurst', mul: 3, txt: '혈염 걸린 적마다 그 혈염 × 3 피해(혈염은 남는다).' }] },
+    { id: 'sb_atone', row: 10, b: '죄인의 피', tier: '중급', n: '속죄의 칼', kind: 'cut', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 16 }, { k: 'wardBurn', mul: 1 }, { k: 'st', s: 'bleed', n: 4 }] },
+    { id: 'sb_ashstorm', row: 10, b: '유산의 불', tier: '중급', n: '잿더미 폭풍', kind: 'spell', tgt: 'front', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'ignite', n: 4 }] },
     { id: 'sb_bloodecho', row: 5, b: '죄인의 피', tier: '중급', n: '피의 반향', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbEcho', txt: '이번 전투 동안 보호막이 있으면 베기가 출혈 +2 더.' }] }, // M5-0 보정 5에서 트리에서 뺐다(죄인의 일격으로). 데이터는 남긴다
     { id: 'sb_ashhand', row: 5, b: '유산의 불', tier: '중급', n: '재 묻은 손', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbAshHand', txt: '다음 기본 공격 2번에 화상 3.' }] }, // M5-0 보정 5에서 트리에서 뺐다(잿불 베기로)
     { id: 'sb_cindermail', row: 8, b: '유산의 불', tier: '중급', n: '불씨 갑주', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'sbCinder', txt: '이번 전투 동안 보호막이 피해로 깎일 때마다 전열에 화상 2.' }] },
@@ -929,6 +936,7 @@ const SB_TAGS = {
   sb_bladeward: ['보호막', '교대'], sb_bolt: ['보호막', '빠름'], sb_shard: [], sb_unravel: ['교대'], sb_turn: ['교대', '빠름'], sb_shell: ['보호막', '빠름'], sb_finale: ['붕괴', '교대'],
   sb_bloodfire: ['출혈', '화상', '싣기'], sb_hotedge: ['출혈', '화상'], sb_searcut: ['혈염'], sb_searspread: ['혈염'], sb_kalpa: ['혈염'],
   sb_bloodmail: ['보호막', '출혈'], sb_sinstrike: ['보호막', '출혈'], sb_film: ['보호막', '출혈'], sb_shackle: ['출혈', '붕괴'], sb_sinwall: ['보호막', '출혈'],
+  sb_bloodfist: ['출혈', '기본공격연동'], sb_counterburn: ['화상', '흘리기'], sb_tricolor: ['출혈', '화상', '보호막'], sb_searburst: ['혈염', '광역'], sb_atone: ['보호막', '출혈'], sb_ashstorm: ['화상', '광역'],
   sb_heatmail: ['보호막', '기본공격연동'], sb_embercut: ['보호막', '화상'], sb_embermail: ['화상', '기본공격연동'], sb_cindermail: ['보호막', '화상'], sb_firebody: ['화상', '기본공격연동'],
 };
 for (const s of SKILLS2.spellblade || []) if (SB_TAGS[s.id]) s.tags = SB_TAGS[s.id].slice();
