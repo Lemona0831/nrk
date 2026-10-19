@@ -327,7 +327,8 @@ const BUILDLOG = !!process.env.DG_BUILDLOG; // M3: 빌드 표(tools/buildmix.js)
 function maskIgn(b) { const saved = []; for (const e of b.en) { if (!e.alive || !(IGN.includes(e.foe) || IGN.includes(e.boss) || IGN.includes(e.bossKind))) continue; saved.push([e, e.intent]); if (e.intent && e.intent.k !== 'attack') e.intent = Object.assign({}, e.intent, { k: 'attack' }); } return () => { for (const [e, it] of saved) e.intent = it; }; }
 function fightCur(pk, r, mem, out) {
   const P = PERSONAS[pk]; const G = G0.__G;
-  G0.enterRoom(); const b = G.b; b.stepMode = false; let n = 0; let stall = 0, lastHp = Infinity; let stuckN = 0;
+  G0.enterRoom(); for (let k = 0; !G.b && G.sheet && k < 4; k++) { handleSheets(pk, r); G0.enterRoom(); } // M5-0: 전투 중 저장본을 이어 한 뒤 받을 큰 각인이 남았으면 enterRoom이 고르기 창을 먼저 연다
+  const b = G.b; b.stepMode = false; let n = 0; let stall = 0, lastHp = Infinity; let stuckN = 0;
   // 10월 5일: 전투 난수를 테스터 판단 난수와 나눈다(판단 규칙 하나를 바꿔도 전투 운은 그대로 남아 비교가 깨끗하다). LEGACY_RNG=1이면 예전처럼 같은 난수
   b.rngF = process.env.LEGACY_RNG ? r : rng(((out.seed || 1) * 7919 + (G.run.room || 0) * 131 + (G.run.ch || 1) * 100003 + (out.acts || 0)) | 0);
   if (OPT.policy?.battleStart) OPT.policy.battleStart(b, G.run);
