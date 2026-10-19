@@ -513,7 +513,8 @@ const SKILLS2 = {
     // 마갑
     { id: 'sb_bladeward', row: 1, b: '마갑', tier: '하급', n: '마갑참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'ward', n: 6 }] },
     { id: 'sb_counter', row: 1, b: '마갑', tier: '하급', n: '맞받아 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 16 }, { k: 'alt', ward: 4 }] },
-    { id: 'sb_bolt', row: 2, b: '마갑', tier: '하급', n: '마갑탄', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'wardDmg', per: 0.5, spend: 0.5, cap: 12 }] },
+    { id: 'sb_bolt', row: 2, b: '마갑', tier: '하급', n: '마갑탄', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'wardDmg', per: 0.5, spend: 0.5, cap: 12 }] },
+    { id: 'sb_shard', row: 1, b: '마갑', tier: '하급', n: '마력 파편', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 9 }] }, // 0.8.0 M5-0 보정(10월 20일 만든 사람) 리듬 칸(비용 1, 교대 아님): 피해만 작게, 보호막 없음
     { id: 'sb_unravel', row: 2, b: '마갑', tier: '하급', n: '마력 교란', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'weak', n: 2 }, { k: 'alt', protect: 1 }] },
     { id: 'sb_shell', row: 3, b: '마갑', tier: '하급', n: '마갑 전개', kind: 'spell', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'ward', n: 18 }, { k: 'st', s: 'protect', n: 1 }] },
     { id: 'sb_beatcut', row: 3, b: '마갑', tier: '하급', n: '교차참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 8 }, { k: 'alt', run: 2, brk: 30 }] },

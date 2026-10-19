@@ -21,7 +21,7 @@ for(const [build,id,key] of cases){
  const before=E.skillBaseDamage(p,s,n);p.gear={wpn:20};near(E.skillBaseDamage(p,s,n),before+(key==='int'?0:n*.24));
 }
 for(const id of ['sb_rebound','sb_sunder']){assert.equal(E.SK2[id].time,'normal');assert.equal(E.v2Static(E.SK2[id]).time,1);assert.equal(E.SK2[id].cd,5);}
-assert.equal(E.SK2.sb_bolt.time,'normal'); // 0.8.0 M5-0: 마갑탄은 비용 1 리듬 칸(주 행동, 빠른 칸 아님)
+assert.equal(E.SK2.sb_bolt.time,'fast'); // 0.8.0 M5-0 보정(10월 20일): 마갑탄은 M4대로 빠른 행동 · 비용 2, 리듬 칸은 마력 파편
 for(const id of ['sb_bolt','sb_spellguard']){
  const s=E.SK2[id],f=s.fx.find(f=>f.k==='wardDmg');
  near(E.wardDamageInfo(f,20).take,f.drainAll?20:10);near(E.wardDamageInfo(f,20).bonus,f.drainAll?10:5);

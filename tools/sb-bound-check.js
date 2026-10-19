@@ -38,7 +38,7 @@ const act = (b, id, t) => { for (const e of b.en) if (e.alive && !e.intent) e.in
 { const { p, b, es } = fight(['sb_firebody']); p.ys = 5; p.ward = 0; act(b, 'sb_firebody'); ok(p.ys === 0 && p.sbSt.fireBody === 3 && b.log.some(x => /불의 몸: 유산 1을 모두 태워 보호막 \+8/.test(x.m || '')), '불의 몸: 남은 유산 1을 태워 보호막 +8, 유산 0'); ok(R('ysAdd')(b, 2, 'turn', '차례') === 0 && p.ys === 0, '그동안 유산이 차지 않음');
   ok(E.addS(b, p, 'ignite', 3) === 0 && !stk(p, 'ignite'), '받는 화상 무효'); const fx = R('fxAdd'); ok(Math.abs(fx(p, 'hitP', b, p, es[0], {}, { id: 'heavy' }) - 0.8) < 1e-9, '기본 공격 · 강공격 ×1.8'); }
 // 비용 1: 교대 아님
-{ const { p, b, es } = fight(['sb_bolt', 'sb_ember']); act(b, 'basic', es[0]); ok(p.sbLast === 'cut', '베기 뒤 직전 종류 베기'); p.ys = 5; p.ward = 0; act(b, 'sb_bolt', es[0]); ok(p.sbLast === 'cut' && !(p.ward > 0), '마갑탄(비용 1 주문)은 교대가 아님: 직전 종류 그대로, 교대 보호막 없음'); act(b, 'sb_ember', es[0]); ok(p.ward > 0, '그다음 주문(비용 2)은 교대'); }
+{ const { p, b, es } = fight(['sb_shard', 'sb_ember']); act(b, 'basic', es[0]); ok(p.sbLast === 'cut', '베기 뒤 직전 종류 베기'); p.ys = 5; p.ward = 0; act(b, 'sb_shard', es[0]); ok(p.sbLast === 'cut' && !(p.ward > 0), '마력 파편(비용 1 주문)은 교대가 아님: 직전 종류 그대로, 교대 보호막 없음'); act(b, 'sb_ember', es[0]); ok(p.ward > 0, '그다음 주문(비용 2)은 교대'); }
 // 경계 입구 requires
 { const run = (() => { E.__G.data = E.blankData(); E.__G.cre = { name: 'b' }; E.startRun('spellblade'); const r = E.__G.run; delete r.alloc; E.__G.sheet = null; E.__G.creating = false; r.lv = 10; r.clears = 1; E.ptFix(r); return r; })();
   ok(/양쪽 갈래/.test(R('atWhy')(run, 'sb_bloodfire')), '경계 입구: 양쪽 첫 노드 전에는 못 엶'); E.atBuy(run, 'sb_ember'); ok(/양쪽 갈래/.test(R('atWhy')(run, 'sb_bloodfire')), '한쪽만으로는 못 엶'); E.atBuy(run, 'sb_bleedcut'); ok(!R('atWhy')(run, 'sb_bloodfire'), '양쪽을 열면 엶');
