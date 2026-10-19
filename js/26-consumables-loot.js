@@ -280,7 +280,7 @@ function rollDrops0(b, e) {
   if (rr() < Math.min(0.01, L.flask * (b.lootMul || 1) * (b.lootX || 1))) b.drops.push({ flask: ['life', 'mana', 'stam'][Math.floor(rr() * 3)] }); // 플라스크 한 칸: 1% 이하
   for (let k = 0; k < L.rolls; k++) {
     if (rr() >= Math.min(1, L.p * (b.lootMul || 1) * (b.lootX || 1))) continue;
-    const x = rr() * (L.gold + L.cons);
+    const x = rr() * (L.gold + L.cons * (chData(chN).consDrop || 1)); // 0.8.0 6단계 마감: 챕터별 소모품 몫(consDrop, 빠진 몫은 골드)
     if (x < L.gold) b.drops.push({ gold: LOOT.goldPer(e.lv || 1) });
     else { const n = L.n[0] + Math.floor(rr() * (L.n[1] - L.n[0] + 1)); for (let i = 0; i < n; i++) { const id = pick(); b.drops.push({ cons: id, g: CONS[id].vm != null && rr() < L.hi + (b.ctx.lower ? LOOT.lowerHi : 0) ? 'm' : 'n' }); } }
   }
