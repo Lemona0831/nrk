@@ -352,7 +352,7 @@ module.exports = function (api) {
     ['전투 시작 시 1', 'BUILDS.hunter.openHaste===1'],
     ['2회 연속 행동', 'roundOrder.toString().includes("pDouble")'],
     ['다른 갈래 스킬을 이어 쓰면 피해 +30%', 'HUNT.link===0.3'],
-    ['기본 공격 50% · 집중 주문 75%', 'BUILDS.elementalist.wpnMul===0.5 && HEAVY_V2===1.5'],
+    ['기본 공격 50% · 집중 주문 85%', 'BUILDS.elementalist.wpnMul===0.5 && HEAVY_V2===1.7'],
     ['내 차례당 1회', 'BUILDS.spellblade.altWard===4 && BLOOD.perTurn===1'],
     ['▶ 공격은 기 1을 써서 피해 +25%', 'MONK.kiCtr===1 && outDmg.toString().includes("d *= 1.25")'],
     ['최대 5까지 계산', 'CONF.cap===5'],

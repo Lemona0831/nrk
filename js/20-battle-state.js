@@ -19,7 +19,7 @@ function basicBase(p) { return wpnDmg(p) * (isCaster(p) && !isV2(p) ? 0.9 : 1) *
 // 기본·강공격은 한 능력치만 사용한다. 기존 힘 투자도 보존한다.
 function weaponGrowthStat(p) { return p.build === 'assassin' || p.build === 'hunter' ? 'dex' : p.build === 'elementalist' || p.build === 'bloodmage' ? 'int' : 'str'; }
 function weaponStatBonus(p) { return .01 * Math.max(stat(p, 'str'), stat(p, weaponGrowthStat(p))); }
-let HEAVY_V2 = 1.5, HEAVY_COST = 40; // 0.6a.2 직업의 강공격 배율 · 스태미나 (도움말·설명 창도 이 값을 쓴다). 0.8.0 M4(D11): 1.7 · 35를 측정 스위치 HEAVY_17로 A/B한 뒤 기본값을 정한다
+let HEAVY_V2 = 1.7, HEAVY_COST = 35; // 0.6a.2 직업의 강공격 배율 · 스태미나 (도움말·설명 창도 이 값을 쓴다). 0.8.0 M4(D11): 1.5 · 40 → 1.7 · 35. 같은 시드 A/B(4성향 × 6직업 × 120)에서 유의한 변화 없음
 function heavyBase(p) { return wpnDmg(p) * (isCaster(p) && !isV2(p) ? 1.6 : isV2(p) ? HEAVY_V2 : 1.8) * (p.eq.weapon === 'twin' ? 0.8 : 1); } // 0.6a.2: 강공격 180% → 150% (10월 3일: 공통 행동이 갈래 스킬보다 세서 갈래 성격이 묻혔다)
 function flaskHealFrac(p) { return (gearOf(p).flask + (hasBt(p, 'mercy') ? 0.1 : 0) + fxVal(p, 'heal', 0, (a, v) => a + v)) * fxVal(p, 'healMul', 1, (a, v) => a * v) * (p.eq.flask === 'chalice' ? 0.9 : p.eq.flask === 'boilflask' ? 0.75 : p.eq.flask === 'bloodoil' ? 0.8 : 1); }
 function calcMpMax(p) { if (isV2(p)) return 0; return BUILDS[p.build].mp + gearOf(p).mp + fxStat(p, 'mp') + ((p.lv || 1) - 1) * ((LV_GAIN[p.build] || {}).mp || 0) + stat(p, 'int') - (p.eq.amulet === 'sigil' ? 15 : 0) - (p.eq.gloves === 'vpouch' ? 10 : 0); }

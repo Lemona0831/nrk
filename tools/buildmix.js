@@ -13,6 +13,7 @@ process.env.DGDIR = process.env.DGDIR || '.';
 const fs = require('fs');
 const D = require('./dgqa.js'); const G0 = D.G0, r = D.run_; const SK2 = r('SK2');
 const argv = process.argv.slice(2); const pkI = argv.indexOf('--pk'); const PKF = pkI >= 0 ? argv[pkI + 1].split(',') : null;
+const KSV1 = argv.includes('--ks-v1'); // 0.8.0 M4 전 배치(KS_V1)로 큰 각인 이름을 읽는다(M4 전 게임의 결과용)
 const files = argv.filter((a, i) => !a.startsWith('--') && !(pkI >= 0 && i === pkI + 1));
 const load = f => { const t = fs.readFileSync(f, 'utf8').trim(); return t.startsWith('[') ? JSON.parse(t) : t.split('\n').filter(Boolean).map(l => JSON.parse(l)); };
 let rows = files.flatMap(load); if (PKF) rows = rows.filter(x => PKF.includes(x.pk));
@@ -25,7 +26,7 @@ const out = [`판 ${rows.length}개 · 성향 ${[...new Set(rows.map(x => x.pk))
 const T = {}; for (const c of CL) T[c] = r(`ptBuild('${c}')`).nodes;
 // BD-1
 out.push('\n## BD-1 큰 각인 집중도\n\n| 직업 | K5 얻은 판 | K5 최빈(몫) | K9 얻은 판 | K9 최빈(몫) |\n| --- | --- | --- | --- | --- |');
-for (const c of CL) { const X = rows.filter(x => x.build === c); const tally = ring => { const m = {}; let n = 0; for (const x of X) { const ks = (x.ks || []).filter(id => id.endsWith('K' + ring)); if (!ks.length) continue; n++; for (const id of ks) { const k = (T[c][id] || {}).n || id; m[k] = (m[k] || 0) + 1; } } const top = Object.entries(m).sort((a, b) => b[1] - a[1])[0]; return [n, top ? `${top[0]} ${pc(top[1], n)}%` : '-']; };
+for (const c of CL) { const X = rows.filter(x => x.build === c); const tally = ring => { const m = {}; let n = 0; for (const x of X) { const ks = (x.ks || []).filter(id => id.endsWith('K' + ring)); if (!ks.length) continue; n++; for (const id of ks) { const k = KSV1 ? ((r('KS_LIST')[(r('KS_V1')[c] || {})[id]] || {}).n || id) : ((T[c][id] || {}).n || id); m[k] = (m[k] || 0) + 1; } } const top = Object.entries(m).sort((a, b) => b[1] - a[1])[0]; return [n, top ? `${top[0]} ${pc(top[1], n)}%` : '-']; };
   const [n5, t5] = tally(5), [n9, t9] = tally(9); out.push(`| ${c} | ${n5} | ${t5} | ${n9} | ${t9} |`); }
 // BD-2
 const DIRS = r('PT.dirs'); const DN = r('PT.dir');
