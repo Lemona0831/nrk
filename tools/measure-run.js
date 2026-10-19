@@ -8,12 +8,15 @@
    - 끝에 tools/measure-validate.js로 점검하고, 문제가 있으면 끝 코드 1
    사용: node tools/measure-run.js --out <x.jsonl> --cls a,b --pk careful,expert --seeds "5000+13*i,i<10" [--chapters 1] [--from 1] [--variant base] [--pol 정책.js] [--jobs 1] [--detail 1]
      --pol: module.exports = (D, G0) => ({ chooseAction, battleStart, … }) (dgqa OPT.policy 훅). 이름이 꼬리표 pol에 남는다
-     FOCUS · CFG · DG_JUMP 같은 환경 변수는 그대로 넘어가고 꼬리표 env에 남는다 */
+     FOCUS · CFG · DG_JUMP 같은 환경 변수는 그대로 넘어가고 꼬리표 env에 남는다
+   M3 측정 프로토콜(10월 19일): 시드를 안 주면 120판(5000+13*i). 끝에 성향 · 지표마다 Wilson 95%를 낸다.
+     --ab <기준.jsonl>: 같은 (성향 · 직업 · 시드) 짝으로 비교하고, 성향 둘 이상이 같은 방향으로 유의할 때만 "게임 원인"이라 적는다(tools/measure-stats.js).
+     manifest에 data/*.js 파일 해시와 게임 커밋(git)을 남긴다. 스위치 레지스트리는 tools/variants.json */
 const fs = require('fs'), path = require('path'), os = require('os'), cp = require('child_process');
 const MM = require('./measure-meta.js');
 const ROOT = path.join(__dirname, '..');
 const argv = process.argv.slice(2); const arg = (k, d) => { const i = argv.indexOf(k); return i < 0 ? d : argv[i + 1]; }; const flag = k => argv.includes(k);
-const O = { out: arg('--out'), cls: (arg('--cls', '') || '').split(',').filter(Boolean), pk: (arg('--pk', 'careful') || '').split(',').filter(Boolean), seeds: MM.seedList(arg('--seeds', '5000+13*i,i<10')),
+const O = { out: arg('--out'), cls: (arg('--cls', '') || '').split(',').filter(Boolean), pk: (arg('--pk', 'careful') || '').split(',').filter(Boolean), seeds: MM.seedList(arg('--seeds', '5000+13*i,i<120')), ab: arg('--ab', null),
   chapters: +arg('--chapters', 1), from: +arg('--from', process.env.DG_FROM || 1), variant: arg('--variant', process.env.DG_VARIANT || 'base'), pol: arg('--pol', null), jobs: +arg('--jobs', 1), detail: arg('--detail', '1') !== '0' };
 if (O.pol) O.pol = path.resolve(O.pol);
 process.env.DG_VARIANT = O.variant; if (O.from > 1) process.env.DG_FROM = String(O.from);
@@ -35,14 +38,17 @@ if (flag('--child')) { runJobs(JSON.parse(fs.readFileSync(arg('--jobfile'), 'utf
 if (!O.out || !O.cls.length) { console.error('사용: node tools/measure-run.js --out <x.jsonl> --cls a,b --pk careful,expert --seeds "5000+13*i,i<10" [--chapters 1] [--from 1] [--variant base] [--pol 정책.js] [--jobs 1]'); process.exit(2); }
 const jobs = []; for (const pk of O.pk) for (const build of O.cls) for (const seed of O.seeds) jobs.push({ pk, build, seed });
 const REV = MM.revision(ROOT);
-const manifest = { tool: 'measure-run', rev: REV.id, git: REV.git, variant: O.variant, from: O.from, chapters: O.chapters, env: REV.env, pol: O.pol ? path.basename(O.pol) : null, groups: [] };
+const dataHash = {}; for (const f of fs.readdirSync(path.join(ROOT, 'data')).filter(f => f.endsWith('.js')).sort()) dataHash[f] = MM.h12(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8'));
+const manifest = { tool: 'measure-run', rev: REV.id, git: REV.git, gameCommit: REV.git ? REV.git.rev + (REV.git.dirty ? '+' : '') : null, data: dataHash, variant: O.variant, from: O.from, chapters: O.chapters, env: REV.env, pol: O.pol ? path.basename(O.pol) : null, groups: [] };
 { const g = {}; for (const j of jobs) { const k = j.pk + '|' + j.build; (g[k] = g[k] || { pk: j.pk, build: j.build, seeds: [] }).seeds.push(j.seed); } manifest.groups = Object.values(g); }
 fs.mkdirSync(path.dirname(path.resolve(O.out)), { recursive: true });
 fs.writeFileSync(O.out + '.manifest.json', JSON.stringify(manifest));
 const t0 = Date.now();
 const finish = () => {
   const V = require('./measure-validate.js'); const rep = V.validate([{ file: O.out }]);
-  console.log(`판 ${jobs.length} · ${((Date.now() - t0) / 1000).toFixed(0)}초 → ${O.out}`); console.log(V.summaryText(rep)); process.exit(rep.problems ? 1 : 0);
+  console.log(`판 ${jobs.length} · ${((Date.now() - t0) / 1000).toFixed(0)}초 → ${O.out}`); console.log(V.summaryText(rep));
+  try { const ST = require('./measure-stats.js'); const rows = ST.load(O.out); console.log('\n# Wilson 95%\n' + ST.table(rows)); if (O.ab) console.log('\n# 같은 시드 A/B (A = ' + O.ab + ')\n' + ST.ab(ST.load(O.ab), rows)); } catch (e) { console.log('통계 출력 실패: ' + e.message); }
+  process.exit(rep.problems ? 1 : 0);
 };
 if (O.jobs <= 1) { runJobs(jobs, O.out); finish(); }
 else {

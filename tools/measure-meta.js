@@ -21,10 +21,17 @@ function gitRev(dir) {
   } catch (e) { return null; }
 }
 /* 한 번만 계산한다(도구를 불러올 때) */
+/* 스위치 레지스트리(tools/variants.json, M3): 도구가 읽는 동작 환경 변수가 등록되지 않았거나, 켜진 환경 변수가 등록되지 않았으면 stderr에 경고(결과 파일은 그대로) */
+function registryWarn(keys) {
+  let reg; try { reg = new Set(JSON.parse(fs.readFileSync(path.join(__dirname, 'variants.json'), 'utf8')).switches.map(s => s.name)); } catch (e) { console.warn('[variants] tools/variants.json을 읽지 못함: ' + e.message); return; }
+  const miss = keys.filter(k => !reg.has(k)); if (miss.length) console.warn('[variants] 등록되지 않은 스위치를 도구가 읽음: ' + miss.join(', '));
+  const on = keys.filter(k => process.env[k] != null && process.env[k] !== '' && !reg.has(k)); if (on.length) console.warn('[variants] 등록되지 않은 스위치가 켜져 있음: ' + on.join(', '));
+}
 function revision(gameDir) {
   const PS = require('./pagesrc.js');
   const game = h12(PS.pageData(gameDir) + '\n' + PS.pageScript(gameDir));
   const tool = h12(TOOL_FILES.map(f => { try { return f + '\n' + fs.readFileSync(path.join(__dirname, f), 'utf8'); } catch (e) { return f; } }).join('\n'));
+  registryWarn(behaviorEnvKeys());
   const env = {}; for (const k of behaviorEnvKeys()) if (process.env[k] != null && process.env[k] !== '') env[k] = process.env[k];
   return { id: game + '.' + tool, game, tool, git: gitRev(gameDir), env };
 }

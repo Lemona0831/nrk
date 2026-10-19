@@ -155,6 +155,7 @@ function spendPassive(pk, r) {
 }
 const KS_PREF = ['ks_deep', 'ks_wall', 'ks_sb_blood', 'ks_cycle', 'ks_crystal', 'ks_el_cut', 'ks_breaker', 'ks_first', 'ks_sb_beat', 'ks_glass', 'ks_flow', 'ks_hammer', 'ks_sb_over', 'ks_brim', 'ks_dry', 'ks_heavy', 'ks_double', 'ks_bare']; // 10월 18일 0.8.0 5단계(원거리 초안 10절 결정 5): 끊어진 영창(원소술사 제어 K5)을 제어 큰 각인 무너뜨리는 자 바로 앞에 둔다(전에는 목록에 없어 0/80판)
 function ksChoice(pk, r, run) {
+  if (OPT.policy?.ksChoice) return OPT.policy.ksChoice(run, r); // M3: 정책 모듈 성향의 큰 각인
   const offer = run.ksOffer || []; if (pk === 'novice') return offer[Math.floor(r() * offer.length)];
   const T = G0.ptBuild(run.build); const sc = id => { const i = KS_PREF.indexOf(T.nodes[id].fx); return (i < 0 ? 99 : i) + r() * 0.5; };
   return offer.slice().sort((x, y) => sc(x) - sc(y))[0];
@@ -260,6 +261,7 @@ function fightRec(R, b, run, hpIn, acts) {
   const used = countBy(b.rec.filter(x => x.k === 'act').map(x => x.a));
   const rec = { f: run.room, ch: run.ch || 1, t: R.type, sq: R.squad, foe: R.foe, mods: (R.mods || []).join('+') || undefined, path: R.path, res: b.over, hpIn: Math.round(hpIn * 100), hpOut: Math.round(run.p.hp / run.p.hpMax * 100), net: Math.round(hpIn * 100) - Math.round(run.p.hp / run.p.hpMax * 100), /* 0.8.0 6단계 승인 정정: 순손실 = hpIn − hpOut(최대 생명력 %p)이 주 지표, 총피해(tk)는 보조 */ rounds: b.round || 0, acts, src, used, brk: b.rec.filter(x => x.k === 'break').length, cut: b.rec.filter(x => x.k === 'break' && x.cut).length, blk: b.rec.filter(x => x.k === 'block').length, parried: hits.filter(h => h.parried).length, guarded: hits.filter(h => h.guard).length, cons: b.rec.filter(x => x.k === 'cons').length, big: b.rec.filter(x => x.k === 'bigfire').length, bigNoTurn: b.rec.filter(x => x.k === 'bigfire' && x.gap < 1).map(x => x.role + ':' + x.i + ':' + x.gap) };
   if (b.mkTr) rec.mkTr = b.mkTr;
+  if (BUILDLOG && b.actDmg) rec.actDmg = b.actDmg;
   { const y = G0.ysSum ? G0.ysSum(b) : null; if (y) rec.ys = { sp: y.sp, use: y.use, w: y.w, g: Object.values(y.ch || {}).reduce((a, v) => a + v, 0) }; } // 0.8.0 6단계 유산 리듬: 비용별 횟수 · 쓴 합 · 상한에 막힌 양(넘침) · 든 양
   rec.tk = b.damageStats ? Math.round(100 * b.damageStats.taken / b.p.hpMax) : null; // 0.8.0 6단계: 총피해(회복 전 받은 피해 합, 최대 생명력 %) 보조 지표
   if (b.p.build === 'warden') { const gw = b.log.map(x => /방패를 세운다\. 보호막 \+(\d+)/.exec(x.m || '')).filter(Boolean).map(m => +m[1]); const S = b.wdS || []; const dir = hits.filter(h => !h.dot);
@@ -311,6 +313,11 @@ function ch2Post(b, P, r, a, t) {
   return tg ? [pick.id, tg.id] : [a, t];
 }
 /* 지금 방에 들어가 성향대로 싸운다 */
+/* 무시 시험(M3, 10월 19일): DG_IGNORE=<기믹 키>[,…]. 키 = 강적 id(foe) 또는 보스 id. 행동을 고르는 동안만 그 적의 예고를 평범한 공격으로 보이게 하고,
+   고른 뒤 그대로 되돌린다(게임 상태는 바뀌지 않는다). 그 기믹을 모르는 사람이 얼마나 지는지 잰다 */
+const IGN = (process.env.DG_IGNORE || '').split(',').filter(Boolean);
+const BUILDLOG = !!process.env.DG_BUILDLOG; // M3: 빌드 표(tools/buildmix.js)용 기록을 더한다. 끄면 결과 파일은 그대로
+function maskIgn(b) { const saved = []; for (const e of b.en) { if (!e.alive || !(IGN.includes(e.foe) || IGN.includes(e.boss) || IGN.includes(e.bossKind))) continue; saved.push([e, e.intent]); if (e.intent && e.intent.k !== 'attack') e.intent = Object.assign({}, e.intent, { k: 'attack' }); } return () => { for (const [e, it] of saved) e.intent = it; }; }
 function fightCur(pk, r, mem, out) {
   const P = PERSONAS[pk]; const G = G0.__G;
   G0.enterRoom(); const b = G.b; b.stepMode = false; let n = 0; let stall = 0, lastHp = Infinity; let stuckN = 0;
@@ -320,6 +327,7 @@ function fightCur(pk, r, mem, out) {
   if (process.env.PN_OFF) { const off = process.env.PN_OFF.split(','); b.p.pn = (b.p.pn || []).filter(k => !off.includes(k)); } // 0.8.0 5단계 측정 변형: 이 전투에서 끌 노드 효과(예: PN_OFF=n_wd_held,n_wd_will). 찍기 · 길은 그대로
   while (!b.over && n++ < 300) {
     useCons(pk, r, b, G.run); if (b.over) break;
+    const unIgn = IGN.length ? maskIgn(b) : null;
     let a, t;
     if (OPT.policy?.chooseAction) {
       [a, t] = OPT.policy.chooseAction(b, G.run, n);
@@ -339,12 +347,15 @@ function fightCur(pk, r, mem, out) {
     }
     if (stuckN >= 2 && !process.env.NO_STUCK_FIX) { const Lk = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); const gd = Lk.find(x => x.id === 'guard') || Lk[0]; if (gd) { a = gd.id; t = null; } } /* 10월 8일: 같은 행동을 해도 차례가 흐르지 않으면(땅속의 적만 남고 단일 대상 행동뿐일 때) 사람처럼 방어로 차례를 넘긴다 */
     }
+    if (unIgn) unIgn();
     if (OPT.onTurn) OPT.onTurn(G, n);
     if (process.env.MK_TRACE && b.p.build === 'monk') (b.mkTr = b.mkTr || []).push([a, G0.st(b.p, 'empower'), b.p.ys, b.turnIdx]); // 0.8.0 5단계: 수도승 행동 · 기 · 유산 흐름(행동 직전)
     if (b.p.build === 'warden' && b.wdT !== b.turnIdx && G0.wardMax) { b.wdT = b.turnIdx; (b.wdS = b.wdS || []).push(Math.round(100 * (b.p.ward || 0) / Math.max(1, G0.wardMax(b.p)))); if (b.wdGd) { b.wdGd = 0; (b.wdSG = b.wdSG || []).push([Math.round(b.p.ward || 0), Math.round(100 * (b.p.ward || 0) / Math.max(1, G0.wardMax(b.p)))]); } } // 보조 지표(10월 17일): 방어한 다음 내 차례의 보호막(값 · 상한 %)
     if (b.p.build === 'warden' && a === 'guard') b.wdGd = 1; // 0.8.0 5단계: 내 차례 첫 행동 때 보호막 / 상한(%)
     const progKey = b.turnIdx + ':' + (b.round || 0) + ':' + b.log.length;
+    const dl0 = BUILDLOG && b.damageStats ? b.damageStats.dealt : 0;
     try { G0.playerAct(b, a, t); } catch (e) { out.bugs.push('예외 ' + e.message + ' @' + a); failOf(out, 'exception', { msg: String(e.message).slice(0, 200), act: a, room: G.run.room, ch: G.run.ch || 1 }); b.over = 'lose'; }
+    if (BUILDLOG && b.damageStats) { const k = a; (b.actDmg = b.actDmg || {})[k] = Math.round(((b.actDmg[k] || 0) + b.damageStats.dealt - dl0) * 10) / 10; } // M3 빌드 표: 행동별 준 피해(DG_BUILDLOG=1일 때만 기록)
     stuckN = progKey === b.turnIdx + ':' + (b.round || 0) + ':' + b.log.length ? stuckN + 1 : 0;
     out.acts++;
     if (OPT.policy?.afterAction) OPT.policy.afterAction(b, G.run, a, t);
@@ -371,7 +382,15 @@ function seedWorld(seed) {
   const h = (Math.imul((seed | 0) ^ 0x9e3779b9, 2654435761) >>> 0) % 100000; G0.__t0 = 1767225600000 + h; // 1767225600000은 100000의 배수라 run.seed = h + (startRun 전까지 부른 수)
   run_('if (!globalThis.__realNow) globalThis.__realNow = Date.now; { let t = __t0; Date.now = () => t++; }');
 }
+/* 정책 모듈 성향 (M3, 10월 19일): PERSONAS에 없는 이름. 판단은 모듈(tools/persona/<이름>.js)이 하고, 모듈이 덮지 않는 판단(문 · 상점 · 이벤트)은 신중으로 돈다.
+   기록의 성향 이름만 그 이름이다. 기존 성향의 결과는 그대로 */
+const PERSONA_MOD = { basic: './persona/basic.js' };
 function playChar(pk, build, seed) {
+  if (!PERSONA_MOD[pk]) return playChar0(pk, build, seed);
+  const prev = OPT.policy, prevId = OPT.polId; OPT.policy = require(PERSONA_MOD[pk])(module.exports, G0); OPT.polId = 'persona:' + pk;
+  try { const o = playChar0('careful', build, seed); o.pk = pk; if (o.meta) o.meta.pk = pk; return o; } finally { OPT.policy = prev; OPT.polId = prevId; }
+}
+function playChar0(pk, build, seed) {
   const P = PERSONAS[pk]; const r = rng(seed);
   seedWorld(seed);
   const G = G0.__G;
