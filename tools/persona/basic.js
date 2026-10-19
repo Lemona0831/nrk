@@ -26,7 +26,8 @@ module.exports = (D, G0) => {
   function spendTree(run, r) {
     spendPassive(run); if (!run.atree) return; const A = G0.atBuild(run.build); run0 = run; if (A.sec) D.sectorPick('basic', r || Math.random, run, A); // M5-0: 목표 부채꼴(평타는 유산의 불 CA)
     for (let n = 0; n < 30 && run.atree.pts > 0; n++) {
-      const can = Object.keys(A.nodes).filter(id => !G0.atWhy(run, id)); if (!can.length) break;
+      const cutSide = id => { const n = A.nodes[id]; if (!n || !n.excl) return true; return !(G0.SK2[id].kind !== 'cut' && G0.SK2[n.excl].kind === 'cut'); }; // M5-0 보정 5: 1고리 갈림에서는 베기 쪽(마갑참 · 혈흔 베기 · 염화 베기)
+      const can = Object.keys(A.nodes).filter(id => !G0.atWhy(run, id) && cutSide(id)); if (!can.length) break;
       const eqd = run.skills || [];
       const ss = id => A.sec ? D.secScore(run, A, id) : 0; can.sort((x, y) => ss(y) - ss(x));
       const pick = can.find(id => ss(id) > 0 && (A.nodes[id].kind !== 'skill' || want(A, id) || A.nodes[id].requires)) || can.find(id => want(A, id) && linked(G0.SK2[id])) || can.find(id => want(A, id)) || can.find(id => A.nodes[id].kind === 'upgrade' && eqd.includes(A.nodes[id].on)) || can.find(id => A.nodes[id].kind === 'upgrade');
@@ -42,7 +43,8 @@ module.exports = (D, G0) => {
     const L = G0.actionList(b); const act = L.find(x => x.id === a); if (!act) return null;
     const atk = a === 'basic' || a === 'heavy' || !!(act.v2 && act.s && act.s.fx.some(f => f.k === 'dmg') && !act.s.fx.some(f => DEF.includes(f.k)) && !act.self);
     if (!atk) return null;
-    const resp = b.ysRespLast != null && b.ysRespLast >= (b.ysR || 0) - 1; if (resp && act.v2 && act.s) return null;
+    const burnFast = act.v2 && act.s && act.s.time === 'fast' && act.s.fx.some(f => f.k === 'wardDmg' && f.spend > 0); // M5-0 보정 5: 보호막을 태우는 빠른 주문(마갑탄)은 먼저 누르지 않는다
+    const resp = b.ysRespLast != null && b.ysRespLast >= (b.ysR || 0) - 1; if (resp && act.v2 && act.s && !burnFast) return null;
     const tgt = x => { const ok = G0.alive(b).filter(e => G0.canTarget(b, e, x)); const keep = ok.find(e => e.id === t); return (keep || ok.sort((p, q) => p.hp - q.hp)[0] || {}).id; };
     const hv = L.find(x => x.id === 'heavy' && x.ok); if (hv && tgt(hv) != null) return ['heavy', tgt(hv)];
     const bs = L.find(x => x.id === 'basic' && x.ok); if (bs && tgt(bs) != null) return ['basic', tgt(bs)];

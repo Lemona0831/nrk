@@ -420,7 +420,8 @@ function playChar0(pk, build, seed) {
   if (process.env.MODE === 'hard') { G0.__G.data.hardOpen = 1; G0.__G.cre = { mode: 'hard' }; } /* 10월 8일: MODE=hard이면 가혹으로 만든다 */
   if (MARKCH) G0.__G.cre = Object.assign(G0.__G.cre || {}, { mark: { ch: MARKCH, ids: MARK_IDS, mode: process.env.MODE === 'hard' ? 'hard' : 'normal' } }); /* 표식 도전: 화면과 같은 startRun 안의 markSetup이 레벨 · 꾸러미 · 표식을 정한다 */
   G0.startRun(build);
-  const run = G.run; if (OPT.persona) run.persona = OPT.persona; G.sheet = null; G.creating = false; G.cre = null; G.scr = 'run';
+  const run = G.run; if (OPT.persona) run.persona = OPT.persona;
+  if (run.offer) { run.seed = (seed * 7919 + 17) % 100000; delete run.offer; run_('atOfferInit')(run); } /* M5-0 보정 5 P4: 제시는 판 시드로(같은 시드 = 같은 제시) */ G.sheet = null; G.creating = false; G.cre = null; G.scr = 'run';
   delete run.alloc; // 10월 16일 0.8.0 2단계: 만들기 배분 흐름 대신 정책으로 바로 찍는다(능력치 = 시작 노드 + 패시브 노드)
   spendPassive(pk, r); while (run.ksPending > 0) { G0.ksEnsureOffer(run); if (!run.ksOffer) break; G0.ksTake(run, ksChoice(pk, r, run)); spendPassive(pk, r); } spendTree(pk, r); G0.treeSync(run); run.p.hp = run.p.hpMax; run.p.mp = run.p.mpMax; run.p.st = run.p.stMax;
   if (OPT.policy?.start) OPT.policy.start(run, r);
@@ -611,6 +612,8 @@ function secScore(run, A, id) {
   if (nd.sec === base) return nd.kind === 'upgrade' ? 8 : nd.ys === 4 ? 10.5 : nd.ring === 3 ? 12.5 : 14.5; // 차이를 성향 난수(신중 · 숙련 1)보다 크게
   return adj.includes(nd.sec) ? 5 : 0;
 }
+/* M5-0 보정 5 P3: 결합 칸은 꼬리표가 맞아 찍을 수 있게 되면 목표 부채꼴 다음으로(이웃 갈래 5보다 위) */
+const comboScore = (A, id) => A.nodes[id] && A.nodes[id].reqTags ? 9 : null;
 /* M5-0 보정 5: 변형 자리를 열 때 고를 변형(v2Pick). 평타 성향은 기본 공격 연동 > 싣기 꼬리표 먼저, 다른 성향은 제시된 것 가운데 판 난수로 */
 function varPick(run, A, slot, pk, r) { const off = run_('atVarsOffered')(run, slot); if (!off.length) return undefined; const V = run_('atBuild')(run.build).vars;
   if ((run.persona || pk) === 'basic') { for (const tg of ['기본공격연동', '싣기']) { const c = off.find(v => (V[v].tags || []).includes(tg)); if (c) return c; } }
@@ -625,7 +628,7 @@ function spendTreeUp(pk, r, run, A) {
     const eqd = G0.v2Equip(run);
     { const fz = can.find(id => force.includes(id) && eqd.includes(A.nodes[id].on)); if (fz) { if (atBuyV(run, A, fz, pk, r)) break; sbEquip(run, A); continue; } }
     const cv = {}; const convOk = id => (id in cv ? cv[id] : (cv[id] = !!(eqd.includes(A.nodes[id].on) && convGain(run, A.nodes[id])))); // 결정적 판단(난수를 쓰지 않는다)
-    const sc = id => { const nd = A.nodes[id]; const rr = r() * (pk === 'novice' ? 20 : 1); if (convJudge && isConv(nd)) return convOk(id) ? 0.3 + nd.ring * 0.1 + rr * 0.1 : -1; let v = (A.sec ? (focus || process.env.DG_SECTOR ? secScore(run, A, id) : 0) : (focus && nd.br === run.focus ? 10 : 0)) + nd.ring * 0.5; v += nd.kind === 'skill' ? ((run.skills || []).length < G0.EQUIP_SLOTS2 ? 4 : 1) : (eqd.includes(nd.on) ? 5 : 0.5); if (A.sec && run.sector && (focus || process.env.DG_SECTOR) && /^[A-C]{2}$/.test(run.sector) && nd.sec === run.sector) v = 100 + secScore(run, A, id) + nd.ring * 0.5; /* M5-0 보정 4: 경계 목표의 경계 칸은 순서 점수만(입구 → 둘째 → 3고리 둘 → 승부수 → 강화) */ return v + rr; }; // 난수는 예전과 같이 부를 때마다 한 번
+    const sc = id => { const nd = A.nodes[id]; const rr = r() * (pk === 'novice' ? 20 : 1); if (convJudge && isConv(nd)) return convOk(id) ? 0.3 + nd.ring * 0.1 + rr * 0.1 : -1; let v = comboScore(A, id) != null ? comboScore(A, id) : (A.sec ? (focus || process.env.DG_SECTOR ? secScore(run, A, id) : 0) : (focus && nd.br === run.focus ? 10 : 0)) + nd.ring * 0.5; v += nd.kind === 'skill' ? ((run.skills || []).length < G0.EQUIP_SLOTS2 ? 4 : 1) : (eqd.includes(nd.on) ? 5 : 0.5); if (A.sec && run.sector && (focus || process.env.DG_SECTOR) && /^[A-C]{2}$/.test(run.sector) && nd.sec === run.sector) v = 100 + secScore(run, A, id) + nd.ring * 0.5; /* M5-0 보정 4: 경계 목표의 경계 칸은 순서 점수만(입구 → 둘째 → 3고리 둘 → 승부수 → 강화) */ return v + rr; }; // 난수는 예전과 같이 부를 때마다 한 번
     const id = can.sort((a, b) => sc(b) - sc(a))[0]; if (convJudge && isConv(A.nodes[id]) && !convOk(id)) break; if (atBuyV(run, A, id, pk, r)) break;
     sbEquip(run, A);
   }
@@ -642,7 +645,7 @@ function sbEquip(run, A) {
   const sc = sbEquipScore(run, A);
   let eq = own.slice().sort((a, b) => sc(b) - sc(a)).slice(0, G0.EQUIP_SLOTS2);
   if (A.sec && run.sector) { const tg = run.sector.replace('_HALF', ''), half = /_HALF$/.test(run.sector), adj = secAdj(run.sector), bound = tg.length === 2; // M5-0: 목표 빌드를 따르는 사람 — 경계 목표면 그 경계 스킬을 먼저. M5-0 보정(10월 20일): 리듬 칸(비용 1)을 반드시 끼우던 규칙은 뺐다(약한 칸이 네 칸 중 하나를 차지해 마갑 신중 1챕터 71 → 30%). 리듬 칸은 점수대로만 끼운다
-    const bd = bound && !half ? own.filter(id => A.nodes[id].sec === tg).sort((a, b) => sc(b) - sc(a)) : []; void adj;
+    const bd = bound && !half ? own.filter(id => A.nodes[id].sec === tg).sort((a, b) => ((G0.SK2[b].tgt !== 'self') - (G0.SK2[a].tgt !== 'self')) || sc(b) - sc(a)) : []; /* 보정 5: 경계 공격 칸을 장착 우선 */ void adj;
     const must = bd.slice(0, G0.EQUIP_SLOTS2 - 1); /* M5-0 보정 4: 경계 스킬이 다섯이 되어 셋까지만 먼저(한 칸은 점수대로, 죄인의 피 다섯 칸은 모두 자기 강화) */ eq = must.concat(eq.filter(id => !must.includes(id)).concat(own.filter(id => !must.includes(id) && !eq.includes(id)))).slice(0, G0.EQUIP_SLOTS2); }
   if (run.build === 'spellblade') for (const k of ['spell', 'cut']) if (eq.length >= G0.EQUIP_SLOTS2 && !eq.some(id => G0.SK2[id].kind === k)) { const c = own.filter(id => G0.SK2[id].kind === k && !eq.includes(id)).sort((a, b) => sc(b) - sc(a))[0]; if (c) { const lo = eq.filter(id => G0.SK2[id].kind !== k).sort((a, b) => sc(a) - sc(b))[0]; eq[eq.indexOf(lo)] = c; } }
   run.skills = eq; G0.atSync(run);
