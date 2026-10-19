@@ -8,7 +8,7 @@ function menuItems() {
   if (inRun) it.push(['equip', '🎒', '장비']);
   if (inRun || (G.scr === 'dead' && G.run && G.run.p)) it.push(['statview', '📊', '능력치']);
   if (inRun) it.push(['awkview', '✨', '큰 각인 ' + (G.run.ptree ? G.run.ptree.ks.length : 0)]);
-  if (runLive() && !G.creating && G.run.ptree && G.scr !== 'tree' && G.scr !== 'tut') { const tp = G.run.ptree.pts + G.run.atree.pts; it.push(['tree', '🌳', '트리' + (tp ? ' <span class="newdot"><span class="sr">남은 포인트 </span>' + tp + '</span>' : '')]); } // 10월 16일 0.8.0 2단계: 패시브 · 액티브 두 트리
+  if (runLive() && !G.creating && G.run.ptree && G.scr !== 'tree' && G.scr !== 'tut') { const tp = G.run.ptree.pts + G.run.atree.pts; it.push(['tree', '🌳', '트리' + (tp ? ' <span class="newdot"><span class="sr">남은 포인트 </span>' + tp + '</span>' : '') + (G.run.ringNew ? ' <span class="newtag">새 고리</span>' : '')]); } // M5-0 보정 5: 야영지에서 새 고리가 열리면 강조 // 10월 16일 0.8.0 2단계: 패시브 · 액티브 두 트리
   if (!inRun && !G.creating && G.scr !== 'tut' && G.scr !== 'tutoffer') it.push(['tut', '🎯', '수련장' + (G.data.tutDone ? ' ✓' : '')]);
   it.push(['codex', '📖', '보스 도감'], ['itembook', '📚', '아이템 도감'], ['rank', '🏆', '랭킹'], ['records', '📜', '기록'], ['changes', '📰', '업데이트' + (G.data.seenVer !== CHANGE_VER ? ' <span class="newdot"><span aria-hidden="true">새</span><span class="sr">새 소식</span></span>' : '')], ['help', '❔', '도움말'], ['settings', '⚙️', '설정']);
   if (G.site && G.conn === 'ok' && G.acct) it.push(G.acct.anon ? ['login', '🔑', '구글 로그인', 'google'] : ['logout', '🚪', '로그아웃']);

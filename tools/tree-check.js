@@ -65,6 +65,12 @@ for (const c of CLS) {
 
 
 
+// ===== M5-0 보정 5: 고리는 야영지에서 연다 =====
+{ const run = newRun('spellblade'); const ro = D.run_('ringOpen'), rc = D.run_('ringCampOpen');
+  ok(!ro(run, 2) && !ro(run, 3), '새 판: 2 · 3고리 잠김'); run.ch = 1; ok(rc(run) === 2 && ro(run, 2) && !ro(run, 3) && run.ringNew === 1, '1챕터 야영지: 2고리가 열리고 트리 버튼 강조');
+  ok(rc(run) === 0, '같은 야영지를 다시 지나도 그대로'); run.ch = 2; ok(rc(run) === 3 && ro(run, 3), '2챕터 야영지: 3고리');
+  const r2 = newRun('spellblade'); r2.clears = 1; ok(ro(r2, 2) && !ro(r2, 3), '1챕터를 깬 판(옛 판 · 챕터 시작)은 2고리 그대로'); }
+
 // ===== 3) 찍기 규칙 =====
 { const run = newRun('spellblade'); const T = E.ptBuild('spellblade');
   ok(run.tv === 2 && run.ptree.pts === 6 && run.atree.pts === 2 && run.ptree.own.length === 0, '새 캐릭터: 트리 판 2, 패시브 6 · 액티브 2');

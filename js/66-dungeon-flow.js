@@ -127,7 +127,7 @@ function chooseDoor(i) {
 function advanceFloor() {
   const run = G.run;
   for (const k in run.buffs) { run.buffs[k]--; if (run.buffs[k] <= 0) delete run.buffs[k]; }
-  run.room++; run.cur = fixedRoom(run.room); if (run.cur && run.cur.type === 'camp' && (run.ch || 1) >= 3 && isV2(run.p)) ksGrant(run, 'c3'); // 10월 16일 0.8.0 2단계: 세 번째 큰 각인은 3챕터 야영지에 들어설 때
+  run.room++; run.cur = fixedRoom(run.room); if (run.cur && run.cur.type === 'camp' && isV2(run.p)) ringCampOpen(run); /* M5-0 보정 5: 야영지에서 고리가 열린다 */ if (run.cur && run.cur.type === 'camp' && (run.ch || 1) >= 3 && isV2(run.p)) ksGrant(run, 'c3'); // 10월 16일 0.8.0 2단계: 세 번째 큰 각인은 3챕터 야영지에 들어설 때
   if ((run.ch || 1) >= 3 && run.room <= FLOORS) { const bd = floorBand3(run.room), pv = floorBand3(run.room - 1); if (bd !== pv) toast(bd.n + '. ' + bd.line); } // 3챕터: 해의 흐름 띠에 들어설 때 한 줄
   if (!run.cur && PATH_AT.includes(run.room)) { run.cross = crossMake(run); run.doors = null; } // 갈래길: 길을 고른 뒤 문이 나온다. 0.8.0 6단계: 길 셋의 다음 구간을 미리 만든다
   else run.doors = run.cur ? null : segDoorsAt(run, run.room);

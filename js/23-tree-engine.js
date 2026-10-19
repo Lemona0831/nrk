@@ -78,8 +78,11 @@ const ptTotal = run => PT.pts.start + PT.pts.lv * Math.max(0, (run.lv || 1) - 1)
 function ptBonus(run, n, why) { ptInit(run); run.ptree.bonus = (run.ptree.bonus || 0) + n; run.ptree.pts += n; run.ptree.log.push({ bonus: n, why, t: Date.now() }); if (typeof toast === 'function') toast(why + ': 패시브 포인트 +' + n); }
 const atTotal = run => AT_PTS.start + AT_PTS.lv * Math.max(0, (run.lv || 1) - 1);
 const clearsEff = run => (run.clears || 0) + (run.markCh ? run.markCh - 1 : 0); // 표식 도전은 시작 챕터 앞을 깬 것으로 친다(1-5)
-const ringOpen = (run, ring) => clearsEff(run) >= (PT.ring[ring] || 0);
-const RING_WHY = { 2: '2고리는 1챕터 보스를 이기면 열립니다', 3: '3고리는 2챕터 보스를 이기면 열립니다' };
+/* M5-0 보정 5(10월 20일 만든 사람): 2고리는 1챕터 야영지, 3고리는 2챕터 야영지에서 연다(액티브 · 패시브 같은 규칙). run.ringCamp = 야영지에서 연 가장 바깥 고리.
+   표식 도전 · 챕터 시작 꾸러미 판은 지금처럼 시작 챕터 기준(clearsEff), 진행 중인 옛 판은 다음 야영지에서 열린다 */
+const ringOpen = (run, ring) => clearsEff(run) >= (PT.ring[ring] || 0) || (run.ringCamp || 1) >= ring;
+const RING_WHY = { 2: '2고리는 1챕터 야영지에서 열립니다', 3: '3고리는 2챕터 야영지에서 열립니다' };
+function ringCampOpen(run) { if (!run || !run.ptree) return 0; const want = Math.min(3, (run.ch || 1) + 1); const was = [2, 3].filter(k => ringOpen(run, k)).length; run.ringCamp = Math.max(run.ringCamp || 1, want); const now = [2, 3].filter(k => ringOpen(run, k)).length; if (now > was) { run.ringNew = 1; if (typeof toast === 'function') toast('새 고리가 열렸다: ' + (now + 1) + '고리'); return now + 1; } return 0; }
 function ptInit(run) { if (!run.ptree) run.ptree = { own: [], free: [], ks: [], pts: ptTotal(run), log: [], ksv: 2 }; if (!run.atree) run.atree = { own: [], pts: atTotal(run), log: [], atv: 3 }; if (!run.ksGot) run.ksGot = {}; if (run.ksPending == null) run.ksPending = 0; return run; }
 const ptOpenIds = run => ['S'].concat(run.ptree.own, run.ptree.free, run.ptree.ks);
 const atOpenIds = run => ['S'].concat(run.atree.own);
