@@ -342,6 +342,7 @@ function fightCur(pk, r, mem, out) {
     const sr = r() < (P.mech || 0.5) ? sigRule(b, r) : null;
     [a, t] = ch2Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look && hazePick(b)) || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem)); // 0.8.0 5단계: 숙련의 신기루 대응(수도승)
     [a, t] = ch2Post(b, P, r, a, t);
+    if (a === 'basic' && (THINK(pk) || pk === 'careful') && b.p.ys != null && (b.p.ys || 0) >= run_('ysCapOf')(b.p)) { const rh = G0.actionList(b).find(x => x.ok && x.v2 && x.s && G0.skCost(x.s) === 1 && x.s.tgt !== 'self'); if (rh) { const e0 = b.en.find(e => e.id === t); const tt = e0 && e0.alive && G0.canTarget(b, e0, rh) ? t : (G0.alive(b).find(e => G0.canTarget(b, e, rh)) || {}).id; if (tt) { a = rh.id; t = tt; } } } // M5-0: 유산이 상한이면 넘치기 전에 리듬 칸(비용 1)을 쓴다(신중 · 숙련)
     // 보스를 깎지 못한 채 버티기만 하면 사람은 밀어붙인다 (한 수 앞만 보는 계산이 페이즈 전환을 피하는 것을 막는다)
     const bs = b.en.find(e => e.role === 'boss' && e.alive);
     if (bs) { if (bs.hp < lastHp - 0.5) stall = 0; else stall++; lastHp = bs.hp;
@@ -620,7 +621,10 @@ function sbEquipScore(run, A) {
 function sbEquip(run, A) {
   const own = run.atree.own.filter(id => A.nodes[id].kind === 'skill');
   const sc = sbEquipScore(run, A);
-  const eq = own.slice().sort((a, b) => sc(b) - sc(a)).slice(0, G0.EQUIP_SLOTS2);
+  let eq = own.slice().sort((a, b) => sc(b) - sc(a)).slice(0, G0.EQUIP_SLOTS2);
+  if (A.sec && run.sector) { const tg = run.sector.replace('_HALF', ''), half = /_HALF$/.test(run.sector), adj = secAdj(run.sector), bound = tg.length === 2; // M5-0: 목표 빌드를 따르는 사람 — 경계 목표면 그 경계 스킬을 먼저, 목표 갈래(경계면 양쪽)의 리듬 칸(비용 1) 하나
+    const bd = bound && !half ? own.filter(id => A.nodes[id].sec === tg).sort((a, b) => sc(b) - sc(a)) : []; const rh = own.filter(id => A.nodes[id].ys === 1 && (A.nodes[id].sec === tg || adj.includes(A.nodes[id].sec))).sort((a, b) => sc(b) - sc(a)).slice(0, 1);
+    const must = bd.concat(rh).slice(0, G0.EQUIP_SLOTS2); eq = must.concat(eq.filter(id => !must.includes(id)).concat(own.filter(id => !must.includes(id) && !eq.includes(id)))).slice(0, G0.EQUIP_SLOTS2); }
   if (run.build === 'spellblade') for (const k of ['spell', 'cut']) if (eq.length >= G0.EQUIP_SLOTS2 && !eq.some(id => G0.SK2[id].kind === k)) { const c = own.filter(id => G0.SK2[id].kind === k && !eq.includes(id)).sort((a, b) => sc(b) - sc(a))[0]; if (c) { const lo = eq.filter(id => G0.SK2[id].kind !== k).sort((a, b) => sc(a) - sc(b))[0]; eq[eq.indexOf(lo)] = c; } }
   run.skills = eq; G0.atSync(run);
 }
