@@ -325,6 +325,17 @@ function ch2Post(b, P, r, a, t) {
 const IGN = (process.env.DG_IGNORE || '').split(',').filter(Boolean);
 const BUILDLOG = !!process.env.DG_BUILDLOG; // M3: 빌드 표(tools/buildmix.js)용 기록을 더한다. 끄면 결과 파일은 그대로
 function maskIgn(b) { const saved = []; for (const e of b.en) { if (!e.alive || !(IGN.includes(e.foe) || IGN.includes(e.boss) || IGN.includes(e.bossKind))) continue; saved.push([e, e.intent]); if (e.intent && e.intent.k !== 'attack') e.intent = Object.assign({}, e.intent, { k: 'attack' }); } return () => { for (const [e, it] of saved) e.intent = it; }; }
+/* 0.8.0 M5-0 보정(10월 20일 만든 사람): 마검사 성향 전부. 이어진 교대(sbRun ≥ 1) 중이면 리듬 칸(비용 1)을 쓰지 않고 교대를 잇는 행동을 쓴다.
+   직전이 주문이면 기본 공격(안 되면 강공격), 직전이 베기면 쓸 수 있는 비용 2 이상 주문. 이을 행동이 없으면 그대로 둔다(비용 1은 교대를 끊지도 잇지도 않는다).
+   유산이 상한이라는 이유만으로 리듬 칸을 고르지 않는다(전에 있던 상한 판단은 뺐다) */
+function sbRhythmGate(b, a, t) {
+  const p = b.p; if (p.build !== 'spellblade' || !((p.sbRun || 0) >= 1) || !p.sbLast) return null;
+  const L = G0.actionList(b); const act = L.find(x => x.id === a); if (!act || !act.v2 || !act.s || G0.skCost(act.s) !== 1) return null;
+  const alt = p.sbLast === 'spell' ? (L.find(x => x.id === 'basic' && x.ok) || L.find(x => x.id === 'heavy' && x.ok)) : L.find(x => x.ok && x.v2 && x.s && x.s.kind === 'spell' && G0.skCost(x.s) >= 2);
+  if (!alt) return null; if (alt.s && alt.s.tgt === 'self') return [alt.id, null];
+  const e0 = b.en.find(e => e.id === t); const tt = e0 && e0.alive && G0.canTarget(b, e0, alt) ? t : (G0.alive(b).find(e => G0.canTarget(b, e, alt)) || {}).id;
+  return tt ? [alt.id, tt] : null;
+}
 function fightCur(pk, r, mem, out) {
   const P = PERSONAS[pk]; const G = G0.__G;
   G0.enterRoom(); for (let k = 0; !G.b && G.sheet && k < 4; k++) { handleSheets(pk, r); G0.enterRoom(); } // M5-0: 전투 중 저장본을 이어 한 뒤 받을 큰 각인이 남았으면 enterRoom이 고르기 창을 먼저 연다
@@ -343,7 +354,6 @@ function fightCur(pk, r, mem, out) {
     const sr = r() < (P.mech || 0.5) ? sigRule(b, r) : null;
     [a, t] = ch2Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look && hazePick(b)) || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem)); // 0.8.0 5단계: 숙련의 신기루 대응(수도승)
     [a, t] = ch2Post(b, P, r, a, t);
-    if (a === 'basic' && (THINK(pk) || pk === 'careful') && b.p.ys != null && (b.p.ys || 0) >= run_('ysCapOf')(b.p)) { const rh = G0.actionList(b).find(x => x.ok && x.v2 && x.s && G0.skCost(x.s) === 1 && x.s.tgt !== 'self'); if (rh) { const e0 = b.en.find(e => e.id === t); const tt = e0 && e0.alive && G0.canTarget(b, e0, rh) ? t : (G0.alive(b).find(e => G0.canTarget(b, e, rh)) || {}).id; if (tt) { a = rh.id; t = tt; } } } // M5-0: 유산이 상한이면 넘치기 전에 리듬 칸(비용 1)을 쓴다(신중 · 숙련)
     // 보스를 깎지 못한 채 버티기만 하면 사람은 밀어붙인다 (한 수 앞만 보는 계산이 페이즈 전환을 피하는 것을 막는다)
     const bs = b.en.find(e => e.role === 'boss' && e.alive);
     if (bs) { if (bs.hp < lastHp - 0.5) stall = 0; else stall++; lastHp = bs.hp;
@@ -357,6 +367,7 @@ function fightCur(pk, r, mem, out) {
     if (stuckN >= 2 && !process.env.NO_STUCK_FIX) { const Lk = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); const gd = Lk.find(x => x.id === 'guard') || Lk[0]; if (gd) { a = gd.id; t = null; } } /* 10월 8일: 같은 행동을 해도 차례가 흐르지 않으면(땅속의 적만 남고 단일 대상 행동뿐일 때) 사람처럼 방어로 차례를 넘긴다 */
     }
     if (OPT.policy?.filterAction) { const x = OPT.policy.filterAction(b, G.run, a, t, n); if (x) [a, t] = x; } // M4: 정책 모듈이 고른 행동의 일부만 바꾼다(평타 성향: 공격 행동만)
+    { const g = sbRhythmGate(b, a, t); if (g) { [a, t] = g; if (BUILDLOG) out.rhGate = (out.rhGate || 0) + 1; } } // M5-0 보정: 마검사 리듬 칸은 이어진 교대를 끊지 않을 때만
     if (unIgn) unIgn();
     if (OPT.onTurn) OPT.onTurn(G, n);
     if (process.env.MK_TRACE && b.p.build === 'monk') (b.mkTr = b.mkTr || []).push([a, G0.st(b.p, 'empower'), b.p.ys, b.turnIdx]); // 0.8.0 5단계: 수도승 행동 · 기 · 유산 흐름(행동 직전)
