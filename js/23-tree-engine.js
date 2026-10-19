@@ -51,7 +51,10 @@ function ptBuild(cls) {
   for (const id in N) N[id].links.sort();
   return (PTREE[cls] = { cls, nodes: N, tmp, kind: 'p' });
 }
-/* 액티브 트리 만들기: 마검사는 ATREE_DEF(8절), 다른 직업은 지금 칸(줄 · par)으로 만든 임시 트리 (스킬 노드만, 하급 1고리 · 중급 2고리 · 상급 3고리) */
+/* 액티브 트리 만들기: ATREE_DEF. 0.8.0 M5-0(10월 19일 만든 사람 D14): 임시 트리는 폐기했다(ATREE_DEF가 없는 직업은 시작 노드만, 찍어 둔 포인트는 atMigrateM5가 돌려준다).
+   부채꼴(sec, 전면 개편 2-1): 갈래 A 0° · B 120° · C 240°, 경계 AB 60° · BC 180° · CA 300°. 행의 둘째 칸(갈래 이름)을 sec가 부채꼴로 바꾼다.
+   스킬 행 [id, 갈래, 고리, 반지름, 칸, 이웃, 비용, { requires }]: requires가 있으면 그 노드가 모두 열려야 연다(경계 입구 = 양쪽 갈래의 1고리 개시 노드) */
+const AT_SEC = { A: 0, AB: 60, B: 120, BC: 180, C: 240, CA: 300 }, AT_SEC_BOUND = ['AB', 'BC', 'CA'];
 const AT_TIER_RING = { 하급: 1, 중급: 2, 상급: 3, 궁극: 3 };
 function atBuild(cls) {
   if (ATREE[cls]) return ATREE[cls];
@@ -59,17 +62,15 @@ function atBuild(cls) {
   const add = (id, o) => { N[id] = Object.assign({ id, links: [], cost: 1 }, o); return N[id]; };
   const link = (a, b) => { if (!N[a] || !N[b]) throw new Error('atree link ' + a + '-' + b); if (!N[a].links.includes(b)) N[a].links.push(b); if (!N[b].links.includes(a)) N[b].links.push(a); };
   add('S', { kind: 'start', ring: 1, pos: { r: 0, lane: 'C' }, cost: 0, n: '시작 스킬', d: T2.starters.map(id => SK2[id] ? SK2[id].n : id).join(' · ') });
+  const secOf = {}; if (D && D.sec) for (const k in D.sec) secOf[D.sec[k]] = k;
   if (D) {
-    for (const [id, br, ring, r, lane, , ys] of D.skills) add(id, { kind: 'skill', br, ring, pos: { r, lane }, ys, n: SK2[id].n });
-    for (const [id, br, ring, r, lane, on, n, d, mod, src] of D.ups) add(id, { kind: 'upgrade', br, ring, pos: { r, lane }, on, n, d, mod, src });
+    for (const [id, br, ring, r, lane, , ys, ex] of D.skills) add(id, Object.assign({ kind: 'skill', br, ring, pos: { r, lane }, ys, n: SK2[id].n }, secOf[br] ? { sec: secOf[br] } : {}, ex && ex.requires ? { requires: ex.requires.slice() } : {}));
+    for (const [id, br, ring, r, lane, on, n, d, mod, src] of D.ups) add(id, Object.assign({ kind: 'upgrade', br, ring, pos: { r, lane }, on, n, d, mod, src }, secOf[br] ? { sec: secOf[br] } : {}));
     for (const [id, , , , , ln] of D.skills) for (const x of ln) link(id, x);
     for (const u of D.ups) link(u[0], u[5]);
-  } else { // 임시 트리 (10월 16일 0.8.0 2단계): 지금 사다리 그대로. 줄 1은 가운데와, 줄 n은 같은 갈래 줄 n−1(par)과 잇는다. 사냥꾼의 줄 건너뛰기(skip)는 쓰지 않는다
-    for (const s of (SKILLS2[cls] || []).filter(x => !x.start && AT_TIER_RING[x.tier])) { const row = (SKILLS2[cls] || []).filter(x => x.b === s.b && x.row === s.row); add(s.id, { kind: 'skill', br: s.b, ring: AT_TIER_RING[s.tier], pos: { r: s.row || 1, lane: row.length < 2 ? 'C' : row.indexOf(s) === 0 ? 'L' : 'R' }, n: s.n, tmp: 1 }); }
-    for (const id in N) { if (id === 'S') continue; const s = SK2[id]; if ((s.row || 1) === 1) link(id, 'S'); else for (const pa of (s.par || [])) if (N[pa]) link(id, pa); }
   }
   for (const id in N) N[id].links.sort();
-  return (ATREE[cls] = { cls, nodes: N, tmp: D ? 0 : 1, kind: 'a', br: T2.branches.slice() });
+  return (ATREE[cls] = { cls, nodes: N, tmp: 0, kind: 'a', br: T2.branches.slice(), sec: D && D.sec ? Object.assign({}, D.sec) : null });
 }
 /* ---- 공통 규칙 ---- */
 const ptTotal = run => PT.pts.start + PT.pts.lv * Math.max(0, (run.lv || 1) - 1) + ((run.ptree && run.ptree.bonus) || 0); // bonus: 이벤트 · 제단의 패시브 포인트(옛 능력치 1점)
@@ -78,7 +79,7 @@ const atTotal = run => AT_PTS.start + AT_PTS.lv * Math.max(0, (run.lv || 1) - 1)
 const clearsEff = run => (run.clears || 0) + (run.markCh ? run.markCh - 1 : 0); // 표식 도전은 시작 챕터 앞을 깬 것으로 친다(1-5)
 const ringOpen = (run, ring) => clearsEff(run) >= (PT.ring[ring] || 0);
 const RING_WHY = { 2: '2고리는 1챕터 보스를 이기면 열립니다', 3: '3고리는 2챕터 보스를 이기면 열립니다' };
-function ptInit(run) { if (!run.ptree) run.ptree = { own: [], free: [], ks: [], pts: ptTotal(run), log: [], ksv: 2 }; if (!run.atree) run.atree = { own: [], pts: atTotal(run), log: [] }; if (!run.ksGot) run.ksGot = {}; if (run.ksPending == null) run.ksPending = 0; return run; }
+function ptInit(run) { if (!run.ptree) run.ptree = { own: [], free: [], ks: [], pts: ptTotal(run), log: [], ksv: 2 }; if (!run.atree) run.atree = { own: [], pts: atTotal(run), log: [], atv: 2 }; if (!run.ksGot) run.ksGot = {}; if (run.ksPending == null) run.ksPending = 0; return run; }
 const ptOpenIds = run => ['S'].concat(run.ptree.own, run.ptree.free, run.ptree.ks);
 const atOpenIds = run => ['S'].concat(run.atree.own);
 const ptSpent = run => run.ptree.own.reduce((a, id) => a + ((ptBuild(run.build).nodes[id] || {}).cost || 0), 0);
@@ -89,7 +90,8 @@ function treeWhyBuy(run, T, openIds, pts, id) {
   if (openIds.includes(id)) return '이미 열렸습니다';
   if (n.kind === 'keystone') return '큰 각인은 챕터 보상으로만 얻습니다';
   if (!ringOpen(run, n.ring)) return RING_WHY[n.ring] || '아직 열 수 없는 고리입니다';
-  if (!n.links.some(x => openIds.includes(x))) return '이웃한 노드를 먼저 열어야 합니다';
+  if (n.requires) { if (!n.requires.every(x => openIds.includes(x))) return '양쪽 갈래의 첫 노드를 먼저 열어야 합니다'; } // 0.8.0 M5-0: 경계 입구
+  else if (!n.links.some(x => openIds.includes(x))) return '이웃한 노드를 먼저 열어야 합니다';
   if (pts < (n.cost || 0)) return '포인트가 없습니다';
   return null;
 }
@@ -251,6 +253,13 @@ function ksTake(run, id) {
   const c = ksInfo(run, id); if (!c) return '닿을 수 없는 자리입니다';
   const open = ptOpenIds(run); const free = c.path.filter(x => !open.includes(x)); run.ptree.free.push(...free); run.ptree.ks.push(id);
   (run.ksLog = run.ksLog || []).push({ id, free, offer: run.ksOffer.slice(), ch: run.ch || 1, room: run.room, t: Date.now() }); run.ksPending--; run.ksOffer = null; ptSync(run); return null;
+}
+/* 0.8.0 M5-0(10월 19일 만든 사람 D14): 임시 액티브 트리 폐기. 트리에 없는 노드를 찍어 둔 판은 그 포인트를 돌려주고 장착을 시작 스킬로 되돌린다(run.atree.atv = 2면 끝난 판) */
+function atMigrateM5(run) {
+  if (!run || !run.atree || run.atree.atv === 2) return 0; run.atree.atv = 2;
+  const A = atBuild(run.build); const gone = (run.atree.own || []).filter(id => !A.nodes[id]); if (!gone.length) return 0;
+  run.atree.own = run.atree.own.filter(id => A.nodes[id]); run.atree.pts = (run.atree.pts || 0) + gone.length; (run.atree.log = run.atree.log || []).push({ refund: gone.length, why: '임시 트리 폐기', t: Date.now() });
+  const T2 = TREE2[run.build] || { starters: [] }; run.skills = (run.skills || []).filter(id => A.nodes[id] || T2.starters.includes(id)); return gone.length;
 }
 /* 0.8.0 M4(10월 19일): 큰 각인 배치가 바뀌었다(KS_V1 → PT_CLS). 옛 판에서 찍어 둔 자리의 각인이 바뀌었으면(넘치는 그릇 · 결정의 칼 · 망치의 길 · 먼저 움직임 · 철벽 등)
    그 각인과 그때 공짜로 연 길을 거두고 큰 각인 하나를 다시 고르게 한다(ksPending +1). run.ptree.ksv = 2면 끝난 판 */

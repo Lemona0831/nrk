@@ -68,7 +68,7 @@ function vKsPick(run) {
    단계: i 안내(옮기기만) → p 패시브 → k 큰 각인(받을 것이 있으면) → a 액티브 · 장착 → 확정. 다음 단계로 넘어가면 앞 단계는 되돌릴 수 없다. 닫기 버튼이 없다 */
 function allocBegin(run, mode) { run.alloc = { mode, step: mode === 'mig' ? 'i' : 'p' }; G.sheet = null; openSheet('alloc', { first: mode === 'create' ? 1 : 0 }); }
 function migBegin(cur) {
-  treeMigrate08(cur); G.run = cur; consFix(cur); ptInit(cur); { const kn = ksMigrateM4(cur); if (kn) toast('큰 각인 자리가 바뀌어 ' + kn + '개를 돌려받았습니다. 다시 고를 수 있습니다'); } ptSync(cur); applyGear(cur); G.b = null; G.sel = null; G.scr = cur.phase === 'clearsv' ? 'survey' : cur.phase || 'run';
+  treeMigrate08(cur); G.run = cur; consFix(cur); ptInit(cur); atMigrateM5(cur); { const kn = ksMigrateM4(cur); if (kn) toast('큰 각인 자리가 바뀌어 ' + kn + '개를 돌려받았습니다. 다시 고를 수 있습니다'); } ptSync(cur); applyGear(cur); G.b = null; G.sel = null; G.scr = cur.phase === 'clearsv' ? 'survey' : cur.phase || 'run';
   allocBegin(cur, 'mig'); render();
 }
 function allocNext(run) {

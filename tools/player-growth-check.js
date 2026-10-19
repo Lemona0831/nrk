@@ -7,7 +7,7 @@ let count = 0;
 // 10월 16일 0.8.0 2단계: 옛 트리 고치기(treeFix) · 능력치 보충(statFix)은 두 트리의 포인트 다시 맞추기(ptFix)와 옛 세이브 옮기기(treeMigrate08)로 바뀌었다
 function fresh(build){E.__G.data=E.blankData();E.__G.cre={name:'g'};E.startRun(build||'assassin');const r=E.__G.run;delete r.alloc;E.__G.sheet=null;E.__G.creating=false;return r;}
 for (const build of V('ALL_CLASS_KEYS()')) for (let lv = 1; lv <= 15; lv++) {
-  const r = fresh(build); const open = lv > 1 ? [Object.values(E.atBuild(build).nodes).find(n => n.kind === 'skill' && n.links.includes('S')).id] : []; // 0.8.0 5단계: 트리에서 가운데와 이어진 스킬(옛 줄 1 칸은 새 트리에 없을 수 있다)
+  const r = fresh(build); const s0 = Object.values(E.atBuild(build).nodes).find(n => n.kind === 'skill' && n.links.includes('S')); const open = lv > 1 && s0 ? [s0.id] : []; /* 0.8.0 M5-0: 숨겨진 직업은 액티브 노드가 없다 */ // 0.8.0 5단계: 트리에서 가운데와 이어진 스킬(옛 줄 1 칸은 새 트리에 없을 수 있다)
   r.lv = lv; r.atree.own = open.slice(); r.skills = open.slice(); E.ptFix(r);
   assert.equal(r.atree.pts + r.atree.own.length, lv + 1); assert.equal(r.ptree.pts, 6 + 2 * (lv - 1));
   const once = JSON.stringify([r.atree, r.ptree]); E.ptFix(r); assert.equal(JSON.stringify([r.atree, r.ptree]), once);

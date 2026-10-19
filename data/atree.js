@@ -5,14 +5,16 @@
    강화는 그 스킬을 끼웠을 때만 일한다. src는 합쳐진 옛 칸(기록용) */
 const ATREE_DEF = {
   spellblade: {
-    br: { 마갑: 0, 염검: 120, 혈인: 240 }, lane: { LL: -36, L: -18, C: 0, R: 18, RR: 36 },
+    br: { 염검: 0, 혈인: 120, 마갑: 240 }, lane: { LL: -36, L: -18, C: 0, R: 18, RR: 36 },
+    /* 0.8.0 M5-0 (10월 19일 만든 사람, 전면 개편 2-1): 부채꼴 6. 갈래 A 염검 · B 혈인 · C 마갑, 경계 AB 혈염(혈인×염검) · BC 죄인의 피(혈인×마갑) · CA 유산의 불(마갑×염검) */
+    sec: { A: '염검', AB: '혈염', B: '혈인', BC: '죄인의 피', C: '마갑', CA: '유산의 불' },
     skills: [
-      ['sb_bleedcut', '혈인', 1, 1, 'C', ['S'], 2], ['sb_boil', '혈인', 1, 2, 'L', ['sb_bleedcut'], 2], ['sb_bloodmark', '혈인', 1, 2, 'R', ['sb_bleedcut'], 3],
+      ['sb_bleedcut', '혈인', 1, 1, 'C', ['S'], 2], ['sb_boil', '혈인', 1, 2, 'L', ['sb_bleedcut'], 2], ['sb_bloodmark', '혈인', 1, 2, 'R', ['sb_bleedcut'], 2], ['sb_blooddrop', '혈인', 1, 2, 'C', ['sb_bleedcut'], 1], // M5-0: 피의 낙인 3 → 2(1고리는 1–2, 값 띠 2), 리듬 칸 핏방울
       ['sb_taste', '혈인', 2, 3, 'L', ['sb_boil'], 2], ['sb_redwind', '혈인', 2, 3, 'R', ['sb_bloodmark'], 3], ['sb_whirl', '혈인', 2, 4, 'L', ['sb_taste'], 2], ['sb_deluge', '혈인', 3, 5, 'C', ['sb_redwind', 'sb_whirl'], 4],
-      ['sb_ember', '염검', 1, 1, 'C', ['S'], 2], ['sb_kindle', '염검', 1, 2, 'L', ['sb_ember'], 2], ['sb_char', '염검', 1, 2, 'R', ['sb_ember'], 2],
-      ['sb_heated', '염검', 2, 3, 'L', ['sb_kindle'], 2], ['sb_snuff', '염검', 2, 3, 'C', ['sb_ember'], 3], ['sb_tome', '염검', 2, 3, 'R', ['sb_char'], 3], ['sb_hellfire', '염검', 3, 5, 'C', ['sb_snuff', 'sb_tome'], 4],
-      ['sb_bladeward', '마갑', 1, 1, 'C', ['S'], 2], ['sb_bolt', '마갑', 1, 2, 'L', ['sb_bladeward'], 2], ['sb_unravel', '마갑', 1, 2, 'R', ['sb_bladeward'], 2],
-      ['sb_turn', '마갑', 2, 3, 'C', ['sb_bladeward'], 2], ['sb_shell', '마갑', 2, 3, 'LL', ['sb_bolt'], 3], ['sb_rebound', '마갑', 2, 3, 'L', ['sb_bolt'], 2], ['sb_sunder', '마갑', 2, 3, 'R', ['sb_unravel'], 2], ['sb_finale', '마갑', 3, 5, 'C', ['sb_turn', 'sb_sunder'], 4],
+      ['sb_ember', '염검', 1, 1, 'C', ['S'], 2], ['sb_kindle', '염검', 1, 2, 'L', ['sb_ember'], 2], ['sb_char', '염검', 1, 2, 'R', ['sb_ember'], 2], ['sb_spark', '염검', 1, 2, 'C', ['sb_ember'], 1], // M5-0: 리듬 칸 불씨
+      ['sb_heated', '염검', 2, 3, 'L', ['sb_kindle'], 2], ['sb_snuff', '염검', 2, 3, 'C', ['sb_ember'], 2], ['sb_tome', '염검', 2, 3, 'R', ['sb_char'], 3], ['sb_hellfire', '염검', 3, 5, 'C', ['sb_snuff', 'sb_tome'], 4],
+      ['sb_bladeward', '마갑', 1, 1, 'C', ['S'], 2], ['sb_bolt', '마갑', 1, 2, 'L', ['sb_bladeward'], 1], ['sb_unravel', '마갑', 1, 2, 'R', ['sb_bladeward'], 2],
+      ['sb_turn', '마갑', 2, 3, 'C', ['sb_bladeward'], 2], ['sb_shell', '마갑', 2, 3, 'LL', ['sb_bolt'], 2], /* M5-0: 숨 끊기 · 껍질 3 → 2(값이 비용 2 띠), 마갑탄 2 → 1(리듬 칸) */ ['sb_rebound', '마갑', 2, 3, 'L', ['sb_bolt'], 2], ['sb_sunder', '마갑', 2, 3, 'R', ['sb_unravel'], 2], ['sb_finale', '마갑', 3, 5, 'C', ['sb_turn', 'sb_sunder'], 4],
     ],
     ups: [
       ['sbu_chain', '혈인', 1, 1, 'LL', 'sb_bleedcut', '혈인 연참', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유). 생명력 30% 이하인 적에게 피해 ×1.5.', { set: { killRecharge: 1 }, fxAdd: [{ k: 'lowx', hp: 0.3, mul: 1.5 }] }, ['sb_throat', 'sb_chaincut', 'sb_execchain', 'sb_pathway']],

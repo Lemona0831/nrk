@@ -29,14 +29,16 @@ function trdLayP(cls) {
 function trdLayA(cls) {
   const key = 'a:' + cls; if (TRD_L[key]) return TRD_L[key];
   const A = atBuild(cls), D = ATREE_DEF[cls], N = {}, brA = {};
-  A.br.forEach((b, i) => { brA[b] = D && D.br[b] != null ? D.br[b] : i * 120; });
+  A.br.forEach((b, i) => { brA[b] = D && D.br && D.br[b] != null ? D.br[b] : i * 120; });
+  if (A.sec) for (const k in A.sec) brA[A.sec[k]] = AT_SEC[k]; // 0.8.0 M5-0: 부채꼴 6(갈래 0 · 120 · 240°, 경계 60 · 180 · 300°)
+  const laneB = { LL: -16, L: -8, C: 0, R: 8, RR: 16 }, laneOf = n => ((n.sec && AT_SEC_BOUND.includes(n.sec)) ? laneB : lane)[n.pos.lane] || 0; // 경계 부채꼴은 40° 안
   const lane = D ? D.lane : { LL: -26, L: -13, C: 0, R: 13, RR: 26 }, U = D ? 80 : 44, R0 = D ? 0 : 40, SK = D ? 21 : 14, UP = 9;
   const radOf = r => r ? R0 + r * U : 0;
-  for (const id in A.nodes) { const n = A.nodes[id]; if (n.kind === 'upgrade') continue; const a = n.kind === 'start' ? 0 : brA[n.br] + (lane[n.pos.lane] || 0), rad = radOf(n.pos.r), [x, y] = trdXY(a, rad); N[id] = { id, x, y, a, rad, sz: n.kind === 'start' ? (D ? 27 : 22) : SK }; }
+  for (const id in A.nodes) { const n = A.nodes[id]; if (n.kind === 'upgrade') continue; const a = n.kind === 'start' ? 0 : brA[n.br] + laneOf(n), rad = radOf(n.pos.r), [x, y] = trdXY(a, rad); N[id] = { id, x, y, a, rad, sz: n.kind === 'start' ? (D ? 27 : 22) : SK }; }
   const placed = Object.values(N);
   for (const id in A.nodes) {
     const n = A.nodes[id]; if (n.kind !== 'upgrade') continue; const P = N[n.on]; if (!P) continue;
-    const [hx, hy] = trdXY(brA[n.br] + (lane[n.pos.lane] || 0), radOf(n.pos.r)); const hint = trdAng(hx - P.x, hy - P.y);
+    const [hx, hy] = trdXY(brA[n.br] + laneOf(n), radOf(n.pos.r)); const hint = trdAng(hx - P.x, hy - P.y);
     const lk = A.nodes[n.on].links.filter(x => N[x] && A.nodes[x].kind !== 'upgrade').map(x => trdAng(N[x].x - P.x, N[x].y - P.y));
     const mine = placed.filter(q => q.sat === n.on).map(q => trdAng(q.x - P.x, q.y - P.y)); const d = P.sz + UP + 8; let best = null;
     for (let phi = 0; phi < 360; phi += 10) {
@@ -53,7 +55,7 @@ function trdLayA(cls) {
   const rr = {}; for (const id in N) { const n = A.nodes[id]; if (n.kind !== 'skill') continue; const q = rr[n.ring] || (rr[n.ring] = [Infinity, -Infinity]); q[0] = Math.min(q[0], N[id].rad); q[1] = Math.max(q[1], N[id].rad); }
   const maxR = Math.max(...Object.values(N).map(q => q.rad + q.sz)), disc = maxR + (D ? 34 : 30);
   const bnd = k => rr[k] && rr[k + 1] ? (rr[k][1] + rr[k + 1][0]) / 2 : disc - 24;
-  return (TRD_L[key] = { kind: 'a', T: A, U, N, links, bounds: [0, bnd(1), bnd(2), disc - 24], disc, inR: (N.S.sz + radOf(1) - SK) / 2, lab: disc + 0.6 * U, vb: disc + (D ? 1.3 : 2) * U, ringAng: 60, axes: A.br.map(b => ({ k: b, n: b, a: brA[b] })), tmp: !D });
+  return (TRD_L[key] = { kind: 'a', T: A, U, N, links, bounds: [0, bnd(1), bnd(2), disc - 24], disc, inR: (N.S.sz + radOf(1) - SK) / 2, lab: disc + 0.6 * U, vb: disc + (D ? 1.3 : 2) * U, ringAng: A.sec ? 20 : 60, axes: A.sec ? Object.keys(A.sec).map(k => ({ k, n: A.sec[k], a: AT_SEC[k], bound: AT_SEC_BOUND.includes(k) })) : A.br.map(b => ({ k: b, n: b, a: brA[b] })), spokes: A.sec ? [40, 80, 160, 200, 280, 320] : null, tmp: !D }); // 액티브 화면은 갈래 · 경계 이름만 쓴다(패시브 방향 이름은 쓰지 않음)
 }
 /* ---- 상태 ---- */
 function trdStP(run, id, T) {
@@ -119,7 +121,7 @@ function trdBoard(run, L) {
   const b = L.bounds, U = L.U; let h = `<circle class="dk-stone" r="${trdF(L.disc)}"/>`;
   h += trdCircle(L.disc - 3, 'dk-rim') + trdCircle(L.disc - 22, 'dk-rim2') + `<path class="dk-rune" d="${trdRunes(L.disc - 12.5, 72)}"/>`;
   for (let k = 2; k <= 3; k++) if (!ringOpen(run, k) && b[k] > b[k - 1]) h += `<path class="dk-lock" fill-rule="evenodd" d="${trdAnnulus(b[k - 1], b[k])}"/>`;
-  for (const ax of L.axes) { const sa = ax.a + (L.kind === 'p' ? 30 : 60), [x0, y0] = trdXY(sa, 0.6 * U), [x1, y1] = trdXY(sa, L.disc - 24); h += `<line class="dk-spoke" x1="${trdF(x0)}" y1="${trdF(y0)}" x2="${trdF(x1)}" y2="${trdF(y1)}"/>`; } // 방향 사이의 나눔선
+  for (const sa0 of (L.spokes || L.axes.map(ax => ax.a + (L.kind === 'p' ? 30 : 60)))) { const sa = sa0, [x0, y0] = trdXY(sa, 0.6 * U), [x1, y1] = trdXY(sa, L.disc - 24); h += `<line class="dk-spoke" x1="${trdF(x0)}" y1="${trdF(y0)}" x2="${trdF(x1)}" y2="${trdF(y1)}"/>`; } // 방향 사이의 나눔선
   for (let k = 1; k <= 2; k++) if (b[k] < L.disc - 30) h += trdCircle(b[k], 'dk-ring') + trdCircle(b[k] + 4, 'dk-ring2') + `<path class="dk-tick" d="${trdTicks(b[k] + 4, 6, 4)}"/>`;
   h += trdCircle(0.55 * U, 'dk-ring2');
   return h;
@@ -129,7 +131,7 @@ function trdNames(run, L) {
   const tilt = L.kind === 'p' ? (PT_TILT[run.build] || {}) : null, TN = { A: '가까움', B: '보통', C: '멂' }; let h = '';
   for (const ax of L.axes) {
     const [x, y] = trdXY(ax.a, L.lab); const sub = tilt ? TN[tilt[ax.k] || 'B'] : '';
-    h += `<text class="tl dl" x="${trdF(x)}" y="${trdF(y)}">${esc(ax.n)}</text>` + (sub ? `<text class="tl dls" x="${trdF(x)}" y="${trdF(y)}" dy="1.25em">${esc(sub)}</text>` : '');
+    h += `<text class="tl dl${ax.bound ? ' dlb' : ''}" x="${trdF(x)}" y="${trdF(y)}">${esc(ax.n)}</text>` + (sub ? `<text class="tl dls" x="${trdF(x)}" y="${trdF(y)}" dy="1.25em">${esc(sub)}</text>` : '');
   }
   for (let k = 1; k <= 3; k++) {
     const r0 = L.bounds[k - 1], r1 = L.bounds[k]; if (!(r1 > r0)) continue; const open = ringOpen(run, k); const mid = k === 1 ? Math.max(r0, r1 * 0.5) : (r0 + r1) / 2; const [x, y] = trdXY(L.ringAng, mid);
@@ -163,7 +165,8 @@ function trdNodeA(run, L, id, st, o) {
     if (st === 'own' && !work) o.idle = 1;
   }
   const gl = st === 'can' ? `<circle class="gl" r="${sz + 4}"/>` : '';
-  return `<g class="tn tn-${n.kind} st-${st}${rl ? ' rlk' : ''}${o.sel ? ' sel' : ''}${o.idle ? ' idle' : ''}${n.kind === 'skill' && (run.skills || []).includes(id) ? ' eq' : ''}${o.isNew ? ' tn-new' : ''}" data-a="tnode" data-k="${id}" data-e="a" transform="translate(${trdF(P.x)} ${trdF(P.y)})" tabindex="${o.tab ? 0 : -1}" role="button" aria-label="${esc(lab + (rl ? ', ' + trdRingShort(n.ring) : ''))}"><title>${esc(n.n)}</title><circle class="hit" r="${Math.max(sz + 6, 13)}"/>${gl}${in1}<circle class="fr" r="${sz + 7}"/></g>`;
+  const reqOff = !!(n.requires && !n.requires.every(x => run.atree.own.includes(x))); /* 0.8.0 M5-0: 경계 입구는 양쪽 첫 노드 전까지 흐림 */
+  return `<g class="tn tn-${n.kind} st-${st}${rl ? ' rlk' : ''}${reqOff ? ' req' : ''}${o.sel ? ' sel' : ''}${o.idle ? ' idle' : ''}${n.kind === 'skill' && (run.skills || []).includes(id) ? ' eq' : ''}${o.isNew ? ' tn-new' : ''}" data-a="tnode" data-k="${id}" data-e="a" transform="translate(${trdF(P.x)} ${trdF(P.y)})" tabindex="${o.tab ? 0 : -1}" role="button" aria-label="${esc(lab + (rl ? ', ' + trdRingShort(n.ring) : ''))}"><title>${esc(n.n)}</title><circle class="hit" r="${Math.max(sz + 6, 13)}"/>${gl}${in1}<circle class="fr" r="${sz + 7}"/></g>`;
 }
 function trdSvg(run, mode, L, v, sel, opt) {
   const kind = L.kind, T = L.T, ids = Object.keys(L.N), stOf = id => kind === 'p' ? trdStP(run, id, T) : trdStA(run, id), ST = {}; for (const id of ids) { ST[id] = stOf(id); if (mode === 'k' && ST[id] === 'can') ST[id] = 'view'; } // 큰 각인 고르기에서는 찍지 않는다(배분 흐름의 단계 잠금)

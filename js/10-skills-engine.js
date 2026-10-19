@@ -217,6 +217,7 @@ function sbAltMerge(s, b) { const L = s.fx.filter(e => e.k === 'alt' && b.sbAlt 
 function sbKindOf(p, id, act) { if (p.build !== 'spellblade') return null; if (id === 'basic' || id === 'heavy') return 'cut'; return act && act.v2 && act.s && act.s.kind || null; }
 function sbBegin(b, id, act, tgt) {
   const p = b.p; const k = sbKindOf(p, id, act); b.sbK = k; b.sbAlt = false; b.sbRunNow = 0; b.sbRun2 = 0; b.sbAltFx = null; b.sbEdgeDone = 0; b.sbWardSpentAll = false; if (!k) return;
+  b.sbNoAlt = act && act.v2 && act.s && skCost(act.s) === 1 ? 1 : 0; if (b.sbNoAlt) return; // 0.8.0 M5-0(10월 19일 만든 사람): 비용 1 스킬은 교대로 치지 않는다(교대 보호막 · 할인 · 이어진 교대 횟수 모두 제외, 직전 종류도 그대로). 칼에 싣기 · 칼날은 그대로
   b.sbAlt = !!p.sbLast && k !== p.sbLast; b.sbRunNow = b.sbAlt ? (p.sbRun || 0) + 1 : 0;
 }
 function sbEdgeApply(b, e, mul) {
@@ -247,7 +248,7 @@ function sbEnd(b, act) {
     if (b.altCnt === 2 && fxFlag(p, 'altDouble')) { const g = fxFlag(p, 'noAltWard') ? 0 : addWard(b, p, SB_ALT2.ward, undefined, true); const dc = SB_ALT2.off > 0 && !(SB_ALT2.max > 0 && (b.altDiscN || 0) >= SB_ALT2.max); if (dc) { b.altDisc = 1; b.altDiscN = (b.altDiscN || 0) + 1; } b.rec.push({ k: 'alt2x', g: r1(g) }); logp(b, 'good', '⇄⇄ 한 차례 두 번 교대' + (g > 0 ? ': 보호막 +' + Math.round(g) : '') + (dc ? ', 다음 스킬 유산 −' + SB_ALT2.off : '')); }
     if (b.sbRunNow >= SB_OVER.run && !b.ovGot && fxFlag(p, 'ovDisc')) { b.ovGot = 1; b.ovDisc = 1; b.rec.push({ k: 'ovready' }); logp(b, 'good', '마검 과부하: 교대 셋. 다음 유산 4 스킬 비용 −3'); } }
   if (b.sbAlt && b.sbRunNow >= 3 && !b.over && (b.ys3N || 0) < 2 && fxFlag(p, 'alt3Ys') && ysRefund(b, '세 박자')) b.ys3N = (b.ys3N || 0) + 1; // 노드 세 박자: 이어진 교대 3번째면 유산 +1(전투마다 2번, 환급 한도 공유)
-  p.sbLast = k; p.sbRun = b.sbRun2 ? 0 : b.sbRunNow; b.sbAlt = false; b.sbRun2 = 0;
+  if (!b.sbNoAlt) { p.sbLast = k; p.sbRun = b.sbRun2 ? 0 : b.sbRunNow; } b.sbNoAlt = 0; b.sbAlt = false; b.sbRun2 = 0;
 }
 /* 수도승 자세 (stance, 10월 10일 단순화): 자세는 하나뿐이다. 내 다음 차례까지 전열 적의 직접 공격을 되받는다(받는 피해는 줄지 않는다. 줄이려면 방어). 덤은 겹치면 칸마다 큰 값.
    내 다음 차례의 첫 행동에서 지워진다. 옛 저장본의 half · max는 읽지 않는다 */

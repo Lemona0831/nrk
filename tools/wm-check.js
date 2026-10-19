@@ -43,8 +43,8 @@ for (const c of ['warden', 'monk']) {
 ok(JSON.stringify(E.SK2.w_flare.fx) === JSON.stringify([{ k: 'wardBurn', mul: 3, max: 8 }, { k: 'brk', n: 3 }, { k: 'bigx', mul: 1.5 }]), '강화는 원래 스킬 데이터를 바꾸지 않음');
 
 // ===== 2) 노드 비용 (결정 1: skCost가 노드 ys를 읽음) =====
-{ const p = { build: 'warden', aup: [], pn: [] }; ok(skCost(E.SK2.w_flare) === 3 && skCost(E.skOf(p, 'w_flare')) === 2, '보호막 터뜨리기: 쿨타임 변환 3, 트리 노드 2');
-  const ps = { build: 'spellblade', aup: [], pn: [] }; const A = E.atBuild('spellblade'); ok(Object.keys(A.nodes).filter(id => A.nodes[id].kind === 'skill').every(id => skCost(E.skOf(ps, id)) === skCost(E.SK2[id])), '마검사는 노드 비용과 쿨타임 변환이 모두 같음(바뀌는 것 없음)'); }
+{ const p = { build: 'warden', aup: [], pn: [] }; ok(skCost(E.skOf(p, 'w_flare')) === 2, '보호막 터뜨리기: 트리 노드 2(0.8.0 M5-0부터 쿨타임 변환표 없음)');
+  const ps = { build: 'spellblade', aup: [], pn: [] }; const A = E.atBuild('spellblade'); ok(Object.keys(A.nodes).filter(id => A.nodes[id].kind === 'skill').every(id => skCost(E.skOf(ps, id)) === A.nodes[id].ys), '마검사: 스킬 비용은 노드 ys 그대로(M5-0)'); }
 
 // ===== 3) 파수꾼 =====
 { const { p, b } = fight('warden', { own: ['su1C', 'su2L'] }); const w = stat(p, 'wil'); ok(w === 6 && p.pn.includes('n_wd_will'), '다진 의지: 의지 6(시작 4 + 작은 노드 2)');
@@ -96,7 +96,7 @@ ok(JSON.stringify(E.SK2.w_flare.fx) === JSON.stringify([{ k: 'wardBurn', mul: 3,
   const CV = ['hu_throat', 'hu_spray', 'hu_scatter', 'hu_crimson', 'hu_dash', 'hu_wedge']; const cvOn = CV.map(id => A.nodes[id].on); // 원거리 초안 2-6 성격 열의 [전환] 여섯
   ok(Object.values(conv).every(v => v <= 1) && new Set(cvOn).size === CV.length && Object.keys(conv).every(on => cvOn.includes(on)), '사냥꾼: 같은 스킬에 [전환] 강화는 하나뿐(숨통 겨누기 · 난사 · 흩뿌리는 화살 · 붉은 폭우 · 질주 · 얼음 쐐기가 모두 다른 스킬)');
   const c = { 2: 0, 3: 0, 4: 0 }; for (const s of sk) c[s.ys]++; ok(c[2] === 4 && c[3] === 17 && c[4] === 3, '사냥꾼: 트리 비용 2 / 3 / 4 = 4 / 17 / 3칸');
-  const p0 = { build: 'hunter', aup: [], pn: [] }; ok(skCost(E.SK2.h_burst) === 4 && skCost(E.skOf(p0, 'h_burst')) === 3 && sk.filter(s => s.id !== 'h_burst').every(s => skCost(E.skOf(p0, s.id)) === skCost(E.SK2[s.id])), '추적 터뜨리기만 쿨타임 변환 4 → 노드 3(결정 4), 나머지는 변환값 그대로');
+  const p0 = { build: 'hunter', aup: [], pn: [] }; ok(skCost(E.skOf(p0, 'h_burst')) === 3 && sk.every(s => skCost(E.skOf(p0, s.id)) === E.atBuild('hunter').nodes[s.id].ys), '추적 터뜨리기 노드 3(결정 4), 모든 칸 비용은 노드 ys(M5-0)');
   ok(['hu_link1', 'hu_link2', 'hu_link3'].map(id => A.nodes[id].on).join() === 'h_burst,h_double,h_hobble', '연계 할인은 갈래마다 1고리 유산 3 스킬 하나(추적 터뜨리기 · 연속 사격 · 발 묶는 화살)');
   ok(E.SK2.h_gap.killRecharge === 1 && !E.SK2.h_gap.fx.some(f => f.k === 'hasten') && !sk.some(s => E.SK2[s.id].fx.some(f => f.k === 'hasten')), '🔄 정리: 빈틈 쏘기는 처치 환급, 트리에 무조건 🔄 없음');
   { const s = E.skOf({ build: 'hunter', aup: ['hu_ankle'], pn: [] }, 'h_leg'); const o = s.fx.find(f => f.k === 'onCutBreak'); ok(o && o.haste === 1 && !o.hasten, '발목 끊기: 끊으면 가속 1만(유산 환급 없음)'); }
@@ -178,7 +178,7 @@ const d0 = basicD().d;
   const conv = {}; for (const u of up) if (u.mod.set && ['time', 'tgt'].some(k => k in u.mod.set)) conv[u.on] = (conv[u.on] || 0) + 1;
   ok(new Set(cvOn).size === CV.length && Object.keys(conv).every(on => cvOn.includes(on)) && Object.values(conv).every(v => v <= 1), '원소술사: 같은 스킬에 [전환] 강화는 하나뿐(겁화 · 영구 동토 · 눈사태 · 극성 뒤집기 · 증기 폭발 · 연쇄 충격 · 역화가 모두 다른 스킬)');
   const c = { 2: 0, 3: 0, 4: 0 }; for (const s of sk) c[s.ys]++; ok(c[2] === 9 && c[3] === 12 && c[4] === 3, '원소술사: 트리 비용 2 / 3 / 4 = 9 / 12 / 3칸');
-  const p0 = { build: 'elementalist', aup: [], pn: [] }; ok(sk.every(s => skCost(E.skOf(p0, s.id)) === skCost(E.SK2[s.id])), '원소술사: 비용은 모두 쿨타임 변환값 그대로(다른 칸 0)');
+  const p0 = { build: 'elementalist', aup: [], pn: [] }; ok(sk.every(s => skCost(E.skOf(p0, s.id)) === E.atBuild('elementalist').nodes[s.id].ys), '원소술사: 비용은 모두 노드 ys(M5-0)');
   ok(['e_kindle', 'e_sparks', 'e_burnout', 'e_bind', 'e_crack', 'e_bite', 'e_weave', 'e_catalyst', 'e_firewave'].map(id => skCost(E.skOf(p0, id))).join() === '2,3,3,2,2,3,2,3,3', '1고리 비용: 불꽃 2 · 3 · 3, 서리 2 · 2 · 3, 공명 2 · 3 · 3');
   ok(E.SK2.e_resonate.killRecharge === 1 && E.SK2.e_resonate.krShock === 1 && !E.SK2.e_resonate.fx.some(f => f.k === 'hasten') && !sk.some(s => E.SK2[s.id].fx.some(f => f.k === 'hasten')), '🔄 정리: 공명은 처치 환급(행동 끝 열충격 포함), 트리에 무조건 🔄 없음(불길 증폭 · 빙벽 화살은 뺌)');
   ok(['e_sunfall', 'e_coffin', 'e_overload'].every(id => A.nodes[id].ys === 4 && A.nodes[id].ring === 3) && !A.nodes.e_critical && A.nodes.eu_chain.src.includes('e_critical'), '결정타 셋(태양 낙하 · 얼음 관 · 과부하 ×2), 임계는 연쇄 충격의 출처로만(결정 12)');
@@ -286,7 +286,7 @@ const setEl = (b, e, I, C) => { if (I) E.addS(b, e, 'ignite', I); if (C) E.addS(
   ok(new Set(cvOn).size === CV.length && conv.slice().sort().join() === CV.slice().sort().join(), '암살자: [전환] 다섯(둔한 독 · 독의 순환 · 독침 파열 · 끓는 피 · 독 묻은 칼막이)이 모두 다른 스킬 — 같은 스킬에 [전환]은 하나뿐');
   const c = { 2: 0, 3: 0, 4: 0 }; for (const s of sk) c[s.ys]++; ok(c[2] === 11 && c[3] === 11 && c[4] === 2, '암살자: 트리 비용 2 / 3 / 4 = 11 / 11 / 2칸');
   const p0 = { build: 'assassin', aup: [], pn: [] }; const diff = sk.filter(s => skCost(E.skOf(p0, s.id)) !== skCost(E.SK2[s.id])).map(s => s.id).sort();
-  ok(diff.join() === 'a_after,a_deflect' && skCost(E.skOf(p0, 'a_deflect')) === 3 && skCost(E.skOf(p0, 'a_after')) === 3 && skCost(E.SK2.a_deflect) === 4 && skCost(E.SK2.a_after) === 4, '흘려 베기 · 잔상 4 → 3(결정 13), 다른 칸은 쿨타임 변환값 그대로');
+  ok(skCost(E.skOf(p0, 'a_deflect')) === 3 && skCost(E.skOf(p0, 'a_after')) === 3, '흘려 베기 · 잔상 노드 3(결정 13, M5-0부터 쿨타임 변환표 없음)');
   ok(['a_fang', 'a_hack', 'a_siphon', 'a_pouch', 'a_brkneedle', 'a_burst', 'a_deflect', 'a_shadow', 'a_ambush'].map(id => skCost(E.skOf(p0, id))).join() === '3,2,2,2,2,3,3,3,2', '1고리 비용: 독사 3 · 2 · 2, 격발 2 · 2 · 3, 그림자 3 · 3 · 2');
   ok(E.SK2.a_chain.killRecharge === 1 && sk.filter(s => E.SK2[s.id].killRecharge).length === 1 && !sk.some(s => E.SK2[s.id].fx.some(f => f.k === 'hasten')), '🔄 정리: 연쇄 격발 처치 환급만, 독무 · 그늘 숨기 🔄 뺌, 흘리기 성공 🔄(연막 · 흘림의 춤 · 되받아치기 · 그림자 역습)은 강화로 합치며 뺌(결정 13)');
   ok(A.nodes.a_cataclysm.ys === 4 && A.nodes.a_umbra.ys === 4 && A.nodes.a_essence.ys === 3 && [A.nodes.a_cataclysm, A.nodes.a_umbra, A.nodes.a_essence].every(x => x.ring === 3), '결정타: 종말의 격발 · 죽음의 그림자 4, 독사 맹독의 정수는 3 그대로(결정 16)');
