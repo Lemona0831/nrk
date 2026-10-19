@@ -137,7 +137,7 @@ module.exports = function (api) {
   A('같은 종류를 이어 쓰면 이어진 교대가 0이 됩니다', 'sbRun = 0 (sbEnd: 같은 종류)', () => has('10-skills-engine.js', 'p.sbRun = b.sbRun2 ? 0 : b.sbRunNow') && has('10-skills-engine.js', 'b.sbRunNow = b.sbAlt ? (p.sbRun || 0) + 1 : 0'));
   A('켜진 스킬을 쓰면 이어진 교대는 0이 됩니다', 'sbRun = 0', () => has('10-skills-engine.js', 'p.sbRun = b.sbRun2 ? 0 : b.sbRunNow') && has('10-skills-engine.js', 'b.sbRunNow = b.sbAlt ? (p.sbRun || 0) + 1 : 0'));
   A('방어하면 해로운 상태를 2 지웁니다', 'CONF.guard = 2', () => E('CONF.guard') === 2);
-  A('최대 생명력의 30%(마검사는 15%)까지 쌓이고', 'WARD.cap = 0.3 · 마검사 wardCap = 0.15', () => E('WARD.cap') === 0.3 && E('BUILDS.spellblade.wardCap') === 0.15);
+  A('최대 생명력의 30%(마검사는 17%)까지 쌓이고', 'WARD.cap = 0.3 · 마검사 wardCap = 0.17', () => E('WARD.cap') === 0.3 && E('BUILDS.spellblade.wardCap') === 0.17);
   A('파수꾼은 방어할 때마다 6을 얻고', 'WARD.guard = 6', () => E('WARD.guard') === 6);
   A('잃은 생명력 10%마다 내가 주는 직접 피해가 3% 늘어납니다(최대 18%)', 'BUTCH.thirst = 0.03 · thirstMax = 0.18, buThirst: 잃은 10%마다', () => E('BUTCH.thirst') === 0.03 && E('BUTCH.thirstMax') === 0.18 && has('12-state-class-rules.js', '(1 - p.hp / p.hpMax) * 10'));
   A('(최대 생명력의 30%까지)', 'BUTCH.grudgeCap = 0.3', () => E('BUTCH.grudgeCap') === 0.3);
@@ -283,7 +283,7 @@ module.exports = function (api) {
   A('칠 때마다 적 카드의 생명력 막대 아래 얇은 붕괴 게이지가 10 찹니다', '수련장 기본 공격 붕괴 +10', BRK10);
   A('흘리기: 고른 적의 다음 공격 피해를 60% 줄입니다', '수련장 견습생 parryRed = 60% (민첩 0)', () => Math.round(E('parryRed(mkPlayer("novice", {}))') * 100) === 60);
   A('강타를 흘리면 그 적의 붕괴 게이지도 25 찹니다', '강타를 흘리면 addBreak(src, 25)', () => has('24-clock-damage.js', "if (o.charged) { addBreak(b, o.src, 25)"));
-  A('강공격: 스태미나 40으로 피해 150%, 붕괴 게이지 35', '견습생: heavyCost 40 · heavyBase/wpnDmg 150% · 붕괴 35 + 힘 0', () => E('heavyCost(mkPlayer("novice", {}))') === 40 && E('Math.round(heavyBase(mkPlayer("novice", {})) / wpnDmg(mkPlayer("novice", {})) * 100)') === 150 && E('stat(mkPlayer("novice", {}), "str")') === 0 && has('32-player-action.js', /\? 30 : 35\) \+ 5 \* Math\.floor/));
+  A('강공격: 스태미나 35로 피해 170%, 붕괴 게이지 35', '견습생: heavyCost 35 · heavyBase/wpnDmg 170% · 붕괴 35 + 힘 0 (0.8.0 M4)', () => E('heavyCost(mkPlayer("novice", {}))') === 35 && E('Math.round(heavyBase(mkPlayer("novice", {})) / wpnDmg(mkPlayer("novice", {})) * 100)') === 170 && E('stat(mkPlayer("novice", {}), "str")') === 0 && has('32-player-action.js', /\? 30 : 35\) \+ 5 \* Math\.floor/));
   A('사수의 예고에 "출혈 2"가 보이면', 'EKW.archerBleed = 2', () => E('EKW.archerBleed') === 2);
   A('막음 2가 다음 해로운 상태 두 번을 튕겨 냅니다', '정화 플라스크: 막음 2 (2 + blockAdd), 상태마다 1 소모', () => has('32-player-action.js', 'const nb = 2 + fxAdd(p, \'blockAdd\', p)') && E('KW.block') >= 2);
   A('정해진 때가 오면 효과가 나고 1 줄어듭니다', 'kwDec는 기본 1씩 줄인다', () => has('20-battle-state.js', 'x.stacks -= (n || 1)'));
@@ -353,7 +353,7 @@ module.exports = function (api) {
     ['2회 연속 행동', 'roundOrder.toString().includes("pDouble")'],
     ['다른 갈래 스킬을 이어 쓰면 피해 +30%', 'HUNT.link===0.3'],
     ['기본 공격 50% · 집중 주문 85%', 'BUILDS.elementalist.wpnMul===0.5 && HEAVY_V2===1.7'],
-    ['내 차례당 1회', 'BUILDS.spellblade.altWard===4 && BLOOD.perTurn===1'],
+    ['내 차례당 1회', 'BUILDS.spellblade.altWard===5 && BLOOD.perTurn===1'],
     ['▶ 공격은 기 1을 써서 피해 +25%', 'MONK.kiCtr===1 && outDmg.toString().includes("d *= 1.25")'],
     ['최대 5까지 계산', 'CONF.cap===5'],
     ['기본 공격은 무기 피해의 80%', 'BUILDS.bloodmage.wpnMul===0.8'],

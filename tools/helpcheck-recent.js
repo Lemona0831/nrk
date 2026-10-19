@@ -35,6 +35,6 @@ module.exports = function ({ E, add, note, source }) {
   note('changelog-latest','해금 1·2·3','잠긴 직업을 공개 업데이트에서 구분하는 이름. 효과 수치 아님');
   add('changelog-latest','스킬 6개의 효과','hasteSpend 스킬6개, 모두 ×1.5, 가속 겹 읽기·전체 타격 적용', E => E('SKILLS2.hunter.filter(s=>s.fx.some(f=>f.k==="hasteSpend")).length') === 6 && E('SKILLS2.hunter.filter(s=>s.fx.some(f=>f.k==="hasteSpend")).every(s=>s.fx.find(f=>f.k==="hasteSpend").mul===1.5)') && E('runSkill2.toString()').includes("st(p, 'haste') > 0") && E('runSkill2.toString()').includes('if (hspOn) base *= hsp.mul'));
   add('changelog-latest','가속 1을 소모하며','kwDec 1회, 모든 타격에 ×1.5', E => E('runSkill2.toString()').includes("kwDec(p, 'haste'); hspOn = true"));
-  add('changelog-latest','기본 교대 보호막 4','BUILDS.spellblade.altWard=4', E => E('BUILDS.spellblade.altWard') === 4);
+  note('changelog-latest','기본 교대 보호막 4','그때 릴리스의 숫자. 0.8.0 M5-0(10월 19일)에서 5로 올렸다(BUILDS.spellblade.altWard)');
   note('changelog-latest','해금 1 · 피해 자원','직업 공개 명칭의 번호. 효과 수치 아님');
 };
