@@ -613,8 +613,8 @@ function secScore(run, A, id) {
   if (nd.sec === base) return nd.kind === 'upgrade' ? 8 : nd.ys === 4 ? 10.5 : nd.ring === 3 ? 12.5 : 14.5; // 차이를 성향 난수(신중 · 숙련 1)보다 크게
   return adj.includes(nd.sec) ? 5 : 0;
 }
-/* M5-0 보정 5 P3: 결합 칸은 꼬리표가 맞아 찍을 수 있게 되면 목표 부채꼴 다음으로(이웃 갈래 5보다 위) */
-const comboScore = (A, id) => A.nodes[id] && A.nodes[id].reqTags ? 9 : null;
+/* M5-0 보정 5 P3: 결합 칸은 꼬리표가 맞아 찍을 수 있게 되면 목표 부채꼴보다 먼저(만든 사람 결정 10월 20일, 처음에는 9점으로 목표 다음이었다) */
+const comboScore = (A, id) => A.nodes[id] && A.nodes[id].reqTags ? 30 : null;
 /* M5-0 보정 5: 변형 자리를 열 때 고를 변형(v2Pick). 평타 성향은 기본 공격 연동 > 싣기 꼬리표 먼저, 다른 성향은 제시된 것 가운데 판 난수로 */
 function varPick(run, A, slot, pk, r) { const off = run_('atVarsOffered')(run, slot); if (!off.length) return undefined; const V = run_('atBuild')(run.build).vars;
   if ((run.persona || pk) === 'basic') { for (const tg of ['기본공격연동', '싣기']) { const c = off.find(v => (V[v].tags || []).includes(tg)); if (c) return c; } }

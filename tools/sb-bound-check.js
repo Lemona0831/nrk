@@ -28,7 +28,7 @@ const act = (b, id, t) => { for (const e of b.en) if (e.alive && !e.intent) e.in
 // 피의 갑주
 { const { p, b, es } = fight(['sb_bloodmail']); E.addS(b, es[0], 'bleed', 2); E.addS(b, es[1], 'bleed', 2); p.ward = 0; act(b, 'sb_bloodmail'); ok(b.log.some(x => /피의 갑주: 출혈 걸린 적 2 → 보호막 \+/.test(x.m || '')) && p.ward > 8, '피의 갑주: 출혈 걸린 적 둘 → 보호막 +17씩(직업 보호막 상한까지)'); }
 // 피막
-{ const { p, b, es } = fight(['sb_film']); act(b, 'sb_film'); p.ward = 20; const o = { src: es[0] }; R('sbWardHit')(b, p, o, 6); ok(stk(es[0], 'bleed') === 8, '피막: 받아낸 6의 125% → 출혈 8(출혈 상한 10)'); }
+{ const { p, b, es } = fight(['sb_film']); act(b, 'sb_film'); p.ward = 20; const o = { src: es[0] }; R('sbWardHit')(b, p, o, 6); ok(stk(es[0], 'bleed') >= Math.ceil(6 * U.filmPer), '피막: 받아낸 6의 75% → 출혈 ' + Math.ceil(6 * U.filmPer) + ' 이상(베기의 출혈 포함)'); }
 // 죄인의 벽
 { const { p, b, es } = fight(['sb_sinwall']); p.hp = p.hpMax; p.ward = 0; act(b, 'sb_sinwall'); const pay = p.hpMax * 0.15; const L = b.log.map(x => x.m || '').find(m => /죄인의 벽: 생명력/.test(m)) || ''; const mm = /생명력 ([\d.]+)을 바쳐 보호막 \+([\d.]+)/.exec(L); ok(mm && Math.abs(+mm[1] - pay) < 0.6 && Math.abs(+mm[2] - 3 * pay) < 1.6, '죄인의 벽: 생명력 15%를 바쳐 3배 보호막 (' + L + ')'); p.ward = 0; R('sbWardHit')(b, p, { src: es[0] }, 1); ok(es.every(e => stk(e, 'bleed') === 5), '죄인의 벽이 깨지면 전열 모두 출혈 5'); }
 // 달군 갑주 · 잿불 갑주

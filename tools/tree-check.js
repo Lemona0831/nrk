@@ -47,7 +47,7 @@ for (const c of CLS) {
   ok(P.nodes.pw2L.stat == null && P.nodes.pw2R.fx === 'n_bs_dmg' && P.nodes.pw2R.stat == null && P.nodes.pw3L.fx === 'n_bs_brk' && P.nodes.pw1C.stat.str === 1 && P.nodes.pw1C.stat.int === 1 && P.nodes.ct1C.sm === 'brk' && P.nodes.lg2L.sm === 'st' && P.nodes.sv1C.stat.con === 2 && P.nodes.su1C.stat.wil === 2 && P.nodes.ag1C.fx === 'n_bs_dmg2' && P.nodes.ag2R.fx === 'n_bs_st' && P.nodes.ag3L.stat.dex === 2, '작은 노드: 화력 · 기민 1고리 앞 두 칸은 평타 노드(M4), 화력 C 힘1 지능1, 제어 붕괴, 계승 스태미나, 생존 체력, 유지력 의지, 기민 민첩');
   ok(JSON.stringify(P.nodes.S.stat) === JSON.stringify({ str: 5, int: 5, con: 3, wil: 1 }), '시작 노드 힘5 지능5 체력3 의지1(4단계: 12 → 14점)');
   /* 0.8.0 M5-0 보정 4(10월 20일 만든 사람): 여섯 부채꼴 같은 크기. 옛 5단계 8-2 · 8-3 표(22칸 + 강화 23)는 이 규격으로 바뀌었다 */
-  const BOUND_ATK_WAIT = ['BC', 'CA'], atkWait = []; // 보정 5 명령대로 둘째 칸만 바꾸면 죄인의 피 · 유산의 불은 공격 1(만든 사람 결정 대기)
+  const BOUND_ATK_WAIT = [], atkWait = []; // 보정 5(만든 사람 결정): 피막 · 불씨 갑주도 공격 칸(베기)으로 바꿔 경계마다 공격 2
   const SECN = { A: [], AB: [], B: [], BC: [], C: [], CA: [] }; for (const x of Object.values(A.nodes)) if (x.sec) SECN[x.sec].push(x);
   const skOfSec = k => SECN[k].filter(x => x.kind === 'skill'), upOfSec = k => SECN[k].filter(x => x.kind === 'upgrade');
   for (const k of ['A', 'B', 'C']) { const S6 = skOfSec(k), r = n => S6.filter(x => x.ring === n); ok(S6.length === 7 && upOfSec(k).length === 7 && upOfSec(k).every(u => u.slot && u.vars.length === 3), A.sec[k] + ': 갈래 스킬 노드 7(찍을 수 있는 칸 6) · 스킬마다 변형 자리 하나에 변형 셋(보정 5) (' + S6.length + ' · ' + upOfSec(k).length + ')');

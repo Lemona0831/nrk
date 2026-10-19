@@ -538,7 +538,7 @@ const SKILLS2 = {
     { id: 'sb_searcut', row: 7, b: '혈염', tier: '중급', n: '혈염', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 20 }, { k: 'searMerge', txt: '출혈 · 화상이 둘 다 걸린 적을 베면 둘을 합쳐 새 상태 혈염(차례마다 (출혈 + 화상) × 1.5 피해, 정화되지 않음)으로 바꾼다. 혈염 걸린 적이 있는 동안 교대 보호막이 없다.' }] },
     { id: 'sb_kalpa', row: 10, b: '혈염', tier: '중급', n: '겁화', kind: 'spell', tgt: 'self', time: 'normal', cd: 9, fx: [{ k: 'sbBlaze', n: 3, txt: '「피와 화염이 몸을 감싸니, 그것은 곧 겁화일지어다.」 3차례 동안 모든 베기에 혈염, 주는 피해 +60%. 대가: 보호막 전부 소실, 받는 피해 +30%.' }] },
     { id: 'sb_bloodmail', row: 4, b: '죄인의 피', tier: '중급', n: '피의 갑주', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'wardPer', s: 'bleed', n: 17, txt: '출혈 걸린 적 하나마다 보호막 +17.' }] },
-    { id: 'sb_film', row: 7, b: '죄인의 피', tier: '중급', n: '피막', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'sbFilm', txt: '이번 차례 보호막으로 받아낸 피해의 130%를 그 적에게 출혈로.' }] },
+    { id: 'sb_film', row: 7, b: '죄인의 피', tier: '중급', n: '피막', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'sbFilm', txt: '이번 차례 보호막으로 받아낸 피해의 75%를 그 적에게 출혈로.' }] }, // M5-0 보정 5(만든 사람): 3고리 공격 칸으로(베기 + 피막)
     { id: 'sb_sinwall', row: 10, b: '죄인의 피', tier: '중급', n: '죄인의 벽', kind: 'spell', tgt: 'self', time: 'normal', cd: 9, fx: [{ k: 'sbSinWall', txt: '「아아, 죄인의 피가 오만방자하게도 모든 것을 가로막고자 하는구나.」 최대 생명력 15%를 바쳐 그 3배의 보호막. 깨지면 전열 모두에게 출혈 5.' }] },
     { id: 'sb_heatmail', row: 4, b: '유산의 불', tier: '중급', n: '달군 갑주', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbHeat', txt: '보호막을 태워 다음 기본 공격 ×2.8.' }] },
     { id: 'sb_embermail', row: 7, b: '유산의 불', tier: '중급', n: '잿불 갑주', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'sbEmberMail', txt: '보호막이 남아 있는 동안 기본 공격 · 강공격에 화상 6을 싣는다.' }] },
@@ -558,7 +558,7 @@ const SKILLS2 = {
     { id: 'sb_ashstorm', row: 10, b: '유산의 불', tier: '중급', n: '잿더미 폭풍', kind: 'spell', tgt: 'front', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'ignite', n: 4 }] },
     { id: 'sb_bloodecho', row: 5, b: '죄인의 피', tier: '중급', n: '피의 반향', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbEcho', txt: '이번 전투 동안 보호막이 있으면 베기가 출혈 +2 더.' }] }, // M5-0 보정 5에서 트리에서 뺐다(죄인의 일격으로). 데이터는 남긴다
     { id: 'sb_ashhand', row: 5, b: '유산의 불', tier: '중급', n: '재 묻은 손', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbAshHand', txt: '다음 기본 공격 2번에 화상 3.' }] }, // M5-0 보정 5에서 트리에서 뺐다(잿불 베기로)
-    { id: 'sb_cindermail', row: 8, b: '유산의 불', tier: '중급', n: '불씨 갑주', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'sbCinder', txt: '이번 전투 동안 보호막이 피해로 깎일 때마다 전열에 화상 2.' }] },
+    { id: 'sb_cindermail', row: 8, b: '유산의 불', tier: '중급', n: '불씨 갑주', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'sbCinder', txt: '이번 전투 동안 보호막이 피해로 깎일 때마다 전열에 화상 1.' }] }, // M5-0 보정 5(만든 사람): 3고리 공격 칸으로(베기 + 불씨 갑주)
     { id: 'sb_bulwark', row: 11, b: '마갑', tier: '상급', n: '방벽 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'wardFill', to: 0.75 }, { k: 'dmg', n: 11 }, { k: 'brk', n: 18 }] },
     { id: 'sb_measure', row: 11, b: '마갑', tier: '상급', n: '교차 일섬', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 19 }, { k: 'alt', run: 2, brk: 40, ward: 4 }] },
     { id: 'sb_barrage', row: 12, b: '마갑', tier: '상급', n: '방벽 포격', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 18 }, { k: 'wardDmg', per: 1, spend: 0.5, cap: 22 }, { k: 'ward', n: 3 }] },
