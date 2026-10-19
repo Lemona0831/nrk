@@ -24,9 +24,9 @@ for (const c of CLS) {
   const dist = bfs(P, 'S'); const W = { '1C': 1, '2L': 2, '2R': 2, '3L': 3, '3R': 3, '4L': 4, '4R': 4, K5: 5, '5L': 5, '5R': 5, '6L': 6, '6R': 6, '7L': 7, '7R': 7, '8L': 8, '8R': 8, K9: 9 };
   for (const d of PT.dirs) for (const pos in W) { assert.equal(dist[d + pos], W[pos], c + ' 거리 ' + d + pos); const nd = P.nodes[d + pos]; assert.equal(nd.ring, pos[0] === 'K' ? (pos === 'K5' ? 2 : 3) : (+pos[0] <= 3 ? 1 : +pos[0] <= 6 ? 2 : 3), c + ' 고리 ' + d + pos); }
   ok(true, c + ': 시작에서의 거리 · 고리 표(2-3)');
-  for (const id of ids) { const nd = P.nodes[id]; if (nd.kind === 'keystone') assert(nd.cost === 0 && IFX_NODE[nd.fx] && KS_LIST[nd.fx], c + ' 큰 각인 ' + id); else if (nd.kind !== 'start') assert(nd.cost === 1, c + ' 비용 ' + id); if (nd.kind === 'notable') assert(IFX_NODE[nd.fx] || IFX_AWK[nd.fx], c + ' 효과 키 ' + nd.fx); if (nd.kind === 'small') assert(nd.stat || nd.sm, c + ' 작은 노드 ' + id); }
+  for (const id of ids) { const nd = P.nodes[id]; if (nd.kind === 'keystone') assert(nd.cost === 0 && IFX_NODE[nd.fx] && KS_LIST[nd.fx], c + ' 큰 각인 ' + id); else if (nd.kind !== 'start') assert(nd.cost === 1, c + ' 비용 ' + id); if (nd.kind === 'notable') assert(IFX_NODE[nd.fx] || IFX_AWK[nd.fx], c + ' 효과 키 ' + nd.fx); if (nd.kind === 'small') assert(nd.stat || nd.sm || nd.basic, c + ' 작은 노드 ' + id); } // 0.8.0 M4: 평타 노드(basic)는 능력치 대신 효과
   const fx = ids.map(id => P.nodes[id].fx).filter(Boolean); ok(new Set(fx).size === fx.length, c + ': 같은 효과는 트리에 한 번');
-  ok(fx.filter(k => KS_LIST[k] && KS_LIST[k].resp).length <= 2, c + ': 대응 충전을 바꾸는 큰 각인은 둘까지(4-3)');
+  ok(fx.filter(k => KS_LIST[k] && KS_LIST[k].resp && !(IFX_NODE[k] && IFX_NODE[k].ysChan)).length <= 2, c + ': 대응 충전을 바꾸는 큰 각인은 둘까지(4-3, 방향별 유산 통로 Y4는 따로)'); ok(fx.filter(k => IFX_NODE[k] && IFX_NODE[k].ysChan).length <= 3, c + ': 유산 통로 큰 각인은 방향마다 하나(M4 Y4)');
   ok(!fx.some(k => ['a_purse', 'a_memory', 'a_flow'].includes(k)), c + ': 빠진 옛 각인(불룩한 주머니 · 샘의 기억 · 흘림새 각인)이 없음');
   const st = Object.values(P.nodes.S.stat).reduce((a, v) => a + v, 0); ok(st === (c === 'spellblade' || c === 'elementalist' ? 14 : 12), c + ': 시작 노드 능력치 12(마검사는 4단계 초반 피해 점검으로 14, 원소술사는 원거리 초안 결정 9로 14)'); // 10월 18일 0.8.0 5단계 원소술사 지능 9 · 체력 3 · 의지 2
   const tilt = PT_TILT[c]; for (const d of PT.dirs) { const first = Math.min(...['1C', '2L', '2R', '3L', '3R'].filter(p => P.nodes[d + p].kind === 'notable').map(p => dist[d + p])); const want = { A: 1, B: 2, C: 3 }[tilt[d]]; if (!P.tmp) assert.equal(first, want, c + ' 기울기 ' + d); else assert(first === Infinity || first >= want, c + ' 임시 기울기 ' + d); }
@@ -42,9 +42,9 @@ for (const c of CLS) {
     ag2L: '흘린 칼끝', ag3R: '가벼운 칼', ag5L: '각오', ag5R: '먼 주문', ag7L: '가벼운 걸음', ag7R: '단숨', lg1C: '교대의 박자', lg3L: '칼에 새긴 주문', lg5L: '넘친 숨', lg5R: '세 박자', lg7L: '가득 찬 그릇', lg7R: '마력 순환',
     su2L: '겹친 갑주', su3R: '남는 마력', su5L: '승전의 숨', su5R: '두꺼운 주문 방패', su7L: '남는 온기', su7R: '피의 갑주', sv3L: '마력 갑주', sv5L: '질긴 살갗', sv5R: '보호막 아래', sv7L: '쇠 같은 몸', sv7R: '버티는 이' };
   for (const id in W7) assert.equal(nm(id), W7[id], '7-4 ' + id); const nts = Object.values(P.nodes).filter(x => x.kind === 'notable'); ok(nts.length === 35 && nts.every(x => W7[x.id]), '마검사 중간 노드 35개가 7-4 표와 같음');
-  const K7 = { pwK5: '결정의 칼', pwK9: '마검 과부하', ctK5: '망치의 길', ctK9: '끊는 박자', agK5: '먼저 움직임', agK9: '흘림새', lgK5: '깊은 샘', lgK9: '넘치는 그릇', suK5: '피의 순환', suK9: '피를 두른 갑주', svK5: '철벽', svK9: '무거운 갑주' };
+  const K7 = { pwK5: '날 선 손', pwK9: '마검 과부하', ctK5: '무너뜨린 숨', ctK9: '끊는 박자', agK5: '흘린 숨', agK9: '먼저 움직임', lgK5: '깊은 샘', lgK9: '겹 대응', suK5: '피의 순환', suK9: '피를 두른 갑주', svK5: '막아 낸 숨', svK9: '철벽' }; // 0.8.0 M4 배치
   for (const id in K7) assert.equal(nm(id), K7[id], '큰 각인 ' + id); ok(Object.values(P.nodes).filter(x => x.kind === 'keystone' && x.pay).length === 4, '큰 각인 12, 대가 있는 것 4');
-  ok(P.nodes.pw2L.stat == null && P.nodes.pw2R.stat.int === 2 && P.nodes.pw3L.stat.str === 2 && P.nodes.pw1C.stat.str === 1 && P.nodes.pw1C.stat.int === 1 && P.nodes.ct1C.sm === 'brk' && P.nodes.lg2L.sm === 'st' && P.nodes.sv1C.stat.con === 2 && P.nodes.su1C.stat.wil === 2 && P.nodes.ag1C.stat.dex === 2, '작은 노드: 화력 L 힘 · R 지능 · C 힘1 지능1, 제어 붕괴, 계승 스태미나, 생존 체력, 유지력 의지, 기민 민첩');
+  ok(P.nodes.pw2L.stat == null && P.nodes.pw2R.fx === 'n_bs_dmg' && P.nodes.pw2R.stat == null && P.nodes.pw3L.fx === 'n_bs_brk' && P.nodes.pw1C.stat.str === 1 && P.nodes.pw1C.stat.int === 1 && P.nodes.ct1C.sm === 'brk' && P.nodes.lg2L.sm === 'st' && P.nodes.sv1C.stat.con === 2 && P.nodes.su1C.stat.wil === 2 && P.nodes.ag1C.fx === 'n_bs_dmg2' && P.nodes.ag2R.fx === 'n_bs_st' && P.nodes.ag3L.stat.dex === 2, '작은 노드: 화력 · 기민 1고리 앞 두 칸은 평타 노드(M4), 화력 C 힘1 지능1, 제어 붕괴, 계승 스태미나, 생존 체력, 유지력 의지, 기민 민첩');
   ok(JSON.stringify(P.nodes.S.stat) === JSON.stringify({ str: 5, int: 5, con: 3, wil: 1 }), '시작 노드 힘5 지능5 체력3 의지1(4단계: 12 → 14점)');
   const S8 = [['sb_bleedcut', '혈인', 2, 1, 1, 'C', ['S', 'sb_boil', 'sb_bloodmark', 'sbu_chain', 'sbu_graze']], ['sb_boil', '혈인', 2, 1, 2, 'L', ['sb_bleedcut', 'sb_taste', 'sbu_boil']], ['sb_bloodmark', '혈인', 3, 1, 2, 'R', ['sb_bleedcut', 'sb_redwind', 'sbu_scarlet']],
     ['sb_taste', '혈인', 2, 2, 3, 'L', ['sb_boil', 'sb_whirl', 'sbu_thirst']], ['sb_redwind', '혈인', 3, 2, 3, 'R', ['sb_bloodmark', 'sb_deluge', 'sbu_gale']], ['sb_whirl', '혈인', 2, 2, 4, 'L', ['sb_taste', 'sb_deluge', 'sbu_exec']], ['sb_deluge', '혈인', 4, 3, 5, 'C', ['sb_redwind', 'sb_whirl', 'sbu_fog']],
@@ -87,14 +87,14 @@ for (const c of CLS) {
   E.ptBuy(run, 'lg1C'); E.ptBuy(run, 'lg2L'); ok(p.stMax === st0 + 6 && E.fxStat(p, 'st') === 6, '계승 작은 노드 스태미나 +6');
   E.ptBuy(run, 'ct1C'); ok(Math.abs(E.fxMul(p, 'brkMul', {}, p, {}, null) - 1.03) < 1e-9, '제어 작은 노드 붕괴 ×1.03');
   ok(p.pn.includes('n_sb_altbeat'), '중간 노드 효과가 p.pn으로 fxList에 들어감');
-  E.ptBuy(run, 'pw1C'); E.ptBuy(run, 'pw2R'); ok(run.stats.str === 6 && run.stats.int === 8, '화력 C1 힘1 지능1, R2 지능 2(시작 힘 5 · 지능 5)');
-  const run2 = newRun('hunter'); E.ptBuy(run2, 'pw1C'); E.ptBuy(run2, 'pw2L'); ok(run2.stats.dex === 10, '사냥꾼 화력 작은 노드는 공격 능력치(민첩)'); // 0.8.0 5단계 원거리 초안 결정 3: 시작 민첩 8 + 화력 L2 작은 노드 2 (C1은 손에 익은 활)
+  E.ptBuy(run, 'pw1C'); E.ptBuy(run, 'pw2R'); ok(run.stats.str === 6 && run.stats.int === 6 && run.p.pn.includes('n_bs_dmg'), '화력 C1 힘1 지능1, R2는 평타 노드(M4, 시작 힘 5 · 지능 5)');
+  const run2 = newRun('hunter'); E.ptBuy(run2, 'pw1C'); E.ptBuy(run2, 'pw2L'); ok(run2.stats.dex === 8 && run2.p.pn.includes('n_bs_dmg'), '사냥꾼 화력 1고리 작은 노드는 평타 노드(M4, 민첩 그대로 8)'); // 0.8.0 5단계 원거리 초안 결정 3: 시작 민첩 8 + 화력 L2 작은 노드 2 (C1은 손에 익은 활)
 }
 // ===== 5) 큰 각인 =====
 { const run = newRun('spellblade'); run.lv = 6; E.ptFix(run); run.clears = 1; run.seed = 77; run.ch = 1;
   for (const id of ['lg1C', 'lg2L', 'lg3L', 'pw1C', 'pw2R', 'pw3R', 'su1C', 'su2L', 'ct1C', 'ct2L']) assert.equal(E.ptBuy(run, id), null, id);
   ok(E.ksGrant(run, 'b1') && !E.ksGrant(run, 'b1') && run.ksPending === 1, '같은 때는 한 번만 준다');
-  { const o4 = E.ksOfferMake(run); ok(o4.length === 3 && !o4.includes('pwK5'), '유산 4 스킬을 열지 않았으면 결정의 칼(pwK5)은 빠지고 다음 후보가 셋을 채움(10월 18일 0.8.0 5단계 결정 4): ' + o4.join(' ')); }
+  { const o4 = E.ksOfferMake(run); ok(o4.length === 3 && o4.includes('pwK5') && E.ptBuild(run.build).nodes.pwK5.fx === 'ks_sharp', '화력 K5는 날 선 손(M4). 결정의 칼이 빠져 유산 4 스킬 조건 없이 제시됨: ' + o4.join(' ')); }
   run.atree.own.push('sb_deluge'); // 10월 18일 0.8.0 5단계: 아래 제시 규칙 점검은 유산 4 스킬(혈인 혈우 낙하 sb_deluge)을 연 캐릭터로 본다
   const off = E.ksEnsureOffer(run); const C = off.map(id => ksInfo(run, id)); ok(off.length === 3, '셋을 보인다');
   ok(C.every(c => c.d <= PT.ksN), '모두 3칸 안: ' + C.map(c => c.id + ':' + c.d).join(' '));
@@ -189,8 +189,8 @@ ok(true, '9-5 4: 3챕터 13층 3번, 11층 2번, 12층 야영지 3번');
   D.click('ptbuy', 'lg1C'); D.click('ptref', 'lg1C'); ok(G.run.ptree.pts === 6, '만드는 동안 한 칸 되돌리기'); D.click('ptbuy', 'lg1C'); R_('ask = () => true'); D.click('allocnext'); D.click('atbuy', 'sb_ember'); D.click('allocok');
   ok(!G.creating && G.data.cur && G.data.cur.tv === 2 && G.data.cur.skills.join() === 'sb_ember' && G.run.p.hp === G.run.p.hpMax, '확정하면 캐릭터를 만들고 저장'); }
 // 유산 상한 · 큰 각인 훅
-{ const run = newRun('spellblade'); run.clears = 2; run.ptree.ks.push('lgK5', 'lgK9'); E.ptSync(run); ok(ysCapOf(run.p) === 8, '유산 상한은 큰 각인으로만, 최대 5 + 3 = 8'); const es = [E.mkEnemy('bruiser', false, 0)]; es[0].hp = es[0].hpMax = 5000; const b = E.newBattle(run.p, es, {}); b.stepMode = false; b.rngF = () => 0.5; E.runUntilPlayer(b); ok(run.p.ys === 8, '전투 시작 값도 상한과 같이'); }
-{ const run = newRun('spellblade'); run.clears = 2; run.ptree.ks.push('svK9'); E.ptSync(run); const es = [E.mkEnemy('bruiser', false, 0)]; const b = E.newBattle(run.p, es, {}); b.stepMode = false; E.runUntilPlayer(b); ok(!E.actionList(b).find(x => x.id === 'dodge').ok, '무거운 갑주: 흘리기를 쓸 수 없음'); }
+{ const run = newRun('spellblade'); run.clears = 2; run.ptree.ks.push('lgK5', 'lgK9'); E.ptSync(run); ok(ysCapOf(run.p) === 6, '유산 상한은 큰 각인으로만, 최대 5 + 1 = 6(M4: 넘치는 그릇 삭제, 계승 K9는 겹 대응)'); const es = [E.mkEnemy('bruiser', false, 0)]; es[0].hp = es[0].hpMax = 5000; const b = E.newBattle(run.p, es, {}); b.stepMode = false; b.rngF = () => 0.5; E.runUntilPlayer(b); ok(run.p.ys === 4, '전투 시작 값: 깊은 샘 +1, 겹 대응 −2 → 4'); }
+{ const run = newRun('spellblade'); run.clears = 2; const h0 = run.p.hpMax; run.ptree.ks.push('svK9'); E.ptSync(run); ok(E.ptBuild('spellblade').nodes.svK9.fx === 'ks_wall' && run.p.hpMax > h0, '생존 K9는 철벽(M4: 밀린 K5를 같은 방향 K9로, 무거운 갑주는 빠짐): 최대 생명력 ' + h0 + ' → ' + run.p.hpMax); }
 { const run = newRun('spellblade'); run.clears = 2; run.ptree.ks.push('suK9'); E.ptSync(run); ok(E.wardMax(run.p) === Math.round(run.p.hpMax * 0.25), '피를 두른 갑주: 보호막 상한 25%(10월 17일 보완 4, 22 → 25)'); }
 // 노드 훅: 교대의 박자(교대 보호막 5) · 마검 과부하(교대 보호막 없음) · 넘친 숨(상한에 막힌 대응을 다음 차례에 +1)
 function nodeFight(keys) { const run = newRun('spellblade'); run.clears = 2; for (const k of keys) { const id = Object.keys(E.ptBuild('spellblade').nodes).find(x => E.ptBuild('spellblade').nodes[x].fx === k); (E.ptBuild('spellblade').nodes[id].kind === 'keystone' ? run.ptree.ks : run.ptree.free).push(id); } E.ptSync(run); const es = ['bruiser', 'bruiser'].map((r, i) => E.mkEnemy(r, false, i)); for (const e of es) { e.hp = e.hpMax = 5000; e.dmg = 0; } const b = E.newBattle(run.p, es, {}); b.rngF = () => 0.5; b.stepMode = false; E.runUntilPlayer(b); return { p: run.p, b, es }; }

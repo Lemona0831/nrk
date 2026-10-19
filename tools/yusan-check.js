@@ -87,4 +87,32 @@ ok(Y.longFrom === 8 && !Y.cheap && !Y.convex, '기본값: 1차-b 측정으로 �
   ok(A1.log.some(m => /\(\+2, 차례\)/.test(m)), '긴 전투 차례 충전 +2 줄'); }
 // 18) 판 기록 요약 rooms[].ys
 { const { p, b, es } = fight(); setInt(es); E.playerAct(b, 'sb_edge', es[0].id); setInt(es); E.playerAct(b, 'guard'); const o = E.ysSum(b); ok(o && o.s === 5 && o.use === 2 && o.sp[2] === 1 && o.ids.sb_edge === 1 && o.ch.turn >= 1 && typeof o.w === 'number', '전투 요약 ysSum: ' + JSON.stringify(o)); }
+// 19–26) 0.8.0 M4 (10월 19일): 방향별 유산 통로 · 날 선 손 · 쉬지 않는 팔 · 깊은 샘 대가 · 평타 노드 · 옛 세이브 각인 환급
+function fightPn(build, pn, ens) {
+  const p = E.mkPlayer(build || 'warden', {}, {}); p.pn = pn.slice(); const es = (ens || ['bruiser']).map((r, i) => E.mkEnemy(r, false, i));
+  for (const e of es) { e.hp = e.hpMax = 5000; e.dmg = 1; }
+  const b = E.newBattle(p, es, {}); b.rngF = () => 0.5; b.stepMode = false; p.pn = pn.slice(); E.runUntilPlayer(b); return { p, b, es };
+}
+const ysResp = D.run_('ysResp');
+{ const { p, b, es } = fightPn('warden', ['ks_blockbreath']); setInt(es); p.ys = 1; E.playerAct(b, 'guard'); const r = ysRec(b, 'resp');
+  ok(r.some(x => x.why === '막기' && x.g === 1) && r.some(x => x.why === '막아 낸 숨' && x.g === 1), '막아 낸 숨: 막기 대응 +1에 +1 더');
+  for (let k = 0; k < 3; k++) { setInt(es); E.playerAct(b, 'guard'); } ok(ysRec(b, 'resp').filter(x => x.why === '막아 낸 숨').length === 2, '막아 낸 숨은 전투마다 2번'); }
+{ const { p, b } = fightPn('warden', ['ks_blockbreath']); p.ys = 0; b.ysR = 7; ysResp(b, '막기'); ysResp(b, '막기'); const r = ysRec(b, 'resp');
+  ok(r.filter(x => x.why === '막기').length === 1 && r.filter(x => x.why === '막아 낸 숨').length === 1, '라운드 공유 한도에 막힌 대응에는 통로 +1도 없다'); }
+{ const { p, b } = fightPn('warden', ['ks_brkbreath']); p.ys = 0; ysResp(b, '막기'); ok(!ysRec(b, 'resp').some(x => x.why === '무너뜨린 숨'), '무너뜨린 숨은 막기에 붙지 않는다');
+  b.ysR = 3; ysResp(b, '무너뜨리기'); ok(ysRec(b, 'resp').some(x => x.why === '무너뜨린 숨'), '무너뜨린 숨: 무너뜨리기 대응에 +1 더'); }
+{ const { p, b } = fightPn('warden', ['ks_slipbreath']); p.ys = 0; ysResp(b, '먼저 치우기'); b.ysR = 4; ysResp(b, '흘리기'); ok(ysRec(b, 'resp').filter(x => x.why === '흘린 숨').length === 2, '흘린 숨: 흘리기 · 먼저 치우기'); }
+{ const { p, b } = fightPn('elementalist', ['ks_el_cut', 'ks_brkbreath']); p.ys = 0; ysResp(b, '무너뜨리기'); const r = ysRec(b, 'resp');
+  ok(r.some(x => x.why === '끊어진 영창') && !r.some(x => x.why === '무너뜨린 숨'), '원소술사: 끊어진 영창이 준 무너뜨리기에는 무너뜨린 숨을 겹치지 않는다'); }
+{ const dmgOf = pn => { const { b, es } = fightPn('warden', pn); setInt(es); const h0 = es[0].hp; E.playerAct(b, 'basic', es[0].id); return h0 - es[0].hp; };
+  const d0 = dmgOf([]), d1 = dmgOf(['ks_sharp']), d2 = dmgOf(['ks_deep']);
+  ok(Math.abs(d1 / d0 - 1.3) < 0.02, '날 선 손: 기본 공격 피해 ×1.3 (' + d0 + ' → ' + d1 + ')'); ok(Math.abs(d2 / d0 - 0.85) < 0.02, '깊은 샘 대가: 기본 공격 피해 ×0.85 (' + d2 + ')');
+  const brkOf = (pn, k) => { const { b, es } = fightPn('warden', pn); setInt(es, k); const b0 = es[0].brk || 0; E.playerAct(b, 'basic', es[0].id); return (es[0].brk || 0) - b0; };
+  ok(brkOf(['ks_sharp'], 'heavy') - brkOf([], 'heavy') === 10 && brkOf(['ks_sharp'], null) === brkOf([], null), '날 선 손: 예고 중인 적에게만 붕괴 +10');
+  const { p } = fightPn('warden', ['ks_sharp']); ok(D.run_('ysStartOf')(p) === Y.start - 2, '날 선 손 대가: 시작 유산 −2'); }
+{ const hc = D.run_('heavyCost'); const a = fightPn('warden', []).p, c = fightPn('warden', ['ks_tireless']).p; ok(hc(a) - hc(c) === 15, '쉬지 않는 팔: 강공격 스태미나 −15'); ok(E.flaskCap(c, 'life') === E.flaskCap(a, 'life') - 1, '쉬지 않는 팔 대가: 생명력 플라스크 −1'); }
+{ const { p, b, es } = fightPn('warden', ['n_bs_st']); setInt(es); p.st = 10; E.playerAct(b, 'basic', es[0].id); ok(p.st >= 13, '평타 노드: 기본 공격이 맞히면 스태미나 +3 (' + p.st + ')'); }
+{ const run = { build: 'warden', ptree: { own: [], free: ['ct4L', 'lg4R'], ks: ['lgK9', 'ctK5', 'lgK5'], pts: 0, log: [] }, ksLog: [{ id: 'ctK5', free: ['ct4L'] }, { id: 'lgK9', free: ['lg4R'] }, { id: 'lgK5', free: [] }], ksPending: 0 };
+  const k = D.run_('ksMigrateM4')(run); ok(k === 2 && run.ptree.ks.join() === 'lgK5' && run.ksPending === 2 && run.ptree.free.length === 0 && run.ptree.ksv === 2, '옛 세이브: 바뀐 자리 각인(넘치는 그릇 · 망치의 길)과 그 길을 거두고 2번 다시 고름');
+  ok(D.run_('ksMigrateM4')(run) === 0, '옛 세이브 옮기기는 한 번만'); }
 console.log('yusan-check: ' + n + '개 통과');

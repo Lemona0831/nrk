@@ -185,10 +185,10 @@ const d0 = basicD().d;
   ok(R_('AT_GONE').elementalist.length === 9 && R_('AT_GONE').elementalist.every(id => E.SK2[id] && !A.nodes[id]), '빠진 스킬 아홉(AT_GONE)');
   ok(/행동 끝 열충격 포함/.test(R_('skBody')(E.SK2.e_resonate)) && /영창을 끊으면 나에게 보호 2/.test(R_('skBody')(E.skOf({ build: 'elementalist', aup: ['eu_veil'], pn: [] }, 'e_disrupt'))), '설명 문장: 공명 처치 환급 · 원소 장막'); }
 { const run = newRun('elementalist'); const S = run.stats; ok(S.int === 9 && S.con === 3 && S.wil === 2 && (S.str || 0) + (S.dex || 0) === 0, '시작 노드 지능 9 · 체력 3 · 의지 2(14, 결정 9)');
-  E.ptBuy(run, 'pw1C'); E.ptBuy(run, 'pw2L'); ok(run.stats.int === 11, '화력 작은 노드는 지능 +2(C1은 번지는 열)');
+  E.ptBuy(run, 'pw1C'); E.ptBuy(run, 'pw2L'); ok(run.stats.int === 9 && run.p.pn.includes('n_bs_dmg'), '화력 1고리 작은 노드는 평타 노드(M4, 지능 그대로 9, C1은 번지는 열)');
   const P = E.ptBuild('elementalist'), K = R_('KS_LIST'); ok(!P.tmp && P.nodes.pw1C.fx === 'k_el1' && P.nodes.ct1C.fx === 'k_el2' && P.nodes.lg2L.fx === 'k_el3' && P.nodes.lg3R.fx === 'n_el_echo' && P.nodes.pw3L.fx === 'n_el_student' && P.nodes.ct3L.fx === 'n_el_chanthand', '패시브 배치: 번지는 열 · 굳는 서리 · 남는 울림 · 이어지는 울림 · 불의 학도 · 영창 끊는 손');
   ok(P.nodes.ctK5.fx === 'ks_el_cut' && P.nodes.pwK9.fx === 'ks_el_ember' && P.nodes.svK9.fx === 'ks_el_heart' && P.nodes.ctK5.ring === 2, '직업 큰 각인 셋: 끊어진 영창(제어 K5, 2고리) · 잿불의 길 · 얼음 심장(결정 11)');
-  const ks = Object.values(P.nodes).filter(n => n.kind === 'keystone'); ok(ks.filter(n => K[n.fx].resp).length === 2 && ks.filter(n => K[n.fx].pay).length === 5 && !ks.some(n => n.fx === 'ks_heavy' || n.fx === 'ks_breaker'), '대응 큰 각인 둘(흘림새 + 끊어진 영창), 대가 다섯, 무거운 갑주 · 무너뜨리는 자 없음');
+  const ks = Object.values(P.nodes).filter(n => n.kind === 'keystone'); const IFXN = R_('IFX_NODE'); ok(ks.filter(n => K[n.fx].resp && !IFXN[n.fx].ysChan).map(n => n.fx).sort().join() === 'ks_double,ks_el_cut' && ks.filter(n => IFXN[n.fx].ysChan).length === 3 && ks.filter(n => K[n.fx].pay).length === 6 && !ks.some(n => n.fx === 'ks_heavy' || n.fx === 'ks_breaker'), '대응 큰 각인: 통로 밖 둘(끊어진 영창 + 겹 대응), 통로 셋(M4, 무너뜨린 숨은 K9), 대가 여섯, 무거운 갑주 · 무너뜨리는 자 없음');
   ok(P.nodes.pw7L.pool === 'common' && P.nodes.pw7R.pool === 'common', '화력 3고리는 공용 둘(인플레이션 막기)');
   ok(/열충격 피해 \+3/.test(P.nodes.lg2L.d) && /스태미나가 6/.test(P.nodes.lg3R.d), '남는 울림은 효과를 바꾸고, 옛 효과(스태미나 +6)는 이어지는 울림으로'); }
 const IFE = R_('IFX_NODE'), elGuardOf = R_('elGuardOf');
@@ -295,10 +295,10 @@ const setEl = (b, e, I, C) => { if (I) E.addS(b, e, 'ignite', I); if (C) E.addS(
   const sb = id => R_('skBody')(E.skOf({ build: 'assassin', aup: [id], pn: [] }, A.nodes[id].on));
   ok(/중독 7/.test(sb('au_venom')) && !/피해 14/.test(sb('au_venom')) && /피해 20/.test(sb('au_counter')), '설명 문장: 독 묻은 칼막이(흘려 내면 피해 대신 중독 7) · 되받아치기(피해 20)'); }
 { const run = newRun('assassin'); const S = run.stats; ok(S.dex === 5 && S.int === 4 && S.con === 3 && (S.str || 0) + (S.wil || 0) === 0, '시작 노드 민첩 5 · 지능 4 · 체력 3 그대로(4-6)');
-  E.ptBuy(run, 'pw1C'); ok(run.stats.dex === 7, '화력 작은 노드는 민첩 +2');
+  E.ptBuy(run, 'pw1C'); ok(run.stats.dex === 5 && run.p.pn.includes('n_bs_dmg'), '화력 1고리 작은 노드는 평타 노드(M4, 민첩 그대로 5)');
   const P = E.ptBuild('assassin'), K = R_('KS_LIST'); ok(!P.tmp && P.nodes.pw2L.fx === 'k_as1' && P.nodes.lg1C.fx === 'k_as2' && P.nodes.ag1C.fx === 'k_as3' && P.nodes.pw3R.fx === 'n_as_gap' && P.nodes.lg5R.fx === 'n_as_store' && P.nodes.lg7R.fx === 'n_as_link', '패시브 배치: 깊은 독 · 터지는 독 · 그림자 숨 · 흘려 낸 틈 · 독의 저장고 · 이어진 그림자');
   ok(P.nodes.pwK9.fx === 'ks_as_lord' && P.nodes.svK9.fx === 'ks_as_oath' && P.nodes.pwK9.ring === 3 && P.nodes.svK9.ring === 3, '직업 큰 각인 둘: 독의 군주(화력 K9) · 그림자 맹세(생존 K9)');
-  const ks = Object.values(P.nodes).filter(n => n.kind === 'keystone'); ok(ks.filter(n => K[n.fx].resp).length === 1 && ks.filter(n => K[n.fx].pay).length === 5 && !ks.some(n => n.fx === 'ks_heavy') && ks.filter(n => K[n.fx].cls === 'assassin').length === 2, '대응 큰 각인은 흘림새 하나, 대가 다섯, 무거운 갑주 없음(그림자 맹세로 바꿈)');
+  const ks = Object.values(P.nodes).filter(n => n.kind === 'keystone'); const IFXN = R_('IFX_NODE'); ok(ks.filter(n => K[n.fx].resp && !IFXN[n.fx].ysChan).map(n => n.fx).join() === 'ks_double' && ks.filter(n => IFXN[n.fx].ysChan).length === 3 && ks.filter(n => K[n.fx].pay).length === 7 && !ks.some(n => n.fx === 'ks_heavy') && ks.filter(n => K[n.fx].cls === 'assassin').length === 2, '대응 큰 각인: 통로 밖은 겹 대응 하나, 통로 셋(M4), 대가 일곱, 무거운 갑주 없음(그림자 맹세로 바꿈)');
   const nt = Object.values(P.nodes).filter(n => n.kind === 'notable'); ok(nt.length === 35 && nt.filter(n => n.pool === 'class').length === 18, '중간 노드 35(직업 18 · 공용 17)'); }
 const asR = R_, ysResp = f('ysResp'), parryRed = f('parryRed'), parryBigOf = R_('parryBigOf'), psnCapOf = R_('psnCapOf');
 const afight = o => { const f = fight('assassin', o); for (const e of f.es) e.brkMax = 1000; return f; };
@@ -412,8 +412,8 @@ const near = (a, b2) => Math.abs(a - b2) < 1e-6;
   const mk = (cls, act) => { const run = newRun(cls); run.lv = 16; run.clears = 2; run.seed = 91; run.ch = 2; E.ptFix(run); for (const id of ['pw1C', 'pw2L', 'pw3L', 'pw4L']) assert.equal(E.ptBuy(run, id), null, cls + ' ' + id); run.atree.own = act.slice(); run.skills = act.filter(id => E.atBuild(cls).nodes[id].kind === 'skill').slice(0, 4); E.atSync(run); return run; };
   for (const [cls, a4, a0] of [['assassin', ['a_pouch', 'a_burst', 'a_cataclysm'], ['a_fang', 'a_hack', 'a_siphon', 'a_essence']], ['hunter', ['h_prey', 'h_pierce', 'h_heavy', 'h_doom'], ['h_prey', 'h_pierce']], ['spellblade', ['sb_deluge'], []]]) {
     const r4 = mk(cls, a4), r0 = mk(cls, a0); const P = E.ptBuild(cls); const o4 = E.ksOfferMake(r4), o0 = E.ksOfferMake(r0);
-    ok(P.nodes.pwK5.fx === 'ks_crystal' && ksHasCost4(r4) && !ksHasCost4(r0), cls + ': 유산 4 스킬 판정(skCost(skOf))');
-    ok(o4.includes('pwK5') && !o0.includes('pwK5') && o0.length === 3 && JSON.stringify(E.ksOfferMake(r0)) === JSON.stringify(o0), cls + ': 유산 4가 있으면 결정의 칼(1칸) 제시, 없으면 빼고 다음 후보로 셋(같은 시드면 같은 셋) ' + o4.join(' ') + ' / ' + o0.join(' '));
+    ok(P.nodes.pwK5.fx === 'ks_sharp' && ksHasCost4(r4) && !ksHasCost4(r0), cls + ': 유산 4 스킬 판정(skCost(skOf)), 화력 K5는 날 선 손(M4)');
+    ok(o4.includes('pwK5') && o0.includes('pwK5') && o0.length === 3 && JSON.stringify(E.ksOfferMake(r0)) === JSON.stringify(o0), cls + ': 결정의 칼이 빠져 화력 K5(날 선 손)는 유산 4 스킬과 상관없이 제시(같은 시드면 같은 셋) ' + o4.join(' ') + ' / ' + o0.join(' '));
     ok(E.ksCands(r0).some(c => c.id === 'pwK5'), cls + ': 후보 계산(ksCands · ksInfo)은 그대로, 제시에서만 뺀다'); }
   { const run = mk('assassin', ['a_pouch', 'a_burst']); run.skills = ['a_pouch', 'a_burst']; E.atSync(run); ok(!ksHasCost4(run), '시작 스킬은 유산 2'); run.atree.own.push('a_cataclysm'); ok(ksHasCost4(run), '찍기만 하고 끼우지 않은 유산 4 스킬도 연 스킬로 셈'); } }
 // 결정 5: 끊어진 영창 — 끊기 · 무너뜨리기 · 먼저 치우기만(막기 · 흘리기는 아님), 대응 한도 밖 +1, 전투마다 2번. 테스터 큰 각인 선호에 있음
@@ -424,7 +424,7 @@ const near = (a, b2) => Math.abs(a - b2) < 1e-6;
   { const fe = efight({ ks: ['ctK5'] }); const { b, p, es } = fe; for (const e of es) e.hp = e.hpMax = 1; es[1].intent = { k: 'heavy' }; b.queue = ['p', es[1].id]; b.stepMode = true; p.ys = 0; E.playerAct(b, 'basic', es[1].id); ok(!es[1].alive && cutN(b) === 1 && b.rec.some(r => r.k === 'ys' && r.why === '먼저 치우기'), '실제 먼저 치우기(강타 예고 적을 그 차례 전에 쓰러뜨림)에도 +1 더'); }
   { const fe = fight('assassin', {}); fe.p.ys = 0; ysResp(fe.b, '끊기'); ok(cutN(fe.b) === 0 && fe.p.ys === 1, '다른 직업에는 없음'); }
   ok(/끊기 · 무너뜨리기 · 먼저 치우기/.test(KS.ks_el_cut.d) && KS.ks_el_cut.resp === 1, '설명: 끊기 · 무너뜨리기 · 먼저 치우기 (대응 큰 각인 표시 그대로)');
-  ok(/const KS_PREF = \[[^\]]*'ks_crystal', 'ks_el_cut', 'ks_breaker'/.test(require('fs').readFileSync(require('path').join(__dirname, 'dgqa.js'), 'utf8')), '테스터 큰 각인 선호: 끊어진 영창을 제어 큰 각인(무너뜨리는 자) 앞에'); }
+  { const KP = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, 'persona', 'ks-pref.json'), 'utf8')); ok(KP.careful.order.includes('ks_el_cut') && KP.expert.order.indexOf('ks_el_cut') < KP.expert.order.indexOf('ks_hammer') && KP.careful.order.indexOf('ks_deep') >= 3 && KP.basic.order[0] === 'ks_sharp', '테스터 큰 각인 선호표(M4): 끊어진 영창이 들어 있고, 신중 깊은 샘 4위 아래, 평타는 날 선 손 1위'); } }
 // 결정 3 측정 변형(ASN_SHADOW_VAR): swap · old · rush 트리가 유효한지 따로 띄운 프로세스에서 본다. 10월 18일 0.8.0 5단계 마무리(11-4): swap이 기본 데이터가 되어 swap은 바꾸지 않고, old가 맞바꾸기 전 배치다
 { const A0 = E.atBuild('assassin'), N0 = A0.nodes; ok(!process.env.ASN_SHADOW_VAR ? N0.a_ambush.ring === 1 && N0.a_aim.ring === 2 && N0.au_smoke.ring === 2 && N0.au_smoke.on === 'a_aim' && N0.a_after.links.includes('a_ambush') && N0.a_shade.links.includes('a_ambush') && N0.a_ambush.links.includes('a_deflect') && N0.a_aim.links.includes('a_shadow') && !N0.a_rush && Object.keys(N0).length === 52 : true, '기본 데이터(맞바꾸기): 후열 기습 1고리(흘려 베기 밑) · 칼끝 겨누기 2고리(그림자 찌르기 밑) · 연막 2고리 · 잔상 · 그늘 숨기는 후열 기습 밑 · 그림자 연타 없음(시작 포함 52)');
   const code = `process.env.DGDIR = '.'; const D = require('./tools/dgqa.js'), E = D.G0, R_ = D.run_; const A = E.atBuild('assassin'), N = A.nodes, skCost = R_('skCost'); const out = {};

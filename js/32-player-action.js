@@ -23,7 +23,7 @@ function pickDodge(b) {
 }
 function dodgeCost(p) { return Math.max(0, actCost(p, 'dodge', (p.build === 'assassin' && isV2(p) ? 25 : 30) + (p.eq.amulet === 'witness' ? 10 : 0) - Math.floor(stat(p, 'dex') / 10)) - (p.pbuf ? p.pbuf.stam : 0)); }
 const guardCost = p => actCost(p, 'guard', 20);
-const heavyCost = p => actCost(p, 'heavy', 40 + (p.eq.weapon === 'maul' && isV2(p) ? 10 : 0)); // 무거운 망치(0.6a.2): 강공격 스태미나 +10 (옛 대가 "1.3T → 1.4T"는 라운드에서 차이가 없다)
+const heavyCost = p => actCost(p, 'heavy', HEAVY_COST + (p.eq.weapon === 'maul' && isV2(p) ? 10 : 0)); // 무거운 망치(0.6a.2): 강공격 스태미나 +10 (옛 대가 "1.3T → 1.4T"는 라운드에서 차이가 없다)
 function actionList(b) {
   const p = b.p; const B = BUILDS[p.build];
   const L = [

@@ -505,6 +505,14 @@
    "introduced": "f7f6630",
    "expires": "상시",
    "note": "빌드 표(tools/buildmix.js)용 기록(행동별 준 피해 actDmg)을 결과에 더한다. 끄면 결과 파일은 그대로"
+  },
+  {
+   "name": "HEAVY_17",
+   "kind": "env",
+   "default": null,
+   "introduced": "M4",
+   "expires": "M5-0",
+   "note": "강공격 A/B(D11): 1이면 HEAVY_V2 1.7 · HEAVY_COST 35, 0이면 1.5 · 40. 끄면 게임 기본값"
   }
  ]
 }

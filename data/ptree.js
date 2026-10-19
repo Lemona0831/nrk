@@ -11,6 +11,7 @@ const PT = {
   ksN: 3, ksOffer: 3, // 큰 각인 제시: 찍은 곳에서 3칸 안, 셋
   smallBrk: 0.03, smallSt: 6, // 제어 작은 노드 주는 붕괴 +3%(곱), 계승 작은 노드 스태미나 +6
 };
+const PT_BASIC = { pw: ['n_bs_dmg', 'n_bs_brk'], ag: ['n_bs_dmg2', 'n_bs_st'] }; // 0.8.0 M4: 방향마다 1고리 작은 노드 앞의 두 칸(능력치 대신 이 효과)
 const AT_PTS = { start: 2, lv: 1 }; // 액티브 포인트: 시작 2 + 레벨마다 1(10월 17일 만든 사람 결정, 시작은 전에 1)
 /* 마검사 두 번 교대 (10월 17일 만든 사람 보완 1, 교대의 박자): 한 차례 두 번째 교대에 보호막 ward, 다음 스킬 비용 −off(바닥 1). max: 할인이 생기는 횟수의 전투당 한도(0이면 차례마다), min: 할인을 받는 스킬의 최소 유산 비용 */
 const SB_ALT2 = { ward: 3, off: 1, max: 0, min: 3 }; // 4단계 조정: min 1 → 3 (모든 다음 스킬 −1이면 1챕터 넘김이 21% → 33%로 뛰었다. 유산 3 · 4 스킬에만 걸면 24%)
@@ -46,6 +47,11 @@ const PT_POOL = {
 };
 /* 새 중간 노드의 이름 · 문장 (공용 3 + 마검사 직업 노드). 옛 각인을 옮긴 노드는 AWK_MAP을 읽는다 */
 const PN_TXT = {
+  /* 0.8.0 M4: 화력 · 기민 1고리 작은 노드 둘씩을 평타 노드로(직업마다 같은 틀, PT_BASIC) */
+  n_bs_dmg: { n: '기본 공격 피해 +4%', d: '기본 공격으로 주는 직접 피해가 4% 늘어납니다.' },
+  n_bs_dmg2: { n: '기본 공격 피해 +4%', d: '기본 공격으로 주는 직접 피해가 4% 늘어납니다.' },
+  n_bs_brk: { n: '기본 공격 붕괴 +2', d: '기본 공격의 붕괴가 2 늘어납니다.' },
+  n_bs_st: { n: '기본 공격 스태미나 +3', d: '기본 공격이 맞히면 스태미나 3을 되찾습니다.' },
   n_overflow: { n: '넘친 숨', d: '대응 충전이 상한에 막혀 버려지면 다음 내 차례 시작에 유산 +1로 돌려받습니다(전투마다 1번).' },
   n_fullvessel: { n: '가득 찬 그릇', d: '유산이 가득할 때 주는 직접 피해가 6% 늘어납니다.' },
   n_shaken: { n: '흔들린 숨', d: '적을 무너뜨리면 스태미나 +8.' },
@@ -152,8 +158,13 @@ const PN_TXT = {
 };
 /* 큰 각인 (4-1 공용, 4-2 직업). dir은 그 자리의 방향, pay는 대가(빨간 줄) */
 const KS_LIST = {
-  ks_deep: { dir: 'lg', n: '깊은 샘', d: '유산 상한 +1(전투 시작 값도 +1).' },
-  ks_brim: { dir: 'lg', n: '넘치는 그릇', d: '유산 상한 +2.', pay: '차례 충전이 짝수 번째 내 차례에만 들어옵니다.' },
+  ks_deep: { dir: 'lg', n: '깊은 샘', d: '유산 상한 +1(전투 시작 값도 +1).', pay: '기본 공격 피해 −15%.' }, // 0.8.0 M4(D10): 대가가 생겼다. 넘치는 그릇(상한 +2)은 없앴다
+  /* 0.8.0 M4 (10월 19일 만든 사람 결정 D8 · Y4): 평타 축 큰 각인과 방향별 유산 통로 */
+  ks_sharp: { dir: 'pw', n: '날 선 손', d: '기본 공격 피해가 30% 늘어납니다. 예고 중인 적을 기본 공격으로 맞히면 붕괴 +10.', pay: '유산 상한 −2(전투 시작 값도 −2).' },
+  ks_tireless: { dir: 'su', n: '쉬지 않는 팔', d: '강공격의 스태미나가 15 줄어듭니다.', pay: '생명력 플라스크 최대 충전 −1.' },
+  ks_brkbreath: { dir: 'ct', n: '무너뜨린 숨', d: '무너뜨리기로 대응 충전을 받으면 유산 +1 더(전투마다 2번).', resp: 1 },
+  ks_slipbreath: { dir: 'ag', n: '흘린 숨', d: '흘리기 · 먼저 치우기로 대응 충전을 받으면 유산 +1 더(전투마다 2번).', resp: 1 },
+  ks_blockbreath: { dir: 'sv', n: '막아 낸 숨', d: '막기로 대응 충전을 받으면 유산 +1 더(전투마다 2번).', resp: 1 },
   ks_double: { dir: 'lg', n: '겹 대응', d: '대응 충전을 라운드에 2번까지 받습니다.', pay: '전투 시작 유산 −2.', resp: 1 },
   ks_bare: { dir: 'lg', n: '빈손의 맹세', d: '대응 충전 한 번에 유산 +2.', pay: '기본 공격 피해 −20%.', resp: 1 },
   ks_crystal: { dir: 'pw', n: '결정의 칼', d: '유산 4 스킬의 피해가 25% 늘어납니다.' },
@@ -184,8 +195,17 @@ const KS_LIST = {
   ks_as_lord: { dir: 'pw', cls: 'assassin', n: '독의 군주', d: '내가 거는 중독의 상한이 20에서 30으로 늘어납니다.', pay: '흘리기 감소분 −15%p(70% → 55%, 공통 흘리기 · 흘리기 스킬 모두).' },
   ks_as_oath: { dir: 'sv', cls: 'assassin', n: '그림자 맹세', d: '흘리기의 스태미나가 10 줄고, 흘리기 스킬의 피해(흘려 내고 주는 피해 포함)가 15% 늘어납니다.', pay: '내가 거는 독 −30%(반올림, 최소 1).' },
 };
+/* 0.8.0 M4(10월 19일) 전 큰 각인 배치. 옛 세이브에서 자리의 각인이 바뀐 것을 찾아 돌려준다(ksMigrateM4) */
+const KS_V1 = {
+  spellblade: { pwK5: 'ks_crystal', pwK9: 'ks_sb_over', ctK5: 'ks_hammer', ctK9: 'ks_sb_beat', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_brim', suK5: 'ks_cycle', suK9: 'ks_sb_blood', svK5: 'ks_wall', svK9: 'ks_heavy' },
+  warden: { pwK5: 'ks_crystal', pwK9: 'ks_wd_drop', ctK5: 'ks_hammer', ctK9: 'ks_breaker', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_brim', suK5: 'ks_cycle', suK9: 'ks_wd_eternal', svK5: 'ks_wall', svK9: 'ks_heavy' },
+  monk: { pwK5: 'ks_crystal', pwK9: 'ks_mk_empty', ctK5: 'ks_hammer', ctK9: 'ks_breaker', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_brim', suK5: 'ks_cycle', suK9: 'ks_dry', svK5: 'ks_wall', svK9: 'ks_mk_vow' },
+  hunter: { pwK5: 'ks_crystal', pwK9: 'ks_hn_solo', ctK5: 'ks_hammer', ctK9: 'ks_breaker', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_hn_chase', suK5: 'ks_cycle', suK9: 'ks_dry', svK5: 'ks_wall', svK9: 'ks_heavy' },
+  elementalist: { pwK5: 'ks_crystal', pwK9: 'ks_el_ember', ctK5: 'ks_el_cut', ctK9: 'ks_hammer', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_brim', suK5: 'ks_cycle', suK9: 'ks_dry', svK5: 'ks_wall', svK9: 'ks_el_heart' },
+  assassin: { pwK5: 'ks_crystal', pwK9: 'ks_as_lord', ctK5: 'ks_hammer', ctK9: 'ks_breaker', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_brim', suK5: 'ks_cycle', suK9: 'ks_dry', svK5: 'ks_wall', svK9: 'ks_as_oath' }
+};
 /* 임시 트리의 큰 각인 자리 (K5, K9): 공용 큰 각인을 방향마다 목록 순서대로 */
-const KS_TMP = { pw: ['ks_crystal', 'ks_glass'], ct: ['ks_hammer', 'ks_breaker'], ag: ['ks_first', 'ks_flow'], lg: ['ks_deep', 'ks_brim'], su: ['ks_cycle', 'ks_dry'], sv: ['ks_wall', 'ks_heavy'] };
+const KS_TMP = { pw: ['ks_sharp', 'ks_glass'], ct: ['ks_brkbreath', 'ks_hammer'], ag: ['ks_slipbreath', 'ks_first'], lg: ['ks_deep', 'ks_double'], su: ['ks_cycle', 'ks_tireless'], sv: ['ks_blockbreath', 'ks_wall'] }; // 0.8.0 M4: K5 = 방향별 유산 통로(화력은 날 선 손), 밀린 K5는 같은 방향 K9로
 /* 직업 트리 내용. nodes: 중간 노드 자리 → 효과 키, ks: 큰 각인 자리 → 큰 각인 키. 마검사는 7-3 · 7-4절 그대로 */
 const PT_CLS = {
   spellblade: {
@@ -199,7 +219,7 @@ const PT_CLS = {
       su2L: 'k_sb3', su3R: 'n_sb_remnant', su5L: 'a_vigor', su5R: 'n_sb_thickaegis', su7L: 'a_warmth', su7R: 'n_sb_bloodmail',
       sv3L: 'n_sb_manamail', sv5L: 'a_skin', sv5R: 'n_sb_under', sv7L: 'a_iron', sv7R: 'a_stand',
     },
-    ks: { pwK5: 'ks_crystal', pwK9: 'ks_sb_over', ctK5: 'ks_hammer', ctK9: 'ks_sb_beat', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_brim', suK5: 'ks_cycle', suK9: 'ks_sb_blood', svK5: 'ks_wall', svK9: 'ks_heavy' },
+    ks: { pwK5: 'ks_sharp', pwK9: 'ks_sb_over', ctK5: 'ks_brkbreath', ctK9: 'ks_sb_beat', agK5: 'ks_slipbreath', agK9: 'ks_first', lgK5: 'ks_deep', lgK9: 'ks_double', suK5: 'ks_cycle', suK9: 'ks_sb_blood', svK5: 'ks_blockbreath', svK9: 'ks_wall' },
   },
   /* 0.8.0 5단계 (10월 17일 만든 사람 검토 반영): docs/제안/0.8.0-5단계-파수꾼-수도승-트리초안-2026-10-17.md 2-5 · 3-5 */
   warden: {
@@ -211,7 +231,7 @@ const PT_CLS = {
       ag3L: 'n_wd_turn', ag5L: 'a_resolve', ag5R: 'a_light', ag7L: 'a_gulp', ag7R: 'n_wd_pullhit',
       lg2L: 'n_wd_stack', lg3R: 'n_wd_respward', lg5L: 'n_fullvessel', lg5R: 'n_wd_ready', lg7L: 'n_wd_fuel', lg7R: 'n_wd_bracewall',
     },
-    ks: { pwK5: 'ks_crystal', pwK9: 'ks_wd_drop', ctK5: 'ks_hammer', ctK9: 'ks_breaker', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_brim', suK5: 'ks_cycle', suK9: 'ks_wd_eternal', svK5: 'ks_wall', svK9: 'ks_heavy' },
+    ks: { pwK5: 'ks_sharp', pwK9: 'ks_wd_drop', ctK5: 'ks_brkbreath', ctK9: 'ks_hammer', agK5: 'ks_slipbreath', agK9: 'ks_first', lgK5: 'ks_deep', lgK9: 'ks_double', suK5: 'ks_cycle', suK9: 'ks_wd_eternal', svK5: 'ks_blockbreath', svK9: 'ks_wall' },
   },
   monk: {
     nodes: {
@@ -222,7 +242,7 @@ const PT_CLS = {
       ag2L: 'n_mk_parry', ag3R: 'n_mk_prestance', ag5L: 'a_resolve', ag5R: 'a_light', ag7L: 'a_gulp', ag7R: 'n_mk_quick',
       lg1C: 'n_mk_vessel', lg3L: 'n_mk_seed', lg5L: 'n_fullvessel', lg5R: 'n_mk_double', lg7L: 'n_mk_pool', lg7R: 'n_mk_spill',
     },
-    ks: { pwK5: 'ks_crystal', pwK9: 'ks_mk_empty', ctK5: 'ks_hammer', ctK9: 'ks_breaker', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_brim', suK5: 'ks_cycle', suK9: 'ks_dry', svK5: 'ks_wall', svK9: 'ks_mk_vow' },
+    ks: { pwK5: 'ks_sharp', pwK9: 'ks_mk_empty', ctK5: 'ks_brkbreath', ctK9: 'ks_hammer', agK5: 'ks_slipbreath', agK9: 'ks_first', lgK5: 'ks_deep', lgK9: 'ks_double', suK5: 'ks_cycle', suK9: 'ks_tireless', svK5: 'ks_blockbreath', svK9: 'ks_mk_vow' },
   },
   /* 0.8.0 5단계 사냥꾼 (10월 18일 결정 반영): docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 2-5. 작은 노드는 화력 · 기민 민첩 +2(공격 능력치) */
   hunter: {
@@ -234,7 +254,7 @@ const PT_CLS = {
       ag1C: 'k_hn3', ag3L: 'n_hn_aside', ag5L: 'a_resolve', ag5R: 'n_hn_quick', ag7L: 'a_light', ag7R: 'a_gulp',
       lg2L: 'k_hn1', lg3R: 'n_hn_pass', lg5L: 'n_overflow', lg5R: 'n_hn_linkup', lg7L: 'n_fullvessel', lg7R: 'n_hn_finale',
     },
-    ks: { pwK5: 'ks_crystal', pwK9: 'ks_hn_solo', ctK5: 'ks_hammer', ctK9: 'ks_breaker', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_hn_chase', suK5: 'ks_cycle', suK9: 'ks_dry', svK5: 'ks_wall', svK9: 'ks_heavy' },
+    ks: { pwK5: 'ks_sharp', pwK9: 'ks_hn_solo', ctK5: 'ks_brkbreath', ctK9: 'ks_hammer', agK5: 'ks_slipbreath', agK9: 'ks_first', lgK5: 'ks_deep', lgK9: 'ks_hn_chase', suK5: 'ks_cycle', suK9: 'ks_tireless', svK5: 'ks_blockbreath', svK9: 'ks_wall' },
   },
   /* 10월 18일 0.8.0 5단계 원소술사 (결정 9–11 반영): docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 3-5. 작은 노드는 화력 지능 +2(공격 능력치).
      화력 3고리는 공용 둘만(3-2 인플레이션 막기). 큰 각인: 끊어진 영창(제어 K5) · 잿불의 길(화력 K9, 대가) · 얼음 심장(생존 K9, 대가). 무거운 갑주 · 무너뜨리는 자는 두지 않는다 */
@@ -247,7 +267,7 @@ const PT_CLS = {
       ag2L: 'n_el_first', ag3R: 'n_el_light', ag5L: 'a_resolve', ag5R: 'n_el_scatter', ag7L: 'a_light', ag7R: 'a_gulp',
       lg2L: 'k_el3', lg3R: 'n_el_echo', lg5L: 'n_overflow', lg5R: 'n_el_spread', lg7L: 'n_fullvessel', lg7R: 'n_el_even',
     },
-    ks: { pwK5: 'ks_crystal', pwK9: 'ks_el_ember', ctK5: 'ks_el_cut', ctK9: 'ks_hammer', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_brim', suK5: 'ks_cycle', suK9: 'ks_dry', svK5: 'ks_wall', svK9: 'ks_el_heart' },
+    ks: { pwK5: 'ks_sharp', pwK9: 'ks_el_ember', ctK5: 'ks_el_cut', ctK9: 'ks_brkbreath', agK5: 'ks_slipbreath', agK9: 'ks_first', lgK5: 'ks_deep', lgK9: 'ks_double', suK5: 'ks_cycle', suK9: 'ks_tireless', svK5: 'ks_blockbreath', svK9: 'ks_el_heart' },
   },
   /* 10월 18일 0.8.0 5단계 암살자 (결정 13–17 반영): docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 4-6. 시작 노드는 그대로(민첩 5 · 지능 4 · 체력 3), 작은 노드는 화력 · 기민 민첩 +2.
      큰 각인 12자리: 공용 10 + 암살자 2(독의 군주 화력 K9 · 그림자 맹세 생존 K9, 무거운 갑주 대신). 대가 다섯, 대응 큰 각인은 흘림새 하나 */
@@ -260,7 +280,7 @@ const PT_CLS = {
       ag1C: 'k_as3', ag3L: 'n_as_step', ag5L: 'a_resolve', ag5R: 'n_as_chain', ag7L: 'a_light', ag7R: 'a_gulp',
       lg1C: 'k_as2', lg3L: 'n_as_mem', lg5L: 'n_overflow', lg5R: 'n_as_store', lg7L: 'n_fullvessel', lg7R: 'n_as_link',
     },
-    ks: { pwK5: 'ks_crystal', pwK9: 'ks_as_lord', ctK5: 'ks_hammer', ctK9: 'ks_breaker', agK5: 'ks_first', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_brim', suK5: 'ks_cycle', suK9: 'ks_dry', svK5: 'ks_wall', svK9: 'ks_as_oath' },
+    ks: { pwK5: 'ks_sharp', pwK9: 'ks_as_lord', ctK5: 'ks_brkbreath', ctK9: 'ks_hammer', agK5: 'ks_slipbreath', agK9: 'ks_first', lgK5: 'ks_deep', lgK9: 'ks_double', suK5: 'ks_cycle', suK9: 'ks_tireless', svK5: 'ks_blockbreath', svK9: 'ks_as_oath' },
   },
 };
 /* 임시 트리: 직업 갈래 각인(4-4)을 그 방향 1고리 첫 중간 노드 자리에 둔다. 도살자 벼랑 끝(k_bu2)은 6단계 큰 각인으로 합쳐질 것이라 임시 트리에 넣지 않는다 */

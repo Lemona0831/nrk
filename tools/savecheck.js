@@ -9,6 +9,8 @@ const mode = process.argv[2] || 'check';
    node tools/savecheck.js floor16 check <저장본.json>
    실제 일은 tools/floor16-migrate-check.js가 한다 */
 if (mode === 'floor16') { process.argv.splice(2, 1); require('./floor16-migrate-check.js'); return; }
+/* 0.8.0 M4: 큰 각인 배치가 바뀐 옛 판 이어 하기(tools/savecheck-ksm4.js) */
+if (mode === 'ks-m4') { require('./savecheck-ksm4.js'); return; }
 const FILE = path.join(__dirname, 'saves06a.json');
 if (mode === 'make') process.env.DGDIR = '.';
 const D = require('./dgqa.js');

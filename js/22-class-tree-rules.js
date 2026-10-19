@@ -55,7 +55,11 @@ function ysAdd(b, n, src, why) {
   return g;
 }
 /* 대응 +1: 라운드에 한 번(다섯 수단이 한도를 함께 쓴다). 상한에 막혀도 그 라운드의 대응으로 센다 */
-function ysResp(b, why) { const g = ysResp0(b, why); if (b && !b.over && isV2(b.p) && b.p.build === 'elementalist') elCutResp(b, why); return g; } // 10월 18일 0.8.0 5단계(원거리 초안 10절 결정 5): 끊어진 영창은 대응 한도와 따로(받은 대응 뒤에 +1)
+function ysResp(b, why) { const R = b ? (b.ysR || 0) : 0, c0 = b && b.ysRespR === R ? (b.ysRespC || 0) : 0, e0 = b ? (b.elCutN || 0) : 0; const g = ysResp0(b, why); if (b && !b.over && isV2(b.p) && b.p.build === 'elementalist') elCutResp(b, why); if (b && b.ysRespR === R && (b.ysRespC || 0) > c0) ysChanResp(b, why, (b.elCutN || 0) > e0); return g; }
+/* 방향별 유산 통로 (0.8.0 M4, 10월 19일 만든 사람 Y4): 통로 큰 각인(ysChan)의 이유로 대응 충전을 실제로 받았으면(라운드 공유 한도 안) 유산 +1 더, 각인마다 전투에 YS_CHAN.max번.
+   원소술사 끊어진 영창이 같은 무너뜨리기로 이미 +1을 줬으면 더하지 않는다(겹침 막기) */
+const YS_CHAN = { max: 2 };
+function ysChanResp(b, why, elFired) { if (!b || b.over || !isV2(b.p)) return 0; let n = 0; for (const [k, f] of fxList(b.p)) { if (!f.ysChan || !f.ysChan.includes(why) || (elFired && why === '무너뜨리기')) continue; b.ysChanN = b.ysChanN || {}; if ((b.ysChanN[k] || 0) >= YS_CHAN.max) continue; b.ysChanN[k] = (b.ysChanN[k] || 0) + 1; fxHit(k); n += ysAdd(b, 1, 'resp', (KS_LIST[k.replace(/^pn_/, '')] || {}).n || k); } return n; } // 10월 18일 0.8.0 5단계(원거리 초안 10절 결정 5): 끊어진 영창은 대응 한도와 따로(받은 대응 뒤에 +1)
 function ysResp0(b, why) { if (!b || !isV2(b.p) || b.over) return 0; const p = b.p, R = b.ysR || 0; const mx = 1 + fxVal(p, 'ysRespMax', 0, (a, v) => a + v); // 10월 16일 0.8.0 2단계: 큰 각인 겹 대응(라운드에 2번) · 빈손의 맹세(+2) · 넘친 숨(버려지면 다음 차례 +1)
   if (b.ysRespR === R && (b.ysRespC || 1) >= mx) return 0; if (b.ysRespR !== R) { b.ysRespR = R; b.ysRespC = 0; } b.ysRespC = (b.ysRespC || 0) + 1; b.ysRespLast = R;
   const n = YUSAN.resp + fxVal(p, 'ysRespPer', 0, (a, v) => a + v); const g = ysAdd(b, n, 'resp', why); if (g < n && !b.ysOvfUsed && fxFlag(p, 'ysOverflowBack')) { b.ysOvfUsed = 1; b.ysOvfPend = 1; } if (g < n && fxFlag(p, 'respWard')) { const w = addWard(b, p, 6, undefined, true); if (w > 0) logp(b, 'good', '막아 든 숨. 버려진 대응이 보호막 +' + r1(w)); } return g; } // 0.8.0 5단계 파수꾼 막아 든 숨: 버려지는 대응 충전 → 보호막 6 (라운드 한도는 대응과 같다)

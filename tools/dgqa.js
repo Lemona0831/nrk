@@ -24,6 +24,7 @@ function loadGame() {
 const G0 = loadGame();
 const run_ = code => vm.runInContext(code, G0);
 /* 유산 리듬 측정 스위치(10월 19일, 게임 기본값은 그대로): YU_CHEAP=0|1 → YUSAN.cheap, YU_START=n → YUSAN.start */
+if (process.env.HEAVY_17 != null) run_(process.env.HEAVY_17 === '1' ? 'HEAVY_V2 = 1.7; HEAVY_COST = 35' : 'HEAVY_V2 = 1.5; HEAVY_COST = 40'); // M4(D11) 강공격 A/B: 1이면 ×1.7 · 35, 0이면 ×1.5 · 40
 if (process.env.YU_CHEAP != null) run_('YUSAN.cheap = ' + (+process.env.YU_CHEAP)); if (process.env.YU_START != null) run_('YUSAN.start = ' + (+process.env.YU_START));
 if (process.env.CFG) run_(process.env.CFG); // 시험할 수치: CFG='DIFF[1].upper.dmg=1.3; BOSSES.abbot.mult=7'
 if (process.env.HUNT_BRIDGE) run_("{ const u = ATREE_DEF.hunter.ups.find(x => x[0] === 'hu_link3'); u[8].cond.when = 'linkFast'; u[7] = '연계로 쓰거나, 이번 차례에 빠른 기동 스킬을 먼저 썼으면 비용 −1(바닥 1, 라운드에 한 번).'; }");
@@ -154,11 +155,19 @@ function spendPassive(pk, r) {
   }
 }
 const KS_PREF = ['ks_deep', 'ks_wall', 'ks_sb_blood', 'ks_cycle', 'ks_crystal', 'ks_el_cut', 'ks_breaker', 'ks_first', 'ks_sb_beat', 'ks_glass', 'ks_flow', 'ks_hammer', 'ks_sb_over', 'ks_brim', 'ks_dry', 'ks_heavy', 'ks_double', 'ks_bare']; // 10월 18일 0.8.0 5단계(원거리 초안 10절 결정 5): 끊어진 영창(원소술사 제어 K5)을 제어 큰 각인 무너뜨리는 자 바로 앞에 둔다(전에는 목록에 없어 0/80판)
+/* 큰 각인 선호 (0.8.0 M4, 10월 19일): 성향별 표 tools/persona/ks-pref.json. order = 표 순서대로(같은 순위 근처는 조금 흔듦), weighted = 순위 가중 무작위, random = 무작위.
+   표에 없는 성향(공격적 · 탐험가)은 숙련 표를 쓴다. 옛 KS_PREF 한 줄은 깊은 샘이 1위라 K5 71–97%가 깊은 샘이었다(M3 BD-1) */
+const KSP = JSON.parse(fs.readFileSync(path.join(__dirname, 'persona', 'ks-pref.json'), 'utf8'));
+function ksPick(key, r, run) {
+  const offer = run.ksOffer || []; if (!offer.length) return undefined; const P = KSP[key] || KSP.expert;
+  if (P.mode === 'random') return offer[Math.floor(r() * offer.length)];
+  const T = G0.ptBuild(run.build); const rank = id => { const i = P.order.indexOf(T.nodes[id].fx); return i < 0 ? P.order.length + 5 : i; };
+  if (P.mode === 'weighted') { const w = offer.map(id => 1 / (1 + rank(id))); let x = r() * w.reduce((a, v) => a + v, 0); for (let i = 0; i < offer.length; i++) { x -= w[i]; if (x <= 0) return offer[i]; } return offer[offer.length - 1]; }
+  const sc = offer.map(id => [id, rank(id) + r() * 0.5]); return sc.sort((x, y) => x[1] - y[1])[0][0];
+}
 function ksChoice(pk, r, run) {
   if (OPT.policy?.ksChoice) return OPT.policy.ksChoice(run, r); // M3: 정책 모듈 성향의 큰 각인
-  const offer = run.ksOffer || []; if (pk === 'novice') return offer[Math.floor(r() * offer.length)];
-  const T = G0.ptBuild(run.build); const sc = id => { const i = KS_PREF.indexOf(T.nodes[id].fx); return (i < 0 ? 99 : i) + r() * 0.5; };
-  return offer.slice().sort((x, y) => sc(x) - sc(y))[0];
+  return ksPick(pk, r, run);
 }
 /* 배분 흐름 시트(옛 세이브 옮기기): 패시브 → 큰 각인 → 액티브를 정책대로 찍고 확정 */
 function allocAuto(pk, r, run) {
@@ -262,7 +271,7 @@ function fightRec(R, b, run, hpIn, acts) {
   const rec = { f: run.room, ch: run.ch || 1, t: R.type, sq: R.squad, foe: R.foe, mods: (R.mods || []).join('+') || undefined, path: R.path, res: b.over, hpIn: Math.round(hpIn * 100), hpOut: Math.round(run.p.hp / run.p.hpMax * 100), net: Math.round(hpIn * 100) - Math.round(run.p.hp / run.p.hpMax * 100), /* 0.8.0 6단계 승인 정정: 순손실 = hpIn − hpOut(최대 생명력 %p)이 주 지표, 총피해(tk)는 보조 */ rounds: b.round || 0, acts, src, used, brk: b.rec.filter(x => x.k === 'break').length, cut: b.rec.filter(x => x.k === 'break' && x.cut).length, blk: b.rec.filter(x => x.k === 'block').length, parried: hits.filter(h => h.parried).length, guarded: hits.filter(h => h.guard).length, cons: b.rec.filter(x => x.k === 'cons').length, big: b.rec.filter(x => x.k === 'bigfire').length, bigNoTurn: b.rec.filter(x => x.k === 'bigfire' && x.gap < 1).map(x => x.role + ':' + x.i + ':' + x.gap) };
   if (b.mkTr) rec.mkTr = b.mkTr;
   if (BUILDLOG && b.actDmg) rec.actDmg = b.actDmg;
-  { const y = G0.ysSum ? G0.ysSum(b) : null; if (y) rec.ys = { sp: y.sp, use: y.use, w: y.w, g: Object.values(y.ch || {}).reduce((a, v) => a + v, 0) }; } // 0.8.0 6단계 유산 리듬: 비용별 횟수 · 쓴 합 · 상한에 막힌 양(넘침) · 든 양
+  { const y = G0.ysSum ? G0.ysSum(b) : null; if (y) rec.ys = { sp: y.sp, use: y.use, w: y.w, g: Object.values(y.ch || {}).reduce((a, v) => a + v, 0), ch: y.ch }; } // M4: ch = 충전 출처별 든 양(차례 · 대응 이유 · 통로 각인 · 환급 · 장비) // 0.8.0 6단계 유산 리듬: 비용별 횟수 · 쓴 합 · 상한에 막힌 양(넘침) · 든 양
   rec.tk = b.damageStats ? Math.round(100 * b.damageStats.taken / b.p.hpMax) : null; // 0.8.0 6단계: 총피해(회복 전 받은 피해 합, 최대 생명력 %) 보조 지표
   if (b.p.build === 'warden') { const gw = b.log.map(x => /방패를 세운다\. 보호막 \+(\d+)/.exec(x.m || '')).filter(Boolean).map(m => +m[1]); const S = b.wdS || []; const dir = hits.filter(h => !h.dot);
     rec.wd = { g: gw.length, gw: gw.reduce((a, v) => a + v, 0), held: Math.round(b.rec.filter(x => x.k === 'held').reduce((a, x) => a + (x.n || 0), 0) * 10) / 10, gHit: dir.filter(h => h.guard).length, gTaken: Math.round(dir.filter(h => h.guard).reduce((a, h) => a + h.d, 0) * 10) / 10, oHit: dir.filter(h => !h.guard).length, oTaken: Math.round(dir.filter(h => !h.guard).reduce((a, h) => a + h.d, 0) * 10) / 10, turns: S.length, half: S.filter(v => v >= 50).length, hpMax: b.p.hpMax, wil: G0.stat ? G0.stat(b.p, 'wil') : null, ng: (b.wdSG || []).length, ngW: (b.wdSG || []).reduce((s, x) => s + x[0], 0), ngP: (b.wdSG || []).reduce((s, x) => s + x[1], 0) }; } // 0.8.0 5단계 방어 측정(2-10): 방어 횟수 · 방어 보호막 합 · 받아낸 몫 · 방어 중/아닐 때 받은 직접 피해 · 보호막 상한 50% 이상인 내 차례
@@ -347,6 +356,7 @@ function fightCur(pk, r, mem, out) {
     }
     if (stuckN >= 2 && !process.env.NO_STUCK_FIX) { const Lk = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); const gd = Lk.find(x => x.id === 'guard') || Lk[0]; if (gd) { a = gd.id; t = null; } } /* 10월 8일: 같은 행동을 해도 차례가 흐르지 않으면(땅속의 적만 남고 단일 대상 행동뿐일 때) 사람처럼 방어로 차례를 넘긴다 */
     }
+    if (OPT.policy?.filterAction) { const x = OPT.policy.filterAction(b, G.run, a, t, n); if (x) [a, t] = x; } // M4: 정책 모듈이 고른 행동의 일부만 바꾼다(평타 성향: 공격 행동만)
     if (unIgn) unIgn();
     if (OPT.onTurn) OPT.onTurn(G, n);
     if (process.env.MK_TRACE && b.p.build === 'monk') (b.mkTr = b.mkTr || []).push([a, G0.st(b.p, 'empower'), b.p.ys, b.turnIdx]); // 0.8.0 5단계: 수도승 행동 · 기 · 유산 흐름(행동 직전)
@@ -704,4 +714,4 @@ function manifestOf(want) {
 }
 /* 판 밖 예외(창 처리 · 트리 찍기 등)로 판이 끝나지 못한 경우의 기록 */
 function crashRow(w, e) { const o = { pk: w.pk, build: w.build, seed: w.seed, res: 'crash', floor: 0, lv: 0, rooms: [], bugs: ['판 밖 예외 ' + e.message], acts: 0, fights: [] }; o.meta = MM.rowMeta(REV, { seed: w.seed, pk: w.pk, build: w.build, from: FROM, chapters: OPT.chapters, variant: OPT.variant, pol: OPT.polId }); failOf(o, 'crash', { msg: String(e.message).slice(0, 200), stack: String(e.stack || '').split('\n').slice(1, 3).join(' | ') }); CUR = null; return o; }
-module.exports = { manifestOf, crashRow, REV, SKE, sbEquip, sbEquipScore, spendPassive, ptSurvNeed, playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post, ch3Pre, seedWorld };
+module.exports = { ksPick, manifestOf, crashRow, REV, SKE, sbEquip, sbEquipScore, spendPassive, ptSurvNeed, playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post, ch3Pre, seedWorld };
