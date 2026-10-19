@@ -1,19 +1,21 @@
 'use strict';
 /* BD-9 꼬리표 프로필 · 상황 동등 표 (0.8.0 M5-0 보정 5, 10월 20일 만든 사람 결정 D15 · D18)
    node tools/bd9.js <결과.jsonl> [...] [--cls spellblade]   (DG_BUILDLOG=1로 돈 결과: tags · vsel · offer · fights.nEn · nBack · nBig · actDmg)
-   - 빌드 = 판 끝 꼬리표(찍은 스킬 · 고른 변형 · 패시브 노드 · 큰 각인)의 정체성 꼬리표 상위 둘. 같으면 꼬리표 이름 순
+   - 빌드 = 판 끝 꼬리표(찍은 스킬 · 고른 변형 · 큰 각인, 명령 5번 그대로. 패시브 작은 · 중간 노드는 세지 않는다)의 정체성 꼬리표 상위 둘(순서 없는 조합). 같은 수면 꼬리표 이름 순
    - 빌드 수 = 완주 판 비중 ≥8%이면서 (완주율이 직업 평균 ±10%p 또는 상황 표에서 어느 상황 1위)
    - 상황 표: 빌드(판 20개 이상) × 상황(무리 적 4+ · 거구 정예/강적 · 후열 적 · 장기전 10라운드+ · 보스)의 전투 승률 · 평균 순손실
      합격: 모든 빌드가 상황 하나 이상에서 상위 절반, 어느 빌드도 모든 상황에서 하위 1/4이 아님
    - 평타 빌드: 판의 평타(기본 공격 · 강공격) 피해 몫 평균 ≥40%인 빌드
    - 변형 선택률: 자리를 연 판 가운데 각 변형을 고른 몫(≤70%), 결합 칸: 찍힌 판 몫(≥10%) */
-const fs = require('fs');
+const fs = require('fs'); process.env.DGDIR = process.env.DGDIR || '.'; const D = require('./dgqa.js'), R = D.run_;
 const argv = process.argv.slice(2); const ci = argv.indexOf('--cls'); const CLS = ci >= 0 ? argv[ci + 1] : 'spellblade';
 const files = argv.filter((a, i) => !a.startsWith('--') && !(ci >= 0 && i === ci + 1));
 const rows = files.flatMap(f => fs.readFileSync(f, 'utf8').trim().split('\n').filter(Boolean).map(l => JSON.parse(l))).filter(x => x.build === CLS && x.tags);
 if (!rows.length) { console.error('사용: node tools/bd9.js <DG_BUILDLOG 결과.jsonl> [...]'); process.exit(2); }
 const ID = ['출혈', '화상', '혈염', '보호막', '교대', '붕괴', '싣기', '기본공격연동', '흘리기'];
-const prof = x => { const e = ID.map(k => [k, x.tags[k] || 0]).filter(e => e[1] > 0).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)); return e.length >= 2 ? e[0][0] + '·' + e[1][0] : e.length ? e[0][0] : '없음'; };
+const SK2 = R('SK2'), PTT = R('PT_TAGS'), AV = cls => R('atBuild')(cls).vars || {}; const PTN = cls => R('ptBuild')(cls).nodes;
+const tagsOf = x => { const c = {}, add = L => { for (const t of L || []) c[t] = (c[t] || 0) + 1; }; const A = R('atBuild')(x.build); for (const id of x.tree || []) if (A.nodes[id] && A.nodes[id].kind === 'skill' && SK2[id]) add(SK2[id].tags); for (const v of Object.values(x.vsel || {})) add((AV(x.build)[v] || {}).tags); const P = PTN(x.build); for (const id of (x.ptree && x.ptree.ks) || x.ks || []) add(PTT[(P[id] || {}).fx]); return c; };
+const prof = x => { x.tags = tagsOf(x); const e = ID.map(k => [k, x.tags[k] || 0]).filter(e => e[1] > 0).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)); return e.length >= 2 ? [e[0][0], e[1][0]].sort().join('·') : e.length ? e[0][0] : '없음'; }; // 순서 없는 조합
 const basicShare = x => { let b = 0, t = 0; for (const f of x.fights || []) for (const k in f.actDmg || {}) { t += f.actDmg[k]; if (k === 'basic' || k === 'heavy') b += f.actDmg[k]; } return t ? b / t : 0; };
 const pc = (a, b) => b ? Math.round(1000 * a / b) / 10 : 0;
 const out = [];
