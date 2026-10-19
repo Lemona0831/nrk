@@ -122,7 +122,7 @@ const STRONG = { big: 0.46, hp: 3.7, dmg: 2.7, bellEvery: 3, leech: 0.45, frenzy
    일반 방: 2층부터 정예 하나, 4층부터 둘. 정예 하나만으로는 순손실이 옛 일반의 1.18 · 1.33 · 1.62배(목표 약 2배)
    야영지 쉬기: 최대 생명력의 60%(전에는 가득). 16층에서는 야영지 → 보스가 7층이라 보스 진입 생명력이 72 · 77%로 높았다(B-7 목표 60–75%). 45%로 더 낮춰도 테스터 결과는 같았다(전투 밖 회복 소모품이 메운다, 측정 5회차) */
 const AMBUSH = { hp: 1.3, dmg: 1.2, elite: 2, loot: 1.5, ptMax: 2 };
-const NORMAL_ROOM = { from: 2, elite: 1, from2: 4, elite2: 2 };
+const NORMAL_ROOM = { from: 2, elite: 1, from2: 4, elite2: 2, hp: 1, dmg: 1 }; // hp · dmg: 일반 방 적의 체력 · 피해 배율. 10월 19일 만든 사람 결정: 6단계는 ×1.0(측정만), 적 수치는 7단계에서 직업 격차를 고친 뒤 한 번에
 const CAMP_REST = { hp: 0.6 };
 const STRONG_FOES = [
   { id: 'bellringer', n: '종지기', en: [['shield', 1], ['minion']] }, // 10월 4일: 하수인을 뺐다(강적 다섯 가운데 가장 무거웠다)
@@ -244,7 +244,7 @@ const CODEX = {
    틀은 1챕터와 같다(16층, 갈림길 4 · 9 · 12층). 이 칸은 1챕터 배열에 ch: 2 항목을 더하고 CHAPTERS[2]를 채운다. 수치는 모두 [가설] */
 ENEMY_NAMES[2] = { bruiser: '무덤지기', shield: '납골당 문지기', archer: '납골당 궁수', healer: '곡하는 사제', summoner: '뼈 엮는 자', minion: '기어 나온 뼈', thief: '도굴꾼', pyre: '장송 영창자', skeleton: '해골 병사', hexer: '무덤 주술사', mason: '뼈 쌓는 자', burrower: '굴 파는 시체', bloat: '부푼 시체', bonewall: '뼈벽' };
 CHAPTERS[2] = {
-  n: '잊힌 지하묘지', boss: 'cryptlord', names: ENEMY_NAMES[2], strongFrom: 2, xp: 1.55, gold: 1.35, settleStrong: 30,
+  n: '잊힌 지하묘지', boss: 'cryptlord', names: ENEMY_NAMES[2], strongFrom: 2, xp: 1.45, gold: 1.35, /* 0.8.0 6단계 보정: 1.55 → 1.45(일반 방 정예 경험치로 2챕터 끝 중앙 Lv12, 앵커 11) */ settleStrong: 30,
   diff: { upper: { hp: 0.75, dmg: 0.51 }, lower: { hp: 0.92, dmg: 0.527 } }, // 10월 9일 결정 7 가(2챕터 완주 10~20%): 적 피해 ×0.85. 이전 dmg 0.60 · 0.62(5.1%). 5,400판 처음부터 흐름에서 1챕터를 깬 434명 가운데 61명(14.1%)
   settleLore: '녹슨 왕관이 뼈 더미 위로 굴러떨어졌다. 더 깊은 곳에서 뜨거운 모래바람이 불어온다.',
   nextLore: '계단 아래로 마른 열기가 올라온다. 벽 틈마다 재가 쌓여 있다.',
