@@ -65,7 +65,7 @@ function trdStP(run, id, T) {
 function trdStA(run, id) { if (id === 'S') return 'open'; if (run.atree.own.includes(id)) return 'own'; const w = atWhy(run, id); return !w ? (treeCanEdit() ? 'can' : 'near') : w === '포인트가 없습니다' ? 'near' : 'lock'; }
 const TRD_STN = { open: '열림', own: '찍음', free: '보너스로 열림', ks: '얻은 큰 각인', can: '찍을 수 있음', near: '이웃이 열림 · 포인트가 없음', view: '찍을 수 있음 · 이 창에서는 큰 각인만 고릅니다', lock: '잠김' };
 const TRD_STA = { open: '시작 스킬', own: '열림', can: '열 수 있음', near: '이웃이 열림 · 포인트가 없음', lock: '잠김' };
-const trdRingShort = r => r === 2 ? '2챕터부터' : r === 3 ? '3챕터부터' : '';
+const trdRingShort = r => r === 2 ? '1챕터 야영지부터' : r === 3 ? '2챕터 야영지부터' : ''; // M5-0 보정 5: 고리는 야영지에서 연다
 /* ---- 보기 상태 ---- */
 const trdVk = (run, mode) => mode + ':' + run.build;
 function trdView0(run, mode, L, opt) { // 처음 보기: 열린 고리까지(조금 더) 맞춘다. 큰 각인 고르기는 후보까지
@@ -244,13 +244,13 @@ function trdInfoA(run, id) {
     h += `<p class="trd-st st-${st}">${TRD_STA[st]}${eq ? ' · 장착' : ''}${!ringOpen(run, n.ring) ? ' · ' + trdRingShort(n.ring) : ''}</p>`;
     if (st === 'own' && edit) b += !eq && eqd.length >= EQUIP_SLOTS2 ? `<button data-a="ateq" data-k="${id}" data-e="a" aria-disabled="true" data-why="장착 칸이 가득 찼습니다. 먼저 하나를 빼 주세요">장착 칸이 가득 참 · ${eqd.length}/${EQUIP_SLOTS2}</button>` : `<button class="${eq ? '' : 'gold'}" data-a="ateq" data-k="${id}" data-e="a">${eq ? '빼기' : '장착'} · ${eqd.length}/${EQUIP_SLOTS2}</button>`;
   } else {
-    const on = SK2[n.on] || { n: n.on }, work = run.p && (run.p.aup || []).includes(id);
-    h = `<div class="trd-ih"><b>✚ ${esc(n.n)}</b><button class="sm trd-x" data-a="tsel" data-k="" data-e="a" aria-label="설명 닫기">✕</button></div><p class="mini">강화 · ${esc(on.n)}에 붙음 · ${n.ring}고리 · 포인트 ${n.cost}</p><p>${esc(n.d)}</p>`;
-    h += `<p class="trd-st st-${st}${st === 'own' && !work ? ' idle' : ''}">${TRD_STA[st]}${st === 'own' ? (work ? ' · 일함' : ' · ' + esc(on.n) + '을(를) 끼우면 일함') : ''}${!ringOpen(run, n.ring) ? ' · ' + trdRingShort(n.ring) : ''}</p>`;
+    const on = SK2[n.on] || { n: n.on }, work = run.p && (n.slot ? (run.p.aup || []).includes((run.atree.vsel || {})[id]) : (run.p.aup || []).includes(id));
+    if (n.slot) { h = `<div class="trd-ih"><b>✚ ${esc(n.n)}</b><button class="sm trd-x" data-a="tsel" data-k="" data-e="a" aria-label="설명 닫기">✕</button></div><p class="mini">변형 · ${esc(on.n)}에 붙음 · ${n.ring}고리 · 포인트 ${n.cost}</p>` + atVarHtml(run, n, st === 'own', st === 'can', edit) + `<p class="trd-st st-${st}${st === 'own' && !work ? ' idle' : ''}">${TRD_STA[st]}${st === 'own' ? (work ? ' · 일함' : ' · ' + esc(on.n) + '을(를) 끼우고 변형을 고르면 일함') : ''}${!ringOpen(run, n.ring) ? ' · ' + trdRingShort(n.ring) : ''}</p>`; }
+    else { h = `<div class="trd-ih"><b>✚ ${esc(n.n)}</b><button class="sm trd-x" data-a="tsel" data-k="" data-e="a" aria-label="설명 닫기">✕</button></div><p class="mini">강화 · ${esc(on.n)}에 붙음 · ${n.ring}고리 · 포인트 ${n.cost}</p><p>${esc(n.d)}</p>`; h += `<p class="trd-st st-${st}${st === 'own' && !work ? ' idle' : ''}">${TRD_STA[st]}${st === 'own' ? (work ? ' · 일함' : ' · ' + esc(on.n) + '을(를) 끼우면 일함') : ''}${!ringOpen(run, n.ring) ? ' · ' + trdRingShort(n.ring) : ''}</p>`; }
   }
   if (why && !(st === 'near' && !edit)) h += `<p class="mini">${esc(why)}</p>`;
   if (!edit && st !== 'own') h += `<p class="mini">${G.run && !G.creating && runOver(G.run) ? '끝난 캐릭터의 트리는 볼 수만 있습니다.' : '전투 중에는 볼 수만 있습니다.'}</p>`;
-  if (st === 'can' && edit) b = `<button class="gold" data-a="atbuy" data-k="${id}" data-e="a">열기 · 포인트 ${n.cost}</button>` + b;
+  if (st === 'can' && edit && !n.slot) b = `<button class="gold" data-a="atbuy" data-k="${id}" data-e="a">열기 · 포인트 ${n.cost}</button>` + b; // 변형 자리는 변형마다 버튼(atVarHtml)
   if (st === 'own' && allocStep(run) === 'a') b += `<button data-a="atref" data-k="${id}" data-e="a">되돌리기</button>`;
   return h + trdBtnRow(b);
 }

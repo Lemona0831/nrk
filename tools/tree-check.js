@@ -50,20 +50,20 @@ for (const c of CLS) {
   const BOUND_ATK_WAIT = ['BC', 'CA'], atkWait = []; // 보정 5 명령대로 둘째 칸만 바꾸면 죄인의 피 · 유산의 불은 공격 1(만든 사람 결정 대기)
   const SECN = { A: [], AB: [], B: [], BC: [], C: [], CA: [] }; for (const x of Object.values(A.nodes)) if (x.sec) SECN[x.sec].push(x);
   const skOfSec = k => SECN[k].filter(x => x.kind === 'skill'), upOfSec = k => SECN[k].filter(x => x.kind === 'upgrade');
-  for (const k of ['A', 'B', 'C']) { const S6 = skOfSec(k), r = n => S6.filter(x => x.ring === n); ok(S6.length === 7 && upOfSec(k).length === 3, A.sec[k] + ': 갈래 스킬 노드 7(찍을 수 있는 칸 6) · 강화 3 (' + S6.length + ' · ' + upOfSec(k).length + ')');
+  for (const k of ['A', 'B', 'C']) { const S6 = skOfSec(k), r = n => S6.filter(x => x.ring === n); ok(S6.length === 7 && upOfSec(k).length === 7 && upOfSec(k).every(u => u.slot && u.vars.length === 3), A.sec[k] + ': 갈래 스킬 노드 7(찍을 수 있는 칸 6) · 스킬마다 변형 자리 하나에 변형 셋(보정 5) (' + S6.length + ' · ' + upOfSec(k).length + ')');
     const op = r(1).filter(x => x.ys === 2); ok(r(1).length === 3 && r(1).map(x => x.ys).sort().join() === '1,2,2' && op.length === 2 && op[0].excl === op[1].id && op[1].excl === op[0].id && r(2).length === 2 && r(2).every(x => x.ys >= 2 && x.ys <= 3) && r(3).length === 2 && r(3).every(x => x.ys >= 3 && x.ys <= 4), A.sec[k] + ': 1고리 첫 스킬 둘(둘 중 하나, 보정 5) + 리듬 1, 2고리 2칸(2–3), 3고리 2칸(3–4)'); }
-  for (const k of ['AB', 'BC', 'CA']) { const S5 = skOfSec(k), r = n => S5.filter(x => x.ring === n); ok(S5.length === 5 && upOfSec(k).length === 3, A.sec[k] + ': 경계 스킬 5 · 강화 3 (' + S5.length + ' · ' + upOfSec(k).length + ')');
+  for (const k of ['AB', 'BC', 'CA']) { const S5 = skOfSec(k), r = n => S5.filter(x => x.ring === n); ok(S5.length === 5 && upOfSec(k).length === 5 && upOfSec(k).every(u => u.slot && u.vars.length === 3), A.sec[k] + ': 경계 스킬 5 · 변형 자리 5(변형 셋씩) (' + S5.length + ' · ' + upOfSec(k).length + ')');
     ok(!r(1).length && r(2).map(x => x.ys).join() === '2,2' && r(3).map(x => x.ys).sort().join() === '3,3,4' && r(2).filter(x => x.requires).length === 1, A.sec[k] + ': 2고리 입구 + 둘째(2 · 2), 3고리 둘 + 승부수(3 · 3 · 4), 1고리 없음');
     const ent = r(2).find(x => x.requires), two = r(2).find(x => !x.requires), fin = r(3).find(x => x.ys === 4), mid = r(3).filter(x => x.ys === 3);
     ok(two.links.includes(ent.id) && mid.every(x => x.links.includes(two.id)) && mid.every(x => fin.links.includes(x.id)), A.sec[k] + ': 입구 → 둘째 → 3고리 둘 → 승부수로 이어짐');
     /* M5-0 보정 5(만든 사람): 경계 5칸 = 공격 2 · 강화/방어 2 · 승부수 1. 공격 = 적을 겨누고 피해를 주는 칸 */
     const atk = S5.filter(x => x.ys !== 4 && E.SK2[x.id].tgt !== 'self' && E.SK2[x.id].fx.some(e => ['dmg', 'wardDmg'].includes(e.k))).length; const msg = A.sec[k] + ': 공격 ' + atk + ' · 강화/방어 ' + (4 - atk) + ' · 승부수 1';
     if (BOUND_ATK_WAIT.includes(k)) atkWait.push(msg); else ok(atk === 2, msg); }
-  { const sk = Object.values(A.nodes).filter(x => x.kind === 'skill'), up = Object.values(A.nodes).filter(x => x.kind === 'upgrade'); ok(sk.length === 36 && up.length === 18, '마검사 스킬 노드 36(1고리 갈림 셋 더) + 강화 18 (' + sk.length + ' + ' + up.length + ')'); }
+  { const sk = Object.values(A.nodes).filter(x => x.kind === 'skill'), up = Object.values(A.nodes).filter(x => x.kind === 'upgrade'); ok(sk.length === 36 && up.length === 36 && Object.keys(A.vars).length === 108, '마검사 스킬 노드 36(1고리 갈림 셋 더) + 변형 자리 36 · 변형 108 (' + sk.length + ' + ' + up.length + ' · ' + Object.keys(A.vars).length + ')'); }
   if (atkWait.length) console.log('경계 공격 칸 판정 대기(만든 사람 결정): ' + atkWait.join(' / '));
   { const CUT = ['sb_whirl', 'sb_heated', 'sb_snuff', 'sb_rebound', 'sb_sunder', 'sb_bloodecho', 'sb_ashhand']; ok(CUT.every(id => !A.nodes[id] && E.SK2[id]), '트리에 없는 칸(스킬 데이터는 남음, 보정 5에서 피의 낙인 · 회류참 되살림, 피의 반향 · 재 묻은 손 교체): ' + CUT.join(' '));
     ok(['sbu_graze', 'sbu_scarlet', 'sbu_thirst', 'sbu_exec', 'sbu_fog', 'sbu_whet', 'sbu_ash', 'sbu_rush', 'sbu_coil', 'sbu_firefall', 'sbu_twin', 'sbu_measure', 'sbu_rhythm', 'sbu_coda'].every(id => !A.nodes[id]), '자른 강화 14'); }
-  { const ent = ['sb_bloodfire', 'sb_bloodmail', 'sb_heatmail'].map(id => A.nodes[id]); const budget = 2 + 5 + 3; ok(ent.every(x => x.requires.length === 2 && x.requires.every(g => Array.isArray(g) && g.length === 2)) && budget <= E.AT_PTS.start + E.AT_PTS.lv * 15, '경계 빌드 포인트: 양쪽 개시 2 + 경계 5 + 강화 3 = ' + budget + '점, Lv16 ' + (E.AT_PTS.start + E.AT_PTS.lv * 15) + '점 안'); }
+  { const ent = ['sb_bloodfire', 'sb_bloodmail', 'sb_heatmail'].map(id => A.nodes[id]); const budget = 2 + 5 + 3; /* 보정 5: 변형 자리를 다 열면 2 + 5 + 5 = 12 */ ok(ent.every(x => x.requires.length === 2 && x.requires.every(g => Array.isArray(g) && g.length === 2)) && budget <= E.AT_PTS.start + E.AT_PTS.lv * 15, '경계 빌드 포인트: 양쪽 개시 2 + 경계 5 + 강화 3 = ' + budget + '점, Lv16 ' + (E.AT_PTS.start + E.AT_PTS.lv * 15) + '점 안'); }
   { const U = D.run_('SB_BOUND'), T = id => E.SK2[id].fx.map(e => e.txt || '').join(' ');
     ok(T('sb_hotedge').includes('화상 +' + U.crossN) && T('sb_shackle').includes('붕괴 +' + U.shackleBrk) && T('sb_embercut').includes(U.emberCutBurn + '까지') && T('sb_cindermail').includes('화상 ' + U.cinderIgn) && T('sb_film').includes(Math.round(U.filmPer * 100) + '%') && T('sb_embermail').includes('화상 ' + U.emberIgn), '경계 문장의 숫자가 SB_BOUND와 같음'); }
 }
@@ -81,6 +81,14 @@ for (const c of CLS) {
   ok(E.atBuy(run, 'sb_blooddrop') === null, '리듬 칸은 둘 중 어느 쪽에서도'); ok(E.atBuy(run, 'sb_flamecut') === null && /같은 자리/.test(atWhy(run, 'sb_ember')), '염화 베기를 찍으면 불씨 투척은 잠김');
   run.clears = 1; ok(!atWhy(run, 'sb_bloodfire'), '피의 낙인 + 염화 베기로도 혈염 입구가 열림'); ok(/양쪽 갈래/.test(atWhy(run, 'sb_bloodmail')), '마갑 첫 스킬이 없으면 죄인의 피 입구는 잠김'); }
 
+// ===== M5-0 보정 5: 변형 강화 =====
+{ const run = newRun('spellblade'); run.atree.pts = 9; const vs = f('atVarSet'); E.atBuy(run, 'sb_bleedcut'); ok(/제시되지 않은/.test(E.atBuy(run, 'sv_bleedcut', 'sbv_mark_fast')), '다른 스킬의 변형은 못 고름');
+  ok(E.atBuy(run, 'sv_bleedcut', 'sbv_bleedcut_fast') === null && E.skOf(run.p, 'sb_bleedcut').time === 'fast', '변형 자리를 열며 하나를 고르면 그 스킬에 적용');
+  ok(/야영지/.test(vs(run, 'sv_bleedcut', 'sbu_chain')) && run.atree.vsel.sv_bleedcut === 'sbv_bleedcut_fast', '야영지가 아니면 바꿀 수 없음'); run.cur = { type: 'camp' }; const p0 = run.atree.pts;
+  ok(vs(run, 'sv_bleedcut', 'sbu_chain') === null && run.atree.pts === p0 && E.skOf(run.p, 'sb_bleedcut').killRecharge === 1 && E.skOf(run.p, 'sb_bleedcut').time !== 'fast', '야영지에서 바꾸면 포인트는 그대로, 새 변형이 적용');
+  run.offer = { vars: { sv_bleedcut: ['sbu_chain', 'sbv_bleedcut_front'] } }; ok(/제시되지 않은/.test(vs(run, 'sv_bleedcut', 'sbv_bleedcut_fast')), '제시되지 않은 변형으로는 못 바꿈');
+  delete run.atree.vsel.sv_bleedcut; E.treeSync(run); ok(!run.p.aup.length && !E.skOf(run.p, 'sb_bleedcut').killRecharge, '고르지 않은 자리(옛 판)는 일하지 않음'); }
+
 // ===== 3) 찍기 규칙 =====
 { const run = newRun('spellblade'); const T = E.ptBuild('spellblade');
   ok(run.tv === 2 && run.ptree.pts === 6 && run.atree.pts === 2 && run.ptree.own.length === 0, '새 캐릭터: 트리 판 2, 패시브 6 · 액티브 2');
@@ -93,7 +101,7 @@ for (const c of CLS) {
   run.alloc = { mode: 'create', step: 'p' }; ok(/이어져/.test(E.ptRefund(run, 'lg2L')), '되돌리면 끊기는 노드는 못 되돌림'); ok(E.ptRefund(run, 'lg3L') === null && run.ptree.pts === 1, '끝 노드는 되돌림 · 포인트 +1'); delete run.alloc;
   ok(!atWhy(run, 'sb_bleedcut') && atWhy(run, 'sb_blooddrop') === '이웃한 노드를 먼저 열어야 합니다', '액티브도 이웃 규칙');
   E.atBuy(run, 'sb_bleedcut'); ok(run.atree.pts === 1 && run.skills.includes('sb_bleedcut') && run.p.skills.includes('sb_bleedcut'), '연 스킬은 빈 칸에 장착'); run.atree.pts = 3; E.atBuy(run, 'sb_blooddrop'); ok(/2고리/.test(atWhy(run, 'sb_boil')), '액티브 2고리 잠금(M5-0 보정 4: 1고리는 개시 + 리듬)');
-  E.atBuy(run, 'sbu_chain'); ok(run.p.aup.includes('sbu_chain') && E.skOf(run.p, 'sb_bleedcut').killRecharge === 1, '강화는 끼운 스킬에 적용');
+  E.atBuy(run, 'sv_bleedcut', 'sbu_chain'); ok(run.atree.own.includes('sv_bleedcut') && run.atree.vsel.sv_bleedcut === 'sbu_chain' && run.p.aup.includes('sbu_chain') && E.skOf(run.p, 'sb_bleedcut').killRecharge === 1, '강화는 끼운 스킬에 적용');
   E.atEquip(run, 'sb_bleedcut'); ok(!run.p.aup.includes('sbu_chain') && !E.skOf(run.p, 'sb_bleedcut').killRecharge, '스킬을 빼면 강화는 일하지 않음');
   ok(E.v2Equip(run).length === 3, '장착 = 시작 둘 + 끼운 스킬'); run.atree.own.push('sb_spark', 'sb_ember', 'sb_bladeward', 'sb_kindle'); for (const id of ['sb_bleedcut', 'sb_spark', 'sb_ember', 'sb_bladeward']) if (!run.skills.includes(id)) E.atEquip(run, id); ok(/가득/.test(E.atEquip(run, 'sb_kindle')), '장착은 4칸(시작 2 + 4 = 6)'); ok(E.v2Equip(run).length === 6, '6칸');
 }
@@ -138,9 +146,9 @@ for (const c of CLS) {
 }
 // ===== 6) 강화 금지선과 조건부 할인 =====
 { const A = E.atBuild('spellblade'); let nc = 0;
-  for (const id in A.nodes) { const u = A.nodes[id]; if (u.kind !== 'upgrade') continue; const m = u.mod; assert(!(m.set && ('ys' in m.set || 'cd' in m.set || 'cost' in m.set)), '무조건 비용 바꾸기 금지 ' + id); if (m.cond) { nc++; assert(m.cond.off === 1 && /^(resp|alt2|ward>=\d+|kw:\w+>=\d+(&kw:\w+>=\d+)?)$/.test(m.cond.when), '조건 어휘 ' + id); /* 0.8.0 M5-0: 경계 강화 표준 "양쪽 갈래 상태가 모두 있으면"(kw & kw), 보유 보호막(ward>=n) */ }
+  for (const id in A.vars) { const u = A.vars[id]; const m = u.mod; assert(!(m.set && ('ys' in m.set || 'cd' in m.set || 'cost' in m.set)), '무조건 비용 바꾸기 금지 ' + id); if (m.cond) { nc++; assert(m.cond.off === 1 && /^(resp|alt2|ward>=\d+|kw:\w+>=\d+(&kw:\w+>=\d+)?)$/.test(m.cond.when), '조건 어휘 ' + id); /* 0.8.0 M5-0: 경계 강화 표준 "양쪽 갈래 상태가 모두 있으면"(kw & kw), 보유 보호막(ward>=n) */ }
     const p = { build: 'spellblade', aup: [id], pn: [] }; const s = E.skOf(p, u.on); assert(s !== E.SK2[u.on] && s.ups.includes(id), '실제 스킬 ' + id); for (const x of m.fxSet || []) { const e = s.fx.find(y => y.k === x.k && (x.s == null || y.s === x.s)); for (const k in x) if (k !== 'k' && k !== 's') assert.equal(e[k], x[k], 'fxSet ' + id + ' ' + k); } }
-  ok(nc === 6, '조건부 할인 강화는 갈래 둘(끓는 피 · 불길 잇기) + 경계 넷(엉긴 상처 · 받아낸 피 · 두꺼운 잿불, 보정 4 번지는 혈흔)'); ok(Object.values(A.nodes).filter(x => x.kind === 'upgrade' && x.mod.set && x.mod.set.killRecharge).length === 1, '환급 강화는 하나(혈인 연참), 처치 조건');
+  ok(nc >= 30, '조건부 할인 변형 ' + nc + '개(대응 · 교대 · 상태 · 보호막 조건, 보정 5)'); ok(Object.values(A.vars).filter(x => x.mod.set && x.mod.set.killRecharge).every(x => /쓰러뜨리면/.test(x.d)), '처치 환급 변형은 처치 조건을 적음');
   ok(JSON.stringify(E.SK2.sb_bleedcut.fx) === JSON.stringify([{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 4 }]), '강화는 원래 스킬 데이터를 바꾸지 않음');
   const fight = (ups, eq) => { const run = newRun('spellblade'); run.clears = 2; run.atree.own = Object.keys(A.nodes).filter(x => x !== 'S'); run.skills = eq; E.atSync(run); run.p.aup = ups.slice(); const es = ['bruiser', 'bruiser'].map((r, i) => E.mkEnemy(r, false, i)); for (const e of es) { e.hp = e.hpMax = 5000; e.dmg = 1; } const b = E.newBattle(run.p, es, {}); b.rngF = () => 0.5; b.stepMode = false; E.runUntilPlayer(b); return { p: run.p, b, es }; };
   { const { p, b, es } = fight(['sbu_boil'], ['sb_boil']); const a0 = E.actionList(b).find(x => x.id === 'sb_boil'); ok(a0.yc === 2, '대응 전 혈염 비용 2'); E.ysResp(b, '막기'); ok(E.actionList(b).find(x => x.id === 'sb_boil').yc === 1, '대응 충전을 받은 라운드에 비용 1');
@@ -234,7 +242,7 @@ function nodeFight(keys) { const run = newRun('spellblade'); run.clears = 2; for
   ok(b.ovDisc === 1 && b.rec.some(x => x.k === 'ovready'), '보완 4: 마검 과부하, 교대 셋을 이으면 할인 준비'); ok(skCostAt(b, Object.assign({}, E.SK2.sb_finale, { ys: 4 })).c === 1 && skCostAt(b, skOf(p, 'sb_edge')).c === 2, '다음 유산 4 스킬 4 → 1(바닥 1), 다른 비용은 그대로');
   const hitP = IFX_NODE.ks_sb_over.hitP; ok(hitP({ sbAlt: true }) === 0.5 && hitP({ sbAlt: false }) === 0, '교대한 행동 피해 +50%(4단계 조정, 만든 사람 값 35%)'); }
 { const { p } = nodeFight(['ks_sb_blood']); ok(Math.round(p.ward) >= 6, '보완 4: 피를 두른 갑주, 전투 시작 보호막 6'); }
-{ const run = newRun('spellblade'); run.lv = 16; run.clears = 2; E.ptFix(run); const A = E.atBuild('spellblade'); for (const id of ['sb_bladeward', 'sb_unravel', 'sb_finale', 'sbu_release']) assert.equal(E.atBuy(run, id), null, id); run.skills = ['sb_finale']; E.treeSync(run);
+{ const run = newRun('spellblade'); run.lv = 16; run.clears = 2; E.ptFix(run); const A = E.atBuild('spellblade'); for (const id of ['sb_bladeward', 'sb_unravel', 'sb_finale']) assert.equal(E.atBuy(run, id), null, id); assert.equal(E.atBuy(run, 'sv_finale', 'sbu_release'), null, 'sv_finale'); run.skills = ['sb_finale']; E.treeSync(run);
   const s = f('skOf')(run.p, 'sb_finale'); ok(s.fx.findIndex(e => e.k === 'wardFirst') >= 0 && s.fx.find(e => e.k === 'wardFirst').n === 18, '보완 5: 갑주 해방은 먼저 보호막 18을 두름(M5-0 보정 4: 마갑 전개는 비용 3 · 보호막 27이 되어 숫자로 적는다)');
   const es = [E.mkEnemy('bruiser', false, 0)]; es[0].hp = es[0].hpMax = 5000; es[0].dmg = 0; const b = E.newBattle(run.p, es, {}); b.rngF = () => 0.5; b.stepMode = false; E.runUntilPlayer(b); run.p.ward = 0; run.p.ys = 5; const hp0 = es[0].hp; E.playerAct(b, 'sb_finale', es[0].id);
   ok(es[0].hp < hp0 && run.p.ward < 1 && b.log.some(x => /먼저 마갑 전개/.test(x.m)) && b.log.some(x => /보호막 18을 태운다/.test(x.m)), '보호막이 없어도 두르고 나서 모두 태워 친다'); }
@@ -252,7 +260,7 @@ const BAND_EXEMPT = ['sb_bolt'];
     const E_ = x => SC(Object.assign({}, E.SK2[x.id], { ys: x.ys })).E; const two = S.filter(x => x.ys === 2 && (!A.sec || ['A', 'B', 'C'].includes(x.sec)) && !BAND_EXEMPT.includes(x.id)); /* 기준 1.0 = 갈래 부채꼴의 비용 2 평균(경계 칸은 기준을 움직이지 않는다) */ const avg = two.reduce((a, x) => a + E_(x), 0) / two.length;
     for (const x of S) { const R = RING[x.ring]; if (!(x.ys >= R[0] && x.ys <= R[1]) && !(x.ring === 3 && E.SK2[x.id].once)) bad.push('고리 ' + x.id + ' r' + x.ring + ' c' + x.ys);
       const v = E_(x) / avg, B = BAND[x.ys].slice(); if (BOUND.includes(x.sec) && x.ring === 3 && x.ys === 4) B[1] *= 1.1; if (!(v >= B[0] - 1e-9 && v <= B[1] + 1e-9) && !BAND_EXEMPT.includes(x.id)) (BAND_WAIT.includes(x.id) ? wait : bad).push('값 ' + x.id + ' ' + v.toFixed(2) + '@' + x.ys + ' [' + B[0] + '–' + B[1].toFixed(2) + ']'); }
-    const numUp = {}; for (const u of N.filter(x => x.kind === 'upgrade')) { const m = u.mod || {}; const pure = !m.set && !m.cond && [...(m.fxSet || []), ...(m.fxAdd || [])].every(f => NUMK.includes(f.k) && !f.when && !f.on); if (pure) numUp[u.br] = (numUp[u.br] || 0) + 1; }
+    const numUp = {}; for (const u of (A.vars ? Object.values(A.vars).map(v => Object.assign({ br: A.nodes[v.on].br }, v)) : N.filter(x => x.kind === 'upgrade'))) { const m = u.mod || {}; const pure = !m.set && !m.cond && [...(m.fxSet || []), ...(m.fxAdd || [])].every(f => NUMK.includes(f.k) && !f.when && !f.on); if (pure) numUp[u.br] = (numUp[u.br] || 0) + 1; }
     if (strict) {
       assert.deepEqual(bad, [], c + ' 규격(고리 = 비용, 값 띠)'); n++;
       for (const k of ['A', 'B', 'C']) { const r1 = S.filter(x => x.sec === k && x.ys === 1); ok(r1.length === 1 && r1[0].ring === 1 && E.SK2[r1[0].id].time !== 'fast' && E.SK2[r1[0].id].b === A.sec[k], c + ' ' + A.sec[k] + ': 리듬 칸(비용 1) 1고리에 하나, 주 행동, 갈래 꼬리표 하나'); }

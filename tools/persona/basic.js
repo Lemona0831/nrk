@@ -30,7 +30,7 @@ module.exports = (D, G0) => {
       const eqd = run.skills || [];
       const ss = id => A.sec ? D.secScore(run, A, id) : 0; can.sort((x, y) => ss(y) - ss(x));
       const pick = can.find(id => ss(id) > 0 && (A.nodes[id].kind !== 'skill' || want(A, id) || A.nodes[id].requires)) || can.find(id => want(A, id) && linked(G0.SK2[id])) || can.find(id => want(A, id)) || can.find(id => A.nodes[id].kind === 'upgrade' && eqd.includes(A.nodes[id].on)) || can.find(id => A.nodes[id].kind === 'upgrade');
-      if (!pick || !G0.atBuy(run, pick)) break; equip(run, A);
+      if (!pick || !G0.atBuy(run, pick, A.nodes[pick] && A.nodes[pick].slot ? D.varPick(run, A, pick, 'basic', r || Math.random) : undefined)) break; equip(run, A);
     }
     equip(run, A);
   }

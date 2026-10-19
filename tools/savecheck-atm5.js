@@ -26,9 +26,9 @@ for (const build of ['butcher', 'confessor', 'bloodmage']) {
   } catch (e) { console.log('✗ spellblade 자른 칸: 예외 ' + e.message); bad++; } } }
 /* M5-0 보정 5(10월 20일): atv 3 판에 피의 반향(트리에서 뺌)과 1고리 갈림 둘(마갑참 · 마갑탄)을 찍어 둔 것처럼 만든다 → 피의 반향 · 나중에 찍은 마갑탄 환급 */
 { const save = saveOf('spellblade', 74000); if (!save) { console.log('✗ spellblade 보정 5: 저장본을 뜨지 못함'); bad++; } else { n++;
-  save.atree.atv = 3; save.atree.own = ['sb_bleedcut', 'sb_bladeward', 'sb_bolt', 'sb_bloodmail', 'sb_bloodecho']; save.atree.pts = 0; save.skills = ((run_('TREE2').spellblade || {}).starters || []).concat(['sb_bolt', 'sb_bloodecho', 'sb_bladeward']);
-  try { const run = reopen(save, n); const rf = run.atree.log.find(x => x.why === '빌드 규격 2판') || {}; const ok1 = JSON.stringify(run.atree.own) === JSON.stringify(['sb_bleedcut', 'sb_bladeward', 'sb_bloodmail']) && rf.refund === 2 && run.atree.atv === 4 && !run.skills.includes('sb_bolt') && !run.skills.includes('sb_bloodecho') && run.skills.includes('sb_bladeward');
+  save.atree.atv = 3; save.atree.own = ['sb_bleedcut', 'sb_bladeward', 'sb_bolt', 'sb_bloodecho', 'sbu_counter']; /* 그 레벨 총량 안: 남는 칸은 셋 */ save.atree.pts = 0; delete save.atree.vsel; save.skills = ((run_('TREE2').spellblade || {}).starters || []).concat(['sb_bolt', 'sb_bloodecho', 'sb_bladeward']);
+  try { const run = reopen(save, n); const rf = run.atree.log.find(x => x.why === '빌드 규격 2판') || {}; const ok1 = JSON.stringify(run.atree.own) === JSON.stringify(['sb_bleedcut', 'sb_bladeward', 'sv_bladeward']) && !(run.atree.vsel || {}).sv_bladeward && rf.refund === 2 && run.atree.atv === 4 && !run.skills.includes('sb_bolt') && !run.skills.includes('sb_bloodecho') && run.skills.includes('sb_bladeward');
     handleSheets('careful', rng(n)); const out = { bugs: [], rooms: [], acts: 0 }; OPT.chapters = 1; playLoop('careful', rng(900 + n), out); const ok2 = !out.bugs.length;
-    console.log(`${ok1 && ok2 ? '✓' : '✗'} spellblade 보정 5: 피의 반향 · 나중에 찍은 마갑탄 거둠(환급 ${rf.refund}), 남은 ${run.atree.own.join(' ')}, 판 끝 ${G.scr} 오류 ${out.bugs.length}`); if (!(ok1 && ok2)) bad++;
+    console.log(`${ok1 && ok2 ? '✓' : '✗'} spellblade 보정 5: 피의 반향 · 나중에 찍은 마갑탄 거둠(환급 ${rf.refund}), 옛 강화 맞받아 베기 → 마갑참 변형 자리(고르지 않음), 남은 ${run.atree.own.join(' ')}, 판 끝 ${G.scr} 오류 ${out.bugs.length}`); if (!(ok1 && ok2)) bad++;
   } catch (e) { console.log('✗ spellblade 보정 5: 예외 ' + e.message); bad++; } } }
 console.log(`at-m5: 저장본 ${n}개, 실패 ${bad}`); process.exitCode = bad ? 1 : 0;

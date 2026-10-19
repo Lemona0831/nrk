@@ -611,6 +611,11 @@ function secScore(run, A, id) {
   if (nd.sec === base) return nd.kind === 'upgrade' ? 8 : nd.ys === 4 ? 10.5 : nd.ring === 3 ? 12.5 : 14.5; // 차이를 성향 난수(신중 · 숙련 1)보다 크게
   return adj.includes(nd.sec) ? 5 : 0;
 }
+/* M5-0 보정 5: 변형 자리를 열 때 고를 변형(v2Pick). 평타 성향은 기본 공격 연동 > 싣기 꼬리표 먼저, 다른 성향은 제시된 것 가운데 판 난수로 */
+function varPick(run, A, slot, pk, r) { const off = run_('atVarsOffered')(run, slot); if (!off.length) return undefined; const V = run_('atBuild')(run.build).vars;
+  if ((run.persona || pk) === 'basic') { for (const tg of ['기본공격연동', '싣기']) { const c = off.find(v => (V[v].tags || []).includes(tg)); if (c) return c; } }
+  return off[Math.floor(r() * off.length)]; }
+const atBuyV = (run, A, id, pk, r) => G0.atBuy(run, id, A.nodes[id] && A.nodes[id].slot ? varPick(run, A, id, pk, r) : undefined);
 function spendTreeUp(pk, r, run, A) {
   const focus = THINK(pk) || pk === 'careful'; const convJudge = !process.env.CONV_OLD && pk !== 'novice';
   if (A.sec) sectorPick(pk, r, run, A);
@@ -618,10 +623,10 @@ function spendTreeUp(pk, r, run, A) {
     const ban = (process.env.BAN_UP || '').split(',').filter(Boolean), force = (process.env.FORCE_UP || '').split(',').filter(Boolean); // 0.8.0 5단계 측정 변형: 찍지 않을 · 먼저 찍을 액티브 노드(같은 포인트 예산)
     const can = Object.keys(A.nodes).filter(id => !G0.atWhy(run, id) && !ban.includes(id)); if (!can.length) break;
     const eqd = G0.v2Equip(run);
-    { const fz = can.find(id => force.includes(id) && eqd.includes(A.nodes[id].on)); if (fz) { if (G0.atBuy(run, fz)) break; sbEquip(run, A); continue; } }
+    { const fz = can.find(id => force.includes(id) && eqd.includes(A.nodes[id].on)); if (fz) { if (atBuyV(run, A, fz, pk, r)) break; sbEquip(run, A); continue; } }
     const cv = {}; const convOk = id => (id in cv ? cv[id] : (cv[id] = !!(eqd.includes(A.nodes[id].on) && convGain(run, A.nodes[id])))); // 결정적 판단(난수를 쓰지 않는다)
     const sc = id => { const nd = A.nodes[id]; const rr = r() * (pk === 'novice' ? 20 : 1); if (convJudge && isConv(nd)) return convOk(id) ? 0.3 + nd.ring * 0.1 + rr * 0.1 : -1; let v = (A.sec ? (focus || process.env.DG_SECTOR ? secScore(run, A, id) : 0) : (focus && nd.br === run.focus ? 10 : 0)) + nd.ring * 0.5; v += nd.kind === 'skill' ? ((run.skills || []).length < G0.EQUIP_SLOTS2 ? 4 : 1) : (eqd.includes(nd.on) ? 5 : 0.5); if (A.sec && run.sector && (focus || process.env.DG_SECTOR) && /^[A-C]{2}$/.test(run.sector) && nd.sec === run.sector) v = 100 + secScore(run, A, id) + nd.ring * 0.5; /* M5-0 보정 4: 경계 목표의 경계 칸은 순서 점수만(입구 → 둘째 → 3고리 둘 → 승부수 → 강화) */ return v + rr; }; // 난수는 예전과 같이 부를 때마다 한 번
-    const id = can.sort((a, b) => sc(b) - sc(a))[0]; if (convJudge && isConv(A.nodes[id]) && !convOk(id)) break; if (G0.atBuy(run, id)) break;
+    const id = can.sort((a, b) => sc(b) - sc(a))[0]; if (convJudge && isConv(A.nodes[id]) && !convOk(id)) break; if (atBuyV(run, A, id, pk, r)) break;
     sbEquip(run, A);
   }
 }
@@ -679,7 +684,7 @@ function playLoop(pk, r, out) {
   if (BUILDLOG) { out.ksLog = (run.ksLog || []).filter(x => x.id).map(x => ({ id: x.id, offer: x.offer, ch: x.ch, room: x.room })); out.atLog = (run.atree && run.atree.log || []).filter(x => x.id).map(x => [x.id, x.ch, x.room]); } // M5-0 빌드 기록: 큰 각인 제시 · 선택, 액티브 찍은 챕터 · 층
   if (run.ptree) out.ks = run.ptree.ks.slice(); if ((run.awk || []).length) out.awk = run.awk.slice(); { const ft = (run.rooms || []).filter(x => x.type === 'fate'); if (ft.length) out.fate = ft.map(x => x.took ? (x.ok ? '+' : '-') + x.took : 'skip'); } /* 각인 · 운명의 저울 (없으면 칸을 두지 않아 1챕터 결과 파일은 그대로) */
   { const hl = (run.drops || []).filter(x => x.g === 'h' || x.g === 'l').map(x => x.item + ':' + x.g + ':' + (x.ch || 1) + (x.boss ? ':boss' : '')); if (hl.length) out.hl = hl; } /* 영웅 · 전설을 얻은 기록 (없으면 칸을 두지 않아 1챕터 결과 파일은 그대로) */
-  if (OPT.detail) { out.cons = (run.consLog || []).length; out.consIds = countBy((run.consLog || []).map(x => x.id)); out.loot = (run.lootLog || []).reduce((a, x) => ({ gold: a.gold + (x.gold || 0), lost: a.lost + (x.lost || 0), n: a.n + Object.values(x.got || {}).reduce((m, v) => m + v, 0) }), { gold: 0, lost: 0, n: 0 }); out.tree = run.atree ? run.atree.own.slice() : null; out.patrol = run.patrolLog || null; out.chLog = run.chLog || null; /* 0.8.0 6단계: 순찰대 보상 고른 것 · 챕터에 들어설 때의 레벨 · 골드 · 장비 등급 · 소모품(C-1) */ out.ptree = run.ptree ? { own: run.ptree.own.slice(), free: run.ptree.free.slice(), ks: run.ptree.ks.slice() } : null; out.equip = (run.skills || []).slice(); out.flaskLeft = Object.assign({}, run.p.flask); out.pathsTaken = (run.pathLog || []).map(x => x.path); } out.gear = Object.values(run.inv).filter(x => run.eqU && Object.values(run.eqU).includes(x.uid)).map(x => x.tpl + ':' + x.g);
+  if (OPT.detail) { out.cons = (run.consLog || []).length; out.consIds = countBy((run.consLog || []).map(x => x.id)); out.loot = (run.lootLog || []).reduce((a, x) => ({ gold: a.gold + (x.gold || 0), lost: a.lost + (x.lost || 0), n: a.n + Object.values(x.got || {}).reduce((m, v) => m + v, 0) }), { gold: 0, lost: 0, n: 0 }); out.tree = run.atree ? run.atree.own.slice() : null; if (run.atree && run.atree.vsel && Object.keys(run.atree.vsel).length) out.vsel = Object.assign({}, run.atree.vsel); if (run.offer) out.offer = run.offer; if (run.atree && run_('typeof runTags') === 'function') out.tags = run_('runTags')(run); /* M5-0 보정 5: 변형 · 제시 · 꼬리표(BD-9) */ out.patrol = run.patrolLog || null; out.chLog = run.chLog || null; /* 0.8.0 6단계: 순찰대 보상 고른 것 · 챕터에 들어설 때의 레벨 · 골드 · 장비 등급 · 소모품(C-1) */ out.ptree = run.ptree ? { own: run.ptree.own.slice(), free: run.ptree.free.slice(), ks: run.ptree.ks.slice() } : null; out.equip = (run.skills || []).slice(); out.flaskLeft = Object.assign({}, run.p.flask); out.pathsTaken = (run.pathLog || []).map(x => x.path); } out.gear = Object.values(run.inv).filter(x => run.eqU && Object.values(run.eqU).includes(x.uid)).map(x => x.tpl + ':' + x.g);
   return out;
 }
 
@@ -750,4 +755,4 @@ function manifestOf(want) {
 }
 /* 판 밖 예외(창 처리 · 트리 찍기 등)로 판이 끝나지 못한 경우의 기록 */
 function crashRow(w, e) { const o = { pk: w.pk, build: w.build, seed: w.seed, res: 'crash', floor: 0, lv: 0, rooms: [], bugs: ['판 밖 예외 ' + e.message], acts: 0, fights: [] }; o.meta = MM.rowMeta(REV, { seed: w.seed, pk: w.pk, build: w.build, from: FROM, chapters: OPT.chapters, variant: OPT.variant, pol: OPT.polId }); failOf(o, 'crash', { msg: String(e.message).slice(0, 200), stack: String(e.stack || '').split('\n').slice(1, 3).join(' | ') }); CUR = null; return o; }
-module.exports = { sectorPick, secScore, ksPick, manifestOf, crashRow, REV, SKE, sbEquip, sbEquipScore, spendPassive, ptSurvNeed, playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post, ch3Pre, seedWorld };
+module.exports = { varPick, sectorPick, secScore, ksPick, manifestOf, crashRow, REV, SKE, sbEquip, sbEquipScore, spendPassive, ptSurvNeed, playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post, ch3Pre, seedWorld };

@@ -27,8 +27,16 @@ function vPTreeList(run) {
   const ks = t.ks.map(id => T.nodes[id].n);
   return `<div class="tsum"><div class="tpts">패시브 포인트 <b>${t.pts}</b><small>시작 ${PT.pts.start} + 레벨마다 ${PT.pts.lv}${t.bonus ? ' + 보너스 ' + t.bonus : ''}</small></div><div>${vStatTotals(run)}</div><div><span class="mini">큰 각인 ${t.ks.length}/${PT.ksN}${ks.length ? ': ' + ks.map(esc).join(', ') : ''}${run.ksPending > 0 ? ' · 고를 것 ' + run.ksPending + '번' : ''}</span></div></div>${T.tmp ? '<p class="mini">이 직업의 패시브 트리는 임시 배치입니다(공용 노드를 기울기대로 채움). 직업 노드는 다음 단계에서 들어옵니다.</p>' : ''}<nav class="tbmenu ptmenu" aria-label="패시브 방향">${tabs}</nav><div class="ptlist">${rows}</div>`;
 }
+/* M5-0 보정 5: 변형 자리의 변형 목록(이번 판에 제시된 것). 열 때 하나를 고르고, 야영지에서 바꾼다(포인트 그대로) */
+function atVarHtml(run, n, own, can, edit) {
+  const A = atBuild(run.build), cur = (run.atree.vsel || {})[n.id], camp = !!(run.cur && run.cur.type === 'camp');
+  const rows = atVarsOffered(run, n.id).map(vid => { const v = A.vars[vid]; const on = cur === vid;
+    const btn = !own ? (can && edit ? `<button class="sm gold" data-a="atbuy" data-k="${n.id}" data-v="${vid}">이 변형으로 열기 · 포인트 ${n.cost}</button>` : '') : on ? '' : edit && camp ? `<button class="sm" data-a="atvar" data-k="${n.id}" data-v="${vid}">${cur ? '바꾸기' : '고르기'}</button>` : '';
+    return `<div class="vrow${on ? ' on' : ''}"><b>${on ? '✔ ' : ''}${esc(v.n)}</b>${v.mut ? ' <span class="newtag">변종</span>' : ''} <span class="mini">${esc(v.d)}</span>${btn ? ' ' + btn : ''}</div>`; }).join('');
+  return `<div class="vlist">${rows}</div>` + (own && !camp ? `<p class="mini">${cur ? '변형은 야영지에서 바꿀 수 있습니다(포인트는 그대로).' : '아직 고른 변형이 없습니다. 야영지에서 고릅니다.'}</p>` : '');
+}
 function vATreeList(run) {
-  const A = atBuild(run.build), a = run.atree, brs = A.br, br = brs.includes(G.abr) ? G.abr : brs[0], edit = treeCanEdit(), refund = allocStep(run) === 'a'; const T2 = TREE2[run.build]; const eqd = run.skills || [];
+  const A = atBuild(run.build), a = run.atree, brs = A.sec ? Object.values(A.sec) : A.br, /* 보정 5: 부채꼴 여섯(경계 포함) */ br = brs.includes(G.abr) ? G.abr : brs[0], edit = treeCanEdit(), refund = allocStep(run) === 'a'; const T2 = TREE2[run.build]; const eqd = run.skills || [];
   const st = T2.starters.map(id => `<span class="tslot on">${esc(SK2[id].n)} <small>유산 ${skCost(skOf(run.p, id))}</small></span>`).join('');
   const slots = Array.from({ length: EQUIP_SLOTS2 }, (_, i) => eqd[i] && SK2[eqd[i]] ? `<button class="tslot on" data-a="ateq" data-k="${eqd[i]}" aria-label="${esc(SK2[eqd[i]].n)} 빼기">${esc(SK2[eqd[i]].n)} ✕</button>` : `<span class="tslot">빈 칸</span>`).join('');
   const tabs = brs.map(x => { const ids = Object.keys(A.nodes).filter(id => A.nodes[id].br === x); const op = ids.filter(id => a.own.includes(id)).length; const can = ids.some(id => !a.own.includes(id) && !atWhy(run, id)); return `<button class="tseg${br === x ? ' on' : ''}" data-a="abr" data-k="${esc(x)}" aria-pressed="${br === x}"><b>${esc(x)}</b> <small>${op}${can ? ' · +' : ''}</small></button>`; }).join('');
@@ -37,8 +45,9 @@ function vATreeList(run) {
     const n = A.nodes[id], own = a.own.includes(id), why = own ? null : atWhy(run, id), eq = eqd.includes(id);
     if (n.ring !== lastRing) { lastRing = n.ring; rows += `<h5 class="ptring">${n.ring}고리${ringOpen(run, n.ring) ? '' : ' 🔒 ' + esc(RING_WHY[n.ring] || '')}</h5>`; }
     let body; if (n.kind === 'skill') { const s = skOf(run.p, id); body = `<b>⚔ ${esc(n.n)}</b> <small class="mini">스킬 · 유산 ${skCost(s)}${own ? ' · 열림' : ''}${eq ? ' · 장착' : ''}</small><p class="mini">${esc(skHead(s))} ${esc(skBody(s))}</p>`; }
+    else if (n.slot) body = `<b>✚ ${esc(n.n)}</b> <small class="mini">변형 · ${esc((SK2[n.on] || {}).n || n.on)}${own ? ' · 열림' : ''}</small>` + atVarHtml(run, n, own, !why, edit);
     else body = `<b>✚ ${esc(n.n)}</b> <small class="mini">강화 · ${esc((SK2[n.on] || {}).n || n.on)}${own ? ' · 열림' + (run.p && (run.p.aup || []).includes(id) ? ' · 일함' : ' · 그 스킬을 끼우면 일함') : ''}</small><p class="mini">${esc(n.d)}</p>`;
-    const btn = (!own && !why && edit ? `<button class="sm gold" data-a="atbuy" data-k="${id}">열기 · 포인트 ${n.cost}</button>` : '') + (own && n.kind === 'skill' && edit ? `<button class="sm${eq ? '' : ' gold'}" data-a="ateq" data-k="${id}">${eq ? '빼기' : '장착'}</button>` : '') + (own && refund ? `<button class="sm" data-a="atref" data-k="${id}">되돌리기</button>` : '');
+    const btn = (!own && !why && edit && !n.slot ? `<button class="sm gold" data-a="atbuy" data-k="${id}">열기 · 포인트 ${n.cost}</button>` : '') + (own && n.kind === 'skill' && edit ? `<button class="sm${eq ? '' : ' gold'}" data-a="ateq" data-k="${id}">${eq ? '빼기' : '장착'}</button>` : '') + (own && refund ? `<button class="sm" data-a="atref" data-k="${id}">되돌리기</button>` : '');
     rows += `<div class="ptnode pt-${own ? 'own' : why ? 'lock' : 'can'} pk-${n.kind}"><div>${body}${why && !/고리/.test(why) && why !== '포인트가 없습니다' ? `<p class="mini">${esc(why)}</p>` : ''}</div><div class="row">${btn}</div></div>`;
   }
   return `<div class="tsum"><div class="tpts">액티브 포인트 <b>${a.pts}</b><small>시작 ${AT_PTS.start} + 레벨마다 ${AT_PTS.lv}</small></div><div><span class="mini">시작 스킬 · 항상 장착</span><div class="trow">${st}</div></div><div><span class="mini">장착 ${eqd.length}/${EQUIP_SLOTS2}</span><div class="trow">${slots}</div>${hunterLoadoutHint(run)}</div></div>${A.tmp ? '<p class="mini">이 직업의 액티브 트리는 임시 배치입니다(지금 스킬 칸을 갈래 · 줄 순서로 이음, 강화 노드 없음).</p>' : ''}<nav class="tbmenu ptmenu" aria-label="액티브 갈래">${tabs}</nav><div class="ptlist">${rows}</div>`;
