@@ -65,7 +65,7 @@ function atBuild(cls) {
   add('S', { kind: 'start', ring: 1, pos: { r: 0, lane: 'C' }, cost: 0, n: '시작 스킬', d: T2.starters.map(id => SK2[id] ? SK2[id].n : id).join(' · ') });
   const secOf = {}; if (D && D.sec) for (const k in D.sec) secOf[D.sec[k]] = k;
   if (D) {
-    for (const [id, br, ring, r, lane, , ys, ex] of D.skills) add(id, Object.assign({ kind: 'skill', br, ring, pos: { r, lane }, ys, n: SK2[id].n }, secOf[br] ? { sec: secOf[br] } : {}, ex && ex.requires ? { requires: ex.requires.slice() } : {}));
+    for (const [id, br, ring, r, lane, , ys, ex] of D.skills) add(id, Object.assign({ kind: 'skill', br, ring, pos: { r, lane }, ys, n: SK2[id].n }, secOf[br] ? { sec: secOf[br] } : {}, ex && ex.requires ? { requires: ex.requires.slice() } : {}, ex && ex.excl ? { excl: ex.excl } : {}));
     for (const [id, br, ring, r, lane, on, n, d, mod, src] of D.ups) add(id, Object.assign({ kind: 'upgrade', br, ring, pos: { r, lane }, on, n, d, mod, src }, secOf[br] ? { sec: secOf[br] } : {}));
     for (const [id, , , , , ln] of D.skills) for (const x of ln) link(id, x);
     for (const u of D.ups) link(u[0], u[5]);
@@ -83,7 +83,7 @@ const clearsEff = run => (run.clears || 0) + (run.markCh ? run.markCh - 1 : 0); 
 const ringOpen = (run, ring) => clearsEff(run) >= (PT.ring[ring] || 0) || (run.ringCamp || 1) >= ring;
 const RING_WHY = { 2: '2고리는 1챕터 야영지에서 열립니다', 3: '3고리는 2챕터 야영지에서 열립니다' };
 function ringCampOpen(run) { if (!run || !run.ptree) return 0; const want = Math.min(3, (run.ch || 1) + 1); const was = [2, 3].filter(k => ringOpen(run, k)).length; run.ringCamp = Math.max(run.ringCamp || 1, want); const now = [2, 3].filter(k => ringOpen(run, k)).length; if (now > was) { run.ringNew = 1; if (typeof toast === 'function') toast('새 고리가 열렸다: ' + (now + 1) + '고리'); return now + 1; } return 0; }
-function ptInit(run) { if (!run.ptree) run.ptree = { own: [], free: [], ks: [], pts: ptTotal(run), log: [], ksv: 2 }; if (!run.atree) run.atree = { own: [], pts: atTotal(run), log: [], atv: 3 }; if (!run.ksGot) run.ksGot = {}; if (run.ksPending == null) run.ksPending = 0; return run; }
+function ptInit(run) { if (!run.ptree) run.ptree = { own: [], free: [], ks: [], pts: ptTotal(run), log: [], ksv: 2 }; if (!run.atree) run.atree = { own: [], pts: atTotal(run), log: [], atv: 4 }; if (!run.ksGot) run.ksGot = {}; if (run.ksPending == null) run.ksPending = 0; return run; }
 const ptOpenIds = run => ['S'].concat(run.ptree.own, run.ptree.free, run.ptree.ks);
 const atOpenIds = run => ['S'].concat(run.atree.own);
 const ptSpent = run => run.ptree.own.reduce((a, id) => a + ((ptBuild(run.build).nodes[id] || {}).cost || 0), 0);
@@ -94,7 +94,8 @@ function treeWhyBuy(run, T, openIds, pts, id) {
   if (openIds.includes(id)) return '이미 열렸습니다';
   if (n.kind === 'keystone') return '큰 각인은 챕터 보상으로만 얻습니다';
   if (!ringOpen(run, n.ring)) return RING_WHY[n.ring] || '아직 열 수 없는 고리입니다';
-  if (n.requires) { if (!n.requires.every(x => openIds.includes(x))) return '양쪽 갈래의 첫 노드를 먼저 열어야 합니다'; } // 0.8.0 M5-0: 경계 입구
+  if (n.excl && openIds.includes(n.excl)) return '같은 자리의 다른 첫 스킬을 이미 골랐습니다'; // M5-0 보정 5: 1고리 갈림(둘 중 하나)
+  if (n.requires) { if (!n.requires.every(x => Array.isArray(x) ? x.some(y => openIds.includes(y)) : openIds.includes(x))) return '양쪽 갈래의 첫 노드를 먼저 열어야 합니다'; } // 0.8.0 M5-0: 경계 입구(보정 5: 갈래마다 첫 스킬 둘 중 어느 쪽이든)
   else if (!n.links.some(x => openIds.includes(x))) return '이웃한 노드를 먼저 열어야 합니다';
   if (pts < (n.cost || 0)) return '포인트가 없습니다';
   return null;
@@ -261,9 +262,16 @@ function ksTake(run, id) {
 }
 /* 0.8.0 M5-0(10월 19일 만든 사람 D14): 임시 액티브 트리 폐기. 트리에 없는 노드를 찍어 둔 판은 그 포인트를 돌려주고 장착을 시작 스킬로 되돌린다(run.atree.atv = 2면 끝난 판) */
 /* M5-0 보정 4(10월 20일 만든 사람): 마검사 갈래 칸을 6칸으로 잘랐다. atv 3: 없어진 노드와, 그 때문에 시작에서 이어지지 않게 된 노드를 거두고 포인트를 돌려준다 */
+/* M5-0 보정 5: 판의 꼬리표 수(찍은 액티브 스킬 · 고른 변형 · 패시브 노드 · 큰 각인). 결합 칸 requires.tags와 BD-9 */
+function runTags(run) { const c = {}; const add = L => { for (const t of L || []) c[t] = (c[t] || 0) + 1; };
+  if (run.atree) { const A = atBuild(run.build); for (const id of run.atree.own) { const n = A.nodes[id]; if (n && n.kind === 'skill' && SK2[id]) add(SK2[id].tags); } for (const v of Object.values(run.atree.vsel || {})) { const V = A.vars && A.vars[v]; if (V) add(V.tags); } }
+  if (run.ptree && typeof PT_TAGS !== 'undefined') { const T = ptBuild(run.build); for (const id of [].concat(run.ptree.own, run.ptree.free, run.ptree.ks)) { const n = T.nodes[id]; if (n && n.fx) add(PT_TAGS[n.fx]); } }
+  return c; }
 function atMigrateM5(run) {
-  if (!run || !run.atree || run.atree.atv >= 3) return 0; const why = run.atree.atv === 2 ? '부채꼴 칸 정리' : '임시 트리 폐기'; run.atree.atv = 3;
-  const A = atBuild(run.build); const own0 = run.atree.own || []; const keep0 = own0.filter(id => A.nodes[id]); const reach = treeReach(A, ['S'].concat(keep0), ['S']); const keep = keep0.filter(id => reach.has(id));
+  if (!run || !run.atree || run.atree.atv >= 4) return 0; const why = run.atree.atv === 3 ? '빌드 규격 2판' : run.atree.atv === 2 ? '부채꼴 칸 정리' : '임시 트리 폐기'; run.atree.atv = 4; // M5-0 보정 5: atv 4(경계 둘째 칸 교체 · 1고리 갈림)
+  const A = atBuild(run.build); const own0 = run.atree.own || []; const keep0 = [];
+  for (const id of own0) { const n = A.nodes[id]; if (!n) continue; if (n.excl && keep0.includes(n.excl)) continue; keep0.push(id); } // 1고리 갈림에서 둘 다 찍힌 옛 판은 먼저 찍은 쪽을 남긴다
+  const reach = treeReach(A, ['S'].concat(keep0), ['S']); const keep = keep0.filter(id => reach.has(id));
   const gone = own0.filter(id => !keep.includes(id)); if (!gone.length) return 0;
   run.atree.own = keep; run.atree.pts = (run.atree.pts || 0) + gone.length; (run.atree.log = run.atree.log || []).push({ refund: gone.length, why, gone: gone.slice(), t: Date.now() });
   const T2 = TREE2[run.build] || { starters: [] }; run.skills = (run.skills || []).filter(id => keep.includes(id) || T2.starters.includes(id)); return gone.length;

@@ -606,7 +606,7 @@ function secScore(run, A, id) {
   const S = run.sector, nd = A.nodes[id]; if (!S) return 0; const half = /_HALF$/.test(S), base = S.replace('_HALF', ''), adj = secAdj(S), bound = base.length === 2;
   if (!bound) return nd.sec === base ? 10 : 0;
   if (half) return nd.sec === base ? -50 : adj.includes(nd.sec) ? 8 : 0;
-  const entry = Object.values(A.nodes).find(x => x.sec === base && x.requires); if (entry && entry.requires.includes(id)) return 14;
+  const entry = Object.values(A.nodes).find(x => x.sec === base && x.requires); if (entry && entry.requires.flat().includes(id)) return 14; // 보정 5: 갈래마다 첫 스킬 둘 중 어느 쪽이든
   /* M5-0 보정 4: 경계 목표는 입구 → 둘째 → 3고리 둘 → 승부수 순, 경계 강화는 그 뒤(아래 점수에 고리 × 0.5가 더해진다) */
   if (nd.sec === base) return nd.kind === 'upgrade' ? 8 : nd.ys === 4 ? 10.5 : nd.ring === 3 ? 12.5 : 14.5; // 차이를 성향 난수(신중 · 숙련 1)보다 크게
   return adj.includes(nd.sec) ? 5 : 0;

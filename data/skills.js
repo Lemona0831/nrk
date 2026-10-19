@@ -484,6 +484,7 @@ const SKILLS2 = {
     { id: 'sb_deluge', row: 13, b: '혈인', tier: '상급', n: '혈우 낙하', kind: 'spell', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'killSpread', per: 1 }] },
     // 염검
     { id: 'sb_spark', row: 1, b: '염검', tier: '하급', n: '불씨', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'ignite', n: 1 }] }, // 0.8.0 M5-0 리듬 칸(비용 1, 교대 아님)
+    { id: 'sb_flamecut', row: 1, b: '염검', tier: '하급', n: '염화 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'imbue', s: 'ignite', n: 3 }] }, // M5-0 보정 5 1고리 갈림: 근접, 칼에 화상 싣기
     { id: 'sb_ember', row: 1, b: '염검', tier: '하급', n: '불씨 투척', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'ignite', n: 4 }] },
     { id: 'sb_sparkcut', row: 1, b: '염검', tier: '하급', n: '불씨 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, hits: 2, fx: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'ignite', n: 3 }] },
     { id: 'sb_flare', row: 2, b: '염검', tier: '하급', n: '불꽃 탄', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 3 }, { k: 'st', s: 'ignite', n: 2 }, { k: 'imbue', s: 'ignite', n: 3 }] },
@@ -545,9 +546,11 @@ const SKILLS2 = {
     /* 0.8.0 M5-0 보정 4(10월 20일 만든 사람 초안): 경계 둘째 칸(2고리) · 3고리 둘째. 꼴은 초안 그대로, 숫자는 값 띠에 맞췄다(data/skillkit.js SB_BOUND). 엔진은 js/10-skills-engine.js 마검사 경계 절 */
     { id: 'sb_hotedge', row: 5, b: '혈염', tier: '중급', n: '달아오른 칼날', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'sbCross', txt: '출혈 걸린 적에게 화상 +4, 화상 걸린 적에게 출혈 +4.' }] },
     { id: 'sb_searspread', row: 8, b: '혈염', tier: '중급', n: '핏불 번짐', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'searSpread', txt: '혈염 걸린 적을 쓰러뜨리면 곁의 적에게 그 혈염.' }] },
-    { id: 'sb_bloodecho', row: 5, b: '죄인의 피', tier: '중급', n: '피의 반향', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbEcho', txt: '이번 전투 동안 보호막이 있으면 베기가 출혈 +2 더.' }] },
+    { id: 'sb_sinstrike', row: 5, b: '죄인의 피', tier: '중급', n: '죄인의 일격', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 8 }, { k: 'wardDmg', per: 0.5, spend: 0, cap: 12 }, { k: 'st', s: 'bleed', n: 2 }] }, // M5-0 보정 5: 막아 낸 만큼 되갚는 칼(지금 보호막에 비례한 피해 + 출혈, 보호막은 쓰지 않음)
     { id: 'sb_shackle', row: 8, b: '죄인의 피', tier: '중급', n: '피의 족쇄', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'sbShackle', txt: '이번 전투 동안 출혈 걸린 적의 강타를 막아 내면 그 적에게 붕괴 +90.' }] },
-    { id: 'sb_ashhand', row: 5, b: '유산의 불', tier: '중급', n: '재 묻은 손', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbAshHand', txt: '다음 기본 공격 2번에 화상 3.' }] },
+    { id: 'sb_embercut', row: 5, b: '유산의 불', tier: '중급', n: '잿불 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 9 }, { k: 'sbEmberCut', txt: '보호막을 6까지 태워 그만큼 화상을 건다.' }] }, // M5-0 보정 5: 보호막을 조금 태워 그만큼 화상
+    { id: 'sb_bloodecho', row: 5, b: '죄인의 피', tier: '중급', n: '피의 반향', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbEcho', txt: '이번 전투 동안 보호막이 있으면 베기가 출혈 +2 더.' }] }, // M5-0 보정 5에서 트리에서 뺐다(죄인의 일격으로). 데이터는 남긴다
+    { id: 'sb_ashhand', row: 5, b: '유산의 불', tier: '중급', n: '재 묻은 손', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbAshHand', txt: '다음 기본 공격 2번에 화상 3.' }] }, // M5-0 보정 5에서 트리에서 뺐다(잿불 베기로)
     { id: 'sb_cindermail', row: 8, b: '유산의 불', tier: '중급', n: '불씨 갑주', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'sbCinder', txt: '이번 전투 동안 보호막이 피해로 깎일 때마다 전열에 화상 2.' }] },
     { id: 'sb_bulwark', row: 11, b: '마갑', tier: '상급', n: '방벽 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'wardFill', to: 0.75 }, { k: 'dmg', n: 11 }, { k: 'brk', n: 18 }] },
     { id: 'sb_measure', row: 11, b: '마갑', tier: '상급', n: '교차 일섬', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 19 }, { k: 'alt', run: 2, brk: 40, ward: 4 }] },
@@ -917,3 +920,15 @@ const TREE_GATE = { 시작: 0, 하급: 0, 중급: 0, 상급: 0 }; // 사다리�
 /* 챕터로 여는 등급: 1~2챕터는 하급·중급만으로 싸운다. 상급·궁극은 3챕터를 만들 때 다시 설계해 더한다 */
 const TREE_CH = { 시작: 1, 하급: 1, 중급: 1, 상급: 3, 궁극: 5 }; // 상급·궁극 칸은 지웠지만(3챕터부터 다시 짠다) 여는 챕터는 남겨 둔다. 이 표에 없는 등급은 열리지 않는다(index.html treeWhy)
 const EQUIP_SLOTS2 = 4;
+
+/* 0.8.0 M5-0 보정 5(10월 20일 만든 사람, M14 선행: 마검사만): 스킬 꼬리표. 결합 칸의 조건(requires.tags)과 빌드 꼬리표 프로필(BD-9)이 읽는다.
+   어휘: 출혈 · 화상 · 혈염 · 보호막 · 교대 · 붕괴 · 싣기 · 기본공격연동 · 흘리기 · 광역 · 빠름 */
+const SB_TAGS = {
+  sb_bleedcut: ['출혈'], sb_bloodmark: ['출혈', '싣기'], sb_blooddrop: ['출혈'], sb_boil: ['출혈', '싣기', '빠름'], sb_taste: ['출혈'], sb_redwind: ['출혈', '광역'], sb_deluge: ['출혈', '광역'],
+  sb_ember: ['화상'], sb_flamecut: ['화상', '싣기'], sb_spark: ['화상'], sb_kindle: ['화상', '싣기', '빠름'], sb_char: ['화상', '빠름'], sb_tome: ['화상', '싣기'], sb_hellfire: ['화상', '붕괴'],
+  sb_bladeward: ['보호막', '교대'], sb_bolt: ['보호막', '빠름'], sb_shard: [], sb_unravel: ['교대'], sb_turn: ['교대', '빠름'], sb_shell: ['보호막', '빠름'], sb_finale: ['붕괴', '교대'],
+  sb_bloodfire: ['출혈', '화상', '싣기'], sb_hotedge: ['출혈', '화상'], sb_searcut: ['혈염'], sb_searspread: ['혈염'], sb_kalpa: ['혈염'],
+  sb_bloodmail: ['보호막', '출혈'], sb_sinstrike: ['보호막', '출혈'], sb_film: ['보호막', '출혈'], sb_shackle: ['출혈', '붕괴'], sb_sinwall: ['보호막', '출혈'],
+  sb_heatmail: ['보호막', '기본공격연동'], sb_embercut: ['보호막', '화상'], sb_embermail: ['화상', '기본공격연동'], sb_cindermail: ['보호막', '화상'], sb_firebody: ['화상', '기본공격연동'],
+};
+for (const s of SKILLS2.spellblade || []) if (SB_TAGS[s.id]) s.tags = SB_TAGS[s.id].slice();

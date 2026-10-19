@@ -11,22 +11,23 @@ const ATREE_DEF = {
        자른 갈래 칸(① 꼬리표 중복 → ② M3 히트맵 개방률 → ③ 값 띠): 혈인 피의 낙인 · 혈풍참, 염검 작열검 · 끊는 불길, 마갑 반향 주문 · 균열 주문 · 회류참. 마갑 전개는 3고리 비용 3, 마갑탄은 띠 예외(보정 2) */
     sec: { A: '염검', AB: '혈염', B: '혈인', BC: '죄인의 피', C: '마갑', CA: '유산의 불' },
     skills: [
-      ['sb_bleedcut', '혈인', 1, 1, 'C', ['S'], 2], ['sb_blooddrop', '혈인', 1, 2, 'C', ['sb_bleedcut'], 1],
-      ['sb_boil', '혈인', 2, 3, 'L', ['sb_bleedcut'], 2], ['sb_taste', '혈인', 2, 3, 'R', ['sb_bleedcut'], 2],
+      /* M5-0 보정 5(10월 20일 만든 사람) 1고리 갈림: 갈래마다 첫 스킬 둘 중 하나(excl), 리듬 칸 공통. 혈인 혈흔 베기 / 피의 낙인(되살림), 염검 불씨 투척 / 염화 베기(신규), 마갑 마갑참 / 마갑탄(2고리에서 올림). 마갑 2고리 빈자리는 회류참(보정 4에서 자른 칸 되살림) */
+      ['sb_bleedcut', '혈인', 1, 1, 'L', ['S'], 2, { excl: 'sb_bloodmark' }], ['sb_bloodmark', '혈인', 1, 1, 'R', ['S'], 2, { excl: 'sb_bleedcut' }], ['sb_blooddrop', '혈인', 1, 2, 'C', ['sb_bleedcut', 'sb_bloodmark'], 1],
+      ['sb_boil', '혈인', 2, 3, 'L', ['sb_bleedcut', 'sb_bloodmark'], 2], ['sb_taste', '혈인', 2, 3, 'R', ['sb_bleedcut', 'sb_bloodmark'], 2],
       ['sb_redwind', '혈인', 3, 5, 'L', ['sb_boil', 'sb_taste'], 3], ['sb_deluge', '혈인', 3, 5, 'R', ['sb_boil', 'sb_taste'], 4],
-      ['sb_ember', '염검', 1, 1, 'C', ['S'], 2], ['sb_spark', '염검', 1, 2, 'C', ['sb_ember'], 1],
-      ['sb_kindle', '염검', 2, 3, 'L', ['sb_ember'], 2], ['sb_char', '염검', 2, 3, 'R', ['sb_ember'], 2],
+      ['sb_ember', '염검', 1, 1, 'L', ['S'], 2, { excl: 'sb_flamecut' }], ['sb_flamecut', '염검', 1, 1, 'R', ['S'], 2, { excl: 'sb_ember' }], ['sb_spark', '염검', 1, 2, 'C', ['sb_ember', 'sb_flamecut'], 1],
+      ['sb_kindle', '염검', 2, 3, 'L', ['sb_ember', 'sb_flamecut'], 2], ['sb_char', '염검', 2, 3, 'R', ['sb_ember', 'sb_flamecut'], 2],
       ['sb_tome', '염검', 3, 5, 'L', ['sb_kindle', 'sb_char'], 3], ['sb_hellfire', '염검', 3, 5, 'R', ['sb_kindle', 'sb_char'], 4],
-      ['sb_bladeward', '마갑', 1, 1, 'C', ['S'], 2], ['sb_shard', '마갑', 1, 2, 'C', ['sb_bladeward'], 1],
-      ['sb_bolt', '마갑', 2, 3, 'L', ['sb_bladeward'], 2], ['sb_unravel', '마갑', 2, 3, 'R', ['sb_bladeward'], 2],
-      ['sb_shell', '마갑', 3, 5, 'L', ['sb_bolt', 'sb_unravel'], 3], ['sb_finale', '마갑', 3, 5, 'R', ['sb_bolt', 'sb_unravel'], 4],
-      /* 경계: 입구(2고리)는 양쪽 갈래의 1고리 개시 노드를 모두 연 뒤. 둘째(2고리) → 3고리 둘 → 승부수(비용 4) */
-      ['sb_bloodfire', '혈염', 2, 3, 'C', ['sb_ember', 'sb_bleedcut'], 2, { requires: ['sb_ember', 'sb_bleedcut'] }], ['sb_hotedge', '혈염', 2, 4, 'C', ['sb_bloodfire'], 2],
+      ['sb_bladeward', '마갑', 1, 1, 'L', ['S'], 2, { excl: 'sb_bolt' }], ['sb_bolt', '마갑', 1, 1, 'R', ['S'], 2, { excl: 'sb_bladeward' }], ['sb_shard', '마갑', 1, 2, 'C', ['sb_bladeward', 'sb_bolt'], 1],
+      ['sb_unravel', '마갑', 2, 3, 'L', ['sb_bladeward', 'sb_bolt'], 2], ['sb_turn', '마갑', 2, 3, 'R', ['sb_bladeward', 'sb_bolt'], 2],
+      ['sb_shell', '마갑', 3, 5, 'L', ['sb_unravel', 'sb_turn'], 3], ['sb_finale', '마갑', 3, 5, 'R', ['sb_unravel', 'sb_turn'], 4],
+      /* 경계: 입구(2고리)는 양쪽 갈래에서 첫 스킬을 하나씩(어느 쪽이든) 연 뒤. 둘째(2고리) → 3고리 둘 → 승부수(비용 4). 보정 5: 죄인의 피 둘째 = 죄인의 일격, 유산의 불 둘째 = 잿불 베기(공격 칸) */
+      ['sb_bloodfire', '혈염', 2, 3, 'C', ['sb_ember', 'sb_flamecut', 'sb_bleedcut', 'sb_bloodmark'], 2, { requires: [['sb_ember', 'sb_flamecut'], ['sb_bleedcut', 'sb_bloodmark']] }], ['sb_hotedge', '혈염', 2, 4, 'C', ['sb_bloodfire'], 2],
       ['sb_searcut', '혈염', 3, 5, 'L', ['sb_hotedge'], 3], ['sb_searspread', '혈염', 3, 5, 'R', ['sb_hotedge'], 3], ['sb_kalpa', '혈염', 3, 6, 'C', ['sb_searcut', 'sb_searspread'], 4],
-      ['sb_bloodmail', '죄인의 피', 2, 3, 'C', ['sb_bleedcut', 'sb_bladeward'], 2, { requires: ['sb_bleedcut', 'sb_bladeward'] }], ['sb_bloodecho', '죄인의 피', 2, 4, 'C', ['sb_bloodmail'], 2],
-      ['sb_film', '죄인의 피', 3, 5, 'L', ['sb_bloodecho'], 3], ['sb_shackle', '죄인의 피', 3, 5, 'R', ['sb_bloodecho'], 3], ['sb_sinwall', '죄인의 피', 3, 6, 'C', ['sb_film', 'sb_shackle'], 4],
-      ['sb_heatmail', '유산의 불', 2, 3, 'C', ['sb_bladeward', 'sb_ember'], 2, { requires: ['sb_bladeward', 'sb_ember'] }], ['sb_ashhand', '유산의 불', 2, 4, 'C', ['sb_heatmail'], 2],
-      ['sb_embermail', '유산의 불', 3, 5, 'L', ['sb_ashhand'], 3], ['sb_cindermail', '유산의 불', 3, 5, 'R', ['sb_ashhand'], 3], ['sb_firebody', '유산의 불', 3, 6, 'C', ['sb_embermail', 'sb_cindermail'], 4],
+      ['sb_bloodmail', '죄인의 피', 2, 3, 'C', ['sb_bleedcut', 'sb_bloodmark', 'sb_bladeward', 'sb_bolt'], 2, { requires: [['sb_bleedcut', 'sb_bloodmark'], ['sb_bladeward', 'sb_bolt']] }], ['sb_sinstrike', '죄인의 피', 2, 4, 'C', ['sb_bloodmail'], 2],
+      ['sb_film', '죄인의 피', 3, 5, 'L', ['sb_sinstrike'], 3], ['sb_shackle', '죄인의 피', 3, 5, 'R', ['sb_sinstrike'], 3], ['sb_sinwall', '죄인의 피', 3, 6, 'C', ['sb_film', 'sb_shackle'], 4],
+      ['sb_heatmail', '유산의 불', 2, 3, 'C', ['sb_bladeward', 'sb_bolt', 'sb_ember', 'sb_flamecut'], 2, { requires: [['sb_bladeward', 'sb_bolt'], ['sb_ember', 'sb_flamecut']] }], ['sb_embercut', '유산의 불', 2, 4, 'C', ['sb_heatmail'], 2],
+      ['sb_embermail', '유산의 불', 3, 5, 'L', ['sb_embercut'], 3], ['sb_cindermail', '유산의 불', 3, 5, 'R', ['sb_embercut'], 3], ['sb_firebody', '유산의 불', 3, 6, 'C', ['sb_embermail', 'sb_cindermail'], 4],
     ],
     ups: [
       /* 부채꼴마다 3(M5-0 보정 4). 갈래는 남은 스킬에 붙은 강화 가운데 히트맵 개방률 순, 순수 숫자 강화 2개까지(염검 잔화검은 셋째 순수 숫자라 불길 잇기로) */
@@ -37,7 +38,7 @@ const ATREE_DEF = {
       ['sbu_brand', '염검', 1, 1, 'RR', 'sb_ember', '불의 표식', '화상 걸린 적에게 ×1.5.', { fxAdd: [{ k: 'kwx', s: 'ignite', mul: 1.5 }] }, ['sb_brand', 'sb_pyre']],
       ['sbu_chainf', '염검', 3, 5, 'LL', 'sb_tome', '불길 잇기', '대상의 화상이 5 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'kw:ignite>=5' } }, []],
       ['sbu_counter', '마갑', 1, 1, 'LL', 'sb_bladeward', '맞받아 베기', '교대면 보호막 +4.', { fxAdd: [{ k: 'alt', ward: 4 }] }, ['sb_counter']],
-      ['sbu_barrage', '마갑', 2, 3, 'LL', 'sb_bolt', '방벽 포격', '보호막 비례 피해 0.5 → 1, 상한 12 → 18.', { fxSet: [{ k: 'wardDmg', per: 1, cap: 18 }] }, ['sb_wardbolt', 'sb_barrage']],
+      ['sbu_barrage', '마갑', 1, 1, 'RR', 'sb_bolt', '방벽 포격', '보호막 비례 피해 0.5 → 1, 상한 12 → 18.', { fxSet: [{ k: 'wardDmg', per: 1, cap: 18 }] }, ['sb_wardbolt', 'sb_barrage']],
       ['sbu_release', '마갑', 3, 5, 'RR', 'sb_finale', '갑주 해방', '먼저 보호막 18 · 보호 1을 두르고, 남은 보호막을 모두 태워 피해로 바꿉니다(×1.5).', { fxAdd: [{ k: 'wardFirst', n: 18, protect: 1 }, { k: 'wardBurn', mul: 1.5 }] }, ['sb_shatter', 'sb_rebuke', 'sb_wardburst', 'sb_embershell', 'sb_breakwall']],
       ['sbu_bf_fast', '혈염', 2, 3, 'L', 'sb_bloodfire', '번지는 핏불', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, []],
       ['sbu_sear_both', '혈염', 3, 5, 'LL', 'sb_searcut', '엉긴 상처', '대상에게 출혈 · 화상이 모두 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'kw:bleed>=1&kw:ignite>=1' } }, []],
@@ -48,7 +49,7 @@ const ATREE_DEF = {
       /* 경계 새 강화(M5-0 보정 4 초안, 규칙 3: 숫자가 아니라 빠르기 · 조건) */
       ['sbu_spread_sear', '혈염', 3, 5, 'RR', 'sb_searspread', '번지는 혈흔', '대상에게 혈염이 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'kw:sear>=1' } }, []],
       ['sbu_shackle_fast', '죄인의 피', 3, 5, 'RR', 'sb_shackle', '서두른 족쇄', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, []],
-      ['sbu_ash_fast', '유산의 불', 2, 4, 'R', 'sb_ashhand', '털어 낸 재', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, []],
+      ['sbu_ash_fast', '유산의 불', 2, 4, 'R', 'sb_embercut', '털어 낸 재', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, []],
     ],
   },
   /* 0.8.0 5단계 (10월 17일 만든 사람 검토 반영): docs/제안/0.8.0-5단계-파수꾼-수도승-트리초안-2026-10-17.md 2-6. 스킬 25 + 강화 27 = 52노드 */
