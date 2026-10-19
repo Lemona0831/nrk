@@ -224,7 +224,8 @@ function nodeFight(keys) { const run = newRun('spellblade'); run.clears = 2; for
   ok(es[0].hp < hp0 && run.p.ward < 1 && b.log.some(x => /먼저 마갑 전개/.test(x.m)) && b.log.some(x => /보호막 18을 태운다/.test(x.m)), '보호막이 없어도 두르고 나서 모두 태워 친다'); }
 // 0.8.0 M5-0 규격(10월 19일, 전면 개편 2절): 부채꼴(sec)로 바뀐 직업은 오류, 아직 사다리인 직업은 보고만(M5-1~5에서 바꾼다)
 /* 판정 대기(10월 19일): 만든 사람이 문장(숫자 포함)을 정한 마검사 경계 칸 가운데 값 띠 밖인 것. 문장 그대로 두고, 숫자를 띠에 맞출지 · 띠를 경계에 어떻게 둘지 결정을 기다린다 */
-const BAND_WAIT = ['sb_bloodfire', 'sb_bloodmail', 'sb_heatmail', 'sb_film', 'sb_embermail', 'sb_kalpa', 'sb_sinwall', 'sb_firebody'];
+/* M5-0 마감(10월 19일 만든 사람): 숫자만 띠 하한까지 올리기로 해 대기 목록을 비웠다. 이제 경계 칸도 띠 밖이면 실패 */
+const BAND_WAIT = [];
 { const SC = D.run_('skScore'), RING = { 1: [1, 2], 2: [2, 3], 3: [3, 4] }, BAND = { 1: [0.5, 0.65], 2: [0.85, 1.15], 3: [1.5, 1.8], 4: [2.2, 2.6] }, BOUND = ['AB', 'BC', 'CA'];
   const NUMK = ['dmg', 'brk', 'exploit', 'kwx', 'lowx', 'brokenx', 'st', 'imbue', 'ward', 'wardDmg', 'stam'], rep = [];
   for (const c of ['spellblade', 'warden', 'monk', 'assassin', 'hunter', 'elementalist']) {

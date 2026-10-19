@@ -88,6 +88,9 @@ const skJo = n => '013678'.includes(String(n).slice(-1)) ? '을' : '를'; // 숫
    sbHeat 기본 공격 하나 × 0.5 − 태운 보호막. sbEmberMail 보호막이 있는 동안 평타 두 번 화상 2. sbFireBody 남은 유산(평균 1) × 8 보호막 + n차례 평타 ×1.3 · 화상 2 − n차례 스킬을 못 쓰는 몫 */
 const SB_BD_K = ['searMerge', 'sbBlaze', 'wardPer', 'sbFilm', 'sbSinWall', 'sbHeat', 'sbEmberMail', 'sbFireBody'];
 const SB_HP = 120;
+/* 경계 숫자 (엔진 js/10-skills-engine.js의 IFX_SB · sbBoundUse · sbWardHit와 값 식이 함께 읽는다). 스킬 문장(data/skills.js txt)의 숫자와 맞춰 둔다 */
+/* M5-0 마감(10월 19일 만든 사람): 문장의 꼴은 그대로, 숫자만 값 띠 하한까지 올렸다. 겁화 피해 +40 → +60%, 피막 50 → 125%, 죄인의 벽 출혈 4 → 5, 달군 갑주 ×1.5 → ×2.8, 잿불 갑주 화상 2 → 5, 불의 몸 ×1.3 → ×1.8 · 화상 2 → 4 (피의 갑주 +4 → +17, 핏불 싣기 출혈 2 · 화상 2 → 3 · 4는 data/skills.js fx) */
+const SB_BOUND = { blazeHit: 0.6, blazeIn: 0.3, blazeSear: 2, filmPer: 1.25, sinPay: 0.15, sinMul: 3, sinBleed: 5, heatMul: 2.8, emberIgn: 5, bodyPer: 8, bodyMul: 0.8, bodyIgn: 4, sinBlock: 0.3, ashMul: 0.5, ashIgn: 2 };
 function skValue(s, ov) {
   if (!ov && SKK.butch && /^b_/.test(String(s.id)) && !s._bu) return skValueBu(s);
   if (!ov && String(s.id).slice(0, 2) === 'e_') return skValueElem(s);
@@ -98,16 +101,16 @@ function skValue(s, ov) {
   const burnTake = e => e.max ? Math.min(e.max, W.B[hi]) : W.all[hi]; // 한 번에 태우는 양: 상한이 있으면 측정 보유량과 상한 가운데 작은 쪽, 모두 태우면 측정값
   const mk = String(s.id).slice(0, 2) === 'm_'; const mt = s.tgt === 'front' || s.tgt === 'all' ? tm : 1; const M = K.monk; // 수도승 (10월 7일)
   for (const e of s.fx) {
-    if (SB_BD_K.includes(e.k)) { const Sbi = SB.S.bleed[hi] + SB.S.ignite[hi], kw = SB.kw.bleed, Wv = K.ward.v; const nT = e.n || 3;
+    if (SB_BD_K.includes(e.k)) { const Sbi = SB.S.bleed[hi] + SB.S.ignite[hi], kw = SB.kw.bleed, Wv = K.ward.v; const nT = e.n || 3; const U = SB_BOUND;
       switch (e.k) {
         case 'searMerge': v += 0.6 * Sbi * kw * (1.5 - 1); break;
-        case 'sbBlaze': v += nT * K.B * 0.4 + 2 * (2 * kw + 0.5 * Sbi * kw) - W.S[hi] * Wv - nT * K.B * 0.8 * 0.3; break;
+        case 'sbBlaze': v += nT * K.B * U.blazeHit + 2 * (U.blazeSear * kw + 0.5 * Sbi * kw) - W.S[hi] * Wv - nT * K.B * 0.8 * U.blazeIn; break;
         case 'wardPer': v += 1.1 * e.n * Wv; break;
-        case 'sbFilm': v += W.S[hi] * 0.5 * kw; break;
-        case 'sbSinWall': v += SB_HP * 0.15 * 3 * Wv - SB_HP * 0.15 + 0.5 * 2 * 4 * kw; break;
-        case 'sbHeat': v += K.B * 0.5 - W.S[hi] * Wv * 0.5; break;
-        case 'sbEmberMail': v += 2 * 2 * kw; break;
-        case 'sbFireBody': v += 1 * 8 * Wv + nT * (K.B * 0.3 + 2 * kw) - nT * (SKK.B * 0.75); break;
+        case 'sbFilm': v += W.S[hi] * U.filmPer * kw; break;
+        case 'sbSinWall': v += SB_HP * U.sinPay * U.sinMul * Wv - SB_HP * U.sinPay + 0.5 * 2 * U.sinBleed * kw; break;
+        case 'sbHeat': v += K.B * (U.heatMul - 1) - W.S[hi] * Wv * 0.5; break;
+        case 'sbEmberMail': v += 2 * U.emberIgn * kw; break;
+        case 'sbFireBody': v += 1 * U.bodyPer * Wv + nT * (K.B * U.bodyMul + U.bodyIgn * kw) - nT * (SKK.B * 0.75); break;
       } continue; }
     switch (e.k) {
       case 'dmg': v += e.n * hits * (s.tgt === 'self' ? 1 : tm); break;

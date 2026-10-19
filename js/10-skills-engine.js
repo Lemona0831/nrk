@@ -223,7 +223,7 @@ function sbBegin(b, id, act, tgt) {
 }
 /* ===== 0.8.0 M5-0 마검사 경계 (10월 19일 만든 사람, 문장 그대로): 혈염(혈인 × 염검) · 죄인의 피(혈인 × 마갑) · 유산의 불(마갑 × 염검) =====
    p.sbSt = { blaze 겁화 남은 차례, fireBody 불의 몸 남은 차례, heatNext 다음 기본 공격 ×, emberMail 잿불 갑주, film 피막(이번 차례), sinWall 죄인의 벽 }. 효과 목록(fxList)에 IFX_SB로 들어간다 */
-const SB_BOUND = { blazeHit: 0.4, blazeIn: 0.3, blazeSear: 2, filmPer: 0.5, sinPay: 0.15, sinMul: 3, sinBleed: 4, heatMul: 1.5, emberIgn: 2, bodyPer: 8, bodyMul: 0.3, bodyIgn: 2, sinBlock: 0.3, ashMul: 0.5, ashIgn: 2 };
+/* 경계 숫자(SB_BOUND)는 값 식과 함께 data/skillkit.js에 있다 */
 const sbIsCut = (p, c) => !!c && (c.id === 'basic' || c.id === 'heavy' || (SK2[c.id] && SK2[c.id].kind === 'cut'));
 const sbBH = c => !!c && (c.id === 'basic' || c.id === 'heavy');
 const IFX_SB = {

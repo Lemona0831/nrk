@@ -4,7 +4,7 @@
 process.env.DGDIR = process.env.DGDIR || '.';
 const assert = require('assert/strict'), D = require('./dgqa.js'), E = D.G0, R = D.run_;
 let n = 0; const FAIL = []; const ok = (c, m) => { if (!c) FAIL.push(m); else n++; };
-const stk = (u, k) => (u.s[k] ? u.s[k].stacks : 0);
+const stk = (u, k) => (u.s[k] ? u.s[k].stacks : 0); const U = R('SB_BOUND');
 function fight(skills, pn, ens) {
   const p = E.mkPlayer('spellblade', {}, {}, skills || []); p.pn = (pn || []).slice(); const es = (ens || ['bruiser', 'bruiser']).map((r, i) => E.mkEnemy(r, false, i));
   for (const e of es) { e.hp = e.hpMax = 5000; e.dmg = 1; e.row = 'front'; e.intent = { k: 'attack' }; }
@@ -21,22 +21,22 @@ const act = (b, id, t) => { for (const e of b.en) if (e.alive && !e.intent) e.in
 { const { p, b, es } = fight(['sb_ember']); E.addS(b, es[1], 'sear', 3); p.ward = 0; act(b, 'basic', es[0]); p.ys = 5; act(b, 'sb_ember', es[0]); ok(!(p.ward > 0), '혈염 걸린 적이 있는 동안 교대 보호막 없음');
   const f2 = fight(['sb_ember']); f2.p.ward = 0; act(f2.b, 'basic', f2.es[0]); f2.p.ys = 5; act(f2.b, 'sb_ember', f2.es[0]); ok(f2.p.ward > 0, '혈염이 없으면 교대 보호막 그대로'); }
 // 핏불 싣기: 출혈 · 화상을 함께 싣고 다음 베기가 건다
-{ const { p, b, es } = fight(['sb_bloodfire']); act(b, 'sb_bloodfire'); ok(p.edge && p.edge.s === 'bleed' && p.edge.also && p.edge.also[0].s === 'ignite', '핏불 싣기: 칼에 출혈 · 화상'); act(b, 'basic', es[0]); ok(stk(es[0], 'bleed') >= 1 && stk(es[0], 'ignite') >= 2 && b.log.some(x => /출혈 2 · 화상 2/.test(x.m || '')), '다음 베기가 출혈 · 화상을 함께 건다(적이 한 번 움직여 출혈 −1)'); }
+{ const { p, b, es } = fight(['sb_bloodfire']); act(b, 'sb_bloodfire'); ok(p.edge && p.edge.s === 'bleed' && p.edge.also && p.edge.also[0].s === 'ignite', '핏불 싣기: 칼에 출혈 · 화상'); act(b, 'basic', es[0]); ok(stk(es[0], 'bleed') >= 1 && stk(es[0], 'ignite') >= 2 && b.log.some(x => /출혈 3 · 화상 4/.test(x.m || '')), '다음 베기가 출혈 · 화상을 함께 건다(적이 한 번 움직여 출혈 −1)'); }
 // 겁화
 { const { p, b, es } = fight(['sb_kalpa']); p.ward = 10; act(b, 'sb_kalpa'); ok(p.ward === 0 && p.sbSt.blaze === 3, '겁화: 보호막 소실, 3차례'); E.addS(b, es[0], 'bleed', 2); act(b, 'basic', es[0]); ok(stk(es[0], 'sear') > 0, '겁화: 베기마다 혈염');
-  const fx = R('fxAdd'); ok(Math.abs(fx(p, 'hitP', b, p, es[0], {}, { id: 'basic' }) - 0.4) < 1e-9 && Math.abs(fx(p, 'inP', b, p, {}) + 0.3) < 1e-9, '겁화: 주는 피해 +40%, 받는 피해 +30%'); }
+  const fx = R('fxAdd'); ok(Math.abs(fx(p, 'hitP', b, p, es[0], {}, { id: 'basic' }) - U.blazeHit) < 1e-9 && U.blazeHit === 0.6 && Math.abs(fx(p, 'inP', b, p, {}) + 0.3) < 1e-9, '겁화: 주는 피해 +60%, 받는 피해 +30%'); }
 // 피의 갑주
-{ const { p, b, es } = fight(['sb_bloodmail']); E.addS(b, es[0], 'bleed', 2); E.addS(b, es[1], 'bleed', 2); p.ward = 0; act(b, 'sb_bloodmail'); ok(b.log.some(x => /피의 갑주: 출혈 걸린 적 2 → 보호막 \+8/.test(x.m || '')), '피의 갑주: 출혈 걸린 적 둘 → 보호막 +8'); }
+{ const { p, b, es } = fight(['sb_bloodmail']); E.addS(b, es[0], 'bleed', 2); E.addS(b, es[1], 'bleed', 2); p.ward = 0; act(b, 'sb_bloodmail'); ok(b.log.some(x => /피의 갑주: 출혈 걸린 적 2 → 보호막 \+/.test(x.m || '')) && p.ward > 8, '피의 갑주: 출혈 걸린 적 둘 → 보호막 +17씩(직업 보호막 상한까지)'); }
 // 피막
-{ const { p, b, es } = fight(['sb_film']); act(b, 'sb_film'); p.ward = 20; const o = { src: es[0] }; R('sbWardHit')(b, p, o, 10); ok(stk(es[0], 'bleed') === 5, '피막: 받아낸 10의 50% → 출혈 5'); }
+{ const { p, b, es } = fight(['sb_film']); act(b, 'sb_film'); p.ward = 20; const o = { src: es[0] }; R('sbWardHit')(b, p, o, 6); ok(stk(es[0], 'bleed') === 8, '피막: 받아낸 6의 125% → 출혈 8(출혈 상한 10)'); }
 // 죄인의 벽
-{ const { p, b, es } = fight(['sb_sinwall']); p.hp = p.hpMax; p.ward = 0; act(b, 'sb_sinwall'); const pay = p.hpMax * 0.15; const L = b.log.map(x => x.m || '').find(m => /죄인의 벽: 생명력/.test(m)) || ''; const mm = /생명력 ([\d.]+)을 바쳐 보호막 \+([\d.]+)/.exec(L); ok(mm && Math.abs(+mm[1] - pay) < 0.6 && Math.abs(+mm[2] - 3 * pay) < 1.6, '죄인의 벽: 생명력 15%를 바쳐 3배 보호막 (' + L + ')'); p.ward = 0; R('sbWardHit')(b, p, { src: es[0] }, 1); ok(es.every(e => stk(e, 'bleed') === 4), '죄인의 벽이 깨지면 전열 모두 출혈 4'); }
+{ const { p, b, es } = fight(['sb_sinwall']); p.hp = p.hpMax; p.ward = 0; act(b, 'sb_sinwall'); const pay = p.hpMax * 0.15; const L = b.log.map(x => x.m || '').find(m => /죄인의 벽: 생명력/.test(m)) || ''; const mm = /생명력 ([\d.]+)을 바쳐 보호막 \+([\d.]+)/.exec(L); ok(mm && Math.abs(+mm[1] - pay) < 0.6 && Math.abs(+mm[2] - 3 * pay) < 1.6, '죄인의 벽: 생명력 15%를 바쳐 3배 보호막 (' + L + ')'); p.ward = 0; R('sbWardHit')(b, p, { src: es[0] }, 1); ok(es.every(e => stk(e, 'bleed') === 5), '죄인의 벽이 깨지면 전열 모두 출혈 5'); }
 // 달군 갑주 · 잿불 갑주
-{ const { p, b, es } = fight(['sb_heatmail']); p.ward = 12; act(b, 'sb_heatmail'); ok(p.ward === 0 && p.sbSt.heatNext, '달군 갑주: 보호막을 태움'); const fx = R('fxAdd'); ok(Math.abs(fx(p, 'hitP', b, p, es[0], {}, { id: 'basic' }) - 0.5) < 1e-9 && fx(p, 'hitP', b, p, es[0], {}, { id: 'heavy' }) === 0, '다음 기본 공격 ×1.5(강공격은 아님)'); act(b, 'basic', es[0]); ok(!p.sbSt.heatNext, '한 번 쓰면 사라짐'); }
-{ const { p, b, es } = fight(['sb_embermail']); act(b, 'sb_embermail'); p.ward = 10; act(b, 'basic', es[0]); ok(stk(es[0], 'ignite') >= 1, '잿불 갑주: 보호막이 있으면 기본 공격에 화상'); }
+{ const { p, b, es } = fight(['sb_heatmail']); p.ward = 12; act(b, 'sb_heatmail'); ok(p.ward === 0 && p.sbSt.heatNext, '달군 갑주: 보호막을 태움'); const fx = R('fxAdd'); ok(Math.abs(fx(p, 'hitP', b, p, es[0], {}, { id: 'basic' }) - 1.8) < 1e-9 && fx(p, 'hitP', b, p, es[0], {}, { id: 'heavy' }) === 0, '다음 기본 공격 ×2.8(강공격은 아님)'); act(b, 'basic', es[0]); ok(!p.sbSt.heatNext, '한 번 쓰면 사라짐'); }
+{ const { p, b, es } = fight(['sb_embermail']); act(b, 'sb_embermail'); p.ward = 10; act(b, 'basic', es[0]); ok(stk(es[0], 'ignite') >= 4, '잿불 갑주: 보호막이 있으면 기본 공격에 화상 5'); }
 // 불의 몸
 { const { p, b, es } = fight(['sb_firebody']); p.ys = 5; p.ward = 0; act(b, 'sb_firebody'); ok(p.ys === 0 && p.sbSt.fireBody === 3 && b.log.some(x => /불의 몸: 유산 1을 모두 태워 보호막 \+8/.test(x.m || '')), '불의 몸: 남은 유산 1을 태워 보호막 +8, 유산 0'); ok(R('ysAdd')(b, 2, 'turn', '차례') === 0 && p.ys === 0, '그동안 유산이 차지 않음');
-  ok(E.addS(b, p, 'ignite', 3) === 0 && !stk(p, 'ignite'), '받는 화상 무효'); const fx = R('fxAdd'); ok(Math.abs(fx(p, 'hitP', b, p, es[0], {}, { id: 'heavy' }) - 0.3) < 1e-9, '기본 공격 · 강공격 ×1.3'); }
+  ok(E.addS(b, p, 'ignite', 3) === 0 && !stk(p, 'ignite'), '받는 화상 무효'); const fx = R('fxAdd'); ok(Math.abs(fx(p, 'hitP', b, p, es[0], {}, { id: 'heavy' }) - 0.8) < 1e-9, '기본 공격 · 강공격 ×1.8'); }
 // 비용 1: 교대 아님
 { const { p, b, es } = fight(['sb_bolt', 'sb_ember']); act(b, 'basic', es[0]); ok(p.sbLast === 'cut', '베기 뒤 직전 종류 베기'); p.ys = 5; p.ward = 0; act(b, 'sb_bolt', es[0]); ok(p.sbLast === 'cut' && !(p.ward > 0), '마갑탄(비용 1 주문)은 교대가 아님: 직전 종류 그대로, 교대 보호막 없음'); act(b, 'sb_ember', es[0]); ok(p.ward > 0, '그다음 주문(비용 2)은 교대'); }
 // 경계 입구 requires
