@@ -494,7 +494,7 @@
    "name": "DG_IGNORE",
    "kind": "env",
    "default": null,
-   "introduced": "M3",
+   "introduced": "f7f6630",
    "expires": "상시",
    "note": "무시 시험: 쉼표로 적은 강적 id · 보스 id의 예고를 행동 고를 때만 평범한 공격으로 보이게 한다"
   },
@@ -502,7 +502,7 @@
    "name": "DG_BUILDLOG",
    "kind": "env",
    "default": null,
-   "introduced": "M3",
+   "introduced": "f7f6630",
    "expires": "상시",
    "note": "빌드 표(tools/buildmix.js)용 기록(행동별 준 피해 actDmg)을 결과에 더한다. 끄면 결과 파일은 그대로"
   }
