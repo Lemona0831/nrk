@@ -607,7 +607,9 @@ function secScore(run, A, id) {
   if (!bound) return nd.sec === base ? 10 : 0;
   if (half) return nd.sec === base ? -50 : adj.includes(nd.sec) ? 8 : 0;
   const entry = Object.values(A.nodes).find(x => x.sec === base && x.requires); if (entry && entry.requires.includes(id)) return 14;
-  return nd.sec === base ? 12 : adj.includes(nd.sec) ? 5 : 0;
+  /* M5-0 보정 4: 경계 목표는 입구 → 둘째 → 3고리 둘 → 승부수 순, 경계 강화는 그 뒤(아래 점수에 고리 × 0.5가 더해진다) */
+  if (nd.sec === base) return nd.kind === 'upgrade' ? 8 : nd.ys === 4 ? 10.5 : nd.ring === 3 ? 12.5 : 14.5; // 차이를 성향 난수(신중 · 숙련 1)보다 크게
+  return adj.includes(nd.sec) ? 5 : 0;
 }
 function spendTreeUp(pk, r, run, A) {
   const focus = THINK(pk) || pk === 'careful'; const convJudge = !process.env.CONV_OLD && pk !== 'novice';
@@ -618,7 +620,7 @@ function spendTreeUp(pk, r, run, A) {
     const eqd = G0.v2Equip(run);
     { const fz = can.find(id => force.includes(id) && eqd.includes(A.nodes[id].on)); if (fz) { if (G0.atBuy(run, fz)) break; sbEquip(run, A); continue; } }
     const cv = {}; const convOk = id => (id in cv ? cv[id] : (cv[id] = !!(eqd.includes(A.nodes[id].on) && convGain(run, A.nodes[id])))); // 결정적 판단(난수를 쓰지 않는다)
-    const sc = id => { const nd = A.nodes[id]; const rr = r() * (pk === 'novice' ? 20 : 1); if (convJudge && isConv(nd)) return convOk(id) ? 0.3 + nd.ring * 0.1 + rr * 0.1 : -1; let v = (A.sec ? (focus || process.env.DG_SECTOR ? secScore(run, A, id) : 0) : (focus && nd.br === run.focus ? 10 : 0)) + nd.ring * 0.5; v += nd.kind === 'skill' ? ((run.skills || []).length < G0.EQUIP_SLOTS2 ? 4 : 1) : (eqd.includes(nd.on) ? 5 : 0.5); return v + rr; }; // 난수는 예전과 같이 부를 때마다 한 번
+    const sc = id => { const nd = A.nodes[id]; const rr = r() * (pk === 'novice' ? 20 : 1); if (convJudge && isConv(nd)) return convOk(id) ? 0.3 + nd.ring * 0.1 + rr * 0.1 : -1; let v = (A.sec ? (focus || process.env.DG_SECTOR ? secScore(run, A, id) : 0) : (focus && nd.br === run.focus ? 10 : 0)) + nd.ring * 0.5; v += nd.kind === 'skill' ? ((run.skills || []).length < G0.EQUIP_SLOTS2 ? 4 : 1) : (eqd.includes(nd.on) ? 5 : 0.5); if (A.sec && run.sector && (focus || process.env.DG_SECTOR) && /^[A-C]{2}$/.test(run.sector) && nd.sec === run.sector) v = 100 + secScore(run, A, id) + nd.ring * 0.5; /* M5-0 보정 4: 경계 목표의 경계 칸은 순서 점수만(입구 → 둘째 → 3고리 둘 → 승부수 → 강화) */ return v + rr; }; // 난수는 예전과 같이 부를 때마다 한 번
     const id = can.sort((a, b) => sc(b) - sc(a))[0]; if (convJudge && isConv(A.nodes[id]) && !convOk(id)) break; if (G0.atBuy(run, id)) break;
     sbEquip(run, A);
   }
@@ -636,7 +638,7 @@ function sbEquip(run, A) {
   let eq = own.slice().sort((a, b) => sc(b) - sc(a)).slice(0, G0.EQUIP_SLOTS2);
   if (A.sec && run.sector) { const tg = run.sector.replace('_HALF', ''), half = /_HALF$/.test(run.sector), adj = secAdj(run.sector), bound = tg.length === 2; // M5-0: 목표 빌드를 따르는 사람 — 경계 목표면 그 경계 스킬을 먼저. M5-0 보정(10월 20일): 리듬 칸(비용 1)을 반드시 끼우던 규칙은 뺐다(약한 칸이 네 칸 중 하나를 차지해 마갑 신중 1챕터 71 → 30%). 리듬 칸은 점수대로만 끼운다
     const bd = bound && !half ? own.filter(id => A.nodes[id].sec === tg).sort((a, b) => sc(b) - sc(a)) : []; void adj;
-    const must = bd.slice(0, G0.EQUIP_SLOTS2); eq = must.concat(eq.filter(id => !must.includes(id)).concat(own.filter(id => !must.includes(id) && !eq.includes(id)))).slice(0, G0.EQUIP_SLOTS2); }
+    const must = bd.slice(0, G0.EQUIP_SLOTS2 - 1); /* M5-0 보정 4: 경계 스킬이 다섯이 되어 셋까지만 먼저(한 칸은 점수대로, 죄인의 피 다섯 칸은 모두 자기 강화) */ eq = must.concat(eq.filter(id => !must.includes(id)).concat(own.filter(id => !must.includes(id) && !eq.includes(id)))).slice(0, G0.EQUIP_SLOTS2); }
   if (run.build === 'spellblade') for (const k of ['spell', 'cut']) if (eq.length >= G0.EQUIP_SLOTS2 && !eq.some(id => G0.SK2[id].kind === k)) { const c = own.filter(id => G0.SK2[id].kind === k && !eq.includes(id)).sort((a, b) => sc(b) - sc(a))[0]; if (c) { const lo = eq.filter(id => G0.SK2[id].kind !== k).sort((a, b) => sc(a) - sc(b))[0]; eq[eq.indexOf(lo)] = c; } }
   run.skills = eq; G0.atSync(run);
 }

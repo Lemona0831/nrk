@@ -80,7 +80,7 @@ const atTotal = run => AT_PTS.start + AT_PTS.lv * Math.max(0, (run.lv || 1) - 1)
 const clearsEff = run => (run.clears || 0) + (run.markCh ? run.markCh - 1 : 0); // 표식 도전은 시작 챕터 앞을 깬 것으로 친다(1-5)
 const ringOpen = (run, ring) => clearsEff(run) >= (PT.ring[ring] || 0);
 const RING_WHY = { 2: '2고리는 1챕터 보스를 이기면 열립니다', 3: '3고리는 2챕터 보스를 이기면 열립니다' };
-function ptInit(run) { if (!run.ptree) run.ptree = { own: [], free: [], ks: [], pts: ptTotal(run), log: [], ksv: 2 }; if (!run.atree) run.atree = { own: [], pts: atTotal(run), log: [], atv: 2 }; if (!run.ksGot) run.ksGot = {}; if (run.ksPending == null) run.ksPending = 0; return run; }
+function ptInit(run) { if (!run.ptree) run.ptree = { own: [], free: [], ks: [], pts: ptTotal(run), log: [], ksv: 2 }; if (!run.atree) run.atree = { own: [], pts: atTotal(run), log: [], atv: 3 }; if (!run.ksGot) run.ksGot = {}; if (run.ksPending == null) run.ksPending = 0; return run; }
 const ptOpenIds = run => ['S'].concat(run.ptree.own, run.ptree.free, run.ptree.ks);
 const atOpenIds = run => ['S'].concat(run.atree.own);
 const ptSpent = run => run.ptree.own.reduce((a, id) => a + ((ptBuild(run.build).nodes[id] || {}).cost || 0), 0);
@@ -257,11 +257,13 @@ function ksTake(run, id) {
   (run.ksLog = run.ksLog || []).push({ id, free, offer: run.ksOffer.slice(), ch: run.ch || 1, room: run.room, t: Date.now() }); run.ksPending--; run.ksOffer = null; ptSync(run); return null;
 }
 /* 0.8.0 M5-0(10월 19일 만든 사람 D14): 임시 액티브 트리 폐기. 트리에 없는 노드를 찍어 둔 판은 그 포인트를 돌려주고 장착을 시작 스킬로 되돌린다(run.atree.atv = 2면 끝난 판) */
+/* M5-0 보정 4(10월 20일 만든 사람): 마검사 갈래 칸을 6칸으로 잘랐다. atv 3: 없어진 노드와, 그 때문에 시작에서 이어지지 않게 된 노드를 거두고 포인트를 돌려준다 */
 function atMigrateM5(run) {
-  if (!run || !run.atree || run.atree.atv === 2) return 0; run.atree.atv = 2;
-  const A = atBuild(run.build); const gone = (run.atree.own || []).filter(id => !A.nodes[id]); if (!gone.length) return 0;
-  run.atree.own = run.atree.own.filter(id => A.nodes[id]); run.atree.pts = (run.atree.pts || 0) + gone.length; (run.atree.log = run.atree.log || []).push({ refund: gone.length, why: '임시 트리 폐기', t: Date.now() });
-  const T2 = TREE2[run.build] || { starters: [] }; run.skills = (run.skills || []).filter(id => A.nodes[id] || T2.starters.includes(id)); return gone.length;
+  if (!run || !run.atree || run.atree.atv >= 3) return 0; const why = run.atree.atv === 2 ? '부채꼴 칸 정리' : '임시 트리 폐기'; run.atree.atv = 3;
+  const A = atBuild(run.build); const own0 = run.atree.own || []; const keep0 = own0.filter(id => A.nodes[id]); const reach = treeReach(A, ['S'].concat(keep0), ['S']); const keep = keep0.filter(id => reach.has(id));
+  const gone = own0.filter(id => !keep.includes(id)); if (!gone.length) return 0;
+  run.atree.own = keep; run.atree.pts = (run.atree.pts || 0) + gone.length; (run.atree.log = run.atree.log || []).push({ refund: gone.length, why, gone: gone.slice(), t: Date.now() });
+  const T2 = TREE2[run.build] || { starters: [] }; run.skills = (run.skills || []).filter(id => keep.includes(id) || T2.starters.includes(id)); return gone.length;
 }
 /* 0.8.0 M4(10월 19일): 큰 각인 배치가 바뀌었다(KS_V1 → PT_CLS). 옛 판에서 찍어 둔 자리의 각인이 바뀌었으면(넘치는 그릇 · 결정의 칼 · 망치의 길 · 먼저 움직임 · 철벽 등)
    그 각인과 그때 공짜로 연 길을 거두고 큰 각인 하나를 다시 고르게 한다(ksPending +1). run.ptree.ksv = 2면 끝난 판 */

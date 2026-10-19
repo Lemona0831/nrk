@@ -31,7 +31,7 @@ function trdLayA(cls) {
   const A = atBuild(cls), D = ATREE_DEF[cls], N = {}, brA = {};
   A.br.forEach((b, i) => { brA[b] = D && D.br && D.br[b] != null ? D.br[b] : i * 120; });
   if (A.sec) for (const k in A.sec) brA[A.sec[k]] = AT_SEC[k]; // 0.8.0 M5-0: 부채꼴 6(갈래 0 · 120 · 240°, 경계 60 · 180 · 300°)
-  const laneB = { LL: -16, L: -8, C: 0, R: 8, RR: 16 }, laneOf = n => ((n.sec && AT_SEC_BOUND.includes(n.sec)) ? laneB : lane)[n.pos.lane] || 0; // 경계 부채꼴은 40° 안
+  const laneOf = n => lane[n.pos.lane] || 0; // M5-0 보정 4(10월 20일 만든 사람): 여섯 부채꼴 60° 균등(경계 40° 철회), 갈래 · 경계가 같은 칸 각도
   const lane = D ? D.lane : { LL: -26, L: -13, C: 0, R: 13, RR: 26 }, U = D ? 80 : 44, R0 = D ? 0 : 40, SK = D ? 21 : 14, UP = 9;
   const radOf = r => r ? R0 + r * U : 0;
   for (const id in A.nodes) { const n = A.nodes[id]; if (n.kind === 'upgrade') continue; const a = n.kind === 'start' ? 0 : brA[n.br] + laneOf(n), rad = radOf(n.pos.r), [x, y] = trdXY(a, rad); N[id] = { id, x, y, a, rad, sz: n.kind === 'start' ? (D ? 27 : 22) : SK }; }
@@ -55,7 +55,7 @@ function trdLayA(cls) {
   const rr = {}; for (const id in N) { const n = A.nodes[id]; if (n.kind !== 'skill') continue; const q = rr[n.ring] || (rr[n.ring] = [Infinity, -Infinity]); q[0] = Math.min(q[0], N[id].rad); q[1] = Math.max(q[1], N[id].rad); }
   const maxR = Math.max(...Object.values(N).map(q => q.rad + q.sz)), disc = maxR + (D ? 34 : 30);
   const bnd = k => rr[k] && rr[k + 1] ? (rr[k][1] + rr[k + 1][0]) / 2 : disc - 24;
-  return (TRD_L[key] = { kind: 'a', T: A, U, N, links, bounds: [0, bnd(1), bnd(2), disc - 24], disc, inR: (N.S.sz + radOf(1) - SK) / 2, lab: disc + 0.6 * U, vb: disc + (D ? 1.3 : 2) * U, ringAng: A.sec ? 20 : 60, axes: A.sec ? Object.keys(A.sec).map(k => ({ k, n: A.sec[k], a: AT_SEC[k], bound: AT_SEC_BOUND.includes(k) })) : A.br.map(b => ({ k: b, n: b, a: brA[b] })), spokes: A.sec ? [40, 80, 160, 200, 280, 320] : null, tmp: !D }); // 액티브 화면은 갈래 · 경계 이름만 쓴다(패시브 방향 이름은 쓰지 않음)
+  return (TRD_L[key] = { kind: 'a', T: A, U, N, links, bounds: [0, bnd(1), bnd(2), disc - 24], disc, inR: (N.S.sz + radOf(1) - SK) / 2, lab: disc + 0.6 * U, vb: disc + (D ? 1.3 : 2) * U, ringAng: A.sec ? 20 : 60, axes: A.sec ? Object.keys(A.sec).map(k => ({ k, n: A.sec[k], a: AT_SEC[k], bound: AT_SEC_BOUND.includes(k) })) : A.br.map(b => ({ k: b, n: b, a: brA[b] })), spokes: A.sec ? [30, 90, 150, 210, 270, 330] : null, tmp: !D }); // 액티브 화면은 갈래 · 경계 이름만 쓴다(패시브 방향 이름은 쓰지 않음)
 }
 /* ---- 상태 ---- */
 function trdStP(run, id, T) {

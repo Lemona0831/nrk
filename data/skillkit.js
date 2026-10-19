@@ -86,11 +86,14 @@ const skJo = n => '013678'.includes(String(n).slice(-1)) ? '을' : '를'; // 숫
    sbBlaze n차례 × 한 행동 값(K.B) × 피해 +40% + 베기 둘에 혈염(더 거는 2 + 합치기) − 잃는 보호막 − 받는 피해 +30%(적 한 방 K.B × 0.8을 n번).
    wardPer 출혈 걸린 적(평균 1.1) × n × 보호막 값. sbFilm 한 차례에 받아내는 보호막 몫(W.S) × 50%가 출혈. sbSinWall 보호막(최대 생명력 15% × 3, 기준 생명력 SB_HP) − 바친 생명력 + 깨질 때(반쯤) 전열 둘 출혈 4.
    sbHeat 기본 공격 하나 × 0.5 − 태운 보호막. sbEmberMail 보호막이 있는 동안 평타 두 번 화상 2. sbFireBody 남은 유산(평균 1) × 8 보호막 + n차례 평타 ×1.3 · 화상 2 − n차례 스킬을 못 쓰는 몫 */
-const SB_BD_K = ['searMerge', 'sbBlaze', 'wardPer', 'sbFilm', 'sbSinWall', 'sbHeat', 'sbEmberMail', 'sbFireBody'];
+const SB_BD_K = ['searMerge', 'sbBlaze', 'wardPer', 'sbFilm', 'sbSinWall', 'sbHeat', 'sbEmberMail', 'sbFireBody', 'sbCross', 'searSpread', 'sbEcho', 'sbShackle', 'sbAshHand', 'sbCinder'];
+/* M5-0 보정 4 새 칸(추정, 측정 아님): sbCross 대상이 출혈 · 화상 중 하나를 가졌을 확률 0.8씩 × n × 상태 값. searSpread 혈염 걸린 적을 쓰러뜨릴 확률 0.35 × 곁의 적 1.5 × 혈염 보유(출혈 + 화상 몫 0.6) × 혈염 값(×1.5).
+   sbEcho 보호막이 있는 동안의 베기 3번 × n. sbShackle 출혈 걸린 적의 강타를 막아 내는 일 전투에 2번 × 붕괴. sbAshHand 기본 공격 k번 × 화상. sbCinder 보호막이 깎이는 일 3번 × 전열 2 × 화상 */
 const SB_HP = 120;
 /* 경계 숫자 (엔진 js/10-skills-engine.js의 IFX_SB · sbBoundUse · sbWardHit와 값 식이 함께 읽는다). 스킬 문장(data/skills.js txt)의 숫자와 맞춰 둔다 */
-/* M5-0 마감(10월 19일 만든 사람): 문장의 꼴은 그대로, 숫자만 값 띠 하한까지 올렸다. 겁화 피해 +40 → +60%, 피막 50 → 125%, 죄인의 벽 출혈 4 → 5, 달군 갑주 ×1.5 → ×2.8, 잿불 갑주 화상 2 → 5, 불의 몸 ×1.3 → ×1.8 · 화상 2 → 4 (피의 갑주 +4 → +17, 핏불 싣기 출혈 2 · 화상 2 → 3 · 4는 data/skills.js fx) */
-const SB_BOUND = { blazeHit: 0.6, blazeIn: 0.3, blazeSear: 2, filmPer: 1.25, sinPay: 0.15, sinMul: 3, sinBleed: 5, heatMul: 2.8, emberIgn: 5, bodyPer: 8, bodyMul: 0.8, bodyIgn: 4, sinBlock: 0.3, ashMul: 0.5, ashIgn: 2 };
+/* M5-0 마감(10월 19일 만든 사람): 문장의 꼴은 그대로, 숫자만 값 띠 하한까지 올렸다. 보정 4(10월 20일)에서 갈래 칸을 잘라 기준 평균이 오르자 다시 맞췄다(피막 130%, 잿불 갑주 화상 6). 겁화 피해 +40 → +60%, 피막 50 → 125%, 죄인의 벽 출혈 4 → 5, 달군 갑주 ×1.5 → ×2.8, 잿불 갑주 화상 2 → 5, 불의 몸 ×1.3 → ×1.8 · 화상 2 → 4 (피의 갑주 +4 → +17, 핏불 싣기 출혈 2 · 화상 2 → 3 · 4는 data/skills.js fx) */
+const SB_BOUND = { blazeHit: 0.6, blazeIn: 0.3, blazeSear: 2, filmPer: 1.3, sinPay: 0.15, sinMul: 3, sinBleed: 5, heatMul: 2.8, emberIgn: 6, bodyPer: 8, bodyMul: 0.8, bodyIgn: 4, sinBlock: 0.3, ashMul: 0.5, ashIgn: 2,
+  crossN: 4, ssPer: 1, echoN: 2, shackleBrk: 90, ashHandK: 2, ashHandIgn: 3, cinderIgn: 2 }; // M5-0 보정 4 새 칸 숫자(문장과 맞춘다)
 function skValue(s, ov) {
   if (!ov && SKK.butch && /^b_/.test(String(s.id)) && !s._bu) return skValueBu(s);
   if (!ov && String(s.id).slice(0, 2) === 'e_') return skValueElem(s);
@@ -111,6 +114,12 @@ function skValue(s, ov) {
         case 'sbHeat': v += K.B * (U.heatMul - 1) - W.S[hi] * Wv * 0.5; break;
         case 'sbEmberMail': v += 2 * U.emberIgn * kw; break;
         case 'sbFireBody': v += 1 * U.bodyPer * Wv + nT * (K.B * U.bodyMul + U.bodyIgn * kw) - nT * (SKK.B * 0.75); break;
+        case 'sbCross': v += 2 * 0.8 * U.crossN * kw; break;
+        case 'searSpread': v += 0.35 * 1.5 * 0.6 * Sbi * U.ssPer * kw * 1.5; break;
+        case 'sbEcho': v += 3 * U.echoN * kw; break;
+        case 'sbShackle': v += 2 * U.shackleBrk * K.brk; break;
+        case 'sbAshHand': v += U.ashHandK * U.ashHandIgn * kw; break;
+        case 'sbCinder': v += 3 * 2 * U.cinderIgn * kw; break; // 보호막 경계 판은 라운드마다 보호막을 두르고 깎인다(전투 6–8라운드)
       } continue; }
     switch (e.k) {
       case 'dmg': v += e.n * hits * (s.tgt === 'self' ? 1 : tm); break;

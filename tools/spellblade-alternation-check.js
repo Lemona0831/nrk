@@ -6,7 +6,7 @@ for(const wil of [0,27,50]){
  const b=E.newBattle(p,[E.mkEnemy('bruiser',false,0)],{});b.turnIdx=1;p.sbLast='spell';
  E.sbBegin(b,'basic',{id:'basic'});E.sbEnd(b,{id:'basic'});assert.equal(p.ward,4);
  p.sbLast='spell';E.sbBegin(b,'basic',{id:'basic'});E.sbEnd(b,{id:'basic'});assert.equal(p.ward,4);
- p.ward=0;E.runSkill2(b,E.v2Static(E.SK2.sb_shell),null);assert(Math.abs(p.ward-Math.min(E.wardMax(p),18*(1+.02*wil)))<1e-8);assert.equal(E.SK2.sb_shell.time,'fast');assert(!E.SK2.sb_shell.fx.some(f=>f.k==='stam'));
+ p.ward=0;E.runSkill2(b,E.v2Static(E.SK2.sb_shell),null);assert(Math.abs(p.ward-Math.min(E.wardMax(p),E.SK2.sb_shell.fx.find(f=>f.k==='ward').n*(1+.02*wil)))<1e-8);assert.equal(E.SK2.sb_shell.time,'fast');assert(!E.SK2.sb_shell.fx.some(f=>f.k==='stam'));
 }
 for(const ward of [0,1,30,100]){
  const p=E.mkPlayer('spellblade',{}, {con:100});p.ward=ward;p.sbLast='cut';
