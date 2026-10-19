@@ -1,8 +1,102 @@
 {
- "about": "큰 각인 선호표 (0.8.0 M4, 10월 19일). 성향마다 순서(앞일수록 먼저 고름). mode random = 제시 가운데 무작위, weighted = 순서에 따른 가중 무작위(앞 칸 가중 높음). 표에 없는 각인은 뒤. 신중 · 숙련은 깊은 샘을 4위로(M3: 깊은 샘 K5 71–97% 집중), 평타는 날 선 손 1위",
- "careful": { "mode": "order", "order": ["ks_blockbreath", "ks_cycle", "ks_brkbreath", "ks_deep", "ks_slipbreath", "ks_el_cut", "ks_sharp", "ks_wall", "ks_sb_blood", "ks_hammer", "ks_first", "ks_tireless", "ks_double", "ks_sb_beat", "ks_sb_over", "ks_wd_eternal", "ks_wd_drop", "ks_mk_vow", "ks_mk_empty", "ks_hn_chase", "ks_hn_solo", "ks_el_heart", "ks_el_ember", "ks_as_oath", "ks_as_lord", "ks_glass", "ks_bare"] },
- "expert": { "mode": "order", "order": ["ks_brkbreath", "ks_slipbreath", "ks_blockbreath", "ks_deep", "ks_el_cut", "ks_sharp", "ks_cycle", "ks_hammer", "ks_sb_over", "ks_sb_beat", "ks_wall", "ks_first", "ks_double", "ks_wd_drop", "ks_mk_empty", "ks_hn_solo", "ks_el_ember", "ks_as_lord", "ks_sb_blood", "ks_tireless", "ks_wd_eternal", "ks_mk_vow", "ks_hn_chase", "ks_el_heart", "ks_as_oath", "ks_glass", "ks_bare"] },
- "basic": { "mode": "order", "order": ["ks_sharp", "ks_tireless", "ks_wall", "ks_cycle", "ks_blockbreath", "ks_hammer", "ks_first", "ks_brkbreath", "ks_slipbreath", "ks_deep", "ks_glass"] },
- "casual": { "mode": "weighted", "order": ["ks_cycle", "ks_blockbreath", "ks_deep", "ks_sharp", "ks_brkbreath", "ks_slipbreath", "ks_wall", "ks_first", "ks_hammer", "ks_tireless", "ks_double"] },
- "novice": { "mode": "random" }
+ "about": "큰 각인 선호표 (0.8.0 M4, 10월 19일). 성향마다 순서(앞일수록 먼저 고름). mode random = 제시 가운데 무작위, weighted = 순서에 따른 가중 무작위(앞 칸 가중 높음). 표에 없는 각인은 뒤. 신중 · 숙련은 깊은 샘을 4위로(M3: 깊은 샘 K5 71–97% 집중), 평타는 날 선 손 1위. 10월 19일 만든 사람(M4 마감): K5 집중도가 선호표 1위를 재지 않도록 신중 · 숙련도 weighted(순위 가중 무작위). M4 측정은 order였다",
+ "careful": {
+  "mode": "weighted",
+  "order": [
+   "ks_blockbreath",
+   "ks_cycle",
+   "ks_brkbreath",
+   "ks_deep",
+   "ks_slipbreath",
+   "ks_el_cut",
+   "ks_sharp",
+   "ks_wall",
+   "ks_sb_blood",
+   "ks_hammer",
+   "ks_first",
+   "ks_tireless",
+   "ks_double",
+   "ks_sb_beat",
+   "ks_sb_over",
+   "ks_wd_eternal",
+   "ks_wd_drop",
+   "ks_mk_vow",
+   "ks_mk_empty",
+   "ks_hn_chase",
+   "ks_hn_solo",
+   "ks_el_heart",
+   "ks_el_ember",
+   "ks_as_oath",
+   "ks_as_lord",
+   "ks_glass",
+   "ks_bare"
+  ]
+ },
+ "expert": {
+  "mode": "weighted",
+  "order": [
+   "ks_brkbreath",
+   "ks_slipbreath",
+   "ks_blockbreath",
+   "ks_deep",
+   "ks_el_cut",
+   "ks_sharp",
+   "ks_cycle",
+   "ks_hammer",
+   "ks_sb_over",
+   "ks_sb_beat",
+   "ks_wall",
+   "ks_first",
+   "ks_double",
+   "ks_wd_drop",
+   "ks_mk_empty",
+   "ks_hn_solo",
+   "ks_el_ember",
+   "ks_as_lord",
+   "ks_sb_blood",
+   "ks_tireless",
+   "ks_wd_eternal",
+   "ks_mk_vow",
+   "ks_hn_chase",
+   "ks_el_heart",
+   "ks_as_oath",
+   "ks_glass",
+   "ks_bare"
+  ]
+ },
+ "basic": {
+  "mode": "order",
+  "order": [
+   "ks_sharp",
+   "ks_tireless",
+   "ks_wall",
+   "ks_cycle",
+   "ks_blockbreath",
+   "ks_hammer",
+   "ks_first",
+   "ks_brkbreath",
+   "ks_slipbreath",
+   "ks_deep",
+   "ks_glass"
+  ]
+ },
+ "casual": {
+  "mode": "weighted",
+  "order": [
+   "ks_cycle",
+   "ks_blockbreath",
+   "ks_deep",
+   "ks_sharp",
+   "ks_brkbreath",
+   "ks_slipbreath",
+   "ks_wall",
+   "ks_first",
+   "ks_hammer",
+   "ks_tireless",
+   "ks_double"
+  ]
+ },
+ "novice": {
+  "mode": "random"
+ }
 }
