@@ -1,0 +1,8 @@
+{
+ "about": "액티브 목표 부채꼴 (0.8.0 M5-0, 10월 19일). 부채꼴 트리(ATREE_DEF sec)가 있는 직업만. mode weighted = 가중 무작위(w), random = 고르게, fixed = 그 부채꼴. 측정에서는 환경 변수 DG_SECTOR(A · AB · B · BC · C · CA, 반반 빌드는 AB_HALF · BC_HALF · CA_HALF)가 이 표보다 먼저다. 평타 성향은 유산의 불(CA, 평타 축)",
+ "careful": { "mode": "weighted", "w": { "A": 1, "AB": 1, "B": 1, "BC": 1, "C": 1, "CA": 1 } },
+ "expert": { "mode": "weighted", "w": { "A": 1, "AB": 1, "B": 1, "BC": 1, "C": 1, "CA": 1 } },
+ "casual": { "mode": "weighted", "w": { "A": 1, "AB": 1, "B": 1, "BC": 1, "C": 1, "CA": 1 } },
+ "novice": { "mode": "random" },
+ "basic": { "mode": "fixed", "sec": "CA" }
+}

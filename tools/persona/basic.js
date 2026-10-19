@@ -8,8 +8,8 @@
    문 · 상점 · 이벤트 · 소모품은 신중 성향 그대로(dgqa playChar 래퍼) */
 module.exports = (D, G0) => {
   const DIRS = ['pw', 'su'];
-  const linked = s => !!(s && s.fx && s.fx.some(f => f.k === 'bbuf'));
-  const want = (A, id) => { const N = A.nodes[id]; if (!N || N.kind !== 'skill') return false; return N.ys === 2 || linked(G0.SK2[id]); };
+  const linked = s => !!(s && s.fx && s.fx.some(f => ['bbuf', 'sbHeat', 'sbEmberMail', 'sbFireBody'].includes(f.k))); // 기본 공격 연동: 사냥꾼 연사 bbuf, 마검사 유산의 불(M5-0)
+  const want = (A, id) => { const N = A.nodes[id]; if (!N || N.kind !== 'skill') return false; return N.ys === 2 || linked(G0.SK2[id]) || (N.requires && A.sec && D.secScore && D.secScore(run0, A, id) > 0); }; let run0 = null;
   function spendPassive(run) {
     if (!run || !run.ptree) return; const T = G0.ptBuild(run.build);
     for (let n = 0; n < 60 && run.ptree.pts > 0; n++) {
@@ -23,12 +23,13 @@ module.exports = (D, G0) => {
     const eq = own.slice().sort((x, y) => (linked(G0.SK2[y]) - linked(G0.SK2[x])) || (x < y ? -1 : 1)).slice(0, G0.EQUIP_SLOTS2);
     if (eq.length) { run.skills = eq; G0.atSync(run); }
   }
-  function spendTree(run) {
-    spendPassive(run); if (!run.atree) return; const A = G0.atBuild(run.build);
+  function spendTree(run, r) {
+    spendPassive(run); if (!run.atree) return; const A = G0.atBuild(run.build); run0 = run; if (A.sec) D.sectorPick('basic', r || Math.random, run, A); // M5-0: 목표 부채꼴(평타는 유산의 불 CA)
     for (let n = 0; n < 30 && run.atree.pts > 0; n++) {
       const can = Object.keys(A.nodes).filter(id => !G0.atWhy(run, id)); if (!can.length) break;
       const eqd = run.skills || [];
-      const pick = can.find(id => want(A, id) && linked(G0.SK2[id])) || can.find(id => want(A, id)) || can.find(id => A.nodes[id].kind === 'upgrade' && eqd.includes(A.nodes[id].on)) || can.find(id => A.nodes[id].kind === 'upgrade');
+      const ss = id => A.sec ? D.secScore(run, A, id) : 0; can.sort((x, y) => ss(y) - ss(x));
+      const pick = can.find(id => ss(id) > 0 && (A.nodes[id].kind !== 'skill' || want(A, id) || A.nodes[id].requires)) || can.find(id => want(A, id) && linked(G0.SK2[id])) || can.find(id => want(A, id)) || can.find(id => A.nodes[id].kind === 'upgrade' && eqd.includes(A.nodes[id].on)) || can.find(id => A.nodes[id].kind === 'upgrade');
       if (!pick || !G0.atBuy(run, pick)) break; equip(run, A);
     }
     equip(run, A);

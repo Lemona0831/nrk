@@ -515,6 +515,14 @@
    "introduced": "M4",
    "expires": "M5-0",
    "note": "강공격 A/B(D11): 1이면 HEAVY_V2 1.7 · HEAVY_COST 35, 0이면 1.5 · 40. 끄면 게임 기본값"
+  },
+  {
+   "name": "DG_SECTOR",
+   "kind": "env",
+   "default": null,
+   "introduced": "M5-0",
+   "expires": "상시",
+   "note": "목표 부채꼴 강제(A · AB · B · BC · C · CA, 반반 빌드 AB_HALF · BC_HALF · CA_HALF). 없으면 tools/persona/sector-pref.json"
   }
  ]
 }

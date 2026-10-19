@@ -52,7 +52,13 @@ for (const c of CL) { const by = {}; for (const x of rows.filter(x => x.build ==
 out.push('\n## BD-7 직업 격차 (최대 − 최소, %p)\n\n| 성향 | 1챕터 넘김 (직업별) | 격차 | 완주 격차 |\n| --- | --- | --- | --- |');
 for (const pk of [...new Set(rows.map(x => x.pk))]) { const w = CL.map(c => { const X = rows.filter(x => x.pk === pk && x.build === c); return X.length ? 100 * X.filter(win1).length / X.length : NaN; }); const cl = CL.map(c => { const X = rows.filter(x => x.pk === pk && x.build === c); return X.length ? 100 * X.filter(x => x.res === 'clear').length / X.length : NaN; });
   const gap = a => { const v = a.filter(x => !isNaN(x)); return v.length ? Math.round(Math.max(...v) - Math.min(...v)) : '-'; }; out.push(`| ${pk} | ${w.map(Math.round).join(' · ')} | ${gap(w)} | ${gap(cl)} |`); }
+// 제시 대비 선택률 (0.8.0 M5-0): 큰 각인은 ksLog(DG_BUILDLOG)의 제시 · 선택, 부채꼴은 목표(run.sector) 대비 액티브 포인트 최다 부채꼴이 목표와 같은 판
+{ const ksRows = rows.filter(x => x.ksLog); if (ksRows.length) { out.push('\n## 큰 각인 제시 대비 선택률 (DG_BUILDLOG 판)\n\n| 직업 | 큰 각인: 고름 / 제시 (%) |\n| --- | --- |');
+  for (const c of CL) { const m = {}; for (const x of ksRows.filter(x => x.build === c)) for (const L of x.ksLog) { for (const id of L.offer || []) { const k = (T[c][id] || {}).n || id; (m[k] = m[k] || [0, 0])[1]++; } const k = (T[c][L.id] || {}).n || L.id; (m[k] = m[k] || [0, 0])[0]++; } if (Object.keys(m).length) out.push(`| ${c} | ${Object.entries(m).sort((a, b) => b[1][1] - a[1][1]).map(([k, v]) => `${k} ${v[0]}/${v[1]} (${pc(v[0], v[1])}%)`).join(' · ')} |`); } } }
+const secOfId = (c, id) => { const A = r(`atBuild('${c}')`); return A.sec && A.nodes[id] ? A.nodes[id].sec : null; };
+{ const sr = rows.filter(x => x.sector); if (sr.length) { out.push('\n## 목표 부채꼴 대비 실제 (액티브 포인트 최다 부채꼴)\n\n| 직업 | 목표: 같은 판 / 목표 판 (%) |\n| --- | --- |');
+  for (const c of CL) { const m = {}; for (const x of sr.filter(x => x.build === c)) { const cnt = {}; for (const id of x.tree || []) { const s = secOfId(c, id); if (s) cnt[s] = (cnt[s] || 0) + 1; } const top = Object.entries(cnt).sort((a, b) => b[1] - a[1])[0]; const tg = x.sector.replace('_HALF', ''); (m[x.sector] = m[x.sector] || [0, 0])[1]++; if (top && top[0] === tg) m[x.sector][0]++; } if (Object.keys(m).length) out.push(`| ${c} | ${Object.entries(m).map(([k, v]) => `${k} ${v[0]}/${v[1]} (${pc(v[0], v[1])}%)`).join(' · ')} |`); } } }
 // BD-8
-out.push('\n## BD-8 액티브 부채꼴 분포 (판 끝 장착 스킬의 갈래 몫 %)\n\n| 직업 | 갈래별 몫 |\n| --- | --- |');
+out.push('\n## BD-8 액티브 부채꼴 분포 (판 끝 장착 스킬의 갈래 몫 %, 부채꼴 트리 직업은 경계 이름 포함)\n\n| 직업 | 갈래별 몫 |\n| --- | --- |');
 for (const c of CL) { const m = {}; let n = 0; for (const x of rows.filter(x => x.build === c)) for (const id of x.equip || []) { const b = (SK2[id] || {}).b; if (!b) continue; m[b] = (m[b] || 0) + 1; n++; } out.push(`| ${c} | ${Object.entries(m).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${pc(v, n)}`).join(' · ')} |`); }
 console.log(out.join('\n'));

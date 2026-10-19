@@ -396,7 +396,7 @@ const PERSONA_MOD = { basic: './persona/basic.js' };
 function playChar(pk, build, seed) {
   if (!PERSONA_MOD[pk]) return playChar0(pk, build, seed);
   const prev = OPT.policy, prevId = OPT.polId; OPT.policy = require(PERSONA_MOD[pk])(module.exports, G0); OPT.polId = 'persona:' + pk;
-  try { const o = playChar0('careful', build, seed); o.pk = pk; if (o.meta) o.meta.pk = pk; return o; } finally { OPT.policy = prev; OPT.polId = prevId; }
+  try { OPT.persona = pk; const o = playChar0('careful', build, seed); o.pk = pk; if (o.meta) o.meta.pk = pk; return o; } finally { OPT.policy = prev; OPT.polId = prevId; OPT.persona = null; }
 }
 function playChar0(pk, build, seed) {
   const P = PERSONAS[pk]; const r = rng(seed);
@@ -407,7 +407,7 @@ function playChar0(pk, build, seed) {
   if (process.env.MODE === 'hard') { G0.__G.data.hardOpen = 1; G0.__G.cre = { mode: 'hard' }; } /* 10월 8일: MODE=hard이면 가혹으로 만든다 */
   if (MARKCH) G0.__G.cre = Object.assign(G0.__G.cre || {}, { mark: { ch: MARKCH, ids: MARK_IDS, mode: process.env.MODE === 'hard' ? 'hard' : 'normal' } }); /* 표식 도전: 화면과 같은 startRun 안의 markSetup이 레벨 · 꾸러미 · 표식을 정한다 */
   G0.startRun(build);
-  const run = G.run; G.sheet = null; G.creating = false; G.cre = null; G.scr = 'run';
+  const run = G.run; if (OPT.persona) run.persona = OPT.persona; G.sheet = null; G.creating = false; G.cre = null; G.scr = 'run';
   delete run.alloc; // 10월 16일 0.8.0 2단계: 만들기 배분 흐름 대신 정책으로 바로 찍는다(능력치 = 시작 노드 + 패시브 노드)
   spendPassive(pk, r); while (run.ksPending > 0) { G0.ksEnsureOffer(run); if (!run.ksOffer) break; G0.ksTake(run, ksChoice(pk, r, run)); spendPassive(pk, r); } spendTree(pk, r); G0.treeSync(run); run.p.hp = run.p.hpMax; run.p.mp = run.p.mpMax; run.p.st = run.p.stMax;
   if (OPT.policy?.start) OPT.policy.start(run, r);
@@ -579,15 +579,33 @@ function convGain(run, nd) {
   const need = base.time === 'fast' && set.time && set.time !== 'fast' ? 1.3 : 1.05;
   return c.perTurn > 0 && c.perTurn >= Math.max(0, a.perTurn) * need;
 }
+/* 0.8.0 M5-0 목표 부채꼴 (10월 19일): 부채꼴 트리(A.sec)가 있는 직업은 판을 시작할 때 목표 부채꼴 하나를 정한다(tools/persona/sector-pref.json, DG_SECTOR가 먼저).
+   갈래 목표 = 그 갈래에 집중(예전 focus). 경계 목표 = 양쪽 갈래의 1고리 개시 노드 → 경계 입구 → 경계 3고리, 남는 포인트는 양쪽 갈래.
+   반반(XX_HALF) = 양쪽 갈래에 반씩, 경계 칸은 찍지 않는다(경계 가치 비교용) */
+const SECP = JSON.parse(fs.readFileSync(path.join(__dirname, 'persona', 'sector-pref.json'), 'utf8'));
+function sectorPick(pk, r, run, A) {
+  if (run.sector) return run.sector; const env = process.env.DG_SECTOR; const keys = Object.keys(A.sec);
+  if (env) run.sector = env; else { const P = SECP[run.persona || pk] || SECP.careful; if (P.mode === 'fixed') run.sector = P.sec; else if (P.mode === 'random') run.sector = keys[Math.floor(r() * keys.length)]; else { const w = keys.map(k => (P.w || {})[k] != null ? P.w[k] : 1); let x = r() * w.reduce((a, v) => a + v, 0); run.sector = keys[keys.length - 1]; for (let i = 0; i < keys.length; i++) { x -= w[i]; if (x <= 0) { run.sector = keys[i]; break; } } } }
+  return run.sector;
+}
+const secAdj = s => s.replace('_HALF', '').length === 2 ? s.replace('_HALF', '').split('') : [s]; // 경계 AB → 갈래 A · B
+function secScore(run, A, id) {
+  const S = run.sector, nd = A.nodes[id]; if (!S) return 0; const half = /_HALF$/.test(S), base = S.replace('_HALF', ''), adj = secAdj(S), bound = base.length === 2;
+  if (!bound) return nd.sec === base ? 10 : 0;
+  if (half) return nd.sec === base ? -50 : adj.includes(nd.sec) ? 8 : 0;
+  const entry = Object.values(A.nodes).find(x => x.sec === base && x.requires); if (entry && entry.requires.includes(id)) return 14;
+  return nd.sec === base ? 12 : adj.includes(nd.sec) ? 5 : 0;
+}
 function spendTreeUp(pk, r, run, A) {
   const focus = THINK(pk) || pk === 'careful'; const convJudge = !process.env.CONV_OLD && pk !== 'novice';
+  if (A.sec) sectorPick(pk, r, run, A);
   for (let n = 0; n < 20 && run.atree.pts > 0; n++) {
     const ban = (process.env.BAN_UP || '').split(',').filter(Boolean), force = (process.env.FORCE_UP || '').split(',').filter(Boolean); // 0.8.0 5단계 측정 변형: 찍지 않을 · 먼저 찍을 액티브 노드(같은 포인트 예산)
     const can = Object.keys(A.nodes).filter(id => !G0.atWhy(run, id) && !ban.includes(id)); if (!can.length) break;
     const eqd = G0.v2Equip(run);
     { const fz = can.find(id => force.includes(id) && eqd.includes(A.nodes[id].on)); if (fz) { if (G0.atBuy(run, fz)) break; sbEquip(run, A); continue; } }
     const cv = {}; const convOk = id => (id in cv ? cv[id] : (cv[id] = !!(eqd.includes(A.nodes[id].on) && convGain(run, A.nodes[id])))); // 결정적 판단(난수를 쓰지 않는다)
-    const sc = id => { const nd = A.nodes[id]; const rr = r() * (pk === 'novice' ? 20 : 1); if (convJudge && isConv(nd)) return convOk(id) ? 0.3 + nd.ring * 0.1 + rr * 0.1 : -1; let v = (focus && nd.br === run.focus ? 10 : 0) + nd.ring * 0.5; v += nd.kind === 'skill' ? ((run.skills || []).length < G0.EQUIP_SLOTS2 ? 4 : 1) : (eqd.includes(nd.on) ? 5 : 0.5); return v + rr; }; // 난수는 예전과 같이 부를 때마다 한 번
+    const sc = id => { const nd = A.nodes[id]; const rr = r() * (pk === 'novice' ? 20 : 1); if (convJudge && isConv(nd)) return convOk(id) ? 0.3 + nd.ring * 0.1 + rr * 0.1 : -1; let v = (A.sec ? (focus || process.env.DG_SECTOR ? secScore(run, A, id) : 0) : (focus && nd.br === run.focus ? 10 : 0)) + nd.ring * 0.5; v += nd.kind === 'skill' ? ((run.skills || []).length < G0.EQUIP_SLOTS2 ? 4 : 1) : (eqd.includes(nd.on) ? 5 : 0.5); return v + rr; }; // 난수는 예전과 같이 부를 때마다 한 번
     const id = can.sort((a, b) => sc(b) - sc(a))[0]; if (convJudge && isConv(A.nodes[id]) && !convOk(id)) break; if (G0.atBuy(run, id)) break;
     sbEquip(run, A);
   }
@@ -595,7 +613,7 @@ function spendTreeUp(pk, r, run, A) {
 /* 10월 17일 측정 도구 보완: 장착 점수는 강화를 반영한 실제 스킬의 한 차례 값(tools/skeval.js: skScore · 실제 유산 · 조건부 할인 · 처치 환급) + 주 갈래 1.5.
    전에는 강화 수 × 2 + 고리 + 주 갈래 1.5였다(강화가 스킬을 얼마나 바꾸는지 · 유산 비용을 보지 않았다). EQUIP_OLD=1이면 예전 점수 */
 function sbEquipScore(run, A) {
-  const foc = id => (A.nodes[id].br === run.focus ? 1.5 : 0);
+  const foc = id => (A.sec && run.sector ? (A.nodes[id].sec === run.sector.replace('_HALF', '') && !/_HALF$/.test(run.sector) ? 1.5 : secAdj(run.sector).includes(A.nodes[id].sec) ? 0.75 : 0) : A.nodes[id].br === run.focus ? 1.5 : 0); // M5-0: 목표 부채꼴
   if (process.env.EQUIP_OLD) { const ups = id => run.atree.own.filter(u => A.nodes[u].on === id).length; return id => ups(id) * 2 + A.nodes[id].ring + foc(id); }
   const m = {}; return id => (m[id] != null ? m[id] : (m[id] = SKE.evalRun(run, id).perTurn + foc(id)));
 }
@@ -639,6 +657,8 @@ function playLoop(pk, r, out) {
   out.steps = guard; CUR = null;
   out.floor = run.room; out.ch = run.ch || 1; out.lv = run.lv; out.gold = run.gold;
   if (OPT.detail && run.atree) { const A = G0.atBuild(run.build); const cnt = {}; for (const id of run.atree.own) { const b0 = (A.nodes[id] || {}).br; if (b0) cnt[b0] = (cnt[b0] || 0) + 1; } const top = Object.entries(cnt).sort((x, y) => y[1] - x[1])[0]; out.branch = run.build === 'hunter' && run.focus ? run.focus : top ? top[0] : null; out.branchN = top ? top[1] : 0; out.branchOf = run.atree.own.length; out.mode = run.mode || 'normal'; } /* 10월 8일(7단계): 갈래(트리 칸을 가장 많이 연 갈래) · 연 칸 수 · 모드를 판마다 남긴다 */
+  if (run.sector) out.sector = run.sector; // M5-0 목표 부채꼴
+  if (BUILDLOG) { out.ksLog = (run.ksLog || []).filter(x => x.id).map(x => ({ id: x.id, offer: x.offer, ch: x.ch, room: x.room })); out.atLog = (run.atree && run.atree.log || []).filter(x => x.id).map(x => [x.id, x.ch, x.room]); } // M5-0 빌드 기록: 큰 각인 제시 · 선택, 액티브 찍은 챕터 · 층
   if (run.ptree) out.ks = run.ptree.ks.slice(); if ((run.awk || []).length) out.awk = run.awk.slice(); { const ft = (run.rooms || []).filter(x => x.type === 'fate'); if (ft.length) out.fate = ft.map(x => x.took ? (x.ok ? '+' : '-') + x.took : 'skip'); } /* 각인 · 운명의 저울 (없으면 칸을 두지 않아 1챕터 결과 파일은 그대로) */
   { const hl = (run.drops || []).filter(x => x.g === 'h' || x.g === 'l').map(x => x.item + ':' + x.g + ':' + (x.ch || 1) + (x.boss ? ':boss' : '')); if (hl.length) out.hl = hl; } /* 영웅 · 전설을 얻은 기록 (없으면 칸을 두지 않아 1챕터 결과 파일은 그대로) */
   if (OPT.detail) { out.cons = (run.consLog || []).length; out.consIds = countBy((run.consLog || []).map(x => x.id)); out.loot = (run.lootLog || []).reduce((a, x) => ({ gold: a.gold + (x.gold || 0), lost: a.lost + (x.lost || 0), n: a.n + Object.values(x.got || {}).reduce((m, v) => m + v, 0) }), { gold: 0, lost: 0, n: 0 }); out.tree = run.atree ? run.atree.own.slice() : null; out.patrol = run.patrolLog || null; out.chLog = run.chLog || null; /* 0.8.0 6단계: 순찰대 보상 고른 것 · 챕터에 들어설 때의 레벨 · 골드 · 장비 등급 · 소모품(C-1) */ out.ptree = run.ptree ? { own: run.ptree.own.slice(), free: run.ptree.free.slice(), ks: run.ptree.ks.slice() } : null; out.equip = (run.skills || []).slice(); out.flaskLeft = Object.assign({}, run.p.flask); out.pathsTaken = (run.pathLog || []).map(x => x.path); } out.gear = Object.values(run.inv).filter(x => run.eqU && Object.values(run.eqU).includes(x.uid)).map(x => x.tpl + ':' + x.g);
@@ -712,4 +732,4 @@ function manifestOf(want) {
 }
 /* 판 밖 예외(창 처리 · 트리 찍기 등)로 판이 끝나지 못한 경우의 기록 */
 function crashRow(w, e) { const o = { pk: w.pk, build: w.build, seed: w.seed, res: 'crash', floor: 0, lv: 0, rooms: [], bugs: ['판 밖 예외 ' + e.message], acts: 0, fights: [] }; o.meta = MM.rowMeta(REV, { seed: w.seed, pk: w.pk, build: w.build, from: FROM, chapters: OPT.chapters, variant: OPT.variant, pol: OPT.polId }); failOf(o, 'crash', { msg: String(e.message).slice(0, 200), stack: String(e.stack || '').split('\n').slice(1, 3).join(' | ') }); CUR = null; return o; }
-module.exports = { ksPick, manifestOf, crashRow, REV, SKE, sbEquip, sbEquipScore, spendPassive, ptSurvNeed, playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post, ch3Pre, seedWorld };
+module.exports = { sectorPick, secScore, ksPick, manifestOf, crashRow, REV, SKE, sbEquip, sbEquipScore, spendPassive, ptSurvNeed, playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post, ch3Pre, seedWorld };

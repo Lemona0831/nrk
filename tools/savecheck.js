@@ -11,6 +11,8 @@ const mode = process.argv[2] || 'check';
 if (mode === 'floor16') { process.argv.splice(2, 1); require('./floor16-migrate-check.js'); return; }
 /* 0.8.0 M4: 큰 각인 배치가 바뀐 옛 판 이어 하기(tools/savecheck-ksm4.js) */
 if (mode === 'ks-m4') { require('./savecheck-ksm4.js'); return; }
+/* 0.8.0 M5-0: 임시 액티브 트리 폐기 뒤 옛 판 이어 하기(tools/savecheck-atm5.js) */
+if (mode === 'at-m5') { require('./savecheck-atm5.js'); return; }
 const FILE = path.join(__dirname, 'saves06a.json');
 if (mode === 'make') process.env.DGDIR = '.';
 const D = require('./dgqa.js');
