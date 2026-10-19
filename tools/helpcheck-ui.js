@@ -137,7 +137,7 @@ module.exports = function (api) {
   A('같은 종류를 이어 쓰면 이어진 교대가 0이 됩니다', 'sbRun = 0 (sbEnd: 같은 종류)', () => has('10-skills-engine.js', 'p.sbRun = b.sbRun2 ? 0 : b.sbRunNow') && has('10-skills-engine.js', 'b.sbRunNow = b.sbAlt ? (p.sbRun || 0) + 1 : 0'));
   A('켜진 스킬을 쓰면 이어진 교대는 0이 됩니다', 'sbRun = 0', () => has('10-skills-engine.js', 'p.sbRun = b.sbRun2 ? 0 : b.sbRunNow') && has('10-skills-engine.js', 'b.sbRunNow = b.sbAlt ? (p.sbRun || 0) + 1 : 0'));
   A('방어하면 해로운 상태를 2 지웁니다', 'CONF.guard = 2', () => E('CONF.guard') === 2);
-  A('최대 생명력의 30%(마검사는 17%)까지 쌓이고', 'WARD.cap = 0.3 · 마검사 wardCap = 0.17', () => E('WARD.cap') === 0.3 && E('BUILDS.spellblade.wardCap') === 0.17);
+  A('최대 생명력의 30%(마검사는 15%)까지 쌓이고', 'WARD.cap = 0.3 · 마검사 wardCap = 0.15', () => E('WARD.cap') === 0.3 && E('BUILDS.spellblade.wardCap') === 0.15);
   A('파수꾼은 방어할 때마다 6을 얻고', 'WARD.guard = 6', () => E('WARD.guard') === 6);
   A('잃은 생명력 10%마다 내가 주는 직접 피해가 3% 늘어납니다(최대 18%)', 'BUTCH.thirst = 0.03 · thirstMax = 0.18, buThirst: 잃은 10%마다', () => E('BUTCH.thirst') === 0.03 && E('BUTCH.thirstMax') === 0.18 && has('12-state-class-rules.js', '(1 - p.hp / p.hpMax) * 10'));
   A('(최대 생명력의 30%까지)', 'BUTCH.grudgeCap = 0.3', () => E('BUTCH.grudgeCap') === 0.3);
@@ -353,7 +353,7 @@ module.exports = function (api) {
     ['2회 연속 행동', 'roundOrder.toString().includes("pDouble")'],
     ['다른 갈래 스킬을 이어 쓰면 피해 +30%', 'HUNT.link===0.3'],
     ['기본 공격 50% · 집중 주문 85%', 'BUILDS.elementalist.wpnMul===0.5 && HEAVY_V2===1.7'],
-    ['내 차례당 1회', 'BUILDS.spellblade.altWard===5 && BLOOD.perTurn===1'],
+    ['내 차례당 1회', 'BUILDS.spellblade.altWard===4 && BLOOD.perTurn===1'],
     ['▶ 공격은 기 1을 써서 피해 +25%', 'MONK.kiCtr===1 && outDmg.toString().includes("d *= 1.25")'],
     ['최대 5까지 계산', 'CONF.cap===5'],
     ['기본 공격은 무기 피해의 80%', 'BUILDS.bloodmage.wpnMul===0.8'],

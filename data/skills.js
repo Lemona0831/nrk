@@ -449,7 +449,7 @@ const SKILLS2 = {
     { id: 'e_eyestorm', row: 13, b: '공명', tier: '상급', n: '폭풍의 눈', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 2 }, { k: 'st', s: 'ignite', n: 1 }, { k: 'st', s: 'chill', n: 1 }, { k: 'shockx', dmg: 1.5, brk: 1.5 }] },
   ],
   spellblade: [
-    /* 마검사 (10월 7일, docs/직업/마검사.md): kind 'cut' ⚔ 베기 · 'spell' ✦ 주문. 베기와 주문을 번갈아 쓰면 교대(직업 보호막 +5, 내 차례마다 한 번).
+    /* 마검사 (10월 7일, docs/직업/마검사.md): kind 'cut' ⚔ 베기 · 'spell' ✦ 주문. 베기와 주문을 번갈아 쓰면 교대(직업 보호막 +4, 내 차례마다 한 번).
        새 효과: imbue(칼에 싣기) · edgeX(칼 ×) · kwx(쓰기 직전 그 상태였던 적에게 ×) · alt(교대 보상, run 2) · killSpread(쓰러뜨려 출혈 퍼뜨리기), exploit의 s · take, hasten on 'alt' · 'kill' */
     // 시작
     { id: 'sb_edge', b: '시작', tier: '시작', start: 1, n: '마검 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 29 }] },

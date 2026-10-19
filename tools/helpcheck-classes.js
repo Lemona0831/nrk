@@ -22,8 +22,8 @@ module.exports = function (api) {
   add(C, '출혈 상태의 적을 처치하거나', '피 수확 3%, 전투당 12%', E => E('BUTCH.harvest')===0.03 && E('BUTCH.harvestFight')===0.12);
   add(C, '기본 피해는 원소 합계 × 3', '상수: ELEM.Cw · D · Bk', E => E('ELEM.Cw') === 2 && E('ELEM.D') === 3 && E('ELEM.Bk') === 12);
   add(C, '서리 무게: 둔화된 적이 나를 치는', '상수: ELEM.guard=' + E('ELEM.guard'), E => pct(E('ELEM.guard')) === 30);
-  add(C, '교대하면 그 행동이 끝난 뒤 보호막 +5', '상수: BUILDS.spellblade.altWard=' + E('BUILDS.spellblade.altWard'), E => E('BUILDS.spellblade.altWard') === 5);
-  add(C, '보호막은 최대 생명력의 17%까지', '실행: wardMax(마검사) = 최대 생명력 × 0.17', E => E(`(() => { const b = __mk("spellblade", 5); return Math.abs(wardMax(b.p) - b.p.hpMax * 0.17) < 1 && BUILDS.spellblade.wardCap === 0.17; })()`));
+  add(C, '교대하면 그 행동이 끝난 뒤 보호막 +4', '상수: BUILDS.spellblade.altWard=' + E('BUILDS.spellblade.altWard'), E => E('BUILDS.spellblade.altWard') === 4);
+  add(C, '보호막은 최대 생명력의 15%까지', '실행: wardMax(마검사) = 최대 생명력 × 0.15', E => E(`(() => { const b = __mk("spellblade", 5); return Math.abs(wardMax(b.p) - b.p.hpMax * 0.15) < 1 && BUILDS.spellblade.wardCap === 0.15; })()`));
   add(C, '되받을 때마다 기가 1 쌓입니다', '상수: MONK.kiCtr=' + E('MONK.kiCtr'), E => E('MONK.kiCtr') === 1);
   add(C, '▶ 공격은 기 1을 써서 피해 +25%', '실행: 강화 1이면 outDmg ×1.25 (수도승)', E => E(`(() => { const b = __mk("monk"); addS(b, b.p, "empower", 1); return outDmg(b, 100, {}) === 125; })()`));
   add(C, '짐은 5까지 셉니다', '상수: CONF.cap=' + E('CONF.cap'), E => E('CONF.cap') === 5);
