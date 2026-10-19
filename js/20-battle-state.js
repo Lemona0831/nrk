@@ -1,5 +1,5 @@
 'use strict';
-const fxList = p => { const out = []; if (!p || !p.eq) return out; for (const sl in p.eq) { const k = p.eq[sl]; if (k && IFX[k]) out.push([k, IFX[k]]); } if (p.awk && p.awk.length) for (const a of p.awk) if (IFX_AWK[a]) out.push(['awk_' + a, IFX_AWK[a]]); /* 각인(챕터 선물) */ if (p.pn && p.pn.length) for (const k of p.pn) { const f = IFX_NODE[k] || IFX_AWK[k]; if (f) out.push(['pn_' + k, f]); } if (p.psm && (p.psm.brk || p.psm.st)) out.push(['pn_small', ptSmallFx(p.psm)]); /* 10월 16일 0.8.0 2단계: 패시브 트리 노드 */ return out; };
+const fxList = p => { const out = []; if (!p || !p.eq) return out; for (const sl in p.eq) { const k = p.eq[sl]; if (k && IFX[k]) out.push([k, IFX[k]]); } if (p.awk && p.awk.length) for (const a of p.awk) if (IFX_AWK[a]) out.push(['awk_' + a, IFX_AWK[a]]); /* 각인(챕터 선물) */ if (p.pn && p.pn.length) for (const k of p.pn) { const f = IFX_NODE[k] || IFX_AWK[k]; if (f) out.push(['pn_' + k, f]); } if (p.psm && (p.psm.brk || p.psm.st)) out.push(['pn_small', ptSmallFx(p.psm)]); /* 10월 16일 0.8.0 2단계: 패시브 트리 노드 */ if (p.sbSt) for (const k in p.sbSt) if (p.sbSt[k] && typeof IFX_SB !== 'undefined' && IFX_SB[k]) out.push(['sb_' + k, IFX_SB[k]]); /* 0.8.0 M5-0 마검사 경계 상태 */ return out; };
 /* 배율·더하기 지점: 바뀌면 센다 */
 function fxMul(p, hook, ...a) { let m = 1; for (const [k, f] of fxList(p)) if (f[hook]) { const v = f[hook](...a); if (v !== 1 && v != null) { m *= v; fxHit(k); } } return m; }
 function fxAdd(p, hook, ...a) { let m = 0; for (const [k, f] of fxList(p)) if (f[hook]) { const v = f[hook](...a); if (v) { m += v; fxHit(k); } } return m; }
@@ -141,11 +141,11 @@ function st(u, k) { const x = u.s[k]; return x ? (x.stacks || 1) : 0; }
    약화↔강화: 공격할 때마다 그 공격 −25%/+25%. 취약↔보호: 직접 피해를 받을 때마다 +25%/−25%. 둔화↔가속: 라운드가 시작될 때 그 라운드의 맨 뒤/맨 앞에서 움직이고 1 감소 (roundOrder).
    반대 쌍은 걸 때 숫자끼리 뺀다. 상한을 넘친 몫은 버린다. 막음: 걸리려는 해로운 상태를 튕겨 낸다(정화 플라스크).
    붕괴(broken)와 낙인(brand, 보스 기믹)은 예전 규칙을 따른다. */
-const KW = { poison: 20, bleed: 10, ignite: 10, weak: 5, empower: 5, vuln: 5, protect: 5, chill: 3, haste: 3, block: 5 };
+const KW = { poison: 20, bleed: 10, ignite: 10, weak: 5, empower: 5, vuln: 5, protect: 5, chill: 3, haste: 3, block: 5, sear: 20 }; // sear 혈염(0.8.0 M5-0 마검사 경계): KW_BAD에 넣지 않아 정화 · 막음으로 지워지지 않는다
 const KW_OPP = { weak: 'empower', empower: 'weak', vuln: 'protect', protect: 'vuln', chill: 'haste', haste: 'chill' };
 const KW_BAD = ['poison', 'bleed', 'ignite', 'weak', 'vuln', 'chill'];
 const KW_FOREVER = 1e9;
-const KW_N = { poison: '중독', bleed: '출혈', ignite: '화상', weak: '약화', empower: '강화', vuln: '취약', protect: '보호', chill: '둔화', haste: '가속', block: '막음' }; // 엔진 기록용 이름 (화면은 SNAMES)
+const KW_N = { poison: '중독', bleed: '출혈', ignite: '화상', weak: '약화', empower: '강화', vuln: '취약', protect: '보호', chill: '둔화', haste: '가속', block: '막음', sear: '혈염' }; // 엔진 기록용 이름 (화면은 SNAMES)
 function kwDec(u, k, n) { const x = u.s && u.s[k]; if (!x) return; x.stacks -= (n || 1); if (x.stacks <= 0) delete u.s[k]; }
 /* 막음: 플레이어에게 해로운 상태가 걸리려 할 때 1 써서 튕겨 낸다 */
 function kwBlocked(b, u, k) {
@@ -154,6 +154,11 @@ function kwBlocked(b, u, k) {
 }
 /* 출혈: 걸린 쪽이 행동할 때마다 N 피해, 1 감소 */
 function kwBleed(b, u) { const n = stk(u, 'bleed'); if (!n || b.over) return; kwDec(u, 'bleed'); const fl = u === b.p && isBu(u) && (u.selfBl || 0) > 0; if (fl) b.bleedFloor = 1; dmgDot(b, u, n * (u === b.p ? 1 : dotMul(b.p)), '출혈'); if (fl) { b.bleedFloor = 0; u.selfBl = Math.min(u.selfBl - 1, stk(u, 'bleed')); } /* 피 웅덩이 ×2는 dmgDot이 한 번만 곱한다 (10월 5일 고침: 여기서도 곱해 4배였다) */ }
+/* 혈염 (0.8.0 M5-0, 10월 19일 만든 사람 마검사 경계 혈염): 출혈 · 화상을 합친 상태. 걸린 쪽이 행동할 때마다 N × SEAR.mul 피해, 1 감소. 정화되지 않는다 */
+const SEAR = { mul: 1.5 };
+function kwSear(b, u) { const n = stk(u, 'sear'); if (!n || b.over) return; kwDec(u, 'sear'); dmgDot(b, u, n * SEAR.mul * (u === b.p ? 1 : dotMul(b.p)), '혈염'); }
+/* 출혈 · 화상을 혈염으로 합친다(둘 다 지운다). extra = 더 거는 혈염 */
+function sbSear(b, e, extra) { if (!e || !e.alive) return 0; const n = stk(e, 'bleed') + stk(e, 'ignite') + (extra || 0); if (!n) return 0; delete e.s.bleed; delete e.s.ignite; const got = addS(b, e, 'sear', n); logp(b, 'good', e.n + '의 피와 불이 엉겨 혈염 ' + stk(e, 'sear') + '이(가) 된다'); b.rec.push({ k: 'sear', e: e.id, n }); return got; }
 /* 직접 피해를 받을 때: 취약 ×1.25 / 보호 ×0.75 (1 감소), 화상 N 더 (1 감소). 지속 피해는 발동시키지 않는다 */
 function kwTaken(b, u, d, o) {
   if (o.dot || !(d > 0)) return d;

@@ -45,11 +45,11 @@ const poolOk = (p, k) => !(isV2(p) && YS_OFF.includes(k)) && !(isV2(p) && V2_OFF
    라운드(b.ysR) = 내 차례 시작부터 다음 내 차례 시작 전까지(playerAct가 차례의 첫 행동에서 센다). 전투마다 1번(once)인 스킬은 쓰면 그 전투 동안 p.cd[id] = CD_USED로 남는다(p.cd는 이 표시에만 쓴다).
    🔄 쿨타임 당기기 · 처치 다시 쓰기는 "유산 +1, 라운드에 한 번"으로 바꿨다(1차 시제품 변환, ysRefund). 장비의 쿨타임 효과는 ysItem(라운드에 한 번) */
 const CD_USED = 999;
-function resetCharges(p) { p.cd = {}; p.cdJust = null; p.hsAt = {}; p.ys = ysStartOf(p); p.pbuf = null; p.dodgeRed = 0; p.dodgeOn = null; if (p.build === 'spellblade') { p.sbLast = null; p.sbRun = 0; p.edge = null; } if (p.build === 'bloodmage') p.payCut = []; if (p.build === 'hunter') { p.bbuf = null; p.hnLastT = null; p.hnPass = 0; p.hnAside = 0; } if (p.build === 'assassin') { p.asParT = null; p.asChain = 0; } } // 10월 18일 0.8.0 5단계 암살자: 흘려 냄 표시 · 연이은 흘림은 전투마다 새로 // 0.8.0 5단계 사냥꾼: 기본 공격 버프 · 직전에 친 적은 전투마다 새로 // 마검사: 직전 종류 · 이어진 교대 · 칼은 전투마다 새로. 숨겨진 직업 3: 값 깎기도
+function resetCharges(p) { p.cd = {}; p.cdJust = null; p.hsAt = {}; p.ys = ysStartOf(p); p.pbuf = null; p.dodgeRed = 0; p.dodgeOn = null; if (p.build === 'spellblade') { p.sbLast = null; p.sbRun = 0; p.edge = null; p.sbSt = {}; } if (p.build === 'bloodmage') p.payCut = []; if (p.build === 'hunter') { p.bbuf = null; p.hnLastT = null; p.hnPass = 0; p.hnAside = 0; } if (p.build === 'assassin') { p.asParT = null; p.asChain = 0; } } // 10월 18일 0.8.0 5단계 암살자: 흘려 냄 표시 · 연이은 흘림은 전투마다 새로 // 0.8.0 5단계 사냥꾼: 기본 공격 버프 · 직전에 친 적은 전투마다 새로 // 마검사: 직전 종류 · 이어진 교대 · 칼은 전투마다 새로. 숨겨진 직업 3: 값 깎기도
 const ysNow = p => p.ys == null ? YUSAN.start : p.ys;
 /* 유산 더하기 (상한까지). src: turn · resp · refund · item · flask. g = 실제로 든 양(0이면 상한에 막혀 버려짐) */
 function ysAdd(b, n, src, why) {
-  const p = b.p; if (!isV2(p) || b.over) return 0; p.ys = ysNow(p); const y0 = p.ys; const g = Math.max(0, Math.min(n, ysCapOf(p) - p.ys)); p.ys += g;
+  const p = b.p; if (!isV2(p) || b.over) return 0; p.ys = ysNow(p); const y0 = p.ys; const g = p.sbSt && p.sbSt.fireBody ? 0 : Math.max(0, Math.min(n, ysCapOf(p) - p.ys)); p.ys += g; // 0.8.0 M5-0 불의 몸: 그동안 유산 0
   if (b.rec) b.rec.push({ k: 'ys', t: r1(b.t), src, why, n, g, ys: p.ys, r: b.ysR || 0 });
   if (g > 0) logp(b, 'good', '유산 ' + y0 + ' → ' + p.ys + ' (+' + g + ', ' + why + ')'); // 10월 16일: 앞 → 뒤 값으로 (차례 충전도 적는다)
   return g;

@@ -177,6 +177,10 @@ const KS_LIST = {
   ks_breaker: { dir: 'ct', n: '무너뜨리는 자', d: '무너진 적에게 주는 직접 피해가 20% 늘어납니다.' },
   ks_first: { dir: 'ag', n: '먼저 움직임', d: '전투를 시작하면 가속 1.' },
   ks_flow: { dir: 'ag', n: '흘림새', d: '큰 공격(강타 · 겨눈 한 발 · 모으기)을 흘리면 대응 충전 +1 더(라운드 한도 밖, 전투마다 2번).', resp: 1 },
+  /* 0.8.0 M5-0 마검사 경계 큰 각인(10월 19일 만든 사람): 모두 새 행동. 경계 제어(60°) · 계승(180°) · 생존(300°) 자리 */
+  ks_sb_sear: { dir: 'ct', cls: 'spellblade', bound: '혈염', n: '혈염의 각인', d: '출혈 걸린 적을 주문으로 치면 화상을 건너뛰고 바로 혈염이 됩니다.' },
+  ks_sb_sin: { dir: 'lg', cls: 'spellblade', bound: '죄인의 피', n: '죄인의 각인', d: '막기로 받아낸 피해의 30%가 그 적에게 출혈로 되돌아갑니다.' },
+  ks_sb_ash: { dir: 'sv', cls: 'spellblade', bound: '유산의 불', n: '잿불의 각인', d: '보호막이 0이 되는 순간 다음 기본 공격이 전열 화염 폭발이 됩니다.' },
   ks_sb_over: { dir: 'pw', cls: 'spellblade', n: '마검 과부하', d: '교대한 행동의 피해가 35% 늘어납니다. 교대를 세 번 이으면 다음 유산 4 스킬의 비용 −3(바닥 1, 전투마다 1번).', pay: '교대 보호막을 얻지 않습니다.' },
   ks_sb_beat: { dir: 'ct', cls: 'spellblade', n: '끊는 박자', d: '이어진 교대의 3번째 행동은 붕괴 +40(내 차례에 한 번).' },
   ks_sb_blood: { dir: 'su', cls: 'spellblade', n: '피를 두른 갑주', d: '보호막 상한이 최대 생명력의 15%에서 25%로 늘어납니다. 전투를 시작하면 보호막 6.' },
@@ -219,6 +223,7 @@ const PT_CLS = {
       su2L: 'k_sb3', su3R: 'n_sb_remnant', su5L: 'a_vigor', su5R: 'n_sb_thickaegis', su7L: 'a_warmth', su7R: 'n_sb_bloodmail',
       sv3L: 'n_sb_manamail', sv5L: 'a_skin', sv5R: 'n_sb_under', sv7L: 'a_iron', sv7R: 'a_stand',
     },
+    ks2: { ctK5b: { fx: 'ks_sb_sear', req: 'sb_bloodfire' }, lgK5b: { fx: 'ks_sb_sin', req: 'sb_bloodmail' }, svK5b: { fx: 'ks_sb_ash', req: 'sb_heatmail' } }, // 0.8.0 M5-0 경계 큰 각인: K5 둘째 자리, 그 경계 입구(액티브)를 열어야 후보
     ks: { pwK5: 'ks_sharp', pwK9: 'ks_sb_over', ctK5: 'ks_brkbreath', ctK9: 'ks_sb_beat', agK5: 'ks_slipbreath', agK9: 'ks_first', lgK5: 'ks_deep', lgK9: 'ks_double', suK5: 'ks_cycle', suK9: 'ks_sb_blood', svK5: 'ks_blockbreath', svK9: 'ks_wall' },
   },
   /* 0.8.0 5단계 (10월 17일 만든 사람 검토 반영): docs/제안/0.8.0-5단계-파수꾼-수도승-트리초안-2026-10-17.md 2-5 · 3-5 */

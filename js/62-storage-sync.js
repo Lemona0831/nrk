@@ -4,9 +4,9 @@ const esc = s => fixJosa(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&
 const SKEY = 'nrk_062_v1';    // 0.6a.2 스킬 시험판: 지인 주소 0.6a·next/(nrk_06_v1), B0.5(nrk_b0_v1)와 브라우저 기록이 섞이지 않게
 /* 저장소 경로: 0.6a.2 스킬 시험판 기록은 지인 주소 0.6a(runs6 등)와 섞이지 않게 runs62·scen62·survey62에, 기록판은 board/<id> 문서의 best62 칸, 랭킹은 rank62 칸에 둔다 */
 const COL = { runs: 'runs62', scen: 'scen62', survey: 'survey62', best: 'best62' };
-const SNAMES = { trap: '덫', rift: '균열', echo: '메아리', plague: '역병', smite: '단죄', bond: '피의 연결', brand: '낙인', poison: '중독', bleed: '출혈', ignite: '화상', chill: '둔화', weak: '약화', empower: '강화', vuln: '취약', protect: '보호', haste: '가속', block: '막음', rage: '격노', broken: '붕괴' };
+const SNAMES = { sear: '혈염', trap: '덫', rift: '균열', echo: '메아리', plague: '역병', smite: '단죄', bond: '피의 연결', brand: '낙인', poison: '중독', bleed: '출혈', ignite: '화상', chill: '둔화', weak: '약화', empower: '강화', vuln: '취약', protect: '보호', haste: '가속', block: '막음', rage: '격노', broken: '붕괴' };
 const BUFFS = { protect: 1, rage: 1, empower: 1, haste: 1, block: 1 };
-const SICO = { poison: '☠️', bleed: '🩸', ignite: '🔥', weak: '🥀', empower: '💪', vuln: '💔', protect: '🛡️', chill: '❄️', haste: '💨', block: '✨', broken: '💫', brand: '📜', rage: '😡', trap: '🪤' }; // 상태 아이콘 (10월 3일)
+const SICO = { sear: '♨️', poison: '☠️', bleed: '🩸', ignite: '🔥', weak: '🥀', empower: '💪', vuln: '💔', protect: '🛡️', chill: '❄️', haste: '💨', block: '✨', broken: '💫', brand: '📜', rage: '😡', trap: '🪤' }; // 상태 아이콘 (10월 3일)
 const REASONS = [['need', '필요해서'], ['curious', '재미있어 보여서'], ['other', '기타']];
 
 const G = {

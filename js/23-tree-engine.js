@@ -41,11 +41,12 @@ function ptBuild(cls) {
     if (typeof PT_BASIC !== 'undefined' && PT_BASIC[d]) PT_POS.map(pos => N[d + pos]).filter(x => x && x.kind === 'small' && x.ring === 1 && !x.fx).slice(0, PT_BASIC[d].length).forEach((x, i) => { const k = PT_BASIC[d][i], T = pnTxt(k); delete x.stat; Object.assign(x, { fx: k, n: T.n, d: T.d, basic: 1 }); }); // 0.8.0 M4 평타 축
     const ks = C ? [C.ks[d + 'K5'], C.ks[d + 'K9']] : KS_TMP[d];
     [5, 9].forEach((r, i) => { const k = ks[i], K = KS_LIST[k]; add(d + 'K' + r, { kind: 'keystone', dir: d, ring: r === 5 ? 2 : 3, pos: { r, lane: 'C' }, cost: 0, fx: k, n: K.n, d: K.d, pay: K.pay || null, pool: K.cls ? 'class' : 'common' }); });
+    if (C && C.ks2 && C.ks2[d + 'K5b']) { const o = C.ks2[d + 'K5b'], K = KS_LIST[o.fx]; add(d + 'K5b', { kind: 'keystone', dir: d, ring: 2, pos: { r: 6, lane: 'C' }, cost: 0, fx: o.fx, n: K.n, d: K.d, pay: K.pay || null, pool: 'class', areq: o.req, bound: K.bound }); } // 0.8.0 M5-0 경계 큰 각인
   }
   PT.dirs.forEach((d, i) => {
     const nx = PT.dirs[(i + 1) % PT.dirs.length], x = p => d + p;
     link('S', x('1C')); link(x('1C'), x('2L')); link(x('1C'), x('2R')); link(x('2L'), x('3L')); link(x('2R'), x('3R')); link(x('3R'), nx + '3L');
-    link(x('3L'), x('4L')); link(x('3R'), x('4R')); link(x('4L'), x('5L')); link(x('4R'), x('5R')); link(x('5L'), x('6L')); link(x('5R'), x('6R')); link(x('K5'), x('4L')); link(x('K5'), x('4R')); link(x('6R'), nx + '6L');
+    link(x('3L'), x('4L')); link(x('3R'), x('4R')); link(x('4L'), x('5L')); link(x('4R'), x('5R')); link(x('5L'), x('6L')); link(x('5R'), x('6R')); link(x('K5'), x('4L')); link(x('K5'), x('4R')); if (N[x('K5b')]) { link(x('K5b'), x('5L')); link(x('K5b'), x('5R')); } link(x('6R'), nx + '6L');
     link(x('6L'), x('7L')); link(x('6R'), x('7R')); link(x('7L'), x('8L')); link(x('7R'), x('8R')); link(x('K9'), x('8L')); link(x('K9'), x('8R'));
   });
   for (const id in N) N[id].links.sort();
@@ -194,6 +195,7 @@ function skCondMet(b, s, c, tgt) {
   const p = b.p; if (c.when === 'resp') return b.ysRespLast != null && b.ysRespLast >= (b.ysR || 0) - 1;
   if (c.when === 'alt2') { if (p.build !== 'spellblade' || !s.kind) return false; const alt = !!p.sbLast && s.kind !== p.sbLast; return (alt ? (p.sbRun || 0) + 1 : 0) >= 2; }
   /* 0.8.0 5단계 내 자원 조건 (1-2절): 보유만 본다. 비용을 낼 때의 값 */
+  if ((c.when || '').includes('&')) return c.when.split('&').every(w => skCondMet(b, s, Object.assign({}, c, { when: w }), tgt)); // 0.8.0 M5-0: 두 조건 모두(경계 강화 엉긴 상처)
   const mw = /^ward>=(\d+)$/.exec(c.when || ''); if (mw) return (p.ward || 0) >= +mw[1];
   const mk = /^ki>=(\d+)$/.exec(c.when || ''); if (mk) return st(p, 'empower') >= +mk[1];
   if (c.when === 'stance') return !!(p.stance || (b.mkStHeld != null && b.mkStHeld === b.turnIdx)); // 직전 적 차례를 자세로 맞았다(내 차례 첫 행동에서 자세가 풀려도 그 차례 동안 참)
@@ -224,7 +226,7 @@ function ksPaths(run) {
 }
 function ksCands(run) {
   const T = ptBuild(run.build), { dist, par } = ksPaths(run), ch = run.ch || 1;
-  return Object.values(T.nodes).filter(n => n.kind === 'keystone' && !run.ptree.ks.includes(n.id) && ringOpen(run, n.ring) && dist[n.id] != null).map(n => {
+  return Object.values(T.nodes).filter(n => n.kind === 'keystone' && !run.ptree.ks.includes(n.id) && ringOpen(run, n.ring) && dist[n.id] != null && (!n.areq || (run.atree && run.atree.own.includes(n.areq)))).map(n => { // 0.8.0 M5-0: 경계 큰 각인은 그 경계 입구를 연 판만
     const path = []; for (let x = par[n.id]; x != null && dist[x] > 0; x = par[x]) path.unshift(x);
     return { id: n.id, dir: n.dir, d: dist[n.id], path, rk: ksHash(n.id + ':' + ((run.seed || 0) + ch)) };
   });
@@ -326,6 +328,7 @@ const IFX_NODE = {
   n_sb_bloodmail: { onKill: (b, p, e) => { if (e.pile || !(stk(e, 'bleed') || st(e, 'ignite'))) return; return addWard(b, p, 5, undefined, true) > 0 ? 1 : 0; } },
   n_sb_manamail: { onStart: (b, p) => { addWard(b, p, 6, undefined, true); return 1; } },
   n_sb_under: { inP: (b, p, o) => p.ward > 0 && !o.dot ? 0.04 : 0 },
+  ks_sb_sear: { ksSearSpell: 1 }, ks_sb_sin: { ksSinBlock: 1 }, ks_sb_ash: { ksAshBlast: 1 }, // 0.8.0 M5-0 마검사 경계 큰 각인(js/24 addS · 방어 · js/10 sbWardHit)
   ks_deep: { ysCap: 1, hitP: (b, p, e, o, c) => c && c.id === 'basic' ? -0.15 : 0 }, // 0.8.0 M4(D10): 대가 기본 공격 −15%
   ks_sharp: { ysCap: -2, hitP: (b, p, e, o, c) => c && c.id === 'basic' ? 0.3 : 0, brk: (b, p, e, c) => c && c.id === 'basic' && e && e.intent && e.intent.k && e.intent.k !== 'attack' ? 10 : 0 }, // 날 선 손
   ks_tireless: { cost: (p, id) => id === 'heavy' ? -15 : 0, cap: { life: -1 } }, // 쉬지 않는 팔

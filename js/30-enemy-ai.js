@@ -315,7 +315,7 @@ function enemyAct(b, e) {
   // 0.6a.2: 공격했으면 약화·강화 1 감소, 행동했으니 출혈 발동, 다음 행동 시간에 둔화·가속
   if (['attack', 'heavy', 'explode', 'mirror', 'brand', 'burn', 'erupt', 'constrict', 'reflect', 'hand', 'firepot', 'ash', 'noon'].includes(i.k)) { kwDec(e, 'weak'); kwDec(e, 'empower'); }
   if (e.ctrWeak) { if (e.alive) addS(b, e, 'weak', e.ctrWeak); e.ctrWeak = 0; } // 수도승 되받기의 약화: 그 적의 다음 공격을 깎는다
-  if (e.alive) kwBleed(b, e);
+  if (e.alive) kwBleed(b, e); if (e.alive) kwSear(b, e); // 0.8.0 M5-0 혈염
   e.acts++;
   if (e.role === 'boss' && e.alive) bossPhase(b, e);
   if (e.role === 'boss' && e.alive && e.bank > 0 && !e.qNext && !e.lordNext && !e.abNext) { const w = bossDwell(e); if (!(w && w.last && w.left)) bossBankApply(b, e); } // 10월 15일: 쌓인 피해

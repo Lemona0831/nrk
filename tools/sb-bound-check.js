@@ -1,0 +1,51 @@
+'use strict';
+/* 0.8.0 M5-0 마검사 경계 점검 (10월 19일). 실행: node tools/sb-bound-check.js
+   혈염(합치기 · 차례 피해 · 정화 불가 · 교대 보호막 없음), 경계 스킬 아홉, 비용 1은 교대 아님, 경계 입구 requires, 경계 큰 각인 셋(동작 · 입구를 연 판만 후보) */
+process.env.DGDIR = process.env.DGDIR || '.';
+const assert = require('assert/strict'), D = require('./dgqa.js'), E = D.G0, R = D.run_;
+let n = 0; const FAIL = []; const ok = (c, m) => { if (!c) FAIL.push(m); else n++; };
+const stk = (u, k) => (u.s[k] ? u.s[k].stacks : 0);
+function fight(skills, pn, ens) {
+  const p = E.mkPlayer('spellblade', {}, {}, skills || []); p.pn = (pn || []).slice(); const es = (ens || ['bruiser', 'bruiser']).map((r, i) => E.mkEnemy(r, false, i));
+  for (const e of es) { e.hp = e.hpMax = 5000; e.dmg = 1; e.row = 'front'; e.intent = { k: 'attack' }; }
+  const b = E.newBattle(p, es, {}); b.rngF = () => 0.5; b.stepMode = false; p.pn = (pn || []).slice(); E.runUntilPlayer(b); p.ys = 5; return { p, b, es };
+}
+const act = (b, id, t) => { for (const e of b.en) if (e.alive && !e.intent) e.intent = { k: 'attack' }; E.playerAct(b, id, t ? t.id : null); };
+// 혈염: 합치기 · 차례 피해 · 정화 불가
+{ const { p, b, es } = fight(['sb_searcut']); E.addS(b, es[0], 'bleed', 3); E.addS(b, es[0], 'ignite', 2); p.ys = 5; act(b, 'sb_searcut', es[0]);
+  ok(b.rec.some(x => x.k === 'sear' && x.n === 5) && stk(es[0], 'sear') >= 4 && !stk(es[0], 'bleed') && !stk(es[0], 'ignite'), '혈염: 벨 때 걸려 있던 출혈 3 · 화상 2를 혈염 5로 합침(적이 한 번 움직여 지금 ' + stk(es[0], 'sear') + ')');
+  const h0 = es[0].hp, s0 = stk(es[0], 'sear'); R('kwSear')(b, es[0]); ok(es[0].hp < h0 && stk(es[0], 'sear') === s0 - 1, '혈염: 행동할 때마다 피해, 1 감소');
+  ok(!R('KW_BAD').includes('sear'), '혈염은 해로운 상태 목록(정화 · 막음 대상)에 없음'); }
+{ const { p, b, es } = fight(['sb_searcut']); E.addS(b, es[0], 'bleed', 3); p.ys = 5; act(b, 'sb_searcut', es[0]); ok(!stk(es[0], 'sear') && stk(es[0], 'bleed') > 0, '혈염: 둘 중 하나만 있으면 합치지 않음'); }
+// 혈염 걸린 적이 있으면 교대 보호막 없음
+{ const { p, b, es } = fight(['sb_ember']); E.addS(b, es[1], 'sear', 3); p.ward = 0; act(b, 'basic', es[0]); p.ys = 5; act(b, 'sb_ember', es[0]); ok(!(p.ward > 0), '혈염 걸린 적이 있는 동안 교대 보호막 없음');
+  const f2 = fight(['sb_ember']); f2.p.ward = 0; act(f2.b, 'basic', f2.es[0]); f2.p.ys = 5; act(f2.b, 'sb_ember', f2.es[0]); ok(f2.p.ward > 0, '혈염이 없으면 교대 보호막 그대로'); }
+// 핏불 싣기: 출혈 · 화상을 함께 싣고 다음 베기가 건다
+{ const { p, b, es } = fight(['sb_bloodfire']); act(b, 'sb_bloodfire'); ok(p.edge && p.edge.s === 'bleed' && p.edge.also && p.edge.also[0].s === 'ignite', '핏불 싣기: 칼에 출혈 · 화상'); act(b, 'basic', es[0]); ok(stk(es[0], 'bleed') >= 1 && stk(es[0], 'ignite') >= 2 && b.log.some(x => /출혈 2 · 화상 2/.test(x.m || '')), '다음 베기가 출혈 · 화상을 함께 건다(적이 한 번 움직여 출혈 −1)'); }
+// 겁화
+{ const { p, b, es } = fight(['sb_kalpa']); p.ward = 10; act(b, 'sb_kalpa'); ok(p.ward === 0 && p.sbSt.blaze === 3, '겁화: 보호막 소실, 3차례'); E.addS(b, es[0], 'bleed', 2); act(b, 'basic', es[0]); ok(stk(es[0], 'sear') > 0, '겁화: 베기마다 혈염');
+  const fx = R('fxAdd'); ok(Math.abs(fx(p, 'hitP', b, p, es[0], {}, { id: 'basic' }) - 0.4) < 1e-9 && Math.abs(fx(p, 'inP', b, p, {}) + 0.3) < 1e-9, '겁화: 주는 피해 +40%, 받는 피해 +30%'); }
+// 피의 갑주
+{ const { p, b, es } = fight(['sb_bloodmail']); E.addS(b, es[0], 'bleed', 2); E.addS(b, es[1], 'bleed', 2); p.ward = 0; act(b, 'sb_bloodmail'); ok(b.log.some(x => /피의 갑주: 출혈 걸린 적 2 → 보호막 \+8/.test(x.m || '')), '피의 갑주: 출혈 걸린 적 둘 → 보호막 +8'); }
+// 피막
+{ const { p, b, es } = fight(['sb_film']); act(b, 'sb_film'); p.ward = 20; const o = { src: es[0] }; R('sbWardHit')(b, p, o, 10); ok(stk(es[0], 'bleed') === 5, '피막: 받아낸 10의 50% → 출혈 5'); }
+// 죄인의 벽
+{ const { p, b, es } = fight(['sb_sinwall']); p.hp = p.hpMax; p.ward = 0; act(b, 'sb_sinwall'); const pay = p.hpMax * 0.15; const L = b.log.map(x => x.m || '').find(m => /죄인의 벽: 생명력/.test(m)) || ''; const mm = /생명력 ([\d.]+)을 바쳐 보호막 \+([\d.]+)/.exec(L); ok(mm && Math.abs(+mm[1] - pay) < 0.6 && Math.abs(+mm[2] - 3 * pay) < 1.6, '죄인의 벽: 생명력 15%를 바쳐 3배 보호막 (' + L + ')'); p.ward = 0; R('sbWardHit')(b, p, { src: es[0] }, 1); ok(es.every(e => stk(e, 'bleed') === 4), '죄인의 벽이 깨지면 전열 모두 출혈 4'); }
+// 달군 갑주 · 잿불 갑주
+{ const { p, b, es } = fight(['sb_heatmail']); p.ward = 12; act(b, 'sb_heatmail'); ok(p.ward === 0 && p.sbSt.heatNext, '달군 갑주: 보호막을 태움'); const fx = R('fxAdd'); ok(Math.abs(fx(p, 'hitP', b, p, es[0], {}, { id: 'basic' }) - 0.5) < 1e-9 && fx(p, 'hitP', b, p, es[0], {}, { id: 'heavy' }) === 0, '다음 기본 공격 ×1.5(강공격은 아님)'); act(b, 'basic', es[0]); ok(!p.sbSt.heatNext, '한 번 쓰면 사라짐'); }
+{ const { p, b, es } = fight(['sb_embermail']); act(b, 'sb_embermail'); p.ward = 10; act(b, 'basic', es[0]); ok(stk(es[0], 'ignite') >= 1, '잿불 갑주: 보호막이 있으면 기본 공격에 화상'); }
+// 불의 몸
+{ const { p, b, es } = fight(['sb_firebody']); p.ys = 5; p.ward = 0; act(b, 'sb_firebody'); ok(p.ys === 0 && p.sbSt.fireBody === 3 && b.log.some(x => /불의 몸: 유산 1을 모두 태워 보호막 \+8/.test(x.m || '')), '불의 몸: 남은 유산 1을 태워 보호막 +8, 유산 0'); ok(R('ysAdd')(b, 2, 'turn', '차례') === 0 && p.ys === 0, '그동안 유산이 차지 않음');
+  ok(E.addS(b, p, 'ignite', 3) === 0 && !stk(p, 'ignite'), '받는 화상 무효'); const fx = R('fxAdd'); ok(Math.abs(fx(p, 'hitP', b, p, es[0], {}, { id: 'heavy' }) - 0.3) < 1e-9, '기본 공격 · 강공격 ×1.3'); }
+// 비용 1: 교대 아님
+{ const { p, b, es } = fight(['sb_bolt', 'sb_ember']); act(b, 'basic', es[0]); ok(p.sbLast === 'cut', '베기 뒤 직전 종류 베기'); p.ys = 5; p.ward = 0; act(b, 'sb_bolt', es[0]); ok(p.sbLast === 'cut' && !(p.ward > 0), '마갑탄(비용 1 주문)은 교대가 아님: 직전 종류 그대로, 교대 보호막 없음'); act(b, 'sb_ember', es[0]); ok(p.ward > 0, '그다음 주문(비용 2)은 교대'); }
+// 경계 입구 requires
+{ const run = (() => { E.__G.data = E.blankData(); E.__G.cre = { name: 'b' }; E.startRun('spellblade'); const r = E.__G.run; delete r.alloc; E.__G.sheet = null; E.__G.creating = false; r.lv = 10; r.clears = 1; E.ptFix(r); return r; })();
+  ok(/양쪽 갈래/.test(R('atWhy')(run, 'sb_bloodfire')), '경계 입구: 양쪽 첫 노드 전에는 못 엶'); E.atBuy(run, 'sb_ember'); ok(/양쪽 갈래/.test(R('atWhy')(run, 'sb_bloodfire')), '한쪽만으로는 못 엶'); E.atBuy(run, 'sb_bleedcut'); ok(!R('atWhy')(run, 'sb_bloodfire'), '양쪽을 열면 엶');
+  run.clears = 2; run.ptree.pts = 40; run.ksPending = 1; const offerHas = () => R('ksCands')(run).some(c => c.id === 'ctK5b'); ok(!offerHas(), '경계 큰 각인: 입구 전에는 후보 아님'); E.atBuy(run, 'sb_bloodfire'); ok(offerHas(), '입구를 열면 후보'); }
+// 경계 큰 각인 셋
+{ const { p, b, es } = fight(['sb_ember'], ['ks_sb_sear']); E.addS(b, es[0], 'bleed', 3); p.ys = 5; act(b, 'sb_ember', es[0]); ok(stk(es[0], 'sear') > 0 && !stk(es[0], 'ignite'), '혈염의 각인: 출혈 걸린 적을 주문으로 치면 바로 혈염'); }
+{ const { p, b, es } = fight([], ['ks_sb_sin']); p.guard = 1; p.ward = 0; R('hurtPlayer')(b, 40, { src: es[0] }); ok(stk(es[0], 'bleed') >= 5, '죄인의 각인: 막기로 받아낸 피해(약 20)의 30% → 출혈 (' + stk(es[0], 'bleed') + ')'); }
+{ const { p, b, es } = fight([], ['ks_sb_ash']); p.ward = 5; R('sbWardHit')(b, p, { src: es[0] }, 5); ok(!p.sbSt.ashNext, '잿불의 각인: 보호막이 남아 있으면 아직'); p.ward = 0; R('sbWardHit')(b, p, { src: es[0] }, 5); ok(p.sbSt.ashNext, '보호막이 0이 되면 다음 기본 공격이 터짐'); const h1 = es[1].hp; act(b, 'basic', es[0]); ok(es[1].hp < h1 && stk(es[1], 'ignite') > 0 && !p.sbSt.ashNext, '기본 공격이 전열에 화염 폭발'); }
+if (FAIL.length) { console.log('실패 ' + FAIL.length + ': ' + FAIL.join(' | ')); process.exitCode = 1; }
+console.log('sb-bound-check: ' + n + '개 통과');

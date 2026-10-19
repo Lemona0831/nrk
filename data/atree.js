@@ -15,6 +15,10 @@ const ATREE_DEF = {
       ['sb_heated', '염검', 2, 3, 'L', ['sb_kindle'], 2], ['sb_snuff', '염검', 2, 3, 'C', ['sb_ember'], 2], ['sb_tome', '염검', 2, 3, 'R', ['sb_char'], 3], ['sb_hellfire', '염검', 3, 5, 'C', ['sb_snuff', 'sb_tome'], 4],
       ['sb_bladeward', '마갑', 1, 1, 'C', ['S'], 2], ['sb_bolt', '마갑', 1, 2, 'L', ['sb_bladeward'], 1], ['sb_unravel', '마갑', 1, 2, 'R', ['sb_bladeward'], 2],
       ['sb_turn', '마갑', 2, 3, 'C', ['sb_bladeward'], 2], ['sb_shell', '마갑', 2, 3, 'LL', ['sb_bolt'], 2], /* M5-0: 숨 끊기 · 껍질 3 → 2(값이 비용 2 띠), 마갑탄 2 → 1(리듬 칸) */ ['sb_rebound', '마갑', 2, 3, 'L', ['sb_bolt'], 2], ['sb_sunder', '마갑', 2, 3, 'R', ['sb_unravel'], 2], ['sb_finale', '마갑', 3, 5, 'C', ['sb_turn', 'sb_sunder'], 4],
+      /* 0.8.0 M5-0 경계 (10월 19일 만든 사람): 입구(2고리 · 비용 2)는 양쪽 갈래의 1고리 개시 노드를 모두 연 뒤, 3고리(비용 3) · 승부수(비용 4) */
+      ['sb_bloodfire', '혈염', 2, 3, 'C', ['sb_ember', 'sb_bleedcut'], 2, { requires: ['sb_ember', 'sb_bleedcut'] }], ['sb_searcut', '혈염', 3, 5, 'L', ['sb_bloodfire'], 3], ['sb_kalpa', '혈염', 3, 6, 'R', ['sb_searcut'], 4],
+      ['sb_bloodmail', '죄인의 피', 2, 3, 'C', ['sb_bleedcut', 'sb_bladeward'], 2, { requires: ['sb_bleedcut', 'sb_bladeward'] }], ['sb_film', '죄인의 피', 3, 5, 'L', ['sb_bloodmail'], 3], ['sb_sinwall', '죄인의 피', 3, 6, 'R', ['sb_film'], 4],
+      ['sb_heatmail', '유산의 불', 2, 3, 'C', ['sb_bladeward', 'sb_ember'], 2, { requires: ['sb_bladeward', 'sb_ember'] }], ['sb_embermail', '유산의 불', 3, 5, 'L', ['sb_heatmail'], 3], ['sb_firebody', '유산의 불', 3, 6, 'R', ['sb_embermail'], 4],
     ],
     ups: [
       ['sbu_chain', '혈인', 1, 1, 'LL', 'sb_bleedcut', '혈인 연참', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유). 생명력 30% 이하인 적에게 피해 ×1.5.', { set: { killRecharge: 1 }, fxAdd: [{ k: 'lowx', hp: 0.3, mul: 1.5 }] }, ['sb_throat', 'sb_chaincut', 'sb_execchain', 'sb_pathway']],
@@ -40,6 +44,13 @@ const ATREE_DEF = {
       ['sbu_rhythm', '마갑', 2, 4, 'C', 'sb_turn', '마검 연무', '전열 모두를 벱니다. 보통 빠르기, 붕괴 +9.', { set: { tgt: 'front', time: 'normal' }, fxAdd: [{ k: 'brk', n: 9 }] }, ['sb_rhythm']],
       ['sbu_coda', '마갑', 3, 5, 'L', 'sb_turn', '마검 종곡', '이어진 교대면 붕괴 +30.', { fxAdd: [{ k: 'alt', run: 2, brk: 30 }] }, ['sb_coda', 'sb_weave']],
       ['sbu_release', '마갑', 3, 6, 'C', 'sb_finale', '갑주 해방', '먼저 마갑 전개처럼 보호막 18 · 보호 1을 두르고, 남은 보호막을 모두 태워 피해로 바꿉니다(×1.5).', { fxAdd: [{ k: 'wardFirst', n: 18, protect: 1 }, { k: 'wardBurn', mul: 1.5 }] }, ['sb_shatter', 'sb_rebuke', 'sb_wardburst', 'sb_embershell', 'sb_breakwall']],
+      /* 0.8.0 M5-0 경계 강화(규칙 3: 숫자가 아니라 빠르기 · 조건). 경계마다 2 */
+      ['sbu_bf_fast', '혈염', 2, 4, 'L', 'sb_bloodfire', '번지는 핏불', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, []],
+      ['sbu_sear_both', '혈염', 3, 5, 'LL', 'sb_searcut', '엉긴 상처', '대상에게 출혈 · 화상이 모두 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'kw:bleed>=1&kw:ignite>=1' } }, []],
+      ['sbu_bm_fast', '죄인의 피', 2, 4, 'L', 'sb_bloodmail', '서두른 갑주', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, []],
+      ['sbu_film_resp', '죄인의 피', 3, 5, 'LL', 'sb_film', '받아낸 피', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, []],
+      ['sbu_hm_fast', '유산의 불', 2, 4, 'L', 'sb_heatmail', '단숨의 열', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, []],
+      ['sbu_em_ward', '유산의 불', 3, 5, 'LL', 'sb_embermail', '두꺼운 잿불', '보호막이 10 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'ward>=10' } }, []],
     ],
   },
   /* 0.8.0 5단계 (10월 17일 만든 사람 검토 반영): docs/제안/0.8.0-5단계-파수꾼-수도승-트리초안-2026-10-17.md 2-6. 스킬 25 + 강화 27 = 52노드 */

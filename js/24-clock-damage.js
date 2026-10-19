@@ -2,6 +2,8 @@
 function addS(b, u, k, dur, stacks, max) {
   if (KW[k]) {
     let n = Math.round(dur || 0); if (n <= 0) return 0;
+    if (k === 'ignite' && u === b.p && fxFlag(u, 'noIgnite')) return 0; // 0.8.0 M5-0 불의 몸: 받는 화상 무효
+    if (k === 'ignite' && u !== b.p && b.p && b.cur && b.sbK === 'spell' && stk(u, 'bleed') > 0 && !b.searBusy && fxFlag(b.p, 'ksSearSpell')) { b.searBusy = 1; const g = sbSear(b, u, n); b.searBusy = 0; return g; } // 0.8.0 M5-0 혈염의 각인: 출혈 걸린 적을 주문으로 치면 화상을 건너뛰고 바로 혈염
     if (b.carve && b.cur && b.cur.grp && u !== b.p && carveMul(b, b.cur.grp) < 1) n = Math.max(1, Math.floor(n * carveMul(b, b.cur.grp)));
     if (u !== b.p && b.cur && !b.selfSt && b.p.eq && k !== 'poison' && KW_BAD.includes(k)) { const so = fxAdd(b.p, 'stOut', b, b.p, u, k); if (so) n += Math.round(so); } // 3챕터 장비: 내가 거는 상태에 더하는 수
     if (k === 'ignite' && u !== b.p && b.p.build === 'elementalist' && fxFlag(b.p, 'elIgnCut')) n = Math.max(1, n - 1); // 10월 18일 0.8.0 5단계 얼음 심장의 대가: 내가 거는 화상 −1(최소 1)
@@ -93,7 +95,7 @@ function tickOnce(b) {
   for (const u of units) {
     const dm = u === p ? 1 : dotMul(p);
     if (u.s.poison) { const n = u.s.poison.stacks; dmgDot(b, u, n * dm, '중독'); if (u.s.poison && !hasMod(b, 'rotair')) { u.s.poison.stacks = n - 1; if (u.s.poison.stacks <= 0) delete u.s.poison; } } // 썩은 공기: 중독이 줄지 않는다
-    if ((u.pile || u.role === 'bonewall') && u.alive && u.s.bleed) kwBleed(b, u); // 움직이지 않는 몸의 출혈은 라운드 끝에
+    if ((u.pile || u.role === 'bonewall') && u.alive && u.s.bleed) kwBleed(b, u); if ((u.pile || u.role === 'bonewall') && u.alive && u.s.sear) kwSear(b, u); // 움직이지 않는 몸의 출혈은 라운드 끝에
   }
   if (bmQ) { b.dotLoop = 0; bmMarkFlush(b); }
   expireAll(b);
@@ -147,6 +149,7 @@ function hurtPlayer(b, raw, o) {
   if (!o.dot && o.src && p.decoy && p.decoy.round === b.round && (o.counter || o.src.row === 'back')) d *= 1 - p.decoy.v; // 소모품 미끼 인형: 이번 라운드 반격 · 후열 사격
   const dG0 = d; if (p.guard && !o.judgment) d *= 1 - (1 - (p.eq.gloves === 'ragechain' ? 0.6 : fxFlag(p, 'guardWeak') ? 0.7 : 0.5)) * carveMul(b, 'prep'); // 준비가 새겨지면 방어가 덜 줄인다 // 심판은 방어로 줄지 않는다 // 0.8.0 5단계 방패를 내린 자: 방어가 30%만
   const held = p.guard && !o.judgment && !o.dot && o.src && o.src !== p ? Math.max(0, dG0 - d) : 0; // 방어로 줄인 피해 (받아낸 몫)
+  if (held > 0 && o.src.alive && fxFlag(p, 'ksSinBlock')) { const n = Math.ceil(held * SB_BOUND.sinBlock); if (n > 0) { addS(b, o.src, 'bleed', n); logp(b, 'good', '죄인의 각인: 받아낸 피가 ' + o.src.n + '에게 출혈 ' + n + '로 되돌아간다'); } } // 0.8.0 M5-0
   if (p.build === 'monk' && p.stance && p.stance.red && !o.dot && !o.judgment) d *= 1 - p.stance.red; // 0.8.0 5단계 철산고: 그 자세만 받는 직접 피해를 줄인다
   if (p.ward > 0 && p.eq.armor === 'wardcrest') d *= 0.85;
   if (p.retal) d *= 0.7;
@@ -171,7 +174,7 @@ function hurtPlayer(b, raw, o) {
   if (p.guard && p.eq.armor === 'plate' && !o.dot) p.counter += d * 0.3;
   if (p.guard && !o.dot && !o.judgment && o.src && o.src !== p) ysResp(b, '막기'); // 10월 15일 유산 1차 시제품: 방어 중에 적의 공격을 받아 냄
   let wardAll = false, wardA = 0, wardBk = false;
-  if (p.ward > 0 && d > 0) { const bk = o.src && !o.dot && o.src.row === 'back' && !o.wardAll; const a = Math.min(p.ward, bk ? d * WARD.back : d); p.ward -= a; d -= a; wardA = a; wardBk = !!bk; if (d <= 0) wardAll = true; else logp(b, 'good', '보호막이 ' + r1(a) + '을(를) 받아낸다' + (bk ? '. 멀리서 온 공격이라 절반만 막는다' : '')); }
+  if (p.ward > 0 && d > 0) { const bk = o.src && !o.dot && o.src.row === 'back' && !o.wardAll; const a = Math.min(p.ward, bk ? d * WARD.back : d); p.ward -= a; d -= a; wardA = a; wardBk = !!bk; if (d <= 0) wardAll = true; else logp(b, 'good', '보호막이 ' + r1(a) + '을(를) 받아낸다' + (bk ? '. 멀리서 온 공격이라 절반만 막는다' : '')); if (p.build === 'spellblade') sbWardHit(b, p, o, a); }
   if (o.dot && b.bleedFloor && d >= p.hp && p.hp > 0) { d = Math.max(0, p.hp - 1); logp(b, 'good', '내가 낸 피로는 쓰러지지 않는다. 생명력 1에서 멈춘다'); b.rec.push({ k: 'bu', w: 'floor' }); } // 출혈 바닥 (숨겨진 직업 1): 나에게 건 출혈이 남아 있는 동안
   if (d >= p.hp && p.hp > 0 && fxList(p).some(([, f]) => f.deathSave) && !p.fxSaved) { d = p.hp - 1; p.fxSaved = 1; fxHit('deadrosary'); logp(b, 'crit', '망자의 묵주가 한 번 붙잡아 준다. 생명력 1'); }
   const actualTaken = Math.max(0, Math.min(p.hp, d));

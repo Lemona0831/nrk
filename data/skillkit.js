@@ -81,6 +81,13 @@ const SKK = {
 };
 const skTri = n => n * (n + 1) / 2;
 const skJo = n => '013678'.includes(String(n).slice(-1)) ? '을' : '를'; // 숫자 뒤 을/를
+/* 0.8.0 M5-0 마검사 경계 효과 (10월 19일). 값은 기존 상수로 센 추정이다(측정이 아님):
+   searMerge 둘 다 걸린 적(쓸 때 열에 여섯)을 합치면 출혈 · 화상 보유량의 SEAR.mul − 1 몫이 더 들어간다.
+   sbBlaze n차례 × 한 행동 값(K.B) × 피해 +40% + 베기 둘에 혈염(더 거는 2 + 합치기) − 잃는 보호막 − 받는 피해 +30%(적 한 방 K.B × 0.8을 n번).
+   wardPer 출혈 걸린 적(평균 1.1) × n × 보호막 값. sbFilm 한 차례에 받아내는 보호막 몫(W.S) × 50%가 출혈. sbSinWall 보호막(최대 생명력 15% × 3, 기준 생명력 SB_HP) − 바친 생명력 + 깨질 때(반쯤) 전열 둘 출혈 4.
+   sbHeat 기본 공격 하나 × 0.5 − 태운 보호막. sbEmberMail 보호막이 있는 동안 평타 두 번 화상 2. sbFireBody 남은 유산(평균 1) × 8 보호막 + n차례 평타 ×1.3 · 화상 2 − n차례 스킬을 못 쓰는 몫 */
+const SB_BD_K = ['searMerge', 'sbBlaze', 'wardPer', 'sbFilm', 'sbSinWall', 'sbHeat', 'sbEmberMail', 'sbFireBody'];
+const SB_HP = 120;
 function skValue(s, ov) {
   if (!ov && SKK.butch && /^b_/.test(String(s.id)) && !s._bu) return skValueBu(s);
   if (!ov && String(s.id).slice(0, 2) === 'e_') return skValueElem(s);
@@ -91,6 +98,17 @@ function skValue(s, ov) {
   const burnTake = e => e.max ? Math.min(e.max, W.B[hi]) : W.all[hi]; // 한 번에 태우는 양: 상한이 있으면 측정 보유량과 상한 가운데 작은 쪽, 모두 태우면 측정값
   const mk = String(s.id).slice(0, 2) === 'm_'; const mt = s.tgt === 'front' || s.tgt === 'all' ? tm : 1; const M = K.monk; // 수도승 (10월 7일)
   for (const e of s.fx) {
+    if (SB_BD_K.includes(e.k)) { const Sbi = SB.S.bleed[hi] + SB.S.ignite[hi], kw = SB.kw.bleed, Wv = K.ward.v; const nT = e.n || 3;
+      switch (e.k) {
+        case 'searMerge': v += 0.6 * Sbi * kw * (1.5 - 1); break;
+        case 'sbBlaze': v += nT * K.B * 0.4 + 2 * (2 * kw + 0.5 * Sbi * kw) - W.S[hi] * Wv - nT * K.B * 0.8 * 0.3; break;
+        case 'wardPer': v += 1.1 * e.n * Wv; break;
+        case 'sbFilm': v += W.S[hi] * 0.5 * kw; break;
+        case 'sbSinWall': v += SB_HP * 0.15 * 3 * Wv - SB_HP * 0.15 + 0.5 * 2 * 4 * kw; break;
+        case 'sbHeat': v += K.B * 0.5 - W.S[hi] * Wv * 0.5; break;
+        case 'sbEmberMail': v += 2 * 2 * kw; break;
+        case 'sbFireBody': v += 1 * 8 * Wv + nT * (K.B * 0.3 + 2 * kw) - nT * (SKK.B * 0.75); break;
+      } continue; }
     switch (e.k) {
       case 'dmg': v += e.n * hits * (s.tgt === 'self' ? 1 : tm); break;
       case 'poison': v += e.n * hits * K.poison * (s.tgt === 'self' ? 1 : tm); break;
@@ -425,6 +443,7 @@ function skBody(s) {
     if (bu) { const t = skBodyBu(s, e, late); if (t !== null) { if (t) out.push(t); continue; } }
     if (cf) { const t = skBodyConf(s, e); if (t !== null) { if (t) out.push(t); continue; } }
     if (bm) { const t = skBodyBm(s, e); if (t !== null) { if (t) out.push(t); continue; } }
+    if (SB_BD_K.includes(e.k) || (e.k === 'imbue' && (e.txt || (!e.also && s.fx.some(x => x.k === 'imbue' && x.also && x.txt))))) { if (e.txt) out.push(e.txt); continue; } // 0.8.0 M5-0 마검사 경계: 만든 사람 문장 그대로(txt)
     switch (e.k) {
       case 'grow': out.push(`대상의 중독을 ${e.mul}배로 만든다.` + (e.add ? ` 그 뒤 중독 ${e.add}.` : '')); break;
       case 'burst':

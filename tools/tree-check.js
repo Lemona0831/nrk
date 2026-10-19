@@ -20,7 +20,7 @@ for (const c of CLS) {
   for (const T of [P, A]) { const d = bfs(T, 'S'); assert.equal(Object.keys(d).length, Object.keys(T.nodes).length, c + ' 시작에서 닿지 않는 노드'); for (const k of [1, 2, 3]) { const dk = bfs(T, 'S', nd => nd.ring <= k); for (const id in T.nodes) if (T.nodes[id].ring <= k) assert(dk[id] != null, c + ' ' + id + ' 고리 ' + k + ' 안에서 이어지지 않음'); } }
   ok(true, c + ': 모든 노드가 시작에서 닿고, 고리 k 노드는 고리 k 이하만 지나 닿음');
   const kinds = ids.reduce((m, id) => (m[P.nodes[id].kind] = (m[P.nodes[id].kind] || 0) + 1, m), {});
-  ok(kinds.start === 1 && kinds.keystone === 12 && kinds.small + kinds.notable === 90, c + ': 패시브 일반 90 + 큰 각인 자리 12 + 시작 1');
+  const kb = Object.values(P.nodes).filter(x => x.kind === 'keystone' && x.areq).length; ok(kinds.start === 1 && kinds.keystone - kb === 12 && kinds.small + kinds.notable === 90 && kb === (c === 'spellblade' ? 3 : 0), c + ': 패시브 일반 90 + 큰 각인 자리 12 + 시작 1 (+ 경계 큰 각인 자리: 마검사 3, M5-0)');
   const dist = bfs(P, 'S'); const W = { '1C': 1, '2L': 2, '2R': 2, '3L': 3, '3R': 3, '4L': 4, '4R': 4, K5: 5, '5L': 5, '5R': 5, '6L': 6, '6R': 6, '7L': 7, '7R': 7, '8L': 8, '8R': 8, K9: 9 };
   for (const d of PT.dirs) for (const pos in W) { assert.equal(dist[d + pos], W[pos], c + ' 거리 ' + d + pos); const nd = P.nodes[d + pos]; assert.equal(nd.ring, pos[0] === 'K' ? (pos === 'K5' ? 2 : 3) : (+pos[0] <= 3 ? 1 : +pos[0] <= 6 ? 2 : 3), c + ' 고리 ' + d + pos); }
   ok(true, c + ': 시작에서의 거리 · 고리 표(2-3)');
@@ -122,9 +122,9 @@ for (const c of CLS) {
 }
 // ===== 6) 강화 금지선과 조건부 할인 =====
 { const A = E.atBuild('spellblade'); let nc = 0;
-  for (const id in A.nodes) { const u = A.nodes[id]; if (u.kind !== 'upgrade') continue; const m = u.mod; assert(!(m.set && ('ys' in m.set || 'cd' in m.set || 'cost' in m.set)), '무조건 비용 바꾸기 금지 ' + id); if (m.cond) { nc++; assert(m.cond.off === 1 && /^(resp|alt2|kw:\w+>=\d+)$/.test(m.cond.when), '조건 어휘 ' + id); }
+  for (const id in A.nodes) { const u = A.nodes[id]; if (u.kind !== 'upgrade') continue; const m = u.mod; assert(!(m.set && ('ys' in m.set || 'cd' in m.set || 'cost' in m.set)), '무조건 비용 바꾸기 금지 ' + id); if (m.cond) { nc++; assert(m.cond.off === 1 && /^(resp|alt2|ward>=\d+|kw:\w+>=\d+(&kw:\w+>=\d+)?)$/.test(m.cond.when), '조건 어휘 ' + id); /* 0.8.0 M5-0: 경계 강화 표준 "양쪽 갈래 상태가 모두 있으면"(kw & kw), 보유 보호막(ward>=n) */ }
     const p = { build: 'spellblade', aup: [id], pn: [] }; const s = E.skOf(p, u.on); assert(s !== E.SK2[u.on] && s.ups.includes(id), '실제 스킬 ' + id); for (const x of m.fxSet || []) { const e = s.fx.find(y => y.k === x.k && (x.s == null || y.s === x.s)); for (const k in x) if (k !== 'k' && k !== 's') assert.equal(e[k], x[k], 'fxSet ' + id + ' ' + k); } }
-  ok(nc === 3, '조건부 할인 강화는 셋(끓는 피 · 불길 잇기 · 교차 일섬)'); ok(Object.values(A.nodes).filter(x => x.kind === 'upgrade' && x.mod.set && x.mod.set.killRecharge).length === 1, '환급 강화는 하나(혈인 연참), 처치 조건');
+  ok(nc === 6, '조건부 할인 강화는 갈래 셋(끓는 피 · 불길 잇기 · 교차 일섬) + 경계 셋(엉긴 상처 · 받아낸 피 · 두꺼운 잿불, M5-0)'); ok(Object.values(A.nodes).filter(x => x.kind === 'upgrade' && x.mod.set && x.mod.set.killRecharge).length === 1, '환급 강화는 하나(혈인 연참), 처치 조건');
   ok(JSON.stringify(E.SK2.sb_bleedcut.fx) === JSON.stringify([{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 4 }]), '강화는 원래 스킬 데이터를 바꾸지 않음');
   const fight = (ups, eq) => { const run = newRun('spellblade'); run.atree.own = Object.keys(A.nodes).filter(x => x !== 'S'); run.skills = eq; E.atSync(run); run.p.aup = ups.slice(); const es = ['bruiser', 'bruiser'].map((r, i) => E.mkEnemy(r, false, i)); for (const e of es) { e.hp = e.hpMax = 5000; e.dmg = 1; } const b = E.newBattle(run.p, es, {}); b.rngF = () => 0.5; b.stepMode = false; E.runUntilPlayer(b); return { p: run.p, b, es }; };
   { const { p, b, es } = fight(['sbu_boil'], ['sb_boil']); const a0 = E.actionList(b).find(x => x.id === 'sb_boil'); ok(a0.yc === 2, '대응 전 혈염 비용 2'); E.ysResp(b, '막기'); ok(E.actionList(b).find(x => x.id === 'sb_boil').yc === 1, '대응 충전을 받은 라운드에 비용 1');
@@ -223,21 +223,23 @@ function nodeFight(keys) { const run = newRun('spellblade'); run.clears = 2; for
   const es = [E.mkEnemy('bruiser', false, 0)]; es[0].hp = es[0].hpMax = 5000; es[0].dmg = 0; const b = E.newBattle(run.p, es, {}); b.rngF = () => 0.5; b.stepMode = false; E.runUntilPlayer(b); run.p.ward = 0; run.p.ys = 5; const hp0 = es[0].hp; E.playerAct(b, 'sb_finale', es[0].id);
   ok(es[0].hp < hp0 && run.p.ward < 1 && b.log.some(x => /먼저 마갑 전개/.test(x.m)) && b.log.some(x => /보호막 18을 태운다/.test(x.m)), '보호막이 없어도 두르고 나서 모두 태워 친다'); }
 // 0.8.0 M5-0 규격(10월 19일, 전면 개편 2절): 부채꼴(sec)로 바뀐 직업은 오류, 아직 사다리인 직업은 보고만(M5-1~5에서 바꾼다)
+/* 판정 대기(10월 19일): 만든 사람이 문장(숫자 포함)을 정한 마검사 경계 칸 가운데 값 띠 밖인 것. 문장 그대로 두고, 숫자를 띠에 맞출지 · 띠를 경계에 어떻게 둘지 결정을 기다린다 */
+const BAND_WAIT = ['sb_bloodfire', 'sb_bloodmail', 'sb_heatmail', 'sb_film', 'sb_embermail', 'sb_kalpa', 'sb_sinwall', 'sb_firebody'];
 { const SC = D.run_('skScore'), RING = { 1: [1, 2], 2: [2, 3], 3: [3, 4] }, BAND = { 1: [0.5, 0.65], 2: [0.85, 1.15], 3: [1.5, 1.8], 4: [2.2, 2.6] }, BOUND = ['AB', 'BC', 'CA'];
   const NUMK = ['dmg', 'brk', 'exploit', 'kwx', 'lowx', 'brokenx', 'st', 'imbue', 'ward', 'wardDmg', 'stam'], rep = [];
   for (const c of ['spellblade', 'warden', 'monk', 'assassin', 'hunter', 'elementalist']) {
-    const A = E.atBuild(c), strict = !!A.sec, N = Object.values(A.nodes), S = N.filter(x => x.kind === 'skill'); const bad = [];
+    const A = E.atBuild(c), strict = !!A.sec, N = Object.values(A.nodes), S = N.filter(x => x.kind === 'skill'); const bad = [], wait = [];
     for (const x of S) assert(x.ys != null, c + ' 비용 없음 ' + x.id);
-    const E_ = x => SC(Object.assign({}, E.SK2[x.id], { ys: x.ys })).E; const two = S.filter(x => x.ys === 2); const avg = two.reduce((a, x) => a + E_(x), 0) / two.length;
+    const E_ = x => SC(Object.assign({}, E.SK2[x.id], { ys: x.ys })).E; const two = S.filter(x => x.ys === 2 && (!A.sec || ['A', 'B', 'C'].includes(x.sec))); /* 기준 1.0 = 갈래 부채꼴의 비용 2 평균(경계 칸은 기준을 움직이지 않는다) */ const avg = two.reduce((a, x) => a + E_(x), 0) / two.length;
     for (const x of S) { const R = RING[x.ring]; if (!(x.ys >= R[0] && x.ys <= R[1]) && !(x.ring === 3 && E.SK2[x.id].once)) bad.push('고리 ' + x.id + ' r' + x.ring + ' c' + x.ys);
-      const v = E_(x) / avg, B = BAND[x.ys].slice(); if (BOUND.includes(x.sec) && x.ring === 3 && x.ys === 4) B[1] *= 1.1; if (!(v >= B[0] - 1e-9 && v <= B[1] + 1e-9)) bad.push('값 ' + x.id + ' ' + v.toFixed(2) + '@' + x.ys); }
+      const v = E_(x) / avg, B = BAND[x.ys].slice(); if (BOUND.includes(x.sec) && x.ring === 3 && x.ys === 4) B[1] *= 1.1; if (!(v >= B[0] - 1e-9 && v <= B[1] + 1e-9)) (BAND_WAIT.includes(x.id) ? wait : bad).push('값 ' + x.id + ' ' + v.toFixed(2) + '@' + x.ys + ' [' + B[0] + '–' + B[1].toFixed(2) + ']'); }
     const numUp = {}; for (const u of N.filter(x => x.kind === 'upgrade')) { const m = u.mod || {}; const pure = !m.set && !m.cond && [...(m.fxSet || []), ...(m.fxAdd || [])].every(f => NUMK.includes(f.k) && !f.when && !f.on); if (pure) numUp[u.br] = (numUp[u.br] || 0) + 1; }
     if (strict) {
       assert.deepEqual(bad, [], c + ' 규격(고리 = 비용, 값 띠)'); n++;
       for (const k of ['A', 'B', 'C']) { const r1 = S.filter(x => x.sec === k && x.ys === 1); ok(r1.length === 1 && r1[0].ring === 1 && E.SK2[r1[0].id].time !== 'fast' && E.SK2[r1[0].id].b === A.sec[k], c + ' ' + A.sec[k] + ': 리듬 칸(비용 1) 1고리에 하나, 주 행동, 갈래 꼬리표 하나'); }
       for (const x of S.filter(x => x.requires)) { const opens = x.requires.map(id => A.nodes[id]); ok(BOUND.includes(x.sec) && opens.length === 2 && opens.every(o => o && o.kind === 'skill' && o.ring === 1 && o.links.includes('S')) && new Set(opens.map(o => o.sec)).size === 2 && opens.every(o => x.sec.includes(o.sec)), c + ' 경계 입구 ' + x.id + ': 양쪽 갈래 1고리 개시 노드'); }
     }
-    rep.push(`${c}${strict ? '(규격)' : ''}: 규격 밖 ${bad.length} · 순수 숫자 강화 갈래별 ${JSON.stringify(numUp)}`);
+    rep.push(`${c}${strict ? '(규격)' : ''}: 규격 밖 ${bad.length}${wait.length ? ' · 판정 대기 ' + wait.length + ' (' + wait.join(', ') + ')' : ''} · 순수 숫자 강화 갈래별 ${JSON.stringify(numUp)}`);
   }
   console.log('M5-0 규격 보고 — ' + rep.join(' | ')); }
 console.log('tree-check: ' + n + '개 통과');
