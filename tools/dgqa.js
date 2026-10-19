@@ -634,9 +634,9 @@ function sbEquip(run, A) {
   const own = run.atree.own.filter(id => A.nodes[id].kind === 'skill');
   const sc = sbEquipScore(run, A);
   let eq = own.slice().sort((a, b) => sc(b) - sc(a)).slice(0, G0.EQUIP_SLOTS2);
-  if (A.sec && run.sector) { const tg = run.sector.replace('_HALF', ''), half = /_HALF$/.test(run.sector), adj = secAdj(run.sector), bound = tg.length === 2; // M5-0: 목표 빌드를 따르는 사람 — 경계 목표면 그 경계 스킬을 먼저, 목표 갈래(경계면 양쪽)의 리듬 칸(비용 1) 하나
-    const bd = bound && !half ? own.filter(id => A.nodes[id].sec === tg).sort((a, b) => sc(b) - sc(a)) : []; const rh = own.filter(id => A.nodes[id].ys === 1 && (A.nodes[id].sec === tg || adj.includes(A.nodes[id].sec))).sort((a, b) => sc(b) - sc(a)).slice(0, 1);
-    const must = bd.concat(rh).slice(0, G0.EQUIP_SLOTS2); eq = must.concat(eq.filter(id => !must.includes(id)).concat(own.filter(id => !must.includes(id) && !eq.includes(id)))).slice(0, G0.EQUIP_SLOTS2); }
+  if (A.sec && run.sector) { const tg = run.sector.replace('_HALF', ''), half = /_HALF$/.test(run.sector), adj = secAdj(run.sector), bound = tg.length === 2; // M5-0: 목표 빌드를 따르는 사람 — 경계 목표면 그 경계 스킬을 먼저. M5-0 보정(10월 20일): 리듬 칸(비용 1)을 반드시 끼우던 규칙은 뺐다(약한 칸이 네 칸 중 하나를 차지해 마갑 신중 1챕터 71 → 30%). 리듬 칸은 점수대로만 끼운다
+    const bd = bound && !half ? own.filter(id => A.nodes[id].sec === tg).sort((a, b) => sc(b) - sc(a)) : []; void adj;
+    const must = bd.slice(0, G0.EQUIP_SLOTS2); eq = must.concat(eq.filter(id => !must.includes(id)).concat(own.filter(id => !must.includes(id) && !eq.includes(id)))).slice(0, G0.EQUIP_SLOTS2); }
   if (run.build === 'spellblade') for (const k of ['spell', 'cut']) if (eq.length >= G0.EQUIP_SLOTS2 && !eq.some(id => G0.SK2[id].kind === k)) { const c = own.filter(id => G0.SK2[id].kind === k && !eq.includes(id)).sort((a, b) => sc(b) - sc(a))[0]; if (c) { const lo = eq.filter(id => G0.SK2[id].kind !== k).sort((a, b) => sc(a) - sc(b))[0]; eq[eq.indexOf(lo)] = c; } }
   run.skills = eq; G0.atSync(run);
 }
