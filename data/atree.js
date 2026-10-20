@@ -14,8 +14,9 @@ const ATREE_DEF = {
     rad: { 1: 125, 2: 185, 3: 255, 4: 320, 5: 395, 6: 470 }, paths: { 혈인: { a: '처형', b: '싣기' }, 염검: { a: '원거리', b: '칼불' }, 마갑: { a: '포격', b: '교대 붕괴' } },
     /* 0.8.0 M5-0c(10월 20일 만든 사람, nrk-private 마검사 재설계 1–5절): 레벨 역산 구조 · 갈래마다 길 둘 · 대사 승부수 고정.
        갈래: 1고리 첫 스킬 쌍(excl)이 길을 고르고 2고리 · 3고리가 길마다 한 칸(L = 길 a, R = 길 b, path). 2고리는 어느 첫 스킬에서든, 3고리는 어느 2고리에서든 열린다.
-       혈인 a 처형(혈흔 베기 → 혈향 → 붉은 처형) · b 싣기(피의 낙인 → 피 먹인 칼 → 피안개), 염검 a 원거리(불씨 투척 → 불의 표식 → 업화) · b 칼불(염화 베기 → 잔화 베기 → 화염 난도),
-       마갑 a 포격(마갑탄 → 마갑 전개 → 마갑 방출) · b 교대 붕괴(마갑참 → 교차참 → 마검 일섬). 경계는 그대로, 혈염 3고리 핏불 번짐 → 핏불 장막(신규). 승부수 후보 제도는 폐지(대사 승부수 셋이 늘 그 자리) */
+       혈인 a 처형(혈흔 베기 → 혈향 → 붉은 처형) · b 싣기(피의 낙인 → 피 먹인 칼 → 피안개), 염검 a 원거리(불씨 투척 → 불의 표식 → 업화) · b 칼불(염화 베기 → 잔화 → 화염 난도),
+       마갑 a 포격(마갑탄 → 마갑 휘두르기 → 마갑 방출) · b 교대 붕괴(마갑참 → 교차 주문 → 마검 일섬).
+       만든 사람 답(같은 날, 측정 뒤): 길마다 1고리 · 2고리를 베기 하나 · 주문 하나로 엇갈리게(베기 길은 2고리가 주문, 주문 길은 2고리가 베기). 기본 공격이 베기라 베기만 있는 길은 교대 상대가 없었다. 경계는 그대로, 혈염 3고리 핏불 번짐 → 핏불 장막(신규). 승부수 후보 제도는 폐지(대사 승부수 셋이 늘 그 자리) */
     skills: [
       ['sb_bleedcut', '혈인', 1, 1, 'LL', ['S'], 2, { excl: 'sb_bloodmark', path: 'a' }], ['sb_bloodmark', '혈인', 1, 1, 'RR', ['S'], 2, { excl: 'sb_bleedcut', path: 'b' }], ['sb_blooddrop', '혈인', 1, 2, 'C', ['sb_bleedcut', 'sb_bloodmark'], 1],
       ['sb_taste', '혈인', 2, 3, 'L', ['sb_bleedcut', 'sb_bloodmark'], 2, { path: 'a' }], ['sb_boil', '혈인', 2, 3, 'R', ['sb_bleedcut', 'sb_bloodmark'], 2, { path: 'b' }],
@@ -53,7 +54,7 @@ const ATREE_DEF = {
         ['sbv_taste_resp', '받아낸 혈향', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기'], { v: 'link' }]],
       sb_boil: [
         ['sbv_boil_slow', '들끓는 피', '보통 빠르기가 됩니다. 칼에 싣는 출혈 5 → 8.', { set: { time: 'normal' }, fxSet: [{ k: 'imbue', s: 'bleed', n: 8 }] }, [], { v: 'deep' }],
-        ['sbv_boil_fire', '불 먹인 칼', '칼에 화상 2를 더 싣습니다.', { fxAdd: [{ k: 'imbue', s: 'ignite', n: 2 }] }, ['화상'], { v: 'link' }]],
+        ['sbv_boil_fire', '불 먹인 칼', '벤 적에게 화상 2를 겁니다.', { fxAdd: [{ k: 'st', s: 'ignite', n: 2 }] }, ['화상'], { v: 'link' }]],
       sb_crimson: [
         ['sbv_crim_normal', '서두른 처형', '보통 빠르기가 됩니다. 피해 11 → 7.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 7 }] }, [], { v: 'deep' }],
         ['sbv_crim_ward', '처형의 갑주', '보호막 +8을 두릅니다.', { fxAdd: [{ k: 'ward', n: 8 }] }, ['보호막'], { v: 'link' }]],
@@ -91,7 +92,7 @@ const ATREE_DEF = {
         ['sbv_shard_kill', '파편 거두기', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유).', { set: { killRecharge: 1 } }, ['처치'], { v: 'deep' }],
         ['sbv_shard_fire', '불꽃 파편', '화상 1을 겁니다. 피해 9 → 8.', { fxSet: [{ k: 'dmg', n: 8 }], fxAdd: [{ k: 'st', s: 'ignite', n: 1 }] }, ['화상'], { v: 'link' }]],
       sb_shell: [
-        ['sbv_shell_slow', '두꺼운 전개', '보통 빠르기가 됩니다. 보호막 16 → 22.', { set: { time: 'normal' }, fxSet: [{ k: 'ward', n: 22 }] }, [], { v: 'deep' }],
+        ['sbv_shell_slow', '무거운 마갑', '보통 빠르기가 됩니다. 피해 5 → 8, 보호막 10 → 14.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 8 }, { k: 'ward', n: 14 }] }, [], { v: 'deep' }],
         ['sbv_shell_fire', '불 두른 마갑', '칼에 화상 3을 싣습니다.', { fxAdd: [{ k: 'imbue', s: 'ignite', n: 3 }] }, ['화상'], { v: 'link' }]],
       sb_beatcut: [
         ['sbv_beat_fast', '날랜 교차', '빠른 칸이 됩니다. 피해 12 → 9.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 9 }] }, ['빠름'], { v: 'deep' }],
@@ -151,7 +152,7 @@ const ATREE_DEF = {
       sb_mutants: [
         ['sbm_kalpa_bulgwi', '불귀', '겁화의 주는 피해 +40% → +80%. 대가: 받는 피해 +30% → +60%.', { fxSet: [{ k: 'sbBlaze', hit: 0.8, inc: 0.6 }] }, ['혈염'], { mut: 1, on: 'sb_kalpa' }],
         ['sbm_bleedcut_frenzy', '피의 폭주', '피해 8 → 13, 출혈 4 → 6. 대가: 나에게 출혈 3.', { fxSet: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'bleed', n: 6 }], fxAdd: [{ k: 'meSt', s: 'bleed', n: 3 }] }, ['출혈'], { mut: 1, on: 'sb_bleedcut' }],
-        ['sbm_shell_overheat', '과열 마갑', '보호막 16 → 24. 대가: 나에게 화상 3.', { fxSet: [{ k: 'ward', n: 24 }], fxAdd: [{ k: 'meSt', s: 'ignite', n: 3 }] }, ['보호막'], { mut: 1, on: 'sb_shell' }]],
+        ['sbm_shell_overheat', '과열 마갑', '보호막 10 → 15. 대가: 나에게 화상 3.', { fxSet: [{ k: 'ward', n: 15 }], fxAdd: [{ k: 'meSt', s: 'ignite', n: 3 }] }, ['보호막'], { mut: 1, on: 'sb_shell' }]],
     },
   },
   /* 0.8.0 5단계 (10월 17일 만든 사람 검토 반영): docs/제안/0.8.0-5단계-파수꾼-수도승-트리초안-2026-10-17.md 2-6. 스킬 25 + 강화 27 = 52노드 */

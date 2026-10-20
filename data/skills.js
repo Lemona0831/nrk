@@ -462,9 +462,9 @@ const SKILLS2 = {
     { id: 'sb_throat', row: 2, b: '혈인', tier: '하급', n: '숨통 끊기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, killRecharge: 1, fx: [{ k: 'dmg', n: 12 }, { k: 'lowx', hp: 0.3, mul: 2 }] },
     { id: 'sb_deepline', row: 3, b: '혈인', tier: '하급', n: '스치는 칼', kind: 'cut', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'bleed', n: 3 }] },
     { id: 'sb_redwind', row: 3, b: '혈인', tier: '하급', n: '붉은 바람', kind: 'spell', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 2 }] },
-    { id: 'sb_taste', row: 4, b: '혈인', tier: '하급', n: '혈향', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 9 }, { k: 'exploit', s: 'bleed', per: 3 }] },
+    { id: 'sb_taste', row: 4, b: '혈인', tier: '하급', n: '혈향', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 9 }, { k: 'exploit', s: 'bleed', per: 3 }] }, /* M5-0c 만든 사람 답(10월 20일): 길마다 1고리 · 2고리를 베기 · 주문으로 엇갈리게 */
     { id: 'sb_chaincut', row: 4, b: '혈인', tier: '하급', n: '혈인 연참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, killRecharge: 1, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'bleed', n: 2 }] },
-    { id: 'sb_boil', row: 5, b: '혈인', tier: '하급', n: '피 먹인 칼', kind: 'spell', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'imbue', s: 'bleed', n: 5 }, { k: 'st', s: 'protect', n: 1 }, { k: 'stam', n: 24 }] },
+    { id: 'sb_boil', row: 5, b: '혈인', tier: '하급', n: '피 먹인 칼', kind: 'cut', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 3 }, { k: 'imbue', s: 'bleed', n: 5 }, { k: 'st', s: 'protect', n: 1 }, { k: 'stam', n: 6 }] }, /* M5-0c 만든 사람 답: 싣기 길 2고리는 베기(베고 나서 칼에 출혈을 싣는다). 값 띠: 피해 3, 스태미나 24 → 6 */
     { id: 'sb_splash', row: 5, b: '혈인', tier: '하급', n: '선혈 비산', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'killSpread', per: 1 }] },
     { id: 'sb_vein', row: 6, b: '혈인', tier: '하급', n: '핏줄 끊기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 10 }, { k: 'exploit', s: 'bleed', per: 3 }, { k: 'lowx', hp: 0.3, mul: 2 }] },
     { id: 'sb_whirl', row: 6, b: '혈인', tier: '하급', n: '혈풍참', kind: 'cut', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'hasten', n: 1, on: 'kill' }] },
@@ -492,8 +492,8 @@ const SKILLS2 = {
     { id: 'sb_ring', row: 3, b: '염검', tier: '하급', n: '화염 고리', kind: 'spell', tgt: 'all', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 5 }, { k: 'st', s: 'ignite', n: 1 }, { k: 'imbue', s: 'ignite', n: 4 }] },
     { id: 'sb_kindle', row: 3, b: '염검', tier: '하급', n: '염화 부여', kind: 'spell', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'imbue', s: 'ignite', n: 5 }, { k: 'st', s: 'protect', n: 1 }, { k: 'stam', n: 21 }] },
     { id: 'sb_snuff', row: 4, b: '염검', tier: '하급', n: '끊는 불길', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'ignite', n: 3 }, { k: 'cutx', brk: 60 }] },
-    { id: 'sb_char', row: 4, b: '염검', tier: '하급', n: '잔화 베기', kind: 'cut', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 7 }, { k: 'exploit', s: 'ignite', per: 2.5 }] }, /* M5-0c: 2고리 값 띠(피해 6 → 7) */
-    { id: 'sb_brand', row: 5, b: '염검', tier: '하급', n: '불의 표식', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'ignite', n: 3 }, { k: 'kwx', s: 'ignite', mul: 1.5 }] }, /* M5-0c: 2고리 값 띠(피해 10 → 7) */
+    { id: 'sb_char', row: 4, b: '염검', tier: '하급', n: '잔화', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 7 }, { k: 'exploit', s: 'ignite', per: 2.5 }] }, /* M5-0c: 2고리 값 띠(피해 6 → 7). 만든 사람 답: 칼불 길 2고리는 주문(잔화 베기 → 잔화) */
+    { id: 'sb_brand', row: 5, b: '염검', tier: '하급', n: '불의 표식', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'ignite', n: 3 }, { k: 'kwx', s: 'ignite', mul: 1.5 }] }, /* M5-0c: 2고리 값 띠(피해 10 → 7) */ /* M5-0c 만든 사람 답(10월 20일): 길마다 1고리 · 2고리를 베기 · 주문으로 엇갈리게 */
     { id: 'sb_flamedown', row: 5, b: '염검', tier: '하급', n: '염검 강하', kind: 'cut', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'exploit', s: 'ignite', per: 3 }, { k: 'brk', n: 29 }] },
     { id: 'sb_sear', row: 6, b: '염검', tier: '하급', n: '작열참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 14 }, { k: 'st', s: 'ignite', n: 3 }] },
     { id: 'sb_flamedance', row: 6, b: '염검', tier: '하급', n: '불꽃 칼춤', kind: 'cut', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 10 }, { k: 'kwx', s: 'ignite', mul: 1.5 }] },
@@ -517,8 +517,8 @@ const SKILLS2 = {
     { id: 'sb_bolt', row: 2, b: '마갑', tier: '하급', n: '마갑탄', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'wardDmg', per: 0.5, spend: 0.5, cap: 12 }] },
     { id: 'sb_shard', row: 1, b: '마갑', tier: '하급', n: '마력 파편', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 9 }] }, // 0.8.0 M5-0 보정(10월 20일 만든 사람) 리듬 칸(비용 1, 교대 아님): 피해만 작게, 보호막 없음
     { id: 'sb_unravel', row: 2, b: '마갑', tier: '하급', n: '마력 교란', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'weak', n: 2 }, { k: 'alt', protect: 1 }] },
-    { id: 'sb_shell', row: 3, b: '마갑', tier: '하급', n: '마갑 전개', kind: 'spell', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'ward', n: 16 }, { k: 'st', s: 'protect', n: 1 }] }, /* M5-0c: 2고리 비용 2 값 띠(보호막 27 → 16) */
-    { id: 'sb_beatcut', row: 3, b: '마갑', tier: '하급', n: '교차참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 8 }, { k: 'alt', run: 2, brk: 30 }] }, /* M5-0c: 2고리 값 띠(피해 14 → 12) */
+    { id: 'sb_shell', row: 3, b: '마갑', tier: '하급', n: '마갑 휘두르기', kind: 'cut', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 5 }, { k: 'ward', n: 10 }, { k: 'st', s: 'protect', n: 1 }] }, /* M5-0c: 2고리 비용 2 값 띠. 만든 사람 답: 포격 길 2고리는 베기(마갑 전개 → 마갑 휘두르기, 피해 5 · 보호막 10 · 보호 1) */
+    { id: 'sb_beatcut', row: 3, b: '마갑', tier: '하급', n: '교차 주문', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 8 }, { k: 'alt', run: 2, brk: 30 }] }, /* M5-0c: 2고리 값 띠(피해 14 → 12). 만든 사람 답: 교대 붕괴 길 2고리는 주문(교차참 → 교차 주문) */
     { id: 'sb_rebuke', row: 4, b: '마갑', tier: '하급', n: '마갑 파쇄', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 5 }, { k: 'wardBurn', mul: 2.5, max: 6 }, { k: 'brk', n: 21 }] },
     { id: 'sb_rebound', row: 4, b: '마갑', tier: '하급', n: '반향 주문', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'cutx', brk: 41 }, { k: 'alt', stam: 10 }] },
     { id: 'sb_wardbolt', row: 5, b: '마갑', tier: '하급', n: '방벽 포격', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'wardDmg', per: 1, spend: 0.5, cap: 18 }] },
