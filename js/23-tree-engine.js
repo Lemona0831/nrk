@@ -90,7 +90,7 @@ const clearsEff = run => (run.clears || 0) + (run.markCh ? run.markCh - 1 : 0); 
 const ringOpen = (run, ring) => clearsEff(run) >= (PT.ring[ring] || 0) || (run.ringCamp || 1) >= ring;
 const RING_WHY = { 2: '2고리는 1챕터 야영지에서 열립니다', 3: '3고리는 2챕터 야영지에서 열립니다' };
 function ringCampOpen(run) { if (!run || !run.ptree) return 0; const want = Math.min(3, (run.ch || 1) + 1); const was = [2, 3].filter(k => ringOpen(run, k)).length; run.ringCamp = Math.max(run.ringCamp || 1, want); const now = [2, 3].filter(k => ringOpen(run, k)).length; if (now > was) { run.ringNew = 1; if (typeof toast === 'function') toast('새 고리가 열렸다: ' + (now + 1) + '고리'); return now + 1; } return 0; }
-function ptInit(run) { if (!run.ptree) run.ptree = { own: [], free: [], ks: [], pts: ptTotal(run), log: [], ksv: 2 }; if (!run.atree) run.atree = { own: [], pts: atTotal(run), log: [], atv: 7 }; if (!run.ksGot) run.ksGot = {}; if (run.ksPending == null) run.ksPending = 0; return run; }
+function ptInit(run) { if (!run.ptree) run.ptree = { own: [], free: [], ks: [], pts: ptTotal(run), log: [], ksv: 2 }; if (!run.atree) run.atree = { own: [], pts: atTotal(run), log: [], atv: 8 }; if (!run.ksGot) run.ksGot = {}; if (run.ksPending == null) run.ksPending = 0; return run; }
 const ptOpenIds = run => ['S'].concat(run.ptree.own, run.ptree.free, run.ptree.ks);
 const atOpenIds = run => ['S'].concat(run.atree.own);
 const ptSpent = run => run.ptree.own.reduce((a, id) => a + ((ptBuild(run.build).nodes[id] || {}).cost || 0), 0);
@@ -303,12 +303,13 @@ function runTags(run) { const c = {}; const add = L => { for (const t of L || []
   if (run.atree) { const A = atBuild(run.build); for (const id of run.atree.own) { const n = A.nodes[id]; if (n && n.kind === 'skill' && SK2[id]) add(SK2[id].tags); } for (const v of Object.values(run.atree.vsel || {})) { const V = A.vars && A.vars[v]; if (V) add(V.tags); } }
   if (run.ptree && typeof PT_TAGS !== 'undefined') { const T = ptBuild(run.build); for (const id of [].concat(run.ptree.own, run.ptree.free, run.ptree.ks)) { const n = T.nodes[id]; if (n && n.fx) add(PT_TAGS[n.fx]); } }
   return c; }
-/* M5-2(10월 20일 만든 사람): 수도승 액티브 재설계. atv 7: 같은 규칙(빠진 칸 환급). 옛 수도승 판의 사다리 칸 · 강화(mu_*)는 트리에 없어 돌려받는다.
+/* M5-3(10월 20일 만든 사람): 암살자 액티브 재설계. atv 8: 같은 규칙(빠진 칸 환급). 옛 암살자 판의 옛 칸 · 강화(au_*)는 트리에 없어 돌려받는다.
+   M5-2(10월 20일 만든 사람): 수도승 액티브 재설계. atv 7: 같은 규칙(빠진 칸 환급). 옛 수도승 판의 사다리 칸 · 강화(mu_*)는 트리에 없어 돌려받는다.
    M5-1(10월 20일 만든 사람): 파수꾼 액티브 재설계. atv 6: 같은 규칙(빠진 칸 · 빠진 변형 환급). 옛 파수꾼 판의 강화 노드(wu_*) · 사다리 칸은 트리에 없어 돌려받는다.
    M5-0c(10월 20일 만든 사람): 마검사 액티브 재설계. atv 5: 트리에서 빠진 칸 · 빠진 변형을 찍어 둔 판은 그 포인트를 돌려준다(액티브 포인트로).
    빠진 변형 = 고른 변형이 그 자리의 변형 목록에 없는 것(변종은 그 자리 것이면 남긴다). 제시(run.offer)는 새 규칙으로 다시 만들고, 남긴 변종은 제시에 더한다 */
 function atMigrateM5(run) {
-  if (!run || !run.atree || run.atree.atv >= 7) return 0; const why = run.atree.atv === 6 ? '수도승 재설계' : run.atree.atv === 5 ? '파수꾼 재설계' : run.atree.atv === 4 ? '마검사 재설계' : run.atree.atv === 3 ? '빌드 규격 2판' : run.atree.atv === 2 ? '부채꼴 칸 정리' : '임시 트리 폐기'; run.atree.atv = 7; // M5-2 수도승: atv 7(다른 직업은 바뀐 칸이 없어 그대로). M5-0 보정 5: atv 4(경계 둘째 칸 교체 · 1고리 갈림), M5-0c: atv 5, M5-1 파수꾼: atv 6(다른 직업은 바뀐 칸이 없어 그대로)
+  if (!run || !run.atree || run.atree.atv >= 8) return 0; const why = run.atree.atv === 7 ? '암살자 재설계' : run.atree.atv === 6 ? '수도승 재설계' : run.atree.atv === 5 ? '파수꾼 재설계' : run.atree.atv === 4 ? '마검사 재설계' : run.atree.atv === 3 ? '빌드 규격 2판' : run.atree.atv === 2 ? '부채꼴 칸 정리' : '임시 트리 폐기'; run.atree.atv = 8; // M5-2 수도승: atv 7(다른 직업은 바뀐 칸이 없어 그대로). M5-0 보정 5: atv 4(경계 둘째 칸 교체 · 1고리 갈림), M5-0c: atv 5, M5-1 파수꾼: atv 6(다른 직업은 바뀐 칸이 없어 그대로)
   const A = atBuild(run.build); const own0 = run.atree.own || []; const keep0 = []; const vs = run.atree.vsel || {};
   const varOk = (slot, v) => !v || (A.vars && A.vars[v] && A.vars[v].slot === slot);
   for (const id0 of own0) { const id = !A.nodes[id0] && A.vars && A.vars[id0] ? A.vars[id0].slot : id0; const n = A.nodes[id]; if (!n || keep0.includes(id)) continue; if (n.excl && keep0.includes(n.excl)) continue; if (n.slot && !varOk(id, vs[id])) continue; keep0.push(id); } // 1고리 갈림에서 둘 다 찍힌 옛 판은 먼저 찍은 쪽을 남긴다. 옛 강화(이제 변형)는 그 스킬의 변형 자리를 연 채 변형은 고르지 않음(야영지에서 고름)

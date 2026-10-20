@@ -441,7 +441,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   // 10월 8일: 강타 예고 대응을 직업 판단보다 먼저 (고해사 · 해금 1 · 해금 3 · 원소술사 · 수도승). 전에는 이 직업들의 판단이 먼저 행동을 돌려줘 예고된 큰 공격을 흘리지도 막지도 않았다(1챕터 보스전 받은 큰 공격 96–338, 다른 직업 63–87). 사람은 예고를 보고 대응한다
   if (hv && PRE_PARRY.includes(p.build) && !v2Ready(b, hv.e.id) && r() < Math.max(P.parry, 0.35) + 0.2 && gt(p, PRE_PARRY, 'pre-parry')) {
     const ps = okS.find(a => has(a, 'parry')); if (ps) return [ps.id, hv.e.id];
-    const pb = okS.find(a => has(a, 'parryBuff')); if (pb && !p.pbuf && E.dodgeCost(p) <= p.st) return [pb.id];
+    const pb = okS.find(a => has(a, 'parryBuff') && (p.build !== 'assassin' || a.time <= 0.6)); if (pb && !p.pbuf && E.dodgeCost(p) <= p.st) return [pb.id]; // M5-3 암살자: 주 행동인 흘리기 준비(칼끝 겨누기)는 강타 앞에서 고르지 않는다(쓰면 차례가 끝나 흘리지 못한다)
     if (L.find(a => a.id === 'dodge' && a.ok) && r() < P.parry + 0.3) return ['dodge', hv.e.id];
   }
   // 숨겨진 직업 2 (10월 7일, 비공개 문서 F-3 4): 짐(적이 건 몫)을 옮길까 · 지울까 · 안고 칠까, 앞서 지운 숫자, 보호 비례, 고행. 이 직업의 효과를 가진 스킬이 끼워졌을 때만
@@ -678,7 +678,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   // 강타 예고: 흘리기형 스킬(스태미나 없이) → 흘리기 준비 → 스태미나 흘리기. 이번 차례에 빠른 행동으로 이미 그 적을 흘릴 준비를 했으면 다시 걸지 않는다(덮어쓰면 붙은 효과를 잃는다)
   if (hv && !PRE_PARRY.includes(p.build) && !v2Ready(b, hv.e.id) && r() < Math.max(P.parry, 0.35) + 0.2 && gt(p, '*', 'parry')) { /* 앞의 다섯 직업은 직업 판단 앞에서 같은 대응을 한다 */
     const ps = okS.find(a => has(a, 'parry')); if (ps) return [ps.id, hv.e.id];
-    const pb = okS.find(a => has(a, 'parryBuff')); if (pb && !p.pbuf && E.dodgeCost(p) <= p.st) return [pb.id];
+    const pb = okS.find(a => has(a, 'parryBuff') && (p.build !== 'assassin' || a.time <= 0.6)); if (pb && !p.pbuf && E.dodgeCost(p) <= p.st) return [pb.id]; // M5-3 암살자: 주 행동인 흘리기 준비(칼끝 겨누기)는 강타 앞에서 고르지 않는다(쓰면 차례가 끝나 흘리지 못한다)
     if (L.find(a => a.id === 'dodge' && a.ok) && r() < P.parry + 0.3) return ['dodge', hv.e.id];
   }
   // 0.6a.2 마검사 (10월 7일, docs/직업/마검사.md F-2): 베기(⚔)와 주문(✦)을 번갈아 쓰고(교대 보호막), 칼에 실은 원소를 오래 살 적에게 박는다.
@@ -759,6 +759,26 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     // 방패병에게 붕괴 ×: 방패병이 있으면 그 방패병을
     { const sx = okS.find(a => has(a, 'shieldx')); if (sx) { const sh = reach(sx).find(e => e.role === 'shield' && !e.s.broken); if (sh) return sx.aoe ? [sx.id] : [sx.id, sh.id]; } }
   }
+  // 0.8.0 M5-3 암살자 (10월 20일 설계지 4판): 승부수 · 강화 · 결합 칸은 쓸 때가 보이면(사람은 버튼 설명과 예고를 보고 쓴다). 터뜨리기 · 중독 · 키우기는 아래 공통 판단
+  if (p.build === 'assassin' && p.asSt && gt(p, 'assassin', 'as5')) { const S = p.asSt, hz = (a, k) => a.s.fx.some(e => e.k === k), fastOk = !b.bonusUsed && !nf, slot = a => fastOk || a.time > 0.6;
+    const foes = E.alive(b).filter(e => e.role !== 'root'), bigE = e => !!(e.elite || e.strong || e.role === 'boss'), bigIn = foes.some(bigE); const psSum = foes.reduce((m, e) => m + psn(e), 0);
+    const atkN = pv1.filter(x => x.e.intent && ['attack', 'heavy'].includes(x.e.intent.k)).reduce((m, x) => m + x.n, 0);
+    if (b.asChainAgain) { const a = okS.find(x => x.id === b.asChainAgain); const t = a && best(a, (x, y) => (psn(y) - psn(x)) || (x.hp - y.hp)); if (t && psn(t) >= 3) return [a.id, t.id]; return ['as_end']; } // 연쇄 격발: 터뜨릴 중독이 있으면 다시
+    { const mu = L.find(x => x.id === 'as_mu' && x.ok); if (mu) { const t = best(mu, (x, y) => (bigE(y) - bigE(x)) || (x.hp - y.hp)); if (t) return ['as_mu', t.id]; } } // 무영살: 숨은 다음 차례에 벤다
+    { const ba = L.find(x => x.id === 'basic' && x.ok); if (ba && !hv && ((S.zan > 0 && r() < 0.85) || (S.flowBlade && S.fbTurn === b.turnIdx))) { const t = best(ba, (x, y) => x.hp - y.hp); if (t) return ['basic', t.id]; } } // 잔영난무 · 흘린 칼: 이번 차례는 기본 공격
+    const early = b.turnIdx <= 3 || foes.reduce((m, e) => m + e.hp, 0) > foes.reduce((m, e) => m + e.hpMax, 0) * 0.6; // 전투 내내 가는 칸은 전투 초반에만(늦게 쓰면 남는 몫이 적다)
+    if (fastOk && early) { const cb = okS.find(a => a.self && ((hz(a, 'asFangC') && !S.fang) || (hz(a, 'asParPsn') && !S.parPsn) || (hz(a, 'asBackFlower') && !S.backFlower) || (hz(a, 'asPlague') && !S.plague && foes.length >= 2) || (hz(a, 'asFlowBlade') && !S.flowBlade) || (hz(a, 'asDance') && !S.dance))); if (cb) return [cb.id]; } // 전투 내내 가는 칸은 첫 빠른 칸에
+    { const a = okS.find(a => hz(a, 'asHide')); if (a && !S.mu && slot(a) && (hv || (bigIn && atkN >= 2) || (bigIn && r() < 0.35))) return [a.id]; } // 무영살: 강타가 오거나 큰 적이 칠 때 숨는다
+    { const a = okS.find(a => hz(a, 'asZan')); if (a && !(S.zan > 0) && !(S.noStam > 0) && slot(a) && !hv && p.hp > p.hpMax * 0.45 && (bigIn || foes.length >= 2)) return [a.id]; } // 잔영난무
+    { const a = okS.find(a => hz(a, 'asBloom')); if (a && slot(a)) { const t = best(a, (x, y) => (bigE(y) - bigE(x)) || (y.hp - x.hp)); if (t && (psSum >= 14 || (psSum >= 8 && bigE(t)) || psSum >= t.hp * 0.25) && p.hp > p.hpMax * 0.3) return [a.id, t.id]; } } // 만독개화: 모인 중독이 넉넉할 때
+    { const a = okS.find(a => hz(a, 'asVeil')); if (a && !S.veil && slot(a) && atkN >= 2 && r() < 0.8) return [a.id]; }
+    { const bu = okS.find(a => has(a, 'burst')); const a = okS.find(a => hz(a, 'asNextBurst')); if (a && !S.nextBurst && bu && slot(a) && foes.some(e => psn(e) >= 5)) return [a.id]; } // 꽃잎 모으기: 곧 터뜨릴 때
+    { const a = okS.find(a => hz(a, 'asNextPsn')); if (a && !(S.nextPsn && S.nextPsn.n > 0) && slot(a) && !hv && L.some(x => x.id === 'basic' && x.ok) && (a.time <= 0.6 || foes.some(e => bigE(e) || e.hp > 40)) && r() < 0.7) return [a.id]; } // 독침 · 독 묻힌 그림자: 기본 공격 앞에(주 행동인 독침은 오래 갈 싸움에서)
+    { const a = okS.find(a => hz(a, 'asCounter')); if (a && !v2Ready(b) && !hv && r() < 0.6) { const at = pv1.find(x => x.e.intent && x.e.intent.k === 'attack' && E.canTarget(b, x.e, a)); if (at) return [a.id, at.e.id]; } } // 흘려 베기: 나를 칠 적에게
+    for (const a of okS.filter(a => hz(a, 'asBackx'))) { const bx = a.s.fx.find(e => e.k === 'asBackx'); const t = reach(a).filter(e => e.row === 'back' && (!bx.low || e.hp <= e.hpMax * bx.low)).sort((x, y) => x.hp - y.hp)[0]; if (t) return [a.id, t.id]; } // 후열 기습 · 그림자 처형: 조건이 맞는 후열
+    for (const a of okS.filter(a => hz(a, 'asVirulent'))) { const t = best(a, (x, y) => (bigE(y) - bigE(x)) || (y.hp - x.hp)); if (t && (bigE(t) || t.hp > 40)) return [a.id, t.id]; } // 맹독: 오래 버틸 적에게
+    for (const a of okS.filter(a => has(a, 'spread'))) { if (foes.length < 2) break; const t = reach(a).filter(e => psn(e) >= 4).sort((x, y) => psn(y) - psn(x))[0]; if (t) return [a.id, t.id]; } // 독 번지기
+  }
   if ((hv || ex) && r() < P.guard && L.find(a => a.id === 'guard' && a.ok)) return ['guard'];
   // 강공격: 스태미나가 넉넉하고 강타 예고가 없으면 가끔 (흘리기 몫 40은 남긴다)
   if (!hv && p.st >= 80 && p.build !== 'elementalist' && r() < 0.3 + P.risk * 0.3 && L.find(a => a.id === 'heavy' && a.ok)) { const t = best({ id: 'heavy', melee: 1 }, (x, y) => y.hp - x.hp); if (t) return ['heavy', t.id]; }
@@ -775,7 +795,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     const dmg = qaPoisonBurst(p,a,psn(t)+pre); // 터뜨리면 나올 피해 (사람은 버튼의 숫자를 보고 누른다)
     const kill = dmg >= t.hp; const low = exe && t.hp <= t.hpMax * exe.hp;
     const big = !!(t.elite || t.strong || t.role === 'boss');
-    if (kill || low || psn(t) + pre >= th || dmg >= 15 || (big && psn(t) + pre >= 3) || (t.intent && t.intent.k === 'heavy')) return [a.id, t.id]; // 큰 적은 독이 조금만 쌓여도 터뜨린다(큰 적 배수)
+    if (kill || low || psn(t) + pre >= th || dmg >= 15 || (big && psn(t) + pre >= (a.s.as5 ? th : 3)) || (t.intent && t.intent.k === 'heavy' && (!a.s.as5 || psn(t) + pre >= 3))) return [a.id, t.id]; // M5-3: 새 암살자 터뜨리기는 큰 적 배수가 작아(1–2배) 큰 적에게도 문턱까지 쌓는다 // 큰 적은 독이 조금만 쌓여도 터뜨린다(큰 적 배수)
   }
   // 터뜨리기를 가진 빌드: 곧 터뜨릴 적에게 먼저 독을 쌓는다 (독 심기 → 독 격발)
   { const bu = L.filter(a => a.v2 && a.s.fx.some(e => e.k === 'burst') && !a.s.once);
@@ -797,7 +817,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   // 흘리기 준비(자신): 강타가 곧 오면
   const pb = okS.find(a => has(a, 'parryBuff')); if (pb && !p.pbuf && E.alive(b).some(e => e.intent && e.intent.k === 'charge') && r() < 0.6) return [pb.id];
   // 그 밖의 공격 스킬: 아직 중독이 적은 적 / 약한 적
-  const atk = okS.filter(a => !a.self && !has(a, 'parry') && !has(a, 'burst') && !has(a, 'grow') && !burnLow(a) && !boNo(a));
+  const atk = okS.filter(a => !a.self && !has(a, 'parry') && !has(a, 'burst') && !has(a, 'grow') && !burnLow(a) && !boNo(a) && !(a.s.as5 && a.s.fx.some(e => ['asBloom', 'asBackx', 'asVirulent', 'spread'].includes(e.k))));
   if (atk.length) { const a = atk[Math.floor(r() * atk.length)]; const t = boT(a) || (has(a, 'poison') ? best(a, (x, y) => (psn(x) - psn(y)) || (x.hp - y.hp)) : best(a, (x, y) => x.hp - y.hp)); if (t) return [a.id, t.id]; }
   return null;
 }

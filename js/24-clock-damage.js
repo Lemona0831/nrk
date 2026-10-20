@@ -59,7 +59,7 @@ function tickOnce(b) {
   for (const w of alive(b)) if (w.role === 'bonewall' && !b.en.some(m => m.id === w.wallOf && m.alive)) { w.alive = false; w.hp = 0; logp(b, 'good', '쌓은 자가 쓰러져 뼈벽이 무너진다'); }
   for (const e of alive(b)) if (e.under && !alive(b).some(x => x !== e && !x.pile && !x.under && x.role !== 'root')) { e.under = 0; logp(b, 'sys', e.n + '이(가) 땅 위로 밀려 나온다'); } // 칠 수 있는 적이 늘 하나는 있다(G9)
   // 플레이어 자원 자연 회복 (전역 T)
-  if (!(p.wdSt && p.wdSt.valor)) { const rg = fxVal(p, 'regen', 0, (a, v) => a + v); if (rg && p.st < p.stMax) fxHit('clothgloves'); p.st = Math.min(p.stMax, p.st + ST_REGEN + rg); } /* M5-1 용맹한 방벽 대가: 스태미나 자연 회복 정지 */
+  if (!(p.wdSt && p.wdSt.valor) && !(p.asSt && p.asSt.noStam > 0)) { const rg = fxVal(p, 'regen', 0, (a, v) => a + v); if (rg && p.st < p.stMax) fxHit('clothgloves'); p.st = Math.min(p.stMax, p.st + ST_REGEN + rg); } /* M5-1 용맹한 방벽 대가: 스태미나 자연 회복 정지 */
   p.mp = Math.min(p.mpMax, p.mp + p.mpMax * 0.05 * (hasMod(b, 'calm') ? 2 : 1));
   if (hasBt(p, 'breath')) p.st = Math.min(p.stMax, p.st + 3);
   if (hasMod(b, 'holy') || hasMod(b, 'shade')) { p.hp = Math.min(p.hpMax, p.hp + p.hpMax * 0.01); for (const e of alive(b)) e.hp = Math.min(e.hpMax, e.hp + e.hpMax * 0.01); }
@@ -95,7 +95,7 @@ function tickOnce(b) {
   const units = [p].concat(alive(b)); const bmQ = isBm(p); if (bmQ) b.dotLoop = 1; // 숨겨진 직업 3: 표식 번짐은 고리 뒤에
   for (const u of units) {
     const dm = u === p ? 1 : dotMul(p);
-    if (u.s.poison) { const n = u.s.poison.stacks; dmgDot(b, u, n * dm, '중독'); if (u.s.poison && !hasMod(b, 'rotair')) { u.s.poison.stacks = n - 1; if (u.s.poison.stacks <= 0) delete u.s.poison; } } // 썩은 공기: 중독이 줄지 않는다
+    if (u.s.poison) { const n = u.s.poison.stacks; dmgDot(b, u, n * dm, '중독'); if (u.s.poison && !hasMod(b, 'rotair')) { if (u.asVir && u.alive && n >= AS_BOUND.virMin) u.s.poison.stacks = Math.min(psnCapOf(p) + 10, n + 1); /* M5-3 맹독: 10 이상이면 줄지 않고 1 는다(판정 ⑦: 라운드 끝마다 다시 봄) */ else u.s.poison.stacks = n - 1; if (u.s.poison.stacks <= 0) delete u.s.poison; } } // 썩은 공기: 중독이 줄지 않는다
     if ((u.pile || u.role === 'bonewall') && u.alive && u.s.bleed) kwBleed(b, u); if ((u.pile || u.role === 'bonewall') && u.alive && u.s.sear) kwSear(b, u); // 움직이지 않는 몸의 출혈은 라운드 끝에
   }
   if (bmQ) { b.dotLoop = 0; bmMarkFlush(b); }
@@ -123,7 +123,7 @@ function dmgDot(b, u, amt, label) {
   else { hurtEnemy(b, u, amt, { dot: 1, label }); }
 }
 function hurtPlayer(b, raw, o) {
-  const p = b.p; o = o || {}; let rip = null; const raw0 = raw, nr0 = !o.dot && o.src && p.nextRed ? p.nextRed : 0, br0 = !!p.brace; /* 화면용 까닭(읽기만) */
+  const p = b.p; o = o || {}; let rip = null; if (p.asSt && p.asSt.hide && !o.dot) { logp(b, 'good', '숨어 있어 ' + (o.src ? o.src.n + '의 ' : '') + '공격이 닿지 않는다'); return 0; } /* M5-3 무영살: 숨은 동안 어떤 공격의 표적도 아님(지속 피해는 받음) */ const raw0 = raw, nr0 = !o.dot && o.src && p.nextRed ? p.nextRed : 0, br0 = !!p.brace; /* 화면용 까닭(읽기만) */
   const bigHit = !!(o.charged || (o.src && o.src.intent && o.src.intent.aimed && !o.dot)); // 예고된 큰 공격: 강타 · 강적과 보스의 큰 한 방 · 겨눈 한 발 · 화형
   if (p.foresee && (b.round || 0) < p.foresee.until && bigHit) raw *= 1 - p.foresee.red;
   if (bigHit && hasBt(p, 'firm')) raw *= 0.85; // 굳건함의 성소 // 사냥꾼 예고 읽기 (피할 수 없는 화형에도 든다)
@@ -141,6 +141,7 @@ function hurtPlayer(b, raw, o) {
     chargeEv(b, 'parry'); ysResp(b, '흘리기'); // 10월 15일 유산 1차 시제품: 대응 충전
     if (p.sbSt && p.sbSt.counterBurn && o.src && o.src.alive) { addS(b, o.src, 'ignite', SB_BOUND.cbIgn); logp(b, 'good', '되받아 태우기: ' + o.src.n + '에게 화상 ' + SB_BOUND.cbIgn); } // M5-0 보정 5 결합 칸
     const on = p.dodgeOn; p.dodgeRed = 0; p.dodgeOn = null;
+    if (p.build === 'assassin' && p.asSt) b.asParry = { src: o.src, on }; // M5-3: 흘린 독 · 흘린 칼 · 반격 · 칼춤은 맞은 피해를 받은 뒤(아래)
     if (on && o.src && o.src.alive) rip = { on, d: on.dmg ? outDmg(b, on.dmg * (on.sk ? 1 + asSum(p, 'parrySkP') : 1), {}) : 0 }; // 흘려 되돌리는 효과는 후열에도 닿는다 (암살자 초안 4절). 10월 18일 0.8.0 5단계 그림자 맹세: 흘리기 스킬이 흘려 내고 주는 피해 +15%(on.sk는 setParry가 단다). 10월 18일 0.8.0 5단계 마무리(만든 사람 결정, 쓰러짐 우선): 피해 값은 여기서(예전과 같은 때) 정하고, 넣는 것은 내가 맞은 뒤로 미룬다
     if (on && on.hasten) hastenBranch(b, on.hb, on.hasten, null); // 🔄 흘려 내면 다른 같은 갈래 스킬 쿨타임 −n
   }
@@ -207,6 +208,8 @@ function hurtPlayer(b, raw, o) {
     if (o.parried) m.push('흘리기로 줄어듦'); if (nr0) m.push('부적으로 −' + Math.round(nr0 * 100) + '%'); if (br0 && !o.dot) m.push('버티기로 −35%'); if (wardA > 0) m.push('보호막이 ' + r1(wardA) + ' 받아냄' + (wardBk ? '(먼 곳에서 온 공격이라 절반만)' : '')); if (b.enrage && o.src && !o.dot) m.push('광폭화');
     const ik = o.src && o.src.intent ? o.src.intent.k : ''; const it = o.dot ? '' : /되받아친다/.test(o.label || '') ? '반격' : !o.src ? '' : ik === 'heavy' ? heavyName(o.src) : ik === 'attack' ? (o.src.intent.aimed ? '겨눈 한 발' : '공격') : (HIT_N[ik] || '');
     (b.hits3 = b.hits3 || []).push({ n: o.src ? o.src.n : '', it, l: o.src ? '' : (o.label || ''), d: r1(d), dot: o.dot ? 1 : 0, big: o.charged ? 1 : 0, m, left: r1(Math.max(0, p.hp)), r: b.round || 0 }); if (b.hits3.length > 3) b.hits3.shift(); if (!o.silent && !o.dot && m.length) whyPush(b, { side: 'in', n: o.src ? o.src.n : (o.label || ''), f: r1(raw0), d: r1(d), m, s: sLine }); } /* 10월 7일 2차: 쓰러짐 화면의 결정타 · 마지막 세 번 (기록 b.rec는 그대로) */
+  if (p.asSt && p.asSt.veil && o.src && o.src.alive && !o.dot && p.hp > 0) { const g = addPoison(b, o.src, p.asSt.veil.poison, 1); if (g) logp(b, 'good', '독의 장막: ' + o.src.n + '에게 중독 ' + g); } // M5-3
+  if (b.asParry) { const A = b.asParry; b.asParry = null; if (p.hp > 0 && !b.over) asOnParry(b, A.src, A.on); } // M5-3 흘려 낸 뒤
   if (rip && p.hp > 0 && !b.over && o.src && o.src.alive) { const on = rip.on; // 10월 18일 0.8.0 5단계 마무리(만든 사람 결정, 쓰러짐 우선): 흘려 낸 칼끝 · 독 · 붕괴 · 출혈은 줄어든 피해를 받은 뒤, 살아 있을 때만. 전에는 칼끝이 마지막 적을 쓰러뜨려 이김이 정해진 뒤 피해가 들어가 생명력 0 아래로 이기는 일이 있었다
     if (on.dmg) hurtEnemy(b, o.src, rip.d, { single: 1, label: '흘려 낸 칼끝' });
     if (on.poison && o.src.alive) addPoison(b, o.src, on.poison, 1);
@@ -354,6 +357,7 @@ function killEnemy(b, e) {
   if (e.role === 'skeleton' && !e.pile && !e.rose && !e.norise && !st(e, 'ignite') && !e.s.broken && !hasBt(b.p, 'rest') && !b.over) { makePile(b, e); return; } // 2챕터 해골: 화상 · 붕괴 · 한 번 일어섬 · 안식의 성소면 더미가 남지 않는다
   if (e.role === 'skeleton' && !e.pile && !e.rose && st(e, 'ignite')) logp(b, 'good', e.n + '이(가) 재가 되어 흩어진다');
   e.alive = false; e.hp = 0; logp(b, 'good', e.n + (e.pile ? '의 뼈 더미가 흩어진다' : '이(가) 쓰러진다'));
+  if (b.p.asSt && b.p.asSt.plague && st(e, 'poison') > 0 && !b.over) { const n = Math.ceil(st(e, 'poison') * b.p.asSt.plague); let k = 0; for (const o of alive(b)) if (o.role !== 'root') { addPoison(b, o, n, 1); k++; } if (k) logp(b, 'good', '역병: ' + e.n + '의 중독 ' + n + '이(가) 다른 적에게 옮겨붙는다'); } // M5-3
   if (e.mark && isBm(b.p)) { const M = e.mark; e.mark = null; if (!e.killPaid) { e.killPaid = 1; const n = Math.min(BLOOD.spreadKillMax, Math.ceil(st(e, 'poison') * (M.per || 1))); if (n > 0) { if (b.dotLoop) (b.markQ = b.markQ || []).push({ e, n }); else bmSpread(b, e, n, null); } } } // 숨겨진 직업 3 표식: 무엇으로든 쓰러지면 한 번 (뼈 더미가 될 때는 남는다)
   if (e.role === 'bloat') { if (st(e, 'ignite')) logp(b, 'good', e.n + '이(가) 불에 타 터지지 않는다'); else { fxRun(b.p, 'onBloat', b, b.p, e); if (!b.noBloat) addPoison(b, b.p, BLOAT.me, 0); for (const o of alive(b)) if (o.role !== 'root') addPoison(b, o, BLOAT.foes, 0); logp(b, 'bad', e.n + '이(가) 터진다. 나에게 중독 ' + (b.noBloat ? 0 : BLOAT.me) + ', 다른 적 모두에게 중독 ' + BLOAT.foes); } }
   if ((b.ctx.ch || 1) >= 3) ch3OnKill(b, e);

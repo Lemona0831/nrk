@@ -23,7 +23,7 @@ function setParry(b, tgt, red, on) {
   let r = red != null ? red - asParryCut(p) : parryRed(p); const o = Object.assign({}, on || {});
   if (p.build === 'assassin') { if (red != null) o.sk = 1; if (p.hp <= p.hpMax * 0.5) r += asSum(p, 'parryLow'); } // 10월 18일 0.8.0 5단계 암살자: 독의 군주의 대가(스킬 흘리기도 −15%p) · 흘리기 스킬 표시(그림자 맹세) · 얇은 그림자(생명력 50% 이하 +5%p, 상한 90%)
   if (p.pbuf) { r += p.pbuf.red; if (p.pbuf.dmg) o.dmg = (o.dmg || 0) + p.pbuf.dmg; if (p.pbuf.poison) o.poison = (o.poison || 0) + p.pbuf.poison; if (p.pbuf.hasten) { o.hasten = (o.hasten || 0) + p.pbuf.hasten; o.hb = p.pbuf.hb; } p.pbuf.n--; if (p.pbuf.n <= 0) p.pbuf = null; }
-  p.dodgeRed = Math.min(0.9, r); p.dodgeOn = (o.dmg || o.poison || o.brk || o.hasten || o.bleed) ? o : null;
+  p.dodgeRed = Math.min(0.9, r); p.dodgeOn = (o.dmg || o.poison || o.brk || o.hasten || o.bleed || o.basic) ? o : null; // M5-3: basic = 흘려 베기의 기본 공격 반격
 }
 /* 0.6a.2 스킬 실행: data/skills.js의 한 줄(fx 목록)을 그대로 처리한다. 설명 문장(skBody)도 같은 줄에서 나온다 */
 function runSkill2(b, act, tgt) {
@@ -40,10 +40,11 @@ function runSkill2(b, act, tgt) {
   const sbOrd = p.build === 'spellblade'; const sbE = sbOrd && s.kind === 'cut' && p.edge ? { st: tgt && targets.includes(tgt) ? 'tgt' : 'any', tgt, apply: null } : null; if (sbE && sbE.st === 'tgt' && targets.length > 1) targets = [tgt].concat(targets.filter(x => x !== tgt)); // 마검사 칼에 싣기: 고른 적부터 친다(전열 베기도 고른 적 하나에게 건다)
   const altF = sbAltMerge(s, b); const altOn = !!altF; /* 10월 16일 0.8.0 2단계: 강화가 더한 교대 보상(alt)은 맞는 것끼리 합친다 */ if (altOn && altF.run === 2) b.sbRun2 = 1; b.sbAltFx = altOn ? altF : null; const altBrk = altOn && altF.brk ? altF.brk : 0; let altBrkLog = 0; // 마검사 교대 보상: 붕괴는 타격 뒤, 나머지는 행동 뒤(sbEnd)
   const hz = F('hasten'); const hzOn = hz ? (hz.on || 'use') : null; // 🔄 쿨타임 당기기 (10월 3일 만든 사람 결정 D: 갈래 규칙 대신 스킬에만 적는다)
-  const par = F('parry'); if (par && tgt) { setParry(b, tgt, par.red, Object.assign({}, F('onParry') || {}, hzOn === 'parry' ? { hasten: hz.n || 1, hb: s.b } : {})); logp(b, 'sys', tgt.n + '의 다음 공격을 흘릴 준비를 한다'); }
+  const par = F('parry'); if (par && tgt) { setParry(b, tgt, par.red, Object.assign({}, F('onParry') || {}, hzOn === 'parry' ? { hasten: hz.n || 1, hb: s.b } : {}, F('asCounter') ? { basic: 1 } : {})); logp(b, 'sys', tgt.n + '의 다음 공격을 흘릴 준비를 한다'); } // M5-3 흘려 베기: 흘려 내면 기본 공격으로 반격(on.basic)
   const sm = F('stam'); if (sm) { p.st = Math.min(p.stMax, p.st + sm.n); if (p.exhaust && p.st >= 30) p.exhaust = 0; }
   if (p.build === 'warden') wdUse(b, s, targets, tgt, 'pre'); // 0.8.0 M5-1 파수꾼 태세 · 승부수 · 결합 칸
   if (p.build === 'monk' && s.mk5) mkUse(b, s); // 0.8.0 M5-2 수도승 강화 · 승부수 · 결합 칸
+  if (p.build === 'assassin' && s.as5) asUse(b, s, targets, tgt); // 0.8.0 M5-3 암살자 강화 · 승부수 · 결합 칸(만독개화는 여기서 독을 모은다)
   if (p.build === 'spellblade') { sbBoundUse(b, s); if (F('searMerge')) for (const e of targets) if (e.alive && stk(e, 'bleed') > 0 && stk(e, 'ignite') > 0) sbSear(b, e, 0); if (F('sbCross')) for (const e of targets) sbCross(b, e); if (F('sbEmberCut') && targets[0]) sbEmberCut(b, targets[0]); if (F('searBurst')) for (const e of targets) sbSearBurst(b, e, F('searBurst').mul || 2); } // 0.8.0 M5-0 마검사 경계 행동, 혈염은 베기 전에 걸려 있던 출혈 · 화상을 합친다
   if (s.tgt === 'self') for (const x of s.fx) if (x.k === 'st') { addS(b, p, x.s, x.n); logp(b, 'good', s.n + '. ' + (x.s === 'empower' && p.build === 'monk' ? '기' : KW_N[x.s] || x.s) + ' ' + x.n); } // 나에게 거는 상태
   for (const x of s.fx) if (x.k === 'meSt' && !x.on && !(p.build === 'monk' && (x.s === 'empower' || x.if))) { if (CF && CONF.kinds.includes(x.s)) { (p.selfBad = p.selfBad || []).push({ s: x.s, n: x.n }); continue; } /* 숨겨진 직업 2: 고행은 행동이 끝난 뒤 (cfSelfApply) */ if (BU && x.s === 'bleed') { b.selfSt = 1; const g = addS(b, p, 'bleed', x.n) || 0; b.selfSt = 0; p.selfBl = Math.min(stk(p, 'bleed'), (p.selfBl || 0) + g); logp(b, 'bad', s.n + '. 나에게 출혈 ' + x.n); b.rec.push({ k: 'bu', w: 'selfBleed', n: g }); continue; } addS(b, p, x.s, x.n); logp(b, 'good', s.n + '. ' + (KW_N[x.s] || x.s) + ' ' + x.n); } // 공격 스킬에 붙은 나에게 거는 상태 (on: 'kill'은 쓰러뜨린 뒤. 수도승의 강화(기)와 if는 피해 뒤 b.kiPend로)
@@ -120,6 +121,7 @@ function runSkill2(b, act, tgt) {
     if (bo && h === 0) base += boPer * preI[e.id] * dotMul(p); // 불태우기: 태운 화상 1마다 (지능 반영)
     if (csh && h === 0 && preCh[e.id] > 0) { base += csh.dmg * preCh[e.id]; delete e.s.chill; } // 얼음 깨기: 둔화를 모두 깨뜨린다
     if (fb && h === 0) base += skillResourceDamage(p, s, fb, fb.n * fOf(e)); if (fxs) base *= 1 + fxs.per * fOf(e); if (swx && h === 0 && prevId != null && prevId !== e.id) base *= swx.mul; if (hsx && b.pDouble === b.round) base *= hsx.mul; if (lnk) base *= 1 + hnLinkMul(p); if (solo) base *= 1 + HN.solo; if (hspOn) base *= hsp.mul; // 추적 소모 피해만 민첩 성장 · 추적 비례는 성장한 기본 피해에 곱함 · 가속은 연속 타격 전체
+    { const abx = s.as5 ? F('asBackx') : null; if (abx && e.row === 'back' && (!abx.low || e.hp <= e.hpMax * abx.low)) base *= abx.mul; } // M5-3 후열 기습 · 그림자 처형
     if (lx && (lx.me ? p.hp <= p.hpMax * lx.hp : e.hp <= e.hpMax * lx.hp)) base *= lx.mul; if (bx && e.s.broken) base *= bx.mul; if (gx && isBig(e)) base *= gx.mul; if (chx && e.s.chill) base *= chx.mul; if (kwxF && preKw[e.id][kwxF.s] > 0) base *= kwxF.mul; // 마무리(생명력 낮음), 붕괴한 적, 큰 적, 둔화된 적 (겹치면 곱한다)
     if (sld && !preBrk[e.id]) base = 0; // 0.8.0 5단계 산사태: 무너지지 않은 적에게는 피해 대신 붕괴(아래)
     const ev0 = !!(e.evading && !multi); let hitE = false; // 몸 낮추기로 피했는가 (수도승: 터뜨린 기를 돌려준다)
@@ -170,12 +172,13 @@ function runSkill2(b, act, tgt) {
       if (bu.pre) addPoison(b, e, bu.pre, 1, capOver); // 터뜨리기 전에 거는 중독 (독 격발: 이 갈래만으로도 돌게)
       const n = st(e, 'poison'); if (n <= 0) { logp(b, 'sys', e.n + '에게 터뜨릴 중독이 없다'); continue; }
       const take0 = bu.half ? Math.ceil(n / 2) : bu.top ? Math.min(bu.top, n) : n; const take = evH ? Math.ceil(take0 / 2) : take0;
-      const low = exe && e.hp <= e.hpMax * exe.hp; const mul = (low ? exe.mul : (bu.mul || 1)) * (gx && isBig(e) ? gx.mul : 1);
+      const low = exe && e.hp <= e.hpMax * exe.hp; const mul = s.as5 ? asBurstMul(b, s, bu, e) : (low ? exe.mul : (bu.mul || 1)) * (gx && isBig(e) ? gx.mul : 1); // M5-3: 터뜨리기 배수는 겹쳐도 가장 큰 하나만
       const total = (poisonTotal(n) - poisonTotal(n - take)) * mul * triggerDamageMul(p);
       const left = (bu.top || bu.half || evH) ? n - take : Math.floor(n * (bu.keep || 0));
       if (left > 0) e.s.poison.stacks = left; else delete e.s.poison;
       logp(b, 'crit', (low ? '숨통을 끊으러 든다. ' : '') + e.n + '의 독이 터진다. 중독 ' + take + (left ? ' (남은 중독 ' + left + ')' : ''));
       b.asBurstK = 1; tot += hurtEnemy(b, e, outDmg(b, total, {}), { single: multi ? 0 : 1, aoe: multi ? 1 : 0, melee: s.tgt === 'melee' ? 1 : 0, burst: 1, label: s.n }); b.asBurstK = 0; // 10월 18일 0.8.0 5단계 암살자: 터뜨린 피해(깨진 틈 찌르기 o.burst) · 터뜨려 쓰러뜨림(남은 독의 온기 b.asBurstK)
+      if (s.as5) (b.asBursts = b.asBursts || []).push([s.id, n, b.round || 0]); // M5-3 측정: 터뜨린 중독 크기
       if (!e.alive) { killed++; continue; }
       if (bu.brkPer) addBreak(b, e, take * bu.brkPer);
     }
@@ -192,6 +195,7 @@ function runSkill2(b, act, tgt) {
   if (krOk) { if (BU) b.krTurn = (b.krTurn || 0) + 1; if (s.once) { (b.krOnce = b.krOnce || {})[s.id] = 1; p.cd[s.id] = 0; logp(b, 'good', s.n + '을(를) 한 번 더 쓸 수 있다'); } else ysRefund(b, s.n); } // 10월 15일 유산 1차 시제품 변환: 처치 다시 쓰기 → 유산 +1(라운드에 한 번). 전투마다 1번 스킬은 한 번 더 (비용은 ysSpend가 playerAct에서 먼저 냈다)
   if (hzOn === 'use' && !(hz.when === 'ward<1' && wardBeforeSkill >= 1)) hastenBranch(b, s.b, hz.n || 1, s.id); else if (hzOn === 'kill' && killed && !BU) hastenBranch(b, s.b, hz.n || 1, s.id); else if (hzOn === 'alt' && b.sbAlt) hastenBranch(b, s.b, hz.n || 1, s.id); else if (hzOn === 'clean' && CF && cfE > 0) hastenBranch(b, s.b, hz.n || 1, s.id); // 🔄 쓰면 다른 같은 갈래 스킬 쿨타임 −n // 이번 차례에 쓴 스킬은 모두 이번 차례가 끝날 때 줄지 않는다 (10월 3일: 빠른 스킬 다음에 스킬을 쓰면 빠른 스킬의 대기가 1 짧았다)
   p.lastSkillDmg = multi ? tot / Math.max(1, targets.length) : tot;
+  if (p.build === 'assassin' && s.as5) asPost(b, s, targets, killed); // M5-3 독 표창 · 맹독 · 연쇄 격발
   if (p.build === 'warden') wdUse(b, s, targets, tgt, 'post'); // M5-1 대지 분쇄 · 사슬 끌기
   if (p.build === 'hunter') hnSkillEnd(b, s, targets); // 사냥꾼 연계: 쓴 갈래(시작 스킬은 lb) · 0.8.0 5단계 기본 공격 버프 · 직전에 친 적
   if (p.build === 'elementalist') { const ctM = s.fx.filter(x => x.k === 'meSt' && x.on === 'cut'); if (ctM.length && b.elCutA === b.actN) elCutMe(b, ctM); b.elBurnPre = null; // 10월 18일 0.8.0 5단계 원소 장막: 이 행동으로 영창을 끊으면 나에게 보호
@@ -426,6 +430,59 @@ function tagFit(build, t) { const br = ((typeof TREE2 !== 'undefined' && TREE2[b
 /* ---- 고정 상황 5개 (10.2 검증 질문 1) ---- */
 
 
+/* ===== 0.8.0 M5-3 암살자 (10월 20일 만든 사람 설계지 4판): 강화 · 승부수 · 결합 칸 =====
+   p.asSt = { nextPsn 독침({n, poison}), plague 역병, flowBlade 흘린 칼({mul, poison}) · fbTurn, dance 칼춤, nextBurst 꽃잎 모으기, veil 독의 장막({n, poison}),
+   hide 무영살 숨음 · mu 다음 차례 베기({mul, poison}) · noParry, zan 잔영난무({n, poison}) · noStam, fang 독니 · parPsn 흘린 독 · backFlower 등 뒤의 꽃 }.
+   공통 판정: 흘려 베기의 반격은 기본 공격(독침 · 독니가 붙는다), 추가로 생긴 공격(반격 · 칼춤)은 추가 공격을 부르지 않고 잔영의 두 번 · 흘린 칼도 받지 않는다. 숫자는 AS_BOUND */
+const IFX_AS = {
+  zan: { inP: (b, p, o) => o && o.dot ? 0 : -AS_BOUND.zanIn },
+};
+const AS_N = { veil: '독의 장막', zan: '잔영난무', noStam: '잔영난무의 대가', noParry: '무영살의 대가' };
+function asUse(b, s, targets, tgt) {
+  const p = b.p, S = p.asSt = p.asSt || {}, F = k => s.fx.find(e => e.k === k);
+  const np = F('asNextPsn'); if (np) { S.nextPsn = { n: np.n || 2, poison: np.poison || 1 }; logp(b, 'good', s.n + ': 다음 기본 공격 ' + S.nextPsn.n + '번에 중독 ' + S.nextPsn.poison); }
+  const pl = F('asPlague'); if (pl) { S.plague = pl.mul || 1; logp(b, 'good', '역병: 이번 전투 동안 쓰러진 적의 중독이 다른 적에게 옮겨붙는다'); }
+  const fb = F('asFlowBlade'); if (fb) { S.flowBlade = { mul: fb.mul || AS_BOUND.flowMul, poison: fb.poison || 0 }; logp(b, 'good', '흘린 칼: 이번 전투 동안 흘려 낸 다음 차례 첫 기본 공격 ×' + S.flowBlade.mul); }
+  const dc = F('asDance'); if (dc) { S.dance = { mul: dc.mul || 1, poison: dc.poison || 0 }; logp(b, 'good', '그림자 칼춤: 이번 전투 동안 흘려 낼 때마다 기본 공격 +1회'); }
+  const nb = F('asNextBurst'); if (nb) { S.nextBurst = Math.max(S.nextBurst || 1, nb.mul || 1.5); logp(b, 'good', s.n + ': 다음 터뜨리기 피해 ' + S.nextBurst + '배'); }
+  const vl = F('asVeil'); if (vl) { S.veil = { n: vl.n || 3, poison: vl.poison || 2 }; logp(b, 'good', s.n + ': ' + S.veil.n + '차례 동안 나를 친 적에게 중독 ' + S.veil.poison); }
+  if (F('asFangC')) { S.fang = 1; logp(b, 'good', '독니: 이번 전투 동안 중독 걸린 적을 기본 공격으로 치면 중독 +' + AS_BOUND.fangPsn); }
+  const pp = F('asParPsn'); if (pp) { S.parPsn = pp.n || 2; logp(b, 'good', '흘린 독: 이번 전투 동안 흘려 낼 때 그 적 중독 +' + S.parPsn); }
+  if (F('asBackFlower')) { S.backFlower = AS_BOUND.backFlower; logp(b, 'good', '등 뒤의 꽃: 이번 전투 동안 후열 적에게 터뜨리기 ' + AS_BOUND.backFlower + '배'); }
+  const hd = F('asHide'); if (hd) { S.hide = 1; S.mu = { mul: hd.mul || 3, poison: hd.poison || 0, brk: hd.brk || 0 }; S.muT = (b.turnIdx || 0) + 1; /* 베기는 숨은 다음 차례(주 행동이 끝나면 turnIdx +1)에만 */ logp(b, 'good', '무영살: 숨는다. 이번 차례 어떤 공격의 표적도 되지 않고, 다음 차례 고른 적의 등 뒤에서 무기 피해의 ' + S.mu.mul + '배로 벤다'); }
+  const zn = F('asZan'); if (zn) { S.zan = (zn.n || 3) + 1; /* 쓴 차례(주 행동이라 끝남) 뒤 내 차례 n번: 차례 시작마다 −1 */ S.zanPsn = zn.poison || 0; S.zanBrk = zn.brk || 0; logp(b, 'good', '잔영난무: ' + (zn.n || 3) + '차례 동안 내가 누른 기본 공격이 두 번 들어간다 (받는 피해 +' + Math.round(AS_BOUND.zanIn * 100) + '%, 끝난 뒤 ' + AS_BOUND.zanNoStam + '차례 스태미나가 차지 않는다)'); }
+  const bl = F('asBloom'); if (bl && tgt && tgt.alive) { // 만독개화: 대가 먼저(지금 생명력에서 최대치의 15%, 이 대가로 쓰러지지 않음), 그 뒤 모든 적의 중독을 대상에게 모은다(터뜨리기는 runSkill2의 burst가 아니라 아래에서)
+    const hp = Math.round(p.hpMax * AS_BOUND.bloomHp); p.hp = Math.max(1, p.hp - hp); let sum = 0; for (const e of alive(b)) { const n = st(e, 'poison'); if (n > 0) { sum += n; delete e.s.poison; } }
+    const n = Math.min(psnCapOf(p) + 10, sum); logp(b, 'good', '만독개화: 생명력 −' + hp + '. 모든 적의 중독 ' + sum + '을(를) ' + tgt.n + '에게 모은다'); if (n > 0) { tgt.s.poison = { stacks: n, until: POISON_FOREVER, dur: POISON_FOREVER };
+      const mul = Math.max(bl.mul || 2, asBurstMul(b, s, { mul: 1 }, tgt)); const total = poisonTotal(n) * mul * triggerDamageMul(p); delete tgt.s.poison; (b.asBursts = b.asBursts || []).push([s.id, n, b.round || 0]);
+      logp(b, 'crit', tgt.n + '의 몸에서 독이 꽃처럼 터진다. 중독 ' + n + ' × ' + mul + '배'); hurtEnemy(b, tgt, outDmg(b, total, {}), { single: 1, burst: 1, label: s.n }); } }
+}
+/* 터뜨리기 배수(판정 ⑥): 격발 찌르기 · 독 결산(정예 · 강적 · 보스) · 꽃잎 모으기 · 등 뒤의 꽃(후열) 가운데 가장 큰 하나. 꽃잎 모으기는 쓰면 사라진다 */
+function asBurstMul(b, s, bu, e) { const S = b.p.asSt || {}; const c = [bu.mul || 1, bu.big && (e.elite || e.strong || e.role === 'boss') ? bu.big : 1, S.nextBurst || 1, S.backFlower && e.row === 'back' ? S.backFlower : 1]; if (S.nextBurst) S.nextBurst = 0; return Math.max(...c); }
+function asPost(b, s, targets, killed) {
+  const p = b.p, S = p.asSt = p.asSt || {}, F = k => s.fx.find(e => e.k === k);
+  if (F('asTwin')) { const ps = s.fx.find(e => e.k === 'poison'); const t0 = targets[0]; const o = alive(b).filter(e => e !== t0 && e.role !== 'root').sort((x, y) => (y.row === 'back') - (x.row === 'back'))[0]; if (o && ps) { const g = addPoison(b, o, ps.n, 1); logp(b, 'good', s.n + ': ' + o.n + '에게도 중독 ' + g); } }
+  if (F('asVirulent')) for (const e of targets) if (e.alive) { e.asVir = 1; logp(b, 'good', e.n + '에게 맹독: 라운드가 끝날 때 중독이 ' + AS_BOUND.virMin + ' 이상이면 줄지 않고 1 는다'); }
+  if (F('asChain') && killed > 0 && !b.over && alive(b).some(e => e.role !== 'root')) { b.asChainAgain = s.id; logp(b, 'good', s.n + ': 쓰러뜨렸다. 이번 차례 한 번 더 쓸 수 있다(유산은 다시 낸다)'); }
+}
+/* 기본 공격의 덧붙는 효과(내가 누른 기본 공격 · 흘려 베기 반격 · 칼춤 공격 모두): 독침 · 독니 */
+function asOnBasic(b, e) { const S = b.p.asSt; if (!S || !e || !e.alive) return;
+  if (S.nextPsn && S.nextPsn.n > 0) { const g = addPoison(b, e, S.nextPsn.poison, 1); S.nextPsn.n--; logp(b, 'good', '독침: ' + e.n + '에게 중독 ' + g + (S.nextPsn.n ? ' (남은 ' + S.nextPsn.n + '번)' : '')); if (S.nextPsn.n <= 0) S.nextPsn = null; }
+  if (S.fang && st(e, 'poison') > 0) { addPoison(b, e, AS_BOUND.fangPsn, 1); logp(b, 'good', '독니: ' + e.n + ' 중독 +' + AS_BOUND.fangPsn); } }
+/* 추가로 생긴 기본 공격(반격 · 칼춤): 기본 공격 피해 · 붕괴, 기본 공격 효과는 붙지만 추가 공격을 다시 부르지 않는다 */
+function asExtraBasic(b, e, label, mul, poison) { const p = b.p; if (!e || !e.alive || b.over) return 0; const cur = b.cur; b.cur = { id: 'basic', grp: 'basic', extra: 1 };
+  const d = hurtEnemy(b, e, outDmg(b, basicBase(p) * (mul || 1), { weapon: 1 }), { single: 1, melee: 1, label }); if (e.alive) addBreak(b, e, 10); if (poison && e.alive) addPoison(b, e, poison, 1); asOnBasic(b, e); b.cur = cur; b.asBasicX = (b.asBasicX || 0) + d; return d; } // b.asBasicX: 측정(평타 몫)에 기본 공격으로 넣는다
+/* 흘려 냈을 때(hurtPlayer): 흘린 독 · 흘린 칼(다음 차례 표시) · 흘려 베기 반격 · 칼춤 */
+function asOnParry(b, src, on) { const p = b.p, S = p.asSt = p.asSt || {};
+  if (S.parPsn && src && src.alive) { const g = addPoison(b, src, S.parPsn, 1); logp(b, 'good', '흘린 독: ' + src.n + ' 중독 +' + g); }
+  if (S.flowBlade) S.fbTurn = b.turnIdx || 0;
+  if (on && on.basic && src && src.alive) asExtraBasic(b, src, '흘려 베기 반격');
+  if (S.dance && src && src.alive) asExtraBasic(b, src, '그림자 칼춤', S.dance.mul, S.dance.poison); }
+function asTurnStart(b, p) { const S = p.asSt;
+  if (S.hide) { S.hide = 0; if (S.mu) logp(b, 'good', '무영살: 등 뒤로 돈다. 이번 차례 고른 적을 벤다'); } else if (S.mu && S.muT !== b.turnIdx) { S.mu = null; logp(b, 'sys', '무영살: 벨 때를 놓쳤다'); } // 베기는 숨은 다음 차례에만
+  for (const k of ['veil', 'noStam', 'noParry', 'zan']) { /* zan이 끝나며 건 noStam은 다음 차례부터 센다 */ const c = k === 'veil' ? S.veil && S.veil.n : S[k]; if (c > 0) { if (k === 'veil') { S.veil.n--; if (!S.veil.n) { S.veil = null; logp(b, 'sys', '독의 장막이 걷힌다'); } } else { S[k]--; if (!S[k]) { logp(b, 'sys', AS_N[k] + '이(가) 걷힌다'); if (k === 'zan') S.noStam = AS_BOUND.zanNoStam; } } } } }
+function asMuStrike(b, tgt) { const p = b.p, S = p.asSt; const M = S.mu; S.mu = null; if (!tgt || !tgt.alive) return; logp(b, 'crit', '무영살: ' + tgt.n + '의 등 뒤에서 벤다');
+  hurtEnemy(b, tgt, outDmg(b, wpnDmg(p) * M.mul, { weapon: 1 }), { single: 1, melee: 1, label: '무영살' }); if (M.poison && tgt.alive) addPoison(b, tgt, M.poison, 1); if (M.brk && tgt.alive) addBreak(b, tgt, M.brk); S.noParry = AS_BOUND.hideNoParry; logp(b, 'bad', '무영살의 대가: ' + AS_BOUND.hideNoParry + '차례 흘리기를 못 한다'); }
 /* ===== 0.8.0 M5-2 수도승 (10월 20일 만든 사람 설계지 2판): 강화 · 승부수 · 결합 칸 =====
    p.mkSt = { condense 기공 응축, adamant 금강불괴, flow 내공 순환, nextBrk 다음 기본 공격 붕괴, yeok 역천(자세 유지 · 되받기 한도 없음 · 붕괴 +15 / 방어 불가 · 받는 피해 +30%),
    cheon 천망(나를 친 적 둔화 +2, 둔화 5면 봉인 / 되받기 피해 0), noKi 일지멸맥의 대가, samjae · reflux · bultoe 결합 칸 }. 남은 차례 수는 내 차례가 시작될 때 −1(mkTurnStart). 숫자는 MK_BOUND */

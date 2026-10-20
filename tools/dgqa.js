@@ -269,6 +269,8 @@ function fightRec(R, b, run, hpIn, acts) {
   const rec = { f: run.room, ch: run.ch || 1, t: R.type, sq: R.squad, foe: R.foe, mods: (R.mods || []).join('+') || undefined, path: R.path, res: b.over, hpIn: Math.round(hpIn * 100), hpOut: Math.round(run.p.hp / run.p.hpMax * 100), net: Math.round(hpIn * 100) - Math.round(run.p.hp / run.p.hpMax * 100), /* 0.8.0 6단계 승인 정정: 순손실 = hpIn − hpOut(최대 생명력 %p)이 주 지표, 총피해(tk)는 보조 */ rounds: b.round || 0, acts, src, used, brk: b.rec.filter(x => x.k === 'break').length, cut: b.rec.filter(x => x.k === 'break' && x.cut).length, blk: b.rec.filter(x => x.k === 'block').length, parried: hits.filter(h => h.parried).length, guarded: hits.filter(h => h.guard).length, cons: b.rec.filter(x => x.k === 'cons').length, big: b.rec.filter(x => x.k === 'bigfire').length, bigNoTurn: b.rec.filter(x => x.k === 'bigfire' && x.gap < 1).map(x => x.role + ':' + x.i + ':' + x.gap) };
   if (b.mkTr) { rec.mkTr = b.mkTr; const C = b.rec.filter(x => x.k === 'ctr'); rec.mkCtr = C.length; rec.mkCtrD = Math.round(C.reduce((a, x) => a + (x.d || 0), 0)); } // M5-2: 되받기 횟수 · 피해(MK_TRACE)
   if (BUILDLOG && b.actDmg) rec.actDmg = b.actDmg;
+  if (b.p.build === 'assassin' && b.asBursts && process.env.AS_TRACE) rec.asB = b.asBursts; // M5-3: 터뜨린 중독 크기(설계지 6-0 터뜨림 분포)
+  if (process.env.DG_LOGBOSS && R.type === 'boss') rec.log = b.log.map(x => x.m); // 보스전 로그(조사용)
   if (BUILDLOG) { const en = b.en.filter(e => e.role !== 'root'); rec.nEn = en.length; rec.nBack = en.filter(e => e.row === 'back').length; rec.nBig = en.filter(e => e.elite || e.role === 'boss' || e.strong || e.big).length; } // M5-0 보정 5 상황 표(무리 · 거구 · 후열)
   { const y = G0.ysSum ? G0.ysSum(b) : null; if (y) rec.ys = { sp: y.sp, use: y.use, w: y.w, g: Object.values(y.ch || {}).reduce((a, v) => a + v, 0), ch: y.ch }; } // M4: ch = 충전 출처별 든 양(차례 · 대응 이유 · 통로 각인 · 환급 · 장비) // 0.8.0 6단계 유산 리듬: 비용별 횟수 · 쓴 합 · 상한에 막힌 양(넘침) · 든 양
   rec.tk = b.damageStats ? Math.round(100 * b.damageStats.taken / b.p.hpMax) : null; // 0.8.0 6단계: 총피해(회복 전 받은 피해 합, 최대 생명력 %) 보조 지표
@@ -375,9 +377,9 @@ function fightCur(pk, r, mem, out) {
     if (b.p.build === 'warden' && b.wdT !== b.turnIdx && G0.wardMax) { b.wdT = b.turnIdx; (b.wdS = b.wdS || []).push(Math.round(100 * (b.p.ward || 0) / Math.max(1, G0.wardMax(b.p)))); if (b.wdGd) { b.wdGd = 0; (b.wdSG = b.wdSG || []).push([Math.round(b.p.ward || 0), Math.round(100 * (b.p.ward || 0) / Math.max(1, G0.wardMax(b.p)))]); } } // 보조 지표(10월 17일): 방어한 다음 내 차례의 보호막(값 · 상한 %)
     if (b.p.build === 'warden' && a === 'guard') b.wdGd = 1; // 0.8.0 5단계: 내 차례 첫 행동 때 보호막 / 상한(%)
     const progKey = b.turnIdx + ':' + (b.round || 0) + ':' + b.log.length;
-    const dl0 = BUILDLOG && b.damageStats ? b.damageStats.dealt : 0;
+    const dl0 = BUILDLOG && b.damageStats ? b.damageStats.dealt : 0; const bx0 = b.asBasicX || 0;
     try { G0.playerAct(b, a, t); } catch (e) { out.bugs.push('예외 ' + e.message + ' @' + a); failOf(out, 'exception', { msg: String(e.message).slice(0, 200), act: a, room: G.run.room, ch: G.run.ch || 1 }); b.over = 'lose'; }
-    if (BUILDLOG && b.damageStats) { const k = a; (b.actDmg = b.actDmg || {})[k] = Math.round(((b.actDmg[k] || 0) + b.damageStats.dealt - dl0) * 10) / 10; } // M3 빌드 표: 행동별 준 피해(DG_BUILDLOG=1일 때만 기록)
+    if (BUILDLOG && b.damageStats) { const k = a; const bx = Math.min(b.damageStats.dealt - dl0, (b.asBasicX || 0) - bx0); (b.actDmg = b.actDmg || {})[k] = Math.round(((b.actDmg[k] || 0) + b.damageStats.dealt - dl0 - (k !== 'basic' && bx > 0 ? bx : 0)) * 10) / 10; if (k !== 'basic' && bx > 0) b.actDmg.basic = Math.round(((b.actDmg.basic || 0) + bx) * 10) / 10; } // M5-3: 흘려 베기 반격 · 칼춤은 기본 공격(판정 ①)이라 평타 몫으로 // M3 빌드 표: 행동별 준 피해(DG_BUILDLOG=1일 때만 기록)
     stuckN = progKey === b.turnIdx + ':' + (b.round || 0) + ':' + b.log.length ? stuckN + 1 : 0;
     out.acts++;
     if (OPT.policy?.afterAction) OPT.policy.afterAction(b, G.run, a, t);

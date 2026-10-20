@@ -90,6 +90,51 @@ const SKILLS2 = {
     { id: 'a_reprisal', row: 12, b: '그림자', tier: '상급', n: '그림자 역습', tgt: 'pick', time: 'normal', cd: 6, fx: [{ k: 'parry', red: 0.8 }, { k: 'onParry', dmg: 24, brk: 12 }, { k: 'hasten', n: 1, on: 'parry' }] },
     { id: 'a_umbra', row: 13, b: '그림자', tier: '상급', n: '죽음의 그림자', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 23 }, { k: 'brk', n: 31 }, { k: 'lowx', hp: 0.35, mul: 2 }, { k: 'bigx', mul: 1.8 }] },
     { id: 'a_daggerrain', row: 13, b: '그림자', tier: '상급', n: '단검 소나기', tgt: 'ranged', time: 'normal', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 16 }, { k: 'brk', n: 13 }] },
+    /* ===== 0.8.0 M5-3 암살자 재설계(10월 20일 만든 사람 설계지 4판, nrk-private/제안/암살자-설계지-2026-10-20.md) =====
+       직업 규칙은 그대로(중독 · 터뜨리기 · 흘리기 70% · 흘리기 준비). 새 상태는 승부수에만(숨음 · 분신). 공통 판정: 터뜨리기는 중독을 0으로(keep 없음), 흘려 베기의 반격은 기본 공격,
+       추가로 생긴 공격은 추가 공격을 부르지 않음, 터뜨리기 배수는 가장 큰 하나만. 칸 설명은 한 줄(skBodyMk), 배수는 무엇의 몇 배인지. 숫자는 가설 — 값 띠 · 측정으로. 새 효과 키는 data/skillkit.js AS_BOUND · js/10 암살자 절 */
+    { id: 'a_dokkal', row: 1, b: '독사', tier: '하급', n: '독 바른 칼', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 10 }, { k: 'poison', n: 3 }] },
+    { id: 'a_dokan', row: 1, b: '독사', tier: '하급', n: '독안개', tgt: 'front', time: 'normal', cd: 4, fx: [{ k: 'poison', n: 3 }] },
+    { id: 'a_dokchim', row: 1, b: '독사', tier: '하급', n: '독침', tgt: 'self', time: 'normal', cd: 3, fx: [{ k: 'asNextPsn', n: 3, poison: 1, txt: '다음 기본 공격 3번에 중독 1' }] },
+    { id: 'a_godok', row: 4, b: '독사', tier: '하급', n: '고독', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 2 }, { k: 'grow', mul: 2 }] },
+    { id: 'a_beonji', row: 4, b: '독사', tier: '하급', n: '독 번지기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 4 }, { k: 'spread', per: 0.5 }] },
+    { id: 'a_maengdok', row: 8, b: '독사', tier: '중급', n: '맹독', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'poison', n: 7 }, { k: 'asVirulent', txt: '이번 전투: 라운드 끝 중독 10 이상이면 줄지 않고 +1' }] },
+    { id: 'a_yeokbyeong', row: 8, b: '독사', tier: '중급', n: '역병', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'asPlague', txt: '이번 전투: 쓰러진 적의 중독이 다른 적에게 옮겨붙음' }] },
+    { id: 'a_gyeokpyo', row: 1, b: '격발', tier: '하급', n: '격발 표창', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 12 }, { k: 'burst', mul: 1, brkPer: 3 }] },
+    { id: 'a_gyeokjjil', row: 1, b: '격발', tier: '하급', n: '격발 찌르기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 7 }, { k: 'burst', mul: 1.5, brkPer: 3 }] },
+    { id: 'a_bangul', row: 1, b: '격발', tier: '하급', n: '독 한 방울', tgt: 'ranged', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 4 }, { k: 'poison', n: 2 }] },
+    { id: 'a_dokpyo', row: 4, b: '격발', tier: '하급', n: '독 표창', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'poison', n: 3 }, { k: 'asTwin', txt: '후열 하나에게 더' }] },
+    { id: 'a_dokssae', row: 4, b: '격발', tier: '하급', n: '독 쐐기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'poison', n: 5 }] },
+    { id: 'a_yeonswae', row: 8, b: '격발', tier: '중급', n: '연쇄 격발', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 23 }, { k: 'burst', mul: 1, brkPer: 4 }, { k: 'asChain', txt: '쓰러뜨리면 다시 쓸 수 있음' }] },
+    { id: 'a_gyeolsan', row: 8, b: '격발', tier: '중급', n: '독 결산', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 22 }, { k: 'burst', mul: 1, big: 2, brkPer: 4 }] },
+    { id: 'a_heulbe', row: 1, b: '그림자', tier: '하급', n: '흘려 베기', tgt: 'pick', time: 'normal', cd: 4, fx: [{ k: 'parry', red: 0.8 }, { k: 'asCounter', txt: '흘려 내면 기본 공격으로 반격' }] },
+    { id: 'a_balbgi', row: 1, b: '그림자', tier: '하급', n: '그림자 밟기', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 22 }] },
+    { id: 'a_gyeonu', row: 1, b: '그림자', tier: '하급', n: '칼끝 겨누기', tgt: 'self', time: 'normal', cd: 3, fx: [{ k: 'parryBuff', red: 0.2, dmg: 14 }] },
+    { id: 'a_heulkal', row: 4, b: '그림자', tier: '하급', n: '흘린 칼', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'asFlowBlade', txt: '이번 전투: 흘려 낸 다음 차례 첫 기본 공격 ×1.5' }] },
+    { id: 'a_hugyeol', row: 4, b: '그림자', tier: '하급', n: '후열 기습', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 16 }, { k: 'asBackx', mul: 1.5 }] },
+    { id: 'a_kalchum', row: 8, b: '그림자', tier: '중급', n: '그림자 칼춤', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'asDance', txt: '이번 전투: 흘려 낼 때마다 기본 공격 +1회' }] },
+    { id: 'a_cheohyeong', row: 8, b: '그림자', tier: '중급', n: '그림자 처형', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 31 }, { k: 'asBackx', mul: 2, low: 0.35 }] },
+    /* 경계 칸(입구 · 둘째 · 3고리 둘)은 [Claude 초안]: 공격 2 · 강화/방어 2 */
+    { id: 'a_pieo', row: 4, b: '독화', tier: '하급', n: '피어나는 독', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 6 }, { k: 'burst', pre: 3, mul: 1, brkPer: 3 }] },
+    { id: 'a_kkotip', row: 5, b: '독화', tier: '하급', n: '꽃잎 모으기', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'asNextBurst', mul: 2, txt: '다음 터뜨리기 피해 2배' }] },
+    { id: 'a_heunal', row: 8, b: '독화', tier: '중급', n: '흩날리는 꽃', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 14 }, { k: 'burst', mul: 1, brkPer: 3 }] },
+    { id: 'a_jangmak', row: 8, b: '독화', tier: '중급', n: '독의 장막', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'asVeil', n: 3, poison: 3, txt: '3차례 나를 친 적에게 중독 3' }] },
+    { id: 'a_geuneul', row: 4, b: '암영', tier: '하급', n: '그늘 찌르기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'exploit', per: 2 }] },
+    { id: 'a_sumjuk', row: 5, b: '암영', tier: '하급', n: '숨죽인 칼', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'parryBuff', red: 0.3, times: 2, dmg: 10 }] },
+    { id: 'a_kkweogi', row: 8, b: '암영', tier: '중급', n: '그림자 꿰기', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 28 }, { k: 'brokenx', mul: 2 }] },
+    { id: 'a_yeonmak', row: 8, b: '암영', tier: '중급', n: '연막', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'evade', n: 3 }, { k: 'st', s: 'protect', n: 8 }] },
+    { id: 'a_janjjil', row: 4, b: '잔영', tier: '하급', n: '잔영 찌르기', tgt: 'melee', time: 'normal', cd: 5, hits: 2, fx: [{ k: 'dmg', n: 8 }, { k: 'poison', n: 1 }] },
+    { id: 'a_geurimdok', row: 5, b: '잔영', tier: '하급', n: '독 묻힌 그림자', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'asNextPsn', n: 3, poison: 2, txt: '다음 기본 공격 3번에 중독 2' }] },
+    { id: 'a_pagodeul', row: 8, b: '잔영', tier: '중급', n: '파고드는 그림자', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 27 }, { k: 'grow', mul: 1.5 }] },
+    { id: 'a_heurit', row: 8, b: '잔영', tier: '중급', n: '흐릿한 몸', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'parryBuff', red: 0.2, stam: 45, times: 2, dmg: 11 }] },
+    /* 경계 승부수(만든 사람 문장 · 대사 그대로) */
+    { id: 'a_mandok', row: 10, b: '독화', tier: '중급', n: '만독개화', tgt: 'ranged', time: 'normal', cd: 9, line: '「피어나라. 한 송이도 남김없이 아름다울 기생화를.」', cut: 'arcane', pay: '쓰는 즉시 지금 생명력에서 최대 생명력의 15%를 잃는다(최대치는 그대로). 지금 생명력이 최대치의 15% 이하면 쓸 수 없다.', fx: [{ k: 'asBloom', mul: 2, txt: '모든 적의 중독을 적 하나에게 모아 터뜨린다(그 터뜨리기 피해 2배).' }] },
+    { id: 'a_muyeong', row: 10, b: '암영', tier: '중급', n: '무영살', tgt: 'self', time: 'normal', cd: 9, line: '「보이지 않는 칼이야말로, 가장 깊이 박히는 법이렸다.」', cut: 'blade', pay: '숨은 차례에는 아무것도 못 한다. 벤 뒤 2차례 흘리기를 못 한다.', fx: [{ k: 'asHide', mul: 3, txt: '한 차례 숨었다가, 다음 차례 고른 적의 등 뒤에서 무기 피해의 3배로 벤다. 숨은 동안 광역을 포함한 어떤 공격의 표적도 되지 않는다(중독 같은 지속 피해는 받음).' }] },
+    { id: 'a_janyeong', row: 10, b: '잔영', tier: '중급', n: '잔영난무', tgt: 'self', time: 'normal', cd: 9, line: '「그림자는 하나가 아니다. 네가 벤 것은, 처음부터 내가 아니었으니.」', cut: 'guard', pay: '그동안 받는 피해 +20%, 끝난 뒤 2차례 스태미나가 차지 않는다.', fx: [{ k: 'asZan', n: 4, txt: '4차례 — 그림자 분신이 함께해, 내가 누른 기본 공격이 두 번 들어간다(반격 · 추가타는 두 번이 아님).' }] },
+    /* 결합 칸 셋(설계지): 원 바깥, 판마다 둘, 꼬리표 조건 */
+    { id: 'a_dokni', row: 7, b: '결합', tier: '중급', n: '독니', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'asFangC', txt: '이번 전투: 중독 걸린 적을 기본 공격으로 치면 중독 +1' }] },
+    { id: 'a_heuldok', row: 7, b: '결합', tier: '중급', n: '흘린 독', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'asParPsn', n: 2, txt: '이번 전투: 흘려 낼 때 그 적 중독 +2' }] },
+    { id: 'a_dwikkot', row: 7, b: '결합', tier: '중급', n: '등 뒤의 꽃', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'asBackFlower', mul: 1.5, txt: '이번 전투: 후열 적에게 터뜨리기 1.5배' }] },
   ],
   warden: [
     // 시작 스킬: 트리 밖. 어느 갈래에도 치우치지 않는 공격 하나(주 행동), 방어 하나(빠른 행동). 보호막은 쓰지 않는다 (10월 3일 초안)
@@ -1029,5 +1074,16 @@ const MK_TAGS = {
   m_pamaek: ['기'], m_gagu: ['기'], m_gwanhyeol: ['둔화'], m_sunhwan: ['기'], m_ilji: ['기', '둔화'],
   m_samjae: ['기', '되받기'], m_yeokryu: ['둔화', '기본공격연동'], m_bultoe: ['자세', '붕괴'],
 };
-for (const s of SKILLS2.monk || []) if (MK_TAGS[s.id]) { s.tags = MK_TAGS[s.id].slice(); s.mk5 = 1; } // mk5: 한 줄 설명(skBodyMk) · 설명 길이 경고(tree-check)
+for (const s of SKILLS2.monk || []) if (MK_TAGS[s.id]) { s.tags = MK_TAGS[s.id].slice(); s.mk5 = 1; }
+/* 0.8.0 M5-3 암살자 꼬리표(결합 칸 조건 · BD-9): 중독 · 터뜨리기 · 흘리기 · 후열 · 광역 · 붕괴 · 기본공격연동 */
+const AS_TAGS = {
+  a_dokkal: ['중독'], a_dokan: ['중독', '광역'], a_dokchim: ['중독', '기본공격연동'], a_godok: ['중독'], a_beonji: ['중독', '광역'], a_maengdok: ['중독'], a_yeokbyeong: ['중독', '광역'],
+  a_gyeokpyo: ['터뜨리기', '후열'], a_gyeokjjil: ['터뜨리기'], a_bangul: ['중독', '후열'], a_dokpyo: ['중독', '후열'], a_dokssae: ['중독'], a_yeonswae: ['터뜨리기'], a_gyeolsan: ['터뜨리기'],
+  a_heulbe: ['흘리기', '기본공격연동'], a_balbgi: ['후열'], a_gyeonu: ['흘리기'], a_heulkal: ['흘리기', '기본공격연동'], a_hugyeol: ['후열'], a_kalchum: ['흘리기', '기본공격연동'], a_cheohyeong: ['후열'],
+  a_pieo: ['터뜨리기', '중독'], a_kkotip: ['터뜨리기'], a_heunal: ['터뜨리기', '광역'], a_jangmak: ['중독'], a_mandok: ['터뜨리기', '중독'],
+  a_geuneul: ['중독'], a_sumjuk: ['흘리기'], a_kkweogi: ['붕괴'], a_yeonmak: ['흘리기'], a_muyeong: ['후열'],
+  a_janjjil: ['중독'], a_geurimdok: ['중독', '기본공격연동'], a_pagodeul: ['중독'], a_heurit: ['흘리기'], a_janyeong: ['기본공격연동', '흘리기'],
+  a_dokni: ['중독', '기본공격연동'], a_heuldok: ['흘리기', '중독'], a_dwikkot: ['터뜨리기', '후열'],
+};
+for (const s of SKILLS2.assassin || []) if (AS_TAGS[s.id]) { s.tags = AS_TAGS[s.id].slice(); s.as5 = 1; } // as5: 한 줄 설명(skBodyMk) · 설명 길이 경고 · 터뜨리기 배수 하나만(js/10) // mk5: 한 줄 설명(skBodyMk) · 설명 길이 경고(tree-check)
 

@@ -242,6 +242,14 @@
    "note": "표식 도전 챕터"
   },
   {
+   "name": "AS_TRACE",
+   "kind": "env",
+   "default": null,
+   "introduced": "M5-3",
+   "expires": "상시",
+   "note": "암살자 터뜨린 중독 크기 기록(판정 칸 아님)"
+  },
+  {
    "name": "MARKS",
    "kind": "env",
    "default": null,
@@ -523,6 +531,14 @@
    "introduced": "M5-0",
    "expires": "상시",
    "note": "목표 부채꼴 강제(A · AB · B · BC · C · CA, 반반 빌드 AB_HALF · BC_HALF · CA_HALF). 없으면 tools/persona/sector-pref.json"
+  },
+  {
+   "name": "DG_LOGBOSS",
+   "kind": "env",
+   "default": null,
+   "introduced": "M5-3",
+   "expires": "상시",
+   "note": "보스전 로그 기록(조사용, 판정 칸 아님)"
   },
   {
    "name": "DG_PATH",

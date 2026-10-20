@@ -33,7 +33,7 @@ function actionList(b) {
   const SKM = skillMap(p.build);
   if (isV2(p)) for (const sid of skillsOf(p)) { // 10월 15일 유산 1차 시제품: 쿨타임 대신 유산 비용(skCost). wait = 모자란 유산(차례마다 +1이므로 기다릴 차례 수와 같다), 전투마다 1번을 썼으면 CD_USED
     const s = skOf(p, sid); if (!s) continue; const used = ysUsed(p, s), cost = skCostAt(b, s).c, lack = Math.max(0, cost - ysNow(p)); const w = used ? CD_USED : lack; // 10월 16일 0.8.0 2단계: 강화를 적용한 실제 스킬 · 조건부 할인
-    const needPoison = !s.fx.some(e => ['dmg', 'poison', 'brk', 'st', ...SB_BD_K, 'parry', 'parryBuff', 'stam', 'cutx', 'ward', 'wardFill', 'wardBurn', 'wardDmg', ...WD_K, ...MK_K, 'kiHits', 'thorn', 'pull', 'vulnPer', 'vulnGrow', 'shieldx', 'chillx', 'evade', 'evadeCtr', 'quick', 'quickTurns', 'foresee', 'meSt', 'focusAdd', 'focusBurst', 'focusx', 'swapx', 'hastex', 'chillCut', 'chillShatter', 'chillSpread', 'freeze', 'onCutBreak', 'hasteSpend', 'grudge', 'carry', 'weave', 'shockx', 'rime', 'burnOut', 'imbue', 'edgeX', 'kwx', 'alt', 'killSpread', 'stance', 'kiBurst', 'kiPer', 'kiGrow', 'sealx', 'cleanse', 'transfer', 'perDmg', 'dispel', 'hpCost', 'bloodDmg', 'payCut'].includes(e.k) || (e.k === 'drain' && e.eat) || (e.k === 'burst' && e.pre) || (e.k === 'grow' && e.add) || (['drain', 'exploit', 'grow', 'spread'].includes(e.k) && e.s === 'bleed') || (e.k === 'exploit' && e.s)); // 중독 없이는 아무 일도 없는 스킬만 잠근다 (10월 3일: 피해를 주는 터뜨리는 일격, 중독 4를 거는 독 응축도 잠겼다)
+    const needPoison = !s.fx.some(e => ['dmg', 'poison', 'brk', 'st', ...SB_BD_K, 'parry', 'parryBuff', 'stam', 'cutx', 'ward', 'wardFill', 'wardBurn', 'wardDmg', ...WD_K, ...MK_K, ...AS_K, 'kiHits', 'thorn', 'pull', 'vulnPer', 'vulnGrow', 'shieldx', 'chillx', 'evade', 'evadeCtr', 'quick', 'quickTurns', 'foresee', 'meSt', 'focusAdd', 'focusBurst', 'focusx', 'swapx', 'hastex', 'chillCut', 'chillShatter', 'chillSpread', 'freeze', 'onCutBreak', 'hasteSpend', 'grudge', 'carry', 'weave', 'shockx', 'rime', 'burnOut', 'imbue', 'edgeX', 'kwx', 'alt', 'killSpread', 'stance', 'kiBurst', 'kiPer', 'kiGrow', 'sealx', 'cleanse', 'transfer', 'perDmg', 'dispel', 'hpCost', 'bloodDmg', 'payCut'].includes(e.k) || (e.k === 'drain' && e.eat) || (e.k === 'burst' && e.pre) || (e.k === 'grow' && e.add) || (['drain', 'exploit', 'grow', 'spread'].includes(e.k) && e.s === 'bleed') || (e.k === 'exploit' && e.s)); // 중독 없이는 아무 일도 없는 스킬만 잠근다 (10월 3일: 피해를 주는 터뜨리는 일격, 중독 4를 거는 독 응축도 잠겼다)
     if (isBm(p)) { // 숨겨진 직업 3: 생명력을 내는 칸의 잠금과 피로 당기기 (10월 15일 유산 1차 시제품: 값은 모자란 유산 1마다 최대 생명력 4%, 내 차례마다 한 번, 내고 나서 생명력 1 아래면 잠긴다)
       const hc = bmHpCost(p, s); let other = null, whyB = null, blood = 0;
       if (needPoison && !alive(b).some(e => e.s.poison)) other = '중독된 적 없음';
@@ -85,12 +85,17 @@ function actionList(b) {
     L.push({ id: 'sig', n: S.n, sig: 1, self: S.tgt ? 0 : 1, ranged: S.tgt ? 1 : 0, cost: S.cd ? S.cd + '차례마다' : '분노 5', time: S.time, ok: !why, why });
   } }
   { const sg = !!(p.wdSt && p.wdSt.siege), yk = !!(p.mkSt && p.mkSt.yeok); L.push({ id: 'guard', n: '방어', self: 1, cost: '스태미나 ' + guardCost(p), time: 1, ok: !sg && !yk && p.st >= guardCost(p), why: sg ? '파성: 방어할 수 없습니다' : yk ? '역천권: 방어할 수 없습니다' : null }); } // M5-1 파성추 · M5-2 역천권 대가
-  { const np = fxFlag(p, 'noParry'), vl = !!(p.wdSt && p.wdSt.valor); L.push({ id: 'dodge', n: '흘리기', dodge: 1, cost: '스태미나 ' + dodgeCost(p), time: 1, ok: !np && !vl && p.st >= dodgeCost(p), why: np ? '무거운 갑주: 흘리기를 쓸 수 없습니다' : vl ? '용맹: 흘리기를 쓸 수 없습니다' : null }); } // M5-1 용맹한 방벽 대가 // 큰 각인 무거운 갑주
+  { const np = fxFlag(p, 'noParry') || !!(p.asSt && p.asSt.noParry > 0), vl = !!(p.wdSt && p.wdSt.valor); L.push({ id: 'dodge', n: '흘리기', dodge: 1, cost: '스태미나 ' + dodgeCost(p), time: 1, ok: !np && !vl && p.st >= dodgeCost(p), why: p.asSt && p.asSt.noParry > 0 ? '무영살의 대가: 흘리기를 못 한다' : np ? '무거운 갑주: 흘리기를 쓸 수 없습니다' : vl ? '용맹: 흘리기를 쓸 수 없습니다' : null }); } // M5-1 용맹한 방벽 대가 // 큰 각인 무거운 갑주
   L.push({ id: 'flaskL', n: p.eq.flask === 'chalice' ? '역류의 성배' : '생명력 플라스크', self: 1, cost: '남은 ' + p.flask.life, time: 0.5, ok: p.flask.life > 0 });
   L.push({ id: 'flaskM', n: isV2(p) ? '정화 플라스크' : '마나 플라스크', self: 1, cost: '남은 ' + p.flask.mana, time: 0.5, ok: p.flask.mana > 0 });
   L.push({ id: 'flaskS', n: '스태미나 플라스크', self: 1, cost: '남은 ' + (p.flask.stam || 0), time: 0.5, ok: (p.flask.stam || 0) > 0 });
   if (!b.ctx.boss && !b.ctx.scen && !b.ctx.tut) L.push({ id: 'flee', n: '도망', self: 1, cost: '성공 ' + Math.round(fleeChance(b) * 100) + '%', time: 1, ok: true });
   for (const sl of b.seal || []) for (const a of L) if (a.ok && ((sl.k === 'skill' && a.id === sl.id) || (sl.k === 'flask' && /^flask/.test(a.id)) || (sl.k === 'prep' && (a.id === 'guard' || a.id === 'dodge')))) { a.ok = false; a.why = '봉인됨'; } // 검은 서기관
+  if (p.build === 'assassin' && p.asSt) { const S = p.asSt; // M5-3: 무영살 베기(숨은 다음 차례) · 흘리기 금지 · 만독개화 생명력 조건 · 연쇄 격발 다시 쓰기
+    if (S.mu && S.muT === b.turnIdx) L.unshift({ id: 'as_mu', n: '무영살 베기', ranged: 1, cost: '유산 0', time: 1, ok: true, d: '고른 적의 등 뒤에서 무기 피해의 ' + S.mu.mul + '배로 벤다.' });
+    for (const a of L) if (a.ok && a.v2 && a.s && S.noParry > 0 && a.s.fx.some(e => e.k === 'parry' || e.k === 'parryBuff')) { a.ok = false; a.why = '무영살의 대가: 흘리기를 못 한다'; }
+    for (const a of L) if (a.ok && a.v2 && a.s && a.s.fx.some(e => e.k === 'asBloom') && p.hp <= p.hpMax * AS_BOUND.bloomHp) { a.ok = false; a.why = '생명력이 최대치의 15% 이하라 쓸 수 없다'; }
+    if (b.asChainAgain) { for (const a of L) if (a.ok && a.id !== b.asChainAgain) { a.ok = false; a.why = '연쇄 격발을 다시 쓰는 차례'; } L.push({ id: 'as_end', n: '차례 넘기기', self: 1, cost: '비용 없음', time: 1, ok: true, d: '연쇄 격발을 다시 쓰지 않고 차례를 끝낸다.' }); } }
   if (b.bonusUsed) for (const a of L) if (a.time >= 1.25 && a.ok) { a.ok = false; a.why = '빠른 행동을 써서 이번 차례엔 느린 행동 불가'; } // 느린 행동은 두 칸
   return b.ctx.allow ? L.filter(a => b.ctx.allow.includes(a.id)) : L; // 수련장: 그 장면에서 배우는 행동만
 }
@@ -170,7 +175,7 @@ function playerAct(b, id, tgtId) {
     if (g) { logp(b, 'sys', g.n + '이(가) 방패를 들어 ' + tgt.n + '을(를) 가로막는다'); b.rec.push({ k: 'redirect', t: r1(b.t), from: tgt.role, to: g.role }); tgt = g; b.cur.tgt = g.id; } // 장비 효과도 바뀐 대상을 본다
   }
   if (tgt && !act.self && !act.aoe && !eatOnly && !bmEO) { const mg = alive(b).find(x => x.guarding === tgt.id && !(x.stun > 0) && !x.s.broken); if (mg) { logp(b, 'sys', mg.n + '이(가) ' + tgt.n + ' 앞을 막아 대신 맞는다'); tgt = mg; b.cur.tgt = mg.id; } } // 하수인의 지키기 (10월 4일)
-  if (b.prepTurn !== b.turnIdx) { b.prepTurn = b.turnIdx; if (p.sbSt) sbTurnStart(b, p); /* 0.8.0 M5-0 마검사 경계 상태 */ if (p.wdSt) wdTurnStart(b, p); /* 0.8.0 M5-1 파수꾼 */ b.ysR = (b.ysR || 0) + 1; p.guard = 0; p.dodge = 0; p.brace = 0; p.dodgeRed = 0; p.dodgeOn = null; if (isBu(p)) { p.grudge = Math.min(p.tookAcc || 0, p.hpMax * BUTCH.grudgeCap); p.tookAcc = 0; b.krTurn = 0; } if (p.build === 'monk') { if (p.mkSt) mkTurnStart(b, p); b.mkStHeld = p.stance ? b.turnIdx : null; b.mkCtrLast = p.ctrN || 0; if (p.stance && (p.stance.keep > 1 || (p.mkSt && p.mkSt.yeok))) { if (p.stance.keep > 1) p.stance.keep--; } else p.stance = null; p.ctrN = 0; } /* M5-2: 부동심 · 철포삼(keep) · 역천권은 자세를 이어 간다, 되돌린 주먹은 지난 적 차례에 되받은 수(b.mkCtrLast) */ if (isCf(p)) b.cleanTurn = 0; if (isBm(p)) b.paidTurn = 0; } // 숨겨진 직업 3: 낸 피는 차례마다 // 숨겨진 직업 1: 받은 피해는 차례의 첫 행동에서 정한다 // 준비(방어·흘리기)는 내 다음 차례까지. 수도승 자세와 되받은 횟수도 여기서 지운다. 빠른 행동으로 건 흘리기를 같은 차례의 주 행동이 지우지 않게 차례의 첫 행동에서만 지운다 (10월 3일: 잔상·흘리며 물러서기가 한 번도 발동하지 않았다)
+  if (b.prepTurn !== b.turnIdx) { b.prepTurn = b.turnIdx; if (p.sbSt) sbTurnStart(b, p); /* 0.8.0 M5-0 마검사 경계 상태 */ if (p.wdSt) wdTurnStart(b, p); /* 0.8.0 M5-1 파수꾼 */ b.ysR = (b.ysR || 0) + 1; p.guard = 0; p.dodge = 0; p.brace = 0; p.dodgeRed = 0; p.dodgeOn = null; if (isBu(p)) { p.grudge = Math.min(p.tookAcc || 0, p.hpMax * BUTCH.grudgeCap); p.tookAcc = 0; b.krTurn = 0; } if (p.asSt) asTurnStart(b, p); /* M5-3 */ if (p.build === 'monk') { if (p.mkSt) mkTurnStart(b, p); b.mkStHeld = p.stance ? b.turnIdx : null; b.mkCtrLast = p.ctrN || 0; if (p.stance && (p.stance.keep > 1 || (p.mkSt && p.mkSt.yeok))) { if (p.stance.keep > 1) p.stance.keep--; } else p.stance = null; p.ctrN = 0; } /* M5-2: 부동심 · 철포삼(keep) · 역천권은 자세를 이어 간다, 되돌린 주먹은 지난 적 차례에 되받은 수(b.mkCtrLast) */ if (isCf(p)) b.cleanTurn = 0; if (isBm(p)) b.paidTurn = 0; } // 숨겨진 직업 3: 낸 피는 차례마다 // 숨겨진 직업 1: 받은 피해는 차례의 첫 행동에서 정한다 // 준비(방어·흘리기)는 내 다음 차례까지. 수도승 자세와 되받은 횟수도 여기서 지운다. 빠른 행동으로 건 흘리기를 같은 차례의 주 행동이 지우지 않게 차례의 첫 행동에서만 지운다 (10월 3일: 잔상·흘리며 물러서기가 한 번도 발동하지 않았다)
   if (p.bbuf && p.build === 'hunter') hnBbufTick(b); // 0.8.0 5단계 사냥꾼: 기간이 지난 기본 공격 버프
   p.tookLast = p.tookSince || 0; p.tookSince = 0; // 앙갚음: 지난 행동 뒤로 받은 피해
   if (p.stun > 0) { p.stun--; logp(b, 'bad', '몸이 말을 듣지 않는다. 행동을 놓친다'); finishPlayer(b, 1, true); return; }
@@ -182,9 +187,12 @@ function playerAct(b, id, tgtId) {
   if (act.v2) { if (act.pull && isBm(p)) bmPull(b, act); ysSpend(b, act.s, tgt); runSkill2(b, act, tgt); if (b.sbK) sbEnd(b, act); fxRun(p, 'onSkill', b, p, act, tgt); if (b.markTgt) { if (b.markTgt.alive) addS(b, b.markTgt, 'vuln', 2); b.markTgt = null; } if (b.rcUsed) { p.rcN = 0; b.rcUsed = 0; } if (b.chainTgt) { if (b.chainTgt.alive) addBreak(b, b.chainTgt, 20); b.chainTgt = null; } if (b.vanguardTgt) { if (b.vanguardTgt.alive) addBreak(b, b.vanguardTgt, 20); b.vanguardTgt = null; } b.resonate = false; b.resoBig = 0; b.echoMul = 1; if (p.hp <= 0) checkEnd(b); if (!b.over) finishPlayer(b, time); return; }
   if (act.gen) { genSkill(b, act, tgt); if (b.markTgt) { if (b.markTgt.alive) { addS(b, b.markTgt, 'vuln', 2); logp(b, 'good', '표식이 ' + b.markTgt.n + '의 빈틈을 드러낸다. 취약'); } b.markTgt = null; } if (b.rcUsed) { p.rcN = 0; b.rcUsed = 0; } if (b.chainTgt) { if (b.chainTgt.alive) addBreak(b, b.chainTgt, 20); b.chainTgt = null; } if (b.vanguardTgt) { if (b.vanguardTgt.alive) addBreak(b, b.vanguardTgt, 20); b.vanguardTgt = null; } if (b.resonate) logp(b, 'crit', '서로 다른 주문이 공명한다. 피해 +15%'); b.resonate = false; b.resoBig = 0; b.echoMul = 1; if (p.hp <= 0) checkEnd(b); if (!b.over) finishPlayer(b, time); return; }
   switch (id) {
+    case 'as_mu': { asMuStrike(b, tgt); break; } // M5-3 무영살 베기
+    case 'as_end': break; // M5-3 연쇄 격발을 다시 쓰지 않음
     case 'basic': {
       const mkC = p.build === 'monk' && p.mkSt && p.mkSt.chain ? p.mkSt.chain : null, kiC = mkC ? st(p, 'empower') : 0; // M5-2 연환권: 기를 쓰기 전의 기로 센다
       let d = outDmg(b, basicBase(p), { weapon: 1 });
+      const asS = p.build === 'assassin' && p.asSt ? p.asSt : null; if (asS && asS.flowBlade && asS.fbTurn != null && asS.fbTurn === b.turnIdx) { d *= asS.flowBlade.mul; asS.fbTurn = null; logp(b, 'good', '흘린 칼: 이 기본 공격 ×' + asS.flowBlade.mul); if (asS.flowBlade.poison) addPoison(b, tgt, asS.flowBlade.poison, 1); } // M5-3 흘린 칼(내 다음 차례 첫 기본 공격, 반격 제외)
       const hb = p.build === 'hunter' && p.bbuf ? hnBasicBuf(b, tgt) : null; if (hb) d *= hb.mul * (1 + hb.extra); // 0.8.0 5단계 사냥꾼 연사: 기본 공격 버프 (덧화살은 같은 공격의 일부로 모든 배수를 받은 피해의 extra만큼)
       const melee1 = !rngCls(p) && !isCaster(p); const bl = CANTRIP[p.build] || '기본 공격'; let dHb = 0;
       if (p.eq.weapon === 'twin') { const d1 = hurtEnemy(b, tgt, d * 0.5, { single: 1, melee: melee1, label: '첫 날' }); dHb = d1; if (b.sbK) sbEdgeHit(b, tgt, d1); if (tgt.alive) dHb += hurtEnemy(b, tgt, d * 0.5, { single: 1, melee: melee1, label: '둘째 날' }); }
@@ -192,6 +200,7 @@ function playerAct(b, id, tgtId) {
       if (hb) hnBasicAfter(b, tgt, dHb, hb); if (p.build === 'hunter') p.hnLastT = tgt.id;
       if (tgt.alive && hasIt(p, 'venomring')) addPoison(b, tgt, 1, 1);
       if (mkC) { const n = (mkC.add || 0) + Math.min(mkC.max || 5, Math.floor(kiC * (mkC.per || 1))); p.mkSt.chain = null; let k = 0; for (let i = 0; i < n && tgt.alive && !b.over; i++) { hurtEnemy(b, tgt, d, { single: 1, melee: melee1, label: '연환권' }); if (mkC.brk && tgt.alive) addBreak(b, tgt, mkC.brk); k++; } if (k) logp(b, 'good', '연환권: 기본 공격이 ' + (k + 1) + '타'); } // M5-2 연환권(평타형): 같은 피해로 더 친다
+      if (asS && tgt.alive) asOnBasic(b, tgt); if (asS && asS.zan > 0 && tgt.alive && !b.over) { hurtEnemy(b, tgt, d, { single: 1, melee: melee1, label: '그림자 분신' }); if (asS.zanPsn && tgt.alive) addPoison(b, tgt, asS.zanPsn, 1); if (asS.zanBrk && tgt.alive) addBreak(b, tgt, asS.zanBrk); if (tgt.alive) asOnBasic(b, tgt); } // M5-3 독침 · 독니, 잔영난무: 내가 누른 기본 공격이 두 번(같은 배수)
       addBreak(b, tgt, 10); applyReflux(b, tgt); break; // 0.6: 기본 공격은 스태미나를 채우지 않는다 (11.6절)
     }
     case 'heavy': {
@@ -371,6 +380,7 @@ function finishPlayer(b, time, lost) {
   if (p.exhaust && p.st >= 30) p.exhaust = 0;
   // 내 차례 = 빠른 행동 1번(먼저) + 주 행동 1번 (10월 3일, 기획서 12.7절). 빠른 칸을 쓰면 차례가 이어지고, 주 행동을 하면 차례가 끝난다.
   // 느린 행동은 두 칸을 다 쓴다(빠른 칸이 남아 있어야 한다). 성인의 성배·수확자의 손: 다음 빠른 행동 한 번은 빠른 칸을 쓰지 않는다
+  if (b.asChainAgain && !lost && !b.over && b.asChainUsed !== b.turnIdx) { b.asChainUsed = b.turnIdx; b.waiting = false; return; } b.asChainAgain = null; // M5-3 연쇄 격발: 쓰러뜨리면 이번 차례 한 번 더(차례마다 한 번)
   if (!lost && !b.over && time <= 0.6 && (!b.bonusUsed || b.extraQuick) && !noFast(p)) {
     if (b.bonusUsed) b.extraQuick = 0; // 소모품 향 한 줌: 빠른 칸 하나 더
     b.bonusUsed = 1; if (p.fxQuickNext) { p.fxQuickNext = 0; b.bonusUsed = 0; fxHit(p.eq.flask === 'saintgrail' ? 'saintgrail' : 'reaperhands'); }
