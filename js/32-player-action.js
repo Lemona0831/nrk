@@ -183,6 +183,7 @@ function playerAct(b, id, tgtId) {
   if (act.gen) { genSkill(b, act, tgt); if (b.markTgt) { if (b.markTgt.alive) { addS(b, b.markTgt, 'vuln', 2); logp(b, 'good', '표식이 ' + b.markTgt.n + '의 빈틈을 드러낸다. 취약'); } b.markTgt = null; } if (b.rcUsed) { p.rcN = 0; b.rcUsed = 0; } if (b.chainTgt) { if (b.chainTgt.alive) addBreak(b, b.chainTgt, 20); b.chainTgt = null; } if (b.vanguardTgt) { if (b.vanguardTgt.alive) addBreak(b, b.vanguardTgt, 20); b.vanguardTgt = null; } if (b.resonate) logp(b, 'crit', '서로 다른 주문이 공명한다. 피해 +15%'); b.resonate = false; b.resoBig = 0; b.echoMul = 1; if (p.hp <= 0) checkEnd(b); if (!b.over) finishPlayer(b, time); return; }
   switch (id) {
     case 'basic': {
+      const mkC = p.build === 'monk' && p.mkSt && p.mkSt.chain ? p.mkSt.chain : null, kiC = mkC ? st(p, 'empower') : 0; // M5-2 연환권: 기를 쓰기 전의 기로 센다
       let d = outDmg(b, basicBase(p), { weapon: 1 });
       const hb = p.build === 'hunter' && p.bbuf ? hnBasicBuf(b, tgt) : null; if (hb) d *= hb.mul * (1 + hb.extra); // 0.8.0 5단계 사냥꾼 연사: 기본 공격 버프 (덧화살은 같은 공격의 일부로 모든 배수를 받은 피해의 extra만큼)
       const melee1 = !rngCls(p) && !isCaster(p); const bl = CANTRIP[p.build] || '기본 공격'; let dHb = 0;
@@ -190,6 +191,7 @@ function playerAct(b, id, tgtId) {
       else { const d1 = hurtEnemy(b, tgt, d, { single: 1, melee: melee1, label: bl }); dHb = d1; if (b.sbK) sbEdgeHit(b, tgt, d1); }
       if (hb) hnBasicAfter(b, tgt, dHb, hb); if (p.build === 'hunter') p.hnLastT = tgt.id;
       if (tgt.alive && hasIt(p, 'venomring')) addPoison(b, tgt, 1, 1);
+      if (mkC) { const n = (mkC.add || 0) + Math.min(mkC.max || 5, Math.floor(kiC * (mkC.per || 1))); p.mkSt.chain = null; let k = 0; for (let i = 0; i < n && tgt.alive && !b.over; i++) { hurtEnemy(b, tgt, d, { single: 1, melee: melee1, label: '연환권' }); if (mkC.brk && tgt.alive) addBreak(b, tgt, mkC.brk); k++; } if (k) logp(b, 'good', '연환권: 기본 공격이 ' + (k + 1) + '타'); } // M5-2 연환권(평타형): 같은 피해로 더 친다
       addBreak(b, tgt, 10); applyReflux(b, tgt); break; // 0.6: 기본 공격은 스태미나를 채우지 않는다 (11.6절)
     }
     case 'heavy': {

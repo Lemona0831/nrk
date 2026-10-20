@@ -201,7 +201,7 @@ const cfFx = a => !!(a && a.s && a.s.fx.some(e => ['cleanse', 'transfer', 'perDm
 const cfRest = (b, L) => b.p.build === 'confessor' && E.cfTake && gt(b.p, 'confessor', 'rest') ? (L.find(a => a.v2 && a.ok && a.self && a.s.fx.some(e => e.k === 'cleanse' && !e.offer) && E.cfTake(b.p, a.s.fx.find(e => e.k === 'cleanse').only, a.s.fx.find(e => e.k === 'cleanse').n, 'clean', 1).e > 0) || null) : null;
 const SB_FX = ['imbue', 'edgeX', 'kwx', 'alt', 'killSpread']; // 마검사 효과 (참고: 마검사 판단은 kind가 있는 스킬이 끼워졌을 때만 걸린다)
 const MONK_OLD = !!process.env.MONK_TEST_OLD; // 1이면 10월 10일 단순화 전의 테스터 판단(자세 · ⚡ 공격)을 쓴다
-const MONK_FX = ['stance', 'kiBurst', 'kiPer', 'kiGrow', 'sealx', 'kiHits', 'mkCondense', 'mkAdamant', 'mkFlow', 'mkYeok', 'mkCheon', 'mkIlji', 'mkSamjae', 'mkReflux', 'mkBultoe', 'mkChillBurst', 'mkDrainChill', 'mkCtrPer']; // M5-2 새 효과 키 // 수도승 효과 (v2Pick의 수도승 판단이 이 효과를 가진 스킬이 끼워졌을 때만 걸린다)
+const MONK_FX = ['stance', 'kiBurst', 'kiPer', 'kiGrow', 'sealx', 'kiHits', 'mkChain', 'mkCondense', 'mkAdamant', 'mkFlow', 'mkYeok', 'mkCheon', 'mkIlji', 'mkSamjae', 'mkReflux', 'mkBultoe', 'mkChillBurst', 'mkDrainChill', 'mkCtrPer']; // M5-2 새 효과 키 // 수도승 효과 (v2Pick의 수도승 판단이 이 효과를 가진 스킬이 끼워졌을 때만 걸린다)
 /* 숨겨진 직업 3 (10월 7일, 비공개 문서 F4): 피로 당기기는 이유가 있을 때만(끊기 · 무너뜨리기 · 쓰러뜨리기 · 서원 · 값 깎기), 내고 난 생명력 40%(신중 50%) 이상, 값은 최대 생명력 15%(급할 때 25%) 이하.
    다른 직업은 a.pull이 없어 아무것도 바뀌지 않는다 */
 const bmFx = a => !!(a && a.s && a.s.fx.some(e => ['hpCost', 'bloodDmg', 'payCut', 'perDmg'].includes(e.k) || (e.k === 'drain' && e.eat) || (e.k === 'spread' && (e.kill || e.s === 'weak'))));
@@ -611,10 +611,12 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     const sure = r() < 0.6 + 0.35 * (P.mech || 0.5); const cur = b.prepTurn === b.turnIdx; const stNow = cur && p.stance, gdNow = cur && p.guard; // 지난 차례의 자세 · 방어는 이번 차례 첫 행동에서 지워진다
     // M5-2 (10월 20일): 결합 칸은 전투 첫 빠른 칸에, 승부수 · 강화 칸은 쓸 때가 보이면(사람은 버튼 설명과 예고를 보고 쓴다)
     { const S = p.mkSt || {}, hz = (a, k) => a.s.fx.some(e => e.k === k), slot = a => fastOk || a.time > 0.6;
+      { const ba = L.find(x => x.id === 'basic' && x.ok); if (S.chain && ba && !hv) { const t = best(ba, (x, y) => x.hp - y.hp); if (t) return ['basic', t.id]; } } // 연환권을 쓴 차례의 주 행동은 기본 공격(강타가 오면 평소 판단)
+      { const a = okS.find(a => hz(a, 'mkChain')); if (a && fastOk && !S.chain && !hv && !bigCtr && L.some(x => x.id === 'basic' && x.ok) && !(M >= 1 && !(cur && p.stance) && okS.some(x => fastSt(x)) && sure)) return [a.id]; } // 연환권(⚡): 이번 차례 기본 공격을 늘린다(되받을 공격이 오면 자세가 먼저)
       if (fastOk) { const cb = okS.find(a => a.self && ((hz(a, 'mkSamjae') && !S.samjae) || (hz(a, 'mkReflux') && !S.reflux) || (hz(a, 'mkBultoe') && !S.bultoe))); if (cb) return [cb.id]; }
       { const a = okS.find(a => hz(a, 'mkYeok')); if (a && !S.yeok && slot(a) && (M >= 2 || bigCtr) && p.hp > p.hpMax * 0.4) return [a.id]; }
-      { const a = okS.find(a => hz(a, 'mkCheon')); if (a && !S.cheon && slot(a) && M >= 1) return [a.id]; }
-      { const a = okS.find(a => hz(a, 'mkIlji')); if (a && !S.noKi && slot(a) && ki >= 3 && p.hp > p.hpMax * 0.25) { const t = reach(a).filter(e => psn2(e, 'chill') >= 2 && !enemyAvoid(e, a)).sort((x, y) => psn2(y, 'chill') * y.hp - psn2(x, 'chill') * x.hp)[0]; if (t) return [a.id, t.id]; } }
+      { const a = okS.find(a => hz(a, 'mkCheon')); if (a && !S.cheon && slot(a) && (M >= 2 || E.alive(b).some(e => e.intent && E.SEAL_K.includes(e.intent.k)))) return [a.id]; } // 천망: 되받기 피해 0이 대가라 둘 이상이 치거나 지원 행동을 하려는 적이 있을 때
+      { const a = okS.find(a => hz(a, 'mkIlji')); const kf = fastOk && okS.find(x => x.self && x.time <= 0.6 && x.s.fx.some(e => e.k === 'st' && e.s === 'empower')); if (a && !S.noKi && ki < 3 && kf && reach(a).some(e => psn2(e, 'chill') >= 2)) return [kf.id]; /* 일지멸맥 앞에 기를 채운다(기 가두기) */ if (a && !S.noKi && slot(a) && (ki >= 3 || (ki >= 2 && reach(a).some(e => psn2(e, 'chill') >= 3))) && p.hp > p.hpMax * 0.25) { const t = reach(a).filter(e => psn2(e, 'chill') >= 2 && !enemyAvoid(e, a)).sort((x, y) => psn2(y, 'chill') * y.hp - psn2(x, 'chill') * x.hp)[0]; if (t) return [a.id, t.id]; } }
       { const a = okS.find(a => hz(a, 'mkAdamant')); if (a && !S.adamant && slot(a) && (bigCtr || M >= 2 || p.hp < p.hpMax * 0.5)) return [a.id]; }
       { const a = okS.find(a => hz(a, 'mkFlow')); if (a && !S.flow && slot(a) && E.alive(b).length) return [a.id]; }
       { const a = okS.find(a => hz(a, 'mkCondense')); if (a && fastOk && !S.condense && ki >= 2 && okS.some(x => !x.self && kbOf(x))) return [a.id]; }

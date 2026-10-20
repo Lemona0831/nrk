@@ -322,8 +322,8 @@ const ATREE_DEF = {
     vars: {
       /* 스킬마다 변형 둘(둘 다 제시): v 'deep' 깊게 = 같은 길을 세게, v 'link' 잇기 = 그 스킬에 없던 다른 빌드의 꼬리표를 더해 경계 · 결합 칸으로. [Claude 초안] */
       m_yeonhwan: [
-        ['mv_yh_more', '끝없는 연환', '최대 5타 → 7타. 피해 12 → 11.', { fxSet: [{ k: 'dmg', n: 11 }, { k: 'kiHits', per: 1, max: 7 }] }, [], { v: 'deep' }],
-        ['mv_yh_basic', '연환 잇기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'mkNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+        ['mv_yh_more', '끝없는 연환', '기로 더하는 타격 최대 5 → 7.', { fxSet: [{ k: 'mkChain', max: 7, txt: '이번 차례 기본 공격 +3타, 기 1마다 1타 더(최대 7)' }] }, [], { v: 'deep' }],
+        ['mv_yh_brk', '연환 붕괴', '더한 타격마다 붕괴 +5.', { fxSet: [{ k: 'mkChain', brk: 5, txt: '이번 차례 기본 공격 +3타, 기 1마다 1타 더 · 타격마다 붕괴 +5' }] }, ['붕괴'], { v: 'link' }]],
       m_bunggwon: [
         ['mv_bg_cond', '터지는 붕권', '기가 3 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'ki>=3' } }, [], { v: 'deep' }],
         ['mv_bg_brk', '부수는 붕권', '쏟은 기 1마다 붕괴 +8.', { fxSet: [{ k: 'kiBurst', mul: 0.2, brk: 8 }] }, ['붕괴'], { v: 'link' }]],
@@ -331,7 +331,7 @@ const ATREE_DEF = {
         ['mv_hh_deep', '깊은 호흡', '기 +2 → +3.', { fxSet: [{ k: 'st', s: 'empower', n: 3 }] }, [], { v: 'deep' }],
         ['mv_hh_st', '고른 호흡', '자세를 함께 잡습니다.', { fxAdd: [{ k: 'stance' }] }, ['자세'], { v: 'link' }]],
       m_cheonsu: [
-        ['mv_cs_hits', '천수 만타', '3타 → 4타. 피해 6 → 5.', { set: { hits: 4 }, fxSet: [{ k: 'dmg', n: 5 }] }, [], { v: 'deep' }],
+        ['mv_cs_hits', '천수 만타', '3타 → 4타. 피해 7 → 6.', { set: { hits: 4 }, fxSet: [{ k: 'dmg', n: 6 }] }, [], { v: 'deep' }],
         ['mv_cs_chill', '짚는 연타', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
       m_eungchuk: [
         ['mv_ec_more', '단전 응축', '쓸 때 기 +1.', { fxAdd: [{ k: 'st', s: 'empower', n: 1 }] }, [], { v: 'deep' }],
@@ -385,11 +385,11 @@ const ATREE_DEF = {
         ['mv_th_slow', '거두는 탈혼', '느린 행동이 됩니다. 둔화 2 → 3.', { set: { time: 'slow' }, fxSet: [{ k: 'st', s: 'chill', n: 3 }] }, [], { v: 'deep' }],
         ['mv_th_seal', '혼을 묶는 손', '지원 행동을 봉인합니다.', { fxAdd: [{ k: 'sealx', brk: 15 }] }, ['봉인'], { v: 'link' }]],
       m_doedol: [
-        ['mv_dd_more', '배로 돌린 주먹', '되받은 1마다 +6 → +9. 피해 13 → 10.', { fxSet: [{ k: 'dmg', n: 10 }, { k: 'mkCtrPer', per: 9, txt: '지난 적 차례에 되받은 1마다 피해 +9.' }] }, [], { v: 'deep' }],
+        ['mv_dd_more', '배로 돌린 주먹', '되받은 1마다 +7 → +10. 피해 13 → 10.', { fxSet: [{ k: 'dmg', n: 10 }, { k: 'mkCtrPer', per: 10, txt: '지난 적 차례에 되받은 1마다 피해 +10.' }] }, [], { v: 'deep' }],
         ['mv_dd_brk', '꺾어 돌린 주먹', '붕괴 +20.', { fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
       m_gibat: [
-        ['mv_gb_more', '넘치는 기 받기', '되받으면 기 +1 → +2.', { fxSet: [{ k: 'stance', dmg: 12, ki: 2 }] }, [], { v: 'deep' }],
-        ['mv_gb_chill', '맥 받는 자세', '되받은 적에게 둔화 1.', { fxSet: [{ k: 'stance', dmg: 12, ki: 1, chill: 1 }] }, ['둔화'], { v: 'link' }]],
+        ['mv_gb_more', '넘치는 기 받기', '되받으면 기 +1 → +2.', { fxSet: [{ k: 'stance', dmg: 13, ki: 2 }] }, [], { v: 'deep' }],
+        ['mv_gb_chill', '맥 받는 자세', '되받은 적에게 둔화 1.', { fxSet: [{ k: 'stance', dmg: 13, ki: 1, chill: 1 }] }, ['둔화'], { v: 'link' }]],
       m_tansan: [
         ['mv_ts_slow', '무거운 탄산권', '느린 행동이 됩니다. 피해 17 → 22.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 22 }] }, [], { v: 'deep' }],
         ['mv_ts_ki', '기 실린 탄산권', '맞은 적마다 기 +1.', { fxAdd: [{ k: 'meSt', s: 'empower', n: 1, if: 'hit' }] }, ['기'], { v: 'link' }]],

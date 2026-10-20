@@ -118,9 +118,10 @@ function skValueWd(e, K, W, hi) { const U = WD_BOUND, Wv = K.ward.v, nT = e.n ||
   } return 0; }
 /* 0.8.0 M5-2 수도승(10월 20일 만든 사람 설계지 2판): 새 효과의 숫자. 설계지 숫자(연환권 기마다 1타 · 붕권 +20% · 금강 +20% · 역천권 받는 피해 +30%)는 그대로, 나머지는 가설 — 값 띠 · 측정으로 정한다 */
 const MK_BOUND = { adamantRed: 0.45, /* 맞추기 1번: 금강불괴 −40% → −45%(비용 3 값 띠) */ yeokBrk: 15, yeokIn: 0.3, cheonChill: 2, cheonSeal: 5, cheonBrk: 22, iljiHp: 0.1, iljiNoKi: 3, samjaeMul: 0.25, refluxKi: 1, bultoeMul: 2, bigBrk: 200 }; /* 기공 응축(설계지 ×2)은 쏟는 기 +3(mkCondense add): 새 트리는 쓸 때 기가 0.5 안팎이라 ×2가 0에 가깝다(M5-2 측정) */
-const MK_K = ['mkCondense', 'mkAdamant', 'mkDrainChill', 'mkChillBurst', 'mkCtrPer', 'mkFlow', 'mkNextBrk', 'mkYeok', 'mkCheon', 'mkIlji', 'mkSamjae', 'mkReflux', 'mkBultoe'];
+const MK_K = ['mkChain', 'mkCondense', 'mkAdamant', 'mkDrainChill', 'mkChillBurst', 'mkCtrPer', 'mkFlow', 'mkNextBrk', 'mkYeok', 'mkCheon', 'mkIlji', 'mkSamjae', 'mkReflux', 'mkBultoe'];
 function skValueMk(e, s, K, M, hi, mt) { const U = MK_BOUND, inc = hi ? 14 : 8, nT = e.n || 3, d = (s.fx.find(x => x.k === 'dmg') || { n: 0 }).n * (s.hits || 1), C = 2.2; /* C: 쓸 때 대상의 둔화(혈도 · 역혈 · 파혈 판) */
   switch (e.k) {
+    case 'mkChain': return ((e.add || 0) + Math.min(e.max || 5, M.Kp[hi] * (e.per || 1))) * (6.5 * 1.125 + (e.brk || 0) * K.brk); // 이번 차례 기본 공격에 더하는 타격: 한 대 = 기본 공격 피해 6.5(M5-2 측정, 붕괴는 기본 공격 한 번), ▶에 기가 실릴 때가 반쯤(×1.125)
     case 'mkCondense': return (e.add || 3) * 9 * 0.8; // 다음에 쏟는 기 +add: 쏟는 칸 하나(기 1당 9쯤)에 더해지는 기
     case 'mkAdamant': return nT * U.adamantRed * inc * 1.5; // 큰 공격 앞에 쓰면 몫이 크다(중급: 받는 피해 14/차례)
     case 'mkDrainChill': return e.per * C * 0.9;

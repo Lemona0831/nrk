@@ -21,8 +21,8 @@ const one = (ids, id, prep, en) => { const f = fight(ids, en); if (prep) prep(f)
   p.stance = { dmg: 8, max: 3, mul: 0.2 }; ok(ctrMax(p) === 3, '금강 자세: 이번 차례 3번까지'); p.mkSt = { yeok: 2 }; ok(ctrMax(p) === Infinity, '역천권: 제한 없음'); }
 { const { p, b } = fight(['m_geumgang'], ['bruiser', 'bruiser', 'bruiser', 'bruiser']); use(b, 'm_brace'); use(b, 'guard'); E.runUntilPlayer(b); ok((b.log.filter(x => /^되받기 \(\d\/2\)/.test(x.m)).length) <= 2 && !b.log.some(x => /^되받기 \(3\//.test(x.m)), '받아칠 자세 + 방어: 한 적 차례에 되받기 2번까지(' + b.log.filter(x => /^되받기 \(/.test(x.m)).length + ')'); }
 // 연환권 · 천수연타
-{ const d0 = lost(one(['m_yeonhwan'], 'm_yeonhwan').es[0]); const d3 = lost(one(['m_yeonhwan'], 'm_yeonhwan', f => setKi(f.p, 3)).es[0]);
-  ok(Math.abs(d3 / d0 - 4) < 0.1, '연환권(⚡): 기 3이면 1타 → 4타, 기는 쓰지 않음 — ' + Math.round(d0) + ' → ' + Math.round(d3)); }
+{ const bas = (k, c) => { const f = fight(['m_yeonhwan']); setKi(f.p, k); if (c) use(f.b, 'm_yeonhwan'); use(f.b, 'basic', f.es[0].id); return f; }; const d0 = lost(bas(3, 0).es[0]), f3 = bas(3, 1), d3 = lost(f3.es[0]), d1 = lost(bas(0, 1).es[0]);
+  ok(Math.abs(d3 / d0 - 7) < 0.15 && Math.abs(d1 / lost(bas(0, 0).es[0]) - 4) < 0.1 && f3.b.log.some(x => /연환권: 기본 공격이 7타/.test(x.m)), '연환권(평타형 ⚡): 이번 차례 기본 공격 +3타, 기 3이면 1 → 7타(기 0이면 4타) — ' + Math.round(d0) + ' → ' + Math.round(d3)); ok(!f3.p.mkSt.chain, '기본 공격을 치면 연환권은 사라짐'); }
 { const d0 = lost(one(['m_yeonhwan', 'm_cheonsu'], 'm_cheonsu').es[0]); const d1 = lost(one(['m_yeonhwan', 'm_cheonsu'], 'm_cheonsu', f => setKi(f.p, 1)).es[0]);
   ok(Math.abs(d1 / d0 - 4 / 3) < 0.05, '천수연타(⚡): 기가 있으면 3타 → 4타 — ' + Math.round(d0) + ' → ' + Math.round(d1)); }
 // 붕권 · 기공 응축 · 멸각

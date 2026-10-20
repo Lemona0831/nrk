@@ -439,6 +439,7 @@ const IFX_MK = {
 const MK_N = { adamant: '금강불괴', flow: '내공 순환', yeok: '역천', cheon: '천망', noKi: '일지멸맥의 대가' };
 function mkUse(b, s) {
   const p = b.p, S = p.mkSt = p.mkSt || {}, U = MK_BOUND, F = k => s.fx.find(e => e.k === k);
+  const ch0 = F('mkChain'); if (ch0) { S.chain = { add: ch0.add || 0, per: ch0.per || 1, max: ch0.max || 5, brk: ch0.brk || 0 }; logp(b, 'good', s.n + ': 이번 차례 기본 공격 +' + S.chain.add + '타, 기 1마다 1타 더'); }
   const cd = F('mkCondense'); if (cd) { S.condense = cd.add || 3; logp(b, 'good', s.n + ': 다음에 쏟는 기 +' + S.condense); }
   const ad = F('mkAdamant'); if (ad) { S.adamant = ad.n || 3; logp(b, 'good', s.n + ': ' + S.adamant + '차례 동안 받는 피해 −' + Math.round(U.adamantRed * 100) + '%'); }
   const fl = F('mkFlow'); if (fl) { S.flow = fl.n || 3; S.flowMul = fl.mul || 0.5; logp(b, 'good', s.n + ': ' + S.flow + '차례 동안 ▶ 공격 피해 +' + Math.round(S.flowMul * 100) + '%'); }
@@ -460,7 +461,7 @@ function mkCheonHit(b, e) {
   b.rec.push({ k: 'seal', big: big ? 1 : 0, cheon: 1 });
 }
 function mkTurnStart(b, p) {
-  const S = p.mkSt; for (const k of ['adamant', 'flow', 'yeok', 'cheon', 'noKi']) if (S[k] > 0) { S[k]--; if (!S[k]) logp(b, 'sys', MK_N[k] + '이(가) 걷힌다'); }
+  const S = p.mkSt; S.chain = null; /* 연환권은 그 차례만 */ for (const k of ['adamant', 'flow', 'yeok', 'cheon', 'noKi']) if (S[k] > 0) { S[k]--; if (!S[k]) logp(b, 'sys', MK_N[k] + '이(가) 걷힌다'); }
 }
 /* ===== 0.8.0 M5-1 파수꾼 (10월 20일 만든 사람 설계지 + 07:40 보완): 태세 · 경계 승부수 · 결합 칸 =====
    p.wdSt = { def · atk 태세(하나만, 수도승 자세 p.stance와 따로), march 묵직한 걸음, siege 파성(siegeAmp), valor 용맹, quakeNext · quakeX 대지 분쇄, wardHalf 보호막 −50%, nextBrk 다음 기본 공격 붕괴, turncoat · hammer · chainPull 결합 칸 }.
