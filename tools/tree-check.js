@@ -80,6 +80,27 @@ for (const c of CLS) {
 
 
 
+// ===== 0.8.0 M5-1 파수꾼 재설계(10월 20일 만든 사람 설계지 + 07:40 보완): M5-0c 규격 그대로 =====
+{ const A = E.atBuild('warden'), N = Object.values(A.nodes), SK = N.filter(x => x.kind === 'skill'), up = N.filter(x => x.slot);
+  ok(JSON.stringify(A.sec) === JSON.stringify({ A: '성벽', AB: '공성추', B: '파쇄', BC: '기둥 파쇄', C: '전열 장악', CA: '용맹의 투지' }), '파수꾼 부채꼴 여섯: 성벽 · 공성추 · 파쇄 · 기둥 파쇄 · 전열 장악 · 용맹의 투지');
+  ok(SK.length === 39 && up.length === 36 && Object.keys(A.vars).length === 72, '파수꾼 스킬 노드 39(갈래 21 · 경계 15 · 결합 3) + 변형 자리 36 · 변형 72');
+  for (const k of ['A', 'B', 'C']) { const S6 = SK.filter(x => x.sec === k), r = n => S6.filter(x => x.ring === n), op = r(1).filter(x => x.ys === 2);
+    ok(S6.length === 7 && r(1).map(x => x.ys).sort().join() === '1,2,2' && op[0].excl === op[1].id && r(2).length === 2 && r(3).length === 2, A.sec[k] + ': 1고리 첫 스킬 둘(길) + 리듬 1, 2고리 2 · 3고리 2');
+    ok([1, 2, 3].every(g => r(g).filter(x => x.path).map(x => x.path).sort().join() === 'a,b'), A.sec[k] + ': 길 a · b — ' + ['a', 'b'].map(w => [1, 2, 3].map(g => r(g).find(x => x.path === w).n).join(' → ')).join(' / ')); }
+  ok(['w_dstance', 's_astance'].every(id => A.nodes[id].ring === 1 && A.nodes[id].path === 'a' && E.SK2[id].fx.some(e => e.k === 'wdStance')) && A.nodes.w_shieldhit.path === 'b' && A.nodes.s_slam.path === 'b' && A.nodes.f_sweep.path === 'a' && A.nodes.f_chainblade.path === 'b', '1고리: 성벽 수비 태세 / 방패 가격, 파쇄 공격 태세 / 내리 찍기, 전열 장악 개기식 / 사슬의 검(만든 사람)');
+  ok(A.nodes.w_pray.ring === 1 && A.nodes.s_regret.ring === 1 && A.nodes.f_stomp.ring === 1 && E.SK2.w_pray.n === '신성한 기도' && E.SK2.s_regret.n === '회한의 검' && E.SK2.f_stomp.n === '발 구르기', '리듬 칸: 신성한 기도 · 회한의 검 · 발 구르기(만든 사람)');
+  for (const k of ['AB', 'BC', 'CA']) { const S5 = SK.filter(x => x.sec === k), fin = S5.filter(x => x.ys === 4); const atk = S5.filter(x => x.ys !== 4 && E.SK2[x.id].tgt !== 'self').length;
+    ok(S5.length === 5 && fin.length === 1 && E.SK2[fin[0].id].line && atk === 2, A.sec[k] + ': 경계 5칸(공격 2 · 강화/방어 2 · 대사 승부수 ' + (fin[0] && fin[0].n) + ')'); }
+  ok(E.SK2.w_siege.line === '「지키지 못하는 성벽 따위, 이 나락에서는 사치임이 분명하구나.」' && E.SK2.s_quake.line === '「네놈들의 방어선을, 쳐부숴주마.」' && E.SK2.w_valor.line === '「이 몸이 물러설 장소 따위. 이미 사라진지 오래렸다.」' && E.SK2.w_siege.cut === 'blade' && E.SK2.w_valor.cut === 'guard', '승부수 대사 셋(만든 사람 문장 그대로) · 컷인 종류');
+  const STG = D.run_('WD_TAGS'), BRIDGE = ['보호막', '붕괴', '태세', '기본공격연동', '원거리', '광역'], pureN = {};
+  for (const u of up) { const V = u.vars.map(v => A.vars[v]); ok(V.length === 2 && V.map(v => v.v).sort().join() === 'deep,link', u.id + ': 깊게 하나 · 잇기 하나'); const lk = V.find(v => v.v === 'link'); ok(lk.tags.some(g => BRIDGE.includes(g) && !(STG[u.on] || []).includes(g)), u.id + ' 잇기 ' + lk.n + ': 없던 꼬리표 더함');
+    const m = V.find(v => v.v === 'deep').mod; if (!m.set && !m.cond && [...(m.fxSet || []), ...(m.fxAdd || [])].every(f => ['dmg', 'brk', 'st', 'ward', 'wardFill', 'thorn', 'wdPray', 'wdMarch', 'wdNextBrk', 'wardBurn'].includes(f.k))) pureN[u.br] = (pureN[u.br] || 0) + 1; }
+  ok(Object.values(pureN).every(n => n <= 2), '파수꾼 깊게의 순수 숫자 변형 갈래마다 둘까지 ' + JSON.stringify(pureN));
+  const nm = SK.map(x => x.n).concat(Object.values(A.vars).map(v => v.n)), dup = nm.filter((x, i) => nm.indexOf(x) !== i), SNv = Object.values(D.run_('SNAMES')).concat(Object.values(A.sec)), clash = SK.filter(x => SNv.includes(x.n) || x.n === '자세').map(x => x.n);
+  ok(!dup.length && !clash.length, '파수꾼 이름 겹침 0, 상태 · 부채꼴 · 수도승 "자세"와 같은 스킬 이름 0' + (dup.length || clash.length ? ' — ' + dup.concat(clash).join(', ') : ''));
+  ok(['w_turncoat', 's_hammerhand', 'f_chainpull'].every(id => A.nodes[id].reqTags) && A.nodes.w_turncoat.reqTags.태세 === 2 && A.nodes.f_chainpull.reqTags.원거리 === 1, '결합 칸 셋(돌아선 방패 태세 2 · 쇠망치 손 기본공격연동 2 · 붕괴 1 · 사슬 끌기 원거리 1 · 보호막 1)');
+  ok(A.nodes.sv_w_dstance && A.nodes.sv_s_astance && A.nodes.sv_w_dstance.on === 'w_dstance', '변형 자리 id는 스킬 id 전체(sv_w_dstance · sv_s_astance가 겹치지 않음)'); }
+
 // ===== M5-0 보정 5: 고리는 야영지에서 연다 =====
 { const run = newRun('spellblade'); const ro = D.run_('ringOpen'), rc = D.run_('ringCampOpen');
   ok(!ro(run, 2) && !ro(run, 3), '새 판: 2 · 3고리 잠김'); run.ch = 1; ok(rc(run) === 2 && ro(run, 2) && !ro(run, 3) && run.ringNew === 1, '1챕터 야영지: 2고리가 열리고 트리 버튼 강조');
@@ -276,7 +297,7 @@ function nodeFight(keys) { const run = newRun('spellblade'); run.clears = 2; for
 /* M5-0 마감(10월 19일 만든 사람): 숫자만 띠 하한까지 올리기로 해 대기 목록을 비웠다. 이제 경계 칸도 띠 밖이면 실패 */
 const BAND_WAIT = [];
 /* 띠 예외(10월 20일 만든 사람, M5-0 보정): 마갑탄은 M4대로(빠른 행동, 비용 2) 되돌렸다. 값 식(E)은 빠른 행동의 시간 몫을 세지 않아 비용 2 띠 아래다. 띠 판정과 기준 평균 모두에서 뺀다 */
-const BAND_EXEMPT = ['sb_bolt'];
+const BAND_EXEMPT = ['sb_bolt', 'w_pray']; /* M5-1: 신성한 기도는 만든 사람 숫자(최대 생명력 2~3%, 수비 태세면 더 세게) 그대로, 리듬 칸 띠 아래 */
 { const SC = D.run_('skScore'), RING = { 1: [1, 2], 2: [2, 3], 3: [3, 4] }, BAND = { 1: [0.5, 0.65], 2: [0.85, 1.15], 3: [1.5, 1.8], 4: [2.2, 2.6] }, BOUND = ['AB', 'BC', 'CA'];
   const NUMK = ['dmg', 'brk', 'exploit', 'kwx', 'lowx', 'brokenx', 'st', 'imbue', 'ward', 'wardDmg', 'stam'], rep = [];
   for (const c of ['spellblade', 'warden', 'monk', 'assassin', 'hunter', 'elementalist']) {

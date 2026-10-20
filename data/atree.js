@@ -155,49 +155,143 @@ const ATREE_DEF = {
         ['sbm_shell_overheat', '과열 마갑', '보호막 10 → 15. 대가: 나에게 화상 3.', { fxSet: [{ k: 'ward', n: 15 }], fxAdd: [{ k: 'meSt', s: 'ignite', n: 3 }] }, ['보호막'], { mut: 1, on: 'sb_shell' }]],
     },
   },
-  /* 0.8.0 5단계 (10월 17일 만든 사람 검토 반영): docs/제안/0.8.0-5단계-파수꾼-수도승-트리초안-2026-10-17.md 2-6. 스킬 25 + 강화 27 = 52노드 */
+  /* 0.8.0 M5-1(10월 20일 만든 사람 설계지 + 07:40 보완): 파수꾼 액티브 재설계. M5-0c 규격 — 갈래 3 × 길 둘 + 리듬 칸, 경계 5칸(대사 승부수 고정), 결합 칸 3(판마다 둘), 변형 스킬마다 둘.
+     옛 사다리 트리(5단계 52노드)의 배치는 버리고 스킬 수치 결정은 살렸다(D14). 성벽 a 수비 태세 · b 방패 가격, 파쇄 a 공격 태세 · b 내리 찍기, 전열 장악 a 개기식 · b 사슬의 검 */
   warden: {
-    br: { 성벽: 0, 파쇄: 120, '전열 장악': 240 }, lane: { LL: -36, L: -18, C: 0, R: 18, RR: 36 },
+    br: { 성벽: 0, 파쇄: 120, '전열 장악': 240 }, lane: { LL: -22, L: -12, C: 0, R: 12, RR: 22 },
+    sec: { A: '성벽', AB: '공성추', B: '파쇄', BC: '기둥 파쇄', C: '전열 장악', CA: '용맹의 투지' },
+    rad: { 1: 125, 2: 185, 3: 255, 4: 320, 5: 395, 6: 470 }, paths: { 성벽: { a: '수비 태세', b: '방패 가격' }, 파쇄: { a: '공격 태세', b: '내리 찍기' }, '전열 장악': { a: '개기식', b: '사슬의 검' } },
     skills: [
-      ['w_raise', '성벽', 1, 1, 'C', ['S'], 2], ['w_shove', '성벽', 1, 2, 'L', ['w_raise'], 2], ['w_flare', '성벽', 1, 2, 'R', ['w_raise'], 2], // 보호막 터뜨리기 3 → 2 (1고리 태우기)
-      ['w_kindle', '성벽', 2, 3, 'LL', ['w_shove'], 2], ['w_stand', '성벽', 2, 3, 'L', ['w_shove'], 3], ['w_hold', '성벽', 2, 3, 'R', ['w_flare'], 2], ['w_blaze', '성벽', 2, 3, 'RR', ['w_flare'], 3],
-      ['w_citadel', '성벽', 3, 5, 'L', ['w_stand'], 4], ['w_last', '성벽', 3, 5, 'R', ['w_blaze'], 4],
-      ['s_knock', '파쇄', 1, 1, 'C', ['S'], 2], ['s_slam', '파쇄', 1, 2, 'L', ['s_knock'], 2], ['s_gap', '파쇄', 1, 2, 'R', ['s_knock'], 2],
-      ['s_cut', '파쇄', 2, 3, 'LL', ['s_slam'], 3], ['s_crack', '파쇄', 2, 3, 'L', ['s_slam'], 2], ['s_dig', '파쇄', 2, 3, 'R', ['s_gap'], 3], ['s_throw', '파쇄', 2, 3, 'RR', ['s_gap'], 3],
-      ['s_ruin', '파쇄', 3, 5, 'C', ['s_dig', 's_throw'], 4],
-      ['f_sweep', '전열 장악', 1, 1, 'C', ['S'], 2], ['f_stomp', '전열 장악', 1, 2, 'L', ['f_sweep'], 2], ['f_break', '전열 장악', 1, 2, 'R', ['f_sweep'], 2],
-      ['f_snare', '전열 장악', 2, 3, 'LL', ['f_stomp'], 2], ['f_cleave', '전열 장악', 2, 3, 'L', ['f_sweep'], 2], ['f_topple', '전열 장악', 2, 3, 'R', ['f_cleave'], 3], ['f_drag', '전열 장악', 2, 3, 'RR', ['f_break'], 3],
-      ['f_collapse', '전열 장악', 3, 5, 'C', ['f_topple', 'f_cleave'], 4],
+      ['w_dstance', '성벽', 1, 1, 'LL', ['S'], 2, { excl: 'w_shieldhit', path: 'a' }], ['w_shieldhit', '성벽', 1, 1, 'RR', ['S'], 2, { excl: 'w_dstance', path: 'b' }], ['w_pray', '성벽', 1, 2, 'C', ['w_dstance', 'w_shieldhit'], 1],
+      ['w_stand', '성벽', 2, 3, 'L', ['w_dstance', 'w_shieldhit'], 2, { path: 'a' }], ['w_hold', '성벽', 2, 3, 'R', ['w_dstance', 'w_shieldhit'], 2, { path: 'b' }],
+      ['w_citadel', '성벽', 3, 5, 'L', ['w_stand', 'w_hold'], 4, { path: 'a' }], ['w_beyond', '성벽', 3, 5, 'R', ['w_stand', 'w_hold'], 3, { path: 'b' }],
+      ['s_astance', '파쇄', 1, 1, 'LL', ['S'], 2, { excl: 's_slam', path: 'a' }], ['s_slam', '파쇄', 1, 1, 'RR', ['S'], 2, { excl: 's_astance', path: 'b' }], ['s_regret', '파쇄', 1, 2, 'C', ['s_astance', 's_slam'], 1],
+      ['s_march', '파쇄', 2, 3, 'L', ['s_astance', 's_slam'], 2, { path: 'a' }], ['s_cut', '파쇄', 2, 3, 'R', ['s_astance', 's_slam'], 2, { path: 'b' }],
+      ['s_ruin', '파쇄', 3, 5, 'L', ['s_march', 's_cut'], 3, { path: 'a' }], ['s_fall', '파쇄', 3, 5, 'R', ['s_march', 's_cut'], 3, { path: 'b' }],
+      ['f_sweep', '전열 장악', 1, 1, 'LL', ['S'], 2, { excl: 'f_chainblade', path: 'a' }], ['f_chainblade', '전열 장악', 1, 1, 'RR', ['S'], 2, { excl: 'f_sweep', path: 'b' }], ['f_stomp', '전열 장악', 1, 2, 'C', ['f_sweep', 'f_chainblade'], 1],
+      ['w_shove', '전열 장악', 2, 3, 'L', ['f_sweep', 'f_chainblade'], 2, { path: 'a' }], ['f_drag', '전열 장악', 2, 3, 'R', ['f_sweep', 'f_chainblade'], 2, { path: 'b' }],
+      ['f_collapse', '전열 장악', 3, 5, 'L', ['w_shove', 'f_drag'], 3, { path: 'a' }], ['f_hook', '전열 장악', 3, 5, 'R', ['w_shove', 'f_drag'], 3, { path: 'b' }],
+      /* 경계 [Claude 초안](입구 · 둘째 · 3고리 둘: 공격 2 · 강화/방어 2) + 대사 승부수(만든 사람) */
+      ['w_flare', '공성추', 2, 3, 'C', ['w_dstance', 'w_shieldhit', 's_astance', 's_slam'], 2, { requires: [['w_dstance', 'w_shieldhit'], ['s_astance', 's_slam']] }], ['w_rebuild', '공성추', 2, 4, 'C', ['w_flare'], 2],
+      ['w_breach', '공성추', 3, 5, 'L', ['w_rebuild'], 3], ['w_rampart', '공성추', 3, 5, 'R', ['w_rebuild'], 3], ['w_siege', '공성추', 3, 6, 'C', ['w_breach', 'w_rampart'], 4],
+      ['f_topple', '기둥 파쇄', 2, 3, 'C', ['s_astance', 's_slam', 'f_sweep', 'f_chainblade'], 2, { requires: [['s_astance', 's_slam'], ['f_sweep', 'f_chainblade']] }], ['s_lean', '기둥 파쇄', 2, 4, 'C', ['f_topple'], 2],
+      ['f_rampart', '기둥 파쇄', 3, 5, 'L', ['s_lean'], 3], ['s_gapwatch', '기둥 파쇄', 3, 5, 'R', ['s_lean'], 3], ['s_quake', '기둥 파쇄', 3, 6, 'C', ['f_rampart', 's_gapwatch'], 4],
+      ['f_charge', '용맹의 투지', 2, 3, 'C', ['f_sweep', 'f_chainblade', 'w_dstance', 'w_shieldhit'], 2, { requires: [['f_sweep', 'f_chainblade'], ['w_dstance', 'w_shieldhit']] }], ['w_spikes', '용맹의 투지', 2, 4, 'C', ['f_charge'], 2],
+      ['f_storm', '용맹의 투지', 3, 5, 'L', ['w_spikes'], 3], ['w_armor', '용맹의 투지', 3, 5, 'R', ['w_spikes'], 3], ['w_valor', '용맹의 투지', 3, 6, 'C', ['f_storm', 'w_armor'], 4],
+      /* 결합 칸 [Claude 초안]: 원 바깥(부채꼴 경계선 바깥 끝), 꼬리표 조건, 판마다 셋 중 둘 */
+      ['w_turncoat', '결합', 2, 4, 'C', [], 2, { reqTags: { 태세: 2 }, ang: 30 }], ['s_hammerhand', '결합', 2, 4, 'C', [], 2, { reqTags: { 기본공격연동: 2, 붕괴: 1 }, ang: 150 }], ['f_chainpull', '결합', 2, 4, 'C', [], 2, { reqTags: { 원거리: 1, 보호막: 1 }, ang: 270 }],
     ],
-    ups: [
-      ['wu_wil', '성벽', 1, 1, 'LL', 'w_raise', '받쳐 든 방패', '의지 1점마다 보호막 +1.', { fxSet: [{ k: 'ward', wil: 1 }] }, []],
-      ['wu_coat', '성벽', 1, 2, 'LL', 'w_shove', '방벽 돌파', '피해 13 → 12, 보호막 10 → 15.', { fxSet: [{ k: 'dmg', n: 12 }, { k: 'ward', n: 15 }] }, ['w_coat']],
-      ['wu_heat', '성벽', 1, 2, 'RR', 'w_flare', '달군 방패', '보호막이 20 이상이면 비용 −1(바닥 1, 라운드에 한 번).', { cond: { off: 1, when: 'ward>=20' } }, ['w_forge']],
-      ['wu_burst', '성벽', 2, 4, 'R', 'w_flare', '보호막 폭발', '전열 모두를 칩니다. 태운 1마다 ×3 → ×2.5.', { set: { tgt: 'front' }, fxSet: [{ k: 'wardBurn', mul: 2.5 }] }, ['w_burst']],
-      ['wu_scald', '성벽', 2, 4, 'LL', 'w_kindle', '용광 방벽', '보호막 21 → 28.', { fxSet: [{ k: 'ward', n: 28 }] }, ['w_scald']],
-      ['wu_rebuild', '성벽', 2, 4, 'L', 'w_stand', '다시 세우는 벽', '빠른 칸이 됩니다. 채우기 60% → 40%, 보호를 주지 않습니다.', { set: { time: 'fast' }, fxSet: [{ k: 'wardFill', to: 0.4 }], fxDel: [{ k: 'st', s: 'protect' }] }, ['w_rebuild', 'w_unyield']],
-      ['wu_crush', '성벽', 2, 4, 'C', 'w_hold', '짓누르는 방패', '피해 17 → 18, 보호막 비례 ×0.25 → ×0.5.', { fxSet: [{ k: 'dmg', n: 18 }, { k: 'wardDmg', per: 0.5 }] }, ['w_crush', 'w_press', 'w_eternal']],
-      ['wu_molten', '성벽', 3, 5, 'RR', 'w_blaze', '쇳물 방패', '느림이 됩니다. 태우기 상한 14 → 20, 붕괴 +25.', { set: { time: 'slow' }, fxSet: [{ k: 'wardBurn', max: 20 }], fxAdd: [{ k: 'brk', n: 25 }] }, ['w_molten', 'w_breach']],
-      ['wu_cinder', '성벽', 3, 6, 'R', 'w_last', '재가 되는 성벽', '큰 적(정예 · 강적 · 보스)에게 ×1.5.', { fxAdd: [{ k: 'bigx', mul: 1.5 }] }, ['w_cinder']],
-      ['su_stagger', '파쇄', 1, 1, 'LL', 's_knock', '비틀거림', '모으는 적이면 붕괴 +70.', { fxAdd: [{ k: 'cutx', brk: 70 }] }, ['s_stagger']],
-      ['su_pillar', '파쇄', 2, 3, 'C', 's_slam', '기둥 꺾기', '붕괴 37 → 47, 큰 적에게 ×1.5.', { fxSet: [{ k: 'brk', n: 47 }], fxAdd: [{ k: 'bigx', mul: 1.5 }] }, ['s_pillar', 's_smash', 's_hammer', 's_rift']],
-      ['su_quake', '파쇄', 2, 4, 'LL', 's_cut', '흔들어 끊기', '붕괴 34 → 46.', { fxSet: [{ k: 'brk', n: 46 }] }, ['s_quake']],
-      ['su_open', '파쇄', 2, 4, 'L', 's_crack', '약점 벌리기', '붕괴 37 → 44. 건 뒤 대상의 취약을 2배로.', { fxSet: [{ k: 'brk', n: 44 }], fxAdd: [{ k: 'vulnGrow', mul: 2 }] }, ['s_open', 's_wedge', 's_wedgebite', 's_mark']],
-      ['su_maul', '파쇄', 2, 4, 'C', 's_gap', '깨뜨리는 망치', '느림이 됩니다. 무너진 적 ×2 → ×2.5.', { set: { time: 'slow' }, fxSet: [{ k: 'brokenx', mul: 2.5 }] }, ['s_maul']],
-      ['su_lever', '파쇄', 2, 4, 'R', 's_dig', '균열 관통', '빠른 칸이 됩니다. 피해 15 → 12, 취약 2를 겁니다.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 12 }], fxAdd: [{ k: 'st', s: 'vuln', n: 2 }] }, ['s_lever', 's_unravel']],
-      ['su_mark', '파쇄', 2, 4, 'RR', 's_throw', '약점 노리는 손', '대상의 취약이 3 이상이면 비용 −1(바닥 1, 라운드에 한 번).', { cond: { off: 1, when: 'kw:vuln>=3' } }, []],
-      ['su_last', '파쇄', 3, 6, 'L', 's_ruin', '무너진 자의 최후', '생명력 30% 이하인 적에게 ×1.5.', { fxAdd: [{ k: 'lowx', hp: 0.3, mul: 1.5 }] }, ['s_lastblow', 's_judge']],
-      ['su_slide', '파쇄', 3, 6, 'R', 's_ruin', '산사태', '무너지지 않은 적에게 쓰면 피해 대신 붕괴 50을 줍니다.', { fxAdd: [{ k: 'slide', brk: 50 }] }, ['s_fall', 's_landslide']],
-      ['fu_charge', '전열 장악', 1, 1, 'LL', 'f_sweep', '방패 돌진', '피해 14 → 12, 붕괴 +21.', { fxSet: [{ k: 'dmg', n: 12 }], fxAdd: [{ k: 'brk', n: 21 }] }, ['f_charge', 'f_spin']],
-      ['fu_onrush', '전열 장악', 2, 4, 'LL', 'f_stomp', '쇄도', '피해 3 → 8, 붕괴 24 → 34.', { fxSet: [{ k: 'dmg', n: 8 }, { k: 'brk', n: 34 }] }, ['f_onrush']],
-      ['fu_chain', '전열 장악', 2, 4, 'L', 'f_snare', '사슬 휘두르기', '전열 모두를 칩니다. 붕괴 31 → 23.', { set: { tgt: 'front' }, fxSet: [{ k: 'brk', n: 23 }] }, ['f_chain', 'f_sweepline']],
-      ['fu_drive', '전열 장악', 2, 4, 'C', 'f_cleave', '몰아치기', '붕괴 +21.', { fxAdd: [{ k: 'brk', n: 21 }] }, ['f_drive']],
-      ['fu_wall', '전열 장악', 2, 4, 'R', 'f_break', '방패 분쇄', '빠른 칸이 됩니다. 피해 15 → 11.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 11 }] }, ['f_wall', 'f_rampart']],
-      ['fu_noose', '전열 장악', 2, 4, 'RR', 'f_break', '올가미', '붕괴 39 → 47, 둔화 3을 겁니다.', { fxSet: [{ k: 'brk', n: 47 }], fxAdd: [{ k: 'st', s: 'chill', n: 3 }] }, ['f_noose', 'f_net']],
-      ['fu_hook', '전열 장악', 3, 5, 'RR', 'f_drag', '갈고리 사슬', '보통 빠르기가 됩니다. 피해 20 → 15, 둔화 2를 겁니다.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 15 }], fxAdd: [{ k: 'st', s: 'chill', n: 2 }] }, ['f_hook']],
-      ['fu_split', '전열 장악', 3, 5, 'R', 'f_topple', '대지 가르기', '무너진 적 ×2 → ×2.5.', { fxSet: [{ k: 'brokenx', mul: 2.5 }] }, ['f_split', 'f_rout']],
-      ['fu_siege', '전열 장악', 3, 6, 'C', 'f_collapse', '포위 분쇄', '둔화된 적에게 ×1.7.', { fxAdd: [{ k: 'chillx', mul: 1.7 }] }, ['f_siege', 'f_storm', 'f_trample']],
-    ],
+    vars: {
+      /* 스킬마다 변형 둘(둘 다 제시): v 'deep' 깊게 = 같은 길을 세게, v 'link' 잇기 = 그 스킬에 없던 다른 빌드의 꼬리표를 더해 경계 · 결합 칸으로. [Claude 초안] */
+      w_dstance: [
+        ['wv_ds_ward', '굳은 태세', '켤 때 보호막 +10을 더 두릅니다.', { fxAdd: [{ k: 'ward', n: 10 }] }, [], { v: 'deep' }],
+        ['wv_ds_basic', '맞받는 태세', '켤 때 다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+      w_shieldhit: [
+        ['wv_sh_fast', '날랜 가격', '빠른 칸이 됩니다. 피해 10 → 7.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 7 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_sh_brk', '부수는 가격', '붕괴 +20. 피해 10 → 7.', { fxSet: [{ k: 'dmg', n: 7 }], fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
+      w_pray: [
+        ['wv_pr_more', '깊은 기도', '회복 3% → 4%(수비 태세면 8%).', { fxSet: [{ k: 'wdPray', n: 0.04 }] }, [], { v: 'deep' }],
+        ['wv_pr_ward', '기도의 막', '보호막 +6을 함께 두릅니다.', { fxAdd: [{ k: 'ward', n: 6 }] }, ['보호막'], { v: 'link' }]],
+      w_stand: [
+        ['wv_st_fast', '서두른 버티기', '빠른 칸이 됩니다. 보호막 상한의 60% → 45%.', { set: { time: 'fast' }, fxSet: [{ k: 'wardFill', to: 0.45 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_st_wst', '태세의 버팀', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
+      w_hold: [
+        ['wv_ho_ward', '두터운 막기', '보호막이 15 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'ward>=15' } }, [], { v: 'deep' }],
+        ['wv_ho_brk', '막고 꺾기', '붕괴 +25.', { fxAdd: [{ k: 'brk', n: 25 }] }, ['붕괴'], { v: 'link' }]],
+      w_citadel: [
+        ['wv_ci_normal', '서두른 철옹성', '보통 빠르기가 됩니다.', { set: { time: 'normal' } }, [], { v: 'deep' }],
+        ['wv_ci_wst', '태세의 성채', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
+      w_beyond: [
+        ['wv_be_normal', '빠른 너머', '보통 빠르기가 됩니다. 피해 20 → 15.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 15 }] }, [], { v: 'deep' }],
+        ['wv_be_basic', '너머의 박자', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+      s_astance: [
+        ['wv_as_basic', '거센 태세', '켤 때 다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, [], { v: 'deep' }],
+        ['wv_as_ward', '버티는 공세', '켤 때 보호막 +10.', { fxAdd: [{ k: 'ward', n: 10 }] }, ['보호막'], { v: 'link' }]],
+      s_slam: [
+        ['wv_sl_slow', '무거운 내리 찍기', '느린 행동이 됩니다. 피해 17 → 24.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 24 }] }, [], { v: 'deep' }],
+        ['wv_sl_basic', '찍고 이어 치기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+      s_regret: [
+        ['wv_rg_kill', '회한 거두기', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유).', { set: { killRecharge: 1 } }, ['처치'], { v: 'deep' }],
+        ['wv_rg_brk', '회한의 일격', '붕괴 +15. 피해 9 → 6.', { fxSet: [{ k: 'dmg', n: 6 }], fxAdd: [{ k: 'brk', n: 15 }] }, ['붕괴'], { v: 'link' }]],
+      s_march: [
+        ['wv_ma_long', '긴 행군', '3차례 → 4차례.', { fxSet: [{ k: 'wdMarch', n: 4 }] }, [], { v: 'deep' }],
+        ['wv_ma_ward', '방패 든 걸음', '보호막 8 → 16.', { fxSet: [{ k: 'ward', n: 16 }] }, ['보호막'], { v: 'link' }]],
+      s_cut: [
+        ['wv_cu_fast', '빠른 끊기', '빠른 칸이 됩니다. 피해 17 → 12.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 12 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_cu_basic', '끊고 잇기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+      s_ruin: [
+        ['wv_ru_normal', '서두른 박살', '보통 빠르기가 됩니다. 피해 24 → 17.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 17 }] }, [], { v: 'deep' }],
+        ['wv_ru_wst', '태세의 박살', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
+      s_fall: [
+        ['wv_fa_vuln', '무너뜨릴 자리', '대상의 취약이 2 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'kw:vuln>=2' } }, [], { v: 'deep' }],
+        ['wv_fa_front', '산사태 휩쓸기', '전열 모두를 칩니다. 피해 24 → 14, 붕괴 70 → 40.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 40 }] }, ['광역'], { v: 'link' }]],
+      f_sweep: [
+        ['wv_sw_kill', '휩쓸어 거두기', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유).', { set: { killRecharge: 1 } }, ['처치'], { v: 'deep' }],
+        ['wv_sw_brk', '무너뜨리는 개기식', '붕괴 +15. 피해 12 → 9.', { fxSet: [{ k: 'dmg', n: 9 }], fxAdd: [{ k: 'brk', n: 15 }] }, ['붕괴'], { v: 'link' }]],
+      f_chainblade: [
+        ['wv_cb_fast', '날랜 사슬', '빠른 칸이 됩니다. 피해 12 → 9.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 9 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_cb_ward', '사슬 방패', '보호막 +8을 함께 두릅니다.', { fxAdd: [{ k: 'ward', n: 8 }] }, ['보호막'], { v: 'link' }]],
+      f_stomp: [
+        ['wv_stp_more', '세게 구르기', '붕괴 20 → 28.', { fxSet: [{ k: 'brk', n: 28 }] }, [], { v: 'deep' }],
+        ['wv_stp_ward', '발 디딘 방패', '보호막 +5를 함께 두릅니다.', { fxAdd: [{ k: 'ward', n: 5 }] }, ['보호막'], { v: 'link' }]],
+      w_shove: [
+        ['wv_sv_fast', '날랜 밀치기', '빠른 칸이 됩니다. 피해 9 → 6.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 6 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_sv_brk', '밀어 무너뜨리기', '붕괴 +18.', { fxAdd: [{ k: 'brk', n: 18 }] }, ['붕괴'], { v: 'link' }]],
+      f_drag: [
+        ['wv_dr_normal', '빠른 끌기', '보통 빠르기가 됩니다. 피해 15 → 11.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 11 }] }, [], { v: 'deep' }],
+        ['wv_dr_ward', '끌어 막기', '보호막 +10을 함께 두릅니다.', { fxAdd: [{ k: 'ward', n: 10 }] }, ['보호막'], { v: 'link' }]],
+      f_collapse: [
+        ['wv_co_normal', '서두른 붕괴', '보통 빠르기가 됩니다. 피해 19 → 13.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 13 }] }, [], { v: 'deep' }],
+        ['wv_co_wst', '태세의 붕괴', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
+      f_hook: [
+        ['wv_hk_fast', '날랜 갈고리', '빠른 칸이 됩니다. 피해 20 → 15.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 15 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_hk_brk', '꺾는 갈고리', '붕괴 45 → 60.', { fxSet: [{ k: 'brk', n: 60 }] }, ['붕괴'], { v: 'link' }]],
+      w_flare: [
+        ['wv_fl_fast', '번쩍 터뜨리기', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
+        ['wv_fl_basic', '터뜨리고 잇기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+      w_rebuild: [
+        ['wv_rb_more', '더 높은 벽', '보호막 상한의 42% → 57%까지 채웁니다.', { fxSet: [{ k: 'wardFill', to: 0.57 }] }, [], { v: 'deep' }],
+        ['wv_rb_wst', '태세의 벽', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
+      w_breach: [
+        ['wv_br_slow', '깊은 부수기', '느린 행동이 됩니다. 태우기 상한 16 → 22.', { set: { time: 'slow' }, fxSet: [{ k: 'wardBurn', max: 22 }] }, [], { v: 'deep' }],
+        ['wv_br_basic', '부수고 잇기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+      w_rampart: [
+        ['wv_ra_fast', '서두른 철벽', '빠른 칸이 됩니다. 보호막 37 → 27.', { set: { time: 'fast' }, fxSet: [{ k: 'ward', n: 27 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_ra_wst', '태세의 철벽', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
+      w_siege: [
+        ['wv_si_fast', '순간의 파성', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
+        ['wv_si_wst', '태세의 파성', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
+      f_topple: [
+        ['wv_tp_kill', '연쇄 거두기', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유).', { set: { killRecharge: 1 } }, ['처치'], { v: 'deep' }],
+        ['wv_tp_basic', '쓰러뜨리고 잇기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+      s_lean: [
+        ['wv_le_fast', '서두른 대열', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
+        ['wv_le_ward', '대열 방패', '보호막 8 → 16.', { fxSet: [{ k: 'ward', n: 16 }] }, ['보호막'], { v: 'link' }]],
+      f_rampart: [
+        ['wv_rp_fast', '날랜 방패벽 부수기', '빠른 칸이 됩니다. 피해 19 → 14.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 14 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_rp_wst', '태세의 방패벽', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
+      s_gapwatch: [
+        ['wv_gw_fast', '서두른 틈', '빠른 칸이 됩니다. 보호막 32 → 22.', { set: { time: 'fast' }, fxSet: [{ k: 'ward', n: 22 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_gw_basic', '틈을 노린 박자', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+      s_quake: [
+        ['wv_qk_fast', '순간의 분쇄', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
+        ['wv_qk_wst', '태세의 분쇄', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
+      f_charge: [
+        ['wv_ch_fast', '날랜 돌진', '빠른 칸이 됩니다. 피해 12 → 9.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 9 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_ch_ward', '방패 든 돌진', '보호막 +8을 함께 두릅니다.', { fxAdd: [{ k: 'ward', n: 8 }] }, ['보호막'], { v: 'link' }]],
+      w_spikes: [
+        ['wv_sp_more', '빽빽한 가시', '가시 4번 → 6번.', { fxSet: [{ k: 'thorn', times: 6 }] }, [], { v: 'deep' }],
+        ['wv_sp_wst', '태세의 가시', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
+      f_storm: [
+        ['wv_sm_normal', '서두른 폭풍', '보통 빠르기가 됩니다. 피해 18 → 13.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 13 }] }, [], { v: 'deep' }],
+        ['wv_sm_ward', '폭풍의 막', '보호막 +10을 함께 두릅니다.', { fxAdd: [{ k: 'ward', n: 10 }] }, ['보호막'], { v: 'link' }]],
+      w_armor: [
+        ['wv_ar_ward', '두꺼운 갑주', '보호막 18 → 25.', { fxSet: [{ k: 'ward', n: 25 }] }, [], { v: 'deep' }],
+        ['wv_ar_wst', '태세의 갑주', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
+      w_valor: [
+        ['wv_va_fast', '순간의 용맹', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
+        ['wv_va_wst', '태세의 용맹', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
+    },
   },
   /* 0.8.0 5단계 수도승: 3-6. 스킬 24 + 강화 29 = 53노드 */
   monk: {
@@ -386,7 +480,7 @@ const ATREE_DEF = {
 };
 /* 지금 트리에서 빠진 스킬 (8-4 "뺌"): 옛 세이브 장착 목록에서 "더는 없는 스킬"로 보인다 */
 const AT_GONE = { spellblade: ['sb_sweepcut', 'sb_pour', 'sb_redrain', 'sb_draw', 'sb_feast', 'sb_sparkcut', 'sb_ring', 'sb_flamedown', 'sb_sear', 'sb_flamedance', 'sb_lance', 'sb_chainfire', 'sb_blaze', 'sb_armor', 'sb_bulwark', /* M5-0c 재설계에서 빠진 칸 */ 'sb_redwind', 'sb_deluge', 'sb_kindle', 'sb_tome', 'sb_unravel', 'sb_turn', 'sb_searspread', 'sb_searburst', 'sb_atone', 'sb_ashstorm'],
-  warden: ['w_spikes', 'w_armor', 'w_rampart', 'w_bulwarkhit', 'w_beyond', 's_knee', 'f_push', 'f_scatter'], monk: ['m_endless', 'm_knee', 'm_calm'],
+  warden: ['w_raise', 'w_kindle', 'w_blaze', 'w_press', 'w_coat', 'w_burst', 'w_crush', 'w_molten', 'w_last', 'w_bulwarkhit', 'w_forge', 'w_unyield', 'w_scald', 'w_eternal', 'w_cinder', 's_gap', 's_knock', 's_mark', 's_smash', 's_knee', 's_dig', 's_hammer', 's_wedge', 's_crack', 's_throw', 's_pillar', 's_maul', 's_open', 's_rift', 's_judge', 's_wedgebite', 's_unravel', 's_stagger', 's_lever', 's_landslide', 's_lastblow', 'f_break', 'f_snare', 'f_cleave', 'f_chain', 'f_wall', 'f_spin', 'f_trample', 'f_drive', 'f_push', 'f_scatter', 'f_split', 'f_net', 'f_sweepline', 'f_onrush', 'f_noose', 'f_rout', 'f_siege'], /* M5-1 재설계: 트리에 없는 파수꾼 칸(스킬 데이터는 남음) */ monk: ['m_endless', 'm_knee', 'm_calm'],
   hunter: ['h_steady', 'h_finish', 'h_stance', 'h_slowrain', 'h_veil', 'h_foresee'],
   elementalist: ['e_spread', 'e_stoke', 'e_catch', 'e_cloak', 'e_hoar', 'e_shell', 'e_hoarbloom', 'e_numb', 'e_frostwave'],
   assassin: ['a_wedge', 'a_seep', 'a_rotbreath', 'a_plant', 'a_rend', 'a_expose', 'a_check', 'a_mark', 'a_strangle', 'a_rush'] }; // 0.8.0 5단계 2-6 · 3-6 "뺌", 사냥꾼은 원거리 초안 2-6 "뺌", 원소술사는 원거리 초안 3-6 "뺌"(10월 18일), 암살자는 원거리 초안 4-7 "뺌"(10월 18일 0.8.0 5단계, 그림자 범용 넷은 결정 15)

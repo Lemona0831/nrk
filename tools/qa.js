@@ -1,5 +1,7 @@
 /* ===== 사람처럼 생각하는 QA 테스터 (엔진 직접 구동) ===== */
 const E = require('./eng.gen.js');
+/* 0.8.0 M5-1 파수꾼 태세(10월 20일): 테스터는 켜 둔 태세를 끄지 않는다(끄기는 유산 0이라 아무 뜻 없이 껐다 켜기를 되풀이했다). 다른 태세로 바꾸는 것은 그대로 */
+{ const AL0 = E.actionList; E.actionList = function (b) { const L = AL0.apply(this, arguments), S = b && b.p && b.p.wdSt; if (S) for (const a of L) { const ws = a.v2 && a.s && a.s.fx && a.s.fx.find(e => e.k === 'wdStance'); if (ws && S[ws.s] && a.ok) { a.ok = false; a.why = '켜 둔 태세(테스터는 끄지 않음)'; } } return L; }; }
 /* 10월 18일 0.8.0 5단계 측정 변형(원거리 초안 10절 결정 3): ASN_SHADOW_VAR가 ATREE_DEF.assassin을 불러올 때 메모리에서 바꾼다(dgqa.js도 이 함수로 같은 변형을 넣는다).
    10월 18일 0.8.0 5단계 마무리(11-4, 만든 사람 승인): 맞바꾸기(swap)가 기본 데이터가 되었다. swap은 이제 아무것도 바꾸지 않는다(예전 측정 명령을 그대로 돌릴 수 있게 둔다).
    old = 맞바꾸기 전 배치로 되돌린다: 후열 기습 2고리 r3 L(그림자 찌르기 밑) · 칼끝 겨누기 1고리 r2 R(흘려 베기 밑), 잔상 · 그늘 숨기는 칼끝 겨누기 밑, 연막 1고리 r2 RR
@@ -389,6 +391,8 @@ function huLookBonus(b, a) {
 function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   const p = b.p; const nf = !!(E.noFast && E.noFast(p)); const okS = L.filter(a => a.v2 && a.ok && !(nf && a.time <= 0.6)); const has = (a, k) => a.s.fx.some(e => e.k === k); // 느린 맥박: 빠른 칸이 없어 빠른 스킬도 차례를 끝내므로 사람처럼 빠른 스킬을 고르지 않는다
   const psn = e => (e.s.poison ? e.s.poison.stacks : 0);
+  /* 0.8.0 M5-1 파수꾼 태세(10월 20일): 태세는 전투마다 꺼진 채 시작한다. 켜 둔 태세가 없으면 먼저 켠다(둘 다 있으면 생명력 절반 아래면 수비, 아니면 공격). 난수를 쓰지 않는다 */
+  if (p.wdSt && !p.wdSt.def && !p.wdSt.atk) { const st = k => okS.find(a => a.s.fx.some(e => e.k === 'wdStance' && e.s === k)); const d = st('def'), k = st('atk'); const pick = d && k ? (p.hp < p.hpMax * 0.5 ? d : k) : d || k; if (pick) return [pick.id]; }
   // 10월 4일 적 행동: 몸 낮춘 적에게 한 적 공격, 반격 태세인 적에게 근접 한 적 공격은 다른 적이 있으면 하지 않는다. 버티는 적은 뒤로, 훔쳤거나 훔치려는 도둑은 앞으로 (사람은 예고를 보고 고른다)
   const reach = a => { const all = E.alive(b).filter(e => e.role !== 'root' && E.canTarget(b, e, a)); const ok = all.filter(e => !enemyAvoid(e, a)); return ok.length ? ok : all; };
   const huPref = (e, a) => p.build !== 'hunter' || a.aoe || a.self || !p.focus ? 0 : a.s && has(a, 'swapx') ? (e.id !== p.focus.id ? 1 : 0) : (e.id === p.focus.id ? 1 : 0); // 사냥꾼 (10월 5일): 한 적 스킬은 추적이 쌓인 적을 계속, 표적 바꾸기 스킬은 다른 적에게

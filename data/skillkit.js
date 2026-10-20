@@ -96,6 +96,25 @@ const SB_HP = 120;
 const SB_BOUND = { blazeHit: 0.6, blazeIn: 0.3, blazeSear: 2, filmPer: 0.75, sinPay: 0.15, sinMul: 3, sinBleed: 5, heatMul: 3.2, /* M5-0c 맞추기 2번: 2.8 → 3.2(평타 쪽으로, 값 띠 안) */ emberIgn: 6, bodyPer: 8, bodyMul: 0.8, bodyIgn: 4, sinBlock: 0.3, ashMul: 0.5, ashIgn: 2,
   crossN: 4, ssPer: 1, echoN: 2, shackleBrk: 90, ashHandK: 2, ashHandIgn: 3, cinderIgn: 1, emberCutBurn: 6, fistMul: 1.5, cbIgn: 3,
   holdPer: 0.05, holdMax: 5 }; // M5-0 보정 5 2차(만든 사람): 버팀 — 보호막 꼬리표 스킬을 쓴 전투에서 보호막을 지킨 채 차례를 넘기면 쌓이는 피해 +5%(최대 5) // M5-0 보정 4 새 칸 숫자(문장과 맞춘다)
+/* 0.8.0 M5-1 파수꾼(10월 20일 만든 사람 설계지 + 07:40 보완): 태세 · 경계 승부수 · 결합 칸 숫자. 엔진은 js/10 파수꾼 절(p.wdSt).
+   값 식(추정, 측정 아님): 태세는 켜 둔 채 평균 5차례(받는 피해 차례마다 8), 승부수 3차례, 결합 칸은 전투 한 번 몫 */
+const WD_BOUND = { defIn: 0.12, /* 맞추기 2번: 0.15 → 0.12(수비 태세를 품은 공성추 · 용맹의 투지가 1챕터에서 셈) */ defWard: 3, defOn: 8, atkHit: 0.25, atkBrk: 10, atkIn: 0, /* 맞추기 1번: 받는 피해 +10%를 뺐다(1챕터 보스에서 공격 태세 길이 버티지 못함), 대신 +30% → +25% · 붕괴 12 → 10 */ atkOnDmg: 5, atkOnBrk: 12, prayDef: 2,
+  marchHit: 0.15, /* 맞추기 2번: 묵직한 걸음에 보호막 8을 주고 피해 +20% → +15% */ marchBrk: 20, marchHeavy: 15, siegeMax: 2.0, siegePer: 20, siegeBrk: 30, siegeHeavy: 20, /* 파성 붕괴 · 스태미나는 설계지 "확인 후 밸런스 조절" */ quakeMul: 2, quakeWard: 0.5, quakeN: 3, valorGuard: 18, valorThorn: 0.5,
+  turnBrk: 25, hammerMul: 1.5, hammerSt: 15, pullN: 2, pullBrk: 30 };
+const WD_K = ['wdStance', 'wdPray', 'wdMarch', 'wdSiege', 'wdQuake', 'wdValor', 'wdTurncoat', 'wdHammer', 'wdChainPull', 'wdNextBrk'];
+function skValueWd(e, K, W, hi) { const U = WD_BOUND, Wv = K.ward.v, nT = e.n || 3, inc = 8;
+  switch (e.k) {
+    case 'wdStance': return e.s === 'def' ? U.defOn * Wv + 5 * (U.defWard * Wv + U.defIn * inc) : (U.atkOnDmg + U.atkOnBrk * K.brk) + 5 * (K.B * U.atkHit + U.atkBrk * K.brk) - 5 * U.atkIn * inc;
+    case 'wdPray': return 125 * e.n * (1 + 0.5 * (U.prayDef - 1)) * 1.5; // 최대 생명력 125 기준, 수비 태세(2배)는 반쯤
+    case 'wdMarch': return nT * (K.B * U.marchHit + U.marchBrk * K.brk + U.marchHeavy * 0.15);
+    case 'wdSiege': return nT * (1.4 * K.B * 1.3 * (U.siegeMax - 1) * 0.9 + U.siegeBrk * K.brk * 1.4 + U.siegeHeavy * 0.15) - W.S[hi] * Wv - nT * 0.7 * 6 * Wv; // 차례마다 기본 공격 · 강공격 1.4번(빠른 칸 포함, 강공격 ×1.3), 잃는 보호막 · 방어
+    case 'wdQuake': return 1.7 * (8 + 1.6 * K.B) + 0.5 * K.B * 1.5 * (U.quakeMul - 1) - U.quakeN * 0.5 * 6 * Wv * U.quakeWard; // 무너뜨리는 적 1.7(놓치는 행동 8 · 무너진 틈), 둘 이상이면(반쯤) 다음 차례 ×2
+    case 'wdValor': return nT * ((U.valorGuard - 6) * Wv + W.S[hi] * U.valorThorn * K.ward.thorn * 2.2) - nT * (10 * 0.15) - nT * 2; // 방어 보호막, 가시(보호막의 절반 × 맞는 2.2번), 스태미나 · 흘리기 대가
+    case 'wdTurncoat': return 16.7 + U.turnBrk * K.brk; // 바꾸는 유산 2 한 번 + 붕괴
+    case 'wdHammer': return 10 * 0.4 * K.B * (U.hammerMul - 1) + 2 * 0.4 * U.hammerSt * 0.15; // 전투에 기본 공격 10번, 무너진 적일 확률 0.4
+    case 'wdChainPull': return U.pullN * (K.ward.pull + U.pullBrk * K.brk);
+    case 'wdNextBrk': return e.n * K.brk;
+  } return 0; }
 function skValue(s, ov) {
   if (!ov && SKK.butch && /^b_/.test(String(s.id)) && !s._bu) return skValueBu(s);
   if (!ov && String(s.id).slice(0, 2) === 'e_') return skValueElem(s);
@@ -106,6 +125,7 @@ function skValue(s, ov) {
   const burnTake = e => e.max ? Math.min(e.max, W.B[hi]) : W.all[hi]; // 한 번에 태우는 양: 상한이 있으면 측정 보유량과 상한 가운데 작은 쪽, 모두 태우면 측정값
   const mk = String(s.id).slice(0, 2) === 'm_'; const mt = s.tgt === 'front' || s.tgt === 'all' ? tm : 1; const M = K.monk; // 수도승 (10월 7일)
   for (const e of s.fx) {
+    if (WD_K.includes(e.k)) { v += skValueWd(e, K, W, hi); continue; } // 0.8.0 M5-1 파수꾼
     if (SB_BD_K.includes(e.k)) { const Sbi = SB.S.bleed[hi] + SB.S.ignite[hi], kw = SB.kw.bleed, Wv = K.ward.v; const nT = e.n || 3; const U = SB_BOUND;
       switch (e.k) {
         case 'searMerge': v += 0.6 * Sbi * kw * (1.5 - 1); break;
@@ -554,7 +574,7 @@ function skBody(s) {
 }
 /* M5-0a(10월 20일 만든 사람): 대사가 있는 스킬(승부수)의 설명란. 대사는 맨 위 따로 한 칸(명조 가운데 인용, 「」는 부채꼴 색 장식 · 위에 ✦ 가는 선, 같은 날 만든 사람 고름), 그 아래 효과 / 대가 / 대상을 줄로 나눈다.
    대가는 색과 "대가" 글자로 구분(색만으로 구분하지 않음). 스크린리더는 "대사: …, 효과: …, 대가: …, 대상: …" 순서. 대사가 없으면 빈 문자열(부른 쪽이 원래 설명을 쓴다) */
-const SK_LINE_COL = { 혈염: '#ef5d3c', '죄인의 피': '#c23a52', '유산의 불': '#f0ac48' };
+const SK_LINE_COL = { 혈염: '#ef5d3c', '죄인의 피': '#c23a52', '유산의 불': '#f0ac48', 공성추: '#a8bace', '기둥 파쇄': '#c98b4a', '용맹의 투지': '#e8c25a' };
 function skDescHtml(s) {
   if (!s || !s.line) return ''; const e = x => String(x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const body = skBody(Object.assign({}, s, { pay: null })), col = SK_LINE_COL[s.b] || 'var(--gold)', who = `${SKK.TGN[s.tgt]} · ${SKK.TN[s.time]}`;

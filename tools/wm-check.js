@@ -28,7 +28,9 @@ const okA = (b, id) => !!(E.actionList(b).find(x => x.id === id) || {}).ok;
 const enemyHit = (b, e, raw, x) => { const cur = b.cur; b.cur = null; const d = E.hurtPlayer(b, raw, Object.assign({ src: e }, x || {})); b.cur = cur; return d; };
 
 // ===== 1) 강화 노드 · 금지선 =====
-for (const c of ['warden', 'monk']) {
+/* 0.8.0 M5-1(10월 20일): 파수꾼은 재설계로 강화 노드 대신 변형(M5-0c 규격)이 됐다. 파수꾼 트리 규칙은 tools/tree-check.js, 태세 · 승부수 · 결합 칸은 tools/wd-check.js */
+{ const A = E.atBuild('warden'), N = Object.values(A.nodes); ok(!A.tmp && N.filter(x => x.kind === 'skill').length === 39 && N.filter(x => x.slot).length === 36 && N.filter(x => x.kind === 'skill').every(x => [1, 2, 3, 4].includes(x.ys)), 'warden: 재설계 트리(스킬 노드 39 · 변형 자리 36, 비용 1–4)'); }
+for (const c of ['monk']) {
   const A = E.atBuild(c); let nu = 0, ns = 0;
   ok(!A.tmp, c + ': 직업 트리(임시 트리 아님)');
   for (const id in A.nodes) { const u = A.nodes[id]; if (u.kind === 'skill') { ns++; assert([2, 3, 4].includes(u.ys), c + ' 비용 ' + id); continue; } if (u.kind !== 'upgrade') continue; nu++;
@@ -57,19 +59,13 @@ ok(JSON.stringify(E.SK2.w_flare.fx) === JSON.stringify([{ k: 'wardBurn', mul: 3,
   b.ysR = R + 1; p.ward = 0; es[1].row = 'back'; enemyHit(b, es[1], 10); ok(Math.abs(b.heldN - 1.25) < 0.01, '받아낸 몫: 후열 공격은 절반(직업 약점 유지)');
   p.guard = 0; const w0 = p.ward; enemyHit(b, es[0], 10); ok(b.heldN === 1.25 && p.ward <= w0, '방어하지 않으면 받아낸 몫 없음'); }
 { const { p, b, es } = fight('warden', { own: ['ct1C', 'ct2L', 'ct3L'] }); p.guard = 1; const k0 = es[0].brk || 0; enemyHit(b, es[0], 10); enemyHit(b, es[0], 10); ok((es[0].brk || 0) - k0 > 0 && (es[0].brk || 0) - k0 < 20, '흔들리는 방패: 방어 중 전열 적의 공격에 붕괴, 적 차례마다 한 번'); }
-{ const { p, b, es } = fight('warden', { own: ['lg1C', 'lg2L'], act: ['w_raise', 'w_flare', 'w_shove', 'w_stand'], eq: ['w_flare', 'w_shove', 'w_stand'] }); ok(p.pn.includes('n_wd_stack'), '쌓인 벽 노드');
+{ const { p, b, es } = fight('warden', { own: ['lg1C', 'lg2L'], act: ['w_dstance', 's_slam', 'w_flare', 'w_shove', 'w_stand'], eq: ['w_flare', 'w_shove', 'w_stand'] }); ok(p.pn.includes('n_wd_stack'), '쌓인 벽 노드');
   const nSt = () => b.log.filter(x => /쌓인 벽/.test(x.m || x.t || '')).length; const act = (id, w) => { E.runUntilPlayer(b); p.ward = w; p.ys = 5; p.st = p.stMax; const c0 = nSt(); E.playerAct(b, id, es[0].id); return nSt() - c0; };
   ok(act('w_bash', 20) === 0, '쌓인 벽: 유산 2 공격(방패 치기)에는 보호막을 쓰지 않음(검토 1-1)');
   ok(act('heavy', 20) === 1, '쌓인 벽: 강공격이면 보호막 5를 써서 +12%');
   ok(act('heavy', 14) === 0, '쌓인 벽: 보호막 15 미만이면 쓰지 않음');
   ok(act('w_flare', 20) === 0, '쌓인 벽: 보호막을 태우는 스킬에는 쓰지 않음'); }
-{ const { p, b } = fight('warden', { act: ['w_raise', 'w_shove', 'w_kindle'], eq: ['w_kindle'] }); p.ward = 0; p.ys = 3; E.playerAct(b, 'w_kindle'); ok(b.rec.some(x => x.k === 'ys' && x.src === 'refund'), '작열 방벽: 보호막 0일 때 쓰면 유산 +1(결정 4)'); }
-{ const { p, b } = fight('warden', { act: ['w_raise', 'w_shove', 'w_kindle'], eq: ['w_kindle'] }); p.ward = 5; p.ys = 3; E.playerAct(b, 'w_kindle'); ok(!b.rec.some(x => x.k === 'ys' && x.src === 'refund'), '작열 방벽: 보호막이 있으면 환급 없음'); }
-{ const { p, b, es } = fight('warden', { act: ['f_sweep', 'f_cleave'], eq: ['f_cleave'] }); es[0].hp = 1; p.ys = 3; E.playerAct(b, 'f_cleave'); ok(b.rec.some(x => x.k === 'ys' && x.src === 'refund'), '넓게 베기: 쓰러뜨리면 유산 +1(결정 4)'); }
-{ const { p, b } = fight('warden', { act: ['w_raise', 'w_flare', 'wu_heat'], eq: ['w_flare'] }); p.ward = 20; ok(yc(b, 'w_flare') === 1, '달군 방패: 보호막 20 이상이면 2 → 1'); p.ward = 19; ok(yc(b, 'w_flare') === 2, '달군 방패: 19면 2'); }
-{ const { p, b, es } = fight('warden', { act: ['s_knock', 's_gap', 's_dig', 's_ruin', 'su_slide'], eq: ['s_ruin'] }); const h0 = es[0].hp, k0 = es[0].brk || 0; p.ys = 5; E.playerAct(b, 's_ruin', es[0].id); ok(es[0].hp === h0 && (es[0].brk || 0) - k0 >= 50 || es[0].s.broken, '산사태: 무너지지 않은 적이면 피해 없이 붕괴 50'); }
-{ const { p, b, es } = fight('warden', { act: ['s_knock', 's_gap', 's_dig', 's_ruin', 'su_slide'], eq: ['s_ruin'] }); E.addS(b, es[0], 'broken', 2); const h0 = es[0].hp; p.ys = 5; E.playerAct(b, 's_ruin', es[0].id); ok(es[0].hp < h0, '산사태: 무너진 적에게는 박살 그대로'); }
-{ const { p } = fight('warden', { act: ['w_raise', 'wu_wil'], eq: ['w_raise'] }); const s = E.skOf(p, 'w_raise'); ok(s.fx.find(e => e.k === 'ward').wil === 1, '받쳐 든 방패: 보호막 +의지'); }
+/* M5-1: 옛 사다리 칸(작열 방벽 · 넓게 베기 · 달군 방패 · 산사태 · 받쳐 든 방패) 시험은 그 칸이 트리에서 빠져 지웠다(스킬 데이터는 남음) */
 { const { p, b } = fight('warden', { ks: ['pwK9'] }); ok(p.pn.includes('ks_wd_drop'), '방패를 내린 자'); p.guard = 1; p.ward = 0; const hp0 = p.hp; enemyHit(b, b.en[0], 10); ok(Math.abs(hp0 - p.hp - 7) < 0.01, '방패를 내린 자: 방어가 30%만 줄임(10 → 7)'); }
 { const { p } = fight('warden', { ks: ['suK9'] }); ok(E.wardMax(p) === Math.round(p.hpMax * 0.4), '영원한 성벽: 보호막 상한 40%'); }
 

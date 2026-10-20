@@ -97,7 +97,7 @@ const SKILLS2 = {
     { id: 'w_brace', b: '시작', tier: '시작', start: 1, n: '굳히기', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'st', s: 'protect', n: 4 }, { k: 'stam', n: 44 }] },
     // 성벽: 막으며 보호막을 쌓고, 쌓인 보호막을 소모해 공격합니다. 왼쪽 기둥은 버티기(보호막 · 가시 · 보호막 비례 피해), 오른쪽은 태우기(보호막을 모아 태워 친다). 장기전 · 폭발에 강하고 지원에 약하다
     { id: 'w_raise', row: 1, b: '성벽', tier: '하급', n: '방패 세우기', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 22 }] },
-    { id: 'w_shove', row: 1, b: '성벽', tier: '하급', n: '방패 밀치기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 13 }, { k: 'ward', n: 10 }] },
+    { id: 'w_shove', row: 1, b: '전열 장악', tier: '하급', n: '방패 밀치기', tgt: 'front', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'ward', n: 10 }] }, /* M5-1(10월 20일 만든 사람 설계지): 전열 장악 2고리: 전열 피해 + 보호막 */
     { id: 'w_hold', row: 2, b: '성벽', tier: '하급', n: '막고 치기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 17 }, { k: 'wardDmg', per: 0.25 }, { k: 'bigx', mul: 1.5 }] }, // 10월 4일: 성벽 강함 거구
     { id: 'w_flare', row: 2, b: '성벽', tier: '하급', n: '보호막 터뜨리기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'wardBurn', mul: 3, max: 8 }, { k: 'brk', n: 3 }, { k: 'bigx', mul: 1.5 }] }, // 10월 4일: 성벽 강함 거구
     { id: 'w_stand', row: 3, b: '성벽', tier: '하급', n: '버티기', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'wardFill', to: 0.6 }, { k: 'st', s: 'protect', n: 2 }] },
@@ -106,15 +106,15 @@ const SKILLS2 = {
     { id: 'w_blaze', row: 4, b: '성벽', tier: '하급', n: '불꽃 방패', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'wardBurn', mul: 3, max: 14 }, { k: 'st', s: 'vuln', n: 1 }] }, // 0.8.0 5단계(10월 17일 검토 1-3): 태우기 상한 9 → 14. 보호막 터뜨리기(유산 2, 최대 8)보다 볼록하게
     { id: 'w_press', row: 5, b: '성벽', tier: '하급', n: '밀어붙이기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 34 }, { k: 'wardDmg', per: 0.5 }, { k: 'bigx', mul: 1.5 }] }, // 10월 4일: 성벽 강함 거구
     { id: 'w_coat', row: 5, b: '성벽', tier: '하급', n: '방벽 돌파', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'ward', n: 15 }] },
-    { id: 'w_rampart', row: 6, b: '성벽', tier: '하급', n: '철벽', tgt: 'self', time: 'normal', cd: 8, fx: [{ k: 'ward', n: 28 }, { k: 'st', s: 'protect', n: 3 }] },
+    { id: 'w_rampart', row: 6, b: '성벽', tier: '하급', n: '철벽', tgt: 'self', time: 'normal', cd: 8, fx: [{ k: 'ward', n: 37 }, { k: 'st', s: 'protect', n: 3 }] }, /* M5-1 값 띠 */
     { id: 'w_burst', row: 6, b: '성벽', tier: '하급', n: '보호막 폭발', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'wardBurn', mul: 2.5, max: 8 }] },
     { id: 'w_crush', row: 7, b: '성벽', tier: '중급', n: '짓누르는 방패', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 18 }, { k: 'wardDmg', per: 0.5 }, { k: 'bigx', mul: 1.5 }] }, // 10월 4일: 성벽 강함 거구
     { id: 'w_molten', row: 7, b: '성벽', tier: '중급', n: '쇳물 방패', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'wardBurn', mul: 3, max: 12 }, { k: 'brk', n: 25 }] },
-    { id: 'w_armor', row: 8, b: '성벽', tier: '중급', n: '가시 갑주', tgt: 'self', time: 'fast', cd: 8, fx: [{ k: 'thorn', times: 5, dmg: 5 }, { k: 'ward', n: 6 }] },
-    { id: 'w_rebuild', row: 8, b: '성벽', tier: '중급', n: '다시 세우는 벽', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'wardFill', to: 0.5 }, { k: 'hasten', n: 1, on: 'use' }] },
+    { id: 'w_armor', row: 8, b: '성벽', tier: '중급', n: '가시 갑주', tgt: 'self', time: 'fast', cd: 8, fx: [{ k: 'thorn', times: 5, dmg: 5 }, { k: 'ward', n: 18 }] }, /* M5-1 값 띠 */
+    { id: 'w_rebuild', row: 8, b: '성벽', tier: '중급', n: '다시 세우는 벽', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'wardFill', to: 0.42 }, { k: 'hasten', n: 1, on: 'use' }] }, /* M5-1 맞추기 1번: 공성추가 1챕터에서 너무 셈(88%), 50% → 42% */
     { id: 'w_beyond', row: 9, b: '성벽', tier: '중급', n: '벽 너머의 일격', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 20 }, { k: 'brk', n: 37 }, { k: 'wardDmg', per: 0.5 }, { k: 'bigx', mul: 1.5 }] }, // 10월 4일: 성벽 강함 거구
-    { id: 'w_breach', row: 9, b: '성벽', tier: '중급', n: '성벽 부수기', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'wardBurn', mul: 2, max: 16 }, { k: 'brk', n: 41 }] },
-    { id: 'w_citadel', row: 10, b: '성벽', tier: '중급', n: '철옹성', tgt: 'self', time: 'slow', cd: 10, once: 1, keep: ['wardFill'], fx: [{ k: 'wardFill' }, { k: 'st', s: 'protect', n: 3 }, { k: 'thorn', times: 3, dmg: 5 }] },
+    { id: 'w_breach', row: 9, b: '성벽', tier: '중급', n: '성벽 부수기', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 5 }, { k: 'wardBurn', mul: 2, max: 16 }, { k: 'brk', n: 41 }] }, /* M5-1 값 띠 */
+    { id: 'w_citadel', row: 10, b: '성벽', tier: '중급', n: '철옹성', tgt: 'self', time: 'slow', cd: 10, once: 1, keep: ['wardFill'], fx: [{ k: 'wardFill' }, { k: 'st', s: 'protect', n: 1 }, { k: 'thorn', times: 2, dmg: 5 }] }, /* M5-1 값 띠 */
     { id: 'w_last', row: 10, b: '성벽', tier: '중급', n: '최후의 성벽', tgt: 'melee', time: 'slow', cd: 10, exc: '만든 사람 결정(10월 5일): 10줄 마무리, 전투당 0.1~0.6번만 써 모델(2번)보다 덜 쓴다. 태운 1마다 1.5 · 40% 이하 ×1.75 그대로', fx: [{ k: 'wardBurn', mul: 1.5 }, { k: 'lowx', hp: 0.4, mul: 1.75 }, { k: 'brk', n: 17 }] }, // 10월 4일: 보호막을 모두 태우는 마무리 (성벽 오른쪽 기둥의 보스전 이길 수단). 만든 사람 결정으로 쓰기를 완화하고(생명력 30% → 40% 이하) 한 방을 낮췄다(×2 · 피해 2 → ×1.75 · 피해 1.5): 보스 63%, 줄 예산 안이라 예외 표시를 뗐다
     // 상급 (3챕터, 11~13줄 · 10월 8일): 왼쪽 기둥은 버티기를 완성(얻으면서 비례로 치는 칸 · 상한 채우기 · 가시 · 큰 비례 일격), 오른쪽은 태우기를 완성(태우고 곧바로 다시 두르는 칸 · 큰 태우기 · 마무리)
     { id: 'w_bulwarkhit', row: 11, b: '성벽', tier: '상급', n: '보루 일격', tgt: 'melee', time: 'fast', cd: 5, keep: ['ward'], fx: [{ k: 'dmg', n: 7 }, { k: 'ward', n: 14 }, { k: 'wardDmg', per: 0.25 }, { k: 'bigx', mul: 1.5 }] },
@@ -124,7 +124,7 @@ const SKILLS2 = {
     { id: 'w_eternal', row: 13, b: '성벽', tier: '상급', n: '불멸의 성채', tgt: 'melee', time: 'normal', cd: 8, keep: ['ward', 'st'], fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 23 }, { k: 'ward', n: 12 }, { k: 'st', s: 'protect', n: 1 }, { k: 'wardDmg', per: 0.25 }, { k: 'bigx', mul: 1.5 }] },
     { id: 'w_cinder', row: 13, b: '성벽', tier: '상급', n: '재가 되는 성벽', tgt: 'melee', time: 'slow', cd: 10, keep: ['ward'], fx: [{ k: 'wardBurn', mul: 1.5, max: 18 }, { k: 'ward', n: 6 }, { k: 'brk', n: 8 }, { k: 'lowx', hp: 0.4, mul: 1.5 }, { k: 'bigx', mul: 1.5 }] },
     // 파쇄: 한 적의 붕괴 게이지를 빨리 채우고, 무너진 적을 느린 강타로 강하게 공격합니다. 왼쪽 기둥은 무너뜨리기(큰 붕괴 · 모으는 적 끊기), 오른쪽은 부수기(붕괴한 적 · 취약한 적에게 크게). 강타 · 거구에 강하고 무리에 약하다
-    { id: 's_slam', row: 1, b: '파쇄', tier: '하급', n: '내리찍기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 37 }] },
+    { id: 's_slam', row: 1, b: '파쇄', tier: '하급', n: '내리 찍기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 37 }, { k: 'brokenx', mul: 1.3 }] }, /* M5-1(10월 20일 만든 사람 설계지): 붕괴 상태면 소량의 추가 피해 */
     { id: 's_gap', row: 1, b: '파쇄', tier: '하급', n: '틈 노리기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 17 }, { k: 'brokenx', mul: 2 }] },
     { id: 's_knock', row: 2, b: '파쇄', tier: '하급', n: '자세 무너뜨리기', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 39 }] },
     { id: 's_mark', row: 2, b: '파쇄', tier: '하급', n: '약점 짚기', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'vuln', n: 2 }] },
@@ -152,20 +152,20 @@ const SKILLS2 = {
     { id: 's_landslide', row: 13, b: '파쇄', tier: '상급', n: '산사태', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 26 }, { k: 'brk', n: 70 }, { k: 'bigx', mul: 1.5 }] },
     { id: 's_lastblow', row: 13, b: '파쇄', tier: '상급', n: '무너진 자의 최후', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 22 }, { k: 'brokenx', mul: 2.5 }, { k: 'lowx', hp: 0.3, mul: 1.5 }, { k: 'bigx', mul: 1.5 }] },
     // 전열 장악: 전열 전체를 치고 여러 적을 함께 무너뜨린다. 왼쪽 기둥은 휩쓸기(전열 모두를 치는 피해), 오른쪽은 깨기(방패병 깨기 · 후열 끌어내기 · 여럿의 붕괴). 무리에 강하고 거구에 약하다
-    { id: 'f_sweep', row: 1, b: '전열 장악', tier: '하급', n: '휘두르기', tgt: 'front', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }] },
+    { id: 'f_sweep', row: 1, b: '전열 장악', tier: '하급', n: '개기식', tgt: 'front', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'ward', n: 6 }] }, /* M5-1(10월 20일 만든 사람 설계지): 얕지만 전열 전체 */ /* M5-1 맞추기 1번: 1챕터 보스는 버티는 쪽이 이긴다(막기가 주 대응) */
     { id: 'f_break', row: 1, b: '전열 장악', tier: '하급', n: '방패 깨기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 39 }, { k: 'shieldx', mul: 2 }] },
     { id: 'f_charge', row: 2, b: '전열 장악', tier: '하급', n: '방패 돌진', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 21 }] },
     { id: 'f_snare', row: 2, b: '전열 장악', tier: '하급', n: '사슬 걸기', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 31 }, { k: 'st', s: 'chill', n: 2 }] },
     { id: 'f_cleave', row: 3, b: '전열 장악', tier: '하급', n: '넓게 베기', tgt: 'front', time: 'normal', cd: 5, killRecharge: 1, fx: [{ k: 'dmg', n: 14 }] }, // 0.8.0 5단계(결정 4): 🔄 → 이 스킬로 적을 쓰러뜨리면 유산 +1
     { id: 'f_chain', row: 3, b: '전열 장악', tier: '하급', n: '사슬 휘두르기', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 23 }, { k: 'st', s: 'chill', n: 2 }] },
-    { id: 'f_stomp', row: 4, b: '전열 장악', tier: '하급', n: '발 구르기', tgt: 'front', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 3 }, { k: 'brk', n: 24 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'f_stomp', row: 4, b: '전열 장악', tier: '하급', n: '발 구르기', tgt: 'front', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 3 }, { k: 'brk', n: 20 }, { k: 'st', s: 'chill', n: 2 }] }, /* M5-1(10월 20일 만든 사람 설계지): 리듬 칸(비용 1)은 주 행동 */
     { id: 'f_wall', row: 4, b: '전열 장악', tier: '하급', n: '방패 분쇄', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 40 }, { k: 'shieldx', mul: 2 }] },
     { id: 'f_spin', row: 5, b: '전열 장악', tier: '하급', n: '회전 베기', tgt: 'front', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 16 }, { k: 'brk', n: 24 }] },
-    { id: 'f_drag', row: 5, b: '전열 장악', tier: '하급', n: '끌어와 치기', tgt: 'ranged', time: 'slow', cd: 6, fx: [{ k: 'dmg', n: 20 }, { k: 'brk', n: 28 }, { k: 'pull' }] }, // 10월 4일: 쿨타임 8 → 6 (전열 장악 오른쪽 기둥의 보스전 이길 수단)
+    { id: 'f_drag', row: 5, b: '전열 장악', tier: '하급', n: '끌어와 치기', tgt: 'ranged', time: 'slow', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 28 }, { k: 'pull' }] }, // 10월 4일: 쿨타임 8 → 6 (전열 장악 오른쪽 기둥의 보스전 이길 수단) /* M5-1 값 띠 */
     { id: 'f_trample', row: 6, b: '전열 장악', tier: '하급', n: '짓밟기', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 12 }, { k: 'chillx', mul: 2 }] },
     { id: 'f_topple', row: 6, b: '전열 장악', tier: '하급', n: '연쇄 붕괴', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 21 }, { k: 'brokenx', mul: 2 }] },
     { id: 'f_drive', row: 7, b: '전열 장악', tier: '중급', n: '몰아치기', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 21 }, { k: 'hasten', n: 1, on: 'use' }] },
-    { id: 'f_rampart', row: 7, b: '전열 장악', tier: '중급', n: '방패벽 부수기', tgt: 'front', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 23 }, { k: 'shieldx', mul: 2 }] },
+    { id: 'f_rampart', row: 7, b: '전열 장악', tier: '중급', n: '방패벽 부수기', tgt: 'front', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 19 }, { k: 'brk', n: 23 }, { k: 'shieldx', mul: 2 }] }, /* M5-1 값 띠 */
     { id: 'f_push', row: 8, b: '전열 장악', tier: '중급', n: '전열 밀어내기', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 23 }, { k: 'st', s: 'vuln', n: 2 }] },
     { id: 'f_scatter', row: 8, b: '전열 장악', tier: '중급', n: '전열 분산', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'chill', n: 2 }, { k: 'st', s: 'weak', n: 3 }] },
     { id: 'f_split', row: 9, b: '전열 장악', tier: '중급', n: '대지 가르기', tgt: 'front', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 18 }, { k: 'brokenx', mul: 2 }] },
@@ -174,11 +174,32 @@ const SKILLS2 = {
     { id: 'f_collapse', row: 10, b: '전열 장악', tier: '중급', n: '전열 붕괴', tgt: 'front', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 19 }, { k: 'brk', n: 33 }, { k: 'shieldx', mul: 2 }] },
     // 상급 (3챕터, 11~13줄 · 10월 8일): 왼쪽 기둥은 휩쓸기(전열 모두의 피해 · 붕괴), 오른쪽은 깨기(후열 끌어내기 · 한 적 묶기 · 방패 깨기). 큰 적 배수는 두지 않는다(거구에 약하다)
     { id: 'f_sweepline', row: 11, b: '전열 장악', tier: '상급', n: '전열 쓸기', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 22 }, { k: 'st', s: 'chill', n: 2 }] },
-    { id: 'f_hook', row: 11, b: '전열 장악', tier: '상급', n: '갈고리 사슬', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 33 }, { k: 'st', s: 'chill', n: 2 }, { k: 'pull' }] },
+    { id: 'f_hook', row: 11, b: '전열 장악', tier: '상급', n: '갈고리 사슬', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 20 }, { k: 'brk', n: 45 }, { k: 'st', s: 'chill', n: 2 }, { k: 'pull' }] }, /* M5-1 값 띠 */
     { id: 'f_onrush', row: 12, b: '전열 장악', tier: '상급', n: '쇄도', tgt: 'front', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 8 }, { k: 'brk', n: 34 }, { k: 'hasten', n: 1, on: 'use' }] },
     { id: 'f_noose', row: 12, b: '전열 장악', tier: '상급', n: '올가미', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 47 }, { k: 'st', s: 'chill', n: 3 }, { k: 'shieldx', mul: 2 }] },
     { id: 'f_rout', row: 13, b: '전열 장악', tier: '상급', n: '전선 와해', tgt: 'front', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 32 }, { k: 'brokenx', mul: 1.5 }, { k: 'chillx', mul: 1.5 }] },
     { id: 'f_siege', row: 13, b: '전열 장악', tier: '상급', n: '포위 분쇄', tgt: 'front', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 34 }, { k: 'chillx', mul: 1.7 }, { k: 'shieldx', mul: 2 }] },
+    /* ===== 0.8.0 M5-1 파수꾼 재설계(10월 20일 만든 사람 설계지 + 07:40 보완, nrk-private/제안/파수꾼-설계지-2026-10-20.md) =====
+       보완: 태세를 켜는 차례에 작은 효과(수비 보호막 · 공격 가벼운 타격), 신성한 기도는 언제나(수비 태세면 더 세게), 용맹의 반사는 가시 방패(p.thorn), 대응은 막기 주 · 무너뜨리기 부, 태세는 수도승 자세(p.stance)와 따로(p.wdSt)
+       태세(수비 · 공격): 켜고 끄는 스킬. 켤 때 유산 2, 유지 무료, 하나만 켜진다(하나를 켜면 다른 하나가 꺼짐). 다시 쓰면 끈다(유산 0). 숫자 · 효과는 data/skillkit.js WD_BOUND */
+    { id: 'w_dstance', row: 1, b: '성벽', tier: '하급', n: '수비 태세', tgt: 'self', time: 'fast', cd: 3, fx: [{ k: 'wdStance', s: 'def', txt: '켜면 수비 태세(켜는 차례에 보호막 +8): 받는 피해 −12%, 내 차례마다 보호막 +3. 공격 태세와 함께 켜지지 않는다. 다시 쓰면 끈다(유산 0).' }] },
+    { id: 'w_shieldhit', row: 1, b: '성벽', tier: '하급', n: '방패 가격', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 10 }, { k: 'ward', n: 8 }, { k: 'wardDmg', per: 0.5, cap: 12 }] }, /* M5-1 값 띠 */
+    { id: 'w_pray', row: 1, b: '성벽', tier: '하급', n: '신성한 기도', tgt: 'self', time: 'normal', cd: 3, fx: [{ k: 'wdPray', n: 0.03, txt: '최대 생명력 3% 회복. 수비 태세면 6%.' }] },
+    { id: 's_astance', row: 1, b: '파쇄', tier: '하급', n: '공격 태세', tgt: 'self', time: 'fast', cd: 3, fx: [{ k: 'wdStance', s: 'atk', txt: '켜면 공격 태세(켜는 차례에 앞의 적 하나에게 피해 5 · 붕괴 12): 기본 공격 · 강공격 피해 +25% · 붕괴 +10. 수비 태세와 함께 켜지지 않는다. 다시 쓰면 끈다(유산 0).' }] },
+    { id: 's_regret', row: 1, b: '파쇄', tier: '하급', n: '회한의 검', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'vuln', n: 2 }] }, /* M5-1 값 띠 */
+    { id: 's_march', row: 4, b: '파쇄', tier: '하급', n: '묵직한 걸음', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 8 }, { k: 'wdMarch', n: 3, txt: '3차례 동안 기본 공격 피해 +15% · 붕괴 +20, 강공격 스태미나 −15.' }] }, // [Claude 초안] 설계지 2고리(붕괴 +15 · 스태미나 −10)를 값 띠에 맞춤. 맞추기 2번: 보호막 8(1챕터 보스는 버티는 쪽이 이긴다)
+    { id: 'f_chainblade', row: 1, b: '전열 장악', tier: '하급', n: '사슬의 검', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 36 }, { k: 'st', s: 'chill', n: 2 }] }, // 파수꾼의 유일한 원거리 견제기(대미지는 얕다)
+    /* 경계 칸(입구 · 둘째 · 3고리 둘)은 [Claude 초안]. 기둥 파쇄의 강화 칸 둘(새 칸) */
+    { id: 's_lean', row: 7, b: '기둥 파쇄', tier: '중급', n: '기울어진 대열', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'st', s: 'empower', n: 3 }, { k: 'st', s: 'protect', n: 2 }, { k: 'ward', n: 8 }] },
+    { id: 's_gapwatch', row: 8, b: '기둥 파쇄', tier: '중급', n: '무너짐의 틈', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'ward', n: 32 }, { k: 'st', s: 'empower', n: 3 }] },
+    /* 경계 승부수(만든 사람 문장 · 대사 그대로, 10월 20일 결정 반영) */
+    { id: 'w_siege', row: 10, b: '공성추', tier: '중급', n: '파성추', kind: 'cut', tgt: 'self', time: 'normal', cd: 9, line: '「지키지 못하는 성벽 따위, 이 나락에서는 사치임이 분명하구나.」', cut: 'blade', pay: '그동안 보호막을 얻지 못하고, 3차례 방어 행동을 할 수 없다.', fx: [{ k: 'wdSiege', n: 3, txt: '현재 보호막을 전부 소모하여 3차례 동안 "파성": 강공격 스태미나 −20, 기본 공격과 강공격 피해가 소모한 보호막에 비례해 최대 ×2.0 증폭, 타격마다 붕괴 +30.' }] },
+    { id: 's_quake', row: 10, b: '기둥 파쇄', tier: '중급', n: '대지 분쇄', tgt: 'front', time: 'normal', cd: 9, line: '「네놈들의 방어선을, 쳐부숴주마.」', cut: 'guard', pay: '사용 후 3라운드 동안 자신의 보호막 획득량 −50%.', fx: [{ k: 'brk', n: 45 }, { k: 'wdQuake', txt: '이번 행동으로 무너진 적이 2명 이상이라면, 다음 차례의 자신 피해를 2배로 한다.' }] },
+    { id: 'w_valor', row: 10, b: '용맹의 투지', tier: '중급', n: '용맹한 방벽', tgt: 'self', time: 'normal', cd: 9, line: '「이 몸이 물러설 장소 따위. 이미 사라진지 오래렸다.」', cut: 'guard', pay: '그동안 스태미나가 저절로 차지 않고, 흘리기를 할 수 없다.', fx: [{ k: 'wdValor', n: 3, txt: '3차례 동안 "용맹": 방어할 때 보호막 +6 → +18, 내 차례마다 보호막의 50%만큼 가시(맞을 때 그 적에게 되돌린다).' }] },
+    /* 결합 칸 셋([Claude 초안]): 원 바깥, 판마다 둘, 꼬리표 조건 */
+    { id: 'w_turncoat', row: 7, b: '결합', tier: '중급', n: '돌아선 방패', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'wdTurncoat', txt: '이번 전투 동안 태세를 바꿀 때 비용이 없고, 바꾼 직후 첫 기본 공격에 붕괴 +25.' }] },
+    { id: 's_hammerhand', row: 7, b: '결합', tier: '중급', n: '쇠망치 손', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'wdHammer', txt: '이번 전투 동안 무너진 적에게 기본 공격 ×1.5, 강공격으로 무너진 적을 치면 스태미나 15를 돌려받는다.' }] },
+    { id: 'f_chainpull', row: 7, b: '결합', tier: '중급', n: '사슬 끌기', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'wdChainPull', txt: '이번 전투 동안 사슬의 검으로 후열 적을 맞히면 그 적을 전열로 끌어오고 붕괴 +30(전투에 두 번).' }] },
   ],
   hunter: [
     // 시작 스킬: 트리 밖. 추적을 쌓는 사격 하나(주 행동), 물러서며 가속을 얻는 사격 하나(빠른 행동) (10월 5일 초안)
@@ -942,3 +963,15 @@ const SB_TAGS = {
   sb_heatmail: ['보호막', '기본공격연동'], sb_embercut: ['보호막', '화상'], sb_embermail: ['화상', '기본공격연동'], sb_cindermail: ['보호막', '화상'], sb_firebody: ['화상', '기본공격연동'],
 };
 for (const s of SKILLS2.spellblade || []) if (SB_TAGS[s.id]) s.tags = SB_TAGS[s.id].slice();
+/* 0.8.0 M5-1 파수꾼 꼬리표(결합 칸 조건 · BD-9). 태세 · 기본공격연동 · 원거리 · 광역 · 보호막 · 붕괴 · 취약 */
+const WD_TAGS = {
+  w_dstance: ['태세', '보호막'], w_shieldhit: ['보호막'], w_pray: ['태세'], w_stand: ['보호막'], w_hold: ['보호막'], w_citadel: ['보호막'], w_beyond: ['보호막', '붕괴'],
+  s_astance: ['태세', '기본공격연동'], s_slam: ['붕괴'], s_regret: ['취약'], s_march: ['기본공격연동', '붕괴'], s_cut: ['붕괴'], s_ruin: ['붕괴'], s_fall: ['붕괴'],
+  f_sweep: ['광역'], f_chainblade: ['원거리'], f_stomp: ['광역', '붕괴'], w_shove: ['광역', '보호막'], f_drag: ['원거리', '붕괴'], f_collapse: ['광역', '붕괴'], f_hook: ['원거리'],
+  w_flare: ['보호막', '붕괴'], w_rebuild: ['보호막'], w_breach: ['보호막', '붕괴'], w_rampart: ['보호막'], w_siege: ['보호막', '기본공격연동'],
+  f_topple: ['광역', '붕괴'], s_lean: ['붕괴'], f_rampart: ['광역', '붕괴'], s_gapwatch: ['보호막'], s_quake: ['광역', '붕괴'],
+  f_charge: ['광역', '붕괴'], w_spikes: ['보호막'], f_storm: ['광역'], w_armor: ['보호막'], w_valor: ['보호막'],
+  w_turncoat: ['태세'], s_hammerhand: ['기본공격연동', '붕괴'], f_chainpull: ['원거리', '보호막'],
+};
+for (const s of SKILLS2.warden || []) if (WD_TAGS[s.id]) s.tags = WD_TAGS[s.id].slice();
+

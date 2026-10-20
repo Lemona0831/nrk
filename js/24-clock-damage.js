@@ -58,7 +58,7 @@ function tickOnce(b) {
   for (const w of alive(b)) if (w.role === 'bonewall' && !b.en.some(m => m.id === w.wallOf && m.alive)) { w.alive = false; w.hp = 0; logp(b, 'good', '쌓은 자가 쓰러져 뼈벽이 무너진다'); }
   for (const e of alive(b)) if (e.under && !alive(b).some(x => x !== e && !x.pile && !x.under && x.role !== 'root')) { e.under = 0; logp(b, 'sys', e.n + '이(가) 땅 위로 밀려 나온다'); } // 칠 수 있는 적이 늘 하나는 있다(G9)
   // 플레이어 자원 자연 회복 (전역 T)
-  { const rg = fxVal(p, 'regen', 0, (a, v) => a + v); if (rg && p.st < p.stMax) fxHit('clothgloves'); p.st = Math.min(p.stMax, p.st + ST_REGEN + rg); }
+  if (!(p.wdSt && p.wdSt.valor)) { const rg = fxVal(p, 'regen', 0, (a, v) => a + v); if (rg && p.st < p.stMax) fxHit('clothgloves'); p.st = Math.min(p.stMax, p.st + ST_REGEN + rg); } /* M5-1 용맹한 방벽 대가: 스태미나 자연 회복 정지 */
   p.mp = Math.min(p.mpMax, p.mp + p.mpMax * 0.05 * (hasMod(b, 'calm') ? 2 : 1));
   if (hasBt(p, 'breath')) p.st = Math.min(p.stMax, p.st + 3);
   if (hasMod(b, 'holy') || hasMod(b, 'shade')) { p.hp = Math.min(p.hpMax, p.hp + p.hpMax * 0.01); for (const e of alive(b)) e.hp = Math.min(e.hpMax, e.hp + e.hpMax * 0.01); }
@@ -241,7 +241,7 @@ function wdHeld(b, p, o, held) {
   if (fxFlag(p, 'heldBrk') && e.alive && e.row === 'front' && b.heldBrkR !== R) { b.heldBrkR = R; logp(b, 'good', e.n + '의 공격을 방패로 흔든다. 붕괴 +' + WD_HELD.brk); addBreak(b, e, WD_HELD.brk); }
 }
 /* 방어 보호막: 기본 WARD.guard, 다진 의지면 + 의지 × 0.5, 버팀목이면 생명력 50% 이하에서 2배 (생성 배율은 addWard가 곱한다) */
-function wdGuardWard(p) { let v = WARD.guard + (fxFlag(p, 'guardWil') ? 0.5 * stat(p, 'wil') : 0); if (fxFlag(p, 'guardLow') && p.hp <= p.hpMax * 0.5) v *= 2; return v; }
+function wdGuardWard(p) { let v = (p.wdSt && p.wdSt.valor ? WD_BOUND.valorGuard : WARD.guard) + /* M5-1 용맹: 방어할 때 보호막 +6 → +18 */ (fxFlag(p, 'guardWil') ? 0.5 * stat(p, 'wil') : 0); if (fxFlag(p, 'guardLow') && p.hp <= p.hpMax * 0.5) v *= 2; return v; }
 /* 화형 사제의 영창이 끊긴다 (쌓인 피해 · 무너짐 · 소모품) */
 function chantBreak(b, e, why) { ysResp(b, '끊기'); elCutEv(b, e, 1, 0); /* 10월 18일 0.8.0 5단계 원소술사: 영창 끊기 (끊어진 영창 · 흩어진 주의 · 원소 장막) */ e.chant = null; e.pyreRest = 1; e.teleTurn = null; if (e.intent && (CHANT_K.includes(e.intent.k) || MCH_K.includes(e.intent.k))) e.intent = { k: 'attack' }; logp(b, 'good', (why ? why + ' ' : '') + e.n + '의 영창이 끊긴다'); }
 /* 보스 단계 문턱과 마지막 단계 버티기. 넘친 피해는 hurtEnemy가 쌓아 두고(e.bank), 보스가 차례를 마쳐 문이 열리면 bossBankApply가 넣는다 */

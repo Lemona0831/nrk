@@ -42,6 +42,7 @@ function runSkill2(b, act, tgt) {
   const hz = F('hasten'); const hzOn = hz ? (hz.on || 'use') : null; // 🔄 쿨타임 당기기 (10월 3일 만든 사람 결정 D: 갈래 규칙 대신 스킬에만 적는다)
   const par = F('parry'); if (par && tgt) { setParry(b, tgt, par.red, Object.assign({}, F('onParry') || {}, hzOn === 'parry' ? { hasten: hz.n || 1, hb: s.b } : {})); logp(b, 'sys', tgt.n + '의 다음 공격을 흘릴 준비를 한다'); }
   const sm = F('stam'); if (sm) { p.st = Math.min(p.stMax, p.st + sm.n); if (p.exhaust && p.st >= 30) p.exhaust = 0; }
+  if (p.build === 'warden') wdUse(b, s, targets, tgt, 'pre'); // 0.8.0 M5-1 파수꾼 태세 · 승부수 · 결합 칸
   if (p.build === 'spellblade') { sbBoundUse(b, s); if (F('searMerge')) for (const e of targets) if (e.alive && stk(e, 'bleed') > 0 && stk(e, 'ignite') > 0) sbSear(b, e, 0); if (F('sbCross')) for (const e of targets) sbCross(b, e); if (F('sbEmberCut') && targets[0]) sbEmberCut(b, targets[0]); if (F('searBurst')) for (const e of targets) sbSearBurst(b, e, F('searBurst').mul || 2); } // 0.8.0 M5-0 마검사 경계 행동, 혈염은 베기 전에 걸려 있던 출혈 · 화상을 합친다
   if (s.tgt === 'self') for (const x of s.fx) if (x.k === 'st') { addS(b, p, x.s, x.n); logp(b, 'good', s.n + '. ' + (x.s === 'empower' && p.build === 'monk' ? '기' : KW_N[x.s] || x.s) + ' ' + x.n); } // 나에게 거는 상태
   for (const x of s.fx) if (x.k === 'meSt' && !x.on && !(p.build === 'monk' && (x.s === 'empower' || x.if))) { if (CF && CONF.kinds.includes(x.s)) { (p.selfBad = p.selfBad || []).push({ s: x.s, n: x.n }); continue; } /* 숨겨진 직업 2: 고행은 행동이 끝난 뒤 (cfSelfApply) */ if (BU && x.s === 'bleed') { b.selfSt = 1; const g = addS(b, p, 'bleed', x.n) || 0; b.selfSt = 0; p.selfBl = Math.min(stk(p, 'bleed'), (p.selfBl || 0) + g); logp(b, 'bad', s.n + '. 나에게 출혈 ' + x.n); b.rec.push({ k: 'bu', w: 'selfBleed', n: g }); continue; } addS(b, p, x.s, x.n); logp(b, 'good', s.n + '. ' + (KW_N[x.s] || x.s) + ' ' + x.n); } // 공격 스킬에 붙은 나에게 거는 상태 (on: 'kill'은 쓰러뜨린 뒤. 수도승의 강화(기)와 if는 피해 뒤 b.kiPend로)
@@ -186,6 +187,7 @@ function runSkill2(b, act, tgt) {
   if (krOk) { if (BU) b.krTurn = (b.krTurn || 0) + 1; if (s.once) { (b.krOnce = b.krOnce || {})[s.id] = 1; p.cd[s.id] = 0; logp(b, 'good', s.n + '을(를) 한 번 더 쓸 수 있다'); } else ysRefund(b, s.n); } // 10월 15일 유산 1차 시제품 변환: 처치 다시 쓰기 → 유산 +1(라운드에 한 번). 전투마다 1번 스킬은 한 번 더 (비용은 ysSpend가 playerAct에서 먼저 냈다)
   if (hzOn === 'use' && !(hz.when === 'ward<1' && wardBeforeSkill >= 1)) hastenBranch(b, s.b, hz.n || 1, s.id); else if (hzOn === 'kill' && killed && !BU) hastenBranch(b, s.b, hz.n || 1, s.id); else if (hzOn === 'alt' && b.sbAlt) hastenBranch(b, s.b, hz.n || 1, s.id); else if (hzOn === 'clean' && CF && cfE > 0) hastenBranch(b, s.b, hz.n || 1, s.id); // 🔄 쓰면 다른 같은 갈래 스킬 쿨타임 −n // 이번 차례에 쓴 스킬은 모두 이번 차례가 끝날 때 줄지 않는다 (10월 3일: 빠른 스킬 다음에 스킬을 쓰면 빠른 스킬의 대기가 1 짧았다)
   p.lastSkillDmg = multi ? tot / Math.max(1, targets.length) : tot;
+  if (p.build === 'warden') wdUse(b, s, targets, tgt, 'post'); // M5-1 대지 분쇄 · 사슬 끌기
   if (p.build === 'hunter') hnSkillEnd(b, s, targets); // 사냥꾼 연계: 쓴 갈래(시작 스킬은 lb) · 0.8.0 5단계 기본 공격 버프 · 직전에 친 적
   if (p.build === 'elementalist') { const ctM = s.fx.filter(x => x.k === 'meSt' && x.on === 'cut'); if (ctM.length && b.elCutA === b.actN) elCutMe(b, ctM); b.elBurnPre = null; // 10월 18일 0.8.0 5단계 원소 장막: 이 행동으로 영창을 끊으면 나에게 보호
     b.shockCtx = { id: s.id, br: s.b, ids: targets.map(e => e.id), multi, sx: F('shockx') || null, hz: hzOn === 'shock' ? (hz.n || 1) : 0, kr: s.killRecharge && s.krShock ? s.n : null, cutMe: ctM.length ? ctM : null }; } // 원소술사: 이 행동 끝의 열충격에 붙일 것 (finishPlayer가 쓰고 지운다). kr: 공명은 행동 끝 열충격 처치도 환급
@@ -418,3 +420,49 @@ function tagFit(build, t) { const br = ((typeof TREE2 !== 'undefined' && TREE2[b
 
 /* ---- 고정 상황 5개 (10.2 검증 질문 1) ---- */
 
+
+/* ===== 0.8.0 M5-1 파수꾼 (10월 20일 만든 사람 설계지 + 07:40 보완): 태세 · 경계 승부수 · 결합 칸 =====
+   p.wdSt = { def · atk 태세(하나만, 수도승 자세 p.stance와 따로), march 묵직한 걸음, siege 파성(siegeAmp), valor 용맹, quakeNext · quakeX 대지 분쇄, wardHalf 보호막 −50%, nextBrk 다음 기본 공격 붕괴, turncoat · hammer · chainPull 결합 칸 }.
+   남은 차례 수는 내 차례가 시작될 때 −1(wdTurnStart). 숫자는 WD_BOUND(data/skillkit.js) */
+const wdBH = c => !!c && (c.id === 'basic' || c.id === 'heavy');
+const IFX_WD = {
+  def: { inP: (b, p, o) => o && o.dot ? 0 : WD_BOUND.defIn },
+  atk: { hitP: (b, p, e, o, c) => wdBH(c) ? WD_BOUND.atkHit : 0, inP: (b, p, o) => o && o.dot ? 0 : -WD_BOUND.atkIn, onHit: (b, p, e, o, c) => { if (!wdBH(c) || !e.alive) return; addBreak(b, e, WD_BOUND.atkBrk); return 1; } },
+  march: { hitP: (b, p, e, o, c) => c && c.id === 'basic' ? WD_BOUND.marchHit : 0, onHit: (b, p, e, o, c) => { if (!c || c.id !== 'basic' || !e.alive) return; addBreak(b, e, WD_BOUND.marchBrk); return 1; }, cost: (p, id) => id === 'heavy' ? -WD_BOUND.marchHeavy : 0 },
+  siege: { out: (b, p, c) => wdBH(c) ? (p.wdSt.siegeAmp || 1) : 1, onHit: (b, p, e, o, c) => { if (!wdBH(c) || !e.alive) return; addBreak(b, e, WD_BOUND.siegeBrk); return 1; }, cost: (p, id) => id === 'heavy' ? -WD_BOUND.siegeHeavy : 0 },
+  quakeX: { out: (b, p, c) => c ? WD_BOUND.quakeMul : 1 },
+  hammer: { hitP: (b, p, e, o, c) => c && c.id === 'basic' && e && e.s && e.s.broken ? WD_BOUND.hammerMul - 1 : 0, onHit: (b, p, e, o, c) => { if (c && c.id === 'heavy' && e && e.s && e.s.broken) { p.st = Math.min(p.stMax, p.st + WD_BOUND.hammerSt); return 1; } } },
+  nextBrk: { onHit: (b, p, e, o, c) => { if (!c || c.id !== 'basic' || !p.wdSt || !(p.wdSt.nextBrk > 0)) return; const n = p.wdSt.nextBrk; p.wdSt.nextBrk = 0; if (e.alive) { addBreak(b, e, n); logp(b, 'good', '기본 공격에 실은 무게: 붕괴 +' + n); } return 1; } },
+};
+const WD_N = { def: '수비 태세', atk: '공격 태세' };
+function wdUse(b, s, targets, tgt, phase) {
+  const p = b.p; const S = p.wdSt = p.wdSt || {}; const F = k => s.fx.find(e => e.k === k), U = WD_BOUND;
+  if (phase === 'post') {
+    if (F('wdQuake')) { const pre = b.wdPre || []; const nb = targets.filter(e => e.s && e.s.broken && !pre.includes(e.id)).length; S.wardHalf = U.quakeN; if (nb >= 2) { S.quakeNext = 1; logp(b, 'good', '대지 분쇄: 무너진 적 ' + nb + ' — 다음 차례 내 피해 ×' + U.quakeMul); } else logp(b, 'sys', '대지 분쇄: 무너진 적 ' + nb); b.wdPre = null; }
+    if (s.id === 'f_chainblade' && S.chainPull > 0) for (const e of targets) if (e.alive && e.row === 'back' && S.chainPull > 0) { e.row = 'front'; e.pulledA = b.actN; S.chainPull--; addBreak(b, e, U.pullBrk); logp(b, 'crit', '사슬 끌기: ' + e.n + '을(를) 전열로 끌어온다(붕괴 +' + U.pullBrk + ')'); }
+    return;
+  }
+  const ws = F('wdStance'); if (ws) { const k = ws.s, o = k === 'def' ? 'atk' : 'def';
+    if (S[k]) { S[k] = 0; logp(b, 'sys', WD_N[k] + '를 푼다'); }
+    else { const sw = !!S[o]; S[o] = 0; S[k] = 1; logp(b, 'good', WD_N[k] + (sw ? '로 바꾼다' : '를 켠다'));
+      if (k === 'def') { const g = addWard(b, p, U.defOn); if (g > 0) logp(b, 'good', '수비 태세: 보호막 +' + r1(g)); }
+      else { const e = tgt && tgt.alive ? tgt : alive(b).filter(x => x.row === 'front' && x.role !== 'root')[0] || alive(b)[0]; if (e) { hurtEnemy(b, e, U.atkOnDmg, { label: '공격 태세' }); if (e.alive) addBreak(b, e, U.atkOnBrk); } }
+      if (sw && S.turncoat) { S.nextBrk = Math.max(S.nextBrk || 0, U.turnBrk); logp(b, 'good', '돌아선 방패: 다음 기본 공격 붕괴 +' + U.turnBrk); } } }
+  const pr = F('wdPray'); if (pr) { const h = p.hpMax * pr.n * (S.def ? U.prayDef : 1) * healMul(p); const h0 = p.hp; p.hp = Math.min(p.hpMax, p.hp + h); logp(b, 'good', s.n + ': 생명력 +' + r1(p.hp - h0) + (S.def ? ' (수비 태세)' : '')); }
+  const nb = F('wdNextBrk'); if (nb) S.nextBrk = Math.max(S.nextBrk || 0, nb.n);
+  const mc = F('wdMarch'); if (mc) { S.march = mc.n || 3; logp(b, 'good', s.n + ': ' + S.march + '차례 동안 기본 공격 피해 +' + Math.round(U.marchHit * 100) + '% · 붕괴 +' + U.marchBrk + ', 강공격 스태미나 −' + U.marchHeavy); }
+  const sg = F('wdSiege'); if (sg) { const w = p.ward || 0; p.ward = 0; S.siegeAmp = 1 + Math.min(1, w / U.siegePer) * (U.siegeMax - 1); S.siege = sg.n || 3; logp(b, 'good', '파성: 보호막 ' + r1(w) + '을 모두 소모해 ' + S.siege + '차례 동안 기본 공격 · 강공격 ×' + r1(S.siegeAmp) + ', 타격마다 붕괴 +' + U.siegeBrk + ', 강공격 스태미나 −' + U.siegeHeavy + ' (보호막을 얻지 못하고 방어할 수 없다)'); }
+  if (F('wdQuake')) b.wdPre = targets.filter(e => e.s && e.s.broken).map(e => e.id);
+  const vl = F('wdValor'); if (vl) { S.valor = vl.n || 3; wdValorThorn(b, p); logp(b, 'good', '용맹: ' + S.valor + '차례 동안 방어할 때 보호막 +' + U.valorGuard + ', 보호막의 절반만큼 가시 (스태미나가 차지 않고 흘리기를 할 수 없다)'); }
+  if (F('wdTurncoat')) { S.turncoat = 1; logp(b, 'good', '돌아선 방패: 이번 전투 동안 태세를 바꿀 때 비용 없음, 바꾼 직후 첫 기본 공격 붕괴 +' + U.turnBrk); }
+  if (F('wdHammer')) { S.hammer = 1; logp(b, 'good', '쇠망치 손: 이번 전투 동안 무너진 적에게 기본 공격 ×' + U.hammerMul + ', 강공격이 무너진 적을 치면 스태미나 +' + U.hammerSt); }
+  if (F('wdChainPull')) { S.chainPull = U.pullN; logp(b, 'good', '사슬 끌기: 이번 전투 동안 사슬의 검이 후열 적을 끌어온다(' + U.pullN + '번)'); }
+}
+/* 용맹: 반사는 새 규칙 대신 가시 방패(p.thorn)로(07:40 보완). 내 차례마다 보호막의 절반만큼 가시를 다시 둔다 */
+function wdValorThorn(b, p) { const d = Math.round((p.ward || 0) * WD_BOUND.valorThorn); if (d <= 0) return; p.thorn = { n: WARD.thornMax, dmg: Math.max(d, p.thorn ? p.thorn.dmg || 0 : 0), valor: 1 }; }
+function wdTurnStart(b, p) {
+  const S = p.wdSt; if (S.def) { const g = addWard(b, p, WD_BOUND.defWard); if (g > 0) logp(b, 'good', '수비 태세: 보호막 +' + r1(g)); }
+  if (S.quakeX) S.quakeX = 0; if (S.quakeNext) { S.quakeNext = 0; S.quakeX = 1; logp(b, 'good', '대지 분쇄: 이번 차례 내 피해 ×' + WD_BOUND.quakeMul); }
+  for (const [k, n] of [['march', '묵직한 걸음'], ['siege', '파성'], ['valor', '용맹'], ['wardHalf', '대지 분쇄의 대가']]) if (S[k]) { S[k]--; if (!S[k]) { logp(b, 'sys', n + '이(가) 걷힌다'); if (k === 'valor' && p.thorn && p.thorn.valor) p.thorn = null; } }
+  if (S.valor) wdValorThorn(b, p);
+}

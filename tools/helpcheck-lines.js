@@ -14,4 +14,6 @@ module.exports = function ({ E, add, note, source }) {
   add('skill-lines', '3차례 "불의 몸"', 'sbFireBody n=3, bodyPer=8, 강공격 배율 1+bodyMul=1.8, bodyIgn=4', E => E('SK2.sb_firebody.fx[0].n') === 3 && E('SB_BOUND.bodyPer') === 8 && Math.abs(1 + E('SB_BOUND.bodyMul') - 1.8) < 1e-9 && E('SB_BOUND.bodyIgn') === 4);
   add('skill-lines', '그동안 유산 0', '불의 몸 동안 ysAdd 0(22번 fireBody 검사)', E => /sbSt\.fireBody \? 0/.test(E('ysAdd.toString()')));
   add('skill-lines', '깨지면 전열 모두에게 출혈 5', 'SB_BOUND.sinBleed=5', E => E('SB_BOUND.sinBleed') === 5);
+  // 0.8.0 M5-1 파수꾼 태세(도움말 한 줄): 켤 때 유산 2(트리 노드 비용), 켜져 있으면 끄기 0
+  add('help', '켤 때 유산 2, 켜 둔 동안은 공짜', '파수꾼 태세 노드 w_dstance · s_astance ys 2, skCostAt 끄기 0', E => E("atBuild('warden').nodes.w_dstance.ys") === 2 && E("atBuild('warden').nodes.s_astance.ys") === 2 && /wdOff/.test(E('skCostAt.toString()')));
 };

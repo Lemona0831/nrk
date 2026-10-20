@@ -335,7 +335,7 @@ if (typeof document !== 'undefined') document.addEventListener('change', ev => {
    - 덮개는 #vfx 안(aria-hidden, pointer-events:none)이라 컷인 중에도 버튼을 누를 수 있다.
    - 카드 동작(기준 5의 승인된 예외): 컷인과 같은 시각에 내 카드 · 적 카드가 움직인다. 상태 표시(카드 모서리 이름 · 남은 차례)는 52번 vHudPlayer가 그린다 */
 const CUT_PACE = { slow: 2200, normal: 1800, fast: 1300, step: 1800 };
-const CUT_COL = { 혈염: [239, 93, 60], '죄인의 피': [194, 58, 82], '유산의 불': [240, 172, 72] };
+const CUT_COL = { 혈염: [239, 93, 60], '죄인의 피': [194, 58, 82], '유산의 불': [240, 172, 72], 공성추: [168, 186, 206], '기둥 파쇄': [201, 139, 74], '용맹의 투지': [232, 194, 90] }; // M5-1 파수꾼: 기존 셋(검 · 방어)에 색만 바꿈. 방패 오라 · 균열 파동 · 성문 연출은 M10b(0.8.1)
 const CUT_PMAX = 250;
 const CUT = { q: [], cv: null, cx: null, P: [], J: [], raf: 0, lastT: 0, run: [], tmr: [], AC: null, el: null, on: false };
 function cutLevel() { const m = vfxMode(); if (m === 'off' || G.skip || G.pace === 'instant') return 'off'; return m === 'low' ? 'base' : 'fancy'; }
