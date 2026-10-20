@@ -42,7 +42,7 @@ for (const c of ['monk']) {
   const tr = Object.values(A.nodes).filter(x => x.kind === 'upgrade'); const conv = {}; for (const u of tr) if (u.mod.set && ('time' in u.mod.set || 'tgt' in u.mod.set)) conv[u.on] = (conv[u.on] || 0) + 1;
   ok(Object.values(conv).every(v => v <= 1), c + ': 같은 스킬에 빠르기 · 대상을 바꾸는 [전환] 강화는 하나뿐(결정 6)');
 }
-ok(JSON.stringify(E.SK2.w_flare.fx) === JSON.stringify([{ k: 'wardBurn', mul: 3, max: 8 }, { k: 'brk', n: 3 }, { k: 'bigx', mul: 1.5 }]), '강화는 원래 스킬 데이터를 바꾸지 않음');
+ok(JSON.stringify(E.SK2.w_flare.fx) === JSON.stringify([{ k: 'wardBurn', mul: 2.6, max: 8 }, { k: 'brk', n: 3 }, { k: 'bigx', mul: 1.5 }]), '강화는 원래 스킬 데이터를 바꾸지 않음');
 
 // ===== 2) 노드 비용 (결정 1: skCost가 노드 ys를 읽음) =====
 { const p = { build: 'warden', aup: [], pn: [] }; ok(skCost(E.skOf(p, 'w_flare')) === 2, '보호막 터뜨리기: 트리 노드 2(0.8.0 M5-0부터 쿨타임 변환표 없음)');

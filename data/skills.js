@@ -99,7 +99,7 @@ const SKILLS2 = {
     { id: 'w_raise', row: 1, b: '성벽', tier: '하급', n: '방패 세우기', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 22 }] },
     { id: 'w_shove', row: 1, b: '전열 장악', tier: '하급', n: '방패 밀치기', tgt: 'front', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'ward', n: 10 }] }, /* M5-1(10월 20일 만든 사람 설계지): 전열 장악 2고리: 전열 피해 + 보호막 */
     { id: 'w_hold', row: 2, b: '성벽', tier: '하급', n: '막고 치기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 17 }, { k: 'wardDmg', per: 0.25 }, { k: 'bigx', mul: 1.5 }] }, // 10월 4일: 성벽 강함 거구
-    { id: 'w_flare', row: 2, b: '성벽', tier: '하급', n: '보호막 터뜨리기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'wardBurn', mul: 3, max: 8 }, { k: 'brk', n: 3 }, { k: 'bigx', mul: 1.5 }] }, // 10월 4일: 성벽 강함 거구
+    { id: 'w_flare', row: 2, b: '성벽', tier: '하급', n: '보호막 터뜨리기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'wardBurn', mul: 2.6, max: 8 }, { k: 'brk', n: 3 }, { k: 'bigx', mul: 1.5 }] }, /* M5-1 만든 사람 답: 공성추 2고리를 조금 약하게(태운 1마다 ×3 → ×2.6) */ // 10월 4일: 성벽 강함 거구
     { id: 'w_stand', row: 3, b: '성벽', tier: '하급', n: '버티기', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'wardFill', to: 0.6 }, { k: 'st', s: 'protect', n: 2 }] },
     { id: 'w_kindle', row: 3, b: '성벽', tier: '하급', n: '작열 방벽', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 21 }, { k: 'hasten', n: 1, on: 'use', when: 'ward<1' }] }, // 0.8.0 5단계(10월 17일 만든 사람 결정 4): 🔄는 보호막이 0일 때 쓴 경우만
     { id: 'w_spikes', row: 4, b: '성벽', tier: '하급', n: '가시 방패', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'thorn', times: 4, dmg: 6 }] },
