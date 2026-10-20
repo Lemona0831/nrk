@@ -148,3 +148,8 @@ html.rm .trd-note{animation:none}html.rm .trd-hint{transition:none}
 .trd-svg .dlp{font-size:calc(11px*var(--tu,1));fill:var(--muted);stroke-width:calc(3.5px*var(--tu,1));font-style:italic;dominant-baseline:middle}
 .trd-svg .cbp{font-size:calc(10.5px*var(--tu,1));fill:var(--muted);stroke-width:calc(3.5px*var(--tu,1));dominant-baseline:hanging}
 .trd-svg .cbp.cbok{fill:var(--good,#7be08a)}
+/* M5-0d: 길이 다른 칸끼리의 선(옅은 점선), 숨긴 고리 글자 */
+.trd-svg .lk.lk-x,.trd-svg .lk-can.lk-x{stroke-dasharray:3 6;opacity:.45}
+.trd-svg .rl.cull{display:none}
+.trd-svg .nl.nlo{dominant-baseline:middle} /* M5-0d: 1고리 스킬 이름(부채꼴 가운데에서 먼 쪽) */
+.trd-svg .nl.nlo[data-a=start]{text-anchor:start}.trd-svg .nl.nlo[data-a=end]{text-anchor:end}
