@@ -50,6 +50,11 @@ const act = (b, id, t) => { for (const e of b.en) if (e.alive && !e.intent) e.in
 // M5-0 보정 5: 경계 승부수 후보 · 변종
 { const { p, b, es } = fight(['sb_searburst']); for (const e of es) E.addS(b, e, 'sear', 4); const h = es.map(e => e.hp); p.ys = 9; act(b, 'sb_searburst'); ok(es.every((e, i) => h[i] - e.hp >= 12) && es.every(e => stk(e, 'sear') >= 2), '혈염 터뜨리기: 혈염 걸린 적마다 그 혈염 × 3 피해, 혈염은 남음'); }
 { const { p, b, es } = fight(['sb_kalpa']); p.aup = ['sbm_kalpa_bulgwi']; p.ys = 9; act(b, 'sb_kalpa'); const fx = R('fxAdd'); ok(Math.abs(fx(p, 'hitP', b, p, es[0], {}, { id: 'basic' }) - 0.8) < 1e-9 && Math.abs(fx(p, 'inP', b, p, {}) + 0.6) < 1e-9, '변종 불귀: 겁화 주는 피해 +80%, 받는 피해 +60%'); }
+// M5-0 보정 5 2차: 버팀(보호막 빌드가 이기는 상황 — 장기전 · 보스)
+{ const { p, b, es } = fight(['sb_bladeward']); p.ys = 5; act(b, 'sb_bladeward', es[0]); ok(p.sbSt.holdOn, '보호막 꼬리표 스킬을 쓰면 버팀 태세'); const ts = R('sbTurnStart'), fx = R('fxAdd');
+  p.ward = 10; p.sbSt.hold = 0; ts(b, p); ts(b, p); ok(p.sbSt.hold === 2 && Math.abs(fx(p, 'hitP', b, p, es[0], {}, { id: 'basic' }) - 0.1) < 1e-9, '보호막을 지킨 채 차례 둘 → 버팀 2, 주는 피해 +10%');
+  for (let i = 0; i < 6; i++) ts(b, p); ok(p.sbSt.hold === U.holdMax, '최대 5'); p.ward = 0; ts(b, p); ok(!p.sbSt.hold, '보호막이 깨진 채 차례가 오면 0'); }
+{ const { p, b, es } = fight(['sb_ember']); p.ys = 5; act(b, 'sb_ember', es[0]); ok(!p.sbSt.holdOn, '보호막 꼬리표가 없는 스킬은 버팀 태세가 아님'); }
 // 비용 1: 교대 아님
 { const { p, b, es } = fight(['sb_shard', 'sb_ember']); act(b, 'basic', es[0]); ok(p.sbLast === 'cut', '베기 뒤 직전 종류 베기'); p.ys = 5; p.ward = 0; act(b, 'sb_shard', es[0]); ok(p.sbLast === 'cut' && !(p.ward > 0), '마력 파편(비용 1 주문)은 교대가 아님: 직전 종류 그대로, 교대 보호막 없음'); act(b, 'sb_ember', es[0]); ok(p.ward > 0, '그다음 주문(비용 2)은 교대'); }
 // 경계 입구 requires

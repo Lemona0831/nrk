@@ -94,7 +94,8 @@ const SB_HP = 120;
 /* 경계 숫자 (엔진 js/10-skills-engine.js의 IFX_SB · sbBoundUse · sbWardHit와 값 식이 함께 읽는다). 스킬 문장(data/skills.js txt)의 숫자와 맞춰 둔다 */
 /* M5-0 마감(10월 19일 만든 사람): 문장의 꼴은 그대로, 숫자만 값 띠 하한까지 올렸다. 보정 4(10월 20일)에서 갈래 칸을 잘라 기준 평균이 오르자 다시 맞췄다(피막 130%, 잿불 갑주 화상 6). 겁화 피해 +40 → +60%, 피막 50 → 125%, 죄인의 벽 출혈 4 → 5, 달군 갑주 ×1.5 → ×2.8, 잿불 갑주 화상 2 → 5, 불의 몸 ×1.3 → ×1.8 · 화상 2 → 4 (피의 갑주 +4 → +17, 핏불 싣기 출혈 2 · 화상 2 → 3 · 4는 data/skills.js fx) */
 const SB_BOUND = { blazeHit: 0.6, blazeIn: 0.3, blazeSear: 2, filmPer: 0.75, sinPay: 0.15, sinMul: 3, sinBleed: 5, heatMul: 2.8, emberIgn: 6, bodyPer: 8, bodyMul: 0.8, bodyIgn: 4, sinBlock: 0.3, ashMul: 0.5, ashIgn: 2,
-  crossN: 4, ssPer: 1, echoN: 2, shackleBrk: 90, ashHandK: 2, ashHandIgn: 3, cinderIgn: 1, emberCutBurn: 6, fistMul: 1.5, cbIgn: 3 }; // M5-0 보정 4 새 칸 숫자(문장과 맞춘다)
+  crossN: 4, ssPer: 1, echoN: 2, shackleBrk: 90, ashHandK: 2, ashHandIgn: 3, cinderIgn: 1, emberCutBurn: 6, fistMul: 1.5, cbIgn: 3,
+  holdPer: 0.05, holdMax: 5 }; // M5-0 보정 5 2차(만든 사람): 버팀 — 보호막 꼬리표 스킬을 쓴 전투에서 보호막을 지킨 채 차례를 넘기면 쌓이는 피해 +5%(최대 5) // M5-0 보정 4 새 칸 숫자(문장과 맞춘다)
 function skValue(s, ov) {
   if (!ov && SKK.butch && /^b_/.test(String(s.id)) && !s._bu) return skValueBu(s);
   if (!ov && String(s.id).slice(0, 2) === 'e_') return skValueElem(s);

@@ -230,6 +230,7 @@ const IFX_SB = {
   blaze: { hitP: (b, p) => p && p.sbSt && p.sbSt.blazeHit != null ? p.sbSt.blazeHit : SB_BOUND.blazeHit, inP: (b, p, o) => !o.dot ? -(p && p.sbSt && p.sbSt.blazeIn != null ? p.sbSt.blazeIn : SB_BOUND.blazeIn) : 0, /* 보정 5: 변종 불귀는 스킬 값(sbBlaze.hit · inc) */ onHit: (b, p, e, o, c) => { if (!sbIsCut(p, c) || !e.alive) return; return sbSear(b, e, SB_BOUND.blazeSear) ? 1 : 0; } },
   fireBody: { hitP: (b, p, e, o, c) => sbBH(c) ? SB_BOUND.bodyMul : 0, onHit: (b, p, e, o, c) => { if (!sbBH(c) || !e.alive) return; addS(b, e, 'ignite', SB_BOUND.bodyIgn); return 1; }, noIgnite: 1 },
   heatNext: { hitP: (b, p, e, o, c) => c && c.id === 'basic' ? SB_BOUND.heatMul - 1 : 0, onHit: (b, p, e, o, c) => { if (c && c.id === 'basic' && p.sbSt) { p.sbSt.heatNext = 0; return 1; } } },
+  hold: { hitP: (b, p) => (p && p.sbSt && p.sbSt.hold || 0) * SB_BOUND.holdPer }, // M5-0 보정 5 2차 버팀
   bloodFist: { hitP: (b, p, e, o, c) => c && c.id === 'basic' && e && stk(e, 'bleed') > 0 ? SB_BOUND.fistMul - 1 : 0 }, // M5-0 보정 5 피 묻은 주먹
   bloodEcho: { onHit: (b, p, e, o, c) => { if (!sbIsCut(p, c) || !e.alive || !(p.ward > 0)) return; addS(b, e, 'bleed', SB_BOUND.echoN); return 1; } }, // M5-0 보정 4 피의 반향
   ashHand: { onHit: (b, p, e, o, c) => { if (!c || c.id !== 'basic' || !p.sbSt || !(p.sbSt.ashHand > 0)) return; p.sbSt.ashHand--; if (e.alive) addS(b, e, 'ignite', SB_BOUND.ashHandIgn); return 1; } }, // 재 묻은 손
@@ -241,6 +242,7 @@ const sbWardRaw = (p, n) => { const w0 = p.ward || 0; p.ward = w0 + Math.max(0, 
 /* 나에게 쓰는 경계 행동 */
 function sbBoundUse(b, s) {
   const p = b.p; p.sbSt = p.sbSt || {}; const F = k => s.fx.find(e => e.k === k);
+  if ((s.tags || []).includes('보호막') && !p.sbSt.holdOn) { p.sbSt.holdOn = 1; logp(b, 'good', '버팀 태세: 이번 전투 동안 보호막을 지킨 채 차례를 넘길 때마다 버팀 +1(주는 피해 +' + Math.round(SB_BOUND.holdPer * 100) + '%, 최대 ' + SB_BOUND.holdMax + ')'); } // M5-0 보정 5 2차: 보호막 빌드가 이기는 상황(장기전 · 보스)
   if (F('sbBlaze')) { const w = p.ward || 0; p.ward = 0; p.sbSt.blaze = F('sbBlaze').n || 3; p.sbSt.blazeHit = F('sbBlaze').hit != null ? F('sbBlaze').hit : SB_BOUND.blazeHit; p.sbSt.blazeIn = F('sbBlaze').inc != null ? F('sbBlaze').inc : SB_BOUND.blazeIn; logp(b, 'good', '피와 화염이 몸을 감싼다. ' + p.sbSt.blaze + '차례 동안 베기마다 혈염, 주는 피해 +' + Math.round(SB_BOUND.blazeHit * 100) + '%' + (w ? ' (보호막 ' + r1(w) + ' 소실)' : '')); }
   const wp = F('wardPer'); if (wp) { const k = alive(b).filter(e => stk(e, wp.s) > 0).length; const g = k ? addWard(b, p, wp.n * k) : 0; logp(b, 'good', '피의 갑주: 출혈 걸린 적 ' + k + ' → 보호막 +' + r1(g)); }
   if (F('sbFilm')) { p.sbSt.film = 1; logp(b, 'good', '피막: 이번 차례 보호막으로 받아낸 피해의 ' + Math.round(SB_BOUND.filmPer * 100) + '%가 그 적에게 출혈로 간다'); }
@@ -268,7 +270,7 @@ function sbCross(b, e) { if (!e || !e.alive) return; const hb = stk(e, 'bleed') 
 function sbSearSpread(b, e, pre) { const n = Math.min(KW.sear, Math.ceil((pre || 0) * SB_BOUND.ssPer)); if (n <= 0) return; let k = 0; for (const o of alive(b)) if (o !== e && o.role !== 'root') { addS(b, o, 'sear', n); k++; } if (k) logp(b, 'good', '핏불 번짐: ' + e.n + '의 혈염이 곁의 적에게 번진다 (혈염 ' + n + ')'); }
 function sbSearBurst(b, e, mul) { const n = stk(e, 'sear'); if (!n || !e.alive) return; hurtEnemy(b, e, n * mul, { src: b.p, label: '혈염 터뜨리기' }); logp(b, 'good', '혈염 터뜨리기: ' + e.n + '의 혈염 ' + n + ' × ' + mul); } // M5-0 보정 5 경계 승부수 후보(혈염은 남는다)
 function sbEmberCut(b, e) { const p = b.p; if (!e || !e.alive) return; const bn = Math.min(p.ward || 0, SB_BOUND.emberCutBurn); if (bn <= 0) return; p.ward -= bn; const n = Math.min(KW.ignite, Math.round(bn)); addS(b, e, 'ignite', n); logp(b, 'good', '잿불 베기: 보호막 ' + r1(bn) + '을 태워 ' + e.n + '에게 화상 ' + n); } // M5-0 보정 5
-function sbTurnStart(b, p) { const S = p.sbSt; S.film = 0; for (const k of ['blaze', 'fireBody']) if (S[k]) { S[k]--; if (!S[k]) logp(b, 'sys', (k === 'blaze' ? '겁화' : '불의 몸') + '가 걷힌다'); } }
+function sbTurnStart(b, p) { const S = p.sbSt; if (S.holdOn) { if ((p.ward || 0) > 0) { const h0 = S.hold || 0; S.hold = Math.min(SB_BOUND.holdMax, h0 + 1); if (S.hold > h0) logp(b, 'good', '버팀 ' + S.hold + ': 보호막을 지킨 채 차례가 왔다(주는 피해 +' + Math.round(S.hold * SB_BOUND.holdPer * 100) + '%)'); } else if (S.hold) { S.hold = 0; logp(b, 'sys', '보호막이 깨져 버팀이 풀린다'); } } S.film = 0; for (const k of ['blaze', 'fireBody']) if (S[k]) { S[k]--; if (!S[k]) logp(b, 'sys', (k === 'blaze' ? '겁화' : '불의 몸') + '가 걷힌다'); } }
 function sbEdgeApply(b, e, mul) {
   const p = b.p; const E = p.edge; if (!E || !e || !e.alive) return; const n = Math.min(KW[E.s] || 10, Math.round(E.n * (mul || 1)) + fxAdd(p, 'edgeAdd', b, p, E.s));
   const got = addS(b, e, E.s, n); for (const x of E.also || []) { if (e.alive) addS(b, e, x.s, Math.min(KW[x.s] || 10, Math.round(x.n * (mul || 1)))); } p.edge = null; b.sbEdgeDone = 1; b.rec.push({ k: 'edge', s: E.s, n });
