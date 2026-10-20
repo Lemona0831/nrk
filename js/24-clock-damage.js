@@ -2,6 +2,7 @@
 function addS(b, u, k, dur, stacks, max) {
   if (KW[k]) {
     let n = Math.round(dur || 0); if (n <= 0) return 0;
+    if (k === 'empower' && b && u === b.p && u.mkSt && u.mkSt.noKi > 0) return 0; // M5-2 일지멸맥의 대가: 기를 얻지 못함
     if (k === 'ignite' && u === b.p && fxFlag(u, 'noIgnite')) return 0; // 0.8.0 M5-0 불의 몸: 받는 화상 무효
     if (k === 'ignite' && u !== b.p && b.p && b.cur && b.sbK === 'spell' && stk(u, 'bleed') > 0 && !b.searBusy && fxFlag(b.p, 'ksSearSpell')) { b.searBusy = 1; const g = sbSear(b, u, n); b.searBusy = 0; return g; } // 0.8.0 M5-0 혈염의 각인: 출혈 걸린 적을 주문으로 치면 화상을 건너뛰고 바로 혈염
     if (b.carve && b.cur && b.cur.grp && u !== b.p && carveMul(b, b.cur.grp) < 1) n = Math.max(1, Math.floor(n * carveMul(b, b.cur.grp)));
@@ -198,7 +199,8 @@ function hurtPlayer(b, raw, o) {
   if (!o.silent && wardAll) logp(b, 'good', (o.label || '공격') + '. 보호막이 모두 받아냈다');
   else if (!o.silent) logp(b, 'bad', o.dot ? (o.label || '피해') + '이(가) 나를 갉아먹는다. ' + r1(d) + ' 피해' : (o.label || '공격') + '. ' + r1(d) + ' 피해' + (p.guard ? ', 방어로 절반' : ''));
   const sLine = b.logN || 0; /* 이 피해 줄의 순번 */
-  if (p.build === 'monk' && (p.guard || p.stance) && !b.cur && !b.over && p.hp > 0 && o.src && !o.dot && !o.aoe && !o.spell && !o.judgment && monkCtrOk(b, o.src) && (p.ctrN || 0) < MONK.ctrMax) monkCounter(b, o); // 수도승 되받기 (의도 키가 아니라 공격의 성질로 가린다. 피해 · 가시 처리와 기록 줄 다음)
+  if (p.build === 'monk' && (p.guard || p.stance) && !b.cur && !b.over && p.hp > 0 && o.src && !o.dot && !o.aoe && !o.spell && !o.judgment && monkCtrOk(b, o.src) && (p.ctrN || 0) < monkCtrMax(p)) monkCounter(b, o); // 수도승 되받기 (의도 키가 아니라 공격의 성질로 가린다. 피해 · 가시 처리와 기록 줄 다음)
+  if (p.mkSt && p.mkSt.cheon && !b.cur && !b.over && p.hp > 0 && o.src && o.src.alive && !o.dot && realFoe(o.src)) mkCheonHit(b, o.src); // M5-2 천망: 나를 친 적에게 둔화
   b.rec.push({ k: 'hit', t: r1(b.t), d: r1(d), actual: r1(actualTaken), dot: !!o.dot, charged: !!o.charged, src: o.src ? o.src.role : null, guard: !!p.guard, parried: o.parried ? 1 : 0 });
   if (p.rime && o.src && o.src.alive && !o.dot && p.hp > 0) elemRime(b, o.src); // 원소술사 되얼림 · 불꽃 외투 (그 공격의 기록 뒤)
   { const m = []; if (hx) { if (hx.vu) m.push('취약 ' + hx.vu + '(으)로 +25%'); if (hx.pr) m.push('보호 ' + hx.pr + '(으)로 −25%'); if (hx.ig) m.push('화상 ' + hx.ig + '만큼 더함'); if (hx.ex) m.push('탈진으로 +20%'); if (hx.gd) m.push('방어로 줄어듦'); }
@@ -218,10 +220,12 @@ const HIT_N = { explode: '폭발', burn: '화형', brand: '죄를 읽는다', er
 /* 수도승 되받기 (10월 7일, docs/직업/수도승.md B-3): 적의 차례에만(b.cur 없음) 나간다. 내 행동이 아니라 기를 쓰지 않고, 장비의 다음 공격 몫(분노의 반지 · 인내의 흉갑 · 분노의 사슬)도 쓰지 않는다.
    반격 태세를 부르지 않고(melee 없음), 수도원장의 요구 · 장비 onHit에 끼지 않는다(가시와 같은 급). 되받은 적에게 거는 약화는 그 적의 공격이 끝난 뒤에 건다(e.ctrWeak) */
 function monkCounter(b, o) {
-  const p = b.p, e = o.src, S = p.stance || {}; p.ctrN = (p.ctrN || 0) + 1;
-  logp(b, 'good', '되받기 (' + p.ctrN + '/' + MONK.ctrMax + '): ' + e.n + '에게 되받아친다');
-  const d = hurtEnemy(b, e, outDmg(b, wpnDmg(p) * MONK.ctr + (S.dmg || 0), { weapon: 1, ctr: 1 }), { single: 1, ctr: 1, label: '되받기' });
-  let bk = 0; if (e.alive) { bk = MONK.ctrBrk + fxVal(p, 'ctrBrk', 0, (a, v) => a + v) + (o.charged ? MONK.ctrBig : 0) + (S.brk || 0); addBreak(b, e, bk); }
+  const p = b.p, e = o.src, S = p.stance || {}, M5 = p.mkSt || {}; p.ctrN = (p.ctrN || 0) + 1; const cm = monkCtrMax(p);
+  logp(b, 'good', '되받기 (' + p.ctrN + (isFinite(cm) ? '/' + cm : ', 역천') + '): ' + e.n + '에게 되받아친다');
+  let raw = (wpnDmg(p) * MONK.ctr + (S.dmg || 0)) * (1 + (S.mul || 0)); if (M5.bultoe && e.s && e.s.broken) { raw *= MK_BOUND.bultoeMul; logp(b, 'good', '불퇴: 무너진 적을 되받는다 ×' + MK_BOUND.bultoeMul); } if (M5.cheon) raw = 0; // M5-2 금강 자세 ×1.2 · 불퇴 · 천망(피해 0)
+  const d = raw > 0 ? hurtEnemy(b, e, outDmg(b, raw, { weapon: 1, ctr: 1 }), { single: 1, ctr: 1, label: '되받기' }) : 0;
+  let bk = 0; if (e.alive) { bk = MONK.ctrBrk + fxVal(p, 'ctrBrk', 0, (a, v) => a + v) + (o.charged ? MONK.ctrBig : 0) + (S.brk || 0) + (M5.yeok ? MK_BOUND.yeokBrk : 0); addBreak(b, e, bk); }
+  if (S.big && o.charged && e.alive && !e.s.broken) { addBreak(b, e, MK_BOUND.bigBrk); logp(b, 'crit', '천근추: 강타를 되받아 ' + e.n + '을(를) 무너뜨린다'); } // M5-2
   const kOnce = fxFlag(p, 'ctrKiOnce') && b.ctrKiR === (b.ysR || 0); if (fxFlag(p, 'ctrKiOnce')) b.ctrKiR = b.ysR || 0; // 0.8.0 5단계 비운 그릇: 되받기로 얻는 기는 내 차례 사이 한 번
   const kWant = kOnce ? 0 : MONK.kiCtr + (S.ki || 0) + (p.ctrN >= 2 ? fxVal(p, 'ctrKi2', 0, (a, v) => a + v) : 0); const k0 = st(p, 'empower'); if (kWant) addS(b, p, 'empower', kWant); const kg = st(p, 'empower') - k0;
   if (kWant > kg) { const sp = fxVal(p, 'kiSpillSt', 0, (a, v) => a + v); if (sp) fxStam(p, sp * (kWant - kg)); } // 넘치는 기운: 버려지는 기 1마다 스태미나

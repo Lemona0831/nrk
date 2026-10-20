@@ -268,7 +268,7 @@ function classRuleHtml(build) {
   const math = {
     hunter: [`추적 보너스 = 공격 전 추적 × ${pct(HUNT.focusPer)}% (정예·강적·보스: × ${pct(HUNT.focusBig)}%)`, `추적 상한 ${HUNT.focusMax}겹 · 3겹: 몸 낮추기·버티기 관통`],
     elementalist: [`원소 합계 = 화상 겹수 + (둔화 겹수 × ${ELEM.Cw}) [상한 ${ELEM.cap}]`, `열충격 기본 피해 = 원소 합계 × ${ELEM.D}`, `열충격 붕괴 = 둔화 겹수 × ${ELEM.Bk}`],
-    monk: [`반격 기본 피해 = 무기 피해 × ${pct(MONK.ctr)}% + 자세 보너스`, `반격 상한: 내 차례당 ${MONK.ctrMax}회`],
+    monk: [`반격 기본 피해 = 무기 피해 × ${pct(MONK.ctr)}% + 자세 보너스`, `반격 상한: 내 차례당 ${MONK.ctrMax}회(금강 자세 3회, 역천권 제한 없음)`],
     butcher: [`흡혈률 = 출혈 × ${pct(BUTCH.leech)}% [상한 ${pct(BUTCH.leechMax)}%]`, `흡혈 기본 회복 = 실제로 깎은 생명력 × 흡혈률`, `흡혈 상한: 내 차례당 최대 생명력의 ${pct(BUTCH.leechTurn)}%`, `갈증: 잃은 생명력 10%마다 피해 +${pct(BUTCH.thirst)}% [상한 +${pct(BUTCH.thirstMax)}%]`],
     confessor: [`보호 = 지운 상태 중 적이 나에게 건 겹수 ÷ ${CONF.per} [올림 · 상한 ${CONF.protMax}]`],
     bloodmage: [`기본 비용 = 최대 생명력 × ${pct(BLOOD.per)}% × 모자란 유산`, '비용 감소를 적용한 뒤 최종 값을 올림']

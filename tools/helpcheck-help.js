@@ -31,7 +31,7 @@ module.exports = function (api) {
   add('help', '기본 피해 = 원소 합계', 'ELEM.Cw · D · Bk (문장은 상수로 만든다)', E => E('ELEM.Cw') === 2 && E('ELEM.D') === 3 && E('ELEM.Bk') === 12 && src('elemShock').includes('ELEM.D') && src('elemShock').includes('ELEM.Bk') && src('elemShock').includes('ELEM.Cw'));
   add('help', '서리 무게', 'ELEM.guard=' + E('ELEM.guard'), E => pct(E('ELEM.guard')) === 30 && (src('hurtPlayer').includes('ELEM.guard') || src('hurtPlayer').includes('elGuardOf'))); // 10월 18일 0.8.0 5단계: 서리 무게 = ELEM.guard + 노드(elGuardOf, 무뎌진 칼날 · 얼음 심장)
   add('help', '교대한 행동 뒤 보호막', 'BUILDS.spellblade.altWard=4, wardCap=0.15', E => E('BUILDS.spellblade.altWard') === 4 && pct(E('BUILDS.spellblade.wardCap')) === 15 && E(`(() => { const b = __mk("spellblade", 5); return Math.abs(wardMax(b.p) - b.p.hpMax * 0.15) < 1; })()`));
-  add('help', '피해는 무기 피해의 80%', 'MONK.ctr=' + E('MONK.ctr') + ', ctrBrk=' + E('MONK.ctrBrk') + ', ctrBig=' + E('MONK.ctrBig') + ', ctrMax=' + E('MONK.ctrMax'), E => pct(E('MONK.ctr')) === 80 && E('MONK.ctrBrk') === 10 && E('MONK.ctrBig') === 25 && E('MONK.ctrMax') === 3);
+  add('help', '피해는 무기 피해의 80%', 'MONK.ctr=' + E('MONK.ctr') + ', ctrBrk=' + E('MONK.ctrBrk') + ', ctrBig=' + E('MONK.ctrBig') + ', ctrMax=' + E('MONK.ctrMax'), E => pct(E('MONK.ctr')) === 80 && E('MONK.ctrBrk') === 10 && E('MONK.ctrBig') === 25 && E('MONK.ctrMax') === 2); // M5-2: 되받기 한도 3 → 2
   add('help', '되받을 때마다 1씩 쌓입니다', 'MONK.kiCtr=1, KW.empower=5 (기 = 강화), 강화 ×1.25(outDmg)', E => E('MONK.kiCtr') === 1 && E('KW.empower') === 5 && src('outDmg').includes('d *= 1.25'));
 
   /* ===== 능력치 ===== */

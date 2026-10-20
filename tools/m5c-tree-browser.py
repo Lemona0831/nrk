@@ -23,8 +23,8 @@ base=f'http://127.0.0.1:{server.server_port}/'
 out=[]
 import os
 CLS=os.environ.get('TREE_CLS','spellblade')
-SECN={'spellblade':['염검','혈염','혈인','죄인의 피','마갑','유산의 불'],'warden':['성벽','공성추','파쇄','기둥 파쇄','전열 장악','용맹의 투지']}
-BUY={'spellblade':['sb_bleedcut','sv_bleedcut','sb_blooddrop','sb_taste','sv_taste','sb_crimson','sb_ember','sb_bloodfire','sb_hotedge','sb_searcut','sb_kalpa'],'warden':['w_dstance','sv_w_dstance','w_pray','w_stand','sv_w_stand','w_citadel','s_slam','w_flare','w_rebuild','w_breach','w_siege']}.get(CLS,[])
+SECN={'spellblade':['염검','혈염','혈인','죄인의 피','마갑','유산의 불'],'warden':['성벽','공성추','파쇄','기둥 파쇄','전열 장악','용맹의 투지'],'monk':['철권','반탄','부동','역혈','혈도','파혈']}
+BUY={'monk':['m_geumgang','sv_m_geumgang','m_balgyeong','m_cheolsan','sv_m_cheolsan','m_jeomhyeol','m_yeokmaek','m_maekji','m_cheongeun','m_hyeolryu','m_yeonhwan'],'spellblade':['sb_bleedcut','sv_bleedcut','sb_blooddrop','sb_taste','sv_taste','sb_crimson','sb_ember','sb_bloodfire','sb_hotedge','sb_searcut','sb_kalpa'],'warden':['w_dstance','sv_w_dstance','w_pray','w_stand','sv_w_stand','w_citadel','s_slam','w_flare','w_rebuild','w_breach','w_siege']}.get(CLS,[])
 def boxes(page,sel): return page.evaluate("s=>[...document.querySelectorAll(s)].filter(t=>getComputedStyle(t).display!=='none'&&t.getAttribute('visibility')!=='hidden'&&+getComputedStyle(t).opacity>0.05).map(t=>{const r=t.getBoundingClientRect();return {n:t.textContent||t.dataset.k,x:r.left,y:r.top,w:r.width,h:r.height}})",sel)
 def overlap(a,b,pad=0): return a['x']<b['x']+b['w']-pad and b['x']<a['x']+a['w']-pad and a['y']<b['y']+b['h']-pad and b['y']<a['y']+a['h']-pad
 import os

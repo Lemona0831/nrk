@@ -681,6 +681,51 @@ const SKILLS2 = {
     { id: 'm_reflux', row: 12, b: '혈도', tier: '상급', n: '역류', tgt: 'ranged', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'chillx', mul: 2 }, { k: 'meSt', s: 'empower', n: 2, if: 'chill' }, { k: 'kiPer', per: 1 }, { k: 'st', s: 'chill', n: 2 }] },
     { id: 'm_freezeworld', row: 13, b: '혈도', tier: '상급', n: '천지 정지', tgt: 'melee', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 32 }, { k: 'st', s: 'chill', n: 3 }, { k: 'st', s: 'weak', n: 3 }, { k: 'cutx', brk: 70 }] },
     { id: 'm_greatflow', row: 13, b: '혈도', tier: '상급', n: '대주천', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 19 }, { k: 'kiBurst', per: 6, pre: 4 }, { k: 'st', s: 'chill', n: 2 }] },
+    /* ===== 0.8.0 M5-2 수도승 재설계(10월 20일 만든 사람 설계지 2판, nrk-private/제안/수도승-설계지-2026-10-20.md) =====
+       직업 규칙은 그대로(기 · 자세 · 되받기 · ▶/⚡), 되받기 한도만 3 → 2(MONK.ctrMax). 새 상태는 승부수에만(역천 · 천망), 혈도는 둔화 하나 · 봉인은 지원 행동 끊기(sealx).
+       칸 설명은 한 줄(skBodyMk), 효과는 칸마다 하나. 숫자는 가설 — 값 띠 · 측정으로 정한다. 새 효과 키와 숫자는 data/skillkit.js MK_BOUND · js/10 수도승 절 */
+    { id: 'm_yeonhwan', row: 1, b: '철권', tier: '하급', n: '연환권', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 12 }, { k: 'kiHits', per: 1, max: 5 }] },
+    { id: 'm_bunggwon', row: 1, b: '철권', tier: '하급', n: '붕권', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 23 }, { k: 'kiBurst', mul: 0.2 }] },
+    { id: 'm_hoheup', row: 1, b: '철권', tier: '하급', n: '호흡', tgt: 'self', time: 'normal', cd: 3, fx: [{ k: 'st', s: 'empower', n: 2 }, { k: 'stam', n: 35 }] },
+    { id: 'm_cheonsu', row: 4, b: '철권', tier: '하급', n: '천수연타', tgt: 'melee', time: 'fast', cd: 5, hits: 3, fx: [{ k: 'dmg', n: 6 }, { k: 'kiHits', per: 1, max: 1 }] },
+    { id: 'm_eungchuk', row: 4, b: '철권', tier: '하급', n: '기공 응축', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'mkCondense', add: 3, txt: '다음에 쏟는 기 +3.' }] },
+    { id: 'm_baekbo', row: 8, b: '철권', tier: '중급', n: '백보신권', tgt: 'ranged', time: 'normal', cd: 7, hits: 5, fx: [{ k: 'dmg', n: 7 }] },
+    { id: 'm_myeolgak', row: 8, b: '철권', tier: '중급', n: '멸각', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 22 }, { k: 'kiBurst', per: 17, max: 5 }] },
+    { id: 'm_geumgang', row: 1, b: '부동', tier: '하급', n: '금강 자세', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'stance', dmg: 14, mul: 0.2, max: 3 }] },
+    { id: 'm_yusu', row: 1, b: '부동', tier: '하급', n: '유수 자세', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'stance', dmg: 21, red: 0.2 }] },
+    { id: 'm_balgyeong', row: 1, b: '부동', tier: '하급', n: '발경', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 24 }] },
+    { id: 'm_cheolsan', row: 4, b: '부동', tier: '하급', n: '철산고', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 19 }, { k: 'kiPer', per: 6 }] },
+    { id: 'm_budong', row: 4, b: '부동', tier: '하급', n: '부동심', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'stance', dmg: 2, keep: 3 }] },
+    { id: 'm_cheongeun', row: 8, b: '부동', tier: '중급', n: '천근추', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'stance', dmg: 28, big: 1 }] },
+    { id: 'm_bulgoe', row: 8, b: '부동', tier: '중급', n: '금강불괴', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'mkAdamant', n: 4, txt: '4차례 받는 피해 −45%.' }] },
+    { id: 'm_jeomhyeol', row: 1, b: '혈도', tier: '하급', n: '점혈', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 19 }, { k: 'st', s: 'chill', n: 2 }, { k: 'sealx', brk: 22 }] },
+    { id: 'm_sahyeol', row: 1, b: '혈도', tier: '하급', n: '사혈', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 20 }, { k: 'meSt', s: 'empower', n: 1, if: 'chill' }] },
+    { id: 'm_maek', row: 1, b: '혈도', tier: '하급', n: '맥 짚기', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'chill', n: 1 }] },
+    { id: 'm_bongswae', row: 4, b: '혈도', tier: '하급', n: '혈맥 봉쇄', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 18 }, { k: 'st', s: 'chill', n: 2 }, { k: 'sealx', brk: 30 }] },
+    { id: 'm_talgi', row: 4, b: '혈도', tier: '하급', n: '탈기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 18 }, { k: 'mkDrainChill', per: 3, txt: '대상의 둔화 1마다 생명력 +3.' }] },
+    { id: 'm_poswae', row: 8, b: '혈도', tier: '중급', n: '사혈 폭쇄', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 16 }, { k: 'mkChillBurst', per: 12, txt: '둔화를 모두 터뜨려 1마다 피해 +12.' }] },
+    { id: 'm_talhon', row: 8, b: '혈도', tier: '중급', n: '탈혼수', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 18 }, { k: 'st', s: 'chill', n: 2 }, { k: 'meSt', s: 'empower', n: 1, if: 'hit' }] },
+    /* 경계 칸(입구 · 둘째 · 3고리 둘)은 [Claude 초안]: 공격 2 · 강화/방어 2 */
+    { id: 'm_doedol', row: 4, b: '반탄', tier: '하급', n: '되돌린 주먹', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'mkCtrPer', per: 6, txt: '지난 적 차례에 되받은 1마다 피해 +6.' }] },
+    { id: 'm_gibat', row: 5, b: '반탄', tier: '하급', n: '기 받는 자세', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'stance', dmg: 12, ki: 1 }] },
+    { id: 'm_tansan', row: 8, b: '반탄', tier: '중급', n: '탄산권', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 30 }] },
+    { id: 'm_cheolpo', row: 8, b: '반탄', tier: '중급', n: '철포삼', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'stance', dmg: 14, red: 0.3, keep: 2 }] },
+    { id: 'm_yeokmaek', row: 4, b: '역혈', tier: '하급', n: '역맥 지르기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 15 }, { k: 'chillx', mul: 1.5 }] },
+    { id: 'm_maekji', row: 5, b: '역혈', tier: '하급', n: '맥 지키는 자세', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'stance', dmg: 13, chill: 2 }] },
+    { id: 'm_hyeolryu', row: 8, b: '역혈', tier: '중급', n: '혈류 역행', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 18 }, { k: 'chillx', mul: 1.5 }] },
+    { id: 'm_cheonri', row: 8, b: '역혈', tier: '중급', n: '천리 받기', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'stance', dmg: 31, far: 1 }] },
+    { id: 'm_pamaek', row: 4, b: '파혈', tier: '하급', n: '파맥권', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 16 }, { k: 'kiBurst', per: 5, max: 3 }] },
+    { id: 'm_gagu', row: 5, b: '파혈', tier: '하급', n: '기 가두기', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'st', s: 'empower', n: 4 }, { k: 'stam', n: 45 }] },
+    { id: 'm_gwanhyeol', row: 8, b: '파혈', tier: '중급', n: '관혈 일격', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 28 }, { k: 'chillx', mul: 1.5 }] },
+    { id: 'm_sunhwan', row: 8, b: '파혈', tier: '중급', n: '내공 순환', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'mkFlow', n: 3, mul: 0.55, txt: '3차례 동안 ▶ 공격 피해 +55%.' }] },
+    /* 경계 승부수(만든 사람 문장 · 대사 그대로) */
+    { id: 'm_yeokcheon', row: 10, b: '반탄', tier: '중급', n: '역천권', tgt: 'self', time: 'normal', cd: 9, line: '「쳐라. 네놈이 휘두른 그 힘이, 곧 나의 주먹이 될 터이니.」', cut: 'guard', pay: '방어 불가, 받는 피해 +30%.', fx: [{ k: 'mkYeok', n: 3, txt: '3차례 — 자세 유지, 되받기 횟수 제한 없음, 되받기마다 붕괴 +15.' }] },
+    { id: 'm_cheonmang', row: 10, b: '역혈', tier: '중급', n: '천망', tgt: 'self', time: 'normal', cd: 9, line: '「나를 친 그 손이, 이미 너의 숨통을 내게 쥐여 주었음을 알지 못하는구나.」', cut: 'arcane', pay: '되받기 피해 0.', fx: [{ k: 'mkCheon', n: 3, txt: '3차례 — 나를 친 적에게 둔화 +2. 둔화 5가 된 적은 봉인.' }] },
+    { id: 'm_ilji', row: 10, b: '파혈', tier: '중급', n: '일지멸맥', tgt: 'melee', time: 'normal', cd: 9, line: '「단 한 점이면 족하다. 무너지는 것은, 언제나 안에서부터이니.」', cut: 'blade', pay: '생명력 10%, 3차례 기를 얻지 못함.', fx: [{ k: 'mkIlji', per: 10, txt: '적 하나에게 기를 모두 쏟아 (둔화 × 기 × 10) 피해.' }] },
+    /* 결합 칸 셋(설계지): 원 바깥, 판마다 둘, 꼬리표 조건 */
+    { id: 'm_samjae', row: 7, b: '결합', tier: '중급', n: '삼재권', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'mkSamjae', txt: '이번 전투: 기가 가득 차면 ⚡ 공격도 +25%.' }] },
+    { id: 'm_yeokryu', row: 7, b: '결합', tier: '중급', n: '역류', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'mkReflux', txt: '이번 전투: 둔화된 적을 기본 공격으로 치면 기 +1.' }] },
+    { id: 'm_bultoe', row: 7, b: '결합', tier: '중급', n: '불퇴', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'mkBultoe', txt: '이번 전투: 무너진 적을 되받으면 ×2.' }] },
   ],
   confessor: [
     /* 숨겨진 직업 2 (10월 7일, UNLOCK.confessor). 설계 · 까닭은 비공개 문서. 새 효과: cleanse(정화 · 사함 offer · after) · transfer(옮기기) · perDmg(of: prot · burden · clean · weak · bleed · tbad) · dispel(강화 벗기기), meSt의 해로운 상태는 행동 뒤 고행(p.selfN), hasten on 'clean' */
@@ -974,4 +1019,15 @@ const WD_TAGS = {
   w_turncoat: ['태세'], s_hammerhand: ['기본공격연동', '붕괴'], f_chainpull: ['원거리', '보호막'],
 };
 for (const s of SKILLS2.warden || []) if (WD_TAGS[s.id]) s.tags = WD_TAGS[s.id].slice();
+/* 0.8.0 M5-2 수도승 꼬리표(결합 칸 조건 · BD-9): 기 · 되받기 · 자세 · 둔화 · 봉인 · 붕괴 · 광역 · 원거리 · 기본공격연동 */
+const MK_TAGS = {
+  m_yeonhwan: ['기'], m_bunggwon: ['기'], m_hoheup: ['기'], m_cheonsu: ['기'], m_eungchuk: ['기'], m_baekbo: ['원거리'], m_myeolgak: ['기'],
+  m_geumgang: ['자세', '되받기'], m_yusu: ['자세'], m_balgyeong: ['붕괴'], m_cheolsan: ['기'], m_budong: ['자세', '되받기'], m_cheongeun: ['자세', '붕괴'], m_bulgoe: ['되받기'],
+  m_jeomhyeol: ['둔화', '봉인'], m_sahyeol: ['둔화', '기'], m_maek: ['둔화'], m_bongswae: ['둔화', '봉인'], m_talgi: ['둔화'], m_poswae: ['둔화'], m_talhon: ['둔화', '광역', '기'],
+  m_doedol: ['되받기', '기'], m_gibat: ['자세', '기'], m_tansan: ['광역', '붕괴'], m_cheolpo: ['자세'], m_yeokcheon: ['되받기', '자세', '붕괴'],
+  m_yeokmaek: ['둔화'], m_maekji: ['자세', '둔화'], m_hyeolryu: ['광역', '둔화'], m_cheonri: ['자세', '원거리'], m_cheonmang: ['둔화', '봉인'],
+  m_pamaek: ['기'], m_gagu: ['기'], m_gwanhyeol: ['둔화'], m_sunhwan: ['기'], m_ilji: ['기', '둔화'],
+  m_samjae: ['기', '되받기'], m_yeokryu: ['둔화', '기본공격연동'], m_bultoe: ['자세', '붕괴'],
+};
+for (const s of SKILLS2.monk || []) if (MK_TAGS[s.id]) { s.tags = MK_TAGS[s.id].slice(); s.mk5 = 1; } // mk5: 한 줄 설명(skBodyMk) · 설명 길이 경고(tree-check)
 

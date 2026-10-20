@@ -30,18 +30,8 @@ const enemyHit = (b, e, raw, x) => { const cur = b.cur; b.cur = null; const d = 
 // ===== 1) 강화 노드 · 금지선 =====
 /* 0.8.0 M5-1(10월 20일): 파수꾼은 재설계로 강화 노드 대신 변형(M5-0c 규격)이 됐다. 파수꾼 트리 규칙은 tools/tree-check.js, 태세 · 승부수 · 결합 칸은 tools/wd-check.js */
 { const A = E.atBuild('warden'), N = Object.values(A.nodes); ok(!A.tmp && N.filter(x => x.kind === 'skill').length === 39 && N.filter(x => x.slot).length === 36 && N.filter(x => x.kind === 'skill').every(x => [1, 2, 3, 4].includes(x.ys)), 'warden: 재설계 트리(스킬 노드 39 · 변형 자리 36, 비용 1–4)'); }
-for (const c of ['monk']) {
-  const A = E.atBuild(c); let nu = 0, ns = 0;
-  ok(!A.tmp, c + ': 직업 트리(임시 트리 아님)');
-  for (const id in A.nodes) { const u = A.nodes[id]; if (u.kind === 'skill') { ns++; assert([2, 3, 4].includes(u.ys), c + ' 비용 ' + id); continue; } if (u.kind !== 'upgrade') continue; nu++;
-    const m = u.mod; assert(!(m.set && ('ys' in m.set || 'cd' in m.set || 'cost' in m.set || 'killRecharge' in m.set)), c + ' 무조건 비용 · 환급 바꾸기 금지 ' + id);
-    if (m.cond) assert(m.cond.off === 1 && /^(ward>=\d+|ki>=\d+|stance|kw:\w+>=\d+)$/.test(m.cond.when), c + ' 조건 어휘 ' + id);
-    const s = E.skOf({ build: c, aup: [id], pn: [] }, u.on); assert(s !== E.SK2[u.on] && s.ups.includes(id), c + ' 실제 스킬 ' + id);
-    for (const x of m.fxSet || []) { const e = s.fx.find(y => y.k === x.k && (x.s == null || y.s === x.s)); for (const k in x) if (k !== 'k' && k !== 's') assert.equal(e[k], x[k], c + ' fxSet ' + id + ' ' + k); } }
-  ok(c === 'warden' ? ns === 25 && nu === 27 : ns === 24 && nu === 29, c + ': 노드 수(파수꾼 25 + 27, 수도승 24 + 29)');
-  const tr = Object.values(A.nodes).filter(x => x.kind === 'upgrade'); const conv = {}; for (const u of tr) if (u.mod.set && ('time' in u.mod.set || 'tgt' in u.mod.set)) conv[u.on] = (conv[u.on] || 0) + 1;
-  ok(Object.values(conv).every(v => v <= 1), c + ': 같은 스킬에 빠르기 · 대상을 바꾸는 [전환] 강화는 하나뿐(결정 6)');
-}
+/* 0.8.0 M5-2(10월 20일): 수도승도 재설계로 강화 노드 대신 변형이 됐다. 수도승 트리 규칙은 tools/tree-check.js, 새 효과 · 승부수 · 결합 칸은 tools/mk-check.js */
+{ const A = E.atBuild('monk'), N = Object.values(A.nodes); ok(!A.tmp && N.filter(x => x.kind === 'skill').length === 39 && N.filter(x => x.slot).length === 36 && N.filter(x => x.kind === 'skill').every(x => [1, 2, 3, 4].includes(x.ys)), 'monk: 재설계 트리(스킬 노드 39 · 변형 자리 36, 비용 1–4)'); }
 ok(JSON.stringify(E.SK2.w_flare.fx) === JSON.stringify([{ k: 'wardBurn', mul: 2.6, max: 8 }, { k: 'brk', n: 3 }, { k: 'bigx', mul: 1.5 }]), '강화는 원래 스킬 데이터를 바꾸지 않음');
 
 // ===== 2) 노드 비용 (결정 1: skCost가 노드 ys를 읽음) =====
@@ -71,14 +61,9 @@ ok(JSON.stringify(E.SK2.w_flare.fx) === JSON.stringify([{ k: 'wardBurn', mul: 2.
 
 // ===== 4) 수도승 =====
 { const { p, b } = fight('monk', { own: ['lg1C'] }); ok(kiCapOf(p) === 6, '기의 그릇: 기 상한 6'); E.addS(b, p, 'empower', 9); ok(st(p, 'empower') === 6, '기는 6에서 멈춤'); }
-{ const { p, b } = fight('monk', { act: ['m_breath', 'm_flow', 'm_barrage', 'm_kifist', 'm_rush', 'm_release', 'mu_open'], eq: ['m_release'] }); E.addS(b, p, 'empower', 5); ok(yc(b, 'm_release') === 3, '열린 단전: 기 5 이상이면 4 → 3'); p.s.empower.stacks = 4; ok(yc(b, 'm_release') === 4, '기 4면 4'); }
-{ const { p, b } = fight('monk', { act: ['m_iron', 'm_answer', 'm_shove', 'm_karma', 'mu_karma'], eq: ['m_karma'] }); ok(yc(b, 'm_karma') === 4, '참회의 무게: 자세가 없으면 4');
-  p.stance = { dmg: 6 }; ok(yc(b, 'm_karma') === 3, '자세가 있으면 3(검토 2-1: 기를 깎지 않음)'); E.addS(b, p, 'empower', 4); p.ys = 5; const k0 = st(p, 'empower'); E.playerAct(b, 'm_karma');
-  const sp = b.rec.filter(x => x.k === 'yspend').pop(); ok(sp && sp.cost === 3 && k0 === 4, '자세는 내 차례 첫 행동에서 풀려도 그 차례 비용은 3, 기비례는 그대로'); }
+/* M5-2: 옛 사다리 칸의 강화(열린 단전 · 참회의 무게 · 철산고 · 천지 정지) 시험은 그 칸이 트리에서 빠져 지웠다(스킬 데이터는 남음) */
 { const { p, b, es } = fight('monk', { ks: ['pwK9'] }); p.guard = 1; const k0 = st(p, 'empower'); enemyHit(b, es[0], 5); enemyHit(b, es[1], 5); ok(st(p, 'empower') - k0 === 1, '비운 그릇: 되받기로 얻는 기는 내 차례 사이 한 번(검토 2-2)'); }
-{ const { p, b } = fight('monk', { ks: ['svK9'], act: ['m_iron', 'm_retort'], eq: ['m_retort'] }); ok(!okA(b, 'm_retort') && okA(b, 'm_brace'), '부동의 맹세: ⚡ 공격 스킬(되치기)은 못 쓰고 ⚡ 자세는 씀'); p.stance = { dmg: 6 }; const hp0 = p.hp; enemyHit(b, b.en[0], 10); ok(Math.abs(hp0 - p.hp - 8.8) < 0.01, '부동의 맹세: 자세 동안 받는 직접 피해 −12%'); }
-{ const { p, b } = fight('monk', { act: ['m_iron', 'mu_ironmtn'], eq: ['m_iron'] }); p.ys = 5; E.playerAct(b, 'm_iron'); ok(p.stance && p.stance.red === 0.25, '철산고: 쇠기둥 자세에 피해 감소 25%'); const hp0 = p.hp; enemyHit(b, b.en[0], 10); ok(Math.abs(hp0 - p.hp - 7.5) < 0.01, '철산고: 10 → 7.5'); }
-{ const { p, b, es } = fight('monk', { act: ['m_point', 'm_siphon', 'm_cut', 'm_stillpt', 'mu_world'], eq: ['m_stillpt'] }); E.addS(b, es[0], 'chill', 2); E.addS(b, es[0], 'weak', 1); const k0 = st(p, 'empower'); p.ys = 5; E.playerAct(b, 'm_stillpt', es[0].id); ok(st(p, 'empower') - k0 >= 1, '천지 정지: 둔화 · 약화 둘 다 걸린 적이면 기 +2(▶가 1을 써서 순 +1 이상)'); }
+{ const { p, b } = fight('monk', { ks: ['svK9'], act: ['m_jeomhyeol'], eq: ['m_jeomhyeol'] }); ok(!okA(b, 'm_jeomhyeol') && okA(b, 'm_brace'), '부동의 맹세: ⚡ 공격 스킬(점혈)은 못 쓰고 ⚡ 자세는 씀'); p.stance = { dmg: 6 }; const hp0 = p.hp; enemyHit(b, b.en[0], 10); ok(Math.abs(hp0 - p.hp - 8.8) < 0.01, '부동의 맹세: 자세 동안 받는 직접 피해 −12%'); }
 { const { p, b, es } = fight('monk', { own: ['lg1C', 'lg2L', 'lg3L', 'lg4R', 'lg5R', 'lg6R', 'lg7R'] }); ok(p.pn.includes('n_mk_spill'), '넘치는 기운 노드'); E.addS(b, p, 'empower', 9); p.guard = 1; p.st = 10; enemyHit(b, es[0], 5); ok(p.st > 10, '넘치는 기운: 상한에 막힌 기 → 스태미나'); }
 // ===== 5) 사냥꾼 (10월 18일, docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 2-2 · 2-5 · 2-6 · 2-6a · 8절) =====
 { const A = E.atBuild('hunter'); const N = Object.values(A.nodes); const sk = N.filter(x => x.kind === 'skill'), up = N.filter(x => x.kind === 'upgrade');

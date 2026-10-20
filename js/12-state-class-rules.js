@@ -260,7 +260,8 @@ function elemRime(b, src) {
 }
 /* 수도승 (10월 7일, docs/직업/수도승.md B절; 10월 10일 단순화): 방어하거나 자세를 잡은 동안 전열 적이 나를 직접 치면 되받는다(monkCounter). 피해 = 무기 피해 × ctr + 자세 덤, 붕괴 ctrBrk(강타면 +ctrBig), 기 +kiCtr.
    내 차례 하나 사이에 ctrMax번까지(p.ctrN, 내 차례의 첫 행동에서 0). 기 = 강화이고 되받을 때(와 스킬이 주는 것)만 쌓인다. ▶ 공격이 1을 써서 +25%, ⚡ 공격에는 실리지 않는다(b.curFast) */
-const MONK = { ctr: 0.8, ctrBrk: 10, ctrBig: 25, ctrMax: 3, kiCtr: 1 }; // ctr 10월 7일 0.5 → 0.8: 던전 보스 승률 1% (다른 직업 12~25%), 0.8에서 10%
+const MONK = { ctr: 0.8, ctrBrk: 10, ctrBig: 25, ctrMax: 2, kiCtr: 1 }; // M5-2(10월 20일 만든 사람): 되받기 한도 3 → 2. 금강 자세(stance.max)가 그 자세 동안 3으로 늘리고, 역천권(p.mkSt.yeok)이 제한을 푼다. ctr 10월 7일 0.5 → 0.8: 던전 보스 승률 1% (다른 직업 12~25%), 0.8에서 10%
+const monkCtrMax = p => p && p.mkSt && p.mkSt.yeok ? Infinity : Math.max(MONK.ctrMax, (p && p.stance && p.stance.max) || 0); // M5-2: 지금 자세의 되받기 한도
 const SEAL_K = ['heal', 'bless', 'summon', 'raise', 'curse', 'hexcurse', 'guard', 'mend', 'build', 'mourn', 'tune', 'seal', 'call']; // 혈도 sealx가 끊는 지원 행동 (일반 · 정예는 평소 공격으로 바뀌고, 강적 · 보스는 붕괴)
 const CTR_SHOW = ['attack', 'heavy', 'brand', 'mirror', 'reflect', 'erupt', 'hand', 'constrict']; // ↩ 표시: 나를 직접 치는 예고 (화형 · 폭발은 되받지 못해 빠진다)
 const monkCtrOk = (b, e) => !!(b.p.build === 'monk' && e && e.alive && realFoe(e) && e.role !== 'candle' && (e.row === 'front' || (b.p.stance && b.p.stance.far)));

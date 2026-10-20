@@ -162,3 +162,7 @@ html.rm .fstat.st-fire{animation:none;box-shadow:0 0 10px rgba(240,172,72,.5)}
 .stt.st-wdst{color:var(--gold,#c9a24b)}.stt.st-siege{color:#a8bace}.stt.st-valor{color:#e8c25a}.stt.st-quake{color:#c98b4a}
 .fstat.st-siege{border-color:#a8bace;box-shadow:0 0 0 1px rgba(168,186,206,.5),0 0 14px rgba(168,186,206,.3)}
 .fstat.st-valor{border-color:#e8c25a;box-shadow:0 0 0 3px rgba(232,194,90,.3),0 0 0 7px rgba(232,194,90,.1)}
+/* M5-2 수도승 승부수 상태: 역천 주황 · 천망 금빛 경락 · 기 막힘(일지멸맥의 대가) 흰빛, 강화는 글자만 */
+.stt.st-yeok{color:#f0903c}.stt.st-cheon{color:#e6c060}.stt.st-noki{color:#dfe6ee}.stt.st-mkbuf{color:var(--gold,#c9a24b)}
+.fstat.st-yeok{border-color:#f0903c;box-shadow:0 0 0 2px rgba(240,144,60,.4),0 0 14px rgba(240,144,60,.3)}
+.fstat.st-cheon{border-color:#e6c060;box-shadow:0 0 0 1px rgba(230,192,96,.5),0 0 14px rgba(230,192,96,.25)}

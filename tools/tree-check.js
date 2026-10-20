@@ -101,6 +101,33 @@ for (const c of CLS) {
   ok(['w_turncoat', 's_hammerhand', 'f_chainpull'].every(id => A.nodes[id].reqTags) && A.nodes.w_turncoat.reqTags.태세 === 2 && A.nodes.f_chainpull.reqTags.원거리 === 1, '결합 칸 셋(돌아선 방패 태세 2 · 쇠망치 손 기본공격연동 2 · 붕괴 1 · 사슬 끌기 원거리 1 · 보호막 1)');
   ok(A.nodes.sv_w_dstance && A.nodes.sv_s_astance && A.nodes.sv_w_dstance.on === 'w_dstance', '변형 자리 id는 스킬 id 전체(sv_w_dstance · sv_s_astance가 겹치지 않음)'); }
 
+// ===== 0.8.0 M5-2 수도승 액티브 재설계(10월 20일 만든 사람 설계지 2판) =====
+{ const A = E.atBuild('monk'), N = Object.values(A.nodes), SK = N.filter(x => x.kind === 'skill'), up = N.filter(x => x.slot), SK2 = E.SK2;
+  ok(JSON.stringify(A.sec) === JSON.stringify({ A: '철권', AB: '반탄', B: '부동', BC: '역혈', C: '혈도', CA: '파혈' }), '수도승 부채꼴 여섯: 철권 · 반탄 · 부동 · 역혈 · 혈도 · 파혈');
+  ok(SK.length === 39 && up.length === 36 && Object.keys(A.vars).length === 72, '수도승 스킬 노드 39(갈래 21 · 경계 15 · 결합 3) + 변형 자리 36 · 변형 72');
+  for (const k of ['A', 'B', 'C']) { const S6 = SK.filter(x => x.sec === k), r = n => S6.filter(x => x.ring === n), op = r(1).filter(x => x.ys === 2);
+    ok(S6.length === 7 && r(1).map(x => x.ys).sort().join() === '1,2,2' && op[0].excl === op[1].id && r(2).length === 2 && r(3).length === 2, A.sec[k] + ': 1고리 첫 스킬 둘(길) + 리듬 1, 2고리 2 · 3고리 2');
+    ok([1, 2, 3].every(g => r(g).filter(x => x.path).map(x => x.path).sort().join() === 'a,b'), A.sec[k] + ': 길 a · b — ' + ['a', 'b'].map(w => [1, 2, 3].map(g => r(g).find(x => x.path === w).n).join(' → ')).join(' / ')); }
+  const nm = id => SK2[id].n; ok([['m_yeonhwan', '연환권', 'a'], ['m_bunggwon', '붕권', 'b'], ['m_geumgang', '금강 자세', 'a'], ['m_yusu', '유수 자세', 'b'], ['m_jeomhyeol', '점혈', 'a'], ['m_sahyeol', '사혈', 'b']].every(([id, n, w]) => nm(id) === n && A.nodes[id].ring === 1 && A.nodes[id].path === w), '1고리 길(설계지): 철권 연환권 / 붕권, 부동 금강 자세 / 유수 자세, 혈도 점혈 / 사혈');
+  ok(nm('m_hoheup') === '호흡' && nm('m_balgyeong') === '발경' && nm('m_maek') === '맥 짚기' && [['m_cheonsu', '천수연타'], ['m_eungchuk', '기공 응축'], ['m_baekbo', '백보신권'], ['m_myeolgak', '멸각'], ['m_cheolsan', '철산고'], ['m_budong', '부동심'], ['m_cheongeun', '천근추'], ['m_bulgoe', '금강불괴'], ['m_bongswae', '혈맥 봉쇄'], ['m_talgi', '탈기'], ['m_poswae', '사혈 폭쇄'], ['m_talhon', '탈혼수']].every(([id, n]) => nm(id) === n), '리듬 칸 호흡 · 발경 · 맥 짚기, 2 · 3고리 이름(설계지)');
+  for (const k of ['AB', 'BC', 'CA']) { const S5 = SK.filter(x => x.sec === k), fin = S5.filter(x => x.ys === 4); const atk = S5.filter(x => x.ys !== 4 && SK2[x.id].tgt !== 'self').length;
+    ok(S5.length === 5 && fin.length === 1 && SK2[fin[0].id].line && atk === 2, A.sec[k] + ': 경계 5칸(공격 2 · 강화/방어 2 · 대사 승부수 ' + (fin[0] && fin[0].n) + ')'); }
+  ok(SK2.m_yeokcheon.line === '「쳐라. 네놈이 휘두른 그 힘이, 곧 나의 주먹이 될 터이니.」' && SK2.m_cheonmang.line === '「나를 친 그 손이, 이미 너의 숨통을 내게 쥐여 주었음을 알지 못하는구나.」' && SK2.m_ilji.line === '「단 한 점이면 족하다. 무너지는 것은, 언제나 안에서부터이니.」' && SK2.m_yeokcheon.cut === 'guard' && SK2.m_cheonmang.cut === 'arcane' && SK2.m_ilji.cut === 'blade', '승부수 대사 셋(만든 사람 문장 그대로) · 컷인 종류(역천권 방어 · 천망 마법 · 일지멸맥 검)');
+  ok(SK2.m_yeokcheon.pay === '방어 불가, 받는 피해 +30%.' && SK2.m_cheonmang.pay === '되받기 피해 0.' && SK2.m_ilji.pay === '생명력 10%, 3차례 기를 얻지 못함.', '승부수 대가(설계지 문장)');
+  const STG = R_('MK_TAGS'), BRIDGE = ['기', '되받기', '자세', '둔화', '봉인', '붕괴', '기본공격연동', '광역', '원거리'], pureN = {};
+  for (const u of up) { const V = u.vars.map(v => A.vars[v]); ok(V.length === 2 && V.map(v => v.v).sort().join() === 'deep,link', u.id + ': 깊게 하나 · 잇기 하나'); const lk = V.find(v => v.v === 'link'); ok(lk.tags.some(g => BRIDGE.includes(g) && !(STG[u.on] || []).includes(g)), u.id + ' 잇기 ' + lk.n + ': 없던 꼬리표 더함');
+    const m = V.find(v => v.v === 'deep').mod; if (!m.set && !m.cond && [...(m.fxSet || []), ...(m.fxAdd || [])].every(f => ['dmg', 'brk', 'st', 'stam'].includes(f.k))) pureN[u.br] = (pureN[u.br] || 0) + 1; }
+  ok(Object.values(pureN).every(n => n <= 2), '수도승 깊게의 순수 숫자 변형 갈래마다 둘까지 ' + JSON.stringify(pureN));
+  const nms = SK.map(x => x.n).concat(Object.values(A.vars).map(v => v.n)), dup = nms.filter((x, i) => nms.indexOf(x) !== i), SNv = Object.values(R_('SNAMES')).concat(Object.values(A.sec)), clash = SK.filter(x => SNv.includes(x.n)).map(x => x.n);
+  ok(!dup.length && !clash.length, '수도승 이름 겹침 0, 상태 · 부채꼴과 같은 스킬 이름 0' + (dup.length || clash.length ? ' — ' + dup.concat(clash).join(', ') : ''));
+  ok(A.nodes.m_samjae.reqTags.기 === 2 && A.nodes.m_samjae.reqTags.되받기 === 1 && A.nodes.m_yeokryu.reqTags.둔화 === 1 && A.nodes.m_yeokryu.reqTags.기본공격연동 === 1 && A.nodes.m_bultoe.reqTags.자세 === 1 && A.nodes.m_bultoe.reqTags.붕괴 === 1, '결합 칸 셋(삼재권 기 2 · 되받기 1, 역류 둔화 1 · 기본공격연동 1, 불퇴 자세 1 · 붕괴 1)');
+  ok(R_('MONK').ctrMax === 2, '되받기 기본 한도 2(만든 사람 결정 10월 20일)');
+  const NEWST = ['chillCut', 'freeze', 'chillShatter', 'chillSpread']; ok(SK.every(x => !SK2[x.id].fx.some(e => NEWST.includes(e.k))) && Object.values(A.vars).every(v => ![...(v.mod.fxSet || []), ...(v.mod.fxAdd || [])].some(e => NEWST.includes(e.k))), '사냥꾼 · 원소술사의 둔화 계열 키를 쓰지 않음(수도승 문서 A절)');
+  /* 칸 설명은 한 줄(만든 사람): 수도승부터 효과 문장 40자 넘으면 경고. 승부수(대사가 있는 칸)는 만든 사람 문장 그대로라 뺀다 */
+  const MAX = R_('MK_DESC_MAX'), long = []; for (const x of SK) { const s = SK2[x.id]; if (s.line) continue; const d = E.skBody(s); if (d.length > MAX) long.push(s.n + '(' + d.length + ')'); }
+  for (const v of Object.values(A.vars)) if (v.d && v.d.length > MAX) long.push(v.n + '(' + v.d.length + ')');
+  if (long.length) console.warn('경고: 수도승 설명 ' + MAX + '자 넘음 — ' + long.join(', ')); else n++; }
+
 // ===== M5-0 보정 5: 고리는 야영지에서 연다 =====
 { const run = newRun('spellblade'); const ro = D.run_('ringOpen'), rc = D.run_('ringCampOpen');
   ok(!ro(run, 2) && !ro(run, 3), '새 판: 2 · 3고리 잠김'); run.ch = 1; ok(rc(run) === 2 && ro(run, 2) && !ro(run, 3) && run.ringNew === 1, '1챕터 야영지: 2고리가 열리고 트리 버튼 강조');

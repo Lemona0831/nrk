@@ -70,6 +70,7 @@ const SKK = {
   /* 수도승 (10월 7일 가설, docs/직업/수도승.md F-3): K 터뜨릴 때 기(하급 · 중급), Kp kiPer를 쓸 때 기, Kg kiGrow를 쓸 때 기, loss 거둔 기 1이 다음 ▶에 줬을 몫의 비율,
      cN 자세 하나에 되받는 횟수, gIn 피해 절반이 막는 값, ctr 직업 되받기 한 번의 기본 값, cS ctrPer를 쓸 때 지난 차례 뒤 되받은 수, ch 쓸 때 대상이 이미 둔화일 몫,
      ride ▶ 공격에 기 ×1.25가 실리는 몫, fast ⚡ 공격이 주는 기 +1의 몫, seal 끊기를 쓸 때 지원 예고가 있을 몫, sealV 끊은 지원 행동의 값 */
+  monk5: { K: [0.7, 0.9], Kp: [0.6, 0.8], KpB: {} }, // 0.8.0 M5-2 새 트리 측정(10월 20일, 수도승 360판 · 테스터 v2Pick): 쓸 때 기 — 쏟는 칸 0.4–0.5, 타수 · 기 비례 칸 0.8–1.1. ▶ 공격이 기를 하나씩 쓰고 빠른 기 모으기 칸이 없어 옛 트리(2.5 · 2.2)의 절반 아래
   monk: { K: [2.5, 2.5], Kp: [2, 2.2], KpB: { 부동: [0.8, 0.8] }, loss: 0.5, cN: 0.8, ctr: 9, ch: 0.6, ride: 0.1, seal: 0.25, sealV: 12, Kg: 2 }, // 10월 7일 50상황 측정(Lv5 · Lv10, 테스터 v2Pick 수도승 칸): 터뜨릴 때 기 3.6 · 2.5, 기 비례 때 기 2.9 · 2.2, 끌어올리기 때 기 1.6, 자세 하나에 되받기 1.36 · 1.38, 되받기 한 번 피해 12, 되갚기 때 되받은 수 0.8 · 1.0, 거두기 때 대상 둔화 0.9(Lv5). 자세 칸은 측정값으로 다시 맞추면 줄 예산의 2배가 되어(직업 규칙의 되받기 몫이 칸마다 들어간다) 가설 그대로 두고 50상황 점수로 본다. 중급(Lv10)의 K · Kp만 측정값(2.5 · 2.2)으로 내렸다(처음 가설 3.5 · 3: 중급 터뜨리기 칸이 기가 모자라 오른쪽 기둥이 왼쪽보다 15 낮았다)
   hz: 1.5,                      // 🔄 쿨타임 당기기 1번의 값 [가설] (10월 3일 50상황: 평소 싸움에서는 스킬이 늘 3~4개 준비되어 있어 거의 0, 쿨타임이 묶이는 보스전에서만 크다)
   Fmax: 6,                      // 한 스킬을 전투에서 쓰는 횟수의 상한 (실측: 바탕 스킬 독니 5.4)
@@ -115,6 +116,25 @@ function skValueWd(e, K, W, hi) { const U = WD_BOUND, Wv = K.ward.v, nT = e.n ||
     case 'wdChainPull': return U.pullN * (K.ward.pull + U.pullBrk * K.brk);
     case 'wdNextBrk': return e.n * K.brk;
   } return 0; }
+/* 0.8.0 M5-2 수도승(10월 20일 만든 사람 설계지 2판): 새 효과의 숫자. 설계지 숫자(연환권 기마다 1타 · 붕권 +20% · 금강 +20% · 역천권 받는 피해 +30%)는 그대로, 나머지는 가설 — 값 띠 · 측정으로 정한다 */
+const MK_BOUND = { adamantRed: 0.45, /* 맞추기 1번: 금강불괴 −40% → −45%(비용 3 값 띠) */ yeokBrk: 15, yeokIn: 0.3, cheonChill: 2, cheonSeal: 5, cheonBrk: 22, iljiHp: 0.1, iljiNoKi: 3, samjaeMul: 0.25, refluxKi: 1, bultoeMul: 2, bigBrk: 200 }; /* 기공 응축(설계지 ×2)은 쏟는 기 +3(mkCondense add): 새 트리는 쓸 때 기가 0.5 안팎이라 ×2가 0에 가깝다(M5-2 측정) */
+const MK_K = ['mkCondense', 'mkAdamant', 'mkDrainChill', 'mkChillBurst', 'mkCtrPer', 'mkFlow', 'mkNextBrk', 'mkYeok', 'mkCheon', 'mkIlji', 'mkSamjae', 'mkReflux', 'mkBultoe'];
+function skValueMk(e, s, K, M, hi, mt) { const U = MK_BOUND, inc = hi ? 14 : 8, nT = e.n || 3, d = (s.fx.find(x => x.k === 'dmg') || { n: 0 }).n * (s.hits || 1), C = 2.2; /* C: 쓸 때 대상의 둔화(혈도 · 역혈 · 파혈 판) */
+  switch (e.k) {
+    case 'mkCondense': return (e.add || 3) * 9 * 0.8; // 다음에 쏟는 기 +add: 쏟는 칸 하나(기 1당 9쯤)에 더해지는 기
+    case 'mkAdamant': return nT * U.adamantRed * inc * 1.5; // 큰 공격 앞에 쓰면 몫이 크다(중급: 받는 피해 14/차례)
+    case 'mkDrainChill': return e.per * C * 0.9;
+    case 'mkChillBurst': return (e.per + (e.brk || 0) * K.brk) * C * mt - C * K.kw.chill * 0.5;
+    case 'mkCtrPer': return e.per * 0.8; // 지난 적 차례에 되받은 수(자세 판 0.8)
+    case 'mkFlow': return nT * 24 * e.mul; // ▶ 공격(스킬 · 기본 공격) 한 번 24쯤
+    case 'mkNextBrk': return e.n * K.brk;
+    case 'mkYeok': return nT * (1.8 * (M.ctr + U.yeokBrk * K.brk) + 2) - nT * (U.yeokIn * 8 + 2); // 차례마다 되받기 1.8(한도 없음, 전열 모두) · 자세 유지, 대가: 받는 피해 · 방어 불가
+    case 'mkCheon': return nT * (2 * U.cheonChill * 3.5 + 0.6 * M.sealV) - nT * M.cN * M.ctr * 0.5; // 차례마다 나를 치는 2번(둘째 차례부터 쌓인 둔화 5로 봉인 0.6), 둔화 1의 값은 혈도 판 3.5(폭쇄 · ×1.5가 거둔다)
+    case 'mkIlji': return e.per * C * 3 * 1.2 - 125 * U.iljiHp - U.iljiNoKi * K.kw.empower * 0.6; // 기 3 이상일 때 아껴 쓴다(테스터 · 사람) // (둔화 × 기) 피해, 대가: 생명력 · 기를 얻지 못함
+    case 'mkSamjae': return 6 * 0.6 * 18 * U.samjaeMul + 4; // 전투에 ⚡ 공격 6번, 기가 가득일 때 0.6(기 · 되받기 판), 넘쳐 버리던 기를 쓰는 몫
+    case 'mkReflux': return 9 * 0.65 * U.refluxKi * K.kw.empower; // 기본 공격 9번(기본공격연동 판), 둔화된 적일 확률 0.65
+    case 'mkBultoe': return 5 * 0.35 * M.ctr * (U.bultoeMul - 1) * 1.5; // 되받기 5번(자세 꼬리표 판), 무너진 적 0.35
+  } return 0; }
 function skValue(s, ov) {
   if (!ov && SKK.butch && /^b_/.test(String(s.id)) && !s._bu) return skValueBu(s);
   if (!ov && String(s.id).slice(0, 2) === 'e_') return skValueElem(s);
@@ -123,9 +143,10 @@ function skValue(s, ov) {
   const KWv = (ov && ov.kw) || SKK.kw; const K = SKK; const Sof = k => (K.Sk && K.Sk[k] != null ? K.Sk[k] : K.S); const tm = K.tmul[s.tgt]; const hits = s.hits || 1; let v = 0; const hi = (s.row || 0) >= 7 ? 1 : 0; // hi: 중급(7~10줄)은 Lv7 이상에서 쓴다
   const sbk = /^sb_/.test(s.id || ''); const W = sbk && K.wardCls ? Object.assign({}, K.ward, K.wardCls.spellblade) : K.ward; const SB = K.sb; const multi = s.tgt === 'front' || s.tgt === 'all'; // 마검사: 직업 보호막 표, 출혈 · 화상 값
   const burnTake = e => e.max ? Math.min(e.max, W.B[hi]) : W.all[hi]; // 한 번에 태우는 양: 상한이 있으면 측정 보유량과 상한 가운데 작은 쪽, 모두 태우면 측정값
-  const mk = String(s.id).slice(0, 2) === 'm_'; const mt = s.tgt === 'front' || s.tgt === 'all' ? tm : 1; const M = K.monk; // 수도승 (10월 7일)
+  const mk = String(s.id).slice(0, 2) === 'm_'; const mt = s.tgt === 'front' || s.tgt === 'all' ? tm : 1; const M = s.mk5 && K.monk5 ? Object.assign({}, K.monk, K.monk5) : K.monk; // 수도승 (10월 7일). M5-2 새 칸은 새 트리 측정값(K.monk5)
   for (const e of s.fx) {
     if (WD_K.includes(e.k)) { v += skValueWd(e, K, W, hi); continue; } // 0.8.0 M5-1 파수꾼
+    if (MK_K.includes(e.k)) { v += skValueMk(e, s, K, M, hi, mt); continue; } // 0.8.0 M5-2 수도승
     if (SB_BD_K.includes(e.k)) { const Sbi = SB.S.bleed[hi] + SB.S.ignite[hi], kw = SB.kw.bleed, Wv = K.ward.v; const nT = e.n || 3; const U = SB_BOUND;
       switch (e.k) {
         case 'searMerge': v += 0.6 * Sbi * kw * (1.5 - 1); break;
@@ -180,9 +201,10 @@ function skValue(s, ov) {
       case 'pull': v += K.ward.pull; break;
       case 'vulnGrow': v += K.ward.vuln * (e.mul - 1) * K.kw.vuln; break; // 쓸 때 대상의 취약을 키운다
       case 'chillx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * (ov && ov.chx != null ? ov.chx : (mk ? M.ch : K.ward.chill)) * (s.tgt === 'front' || s.tgt === 'all' ? tm : 1); break; } // 둔화된 적에게 × (수도승 혈도는 스스로 둔화를 걸어 몫이 크다)
-      case 'stance': v += M.cN * (M.ctr + (e.dmg || 0) + (e.brk || 0) * K.brk + (e.ki || 0) * K.kw.empower + (e.chill || 0) * K.kw.chill + (e.weak || 0) * K.kw.weak) * (e.far ? 1.25 : 1); break; // 수도승 자세: 되받기 몫 (10월 10일 단순화: 막기 몫과 상한 몫을 뺐다)
-      case 'kiBurst': { const t = Math.min(e.max || 5, M.K[hi] + (e.pre ? e.pre * M.ch : 0)); v += t * (e.per + (e.brk || 0) * K.brk) * mt - Math.min(e.max || 5, M.K[hi]) * K.kw.empower * M.loss + (e.keep ? Math.floor(M.K[hi] * e.keep) * K.kw.empower * M.loss : 0); break; } // 기 터뜨리기: 거둔 기 × per, 거둔 기가 다음 ▶에 줬을 몫을 뺀다
+      case 'stance': { const one = M.cN * ((M.ctr + (e.dmg || 0)) * (1 + (e.mul || 0)) + (e.brk || 0) * K.brk + (e.ki || 0) * K.kw.empower + (e.chill || 0) * K.kw.chill + (e.weak || 0) * K.kw.weak) * (e.far ? 1.25 : 1) + (e.max ? 0.12 * (M.ctr + (e.dmg || 0)) * (1 + (e.mul || 0)) : 0) + (e.big ? 0.3 * (8 + 1.6 * K.B) : 0) + (s.mk5 ? (e.red || 0) * 8 : 0); v += one * (e.keep ? 1 + (e.keep - 1) * 0.85 : 1); break; } // M5-2: 되받기 배수 · 한도 3 · 강타를 되받아 무너뜨림 · 받는 피해(새 칸만, 옛 철산고 값은 그대로) · 유지 차례 // 수도승 자세: 되받기 몫 (10월 10일 단순화: 막기 몫과 상한 몫을 뺐다)
+      case 'kiBurst': { const t = Math.min(e.max || 5, M.K[hi] + (e.pre ? e.pre * M.ch : 0)); const dd = s.fx.find(x => x.k === 'dmg'); v += t * ((e.per || 0) + (e.brk || 0) * K.brk + (e.mul ? e.mul * (dd ? dd.n * hits : 0) : 0)) * mt - Math.min(e.max || 5, M.K[hi]) * K.kw.empower * M.loss + (e.keep ? Math.floor(M.K[hi] * e.keep) * K.kw.empower * M.loss : 0); break; } // 기 터뜨리기: 거둔 기 × per, 거둔 기가 다음 ▶에 줬을 몫을 뺀다
       case 'kiPer': v += e.per * (M.KpB && M.KpB[s.b] ? M.KpB[s.b][hi] : M.Kp[hi]) * hits * mt; break; // 쓰기 전의 기 1마다 타격마다 (갈래마다 평균 기)
+      case 'kiHits': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n : 0) * Math.min(e.max || 5, M.Kp[hi] * (e.per || 1) * (e.max === 1 ? 0.45 : 1)) * mt; break; } // M5-2 기 1마다 1타 추가(max 1이면 기가 있을 때 +1타: 기가 있을 확률)
       case 'kiGrow': { const k0 = M.Kg - 1; v += (Math.min(5, (k0 + (e.add || 0)) * e.mul) - k0) * K.kw.empower * 0.8; break; }
       case 'sealx': v += M.seal * (M.sealV * 0.8 + e.brk * K.brk * 0.2) * mt; break; // 지원 행동 끊기
       case 'focusx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * e.per * K.hunt.F; break; } // 추적 1겹마다 피해 +per
@@ -191,7 +213,7 @@ function skValue(s, ov) {
       case 'swapx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n : 0) * (e.mul - 1) * K.hunt.swap; break; } // 직전과 다른 적이면 × (첫 발만)
       case 'evade': v += e.n * K.hunt.ev; break; // 다음에 맞는 공격 n번을 피한다
       case 'hastex': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * K.hunt.hx; break; } // 가속 상태면 ×
-      case 'meSt': v += e.n * (KWv[e.s] || 1) * (e.if === 'chill' ? M.ch * mt : e.on === 'cut' ? 0.25 : 1); break; // if: 'chill' 대상이 이미 둔화일 때만(수도승 거두기). on 'cut'(10월 18일 원소 장막): 영창을 끊을 때만(cutx와 같은 넷 중 하나)
+      case 'meSt': v += e.n * (KWv[e.s] || 1) * (e.if === 'chill' ? M.ch * mt : e.if === 'hit' ? mt : e.on === 'cut' ? 0.25 : 1); break; // if: 'chill' 대상이 이미 둔화일 때만(수도승 거두기). on 'cut'(10월 18일 원소 장막): 영창을 끊을 때만(cutx와 같은 넷 중 하나)
       case 'hasteSpend': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * 0.4; break; } // 가속이 있으면 써서 ×
       case 'chillCut': v += K.hunt.stop * (K.hunt.stopV * 0.8 + e.brk * K.brk * 0.2); break; // 둔화된 적이 모으는 중이면 끊는다(강적 · 보스는 붕괴)
       case 'chillShatter': v += K.hunt.ch * (e.dmg + e.brk * K.brk); break; // 둔화를 깨뜨려 1마다 피해 · 붕괴
@@ -453,7 +475,32 @@ function skBodyBm(s, e) {
   }
   return null;
 }
+/* 0.8.0 M5-2 수도승 칸의 한 줄 설명(만든 사람: 칸 설명은 한 줄, 효과는 칸마다 하나). 숫자는 효과에서 읽어 변형을 따라간다. 대가는 skDescHtml이 따로 */
+const MK_DESC_MAX = 40;
+function skBodyMk(s) {
+  const hits = s.hits || 1, multi = s.tgt === 'front' || s.tgt === 'all', P = [];
+  for (const e of s.fx) switch (e.k) {
+    case 'dmg': P.push((multi ? (s.tgt === 'front' ? '전열 모두에게 ' : '모든 적에게 ') : '') + '피해 ' + e.n + (hits > 1 ? ' × ' + hits + '타' : '')); break;
+    case 'brk': P.push('붕괴 +' + e.n); break;
+    case 'st': P.push(s.tgt === 'self' ? (e.s === 'empower' ? '기 +' + e.n : '나에게 ' + skKw(s, e.s) + ' ' + e.n) : skKw(s, e.s) + ' ' + e.n); break;
+    case 'kiHits': P.push(e.max === 1 ? '기가 있으면 +1타' : '기 1마다 1타 추가(최대 ' + e.max + ')'); break;
+    case 'kiBurst': P.push((e.max ? '기를 ' + e.max + '까지' : '기를 모두') + ' 쏟아 기마다 ' + (e.mul ? '피해 +' + Math.round(e.mul * 100) + '%' : '+' + e.per) + (e.brk ? ' · 붕괴 +' + e.brk : '')); break;
+    case 'kiPer': P.push('기마다 피해 +' + e.per); break;
+    case 'stam': P.push('스태미나 +' + e.n); break;
+    case 'meSt': P.push(e.if === 'chill' ? '둔화된 적이면 기 +' + e.n : e.if === 'hit' ? '맞은 적마다 기 +' + e.n : '기 +' + e.n); break;
+    case 'sealx': P.push('지원 행동 봉인'); break;
+    case 'chillx': P.push('둔화된 적에게 ×' + e.mul); break;
+    case 'bigx': P.push('큰 적에게 ×' + e.mul); break;
+    case 'stance': { const L = ['자세'];
+      if (e.red) L.push('받는 피해 −' + Math.round(e.red * 100) + '%'); if (e.dmg) L.push('되받기 +' + e.dmg); if (e.mul) L.push('되받기 ×' + (1 + e.mul)); if (e.max) L.push(e.max + '번까지'); if (e.keep) L.push(e.keep + '차례 유지');
+      if (e.big) L.push('강타를 되받으면 무너뜨림'); if (e.far) L.push('후열도 되받음'); if (e.ki) L.push('되받으면 기 +' + e.ki); if (e.brk) L.push('되받기 붕괴 +' + e.brk); if (e.chill) L.push('되받은 적 둔화 ' + e.chill);
+      P.push(s.tgt === 'self' ? L.join(' · ') : '친 뒤 ' + L.join(' · ')); break; }
+    default: if (e.txt) P.push(e.txt.replace(/\.$/, ''));
+  }
+  return P.join(' · ') + '.';
+}
 function skBody(s) {
+  if (s.mk5) return skBodyMk(s) + (s.pay ? ' 대가: ' + s.pay : '');
   const out = []; const hits = s.hits || 1; const parts = []; const first = []; const burnWard = s.fx.some(e => e.k === 'wardBurn'); const isE = String(s.id).slice(0, 2) === 'e_'; // first: 연타의 첫 타격에만 거는 상태 (마검사 연타 칸)
   const eMulti = isE && hits > 1 && s.fx.some(e => e.k === 'st'); // 원소술사 여러 번 쏘기: 상태는 첫 발 뒤에 걸려 다음 발부터 쓴다 (엔진 그대로, 문장만)
   const cf = String(s.id).slice(0, 2) === 'c_'; if (cf) out.push(...skBodyConfPre(s)); // 숨겨진 직업 2: 옮기기 · 벗기기 · 정화 · 사함은 피해보다 먼저
@@ -574,7 +621,7 @@ function skBody(s) {
 }
 /* M5-0a(10월 20일 만든 사람): 대사가 있는 스킬(승부수)의 설명란. 대사는 맨 위 따로 한 칸(명조 가운데 인용, 「」는 부채꼴 색 장식 · 위에 ✦ 가는 선, 같은 날 만든 사람 고름), 그 아래 효과 / 대가 / 대상을 줄로 나눈다.
    대가는 색과 "대가" 글자로 구분(색만으로 구분하지 않음). 스크린리더는 "대사: …, 효과: …, 대가: …, 대상: …" 순서. 대사가 없으면 빈 문자열(부른 쪽이 원래 설명을 쓴다) */
-const SK_LINE_COL = { 혈염: '#ef5d3c', '죄인의 피': '#c23a52', '유산의 불': '#f0ac48', 공성추: '#a8bace', '기둥 파쇄': '#c98b4a', '용맹의 투지': '#e8c25a' };
+const SK_LINE_COL = { 반탄: '#f0903c', 역혈: '#e6c060', 파혈: '#e8eef5', /* M5-2 수도승: 역천권 주황 · 천망 금빛 경락 · 일지멸맥 하얀 빛 */ 혈염: '#ef5d3c', '죄인의 피': '#c23a52', '유산의 불': '#f0ac48', 공성추: '#a8bace', '기둥 파쇄': '#c98b4a', '용맹의 투지': '#e8c25a' };
 function skDescHtml(s) {
   if (!s || !s.line) return ''; const e = x => String(x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const body = skBody(Object.assign({}, s, { pay: null })), col = SK_LINE_COL[s.b] || 'var(--gold)', who = `${SKK.TGN[s.tgt]} · ${SKK.TN[s.time]}`;

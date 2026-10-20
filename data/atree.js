@@ -293,51 +293,143 @@ const ATREE_DEF = {
         ['wv_va_wst', '태세의 용맹', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
     },
   },
-  /* 0.8.0 5단계 수도승: 3-6. 스킬 24 + 강화 29 = 53노드 */
+  /* 0.8.0 M5-2(10월 20일 만든 사람 설계지 2판): 수도승 액티브 재설계. M5-0c 규격 — 갈래 3 × 길 둘 + 리듬 칸, 경계 5칸(대사 승부수 고정), 결합 칸 3(판마다 둘), 변형 스킬마다 둘.
+     옛 사다리 트리(5단계 53노드)는 버렸다(옛 판은 포인트를 돌려받는다). 철권 a 연환권 · b 붕권, 부동 a 금강 자세 · b 유수 자세, 혈도 a 점혈 · b 사혈 */
   monk: {
-    br: { 철권: 0, 부동: 120, 혈도: 240 }, lane: { LL: -36, L: -18, C: 0, R: 18, RR: 36 },
+    br: { 철권: 0, 부동: 120, 혈도: 240 }, lane: { LL: -22, L: -12, C: 0, R: 12, RR: 22 },
+    sec: { A: '철권', AB: '반탄', B: '부동', BC: '역혈', C: '혈도', CA: '파혈' },
+    rad: { 1: 125, 2: 185, 3: 255, 4: 320, 5: 395, 6: 470 }, paths: { 철권: { a: '연환권', b: '붕권' }, 부동: { a: '금강 자세', b: '유수 자세' }, 혈도: { a: '점혈', b: '사혈' } },
     skills: [
-      ['m_breath', '철권', 1, 1, 'C', ['S'], 2], ['m_kifist', '철권', 1, 2, 'L', ['m_breath'], 2], ['m_rush', '철권', 1, 2, 'R', ['m_breath'], 3],
-      ['m_hundred', '철권', 2, 3, 'LL', ['m_kifist'], 3], ['m_barrage', '철권', 2, 3, 'L', ['m_kifist'], 3], ['m_flow', '철권', 2, 3, 'R', ['m_rush'], 2], ['m_wave', '철권', 2, 3, 'RR', ['m_rush'], 3],
-      ['m_release', '철권', 3, 5, 'C', ['m_barrage', 'm_flow'], 4],
-      ['m_iron', '부동', 1, 1, 'C', ['S'], 2], ['m_answer', '부동', 1, 2, 'L', ['m_iron'], 2], ['m_retort', '부동', 1, 2, 'R', ['m_iron'], 2],
-      ['m_root', '부동', 2, 3, 'LL', ['m_answer'], 3], ['m_shove', '부동', 2, 3, 'L', ['m_answer'], 3], ['m_far', '부동', 2, 3, 'R', ['m_retort'], 3], ['m_breaker', '부동', 2, 3, 'RR', ['m_retort'], 3],
-      ['m_karma', '부동', 3, 5, 'C', ['m_shove', 'm_breaker'], 4],
-      ['m_point', '혈도', 1, 1, 'C', ['S'], 2], ['m_siphon', '혈도', 1, 2, 'L', ['m_point'], 2], ['m_sinew', '혈도', 1, 2, 'R', ['m_point'], 2],
-      ['m_drain', '혈도', 2, 3, 'LL', ['m_siphon'], 3], ['m_cut', '혈도', 2, 3, 'L', ['m_siphon'], 3], ['m_finger', '혈도', 2, 3, 'R', ['m_sinew'], 2], ['m_flick', '혈도', 2, 3, 'RR', ['m_sinew'], 3],
-      ['m_stillpt', '혈도', 3, 5, 'C', ['m_cut', 'm_flick'], 4],
+      ['m_yeonhwan', '철권', 1, 1, 'LL', ['S'], 2, { excl: 'm_bunggwon', path: 'a' }], ['m_bunggwon', '철권', 1, 1, 'RR', ['S'], 2, { excl: 'm_yeonhwan', path: 'b' }], ['m_hoheup', '철권', 1, 2, 'C', ['m_yeonhwan', 'm_bunggwon'], 1],
+      ['m_cheonsu', '철권', 2, 3, 'L', ['m_yeonhwan', 'm_bunggwon'], 2, { path: 'a' }], ['m_eungchuk', '철권', 2, 3, 'R', ['m_yeonhwan', 'm_bunggwon'], 2, { path: 'b' }],
+      ['m_baekbo', '철권', 3, 5, 'L', ['m_cheonsu', 'm_eungchuk'], 3, { path: 'a' }], ['m_myeolgak', '철권', 3, 5, 'R', ['m_cheonsu', 'm_eungchuk'], 3, { path: 'b' }],
+      ['m_geumgang', '부동', 1, 1, 'LL', ['S'], 2, { excl: 'm_yusu', path: 'a' }], ['m_yusu', '부동', 1, 1, 'RR', ['S'], 2, { excl: 'm_geumgang', path: 'b' }], ['m_balgyeong', '부동', 1, 2, 'C', ['m_geumgang', 'm_yusu'], 1],
+      ['m_cheolsan', '부동', 2, 3, 'L', ['m_geumgang', 'm_yusu'], 2, { path: 'a' }], ['m_budong', '부동', 2, 3, 'R', ['m_geumgang', 'm_yusu'], 2, { path: 'b' }],
+      ['m_cheongeun', '부동', 3, 5, 'L', ['m_cheolsan', 'm_budong'], 3, { path: 'a' }], ['m_bulgoe', '부동', 3, 5, 'R', ['m_cheolsan', 'm_budong'], 3, { path: 'b' }],
+      ['m_jeomhyeol', '혈도', 1, 1, 'LL', ['S'], 2, { excl: 'm_sahyeol', path: 'a' }], ['m_sahyeol', '혈도', 1, 1, 'RR', ['S'], 2, { excl: 'm_jeomhyeol', path: 'b' }], ['m_maek', '혈도', 1, 2, 'C', ['m_jeomhyeol', 'm_sahyeol'], 1],
+      ['m_bongswae', '혈도', 2, 3, 'L', ['m_jeomhyeol', 'm_sahyeol'], 2, { path: 'a' }], ['m_talgi', '혈도', 2, 3, 'R', ['m_jeomhyeol', 'm_sahyeol'], 2, { path: 'b' }],
+      ['m_poswae', '혈도', 3, 5, 'L', ['m_bongswae', 'm_talgi'], 3, { path: 'a' }], ['m_talhon', '혈도', 3, 5, 'R', ['m_bongswae', 'm_talgi'], 3, { path: 'b' }],
+      /* 경계 [Claude 초안](입구 · 둘째 · 3고리 둘: 공격 2 · 강화/방어 2) + 대사 승부수(만든 사람) */
+      ['m_doedol', '반탄', 2, 3, 'C', ['m_yeonhwan', 'm_bunggwon', 'm_geumgang', 'm_yusu'], 2, { requires: [['m_yeonhwan', 'm_bunggwon'], ['m_geumgang', 'm_yusu']] }], ['m_gibat', '반탄', 2, 4, 'C', ['m_doedol'], 2],
+      ['m_tansan', '반탄', 3, 5, 'L', ['m_gibat'], 3], ['m_cheolpo', '반탄', 3, 5, 'R', ['m_gibat'], 3], ['m_yeokcheon', '반탄', 3, 6, 'C', ['m_tansan', 'm_cheolpo'], 4],
+      ['m_yeokmaek', '역혈', 2, 3, 'C', ['m_geumgang', 'm_yusu', 'm_jeomhyeol', 'm_sahyeol'], 2, { requires: [['m_geumgang', 'm_yusu'], ['m_jeomhyeol', 'm_sahyeol']] }], ['m_maekji', '역혈', 2, 4, 'C', ['m_yeokmaek'], 2],
+      ['m_hyeolryu', '역혈', 3, 5, 'L', ['m_maekji'], 3], ['m_cheonri', '역혈', 3, 5, 'R', ['m_maekji'], 3], ['m_cheonmang', '역혈', 3, 6, 'C', ['m_hyeolryu', 'm_cheonri'], 4],
+      ['m_pamaek', '파혈', 2, 3, 'C', ['m_jeomhyeol', 'm_sahyeol', 'm_yeonhwan', 'm_bunggwon'], 2, { requires: [['m_jeomhyeol', 'm_sahyeol'], ['m_yeonhwan', 'm_bunggwon']] }], ['m_gagu', '파혈', 2, 4, 'C', ['m_pamaek'], 2],
+      ['m_gwanhyeol', '파혈', 3, 5, 'L', ['m_gagu'], 3], ['m_sunhwan', '파혈', 3, 5, 'R', ['m_gagu'], 3], ['m_ilji', '파혈', 3, 6, 'C', ['m_gwanhyeol', 'm_sunhwan'], 4],
+      /* 결합 칸(설계지): 원 바깥, 꼬리표 조건, 판마다 셋 중 둘 */
+      ['m_samjae', '결합', 2, 4, 'C', [], 2, { reqTags: { 기: 2, 되받기: 1 }, ang: 30 }], ['m_yeokryu', '결합', 2, 4, 'C', [], 2, { reqTags: { 둔화: 1, 기본공격연동: 1 }, ang: 150 }], ['m_bultoe', '결합', 2, 4, 'C', [], 2, { reqTags: { 자세: 1, 붕괴: 1 }, ang: 270 }],
     ],
-    ups: [
-      ['mu_deep', '철권', 1, 1, 'LL', 'm_breath', '깊은 호흡', '보통 빠르기가 됩니다(빠른 칸을 비웁니다). 기 3 → 4.', { set: { time: 'normal' }, fxSet: [{ k: 'st', s: 'empower', n: 4 }] }, []],
-      ['mu_over', '철권', 2, 3, 'C', 'm_kifist', '넘치는 기', '쓴 뒤 기 +1(상한까지).', { fxAdd: [{ k: 'kiGrow', add: 1, mul: 1 }] }, ['m_overflow', 'm_surge']],
-      ['mu_after', '철권', 2, 4, 'L', 'm_barrage', '잔상권', '큰 적(정예 · 강적 · 보스)에게 ×1.3.', { fxAdd: [{ k: 'bigx', mul: 1.3 }] }, ['m_afterimage', 'm_triple', 'm_double']],
-      ['mu_chain', '철권', 2, 4, 'C', 'm_flow', '연환권', '19 한 번 → 9 세 번.', { set: { hits: 3 }, fxSet: [{ k: 'dmg', n: 9 }] }, ['m_chainfist', 'm_gale', 'm_jab']],
-      ['mu_blast', '철권', 2, 4, 'R', 'm_rush', '기 폭발', '거둔 기 1마다 붕괴 +12.', { fxSet: [{ k: 'kiBurst', brk: 12 }] }, ['m_kiblast', 'm_kistrike']],
-      ['mu_split', '철권', 2, 4, 'RR', 'm_rush', '기 가르기', '거둔 기의 절반을 남깁니다. 기 1마다 피해 +8 → +6.', { fxSet: [{ k: 'kiBurst', per: 6, keep: 0.5 }] }, ['m_split', 'm_dantian']],
-      ['mu_storm', '철권', 3, 5, 'LL', 'm_hundred', '폭풍 연타', '5타 → 6타, 큰 적에게 ×1.3.', { set: { hits: 6 }, fxAdd: [{ k: 'bigx', mul: 1.3 }] }, ['m_tempest', 'm_storm']],
-      ['mu_shock', '철권', 3, 5, 'RR', 'm_wave', '기 충격파', '전열 모두를 칩니다(후열에 닿지 않음). 기 1마다 +8 → +5.', { set: { tgt: 'front' }, fxSet: [{ k: 'kiBurst', per: 5 }] }, ['m_shock']],
-      ['mu_spirit', '철권', 3, 6, 'L', 'm_release', '기혼 일격', '큰 적에게 ×1.4.', { fxAdd: [{ k: 'bigx', mul: 1.4 }] }, ['m_spirit']],
-      ['mu_open', '철권', 3, 6, 'R', 'm_release', '열린 단전', '기가 5 이상이면 비용 −1(바닥 1, 라운드에 한 번).', { cond: { off: 1, when: 'ki>=5' } }, []],
-      ['mu_vajra', '부동', 1, 1, 'LL', 'm_iron', '금강', '자세 덤 22 → 26, 되받으면 기 +1 더.', { fxSet: [{ k: 'stance', dmg: 26, ki: 1 }] }, ['m_diamond', 'm_thorns', 'm_myeongwang']],
-      ['mu_wrath', '부동', 2, 2, 'LL', 'm_answer', '분노의 응수', '친 뒤 자세를 잡습니다(덤 없음).', { fxAdd: [{ k: 'stance' }] }, ['m_wrath', 'm_final', 'm_unbroken', 'm_vajra']],
-      ['mu_repay', '부동', 2, 2, 'RR', 'm_retort', '되갚는 발', '붕괴 20 → 36.', { fxSet: [{ k: 'brk', n: 36 }] }, ['m_repay']],
-      ['mu_ironmtn', '부동', 2, 3, 'C', 'm_iron', '철산고', '이 자세 동안 받는 직접 피해 −25%.', { fxSet: [{ k: 'stance', red: 0.25 }] }, ['m_ironmtn']],
-      ['mu_still', '부동', 2, 4, 'LL', 'm_root', '고요한 받기', '되받은 적에게 둔화 2.', { fxSet: [{ k: 'stance', chill: 2 }] }, ['m_still']],
-      ['mu_mtn', '부동', 2, 4, 'L', 'm_root', '산처럼', '자세의 기 +1 대신 되받기 붕괴 +40.', { fxSet: [{ k: 'stance', ki: 0, brk: 40 }] }, ['m_mountain']],
-      ['mu_rebound', '부동', 2, 4, 'C', 'm_shove', '반탄', '기 1마다 피해 +6(기를 쓰지 않음).', { fxAdd: [{ k: 'kiPer', per: 6 }] }, ['m_rebound', 'm_tide', 'm_backlash', 'm_wavefall']],
-      ['mu_farwall', '부동', 3, 5, 'R', 'm_far', '천리 부동', '되받으면 기 +1 더.', { fxSet: [{ k: 'stance', ki: 1 }] }, ['m_farwall']],
-      ['mu_hundred', '부동', 3, 5, 'RR', 'm_breaker', '백배 갚기', '느림이 됩니다. 기 1마다 +7 → +13.', { set: { time: 'slow' }, fxSet: [{ k: 'kiPer', per: 13 }] }, ['m_hundredfold']],
-      ['mu_karma', '부동', 3, 6, 'C', 'm_karma', '참회의 무게', '직전 적 차례를 자세로 맞았으면 비용 −1(바닥 1, 라운드에 한 번). 기는 깎지 않습니다.', { cond: { off: 1, when: 'stance' } }, []],
-      ['mu_numb', '혈도', 1, 1, 'LL', 'm_point', '마비 지르기', '피해 16 → 20, 약화 1을 겁니다.', { fxSet: [{ k: 'dmg', n: 20 }], fxAdd: [{ k: 'st', s: 'weak', n: 1 }] }, ['m_numb', 'm_lock']],
-      ['mu_drink', '혈도', 2, 3, 'C', 'm_siphon', '흐름 마시기', '둔화된 적에게 ×1.3.', { fxAdd: [{ k: 'chillx', mul: 1.3 }] }, ['m_drink', 'm_reverse', 'm_frozenvein']],
-      ['mu_absorb', '혈도', 2, 4, 'LL', 'm_drain', '기맥 흡수', '둔화된 적에게 ×1.5.', { fxAdd: [{ k: 'chillx', mul: 1.5 }] }, ['m_absorb']],
-      ['mu_death', '혈도', 2, 4, 'L', 'm_cut', '절맥', '빠른 칸이 됩니다(기가 실리지 않음). 피해 24 → 20, 약화 2를 겁니다.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 20 }], fxAdd: [{ k: 'st', s: 'weak', n: 2 }] }, ['m_deathpt']],
-      ['mu_backflow', '혈도', 2, 4, 'R', 'm_finger', '거슬러 오르는 기', '둔화된 적이면 기 +1.', { fxAdd: [{ k: 'meSt', s: 'empower', n: 1, if: 'chill' }] }, ['m_backflow', 'm_reflux']],
-      ['mu_seal', '혈도', 2, 4, 'RR', 'm_flick', '혈 봉쇄', '모으는 적이면 붕괴 +52.', { fxAdd: [{ k: 'cutx', brk: 52 }] }, ['m_seal', 'm_chainpt', 'm_allpoint']],
-      ['mu_harvest', '혈도', 3, 5, 'LL', 'm_drain', '기 거두기', '전열 모두를 칩니다. 피해 23 → 14, 둔화된 적마다 기 +1.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 14 }, { k: 'meSt', s: 'empower', n: 1 }] }, ['m_harvest', 'm_press']],
-      ['mu_world', '혈도', 3, 6, 'L', 'm_stillpt', '천지 정지', '보통 빠르기가 됩니다. 피해 32 → 24. 쓰기 전 대상이 둔화 · 약화 둘 다면 기 +2.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 24 }], fxAdd: [{ k: 'meSt', s: 'empower', n: 2, if: 'chillweak' }] }, ['m_freezeworld']],
-      ['mu_great', '혈도', 3, 6, 'R', 'm_stillpt', '대주천', '기를 거둬 기 1마다 피해 +6.', { fxAdd: [{ k: 'kiBurst', per: 6 }] }, ['m_greatflow', 'm_kingvein', 'm_veinburst']],
-    ],
+    vars: {
+      /* 스킬마다 변형 둘(둘 다 제시): v 'deep' 깊게 = 같은 길을 세게, v 'link' 잇기 = 그 스킬에 없던 다른 빌드의 꼬리표를 더해 경계 · 결합 칸으로. [Claude 초안] */
+      m_yeonhwan: [
+        ['mv_yh_more', '끝없는 연환', '최대 5타 → 7타. 피해 12 → 11.', { fxSet: [{ k: 'dmg', n: 11 }, { k: 'kiHits', per: 1, max: 7 }] }, [], { v: 'deep' }],
+        ['mv_yh_basic', '연환 잇기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'mkNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+      m_bunggwon: [
+        ['mv_bg_cond', '터지는 붕권', '기가 3 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'ki>=3' } }, [], { v: 'deep' }],
+        ['mv_bg_brk', '부수는 붕권', '쏟은 기 1마다 붕괴 +8.', { fxSet: [{ k: 'kiBurst', mul: 0.2, brk: 8 }] }, ['붕괴'], { v: 'link' }]],
+      m_hoheup: [
+        ['mv_hh_deep', '깊은 호흡', '기 +2 → +3.', { fxSet: [{ k: 'st', s: 'empower', n: 3 }] }, [], { v: 'deep' }],
+        ['mv_hh_st', '고른 호흡', '자세를 함께 잡습니다.', { fxAdd: [{ k: 'stance' }] }, ['자세'], { v: 'link' }]],
+      m_cheonsu: [
+        ['mv_cs_hits', '천수 만타', '3타 → 4타. 피해 6 → 5.', { set: { hits: 4 }, fxSet: [{ k: 'dmg', n: 5 }] }, [], { v: 'deep' }],
+        ['mv_cs_chill', '짚는 연타', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
+      m_eungchuk: [
+        ['mv_ec_more', '단전 응축', '쓸 때 기 +1.', { fxAdd: [{ k: 'st', s: 'empower', n: 1 }] }, [], { v: 'deep' }],
+        ['mv_ec_st', '응축 자세', '자세를 함께 잡습니다.', { fxAdd: [{ k: 'stance' }] }, ['자세'], { v: 'link' }]],
+      m_baekbo: [
+        ['mv_bb_big', '백보 관통', '정예 · 강적 · 보스에게 ×1.3.', { fxAdd: [{ k: 'bigx', mul: 1.3 }] }, [], { v: 'deep' }],
+        ['mv_bb_ki', '기 실린 백보', '기가 있으면 타수 +1.', { fxAdd: [{ k: 'kiHits', per: 1, max: 1 }] }, ['기'], { v: 'link' }]],
+      m_myeolgak: [
+        ['mv_mg_normal', '서두른 멸각', '보통 빠르기가 됩니다. 기마다 +17 → +13.', { set: { time: 'normal' }, fxSet: [{ k: 'kiBurst', per: 13, max: 5 }] }, [], { v: 'deep' }],
+        ['mv_mg_brk', '무너뜨리는 멸각', '쏟은 기 1마다 붕괴 +10.', { fxSet: [{ k: 'kiBurst', per: 17, max: 5, brk: 10 }] }, ['붕괴'], { v: 'link' }]],
+      m_geumgang: [
+        ['mv_gg_more', '굳은 금강', '되받기 +20% → +35%.', { fxSet: [{ k: 'stance', dmg: 14, mul: 0.35, max: 3 }] }, [], { v: 'deep' }],
+        ['mv_gg_ki', '기 모으는 금강', '되받으면 기 +1 더.', { fxSet: [{ k: 'stance', dmg: 14, mul: 0.2, max: 3, ki: 1 }] }, ['기'], { v: 'link' }]],
+      m_yusu: [
+        ['mv_ys_red', '깊은 유수', '받는 피해 −20% → −28%.', { fxSet: [{ k: 'stance', dmg: 21, red: 0.28 }] }, [], { v: 'deep' }],
+        ['mv_ys_ctr', '흐르는 반격', '되받은 적에게 둔화 1.', { fxSet: [{ k: 'stance', dmg: 21, red: 0.2, chill: 1 }] }, ['둔화'], { v: 'link' }]],
+      m_balgyeong: [
+        ['mv_bk_big', '침투 발경', '정예 · 강적 · 보스에게 ×1.3.', { fxAdd: [{ k: 'bigx', mul: 1.3 }] }, [], { v: 'deep' }],
+        ['mv_bk_st', '발경 자세', '친 뒤 자세를 잡습니다.', { fxAdd: [{ k: 'stance' }] }, ['자세'], { v: 'link' }]],
+      m_cheolsan: [
+        ['mv_cl_more', '철산 돌파', '기마다 +6 → +8. 피해 19 → 16.', { fxSet: [{ k: 'dmg', n: 16 }, { k: 'kiPer', per: 8 }] }, [], { v: 'deep' }],
+        ['mv_cl_brk', '무너뜨리는 철산고', '붕괴 +25.', { fxAdd: [{ k: 'brk', n: 25 }] }, ['붕괴'], { v: 'link' }]],
+      m_budong: [
+        ['mv_bd_long', '흔들림 없는 마음', '3차례 → 4차례.', { fxSet: [{ k: 'stance', dmg: 2, keep: 4 }] }, [], { v: 'deep' }],
+        ['mv_bd_ki', '고요한 기', '되받으면 기 +1 더.', { fxSet: [{ k: 'stance', dmg: 2, keep: 3, ki: 1 }] }, ['기'], { v: 'link' }]],
+      m_cheongeun: [
+        ['mv_cg_dmg', '천근 무게', '되받을 때 피해 +28 → +36.', { fxSet: [{ k: 'stance', dmg: 36, big: 1 }] }, [], { v: 'deep' }],
+        ['mv_cg_chill', '짓누르는 천근', '되받은 적에게 둔화 1.', { fxSet: [{ k: 'stance', dmg: 28, big: 1, chill: 1 }] }, ['둔화'], { v: 'link' }]],
+      m_bulgoe: [
+        ['mv_bl_fast', '즉시 금강불괴', '빠른 칸이 됩니다. 4차례 → 3차례.', { set: { time: 'fast' }, fxSet: [{ k: 'mkAdamant', n: 3, txt: '3차례 받는 피해 −45%.' }] }, [], { v: 'deep' }],
+        ['mv_bl_st', '불괴 자세', '자세를 함께 잡습니다.', { fxAdd: [{ k: 'stance' }] }, ['자세'], { v: 'link' }]],
+      m_jeomhyeol: [
+        ['mv_jh_more', '깊은 점혈', '둔화 2 → 3. 피해 19 → 14.', { fxSet: [{ k: 'dmg', n: 14 }, { k: 'st', s: 'chill', n: 3 }] }, [], { v: 'deep' }],
+        ['mv_jh_ki', '점혈 흡기', '대상이 이미 둔화되어 있었으면 기 +1.', { fxAdd: [{ k: 'meSt', s: 'empower', n: 1, if: 'chill' }] }, ['기'], { v: 'link' }]],
+      m_sahyeol: [
+        ['mv_sh_cond', '흐르는 사혈', '대상의 둔화가 2 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'kw:chill>=2' } }, [], { v: 'deep' }],
+        ['mv_sh_brk', '사혈 꺾기', '붕괴 +20.', { fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
+      m_maek: [
+        ['mv_mk_more', '깊은 맥', '둔화 1 → 2. 피해 12 → 9.', { fxSet: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'chill', n: 2 }] }, [], { v: 'deep' }],
+        ['mv_mk_basic', '맥 짚고 치기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'mkNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+      m_bongswae: [
+        ['mv_bs_fast', '날랜 봉쇄', '빠른 칸이 됩니다. 피해 18 → 13.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 13 }] }, [], { v: 'deep' }],
+        ['mv_bs_front', '전열 봉쇄', '전열 모두를 칩니다. 피해 18 → 11.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 11 }] }, ['광역'], { v: 'link' }]],
+      m_talgi: [
+        ['mv_tg_more', '깊은 탈기', '둔화 1마다 생명력 +3 → +4.', { fxSet: [{ k: 'mkDrainChill', per: 4, txt: '대상의 둔화 1마다 생명력 +4.' }] }, [], { v: 'deep' }],
+        ['mv_tg_ki', '기 빼앗기', '대상이 이미 둔화되어 있었으면 기 +1.', { fxAdd: [{ k: 'meSt', s: 'empower', n: 1, if: 'chill' }] }, ['기'], { v: 'link' }]],
+      m_poswae: [
+        ['mv_ps_cond', '무르익은 폭쇄', '대상의 둔화가 3 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'kw:chill>=3' } }, [], { v: 'deep' }],
+        ['mv_ps_brk', '혈 무너뜨리기', '터뜨린 둔화 1마다 붕괴 +8.', { fxSet: [{ k: 'mkChillBurst', per: 12, brk: 8, txt: '둔화를 모두 터뜨려 1마다 피해 +12 · 붕괴 +8.' }] }, ['붕괴'], { v: 'link' }]],
+      m_talhon: [
+        ['mv_th_slow', '거두는 탈혼', '느린 행동이 됩니다. 둔화 2 → 3.', { set: { time: 'slow' }, fxSet: [{ k: 'st', s: 'chill', n: 3 }] }, [], { v: 'deep' }],
+        ['mv_th_seal', '혼을 묶는 손', '지원 행동을 봉인합니다.', { fxAdd: [{ k: 'sealx', brk: 15 }] }, ['봉인'], { v: 'link' }]],
+      m_doedol: [
+        ['mv_dd_more', '배로 돌린 주먹', '되받은 1마다 +6 → +9. 피해 13 → 10.', { fxSet: [{ k: 'dmg', n: 10 }, { k: 'mkCtrPer', per: 9, txt: '지난 적 차례에 되받은 1마다 피해 +9.' }] }, [], { v: 'deep' }],
+        ['mv_dd_brk', '꺾어 돌린 주먹', '붕괴 +20.', { fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
+      m_gibat: [
+        ['mv_gb_more', '넘치는 기 받기', '되받으면 기 +1 → +2.', { fxSet: [{ k: 'stance', dmg: 12, ki: 2 }] }, [], { v: 'deep' }],
+        ['mv_gb_chill', '맥 받는 자세', '되받은 적에게 둔화 1.', { fxSet: [{ k: 'stance', dmg: 12, ki: 1, chill: 1 }] }, ['둔화'], { v: 'link' }]],
+      m_tansan: [
+        ['mv_ts_slow', '무거운 탄산권', '느린 행동이 됩니다. 피해 17 → 22.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 22 }] }, [], { v: 'deep' }],
+        ['mv_ts_ki', '기 실린 탄산권', '맞은 적마다 기 +1.', { fxAdd: [{ k: 'meSt', s: 'empower', n: 1, if: 'hit' }] }, ['기'], { v: 'link' }]],
+      m_cheolpo: [
+        ['mv_cp_red', '두꺼운 철포삼', '받는 피해 −30% → −38%.', { fxSet: [{ k: 'stance', dmg: 14, red: 0.38, keep: 2 }] }, [], { v: 'deep' }],
+        ['mv_cp_brk', '철포 반탄', '되받을 때마다 붕괴 +20.', { fxSet: [{ k: 'stance', dmg: 14, red: 0.3, keep: 2, brk: 20 }] }, ['붕괴'], { v: 'link' }]],
+      m_yeokcheon: [
+        ['mv_yc_fast', '순간의 역천', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, [], { v: 'deep' }],
+        ['mv_yc_ki', '역천의 기', '기가 3 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'ki>=3' } }, ['기'], { v: 'link' }]],
+      m_yeokmaek: [
+        ['mv_ym_more', '깊은 역맥', '둔화된 적에게 ×1.5 → ×1.8. 피해 15 → 13.', { fxSet: [{ k: 'dmg', n: 13 }, { k: 'chillx', mul: 1.8 }] }, [], { v: 'deep' }],
+        ['mv_ym_st', '역맥 자세', '친 뒤 자세를 잡습니다.', { fxAdd: [{ k: 'stance' }] }, ['자세'], { v: 'link' }]],
+      m_maekji: [
+        ['mv_mj_more', '굳게 지키는 맥', '되받은 적에게 둔화 2 → 3.', { fxSet: [{ k: 'stance', dmg: 13, chill: 3 }] }, [], { v: 'deep' }],
+        ['mv_mj_ki', '맥에서 오르는 기', '되받으면 기 +1 더.', { fxSet: [{ k: 'stance', dmg: 13, chill: 2, ki: 1 }] }, ['기'], { v: 'link' }]],
+      m_hyeolryu: [
+        ['mv_hr_fast', '날랜 역행', '빠른 칸이 됩니다. 피해 18 → 13.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 13 }] }, [], { v: 'deep' }],
+        ['mv_hr_seal', '봉인하는 역행', '지원 행동을 봉인합니다.', { fxAdd: [{ k: 'sealx', brk: 15 }] }, ['봉인'], { v: 'link' }]],
+      m_cheonri: [
+        ['mv_cr_dmg', '먼 곳까지 받기', '되받을 때 피해 +31 → +39.', { fxSet: [{ k: 'stance', dmg: 39, far: 1 }] }, [], { v: 'deep' }],
+        ['mv_cr_chill', '천리의 맥', '되받은 적에게 둔화 1.', { fxSet: [{ k: 'stance', dmg: 31, far: 1, chill: 1 }] }, ['둔화'], { v: 'link' }]],
+      m_cheonmang: [
+        ['mv_cm_fast', '순간의 천망', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, [], { v: 'deep' }],
+        ['mv_cm_st', '천망 자세', '자세를 함께 잡습니다.', { fxAdd: [{ k: 'stance' }] }, ['자세'], { v: 'link' }]],
+      m_pamaek: [
+        ['mv_pm_more', '깊은 파맥', '기 3까지 → 4까지 쏟습니다.', { fxSet: [{ k: 'kiBurst', per: 5, max: 4 }] }, [], { v: 'deep' }],
+        ['mv_pm_chill', '짚고 쏟기', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
+      m_gagu: [
+        ['mv_gu_more', '단단한 기', '기 +4 → +5.', { fxSet: [{ k: 'st', s: 'empower', n: 5 }] }, [], { v: 'deep' }],
+        ['mv_gu_st', '기 가둔 자세', '자세를 함께 잡습니다.', { fxAdd: [{ k: 'stance' }] }, ['자세'], { v: 'link' }]],
+      m_gwanhyeol: [
+        ['mv_gh_normal', '서두른 관혈', '보통 빠르기가 됩니다. 피해 28 → 21.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 21 }] }, [], { v: 'deep' }],
+        ['mv_gh_ki', '관혈 흡기', '대상이 이미 둔화되어 있었으면 기 +2.', { fxAdd: [{ k: 'meSt', s: 'empower', n: 2, if: 'chill' }] }, ['기'], { v: 'link' }]],
+      m_sunhwan: [
+        ['mv_sw_long', '긴 순환', '3차례 → 4차례.', { fxSet: [{ k: 'mkFlow', n: 4, txt: '4차례 동안 ▶ 공격 피해 +55%.' }] }, [], { v: 'deep' }],
+        ['mv_sw_st', '순환 자세', '자세를 함께 잡습니다.', { fxAdd: [{ k: 'stance' }] }, ['자세'], { v: 'link' }]],
+      m_ilji: [
+        ['mv_il_fast', '순간의 일지', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, [], { v: 'deep' }],
+        ['mv_il_brk', '무너뜨리는 일지', '붕괴 +30.', { fxAdd: [{ k: 'brk', n: 30 }] }, ['붕괴'], { v: 'link' }]],
+    },
   },
   /* 0.8.0 5단계 사냥꾼 (10월 18일 만든 사람 결정 반영): docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 2-6 · 2-6a · 8절. 스킬 24 + 강화 27 = 51노드.
      시작 스킬은 연계 갈래 태그(lb)를 가진다: 겨눠 쏘기 저격, 물러서며 쏘기 기동(data/skills.js). 연계 할인(cond link)은 갈래마다 1고리 유산 3 스킬 하나에만 */
@@ -481,6 +573,7 @@ const ATREE_DEF = {
 /* 지금 트리에서 빠진 스킬 (8-4 "뺌"): 옛 세이브 장착 목록에서 "더는 없는 스킬"로 보인다 */
 const AT_GONE = { spellblade: ['sb_sweepcut', 'sb_pour', 'sb_redrain', 'sb_draw', 'sb_feast', 'sb_sparkcut', 'sb_ring', 'sb_flamedown', 'sb_sear', 'sb_flamedance', 'sb_lance', 'sb_chainfire', 'sb_blaze', 'sb_armor', 'sb_bulwark', /* M5-0c 재설계에서 빠진 칸 */ 'sb_redwind', 'sb_deluge', 'sb_kindle', 'sb_tome', 'sb_unravel', 'sb_turn', 'sb_searspread', 'sb_searburst', 'sb_atone', 'sb_ashstorm'],
   warden: ['w_raise', 'w_kindle', 'w_blaze', 'w_press', 'w_coat', 'w_burst', 'w_crush', 'w_molten', 'w_last', 'w_bulwarkhit', 'w_forge', 'w_unyield', 'w_scald', 'w_eternal', 'w_cinder', 's_gap', 's_knock', 's_mark', 's_smash', 's_knee', 's_dig', 's_hammer', 's_wedge', 's_crack', 's_throw', 's_pillar', 's_maul', 's_open', 's_rift', 's_judge', 's_wedgebite', 's_unravel', 's_stagger', 's_lever', 's_landslide', 's_lastblow', 'f_break', 'f_snare', 'f_cleave', 'f_chain', 'f_wall', 'f_spin', 'f_trample', 'f_drive', 'f_push', 'f_scatter', 'f_split', 'f_net', 'f_sweepline', 'f_onrush', 'f_noose', 'f_rout', 'f_siege'], /* M5-1 재설계: 트리에 없는 파수꾼 칸(스킬 데이터는 남음) */ monk: ['m_endless', 'm_knee', 'm_calm'],
+  monk: ['m_answer', 'm_barrage', 'm_breaker', 'm_breath', 'm_cut', 'm_drain', 'm_far', 'm_finger', 'm_flick', 'm_flow', 'm_hundred', 'm_iron', 'm_karma', 'm_kifist', 'm_point', 'm_release', 'm_retort', 'm_root', 'm_rush', 'm_shove', 'm_sinew', 'm_siphon', 'm_stillpt', 'm_wave'], /* M5-2 재설계에서 빠진 옛 수도승 칸 */
   hunter: ['h_steady', 'h_finish', 'h_stance', 'h_slowrain', 'h_veil', 'h_foresee'],
   elementalist: ['e_spread', 'e_stoke', 'e_catch', 'e_cloak', 'e_hoar', 'e_shell', 'e_hoarbloom', 'e_numb', 'e_frostwave'],
   assassin: ['a_wedge', 'a_seep', 'a_rotbreath', 'a_plant', 'a_rend', 'a_expose', 'a_check', 'a_mark', 'a_strangle', 'a_rush'] }; // 0.8.0 5단계 2-6 · 3-6 "뺌", 사냥꾼은 원거리 초안 2-6 "뺌", 원소술사는 원거리 초안 3-6 "뺌"(10월 18일), 암살자는 원거리 초안 4-7 "뺌"(10월 18일 0.8.0 5단계, 그림자 범용 넷은 결정 15)

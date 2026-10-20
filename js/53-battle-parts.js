@@ -217,7 +217,7 @@ function stsHtml(u, b, inCard, opt) {
       const paid = b.prepTurn === b.turnIdx ? (b.paidTurn || 0) : 0; if (paid > 0 && skillsOf(u).some(id => SK2[id] && SK2[id].fx.some(e => e.k === 'bloodDmg'))) out.push(`<i class="b" data-info="bmpaid" tabindex="0">🩸 낸 피 <b>${Math.round(paid)}</b></i>`);
       const pc = u.payCut || []; const nh = pc.filter(x => x.mul != null).length, no = pc.filter(x => x.off != null); if (nh) out.push(`<i class="b" data-info="bmcut" tabindex="0">🩸½ ×${nh}</i>`); if (no.length) out.push(`<i class="b" data-info="bmcut" tabindex="0">🩸−${no[0].off}턴 ×${no.length}</i>`); }
     if (u.rime) for (const k in u.rime) if (u.rime[k] && u.rime[k].times > 0) out.push(`<i class="b" data-info="rime" tabindex="0">${k === 'ignite' ? '🔥' : '❄️'}↩ <b>${u.rime[k].times}</b><small>·${u.rime[k].n}</small></i>`); // 원소술사 되얼림 · 불꽃 외투
-    if (u.build === 'monk' && (u.stance || u.guard)) out.push(`<i class="b" data-info="mstance" tabindex="0"><span class="sic" aria-hidden="true">🥋</span>자세</i>`); // 수도승: 자세 칩 하나(숫자와 덤은 설명 창)
+    if (u.build === 'monk' && (u.stance || u.guard)) { const cm = monkCtrMax(u), left = isFinite(cm) ? Math.max(0, cm - (u.ctrN || 0)) : '∞'; out.push(`<i class="b" data-info="mstance" tabindex="0"><span class="sic" aria-hidden="true">🥋</span>자세${u.stance && u.stance.keep > 1 ? ' <small>' + u.stance.keep + '차례</small>' : ''} <span aria-hidden="true">↩</span><b>${left}</b><span class="sr">번 더 되받을 수 있음</span></i>`); } // 수도승: 자세 칩 하나(덤은 설명 창). M5-2: 남은 되받기 횟수 ↩ n(만든 사람 결정)
     if (u.counter > 0) out.push(`<i class="b" data-info="counter" tabindex="0">반격 +${r1(u.counter)}</i>`);
     if (u.reflux) out.push('<i class="b" data-info="reflux" tabindex="0">되돌릴 독</i>');
   }
