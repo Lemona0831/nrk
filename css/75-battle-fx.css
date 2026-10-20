@@ -108,3 +108,51 @@
 @keyframes vfop{0%{opacity:0}25%{opacity:.9}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.dpop{animation:none}.dpop.big{animation:none}}
 html.rm .dpop{animation:popfade 1.4s linear forwards}
+/* ===== M5-0a 승부수 컷인(js/59 cutin): 판(적 줄 + 내 카드) 크기의 상자 안에 띠 하나. 화면 전체 번쩍임 없음 ===== */
+#vfx .cutin{position:absolute;display:grid;place-items:center;overflow:hidden;pointer-events:none;--fq:'Nanum Myeongjo','Noto Serif KR',serif}
+.cutin .cu-veil{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(5,6,8,.35),rgba(5,6,8,.7));opacity:0}
+.cutin .cu-stage{position:relative;width:100%;height:138px}
+.cutin .cu-layer{position:absolute;inset:0;display:grid;place-items:center}
+.cutin .cu-band{position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,var(--band) 12%,var(--band) 88%,transparent 100%);border-block:1px solid var(--edge)}
+.cutin .cu-band::before,.cutin .cu-band::after{content:"";position:absolute;left:9%;right:9%;height:1px;background:linear-gradient(90deg,transparent,var(--edge),transparent);opacity:.7}
+.cutin .cu-band::before{top:5px}.cutin .cu-band::after{bottom:5px}
+.cutin .cu-txt{position:relative;display:grid;gap:6px;justify-items:center;text-align:center;padding:0 20px}
+.cutin .cu-skill{font-size:12px;letter-spacing:.3em;color:var(--edge);font-weight:600;opacity:0}
+.cutin .cu-q{font-family:var(--fq);font-weight:700;font-size:clamp(16px,3.3vw,23px);line-height:1.45;color:#f6efe2;text-shadow:0 0 16px var(--glow),0 1px 0 rgba(0,0,0,.7);text-wrap:balance;max-width:34ch;word-break:keep-all}
+.cutin.cu-fancy .cu-q{font-size:clamp(18px,3.8vw,27px)}
+.cutin .cu-q span{opacity:0}
+.cutin .cu-sw{position:absolute;left:-5%;right:-5%;top:50%;height:0}.cutin .cu-sw.x2{transform:rotate(18deg)}
+.cutin .cu-slash{position:absolute;left:0;right:0;top:-1.5px;height:3px;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,transparent,#fff 12%,#fff 92%,rgba(255,255,255,.2));box-shadow:0 0 8px 2px #fff,0 0 18px 4px var(--edge),0 0 40px 10px var(--glow);opacity:0}
+.cutin .cu-ring{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:2px solid var(--edge);box-shadow:0 0 18px var(--glow),inset 0 0 12px var(--glow);opacity:0}
+.cutin .cu-seam{position:absolute;left:50%;top:6px;bottom:6px;width:2px;margin-left:-1px;background:var(--edge);box-shadow:0 0 12px var(--glow);opacity:0}
+.cutin .cu-hex{position:absolute;inset:0;opacity:0;background-image:linear-gradient(30deg,transparent 47%,var(--edge) 48%,var(--edge) 52%,transparent 53%),linear-gradient(150deg,transparent 47%,var(--edge) 48%,var(--edge) 52%,transparent 53%),linear-gradient(90deg,transparent 47%,var(--edge) 48%,var(--edge) 52%,transparent 53%);background-size:26px 45px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent);mask-image:linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent)}
+.cutin .cu-sigil{position:absolute;left:50%;top:50%;width:220px;height:220px;margin:-110px 0 0 -110px;opacity:0}
+.cutin .cu-sigil circle,.cutin .cu-sigil path,.cutin .cu-rune circle,.cutin .cu-rune path{fill:none;stroke:var(--edge)}
+.cutin .cu-rune{position:absolute;left:50%;top:50%;width:420px;height:420px;margin:-210px 0 0 -210px;opacity:0}
+.cutin .cu-rune text{fill:var(--edge);font-family:'Noto Sans Runic','Segoe UI Historic','Segoe UI Symbol',serif;font-size:15px;letter-spacing:7px}
+.cutin .cu-rune .cu-rg1 text{font-size:17px;filter:drop-shadow(0 0 4px var(--glow))}
+.cutin .cu-glyphs{position:absolute;inset:0}
+.cutin .cu-glyph{position:absolute;font-family:'Noto Sans Runic','Segoe UI Historic','Segoe UI Symbol',serif;font-size:22px;color:#ffe2b0;text-shadow:0 0 8px var(--edge),0 0 18px var(--glow);opacity:0;transform:translate(-50%,-50%)}
+.cutin .cu-ghost{position:absolute;inset:0;display:grid;place-items:center;mix-blend-mode:screen;opacity:0}
+.cutin .cu-ghost .cu-q{text-shadow:none}.cutin .cu-ghost .cu-q span{opacity:1}
+.cutin .cu-ghost.r .cu-q{color:rgba(255,80,60,.7)}.cutin .cu-ghost.b .cu-q{color:rgba(120,200,255,.55)}
+.cutin .cu-cv{position:absolute;inset:0;width:100%;height:100%}
+/* 승부수 상태(52번 vHudPlayer): 카드 테두리 색 + 모서리 글자(이름 · 남은 차례). 움직임 줄이기면 일렁임 없이 테두리만 */
+.fstat{position:relative}
+.fstat.st-blaze{border-color:#ef5d3c;box-shadow:0 0 0 1px rgba(239,93,60,.5),0 0 16px rgba(239,93,60,.35)}
+.fstat.st-wall{border-color:#c23a52;box-shadow:0 0 0 3px rgba(194,58,82,.35),0 0 0 7px rgba(194,58,82,.12)}
+.fstat.st-fire{border-color:#f0ac48;animation:emberEdge 900ms ease-in-out infinite alternate}
+@keyframes emberEdge{from{box-shadow:0 0 6px rgba(240,172,72,.35),0 -2px 12px rgba(240,120,40,.25)}to{box-shadow:0 0 14px rgba(240,172,72,.6),0 -6px 22px rgba(240,120,40,.4)}}
+.fstat .stt-row{position:absolute;top:-9px;right:8px;display:flex;gap:4px;z-index:2}
+.fstat .stt{font-size:calc(11px*var(--fs,1));padding:0 7px;border-radius:999px;background:var(--panel,#1d2129);border:1px solid currentColor;line-height:17px;white-space:nowrap}
+.fstat .stt b{font-weight:700}
+.stt.st-blaze{color:#ef5d3c}.stt.st-wall{color:#e0687e}.stt.st-fire{color:#f0ac48}
+@media (prefers-reduced-motion:reduce){.fstat.st-fire{animation:none;box-shadow:0 0 10px rgba(240,172,72,.5)}}
+html.rm .fstat.st-fire{animation:none;box-shadow:0 0 10px rgba(240,172,72,.5)}
+/* 설명란(data/skillkit.js skDescHtml): 대사는 위에 따로 한 칸(명조 · 경계 색 줄), 효과 · 대가 · 대상은 아래 줄 단위. 대가는 색과 "대가" 글자를 함께 */
+.skd{display:grid;gap:6px;margin:4px 0}
+.skd-line{margin:0;padding:8px 10px;border-left:2px solid var(--lc,#c9a24b);background:linear-gradient(90deg,rgba(255,255,255,.04),transparent);border-radius:0 6px 6px 0;font-family:'Nanum Myeongjo','Noto Serif KR',serif;font-weight:700;font-size:calc(14px*var(--fs,1));line-height:1.6;color:#efe6d6;word-break:keep-all}
+.skd-rows{display:grid;gap:3px;font-size:calc(13px*var(--fs,1));line-height:1.55}
+.skd-r{display:grid;grid-template-columns:3.4em 1fr;gap:6px}
+.skd-r .k{color:var(--muted);font-size:calc(12px*var(--fs,1))}
+.skd-r.pay .k{color:#e39a8a;font-weight:700}.skd-r.pay .v{color:#e39a8a}

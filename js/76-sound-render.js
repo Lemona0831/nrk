@@ -28,7 +28,7 @@ function sndSync() {
   let v = el.volume; SND.fadeT = setInterval(() => { v = Math.max(0, v - Math.max(0.02, c.music / 8)); el.volume = v; if (v <= 0) { clearInterval(SND.fadeT); start(); } }, 60);
 }
 function sfx(k) {
-  const c = sndCfg(); if (!c.on || !SND.unlocked || typeof Audio === 'undefined' || !SFX[k]) return;
+  const c = sndCfg(); if (!c.on || !SND.unlocked || typeof Audio === 'undefined' || !SFX[k] || !SFX[k].src) return;
   try { const a = new Audio(SFX[k].src); a.volume = c.sfx; a.play().catch(() => { }); } catch (e) { }
 }
 /* 전투 효과음(59번이 부른다): 파일을 한 번 받아 두고 복제해 쓴다. 동시에 3개까지, 같은 소리는 80ms에 한 번. 사람이 누른 뒤에만(SND.unlocked) */
@@ -38,7 +38,7 @@ function sfxPreload() {
   for (const k of Object.keys(SFX)) if (k.startsWith('b_')) { try { const a = new Audio(); a.preload = 'auto'; a.src = SFX[k].src; SFXB.cache[k] = a; } catch (e) { } }
 }
 function sfxPlay(k, o) {
-  const c = sndCfg(); if (!c.on || !c.bfx || !SND.unlocked || typeof Audio === 'undefined' || !SFX[k]) return;
+  const c = sndCfg(); if (!c.on || !c.bfx || !SND.unlocked || typeof Audio === 'undefined' || !SFX[k] || !SFX[k].src) return; // M5-0a: 파일이 없는 키(컷인)는 59번이 합성음으로
   let release = () => {};
   try {
     const now = Date.now(); if (SFXB.last[k] && now - SFXB.last[k] < 80) return; if (SFXB.live >= 3) return; SFXB.last[k] = now;

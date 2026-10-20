@@ -238,7 +238,7 @@ function trdInfoA(run, id) {
   }
   if (n.kind === 'skill') {
     const s = skOf(run.p, id) || SK2[id], eq = eqd.includes(id), mk = s.kind === 'cut' ? '⚔ ' : s.kind === 'spell' ? '✦ ' : '';
-    h = `<div class="trd-ih"><b>${mk}${esc(n.n)}</b><button class="sm trd-x" data-a="tsel" data-k="" data-e="a" aria-label="설명 닫기">✕</button></div><p class="mini">스킬 · 유산 ${skCost(s)} · ${esc(n.br)} · ${n.ring}고리 · 포인트 ${n.cost}</p><p class="mini">${esc(skHead(s))}</p><p>${esc(skBody(s))}</p>`;
+    h = `<div class="trd-ih"><b>${mk}${esc(n.n)}</b><button class="sm trd-x" data-a="tsel" data-k="" data-e="a" aria-label="설명 닫기">✕</button></div><p class="mini">스킬 · 유산 ${skCost(s)} · ${esc(n.br)} · ${n.ring}고리 · 포인트 ${n.cost}</p><p class="mini">${esc(skHead(s))}</p>${skDescHtml(s) || `<p>${esc(skBody(s))}</p>`}`; /* M5-0a 승부수: 대사 칸 + 효과 / 대가 / 대상 */
     const ups = n.links.filter(x => A.nodes[x] && A.nodes[x].kind === 'upgrade');
     if (ups.length) h += `<p class="mini">강화: ${ups.map(u => esc(A.nodes[u].n) + (run.atree.own.includes(u) ? ' (열림)' : '')).join(', ')}</p>`;
     h += `<p class="trd-st st-${st}">${TRD_STA[st]}${eq ? ' · 장착' : ''}${!ringOpen(run, n.ring) ? ' · ' + trdRingShort(n.ring) : ''}</p>`;

@@ -260,6 +260,7 @@ function vfxSound(x) {
 /* render()가 끝날 때마다 부른다. 쌓인 사건을 순서대로 조금씩 어긋나게 보여 준다(진행 속도는 건드리지 않는다) */
 function vfxFlush() {
   if (!vfxDoc()) return;
+  try { cutFlush(); } catch (e) { } /* M5-0a 승부수 컷인(아래) */
   const b = G.b, q = VFX.q; VFX.q = [];
   /* 나의 생명력 · 보호막이 늘었으면 빛을 낸다(다시 그려 사이의 차이를 본다) */
   const ev2 = [];
@@ -323,3 +324,158 @@ function vfxSettingRow() {
 if (typeof document !== 'undefined') document.addEventListener('change', ev => {
   const t = ev.target; if (!t || t.id !== 'setfx' || !vfxDoc()) return; const v = t.value; G.data.fx = v === 'off' || v === 'low' || v === 'high' ? v : 'normal'; saveLocal(); VFX.q = []; if (vfxMode() === 'off') vfxClear();
 });
+/* ===== M5-0a 승부수 컷인 (10월 20일 만든 사람, 시안 "승부수 컷인 시안" 7판 기준). 장식만: 판정 · 순서 · 진행 속도를 바꾸지 않는다 =====
+   대사(line)가 있는 스킬(비용 4 승부수)을 전투마다 처음 쓸 때 가로 띠 컷인을 띄운다. 두 번째부터는 기존 이펙트만.
+   문법(cut: blade · guard · arcane)이 타이밍 · 길이 · 안전 · 첫 사용 규칙 · 소리 자리를 정하고, 그림은 직업 모티프 층(CUT_MOTIF[직업][cut] = { pre, hit, linger, out })이 그린다.
+   이번에는 마검사 모티프 셋만. 다른 직업은 M5-1~5에서 승부수 대사와 "장면 한 줄"을 받아 새로 짓는다.
+   - 길이: 진행 속도 느림 2.2 · 보통 1.8 · 빠름 1.3초, 화려 단계 ×1.25. 컷인이 떠 있어도 전투 진행은 멈추지 않는다.
+   - 단계: 전투 효과 '약하게' = 기본(띠 안에서만), '보통' · '강하게' = 화려(판 전체). '끔' · 빨리 감기 · 즉시는 컷인 없이 전투 기록에 대사 한 줄.
+   - 안전: 화면 전체 번쩍임 없음(빛은 선 하나 · 고리 하나 크기), 입자는 캔버스 하나에 동시 250개까지. 움직임 줄이기면 띠와 글만 나타났다 사라진다.
+   - 소리: 효과음이 켜져 있으면 cut_blade(칭) · cut_guard(쿵) · cut_arcane(화르륵). 파일이 없으면 웹 오디오 합성음.
+   - 덮개는 #vfx 안(aria-hidden, pointer-events:none)이라 컷인 중에도 버튼을 누를 수 있다.
+   - 카드 동작(기준 5의 승인된 예외): 컷인과 같은 시각에 내 카드 · 적 카드가 움직인다. 상태 표시(카드 모서리 이름 · 남은 차례)는 52번 vHudPlayer가 그린다 */
+const CUT_PACE = { slow: 2200, normal: 1800, fast: 1300, step: 1800 };
+const CUT_COL = { 혈염: [239, 93, 60], '죄인의 피': [194, 58, 82], '유산의 불': [240, 172, 72] };
+const CUT_PMAX = 250;
+const CUT = { q: [], cv: null, cx: null, P: [], J: [], raf: 0, lastT: 0, run: [], tmr: [], AC: null, el: null, on: false };
+function cutLevel() { const m = vfxMode(); if (m === 'off' || G.skip || G.pace === 'instant') return 'off'; return m === 'low' ? 'base' : 'fancy'; }
+/* 엔진이 승부수를 쓴 뒤(runSkill2 감싸기) 큐에 쌓는다. 첫 사용이 아니면 아무것도 하지 않는다 */
+function cutQueue(b, s) {
+  if (!vfxDoc() || !b || b !== G.b || !s || !s.line) return; b.vfCut = b.vfCut || {}; if (b.vfCut[s.id]) return; b.vfCut[s.id] = 1;
+  try { logp(b, 'sys', s.line + ' — ' + s.n); } catch (e) { }
+  if (cutLevel() === 'off' || G.scr === 'hudsample' || G.hudEd) return;
+  CUT.q.push({ s, build: b.p.build, t: Date.now() });
+}
+/* 판(적 줄 + 내 카드)의 영역 */
+function cutBoardRect() { const els = [...document.querySelectorAll('[data-hud="hud-field"],[data-hud="hud-player"]')].map(e => e.getBoundingClientRect()).filter(r => r.width > 4); if (!els.length) return null;
+  const l = Math.max(0, Math.min(...els.map(r => r.left))), t = Math.max(0, Math.min(...els.map(r => r.top))), r = Math.min(innerWidth, Math.max(...els.map(r => r.right))), btm = Math.min(innerHeight, Math.max(...els.map(r => r.bottom))); return { l, t, w: r - l, h: btm - t }; }
+const cutRnd = (a, b) => a + Math.random() * (b - a);
+/* ---- 입자 · 캔버스 그리기 ---- */
+function cutTick(t) {
+  const c = CUT.cx, el = CUT.el; if (!c || !el) { CUT.raf = 0; return; } const dt = Math.min(40, t - (CUT.lastT || t)) / 16.7; CUT.lastT = t;
+  const W = el.clientWidth, H = el.clientHeight; c.clearRect(0, 0, W, H); c.globalCompositeOperation = 'lighter';
+  const now = performance.now(); CUT.J = CUT.J.filter(j => now < j.t0 + j.dur); for (const j of CUT.J) if (now >= j.t0) { c.save(); try { j.draw(c, (now - j.t0) / j.dur, { width: W, height: H }); } catch (e) { } c.restore(); }
+  CUT.P = CUT.P.filter(p => (p.life -= dt) > 0);
+  for (const p of CUT.P) { p.vx *= p.drag; p.vy = p.vy * p.drag + p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; const a = Math.max(0, Math.min(1, p.life / p.max)) * p.a;
+    if (p.streak) { c.strokeStyle = 'rgba(' + p.c + ',' + a + ')'; c.lineWidth = p.s; c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x - p.vx * 2.2, p.y - p.vy * 2.2); c.stroke(); }
+    else { const g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.s * 2.4); g.addColorStop(0, 'rgba(255,240,210,' + a + ')'); g.addColorStop(.35, 'rgba(' + p.c + ',' + a * .8 + ')'); g.addColorStop(1, 'rgba(' + p.c + ',0)'); c.fillStyle = g; c.beginPath(); c.arc(p.x, p.y, p.s * 2.4, 0, 6.283); c.fill(); } }
+  c.globalCompositeOperation = 'source-over'; CUT.raf = (CUT.P.length || CUT.J.length) ? requestAnimationFrame(cutTick) : 0; if (!CUT.raf) CUT.lastT = 0;
+}
+function cutSpawn(n, f) { if (!CUT.cx) return; n = Math.max(0, Math.min(n, CUT_PMAX - CUT.P.length)); for (let i = 0; i < n; i++) CUT.P.push(f(i)); if (!CUT.raf) CUT.raf = requestAnimationFrame(cutTick); }
+function cutJob(start, dur, draw) { if (!CUT.cx) return; CUT.J.push({ t0: performance.now() + start, dur, draw }); if (!CUT.raf) CUT.raf = requestAnimationFrame(cutTick); }
+function cutLater(ms, f) { CUT.tmr.push(setTimeout(() => { if (CUT.on) f(); }, ms)); }
+const cutA = (el, kf, o) => { if (!el || !el.animate) return null; const a = el.animate(kf, Object.assign({ fill: 'both', easing: 'cubic-bezier(.2,.7,.2,1)' }, o)); CUT.run.push(a); return a; };
+/* ---- 소리(효과음 설정이 켜져 있을 때만). 파일이 있으면 그 파일, 없으면 합성음 ---- */
+function cutAu() { if (!vfxSndOn() || typeof SND === 'undefined' || !SND.unlocked) return null; try { CUT.AC = CUT.AC || new (window.AudioContext || window.webkitAudioContext)(); if (CUT.AC.state === 'suspended') CUT.AC.resume(); return CUT.AC; } catch (e) { return null; } }
+function cutNoise(c, t, dur, freq, vol, swell) { const v0 = vol * sndCfg().sfx; const n = c.createBuffer(1, Math.max(1, c.sampleRate * dur | 0), c.sampleRate), d = n.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; const s = c.createBufferSource(); s.buffer = n; const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = .8; const g = c.createGain(); if (swell) { g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v0, t + dur * .6); g.gain.linearRampToValueAtTime(0, t + dur); } else { g.gain.setValueAtTime(v0, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur); } s.connect(f).connect(g).connect(c.destination); s.start(t); }
+function cutSound(cut, at, dur) {
+  const k = 'cut_' + cut; if (typeof SFX !== 'undefined' && SFX[k] && SFX[k].src) { cutLater(at, () => sfxPlay(k, { lim: 1, vol: 0.8 })); return; }
+  const c = cutAu(); if (!c) return; const t = c.currentTime + at / 1000, V = sndCfg().sfx;
+  if (cut === 'blade') { [[2637, .16], [3951, .08], [5274, .05]].forEach(([f, v]) => { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * .985, t + .9); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v * V, t + .004); g.gain.exponentialRampToValueAtTime(.0001, t + .9); o.connect(g).connect(c.destination); o.start(t); o.stop(t + 1); }); cutNoise(c, t, .07, 6000, .22); }
+  else if (cut === 'guard') { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(42, t + .35); g.gain.setValueAtTime(.38 * V, t); g.gain.exponentialRampToValueAtTime(.0001, t + .45); o.connect(g).connect(c.destination); o.start(t); o.stop(t + .5); cutNoise(c, t, .05, 900, .25); }
+  else cutNoise(c, t, dur || .9, 1400, .12, true);
+}
+/* ---- 덮개 DOM ---- */
+const CUT_RUNE = '<svg class="cu-rune" viewBox="0 0 420 420" aria-hidden="true" focusable="false"><defs><path id="cu-rp1" d="M210 210 m-180 0 a180 180 0 1 1 360 0 a180 180 0 1 1 -360 0"/><path id="cu-rp2" d="M210 210 m-140 0 a140 140 0 1 0 280 0 a140 140 0 1 0 -280 0"/></defs><circle cx="210" cy="210" r="196" stroke-width="1.4"/><circle cx="210" cy="210" r="166" stroke-width=".8"/><circle cx="210" cy="210" r="124" stroke-width="1"/><g class="cu-rg1"><text><textPath href="#cu-rp1">ᚱ ᛟ ᚦ ᛉ ᚨ ᛞ ᚷ ᛗ ᚾ ᛁ ᛋ ᛏ ᚱ ᛟ ᚦ ᛉ ᚨ ᛞ ᚷ ᛗ ᚾ ᛁ ᛋ ᛏ ᚱ ᛟ ᚦ ᛉ</textPath></text></g><g class="cu-rg2"><text><textPath href="#cu-rp2">✦ 유 · 산 · 의 · 불 ✦ 유 · 산 · 의 · 불 ✦ 유 · 산 · 의 · 불 ✦</textPath></text></g><path d="M210 30 L366 300 L54 300 Z" stroke-width="1" opacity=".6"/><path d="M210 390 L54 120 L366 120 Z" stroke-width="1" opacity=".6"/></svg>';
+const CUT_SIGIL = '<svg class="cu-sigil" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><circle cx="110" cy="110" r="104" stroke-width="1.2" opacity=".8"/><circle cx="110" cy="110" r="92" stroke-width="0.8" stroke-dasharray="2 6"/><circle cx="110" cy="110" r="62" stroke-width="1"/><path d="M110 18 L189 156 L31 156 Z" stroke-width="1" opacity=".7"/><path d="M110 202 L31 64 L189 64 Z" stroke-width="1" opacity=".7"/></svg>';
+function cutBuild(s, col, rc) {
+  cutStop(); const L = vfxLayer(); const d = document.createElement('div'); d.className = 'cutin'; d.style.cssText = `left:${rc.l}px;top:${rc.t}px;width:${rc.w}px;height:${rc.h}px;--edge:rgb(${col});--glow:rgba(${col},.85);--band:rgba(${Math.round(col[0] * .22)},${Math.round(col[1] * .12)},${Math.round(col[2] * .1)},.93)`;
+  const esc1 = c => c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : c; const q = [...s.line.replace(/^「|」$/g, '')].map(c => '<span>' + esc1(c) + '</span>').join(''), nm = [...s.n].join(' ');
+  const lay = id => `<div class="cu-layer ${id}"><div class="cu-band"></div><div class="cu-hex"></div><div class="cu-txt"><div class="cu-skill">${nm}</div><div class="cu-q">${q}</div></div></div>`;
+  d.innerHTML = `<div class="cu-veil"></div>${CUT_RUNE}<div class="cu-glyphs"></div><div class="cu-stage">${lay('la')}${lay('lb')}${CUT_SIGIL}<div class="cu-seam"></div><div class="cu-ring"></div><div class="cu-sw x2"><div class="cu-slash"></div></div><div class="cu-sw main"><div class="cu-slash"></div></div><div class="cu-ghost r"><div class="cu-txt"><div class="cu-skill"></div><div class="cu-q">${q}</div></div></div><div class="cu-ghost b"><div class="cu-txt"><div class="cu-skill"></div><div class="cu-q">${q}</div></div></div></div><canvas class="cu-cv"></canvas>`;
+  L.appendChild(d); CUT.el = d; CUT.on = true; const cv = d.querySelector('.cu-cv'), dpr = Math.min(2, window.devicePixelRatio || 1); cv.width = rc.w * dpr; cv.height = rc.h * dpr; CUT.cv = cv; CUT.cx = cv.getContext('2d'); CUT.cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return d;
+}
+function cutStop() { for (const a of CUT.run) { try { a.cancel(); } catch (e) { } } CUT.run = []; for (const t of CUT.tmr) clearTimeout(t); CUT.tmr = []; CUT.P = []; CUT.J = []; CUT.on = false; if (CUT.el && CUT.el.parentNode) CUT.el.parentNode.removeChild(CUT.el); CUT.el = null; CUT.cx = null; }
+/* ---- 카드 동작(기존 vfxLunge · vfxKnock과 같은 WAAPI, 장식만) ---- */
+const cutEns = () => [...document.querySelectorAll('.en[data-e]')];
+/* 전투 화면은 다시 그릴 때마다 카드 요소가 새로 생기므로, 움직임을 시작하는 그 순간에 요소를 찾는다 */
+const cutAt = (ms, sel, kf, o) => cutLater(Math.max(0, ms), () => { const L = typeof sel === 'function' ? sel() : sel; for (const [el, f, oo] of L) cutA(el, f, Object.assign({}, o, oo)); });
+function cutCard(cut, at, t, rm) {
+  if (rm) return;
+  if (cut === 'blade') { cutAt(at - 260, () => { const me = vfxSelMe(), ens = cutEns(); if (!me) return []; const e0 = ens[Math.floor(ens.length / 2)] || ens[0]; let dx = 60, dy = -60; if (e0) { const m = me.getBoundingClientRect(), e = e0.getBoundingClientRect(); dx = (e.left + e.width / 2) - (m.left + m.width / 2); dy = (e.top + e.height / 2) - (m.top + m.height / 2); }
+      return [[me, [{ transform: 'none' }, { transform: 'translate(-6px,6px) scale(.97)', offset: .25 }, { transform: `translate(${(dx * .35 + 60).toFixed(0)}px,${(dy * .55).toFixed(0)}px) skewX(-10deg) scale(1.03)`, offset: .55 }, { transform: `translate(${(dx * .35 + 80).toFixed(0)}px,${(dy * .5).toFixed(0)}px) scale(1.01)`, offset: .7 }, { transform: 'none' }]]]; }, { duration: 620, easing: 'cubic-bezier(.3,0,.2,1)' });
+    cutAt(at + 40, () => cutEns().map((e, i) => [e, [{ transform: 'none' }, { transform: 'translate(10px,-8px) rotate(4deg)', offset: .2 }, { transform: 'translate(-3px,2px) rotate(-1deg)', offset: .55 }, { transform: 'none' }], { delay: i * 70 }]), { duration: 420, easing: 'ease-out' }); }
+  else if (cut === 'guard') { cutAt(at - 160, () => { const me = vfxSelMe(); return me ? [[me, [{ transform: 'none' }, { transform: 'translateY(-4px) scale(1.02)', offset: .3 }, { transform: 'translateY(5px) scale(.96,.98)', offset: .5 }, { transform: 'translateY(2px) scale(1)', offset: .75 }, { transform: 'none' }]]] : []; }, { duration: 520, easing: 'cubic-bezier(.4,0,.2,1)' });
+    cutAt(at + 40, () => { const ens = cutEns(), mid = (ens.length - 1) / 2; return ens.map((e, i) => [e, [{ transform: 'none' }, { transform: 'translateY(-9px)', offset: .3 }, { transform: 'translateY(-6px)', offset: .7 }, { transform: 'none' }], { delay: Math.abs(i - mid) * 60 }]); }, { duration: 560, easing: 'ease-out' }); }
+  else cutAt(at, () => { const me = vfxSelMe(); return me ? [[me, [{ transform: 'none' }, { transform: 'translateY(-10px) scale(1.04)', offset: .5 }, { transform: 'none' }]]] : []; }, { duration: t * .7, easing: 'cubic-bezier(.3,.6,.3,1)' });
+}
+/* ---- 글자 번짐 · 가림막 ---- */
+function cutInk(L, start, span, dur) { const sp = L.querySelectorAll('.cu-q span'), n = sp.length || 1, step = span / n; sp.forEach((e, i) => cutA(e, [{ opacity: 0, filter: 'blur(4px)', transform: 'translateY(3px)' }, { opacity: 1, filter: 'blur(0)', transform: 'none' }], { duration: dur, delay: start + i * step, easing: 'ease-out' })); cutA(L.querySelector('.cu-skill'), [{ opacity: 0, letterSpacing: '.6em' }, { opacity: 1, letterSpacing: '.3em' }], { duration: 320, delay: Math.max(0, start - 120) }); }
+function cutShow(L, t) { cutA(L, [{ opacity: 0 }, { opacity: 1, offset: .1 }, { opacity: 1, offset: .85 }, { opacity: 0 }], { duration: t, easing: 'linear' }); L.querySelectorAll('.cu-q span').forEach(e => { e.style.opacity = 1; }); L.querySelector('.cu-skill').style.opacity = 1; }
+/* ---- 마검사 모티프(그림): 문법이 pre → hit → linger → out 순서로 부른다. C = { d, la, lb, t, col, F(화려), rc } ---- */
+const CUT_MOTIF = { spellblade: {
+  blade: {
+    pre(C) { const { la, lb, t } = C, ang = -4, tanA = Math.tan(ang * Math.PI / 180), st = C.d.querySelector('.cu-stage').getBoundingClientRect(), off = (st.width / 2) * tanA / st.height * 100; C.tanA = tanA;
+      C.d.querySelector('.cu-sw.main').style.transform = `rotate(${ang}deg)`; la.style.clipPath = `polygon(0 0, 100% 0, 100% ${50 + off}%, 0 ${50 - off}%)`; lb.style.clipPath = `polygon(0 ${50 - off}%, 100% ${50 + off}%, 100% 100%, 0 100%)`;
+      const inEnd = t * .14; for (const L of [la, lb]) cutA(L, [{ opacity: 0, transform: 'translateX(-40px) skewX(-8deg)' }, { opacity: 1, transform: 'none' }], { duration: inEnd, easing: 'cubic-bezier(.1,.9,.2,1)' }); cutInk(la, inEnd, t * .32, 240); cutInk(lb, inEnd, t * .32, 240);
+      if (C.F) { const at = C.hitAt - 200; cutA(C.d.querySelector('.cu-sw.x2 .cu-slash'), [{ opacity: .85, transform: 'scaleX(0)' }, { opacity: .85, transform: 'scaleX(1)', offset: .5 }, { opacity: 0, transform: 'scaleX(1) scaleY(.1)' }], { duration: 220, delay: at, easing: 'cubic-bezier(.6,0,.2,1)' }); cutSound('blade', at); } },
+    hit(C) { const { la, lb, t, d } = C; const at = C.hitAt; cutA(d.querySelector('.cu-sw.main .cu-slash'), [{ opacity: 1, transform: 'scaleX(0)' }, { opacity: 1, transform: 'scaleX(1)', offset: .45 }, { opacity: 0, transform: 'scaleX(1) scaleY(.2)' }], { duration: 300, delay: at, easing: 'cubic-bezier(.6,0,.2,1)' }); cutSound('blade', at);
+      const sep = t - at - 120; cutA(la, [{ transform: 'none', opacity: 1 }, { transform: 'translate(-22px,-16px) rotate(-1.6deg)', opacity: 1, offset: .3 }, { transform: 'translate(-30px,-22px) rotate(-2deg)', opacity: .9, offset: .6 }, { transform: 'translate(-70px,-40px) rotate(-3deg)', opacity: 0 }], { duration: sep, delay: at + 110, easing: 'cubic-bezier(.2,.8,.3,1)' });
+      cutA(lb, [{ transform: 'none', opacity: 1 }, { transform: 'translate(22px,16px) rotate(1.6deg)', opacity: 1, offset: .3 }, { transform: 'translate(30px,22px) rotate(2deg)', opacity: .9, offset: .6 }, { transform: 'translate(70px,40px) rotate(3deg)', opacity: 0 }], { duration: sep, delay: at + 110, easing: 'cubic-bezier(.2,.8,.3,1)' });
+      cutAt(at + 100, () => [...document.querySelectorAll('[data-hud="hud-field"]')].map(el => [el, [{ transform: 'none' }, { transform: 'translate(5px,-1px)', offset: .25 }, { transform: 'none' }]]), { duration: 260, easing: 'ease-out' }); },
+    linger(C) { const at = C.hitAt + 90, col = C.col.join(','), tanA = C.tanA, W = C.rc.w, y0 = C.yMid; const n1 = C.F ? 80 : 70, n2 = C.F ? 22 : 26;
+      cutLater(at, () => { cutSpawn(n1, () => { const x = cutRnd(W * (C.F ? 0 : .08), W * (C.F ? 1 : .92)), y = y0 + (x - W / 2) * tanA, dir = Math.random() < .5 ? -1 : 1; return { x, y, vx: cutRnd(-2.5, 2.5), vy: dir * cutRnd(C.F ? 2.5 : 1, C.F ? 8 : 7), g: C.F ? .09 : .06, drag: .94, life: cutRnd(22, 48), max: 48, s: cutRnd(1, 2.2), a: 1, c: Math.random() < .3 ? '255,230,190' : col, streak: true }; });
+        cutSpawn(n2, () => ({ x: cutRnd(W * .1, W * .9), y: y0 + cutRnd(-8, 8), vx: cutRnd(-.5, .5), vy: cutRnd(-2, -.5), g: -.02, drag: .985, life: cutRnd(40, 80), max: 80, s: cutRnd(1.5, 3.4), a: .8, c: col })); });
+      if (!C.F) return; cutJob(at, 460, (c, k, r) => { const a = 1 - k; c.strokeStyle = 'rgba(255,245,230,' + a * .9 + ')'; c.lineWidth = 1.8 * a + .4; c.shadowColor = 'rgba(' + col + ',1)'; c.shadowBlur = 14; c.beginPath(); for (let x = -20; x <= r.width + 20; x += 20) { const y = y0 + (x - r.width / 2) * tanA + Math.sin(x * .13) * 1.6 * a; x < 0 ? c.moveTo(x, y) : c.lineTo(x, y); } c.stroke(); });
+      const gr = C.d.querySelector('.cu-ghost.r'), gb = C.d.querySelector('.cu-ghost.b'); cutA(gr, [{ opacity: 0, transform: 'none' }, { opacity: .45, transform: 'translate(-5px,-2px)', offset: .25 }, { opacity: 0, transform: 'translate(-12px,-5px)' }], { duration: 380, delay: at + 10 }); cutA(gb, [{ opacity: 0, transform: 'none' }, { opacity: .4, transform: 'translate(5px,2px)', offset: .25 }, { opacity: 0, transform: 'translate(12px,5px)' }], { duration: 380, delay: at + 10 }); },
+    out() { }
+  },
+  guard: {
+    pre(C) { const { la, lb } = C, shut = C.hitAt; la.style.clipPath = 'inset(0 50% 0 0)'; lb.style.clipPath = 'inset(0 0 0 50%)'; cutA(la, [{ transform: 'translateX(-55%)', opacity: .6 }, { transform: 'translateX(0)', opacity: 1 }], { duration: shut, easing: 'cubic-bezier(.7,0,.9,.4)' }); cutA(lb, [{ transform: 'translateX(55%)', opacity: .6 }, { transform: 'translateX(0)', opacity: 1 }], { duration: shut, easing: 'cubic-bezier(.7,0,.9,.4)' }); },
+    hit(C) { const { la, lb, d, t } = C, shut = C.hitAt; cutSound('guard', shut);
+      cutA(d.querySelector('.cu-seam'), [{ opacity: 0 }, { opacity: 1, offset: .1 }, { opacity: 0 }], { duration: 520, delay: shut, easing: 'ease-out' }); cutA(d.querySelector('.cu-ring'), [{ opacity: .95, transform: 'scale(.4)' }, { opacity: 0, transform: 'scale(9)' }], { duration: 620, delay: shut, easing: 'cubic-bezier(.2,.8,.3,1)' });
+      for (const L of [la, lb]) cutA(L.querySelector('.cu-hex'), [{ opacity: 0 }, { opacity: .22, offset: .2 }, { opacity: .06, offset: .7 }, { opacity: 0 }], { duration: t * .7, delay: shut });
+      cutAt(shut, () => [...document.querySelectorAll('[data-hud="hud-field"]')].map(el => [el, [{ transform: 'scale(1)' }, { transform: 'scale(.988)', offset: .3 }, { transform: 'scale(1)' }]]), { duration: 300, easing: 'ease-out' });
+      for (const L of [la, lb]) { L.querySelectorAll('.cu-q span').forEach(e => cutA(e, [{ opacity: 0 }, { opacity: 1 }], { duration: 1, delay: shut + 60 })); cutA(L.querySelector('.cu-q'), [{ transform: 'scale(1.08)', filter: 'blur(2px)' }, { transform: 'scale(1)', filter: 'blur(0)' }], { duration: 260, delay: shut + 60, easing: 'cubic-bezier(.2,.9,.3,1)' }); cutA(L.querySelector('.cu-skill'), [{ opacity: 0 }, { opacity: 1 }], { duration: 200, delay: shut + 40 }); } },
+    linger(C) { const shut = C.hitAt, col = C.col.join(','), x0 = C.rc.w / 2, y0 = C.yMid, t = C.t;
+      cutLater(shut, () => cutSpawn(22, () => ({ x: x0 + cutRnd(-6, 6), y: y0 + cutRnd(-40, 40), vx: cutRnd(-3.5, 3.5), vy: cutRnd(-1.5, 1.5), g: .14, drag: .96, life: cutRnd(26, 50), max: 50, s: cutRnd(1.2, 2.4), a: .9, c: col })));
+      if (!C.F) return; const stg = C.d.querySelector('.cu-stage'), ring = C.d.querySelector('.cu-ring');
+      [140, 280].forEach(dl => { const rg = ring.cloneNode(); stg.appendChild(rg); cutA(rg, [{ opacity: .8, transform: 'scale(.4)' }, { opacity: 0, transform: 'scale(12)' }], { duration: 760, delay: shut + dl, easing: 'cubic-bezier(.2,.8,.3,1)' }); cutSound('guard', shut + dl); });
+      cutJob(shut, t * .75, (c, k, r) => { const cxm = r.width / 2, cym = y0, R = Math.hypot(cxm, r.height) * 1.1, front = R * Math.min(1, k * 1.8), size = 22, hh = size * Math.sqrt(3); c.lineWidth = 1.2;
+        for (let gy = -1; gy < r.height / hh + 1; gy++) for (let gx = -1; gx < r.width / (size * 1.5) + 1; gx++) { const x = gx * size * 1.5, y = gy * hh + (gx % 2 ? hh / 2 : 0), dd = Math.hypot(x - cxm, y - cym), edge = Math.abs(dd - front); let a = dd < front ? 0.10 * (1 - k) : 0; if (edge < 26) a += 0.55 * (1 - edge / 26) * (1 - k * .6); if (a < .02) continue;
+          c.strokeStyle = 'rgba(' + col + ',' + a + ')'; c.beginPath(); for (let i = 0; i < 6; i++) { const an = i / 6 * 6.283, px = x + Math.cos(an) * size, py = y + Math.sin(an) * size; i ? c.lineTo(px, py) : c.moveTo(px, py); } c.closePath(); c.stroke(); } });
+      cutJob(shut + 120, 520, (c, k, r) => { const st = C.stage, y = st.t, h = st.h, x = -200 + (r.width + 400) * k; const g = c.createLinearGradient(x - 90, 0, x + 90, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, 'rgba(255,240,230,.35)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.beginPath(); c.moveTo(x - 60, y); c.lineTo(x + 100, y); c.lineTo(x + 60, y + h); c.lineTo(x - 100, y + h); c.fill(); });
+      cutLater(shut, () => cutSpawn(50, () => { const a = cutRnd(0, 6.283), sp = cutRnd(3, 9); return { x: x0, y: y0 + cutRnd(-50, 50), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * .6, g: .12, drag: .93, life: cutRnd(20, 40), max: 40, s: cutRnd(1, 2), a: 1, c: Math.random() < .5 ? '235,225,215' : col, streak: true }; })); },
+    out(C) { const { la, lb } = C, at = C.t - 420; cutA(la, [{ transform: 'translateX(0)', opacity: 1 }, { transform: 'translateX(-18%)', opacity: 0 }], { duration: 420, delay: at, easing: 'ease-in' }); cutA(lb, [{ transform: 'translateX(0)', opacity: 1 }, { transform: 'translateX(18%)', opacity: 0 }], { duration: 420, delay: at, easing: 'ease-in' }); }
+  },
+  arcane: {
+    pre(C) { const { la, lb, t, d } = C, rise = C.hitAt; lb.style.opacity = 0; cutA(la, [{ clipPath: 'inset(100% 0 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: rise, easing: 'cubic-bezier(.3,.7,.3,1)' }); cutSound('arcane', 0, rise / 1000 + .5);
+      cutA(d.querySelector('.cu-sigil'), [{ opacity: 0, transform: 'rotate(-40deg) scale(.6)' }, { opacity: .55, transform: 'rotate(0deg) scale(1)', offset: .25 }, { opacity: .4, transform: 'rotate(50deg) scale(1.05)', offset: .85 }, { opacity: 0, transform: 'rotate(70deg) scale(1.25)' }], { duration: t, easing: 'linear' }); cutInk(la, rise * .6, t * .34, 300); },
+    hit(C) { const { la } = C, rise = C.hitAt; cutA(la.querySelector('.cu-q'), [{ textShadow: '0 0 12px var(--glow), 0 1px 0 rgba(0,0,0,.7)' }, { textShadow: '0 0 24px var(--glow), 0 1px 0 rgba(0,0,0,.7)' }, { textShadow: '0 0 14px var(--glow), 0 1px 0 rgba(0,0,0,.7)' }], { duration: 520, iterations: 3, delay: rise, easing: 'ease-in-out' }); },
+    linger(C) { const t = C.t, rise = C.hitAt, col = C.col.join(','), W = C.rc.w, yb = C.stage.t + C.stage.h, yc = C.yMid;
+      const emb = () => ({ x: cutRnd(W * .12, W * .88), y: yb + cutRnd(-6, 6), vx: cutRnd(-.35, .35), vy: cutRnd(-2.4, -1), g: -.02, drag: .99, life: cutRnd(40, 80), max: 80, s: cutRnd(1.2, 2.8), a: .95, c: Math.random() < .25 ? '255,214,140' : col });
+      for (let k = 0, at = 0; at < t * .7; k++, at += 60) cutLater(at, () => cutSpawn(5, emb));
+      if (!C.F) return; const rune = C.d.querySelector('.cu-rune'); cutA(rune, [{ opacity: 0, transform: 'scale(.7) rotate(-20deg)' }, { opacity: .6, transform: 'scale(1) rotate(0deg)', offset: .24 }, { opacity: .5, transform: 'scale(1.03) rotate(22deg)', offset: .85 }, { opacity: 0, transform: 'scale(1.2) rotate(32deg)' }], { duration: t, easing: 'cubic-bezier(.2,.7,.3,1)' }); const rg2 = rune.querySelector('.cu-rg2'); if (rg2) { rg2.style.transformOrigin = '210px 210px'; cutA(rg2, [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-90deg)' }], { duration: t, easing: 'linear' }); }
+      cutJob(0, t, (c, k, r) => { const base = yb + 6, cxm = r.width / 2, amp = Math.sin(Math.min(1, k * 1.6) * Math.PI / 2) * (k > .8 ? (1 - k) / .2 : 1) * .55, H = r.height * .5 * amp / .55, Wd = r.width * .26;
+        for (let i = 0; i < 3; i++) { const ww = Wd * (1 - i * .22), hh = H * (1 - i * .15), g = c.createRadialGradient(cxm, base, 4, cxm, base - hh * .35, hh * .9 + 1); g.addColorStop(0, 'rgba(255,230,180,' + .2 * amp + ')'); g.addColorStop(.45, 'rgba(' + col + ',' + .12 * amp + ')'); g.addColorStop(1, 'rgba(' + col + ',0)'); c.fillStyle = g; c.beginPath(); c.moveTo(cxm - ww, base); c.quadraticCurveTo(cxm - ww * .5 + Math.sin(k * 26 + i) * 10, base - hh * .6, cxm + Math.sin(k * 20 + i * 2) * 14, base - hh); c.quadraticCurveTo(cxm + ww * .5 + Math.cos(k * 24 + i) * 10, base - hh * .6, cxm + ww, base); c.fill(); } });
+      const G2 = C.d.querySelector('.cu-glyphs'), R = 'ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ', n = 12;
+      for (let i = 0; i < n; i++) { const g = document.createElement('span'); g.className = 'cu-glyph'; g.textContent = R[(i * 7) % R.length]; const side = i % 2 ? 1 : -1, x = W / 2 + side * cutRnd(W * .2, W * .44), y = yc + cutRnd(-C.stage.h * .55, C.stage.h * .55); g.style.left = x + 'px'; g.style.top = y + 'px'; G2.appendChild(g);
+        const dl = rise + i * (t * .45 / n), life = t - dl - 120; cutA(g, [{ opacity: 0, transform: 'translate(-50%,-50%) scale(.6)', filter: 'blur(3px)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.15)', filter: 'blur(0)', offset: .15 }, { opacity: .85, transform: 'translate(-50%, calc(-50% - 22px)) scale(1)', offset: .75 }, { opacity: 0, transform: 'translate(-50%, calc(-50% - 44px)) scale(.9)', filter: 'blur(2px)' }], { duration: life, delay: dl, easing: 'ease-out' });
+        cutLater(dl + life - 80, () => cutSpawn(5, () => ({ x, y: y - 40, vx: cutRnd(-1, 1), vy: cutRnd(-2.4, -.8), g: -.02, drag: .97, life: cutRnd(20, 40), max: 40, s: cutRnd(1, 2), a: .9, c: col }))); } },
+    out(C) { const { la, t } = C, at = t - 420, col = C.col.join(','), W = C.rc.w; cutA(la, [{ clipPath: 'inset(0 0 0 0)', opacity: 1 }, { clipPath: 'inset(0 0 100% 0)', opacity: .6 }], { duration: 400, delay: at, easing: 'ease-in' });
+      cutLater(at, () => cutSpawn(C.F ? 40 : 50, () => ({ x: cutRnd(W * .1, W * .9), y: C.stage.t + cutRnd(10, C.stage.h - 10), vx: cutRnd(-1.2, 1.2), vy: cutRnd(-4, -1.5), g: -.03, drag: .975, life: cutRnd(30, 60), max: 60, s: cutRnd(1, 2.4), a: 1, c: col }))); }
+  }
+} };
+const CUT_HIT = { blade: .56, guard: .16, arcane: .2 }; /* 문법: 맞물림(hit)의 시각(길이에 대한 몫) */
+/* cutin({ line, cut, motif, col }): 문법 한 함수. 그림은 모티프 표에서 */
+function cutin(o) {
+  const rc = cutBoardRect(); if (!rc) return 0; const lvl = cutLevel(); if (lvl === 'off') return 0; const rm = vfxRm(), F = lvl === 'fancy' && !rm;
+  const t = Math.round((CUT_PACE[G.pace] || CUT_PACE.normal) * (F ? 1.25 : 1)); const s = o.s, d = cutBuild(s, o.col, rc); d.classList.add('cu-' + o.cut); if (F) d.classList.add('cu-fancy');
+  const la = d.querySelector('.cu-layer.la'), lb = d.querySelector('.cu-layer.lb'), stR = d.querySelector('.cu-stage').getBoundingClientRect(); const C = { d, la, lb, t, col: o.col, F, rc, hitAt: Math.round(t * (CUT_HIT[o.cut] || .5)), stage: { t: stR.top - rc.t, h: stR.height }, yMid: stR.top - rc.t + stR.height / 2 };
+  cutA(d.querySelector('.cu-veil'), [{ opacity: 0 }, { opacity: 1, offset: .1 }, { opacity: 1, offset: .85 }, { opacity: 0 }], { duration: t, easing: 'linear' });
+  cutCard(o.cut, C.hitAt, t, rm);
+  if (rm) { cutShow(la, t); lb.style.display = 'none'; }
+  else { const M = (CUT_MOTIF[o.motif] || CUT_MOTIF.spellblade)[o.cut]; M.pre(C); M.hit(C); M.linger(C); M.out(C); }
+  cutLater(t + 60, () => cutStop()); return t;
+}
+/* render()가 끝날 때(vfxFlush 앞에서) 쌓인 컷인을 띄운다 */
+function cutFlush() {
+  if (!vfxDoc() || !CUT.q.length) return; const q = CUT.q; CUT.q = []; const x = q.filter(e => Date.now() - e.t < 3000).pop(); if (!x || !G.b || G.sheet || G.hudEd || document.hidden) return;
+  const col = CUT_COL[x.s.b] || [201, 162, 75]; try { cutin({ line: x.s.line, cut: x.s.cut, motif: x.build, col, s: x.s }); } catch (e) { cutStop(); }
+}
+/* 엔진 runSkill2 감싸기(화면이 있을 때만): 승부수를 쓴 뒤 큐에 쌓는다. 결과를 그대로 돌려준다 */
+(function () {
+  if (typeof document === 'undefined' || typeof runSkill2 !== 'function') return; const o0 = runSkill2;
+  runSkill2 = function (b, act, tgt) { const r = o0.apply(this, arguments); try { if (b && act && act.s && act.s.line) cutQueue(b, act.s); } catch (e) { } return r; };
+})();

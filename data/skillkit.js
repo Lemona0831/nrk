@@ -549,5 +549,14 @@ function skBody(s) {
   if (s.killRecharge) out.push(s.once ? '이 스킬로 적을 쓰러뜨리면 한 번 더 쓸 수 있다.' : s.krShock ? '이 행동으로 적을 쓰러뜨리면(행동 끝 열충격 포함) 유산 +1(차례마다 한 번).' : '이 스킬로 적을 쓰러뜨리면 유산 +1(차례마다 한 번).'); // krShock: 10월 18일 0.8.0 5단계 공명
   if (bu && (s.tgt === 'ranged' || s.tgt === 'all') && s.fx.some(e => e.k === 'dmg')) out.push((s.tgt === 'all' ? '후열에도 닿는다. ' : '') + '근접 공격이 아니라 흡혈은 일어나지 않는다.');
   if (s.fx.some(e => skillResourceGrows(s, e) && e.k !== 'focusBurst')) out.push((/^m_/.test(s.id) ? '이 기 추가 피해' : '이 자원 추가 피해') + '는 힘 1점마다 기준값의 1%씩 증가한다.');
+  if (s.pay) out.push('대가: ' + s.pay); // M5-0a 승부수: 대가는 따로 적어 두고(설명란은 skDescHtml이 줄을 나눈다), 글 설명에서는 끝에 붙인다
   return out.join(' ').replace(/\s+/g, ' ').trim();
+}
+/* M5-0a(10월 20일 만든 사람): 대사가 있는 스킬(승부수)의 설명란. 대사는 맨 위 따로 한 칸(명조, 부채꼴 색 왼쪽 줄), 그 아래 효과 / 대가 / 대상을 줄로 나눈다.
+   대가는 색과 "대가" 글자로 구분(색만으로 구분하지 않음). 스크린리더는 "대사: …, 효과: …, 대가: …, 대상: …" 순서. 대사가 없으면 빈 문자열(부른 쪽이 원래 설명을 쓴다) */
+const SK_LINE_COL = { 혈염: '#ef5d3c', '죄인의 피': '#c23a52', '유산의 불': '#f0ac48' };
+function skDescHtml(s) {
+  if (!s || !s.line) return ''; const e = x => String(x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const body = skBody(Object.assign({}, s, { pay: null })), col = SK_LINE_COL[s.b] || 'var(--gold)', who = `${SKK.TGN[s.tgt]} · ${SKK.TN[s.time]}`;
+  return `<div class="skd" style="--lc:${col}"><p class="skd-line"><span class="sr">대사: </span>${e(s.line)}</p><div class="skd-rows"><div class="skd-r"><span class="k">효과</span><span class="v">${e(body)}</span></div>${s.pay ? `<div class="skd-r pay"><span class="k">대가</span><span class="v">${e(s.pay)}</span></div>` : ''}<div class="skd-r"><span class="k">대상</span><span class="v">${e(who)}</span></div></div></div>`;
 }

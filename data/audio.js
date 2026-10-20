@@ -18,6 +18,8 @@ const MUSIC = {
 const SFX = {
   coin: { src: 'audio/coin.mp3', n: '골드' },
   b_slash: { src: 'audio/sfx_slash.mp3', n: '베기' },
+  /* M5-0a 승부수 컷인(파일 없음: src가 비어 있으면 59번 컷인이 웹 오디오 합성음으로 대신한다) */
+  cut_blade: { src: '', n: '승부수 컷인 · 검(칭)' }, cut_guard: { src: '', n: '승부수 컷인 · 방어(쿵)' }, cut_arcane: { src: '', n: '승부수 컷인 · 불 · 마법(화르륵)' },
   b_slash2: { src: 'audio/sfx_slash2.mp3', n: '베기 2' },
   b_dot_fire: { src: 'audio/sfx_dot_fire.mp3', n: '화상' },
   b_dot_frost: { src: 'audio/sfx_dot_frost.mp3', n: '냉기 지속 피해' },

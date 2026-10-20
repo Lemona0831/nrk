@@ -59,12 +59,12 @@ function infoHtml(key) {
   if (key === 'bar:st' && b) { const p = b.p; return H('스태미나', P('지금 강공격 ' + heavyCost(p) + ', 방어 ' + guardCost(p) + ', 흘리기 ' + dodgeCost(p) + '이 듭니다. 라운드가 끝날 때마다 10씩 차고, 스태미나 플라스크로 60을 채웁니다. 기본 공격은 스태미나를 채우지 않습니다. 0이 되면 탈진합니다.')); } /* 10월 7일: 직업마다 다른 흘리기 비용을 그대로 */
   if (parts[0] === 'tn' && G.run && G.run.atree) { // 10월 16일 0.8.0 2단계: 액티브 트리 노드
     const s = SK2[parts[1]]; if (!s) return ''; const own = s.start || G.run.atree.own.includes(s.id); const why = own ? null : atWhy(G.run, s.id); const ss = skOf(G.run.p, s.id) || s;
-    return H(s.n, P((s.start ? '시작 스킬 · 늘 끼움' : s.b + (own ? ' · 열림' : '')) + '. ' + skHead(ss)) + P(skBody(ss)) + (G.run && G.run.p && skillDamageHint(G.run.p, ss) ? P(skillDamageHint(G.run.p, ss)) : '') + cfKwHtml(ss) + (why ? `<p class="no">${esc(why)}</p>` : ''));
+    return H(s.n, P((s.start ? '시작 스킬 · 늘 끼움' : s.b + (own ? ' · 열림' : '')) + '. ' + skHead(ss)) + (skDescHtml(ss) || P(skBody(ss))) + (G.run && G.run.p && skillDamageHint(G.run.p, ss) ? P(skillDamageHint(G.run.p, ss)) : '') + cfKwHtml(ss) + (why ? `<p class="no">${esc(why)}</p>` : ''));
   }
   if (parts[0] === 'act' && b) {
     const a = actionList(b).find(x => x.id === parts[1]); if (!a) return '';
     const s = skillMap(b.p.build)[a.id];
-    let body = (a.v2 ? P(skHead(a.s)) + P(skBody(a.s)) + (skillDamageHint(b.p,a.s) ? P(skillDamageHint(b.p,a.s)) : '') + cfKwHtml(a.s) + (a.wait > 0 && a.wait < CD_USED ? P('유산 ' + a.yc + ' 필요, 지금 ' + ysNow(b.p) + '. 내 차례가 시작될 때 +1, 대응에 성공하면 +1' + (a.ok && a.pull ? '. 지금 누르면 모자란 ' + a.wait + '을(를) 피로 당겨 바로 씁니다. 내는 생명력 ' + a.blood : '')) : a.wait >= CD_USED ? P('이번 전투에 이미 썼습니다') : P('사용 가능. 유산 ' + a.yc + '을(를) 씁니다(지금 ' + ysNow(b.p) + ')')) : P(a.id === 'sig' ? '직업 기술. ' + (SIG[b.p.build].cd ? SIG[b.p.build].cd + '차례에 한 번. ' : '') + SIG[b.p.build].d : (s ? resLabel(s, a.mana) + '. ' + s.d : actInfo(b.p, a.id)))) + (a.v2 ? '' : P('빠르기: ' + speedWord(a.time)));
+    let body = (a.v2 ? P(skHead(a.s)) + (skDescHtml(a.s) || P(skBody(a.s))) + /* M5-0a 승부수: 대사 칸 + 효과 / 대가 / 대상 */ (skillDamageHint(b.p,a.s) ? P(skillDamageHint(b.p,a.s)) : '') + cfKwHtml(a.s) + (a.wait > 0 && a.wait < CD_USED ? P('유산 ' + a.yc + ' 필요, 지금 ' + ysNow(b.p) + '. 내 차례가 시작될 때 +1, 대응에 성공하면 +1' + (a.ok && a.pull ? '. 지금 누르면 모자란 ' + a.wait + '을(를) 피로 당겨 바로 씁니다. 내는 생명력 ' + a.blood : '')) : a.wait >= CD_USED ? P('이번 전투에 이미 썼습니다') : P('사용 가능. 유산 ' + a.yc + '을(를) 씁니다(지금 ' + ysNow(b.p) + ')')) : P(a.id === 'sig' ? '직업 기술. ' + (SIG[b.p.build].cd ? SIG[b.p.build].cd + '차례에 한 번. ' : '') + SIG[b.p.build].d : (s ? resLabel(s, a.mana) + '. ' + s.d : actInfo(b.p, a.id)))) + (a.v2 ? '' : P('빠르기: ' + speedWord(a.time)));
     if (a.v2 && b.p.build === 'monk') { const now = skillHint0(b,a); if (now) body += P('지금: ' + now); }
     if (a.id !== 'flee') body += `<p class="pv">${esc(previewText(b, a.time))}</p>` + P('예상 수치' + '는 내 행동의 즉시 결과입니다. 이후 적 차례와 라운드 끝 피해는 포함하지 않습니다.');
     if (a.id === 'dodge') {
@@ -128,7 +128,7 @@ function infoHtml(key) {
     return H('흘리기 준비', P((de ? de.n + '의' : '고른 적의') + ' 다음 공격 피해가 ' + Math.round(Math.max(0, (p.dodgeRed || parryRed(p)) - parryBigOf(p, de)) * 100) + '% 줄어듭니다' + (parryBig(de) ? '(강적·보스라 ' + Math.round(parryBigOf(p, de) * 100) + '%p 덜)' : '') + '. 강타라면 그 적의 붕괴 게이지가 25 찹니다.') + (ret ? P('흘려 내면 그 적에게 ' + ret + '.') : '') + P('내 다음 차례까지 유효합니다. 고른 적이 그 사이 움직이지 않으면 헛됩니다.'));
   }
   if (parts[0] === 'buff' && G.run) { const k = parts[1], S = SHRINES.find(x => x.id === k); const n = (G.run.buffs || {})[k] || 0; return H(S ? S.n : (EVBUFF[k] || [k])[0], P(S ? S.d : (EVBUFF[k] || ['', ''])[1]) + P('지금 방을 포함해 ' + n + '개 방 동안 이어집니다.')); } // 10월 5일: 브라우저 툴팁 대신 게임 설명 창
-  if (parts[0] === 'sk' && SK2[parts[1]]) { const s = SK2[parts[1]]; return H(s.n, P((s.start ? '시작 스킬' : s.b + ' · ' + s.tier + ' · ' + s.row + '줄') + '. ' + skHead(s)) + P(skBody(s)) + cfKwHtml(s)); } // 시험 전투의 스킬 칸
+  if (parts[0] === 'sk' && SK2[parts[1]]) { const s = SK2[parts[1]]; return H(s.n, P((s.start ? '시작 스킬' : s.b + ' · ' + s.tier + ' · ' + s.row + '줄') + '. ' + skHead(s)) + (skDescHtml(s) || P(skBody(s))) + cfKwHtml(s)); } // 시험 전투의 스킬 칸
   if (parts[0] === 'mod' && ROOM_MODS[parts[1]]) return H(ROOM_MODS[parts[1]].n, P(ROOM_MODS[parts[1]].d));
   if (key === 'heat' && b && b.heat != null) return H('열기', P('지금 ' + Math.round(b.heat) + '/100. 이번 라운드 끝에 약 +' + heatRise(b) + '.') + P('열기가 100 이상인 채 라운드가 끝나면 ' + heatName(b) + '이(가) 붑니다. 예고가 뜬 뒤에는 내 차례가 한 번 옵니다. 그 전에 열기를 100 아래로 내리면 불지 않습니다.') + P('열기가 변할 때마다 전투 기록에 까닭이 적힙니다.'));
   if (key === 'ign' && b) return H('내 화상', P('직접 피해를 받을 때마다 화상 수만큼 피해가 더해지고 1 줄어듭니다. 예고 숫자 옆 (+화상 n)은 그 공격에 더해질 몫입니다. 한 라운드에 새로 붙는 화상은 ' + IGN_ROUND_CAP + '까지입니다.'));

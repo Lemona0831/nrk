@@ -44,7 +44,7 @@ function vATreeList(run) {
   for (const id of ids) {
     const n = A.nodes[id], own = a.own.includes(id), why = own ? null : atWhy(run, id), eq = eqd.includes(id);
     if (n.ring !== lastRing) { lastRing = n.ring; rows += `<h5 class="ptring">${n.ring}고리${ringOpen(run, n.ring) ? '' : ' 🔒 ' + esc(RING_WHY[n.ring] || '')}</h5>`; }
-    let body; if (n.kind === 'skill') { const s = skOf(run.p, id); body = `<b>⚔ ${esc(n.n)}</b> <small class="mini">스킬 · 유산 ${skCost(s)}${own ? ' · 열림' : ''}${eq ? ' · 장착' : ''}</small><p class="mini">${esc(skHead(s))} ${esc(skBody(s))}</p>`; }
+    let body; if (n.kind === 'skill') { const s = skOf(run.p, id); body = `<b>⚔ ${esc(n.n)}</b> <small class="mini">스킬 · 유산 ${skCost(s)}${own ? ' · 열림' : ''}${eq ? ' · 장착' : ''}</small><p class="mini">${esc(skHead(s))}${skDescHtml(s) ? '' : ' ' + esc(skBody(s))}</p>${skDescHtml(s)}`; } // M5-0a: 승부수는 대사 칸 + 효과 / 대가 / 대상
     else if (n.slot) body = `<b>✚ ${esc(n.n)}</b> <small class="mini">변형 · ${esc((SK2[n.on] || {}).n || n.on)}${own ? ' · 열림' : ''}</small>` + atVarHtml(run, n, own, !why, edit);
     else body = `<b>✚ ${esc(n.n)}</b> <small class="mini">강화 · ${esc((SK2[n.on] || {}).n || n.on)}${own ? ' · 열림' + (run.p && (run.p.aup || []).includes(id) ? ' · 일함' : ' · 그 스킬을 끼우면 일함') : ''}</small><p class="mini">${esc(n.d)}</p>`;
     const btn = (!own && !why && edit && !n.slot ? `<button class="sm gold" data-a="atbuy" data-k="${id}">열기 · 포인트 ${n.cost}</button>` : '') + (own && n.kind === 'skill' && edit ? `<button class="sm${eq ? '' : ' gold'}" data-a="ateq" data-k="${id}">${eq ? '빼기' : '장착'}</button>` : '') + (own && refund ? `<button class="sm" data-a="atref" data-k="${id}">되돌리기</button>` : '');

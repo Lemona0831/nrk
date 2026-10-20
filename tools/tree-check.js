@@ -283,4 +283,9 @@ const BAND_EXEMPT = ['sb_bolt'];
     rep.push(`${c}${strict ? '(규격)' : ''}: 규격 밖 ${bad.length}${wait.length ? ' · 판정 대기 ' + wait.length + ' (' + wait.join(', ') + ')' : ''} · 순수 숫자 강화 갈래별 ${JSON.stringify(numUp)}`);
   }
   console.log('M5-0 규격 보고 — ' + rep.join(' | ')); }
+/* M5-0a 승부수 대사 · 컷인: 대사(line)는 비용 4 승부수에만(아니면 경고), 대사가 있으면 컷인 문법(cut) · 대가(pay)가 있고 효과 글에 「」가 남지 않음 */
+{ const SK2 = E.SK2, warn = [], lines = []; for (const c of CLS) for (const s of (E.SKILLS2 && E.SKILLS2[c]) || []) { const x = SK2[s.id] || s; if (!x.line) continue; lines.push(x.id); const an = (E.atBuild(c).nodes || {})[x.id] || {}; if (an.ys !== 4) warn.push(c + ' ' + x.id + '(비용 ' + an.ys + ')');
+    assert(['blade', 'guard', 'arcane'].includes(x.cut), x.id + ' 컷인 문법'); assert(/^「.+」$/.test(x.line), x.id + ' 대사 「」'); assert(!(x.fx || []).some(f => /「/.test(f.txt || '')), x.id + ' 효과 글에 대사가 남음'); n++; }
+  if (warn.length) console.warn('경고: 승부수가 아닌 스킬에 대사 — ' + warn.join(', '));
+  ok(['sb_kalpa', 'sb_sinwall', 'sb_firebody'].every(id => lines.includes(id)), '마검사 승부수 셋에 대사 · 컷인(겁화 검 · 죄인의 벽 방어 · 불의 몸 불·마법)'); }
 console.log('tree-check: ' + n + '개 통과');
