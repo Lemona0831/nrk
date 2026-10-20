@@ -147,7 +147,7 @@ function skValueAs(e, s, K, hi, tm) { const U = AS_BOUND, P = K.poison, Wd = K.a
     case 'asPlague': return 3 * S0 * (e.mul || 1) * 1.3 * P * 0.6; // 전투에 쓰러지는 적 3, 그때 중독 S, 다른 적 1.3에게(옮겨붙은 독이 다 들지는 않음 0.6)
     case 'asTwin': return pn * P * 0.7; // 후열 하나에게 같은 중독(후열이 있을 확률 0.7)
     case 'asChain': return 0.3 * 0.6 * 20; // 쓰러뜨릴 확률 0.3, 다시 쓰는 터뜨리기 한 번(쓴 유산 몫을 빼고)
-    case 'asCounter': return K.pOk * (B * 1.1); // 흘려 내면 기본 공격 한 번(흘리기 성공 · 기본 공격 효과 포함)
+    case 'asCounter': return K.pOk * (B * 1.1) * (e.mul || 1); // 흘려 내면 기본 공격 한 번(흘리기 성공 · 기본 공격 효과 포함)
     case 'asFlowBlade': return 6 * K.pOk * 0.8 * B * ((e.mul || U.flowMul) - 1) + 6 * 0.6 * (e.poison || 0) * P; // 전투에 흘리기 6번(흘리기 길), 다음 차례 기본 공격으로 이어짐 0.8
     case 'asBackx': { const d = s.fx.find(x => x.k === 'dmg'); return (d ? d.n : 0) * ((e.mul || 1) - 1) * (e.low ? 0.25 : 0.55); } // 후열(0.55) · 생명력 낮은 후열(0.25)에게 ×
     case 'asDance': return 4 * K.pOk * B * (e.mul || 1) * 0.9 + 4 * K.pOk * (e.poison || 0) * P; // 전투에 흘리기 4번, 그때마다 기본 공격 한 번
@@ -155,10 +155,10 @@ function skValueAs(e, s, K, hi, tm) { const U = AS_BOUND, P = K.poison, Wd = K.a
     case 'asVeil': return nT * 1.3 * (e.poison || 2) * P * 0.7; // 차례마다 나를 치는 1.3
     case 'asBloom': { const n = Math.min(20, S0 * 3); return skTri(n) * ((e.mul || 2) - 1) * 0.55 + skTri(n) * 0.35 - 125 * U.bloomHp; } // 모인 중독(적 2.5 몫)을 2배로, 터뜨려 사라지는 몫 · 생명력 15%
     case 'asHide': return Wd * (e.mul || 3) * 1.2 + 8 + (e.poison || 0) * P + (e.brk || 0) * 0.2 - U.hideNoParry * 4; // 무기 피해 × 3(큰 한 방) + 숨은 차례 피한 피해 8, 대가 흘리기 2차례
-    case 'asZan': return nT * B * 1.2 + nT * (e.poison || 0) * P + nT * 1.2 * (e.brk || 0) * 0.2 - nT * U.zanIn * 8 - U.zanNoStam * 1.5; // 스태미나 회복 한 차례 10 × 0.15 // 차례마다 기본 공격 한 번 더, 대가 받는 피해 · 스태미나
-    case 'asFangC': return 8 * 0.6 * U.fangPsn * P; // 기본 공격 8번, 중독 걸린 적 0.6
+    case 'asZan': return nT * B * 1.2 * (e.mul || 1) + nT * (e.poison || 0) * P + nT * 1.2 * (e.brk || 0) * 0.2 - nT * U.zanIn * 8 - U.zanNoStam * 1.5; // 스태미나 회복 한 차례 10 × 0.15 // 차례마다 기본 공격 한 번 더, 대가 받는 피해 · 스태미나
+    case 'asFangC': return 8 * 0.5 * (e.n || U.fangPsn) * P; // 기본 공격 8번, 중독 걸린 적 0.5(M5-3 2배 맞추기: 0.6 → 0.5, 정수 칸이라 +2가 띠 위로 넘던 것)
     case 'asParPsn': return 4 * K.pOk * (e.n || 2) * P * 0.8;
-    case 'asBackFlower': return 3 * 0.4 * skTri(K.as5.Sb + 2) * (U.backFlower - 1) + 6; // 터뜨리기 3번, 후열 0.4
+    case 'asBackFlower': return 3 * 0.4 * skTri(K.as5.Sb + 2) * ((e.mul || U.backFlower) - 1) + 6; // 터뜨리기 3번, 후열 0.4
   } return 0; }
 function skValue(s, ov) {
   if (!ov && SKK.butch && /^b_/.test(String(s.id)) && !s._bu) return skValueBu(s);
@@ -514,7 +514,7 @@ function skBodyMk(s) {
     case 'kiPer': P.push('기마다 피해 +' + e.per); break;
     case 'stam': P.push('스태미나 +' + e.n); break;
     case 'poison': P.push((multi ? (s.tgt === 'front' ? '전열 모두에게 ' : '모든 적에게 ') : '') + '중독 ' + e.n); break;
-    case 'burst': P.push((e.pre ? '중독 ' + e.pre + '을 건 뒤 ' : '') + (multi ? '전열 모두의 ' : '대상 ') + '중독을 터뜨림' + (e.mul && e.mul !== 1 ? '(터뜨리기 피해 ' + e.mul + '배)' : '') + (e.big ? '(정예 · 보스는 터뜨리기 피해 ' + e.big + '배)' : '')); break;
+    case 'burst': P.push((e.pre ? '중독 ' + e.pre + '을을를을를를을을을를'[e.pre % 10] + ' 건 뒤 ' : '') + (multi ? '전열 모두의 ' : '대상 ') + '중독을 터뜨림' + (e.mul && e.mul !== 1 ? '(터뜨리기 피해 ' + e.mul + '배)' : '') + (e.big ? '(정예 · 보스는 터뜨리기 피해 ' + e.big + '배)' : '')); break;
     case 'grow': P.push('대상 중독 ×' + e.mul); break;
     case 'spread': P.push('대상 중독 ' + (e.per === 0.5 ? '절반' : Math.round(e.per * 100) + '%') + '을 다른 적 모두에게'); break;
     case 'exploit': P.push('대상 중독 1마다 피해 +' + e.per); break;
@@ -522,7 +522,7 @@ function skBodyMk(s) {
     case 'brokenx': P.push('무너진 적에게 ×' + e.mul); break;
     case 'asBackx': P.push((e.low ? '생명력 ' + Math.round(e.low * 100) + '% 이하 ' : '') + '후열 적에게 ×' + e.mul); break;
     case 'evade': P.push('다음에 맞는 공격 ' + e.n + '번을 피함'); break;
-    case 'parry': P.push('고른 적의 다음 공격을 흘림(' + Math.round(e.red * 100) + '%)'); break;
+    case 'parry': P.push('다음 공격을 흘림(' + Math.round(e.red * 100) + '%)'); break; // 대상은 버튼에서 고른다
     case 'onParry': P.push('흘려 내면 그 적에게 ' + [e.dmg ? '피해 ' + e.dmg : '', e.poison ? '중독 ' + e.poison : '', e.brk ? '붕괴 +' + e.brk : ''].filter(Boolean).join(' · ')); break;
     case 'parryBuff': P.push('다음 흘리기' + ((e.times || 1) > 1 ? ' ' + e.times + '번' : '') + ' +' + Math.round((e.red || 0) * 100) + '%p' + (e.stam ? ' · 스태미나 없이' : '') + (e.dmg ? ' · 흘려 내면 피해 ' + e.dmg : '') + (e.poison ? ' · 흘려 내면 중독 ' + e.poison : '')); break;
     case 'meSt': P.push(e.if === 'chill' ? '둔화된 적이면 기 +' + e.n : e.if === 'hit' ? '맞은 적마다 기 +' + e.n : '기 +' + e.n); break;

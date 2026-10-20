@@ -200,7 +200,7 @@ function playerAct(b, id, tgtId) {
       if (hb) hnBasicAfter(b, tgt, dHb, hb); if (p.build === 'hunter') p.hnLastT = tgt.id;
       if (tgt.alive && hasIt(p, 'venomring')) addPoison(b, tgt, 1, 1);
       if (mkC) { const n = (mkC.add || 0) + Math.min(mkC.max || 5, Math.floor(kiC * (mkC.per || 1))); p.mkSt.chain = null; let k = 0; for (let i = 0; i < n && tgt.alive && !b.over; i++) { hurtEnemy(b, tgt, d, { single: 1, melee: melee1, label: '연환권' }); if (mkC.brk && tgt.alive) addBreak(b, tgt, mkC.brk); k++; } if (k) logp(b, 'good', '연환권: 기본 공격이 ' + (k + 1) + '타'); } // M5-2 연환권(평타형): 같은 피해로 더 친다
-      if (asS && tgt.alive) asOnBasic(b, tgt); if (asS && asS.zan > 0 && tgt.alive && !b.over) { hurtEnemy(b, tgt, d, { single: 1, melee: melee1, label: '그림자 분신' }); if (asS.zanPsn && tgt.alive) addPoison(b, tgt, asS.zanPsn, 1); if (asS.zanBrk && tgt.alive) addBreak(b, tgt, asS.zanBrk); if (tgt.alive) asOnBasic(b, tgt); } // M5-3 독침 · 독니, 잔영난무: 내가 누른 기본 공격이 두 번(같은 배수)
+      if (asS && tgt.alive) asOnBasic(b, tgt); if (asS && asS.zan > 0 && tgt.alive && !b.over) { hurtEnemy(b, tgt, d * (asS.zanMul || 1), { single: 1, melee: melee1, label: '그림자 분신' }); if (asS.zanPsn && tgt.alive) addPoison(b, tgt, asS.zanPsn, 1); if (asS.zanBrk && tgt.alive) addBreak(b, tgt, asS.zanBrk); if (tgt.alive) asOnBasic(b, tgt); } // M5-3 독침 · 독니, 잔영난무: 내가 누른 기본 공격이 두 번(같은 배수)
       addBreak(b, tgt, 10); applyReflux(b, tgt); break; // 0.6: 기본 공격은 스태미나를 채우지 않는다 (11.6절)
     }
     case 'heavy': {

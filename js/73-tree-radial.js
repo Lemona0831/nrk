@@ -347,11 +347,13 @@ function trdCull(svg, s) {
   for (const t of svg.querySelectorAll('.trd-labs .dl')) { const x = +t.getAttribute('x'), y = +t.getAttribute('y'), w = 70 / s; keep.push([x - w / 2, y - 18 / s, x + w / 2, y + 22 / s]); }
   for (const t of svg.querySelectorAll('.trd-labs .dlp')) { const x = +t.getAttribute('x'), y = +t.getAttribute('y'), w = trdTW(t.textContent) * 0.95 / s; keep.push([x - w / 2, y - 7 / s, x + w / 2, y + 9 / s]); } /* M5-0c 길 이름 · 결합 진행 */
   const rls = [...svg.querySelectorAll('.trd-labs .rl')].map(t => { const x = +t.getAttribute('x'), y = +t.getAttribute('y'), w = trdTW(t.textContent) * 1.1 / s, d = t.classList.contains('rls') ? 20 / s : 0; return { t, b: [x - w / 2, y - 9 / s + d, x + w / 2, y + 9 / s + d] }; }); // 고리 번호 · 잠김 글자(M5-0d: 칸 이름 다음)
-  const it = L.map(t => { const q = [...t.classList].find(c => TRD_Q[c] != null) || 'q0'; return { t, ok: s >= TRD_Q[q], p: +t.dataset.p || 0, x: +t.getAttribute('x') + (+t.dataset.ox || 0) / s, y: +t.getAttribute('y') + (+t.dataset.oy || 0) / s, w: (+t.dataset.w || 40) / s, a: t.dataset.a || 'middle', mid: t.classList.contains('nlo') }; }).sort((a, b) => a.p - b.p || a.y - b.y);
+  const it = L.map(t => { const q = [...t.classList].find(c => TRD_Q[c] != null) || 'q0'; if (t.dataset.y0 == null) { t.dataset.y0 = t.getAttribute('y'); t.dataset.x0 = t.getAttribute('x'); } return { t, ok: s >= TRD_Q[q], p: +t.dataset.p || 0, x: +t.dataset.x0 + (+t.dataset.ox || 0) / s, y: +t.dataset.y0 + (+t.dataset.oy || 0) / s, w: (+t.dataset.w || 40) / s, a: t.dataset.a || 'middle', mid: t.classList.contains('nlo') }; }).sort((a, b) => a.p - b.p || a.y - b.y);
   for (const o of it) {
     let show = o.ok; const x0 = o.a === 'start' ? o.x : o.a === 'end' ? o.x - o.w : o.x - o.w / 2, y0 = o.mid ? o.y - h / 2 : o.y; const b = [x0 - pad, y0 - pad, x0 + o.w + pad, y0 + h + pad];
-    if (show && o.p > 0) show = !keep.some(k => b[0] < k[2] && b[2] > k[0] && b[1] < k[3] && b[3] > k[1]);
-    if (show) keep.push(b); o.t.classList.toggle('cull', !show);
+    const hitK = bb => keep.some(k => bb[0] < k[2] && bb[2] > k[0] && bb[1] < k[3] && bb[3] > k[1]); let bs = b, dx = 0, dy = 0;
+    if (show && o.p > 0 && hitK(b)) { show = false; if (o.mid) { const H = b[3] - b[1], Wd = b[2] - b[0]; // M5-3: 1고리 칸 이름은 지우기 전에 아래 · 위 · 옆 자리를 본다(긴 이름 둘이 붙는 부채꼴)
+      for (const [mx, my] of [[0, 1], [0, -1], [0, 2], [0, -2], [-0.6, 0], [0.6, 0], [-0.6, 1], [0.6, 1]]) { const c = [b[0] + mx * Wd, b[1] + my * H, b[2] + mx * Wd, b[3] + my * H]; if (!hitK(c)) { show = true; bs = c; dx = mx * Wd; dy = my * H; break; } } } }
+    o.t.setAttribute('x', trdF(+o.t.dataset.x0 + dx)); o.t.setAttribute('y', trdF(+o.t.dataset.y0 + dy)); if (show) keep.push(bs); o.t.classList.toggle('cull', !show);
   }
   for (const r of rls) { const hit = keep.some(k => r.b[0] < k[2] && r.b[2] > k[0] && r.b[1] < k[3] && r.b[3] > k[1]); r.t.classList.toggle('cull', hit); if (!hit) keep.push(r.b); }
 }

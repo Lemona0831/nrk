@@ -55,7 +55,7 @@ function vPlayerPanel(p, b) {
 
 /* ---------- 전투 ---------- */
 const AGROUP = [
-  ['공격', ['basic', 'heavy']],
+  ['공격', ['as_mu', 'basic', 'heavy', 'as_end']], // M5-3 암살자: 무영살 베기 · 연쇄 격발 넘기기
   ['스킬', null],
   ['직업', ['sig']],
   ['지키기', ['guard', 'dodge']],

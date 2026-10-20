@@ -278,7 +278,7 @@ const near = (a, b2) => Math.abs(a - b2) < 1e-6;
   ok(dc(f0) === 25 && dc(f0) - dc(f1) === 10 && dc(f0) - dc(f2) === 4 && dc(f0) - dc(f3) === 14, '흘리기 스태미나: 25, 그림자 맹세 −10, 그림자 발 −4(함께 −14)'); }
 { const pz = (o, n) => { const f = afight(o); E.addPoison(f.b, f.es[0], n, 1); return st(f.es[0], 'poison'); };
   ok(pz({ ks: ['svK9'] }, 6) === 4 && pz({ ks: ['svK9'] }, 7) === 5 && pz({ ks: ['svK9'] }, 2) === 1 && pz({ ks: ['svK9'] }, 1) === 1 && pz({}, 6) === 6, '그림자 맹세의 대가: 거는 독 −30% 반올림, 최소 1(6 → 4, 7 → 5, 2 → 1, 1 → 1)');
-  const f = afight({ ks: ['svK9'], act: ['a_dokkal'], eq: ['a_dokkal'] }); aAct(f, 'a_dokkal'); ok(st(f.es[0], 'poison') === 2, '그림자 맹세의 대가: 독 바른 칼 3 → 2');
+  const f = afight({ ks: ['svK9'], act: ['a_dokkal'], eq: ['a_dokkal'] }); aAct(f, 'a_dokkal'); ok(st(f.es[0], 'poison') === 3, '그림자 맹세의 대가: 독 바른 칼 4 → 3');
   const g = afight({ ks: ['svK9'] }); E.addPoison(g.b, g.p, 6, 0); ok(st(g.p, 'poison') === 6, '내가 받는 독은 줄지 않음'); }
 /* M5-3: 흘려 베기의 반격은 기본 공격(판정 ①)이라 그림자 맹세의 흘리기 스킬 피해 +15%를 받지 않는다(새 트리에 흘려 낸 피해를 주는 흘리기 스킬이 없음) */
 { const cm = o => { const f = afight(Object.assign({ act: ['a_gyeonu'], eq: ['a_gyeonu'] }, o)); f.b.stepMode = true; E.playerAct(f.b, 'a_gyeonu'); f.b.cur = null; E.setParry(f.b, f.es[0], null, null); const h = f.es[0].hp; enemyHit(f.b, f.es[0], 10); return h - f.es[0].hp; };
@@ -308,7 +308,7 @@ const near = (a, b2) => Math.abs(a - b2) < 1e-6;
 // 유지력: 흘린 숨 · 남은 독의 온기 (M5-3: 독 흡수가 트리에서 빠져 독 마시는 몸 시험은 지움 — 장비 · 다른 흡수에만 듦)
 { const f = afight({ own: ['su3R'] }); const { b, p, es } = f; p.hp = p.hpMax * 0.5; const h = p.hp; E.setParry(b, es[0], null, null); enemyHit(b, es[0], 0); ok(near(p.hp - h, p.hpMax * 0.01), '흘린 숨: 흘려 내면 최대 생명력 1% 회복');
   for (let i = 0; i < 6; i++) { E.setParry(b, es[0], null, null); enemyHit(b, es[0], 0); } ok(near(p.hp - h, p.hpMax * 0.04), '흘린 숨: 전투마다 4%까지'); }
-{ const wm = (o, id) => { const f = afight(Object.assign({ act: ['a_gyeokpyo'], eq: ['a_gyeokpyo'] }, o)); E.addPoison(f.b, f.es[0], 5, 1); f.es[0].hp = id ? 1 : 20; f.p.hp = f.p.hpMax * 0.5; const h = f.p.hp; aAct(f, id || 'a_gyeokpyo'); return [f.p.hp - h, f]; }; // 격발 표창: 피해 12로는 남고 터뜨린 독(1+…+5)으로 쓰러진다
+{ const wm = (o, id) => { const f = afight(Object.assign({ act: ['a_gyeokpyo'], eq: ['a_gyeokpyo'] }, o)); E.addPoison(f.b, f.es[0], 6, 1); f.es[0].hp = id ? 1 : 40; f.p.hp = f.p.hpMax * 0.5; const h = f.p.hp; aAct(f, id || 'a_gyeokpyo'); return [f.p.hp - h, f]; }; // 격발 표창: 피해로는 남고 터뜨린 독(1+…+6)으로 쓰러진다
   const [w1, fw] = wm({ own: ['su5R'] }), [w0] = wm({}), [wb] = wm({ own: ['su5R'] }, 'basic');
   ok(!fw.es[0].alive && near(w1 - w0, fw.p.hpMax * 0.02) && near(wb, 0), '남은 독의 온기: 독을 터뜨려 쓰러뜨리면 2% 회복, 기본 공격 처치는 없음');
   const IFA = R_('IFX_NODE'); fw.b.asBurstK = 1; for (let i = 0; i < 5; i++) IFA.n_as_warm.onKill(fw.b, fw.p, fw.es[1]); fw.b.asBurstK = 0; ok(near(fw.b.asWarmH, fw.p.hpMax * 0.06), '남은 독의 온기: 전투마다 6%까지'); }

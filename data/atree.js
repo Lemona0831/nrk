@@ -550,13 +550,13 @@ const ATREE_DEF = {
     vars: {
       /* 스킬마다 변형 둘(둘 다 제시): v 'deep' 깊게 = 같은 길을 세게, v 'link' 잇기 = 그 스킬에 없던 다른 빌드의 꼬리표를 더해 경계 · 결합 칸으로. [Claude 초안] */
       a_dokkal: [
-        ['av_dk_more', '깊은 독 칼', '중독 3 → 4. 피해 10 → 7.', { fxSet: [{ k: 'dmg', n: 7 }, { k: 'poison', n: 4 }] }, [], { v: 'deep' }],
+        ['av_dk_more', '깊은 독 칼', '중독 4 → 6. 피해 18 → 12.', { fxSet: [{ k: 'dmg', n: 12 }, { k: 'poison', n: 6 }] }, [], { v: 'deep' }],
         ['av_dk_par', '독 칼 받기', '다음 흘리기 +10%p.', { fxAdd: [{ k: 'parryBuff', red: 0.1 }] }, ['흘리기'], { v: 'link' }]],
       a_dokan: [
-        ['av_da_thick', '짙은 안개', '느린 행동이 됩니다. 중독 3 → 4.', { set: { time: 'slow' }, fxSet: [{ k: 'poison', n: 4 }] }, [], { v: 'deep' }],
+        ['av_da_thick', '짙은 안개', '느린 행동이 됩니다. 중독 5 → 7.', { set: { time: 'slow' }, fxSet: [{ k: 'poison', n: 7 }] }, [], { v: 'deep' }],
         ['av_da_basic', '안개 속 칼', '다음 기본 공격 1번에 중독 1.', { fxAdd: [{ k: 'asNextPsn', n: 1, poison: 1, txt: '다음 기본 공격 1번에 중독 1' }] }, ['기본공격연동'], { v: 'link' }]],
       a_dokchim: [
-        ['av_dc_three', '네 바늘', '기본 공격 3번 → 4번.', { fxSet: [{ k: 'asNextPsn', n: 4, txt: '다음 기본 공격 4번에 중독 1' }] }, [], { v: 'deep' }],
+        ['av_dc_three', '네 바늘', '기본 공격 3번 → 4번.', { fxSet: [{ k: 'asNextPsn', n: 4, txt: '다음 기본 공격 4번에 중독 2' }] }, [], { v: 'deep' }],
         ['av_dc_par', '흘린 독침', '다음 흘리기 +10%p.', { fxAdd: [{ k: 'parryBuff', red: 0.1 }] }, ['흘리기'], { v: 'link' }]],
       a_godok: [
         ['av_gd_fast', '서두른 고독', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, [], { v: 'deep' }],
@@ -565,10 +565,10 @@ const ATREE_DEF = {
         ['av_bj_wide', '넓은 번짐', '절반 → 70%를 번지게 합니다.', { fxSet: [{ k: 'spread', per: 0.7 }] }, [], { v: 'deep' }],
         ['av_bj_back', '먼 번짐', '후열까지 닿습니다.', { set: { tgt: 'ranged' } }, ['후열'], { v: 'link' }]],
       a_maengdok: [
-        ['av_md_more', '진한 맹독', '중독 7 → 9.', { fxSet: [{ k: 'poison', n: 9 }] }, [], { v: 'deep' }],
+        ['av_md_more', '진한 맹독', '중독 12 → 15.', { fxSet: [{ k: 'poison', n: 15 }] }, [], { v: 'deep' }],
         ['av_md_brk', '맹독 붕괴', '붕괴 +20.', { fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
       a_yeokbyeong: [
-        ['av_yb_more', '짙은 역병', '옮겨붙는 중독 1배 → 1.5배.', { fxSet: [{ k: 'asPlague', mul: 1.5, txt: '이번 전투: 쓰러진 적의 중독 1.5배가 다른 적에게' }] }, [], { v: 'deep' }],
+        ['av_yb_more', '짙은 역병', '옮겨붙는 중독 1.6배 → 2배.', { fxSet: [{ k: 'asPlague', mul: 2, txt: '이번 전투: 쓰러진 적 중독의 2배가 다른 적에게 옮겨붙음' }] }, [], { v: 'deep' }],
         ['av_yb_par', '시든 칼', '다음 흘리기 +10%p.', { fxAdd: [{ k: 'parryBuff', red: 0.1 }] }, ['흘리기'], { v: 'link' }]],
       a_gyeokpyo: [
         ['av_gp_more', '깊은 표창', '터뜨리기 피해 1배 → 1.2배.', { fxSet: [{ k: 'burst', mul: 1.2 }] }, [], { v: 'deep' }],
@@ -577,13 +577,13 @@ const ATREE_DEF = {
         ['av_gj_fast', '서두른 찌르기', '빠른 칸이 됩니다. 터뜨리기 피해 1.5배 → 1.2배.', { set: { time: 'fast' }, fxSet: [{ k: 'burst', mul: 1.2 }] }, [], { v: 'deep' }],
         ['av_gj_par', '찌르고 흘리기', '다음 흘리기 +10%p.', { fxAdd: [{ k: 'parryBuff', red: 0.1 }] }, ['흘리기'], { v: 'link' }]],
       a_bangul: [
-        ['av_bg_two', '두 방울', '중독 2 → 3.', { fxSet: [{ k: 'poison', n: 3 }] }, [], { v: 'deep' }],
+        ['av_bg_two', '두 방울', '중독 3 → 4.', { fxSet: [{ k: 'poison', n: 4 }] }, [], { v: 'deep' }],
         ['av_bg_brk', '붕괴 방울', '붕괴 +15.', { fxAdd: [{ k: 'brk', n: 15 }] }, ['붕괴'], { v: 'link' }]],
       a_dokpyo: [
-        ['av_dp_more', '세 표창', '중독 3 → 4.', { fxSet: [{ k: 'poison', n: 4 }] }, [], { v: 'deep' }],
+        ['av_dp_more', '세 표창', '중독 4 → 5.', { fxSet: [{ k: 'poison', n: 5 }] }, [], { v: 'deep' }],
         ['av_dp_par', '표창 받기', '다음 흘리기 +10%p.', { fxAdd: [{ k: 'parryBuff', red: 0.1 }] }, ['흘리기'], { v: 'link' }]],
       a_dokssae: [
-        ['av_ds_deep', '깊은 쐐기', '느린 행동이 됩니다. 중독 5 → 7.', { set: { time: 'slow' }, fxSet: [{ k: 'poison', n: 7 }] }, [], { v: 'deep' }],
+        ['av_ds_deep', '깊은 쐐기', '느린 행동이 됩니다. 중독 7 → 10.', { set: { time: 'slow' }, fxSet: [{ k: 'poison', n: 10 }] }, [], { v: 'deep' }],
         ['av_ds_brk', '쐐기 붕괴', '붕괴 +20.', { fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
       a_yeonswae: [
         ['av_ys_brk', '연쇄 붕괴', '터뜨린 중독 1마다 붕괴 +4 → +7.', { fxSet: [{ k: 'burst', brkPer: 7 }] }, [], { v: 'deep' }],
@@ -595,28 +595,28 @@ const ATREE_DEF = {
         ['av_hb_deep', '깊은 흘림', '흘리기 80% → 90%.', { fxSet: [{ k: 'parry', red: 0.9 }] }, [], { v: 'deep' }],
         ['av_hb_psn', '독 베기', '흘려 내면 그 적에게 중독 2.', { fxAdd: [{ k: 'onParry', poison: 2 }] }, ['중독'], { v: 'link' }]],
       a_balbgi: [
-        ['av_bb_deep', '깊은 밟기', '느린 행동이 됩니다. 피해 22 → 29.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 29 }] }, [], { v: 'deep' }],
+        ['av_bb_deep', '깊은 밟기', '느린 행동이 됩니다. 피해 35 → 46.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 46 }] }, [], { v: 'deep' }],
         ['av_bb_psn', '그림자 독', '중독 2를 겁니다.', { fxAdd: [{ k: 'poison', n: 2 }] }, ['중독'], { v: 'link' }]],
       a_gyeonu: [
         ['av_gn_sharp', '날카로운 칼끝', '+20%p → +30%p.', { fxSet: [{ k: 'parryBuff', red: 0.3 }] }, [], { v: 'deep' }],
         ['av_gn_psn', '독 칼끝', '흘려 내면 그 적에게 중독 2.', { fxSet: [{ k: 'parryBuff', poison: 2 }] }, ['중독'], { v: 'link' }]],
       a_heulkal: [
-        ['av_hk_deep', '깊은 칼', '×1.5 → ×1.8.', { fxSet: [{ k: 'asFlowBlade', mul: 1.8, txt: '이번 전투: 흘려 낸 다음 차례 첫 기본 공격 ×1.8' }] }, [], { v: 'deep' }],
-        ['av_hk_psn', '독 묻은 칼', '그 공격에 중독 2.', { fxSet: [{ k: 'asFlowBlade', poison: 2, txt: '이번 전투: 흘려 낸 다음 차례 첫 기본 공격 ×1.5 · 중독 2' }] }, ['중독'], { v: 'link' }]],
+        ['av_hk_deep', '깊은 칼', '×1.7 → ×2.', { fxSet: [{ k: 'asFlowBlade', mul: 2, txt: '이번 전투: 흘려 낸 다음 차례 첫 기본 공격 ×2' }] }, [], { v: 'deep' }],
+        ['av_hk_psn', '독 묻은 칼', '그 공격에 중독 3.', { fxSet: [{ k: 'asFlowBlade', poison: 3, txt: '이번 전투: 흘려 낸 다음 차례 첫 기본 공격 ×1.7 · 중독 3' }] }, ['중독'], { v: 'link' }]],
       a_hugyeol: [
-        ['av_hg_fast', '서두른 기습', '빠른 칸이 됩니다. 피해 16 → 11.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 11 }] }, [], { v: 'deep' }],
+        ['av_hg_fast', '서두른 기습', '빠른 칸이 됩니다. 피해 27 → 19.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 19 }] }, [], { v: 'deep' }],
         ['av_hg_brk', '기습 붕괴', '붕괴 +20.', { fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
       a_kalchum: [
-        ['av_kc_deep', '두 겹 칼춤', '칼춤 기본 공격 ×1.2.', { fxSet: [{ k: 'asDance', mul: 1.2, txt: '이번 전투: 흘려 낼 때마다 기본 공격 +1회(×1.2)' }] }, [], { v: 'deep' }],
-        ['av_kc_psn', '독 칼춤', '칼춤 공격에 중독 1.', { fxSet: [{ k: 'asDance', poison: 1, txt: '이번 전투: 흘려 낼 때마다 기본 공격 +1회 · 중독 1' }] }, ['중독'], { v: 'link' }]],
+        ['av_kc_deep', '두 겹 칼춤', '칼춤 기본 공격 ×1.6 → ×1.9.', { fxSet: [{ k: 'asDance', mul: 1.9, txt: '이번 전투: 흘려 낼 때마다 기본 공격 ×1.9 한 번 더' }] }, [], { v: 'deep' }],
+        ['av_kc_psn', '독 칼춤', '칼춤 공격에 중독 2.', { fxSet: [{ k: 'asDance', poison: 2, txt: '이번 전투: 흘려 낼 때마다 기본 공격 ×1.6 한 번 더 · 중독 2' }] }, ['중독'], { v: 'link' }]],
       a_cheohyeong: [
         ['av_ch_fast', '서두른 처형', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, [], { v: 'deep' }],
         ['av_ch_brk', '처형 붕괴', '붕괴 +25.', { fxAdd: [{ k: 'brk', n: 25 }] }, ['붕괴'], { v: 'link' }]],
       a_pieo: [
-        ['av_pe_more', '활짝 핀 독', '먼저 거는 중독 3 → 5.', { fxSet: [{ k: 'burst', pre: 5 }] }, [], { v: 'deep' }],
+        ['av_pe_more', '활짝 핀 독', '먼저 거는 중독 4 → 6.', { fxSet: [{ k: 'burst', pre: 6 }] }, [], { v: 'deep' }],
         ['av_pe_back', '피는 칼', '후열까지 닿습니다.', { set: { tgt: 'ranged' } }, ['후열'], { v: 'link' }]],
       a_kkotip: [
-        ['av_kp_more', '모은 꽃잎', '2배 → 2.4배.', { fxSet: [{ k: 'asNextBurst', mul: 2.4, txt: '다음 터뜨리기 피해 2.4배' }] }, [], { v: 'deep' }],
+        ['av_kp_more', '모은 꽃잎', '2.7배 → 3.2배.', { fxSet: [{ k: 'asNextBurst', mul: 3.2, txt: '다음 터뜨리기 피해 3.2배' }] }, [], { v: 'deep' }],
         ['av_kp_basic', '꽃잎 독', '다음 기본 공격 1번에 중독 2.', { fxAdd: [{ k: 'asNextPsn', n: 1, poison: 2, txt: '다음 기본 공격 1번에 중독 2' }] }, ['기본공격연동'], { v: 'link' }]],
       a_heunal: [
         ['av_hn_slow', '느린 낙화', '느린 행동이 됩니다. 터뜨리기 피해 1배 → 1.2배.', { set: { time: 'slow' }, fxSet: [{ k: 'burst', mul: 1.2 }] }, [], { v: 'deep' }],
@@ -625,25 +625,25 @@ const ATREE_DEF = {
         ['av_jm_long', '긴 장막', '3차례 → 4차례.', { fxSet: [{ k: 'asVeil', n: 4, txt: '4차례 나를 친 적에게 중독 3' }] }, [], { v: 'deep' }],
         ['av_jm_par', '장막 흘리기', '다음 흘리기 +10%p.', { fxAdd: [{ k: 'parryBuff', red: 0.1 }] }, ['흘리기'], { v: 'link' }]],
       a_geuneul: [
-        ['av_gu_deep', '깊은 그늘', '중독 1마다 +2 → +3. 피해 13 → 9.', { fxSet: [{ k: 'dmg', n: 9 }, { k: 'exploit', per: 3 }] }, [], { v: 'deep' }],
+        ['av_gu_deep', '깊은 그늘', '중독 1마다 +3 → +4. 피해 21 → 15.', { fxSet: [{ k: 'dmg', n: 15 }, { k: 'exploit', per: 4 }] }, [], { v: 'deep' }],
         ['av_gu_par', '그늘 흘리기', '다음 흘리기 +10%p.', { fxAdd: [{ k: 'parryBuff', red: 0.1 }] }, ['흘리기'], { v: 'link' }]],
       a_sumjuk: [
         ['av_sj_three', '세 번 숨죽임', '2번 → 3번.', { fxSet: [{ k: 'parryBuff', times: 3 }] }, [], { v: 'deep' }],
         ['av_sj_psn', '독 숨', '흘려 내면 그 적에게 중독 2.', { fxSet: [{ k: 'parryBuff', poison: 2 }] }, ['중독'], { v: 'link' }]],
       a_kkweogi: [
-        ['av_kw_deep', '깊이 꿰기', '무너진 적 2배 → 2.5배. 피해 28 → 22.', { fxSet: [{ k: 'dmg', n: 22 }, { k: 'brokenx', mul: 2.5 }] }, [], { v: 'deep' }],
+        ['av_kw_deep', '깊이 꿰기', '무너진 적 2배 → 2.5배. 피해 44 → 35.', { fxSet: [{ k: 'dmg', n: 35 }, { k: 'brokenx', mul: 2.5 }] }, [], { v: 'deep' }],
         ['av_kw_psn', '꿰는 독', '중독 2를 겁니다.', { fxAdd: [{ k: 'poison', n: 2 }] }, ['중독'], { v: 'link' }]],
       a_yeonmak: [
-        ['av_ym_more', '짙은 연막', '보호 8 → 11.', { fxSet: [{ k: 'st', s: 'protect', n: 11 }] }, [], { v: 'deep' }],
+        ['av_ym_more', '짙은 연막', '보호 18 → 24.', { fxSet: [{ k: 'st', s: 'protect', n: 24 }] }, [], { v: 'deep' }],
         ['av_ym_psn', '연막 독', '2차례 나를 친 적에게 중독 1.', { fxAdd: [{ k: 'asVeil', n: 2, poison: 1, txt: '2차례 나를 친 적에게 중독 1' }] }, ['중독'], { v: 'link' }]],
       a_janjjil: [
         ['av_jj_three', '세 번 찌르기', '2번 → 3번. 피해 8 → 6.', { set: { hits: 3 }, fxSet: [{ k: 'dmg', n: 6 }] }, [], { v: 'deep' }],
         ['av_jj_par', '잔영 흘리기', '다음 흘리기 +10%p.', { fxAdd: [{ k: 'parryBuff', red: 0.1 }] }, ['흘리기'], { v: 'link' }]],
       a_geurimdok: [
-        ['av_gr_more', '짙은 그림자 독', '중독 2 → 3.', { fxSet: [{ k: 'asNextPsn', poison: 3, txt: '다음 기본 공격 3번에 중독 3' }] }, [], { v: 'deep' }],
+        ['av_gr_more', '짙은 그림자 독', '중독 3 → 4.', { fxSet: [{ k: 'asNextPsn', poison: 4, txt: '다음 기본 공격 3번에 중독 4' }] }, [], { v: 'deep' }],
         ['av_gr_par', '그림자 흘림', '다음 흘리기 +10%p.', { fxAdd: [{ k: 'parryBuff', red: 0.1 }] }, ['흘리기'], { v: 'link' }]],
       a_pagodeul: [
-        ['av_pg_deep', '깊이 파고들기', '×1.5 → ×1.8. 피해 27 → 21.', { fxSet: [{ k: 'dmg', n: 21 }, { k: 'grow', mul: 1.8 }] }, [], { v: 'deep' }],
+        ['av_pg_deep', '깊이 파고들기', '×1.5 → ×1.8. 피해 48 → 37.', { fxSet: [{ k: 'dmg', n: 37 }, { k: 'grow', mul: 1.8 }] }, [], { v: 'deep' }],
         ['av_pg_brk', '파고드는 칼', '붕괴 +20.', { fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
       a_heurit: [
         ['av_hr_three', '더 흐릿한 몸', '2번 → 3번.', { fxSet: [{ k: 'parryBuff', times: 3 }] }, [], { v: 'deep' }],
@@ -652,10 +652,10 @@ const ATREE_DEF = {
         ['av_mk_fast', '서두른 개화', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, [], { v: 'deep' }],
         ['av_mk_brk', '무너지는 꽃', '붕괴 +30.', { fxAdd: [{ k: 'brk', n: 30 }] }, ['붕괴'], { v: 'link' }]],
       a_muyeong: [
-        ['av_my_deep', '깊은 무영', '무기 피해의 3배 → 3.5배.', { fxSet: [{ k: 'asHide', mul: 3.5 }] }, [], { v: 'deep' }],
+        ['av_my_deep', '깊은 무영', '무기 피해의 5.8배 → 6.5배.', { fxSet: [{ k: 'asHide', mul: 6.5, txt: '한 차례 숨었다가, 다음 차례 고른 적의 등 뒤에서 무기 피해의 6.5배로 벤다. 숨은 동안 광역을 포함한 어떤 공격의 표적도 되지 않는다(중독 같은 지속 피해는 받음).' }] }, [], { v: 'deep' }],
         ['av_my_brk', '무너뜨리는 무영', '벨 때 붕괴 +40.', { fxSet: [{ k: 'asHide', brk: 40 }] }, ['붕괴'], { v: 'link' }]],
       a_janyeong: [
-        ['av_jy_long', '긴 난무', '4차례 → 5차례.', { fxSet: [{ k: 'asZan', n: 5, txt: '5차례 — 그림자 분신이 함께해, 내가 누른 기본 공격이 두 번 들어간다(반격 · 추가타는 두 번이 아님).' }] }, [], { v: 'deep' }],
+        ['av_jy_long', '긴 난무', '4차례 → 5차례.', { fxSet: [{ k: 'asZan', n: 5, txt: '5차례 — 그림자 분신이 함께해, 내가 누른 기본 공격이 두 번 들어간다(분신은 기본 공격의 1.7배, 반격 · 추가타는 두 번이 아님).' }] }, [], { v: 'deep' }],
         ['av_jy_brk', '흔드는 잔영', '분신 공격에 붕괴 +5.', { fxSet: [{ k: 'asZan', brk: 5 }] }, ['붕괴'], { v: 'link' }]],
     },
   },

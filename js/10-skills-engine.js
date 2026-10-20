@@ -40,7 +40,7 @@ function runSkill2(b, act, tgt) {
   const sbOrd = p.build === 'spellblade'; const sbE = sbOrd && s.kind === 'cut' && p.edge ? { st: tgt && targets.includes(tgt) ? 'tgt' : 'any', tgt, apply: null } : null; if (sbE && sbE.st === 'tgt' && targets.length > 1) targets = [tgt].concat(targets.filter(x => x !== tgt)); // 마검사 칼에 싣기: 고른 적부터 친다(전열 베기도 고른 적 하나에게 건다)
   const altF = sbAltMerge(s, b); const altOn = !!altF; /* 10월 16일 0.8.0 2단계: 강화가 더한 교대 보상(alt)은 맞는 것끼리 합친다 */ if (altOn && altF.run === 2) b.sbRun2 = 1; b.sbAltFx = altOn ? altF : null; const altBrk = altOn && altF.brk ? altF.brk : 0; let altBrkLog = 0; // 마검사 교대 보상: 붕괴는 타격 뒤, 나머지는 행동 뒤(sbEnd)
   const hz = F('hasten'); const hzOn = hz ? (hz.on || 'use') : null; // 🔄 쿨타임 당기기 (10월 3일 만든 사람 결정 D: 갈래 규칙 대신 스킬에만 적는다)
-  const par = F('parry'); if (par && tgt) { setParry(b, tgt, par.red, Object.assign({}, F('onParry') || {}, hzOn === 'parry' ? { hasten: hz.n || 1, hb: s.b } : {}, F('asCounter') ? { basic: 1 } : {})); logp(b, 'sys', tgt.n + '의 다음 공격을 흘릴 준비를 한다'); } // M5-3 흘려 베기: 흘려 내면 기본 공격으로 반격(on.basic)
+  const par = F('parry'); if (par && tgt) { setParry(b, tgt, par.red, Object.assign({}, F('onParry') || {}, hzOn === 'parry' ? { hasten: hz.n || 1, hb: s.b } : {}, F('asCounter') ? { basic: F('asCounter').mul || 1 } : {})); logp(b, 'sys', tgt.n + '의 다음 공격을 흘릴 준비를 한다'); } // M5-3 흘려 베기: 흘려 내면 기본 공격으로 반격(on.basic)
   const sm = F('stam'); if (sm) { p.st = Math.min(p.stMax, p.st + sm.n); if (p.exhaust && p.st >= 30) p.exhaust = 0; }
   if (p.build === 'warden') wdUse(b, s, targets, tgt, 'pre'); // 0.8.0 M5-1 파수꾼 태세 · 승부수 · 결합 칸
   if (p.build === 'monk' && s.mk5) mkUse(b, s); // 0.8.0 M5-2 수도승 강화 · 승부수 · 결합 칸
@@ -446,11 +446,11 @@ function asUse(b, s, targets, tgt) {
   const dc = F('asDance'); if (dc) { S.dance = { mul: dc.mul || 1, poison: dc.poison || 0 }; logp(b, 'good', '그림자 칼춤: 이번 전투 동안 흘려 낼 때마다 기본 공격 +1회'); }
   const nb = F('asNextBurst'); if (nb) { S.nextBurst = Math.max(S.nextBurst || 1, nb.mul || 1.5); logp(b, 'good', s.n + ': 다음 터뜨리기 피해 ' + S.nextBurst + '배'); }
   const vl = F('asVeil'); if (vl) { S.veil = { n: vl.n || 3, poison: vl.poison || 2 }; logp(b, 'good', s.n + ': ' + S.veil.n + '차례 동안 나를 친 적에게 중독 ' + S.veil.poison); }
-  if (F('asFangC')) { S.fang = 1; logp(b, 'good', '독니: 이번 전투 동안 중독 걸린 적을 기본 공격으로 치면 중독 +' + AS_BOUND.fangPsn); }
+  { const fc = F('asFangC'); if (fc) { S.fang = fc.n || AS_BOUND.fangPsn; logp(b, 'good', '독니: 이번 전투 동안 중독 걸린 적을 기본 공격으로 치면 중독 +' + S.fang); } }
   const pp = F('asParPsn'); if (pp) { S.parPsn = pp.n || 2; logp(b, 'good', '흘린 독: 이번 전투 동안 흘려 낼 때 그 적 중독 +' + S.parPsn); }
-  if (F('asBackFlower')) { S.backFlower = AS_BOUND.backFlower; logp(b, 'good', '등 뒤의 꽃: 이번 전투 동안 후열 적에게 터뜨리기 ' + AS_BOUND.backFlower + '배'); }
+  { const bf = F('asBackFlower'); if (bf) { S.backFlower = bf.mul || AS_BOUND.backFlower; logp(b, 'good', '등 뒤의 꽃: 이번 전투 동안 후열 적에게 터뜨리기 ' + S.backFlower + '배'); } }
   const hd = F('asHide'); if (hd) { S.hide = 1; S.mu = { mul: hd.mul || 3, poison: hd.poison || 0, brk: hd.brk || 0 }; S.muT = (b.turnIdx || 0) + 1; /* 베기는 숨은 다음 차례(주 행동이 끝나면 turnIdx +1)에만 */ logp(b, 'good', '무영살: 숨는다. 이번 차례 어떤 공격의 표적도 되지 않고, 다음 차례 고른 적의 등 뒤에서 무기 피해의 ' + S.mu.mul + '배로 벤다'); }
-  const zn = F('asZan'); if (zn) { S.zan = (zn.n || 3) + 1; /* 쓴 차례(주 행동이라 끝남) 뒤 내 차례 n번: 차례 시작마다 −1 */ S.zanPsn = zn.poison || 0; S.zanBrk = zn.brk || 0; logp(b, 'good', '잔영난무: ' + (zn.n || 3) + '차례 동안 내가 누른 기본 공격이 두 번 들어간다 (받는 피해 +' + Math.round(AS_BOUND.zanIn * 100) + '%, 끝난 뒤 ' + AS_BOUND.zanNoStam + '차례 스태미나가 차지 않는다)'); }
+  const zn = F('asZan'); if (zn) { S.zan = (zn.n || 3) + 1; /* 쓴 차례(주 행동이라 끝남) 뒤 내 차례 n번: 차례 시작마다 −1 */ S.zanPsn = zn.poison || 0; S.zanBrk = zn.brk || 0; S.zanMul = zn.mul || 1; logp(b, 'good', '잔영난무: ' + (zn.n || 3) + '차례 동안 내가 누른 기본 공격이 두 번 들어간다 (받는 피해 +' + Math.round(AS_BOUND.zanIn * 100) + '%, 끝난 뒤 ' + AS_BOUND.zanNoStam + '차례 스태미나가 차지 않는다)'); }
   const bl = F('asBloom'); if (bl && tgt && tgt.alive) { // 만독개화: 대가 먼저(지금 생명력에서 최대치의 15%, 이 대가로 쓰러지지 않음), 그 뒤 모든 적의 중독을 대상에게 모은다(터뜨리기는 runSkill2의 burst가 아니라 아래에서)
     const hp = Math.round(p.hpMax * AS_BOUND.bloomHp); p.hp = Math.max(1, p.hp - hp); let sum = 0; for (const e of alive(b)) { const n = st(e, 'poison'); if (n > 0) { sum += n; delete e.s.poison; } }
     const n = Math.min(psnCapOf(p) + 10, sum); logp(b, 'good', '만독개화: 생명력 −' + hp + '. 모든 적의 중독 ' + sum + '을(를) ' + tgt.n + '에게 모은다'); if (n > 0) { tgt.s.poison = { stacks: n, until: POISON_FOREVER, dur: POISON_FOREVER };
@@ -468,7 +468,7 @@ function asPost(b, s, targets, killed) {
 /* 기본 공격의 덧붙는 효과(내가 누른 기본 공격 · 흘려 베기 반격 · 칼춤 공격 모두): 독침 · 독니 */
 function asOnBasic(b, e) { const S = b.p.asSt; if (!S || !e || !e.alive) return;
   if (S.nextPsn && S.nextPsn.n > 0) { const g = addPoison(b, e, S.nextPsn.poison, 1); S.nextPsn.n--; logp(b, 'good', '독침: ' + e.n + '에게 중독 ' + g + (S.nextPsn.n ? ' (남은 ' + S.nextPsn.n + '번)' : '')); if (S.nextPsn.n <= 0) S.nextPsn = null; }
-  if (S.fang && st(e, 'poison') > 0) { addPoison(b, e, AS_BOUND.fangPsn, 1); logp(b, 'good', '독니: ' + e.n + ' 중독 +' + AS_BOUND.fangPsn); } }
+  if (S.fang && st(e, 'poison') > 0) { addPoison(b, e, S.fang, 1); logp(b, 'good', '독니: ' + e.n + ' 중독 +' + S.fang); } }
 /* 추가로 생긴 기본 공격(반격 · 칼춤): 기본 공격 피해 · 붕괴, 기본 공격 효과는 붙지만 추가 공격을 다시 부르지 않는다 */
 function asExtraBasic(b, e, label, mul, poison) { const p = b.p; if (!e || !e.alive || b.over) return 0; const cur = b.cur; b.cur = { id: 'basic', grp: 'basic', extra: 1 };
   const d = hurtEnemy(b, e, outDmg(b, basicBase(p) * (mul || 1), { weapon: 1 }), { single: 1, melee: 1, label }); if (e.alive) addBreak(b, e, 10); if (poison && e.alive) addPoison(b, e, poison, 1); asOnBasic(b, e); b.cur = cur; b.asBasicX = (b.asBasicX || 0) + d; return d; } // b.asBasicX: 측정(평타 몫)에 기본 공격으로 넣는다
@@ -476,7 +476,7 @@ function asExtraBasic(b, e, label, mul, poison) { const p = b.p; if (!e || !e.al
 function asOnParry(b, src, on) { const p = b.p, S = p.asSt = p.asSt || {};
   if (S.parPsn && src && src.alive) { const g = addPoison(b, src, S.parPsn, 1); logp(b, 'good', '흘린 독: ' + src.n + ' 중독 +' + g); }
   if (S.flowBlade) S.fbTurn = b.turnIdx || 0;
-  if (on && on.basic && src && src.alive) asExtraBasic(b, src, '흘려 베기 반격');
+  if (on && on.basic && src && src.alive) asExtraBasic(b, src, '흘려 베기 반격', on.basic);
   if (S.dance && src && src.alive) asExtraBasic(b, src, '그림자 칼춤', S.dance.mul, S.dance.poison); }
 function asTurnStart(b, p) { const S = p.asSt;
   if (S.hide) { S.hide = 0; if (S.mu) logp(b, 'good', '무영살: 등 뒤로 돈다. 이번 차례 고른 적을 벤다'); } else if (S.mu && S.muT !== b.turnIdx) { S.mu = null; logp(b, 'sys', '무영살: 벨 때를 놓쳤다'); } // 베기는 숨은 다음 차례에만
