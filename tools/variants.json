@@ -523,6 +523,14 @@
    "introduced": "M5-0",
    "expires": "상시",
    "note": "목표 부채꼴 강제(A · AB · B · BC · C · CA, 반반 빌드 AB_HALF · BC_HALF · CA_HALF). 없으면 tools/persona/sector-pref.json"
+  },
+  {
+   "name": "DG_PATH",
+   "kind": "env",
+   "default": null,
+   "introduced": "M5-0c",
+   "expires": "상시",
+   "note": "길 고정(마검사 갈래 길 a · b, 예 B:a). 목표 부채꼴을 그 갈래로 두고 그 갈래의 다른 길 칸은 찍지 않는다"
   }
  ]
 }

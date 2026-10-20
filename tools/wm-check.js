@@ -410,7 +410,7 @@ const near = (a, b2) => Math.abs(a - b2) < 1e-6;
 // 결정 4: 큰 각인 제시 — 연 액티브 스킬(시작 · 찍은 스킬 노드 · 장착)에 유산 4가 없으면 결정의 칼을 뺀다(모든 직업)
 { const ksHasCost4 = f('ksHasCost4');
   const mk = (cls, act) => { const run = newRun(cls); run.lv = 16; run.clears = 2; run.seed = 91; run.ch = 2; E.ptFix(run); for (const id of ['pw1C', 'pw2L', 'pw3L', 'pw4L']) assert.equal(E.ptBuy(run, id), null, cls + ' ' + id); run.atree.own = act.slice(); run.skills = act.filter(id => E.atBuild(cls).nodes[id].kind === 'skill').slice(0, 4); E.atSync(run); return run; };
-  for (const [cls, a4, a0] of [['assassin', ['a_pouch', 'a_burst', 'a_cataclysm'], ['a_fang', 'a_hack', 'a_siphon', 'a_essence']], ['hunter', ['h_prey', 'h_pierce', 'h_heavy', 'h_doom'], ['h_prey', 'h_pierce']], ['spellblade', ['sb_deluge'], []]]) {
+  for (const [cls, a4, a0] of [['assassin', ['a_pouch', 'a_burst', 'a_cataclysm'], ['a_fang', 'a_hack', 'a_siphon', 'a_essence']], ['hunter', ['h_prey', 'h_pierce', 'h_heavy', 'h_doom'], ['h_prey', 'h_pierce']], ['spellblade', ['sb_crimson'], []]]) {
     const r4 = mk(cls, a4), r0 = mk(cls, a0); const P = E.ptBuild(cls); const o4 = E.ksOfferMake(r4), o0 = E.ksOfferMake(r0);
     ok(P.nodes.pwK5.fx === 'ks_sharp' && ksHasCost4(r4) && !ksHasCost4(r0), cls + ': 유산 4 스킬 판정(skCost(skOf)), 화력 K5는 날 선 손(M4)');
     ok(o4.includes('pwK5') && o0.includes('pwK5') && o0.length === 3 && JSON.stringify(E.ksOfferMake(r0)) === JSON.stringify(o0), cls + ': 결정의 칼이 빠져 화력 K5(날 선 손)는 유산 4 스킬과 상관없이 제시(같은 시드면 같은 셋) ' + o4.join(' ') + ' / ' + o0.join(' '));

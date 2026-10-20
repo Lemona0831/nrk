@@ -65,14 +65,14 @@ function atBuild(cls) {
   add('S', { kind: 'start', ring: 1, pos: { r: 0, lane: 'C' }, cost: 0, n: '시작 스킬', d: T2.starters.map(id => SK2[id] ? SK2[id].n : id).join(' · ') });
   const secOf = {}; if (D && D.sec) for (const k in D.sec) secOf[D.sec[k]] = k;
   if (D) {
-    for (const [id, br, ring, r, lane, , ys, ex] of D.skills) add(id, Object.assign({ kind: 'skill', br, ring, pos: { r, lane }, ys, n: SK2[id].n }, secOf[br] ? { sec: secOf[br] } : {}, ex && ex.requires ? { requires: ex.requires.slice() } : {}, ex && ex.excl ? { excl: ex.excl } : {}, ex && ex.reqTags ? { reqTags: Object.assign({}, ex.reqTags), ang: ex.ang } : {}, ex && ex.finOf ? { finOf: ex.finOf } : {}));
+    for (const [id, br, ring, r, lane, , ys, ex] of D.skills) add(id, Object.assign({ kind: 'skill', br, ring, pos: { r, lane }, ys, n: SK2[id].n }, secOf[br] ? { sec: secOf[br] } : {}, ex && ex.requires ? { requires: ex.requires.slice() } : {}, ex && ex.excl ? { excl: ex.excl } : {}, ex && ex.reqTags ? { reqTags: Object.assign({}, ex.reqTags), ang: ex.ang } : {}, ex && ex.finOf ? { finOf: ex.finOf } : {}, ex && ex.path ? { path: ex.path } : {})); /* M5-0c: 갈래 칸의 길(a · b) */
     for (const [id, br, ring, r, lane, on, n, d, mod, src] of D.ups || []) add(id, Object.assign({ kind: 'upgrade', br, ring, pos: { r, lane }, on, n, d, mod, src }, secOf[br] ? { sec: secOf[br] } : {}));
     for (const [id, , , , , ln] of D.skills) for (const x of ln) link(id, x);
     for (const u of D.ups || []) link(u[0], u[5]);
     /* M5-0 보정 5 P2 변형 강화: 스킬마다 변형 자리 노드(sv_*, 포인트 1)와 변형 셋(V). 고른 변형은 run.atree.vsel[자리] */
     if (D.vars && D.vars.sb_mutants) for (const [vid, n, d, mod, tags, ex] of D.vars.sb_mutants) V[vid] = Object.assign({ id: vid, slot: 'sv_' + ex.on.slice(3), n, d, mod, tags: tags || [] }, ex); // P4 (d) 변종: 자리의 변형 목록에는 없고 제시에만 섞인다
     if (D.vars) for (const sid in D.vars) { const sk = N[sid]; if (!sk) continue; const slot = 'sv_' + sid.slice(3);
-      add(slot, Object.assign({ kind: 'upgrade', slot: 1, br: sk.br, ring: sk.ring, pos: { r: sk.pos.r, lane: sk.pos.lane }, on: sid, n: SK2[sid].n + ' 변형', d: '변형 가운데 하나를 고릅니다. 판마다 둘이 제시되고, 야영지에서 바꿀 수 있습니다(포인트는 그대로).', mod: {}, vars: D.vars[sid].map(v => v[0]) }, sk.sec ? { sec: sk.sec } : {})); link(slot, sid);
+      add(slot, Object.assign({ kind: 'upgrade', slot: 1, br: sk.br, ring: sk.ring, pos: { r: sk.pos.r, lane: sk.pos.lane }, on: sid, n: SK2[sid].n + ' 변형', d: '변형 둘 가운데 하나를 고릅니다. 야영지에서 바꿀 수 있습니다(포인트는 그대로).', mod: {}, vars: D.vars[sid].map(v => v[0]) }, sk.sec ? { sec: sk.sec } : {})); link(slot, sid);
       for (const [vid, n, d, mod, tags, ex] of D.vars[sid]) V[vid] = Object.assign({ id: vid, on: sid, slot, n, d, mod, tags: tags || [] }, ex || {}); }
   }
   for (const id in N) N[id].links.sort();
@@ -88,7 +88,7 @@ const clearsEff = run => (run.clears || 0) + (run.markCh ? run.markCh - 1 : 0); 
 const ringOpen = (run, ring) => clearsEff(run) >= (PT.ring[ring] || 0) || (run.ringCamp || 1) >= ring;
 const RING_WHY = { 2: '2고리는 1챕터 야영지에서 열립니다', 3: '3고리는 2챕터 야영지에서 열립니다' };
 function ringCampOpen(run) { if (!run || !run.ptree) return 0; const want = Math.min(3, (run.ch || 1) + 1); const was = [2, 3].filter(k => ringOpen(run, k)).length; run.ringCamp = Math.max(run.ringCamp || 1, want); const now = [2, 3].filter(k => ringOpen(run, k)).length; if (now > was) { run.ringNew = 1; if (typeof toast === 'function') toast('새 고리가 열렸다: ' + (now + 1) + '고리'); return now + 1; } return 0; }
-function ptInit(run) { if (!run.ptree) run.ptree = { own: [], free: [], ks: [], pts: ptTotal(run), log: [], ksv: 2 }; if (!run.atree) run.atree = { own: [], pts: atTotal(run), log: [], atv: 4 }; if (!run.ksGot) run.ksGot = {}; if (run.ksPending == null) run.ksPending = 0; return run; }
+function ptInit(run) { if (!run.ptree) run.ptree = { own: [], free: [], ks: [], pts: ptTotal(run), log: [], ksv: 2 }; if (!run.atree) run.atree = { own: [], pts: atTotal(run), log: [], atv: 5 }; if (!run.ksGot) run.ksGot = {}; if (run.ksPending == null) run.ksPending = 0; return run; }
 const ptOpenIds = run => ['S'].concat(run.ptree.own, run.ptree.free, run.ptree.ks);
 const atOpenIds = run => ['S'].concat(run.atree.own);
 const ptSpent = run => run.ptree.own.reduce((a, id) => a + ((ptBuild(run.build).nodes[id] || {}).cost || 0), 0);
@@ -111,16 +111,17 @@ const ptWhy = (run, id) => treeWhyBuy(run, ptBuild(run.build), ptOpenIds(run), r
 const atWhy = (run, id) => treeWhyBuy(run, atBuild(run.build), atOpenIds(run), run.atree.pts, id);
 function ptBuy(run, id) { const why = ptWhy(run, id); if (why) return why; const n = ptBuild(run.build).nodes[id]; run.ptree.own.push(id); run.ptree.pts -= n.cost; run.ptree.log.push({ id, lv: run.lv || 1, ch: run.ch || 1, room: run.room, t: Date.now() }); ptSync(run); return null; }
 /* M5-0 보정 5 P4 판마다 다른 제시(만든 사람 결정 D17): 판 시작 때 run.seed로 정한다. 갈래 스킬은 고정.
-   변형은 자리마다 셋 중 둘, 결합 칸은 셋 중 둘, 경계 승부수는 부채꼴마다 후보 둘 중 하나, 판마다 10%로 변종 하나가 제시에 섞인다. 저장(run.offer) */
+   변형은 자리마다 셋 중 둘, 결합 칸은 셋 중 둘, 경계 승부수는 부채꼴마다 후보 둘 중 하나, 판마다 10%로 변종 하나가 제시에 섞인다. 저장(run.offer)
+   M5-0c(10월 20일 만든 사람): 변형은 스킬마다 둘이고 둘 다 제시(무작위 없음), 승부수 후보 제도 폐지(대사 승부수 셋이 늘 나온다). 결합 칸 셋 중 둘 · 10% 변종(변형 셋째로 더함)은 그대로 */
 const AT_OFFER = { vars: 2, combos: 2, mut: 0.1 };
 function atRng(seed) { let a = (seed >>> 0) || 1; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 function atOfferMake(build, seed) {
   const D = ATREE_DEF[build]; if (!D || !D.vars) return null; const A = atBuild(build), r = atRng((seed | 0) * 2654435761 + build.length * 97 + 7), pick = (L, k) => { const a = L.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, k); };
   const o = { v: 1, seed, vars: {}, combos: null, fins: {}, mut: null };
-  for (const id of Object.keys(A.nodes).sort()) { const n = A.nodes[id]; if (n.slot) o.vars[id] = pick(n.vars, AT_OFFER.vars); }
+  for (const id of Object.keys(A.nodes).sort()) { const n = A.nodes[id]; if (n.slot) o.vars[id] = n.vars.length > AT_OFFER.vars ? pick(n.vars, AT_OFFER.vars) : n.vars.slice(); }
   const cb = Object.keys(A.nodes).filter(id => A.nodes[id].reqTags).sort(); if (cb.length) o.combos = pick(cb, AT_OFFER.combos).sort();
   const fg = {}; for (const id of Object.keys(A.nodes).sort()) { const f = A.nodes[id].finOf; if (f) (fg[f] = fg[f] || []).push(id); } for (const f in fg) o.fins[f] = pick(fg[f], 1)[0];
-  const muts = Object.values(A.vars).filter(v => v.mut && o.vars[v.slot]); if (muts.length && r() < AT_OFFER.mut) { const m = pick(muts.map(v => v.id), 1)[0], s = A.vars[m].slot; o.vars[s] = [o.vars[s][0], m]; o.mut = m; }
+  const muts = Object.values(A.vars).filter(v => v.mut && o.vars[v.slot]); if (muts.length && r() < AT_OFFER.mut) { const m = pick(muts.map(v => v.id), 1)[0], s = A.vars[m].slot; o.vars[s] = o.vars[s].length > 2 ? [o.vars[s][0], m] : o.vars[s].concat([m]); o.mut = m; }
   return o; }
 function atOfferInit(run) { if (!run || run.offer || !ATREE_DEF[run.build] || !ATREE_DEF[run.build].vars) return run && run.offer; run.offer = atOfferMake(run.build, run.seed || 1); return run.offer; }
 /* 이번 판에 없는 칸: 제시되지 않은 결합 칸 · 승부수 후보, 그 칸의 변형 자리 */
@@ -298,11 +299,16 @@ function runTags(run) { const c = {}; const add = L => { for (const t of L || []
   if (run.atree) { const A = atBuild(run.build); for (const id of run.atree.own) { const n = A.nodes[id]; if (n && n.kind === 'skill' && SK2[id]) add(SK2[id].tags); } for (const v of Object.values(run.atree.vsel || {})) { const V = A.vars && A.vars[v]; if (V) add(V.tags); } }
   if (run.ptree && typeof PT_TAGS !== 'undefined') { const T = ptBuild(run.build); for (const id of [].concat(run.ptree.own, run.ptree.free, run.ptree.ks)) { const n = T.nodes[id]; if (n && n.fx) add(PT_TAGS[n.fx]); } }
   return c; }
+/* M5-0c(10월 20일 만든 사람): 마검사 액티브 재설계. atv 5: 트리에서 빠진 칸 · 빠진 변형을 찍어 둔 판은 그 포인트를 돌려준다(액티브 포인트로).
+   빠진 변형 = 고른 변형이 그 자리의 변형 목록에 없는 것(변종은 그 자리 것이면 남긴다). 제시(run.offer)는 새 규칙으로 다시 만들고, 남긴 변종은 제시에 더한다 */
 function atMigrateM5(run) {
-  if (!run || !run.atree || run.atree.atv >= 4) return 0; const why = run.atree.atv === 3 ? '빌드 규격 2판' : run.atree.atv === 2 ? '부채꼴 칸 정리' : '임시 트리 폐기'; run.atree.atv = 4; // M5-0 보정 5: atv 4(경계 둘째 칸 교체 · 1고리 갈림)
-  const A = atBuild(run.build); const own0 = run.atree.own || []; const keep0 = [];
-  for (const id0 of own0) { const id = !A.nodes[id0] && A.vars && A.vars[id0] ? A.vars[id0].slot : id0; const n = A.nodes[id]; if (!n || keep0.includes(id)) continue; if (n.excl && keep0.includes(n.excl)) continue; keep0.push(id); } // 1고리 갈림에서 둘 다 찍힌 옛 판은 먼저 찍은 쪽을 남긴다. 옛 강화(이제 변형)는 그 스킬의 변형 자리를 연 채 변형은 고르지 않음(야영지에서 고름)
+  if (!run || !run.atree || run.atree.atv >= 5) return 0; const why = run.atree.atv === 4 ? '마검사 재설계' : run.atree.atv === 3 ? '빌드 규격 2판' : run.atree.atv === 2 ? '부채꼴 칸 정리' : '임시 트리 폐기'; run.atree.atv = 5; // M5-0 보정 5: atv 4(경계 둘째 칸 교체 · 1고리 갈림), M5-0c: atv 5
+  const A = atBuild(run.build); const own0 = run.atree.own || []; const keep0 = []; const vs = run.atree.vsel || {};
+  const varOk = (slot, v) => !v || (A.vars && A.vars[v] && A.vars[v].slot === slot);
+  for (const id0 of own0) { const id = !A.nodes[id0] && A.vars && A.vars[id0] ? A.vars[id0].slot : id0; const n = A.nodes[id]; if (!n || keep0.includes(id)) continue; if (n.excl && keep0.includes(n.excl)) continue; if (n.slot && !varOk(id, vs[id])) continue; keep0.push(id); } // 1고리 갈림에서 둘 다 찍힌 옛 판은 먼저 찍은 쪽을 남긴다. 옛 강화(이제 변형)는 그 스킬의 변형 자리를 연 채 변형은 고르지 않음(야영지에서 고름)
   const reach = treeReach(A, ['S'].concat(keep0), ['S']); const keep = keep0.filter(id => reach.has(id) || A.nodes[id].reqTags || (A.nodes[id].slot && A.nodes[A.nodes[id].on].reqTags && keep0.includes(A.nodes[id].on)));
+  for (const s in vs) if (!keep.includes(s) || !varOk(s, vs[s])) delete vs[s];
+  if (ATREE_DEF[run.build] && ATREE_DEF[run.build].vars && run.offer) { run.offer = atOfferMake(run.build, run.seed || 1); for (const s in vs) { const v = A.vars[vs[s]]; if (v && v.mut && run.offer.vars[s] && !run.offer.vars[s].includes(v.id)) { run.offer.vars[s] = run.offer.vars[s].concat([v.id]); run.offer.mut = v.id; } } }
   const slotOf = id => !A.nodes[id] && A.vars && A.vars[id] ? A.vars[id].slot : id; const gone = own0.filter(id => !keep.includes(slotOf(id))); if (!gone.length) { run.atree.own = keep; return 0; }
   run.atree.own = keep; run.atree.pts = (run.atree.pts || 0) + gone.length; (run.atree.log = run.atree.log || []).push({ refund: gone.length, why, gone: gone.slice(), t: Date.now() });
   const T2 = TREE2[run.build] || { starters: [] }; run.skills = (run.skills || []).filter(id => keep.includes(id) || T2.starters.includes(id)); return gone.length;

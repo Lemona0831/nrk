@@ -33,8 +33,8 @@ function trdLayA(cls) {
   if (A.sec) for (const k in A.sec) brA[A.sec[k]] = AT_SEC[k]; // 0.8.0 M5-0: 부채꼴 6(갈래 0 · 120 · 240°, 경계 60 · 180 · 300°)
   const laneOf = n => lane[n.pos.lane] || 0; // M5-0 보정 4(10월 20일 만든 사람): 여섯 부채꼴 60° 균등(경계 40° 철회), 갈래 · 경계가 같은 칸 각도
   const lane = D ? D.lane : { LL: -26, L: -13, C: 0, R: 13, RR: 26 }, U = D ? 80 : 44, R0 = D ? 0 : 40, SK = D ? 21 : 14, UP = 9;
-  const radOf = r => r ? R0 + r * U : 0;
-  for (const id in A.nodes) { const n = A.nodes[id]; if (n.kind === 'upgrade') continue; const a = n.kind === 'start' ? 0 : n.ang != null ? n.ang : brA[n.br] + laneOf(n), rad = radOf(n.pos.r), [x, y] = trdXY(a, rad); N[id] = { id, x, y, a, rad, sz: n.kind === 'start' ? (D ? 27 : 22) : SK }; } // 보정 5: 결합 칸은 정해진 각도(ang)
+  const radOf = r => r ? (D && D.rad && D.rad[r] ? D.rad[r] : R0 + r * U) : 0; /* M5-0c: 반지름 표(D.rad)가 있으면 그것으로 */
+  for (const id in A.nodes) { const n = A.nodes[id]; if (n.kind === 'upgrade' || n.reqTags) continue; /* M5-0c: 결합 칸은 원 바깥(아래에서) */ const a = n.kind === 'start' ? 0 : n.ang != null ? n.ang : brA[n.br] + laneOf(n), rad = radOf(n.pos.r), [x, y] = trdXY(a, rad); N[id] = { id, x, y, a, rad, sz: n.kind === 'start' ? (D ? 27 : 22) : SK }; } // 보정 5: 결합 칸은 정해진 각도(ang)
   const placed = Object.values(N);
   for (const id in A.nodes) {
     const n = A.nodes[id]; if (n.kind !== 'upgrade') continue; const P = N[n.on]; if (!P) continue;
@@ -51,11 +51,16 @@ function trdLayA(cls) {
     }
     N[id] = { id, x: best.x, y: best.y, a: best.phi, rad: Math.hypot(best.x, best.y), sz: UP, sat: n.on }; placed.push(N[id]);
   }
-  const links = []; for (const id in A.nodes) for (const o of A.nodes[id].links) if (id < o && N[id] && N[o]) links.push({ a: id, b: o, sat: A.nodes[id].kind === 'upgrade' || A.nodes[o].kind === 'upgrade' });
-  const rr = {}; for (const id in N) { const n = A.nodes[id]; if (n.kind !== 'skill') continue; const q = rr[n.ring] || (rr[n.ring] = [Infinity, -Infinity]); q[0] = Math.min(q[0], N[id].rad); q[1] = Math.max(q[1], N[id].rad); }
+  const links = []; for (const id in A.nodes) for (const o of A.nodes[id].links) if (id < o && N[id] && N[o]) links.push(Object.assign({ a: id, b: o, sat: A.nodes[id].kind === 'upgrade' || A.nodes[o].kind === 'upgrade' }, A.nodes[id].requires ? { req: id, op: o } : A.nodes[o].requires ? { req: o, op: id } : {}));
+  const rr = {}; for (const id in N) { const n = A.nodes[id]; if (n.kind !== 'skill' || n.reqTags) continue; const q = rr[n.ring] || (rr[n.ring] = [Infinity, -Infinity]); q[0] = Math.min(q[0], N[id].rad); q[1] = Math.max(q[1], N[id].rad); }
   const maxR = Math.max(...Object.values(N).map(q => q.rad + q.sz)), disc = maxR + (D ? 34 : 30);
+  /* M5-0c 결합 칸: 원 바깥 띠(부채꼴 경계선의 바깥 끝, ang). 제시되지 않은 칸은 그리지 않는다(trdSvg) */
+  for (const id in A.nodes) { const n = A.nodes[id]; if (!n.reqTags) continue; const rad = disc + 46, [x, y] = trdXY(n.ang, rad); N[id] = { id, x, y, a: n.ang, rad, sz: SK, cb: 1 }; }
+  /* M5-0c 경계 입구 선: 갈래마다 한 가닥. 찍은 첫 스킬이 없으면 경계 쪽에 가까운 첫 스킬로(다른 부채꼴을 지나지 않게). 판정 규칙(둘 중 어느 쪽이든)은 그대로 */
+  const reqNear = {}; for (const id in A.nodes) { const n = A.nodes[id]; if (!n.requires || !N[id]) continue; reqNear[id] = n.requires.map(g => [].concat(g).filter(x => N[x]).sort((p, q) => trdAD(N[p].a, N[id].a) - trdAD(N[q].a, N[id].a))); }
   const bnd = k => rr[k] && rr[k + 1] ? (rr[k][1] + rr[k + 1][0]) / 2 : disc - 24;
-  return (TRD_L[key] = { kind: 'a', T: A, U, N, links, bounds: [0, bnd(1), bnd(2), disc - 24], disc, inR: (N.S.sz + radOf(1) - SK) / 2, lab: disc + 0.6 * U, vb: disc + (D ? 1.3 : 2) * U, ringAng: A.sec ? 20 : 60, axes: A.sec ? Object.keys(A.sec).map(k => ({ k, n: A.sec[k], a: AT_SEC[k], bound: AT_SEC_BOUND.includes(k) })) : A.br.map(b => ({ k: b, n: b, a: brA[b] })), spokes: A.sec ? [30, 90, 150, 210, 270, 330] : null, tmp: !D }); // 액티브 화면은 갈래 · 경계 이름만 쓴다(패시브 방향 이름은 쓰지 않음)
+  const paths = A.sec && D.paths ? Object.entries(D.paths).flatMap(([b, P]) => ['a', 'b'].map(w => { const nd = Object.values(A.nodes).find(x => x.kind === 'skill' && x.br === b && x.ring === 3 && x.path === w); return nd ? { n: P[w], a: brA[b] + (lane[nd.pos.lane] || 0) * 1.3, r: disc - 13 } : null; }).filter(Boolean)) : [];
+  return (TRD_L[key] = { kind: 'a', T: A, U, N, links, reqNear, paths, r1lab: A.sec ? (N.S.sz + radOf(1) - SK) / 2 : null, bounds: [0, bnd(1), bnd(2), disc - 24], disc, inR: (N.S.sz + radOf(1) - SK) / 2, lab: disc + 0.6 * U, vb: disc + (D ? 1.3 : 2) * U, ringAng: A.sec ? 30 : 60, axes: A.sec ? Object.keys(A.sec).map(k => ({ k, n: A.sec[k], a: AT_SEC[k], bound: AT_SEC_BOUND.includes(k) })) : A.br.map(b => ({ k: b, n: b, a: brA[b] })), spokes: A.sec ? [30, 90, 150, 210, 270, 330] : null, tmp: !D }); // 액티브 화면은 갈래 · 경계 이름만 쓴다(패시브 방향 이름은 쓰지 않음)
 }
 /* ---- 상태 ---- */
 function trdStP(run, id, T) {
@@ -133,8 +138,9 @@ function trdNames(run, L) {
     const [x, y] = trdXY(ax.a, L.lab); const sub = tilt ? TN[tilt[ax.k] || 'B'] : '';
     h += `<text class="tl dl${ax.bound ? ' dlb' : ''}" x="${trdF(x)}" y="${trdF(y)}">${esc(ax.n)}</text>` + (sub ? `<text class="tl dls" x="${trdF(x)}" y="${trdF(y)}" dy="1.25em">${esc(sub)}</text>` : '');
   }
+  for (const p of L.paths || []) { const [x, y] = trdXY(p.a, p.r); h += `<text class="tl dlp" x="${trdF(x)}" y="${trdF(y)}">길: ${esc(p.n)}</text>`; } /* M5-0c: 길 a · b 이름(갈래 안 좌우) */
   for (let k = 1; k <= 3; k++) {
-    const r0 = L.bounds[k - 1], r1 = L.bounds[k]; if (!(r1 > r0)) continue; const open = ringOpen(run, k); const mid = k === 1 ? Math.max(r0, r1 * 0.5) : (r0 + r1) / 2; const [x, y] = trdXY(L.ringAng, mid);
+    const r0 = L.bounds[k - 1], r1 = L.bounds[k]; if (!(r1 > r0)) continue; const open = ringOpen(run, k); const mid = k === 1 ? (L.r1lab || Math.max(r0, r1 * 0.5)) : (r0 + r1) / 2; const [x, y] = trdXY(L.ringAng, mid);
     h += `<text class="tl rl${open ? '' : ' rlo'}" x="${trdF(x)}" y="${trdF(y)}">${k}고리</text>` + (open ? '' : `<text class="tl rl rlo rls" x="${trdF(x)}" y="${trdF(y)}" dy="1.2em">잠김 · ${trdRingShort(k)}</text>`);
   }
   return h;
@@ -169,7 +175,8 @@ function trdNodeA(run, L, id, st, o) {
   return `<g class="tn tn-${n.kind} st-${st}${rl ? ' rlk' : ''}${reqOff ? ' req' : ''}${o.sel ? ' sel' : ''}${o.idle ? ' idle' : ''}${n.kind === 'skill' && (run.skills || []).includes(id) ? ' eq' : ''}${o.isNew ? ' tn-new' : ''}" data-a="tnode" data-k="${id}" data-e="a" transform="translate(${trdF(P.x)} ${trdF(P.y)})" tabindex="${o.tab ? 0 : -1}" role="button" aria-label="${esc(lab + (rl ? ', ' + trdRingShort(n.ring) : ''))}"><title>${esc(n.n)}</title><circle class="hit" r="${Math.max(sz + 6, 13)}"/>${gl}${in1}<circle class="fr" r="${sz + 7}"/></g>`;
 }
 function trdSvg(run, mode, L, v, sel, opt) {
-  const absent = id => kind === 'a' && run.offer && atAbsent(run, id); /* M5-0 보정 5 P4: 이번 판에 없는 칸은 그리지 않는다 */ const kind = L.kind, T = L.T, ids = Object.keys(L.N).filter(id => !absent(id)), stOf = id => kind === 'p' ? trdStP(run, id, T) : trdStA(run, id), ST = {}; for (const id of ids) { ST[id] = stOf(id); if (mode === 'k' && ST[id] === 'can') ST[id] = 'view'; } // 큰 각인 고르기에서는 찍지 않는다(배분 흐름의 단계 잠금)
+  const sat0 = id => { const n = T.nodes[id]; return kind === 'a' && n && n.slot && L.T === atBuild(run.build) && !run.atree.own.includes(id) && !run.atree.own.includes(n.on) && sel !== n.on && sel !== id; }; /* M5-0c: 변형 표식은 찍은 스킬(또는 고른 스킬) 곁에만 */
+  const absent = id => (kind === 'a' && run.offer && atAbsent(run, id)) || sat0(id); /* M5-0 보정 5 P4: 이번 판에 없는 칸은 그리지 않는다 */ const kind = L.kind, T = L.T, ids = Object.keys(L.N).filter(id => !absent(id)), stOf = id => kind === 'p' ? trdStP(run, id, T) : trdStA(run, id), ST = {}; for (const id of ids) { ST[id] = stOf(id); if (mode === 'k' && ST[id] === 'can') ST[id] = 'view'; } // 큰 각인 고르기에서는 찍지 않는다(배분 흐름의 단계 잠금)
   const isOpen = id => ['open', 'own', 'free', 'ks'].includes(ST[id]), jn = G.tjust && G.tjust.e === kind ? G.tjust.id : null;
   const offer = mode === 'k' ? ((opt && opt.offer) || []) : [], will = {}, kp = [];
   if (mode === 'k') { // 후보마다 덤으로 열릴 길: 열린 이웃 → 길 → 큰 각인 자리
@@ -177,7 +184,8 @@ function trdSvg(run, mode, L, v, sel, opt) {
     offer.forEach(kid => { const c = ksInfo(run, kid); if (!c) return; const path = c.path.filter(x => !open.includes(x)); const first = path[0] || kid; const st0 = T.nodes[first].links.filter(x => open.includes(x)).sort()[0]; const pts = (st0 ? [st0] : []).concat(path, [kid]); kp.push({ kid, pts, on: kid === sel }); if (kid === sel) for (const x of path) will[x] = 1; });
   }
   let lk = '', lkr = '';
-  for (const l of L.links) { if (absent(l.a) || absent(l.b)) continue;
+  const reqPick = (e, g) => { const own = g.find(x => run.atree.own.includes(x)); return own || g[0]; }; /* 찍은 첫 스킬이 있으면 그것, 없으면 가까운 것 */
+  for (const l of L.links) { if (absent(l.a) || absent(l.b)) continue; if (l.req && L.reqNear && L.reqNear[l.req] && !L.reqNear[l.req].some(g => g.includes(l.op) && reqPick(l.req, g) === l.op)) continue;
     const A = L.N[l.a], B = L.N[l.b], oa = isOpen(l.a), ob = isOpen(l.b), rl = (T.nodes[l.a].ring > 1 && !ringOpen(run, T.nodes[l.a].ring)) || (T.nodes[l.b].ring > 1 && !ringOpen(run, T.nodes[l.b].ring));
     let c = oa && ob ? (ST[l.a] === 'free' || ST[l.b] === 'free' || ST[l.a] === 'ks' || ST[l.b] === 'ks' ? 'lk-fr' : 'lk-on') : (oa && ST[l.b] === 'can') || (ob && ST[l.a] === 'can') ? 'lk-can' : 'lk';
     if (rl && c === 'lk') c += ' lk-rl'; if (l.sat) c += ' lk-sat'; const nw = jn && (l.a === jn || l.b === jn) && oa && ob ? ' lk-new' : '';
@@ -195,8 +203,10 @@ function trdSvg(run, mode, L, v, sel, opt) {
     // 배율이 낮으면 큰 각인 · 연 중간 노드 · 스킬만, 높을수록 더 (겹치는 것은 trdCull이 숨긴다)
     const open = ['own', 'free', 'ks'].includes(ST[id]), q = id === sel || o.cand || n.kind === 'keystone' || (n.kind === 'notable' && open) ? 'q0' : kind === 'p' ? (n.kind === 'small' ? (open ? 'q2' : 'q3') : 'q1') : (n.kind === 'skill' ? (L.tmp ? 'q15' : 'q0') : 'q3');
     // 겹치면 숨길 때의 순서: 고른 노드 · 후보 → 큰 각인 → 연 중간 노드 · 스킬 → 중간 노드 → 연 작은 노드 · 강화 → 나머지
-    const pr = id === sel || o.cand ? 0 : n.kind === 'keystone' ? 1 : (n.kind === 'notable' || n.kind === 'skill') ? (open ? 2 : 3) : open ? 4 : 5;
-    labs += `<text class="tl nl ${q}${n.kind === 'keystone' || n.kind === 'skill' ? ' nlk' : ''}${ST[id] === 'lock' && !o.cand ? ' nll' : ''}" x="${trdF(P.x)}" y="${trdF(P.y + P.sz + 4)}" data-p="${pr}" data-w="${trdTW(n.n)}">${esc(n.n)}</text>`;
+    const pr = id === sel || o.cand || P.cb ? 0 : n.kind === 'keystone' ? 1 : (n.kind === 'notable' || n.kind === 'skill') ? (open ? 2 : 3) : open ? 4 : 5;
+    const side = P.cb && Math.abs(P.x) > L.disc * 0.4 ? (P.x < 0 ? 'start' : 'end') : '', lx = side ? P.x + (P.x < 0 ? -P.sz : P.sz) : P.x, anc = side ? ` text-anchor="${side}"` : '';
+    labs += `<text class="tl nl ${q}${n.kind === 'keystone' || n.kind === 'skill' ? ' nlk' : ''}${ST[id] === 'lock' && !o.cand ? ' nll' : ''}" x="${trdF(lx)}" y="${trdF(P.y + P.sz + 4)}"${anc} data-p="${pr}" data-w="${trdTW(n.n)}">${esc(n.n)}</text>`;
+    if (P.cb && n.reqTags) { const c = runTags(run), TG = { 기본공격연동: '평타' }, tx = Object.entries(n.reqTags).map(([k, v]) => `${TG[k] || k} ${Math.min(c[k] || 0, v)}/${v}`).join(' · '); labs += `<text class="tl cbp trd-cb${Object.entries(n.reqTags).every(([k, v]) => (c[k] || 0) >= v) ? ' cbok' : ''}" data-k="${id}" x="${trdF(lx)}" y="${trdF(P.y + P.sz + 4)}"${anc} dy="1.45em">${esc(tx)}</text>`; } /* M5-0c 결합 칸: 조건 꼬리표 진행 */
   }
   const vk = trdVk(run, mode), nm = kind === 'p' ? '패시브 트리' : '액티브 트리';
   return `<svg class="trd-svg" data-vk="${esc(vk)}" data-e="${mode}" viewBox="${trdF(-L.vb)} ${trdF(-L.vb)} ${trdF(2 * L.vb)} ${trdF(2 * L.vb)}" preserveAspectRatio="xMidYMid meet" role="group" aria-label="${nm} 그림. 화살표 키로 노드를 옮겨 다니고 Enter로 고르거나 찍습니다. Esc는 설명을 닫습니다." style="--tu:1">${trdDefs()}<g class="trd-vp" transform="translate(${trdF(v.x)} ${trdF(v.y)}) scale(${Math.round(v.k * 1000) / 1000})">${trdBoard(run, L)}<g class="trd-lk">${lk}${lkr}</g><g class="trd-kp">${kph}</g><g class="trd-nodes">${nodes}</g><g class="trd-labs" aria-hidden="true">${trdNames(run, L)}${labs}</g></g></svg>`;
@@ -327,6 +337,7 @@ function trdScale(svg, v) { // 글자는 확대와 상관없이 같은 크기, �
 function trdCull(svg, s) {
   const L = [...svg.querySelectorAll('.trd-labs .nl')], keep = [], pad = 2 / s, h = 14 / s;
   for (const t of svg.querySelectorAll('.trd-labs .dl')) { const x = +t.getAttribute('x'), y = +t.getAttribute('y'), w = 70 / s; keep.push([x - w / 2, y - 18 / s, x + w / 2, y + 22 / s]); }
+  for (const t of svg.querySelectorAll('.trd-labs .dlp')) { const x = +t.getAttribute('x'), y = +t.getAttribute('y'), w = trdTW(t.textContent) * 0.95 / s; keep.push([x - w / 2, y - 7 / s, x + w / 2, y + 9 / s]); } /* M5-0c 길 이름 · 결합 진행 */
   for (const t of svg.querySelectorAll('.trd-labs .rl')) { const x = +t.getAttribute('x'), y = +t.getAttribute('y'), w = trdTW(t.textContent) * 1.1 / s, d = t.classList.contains('rls') ? 17 / s : 0; keep.push([x - w / 2, y - 9 / s + d, x + w / 2, y + 9 / s + d]); } // 고리 번호 · 잠김 글자
   const it = L.map(t => { const q = [...t.classList].find(c => TRD_Q[c] != null) || 'q0'; return { t, ok: s >= TRD_Q[q], p: +t.dataset.p || 0, x: +t.getAttribute('x'), y: +t.getAttribute('y'), w: (+t.dataset.w || 40) / s }; }).sort((a, b) => a.p - b.p || a.y - b.y);
   for (const o of it) {

@@ -598,8 +598,10 @@ function convGain(run, nd) {
    갈래 목표 = 그 갈래에 집중(예전 focus). 경계 목표 = 양쪽 갈래의 1고리 개시 노드 → 경계 입구 → 경계 3고리, 남는 포인트는 양쪽 갈래.
    반반(XX_HALF) = 양쪽 갈래에 반씩, 경계 칸은 찍지 않는다(경계 가치 비교용) */
 const SECP = JSON.parse(fs.readFileSync(path.join(__dirname, 'persona', 'sector-pref.json'), 'utf8'));
+/* 0.8.0 M5-0c 길 고정(10월 20일): DG_PATH=B:a — 목표 부채꼴을 그 갈래로 두고, 그 갈래의 다른 길 칸(스킬과 그 변형 자리)은 찍지 않는다. 리듬 칸 · 다른 부채꼴은 평소대로 */
+const PATHSW = (process.env.DG_PATH || '').split(':'); const pathBan = A => PATHSW[1] ? Object.keys(A.nodes).filter(id => { const n = A.nodes[id], k = n.slot ? A.nodes[n.on] : n; return k && k.sec === PATHSW[0] && k.path && k.path !== PATHSW[1]; }) : [];
 function sectorPick(pk, r, run, A) {
-  if (run.sector) return run.sector; const env = process.env.DG_SECTOR; const keys = Object.keys(A.sec);
+  if (run.sector) return run.sector; const env = process.env.DG_SECTOR || (PATHSW[1] ? PATHSW[0] : ''); const keys = Object.keys(A.sec);
   if (env) run.sector = env; else { const P = SECP[run.persona || pk] || SECP.careful; if (P.mode === 'fixed') run.sector = P.sec; else if (P.mode === 'random') run.sector = keys[Math.floor(r() * keys.length)]; else { const w = keys.map(k => (P.w || {})[k] != null ? P.w[k] : 1); let x = r() * w.reduce((a, v) => a + v, 0); run.sector = keys[keys.length - 1]; for (let i = 0; i < keys.length; i++) { x -= w[i]; if (x <= 0) { run.sector = keys[i]; break; } } } }
   return run.sector;
 }
@@ -624,12 +626,12 @@ function spendTreeUp(pk, r, run, A) {
   const focus = THINK(pk) || pk === 'careful'; const convJudge = !process.env.CONV_OLD && pk !== 'novice';
   if (A.sec) sectorPick(pk, r, run, A);
   for (let n = 0; n < 20 && run.atree.pts > 0; n++) {
-    const ban = (process.env.BAN_UP || '').split(',').filter(Boolean), force = (process.env.FORCE_UP || '').split(',').filter(Boolean); // 0.8.0 5단계 측정 변형: 찍지 않을 · 먼저 찍을 액티브 노드(같은 포인트 예산)
+    const ban = (process.env.BAN_UP || '').split(',').filter(Boolean).concat(A.sec ? pathBan(A) : []), force = (process.env.FORCE_UP || '').split(',').filter(Boolean); // 0.8.0 5단계 측정 변형: 찍지 않을 · 먼저 찍을 액티브 노드(같은 포인트 예산)
     const can = Object.keys(A.nodes).filter(id => !G0.atWhy(run, id) && !ban.includes(id)); if (!can.length) break;
     const eqd = G0.v2Equip(run);
     { const fz = can.find(id => force.includes(id) && eqd.includes(A.nodes[id].on)); if (fz) { if (atBuyV(run, A, fz, pk, r)) break; sbEquip(run, A); continue; } }
     const cv = {}; const convOk = id => (id in cv ? cv[id] : (cv[id] = !!(eqd.includes(A.nodes[id].on) && convGain(run, A.nodes[id])))); // 결정적 판단(난수를 쓰지 않는다)
-    const sc = id => { const nd = A.nodes[id]; const rr = r() * (pk === 'novice' ? 20 : 1); if (convJudge && isConv(nd)) return convOk(id) ? 0.3 + nd.ring * 0.1 + rr * 0.1 : -1; let v = comboScore(A, id) != null ? comboScore(A, id) : (A.sec ? (focus || process.env.DG_SECTOR ? secScore(run, A, id) : 0) : (focus && nd.br === run.focus ? 10 : 0)) + nd.ring * 0.5; v += nd.kind === 'skill' ? ((run.skills || []).length < G0.EQUIP_SLOTS2 ? 4 : 1) : (eqd.includes(nd.on) ? 5 : 0.5); if (A.sec && run.sector && (focus || process.env.DG_SECTOR) && /^[A-C]{2}$/.test(run.sector) && nd.sec === run.sector) v = 100 + secScore(run, A, id) + nd.ring * 0.5; /* M5-0 보정 4: 경계 목표의 경계 칸은 순서 점수만(입구 → 둘째 → 3고리 둘 → 승부수 → 강화) */ return v + rr; }; // 난수는 예전과 같이 부를 때마다 한 번
+    const sc = id => { const nd = A.nodes[id]; const rr = r() * (pk === 'novice' ? 20 : 1); if (convJudge && isConv(nd)) return convOk(id) ? 0.3 + nd.ring * 0.1 + rr * 0.1 : -1; let v = comboScore(A, id) != null ? comboScore(A, id) : (A.sec ? (focus || process.env.DG_SECTOR || PATHSW[1] ? secScore(run, A, id) : 0) : (focus && nd.br === run.focus ? 10 : 0)) + nd.ring * 0.5; v += nd.kind === 'skill' ? ((run.skills || []).length < G0.EQUIP_SLOTS2 ? 4 : 1) : (eqd.includes(nd.on) ? 5 : 0.5); if (A.sec && run.sector && (focus || process.env.DG_SECTOR || PATHSW[1]) && /^[A-C]{2}$/.test(run.sector) && nd.sec === run.sector) v = 100 + secScore(run, A, id) + nd.ring * 0.5; /* M5-0 보정 4: 경계 목표의 경계 칸은 순서 점수만(입구 → 둘째 → 3고리 둘 → 승부수 → 강화) */ return v + rr; }; // 난수는 예전과 같이 부를 때마다 한 번
     const id = can.sort((a, b) => sc(b) - sc(a))[0]; if (convJudge && isConv(A.nodes[id]) && !convOk(id)) break; if (atBuyV(run, A, id, pk, r)) break;
     sbEquip(run, A);
   }

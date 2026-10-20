@@ -464,17 +464,17 @@ const SKILLS2 = {
     { id: 'sb_redwind', row: 3, b: '혈인', tier: '하급', n: '붉은 바람', kind: 'spell', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 2 }] },
     { id: 'sb_taste', row: 4, b: '혈인', tier: '하급', n: '혈향', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 9 }, { k: 'exploit', s: 'bleed', per: 3 }] },
     { id: 'sb_chaincut', row: 4, b: '혈인', tier: '하급', n: '혈인 연참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, killRecharge: 1, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'bleed', n: 2 }] },
-    { id: 'sb_boil', row: 5, b: '혈인', tier: '하급', n: '혈염', kind: 'spell', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'imbue', s: 'bleed', n: 5 }, { k: 'st', s: 'protect', n: 1 }, { k: 'stam', n: 24 }] },
+    { id: 'sb_boil', row: 5, b: '혈인', tier: '하급', n: '피 먹인 칼', kind: 'spell', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'imbue', s: 'bleed', n: 5 }, { k: 'st', s: 'protect', n: 1 }, { k: 'stam', n: 24 }] },
     { id: 'sb_splash', row: 5, b: '혈인', tier: '하급', n: '선혈 비산', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'killSpread', per: 1 }] },
     { id: 'sb_vein', row: 6, b: '혈인', tier: '하급', n: '핏줄 끊기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 10 }, { k: 'exploit', s: 'bleed', per: 3 }, { k: 'lowx', hp: 0.3, mul: 2 }] },
     { id: 'sb_whirl', row: 6, b: '혈인', tier: '하급', n: '혈풍참', kind: 'cut', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'hasten', n: 1, on: 'kill' }] },
     { id: 'sb_pour', row: 7, b: '혈인', tier: '중급', n: '혈류 파열', kind: 'cut', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'bleed', n: 5 }, { k: 'brk', n: 28 }] },
     { id: 'sb_execchain', row: 7, b: '혈인', tier: '중급', n: '연쇄 처형', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, killRecharge: 1, fx: [{ k: 'dmg', n: 15 }, { k: 'kwx', s: 'bleed', mul: 1.5 }] },
-    { id: 'sb_bloodfog', row: 8, b: '혈인', tier: '중급', n: '피안개', kind: 'spell', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'st', s: 'bleed', n: 4 }, { k: 'imbue', s: 'bleed', n: 5 }] },
+    { id: 'sb_bloodfog', row: 8, b: '혈인', tier: '중급', n: '피안개', kind: 'spell', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'st', s: 'bleed', n: 4 }, { k: 'imbue', s: 'bleed', n: 4 }] }, /* M5-0c: 3고리 값 띠(칼에 싣는 출혈 5 → 4) */
     { id: 'sb_redrain', row: 8, b: '혈인', tier: '중급', n: '선혈 수확', kind: 'spell', tgt: 'all', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 6 }, { k: 'exploit', s: 'bleed', per: 1.5 }] },
     { id: 'sb_draw', row: 9, b: '혈인', tier: '중급', n: '혈각참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 14 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'edgeX', mul: 2 }] },
     { id: 'sb_redstorm', row: 9, b: '혈인', tier: '중급', n: '붉은 회오리', kind: 'cut', tgt: 'front', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'bleed', n: 1 }, { k: 'killSpread', per: 1 }] },
-    { id: 'sb_crimson', row: 10, b: '혈인', tier: '중급', n: '붉은 처형', kind: 'cut', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 9 }, { k: 'exploit', s: 'bleed', per: 8, take: 1 }, { k: 'lowx', hp: 0.35, mul: 1.5 }] },
+    { id: 'sb_crimson', row: 10, b: '혈인', tier: '중급', n: '붉은 처형', kind: 'cut', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 11 }, { k: 'exploit', s: 'bleed', per: 8, take: 1 }, { k: 'lowx', hp: 0.35, mul: 1.5 }] },
     { id: 'sb_feast', row: 10, b: '혈인', tier: '중급', n: '선혈 난무', kind: 'cut', tgt: 'front', time: 'normal', cd: 10, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'hasten', n: 2, on: 'kill' }] },
     { id: 'sb_scarlet', row: 11, b: '혈인', tier: '상급', n: '선홍 표식', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 4 }, { k: 'imbue', s: 'bleed', n: 5 }] },
     { id: 'sb_pathway', row: 11, b: '혈인', tier: '상급', n: '혈로 개척', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, killRecharge: 1, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'lowx', hp: 0.3, mul: 1.5 }] },
@@ -483,7 +483,7 @@ const SKILLS2 = {
     { id: 'sb_ledger', row: 13, b: '혈인', tier: '상급', n: '피의 결산', kind: 'cut', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 4 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'exploit', s: 'bleed', per: 5 }, { k: 'lowx', hp: 0.35, mul: 1.5 }] },
     { id: 'sb_deluge', row: 13, b: '혈인', tier: '상급', n: '혈우 낙하', kind: 'spell', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'killSpread', per: 1 }] },
     // 염검
-    { id: 'sb_spark', row: 1, b: '염검', tier: '하급', n: '불씨', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'ignite', n: 1 }] }, // 0.8.0 M5-0 리듬 칸(비용 1, 교대 아님)
+    { id: 'sb_spark', row: 1, b: '염검', tier: '하급', n: '불티', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'ignite', n: 1 }] }, // 0.8.0 M5-0 리듬 칸(비용 1, 교대 아님)
     { id: 'sb_flamecut', row: 1, b: '염검', tier: '하급', n: '염화 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'imbue', s: 'ignite', n: 3 }] }, // M5-0 보정 5 1고리 갈림: 근접, 칼에 화상 싣기
     { id: 'sb_ember', row: 1, b: '염검', tier: '하급', n: '불씨 투척', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'ignite', n: 4 }] },
     { id: 'sb_sparkcut', row: 1, b: '염검', tier: '하급', n: '불씨 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, hits: 2, fx: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'ignite', n: 3 }] },
@@ -492,8 +492,8 @@ const SKILLS2 = {
     { id: 'sb_ring', row: 3, b: '염검', tier: '하급', n: '화염 고리', kind: 'spell', tgt: 'all', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 5 }, { k: 'st', s: 'ignite', n: 1 }, { k: 'imbue', s: 'ignite', n: 4 }] },
     { id: 'sb_kindle', row: 3, b: '염검', tier: '하급', n: '염화 부여', kind: 'spell', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'imbue', s: 'ignite', n: 5 }, { k: 'st', s: 'protect', n: 1 }, { k: 'stam', n: 21 }] },
     { id: 'sb_snuff', row: 4, b: '염검', tier: '하급', n: '끊는 불길', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'ignite', n: 3 }, { k: 'cutx', brk: 60 }] },
-    { id: 'sb_char', row: 4, b: '염검', tier: '하급', n: '잔화 베기', kind: 'cut', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 6 }, { k: 'exploit', s: 'ignite', per: 2.5 }] },
-    { id: 'sb_brand', row: 5, b: '염검', tier: '하급', n: '불의 표식', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'ignite', n: 3 }, { k: 'kwx', s: 'ignite', mul: 1.5 }] },
+    { id: 'sb_char', row: 4, b: '염검', tier: '하급', n: '잔화 베기', kind: 'cut', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 7 }, { k: 'exploit', s: 'ignite', per: 2.5 }] }, /* M5-0c: 2고리 값 띠(피해 6 → 7) */
+    { id: 'sb_brand', row: 5, b: '염검', tier: '하급', n: '불의 표식', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'ignite', n: 3 }, { k: 'kwx', s: 'ignite', mul: 1.5 }] }, /* M5-0c: 2고리 값 띠(피해 10 → 7) */
     { id: 'sb_flamedown', row: 5, b: '염검', tier: '하급', n: '염검 강하', kind: 'cut', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'exploit', s: 'ignite', per: 3 }, { k: 'brk', n: 29 }] },
     { id: 'sb_sear', row: 6, b: '염검', tier: '하급', n: '작열참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 14 }, { k: 'st', s: 'ignite', n: 3 }] },
     { id: 'sb_flamedance', row: 6, b: '염검', tier: '하급', n: '불꽃 칼춤', kind: 'cut', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 10 }, { k: 'kwx', s: 'ignite', mul: 1.5 }] },
@@ -517,8 +517,8 @@ const SKILLS2 = {
     { id: 'sb_bolt', row: 2, b: '마갑', tier: '하급', n: '마갑탄', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'wardDmg', per: 0.5, spend: 0.5, cap: 12 }] },
     { id: 'sb_shard', row: 1, b: '마갑', tier: '하급', n: '마력 파편', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 9 }] }, // 0.8.0 M5-0 보정(10월 20일 만든 사람) 리듬 칸(비용 1, 교대 아님): 피해만 작게, 보호막 없음
     { id: 'sb_unravel', row: 2, b: '마갑', tier: '하급', n: '마력 교란', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'weak', n: 2 }, { k: 'alt', protect: 1 }] },
-    { id: 'sb_shell', row: 3, b: '마갑', tier: '하급', n: '마갑 전개', kind: 'spell', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'ward', n: 27 }, { k: 'st', s: 'protect', n: 1 }] },
-    { id: 'sb_beatcut', row: 3, b: '마갑', tier: '하급', n: '교차참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 8 }, { k: 'alt', run: 2, brk: 30 }] },
+    { id: 'sb_shell', row: 3, b: '마갑', tier: '하급', n: '마갑 전개', kind: 'spell', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'ward', n: 16 }, { k: 'st', s: 'protect', n: 1 }] }, /* M5-0c: 2고리 비용 2 값 띠(보호막 27 → 16) */
+    { id: 'sb_beatcut', row: 3, b: '마갑', tier: '하급', n: '교차참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 8 }, { k: 'alt', run: 2, brk: 30 }] }, /* M5-0c: 2고리 값 띠(피해 14 → 12) */
     { id: 'sb_rebuke', row: 4, b: '마갑', tier: '하급', n: '마갑 파쇄', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 5 }, { k: 'wardBurn', mul: 2.5, max: 6 }, { k: 'brk', n: 21 }] },
     { id: 'sb_rebound', row: 4, b: '마갑', tier: '하급', n: '반향 주문', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'cutx', brk: 41 }, { k: 'alt', stam: 10 }] },
     { id: 'sb_wardbolt', row: 5, b: '마갑', tier: '하급', n: '방벽 포격', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'wardDmg', per: 1, spend: 0.5, cap: 18 }] },
@@ -527,7 +527,7 @@ const SKILLS2 = {
     { id: 'sb_sunder', row: 6, b: '마갑', tier: '하급', n: '균열 주문', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 6 }, { k: 'alt', run: 2, brk: 30 }] },
     { id: 'sb_armor', row: 7, b: '마갑', tier: '중급', n: '마갑 연성', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'wardFill', to: 0.5 }, { k: 'dmg', n: 12 }, { k: 'brk', n: 16 }] },
     { id: 'sb_weave', row: 7, b: '마갑', tier: '중급', n: '마검 교직', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 8 }, { k: 'alt', run: 2, brk: 35, ward: 4 }] },
-    { id: 'sb_spellguard', row: 8, b: '마갑', tier: '중급', n: '마갑 방출', kind: 'spell', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 7 }, { k: 'wardDmg', per: 0.5, spend: 1, drainAll: true, cap: 16 }] },
+    { id: 'sb_spellguard', row: 8, b: '마갑', tier: '중급', n: '마갑 방출', kind: 'spell', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 8 }, { k: 'wardDmg', per: 0.8, spend: 1, drainAll: true, cap: 20 }] }, /* M5-0c: 3고리 비용 3 값 띠(피해 7 → 8, 보호막 비례 0.5 → 0.8, 상한 16 → 20) */
     { id: 'sb_reverse', row: 8, b: '마갑', tier: '중급', n: '역영창', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 8 }, { k: 'alt', run: 2, ward: 6, protect: 2 }] },
     { id: 'sb_embershell', row: 9, b: '마갑', tier: '중급', n: '잔화 방벽', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'wardBurn', mul: 3, max: 9 }, { k: 'ward', n: 5 }] },
     { id: 'sb_rhythm', row: 9, b: '마갑', tier: '중급', n: '마검 연무', kind: 'cut', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 10 }, { k: 'brk', n: 9 }, { k: 'alt', ward: 4 }, { k: 'hasten', n: 1, on: 'alt' }] },
@@ -535,7 +535,7 @@ const SKILLS2 = {
     { id: 'sb_finale', row: 10, b: '마갑', tier: '중급', n: '마검 일섬', kind: 'cut', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 26 }, { k: 'brk', n: 25 }, { k: 'alt', run: 2, brk: 30 }, { k: 'brokenx', mul: 1.5 }] },
     /* ===== 0.8.0 M5-0 마검사 경계 (10월 19일 만든 사람 결정, 문장 그대로). b = 경계 이름. 새 효과는 js/10-skills-engine.js의 마검사 경계 절, 값(v)은 data/skillkit.js skValue의 경계 식 ===== */
     { id: 'sb_bloodfire', row: 4, b: '혈염', tier: '중급', n: '핏불 싣기', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'imbue', s: 'bleed', n: 3 }, { k: 'imbue', s: 'ignite', n: 4, also: 1, txt: '칼에 출혈 3 · 화상 4를 함께 싣는다.' }] },
-    { id: 'sb_searcut', row: 7, b: '혈염', tier: '중급', n: '혈염', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 20 }, { k: 'searMerge', txt: '출혈 · 화상이 둘 다 걸린 적을 베면 둘을 합쳐 새 상태 혈염(차례마다 (출혈 + 화상) × 1.5 피해, 정화되지 않음)으로 바꾼다. 혈염 걸린 적이 있는 동안 교대 보호막이 없다.' }] },
+    { id: 'sb_searcut', row: 7, b: '혈염', tier: '중급', n: '혈염 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 20 }, { k: 'searMerge', txt: '출혈 · 화상이 둘 다 걸린 적을 베면 둘을 합쳐 새 상태 혈염(차례마다 (출혈 + 화상) × 1.5 피해, 정화되지 않음)으로 바꾼다. 혈염 걸린 적이 있는 동안 교대 보호막이 없다.' }] },
     { id: 'sb_kalpa', row: 10, b: '혈염', tier: '중급', n: '겁화', kind: 'spell', tgt: 'self', time: 'normal', cd: 9, line: '「피와 화염이 몸을 감싸니, 그것은 곧 겁화일지어다.」', cut: 'blade', pay: '보호막 전부 소실, 받는 피해 +30%.', fx: [{ k: 'sbBlaze', n: 3, txt: '3차례 동안 모든 베기에 혈염, 주는 피해 +60%.' }] }, // M5-0a: 대사(line) · 컷인(cut) · 대가(pay)는 따로
     { id: 'sb_bloodmail', row: 4, b: '죄인의 피', tier: '중급', n: '피의 갑주', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'wardPer', s: 'bleed', n: 17, txt: '출혈 걸린 적 하나마다 보호막 +17.' }] },
     { id: 'sb_film', row: 7, b: '죄인의 피', tier: '중급', n: '피막', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'sbFilm', txt: '이번 차례 보호막으로 받아낸 피해의 75%를 그 적에게 출혈로.' }] }, // M5-0 보정 5(만든 사람): 3고리 공격 칸으로(베기 + 피막)
@@ -546,6 +546,7 @@ const SKILLS2 = {
     /* 0.8.0 M5-0 보정 4(10월 20일 만든 사람 초안): 경계 둘째 칸(2고리) · 3고리 둘째. 꼴은 초안 그대로, 숫자는 값 띠에 맞췄다(data/skillkit.js SB_BOUND). 엔진은 js/10-skills-engine.js 마검사 경계 절 */
     { id: 'sb_hotedge', row: 5, b: '혈염', tier: '중급', n: '달아오른 칼날', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'sbCross', txt: '출혈 걸린 적에게 화상 +4, 화상 걸린 적에게 출혈 +4.' }] },
     { id: 'sb_searspread', row: 8, b: '혈염', tier: '중급', n: '핏불 번짐', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'searSpread', txt: '혈염 걸린 적을 쓰러뜨리면 곁의 적에게 그 혈염.' }] },
+    { id: 'sb_searveil', row: 8, b: '혈염', tier: '중급', n: '핏불 장막', kind: 'spell', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'ward', n: 22 }, { k: 'wardPer', s: 'sear', n: 10, txt: '혈염 걸린 적 하나마다 보호막 +10(보호막 상한까지).' }] }, // 0.8.0 M5-0c(10월 20일 만든 사람): 혈염 3고리 방어 칸. 혈염 걸린 적 하나마다 보호막 +10(혈염의 대가 "교대 보호막 없음"을 메운다). 값 띠에 맞춰 바탕 보호막 22
     { id: 'sb_sinstrike', row: 5, b: '죄인의 피', tier: '중급', n: '죄인의 일격', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 8 }, { k: 'wardDmg', per: 0.5, spend: 0, cap: 12 }, { k: 'st', s: 'bleed', n: 2 }] }, // M5-0 보정 5: 막아 낸 만큼 되갚는 칼(지금 보호막에 비례한 피해 + 출혈, 보호막은 쓰지 않음)
     { id: 'sb_shackle', row: 8, b: '죄인의 피', tier: '중급', n: '피의 족쇄', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'sbShackle', txt: '이번 전투 동안 출혈 걸린 적의 강타를 막아 내면 그 적에게 붕괴 +90.' }] },
     { id: 'sb_embercut', row: 5, b: '유산의 불', tier: '중급', n: '잿불 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 9 }, { k: 'sbEmberCut', txt: '보호막을 6까지 태워 그만큼 화상을 건다.' }] }, // M5-0 보정 5: 보호막을 조금 태워 그만큼 화상
@@ -931,10 +932,11 @@ const EQUIP_SLOTS2 = 4;
 /* 0.8.0 M5-0 보정 5(10월 20일 만든 사람, M14 선행: 마검사만): 스킬 꼬리표. 결합 칸의 조건(requires.tags)과 빌드 꼬리표 프로필(BD-9)이 읽는다.
    어휘: 출혈 · 화상 · 혈염 · 보호막 · 교대 · 붕괴 · 싣기 · 기본공격연동 · 흘리기 · 광역 · 빠름 */
 const SB_TAGS = {
+  sb_crimson: ['출혈'], sb_bloodfog: ['출혈', '싣기', '기본공격연동'], sb_brand: ['화상'], sb_inferno: ['화상'], sb_beatcut: ['교대', '붕괴'], sb_spellguard: ['보호막', '광역'], /* M5-0c: 새로 트리에 든 칸 */
   sb_bleedcut: ['출혈'], sb_bloodmark: ['출혈', '싣기'], sb_blooddrop: ['출혈'], sb_boil: ['출혈', '싣기', '빠름'], sb_taste: ['출혈'], sb_redwind: ['출혈', '광역'], sb_deluge: ['출혈', '광역'],
   sb_ember: ['화상'], sb_flamecut: ['화상', '싣기'], sb_spark: ['화상'], sb_kindle: ['화상', '싣기', '빠름'], sb_char: ['화상', '빠름'], sb_tome: ['화상', '싣기'], sb_hellfire: ['화상', '붕괴'],
   sb_bladeward: ['보호막', '교대'], sb_bolt: ['보호막', '빠름'], sb_shard: [], sb_unravel: ['교대'], sb_turn: ['교대', '빠름'], sb_shell: ['보호막', '빠름'], sb_finale: ['붕괴', '교대'],
-  sb_bloodfire: ['출혈', '화상', '싣기'], sb_hotedge: ['출혈', '화상'], sb_searcut: ['혈염'], sb_searspread: ['혈염'], sb_kalpa: ['혈염'],
+  sb_bloodfire: ['출혈', '화상', '싣기'], sb_hotedge: ['출혈', '화상'], sb_searcut: ['혈염'], sb_searspread: ['혈염'], sb_searveil: ['혈염', '보호막'], sb_kalpa: ['혈염'],
   sb_bloodmail: ['보호막', '출혈'], sb_sinstrike: ['보호막', '출혈'], sb_film: ['보호막', '출혈'], sb_shackle: ['출혈', '붕괴'], sb_sinwall: ['보호막', '출혈'],
   sb_bloodfist: ['출혈', '기본공격연동'], sb_counterburn: ['화상', '흘리기'], sb_tricolor: ['출혈', '화상', '보호막'], sb_searburst: ['혈염', '광역'], sb_atone: ['보호막', '출혈'], sb_ashstorm: ['화상', '광역'],
   sb_heatmail: ['보호막', '기본공격연동'], sb_embercut: ['보호막', '화상'], sb_embermail: ['화상', '기본공격연동'], sb_cindermail: ['보호막', '화상'], sb_firebody: ['화상', '기본공격연동'],
