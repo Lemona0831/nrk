@@ -150,8 +150,10 @@ html.rm .dpop{animation:popfade 1.4s linear forwards}
 @media (prefers-reduced-motion:reduce){.fstat.st-fire{animation:none;box-shadow:0 0 10px rgba(240,172,72,.5)}}
 html.rm .fstat.st-fire{animation:none;box-shadow:0 0 10px rgba(240,172,72,.5)}
 /* 설명란(data/skillkit.js skDescHtml): 대사는 위에 따로 한 칸(명조 · 경계 색 줄), 효과 · 대가 · 대상은 아래 줄 단위. 대가는 색과 "대가" 글자를 함께 */
-.skd{display:grid;gap:6px;margin:4px 0}
-.skd-line{margin:0;padding:8px 10px;border-left:2px solid var(--lc,#c9a24b);background:linear-gradient(90deg,rgba(255,255,255,.04),transparent);border-radius:0 6px 6px 0;font-family:'Nanum Myeongjo','Noto Serif KR',serif;font-weight:700;font-size:calc(14px*var(--fs,1));line-height:1.6;color:#efe6d6;word-break:keep-all}
+.skd{display:grid;gap:8px;margin:6px 0}
+.skd-line{position:relative;margin:0;padding:16px 14px 12px;text-align:center;font-family:'Nanum Myeongjo','Noto Serif KR',serif;font-weight:700;font-size:calc(15px*var(--fs,1));line-height:1.7;color:#efe6d6;word-break:keep-all;text-wrap:balance;border-bottom:1px solid color-mix(in srgb,var(--lc,#c9a24b) 35%,transparent)}
+.skd-line::before{content:'✦';position:absolute;left:0;right:0;top:-2px;font-size:10px;line-height:1;color:var(--lc,#c9a24b);background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--lc,#c9a24b) 55%,transparent) 20%,transparent 44%,transparent 56%,color-mix(in srgb,var(--lc,#c9a24b) 55%,transparent) 80%,transparent) center/100% 1px no-repeat}
+.skd-q{color:var(--lc,#c9a24b);font-size:1.35em;line-height:0;vertical-align:-.12em;opacity:.9;margin:0 .12em;text-shadow:0 0 10px color-mix(in srgb,var(--lc,#c9a24b) 45%,transparent)}
 .skd-rows{display:grid;gap:3px;font-size:calc(13px*var(--fs,1));line-height:1.55}
 .skd-r{display:grid;grid-template-columns:3.4em 1fr;gap:6px}
 .skd-r .k{color:var(--muted);font-size:calc(12px*var(--fs,1))}
