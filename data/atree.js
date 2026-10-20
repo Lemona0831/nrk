@@ -44,8 +44,8 @@ const ATREE_DEF = {
         ['sbv_bleedcut_fast', '스치는 칼', '빠른 칸이 됩니다. 피해 8 → 7.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 7 }] }, ['빠름'], { v: 'deep' }],
         ['sbv_bleedcut_burn', '불붙은 상처', '화상 2를 더 겁니다. 출혈 4 → 3.', { fxSet: [{ k: 'st', s: 'bleed', n: 3 }], fxAdd: [{ k: 'st', s: 'ignite', n: 2 }] }, ['화상'], { v: 'link' }]],
       sb_bloodmark: [
-        ['sbv_mark_fast', '서두른 낙인', '빠른 칸이 됩니다. 피해 7 → 5.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 5 }] }, ['빠름'], { v: 'deep' }],
-        ['sbv_mark_ward', '핏빛 방패 낙인', '보호막 +5를 두릅니다. 피해 7 → 5.', { fxSet: [{ k: 'dmg', n: 5 }], fxAdd: [{ k: 'ward', n: 5 }] }, ['보호막'], { v: 'link' }]],
+        ['sbv_mark_fast', '서두른 낙인', '빠른 칸이 됩니다. 피해 5 → 4.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 4 }] }, ['빠름'], { v: 'deep' }],
+        ['sbv_mark_ward', '핏빛 방패 낙인', '보호막 +5를 두릅니다. 피해 5 → 3.', { fxSet: [{ k: 'dmg', n: 3 }], fxAdd: [{ k: 'ward', n: 5 }] }, ['보호막'], { v: 'link' }]],
       sb_blooddrop: [
         ['sbv_drop_kill', '핏방울 거두기', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유).', { set: { killRecharge: 1 } }, ['처치'], { v: 'deep' }],
         ['sbv_drop_edge', '피 묻히기', '칼에 출혈 2를 싣습니다(다음 기본 공격에).', { fxAdd: [{ k: 'imbue', s: 'bleed', n: 2 }] }, ['싣기', '기본공격연동'], { v: 'link' }]],
@@ -110,7 +110,7 @@ const ATREE_DEF = {
         ['sbv_he_fast', '달아오른 손놀림', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
         ['sbv_he_ward', '달군 칼막', '보호막 +5를 두릅니다.', { fxAdd: [{ k: 'ward', n: 5 }] }, ['보호막'], { v: 'link' }]],
       sb_searcut: [
-        ['sbv_sc_fast', '혈염 찌르기', '빠른 칸이 됩니다. 피해 20 → 15.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 15 }] }, ['빠름'], { v: 'deep' }],
+        ['sbv_sc_fast', '혈염 찌르기', '빠른 칸이 됩니다. 피해 22 → 16.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 16 }] }, ['빠름'], { v: 'deep' }],
         ['sbv_sc_resp', '받아친 혈염', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기'], { v: 'link' }]],
       sb_searveil: [
         ['sbv_sv_fast', '서두른 장막', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
