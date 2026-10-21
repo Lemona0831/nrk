@@ -645,7 +645,7 @@ const ATREE_DEF = {
         ['ev_fb_more', '짙은 화염탄', '화상 3 → 5.', { fxSet: [{ k: 'st', s: 'ignite', n: 5 }] }, [], { v: 'deep' }],
         ['ev_fb_chill', '서리 낀 화염', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
       e5_sparks: [
-        ['ev_sp_deep', '굵은 불똥', '느린 행동이 됩니다. 피해 10 → 14.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 14 }] }, [], { v: 'deep' }],
+        ['ev_sp_deep', '굵은 불똥', '느린 행동이 됩니다. 피해 12 → 17.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 17 }] }, [], { v: 'deep' }],
         ['ev_sp_vuln', '드러내는 불똥', '취약 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'vuln', n: 1 }] }, ['취약'], { v: 'link' }]],
       e5_cloak: [
         ['ev_cl_more', '긴 외투', '5라운드 → 7라운드.', { fxSet: [{ k: 'elRimeR', s: 'ignite', r: 7 }] }, [], { v: 'deep' }],
@@ -666,7 +666,7 @@ const ATREE_DEF = {
         ['ev_is_more', '깊은 얼음 창', '둔화 2 → 3.', { fxSet: [{ k: 'st', s: 'chill', n: 3 }] }, [], { v: 'deep' }],
         ['ev_is_ign', '달군 얼음 창', '화상 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'ignite', n: 1 }] }, ['화상'], { v: 'link' }]],
       e5_frostarmor: [
-        ['ev_fa_more', '긴 갑옷', '7라운드 → 9라운드.', { fxSet: [{ k: 'elRimeR', s: 'chill', r: 9 }] }, [], { v: 'deep' }],
+        ['ev_fa_more', '긴 갑옷', '8라운드 → 10라운드.', { fxSet: [{ k: 'elRimeR', s: 'chill', r: 10 }] }, [], { v: 'deep' }],
         ['ev_fa_prot', '얼음 껍질', '쓸 때 나에게 보호 1.', { fxAdd: [{ k: 'st', s: 'protect', n: 1 }] }, ['보호'], { v: 'link' }]],
       e5_rimefrost: [
         ['ev_rf_two', '두 줄기 서릿발', '두 발을 쏩니다.', { set: { hits: 2 } }, [], { v: 'deep' }],
@@ -684,7 +684,7 @@ const ATREE_DEF = {
         ['ev_cw_deep', '긴 한파', '느린 행동이 됩니다. 피해 17 → 24.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 24 }] }, [], { v: 'deep' }],
         ['ev_cw_vuln', '드러내는 한파', '취약 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'vuln', n: 1 }] }, ['취약'], { v: 'link' }]],
       e5_charge: [
-        ['ev_ch_four', '네 번 응축', '기본 공격 3번 → 4번.', { fxSet: [{ k: 'elCharge', n: 4, txt: '다음 기본 공격 4번 피해 +10' }] }, [], { v: 'deep' }],
+        ['ev_ch_four', '네 번 응축', '기본 공격 4번 → 5번.', { fxSet: [{ k: 'elCharge', n: 5, txt: '다음 기본 공격 5번 피해 +8' }] }, [], { v: 'deep' }],
         ['ev_ch_ign', '불 실은 응축', '그 기본 공격에 화상 1.', { fxAdd: [{ k: 'elChargeEl', ign: 1, txt: '그 기본 공격에 화상 1' }] }, ['화상'], { v: 'link' }]],
       e5_barrier: [
         ['ev_ba_more', '두꺼운 방벽', '보호막 32 → 40.', { fxSet: [{ k: 'ward', n: 40 }] }, [], { v: 'deep' }],
@@ -702,7 +702,7 @@ const ATREE_DEF = {
         ['ev_ar_deep', '깊은 비전', '×2 → ×2.5.', { fxSet: [{ k: 'elArcane', mul: 2.5, txt: '취약 걸린 적에게 ×2.5' }] }, [], { v: 'deep' }],
         ['ev_ar_brk', '부수는 비전', '붕괴 +20.', { fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
       e5_ward: [
-        ['ev_wd_long', '긴 결계', '6라운드 → 7라운드.', { fxSet: [{ k: 'elBarrier', r: 7, txt: '7라운드 받는 피해 −40%' }] }, [], { v: 'deep' }],
+        ['ev_wd_long', '긴 결계', '6라운드 → 7라운드.', { fxSet: [{ k: 'elBarrier', r: 7, txt: '7라운드 받는 피해 −42%' }] }, [], { v: 'deep' }],
         ['ev_wd_chill', '얼음 결계', '쓸 때 대상 없이 나를 친 적에게 다음 3번 둔화 1.', { fxAdd: [{ k: 'rime', s: 'chill', n: 1, times: 3 }] }, ['둔화'], { v: 'link' }]],
       e5_weave: [
         ['ev_wv_deep', '굵은 엮기', '피해 12 → 16.', { fxSet: [{ k: 'dmg', n: 16 }] }, [], { v: 'deep' }],
