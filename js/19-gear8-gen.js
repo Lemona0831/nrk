@@ -10,21 +10,26 @@ const G8GEN = {
   uq: { r: 0.2, h: 0.35 }, own: 0.6, afN: { n: 0, m: 1, r: 2, h: 2 },
   slotW: { even: { weapon: 1, armor: 1, gloves: 1, amulet: 1, ring: 1, flask: 1 }, boss: { weapon: 2, armor: 2, gloves: 1, amulet: 1, ring: 1, flask: 1 } },
   reroll: { m: 40, r: 90, h: 200, chMul: 1.5, n: 1.6 },
-  aim: { m: [0.65, 1], r: [0.1, 0.45] }, // 값을 띠의 이 몫 안으로 겨눈다(못 맞추면 띠 전체) — 챕터 곡선(E4 · 9절): 1챕 희귀 ≈ 2챕 고급, 2챕 희귀 ≈ 3챕 고급 // 다시 굴리기 값 = 기준가(등급) × 1.5^(챕터−1) × 1.6^(그 장비를 굴린 횟수)
+  aim: { m: [0.65, 1], r: [0.1, 0.45] },
+  noAf: 0, noWpnAf: 0, // M6-3 측정 손잡이(DG_NOAF · DG_NOWPNAF): 기반만 · 무기만 접사 없음(K 실측 · 무기 = 평타) // 값을 띠의 이 몫 안으로 겨눈다(못 맞추면 띠 전체) — 챕터 곡선(E4 · 9절): 1챕 희귀 ≈ 2챕 고급, 2챕 희귀 ≈ 3챕 고급 // 다시 굴리기 값 = 기준가(등급) × 1.5^(챕터−1) × 1.6^(그 장비를 굴린 횟수)
   dirTags: { pw: ['기본공격연동'], ct: ['붕괴'], ag: ['흘리기', '몸 빼기'], lg: ['처치'], su: ['보호막', '기'], sv: ['막기', '보호막'] }, // 패시브 방향 → 빌드 꼬리표
 };
 const G8_ORDER = ['n', 'm', 'r', 'h'];
 /* ---- 점수(5절, tools/item-score.js와 같은 식 — item-check가 둘을 맞춰 본다) ---- */
 function g8Trig(A) { const T = Object.assign({}, ITEM_V.trig), tg = A.tags || []; if (tg.includes('흘리기') || tg.includes('막기')) Object.assign(T, { parry: ITEM_V.trigTag.parry, guard: ITEM_V.trigTag.guard, guardHit: ITEM_V.trigTag.guardHit }); else if (tg.includes('기본공격연동') && !A.fix) Object.assign(T, { basic: ITEM_V.trigTag.basic, heavy: ITEM_V.trigTag.heavy }); else if (tg.includes('붕괴')) T.heavy = ITEM_V.trigTag.heavy; return T; }
-function g8VAf(id, v, t) {
+/* M6-3 실측 보정(ITEM_V.obs): 접사 한 점의 값 × 1/af, 그 직업(장비를 얻은 직업 k)이면 × 1/cls. 고정 값 · 상태 겹 접사는 빼고 */
+const g8ObsK = (A, cls) => A.fix || ITEM_V.obs.keep.includes(A.vs.u) ? 1 : 1 / ITEM_V.obs.af / ((cls && ITEM_V.obs.cls[cls]) || 1);
+const g8ClsC = (A, cls) => A.fix || ITEM_V.obs.keep.includes(A.vs.u) ? 1 : (cls && ITEM_V.obs.cls[cls]) || 1; // 직업 배율: 단 범위에 곱한다
+function g8VAf(id, v, t, cls) { return g8VAf0(id, v, t) * g8ObsK(AFFIX[id], cls); }
+function g8VAf0(id, v, t) {
   const A = AFFIX[id], S = A.vs, U = ITEM_V.unit, T = g8Trig(A), P = ITEM_V.pool, m = ITEM_V.chMul[(t || 1) - 1], p = S.p == null ? 1 : typeof S.p === 'number' ? S.p : ITEM_V.p[S.p];
   if (S.k === 'flat') return U[S.u] * v * T[S.per] * p * (ITEM_V.scale.includes(S.u) ? m : 1); if (S.k === 'pct') return (v / 100) * P[S.pool] * T[S.per] * p * m;
   if (S.k === 'inr') return U.inRed * (v / 100) * (S.pool ? P[S.pool] * T[S.per] : P.taken) * p * m; if (S.k === 'stat') return U[S.u] * v; return 0;
 }
-function g8VAfs(list, t) { const seen = {}; let s = 0; for (const a of list) { const A = AFFIX[a.id], k = A.vs.per || A.vs.u || a.id; const n = seen[k] = (seen[k] || 0) + 1; s += g8VAf(a.id, a.v, t) * ITEM_V.ov[Math.min(n, ITEM_V.ov.length) - 1]; } return s; }
+function g8VAfs(list, t, cls) { const seen = {}; let s = 0; for (const a of list) { const A = AFFIX[a.id], k = A.vs.per || A.vs.u || a.id; const n = seen[k] = (seen[k] || 0) + 1; s += g8VAf(a.id, a.v, t, cls) * ITEM_V.ov[Math.min(n, ITEM_V.ov.length) - 1]; } return s; }
 function g8VBase(it) { const x = itemBase(it); return x.k === 'wpn' ? x.v * ITEM_V.trig.basic : x.k === 'hp' ? x.v * ITEM_V.unit.hp : x.k === 'st' ? x.v * ITEM_V.unit.st : x.k === 'flask' ? x.v * 100 * ITEM_V.unit.flaskPct : 0; }
 const g8Afs = it => (it.af || []).concat(it.ax ? [it.ax] : []);
-function g8V(it) { if (!isG8(it)) return 0; const U = it.uq && UNIQUE[it.uq]; return g8VBase(it) + g8VAfs(g8Afs(it), U ? U.ch : it.ch) + (U ? U.vr - U.vc : 0); }
+function g8V(it) { if (!isG8(it)) return 0; const U = it.uq && UNIQUE[it.uq]; return g8VBase(it) + g8VAfs(g8Afs(it), U ? U.ch : it.ch, U ? (U.cls === 'all' ? null : U.cls) : it.k) + (U ? U.vr - U.vc : 0); }
 const g8Band = (g, t) => { const m = ITEM_V.chMul[(t || 1) - 1]; return (ITEM_V.band[g] || [0, 0]).map(x => x * m); };
 /* ---- 지금 빌드(6-3) ---- */
 function g8BuildTags(run) {
@@ -47,31 +52,32 @@ function g8Grade(ch, where) {
   return g;
 }
 function g8Shape(build, slot) { const L = Object.keys(AFFIX_BASE).filter(k => AFFIX_BASE[k].slot === slot && (AFFIX_BASE[k].cls === 'all' || AFFIX_BASE[k].cls.includes(build))); return L[Math.floor(Math.random() * L.length)]; }
-function g8Pool(slot, cls, t, g, used, ax) {
+function g8Pool(slot, cls, t, g, used, ax, kc) {
   return Object.keys(AFFIX).filter(id => { const A = AFFIX[id]; if (!!A.ax !== !!ax || A.pool === false || !A.slot.includes(slot) || !A.tier[t] || used.includes(A.fam)) return false;
-    if (ax ? A.cls !== cls : !(A.cls === 'all' || A.cls === cls)) return false; if (g === 'm') { if (A.pair && A.pair.includes(t)) return false; const B = g8Band('m', t), [lo, hi] = A.tier[t]; if (g8VAf(id, lo, t) > B[1] + 1e-9 || g8VAf(id, hi, t) < B[0] - 1e-9) return false; } return true; });
+    if (ax ? A.cls !== cls : !(A.cls === 'all' || A.cls === cls)) return false; if (g === 'm') { if (A.pair && A.pair.includes(t)) return false; const B = g8Band('m', t), [lo, hi] = g8Rng(id, t, kc); if (g8VAf(id, lo, t, kc) > B[1] + 1e-9 || g8VAf(id, hi, t, kc) < B[0] - 1e-9) return false; } return true; });
 }
-const g8RollV = (id, t) => { const [lo, hi] = AFFIX[id].tier[t]; return lo + Math.floor(Math.random() * (hi - lo + 1)); };
+const g8Rng = (id, t, cls) => { const c = g8ClsC(AFFIX[id], cls), [lo, hi] = AFFIX[id].tier[t]; return c === 1 ? [lo, hi] : [Math.max(1, Math.round(lo * c)), Math.max(1, Math.round(hi * c))]; };
+const g8RollV = (id, t, cls) => { const [lo, hi] = g8Rng(id, t, cls); return lo + Math.floor(Math.random() * (hi - lo + 1)); };
 /* 값을 등급 띠 안으로: 다시 굴리기 최대 5번, 그래도 밖이면 가장 가까운 값으로(바꿀 수 있는 접사만) */
-function g8Fit(list, t, band, free) {
-  const inB = () => { const v = g8VAfs(list, t); return v >= band[0] - 1e-9 && v <= band[1] + 1e-9; };
-  for (let k = 0; k < 5 && !inB(); k++) for (const i of free) list[i].v = g8RollV(list[i].id, t);
-  for (let guard = 0; guard < 400 && !inB(); guard++) { const v = g8VAfs(list, t), dir = v < band[0] ? 1 : -1; let moved = false;
-    for (const i of free) { const [lo, hi] = AFFIX[list[i].id].tier[t]; const nv = list[i].v + dir; if (nv >= lo && nv <= hi) { list[i].v = nv; moved = true; if (inB()) break; } } if (!moved) break; }
+function g8Fit(list, t, band, free, cls) {
+  const inB = () => { const v = g8VAfs(list, t, cls); return v >= band[0] - 1e-9 && v <= band[1] + 1e-9; };
+  for (let k = 0; k < 5 && !inB(); k++) for (const i of free) list[i].v = g8RollV(list[i].id, t, cls);
+  for (let guard = 0; guard < 400 && !inB(); guard++) { const v = g8VAfs(list, t, cls), dir = v < band[0] ? 1 : -1; let moved = false;
+    for (const i of free) { const [lo, hi] = g8Rng(list[i].id, t, cls); const nv = list[i].v + dir; if (nv >= lo && nv <= hi) { list[i].v = nv; moved = true; if (inB()) break; } } if (!moved) break; }
   return inB();
 }
-function g8Affixes(slot, cls, t, g, want) {
+function g8Affixes(slot, cls, t, g, want, kc) {
   const n = G8GEN.afN[g] || 0; if (!n) return { af: [], ax: null };
   for (let tries = 0; tries < 30; tries++) {
     const used = [], af = []; let pairs = 0;
     for (let k = 0; k < n; k++) {
-      let P = g8Pool(slot, cls, t, g, used, false).filter(id => !(AFFIX[id].pair && AFFIX[id].pair.includes(t)) || (pairs === 0 && n >= 2));
+      let P = g8Pool(slot, cls, t, g, used, false, kc).filter(id => !(AFFIX[id].pair && AFFIX[id].pair.includes(t)) || (pairs === 0 && n >= 2));
       if (k === 0 && want && want.size) { const W = P.filter(id => (AFFIX[id].tags || []).some(x => want.has(x))); if (W.length) P = W; }
-      if (!P.length) break; const id = P[Math.floor(Math.random() * P.length)]; if (AFFIX[id].pair && AFFIX[id].pair.includes(t)) pairs++; used.push(AFFIX[id].fam); af.push({ id, v: g8RollV(id, t) });
+      if (!P.length) break; const id = P[Math.floor(Math.random() * P.length)]; if (AFFIX[id].pair && AFFIX[id].pair.includes(t)) pairs++; used.push(AFFIX[id].fam); af.push({ id, v: g8RollV(id, t, kc) });
     }
     if (af.length < n) continue;
-    let ax = null; if (g === 'h') { let P = g8Pool(slot, cls, t, g, [], true); if (want && want.size) { const W = P.filter(id => (AFFIX[id].tags || []).some(x => want.has(x))); if (W.length) P = W; } if (!P.length) continue; const id = P[Math.floor(Math.random() * P.length)]; ax = { id, v: g8RollV(id, t) }; }
-    const list = af.concat(ax ? [ax] : []), B = g8Band(g, t), W = G8GEN.aim[g]; if (g8Fit(list, t, W ? [B[0] + W[0] * (B[1] - B[0]), B[0] + W[1] * (B[1] - B[0])] : B, list.map((x, i) => i)) || g8Fit(list, t, B, list.map((x, i) => i))) return { af: list.slice(0, af.length), ax };
+    let ax = null; if (g === 'h') { let P = g8Pool(slot, cls, t, g, [], true, kc); if (want && want.size) { const W = P.filter(id => (AFFIX[id].tags || []).some(x => want.has(x))); if (W.length) P = W; } if (!P.length) continue; const id = P[Math.floor(Math.random() * P.length)]; ax = { id, v: g8RollV(id, t, kc) }; }
+    const list = af.concat(ax ? [ax] : []), B = g8Band(g, t), W = G8GEN.aim[g]; if (g8Fit(list, t, W ? [B[0] + W[0] * (B[1] - B[0]), B[0] + W[1] * (B[1] - B[0])] : B, list.map((x, i) => i), kc) || g8Fit(list, t, B, list.map((x, i) => i), kc)) return { af: list.slice(0, af.length), ax };
   }
   return null;
 }
@@ -80,14 +86,15 @@ function g8Gen(run, o) {
   o = o || {}; const ch = Math.min(3, Math.max(1, o.ch || run.ch || 1)), build = run.build;
   const want0 = o.want === true ? g8BuildTags(run) : o.want || null;
   let slot = o.slot || g8Pick(G8GEN.slotW[o.where === 'boss' ? 'boss' : 'even']); let g = o.g || g8Grade(ch, o.where);
-  if (!o.slot && want0 && want0.size) { const ok = sl => g8Pool(sl, build, ch, 'm', [], false).some(id => (AFFIX[id].tags || []).some(x => want0.has(x))); if (!ok(slot)) { const L = Object.keys(G8GEN.slotW.even).filter(ok); if (L.length) slot = L[Math.floor(Math.random() * L.length)]; } } /* 보장 자리는 빌드 꼬리표 접사가 있는 슬롯으로 */
+  if (!o.slot && want0 && want0.size) { const ok = sl => g8Pool(sl, build, ch, 'm', [], false, build).some(id => (AFFIX[id].tags || []).some(x => want0.has(x))); if (!ok(slot)) { const L = Object.keys(G8GEN.slotW.even).filter(ok); if (L.length) slot = L[Math.floor(Math.random() * L.length)]; } } /* 보장 자리는 빌드 꼬리표 접사가 있는 슬롯으로 */
   if (g === 'l') g = 'h'; if (g === 'h' && ch < 2 && !o.g) g = 'r';
   let own = o.own != null ? o.own : (g === 'h' || Math.random() < G8GEN.own); if (g === 'h') own = true; // 영웅 축은 직업 축이다
   const want = want0;
+  const bare = G8GEN.noAf || (G8GEN.noWpnAf && slot === 'weapon'); if (bare) return mkItem8({ base: g8Shape(build, slot), g, ch, b: rollBonus(g) }); /* M6-3 측정: 접사 없이(같은 굴림 순서는 아님) */
   if (!o.noUq && (g === 'r' || g === 'h') && Math.random() < G8GEN.uq[g]) { const u = g8PickUq(run, slot, g, ch, own); if (u) { const it = mkUq(u, ch); (run.uqSeen = run.uqSeen || []).push(u); return it; } }
   const base = g8Shape(build, slot); let g2 = g; if (want && g2 === 'n') g2 = 'm'; // 보장 자리는 접사가 있어야 맞는다
-  let A = g8Affixes(slot, own ? build : 'all', ch, g2, want); if (!A) { A = g8Affixes(slot, own ? build : 'all', ch, 'm', want) || { af: [], ax: null }; g2 = A.af.length ? 'm' : 'n'; }
-  return mkItem8({ base, g: g2, ch, b: rollBonus(g2), af: A.af.map(a => [a.id, a.v]), ax: A.ax ? [A.ax.id, A.ax.v] : null });
+  let A = g8Affixes(slot, own ? build : 'all', ch, g2, want, build); if (!A) { A = g8Affixes(slot, own ? build : 'all', ch, 'm', want, build) || { af: [], ax: null }; g2 = A.af.length ? 'm' : 'n'; }
+  const it = mkItem8({ base, g: g2, ch, b: rollBonus(g2), af: A.af.map(a => [a.id, a.v]), ax: A.ax ? [A.ax.id, A.ax.v] : null }); it.k = build; return it; // k: 장비를 얻은 직업(실측 직업 배율 · V)
 }
 /* 고유 뽑기: 그 슬롯 · 그 등급, 판에 안 나온 것, 내 직업(own) 또는 공용 — 없으면 다른 쪽 */
 function g8PickUq(run, slot, g, ch, own) {
@@ -109,9 +116,9 @@ const g8RerollWhy = (run, it) => !isG8(it) ? '새 장비만 다시 굴립니다'
 function g8Reroll(run, it, i) {
   if (g8RerollWhy(run, it) || !it.af[i]) return null; const t = it.ch || 1, cls = (AFFIX[it.af[i].id] || {}).cls === 'all' && !it.af.some(a => AFFIX[a.id].cls !== 'all') && !it.ax ? 'all' : run.build;
   const used = it.af.map(a => AFFIX[a.id].fam), pairsElse = it.af.filter((a, k) => k !== i && AFFIX[a.id].pair && AFFIX[a.id].pair.includes(t)).length;
-  const P = g8Pool(g8Slot(it), cls, t, it.g, used, false).filter(id => !(AFFIX[id].pair && AFFIX[id].pair.includes(t)) || (!pairsElse && it.af.length >= 2));
+  const kc = it.k || run.build; const P = g8Pool(g8Slot(it), cls, t, it.g, used, false, kc).filter(id => !(AFFIX[id].pair && AFFIX[id].pair.includes(t)) || (!pairsElse && it.af.length >= 2));
   if (!P.length) return null; const price = g8RerollPrice(it); const old = it.af[i];
-  for (let k = 0; k < 20; k++) { const id = P[Math.floor(Math.random() * P.length)]; const list = g8Afs(it).map(a => ({ id: a.id, v: a.v })); list[i] = { id, v: g8RollV(id, t) }; if (g8Fit(list, t, g8Band(it.g, t), [i]) || k === 19) { it.af[i] = list[i]; break; } }
+  for (let k = 0; k < 20; k++) { const id = P[Math.floor(Math.random() * P.length)]; const list = g8Afs(it).map(a => ({ id: a.id, v: a.v })); list[i] = { id, v: g8RollV(id, t, kc) }; if (g8Fit(list, t, g8Band(it.g, t), [i], kc) || k === 19) { it.af[i] = list[i]; break; } }
   run.gold -= price; it.rr = (it.rr || 0) + 1; (run.rerolls = run.rerolls || []).push({ ch: run.ch || 1, uid: it.uid, from: old.id + ':' + old.v, to: it.af[i].id + ':' + it.af[i].v, gold: price, t: Date.now() });
   return it.af[i];
 }

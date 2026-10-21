@@ -74,7 +74,7 @@ for (const id in UNIQUE) {
   // ② 추가 타격 · 번지는 피해는 chain 0
   if (/두 번|한 번 더|한 발 더|곁의 적|후열 적 하나에게도|후열 적 둘|곁의 적 붕괴/.test(U.rule.txt)) ok(U.chain === 0, id + ': 금지선 ② 추가 타격 · 번지는 피해는 chain 0');
   // 고정 접사(4-1): 슬롯 · 직업이 맞고, 영웅은 축 접사, V접사가 등급 띠 안
-  ok(U.af.length === 2 && U.af.every(([a, v]) => AFFIX[a] && AFFIX[a].slot.includes(U.slot) && (AFFIX[a].cls === 'all' || AFFIX[a].cls === U.cls) && AFFIX[a].tier[U.ch] && v >= AFFIX[a].tier[U.ch][0] && v <= AFFIX[a].tier[U.ch][1]), id + ': 고정 접사 둘(슬롯 · 직업 · 그 단 범위 안)');
+  ok(U.af.length === 2 && U.af.every(([a, v]) => AFFIX[a] && AFFIX[a].slot.includes(U.slot) && (AFFIX[a].cls === 'all' || AFFIX[a].cls === U.cls) && AFFIX[a].tier[U.ch] && v >= S.rngOf(a, U.ch, U.cls === 'all' ? null : U.cls)[0] && v <= S.rngOf(a, U.ch, U.cls === 'all' ? null : U.cls)[1]), id + ': 고정 접사 둘(슬롯 · 직업 · 그 단 범위 안)');
   ok(U.g !== 'h' || (U.ax && AFFIX[U.ax[0]] && AFFIX[U.ax[0]].ax && AFFIX[U.ax[0]].axis === U.axis), id + ': 영웅 고유의 빌드 축 접사');
   ok(new Set(U.af.map(([a]) => AFFIX[a].fam)).size === U.af.length, id + ': 같은 묶음 둘 금지');
   const u = S.vUnique(id); ok(u.af >= u.band.af[0] - 1e-9 && u.af <= u.band.af[1] + 1e-9, id + ': 고정 접사 V ' + u.af.toFixed(1) + ' 등급 띠(' + u.band.af.map(x => x.toFixed(0)).join('~') + ')');

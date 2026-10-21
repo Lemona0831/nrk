@@ -5,7 +5,7 @@
    applyGear가 g8 장비를 p.eq 대신 p.g8 = { af: [...], uq: [...] }에 모은다(낀 장비 전부, 같은 묶음은 큰 쪽만 — 두 반지 포함).
    효과는 fxList의 항목으로만 든다: 접사 묶음 하나(g8af, 같은 대상의 %는 가장 큰 하나만 — maxOf) + 고유마다 규칙(uq_id) · 대가(uqc_id). 훅 이름은 IFX와 같다.
    고유 규칙이 엔진의 새 지점을 읽을 때는 uqF · uqV · uqA · uqR(아래)로 읽는다: g8 장비가 없으면(p.g8u 없음) 곧바로 기본값을 돌려준다 — 스위치를 끄면 같은 시드 결과가 같다 */
-const GEAR8 = { on: true }; // 0.8.0 M6-2(10월 21일): 기본값 켬(만든 사람 결정 — 큐 M6-2 "이 항목 끝에서 gear8을 기본값으로"). GEAR8=0이면 옛 장비(기준선)
+const GEAR8 = { on: true, afScale: 1, baseScale: 1 }; // afScale · baseScale: M6-3 맞추기 시험 손잡이(접사 값 · 기반 수치 배율, 기본 1) // 0.8.0 M6-2(10월 21일): 기본값 켬(만든 사람 결정 — 큐 M6-2 "이 항목 끝에서 gear8을 기본값으로"). GEAR8=0이면 옛 장비(기준선)
 const UQFX = {}; // 고유 규칙 · 대가: UQFX[id] = { rule: {훅}, cost: {훅} } (js/18-unique-rules.js)
 const uqF = (p, key) => !!(p && p.g8u) && fxFlag(p, key);
 const uqV = (p, key, init, comb) => p && p.g8u ? fxVal(p, key, init, comb) : init;
@@ -24,8 +24,8 @@ function mkUq(id, ch) { const U = UNIQUE[id]; return mkItem8({ base: U.base, g: 
 const g8Slot = it => kindOf((AFFIX_BASE[it.tpl] || {}).slot || 'weapon');
 /* 낀 g8 장비 → p.g8. 같은 묶음(fam)은 큰 값 하나만(3-2 규칙 4 · 10절 결정 1: 두 반지도) */
 function g8Collect(items) {
-  const best = {}, uq = [];
-  for (const it of items) { for (const a of (it.af || []).concat(it.ax ? [it.ax] : [])) { const A = AFFIX[a.id]; if (!A) continue; const f = A.fam || a.id; if (!best[f] || Math.abs(a.v) > Math.abs(best[f].v)) best[f] = { id: a.id, v: a.v }; } if (it.uq && UNIQUE[it.uq]) uq.push(it.uq); }
+  const best = {}, uq = []; const sc = GEAR8.afScale * (((GEAR8.afScaleCls || {})[typeof G !== 'undefined' && G.run ? G.run.build : '']) || 1);
+  for (const it of items) { const ss = ((GEAR8.slotAf || {})[g8Slot(it)]) || 1; for (const a0 of (it.af || []).concat(it.ax ? [it.ax] : [])) { const A = AFFIX[a0.id]; if (!A) continue; const a = sc * ss !== 1 && !A.fix ? { id: a0.id, v: Math.max(1, Math.round(a0.v * sc * ss)) } : a0; const f = A.fam || a.id; if (!best[f] || Math.abs(a.v) > Math.abs(best[f].v)) best[f] = { id: a.id, v: a.v }; } if (it.uq && UNIQUE[it.uq]) uq.push(it.uq); }
   return { af: Object.values(best), uq };
 }
 /* fxList가 부른다: p.g8 → 항목들. 같은 p.g8 객체는 한 번만 엮는다(세이브 · 복사로 새 객체가 되면 다시) */

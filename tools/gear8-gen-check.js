@@ -18,7 +18,7 @@ function newRun(c, seed) {
   run.atree.own = pick.slice(); run.skills = pick.slice(-4); E.atSync(run); const P = E.ptBuild(c), pn = Object.keys(P.nodes).filter(id => P.nodes[id].ring === 1); run.ptree.own.push(...pn.sort(() => E.__rr() - 0.5).slice(0, 3)); E.ptSync(run);
   return run;
 }
-const Vaf = it => R_('g8VAfs')(R_('g8Afs')(it), it.uq ? UQ[it.uq].ch : it.ch), band = (g, t) => R_('g8Band')(g, t);
+const Vaf = it => R_('g8VAfs')(R_('g8Afs')(it), it.uq ? UQ[it.uq].ch : it.ch, it.uq ? (UQ[it.uq].cls === 'all' ? null : UQ[it.uq].cls) : it.k), band = (g, t) => R_('g8Band')(g, t);
 /* 1 값 띠 · 데이터 맞음 */
 { let out = 0, cnt = { n: 0, m: 0, r: 0, h: 0 }, uq = 0; const per = {};
   for (let i = 0; i < N; i++) { const c = CLS[i % 6], run = newRun(c, 1000 + i), ch = 1 + (i % 3), where = ['room', 'big', 'boss', 'shop'][Math.floor(i / 3) % 4]; run.ch = ch;
@@ -26,7 +26,7 @@ const Vaf = it => R_('g8VAfs')(R_('g8Afs')(it), it.uq ? UQ[it.uq].ch : it.ch), b
     const t = it.ch, list = R_('g8Afs')(it), v = Vaf(it), B = it.g === 'n' ? [0, 0] : band(it.g, t);
     if (!(v >= B[0] - 1e-6 && v <= B[1] + 1e-6)) { out++; if (err.length < 5) err.push('띠 밖: ' + it.g + ' ' + t + '챕 V ' + v.toFixed(1) + ' ' + JSON.stringify(list)); }
     const fams = list.map(a => AF[a.id].fam); ok(new Set(fams).size === fams.length, '같은 묶음 둘: ' + JSON.stringify(list));
-    for (const a of list) { const A = AF[a.id]; ok(A.tier[t] && a.v >= A.tier[t][0] && a.v <= A.tier[t][1], '단 범위 밖: ' + a.id + ' ' + a.v); ok(A.slot.includes(R_('g8Slot')(it)), '슬롯: ' + a.id); ok(A.cls === 'all' || A.cls === c, '직업: ' + a.id + ' → ' + c); }
+    for (const a of list) { const A = AF[a.id], rg = R_('g8Rng')(a.id, t, it.k); ok(A.tier[t] && a.v >= rg[0] && a.v <= rg[1], '단 범위 밖: ' + a.id + ' ' + a.v); ok(A.slot.includes(R_('g8Slot')(it)), '슬롯: ' + a.id); ok(A.cls === 'all' || A.cls === c, '직업: ' + a.id + ' → ' + c); }
     ok(list.length === { n: 0, m: 1, r: 2, h: 3 }[it.g], '접사 수: ' + it.g + ' ' + list.length);
     const base = R_('AFFIX_BASE')[it.tpl]; ok(base && (base.cls === 'all' || base.cls.includes(c)), '기반 모양 직업: ' + it.tpl + ' → ' + c);
     const k = it.g + t; (per[k] = per[k] || []).push(R_('g8V')(it)); }

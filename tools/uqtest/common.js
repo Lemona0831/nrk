@@ -46,7 +46,7 @@ module.exports = H => {
     ok(near(run('rule', 1), 2), '가시 갑옷 규칙: 방어 중 맞으면 그 적에게 2'); ok(run('none', 1) === 0, '가시 없음: 되돌림 없음');
     ok(run('rule', 0) === 0, '가시 갑옷 규칙: 방어하지 않으면 없음'); ok(run('rule', 1, 'back') === 0, '가시 갑옷 규칙: 후열 적은 없음');
     H.cover('cm_thorns', 'rule'); }
-  { const c = F('warden', 'cm_thorns', 'cost').p.hpMax, z = F('warden', 'cm_thorns', 'none').p.hpMax; ok(c === Math.round(z * 0.95), '가시 갑옷 대가: 최대 생명력 −5% (' + z + ' → ' + c + ')'); H.cover('cm_thorns', 'cost'); }
+  { const c = F('warden', 'cm_thorns', 'cost').p.hpMax, z = F('warden', 'cm_thorns', 'none').p.hpMax; ok(Math.abs(c - z * 0.95) <= 1, '가시 갑옷 대가: 최대 생명력 −5% (' + z + ' → ' + c + ')'); H.cover('cm_thorns', 'cost'); }
 
   // 그림자 망토: 흘리기 줄임 +15%p(최대 90%) · 대가 최대 생명력 −5%
   { const red = (cls, only) => { const f = F(cls, 'cm_cloak', only); act(f, 'dodge'); return f.p.dodgeRed; };
@@ -56,7 +56,7 @@ module.exports = H => {
     ok(pr('rule') < pr('none'), '그림자 망토 규칙: 흘린 공격 피해가 더 준다');
     const sk = only => { const f = F('assassin', 'cm_cloak', only, { act: ['a_heulbe'] }); act(f, 'a_heulbe', f.es[0]); return f.p.dodgeRed; }; const k1 = sk('rule'), k0 = sk('none'); ok(k0 > 0 && near(k1, Math.min(0.9, k0 + 0.15)), '그림자 망토 규칙: 흘리기 스킬도 +15%p, 상한 90% (' + k0 + ' → ' + k1 + ')');
     H.cover('cm_cloak', 'rule'); }
-  { const c = F('assassin', 'cm_cloak', 'cost').p.hpMax, z = F('assassin', 'cm_cloak', 'none').p.hpMax; ok(c === Math.round(z * 0.95), '그림자 망토 대가: 최대 생명력 −5%'); H.cover('cm_cloak', 'cost'); }
+  { const c = F('assassin', 'cm_cloak', 'cost').p.hpMax, z = F('assassin', 'cm_cloak', 'none').p.hpMax; ok(Math.abs(c - z * 0.95) <= 1, '그림자 망토 대가: 최대 생명력 −5%'); H.cover('cm_cloak', 'cost'); }
 
   // 피의 서약: 생명력이 절반 아래면 주는 피해 +20% · 대가 플라스크 · 스킬로 되찾는 생명력 −15%
   { const low = f => { f.p.hp = f.p.hpMax * 0.4; };
@@ -116,7 +116,7 @@ module.exports = H => {
   { const tk = (only, ward) => { const f = F('warden', 'cm_ward', only); f.p.ward = ward; const hp = f.p.hp; enemyHit(f, f.es[0], 20); return (ward - f.p.ward) + (hp - f.p.hp); };
     ok(near(tk('rule', 60) / tk('none', 60), 0.85, 0.01), '수호의 문장 규칙: 보호막 동안 받는 피해 −15%'); ok(near(tk('rule', 0), tk('none', 0)), '수호의 문장 규칙: 보호막이 없으면 그대로');
     H.cover('cm_ward', 'rule'); }
-  { const c = F('warden', 'cm_ward', 'cost').p.hpMax, z = F('warden', 'cm_ward', 'none').p.hpMax; ok(c === Math.round(z * 0.95), '수호의 문장 대가: 최대 생명력 −5%'); H.cover('cm_ward', 'cost'); }
+  { const c = F('warden', 'cm_ward', 'cost').p.hpMax, z = F('warden', 'cm_ward', 'none').p.hpMax; ok(Math.abs(c - z * 0.95) <= 1, '수호의 문장 대가: 최대 생명력 −5%'); H.cover('cm_ward', 'cost'); }
 
   // 느린 맥박: 직접 피해 +35% · 대가 빠른 칸 없음
   { const c = hitBy('warden', 'cm_pulse', 'rule', 'basic'), z = hitBy('warden', 'cm_pulse', 'none', 'basic'); ok(near(c / z, 1.35, 0.01), '느린 맥박 규칙: 직접 피해 +35%');

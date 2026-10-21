@@ -16,7 +16,12 @@ function trigOf(A) {
   else if (tg.includes('붕괴')) T.heavy = IV.trigTag.heavy;
   return T;
 }
-function vAf(id, v, t) {
+/* M6-3 실측 보정(ITEM_V.obs): 접사 한 점 × 1/af, 그 직업이면 × 1/cls(고정 값 · 상태 겹 접사 제외) — 엔진 g8VAf와 같다 */
+const obsK = (A, cls) => A.fix || IV.obs.keep.includes(A.vs.u) ? 1 : 1 / IV.obs.af / ((cls && IV.obs.cls[cls]) || 1);
+/* 그 직업의 단 범위(엔진 g8Rng와 같다): 직업 배율을 곱하고 반올림, 최소 1 */
+function rngOf(id, t, cls) { const A = AFFIX[id], [lo, hi] = A.tier[t]; const c = A.fix || IV.obs.keep.includes(A.vs.u) ? 1 : (cls && IV.obs.cls[cls]) || 1; return c === 1 ? [lo, hi] : [Math.max(1, Math.round(lo * c)), Math.max(1, Math.round(hi * c))]; }
+function vAf(id, v, t, cls) { const A = AFFIX[id]; if (!A) throw new Error('접사 없음 ' + id); return vAf0(id, v, t) * obsK(A, cls); }
+function vAf0(id, v, t) {
   const A = AFFIX[id]; if (!A) throw new Error('접사 없음 ' + id); const S = A.vs, U = IV.unit, T = trigOf(A), P = IV.pool, m = chm(t);
   const p = S.p == null ? 1 : typeof S.p === 'number' ? S.p : IV.p[S.p];
   if (S.k === 'flat') return U[S.u] * v * T[S.per] * p * (IV.scale.includes(S.u) ? m : 1);
@@ -26,10 +31,11 @@ function vAf(id, v, t) {
   throw new Error('점수 꼴 ' + id);
 }
 /* 겹침 보정(5-1): 같은 트리거(vs.per)를 쓰는 접사가 둘이면 둘째부터 × 0.85, 셋이면 × 0.7 */
-function vAfs(list, t) { const seen = {}; let s = 0; const rows = []; for (const [id, v] of list) { const A = AFFIX[id], k = A.vs.per || A.vs.u || id; const n = seen[k] = (seen[k] || 0) + 1; const ov = IV.ov[Math.min(n, IV.ov.length) - 1]; const x = vAf(id, v, t) * ov; rows.push({ id, v, V: x, ov }); s += x; } return { V: s, rows }; }
+function vAfs(list, t, cls) { const seen = {}; let s = 0; const rows = []; for (const [id, v] of list) { const A = AFFIX[id], k = A.vs.per || A.vs.u || id; const n = seen[k] = (seen[k] || 0) + 1; const ov = IV.ov[Math.min(n, IV.ov.length) - 1]; const x = vAf(id, v, t, cls) * ov; rows.push({ id, v, V: x, ov }); s += x; } return { V: s, rows }; }
 /* 기반 V(5-5 표: 무기 1챕 8 × 기본 공격 5 = 40, 등급 보너스 b %를 곱함) */
 function vBase(slot, ch, b) {
   const k = slot === 'ring1' || slot === 'ring2' ? 'ring' : slot, sb = SLOT_BASE[k], x = sb.v[(ch || 1) - 1] * (1 + (b || 0) / 100);
+  const xb = sb.k === 'flask' ? x : x * IV.obs.base; return sb.k === 'wpn' ? xb * IV.trig.basic : sb.k === 'hp' ? xb * IV.unit.hp : sb.k === 'st' ? xb * IV.unit.st : sb.k === 'flask' ? x * 100 * IV.unit.flaskPct : 0; /* 새 장비 기반 × obs.base */
   return sb.k === 'wpn' ? x * IV.trig.basic : sb.k === 'hp' ? x * IV.unit.hp : sb.k === 'st' ? x * IV.unit.st : sb.k === 'flask' ? x * 100 * IV.unit.flaskPct : 0;
 }
 const gMid = g => (GRADE[g].lo + GRADE[g].hi) / 2;
@@ -37,10 +43,10 @@ const gMid = g => (GRADE[g].lo + GRADE[g].hi) / 2;
 function bandOf(g, ch) { const m = chm(ch), B = IV.band; return { af: g === 'n' ? [0, 0] : (B[g] || [0, 0]).map(x => x * m), rule: (g === 'h' ? B.uqH : B.uqR).slice() }; } // V규칙 띠는 1챕 단위(사전 추정이 1챕 단위)
 function vUnique(id) {
   const U = UNIQUE[id], t = U.ch, af = U.af.concat(U.ax && U.ax[1] ? [U.ax] : []);
-  const base = vBase(U.slot, U.ch, gMid(U.g)), A = vAfs(af, t), rule = U.vr - U.vc;
+  const base = vBase(U.slot, U.ch, gMid(U.g)), A = vAfs(af, t, U.cls === 'all' ? null : U.cls), rule = U.vr - U.vc;
   return { id, n: U.n, cls: U.cls, g: U.g, ch: U.ch, base, af: A.V, afRows: A.rows, vr: U.vr, vc: U.vc, rule, V: base + A.V + rule, band: bandOf(U.g, U.ch), dPct: rule / IV.K };
 }
-module.exports = { C, IV, AFFIX, UNIQUE, vAf, vAfs, vBase, vUnique, bandOf, chm, trigOf };
+module.exports = { C, IV, AFFIX, UNIQUE, rngOf, vAf, vAfs, vBase, vUnique, bandOf, chm, trigOf };
 if (require.main === module) {
   const a = process.argv.slice(2), md = a.includes('--md'), all = !a.includes('--affix') && !a.includes('--unique'); const r1 = x => Math.round(x * 10) / 10;
   if (all || a.includes('--affix')) {

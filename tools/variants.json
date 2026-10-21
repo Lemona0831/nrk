@@ -603,6 +603,30 @@
    "introduced": "M6-2",
    "expires": "상시",
    "note": "조사용: 판 안 행동 예외의 스택을 stderr에 찍는다(동작 아님)"
+  },
+  {
+   "name": "DG_NOAF",
+   "kind": "env",
+   "default": null,
+   "introduced": "M6-3",
+   "expires": "상시",
+   "note": "M6-3 측정: 새 장비를 기반만(접사 · 고유 없이) 만든다(K 실측)"
+  },
+  {
+   "name": "DG_NOWPNAF",
+   "kind": "env",
+   "default": null,
+   "introduced": "M6-3",
+   "expires": "상시",
+   "note": "M6-3 측정: 무기만 접사 · 고유 없이(무기 = 평타)"
+  },
+  {
+   "name": "DG_UQ",
+   "kind": "env",
+   "default": null,
+   "introduced": "M6-3",
+   "expires": "상시",
+   "note": "M6-3 고유 존재감: 1챕터 야영지에서 그 고유(id)를 지급해 끼운다"
   }
  ]
 }
