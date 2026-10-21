@@ -207,9 +207,9 @@ function playerAct(b, id, tgtId) {
       if (hb) hnBasicAfter(b, tgt, dHb, hb); if (p.build === 'hunter') { p.hnLastT = tgt.id; hnBasicExtra(b, tgt, d, melee1); } // M5-4 화살 재기 · 질풍난사 두 번째 화살
       if (p.build === 'elementalist' && p.elSt) elBasicAfter(b, tgt, d, melee1); // M5-5 마력 연사 · 불씨 응축 · 마염 화살 · 빙염의 화신
       if (tgt.alive && hasIt(p, 'venomring')) addPoison(b, tgt, 1, 1);
-      if (mkC) { const n = (mkC.add || 0) + Math.min(mkC.max || 5, Math.floor(kiC * (mkC.per || 1))); p.mkSt.chain = null; let k = 0; for (let i = 0; i < n && tgt.alive && !b.over; i++) { hurtEnemy(b, tgt, d, { single: 1, melee: melee1, label: '연환권' }); if (mkC.brk && tgt.alive) addBreak(b, tgt, mkC.brk); k++; } if (k) logp(b, 'good', '연환권: 기본 공격이 ' + (k + 1) + '타'); } // M5-2 연환권(평타형): 같은 피해로 더 친다
-      if (asS && tgt.alive) asOnBasic(b, tgt); if (asS && asS.zan > 0 && tgt.alive && !b.over) { hurtEnemy(b, tgt, d * (asS.zanMul || 1), { single: 1, melee: melee1, label: '그림자 분신' }); if (asS.zanPsn && tgt.alive) addPoison(b, tgt, asS.zanPsn, 1); if (asS.zanBrk && tgt.alive) addBreak(b, tgt, asS.zanBrk); if (tgt.alive) asOnBasic(b, tgt); } // M5-3 독침 · 독니, 잔영난무: 내가 누른 기본 공격이 두 번(같은 배수)
-      addBreak(b, tgt, 10); applyReflux(b, tgt); break; // 0.6: 기본 공격은 스태미나를 채우지 않는다 (11.6절)
+      if (mkC) { const n = (mkC.add || 0) + Math.min(mkC.max || 5, Math.floor(kiC * (mkC.per || 1))); p.mkSt.chain = null; let k = 0; for (let i = 0; i < n && tgt.alive && !b.over; i++) { hurtEnemy(b, tgt, d, { single: 1, melee: melee1, label: '연환권' }); if (mkC.brk && tgt.alive && !BRK_RULE.basic0) addBreak(b, tgt, mkC.brk); k++; } if (k) logp(b, 'good', '연환권: 기본 공격이 ' + (k + 1) + '타'); } // M5-2 연환권(평타형): 같은 피해로 더 친다
+      if (asS && tgt.alive) asOnBasic(b, tgt); if (asS && asS.zan > 0 && tgt.alive && !b.over) { hurtEnemy(b, tgt, d * (asS.zanMul || 1), { single: 1, melee: melee1, label: '그림자 분신' }); if (asS.zanPsn && tgt.alive) addPoison(b, tgt, asS.zanPsn, 1); if (asS.zanBrk && tgt.alive && !BRK_RULE.basic0) addBreak(b, tgt, asS.zanBrk); if (tgt.alive) asOnBasic(b, tgt); } // M5-3 독침 · 독니, 잔영난무: 내가 누른 기본 공격이 두 번(같은 배수)
+      if (!BRK_RULE.basic0) addBreak(b, tgt, 10); else if (tgt.alive && typeof vfxEmit === 'function') vfxEmit('bktouch', tgt.id); /* M5-7: 기본 공격은 붕괴를 채우지 않는다(게이지 테두리만 떨림, 장식) */ applyReflux(b, tgt); break; // 0.6: 기본 공격은 스태미나를 채우지 않는다 (11.6절)
     }
     case 'heavy': {
       const tele = ysBigTele(tgt); // 10월 15일 유산 1차 시제품: 예고 중인 적을 맞히면 붕괴를 크게 더한다(무너뜨리기 유도). 강적 · 정예 · 보스는 확정 끊기 없음
@@ -220,7 +220,7 @@ function playerAct(b, id, tgtId) {
       else { const d1 = hurtEnemy(b, tgt, outDmg(b, heavyBase(p), { weapon: 1 }), { single: 1, melee: isMeleeAct(p, 'heavy') ? 1 : 0, label: isCaster(p) ? '집중 주문' : '강공격' }); if (b.sbK) sbEdgeHit(b, tgt, d1); } // 사냥꾼 강공격은 활이라 근접이 아니다
       if (p.build === 'hunter') p.hnLastT = tgt.id; // 0.8.0 5단계: 직전에 친 적(강공격은 버프를 받지 않는다)
       if (tele && isV2(p) && tgt.alive) logp(b, 'good', '힘을 모으는 ' + tgt.n + '의 빈틈을 내리친다. 붕괴 +' + YUSAN.heavyTele);
-      addBreak(b, tgt, (isCaster(p) && !isV2(p) ? 30 : 35) + 5 * Math.floor(stat(p, 'str') / 10) + (p.eq.weapon === 'maul' ? 20 : 0) + (tele && isV2(p) ? YUSAN.heavyTele : 0)); if (p.eq.weapon === 'maul') time = 1.4; applyReflux(b, tgt);
+      addBreak(b, tgt, ((isCaster(p) && !isV2(p) ? 30 : 35) + 5 * Math.floor(stat(p, 'str') / 10) + (p.eq.weapon === 'maul' ? 20 : 0) + (tele && isV2(p) ? YUSAN.heavyTele : 0)) * (BRK_RULE.basic0 ? BRK_RULE.heavyMul : 1)); if (BRK_RULE.basic0 && p.asSt && p.asSt.zan > 0 && p.asSt.zanBrk && tgt.alive) addBreak(b, tgt, p.asSt.zanBrk); /* M5-7: 흔드는 잔영(분신 붕괴)은 잔영난무 동안 강공격에 */ if (p.eq.weapon === 'maul') time = 1.4; applyReflux(b, tgt);
       if (tele && isV2(p) && tgt.alive && ysBigTele(tgt) && !(tgt.brkMax > 0) && !(tgt.elite || tgt.strong || tgt.role === 'boss')) { if (tgt.chant) { tgt.chant = null; tgt.pyreRest = 1; } tgt.intent = { k: 'attack' }; tgt.teleTurn = null; logp(b, 'crit', tgt.n + '의 예고를 강공격으로 끊는다'); ysResp(b, '끊기'); } // 붕괴 게이지가 없는 약한 적만 바로 끊는다
       break;
     }

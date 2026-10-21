@@ -15,7 +15,7 @@ const VFX_COL = { steel: '#fff1d0', fire: '#ff8a3d', frost: '#9fdcff', venom: '#
 const VFX_MAX = 10; /* 동시에 떠 있는 상자 수 */
 const VFX_FLASH_PER_SEC = 2; /* 면 번쩍임(흰색 → 속성색)을 새로 시작할 수 있는 수. 1초에 3번 미만 */
 const VFX_LV = { low: { s: 0.5, t: 0.8, fo: 0, shake: 0 }, normal: { s: 1, t: 1, fo: 0.42, shake: 2 }, high: { s: 1.4, t: 1.2, fo: 0.55, shake: 4 } };
-const VFX_LOW_KINDS = ['hit', 'brk', 'kill', 'phit', 'pgd', 'pwd', 'ppr', 'pev'];
+const VFX_LOW_KINDS = ['hit', 'brk', 'bktouch', 'kill', 'phit', 'pgd', 'pwd', 'ppr', 'pev'];
 const VFX_LABEL = { slash: '베기', pierce: '찌르기', blunt: '타격', arrow: '명중', spell: '주문', ctr: '반격' };
 const VFX = { q: [], seq: 0, flashAt: [], base: null, sk: {}, shakeAt: 0 };
 const vfxDoc = () => typeof document !== 'undefined' && typeof G !== 'undefined' && !!G;
@@ -175,6 +175,7 @@ function vfxPlay(ev, X) {
     }
     case 'dot': h = '<i class="vf-dt"></i><i class="vf-dt d2"></i>' + vfxElemParts(ev.el, n(4), 24 * S, false); dur = 520; break;
     case 'miss': col = '#e8e8e8'; h = '<i class="vf-gz"></i><i class="vf-gx"></i><i class="vf-gx g2"></i>'; dur = 560; lab = '회피'; break;
+    case 'bktouch': { const g = el && el.querySelector('.bkb'); if (g && g.animate) g.animate(rm ? [{ outlineColor: 'rgba(255,240,210,0)' }, { outline: '1px solid rgba(255,240,210,.85)', offset: .3 }, { outline: '1px solid rgba(255,240,210,0)' }] : [{ transform: 'none', outline: '1px solid rgba(255,240,210,0)' }, { transform: 'translateX(-1.5px)', outline: '1px solid rgba(255,240,210,.85)', offset: .2 }, { transform: 'translateX(1.5px)', offset: .45 }, { transform: 'translateX(-1px)', offset: .7 }, { transform: 'none', outline: '1px solid rgba(255,240,210,0)' }], { duration: rm ? 260 : 220, easing: 'ease-out' }); return 0; } /* M5-7 손맛: 기본 공격이 맞으면 붕괴 게이지 테두리만 짧게 떨린다(장식, 움직임 줄이기면 색만) */
     case 'brk': col = VFX_COL.shard; h = fl + '<i class="vf-ol"></i><i class="vf-rg"></i><i class="vf-crack"></i>' + (low ? '' : vfxParts(n(10), 62 * S, 'vf-sh', 6)); dur = 760; lab = '붕괴'; break;
     case 'kill': col = VFX_COL.shard; h = fl + '<i class="vf-gh"></i><i class="vf-rg"></i>' + vfxParts(n(16), 54 * S, 'vf-p pf-star', -8); dur = 800; lab = '처치'; break;
     case 'phit': col = VFX_COL.hurt; h = '<i class="vf-ol"></i><i class="vf-cl"></i>' + (ev.big ? '<i class="vf-cl c2"></i>' : '') + (ev.dot ? '' : '<i class="vf-rg"></i>'); dur = ev.big ? 760 : 580; cls += ev.big ? ' big' : ''; if (ev.big) lab = '큰 피해'; break;

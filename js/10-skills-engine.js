@@ -607,19 +607,19 @@ function asTurnStart(b, p) { const S = p.asSt;
 function asMuStrike(b, tgt) { const p = b.p, S = p.asSt; const M = S.mu; S.mu = null; if (!tgt || !tgt.alive) return; logp(b, 'crit', '무영살: ' + tgt.n + '의 등 뒤에서 벤다');
   hurtEnemy(b, tgt, outDmg(b, wpnDmg(p) * M.mul, { weapon: 1 }), { single: 1, melee: 1, label: '무영살' }); if (M.poison && tgt.alive) addPoison(b, tgt, M.poison, 1); if (M.brk && tgt.alive) addBreak(b, tgt, M.brk); S.noParry = AS_BOUND.hideNoParry; logp(b, 'bad', '무영살의 대가: ' + AS_BOUND.hideNoParry + '차례 흘리기를 못 한다'); }
 /* ===== 0.8.0 M5-2 수도승 (10월 20일 만든 사람 설계지 2판): 강화 · 승부수 · 결합 칸 =====
-   p.mkSt = { condense 기공 응축, adamant 금강불괴, flow 내공 순환, nextBrk 다음 기본 공격 붕괴, yeok 역천(자세 유지 · 되받기 한도 없음 · 붕괴 +15 / 방어 불가 · 받는 피해 +30%),
+   p.mkSt = { condense 기공 응축, adamant 금강불괴, flow 내공 순환, nextBrk 다음 기본 공격 붕괴(M5-7 붕괴 규칙을 켜면 다음 강공격), yeok 역천(자세 유지 · 되받기 한도 없음 · 붕괴 +15 / 방어 불가 · 받는 피해 +30%),
    cheon 천망(나를 친 적 둔화 +2, 둔화 5면 봉인 / 되받기 피해 0), noKi 일지멸맥의 대가, samjae · reflux · bultoe 결합 칸 }. 남은 차례 수는 내 차례가 시작될 때 −1(mkTurnStart). 숫자는 MK_BOUND */
 const IFX_MK = {
   adamant: { inP: (b, p, o) => o && o.dot ? 0 : MK_BOUND.adamantRed },
   yeok: { inP: (b, p, o) => o && o.dot ? 0 : -MK_BOUND.yeokIn },
   flow: { out: (b, p, c) => c && !b.curFast ? 1 + (p.mkSt.flowMul || 0.5) : 1 },
   reflux: { onHit: (b, p, e, o, c) => { if (!c || c.id !== 'basic' || !e || !(st(e, 'chill') > 0)) return; b.kiPend = (b.kiPend || 0) + MK_BOUND.refluxKi; logp(b, 'good', '역류: 둔화된 적을 쳐 기 +' + MK_BOUND.refluxKi); return 1; } },
-  nextBrk: { onHit: (b, p, e, o, c) => { if (!c || c.id !== 'basic' || !p.mkSt || !(p.mkSt.nextBrk > 0)) return; const n = p.mkSt.nextBrk; p.mkSt.nextBrk = 0; if (e.alive) { addBreak(b, e, n); logp(b, 'good', '기본 공격에 실은 무게: 붕괴 +' + n); } return 1; } },
+  nextBrk: { onHit: (b, p, e, o, c) => { if (!brkB(c) || !p.mkSt || !(p.mkSt.nextBrk > 0)) return; const n = p.mkSt.nextBrk; p.mkSt.nextBrk = 0; if (e.alive) { addBreak(b, e, n); logp(b, 'good', '강공격에 실은 무게: 붕괴 +' + n); } return 1; } },
 };
 const MK_N = { adamant: '금강불괴', flow: '내공 순환', yeok: '역천', cheon: '천망', noKi: '일지멸맥의 대가' };
 function mkUse(b, s) {
   const p = b.p, S = p.mkSt = p.mkSt || {}, U = MK_BOUND, F = k => s.fx.find(e => e.k === k);
-  const ch0 = F('mkChain'); if (ch0) { S.chain = { add: ch0.add || 0, per: ch0.per || 1, max: ch0.max || 5, brk: ch0.brk || 0 }; logp(b, 'good', s.n + ': 이번 차례 기본 공격 +' + S.chain.add + '타, 기 1마다 1타 더'); }
+  const ch0 = F('mkChain'); if (ch0) { S.chain = { add: ch0.add || 0, per: ch0.per || 1, max: ch0.max || 5, brk: ch0.brk || 0 }; if (BRK_RULE.basic0 && ch0.brk) S.nextBrk = Math.max(S.nextBrk || 0, ch0.brk * Math.max(1, ch0.add || 3)); /* M5-7: 연환 붕괴는 다음 강공격에 */ logp(b, 'good', s.n + ': 이번 차례 기본 공격 +' + S.chain.add + '타, 기 1마다 1타 더'); }
   const cd = F('mkCondense'); if (cd) { S.condense = cd.add || 3; logp(b, 'good', s.n + ': 다음에 쏟는 기 +' + S.condense); }
   const ad = F('mkAdamant'); if (ad) { S.adamant = ad.n || 3; logp(b, 'good', s.n + ': ' + S.adamant + '차례 동안 받는 피해 −' + Math.round(U.adamantRed * 100) + '%'); }
   const fl = F('mkFlow'); if (fl) { S.flow = fl.n || 3; S.flowMul = fl.mul || 0.5; logp(b, 'good', s.n + ': ' + S.flow + '차례 동안 ▶ 공격 피해 +' + Math.round(S.flowMul * 100) + '%'); }
@@ -644,17 +644,17 @@ function mkTurnStart(b, p) {
   const S = p.mkSt; S.chain = null; /* 연환권은 그 차례만 */ for (const k of ['adamant', 'flow', 'yeok', 'cheon', 'noKi']) if (S[k] > 0) { S[k]--; if (!S[k]) logp(b, 'sys', MK_N[k] + '이(가) 걷힌다'); }
 }
 /* ===== 0.8.0 M5-1 파수꾼 (10월 20일 만든 사람 설계지 + 07:40 보완): 태세 · 경계 승부수 · 결합 칸 =====
-   p.wdSt = { def · atk 태세(하나만, 수도승 자세 p.stance와 따로), march 묵직한 걸음, siege 파성(siegeAmp), valor 용맹, quakeNext · quakeX 대지 분쇄, wardHalf 보호막 −50%, nextBrk 다음 기본 공격 붕괴, turncoat · hammer · chainPull 결합 칸 }.
+   p.wdSt = { def · atk 태세(하나만, 수도승 자세 p.stance와 따로), march 묵직한 걸음, siege 파성(siegeAmp), valor 용맹, quakeNext · quakeX 대지 분쇄, wardHalf 보호막 −50%, nextBrk 다음 기본 공격 붕괴(M5-7 규칙을 켜면 강공격), turncoat · hammer · chainPull 결합 칸 }.
    남은 차례 수는 내 차례가 시작될 때 −1(wdTurnStart). 숫자는 WD_BOUND(data/skillkit.js) */
 const wdBH = c => !!c && (c.id === 'basic' || c.id === 'heavy');
 const IFX_WD = {
   def: { inP: (b, p, o) => o && o.dot ? 0 : WD_BOUND.defIn },
-  atk: { hitP: (b, p, e, o, c) => wdBH(c) ? WD_BOUND.atkHit : 0, inP: (b, p, o) => o && o.dot ? 0 : -WD_BOUND.atkIn, onHit: (b, p, e, o, c) => { if (!wdBH(c) || !e.alive) return; addBreak(b, e, WD_BOUND.atkBrk); return 1; } },
-  march: { hitP: (b, p, e, o, c) => c && c.id === 'basic' ? WD_BOUND.marchHit : 0, onHit: (b, p, e, o, c) => { if (!c || c.id !== 'basic' || !e.alive) return; addBreak(b, e, WD_BOUND.marchBrk); return 1; }, cost: (p, id) => id === 'heavy' ? -WD_BOUND.marchHeavy : 0 },
-  siege: { out: (b, p, c) => wdBH(c) ? (p.wdSt.siegeAmp || 1) : 1, onHit: (b, p, e, o, c) => { if (!wdBH(c) || !e.alive) return; addBreak(b, e, WD_BOUND.siegeBrk); return 1; }, cost: (p, id) => id === 'heavy' ? -WD_BOUND.siegeHeavy : 0 },
+  atk: { hitP: (b, p, e, o, c) => wdBH(c) ? WD_BOUND.atkHit : 0, inP: (b, p, o) => o && o.dot ? 0 : -WD_BOUND.atkIn, onHit: (b, p, e, o, c) => { if (!wdBH(c) || !e.alive || (BRK_RULE.basic0 && c.id === 'basic')) return; addBreak(b, e, WD_BOUND.atkBrk); return 1; } }, /* M5-7: 규칙을 켜면 강공격만 */
+  march: { hitP: (b, p, e, o, c) => c && c.id === 'basic' ? WD_BOUND.marchHit : 0, onHit: (b, p, e, o, c) => { if (!brkB(c) || !e.alive) return; addBreak(b, e, WD_BOUND.marchBrk); return 1; }, /* M5-7: 붕괴는 brkB(규칙을 켜면 강공격) */ cost: (p, id) => id === 'heavy' ? -WD_BOUND.marchHeavy : 0 },
+  siege: { out: (b, p, c) => wdBH(c) ? (p.wdSt.siegeAmp || 1) : 1, onHit: (b, p, e, o, c) => { if (!wdBH(c) || !e.alive || (BRK_RULE.basic0 && c.id === 'basic')) return; addBreak(b, e, WD_BOUND.siegeBrk); return 1; }, cost: (p, id) => id === 'heavy' ? -WD_BOUND.siegeHeavy : 0 },
   quakeX: { out: (b, p, c) => c ? WD_BOUND.quakeMul : 1 },
   hammer: { hitP: (b, p, e, o, c) => c && c.id === 'basic' && e && e.s && e.s.broken ? WD_BOUND.hammerMul - 1 : 0, onHit: (b, p, e, o, c) => { if (c && c.id === 'heavy' && e && e.s && e.s.broken) { p.st = Math.min(p.stMax, p.st + WD_BOUND.hammerSt); return 1; } } },
-  nextBrk: { onHit: (b, p, e, o, c) => { if (!c || c.id !== 'basic' || !p.wdSt || !(p.wdSt.nextBrk > 0)) return; const n = p.wdSt.nextBrk; p.wdSt.nextBrk = 0; if (e.alive) { addBreak(b, e, n); logp(b, 'good', '기본 공격에 실은 무게: 붕괴 +' + n); } return 1; } },
+  nextBrk: { onHit: (b, p, e, o, c) => { if (!brkB(c) || !p.wdSt || !(p.wdSt.nextBrk > 0)) return; const n = p.wdSt.nextBrk; p.wdSt.nextBrk = 0; if (e.alive) { addBreak(b, e, n); logp(b, 'good', '강공격에 실은 무게: 붕괴 +' + n); } return 1; } },
 };
 const WD_N = { def: '수비 태세', atk: '공격 태세' };
 function wdUse(b, s, targets, tgt, phase) {
@@ -669,14 +669,14 @@ function wdUse(b, s, targets, tgt, phase) {
     else { const sw = !!S[o]; S[o] = 0; S[k] = 1; logp(b, 'good', WD_N[k] + (sw ? '로 바꾼다' : '를 켠다'));
       if (k === 'def') { const g = addWard(b, p, U.defOn); if (g > 0) logp(b, 'good', '수비 태세: 보호막 +' + r1(g)); }
       else { const e = tgt && tgt.alive ? tgt : alive(b).filter(x => x.row === 'front' && x.role !== 'root')[0] || alive(b)[0]; if (e) { hurtEnemy(b, e, U.atkOnDmg, { label: '공격 태세' }); if (e.alive) addBreak(b, e, U.atkOnBrk); } }
-      if (sw && S.turncoat) { S.nextBrk = Math.max(S.nextBrk || 0, U.turnBrk); logp(b, 'good', '돌아선 방패: 다음 기본 공격 붕괴 +' + U.turnBrk); } } }
+      if (sw && S.turncoat) { S.nextBrk = Math.max(S.nextBrk || 0, U.turnBrk); logp(b, 'good', '돌아선 방패: 다음 강공격 붕괴 +' + U.turnBrk); } } }
   const pr = F('wdPray'); if (pr) { const h = p.hpMax * pr.n * (S.def ? U.prayDef : 1) * healMul(p); const h0 = p.hp; p.hp = Math.min(p.hpMax, p.hp + h); logp(b, 'good', s.n + ': 생명력 +' + r1(p.hp - h0) + (S.def ? ' (수비 태세)' : '')); }
   const nb = F('wdNextBrk'); if (nb) S.nextBrk = Math.max(S.nextBrk || 0, nb.n);
   const mc = F('wdMarch'); if (mc) { S.march = mc.n || 3; logp(b, 'good', s.n + ': ' + S.march + '차례 동안 기본 공격 피해 +' + Math.round(U.marchHit * 100) + '% · 붕괴 +' + U.marchBrk + ', 강공격 스태미나 −' + U.marchHeavy); }
   const sg = F('wdSiege'); if (sg) { const w = p.ward || 0; p.ward = 0; S.siegeAmp = 1 + Math.min(1, w / U.siegePer) * (U.siegeMax - 1); S.siege = sg.n || 3; logp(b, 'good', '파성: 보호막 ' + r1(w) + '을 모두 소모해 ' + S.siege + '차례 동안 기본 공격 · 강공격 ×' + r1(S.siegeAmp) + ', 타격마다 붕괴 +' + U.siegeBrk + ', 강공격 스태미나 −' + U.siegeHeavy + ' (보호막을 얻지 못하고 방어할 수 없다)'); }
   if (F('wdQuake')) b.wdPre = targets.filter(e => e.s && e.s.broken).map(e => e.id);
   const vl = F('wdValor'); if (vl) { S.valor = vl.n || 3; wdValorThorn(b, p); logp(b, 'good', '용맹: ' + S.valor + '차례 동안 방어할 때 보호막 +' + U.valorGuard + ', 보호막의 절반만큼 가시 (스태미나가 차지 않고 흘리기를 할 수 없다)'); }
-  if (F('wdTurncoat')) { S.turncoat = 1; logp(b, 'good', '돌아선 방패: 이번 전투 동안 태세를 바꿀 때 비용 없음, 바꾼 직후 첫 기본 공격 붕괴 +' + U.turnBrk); }
+  if (F('wdTurncoat')) { S.turncoat = 1; logp(b, 'good', '돌아선 방패: 이번 전투 동안 태세를 바꿀 때 비용 없음, 바꾼 직후 첫 강공격 붕괴 +' + U.turnBrk); }
   if (F('wdHammer')) { S.hammer = 1; logp(b, 'good', '쇠망치 손: 이번 전투 동안 무너진 적에게 기본 공격 ×' + U.hammerMul + ', 강공격이 무너진 적을 치면 스태미나 +' + U.hammerSt); }
   if (F('wdChainPull')) { S.chainPull = U.pullN; logp(b, 'good', '사슬 끌기: 이번 전투 동안 사슬의 검이 후열 적을 끌어온다(' + U.pullN + '번)'); }
 }

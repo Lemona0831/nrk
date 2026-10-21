@@ -14,16 +14,18 @@ const SDESC = {
 };
 /* 주문직의 기본 공격·강공격은 캔트립·집중 주문이다 */
 function actInfo(p, id) {
-  if (isCaster(p) && isV2(p) && id === 'basic') return CANTRIP[p.build] + '. 비용 없이 원거리 주문을 쏜다. 피해는 무기 피해의 ' + Math.round(((BUILDS[p.build] || {}).wpnMul || 1) * 100) + '%. 후열에 닿고 방패병에게 막히지 않는다. 붕괴 게이지 +10. 스태미나는 채우지 않는다.'; // 원소술사 (10월 7일)
+  if (isCaster(p) && isV2(p) && id === 'basic') return CANTRIP[p.build] + '. 비용 없이 원거리 주문을 쏜다. 피해는 무기 피해의 ' + Math.round(((BUILDS[p.build] || {}).wpnMul || 1) * 100) + '%. 후열에 닿고 방패병에게 막히지 않는다. ' + brkBasicTxt() + ' 스태미나는 채우지 않는다.'; // 원소술사 (10월 7일)
   if (isCaster(p) && isV2(p) && id === 'heavy') return '집중 주문. 스태미나 ' + heavyCost(p) + '. 원거리, 무기 피해의 ' + Math.round(((BUILDS[p.build] || {}).wpnMul || 1) * HEAVY_V2 * 100) + '%, 붕괴 게이지 +' + (35 + 5 * Math.floor(stat(p, 'str') / 10) + (p.eq.weapon === 'maul' ? 20 : 0)) + '. 후열에 닿는다. 느린 행동이라 빠른 칸과 주 행동을 함께 쓴다.';
   if (isCaster(p) && id === 'basic') return CANTRIP[p.build] + '. 비용 없이 원거리 주문을 쏜다. 피해는 무기 피해의 90%. 후열에 닿고 방패병에게 막히지 않는다. 붕괴 게이지 +10. 스태미나는 채우지 않는다.';
   if (isCaster(p) && id === 'heavy') return '집중 주문. 스태미나 40. 원거리, 무기 피해의 160%, 붕괴 게이지 +30. 느린 행동이라 빠른 칸과 주 행동을 함께 쓴다.';
   if (isV2(p) && AINFO2[id]) return AINFO2[id](p);
-  return AINFO[id] || '';
+  return id === 'basic' ? String(AINFO.basic || '').replace('붕괴 게이지 +10.', brkBasicTxt()) : AINFO[id] || ''; // M5-7: 기본 공격 붕괴 문장은 규칙을 따른다(글자층 js/60이 문장을 덮어써도)
 }
 /* 0.6a.2 직업의 공용 행동 설명: 엔진 값에서 바로 만든다 (10월 3일: 0.6a 문장이 남아 강공격 180%, 흘리기 60%, 플라스크가 지운다고 나왔다) */
+/* M5-7: 기본 공격 붕괴 문장(규칙을 켜면 "채우지 않음") */
+const brkBasicTxt = () => BRK_RULE.basic0 ? '기본 공격은 붕괴를 채우지 않는다(반격 · 강공격 · 스킬은 채운다).' : '붕괴 게이지 +10.';
 const AINFO2 = {
-  heavy: p => '스태미나 ' + heavyCost(p) + '. 무기 피해의 ' + Math.round(heavyBase(p) / wpnDmg(p) * 100) + '%, 붕괴 게이지 +' + (35 + 5 * Math.floor(stat(p, 'str') / 10) + (p.eq.weapon === 'maul' ? 20 : 0)) + '. 강타 · 영창 · 겨누기를 모으는 적을 치면 붕괴 +' + YUSAN.heavyTele + ' 더. 느린 행동이라 빠른 칸과 주 행동을 함께 쓴다.',
+  heavy: p => '스태미나 ' + heavyCost(p) + '. 무기 피해의 ' + Math.round(heavyBase(p) / wpnDmg(p) * 100) + '%, 붕괴 게이지 +' + Math.round((35 + 5 * Math.floor(stat(p, 'str') / 10) + (p.eq.weapon === 'maul' ? 20 : 0)) * (BRK_RULE.basic0 ? BRK_RULE.heavyMul : 1)) + '. 강타 · 영창 · 겨누기를 모으는 적을 치면 붕괴 +' + YUSAN.heavyTele + ' 더. 느린 행동이라 빠른 칸과 주 행동을 함께 쓴다.',
   dodge: p => '스태미나 ' + dodgeCost(p) + '. 고른 적의 다음 공격 피해를 ' + Math.round(parryRed(p) * 100) + '% 줄인다. 그 공격이 강타였다면 그 적의 붕괴 게이지 +25. 광역 공격과 지속 피해는 흘리지 못한다. 강적·보스의 공격은 ' + Math.round(PARRY_BIG * 100) + '%p 덜 줄인다. 내 다음 차례까지 유효하다.',
   flaskL: p => '생명력을 ' + Math.round(flaskHealFrac(p) * healMul(p) * 100) + '% 채운다. 걸린 상태는 지우지 않는다. 빠른 행동이라 마신 뒤에도 주 행동을 한다.',
   flaskM: p => '마시면 막음 ' + Math.min(KW.block, 2 + fxAdd(p, 'blockAdd', p)) + ': 다음에 걸리려는 해로운 상태를 그만큼 튕겨 낸다. 이미 걸린 상태는 지우지 않는다. 빠른 행동이다.',

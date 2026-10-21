@@ -5,7 +5,7 @@ const DEBUFFS = ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln', 'brand'];
 const nDebuff = e => DEBUFFS.concat(['broken']).filter(k => e.s[k]).length;
 const isSpell = c => !!(c && c.spell);
 const IFX = {
-  rustsword: { brk: (b, p, e, c) => c.id === 'basic' ? 2 : 0 },
+  rustsword: { brk: (b, p, e, c) => brkB(c) ? 2 : 0 }, // M5-7: 규칙을 켜면 강공격 붕괴
   pilgstaff: { out: (b, p, c) => (isSpell(c) || c.cantrip) ? 1.03 : 1 },
   huntbow: { hit: (b, p, e, o) => e.row === 'back' ? 1.05 : 1 },
   dullknife: { hitAdd: (b, p, e, o, c) => c.id === 'basic' && e.s.poison ? 1 : 0 },
@@ -169,7 +169,7 @@ const IFX2 = {
   torchclub: { onHit: (b, p, e, o, c) => { if (c.id !== 'basic' || e.role !== 'skeleton' || e.pile || !e.alive) return; addS(b, e, 'ignite', 1); return 1; } },
   spadespear: { hitP: (b, p, e) => e.role === 'burrower' && !e.under ? 0.12 : 0 },
   mournsickle: { onKill: (b, p, e) => { if (!stk(e, 'bleed')) return; fxStam(p, 6); return 1; } },
-  venomawl: { brk: (b, p, e, c) => c.id === 'basic' && st(e, 'poison') >= 3 ? 4 : 0 },
+  venomawl: { brk: (b, p, e, c) => brkB(c) && st(e, 'poison') >= 3 ? 4 : 0 },
   mossstaff: { hitP: (b, p, e) => st(e, 'chill') ? 0.05 : 0 },
   scorchrod: { hitP: (b, p, e) => st(e, 'ignite') >= 3 ? 0.05 : 0 },
   wardhammer: { brk: (b, p, e, c) => c.id === 'heavy' && p.ward > 0 ? 4 : 0 },
@@ -461,7 +461,7 @@ function hazePeel(b, e) { if (!(e.haze > 0)) return; e.haze--; e.hazeLast = b.ro
 function wrapWear(b, e, why) { if (!(e.wrap > 0)) return; if (e.wrap <= 1) wrapOff(b, e, why); else e.wrap--; }
 const IFX3 = {
   // 무기
-  ashrake: { brk: (b, p, e, c) => c.id === 'basic' && wrE(e) ? 4 : 0 },
+  ashrake: { brk: (b, p, e, c) => brkB(c) && wrE(e) ? 4 : 0 },
   glassknife: { onHaze: (b, p, e, why) => { if (why !== 'hit') return; fxStam(p, 6); return 1; } },
   brandaxe: { hitP: (b, p, e) => e.fire ? 0.08 : 0 },
   noonblade: { hitP: (b, p, e, o, c) => c && c.id === 'basic' && b.heat >= 50 ? 0.06 : 0 },
@@ -551,7 +551,7 @@ const IFX3 = {
   sparkhands: { onShock: b => b.heat != null && fxHeat(b, 2, '불똥 손') > 0 ? 1 : 0 },
   pennancehands: { onCleanse: (b, p, n) => n > 0 && b.heat != null && fxHeat(b, 3, '고행의 손') > 0 ? 1 : 0 },
   stainedglove: { onHit: (b, p, e, o, c) => { if (!wrE(e) || !e.alive || !c.skill) return; const ps = fxSk(c, 'poison'), bl = fxSk(c, 'st', 'bleed'); if (!(ps || bl) || !fxOnce(b, 'stainedglove')) return; if (ps) addPoison(b, e, 1, 1); if (bl) addS(b, e, 'bleed', 1); return 1; } },
-  splitglove: { onHaze: (b, p, e, why) => { if (why !== 'hit') return; const t = fOther(b, e); if (!t) return; addBreak(b, t, 10); return 1; }, brk: (b, p, e, c) => c.id === 'basic' && !hzE(e) ? -2 : 0 },
+  splitglove: { onHaze: (b, p, e, why) => { if (why !== 'hit') return; const t = fOther(b, e); if (!t) return; addBreak(b, t, 10); return 1; }, brk: (b, p, e, c) => brkB(c) && !hzE(e) ? -2 : 0 },
   wearinggrip: { onHit: (b, p, e) => { if (!wrE(e) || !e.alive || !fxOnce(b, 'wearinggrip')) return; wrapWear(b, e, '닳아'); return 1; }, hitP: (b, p, e, o, c) => c && c.id === 'basic' ? -0.05 : 0 },
   heatpalm: { brk: (b, p, e, c) => b.heat != null && c.time <= 0.6 ? Math.floor(b.heat / 20) * 2 : 0, onRound: b => { if (b.heat == null) return; heatAdd(b, 1, '달군 손바닥'); return 1; } },
   blazeglove: { onAlt: (b, p) => { let n = 0; for (const e of fFoes(b)) if (st(e, 'ignite') && !e.under) { addS(b, e, 'ignite', 1); n++; } return n ? 1 : 0; } },

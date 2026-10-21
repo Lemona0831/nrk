@@ -169,7 +169,7 @@ T('purgingchalice', () => { const b = flask(['purgingchalice'], 'flaskM', b => {
 
 /* 셋째 묶음: 남은 효과 */
 const dmgRatio = (items, room, bd, prep, raw) => { const f = it => { const b = battle(room, bd || 'assassin', 13, it); const e = b.en[0]; if (prep) prep(b, e); return hit(b, e, raw || 100); }; return f(items) / f([]); };
-T('ashrake', () => { const f = it => { const b = battle({ en: [['wrapped', 0]] }, 'assassin', 13, it); const e = b.en[0]; b.actN++; b.cur = { id: 'basic' }; const k0 = e.brk; G0.addBreak(b, e, 5); b.cur = null; return e.brk - k0; }; ok(f(['ashrake']) - f([]) >= 4 - 0.01, '재 긁는 갈퀴: 붕대 감긴 적에게 기본 공격 붕괴 +4'); });
+T('ashrake', () => { const f = it => { const b = battle({ en: [['wrapped', 0]] }, 'assassin', 13, it); const e = b.en[0]; b.actN++; b.cur = { id: run_('BRK_RULE').basic0 ? 'heavy' : 'basic' }; const k0 = e.brk; G0.addBreak(b, e, 5); b.cur = null; return e.brk - k0; }; /* M5-7: 규칙을 켜면 강공격 붕괴 */ ok(f(['ashrake']) - f([]) >= 4 - 0.01, '재 긁는 갈퀴: 붕대 감긴 적에게 기본 공격 붕괴 +4'); });
 T('brandaxe', () => { const r = dmgRatio(['brandaxe'], { en: [['bruiser', 1]] }, 'assassin', (b, e) => { e.fire = 1; }); ok(near(r, 1.08, 0.01), '낙인 깨는 도끼 +8% (' + r.toFixed(3) + ')'); });
 T('noonblade', () => { const r = dmgRatio(['noonblade'], { en: [['bruiser', 0]], mods: ['noon'] }, 'assassin', (b) => { b.heat = 60; }); ok(near(r, 1.06, 0.01), '한낮의 검: 열기 50 이상 기본 공격 +6% (' + r.toFixed(3) + ')'); });
 T('lurkspike', () => { const f = it => { const b = battle({ en: [['lurker', 0], ['bruiser', 0], ['archer', 0]] }, 'assassin', 13, it); b.en[0].under = 1; return hit(b, b.en[2], 100); }; ok(near(f(['lurkspike']) / f([]), 1.1, 0.01), '숨은 적 찌르개: 숨은 적이 있으면 후열 +10%'); });

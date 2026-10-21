@@ -563,6 +563,22 @@
    "introduced": "M5-0c",
    "expires": "상시",
    "note": "길 고정(마검사 갈래 길 a · b, 예 B:a). 목표 부채꼴을 그 갈래로 두고 그 갈래의 다른 길 칸은 찍지 않는다"
+  },
+  {
+   "name": "BRK_BASIC0",
+   "kind": "env",
+   "default": null,
+   "introduced": "M5-7",
+   "expires": "상시",
+   "note": "M5-7 붕괴 규칙: 1이면 기본 공격 붕괴 0 · 기본 공격 붕괴 효과 → 강공격 · 제어 스킬 붕괴 노드, 0이면 끔(기준선)"
+  },
+  {
+   "name": "HEAVY_BRK",
+   "kind": "env",
+   "default": null,
+   "introduced": "M5-7",
+   "expires": "상시",
+   "note": "M5-7 강공격 붕괴 배율(규칙을 켰을 때, 기본 1)"
   }
  ]
 }

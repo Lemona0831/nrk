@@ -38,7 +38,7 @@ for (const c of CLS) {
 
 // ===== 2) 마검사 = 1단계 문서 7 · 8절 =====
 { const P = E.ptBuild('spellblade'), A = E.atBuild('spellblade'); const nm = id => P.nodes[id].n;
-  const W7 = { pw2L: '피 맛', pw3R: '밴 불씨', pw5L: '벼린 눈', pw5R: '교대의 칼끝', pw7L: '흩는 손', pw7R: '마무리 칼', ct2L: '박자 끊기', ct3R: '예고 깨기', ct5L: '균열 읽기', ct5R: '무너진 틈', ct7L: '무거운 손', ct7R: '흐트러진 자세',
+  const W7 = { pw2L: '피 맛', pw3R: '밴 불씨', pw5L: '벼린 눈', pw5R: '교대의 칼끝', pw7L: '흩는 손', pw7R: '마무리 칼', ct2L: '박자 끊기', ct3R: '예고 깨기', ct5L: R_('BRK_RULE').basic0 ? R_('PN_TXT').n_ct_skbrk.n : '균열 읽기', /* M5-7 붕괴 규칙: 제어 2고리 중간 노드 스킬 붕괴 */ ct5R: '무너진 틈', ct7L: '무거운 손', ct7R: '흐트러진 자세',
     ag2L: '흘린 칼끝', ag3R: '가벼운 칼', ag5L: '각오', ag5R: '먼 주문', ag7L: '가벼운 걸음', ag7R: '단숨', lg1C: '교대의 박자', lg3L: '칼에 새긴 주문', lg5L: '넘친 숨', lg5R: '세 박자', lg7L: '가득 찬 그릇', lg7R: '마력 순환',
     su2L: '겹친 갑주', su3R: '남는 마력', su5L: '승전의 숨', su5R: '두꺼운 주문 방패', su7L: '남는 온기', su7R: '피의 갑주', sv3L: '마력 갑주', sv5L: '질긴 살갗', sv5R: '보호막 아래', sv7L: '쇠 같은 몸', sv7R: '버티는 이' };
   for (const id in W7) assert.equal(nm(id), W7[id], '7-4 ' + id); const nts = Object.values(P.nodes).filter(x => x.kind === 'notable'); ok(nts.length === 35 && nts.every(x => W7[x.id]), '마검사 중간 노드 35개가 7-4 표와 같음');

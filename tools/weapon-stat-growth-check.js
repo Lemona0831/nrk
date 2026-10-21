@@ -37,7 +37,7 @@ for(const build of Object.keys(E.TREE2))for(const str of [0,20])for(const attack
  const stamina=p.st;E.playerAct(b,id,e.id);E.hurtEnemy=hit;
  close(damage,expected,'실제 행동의 피해');
  close(stamina-p.st,id==='heavy'?D.run_('heavyCost')(p):0,'행동 비용');
- assert(e.brk>0||E.st(e,'broken')>0,'붕괴 경로 유지 '+build+'/'+str+'/'+attack+'/'+id);actions++;
+ if(id==='basic'&&D.run_('BRK_RULE').basic0)assert(!(e.brk>0),'M5-7: 기본 공격은 붕괴를 채우지 않음 '+build); else assert(e.brk>0||E.st(e,'broken')>0,'붕괴 경로 유지 '+build+'/'+str+'/'+attack+'/'+id);actions++;
 }
 E.finishPlayer=finish;
 console.log(JSON.stringify({passed:true,classes:9,multipliers,legacy,actions,previews,gear}));

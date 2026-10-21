@@ -230,19 +230,19 @@ const SKILLS2 = {
     { id: 'w_dstance', row: 1, b: '성벽', tier: '하급', n: '수비 태세', tgt: 'self', time: 'fast', cd: 3, fx: [{ k: 'wdStance', s: 'def', txt: '켜면 수비 태세(켜는 차례에 보호막 +8): 받는 피해 −12%, 내 차례마다 보호막 +3. 공격 태세와 함께 켜지지 않는다. 다시 쓰면 끈다(유산 0).' }] },
     { id: 'w_shieldhit', row: 1, b: '성벽', tier: '하급', n: '방패 가격', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 10 }, { k: 'ward', n: 8 }, { k: 'wardDmg', per: 0.5, cap: 12 }] }, /* M5-1 값 띠 */
     { id: 'w_pray', row: 1, b: '성벽', tier: '하급', n: '신성한 기도', tgt: 'self', time: 'normal', cd: 3, fx: [{ k: 'wdPray', n: 0.03, txt: '최대 생명력 3% 회복. 수비 태세면 6%.' }] },
-    { id: 's_astance', row: 1, b: '파쇄', tier: '하급', n: '공격 태세', tgt: 'self', time: 'fast', cd: 3, fx: [{ k: 'wdStance', s: 'atk', txt: '켜면 공격 태세(켜는 차례에 앞의 적 하나에게 피해 5 · 붕괴 12): 기본 공격 · 강공격 피해 +25% · 붕괴 +10. 수비 태세와 함께 켜지지 않는다. 다시 쓰면 끈다(유산 0).' }] },
+    { id: 's_astance', row: 1, b: '파쇄', tier: '하급', n: '공격 태세', tgt: 'self', time: 'fast', cd: 3, fx: [{ k: 'wdStance', s: 'atk', txt: '켜면 공격 태세(켜는 차례에 앞의 적 하나에게 피해 5 · 붕괴 12): 기본 공격 · 강공격 피해 +25% · 강공격 붕괴 +10. 수비 태세와 함께 켜지지 않는다. 다시 쓰면 끈다(유산 0).' }] },
     { id: 's_regret', row: 1, b: '파쇄', tier: '하급', n: '회한의 검', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'vuln', n: 2 }] }, /* M5-1 값 띠 */
-    { id: 's_march', row: 4, b: '파쇄', tier: '하급', n: '묵직한 걸음', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 8 }, { k: 'wdMarch', n: 3, txt: '3차례 동안 기본 공격 피해 +15% · 붕괴 +20, 강공격 스태미나 −15.' }] }, // [Claude 초안] 설계지 2고리(붕괴 +15 · 스태미나 −10)를 값 띠에 맞춤. 맞추기 2번: 보호막 8(1챕터 보스는 버티는 쪽이 이긴다)
+    { id: 's_march', row: 4, b: '파쇄', tier: '하급', n: '묵직한 걸음', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 8 }, { k: 'wdMarch', n: 3, txt: '3차례 동안 기본 공격 피해 +15% · 강공격 붕괴 +20, 강공격 스태미나 −15.' }] }, // [Claude 초안] 설계지 2고리(붕괴 +15 · 스태미나 −10)를 값 띠에 맞춤. 맞추기 2번: 보호막 8(1챕터 보스는 버티는 쪽이 이긴다)
     { id: 'f_chainblade', row: 1, b: '전열 장악', tier: '하급', n: '사슬의 검', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 36 }, { k: 'st', s: 'chill', n: 2 }] }, // 파수꾼의 유일한 원거리 견제기(대미지는 얕다)
     /* 경계 칸(입구 · 둘째 · 3고리 둘)은 [Claude 초안]. 기둥 파쇄의 강화 칸 둘(새 칸) */
     { id: 's_lean', row: 7, b: '기둥 파쇄', tier: '중급', n: '기울어진 대열', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'st', s: 'empower', n: 3 }, { k: 'st', s: 'protect', n: 2 }, { k: 'ward', n: 8 }] },
     { id: 's_gapwatch', row: 8, b: '기둥 파쇄', tier: '중급', n: '무너짐의 틈', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'ward', n: 32 }, { k: 'st', s: 'empower', n: 3 }] },
     /* 경계 승부수(만든 사람 문장 · 대사 그대로, 10월 20일 결정 반영) */
-    { id: 'w_siege', row: 10, b: '공성추', tier: '중급', n: '파성추', kind: 'cut', tgt: 'self', time: 'normal', cd: 9, line: '「지키지 못하는 성벽 따위, 이 나락에서는 사치임이 분명하구나.」', cut: 'blade', pay: '그동안 보호막을 얻지 못하고, 3차례 방어 행동을 할 수 없다.', fx: [{ k: 'wdSiege', n: 3, txt: '현재 보호막을 전부 소모하여 3차례 동안 "파성": 강공격 스태미나 −20, 기본 공격과 강공격 피해가 소모한 보호막에 비례해 최대 ×2.0 증폭, 타격마다 붕괴 +30.' }] },
+    { id: 'w_siege', row: 10, b: '공성추', tier: '중급', n: '파성추', kind: 'cut', tgt: 'self', time: 'normal', cd: 9, line: '「지키지 못하는 성벽 따위, 이 나락에서는 사치임이 분명하구나.」', cut: 'blade', pay: '그동안 보호막을 얻지 못하고, 3차례 방어 행동을 할 수 없다.', fx: [{ k: 'wdSiege', n: 3, txt: '현재 보호막을 전부 소모하여 3차례 동안 "파성": 강공격 스태미나 −20, 기본 공격과 강공격 피해가 소모한 보호막에 비례해 최대 ×2.0 증폭, 강공격마다 붕괴 +30.' }] },
     { id: 's_quake', row: 10, b: '기둥 파쇄', tier: '중급', n: '대지 분쇄', tgt: 'front', time: 'normal', cd: 9, line: '「네놈들의 방어선을, 쳐부숴주마.」', cut: 'guard', pay: '사용 후 3라운드 동안 자신의 보호막 획득량 −50%.', fx: [{ k: 'brk', n: 45 }, { k: 'wdQuake', txt: '이번 행동으로 무너진 적이 2명 이상이라면, 다음 차례의 자신 피해를 2배로 한다.' }] },
     { id: 'w_valor', row: 10, b: '용맹의 투지', tier: '중급', n: '용맹한 방벽', tgt: 'self', time: 'normal', cd: 9, line: '「이 몸이 물러설 장소 따위. 이미 사라진지 오래렸다.」', cut: 'guard', pay: '그동안 스태미나가 저절로 차지 않고, 흘리기를 할 수 없다.', fx: [{ k: 'wdValor', n: 3, txt: '3차례 동안 "용맹": 방어할 때 보호막 +6 → +18, 내 차례마다 보호막의 50%만큼 가시(맞을 때 그 적에게 되돌린다).' }] },
     /* 결합 칸 셋([Claude 초안]): 원 바깥, 판마다 둘, 꼬리표 조건 */
-    { id: 'w_turncoat', row: 7, b: '결합', tier: '중급', n: '돌아선 방패', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'wdTurncoat', txt: '이번 전투 동안 태세를 바꿀 때 비용이 없고, 바꾼 직후 첫 기본 공격에 붕괴 +25.' }] },
+    { id: 'w_turncoat', row: 7, b: '결합', tier: '중급', n: '돌아선 방패', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'wdTurncoat', txt: '이번 전투 동안 태세를 바꿀 때 비용이 없고, 바꾼 직후 첫 강공격에 붕괴 +25.' }] },
     { id: 's_hammerhand', row: 7, b: '결합', tier: '중급', n: '쇠망치 손', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'wdHammer', txt: '이번 전투 동안 무너진 적에게 기본 공격 ×1.5, 강공격으로 무너진 적을 치면 스태미나 15를 돌려받는다.' }] },
     { id: 'f_chainpull', row: 7, b: '결합', tier: '중급', n: '사슬 끌기', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'wdChainPull', txt: '이번 전투 동안 사슬의 검으로 후열 적을 맞히면 그 적을 전열로 끌어오고 붕괴 +30(전투에 두 번).' }] },
   ],

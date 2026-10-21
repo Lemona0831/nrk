@@ -14,9 +14,9 @@ function ptSmallOf(cls, d, lane) {
   if (d === 'sv') return { stat: { con: 2 } }; if (d === 'su') return { stat: { wil: 2 } }; if (d === 'ag') return { stat: { dex: 2 } };
   if (d === 'ct') return { sm: 'brk' }; return { sm: 'st' };
 }
-const ptSmallTxt = o => o.stat ? Object.entries(o.stat).map(([k, v]) => PT_STATN[k] + ' +' + v).join(' · ') : o.sm === 'brk' ? '주는 붕괴 +' + Math.round(PT.smallBrk * 100) + '%' : '스태미나 +' + PT.smallSt;
+const ptSmallTxt = o => o.stat ? Object.entries(o.stat).map(([k, v]) => PT_STATN[k] + ' +' + v).join(' · ') : o.sm === 'brk' ? '주는 붕괴 +' + Math.round(PT.smallBrk * 100) + '%' : o.sm === 'skb' ? '스킬 붕괴 +' + Math.round(BRK_RULE.skbS * 100) + '%' : '스태미나 +' + PT.smallSt;
 const pnTxt = k => (typeof AWK_MAP !== 'undefined' && AWK_MAP[k]) || PN_TXT[k] || KS_LIST[k] || { n: k, d: '' };
-const ptPoolHas = k => PT.dirs.some(d => PT_POOL[d].r2.includes(k) || PT_POOL[d].r3.includes(k));
+const ptPoolHas = k => k === 'n_ct_skbrk' || PT.dirs.some(d => PT_POOL[d].r2.includes(k) || PT_POOL[d].r3.includes(k)); // M5-7: 스킬 붕괴 중간 노드는 직업마다 같은 틀(공용)
 /* 패시브 트리 만들기 (2-3 틀): 방향마다 일반 15 + 큰 각인 자리 2, 다리 R3 → 시계 방향 이웃 L3 · R6 → 이웃 L6 */
 function ptBuild(cls) {
   if (PTREE[cls]) return PTREE[cls];
@@ -34,8 +34,9 @@ function ptBuild(cls) {
     for (const pos of PT_POS) {
       const r = +pos[0], lane = pos[1], id = d + pos, k = content[pos];
       const base = { dir: d, ring: ptRingOf(r), pos: { r, lane } };
-      if (k) { const T = pnTxt(k); add(id, Object.assign(base, { kind: 'notable', fx: k, n: T.n, d: T.d, pool: ptPoolHas(k) ? 'common' : 'class' })); }
-      else { const sm = ptSmallOf(cls, d, lane); const xf = C && C.smallFx && C.smallFx[id]; /* 10월 17일 보완 2: 효과가 붙은 작은 노드(마검사 화력 C1 양손의 마검) */
+      if (k && C && BRK_RULE.basic0 && id === 'ct5L' && k === 'a_gap') content[pos] = 'n_ct_skbrk'; /* M5-7: 제어 2고리 중간 노드 균열 읽기 → 스킬 붕괴 */
+      if (content[pos]) { const T = pnTxt(content[pos]); const k = content[pos]; add(id, Object.assign(base, { kind: 'notable', fx: k, n: T.n, d: T.d, pool: ptPoolHas(k) ? 'common' : 'class' })); }
+      else { const sm = C && BRK_RULE.basic0 && typeof PT_SKB !== 'undefined' && PT_SKB.includes(id) ? { sm: 'skb' } : ptSmallOf(cls, d, lane); const xf = C && C.smallFx && C.smallFx[id]; /* 10월 17일 보완 2: 효과가 붙은 작은 노드(마검사 화력 C1 양손의 마검) */
         add(id, Object.assign(base, { kind: 'small', n: xf ? pnTxt(xf).n : ptSmallTxt(sm), d: ptSmallTxt(sm) + '.' + (xf ? ' ' + pnTxt(xf).d : '') }, sm, xf ? { fx: xf } : {})); }
     }
     if (typeof PT_BASIC !== 'undefined' && PT_BASIC[d]) PT_POS.map(pos => N[d + pos]).filter(x => x && x.kind === 'small' && x.ring === 1 && !x.fx).slice(0, PT_BASIC[d].length).forEach((x, i) => { const k = PT_BASIC[d][i], T = pnTxt(k); delete x.stat; Object.assign(x, { fx: k, n: T.n, d: T.d, basic: 1 }); }); // 0.8.0 M4 평타 축
@@ -181,7 +182,7 @@ function ptStats(run) { const T = ptBuild(run.build), o = { str: 0, dex: 0, int:
 /* 출처별 능력치 (화면): 시작 · 작은 노드 · 보너스 노드 */
 function ptStatSrc(run) { const T = ptBuild(run.build), src = { start: {}, own: {}, free: {} }; const put = (w, n) => { if (n && n.stat) for (const k in n.stat) src[w][k] = (src[w][k] || 0) + n.stat[k]; }; put('start', T.nodes.S); for (const id of run.ptree.own) put('own', T.nodes[id]); for (const id of run.ptree.free) put('free', T.nodes[id]); return src; }
 function ptFxKeys(run) { const T = ptBuild(run.build); return ['S'].concat(run.ptree.own, run.ptree.free, run.ptree.ks).map(id => T.nodes[id]).filter(n => n && n.fx).map(n => n.fx); }
-function ptSmall(run) { const T = ptBuild(run.build), o = { brk: 0, st: 0 }; for (const id of run.ptree.own.concat(run.ptree.free)) { const n = T.nodes[id]; if (n && n.sm) o[n.sm]++; } return o; }
+function ptSmall(run) { const T = ptBuild(run.build), o = { brk: 0, st: 0, skb: 0 }; for (const id of run.ptree.own.concat(run.ptree.free)) { const n = T.nodes[id]; if (n && n.sm) o[n.sm]++; } return o; }
 /* 트리 → 캐릭터: 능력치 · 노드 효과(p.pn · p.psm) · 생명력 비율 유지 */
 function ptSync(run) { if (!run.ptree) return; run.stats = ptStats(run); const p = run.p; if (!p) return; p.pn = ptFxKeys(run); p.psm = ptSmall(run); p.awk = (run.awk || []).slice(); applyStats(p, run.stats); }
 function atSync(run) { if (!run.atree || !run.p) return; run.p.skills = v2Equip(run); const T = atBuild(run.build), eq = run.p.skills; run.p.aup = run.atree.own.filter(id => T.nodes[id] && T.nodes[id].kind === 'upgrade' && eq.includes(T.nodes[id].on)).map(id => T.nodes[id].slot ? (run.atree.vsel || {})[id] : id).filter(Boolean).sort(); /* M5-0 보정 5: 변형 자리는 고른 변형으로(안 고른 자리는 일하지 않음) */ run.p.sbLead = atLead(run); }
@@ -404,11 +405,12 @@ const IFX_NODE = {
   n_sb_under: { inP: (b, p, o) => p.ward > 0 && !o.dot ? 0.04 : 0 },
   ks_sb_sear: { ksSearSpell: 1 }, ks_sb_sin: { ksSinBlock: 1 }, ks_sb_ash: { ksAshBlast: 1 }, // 0.8.0 M5-0 마검사 경계 큰 각인(js/24 addS · 방어 · js/10 sbWardHit)
   ks_deep: { ysCap: 1, hitP: (b, p, e, o, c) => c && c.id === 'basic' ? -0.15 : 0 }, // 0.8.0 M4(D10): 대가 기본 공격 −15%
-  ks_sharp: { ysCap: -2, hitP: (b, p, e, o, c) => c && c.id === 'basic' ? 0.3 : 0, brk: (b, p, e, c) => c && c.id === 'basic' && e && e.intent && e.intent.k && e.intent.k !== 'attack' ? 10 : 0 }, // 날 선 손
+  ks_sharp: { ysCap: -2, hitP: (b, p, e, o, c) => c && c.id === 'basic' ? 0.3 : 0, brk: (b, p, e, c) => brkB(c) && e && e.intent && e.intent.k && e.intent.k !== 'attack' ? 10 : 0 }, // 날 선 손(M5-7: 규칙을 켜면 강공격일 때만)
   ks_tireless: { cost: (p, id) => id === 'heavy' ? -15 : 0, cap: { life: -1 } }, // 쉬지 않는 팔
   ks_brkbreath: { ysChan: ['무너뜨리기'] }, ks_slipbreath: { ysChan: ['흘리기', '먼저 치우기'] }, ks_blockbreath: { ysChan: ['막기'] }, // 방향별 유산 통로(ysChanResp)
   n_bs_dmg: { hitP: (b, p, e, o, c) => c && c.id === 'basic' ? 0.04 : 0 }, n_bs_dmg2: { hitP: (b, p, e, o, c) => c && c.id === 'basic' ? 0.04 : 0 },
-  n_bs_brk: { brk: (b, p, e, c) => c && c.id === 'basic' ? 2 : 0 },
+  n_bs_brk: { brk: (b, p, e, c) => brkB(c) ? (BRK_RULE.basic0 ? BRK_RULE.bsHeavy : 2) : 0 }, // M5-7: 규칙을 켜면 강공격 붕괴 +bsHeavy
+  n_ct_skbrk: { brkMul: (b, p, e, c) => c && c.skill ? 1 + BRK_RULE.skbM : 1 }, // M5-7 제어 중간 노드: 스킬 붕괴
   n_bs_st: { onHit: (b, p, e, o, c) => { if (!c || c.id !== 'basic') return; const s0 = p.st; p.st = Math.min(p.stMax, p.st + 3); return p.st > s0 ? 1 : 0; } },
   ks_double: { ysRespMax: 1, ysStart: -2 },
   ks_bare: { ysRespPer: 1, hitP: (b, p, e, o, c) => c && c.id === 'basic' ? -0.2 : 0 },
@@ -526,4 +528,4 @@ const IFX_NODE = {
 /* 사냥꾼: 이 타격 전의 추적 겹 (한 적 공격은 hurtEnemy가 겹을 먼저 올리므로 그 전 값, 광역은 올리지 않는다) */
 function hnFocusPre(b, p, e, o) { if (!p.focus || p.focus.id !== e.id) return 0; if (o && o.aoe) return p.focus.n; if (b.curSkill && b.focusKey === b.curSkill + ':' + e.id) return b.focusPre || 0; return Math.max(0, p.focus.n - 1); }
 const PSM_FX = new Map();
-function ptSmallFx(sm) { const key = (sm.brk || 0) + ':' + (sm.st || 0); if (!PSM_FX.has(key)) PSM_FX.set(key, Object.assign(sm.st ? { st: { st: PT.smallSt * sm.st } } : {}, sm.brk ? { brkMul: (() => { const m = Math.pow(1 + PT.smallBrk, sm.brk); return () => m; })() } : {})); return PSM_FX.get(key); }
+function ptSmallFx(sm) { const key = (sm.brk || 0) + ':' + (sm.st || 0) + ':' + (sm.skb || 0); if (!PSM_FX.has(key)) PSM_FX.set(key, Object.assign(sm.st ? { st: { st: PT.smallSt * sm.st } } : {}, (sm.brk || sm.skb) ? { brkMul: (() => { const m = Math.pow(1 + PT.smallBrk, sm.brk || 0), k = 1 + BRK_RULE.skbS * (sm.skb || 0); return (b, p, e, c) => m * (c && c.skill ? k : 1); })() } : {})); /* M5-7: skb 스킬 붕괴 */ return PSM_FX.get(key); }

@@ -34,7 +34,7 @@ const act = (b, id, t) => { b.p.ys = 9; b.p.st = b.p.stMax; E.playerAct(b, id, t
 // 파성추
 { const { p, b, es } = fight(['w_dstance', 's_astance', 'w_flare', 'w_rebuild', 'w_breach', 'w_siege'], ['w_siege']); p.ward = 20; act(b, 'w_siege'); ok(p.ward === 0 && p.wdSt.siege >= 2 && Math.abs(p.wdSt.siegeAmp - 2) < 1e-9, '파성: 보호막 20을 모두 소모해 ×2.0'); ok(!A(b, 'guard').ok && /파성/.test(A(b, 'guard').why), '파성: 방어할 수 없음');
   ok(R_('addWard')(b, p, 10) === 0, '파성: 보호막을 얻지 못함'); const fm = R_('fxMul'); ok(Math.abs(fm(p, 'out', b, p, { id: 'heavy' }) - 2) < 1e-9 && fm(p, 'out', b, p, { id: 'w_bash' }) === 1, '파성: 기본 공격 · 강공격만 ×2.0');
-  const k0 = es[0].brk || 0; act(b, 'basic', es[0].id); ok((es[0].brk || 0) - k0 >= U.siegeBrk || es[0].s.broken, '파성: 타격마다 붕괴 +' + U.siegeBrk); }
+  const B0 = R_('BRK_RULE').basic0, k0 = es[0].brk || 0; act(b, B0 ? 'heavy' : 'basic', es[0].id); ok((es[0].brk || 0) - k0 >= U.siegeBrk || es[0].s.broken, '파성: ' + (B0 ? '강공격마다' : '타격마다') + ' 붕괴 +' + U.siegeBrk + '(M5-7 붕괴 규칙을 켜면 강공격만)'); }
 { const { p, b } = fight(['w_siege'], ['w_siege']); p.ward = 5; act(b, 'w_siege'); ok(Math.abs(p.wdSt.siegeAmp - (1 + 5 / U.siegePer)) < 1e-9, '파성: 증폭은 소모한 보호막에 비례(5 → ×' + (1 + 5 / U.siegePer) + ')'); }
 // 대지 분쇄
 { const { p, b, es } = fight(['s_quake'], ['s_quake'], ['bruiser', 'bruiser', 'bruiser']); for (const e of es) e.brk = (e.brkMax || 100) - 10; act(b, 's_quake'); const nb = es.filter(e => e.s.broken).length; ok(nb >= 2, '대지 분쇄: 전열 붕괴 +45로 둘 이상 무너짐(' + nb + ')'); ok(p.wdSt.quakeX === 1 || b.log.some(x => /다음 차례 내 피해 ×2/.test(x.m)), '대지 분쇄: 무너진 적이 둘 이상이면 다음 차례 ×2'); ok(p.wdSt.wardHalf >= 1, '대지 분쇄 대가: 보호막 획득량 −50%');

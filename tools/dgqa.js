@@ -24,6 +24,7 @@ function loadGame() {
 const G0 = loadGame();
 const run_ = code => vm.runInContext(code, G0);
 if (process.env.HEAVY_17 != null) run_(process.env.HEAVY_17 === '1' ? 'HEAVY_V2 = 1.7; HEAVY_COST = 35' : 'HEAVY_V2 = 1.5; HEAVY_COST = 40'); // M4(D11) 강공격 A/B: 1이면 ×1.7 · 35, 0이면 ×1.5 · 40
+if (process.env.BRK_BASIC0 != null || process.env.HEAVY_BRK) run_('BRK_RULE.basic0 = ' + (process.env.BRK_BASIC0 === '0' ? 'false' : process.env.BRK_BASIC0 != null ? 'true' : 'BRK_RULE.basic0') + '; ' + (process.env.HEAVY_BRK ? 'BRK_RULE.heavyMul = ' + (+process.env.HEAVY_BRK) + '; ' : '') + 'for (const k in PTREE) delete PTREE[k];'); if (process.env.BRK_BASIC0 != null || process.env.HEAVY_BRK) { const R = require('./eng.gen.js').BRK_RULE; if (R) { R.basic0 = run_('BRK_RULE.basic0'); R.heavyMul = run_('BRK_RULE.heavyMul'); } } // M5-7 붕괴 규칙 측정: BRK_BASIC0=1 켬 · 0 끔, HEAVY_BRK 강공격 붕괴 배율
 if (process.env.CFG) run_(process.env.CFG); // 시험할 수치: CFG='DIFF[1].upper.dmg=1.3; BOSSES.abbot.mult=7'
 if (process.env.HUNT_BRIDGE) run_("{ const u = ATREE_DEF.hunter.ups.find(x => x[0] === 'hu_link3'); u[8].cond.when = 'linkFast'; u[7] = '연계로 쓰거나, 이번 차례에 빠른 기동 스킬을 먼저 썼으면 비용 −1(바닥 1, 라운드에 한 번).'; }");
 if (process.env.ASN_SHADOW_VAR) { Q.asnShadowVar(run_('ATREE_DEF'), run_('AT_GONE'), process.env.ASN_SHADOW_VAR); run_('delete ATREE.assassin; SKC.clear()'); } // 10월 18일 0.8.0 5단계 측정 변형(원거리 초안 10절 결정 3): 암살자 그림자 old · rush(qa.js asnShadowVar). 10월 18일 0.8.0 5단계 마무리: swap은 기본 데이터가 되어 바꾸지 않는다 // 0.8.0 5단계 측정 변형(원거리 초안 8절 보완 2): 이어 묶는 화살 = 연계이거나 이번 차례에 빠른 기동 스킬을 먼저 씀. 기본값 아님

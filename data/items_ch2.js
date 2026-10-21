@@ -11,7 +11,7 @@ const ITEMS_CH2 = {
   torchclub: { n: '횃불 곤봉', slot: 'weapon', g: 'n', act: '기본 공격이 해골 병사에게 화상 1을 건다.', cost: '', lore: '끝에 감은 헝겊이 아직 그을려 있다.', t: '불꽃 염검', vs: 'pile' },
   spadespear: { n: '삽날 창', slot: 'weapon', g: 'n', act: '땅 위에 나와 있는 굴 파는 시체에게 주는 피해 +12%.', cost: '', lore: '흙을 뒤집던 날을 자루 끝에 박았다.', t: 'all', vs: 'under' },
   mournsickle: { n: '곡하는 낫', slot: 'weapon', g: 'n', act: '출혈된 적이 쓰러지면 스태미나 +6.', cost: '', lore: '장례 행렬 맨 뒤에서 들고 걷던 낫.', t: '도륙 학살 혈인 연사' },
-  venomawl: { n: '독 묻은 송곳', slot: 'weapon', g: 'n', act: '중독 3 이상인 적에게 기본 공격 붕괴 +4.', cost: '', lore: '관 뚜껑을 여는 데 쓰던 송곳이다.', t: '독사 격발 그림자 bloodmage' },
+  venomawl: { n: '독 묻은 송곳', slot: 'weapon', g: 'n', act: '중독 3 이상인 적에게 강공격 붕괴 +4.', cost: '', lore: '관 뚜껑을 여는 데 쓰던 송곳이다.', t: '독사 격발 그림자 bloodmage' },
   mossstaff: { n: '이끼 낀 지팡이', slot: 'weapon', g: 'n', act: '둔화된 적에게 주는 피해 +5%.', cost: '', lore: '젖은 벽에 기대 두었더니 이끼가 올랐다.', t: '서리 혈도 기동' },
   scorchrod: { n: '그을린 홀', slot: 'weapon', g: 'n', act: '화상 3 이상인 적에게 주는 피해 +5%.', cost: '', lore: '화장터의 재를 휘젓던 홀.', t: '불꽃 염검 공명' },
   wardhammer: { n: '방패 깨는 망치', slot: 'weapon', g: 'n', act: '보호막이 있으면 강공격 붕괴 +4.', cost: '', lore: '방패 뒤에 선 자가 쓰라고 자루를 짧게 잘랐다.', t: '성벽 파쇄 마갑' },

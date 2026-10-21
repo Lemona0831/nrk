@@ -235,7 +235,7 @@ const near = (a, b2) => Math.abs(a - b2) < 1e-6;
   const IFA = R_('IFX_NODE'); fw.b.asBurstK = 1; for (let i = 0; i < 5; i++) IFA.n_as_warm.onKill(fw.b, fw.p, fw.es[1]); fw.b.asBurstK = 0; ok(near(fw.b.asWarmH, fw.p.hpMax * 0.06), '남은 독의 온기: 전투마다 6%까지'); }
 // 제어: 무너뜨리는 독 · 끊는 칼끝 · 깨진 틈 찌르기
 { const IFA = R_('IFX_NODE'); const f = afight({ own: ['ct2L'] }); E.addPoison(f.b, f.es[0], 9, 1); ok(IFA.n_as_crush.brkMul(f.b, f.p, f.es[0]) === 1, '무너뜨리는 독: 중독 9면 없음'); E.addPoison(f.b, f.es[0], 1, 1); ok(IFA.n_as_crush.brkMul(f.b, f.p, f.es[0]) === 1.1, '무너뜨리는 독: 중독 10 이상이면 붕괴 ×1.1');
-  const bk = o => { const x = afight(o); E.addPoison(x.b, x.es[0], 10, 1); const k = x.es[0].brk || 0; aAct(x, 'basic'); return x.es[0].brk - k; }; ok(near(bk({ own: ['ct2L'] }) / bk({}), 1.1), '무너뜨리는 독: 중독 10 이상인 적에게 기본 공격 붕괴 ×1.1(실제)'); }
+  const bk = o => { const x = afight(o); E.addPoison(x.b, x.es[0], 10, 1); const k = x.es[0].brk || 0; x.p.st = x.p.stMax; aAct(x, R_('BRK_RULE').basic0 ? 'heavy' : 'basic'); return x.es[0].brk - k; }; /* M5-7: 규칙을 켜면 강공격으로 잰다 */ ok(near(bk({ own: ['ct2L'] }) / bk({}), 1.1), '무너뜨리는 독: 중독 10 이상인 적에게 기본 공격 붕괴 ×1.1(실제)'); }
 { const pk = o => { const f = afight(o); E.setParry(f.b, f.es[0], null, null); const k = f.es[0].brk || 0; enemyHit(f.b, f.es[0], 10, { charged: 1 }); return f.es[0].brk - k; };
   ok(near(pk({}), 25) && near(pk({ own: ['ct3R'] }), 35), '끊는 칼끝: 강타를 흘려 내면 붕괴 +25 → +35'); }
 { const cr = (o, brk) => { const run = n => { const f = afight(Object.assign({ act: ['a_gyeokjjil'], eq: ['a_gyeokjjil'] }, o)); if (n) E.addPoison(f.b, f.es[0], n, 1); if (brk) E.addS(f.b, f.es[0], 'broken', 2); return aAct(f, 'a_gyeokjjil'); }; return run(6) - run(0); }; // 터뜨린 몫만

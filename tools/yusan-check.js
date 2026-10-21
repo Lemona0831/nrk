@@ -30,10 +30,10 @@ const setInt = (es, k) => { for (const e of es) e.intent = Object.assign({ k: 'a
 // 6) 대응: 흘리기
 { const { p, b, es } = fight(); setInt(es); p.ys = 1; E.playerAct(b, 'dodge', es[0].id); const r = ysRec(b, 'resp'); ok(r.length === 1 && r[0].why === '흘리기', '흘리기 성공 +1'); ok(p.ys === 3, '흘리기 뒤 3'); }
 // 7) 대응: 무너뜨리기 · 라운드에 한 번
-{ const { p, b, es } = fight('spellblade', ['bruiser', 'bruiser']); setInt(es); p.ys = 1; es[0].brk = es[0].brkMax - 1; E.playerAct(b, 'basic', es[0].id); const r = ysRec(b, 'resp'); ok(r.length >= 1 && r[0].why === '무너뜨리기', '무너뜨리면 +1');
+{ const { p, b, es } = fight('spellblade', ['bruiser', 'bruiser']); setInt(es); p.ys = 1; es[0].brk = es[0].brkMax - 1; p.st = p.stMax; E.playerAct(b, D.run_('BRK_RULE').basic0 ? 'heavy' : 'basic', es[0].id); const r = ysRec(b, 'resp'); ok(r.length >= 1 && r[0].why === '무너뜨리기', '무너뜨리면 +1(M5-7 붕괴 규칙을 켜면 강공격으로)');
   const R = b.ysR; ok(E.ysResp(b, '막기') === 0, '같은 라운드의 두 번째 대응은 0'); ok(ysRec(b, 'resp').filter(x => x.r === R).length === 1, '라운드마다 한 번'); }
 // 8) 대응: 끊기 (모으는 적을 무너뜨림)
-{ const { p, b, es } = fight(); setInt(es, 'heavy'); p.ys = 1; es[0].brk = es[0].brkMax - 1; E.playerAct(b, 'basic', es[0].id); const r = ysRec(b, 'resp'); ok(r.length >= 1 && r[0].why === '끊기', '강타 예고를 무너뜨리면 끊기 +1'); ok(b.rec.some(x => x.k === 'break' && x.cut), 'break cut 기록'); }
+{ const { p, b, es } = fight(); setInt(es, 'heavy'); p.ys = 1; es[0].brk = es[0].brkMax - 1; p.st = p.stMax; E.playerAct(b, D.run_('BRK_RULE').basic0 ? 'heavy' : 'basic', es[0].id); const r = ysRec(b, 'resp'); ok(r.length >= 1 && r[0].why === '끊기', '강타 예고를 무너뜨리면 끊기 +1'); ok(b.rec.some(x => x.k === 'break' && x.cut), 'break cut 기록'); }
 // 9) 대응: 먼저 치우기 (10월 15일 수정: 이번 라운드에 아직 움직이지 않았고 큰 예고 YS_PRE_K · 겨눈 한 발일 때만)
 { const { p, b, es } = fight('spellblade', ['bruiser', 'bruiser']); setInt(es, 'heavy'); p.ys = 1; ok(b.queue.includes(es[0].id), '적이 아직 순서에 남아 있음'); es[0].hp = 1; es[0].brk = 0; E.playerAct(b, 'basic', es[0].id); const r = ysRec(b, 'resp'); ok(r.length >= 1 && r[0].why === '먼저 치우기', '강타를 모으는 적을 움직이기 전에 쓰러뜨리면 먼저 치우기 +1'); }
 { const { p, b, es } = fight('spellblade', ['bruiser', 'bruiser']); setInt(es); p.ys = 1; es[0].hp = 1; es[0].brk = 0; E.playerAct(b, 'basic', es[0].id); ok(!ysRec(b, 'resp').some(x => x.why === '먼저 치우기'), '평소 공격 예고인 적을 쓰러뜨리면 먼저 치우기 아님'); }
@@ -56,9 +56,9 @@ const setInt = (es, k) => { for (const e of es) e.intent = Object.assign({ k: 'a
   p.ys = 0; b.bloodTurn = b.turnIdx; const a3 = E.actionList(b).find(x => x.id === sid); ok(!a3.ok && /이미 피로 당겼음/.test(a3.why), '피로 당기기는 차례마다 한 번');
   b.bloodTurn = -1; p.hp = 2; const a4 = E.actionList(b).find(x => x.id === sid); ok(!a4.ok && /생명력이 모자랍니다/.test(a4.why), '생명력 1 아래로는 낼 수 없다'); }
 // 14) 강공격: 예고 중인 적에게 붕괴를 더한다 (확정 끊기 없음)
-{ const { p, b, es } = fight(); setInt(es, 'charge'); es[0].brkMax = 999; es[0].brk = 0; p.st = 100; E.playerAct(b, 'heavy', es[0].id); const base = 35 + 5 * Math.floor(E.stat(p, 'str') / 10); ok(Math.abs(es[0].brk - (base + Y.heavyTele) * (1 + 0.01 * E.stat(p, 'str'))) < 1e-6, '예고 중 강공격 붕괴 = 기본 + ' + Y.heavyTele);
+{ const { p, b, es } = fight(); setInt(es, 'charge'); es[0].brkMax = 999; es[0].brk = 0; p.st = 100; E.playerAct(b, 'heavy', es[0].id); const base = 35 + 5 * Math.floor(E.stat(p, 'str') / 10); const HB = D.run_('BRK_RULE'), hm = HB.basic0 ? HB.heavyMul : 1; ok(Math.abs(es[0].brk - (base + Y.heavyTele) * hm * (1 + 0.01 * E.stat(p, 'str'))) < 1e-6, '예고 중 강공격 붕괴 = (기본 + ' + Y.heavyTele + ') × 강공격 붕괴 배율 ' + hm);
   ok(es[0].intent.k !== 'attack' || true, '붕괴 게이지가 있으면 끊지 않음'); }
-{ const { p, b, es } = fight(); setInt(es); es[0].brkMax = 999; es[0].brk = 0; p.st = 100; E.playerAct(b, 'heavy', es[0].id); const base = 35 + 5 * Math.floor(E.stat(p, 'str') / 10); ok(Math.abs(es[0].brk - base * (1 + 0.01 * E.stat(p, 'str'))) < 1e-6, '예고가 없으면 기본 붕괴'); ok(base > 10, '강공격 붕괴가 기본 공격(10)보다 높다'); }
+{ const { p, b, es } = fight(); setInt(es); es[0].brkMax = 999; es[0].brk = 0; p.st = 100; E.playerAct(b, 'heavy', es[0].id); const base = 35 + 5 * Math.floor(E.stat(p, 'str') / 10); const HB = D.run_('BRK_RULE'), hm = HB.basic0 ? HB.heavyMul : 1; ok(Math.abs(es[0].brk - base * hm * (1 + 0.01 * E.stat(p, 'str'))) < 1e-6, '예고가 없으면 기본 붕괴(× 강공격 붕괴 배율 ' + hm + ')'); ok(base > 10, '강공격 붕괴가 기본 공격(10)보다 높다'); }
 // 15) 침묵의 종 · 독 거두는 손: 유산 −1, 0 아래로 내려가지 않음
 { const { p, b } = fight(); p.ys = 0; const l = E.ysLose(b, 1, '침묵의 종'); ok(l === 0 && p.ys === 0, '0 아래로 내려가지 않음'); p.ys = 3; ok(E.ysLose(b, 1, '침묵의 종') === 1 && p.ys === 2, '유산 −1'); }
 // 16) 1차-b 스위치 (10월 15일): A 싼 칸 1, B 긴 전투 차례 충전 +2, C 볼록한 비용당 값. 기본값을 바꾸지 않고 켜고 끄며 본다
@@ -105,8 +105,8 @@ const ysResp = D.run_('ysResp');
 { const dmgOf = pn => { const { b, es } = fightPn('warden', pn); setInt(es); const h0 = es[0].hp; E.playerAct(b, 'basic', es[0].id); return h0 - es[0].hp; };
   const d0 = dmgOf([]), d1 = dmgOf(['ks_sharp']), d2 = dmgOf(['ks_deep']);
   ok(Math.abs(d1 / d0 - 1.3) < 0.02, '날 선 손: 기본 공격 피해 ×1.3 (' + d0 + ' → ' + d1 + ')'); ok(Math.abs(d2 / d0 - 0.85) < 0.02, '깊은 샘 대가: 기본 공격 피해 ×0.85 (' + d2 + ')');
-  const brkOf = (pn, k) => { const { b, es } = fightPn('warden', pn); setInt(es, k); const b0 = es[0].brk || 0; E.playerAct(b, 'basic', es[0].id); return (es[0].brk || 0) - b0; };
-  ok(brkOf(['ks_sharp'], 'heavy') - brkOf([], 'heavy') === 10 && brkOf(['ks_sharp'], null) === brkOf([], null), '날 선 손: 예고 중인 적에게만 붕괴 +10');
+  const brkOf = (pn, k) => { const { b, p, es } = fightPn('warden', pn); setInt(es, k); es[0].brkMax = 99999; const b0 = es[0].brk || 0; if (D.run_('BRK_RULE').basic0) p.st = p.stMax; E.playerAct(b, D.run_('BRK_RULE').basic0 ? 'heavy' : 'basic', es[0].id); return (es[0].brk || 0) - b0; }; // M5-7: 규칙을 켜면 날 선 손은 강공격
+  ok(Math.abs(brkOf(['ks_sharp'], 'heavy') - brkOf([], 'heavy') - 10 * (D.run_('BRK_RULE').basic0 ? 1 + 0.01 * D.run_('stat')(fightPn('warden', []).p, 'str') : 1)) < 1e-6 && brkOf(['ks_sharp'], null) === brkOf([], null), '날 선 손: 예고 중인 적에게만 붕괴 +10');
   const { p } = fightPn('warden', ['ks_sharp']); ok(D.run_('ysStartOf')(p) === Y.start - 2, '날 선 손 대가: 시작 유산 −2'); }
 { const hc = D.run_('heavyCost'); const a = fightPn('warden', []).p, c = fightPn('warden', ['ks_tireless']).p; ok(hc(a) - hc(c) === 15, '쉬지 않는 팔: 강공격 스태미나 −15'); ok(E.flaskCap(c, 'life') === E.flaskCap(a, 'life') - 1, '쉬지 않는 팔 대가: 생명력 플라스크 −1'); }
 { const { p, b, es } = fightPn('warden', ['n_bs_st']); setInt(es); p.st = 10; E.playerAct(b, 'basic', es[0].id); ok(p.st >= 13, '평타 노드: 기본 공격이 맞히면 스태미나 +3 (' + p.st + ')'); }

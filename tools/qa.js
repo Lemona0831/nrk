@@ -219,7 +219,8 @@ function bmDmg(b, a, e) { // 사람의 어림: 버튼에 보이는 피해 숫자
   if (p.s.empower) v *= 1.25; if (p.s.weak) v *= 0.75; if (e.braced) v *= 0.5; if (e.vow) v *= 0.6; if (e.evading && !a.aoe) v = 0; if (a.aoe && e.row === 'back') v *= 0.8;
   return v;
 }
-function bmBrk(a, e) { const f = a.s ? a.s.fx : []; let v = a.id === 'basic' ? 10 : a.id === 'heavy' ? 35 : f.reduce((m, x) => m + (x.k === 'brk' ? x.n : 0), 0); const cx = f.find(x => x.k === 'cutx'); if (cx && e.intent && BM_CHG.includes(e.intent.k)) v += cx.brk; return e.vow ? v * 1.5 : v; }
+const qaB0 = () => !!(E.BRK_RULE && E.BRK_RULE.basic0), qaBasicBrk = () => qaB0() ? 0 : 10, qaHeavyBrk = () => 35 * (qaB0() ? E.BRK_RULE.heavyMul : 1); // M5-7 붕괴 규칙
+function bmBrk(a, e) { const f = a.s ? a.s.fx : []; let v = a.id === 'basic' ? qaBasicBrk() : a.id === 'heavy' ? qaHeavyBrk() : f.reduce((m, x) => m + (x.k === 'brk' ? x.n : 0), 0); const cx = f.find(x => x.k === 'cutx'); if (cx && e.intent && BM_CHG.includes(e.intent.k)) v += cx.brk; return e.vow ? v * 1.5 : v; }
 /* 이 행동(쓸 수 있는 칸 · 당길 칸)이 지금 할 수 있는 급한 일: 영창 끊기 · 모으는 적 무너뜨리기 · 쓰러뜨리기 · 서원 · 희생 */
 function bmUrgent(b, a) {
   const ts = E.alive(b).filter(e => e.role !== 'root' && (a.aoe ? (!a.s || a.s.tgt === 'all' || e.row === 'front') : E.canTarget(b, e, a)));
@@ -758,7 +759,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
         if (x > 0) { const ig = psn2(e, 'ignite'); for (let h = 0; h < hits && ig - h > 0; h++) x += ig - h; } // 화상은 맞을 때마다 더 든다
         const kill = x >= e.hp; v += Math.min(x, e.hp) + (kill ? 8 : 0);
         if (!kill && a.s) for (const f of a.s.fx) if (f.k === 'st' && (f.s === 'bleed' || f.s === 'ignite')) v += f.n * (f.s === 'bleed' ? 2 : 1.5) * (big(e) ? 1.3 : 1); else if (f.k === 'st' && f.s === 'weak') v += f.n * 1.5;
-        const brk = (bk ? bk.n : a.id === 'basic' ? 10 : a.id === 'heavy' ? 35 : 0) + (cx && chg(e) ? cx.brk : 0) + (altOn && al.brk ? al.brk : 0);
+        const brk = (bk ? bk.n : a.id === 'basic' ? qaBasicBrk() : a.id === 'heavy' ? qaHeavyBrk() : 0) + (cx && chg(e) ? cx.brk : 0) + (altOn && al.brk ? al.brk : 0);
         v += brk * (chg(e) || big(e) ? 0.3 : 0.12) + (chg(e) && e.brk + brk >= e.brkMax ? 14 : 0);
         if (a.s && a.s.killRecharge && kill) v += 6; if (ks && kill && psn2(e, 'bleed') >= 2) v += Math.ceil(psn2(e, 'bleed') * ks.per) * Math.max(0, E.alive(b).filter(o => o.role !== 'root').length - 1) * 1.5;
         if (k === 'cut' && p.edge && i === 0 && x > 0 && !kill) v += p.edge.n * (ed ? ed.mul : 1) * (p.edge.s === 'bleed' ? 2 : 1.6) * (e.hp > e.hpMax * 0.4 ? 1 : 0.5);
@@ -832,6 +833,7 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   }
   if ((hv || ex) && r() < P.guard && L.find(a => a.id === 'guard' && a.ok)) return ['guard'];
   // 강공격: 스태미나가 넉넉하고 강타 예고가 없으면 가끔 (흘리기 몫 40은 남긴다)
+  if (qaB0() && !hv) { const hA = L.find(a => a.id === 'heavy' && a.ok); if (hA) { const chg = e => !!(e.intent && (['charge', 'heavy', 'chant', 'chanting', 'burn', 'aim', 'fuse', 'explode'].includes(e.intent.k) || e.intent.aimed)); const t = E.alive(b).filter(e => e.role !== 'root' && !e.s.broken && chg(e) && E.canTarget(b, e, hA) && e.brk + qaHeavyBrk() >= e.brkMax).sort((x, y) => y.dmg - x.dmg)[0]; if (t && r() < 0.5 + 0.4 * (P.mech || 0.5)) return ['heavy', t.id]; } } // M5-7: 기본 공격이 붕괴를 채우지 않으니, 모으는 적을 무너뜨릴 수 있으면 강공격(사람은 붕괴 게이지를 보고 고른다)
   if (!hv && p.st >= 80 && p.build !== 'elementalist' && r() < 0.3 + P.risk * 0.3 && L.find(a => a.id === 'heavy' && a.ok)) { const t = best({ id: 'heavy', melee: 1 }, (x, y) => y.hp - x.hp); if (t) return ['heavy', t.id]; }
   const boNo = a => p.build === 'elementalist' && !process.env.ELEM_BURN_OLD && has(a, 'burnOut') && gt(p, 'elementalist', 'burn') && !reach(a).some(e => psn2(e, 'ignite') > 0); // 10월 18일 0.8.0 5단계 마무리(11-6): 화상이 붙은 적이 없으면 불태우기를 고르지 않는다(사람은 버튼의 "화상이 없으면 0"을 본다)
   const boT = a => p.build === 'elementalist' && !process.env.ELEM_BURN_OLD && has(a, 'burnOut') ? best(a, (x, y) => (psn2(y, 'ignite') - psn2(x, 'ignite')) || (x.hp - y.hp)) : null; // 불태우기 대상: 화상이 가장 많은 적

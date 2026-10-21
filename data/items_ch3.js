@@ -7,7 +7,7 @@
    plain: 조건 없이 숫자만 올리는 장비(풀의 10% 이하) */
 const ITEMS_CH3 = {
   // 무기 38 (평범 11 · 고급 12 · 희귀 9 · 영웅 5 · 전설 1)
-  ashrake: { n: '재 긁는 갈퀴', slot: 'weapon', g: 'n', act: '붕대 감긴 적에게 기본 공격 붕괴 +4.', cost: '', lore: '타다 남은 천을 걷어 내는 데 쓰던 갈퀴.', t: '파쇄 철권 혈도 학살', vs: 'wrap' },
+  ashrake: { n: '재 긁는 갈퀴', slot: 'weapon', g: 'n', act: '붕대 감긴 적에게 강공격 붕괴 +4.', cost: '', lore: '타다 남은 천을 걷어 내는 데 쓰던 갈퀴.', t: '파쇄 철권 혈도 학살', vs: 'wrap' },
   glassknife: { n: '깨진 거울 칼', slot: 'weapon', g: 'n', act: '허상을 걷으면 스태미나 +6.', cost: '', lore: '거울 파편에 손잡이를 감았다.', t: 'all', vs: 'haze' },
   brandaxe: { n: '낙인 깨는 도끼', slot: 'weapon', g: 'n', act: '화염 강화 정예에게 주는 피해 +8%.', cost: '', lore: '불의 낙인이 찍힌 자의 방패를 쪼개던 도끼.', t: 'all', vs: 'fire' },
   noonblade: { n: '한낮의 검', slot: 'weapon', g: 'n', act: '열기가 50 이상이면 기본 공격 피해 +6%.', cost: '', lore: '달궈질수록 손에 붙는다.', t: '불꽃 염검 광기', vs: 'heat' },
@@ -97,7 +97,7 @@ const ITEMS_CH3 = {
   sparkhands: { n: '불똥 손', slot: 'gloves', g: 'm', act: '열충격이 일어나면 열기 −2.', cost: '', lore: '튀는 불똥이 도리어 공기를 식힌다.', t: '공명 불꽃 서리', vs: 'heat', fits: ['elementalist'] },
   pennancehands: { n: '고행의 손', slot: 'gloves', g: 'm', act: '해로운 상태를 지우면 열기 −3.', cost: '', lore: '아픔을 털어 낼 때마다 열이 빠진다.', t: '속죄 고행', vs: 'heat' },
   stainedglove: { n: '얼룩 장갑', slot: 'gloves', g: 'm', act: '붕대 감긴 적에게 중독이나 출혈을 거는 스킬은 한 칸 더 건다(행동마다 한 번).', cost: '', lore: '천은 피를 걸러 내지 못한다.', t: '독사 격발 도륙 역병 학살 혈인 포식', vs: 'wrap' },
-  splitglove: { n: '갈라진 장갑', slot: 'gloves', g: 'r', act: '허상을 걷으면 다른 적 하나의 붕괴 +10.', cost: '허상이 없는 적에게 기본 공격 붕괴 −2', lore: '손바닥에 금이 간 자리마다 다른 얼굴이 비친다.', t: '파쇄 철권 연사 공명', vs: 'haze' },
+  splitglove: { n: '갈라진 장갑', slot: 'gloves', g: 'r', act: '허상을 걷으면 다른 적 하나의 붕괴 +10.', cost: '허상이 없는 적에게 강공격 붕괴 −2', lore: '손바닥에 금이 간 자리마다 다른 얼굴이 비친다.', t: '파쇄 철권 연사 공명', vs: 'haze' },
   wearinggrip: { n: '닳게 하는 손', slot: 'gloves', g: 'r', act: '붕대 감긴 적을 맞히면 붕대가 한 번 더 닳는다(행동마다 한 번).', cost: '기본 공격 피해 −5%', lore: '쥐고 비틀면 천이 먼저 해진다.', t: '파쇄 철권 혈도 독사', vs: 'wrap' },
   heatpalm: { n: '달군 손바닥', slot: 'gloves', g: 'r', act: '열기 20마다 빠른 행동의 붕괴 +2.', cost: '열기가 있는 방에서 열기가 라운드마다 1 더 오른다', lore: '뜨거운 손에는 얼음도 오래 붙어 있지 못한다.', t: '철권 혈도 기동 그림자', vs: 'heat' },
   blazeglove: { n: '염검 장갑', slot: 'gloves', g: 'r', act: '교대가 일어나면 화상이 걸린 적 모두에게 화상 1을 건다.', cost: '', lore: '칼과 주문이 엇갈릴 때 불똥이 튄다.', t: '염검 혈인 마갑', vs: 'fire', fits: ['spellblade'] },

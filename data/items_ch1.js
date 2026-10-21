@@ -4,7 +4,7 @@
    g: n 평범 / m 고급 / r 희귀 */
 const ITEMS_CH1 = {
   // 무기
-  rustsword: { n: '녹슨 장검', slot: 'weapon', g: 'n', act: '기본 공격 붕괴 +2.', cost: '', lore: '수도원 문지기가 버리고 간 칼.' },
+  rustsword: { n: '녹슨 장검', slot: 'weapon', g: 'n', act: '강공격 붕괴 +2.', cost: '', lore: '수도원 문지기가 버리고 간 칼.' },
   pilgstaff: { n: '순례자의 지팡이', slot: 'weapon', g: 'n', act: '캔트립과 주문 피해 +3%.', cost: '', lore: '먼 길을 짚어 온 나무에 기도가 배었다.' },
   huntbow: { n: '사냥꾼의 짧은활', slot: 'weapon', g: 'n', act: '후열 적에게 주는 피해 +5%.', cost: '', lore: '숲에서 쓰던 활. 회랑에서도 쓸 만하다.' },
   dullknife: { n: '무딘 단검', slot: 'weapon', g: 'n', act: '중독된 적에게 기본 공격 피해 +1.', cost: '', lore: '날은 죽었지만 홈에 독이 남아 있다.' },
