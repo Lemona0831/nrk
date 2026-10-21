@@ -70,7 +70,8 @@ const SKK = {
   /* 수도승 (10월 7일 가설, docs/직업/수도승.md F-3): K 터뜨릴 때 기(하급 · 중급), Kp kiPer를 쓸 때 기, Kg kiGrow를 쓸 때 기, loss 거둔 기 1이 다음 ▶에 줬을 몫의 비율,
      cN 자세 하나에 되받는 횟수, gIn 피해 절반이 막는 값, ctr 직업 되받기 한 번의 기본 값, cS ctrPer를 쓸 때 지난 차례 뒤 되받은 수, ch 쓸 때 대상이 이미 둔화일 몫,
      ride ▶ 공격에 기 ×1.25가 실리는 몫, fast ⚡ 공격이 주는 기 +1의 몫, seal 끊기를 쓸 때 지원 예고가 있을 몫, sealV 끊은 지원 행동의 값 */
-  as5: { Sb: 4, B: 12, Wd: 13 }, // 0.8.0 M5-3 암살자 새 칸 [가설, 측정으로 확인]: 터뜨릴 때 대상 중독 5(길마다 독을 대고 터뜨린다), 늦은 챕터 기본 공격 한 대 12 · 무기 피해 13(승부수 · 그림자 칸)
+  as5: { Sb: 4, B: 12, Wd: 13 },
+  hn5: { B: 8, Wd: 8, F: 2, ev: 10 }, // 0.8.0 M5-4 사냥꾼 새 칸 [가설, 측정으로 확인]: 기본 공격 한 대 8 · 무기 피해 8(활 55–65%) · 쓸 때 대상 추적 2 // 0.8.0 M5-3 암살자 새 칸 [가설, 측정으로 확인]: 터뜨릴 때 대상 중독 5(길마다 독을 대고 터뜨린다), 늦은 챕터 기본 공격 한 대 12 · 무기 피해 13(승부수 · 그림자 칸)
   monk5: { K: [0.7, 0.9], Kp: [0.6, 0.8], KpB: {} }, // 0.8.0 M5-2 새 트리 측정(10월 20일, 수도승 360판 · 테스터 v2Pick): 쓸 때 기 — 쏟는 칸 0.4–0.5, 타수 · 기 비례 칸 0.8–1.1. ▶ 공격이 기를 하나씩 쓰고 빠른 기 모으기 칸이 없어 옛 트리(2.5 · 2.2)의 절반 아래
   monk: { K: [2.5, 2.5], Kp: [2, 2.2], KpB: { 부동: [0.8, 0.8] }, loss: 0.5, cN: 0.8, ctr: 9, ch: 0.6, ride: 0.1, seal: 0.25, sealV: 12, Kg: 2 }, // 10월 7일 50상황 측정(Lv5 · Lv10, 테스터 v2Pick 수도승 칸): 터뜨릴 때 기 3.6 · 2.5, 기 비례 때 기 2.9 · 2.2, 끌어올리기 때 기 1.6, 자세 하나에 되받기 1.36 · 1.38, 되받기 한 번 피해 12, 되갚기 때 되받은 수 0.8 · 1.0, 거두기 때 대상 둔화 0.9(Lv5). 자세 칸은 측정값으로 다시 맞추면 줄 예산의 2배가 되어(직업 규칙의 되받기 몫이 칸마다 들어간다) 가설 그대로 두고 50상황 점수로 본다. 중급(Lv10)의 K · Kp만 측정값(2.5 · 2.2)으로 내렸다(처음 가설 3.5 · 3: 중급 터뜨리기 칸이 기가 모자라 오른쪽 기둥이 왼쪽보다 15 낮았다)
   hz: 1.5,                      // 🔄 쿨타임 당기기 1번의 값 [가설] (10월 3일 50상황: 평소 싸움에서는 스킬이 늘 3~4개 준비되어 있어 거의 0, 쿨타임이 묶이는 보스전에서만 크다)
@@ -160,6 +161,30 @@ function skValueAs(e, s, K, hi, tm) { const U = AS_BOUND, P = K.poison, Wd = K.a
     case 'asParPsn': return 4 * K.pOk * (e.n || 2) * P * 0.8;
     case 'asBackFlower': return 3 * 0.4 * skTri(K.as5.Sb + 2) * ((e.mul || U.backFlower) - 1) + 6; // 터뜨리기 3번, 후열 0.4
   } return 0; }
+/* 0.8.0 M5-4 사냥꾼(10월 20일 만든 사람 설계지 2판): 새 효과의 숫자. 설계지 숫자(대가 15% · +30% · +20% · 추적 3겹)는 그대로, 나머지는 가설.
+   evadeNoResp: 몸 빼기로 피한 공격은 대응 충전을 주지 않는다(사냥꾼, 만든 사람 검토 11). linkMax: 연계 빠른 행동은 내 차례에 한 번(이어 쏘기 숙련 2번) */
+const HN5_BOUND = { drawIn: 0.3, galeIn: 0.2, trapHp: 0.15, trapFocus: 3, linkMax: 1, linkMaxUp: 2, Fv: 5 };
+const HN_K = ['hnLock', 'hnSky', 'hnCarry', 'hnVolley', 'hnNock', 'hnBloodRain', 'hnWindStep', 'hnWindVeil', 'hnDraw', 'hnGale', 'hnTrap', 'hnChaseC', 'hnScent', 'hnFrozen', 'hnNockChill', 'hnFocusSelf', 'hnChillAll'];
+function skValueHn(e, s, K, tm) { const U = HN5_BOUND, H = K.hn5, B = H.B, Wd = H.Wd, F = H.F, Fv = U.Fv, dm = (s.fx.find(x => x.k === 'dmg') || { n: 0 }).n, hits = s.hits || 1, nT = tm || 2;
+  switch (e.k) {
+    case 'hnLock': return ((e.r || 0) + 1) * 1.1 * B * (e.per || 0.1) * F * 0.9; // 라운드마다 기본 공격 1.1번, 그때 대상 추적 F
+    case 'hnSky': return 0.55 * Math.max(0, Wd * (e.mul || 3) - dm * hits); // 추적 3겹일 몫 0.55: 피해 대신 무기 피해 × mul
+    case 'hnCarry': return 1.5 * F * Fv; // 전투에 넘어가는 추적 1.5번
+    case 'hnVolley': return (hits - 1) * dm * 0.25; // 발마다 다른 적(후열 · 지원하는 적에게 닿는 몫)
+    case 'hnNock': return (e.n || 2) * (1 + 0.7 * ((e.shots || 2) - 2)) * B * 0.9; // 세 발째부터는 0.7(대상이 먼저 쓰러지는 몫)
+    case 'hnBloodRain': return nT * 0.7 * Wd * (e.mul || 2); // 출혈 걸린 적 0.7(화살비 · 덧화살 길)
+    case 'hnWindStep': return 6 * 0.6 * 7; // 피함 6번(받아넘기기 · 몸 빼기 길), 그 뒤 기동 스킬 0.6 · 유산 1의 값 7
+    case 'hnWindVeil': return (e.r || 3) * 0.9 * H.ev; // 라운드마다 맞을 몫 0.9, 피한 한 대
+    case 'hnDraw': return Wd * ((e.mul || 3) + (e.per || 1) * F) * 1.1 + (e.brk || 0) * K.brk - B - 6; // 당기는 차례(기본 공격 한 번) · 받는 피해 +30%
+    case 'hnGale': return (e.r || 3) * (B * 1.5 + 1.5 * B * 0.9 + (e.bleed || 0) * 3) - (e.r || 3) * 4 - 6; // 한 번 더 움직임 = 기본 공격 1.5배(스킬도 씀), 두 번째 화살은 라운드에 1.5번 // 라운드마다 한 번 더 움직임 · 두 번째 화살, 대가 받는 피해 +20% · 몸 빼기 · 방어 불가
+    case 'hnTrap': return 1.6 * (K.hunt.stun + U.trapFocus * Fv * 0.5 + Wd * (e.mul || 0) + (e.brk || 0) * K.brk + (e.bleed || 0) * 3) - 125 * U.trapHp * 0.6; // 이번 라운드 나를 치는 적 1.6, 생명력 15%
+    case 'hnChaseC': return 4 * (e.n || 1) * Fv; // 전투에 피함 4번
+    case 'hnScent': return 6 * 0.7 * (e.n || 1) * Fv; // 출혈 걸린 적을 맞히는 행동 6 · 그때 추적이 쌓일 몫 0.7
+    case 'hnFrozen': return 8 * 0.45 * B * ((e.mul || 1.5) - 1); // 기본 공격 8번, 둔화 걸린 적 0.45
+    case 'hnNockChill': return 2 * (e.n || 1) * K.kw.chill;
+    case 'hnFocusSelf': return (e.n || 1) * Fv * 0.7;
+    case 'hnChillAll': return (e.n || 1) * K.kw.chill * 2;
+  } return 0; }
 function skValue(s, ov) {
   if (!ov && SKK.butch && /^b_/.test(String(s.id)) && !s._bu) return skValueBu(s);
   if (!ov && String(s.id).slice(0, 2) === 'e_') return skValueElem(s);
@@ -173,6 +198,7 @@ function skValue(s, ov) {
     if (WD_K.includes(e.k)) { v += skValueWd(e, K, W, hi); continue; } // 0.8.0 M5-1 파수꾼
     if (MK_K.includes(e.k)) { v += skValueMk(e, s, K, M, hi, mt); continue; } // 0.8.0 M5-2 수도승
     if (AS_K.includes(e.k)) { v += skValueAs(e, s, K, hi, tm); continue; } // 0.8.0 M5-3 암살자
+    if (HN_K.includes(e.k)) { v += skValueHn(e, s, K, tm); continue; } // 0.8.0 M5-4 사냥꾼
     if (SB_BD_K.includes(e.k)) { const Sbi = SB.S.bleed[hi] + SB.S.ignite[hi], kw = SB.kw.bleed, Wv = K.ward.v; const nT = e.n || 3; const U = SB_BOUND;
       switch (e.k) {
         case 'searMerge': v += 0.6 * Sbi * kw * (1.5 - 1); break;
@@ -237,7 +263,7 @@ function skValue(s, ov) {
       case 'focusBurst': v += e.n * K.hunt.F; break; // 추적을 터뜨린다: 1겹마다 피해 +n
       case 'focusAdd': v += e.n * K.hunt.fa; break; // 대상에게 추적 +n겹
       case 'swapx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n : 0) * (e.mul - 1) * K.hunt.swap; break; } // 직전과 다른 적이면 × (첫 발만)
-      case 'evade': v += e.n * K.hunt.ev; break; // 다음에 맞는 공격 n번을 피한다
+      case 'evade': v += e.n * (s.hn5 && K.hn5 ? K.hn5.ev : K.hunt.ev); break; // 다음에 맞는 공격 n번을 피한다
       case 'hastex': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * K.hunt.hx; break; } // 가속 상태면 ×
       case 'meSt': v += e.n * (KWv[e.s] || 1) * (e.if === 'chill' ? M.ch * mt : e.if === 'hit' ? mt : e.on === 'cut' ? 0.25 : 1); break; // if: 'chill' 대상이 이미 둔화일 때만(수도승 거두기). on 'cut'(10월 18일 원소 장막): 영창을 끊을 때만(cutx와 같은 넷 중 하나)
       case 'hasteSpend': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * 0.4; break; } // 가속이 있으면 써서 ×
@@ -508,7 +534,15 @@ function skBodyMk(s) {
   for (const e of s.fx) switch (e.k) {
     case 'dmg': P.push((multi ? (s.tgt === 'front' ? '전열 모두에게 ' : '모든 적에게 ') : '') + '피해 ' + e.n + (hits > 1 ? ' × ' + hits + '타' : '')); break;
     case 'brk': P.push('붕괴 +' + e.n); break;
-    case 'st': P.push(s.tgt === 'self' ? (e.s === 'empower' ? '기 +' + e.n : '나에게 ' + skKw(s, e.s) + ' ' + e.n) : skKw(s, e.s) + ' ' + e.n); break;
+    case 'st': P.push(s.tgt === 'self' ? (e.s === 'empower' && !s.hn5 ? '기 +' + e.n : e.s === 'empower' ? '다음 공격 피해 ×1.25' : '나에게 ' + skKw(s, e.s) + ' ' + e.n) : (multi && s.hn5 && !s.fx.some(x => x.k === 'dmg') ? (s.tgt === 'front' ? '전열 모두에게 ' : '모든 적에게 ') : '') + skKw(s, e.s) + ' ' + e.n); break;
+    case 'focusx': P.push('추적 겹마다 피해 +' + Math.round(e.per * 100) + '%'); break;
+    case 'focusAdd': P.push('추적 ' + e.n + '겹'); break;
+    case 'evadeCtr': P.push((e.rounds ? e.rounds + '라운드 ' : '') + '피하면 반격 사격 ' + e.dmg + (e.focus ? '(추적 +' + e.focus + '겹)' : '')); break;
+    case 'chillCut': P.push('둔화된 채 모으는 적의 공격을 끊음'); break;
+    case 'freeze': P.push('대상이 다음 행동을 놓침'); break;
+    case 'foresee': P.push(e.rounds + '라운드 큰 공격 피해 −' + Math.round(e.red * 100) + '%'); break;
+    case 'bbuf': P.push(((e.r || 0) + 1) + '라운드 기본 공격에 ' + (e.s === 'barb' ? '출혈 ' + e.bleed : e.s)); break;
+    case 'hnTrap': P.push(e.txt.replace(/\.$/, '') + (e.mul ? ' · 걸린 적에게 무기 피해의 ' + e.mul + '배' : '')); break;
     case 'kiHits': P.push(e.max === 1 ? '기가 있으면 +1타' : '기 1마다 1타 추가(최대 ' + e.max + ')'); break;
     case 'kiBurst': P.push((e.max ? '기를 ' + e.max + '까지' : '기를 모두') + ' 쏟아 기마다 ' + (e.mul ? '피해 +' + Math.round(e.mul * 100) + '%' : '+' + e.per) + (e.brk ? ' · 붕괴 +' + e.brk : '')); break;
     case 'kiPer': P.push('기마다 피해 +' + e.per); break;
@@ -521,7 +555,7 @@ function skBodyMk(s) {
     case 'brkPer': P.push('대상 중독 1마다 붕괴 +' + e.per); break;
     case 'brokenx': P.push('무너진 적에게 ×' + e.mul); break;
     case 'asBackx': P.push((e.low ? '생명력 ' + Math.round(e.low * 100) + '% 이하 ' : '') + '후열 적에게 ×' + e.mul); break;
-    case 'evade': P.push('다음에 맞는 공격 ' + e.n + '번을 피함'); break;
+    case 'evade': P.push(s.hn5 ? '몸 빼기 ' + e.n : '다음에 맞는 공격 ' + e.n + '번을 피함'); break;
     case 'parry': P.push('다음 공격을 흘림(' + Math.round(e.red * 100) + '%)'); break; // 대상은 버튼에서 고른다
     case 'onParry': P.push('흘려 내면 그 적에게 ' + [e.dmg ? '피해 ' + e.dmg : '', e.poison ? '중독 ' + e.poison : '', e.brk ? '붕괴 +' + e.brk : ''].filter(Boolean).join(' · ')); break;
     case 'parryBuff': P.push('다음 흘리기' + ((e.times || 1) > 1 ? ' ' + e.times + '번' : '') + ' +' + Math.round((e.red || 0) * 100) + '%p' + (e.stam ? ' · 스태미나 없이' : '') + (e.dmg ? ' · 흘려 내면 피해 ' + e.dmg : '') + (e.poison ? ' · 흘려 내면 중독 ' + e.poison : '')); break;
@@ -538,7 +572,7 @@ function skBodyMk(s) {
   return P.join(' · ') + '.';
 }
 function skBody(s) {
-  if (s.mk5 || s.as5) return skBodyMk(s) + (s.pay ? ' 대가: ' + s.pay : ''); // M5-2 수도승 · M5-3 암살자 한 줄 설명
+  if (s.mk5 || s.as5 || s.hn5) return skBodyMk(s) + (s.pay ? ' 대가: ' + s.pay : ''); // M5-2 수도승 · M5-3 암살자 한 줄 설명
   const out = []; const hits = s.hits || 1; const parts = []; const first = []; const burnWard = s.fx.some(e => e.k === 'wardBurn'); const isE = String(s.id).slice(0, 2) === 'e_'; // first: 연타의 첫 타격에만 거는 상태 (마검사 연타 칸)
   const eMulti = isE && hits > 1 && s.fx.some(e => e.k === 'st'); // 원소술사 여러 번 쏘기: 상태는 첫 발 뒤에 걸려 다음 발부터 쓴다 (엔진 그대로, 문장만)
   const cf = String(s.id).slice(0, 2) === 'c_'; if (cf) out.push(...skBodyConfPre(s)); // 숨겨진 직업 2: 옮기기 · 벗기기 · 정화 · 사함은 피해보다 먼저
@@ -659,7 +693,7 @@ function skBody(s) {
 }
 /* M5-0a(10월 20일 만든 사람): 대사가 있는 스킬(승부수)의 설명란. 대사는 맨 위 따로 한 칸(명조 가운데 인용, 「」는 부채꼴 색 장식 · 위에 ✦ 가는 선, 같은 날 만든 사람 고름), 그 아래 효과 / 대가 / 대상을 줄로 나눈다.
    대가는 색과 "대가" 글자로 구분(색만으로 구분하지 않음). 스크린리더는 "대사: …, 효과: …, 대가: …, 대상: …" 순서. 대사가 없으면 빈 문자열(부른 쪽이 원래 설명을 쓴다) */
-const SK_LINE_COL = { 독화: '#9ad46a', 암영: '#c9d2e0', 잔영: '#8b7bd8', /* M5-3 암살자: 만독개화 독빛 · 무영살 칼빛 · 잔영난무 잔상빛 */ 반탄: '#f0903c', 역혈: '#e6c060', 파혈: '#e8eef5', /* M5-2 수도승: 역천권 주황 · 천망 금빛 경락 · 일지멸맥 하얀 빛 */ 혈염: '#ef5d3c', '죄인의 피': '#c23a52', '유산의 불': '#f0ac48', 공성추: '#a8bace', '기둥 파쇄': '#c98b4a', '용맹의 투지': '#e8c25a' };
+const SK_LINE_COL = { 명궁: '#e8d48a', 유격: '#9fd0e8', 잠복: '#d0604a', /* M5-4 사냥꾼: 만궁 활빛 · 질풍난사 바람빛 · 혈향의 덫 핏빛 */ 독화: '#9ad46a', 암영: '#c9d2e0', 잔영: '#8b7bd8', /* M5-3 암살자: 만독개화 독빛 · 무영살 칼빛 · 잔영난무 잔상빛 */ 반탄: '#f0903c', 역혈: '#e6c060', 파혈: '#e8eef5', /* M5-2 수도승: 역천권 주황 · 천망 금빛 경락 · 일지멸맥 하얀 빛 */ 혈염: '#ef5d3c', '죄인의 피': '#c23a52', '유산의 불': '#f0ac48', 공성추: '#a8bace', '기둥 파쇄': '#c98b4a', '용맹의 투지': '#e8c25a' };
 function skDescHtml(s) {
   if (!s || !s.line) return ''; const e = x => String(x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const body = skBody(Object.assign({}, s, { pay: null })), col = SK_LINE_COL[s.b] || 'var(--gold)', who = `${SKK.TGN[s.tgt]} · ${SKK.TN[s.time]}`;

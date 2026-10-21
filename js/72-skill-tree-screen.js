@@ -55,7 +55,7 @@ function vATreeList(run) {
 // 사냥꾼의 연계는 장착한 갈래 스킬끼리만 만듭니다.
 function hunterLoadoutHint(run) {
   if (run.build !== 'hunter') return '';
-  return `<p class="mini loadout-hint" data-info="elink" tabindex="0">연계: 다른 갈래 스킬을 이어 쓰면 피해 +${Math.round(HUNT.link * 100)}%.</p>`;
+  return `<p class="mini loadout-hint" data-info="elink" tabindex="0">연계: 다른 갈래 스킬을 이어 쓰면 그 스킬이 빠른 행동(내 차례에 한 번).</p>`;
 }
 function vTreeView() {
   const run = G.run; if (!run.ptree) treeSync(run); const v = G.tview === 'a' ? 'a' : 'p';
@@ -77,7 +77,7 @@ function vKsPick(run) {
    단계: i 안내(옮기기만) → p 패시브 → k 큰 각인(받을 것이 있으면) → a 액티브 · 장착 → 확정. 다음 단계로 넘어가면 앞 단계는 되돌릴 수 없다. 닫기 버튼이 없다 */
 function allocBegin(run, mode) { run.alloc = { mode, step: mode === 'mig' ? 'i' : 'p' }; G.sheet = null; openSheet('alloc', { first: mode === 'create' ? 1 : 0 }); }
 function migBegin(cur) {
-  treeMigrate08(cur); G.run = cur; consFix(cur); ptInit(cur); atMigrateM5(cur); { const kn = ksMigrateM4(cur); if (kn) toast('큰 각인 자리가 바뀌어 ' + kn + '개를 돌려받았습니다. 다시 고를 수 있습니다'); } ptSync(cur); applyGear(cur); G.b = null; G.sel = null; G.scr = cur.phase === 'clearsv' ? 'survey' : cur.phase || 'run';
+  treeMigrate08(cur); G.run = cur; consFix(cur); ptInit(cur); atMigrateM5(cur); { const kn = ksMigrateM4(cur) + ksMigrateM54(cur); if (kn) toast('큰 각인 자리가 바뀌어 ' + kn + '개를 돌려받았습니다. 다시 고를 수 있습니다'); } ptSync(cur); applyGear(cur); G.b = null; G.sel = null; G.scr = cur.phase === 'clearsv' ? 'survey' : cur.phase || 'run';
   allocBegin(cur, 'mig'); render();
 }
 function allocNext(run) {

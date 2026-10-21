@@ -408,6 +408,35 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
   else if (((bleedIn && psn2(p, 'bleed') >= 2) || boomIn) && !p.s.block && p.flask.mana > 0 && r() < aware * 0.5 && gt(p, '*', 'flask-cure')) return ['flaskM'];
   // 0.6a.2 사냥꾼 (10월 5일, 흘리기보다 먼저: 사냥꾼은 피하기로 받는다): 예고 대응(피할 수 있는 강타 · 겨눈 한 발은 받아넘기기 · 몸 빼기, 피할 수 없는 화형은 예고 읽기 · 흙먼지 장막), 추적 유지 · 터뜨리기, 표적 바꾸기
   if (p.build === 'hunter' && gt(p, 'hunter', 'main')) {
+    // 0.8.0 M5-4 사냥꾼 (10월 20일 설계지 2판): 연계는 빠른 행동. 테스터 리듬(설계지 12): 연계로 빠른 행동 스킬을 쓴 뒤의 주 행동은 유산이 3 미만이면 기본 공격 또는 방어, 리듬 칸 유산 1은 남긴다.
+    // HN_LINK_GREEDY=1이면 "매번 둘 다 쓰는" 정책(비교용). 승부수 · 강화 · 결합 칸은 쓸 때가 보이면(사람은 버튼 설명과 예고를 보고 쓴다)
+    if (p.hnSt) { const S = p.hnSt, hz = (a, k) => a.s.fx.some(e => e.k === k), fastOk = !b.bonusUsed && !nf, slot = a => fastOk || a.time > 0.6, ys = E.ysNow(p);
+      const foes = E.alive(b).filter(e => e.role !== 'root'), bigE = e => !!(e.elite || e.strong || e.role === 'boss'), bigIn = foes.some(bigE);
+      const atkN = pv1.filter(x => x.e.intent && ['attack', 'heavy'].includes(x.e.intent.k)).reduce((m, x) => m + x.n, 0); const fe = p.focus && foes.find(e => e.id === p.focus.id); const fn = fe ? p.focus.n : 0;
+      { const sh = L.find(x => x.id === 'hn_shot' && x.ok); if (sh) return ['hn_shot', (fe || best(sh, (x, y) => (bigE(y) - bigE(x)) || (x.hp - y.hp)) || {}).id]; } // 만궁 쏘기
+      if (E.hnLinkUsed && E.hnLinkUsed(b) > 0 && !process.env.HN_LINK_GREEDY && ys < 3) { // 연계 뒤 주 행동: 유산 3 미만이면 기본 공격 · 방어
+        (b.hnRec = b.hnRec || []).push('after');
+        if (hv && L.find(a => a.id === 'guard' && a.ok) && r() < 0.7) { b.hnAfter = 'guard'; return ['guard']; }
+        const ba = L.find(x => x.id === 'basic' && x.ok); if (ba) { const t0 = fe && E.canTarget(b, fe, ba) ? fe : best(ba, (x, y) => x.hp - y.hp); if (t0) { b.hnAfter = 'basic'; return ['basic', t0.id]; } } }
+      { const ult = L.find(a => a.v2 && a.s && a.s.fx.some(e => ['hnDraw', 'hnGale', 'hnTrap'].includes(e.k))); const used = ult && (b.rec || []).some(x => x.k === 'act' && x.a === ult.id);
+        if (ult && !used && !ult.ok && bigIn && (ult.wait || 0) <= 2 && (ult.wait || 0) > 0 && r() < 0.75) for (const a of okS.slice()) if (a !== ult && (a.yc || 0) > 1) okS.splice(okS.indexOf(a), 1); } // 큰 적 싸움: 승부수에 유산이 2 이내로 모자라면 비용 칸을 아낀다(리듬 칸 1은 쓴다)
+      { const a = okS.find(a => hz(a, 'hnDraw')); if (a && !S.draw && slot(a) && !hv && fe && (bigE(fe) || fe.hp > 40) && fn >= 1) return [a.id]; } // 만궁: 추적한 큰 적
+      { const a = okS.find(a => hz(a, 'hnGale')); if (a && !(S.gale > 0) && slot(a) && !hv && p.hp > p.hpMax * 0.45 && (bigIn || foes.length >= 2)) return [a.id]; } // 질풍난사
+      { const a = okS.find(a => hz(a, 'hnTrap')); if (a && !S.trap && slot(a) && (hv || atkN >= 2) && p.hp > p.hpMax * 0.3) return [a.id]; } // 혈향의 덫: 나를 칠 적이 있을 때
+      const early = b.turnIdx <= 3 || foes.reduce((m, e) => m + e.hp, 0) > foes.reduce((m, e) => m + e.hpMax, 0) * 0.6;
+      if (fastOk && early) { const cb = okS.find(a => a.self && a.time <= 0.6 && ((hz(a, 'hnChaseC') && !S.chase) || (hz(a, 'hnScent') && !S.scent) || (hz(a, 'hnFrozen') && !S.frozen) || (hz(a, 'hnWindStep') && !S.windStep))); if (cb) return [cb.id]; } // 전투 내내 가는 칸
+      { const a = okS.find(a => hz(a, 'hnWindVeil')); if (a && !(S.veilU >= (b.round || 0)) && slot(a) && (atkN >= 1 || bigIn)) return [a.id]; }
+      { const a = okS.find(a => hz(a, 'hnLock')); const B = p.bbuf || {}; if (a && slot(a) && fn >= 1 && !(B.lock && B.lock.until >= (b.ysR || 0)) && L.some(x => x.id === 'basic' && x.ok)) return [a.id]; } // 표적 고정: 추적한 적이 있으면
+      { const a = okS.find(a => hz(a, 'hnNock')); if (a && slot(a) && !(S.nock && S.nock.n > 0) && a.time <= 0.6 && L.some(x => x.id === 'basic' && x.ok) && !hv) return [a.id]; } // 화살 재기 · 끝없는 화살 · 순풍(⚡)
+      { const a = okS.find(a => a.self && a.s.fx.some(e => e.k === 'bbuf' && e.s === 'barb')); const B = p.bbuf || {}; if (a && slot(a) && a.time <= 0.6 && !(B.barb && B.barb.until >= (b.ysR || 0)) && L.some(x => x.id === 'basic' && x.ok)) return [a.id]; } // 덧화살
+      { const cv = okS.find(a => a.self && a.s.fx.some(e => e.k === 'st' && e.s === 'protect')); if (cv && (hv || atkN >= 2) && !(psn2(p, 'protect') > 0) && slot(cv) && r() < 0.7) return [cv.id]; } // 엄폐 · 흙먼지 · 위장
+      { const dg = okS.find(a => a.self && hz(a, 'evade') && !hz(a, 'evadeCtr')); if (dg && (hv || (bigIn && atkN >= 1)) && !(p.evade > 0) && slot(dg) && r() < 0.75) return [dg.id]; } // 몸 빼기 · 숨은 사수: 큰 공격이 올 때
+      { const ct = okS.find(a => hz(a, 'evadeCtr')); if (ct && atkN >= 1 && !(p.evade > 0) && slot(ct) && r() < 0.7) return [ct.id]; } // 받아넘기기
+      { const a = okS.find(a => hz(a, 'hnSky')); if (a && fe && fn >= 3 && E.canTarget(b, fe, a)) return [a.id, fe.id]; } // 하늘 가르기: 추적 3겹
+      { const a = okS.find(a => hz(a, 'hnBloodRain')); if (a && foes.filter(e => psn2(e, 'bleed') > 0).length >= Math.min(2, foes.length)) return [a.id]; } // 피의 비: 출혈 걸린 적이 있을 때
+      for (const a of okS.filter(a => hz(a, 'focusAdd') && !a.self)) { const t0 = fe && E.canTarget(b, fe, a) ? fe : best(a, (x, y) => (bigE(y) - bigE(x)) || (y.hp - x.hp)); if (t0 && (t0 !== fe || fn < 2) && r() < 0.6) return [a.id, t0.id]; } // 추적 걸기: 오래 버틸 적에게
+      { const lf = okS.filter(a => !a.self && a.time > 0.6 && a.time < 1.25 && E.hnLinkFastOk && E.hnLinkFastOk(b, a) && a.s.fx.some(e => e.k === 'dmg')); if (lf.length && ys >= (process.env.HN_LINK_GREEDY ? 0 : 3) && r() < 0.5 + 0.4 * (P.mech || 0.5)) { const a = lf[Math.floor(r() * lf.length)]; const t0 = a.aoe ? null : (fe && E.canTarget(b, fe, a) ? fe : best(a, (x, y) => x.hp - y.hp)); if (a.aoe || t0) return [a.id, t0 && t0.id]; } } // 연계 빠른 행동(유산 3 이상일 때, 리듬 칸 몫을 남긴다)
+    }
     const fe = p.focus ? E.alive(b).find(e => e.id === p.focus.id) : null; const fn = fe ? p.focus.n : 0;
     const aimedIn = pv1.find(x => x.e.intent && x.e.intent.aimed); const bigIn = hv || aimedIn; const burnIn = pv1.find(x => x.e.intent && x.e.intent.k === 'burn');
     const atkN = pv1.filter(x => x.e.intent && ['attack', 'heavy'].includes(x.e.intent.k)).reduce((m, x) => m + x.n, 0);

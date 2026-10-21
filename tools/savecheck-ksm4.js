@@ -19,7 +19,7 @@ for (const build of CLS) {
     G.data = G0.blankData(); G.data.cur = save; G.run = null; G.b = null; G.sheet = null; G.dropQ = [];
     run_('toast = () => {}'); G0.resumeRun(); const run = G.run; if (!run) throw new Error('이어 하기 뒤 판이 없음');
     const T = G0.ptBuild(build); const gone = before.filter(id => !run.ptree.ks.includes(id)); const want = before.filter(id => KS_V1()[build][id] && T.nodes[id].fx !== KS_V1()[build][id]);
-    const ok1 = JSON.stringify(gone.sort()) === JSON.stringify(want.sort()) && run.ptree.ksv === 2, ok2 = (run.ksPending || 0) === pend0 + want.length;
+    const ok1 = JSON.stringify(gone.sort()) === JSON.stringify(want.sort()) && run.ptree.ksv === 3 /* M5-4: ksv 3 */, ok2 = (run.ksPending || 0) === pend0 + want.length;
     handleSheets('careful', rng(n)); const out = { bugs: [], rooms: [], acts: 0 }; OPT.chapters = 2; playLoop('careful', rng(1000 + n), out);
     const ok3 = !out.bugs.length;
     console.log(`${ok1 && ok2 && ok3 ? '✓' : '✗'} ${build}: 찍어 둔 ${before.join(' ')} → 거둠 ${gone.join(' ') || '없음'}(기대 ${want.join(' ')}), 다시 고를 각인 ${pend0} → ${pend0 + want.length}, 지금 ${run.ptree.ks.join(' ')}, 판 끝 ${G.scr} 오류 ${out.bugs.length}`);

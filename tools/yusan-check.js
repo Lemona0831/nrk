@@ -111,6 +111,6 @@ const ysResp = D.run_('ysResp');
 { const hc = D.run_('heavyCost'); const a = fightPn('warden', []).p, c = fightPn('warden', ['ks_tireless']).p; ok(hc(a) - hc(c) === 15, '쉬지 않는 팔: 강공격 스태미나 −15'); ok(E.flaskCap(c, 'life') === E.flaskCap(a, 'life') - 1, '쉬지 않는 팔 대가: 생명력 플라스크 −1'); }
 { const { p, b, es } = fightPn('warden', ['n_bs_st']); setInt(es); p.st = 10; E.playerAct(b, 'basic', es[0].id); ok(p.st >= 13, '평타 노드: 기본 공격이 맞히면 스태미나 +3 (' + p.st + ')'); }
 { const run = { build: 'warden', ptree: { own: [], free: ['ct4L', 'lg4R'], ks: ['lgK9', 'ctK5', 'lgK5'], pts: 0, log: [] }, ksLog: [{ id: 'ctK5', free: ['ct4L'] }, { id: 'lgK9', free: ['lg4R'] }, { id: 'lgK5', free: [] }], ksPending: 0 };
-  const k = D.run_('ksMigrateM4')(run); ok(k === 2 && run.ptree.ks.join() === 'lgK5' && run.ksPending === 2 && run.ptree.free.length === 0 && run.ptree.ksv === 2, '옛 세이브: 바뀐 자리 각인(넘치는 그릇 · 망치의 길)과 그 길을 거두고 2번 다시 고름');
+  const k = D.run_('ksMigrateM4')(run); ok(k === 2 && run.ptree.ks.join() === 'lgK5' && run.ksPending === 2 && run.ptree.free.length === 0 && run.ptree.ksv === 3, '옛 세이브(M5-4부터 ksv 3): 바뀐 자리 각인(넘치는 그릇 · 망치의 길)과 그 길을 거두고 2번 다시 고름');
   ok(D.run_('ksMigrateM4')(run) === 0, '옛 세이브 옮기기는 한 번만'); }
 console.log('yusan-check: ' + n + '개 통과');

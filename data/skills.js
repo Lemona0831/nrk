@@ -335,6 +335,48 @@ const SKILLS2 = {
     { id: 'h_snare', row: 12, b: '기동', tier: '상급', n: '붙잡는 화살', tgt: 'ranged', time: 'fast', cd: 8, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'chill', n: 2 }, { k: 'cutx', brk: 60 }, { k: 'chillCut', brk: 40 }] },
     { id: 'h_mirage', row: 13, b: '기동', tier: '상급', n: '환영 질주', tgt: 'self', time: 'fast', cd: 10, fx: [{ k: 'evade', n: 1 }, { k: 'st', s: 'haste', n: 1 }, { k: 'evadeCtr', dmg: 4, rounds: 3 }, { k: 'stam', n: 10 }] },
     { id: 'h_winterchain', row: 13, b: '기동', tier: '상급', n: '겨울 사슬', tgt: 'ranged', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 5 }, { k: 'chillShatter', dmg: 4, brk: 25 }, { k: 'st', s: 'chill', n: 2 }, { k: 'onCutBreak', haste: 2, hasten: 1 }] },
+    /* ===== 0.8.0 M5-4 사냥꾼 재설계 (10월 20일 만든 사람 설계지 2판): 저격 · 연사 · 기동 + 경계 명궁 · 유격 · 잠복 + 결합 칸 셋. 이름 · 대사 · 문장 그대로, 숫자는 가설(값 띠 · 측정).
+       새 효과 키는 data/skillkit.js HN5_BOUND · js/10 사냥꾼 절(hnUse). 생성: M5-4 gen.py ===== */
+    { id: 'h5_pierce', row: 1, b: '저격', tier: '하급', n: '꿰뚫는 화살', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 21 }, { k: 'focusx', per: 0.1 }] },
+    { id: 'h5_prey', row: 1, b: '저격', tier: '하급', n: '사냥감 지정', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 21 }, { k: 'focusAdd', n: 2 }] },
+    { id: 'h5_cover', row: 1, b: '저격', tier: '하급', n: '엄폐', tgt: 'self', time: 'normal', cd: 4, fx: [{ k: 'st', s: 'protect', n: 7 }] },
+    { id: 'h5_heavy', row: 4, b: '저격', tier: '하급', n: '무거운 화살', tgt: 'ranged', time: 'slow', cd: 4, fx: [{ k: 'dmg', n: 20 }, { k: 'brk', n: 15 }] },
+    { id: 'h5_lock', row: 4, b: '저격', tier: '하급', n: '표적 고정', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'hnLock', r: 6, per: 0.2, txt: '7라운드 기본 공격이 대상 추적 겹마다 +20%' }] },
+    { id: 'h5_sky', row: 8, b: '저격', tier: '중급', n: '하늘 가르기', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 38 }, { k: 'hnSky', need: 3, mul: 3, txt: '추적 3겹이면 무기 피해의 3배' }] },
+    { id: 'h5_endhunt', row: 8, b: '저격', tier: '중급', n: '끝없는 사냥', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 23 }, { k: 'hnCarry', txt: '이번 전투: 추적한 적이 쓰러지면 추적이 다음 적에게' }] },
+    { id: 'h5_volley', row: 1, b: '연사', tier: '하급', n: '연속 사격', tgt: 'ranged', time: 'normal', cd: 4, hits: 3, fx: [{ k: 'dmg', n: 7 }, { k: 'hnVolley', txt: '발마다 다른 적' }] },
+    { id: 'h5_nock', row: 1, b: '연사', tier: '하급', n: '화살 재기', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'hnNock', n: 3, shots: 2, txt: '다음 기본 공격 3번이 두 발' }] },
+    { id: 'h5_harass', row: 1, b: '연사', tier: '하급', n: '견제 사격', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'chill', n: 1 }] },
+    { id: 'h5_rain', row: 4, b: '연사', tier: '하급', n: '화살비', tgt: 'all', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 1 }] },
+    { id: 'h5_barb', row: 4, b: '연사', tier: '하급', n: '덧화살', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'bbuf', s: 'barb', bleed: 2, r: 12 }] },
+    { id: 'h5_bloodrain', row: 8, b: '연사', tier: '중급', n: '피의 비', tgt: 'all', time: 'normal', cd: 4, fx: [{ k: 'hnBloodRain', mul: 3.4, txt: '출혈 걸린 적 모두에게 무기 피해의 3.4배' }] },
+    { id: 'h5_endless', row: 8, b: '연사', tier: '중급', n: '끝없는 화살', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'hnNock', n: 3, shots: 3, txt: '다음 기본 공격 3번이 세 발' }] },
+    { id: 'h5_counter', row: 1, b: '기동', tier: '하급', n: '받아넘기기', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'evade', n: 1 }, { k: 'evadeCtr', dmg: 15, rounds: 3 }] },
+    { id: 'h5_leg', row: 1, b: '기동', tier: '하급', n: '다리 쏘기', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 20 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'h5_dodge', row: 1, b: '기동', tier: '하급', n: '몸 빼기', tgt: 'self', time: 'normal', cd: 4, fx: [{ k: 'evade', n: 1 }, { k: 'stam', n: 25 }] },
+    { id: 'h5_windstep', row: 4, b: '기동', tier: '하급', n: '바람 걸음', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'hnWindStep', txt: '이번 전투: 피할 때마다 다음 기동 스킬 유산 −1(바닥 1)' }] },
+    { id: 'h5_stop', row: 4, b: '기동', tier: '하급', n: '멈춰 세우기', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 23 }, { k: 'chillCut', brk: 40 }] },
+    { id: 'h5_windveil', row: 8, b: '기동', tier: '중급', n: '바람의 장막', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'hnWindVeil', r: 5, txt: '5라운드 공격을 받을 때마다 몸 빼기 1(라운드에 한 번)' }] },
+    { id: 'h5_icecage', row: 8, b: '기동', tier: '중급', n: '얼음 감옥', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 35 }, { k: 'freeze', chill: 3, brk: 40 }] },
+    { id: 'h5_aimvol', row: 4, b: '명궁', tier: '하급', n: '겨눈 연사', tgt: 'ranged', time: 'normal', cd: 4, hits: 2, fx: [{ k: 'dmg', n: 10 }, { k: 'focusx', per: 0.1 }] },
+    { id: 'h5_steady', row: 4, b: '명궁', tier: '하급', n: '숨 고르기', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'st', s: 'empower', n: 6 }] },
+    { id: 'h5_pinpoint', row: 8, b: '명궁', tier: '중급', n: '급소 꿰기', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 33 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 'h5_hawkeye', row: 8, b: '명궁', tier: '중급', n: '매의 눈', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'foresee', red: 0.5, rounds: 9 }] },
+    { id: 'h5_mangung', row: 10, b: '명궁', tier: '중급', n: '만궁', tgt: 'self', time: 'normal', cd: 4, line: '「한 호흡이면 족하다. 끝까지 당긴 시위는, 결코 빗나가지 않으니.」', cut: 'blade', pay: '당기는 차례에는 아무것도 못 하고, 그동안 받는 피해 +30%.', fx: [{ k: 'hnDraw', mul: 6.5, per: 1, txt: '한 차례 시위를 당겼다가, 다음 차례 추적한 적에게 무기 피해의 6.5배(추적 겹마다 +1배).' }] },
+    { id: 'h5_runshot', row: 4, b: '유격', tier: '하급', n: '달리며 쏘기', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 12 }, { k: 'evade', n: 1 }] },
+    { id: 'h5_dust', row: 4, b: '유격', tier: '하급', n: '흙먼지', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'st', s: 'protect', n: 11 }] },
+    { id: 'h5_storm', row: 8, b: '유격', tier: '중급', n: '폭풍 사격', tgt: 'all', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 17 }, { k: 'st', s: 'bleed', n: 2 }] },
+    { id: 'h5_tailwind', row: 8, b: '유격', tier: '중급', n: '순풍', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'hnNock', n: 5, shots: 2, txt: '다음 기본 공격 5번이 두 발' }] },
+    { id: 'h5_gale', row: 10, b: '유격', tier: '중급', n: '질풍난사', tgt: 'self', time: 'normal', cd: 4, line: '「바람보다 빠르게, 비보다 많이. 사냥은 이제부터다.」', cut: 'guard', pay: '그동안 몸 빼기 · 방어 불가, 받는 피해 +20%.', fx: [{ k: 'hnGale', r: 3, txt: '3라운드 동안 매 라운드 두 번 움직이고(가속), 기본 공격이 두 발.' }] },
+    { id: 'h5_snare', row: 4, b: '잠복', tier: '하급', n: '덫 화살', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 20 }, { k: 'st', s: 'chill', n: 1 }] },
+    { id: 'h5_hide', row: 4, b: '잠복', tier: '하급', n: '숨은 사수', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'evade', n: 2 }] },
+    { id: 'h5_ambush', row: 8, b: '잠복', tier: '중급', n: '매복 사격', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 33 }, { k: 'chillx', mul: 1.5 }] },
+    { id: 'h5_camo', row: 8, b: '잠복', tier: '중급', n: '위장', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'st', s: 'protect', n: 19 }] },
+    { id: 'h5_trap', row: 10, b: '잠복', tier: '중급', n: '혈향의 덫', tgt: 'self', time: 'normal', cd: 4, line: '「피 냄새를 맡고 온 짐승이, 덫을 피하는 법은 없지.」', cut: 'arcane', pay: '깔 때 지금 생명력에서 최대치의 15%를 미끼로 흘린다(15% 이하면 못 씀).', fx: [{ k: 'hnTrap', mul: 3.5, txt: '이번 라운드 나를 치는 적은 모두 다음 행동을 놓치고 추적 3겹이 된다.' }] },
+    { id: 'h5_chase', row: 7, b: '결합', tier: '중급', n: '추격', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'hnChaseC', txt: '이번 전투: 피할 때마다 그 적에게 추적 +1겹', n: 1 }] },
+    { id: 'h5_scent', row: 7, b: '결합', tier: '중급', n: '피 냄새', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'hnScent', txt: '이번 전투: 출혈 걸린 적을 맞히면 추적 +1겹', n: 1 }] },
+    { id: 'h5_frozen', row: 7, b: '결합', tier: '중급', n: '얼어붙은 사냥감', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'hnFrozen', mul: 1.8, txt: '이번 전투: 둔화 걸린 적에게 기본 공격 ×1.8' }] },
+    /* ===== M5-4 사냥꾼 끝 ===== */
   ],
   /* 숨겨진 직업 1 (10월 7일, key butcher). 새 효과 키 grudge · carry, 넓힌 인자(st/exploit/grow/drain/spread s: 'bleed', exploit · drain me, lowx me, hasten · quick · meSt on: 'kill', thorn · onParry bleed)는 index.html runSkill2, 점수는 skillkit.js SKK.butch */
   butcher: [
@@ -1086,4 +1128,6 @@ const AS_TAGS = {
   a_dokni: ['중독', '기본공격연동'], a_heuldok: ['흘리기', '중독'], a_dwikkot: ['터뜨리기', '후열'],
 };
 for (const s of SKILLS2.assassin || []) if (AS_TAGS[s.id]) { s.tags = AS_TAGS[s.id].slice(); s.as5 = 1; } // as5: 한 줄 설명(skBodyMk) · 설명 길이 경고 · 터뜨리기 배수 하나만(js/10) // mk5: 한 줄 설명(skBodyMk) · 설명 길이 경고(tree-check)
+const HN_TAGS = { h5_pierce: ['추적'], h5_prey: ['추적', '기본공격연동'], h5_cover: ['보호'], h5_heavy: ['붕괴'], h5_lock: ['추적', '기본공격연동'], h5_sky: ['추적'], h5_endhunt: ['추적', '기본공격연동'], h5_volley: ['광역'], h5_nock: ['기본공격연동'], h5_harass: ['둔화'], h5_rain: ['출혈', '광역'], h5_barb: ['출혈', '기본공격연동'], h5_bloodrain: ['출혈', '광역'], h5_endless: ['기본공격연동'], h5_counter: ['몸 빼기'], h5_leg: ['둔화'], h5_dodge: ['몸 빼기'], h5_windstep: ['몸 빼기'], h5_stop: ['둔화', '붕괴'], h5_windveil: ['몸 빼기'], h5_icecage: ['둔화', '붕괴'], h5_aimvol: ['추적'], h5_steady: ['추적'], h5_pinpoint: ['추적'], h5_hawkeye: ['보호'], h5_mangung: ['추적'], h5_runshot: ['몸 빼기'], h5_dust: ['보호'], h5_storm: ['출혈', '광역'], h5_tailwind: ['기본공격연동'], h5_gale: ['기본공격연동'], h5_snare: ['둔화'], h5_hide: ['몸 빼기'], h5_ambush: ['둔화'], h5_camo: ['보호'], h5_trap: ['추적'], h5_chase: ['추적', '몸 빼기'], h5_scent: ['출혈', '추적'], h5_frozen: ['둔화', '기본공격연동'] };
+for (const s of SKILLS2.hunter || []) if (HN_TAGS[s.id]) { s.tags = HN_TAGS[s.id].slice(); s.hn5 = 1; } // M5-4 hn5: 한 줄 설명(skBodyMk) · 설명 길이 경고 · 값 식(skValueHn) · 새 효과(js/10 hnUse)
 

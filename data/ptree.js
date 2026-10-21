@@ -112,7 +112,7 @@ const PN_TXT = {
   n_mk_pool: { n: '고인 기', d: '기가 상한일 때 되받기 피해 +20%.' },
   n_mk_spill: { n: '넘치는 기운', d: '되받기로 얻을 기가 상한에 막혀 버려지면 1마다 스태미나 +4.' },
   /* 0.8.0 5단계 사냥꾼 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 2-5, 10월 18일 결정) */
-  n_hn_pull: { n: '이어 당기는 활', d: '가속의 두 번째 차례에 쓰는 기본 공격의 피해가 15% 늘어나고(덧화살에도 든다), 맞히면 스태미나 +5.' },
+  n_hn_pull: { n: '이어 당기는 활', d: '연계로 빠른 행동을 쓴 차례의 기본 공격 피해가 15% 늘어나고(덧쏜 화살에도 든다), 맞히면 스태미나 +5.' }, /* M5-4: 가속의 두 번째 차례 → 연계 빠른 행동을 쓴 차례 */
   n_hn_breath: { n: '사냥감의 숨', d: '추적 3겹 이상인 적에게 주는 스킬 피해가 8% 늘어납니다.' },
   n_hn_tough: { n: '질긴 사냥꾼', d: '생명력이 30% 이하일 때 받는 직접 피해가 8% 줄어듭니다.' },
   n_hn_unavoid: { n: '피할 수 없는 것', d: '회피할 수 없는 공격(광역 · 주문 · 지속 피해)에 받는 피해가 8% 줄어듭니다.' },
@@ -124,7 +124,7 @@ const PN_TXT = {
   n_hn_aside: { n: '비켜 선 자리', d: '공격을 몸을 빼 피한 다음, 내 첫 공격의 피해가 10% 늘어납니다(한 번).' },
   n_hn_quick: { n: '날랜 시위', d: '⚡ 공격 스킬의 피해가 8% 늘어납니다.' },
   n_hn_pass: { n: '넘겨받는 추적', d: '추적 3겹 이상인 적을 쓰러뜨리면, 다음에 친 다른 적은 추적 1겹에서 시작합니다(처치마다).' },
-  n_hn_linkup: { n: '이어 쏘기 숙련', d: '연계 피해가 30%에서 38%로 늘어납니다.' },
+  n_hn_linkup: { n: '이어 쏘기 숙련', d: '연계 빠른 행동을 내 차례에 두 번까지 쓸 수 있습니다(원래 한 번).' }, /* M5-4: 연계 +30% → 빠른 행동 */
   n_hn_finale: { n: '끝맺는 연계', d: '연계로 쓴 유산 4 스킬의 피해가 12% 늘어납니다.' },
   /* 10월 18일 0.8.0 5단계 원소술사 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 3-5, 8절 결정 9–11) */
   n_el_student: { n: '불의 학도', d: '스킬의 첫 타격 피해 +3(행동마다 한 번, 배율을 모두 곱한 뒤 더함).' },
@@ -261,7 +261,7 @@ const PT_CLS = {
       ag1C: 'k_hn3', ag3L: 'n_hn_aside', ag5L: 'a_resolve', ag5R: 'n_hn_quick', ag7L: 'a_light', ag7R: 'a_gulp',
       lg2L: 'k_hn1', lg3R: 'n_hn_pass', lg5L: 'n_overflow', lg5R: 'n_hn_linkup', lg7L: 'n_fullvessel', lg7R: 'n_hn_finale',
     },
-    ks: { pwK5: 'ks_sharp', pwK9: 'ks_hn_solo', ctK5: 'ks_brkbreath', ctK9: 'ks_hammer', agK5: 'ks_slipbreath', agK9: 'ks_first', lgK5: 'ks_deep', lgK9: 'ks_hn_chase', suK5: 'ks_cycle', suK9: 'ks_tireless', svK5: 'ks_blockbreath', svK9: 'ks_wall' },
+    ks: { pwK5: 'ks_sharp', pwK9: 'ks_hn_solo', ctK5: 'ks_brkbreath', ctK9: 'ks_hammer', agK5: 'ks_slipbreath', agK9: 'ks_flow', lgK5: 'ks_deep', lgK9: 'ks_hn_chase', /* M5-4: 기민 K9 먼저 움직임(가속) → 흘림새 */ suK5: 'ks_cycle', suK9: 'ks_tireless', svK5: 'ks_blockbreath', svK9: 'ks_wall' },
   },
   /* 10월 18일 0.8.0 5단계 원소술사 (결정 9–11 반영): docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 3-5. 작은 노드는 화력 지능 +2(공격 능력치).
      화력 3고리는 공용 둘만(3-2 인플레이션 막기). 큰 각인: 끊어진 영창(제어 K5) · 잿불의 길(화력 K9, 대가) · 얼음 심장(생존 K9, 대가). 무거운 갑주 · 무너뜨리는 자는 두지 않는다 */

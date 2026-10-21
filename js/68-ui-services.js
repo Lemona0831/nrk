@@ -39,7 +39,8 @@ const focusOn = (b, e) => !!(b && b.p.build === 'hunter' && b.p.focus && b.p.foc
 function focusLine(b) {
   const p = b.p; if (p.build !== 'hunter') return ''; const e = p.focus && b.en.find(x => x.id === p.focus.id && x.alive); const n = e ? p.focus.n : 0;
   const hs = st(p, 'haste'); const hl = `<div class="focusln hs" data-info="st:p:haste" tabindex="0">⚡ 가속 ${hs ? `<b>${hs}</b> · 다음 라운드 맨 앞에서 두 번 연달아 움직인다` : '없음'}${b.pDouble === b.round ? ' · 이번 라운드는 연속 행동 중' : ''}</div>`;
-  const ll = `<div class="focusln lk" data-info="elink" tabindex="0">🔗 연계 ${p.lastBr ? `방금 <b>${esc(p.lastBr)}</b> · 다른 갈래 스킬을 쓰면 피해 +${Math.round(HUNT.link * 100)}%` : `갈래를 바꿔 이어 쓰면 피해 +${Math.round(HUNT.link * 100)}%`}</div>`;
+  const lbr = [...new Set(skillsOf(p).map(id => SK2[id]).filter(s => s && hnBr(s) && hnBr(s) !== '시작' && hnBr(s) !== p.lastBr).map(hnBr))]; const lleft = Math.max(0, hnLinkMax(p) - hnLinkUsed(b)); /* M5-4: 지금 연계되는 갈래를 한 단어로 */
+  const ll = `<div class="focusln lk" data-info="elink" tabindex="0">🔗 ${p.lastBr ? (lbr.length ? `<b>${esc(lbr.join(' · '))}</b> · 빠른 행동` + (lleft ? '' : ' (이번 차례 다 씀)') : '이어 쏠 다른 갈래 없음') : '갈래를 바꿔 이어 쏘면 빠른 행동'}</div>`;
   return hl + ll + `<div class="focusln" data-info="efocus" tabindex="0">🎯 추적 ${n ? `<b>${n}</b>/${HUNT.focusMax}겹 · ${esc(e.n)} · 다음 한 방 +${Math.round(n * (e.elite || e.strong || e.role === 'boss' ? HUNT.focusBig : HUNT.focusPer) * 100)}%` : '없음 · 같은 적을 연달아 맞히면 쌓입니다'}</div>`;
 }
 /* 마검사 교대 · 칼 표시 (10월 7일, docs/직업/마검사.md F-1): 직전 종류와 다음 교대, 이어진 교대, 칼에 실린 것 */

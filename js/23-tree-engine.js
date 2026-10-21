@@ -90,7 +90,7 @@ const clearsEff = run => (run.clears || 0) + (run.markCh ? run.markCh - 1 : 0); 
 const ringOpen = (run, ring) => clearsEff(run) >= (PT.ring[ring] || 0) || (run.ringCamp || 1) >= ring;
 const RING_WHY = { 2: '2고리는 1챕터 야영지에서 열립니다', 3: '3고리는 2챕터 야영지에서 열립니다' };
 function ringCampOpen(run) { if (!run || !run.ptree) return 0; const want = Math.min(3, (run.ch || 1) + 1); const was = [2, 3].filter(k => ringOpen(run, k)).length; run.ringCamp = Math.max(run.ringCamp || 1, want); const now = [2, 3].filter(k => ringOpen(run, k)).length; if (now > was) { run.ringNew = 1; if (typeof toast === 'function') toast('새 고리가 열렸다: ' + (now + 1) + '고리'); return now + 1; } return 0; }
-function ptInit(run) { if (!run.ptree) run.ptree = { own: [], free: [], ks: [], pts: ptTotal(run), log: [], ksv: 2 }; if (!run.atree) run.atree = { own: [], pts: atTotal(run), log: [], atv: 8 }; if (!run.ksGot) run.ksGot = {}; if (run.ksPending == null) run.ksPending = 0; return run; }
+function ptInit(run) { if (!run.ptree) run.ptree = { own: [], free: [], ks: [], pts: ptTotal(run), log: [], ksv: 3 }; if (!run.atree) run.atree = { own: [], pts: atTotal(run), log: [], atv: 9 }; if (!run.ksGot) run.ksGot = {}; if (run.ksPending == null) run.ksPending = 0; return run; }
 const ptOpenIds = run => ['S'].concat(run.ptree.own, run.ptree.free, run.ptree.ks);
 const atOpenIds = run => ['S'].concat(run.atree.own);
 const ptSpent = run => run.ptree.own.reduce((a, id) => a + ((ptBuild(run.build).nodes[id] || {}).cost || 0), 0);
@@ -248,6 +248,7 @@ function skCostAt(b, s, tgt) {
   const c0 = skCost(s); if (!b) return { c: c0, by: null }; let best = { c: c0, by: null };
   { const ws = s.fx && s.fx.find(e => e.k === 'wdStance'), S = b.p && b.p.wdSt; if (ws && S) { if (S[ws.s]) return { c: 0, by: 'wdOff' }; if (S.turncoat && S[ws.s === 'def' ? 'atk' : 'def']) return { c: 0, by: 'wdTurn' }; } } // M5-1 파수꾼 태세: 끄기는 유산 0, 돌아선 방패면 바꾸기도 0
   for (const c of s.cond || []) { if (b.condUsed && b.condUsed[c.id || s.id] === (b.ysR || 0)) continue; if (skCondMet(b, s, c, tgt)) { const c1 = Math.max(1, c0 - (c.off || 1)); if (c1 < best.c) { best = { c: c1, by: c.id || s.id }; break; } } }
+  if (b.p && b.p.hnSt && b.p.hnSt.windDisc && hnBr(s) === '기동' && c0 > 1 && c0 - 1 < best.c) best = { c: c0 - 1, by: 'hnWind' }; // M5-4 바람 걸음: 피한 뒤 다음 기동 스킬 −1(바닥 1)
   /* 10월 17일 보완 1 · 4: 두 번 교대의 다음 스킬 −1(b.altDisc), 마검 과부하 교대 셋의 다음 유산 4 스킬 −3(b.ovDisc). 바닥 1, 가장 큰 할인 하나만 */
   if (b.p && b.p.sbSt && b.p.sbSt.tricolor && s.kind === 'cut' && (b.p.ward || 0) > 0 && !(b.condUsed && b.condUsed.tricolor === (b.ysR || 0)) && alive(b).some(e => stk(e, 'bleed') > 0 && stk(e, 'ignite') > 0)) { const c1 = Math.max(1, c0 - 1); if (c1 < best.c) best = { c: c1, by: 'tricolor' }; } // M5-0 보정 5 결합 칸 삼색검(내 차례에 한 번)
   if (b.ovDisc && c0 >= 4) { const c1 = Math.max(1, c0 - SB_OVER.off); if (c1 < best.c) best = { c: c1, by: 'ksOver' }; }
@@ -303,13 +304,14 @@ function runTags(run) { const c = {}; const add = L => { for (const t of L || []
   if (run.atree) { const A = atBuild(run.build); for (const id of run.atree.own) { const n = A.nodes[id]; if (n && n.kind === 'skill' && SK2[id]) add(SK2[id].tags); } for (const v of Object.values(run.atree.vsel || {})) { const V = A.vars && A.vars[v]; if (V) add(V.tags); } }
   if (run.ptree && typeof PT_TAGS !== 'undefined') { const T = ptBuild(run.build); for (const id of [].concat(run.ptree.own, run.ptree.free, run.ptree.ks)) { const n = T.nodes[id]; if (n && n.fx) add(PT_TAGS[n.fx]); } }
   return c; }
-/* M5-3(10월 20일 만든 사람): 암살자 액티브 재설계. atv 8: 같은 규칙(빠진 칸 환급). 옛 암살자 판의 옛 칸 · 강화(au_*)는 트리에 없어 돌려받는다.
+/* M5-4(10월 21일 만든 사람): 사냥꾼 액티브 재설계. atv 9: 같은 규칙(빠진 칸 환급). 옛 사냥꾼 판의 옛 칸 · 강화(hu_*)는 트리에 없어 돌려받는다.
+   M5-3(10월 20일 만든 사람): 암살자 액티브 재설계. atv 8: 같은 규칙(빠진 칸 환급). 옛 암살자 판의 옛 칸 · 강화(au_*)는 트리에 없어 돌려받는다.
    M5-2(10월 20일 만든 사람): 수도승 액티브 재설계. atv 7: 같은 규칙(빠진 칸 환급). 옛 수도승 판의 사다리 칸 · 강화(mu_*)는 트리에 없어 돌려받는다.
    M5-1(10월 20일 만든 사람): 파수꾼 액티브 재설계. atv 6: 같은 규칙(빠진 칸 · 빠진 변형 환급). 옛 파수꾼 판의 강화 노드(wu_*) · 사다리 칸은 트리에 없어 돌려받는다.
    M5-0c(10월 20일 만든 사람): 마검사 액티브 재설계. atv 5: 트리에서 빠진 칸 · 빠진 변형을 찍어 둔 판은 그 포인트를 돌려준다(액티브 포인트로).
    빠진 변형 = 고른 변형이 그 자리의 변형 목록에 없는 것(변종은 그 자리 것이면 남긴다). 제시(run.offer)는 새 규칙으로 다시 만들고, 남긴 변종은 제시에 더한다 */
 function atMigrateM5(run) {
-  if (!run || !run.atree || run.atree.atv >= 8) return 0; const why = run.atree.atv === 7 ? '암살자 재설계' : run.atree.atv === 6 ? '수도승 재설계' : run.atree.atv === 5 ? '파수꾼 재설계' : run.atree.atv === 4 ? '마검사 재설계' : run.atree.atv === 3 ? '빌드 규격 2판' : run.atree.atv === 2 ? '부채꼴 칸 정리' : '임시 트리 폐기'; run.atree.atv = 8; // M5-2 수도승: atv 7(다른 직업은 바뀐 칸이 없어 그대로). M5-0 보정 5: atv 4(경계 둘째 칸 교체 · 1고리 갈림), M5-0c: atv 5, M5-1 파수꾼: atv 6(다른 직업은 바뀐 칸이 없어 그대로)
+  if (!run || !run.atree || run.atree.atv >= 9) return 0; const why = run.atree.atv === 8 ? '사냥꾼 재설계' : run.atree.atv === 7 ? '암살자 재설계' : run.atree.atv === 6 ? '수도승 재설계' : run.atree.atv === 5 ? '파수꾼 재설계' : run.atree.atv === 4 ? '마검사 재설계' : run.atree.atv === 3 ? '빌드 규격 2판' : run.atree.atv === 2 ? '부채꼴 칸 정리' : '임시 트리 폐기'; run.atree.atv = 9; // M5-2 수도승: atv 7(다른 직업은 바뀐 칸이 없어 그대로). M5-0 보정 5: atv 4(경계 둘째 칸 교체 · 1고리 갈림), M5-0c: atv 5, M5-1 파수꾼: atv 6(다른 직업은 바뀐 칸이 없어 그대로)
   const A = atBuild(run.build); const own0 = run.atree.own || []; const keep0 = []; const vs = run.atree.vsel || {};
   const varOk = (slot, v) => !v || (A.vars && A.vars[v] && A.vars[v].slot === slot);
   for (const id0 of own0) { const id = !A.nodes[id0] && A.vars && A.vars[id0] ? A.vars[id0].slot : id0; const n = A.nodes[id]; if (!n || keep0.includes(id)) continue; if (n.excl && keep0.includes(n.excl)) continue; if (n.slot && !varOk(id, vs[id])) continue; keep0.push(id); } // 1고리 갈림에서 둘 다 찍힌 옛 판은 먼저 찍은 쪽을 남긴다. 옛 강화(이제 변형)는 그 스킬의 변형 자리를 연 채 변형은 고르지 않음(야영지에서 고름)
@@ -324,9 +326,22 @@ function atMigrateM5(run) {
 /* 0.8.0 M4(10월 19일): 큰 각인 배치가 바뀌었다(KS_V1 → PT_CLS). 옛 판에서 찍어 둔 자리의 각인이 바뀌었으면(넘치는 그릇 · 결정의 칼 · 망치의 길 · 먼저 움직임 · 철벽 등)
    그 각인과 그때 공짜로 연 길을 거두고 큰 각인 하나를 다시 고르게 한다(ksPending +1). run.ptree.ksv = 2면 끝난 판 */
 function ksMigrateM4(run) {
-  if (!run || !run.ptree || run.ptree.ksv === 2) return 0; run.ptree.ksv = 2;
+  if (!run || !run.ptree || run.ptree.ksv >= 2) return 0; run.ptree.ksv = 3; /* M4 전 판은 지금 배치와 견주므로 M5-4 옮기기(ksMigrateM54)는 건너뛴다 */
   if (typeof KS_V1 === 'undefined' || !KS_V1[run.build] || !(run.ptree.ks || []).length) return 0;
   const T = ptBuild(run.build), old = KS_V1[run.build]; let n = 0;
+  for (const id of run.ptree.ks.slice()) {
+    if (!old[id] || !T.nodes[id] || T.nodes[id].fx === old[id]) continue;
+    run.ptree.ks = run.ptree.ks.filter(x => x !== id); const L = (run.ksLog || []).filter(x => x.id === id).pop(); if (L && L.free) run.ptree.free = run.ptree.free.filter(x => !L.free.includes(x));
+    run.ksPending = (run.ksPending || 0) + 1; run.ksOffer = null; (run.ksRefund = run.ksRefund || []).push({ id, fx: old[id], t: Date.now() }); n++;
+  }
+  return n;
+}
+/* 0.8.0 M5-4(10월 21일): 사냥꾼 기민 K9 먼저 움직임(전투 시작 가속) → 흘림새. M4 배치(ksv 2)의 판에서 바뀐 자리의 각인을 찍어 두었으면 거두고 다시 고르게 한다. ksv 3이면 끝난 판 */
+const KS_V2 = { hunter: { agK9: 'ks_first' } };
+function ksMigrateM54(run) {
+  if (!run || !run.ptree || run.ptree.ksv !== 2) return 0; run.ptree.ksv = 3;
+  if (!KS_V2[run.build] || !(run.ptree.ks || []).length) return 0;
+  const T = ptBuild(run.build), old = KS_V2[run.build]; let n = 0;
   for (const id of run.ptree.ks.slice()) {
     if (!old[id] || !T.nodes[id] || T.nodes[id].fx === old[id]) continue;
     run.ptree.ks = run.ptree.ks.filter(x => x !== id); const L = (run.ksLog || []).filter(x => x.id === id).pop(); if (L && L.free) run.ptree.free = run.ptree.free.filter(x => !L.free.includes(x));
@@ -450,7 +465,7 @@ const IFX_NODE = {
   ks_mk_empty: { hitP: (b, p, e, o, c) => c && c.skill && (skOf(p, c.id) || { fx: [] }).fx.some(f => f.k === 'kiBurst') ? 0.3 : 0, ctrKiOnce: 1 }, // 비운 그릇 (10월 17일 검토 2-2: 대가는 되받기 기 한 번)
   ks_mk_vow: { inP: (b, p, o) => p.stance && !o.dot ? 0.12 : 0, noFastAtk: 1 }, // 부동의 맹세
   /* ---- 0.8.0 5단계 사냥꾼 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 2-5, 10월 18일) ---- */
-  n_hn_pull: { hitP: (b, p, e, o, c) => c && c.id === 'basic' && b.extraTurn ? 0.15 : 0, onHit: (b, p, e, o, c, d) => { if (!c || c.id !== 'basic' || !b.extraTurn || !(d > 0) || b.hnPullA === b.actN) return; b.hnPullA = b.actN; fxStam(p, 5); return 1; } }, // 이어 당기는 활: 가속의 두 번째 차례 기본 공격(덧화살 포함) +15%, 맞히면 스태미나 +5
+  n_hn_pull: { hitP: (b, p, e, o, c) => c && c.id === 'basic' && hnLinkUsed(b) > 0 ? 0.15 : 0, onHit: (b, p, e, o, c, d) => { if (!c || c.id !== 'basic' || !(hnLinkUsed(b) > 0) || !(d > 0) || b.hnPullA === b.actN) return; b.hnPullA = b.actN; fxStam(p, 5); return 1; } }, // 이어 당기는 활: 가속의 두 번째 차례 기본 공격(덧화살 포함) +15%, 맞히면 스태미나 +5
   n_hn_breath: { hitP: (b, p, e, o, c) => c && c.skill && hnFocusPre(b, p, e, o) >= HUNT.focusMax ? 0.08 : 0 }, // 사냥감의 숨: 맞히기 전 추적 3겹 이상
   n_hn_tough: { inP: (b, p, o) => !o.dot && p.hp <= p.hpMax * 0.3 ? 0.08 : 0 }, // 질긴 사냥꾼
   n_hn_unavoid: { inP: (b, p, o) => o.aoe || o.spell || o.dot ? 0.08 : 0 }, // 피할 수 없는 것

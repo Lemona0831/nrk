@@ -156,6 +156,37 @@ for (const c of CLS) {
   for (const v of Object.values(A.vars)) if (v.d && v.d.length > MAX) long.push(v.n + '(' + v.d.length + ')');
   if (long.length) console.warn('경고: 암살자 설명 ' + MAX + '자 넘음 — ' + long.join(', ')); else n++; }
 
+// ===== 0.8.0 M5-4 사냥꾼 액티브 재설계(10월 20일 만든 사람 설계지 2판) =====
+{ const A = E.atBuild('hunter'), N = Object.values(A.nodes), SK = N.filter(x => x.kind === 'skill'), up = N.filter(x => x.slot), SK2 = E.SK2;
+  ok(JSON.stringify(A.sec) === JSON.stringify({ A: '저격', AB: '명궁', B: '연사', BC: '유격', C: '기동', CA: '잠복' }), '사냥꾼 부채꼴 여섯: 저격 · 명궁 · 연사 · 유격 · 기동 · 잠복');
+  ok(SK.length === 39 && up.length === 36 && Object.keys(A.vars).length === 72, '사냥꾼 스킬 노드 39(갈래 21 · 경계 15 · 결합 3) + 변형 자리 36 · 변형 72');
+  for (const k of ['A', 'B', 'C']) { const S6 = SK.filter(x => x.sec === k), r = n => S6.filter(x => x.ring === n), op = r(1).filter(x => x.ys === 2);
+    ok(S6.length === 7 && r(1).map(x => x.ys).sort().join() === '1,2,2' && op[0].excl === op[1].id && r(2).length === 2 && r(3).length === 2, A.sec[k] + ': 1고리 첫 스킬 둘(길) + 리듬 1, 2고리 2 · 3고리 2');
+    ok([1, 2, 3].every(g => r(g).filter(x => x.path).map(x => x.path).sort().join() === 'a,b'), A.sec[k] + ': 길 a · b — ' + ['a', 'b'].map(w => [1, 2, 3].map(g => r(g).find(x => x.path === w).n).join(' → ')).join(' / ')); }
+  const nm = id => SK2[id].n; ok([['h5_pierce', '꿰뚫는 화살', 'a'], ['h5_prey', '사냥감 지정', 'b'], ['h5_volley', '연속 사격', 'a'], ['h5_nock', '화살 재기', 'b'], ['h5_counter', '받아넘기기', 'a'], ['h5_leg', '다리 쏘기', 'b']].every(([id, n, w]) => nm(id) === n && A.nodes[id].ring === 1 && A.nodes[id].path === w), '1고리 길(설계지): 저격 꿰뚫는 화살 / 사냥감 지정, 연사 연속 사격 / 화살 재기, 기동 받아넘기기 / 다리 쏘기');
+  ok(nm('h5_cover') === '엄폐' && nm('h5_harass') === '견제 사격' && nm('h5_dodge') === '몸 빼기' && [['h5_heavy', '무거운 화살'], ['h5_lock', '표적 고정'], ['h5_sky', '하늘 가르기'], ['h5_endhunt', '끝없는 사냥'], ['h5_rain', '화살비'], ['h5_barb', '덧화살'], ['h5_bloodrain', '피의 비'], ['h5_endless', '끝없는 화살'], ['h5_windstep', '바람 걸음'], ['h5_stop', '멈춰 세우기'], ['h5_windveil', '바람의 장막'], ['h5_icecage', '얼음 감옥']].every(([id, n]) => nm(id) === n), '리듬 칸 엄폐 · 견제 사격 · 몸 빼기(숨 돌리는 칸), 2 · 3고리 이름(설계지)');
+  ok(SK2.h5_cover.time !== 'fast' && SK2.h5_harass.time !== 'fast' && SK2.h5_dodge.time !== 'fast' && SK2.h5_heavy.time === 'slow', '리듬 칸은 주 행동, 무거운 화살은 느림(연계여도 주 행동)');
+  ok(JSON.stringify(R_('TREE2').hunter.starters) === JSON.stringify(['h_aim', 'h_step']), '시작 스킬 그대로(겨눠 쏘기 · 물러서며 쏘기)');
+  for (const k of ['AB', 'BC', 'CA']) { const S5 = SK.filter(x => x.sec === k), fin = S5.filter(x => x.ys === 4); const atk = S5.filter(x => x.ys !== 4 && SK2[x.id].tgt !== 'self').length;
+    ok(S5.length === 5 && fin.length === 1 && SK2[fin[0].id].line && atk === 2 && A.sec[k] !== fin[0].n, A.sec[k] + ': 경계 5칸(공격 2 · 강화/방어 2 · 대사 승부수 ' + (fin[0] && fin[0].n) + ', 경계 이름과 다름)'); }
+  ok(SK2.h5_mangung.line === '「한 호흡이면 족하다. 끝까지 당긴 시위는, 결코 빗나가지 않으니.」' && SK2.h5_gale.line === '「바람보다 빠르게, 비보다 많이. 사냥은 이제부터다.」' && SK2.h5_trap.line === '「피 냄새를 맡고 온 짐승이, 덫을 피하는 법은 없지.」' && SK2.h5_mangung.cut === 'blade' && SK2.h5_gale.cut === 'guard' && SK2.h5_trap.cut === 'arcane', '승부수 대사 셋(만든 사람 문장 그대로) · 컷인 종류(만궁 검 · 질풍난사 방어 · 혈향의 덫 마법)');
+  ok(SK2.h5_mangung.pay === '당기는 차례에는 아무것도 못 하고, 그동안 받는 피해 +30%.' && SK2.h5_gale.pay === '그동안 몸 빼기 · 방어 불가, 받는 피해 +20%.' && SK2.h5_trap.pay === '깔 때 지금 생명력에서 최대치의 15%를 미끼로 흘린다(15% 이하면 못 씀).', '승부수 대가(설계지 문장)');
+  const ULT = ['hnDraw', 'hnGale', 'hnTrap'], HASTE = e => ['hastex', 'hasteSpend', 'quickTurns', 'quick', 'hasten'].includes(e.k) || ((e.k === 'st' || e.k === 'meSt') && e.s === 'haste') || e.haste || e.hasten, VF = v => [...(v.mod.fxSet || []), ...(v.mod.fxAdd || [])];
+  ok(SK.every(x => !SK2[x.id].fx.some(e => ULT.includes(e.k)) || x.ys === 4), '새 상태(시위 당김 · 질풍 · 덫)는 승부수에만');
+  ok(SK.every(x => !SK2[x.id].fx.some(HASTE)) && Object.values(A.vars).every(v => !VF(v).some(HASTE)), '가속을 주거나 쓰는 효과가 트리 칸 · 변형에 없음(가속은 개전 · 질풍난사만)');
+  const STG = R_('HN_TAGS'), BRIDGE = ['추적', '출혈', '둔화', '몸 빼기', '기본공격연동', '광역', '붕괴', '보호'], pureN = {};
+  for (const u of up) { const V = u.vars.map(v => A.vars[v]); ok(V.length === 2 && V.map(v => v.v).sort().join() === 'deep,link', u.id + ': 깊게 하나 · 잇기 하나'); const lk = V.find(v => v.v === 'link'); ok(lk.tags.some(g => BRIDGE.includes(g) && !(STG[u.on] || []).includes(g)), u.id + ' 잇기 ' + lk.n + ': 없던 꼬리표 더함');
+    const m = V.find(v => v.v === 'deep').mod; if (!m.set && !m.cond && [...(m.fxSet || []), ...(m.fxAdd || [])].every(f => ['dmg', 'brk', 'st', 'stam'].includes(f.k))) pureN[u.br] = (pureN[u.br] || 0) + 1; }
+  ok(Object.values(pureN).every(n => n <= 2), '사냥꾼 깊게의 순수 숫자 변형 갈래마다 둘까지 ' + JSON.stringify(pureN));
+  const nms = SK.map(x => x.n).concat(Object.values(A.vars).map(v => v.n)), dup = nms.filter((x, i) => nms.indexOf(x) !== i), SNv = Object.values(R_('SNAMES')).concat(Object.values(A.sec)), clash = SK.filter(x => SNv.includes(x.n)).map(x => x.n);
+  ok(!dup.length && !clash.length, '사냥꾼 이름 겹침 0, 상태 · 부채꼴과 같은 스킬 이름 0' + (dup.length || clash.length ? ' — ' + dup.concat(clash).join(', ') : ''));
+  ok(A.nodes.h5_chase.reqTags.추적 === 1 && A.nodes.h5_chase.reqTags['몸 빼기'] === 1 && A.nodes.h5_scent.reqTags.출혈 === 1 && A.nodes.h5_scent.reqTags.추적 === 1 && A.nodes.h5_frozen.reqTags.둔화 === 2 && A.nodes.h5_frozen.reqTags.기본공격연동 === 1, '결합 칸 셋(추격 추적 1 · 몸 빼기 1, 피 냄새 출혈 1 · 추적 1, 얼어붙은 사냥감 둔화 2 · 기본공격연동 1)');
+  ok(R_('HN5_BOUND').trapHp === 0.15 && R_('HN5_BOUND').drawIn === 0.3 && R_('HN5_BOUND').galeIn === 0.2 && R_('HN5_BOUND').trapFocus === 3, '설계지 숫자: 대가 15% · +30% · +20% · 추적 3겹');
+  /* 칸 설명은 한 줄(만든 사람): 효과 문장 40자 넘으면 경고. 승부수(대사가 있는 칸)는 만든 사람 문장 그대로라 뺀다 */
+  const MAX = R_('MK_DESC_MAX'), long = []; for (const x of SK) { const s = SK2[x.id]; if (s.line) continue; const d = E.skBody(s); if (d.length > MAX) long.push(s.n + '(' + d.length + ')'); }
+  for (const v of Object.values(A.vars)) if (v.d && v.d.length > MAX) long.push(v.n + '(' + v.d.length + ')');
+  if (long.length) console.warn('경고: 사냥꾼 설명 ' + MAX + '자 넘음 — ' + long.join(', ')); else n++; }
+
 // ===== M5-0 보정 5: 고리는 야영지에서 연다 =====
 { const run = newRun('spellblade'); const ro = D.run_('ringOpen'), rc = D.run_('ringCampOpen');
   ok(!ro(run, 2) && !ro(run, 3), '새 판: 2 · 3고리 잠김'); run.ch = 1; ok(rc(run) === 2 && ro(run, 2) && !ro(run, 3) && run.ringNew === 1, '1챕터 야영지: 2고리가 열리고 트리 버튼 강조');

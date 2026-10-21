@@ -250,6 +250,14 @@
    "note": "암살자 터뜨린 중독 크기 기록(판정 칸 아님)"
   },
   {
+   "name": "HN_LINK_GREEDY",
+   "kind": "env",
+   "default": null,
+   "introduced": "M5-4",
+   "expires": "상시",
+   "note": "사냥꾼 테스터: 연계 뒤에도 유산을 아끼지 않는 정책(비교 측정용)"
+  },
+  {
    "name": "MARKS",
    "kind": "env",
    "default": null,

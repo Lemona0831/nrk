@@ -434,47 +434,162 @@ const ATREE_DEF = {
   /* 0.8.0 5단계 사냥꾼 (10월 18일 만든 사람 결정 반영): docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 2-6 · 2-6a · 8절. 스킬 24 + 강화 27 = 51노드.
      시작 스킬은 연계 갈래 태그(lb)를 가진다: 겨눠 쏘기 저격, 물러서며 쏘기 기동(data/skills.js). 연계 할인(cond link)은 갈래마다 1고리 유산 3 스킬 하나에만 */
   hunter: {
-    br: { 저격: 0, 연사: 120, 기동: 240 }, lane: { LL: -36, L: -18, C: 0, R: 18, RR: 36 },
+    /* 0.8.0 M5-4 사냥꾼 재설계 (10월 20일 만든 사람 설계지 2판). 경계 이름 명궁 · 유격 · 잠복(승부수 만궁 · 질풍난사 · 혈향의 덫과 다른 이름). 생성: M5-4 gen.py */
+    br: { 저격: 0, 연사: 120, 기동: 240 }, lane: { LL: -22, L: -12, C: 0, R: 12, RR: 22 },
+    sec: { A: '저격', AB: '명궁', B: '연사', BC: '유격', C: '기동', CA: '잠복' },
+    rad: { 1: 125, 2: 185, 3: 255, 4: 320, 5: 395, 6: 470 }, paths: { 저격: { a: '꿰뚫는 화살', b: '사냥감 지정' }, 연사: { a: '연속 사격', b: '화살 재기' }, 기동: { a: '받아넘기기', b: '다리 쏘기' } },
     skills: [
-      ['h_prey', '저격', 1, 1, 'C', ['S'], 3], ['h_pierce', '저격', 1, 2, 'L', ['h_prey'], 2], ['h_burst', '저격', 1, 2, 'R', ['h_prey'], 3], // 추적 터뜨리기 4 → 3 (결정 4: 1고리 쓰기 칸)
-      ['h_weak', '저격', 2, 3, 'LL', ['h_pierce'], 3], ['h_vital', '저격', 2, 3, 'L', ['h_pierce'], 3], ['h_heavy', '저격', 2, 3, 'C', ['h_pierce'], 3], ['h_chase', '저격', 2, 3, 'RR', ['h_burst'], 3],
-      ['h_doom', '저격', 3, 5, 'C', ['h_burst'], 4],
-      ['h_switch', '연사', 1, 1, 'C', ['S'], 2], ['h_double', '연사', 1, 2, 'L', ['h_switch'], 3], ['h_rain', '연사', 1, 2, 'R', ['h_switch'], 3],
-      ['h_gap', '연사', 2, 3, 'LL', ['h_double'], 3], ['h_triple', '연사', 2, 3, 'L', ['h_double'], 3], ['h_barb', '연사', 2, 3, 'R', ['h_rain'], 3], ['h_tearrain', '연사', 2, 3, 'RR', ['h_rain'], 3],
-      ['h_deluge', '연사', 3, 5, 'C', ['h_rain'], 4],
-      ['h_dodge', '기동', 1, 1, 'C', ['S'], 2], ['h_leg', '기동', 1, 2, 'L', ['h_dodge'], 2], ['h_hobble', '기동', 1, 2, 'R', ['h_dodge'], 3],
-      ['h_stop', '기동', 2, 3, 'LL', ['h_leg'], 3], ['h_shatter', '기동', 2, 3, 'L', ['h_leg'], 3], ['h_counter', '기동', 2, 3, 'R', ['h_dodge'], 3], ['h_side', '기동', 2, 3, 'RR', ['h_dodge'], 3],
-      ['h_icecage', '기동', 3, 5, 'C', ['h_hobble'], 4],
+      ['h5_pierce', '저격', 1, 1, 'LL', ['S'], 2, { excl: 'h5_prey', path: 'a' }],
+      ['h5_prey', '저격', 1, 1, 'RR', ['S'], 2, { excl: 'h5_pierce', path: 'b' }],
+      ['h5_cover', '저격', 1, 2, 'C', ['h5_pierce', 'h5_prey'], 1],
+      ['h5_heavy', '저격', 2, 3, 'L', ['h5_pierce', 'h5_prey'], 2, { path: 'a' }],
+      ['h5_lock', '저격', 2, 3, 'R', ['h5_pierce', 'h5_prey'], 2, { path: 'b' }],
+      ['h5_sky', '저격', 3, 5, 'L', ['h5_heavy', 'h5_lock'], 3, { path: 'a' }],
+      ['h5_endhunt', '저격', 3, 5, 'R', ['h5_heavy', 'h5_lock'], 3, { path: 'b' }],
+      ['h5_volley', '연사', 1, 1, 'LL', ['S'], 2, { excl: 'h5_nock', path: 'a' }],
+      ['h5_nock', '연사', 1, 1, 'RR', ['S'], 2, { excl: 'h5_volley', path: 'b' }],
+      ['h5_harass', '연사', 1, 2, 'C', ['h5_volley', 'h5_nock'], 1],
+      ['h5_rain', '연사', 2, 3, 'L', ['h5_volley', 'h5_nock'], 2, { path: 'a' }],
+      ['h5_barb', '연사', 2, 3, 'R', ['h5_volley', 'h5_nock'], 2, { path: 'b' }],
+      ['h5_bloodrain', '연사', 3, 5, 'L', ['h5_rain', 'h5_barb'], 3, { path: 'a' }],
+      ['h5_endless', '연사', 3, 5, 'R', ['h5_rain', 'h5_barb'], 3, { path: 'b' }],
+      ['h5_counter', '기동', 1, 1, 'LL', ['S'], 2, { excl: 'h5_leg', path: 'a' }],
+      ['h5_leg', '기동', 1, 1, 'RR', ['S'], 2, { excl: 'h5_counter', path: 'b' }],
+      ['h5_dodge', '기동', 1, 2, 'C', ['h5_counter', 'h5_leg'], 1],
+      ['h5_windstep', '기동', 2, 3, 'L', ['h5_counter', 'h5_leg'], 2, { path: 'a' }],
+      ['h5_stop', '기동', 2, 3, 'R', ['h5_counter', 'h5_leg'], 2, { path: 'b' }],
+      ['h5_windveil', '기동', 3, 5, 'L', ['h5_windstep', 'h5_stop'], 3, { path: 'a' }],
+      ['h5_icecage', '기동', 3, 5, 'R', ['h5_windstep', 'h5_stop'], 3, { path: 'b' }],
+      ['h5_aimvol', '명궁', 2, 3, 'C', ['h5_pierce', 'h5_prey', 'h5_volley', 'h5_nock'], 2, { requires: [['h5_pierce', 'h5_prey'], ['h5_volley', 'h5_nock']] }],
+      ['h5_steady', '명궁', 2, 4, 'C', ['h5_aimvol'], 2],
+      ['h5_pinpoint', '명궁', 3, 5, 'L', ['h5_steady'], 3],
+      ['h5_hawkeye', '명궁', 3, 5, 'R', ['h5_steady'], 3],
+      ['h5_mangung', '명궁', 3, 6, 'C', ['h5_pinpoint', 'h5_hawkeye'], 4],
+      ['h5_runshot', '유격', 2, 3, 'C', ['h5_volley', 'h5_nock', 'h5_counter', 'h5_leg'], 2, { requires: [['h5_volley', 'h5_nock'], ['h5_counter', 'h5_leg']] }],
+      ['h5_dust', '유격', 2, 4, 'C', ['h5_runshot'], 2],
+      ['h5_storm', '유격', 3, 5, 'L', ['h5_dust'], 3],
+      ['h5_tailwind', '유격', 3, 5, 'R', ['h5_dust'], 3],
+      ['h5_gale', '유격', 3, 6, 'C', ['h5_storm', 'h5_tailwind'], 4],
+      ['h5_snare', '잠복', 2, 3, 'C', ['h5_counter', 'h5_leg', 'h5_pierce', 'h5_prey'], 2, { requires: [['h5_counter', 'h5_leg'], ['h5_pierce', 'h5_prey']] }],
+      ['h5_hide', '잠복', 2, 4, 'C', ['h5_snare'], 2],
+      ['h5_ambush', '잠복', 3, 5, 'L', ['h5_hide'], 3],
+      ['h5_camo', '잠복', 3, 5, 'R', ['h5_hide'], 3],
+      ['h5_trap', '잠복', 3, 6, 'C', ['h5_ambush', 'h5_camo'], 4],
+      ['h5_chase', '결합', 2, 4, 'C', [], 2, { reqTags: { 추적: 1, '몸 빼기': 1 }, ang: 30 }],
+      ['h5_scent', '결합', 2, 4, 'C', [], 2, { reqTags: { 출혈: 1, 추적: 1 }, ang: 150 }],
+      ['h5_frozen', '결합', 2, 4, 'C', [], 2, { reqTags: { 둔화: 2, 기본공격연동: 1 }, ang: 270 }],
     ],
-    ups: [
-      ['hu_lock', '저격', 1, 1, 'LL', 'h_prey', '표적 고정', '취약 1 → 2.', { fxSet: [{ k: 'st', s: 'vuln', n: 2 }] }, ['h_lock']],
-      ['hu_through', '저격', 1, 2, 'LL', 'h_pierce', '관통 사격', '붕괴 18 → 25.', { fxSet: [{ k: 'brk', n: 25 }] }, ['h_through']],
-      ['hu_link1', '저격', 1, 2, 'RR', 'h_burst', '이어 쏘는 화살', '연계로 쓰면(직전 갈래가 다르면) 비용 −1(바닥 1, 라운드에 한 번). 외길 사냥꾼이면 같은 갈래 스킬을 바로 이어 쓸 때 −1.', { cond: { off: 1, when: 'link' } }, []],
-      ['hu_throat', '저격', 2, 4, 'R', 'h_burst', '숨통 겨누기', '가속이 있으면 1을 써서 피해 ×1.5. 그 대신 다음 라운드에 연속 행동을 하지 못합니다.', { fxAdd: [{ k: 'hasteSpend', mul: 1.5 }] }, ['h_throat', 'h_endhunt']],
-      ['hu_widen', '저격', 2, 4, 'LL', 'h_weak', '약점 벌리기', '건 뒤 대상의 취약을 2배로(상한 5).', { fxAdd: [{ k: 'vulnGrow', mul: 2 }] }, ['h_widen', 'h_delve', 'h_nail']],
-      ['hu_heart', '저격', 2, 4, 'L', 'h_vital', '심장 꿰뚫기', '취약 1마다 피해 +4 → +5.', { fxSet: [{ k: 'vulnPer', per: 5 }] }, ['h_heart']],
-      ['hu_giant', '저격', 3, 5, 'L', 'h_heavy', '거인 사냥', '큰 적(정예 · 강적 · 보스)에게 ×1.5 → ×1.8.', { fxSet: [{ k: 'bigx', mul: 1.8 }] }, ['h_giant', 'h_killshot', 'h_oneshot']],
-      ['hu_zeal', '저격', 2, 4, 'RR', 'h_chase', '집념의 화살', '큰 적(정예 · 강적 · 보스)에게 ×1.3.', { fxAdd: [{ k: 'bigx', mul: 1.3 }] }, ['h_zeal', 'h_hound', 'h_mark']],
-      ['hu_unend', '저격', 3, 6, 'C', 'h_doom', '끝없는 사냥', '대상의 추적이 3겹 이상이면 비용 −1(바닥 1, 라운드에 한 번).', { cond: { off: 1, when: 'focus>=3' } }, ['h_unend']],
-      ['hu_hound', '연사', 1, 1, 'LL', 'h_switch', '물어뜯는 화살', '바꿔 쏘기(기본 공격 버프)가 다음 라운드가 끝날 때까지 갑니다.', { fxSet: [{ k: 'bbuf', s: 'swap', r: 1 }] }, ['h_houndshot', 'h_cross']],
-      ['hu_link2', '연사', 1, 2, 'LL', 'h_double', '이어 쏘는 활', '연계로 쓰면(직전 갈래가 다르면) 비용 −1(바닥 1, 라운드에 한 번). 외길 사냥꾼이면 같은 갈래 스킬을 바로 이어 쓸 때 −1.', { cond: { off: 1, when: 'link' } }, []],
-      ['hu_turn', '연사', 2, 4, 'LL', 'h_double', '선회 사격', '덧화살이 켜진 동안 기본 공격이 직전에 친 적과 다른 적을 치면 ×1.3(덧화살 포함, 바꿔 쏘기와 곱함).', { fxSet: [{ k: 'bbuf', s: 'extra', turn: 1.3 }] }, ['h_turn', 'h_endless']],
-      ['hu_spray', '연사', 2, 4, 'L', 'h_triple', '난사', '느림이 됩니다. 3타 → 4타.', { set: { time: 'slow', hits: 4 } }, ['h_spray', 'h_rapid', 'h_thousand', 'h_shade', 'h_storm']],
-      ['hu_scatter', '연사', 2, 4, 'R', 'h_rain', '흩뿌리는 화살', '전열 모두를 칩니다(후열에 닿지 않음). 피해 8 → 11.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 11 }] }, ['h_scatter']],
-      ['hu_dull', '연사', 2, 3, 'C', 'h_rain', '쇠약의 비', '약화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'weak', n: 1 }] }, ['h_dull', 'h_bloodrain']],
-      ['hu_rend', '연사', 2, 4, 'RR', 'h_barb', '찢는 화살', '가시(기본 공격 버프)의 출혈 +2 → +3, 기간 2 → 3라운드.', { fxSet: [{ k: 'bbuf', s: 'barb', bleed: 3, r: 2 }] }, ['h_rend', 'h_thornrain']],
-      ['hu_crimson', '연사', 3, 5, 'RR', 'h_tearrain', '붉은 폭우', '전열 모두를 칩니다(후열에 닿지 않음). 출혈 3 → 5.', { set: { tgt: 'front' }, fxSet: [{ k: 'st', s: 'bleed', n: 5 }] }, ['h_crimson', 'h_bloodstorm']],
-      ['hu_sky', '연사', 3, 6, 'C', 'h_deluge', '하늘 가르기', '가속으로 두 번 움직이는 라운드면 피해 ×1.6. 쓴 뒤 이번 라운드 기본 공격 ×1.3.', { fxAdd: [{ k: 'hastex', mul: 1.6 }, { k: 'bbuf', s: 'sky', mul: 1.3, r: 0 }] }, ['h_skysplit', 'h_slaughter']],
-      ['hu_dash', '기동', 2, 3, 'C', 'h_dodge', '질주', '회피 1 대신 나에게 가속 1(다음 라운드 연속 행동, 두 번째 차례는 유산이 차지 않음). 스태미나 38 → 20.', { fxDel: [{ k: 'evade' }], fxSet: [{ k: 'stam', n: 20 }], fxAdd: [{ k: 'meSt', s: 'haste', n: 1 }] }, ['h_dash', 'h_windarrow', 'h_mirage', 'h_shadowrun']],
-      ['hu_ankle', '기동', 1, 2, 'LL', 'h_leg', '발목 끊기', '모으던 적을 이 스킬로 무너뜨리면 나에게 가속 1(유산 환급 없음).', { fxAdd: [{ k: 'onCutBreak', haste: 1 }] }, ['h_ankle', 'h_winterchain']],
-      ['hu_link3', '기동', 1, 2, 'RR', 'h_hobble', '이어 묶는 화살', '연계로 쓰면(직전 갈래가 다르면) 비용 −1(바닥 1, 라운드에 한 번). 외길 사냥꾼이면 같은 갈래 스킬을 바로 이어 쓸 때 −1.', { cond: { off: 1, when: 'link' } }, []], // 8절 보완 2: 측정 스위치 HUNT_BRIDGE=1(tools/dgqa.js)이 when을 linkFast(연계이거나 이번 차례에 빠른 기동 스킬을 먼저 씀)로 바꾼다
-      ['hu_frost', '기동', 2, 4, 'R', 'h_hobble', '얼어붙는 화살', '둔화된 적에게 ×1.5.', { fxAdd: [{ k: 'chillx', mul: 1.5 }] }, ['h_frost']],
-      ['hu_dance', '기동', 2, 4, 'RR', 'h_counter', '반격의 춤', '반격 22 → 28.', { fxSet: [{ k: 'evadeCtr', dmg: 28 }] }, ['h_dance', 'h_after', 'h_wind']],
-      ['hu_void', '기동', 3, 5, 'RR', 'h_side', '허공 사격', '공격을 피할 때마다 그 적에게 반격 사격(피해 7).', { fxAdd: [{ k: 'evadeCtr', dmg: 7 }] }, ['h_void']],
-      ['hu_snare', '기동', 2, 4, 'LL', 'h_stop', '붙잡는 화살', '대상이 강타나 영창을 모으는 중이면 붕괴 +60.', { fxAdd: [{ k: 'cutx', brk: 60 }] }, ['h_snare']],
-      ['hu_wedge', '기동', 3, 5, 'L', 'h_shatter', '얼음 쐐기', '빠른 칸이 됩니다. 피해 8 → 5, 둔화 2를 겁니다.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 5 }], fxAdd: [{ k: 'st', s: 'chill', n: 2 }] }, ['h_wedge', 'h_spread']],
-      ['hu_slow', '기동', 3, 6, 'C', 'h_icecage', '시간 늦추기', '쓴 뒤 나에게 가속 1.', { fxAdd: [{ k: 'meSt', s: 'haste', n: 1 }] }, ['h_timeslow']],
-    ],
+    vars: {
+      /* 스킬마다 변형 둘(둘 다 제시): v 'deep' 깊게 = 같은 길을 세게, v 'link' 잇기 = 그 스킬에 없던 다른 빌드의 꼬리표를 더해 경계 · 결합 칸으로. [Claude 초안] */
+      h5_pierce: [
+        ['hv_pc_deep', '깊이 꿰뚫기', '느린 행동이 됩니다. 피해 21 → 28.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 28 }] }, [], { v: 'deep' }],
+        ['hv_pc_bleed', '찢는 화살촉', '출혈 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'bleed', n: 1 }] }, ['출혈'], { v: 'link' }]],
+      h5_prey: [
+        ['hv_py_more', '깊은 지정', '추적 2 → 3겹을 겁니다.', { fxSet: [{ k: 'focusAdd', n: 3 }] }, [], { v: 'deep' }],
+        ['hv_py_slow', '묶어 둔 사냥감', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
+      h5_cover: [
+        ['hv_cv_more', '두꺼운 엄폐', '보호 7 → 8.', { fxSet: [{ k: 'st', s: 'protect', n: 8 }] }, [], { v: 'deep' }],
+        ['hv_cv_dodge', '엄폐 뒤 빠지기', '몸 빼기 1.', { fxAdd: [{ k: 'evade', n: 1 }] }, ['몸 빼기'], { v: 'link' }]],
+      h5_heavy: [
+        ['hv_hv_deep', '가벼운 무게', '보통 행동이 됩니다(연계면 빠른 행동). 피해 20 → 16.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 16 }] }, [], { v: 'deep' }],
+        ['hv_hv_focus', '겨눈 무게', '추적 1겹을 겁니다.', { fxAdd: [{ k: 'focusAdd', n: 1 }] }, ['추적'], { v: 'link' }]],
+      h5_lock: [
+        ['hv_lk_long', '긴 고정', '7라운드 → 8라운드.', { fxSet: [{ k: 'hnLock', r: 7, txt: '8라운드 기본 공격이 대상 추적 겹마다 +20%' }] }, [], { v: 'deep' }],
+        ['hv_lk_bleed', '피 묻은 고정', '켤 때 다음 기본 공격 2번에 출혈 1.', { fxAdd: [{ k: 'bbuf', s: 'barb', bleed: 1, r: 0 }] }, ['출혈'], { v: 'link' }]],
+      h5_sky: [
+        ['hv_sk_deep', '갈라진 하늘', '무기 피해의 3배 → 3.5배.', { fxSet: [{ k: 'hnSky', mul: 3.5, txt: '추적 3겹이면 무기 피해의 3.5배' }] }, [], { v: 'deep' }],
+        ['hv_sk_brk', '하늘 무너뜨리기', '붕괴 +20.', { fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
+      h5_endhunt: [
+        ['hv_eh_deep', '깊은 사냥', '피해 23 → 30.', { fxSet: [{ k: 'dmg', n: 30 }] }, [], { v: 'deep' }],
+        ['hv_eh_bleed', '피 흘리는 사냥', '출혈 2를 겁니다.', { fxAdd: [{ k: 'st', s: 'bleed', n: 2 }] }, ['출혈'], { v: 'link' }]],
+      h5_volley: [
+        ['hv_vl_deep', '빠른 연속', '한 발 피해 7 → 9.', { fxSet: [{ k: 'dmg', n: 9 }] }, [], { v: 'deep' }],
+        ['hv_vl_bleed', '찢는 연속', '맞힌 적마다 출혈 1.', { fxAdd: [{ k: 'st', s: 'bleed', n: 1 }] }, ['출혈'], { v: 'link' }]],
+      h5_nock: [
+        ['hv_nk_three', '세 번 재기', '기본 공격 2번 → 3번.', { fxSet: [{ k: 'hnNock', n: 3, txt: '다음 기본 공격 3번이 두 발' }] }, [], { v: 'deep' }],
+        ['hv_nk_slow', '얼린 화살촉', '다음 기본 공격 2번에 둔화 1.', { fxAdd: [{ k: 'hnNockChill', n: 1, txt: '다음 기본 공격 2번에 둔화 1' }] }, ['둔화'], { v: 'link' }]],
+      h5_harass: [
+        ['hv_hr_two', '두 발 견제', '두 발을 쏩니다.', { set: { hits: 2 } }, [], { v: 'deep' }],
+        ['hv_hr_focus', '견제 표식', '추적 1겹을 겁니다.', { fxAdd: [{ k: 'focusAdd', n: 1 }] }, ['추적'], { v: 'link' }]],
+      h5_rain: [
+        ['hv_rn_more', '짙은 화살비', '출혈 1 → 2.', { fxSet: [{ k: 'st', s: 'bleed', n: 2 }] }, [], { v: 'deep' }],
+        ['hv_rn_slow', '얼음비', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
+      h5_barb: [
+        ['hv_bb_more', '깊은 덧화살', '출혈 1 → 2.', { fxSet: [{ k: 'bbuf', s: 'barb', bleed: 2 }] }, [], { v: 'deep' }],
+        ['hv_bb_focus', '표식 덧화살', '켤 때 대상 추적 1겹.', { fxAdd: [{ k: 'hnFocusSelf', n: 1, txt: '추적한 적 추적 +1겹' }] }, ['추적'], { v: 'link' }]],
+      h5_bloodrain: [
+        ['hv_br_deep', '짙은 피의 비', '무기 피해의 3.4배 → 3.9배.', { fxSet: [{ k: 'hnBloodRain', mul: 3.9, txt: '출혈 걸린 적 모두에게 무기 피해의 3.9배' }] }, [], { v: 'deep' }],
+        ['hv_br_brk', '피의 무게', '붕괴 +15.', { fxAdd: [{ k: 'brk', n: 15 }] }, ['붕괴'], { v: 'link' }]],
+      h5_endless: [
+        ['hv_el_four', '네 번 쏘기', '기본 공격 3번 → 4번.', { fxSet: [{ k: 'hnNock', n: 4, txt: '다음 기본 공격 4번이 세 발' }] }, [], { v: 'deep' }],
+        ['hv_el_bleed', '피 젖은 화살', '켤 때 다음 기본 공격 2번에 출혈 1.', { fxAdd: [{ k: 'bbuf', s: 'barb', bleed: 1, r: 0 }] }, ['출혈'], { v: 'link' }]],
+      h5_counter: [
+        ['hv_ct_deep', '날카로운 반격', '반격 15 → 21.', { fxSet: [{ k: 'evadeCtr', dmg: 21 }] }, [], { v: 'deep' }],
+        ['hv_ct_focus', '되쏘는 표식', '반격에 추적 1겹.', { fxSet: [{ k: 'evadeCtr', focus: 1 }] }, ['추적'], { v: 'link' }]],
+      h5_leg: [
+        ['hv_lg_more', '깊은 다리 쏘기', '둔화 2 → 3.', { fxSet: [{ k: 'st', s: 'chill', n: 3 }] }, [], { v: 'deep' }],
+        ['hv_lg_bleed', '찢는 다리 쏘기', '출혈 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'bleed', n: 1 }] }, ['출혈'], { v: 'link' }]],
+      h5_dodge: [
+        ['hv_dg_two', '두 번 빼기', '몸 빼기 1 → 2.', { fxSet: [{ k: 'evade', n: 2 }] }, [], { v: 'deep' }],
+        ['hv_dg_focus', '빠지며 겨누기', '추적한 적 추적 +1겹.', { fxAdd: [{ k: 'hnFocusSelf', n: 1, txt: '추적한 적 추적 +1겹' }] }, ['추적'], { v: 'link' }]],
+      h5_windstep: [
+        ['hv_ws_dodge', '바람 타기', '쓸 때 몸 빼기 1.', { fxAdd: [{ k: 'evade', n: 1 }] }, [], { v: 'deep' }],
+        ['hv_ws_chill', '찬바람 걸음', '쓸 때 모든 적 둔화 1.', { fxAdd: [{ k: 'hnChillAll', n: 1, txt: '모든 적 둔화 1' }] }, ['둔화'], { v: 'link' }]],
+      h5_stop: [
+        ['hv_sp_deep', '단단한 멈춤', '모으는 둔화된 적 붕괴 40 → 60.', { fxSet: [{ k: 'chillCut', brk: 60 }] }, [], { v: 'deep' }],
+        ['hv_sp_focus', '멈춘 표적', '추적 1겹을 겁니다.', { fxAdd: [{ k: 'focusAdd', n: 1 }] }, ['추적'], { v: 'link' }]],
+      h5_windveil: [
+        ['hv_wv_long', '긴 장막', '5라운드 → 6라운드.', { fxSet: [{ k: 'hnWindVeil', r: 6, txt: '6라운드 공격을 받을 때마다 몸 빼기 1(라운드에 한 번)' }] }, [], { v: 'deep' }],
+        ['hv_wv_prot', '바람 갑옷', '보호 2.', { fxAdd: [{ k: 'st', s: 'protect', n: 2 }] }, ['보호'], { v: 'link' }]],
+      h5_icecage: [
+        ['hv_ic_deep', '깊은 감옥', '피해 35 → 46.', { fxSet: [{ k: 'dmg', n: 46 }] }, [], { v: 'deep' }],
+        ['hv_ic_focus', '갇힌 사냥감', '추적 2겹을 겁니다.', { fxAdd: [{ k: 'focusAdd', n: 2 }] }, ['추적'], { v: 'link' }]],
+      h5_aimvol: [
+        ['hv_av_deep', '깊은 겨눔', '한 발 피해 10 → 13.', { fxSet: [{ k: 'dmg', n: 13 }] }, [], { v: 'deep' }],
+        ['hv_av_bleed', '찢는 겨눔', '출혈 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'bleed', n: 1 }] }, ['출혈'], { v: 'link' }]],
+      h5_steady: [
+        ['hv_st_two', '깊은 숨', '강화 1 → 2.', { fxSet: [{ k: 'st', s: 'empower', n: 2 }] }, [], { v: 'deep' }],
+        ['hv_st_dodge', '숨 돌린 발', '몸 빼기 1.', { fxAdd: [{ k: 'evade', n: 1 }] }, ['몸 빼기'], { v: 'link' }]],
+      h5_pinpoint: [
+        ['hv_pp_deep', '숨 멈춘 한 발', '느린 행동이 됩니다. 피해 33 → 43.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 43 }] }, [], { v: 'deep' }],
+        ['hv_pp_brk', '급소 부수기', '붕괴 +25.', { fxAdd: [{ k: 'brk', n: 25 }] }, ['붕괴'], { v: 'link' }]],
+      h5_hawkeye: [
+        ['hv_he_long', '긴 눈', '3라운드 → 4라운드.', { fxSet: [{ k: 'foresee', rounds: 4 }] }, [], { v: 'deep' }],
+        ['hv_he_focus', '노려보는 눈', '추적한 적 추적 +1겹.', { fxAdd: [{ k: 'hnFocusSelf', n: 1, txt: '추적한 적 추적 +1겹' }] }, ['추적'], { v: 'link' }]],
+      h5_mangung: [
+        ['hv_mg_deep', '더 당긴 시위', '무기 피해의 6.5배 → 7배.', { fxSet: [{ k: 'hnDraw', mul: 7, txt: '한 차례 시위를 당겼다가, 다음 차례 추적한 적에게 무기 피해의 7배(추적 겹마다 +1배).' }] }, [], { v: 'deep' }],
+        ['hv_mg_brk', '무너뜨리는 한 발', '쏠 때 붕괴 +40.', { fxSet: [{ k: 'hnDraw', brk: 40 }] }, ['붕괴'], { v: 'link' }]],
+      h5_runshot: [
+        ['hv_rs_deep', '깊은 달음', '피해 12 → 16.', { fxSet: [{ k: 'dmg', n: 16 }] }, [], { v: 'deep' }],
+        ['hv_rs_bleed', '찢으며 달리기', '출혈 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'bleed', n: 1 }] }, ['출혈'], { v: 'link' }]],
+      h5_dust: [
+        ['hv_ds_more', '짙은 흙먼지', '보호 11 → 13.', { fxSet: [{ k: 'st', s: 'protect', n: 13 }] }, [], { v: 'deep' }],
+        ['hv_ds_chill', '눈보라 흙먼지', '모든 적 둔화 1.', { fxAdd: [{ k: 'hnChillAll', n: 1, txt: '모든 적 둔화 1' }] }, ['둔화'], { v: 'link' }]],
+      h5_storm: [
+        ['hv_sm_deep', '거센 폭풍', '느린 행동이 됩니다. 피해 17 → 22.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 22 }] }, [], { v: 'deep' }],
+        ['hv_sm_chill', '얼음 폭풍', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
+      h5_tailwind: [
+        ['hv_tw_three', '센 순풍', '두 발 → 세 발.', { fxSet: [{ k: 'hnNock', shots: 3, txt: '다음 기본 공격 5번이 세 발' }] }, [], { v: 'deep' }],
+        ['hv_tw_focus', '겨눈 순풍', '켤 때 추적한 적 추적 +1겹.', { fxAdd: [{ k: 'hnFocusSelf', n: 1, txt: '추적한 적 추적 +1겹' }] }, ['추적'], { v: 'link' }]],
+      h5_gale: [
+        ['hv_gl_long', '긴 질풍', '3라운드 → 4라운드.', { fxSet: [{ k: 'hnGale', r: 4, txt: '4라운드 동안 매 라운드 두 번 움직이고(가속), 기본 공격이 두 발.' }] }, [], { v: 'deep' }],
+        ['hv_gl_bleed', '피바람 난사', '그동안 기본 공격에 출혈 1.', { fxSet: [{ k: 'hnGale', bleed: 1 }] }, ['출혈'], { v: 'link' }]],
+      h5_snare: [
+        ['hv_sn_deep', '깊은 덫 화살', '피해 20 → 26.', { fxSet: [{ k: 'dmg', n: 26 }] }, [], { v: 'deep' }],
+        ['hv_sn_focus', '표식 덫', '추적 1겹을 겁니다.', { fxAdd: [{ k: 'focusAdd', n: 1 }] }, ['추적'], { v: 'link' }]],
+      h5_hide: [
+        ['hv_hd_three', '깊이 숨기', '몸 빼기 2 → 3.', { fxSet: [{ k: 'evade', n: 3 }] }, [], { v: 'deep' }],
+        ['hv_hd_prot', '숨은 갑옷', '보호 2.', { fxAdd: [{ k: 'st', s: 'protect', n: 2 }] }, ['보호'], { v: 'link' }]],
+      h5_ambush: [
+        ['hv_ab_deep', '긴 매복', '느린 행동이 됩니다. 피해 33 → 43.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 43 }] }, [], { v: 'deep' }],
+        ['hv_ab_focus', '노린 매복', '추적 1겹을 겁니다.', { fxAdd: [{ k: 'focusAdd', n: 1 }] }, ['추적'], { v: 'link' }]],
+      h5_camo: [
+        ['hv_cm_more', '두꺼운 위장', '보호 19 → 21.', { fxSet: [{ k: 'st', s: 'protect', n: 21 }] }, [], { v: 'deep' }],
+        ['hv_cm_dodge', '위장 뒤 빠지기', '몸 빼기 1.', { fxAdd: [{ k: 'evade', n: 1 }] }, ['몸 빼기'], { v: 'link' }]],
+      h5_trap: [
+        ['hv_tp_brk', '깊은 덫', '걸린 적 붕괴 +30.', { fxSet: [{ k: 'hnTrap', brk: 30 }] }, [], { v: 'deep' }],
+        ['hv_tp_bleed', '피 묻은 덫', '걸린 적 출혈 2.', { fxSet: [{ k: 'hnTrap', bleed: 2 }] }, ['출혈'], { v: 'link' }]],
+    },
   },
   /* 10월 18일 0.8.0 5단계 원소술사 (만든 사람 결정 9–12 반영): docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 3-6 · 8절. 스킬 24 + 강화 27 = 51노드.
      비용은 모두 쿨타임 변환값 그대로. 🔄는 공명 하나만 처치 환급(행동 끝 열충격 포함, data/skills.js krShock). 결정타: 태양 낙하 · 얼음 관 · 과부하(임계는 연쇄 충격의 출처로만) */
@@ -664,6 +779,6 @@ const ATREE_DEF = {
 const AT_GONE = { spellblade: ['sb_sweepcut', 'sb_pour', 'sb_redrain', 'sb_draw', 'sb_feast', 'sb_sparkcut', 'sb_ring', 'sb_flamedown', 'sb_sear', 'sb_flamedance', 'sb_lance', 'sb_chainfire', 'sb_blaze', 'sb_armor', 'sb_bulwark', /* M5-0c 재설계에서 빠진 칸 */ 'sb_redwind', 'sb_deluge', 'sb_kindle', 'sb_tome', 'sb_unravel', 'sb_turn', 'sb_searspread', 'sb_searburst', 'sb_atone', 'sb_ashstorm'],
   warden: ['w_raise', 'w_kindle', 'w_blaze', 'w_press', 'w_coat', 'w_burst', 'w_crush', 'w_molten', 'w_last', 'w_bulwarkhit', 'w_forge', 'w_unyield', 'w_scald', 'w_eternal', 'w_cinder', 's_gap', 's_knock', 's_mark', 's_smash', 's_knee', 's_dig', 's_hammer', 's_wedge', 's_crack', 's_throw', 's_pillar', 's_maul', 's_open', 's_rift', 's_judge', 's_wedgebite', 's_unravel', 's_stagger', 's_lever', 's_landslide', 's_lastblow', 'f_break', 'f_snare', 'f_cleave', 'f_chain', 'f_wall', 'f_spin', 'f_trample', 'f_drive', 'f_push', 'f_scatter', 'f_split', 'f_net', 'f_sweepline', 'f_onrush', 'f_noose', 'f_rout', 'f_siege'], /* M5-1 재설계: 트리에 없는 파수꾼 칸(스킬 데이터는 남음) */ monk: ['m_endless', 'm_knee', 'm_calm'],
   monk: ['m_answer', 'm_barrage', 'm_breaker', 'm_breath', 'm_cut', 'm_drain', 'm_far', 'm_finger', 'm_flick', 'm_flow', 'm_hundred', 'm_iron', 'm_karma', 'm_kifist', 'm_point', 'm_release', 'm_retort', 'm_root', 'm_rush', 'm_shove', 'm_sinew', 'm_siphon', 'm_stillpt', 'm_wave'], /* M5-2 재설계에서 빠진 옛 수도승 칸 */
-  hunter: ['h_steady', 'h_finish', 'h_stance', 'h_slowrain', 'h_veil', 'h_foresee'],
+  hunter: ['h_steady', 'h_finish', 'h_stance', 'h_slowrain', 'h_veil', 'h_foresee', 'h_ankle', 'h_barb', 'h_burst', 'h_chase', 'h_counter', 'h_crimson', 'h_dance', 'h_dash', 'h_deluge', 'h_dodge', 'h_doom', 'h_double', 'h_dull', 'h_frost', 'h_gap', 'h_giant', 'h_heart', 'h_heavy', 'h_hobble', 'h_houndshot', 'h_icecage', 'h_leg', 'h_lock', 'h_pierce', 'h_prey', 'h_rain', 'h_rend', 'h_scatter', 'h_shatter', 'h_side', 'h_skysplit', 'h_snare', 'h_spray', 'h_stop', 'h_switch', 'h_tearrain', 'h_throat', 'h_through', 'h_timeslow', 'h_triple', 'h_turn', 'h_unend', 'h_vital', 'h_void', 'h_weak', 'h_wedge', 'h_widen', 'h_zeal', 'hu_ankle', 'hu_crimson', 'hu_dance', 'hu_dash', 'hu_dull', 'hu_frost', 'hu_giant', 'hu_heart', 'hu_hound', 'hu_link1', 'hu_link2', 'hu_link3', 'hu_lock', 'hu_rend', 'hu_scatter', 'hu_sky', 'hu_slow', 'hu_snare', 'hu_spray', 'hu_throat', 'hu_through', 'hu_turn', 'hu_unend', 'hu_void', 'hu_wedge', 'hu_widen', 'hu_zeal'],
   elementalist: ['e_spread', 'e_stoke', 'e_catch', 'e_cloak', 'e_hoar', 'e_shell', 'e_hoarbloom', 'e_numb', 'e_frostwave'],
   assassin: ['a_after', 'a_aim', 'a_ambush', 'a_brkneedle', 'a_burst', 'a_burststab', 'a_cataclysm', 'a_chain', 'a_check', 'a_crumble', 'a_dart', 'a_deepplant', 'a_deflect', 'a_double', 'a_essence', 'a_expose', 'a_fang', 'a_gap', 'a_hack', 'a_mark', 'a_mist', 'a_plant', 'a_pouch', 'a_rend', 'a_rot', 'a_rotbreath', 'a_rush', 'a_seep', 'a_shade', 'a_shadow', 'a_siphon', 'a_strangle', 'a_umbra', 'a_wedge'] }; // 0.8.0 5단계 2-6 · 3-6 "뺌", 사냥꾼은 원거리 초안 2-6 "뺌", 원소술사는 원거리 초안 3-6 "뺌"(10월 18일), 암살자는 원거리 초안 4-7 "뺌"(10월 18일 0.8.0 5단계, 그림자 범용 넷은 결정 15)

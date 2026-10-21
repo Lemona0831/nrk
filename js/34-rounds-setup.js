@@ -12,7 +12,8 @@ function roundOrder(b, consume, slowMe) {
   const ents = [{ id: 'p', g: grp(p, true), sp: pSpeed(b), i: -1 }].concat(al.map((e, i) => ({ id: e.id, g: grp(e, false), sp: eSpeed(b, e), i })));
   ents.sort((a, c) => a.g - c.g || c.sp - a.sp || a.i - c.i);
   const out = ents.slice(); for (const x of ents) if (x.id !== 'p' && x.sp >= RND_TWICE) out.push(Object.assign({}, x, { twice: 1 })); // 두 번 움직이는 적
-  if (p.s.haste && p.build === 'hunter') { const i = out.findIndex(x => x.id === 'p'); out.splice(i + 1, 0, Object.assign({}, out[i], { extra: 1 })); if (consume) b.pDouble = b.round || 0; } /* 10월 18일 0.8.0 5단계(원거리 초안 10절 결정 1): startRound가 b.round를 먼저 올린 뒤 부르므로 지금 라운드가 두 번 움직이는 라운드다. 전에는 + 1이라 hastex(가속 라운드면 ×) · 연속 행동 표시가 그다음 라운드에 붙었다 */ // 가속 (10월 5일 만든 사람 결정): 사냥꾼 전용, 라운드 맨 앞에서 두 번 연달아 움직인다(한 라운드에 한 번). 두 번째 차례는 쿨타임이 줄지 않는다
+  const gale = p.build === 'hunter' && p.hnSt && p.hnSt.gale > 0; /* M5-4 질풍난사: 남은 라운드마다 두 번(가속) */
+  if ((p.s.haste || gale) && p.build === 'hunter') { const i = out.findIndex(x => x.id === 'p'); out.splice(i + 1, 0, Object.assign({}, out[i], { extra: 1 })); if (consume) { b.pDouble = b.round || 0; if (gale && !p.s.haste) p.hnSt.gale--; } } /* 10월 18일 0.8.0 5단계(원거리 초안 10절 결정 1): startRound가 b.round를 먼저 올린 뒤 부르므로 지금 라운드가 두 번 움직이는 라운드다. 전에는 + 1이라 hastex(가속 라운드면 ×) · 연속 행동 표시가 그다음 라운드에 붙었다 */ // 가속 (10월 5일 만든 사람 결정): 사냥꾼 전용, 라운드 맨 앞에서 두 번 연달아 움직인다(한 라운드에 한 번). 두 번째 차례는 쿨타임이 줄지 않는다
   if (consume) {
     for (const x of ents) { const u = x.id === 'p' ? p : b.en.find(e => e.id === x.id); if (!u) continue;
       if (x.g === 0 && u.s.haste) kwDec(u, 'haste'); if (x.g === 2 && u.s.chill) { if (x.id !== 'p' && p.build === 'elementalist') u.chillR = b.round; if (x.id !== 'p') u.slowR = b.round; kwDec(u, 'chill'); } /* 원소술사 서리 무게: 둔화로 맨 뒤에 선 라운드는 둔화가 0이 되어도 무뎌진다 */ if (x.id !== 'p') u.quick = 0; }
