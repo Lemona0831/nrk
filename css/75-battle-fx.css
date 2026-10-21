@@ -166,3 +166,7 @@ html.rm .fstat.st-fire{animation:none;box-shadow:0 0 10px rgba(240,172,72,.5)}
 .stt.st-yeok{color:#f0903c}.stt.st-cheon{color:#e6c060}.stt.st-noki{color:#dfe6ee}.stt.st-mkbuf{color:var(--gold,#c9a24b)}
 .fstat.st-yeok{border-color:#f0903c;box-shadow:0 0 0 2px rgba(240,144,60,.4),0 0 14px rgba(240,144,60,.3)}
 .fstat.st-cheon{border-color:#e6c060;box-shadow:0 0 0 1px rgba(230,192,96,.5),0 0 14px rgba(230,192,96,.25)}
+
+/* M5-6: 대사 · 이름 어두운 테두리 그림자(효과 위에서도 읽히게) */
+.cutin .cu-q{text-shadow:0 0 16px var(--glow),0 0 2px rgba(0,0,0,.95),0 2px 3px rgba(0,0,0,.9)}
+.cutin .cu-skill{text-shadow:0 1px 2px rgba(0,0,0,.9)}

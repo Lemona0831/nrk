@@ -1,4 +1,5 @@
 # 0.8.0 M5-0a: 승부수 컷인 · 카드 동작 · 상태 표시 · 설명란을 브라우저에서 확인한다(마검사 승부수 셋).
+# 0.8.0 M5-6: 승부수 18(직업 여섯 × 셋)마다 따로 지은 컷인 — ⑨ 아래 SK18 묶음. CUT18_ONLY=1이면 그 묶음만 본다
 # 실행: python tools/cutin-browser.py [사이트 폴더=.] [캡처 폴더]
 # 판정: ① 세 승부수가 전투마다 첫 사용에 컷인(종류별 문법 클래스)과 전투 기록 대사 한 줄, 두 번째 사용은 컷인 없음
 #       ② 컷인 중에도 행동 단추가 눌림(덮개 pointer-events:none · aria-hidden) ③ 카드 상태 표시(겁화 3 → 2, 불의 몸 3 → 2, 죄인의 벽)
@@ -19,6 +20,15 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
 server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(Quiet,directory=str(site)))
 threading.Thread(target=server.serve_forever,daemon=True).start()
 base=f'http://127.0.0.1:{server.server_port}/'
+# M5-6: (id, 직업, 이름, 게임 원본 그림 cut 또는 None)
+SK18=[('sb_kalpa','spellblade','겁화',None),('sb_sinwall','spellblade','죄인의 벽',None),('sb_firebody','spellblade','불의 몸','arcane'),
+ ('w_siege','warden','파성추',None),('s_quake','warden','대지 분쇄',None),('w_valor','warden','용맹한 방벽','guard'),
+ ('m_yeokcheon','monk','역천권',None),('m_cheonmang','monk','천망',None),('m_ilji','monk','일지멸맥',None),
+ ('a_mandok','assassin','만독개화',None),('a_muyeong','assassin','무영살',None),('a_janyeong','assassin','잔영난무',None),
+ ('h5_mangung','hunter','만궁',None),('h5_gale','hunter','질풍난사',None),('h5_trap','hunter','혈향의 덫',None),
+ ('e5_avatar','elementalist','빙염의 화신',None),('e5_stasis','elementalist','영겁의 정적',None),('e5_meteor','elementalist','천화',None)]
+import os
+ONLY18=bool(os.environ.get('CUT18_ONLY'))
 FIN=[('sb_kalpa','blade','겁화','피와 화염이 몸을 감싸니'),('sb_sinwall','guard','죄인의 벽','죄인의 피가 오만방자하게도'),('sb_firebody','arcane','불의 몸','과거의 유산은, 결국 자신도')]
 out=[]
 def shot(page,name):
@@ -55,6 +65,136 @@ def use(page,sid):
  page.click(f'[data-a=act][data-id={sid}]')
  page.mouse.move(2,2); page.evaluate("()=>{if(typeof hidePop==='function')hidePop()}") # 눌린 단추 위 설명 창이 컷인을 가리지 않게
 def logHas(page,frag): return page.evaluate("f=>G.b.log.some(x=>x.m.includes(f))",frag)
+def check_m5a(page,errors,W):
+ # ① ② ③ 세 승부수(이펙트 보통 = 화려 단계, 효과음 켬)
+ for sid,cut,nm,frag in FIN:
+  page.evaluate(FIGHT,{'fx':'normal','rm':False,'snd':True}); use(page,sid)
+  page.wait_for_selector('#vfx .cutin',timeout=3000)
+  info=page.evaluate("()=>{const c=document.querySelector('#vfx .cutin');const v=document.getElementById('vfx');return {cls:c.className,hid:v.getAttribute('aria-hidden'),pe:getComputedStyle(v).pointerEvents,w:c.getBoundingClientRect().width}}")
+  sk=sid!='sb_firebody'; assert (('cu-sk' if sk else 'cu-'+cut) in info['cls']) and 'cu-fancy' in info['cls'],(sid,info); # M5-6: 겁화 · 죄인의 벽은 따로 지은 그림(cu-sk), 불의 몸은 게임 원본(마법)
+  assert info['hid']=='true' and info['pe']=='none',info
+  assert logHas(page,frag),(sid,'기록에 대사 없음')
+  hitAt={'blade':.56,'guard':.16,'arcane':.2}[cut]*2250
+  page.wait_for_timeout(int(hitAt)+120); shot(page,f'{W}-{cut}-hit')
+  page.wait_for_timeout(500); shot(page,f'{W}-{cut}-linger')
+  # 컷인 중에도 단추가 눌린다(덮개가 막지 않음): 그 자리의 맨 위 요소가 덮개가 아님
+  top=page.evaluate("()=>{const b=document.querySelector('[data-a=act]');const r=b.getBoundingClientRect();const el=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return el&&!el.closest('#vfx')}")
+  assert top,('덮개가 단추를 가림',sid)
+  snd=page.evaluate("()=>window.__snd.slice()"); sks=page.evaluate("(id)=>CUT.lastSk&&CUT.lastSk.id===id?CUT.lastSk.snd:0",sid) if sk else 0; assert (sks if sk else cut in snd),(sid,'컷인 소리 없음',snd,sks)
+  page.wait_for_function("!document.querySelector('#vfx .cutin')",timeout=4000)
+  ready(page)
+  badge=page.evaluate("()=>[...document.querySelectorAll('.fstat .stt')].map(x=>x.textContent.replace(/\\s+/g,' ').trim())")
+  st=page.evaluate("()=>document.querySelector('.fstat').className")
+  shot(page,f'{W}-{cut}-badge')
+  if cut=='blade': assert any('겁화' in x and '3' in x for x in badge) or any('겁화' in x and '2' in x for x in badge),badge; assert 'st-blaze' in st,st
+  if cut=='guard': assert any('죄인의 벽' in x for x in badge),badge; assert 'st-wall' in st,st
+  if cut=='arcane': assert any('불의 몸' in x for x in badge),badge; assert 'st-fire' in st,st
+  n0=page.evaluate("k=>G.b.p.sbSt[k]",{'blade':'blaze','guard':'sinWall','arcane':'fireBody'}[cut])
+  # 차례 하나 넘기기(기본 공격) → 남은 차례 감소
+  page.evaluate("()=>{G.b.p.cd={};render()}"); page.click('[data-a=act][data-id=basic]'); page.wait_for_timeout(200); ready(page)
+  n1=page.evaluate("k=>G.b.p.sbSt[k]",{'blade':'blaze','guard':'sinWall','arcane':'fireBody'}[cut])
+  badge2=page.evaluate("()=>[...document.querySelectorAll('.fstat .stt')].map(x=>x.textContent.replace(/\\s+/g,' ').trim())")
+  if cut!='guard': assert n1==n0-1 and any(str(n1) in x for x in badge2),(cut,n0,n1,badge2)
+  # 같은 전투에서 두 번째 사용: 컷인 없음
+  if cut=='blade':
+   page.evaluate("()=>{G.b.p.sbSt.blaze=0;render()}"); use(page,sid); page.wait_for_timeout(400)
+   assert not page.query_selector('#vfx .cutin'),'두 번째 사용에 컷인'
+  out.append(f'{W}px {nm}: 컷인 {cut} · 기록 대사 · 소리 {cut} · 상태 {badge} → 다음 차례 {badge2}')
+ # ④ 움직임 줄이기
+ page.evaluate(FIGHT,{'fx':'normal','rm':True,'snd':True}); use(page,'sb_kalpa'); page.wait_for_selector('#vfx .cutin',timeout=3000); page.wait_for_timeout(900)
+ rmI=page.evaluate("()=>{const c=document.querySelector('#vfx .cutin');const sl=[...c.querySelectorAll('.cu-slash')].map(e=>+getComputedStyle(e).opacity);return {cls:c.className,slash:Math.max(...sl),lb:getComputedStyle(c.querySelector('.cu-layer.lb')).display,anim:document.querySelector('.fstat').getAnimations().length}}")
+ assert 'cu-fancy' not in rmI['cls'] and rmI['slash']==0 and rmI['lb']=='none' and rmI['anim']==0,rmI
+ shot(page,f'{W}-rm'); out.append(f'{W}px 움직임 줄이기: 띠와 글만(가르기 선 0, 카드 움직임 0)')
+ page.wait_for_function("!document.querySelector('#vfx .cutin')",timeout=4000)
+ # ⑤ 이펙트 끔(효과음 켬 · 끔)
+ for snd in (True,False):
+  page.evaluate(FIGHT,{'fx':'off','rm':False,'snd':snd}); use(page,'sb_kalpa'); page.wait_for_timeout(700)
+  assert not page.query_selector('#vfx .cutin'),('이펙트 끔에 컷인',snd); assert logHas(page,'피와 화염이 몸을 감싸니'),'이펙트 끔: 기록 한 줄 없음'
+  assert page.evaluate("()=>window.__snd.length")==0,'이펙트 끔에 컷인 소리'
+ out.append(f'{W}px 이펙트 끔(효과음 켬 · 끔): 컷인 없음, 기록 한 줄, 컷인 소리 없음')
+ # ⑥ 효과음 끔 + 이펙트 보통
+ page.evaluate(FIGHT,{'fx':'normal','rm':False,'snd':False}); use(page,'sb_sinwall'); page.wait_for_selector('#vfx .cutin',timeout=3000)
+ real=page.evaluate("()=>vfxSndOn()"); assert not real,'효과음 끔인데 켜짐'
+ out.append(f'{W}px 효과음 끔 + 이펙트 보통: 컷인은 뜨고 소리 판정 꺼짐')
+ page.wait_for_function("!document.querySelector('#vfx .cutin')",timeout=4000)
+ # ⑦ 설명란: 전투 스킬 정보
+ ready(page); page.evaluate("()=>{G.data.fx='normal'}")
+ h=page.evaluate("()=>infoHtml('act:sb_kalpa')")
+ assert 'skd-line' in h and h.index('대사: ')<h.index('효과') and 'skd-r pay' in h and '>대가<' in h and '>대상<' in h,h[:300]
+ if W==390:
+  el=page.query_selector('[data-a=act][data-id=sb_sinwall]'); showp=page.evaluate("()=>{const el=document.querySelector('[data-a=act][data-id=sb_sinwall]');showPop(el,true);return !!document.querySelector('.skd')}")
+  assert showp,'전투 정보 창에 설명란 없음'; shot(page,f'{W}-desc-battle')
+ # 트리(방사형 상세)
+ page.evaluate("()=>{G.b=null;const run=G.run;run.p=mkPlayer('spellblade',{},{},['sb_kalpa']);G.tview='a';G.scr='tree';G.sheet=null;render()}"); page.wait_for_timeout(300)
+ page.evaluate("()=>{const n=document.querySelector('.tn[data-k=sb_firebody]')||document.querySelector('[data-k=sb_firebody]');if(n)n.dispatchEvent(new MouseEvent('click',{bubbles:true}))}"); page.wait_for_timeout(250)
+ VIS="()=>{const L=[...document.querySelectorAll('.skd')].filter(x=>x.getClientRects().length&&x.offsetParent!==null);if(L[0])L[0].scrollIntoView({block:'center'});return L.length}"
+ tr=page.evaluate(VIS)
+ if not tr:
+  page.evaluate("()=>{G.tsel=G.tsel||{};G.tsel.a='sb_firebody';render()}"); page.wait_for_timeout(200); tr=page.evaluate(VIS)
+ assert tr,('트리 설명란 없음',page.evaluate("()=>document.querySelectorAll('.skd').length"))
+ shot(page,f'{W}-desc-tree')
+ # 장착 창: 트리 목록 보기(찍은 스킬마다 장착 단추). 승부수 셋을 연 상태로 본다
+ hs=page.evaluate("()=>infoHtml('sk:sb_sinwall')"); assert 'skd-line' in hs and '>대가<' in hs,hs[:200]
+ page.evaluate("()=>{const a=G.run.atree;for(const k of ['sb_kalpa','sb_sinwall','sb_firebody'])if(!a.own.includes(k))a.own.push(k);G.data.treeList=true;G.abr='죄인의 피';delete G.run.offer;G.tview='a';G.scr='tree';G.sheet=null;render()}"); page.wait_for_timeout(300)
+ eqn=page.evaluate("()=>{const L=[...document.querySelectorAll('.ptnode')].filter(x=>x.querySelector('.skd'));const n=L.find(x=>/죄인의 벽/.test(x.textContent))||L[0];if(n)n.scrollIntoView({block:'center'});return {n:L.length,eq:L.filter(x=>x.querySelector('[data-a=ateq]')).length}}")
+ assert eqn['n']>=1,('장착 목록 설명란',eqn); shot(page,f'{W}-desc-equip'); out.append(f'{W}px 장착 목록(트리 목록 보기): 승부수 설명란 {eqn["n"]}칸, 장착 단추 {eqn["eq"]}')
+ page.evaluate("()=>{G.data.treeList=false}")
+
+# ⑨ M5-6 승부수 18: 컷인(표 CUT_SK 또는 게임 원본 그림) · 소리 호출 · 대사가 띠 길이의 절반 이상 보임 · 끝난 뒤 카드 원상복구 · 룬 고리는 불의 몸만 · 사냥꾼 음높이 소리 없음 · 움직임 줄이기
+FIGHT18="""(o)=>{G.data.fx=o.fx;G.data.rm=o.rm?1:0;G.data.audio=Object.assign({},G.data.audio||{},{on:true,bfx:true});G.pace='normal';G.skip=false;
+ const p=mkPlayer(o.build,{},{},[o.sid]);p.hpMax=p.hp=400;G.run.p=p;G.run.build=o.build;
+ const es=[mkEnemy('skeleton',false,0),mkEnemy('skeleton',false,1),mkEnemy('skeleton',false,2)];for(const e of es){e.hpMax=e.hp=500;}
+ G.b=newBattle(p,es,{ch:1});G.sel=es[0].id;G.scr='run';G.sheet=null;p.ys=8;render();
+ window.__snd=[];window.__ax=[];for(const k of Object.keys(CUT_SND)){if(!CUT_SND[k].__w){const f=CUT_SND[k];CUT_SND[k]=function(){window.__snd.push(k);return f.apply(this,arguments)};CUT_SND[k].__w=1}}
+ for(const m of ['boom','noise','metal','bell','pluck','pad','crackle','whoosh','clatter']){if(!AX[m].__w){const f=AX[m];AX[m]=function(){window.__ax.push(m);return f.apply(this,arguments)};AX[m].__w=1}}
+ if(!window.__cs){const f=window.cutSound;window.cutSound=function(c){window.__snd.push('cut:'+c);return f.apply(this,arguments)};window.__cs=1}
+ return {}}"""
+SAMPLE="""()=>{const c=document.querySelector('#vfx .cutin');if(!c)return null;const la=c.querySelector('.cu-layer.la'),lb=c.querySelector('.cu-layer.lb');
+ const vis=L=>{if(!L||getComputedStyle(L).display==='none')return [0,0];let o=1,e=L;while(e&&e!==c.parentNode){o*=+getComputedStyle(e).opacity;e=e.parentElement}const op=[...L.querySelectorAll('.cu-q span')].map(x=>+getComputedStyle(x).opacity);const m=op.length?op.reduce((a,x)=>a+x,0)/op.length:0,mx=op.length?Math.max(...op):0;const cp=getComputedStyle(L).clipPath;return (cp&&cp!=='none'&&/inset\\(100%|inset\\(0px 0px 100%/.test(cp))?[0,0]:[o*mx,o*m]};
+ const rune=+getComputedStyle(c.querySelector('.cu-rune')).opacity,A=vis(la),B=vis(lb);return {v:Math.max(A[0],B[0]),vm:Math.max(A[1],B[1]),rune,hole:!!CUT.hole,P:CUT.P.length,J:CUT.J.length}}"""
+CARDS="""()=>{const L=[vfxSelMe(),...cutEns(),...document.querySelectorAll('[data-hud="hud-field"]')].filter(Boolean);return L.map(e=>{const s=getComputedStyle(e);return {an:e.getAnimations().filter(a=>a.playState!=='finished'&&!(typeof CSSAnimation!=='undefined'&&a instanceof CSSAnimation)&&!(typeof CSSTransition!=='undefined'&&a instanceof CSSTransition)).length,f:s.filter,o:s.opacity,tr:s.transform}}).filter(x=>x.an||x.f!=='none'||+x.o<1||(x.tr!=='none'&&x.tr!=='matrix(1, 0, 0, 1, 0, 0)'))}"""
+def use18(page,sid):
+ ready(page); btn=page.query_selector(f'[data-a=act][data-id={sid}]'); assert btn,('스킬 단추 없음',sid)
+ page.evaluate("()=>{G.b.p.ys=Math.max(G.b.p.ys,4);G.b.p.cd={};render()}")
+ page.click(f'[data-a=act][data-id={sid}]'); page.mouse.move(2,2); page.evaluate("()=>{if(typeof hidePop==='function')hidePop()}")
+VISF=[]
+def check_sk18(page,errors,W):
+ rows=[]
+ for sid,build,nm,game in [x for x in SK18 if not os.environ.get('CUT18_IDS') or x[0] in os.environ['CUT18_IDS'].split(',')]:
+  for fx,rm in (('normal',False),('normal',True),('low',False)): # 보통(화려) · 움직임 줄이기 · 약하게(기본 단계, C.F = false)
+   page.evaluate(FIGHT18,{'fx':fx,'rm':rm,'build':build,'sid':sid}); use18(page,sid)
+   page.wait_for_selector('#vfx .cutin',timeout=3000)
+   cls=page.evaluate("()=>document.querySelector('#vfx .cutin').className"); T=page.evaluate("()=>CUT.lastSk&&CUT.lastSk.id")
+   if game: assert ('cu-'+game) in cls and 'cu-sk' not in cls,(sid,cls)
+   else: assert 'cu-sk' in cls and T==sid,(sid,cls,T)
+   assert ('cu-fancy' in cls)==(fx=='normal' and not rm),(sid,fx,rm,'단계 클래스',cls)
+   S=[]; shot_at={False:None,True:None}
+   for i in range(80):
+    x=page.evaluate(SAMPLE)
+    if x is None: break
+    S.append(x)
+    if i==int(len(S)) and False: pass
+    if not rm and i==14: shot(page,f'm56-{W}-{sid}'+('' if fx=='normal' else '-low'))
+    if rm and i==10: shot(page,f'm56-{W}-{sid}-rm')
+    page.wait_for_timeout(80)
+   page.wait_for_function("!document.querySelector('#vfx .cutin')",timeout=5000); page.wait_for_timeout(120)
+   n=len(S); vis=sum(1 for x in S if x['v']>.5)/max(1,n); full=sum(1 for x in S if x['vm']>.5)/max(1,n); runeMax=max(x['rune'] for x in S) if S else 0
+   bad=page.evaluate(CARDS); snd=page.evaluate("()=>window.__snd.slice()"); ax=page.evaluate("()=>window.__ax.slice()")
+   if vis<.5: VISF.append((sid,fx,rm,round(vis,2),[round(x['v'],2) for x in S]))
+   assert not bad,(sid,fx,rm,'끝난 뒤 카드가 원래대로 아님',bad)
+   if sid!='sb_firebody': assert runeMax<.02,(sid,'룬 고리(유산의 불)가 보임',runeMax)
+   if rm:
+    assert max(x['P'] for x in S)==0 and max(x['J'] for x in S)==0 and not snd,(sid,'움직임 줄이기에 그림 · 소리',S[:2],snd)
+   else:
+    if game: assert ('cut:'+game) in snd,(sid,'게임 원본 소리 없음',snd)
+    else: assert sid in snd,(sid,'승부수 소리 호출 없음',snd)
+    if build=='hunter': assert not any(m in ('metal','bell','pluck','pad') for m in ax),(sid,'사냥꾼 음높이 소리',sorted(set(ax)))
+    hole=any(x['hole'] for x in S); assert hole or game,(sid,'대사 자리(CUT.hole) 없음')
+   if fx=='low': rows[-1]+=f" · 약하게 대사 보임 {round(vis*100)}%"
+   elif not rm: rows.append(f"{nm}({sid}): {'원본 '+game if game else '따로 지은 그림'} · 대사 보임 {round(vis*100)}%(절반 넘게 읽힘 {round(full*100)}%) · 소리 {'파일/합성' if snd else '없음'}({len(ax)}겹) · 끝난 뒤 카드 원상복구")
+   else: rows[-1]+=f" · 움직임 줄이기 대사 보임 {round(vis*100)}%"
+ out.append(f'{W}px 승부수 18:\n  '+'\n  '.join(rows))
+ assert not VISF,('대사가 띠 길이의 절반 미만',VISF)
 try:
  with sync_playwright() as pw:
   browser=pw.chromium.launch()
@@ -66,81 +206,12 @@ try:
    ctx.route('**/fonts.googleapis.com/**',lambda r:r.abort()); ctx.route('**/fonts.gstatic.com/**',lambda r:r.abort())
    ctx.route('**/release.json?*',lambda r:r.fulfill(status=200,content_type='application/json',body=json.dumps({'revision':rev})))
    page,errors=setup(ctx,W)
-   # ① ② ③ 세 승부수(이펙트 보통 = 화려 단계, 효과음 켬)
-   for sid,cut,nm,frag in FIN:
-    page.evaluate(FIGHT,{'fx':'normal','rm':False,'snd':True}); use(page,sid)
-    page.wait_for_selector('#vfx .cutin',timeout=3000)
-    info=page.evaluate("()=>{const c=document.querySelector('#vfx .cutin');const v=document.getElementById('vfx');return {cls:c.className,hid:v.getAttribute('aria-hidden'),pe:getComputedStyle(v).pointerEvents,w:c.getBoundingClientRect().width}}")
-    assert ('cu-'+cut) in info['cls'] and 'cu-fancy' in info['cls'],(sid,info); assert info['hid']=='true' and info['pe']=='none',info
-    assert logHas(page,frag),(sid,'기록에 대사 없음')
-    hitAt={'blade':.56,'guard':.16,'arcane':.2}[cut]*2250
-    page.wait_for_timeout(int(hitAt)+120); shot(page,f'{W}-{cut}-hit')
-    page.wait_for_timeout(500); shot(page,f'{W}-{cut}-linger')
-    # 컷인 중에도 단추가 눌린다(덮개가 막지 않음): 그 자리의 맨 위 요소가 덮개가 아님
-    top=page.evaluate("()=>{const b=document.querySelector('[data-a=act]');const r=b.getBoundingClientRect();const el=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return el&&!el.closest('#vfx')}")
-    assert top,('덮개가 단추를 가림',sid)
-    snd=page.evaluate("()=>window.__snd.slice()"); assert cut in snd,(sid,'컷인 소리 없음',snd)
-    page.wait_for_function("!document.querySelector('#vfx .cutin')",timeout=4000)
-    ready(page)
-    badge=page.evaluate("()=>[...document.querySelectorAll('.fstat .stt')].map(x=>x.textContent.replace(/\\s+/g,' ').trim())")
-    st=page.evaluate("()=>document.querySelector('.fstat').className")
-    shot(page,f'{W}-{cut}-badge')
-    if cut=='blade': assert any('겁화' in x and '3' in x for x in badge) or any('겁화' in x and '2' in x for x in badge),badge; assert 'st-blaze' in st,st
-    if cut=='guard': assert any('죄인의 벽' in x for x in badge),badge; assert 'st-wall' in st,st
-    if cut=='arcane': assert any('불의 몸' in x for x in badge),badge; assert 'st-fire' in st,st
-    n0=page.evaluate("k=>G.b.p.sbSt[k]",{'blade':'blaze','guard':'sinWall','arcane':'fireBody'}[cut])
-    # 차례 하나 넘기기(기본 공격) → 남은 차례 감소
-    page.evaluate("()=>{G.b.p.cd={};render()}"); page.click('[data-a=act][data-id=basic]'); page.wait_for_timeout(200); ready(page)
-    n1=page.evaluate("k=>G.b.p.sbSt[k]",{'blade':'blaze','guard':'sinWall','arcane':'fireBody'}[cut])
-    badge2=page.evaluate("()=>[...document.querySelectorAll('.fstat .stt')].map(x=>x.textContent.replace(/\\s+/g,' ').trim())")
-    if cut!='guard': assert n1==n0-1 and any(str(n1) in x for x in badge2),(cut,n0,n1,badge2)
-    # 같은 전투에서 두 번째 사용: 컷인 없음
-    if cut=='blade':
-     page.evaluate("()=>{G.b.p.sbSt.blaze=0;render()}"); use(page,sid); page.wait_for_timeout(400)
-     assert not page.query_selector('#vfx .cutin'),'두 번째 사용에 컷인'
-    out.append(f'{W}px {nm}: 컷인 {cut} · 기록 대사 · 소리 {cut} · 상태 {badge} → 다음 차례 {badge2}')
-   # ④ 움직임 줄이기
-   page.evaluate(FIGHT,{'fx':'normal','rm':True,'snd':True}); use(page,'sb_kalpa'); page.wait_for_selector('#vfx .cutin',timeout=3000); page.wait_for_timeout(900)
-   rmI=page.evaluate("()=>{const c=document.querySelector('#vfx .cutin');const sl=[...c.querySelectorAll('.cu-slash')].map(e=>+getComputedStyle(e).opacity);return {cls:c.className,slash:Math.max(...sl),lb:getComputedStyle(c.querySelector('.cu-layer.lb')).display,anim:document.querySelector('.fstat').getAnimations().length}}")
-   assert 'cu-fancy' not in rmI['cls'] and rmI['slash']==0 and rmI['lb']=='none' and rmI['anim']==0,rmI
-   shot(page,f'{W}-rm'); out.append(f'{W}px 움직임 줄이기: 띠와 글만(가르기 선 0, 카드 움직임 0)')
-   page.wait_for_function("!document.querySelector('#vfx .cutin')",timeout=4000)
-   # ⑤ 이펙트 끔(효과음 켬 · 끔)
-   for snd in (True,False):
-    page.evaluate(FIGHT,{'fx':'off','rm':False,'snd':snd}); use(page,'sb_kalpa'); page.wait_for_timeout(700)
-    assert not page.query_selector('#vfx .cutin'),('이펙트 끔에 컷인',snd); assert logHas(page,'피와 화염이 몸을 감싸니'),'이펙트 끔: 기록 한 줄 없음'
-    assert page.evaluate("()=>window.__snd.length")==0,'이펙트 끔에 컷인 소리'
-   out.append(f'{W}px 이펙트 끔(효과음 켬 · 끔): 컷인 없음, 기록 한 줄, 컷인 소리 없음')
-   # ⑥ 효과음 끔 + 이펙트 보통
-   page.evaluate(FIGHT,{'fx':'normal','rm':False,'snd':False}); use(page,'sb_sinwall'); page.wait_for_selector('#vfx .cutin',timeout=3000)
-   real=page.evaluate("()=>vfxSndOn()"); assert not real,'효과음 끔인데 켜짐'
-   out.append(f'{W}px 효과음 끔 + 이펙트 보통: 컷인은 뜨고 소리 판정 꺼짐')
-   page.wait_for_function("!document.querySelector('#vfx .cutin')",timeout=4000)
-   # ⑦ 설명란: 전투 스킬 정보
-   ready(page); page.evaluate("()=>{G.data.fx='normal'}")
-   h=page.evaluate("()=>infoHtml('act:sb_kalpa')")
-   assert 'skd-line' in h and h.index('대사: ')<h.index('효과') and 'skd-r pay' in h and '>대가<' in h and '>대상<' in h,h[:300]
-   if W==390:
-    el=page.query_selector('[data-a=act][data-id=sb_sinwall]'); showp=page.evaluate("()=>{const el=document.querySelector('[data-a=act][data-id=sb_sinwall]');showPop(el,true);return !!document.querySelector('.skd')}")
-    assert showp,'전투 정보 창에 설명란 없음'; shot(page,f'{W}-desc-battle')
-   # 트리(방사형 상세)
-   page.evaluate("()=>{G.b=null;const run=G.run;run.p=mkPlayer('spellblade',{},{},['sb_kalpa']);G.tview='a';G.scr='tree';G.sheet=null;render()}"); page.wait_for_timeout(300)
-   page.evaluate("()=>{const n=document.querySelector('.tn[data-k=sb_firebody]')||document.querySelector('[data-k=sb_firebody]');if(n)n.dispatchEvent(new MouseEvent('click',{bubbles:true}))}"); page.wait_for_timeout(250)
-   VIS="()=>{const L=[...document.querySelectorAll('.skd')].filter(x=>x.getClientRects().length&&x.offsetParent!==null);if(L[0])L[0].scrollIntoView({block:'center'});return L.length}"
-   tr=page.evaluate(VIS)
-   if not tr:
-    page.evaluate("()=>{G.tsel=G.tsel||{};G.tsel.a='sb_firebody';render()}"); page.wait_for_timeout(200); tr=page.evaluate(VIS)
-   assert tr,('트리 설명란 없음',page.evaluate("()=>document.querySelectorAll('.skd').length"))
-   shot(page,f'{W}-desc-tree')
-   # 장착 창: 트리 목록 보기(찍은 스킬마다 장착 단추). 승부수 셋을 연 상태로 본다
-   hs=page.evaluate("()=>infoHtml('sk:sb_sinwall')"); assert 'skd-line' in hs and '>대가<' in hs,hs[:200]
-   page.evaluate("()=>{const a=G.run.atree;for(const k of ['sb_kalpa','sb_sinwall','sb_firebody'])if(!a.own.includes(k))a.own.push(k);G.data.treeList=true;G.abr='죄인의 피';delete G.run.offer;G.tview='a';G.scr='tree';G.sheet=null;render()}"); page.wait_for_timeout(300)
-   eqn=page.evaluate("()=>{const L=[...document.querySelectorAll('.ptnode')].filter(x=>x.querySelector('.skd'));const n=L.find(x=>/죄인의 벽/.test(x.textContent))||L[0];if(n)n.scrollIntoView({block:'center'});return {n:L.length,eq:L.filter(x=>x.querySelector('[data-a=ateq]')).length}}")
-   assert eqn['n']>=1,('장착 목록 설명란',eqn); shot(page,f'{W}-desc-equip'); out.append(f'{W}px 장착 목록(트리 목록 보기): 승부수 설명란 {eqn["n"]}칸, 장착 단추 {eqn["eq"]}')
-   page.evaluate("()=>{G.data.treeList=false}")
+   if not ONLY18: check_m5a(page,errors,W)
+   check_sk18(page,errors,W)
    w=page.evaluate('document.documentElement.scrollWidth'); assert w<=W,('가로 넘침',w)
    assert not errors,errors
    ctx.close()
   browser.close()
   print('\n'.join(out)); print('cutin-browser: 통과')
 finally:server.shutdown();server.server_close()
+
