@@ -83,4 +83,11 @@ for (const build of ['butcher', 'confessor', 'bloodmage']) {
     handleSheets('careful', rng(n)); const out = { bugs: [], rooms: [], acts: 0 }; OPT.chapters = 1; playLoop('careful', rng(900 + n), out); const ok2 = !out.bugs.length;
     console.log(`${ok1 && ok2 ? '✓' : '✗'} elementalist 재설계(atv 9 → 10): 옛 칸 불붙이기 · 옛 강화 겁화 거둠(환급 ${rf.refund}), 포인트 ${pts1}, 시작 스킬 마력탄 · 원소 전환, 새 제시(변형 둘), 판 끝 ${G.scr} 오류 ${out.bugs.length}`); if (!(ok1 && ok2)) bad++;
   } catch (e) { console.log('✗ elementalist 재설계: 예외 ' + e.message); bad++; } } }
+/* 0.8.0 M6-2(10월 21일): 옛 장비가 든 개발 중 세이브를 새 장비(gear8 기본값)로 열면 오류 없이 그 칸을 비운다(변환 없음, 무기 칸은 평범 새 무기). 세이브 키 그대로 */
+{ run_('GEAR8.on = false'); const save = saveOf('warden', 71300); run_('GEAR8.on = true');
+  if (!save) { console.log('✗ 옛 장비 세이브: 저장본을 뜨지 못함'); bad++; } else { n++; const old0 = Object.values(save.inv || {}).filter(x => !x.g8).length;
+    try { const run = reopen(save, n); G0.initGear(run); G0.applyGear(run); const ok1 = old0 > 0 && Object.values(run.inv).every(x => x.g8) && run.eqU.weapon && run.inv[run.eqU.weapon] && run.bag.every(u => run.inv[u]);
+      handleSheets('careful', rng(n)); const out = { bugs: [], rooms: [], acts: 0 }; OPT.chapters = 1; playLoop('careful', rng(900 + n), out); const ok2 = !out.bugs.length;
+      console.log(`${ok1 && ok2 ? '✓' : '✗'} 옛 장비 세이브(gear8): 옛 장비 ${old0}개 비움, 무기 칸 평범 새 무기, 판 끝 ${out.bugs.length ? '오류 ' + out.bugs.join(' | ') : '오류 0'}`); if (!(ok1 && ok2)) bad++; }
+    catch (e) { console.log('✗ 옛 장비 세이브(gear8): 예외 ' + e.message); bad++; } } }
 console.log(`at-m5: 저장본 ${n}개, 실패 ${bad}`); process.exitCode = bad ? 1 : 0;

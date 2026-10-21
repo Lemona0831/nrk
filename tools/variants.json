@@ -585,16 +585,24 @@
    "kind": "env",
    "default": null,
    "introduced": "M6-1",
-   "expires": "M6-2에서 기본값 켬",
-   "note": "M6-1 장비 틀(gear8): 1이면 GEAR8.on — 접사 · 고유 장비(data/affixes.js · data/uniques.js)를 p.g8로 적용. 0 · 없음이면 끔(옛 장비 그대로, 같은 시드 결과 같음)"
+   "expires": "M7 정리 검토",
+   "note": "M6 장비(gear8): 기본 켬(M6-2, 10월 21일). 0이면 옛 장비(기준선), 1 · 없음이면 새 장비(접사 · 고유, data/affixes.js · data/uniques.js)"
   },
   {
    "name": "GEAR8.on",
    "kind": "game",
-   "default": "false",
+   "default": "true",
    "introduced": "M6-1",
-   "expires": "M6-2",
-   "note": "gear8 스위치(js/17). M6-2 생성기와 함께 기본값 켬"
+   "expires": "M7",
+   "note": "gear8 스위치(js/17). M6-2에서 기본값 켬"
+  },
+  {
+   "name": "DG_STACK",
+   "kind": "env",
+   "default": null,
+   "introduced": "M6-2",
+   "expires": "상시",
+   "note": "조사용: 판 안 행동 예외의 스택을 stderr에 찍는다(동작 아님)"
   }
  ]
 }

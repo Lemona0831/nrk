@@ -118,7 +118,7 @@ function g8Reroll(run, it, i) {
 /* ---- 시작 장비 · 옛 장비(만든 사람 10월 21일: 옛 장비 변환 없음 — 개발 중 세이브의 옛 장비는 그 칸을 비운다) ---- */
 function g8StartGear(run) { const mk = sl => mkItem8({ base: g8Shape(run.build, sl), g: 'n', ch: 1, b: 0 }); return { weapon: mk('weapon'), armor: mk('armor'), flask: mk('flask') }; }
 function g8Purge(run) {
-  if (!GEAR8.on || !run || !run.inv) return 0; let n = 0;
+  if (!GEAR8.on || !run || !run.inv) return 0; let n = 0; if (!run.eqU) { run.eqU = {}; for (const sl of EQ_SLOTS) run.eqU[sl] = null; }
   for (const u of Object.keys(run.inv)) { if (isG8(run.inv[u])) continue; delete run.inv[u]; n++; for (const sl of EQ_SLOTS) if (run.eqU[sl] === u) run.eqU[sl] = null; }
   run.bag = (run.bag || []).filter(u => run.inv[u]);
   if (!run.eqU.weapon) { const w = mkItem8({ base: g8Shape(run.build, 'weapon'), g: 'n', ch: 1, b: 0 }); run.inv[w.uid] = w; run.eqU.weapon = w.uid; } // 무기 칸은 비워 두지 않는다(무기는 다른 무기로만 바꾼다)

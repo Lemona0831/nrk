@@ -1,6 +1,7 @@
 'use strict';
 process.env.DGDIR = process.env.DGDIR || '.';
 const assert = require('assert/strict'), D = require('./dgqa.js'), E = D.G0, V = D.run_;
+V('GEAR8.on = false'); // 옛 장비 흐름 점검: 옛 길에서(0.8.0 M6-2부터 기본은 새 장비, 새 장비 흐름은 tools/gear8-gen-check.js · gear8-shop-browser.py)
 let count = 0;
 function fresh(build) {
   const r = { build, p: E.mkPlayer(build, {}), bag: [], swaps: [], room: 0, cons: [] };

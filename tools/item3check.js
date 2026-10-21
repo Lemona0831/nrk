@@ -3,6 +3,7 @@
    실행: DGDIR=06a2 node tools/item3check.js */
 process.env.DGDIR = process.env.DGDIR || '.';
 const D = require('./dgqa.js'); const G0 = D.G0; const run_ = D.run_;
+run_('GEAR8.on = false'); // 옛 장비(3챕터 장비 557종 쪽)를 재는 점검: 옛 길에서(0.8.0 M6-2부터 기본은 새 장비, GEAR8=0이 기준선)
 let fail = 0, pass = 0; const ok = (c, m) => { if (c) pass++; else { fail++; console.log('실패:', m); } };
 const V = k => run_(k);
 function battle(room, build, lv, items) {

@@ -407,7 +407,7 @@ function stealLoot(b) {
   if (!opts.length) return null; const o = opts[Math.floor(b.rngF() * opts.length)];
   if (o.k === 'flask') p.flask[o.f]--;
   if (o.k === 'gold') { run.gold -= o.g; o.n = '골드 ' + o.g; }
-  if (o.k === 'item') { const u = run.bag.splice(Math.floor(b.rngF() * run.bag.length), 1)[0]; o.u = u; o.run = run; o.n = run.inv[u] ? ITEMS[run.inv[u].tpl].n : '장비'; }
+  if (o.k === 'item') { const u = run.bag.splice(Math.floor(b.rngF() * run.bag.length), 1)[0]; o.u = u; o.run = run; o.n = run.inv[u] ? itName(run.inv[u]) || '장비' : '장비'; /* 0.8.0 M6-2: 새 장비 이름 */ }
   if (o.k === 'gold') o.run = run; return o;
 }
 function returnLoot(b, o) { if (o.k === 'flask') b.p.flask[o.f]++; if (o.k === 'gold' && o.run) o.run.gold = (o.run.gold || 0) + o.g; if (o.k === 'item' && o.run) o.run.bag.push(o.u); }

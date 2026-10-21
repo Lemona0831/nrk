@@ -46,7 +46,7 @@ function vPlayerPanel(p, b) {
   const extra = [];
   if (b) extra.push(`<span data-info="speed" tabindex="0">속도 ${r1(pSpeed(b))}</span>`);
   const eq = Object.values(p.eq).filter(Boolean);
-  if (eq.length) extra.push('장착: ' + eq.map(k => `<span class="gr-${ITEMS[k].g || 'n'}">${inm(k, ITEMS[k].g || 'n')}</span>`).join(', '));
+   const g8n = (typeof G !== 'undefined' && G.run && G.run.p === p && G.run.eqU) ? EQ_SLOTS.map(sl => G.run.inv[G.run.eqU[sl]]).filter(it => it && isG8(it) && it.g !== 'n').map(it => `<span class="gr-${it.g}">${g8NameHtml(it)}</span>`) : []; /* 0.8.0 M6-2: 새 장비(평범 빼고) */ if (eq.length || g8n.length) extra.push('장착: ' + eq.map(k => `<span class="gr-${ITEMS[k].g || 'n'}">${inm(k, ITEMS[k].g || 'n')}</span>`).concat(g8n).join(', '));
   if (extra.length) h += `<div class="mini">${extra.join(' · ')}</div>`;
   if (b) h += stsHtml(p, b);
   if (b && b.seal && b.seal.length) h += `<div class="mini sealln" data-info="seal" tabindex="0">🔏 봉인: ${b.seal.map(x => esc(x.n)).join(', ')}</div>`;

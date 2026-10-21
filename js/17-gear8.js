@@ -1,11 +1,11 @@
 'use strict';
 /* ===== 0.8.0 M6-1 장비 틀 (gear8, 만든 사람 확정 10월 20일 · 설계 nrk-private M6-장비-설계 3~5절) =====
-   장비 = 기반(슬롯 · 챕터 · 등급 수치) + 접사 0~3 + (고유 규칙). 스위치 GEAR8.on(측정 env GEAR8, tools/variants.json gear8). 기본값 끔 — 끄면 아무 것도 바뀌지 않는다(M6-2에서 켬).
+   장비 = 기반(슬롯 · 챕터 · 등급 수치) + 접사 0~3 + (고유 규칙). 스위치 GEAR8.on(측정 env GEAR8, tools/variants.json gear8). M6-2에서 기본값 켬 — 끄면(GEAR8=0) 옛 장비 길 그대로.
    한 개의 장비(인스턴스): { rollV: 2, g8: 1, uid, tpl: 기반 모양(AFFIX_BASE), g, ch, b, af: [{ id, v }], ax: { id, v } | null, uq: 고유 id | null }
    applyGear가 g8 장비를 p.eq 대신 p.g8 = { af: [...], uq: [...] }에 모은다(낀 장비 전부, 같은 묶음은 큰 쪽만 — 두 반지 포함).
    효과는 fxList의 항목으로만 든다: 접사 묶음 하나(g8af, 같은 대상의 %는 가장 큰 하나만 — maxOf) + 고유마다 규칙(uq_id) · 대가(uqc_id). 훅 이름은 IFX와 같다.
    고유 규칙이 엔진의 새 지점을 읽을 때는 uqF · uqV · uqA · uqR(아래)로 읽는다: g8 장비가 없으면(p.g8u 없음) 곧바로 기본값을 돌려준다 — 스위치를 끄면 같은 시드 결과가 같다 */
-const GEAR8 = { on: false };
+const GEAR8 = { on: true }; // 0.8.0 M6-2(10월 21일): 기본값 켬(만든 사람 결정 — 큐 M6-2 "이 항목 끝에서 gear8을 기본값으로"). GEAR8=0이면 옛 장비(기준선)
 const UQFX = {}; // 고유 규칙 · 대가: UQFX[id] = { rule: {훅}, cost: {훅} } (js/18-unique-rules.js)
 const uqF = (p, key) => !!(p && p.g8u) && fxFlag(p, key);
 const uqV = (p, key, init, comb) => p && p.g8u ? fxVal(p, key, init, comb) : init;
