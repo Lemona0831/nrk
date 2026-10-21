@@ -18,7 +18,7 @@ function skelRise(b, e) {
   return { wait: RISE.wait + lime + charm, lime, charm };
 }
 function makePile(b, e) { // 해골이 쓰러지면 뼈 더미가 된다 (경험치 · 전리품은 마지막에 한 번)
-  e.pile = { wait: RISE.wait + (e.limeDelay || 0), born: b.tick }; if (e.limeDelay) { logp(b, 'good', e.n + '의 뼈에 석회가 배어 있다. 부활 +' + e.limeDelay + '라운드'); e.limeDelay = 0; } e.hp = Math.max(1, Math.round(e.hpMax * RISE.pile)); e.intent = { k: 'none' }; e.braced = 0; e.countering = 0; e.evading = 0; e.guarding = null; e.stun = 0; e.brk = 0;
+  e.pile = { wait: RISE.wait + (e.limeDelay || 0), born: b.tick }; if (e.limeDelay) { logp(b, 'good', e.n + '의 뼈에 석회가 배어 있다. 부활 +' + e.limeDelay + '라운드'); e.limeDelay = 0; } e.hp = Math.max(1, Math.round(e.hpMax * RISE.pile)); e.intent = { k: 'none' }; e.teleX = 1; e.braced = 0; e.countering = 0; e.evading = 0; e.guarding = null; e.stun = 0; e.brk = 0;
   for (const k of Object.keys(e.s)) if (!['poison', 'bleed'].includes(k)) delete e.s[k];
   logp(b, 'good', e.n + '이(가) 무너진다. 뼈가 아직 꿈틀거린다');
   fxRun(b.p, 'onPile', b, b.p, e);
@@ -55,7 +55,7 @@ function lordFall(b, e) {
   for (const x of alive(b).filter(x => x.pile)) riseSkel(b, x, ''); codexHit(b, 'cryptlord', 'fall');
 }
 function lordGuard(lv, id, ch) { const s0 = mkEnemy('skeleton', 0, id, { lv, name: (ENEMY_NAMES[ch] || ENEMY_NAMES[2] || {}).skeleton }); const D = diffOf(ch).lower; s0.hpMax = Math.round(s0.hpMax * D.hp * LORD.gHp); s0.hp = s0.hpMax; s0.dmg *= D.dmg * LORD.gDmg; s0.summoned = true; return s0; } // 근위 · 부름 해골: 하층 해골과 같은 세기 (10월 7일: 던전 배율이 빠져 1.6배로 때렸다)
-function riseSkel(b, e, pre) { e.pile = null; e.rose = 1; e.hp = Math.max(1, Math.round(e.hpMax * RISE.hp)); e.intent = { k: 'brace' }; e.acts = 2; logp(b, 'bad', (pre || '') + '뼈 더미가 다시 맞춰져 ' + e.n + '이(가) 일어선다'); fxRun(b.p, 'onRise', b, b.p, e); }
+function riseSkel(b, e, pre) { e.pile = null; e.rose = 1; e.hp = Math.max(1, Math.round(e.hpMax * RISE.hp)); e.intent = { k: 'brace' }; e.teleX = 1; e.acts = 2; logp(b, 'bad', (pre || '') + '뼈 더미가 다시 맞춰져 ' + e.n + '이(가) 일어선다'); fxRun(b.p, 'onRise', b, b.p, e); }
 /* ===== 3챕터 몸과 역할 · 열기 · 강적 · 재의 여왕 (10월 7일, docs/챕터/3챕터.md 6 · 9 · 10절. 강적 · 보스의 상세 · 대처는 비공개 문서) =====
    모래 잠복자는 2챕터 땅속(e.under, BURROW)을 그대로 쓴다. 허상 e.haze(카드 🌫️n), 붕대 e.wrap(🧻n), 열기 b.heat(전장 게이지), 화염 강화 e.fire.
    여기의 함수는 3챕터 몸(또는 3챕터 전투 b.ctx.ch ≥ 3)이 있을 때만 무언가를 한다. 1 · 2챕터 전투의 결과는 그대로다 */
@@ -105,7 +105,7 @@ function ch3Tick(b, T) {
     if (e.s.chill || e.slowR === b.round) { codexHit(b, 'sundial', 'stall'); continue; }
     e.clock = Math.max(0, (e.clock != null ? e.clock : FOE_X.sundial.clock) - 1);
     if (e.clock === 1) logp(b, 'bad', '해시계의 그림자가 짧아진다. 다음 라운드 끝에 정오');
-    if (e.clock <= 0) { e.noonNext = 1; e.intent = { k: 'noon' }; e.teleTurn = b.turnIdx; logp(b, 'crit', '해시계의 그림자가 사라진다. ' + e.n + '에게 빛이 모인다'); }
+    if (e.clock <= 0) { e.noonNext = 1; e.intent = { k: 'noon' }; e.teleX = 1; e.teleTurn = b.turnIdx; logp(b, 'crit', '해시계의 그림자가 사라진다. ' + e.n + '에게 빛이 모인다'); }
   }
   if (b.heat == null) return;
   const q = queenOf(b); const r = heatRise(b);
@@ -154,7 +154,7 @@ function ch3HitMul(b, e, o) {
   if (e.row === 'back' && hasMod(b, 'sandstorm')) m *= 0.8;
   if (e.foe === 'stalker') {
     if (e.stkExp > 0) m *= 1 + FOE_X.stalker.exposedTaken;
-    if (e.under && o.aoe && e.stlAct !== b.actN) { e.stlAct = b.actN; e.startle = (e.startle || 0) + 1; if (e.startle >= FOE_X.stalker.aoeReveal) { e.under = 0; e.stkPrep = 0; e.teleTurn = null; e.startle = 0; e.stkExp = 1; e.intent = { k: 'exposed' }; logp(b, 'crit', e.n + '이(가) 놀라 모래 위로 튀어나온다'); codexHit(b, 'stalker', 'startle'); } }
+    if (e.under && o.aoe && e.stlAct !== b.actN) { e.stlAct = b.actN; e.startle = (e.startle || 0) + 1; if (e.startle >= FOE_X.stalker.aoeReveal) { e.under = 0; e.stkPrep = 0; e.teleTurn = null; e.startle = 0; e.stkExp = 1; e.intent = { k: 'exposed' }; e.teleX = 1; logp(b, 'crit', e.n + '이(가) 놀라 모래 위로 튀어나온다'); codexHit(b, 'stalker', 'startle'); } }
   }
   if (e.foe === 'sundial' && !e.noonNext && (e.clock != null ? e.clock : 9) <= FOE_X.sundial.lowAt && e.rwR !== b.round) { e.rwR = b.round; e.clock += FOE_X.sundial.lowBack; logp(b, 'good', e.n + '이(가) 움찔한다. 해시계 +' + FOE_X.sundial.lowBack + ' (' + e.clock + ')'); codexHit(b, 'sundial', 'shadow'); }
   return m;
@@ -174,9 +174,9 @@ function ch3OnBreak(b, e) {
   if (e.wrap > 0) wrapOff(b, e, '찢겨');
   if (e.foe === 'colossus' && e.glow) { e.glow = 0; logp(b, 'good', e.n + '의 붉은 빛이 꺼진다'); }
   if (e.foe === 'reaper' && e.embers) { e.embers = 0; logp(b, 'good', '낫의 불씨가 흩어진다'); codexHit(b, 'reaper', 'scatter'); }
-  if (e.foe === 'sundial') { e.clock = Math.min(FOE_X.sundial.clock, (e.clock || 0) + FOE_X.sundial.brkBack); if (e.noonNext) { e.noonNext = 0; e.teleTurn = null; } if (e.intent && e.intent.k === 'noon') e.intent = { k: 'attack' }; logp(b, 'good', '그림자가 다시 길어진다. 해시계 ' + e.clock); codexHit(b, 'sundial', 'shadow'); }
+  if (e.foe === 'sundial') { e.clock = Math.min(FOE_X.sundial.clock, (e.clock || 0) + FOE_X.sundial.brkBack); if (e.noonNext) { e.noonNext = 0; e.teleTurn = null; } if (e.intent && e.intent.k === 'noon') { e.intent = { k: 'attack' }; e.teleX = 1; } logp(b, 'good', '그림자가 다시 길어진다. 해시계 ' + e.clock); codexHit(b, 'sundial', 'shadow'); }
   if (e.boss === 'queen') heatAdd(b, -QUEEN.breakHeat, '여왕이 무너짐');
-  if (e.role === 'maid' && e.intent && MCH_K.includes(e.intent.k)) e.intent = { k: 'attack' };
+  if (e.role === 'maid' && e.intent && MCH_K.includes(e.intent.k)) { e.intent = { k: 'attack' }; e.teleX = 1; }
 }
 /* 쓰러졌을 때 (killEnemy) */
 function ch3OnKill(b, e) {

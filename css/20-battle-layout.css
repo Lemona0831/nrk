@@ -136,6 +136,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .en .eord.soon{background:#a8362b;border-color:#a8362b;color:var(--hi)}.en .eord.done{color:var(--muted);font-weight:500}
 .en .bar.ehp,.field .en .bar.ehp{height:20px;margin:3px 0 2px;border-radius:5px}
 .en .bar.ehp span,.field .en .bar.ehp span{font-size:calc(13px*var(--fs,1));line-height:calc(18px*var(--fs,1));font-weight:600}
+.en .foeas{display:inline-flex;gap:6px;align-items:center;font-size:calc(12px*var(--fs,1));margin:0 0 2px}.en .farm b{margin-left:2px}.en .farm.off{opacity:.45}.en .fshd{display:inline-flex;gap:2px}.en .fshd i{width:8px;height:10px;border:1px solid var(--line,#888);border-radius:2px}.en .fshd i.on{background:var(--bk,#9ab)}
 .bar.ehp span b{font-size:calc(16px*var(--fs,1));font-weight:700}.bar.ehp.lo{border-color:var(--bad)}.bar.ehp.lo i{background:#a8362b}
 .field .en .sts{margin:3px 0 1px}.field .en .sts i{font-size:calc(13px*var(--fs,1))}
 .slotrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 6px}

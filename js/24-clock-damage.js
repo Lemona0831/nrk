@@ -56,6 +56,7 @@ function eSpeed(b, e) { let s = e.spd * (hasMod(b, 'bell') || hasMod(b, 'drums')
 /* 1T 경계마다 전역 처리 */
 function tickOnce(b) {
   b.tick++; const T = b.tick; const p = b.p;
+  chDev(b, 'onRoundEnd'); // A0 챕터 장치
   expireAll(b);
   for (const e of alive(b)) if (e.pile && e.pile.born < T) { e.pile.wait--; if (e.pile.wait <= 0) riseSkel(b, e, ''); } // 뼈 더미: 그 라운드에 생긴 더미는 줄지 않는다
   for (const w of alive(b)) if (w.role === 'bonewall' && !b.en.some(m => m.id === w.wallOf && m.alive)) { w.alive = false; w.hp = 0; logp(b, 'good', '쌓은 자가 쓰러져 뼈벽이 무너진다'); }
@@ -260,7 +261,7 @@ function wdHeld(b, p, o, held) {
 /* 방어 보호막: 기본 WARD.guard, 다진 의지면 + 의지 × 0.5, 버팀목이면 생명력 50% 이하에서 2배 (생성 배율은 addWard가 곱한다) */
 function wdGuardWard(p) { let v = (p.wdSt && p.wdSt.valor ? WD_BOUND.valorGuard : WARD.guard) + /* M5-1 용맹: 방어할 때 보호막 +6 → +18 */ (fxFlag(p, 'guardWil') ? 0.5 * stat(p, 'wil') : 0); if (fxFlag(p, 'guardLow') && p.hp <= p.hpMax * 0.5) v *= 2; return v + uqA(p, 'u_guardWard', p); /* M6-1 고유 wd_h1 문지기의 맹세: 수비 태세 중 +8 */ }
 /* 화형 사제의 영창이 끊긴다 (쌓인 피해 · 무너짐 · 소모품) */
-function chantBreak(b, e, why) { ysResp(b, '끊기'); uqR(b.p, 'u_cut', b, b.p, e); /* M6-1 고유 hn_h6 */ elCutEv(b, e, 1, 0); /* 10월 18일 0.8.0 5단계 원소술사: 영창 끊기 (끊어진 영창 · 흩어진 주의 · 원소 장막) */ e.chant = null; e.pyreRest = 1; e.teleTurn = null; if (e.intent && (CHANT_K.includes(e.intent.k) || MCH_K.includes(e.intent.k))) e.intent = { k: 'attack' }; logp(b, 'good', (why ? why + ' ' : '') + e.n + '의 영창이 끊긴다'); }
+function chantBreak(b, e, why) { ysResp(b, '끊기'); uqR(b.p, 'u_cut', b, b.p, e); /* M6-1 고유 hn_h6 */ elCutEv(b, e, 1, 0); /* 10월 18일 0.8.0 5단계 원소술사: 영창 끊기 (끊어진 영창 · 흩어진 주의 · 원소 장막) */ e.chant = null; e.pyreRest = 1; e.teleTurn = null; if (e.intent && (CHANT_K.includes(e.intent.k) || MCH_K.includes(e.intent.k))) { e.intent = { k: 'attack' }; e.teleX = 1; } logp(b, 'good', (why ? why + ' ' : '') + e.n + '의 영창이 끊긴다'); }
 /* 보스 단계 문턱과 마지막 단계 버티기. 넘친 피해는 hurtEnemy가 쌓아 두고(e.bank), 보스가 차례를 마쳐 문이 열리면 bossBankApply가 넣는다 */
 function bossGate(b, e) {
   if (e.boss === 'queen') queenThresh(b, e);
@@ -278,6 +279,20 @@ function bossBankApply(b, e) {
   logp(b, 'good', '쌓였던 피해가 ' + e.n + '에게 들어간다. ' + r1(dealt) + ' 피해' + (held > 0 ? ' (쌓임 ' + r1(held) + ' · ' + ((bossDwell(e) || {}).last ? '버티는 중' : '단계 문턱') + ')' : ''));
   if (e.hp <= 0) killEnemy(b, e);
   checkEnd(b);
+}
+/* ===== 0.8.0 A0 챕터 장치 틀: CH_DEVICE[챕터]의 훅(onRoomStart · onRoundEnd · onFoeBreak · onFoeDown · onRoomEnd)을 부른다. 장치가 없으면 아무 일도 없다 */
+function chDevOf(b) { return typeof CH_DEVICE !== 'undefined' ? CH_DEVICE[(b && b.ctx && b.ctx.ch) || 1] || null : null; }
+function chDev(b, h, ...a) { const D = chDevOf(b); if (D && typeof D[h] === 'function') { D[h](b, ...a); if (b.rec) b.rec.push({ k: 'dev', h }); } }
+function chDevChip(b) { const D = chDevOf(b); if (!D || !D.chip) return ''; const t = D.chip(b); return t ? `<span class="chip devc" data-info="chdev">${esc(D.n || '')} ${esc(String(t))}</span>` : ''; }
+/* ===== 0.8.0 A0 갑옷 · 방패 (2 · 3챕터 설계 확정 「갑옷과 방패」. 값은 data/foes.js armor · shield, 1 · 2챕터는 둘 다 0) =====
+   갑옷 N: 맞을 때마다 피해 −N, 단 원래 피해의 1/3은 들어간다. 무너지면 벗겨진다(그 전투 · 보스는 그 단계). 지속 피해는 무시한다.
+   방패 N겹: 한 적을 노린 행동 하나를 통째로 막고 한 겹 잃는다(강공격은 두 겹). 광역 · 지속 피해는 지나간다 */
+function foeAS(b, e) { if (e.armor == null) { const F = foeDef(b, e); e.armor = (F && F.armor) || 0; e.shield = e.shieldMax = (F && F.shield) || 0; } return e; }
+function foeArmor(b, e, d, o) {
+  if (e.shield > 0 && !o.aoe) { const n = b.cur && b.cur.id === 'heavy' ? 2 : 1; if (e.shBlkA !== b.actN) { e.shBlkA = b.actN; e.shield = Math.max(0, e.shield - n); logp(b, 'sys', e.n + '의 방패가 막는다. 방패 ' + e.shield + '겹'); b.rec.push({ k: 'shieldBlk', role: e.role, n }); } return 0; }
+  if (e.shBlkA === b.actN && b.actN != null && !o.aoe) return 0; // 막은 행동의 나머지 타격
+  if (e.armor > 0 && !e.armorOff) d = Math.max(d / 3, d - e.armor);
+  return d;
 }
 function hurtEnemy(b, e, raw, o) {
   o = o || {};
@@ -317,6 +332,7 @@ function hurtEnemy(b, e, raw, o) {
   }
   if (d > 0 && b.p.build === 'elementalist') { const fa = fxAdd(b.p, 'flatAdd', b, b.p, e, o, b.cur); if (fa) d += fa; } // 10월 18일 0.8.0 5단계 원소술사 고정 피해(flatAdd, 원거리 초안 1-3 · 결정 10): 배율을 모두 곱한 뒤 더한다(불의 학도 스킬 첫 타격 +3 · 남는 울림 열충격 +3)
   d = Math.max(0, d);
+  if (!o.dot && d > 0 && (foeAS(b, e).shield > 0 || e.armor > 0 || (e.shBlkA != null && e.shBlkA === b.actN))) { d = foeArmor(b, e, d, o); if (d <= 0) return 0; } // A0 갑옷 · 방패
   if (e.role === 'bomber') d = !o.dot && !o.aoe ? Math.max(d, e.hp) : Math.min(d, Math.max(0, e.hp - 1)); // 자폭병 (10월 4일): 한 적 공격 한 번에는 반드시 쓰러지고, 광역 · 지속 피해로는 쓰러지지 않는다
   const hp0 = e.hp;
   e.hp -= d;
@@ -387,8 +403,10 @@ function killEnemy(b, e) {
   fxRun(b.p, 'onKill', b, b.p, e);
   chargeEv(b, 'kill'); ysPreKill(b, e); // 10월 15일 유산 1차 시제품: 먼저 치우기
   b.rec.push({ k: 'kill', t: r1(b.t), role: e.role });
+  chDev(b, 'onFoeDown', e); // A0 챕터 장치
 }
-function checkEnd(b) {
+function checkEnd(b) { const was = b.over; checkEnd0(b); if (!was && b.over) chDev(b, 'onRoomEnd', b.over); } // A0 챕터 장치: 방이 끝날 때 한 번
+function checkEnd0(b) {
   if (b.over) return;
   if (b.p.hp <= 0 && b.ctx.safe) { b.p.hp = 1; logp(b, 'good', '수련장의 짚 인형처럼 버틴다. 여기서는 쓰러지지 않는다(생명력 1)'); }
   if (b.p.hp <= 0) { b.p.hp = 0; b.over = 'lose'; logp(b, 'bad', '무릎이 꺾인다. 쓰러졌다'); return; }

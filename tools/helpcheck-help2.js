@@ -53,7 +53,7 @@ module.exports = function (api) {
   add('help', '장비 가방은 20칸, 소모품 가방은 따로 5칸', '상수: BAG_MAX=' + E('BAG_MAX') + ', CONS_BAG=' + E('CONS_BAG') + ', 소스: bagUsed는 장비만(10월 14일 개편 1단계)', E => E('BAG_MAX') === 20 && E('CONS_BAG') === 5 && !src('bagUsed').includes('cons'));
   add('help', '판매품은 칸을 차지하지 않고 상점에 들어갈 때 골드로', '소스: consAdd가 판매품을 pouchAdd로, genShop이 pouchSell', E => src('consAdd').includes('pouchAdd') && src('genShop').includes('pouchSell'));
   add('help', '가방은 20칸이고 가득 차면', '상수: BAG_MAX=' + E('BAG_MAX'), E => E('BAG_MAX') === 20);
-  add('help', '(예: "공격 4 · 출혈 2")', '소스: 공격 예고 문장이 "공격 N · 출혈 N" 꼴 (enemyIntent)', E => has("'공격 ' + est + (i.bleed ? ' · 출혈 ' + i.bleed"));
+  add('help', '(예: "공격 4 · 출혈 2")', '소스: 공격 예고 문장이 "공격 N · 출혈 N" 꼴 (data/foes.js TELE_T.attack · f_bleed)', E => E('TELE_T.attack[0]').startsWith('공격 {est}{bleed}') && E('TELE_T.f_bleed[0]') === ' · 출혈 {n}');
 
   /* ===== 적의 예고와 역할 ===== */
   add('help', '평소의 1.75배 피해를 주고', '상수: TELE.heavy=' + E('TELE.heavy') + ', EKW.heavyVuln=' + E('EKW.heavyVuln'), E => E('TELE.heavy') === 1.75 && E('EKW.heavyVuln') === 2);

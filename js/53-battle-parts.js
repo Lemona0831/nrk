@@ -263,6 +263,8 @@ function eordHtml(b, e) {
   return L.length ? `<span class="eord${L[0] === 1 ? ' soon' : ''}" data-info="eord">${L.join('·')}번째</span>` : '<span class="eord done" data-info="eord">✓ 다음 라운드</span>';
 }
 /* 적 생명력: 굵은 막대 + 큰 숫자. 30% 아래면 붉게 */
+/* A0 갑옷 · 방패 칩: 생명력 막대 옆. 둘 다 0이면 아무것도 그리지 않는다 */
+function foeASHtml(b, e) { foeAS(b, e); if (!(e.armor > 0) && !(e.shieldMax > 0)) return ''; return `<span class="foeas">${e.armor > 0 ? `<span class="farm${e.armorOff ? ' off' : ''}" data-info="farmor" aria-label="갑옷 ${e.armorOff ? '벗겨짐' : e.armor}">🪖<b>${e.armorOff ? '–' : e.armor}</b></span>` : ''}${e.shieldMax > 0 ? `<span class="fshd" data-info="fshield" aria-label="방패 ${e.shield}/${e.shieldMax}겹">${'<i class="on"></i>'.repeat(e.shield)}${'<i></i>'.repeat(Math.max(0, e.shieldMax - e.shield))}</span>` : ''}</span>`; }
 function ehpBar(e) { const r = e.hpMax > 0 ? Math.max(0, Math.min(1, e.hp / e.hpMax)) : 0; return `<span class="bar hp ehp${r <= 0.3 ? ' lo' : ''}" role="progressbar" aria-label="생명력" aria-valuemin="0" aria-valuemax="${Math.round(e.hpMax)}" aria-valuenow="${shownHp(e.hp)}"><i style="width:${r * 100}%"></i><span><b>${shownHp(e.hp)}</b> / ${Math.round(e.hpMax)}</span></span>`; }
 /* 이번 차례에 남은 칸: ⚡ 빠른 행동(먼저) + ▶ 주 행동(차례를 끝냄) */
 function slotHtml(b) {

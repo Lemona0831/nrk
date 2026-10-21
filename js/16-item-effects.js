@@ -133,7 +133,7 @@ const IFX = {
   copperflask: { heal: 0.01, onFlask: (b, p, k) => { if (k === 'mana') { p.st = Math.min(p.stMax, p.st + 8); return 1; } } },
   towerflask: { onFlask: (b, p, k) => { if (k === 'stam') { addWard(b, p, 10); return 1; } } },
   bigtonic: { cap: { stam: 1 } },
-  holywater: { cap: { life: -1 }, onFlask: (b) => { const e = alive(b).find(x => x.intent && (x.intent.k === 'charge' || x.intent.k === 'heavy') && x.role !== 'boss'); if (!e) return; e.intent = { k: 'attack' }; logp(b, 'good', '성수가 튀자 ' + e.n + '이(가) 강타를 거둔다'); return 1; } },
+  holywater: { cap: { life: -1 }, onFlask: (b) => { const e = alive(b).find(x => x.intent && (x.intent.k === 'charge' || x.intent.k === 'heavy') && x.role !== 'boss'); if (!e) return; e.intent = { k: 'attack' }; e.teleX = 1; logp(b, 'good', '성수가 튀자 ' + e.n + '이(가) 강타를 거둔다'); return 1; } },
   emberflask: { heal: -0.05, onFlask: (b, p, k) => { if (k !== 'life') return; let n = 0; for (const e of alive(b)) if (e.role !== 'root') { addS(b, e, 'ignite', 1); n++; } return n ? 1 : 0; } },
 };
 /* ===== 2챕터 장비 효과 (IFX2, 10월 7일, docs/아이템/2챕터-장비.md · 장비-경제.md 9절) =====
@@ -159,7 +159,7 @@ const fxStam = (p, x) => { p.st = Math.min(p.stMax, p.st + x); if (p.exhaust && 
 const fxOnce = (b, key) => { b.fxOn = b.fxOn || {}; if (b.fxOn[key] === b.actN) return false; b.fxOn[key] = b.actN; return true; };
 const fxCnt = (b, key, max) => { b.fxN = b.fxN || {}; if ((b.fxN[key] || 0) >= max) return false; b.fxN[key] = (b.fxN[key] || 0) + 1; return true; };
 function fxCdMax(b, p, not) { return ysItem(b, '장비') || null; } // 10월 15일 유산 1차 시제품 변환: 쿨타임이 가장 많이 남은 스킬 −1 → 유산 +1(라운드에 한 번)
-function fxUnearth(b, e, vuln) { if (e.foe === 'stalker') return; e.under = 0; e.intent = { k: 'attack' }; e.teleTurn = null; if (vuln) addS(b, e, 'vuln', vuln); logp(b, 'good', e.n + '이(가) 땅 위로 끌려 나온다'); }
+function fxUnearth(b, e, vuln) { if (e.foe === 'stalker') return; e.under = 0; e.intent = { k: 'attack' }; e.teleX = 1; e.teleTurn = null; if (vuln) addS(b, e, 'vuln', vuln); logp(b, 'good', e.n + '이(가) 땅 위로 끌려 나온다'); }
 function fxPileKill(b, e) { e.norise = 1; e.hp = 0; killEnemy(b, e); checkEnd(b); }
 const fxBig = o => !!(o.charged || (o.src && o.src.intent && o.src.intent.aimed && !o.dot));
 function fxApplyKw(b, e, k, n) { if (!e || !e.alive || !(n > 0)) return 0; return k === 'poison' ? addPoison(b, e, n, 1) : addS(b, e, k, n); }

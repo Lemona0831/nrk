@@ -224,7 +224,7 @@ function playerAct(b, id, tgtId) {
       if (p.build === 'hunter') p.hnLastT = tgt.id; // 0.8.0 5단계: 직전에 친 적(강공격은 버프를 받지 않는다)
       if (tele && isV2(p) && tgt.alive) logp(b, 'good', '힘을 모으는 ' + tgt.n + '의 빈틈을 내리친다. 붕괴 +' + YUSAN.heavyTele);
       addBreak(b, tgt, ((isCaster(p) && !isV2(p) ? 30 : 35) + 5 * Math.floor(stat(p, 'str') / 10) + (p.eq.weapon === 'maul' ? 20 : 0) + (tele && isV2(p) ? YUSAN.heavyTele : 0)) * (BRK_RULE.basic0 ? BRK_RULE.heavyMul : 1) + (uqF(p, 'u_maul') ? 20 : 0)); /* M6-1 고유 cm_maul: 강공격 붕괴 +20(배율 밖) */ if (BRK_RULE.basic0 && p.asSt && p.asSt.zan > 0 && p.asSt.zanBrk && tgt.alive) addBreak(b, tgt, p.asSt.zanBrk); /* M5-7: 흔드는 잔영(분신 붕괴)은 잔영난무 동안 강공격에 */ if (p.eq.weapon === 'maul') time = 1.4; applyReflux(b, tgt);
-      if (tele && isV2(p) && tgt.alive && ysBigTele(tgt) && !(tgt.brkMax > 0) && !(tgt.elite || tgt.strong || tgt.role === 'boss')) { if (tgt.chant) { tgt.chant = null; tgt.pyreRest = 1; } tgt.intent = { k: 'attack' }; tgt.teleTurn = null; logp(b, 'crit', tgt.n + '의 예고를 강공격으로 끊는다'); ysResp(b, '끊기'); uqR(p, 'u_cut', b, p, tgt); /* M6-1 고유 hn_h6 */ } // 붕괴 게이지가 없는 약한 적만 바로 끊는다
+      if (tele && isV2(p) && tgt.alive && ysBigTele(tgt) && !(tgt.brkMax > 0) && !(tgt.elite || tgt.strong || tgt.role === 'boss')) { if (tgt.chant) { tgt.chant = null; tgt.pyreRest = 1; } tgt.intent = { k: 'attack' }; tgt.teleX = 1; tgt.teleTurn = null; logp(b, 'crit', tgt.n + '의 예고를 강공격으로 끊는다'); ysResp(b, '끊기'); uqR(p, 'u_cut', b, p, tgt); /* M6-1 고유 hn_h6 */ } // 붕괴 게이지가 없는 약한 적만 바로 끊는다
       break;
     }
     case 'sig': {
@@ -362,7 +362,7 @@ function addBreak(b, e, v) {
   if (e.exposed) v *= FOE_X.sexton.brk; // 솟구친 묘지기: 드러난 동안 붕괴 ×1.5
   if (hasBt(b.p, 'break')) v *= 1.2;
   if (e.vow) v *= 1.5;
-  e.brk += v * (1 + 0.01 * stat(b.p, 'str'));
+  { const bv = v * (1 + 0.01 * stat(b.p, 'str')); e.brk += bv; if (b.cur) b.pBrk = (b.pBrk || 0) + bv; } // A0 tools/hitref.js: 내 행동이 채운 붕괴 합
   if (e.brk >= e.brkMax && e.role === 'bonewall') { e.brk = 0; logp(b, 'crit', e.n + '이(가) 산산이 부서진다'); killEnemy(b, e); checkEnd(b); return; }
   if (e.brk >= e.brkMax) {
     const cut = !!(e.intent && ['heavy', 'charge', 'explode', 'fuse', 'chant', 'chanting', 'burn'].includes(e.intent.k)); const elChant = b.p.build === 'elementalist' && !!(e.chant || (e.intent && (CHANT_K.includes(e.intent.k) || MCH_K.includes(e.intent.k)))); /* 10월 18일 0.8.0 5단계 원소술사: 영창을 끊었는가 */ if (e.chant) { e.chant = null; e.pyreRest = 1; logp(b, 'good', e.n + '의 영창이 끊긴다'); } // 모으던 강타·폭발을 끊었는가 (수련장 목표)
@@ -371,13 +371,15 @@ function addBreak(b, e, v) {
     if (e.foe === 'cantor' && hymnReset(b)) { logp(b, 'good', '노래가 흩어진다'); codexHit(b, 'cantor', 'cut'); }
     if (e.foe === 'scribe' && (b.seal || []).length) { b.seal = []; logp(b, 'good', '봉인이 풀린다'); codexHit(b, 'scribe', 'unseal'); }
     if (e.intent && e.intent.k === 'sacrifice') { e.sacNext = null; e.sacCool = ABBOT.sacCool; logp(b, 'good', e.n + '의 제사가 끊긴다'); }
-    if (e.intent && (e.intent.k === 'heavy' || e.intent.k === 'charge' || e.intent.k === 'explode' || e.intent.k === 'fuse' || CHANT_K.includes(e.intent.k) || e.intent.k === 'sacrifice' || e.intent.k === 'sacprep' || e.intent.k === 'retprep' || e.intent.k === 'return' || e.intent.k === 'mimic' || e.intent.k === 'reflect')) { if (e.foe === 'knight' && ['retprep', 'return'].includes(e.intent.k)) codexHit(b, 'knight', 'stop'); if (e.foe === 'echo' && e.mimicOn) codexHit(b, 'echo', 'cut'); e.intent = { k: 'attack' }; }
+    if (e.intent && (e.intent.k === 'heavy' || e.intent.k === 'charge' || e.intent.k === 'explode' || e.intent.k === 'fuse' || CHANT_K.includes(e.intent.k) || e.intent.k === 'sacrifice' || e.intent.k === 'sacprep' || e.intent.k === 'retprep' || e.intent.k === 'return' || e.intent.k === 'mimic' || e.intent.k === 'reflect')) { if (e.foe === 'knight' && ['retprep', 'return'].includes(e.intent.k)) codexHit(b, 'knight', 'stop'); if (e.foe === 'echo' && e.mimicOn) codexHit(b, 'echo', 'cut'); e.intent = { k: 'attack' }; e.teleX = 1; }
     e.mimicOn = null; if (e.foe === 'collector' && e.s.protect) { delete e.s.protect; logp(b, 'good', '몸에 두른 뼈가 쏟아져 내린다'); codexHit(b, 'collector', 'shatter'); } if (e.boss === 'cryptlord' && b.carve) { b.carve = null; logp(b, 'good', '군주가 무너지자 새긴 이름이 흐려진다'); codexHit(b, 'cryptlord', 'carvebreak'); }
     if ((b.ctx.ch || 1) >= 3) ch3OnBreak(b, e);
     if (e.role === 'boss') { e.breaks++; e.brkMax = Math.round(e.brkMax * 1.5); }
+    if (e.armor > 0 && !e.armorOff) { e.armorOff = 1; logp(b, 'good', e.n + '의 갑옷이 벗겨진다'); } // A0: 그 전투(보스는 그 단계) 동안
     logp(b, 'crit', e.n + '의 자세가 무너진다. 모으던 힘이 흩어지고 다음 행동을 놓친다');
     const hnK = b.p.build === 'hunter'; if (hnK) b.brkCut = cut; fxRun(b.p, 'onBreak', b, b.p, e); if (hnK) b.brkCut = false; // 0.8.0 5단계 사냥꾼 끊은 화살 · 멈춰 세운 틈: 끊기였는가
     b.rec.push({ k: 'break', t: r1(b.t), role: e.role, cut: cut ? 1 : 0 });
+    chDev(b, 'onFoeBreak', e, cut); // A0 챕터 장치
     ysResp(b, cut ? '끊기' : '무너뜨리기'); // 10월 15일 유산 1차 시제품: 대응 충전
     if (b.p.build === 'elementalist') elCutEv(b, e, elChant, !!b.elShockBrk); // 10월 18일 0.8.0 5단계 영창 끊기 노드(흩어진 주의 · 원소 장막). 끊어진 영창의 대응 +1 더는 위 ysResp가 준다(결정 5)
   }

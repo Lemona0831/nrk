@@ -207,9 +207,7 @@ const STAT_REC = { assassin: { dex: 0.4, int: 0.35, con: 0.25 }, warden: { str: 
 /* 정예 접사 "강인": 체력 +50% (4.6절 1막 접사). 정예에게 상층 35%, 하층 60% */
 const TOUGH_CHANCE = { upper: 0.35, lower: 0.6 };
 /* 1챕터(저주받은 수도원) 적 이름. 역할은 카드에 작게 함께 보인다 */
-const ENEMY_NAMES = {
-  1: { bruiser: '광신 수도사', shield: '문지기 수사', archer: '종탑 궁수', healer: '피 닦는 수녀', summoner: '뼈 부르는 사제', bomber: '불붙은 고행자', pyre: '화형 사제', minion: '일어선 시체', thief: '헌금함 도둑', darkmage: '검은 기도사' },
-};
+const ENEMY_NAMES = { 1: Object.fromEntries(Object.values(FOES).filter(f => f.ch === 1 && f.grade === 'mob').map(f => [f.id, f.n])) }; // A0: 이름은 data/foes.js
 
 /* ===== 챕터 (10월 5일, 1~3챕터 작업): 챕터마다 다른 값은 여기서만 읽는다(chData). 층 틀(16층, 갈림길 4 · 9 · 12층)은 모든 챕터가 같다.
    n 이름, boss 보스, settleLore 정산 분위기 문장, nextLore 다음 챕터를 내다보는 문장, diff 던전 세기(없으면 DIFF), names 적 이름(없으면 ENEMY_NAMES[1]).
@@ -223,21 +221,11 @@ const inCh = (x, ch) => (x.ch || 1) === (ch || 1);
 /* ===== 강적과 보스: 처음 만날 때 "눈에 보이는 것", 겪은 뒤 도감 (기획서 11.9절) =====
    여기에는 대처법을 쓰지 않는다. 기믹 상세는 저장소 밖 비공개 문서에 있다 */
 const FOE_INTRO = {
-  abbot: { n: '타락한 수도원장', lore: '제단 앞에서 등을 돌린 채, 아직도 누군가의 고해를 기다린다.', see: ['수도원장이 낡은 성서를 펼친다. 손가락이 당신의 이름 위에서 멈춘다.'] },
-  bellringer: { n: '종지기', lore: '줄을 놓지 않는 손. 종은 아직 울리지 않았다.', see: ['뒤쪽에 큰 종이 매달려 있다. 종지기가 줄을 감아쥔다.'] },
-  bishop: { n: '납골당 주교', lore: '뼈로 엮은 주교관을 쓴 자. 묻힌 이들이 아직 그의 말을 듣는다.', see: ['주교가 지팡이로 바닥을 두드린다. 흙 아래에서 무언가 꿈틀거린다.'] },
-  cantor: { n: '성가 조율자', lore: '무너진 성가대석에서 혼자 박자를 센다.', see: ['조율자가 손을 들자 곁의 수도사들이 숨을 맞춘다.'] },
-  scribe: { n: '검은 서기관', lore: '펜촉에서 검은 잉크가 끝없이 떨어진다.', see: ['서기관이 두루마리를 펼친다. 당신이 할 수 있는 일들이 한 줄씩 적혀 있다.'] },
-  pilgrim: { n: '굶주린 순례자', lore: '먼 길을 걸어온 자. 이제 무엇을 먹어도 배가 차지 않는다.', see: ['순례자가 입가를 훔친다. 손등에 마른 피가 묻어 있다.'] },
+  ...Object.fromEntries(Object.values(FOES).filter(f => f.ch === 1 && f.log.lore).map(f => [f.id, { n: f.n, lore: f.log.lore, see: [f.log.see] }])), // A0: 1챕터는 data/foes.js log
 };
 /* 도감: 처음 겪은 일만 적힌다 (결과만, 대처법은 플레이어 메모) */
 const CODEX = {
-  abbot: { brand: '죄를 읽으면 낙인이 남는다. 낙인이 쌓인 채 내리치는 강타는 더 아프다.', vow: '입을 다문 동안에는 공격하지 않고 상처를 다스린다.', vowbreak: '서원이 깨지고 빈틈이 드러났다.', judgment: '낙인이 가득 찬 채 내리치는 강타는 심판이 된다.', demand: '수도원장은 때로 맞서기를, 때로 침묵을 요구한다.', bell: '입을 다물기 전, 종이 울리며 몸에 두른 기운이 흩어진다.', candles: '입을 다문 동안 촛불이 켜진다. 서원이 끝날 때 남은 촛불이 수도원장을 북돋운다.', altar: '제단이 무너지며 돌이 떨어진다. 돌은 이따금 다시 떨어진다.', sacrifice: '숨이 다해 가면 수도원장이 수도사를 끌어당겨 제물로 삼는다.', monks: '쓰러지기 직전, 제단에서 수도사들이 일어나 수도원장을 돌본다.' },
-  bellringer: { ring: '종이 울리면 적들이 서두른다.', bellbreak: '큰 종이 부서졌다. 종지기가 비틀거렸고 종은 더 울리지 않았다.' },
-  bishop: { raise: '주교가 지팡이를 두드리면 시체가 일어선다.', spear: '뼈 창은 일어선 시체를 삼키고, 삼킨 만큼 무겁다.' },
-  cantor: { hymn: '조율자가 음을 고를수록 곁의 적들이 거세진다.', chorus: '노래가 끝나면 곁의 적들이 한꺼번에 덮친다.', cut: '노래가 흩어졌다.' },
-  scribe: { seal: '서기관이 적어 넣은 것은 한동안 쓸 수 없다.', verdict: '봉인이 가득 차자 선고가 내렸다.', unseal: '봉인이 풀렸다.' },
-  pilgrim: { leech: '맞힐 때마다 피를 마시며 상처를 메운다.', frenzy: '반쯤 쓰러지면 더 빨라진다.', rot: '쓰러질 때 썩은 기운이 퍼져, 다음 방까지 몸에 남는다.' },
+  ...Object.fromEntries(Object.values(FOES).filter(f => f.ch === 1 && f.log.codex).map(f => [f.id, f.log.codex])), // A0: 1챕터는 data/foes.js log.codex
 };
 
 /* ===== 2챕터: 잊힌 지하묘지 (10월 5일, docs/챕터/2챕터.md. 강적 · 보스의 기믹과 대처는 비공개 문서) =====
