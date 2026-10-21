@@ -70,7 +70,7 @@ function adminGearSnapshot(run) { return run.eqU && run.inv ? EQ_SLOTS.map(sl =>
 
 function logSwap(run, it, on, ctx) { const r = G.eqWhy || {}; run.swaps.push({ ch: run.ch || 1, detail: adminItemSnapshot(it), room: run.room, item: it.tpl, uid: it.uid, g: it.g, b: it.b, on: on ? 1 : 0, reason: r.reason || '', note: r.note || '', ctx: ctx || 'free', t: Date.now() }); }
 function newBadge(x) { return x && x.fresh ? '<span class="item-new"><span class="sr">새로 획득 </span><span aria-hidden="true">new!</span></span>' : ''; }
-function lockButton(it) { return `<button class="sm" data-a="eqlock" data-k="${it.uid}" aria-pressed="${!!it.locked}" aria-label="${esc(ITEMS[it.tpl].n)} ${it.locked ? '잠금 해제' : '잠금'}">${it.locked ? '잠금 해제' : '잠금'}</button>`; }
+function lockButton(it) { return `<button class="sm" data-a="eqlock" data-k="${it.uid}" aria-pressed="${!!it.locked}" aria-label="${esc(isG8(it) ? g8Name(it) : ITEMS[it.tpl].n)} ${it.locked ? '잠금 해제' : '잠금'}">${it.locked ? '잠금 해제' : '잠금'}</button>`; }
 function itemRemoveWhy(run, uid) { return run.inv[uid] && run.inv[uid].locked ? '잠긴 장비입니다. 먼저 잠금을 해제하세요' : ''; }
 function addItem(run, it) { if (bagUsed(run) >= BAG_MAX) return false; it.fresh = true; run.inv[it.uid] = it; run.bag.push(it.uid); return true; }
 function rewardEquipSlots(it) { const kind = tplKind(it.tpl); return kind === 'ring' ? ['ring1', 'ring2'] : [kind]; }
@@ -147,6 +147,7 @@ function simEquip(run, uid, slot) {
   applyGear(t); return gearStats(t.p);
 }
 function compareHtml(run, uid, slot) {
+  if (isG8(run.inv[uid]) || (run.eqU[slot] && isG8(run.inv[run.eqU[slot]]))) return g8Compare(run, run.inv[uid], slot); /* 0.8.0 M6-1 장비 틀(js/17) */
   const it = run.inv[uid]; const curU = run.eqU[slot]; const cur = curU && run.inv[curU];
   const a = gearStats(run.p), b = simEquip(run, uid, slot);
   const rows = []; let up = 0, down = 0;
@@ -172,6 +173,7 @@ function compareHtml(run, uid, slot) {
   return `<div class="cmp"><div class="cmpv ${v[0]}">${v[1]}</div><div class="cmph">${cur ? `지금 낀 <b class="gr-${cur.g}">${inm(cur.tpl, cur.g)}</b>과 비교` : '이 칸은 비어 있습니다'}</div>${rows.length ? `<ul class="cmpl" aria-label="바뀌는 것">${rows.join('')}</ul>` : ''}</div>`;
 }
 function itemDetail(it, opt) {
+  if (isG8(it)) return g8Detail(it, opt); /* 0.8.0 M6-1 장비 틀: 다섯 줄(js/17) */
   const I = ITEMS[it.tpl]; const R = GRADE[it.g] || GRADE.n; const o = opt || {};
   return `<div class="idet grb-${it.g}${it.fresh ? ' has-new' : ''}">${newBadge(it)}<div class="idet-h"><b class="gr-${it.g}">${inm(it.tpl, it.g)}</b>${gradeTag(it.g)}<span class="mini">${EQ_SLOT_N[kindOf(I.slot) === 'ring' ? 'ring1' : I.slot].replace(' 1', '')}</span></div>
 <div class="idet-base"><b>${baseText(it)}</b>${o.compact ? '' : ` <span class="mini">${I.kind === 'start' ? '시작 장비' : it.rollV===2 ? `${R.n} 범위 +${R.lo}~${R.hi}% 중 +${it.b}%` : `보유 보너스 +${it.b}%`}</span>`}</div>${I.act ? `<div class="l act">${esc(I.act)}</div>` : ''}${I.cost ? `<div class="l cost">대가: ${esc(I.cost)}</div>` : ''}${I.lore && !o.compact ? `<p class="lore">${esc(I.lore)}</p>` : ''}</div>`;
@@ -179,7 +181,7 @@ function itemDetail(it, opt) {
 /* 지금 낀 장비 한 줄 (고르기 창: 아직 얻지 않은 장비는 비교할 수 없어 낀 것을 보인다) */
 function curLine(run, k) {
   const kind = tplKind(k); const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind; const u = run.eqU[sl], x = u && run.inv[u];
-  return `<p class="mini nowl">${x ? `지금 낀 장비: <b class="gr-${x.g}">${inm(x.tpl, x.g)}</b> · ${baseText(x)}` : `${EQ_SLOT_N[sl].replace(' 1', '')} 칸은 비어 있습니다`}</p>`;
+  return `<p class="mini nowl">${x ? `지금 낀 장비: <b class="gr-${x.g}">${isG8(x) ? g8NameHtml(x) : inm(x.tpl, x.g)}</b> · ${baseText(x)}` : `${EQ_SLOT_N[sl].replace(' 1', '')} 칸은 비어 있습니다`}</p>`;
 }
 /* 방을 이긴 직후 얻은 것 한 줄 요약 (G.winSum: 이긴 방의 골드 · 경험치 · 소모품, 첫 창에만 보인다) */
 function winSumHtml() {
@@ -204,7 +206,7 @@ function vEquip() {
   h += `<div class="eqcols"><section class="eqslots" aria-label="장비 칸">`;
   for (const sl of EQ_SLOTS) {
     const u = run.eqU[sl], it = u && run.inv[u]; const on = !sel.uid && sel.slot === sl;
-    h += `<button class="eqrow${on ? ' on' : ''}${it ? ' grb-' + it.g : ''}" data-a="eqsel" data-k="${sl}" aria-pressed="${on}"><span class="eqsl">${EQ_SLOT_N[sl]}</span>${it ? `<span class="eqn gr-${it.g}"><span class="eqg" aria-hidden="true">${(GRADE[it.g] || GRADE.n).n[0]}</span><span class="sr">${(GRADE[it.g] || GRADE.n).n} </span>${it.g === 'l' ? '<span aria-hidden="true">✦ </span>' : ''}${esc(ITEMS[it.tpl].n)}</span><span class="eqb">${baseText(it)}</span>` : '<span class="eqn empty">비어 있음</span>'}</button>`;
+    h += `<button class="eqrow${on ? ' on' : ''}${it ? ' grb-' + it.g : ''}" data-a="eqsel" data-k="${sl}" aria-pressed="${on}"><span class="eqsl">${EQ_SLOT_N[sl]}</span>${it ? `<span class="eqn gr-${it.g}"><span class="eqg" aria-hidden="true">${(GRADE[it.g] || GRADE.n).n[0]}</span><span class="sr">${(GRADE[it.g] || GRADE.n).n} </span>${it.g === 'l' || it.uq ? '<span aria-hidden="true">✦ </span>' : ''}${esc(isG8(it) ? g8Name(it) : ITEMS[it.tpl].n)}</span><span class="eqb">${baseText(it)}</span>` : '<span class="eqn empty">비어 있음</span>'}</button>`;
   }
   h += `</section><div class="eqdet" aria-live="polite">`;
   if (sel.uid && run.inv[sel.uid]) {
@@ -233,7 +235,7 @@ function vEquip() {
     const u = bag[i], it = u && run.inv[u];
     if (!it) { h += `<div class="bagc empty" aria-hidden="true"></div>`; continue; }
     const fits = kindOf(sel.slot) === tplKind(it.tpl) && !sel.uid; const on = sel.uid === u;
-    h += `<button class="bagc grb-${it.g}${on ? ' on' : ''}${fits ? ' fits' : ''}${it.fresh ? ' has-new' : ''}" data-a="eqpick" data-k="${u}" aria-pressed="${on}">${newBadge(it)}${it.locked ? '<span class="item-lock" aria-label="잠김">🔒</span>' : ''}<span class="gr-${it.g}">${inm(it.tpl, it.g)}</span><small>${EQ_SLOT_N[kindOf(ITEMS[it.tpl].slot) === 'ring' ? 'ring1' : ITEMS[it.tpl].slot].replace(' 1', '')} · ${it.ch || 1}챕터</small><small>${baseText(it)}</small></button>`;
+    h += `<button class="bagc grb-${it.g}${on ? ' on' : ''}${fits ? ' fits' : ''}${it.fresh ? ' has-new' : ''}" data-a="eqpick" data-k="${u}" aria-pressed="${on}">${newBadge(it)}${it.locked ? '<span class="item-lock" aria-label="잠김">🔒</span>' : ''}<span class="gr-${it.g}">${isG8(it) ? g8NameHtml(it) : inm(it.tpl, it.g)}</span><small>${EQ_SLOT_N[tplKind(it.tpl) === 'ring' ? 'ring1' : tplKind(it.tpl)].replace(' 1', '')} · ${it.ch || 1}챕터</small><small>${baseText(it)}</small></button>`;
   }
   h += `</div></section>`;
   const w = G.eqWhy || {};

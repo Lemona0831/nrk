@@ -146,3 +146,5 @@ body:has(.sheet-bg) .toast{top:calc(env(safe-area-inset-top,0px) + 6px)}
 .cacts{display:flex;gap:4px;align-items:center}.cline .cbrew{min-height:44px;white-space:nowrap}.cbrewl{color:var(--good)}
 .cstat{font-size:13px;color:var(--good);white-space:nowrap}.cstat.warn{color:var(--muted)}
 .bagline.consrow{grid-template-columns:1fr}.bagline.consrow>.row{justify-content:flex-end;flex-wrap:wrap}
+/* 0.8.0 M6-1 장비 틀: 접사 줄(꼬리표 아이콘 하나) · 영웅 축 줄 · 고유 규칙 · 대가 */
+.idet.g8 .l{font-size:calc(13px*var(--fs,1));margin:2px 0;line-height:1.45}.idet.g8 .l.af .afi{display:inline-block;width:1.3em;text-align:center;opacity:.85}.idet.g8 .l.ax{color:var(--gold)}.idet.g8 .l.act{color:var(--ink)}.idet.g8 .l.cost{color:var(--bad,#d77)}.idet.g8 .l.mini{color:var(--muted);font-size:calc(12px*var(--fs,1))}

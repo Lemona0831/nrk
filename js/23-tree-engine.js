@@ -257,6 +257,7 @@ function skCostAt(b, s, tgt) {
   if (b.ovDisc && c0 >= 4) { const c1 = Math.max(1, c0 - SB_OVER.off); if (c1 < best.c) best = { c: c1, by: 'ksOver' }; }
   if (b.altDisc && c0 >= (SB_ALT2.min || 1)) { const c1 = Math.max(1, c0 - SB_ALT2.off); if (c1 < best.c) best = { c: c1, by: 'altDbl' }; }
   if (s.kind === 'cut' && !(b.condUsed && b.condUsed.uqCut === (b.ysR || 0)) && uqF(b.p, 'u_cutDisc')) { const c1 = Math.max(1, c0 - 1); if (c1 < best.c) best = { c: c1, by: 'uqCut' }; } /* M6-1 고유 sb_r3: 베기 스킬 유산 −1(내 차례에 한 번, 바닥 1, 가장 큰 할인 하나만) */
+  if (b.p && b.p.g8u && !(b.condUsed && b.condUsed.g8co === (b.ysR || 0))) { const co = uqV(b.p, 'u_costOnce', [], (a, v) => a.concat(v)); if (co.length && (s.tags || []).some(t => co.includes(t))) { const c1 = Math.max(1, c0 - 1); if (c1 < best.c) best = { c: c1, by: 'g8co' }; } } /* M6-1 접사 costOnce: [꼬리표] 스킬 유산 −1(내 차례에 한 번, 바닥 1, 가장 큰 할인 하나만) */
   return best;
 }
 /* ---- 큰 각인 (1-7) ---- */

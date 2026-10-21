@@ -154,7 +154,7 @@ function hurtPlayer(b, raw, o) {
   if (!o.dot && o.src && o.src.redNext) { d *= 1 - o.src.redNext; o.src.redNext = 0; } // 소모품 흩뿌리는 성물 · 연막: 그 적의 다음 공격 하나
   if (!o.dot && o.src && o.src.bigRed) { d *= 1 - o.src.bigRed; o.src.bigRed = 0; } // 소모품 종 조각: 큰 공격을 모으는 적의 다음 공격(그 큰 공격)
   if (!o.dot && o.src && p.decoy && p.decoy.round === b.round && (o.counter || o.src.row === 'back')) d *= 1 - p.decoy.v; // 소모품 미끼 인형: 이번 라운드 반격 · 후열 사격
-  const dG0 = d; if (p.guard && !o.judgment) d *= 1 - (1 - (p.eq.gloves === 'ragechain' ? 0.6 : fxFlag(p, 'guardWeak') ? 0.7 : 0.5)) * carveMul(b, 'prep'); // 준비가 새겨지면 방어가 덜 줄인다 // 심판은 방어로 줄지 않는다 // 0.8.0 5단계 방패를 내린 자: 방어가 30%만
+  const dG0 = d; if (p.guard && !o.judgment) d *= 1 - (1 - (p.eq.gloves === 'ragechain' ? 0.6 : fxFlag(p, 'guardWeak') ? 0.7 : 0.5)) * carveMul(b, 'prep'); if (p.guard && !o.judgment && p.g8u) { const gr = uqV(p, 'u_guardRed', 0, (a, v) => a + v); if (gr) d *= 1 - Math.min(0.6, gr); } /* M6-1 접사 guardRed: 방어 중 받는 피해 −N% 더 */ // 준비가 새겨지면 방어가 덜 줄인다 // 심판은 방어로 줄지 않는다 // 0.8.0 5단계 방패를 내린 자: 방어가 30%만
   const held = p.guard && !o.judgment && !o.dot && o.src && o.src !== p ? Math.max(0, dG0 - d) : 0; // 방어로 줄인 피해 (받아낸 몫)
   if (held > 0 && o.charged && o.src.alive && p.sbSt && p.sbSt.shackle && stk(o.src, 'bleed') > 0) { addBreak(b, o.src, SB_BOUND.shackleBrk); logp(b, 'good', '피의 족쇄: 막아 낸 강타, ' + o.src.n + '에게 붕괴 +' + SB_BOUND.shackleBrk); } // M5-0 보정 4
   if (held > 0 && o.src.alive && fxFlag(p, 'ksSinBlock')) { const n = Math.ceil(held * SB_BOUND.sinBlock); if (n > 0) { addS(b, o.src, 'bleed', n); logp(b, 'good', '죄인의 각인: 받아낸 피가 ' + o.src.n + '에게 출혈 ' + n + '로 되돌아간다'); } } // 0.8.0 M5-0

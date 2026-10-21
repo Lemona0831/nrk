@@ -579,6 +579,22 @@
    "introduced": "M5-7",
    "expires": "상시",
    "note": "M5-7 강공격 붕괴 배율(규칙을 켰을 때, 기본 1)"
+  },
+  {
+   "name": "GEAR8",
+   "kind": "env",
+   "default": null,
+   "introduced": "M6-1",
+   "expires": "M6-2에서 기본값 켬",
+   "note": "M6-1 장비 틀(gear8): 1이면 GEAR8.on — 접사 · 고유 장비(data/affixes.js · data/uniques.js)를 p.g8로 적용. 0 · 없음이면 끔(옛 장비 그대로, 같은 시드 결과 같음)"
+  },
+  {
+   "name": "GEAR8.on",
+   "kind": "game",
+   "default": "false",
+   "introduced": "M6-1",
+   "expires": "M6-2",
+   "note": "gear8 스위치(js/17). M6-2 생성기와 함께 기본값 켬"
   }
  ]
 }

@@ -20,7 +20,7 @@ function v2Static(s) { return { id: s.id, n: s.n, v2: 1, s, skill: 1, melee: s.t
 /* 흘리기를 건다: 고른 적의 다음 공격을 줄이고, 흘려 내면 on의 효과를 그 적에게. 흘리기 준비(pbuf)가 있으면 얹고 1 쓴다 */
 function setParry(b, tgt, red, on) {
   const p = b.p; p.dodge = tgt.id; p.fxDodged = 1;
-  let r = red != null ? red - asParryCut(p) : parryRed(p); const o = Object.assign({}, on || {});
+  let r = red != null ? red - asParryCut(p) + uqV(p, 'u_parryRed', 0, (a, v) => a + v) : parryRed(p); /* M6-1 접사 parryRed: 흘리기 스킬에도 */ const o = Object.assign({}, on || {});
   if (p.build === 'assassin') { if (red != null) o.sk = 1; if (p.hp <= p.hpMax * 0.5) r += asSum(p, 'parryLow'); } // 10월 18일 0.8.0 5단계 암살자: 독의 군주의 대가(스킬 흘리기도 −15%p) · 흘리기 스킬 표시(그림자 맹세) · 얇은 그림자(생명력 50% 이하 +5%p, 상한 90%)
   if (p.pbuf) { r += p.pbuf.red; if (p.pbuf.dmg) o.dmg = (o.dmg || 0) + p.pbuf.dmg; if (p.pbuf.poison) o.poison = (o.poison || 0) + p.pbuf.poison; if (p.pbuf.hasten) { o.hasten = (o.hasten || 0) + p.pbuf.hasten; o.hb = p.pbuf.hb; } p.pbuf.n--; if (p.pbuf.n <= 0) p.pbuf = null; }
   if (red != null && uqF(p, 'u_cloak')) r += 0.15; /* M6-1 고유 cm_cloak: 스킬 흘리기도 +15%p(상한 90%) */
@@ -487,7 +487,7 @@ function elBase(b, s, e, base, h, c0) { const p = b.p, F = k => s.fx.find(x => x
 /* 맞힌 뒤(첫 타격, 이 스킬의 상태를 건 뒤): 마력탄의 원소 · 둔화 비례 붕괴 · 얼음 깨기 · 화상 번지기 · 빙염의 화신 */
 function elHit(b, s, e, c0, hit) { const p = b.p, S = p.elSt || {}, F = k => s.fx.find(x => x.k === k);
   { const r3 = hit && c0 > 0 ? uqA(p, 'u_elChillHit', b, s) : 0; if (r3 && e.alive) addS(b, e, 'chill', r3); } /* M6-1 고유 el_r3: 둔화 걸린 적을 서리 스킬로 치면 둔화 +2 */
-  { const bo = F('elBolt'); if (bo && hit) addS(b, e, S.el === 'ice' ? 'chill' : 'ignite', (bo.n || 1) + (S.el === 'ice' ? 0 : uqA(p, 'u_boltIgn', b))); } /* M6-1 고유 el_h1: 불 마력탄 화상 +1 */
+  { const bo = F('elBolt'); if (bo && hit) addS(b, e, S.el === 'ice' ? 'chill' : 'ignite', (bo.n || 1) + (S.el === 'ice' ? 0 : uqA(p, 'u_boltIgn', b)) + uqV(p, 'u_boltSt', 0, (a, v) => a + v) /* M6-1 접사 el_boltSt */); } /* M6-1 고유 el_h1: 불 마력탄 화상 +1 */
   const cb = F('elChillBrk'); if (cb && c0 > 0) { addBreak(b, e, cb.per * c0); logp(b, 'good', e.n + '의 둔화 ' + c0 + ': 붕괴 +' + cb.per * c0); }
   const sh = F('elShatter'); if (sh && c0 > 0 && e.alive) { delete e.s.chill; e.chillR = 0; e.frzP = 0; logp(b, 'good', e.n + '의 얼음을 깨뜨린다. 둔화 ' + c0 + '만큼 피해를 더했다'); b.rec.push({ k: 'elShatter', n: c0 }); }
   const sp = F('elSpreadIgn'); if (sp && e.alive) { const n = Math.floor(st(e, 'ignite') * (sp.per || 0.5)); let k = 0; if (n > 0) for (const o of alive(b)) if (o !== e && o.role !== 'root') { addS(b, o, 'ignite', n); k++; } if (k) logp(b, 'good', e.n + '의 불이 번진다. 다른 적 모두에게 화상 ' + n); }
@@ -512,7 +512,7 @@ function elTurnStart(b, p) { const S = p.elSt; if (S.cat && S.catT !== b.turnIdx
 /* 빙결(elemShock 끝, 열충격 뒤): 이번에 둔화가 가득 찬 적(addS의 e.frzP). 영겁의 정적이 거는 둔화 3은 얼리지 않는다(b.elNoFrz) */
 function elFreeze(b, by) { for (const e of b.en) { if (!e.frzP) continue; e.frzP = 0; if (!e.alive || b.over || e.role === 'root' || st(e, 'chill') < KW.chill) continue;
   delete e.s.chill; e.chillR = 0;
-  if (e.strong || e.role === 'boss') { const fb = uqV(b.p, 'u_frzBrk', EL5_BOUND.frzBrk, (a, v) => Math.max(a, v)); /* M6-1 고유 el_h3: 붕괴 +40 → +60 */ addBreak(b, e, fb); logp(b, 'good', e.n + '이(가) 얼어붙다 만다. 둔화가 풀리고 붕괴 +' + fb); b.rec.push({ k: 'freeze', big: 1, by }); }
+  if (e.strong || e.role === 'boss') { const fb = uqV(b.p, 'u_frzBrk', EL5_BOUND.frzBrk, (a, v) => Math.max(a, v)) + uqV(b.p, 'u_freezeBrk', 0, (a, v) => a + v); /* M6-1 접사 el_freezeBrk */ /* M6-1 고유 el_h3: 붕괴 +40 → +60 */ addBreak(b, e, fb); logp(b, 'good', e.n + '이(가) 얼어붙다 만다. 둔화가 풀리고 붕괴 +' + fb); b.rec.push({ k: 'freeze', big: 1, by }); }
   else { const tl = ysBigTele(e); e.stun = Math.max(e.stun || 0, 1); if (b.p.g8u) e.uqFrz = 1; /* M6-1 고유 el_h8: 얼어서 놓치는 행동 표시(js/30) */ logp(b, 'crit', '빙결: ' + e.n + '이(가) 얼어붙는다. 다음 행동을 놓친다'); if (tl) ysResp(b, '끊기'); b.rec.push({ k: 'freeze', big: 0, by }); } } }
 /* M6-1 고유 장비 읽는 곳(원소술사): 주문의 상태 더하기(el_h2) · 마력 화살 무기 피해 배율(el_h5, basicBase) · 미리 보기용 조용한 합(발동을 세지 않는다) */
 const elStAdd = (b, s, x) => uqA(b.p, 'u_elStAdd', b, s, x);

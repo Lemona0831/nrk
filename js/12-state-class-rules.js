@@ -219,7 +219,7 @@ function elemPreview(b, s, e, multi) {
   for (let h = 0; h < (s.hits || 1); h++) {
     if (hit && !(bo && h === 0) && I > 0) I--;
     if (h === 0) { if (bo) I = 0; if (s.tgt !== 'self') for (const x of s.fx) if (x.k === 'st') add(x.s, x.n + (s.el5 ? elUqQ(b.p, 'u_elStAdd', b, s, x) : 0)); /* M6-1 고유 el_h2 */ if (wv) { if (I && !C) { wvAdd = ['chill', wv.chill]; add('chill', wv.chill); } else if (!I) { wvAdd = ['ignite', wv.ign]; add('ignite', wv.ign); } }
-      if (hit && C0 > 0 && s.tgt !== 'self') add('chill', elUqQ(b.p, 'u_elChillHit', b, s)); /* M6-1 고유 el_r3 */ if (bl) add(b.p.elSt && b.p.elSt.el === 'ice' ? 'chill' : 'ignite', (bl.n || 1) + (b.p.elSt && b.p.elSt.el === 'ice' ? 0 : elUqQ(b.p, 'u_boltIgn', b))); /* M6-1 고유 el_h1 */ if (shx && C0 > 0) C = 0; if (hit && s.tgt !== 'self' && typeof elAvOn === 'function' && elAvOn(b)) { add('ignite', 1); add('chill', 1); } } // M5-5
+      if (hit && C0 > 0 && s.tgt !== 'self') add('chill', elUqQ(b.p, 'u_elChillHit', b, s)); /* M6-1 고유 el_r3 */ if (bl) add(b.p.elSt && b.p.elSt.el === 'ice' ? 'chill' : 'ignite', (bl.n || 1) + (b.p.elSt && b.p.elSt.el === 'ice' ? 0 : elUqQ(b.p, 'u_boltIgn', b)) + uqV(b.p, 'u_boltSt', 0, (a, v) => a + v)); /* M6-1 고유 el_h1 */ if (shx && C0 > 0) C = 0; if (hit && s.tgt !== 'self' && typeof elAvOn === 'function' && elAvOn(b)) { add('ignite', 1); add('chill', 1); } } // M5-5
   }
   const sx = s.fx.find(x => x.k === 'shockx'); const shock = I >= 1 && C >= 1 && !e.under;
   const T = shock ? Math.min(ELEM.cap, I + ELEM.Cw * C) : 0;
