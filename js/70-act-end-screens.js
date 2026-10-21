@@ -136,6 +136,7 @@ function vFinal() {
 
 /* 아직 얻지 않은 장비(고르기 창): 등급과 기본 수치 범위를 함께 보인다 */
 function itemCard(k, extra) {
+  if (k && typeof k === 'object') return `<div class="icard">${g8Detail(k)}${extra || ''}</div>`; /* 0.8.0 M6-2: 새 장비 */
   const I = ITEMS[k]; const g = I.g || 'n'; const R = GRADE[g]; const sb = SLOT_BASE[tplKind(k)]; const v = sb.v[itemChOf(k) - 1] || sb.v[0];
   const range = sb.k === 'flask' ? `${sb.lab} ${Math.round(v * (1 + R.lo / 100) * 1000) / 10}~${Math.round(v * (1 + R.hi / 100) * 1000) / 10}%` : `${sb.lab} ${r1(v * (1 + R.lo / 100))}~${r1(v * (1 + R.hi / 100))}`;
   return `<div class="icard grb-${g}"><div class="idet-h"><b class="in gr-${g}">${inm(k, g)}</b>${gradeTag(g)}<span class="mini">${SLOT_N[I.slot]}</span></div><div class="idet-base">${range}</div>${I.act ? `<div class="l act">${esc(I.act)}</div>` : ''}${I.cost ? `<div class="l cost">대가: ${esc(I.cost)}</div>` : ''}${I.lore ? `<p class="lore">${esc(I.lore)}</p>` : ''}${extra || ''}</div>`;

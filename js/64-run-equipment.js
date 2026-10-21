@@ -31,19 +31,21 @@ function rollBonus(g) { const R = GRADE[g] || GRADE.n; return Math.round((R.lo +
 function poolOf(ch) { return (typeof CH_POOLS !== 'undefined' && CH_POOLS[ch]) || CH1_POOL; }
 /* 장비의 챕터(기본 수치의 챕터): 지금 챕터 풀에 없고 이전 챕터 풀에 있으면 그 챕터 (장비-경제.md 3절 옛 장비) */
 function itemChOf(k) { const c = (typeof G !== 'undefined' && G.run && G.run.ch) || 1; if (c >= 2 && typeof CH_POOLS !== 'undefined' && CH_POOLS[c] && !CH_POOLS[c].includes(k)) for (let x = c - 1; x >= 1; x--) if (CH_POOLS[x] && CH_POOLS[x].includes(k)) return x; return c; }
-function mkItem(k, o) { o = o || {}; const g = o.g || ITEMS[k].g || 'n'; return { rollV: 2, foundAt: Date.now(), uid: 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tpl: k, g, ch: o.ch || itemChOf(k), /* 10월 5일: 기본값이 늘 1이라 2챕터 드롭이 1챕터 수치로 나올 뻔했다 */ b: o.b != null ? o.b : rollBonus(g) }; }
+function mkItem(k, o) { o = o || {}; if (typeof k === 'string' && k.startsWith('g8|')) { const [, g, slot] = k.split('|'); return g8Gen(G.run, { g, slot: slot || undefined, ch: o.ch }); } /* 0.8.0 M6-2: 드롭 자리(dropKey · rollSlotItem)가 넘긴 새 장비 표 */ const g = o.g || ITEMS[k].g || 'n'; return { rollV: 2, foundAt: Date.now(), uid: 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tpl: k, g, ch: o.ch || itemChOf(k), /* 10월 5일: 기본값이 늘 1이라 2챕터 드롭이 1챕터 수치로 나올 뻔했다 */ b: o.b != null ? o.b : rollBonus(g) }; }
 function itemBase(it) { const sb = SLOT_BASE[tplKind(it.tpl)]; const v = sb.v[(it.ch || 1) - 1] * (1 + (it.b || 0) / 100); return { k: sb.k, lab: sb.lab, v }; }
 function baseText(it) { const x = itemBase(it); return x.k === 'flask' ? `${x.lab} ${Math.round(x.v * 1000) / 10}%` : x.k === 'wpn' ? `${x.lab} ${r1(x.v)}` : `${x.lab} +${Math.round(x.v)}`; }
 /* 장비 이름: 등급 글자(평 · 고 · 희 · 영 · 전, 색과 함께 글자로도 보인다)와 전설의 ✦. 색은 부르는 쪽의 gr-g가 입힌다 */
 function inm(tpl, g) { const R = GRADE[g] || GRADE.n; return `<span class="gl" aria-hidden="true">${R.n[0]}</span><span class="sr">${R.n} </span>${g === 'l' ? '<span aria-hidden="true">✦ </span>' : ''}${esc((ITEMS[tpl] || {}).n || tpl)}`; }
+const inmIt = it => isG8(it) ? g8NameHtml(it) : inm(it.tpl, it.g); // 0.8.0 M6-2: 새 장비 이름(js/17)
+const itName = it => !it ? '' : isG8(it) ? g8Name(it) : (ITEMS[it.tpl] || {}).n || it.tpl;
 function gradeTag(g) { return `<span class="gtag gr-${g}">${(GRADE[g] || GRADE.n).n}</span>`; }
 function initGear(run) {
-  if (run.inv) return;
+  if (run.inv) { if (GEAR8.on && g8Purge(run)) applyGear(run); return; } /* 0.8.0 M6-2: 개발 중 세이브의 옛 장비는 그 칸을 비운다(변환 없음, 만든 사람 10월 21일) */
   const p = run.p; run.inv = {}; run.eqU = {}; for (const sl of EQ_SLOTS) run.eqU[sl] = null;
   const put = (it, sl) => { run.inv[it.uid] = it; run.eqU[sl] = it.uid; };
-  put(mkItem('start_wpn_' + run.build, { b: 0 }), 'weapon'); put(mkItem('start_armor', { b: 0 }), 'armor'); put(mkItem('start_flask', { b: 0 }), 'flask');
-  const oldBag = Array.isArray(run.bag) ? run.bag.filter(k => ITEMS[k]) : []; run.bag = [];
-  for (const sl of EQ_SLOTS) { const k = p.eq && p.eq[sl]; if (k && ITEMS[k] && ITEMS[k].kind !== 'start') { const it = mkItem(k); run.inv[it.uid] = it; const prev = run.eqU[sl]; run.eqU[sl] = it.uid; if (prev) run.bag.push(prev); } }
+  if (GEAR8.on) { const S8 = g8StartGear(run); for (const sl in S8) { S8[sl].start = 1; put(S8[sl], sl); } } /* 0.8.0 M6-2: 시작 장비도 새 장비(평범, 기반만) */ else { put(mkItem('start_wpn_' + run.build, { b: 0 }), 'weapon'); put(mkItem('start_armor', { b: 0 }), 'armor'); put(mkItem('start_flask', { b: 0 }), 'flask'); }
+  const oldBag = !GEAR8.on && Array.isArray(run.bag) ? run.bag.filter(k => ITEMS[k]) : []; run.bag = [];
+  for (const sl of EQ_SLOTS) { const k = p.eq && p.eq[sl]; if (!GEAR8.on && k && ITEMS[k] && ITEMS[k].kind !== 'start') { const it = mkItem(k); run.inv[it.uid] = it; const prev = run.eqU[sl]; run.eqU[sl] = it.uid; if (prev) run.bag.push(prev); } }
   for (const k of oldBag) if (!Object.values(run.inv).some(x => x.tpl === k) && run.bag.length < BAG_MAX) { const it = mkItem(k); run.inv[it.uid] = it; run.bag.push(it.uid); }
   applyGear(run, true);
 }
@@ -63,6 +65,7 @@ function slotOfUid(run, uid) { return EQ_SLOTS.find(sl => run.eqU[sl] === uid) |
 function gearCheck(run) { const seen = {}; for (const u of run.bag.concat(EQ_SLOTS.map(sl => run.eqU[sl]).filter(Boolean))) { if (seen[u] || !run.inv[u]) return false; seen[u] = 1; } return Object.keys(run.inv).length === Object.keys(seen).length; }
 /* 저장 시점의 장비 실물 수치와 설명을 보존한다. 조회 시 재계산하지 않는다. */
 function adminItemSnapshot(it, sl) {
+  if (isG8(it)) { const U = it.uq && UNIQUE[it.uq]; return { sl: sl || '', uid: it.uid || '', tpl: it.tpl, name: g8Name(it), g: it.g, ch: it.ch || 1, b: it.b, base: baseText(it), baseValue: itemBase(it).v, effect: U ? U.rule.txt : g8Afs(it).map(g8AfTxt).join(' · '), cost: U ? U.cost.txt : '', af: g8Afs(it).map(a => a.id + ':' + a.v), uq: it.uq || null }; } /* 0.8.0 M6-2 */
   const d = it && ITEMS[it.tpl]; if (!d) return null;
   return { sl: sl || '', uid: it.uid || '', tpl: it.tpl, name: d.n, g: it.g, ch: it.ch || 1, b: it.b == null ? null : it.b, base: baseText(it), baseValue: itemBase(it).v, effect: d.act || '', cost: d.cost || '' };
 }
@@ -180,8 +183,8 @@ function itemDetail(it, opt) {
 }
 /* 지금 낀 장비 한 줄 (고르기 창: 아직 얻지 않은 장비는 비교할 수 없어 낀 것을 보인다) */
 function curLine(run, k) {
-  const kind = tplKind(k); const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind; const u = run.eqU[sl], x = u && run.inv[u];
-  return `<p class="mini nowl">${x ? `지금 낀 장비: <b class="gr-${x.g}">${isG8(x) ? g8NameHtml(x) : inm(x.tpl, x.g)}</b> · ${baseText(x)}` : `${EQ_SLOT_N[sl].replace(' 1', '')} 칸은 비어 있습니다`}</p>`;
+  const kind = k && typeof k === 'object' ? g8Slot(k) : tplKind(k); /* 0.8.0 M6-2: 새 장비(객체)도 */ const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind; const u = run.eqU[sl], x = u && run.inv[u];
+  return `<p class="mini nowl">${x ? `지금 낀 장비: <b class="gr-${x.g}">${isG8(x) ? g8NameHtml(x) : inmIt(x)}</b> · ${baseText(x)}` : `${EQ_SLOT_N[sl].replace(' 1', '')} 칸은 비어 있습니다`}</p>`;
 }
 /* 방을 이긴 직후 얻은 것 한 줄 요약 (G.winSum: 이긴 방의 골드 · 경험치 · 소모품, 첫 창에만 보인다) */
 function winSumHtml() {
@@ -302,7 +305,7 @@ function reviveRun(r) {
   EQ_SLOTS.forEach((sl, i) => { const s2 = r.eq7[i]; if (!s2) return; const [tpl, g] = s2.split(':'); const it = items.find(x => x.tpl === tpl && x.g === g && !used().includes(x.uid)); if (it) run.eqU[sl] = it.uid; });
   run.bag = items.filter(x => !used().includes(x.uid)).slice(0, BAG_MAX).map(x => x.uid);
   for (const it of items) if (used().includes(it.uid) || run.bag.includes(it.uid)) run.inv[it.uid] = it;
-  if (!run.eqU.weapon) { const w = mkItem('start_wpn_' + run.build, { b: 0 }); run.inv[w.uid] = w; run.eqU.weapon = w.uid; }
+  if (GEAR8.on) g8Purge(run); else if (!run.eqU.weapon) { const w = mkItem('start_wpn_' + run.build, { b: 0 }); run.inv[w.uid] = w; run.eqU.weapon = w.uid; } /* 0.8.0 M6-2: 기록의 옛 장비는 되살리지 않는다 */
   applyGear(run, true); for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = flaskCap(p, fk);
   return run;
 }

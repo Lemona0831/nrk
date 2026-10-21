@@ -20,7 +20,7 @@ function mkItem8(spec) {
   return { rollV: 2, g8: 1, foundAt: Date.now(), uid: 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tpl: spec.base, g, ch: spec.ch || 1, b: spec.b != null ? spec.b : Math.round((R.lo + R.hi) / 2),
     af: (spec.af || []).map(([id, v]) => ({ id, v })), ax: spec.ax ? { id: spec.ax[0], v: spec.ax[1] } : null, uq: spec.uq || null };
 }
-function mkUq(id) { const U = UNIQUE[id]; return mkItem8({ base: U.base, g: U.g, ch: U.ch, af: U.af, ax: U.ax && U.ax[1] ? U.ax : null, uq: id }); }
+function mkUq(id, ch) { const U = UNIQUE[id]; return mkItem8({ base: U.base, g: U.g, ch: Math.max(U.ch, ch || U.ch), af: U.af, ax: U.ax && U.ax[1] ? U.ax : null, uq: id }); }
 const g8Slot = it => kindOf((AFFIX_BASE[it.tpl] || {}).slot || 'weapon');
 /* 낀 g8 장비 → p.g8. 같은 묶음(fam)은 큰 값 하나만(3-2 규칙 4 · 10절 결정 1: 두 반지도) */
 function g8Collect(items) {

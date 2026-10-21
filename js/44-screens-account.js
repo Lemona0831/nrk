@@ -135,8 +135,9 @@ function markSetup(run, M) {
 const kitCands = (run, ch, sl, g) => { const p = run.p; const kind = sl === 'ring1' || sl === 'ring2' ? 'ring' : sl; const owned = Object.values(run.inv).map(x => x.tpl); const pool = poolOf(ch - 1).filter(k => ITEMS[k] && ITEMS[k].kind !== 'start' && tplKind(k) === kind && poolOk(p, k) && !owned.includes(k)); const fit = pool.filter(k => itemFits(p, k) && (ITEMS[k].g || 'n') === g), any = pool.filter(k => (ITEMS[k].g || 'n') === g); return fit.length ? fit : any.length ? any : pool; };
 function markKit(run, ch) {
   const p = run.p; const K = MARK_KIT[ch] || MARK_KIT[2];
-  run.kitPick = { ch, opts: {} }; for (const sl of ['weapon', 'armor']) { const L = kitCands(run, ch, sl, K[sl]).slice(); const o = []; while (o.length < 3 && L.length) o.push(L.splice(Math.floor(Math.random() * L.length), 1)[0]); run.kitPick.opts[sl] = { g: K[sl], tpl: o }; }
-  for (const sl of ['gloves', 'amulet', 'ring1', 'ring2']) {
+  run.kitPick = { ch, opts: {} }; if (GEAR8.on) { for (const sl of ['weapon', 'armor']) { const its = {}; for (let k = 0; k < 3; k++) { const it = g8Gen(run, { slot: sl, g: K[sl], ch: ch - 1, own: true, noUq: true }); its[it.uid] = it; } run.kitPick.opts[sl] = { g: K[sl], tpl: Object.keys(its), its }; }
+    for (const sl of ['gloves', 'amulet', 'ring1', 'ring2']) { const it = g8Gen(run, { slot: sl.startsWith('ring') ? 'ring' : sl, g: K.rest[sl] || 'n', ch: ch - 1, noUq: true }); run.inv[it.uid] = it; run.bag.push(it.uid); equipUid(run, it.uid, sl); } } /* 0.8.0 M6-2: 새 장비 꾸러미 */ else for (const sl of ['weapon', 'armor']) { const L = kitCands(run, ch, sl, K[sl]).slice(); const o = []; while (o.length < 3 && L.length) o.push(L.splice(Math.floor(Math.random() * L.length), 1)[0]); run.kitPick.opts[sl] = { g: K[sl], tpl: o }; }
+  if (!GEAR8.on) for (const sl of ['gloves', 'amulet', 'ring1', 'ring2']) {
     const kind = sl === 'ring1' || sl === 'ring2' ? 'ring' : sl; const g = K.rest[sl] || 'n';
     const owned = Object.values(run.inv).map(x => x.tpl);
     const pool = poolOf(ch - 1).filter(k => ITEMS[k] && ITEMS[k].kind !== 'start' && tplKind(k) === kind && poolOk(p, k) && !owned.includes(k));
@@ -152,8 +153,8 @@ function markKit(run, ch) {
 /* 꾸러미 무기 · 갑옷 고르기: 고른 것을 끼우고 시작 장비는 버린다. 둘 다 고르면 창을 닫는다 */
 function kitPick(sl, tpl) {
   const run = G.run, K = run && run.kitPick; if (!K || !K.opts[sl] || !K.opts[sl].tpl.includes(tpl)) return;
-  const g = K.opts[sl].g, R = GRADE[g] || GRADE.n; const old = run.eqU[sl]; const it = mkItem(tpl, { g, ch: K.ch - 1, b: Math.round((R.lo + R.hi) / 2 * 10) / 10 }); run.inv[it.uid] = it; run.bag.push(it.uid); equipUid(run, it.uid, sl);
-  if (old && run.inv[old] && ITEMS[run.inv[old].tpl].kind === 'start') discardUid(run, old); delete K.opts[sl];
+  const g = K.opts[sl].g, R = GRADE[g] || GRADE.n; const old = run.eqU[sl]; const it = K.opts[sl].its ? K.opts[sl].its[tpl] : mkItem(tpl, { g, ch: K.ch - 1, b: Math.round((R.lo + R.hi) / 2 * 10) / 10 }); run.inv[it.uid] = it; run.bag.push(it.uid); equipUid(run, it.uid, sl);
+  if (old && run.inv[old] && (isG8(run.inv[old]) ? run.inv[old].start : ITEMS[run.inv[old].tpl].kind === 'start')) discardUid(run, old); delete K.opts[sl];
   if (!Object.keys(K.opts).length) { run.kitPick = null; G.sheet = null; } applyGear(run); run.p.hp = run.p.hpMax; saveRunLocal(); saveCur(); render();
 }
 /* 꾸러미로 시작하는 판(표식 도전 2 · 3챕터): 배분을 마치면 앞 챕터 정산 뒤 상점에 선다. 상점 물건은 앞 챕터 것 */

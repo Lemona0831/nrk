@@ -41,6 +41,21 @@ const THINK = k => k === 'expert' || k === 'explorer'; // 한 수 앞을 계산�
 const MEASURE = 'careful'; // 목표의 "사고하는 유저" = 신중 (10월 2일 만든 사람 결정: 예고를 읽고 막고, 자원과 길을 관리하는 성향)
 
 /* 장비 점수: 바뀌는 수치의 합(11.11절 "비교 점수") */
+/* 0.8.0 M6-2 새 장비(gear8) 고르기: item-score V(js/19 g8V) + "지금 빌드" 꼬리표가 맞으면 ×1.15. 반지는 V가 낮은 쪽 칸 */
+const F8C = {}; const F8 = k => F8C[k] || (F8C[k] = run_(k));
+const g8On = () => run_('GEAR8.on');
+function g8Val(run, it) { if (!it || !F8('isG8')(it)) return 0; const v = G0.g8V(it); return F8('g8Fits')(it, G0.g8BuildTags(run)) ? v * 1.15 : v; }
+function g8SlotOf(run, it) { const k = F8('g8Slot')(it); if (k !== 'ring') return k; const a = run.inv[run.eqU.ring1], b = run.inv[run.eqU.ring2]; if (!a) return 'ring1'; if (!b) return 'ring2'; return g8Val(run, a) <= g8Val(run, b) ? 'ring1' : 'ring2'; }
+function g8Delta(run, it, sl) { const cur = run.eqU[sl] && run.inv[run.eqU[sl]]; return g8Val(run, it) - g8Val(run, cur); }
+/* 다시 굴리기(6-4): V가 오를 것 같을 때만 — 가장 낮은 접사의 V가 그 등급 한 접사 몫의 75% 아래면 굴린다(한 상점에 두 번까지) */
+function g8RerollPhase(pk, r, run) {
+  if (!g8On() || !(THINK(pk) || pk === 'careful')) return; const IV = F8('ITEM_V'), AF = F8('AFFIX');
+  for (let k = 0; k < 2; k++) { let best = null;
+    for (const sl of ['weapon', 'armor', 'gloves', 'amulet', 'ring1', 'ring2', 'flask']) { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; if (!it || !F8('isG8')(it) || it.uq || !(it.af || []).length || F8('g8RerollWhy')(run, it)) continue;
+      const B = F8('g8Band')(it.g, it.ch), share = (B[0] + B[1]) / 2 / (it.ax ? 3 : it.af.length);
+      it.af.forEach((a, i) => { const v = G0.g8VAf(a.id, a.v, it.ch); if (v < share * 0.75 && (!best || v / share < best.q)) best = { it, i, q: v / share }; }); }
+    if (!best) break; click('reroll', best.it.uid + ':' + best.i); }
+}
 function gearScore(st) { return st.hp * 0.6 + st.mp * 0.25 + st.st * 0.25 + st.basic * 3 + st.heavy * 1.5 + st.flask * 120; }
 
 /* 문 고르기 (성향별) */
@@ -94,9 +109,9 @@ function handleSheets(pk, r) {
       continue;
     }
     if (S.kind === 'drop') {
-      const it = run.inv[S.data.uid]; const kind = G0.tplKind(it.tpl); const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind;
-      const d = gearScore(G0.simEquip(run, it.uid, sl)) - gearScore(G0.gearStats(run.p));
-      const act = !!G0.ITEMS[it.tpl].act; const fit = G0.classFit(run.p, it.tpl);
+      const it = run.inv[S.data.uid]; const n8 = F8('isG8')(it); const kind = G0.tplKind(it.tpl); const sl = n8 ? g8SlotOf(run, it) : kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind;
+      const d = n8 ? g8Delta(run, it, sl) : gearScore(G0.simEquip(run, it.uid, sl)) - gearScore(G0.gearStats(run.p)); /* 0.8.0 M6-2: 새 장비는 V + 지금 빌드 */
+      const act = n8 ? !!it.uq : !!G0.ITEMS[it.tpl].act; const fit = n8 ? F8('g8Fits')(it, G0.g8BuildTags(run)) : G0.classFit(run.p, it.tpl);
       const hl = it.g === 'h' || it.g === 'l'; const why = G0.equipWhy ? G0.equipWhy(run, it.uid, sl) : ''; /* 2챕터 영웅 · 전설: 성향과 상관없이 끼어 본다(초보 빼고). 전설은 하나만(equipWhy) */
       let eq;
       if (hl && !why && pk !== 'novice' && d > -10) eq = true;
@@ -106,7 +121,9 @@ function handleSheets(pk, r) {
       if (why) eq = false;
       if (eq) click('dropequip', it.uid, { s: sl }); else click('dropkeep');
     } else if (S.kind === 'choice') {
-      const o = S.data.offer; const k = THINK(pk) ? (o.find(x => G0.classFit(run.p, x)) || o[0]) : o[Math.floor(r() * o.length)];
+      const o = S.data.offer; let k;
+      if (o.length && typeof o[0] === 'object') { const sc = x => g8Delta(run, x, g8SlotOf(run, x)); k = (THINK(pk) ? o.slice().sort((a, b) => sc(b) - sc(a))[0] : o[Math.floor(r() * o.length)]).uid; } /* 0.8.0 M6-2: 새 장비 상자 */
+      else k = THINK(pk) ? (o.find(x => G0.classFit(run.p, x)) || o[0]) : o[Math.floor(r() * o.length)];
       click('choose', k);
     } else if (S.kind === 'bagfull') { const keep = u => run.inv[u] && ['h', 'l'].includes(run.inv[u].g); click(run.bag.length ? 'bfdrop' : 'bfskip', run.bag.find(u => !keep(u)) || run.bag[0]); } /* 영웅 · 전설은 버리지 않는다 */
     else if (S.kind === 'alloc') { allocAuto(pk, r, run); } /* 10월 16일 0.8.0 2단계: 배분 흐름(옛 세이브 옮기기 · 만들기) */
@@ -456,6 +473,7 @@ function jumpTo(pk, r, ch) {
   G0.initGear(run);
   for (const sl of ['weapon', 'armor', 'gloves', 'amulet', 'ring1', 'ring2']) {
     const kind = sl === 'ring1' || sl === 'ring2' ? 'ring' : sl; const g = sl === 'weapon' || sl === 'armor' ? 'r' : 'm';
+    if (g8On()) { const it = G0.g8Gen(run, { slot: kind, g, ch: ch - 1, own: true, noUq: true }); run.inv[it.uid] = it; run.bag.push(it.uid); G0.equipUid(run, it.uid, sl); continue; } /* 0.8.0 M6-2 */
     const owned = Object.values(run.inv).map(x => x.tpl); const pool = G0.poolOf(ch - 1).filter(k => G0.ITEMS[k] && G0.ITEMS[k].kind !== 'start' && G0.tplKind(k) === kind && G0.poolOk_(run.p, k) && !owned.includes(k));
     const fit = pool.filter(k => G0.itemFits(run.p, k) && (G0.ITEMS[k].g || 'n') === g); const any = pool.filter(k => (G0.ITEMS[k].g || 'n') === g); const L = fit.length ? fit : any.length ? any : pool; if (!L.length) continue;
     const it = G0.mkItem(L[Math.floor(r() * L.length)], { ch: ch - 1 }); run.inv[it.uid] = it; run.bag.push(it.uid); G0.equipUid(run, it.uid, sl);
@@ -466,7 +484,7 @@ function jumpTo(pk, r, ch) {
   G0.applyGear(run); run.p.hp = run.p.hpMax; run.p.st = run.p.stMax; run.p.flask.life = run.p.flaskMax; run.p.flask.mana = run.p.flaskMax; run.p.flask.stam = run.p.flaskMax; run.gold = 0;
   if (process.env.DG_KIT === 'game') { /* 0.8.0 6단계 C-3: 게임의 챕터 시작 꾸러미(MARK_KIT)로 시작한다. 무기 · 갑옷은 셋 가운데 장비 점수가 가장 높은 것. 그다음 앞 챕터 정산 뒤 상점에서 테스터의 상점 정책대로 산다(자연 판과 같은 자리) */
     for (const u of Object.values(run.eqU || {})) if (u) G0.discardUid(run, u); G0.initGear(run); run.cons = []; G0.markKit(run, ch); run.markShop = 0;
-    for (const sl of ['weapon', 'armor']) { const o = run.kitPick && run.kitPick.opts[sl]; if (!o || !o.tpl.length) continue; const sc = tpl => { const it = G0.mkItem(tpl, { g: o.g, ch: ch - 1 }); run.inv[it.uid] = it; const v = gearScore(G0.simEquip(run, it.uid, sl)); delete run.inv[it.uid]; return v; }; const best = o.tpl.slice().sort((a, b) => sc(b) - sc(a))[0]; G0.kitPick(sl, best); }
+    for (const sl of ['weapon', 'armor']) { const o = run.kitPick && run.kitPick.opts[sl]; if (!o || !o.tpl.length) continue; const sc = tpl => { if (o.its) return g8Val(run, o.its[tpl]); /* 0.8.0 M6-2 */ const it = G0.mkItem(tpl, { g: o.g, ch: ch - 1 }); run.inv[it.uid] = it; const v = gearScore(G0.simEquip(run, it.uid, sl)); delete run.inv[it.uid]; return v; }; const best = o.tpl.slice().sort((a, b) => sc(b) - sc(a))[0]; G0.kitPick(sl, best); }
     run.kitPick = null; G0.applyGear(run); run.p.hp = run.p.hpMax; run.p.st = run.p.stMax;
     const c0 = run.ch; run.ch = ch - 1; G0.genShop(run); run.phase = 'shop'; G0.__G.scr = 'shop'; shopPhase(pk, r); run.ch = c0; run.shop = null; run.phase = null; G0.__G.scr = 'run'; G0.__G.sheet = null; }
   if (process.env.DG_JUMP !== 'chrono' && !process.env.KS_ACT_OLD) { run.ch = ch - 1; spendTree(pk, r); G0.treeSync(run); } /* 10월 18일 0.8.0 5단계(원거리 초안 10절 결정 4): 큰 각인 제시가 연 액티브 스킬(유산 4가 있는가)을 보므로, 앞 챕터를 깬 캐릭터처럼 액티브를 먼저 찍고 정산 큰 각인을 받는다. 전에는 Lv1에 찍은 2점만 연 채 받았다. KS_ACT_OLD=1이면 예전 순서 */
@@ -496,8 +514,8 @@ function gamblePhase(pk, r) {
     const cur = sl => Math.min(...(sl === 'ring' ? ['ring1', 'ring2'] : [sl]).map(e => run.eqU[e] && run.inv[run.eqU[e]] ? GR[run.inv[run.eqU[e]].g] : -1));
     const slot = slots.map(sl => ({ sl, v: cur(sl) + r() * 0.5 })).sort((a, b) => a.v - b.v)[0].sl;
     click('gamble', slot); const res = S.gamble; if (!res || !run.inv[res.it.uid]) break;
-    const it = run.inv[res.it.uid]; const kind = G0.tplKind(it.tpl); const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind;
-    const d = gearScore(G0.simEquip(run, it.uid, sl)) - gearScore(G0.gearStats(run.p)); const hl = it.g === 'h' || it.g === 'l'; const why = G0.equipWhy(run, it.uid, sl);
+    const it = run.inv[res.it.uid]; const n8 = F8('isG8')(it); const kind = G0.tplKind(it.tpl); const sl = n8 ? g8SlotOf(run, it) : kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind;
+    const d = n8 ? g8Delta(run, it, sl) : gearScore(G0.simEquip(run, it.uid, sl)) - gearScore(G0.gearStats(run.p)); const hl = it.g === 'h' || it.g === 'l'; const why = G0.equipWhy(run, it.uid, sl);
     if (!why && ((hl && d > -10) || d > 0.5)) { G0.equipUid(run, it.uid, sl); G0.applyGear(run); }
   }
 }
@@ -506,7 +524,7 @@ const altarCost = run => { try { return run_('altarGold')(run); } catch (e) { re
 function shopPhase(pk, r) {
   if (OPT.policy?.shop) return OPT.policy.shop(G0.__G.run, r);
   const G = G0.__G, run = G.run, S = run.shop; if (!S) return;
-  const delta = it => { const kind = G0.tplKind(it.tpl); const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind; const had = !!run.inv[it.uid]; run.inv[it.uid] = it; const d = gearScore(G0.simEquip(run, it.uid, sl)) - gearScore(G0.gearStats(run.p)); if (!had) delete run.inv[it.uid]; return { d: d + (G0.classFit(run.p, it.tpl) && G0.ITEMS[it.tpl].act ? 2 : 0), sl }; };
+  const delta = it => { if (F8('isG8')(it)) { const sl = g8SlotOf(run, it); return { sl, d: g8Delta(run, it, sl) }; } /* 0.8.0 M6-2 */ const kind = G0.tplKind(it.tpl); const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind; const had = !!run.inv[it.uid]; run.inv[it.uid] = it; const d = gearScore(G0.simEquip(run, it.uid, sl)) - gearScore(G0.gearStats(run.p)); if (!had) delete run.inv[it.uid]; return { d: d + (G0.classFit(run.p, it.tpl) && G0.ITEMS[it.tpl].act ? 2 : 0), sl }; };
   for (let n = 0; n < 6; n++) {
     const opts = S.stock.map((x, i) => Object.assign({ i }, x)).filter(o => !o.sold && o.price <= (run.gold || 0) && (G0.bagUsed ? G0.bagUsed(run) : run.bag.length) < (G0.BAG_MAX || 12)).map(o => Object.assign(o, delta(o.it))).map(o => (o.it.g === 'h' && (o.d += 4), o)).filter(o => o.d > 0.5); /* 영웅 칸: 효과가 크다고 보고 더 친다 */
     if (!opts.length) break;
@@ -515,6 +533,7 @@ function shopPhase(pk, r) {
     G0.applyGear(run);
   }
   gamblePhase(pk, r);
+  g8RerollPhase(pk, r, run); G0.applyGear(run);
 }
 /* 0.6a.2 트리: 포인트가 있으면 성향대로 연다. 숙련·탐험가·신중은 한 갈래에 몰고(깊은 칸), 나머지는 아무 칸이나.
    연 스킬은 빈칸에 끼우고, 칸이 차면 가장 낮은 등급과 바꾼다 */

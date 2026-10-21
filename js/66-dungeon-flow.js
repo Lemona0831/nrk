@@ -176,8 +176,8 @@ function rollGrade(minG) { const x = Math.random() * 100; let g = x < 50 ? 'n' :
 /* 2챕터부터의 장비 등급 확률 (장비-경제.md 5.1절). room: 일반 · 매복, big: 강적 · 시련 · 보물, boss: 챕터 보스. 표가 없는 챕터(1챕터)는 예전 그대로 rollGrade · 희귀 */
 const DROP_G = { 2: { room: { n: 58, m: 30, r: 10, h: 1.8, l: 0.2 }, big: { r: 88, h: 10, l: 2 }, boss: { r: 60, h: 32, l: 8 } }, 3: { room: { n: 50, m: 32, r: 14, h: 3.4, l: 0.6 }, big: { r: 88, h: 10, l: 2 }, boss: { r: 60, h: 32, l: 8 } } };
 const OLD_DROP = 0.1; /* 2챕터부터 드롭의 10%는 이전 챕터 풀에서 (평범 · 고급 · 희귀만) */
-function rollGradeCh(ch, src) { const T = DROP_G[ch || 1] && DROP_G[ch || 1][src]; if (!T) return src === 'room' ? rollGrade() : 'r'; const hard = G.run && G.run.mode === 'hard'; const W = g => (hard && (g === 'h' || g === 'l') ? MODES.hard.hero : 1) * (T[g] || 0); let x = Math.random() * (hard ? ['n', 'm', 'r', 'h', 'l'].reduce((q, g) => q + W(g), 0) : 100); /* 가혹: 영웅 · 전설 확률 ×1.5 (나머지는 그만큼 줄어든다) */ for (const g of ['n', 'm', 'r', 'h', 'l']) { if (!T[g]) continue; if (x < W(g)) return g; x -= W(g); } return 'r'; }
-function dropKey(run, g, not) {
+function rollGradeCh(ch, src) { if (GEAR8.on) return g8Grade(ch, src); /* 0.8.0 M6-2: 챕터 확률표 + 자리 보정(6-1) */ const T = DROP_G[ch || 1] && DROP_G[ch || 1][src]; if (!T) return src === 'room' ? rollGrade() : 'r'; const hard = G.run && G.run.mode === 'hard'; const W = g => (hard && (g === 'h' || g === 'l') ? MODES.hard.hero : 1) * (T[g] || 0); let x = Math.random() * (hard ? ['n', 'm', 'r', 'h', 'l'].reduce((q, g) => q + W(g), 0) : 100); /* 가혹: 영웅 · 전설 확률 ×1.5 (나머지는 그만큼 줄어든다) */ for (const g of ['n', 'm', 'r', 'h', 'l']) { if (!T[g]) continue; if (x < W(g)) return g; x -= W(g); } return 'r'; }
+function dropKey(run, g, not) { if (GEAR8.on) return 'g8|' + g; /* 0.8.0 M6-2: 새 장비는 mkItem이 굴린다 */
   const owned = Object.values(run.inv || {}).map(x => x.tpl); not = not || [];
   let src = poolOf(run.ch); if ((run.ch || 1) >= 2 && 'nmr'.includes(g) && Math.random() < OLD_DROP) src = poolOf(run.ch - 1);
   const base = src.filter(k => poolOk(run.p, k));
@@ -188,7 +188,7 @@ function dropKey(run, g, not) {
   return k;
 }
 /* 챕터 보스를 이기면 장비 하나 (표가 있는 챕터만, 정산 화면에 보인다) */
-function bossLoot(run) { if (!DROP_G[run.ch || 1]) return null; const it = mkItem(dropKey(run, rollGradeCh(run.ch, 'boss'))); it.g = ITEMS[it.tpl].g || 'n'; if (!addItem(run, it)) { run.gearPending = { item: it, then: 'boss' }; return { tpl: it.tpl, g: it.g, pending: 1 }; } run.drops.push({ room: run.room, item: it.tpl, g: it.g, b: it.b, boss: 1, ch: run.ch || 1 }); return { tpl: it.tpl, g: it.g }; }
+function bossLoot(run) { if (!DROP_G[run.ch || 1]) return null; const it = GEAR8.on ? g8Gen(run, { where: 'boss', g: g8Grade(run.ch, 'boss') }) : mkItem(dropKey(run, rollGradeCh(run.ch, 'boss'))); if (!isG8(it)) it.g = ITEMS[it.tpl].g || 'n'; /* 0.8.0 M6-2: 보스는 무기 · 갑옷 가중, 희귀 이상(3챕터 영웅) */ if (!addItem(run, it)) { run.gearPending = { item: it, then: 'boss' }; return { tpl: it.tpl, g: it.g, pending: 1 }; } run.drops.push({ room: run.room, item: it.tpl, g: it.g, b: it.b, boss: 1, ch: run.ch || 1 }); return { tpl: it.tpl, g: it.g }; }
 function queueDrops(list) { G.dropQ = (G.dropQ || []).concat(list); nextDrop(); }
 function nextDrop() {
   const run = G.run; if (run && run.gearPending) { openSheet('bagfull', run.gearPending); return; } if (G.winSumShown) { G.winSum = null; G.winSumShown = false; }
@@ -422,9 +422,9 @@ function battleContinue() {
   if (nu.coffin) drops.push(mkItem(dropKey(run, rollGradeCh(run.ch, 'big'))));
   if (nu3.herald) drops.push(mkItem(dropKey(run, 'r'))); // 여왕의 전령에게 칼을 뽑았다
   for (let k = 0; k < (nu.extraDrop || 0); k++) drops.push(mkItem(dropKey(run, pg(rollGradeCh(run.ch, 'room')))));
-  for (const it of drops) it.g = ITEMS[it.tpl].g || 'n';
+  for (const it of drops) if (!isG8(it)) it.g = ITEMS[it.tpl].g || 'n';
   advanceFloor();
-  const q = []; if (t === 'treasure') { const a = dropKey(run, rollGradeCh(run.ch, 'big')), b2 = dropKey(run, pg(rollGradeCh(run.ch, 'room')), [a]); q.push({ chest: [a, b2], room: run.room - 1 }); }
+  const q = []; if (t === 'treasure') { const a = dropKey(run, rollGradeCh(run.ch, 'big')), b2 = dropKey(run, pg(rollGradeCh(run.ch, 'room')), [a]); q.push({ chest: GEAR8.on ? [mkItem(a), mkItem(b2)] : [a, b2], room: run.room - 1 }); } /* 0.8.0 M6-2: 상자의 새 장비는 미리 굴려 보여 준다 */
   q.push(...drops);
   if (lvUp && typeof sfx === 'function') sfx('b_levelup'); if (xpGot) toast('경험치 +' + xpGot + (lvUp ? ' · 레벨 ' + run.lv + ' 달성' : ''));
   if (lvUp) toast('레벨 ' + run.lv + ' · 패시브 포인트 +' + PT.pts.lv * lvUp + ' · 액티브 포인트 +' + AT_PTS.lv * lvUp + '. 트리에서 찍습니다'); // 10월 16일 0.8.0 2단계: 능력치 창 대신 트리 포인트(남겨도 된다)
