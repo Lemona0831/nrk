@@ -5,7 +5,7 @@
    라운드가 끝나면 중독, 스태미나, 보스 시계, 광폭화를 처리한다(tickOnce). b.t는 지난 라운드 수다 */
 const RND_TWICE = 1.5;
 /* 느린 맥박(0.6a.2 라운드): 내 차례에 빠른 칸이 없다. 빠른 행동도 주 행동처럼 차례를 끝낸다 (10월 3일: 옛 대가 "내 차례가 덜 자주 온다"가 라운드에서는 순서만 뒤로 미뤘다) */
-const noFast = p => isV2(p) && (p.eq.ring1 === 'pulse' || p.eq.ring2 === 'pulse');
+const noFast = p => isV2(p) && (p.eq.ring1 === 'pulse' || p.eq.ring2 === 'pulse' || uqF(p, 'u_noFast')); /* M6-1 고유 cm_pulse 대가 */
 function roundOrder(b, consume, slowMe) {
   const p = b.p; const al = alive(b).filter(e => e.role !== 'root' && e.role !== 'candle' && e.role !== 'bonewall' && e.role !== 'crown' && !e.pile);
   const grp = (u, isP) => { if (isP && (b.ambushR && (b.round || 0) === 0)) return 2; if (isP && !u.s.chill && fxList(u).some(([, f]) => f.first)) return 0; if (!isP && u.quick) return 0; if (u.s.haste) return 0; if (u.s.chill) return 2; return 1; };

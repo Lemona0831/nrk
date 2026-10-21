@@ -25,7 +25,7 @@ function startRun(build, boss) {
 const EQ_SLOTS = ['weapon', 'armor', 'gloves', 'amulet', 'ring1', 'ring2', 'flask'];
 const EQ_SLOT_N = { weapon: '무기', armor: '갑옷', gloves: '장갑', amulet: '목걸이', ring1: '반지 1', ring2: '반지 2', flask: '플라스크' };
 const kindOf = slot => slot === 'ring1' || slot === 'ring2' ? 'ring' : slot;
-const tplKind = k => kindOf(ITEMS[k].slot);
+const tplKind = k => kindOf((ITEMS[k] || AFFIX_BASE[k]).slot); // M6-1: g8 장비의 tpl은 기반 모양(AFFIX_BASE)
 function rollBonus(g) { const R = GRADE[g] || GRADE.n; return Math.round((R.lo + Math.random() * (R.hi - R.lo)) * 10) / 10; }
 /* 챕터마다 장비 풀 (CH_POOLS[ch], 없으면 1챕터 풀) */
 function poolOf(ch) { return (typeof CH_POOLS !== 'undefined' && CH_POOLS[ch]) || CH1_POOL; }
@@ -50,7 +50,8 @@ function initGear(run) {
 /* 장비 칸의 장비로 엔진 값(p.eq, p.gear)과 최대치를 다시 맞춘다. 남은 비율은 유지한다 */
 function applyGear(run, full) {
   const p = run.p; const g = { wpn: 0, hp: 0, st: 0, mp: 0, flask: 0 };
-  for (const sl of EQ_SLOTS) { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; p.eq[sl] = it ? it.tpl : null; if (it) { const x = itemBase(it); g[x.k] += x.v; } }
+  const g8 = []; for (const sl of EQ_SLOTS) { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; p.eq[sl] = it && !isG8(it) ? it.tpl : null; if (it) { const x = itemBase(it); g[x.k] += x.v; if (isG8(it)) g8.push(it); } }
+  if (g8.length) { p.g8 = g8Collect(g8); p.g8u = 1; } else { delete p.g8; delete p.g8u; } /* 0.8.0 M6-1 장비 틀: g8 장비의 접사 · 고유는 p.g8로(js/17) */
   if (!g.wpn) g.wpn = 4; if (!g.flask) g.flask = START_GEAR.flask;
   const f = { hp: p.hpMax ? p.hp / p.hpMax : 1, mp: p.mpMax ? p.mp / p.mpMax : 1, st: p.stMax ? p.st / p.stMax : 1 };
   p.gear = g; p.hpMax = calcHpMax(p); p.mpMax = calcMpMax(p); p.stMax = calcStMax(p);

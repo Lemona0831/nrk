@@ -42,7 +42,8 @@ const hnSolo = p => !!(p && p.build === 'hunter' && fxFlag(p, 'hnSolo'));
 const linkOn = (b, a) => !!(b && b.p.build === 'hunter' && a && a.v2 && a.s && hnBr(a.s) !== '시작' && b.p.lastBr && b.p.lastBr !== hnBr(a.s) && !hnSolo(b.p)); // 사냥꾼 연계: 갈래 스킬 · 시작 스킬(lb)만 연계를 만들고 받는다 // focusHaste: 추적이 3겹이 되는 순간 얻는 가속
 const soloOn = (b, a) => !!(b && b.p.build === 'hunter' && a && a.v2 && a.s && hnBr(a.s) !== '시작' && b.p.lastBr && b.p.lastBr === hnBr(a.s) && hnSolo(b.p)); // 외길 사냥꾼: 같은 갈래를 바로 이어 씀
 const hnLinkMul = p => fxFlag(p, 'hnLinkUp') ? HN.linkUp : HUNT.link;
-const focusCapOf = p => HUNT.focusMax + (p && p.build === 'hunter' && fxFlag(p, 'focusCap') ? 1 : 0); // 끝까지 쫓는 자: 추적 상한 3 → 4 (3겹 효과의 문턱은 HUNT.focusMax 그대로)
+const focusCapOf = p => HUNT.focusMax + (p && p.build === 'hunter' && fxFlag(p, 'focusCap') ? 1 : 0) - uqV(p, 'u_focCapCut', 0, (a, v) => a + v); /* M6-1 고유 hn_r5 대가: 추적 상한 3 → 2 */
+const hnEvCap = p => 3 - uqV(p, 'u_evCapCut', 0, (a, v) => a + v); /* M6-1 고유 hn_r2 대가: 몸 빼기 쌓기 상한 3 → 1 */ // 끝까지 쫓는 자: 추적 상한 3 → 4 (3겹 효과의 문턱은 HUNT.focusMax 그대로)
 /* 숨겨진 직업 1 (10월 7일, butcher): 흡혈(출혈된 적을 근접으로 칠 때, 출혈 1마다 leech, 최대 leechMax, 한 차례 leechTurn), 갈증(잃은 생명력 10%마다 thirst, 최대 thirstMax),
    회복은 최대 생명력까지. 먹기는 전투당 eatFight, 피 수확은 적 하나당 harvest · 전투당 harvestFight까지. 받은 피해 상한 grudgeCap, 한 차례 killRecharge 다시 쓰기 krTurn */
 const BUTCH = { leech: 0.04, leechMax: 0.4, leechTurn: 0.08, harvest: 0.03, harvestFight: 0.12, thirst: 0.03, thirstMax: 0.18, eatFight: 0.4, grudgeCap: 0.3, krTurn: 2 };
@@ -191,7 +192,7 @@ const ELEM = { D: 3, Cw: 2, Bk: 12, guard: 0.2, half: 0.5, cap: 16, rimeMax: 8 }
    (라운드 한도 밖, 전투마다 ELEM_CUT.max번, 흘림새와 같은 장치). 전에는 영창을 끊거나 열충격으로 무너뜨릴 때만이었다 */
 const ELEM_CUT = { max: 2, on: ['끊기', '무너뜨리기', '먼저 치우기'] };
 function elCutResp(b, why) { const p = b.p; if (p.build !== 'elementalist' || !ELEM_CUT.on.includes(why) || !fxFlag(p, 'elCutResp') || (b.elCutN || 0) >= ELEM_CUT.max) return 0; b.elCutN = (b.elCutN || 0) + 1; return ysAdd(b, 1, 'resp', '끊어진 영창'); }
-const elGuardOf = p => ELEM.guard + fxVal(p, 'elGuard', 0, (a, v) => a + v);
+const elGuardOf = p => uqV(p, 'u_noGuard', 0, (a, v) => a || v) ? 0 : uqV(p, 'u_guardBase', ELEM.guard, (a, v) => Math.min(a, v)) + fxVal(p, 'elGuard', 0, (a, v) => a + v); /* M6-1 고유 el_h3 · el_r2: 서리 무게 −20% → −10%, el_r3: 감소 없음 */
 const elShockMul = (b, e, arc, quiet) => { let m = 1; for (const [k, f] of fxList(b.p)) if (f.shockMul) { const v = f.shockMul(b, b.p, e, arc); if (v !== 1 && v != null) { m *= v; if (!quiet) fxHit(k); } } return m; };
 function elCutEv(b, e, chant, shock) {
   if (!b || b.over || b.p.build !== 'elementalist') return; const p = b.p;
@@ -217,13 +218,13 @@ function elemPreview(b, s, e, multi) {
   const add = (k, n) => { if (k === 'chill') { const m = Math.min(n, H); H -= m; n -= m; if (n > 0) C = Math.min(Math.max(KW.chill, C), C + n); } else if (k === 'ignite') { if (igCut) n = Math.max(1, n - 1); I = Math.min(Math.max(KW.ignite, I), I + n); } };
   for (let h = 0; h < (s.hits || 1); h++) {
     if (hit && !(bo && h === 0) && I > 0) I--;
-    if (h === 0) { if (bo) I = 0; if (s.tgt !== 'self') for (const x of s.fx) if (x.k === 'st') add(x.s, x.n); if (wv) { if (I && !C) { wvAdd = ['chill', wv.chill]; add('chill', wv.chill); } else if (!I) { wvAdd = ['ignite', wv.ign]; add('ignite', wv.ign); } }
-      if (bl) add(b.p.elSt && b.p.elSt.el === 'ice' ? 'chill' : 'ignite', bl.n || 1); if (shx && C0 > 0) C = 0; if (hit && s.tgt !== 'self' && typeof elAvOn === 'function' && elAvOn(b)) { add('ignite', 1); add('chill', 1); } } // M5-5
+    if (h === 0) { if (bo) I = 0; if (s.tgt !== 'self') for (const x of s.fx) if (x.k === 'st') add(x.s, x.n + (s.el5 ? elUqQ(b.p, 'u_elStAdd', b, s, x) : 0)); /* M6-1 고유 el_h2 */ if (wv) { if (I && !C) { wvAdd = ['chill', wv.chill]; add('chill', wv.chill); } else if (!I) { wvAdd = ['ignite', wv.ign]; add('ignite', wv.ign); } }
+      if (hit && C0 > 0 && s.tgt !== 'self') add('chill', elUqQ(b.p, 'u_elChillHit', b, s)); /* M6-1 고유 el_r3 */ if (bl) add(b.p.elSt && b.p.elSt.el === 'ice' ? 'chill' : 'ignite', (bl.n || 1) + (b.p.elSt && b.p.elSt.el === 'ice' ? 0 : elUqQ(b.p, 'u_boltIgn', b))); /* M6-1 고유 el_h1 */ if (shx && C0 > 0) C = 0; if (hit && s.tgt !== 'self' && typeof elAvOn === 'function' && elAvOn(b)) { add('ignite', 1); add('chill', 1); } } // M5-5
   }
   const sx = s.fx.find(x => x.k === 'shockx'); const shock = I >= 1 && C >= 1 && !e.under;
   const T = shock ? Math.min(ELEM.cap, I + ELEM.Cw * C) : 0;
   const el = b.p.build === 'elementalist'; const fl = el && shock ? fxList(b.p).reduce((a, [, f]) => a + (f.flatAdd ? f.flatAdd(b, b.p, e, { dot: 1, shock: 1, pre: 1 }, null) || 0 : 0), 0) : 0; // 0.8.0 5단계: 열충격 배수 노드 · 남는 울림(+3)도 미리 본다(발동 기록은 남기지 않음)
-  return { I0, C0, I, C, shock, T, d: shock ? T * ELEM.D * triggerDamageMul(b.p) * ((sx && sx.dmg) || 1) * (multi ? aoeCut(b, e, 1) : 1) * (el ? elShockMul(b, e, 0, 1) : 1) + fl : 0, brk: shock ? C * ELEM.Bk * ((sx && sx.brk) || 1) : 0, wv: wvAdd, burn: bo ? I0 : 0, frz: b.p.build === 'elementalist' && !shock && C >= KW.chill && C0 < KW.chill && !e.under ? 1 : 0, shat: shx ? C0 : 0 }; // M5-5 frz: 이 행동 끝에 얼어붙음, shat: 깨뜨릴 둔화
+  return { I0, C0, I, C, shock, T, d: shock ? T * ELEM.D * triggerDamageMul(b.p) * ((sx && sx.dmg) || 1) * (multi ? aoeCut(b, e, 1) : 1) * (el ? elShockMul(b, e, 0, 1) : 1) + fl : 0, brk: shock && !elUqQ(b.p, 'u_noShockBrk') ? C * ELEM.Bk * ((sx && sx.brk) || 1) : 0, /* M6-1 고유 el_h7 대가 */ wv: wvAdd, burn: bo ? I0 : 0, frz: b.p.build === 'elementalist' && !shock && C >= KW.chill && C0 < KW.chill && !e.under ? 1 : 0, shat: shx ? C0 : 0 }; // M5-5 frz: 이 행동 끝에 얼어붙음, shat: 깨뜨릴 둔화
 }
 /* 열충격 처리 (by: 'me' 내 행동 끝, 'enemy' 적 행동 끝). 내 행동이면 b.shockCtx(runSkill2가 싣는다)의 대상에게 shockx를 붙인다 */
 function elemShock(b, by) {
@@ -238,7 +239,7 @@ function elemShock(b, by) {
     const big = !!(e.intent && (['heavy', 'charge', 'chant', 'chanting', 'burn', 'aim', 'reflect', 'erupt'].includes(e.intent.k) || e.intent.aimed)); const preB = !!e.s.broken; const red = !!(e.braced || e.vow);
     logp(b, 'crit', ''); const ent = b.log[b.log.length - 1];
     const dealt = hurtEnemy(b, e, base * sm * (multi ? aoeCut(b, e) : 1), { dot: 1, shock: 1, shockAoe: multi ? 1 : 0, silent: 1, label: '열충격' }); if (!e.alive) shKill++;
-    let brk = 0; if (e.alive) { delete e.s.ignite; delete e.s.chill; e.chillR = 0; brk = C * ELEM.Bk * ((sx && sx.brk) || 1); b.elShockBrk = 1; addBreak(b, e, brk); b.elShockBrk = 0; } // elShockBrk: 끊어진 영창이 열충격으로 무너뜨림을 안다(addBreak)
+    let brk = 0; if (e.alive) { delete e.s.ignite; delete e.s.chill; e.chillR = 0; if (!uqF(b.p, 'u_noShockBrk')) { brk = C * ELEM.Bk * ((sx && sx.brk) || 1); b.elShockBrk = 1; addBreak(b, e, brk); b.elShockBrk = 0; } } /* M6-1 고유 el_h7 대가: 열충격의 붕괴가 없다 */ // elShockBrk: 끊어진 영창이 열충격으로 무너뜨림을 안다(addBreak)
     const broke = e.alive && !!e.s.broken && !preB;
     fxRun(b.p, 'onShock', b, b.p, e, I, C, dealt, broke);
     ent.m = fixJosa((by === 'enemy' ? '(적 차례) ' : '') + '열충격: ' + e.n + '. 화상 ' + I + ' + 둔화 ' + C + ' × 2 → 피해 ' + r1(dealt) + (brk ? ', 붕괴 +' + Math.round(brk) : ''));
@@ -264,10 +265,10 @@ function elemRime(b, src) {
 /* 수도승 (10월 7일, docs/직업/수도승.md B절; 10월 10일 단순화): 방어하거나 자세를 잡은 동안 전열 적이 나를 직접 치면 되받는다(monkCounter). 피해 = 무기 피해 × ctr + 자세 덤, 붕괴 ctrBrk(강타면 +ctrBig), 기 +kiCtr.
    내 차례 하나 사이에 ctrMax번까지(p.ctrN, 내 차례의 첫 행동에서 0). 기 = 강화이고 되받을 때(와 스킬이 주는 것)만 쌓인다. ▶ 공격이 1을 써서 +25%, ⚡ 공격에는 실리지 않는다(b.curFast) */
 const MONK = { ctr: 0.8, ctrBrk: 10, ctrBig: 25, ctrMax: 2, kiCtr: 1 }; // M5-2(10월 20일 만든 사람): 되받기 한도 3 → 2. 금강 자세(stance.max)가 그 자세 동안 3으로 늘리고, 역천권(p.mkSt.yeok)이 제한을 푼다. ctr 10월 7일 0.5 → 0.8: 던전 보스 승률 1% (다른 직업 12~25%), 0.8에서 10%
-const monkCtrMax = p => p && p.mkSt && p.mkSt.yeok ? Infinity : Math.max(MONK.ctrMax, (p && p.stance && p.stance.max) || 0); // M5-2: 지금 자세의 되받기 한도
+const monkCtrMax = p => p && p.mkSt && p.mkSt.yeok ? Infinity : Math.max(MONK.ctrMax, (p && p.stance && p.stance.max) || 0) + uqA(p, 'u_ctrMax'); /* M6-1 고유 mk_h3 한도 +1 */ // M5-2: 지금 자세의 되받기 한도
 const SEAL_K = ['heal', 'bless', 'summon', 'raise', 'curse', 'hexcurse', 'guard', 'mend', 'build', 'mourn', 'tune', 'seal', 'call']; // 혈도 sealx가 끊는 지원 행동 (일반 · 정예는 평소 공격으로 바뀌고, 강적 · 보스는 붕괴)
 const CTR_SHOW = ['attack', 'heavy', 'brand', 'mirror', 'reflect', 'erupt', 'hand', 'constrict']; // ↩ 표시: 나를 직접 치는 예고 (화형 · 폭발은 되받지 못해 빠진다)
-const monkCtrOk = (b, e) => !!(b.p.build === 'monk' && e && e.alive && realFoe(e) && e.role !== 'candle' && (e.row === 'front' || (b.p.stance && b.p.stance.far)));
+const monkCtrOk = (b, e) => !!(b.p.build === 'monk' && e && e.alive && realFoe(e) && e.role !== 'candle' && (e.row === 'front' || (b.p.stance && b.p.stance.far) || uqF(b.p, 'u_ctrFar'))); /* M6-1 고유 mk_r2 후열도 되받기 */
 const monkShowCtr = (b, e) => monkCtrOk(b, e) && !!(e.intent && CTR_SHOW.includes(e.intent.k)) && !(e.boss === 'abbot' && e.intent.k === 'heavy' && st(b.p, 'brand') >= 3);
 const kiCapOf = p => KW.empower + (p && p.build === 'monk' && p.eq ? fxVal(p, 'kiCap', 0, (a, v) => a + v) : 0); // 0.8.0 5단계: 기의 그릇(계승 C1) 상한 +1
 const setKi = (p, n) => { n = Math.max(0, Math.min(kiCapOf(p), Math.round(n))); if (n > 0) p.s.empower = { stacks: n, until: KW_FOREVER, dur: KW_FOREVER }; else delete p.s.empower; };

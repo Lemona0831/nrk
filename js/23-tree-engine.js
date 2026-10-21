@@ -246,14 +246,17 @@ function skCondMet(b, s, c, tgt) {
   return false;
 }
 function skCostAt(b, s, tgt) {
-  const c0 = skCost(s); if (!b) return { c: c0, by: null }; let best = { c: c0, by: null };
-  { const ws = s.fx && s.fx.find(e => e.k === 'wdStance'), S = b.p && b.p.wdSt; if (ws && S) { if (S[ws.s]) return { c: 0, by: 'wdOff' }; if (S.turncoat && S[ws.s === 'def' ? 'atk' : 'def']) return { c: 0, by: 'wdTurn' }; } } // M5-1 파수꾼 태세: 끄기는 유산 0, 돌아선 방패면 바꾸기도 0
+  const c0 = skCost(s) + (b && b.p && s.kind === 'spell' ? uqV(b.p, 'u_spellYs', 0, (a, v) => a + v) : 0); if (!b) return { c: c0, by: null }; let best = { c: c0, by: null }; /* M6-1 고유 sb_r3 대가: 주문 스킬 유산 +1 */
+  { const z = uqA(b.p, 'u_ysOff', s); if (z) return { c: Math.max(0, c0 - z), by: null }; } /* M6-1 고유 mk_r3 호흡 유산 0 */
+  { const ws = s.fx && s.fx.find(e => e.k === 'wdStance'), S = b.p && b.p.wdSt; if (ws && S) { if (S[ws.s]) return { c: 0, by: 'wdOff' }; if (S[ws.s === 'def' ? 'atk' : 'def'] && (S.turncoat || uqF(b.p, 'u_stanceFree'))) return { c: 0, by: 'wdTurn' }; } } /* M6-1 고유 wd_r3 태세의 장갑: 바꾸기 유산 0 */ // M5-1 파수꾼 태세: 끄기는 유산 0, 돌아선 방패면 바꾸기도 0
+  if (b.p && b.p.g8u && b.p.build === 'elementalist' && s.fx && s.fx.some(e => e.k === 'elSwitch') && uqF(b.p, 'u_freeSwitch')) return { c: 0, by: null }; /* M6-1 고유 el_r1: 원소 전환에 유산이 들지 않는다 */
   for (const c of s.cond || []) { if (b.condUsed && b.condUsed[c.id || s.id] === (b.ysR || 0)) continue; if (skCondMet(b, s, c, tgt)) { const c1 = Math.max(1, c0 - (c.off || 1)); if (c1 < best.c) { best = { c: c1, by: c.id || s.id }; break; } } }
   if (b.p && b.p.hnSt && b.p.hnSt.windDisc && hnBr(s) === '기동' && c0 > 1 && c0 - 1 < best.c) best = { c: c0 - 1, by: 'hnWind' }; // M5-4 바람 걸음: 피한 뒤 다음 기동 스킬 −1(바닥 1)
   /* 10월 17일 보완 1 · 4: 두 번 교대의 다음 스킬 −1(b.altDisc), 마검 과부하 교대 셋의 다음 유산 4 스킬 −3(b.ovDisc). 바닥 1, 가장 큰 할인 하나만 */
   if (b.p && b.p.sbSt && b.p.sbSt.tricolor && s.kind === 'cut' && (b.p.ward || 0) > 0 && !(b.condUsed && b.condUsed.tricolor === (b.ysR || 0)) && alive(b).some(e => stk(e, 'bleed') > 0 && stk(e, 'ignite') > 0)) { const c1 = Math.max(1, c0 - 1); if (c1 < best.c) best = { c: c1, by: 'tricolor' }; } // M5-0 보정 5 결합 칸 삼색검(내 차례에 한 번)
   if (b.ovDisc && c0 >= 4) { const c1 = Math.max(1, c0 - SB_OVER.off); if (c1 < best.c) best = { c: c1, by: 'ksOver' }; }
   if (b.altDisc && c0 >= (SB_ALT2.min || 1)) { const c1 = Math.max(1, c0 - SB_ALT2.off); if (c1 < best.c) best = { c: c1, by: 'altDbl' }; }
+  if (s.kind === 'cut' && !(b.condUsed && b.condUsed.uqCut === (b.ysR || 0)) && uqF(b.p, 'u_cutDisc')) { const c1 = Math.max(1, c0 - 1); if (c1 < best.c) best = { c: c1, by: 'uqCut' }; } /* M6-1 고유 sb_r3: 베기 스킬 유산 −1(내 차례에 한 번, 바닥 1, 가장 큰 할인 하나만) */
   return best;
 }
 /* ---- 큰 각인 (1-7) ---- */
