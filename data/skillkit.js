@@ -4,7 +4,7 @@ const FOCUS_STAT_PCT = 2;
 // 상태를 준비해 소모하는 피해. 지속 피해와 화상 소모의 dotMul은 따로 유지한다.
 const TRIGGER_STAT_PCT = 3;
 function triggerDamageMul(p) { return 1 + stat(p, 'int') * TRIGGER_STAT_PCT / 100; }
-function skillGrowthStat(s) { return s.kind === 'spell' || /^(e_|v_)/.test(s.id) ? 'int' : /^(a_|h_)/.test(s.id) ? 'dex' : 'str'; }
+function skillGrowthStat(s) { return s.kind === 'spell' || /^(e_|e5_|v_)/.test(s.id) ? 'int' : /^(a_|h_)/.test(s.id) ? 'dex' : 'str'; }
 function skillBaseDamage(p, s, n) {
   if (!n || s.id === 'tut_bash' || p.build === 'novice') return n || 0;
   const k=skillGrowthStat(s), weapon=k==='int'?0:Math.max(0,gearOf(p).wpn-START_GEAR.wpn)*0.02;
@@ -71,6 +71,7 @@ const SKK = {
      cN 자세 하나에 되받는 횟수, gIn 피해 절반이 막는 값, ctr 직업 되받기 한 번의 기본 값, cS ctrPer를 쓸 때 지난 차례 뒤 되받은 수, ch 쓸 때 대상이 이미 둔화일 몫,
      ride ▶ 공격에 기 ×1.25가 실리는 몫, fast ⚡ 공격이 주는 기 +1의 몫, seal 끊기를 쓸 때 지원 예고가 있을 몫, sealV 끊은 지원 행동의 값 */
   as5: { Sb: 4, B: 12, Wd: 13 },
+  el5: { B: 5, Wd: 5, hitR: 1.5, hitD: 11, I: 3, C: 1.5, T: 10, vP: 0.5 }, // 0.8.0 M5-5 원소술사 새 칸 [가설, 측정으로 확인]
   hn5: { B: 8, Wd: 8, F: 2, ev: 10 }, // 0.8.0 M5-4 사냥꾼 새 칸 [가설, 측정으로 확인]: 기본 공격 한 대 8 · 무기 피해 8(활 55–65%) · 쓸 때 대상 추적 2 // 0.8.0 M5-3 암살자 새 칸 [가설, 측정으로 확인]: 터뜨릴 때 대상 중독 5(길마다 독을 대고 터뜨린다), 늦은 챕터 기본 공격 한 대 12 · 무기 피해 13(승부수 · 그림자 칸)
   monk5: { K: [0.7, 0.9], Kp: [0.6, 0.8], KpB: {} }, // 0.8.0 M5-2 새 트리 측정(10월 20일, 수도승 360판 · 테스터 v2Pick): 쓸 때 기 — 쏟는 칸 0.4–0.5, 타수 · 기 비례 칸 0.8–1.1. ▶ 공격이 기를 하나씩 쓰고 빠른 기 모으기 칸이 없어 옛 트리(2.5 · 2.2)의 절반 아래
   monk: { K: [2.5, 2.5], Kp: [2, 2.2], KpB: { 부동: [0.8, 0.8] }, loss: 0.5, cN: 0.8, ctr: 9, ch: 0.6, ride: 0.1, seal: 0.25, sealV: 12, Kg: 2 }, // 10월 7일 50상황 측정(Lv5 · Lv10, 테스터 v2Pick 수도승 칸): 터뜨릴 때 기 3.6 · 2.5, 기 비례 때 기 2.9 · 2.2, 끌어올리기 때 기 1.6, 자세 하나에 되받기 1.36 · 1.38, 되받기 한 번 피해 12, 되갚기 때 되받은 수 0.8 · 1.0, 거두기 때 대상 둔화 0.9(Lv5). 자세 칸은 측정값으로 다시 맞추면 줄 예산의 2배가 되어(직업 규칙의 되받기 몫이 칸마다 들어간다) 가설 그대로 두고 50상황 점수로 본다. 중급(Lv10)의 K · Kp만 측정값(2.5 · 2.2)으로 내렸다(처음 가설 3.5 · 3: 중급 터뜨리기 칸이 기가 모자라 오른쪽 기둥이 왼쪽보다 15 낮았다)
@@ -185,9 +186,38 @@ function skValueHn(e, s, K, tm) { const U = HN5_BOUND, H = K.hn5, B = H.B, Wd = 
     case 'hnFocusSelf': return (e.n || 1) * Fv * 0.7;
     case 'hnChillAll': return (e.n || 1) * K.kw.chill * 2;
   } return 0; }
+/* 0.8.0 M5-5 원소술사(10월 20일 만든 사람 설계지 2판): 새 효과의 숫자. 설계지 숫자(빙결 붕괴 +40 · 화신 5% · 천화 절반 · 정적 둔화 3 · 서리 무게 −20%)는 그대로, 나머지는 가설 */
+const EL5_BOUND = { frzBrk: 40, stasisChill: 3, avatarHp: 0.05, meteorHp: 0.5 };
+const EL_K = ['elBolt', 'elSwitch', 'elRimeR', 'elCharge', 'elMulti', 'elChargeEl', 'elCat', 'elBarrier', 'elChillAll', 'elVulnAll', 'elVulnFocus', 'elFrostEmber', 'elFrostWall', 'elManaFire', 'elAvatar', 'elStasis', 'elMeteor', 'elArcane', 'elShatter', 'elChillBrk', 'elSpreadIgn', 'elProtR', 'elIgnGuard'];
+/* 값 식: K.el5 = { B 기본 공격 한 대, Wd 무기 피해, hitR 라운드마다 나를 치는 적, hitD 그 한 대, I 쓸 때 대상 화상, C 쓸 때 대상 둔화, T 그 차례 열충격 합계, vP 비전 일격 때 취약 몫 } [가설] */
+function skValueEl(e, s, K, tm) { const X = K.elem, H = K.el5, B = H.B, Wd = H.Wd, dm = (s.fx.find(x => x.k === 'dmg') || { n: 0 }).n, hits = s.hits || 1, nT = tm || 2;
+  switch (e.k) {
+    case 'elBolt': return (e.n || 1) * 3; // 원소 1의 값(화상 · 둔화 가운데). 피해는 dmg
+    case 'elRimeR': return (e.r || 2) * H.hitR * X.hit * (e.n || 1) * X.kw[e.s || 'chill'];
+    case 'elCharge': return (e.ign || e.chill) ? (e.n || 3) * 0.9 * ((e.ign || 0) * X.kw.ignite + (e.chill || 0) * X.kw.chill) : (e.n || 3) * 0.9 * (e.add || 6); // 기본 공격 n번 · 쓰기 전에 끝날 몫 0.1
+    case 'elMulti': return (e.n || 2) * ((e.shots || 2) - 1) * B * 0.9;
+    case 'elChargeEl': return 2.5 * 0.9 * ((e.ign || 0) * X.kw.ignite + (e.chill || 0) * X.kw.chill);
+    case 'elCat': return ((e.mul || 1.5) - 1) * X.D * H.T * 0.8; // 그 차례 열충격이 일어날 몫 0.8
+    case 'elProtR': return (e.r || 3) * Math.min(e.n || 3, H.hitR) * H.hitD * 0.25; // 라운드마다 보호가 막는 몫(맞는 수까지)
+    case 'elIgnGuard': return 6 * H.hitR * H.hitD * (e.red || 0.4) * 0.7; // 전투 6라운드, 나를 치는 적이 화상일 몫 0.7(마염 · 불꽃 빌드). 받는 피해 줄이기는 모두 합쳐 FX_CAP 0.6까지
+    case 'elBarrier': return (e.r || 3) * H.hitR * H.hitD * (e.red || 0.4);
+    case 'elChillAll': return (e.n || 1) * X.kw.chill * 2;
+    case 'elVulnAll': return (e.n || 1) * K.kw.vuln * 2;
+    case 'elVulnFocus': return (e.n || 1) * K.kw.vuln;
+    case 'elFrostEmber': return 9 * (e.n || 1) * X.D; // 둔화된 적에게 화상을 거는 행동 9번, 화상 1이 열충격 합계 +1
+    case 'elFrostWall': return 7.5 * X.kw.chill; // 보호 · 보호막이 있을 때 맞는 7.5번(보호 꼬리표 빌드)
+    case 'elManaFire': return 12 * 0.7 * X.D; // 기본 공격 12번(기본공격연동 빌드), 화상 걸린 적 0.7 · 화상 1이 열충격 합계 +1
+    case 'elAvatar': return (e.r || 3) * 1.2 * 1.6 * (X.D * 3.5 + X.Bk * K.brk) - (e.r || 3) * 110 * EL5_BOUND.avatarHp * 0.6; // 차례마다 행동 1.2 · 맞히는 적 1.6 · 맞히는 족족 열충격(합계 3.5쯤) · 대가 생명력
+    case 'elStasis': return (e.r || 1) * 3 * K.hunt.stun + 0.5 * EL5_BOUND.stasisChill * X.kw.chill + (e.brk || 0) * K.brk * 0.5 - 1.2 * B; // 놓치게 한 적 3(승부수는 큰 싸움 앞에서), 강적 · 보스 0.5 · 내 다음 차례
+    case 'elMeteor': return -70 * EL5_BOUND.meteorHp * 0.6; // 대가: 지금 생명력의 절반(70쯤), 생명력 1의 값 0.6 (피해는 dmg)
+    case 'elArcane': return H.vP * ((e.mul || 2) - 1) * dm * hits; // 취약 걸린 적일 몫(약화의 표식 길)
+    case 'elShatter': return (e.per || 8) * H.C * 0.8 - H.C * X.kw.chill * 0.5; // 쓸 때 대상 둔화 C, 깬 둔화의 값 절반
+    case 'elChillBrk': return (e.per || 12) * H.C * K.brk;
+    case 'elSpreadIgn': return (e.per || 0.5) * H.I * 1.5 * X.kw.ignite; // 다른 적 1.5
+  } return 0; }
 function skValue(s, ov) {
   if (!ov && SKK.butch && /^b_/.test(String(s.id)) && !s._bu) return skValueBu(s);
-  if (!ov && String(s.id).slice(0, 2) === 'e_') return skValueElem(s);
+  if (!ov && (String(s.id).slice(0, 2) === 'e_' || s.el5)) return skValueElem(s); // M5-5 새 칸(e5_)도 열충격 몫으로 센다
   if (!ov && String(s.id).slice(0, 2) === 'c_' && !s._cf && SKK.conf) return skValueConf(s); // 숨겨진 직업 2: 정화 · 옮기기 · 비례 · 벗기기 · 고행 몫을 더한다(아래 skValueConf) // 원소술사: 열충격 가설(아래 skValueElem)이 화상 · 둔화 값을 바꿔 이 함수를 다시 부른다
   if (!ov && SKK.blood && /^v_/.test(String(s.id)) && !s._bm) return skValueBm(s); // 숨겨진 직업 3: 먹기 · 생명력 내기 · 값 깎기 · 번짐 몫을 더한다 // 원소술사: 열충격 가설(아래 skValueElem)이 화상 · 둔화 값을 바꿔 이 함수를 다시 부른다
   const KWv = (ov && ov.kw) || SKK.kw; const K = SKK; const Sof = k => (s.as5 && k === 'burst' && K.as5 ? K.as5.Sb : K.Sk && K.Sk[k] != null ? K.Sk[k] : K.S); /* M5-3: 새 암살자 칸의 터뜨리기는 K.as5.Sb */ const tm = K.tmul[s.tgt]; const hits = s.hits || 1; let v = 0; const hi = (s.row || 0) >= 7 ? 1 : 0; // hi: 중급(7~10줄)은 Lv7 이상에서 쓴다
@@ -199,6 +229,7 @@ function skValue(s, ov) {
     if (MK_K.includes(e.k)) { v += skValueMk(e, s, K, M, hi, mt); continue; } // 0.8.0 M5-2 수도승
     if (AS_K.includes(e.k)) { v += skValueAs(e, s, K, hi, tm); continue; } // 0.8.0 M5-3 암살자
     if (HN_K.includes(e.k)) { v += skValueHn(e, s, K, tm); continue; } // 0.8.0 M5-4 사냥꾼
+    if (EL_K.includes(e.k)) { v += skValueEl(e, s, K, tm); continue; } // 0.8.0 M5-5 원소술사
     if (SB_BD_K.includes(e.k)) { const Sbi = SB.S.bleed[hi] + SB.S.ignite[hi], kw = SB.kw.bleed, Wv = K.ward.v; const nT = e.n || 3; const U = SB_BOUND;
       switch (e.k) {
         case 'searMerge': v += 0.6 * Sbi * kw * (1.5 - 1); break;
@@ -562,6 +593,13 @@ function skBodyMk(s) {
     case 'meSt': P.push(e.if === 'chill' ? '둔화된 적이면 기 +' + e.n : e.if === 'hit' ? '맞은 적마다 기 +' + e.n : '기 +' + e.n); break;
     case 'sealx': P.push('지원 행동 봉인'); break;
     case 'chillx': P.push('둔화된 적에게 ×' + e.mul); break;
+    case 'rime': P.push('나를 친 적 다음 ' + e.times + '번 ' + skKw(s, e.s || 'chill') + ' ' + e.n); break;
+    case 'elRimeR': P.push(e.r + '라운드 나를 친 적에게 ' + skKw(s, e.s) + ' ' + e.n); break;
+    case 'shockx': P.push(e.arc ? '열충격이 다른 적에게 ' + Math.round(e.arc * 100) + '%' : '열충격 ×' + (e.dmg || 1)); break;
+    case 'burnOut': P.push('대상 화상을 모두 태워 1마다 피해 +' + e.per + ' · 붕괴 +' + e.brk); break;
+    case 'thorn': P.push('맞을 때마다 때린 적에게 피해 ' + e.dmg + ' · ' + e.times + '번'); break;
+    case 'kwx': P.push(skKw(s, e.s) + ' 걸린 적에게 ×' + e.mul); break;
+    case 'ward': P.push('보호막 +' + e.n); break;
     case 'bigx': P.push('큰 적에게 ×' + e.mul); break;
     case 'stance': { const L = ['자세'];
       if (e.red) L.push('받는 피해 −' + Math.round(e.red * 100) + '%'); if (e.dmg) L.push('되받기 +' + e.dmg); if (e.mul) L.push('되받기 ×' + (1 + e.mul)); if (e.max) L.push(e.max + '번까지'); if (e.keep) L.push(e.keep + '차례 유지');
@@ -572,7 +610,7 @@ function skBodyMk(s) {
   return P.join(' · ') + '.';
 }
 function skBody(s) {
-  if (s.mk5 || s.as5 || s.hn5) return skBodyMk(s) + (s.pay ? ' 대가: ' + s.pay : ''); // M5-2 수도승 · M5-3 암살자 한 줄 설명
+  if (s.mk5 || s.as5 || s.hn5 || s.el5) return skBodyMk(s) + (s.pay ? ' 대가: ' + s.pay : ''); // M5-2 수도승 · M5-3 암살자 한 줄 설명
   const out = []; const hits = s.hits || 1; const parts = []; const first = []; const burnWard = s.fx.some(e => e.k === 'wardBurn'); const isE = String(s.id).slice(0, 2) === 'e_'; // first: 연타의 첫 타격에만 거는 상태 (마검사 연타 칸)
   const eMulti = isE && hits > 1 && s.fx.some(e => e.k === 'st'); // 원소술사 여러 번 쏘기: 상태는 첫 발 뒤에 걸려 다음 발부터 쓴다 (엔진 그대로, 문장만)
   const cf = String(s.id).slice(0, 2) === 'c_'; if (cf) out.push(...skBodyConfPre(s)); // 숨겨진 직업 2: 옮기기 · 벗기기 · 정화 · 사함은 피해보다 먼저
@@ -693,7 +731,7 @@ function skBody(s) {
 }
 /* M5-0a(10월 20일 만든 사람): 대사가 있는 스킬(승부수)의 설명란. 대사는 맨 위 따로 한 칸(명조 가운데 인용, 「」는 부채꼴 색 장식 · 위에 ✦ 가는 선, 같은 날 만든 사람 고름), 그 아래 효과 / 대가 / 대상을 줄로 나눈다.
    대가는 색과 "대가" 글자로 구분(색만으로 구분하지 않음). 스크린리더는 "대사: …, 효과: …, 대가: …, 대상: …" 순서. 대사가 없으면 빈 문자열(부른 쪽이 원래 설명을 쓴다) */
-const SK_LINE_COL = { 명궁: '#e8d48a', 유격: '#9fd0e8', 잠복: '#d0604a', /* M5-4 사냥꾼: 만궁 활빛 · 질풍난사 바람빛 · 혈향의 덫 핏빛 */ 독화: '#9ad46a', 암영: '#c9d2e0', 잔영: '#8b7bd8', /* M5-3 암살자: 만독개화 독빛 · 무영살 칼빛 · 잔영난무 잔상빛 */ 반탄: '#f0903c', 역혈: '#e6c060', 파혈: '#e8eef5', /* M5-2 수도승: 역천권 주황 · 천망 금빛 경락 · 일지멸맥 하얀 빛 */ 혈염: '#ef5d3c', '죄인의 피': '#c23a52', '유산의 불': '#f0ac48', 공성추: '#a8bace', '기둥 파쇄': '#c98b4a', '용맹의 투지': '#e8c25a' };
+const SK_LINE_COL = { 빙염: '#b48cf0', 정적: '#a8d8f0', 마염: '#f07a3c', /* M5-5 원소술사: 빙염의 화신 비전빛 · 영겁의 정적 얼음빛 · 천화 불빛 */ 명궁: '#e8d48a', 유격: '#9fd0e8', 잠복: '#d0604a', /* M5-4 사냥꾼: 만궁 활빛 · 질풍난사 바람빛 · 혈향의 덫 핏빛 */ 독화: '#9ad46a', 암영: '#c9d2e0', 잔영: '#8b7bd8', /* M5-3 암살자: 만독개화 독빛 · 무영살 칼빛 · 잔영난무 잔상빛 */ 반탄: '#f0903c', 역혈: '#e6c060', 파혈: '#e8eef5', /* M5-2 수도승: 역천권 주황 · 천망 금빛 경락 · 일지멸맥 하얀 빛 */ 혈염: '#ef5d3c', '죄인의 피': '#c23a52', '유산의 불': '#f0ac48', 공성추: '#a8bace', '기둥 파쇄': '#c98b4a', '용맹의 투지': '#e8c25a' };
 function skDescHtml(s) {
   if (!s || !s.line) return ''; const e = x => String(x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const body = skBody(Object.assign({}, s, { pay: null })), col = SK_LINE_COL[s.b] || 'var(--gold)', who = `${SKK.TGN[s.tgt]} · ${SKK.TN[s.time]}`;

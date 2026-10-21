@@ -273,7 +273,8 @@ function elemPick(b, P, r, okS, reach, pv1) {
     const v = E.elemPreview(b, a.s, e, multi); const d0 = fxOf(a, 'dmg'); const bo = fxOf(a, 'burnOut');
     let m = 1; const lx = fxOf(a, 'lowx'), gx = fxOf(a, 'bigx'), bx = fxOf(a, 'brokenx'), cx = fxOf(a, 'chillx');
     if (lx && e.hp <= e.hpMax * lx.hp) m *= lx.mul; if (gx && isBig(e)) m *= gx.mul; if (bx && e.s.broken) m *= bx.mul; if (cx && e.s.chill) m *= cx.mul;
-    const dd = ((d0 ? qaSkillBase(p,a) * (a.s.hits || 1) : 0) + qaBurnDamage(p,a,v.burn)) * m * (multi ? 0.8 : 1) * (e.evading && !multi ? 0 : 1) * (e.braced ? 0.5 : 1);
+    const shF = fxOf(a, 'elShatter'); const el5 = shF && d0 ? shF.per * (v.shat || 0) * qaSkillBase(p, a) / Math.max(1, d0.n) : 0; // M5-5 빙결 파쇄: 깬 둔화만큼 더한 피해(지능으로 큼)
+    const dd = ((d0 ? qaSkillBase(p,a) * (a.s.hits || 1) : 0) + el5 + qaBurnDamage(p,a,v.burn)) * m * (multi ? 0.8 : 1) * (e.evading && !multi ? 0 : 1) * (e.braced ? 0.5 : 1);
     const flat = d0 && (p.pn || []).includes('n_el_student') && !(e.evading && !multi) ? (multi ? 3 / Math.max(1, al.length) : 3) : 0; // 10월 18일 0.8.0 5단계 불의 학도: 스킬 첫 타격 +3(배율 뒤, 모두 치면 첫 대상 하나라 나눠 본다). 남는 울림 +3 · 열충격 배수 노드는 v.d(elemPreview)에 든다
     const tot = dd + flat + (v.shock ? v.d : 0); const kill = tot >= e.hp;
     const cut = a.s.fx.find(x => x.k === 'cutx'); const cutOn = cut && e.intent && (cut.chant ? ['chant', 'chanting', 'burn'] : ['charge', 'heavy', 'fuse', 'explode', 'chant', 'chanting', 'burn']).includes(e.intent.k);
@@ -283,6 +284,7 @@ function elemPick(b, P, r, okS, reach, pv1) {
     if (kill) val += 6 + prio(e) * 2;
     if (breaks) val += urgent(e) ? 30 : soon(e) ? 8 : 4; else if (urgent(e) || soon(e)) val += brk * 0.06;
     if (v.shock && v.C0 > 0 && hitter(e) && !kill && !breaks) val -= 4 + e.dmg * 0.3 * Math.min(2, v.C0); // 무뎌진 적은 깨지 않는다
+    if (v.frz && !kill) val += isBig(e) ? 3 : nAct[e.id] ? 6 + e.dmg * 0.8 : 3; // M5-5 빙결: 둔화가 가득 차면 다음 행동을 놓친다(강적 · 보스는 붕괴 +40)
     if (!v.shock && !kill) {
       if (v.C > v.C0) val += (hitter(e) ? 1 : nAct[e.id] ? 0.3 : 0.5) * e.dmg * 0.3 * Math.min(2, v.C) + (v.I0 === 0 ? 1 : 0); // 무뎌짐 (평소 공격을 30% 줄인다)
       if (v.I > v.I0) val += (v.I - v.I0) * (isBig(e) ? 1.2 : 0.6); // 화상: 다음 타격 덧피해와 열충격 재료
@@ -624,6 +626,24 @@ function v2Pick(b, P, r, mem, L, al, hv, ex, aware) {
     }
     // 9) 사혈(나에게 쓰는 생명력 내기)은 위의 순서에서만 쓴다
     for (const a of okS.slice()) if (a.self && (a.hpCost || 0) > 0) okS.splice(okS.indexOf(a), 1);
+  }
+  if (p.build === 'elementalist' && p.elSt && !process.env.ELEM_OFF && !process.env.EL5_OFF && gt(p, 'elementalist', 'el5')) {
+    // 0.8.0 M5-5 원소술사 (10월 20일 설계지 2판): 사람은 버튼의 🔥/❄와 적 카드의 원소를 보고 원소 전환을 쓰고, 승부수 · 강화 · 결합 칸은 쓸 때가 보이면 쓴다. 공격 칸 고르기는 아래 elemPick(열충격 · 빙결 미리 보기)
+    const S = p.elSt, hz = (a, k) => a.s.fx.some(e => e.k === k), fastOk = !b.bonusUsed && !nf, slot = a => fastOk || a.time > 0.6;
+    const foes = E.alive(b).filter(e => e.role !== 'root'), bigE = e => !!(e.elite || e.strong || e.role === 'boss'), bigIn = foes.some(bigE), small = foes.filter(e => !(e.strong || e.role === 'boss'));
+    const atkN = pv1.filter(x => x.e.intent && ['attack', 'heavy'].includes(x.e.intent.k)).reduce((m, x) => m + x.n, 0);
+    { const a = okS.find(a => hz(a, 'elMeteor')); if (a && (foes.length >= 2 || bigIn) && p.hp > p.hpMax * 0.55 && r() < 0.8) return [a.id]; } // 천화: 생명력이 넉넉할 때
+    { const a = okS.find(a => hz(a, 'elStasis')); if (a && small.length >= 2 && atkN >= 2 && r() < 0.8) return [a.id]; } // 영겁의 정적: 나를 칠 작은 적이 둘 이상
+    { const a = okS.find(a => hz(a, 'elAvatar')); if (a && !(S.avatar > 0) && (bigIn || foes.length >= 2) && p.hp > p.hpMax * 0.4 && r() < 0.8) return [a.id]; } // 빙염의 화신
+    if (fastOk) { const cb = okS.find(a => a.self && a.time <= 0.6 && ((hz(a, 'elFrostEmber') && !S.frostEmber) || (hz(a, 'elFrostWall') && !S.frostWall) || (hz(a, 'elManaFire') && !S.manaFire) || (hz(a, 'elIgnGuard') && !S.ignGuard))); if (cb) return [cb.id]; } // 전투 내내 가는 칸
+    { const ba = L.find(x => x.id === 'basic' && x.ok); const a = okS.find(a => a.self && slot(a) && ((hz(a, 'elMulti') && !S.multi) || (hz(a, 'elCharge') && !S.charge && !S.kindle))); if (a && ba && !hv) return [a.id]; // 마력 응축 · 마력 연사 · 불씨 응축 → 기본 공격
+      if (ba && (S.charge || S.multi || S.kindle) && !hv) { const t0 = best(ba, (x, y) => ((psn2(y, 'ignite') > 0) - (psn2(x, 'ignite') > 0)) || (x.hp - y.hp)); if (t0) return ['basic', t0.id]; } }
+    { const a = okS.find(a => a.self && slot(a) && ((hz(a, 'elProtR') && !S.protR) || (hz(a, 'ward') && (p.ward || 0) < 8) || (hz(a, 'elBarrier') && !(S.wardU >= (b.round || 0))) || (hz(a, 'thorn') && !(p.thorn && p.thorn.n > 0)) || (hz(a, 'elRimeR') && !(p.rime && Object.values(p.rime).some(x => x && x.until))))); if (a && (hv || atkN >= 2) && r() < 0.7) return [a.id]; } // 버팀 칸: 나를 칠 적이 있을 때
+    { const a = okS.find(a => a.self && hz(a, 'foresee') && slot(a) && !(p.foresee && (b.round || 0) < p.foresee.until)); if (a && hv && r() < 0.7) return [a.id]; } // 고요의 눈
+    { const a = okS.find(a => hz(a, 'elCat')); if (a && fastOk && !(S.cat && S.catT === b.turnIdx) && foes.some(e => psn2(e, 'ignite') + psn2(e, 'chill') >= 2) && r() < 0.7) return [a.id]; } // 촉매: 열충격을 낼 차례
+    { const sw = okS.find(a => hz(a, 'elSwitch')), bo = L.find(a => a.v2 && a.s && hz(a, 'elBolt')); if (sw && bo && fastOk) { // 원소 전환: 마력탄으로 열충격 · 빙결을 낼 적이 지금 원소와 반대일 때(차례에 한 번)
+      const R = reach(bo), wantF = R.filter(e => psn2(e, 'chill') > 0 && !psn2(e, 'ignite')).length, wantI = R.filter(e => psn2(e, 'ignite') > 0 && !psn2(e, 'chill')).length + R.filter(e => psn2(e, 'chill') === 2 && !psn2(e, 'ignite') && !bigE(e)).length;
+      const go = S.el === 'fire' ? wantI > wantF : wantF > wantI; const afford = E.ysNow(p) >= E.skCost(sw.s) + E.skCost(bo.s); if (go && afford && b.elSwT !== b.turnIdx && r() < 0.5 + 0.4 * (P.mech || 0.5)) { b.elSwT = b.turnIdx; return [sw.id]; } } } // 전환 뒤 곧바로 마력탄을 쏠 유산이 있을 때만
   }
   if (p.build === 'elementalist' && E.elemPreview && useMech && !process.env.ELEM_OFF && gt(p, 'elementalist', 'main')) { const v = elemPick(b, P, r, okS, reach, pv1); if (v) return v; } // 0.6a.2 원소술사 (10월 7일): 열충격 미리 보기로 고른다
   // 0.6a.2 수도승 (10월 7일, docs/직업/수도승.md F-4): 되받을 직접 공격 예고가 있으면 자세, 차례의 첫 ⚡ 공격, 기를 보고 터뜨리기 · 흘려 쓰기, 늦춘 적에게서 거두기, 되받은 다음 차례의 되갚기, 모으는 적 · 지원하는 적 끊기

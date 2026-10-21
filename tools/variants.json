@@ -258,6 +258,14 @@
    "note": "사냥꾼 테스터: 연계 뒤에도 유산을 아끼지 않는 정책(비교 측정용)"
   },
   {
+   "name": "EL5_OFF",
+   "kind": "env",
+   "default": null,
+   "introduced": "M5-5",
+   "expires": "상시",
+   "note": "원소술사 테스터: 원소 전환 · 승부수 · 강화 칸 판단을 끈다(비교 측정용)"
+  },
+  {
    "name": "MARKS",
    "kind": "env",
    "default": null,

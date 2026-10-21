@@ -97,9 +97,9 @@ function intentText0(b, e) {
   const i = e.intent || {}; const est = r1(enemyHitEst(b, e));
   if (isCh3(b)) { const x = ch3Text(b, e, i, est); if (x) return x; }
   switch (i.k) {
-    case 'attack': return { t: '공격 ' + est + (i.bleed ? ' · 출혈 ' + i.bleed : '') + (i.poison ? ' · 중독 ' + i.poison : '') + (!i.aimed && frostOn(b, e) ? ' · ❄️ 무뎌짐 −' + Math.round(elGuardOf(b.p) * 100) + '%' : ''), hv: 0 };
+    case 'attack': return { t: '공격 ' + est + (i.bleed ? ' · 출혈 ' + i.bleed : '') + (i.poison ? ' · 중독 ' + i.poison : '') + frostTag(b, e), hv: 0 };
     case 'charge': return { t: heavyName(e) + '을(를) 모으는 중. 다음 행동에 내리친다', hv: 1 };
-    case 'heavy': return { t: heavyName(e) + ' ' + r1(est * heavyMulOf(e, b)) + ' · 맞으면 취약 ' + EKW.heavyVuln, hv: 1 };
+    case 'heavy': return { t: heavyName(e) + ' ' + r1(est * heavyMulOf(e, b) * (frostOn(b, e) ? 1 - elGuardOf(b.p) : 1)) + ' · 맞으면 취약 ' + EKW.heavyVuln + frostTag(b, e), hv: 1 };
     case 'raise': return { t: '시체를 일으킨다', hv: 0 };
     case 'tune': return { t: '음을 고른다. 곁의 적들의 피해가 오른다', hv: 1 };
     case 'seal': return { t: '내 행동 하나를 적어 넣어 쓸 수 없게 한다', hv: 1 };
@@ -163,7 +163,7 @@ function intentBadge0(b, e) {
   const i = e.intent || {}; const est = enemyHitEst(b, e); const capOf = d => Math.min(d, b.p.hpMax * (e.role === 'boss' ? 0.45 : e.elite ? 0.35 : 0.25));
   if (isCh3(b)) { const x = ch3Badge(b, e, i, est, capOf); if (x) return x; }
   switch (i.k) {
-    case 'attack': { const fw = !i.aimed && frostOn(b, e); return { ico: INTENT_ICO.attack, num: r1(capOf(est * (i.aimed ? EKW.aimMul : 1) * (fw ? 1 - elGuardOf(b.p) : 1))), txt: (i.aimed ? '겨눈 한 발' : '공격') + (fw ? ' ❄️무뎌짐' : '') + (i.bleed ? ' 🩸' + i.bleed : '') + (i.poison ? ' ☠️' + i.poison : ''), cls: 'atk' }; }
+    case 'attack': { const fw = frostOn(b, e); return { ico: INTENT_ICO.attack, num: r1(capOf(est * (i.aimed ? EKW.aimMul : 1) * (fw ? 1 - elGuardOf(b.p) : 1))), txt: (i.aimed ? '겨눈 한 발' : '공격') + (fw ? ' ❄️무뎌짐' : '') + (i.bleed ? ' 🩸' + i.bleed : '') + (i.poison ? ' ☠️' + i.poison : ''), cls: 'atk' }; }
     case 'hexcurse': return { ico: '🪢', num: '', txt: '저주 · 약화 1 · 취약 1', cls: 'warn' };
     case 'pick': { const n = alive(b).filter(x => x.pile).length; return { ico: '🦴', num: n, txt: '뼈 줍기 · 더미', cls: n ? 'warn' : 'sup' }; }
     case 'retprep': return { ico: '🔁', num: '', txt: '되돌리기 준비', cls: 'warn' };
@@ -196,7 +196,7 @@ function intentBadge0(b, e) {
     case 'raise': return { ico: INTENT_ICO.raise, num: '', txt: '시체 일으키기', cls: 'sup' };
     case 'tune': return { ico: INTENT_ICO.tune, num: '', txt: '음 고르기', cls: 'warn' };
     case 'seal': return { ico: INTENT_ICO.seal, num: '', txt: '봉인', cls: 'warn' };
-    case 'heavy': if (e.boss === 'abbot' && st(b.p, 'brand') >= 3) return { ico: '⚡', num: r1(capOf(est * heavyMulOf(e, b) * (1 + ABBOT.brand * 3))), txt: '심판', cls: 'hv' }; return { ico: INTENT_ICO.heavy, num: r1(capOf(est * heavyMulOf(e, b))), txt: heavyName(e) + ' · 취약 ' + EKW.heavyVuln, cls: 'hv' };
+    case 'heavy': if (e.boss === 'abbot' && st(b.p, 'brand') >= 3) return { ico: '⚡', num: r1(capOf(est * heavyMulOf(e, b) * (1 + ABBOT.brand * 3))), txt: '심판', cls: 'hv' }; return { ico: INTENT_ICO.heavy, num: r1(capOf(est * heavyMulOf(e, b) * (frostOn(b, e) ? 1 - elGuardOf(b.p) : 1))), txt: heavyName(e) + ' · 취약 ' + EKW.heavyVuln + frostTag(b, e, 1), cls: 'hv' };
     case 'heal': { const t = b.en.find(x => x.id === i.tgt); return { ico: INTENT_ICO.heal, num: Math.round(healFrac(e) * 100) + '%', txt: '치유', cls: 'sup' }; }
     case 'summon': return { ico: INTENT_ICO.summon, num: '', txt: '부르기', cls: 'sup' };
     case 'fuse': return { ico: INTENT_ICO.fuse, num: '', txt: '도화선 · 곧 폭발', cls: 'warn' };

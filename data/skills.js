@@ -555,6 +555,50 @@ const SKILLS2 = {
     { id: 'e_stormfront', row: 12, b: '공명', tier: '상급', n: '폭풍전선', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 4 }, { k: 'weave', ign: 3, chill: 1 }, { k: 'shockx', dmg: 1.6 }] },
     { id: 'e_critical', row: 13, b: '공명', tier: '상급', n: '임계', tgt: 'ranged', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 12 }, { k: 'weave', ign: 5, chill: 2 }, { k: 'shockx', dmg: 2.2, brk: 2 }] },
     { id: 'e_eyestorm', row: 13, b: '공명', tier: '상급', n: '폭풍의 눈', tgt: 'all', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 2 }, { k: 'st', s: 'ignite', n: 1 }, { k: 'st', s: 'chill', n: 1 }, { k: 'shockx', dmg: 1.5, brk: 1.5 }] },
+    /* ===== 0.8.0 M5-5 원소술사 재설계 (10월 20일 만든 사람 설계지 2판): 불꽃 · 서리 · 마력 + 경계 빙염 · 정적 · 마염 + 결합 칸 셋. 이름 · 대사 · 문장 그대로, 숫자는 가설(값 띠 · 측정).
+       시작 스킬 마력탄 · 원소 전환(아래 두 줄). 새 효과 키는 data/skillkit.js EL5_BOUND · js/10 원소술사 절(elUse). 생성: M5-5 gen.py ===== */
+    { id: 'e5_bolt', b: '시작', tier: '시작', start: 1, n: '마력탄', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 18 }, { k: 'elBolt', n: 2, txt: '지금 원소 2(불이면 화상, 얼음이면 둔화)' }] },
+    { id: 'e5_switch', b: '시작', tier: '시작', start: 1, n: '원소 전환', tgt: 'self', time: 'fast', cd: 4, ys: 1, fx: [{ k: 'elSwitch', txt: '마력탄의 원소를 불 ↔ 얼음' }] },
+    { id: 'e5_firebolt', row: 1, b: '불꽃', tier: '하급', n: '화염탄', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 19 }, { k: 'st', s: 'ignite', n: 3 }] },
+    { id: 'e5_sparks', row: 1, b: '불꽃', tier: '하급', n: '불똥 세례', tgt: 'all', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'ignite', n: 1 }] },
+    { id: 'e5_cloak', row: 1, b: '불꽃', tier: '하급', n: '불꽃 외투', tgt: 'self', time: 'normal', cd: 4, fx: [{ k: 'elRimeR', s: 'ignite', n: 1, r: 5 }] },
+    { id: 'e5_burnout', row: 4, b: '불꽃', tier: '하급', n: '불태우기', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'burnOut', per: 3, brk: 4 }] },
+    { id: 'e5_spread', row: 4, b: '불꽃', tier: '하급', n: '번지는 불', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 20 }, { k: 'elSpreadIgn', per: 0.5, txt: '대상 화상 절반을 다른 적 모두에게' }] },
+    { id: 'e5_inferno', row: 8, b: '불꽃', tier: '중급', n: '대화재', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 18 }, { k: 'burnOut', per: 4, brk: 6 }] },
+    { id: 'e5_hongryeon', row: 8, b: '불꽃', tier: '중급', n: '홍련', tgt: 'all', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 16 }, { k: 'st', s: 'ignite', n: 2 }] },
+    { id: 'e5_icespear', row: 1, b: '서리', tier: '하급', n: '얼음 창', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 22 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'e5_frostarmor', row: 1, b: '서리', tier: '하급', n: '서리 갑옷', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'elRimeR', s: 'chill', n: 1, r: 7 }] },
+    { id: 'e5_rimefrost', row: 1, b: '서리', tier: '하급', n: '서릿발', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'chill', n: 1 }] },
+    { id: 'e5_crack', row: 4, b: '서리', tier: '하급', n: '서리 균열', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 26 }, { k: 'elChillBrk', per: 12, txt: '대상 둔화 1마다 붕괴 +12' }] },
+    { id: 'e5_icewall', row: 4, b: '서리', tier: '하급', n: '얼음 장벽', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'elProtR', n: 3, r: 7, txt: '7라운드 동안 내 차례마다 보호 3까지' }] },
+    { id: 'e5_shatter', row: 8, b: '서리', tier: '중급', n: '빙결 파쇄', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 41 }, { k: 'elShatter', per: 8, txt: '둔화를 모두 지우고 둔화 1마다 피해 +8' }] },
+    { id: 'e5_coldwave', row: 8, b: '서리', tier: '중급', n: '한파', tgt: 'all', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 17 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'e5_charge', row: 1, b: '마력', tier: '하급', n: '마력 응축', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'elCharge', n: 3, add: 10, txt: '다음 기본 공격 3번 피해 +10' }] },
+    { id: 'e5_barrier', row: 1, b: '마력', tier: '하급', n: '마력 방벽', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'ward', n: 32 }] },
+    { id: 'e5_mark', row: 1, b: '마력', tier: '하급', n: '약화의 표식', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 14 }, { k: 'st', s: 'vuln', n: 1 }] },
+    { id: 'e5_volley', row: 4, b: '마력', tier: '하급', n: '마력 연사', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'elMulti', n: 6, shots: 2, txt: '다음 기본 공격 6번이 두 발' }] },
+    { id: 'e5_mirror', row: 4, b: '마력', tier: '하급', n: '거울 장막', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'thorn', times: 2, dmg: 15 }] },
+    { id: 'e5_arcane', row: 8, b: '마력', tier: '중급', n: '비전 일격', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 29 }, { k: 'elArcane', mul: 2, txt: '취약 걸린 적에게 ×2' }] },
+    { id: 'e5_ward', row: 8, b: '마력', tier: '중급', n: '마력 결계', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'elBarrier', r: 6, red: 0.4, txt: '6라운드 받는 피해 −40%' }] },
+    { id: 'e5_weave', row: 4, b: '빙염', tier: '하급', n: '원소 엮기', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'ignite', n: 1 }, { k: 'st', s: 'chill', n: 1 }] },
+    { id: 'e5_catalyst', row: 4, b: '빙염', tier: '하급', n: '촉매', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'elCat', mul: 2.1, txt: '이번 차례 열충격 2.1배' }] },
+    { id: 'e5_arc', row: 8, b: '빙염', tier: '중급', n: '튀는 충격', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 21 }, { k: 'st', s: 'ignite', n: 1 }, { k: 'st', s: 'chill', n: 1 }, { k: 'shockx', arc: 0.5 }] },
+    { id: 'e5_storm', row: 8, b: '빙염', tier: '중급', n: '원소 폭풍', tgt: 'all', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'ignite', n: 1 }, { k: 'st', s: 'chill', n: 1 }] },
+    { id: 'e5_avatar', row: 10, b: '빙염', tier: '중급', n: '빙염의 화신', tgt: 'self', time: 'normal', cd: 4, line: '「불도 얼음도, 이 몸 안에서는 하나일 뿐이니.」', cut: 'arcane', pay: '그동안 내 차례마다 최대 생명력의 5%를 잃는다.', fx: [{ k: 'elAvatar', r: 3, txt: '3차례 — 내 모든 공격이 화상 1과 둔화 1을 함께 건다(맞히는 족족 열충격).' }] },
+    { id: 'e5_frostbolt', row: 4, b: '정적', tier: '하급', n: '얼음 탄환', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 23 }, { k: 'st', s: 'chill', n: 1 }] },
+    { id: 'e5_stillward', row: 4, b: '정적', tier: '하급', n: '고요한 방벽', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'elProtR', n: 2, r: 6, txt: '6라운드 동안 내 차례마다 보호 2까지' }] },
+    { id: 'e5_shardrain', row: 8, b: '정적', tier: '중급', n: '얼음 파편비', tgt: 'all', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 18 }, { k: 'st', s: 'chill', n: 1 }] },
+    { id: 'e5_stilleye', row: 8, b: '정적', tier: '중급', n: '고요의 눈', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'foresee', red: 0.5, rounds: 10 }] },
+    { id: 'e5_stasis', row: 10, b: '정적', tier: '중급', n: '영겁의 정적', tgt: 'self', time: 'normal', cd: 4, line: '「모든 것이 멈춘 이 한순간만이, 나락에서 유일한 고요로구나.」', cut: 'guard', pay: '내 다음 차례도 아무것도 못 한다(나도 함께 멈춘다).', fx: [{ k: 'elStasis', r: 2, txt: '이번 라운드와 다음 라운드 모든 적이 행동을 놓친다(강적 · 보스는 대신 둔화 3).' }] },
+    { id: 'e5_manaflame', row: 4, b: '마염', tier: '하급', n: '마염탄', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 21 }, { k: 'st', s: 'ignite', n: 2 }] },
+    { id: 'e5_kindlemana', row: 4, b: '마염', tier: '하급', n: '불씨 응축', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'elCharge', n: 6, mul: 1, ign: 2, txt: '다음 기본 공격 6번에 화상 2' }] },
+    { id: 'e5_flamelance', row: 8, b: '마염', tier: '중급', n: '불꽃 창', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 34 }, { k: 'kwx', s: 'ignite', mul: 1.5 }] },
+    { id: 'e5_heatshield', row: 8, b: '마염', tier: '중급', n: '열기 방패', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'elIgnGuard', red: 0.6, txt: '이번 전투 동안 화상 걸린 적이 주는 피해 −60%' }] },
+    { id: 'e5_meteor', row: 10, b: '마염', tier: '중급', n: '천화', tgt: 'all', time: 'normal', cd: 4, line: '「타올라라. 이 나락에 내린 불의 비가, 너희의 마지막 하늘이 될 터이니.」', cut: 'blade', pay: '쓰는 즉시 지금 생명력의 절반을 바친다.', fx: [{ k: 'dmg', n: 35 }, { k: 'elMeteor' }, { k: 'st', s: 'ignite', n: 3 }] },
+    { id: 'e5_frostember', row: 7, b: '결합', tier: '중급', n: '얼어붙은 불씨', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'elFrostEmber', n: 1, txt: '이번 전투: 둔화 걸린 적에게 화상을 걸면 화상 +1' }] },
+    { id: 'e5_frostwall', row: 7, b: '결합', tier: '중급', n: '서리 방벽', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'elFrostWall', n: 1, txt: '이번 전투: 보호나 보호막이 있을 때 나를 친 적에게 둔화 1' }] },
+    { id: 'e5_manafire', row: 7, b: '결합', tier: '중급', n: '마염 화살', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'elManaFire', n: 1, txt: '이번 전투: 화상 걸린 적을 기본 공격으로 치면 화상 +1' }] },
+    /* ===== M5-5 원소술사 끝 ===== */
   ],
   spellblade: [
     /* 마검사 (10월 7일, docs/직업/마검사.md): kind 'cut' ⚔ 베기 · 'spell' ✦ 주문. 베기와 주문을 번갈아 쓰면 교대(직업 보호막 +4, 내 차례마다 한 번).
@@ -1032,11 +1076,11 @@ const TREE2 = {
   },
   /* 원소술사 (10월 7일). 맞물림: 불꽃 ↔ 서리는 무리, 서리 ↔ 공명은 지원, 공명 ↔ 불꽃은 거구. 직업 약점은 강타(서리 무게가 큰 공격을 줄이지 않고 몸이 가장 약하다) */
   elementalist: {
-    branches: ['불꽃', '서리', '공명'],
-    bd: { 불꽃: '한 적에게 화상을 쌓고, 연타로 꺼내 쓰고, 긴 쿨타임의 큰 불로 마무리합니다. 큰 적에 강하고, 무리에 약합니다', 서리: '둔화로 적의 평소 공격을 무디게 묶고, 필요할 때 깨뜨립니다. 무리와 긴 싸움에 강하고, 치유·소환하는 적에게 약합니다', 공명: '없는 원소를 골라 걸어 열충격을 자주 일으키고, 그 충격을 번지게 합니다. 치유·소환하는 적과 섞인 무리에 강하고, 큰 적에 약합니다' },
+    branches: ['불꽃', '서리', '마력'], // M5-5: 공명 → 마력(설계지 2판)
+    bd: { 불꽃: '태웁니다. 화상을 쌓아 한꺼번에 태우거나 무리에 번지게 합니다. 큰 적과 무리에 강하고, 버티는 힘은 약합니다', 서리: '얼립니다. 둔화를 가득 채워 적이 행동을 놓치게 하거나, 쌓인 얼음을 깨뜨려 크게 칩니다. 무리와 긴 싸움에 강하고, 치유·소환하는 적에게 약합니다', 마력: '다룹니다. 마력 화살을 응축하고 연사하는 평타 길과, 방벽 · 결계로 버티는 길이 있습니다. 긴 싸움에 강하고, 무리에 약합니다' },
     haste: {},
-    profile: { 불꽃: { strong: ['거구'], weak: ['무리'] }, 서리: { strong: ['무리', '장기전'], weak: ['지원'] }, 공명: { strong: ['지원', '혼합'], weak: ['거구'] }, 직업: { strong: [], weak: ['강타'] } },
-    starters: ['e_ember', 'e_touch'], pts: 1,
+    profile: { 불꽃: { strong: ['거구'], weak: ['무리'] }, 서리: { strong: ['무리', '장기전'], weak: ['지원'] }, 마력: { strong: ['장기전'], weak: ['무리'] }, 직업: { strong: [], weak: ['강타'] } },
+    starters: ['e5_bolt', 'e5_switch'], pts: 1, /* M5-5: 시작 스킬 마력탄 · 원소 전환(옛 불씨 화살 · 서리 손길은 칸 재료) */
   },
   spellblade: {
     branches: ['혈인', '염검', '마갑'],
@@ -1130,4 +1174,6 @@ const AS_TAGS = {
 for (const s of SKILLS2.assassin || []) if (AS_TAGS[s.id]) { s.tags = AS_TAGS[s.id].slice(); s.as5 = 1; } // as5: 한 줄 설명(skBodyMk) · 설명 길이 경고 · 터뜨리기 배수 하나만(js/10) // mk5: 한 줄 설명(skBodyMk) · 설명 길이 경고(tree-check)
 const HN_TAGS = { h5_pierce: ['추적'], h5_prey: ['추적', '기본공격연동'], h5_cover: ['보호'], h5_heavy: ['붕괴'], h5_lock: ['추적', '기본공격연동'], h5_sky: ['추적'], h5_endhunt: ['추적', '기본공격연동'], h5_volley: ['광역'], h5_nock: ['기본공격연동'], h5_harass: ['둔화'], h5_rain: ['출혈', '광역'], h5_barb: ['출혈', '기본공격연동'], h5_bloodrain: ['출혈', '광역'], h5_endless: ['기본공격연동'], h5_counter: ['몸 빼기'], h5_leg: ['둔화'], h5_dodge: ['몸 빼기'], h5_windstep: ['몸 빼기'], h5_stop: ['둔화', '붕괴'], h5_windveil: ['몸 빼기'], h5_icecage: ['둔화', '붕괴'], h5_aimvol: ['추적'], h5_steady: ['추적'], h5_pinpoint: ['추적'], h5_hawkeye: ['보호'], h5_mangung: ['추적'], h5_runshot: ['몸 빼기'], h5_dust: ['보호'], h5_storm: ['출혈', '광역'], h5_tailwind: ['기본공격연동'], h5_gale: ['기본공격연동'], h5_snare: ['둔화'], h5_hide: ['몸 빼기'], h5_ambush: ['둔화'], h5_camo: ['보호'], h5_trap: ['추적'], h5_chase: ['추적', '몸 빼기'], h5_scent: ['출혈', '추적'], h5_frozen: ['둔화', '기본공격연동'] };
 for (const s of SKILLS2.hunter || []) if (HN_TAGS[s.id]) { s.tags = HN_TAGS[s.id].slice(); s.hn5 = 1; } // M5-4 hn5: 한 줄 설명(skBodyMk) · 설명 길이 경고 · 값 식(skValueHn) · 새 효과(js/10 hnUse)
+const EL_TAGS = { e5_firebolt: ['화상'], e5_sparks: ['화상', '광역'], e5_cloak: ['화상'], e5_burnout: ['화상', '붕괴'], e5_spread: ['화상', '광역'], e5_inferno: ['화상', '붕괴'], e5_hongryeon: ['화상', '광역'], e5_icespear: ['둔화'], e5_frostarmor: ['둔화'], e5_rimefrost: ['둔화'], e5_crack: ['둔화', '붕괴'], e5_icewall: ['보호'], e5_shatter: ['둔화', '붕괴'], e5_coldwave: ['둔화', '광역'], e5_charge: ['기본공격연동'], e5_barrier: ['보호'], e5_mark: ['취약'], e5_volley: ['기본공격연동'], e5_mirror: ['보호'], e5_arcane: ['취약'], e5_ward: ['보호'], e5_weave: ['열충격', '화상', '둔화'], e5_catalyst: ['열충격'], e5_arc: ['열충격', '광역'], e5_storm: ['화상', '둔화', '광역'], e5_avatar: ['열충격'], e5_frostbolt: ['둔화'], e5_stillward: ['보호'], e5_shardrain: ['둔화', '광역'], e5_stilleye: ['보호'], e5_stasis: ['둔화'], e5_manaflame: ['화상'], e5_kindlemana: ['기본공격연동', '화상'], e5_flamelance: ['화상'], e5_heatshield: ['보호'], e5_meteor: ['화상', '광역'], e5_frostember: ['둔화', '화상'], e5_frostwall: ['보호', '둔화'], e5_manafire: ['기본공격연동', '화상'], e5_bolt: ['화상', '둔화'], e5_switch: [] };
+for (const s of SKILLS2.elementalist || []) if (EL_TAGS[s.id]) { s.tags = EL_TAGS[s.id].slice(); s.el5 = 1; } // M5-5 el5: 한 줄 설명(skBodyMk) · 설명 길이 경고 · 값 식(skValueEl) · 새 효과(js/10 elUse)
 

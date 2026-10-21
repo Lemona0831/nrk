@@ -271,6 +271,7 @@ function fightRec(R, b, run, hpIn, acts) {
   if (BUILDLOG && b.actDmg) rec.actDmg = b.actDmg;
   if (b.p.build === 'assassin' && b.asBursts && process.env.AS_TRACE) rec.asB = b.asBursts;
   if (b.p.build === 'hunter') rec.hn5 = { lf: b.hnLf || 0, lfD: Math.round(b.hnLfD || 0), turns: b.turnIdx || 0, after: b.hnAfterC || {}, y0: hits.filter(h => h.y0).length }; // M5-4: 연계 빠른 행동 수 · 몫 · 연계 뒤 주 행동 · 유산 0으로 맞음 // M5-3: 터뜨린 중독 크기(설계지 6-0 터뜨림 분포)
+  if (b.p.build === 'elementalist') { const F = b.rec.filter(x => x.k === 'freeze'), C2 = countBy(b.rec.filter(x => x.k === 'ch2').map(x => x.a)), SH = b.rec.filter(x => x.k === 'shock'); rec.el5 = { frz: F.filter(x => !x.big).length, frzBig: F.filter(x => x.big).length, shock: SH.length, shockD: Math.round(SH.reduce((a, x) => a + (x.dmg || 0), 0)), ch2: C2, turns: b.turnIdx || 0 }; } // M5-5: 빙결 · 열충격 수, 둔화 2인 적 앞의 고르기(얼리기 · 깨기 · 열충격)
   if (process.env.DG_LOGBOSS && R.type === 'boss') rec.log = b.log.map(x => x.m); // 보스전 로그(조사용)
   if (BUILDLOG) { const en = b.en.filter(e => e.role !== 'root'); rec.nEn = en.length; rec.nBack = en.filter(e => e.row === 'back').length; rec.nBig = en.filter(e => e.elite || e.role === 'boss' || e.strong || e.big).length; } // M5-0 보정 5 상황 표(무리 · 거구 · 후열)
   { const y = G0.ysSum ? G0.ysSum(b) : null; if (y) rec.ys = { sp: y.sp, use: y.use, w: y.w, g: Object.values(y.ch || {}).reduce((a, v) => a + v, 0), ch: y.ch }; } // M4: ch = 충전 출처별 든 양(차례 · 대응 이유 · 통로 각인 · 환급 · 장비) // 0.8.0 6단계 유산 리듬: 비용별 횟수 · 쓴 합 · 상한에 막힌 양(넘침) · 든 양

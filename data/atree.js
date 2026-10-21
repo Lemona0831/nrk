@@ -594,47 +594,162 @@ const ATREE_DEF = {
   /* 10월 18일 0.8.0 5단계 원소술사 (만든 사람 결정 9–12 반영): docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 3-6 · 8절. 스킬 24 + 강화 27 = 51노드.
      비용은 모두 쿨타임 변환값 그대로. 🔄는 공명 하나만 처치 환급(행동 끝 열충격 포함, data/skills.js krShock). 결정타: 태양 낙하 · 얼음 관 · 과부하(임계는 연쇄 충격의 출처로만) */
   elementalist: {
-    br: { 불꽃: 0, 서리: 120, 공명: 240 }, lane: { LL: -36, L: -18, C: 0, R: 18, RR: 36 },
+    /* 0.8.0 M5-5 원소술사 재설계 (10월 20일 만든 사람 설계지 2판). 공명 갈래 → 마력. 열충격을 키우는 칸은 빙염 경계에만. 생성: M5-5 gen.py */
+    br: { 불꽃: 0, 서리: 120, 마력: 240 }, lane: { LL: -22, L: -12, C: 0, R: 12, RR: 22 },
+    sec: { A: '불꽃', AB: '빙염', B: '서리', BC: '정적', C: '마력', CA: '마염' },
+    rad: { 1: 125, 2: 185, 3: 255, 4: 320, 5: 395, 6: 470 }, paths: { 불꽃: { a: '화염탄', b: '불똥 세례' }, 서리: { a: '얼음 창', b: '서리 갑옷' }, 마력: { a: '마력 응축', b: '마력 방벽' } },
     skills: [
-      ['e_kindle', '불꽃', 1, 1, 'C', ['S'], 2], ['e_sparks', '불꽃', 1, 2, 'L', ['e_kindle'], 3], ['e_burnout', '불꽃', 1, 2, 'R', ['e_kindle'], 3],
-      ['e_afterglow', '불꽃', 2, 3, 'LL', ['e_sparks'], 2], ['e_seal', '불꽃', 2, 3, 'L', ['e_sparks'], 2], ['e_chantburn', '불꽃', 2, 3, 'R', ['e_burnout'], 3], ['e_firebolt', '불꽃', 2, 3, 'RR', ['e_burnout'], 3],
-      ['e_sunfall', '불꽃', 3, 5, 'C', ['e_firebolt'], 4],
-      ['e_bind', '서리', 1, 1, 'C', ['S'], 2], ['e_crack', '서리', 1, 2, 'L', ['e_bind'], 2], ['e_bite', '서리', 1, 2, 'R', ['e_bind'], 3],
-      ['e_armor', '서리', 2, 3, 'LL', ['e_crack'], 2], ['e_stasis', '서리', 2, 3, 'L', ['e_crack'], 2], ['e_maul', '서리', 2, 3, 'R', ['e_bite'], 3], ['e_breaker', '서리', 2, 3, 'RR', ['e_bite'], 3],
-      ['e_coffin', '서리', 3, 5, 'C', ['e_bite'], 4],
-      ['e_weave', '공명', 1, 1, 'C', ['S'], 2], ['e_catalyst', '공명', 1, 2, 'L', ['e_weave'], 3], ['e_firewave', '공명', 1, 2, 'R', ['e_weave'], 3],
-      ['e_twin', '공명', 2, 3, 'LL', ['e_catalyst'], 2], ['e_resonate', '공명', 2, 3, 'L', ['e_catalyst'], 3], ['e_arc', '공명', 2, 3, 'R', ['e_firewave'], 3], ['e_disrupt', '공명', 2, 3, 'RR', ['e_firewave'], 3],
-      ['e_overload', '공명', 3, 5, 'C', ['e_catalyst'], 4],
+      ['e5_firebolt', '불꽃', 1, 1, 'LL', ['S'], 2, { excl: 'e5_sparks', path: 'a' }],
+      ['e5_sparks', '불꽃', 1, 1, 'RR', ['S'], 2, { excl: 'e5_firebolt', path: 'b' }],
+      ['e5_cloak', '불꽃', 1, 2, 'C', ['e5_firebolt', 'e5_sparks'], 1],
+      ['e5_burnout', '불꽃', 2, 3, 'L', ['e5_firebolt', 'e5_sparks'], 2, { path: 'a' }],
+      ['e5_spread', '불꽃', 2, 3, 'R', ['e5_firebolt', 'e5_sparks'], 2, { path: 'b' }],
+      ['e5_inferno', '불꽃', 3, 5, 'L', ['e5_burnout', 'e5_spread'], 3, { path: 'a' }],
+      ['e5_hongryeon', '불꽃', 3, 5, 'R', ['e5_burnout', 'e5_spread'], 3, { path: 'b' }],
+      ['e5_icespear', '서리', 1, 1, 'LL', ['S'], 2, { excl: 'e5_frostarmor', path: 'a' }],
+      ['e5_frostarmor', '서리', 1, 1, 'RR', ['S'], 2, { excl: 'e5_icespear', path: 'b' }],
+      ['e5_rimefrost', '서리', 1, 2, 'C', ['e5_icespear', 'e5_frostarmor'], 1],
+      ['e5_crack', '서리', 2, 3, 'L', ['e5_icespear', 'e5_frostarmor'], 2, { path: 'a' }],
+      ['e5_icewall', '서리', 2, 3, 'R', ['e5_icespear', 'e5_frostarmor'], 2, { path: 'b' }],
+      ['e5_shatter', '서리', 3, 5, 'L', ['e5_crack', 'e5_icewall'], 3, { path: 'a' }],
+      ['e5_coldwave', '서리', 3, 5, 'R', ['e5_crack', 'e5_icewall'], 3, { path: 'b' }],
+      ['e5_charge', '마력', 1, 1, 'LL', ['S'], 2, { excl: 'e5_barrier', path: 'a' }],
+      ['e5_barrier', '마력', 1, 1, 'RR', ['S'], 2, { excl: 'e5_charge', path: 'b' }],
+      ['e5_mark', '마력', 1, 2, 'C', ['e5_charge', 'e5_barrier'], 1],
+      ['e5_volley', '마력', 2, 3, 'L', ['e5_charge', 'e5_barrier'], 2, { path: 'a' }],
+      ['e5_mirror', '마력', 2, 3, 'R', ['e5_charge', 'e5_barrier'], 2, { path: 'b' }],
+      ['e5_arcane', '마력', 3, 5, 'L', ['e5_volley', 'e5_mirror'], 3, { path: 'a' }],
+      ['e5_ward', '마력', 3, 5, 'R', ['e5_volley', 'e5_mirror'], 3, { path: 'b' }],
+      ['e5_weave', '빙염', 2, 3, 'C', ['e5_firebolt', 'e5_sparks', 'e5_icespear', 'e5_frostarmor'], 2, { requires: [['e5_firebolt', 'e5_sparks'], ['e5_icespear', 'e5_frostarmor']] }],
+      ['e5_catalyst', '빙염', 2, 4, 'C', ['e5_weave'], 2],
+      ['e5_arc', '빙염', 3, 5, 'L', ['e5_catalyst'], 3],
+      ['e5_storm', '빙염', 3, 5, 'R', ['e5_catalyst'], 3],
+      ['e5_avatar', '빙염', 3, 6, 'C', ['e5_arc', 'e5_storm'], 4],
+      ['e5_frostbolt', '정적', 2, 3, 'C', ['e5_icespear', 'e5_frostarmor', 'e5_charge', 'e5_barrier'], 2, { requires: [['e5_icespear', 'e5_frostarmor'], ['e5_charge', 'e5_barrier']] }],
+      ['e5_stillward', '정적', 2, 4, 'C', ['e5_frostbolt'], 2],
+      ['e5_shardrain', '정적', 3, 5, 'L', ['e5_stillward'], 3],
+      ['e5_stilleye', '정적', 3, 5, 'R', ['e5_stillward'], 3],
+      ['e5_stasis', '정적', 3, 6, 'C', ['e5_shardrain', 'e5_stilleye'], 4],
+      ['e5_manaflame', '마염', 2, 3, 'C', ['e5_charge', 'e5_barrier', 'e5_firebolt', 'e5_sparks'], 2, { requires: [['e5_charge', 'e5_barrier'], ['e5_firebolt', 'e5_sparks']] }],
+      ['e5_kindlemana', '마염', 2, 4, 'C', ['e5_manaflame'], 2],
+      ['e5_flamelance', '마염', 3, 5, 'L', ['e5_kindlemana'], 3],
+      ['e5_heatshield', '마염', 3, 5, 'R', ['e5_kindlemana'], 3],
+      ['e5_meteor', '마염', 3, 6, 'C', ['e5_flamelance', 'e5_heatshield'], 4],
+      ['e5_frostember', '결합', 2, 4, 'C', [], 2, { reqTags: { 둔화: 2, 화상: 1 }, ang: 30 }],
+      ['e5_frostwall', '결합', 2, 4, 'C', [], 2, { reqTags: { 보호: 1, 둔화: 1 }, ang: 150 }],
+      ['e5_manafire', '결합', 2, 4, 'C', [], 2, { reqTags: { 기본공격연동: 1, 화상: 1 }, ang: 270 }],
     ],
-    ups: [
-      ['eu_hell', '불꽃', 2, 3, 'C', 'e_kindle', '겁화', '느림이 됩니다(빠른 칸을 비웁니다). 화상 5 → 10, 피해 6 → 3.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 3 }, { k: 'st', s: 'ignite', n: 10 }] }, ['e_hellfire']],
-      ['eu_phoenix', '불꽃', 2, 4, 'LL', 'e_sparks', '불새의 깃', '3타 → 5타, 타당 피해 5 → 4.', { set: { hits: 5 }, fxSet: [{ k: 'dmg', n: 4 }] }, ['e_phoenix', 'e_cinderrain', 'e_hellblaze']],
-      ['eu_heart', '불꽃', 3, 5, 'LL', 'e_afterglow', '불씨 심장', '열충격 뒤 남기는 화상 3 → 4, 이 스킬로 일어난 열충격 ×1.3.', { fxSet: [{ k: 'shockx', keep: { s: 'ignite', n: 4 }, dmg: 1.3 }] }, ['e_pyreheart']],
-      ['eu_burn', '불꽃', 1, 2, 'RR', 'e_burnout', '타오른 만큼', '태운 화상 1마다 피해 +3 → +4.', { fxSet: [{ k: 'burnOut', per: 4 }] }, ['e_conflag']],
-      ['eu_ash', '불꽃', 2, 4, 'R', 'e_burnout', '잿더미', '생명력 35% 이하인 적에게 ×1.5.', { fxAdd: [{ k: 'lowx', hp: 0.35, mul: 1.5 }] }, ['e_cinders', 'e_ash']],
-      ['eu_spear', '불꽃', 2, 4, 'RR', 'e_chantburn', '불꽃 창', '피해 15 → 22, 붕괴 +20.', { fxSet: [{ k: 'dmg', n: 22 }], fxAdd: [{ k: 'brk', n: 20 }] }, ['e_spear']],
-      ['eu_lance', '불꽃', 2, 4, 'C', 'e_firebolt', '불의 창', '큰 적(정예 · 강적 · 보스)에게 ×1.5.', { fxAdd: [{ k: 'bigx', mul: 1.5 }] }, ['e_lance', 'e_scorchshot']],
-      ['eu_eclipse', '불꽃', 3, 6, 'C', 'e_sunfall', '일식', '큰 적(정예 · 강적 · 보스)에게 ×1.5 → ×2.', { fxSet: [{ k: 'bigx', mul: 2 }] }, ['e_eclipse', 'e_meteor', 'e_judgefire']],
-      ['eu_sky', '불꽃', 3, 6, 'R', 'e_sunfall', '타는 하늘', '대상의 화상이 5 이상이면 비용 −1(바닥 1, 라운드에 한 번). 태양 낙하는 화상을 지우지 않습니다.', { cond: { off: 1, when: 'kw:ignite>=5' } }, []],
-      ['eu_cold', '서리', 1, 1, 'LL', 'e_bind', '식은 불씨', '이 스킬로 일어난 열충격 뒤 대상에게 둔화 1을 남깁니다.', { fxAdd: [{ k: 'shockx', keep: { s: 'chill', n: 1 } }] }, ['e_coldember']],
-      ['eu_pick', '서리', 2, 4, 'LL', 'e_crack', '얼음 송곳', '대상이 영창 중이면 붕괴 +70.', { fxAdd: [{ k: 'cutx', brk: 70, chant: 1 }] }, ['e_icepick']],
-      ['eu_mirror', '서리', 2, 4, 'L', 'e_armor', '얼음 거울', '되얼림 3번 → 4번, 나에게 보호 3.', { fxSet: [{ k: 'rime', times: 4 }], fxAdd: [{ k: 'meSt', s: 'protect', n: 3 }] }, ['e_mirror', 'e_icebarrier']],
-      ['eu_tundra', '서리', 3, 5, 'L', 'e_stasis', '영구 동토', '모든 적을 칩니다. 피해 18 → 10, 둔화 3 → 1(한 적에게는 약해집니다).', { set: { tgt: 'all' }, fxSet: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'chill', n: 1 }] }, ['e_tundra', 'e_longwinter', 'e_snap', 'e_zero']],
-      ['eu_shatter', '서리', 2, 4, 'R', 'e_bite', '산산조각', '이 스킬로 일어난 열충격의 붕괴 ×2.', { fxAdd: [{ k: 'shockx', brk: 2 }] }, ['e_shatter', 'e_hail', 'e_icelance']],
-      ['eu_gap', '서리', 2, 4, 'RR', 'e_maul', '얼어붙은 틈', '대상의 둔화가 2 이상이면 비용 −1(바닥 1, 라운드에 한 번).', { cond: { off: 1, when: 'kw:chill>=2' } }, []],
-      ['eu_flash', '서리', 3, 5, 'RR', 'e_breaker', '급랭', '둔화 2 → 3.', { fxSet: [{ k: 'st', s: 'chill', n: 3 }] }, ['e_flash']],
-      ['eu_cryo', '서리', 3, 6, 'C', 'e_coffin', '극저온 파쇄', '큰 적(정예 · 강적 · 보스)에게 ×1.4.', { fxAdd: [{ k: 'bigx', mul: 1.4 }] }, ['e_cryo']],
-      ['eu_avalanche', '서리', 3, 6, 'R', 'e_coffin', '눈사태', '전열 모두를 칩니다(후열에 닿지 않음). 피해 28 → 18(한 적의 붕괴가 줍니다).', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 18 }] }, ['e_avalanche']],
-      ['eu_attune', '공명', 1, 1, 'LL', 'e_weave', '조율', '이 스킬로 일어난 열충격 뒤 대상에게 둔화 1을 남깁니다.', { fxAdd: [{ k: 'shockx', keep: { s: 'chill', n: 1 } }] }, ['e_attune']],
-      ['eu_polar', '공명', 2, 4, 'LL', 'e_catalyst', '극성 뒤집기', '빠른 칸이 됩니다. 이 스킬로 일어난 열충격 ×1.5 → ×1.2, 열충격 붕괴 ×2.', { set: { time: 'fast' }, fxSet: [{ k: 'shockx', dmg: 1.2, brk: 2 }] }, ['e_polar']],
-      ['eu_heat', '공명', 2, 4, 'L', 'e_twin', '잔열', '이 스킬로 일어난 열충격 뒤 대상에게 화상 3을 남깁니다.', { fxAdd: [{ k: 'shockx', keep: { s: 'ignite', n: 3 } }] }, ['e_afterheat']],
-      ['eu_steam', '공명', 3, 5, 'L', 'e_resonate', '증기 폭발', '전열 모두를 칩니다(후열에 닿지 않음). 피해 15 → 9.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 9 }] }, ['e_steam', 'e_tempest', 'e_eyestorm']],
-      ['eu_chain', '공명', 3, 6, 'C', 'e_overload', '연쇄 충격', '보통 빠르기가 됩니다. 이 스킬로 일어난 열충격 ×2 → ×1.6.', { set: { time: 'normal' }, fxSet: [{ k: 'shockx', dmg: 1.6 }] }, ['e_chainshock', 'e_critical']],
-      ['eu_pole', '공명', 3, 6, 'L', 'e_overload', '극점', '대상의 둔화가 2 이상이면 비용 −1(바닥 1, 라운드에 한 번).', { cond: { off: 1, when: 'kw:chill>=2' } }, ['e_pole']],
-      ['eu_back', '공명', 2, 4, 'R', 'e_firewave', '역화', '화상 1 대신 적마다 없는 원소를 겁니다(화상 3 / 둔화 1). 피해 10 → 6.', { fxSet: [{ k: 'dmg', n: 6 }], fxDel: [{ k: 'st', s: 'ignite' }], fxAdd: [{ k: 'weave', ign: 3, chill: 1 }] }, ['e_backdraft', 'e_maelstrom', 'e_stormfront']],
-      ['eu_cascade', '공명', 2, 4, 'RR', 'e_arc', '원소 연쇄', '열충격의 번짐 50% → 70%.', { fxSet: [{ k: 'shockx', arc: 0.7 }] }, ['e_cascade', 'e_cloud', 'e_tide', 'e_resoburst']],
-      ['eu_veil', '공명', 3, 5, 'RR', 'e_disrupt', '원소 장막', '이 행동으로 영창을 끊으면 나에게 보호 2.', { fxAdd: [{ k: 'meSt', s: 'protect', n: 2, on: 'cut' }] }, ['e_veil']],
-    ],
+    vars: {
+      /* 스킬마다 변형 둘(둘 다 제시): v 'deep' 깊게 = 같은 길을 세게, v 'link' 잇기 = 그 스킬에 없던 다른 빌드의 꼬리표를 더해 경계 · 결합 칸으로. [Claude 초안] */
+      e5_firebolt: [
+        ['ev_fb_more', '짙은 화염탄', '화상 3 → 5.', { fxSet: [{ k: 'st', s: 'ignite', n: 5 }] }, [], { v: 'deep' }],
+        ['ev_fb_chill', '서리 낀 화염', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
+      e5_sparks: [
+        ['ev_sp_deep', '굵은 불똥', '느린 행동이 됩니다. 피해 10 → 14.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 14 }] }, [], { v: 'deep' }],
+        ['ev_sp_vuln', '드러내는 불똥', '취약 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'vuln', n: 1 }] }, ['취약'], { v: 'link' }]],
+      e5_cloak: [
+        ['ev_cl_more', '긴 외투', '5라운드 → 7라운드.', { fxSet: [{ k: 'elRimeR', s: 'ignite', r: 7 }] }, [], { v: 'deep' }],
+        ['ev_cl_chill', '서리 외투', '같은 5라운드 동안 둔화 1도 겁니다.', { fxAdd: [{ k: 'elRimeR', s: 'chill', n: 1, r: 5 }] }, ['둔화'], { v: 'link' }]],
+      e5_burnout: [
+        ['ev_bo_deep', '깊은 불태우기', '화상 1마다 +3 → +4.', { fxSet: [{ k: 'burnOut', per: 4 }] }, [], { v: 'deep' }],
+        ['ev_bo_chill', '식은 재', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
+      e5_spread: [
+        ['ev_spr_wide', '넓은 불길', '절반 → 70%.', { fxSet: [{ k: 'elSpreadIgn', per: 0.7, txt: '대상 화상 70%를 다른 적 모두에게' }] }, [], { v: 'deep' }],
+        ['ev_spr_brk', '무너뜨리는 불', '붕괴 +15.', { fxAdd: [{ k: 'brk', n: 15 }] }, ['붕괴'], { v: 'link' }]],
+      e5_inferno: [
+        ['ev_inf_deep', '거센 대화재', '느린 행동이 됩니다. 피해 18 → 27.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 27 }] }, [], { v: 'deep' }],
+        ['ev_inf_vuln', '드러난 잿더미', '취약 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'vuln', n: 1 }] }, ['취약'], { v: 'link' }]],
+      e5_hongryeon: [
+        ['ev_hr_more', '붉은 연꽃', '화상 2 → 3.', { fxSet: [{ k: 'st', s: 'ignite', n: 3 }] }, [], { v: 'deep' }],
+        ['ev_hr_chill', '서리 연꽃', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
+      e5_icespear: [
+        ['ev_is_more', '깊은 얼음 창', '둔화 2 → 3.', { fxSet: [{ k: 'st', s: 'chill', n: 3 }] }, [], { v: 'deep' }],
+        ['ev_is_ign', '달군 얼음 창', '화상 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'ignite', n: 1 }] }, ['화상'], { v: 'link' }]],
+      e5_frostarmor: [
+        ['ev_fa_more', '긴 갑옷', '7라운드 → 9라운드.', { fxSet: [{ k: 'elRimeR', s: 'chill', r: 9 }] }, [], { v: 'deep' }],
+        ['ev_fa_prot', '얼음 껍질', '쓸 때 나에게 보호 1.', { fxAdd: [{ k: 'st', s: 'protect', n: 1 }] }, ['보호'], { v: 'link' }]],
+      e5_rimefrost: [
+        ['ev_rf_two', '두 줄기 서릿발', '두 발을 쏩니다.', { set: { hits: 2 } }, [], { v: 'deep' }],
+        ['ev_rf_vuln', '드러내는 서리', '취약 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'vuln', n: 1 }] }, ['취약'], { v: 'link' }]],
+      e5_crack: [
+        ['ev_cr_deep', '깊은 균열', '둔화 1마다 붕괴 +12 → +18.', { fxSet: [{ k: 'elChillBrk', per: 18, txt: '대상 둔화 1마다 붕괴 +18' }] }, [], { v: 'deep' }],
+        ['ev_cr_ign', '불붙은 균열', '화상 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'ignite', n: 1 }] }, ['화상'], { v: 'link' }]],
+      e5_icewall: [
+        ['ev_iw_more', '두꺼운 장벽', '보호 3 → 4.', { fxSet: [{ k: 'elProtR', n: 4, txt: '7라운드 동안 내 차례마다 보호 4까지' }] }, [], { v: 'deep' }],
+        ['ev_iw_chill', '서리 장벽', '쓸 때 대상 없이 나를 친 적에게 다음 2번 둔화 1.', { fxAdd: [{ k: 'rime', s: 'chill', n: 1, times: 2 }] }, ['둔화'], { v: 'link' }]],
+      e5_shatter: [
+        ['ev_sh_deep', '깊은 파쇄', '둔화 1마다 피해 +8 → +12.', { fxSet: [{ k: 'elShatter', per: 12, txt: '둔화를 모두 지우고 둔화 1마다 피해 +12' }] }, [], { v: 'deep' }],
+        ['ev_sh_ign', '달군 파쇄', '화상 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'ignite', n: 1 }] }, ['화상'], { v: 'link' }]],
+      e5_coldwave: [
+        ['ev_cw_deep', '긴 한파', '느린 행동이 됩니다. 피해 17 → 24.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 24 }] }, [], { v: 'deep' }],
+        ['ev_cw_vuln', '드러내는 한파', '취약 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'vuln', n: 1 }] }, ['취약'], { v: 'link' }]],
+      e5_charge: [
+        ['ev_ch_four', '네 번 응축', '기본 공격 3번 → 4번.', { fxSet: [{ k: 'elCharge', n: 4, txt: '다음 기본 공격 4번 피해 +10' }] }, [], { v: 'deep' }],
+        ['ev_ch_ign', '불 실은 응축', '그 기본 공격에 화상 1.', { fxAdd: [{ k: 'elChargeEl', ign: 1, txt: '그 기본 공격에 화상 1' }] }, ['화상'], { v: 'link' }]],
+      e5_barrier: [
+        ['ev_ba_more', '두꺼운 방벽', '보호막 32 → 40.', { fxSet: [{ k: 'ward', n: 40 }] }, [], { v: 'deep' }],
+        ['ev_ba_chill', '서리 방벽 조각', '쓸 때 대상 없이 나를 친 적에게 다음 2번 둔화 1.', { fxAdd: [{ k: 'rime', s: 'chill', n: 1, times: 2 }] }, ['둔화'], { v: 'link' }]],
+      e5_mark: [
+        ['ev_mk_more', '깊은 표식', '취약 1 → 2.', { fxSet: [{ k: 'st', s: 'vuln', n: 2 }] }, [], { v: 'deep' }],
+        ['ev_mk_ign', '불타는 표식', '화상 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'ignite', n: 1 }] }, ['화상'], { v: 'link' }]],
+      e5_volley: [
+        ['ev_vl_three', '세 번 연사', '기본 공격 6번 → 7번.', { fxSet: [{ k: 'elMulti', n: 7, txt: '다음 기본 공격 7번이 두 발' }] }, [], { v: 'deep' }],
+        ['ev_vl_chill', '서리 연사', '그 기본 공격에 둔화 1.', { fxAdd: [{ k: 'elChargeEl', chill: 1, txt: '그 기본 공격에 둔화 1' }] }, ['둔화'], { v: 'link' }]],
+      e5_mirror: [
+        ['ev_mr_three', '세 겹 거울', '2번 → 3번.', { fxSet: [{ k: 'thorn', times: 3 }] }, [], { v: 'deep' }],
+        ['ev_mr_chill', '얼음 거울', '쓸 때 대상 없이 나를 친 적에게 다음 2번 둔화 1.', { fxAdd: [{ k: 'rime', s: 'chill', n: 1, times: 2 }] }, ['둔화'], { v: 'link' }]],
+      e5_arcane: [
+        ['ev_ar_deep', '깊은 비전', '×2 → ×2.5.', { fxSet: [{ k: 'elArcane', mul: 2.5, txt: '취약 걸린 적에게 ×2.5' }] }, [], { v: 'deep' }],
+        ['ev_ar_brk', '부수는 비전', '붕괴 +20.', { fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
+      e5_ward: [
+        ['ev_wd_long', '긴 결계', '6라운드 → 7라운드.', { fxSet: [{ k: 'elBarrier', r: 7, txt: '7라운드 받는 피해 −40%' }] }, [], { v: 'deep' }],
+        ['ev_wd_chill', '얼음 결계', '쓸 때 대상 없이 나를 친 적에게 다음 3번 둔화 1.', { fxAdd: [{ k: 'rime', s: 'chill', n: 1, times: 3 }] }, ['둔화'], { v: 'link' }]],
+      e5_weave: [
+        ['ev_wv_deep', '굵은 엮기', '피해 12 → 16.', { fxSet: [{ k: 'dmg', n: 16 }] }, [], { v: 'deep' }],
+        ['ev_wv_vuln', '드러내는 엮기', '취약 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'vuln', n: 1 }] }, ['취약'], { v: 'link' }]],
+      e5_catalyst: [
+        ['ev_ct_deep', '진한 촉매', '2.1배 → 2.4배.', { fxSet: [{ k: 'elCat', mul: 2.4, txt: '이번 차례 열충격 2.4배' }] }, [], { v: 'deep' }],
+        ['ev_ct_prot', '촉매 방벽', '보호 1.', { fxAdd: [{ k: 'st', s: 'protect', n: 1 }] }, ['보호'], { v: 'link' }]],
+      e5_arc: [
+        ['ev_arc_deep', '큰 충격', '느린 행동이 됩니다. 피해 21 → 27.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 27 }] }, [], { v: 'deep' }],
+        ['ev_arc_brk', '부수는 충격', '붕괴 +15.', { fxAdd: [{ k: 'brk', n: 15 }] }, ['붕괴'], { v: 'link' }]],
+      e5_storm: [
+        ['ev_st_deep', '거센 폭풍', '느린 행동이 됩니다. 피해 8 → 11.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 11 }] }, [], { v: 'deep' }],
+        ['ev_st_vuln', '드러내는 폭풍', '취약 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'vuln', n: 1 }] }, ['취약'], { v: 'link' }]],
+      e5_avatar: [
+        ['ev_av_long', '긴 화신', '3차례 → 4차례.', { fxSet: [{ k: 'elAvatar', r: 4, txt: '4차례 — 내 모든 공격이 화상 1과 둔화 1을 함께 건다(맞히는 족족 열충격).' }] }, [], { v: 'deep' }],
+        ['ev_av_prot', '화신의 껍질', '쓸 때 보호 3.', { fxAdd: [{ k: 'st', s: 'protect', n: 3 }] }, ['보호'], { v: 'link' }]],
+      e5_frostbolt: [
+        ['ev_fbt_deep', '굵은 얼음 탄환', '피해 23 → 30.', { fxSet: [{ k: 'dmg', n: 30 }] }, [], { v: 'deep' }],
+        ['ev_fbt_vuln', '드러내는 탄환', '취약 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'vuln', n: 1 }] }, ['취약'], { v: 'link' }]],
+      e5_stillward: [
+        ['ev_sw_more', '두꺼운 고요', '보호 2 → 3.', { fxSet: [{ k: 'elProtR', n: 3, txt: '6라운드 동안 내 차례마다 보호 3까지' }] }, [], { v: 'deep' }],
+        ['ev_sw_chill', '서리 고요', '쓸 때 대상 없이 나를 친 적에게 다음 2번 둔화 1.', { fxAdd: [{ k: 'rime', s: 'chill', n: 1, times: 2 }] }, ['둔화'], { v: 'link' }]],
+      e5_shardrain: [
+        ['ev_sr_deep', '굵은 파편비', '느린 행동이 됩니다. 피해 18 → 25.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 25 }] }, [], { v: 'deep' }],
+        ['ev_sr_vuln', '드러내는 파편', '취약 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'vuln', n: 1 }] }, ['취약'], { v: 'link' }]],
+      e5_stilleye: [
+        ['ev_se_long', '긴 고요', '10라운드 → 11라운드.', { fxSet: [{ k: 'foresee', rounds: 11 }] }, [], { v: 'deep' }],
+        ['ev_se_chill', '얼어붙은 눈', '모든 적 둔화 1.', { fxAdd: [{ k: 'elChillAll', n: 1, txt: '모든 적 둔화 1' }] }, ['둔화'], { v: 'link' }]],
+      e5_stasis: [
+        ['ev_ss_brk', '깊은 정적', '강적 · 보스는 붕괴 +30도.', { fxSet: [{ k: 'elStasis', brk: 30 }] }, [], { v: 'deep' }],
+        ['ev_ss_vuln', '드러난 정적', '모든 적 취약 1.', { fxAdd: [{ k: 'elVulnAll', n: 1, txt: '모든 적 취약 1' }] }, ['취약'], { v: 'link' }]],
+      e5_manaflame: [
+        ['ev_mf_deep', '굵은 마염탄', '피해 21 → 27.', { fxSet: [{ k: 'dmg', n: 27 }] }, [], { v: 'deep' }],
+        ['ev_mf_chill', '서리 마염', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
+      e5_kindlemana: [
+        ['ev_km_more', '짙은 불씨', '기본 공격 6번 → 8번.', { fxSet: [{ k: 'elCharge', n: 8, txt: '다음 기본 공격 8번에 화상 2' }] }, [], { v: 'deep' }],
+        ['ev_km_vuln', '드러내는 불씨', '쓸 때 대상 취약 1.', { fxAdd: [{ k: 'elVulnFocus', n: 1, txt: '가장 센 적 취약 1' }] }, ['취약'], { v: 'link' }]],
+      e5_flamelance: [
+        ['ev_fl_deep', '긴 불꽃 창', '느린 행동이 됩니다. 피해 34 → 44.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 44 }] }, [], { v: 'deep' }],
+        ['ev_fl_chill', '얼음 섞인 창', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
+      e5_heatshield: [
+        ['ev_hs_more', '타오르는 방패', '3라운드 동안 나를 친 적에게 화상 1도 겁니다.', { fxAdd: [{ k: 'elRimeR', s: 'ignite', n: 1, r: 3 }] }, [], { v: 'deep' }],
+        ['ev_hs_chill', '서늘한 방패', '나를 친 적에게 다음 2번 둔화 1.', { fxAdd: [{ k: 'rime', s: 'chill', n: 1, times: 2 }] }, ['둔화'], { v: 'link' }]],
+      e5_meteor: [
+        ['ev_mt_deep', '거센 불의 비', '피해 35 → 46.', { fxSet: [{ k: 'dmg', n: 46 }] }, [], { v: 'deep' }],
+        ['ev_mt_chill', '얼음비 섞기', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
+    },
   },
   /* 0.8.0 M5-3(10월 20일 만든 사람 설계지 4판): 암살자 액티브 재설계. M5-0c 규격 — 갈래 3 × 길 둘 + 리듬 칸, 경계 5칸(대사 승부수 고정), 결합 칸 3(판마다 둘), 변형 스킬마다 둘.
      옛 사다리 트리(5단계)는 버렸다(옛 판은 포인트를 돌려받는다). 독사 a 독 바른 칼 · b 독안개, 격발 a 격발 표창 · b 격발 찌르기, 그림자 a 흘려 베기 · b 그림자 밟기 */
@@ -780,5 +895,5 @@ const AT_GONE = { spellblade: ['sb_sweepcut', 'sb_pour', 'sb_redrain', 'sb_draw'
   warden: ['w_raise', 'w_kindle', 'w_blaze', 'w_press', 'w_coat', 'w_burst', 'w_crush', 'w_molten', 'w_last', 'w_bulwarkhit', 'w_forge', 'w_unyield', 'w_scald', 'w_eternal', 'w_cinder', 's_gap', 's_knock', 's_mark', 's_smash', 's_knee', 's_dig', 's_hammer', 's_wedge', 's_crack', 's_throw', 's_pillar', 's_maul', 's_open', 's_rift', 's_judge', 's_wedgebite', 's_unravel', 's_stagger', 's_lever', 's_landslide', 's_lastblow', 'f_break', 'f_snare', 'f_cleave', 'f_chain', 'f_wall', 'f_spin', 'f_trample', 'f_drive', 'f_push', 'f_scatter', 'f_split', 'f_net', 'f_sweepline', 'f_onrush', 'f_noose', 'f_rout', 'f_siege'], /* M5-1 재설계: 트리에 없는 파수꾼 칸(스킬 데이터는 남음) */ monk: ['m_endless', 'm_knee', 'm_calm'],
   monk: ['m_answer', 'm_barrage', 'm_breaker', 'm_breath', 'm_cut', 'm_drain', 'm_far', 'm_finger', 'm_flick', 'm_flow', 'm_hundred', 'm_iron', 'm_karma', 'm_kifist', 'm_point', 'm_release', 'm_retort', 'm_root', 'm_rush', 'm_shove', 'm_sinew', 'm_siphon', 'm_stillpt', 'm_wave'], /* M5-2 재설계에서 빠진 옛 수도승 칸 */
   hunter: ['h_steady', 'h_finish', 'h_stance', 'h_slowrain', 'h_veil', 'h_foresee', 'h_ankle', 'h_barb', 'h_burst', 'h_chase', 'h_counter', 'h_crimson', 'h_dance', 'h_dash', 'h_deluge', 'h_dodge', 'h_doom', 'h_double', 'h_dull', 'h_frost', 'h_gap', 'h_giant', 'h_heart', 'h_heavy', 'h_hobble', 'h_houndshot', 'h_icecage', 'h_leg', 'h_lock', 'h_pierce', 'h_prey', 'h_rain', 'h_rend', 'h_scatter', 'h_shatter', 'h_side', 'h_skysplit', 'h_snare', 'h_spray', 'h_stop', 'h_switch', 'h_tearrain', 'h_throat', 'h_through', 'h_timeslow', 'h_triple', 'h_turn', 'h_unend', 'h_vital', 'h_void', 'h_weak', 'h_wedge', 'h_widen', 'h_zeal', 'hu_ankle', 'hu_crimson', 'hu_dance', 'hu_dash', 'hu_dull', 'hu_frost', 'hu_giant', 'hu_heart', 'hu_hound', 'hu_link1', 'hu_link2', 'hu_link3', 'hu_lock', 'hu_rend', 'hu_scatter', 'hu_sky', 'hu_slow', 'hu_snare', 'hu_spray', 'hu_throat', 'hu_through', 'hu_turn', 'hu_unend', 'hu_void', 'hu_wedge', 'hu_widen', 'hu_zeal'],
-  elementalist: ['e_spread', 'e_stoke', 'e_catch', 'e_cloak', 'e_hoar', 'e_shell', 'e_hoarbloom', 'e_numb', 'e_frostwave'],
+  elementalist: ['e_spread', 'e_stoke', 'e_catch', 'e_cloak', 'e_hoar', 'e_shell', 'e_hoarbloom', 'e_numb', 'e_frostwave', 'e_afterglow', 'e_afterheat', 'e_arc', 'e_armor', 'e_attune', 'e_avalanche', 'e_backdraft', 'e_bind', 'e_bite', 'e_breaker', 'e_burnout', 'e_cascade', 'e_catalyst', 'e_chainshock', 'e_chantburn', 'e_cinders', 'e_coffin', 'e_coldember', 'e_conflag', 'e_crack', 'e_cryo', 'e_disrupt', 'e_eclipse', 'e_firebolt', 'e_firewave', 'e_flash', 'e_hellfire', 'e_icepick', 'e_kindle', 'e_lance', 'e_maul', 'e_mirror', 'e_overload', 'e_phoenix', 'e_polar', 'e_pole', 'e_pyreheart', 'e_resonate', 'e_seal', 'e_shatter', 'e_sparks', 'e_spear', 'e_stasis', 'e_steam', 'e_sunfall', 'e_tundra', 'e_twin', 'e_veil', 'e_weave', 'eu_ash', 'eu_attune', 'eu_avalanche', 'eu_back', 'eu_burn', 'eu_cascade', 'eu_chain', 'eu_cold', 'eu_cryo', 'eu_eclipse', 'eu_flash', 'eu_gap', 'eu_heart', 'eu_heat', 'eu_hell', 'eu_lance', 'eu_mirror', 'eu_phoenix', 'eu_pick', 'eu_polar', 'eu_pole', 'eu_shatter', 'eu_sky', 'eu_spear', 'eu_steam', 'eu_tundra', 'eu_veil', 'e_ember', 'e_touch'],
   assassin: ['a_after', 'a_aim', 'a_ambush', 'a_brkneedle', 'a_burst', 'a_burststab', 'a_cataclysm', 'a_chain', 'a_check', 'a_crumble', 'a_dart', 'a_deepplant', 'a_deflect', 'a_double', 'a_essence', 'a_expose', 'a_fang', 'a_gap', 'a_hack', 'a_mark', 'a_mist', 'a_plant', 'a_pouch', 'a_rend', 'a_rot', 'a_rotbreath', 'a_rush', 'a_seep', 'a_shade', 'a_shadow', 'a_siphon', 'a_strangle', 'a_umbra', 'a_wedge'] }; // 0.8.0 5단계 2-6 · 3-6 "뺌", 사냥꾼은 원거리 초안 2-6 "뺌", 원소술사는 원거리 초안 3-6 "뺌"(10월 18일), 암살자는 원거리 초안 4-7 "뺌"(10월 18일 0.8.0 5단계, 그림자 범용 넷은 결정 15)

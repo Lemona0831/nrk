@@ -45,6 +45,7 @@ function runSkill2(b, act, tgt) {
   if (p.build === 'warden') wdUse(b, s, targets, tgt, 'pre'); // 0.8.0 M5-1 파수꾼 태세 · 승부수 · 결합 칸
   if (p.build === 'monk' && s.mk5) mkUse(b, s); // 0.8.0 M5-2 수도승 강화 · 승부수 · 결합 칸
   if (p.build === 'assassin' && s.as5) asUse(b, s, targets, tgt);
+  if (p.build === 'elementalist' && s.el5) elUse(b, s, targets, tgt); // 0.8.0 M5-5 원소술사 원소 전환 · 강화 · 승부수 · 결합 칸
   if (p.build === 'hunter' && s.hn5) hnUse(b, s, targets, tgt); // 0.8.0 M5-4 사냥꾼 강화 · 승부수 · 결합 칸 // 0.8.0 M5-3 암살자 강화 · 승부수 · 결합 칸(만독개화는 여기서 독을 모은다)
   if (p.build === 'spellblade') { sbBoundUse(b, s); if (F('searMerge')) for (const e of targets) if (e.alive && stk(e, 'bleed') > 0 && stk(e, 'ignite') > 0) sbSear(b, e, 0); if (F('sbCross')) for (const e of targets) sbCross(b, e); if (F('sbEmberCut') && targets[0]) sbEmberCut(b, targets[0]); if (F('searBurst')) for (const e of targets) sbSearBurst(b, e, F('searBurst').mul || 2); } // 0.8.0 M5-0 마검사 경계 행동, 혈염은 베기 전에 걸려 있던 출혈 · 화상을 합친다
   if (s.tgt === 'self') for (const x of s.fx) if (x.k === 'st') { addS(b, p, x.s, x.n); logp(b, 'good', s.n + '. ' + (x.s === 'empower' && p.build === 'monk' ? '기' : KW_N[x.s] || x.s) + ' ' + x.n); } // 나에게 거는 상태
@@ -124,6 +125,7 @@ function runSkill2(b, act, tgt) {
     if (csh && h === 0 && preCh[e.id] > 0) { base += csh.dmg * preCh[e.id]; delete e.s.chill; } // 얼음 깨기: 둔화를 모두 깨뜨린다
     if (fb && h === 0) base += skillResourceDamage(p, s, fb, fb.n * fOf(e)); if (fxs) base *= 1 + fxs.per * fOf(e); if (swx && h === 0 && prevId != null && prevId !== e.id) base *= swx.mul; if (hsx && b.pDouble === b.round) base *= hsx.mul; if (solo) base *= 1 + HN.solo; if (hspOn) base *= hsp.mul; // 추적 소모 피해만 민첩 성장 · 추적 비례는 성장한 기본 피해에 곱함 · 가속은 연속 타격 전체
     if (p.build === 'hunter' && s.hn5) { const hs = F('hnSky'), hbr = F('hnBloodRain'); if (hs && fOf(e) >= hs.need) base = Math.max(base, wpnDmg(p) * hs.mul); if (hbr) base = st(e, 'bleed') > 0 ? wpnDmg(p) * hbr.mul : 0; } // M5-4 하늘 가르기 · 피의 비
+    if (p.build === 'elementalist' && s.el5) base = elBase(b, s, e, base, h, preCh[e.id]); // M5-5 마력탄 · 천화 · 비전 일격 · 빙결 파쇄
     { const abx = s.as5 ? F('asBackx') : null; if (abx && e.row === 'back' && (!abx.low || e.hp <= e.hpMax * abx.low)) base *= abx.mul; } // M5-3 후열 기습 · 그림자 처형
     if (lx && (lx.me ? p.hp <= p.hpMax * lx.hp : e.hp <= e.hpMax * lx.hp)) base *= lx.mul; if (bx && e.s.broken) base *= bx.mul; if (gx && isBig(e)) base *= gx.mul; if (chx && e.s.chill) base *= chx.mul; if (kwxF && preKw[e.id][kwxF.s] > 0) base *= kwxF.mul; // 마무리(생명력 낮음), 붕괴한 적, 큰 적, 둔화된 적 (겹치면 곱한다)
     if (sld && !preBrk[e.id]) base = 0; // 0.8.0 5단계 산사태: 무너지지 않은 적에게는 피해 대신 붕괴(아래)
@@ -153,6 +155,7 @@ function runSkill2(b, act, tgt) {
     if (dr && !dr.s && !dr.eat && h === 0 && st(e, 'poison') > 0) { const hl = Math.min(p.hpMax - p.hp, st(e, 'poison') * dr.per * healMul(p) * (p.build === 'assassin' ? 1 + asSum(p, 'drainP') : 1)); if (hl > 0) { p.hp += hl; logp(b, 'good', e.n + '의 독에서 생명력 +' + r1(hl)); } } // 독 흡수: 중독은 그대로
     if (bp && h === 0) addBreak(b, e, bp.per * st(e, 'poison'));
     if (h === 0 && !sbOrd) for (const x of stx) if (e.alive) addS(b, e, x.s, x.n); // 적에게 거는 상태 (독무의 약화). 마검사는 위에서 붕괴보다 먼저
+    if (h === 0 && p.build === 'elementalist' && s.el5 && e.alive) elHit(b, s, e, preCh[e.id], base > 0); // M5-5
     if (slx && h === 0 && hitE && e.alive && e.intent && SEAL_K.includes(e.intent.k)) { if (big(e)) { addBreak(b, e, slx.brk); logp(b, 'good', e.n + '의 혈을 짚는다. 끊기지 않고 붕괴 +' + slx.brk); } else { e.intent = { k: 'attack' }; e.teleTurn = null; logp(b, 'crit', e.n + '의 혈을 짚어 하려던 일을 끊는다'); ysResp(b, '끊기'); fxRun(p, 'onSeal', b, p, e); } b.rec.push({ k: 'seal', big: big(e) ? 1 : 0 }); } // 혈도: 지원 행동 끊기
     if (gru && h === 0 && e.alive && (p.grudge || 0) > 0) { if (gru.bl) addS(b, e, 'bleed', Math.min(6, Math.floor(p.grudge / gru.bl))); if (gru.vu) addS(b, e, 'vuln', Math.min(3, Math.floor(p.grudge / gru.vu))); if (gru.brk) addBreak(b, e, Math.min(gru.brkMax || 999, p.grudge * gru.brk)); } // 받은 피해를 출혈 · 취약 · 붕괴로
     if (wv && h === 0 && e.alive) { const I = st(e, 'ignite'), C = st(e, 'chill'); if (I && !C) addS(b, e, 'chill', wv.chill); else if (!I) addS(b, e, 'ignite', wv.ign); } // 원소술사 엮기: 없는 원소 (첫 타격이 화상을 쓴 뒤의 상태로 고른다. 둘 다 있으면 걸지 않는다)
@@ -433,6 +436,75 @@ function tagFit(build, t) { const br = ((typeof TREE2 !== 'undefined' && TREE2[b
 /* ---- 고정 상황 5개 (10.2 검증 질문 1) ---- */
 
 
+/* ===== 0.8.0 M5-5 원소술사 (10월 20일 만든 사람 설계지 2판): 원소 전환 · 빙결 · 강화 · 승부수 · 결합 칸 =====
+   p.elSt = { el 마력탄의 원소('fire' 불 · 'ice' 얼음, 전투는 불로 시작), charge 마력 응축({n, mul}), kindle 불씨 응축({n, ign}), multi 마력 연사({n, shots}), basicEl 그 기본 공격에 원소({n, ign, chill}),
+   cat · catT 촉매(이번 차례 열충격 배수), wardRed · wardU 마력 결계 · 고요한 방벽, protR 얼음 장벽 · 고요한 방벽({n, until} 내 차례마다 보호 채우기), ignGuard 열기 방패, avatar · avOnT 빙염의 화신(남은 차례 · 켜진 차례), stasisT 영겁의 정적, frostEmber · frostWall · manaFire 결합 칸 }.
+   빙결(원소술사가 싸울 때만, 수도승 · 사냥꾼은 그대로): 둔화가 가득 차면(3) 다음 행동을 놓치고 둔화가 풀린다. 강적 · 보스는 대신 붕괴 +40. 열충격이 먼저다(elemShock 끝의 elFreeze).
+   서리 무게: 둔화된 적이 주는 피해 −20%(큰 공격 포함, js/24). 숫자는 EL5_BOUND */
+const IFX_EL = {
+  cat: { shockMul: (b, p) => p.elSt.catT === b.turnIdx ? p.elSt.cat : 1 },
+  wardRed: { inP: (b, p, o) => o && o.dot ? 0 : (p.elSt.wardU >= (b.round || 0) ? p.elSt.wardRed : 0) },
+  ignGuard: { inP: (b, p, o) => o && !o.dot && o.src && o.src !== p && st(o.src, 'ignite') > 0 ? p.elSt.ignGuard : 0 }, // 열기 방패
+};
+const elAvOn = b => !!(b.p.elSt && b.p.elSt.avOnT != null && b.p.elSt.avOnT === b.turnIdx);
+function elUse(b, s, targets, tgt) {
+  const p = b.p, S = p.elSt = p.elSt || { el: 'fire' }, F = k => s.fx.find(e => e.k === k);
+  { const t0 = tgt || (s.tgt !== 'self' && targets.length === 1 ? targets[0] : null); if (t0 && t0.alive && st(t0, 'chill') === 2) { const adds = k => s.fx.some(e => e.k === 'st' && e.s === k) || (F('elBolt') && (S.el === 'ice' ? 'chill' : 'ignite') === k) || (elAvOn(b) && s.tgt !== 'self'); b.rec.push({ k: 'ch2', id: s.id, a: F('elShatter') ? 'shatter' : adds('chill') && !adds('ignite') ? 'freeze' : adds('ignite') ? 'shock' : 'other' }); } } // 측정: 둔화 2인 적 앞에서 고른 것(얼리기 · 깨기 · 열충격)
+  if (F('elSwitch')) { S.el = S.el === 'ice' ? 'fire' : 'ice'; logp(b, 'good', '원소 전환: 마력탄이 ' + (S.el === 'ice' ? '❄ 얼음(둔화 1)' : '🔥 불(화상 1)') + '이 된다'); }
+  for (const r of s.fx.filter(e => e.k === 'elRimeR')) { p.rime = p.rime || {}; const c0 = p.rime[r.s]; const until = (b.round || 0) + (r.r || 2) - 1; p.rime[r.s] = { n: Math.max(c0 ? c0.n : 0, r.n || 1), times: ELEM.rimeMax, until: Math.max(c0 && c0.until ? c0.until : 0, until) }; logp(b, 'good', s.n + '. ' + (r.r || 2) + '라운드 동안 나를 친 적에게 ' + KW_N[r.s] + ' ' + p.rime[r.s].n); } // 불꽃 외투 · 서리 갑옷: 라운드로 끝나는 되얼림
+  const ch = F('elCharge'); if (ch) { if (ch.ign || ch.chill) { S.kindle = { n: ch.n || 3, ign: ch.ign || 0, chill: ch.chill || 0 }; logp(b, 'good', s.n + ': 다음 기본 공격 ' + S.kindle.n + '번에 ' + (S.kindle.ign ? '화상 ' + S.kindle.ign : '둔화 ' + S.kindle.chill)); } else { S.charge = { n: ch.n || 3, add: Math.round(skillBaseDamage(p, s, ch.add || 6)) }; logp(b, 'good', s.n + ': 다음 기본 공격 ' + S.charge.n + '번 피해 +' + S.charge.add); } }
+  const ml = F('elMulti'); if (ml) { S.multi = { n: ml.n || 2, shots: ml.shots || 2 }; logp(b, 'good', s.n + ': 다음 기본 공격 ' + S.multi.n + '번이 ' + S.multi.shots + '발'); }
+  const ce = F('elChargeEl'); if (ce) S.basicEl = { n: (ch || ml || { n: 2 }).n || 2, ign: ce.ign || 0, chill: ce.chill || 0 };
+  const ct = F('elCat'); if (ct) { S.cat = ct.mul || 1.5; S.catT = b.turnIdx; logp(b, 'good', '촉매: 이번 차례 열충격 ×' + S.cat); }
+  const wd = F('elBarrier'); if (wd) { S.wardRed = wd.red || 0.4; S.wardU = (b.round || 0) + (wd.r || 3) - 1; logp(b, 'good', '마력 결계: ' + (wd.r || 3) + '라운드 동안 받는 피해 −' + Math.round(S.wardRed * 100) + '%'); }
+  const pr = F('elProtR'); if (pr) { S.protR = { n: pr.n || 3, until: (b.round || 0) + (pr.r || 3) - 1 }; elProtFill(b, p); logp(b, 'good', s.n + ': ' + (pr.r || 3) + '라운드 동안 내 차례마다 보호 ' + S.protR.n + '까지'); }
+  const ig = F('elIgnGuard'); if (ig) { S.ignGuard = Math.max(S.ignGuard || 0, ig.red || 0.4); logp(b, 'good', s.n + ': 이번 전투 동안 화상 걸린 적이 주는 피해 −' + Math.round(S.ignGuard * 100) + '%'); }
+  const ca = F('elChillAll'); if (ca) for (const e of alive(b)) if (e.role !== 'root') addS(b, e, 'chill', ca.n || 1);
+  const va = F('elVulnAll'); if (va) for (const e of alive(b)) if (e.role !== 'root') addS(b, e, 'vuln', va.n || 1);
+  const vf = F('elVulnFocus'); if (vf) { const e = alive(b).filter(x => x.role !== 'root').sort((x, y) => y.hp - x.hp)[0]; if (e) { addS(b, e, 'vuln', vf.n || 1); logp(b, 'good', e.n + '에게 취약 ' + (vf.n || 1)); } }
+  if (F('elFrostEmber')) { S.frostEmber = 1; logp(b, 'good', '얼어붙은 불씨: 이번 전투 동안 둔화 걸린 적에게 화상을 걸면 화상 +1'); }
+  if (F('elFrostWall')) { S.frostWall = 1; logp(b, 'good', '서리 방벽: 이번 전투 동안 보호가 있을 때 나를 친 적에게 둔화 1'); }
+  if (F('elManaFire')) { S.manaFire = 1; logp(b, 'good', '마염 화살: 이번 전투 동안 화상 걸린 적을 기본 공격으로 치면 화상 +1'); }
+  const av = F('elAvatar'); if (av) { S.avatar = av.r || 3; S.avatarT = b.turnIdx; logp(b, 'crit', '빙염의 화신: 다음 ' + S.avatar + '차례 동안 내 모든 공격이 화상 1과 둔화 1을 함께 건다 — 그 차례마다 최대 생명력의 ' + Math.round(EL5_BOUND.avatarHp * 100) + '%를 잃는다'); }
+  const ss = F('elStasis'); if (ss) { let k = 0; for (const e of alive(b)) { if (e.role === 'root') continue; if (e.strong || e.role === 'boss') { b.elNoFrz = 1; addS(b, e, 'chill', EL5_BOUND.stasisChill); b.elNoFrz = 0; if (ss.brk) addBreak(b, e, ss.brk); } else { const tl = ysBigTele(e); e.stun = Math.max(e.stun || 0, ss.r || 1); k++; if (tl) ysResp(b, '끊기'); } }
+    p.stun = Math.max(p.stun || 0, 1); S.stasisT = b.turnIdx; logp(b, 'crit', '영겁의 정적: 모든 것이 멈춘다 — 적 ' + k + '이(가) ' + ((ss.r || 1) > 1 ? ss.r + '번' : '') + ' 행동을 놓친다(강적 · 보스는 둔화 ' + EL5_BOUND.stasisChill + '). 나도 다음 차례를 쉰다'); b.rec.push({ k: 'elStasis', n: k }); }
+  const mt = F('elMeteor'); if (mt) { const hp = Math.floor(p.hp * EL5_BOUND.meteorHp); p.hp = Math.max(1, p.hp - hp); logp(b, 'bad', '천화: 생명력 ' + hp + '을(를) 불의 비에 바친다'); }
+}
+/* 타격 피해(runSkill2 대상 고리): 비전 일격 = 취약 걸린 적에게 ×, 빙결 파쇄 = 둔화 1마다 피해 더함(지능으로 큼). 원소술사 무기 피해는 시작 4라 무기 피해 배수를 쓰지 않는다 */
+function elBase(b, s, e, base, h, c0) { const p = b.p, F = k => s.fx.find(x => x.k === k);
+  const ar = F('elArcane'); if (ar && st(e, 'vuln') > 0) base *= ar.mul || 2;
+  const sh = F('elShatter'); if (sh && h === 0 && c0 > 0) base += skillBaseDamage(p, s, (sh.per || 8) * c0);
+  return base; }
+/* 맞힌 뒤(첫 타격, 이 스킬의 상태를 건 뒤): 마력탄의 원소 · 둔화 비례 붕괴 · 얼음 깨기 · 화상 번지기 · 빙염의 화신 */
+function elHit(b, s, e, c0, hit) { const p = b.p, S = p.elSt || {}, F = k => s.fx.find(x => x.k === k);
+  { const bo = F('elBolt'); if (bo && hit) addS(b, e, S.el === 'ice' ? 'chill' : 'ignite', bo.n || 1); }
+  const cb = F('elChillBrk'); if (cb && c0 > 0) { addBreak(b, e, cb.per * c0); logp(b, 'good', e.n + '의 둔화 ' + c0 + ': 붕괴 +' + cb.per * c0); }
+  const sh = F('elShatter'); if (sh && c0 > 0 && e.alive) { delete e.s.chill; e.chillR = 0; e.frzP = 0; logp(b, 'good', e.n + '의 얼음을 깨뜨린다. 둔화 ' + c0 + '만큼 피해를 더했다'); b.rec.push({ k: 'elShatter', n: c0 }); }
+  const sp = F('elSpreadIgn'); if (sp && e.alive) { const n = Math.floor(st(e, 'ignite') * (sp.per || 0.5)); let k = 0; if (n > 0) for (const o of alive(b)) if (o !== e && o.role !== 'root') { addS(b, o, 'ignite', n); k++; } if (k) logp(b, 'good', e.n + '의 불이 번진다. 다른 적 모두에게 화상 ' + n); }
+  if (hit && e.alive && elAvOn(b)) { addS(b, e, 'ignite', 1); addS(b, e, 'chill', 1); }
+}
+/* 기본 공격(js/32): 마력 응축 더하기(치기 전, 지능으로 큰 값) · 마력 연사 덧쏘기 · 불씨 응축 · 그 기본 공격의 원소 · 마염 화살 · 빙염의 화신(친 뒤) */
+function elBasicAdd(b, tgt) { const S = b.p.elSt; S.mfPre = tgt ? st(tgt, 'ignite') : 0; let a = 0; if (S.charge && S.charge.n > 0) { a = S.charge.add; S.charge.n--; logp(b, 'good', '마력 응축: 이 마력 화살 피해 +' + a + (S.charge.n ? ' (남은 ' + S.charge.n + '번)' : '')); if (S.charge.n <= 0) S.charge = null; } return a ? outDmg(b, a, {}) : 0; }
+function elBasicAfter(b, tgt, d, melee1) { const p = b.p, S = p.elSt; if (!tgt) return;
+  let n = 0; if (S.multi && S.multi.n > 0) { n = S.multi.shots - 1; S.multi.n--; if (S.multi.n <= 0) S.multi = null; }
+  for (let i = 0; i < n && tgt.alive && !b.over; i++) hurtEnemy(b, tgt, d, { single: 1, melee: melee1, label: '마력 연사' });
+  if (!tgt.alive || b.over) return;
+  if (S.kindle && S.kindle.n > 0) { if (S.kindle.ign) addS(b, tgt, 'ignite', S.kindle.ign); if (S.kindle.chill) addS(b, tgt, 'chill', S.kindle.chill); S.kindle.n--; if (S.kindle.n <= 0) S.kindle = null; }
+  if (S.basicEl && S.basicEl.n > 0) { if (S.basicEl.ign) addS(b, tgt, 'ignite', S.basicEl.ign); if (S.basicEl.chill) addS(b, tgt, 'chill', S.basicEl.chill); S.basicEl.n--; if (S.basicEl.n <= 0) S.basicEl = null; }
+  if (S.manaFire && S.mfPre > 0) { addS(b, tgt, 'ignite', 1); logp(b, 'good', '마염 화살: ' + tgt.n + '에게 화상 +1'); }
+  if (elAvOn(b)) { addS(b, tgt, 'ignite', 1); addS(b, tgt, 'chill', 1); }
+}
+/* 내 차례 시작(js/32 prepTurn): 촉매 끝 · 빙염의 화신(그 차례에 켜고 최대 생명력 5%) */
+function elProtFill(b, p) { const S = p.elSt; if (!S.protR) return; if ((b.round || 0) > S.protR.until) { S.protR = null; return; } const c = st(p, 'protect'); if (c < S.protR.n) addS(b, p, 'protect', S.protR.n - c); }
+function elTurnStart(b, p) { const S = p.elSt; if (S.cat && S.catT !== b.turnIdx) S.cat = 0; if (S.protR) elProtFill(b, p);
+  if (S.avatar > 0 && S.avatarT !== b.turnIdx) { S.avatar--; S.avOnT = b.turnIdx; const hp = Math.max(1, Math.round(p.hpMax * EL5_BOUND.avatarHp)); p.hp = Math.max(1, p.hp - hp); logp(b, 'bad', '빙염의 화신: 생명력 −' + hp + (S.avatar ? ' (남은 ' + S.avatar + '차례)' : ' (마지막 차례)')); } }
+/* 빙결(elemShock 끝, 열충격 뒤): 이번에 둔화가 가득 찬 적(addS의 e.frzP). 영겁의 정적이 거는 둔화 3은 얼리지 않는다(b.elNoFrz) */
+function elFreeze(b, by) { for (const e of b.en) { if (!e.frzP) continue; e.frzP = 0; if (!e.alive || b.over || e.role === 'root' || st(e, 'chill') < KW.chill) continue;
+  delete e.s.chill; e.chillR = 0;
+  if (e.strong || e.role === 'boss') { addBreak(b, e, EL5_BOUND.frzBrk); logp(b, 'good', e.n + '이(가) 얼어붙다 만다. 둔화가 풀리고 붕괴 +' + EL5_BOUND.frzBrk); b.rec.push({ k: 'freeze', big: 1, by }); }
+  else { const tl = ysBigTele(e); e.stun = Math.max(e.stun || 0, 1); logp(b, 'crit', '빙결: ' + e.n + '이(가) 얼어붙는다. 다음 행동을 놓친다'); if (tl) ysResp(b, '끊기'); b.rec.push({ k: 'freeze', big: 0, by }); } } }
+/* 서리 방벽(js/24): 보호가 있을 때 나를 친 적에게 둔화 1 */
+function elFrostWallHit(b, src) { if (!src || !src.alive || src.role === 'root') return; const g = addS(b, src, 'chill', 1); if (g) logp(b, 'good', '서리 방벽: ' + src.n + '에게 둔화 1'); }
 /* ===== 0.8.0 M5-4 사냥꾼 (10월 20일 만든 사람 설계지 2판): 강화 · 승부수 · 결합 칸 =====
    p.hnSt = { nock 화살 재기({n, shots}), nockChill({n, chill}), carry 끝없는 사냥, windStep 바람 걸음 · windDisc, veilU · veilR 바람의 장막,
    draw 만궁({mul, per, brk}) · drawT, gale 질풍난사(남은 라운드) · galeBleed, trap 혈향의 덫({mul, brk, bleed}) · trapT, chase 추격, scent 피 냄새, frozen 얼어붙은 사냥감 }.

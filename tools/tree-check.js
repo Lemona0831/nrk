@@ -187,6 +187,34 @@ for (const c of CLS) {
   for (const v of Object.values(A.vars)) if (v.d && v.d.length > MAX) long.push(v.n + '(' + v.d.length + ')');
   if (long.length) console.warn('경고: 사냥꾼 설명 ' + MAX + '자 넘음 — ' + long.join(', ')); else n++; }
 
+// ===== 0.8.0 M5-5 원소술사 액티브 재설계(10월 20일 만든 사람 설계지 2판) =====
+{ const A = E.atBuild('elementalist'), N = Object.values(A.nodes), SK = N.filter(x => x.kind === 'skill'), up = N.filter(x => x.slot), SK2 = E.SK2;
+  ok(JSON.stringify(A.sec) === JSON.stringify({ A: '불꽃', AB: '빙염', B: '서리', BC: '정적', C: '마력', CA: '마염' }), '원소술사 부채꼴 여섯: 불꽃 · 빙염 · 서리 · 정적 · 마력 · 마염(공명 없앰)');
+  ok(SK.length === 39 && up.length === 36 && Object.keys(A.vars).length === 72, '원소술사 스킬 노드 39(갈래 21 · 경계 15 · 결합 3) + 변형 자리 36 · 변형 72');
+  for (const k of ['A', 'B', 'C']) { const S6 = SK.filter(x => x.sec === k), r = n => S6.filter(x => x.ring === n), op = r(1).filter(x => x.ys === 2);
+    ok(S6.length === 7 && r(1).map(x => x.ys).sort().join() === '1,2,2' && op[0].excl === op[1].id && r(2).length === 2 && r(3).length === 2, A.sec[k] + ': 1고리 첫 스킬 둘(길) + 리듬 1, 2고리 2 · 3고리 2');
+    ok([1, 2, 3].every(g => r(g).filter(x => x.path).map(x => x.path).sort().join() === 'a,b'), A.sec[k] + ': 길 a · b — ' + ['a', 'b'].map(w => [1, 2, 3].map(g => r(g).find(x => x.path === w).n).join(' → ')).join(' / ')); }
+  const nm = id => SK2[id].n, path = (a, b) => a.every((id, i) => A.nodes[id].path === b && A.nodes[id].ring === i + 1);
+  ok(path(['e5_charge', 'e5_volley', 'e5_arcane'], 'a') && path(['e5_barrier', 'e5_mirror', 'e5_ward'], 'b') && ['마력 응축', '마력 연사', '비전 일격', '마력 방벽', '거울 장막', '마력 결계'].join() === ['e5_charge', 'e5_volley', 'e5_arcane', 'e5_barrier', 'e5_mirror', 'e5_ward'].map(nm).join(), '마력 길(설계지): 평타 마력 응축 → 마력 연사 → 비전 일격 / 버팀 마력 방벽 → 거울 장막 → 마력 결계');
+  ok([['e5_firebolt', '화염탄'], ['e5_sparks', '불똥 세례'], ['e5_cloak', '불꽃 외투'], ['e5_burnout', '불태우기'], ['e5_spread', '번지는 불'], ['e5_inferno', '대화재'], ['e5_hongryeon', '홍련'], ['e5_icespear', '얼음 창'], ['e5_frostarmor', '서리 갑옷'], ['e5_rimefrost', '서릿발'], ['e5_crack', '서리 균열'], ['e5_icewall', '얼음 장벽'], ['e5_shatter', '빙결 파쇄'], ['e5_coldwave', '한파'], ['e5_mark', '약화의 표식'], ['e5_weave', '원소 엮기'], ['e5_catalyst', '촉매'], ['e5_arc', '튀는 충격'], ['e5_storm', '원소 폭풍'], ['e5_avatar', '빙염의 화신'], ['e5_stasis', '영겁의 정적'], ['e5_meteor', '천화']].every(([id, n]) => nm(id) === n), '설계지 이름 그대로(홍련 · 영겁의 정적 · 천화)');
+  ok(JSON.stringify(R_('TREE2').elementalist.starters) === JSON.stringify(['e5_bolt', 'e5_switch']) && nm('e5_bolt') === '마력탄' && nm('e5_switch') === '원소 전환' && SK2.e5_switch.time === 'fast' && SK2.e5_switch.ys === 1, '시작 스킬 마력탄 · 원소 전환(빠른 행동 · 유산 1)');
+  const SHK = id => SK2[id].fx.some(e => (e.k === 'shockx' || e.k === 'elCat' || e.k === 'elAvatar')); ok(SK.filter(x => SHK(x.id)).every(x => x.sec === 'AB'), '열충격을 키우는 칸은 빙염 경계에만');
+  for (const k of ['AB', 'BC', 'CA']) { const S5 = SK.filter(x => x.sec === k), fin = S5.filter(x => x.ys === 4); const atk = S5.filter(x => x.ys !== 4 && SK2[x.id].tgt !== 'self').length;
+    ok(S5.length === 5 && fin.length === 1 && SK2[fin[0].id].line && atk === (k === 'AB' ? 3 : 2) && A.sec[k] !== fin[0].n, A.sec[k] + ': 경계 5칸(공격 ' + (k === 'AB' ? '3 · 강화 1(설계지)' : '2 · 강화/방어 2') + ' · 대사 승부수 ' + (fin[0] && fin[0].n) + ', 경계 이름과 다름)'); }
+  ok(SK2.e5_avatar.line === '「불도 얼음도, 이 몸 안에서는 하나일 뿐이니.」' && SK2.e5_stasis.line === '「모든 것이 멈춘 이 한순간만이, 나락에서 유일한 고요로구나.」' && SK2.e5_meteor.line === '「타올라라. 이 나락에 내린 불의 비가, 너희의 마지막 하늘이 될 터이니.」' && SK2.e5_avatar.cut === 'arcane' && SK2.e5_stasis.cut === 'guard' && SK2.e5_meteor.cut === 'blade', '승부수 대사 셋(만든 사람 문장 그대로) · 컷인 종류(화신 마법 · 정적 방어 · 천화 검)');
+  const ULT = ['elAvatar', 'elStasis', 'elMeteor']; ok(SK.every(x => !SK2[x.id].fx.some(e => ULT.includes(e.k)) || x.ys === 4), '새 상태(화신 · 정적 · 천화)는 승부수에만');
+  const STG = R_('EL_TAGS'), BRIDGE = ['화상', '둔화', '취약', '보호', '기본공격연동', '광역', '붕괴', '열충격'], pureN = {}, VF = v => [...(v.mod.fxSet || []), ...(v.mod.fxAdd || [])];
+  for (const u of up) { const V = u.vars.map(v => A.vars[v]); ok(V.length === 2 && V.map(v => v.v).sort().join() === 'deep,link', u.id + ': 깊게 하나 · 잇기 하나'); const lk = V.find(v => v.v === 'link'); ok(lk.tags.some(g => BRIDGE.includes(g) && !(STG[u.on] || []).includes(g)), u.id + ' 잇기 ' + lk.n + ': 없던 꼬리표 더함');
+    const m = V.find(v => v.v === 'deep').mod; if (!m.set && !m.cond && VF({ mod: m }).every(f => ['dmg', 'brk', 'st', 'stam'].includes(f.k))) pureN[u.br] = (pureN[u.br] || 0) + 1; }
+  ok(Object.values(pureN).every(n => n <= 2), '원소술사 깊게의 순수 숫자 변형 갈래마다 둘까지 ' + JSON.stringify(pureN));
+  const nms = SK.map(x => x.n).concat(Object.values(A.vars).map(v => v.n)), dup = nms.filter((x, i) => nms.indexOf(x) !== i), SNv = Object.values(R_('SNAMES')).concat(Object.values(A.sec)), clash = SK.filter(x => SNv.includes(x.n)).map(x => x.n);
+  ok(!dup.length && !clash.length, '원소술사 이름 겹침 0, 상태 · 부채꼴과 같은 스킬 이름 0' + (dup.length || clash.length ? ' — ' + dup.concat(clash).join(', ') : ''));
+  ok(A.nodes.e5_frostember.reqTags.둔화 === 2 && A.nodes.e5_frostember.reqTags.화상 === 1 && A.nodes.e5_frostwall.reqTags.보호 === 1 && A.nodes.e5_frostwall.reqTags.둔화 === 1 && A.nodes.e5_manafire.reqTags.기본공격연동 === 1 && A.nodes.e5_manafire.reqTags.화상 === 1, '결합 칸 셋(얼어붙은 불씨 둔화 2 · 화상 1, 서리 방벽 보호 1 · 둔화 1, 마염 화살 기본공격연동 1 · 화상 1)');
+  ok(R_('EL5_BOUND').frzBrk === 40 && R_('EL5_BOUND').avatarHp === 0.05 && R_('EL5_BOUND').meteorHp === 0.5 && R_('EL5_BOUND').stasisChill === 3 && R_('ELEM').guard === 0.2, '설계지 숫자: 빙결 붕괴 +40 · 화신 5% · 천화 절반 · 정적 둔화 3 · 서리 무게 −20%');
+  const MAX = R_('MK_DESC_MAX'), long = []; for (const x of SK) { const s = SK2[x.id]; if (s.line) continue; const d = E.skBody(s); if (d.length > MAX) long.push(s.n + '(' + d.length + ')'); }
+  for (const v of Object.values(A.vars)) if (v.d && v.d.length > MAX) long.push(v.n + '(' + v.d.length + ')');
+  if (long.length) console.warn('경고: 원소술사 설명 ' + MAX + '자 넘음 — ' + long.join(', ')); else n++; }
+
 // ===== M5-0 보정 5: 고리는 야영지에서 연다 =====
 { const run = newRun('spellblade'); const ro = D.run_('ringOpen'), rc = D.run_('ringCampOpen');
   ok(!ro(run, 2) && !ro(run, 3), '새 판: 2 · 3고리 잠김'); run.ch = 1; ok(rc(run) === 2 && ro(run, 2) && !ro(run, 3) && run.ringNew === 1, '1챕터 야영지: 2고리가 열리고 트리 버튼 강조');

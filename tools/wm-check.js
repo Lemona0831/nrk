@@ -5,8 +5,8 @@
    4 수도승(기의 그릇 · 열린 단전 · 참회의 무게 · 비운 그릇 · 부동의 맹세 · 철산고 · 천지 정지 · 넘치는 기운)
    5 사냥꾼(10월 18일, docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md): 51노드 · 금지선 · [전환] 하나 · 비용 · 시작 스킬 태그(lb) · 조건 link · focus>=n · linkFast · 외길 사냥꾼 전환 ·
      이어 쏘기 숙련 · 끝까지 쫓는 자 · 넘겨받는 추적 · 끝맺는 연계 · 손에 익은 활 · 이어 당기는 활(두 번째 차례) · 기본 공격 버프(바꿔 쏘기 · 덧화살 · 가시 · 하늘 가르기의 기간 · 겹침 · 다시 걸기 · 버림 · 전투 끝) · 결정 7
-   6 원소술사(10월 18일, 같은 문서 3절 · 8절 결정 9–12): 51노드 · 고리 · 금지선 · [전환] 하나 · 비용 · 공명 처치 환급(행동 끝 열충격 포함) · 시작 노드 · 패시브 배치 · 고정 피해(불의 학도 행동마다 한 번 · 남는 울림 열충격마다) ·
-     끊어진 영창(끊기 · 무너뜨리기 · 먼저 치우기, 라운드 한도 밖, 전투마다 2번) · 잿불의 길 · 얼음 심장(대가 포함) · 서리 무게 노드 · 열충격 배수 노드 · 회복 · 스태미나 노드 · 원소 장막 · kw 할인
+   6 원소술사(M5-5 재설계 뒤: 새 트리 규격 한 줄 · 시작 노드 · 패시브 배치 · 패시브 노드 시험은 새 칸으로 — 고정 피해(불의 학도 행동마다 한 번 · 남는 울림 열충격마다) ·
+     끊어진 영창(끊기 · 무너뜨리기 · 먼저 치우기, 라운드 한도 밖, 전투마다 2번) · 잿불의 길 · 얼음 심장(대가 포함) · 서리 무게 노드(−20%, 큰 공격 포함) · 열충격 배수 노드 · 회복 · 스태미나 노드
    7 암살자(M5-3 재설계 뒤: 새 트리 규격 한 줄 · 패시브 노드 시험은 새 칸으로 — 중독 상한 · 독의 군주 · 그림자 맹세 · 흘려 냄 표시 · 얇은 그림자 · 피하는 몸 · 흘린 숨 · 남은 독의 온기 · 무너뜨리는 독 · 끊는 칼끝 · 깨진 틈 찌르기 · 연이은 흘림 · 독 기억 · 무르익은 독).
      옛 칸 비용 할인 · 옛 강화 · 측정 변형(ASN_SHADOW_VAR) 시험은 옛 칸이 트리에서 빠져 지웠다 */
 process.env.DGDIR = process.env.DGDIR || '.';
@@ -97,25 +97,11 @@ const d0 = basicD().d;
   { const f = hfight({ own: ['pw3L'] }); f.b.hnLinkT = f.b.turnIdx; f.b.hnLinkN = 1; f.p.st = 10; f.b.stepMode = true; E.playerAct(f.b, 'basic', f.es[1].id); ok(f.p.st === 15, '이어 당기는 활: 맞히면 스태미나 +5'); }
   const y = basicD({ own: ['pw3L'] }); ok(Math.abs(y.d / d0 - 1) < 1e-6, '이어 당기는 활: 연계 빠른 행동이 없던 차례에는 없음'); }
 /* M5-4: 옛 칸(전환 사격 · 연속 사격 · 가시 화살 · 화살 폭우)의 기본 공격 버프 시험은 칸이 빠져 지웠다. 버프 엔진(hnBbufSet · hnBasicBuf)은 새 칸(덧화살 · 표적 고정)이 쓰고 tools/hn-check.js가 본다 */
-// ===== 6) 원소술사 (10월 18일, docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 3-2 · 3-3 · 3-5 · 3-6 · 8절 결정 9–12) =====
-{ const A = E.atBuild('elementalist'); const N = Object.values(A.nodes); const sk = N.filter(x => x.kind === 'skill'), up = N.filter(x => x.kind === 'upgrade');
-  ok(!A.tmp && sk.length === 24 && up.length === 27, '원소술사: 직업 트리, 스킬 24 + 강화 27 = 51노드');
-  const rg = { 1: 0, 2: 0, 3: 0 }; for (const x of sk.concat(up)) rg[x.ring]++; ok(rg[1] === 12 && rg[2] === 25 && rg[3] === 14, '원소술사: 1고리 12 · 2고리 25 · 3고리 14');
-  for (const u of up) { const m = u.mod; assert(!(m.set && ('ys' in m.set || 'cd' in m.set || 'cost' in m.set || 'killRecharge' in m.set)), '원소술사 무조건 비용 · 환급 바꾸기 금지 ' + u.id);
-    if (m.cond) assert(m.cond.off === 1 && /^kw:\w+>=\d+$/.test(m.cond.when), '원소술사 조건 어휘 ' + u.id);
-    const s = E.skOf({ build: 'elementalist', aup: [u.id], pn: [] }, u.on); assert(s !== E.SK2[u.on] && s.ups.includes(u.id), '원소술사 실제 스킬 ' + u.id);
-    for (const x of m.fxSet || []) { const e = s.fx.find(y => y.k === x.k && (x.s == null || y.s === x.s)); for (const k in x) if (k !== 'k' && k !== 's') assert.equal(e[k], x[k], '원소술사 fxSet ' + u.id + ' ' + k); } }
-  ok(true, '원소술사: 강화 27개가 모두 실제 스킬을 바꾸고, 조건 어휘는 kw:상태>=n뿐');
-  const CV = ['eu_hell', 'eu_tundra', 'eu_avalanche', 'eu_polar', 'eu_steam', 'eu_chain', 'eu_back']; const cvOn = CV.map(id => A.nodes[id].on); // 3-6 성격 열의 [전환] 일곱
-  const conv = {}; for (const u of up) if (u.mod.set && ['time', 'tgt'].some(k => k in u.mod.set)) conv[u.on] = (conv[u.on] || 0) + 1;
-  ok(new Set(cvOn).size === CV.length && Object.keys(conv).every(on => cvOn.includes(on)) && Object.values(conv).every(v => v <= 1), '원소술사: 같은 스킬에 [전환] 강화는 하나뿐(겁화 · 영구 동토 · 눈사태 · 극성 뒤집기 · 증기 폭발 · 연쇄 충격 · 역화가 모두 다른 스킬)');
-  const c = { 2: 0, 3: 0, 4: 0 }; for (const s of sk) c[s.ys]++; ok(c[2] === 9 && c[3] === 12 && c[4] === 3, '원소술사: 트리 비용 2 / 3 / 4 = 9 / 12 / 3칸');
-  const p0 = { build: 'elementalist', aup: [], pn: [] }; ok(sk.every(s => skCost(E.skOf(p0, s.id)) === E.atBuild('elementalist').nodes[s.id].ys), '원소술사: 비용은 모두 노드 ys(M5-0)');
-  ok(['e_kindle', 'e_sparks', 'e_burnout', 'e_bind', 'e_crack', 'e_bite', 'e_weave', 'e_catalyst', 'e_firewave'].map(id => skCost(E.skOf(p0, id))).join() === '2,3,3,2,2,3,2,3,3', '1고리 비용: 불꽃 2 · 3 · 3, 서리 2 · 2 · 3, 공명 2 · 3 · 3');
-  ok(E.SK2.e_resonate.killRecharge === 1 && E.SK2.e_resonate.krShock === 1 && !E.SK2.e_resonate.fx.some(f => f.k === 'hasten') && !sk.some(s => E.SK2[s.id].fx.some(f => f.k === 'hasten')), '🔄 정리: 공명은 처치 환급(행동 끝 열충격 포함), 트리에 무조건 🔄 없음(불길 증폭 · 빙벽 화살은 뺌)');
-  ok(['e_sunfall', 'e_coffin', 'e_overload'].every(id => A.nodes[id].ys === 4 && A.nodes[id].ring === 3) && !A.nodes.e_critical && A.nodes.eu_chain.src.includes('e_critical'), '결정타 셋(태양 낙하 · 얼음 관 · 과부하 ×2), 임계는 연쇄 충격의 출처로만(결정 12)');
-  ok(R_('AT_GONE').elementalist.length === 9 && R_('AT_GONE').elementalist.every(id => E.SK2[id] && !A.nodes[id]), '빠진 스킬 아홉(AT_GONE)');
-  ok(/행동 끝 열충격 포함/.test(R_('skBody')(E.SK2.e_resonate)) && /영창을 끊으면 나에게 보호 2/.test(R_('skBody')(E.skOf({ build: 'elementalist', aup: ['eu_veil'], pn: [] }, 'e_disrupt'))), '설명 문장: 공명 처치 환급 · 원소 장막'); }
+// ===== 6) 원소술사 (10월 18일 원거리 초안의 패시브 노드 · M5-5 재설계 뒤 새 칸으로) =====
+/* 0.8.0 M5-5(10월 21일): 원소술사도 재설계로 강화 노드 대신 변형이 됐다. 트리 규칙은 tools/tree-check.js, 원소 전환 · 빙결 · 서리 무게 · 승부수 · 새 효과는 tools/el-check.js.
+   옛 칸 시험(51노드 · [전환] · 공명 처치 환급 · 원소 장막 · kw 할인 · 결정타 셋 · 3타 불똥)은 칸이 트리에서 빠져 지웠다(스킬 데이터는 남음). 패시브 노드 시험은 새 칸으로 */
+{ const A = E.atBuild('elementalist'), N = Object.values(A.nodes); ok(!A.tmp && N.filter(x => x.kind === 'skill').length === 39 && N.filter(x => x.slot).length === 36 && N.filter(x => x.kind === 'skill').every(x => [1, 2, 3, 4].includes(x.ys)), 'elementalist: 새 트리(스킬 39 · 변형 자리 36, 비용 1–4)');
+  ok(['e_kindle', 'e_resonate', 'e_overload', 'eu_veil', 'e_ember', 'e_touch'].every(id => (E.SK2[id] || id.startsWith('eu_')) && !A.nodes[id] && R_('AT_GONE').elementalist.includes(id)), '옛 칸 · 옛 강화 · 옛 시작 스킬은 트리에서 빠지고(AT_GONE) 스킬 데이터는 남음'); }
 { const run = newRun('elementalist'); const S = run.stats; ok(S.int === 9 && S.con === 3 && S.wil === 2 && (S.str || 0) + (S.dex || 0) === 0, '시작 노드 지능 9 · 체력 3 · 의지 2(14, 결정 9)');
   E.ptBuy(run, 'pw1C'); E.ptBuy(run, 'pw2L'); ok(run.stats.int === 9 && run.p.pn.includes('n_bs_dmg'), '화력 1고리 작은 노드는 평타 노드(M4, 지능 그대로 9, C1은 번지는 열)');
   const P = E.ptBuild('elementalist'), K = R_('KS_LIST'); ok(!P.tmp && P.nodes.pw1C.fx === 'k_el1' && P.nodes.ct1C.fx === 'k_el2' && P.nodes.lg2L.fx === 'k_el3' && P.nodes.lg3R.fx === 'n_el_echo' && P.nodes.pw3L.fx === 'n_el_student' && P.nodes.ct3L.fx === 'n_el_chanthand', '패시브 배치: 번지는 열 · 굳는 서리 · 남는 울림 · 이어지는 울림 · 불의 학도 · 영창 끊는 손');
@@ -129,23 +115,22 @@ const eHit = (o, id, prep) => { const f = efight(o); if (prep) prep(f); f.p.ys =
 const lastShock = b => b.rec.filter(r => r.k === 'shock').pop();
 const setEl = (b, e, I, C) => { if (I) E.addS(b, e, 'ignite', I); if (C) E.addS(b, e, 'chill', C); };
 // 고정 피해(flatAdd): 배율을 모두 곱한 뒤 더한다
-{ const A0 = { act: ['e_kindle', 'e_sparks', 'e_weave', 'e_firewave'], eq: ['e_kindle', 'e_sparks', 'e_firewave'] }, A1 = Object.assign({ own: ['pw3L'] }, A0);
+{ const A0 = { act: ['e5_firebolt', 'e5_sparks'], eq: ['e5_firebolt', 'e5_sparks'] }, A1 = Object.assign({ own: ['pw3L'] }, A0);
   const d = (o, id, prep) => eHit(o, id, prep).d; const sum = a => a.reduce((x, y) => x + y, 0);
-  const em0 = d(A0, 'e_ember')[0], em1 = d(A1, 'e_ember')[0]; ok(Math.abs(em1 - em0 - 3) < 1e-6, '불의 학도: 불씨 화살 +3(' + em0.toFixed(1) + ' → ' + em1.toFixed(1) + ')');
-  ok(Math.abs(d(A1, 'e_sparks')[0] - d(A0, 'e_sparks')[0] - 3) < 1e-6, '불의 학도: 3타 스킬도 첫 타격에만 +3(행동마다 한 번)');
-  ok(Math.abs(sum(d(A1, 'e_firewave')) - sum(d(A0, 'e_firewave')) - 3) < 1e-6, '불의 학도: 모두 치는 스킬도 첫 대상 하나에만 +3');
-  const vu = f => E.addS(f.b, f.es[0], 'vuln', 2); ok(Math.abs(d(A1, 'e_ember', vu)[0] - d(A0, 'e_ember', vu)[0] - 3) < 1e-6, '불의 학도: 취약(×1.25)을 곱한 뒤 더한다(+3 그대로)');
+  const em0 = d(A0, 'e5_firebolt')[0], em1 = d(A1, 'e5_firebolt')[0]; ok(Math.abs(em1 - em0 - 3) < 1e-6, '불의 학도: 화염탄 +3(' + em0.toFixed(1) + ' → ' + em1.toFixed(1) + ')');
+  ok(Math.abs(sum(d(A1, 'e5_sparks')) - sum(d(A0, 'e5_sparks')) - 3) < 1e-6, '불의 학도: 모두 치는 스킬(불똥 세례)도 첫 대상 하나에만 +3');
+  const vu = f => E.addS(f.b, f.es[0], 'vuln', 2); ok(Math.abs(d(A1, 'e5_firebolt', vu)[0] - d(A0, 'e5_firebolt', vu)[0] - 3) < 1e-6, '불의 학도: 취약(×1.25)을 곱한 뒤 더한다(+3 그대로)');
   ok(Math.abs(d(A1, 'basic')[0] - d(A0, 'basic')[0]) < 1e-6, '불의 학도: 기본 공격에는 없음(스킬만)');
-  { const two = o => { const f = efight(o); f.p.ys = 5; f.b.stepMode = true; const h0 = f.es[0].hp; E.playerAct(f.b, 'e_kindle', f.es[0].id); const h1 = f.es[0].hp; E.playerAct(f.b, 'e_sparks', f.es[0].id); return [h0 - h1, h1 - f.es[0].hp]; };
-    const x = two(A1), y = two(A0); ok(Math.abs(x[0] - y[0] - 3) < 1e-6 && Math.abs(x[1] - y[1] - 3) < 1e-6, '불의 학도: ⚡ 행동과 ▶ 행동은 행동마다 따로 +3'); } }
+  { const two = o => { const f = efight(o); f.p.ys = 5; f.b.stepMode = true; const h0 = f.es[0].hp; E.playerAct(f.b, 'e5_bolt', f.es[0].id); const h1 = f.es[0].hp; E.playerAct(f.b, 'e5_firebolt', f.es[0].id); return [h0 - h1, h1 - f.es[0].hp]; };
+    const x = two(A1), y = two(A0); ok(Math.abs(x[0] - y[0] - 3) < 1e-6 && Math.abs(x[1] - y[1] - 3) < 1e-6, '불의 학도: ⚡ 행동(마력탄)과 ▶ 행동(화염탄)은 행동마다 따로 +3'); } }
 { const shk = (o, I, C, prep) => { const f = efight(o); setEl(f.b, f.es[0], I, C); if (prep) prep(f); const h = f.es[0].hp; f.b.stepMode = true; E.playerAct(f.b, 'guard'); return { d: h - f.es[0].hp, f }; };
   const a = shk({}, 3, 2), b2 = shk({ own: ['lg2L'] }, 3, 2); ok(lastShock(a.f.b) && Math.abs(b2.d - a.d - 3) < 1e-6, '남는 울림: 열충격 피해 +3(' + a.d.toFixed(1) + ' → ' + b2.d.toFixed(1) + ', 내 방어 행동 끝에도)');
   const c2 = shk({ own: ['lg2L'] }, 10, 3), c0 = shk({}, 10, 3); ok(Math.abs(c2.d - c0.d - 3) < 1e-6 && c0.d > a.d * 2, '남는 울림: T가 커도 +3 그대로(고정 피해는 묽어진다)');
-  const arcF = o => { const f = efight(Object.assign({ act: ['e_weave', 'e_firewave', 'e_arc'], eq: ['e_arc'] }, o)); setEl(f.b, f.es[0], 3, 0); f.p.ys = 5; const h = f.es.map(e => e.hp); f.b.stepMode = true; E.playerAct(f.b, 'e_arc', f.es[0].id); return f.es.map((e, i) => h[i] - e.hp); };
+  const arcF = o => { const f = efight(Object.assign({ act: ['e5_weave', 'e5_catalyst', 'e5_arc'], eq: ['e5_arc'] }, o)); setEl(f.b, f.es[0], 3, 0); f.p.ys = 5; const h = f.es.map(e => e.hp); f.b.stepMode = true; E.playerAct(f.b, 'e5_arc', f.es[0].id); return f.es.map((e, i) => h[i] - e.hp); };
   const r0 = arcF({}), r3 = arcF({ own: ['lg2L'] }); ok(r0[1] > 0 && Math.abs(r3[1] - r0[1]) < 1e-6 && Math.abs(r3[0] - r0[0] - 3) < 1e-6, '남는 울림: 번진 열충격에는 없음(열충격마다 한 번)');
   const sp = arcF({ own: ['lg5R'] }); ok(Math.abs(sp[1] / r0[1] - 1.15) < 1e-6, '번지는 울림: 번진 열충격 ×1.15');
-  { const f = efight({ own: ['lg5R'], act: ['e_weave', 'e_firewave', 'e_arc'], eq: ['e_arc'] }); ok(IFE.n_el_spread.hitP(f.b, f.p, f.es[0], {}, { skill: 1, id: 'e_arc' }) === 0.15 && IFE.n_el_spread.hitP(f.b, f.p, f.es[0], {}, { skill: 1, id: 'e_ember' }) === 0, '번지는 울림: 번짐 칸(튀는 충격)의 직접 피해 +15%, 다른 칸은 없음'); }
-  { const f = efight({ own: ['lg2L'] }); setEl(f.b, f.es[0], 3, 2); const v = E.elemPreview(f.b, E.SK2.e_touch, f.es[0]), g = efight({}); setEl(g.b, g.es[0], 3, 2); const w = E.elemPreview(g.b, E.SK2.e_touch, g.es[0]); ok(Math.abs(v.d - w.d - 3) < 1e-6, '미리 보기(버튼 · 테스터)도 남는 울림 +3을 셈'); }
+  { const f = efight({ own: ['lg5R'], act: ['e5_weave', 'e5_catalyst', 'e5_arc'], eq: ['e5_arc'] }); ok(IFE.n_el_spread.hitP(f.b, f.p, f.es[0], {}, { skill: 1, id: 'e5_arc' }) === 0.15 && IFE.n_el_spread.hitP(f.b, f.p, f.es[0], {}, { skill: 1, id: 'e5_firebolt' }) === 0, '번지는 울림: 번짐 칸(튀는 충격)의 직접 피해 +15%, 다른 칸은 없음'); }
+  { const f = efight({ own: ['lg2L'] }); setEl(f.b, f.es[0], 3, 2); const v = E.elemPreview(f.b, E.SK2.e5_icespear, f.es[0]), g = efight({}); setEl(g.b, g.es[0], 3, 2); const w = E.elemPreview(g.b, E.SK2.e5_icespear, g.es[0]); ok(Math.abs(v.d - w.d - 3) < 1e-6, '미리 보기(버튼 · 테스터)도 남는 울림 +3을 셈'); }
   const brk = f => E.addS(f.b, f.es[0], 'broken', 2);
   const k0 = shk({}, 3, 2, brk), k1 = shk({ own: ['ct5R'] }, 3, 2, brk), k2 = shk({ own: ['ct5R'] }, 3, 2); ok(Math.abs(k1.d / k0.d - 1.2) < 1e-6 && Math.abs(k2.d - a.d) < 1e-6, '깨진 얼음: 무너진 적에게만 열충격 ×1.2');
   ok(Math.abs(shk({ ks: ['pwK9'] }, 3, 2).d / a.d - 0.7) < 1e-6, '잿불의 길의 대가: 열충격 피해 −30%');
@@ -153,19 +138,19 @@ const setEl = (b, e, I, C) => { if (I) E.addS(b, e, 'ignite', I); if (C) E.addS(
   { const f = efight({ own: ['su3L'] }); setEl(f.b, f.es[0], 3, 2); f.p.hp = f.p.hpMax * 0.5; const h = f.p.hp; f.b.stepMode = true; E.playerAct(f.b, 'guard'); ok(Math.abs(f.p.hp - h - f.p.hpMax * 0.01) < 1e-6, '식은 숨: 열충격이 일어나면 최대 생명력 1% 회복');
     for (let i = 0; i < 6; i++) IFE.n_el_coolbreath.onShock(f.b, f.p); ok(Math.abs(f.p.hp - h - f.p.hpMax * 0.05) < 1e-6, '식은 숨: 전투마다 5%까지'); } }
 // 불태우기 계열: 잿불의 길(+1 더) · 거센 불길(5 이상 +10%)
-{ const bo = (o, I) => { const f = efight({ own: o.own, ks: o.ks, act: ['e_kindle', 'e_burnout'].concat(o.act || []), eq: ['e_burnout'] }); setEl(f.b, f.es[0], I, 0); f.p.ys = 5; const h = f.es[0].hp; f.b.stepMode = true; E.playerAct(f.b, 'e_burnout', f.es[0].id); return h - f.es[0].hp; };
-  ok(Math.abs(bo({ ks: ['pwK9'] }, 5) - bo({ act: ['eu_burn'] }, 5)) < 1e-6 && bo({ ks: ['pwK9'] }, 5) > bo({}, 5), '잿불의 길: 태운 화상 1마다 +1 더(+3 → +4는 타오른 만큼과 같은 값)');
+{ const bo = (o, I) => { const f = efight({ own: o.own, ks: o.ks, act: ['e5_firebolt', 'e5_burnout'].concat(o.act || []), eq: ['e5_burnout'] }); setEl(f.b, f.es[0], I, 0); f.p.ys = 5; const h = f.es[0].hp; f.b.stepMode = true; E.playerAct(f.b, 'e5_burnout', f.es[0].id); return h - f.es[0].hp; };
+  { const f = efight({ act: ['e5_firebolt', 'e5_burnout'], eq: ['e5_burnout'] }); const per = 5 * R_('dotMul')(f.p); ok(Math.abs(bo({ ks: ['pwK9'] }, 5) - bo({}, 5) - per) < 1e-6, '잿불의 길: 태운 화상 1마다 +1 더(불태우기 +3 → +4)'); }
   ok(Math.abs(bo({ own: ['pw5R'] }, 5) / bo({}, 5) - 1.1) < 1e-6 && Math.abs(bo({ own: ['pw5R'] }, 4) / bo({}, 4) - 1) < 1e-6, '거센 불길: 화상 5 이상을 지우면 그 공격 +10%, 4면 없음'); }
 // 서리 무게 · 얼음 심장 · 서리 껍질
 { const g = o => { const f = efight(o); E.addS(f.b, f.es[0], 'chill', 2); const h = f.p.hp; enemyHit(f.b, f.es[0], 10); const n = h - f.p.hp; const h2 = f.p.hp; enemyHit(f.b, f.es[0], 10, { charged: 1 }); return [n, h2 - f.p.hp, f]; };
-  const [n0, c0] = g({}), [n1] = g({ own: ['sv5R'] }), [n2, c2, f2] = g({ ks: ['svK9'] }), [n3, c3] = g({ own: ['sv3L'] });
-  ok(Math.abs(n0 - 7) < 0.01 && Math.abs(c0 - 10) < 0.01, '서리 무게: 둔화된 적의 평소 공격 10 → 7, 강타는 10');
-  ok(Math.abs(n1 - 6.5) < 0.01 && Math.abs(elGuardOf(efight({ own: ['sv5R'] }).p) - 0.35) < 1e-9, '무뎌진 칼날: −30% → −35%');
-  ok(Math.abs(n2 - 5.5) < 0.01 && Math.abs(c2 - 10) < 0.01, '얼음 심장: −45%(평소 공격만, 강타는 그대로)');
-  ok(Math.abs(n3 - 6.65) < 0.01 && Math.abs(c3 - 9.5) < 0.01, '서리 껍질: 둔화된 적에게서 받는 직접 피해 −5%(강타에도)');
-  { const b = f2.b, p = f2.p, e = f2.es[1]; b.stepMode = true; p.ys = 5; E.playerAct(b, 'e_ember', e.id); ok(st(e, 'ignite') === 2, '얼음 심장의 대가: 불씨 화살 화상 3 → 2'); E.addS(b, f2.es[0], 'ignite', 1); ok(st(f2.es[0], 'ignite') === 1, '거는 화상 1은 1(최소 1)');
-    ok(E.elemPreview(b, E.SK2.e_kindle, f2.es[0]).I === 4, '미리 보기도 화상 −1(타격이 화상 1을 쓰고 불붙이기 5 → 4)'); }
-  { const f = efight({}); f.b.stepMode = true; f.p.ys = 5; E.playerAct(f.b, 'e_ember', f.es[1].id); ok(st(f.es[1], 'ignite') === 3, '얼음 심장이 없으면 화상 3 그대로'); } }
+  const [n0, c0] = g({}), [n1] = g({ own: ['sv5R'] }), [n2, c2, f2] = g({ ks: ['svK9'], act: ['e5_firebolt'], eq: ['e5_firebolt'] }), [n3, c3] = g({ own: ['sv3L'] });
+  ok(Math.abs(n0 - 8) < 0.01 && Math.abs(c0 - 8) < 0.01, 'M5-5 서리 무게: 둔화된 적의 공격 10 → 8, 강타도 8(큰 공격 포함)');
+  ok(Math.abs(n1 - 7.5) < 0.01 && Math.abs(elGuardOf(efight({ own: ['sv5R'] }).p) - 0.25) < 1e-9, '무뎌진 칼날: −20% → −25%');
+  ok(Math.abs(n2 - 6.5) < 0.01 && Math.abs(c2 - 6.5) < 0.01, '얼음 심장: −35%(큰 공격 포함)');
+  ok(Math.abs(n3 - 7.6) < 0.01 && Math.abs(c3 - 7.6) < 0.01, '서리 껍질: 둔화된 적에게서 받는 직접 피해 −5%(강타에도)');
+  { const b = f2.b, p = f2.p, e = f2.es[1]; b.stepMode = true; p.ys = 5; E.playerAct(b, 'e5_firebolt', e.id); ok(st(e, 'ignite') === 2, '얼음 심장의 대가: 화염탄 화상 3 → 2'); E.addS(b, f2.es[0], 'ignite', 1); ok(st(f2.es[0], 'ignite') === 1, '거는 화상 1은 1(최소 1)');
+    ok(E.elemPreview(b, E.SK2.e5_firebolt, f2.es[0]).I === 2, '미리 보기도 화상 −1(타격이 화상 1을 쓰고 화염탄 3 → 2)'); }
+  { const f = efight({ act: ['e5_firebolt'], eq: ['e5_firebolt'] }); f.b.stepMode = true; f.p.ys = 5; E.playerAct(f.b, 'e5_firebolt', f.es[1].id); ok(st(f.es[1], 'ignite') === 3, '얼음 심장이 없으면 화상 3 그대로'); } }
 // 끊어진 영창: 끊기 · 무너뜨리기 · 먼저 치우기에 성공하면 대응 +1 더(라운드 한도 밖, 전투마다 2번). 10월 18일 0.8.0 5단계 결정 5로 넓힘(전에는 영창 끊기 · 열충격 무너뜨리기)
 { const cutN = b => b.rec.filter(r => r.k === 'ys' && r.why === '끊어진 영창').length;
   const chantBrk = (b, e) => { e.intent = { k: 'chanting' }; b.cur = { id: 'basic' }; E.addBreak(b, e, 9999); b.cur = null; };
@@ -178,29 +163,14 @@ const setEl = (b, e, I, C) => { if (I) E.addS(b, e, 'ignite', I); if (C) E.addS(
   { const f = efight({ ks: ['ctK5'] }); const { b, p, es } = f; es[0].chant = { taken: 0, need: 1 }; es[0].intent = { k: 'chanting' }; b.stepMode = true; p.ys = 0; E.playerAct(b, 'basic', es[0].id); ok(!es[0].chant && cutN(b) === 1, '쌓인 상처로 영창이 끊겨도 +1 더'); }
   { const f = efight({ own: ['ag5R'] }); f.p.st = 10; const st0 = f.p.st; f.es[0].intent = { k: 'chanting' }; f.b.cur = { id: 'basic' }; E.addBreak(f.b, f.es[0], 9999); f.b.cur = null; ok(f.p.st - st0 === 10, '흩어진 주의: 영창을 끊으면 스태미나 +10');
     f.es[1].intent = { k: 'attack' }; const s1 = f.p.st; f.b.cur = { id: 'basic' }; E.addBreak(f.b, f.es[1], 9999); f.b.cur = null; ok(f.p.st === s1, '영창이 아닌 무너뜨리기에는 없음'); }
-  { const vf = intent => { const f = efight({ act: ['e_weave', 'e_firewave', 'e_disrupt', 'eu_veil'], eq: ['e_disrupt'] }); f.es[0].intent = { k: intent }; f.es[0].brk = f.es[0].brkMax - 1; f.p.ys = 5; f.b.stepMode = true; E.playerAct(f.b, 'e_disrupt', f.es[0].id); return st(f.p, 'protect'); };
-    ok(vf('chanting') === 2 && vf('attack') === 0, '원소 장막: 원소 교란으로 영창을 끊으면 나에게 보호 2, 끊지 않으면 없음'); }
   { const f = efight({ own: ['ct3L'] }); f.es[0].intent = { k: 'chanting' }; ok(IFE.n_el_chanthand.brk(f.b, f.p, f.es[0]) === 10, '영창 끊는 손: 영창 중인 적에게 붕괴 +10'); f.es[0].intent = { k: 'heavy' }; ok(IFE.n_el_chanthand.brk(f.b, f.p, f.es[0]) === 0, '강타 예고에는 없음(끊기 칸은 영창에만, 강타 약점 유지)'); } }
-// 공명: 이 행동으로 쓰러뜨리면(행동 끝 열충격 포함) 유산 +1
-{ const R = { act: ['e_weave', 'e_catalyst', 'e_resonate'], eq: ['e_resonate'] }; const refN = b => b.rec.filter(r => r.k === 'ys' && r.src === 'refund').length;
-  const rs = (hp, I, id) => { const f = efight(R); if (I) setEl(f.b, f.es[0], I, 0); if (hp) f.es[0].hp = hp; f.p.ys = 3; f.b.stepMode = true; E.playerAct(f.b, id || 'e_resonate', f.es[0].id); return f; };
-  const a = rs(0, 6); const dHit = a.b.rec.filter(r => r.k === 'dealt' && r.a === '공명').reduce((m, r) => m + r.d, 0), sh = lastShock(a.b);
-  ok(sh && sh.dmg > 0 && refN(a.b) === 0, '공명: 엮기로 열충격이 나도 쓰러뜨리지 못하면 환급 없음(🔄 열충격 → 처치)');
-  ok(refN(rs(1, 0).b) === 1, '공명: 타격으로 쓰러뜨리면 유산 +1');
-  const k = rs(dHit + sh.dmg / 2, 6); ok(!k.es[0].alive && lastShock(k.b).kill === 1 && refN(k.b) === 1, '공명: 행동 끝 열충격으로 쓰러뜨려도 유산 +1');
-  ok(refN(rs(dHit + sh.dmg / 2, 6, 'e_weave').b) === 0, '다른 엮기 칸(원소 엮기)은 열충격으로 쓰러뜨려도 환급 없음'); }
 // 앞선 주문 · 가벼운 손 · 고른 원소 · 녹는 서리
-{ const f = efight({ own: ['ag2L'] }); f.b.turnIdx = 0; ok(IFE.n_el_first.hitP(f.b, f.p, f.es[0], {}, { skill: 1, id: 'e_ember' }) === 0.12 && IFE.n_el_first.hitP(f.b, f.p, f.es[0], {}, { id: 'basic' }) === 0, '앞선 주문: 전투 첫 내 차례의 스킬 +12%(기본 공격 없음)'); f.b.turnIdx = 1; ok(IFE.n_el_first.hitP(f.b, f.p, f.es[0], {}, { skill: 1, id: 'e_ember' }) === 0, '두 번째 차례부터 없음'); }
-{ const lt = (own, id, I) => { const f = efight({ own, act: ['e_weave', 'e_firewave', 'eu_back'], eq: ['e_firewave'] }); if (I) setEl(f.b, f.es[0], I, 0); f.p.st = 10; f.p.ys = 5; f.b.stepMode = true; E.playerAct(f.b, id, f.es[0].id); return f.p.st; };
-  ok(lt(['ag3R'], 'e_touch') - lt([], 'e_touch') === 4 && lt(['ag3R'], 'e_ember') === lt([], 'e_ember'), '가벼운 손: ⚡ 스킬(서리 손길)로 둔화를 걸면 스태미나 +4, ▶ 스킬은 없음');
-  ok(lt(['lg7R'], 'e_firewave', 3) - lt([], 'e_firewave', 3) === 6 && lt(['lg7R'], 'e_ember') === lt([], 'e_ember'), '고른 원소: 한 행동에 화상 · 둔화를 둘 다 걸면(역화) 스태미나 +6, 하나면 없음'); }
+{ const f = efight({ own: ['ag2L'] }); f.b.turnIdx = 0; ok(IFE.n_el_first.hitP(f.b, f.p, f.es[0], {}, { skill: 1, id: 'e5_bolt' }) === 0.12 && IFE.n_el_first.hitP(f.b, f.p, f.es[0], {}, { id: 'basic' }) === 0, '앞선 주문: 전투 첫 내 차례의 스킬 +12%(기본 공격 없음)'); f.b.turnIdx = 1; ok(IFE.n_el_first.hitP(f.b, f.p, f.es[0], {}, { skill: 1, id: 'e5_bolt' }) === 0, '두 번째 차례부터 없음'); }
+{ const lt = (own, id, I) => { const f = efight({ own, act: ['e5_firebolt', 'e5_icespear', 'e5_weave'], eq: ['e5_icespear', 'e5_weave', 'e5_firebolt'] }); f.p.elSt.el = 'ice'; if (I) setEl(f.b, f.es[0], I, 0); f.p.st = 10; f.p.ys = 5; f.b.stepMode = true; E.playerAct(f.b, id, f.es[0].id); return f.p.st; };
+  ok(lt(['ag3R'], 'e5_bolt') - lt([], 'e5_bolt') === 4 && lt(['ag3R'], 'e5_icespear') === lt([], 'e5_icespear'), '가벼운 손: ⚡ 스킬(얼음 마력탄)로 둔화를 걸면 스태미나 +4, ▶ 스킬(얼음 창)은 없음');
+  ok(lt(['lg7R'], 'e5_weave') - lt([], 'e5_weave') === 6 && lt(['lg7R'], 'e5_firebolt') === lt([], 'e5_firebolt'), '고른 원소: 한 행동에 화상 · 둔화를 둘 다 걸면(원소 엮기) 스태미나 +6, 하나면 없음'); }
 { const f = efight({ own: ['su5R'] }); f.p.rime = { chill: { n: 2, times: 8 } }; f.p.hp = f.p.hpMax * 0.5; const h = f.p.hp; enemyHit(f.b, f.es[0], 0); ok(Math.abs(f.p.hp - h - f.p.hpMax * 0.01) < 1e-6 && st(f.es[0], 'chill') === 2, '녹는 서리: 되얼림이 발동하면 최대 생명력 1% 회복');
   for (let i = 0; i < 6; i++) enemyHit(f.b, f.es[0], 0); ok(Math.abs(f.p.hp - h - f.p.hpMax * 0.04) < 1e-6, '녹는 서리: 전투마다 4%까지'); }
-// 조건부 할인 (kw)
-{ const { b, es } = efight({ act: ['e_kindle', 'e_burnout', 'e_firebolt', 'e_sunfall', 'eu_sky'], eq: ['e_sunfall'] }); ok(yc(b, 'e_sunfall') === 4, '타는 하늘: 화상 5 미만이면 4'); E.addS(b, es[0], 'ignite', 5); ok(yc(b, 'e_sunfall') === 3, '타는 하늘: 대상 화상 5 이상이면 4 → 3'); }
-{ const { b, es } = efight({ act: ['e_bind', 'e_bite', 'e_maul', 'eu_gap'], eq: ['e_maul'] }); E.addS(b, es[0], 'chill', 1); ok(yc(b, 'e_maul') === 3, '얼어붙은 틈: 둔화 1이면 3'); E.addS(b, es[0], 'chill', 1); ok(yc(b, 'e_maul') === 2, '얼어붙은 틈: 둔화 2 이상이면 3 → 2'); }
-{ const { p, b, es } = efight({ act: ['e_weave', 'e_catalyst', 'e_overload', 'eu_pole'], eq: ['e_overload'] }); E.addS(b, es[0], 'chill', 2); ok(yc(b, 'e_overload') === 3, '극점: 둔화 2 이상이면 4 → 3');
-  ok(E.skOf(p, 'e_overload').fx.find(x => x.k === 'shockx').dmg === 2 && E.skOf({ build: 'elementalist', aup: ['eu_chain'], pn: [] }, 'e_overload').time === 'normal' && E.skOf({ build: 'elementalist', aup: ['eu_chain'], pn: [] }, 'e_overload').fx.find(x => x.k === 'shockx').dmg === 1.6, '과부하 ×2, 연쇄 충격은 보통 빠르기 ×1.6'); }
 // ===== 7) 암살자 =====
 /* 0.8.0 M5-3(10월 20일): 암살자도 재설계로 강화 노드 대신 변형이 됐다. 암살자 트리 규칙은 tools/tree-check.js, 새 효과 · 승부수 · 결합 칸 · 그림자 판정은 tools/as-check.js.
    옛 칸의 비용 할인(그림자 걸음 · 목을 긋는 그림자 · 맹독의 끝 · 맹독 뇌관) · 옛 강화(되받아치기 · 독 묻은 칼막이 · 연막 · 흘림의 춤 · 그림자 역습 · 격발 강화) 시험은 그 칸이 트리에서 빠져 지웠다(스킬 데이터는 남음) */

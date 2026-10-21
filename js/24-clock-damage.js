@@ -7,6 +7,7 @@ function addS(b, u, k, dur, stacks, max) {
     if (k === 'ignite' && u !== b.p && b.p && b.cur && b.sbK === 'spell' && stk(u, 'bleed') > 0 && !b.searBusy && fxFlag(b.p, 'ksSearSpell')) { b.searBusy = 1; const g = sbSear(b, u, n); b.searBusy = 0; return g; } // 0.8.0 M5-0 혈염의 각인: 출혈 걸린 적을 주문으로 치면 화상을 건너뛰고 바로 혈염
     if (b.carve && b.cur && b.cur.grp && u !== b.p && carveMul(b, b.cur.grp) < 1) n = Math.max(1, Math.floor(n * carveMul(b, b.cur.grp)));
     if (u !== b.p && b.cur && !b.selfSt && b.p.eq && k !== 'poison' && KW_BAD.includes(k)) { const so = fxAdd(b.p, 'stOut', b, b.p, u, k); if (so) n += Math.round(so); } // 3챕터 장비: 내가 거는 상태에 더하는 수
+    if (k === 'ignite' && u !== b.p && b.p.elSt && b.p.elSt.frostEmber && stk(u, 'chill') > 0) n += 1; // M5-5 얼어붙은 불씨
     if (k === 'ignite' && u !== b.p && b.p.build === 'elementalist' && fxFlag(b.p, 'elIgnCut')) n = Math.max(1, n - 1); // 10월 18일 0.8.0 5단계 얼음 심장의 대가: 내가 거는 화상 −1(최소 1)
     if (u === b.p && DEBUFFS.includes(k) && !b.selfSt) {
       for (const [ik, f] of fxList(u)) if (f.block && f.block(b, u, k)) { fxHit(ik); return 0; }
@@ -20,6 +21,7 @@ function addS(b, u, k, dur, stacks, max) {
     const opp = KW_OPP[k]; if (opp && u.s[opp]) { const m = Math.min(n, u.s[opp].stacks); kwDec(u, opp, m); n -= m; if (n <= 0) return 0; }
     const cur = stk(u, k); const cap = k === 'empower' && u === b.p ? kiCapOf(u) : KW[k]; const nv = Math.min(Math.max(cap, cur), cur + n);
     if (nv > cur) u.s[k] = { stacks: nv, until: KW_FOREVER, dur: KW_FOREVER };
+    if (k === 'chill' && nv > cur && nv >= KW.chill && u !== b.p && b.p.build === 'elementalist' && !b.elNoFrz) u.frzP = 1; // M5-5 빙결: 둔화가 가득 찼다(행동 끝 elFreeze)
     if (u === b.p && k === 'protect' && nv > cur && !b.fxProtIn && u.eq) { b.fxProtIn = 1; fxRun(u, 'onProt', b, u, nv - cur); b.fxProtIn = 0; } /* 2챕터 장비 */
     if (nv > cur && (b.ctx.ch || 1) >= 3) ch3OnStatus(b, u, k, nv - cur);
     if (u !== b.p && KW_BAD.includes(k) && nv > cur) chargeEv(b, k === 'poison' ? 'poison' : 'apply');
@@ -165,7 +167,7 @@ function hurtPlayer(b, raw, o) {
   if (o.charged && hasIt(p, 'fury')) d *= 1.1;
   if (p.st <= 0 || p.exhaust) d *= 1.2;
   const hx = o.dot ? null : { vu: st(p, 'vuln'), pr: st(p, 'protect'), ig: st(p, 'ignite'), ex: p.st <= 0 || !!p.exhaust, gd: !!(p.guard && !o.judgment) }; /* 10월 7일 2차: 쓰러짐 화면에 보일 더해진 것 (값을 바꾸지 않는다) */
-  if (p.build === 'elementalist' && o.src && !o.dot && !bigHit && (o.src.s.chill || o.src.chillR === b.round)) { const d0 = d; d *= 1 - elGuardOf(p); b.frostN = (b.frostN || 0) + 1; b.frostSaved = (b.frostSaved || 0) + (d0 - d); } // 원소술사 서리 무게 (10월 7일)
+  if (p.build === 'elementalist' && o.src && !o.dot && (o.src.s.chill || o.src.chillR === b.round)) { const d0 = d; d *= 1 - elGuardOf(p); b.frostN = (b.frostN || 0) + 1; b.frostSaved = (b.frostSaved || 0) + (d0 - d); } // 원소술사 서리 무게 (10월 7일)
   { const ip = fxAdd(p, 'inP', b, p, o); if (ip) d *= 1 - Math.max(-FX_CAP, Math.min(FX_CAP, ip)); } /* 2챕터 장비(IFX2): 상태(kwTaken) 앞 */
   d = kwTaken(b, p, d, o);
   d *= fxMul(p, 'inMul', b, p, o);
@@ -206,6 +208,7 @@ function hurtPlayer(b, raw, o) {
   if (p.mkSt && p.mkSt.cheon && !b.cur && !b.over && p.hp > 0 && o.src && o.src.alive && !o.dot && realFoe(o.src)) mkCheonHit(b, o.src); // M5-2 천망: 나를 친 적에게 둔화
   b.rec.push({ k: 'hit', y0: isV2(p) && (p.ys || 0) === 0 && !o.dot ? 1 : 0, t: r1(b.t), d: r1(d), actual: r1(actualTaken), dot: !!o.dot, charged: !!o.charged, src: o.src ? o.src.role : null, guard: !!p.guard, parried: o.parried ? 1 : 0 });
   if (p.rime && o.src && o.src.alive && !o.dot && p.hp > 0) elemRime(b, o.src); // 원소술사 되얼림 · 불꽃 외투 (그 공격의 기록 뒤)
+  if (p.elSt && p.elSt.frostWall && ((hx && hx.pr > 0) || wardA > 0) && o.src && o.src.alive && p.hp > 0 && !b.over) elFrostWallHit(b, o.src); // M5-5 서리 방벽
   { const m = []; if (hx) { if (hx.vu) m.push('취약 ' + hx.vu + '(으)로 +25%'); if (hx.pr) m.push('보호 ' + hx.pr + '(으)로 −25%'); if (hx.ig) m.push('화상 ' + hx.ig + '만큼 더함'); if (hx.ex) m.push('탈진으로 +20%'); if (hx.gd) m.push('방어로 줄어듦'); }
     if (o.parried) m.push('흘리기로 줄어듦'); if (nr0) m.push('부적으로 −' + Math.round(nr0 * 100) + '%'); if (br0 && !o.dot) m.push('버티기로 −35%'); if (wardA > 0) m.push('보호막이 ' + r1(wardA) + ' 받아냄' + (wardBk ? '(먼 곳에서 온 공격이라 절반만)' : '')); if (b.enrage && o.src && !o.dot) m.push('광폭화');
     const ik = o.src && o.src.intent ? o.src.intent.k : ''; const it = o.dot ? '' : /되받아친다/.test(o.label || '') ? '반격' : !o.src ? '' : ik === 'heavy' ? heavyName(o.src) : ik === 'attack' ? (o.src.intent.aimed ? '겨눈 한 발' : '공격') : (HIT_N[ik] || '');

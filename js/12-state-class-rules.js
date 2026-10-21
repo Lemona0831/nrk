@@ -184,7 +184,7 @@ const CHANT_K = ['chant', 'chanting', 'burn'];
    열충격은 몸 낮추기를 지나가고 버티기 · 서원(보스 고유 감소)은 감소 몫의 half만 받는다. 취약 · 보호 · 화상 · 장비 타격 배율은 쓰지도 받지도 않는다. 두 상태는 피해 뒤에 지운다(쓰러지면 화상이 남은 채 쓰러진다).
    서리 무게: 둔화된 적(또는 이번 라운드 둔화로 맨 뒤에 선 적, e.chillR)이 나를 치는 평소 공격은 피해 ×(1 − guard). 큰 공격(bigHit)과 지속 피해는 그대로.
    되얼림(rime): 나를 직접 친 적에게 상태 n, 횟수 상한 rimeMax */
-const ELEM = { D: 3, Cw: 2, Bk: 12, guard: 0.3, half: 0.5, cap: 16, rimeMax: 8 };
+const ELEM = { D: 3, Cw: 2, Bk: 12, guard: 0.2, half: 0.5, cap: 16, rimeMax: 8 }; // M5-5: 서리 무게 −30%(평소 공격만) → −20%(큰 공격 포함)
 /* 10월 18일 0.8.0 5단계 원소술사 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 3-3 · 3-5):
    서리 무게 = guard + elGuard(무뎌진 칼날 +0.05, 얼음 심장 +0.15). 열충격 배수 shockMul(깨진 얼음 · 번지는 울림 · 잿불의 길의 대가, 곱한다): arc 1이면 번진 몫.
    끊어진 영창(elCutResp): 10월 18일 0.8.0 5단계(원거리 초안 10절 결정 5) 끊기 · 무너뜨리기 · 먼저 치우기 가운데 무엇이든 대응에 성공하면(ysResp의 why가 ELEM_CUT.on) 대응 충전 +1 더
@@ -208,20 +208,22 @@ function aoeApply(b, e, d, quiet) {
 }
 const aoeCut = (b, e, quiet) => aoeApply(b, e, 1, quiet);
 const frostOn = (b, e) => !!(b && b.p.build === 'elementalist' && e && (e.s.chill || e.chillR === b.round)); // 서리 무게가 걸린 적 (화면 표시)
+const frostTag = (b, e, short) => frostOn(b, e) ? (short ? ' ❄️무뎌짐' : ' · ❄️ 무뎌짐 −' + Math.round(elGuardOf(b.p) * 100) + '%') : ''; // M5-5: 큰 공격도 줄어든다
 /* 이 스킬을 이 적에게 쓰면 행동 끝에 남는 화상 · 둔화와 열충격 (버튼 미리 보기 · 테스터). 엔진과 같은 순서: 타격이 화상 1을 쓰고 → 첫 타격 뒤 상태 → 엮기 → 다음 타격 */
 function elemPreview(b, s, e, multi) {
   let I = st(e, 'ignite'), C = st(e, 'chill'), H = st(e, 'haste'); const I0 = I, C0 = C;
-  const dm = s.fx.find(x => x.k === 'dmg'), bo = s.fx.find(x => x.k === 'burnOut'), wv = s.fx.find(x => x.k === 'weave'); const hit = !!(dm && dm.n > 0) || !!bo; let wvAdd = null;
+  const dm = s.fx.find(x => x.k === 'dmg'), bo = s.fx.find(x => x.k === 'burnOut'), wv = s.fx.find(x => x.k === 'weave'); const bl = s.fx.find(x => x.k === 'elBolt'), mt = s.fx.find(x => x.k === 'elMeteor'), shx = s.fx.find(x => x.k === 'elShatter'); const hit = !!(dm && dm.n > 0) || !!bo || !!bl || !!mt; let wvAdd = null; // M5-5 마력탄 · 천화도 친다
   const igCut = b.p.build === 'elementalist' && fxList(b.p).some(([, f]) => f.elIgnCut); // 얼음 심장의 대가: 거는 화상 −1(최소 1)
   const add = (k, n) => { if (k === 'chill') { const m = Math.min(n, H); H -= m; n -= m; if (n > 0) C = Math.min(Math.max(KW.chill, C), C + n); } else if (k === 'ignite') { if (igCut) n = Math.max(1, n - 1); I = Math.min(Math.max(KW.ignite, I), I + n); } };
   for (let h = 0; h < (s.hits || 1); h++) {
     if (hit && !(bo && h === 0) && I > 0) I--;
-    if (h === 0) { if (bo) I = 0; if (s.tgt !== 'self') for (const x of s.fx) if (x.k === 'st') add(x.s, x.n); if (wv) { if (I && !C) { wvAdd = ['chill', wv.chill]; add('chill', wv.chill); } else if (!I) { wvAdd = ['ignite', wv.ign]; add('ignite', wv.ign); } } }
+    if (h === 0) { if (bo) I = 0; if (s.tgt !== 'self') for (const x of s.fx) if (x.k === 'st') add(x.s, x.n); if (wv) { if (I && !C) { wvAdd = ['chill', wv.chill]; add('chill', wv.chill); } else if (!I) { wvAdd = ['ignite', wv.ign]; add('ignite', wv.ign); } }
+      if (bl) add(b.p.elSt && b.p.elSt.el === 'ice' ? 'chill' : 'ignite', bl.n || 1); if (shx && C0 > 0) C = 0; if (hit && s.tgt !== 'self' && typeof elAvOn === 'function' && elAvOn(b)) { add('ignite', 1); add('chill', 1); } } // M5-5
   }
   const sx = s.fx.find(x => x.k === 'shockx'); const shock = I >= 1 && C >= 1 && !e.under;
   const T = shock ? Math.min(ELEM.cap, I + ELEM.Cw * C) : 0;
   const el = b.p.build === 'elementalist'; const fl = el && shock ? fxList(b.p).reduce((a, [, f]) => a + (f.flatAdd ? f.flatAdd(b, b.p, e, { dot: 1, shock: 1, pre: 1 }, null) || 0 : 0), 0) : 0; // 0.8.0 5단계: 열충격 배수 노드 · 남는 울림(+3)도 미리 본다(발동 기록은 남기지 않음)
-  return { I0, C0, I, C, shock, T, d: shock ? T * ELEM.D * triggerDamageMul(b.p) * ((sx && sx.dmg) || 1) * (multi ? aoeCut(b, e, 1) : 1) * (el ? elShockMul(b, e, 0, 1) : 1) + fl : 0, brk: shock ? C * ELEM.Bk * ((sx && sx.brk) || 1) : 0, wv: wvAdd, burn: bo ? I0 : 0 };
+  return { I0, C0, I, C, shock, T, d: shock ? T * ELEM.D * triggerDamageMul(b.p) * ((sx && sx.dmg) || 1) * (multi ? aoeCut(b, e, 1) : 1) * (el ? elShockMul(b, e, 0, 1) : 1) + fl : 0, brk: shock ? C * ELEM.Bk * ((sx && sx.brk) || 1) : 0, wv: wvAdd, burn: bo ? I0 : 0, frz: b.p.build === 'elementalist' && !shock && C >= KW.chill && C0 < KW.chill && !e.under ? 1 : 0, shat: shx ? C0 : 0 }; // M5-5 frz: 이 행동 끝에 얼어붙음, shat: 깨뜨릴 둔화
 }
 /* 열충격 처리 (by: 'me' 내 행동 끝, 'enemy' 적 행동 끝). 내 행동이면 b.shockCtx(runSkill2가 싣는다)의 대상에게 shockx를 붙인다 */
 function elemShock(b, by) {
@@ -248,13 +250,14 @@ function elemShock(b, by) {
   if (ctx && ctx.hz && tgtN && !b.over) hastenBranch(b, ctx.br, ctx.hz, ctx.id); // 🔄 이 스킬로 열충격이 일어나면 (행동에 한 번)
   if (ctx && ctx.kr && shKill) ysRefund(b, ctx.kr); // 10월 18일 0.8.0 5단계 공명(krShock): 행동 끝 열충격으로 쓰러뜨려도 처치 환급(라운드에 한 번, 타격 처치와 한도를 함께 씀)
   if (ctx && ctx.cutMe && b.elCutA === b.actN && !b.over) elCutMe(b, ctx.cutMe); // 원소 장막: 행동 끝 열충격이 영창을 끊었을 때
+  if (!b.over) elFreeze(b, by); // M5-5 빙결: 열충격 뒤
 }
 /* 원소 장막 (0.8.0 5단계): 이 행동으로 영창을 끊으면 나에게 상태(행동마다 한 번) */
 function elCutMe(b, L) { if (b.elCutMeA === b.actN) return; b.elCutMeA = b.actN; for (const x of L) { addS(b, b.p, x.s, x.n); logp(b, 'good', '영창을 끊었다. 나에게 ' + (KW_N[x.s] || x.s) + ' ' + x.n); } }
 /* 되얼림 · 불꽃 외투: 나를 직접 친 적에게 상태 (보호막 · 방어 · 흘리기로 0이 되어도 센다. 몸 빼기로 피한 공격은 hurtPlayer가 먼저 끝낸다) */
 function elemRime(b, src) {
   const p = b.p;
-  let fired = 0; for (const k of Object.keys(p.rime)) { const r = p.rime[k]; if (!r || !(r.times > 0) || !src.alive) continue; const g = addS(b, src, k, r.n); r.times--; fired++; if (r.times <= 0) delete p.rime[k]; logp(b, 'good', (k === 'ignite' ? '불꽃이 ' : '서리가 ') + src.n + '에게 옮겨 간다. ' + KW_N[k] + ' ' + g + (r.times > 0 ? ' (남은 ' + r.times + '번)' : '')); }
+  let fired = 0; for (const k of Object.keys(p.rime)) { const r = p.rime[k]; if (r && r.until && (b.round || 0) > r.until) { delete p.rime[k]; continue; } /* M5-5 라운드로 끝나는 외투 · 갑옷 */ if (!r || !(r.times > 0) || !src.alive) continue; const g = addS(b, src, k, r.n); r.times--; fired++; if (r.times <= 0) delete p.rime[k]; logp(b, 'good', (k === 'ignite' ? '불꽃이 ' : '서리가 ') + src.n + '에게 옮겨 간다. ' + KW_N[k] + ' ' + g + (r.times > 0 ? ' (남은 ' + r.times + '번)' : '')); }
   if (!Object.keys(p.rime).length) p.rime = null;
   if (fired) fxRun(p, 'onRime', b, p, src); // 10월 18일 0.8.0 5단계 녹는 서리
 }
