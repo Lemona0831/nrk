@@ -284,6 +284,14 @@ function bossBankApply(b, e) {
 function chDevOf(b) { return typeof CH_DEVICE !== 'undefined' ? CH_DEVICE[(b && b.ctx && b.ctx.ch) || 1] || null : null; }
 function chDev(b, h, ...a) { const D = chDevOf(b); if (D && typeof D[h] === 'function') { D[h](b, ...a); if (b.rec) b.rec.push({ k: 'dev', h }); } }
 function chDevChip(b) { const D = chDevOf(b); if (!D || !D.chip) return ''; const t = D.chip(b); return t ? `<span class="chip devc" data-info="chdev">${esc(D.n || '')} ${esc(String(t))}</span>` : ''; }
+/* ===== 0.8.0 A1 타수 → 체력: 적 체력 = 타수(data/foes.js hits.hp) × FOE_HIT_REF[챕터][층 띠].dmg × 등급 맞춤 배율(FOE_HP_ON[챕터].k) × 정예 1.8(우두머리는 이미 정예) × 강인 1.5. 켠 챕터만 */
+function foeHitsDef(e, ch) { if (typeof FOES === 'undefined') return null; const F = e.role === 'boss' ? FOES[e.boss] : e.strong ? FOES[e.foe] : e.bell ? (FOES.bellringer && FOES.bellringer.bellHits ? { ch: 1, grade: 'add', hits: { hp: FOES.bellringer.bellHits } } : null) : e.corpse ? FOES.minion : FOES[e.role]; return F && F.ch === ch && F.hits && !F.unused ? F : null; }
+function foeHitHp(e, ch, floor) {
+  const on = typeof FOE_HP_ON !== 'undefined' && FOE_HP_ON[ch]; if (!on || typeof FOE_HIT_REF === 'undefined' || !FOE_HIT_REF || !FOE_HIT_REF[ch]) return 0;
+  const F = foeHitsDef(e, ch); if (!F) return 0; const bi = e.role === 'boss' ? 4 : HIT_BANDS.findIndex(([a, z]) => floor >= a && floor <= z); const R = FOE_HIT_REF[ch][Math.max(0, bi)]; if (!R) return 0;
+  const g = e.role === 'boss' ? 'boss' : e.strong ? 'strong' : F.grade === 'elite' ? 'elite' : 'mob'; const k = (on.k && on.k[g]) || 1;
+  return F.hits.hp * R.dmg * k * (e.elite && !e.strong && F.grade !== 'elite' ? 1.8 : 1) * (e.tough ? 1.5 : 1);
+}
 /* ===== 0.8.0 A0 갑옷 · 방패 (2 · 3챕터 설계 확정 「갑옷과 방패」. 값은 data/foes.js armor · shield, 1 · 2챕터는 둘 다 0) =====
    갑옷 N: 맞을 때마다 피해 −N, 단 원래 피해의 1/3은 들어간다. 무너지면 벗겨진다(그 전투 · 보스는 그 단계). 지속 피해는 무시한다.
    방패 N겹: 한 적을 노린 행동 하나를 통째로 막고 한 겹 잃는다(강공격은 두 겹). 광역 · 지속 피해는 지나간다 */
@@ -332,6 +340,7 @@ function hurtEnemy(b, e, raw, o) {
   }
   if (d > 0 && b.p.build === 'elementalist') { const fa = fxAdd(b.p, 'flatAdd', b, b.p, e, o, b.cur); if (fa) d += fa; } // 10월 18일 0.8.0 5단계 원소술사 고정 피해(flatAdd, 원거리 초안 1-3 · 결정 10): 배율을 모두 곱한 뒤 더한다(불의 학도 스킬 첫 타격 +3 · 남는 울림 열충격 +3)
   d = Math.max(0, d);
+  if (e.barrier > 0 && d > 0) { const a = Math.min(e.barrier, d); e.barrier = r1(e.barrier - a); d -= a; if (d <= 0) { logp(b, 'sys', e.n + '의 보호막이 받아낸다'); return 0; } } // A1 적 보호막(끝나지 않은 기도)
   if (!o.dot && d > 0 && (foeAS(b, e).shield > 0 || e.armor > 0 || (e.shBlkA != null && e.shBlkA === b.actN))) { d = foeArmor(b, e, d, o); if (d <= 0) return 0; } // A0 갑옷 · 방패
   if (e.role === 'bomber') d = !o.dot && !o.aoe ? Math.max(d, e.hp) : Math.min(d, Math.max(0, e.hp - 1)); // 자폭병 (10월 4일): 한 적 공격 한 번에는 반드시 쓰러지고, 광역 · 지속 피해로는 쓰러지지 않는다
   const hp0 = e.hp;
@@ -379,6 +388,7 @@ function payMana(b, cost) {
 }
 function killEnemy(b, e) {
   if (e.role === 'crown') { crownBreak(b, e); return; } // 3챕터: 왕관은 깨진다
+  if (e.mendRise && !b.over) { e.mendRise = 0; e.hp = Math.max(1, Math.round(e.hpMax * MENDER.rise)); e.alive = true; logp(b, 'bad', e.n + '이(가) 실밥을 당겨 다시 일어선다'); return; } // A1 수선공 정예 「마지막 수선」
   if (!e.pile && !e.summoned && !['root', 'candle', 'bonewall'].includes(e.role) && !b.over) { if (['poison', 'bleed', 'ignite', 'weak', 'vuln', 'chill'].some(k => b.p.s[k])) unlAdd(b, 'sinKill'); if (e.strong && e.foe) unlAdd(b, 'foe:' + e.foe); } // 숨겨진 직업 해금 셈
   if (e.role === 'skeleton' && !e.pile && !e.rose && !e.norise && !st(e, 'ignite') && !e.s.broken && !hasBt(b.p, 'rest') && !b.over) { makePile(b, e); return; } // 2챕터 해골: 화상 · 붕괴 · 한 번 일어섬 · 안식의 성소면 더미가 남지 않는다
   if (e.role === 'skeleton' && !e.pile && !e.rose && st(e, 'ignite')) logp(b, 'good', e.n + '이(가) 재가 되어 흩어진다');
@@ -391,7 +401,7 @@ function killEnemy(b, e) {
   if (e.role === 'bonewall') { const m = b.en.find(x => x.id === e.wallOf); if (m) m.wallWait = BWALL.wait; if (e.lordWall && m && m.alive && !alive(b).some(x => x.lordWall)) { addS(b, m, 'vuln', LORD.expose); logp(b, 'good', '뼈벽이 모두 무너져 ' + m.n + '이(가) 드러난다. 취약 ' + LORD.expose); } }
   if (e.boss === 'abbot') { for (const x of b.en) if (x.alive && (x.monk || x.role === 'candle')) { x.alive = false; x.hp = 0; } } // 수도원장이 쓰러지면 수도사와 촛불도 흩어진다
   if (e.loot) { returnLoot(b, e.loot); logp(b, 'good', e.loot.n + '을(를) 되찾는다'); e.loot = null; }
-  if (e.foe === 'bishop') { const cs = corpsesOf(b); for (const c of cs) { c.alive = false; c.hp = 0; } if (cs.length) logp(b, 'good', '일어선 시체들이 무너진다'); }
+  if (e.foe === 'bishop') { const cs = corpsesOf(b); for (const c of cs) { c.alive = false; c.hp = 0; } if (cs.length) logp(b, 'good', (FOES.bishop.corpseN || '시체') + '들이 무너진다'); }
   if (e.foe === 'cantor') hymnReset(b);
   if (e.foe === 'scribe' && (b.seal || []).length) { b.seal = []; logp(b, 'good', '봉인이 풀린다'); }
   if (b.p.build === 'warlock' && (e.s.weak || e.s.vuln)) { const hl = b.p.hpMax * CLS_TUNE.warlockKill; b.p.hp = Math.min(b.p.hpMax, b.p.hp + hl); logp(b, 'good', '꺼져 가는 혼을 들이마신다. 생명력 +' + r1(hl)); }
@@ -403,6 +413,8 @@ function killEnemy(b, e) {
   fxRun(b.p, 'onKill', b, b.p, e);
   chargeEv(b, 'kill'); ysPreKill(b, e); // 10월 15일 유산 1차 시제품: 먼저 치우기
   b.rec.push({ k: 'kill', t: r1(b.t), role: e.role });
+  for (const x of alive(b)) if (x.role === 'drill' && x !== e && !e.summoned) x.orderNext = 1; // A1 수련장 성향: 동료가 쓰러지면 남은 동료를 먼저 다그친다
+  if (e.boss === 'abbot' && (b.ctx.ch || 1) === 1 && FOES.abbot.log.line) logp(b, 'crit', e.n + ': ' + FOES.abbot.log.line); // A1 마지막 한 마디(만든 사람)
   chDev(b, 'onFoeDown', e); // A0 챕터 장치
 }
 function checkEnd(b) { const was = b.over; checkEnd0(b); if (!was && b.over) chDev(b, 'onRoomEnd', b.over); } // A0 챕터 장치: 방이 끝날 때 한 번

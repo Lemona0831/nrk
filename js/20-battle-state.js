@@ -109,7 +109,6 @@ function newBattle(player, enemies, ctx) {
   if (isCf(player)) { player.selfN = {}; player.selfBad = null; } // 숨겨진 직업 2: 고행 몫은 전투마다
   { const oh = (BUILDS[player.build] || {}).openHaste; if (oh) { addS(b, player, 'haste', oh); logp(b, 'good', '먼저 움직인다. 가속 ' + oh + ' (라운드 맨 앞에서 두 번 연달아)'); } } // 사냥꾼 개전 가속 (10월 5일)
   fxRun(player, 'onStart', b, player);
-  chDev(b, 'onRoomStart'); // A0 챕터 장치
   return b;
 }
 /* 조사 고르기: 앞 글자의 받침을 보고 이/가, 을/를, 은/는, 와/과를 정한다 */

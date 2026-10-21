@@ -135,6 +135,10 @@ const STRONG_FOES = [
    bishop: 한 번에 일으키는 수 raise, 최대 cap, 큰 한 방 = 기준 생명력 × (base + per × 남은 시체)
    cantor: 한 겹마다 곁의 적 피해 +hymn, 최대 cap, 큰 한 방 = 기준 생명력 × per × 곁의 적 수
    scribe: 봉인 최대 cap, 큰 한 방은 강적 기본(STRONG.big) */
+/* A1 굶주린 순례자 배 채움 값(확정본 [이식 제안], 규칙은 비공개 문서 참조). 숫자는 가설 */
+const PILGRIM = { fill: 0.15, feast: 1.0 };
+/* A1 1챕터 강적: 큰 한 방 배율(M3 무시 시험에서 예고를 몰라도 96–100% 이겨서, 막지 못한 큰 한 방이 아프게). 숫자는 가설 */
+const STRONG1 = { big: 2.2 };
 const FOE_X = {
   bishop: { raise: 2, cap: 4, base: 0.30, per: 0.04 },
   cantor: { hymn: 0.25, cap: 3, per: 0.2 },
@@ -155,6 +159,7 @@ const SQUADS = [
   { id: 'zeal', n: '광신 돌격', w: 1.3, up: [['bruiser'], ['bruiser']], low: [['bruiser', 1], ['bruiser']], vary: [1, ['bruiser', 'thief']] },
   { id: 'patrol', n: '혼성 순찰', w: 1, up: [['bruiser'], ['archer'], ['healer']], low: [['bruiser'], ['archer'], ['healer', 1]], vary: [1, ['archer', 'darkmage', 'thief', 'pyre']] },
   { id: 'gate', n: '문지기', w: 0.6, up: [['bruiser', 1]], low: [['bruiser', 1], ['shield']], vary: [0, ['bruiser', 'shield']] },
+  { id: 'drill', n: '순찰대', w: 1.2, amb: 1, up: [['drill', 1], ['bruiser'], ['archer']], low: [['drill', 1], ['bruiser'], ['archer']] }, // A1 1챕터 이식: 수련장(우두머리)이 이끈다. amb = 순찰대 방(ambush)에만
 ];
 
 /* 성소: 다음 3개 방 동안 */
@@ -173,15 +178,15 @@ const ALTARS = [
   { id: 'offer', n: '바치는 제단', d: '가방의 장비 하나를 바치면 한 등급 위의 장비 하나를 받습니다(희귀는 다시 희귀).' },
 ];
 
-/* 이벤트 (1챕터). 같은 것은 한 챕터에 한 번 */
+/* 이벤트 (1챕터). 같은 것은 한 챕터에 한 번. frag = 고르면 보이는 이야기 조각(세계 노트 9절, A1 1챕터 이식), wake = 그 확률로 바로 싸우는 적 */
 const EVENTS = [
-  { id: 'confess', n: '버려진 고해실', lore: '휘장 너머에서 누군가 숨을 고른다.', opts: [{ id: 'do', n: '고해한다', d: '희귀 장비 하나. 대신 약화 3 · 취약 3을 안고 다음 전투에 들어갑니다.' }, { id: 'pass', n: '지나친다', d: '' }] },
+  { id: 'confess', n: '버려진 고해실', lore: '휘장 너머에서 누군가 숨을 고른다.', opts: [{ id: 'do', n: '고해한다', d: '희귀 장비 하나와 이야기 조각 하나. 대신 약화 3 · 취약 3을 안고 다음 전투에 들어갑니다.', frag: '수도원장은 그 밤에도 누군가의 고해를 듣기 위해 수도원에 남아 있었다. 허나 마지막 고해자는 끝내 오지 않았다.' }, { id: 'pass', n: '지나친다', d: '' }] },
   { id: 'pilgrim', n: '쓰러진 순례자', lore: '짐 보따리가 아직 따뜻하다.', opts: [{ id: 'loot', n: '짐을 뒤진다', d: '장비 하나. 대신 다음 전투를 중독 3으로 시작합니다.' }, { id: 'pray', n: '기도한다', d: '생명력 플라스크 +1.' }, { id: 'pass', n: '지나친다', d: '' }] },
-  { id: 'reliquary', n: '잠긴 성물함', lore: '녹슨 자물쇠가 손을 기다린다.', opts: [{ id: 'force', n: '억지로 연다', d: '스태미나 40을 쓰고 골드 30 또는 고급 장비를 얻습니다.' }, { id: 'pass', n: '지나친다', d: '' }] },
+  { id: 'reliquary', n: '잠긴 성물함', lore: '녹슨 자물쇠가 손을 기다린다.', opts: [{ id: 'force', n: '억지로 연다', d: '스태미나 40을 쓰고 골드 30 또는 고급 장비를 얻습니다. 30%로 성물함 곁에 눕혀 둔 것이 깨어나 바로 싸웁니다(기워진 시체 둘).', wake: { p: 0.3, en: [['minion'], ['minion']] } }, { id: 'pass', n: '지나친다', d: '' }] },
   { id: 'chalice', n: '피 묻은 성배', lore: '잔 바닥에 검붉은 것이 고여 있다.', opts: [{ id: 'drink', n: '마신다', d: '최대 생명력 +5(영구). 지금 생명력은 15% 줄어듭니다.' }, { id: 'spill', n: '쏟는다', d: '정화 플라스크 +1.' }] },
   { id: 'candle', n: '속삭이는 촛불', lore: '불꽃이 이름을 부른다.', opts: [{ id: 'snuff', n: '불을 끈다', d: '다음 3개 방 동안 받는 화상 피해가 0이 됩니다. 대신 주는 피해 −5%.' }, { id: 'pass', n: '지나친다', d: '' }] },
-  { id: 'library', n: '무너진 서고', lore: '젖은 책장 사이로 글자가 번진다.', opts: [{ id: 'read', n: '책을 읽는다', d: '패시브 포인트 1.' }, { id: 'sell', n: '책을 챙긴다', d: '골드 20.' }] },
-  { id: 'monk', n: '굶주린 수도사', lore: '뼈만 남은 손이 소매를 붙든다.', opts: [{ id: 'feed', n: '먹을 것을 준다', d: '플라스크 하나(가장 많이 찬 것)를 비우면 다음 전투 방에서 장비 하나를 더 얻습니다.' }, { id: 'chase', n: '내쫓는다', d: '다음 전투에 굶주린 수도사(돌격병)가 더해집니다. 이기면 골드 20.' }] },
+  { id: 'library', n: '무너진 서고', lore: '젖은 책장 사이로 글자가 번진다.', opts: [{ id: 'read', n: '책을 읽는다', d: '패시브 포인트 1과 이야기 조각 하나. 대신 번진 글자를 소리 내어 읽고 맙니다: 다음 전투에 검은 기도사 하나가 더해집니다.', frag: '입소 명부의 마지막 장. 아이들 이름 옆마다 같은 글씨로 \'안쪽으로\'라고 적혀 있다.' }, { id: 'sell', n: '책을 챙긴다', d: '골드 20.' }] },
+  { id: 'monk', n: '굶주린 수도사', lore: '뼈만 남은 손이 소매를 붙든다.', opts: [{ id: 'feed', n: '먹을 것을 준다', d: '플라스크 하나(가장 많이 찬 것)를 비우면 다음 전투 방에서 장비 하나를 더 얻습니다. 이야기 조각 하나.', frag: '수도사들은 제 몫의 빵을 아이들 그릇에 먼저 덜었다. 그릇이 비는 날에도 그랬다.' }, { id: 'chase', n: '내쫓는다', d: '다음 전투에 굶주린 수도사(돌격병)가 더해집니다. 이기면 골드 20.' }] },
   { id: 'bell', n: '종탑의 줄', lore: '줄 끝이 아래로, 아래로 이어진다.', opts: [{ id: 'pull', n: '당긴다', d: '다음 층 문에 강적이 반드시 나옵니다. 골드 15.' }, { id: 'pass', n: '지나친다', d: '' }] },
 ];
 
@@ -213,7 +218,7 @@ const ENEMY_NAMES = { 1: Object.fromEntries(Object.values(FOES).filter(f => f.ch
    n 이름, boss 보스, settleLore 정산 분위기 문장, nextLore 다음 챕터를 내다보는 문장, diff 던전 세기(없으면 DIFF), names 적 이름(없으면 ENEMY_NAMES[1]).
    SQUADS · STRONG_FOES · EVENTS의 ch(없으면 1)와 ROOM_MODS의 chs(없으면 모든 챕터)로 챕터를 가른다 */
 const CHAPTERS = {
-  1: { strongFrom: 4, n: '저주받은 수도원', boss: 'abbot', settleLore: '수도원장의 종이 멎었다. 계단은 더 아래로 이어진다.', nextLore: '수도원보다 더 깊은 곳에서 찬 바람이 올라온다.' },
+  1: { strongFrom: 4, n: '저주받은 수도원', boss: 'abbot', settleLore: '수도원장의 종이 멎었다. 굳게 닫혔던 수도원 뒷문이 열리고, 밤공기가 밀려든다.', nextLore: '수도원 문 밖, 꺼진 등불의 거리로.' },
 };
 const chData = ch => CHAPTERS[ch] || CHAPTERS[1];
 const diffOf = ch => chData(ch).diff || DIFF;
@@ -253,6 +258,7 @@ const BLOAT = { me: 4, foes: 3 };                // 부푼 시체: 쓰러질 때
 const SWIFT = { share: 0.5, hp: 1.15, from: 6 }; // 신속 접사(2챕터부터): 라운드가 시작될 때 둔화가 없으면 가속 1
 const INTRO_AT = { skeleton: 1, hexer: 2, burrower: 3, mason: 4, bloat: 9 }; // 0.8.0 6단계: 16층 틀(옛 1 · 3 · 5 · 7 · 13층) // 처음 만남 보장 문 (그 층까지 못 봤으면)
 const ROLE_INTRO = {
+  drill: ['수련장이 회초리로 바닥을 친다. 남은 수사들이 일제히 고개를 든다.', '호령을 받은 동료는 다음 공격이 강해집니다. 회초리 세례를 모으는 동안 무너뜨리면 끊깁니다.'],
   skeleton: ['뼈마디가 덜그럭거린다.', '쓰러진 해골은 뼈 더미가 됩니다. 더미 위 숫자는 다시 일어서기까지 남은 라운드입니다. 화상이 걸렸거나 무너진 채 쓰러진 해골은 일어서지 않습니다.'],
   hexer: ['손가락에 감긴 실이 내 쪽으로 뻗어 있다.', '조이기는 내 해로운 상태가 여러 가지일수록 아픕니다.'],
   mason: ['등에 진 바구니에서 뼈가 쏟아진다.', '뼈벽이 서 있으면 후열의 적은 한 적을 노린 공격을 절반만 받습니다. 뼈벽은 붕괴에 약합니다.'],
@@ -459,3 +465,8 @@ Object.assign(CODEX, {
   dancer: { copies: '칼에 맞은 것은 윤곽뿐이었다.', dance: '남은 윤곽의 수만큼 춤이 길었다.', sweep: '윤곽이 한꺼번에 흩어졌다.' },
   queen: { heat: '공기가 뜨거워질수록 재가 무겁게 내려앉았다.', crown: '열기가 가라앉는 때가 있었다.', crownbreak: '왕관이 깨지자 여왕이 휘청였다.', storm: '열기가 가득 차자 재폭풍이 몰아쳤다.', fire: '불길이 여왕에게 스며들자 공기가 더 뜨거워졌다.', sand: '여왕이 모래에 잠긴 동안 열기가 더 빨리 올랐다.', chant: '시녀의 노래가 끝나자 열기가 치솟았다.', melt: '왕관이 녹아내린 뒤로 여왕도 자신의 불에 타들어 갔다.' },
 });
+
+/* A1 1챕터 이식(만든 사람 확인 10월 21일): 수선공(옛 뼈 부르는 사제) — 수선 n · 띄우기 약화 loft · 정예 마지막 수선은 생명력 ult 아래에서 한 번, 다시 일어날 때 최대 생명력 × rise.
+   수련장(우두머리) — 호령 강화 order · 꾸짖음 피해 × scold · 약화 scoldWeak · 회초리 세례는 행동 ultAt번 뒤 한 번. 숫자는 가설(M7) */
+const MENDER = { loft: 1, ult: 0.5, rise: 0.4 };
+const DRILL = { order: 1, scold: 0.5, scoldWeak: 1, ultAt: 3 };

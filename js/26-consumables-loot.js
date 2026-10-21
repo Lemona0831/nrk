@@ -311,6 +311,6 @@ function grantDrops(run, b) {
 function loseLoot(o) { if (o.k === 'item' && o.run && o.run.inv) delete o.run.inv[o.u]; }
 function spawn(b, role) {
   if (alive(b).filter(e => e.role === 'minion').length >= 4) return null;
-  const e = mkEnemy(role, 0, b.idc++, { lv: (b.ctx && b.ctx.lv) || 1, name: b.ctx && b.ctx.names && b.ctx.names[role] }); e.summoned = true; decideIntent(b, e); b.en.push(e); return e;
+  const e = mkEnemy(role, 0, b.idc++, { lv: (b.ctx && b.ctx.lv) || 1, name: b.ctx && b.ctx.names && b.ctx.names[role] }); e.summoned = true; { const h = foeHitHp(e, (b.ctx && b.ctx.ch) || 1, (b.ctx && b.ctx.floor) || 0); if (h > 0) { e.hpMax = Math.max(1, Math.round(h)); e.hp = e.hpMax; } } /* A1 타수 → 체력 */ decideIntent(b, e); b.en.push(e); return e;
 }
 

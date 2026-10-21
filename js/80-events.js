@@ -149,6 +149,7 @@ function onClick(ev) {
       if (R.event === 'chalice' && o === 'spill') p.flask.mana = Math.min(flaskCap(p, 'mana'), p.flask.mana + 1);
       if (R.event === 'candle' && o === 'snuff') run.buffs.snuff = 4;
       if (R.event === 'library' && o === 'sell') gainGold(run, 20, '책을 팔 곳을 찾았습니다');
+      if (R.event === 'library' && o === 'read') run.next.reader = 1; // A1: 번진 글자를 소리 내어 읽고 만다(다음 전투에 검은 기도사 하나)
       if (R.event === 'monk' && o === 'feed') { const fk = ['life', 'mana', 'stam'].sort((a, c) => (p.flask[c] || 0) - (p.flask[a] || 0))[0]; p.flask[fk] = Math.max(0, (p.flask[fk] || 0) - 1); run.next.extraDrop = (run.next.extraDrop || 0) + 1; }
       if (R.event === 'monk' && o === 'chase') run.next.chase = 1;
       if (R.event === 'bell' && o === 'pull') { run.dg.force = 'strong'; gainGold(run, 15, '종이 울립니다'); }
@@ -177,7 +178,12 @@ function onClick(ev) {
       if (R.event === 'herald' && o === 'kneel') run.buffs.herald = 5;
       if (R.event === 'herald' && o === 'draw') run.next3 = Object.assign(run.next3 || {}, { herald: 1 });
       if (R.event === 'bonepipe' && o === 'blow') { run.dg.force = 'strong'; gainGold(run, 20, '피리 소리가 아래로 내려간다'); }
-      run.rooms.push({ room: run.room, type: 'event', event: R.event, took: o }); advanceFloor();
+      const EO = ((EVENTS.find(x => x.id === R.event) || {}).opts || []).find(x => x.id === o) || {}; // A1: 이야기 조각 · 깨어남(확정본 1챕터 이식)
+      if (EO.frag) toast('이야기 조각 — 「' + EO.frag + '」');
+      const wake = EO.wake && Math.random() < EO.wake.p;
+      run.rooms.push({ room: run.room, type: 'event', event: R.event, took: o, wake: wake ? 1 : undefined });
+      if (wake) { run.cur = Object.assign({}, R, { type: 'normal', en: EO.wake.en.map(x => x.slice()), squad: null, mods: [], tough: [], gold: 0, wake: R.event }); toast('성물함 곁에 눕혀 둔 것이 깨어난다'); queueDrops(drops); saveRunLocal(); render(); break; }
+      advanceFloor();
       if (R.event === 'library' && o === 'read') ptBonus(run, 1, '무너진 서고');
       if (R.event === 'archive' && o === 'pull') ptBonus(run, 1, '불타는 서고');
       queueDrops(drops); break; }

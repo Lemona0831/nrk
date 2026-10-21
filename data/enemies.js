@@ -12,6 +12,7 @@ const ROLES = {
   minion:   { n: '하수인', ico: '💀', row: 'front', hp: 0.4, dmg: 0.5, spd: 1.0, hit: 0.10 },
   thief:    { n: '도둑',   ico: '🫳', row: 'front', hp: 0.6, dmg: 0.4, spd: 1.2, hit: 0.07 },
   darkmage: { n: '암흑술사', ico: '🌑', row: 'back', hp: 0.6, dmg: 0.8, spd: 0.9, hit: 0.11 },
+  drill:    { n: '우두머리', ico: '📏', row: 'front', hp: 1.4, dmg: 1.0, spd: 1.0, hit: 0.13 }, // A1 1챕터 수련장(순찰대 방). 체력은 타수(data/foes.js)
   // 2챕터 (10월 5일, docs/챕터/2챕터.md 5절). 행동 수치는 data/dungeon.js의 RISE · HEX · BWALL · BURROW · BLOAT
   skeleton: { n: '해골 병사', ico: '🦴', row: 'front', hp: 0.8, dmg: 1.0, spd: 1.0, hit: 0.11 },
   hexer:    { n: '무덤 주술사', ico: '🪢', row: 'back', hp: 0.6, dmg: 0.8, spd: 0.9, hit: 0.09 },

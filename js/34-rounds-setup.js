@@ -75,19 +75,21 @@ function roomBattle(player, room, bossKind, seed) {
   if (room.strong && en[0]) { const e = en[0]; e.strong = true; e.foe = room.foe; const low = isLower(room.floor || 0); e.n = room.strong; e.hpMax = Math.round(e.hpMax * STRONG.hp * (low ? STRONG.lowerHp : 1)); e.hp = e.hpMax; { const F = STRONG_FOES.find(x => x.id === room.foe) || {}; e.hpMax = Math.round(e.hpMax * (F.hp || 1)); e.hp = e.hpMax; e.dmg *= F.dmg || 1; } e.dmg *= STRONG.dmg * (low ? STRONG.lowerDmg : 1); e.bigMul = HIT_REF(e.lv || 1) * STRONG.big / e.dmg; e.info = '강적. 무엇을 하는지는 겪어 보아야 안다.'; }
   if (room.foe === 'bellringer') { const bell = mkEnemy('root', 0, 60, { lv: room.lv || 1 }); bell.n = '큰 종'; bell.ico = '🔔'; bell.bell = 1; bell.hpMax = Math.round(bell.hpMax * 1.2); bell.hp = bell.hpMax; bell.info = '큰 종. 후열. 스스로는 움직이지 않는다.'; en.push(bell); }
   { let hx = 0; for (const e of en) { e.xpCh = roomXpMul(room); if (e.role === 'hexer') e.hexOff = hx++; } for (const k of room.swift || []) { const e = en[k]; if (e && !e.strong) { e.swift = 1; e.hpMax = Math.round(e.hpMax * SWIFT.hp); e.hp = e.hpMax; } } }
+  { const ch = room.ch || 1, fl = room.boss ? FLOOR_BOSS : room.floor || 0, PH = room.boss ? 1 : pathOf(room.path, room.mode).hp * (room.ambush ? AMBUSH.hp : 1); for (const e of en) { const h = foeHitHp(e, ch, fl); if (h > 0) { e.hpMax = Math.max(1, Math.round(h * PH * (e.swift ? SWIFT.hp : 1))); e.hp = e.hpMax; } if (e.foe === 'pilgrim' && ch === 1) { e.fill = 0; e.fillMax = Math.round(e.hpMax * PILGRIM.fill); } } } // A1 타수 → 체력(data/foes.js FOE_HP_ON) · 순례자 배 채움 칸
   if (room.mode === 'hard') for (const e of en) if (e.role !== 'root') { e.hpMax = Math.round(e.hpMax * MODES.hard.hp); e.hp = Math.min(e.hpMax, Math.round(e.hp * MODES.hard.hp)); } /* 가혹: 적 생명력 배율(지금 ×1) (피해 ×1.3은 hurtPlayer) */
   if (room.marks) markEnemies(en, room.marks); /* 표식 도전: 적 생명력 · 보스 생명력 */
   const mods = room.mods || [];
   if (mods.includes('bonepile')) { const D = diffOf(room.ch)[isLower(room.floor || 0) ? 'lower' : 'upper'], P = pathOf(room.path, room.mode); for (let k = 0; k < 2; k++) { const s = mkEnemy('skeleton', 0, 70 + k, { lv: room.lv || 1, name: room.names && room.names.skeleton }); s.hpMax = Math.round(s.hpMax * D.hp * P.hp); s.dmg *= D.dmg * P.dmg; s.rose = 1; s.summoned = true; s.pile = { wait: RISE.wait, born: -1 }; s.hp = Math.max(1, Math.round(s.hpMax * RISE.pile)); s.intent = { k: 'none' }; en.push(s); } } // 무너진 납골벽: 이미 한 번 일어선 해골로 친다(경험치 · 전리품 없음)
   if (mods.includes('narrow') || mods.includes('alley')) { let f = 0; for (const e of en) if (e.row === 'front' && e.role !== 'boss') { f++; if (f > 2) e.row = 'back'; } }
   player.bt = Object.assign({}, room.buffs || {});
-  const b = newBattle(player, en, Object.assign({ boss: !!room.boss, bossKind, mods, ambush: !!room.ambush, lv: room.lv || 1, names: room.names || null, lower: isLower(room.floor || 0), ch: room.ch || 1, mode: room.mode || 'normal' }, room.marks ? { marks: room.marks } : null));
+  const b = newBattle(player, en, Object.assign({ boss: !!room.boss, bossKind, mods, ambush: !!room.ambush, lv: room.lv || 1, names: room.names || null, lower: isLower(room.floor || 0), ch: room.ch || 1, mode: room.mode || 'normal', room: room.type || (room.boss ? 'boss' : null), floor: room.boss ? FLOOR_BOSS : room.floor || 0, wake: room.wake || null }, room.marks ? { marks: room.marks } : null));
   if (mods.includes('flooded')) { addS(b, player, 'chill', 1); for (const e of en) if (e.role !== 'root') addS(b, e, 'chill', 1); logp(b, 'sys', '발목까지 물이 찬다. 모두 둔화 1'); }
   if (!room.boss && room.floor) b.lootMul = (room.ambush ? AMBUSH.loot : 1) * pathOf(room.path, room.mode).loot * (room.mode === 'hard' ? MODES.hard.loot : 1); // 매복은 전리품 1.5배, 길마다 배율 (10월 4일)
   setRng(b, seed || 7);
   const pre = room.pre || {};
   if (pre.weak) addS(b, player, 'weak', pre.weak); if (pre.vuln) addS(b, player, 'vuln', pre.vuln); if (pre.poison) addPoison(b, player, pre.poison, 0);
   if ((room.ch || 1) >= 3) { ch3Setup(b, room); if (pre.ignite) addS(b, player, 'ignite', pre.ignite); if (pre.chill) addS(b, player, 'chill', pre.chill); if (pre.bleed) addS(b, player, 'bleed', pre.bleed); } // 3챕터: 열기 · 아지랑이 · 붕대 · 화염 강화 · 강적 값, 이벤트가 붙인 시작 상태
+  chDev(b, 'onRoomStart'); // A0 챕터 장치(A1: 난수를 정한 뒤로 옮김)
   // 0.8.0 6단계 A-6: 순찰대(내부 키 ambush)는 먼저 덮치지 않는다(전에는 첫 라운드에 내가 맨 뒤)
   runUntilPlayer(b);
   return b;

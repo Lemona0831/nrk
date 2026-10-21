@@ -322,6 +322,14 @@ function ch2Pre(b, P, r) {
   }
   return null;
 }
+/* 0.8.0 A1 1챕터 장치 판단: 기도하는 적이 있으면 그 적을 붕괴가 큰 행동(없으면 한 적 공격)으로 친다. 장치가 있는 전투에서만 난수를 쓴다 */
+function devPre(b, P, r) {
+  const pr = b.prayer && !b.prayer.done && G0.alive(b).find(e => e.id === b.prayer.id); if (!pr || r() >= (P.mech || 0.5) + 0.2) return null;
+  const L = G0.actionList(b).filter(x => x.ok && !x.self && x.id !== 'flee' && G0.canTarget(b, pr, x));
+  const brkOf = x => x.id === 'heavy' ? 35 : x.v2 ? x.s.fx.reduce((m, f) => m + (f.k === 'brk' ? f.n : f.k === 'cutx' ? f.brk : 0), 0) : 0;
+  const c = L.filter(x => brkOf(x) > 0).sort((x, y) => brkOf(y) - brkOf(x))[0] || L.find(x => x.v2 && !x.aoe && x.s.fx.some(f => f.k === 'dmg')) || L.find(x => x.id === 'basic');
+  return c ? [c.id, c.aoe ? null : pr.id] : null;
+}
 /* 3챕터 판단 (10월 7일, 비공개 문서의 테스터 판단 가운데 사람이 화면을 보고 할 만한 것만). 3챕터 전투에서만 난수를 쓴다: 1 · 2챕터 측정은 그대로다 */
 function ch3Pre(b, P, r) {
   if (!(((b.ctx && b.ctx.ch) || 1) >= 3)) return null;
@@ -350,7 +358,7 @@ function ch2Post(b, P, r, a, t) {
    고른 뒤 그대로 되돌린다(게임 상태는 바뀌지 않는다). 그 기믹을 모르는 사람이 얼마나 지는지 잰다 */
 const IGN = (process.env.DG_IGNORE || '').split(',').filter(Boolean);
 const BUILDLOG = !!process.env.DG_BUILDLOG; // M3: 빌드 표(tools/buildmix.js)용 기록을 더한다. 끄면 결과 파일은 그대로
-function maskIgn(b) { const saved = []; for (const e of b.en) { if (!e.alive || !(IGN.includes(e.foe) || IGN.includes(e.boss) || IGN.includes(e.bossKind))) continue; saved.push([e, e.intent]); if (e.intent && e.intent.k !== 'attack') e.intent = Object.assign({}, e.intent, { k: 'attack' }); } return () => { for (const [e, it] of saved) e.intent = it; }; }
+function maskIgn(b) { const saved = []; const hid = IGN.includes('bellringer') ? b.en.filter(e => e.bell && e.alive && b.en.some(o => o.alive && !o.bell && o.role !== 'root')) : []; for (const e of hid) e.alive = false; /* A1: 종지기를 무시하면 큰 종도 노리지 않는다 */ for (const e of b.en) { if (!e.alive || !(IGN.includes(e.foe) || IGN.includes(e.boss) || IGN.includes(e.bossKind))) continue; saved.push([e, e.intent]); if (e.intent && e.intent.k !== 'attack') e.intent = Object.assign({}, e.intent, { k: 'attack' }); } return () => { for (const [e, it] of saved) e.intent = it; for (const e of hid) e.alive = true; }; }
 /* 0.8.0 M5-0 보정(10월 20일 만든 사람): 마검사 성향 전부. 이어진 교대(sbRun ≥ 1) 중이면 리듬 칸(비용 1)을 쓰지 않고 교대를 잇는 행동을 쓴다.
    직전이 주문이면 기본 공격(안 되면 강공격), 직전이 베기면 쓸 수 있는 비용 2 이상 주문. 이을 행동이 없으면 그대로 둔다(비용 1은 교대를 끊지도 잇지도 않는다).
    유산이 상한이라는 이유만으로 리듬 칸을 고르지 않는다(전에 있던 상한 판단은 뺐다) */
@@ -378,7 +386,7 @@ function fightCur(pk, r, mem, out) {
       [a, t] = OPT.policy.chooseAction(b, G.run, n);
     } else {
     const sr = r() < (P.mech || 0.5) ? sigRule(b, r) : null;
-    [a, t] = ch2Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look && hazePick(b)) || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem)); // 0.8.0 5단계: 숙련의 신기루 대응(수도승)
+    [a, t] = devPre(b, P, r) || ch2Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look && hazePick(b)) || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem)); // 0.8.0 5단계: 숙련의 신기루 대응(수도승)
     [a, t] = ch2Post(b, P, r, a, t);
     // 보스를 깎지 못한 채 버티기만 하면 사람은 밀어붙인다 (한 수 앞만 보는 계산이 페이즈 전환을 피하는 것을 막는다)
     const bs = b.en.find(e => e.role === 'boss' && e.alive);

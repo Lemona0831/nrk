@@ -350,6 +350,29 @@ const EKW = { archerBleed: 2, archerEvery: 3, heavyVuln: 2, explodeWeak: 2, expl
 const HIT_REF = lv => 102 + 5 * (lv - 1);
 const PRIEST = { heal: 0.4 };
 const SUMMON = { n: 1, cap: 3 };
-const heavyMulOf = (e, b) => e.role === 'boss' ? TELE.boss : e.strong && e.bigMul ? e.bigMul * foeBigMul(b, e) : TELE.heavy; // 강적의 강타는 기준 생명력 × STRONG.big (e.bigMul) // explodeMul: 자폭병 폭발 = 평소 공격 × 3 (10월 3일: 폭발이 평소 공격과 같아 "터지기 전에 끊는다"는 판단이 없었다)
+const heavyMulOf = (e, b) => e.role === 'boss' ? TELE.boss : e.strong && e.bigMul ? e.bigMul * foeBigMul(b, e) * (b && (b.ctx.ch || 1) === 1 ? STRONG1.big : 1) : TELE.heavy; /* A1: 1챕터 강적의 큰 한 방 배율(기믹이 승패에 닿게) */ // 강적의 강타는 기준 생명력 × STRONG.big (e.bigMul) // explodeMul: 자폭병 폭발 = 평소 공격 × 3 (10월 3일: 폭발이 평소 공격과 같아 "터지기 전에 끊는다"는 판단이 없었다)
 const ENRAGE = { boss: 45, room: 40, step: 10, byBoss: { queen: 50 } }; // byBoss: 보스마다 다른 광폭화 시각 (3챕터 재의 여왕) // 광폭화 시각(시간 단위)과 짙어지는 간격
 const ABBOT = { ph: [0.65, 0.3], brand: 0.2, vowTaken: 0.6, monkHeal: 0.05, monkDecay: 0.85, healHp: 0.10, shieldHp: 0.18, candleHp: 0.04, candles: [2, 3, 4], candleHeal: 0.03, candleDecay: 0.65, vowR: 3, sermonR: 3, sermonWeak: 2, stoneEvery: 3, stoneP: 0.06, stoneM: 0.10, altar: 0.08, sacHp: 0.15, sacHeal: 0.20, sacCool: 3 }; // 10월 4일 고해의 밤 (상세는 비공개 문서)
+
+/* ===== 0.8.0 A1 1챕터 장치 「끝나지 않은 기도」 (만든 사람 확정 10월 21일, 값은 data/foes.js DEV_PRAYER) =====
+   일반 방 약 1/3(2층부터, 강적 · 보스 · 성물함에서 깨어난 전투는 없음): 그 무리의 후열 하나(검은 기도사 먼저, 후열이 없으면 아무나)가 기도하는 채로 시작한다.
+   라운드가 끝날 때마다 한 칸, 다 차면 적 모두 보호막(각자 최대 생명력 × ward, 한 번). 그 적을 무너뜨리거나 쓰러뜨리면 끊기고 골드 +gold */
+function prayCut(b, e) { const P = b.prayer; if (!P || P.done || P.id !== e.id) return; P.done = 1; P.cut = 1; e.praying = 0; const run = typeof G !== 'undefined' && G.run && G.run.p === b.p ? G.run : null; if (run) run.gold = (run.gold || 0) + DEV_PRAYER.gold; logp(b, 'good', '기도가 끊긴다. 골드 +' + DEV_PRAYER.gold); b.rec.push({ k: 'prayCut' }); }
+const PRAYER_DEV = {
+  id: 'prayer', n: '끝나지 않은 기도', help: '적 하나가 기도하는 채로 시작합니다. 라운드가 끝날 때마다 한 칸 차고, 다 차면 적 모두가 보호막(각자 최대 생명력의 15%)을 두릅니다. 그 적을 무너뜨리거나 쓰러뜨리면 기도가 끊기고 골드 +5.',
+  chip: b => b.prayer && !b.prayer.done ? '기도 ' + b.prayer.n + '/' + DEV_PRAYER.need : '',
+  onRoomStart(b) {
+    const c = b.ctx || {}; if (c.room !== 'normal' || c.wake || c.boss || (c.floor || 0) < DEV_PRAYER.from || b.en.some(e => e.strong)) return;
+    if ((b.rngF || Math.random)() >= DEV_PRAYER.p) return;
+    const L = b.en.filter(e => e.alive && e.role !== 'root' && !e.pile), back = L.filter(e => e.row === 'back'); const pr = back.find(e => e.role === 'darkmage') || back[0] || L[0]; if (!pr) return;
+    b.prayer = { id: pr.id, n: 0 }; pr.praying = 1; logp(b, 'crit', pr.n + '이(가) 기도하는 채로 서 있다. 끝나지 않은 기도 0/' + DEV_PRAYER.need); b.rec.push({ k: 'prayStart', role: pr.role });
+  },
+  onRoundEnd(b) {
+    const P = b.prayer; if (!P || P.done || b.over) return; const e = b.en.find(x => x.id === P.id); if (!e || !e.alive) return; P.n++;
+    if (P.n < DEV_PRAYER.need) { logp(b, 'sys', e.n + '의 기도가 이어진다. ' + P.n + '/' + DEV_PRAYER.need); return; }
+    P.done = 1; e.praying = 0; for (const x of alive(b)) if (x.role !== 'root' && !x.pile) x.barrier = (x.barrier || 0) + Math.round(x.hpMax * DEV_PRAYER.ward);
+    logp(b, 'bad', '기도가 끝난다. 적 모두가 보호막을 두른다'); b.rec.push({ k: 'prayDone' });
+  },
+  onFoeBreak(b, e) { prayCut(b, e); }, onFoeDown(b, e) { prayCut(b, e); },
+};
+CH_DEVICE[1] = PRAYER_DEV;
