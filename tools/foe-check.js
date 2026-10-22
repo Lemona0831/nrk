@@ -64,7 +64,7 @@ const T = []; const t = (c, m) => { if (!c) T.push(m); };
 }
 /* 4-2. 챕터 장치 틀 */
 const CHD = R_('CH_DEVICE'); const fired = {}; const hooks = ['onRoomStart', 'onRoundEnd', 'onFoeBreak', 'onFoeDown', 'onRoomEnd'];
-const REAL = CHD[1]; t(!CHD[3], '3챕터 장치가 이미 꽂혀 있다(A3 전에는 비어 있어야 한다)'); t(CHD[2] === R_('LAMP_DEV'), '2챕터 장치가 「등불」이 아니다');
+const REAL = CHD[1]; t(CHD[3] === R_('ALARM_DEV'), '3챕터 장치가 「경보」가 아니다'); t(CHD[2] === R_('LAMP_DEV'), '2챕터 장치가 「등불」이 아니다');
 CHD[1] = { id: 'test', n: '시험 장치', help: '시험용 도움말 한 줄', chip: b => 'T' + (b.tick || 0) }; for (const h of hooks) CHD[1][h] = () => { fired[h] = (fired[h] || 0) + 1; };
 let chip = '', help = null; D.OPT.onTurn = G => { if (!chip) chip = R_('chDevChip')(G.b); if (help == null) { const g = R_('G'); const gb = g.b; g.b = G.b; help = R_('infoHtml') ? String(R_('infoHtml')('chdev') || '') : ''; g.b = gb; } };
 try { D.playChar('careful', 'warden', 5000); } catch (e) { T.push('가짜 장치 판 예외: ' + e.message); } D.OPT.onTurn = null;
@@ -100,6 +100,31 @@ if (CH === 2) {
   { const f = fight2(['dun']); const b = f.b; const bd = f.es[0]; bd.role = 'boss'; bd.boss = 'bardo'; R_('bardoSetup')(b, bd); const L = b.en.filter(x => x.role === 'lantern'); t(L.length === 5 && L.every(x => x.lit), '바르도: 등불 다섯이 켜진 채 시작하지 않는다'); const l = L[0]; l.brk = l.brkMax - 0.5; E.addBreak(b, l, 50); t(!l.lit && l.alive && bd.relightNext === 1, '등불을 깨면 꺼지고 바르도가 다시 켜려 해야 한다'); t(!R_('realFoe')(l), '등불이 적으로 세어진다(전투가 끝나지 않는다)'); }
   { const f = fight2(['dun', 'dun'], (run, es) => { es[0].cmd = 1; }); const b = f.b; t(Math.abs(R_('ch2FoeOut')(b, f.es[1]) - 1.15) < 1e-9, '지휘: 같은 무리 잡몹 피해 +15%가 아니다'); E.hurtEnemy(b, f.es[0], 9999, { single: 1 }); t(f.es[1].stun >= 1, '지휘하던 정예가 쓰러졌는데 무리가 흔들리지 않는다'); }
   { const f = fight2(['dun']); const b = f.b; b.ctx.mods.push('oilfloor'); const n0 = R_('st')(b.p, 'ignite'); E.addS(b, b.p, 'ignite', 2); t(R_('st')(b.p, 'ignite') - n0 === 3, '기름 바닥: 화상 +1이 아니다'); }
+}
+/* 4-5. 3챕터(A3): 갑옷 값 · 경보 · 종 표식 · 잠식 · 틈 · 성벽 위 · 강적 */
+if (CH === 3) {
+  const fight3 = (en, ctx, setup) => { const f = H.fight('warden', { en, hp: 300, setup, ctx: Object.assign({ ch: 3, floor: 10, mods: [] }, ctx || {}) }); f.b.cur = null; return f; };
+  const AD = R_('ALARM_DEV'), AL = R_('ALARM'), X3 = R_('CH3X');
+  { const f = fight3(['pike', 'wallguard', 'rioter', 'tenman']); const b = f.b; for (const e of f.es) { e.armor = null; R_('foeAS')(b, e); }
+    const [pk, wg, ri, tm] = f.es; const L = R_('w3Armor')(b, 'light'), Hh = R_('w3Armor')(b, 'heavy');
+    t(L > 0 && Hh > L, '갑옷 값: 가벼움 ' + L + ' · 무거움 ' + Hh);
+    t(pk.armor === L && pk.shieldMax === 0, '장창병: 가벼운 갑옷만이 아니다'); t(wg.armor === 0 && wg.shieldMax === 2, '수비병: 방패 2겹만이 아니다'); t(ri.armor === 0 && ri.shieldMax === 0, '폭도에게 갑옷 · 방패가 있다'); t(tm.armor === L && tm.shieldMax === 2, '십인장: 갑옷 + 방패 2겹이 아니다'); }
+  { const f = fight3(['pike', 'rioter']); const b = f.b; f.es[0].elite = true; R_('w3Setup')(b, { floor: 10, path: 'main', lv: 12 });
+    t(b.al.on && b.al.next === AL.first, '경보: 4라운드 끝이 아니다(' + b.al.next + ')'); t(b.bellMark === f.es[0].id, '종 표식: 정예가 아니다');
+    const n0 = b.en.length; b.tick = 3; AD.onRoundEnd(b); t(b.en.length === n0, '경보: 3라운드에 울렸다'); b.tick = 4; AD.onRoundEnd(b); t(b.en.length === n0 + 1 && b.al.n === 1 && b.al.next === 7, '경보: 4라운드 끝 증원 하나 · 다음 7이 아니다');
+    for (const k of [7, 10, 13, 16]) { b.tick = k; AD.onRoundEnd(b); } t(b.al.n === AL.cap && b.en.length === n0 + AL.cap, '경보 상한 3이 아니다(' + b.al.n + ')'); }
+  { const f = fight3(['pike', 'rioter']); const b = f.b; R_('w3Setup')(b, { floor: 10, path: 'rough', lv: 12 }); t(b.al.next === AL.rough, '망루 길: 3라운드 끝이 아니다');
+    const mk = b.en.find(e => e.id === b.bellMark); AD.onFoeBreak(b, mk); AD.onFoeBreak(b, mk); t(b.al.next === AL.rough + 1, '종 표식: 무너지면 +1라운드(한 번만)가 아니다(' + b.al.next + ')'); }
+  { const f = fight3(['pike']); const b = f.b; R_('w3Setup')(b, { floor: 10, path: 'main', strong: '봉화대장', foe: 'beaconlord', lv: 12 }); t(!b.al.on, '강적 방에 경보가 있다'); }
+  { const f = fight3(['pike', 'rioter']); const b = f.b, e = f.es[0]; R_('taintAdd')(b, e, 9, null); t(e.taint === X3.taintCap, '잠식 상한 5가 아니다'); e.taint = 3; t(Math.abs(R_('w3FoeOut')(b, e) - 1.3) < 1e-9, '잠식 3: 적 피해 ×1.3이 아니다'); b.p.taint = 2; t(Math.abs(R_('w3InMul')(b, {}) - 1.2) < 1e-9, '내 잠식 2: 받는 피해 ×1.2가 아니다'); b.p.taint = 0; }
+  { const f = fight3(['pike', 'rioter'], { mods: ['rift'] }); const b = f.b; R_('w3Tick')(b, 1); t(f.es.some(e => e.taint === 1), '재액의 틈: 라운드 끝 잠식이 없다'); R_('w3PlayerAct')(b, 'sealrift'); const s0 = f.es.reduce((a, e) => a + (e.taint || 0), 0); R_('w3Tick')(b, 2); t(f.es.reduce((a, e) => a + (e.taint || 0), 0) === s0, '틈을 막았는데 잠식이 번진다');
+    t(!E.actionList(b).some(a => a.id === 'sealrift'), '막은 뒤에도 틈 막기가 보인다'); }
+  { const f = fight3(['pike', 'wallxbow'], { mods: ['wall'] }); const b = f.b; const xb = f.es[1]; xb.armor = 0; xb.shield = xb.shieldMax = 0; xb.evading = 0; b.cur = null; const h0 = xb.hp; E.hurtEnemy(b, xb, 10, { single: 1 }); t(Math.abs(h0 - xb.hp - 8) < 0.01, '성벽 위: 후열 직접 피해 −20%가 아니다(' + (h0 - xb.hp) + ')'); }
+  { const f = fight3(['bellman', 'rioter', 'rioter']); const b = f.b, s = f.es[0]; s.strong = true; s.foe = 'speaker'; t(Math.abs(R_('w3HitMul')(b, s, {}) - 0.4) < 1e-9, '대변인: 폭도 둘이면 받는 피해 −60%가 아니다'); }
+  { const f = fight3(['wallxbow']); const b = f.b, s = f.es[0]; s.strong = true; s.foe = 'marksman'; b.cur = { id: 'basic' }; t(Math.abs(R_('w3HitMul')(b, s, {}) - 0.5) < 1e-9, '명사수: 근접 −50%가 아니다'); t(R_('w3HitMul')(b, s, { aoe: 1 }) === 1, '명사수: 광역도 줄었다'); b.cur = null; }
+  { const f = fight3(['pike']); const b = f.b; const s = f.es[0]; s.strong = true; s.foe = 'beaconlord'; R_('w3Setup')(b, { floor: 10, strong: '봉화대장', foe: 'beaconlord', lv: 12 }); const L = b.en.filter(e => e.role === 'bonfire'); t(L.length === 3 && L.every(x => x.fuse === 3), '봉화 셋 · 칸 3이 아니다');
+    if (L.length === 3) { const h0 = b.p.hp; L[0].fuse = 1; R_('w3Act')(b, s, { k: 'pourbeacon' }, 10); t(!L[0].alive && b.p.hp < h0, '칸 0인 봉화가 터지지 않았다'); L[1].brk = L[1].brkMax - 0.5; E.addBreak(b, L[1], 50); t(!L[1].alive, '봉화가 붕괴로 부서지지 않았다'); } }
+  t(!R_('isW3')({ ctx: { ch: 2 } }) && !R_('isW3')({ ctx: { ch: 1 } }) && R_('isW3')({ ctx: { ch: 3 } }), 'isW3가 3챕터만이 아니다');
 }
 /* 보고 */
 console.log('foe-check (' + CH + '챕터): 적 ' + Object.keys(FOES).filter(id => (FOES[id].ch || 1) === CH).length + ' · 무리 ' + SQUADS.filter(s => (s.ch || 1) === CH).length + ' · 전투 ' + fights + ' · 적 행동 ' + eact);

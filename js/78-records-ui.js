@@ -12,6 +12,7 @@ const rcClock = t => t ? new Date(t).toLocaleTimeString('ko-KR', { hour: '2-digi
 const rcMs = ms => ms > 0 ? fmtMs(ms) : '기록 없음';
 function rcFloor(ch, f) {
   if (!f) return '';
+  if (ch === 3 && !OLD3) return f > FLOORS ? '끝' : f === FLOOR_CAMP || f === FLOOR_BOSS ? floorBandOf(3, f).n : floorBandOf(3, f).n + ' ' + f + '층'; // A3 「성벽 아래」 층 띠
   if (f === FLOOR_BOSS) return ch >= 3 ? '재의 왕좌' : '보스';
   if (f === FLOOR_CAMP) return ch >= 3 && typeof floorBand3 === 'function' ? '오아시스 야영지' : '야영지';
   if (f > FLOORS) return '끝';

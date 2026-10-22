@@ -65,7 +65,7 @@ function pickDoor(pk, run, r) {
   const P = PERSONAS[pk]; const p = run.p; const h = p.hp / p.hpMax; const fl = p.flask.life;
   const low = G0.isLower(run.room, run.ch);
   const loss = { normal: 0.22, ambush: 0.3, treasure: 0.3, trial: 0.45, strong: low ? 0.75 : 0.5 };
-  const gain = { normal: 3, ambush: 3.3, treasure: 5, trial: 5, strong: 6, spring: 0, shrine: 1.5, altar: 1, event: 1.5, fate: 1.2, market: 1.4 };
+  const gain = { normal: 3, ambush: 3.3, treasure: 5, trial: 5, strong: 6, spring: 0, shrine: 1.5, altar: 1, event: 1.5, fate: 1.2, market: 1.4, checkpoint: 1.1, smugstall: 1.4 };
   const sc = run.doors.map(d => {
     const t = d.type; let v;
     if (pk === 'novice') return r();
@@ -86,7 +86,7 @@ function pickDoor(pk, run, r) {
 }
 
 /* 갈래길 고르기 (0.6a.2, 10월 4일): 험한 길 · 큰 길 · 샛길. 생명력과 플라스크를 보고 성향대로 */
-function pickPath(pk, run, r) { const k = OPT.policy?.pickPath ? OPT.policy.pickPath(run, r) : pickPath0(pk, run, r); return k === 'quiet' && (run.marks && run.marks.includes('noquiet')) ? 'main' : k; } /* 표식 noquiet이면 샛길은 막혀 있다 */
+function pickPath(pk, run, r) { const k = OPT.policy?.pickPath ? OPT.policy.pickPath(run, r) : pickPath0(pk, run, r); return k === 'quiet' && ((run.marks && run.marks.includes('noquiet')) || ((run.ch || 1) === 3 && run.dg && run.dg.oath)) ? 'main' : k; } /* A3 수비대의 맹세도 */ /* 표식 noquiet이면 샛길은 막혀 있다 */
 function pickPath0(pk, run, r) {
   if (process.env.PATH_FIX) return process.env.PATH_FIX; /* 10월 8일(7단계): 길 고정(rough · main · quiet). 없으면 아래 그대로 */
   const p = run.p; const h = p.hp / p.hpMax; const fl = p.flask.life;
@@ -214,16 +214,18 @@ function restRoom(pk, run, r) {
   if (R.type === 'fate') return fatePick(pk, run, r);
   if (R.type === 'altar') {
     const can = R.altar === 'gold' ? (run.gold || 0) >= altarCost(run) : /* 10월 18일: 전에는 40으로 두어 2 · 3챕터(비용이 더 큼)에서 '골드가 모자랍니다'를 되풀이하다 걸음 한도에 걸렸다 */ R.altar === 'offer' ? run.bag.length > 0 : R.altar === 'ash' ? (run.cons || []).filter(c => G0.CONS[c.id].use !== 'none' && G0.CONS[c.id].price > 6).reduce((a, c) => a + c.n, 0) >= 6 : true;
-    const want = R.altar === 'blood' || R.altar === 'scale' ? (THINK(pk) ? h > 0.6 : r() < 0.5) : can; // 3챕터 재의 제단은 태울 것이 넉넉할 때만
+    const want = R.altar === 'blood' || R.altar === 'scale' || R.altar === 'oath' ? (THINK(pk) ? h > 0.6 : r() < 0.5) : can; // A3 맹세는 피 제단처럼 // 3챕터 재의 제단은 태울 것이 넉넉할 때만
     return click('altar', can && want ? 1 : 0);
   }
   if (R.type === 'market') { const M = run_('MARKET'), g = run.gold || 0, S = G0.marketStock(run, R); const k = pk === 'novice' ? null : S.uq && g >= M.uq.gold + 40 ? 'uq-gold' : g >= M.bundle.gold + 20 && r() < 0.6 ? 'bundle' : null; return k ? click('mkbuy', k) : click('mkleave'); } // A2 암시장
+  if (R.type === 'smugstall') { const M = run_('SMUG3'), g = run.gold || 0, S = G0.smugStock(run, R); const k = pk === 'novice' ? null : g >= M.hero.gold + 30 ? 'hero-gold' : S.uq.length && g >= M.uq.gold + 30 ? 'uq-0' : g >= M.inner.gold + 20 && !run.dg.inner && r() < 0.3 ? 'inner' : g >= M.info.gold + 20 && r() < 0.15 ? 'info' : null; return k ? click('smbuy', k) : click('smleave'); } // A3 밀수꾼의 좌판
+  if (R.type === 'checkpoint') { const g = run.gold || 0, C = run_('CHECK3'); const o = pk === 'novice' ? ['toll', 'refuse', 'sneak'][Math.floor(r() * 3)] : g >= C.toll + 40 && (THINK(pk) || pk === 'careful') && r() < 0.5 ? 'toll' : h > 0.6 && r() < 0.5 ? 'refuse' : 'sneak'; if (CUR_OUT) (CUR_OUT.evLog = CUR_OUT.evLog || []).push({ id: 'checkpoint3', o: o === 'toll' && g < C.toll ? 'sneak' : o }); return click('event', o === 'toll' && g < C.toll ? 'sneak' : o); } // A3 검문소
   if (R.type === 'event') {
     const E0 = G0.EVENTS.find(x => x.id === R.event);
-    const ok = E0.opts.filter(o => !G0.ch2EvDis(run, E0, o) && !((E0.id === 'reliquary' && o.id === 'force' && p.st < 40) || (E0.id === 'buried' && o.id === 'dig' && p.st < 50) || (E0.id === 'monk' && o.id === 'feed' && !(p.flask.life + p.flask.mana + (p.flask.stam || 0)))));
+    const ok = E0.opts.filter(o => !G0.ch2EvDis(run, E0, o) && !G0.w3EvDis(run, E0, o) && !((E0.id === 'reliquary' && o.id === 'force' && p.st < 40) || (E0.id === 'buried' && o.id === 'dig' && p.st < 50) || (E0.id === 'monk' && o.id === 'feed' && !(p.flask.life + p.flask.mana + (p.flask.stam || 0)))));
     let o = ok[Math.floor(r() * ok.length)];
     if (THINK(pk) || pk === 'careful') { // 위험한 선택은 생명력이 넉넉할 때만
-      const safe = ok.filter(x => !(x.id === 'drink' && h < 0.5) && !(x.id === 'chase' && h < 0.6) && !(x.id === 'do' && h < 0.6) && !(x.id === 'loot' && h < 0.5) && !((E0.ch || 1) >= 3 && ((['pull', 'take', 'dig', 'hasten'].includes(x.id) && h < 0.6) || (x.id === 'draw' && h < 0.7)))); // 3챕터 위험한 선택 (1 · 2챕터 이벤트는 그대로: 종탑의 줄도 id가 pull이다)
+      const safe = ok.filter(x => !(x.id === 'drink' && h < 0.5) && !(x.id === 'chase' && h < 0.6) && !(x.id === 'do' && h < 0.6) && !(x.id === 'loot' && h < 0.5) && !((E0.ch || 1) >= 3 && ((['pull', 'take', 'dig', 'hasten', 'climb', 'answer', 'drink'].includes(x.id) && h < 0.6) || (x.id === 'draw' && h < 0.7)))); // 3챕터 위험한 선택 (1 · 2챕터 이벤트는 그대로: 종탑의 줄도 id가 pull이다)
       if (safe.length) o = pk === 'careful' ? safe[safe.length - 1] : safe[Math.floor(r() * safe.length)];
     }
     if (CUR_OUT) (CUR_OUT.evLog = CUR_OUT.evLog || []).push({ id: E0.id, o: o.id }); // A2 측정: 이벤트 선택 분포
@@ -275,6 +277,8 @@ function useCons(pk, r, b, run) {
     case 'unhaze': return al.some(e => e.foe === 'dancer' && e.haze >= 1 && it(e, 'charge')) || al.reduce((a, e) => a + (e.haze || 0), 0) >= 3;
     case 'rewind': return al.some(e => (e.foe === 'sundial' && (e.clock || 0) <= 1) || (e.foe === 'colossus' && e.glow >= 2) || (e.foe === 'reaper' && e.embers >= 4) || (e.chant && it(e, 'chanting', 'mchanting')));
     case 'healcure': return (p.hp < p.hpMax * 0.45 && (!p.flask.life || r() < 0.5)) || sk(p, 'ignite') >= 4;
+    case 'flare': return !!(b.al && b.al.on && b.al.n < b.al.cap && b.al.next <= (b.round || 0) + 1 && al.length >= 2); // A3
+    case 'holyw': return (p.taint || 0) >= 2 || al.some(e => (e.taint || 0) >= 3);
     default: return false; } };
   for (let k = 0; k < 3; k++) { const i = run.cons.findIndex(c => G0.CONS[c.id].use !== 'none' && !G0.consWhyNot(b, run, c, null) && r() < aware && want(c)); if (i < 0) break; G0.consUse(b, run, i, null); if (b.over) break; }
 }
@@ -291,6 +295,9 @@ function fightRec(R, b, run, hpIn, acts) {
   for (const h of hits) { const k = (h.dot ? 'dot:' : '') + (h.src || 'none') + (h.charged ? ':big' : ''); src[k] = Math.round(((src[k] || 0) + h.d) * 10) / 10; }
   const used = countBy(b.rec.filter(x => x.k === 'act').map(x => x.a));
   const rec = { f: run.room, ch: run.ch || 1, t: R.type, sq: R.squad, foe: R.foe, mods: (R.mods || []).join('+') || undefined, path: R.path, res: b.over, hpIn: Math.round(hpIn * 100), hpOut: Math.round(run.p.hp / run.p.hpMax * 100), net: Math.round(hpIn * 100) - Math.round(run.p.hp / run.p.hpMax * 100), /* 0.8.0 6단계 승인 정정: 순손실 = hpIn − hpOut(최대 생명력 %p)이 주 지표, 총피해(tk)는 보조 */ rounds: b.round || 0, acts, src, used, brk: b.rec.filter(x => x.k === 'break').length, cut: b.rec.filter(x => x.k === 'break' && x.cut).length, blk: b.rec.filter(x => x.k === 'block').length, parried: hits.filter(h => h.parried).length, guarded: hits.filter(h => h.guard).length, cons: b.rec.filter(x => x.k === 'cons').length, big: b.rec.filter(x => x.k === 'bigfire').length, bigNoTurn: b.rec.filter(x => x.k === 'bigfire' && x.gap < 1).map(x => x.role + ':' + x.i + ':' + x.gap) };
+  if (b.al) rec.al = { on: b.al.on ? 1 : 0, n: b.al.n, d: b.al.delayed ? 1 : 0 }; // A3 측정: 경보 울림 · 종 표식 늦춤
+  if ((b.ctx.ch || 1) === 3) { const dl = b.rec.filter(x => x.k === 'dealt'); rec.dl = Math.round(dl.reduce((a, x) => a + x.d, 0)); rec.pa = b.rec.filter(x => x.k === 'act').length; rec.hp3 = b.en.filter(e => (!e.elite || e.strong) && !e.tough && !e.summoned && !['bonfire', 'rampart', 'brick', 'barricade'].includes(e.role)).map(e => [e.role === 'boss' ? e.boss : e.foe || e.role, Math.round(e.hpMax), e.strong ? 1 : 0]); } // A3 측정: 타수 표(체력 ÷ 행동 하나의 피해)
+  if (b.armCut || b.rec.some(x => x.k === 'shieldBlk')) { const dl = b.rec.filter(x => x.k === 'dealt'); rec.as = { cut: Math.round(b.armCut || 0), blk: b.rec.filter(x => x.k === 'shieldBlk').reduce((a, x) => a + (x.n || 1), 0), dealt: Math.round(dl.reduce((a, x) => a + x.d, 0)), pa: b.rec.filter(x => x.k === 'act').length }; } // A3 측정: 갑옷 · 방패가 더한 타수
   if (b.mkTr) { rec.mkTr = b.mkTr; const C = b.rec.filter(x => x.k === 'ctr'); rec.mkCtr = C.length; rec.mkCtrD = Math.round(C.reduce((a, x) => a + (x.d || 0), 0)); } // M5-2: 되받기 횟수 · 피해(MK_TRACE)
   if (BUILDLOG && b.actDmg) rec.actDmg = b.actDmg;
   if (b.p.build === 'assassin' && b.asBursts && process.env.AS_TRACE) rec.asB = b.asBursts;
@@ -342,9 +349,26 @@ function streetPre(b, P, r) {
   const lamps = al.filter(e => e.role === 'lantern'), lamp = lamps.find(e => e.lit && !e.last); if (lamp && lamps.filter(e => e.lit).length >= 4 && !al.some(e => e.boss === 'bardo' && e.intent && e.intent.k === 'relight') && r() < (P.mech || 0.5) + 0.1) { /* 켜진 등불이 많을 때만 깨고, 다시 켜는 사이에는 바르도를 친다 */ const A = L.filter(x => x.ok && !x.self && x.id !== 'flee' && G0.canTarget(b, lamp, x)); const brkOf = x => x.id === 'heavy' ? 35 : x.v2 ? x.s.fx.reduce((m, f) => m + (f.k === 'brk' ? f.n : f.k === 'cutx' ? f.brk : 0), 0) : 0; const c = A.filter(x => brkOf(x) > 0).sort((x, y) => brkOf(y) - brkOf(x))[0]; if (c) return [c.id, c.aoe ? null : lamp.id]; }
   return null;
 }
+/* 0.8.0 A3 3챕터 판단(사람이 화면을 보고 할 만한 것만): 틈 막기 · 종 표식 · 봉화 · 부품 · 벽돌 · 조준하는 명사수 · 벽돌을 쌓는 루를 붕괴로. 3챕터 전투에서만 난수를 쓴다 */
+const W3O = ['bonfire', 'rampart', 'brick', 'barricade'];
+function w3Pre(b, P, r) {
+  if (!G0.isW3(b)) return null; const al = G0.alive(b); const L = () => G0.actionList(b).filter(x => x.ok && x.id !== 'flee');
+  const brkOf = x => x.id === 'heavy' ? 35 : x.v2 ? x.s.fx.reduce((m, f) => m + (f.k === 'brk' ? f.n : f.k === 'cutx' ? f.brk : 0), 0) : 0;
+  const brkOn = (e, min) => { const c = L().filter(x => !x.self && G0.canTarget(b, e, x) && brkOf(x) >= (min || 1)).sort((x, y) => brkOf(y) - brkOf(x))[0]; return c ? [c.id, c.aoe ? null : e.id] : null; };
+  const m = (P.mech || 0.5);
+  if ((b.ctx.mods || []).includes('rift') && !b.riftSealed && (b.round || 0) <= 2 && r() < m + 0.2) { const s = L().find(x => x.id === 'sealrift'); if (s) return ['sealrift', null]; }
+  const fire = al.filter(e => e.role === 'bonfire').sort((x, y) => x.fuse - y.fuse)[0]; if (fire && fire.fuse <= 2 && r() < m + 0.2) { const a = brkOn(fire); if (a) return a; }
+  const part = al.find(e => e.role === 'rampart'); if (part && (b.ram || 0) >= 50 && r() < m + 0.2) { const a = brkOn(part); if (a) return a; }
+  const brick = al.find(e => e.role === 'brick'); if (brick && r() < m) { const a = brkOn(brick); if (a) return a; }
+  const mk = al.find(e => e.foe === 'marksman' && e.intent && e.intent.k === 'aimx'); if (mk && r() < m + 0.2) { const a = brkOn(mk, 15); if (a) return a; }
+  const lu = al.find(e => e.boss === 'lu' && e.intent && e.intent.k === 'rebuild'); if (lu && r() < m + 0.2) { const a = brkOn(lu, 15); if (a) return a; }
+  const bm = b.al && b.al.on && !b.al.delayed && al.find(e => e.id === b.bellMark); if (bm && bm.brk + 35 >= bm.brkMax && r() < m) { const a = brkOn(bm, 20); if (a) return a; }
+  return null;
+}
+let OLD3V = null; const old3On = () => (OLD3V == null ? (OLD3V = !!run_('OLD3')) : OLD3V);
 /* 3챕터 판단 (10월 7일, 비공개 문서의 테스터 판단 가운데 사람이 화면을 보고 할 만한 것만). 3챕터 전투에서만 난수를 쓴다: 1 · 2챕터 측정은 그대로다 */
 function ch3Pre(b, P, r) {
-  if (!(((b.ctx && b.ctx.ch) || 1) >= 3)) return null;
+  if (!(((b.ctx && b.ctx.ch) || 1) >= 3) || !old3On()) return null; // A3: 옛 재의 사막 판단은 OLD3일 때만
   const al = G0.alive(b); const q = al.find(e => e.boss === 'queen'); const crown = al.find(e => e.role === 'crown');
   const hot = (b.heat || 0) >= 80 || (b.heatWarn != null && b.heatWarn <= (b.round || 0) + 1); if (crown) crown.crownHot = hot ? 1 : 0; // qa.js enemyPrio: 열기가 높거나 예고가 뜨면 왕관을 먼저
   const L = () => G0.actionList(b).filter(x => x.ok && x.id !== 'flee');
@@ -399,7 +423,7 @@ function fightCur(pk, r, mem, out) {
       [a, t] = OPT.policy.chooseAction(b, G.run, n);
     } else {
     const sr = r() < (P.mech || 0.5) ? sigRule(b, r) : null;
-    [a, t] = devPre(b, P, r) || streetPre(b, P, r) || ch2Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look && hazePick(b)) || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem)); // 0.8.0 5단계: 숙련의 신기루 대응(수도승)
+    [a, t] = devPre(b, P, r) || streetPre(b, P, r) || ch2Pre(b, P, r) || w3Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look && hazePick(b)) || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem)); // 0.8.0 5단계: 숙련의 신기루 대응(수도승)
     [a, t] = ch2Post(b, P, r, a, t);
     // 보스를 깎지 못한 채 버티기만 하면 사람은 밀어붙인다 (한 수 앞만 보는 계산이 페이즈 전환을 피하는 것을 막는다)
     const bs = b.en.find(e => e.role === 'boss' && e.alive);
@@ -717,6 +741,7 @@ function playLoop(pk, r, out) {
     }
     handleSheets(pk, r); spendTree(pk, r);
     if (!run.cur && run.cross) { const k = pickPath(pk, run, r); (out.paths = out.paths || []).push(k); G0.choosePath(k); continue; }
+    if (!run.cur && run.doors && (run.ch || 1) === 3 && run.doors.length < 4 && pk !== 'novice' && run.doors.every(d => !['spring', 'shrine', 'event', 'strong'].includes(d.type))) { const li = (run.cons || []).findIndex(c => G0.CONS[c.id] && G0.CONS[c.id].k === 'ladder' && !G0.consWhyNot(null, run, c, null)); if (li >= 0 && r() < 0.5) G0.consUse(null, run, li, null); } // A3 줄사다리
     if (!run.cur && run.doors) { const i = pickDoor(pk, run, r); out.rooms.push(run.doors[i].type); G0.chooseDoor(i); continue; }
     const R = run.cur; if (!R) { out.bugs.push('방이 없음 ' + run.room); failOf(out, 'noroom', { room: run.room, ch: run.ch || 1 }); break; }
     if (!G0.ROOM_TYPES[R.type] || !G0.ROOM_TYPES[R.type].fight) { if (R.type !== 'boss') { restRoom(pk, run, r); handleSheets(pk, r); continue; } }

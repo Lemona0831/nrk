@@ -55,6 +55,7 @@ function vPlayerPanel(p, b) {
 
 /* ---------- 전투 ---------- */
 const AGROUP = [
+  ['상황', ['tradeyes', 'tradeno', 'paydebt', 'lampoil', 'sealrift']], // A3: 챕터 행동(2챕터 거래 · 빚 갚기 · 등불 기름, 3챕터 틈 막기). 전에는 묶음에 없어 화면에 그려지지 않았다
   ['공격', ['as_mu', 'hn_shot', 'basic', 'heavy', 'as_end']], // M5-3 암살자: 무영살 베기 · 연쇄 격발 넘기기
   ['스킬', null],
   ['직업', ['sig']],
@@ -104,6 +105,7 @@ const RISK_W = { 1: '낮음', 2: '보통', 3: '높음', 4: '매우 높음' }; /*
 const rewardHint = r => r.hide ? '보상은 열어 봐야 안다' : ROOM_TYPES[r.type].hint; // 10월 4일: 보상은 일부 문에만 적힌다
 /* 갈래길: 길 셋 가운데 하나 (다음 갈래길이나 야영지 · 보스 앞까지) */
 function crossCard(id) {
+  if (id === 'quiet' && w3NoQuiet(G.run)) { const P = pathTxt(G.run, id); return `<button class="door t-path-${id}" disabled aria-disabled="true"><span class="dr-h"><span class="dr-ico" aria-hidden="true">${P.ico}</span><b>${esc(P.n)}</b></span><span class="mini">수비대의 맹세 때문에 이 챕터에서는 고를 수 없다.</span></button>`; } // A3
   const P = pathTxt(G.run, id), f = G.run.room; /* A2: 길 이름 · 설명은 챕터마다 */ const to = Math.min(f < FLOOR_CAMP ? FLOOR_CAMP : FLOOR_BOSS, PATH_AT.find(x => x > f) || FLOOR_BOSS) - 1;
   const x = v => '×' + v; const W = Object.entries(P.w || {}).filter(([t]) => ROOM_TYPES[t]).map(([t, v]) => ROOM_TYPES[t].n + ' ' + x(v));
   const nums = [P.hp === 1 && P.dmg === 1 ? '적 체력 · 피해 그대로' : `적 체력 <b>${x(P.hp)}</b> · 피해 <b>${x(P.dmg)}</b>`, `전리품 <b>${x(P.loot)}</b> · 골드 <b>${x(P.gold)}</b>`].concat(P.up ? [`장비 등급 ${P.up > 0 ? '오름' : '내림'} <b>${Math.round(Math.abs(P.up) * 100)}%</b>`] : []);
@@ -137,6 +139,8 @@ function vRoom(run, R) {
   if (R.type === 'boss') { const B = BOSSES[run.boss]; return h + `<h3>보스</h3><p><b>${B.ico} ${esc(B.n)}</b></p><p class="lore">${esc(B.lore || '')}</p><p class="mini">보스전은 도망칠 수 없고, 너무 오래 끌면 보스가 광폭해집니다.</p><button class="gold" data-a="enter" data-focus>보스와 싸우기</button></section>`; }
   if (R.type === 'fate') return vFateRoom(run, h);
   if (R.type === 'market') return h + vMarket(run, R) + '</section>'; // A2 암시장
+  if (R.type === 'smugstall') return h + vSmug(run, R) + '</section>'; // A3 밀수꾼의 좌판
+  if (R.type === 'checkpoint') return w3CheckRoom(run, R, h); // A3 검문소
   if (R.type === 'camp') return h + vCamp(run) + '</section>'; // 10월 14일 개편 5단계: 정비 시간(46-screens-shop.js)
   if (R.type === 'spring') return h + `<h3>💧 샘</h3><p>샘에서 쉬면 생명력이 50% 차고, 플라스크가 하나씩 찹니다.</p><button class="gold" data-a="rest" data-focus>샘에서 쉬기</button></section>`;
   if (R.type === 'shrine') { const S = SHRINES.find(x => x.id === R.shrine); return h + `<h3>🕯️ ${esc(S.n)}</h3><p>${esc(S.d)} 다음 3개 방 동안 이어집니다.</p><div class="row"><button class="gold" data-a="shrine" data-k="1" data-focus>기도한다</button><button data-a="shrine" data-k="0">지나친다</button></div></section>`; }
@@ -146,7 +150,7 @@ function vRoom(run, R) {
   }
   if (R.type === 'event') {
     const E0 = EVENTS.find(x => x.id === R.event);
-    const dis = o => (E0.id === 'reliquary' && o.id === 'force' && run.p.st < 40) || (E0.id === 'buried' && o.id === 'dig' && run.p.st < 50) || (E0.id === 'monk' && o.id === 'feed' && !(run.p.flask.life + run.p.flask.mana + (run.p.flask.stam || 0))) || ch2EvDis(run, E0, o);
+    const dis = o => (E0.id === 'reliquary' && o.id === 'force' && run.p.st < 40) || (E0.id === 'buried' && o.id === 'dig' && run.p.st < 50) || (E0.id === 'monk' && o.id === 'feed' && !(run.p.flask.life + run.p.flask.mana + (run.p.flask.stam || 0))) || ch2EvDis(run, E0, o) || w3EvDis(run, E0, o);
     return h + `<h3>❔ ${esc(E0.n)}</h3><p class="lore">${esc(E0.lore)}</p><div class="evopts">${E0.opts.map(o => `<button class="evo" data-a="event" data-k="${o.id}"${dis(o) ? ' disabled' : ''}><b>${esc(o.n)}</b>${o.d ? `<small>${esc(o.d)}</small>` : ''}</button>`).join('')}</div></section>`;
   }
   // 전투 방

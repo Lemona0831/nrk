@@ -69,13 +69,17 @@ module.exports = function (api) {
   add('help', '기본 공격 10, 강공격 35씩 차고', '실행: 기본 공격 +10, 강공격 +35', E => E(`(() => { const r = []; for (const id of ["basic", "heavy"]) { const b = __mk("warden"); const e = b.en[0]; const k0 = e.brk || 0; playerAct(b, id, e.id); r.push((e.brk || 0) - k0); } return r.join(); })()`) === '10,35');
   add('help', '다음 행동을 잃고, 취약 2가', '실행: 붕괴 가득이면 취약 2', E => E(`(() => { const b = __mk("warden"); const e = b.en[0]; addBreak(b, e, 9999); return st(e, "vuln") === 2; })()`));
   add('help', '사수(후열): 겨누기', '상수: EKW.archerBleed=' + E('EKW.archerBleed') + ', archerEvery=' + E('EKW.archerEvery'), E => E('EKW.archerBleed') === 2);
-  add('help', '신속이 붙은 적은', '소스: startRound가 e.swift이고 둔화 · 붕괴 · 가속이 없으면 가속 1', E => has('e.swift && !e.s.chill && !e.s.broken && !e.s.haste') && has('e.s.haste = { stacks: 1,'));
-  add('help', '출혈 2를 겁니다', '상수: LURK.bleed=' + E('LURK.bleed'), E => E('LURK.bleed') === 2);
-  add('help', '붕대가 받는 직접 피해를 30%', '상수: WRAP.cut=' + E('WRAP.cut'), E => pct(E('WRAP.cut')) === 30);
-  add('help', '불단지(화상 3)', '상수: EMBER.potIgn=' + E('EMBER.potIgn') + ' · share=' + E('EMBER.share'), E => E('EMBER.potIgn') === 3 && E('EMBER.share') === 2);
-  add('help', '동료에게 허상 2, 자기에게 허상 1', '상수: HAZE.give=' + E('HAZE.give') + ' · self=' + E('HAZE.self'), E => E('HAZE.give') === 2 && E('HAZE.self') === 1);
-  add('help', '공격에 화상을 싣습니다(평소 1, 강타 2)', '상수: FIRE_AFFIX.hit=' + E('FIRE_AFFIX.hit') + ' · heavy=' + E('FIRE_AFFIX.heavy'), E => E('FIRE_AFFIX.hit') === 1 && E('FIRE_AFFIX.heavy') === 2);
-  add('help', '한 라운드에 새로 붙는 화상이 4까지', '상수: IGN_ROUND_CAP=' + E('IGN_ROUND_CAP'), E => E('IGN_ROUND_CAP') === 4);
+  /* A3: 옛 3챕터(재의 사막) 대조 열 줄은 새 「성벽 아래」 대조로 바꿨다 */
+  add('help', '옆 수비병과 대형을 이으면 둘 다 받는 피해가 15%', '소스: w3HitMul 대형 잇기 ×0.85', E => has('if (e.linked && alive(b).some(x => x.id === e.linked)) m *= 0.85;'));
+  add('help', '장전 중에는 붕괴에 약합니다', '상수: FOE_X.marksman.brkAim=' + E('FOE_X.marksman.brkAim') + ', 소스: w3BrkMul 석궁병 장전', E => E('FOE_X.marksman.brkAim') === 1.5 && has("(e.role === 'wallxbow' && e.intent.k === 'load')"));
+  add('help', '받는 직접 피해 −50%, 붕괴 한 번에 무너짐', '소스: w3HitMul 바리케이드 ×0.5 · w3OnBreak 바리케이드', E => has("if (e.row === 'back' && !o.aoe && !o.dot && alive(b).some(x => x.role === 'barricade')) m *= 0.5;") && has("if (e.role === 'barricade') { e.alive = false;"));
+  add('help', '잠식: 적은 잠식 하나마다 주는 피해 +', '상수: CH3X.taint=' + E('CH3X.taint') + ' · taintCap=' + E('CH3X.taintCap'), E => E('CH3X.taint') === 0.1 && E('CH3X.taintCap') === 5);
+  add('help', '대형(옆 동료가 받는 피해 −', '상수: AFFIX3.form=' + E('AFFIX3.form'), E => pct(E('AFFIX3.form')) === 20);
+  add('help', '4라운드째가 끝날 때 경보 종이 울려', '상수: ALARM.first=' + E('ALARM.first') + ' · every=' + E('ALARM.every') + ' · cap=' + E('ALARM.cap') + ' · rough=' + E('ALARM.rough'), E => E('ALARM.first') === 4 && E('ALARM.every') === 3 && E('ALARM.cap') === 3 && E('ALARM.rough') === 3);
+  add('help', '경보가 한 라운드 늦어집니다(전투마다 한 번)', '소스: w3BellDelay a.delayed · a.next += 1', E => has('a.delayed = 1; a.next += 1;'));
+  add('help', '원래 피해의 1/3은 들어갑니다', '소스: foeArmor Math.max(d / 3, d - e.armor)', E => has('d = Math.max(d / 3, d - e.armor)'));
+  add('help', '강공격은 두 겹', "소스: foeArmor 강공격이면 n = 2", E => has("const n = b.cur && b.cur.id === 'heavy' ? 2 : 1;"));
+  add('help', '낙석(4라운드마다 모두 피해 4)', '상수: CH3X.rock=' + E('CH3X.rock') + ' · rockEvery=' + E('CH3X.rockEvery'), E => E('CH3X.rock') === 4 && E('CH3X.rockEvery') === 4);
 
   /* ===== 상태이상 ===== */
   add('help', '정해진 때가 오면 효과가 나고', '실행: 화상 4가 직접 피해에 발동하면 3으로 줄어든다', E => E(`(() => { const b = __mk("warden"); const p = b.p; addS(b, p, "ignite", 4); kwTaken(b, p, 100, { src: b.en[0] }); return st(p, "ignite") === 3; })()`));
@@ -94,9 +98,6 @@ module.exports = function (api) {
   add('help', '값은 그 챕터 고급 장비의 1.3배', '상수: GAMBLE.mul=' + E('GAMBLE.mul') + ', 실행: gamblePrice(2) = round(고급 가격 × 1.3)', E => E('GAMBLE.mul') === 1.3 && E('gamblePrice(2)') === Math.round(E('priceOf("m",2)') * 1.3));
   add('help', '평범은 70%, 고급은 45%, 희귀는 20%', '상수: FATE.up', E => pct(E('FATE.up.n')) === 70 && pct(E('FATE.up.m')) === 45 && pct(E('FATE.up.r')) === 20);
   add('help', '챕터마다 24층입니다', '상수: FLOORS=24 · FLOOR_CAMP=12 · FLOOR_BOSS=24, 실행: isLower 11층 거짓 · 13층 참 · 23층 참', E => E('FLOORS') === 24 && E('FLOOR_CAMP') === 12 && E('FLOOR_BOSS') === 24 && E('isLower(11,1)') === false && E('isLower(13,1)') === true && E('isLower(23,1)') === true);
-  add('help', '라운드가 끝날 때마다 열기가 10 오르고', '상수: HEAT.mod=' + E('HEAT.mod') + ' · ember=' + E('HEAT.ember') + ' · reset=' + E('HEAT.reset') + ', 소스: 열기 상한 100', E => E('HEAT.mod') === 10 && E('HEAT.ember') === 8 && E('HEAT.reset') === 30 && has('Math.max(0, Math.min(100, b.heat + n))'));
-  add('help', '아지랑이는 모든 적이 허상 1로', "소스: ch3Setup이 haze 방 특성이면 진짜 적마다 e.haze를 1 이상으로", E => has("if (mods.includes('haze')) for (const e of alive(b)) if (realFoe(e)) e.haze = Math.max(e.haze || 0, 1);"));
-  add('help', '모래폭풍은 후열 적이 주는 피해와 받는 피해가 20%', "소스: 받는 피해 ch3HitMul 0.8, 주는 피해 enemyHitEst 0.8", E => has("if (e.row === 'back' && hasMod(b, 'sandstorm')) m *= 0.8;") && has("if (e.row === 'back' && hasMod(b, 'sandstorm')) d *= 0.8;"));
   add('help', '보스전을 오래 끌면(보통', '상수: ENRAGE.boss=' + E('ENRAGE.boss') + ' (b.t는 라운드마다 1, 45라운드)', E => E('ENRAGE.boss') === 45);
 
   /* 숫자는 있지만 규칙이 아닌 문장, 또는 아래에서 따로 증명하는 문장 */
@@ -112,5 +113,5 @@ module.exports = function (api) {
   add('help', '일곱 장면으로 연습합니다', '데이터: TUT.length=' + E('TUT.length'), E => E('TUT.length') === 7);
   add('help', '처음에는 간단입니다', '상수: HUD_NAMES, HUD_DEFAULT=' + E('HUD_DEFAULT'), E => E('HUD_NAMES.join()') === 'simple,normal,full' && E('HUD_DEFAULT') === 'simple');
   add('help', '끔 · 약하게 · 보통 · 강하게를 고릅니다', '데이터: VFX_OPTS 네 단계', E => E('VFX_OPTS.map(o => o[1]).join()') === '끔,약하게,보통,강하게');
-  add('help', '챕터는 1챕터 저주받은 수도원', '데이터: CHAPTERS 이름 셋', E => E('[1,2,3].map(c => CHAPTERS[c].n).join()') === '저주받은 수도원,어둠이 가라앉은 거리,재의 사막 유적');
+  add('help', '챕터는 1챕터 저주받은 수도원', '데이터: CHAPTERS 이름 셋', E => E('[1,2,3].map(c => CHAPTERS[c].n).join()') === '저주받은 수도원,어둠이 가라앉은 거리,성벽 아래');
 };

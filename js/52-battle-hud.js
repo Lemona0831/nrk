@@ -121,7 +121,7 @@ function vHudClass(b, hud) {
   const h = buildRes(b.p) + focusLine(b) + sbLine(b) + cfLine(b); if (!h) return '';
   return hud.cls ? `<div class="hudm" data-hud="hud-classchip">${h}</div>` : `<div class="sr" data-hud="hud-classchip">${hudQuiet(h)}</div>`;
 }
-const AGROUP4 = [['공격', ['as_mu', 'hn_shot', 'basic', 'heavy', 'as_end']], ['스킬', null], ['지키기', ['guard', 'dodge']], ['도구', ['flaskL', 'flaskM', 'flaskS', 'flee']]];
+const AGROUP4 = [['상황', ['tradeyes', 'tradeno', 'paydebt', 'lampoil', 'sealrift']], ['공격', ['as_mu', 'hn_shot', 'basic', 'heavy', 'as_end']], ['스킬', null], ['지키기', ['guard', 'dodge']], ['도구', ['flaskL', 'flaskM', 'flaskS', 'flee']]];
 function consUsefulN(b) {
   const run = G.run; if (!run || !Array.isArray(run.cons) || b.over || !b.p) return 0;
   const bq = Object.assign({}, b, { consN: 0, consF: 0, queue: ['p'] }); let n = 0;

@@ -9,7 +9,7 @@ const CH = arg('--ch', null), NOTES = arg('--notes', path.join(__dirname, '..', 
 const ctx = {}; vm.createContext(ctx); const V_ = s => s.replace(/^const (\w+)/gm, 'var $1');
 vm.runInContext(['data/foes.js', 'data/dungeon.js'].map(f => V_(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'))).join(';\n'), ctx);
 const EVENTS = ctx.EVENTS.filter(e => !CH || String(e.ch || 1) === CH);
-const COST = /대신|줄어|주는 피해 −|매복|쓰고|씁니다|비우|더해지|약화 \d|취약 \d|중독 \d|화상 \d|출혈 \d|둔화 \d|강적이 반드시|주고|넘기|반반|잃/;
+const COST = /대신|줄어|주는 피해 −|매복|쓰고|씁니다|비우|더해지|약화 \d|취약 \d|중독 \d|화상 \d|출혈 \d|둔화 \d|강적이 반드시|주고|넘기|반반|잃|나도 피해 \d|경보가 처음부터|경보가 1라운드 빨리/; // A3: 3챕터 대가(공성추에 나도 맞음 · 경보가 당겨짐)
 const V = []; const bad = (kind, id, what) => V.push({ kind, id, what });
 for (const e of EVENTS) if (!e.opts.some(o => COST.test(o.d || ''))) bad('벌칙 없음', e.id + ' ' + e.n, e.opts.map(o => o.n).join(' · '));
 let frag = null;
@@ -19,7 +19,7 @@ if (fs.existsSync(NOTES)) {
     const m = L[i].match(/^\|\s*(\d+)\s*\|\s*(\d)\s*\|\s*([^|(]+)\(([^)]*)\)\s*\|\s*([^|]+)\|/); if (!m) continue;
     const ch = m[2], name = m[3].trim(), opt = m[4].trim(), text = m[5].trim(); if (CH && ch !== CH) continue; frag.n++;
     const ev = ctx.EVENTS.find(e => String(e.ch || 1) === ch && e.n === name);
-    const hay = ev ? JSON.stringify(ev) : ''; const o = ev && ev.opts.find(x => x.n === opt);
+    const hay = ev ? JSON.stringify(ev) : ''; const o = ev && ev.opts.find(x => x.n === opt || x.n.includes(opt)); // A3: 노트는 선택지를 줄여 적기도 한다(쓸어 본다 · 맨 아래 장)
     if (!ev) bad('조각 이벤트 없음', '#' + m[1] + ' ' + ch + '챕', name);
     else if (!o) bad('조각 선택지 없음', '#' + m[1] + ' ' + ev.id, opt);
     else if (!hay.includes(text.replace(/"/g, '\\"'))) bad('조각 글 다름', '#' + m[1] + ' ' + ev.id, opt);

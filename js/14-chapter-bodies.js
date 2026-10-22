@@ -4,7 +4,7 @@ const BIGK = ['charge', 'heavy', 'burrow', 'erupt', 'chant', 'chanting', 'burn',
 const hexDmgOf = (b, e) => { const k = HEX.kinds.filter(s => st(b.p, s) > 0).length; return enemyHitEst(b, e) / ROLES.hexer.hit * Math.min(HEX.cap, HEX.base + HEX.per * k); }; // 조이기: 내 해로운 상태 가짓수
 const bigPending = (b, e) => alive(b).some(x => x !== e && x.intent && (BIGK.includes(x.intent.k) || (x.intent.k === 'constrict' && hexDmgOf(b, x) >= b.p.hpMax * 0.15))) || (b.heatWarn != null && b.heatWarn >= (b.round || 0)); // 3챕터: 열풍이 예고된 라운드도 큰 공격 하나로 센다
 const wallOf = (b, e) => alive(b).find(x => x.role === 'bonewall' && x.wallOf === e.id);
-const realFoe = e => e.role !== 'root' && !e.pile && e.role !== 'bonewall' && e.role !== 'crown' && e.role !== 'lantern'; // A2: 바르도의 등불(물체)도 세지 않는다 // 전투 끝 판정에서 세는 적 (뼈 더미 · 뼈벽은 빼고)
+const realFoe = e => e.role !== 'root' && !e.pile && e.role !== 'bonewall' && e.role !== 'crown' && e.role !== 'lantern' && !['bonfire', 'rampart', 'brick', 'barricade'].includes(e.role); // A3: 3챕터 물체(봉화 · 부품 · 벽돌 · 바리케이드)도 세지 않는다. A2: 바르도의 등불(물체)도 세지 않는다 // 전투 끝 판정에서 세는 적 (뼈 더미 · 뼈벽은 빼고)
 function buildWall(b, e) {
   if (wallOf(b, e)) return; const w = mkEnemy('bonewall', 0, b.idc++, { lv: e.lv || 1, name: b.ctx.names && b.ctx.names.bonewall });
   w.hpMax = Math.max(1, Math.round(e.hpMax * BWALL.hp)); w.hp = w.hpMax; w.brkMax = BWALL.brk; w.summoned = true; w.wallOf = e.id; w.intent = { k: 'none' }; b.en.push(w);
@@ -56,10 +56,13 @@ function lordFall(b, e) {
 }
 function lordGuard(lv, id, ch) { const s0 = mkEnemy('skeleton', 0, id, { lv, name: (ENEMY_NAMES[ch] || ENEMY_NAMES[2] || {}).skeleton }); const D = diffOf(ch).lower; s0.hpMax = Math.round(s0.hpMax * D.hp * LORD.gHp); s0.hp = s0.hpMax; s0.dmg *= D.dmg * LORD.gDmg; s0.summoned = true; return s0; } // 근위 · 부름 해골: 하층 해골과 같은 세기 (10월 7일: 던전 배율이 빠져 1.6배로 때렸다)
 function riseSkel(b, e, pre) { e.pile = null; e.rose = 1; e.hp = Math.max(1, Math.round(e.hpMax * RISE.hp)); e.intent = { k: 'brace' }; e.teleX = 1; e.acts = 2; logp(b, 'bad', (pre || '') + '뼈 더미가 다시 맞춰져 ' + e.n + '이(가) 일어선다'); fxRun(b.p, 'onRise', b, b.p, e); }
-/* ===== 3챕터 몸과 역할 · 열기 · 강적 · 재의 여왕 (10월 7일, docs/챕터/3챕터.md 6 · 9 · 10절. 강적 · 보스의 상세 · 대처는 비공개 문서) =====
+/* ===== 3챕터 몸과 역할 · 열기 · 강적 · 재의 여왕 (10월 7일, docs/챕터/archive/3챕터-재의사막.md 6 · 9 · 10절. 강적 · 보스의 상세 · 대처는 비공개 문서) =====
    모래 잠복자는 2챕터 땅속(e.under, BURROW)을 그대로 쓴다. 허상 e.haze(카드 🌫️n), 붕대 e.wrap(🧻n), 열기 b.heat(전장 게이지), 화염 강화 e.fire.
    여기의 함수는 3챕터 몸(또는 3챕터 전투 b.ctx.ch ≥ 3)이 있을 때만 무언가를 한다. 1 · 2챕터 전투의 결과는 그대로다 */
-const isCh3 = b => ((b && b.ctx && b.ctx.ch) || 1) >= 3;
+/* 0.8.0 A3(10월 22일): 3챕터를 「성벽 아래」로 바꾸면서 옛 재의 사막 엔진은 OLD3 깃발(거짓)로 잠들었다. 옛 데이터는 data/archive/old-ch3.js(index.html은 읽지 않음) */
+const OLD3 = false;
+const isCh3 = b => OLD3 && ((b && b.ctx && b.ctx.ch) || 1) >= 3;
+const old3 = ch => OLD3 && (ch || 1) >= 3;
 const queenOf = b => b.en.find(e => e.boss === 'queen' && e.alive);
 const MCH_K = ['mchant', 'mchanting', 'msong']; // 재의 시녀의 영창
 const DMG_K = ['attack', 'heavy', 'firepot', 'ash', 'noon', 'erupt', 'constrict', 'burn', 'explode', 'brand', 'mirror', 'reflect', 'hand']; // 나를 직접 치는 예고 (내 화상 몫을 더해 보인다)

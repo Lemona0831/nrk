@@ -340,140 +340,110 @@ Object.assign(ROLE_INTRO, {
 /* 방 특성 (9절): 새 셋은 2챕터만, 수도원 주제(성수 · 종소리)는 1챕터만 */
 ROOM_MODS.holy.chs = [1]; ROOM_MODS.bell.chs = [1];
 /* 성소 · 제단 (10절): chs가 없으면 모든 챕터 */
-SHRINES.push({ id: 'rest', chs: [3], n: '안식의 성소', d: '쓰러뜨린 적은 다시 일어서지 않습니다.' }, { id: 'firm', chs: [3], n: '굳건함의 성소', d: '예고된 큰 공격으로 받는 피해 −15%.' });
 ALTARS.find(a => a.id === 'gold').cost = [40, 60, 90];
 
 
-/* ===== 3챕터: 재의 사막 유적 (10월 7일, docs/챕터/3챕터.md. 강적 · 보스의 기믹과 대처는 비공개 문서) =====
-   틀은 1 · 2챕터와 같다(16층, 갈림길 4 · 9 · 12층). 이 칸은 1챕터 배열에 ch: 3 항목을 더하고 CHAPTERS[3]을 채운다. 수치는 모두 [가설] */
-ENEMY_NAMES[3] = { bruiser: '사막 약탈자', shield: '유적 근위병', archer: '모래 궁수', healer: '재의 무녀', summoner: '모래 부르는 자', pyre: '태양 영창자', minion: '재 인형', thief: '무덤 도굴꾼', darkmage: '검은 해의 주술사', skeleton: '불탄 해골', lurker: '모래 잠복자', ember: '불씨 투척병', wrapped: '붕대 감긴 망자', mirage: '아지랑이 술사', crown: '재의 왕관', maid: '재의 시녀' };
-/* 해의 흐름 (1.2절): 띠마다 층 이름과 들어설 때 한 줄. 특성 무게는 MOD3 */
-const BANDS3 = [
-  { to: 4, n: '불탄 성벽', line: '검은 해가 지평선에 걸려 있다. 모래가 아직 차다.' },
-  { to: 7, n: '무너진 시장', line: '그림자가 발밑으로 숨는다. 공기가 일렁인다.' },
-  { to: 8, n: '오아시스 야영지', line: '물 위에 재가 떠 있다. 그래도 물이다.' },
-  { to: 12, n: '왕의 묘실', line: '같은 얼굴이 두 번 보인다.' },
-  { to: 15, n: '유리 사원', line: '모래가 별을 가린다. 어둠 속에서 모래가 숨을 쉰다.' },
-  { to: 16, n: '재의 왕좌', line: '재가 눈처럼 내린다. 왕좌가 따뜻하다.' },
-];
-CHAPTERS[3] = {
-  n: '재의 사막 유적', boss: 'queen', names: ENEMY_NAMES[3], strongFrom: 2, xp: 1.9, gold: 2.1, settleStrong: 45, bands: BANDS3,
-  diff: { upper: { hp: 0.625, dmg: 0.66 }, lower: { hp: 0.93, dmg: 0.68 } }, // 3.1절 [가설]: 1챕터와 같은 체감에서 출발. 10월 15일(만든 사람 결정): 생명력 상층 ×1.25(0.50 → 0.625) · 하층 ×1.5(0.62 → 0.93). 측정은 비공개 검증 문서
-  modChance: { upper: 0.35, lower: 0.55 }, roomW: { normal: 27, ambush: 19, trial: 5, shrine: 5 }, /* 0.8.0 6단계 A-5: 일반 40 → 27(1 · 2챕터 44 → 30과 같은 비율) */ roomMax: { ambush: 6 }, // 흔들리는 문은 넣지 않았다(만든 사람이 정할 것 1). 그 무게는 매복 · 시련에 나눴다
-  enterLore: '지하묘지의 바닥이 무너진다. 아래에는 하늘이 있었다. 검은 해 아래로 모래가 끝없이 이어진다.',
-  settleLore: '왕관이 식은 재 속으로 떨어진다. 왕좌 밑에서 금이 간 문이 숨을 쉰다. 금 너머로 성벽이 보인다.',
-  nextLore: '재가 서리처럼 내려앉는다. 금 간 문 너머에서 찬 바람이 분다.',
-  deathLine: '당신의 이름이 재가 되어 바람에 섞인다.',
-};
-/* 새 역할 · 게이지의 수치 (6절, 2절). 잠복은 2챕터 BURROW를 그대로 쓴다(출혈 LURK.bleed만 다르다) */
-const LURK = { bleed: 2, rest: 1 };                  // 모래 잠복자: 솟구침 출혈, 드러난 뒤 쉬는 행동
-const EMBER = { pot: 0.875, potIgn: 3, share: 2 };   // 불씨 투척병: 불단지 = 평소 × pot + 화상, 불씨 나누기 = 동료의 다음 공격에 화상
-const WRAP = { cut: 0.3, hits: 3, rewrap: 1 };       // 붕대: 받는 직접 피해 −30%, 세 번 맞으면 풀림, 다시 감기 한 번
-const HAZE = { cap: 2, capStrong: 3, give: 2, self: 1 }; // 허상
-const HEAT = { start: 20, mod: 10, ember: 8, burst: 0.10, burstIgn: 2, foeIgn: 2, reset: 30, warn: 80 }; // 작열하는 한낮의 열기
-const IGN_ROUND_CAP = 4;     // 나에게 한 라운드에 새로 붙는 화상 (2절 5번)
-const UNAVOID_CAP = 0.30;    // 피할 수 없는 피해의 상한 = 기준 생명력 × (2절 8번, 광폭만 예외)
-const FIRE_AFFIX = { hit: 1, heavy: 2, from: 10 };   // 정예 접사 화염 강화
-const AFFIX_W3 = { tough: 1, swift: 1, fire: 1 };
-/* 방 특성 (10절): 3챕터 새 셋과 1챕터 특성의 3챕터 판. 어둠 · 고요는 3챕터에 두지 않는다 */
 ROOM_MODS.narrow.chs = [1, 2]; ROOM_MODS.ceiling.chs = [1, 2]; ROOM_MODS.candle.chs = [1, 2]; ROOM_MODS.dark.chs = [1, 2];
-ROOM_MODS.noon = { n: '작열하는 한낮', chs: [3], d: '열기 칸이 보입니다. 라운드가 끝날 때마다 열기가 10 오릅니다. 100이 되면 열풍이 불어 나와 적 모두를 태우고 30으로 내려갑니다.' };
-ROOM_MODS.haze = { n: '아지랑이', chs: [3], d: '모든 적이 허상 1을 두르고 시작합니다.' };
-ROOM_MODS.sandstorm = { n: '모래폭풍', chs: [3], d: '후열 적이 주는 피해와 받는 피해가 모두 20% 줄어듭니다.' };
-ROOM_MODS.alley = { n: '무너진 골목', chs: [3], d: '전열에 적이 2기까지만 섭니다. 나머지는 후열입니다.' };
-ROOM_MODS.pillar = { n: '무너지는 기둥', chs: [3], d: '4라운드마다 모두가 피해 4를 입습니다.' };
-ROOM_MODS.shade = { n: '오아시스 그늘', chs: [3], d: '라운드가 끝날 때마다 모두 생명력 1%를 되찾습니다. 나와 적이 받는 화상 피해는 절반입니다.' };
-ROOM_MODS.brazier = { n: '불씨 화로', chs: [3], d: '화상 피해가 모두 50% 늘어납니다.' };
-ROOM_MODS.drums = { n: '북소리', chs: [3], d: '적 속도 +10%라 라운드에서 대개 나보다 먼저 움직입니다. 이 방의 골드 +50%.' };
-/* 3챕터 특성 무게 (4.2 · 10.1절): from 첫 층, band 띠마다 배율([층까지, 배율]), path 길마다 배율. 시야 특성(아지랑이 · 모래폭풍)은 한 방에 하나 */
-const MOD3 = {
-  noon: { from: 6, band: [[7, 3], [12, 1.5]], path: { rough: 1.5, quiet: 0.5 } }, // 0.8.0 6단계: 16층 틀(옛 9 · 11 · 18층)
-  haze: { from: 9, band: [[12, 3]] },
-  sandstorm: { from: 12, band: [[15, 1.5]] },
-  shade: { path: { quiet: 2 } },
-  alley: {}, pillar: {}, brazier: {}, bloodpool: {}, drums: {},
+/* 위 한 줄(좁은 통로 · 낮은 천장 · 촛불 · 어둠을 1 · 2챕터에)은 A2 기준과 같은 결과를 지키려고 남겼다(A2에서 2챕터 특성 칸이 이 줄로 덮여 있었다 — A3 보고서 참조) */
+
+/* ===== 3챕터 「성벽 아래」 (0.8.0 A3, 만든 사람 확정 10월 21일, docs/챕터/3챕터.md) =====
+   틀은 1 · 2챕터와 같다(16층, 갈림길 4 · 9 · 12층). 강적 · 보스의 기믹과 대처는 비공개 문서. 숫자 · 타수는 가설(M7). 옛 3챕터(재의 사막)는 data/archive/old-ch3.js */
+ENEMY_NAMES[3] = Object.fromEntries(Object.values(FOES).filter(f => f.ch === 3 && ['mob', 'elite'].includes(f.grade)).map(f => [f.id, f.n]));
+CHAPTERS[3] = {
+  n: '성벽 아래', boss: 'lu', names: ENEMY_NAMES[3], strongFrom: 4, xp: 1.9, gold: 2.1, settleStrong: 45,
+  diff: { upper: { hp: 0.625, dmg: 0.66 }, lower: { hp: 0.93, dmg: 0.68 } }, // 피해 배율은 옛 3챕터 값 그대로(체력은 타수가 정한다)
+  roomW: { normal: 27, ambush: 19, trial: 5, shrine: 5 }, roomMax: { ambush: 6 }, // 옛 3챕터 문 무게 그대로(0.8.0 6단계 A-5)
+  enterLore: '거리의 끝에서 하늘이 막힌다. 성벽이다. 성문은 닫혀 있고, 문 앞에 천막이 끝없이 늘어서 있다.',
+  settleLore: '성문이 열린다. 안쪽에서 아주 오래된 바람이 분다.',
+  nextLore: '성벽 너머, 그가 끝내 막으려던 곳으로.',
+  deathLine: '당신도 성벽 아래의 이름 하나가 된다.',
+  bands: [
+    { to: 3, n: '피난민 천막촌', line: '천막마다 등불 대신 이름표가 걸려 있다.' },
+    { to: 7, n: '버려진 공성 진지', line: '부수다 만 공성추가 성벽을 향해 서 있다.' },
+    { to: 8, n: '무너진 초소', line: '초소 벽에 수비대 교대 일지가 붙어 있다. 마지막 칸이 비어 있다.' },
+    { to: 11, n: '해자와 배수로', line: '물 위에 재가 떠 있다. 아래에서 무언가 긁는 소리가 난다.' },
+    { to: 15, n: '성벽 위 순찰로', line: '바람이 세다. 아래로 천막촌이 내려다보인다.' },
+    { to: 16, n: '성문', line: '문은 닫혀 있다. 누군가 그 앞을 한 번도 떠나지 않았다.' },
+  ],
+  paths: { rough: { n: '망루 길', d: '망루를 잇는 길. 수비대가 지키고, 공성 진지의 전리품이 남았다.' }, main: { n: '성문 대로', d: '피난민이 밟고 지나간 큰길.' }, quiet: { n: '배수로', d: '성벽 밑을 흐르는 배수로. 적은 적지만 물이 검다.' } },
 };
-const MOD3_SIGHT = ['haze', 'sandstorm'];
-const MOD3_NEW = ['noon', 'haze', 'sandstorm'];
-/* 3챕터 테마 무리 (8절). from: 나오는 첫 층, up이 null이면 하층에서만. 1챕터 무리 셋은 3챕터 이름으로 상층을 채운다 */
+/* 3챕터 무리 여덟(확정본 구성). from · to: 나오는 층, pw: 길마다 가중, bw: 층 띠 가중([층까지, 배율]) */
 SQUADS.push(
-  { id: 'wall3', ch: 3, n: '무너진 성벽 수비', w: 0.8, from: 1, up: [['shield'], ['shield'], ['minion']], low: [['shield', 1], ['shield'], ['archer']], vary: [2, ['minion', 'archer']] },
-  { id: 'zeal3', ch: 3, n: '약탈자 돌격', w: 1.0, from: 1, up: [['bruiser'], ['bruiser']], low: [['bruiser', 1], ['bruiser']], vary: [1, ['bruiser', 'thief']] },
-  { id: 'patrol3', ch: 3, n: '사막 순찰', w: 0.8, from: 1, up: [['bruiser'], ['archer'], ['healer']], low: [['bruiser'], ['archer'], ['healer', 1]], vary: [1, ['archer', 'darkmage', 'thief', 'pyre']] },
-  { id: 'raid', ch: 3, n: '약탈단', w: 1.0, from: 1, up: [['bruiser'], ['thief'], ['archer']], low: [['bruiser', 1], ['thief'], ['archer']], vary: [2, ['archer', 'ember']] },
-  { id: 'sandtrap', ch: 3, n: '모래 웅덩이', w: 1.1, from: 1, up: [['lurker'], ['bruiser']], low: [['lurker', 1], ['lurker'], ['archer']], vary: [2, ['archer', 'bruiser']] },
-  { id: 'tomb', ch: 3, n: '묘실 파수', w: 1.0, from: 3, up: [['wrapped'], ['healer']], low: [['wrapped', 1], ['wrapped'], ['healer']], vary: [1, ['healer', 'shield']] },
-  { id: 'firebrand', ch: 3, n: '불 지르는 행렬', w: 1.1, press: 1, from: 4, up: [['bruiser'], ['ember']], low: [['bruiser', 1], ['shield'], ['ember']], vary: [0, ['bruiser', 'wrapped']] },
-  { id: 'hunt3', ch: 3, n: '사막 사냥패', w: 0.9, press: 1, from: 6, up: [['lurker'], ['archer'], ['archer']], low: [['lurker', 1], ['archer'], ['archer']], vary: [0, ['lurker', 'minion']] },
-  { id: 'robbers3', ch: 3, n: '도굴꾼 떼', w: 0.8, from: 6, up: [['thief'], ['thief'], ['lurker']], low: [['thief'], ['thief', 1], ['lurker']], vary: [2, ['lurker', 'archer']] },
-  { id: 'ashrite', ch: 3, n: '재 의식', w: 1.1, press: 1, from: 9, up: null, low: [['shield'], ['darkmage', 1], ['ember']], vary: [0, ['bruiser', 'shield']] },
-  { id: 'sunchant', ch: 3, n: '태양 영창', w: 1.0, from: 9, up: null, low: [['shield', 1], ['pyre'], ['healer']], vary: [2, ['healer', 'ember']] },
-  { id: 'mirages', ch: 3, n: '신기루 행렬', w: 1.0, from: 10, up: null, low: [['bruiser', 1], ['bruiser'], ['mirage']], vary: [1, ['bruiser', 'thief']] },
-  { id: 'bones3', ch: 3, n: '불탄 해골 순찰', w: 0.7, from: 9, up: null, low: [['skeleton', 1], ['summoner'], ['skeleton']], vary: [2, ['minion', 'ember']] }, // 10월 7일: 해골 둘 + 소환사는 쓰러짐 43%라 셋째 칸이 하수인 · 투척병으로 바뀔 수 있다
+  { id: 'gatew', ch: 3, n: '성문 수비대', w: 1.3, from: 1, up: [['wallguard'], ['wallguard'], ['pike']], low: [['wallguard', 1], ['wallguard'], ['pike']] },
+  { id: 'archers3', ch: 3, n: '성벽 사수대', w: 1.0, from: 4, pw: { rough: 1.5 }, bw: [[11, 1], [15, 1.6]], up: [['wallguard'], ['wallxbow'], ['wallxbow']], low: [['wallguard'], ['wallxbow', 1], ['wallxbow']] },
+  { id: 'beacons', ch: 3, n: '봉화대', w: 1.0, from: 4, pw: { rough: 1.4 }, up: [['pike'], ['beacon'], ['bellman']], low: [['pike', 1], ['beacon'], ['bellman']] },
+  { id: 'riot', ch: 3, n: '천막촌 폭동', w: 1.2, from: 1, bw: [[3, 1.8], [7, 1], [15, 0.6]], up: [['rioter'], ['rioter'], ['rioter'], ['rioter']], low: [['rioter'], ['rioter'], ['rioter'], ['smuggler', 1]] },
+  { id: 'sappers', ch: 3, n: '공병대', w: 1.1, from: 4, bw: [[7, 1.6], [15, 1]], up: [['wallguard'], ['pike'], ['sapper']], low: [['wallguard'], ['pike', 1], ['sapper']] },
+  { id: 'hospital', ch: 3, n: '야전 병원', w: 1.0, from: 2, up: [['wallguard'], ['wallguard'], ['medic']], low: [['wallguard', 1], ['wallguard'], ['medic']] },
+  { id: 'smugglers', ch: 3, n: '밀수 행렬', w: 1.0, from: 1, bw: [[3, 1.6], [15, 1]], up: [['smuggler'], ['smuggler']], low: [['smuggler', 1], ['smuggler'], ['tainted']] },
+  { id: 'tenmen', ch: 3, n: '십인대', w: 1.6, from: 12, up: null, low: [['tenman', 1], ['wallguard'], ['wallguard'], ['wallxbow']] },
 );
-ENC.treasure3 = [[['shield', 1], ['bruiser']], [['bruiser', 1], ['archer']], [['archer', 1], ['shield']]];
-/* 가르치는 순서 (5절): 혼자 처음 나오는 층(그 층에서 놓치면 다음 층에 한 번 더). 역할은 그 무리로, 특성(noon · haze)은 그 특성을 붙인 방으로 */
-const NEWR3 = ['lurker', 'ember', 'wrapped', 'mirage', 'haze'];
-const INTRO_AT3 = { lurker: 1, wrapped: 3, ember: 4, noon: 6, haze: 9, mirage: 10 }; // 0.8.0 6단계: 16층 틀(옛 2 · 5 · 7 · 9 · 13 · 14층)
-const INTRO_SQ3 = { lurker: 'sandtrap', wrapped: 'tomb', ember: 'firebrand', noon: 'zeal3', mirage: 'mirages' };
-const FIRST_GIFT3 = { lurker: 'charm', wrapped: 'flash', ember: 'cleanse', noon: 'knot', mirage: 'mirror', haze: 'mirror' }; // 10월 14일 개편 4단계: 잠복자의 기습 → 나무 부적, 망자의 붕대(무너뜨리면 풀림) → 섬광 가루, 열풍의 화상 → 기도 매듭 // 10월 14일 개편 4단계: 없앤 소모품(흙 다지개 · 기름 단지 · 차양 천)의 보상은 뺐다 // 처음 만난 방을 이기면 그 상황을 푸는 소모품 하나 (5.1절 5번)
-Object.assign(ROLE_INTRO, {
-  lurker: ['발밑 모래가 숨을 쉰다.', '모래 속의 적은 땅속의 적처럼 고를 수 없습니다. 광역 공격은 더 아프게, 지속 피해는 그대로 들어갑니다. 솟구치기 한 행동 전에 예고합니다.'],
-  wrapped: ['마른 붕대 사이로 모래가 흘러내린다.', '붕대는 받는 직접 피해를 줄입니다. 지속 피해는 줄이지 않습니다. 붕대는 화상이 걸리거나 무너지거나 세 번 맞으면 벗겨집니다.'],
-  ember: ['기름 먹인 천이 타는 냄새가 난다.', '화상은 직접 피해를 받을 때마다 그 수만큼 피해를 더하고 1 줄어듭니다. 여러 번 맞는 싸움일수록 아픕니다.'],
-  noon: ['공기가 일렁인다.', '열기가 라운드가 끝날 때마다 오릅니다. 100이 되면 열풍이 붑니다. 열풍은 나와 적 모두를 태웁니다.'],
-  haze: ['같은 얼굴이 두 번 보인다.', '허상 한 겹은 적 하나를 고르는 공격 하나를 헛치게 합니다. 광역 공격과 지속 피해는 허상을 지나 들어갑니다.'],
-  mirage: ['같은 얼굴이 두 번 보인다.', '허상 한 겹은 적 하나를 고르는 공격 하나를 헛치게 합니다. 광역 공격과 지속 피해는 허상을 지나 들어갑니다. 술사가 쓰러지면 술사가 준 허상도 사라집니다.'],
-  fire: ['칼날 끝에 불이 붙어 있다.', '이 적의 공격은 화상을 싣습니다. 둔화가 걸려 있으면 싣지 않습니다.'],
+ENC.treasure3 = [[['wallguard', 1], ['pike']], [['pike', 1], ['wallxbow']], [['smuggler', 1], ['rioter'], ['rioter']]];
+/* 방 특성 넷(확정본). 재액의 틈은 야영지(8층) 뒤부터, 배수로에서 잦다 */
+ROOM_MODS.rift = { n: '재액의 틈', chs: [3], d: '라운드가 끝날 때마다 적 하나가 잠식 1을 얻습니다(주는 피해 +10%, 5까지). 행동 하나로 틈을 막으면 멈춥니다. 잠식된 적을 쓰러뜨리면 잠식이 곁의 적에게 옮습니다.' };
+ROOM_MODS.wall = { n: '성벽 위', chs: [3], d: '후열 적이 엄폐해 받는 직접 피해가 20% 줄어듭니다. 전열에는 적이 2기까지만 섭니다. 밀쳐내기가 붕괴를 20 더 채웁니다.' };
+ROOM_MODS.mob3 = { n: '군중', chs: [3], d: '라운드가 시작될 때마다 25% 확률로 피난민 폭도 하나가 전열에 끼어듭니다(2까지). 끼어든 폭도는 경험치와 전리품이 없습니다.' };
+ROOM_MODS.rockfall = { n: '낙석', chs: [3], d: '4라운드마다 모두가 피해 4를 입습니다. 무너진 적이 있으면 그 라운드 낙석은 적에게만 떨어집니다.' };
+const MOD3W = { chance: { upper: 0.35, lower: 0.5 }, w: { rift: 1.2, wall: 1, mob3: 1, rockfall: 0.8 }, riftFrom: 9, mobTo: 11, wallFrom: 9, pathRift: { quiet: 2.5, rough: 0.6 }, pathWall: { rough: 1.6 } }; // 특성 확률 · 무게(띠 · 길)
+ALTARS.push({ id: 'oath', chs: [3], n: '수비대의 맹세', d: '맹세합니다: 최대 생명력 +10(이 캐릭터가 끝날 때까지). 대신 이 챕터 동안 배수로를 고를 수 없습니다.' });
+/* 새 방 둘: 검문소(성문 대로 4층부터, 챕터에 둘) · 밀수꾼의 좌판(배수로 4–11층, 챕터에 하나. 검문소 대신) */
+Object.assign(ROOM_TYPES, {
+  checkpoint: { n: '검문소', ico: '🚧', w: 6, max: 2, from: 4, fight: 0, risk: 0, gold: [0, 0], hint: '통행세 · 거절 · 몰래 지나가기' },
+  smugstall: { n: '밀수꾼의 좌판', ico: '🕳️', w: 6, max: 1, from: 4, fight: 0, risk: 0, gold: [0, 0], hint: '안쪽 물건을 골드나 대가로' },
 });
-/* 성소 · 제단 (11절) */
-SHRINES.push({ id: 'shade', chs: [3], n: '그늘의 성소', d: '받는 화상 피해 −50%. 열기가 오르는 양 −30%.' }, { id: 'clarity', chs: [3], n: '맑은 눈의 성소', d: '허상이나 몸 낮추기에 막힌 공격도 피해의 절반이 들어갑니다.' });
-ALTARS.push(
-  { id: 'ash', chs: [3], n: '재의 제단', d: '가방의 소모품 넷을 태우면 3챕터 고급 소모품 둘을 받습니다. 파는 것과 돌멩이는 태울 수 없습니다.' },
-  { id: 'scale', chs: [3], n: '유리 저울', d: '최대 생명력 3%를 바치고(이 캐릭터가 끝날 때까지) 패시브 포인트 1을 받습니다.' },
-);
-/* 이벤트 여덟 (11.1절, 3챕터). "다음 전투"는 다음 일반 · 매복 전투다(강적 · 보스 · 시련 방은 건너뛴다) */
+/* 이벤트 아홉(확정본 3챕터). frag = 이야기 조각, wake = 그 확률로 바로 싸우는 적 */
 EVENTS.push(
-  { id: 'camel', ch: 3, n: '쓰러진 낙타', lore: '짐 끈이 모래에 반쯤 묻혀 있다.', opts: [{ id: 'loot', n: '짐을 뒤진다', d: '소모품 셋. 대신 다음 전투를 화상 2로 시작합니다.' }, { id: 'bury', n: '묻어 준다', d: '선인장 수액 하나.' }] },
-  { id: 'oasis', ch: 3, n: '신기루 속 샘', lore: '물빛이 흔들린다. 가까이 가도 사라지지 않는다.', opts: [{ id: 'drink', n: '마신다', d: '반반 확률로 생명력 30%를 회복하거나, 다음 전투를 둔화 2로 시작합니다.' }, { id: 'fill', n: '물을 담는다', d: '찬물 한 병.' }, { id: 'pass', n: '지나친다', d: '' }] },
-  { id: 'sundial', ch: 3, n: '왕의 해시계', lore: '바늘의 그림자가 아직 움직인다.', opts: [{ id: 'turn', n: '바늘을 돌린다', d: '다음 층 문 셋의 보상이 모두 보입니다. 대신 다음 전투에 작열하는 한낮이 붙고 열기 50에서 시작합니다.' }, { id: 'hasten', n: '해를 앞당긴다', d: '다음 층 문에 강적이 반드시 나오고 골드 25.' }, { id: 'pass', n: '지나친다', d: '' }] },
-  { id: 'archive', ch: 3, n: '불타는 서고', lore: '책장이 타는 냄새에 오래된 잉크 냄새가 섞인다.', opts: [{ id: 'pull', n: '불 속에서 책을 꺼낸다', d: '패시브 포인트 1. 대신 다음 전투를 화상 4로 시작합니다.' }, { id: 'sweep', n: '재를 쓸어 담는다', d: '골드 25.' }] },
-  { id: 'names', ch: 3, n: '재 속의 이름', lore: '재 위에 낯익은 이름이 적혀 있다.', opts: [{ id: 'call', n: '이름을 부른다', d: '이 브라우저에서 쓰러진 내 캐릭터 이름 하나가 보이고, 골드를 받습니다(그 캐릭터의 레벨 × 4, 최대 40). 기록이 없으면 골드 10입니다.' }, { id: 'cover', n: '재를 덮어 준다', d: '다음 3개 방 동안 받는 직접 피해 −5%.' }] },
-  { id: 'glass', ch: 3, n: '유리 사막', lore: '녹았다 굳은 땅이 햇빛을 되쏜다.', opts: [{ id: 'take', n: '유리를 줍는다', d: '희귀 장비 하나. 대신 다음 전투를 출혈 3으로 시작합니다.' }, { id: 'pass', n: '지나친다', d: '' }] },
-  { id: 'buried', ch: 3, n: '묻힌 문', lore: '모래 아래로 문틀 윗부분만 보인다.', opts: [{ id: 'dig', n: '판다', d: '스태미나 50을 씁니다. 반반 확률로 다음 층 문 하나가 보물 방이 되거나, 다음 전투가 모래 매복이 됩니다.' }, { id: 'pass', n: '지나친다', d: '' }] },
-  { id: 'herald', ch: 3, n: '여왕의 전령', lore: '재로 된 망토를 두른 자가 길을 막고 고개를 숙인다.', opts: [{ id: 'kneel', n: '무릎 꿇는다', d: '다음 4개 방 동안 받는 화상 피해 0, 주는 피해 −5%.' }, { id: 'draw', n: '칼을 뽑는다', d: '다음 일반 · 매복 전투에 화염 강화 정예 약탈자가 더해지고, 이기면 희귀 장비.' }] },
+  { id: 'heightpost', ch: 3, n: '키 재기 기둥', lore: '성벽 안쪽 기둥에 아이들 키가 칼자국으로 새겨져 있다. 맨 위 칸에 날짜가 없다.', opts: [{ id: 'touch', n: '손으로 쓸어 본다', d: '이야기 조각 하나와 생명력 15%. 30%로 맨 위 칸의 칼자국에 손이 베여 출혈 3을 안고 다음 전투에 들어갑니다.', frag: '뒤죽박죽 그어진 자국들. 제멋대로인 키들. 몇 번이고 다시 그은 흔적 위로, 피가 덮인 지 오래였다.' }, { id: 'pass', n: '그냥 지나친다', d: '' }] },
+  { id: 'lastpack', ch: 3, n: '피난민의 마지막 짐', lore: '주인이 돌아오지 않은 보따리.', opts: [{ id: 'search', n: '뒤진다', d: '소모품 하나. 대신 다음 군중 방에서 폭도가 당신을 먼저 노립니다.' }, { id: 'tie', n: '묶어 둔다', d: '아무 일도 없습니다.' }] },
+  { id: 'petitions', ch: 3, n: '탄원서 더미', lore: '"들여보내 주십시오"가 수백 장. 맨 아래 한 장은 수비대 쪽에서 쓴 것이다.', opts: [{ id: 'read', n: '맨 아래 장을 읽는다', d: '이야기 조각 하나. 다음 3개 방 동안 받는 피해 −10%. 대신 마음이 급해져 다음 2개 방은 경보가 1라운드 빨리 울립니다.', frag: '…모두를 지킬 수는 없다. 이 모든 청을 들어준다면 무엇을 불러올지, 너무나도 명확하기에. — 성벽지기 루' }, { id: 'pass', n: '지나친다', d: '' }] },
+  { id: 'shiftlog', ch: 3, n: '수비대 교대 일지', lore: '같은 이름이 매일 밤 적혀 있다. 교대한 사람이 없다.', opts: [{ id: 'read', n: '끝까지 읽는다', d: '이야기 조각 하나와 패시브 포인트 1. 대신 밤새 읽어 다음 전투를 약화 2로 시작합니다.', frag: '밤 경계: 루. 다음 밤: 루. 그다음 밤도, 루. 교대 칸은 언제부턴가 비워 두지도 않았다.' }, { id: 'close', n: '덮는다', d: '' }] },
+  { id: 'smugladder', ch: 3, n: '밀수꾼의 사다리', lore: '성벽에 걸친 줄사다리. 위가 보이지 않는다.', opts: [{ id: 'climb', n: '오른다', d: '50%로 다음 층을 건너뜁니다(그 층 보상 없음). 50%로 위에서 매복(바로 싸움, 성벽 석궁병 둘 · 장창병, 성벽 위).', wake: { p: 0.5, en: [['wallxbow'], ['wallxbow'], ['pike']], mods: ['wall'], first: 1, msg: '사다리 끝에서 석궁이 내려다본다. 매복이다' } }, { id: 'cut', n: '끊는다', d: '다음 밀수꾼 무리가 나오지 않습니다.' }] },
+  { id: 'taintwell', ch: 3, n: '재액이 스민 우물', lore: '물이 위로 흐른다.', opts: [{ id: 'drink', n: '마신다', d: '최대 스태미나 +10(이 캐릭터가 끝날 때까지). 대신 이 챕터의 재액의 틈 방에서 잠식 1을 안고 시작합니다.' }, { id: 'cover', n: '뚜껑을 덮는다', d: '행동 하나를 쓴 셈이라 다음 전투 첫 라운드에 빠른 행동이 없습니다. 이 챕터의 재액의 틈 방이 하나 줄어듭니다.' }] },
+  { id: 'fallentower', ch: 3, n: '무너진 망루', lore: '꼭대기 종이 아직 매달려 있다.', opts: [{ id: 'ring', n: '종을 친다', d: '다음 층 문에 강적이 반드시 나옵니다. 골드 25.' }, { id: 'take', n: '종을 떼어 낸다', d: '스태미나 40을 씁니다. 다음 2개 방은 경보가 울리지 않습니다.' }] },
+  { id: 'gatevoice', ch: 3, n: '성문 틈의 목소리', lore: '닫힌 성문 너머에서 누가 이름을 부른다. 당신의 이름이다.', opts: [{ id: 'answer', n: '대답한다', d: '이야기 조각 하나. 보스방에 들어설 때 생명력 +10%p. 대신 지금 생명력 15%를 잃습니다.', frag: '"가지 마. 여기 있으면, 아무것도 잃지 않아." 다정한 목소리였다. 문 너머의 모든 것을 놓지 못하는 손처럼.' }, { id: 'silent', n: '대답하지 않는다', d: '목소리가 그친다. 아무 일도 없습니다.' }] },
+  { id: 'oldram', ch: 3, n: '버려진 공성추', lore: '밧줄 하나만 끊으면 굴러갈 것 같다.', opts: [{ id: 'cut', n: '밧줄을 끊는다', d: '다음 전투가 시작될 때 전열 적 모두 붕괴 +40 · 피해 6. 30%로 공성추가 옆으로 굴러 나도 피해 10.' }, { id: 'pass', n: '지나친다', d: '' }] },
 );
-/* 3챕터 강적 다섯 · 보스 (14 · 15절). 무엇을 하는지와 대처는 비공개 문서에만 적는다. from: 나오는 첫 층, upper: 0이면 하층에만, needs: 먼저 만나야 하는 것 */
+/* 검문소(싸우지 않는 방, js/16 w3Checkpoint): 이벤트 화면을 빌려 쓴다(roll: 0이라 이벤트 방에는 나오지 않는다) */
+EVENTS.push({ id: 'checkpoint3', ch: 3, roll: 0, n: '검문소', lore: '무너진 차단봉. 수비병 하나가 아직 서 있다.', opts: [{ id: 'toll', n: '통행세를 낸다', d: '골드 40. 다음 층 문 셋 가운데 하나를 미리 봅니다.' }, { id: 'refuse', n: '거절한다', d: '싸웁니다(수비병 셋). 이 싸움에는 경보가 없습니다.', wake: { p: 1, en: [['wallguard'], ['wallguard'], ['wallguard']], noAlarm: 1, msg: '수비병이 차단봉을 내린다. 뒤에서 둘이 더 나온다' } }, { id: 'sneak', n: '몰래 지나간다', d: '50%로 그냥 지나갑니다. 50%로 들켜 다음 전투의 경보가 처음부터 울립니다.' }] });
+/* 3챕터 강적 다섯 · 보스 성벽지기 루. 무엇을 하는지와 대처는 비공개 문서에만 적는다 */
 STRONG_FOES.push(
-  { id: 'stalker', ch: 3, n: '모래 속 사냥꾼', en: [['lurker', 1], ['archer'], ['bruiser']], hp: 0.9, from: 2, needs: ['lurker'] },
-  { id: 'colossus', ch: 3, n: '녹은 유리 거상', en: [['bruiser', 1]], hp: 1.2, from: 3 },
-  { id: 'reaper', ch: 3, n: '불씨 수확자', en: [['bruiser', 1], ['ember']], dmg: 0.75, from: 5, needs: ['ember'] }, // 10월 7일: 평소 0.9 → 0.75, 호위 약탈자를 뺐다 (쓰러짐 44 → 57 → 31%)
-  { id: 'sundial', ch: 3, n: '해시계 사제', en: [['healer', 1], ['shield'], ['bruiser']], dmg: 0.6, from: 9, upper: 0 }, // 10월 7일: 후열에서 늘 때려 0.8 → 0.6 (쓰러짐 63%)
-  { id: 'dancer', ch: 3, n: '아지랑이 무희', en: [['bruiser', 1], ['archer']], hp: 0.8, dmg: 0.85, from: 10, upper: 0, needs: ['haze'] }, // 10월 7일: 허상으로 싸움이 길어 체력 0.8 · 평소 0.85 (쓰러짐 50%, 표본 작음)
+  { id: 'beaconlord', ch: 3, n: '봉화대장', en: [['pike', 1], ['beacon']] },
+  { id: 'siege', ch: 3, n: '공성 기술자', en: [['sapper', 1], ['wallguard']] },
+  { id: 'speaker', ch: 3, n: '탄원자들의 대변인', en: [['bellman', 1], ['rioter'], ['rioter']] },
+  { id: 'marksman', ch: 3, n: '성벽 위의 명사수', en: [['wallxbow', 1], ['wallguard'], ['pike']], from: 6 },
+  { id: 'wallcap', ch: 3, n: '성벽에 녹아든 수비대장', en: [['wallguard', 1], ['tainted']], from: 9 },
 );
-Object.assign(FOE_X, { // 뜻은 비공개 문서
-  stalker: { aoeReveal: 2, surgeBleed: 3, exposedTaken: 0.3, parryRest: 2 },
-  colossus: { heatMax: 3, pourIgn: 3, crackVuln: 2, crackBrk: 40, spd: 0.7 },
-  reaper: { death: 2, cap: 6, base: 0.30, add: 0.025 },
-  sundial: { clock: 6, noon: 0.28, noonEmp: 2, brkBack: 3, lowAt: 2, lowBack: 1, bellBack: 2, glassBack: 2 },
-  dancer: { haze: 2, hit: 0.11, capTot: 0.35 }, // 10월 7일: 분신 3겹은 쓰러짐 45~53%(한 적 공격 직업이 한 바퀴마다 세 번을 헛쳤다)라 2겹
-});
-const QUEEN = { brk: 180, heat0: 20, rise: [10, 13, 16], hiddenX: 2, ash: 10, breath: 0.5, ignTick: 2, chant: 25, enrageRise: 20, enrageFloor: 50, crownHp: 0.08, crownHit: 6, crownRoundCap: 24, crownBreak: 40, crownRegrow: 3, crownGrow: 1.5, breakHeat: 30, shock: 10, storm: 0.26, stormWeak: 2, stormIgn: 2, stormReset: 30, p3StormSelf: 0.06, p3SelfMax: 3, maidHp: 0.07, maidMax: 2, maidBack: 2, maidHit: 0.5, surge: 3, surgeBleed: 2, p2Cycle: 4, ph: [0.7, 0.35], p2Heat: 10, p3Heat: 55, enrage: 50 }; // 재의 여왕 (뜻은 비공개 문서)
-Object.assign(FOE_INTRO, {
-  queen: { n: '재의 여왕', lore: '불타는 왕국을 재로 굳혀 지킨 자. 아직도 해가 지지 않기를 기다린다.', see: ['왕좌의 재가 사람 모양으로 일어선다. 재 속에서 당신의 이름이 반짝인다.', '공기가 뜨거워진다.'] },
-  stalker: { n: '모래 속 사냥꾼', lore: '발자국이 앞에서 끊기고, 뒤에서 다시 시작된다.', see: ['모래가 한 번 크게 일렁인다. 무언가 그 아래를 지나간다.'] },
-  colossus: { n: '녹은 유리 거상', lore: '사원의 유리창이 녹아 사람 모양으로 굳었다.', see: ['거상의 몸속에서 붉은 빛이 천천히 차오른다.'] },
-  reaper: { n: '불씨 수확자', lore: '낫 끝에 꺼지지 않는 불씨가 매달려 있다.', see: ['수확자가 낫을 들어 올린다. 주변의 불꽃이 그쪽으로 기운다.'] },
-  sundial: { n: '해시계 사제', lore: '그림자의 길이로 남은 시간을 재는 자.', see: ['사제 뒤의 해시계에 숫자가 새겨져 있다. 그림자가 한 칸씩 짧아진다.'] },
-  dancer: { n: '아지랑이 무희', lore: '춤이 끝나기 전에는 몇 명인지 셀 수 없다.', see: ['무희가 한 바퀴 돌자 윤곽이 셋으로 번진다.'] },
-});
+Object.assign(FOE_INTRO, Object.fromEntries(Object.values(FOES).filter(f => f.ch === 3 && ['strong', 'boss'].includes(f.grade)).map(f => [f.id, { n: f.n, lore: f.log.lore, see: [f.log.see] }])));
+/* 도감: 겪은 결과만(대처는 플레이어 메모) */
 Object.assign(CODEX, {
-  stalker: { hide: '모래 속에서는 칼이 닿지 않았다.', startle: '모래 위로 튀어나왔다.', exposed: '솟구친 뒤에는 한동안 모래 위에서 숨을 골랐다.' },
-  colossus: { heat: '달아오를수록 닿는 곳마다 데었다.', crack: '식은 유리에 금이 갔다.', pour: '붉은 빛이 가득 차자 녹은 유리가 쏟아졌다.' },
-  reaper: { reap: '낫이 불꽃을 거두어 갔다. 거둔 만큼 낫이 무거웠다.', ember: '불붙은 채 쓰러진 것의 불씨가 낫으로 날아들었다.', scatter: '불씨가 흩어졌다.' },
-  sundial: { noon: '해시계의 그림자가 사라지는 순간 빛이 내리꽂혔다.', stall: '해시계의 그림자가 한동안 움직이지 않았다.', shadow: '그림자가 다시 길어졌다.' },
-  dancer: { copies: '칼에 맞은 것은 윤곽뿐이었다.', dance: '남은 윤곽의 수만큼 춤이 길었다.', sweep: '윤곽이 한꺼번에 흩어졌다.' },
-  queen: { heat: '공기가 뜨거워질수록 재가 무겁게 내려앉았다.', crown: '열기가 가라앉는 때가 있었다.', crownbreak: '왕관이 깨지자 여왕이 휘청였다.', storm: '열기가 가득 차자 재폭풍이 몰아쳤다.', fire: '불길이 여왕에게 스며들자 공기가 더 뜨거워졌다.', sand: '여왕이 모래에 잠긴 동안 열기가 더 빨리 올랐다.', chant: '시녀의 노래가 끝나자 열기가 치솟았다.', melt: '왕관이 녹아내린 뒤로 여왕도 자신의 불에 타들어 갔다.' },
+  beaconlord: { oil: '봉화에 기름이 부어질 때마다 남은 칸이 줄었다.', boom: '칸이 다 찬 봉화가 터졌다. 종이 울렸다.', out: '부순 봉화는 다시 켜지지 않았다.' },
+  siege: { ram: '공성추가 다 맞춰지자 날아왔다.', part: '부품을 부수자 공성추가 한 뼘 물러났다.' },
+  speaker: { crowd: '군중이 앞에 있는 동안 대변인에게 칼이 잘 닿지 않았다.', scatter: '대변인이 무너지자 군중이 잠깐 흩어졌다.' },
+  marksman: { cover: '엄폐한 사수에게 칼끝이 반쯤 막혔다.', drop: '조준하던 사수가 무너지자 성벽 아래로 떨어졌다.', shot: '조준이 다 쌓이자 한 발이 날아왔다.' },
+  wallcap: { bricks: '벽돌이 서 있는 동안 본체에 칼이 잘 닿지 않았다.', rebuilt: '무너진 벽돌이 다시 섰다.' },
+  lu: { patrol: '성벽 위에서 순찰대가 내려왔다.', rebuild: '그는 무너진 벽돌을 다시 쌓았다. 그동안 몸이 비었다.', endure: '그는 반격하지 않았다. 벽에 등을 대고 버텼다.' },
+});
+/* 3챕터 값(확정본 경제 칸 · 가설). 뜻: ALARM 장치 「경보」 · CHECK3 검문소 · SMUG3 밀수꾼의 좌판 · AFFIX3 정예 접사 · CH3X 방 특성 · 잠식 · OATH 맹세 · ARMOR3 갑옷(층 띠 기본 공격의 몫). 강적 · 보스 값(FOE_X)의 뜻은 비공개 문서 */
+const ALARM = { first: 4, rough: 3, every: 3, cap: 3, stageAt: 2, strongW: 1.4, flare: 3, flareNext: 1 };
+const CHECK3 = { toll: 40, sneak: 0.5 };
+const SMUG3 = { from: 4, to: 11, hero: { gold: 220, hpPen: 0.05 }, uq: { gold: 150, n: 2 }, inner: { gold: 80, dmg: 0.15 }, info: { gold: 30 } };
+const AFFIX3 = { w: { tough: 1, form: 1.2, taint: 1, bell: 0.8 }, taintFrom: 9, form: 0.2 };
+const CH3X = { taint: 0.1, taintCap: 5, wallCover: 0.2, wallBrk: 20, mobP: 0.25, mobCap: 2, rock: 4, rockEvery: 4 };
+const OATH = { hp: 10 };
+const ARMOR3 = { light: 0.2, heavy: 0.35, basic: 0.75 }; // 갑옷 = 그 층 띠 행동 하나의 피해(FOE_HIT_REF) × basic(기본 공격 몫) × light · heavy
+Object.assign(FOE_X, {
+  beaconlord: { fires: 3, fuse: 3, boom: 0.2, boomIgn: 3, brk: 45 },
+  siege: { step: 25, launch: 0.45, parts: 2, partBrk: 30, cut: 25 },
+  speaker: { cut: 0.6, need: 2, call: 2, cap: 4, incite: 0.15 },
+  marksman: { melee: 0.5, drop: 2, aims: 3, shot: 0.35, brkAim: 1.5 },
+  wallcap: { bricks: 3, cut: 0.7, back: 2, brk: 30 },
+  lu: { ph: [0.6, 0.3], patrol: 2, bricks: 3 },
+});
+BOSS_DWELL.lu = { mid: 3, last: 3 }; // 확정본: 단계마다 최소 행동 3, 3단계는 최소 3행동 고정(비공개 문서 참조)
+Object.assign(ROLE_INTRO, {
+  rift: ['성벽 틈에서 검은 것이 배어 나온다.', '라운드가 끝날 때마다 적 하나가 잠식됩니다. 행동 하나로 틈을 막을 수 있습니다.'],
+  tainted: ['그것에게는 그림자가 없다. 대신 성벽에 그림자가 하나 더 생긴다.', '잠식된 자는 잠식을 옮깁니다. 잠식이 쌓이면 받는 피해가 커집니다.'],
+  bellman: ['경보수가 줄을 쥔다. 손이 떨리지 않는다.', '종 치기 예고를 끊거나 먼저 잡으면 경보가 당겨지지 않습니다.'],
 });
 
 /* A1 1챕터 이식(만든 사람 확인 10월 21일): 수선공(옛 뼈 부르는 사제) — 수선 n · 띄우기 약화 loft · 정예 마지막 수선은 생명력 ult 아래에서 한 번, 다시 일어날 때 최대 생명력 × rise.

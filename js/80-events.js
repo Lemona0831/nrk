@@ -116,6 +116,7 @@ function onClick(ev) {
     case 'altar': { const run=G.run,p=run.p,R=roomDef(),yes=el.dataset.k==='1';
       if(yes && R.altar==='offer'){openSheet('offer',{});break;}
       const paid=[],received=[],drops=[];const hpBefore=p.hpMax, gainBefore=(run.consGainLog||[]).length;
+      if(yes && R.altar==='oath'){p.hpBonus=(p.hpBonus||0)+OATH.hp;applyGear(run);run.dg.oath=1;paid.push('이 챕터 동안 배수로를 고를 수 없음');received.push('최대 생명력 '+hpBefore+' → '+p.hpMax+' (이 캐릭터가 끝날 때까지)');} // A3 수비대의 맹세
       if(yes && R.altar==='debt'){gainGold(run,DEBT_ALTAR.gold,'빚의 제단');run.shopMarkup=DEBT_ALTAR.markup;paid.push('다음 상점 값 +'+Math.round(DEBT_ALTAR.markup*100)+'% (한 번)');received.push('골드 '+DEBT_ALTAR.gold);} // A2 빚의 제단
       if(yes && R.altar==='blood'){p.hpPen=(p.hpPen||0)+.05;applyGear(run);paid.push('최대 생명력 '+hpBefore+' → '+p.hpMax+' (이 캐릭터가 끝날 때까지)');const it=mkItem(dropKey(run,'r'));drops.push(it);received.push((GRADE[it.g]||GRADE.n).n+' '+itName(it));}
       if(yes && (R.altar==='ash'||R.altar==='bone')){
@@ -183,11 +184,14 @@ function onClick(ev) {
       if (EO.frag) toast('이야기 조각 — 「' + EO.frag + '」');
       const wake = EO.wake && Math.random() < EO.wake.p;
       if ((run.ch || 1) === 2) ch2Event(run, R, o, drops); // A2 2챕터 이벤트 아홉
+      if ((run.ch || 1) === 3 && !OLD3) w3Event(run, R, o, drops); // A3 3챕터 이벤트 아홉 · 검문소
+      const skip3 = R.event === 'smugladder' && o === 'climb' && !wake && w3LadderSkip(run); // A3 사다리: 다음 층을 건너뛴다
       if (!wake && EO.wake && EO.wake.elseGold) gainGold(run, EO.wake.elseGold, '지갑에 골드가 들어 있다');
       run.rooms.push({ room: run.room, type: 'event', event: R.event, took: o, wake: wake ? 1 : undefined });
-      if (wake) { run.cur = Object.assign({}, R, { type: 'normal', en: EO.wake.en.map(x => x.slice()), squad: null, mods: [], tough: [], gold: 0, wake: R.event, wakeFirst: EO.wake.first ? 1 : 0, wakeWin: EO.wake.gold || EO.wake.item ? { gold: EO.wake.gold || 0, item: EO.wake.item || 0 } : null }); toast(EO.wake.msg || '무언가 깨어난다'); queueDrops(drops); saveRunLocal(); render(); break; }
-      advanceFloor();
+      if (wake) { run.cur = Object.assign({}, R, { type: 'normal', en: EO.wake.en.map(x => x.slice()), squad: null, mods: (EO.wake.mods || []).slice(), noAlarm: EO.wake.noAlarm ? 1 : undefined, tough: [], gold: 0, wake: R.event, wakeFirst: EO.wake.first ? 1 : 0, wakeWin: EO.wake.gold || EO.wake.item ? { gold: EO.wake.gold || 0, item: EO.wake.item || 0 } : null }); toast(EO.wake.msg || '무언가 깨어난다'); queueDrops(drops); saveRunLocal(); render(); break; }
+      advanceFloor(); if (skip3) { run.rooms.push({ room: run.room, type: 'skip', took: 'ladder' }); toast('사다리 위로 한 층을 건너뛴다. 그 층의 보상은 없다'); advanceFloor(); }
       if (R.event === 'library' && o === 'read') ptBonus(run, 1, '무너진 서고');
+      if (R.event === 'shiftlog' && o === 'read') ptBonus(run, 1, '수비대 교대 일지');
       if (R.event === 'archive' && o === 'pull') ptBonus(run, 1, '불타는 서고');
       queueDrops(drops); break; }
 
@@ -198,6 +202,8 @@ function onClick(ev) {
     case 'enter': enterRoom(); break;
     case 'enterlit': { const run = G.run, R = roomDef(); if (!((run.oil || 0) > 0)) break; run.oil--; R.lit = 1; toast('등불 기름으로 방을 밝힌다. 남은 기름 ' + run.oil); enterRoom(); break; } // A2 장치 「등불」
     case 'mkbuy': { const run = G.run, R = roomDef(); if (!R || R.type !== 'market') break; const r = ch2MarketBuy(run, R, el.dataset.k); if (!r) { toast('살 수 없습니다'); break; } sfx('coin'); run.rooms.push({ room: run.room, type: 'market', took: el.dataset.k, paid: r.paid }); advanceFloor(); queueDrops(r.drops); render(); break; } // A2 암시장
+    case 'smbuy': { const run = G.run, R = roomDef(); if (!R || R.type !== 'smugstall') break; const r = smugBuy(run, R, el.dataset.k); if (!r) { toast('살 수 없습니다'); break; } sfx('coin'); run.rooms.push({ room: run.room, type: 'smugstall', took: el.dataset.k, paid: r.paid }); advanceFloor(); queueDrops(r.drops); render(); break; } // A3 밀수꾼의 좌판
+    case 'smleave': { const run = G.run, R = roomDef(); if (!R || R.type !== 'smugstall') break; run.rooms.push({ room: run.room, type: 'smugstall', took: null }); advanceFloor(); render(); break; }
     case 'mkleave': { const run = G.run, R = roomDef(); if (!R || R.type !== 'market') break; run.rooms.push({ room: run.room, type: 'market', took: null }); advanceFloor(); render(); break; }
     case 'oilbuy': { const run = G.run, S = el.dataset.s === 'camp' ? run.camp : run.shop; const o = S && S.oil; if (!o || o.left <= 0) break; if ((run.gold || 0) < o.price) { toast('골드가 모자랍니다'); break; } if ((run.oil || 0) >= LAMP.max) { toast('기름은 ' + LAMP.max + '개까지 들 수 있습니다'); break; } run.gold -= o.price; o.left--; run.oil = (run.oil || 0) + 1; sfx('coin'); toast('등불 기름 +1 (가진 기름 ' + run.oil + ')'); saveRunLocal(); saveCur(); render(); break; } // A2 장터 상점 재고
     case 'statview': if (!G.run || !G.run.p || G.creating) break; hidePop(); openSheet('statview', { from: el.dataset.from || '' }); break;

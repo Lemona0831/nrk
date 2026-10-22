@@ -15,7 +15,7 @@ module.exports = function (api) {
   const nx = (s, re) => +mx(s, re)[1];
   const pct = f => Math.round(Math.abs(f - 1) * 100);          // 배율 → 늘거나 준 퍼센트
   const rooms = buff => buff - 1;                                // run.buffs 값 → 이어지는 방 수 (advanceFloor가 방을 넘길 때마다 1씩 줄이고, 고른 방에서 한 번 줄어든 채 시작한다)
-  const igSnuff0 = /hasBt\(u, 'snuff'\)\) x = isCf\(u\) \?.*?\) : 0; if \(\(b\.ctx\.ch/.test(S20); // 꺼진 촛불: 내게 오는 화상 피해 0 (숨겨진 직업의 고행 몫만 예외)
+  const igSnuff0 = /hasBt\(u, 'snuff'\)\) x = isCf\(u\) \?.*?\) : 0; if \((\(b\.ctx\.ch|isCh3\(b\))/.test(S20); // A3: 옛 3챕터 갈래는 isCh3(OLD3) // 꺼진 촛불: 내게 오는 화상 피해 0 (숨겨진 직업의 고행 몫만 예외)
   const durOk =/for \(const k in run\.buffs\) \{ run\.buffs\[k\]--; if \(run\.buffs\[k\] <= 0\) delete run\.buffs\[k\]; \}/.test(S66);
 
   // ===== 이벤트 =====
@@ -87,7 +87,7 @@ module.exports = function (api) {
   api.add('world-altars', '[blood] ', '80-events.js altar blood hpPen', () => E('ALTARS.find(a => a.id === "blood").d').includes('최대 생명력 ' + Math.round(nx(altH('blood'), /p\.hpPen\s*\|\|\s*0\)\s*\+\s*([\d.]+)/) * 100) + '%를'));
   const paysGold = () => /const\s+cost\s*=\s*altarGold\(run\)/.test(altH('gold')) && /run\.gold\s*-=\s*cost/.test(altH('gold'));
   api.add('world-altars', '[gold] ', '66-dungeon-flow.js altarGold · ALTARS.gold.cost[0]', () => E('ALTARS.find(a => a.id === "gold").d').includes('골드 ' + E('altarGold({ ch: 1 })') + '을 내면') && E('ALTARS.find(a => a.id === "gold").cost[0]') === E('altarGold({ ch: 1 })') && paysGold());
-  api.add('world-altars', '[scale] 최대 생명력', '80-events.js altar scale hpPen', () => { const t = E('ALTARS.find(a => a.id === "scale").d'); return t.includes('최대 생명력 ' + Math.round(nx(altH('scale'), /p\.hpPen\s*\|\|\s*0\)\s*\+\s*([\d.]+)/) * 100) + '%를') && t.includes('패시브 포인트 ' + nx(altH('scale'), /ptBonus\(run,\s*(\d+)/) + '을'); });
+  if (E('!!(ALTARS.find(a => a.id === "scale"))')) api.add('world-altars', '[scale] 최대 생명력', '80-events.js altar scale hpPen', () => { const t = E('ALTARS.find(a => a.id === "scale").d'); return t.includes('최대 생명력 ' + Math.round(nx(altH('scale'), /p\.hpPen\s*\|\|\s*0\)\s*\+\s*([\d.]+)/) * 100) + '%를') && t.includes('패시브 포인트 ' + nx(altH('scale'), /ptBonus\(run,\s*(\d+)/) + '을'); }); // A3: 옛 3챕터 항목(보관)은 있을 때만
 
   // 화면에 그려지는 제단 카드: 챕터마다 황금 촛대의 값이 다르다 (A.d의 40을 실제 값으로 바꿔 보인다)
   const altUi = [];
@@ -106,9 +106,9 @@ module.exports = function (api) {
   api.add('world-shrines', '[wrath] ', '32-player-action.js hasBt wrath', () => shd('wrath').includes('+' + pct(nx(S32, /hasBt\(p, 'wrath'\)\) d \*= ([\d.]+)/)) + '%'));
   api.add('world-shrines', '[breath] ', '24-clock-damage.js hasBt breath', () => shd('breath').includes('+' + nx(S24, /hasBt\(p, 'breath'\)\) p\.st = Math\.min\(p\.stMax, p\.st \+ (\d+)\)/)));
   api.add('world-shrines', '[mercy] ', '20-battle-state.js flaskHealFrac mercy', () => shd('mercy').includes('+' + Math.round(nx(S20, /hasBt\(p, 'mercy'\) \? ([\d.]+)/) * 100) + '%p'));
-  api.add('world-shrines', '[firm] ', '24-clock-damage.js hasBt firm', () => shd('firm').includes('−' + pct(nx(S24, /hasBt\(p, 'firm'\)\) raw \*= ([\d.]+)/)) + '%'));
-  api.add('world-shrines', '[shade] 받는 화상', '20-battle-state.js hasBt shade', () => shd('shade').includes('화상 피해 −' + pct(nx(S20, /u === b\.p && hasBt\(u, 'shade'\)\) x \*= ([\d.]+)/)) + '%'));
-  api.add('world-shrines', '[shade] 열기', '14-chapter-bodies.js heatRise shade', () => shd('shade').includes('열기가 오르는 양 −' + pct(nx(S14, /hasBt\(b\.p, 'shade'\) \? ([\d.]+)/)) + '%'));
+  if (E('!!(SHRINES.find(x => x.id === "firm"))')) api.add('world-shrines', '[firm] ', '24-clock-damage.js hasBt firm', () => shd('firm').includes('−' + pct(nx(S24, /hasBt\(p, 'firm'\)\) raw \*= ([\d.]+)/)) + '%')); // A3: 옛 3챕터 항목(보관)은 있을 때만
+  if (E('!!(SHRINES.find(x => x.id === "shade"))')) api.add('world-shrines', '[shade] 받는 화상', '20-battle-state.js hasBt shade', () => shd('shade').includes('화상 피해 −' + pct(nx(S20, /u === b\.p && hasBt\(u, 'shade'\)\) x \*= ([\d.]+)/)) + '%')); // A3: 옛 3챕터 항목(보관)은 있을 때만
+  if (E('!!(SHRINES.find(x => x.id === "shade"))')) api.add('world-shrines', '[shade] 열기', '14-chapter-bodies.js heatRise shade', () => shd('shade').includes('열기가 오르는 양 −' + pct(nx(S14, /hasBt\(b\.p, 'shade'\) \? ([\d.]+)/)) + '%')); // A3: 옛 3챕터 항목(보관)은 있을 때만
 
   // 성소가 이어지는 방 수: 문 · 방 카드 · 상단 칩 설명이 모두 "3개 방"이라고 쓴다
   const shUi = [
@@ -141,24 +141,24 @@ module.exports = function (api) {
   const RM = E('Object.keys(ROOM_MODS).map(k => ({ id: k, d: ROOM_MODS[k].d }))');
   api.source('world-mods', RM.map(x => ({ id: x.id, text: pref(x.id, x.d) })));
   const md = id => E('ROOM_MODS.' + id + '.d');
-  for (const k of ['narrow', 'alley']) api.add('world-mods', '[' + k + '] ', '34-rounds-setup.js narrow/alley: 전열 f > n이면 후열', () => md(k).includes('전열에 적이 ' + nx(S34, /mods\.includes\('narrow'\) \|\| mods\.includes\('alley'\)\) \{ let f = 0; for \(const e of en\) if \(e\.row === 'front' && e\.role !== 'boss'\) \{ f\+\+; if \(f > (\d+)\)/) + '기까지'));
+  for (const k of ['narrow', 'alley'].filter(k => E('!!ROOM_MODS.' + k))) api.add('world-mods', '[' + k + '] ', '34-rounds-setup.js narrow/alley: 전열 f > n이면 후열', () => md(k).includes('전열에 적이 ' + nx(S34, /mods\.includes\('narrow'\) \|\| mods\.includes\('alley'\)\) \{ let f = 0; for \(const e of en\) if \(e\.row === 'front' && e\.role !== 'boss'\) \{ f\+\+; if \(f > (\d+)\)/) + '기까지'));
   const ceil = () => ({ T: nx(S24, /hasMod\(b, 'pillar'\)\) && T % (\d+) === 0/), a: nx(S24, /hurtPlayer\(b, (\d+), \{ aoe: 1, label: '무너지는 천장' \}\)/), b: nx(S24, /hurtEnemy\(b, e, (\d+), \{ aoe: 1, label: '무너지는 천장' \}\)/) });
-  for (const k of ['ceiling', 'pillar']) api.add('world-mods', '[' + k + '] ', '24-clock-damage.js tickOnce: T % n === 0, 나와 적 모두 n 피해', () => { const c = ceil(); return c.a === c.b && md(k).includes(c.T + '라운드마다 모두가 피해 ' + c.a); });
-  for (const k of ['holy', 'shade']) api.add('world-mods', '[' + k + '] ', '24-clock-damage.js tickOnce: 나와 적 hpMax × 0.01', () => { const h = mx(S24, /hasMod\(b, 'holy'\) \|\| hasMod\(b, 'shade'\)\) \{ p\.hp = Math\.min\(p\.hpMax, p\.hp \+ p\.hpMax \* ([\d.]+)\); for \(const e of alive\(b\)\) e\.hp = Math\.min\(e\.hpMax, e\.hp \+ e\.hpMax \* ([\d.]+)\)/); return h[1] === h[2] && md(k).includes('생명력 ' + Math.round(h[1] * 100) + '%를') && (k !== 'shade' || md(k).includes('화상 피해는 절반') && nx(S20, /hasMod\(b, 'shade'\)\) x \*= ([\d.]+)/) === 0.5); });
+  for (const k of ['ceiling', 'pillar'].filter(k => E('!!ROOM_MODS.' + k))) api.add('world-mods', '[' + k + '] ', '24-clock-damage.js tickOnce: T % n === 0, 나와 적 모두 n 피해', () => { const c = ceil(); return c.a === c.b && md(k).includes(c.T + '라운드마다 모두가 피해 ' + c.a); });
+  for (const k of ['holy', 'shade'].filter(k => E('!!ROOM_MODS.' + k))) api.add('world-mods', '[' + k + '] ', '24-clock-damage.js tickOnce: 나와 적 hpMax × 0.01', () => { const h = mx(S24, /hasMod\(b, 'holy'\) \|\| hasMod\(b, 'shade'\)\) \{ p\.hp = Math\.min\(p\.hpMax, p\.hp \+ p\.hpMax \* ([\d.]+)\); for \(const e of alive\(b\)\) e\.hp = Math\.min\(e\.hpMax, e\.hp \+ e\.hpMax \* ([\d.]+)\)/); return h[1] === h[2] && md(k).includes('생명력 ' + Math.round(h[1] * 100) + '%를') && (k !== 'shade' || md(k).includes('화상 피해는 절반') && nx(S20, /hasMod\(b, 'shade'\)\) x \*= ([\d.]+)/) === 0.5); });
   api.add('world-mods', '[candle] ', '20-battle-state.js kwTaken: 화상 × 1.5', () => md('candle').includes('화상 피해가 모두 ' + pct(nx(S20, /hasMod\(b, 'candle'\) \? ([\d.]+)/)) + '% 늘'));
-  api.add('world-mods', '[brazier] ', '20-battle-state.js kwTaken: 화상 × 1.5', () => md('brazier').includes('화상 피해가 모두 ' + pct(nx(S20, /hasMod\(b, 'brazier'\)\) x \*= ([\d.]+)/)) + '% 늘'));
+  if (E('!!(ROOM_MODS.brazier)')) api.add('world-mods', '[brazier] ', '20-battle-state.js kwTaken: 화상 × 1.5', () => md('brazier').includes('화상 피해가 모두 ' + pct(nx(S20, /hasMod\(b, 'brazier'\)\) x \*= ([\d.]+)/)) + '% 늘')); // A3: 옛 3챕터 항목(보관)은 있을 때만
   api.add('world-mods', '[bloodpool] ', '24-clock-damage.js dmgDot: 출혈 × 2', () => md('bloodpool').includes('출혈 피해가 모두 ' + nx(S24, /label === '출혈' && hasMod\(b, 'bloodpool'\)\) amt \*= (\d+)/) + '배'));
-  for (const k of ['bell', 'drums']) {
+  for (const k of ['bell', 'drums'].filter(k => E('!!ROOM_MODS.' + k))) {
     api.add('world-mods', '[' + k + '] 적 속도', '24-clock-damage.js eSpeed: 속도 × 1.1', () => md(k).includes('적 속도 +' + pct(nx(S24, /hasMod\(b, 'bell'\) \|\| hasMod\(b, 'drums'\) \? ([\d.]+)/)) + '%'));
     api.add('world-mods', '[' + k + '] 이 방의 골드', '66-dungeon-flow.js battleContinue: 골드 × 1.5', () => md(k).includes('이 방의 골드 +' + pct(nx(S66, /R\.mods\.includes\('bell'\) \|\| R\.mods\.includes\('drums'\)\) \? ([\d.]+)/)) + '%'));
   }
   api.add('world-mods', '[calm] ', '24-clock-damage.js tickOnce: 마나 회복 × 2 (rollMods가 뽑지 않아 화면에는 안 나온다)', () => md('calm').includes('양이 ' + nx(S24, /hasMod\(b, 'calm'\) \? (\d+) : 1/) + '배'));
   if (E('!!ROOM_MODS.bonepile')) api.add('world-mods', '[bonepile] 2라운드', '34-rounds-setup.js bonepile: 뼈 더미 둘, RISE.wait 라운드 뒤 일어섬', () => { const n = nx(S34, /bonepile'\)\) \{[^}]*?for \(let k = 0; k < (\d+); k\+\+\)/); return n === 2 && md('bonepile').includes('뼈 더미 둘') && /s\.pile = \{ wait: RISE\.wait, born: -1 \}/.test(S34) && md('bonepile').includes(E('RISE.wait') + '라운드 뒤'); }); // A2: 옛 2챕터(보관)면 건너뛴다
   if (E('!!ROOM_MODS.flooded')) api.add('world-mods', '[flooded] ', '34-rounds-setup.js flooded: 나와 모든 적에게 둔화 1', () => md('flooded').includes('둔화 ' + nx(S34, /mods\.includes\('flooded'\)\) \{ addS\(b, player, 'chill', (\d+)\)/) + '을')); // A2: 옛 2챕터(보관)면 건너뛴다
-  api.add('world-mods', '[noon] 라운드가', '14-chapter-bodies.js heatRise: HEAT.mod', () => md('noon').includes('열기가 ' + E('HEAT.mod') + ' 오릅니다') && /return Math\.round\(HEAT\.mod \* sh\)/.test(S14));
-  api.add('world-mods', '[noon] 100이', '14-chapter-bodies.js heatAdd 상한 100 · heatStorm 뒤 HEAT.reset', () => /b\.heat = Math\.max\(0, Math\.min\((\d+), b\.heat \+ n\)\)/.test(S14) && nx(S14, /b\.heat = Math\.max\(0, Math\.min\((\d+), b\.heat \+ n\)\)/) === 100 && nx(S14, /b\.heat >= (\d+)\) \{ if \(b\.heatWarn/) === 100 && md('noon').includes('100이 되면') && md('noon').includes(E('HEAT.reset') + '으로 내려갑니다') && /b\.heat = q \? QUEEN\.stormReset : HEAT\.reset/.test(S14));
-  api.add('world-mods', '[haze] ', '14-chapter-bodies.js ch3Setup: 허상 1', () => md('haze').includes('허상 ' + nx(S14, /mods\.includes\('haze'\)\) for \(const e of alive\(b\)\) if \(realFoe\(e\)\) e\.haze = Math\.max\(e\.haze \|\| 0, (\d+)\)/) + '을'));
-  api.add('world-mods', '[sandstorm] ', '14-chapter-bodies.js ch3HitMul · 30-enemy-ai.js: 후열 × 0.8 (받는 · 주는)', () => { const a = nx(S14, /hasMod\(b, 'sandstorm'\)\) m \*= ([\d.]+)/), b = nx(S30, /hasMod\(b, 'sandstorm'\)\) d \*= ([\d.]+)/); return a === b && md('sandstorm').includes('모두 ' + pct(a) + '% 줄어듭니다'); });
+  if (E('!!(ROOM_MODS.noon)')) api.add('world-mods', '[noon] 라운드가', '14-chapter-bodies.js heatRise: HEAT.mod', () => md('noon').includes('열기가 ' + E('HEAT.mod') + ' 오릅니다') && /return Math\.round\(HEAT\.mod \* sh\)/.test(S14)); // A3: 옛 3챕터 항목(보관)은 있을 때만
+  if (E('!!(ROOM_MODS.noon)')) api.add('world-mods', '[noon] 100이', '14-chapter-bodies.js heatAdd 상한 100 · heatStorm 뒤 HEAT.reset', () => /b\.heat = Math\.max\(0, Math\.min\((\d+), b\.heat \+ n\)\)/.test(S14) && nx(S14, /b\.heat = Math\.max\(0, Math\.min\((\d+), b\.heat \+ n\)\)/) === 100 && nx(S14, /b\.heat >= (\d+)\) \{ if \(b\.heatWarn/) === 100 && md('noon').includes('100이 되면') && md('noon').includes(E('HEAT.reset') + '으로 내려갑니다') && /b\.heat = q \? QUEEN\.stormReset : HEAT\.reset/.test(S14)); // A3: 옛 3챕터 항목(보관)은 있을 때만
+  if (E('!!(ROOM_MODS.haze)')) api.add('world-mods', '[haze] ', '14-chapter-bodies.js ch3Setup: 허상 1', () => md('haze').includes('허상 ' + nx(S14, /mods\.includes\('haze'\)\) for \(const e of alive\(b\)\) if \(realFoe\(e\)\) e\.haze = Math\.max\(e\.haze \|\| 0, (\d+)\)/) + '을')); // A3: 옛 3챕터 항목(보관)은 있을 때만
+  if (E('!!(ROOM_MODS.sandstorm)')) api.add('world-mods', '[sandstorm] ', '14-chapter-bodies.js ch3HitMul · 30-enemy-ai.js: 후열 × 0.8 (받는 · 주는)', () => { const a = nx(S14, /hasMod\(b, 'sandstorm'\)\) m \*= ([\d.]+)/), b = nx(S30, /hasMod\(b, 'sandstorm'\)\) d \*= ([\d.]+)/); return a === b && md('sandstorm').includes('모두 ' + pct(a) + '% 줄어듭니다'); }); // A3: 옛 3챕터 항목(보관)은 있을 때만
 
   // ===== 갈래길 (화면에 그려진 카드의 숫자) =====
   const pathCards = [];
@@ -195,8 +195,8 @@ module.exports = function (api) {
   // ===== 처음 만남 (역할 소개) =====
   const RI = E('Object.keys(ROLE_INTRO).map(k => ({ k, a: ROLE_INTRO[k][0], b: ROLE_INTRO[k][1] }))');
   api.source('world-roleintro', RI.map(x => ({ id: x.k, text: pref(x.k, x.a + ' ' + x.b) })));
-  api.add('world-roleintro', '[ember] ', '20-battle-state.js kwTaken: 화상 n 더하고 kwDec 기본 1', () => { const t = E('ROLE_INTRO.ember[1]'); return t.includes('그 수만큼 피해를 더하고 ' + nx(S20, /function kwDec\(u, k, n\) \{[^}]*x\.stacks -= \(n \|\| (\d+)\)/) + ' 줄어듭니다') && /const n = stk\(u, 'ignite'\); kwDec\(u, 'ignite'\);/.test(S20) && /d \+= x; \}/.test(S20); });
-  api.add('world-roleintro', '[noon] ', '14-chapter-bodies.js heatAdd: 열기 100이면 열풍', () => nx(S14, /b\.heat >= (\d+)\) \{ if \(b\.heatWarn/) === 100 && E('ROLE_INTRO.noon[1]').includes('100이 되면 열풍이 붑니다'));
+  if (E('!!(ROLE_INTRO.ember)')) api.add('world-roleintro', '[ember] ', '20-battle-state.js kwTaken: 화상 n 더하고 kwDec 기본 1', () => { const t = E('ROLE_INTRO.ember[1]'); return t.includes('그 수만큼 피해를 더하고 ' + nx(S20, /function kwDec\(u, k, n\) \{[^}]*x\.stacks -= \(n \|\| (\d+)\)/) + ' 줄어듭니다') && /const n = stk\(u, 'ignite'\); kwDec\(u, 'ignite'\);/.test(S20) && /d \+= x; \}/.test(S20); }); // A3: 옛 3챕터 항목(보관)은 있을 때만
+  if (E('!!(ROLE_INTRO.noon)')) api.add('world-roleintro', '[noon] ', '14-chapter-bodies.js heatAdd: 열기 100이면 열풍', () => nx(S14, /b\.heat >= (\d+)\) \{ if \(b\.heatWarn/) === 100 && E('ROLE_INTRO.noon[1]').includes('100이 되면 열풍이 붑니다')); // A3: 옛 3챕터 항목(보관)은 있을 때만
   api.add('world-roleintro', '[swift] ', '34-rounds-setup.js startRound: 신속은 라운드마다 haste stacks 1', () => E('ROLE_INTRO.swift[1]').includes('가속 ' + nx(S34, /e\.swift && !e\.s\.chill && !e\.s\.broken && !e\.s\.haste\) e\.s\.haste = \{ stacks: (\d+)/) + '을') && E('ROLE_INTRO.swift[1]').includes('둔화가 걸리면'));
 
   // ===== 이야기 · 도감 · 층 이름: 숫자가 없어야 한다 (숫자가 생기면 이 출처에서 걸린다) =====
@@ -205,7 +205,7 @@ module.exports = function (api) {
   for (const [k, v] of Object.entries(E('FOE_INTRO'))) { add('intro.' + k + '.lore', v.lore); (v.see || []).forEach((s, i) => add('intro.' + k + '.see' + i, s)); }
   for (const [k, v] of Object.entries(E('CODEX'))) for (const [j, s] of Object.entries(v)) add('codex.' + k + '.' + j, s);
   for (const [k, v] of Object.entries(E('CHAPTERS'))) for (const j of ['n', 'settleLore', 'nextLore', 'enterLore', 'deathLine']) add('chapter.' + k + '.' + j, v[j]);
-  for (const [i, b] of E('BANDS3').entries()) { add('band.' + i + '.n', b.n); add('band.' + i + '.line', b.line); }
+  for (const c of [2, 3]) for (const [i, b] of (E('CHAPTERS[' + c + '].bands') || []).entries()) { add('band' + c + '.' + i + '.n', b.n); add('band' + c + '.' + i + '.line', b.line); } // A3: 층 띠는 챕터 데이터에서(옛 BANDS3은 보관)
   for (const [k, v] of Object.entries(E('ROLE_INTRO'))) add('role.' + k + '.0', v[0]);
   for (const e of EV) add('lore.' + e.id, e.lore);
   for (const [k, v] of Object.entries(E('BOSSES'))) if (['abbot', 'cryptlord', 'queen'].includes(k)) { add('boss.' + k + '.d', v.d); add('boss.' + k + '.lore', v.lore); }

@@ -200,4 +200,10 @@ const G8_CH = {
     down: ['wardRed', 'heal', 'flaskWard', 'cleanse'], upW: 1.5, downW: 0.7, keepShape: ['bow', 'staff'],
     names: { weapon: ['쇠못 곤봉', '톱니 단도', '수금꾼의 철퇴'], armor: ['누빈 외투', '덧댄 가죽 조끼', '경비대 미늘 갑옷'], gloves: ['붕대 감은 손', '투사의 손싸개', '철판 주먹'], amulet: ['놋쇠 패', '장물 목걸이', '등불 기름병'], ring: ['빚 반지', '도박꾼의 반지', '인장 반지'], flask: ['찌그러진 술병', '약장수 병', '유리 등잔'] },
   },
+  /* 0.8.0 A3 3챕터 장비 성향(확정본 「3챕터 장비 성향」): 막기 · 보호막 · 강공격 붕괴 · 무너진 적에게 · 첫 라운드 · 여럿을 치는 스킬 ×1.5, 화상 ×0.7(옛 3챕터 화상 쏠림을 되돌림) */
+  3: {
+    up: ['guardRed', 'thorn', 'wardRed', 'flaskWard', 'costOnce_보호막', 'heavyBrk', 'skillBrk', 'costOnce_붕괴', 'vsBroken', 'firstRound', 'aoeDmg', 'costOnce_광역', 'sb_altWard', 'wd_guardOn', 'wd_defWard', 'wd_atkBrk', 'mk_ctrBrk', 'as_poisonBrk', 'hn_chainBrk', 'hn_track3Brk', 'el_freezeBrk', 'el_shockBrk', 'wd_ax_sweep', 'el_ax_barrier'],
+    down: ['basicSt_burn', 'heavySt_burn', 'vsSt_burn', 'costOnce_화상', 'sb_vsBurnSpell', 'el_vsBurnBolt', 'el_burnRed', 'sb_ax_sling', 'sb_ax_flame', 'el_ax_fire', 'el_ax_sparks'], upW: 1.5, downW: 0.7, keepShape: ['bow', 'staff'],
+    names: { weapon: ['수비대 장창', '공병 망치', '성벽지기의 검'], armor: ['천막 외투', '수비대 흉갑', '성벽 판금'], gloves: ['밧줄 장갑', '공병 장갑', '문장 건틀릿'], amulet: ['피난민 이름표', '교대 휘장', '성문 열쇠'], ring: ['맹세 반지', '수비대 인장', '잠식된 반지'], flask: ['물통', '수비대 수통', '성수 병'] },
+  },
 };

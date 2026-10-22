@@ -91,6 +91,7 @@ function actionList(b) {
   L.push({ id: 'flaskS', n: '스태미나 플라스크', self: 1, cost: '남은 ' + (p.flask.stam || 0), time: 0.5, ok: (p.flask.stam || 0) > 0 });
   if (!b.ctx.boss && !b.ctx.scen && !b.ctx.tut) L.push({ id: 'flee', n: '도망', self: 1, cost: '성공 ' + Math.round(fleeChance(b) * 100) + '%', time: 1, ok: true });
   if (isCh2(b)) ch2Actions(b, L); // A2 빚 갚기 · 등불 기름 · 거래
+  if (isW3(b)) w3Actions(b, L); // A3 틈 막기
   for (const sl of b.seal || []) for (const a of L) if (a.ok && ((sl.k === 'skill' && a.id === sl.id) || (sl.k === 'flask' && /^flask/.test(a.id)) || (sl.k === 'prep' && (a.id === 'guard' || a.id === 'dodge')))) { a.ok = false; a.why = '봉인됨'; } // 검은 서기관
   if (p.build === 'hunter' && p.hnSt) { const S = p.hnSt; // M5-4: 만궁 쏘기(당긴 다음 차례) · 질풍난사 동안 몸 빼기 · 방어 불가 · 혈향의 덫 생명력 조건
     if (S.draw && S.drawT === b.turnIdx) { const fe = p.focus && alive(b).find(e => e.id === p.focus.id); L.unshift({ id: 'hn_shot', n: '만궁 쏘기', ranged: 1, cost: '유산 0', time: 1, ok: true, d: (fe ? fe.n : '고른 적') + '에게 무기 피해의 ' + S.draw.mul + '배(추적 겹마다 +' + S.draw.per + '배).' }); }
@@ -196,6 +197,7 @@ function playerAct(b, id, tgtId) {
     case 'as_mu': { asMuStrike(b, tgt); break; } // M5-3 무영살 베기
     case 'as_end': break; // M5-3 연쇄 격발을 다시 쓰지 않음
     case 'tradeyes': case 'tradeno': case 'paydebt': case 'lampoil': ch2PlayerAct(b, id); break; // A2
+    case 'sealrift': w3PlayerAct(b, id); break; // A3
     case 'hn_shot': { hnShot(b, tgt); break; } // M5-4 만궁 쏘기
     case 'basic': {
       const mkC = p.build === 'monk' && p.mkSt && p.mkSt.chain ? p.mkSt.chain : null, kiC = mkC ? st(p, 'empower') : 0; // M5-2 연환권: 기를 쓰기 전의 기로 센다
@@ -363,6 +365,7 @@ function addBreak(b, e, v) {
   v *= uqM(b.p, 'u_brkOut', b, b.p, e); /* M6-1 고유 wd_h8 도미노 반지 대가: 내가 채우는 붕괴 −10%(적 차례 포함) */
   if (e.exposed) v *= FOE_X.sexton.brk; // 솟구친 묘지기: 드러난 동안 붕괴 ×1.5
   if (e.oiled) v *= AFFIX2.oiledBrk; // A2 기름 먹은 정예
+  if (isW3(b)) v *= w3BrkMul(b, e); // A3 장전 · 조준 중 붕괴 ×1.5
   if (hasBt(b.p, 'break')) v *= 1.2;
   if (e.vow) v *= 1.5;
   { const bv = v * (1 + 0.01 * stat(b.p, 'str')); e.brk += bv; if (b.cur) b.pBrk = (b.pBrk || 0) + bv; } // A0 tools/hitref.js: 내 행동이 채운 붕괴 합
@@ -376,8 +379,9 @@ function addBreak(b, e, v) {
     if (e.intent && e.intent.k === 'sacrifice') { e.sacNext = null; e.sacCool = ABBOT.sacCool; logp(b, 'good', e.n + '의 제사가 끊긴다'); }
     if (e.intent && (e.intent.k === 'heavy' || e.intent.k === 'charge' || e.intent.k === 'explode' || e.intent.k === 'fuse' || CHANT_K.includes(e.intent.k) || e.intent.k === 'sacrifice' || e.intent.k === 'sacprep' || e.intent.k === 'retprep' || e.intent.k === 'return' || e.intent.k === 'mimic' || e.intent.k === 'reflect' || e.intent.k === 'lastmend' || e.intent.k === 'finalbell')) { if (e.foe === 'knight' && ['retprep', 'return'].includes(e.intent.k)) codexHit(b, 'knight', 'stop'); if (e.foe === 'echo' && e.mimicOn) codexHit(b, 'echo', 'cut'); e.intent = { k: 'attack' }; e.teleX = 1; }
     e.mimicOn = null; if (e.foe === 'collector' && e.s.protect) { delete e.s.protect; logp(b, 'good', '몸에 두른 뼈가 쏟아져 내린다'); codexHit(b, 'collector', 'shatter'); } if (e.boss === 'cryptlord' && b.carve) { b.carve = null; logp(b, 'good', '군주가 무너지자 새긴 이름이 흐려진다'); codexHit(b, 'cryptlord', 'carvebreak'); }
-    if ((b.ctx.ch || 1) >= 3) ch3OnBreak(b, e);
+    if (isCh3(b)) ch3OnBreak(b, e);
     if (isCh2(b)) ch2OnBreak(b, e); // A2
+    if (isW3(b)) w3OnBreak(b, e); // A3
     if (e.role === 'boss') { e.breaks++; e.brkMax = Math.round(e.brkMax * 1.5); }
     if (e.armor > 0 && !e.armorOff) { e.armorOff = 1; logp(b, 'good', e.n + '의 갑옷이 벗겨진다'); } // A0: 그 전투(보스는 그 단계) 동안
     logp(b, 'crit', e.n + '의 자세가 무너진다. 모으던 힘이 흩어지고 다음 행동을 놓친다');

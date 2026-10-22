@@ -5,7 +5,7 @@
    라운드가 끝나면 중독, 스태미나, 보스 시계, 광폭화를 처리한다(tickOnce). b.t는 지난 라운드 수다 */
 const RND_TWICE = 1.5;
 /* 느린 맥박(0.6a.2 라운드): 내 차례에 빠른 칸이 없다. 빠른 행동도 주 행동처럼 차례를 끝낸다 (10월 3일: 옛 대가 "내 차례가 덜 자주 온다"가 라운드에서는 순서만 뒤로 미뤘다) */
-const noFast = p => isV2(p) && (p.eq.ring1 === 'pulse' || p.eq.ring2 === 'pulse' || uqF(p, 'u_noFast')); /* M6-1 고유 cm_pulse 대가 */
+const noFast = p => (isV2(p) && (p.eq.ring1 === 'pulse' || p.eq.ring2 === 'pulse' || uqF(p, 'u_noFast'))) || !!p.noFast1; /* A3 재액이 스민 우물(뚜껑): 다음 전투 첫 라운드 */ /* M6-1 고유 cm_pulse 대가 */
 function roundOrder(b, consume, slowMe) {
   const p = b.p; const al = alive(b).filter(e => e.role !== 'root' && e.role !== 'candle' && e.role !== 'bonewall' && e.role !== 'crown' && !e.pile);
   const grp = (u, isP) => { if (isP && (b.ambushR && (b.round || 0) === 0)) return 2; if (isP && !u.s.chill && fxList(u).some(([, f]) => f.first)) return 0; if (!isP && u.quick) return 0; if (u.s.haste) return 0; if (u.s.chill) return 2; return 1; };
@@ -21,7 +21,7 @@ function roundOrder(b, consume, slowMe) {
   }
   return out;
 }
-function startRound(b) { for (const e of alive(b)) if (e.swift && !e.s.chill && !e.s.broken && !e.s.haste) e.s.haste = { stacks: 1, until: KW_FOREVER, dur: KW_FOREVER }; /* 신속: addS를 쓰지 않는다(내가 건 둔화를 지우지 않게) */ b.round = (b.round || 0) + 1; b.queue = roundOrder(b, true).map(x => x.id); b.roundAll = b.queue.slice(); b.bonusUsed = 0; if ((b.ctx.ch || 1) >= 3) ch3Round(b); }
+function startRound(b) { for (const e of alive(b)) if (e.swift && !e.s.chill && !e.s.broken && !e.s.haste) e.s.haste = { stacks: 1, until: KW_FOREVER, dur: KW_FOREVER }; /* 신속: addS를 쓰지 않는다(내가 건 둔화를 지우지 않게) */ b.round = (b.round || 0) + 1; b.queue = roundOrder(b, true).map(x => x.id); b.roundAll = b.queue.slice(); b.bonusUsed = 0; if (isCh3(b)) ch3Round(b); if (isW3(b)) w3RoundStart(b); /* A3 군중 · 첫 라운드 빠른 칸 */ }
 function endRound(b) { b.t = b.tick + 1; tickOnce(b); }
 /* 순서 안의 자리: 이번 라운드 남은 줄 → 다음 라운드 (흘릴 적 고르기, 미리 보기) */
 function actIdx(b, e) { const q = (b.queue || []).filter(id => id !== 'p'); const i = q.indexOf(e.id); if (i >= 0) return i; const j = roundOrder(b, false).map(x => x.id).indexOf(e.id); return j >= 0 ? q.length + j : 99; }
@@ -88,8 +88,9 @@ function roomBattle(player, room, bossKind, seed) {
   setRng(b, seed || 7);
   const pre = room.pre || {};
   if (pre.weak) addS(b, player, 'weak', pre.weak); if (pre.vuln) addS(b, player, 'vuln', pre.vuln); if (pre.poison) addPoison(b, player, pre.poison, 0);
-  if ((room.ch || 1) >= 3) { ch3Setup(b, room); if (pre.ignite) addS(b, player, 'ignite', pre.ignite); if (pre.chill) addS(b, player, 'chill', pre.chill); if (pre.bleed) addS(b, player, 'bleed', pre.bleed); }
+  if ((room.ch || 1) >= 3) { if (OLD3) ch3Setup(b, room); if (pre.ignite) addS(b, player, 'ignite', pre.ignite); if (pre.chill) addS(b, player, 'chill', pre.chill); if (pre.bleed) addS(b, player, 'bleed', pre.bleed); }
   if ((room.ch || 1) === 2) { ch2Setup(b, room); if (pre.ignite) addS(b, player, 'ignite', pre.ignite); } // A2 2챕터 시작(정예 접사 · 대형 · 바르도 등불 · 이벤트 흔적) // 3챕터: 열기 · 아지랑이 · 붕대 · 화염 강화 · 강적 값, 이벤트가 붙인 시작 상태
+  if ((room.ch || 1) === 3 && !OLD3) w3Setup(b, room); // A3 3챕터 시작(접사 · 강적 물체 · 경보 · 종 표식 · 잠식 · 이벤트 흔적)
   chDev(b, 'onRoomStart'); // A0 챕터 장치(A1: 난수를 정한 뒤로 옮김)
   // 0.8.0 6단계 A-6: 순찰대(내부 키 ambush)는 먼저 덮치지 않는다(전에는 첫 라운드에 내가 맨 뒤)
   runUntilPlayer(b);
