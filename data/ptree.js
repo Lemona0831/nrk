@@ -8,7 +8,7 @@ const PT = {
   lane: { L: -12, C: 0, R: 12 },
   pts: { start: 6, lv: 2 }, // 패시브 포인트: 시작 6 + 레벨마다 2 (만든 사람 결정 10월 16일)
   ring: { 1: 0, 2: 1, 3: 2 }, // 고리가 열리는 깬 챕터 수(run.clears, 표식 도전은 markCh − 1을 더함). M5-0 보정 5: 그 전 챕터 야영지에서도 열린다(run.ringCamp, ringOpen)
-  ksN: 3, ksOffer: 3, // 큰 각인 제시: 찍은 곳에서 3칸 안, 셋
+  ksN: 3, ksOffer: 3, ksFree: 2, // 큰 각인 제시: 찍은 곳에서 3칸 안, 셋. 함께 열리는 보너스 노드는 2칸까지(M7-2: 엔진이 ksN을 읽지 않아 먼 각인까지 긴 공짜 길이 열리던 것을 고침)
   smallBrk: 0.03, smallSt: 6, // 제어 작은 노드 주는 붕괴 +3%(곱), 계승 작은 노드 스태미나 +6
 };
 /* M5-0 보정 5: 패시브 꼬리표(노드 효과 · 큰 각인 id → 꼬리표). 결합 칸 조건과 BD-9가 액티브 꼬리표와 함께 센다 */
@@ -238,7 +238,7 @@ const PT_CLS = {
       su2L: 'n_wd_will', su3R: 'n_wd_remnant', su5L: 'a_shell', su5R: 'n_wd_breath', su7L: 'a_warmth', su7R: 'a_brew',
       ct1C: 'k_wd2', ct3L: 'n_wd_shake', ct5L: 'a_gap', ct5R: 'n_wd_breakwall', ct7L: 'a_heavyhand', ct7R: 'n_shaken',
       ag3L: 'n_wd_turn', ag5L: 'a_resolve', ag5R: 'a_light', ag7L: 'a_gulp', ag7R: 'n_wd_pullhit',
-      lg2L: 'n_wd_stack', lg3R: 'n_wd_respward', lg5L: 'n_fullvessel', lg5R: 'n_wd_ready', lg7L: 'n_wd_fuel', lg7R: 'n_wd_bracewall',
+      lg2L: 'n_wd_stack', lg3R: 'n_wd_respward', lg5L: 'n_overflow', lg5R: 'n_wd_ready', lg7L: 'n_fullvessel', lg7R: 'n_wd_bracewall', // 0.8.0 M7-2 정체성 정리: 계승을 다른 직업과 같은 꼴(첫 칸 직업 각인 자리 · 직업 3 · 공용 2, 공용은 2고리 넘치는 그릇 · 3고리 가득 찬 그릇)로. 직업 5 · 공용 1에서 보호막 연료(n_wd_fuel)를 뺐다
     },
     ks: { pwK5: 'ks_sharp', pwK9: 'ks_wd_drop', ctK5: 'ks_brkbreath', ctK9: 'ks_hammer', agK5: 'ks_slipbreath', agK9: 'ks_first', lgK5: 'ks_deep', lgK9: 'ks_double', suK5: 'ks_cycle', suK9: 'ks_wd_eternal', svK5: 'ks_blockbreath', svK9: 'ks_wall' },
   },
@@ -292,9 +292,10 @@ const PT_CLS = {
     ks: { pwK5: 'ks_sharp', pwK9: 'ks_as_lord', ctK5: 'ks_brkbreath', ctK9: 'ks_hammer', agK5: 'ks_slipbreath', agK9: 'ks_first', lgK5: 'ks_deep', lgK9: 'ks_double', suK5: 'ks_cycle', suK9: 'ks_tireless', svK5: 'ks_blockbreath', svK9: 'ks_as_oath' },
   },
 };
-/* 임시 트리: 직업 갈래 각인(4-4)을 그 방향 1고리 첫 중간 노드 자리에 둔다. 도살자 벼랑 끝(k_bu2)은 6단계 큰 각인으로 합쳐질 것이라 임시 트리에 넣지 않는다 */
+/* 임시 트리: 직업 갈래 각인(4-4)을 그 방향 1고리 첫 중간 노드 자리에 둔다. 도살자 벼랑 끝(k_bu2)은 6단계 큰 각인으로 합쳐질 것이라 임시 트리에 넣지 않는다.
+   파수꾼 계승 자리는 쌓인 벽 옛 판(k_wd1)을 10월 17일 검토 1-1에서 고친 n_wd_stack이다(PT_CLS 파수꾼 lg2L과 맞춤, M7-2) */
 const PT_CLSAWK = {
-  assassin: { pw: ['k_as1'], lg: ['k_as2'], ag: ['k_as3'] }, warden: { lg: ['k_wd1'], ct: ['k_wd2'], pw: ['k_wd3'] }, hunter: { lg: ['k_hn1'], pw: ['k_hn2'], ag: ['k_hn3'] },
+  assassin: { pw: ['k_as1'], lg: ['k_as2'], ag: ['k_as3'] }, warden: { lg: ['n_wd_stack'], ct: ['k_wd2'], pw: ['k_wd3'] }, hunter: { lg: ['k_hn1'], pw: ['k_hn2'], ag: ['k_hn3'] },
   elementalist: { pw: ['k_el1'], ct: ['k_el2'], lg: ['k_el3'] }, monk: { pw: ['k_mk1'], sv: ['k_mk2'], ct: ['k_mk3'] },
   butcher: { pw: ['k_bu1'], su: ['k_bu3'] }, confessor: { su: ['k_cf1'], ct: ['k_cf2'], lg: ['k_cf3'] }, bloodmage: { pw: ['k_bm1'], su: ['k_bm2'], lg: ['k_bm3'] },
 };

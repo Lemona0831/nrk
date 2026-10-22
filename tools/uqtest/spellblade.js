@@ -17,7 +17,7 @@ module.exports = H => {
     ok(near(run('rule', 0), run('none', 0)), '처형자의 인장: 출혈 없으면 그대로'); H.cover('sb_h1', 'rule');
     const ld = only => { const f = W('sb_h1', only, { act: ['sb_boil'] }); act(f, 'sb_boil', f.es[0]); return f.p.edge && f.p.edge.n; };
     const lc = only => { const f = W('sb_h1', only); R_('sbLoad')(f.b, f.p, 'bleed', 1); const a = f.p.edge.n; f.p.edge = null; R_('sbLoad')(f.b, f.p, 'ignite', 3); return [a, f.p.edge.n]; };
-    ok(ld('none') === 5 && ld('cost') === 4, '처형자의 인장 대가: 칼에 싣는 출혈 5 → 4');
+    { const n0 = ld('none'); ok(n0 >= 2 && ld('cost') === n0 - 1, '처형자의 인장 대가: 칼에 싣는 출혈 ' + n0 + ' → ' + (n0 - 1)); } // M7-2: 싣는 양은 직업 기준 옮김으로 바뀐다. 대가는 −1
     ok(lc('cost')[0] === 1 && lc('cost')[1] === 3, '처형자의 인장 대가: 바닥 1 · 화상은 그대로'); H.cover('sb_h1', 'cost'); }
 
   // sb_h2 피 먹는 장검
@@ -104,7 +104,7 @@ module.exports = H => {
     const r = run('rule'), n = run('none');
     ok(r.bl > 0 && near(r.d, n.d * 1.2, 1e-6), '칼날의 반지: 칼로 건 상태가 걸린 적에게 기본 공격 +20%'); ok(near(r.d1, n.d1), '칼날의 반지: 다른 적은 그대로'); H.cover('sb_r5', 'rule');
     const ld = only => { const f = W('sb_r5', only, { act: ['sb_flamecut'] }); act(f, 'sb_flamecut', f.es[0]); return f.p.edge && f.p.edge.n; };
-    ok(ld('none') === 3 && ld('cost') === 2, '칼날의 반지 대가: 칼에 싣기 3 → 2');
+    { const n0 = ld('none'); ok(n0 >= 2 && ld('cost') === n0 - 1, '칼날의 반지 대가: 칼에 싣기 ' + n0 + ' → ' + (n0 - 1)); }
     const fl = W('sb_r5', 'cost'); R_('sbLoad')(fl.b, fl.p, 'ignite', 1); ok(fl.p.edge.n === 1, '칼날의 반지 대가: 바닥 1'); H.cover('sb_r5', 'cost'); }
 
   // sb_r6 핏빛 플라스크

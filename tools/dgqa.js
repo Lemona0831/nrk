@@ -28,6 +28,10 @@ if (process.env.BRK_BASIC0 != null || process.env.HEAVY_BRK) run_('BRK_RULE.basi
 if (process.env.GEAR8 != null) { run_('GEAR8.on = ' + (process.env.GEAR8 !== '0')); const E8 = require('./eng.gen.js').GEAR8; if (E8) E8.on = process.env.GEAR8 !== '0'; } // M6-1 장비 틀 스위치(gear8): 1 켬 · 0 끔
 if (process.env.DG_NOAF) run_('G8GEN.noAf = 1'); if (process.env.DG_NOWPNAF) run_('G8GEN.noWpnAf = 1'); // M6-3 측정: 기반만 · 무기 접사 없음
 if (process.env.CFG) run_(process.env.CFG); // 시험할 수치: CFG='DIFF[1].upper.dmg=1.3; BOSSES.abbot.mult=7'
+/* M7-2 측정 스위치 YS_BLOCK=pre: 막기 대응(방어로 받아 냄 · 되받기)의 유산을, 받아 낸 공격이 큰 예고(YS_PRE_K · 겨눈 한 발)일 때만 준다. 실제 게임 엔진에만 걸고 한 수 앞 계산(eng.gen.js)은 그대로 */
+if (process.env.YS_BLOCK === 'pre') run_(`(function () { const H = hurtPlayer, Y = ysResp; let pre = 0; const isPre = e => !!(e && e.intent && (YS_PRE_K.includes(e.intent.k) || e.intent.aimed));
+  hurtPlayer = function (b, raw, o) { const s = pre; pre = isPre(o && o.src); try { return H.apply(this, arguments); } finally { pre = s; } };
+  ysResp = function (b, why) { return why === '막기' && !pre ? 0 : Y.apply(this, arguments); }; })()`);
 if (process.env.HUNT_BRIDGE) run_("{ const u = ATREE_DEF.hunter.ups.find(x => x[0] === 'hu_link3'); u[8].cond.when = 'linkFast'; u[7] = '연계로 쓰거나, 이번 차례에 빠른 기동 스킬을 먼저 썼으면 비용 −1(바닥 1, 라운드에 한 번).'; }");
 if (process.env.ASN_SHADOW_VAR) { Q.asnShadowVar(run_('ATREE_DEF'), run_('AT_GONE'), process.env.ASN_SHADOW_VAR); run_('delete ATREE.assassin; SKC.clear()'); } // 10월 18일 0.8.0 5단계 측정 변형(원거리 초안 10절 결정 3): 암살자 그림자 old · rush(qa.js asnShadowVar). 10월 18일 0.8.0 5단계 마무리: swap은 기본 데이터가 되어 바꾸지 않는다 // 0.8.0 5단계 측정 변형(원거리 초안 8절 보완 2): 이어 묶는 화살 = 연계이거나 이번 차례에 빠른 기동 스킬을 먼저 씀. 기본값 아님
 /* 10월 17일 측정 도구 보완: 판 기록마다 꼬리표(out.meta: 게임 · 도구 지문, 시드, 성향, 직업, 시작 챕터, 변형, 행동을 바꾸는 환경 변수)를 남기고,

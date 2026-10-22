@@ -277,7 +277,8 @@ function ksCands(run) {
     return { id: n.id, dir: n.dir, d: dist[n.id], path, rk: ksHash(n.id + ':' + ((run.seed || 0) + ch)) };
   });
 }
-/* 셋 고르기: 거리 → 이미 고른 후보와 다른 방향 → 시드 순서. 3칸 안이 모자라면 4, 5칸 …에서 같은 순서로 채운다 */
+/* 셋 고르기: 거리 → 이미 고른 후보와 다른 방향 → 시드 순서. 찍은 곳에서 PT.ksN칸 안, 보너스 노드 PT.ksFree칸까지만(0.8.0 M7-2: 전에는 4, 5칸 …에서도 채워 긴 공짜 길이 열렸다).
+   3칸 안에 없으면 받을 것(ksPending)은 남겨 두고 제시하지 않는다. 노드를 더 찍어 가까워지면 그때 고른다 */
 /* 10월 18일 0.8.0 5단계(원거리 초안 10절 결정 4, 모든 직업): 연 액티브 스킬(시작 스킬 · 찍은 스킬 노드 · 장착)에 유산 4 스킬이 하나도 없으면 결정의 칼(유산 4 스킬 +25%)은 후보에서 뺀다.
    비용은 강화 · 노드 비용을 넣은 skCost(skOf). 빠진 자리는 같은 규칙(거리 → 방향 → 시드)으로 다음 후보가 채운다 */
 function ksHasCost4(run) {
@@ -288,14 +289,15 @@ function ksHasCost4(run) {
 }
 function ksOfferMake(run) {
   const T = ptBuild(run.build), no4 = !ksHasCost4(run);
-  const C = ksCands(run).filter(x => !(no4 && T.nodes[x.id].fx === 'ks_crystal')).sort((a, b) => a.d - b.d || a.rk - b.rk), out = [];
+  const C = ksCands(run).filter(x => x.d <= PT.ksN && x.path.length <= PT.ksFree && !(no4 && T.nodes[x.id].fx === 'ks_crystal')).sort((a, b) => a.d - b.d || a.rk - b.rk), out = [];
   while (out.length < PT.ksOffer && C.length) { const d = C[0].d; const grp = C.filter(x => x.d === d); const dirs = out.map(x => x.dir); const pick = grp.find(x => !dirs.includes(x.dir)) || grp[0]; out.push(pick); C.splice(C.indexOf(pick), 1); }
   return out.map(x => x.id);
 }
 const ksInfo = (run, id) => ksCands(run).find(x => x.id === id) || null;
 /* 받는 때: 1 · 2챕터 정산을 확정한 뒤(b1 · b2), 3챕터 야영지에 들어설 때(c3). 같은 때는 한 번만 */
 function ksGrant(run, key) { ptInit(run); if (run.ksGot[key]) return false; run.ksGot[key] = Date.now(); run.ksPending = (run.ksPending || 0) + 1; (run.ksLog = run.ksLog || []).push({ grant: key, ch: run.ch || 1, room: run.room, t: Date.now() }); return true; }
-function ksEnsureOffer(run) { if (!(run.ksPending > 0)) { run.ksOffer = null; return []; } if (!run.ksOffer || !run.ksOffer.length || run.ksOffer.some(id => run.ptree.ks.includes(id))) run.ksOffer = ksOfferMake(run); if (!run.ksOffer.length) { run.ksPending = 0; run.ksOffer = null; return []; } return run.ksOffer; }
+function ksEnsureOffer(run) { if (!(run.ksPending > 0)) { run.ksOffer = null; return []; } if (!run.ksOffer || !run.ksOffer.length || run.ksOffer.some(id => run.ptree.ks.includes(id))) run.ksOffer = ksOfferMake(run); if (!run.ksOffer.length) { run.ksOffer = null; return []; } return run.ksOffer; }
+const ksCanPick = run => run.ksPending > 0 && ksEnsureOffer(run).length > 0; // 받을 것이 있고 3칸 안에 후보가 있다
 function ksTake(run, id) {
   if (!(run.ksPending > 0) || !(run.ksOffer || []).includes(id) || run.ptree.ks.includes(id)) return '고를 수 없는 큰 각인입니다';
   const c = ksInfo(run, id); if (!c) return '닿을 수 없는 자리입니다';

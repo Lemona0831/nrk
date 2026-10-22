@@ -97,13 +97,13 @@ const SB_BD_K = ['searMerge', 'sbBlaze', 'wardPer', 'sbFilm', 'sbSinWall', 'sbHe
 const SB_HP = 120;
 /* 경계 숫자 (엔진 js/10-skills-engine.js의 IFX_SB · sbBoundUse · sbWardHit와 값 식이 함께 읽는다). 스킬 문장(data/skills.js txt)의 숫자와 맞춰 둔다 */
 /* M5-0 마감(10월 19일 만든 사람): 문장의 꼴은 그대로, 숫자만 값 띠 하한까지 올렸다. 보정 4(10월 20일)에서 갈래 칸을 잘라 기준 평균이 오르자 다시 맞췄다(피막 130%, 잿불 갑주 화상 6). 겁화 피해 +40 → +60%, 피막 50 → 125%, 죄인의 벽 출혈 4 → 5, 달군 갑주 ×1.5 → ×2.8, 잿불 갑주 화상 2 → 5, 불의 몸 ×1.3 → ×1.8 · 화상 2 → 4 (피의 갑주 +4 → +17, 핏불 싣기 출혈 2 · 화상 2 → 3 · 4는 data/skills.js fx) */
-const SB_BOUND = { blazeHit: 0.6, blazeIn: 0.3, blazeSear: 2, filmPer: 0.75, sinPay: 0.15, sinMul: 3, sinBleed: 5, heatMul: 3.2, /* M5-0c 맞추기 2번: 2.8 → 3.2(평타 쪽으로, 값 띠 안) */ emberIgn: 6, bodyPer: 8, bodyMul: 0.8, bodyIgn: 4, sinBlock: 0.3, ashMul: 0.5, ashIgn: 2,
-  crossN: 4, ssPer: 1, echoN: 2, shackleBrk: 90, ashHandK: 2, ashHandIgn: 3, cinderIgn: 1, emberCutBurn: 6, fistMul: 1.5, cbIgn: 3,
+const SB_BOUND = { blazeHit: 1, blazeIn: 0.3, blazeSear: 2, filmPer: 0.75, sinPay: 0.15, sinMul: 3.5, sinBleed: 7, heatMul: 3.2, /* M5-0c 맞추기 2번: 2.8 → 3.2(평타 쪽으로, 값 띠 안) */ emberIgn: 7, bodyPer: 11, bodyMul: 0.8, bodyIgn: 5, sinBlock: 0.3, ashMul: 0.5, ashIgn: 2,
+  crossN: 5, ssPer: 1, echoN: 2, shackleBrk: 115, ashHandK: 2, ashHandIgn: 3, cinderIgn: 1, emberCutBurn: 6, fistMul: 1.6, cbIgn: 4,
   holdPer: 0.05, holdMax: 5 }; // M5-0 보정 5 2차(만든 사람): 버팀 — 보호막 꼬리표 스킬을 쓴 전투에서 보호막을 지킨 채 차례를 넘기면 쌓이는 피해 +5%(최대 5) // M5-0 보정 4 새 칸 숫자(문장과 맞춘다)
 /* 0.8.0 M5-1 파수꾼(10월 20일 만든 사람 설계지 + 07:40 보완): 태세 · 경계 승부수 · 결합 칸 숫자. 엔진은 js/10 파수꾼 절(p.wdSt).
    값 식(추정, 측정 아님): 태세는 켜 둔 채 평균 5차례(받는 피해 차례마다 8), 승부수 3차례, 결합 칸은 전투 한 번 몫 */
-const WD_BOUND = { defIn: 0.12, /* 맞추기 2번: 0.15 → 0.12(수비 태세를 품은 공성추 · 용맹의 투지가 1챕터에서 셈) */ defWard: 3, defOn: 8, atkHit: 0.25, atkBrk: 10, atkIn: 0, /* 맞추기 1번: 받는 피해 +10%를 뺐다(1챕터 보스에서 공격 태세 길이 버티지 못함), 대신 +30% → +25% · 붕괴 12 → 10 */ atkOnDmg: 5, atkOnBrk: 12, prayDef: 2,
-  marchHit: 0.15, /* 맞추기 2번: 묵직한 걸음에 보호막 8을 주고 피해 +20% → +15% */ marchBrk: 20, marchHeavy: 15, siegeMax: 2.0, siegePer: 20, siegeBrk: 30, siegeHeavy: 20, /* 파성 붕괴 · 스태미나는 설계지 "확인 후 밸런스 조절" */ quakeMul: 2, quakeWard: 0.5, quakeN: 3, valorGuard: 18, valorThorn: 0.5,
+const WD_BOUND = { defIn: 0.1, /* 맞추기 2번: 0.15 → 0.12(수비 태세를 품은 공성추 · 용맹의 투지가 1챕터에서 셈) */ defWard: 2, defOn: 8, atkHit: 0.2, atkBrk: 7, atkIn: 0, /* 맞추기 1번: 받는 피해 +10%를 뺐다(1챕터 보스에서 공격 태세 길이 버티지 못함), 대신 +30% → +25% · 붕괴 12 → 10 */ atkOnDmg: 4, atkOnBrk: 10, prayDef: 2,
+  marchHit: 0.12, /* 맞추기 2번: 묵직한 걸음에 보호막 8을 주고 피해 +20% → +15% */ marchBrk: 16, marchHeavy: 12, siegeMax: 2.0, siegePer: 20, siegeBrk: 26, siegeHeavy: 20, /* 파성 붕괴 · 스태미나는 설계지 "확인 후 밸런스 조절" */ quakeMul: 2, quakeWard: 0.5, quakeN: 3, valorGuard: 18, valorThorn: 0.5,
   turnBrk: 25, hammerMul: 1.5, hammerSt: 15, pullN: 2, pullBrk: 30 };
 const WD_K = ['wdStance', 'wdPray', 'wdMarch', 'wdSiege', 'wdQuake', 'wdValor', 'wdTurncoat', 'wdHammer', 'wdChainPull', 'wdNextBrk'];
 function skValueWd(e, K, W, hi) { const U = WD_BOUND, Wv = K.ward.v, nT = e.n || 3, inc = 8;
@@ -248,7 +248,7 @@ function skValue(s, ov) {
         case 'sbEmberCut': { const bn = Math.min(U.emberCutBurn, W.S[hi]); v += bn * kw * 0.8 - bn * Wv; break; } // 태운 보호막만큼 화상(상한 10에 걸리는 몫 0.8)
         case 'sbFist': v += 5 * K.B * 0.7 * (U.fistMul - 1); break;
         case 'sbCounterBurn': v += 2 * U.cbIgn * kw; break;
-        case 'sbTricolor': v += 2 * 8.35; break; // 유산 1의 값 = 갈래 비용 2 평균(16.7)의 절반
+        case 'sbTricolor': v += 2 * 10.75; break; // 유산 1의 값 = 갈래 비용 2 평균의 절반 (M7-2 직업 기준 옮김: 16.7 → 21.5)
         case 'searBurst': v += 1.5 * 0.6 * Sbi * (e.mul || 2); break;
         case 'sbCinder': v += 3 * 2 * U.cinderIgn * kw; break; // 보호막 경계 판은 라운드마다 보호막을 두르고 깎인다(전투 6–8라운드)
       } continue; }

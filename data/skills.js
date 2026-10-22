@@ -6,126 +6,126 @@
 const SKILLS2 = {
   assassin: [
     // 시작 스킬: 트리 밖. 늘 끼워져 있고 장착 칸을 차지하지 않는다. 어느 갈래에도 치우치지 않는 공격 하나(주 행동), 방어 하나(빠른 행동) (10월 3일 만든 사람 결정: 독 없음)
-    { id: 'a_vital', b: '시작', tier: '시작', start: 1, n: '급소 찌르기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 16 }, { k: 'brk', n: 23 }] },
+    { id: 'a_vital', b: '시작', tier: '시작', start: 1, n: '급소 찌르기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 18 }, { k: 'brk', n: 25 }] },
     { id: 'a_slip', b: '시작', tier: '시작', start: 1, n: '몸 빼기', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'st', s: 'protect', n: 4 }, { k: 'stam', n: 44 }] },
     // 독사: 작은 독을 자주, 넓게 걸고 키운다. 무리·장기전에 강하고 후열에 약하다
-    { id: 'a_fang', row: 1, b: '독사', tier: '하급', n: '독니', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 1 }, { k: 'poison', n: 6 }] },
+    { id: 'a_fang', row: 1, b: '독사', tier: '하급', n: '독니', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 1 }, { k: 'poison', n: 7 }] },
     { id: 'a_hack', row: 1, b: '독사', tier: '하급', n: '난도질', tgt: 'melee', time: 'fast', cd: 4, hits: 2, fx: [{ k: 'dmg', n: 1 }, { k: 'poison', n: 2 }] },
-    { id: 'a_bladedance', row: 2, b: '독사', tier: '하급', n: '칼날 춤', tgt: 'front', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 6 }, { k: 'poison', n: 3 }] },
-    { id: 'a_dart', row: 2, b: '독사', tier: '하급', n: '독 바른 투척', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 5 }, { k: 'poison', n: 5 }] },
-    { id: 'a_rot', row: 3, b: '독사', tier: '하급', n: '썩은 상처', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'poison', n: 4 }, { k: 'st', s: 'vuln', n: 3 }] },
+    { id: 'a_bladedance', row: 2, b: '독사', tier: '하급', n: '칼날 춤', tgt: 'front', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 7 }, { k: 'poison', n: 3 }] },
+    { id: 'a_dart', row: 2, b: '독사', tier: '하급', n: '독 바른 투척', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 6 }, { k: 'poison', n: 6 }] },
+    { id: 'a_rot', row: 3, b: '독사', tier: '하급', n: '썩은 상처', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'poison', n: 5 }, { k: 'st', s: 'vuln', n: 3 }] },
     { id: 'a_sheath', row: 3, b: '독사', tier: '하급', n: '독 칼집', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'poison', n: 2 }, { k: 'stam', n: 51 }] },
-    { id: 'a_numb', row: 4, b: '독사', tier: '하급', n: '둔한 독', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'poison', n: 4 }, { k: 'st', s: 'chill', n: 3 }] },
-    { id: 'a_sap', row: 4, b: '독사', tier: '하급', n: '쇠약독', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'poison', n: 6 }, { k: 'st', s: 'weak', n: 2 }] },
-    { id: 'a_wedge', row: 5, b: '독사', tier: '하급', n: '독 쐐기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'poison', n: 5 }, { k: 'brk', n: 32 }] },
+    { id: 'a_numb', row: 4, b: '독사', tier: '하급', n: '둔한 독', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'poison', n: 5 }, { k: 'st', s: 'chill', n: 3 }] },
+    { id: 'a_sap', row: 4, b: '독사', tier: '하급', n: '쇠약독', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'poison', n: 7 }, { k: 'st', s: 'weak', n: 2 }] },
+    { id: 'a_wedge', row: 5, b: '독사', tier: '하급', n: '독 쐐기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'poison', n: 6 }, { k: 'brk', n: 35 }] },
     { id: 'a_mist', row: 5, b: '독사', tier: '하급', n: '독무', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'poison', n: 4 }] }, // 10월 18일 0.8.0 5단계(원거리 초안 1-2 · 4-7): 🔄(쓰면) 뺌
-    { id: 'a_seep', row: 6, b: '독사', tier: '하급', n: '독 스미기', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 4 }, { k: 'poison', n: 3 }, { k: 'exploit', per: 1 }] },
-    { id: 'a_siphon', row: 6, b: '독사', tier: '하급', n: '독 흡수', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'poison', n: 4 }, { k: 'drain', per: 1.5 }] },
+    { id: 'a_seep', row: 6, b: '독사', tier: '하급', n: '독 스미기', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 5 }, { k: 'poison', n: 3 }, { k: 'exploit', per: 1 }] },
+    { id: 'a_siphon', row: 6, b: '독사', tier: '하급', n: '독 흡수', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'poison', n: 5 }, { k: 'drain', per: 1.5 }] },
     { id: 'a_double', row: 7, b: '독사', tier: '중급', n: '맹독 증폭', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'grow', mul: 2.1 }] },
-    { id: 'a_spread', row: 7, b: '독사', tier: '중급', n: '독 번지기', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 4 }, { k: 'spread', per: 0.5 }] },
+    { id: 'a_spread', row: 7, b: '독사', tier: '중급', n: '독 번지기', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 6 }, { k: 'spread', per: 0.5 }] },
     { id: 'a_condense', row: 8, b: '독사', tier: '중급', n: '독 응축', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'grow', mul: 1.6, add: 5 }] },
-    { id: 'a_rain', row: 8, b: '독사', tier: '중급', n: '독 비', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'poison', n: 5 }] },
-    { id: 'a_venomstrike', row: 9, b: '독사', tier: '중급', n: '맹독 일격', tgt: 'melee', time: 'slow', cd: 5, fx: [{ k: 'dmg', n: 5 }, { k: 'poison', n: 7 }] },
+    { id: 'a_rain', row: 8, b: '독사', tier: '중급', n: '독 비', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'poison', n: 6 }] },
+    { id: 'a_venomstrike', row: 9, b: '독사', tier: '중급', n: '맹독 일격', tgt: 'melee', time: 'slow', cd: 5, fx: [{ k: 'dmg', n: 5 }, { k: 'poison', n: 8 }] },
     { id: 'a_rotbreath', row: 9, b: '독사', tier: '중급', n: '썩은 숨', tgt: 'front', time: 'normal', cd: 3, fx: [{ k: 'poison', n: 3 }, { k: 'st', s: 'vuln', n: 2 }] },
     { id: 'a_cycle', row: 10, b: '독사', tier: '중급', n: '독의 순환', tgt: 'all', time: 'slow', cd: 5, fx: [{ k: 'grow', mul: 1.8 }, { k: 'hasten', n: 1, on: 'use' }] },
-    { id: 'a_feast', row: 10, b: '독사', tier: '중급', n: '독 흡혈', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'poison', n: 4 }, { k: 'drain', per: 2.5 }] },
+    { id: 'a_feast', row: 10, b: '독사', tier: '중급', n: '독 흡혈', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'poison', n: 5 }, { k: 'drain', per: 2.5 }] },
     // 상급 (3챕터, 11~13줄 · 10월 8일): 갈래 정체성을 마무리한다. 왼쪽 기둥은 한 적에 깊게(독 키우기 · 약점), 오른쪽 기둥은 후열 · 지속 · 여럿
-    { id: 'a_festerwound', row: 11, b: '독사', tier: '상급', n: '곪은 상처', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'poison', n: 5 }, { k: 'st', s: 'vuln', n: 3 }] },
-    { id: 'a_web', row: 11, b: '독사', tier: '상급', n: '독 그물', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 2 }, { k: 'poison', n: 3 }, { k: 'spread', per: 0.5 }] },
-    { id: 'a_wither', row: 12, b: '독사', tier: '상급', n: '시드는 독', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'poison', n: 6 }, { k: 'st', s: 'weak', n: 2 }, { k: 'st', s: 'chill', n: 2 }] },
-    { id: 'a_breath', row: 12, b: '독사', tier: '상급', n: '독 호흡', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'poison', n: 3 }, { k: 'drain', per: 1.5 }, { k: 'stam', n: 40 }] },
-    { id: 'a_essence', row: 13, b: '독사', tier: '상급', n: '맹독의 정수', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'exploit', per: 2 }, { k: 'poison', n: 4 }, { k: 'grow', mul: 1.4 }] },
-    { id: 'a_plaguecloud', row: 13, b: '독사', tier: '상급', n: '맹독 안개', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'poison', n: 5 }, { k: 'st', s: 'weak', n: 2 }] },
+    { id: 'a_festerwound', row: 11, b: '독사', tier: '상급', n: '곪은 상처', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'poison', n: 6 }, { k: 'st', s: 'vuln', n: 3 }] },
+    { id: 'a_web', row: 11, b: '독사', tier: '상급', n: '독 그물', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 2 }, { k: 'poison', n: 4 }, { k: 'spread', per: 0.5 }] },
+    { id: 'a_wither', row: 12, b: '독사', tier: '상급', n: '시드는 독', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'poison', n: 7 }, { k: 'st', s: 'weak', n: 2 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'a_breath', row: 12, b: '독사', tier: '상급', n: '독 호흡', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'poison', n: 4 }, { k: 'drain', per: 1.5 }, { k: 'stam', n: 40 }] },
+    { id: 'a_essence', row: 13, b: '독사', tier: '상급', n: '맹독의 정수', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'exploit', per: 2 }, { k: 'poison', n: 5 }, { k: 'grow', mul: 1.4 }] },
+    { id: 'a_plaguecloud', row: 13, b: '독사', tier: '상급', n: '맹독 안개', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'poison', n: 6 }, { k: 'st', s: 'weak', n: 2 }] },
     // 격발: 독을 심고 터뜨려 큰 적을 무너뜨린다. 거구·강타에 강하고 무리에 약하다
-    { id: 'a_plant', row: 1, b: '격발', tier: '하급', n: '독 심기', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'poison', n: 6 }] },
+    { id: 'a_plant', row: 1, b: '격발', tier: '하급', n: '독 심기', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'poison', n: 7 }] },
     { id: 'a_burst', row: 1, b: '격발', tier: '하급', n: '독 격발', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'burst', pre: 2, mul: 2.5, brkPer: 3 }, { k: 'bigx', mul: 2 }] },
     { id: 'a_pop', row: 2, b: '격발', tier: '하급', n: '독침 파열', tgt: 'melee', time: 'fast', cd: 9, fx: [{ k: 'burst', pre: 4, top: 2, mul: 2.5, brkPer: 3 }] },
-    { id: 'a_finish', row: 2, b: '격발', tier: '하급', n: '마무리 찌르기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'lowx', hp: 0.3, mul: 2 }, { k: 'bigx', mul: 2 }] },
-    { id: 'a_brkneedle', row: 3, b: '격발', tier: '하급', n: '붕괴 독침', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'poison', n: 2 }, { k: 'brk', n: 59 }] },
-    { id: 'a_pouch', row: 3, b: '격발', tier: '하급', n: '독 바르기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'poison', n: 5 }] },
-    { id: 'a_deepplant', row: 4, b: '격발', tier: '하급', n: '심층 주입', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'poison', n: 7 }] },
-    { id: 'a_burststab', row: 4, b: '격발', tier: '하급', n: '터뜨리는 일격', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 10 }, { k: 'burst', top: 3, mul: 3, brkPer: 3 }, { k: 'bigx', mul: 2 }] },
-    { id: 'a_rend', row: 5, b: '격발', tier: '하급', n: '갈라 터뜨리기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 2 }, { k: 'exploit', per: 5 }] },
-    { id: 'a_crumble', row: 5, b: '격발', tier: '하급', n: '부식독', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 3 }, { k: 'brkPer', per: 25 }] },
-    { id: 'a_cutoff', row: 6, b: '격발', tier: '하급', n: '끊어 내기', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 24 }, { k: 'cutx', brk: 91 }, { k: 'bigx', mul: 2 }] },
-    { id: 'a_expose', row: 6, b: '격발', tier: '하급', n: '약점 드러내기', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'vuln', n: 3 }] },
+    { id: 'a_finish', row: 2, b: '격발', tier: '하급', n: '마무리 찌르기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'lowx', hp: 0.3, mul: 2 }, { k: 'bigx', mul: 2 }] },
+    { id: 'a_brkneedle', row: 3, b: '격발', tier: '하급', n: '붕괴 독침', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'poison', n: 2 }, { k: 'brk', n: 71 }] },
+    { id: 'a_pouch', row: 3, b: '격발', tier: '하급', n: '독 바르기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'poison', n: 6 }] },
+    { id: 'a_deepplant', row: 4, b: '격발', tier: '하급', n: '심층 주입', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'poison', n: 8 }] },
+    { id: 'a_burststab', row: 4, b: '격발', tier: '하급', n: '터뜨리는 일격', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 12 }, { k: 'burst', top: 3, mul: 3, brkPer: 3 }, { k: 'bigx', mul: 2 }] },
+    { id: 'a_rend', row: 5, b: '격발', tier: '하급', n: '갈라 터뜨리기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 2 }, { k: 'exploit', per: 6 }] },
+    { id: 'a_crumble', row: 5, b: '격발', tier: '하급', n: '부식독', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 5 }, { k: 'brkPer', per: 25 }] },
+    { id: 'a_cutoff', row: 6, b: '격발', tier: '하급', n: '끊어 내기', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 27 }, { k: 'cutx', brk: 91 }, { k: 'bigx', mul: 2 }] },
+    { id: 'a_expose', row: 6, b: '격발', tier: '하급', n: '약점 드러내기', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'vuln', n: 3 }] },
     { id: 'a_boil', row: 7, b: '격발', tier: '중급', n: '끓는 피', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'burst', pre: 2, mul: 2, keep: 0.5, brkPer: 4 }] },
     { id: 'a_chain', row: 7, b: '격발', tier: '중급', n: '연쇄 격발', tgt: 'melee', time: 'normal', cd: 7, killRecharge: 1, fx: [{ k: 'burst', pre: 3, mul: 2, brkPer: 6 }] },
     { id: 'a_gash', row: 8, b: '격발', tier: '중급', n: '상처 벌리기', tgt: 'melee', time: 'normal', cd: 9, fx: [{ k: 'st', s: 'vuln', n: 5 }, { k: 'burst', pre: 3, mul: 2, brkPer: 3 }] },
-    { id: 'a_vitalburst', row: 8, b: '격발', tier: '중급', n: '급소 터뜨리기', tgt: 'melee', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 9 }, { k: 'burst', pre: 2, mul: 2, brkPer: 3 }, { k: 'bigx', mul: 2 }] },
+    { id: 'a_vitalburst', row: 8, b: '격발', tier: '중급', n: '급소 터뜨리기', tgt: 'melee', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 11 }, { k: 'burst', pre: 2, mul: 2, brkPer: 3 }, { k: 'bigx', mul: 2 }] },
     { id: 'a_deepburst', row: 9, b: '격발', tier: '중급', n: '깊은 격발', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'burst', pre: 2, mul: 3.5, brkPer: 6 }, { k: 'bigx', mul: 2 }] },
-    { id: 'a_hunt', row: 9, b: '격발', tier: '중급', n: '독 사냥', tgt: 'melee', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 7 }, { k: 'exploit', per: 3.5 }, { k: 'lowx', hp: 0.3, mul: 2 }, { k: 'bigx', mul: 2 }] },
+    { id: 'a_hunt', row: 9, b: '격발', tier: '중급', n: '독 사냥', tgt: 'melee', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 9 }, { k: 'exploit', per: 3.5 }, { k: 'lowx', hp: 0.3, mul: 2 }, { k: 'bigx', mul: 2 }] },
     { id: 'a_brkburst', row: 10, b: '격발', tier: '중급', n: '붕괴 격발', tgt: 'melee', time: 'normal', cd: 10, fx: [{ k: 'burst', pre: 5, mul: 1.5, brkPer: 8 }] },
-    { id: 'a_reap', row: 10, b: '격발', tier: '중급', n: '거두기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'lowx', hp: 0.35, mul: 2 }, { k: 'bigx', mul: 2 }] },
-    { id: 'a_fuse', row: 11, b: '격발', tier: '상급', n: '붕괴 뇌관', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'poison', n: 3 }, { k: 'brk', n: 61 }, { k: 'cutx', brk: 70 }] },
-    { id: 'a_verdict', row: 11, b: '격발', tier: '상급', n: '집행의 독', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 4 }, { k: 'exploit', per: 2.5 }, { k: 'brokenx', mul: 1.6 }, { k: 'bigx', mul: 3 }] },
+    { id: 'a_reap', row: 10, b: '격발', tier: '중급', n: '거두기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 17 }, { k: 'lowx', hp: 0.35, mul: 2 }, { k: 'bigx', mul: 2 }] },
+    { id: 'a_fuse', row: 11, b: '격발', tier: '상급', n: '붕괴 뇌관', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'poison', n: 3 }, { k: 'brk', n: 71 }, { k: 'cutx', brk: 70 }] },
+    { id: 'a_verdict', row: 11, b: '격발', tier: '상급', n: '집행의 독', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 5 }, { k: 'exploit', per: 2.5 }, { k: 'brokenx', mul: 1.6 }, { k: 'bigx', mul: 3 }] },
     { id: 'a_wick', row: 12, b: '격발', tier: '상급', n: '연쇄 도화선', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'burst', pre: 3, mul: 2, brkPer: 6 }, { k: 'bigx', mul: 2 }] },
     { id: 'a_gallows', row: 12, b: '격발', tier: '상급', n: '독 처형', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'poison', n: 4 }, { k: 'dmg', n: 4 }, { k: 'lowx', hp: 0.35, mul: 2.5 }] },
     { id: 'a_cataclysm', row: 13, b: '격발', tier: '상급', n: '종말의 격발', tgt: 'melee', time: 'normal', cd: 9, fx: [{ k: 'burst', pre: 2, mul: 2.6, brkPer: 8 }, { k: 'bigx', mul: 3 }] },
     { id: 'a_finale', row: 13, b: '격발', tier: '상급', n: '숨통 터뜨리기', tgt: 'melee', time: 'normal', cd: 10, fx: [{ k: 'burst', pre: 3, mul: 1.35, brkPer: 4 }, { k: 'execute', hp: 0.3, mul: 3.2 }, { k: 'bigx', mul: 3 }] },
     // 그림자: 공격을 흘려 낸 틈을 찌르고 후열에 닿는다. 후열에 강하고 무리·거구에 약하다
-    { id: 'a_shadow', row: 1, b: '그림자', tier: '하급', n: '그림자 찌르기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 25 }] },
-    { id: 'a_deflect', row: 1, b: '그림자', tier: '하급', n: '흘려 베기', tgt: 'pick', time: 'normal', cd: 9, fx: [{ k: 'parry', red: 0.7 }, { k: 'dmg', n: 9 }, { k: 'onParry', dmg: 14 }] },
-    { id: 'a_trip', row: 2, b: '그림자', tier: '하급', n: '발 걸기', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 37 }] },
-    { id: 'a_step', row: 2, b: '그림자', tier: '하급', n: '그림자 밟기', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 24 }] },
-    { id: 'a_check', row: 3, b: '그림자', tier: '하급', n: '견제 찌르기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 20 }, { k: 'st', s: 'weak', n: 3 }] },
+    { id: 'a_shadow', row: 1, b: '그림자', tier: '하급', n: '그림자 찌르기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 28 }] },
+    { id: 'a_deflect', row: 1, b: '그림자', tier: '하급', n: '흘려 베기', tgt: 'pick', time: 'normal', cd: 9, fx: [{ k: 'parry', red: 0.7 }, { k: 'dmg', n: 12 }, { k: 'onParry', dmg: 14 }] },
+    { id: 'a_trip', row: 2, b: '그림자', tier: '하급', n: '발 걸기', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 41 }] },
+    { id: 'a_step', row: 2, b: '그림자', tier: '하급', n: '그림자 밟기', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 27 }] },
+    { id: 'a_check', row: 3, b: '그림자', tier: '하급', n: '견제 찌르기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 23 }, { k: 'st', s: 'weak', n: 3 }] },
     { id: 'a_backstep', row: 3, b: '그림자', tier: '하급', n: '흘리며 물러서기', tgt: 'pick', time: 'fast', cd: 8, fx: [{ k: 'parry', red: 0.5 }, { k: 'onParry', brk: 138 }] },
-    { id: 'a_ambush', row: 4, b: '그림자', tier: '하급', n: '후열 기습', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 21 }, { k: 'brk', n: 26 }] },
+    { id: 'a_ambush', row: 4, b: '그림자', tier: '하급', n: '후열 기습', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 23 }, { k: 'brk', n: 29 }] },
     { id: 'a_smoke', row: 4, b: '그림자', tier: '하급', n: '연막', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'parryBuff', red: 0.3, stam: 45, times: 2 }, { k: 'hasten', n: 1, on: 'parry' }] },
     { id: 'a_after', row: 5, b: '그림자', tier: '하급', n: '잔상', tgt: 'pick', time: 'fast', cd: 9, fx: [{ k: 'parry', red: 0.7 }, { k: 'onParry', dmg: 20, brk: 9 }] },
     { id: 'a_aim', row: 5, b: '그림자', tier: '하급', n: '칼끝 겨누기', tgt: 'self', time: 'fast', cd: 3, fx: [{ k: 'parryBuff', red: 0, dmg: 19 }] },
-    { id: 'a_mark', row: 6, b: '그림자', tier: '하급', n: '그림자 표식', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'vuln', n: 4 }] },
+    { id: 'a_mark', row: 6, b: '그림자', tier: '하급', n: '그림자 표식', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'vuln', n: 4 }] },
     { id: 'a_shade', row: 6, b: '그림자', tier: '하급', n: '그늘 숨기', tgt: 'self', time: 'fast', cd: 3, fx: [{ k: 'st', s: 'protect', n: 2 }, { k: 'parryBuff', red: 0, dmg: 14 }] }, // 10월 18일 0.8.0 5단계(원거리 초안 4-2 · 8절 결정 13): 🔄(흘려 내면) 뺌(대응 +1과 두 겹)
-    { id: 'a_gap', row: 7, b: '그림자', tier: '중급', n: '빈틈 노리기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 19 }, { k: 'brk', n: 28 }, { k: 'bigx', mul: 1.8 }] },
+    { id: 'a_gap', row: 7, b: '그림자', tier: '중급', n: '빈틈 노리기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 21 }, { k: 'brk', n: 32 }, { k: 'bigx', mul: 1.8 }] },
     { id: 'a_venomguard', row: 7, b: '그림자', tier: '중급', n: '독 묻은 칼막이', tgt: 'pick', time: 'normal', cd: 7, fx: [{ k: 'parry', red: 0.6 }, { k: 'onParry', poison: 7 }] },
-    { id: 'a_pierce', row: 8, b: '그림자', tier: '중급', n: '급소 꿰기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 18 }, { k: 'brokenx', mul: 2 }, { k: 'bigx', mul: 1.8 }] },
-    { id: 'a_strangle', row: 8, b: '그림자', tier: '중급', n: '목 조르기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 26 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'a_pierce', row: 8, b: '그림자', tier: '중급', n: '급소 꿰기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 20 }, { k: 'brokenx', mul: 2 }, { k: 'bigx', mul: 1.8 }] },
+    { id: 'a_strangle', row: 8, b: '그림자', tier: '중급', n: '목 조르기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 29 }, { k: 'st', s: 'chill', n: 2 }] },
     { id: 'a_counter', row: 9, b: '그림자', tier: '중급', n: '되받아치기', tgt: 'pick', time: 'normal', cd: 6, fx: [{ k: 'parry', red: 0.8 }, { k: 'onParry', dmg: 23, brk: 10 }, { k: 'hasten', n: 1, on: 'parry' }] },
-    { id: 'a_rush', row: 9, b: '그림자', tier: '중급', n: '그림자 연타', tgt: 'melee', time: 'normal', cd: 6, hits: 3, fx: [{ k: 'dmg', n: 10 }, { k: 'brk', n: 3 }] },
-    { id: 'a_darkstrike', row: 10, b: '그림자', tier: '중급', n: '어둠 일격', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 26 }, { k: 'brk', n: 44 }, { k: 'bigx', mul: 1.8 }] },
+    { id: 'a_rush', row: 9, b: '그림자', tier: '중급', n: '그림자 연타', tgt: 'melee', time: 'normal', cd: 6, hits: 3, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 3 }] },
+    { id: 'a_darkstrike', row: 10, b: '그림자', tier: '중급', n: '어둠 일격', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 29 }, { k: 'brk', n: 48 }, { k: 'bigx', mul: 1.8 }] },
     { id: 'a_parrydance', row: 10, b: '그림자', tier: '중급', n: '흘림의 춤', tgt: 'self', time: 'fast', cd: 8, fx: [{ k: 'parryBuff', red: 0.2, stam: 30, times: 2, dmg: 7 }, { k: 'hasten', n: 2, on: 'parry' }] },
-    { id: 'a_chase', row: 11, b: '그림자', tier: '상급', n: '그림자 추격', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 19 }, { k: 'brk', n: 28 }, { k: 'st', s: 'vuln', n: 2 }, { k: 'bigx', mul: 1.8 }] },
+    { id: 'a_chase', row: 11, b: '그림자', tier: '상급', n: '그림자 추격', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 21 }, { k: 'brk', n: 32 }, { k: 'st', s: 'vuln', n: 2 }, { k: 'bigx', mul: 1.8 }] },
     { id: 'a_venomriposte', row: 11, b: '그림자', tier: '상급', n: '독니 되치기', tgt: 'pick', time: 'normal', cd: 7, fx: [{ k: 'parry', red: 0.8 }, { k: 'onParry', dmg: 14, poison: 4, brk: 5 }] },
-    { id: 'a_breach', row: 12, b: '그림자', tier: '상급', n: '틈새 베기', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 21 }, { k: 'brokenx', mul: 2.2 }, { k: 'bigx', mul: 1.8 }] },
+    { id: 'a_breach', row: 12, b: '그림자', tier: '상급', n: '틈새 베기', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 23 }, { k: 'brokenx', mul: 2.2 }, { k: 'bigx', mul: 1.8 }] },
     { id: 'a_reprisal', row: 12, b: '그림자', tier: '상급', n: '그림자 역습', tgt: 'pick', time: 'normal', cd: 6, fx: [{ k: 'parry', red: 0.8 }, { k: 'onParry', dmg: 24, brk: 12 }, { k: 'hasten', n: 1, on: 'parry' }] },
-    { id: 'a_umbra', row: 13, b: '그림자', tier: '상급', n: '죽음의 그림자', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 23 }, { k: 'brk', n: 31 }, { k: 'lowx', hp: 0.35, mul: 2 }, { k: 'bigx', mul: 1.8 }] },
-    { id: 'a_daggerrain', row: 13, b: '그림자', tier: '상급', n: '단검 소나기', tgt: 'ranged', time: 'normal', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 16 }, { k: 'brk', n: 13 }] },
+    { id: 'a_umbra', row: 13, b: '그림자', tier: '상급', n: '죽음의 그림자', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 26 }, { k: 'brk', n: 34 }, { k: 'lowx', hp: 0.35, mul: 2 }, { k: 'bigx', mul: 1.8 }] },
+    { id: 'a_daggerrain', row: 13, b: '그림자', tier: '상급', n: '단검 소나기', tgt: 'ranged', time: 'normal', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 18 }, { k: 'brk', n: 14 }] },
     /* ===== 0.8.0 M5-3 암살자 재설계(10월 20일 만든 사람 설계지 4판, nrk-private/제안/암살자-설계지-2026-10-20.md) =====
        직업 규칙은 그대로(중독 · 터뜨리기 · 흘리기 70% · 흘리기 준비). 새 상태는 승부수에만(숨음 · 분신). 공통 판정: 터뜨리기는 중독을 0으로(keep 없음), 흘려 베기의 반격은 기본 공격,
        추가로 생긴 공격은 추가 공격을 부르지 않음, 터뜨리기 배수는 가장 큰 하나만. 칸 설명은 한 줄(skBodyMk), 배수는 무엇의 몇 배인지. 숫자는 가설 — 값 띠 · 측정으로. 새 효과 키는 data/skillkit.js AS_BOUND · js/10 암살자 절 */
-    { id: 'a_dokkal', row: 1, b: '독사', tier: '하급', n: '독 바른 칼', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 18 }, { k: 'poison', n: 4 }] },
-    { id: 'a_dokan', row: 1, b: '독사', tier: '하급', n: '독안개', tgt: 'front', time: 'normal', cd: 4, fx: [{ k: 'poison', n: 5 }] },
+    { id: 'a_dokkal', row: 1, b: '독사', tier: '하급', n: '독 바른 칼', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 20 }, { k: 'poison', n: 4 }] },
+    { id: 'a_dokan', row: 1, b: '독사', tier: '하급', n: '독안개', tgt: 'front', time: 'normal', cd: 4, fx: [{ k: 'poison', n: 6 }] },
     { id: 'a_dokchim', row: 1, b: '독사', tier: '하급', n: '독침', tgt: 'self', time: 'normal', cd: 3, fx: [{ k: 'asNextPsn', n: 3, poison: 2, txt: '다음 기본 공격 3번에 중독 2' }] },
-    { id: 'a_godok', row: 4, b: '독사', tier: '하급', n: '고독', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'grow', mul: 2 }] },
-    { id: 'a_beonji', row: 4, b: '독사', tier: '하급', n: '독 번지기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 16 }, { k: 'spread', per: 0.5 }] },
-    { id: 'a_maengdok', row: 8, b: '독사', tier: '중급', n: '맹독', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'poison', n: 12 }, { k: 'asVirulent', txt: '라운드 끝 중독 10 이상이면 줄지 않고 +1' }] },
+    { id: 'a_godok', row: 4, b: '독사', tier: '하급', n: '고독', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 18 }, { k: 'grow', mul: 2 }] },
+    { id: 'a_beonji', row: 4, b: '독사', tier: '하급', n: '독 번지기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 20 }, { k: 'spread', per: 0.5 }] },
+    { id: 'a_maengdok', row: 8, b: '독사', tier: '중급', n: '맹독', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'poison', n: 14 }, { k: 'asVirulent', txt: '라운드 끝 중독 10 이상이면 줄지 않고 +1' }] },
     { id: 'a_yeokbyeong', row: 8, b: '독사', tier: '중급', n: '역병', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'asPlague', mul: 1.6, txt: '이번 전투: 쓰러진 적 중독의 1.6배가 다른 적에게 옮겨붙음' }] },
-    { id: 'a_gyeokpyo', row: 1, b: '격발', tier: '하급', n: '격발 표창', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 26 }, { k: 'burst', mul: 1, brkPer: 3 }] },
-    { id: 'a_gyeokjjil', row: 1, b: '격발', tier: '하급', n: '격발 찌르기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 18 }, { k: 'burst', mul: 1.5, brkPer: 3 }] },
-    { id: 'a_bangul', row: 1, b: '격발', tier: '하급', n: '독 한 방울', tgt: 'ranged', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 5 }, { k: 'poison', n: 3 }] },
-    { id: 'a_dokpyo', row: 4, b: '격발', tier: '하급', n: '독 표창', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'poison', n: 4 }, { k: 'asTwin', txt: '후열 하나에게 더' }] },
-    { id: 'a_dokssae', row: 4, b: '격발', tier: '하급', n: '독 쐐기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'poison', n: 7 }] },
-    { id: 'a_yeonswae', row: 8, b: '격발', tier: '중급', n: '연쇄 격발', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 42 }, { k: 'burst', mul: 1, brkPer: 4 }, { k: 'asChain', txt: '쓰러뜨리면 다시 쓸 수 있음' }] },
-    { id: 'a_gyeolsan', row: 8, b: '격발', tier: '중급', n: '독 결산', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 42 }, { k: 'burst', mul: 1, big: 2, brkPer: 4 }] },
+    { id: 'a_gyeokpyo', row: 1, b: '격발', tier: '하급', n: '격발 표창', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 30 }, { k: 'burst', mul: 1, brkPer: 3 }] },
+    { id: 'a_gyeokjjil', row: 1, b: '격발', tier: '하급', n: '격발 찌르기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 21 }, { k: 'burst', mul: 1.5, brkPer: 3 }] },
+    { id: 'a_bangul', row: 1, b: '격발', tier: '하급', n: '독 한 방울', tgt: 'ranged', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 6 }, { k: 'poison', n: 3 }] },
+    { id: 'a_dokpyo', row: 4, b: '격발', tier: '하급', n: '독 표창', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'poison', n: 5 }, { k: 'asTwin', txt: '후열 하나에게 더' }] },
+    { id: 'a_dokssae', row: 4, b: '격발', tier: '하급', n: '독 쐐기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'poison', n: 8 }] },
+    { id: 'a_yeonswae', row: 8, b: '격발', tier: '중급', n: '연쇄 격발', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 47 }, { k: 'burst', mul: 1, brkPer: 4 }, { k: 'asChain', txt: '쓰러뜨리면 다시 쓸 수 있음' }] },
+    { id: 'a_gyeolsan', row: 8, b: '격발', tier: '중급', n: '독 결산', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 47 }, { k: 'burst', mul: 1, big: 2, brkPer: 4 }] },
     { id: 'a_heulbe', row: 1, b: '그림자', tier: '하급', n: '흘려 베기', tgt: 'pick', time: 'normal', cd: 4, fx: [{ k: 'parry', red: 0.8 }, { k: 'asCounter', mul: 2.4, txt: '흘려 내면 기본 공격 ×2.4로 반격' }] },
-    { id: 'a_balbgi', row: 1, b: '그림자', tier: '하급', n: '그림자 밟기', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 35 }] },
+    { id: 'a_balbgi', row: 1, b: '그림자', tier: '하급', n: '그림자 밟기', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 39 }] },
     { id: 'a_gyeonu', row: 1, b: '그림자', tier: '하급', n: '칼끝 겨누기', tgt: 'self', time: 'normal', cd: 3, fx: [{ k: 'parryBuff', red: 0.2, dmg: 22 }] },
     { id: 'a_heulkal', row: 4, b: '그림자', tier: '하급', n: '흘린 칼', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'asFlowBlade', mul: 1.7, txt: '이번 전투: 흘려 낸 다음 차례 첫 기본 공격 ×1.7' }] },
-    { id: 'a_hugyeol', row: 4, b: '그림자', tier: '하급', n: '후열 기습', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 27 }, { k: 'asBackx', mul: 1.5 }] },
+    { id: 'a_hugyeol', row: 4, b: '그림자', tier: '하급', n: '후열 기습', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 30 }, { k: 'asBackx', mul: 1.5 }] },
     { id: 'a_kalchum', row: 8, b: '그림자', tier: '중급', n: '그림자 칼춤', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'asDance', mul: 1.6, txt: '이번 전투: 흘려 낼 때마다 기본 공격 ×1.6 한 번 더' }] },
-    { id: 'a_cheohyeong', row: 8, b: '그림자', tier: '중급', n: '그림자 처형', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 49 }, { k: 'asBackx', mul: 2, low: 0.35 }] },
+    { id: 'a_cheohyeong', row: 8, b: '그림자', tier: '중급', n: '그림자 처형', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 53 }, { k: 'asBackx', mul: 2, low: 0.35 }] },
     /* 경계 칸(입구 · 둘째 · 3고리 둘)은 [Claude 초안]: 공격 2 · 강화/방어 2 */
-    { id: 'a_pieo', row: 4, b: '독화', tier: '하급', n: '피어나는 독', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'burst', pre: 4, mul: 1, brkPer: 3 }] },
+    { id: 'a_pieo', row: 4, b: '독화', tier: '하급', n: '피어나는 독', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 15 }, { k: 'burst', pre: 4, mul: 1, brkPer: 3 }] },
     { id: 'a_kkotip', row: 5, b: '독화', tier: '하급', n: '꽃잎 모으기', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'asNextBurst', mul: 2.7, txt: '다음 터뜨리기 피해 2.7배' }] },
-    { id: 'a_heunal', row: 8, b: '독화', tier: '중급', n: '흩날리는 꽃', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 29 }, { k: 'burst', mul: 1, brkPer: 3 }] },
+    { id: 'a_heunal', row: 8, b: '독화', tier: '중급', n: '흩날리는 꽃', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 33 }, { k: 'burst', mul: 1, brkPer: 3 }] },
     { id: 'a_jangmak', row: 8, b: '독화', tier: '중급', n: '독의 장막', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'asVeil', n: 3, poison: 5, txt: '3차례 나를 친 적에게 중독 5' }] },
-    { id: 'a_geuneul', row: 4, b: '암영', tier: '하급', n: '그늘 찌르기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 21 }, { k: 'exploit', per: 3 }] },
+    { id: 'a_geuneul', row: 4, b: '암영', tier: '하급', n: '그늘 찌르기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 25 }, { k: 'exploit', per: 3 }] },
     { id: 'a_sumjuk', row: 5, b: '암영', tier: '하급', n: '숨죽인 칼', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'parryBuff', red: 0.3, times: 2, dmg: 17 }] },
-    { id: 'a_kkweogi', row: 8, b: '암영', tier: '중급', n: '그림자 꿰기', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 44 }, { k: 'brokenx', mul: 2 }] },
+    { id: 'a_kkweogi', row: 8, b: '암영', tier: '중급', n: '그림자 꿰기', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 49 }, { k: 'brokenx', mul: 2 }] },
     { id: 'a_yeonmak', row: 8, b: '암영', tier: '중급', n: '연막', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'evade', n: 3 }, { k: 'st', s: 'protect', n: 18 }] },
-    { id: 'a_janjjil', row: 4, b: '잔영', tier: '하급', n: '잔영 찌르기', tgt: 'melee', time: 'normal', cd: 5, hits: 2, fx: [{ k: 'dmg', n: 8 }, { k: 'poison', n: 2 }] },
+    { id: 'a_janjjil', row: 4, b: '잔영', tier: '하급', n: '잔영 찌르기', tgt: 'melee', time: 'normal', cd: 5, hits: 2, fx: [{ k: 'dmg', n: 10 }, { k: 'poison', n: 2 }] },
     { id: 'a_geurimdok', row: 5, b: '잔영', tier: '하급', n: '독 묻힌 그림자', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'asNextPsn', n: 3, poison: 3, txt: '다음 기본 공격 3번에 중독 3' }] },
-    { id: 'a_pagodeul', row: 8, b: '잔영', tier: '중급', n: '파고드는 그림자', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 48 }, { k: 'grow', mul: 1.5 }] },
+    { id: 'a_pagodeul', row: 8, b: '잔영', tier: '중급', n: '파고드는 그림자', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 54 }, { k: 'grow', mul: 1.5 }] },
     { id: 'a_heurit', row: 8, b: '잔영', tier: '중급', n: '흐릿한 몸', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'parryBuff', red: 0.2, stam: 45, times: 2, dmg: 24 }] },
     /* 경계 승부수(만든 사람 문장 · 대사 그대로) */
     { id: 'a_mandok', row: 10, b: '독화', tier: '중급', n: '만독개화', tgt: 'ranged', time: 'normal', cd: 9, line: '「피어나라. 한 송이도 남김없이 아름다울 기생화를.」', cut: 'arcane', pay: '쓰는 즉시 지금 생명력에서 최대 생명력의 15%를 잃는다(최대치는 그대로). 지금 생명력이 최대치의 15% 이하면 쓸 수 없다.', fx: [{ k: 'asBloom', mul: 2.9, txt: '모든 적의 중독을 적 하나에게 모아 터뜨린다(그 터뜨리기 피해 2.9배).' }] },
@@ -138,108 +138,108 @@ const SKILLS2 = {
   ],
   warden: [
     // 시작 스킬: 트리 밖. 어느 갈래에도 치우치지 않는 공격 하나(주 행동), 방어 하나(빠른 행동). 보호막은 쓰지 않는다 (10월 3일 초안)
-    { id: 'w_bash', b: '시작', tier: '시작', start: 1, n: '방패 치기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 36 }] },
+    { id: 'w_bash', b: '시작', tier: '시작', start: 1, n: '방패 치기', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 10 }, { k: 'brk', n: 29 }] },
     { id: 'w_brace', b: '시작', tier: '시작', start: 1, n: '굳히기', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'st', s: 'protect', n: 4 }, { k: 'stam', n: 44 }] },
     // 성벽: 막으며 보호막을 쌓고, 쌓인 보호막을 소모해 공격합니다. 왼쪽 기둥은 버티기(보호막 · 가시 · 보호막 비례 피해), 오른쪽은 태우기(보호막을 모아 태워 친다). 장기전 · 폭발에 강하고 지원에 약하다
-    { id: 'w_raise', row: 1, b: '성벽', tier: '하급', n: '방패 세우기', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 22 }] },
-    { id: 'w_shove', row: 1, b: '전열 장악', tier: '하급', n: '방패 밀치기', tgt: 'front', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'ward', n: 10 }] }, /* M5-1(10월 20일 만든 사람 설계지): 전열 장악 2고리: 전열 피해 + 보호막 */
-    { id: 'w_hold', row: 2, b: '성벽', tier: '하급', n: '막고 치기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 17 }, { k: 'wardDmg', per: 0.25 }, { k: 'bigx', mul: 1.5 }] }, // 10월 4일: 성벽 강함 거구
-    { id: 'w_flare', row: 2, b: '성벽', tier: '하급', n: '보호막 터뜨리기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'wardBurn', mul: 2.6, max: 8 }, { k: 'brk', n: 3 }, { k: 'bigx', mul: 1.5 }] }, /* M5-1 만든 사람 답: 공성추 2고리를 조금 약하게(태운 1마다 ×3 → ×2.6) */ // 10월 4일: 성벽 강함 거구
-    { id: 'w_stand', row: 3, b: '성벽', tier: '하급', n: '버티기', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'wardFill', to: 0.6 }, { k: 'st', s: 'protect', n: 2 }] },
-    { id: 'w_kindle', row: 3, b: '성벽', tier: '하급', n: '작열 방벽', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 21 }, { k: 'hasten', n: 1, on: 'use', when: 'ward<1' }] }, // 0.8.0 5단계(10월 17일 만든 사람 결정 4): 🔄는 보호막이 0일 때 쓴 경우만
+    { id: 'w_raise', row: 1, b: '성벽', tier: '하급', n: '방패 세우기', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 17 }] },
+    { id: 'w_shove', row: 1, b: '전열 장악', tier: '하급', n: '방패 밀치기', tgt: 'front', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 8 }, { k: 'ward', n: 8 }] }, /* M5-1(10월 20일 만든 사람 설계지): 전열 장악 2고리: 전열 피해 + 보호막 */
+    { id: 'w_hold', row: 2, b: '성벽', tier: '하급', n: '막고 치기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'wardDmg', per: 0.25 }, { k: 'bigx', mul: 1.5 }] }, // 10월 4일: 성벽 강함 거구
+    { id: 'w_flare', row: 2, b: '성벽', tier: '하급', n: '보호막 터뜨리기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'wardBurn', mul: 2.6, max: 8 }, { k: 'brk', n: 2 }, { k: 'bigx', mul: 1.5 }] }, /* M5-1 만든 사람 답: 공성추 2고리를 조금 약하게(태운 1마다 ×3 → ×2.6) */ // 10월 4일: 성벽 강함 거구
+    { id: 'w_stand', row: 3, b: '성벽', tier: '하급', n: '버티기', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'wardFill', to: 0.45 }, { k: 'st', s: 'protect', n: 2 }] },
+    { id: 'w_kindle', row: 3, b: '성벽', tier: '하급', n: '작열 방벽', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 16 }, { k: 'hasten', n: 1, on: 'use', when: 'ward<1' }] }, // 0.8.0 5단계(10월 17일 만든 사람 결정 4): 🔄는 보호막이 0일 때 쓴 경우만
     { id: 'w_spikes', row: 4, b: '성벽', tier: '하급', n: '가시 방패', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'thorn', times: 4, dmg: 6 }] },
     { id: 'w_blaze', row: 4, b: '성벽', tier: '하급', n: '불꽃 방패', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'wardBurn', mul: 3, max: 14 }, { k: 'st', s: 'vuln', n: 1 }] }, // 0.8.0 5단계(10월 17일 검토 1-3): 태우기 상한 9 → 14. 보호막 터뜨리기(유산 2, 최대 8)보다 볼록하게
-    { id: 'w_press', row: 5, b: '성벽', tier: '하급', n: '밀어붙이기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 34 }, { k: 'wardDmg', per: 0.5 }, { k: 'bigx', mul: 1.5 }] }, // 10월 4일: 성벽 강함 거구
-    { id: 'w_coat', row: 5, b: '성벽', tier: '하급', n: '방벽 돌파', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'ward', n: 15 }] },
-    { id: 'w_rampart', row: 6, b: '성벽', tier: '하급', n: '철벽', tgt: 'self', time: 'normal', cd: 8, fx: [{ k: 'ward', n: 37 }, { k: 'st', s: 'protect', n: 3 }] }, /* M5-1 값 띠 */
+    { id: 'w_press', row: 5, b: '성벽', tier: '하급', n: '밀어붙이기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 26 }, { k: 'wardDmg', per: 0.5 }, { k: 'bigx', mul: 1.5 }] }, // 10월 4일: 성벽 강함 거구
+    { id: 'w_coat', row: 5, b: '성벽', tier: '하급', n: '방벽 돌파', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 10 }, { k: 'ward', n: 11 }] },
+    { id: 'w_rampart', row: 6, b: '성벽', tier: '하급', n: '철벽', tgt: 'self', time: 'normal', cd: 8, fx: [{ k: 'ward', n: 28 }, { k: 'st', s: 'protect', n: 3 }] }, /* M5-1 값 띠 */
     { id: 'w_burst', row: 6, b: '성벽', tier: '하급', n: '보호막 폭발', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'wardBurn', mul: 2.5, max: 8 }] },
-    { id: 'w_crush', row: 7, b: '성벽', tier: '중급', n: '짓누르는 방패', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 18 }, { k: 'wardDmg', per: 0.5 }, { k: 'bigx', mul: 1.5 }] }, // 10월 4일: 성벽 강함 거구
-    { id: 'w_molten', row: 7, b: '성벽', tier: '중급', n: '쇳물 방패', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'wardBurn', mul: 3, max: 12 }, { k: 'brk', n: 25 }] },
-    { id: 'w_armor', row: 8, b: '성벽', tier: '중급', n: '가시 갑주', tgt: 'self', time: 'fast', cd: 8, fx: [{ k: 'thorn', times: 5, dmg: 5 }, { k: 'ward', n: 18 }] }, /* M5-1 값 띠 */
+    { id: 'w_crush', row: 7, b: '성벽', tier: '중급', n: '짓누르는 방패', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 13 }, { k: 'wardDmg', per: 0.5 }, { k: 'bigx', mul: 1.5 }] }, // 10월 4일: 성벽 강함 거구
+    { id: 'w_molten', row: 7, b: '성벽', tier: '중급', n: '쇳물 방패', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'wardBurn', mul: 3, max: 12 }, { k: 'brk', n: 19 }] },
+    { id: 'w_armor', row: 8, b: '성벽', tier: '중급', n: '가시 갑주', tgt: 'self', time: 'fast', cd: 8, fx: [{ k: 'thorn', times: 5, dmg: 4 }, { k: 'ward', n: 15 }] }, /* M5-1 값 띠 */
     { id: 'w_rebuild', row: 8, b: '성벽', tier: '중급', n: '다시 세우는 벽', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'wardFill', to: 0.42 }, { k: 'hasten', n: 1, on: 'use' }] }, /* M5-1 맞추기 1번: 공성추가 1챕터에서 너무 셈(88%), 50% → 42% */
-    { id: 'w_beyond', row: 9, b: '성벽', tier: '중급', n: '벽 너머의 일격', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 20 }, { k: 'brk', n: 37 }, { k: 'wardDmg', per: 0.5 }, { k: 'bigx', mul: 1.5 }] }, // 10월 4일: 성벽 강함 거구
-    { id: 'w_breach', row: 9, b: '성벽', tier: '중급', n: '성벽 부수기', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 5 }, { k: 'wardBurn', mul: 2, max: 16 }, { k: 'brk', n: 41 }] }, /* M5-1 값 띠 */
-    { id: 'w_citadel', row: 10, b: '성벽', tier: '중급', n: '철옹성', tgt: 'self', time: 'slow', cd: 10, once: 1, keep: ['wardFill'], fx: [{ k: 'wardFill' }, { k: 'st', s: 'protect', n: 1 }, { k: 'thorn', times: 2, dmg: 5 }] }, /* M5-1 값 띠 */
-    { id: 'w_last', row: 10, b: '성벽', tier: '중급', n: '최후의 성벽', tgt: 'melee', time: 'slow', cd: 10, exc: '만든 사람 결정(10월 5일): 10줄 마무리, 전투당 0.1~0.6번만 써 모델(2번)보다 덜 쓴다. 태운 1마다 1.5 · 40% 이하 ×1.75 그대로', fx: [{ k: 'wardBurn', mul: 1.5 }, { k: 'lowx', hp: 0.4, mul: 1.75 }, { k: 'brk', n: 17 }] }, // 10월 4일: 보호막을 모두 태우는 마무리 (성벽 오른쪽 기둥의 보스전 이길 수단). 만든 사람 결정으로 쓰기를 완화하고(생명력 30% → 40% 이하) 한 방을 낮췄다(×2 · 피해 2 → ×1.75 · 피해 1.5): 보스 63%, 줄 예산 안이라 예외 표시를 뗐다
+    { id: 'w_beyond', row: 9, b: '성벽', tier: '중급', n: '벽 너머의 일격', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 26 }, { k: 'wardDmg', per: 0.5 }, { k: 'bigx', mul: 1.5 }] }, // 10월 4일: 성벽 강함 거구
+    { id: 'w_breach', row: 9, b: '성벽', tier: '중급', n: '성벽 부수기', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 4 }, { k: 'wardBurn', mul: 1.7, max: 16 }, { k: 'brk', n: 34 }] }, /* M5-1 값 띠 */
+    { id: 'w_citadel', row: 10, b: '성벽', tier: '중급', n: '철옹성', tgt: 'self', time: 'slow', cd: 10, once: 1, keep: ['wardFill'], fx: [{ k: 'wardFill', to: 0.8 }, { k: 'st', s: 'protect', n: 1 }, { k: 'thorn', times: 2, dmg: 5 }] }, /* M5-1 값 띠 */
+    { id: 'w_last', row: 10, b: '성벽', tier: '중급', n: '최후의 성벽', tgt: 'melee', time: 'slow', cd: 10, exc: '만든 사람 결정(10월 5일): 10줄 마무리, 전투당 0.1~0.6번만 써 모델(2번)보다 덜 쓴다. 태운 1마다 1.5 · 40% 이하 ×1.75 그대로', fx: [{ k: 'wardBurn', mul: 1.5 }, { k: 'lowx', hp: 0.4, mul: 1.75 }, { k: 'brk', n: 13 }] }, // 10월 4일: 보호막을 모두 태우는 마무리 (성벽 오른쪽 기둥의 보스전 이길 수단). 만든 사람 결정으로 쓰기를 완화하고(생명력 30% → 40% 이하) 한 방을 낮췄다(×2 · 피해 2 → ×1.75 · 피해 1.5): 보스 63%, 줄 예산 안이라 예외 표시를 뗐다
     // 상급 (3챕터, 11~13줄 · 10월 8일): 왼쪽 기둥은 버티기를 완성(얻으면서 비례로 치는 칸 · 상한 채우기 · 가시 · 큰 비례 일격), 오른쪽은 태우기를 완성(태우고 곧바로 다시 두르는 칸 · 큰 태우기 · 마무리)
-    { id: 'w_bulwarkhit', row: 11, b: '성벽', tier: '상급', n: '보루 일격', tgt: 'melee', time: 'fast', cd: 5, keep: ['ward'], fx: [{ k: 'dmg', n: 7 }, { k: 'ward', n: 14 }, { k: 'wardDmg', per: 0.25 }, { k: 'bigx', mul: 1.5 }] },
-    { id: 'w_forge', row: 11, b: '성벽', tier: '상급', n: '달군 방벽', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'wardBurn', mul: 2.5, max: 9 }, { k: 'ward', n: 12 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 'w_bulwarkhit', row: 11, b: '성벽', tier: '상급', n: '보루 일격', tgt: 'melee', time: 'fast', cd: 5, keep: ['ward'], fx: [{ k: 'dmg', n: 6 }, { k: 'ward', n: 10 }, { k: 'wardDmg', per: 0.25 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 'w_forge', row: 11, b: '성벽', tier: '상급', n: '달군 방벽', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'wardBurn', mul: 2, max: 9 }, { k: 'ward', n: 10 }, { k: 'bigx', mul: 1.5 }] },
     { id: 'w_unyield', row: 12, b: '성벽', tier: '상급', n: '불굴의 장벽', tgt: 'self', time: 'fast', cd: 8, fx: [{ k: 'wardFill', to: 0.5 }, { k: 'thorn', times: 2, dmg: 4 }] },
-    { id: 'w_scald', row: 12, b: '성벽', tier: '상급', n: '용광 방벽', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'ward', n: 32 }, { k: 'hasten', n: 1, on: 'use' }] },
-    { id: 'w_eternal', row: 13, b: '성벽', tier: '상급', n: '불멸의 성채', tgt: 'melee', time: 'normal', cd: 8, keep: ['ward', 'st'], fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 23 }, { k: 'ward', n: 12 }, { k: 'st', s: 'protect', n: 1 }, { k: 'wardDmg', per: 0.25 }, { k: 'bigx', mul: 1.5 }] },
-    { id: 'w_cinder', row: 13, b: '성벽', tier: '상급', n: '재가 되는 성벽', tgt: 'melee', time: 'slow', cd: 10, keep: ['ward'], fx: [{ k: 'wardBurn', mul: 1.5, max: 18 }, { k: 'ward', n: 6 }, { k: 'brk', n: 8 }, { k: 'lowx', hp: 0.4, mul: 1.5 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 'w_scald', row: 12, b: '성벽', tier: '상급', n: '용광 방벽', tgt: 'self', time: 'fast', cd: 6, fx: [{ k: 'ward', n: 24 }, { k: 'hasten', n: 1, on: 'use' }] },
+    { id: 'w_eternal', row: 13, b: '성벽', tier: '상급', n: '불멸의 성채', tgt: 'melee', time: 'normal', cd: 8, keep: ['ward', 'st'], fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 17 }, { k: 'ward', n: 9 }, { k: 'st', s: 'protect', n: 1 }, { k: 'wardDmg', per: 0.25 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 'w_cinder', row: 13, b: '성벽', tier: '상급', n: '재가 되는 성벽', tgt: 'melee', time: 'slow', cd: 10, keep: ['ward'], fx: [{ k: 'wardBurn', mul: 1.5, max: 18 }, { k: 'ward', n: 5 }, { k: 'brk', n: 6 }, { k: 'lowx', hp: 0.4, mul: 1.5 }, { k: 'bigx', mul: 1.5 }] },
     // 파쇄: 한 적의 붕괴 게이지를 빨리 채우고, 무너진 적을 느린 강타로 강하게 공격합니다. 왼쪽 기둥은 무너뜨리기(큰 붕괴 · 모으는 적 끊기), 오른쪽은 부수기(붕괴한 적 · 취약한 적에게 크게). 강타 · 거구에 강하고 무리에 약하다
-    { id: 's_slam', row: 1, b: '파쇄', tier: '하급', n: '내리 찍기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 37 }, { k: 'brokenx', mul: 1.3 }] }, /* M5-1(10월 20일 만든 사람 설계지): 붕괴 상태면 소량의 추가 피해 */
-    { id: 's_gap', row: 1, b: '파쇄', tier: '하급', n: '틈 노리기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 17 }, { k: 'brokenx', mul: 2 }] },
-    { id: 's_knock', row: 2, b: '파쇄', tier: '하급', n: '자세 무너뜨리기', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 39 }] },
-    { id: 's_mark', row: 2, b: '파쇄', tier: '하급', n: '약점 짚기', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'vuln', n: 2 }] },
-    { id: 's_cut', row: 3, b: '파쇄', tier: '하급', n: '끊어 치기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 34 }, { k: 'cutx', brk: 68 }] },
-    { id: 's_smash', row: 3, b: '파쇄', tier: '하급', n: '부수는 일격', tgt: 'melee', time: 'slow', cd: 6, fx: [{ k: 'dmg', n: 24 }, { k: 'brk', n: 36 }] },
-    { id: 's_knee', row: 4, b: '파쇄', tier: '하급', n: '무릎 꺾기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 16 }, { k: 'brk', n: 40 }, { k: 'st', s: 'chill', n: 2 }] },
-    { id: 's_dig', row: 4, b: '파쇄', tier: '하급', n: '취약 파고들기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'vulnPer', per: 5 }] },
-    { id: 's_hammer', row: 5, b: '파쇄', tier: '하급', n: '망치질', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 26 }, { k: 'brk', n: 37 }] },
-    { id: 's_wedge', row: 5, b: '파쇄', tier: '하급', n: '쐐기 박기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 36 }, { k: 'st', s: 'vuln', n: 2 }] },
-    { id: 's_crack', row: 6, b: '파쇄', tier: '하급', n: '균열', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 6 }, { k: 'brk', n: 37 }, { k: 'st', s: 'vuln', n: 3 }] },
-    { id: 's_throw', row: 6, b: '파쇄', tier: '하급', n: '메다꽂기', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 18 }, { k: 'brokenx', mul: 2 }, { k: 'bigx', mul: 1.5 }] },
-    { id: 's_pillar', row: 7, b: '파쇄', tier: '중급', n: '기둥 꺾기', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 18 }, { k: 'brk', n: 47 }, { k: 'bigx', mul: 1.5 }] },
-    { id: 's_maul', row: 7, b: '파쇄', tier: '중급', n: '깨뜨리는 망치', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 27 }, { k: 'brokenx', mul: 2 }] },
-    { id: 's_quake', row: 8, b: '파쇄', tier: '중급', n: '흔들어 끊기', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 20 }, { k: 'brk', n: 46 }, { k: 'cutx', brk: 70 }] },
-    { id: 's_open', row: 8, b: '파쇄', tier: '중급', n: '약점 벌리기', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 10 }, { k: 'brk', n: 44 }, { k: 'vulnGrow', mul: 2 }] },
-    { id: 's_rift', row: 9, b: '파쇄', tier: '중급', n: '지반 가르기', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 29 }, { k: 'brk', n: 50 }] },
-    { id: 's_judge', row: 9, b: '파쇄', tier: '중급', n: '처단', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 16 }, { k: 'vulnPer', per: 5 }, { k: 'lowx', hp: 0.3, mul: 2 }] },
-    { id: 's_fall', row: 10, b: '파쇄', tier: '중급', n: '산 무너뜨리기', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 24 }, { k: 'brk', n: 70 }, { k: 'bigx', mul: 1.5 }] },
-    { id: 's_ruin', row: 10, b: '파쇄', tier: '중급', n: '박살', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 24 }, { k: 'brokenx', mul: 2.5 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 's_slam', row: 1, b: '파쇄', tier: '하급', n: '내리 찍기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 30 }, { k: 'brokenx', mul: 1.3 }] }, /* M5-1(10월 20일 만든 사람 설계지): 붕괴 상태면 소량의 추가 피해 */
+    { id: 's_gap', row: 1, b: '파쇄', tier: '하급', n: '틈 노리기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'brokenx', mul: 2 }] },
+    { id: 's_knock', row: 2, b: '파쇄', tier: '하급', n: '자세 무너뜨리기', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 7 }, { k: 'brk', n: 30 }] },
+    { id: 's_mark', row: 2, b: '파쇄', tier: '하급', n: '약점 짚기', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'vuln', n: 2 }] },
+    { id: 's_cut', row: 3, b: '파쇄', tier: '하급', n: '끊어 치기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 26 }, { k: 'cutx', brk: 68 }] },
+    { id: 's_smash', row: 3, b: '파쇄', tier: '하급', n: '부수는 일격', tgt: 'melee', time: 'slow', cd: 6, fx: [{ k: 'dmg', n: 19 }, { k: 'brk', n: 27 }] },
+    { id: 's_knee', row: 4, b: '파쇄', tier: '하급', n: '무릎 꺾기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 29 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 's_dig', row: 4, b: '파쇄', tier: '하급', n: '취약 파고들기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 10 }, { k: 'vulnPer', per: 5 }] },
+    { id: 's_hammer', row: 5, b: '파쇄', tier: '하급', n: '망치질', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 20 }, { k: 'brk', n: 29 }] },
+    { id: 's_wedge', row: 5, b: '파쇄', tier: '하급', n: '쐐기 박기', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 28 }, { k: 'st', s: 'vuln', n: 2 }] },
+    { id: 's_crack', row: 6, b: '파쇄', tier: '하급', n: '균열', tgt: 'melee', time: 'fast', cd: 3, fx: [{ k: 'dmg', n: 4 }, { k: 'brk', n: 25 }, { k: 'st', s: 'vuln', n: 3 }] },
+    { id: 's_throw', row: 6, b: '파쇄', tier: '하급', n: '메다꽂기', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 14 }, { k: 'brokenx', mul: 2 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 's_pillar', row: 7, b: '파쇄', tier: '중급', n: '기둥 꺾기', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 36 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 's_maul', row: 7, b: '파쇄', tier: '중급', n: '깨뜨리는 망치', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 21 }, { k: 'brokenx', mul: 2 }] },
+    { id: 's_quake', row: 8, b: '파쇄', tier: '중급', n: '흔들어 끊기', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 35 }, { k: 'cutx', brk: 70 }] },
+    { id: 's_open', row: 8, b: '파쇄', tier: '중급', n: '약점 벌리기', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 7 }, { k: 'brk', n: 32 }, { k: 'vulnGrow', mul: 2 }] },
+    { id: 's_rift', row: 9, b: '파쇄', tier: '중급', n: '지반 가르기', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 23 }, { k: 'brk', n: 38 }] },
+    { id: 's_judge', row: 9, b: '파쇄', tier: '중급', n: '처단', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 11 }, { k: 'vulnPer', per: 5 }, { k: 'lowx', hp: 0.3, mul: 2 }] },
+    { id: 's_fall', row: 10, b: '파쇄', tier: '중급', n: '산 무너뜨리기', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 19 }, { k: 'brk', n: 54 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 's_ruin', row: 10, b: '파쇄', tier: '중급', n: '박살', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 19 }, { k: 'brokenx', mul: 2.5 }, { k: 'bigx', mul: 1.5 }] },
     // 상급 (3챕터, 11~13줄 · 10월 8일): 왼쪽 기둥은 무너뜨리기(큰 붕괴 · 끊기), 오른쪽은 부수기(취약 · 붕괴한 적에게 크게). 한 적 칸만 둔다(무리에 약하다)
-    { id: 's_wedgebite', row: 11, b: '파쇄', tier: '상급', n: '쐐기 파열', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 46 }, { k: 'st', s: 'vuln', n: 2 }, { k: 'bigx', mul: 1.5 }] },
-    { id: 's_unravel', row: 11, b: '파쇄', tier: '상급', n: '약점 해체', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 16 }, { k: 'vulnPer', per: 5 }, { k: 'brokenx', mul: 1.5 }, { k: 'bigx', mul: 1.5 }] },
-    { id: 's_stagger', row: 12, b: '파쇄', tier: '상급', n: '비틀거림', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 67 }, { k: 'cutx', brk: 70 }] },
-    { id: 's_lever', row: 12, b: '파쇄', tier: '상급', n: '균열 관통', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'vuln', n: 2 }, { k: 'vulnPer', per: 5 }] },
-    { id: 's_landslide', row: 13, b: '파쇄', tier: '상급', n: '산사태', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 26 }, { k: 'brk', n: 70 }, { k: 'bigx', mul: 1.5 }] },
-    { id: 's_lastblow', row: 13, b: '파쇄', tier: '상급', n: '무너진 자의 최후', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 22 }, { k: 'brokenx', mul: 2.5 }, { k: 'lowx', hp: 0.3, mul: 1.5 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 's_wedgebite', row: 11, b: '파쇄', tier: '상급', n: '쐐기 파열', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 35 }, { k: 'st', s: 'vuln', n: 2 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 's_unravel', row: 11, b: '파쇄', tier: '상급', n: '약점 해체', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 11 }, { k: 'vulnPer', per: 5 }, { k: 'brokenx', mul: 1.5 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 's_stagger', row: 12, b: '파쇄', tier: '상급', n: '비틀거림', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 50 }, { k: 'cutx', brk: 70 }] },
+    { id: 's_lever', row: 12, b: '파쇄', tier: '상급', n: '균열 관통', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'vuln', n: 2 }, { k: 'vulnPer', per: 5 }] },
+    { id: 's_landslide', row: 13, b: '파쇄', tier: '상급', n: '산사태', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 20 }, { k: 'brk', n: 54 }, { k: 'bigx', mul: 1.5 }] },
+    { id: 's_lastblow', row: 13, b: '파쇄', tier: '상급', n: '무너진 자의 최후', tgt: 'melee', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 17 }, { k: 'brokenx', mul: 2.5 }, { k: 'lowx', hp: 0.3, mul: 1.5 }, { k: 'bigx', mul: 1.5 }] },
     // 전열 장악: 전열 전체를 치고 여러 적을 함께 무너뜨린다. 왼쪽 기둥은 휩쓸기(전열 모두를 치는 피해), 오른쪽은 깨기(방패병 깨기 · 후열 끌어내기 · 여럿의 붕괴). 무리에 강하고 거구에 약하다
-    { id: 'f_sweep', row: 1, b: '전열 장악', tier: '하급', n: '개기식', tgt: 'front', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'ward', n: 6 }] }, /* M5-1(10월 20일 만든 사람 설계지): 얕지만 전열 전체 */ /* M5-1 맞추기 1번: 1챕터 보스는 버티는 쪽이 이긴다(막기가 주 대응) */
-    { id: 'f_break', row: 1, b: '전열 장악', tier: '하급', n: '방패 깨기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 39 }, { k: 'shieldx', mul: 2 }] },
-    { id: 'f_charge', row: 2, b: '전열 장악', tier: '하급', n: '방패 돌진', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 21 }] },
-    { id: 'f_snare', row: 2, b: '전열 장악', tier: '하급', n: '사슬 걸기', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 31 }, { k: 'st', s: 'chill', n: 2 }] },
-    { id: 'f_cleave', row: 3, b: '전열 장악', tier: '하급', n: '넓게 베기', tgt: 'front', time: 'normal', cd: 5, killRecharge: 1, fx: [{ k: 'dmg', n: 14 }] }, // 0.8.0 5단계(결정 4): 🔄 → 이 스킬로 적을 쓰러뜨리면 유산 +1
-    { id: 'f_chain', row: 3, b: '전열 장악', tier: '하급', n: '사슬 휘두르기', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 23 }, { k: 'st', s: 'chill', n: 2 }] },
-    { id: 'f_stomp', row: 4, b: '전열 장악', tier: '하급', n: '발 구르기', tgt: 'front', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 3 }, { k: 'brk', n: 20 }, { k: 'st', s: 'chill', n: 2 }] }, /* M5-1(10월 20일 만든 사람 설계지): 리듬 칸(비용 1)은 주 행동 */
-    { id: 'f_wall', row: 4, b: '전열 장악', tier: '하급', n: '방패 분쇄', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 40 }, { k: 'shieldx', mul: 2 }] },
-    { id: 'f_spin', row: 5, b: '전열 장악', tier: '하급', n: '회전 베기', tgt: 'front', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 16 }, { k: 'brk', n: 24 }] },
-    { id: 'f_drag', row: 5, b: '전열 장악', tier: '하급', n: '끌어와 치기', tgt: 'ranged', time: 'slow', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 28 }, { k: 'pull' }] }, // 10월 4일: 쿨타임 8 → 6 (전열 장악 오른쪽 기둥의 보스전 이길 수단) /* M5-1 값 띠 */
-    { id: 'f_trample', row: 6, b: '전열 장악', tier: '하급', n: '짓밟기', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 12 }, { k: 'chillx', mul: 2 }] },
-    { id: 'f_topple', row: 6, b: '전열 장악', tier: '하급', n: '연쇄 붕괴', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 21 }, { k: 'brokenx', mul: 2 }] },
-    { id: 'f_drive', row: 7, b: '전열 장악', tier: '중급', n: '몰아치기', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 21 }, { k: 'hasten', n: 1, on: 'use' }] },
-    { id: 'f_rampart', row: 7, b: '전열 장악', tier: '중급', n: '방패벽 부수기', tgt: 'front', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 19 }, { k: 'brk', n: 23 }, { k: 'shieldx', mul: 2 }] }, /* M5-1 값 띠 */
-    { id: 'f_push', row: 8, b: '전열 장악', tier: '중급', n: '전열 밀어내기', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 23 }, { k: 'st', s: 'vuln', n: 2 }] },
-    { id: 'f_scatter', row: 8, b: '전열 장악', tier: '중급', n: '전열 분산', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'chill', n: 2 }, { k: 'st', s: 'weak', n: 3 }] },
-    { id: 'f_split', row: 9, b: '전열 장악', tier: '중급', n: '대지 가르기', tgt: 'front', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 18 }, { k: 'brokenx', mul: 2 }] },
-    { id: 'f_net', row: 9, b: '전열 장악', tier: '중급', n: '사슬 조이기', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 18 }, { k: 'brk', n: 40 }, { k: 'chillx', mul: 2 }] },
-    { id: 'f_storm', row: 10, b: '전열 장악', tier: '중급', n: '폭풍 같은 방패', tgt: 'front', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 18 }, { k: 'brk', n: 25 }, { k: 'chillx', mul: 1.5 }] },
-    { id: 'f_collapse', row: 10, b: '전열 장악', tier: '중급', n: '전열 붕괴', tgt: 'front', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 19 }, { k: 'brk', n: 33 }, { k: 'shieldx', mul: 2 }] },
+    { id: 'f_sweep', row: 1, b: '전열 장악', tier: '하급', n: '개기식', tgt: 'front', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 9 }, { k: 'ward', n: 5 }] }, /* M5-1(10월 20일 만든 사람 설계지): 얕지만 전열 전체 */ /* M5-1 맞추기 1번: 1챕터 보스는 버티는 쪽이 이긴다(막기가 주 대응) */
+    { id: 'f_break', row: 1, b: '전열 장악', tier: '하급', n: '방패 깨기', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 31 }, { k: 'shieldx', mul: 2 }] },
+    { id: 'f_charge', row: 2, b: '전열 장악', tier: '하급', n: '방패 돌진', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 16 }] },
+    { id: 'f_snare', row: 2, b: '전열 장악', tier: '하급', n: '사슬 걸기', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 6 }, { k: 'brk', n: 22 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'f_cleave', row: 3, b: '전열 장악', tier: '하급', n: '넓게 베기', tgt: 'front', time: 'normal', cd: 5, killRecharge: 1, fx: [{ k: 'dmg', n: 10 }] }, // 0.8.0 5단계(결정 4): 🔄 → 이 스킬로 적을 쓰러뜨리면 유산 +1
+    { id: 'f_chain', row: 3, b: '전열 장악', tier: '하급', n: '사슬 휘두르기', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 6 }, { k: 'brk', n: 17 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'f_stomp', row: 4, b: '전열 장악', tier: '하급', n: '발 구르기', tgt: 'front', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 2 }, { k: 'brk', n: 14 }, { k: 'st', s: 'chill', n: 2 }] }, /* M5-1(10월 20일 만든 사람 설계지): 리듬 칸(비용 1)은 주 행동 */
+    { id: 'f_wall', row: 4, b: '전열 장악', tier: '하급', n: '방패 분쇄', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 8 }, { k: 'brk', n: 31 }, { k: 'shieldx', mul: 2 }] },
+    { id: 'f_spin', row: 5, b: '전열 장악', tier: '하급', n: '회전 베기', tgt: 'front', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 19 }] },
+    { id: 'f_drag', row: 5, b: '전열 장악', tier: '하급', n: '끌어와 치기', tgt: 'ranged', time: 'slow', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 20 }, { k: 'pull' }] }, // 10월 4일: 쿨타임 8 → 6 (전열 장악 오른쪽 기둥의 보스전 이길 수단) /* M5-1 값 띠 */
+    { id: 'f_trample', row: 6, b: '전열 장악', tier: '하급', n: '짓밟기', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'chillx', mul: 2 }] },
+    { id: 'f_topple', row: 6, b: '전열 장악', tier: '하급', n: '연쇄 붕괴', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 17 }, { k: 'brokenx', mul: 2 }] },
+    { id: 'f_drive', row: 7, b: '전열 장악', tier: '중급', n: '몰아치기', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 10 }, { k: 'brk', n: 16 }, { k: 'hasten', n: 1, on: 'use' }] },
+    { id: 'f_rampart', row: 7, b: '전열 장악', tier: '중급', n: '방패벽 부수기', tgt: 'front', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 18 }, { k: 'shieldx', mul: 2 }] }, /* M5-1 값 띠 */
+    { id: 'f_push', row: 8, b: '전열 장악', tier: '중급', n: '전열 밀어내기', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 8 }, { k: 'brk', n: 17 }, { k: 'st', s: 'vuln', n: 2 }] },
+    { id: 'f_scatter', row: 8, b: '전열 장악', tier: '중급', n: '전열 분산', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'chill', n: 2 }, { k: 'st', s: 'weak', n: 3 }] },
+    { id: 'f_split', row: 9, b: '전열 장악', tier: '중급', n: '대지 가르기', tgt: 'front', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 14 }, { k: 'brokenx', mul: 2 }] },
+    { id: 'f_net', row: 9, b: '전열 장악', tier: '중급', n: '사슬 조이기', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 31 }, { k: 'chillx', mul: 2 }] },
+    { id: 'f_storm', row: 10, b: '전열 장악', tier: '중급', n: '폭풍 같은 방패', tgt: 'front', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 20 }, { k: 'chillx', mul: 1.5 }] },
+    { id: 'f_collapse', row: 10, b: '전열 장악', tier: '중급', n: '전열 붕괴', tgt: 'front', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 26 }, { k: 'shieldx', mul: 2 }] },
     // 상급 (3챕터, 11~13줄 · 10월 8일): 왼쪽 기둥은 휩쓸기(전열 모두의 피해 · 붕괴), 오른쪽은 깨기(후열 끌어내기 · 한 적 묶기 · 방패 깨기). 큰 적 배수는 두지 않는다(거구에 약하다)
-    { id: 'f_sweepline', row: 11, b: '전열 장악', tier: '상급', n: '전열 쓸기', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 22 }, { k: 'st', s: 'chill', n: 2 }] },
-    { id: 'f_hook', row: 11, b: '전열 장악', tier: '상급', n: '갈고리 사슬', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 20 }, { k: 'brk', n: 45 }, { k: 'st', s: 'chill', n: 2 }, { k: 'pull' }] }, /* M5-1 값 띠 */
-    { id: 'f_onrush', row: 12, b: '전열 장악', tier: '상급', n: '쇄도', tgt: 'front', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 8 }, { k: 'brk', n: 34 }, { k: 'hasten', n: 1, on: 'use' }] },
-    { id: 'f_noose', row: 12, b: '전열 장악', tier: '상급', n: '올가미', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 47 }, { k: 'st', s: 'chill', n: 3 }, { k: 'shieldx', mul: 2 }] },
-    { id: 'f_rout', row: 13, b: '전열 장악', tier: '상급', n: '전선 와해', tgt: 'front', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 32 }, { k: 'brokenx', mul: 1.5 }, { k: 'chillx', mul: 1.5 }] },
-    { id: 'f_siege', row: 13, b: '전열 장악', tier: '상급', n: '포위 분쇄', tgt: 'front', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 17 }, { k: 'brk', n: 34 }, { k: 'chillx', mul: 1.7 }, { k: 'shieldx', mul: 2 }] },
+    { id: 'f_sweepline', row: 11, b: '전열 장악', tier: '상급', n: '전열 쓸기', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 17 }, { k: 'st', s: 'chill', n: 2 }] },
+    { id: 'f_hook', row: 11, b: '전열 장악', tier: '상급', n: '갈고리 사슬', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 32 }, { k: 'st', s: 'chill', n: 2 }, { k: 'pull' }] }, /* M5-1 값 띠 */
+    { id: 'f_onrush', row: 12, b: '전열 장악', tier: '상급', n: '쇄도', tgt: 'front', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 6 }, { k: 'brk', n: 26 }, { k: 'hasten', n: 1, on: 'use' }] },
+    { id: 'f_noose', row: 12, b: '전열 장악', tier: '상급', n: '올가미', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 8 }, { k: 'brk', n: 34 }, { k: 'st', s: 'chill', n: 3 }, { k: 'shieldx', mul: 2 }] },
+    { id: 'f_rout', row: 13, b: '전열 장악', tier: '상급', n: '전선 와해', tgt: 'front', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 25 }, { k: 'brokenx', mul: 1.5 }, { k: 'chillx', mul: 1.5 }] },
+    { id: 'f_siege', row: 13, b: '전열 장악', tier: '상급', n: '포위 분쇄', tgt: 'front', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 26 }, { k: 'chillx', mul: 1.7 }, { k: 'shieldx', mul: 2 }] },
     /* ===== 0.8.0 M5-1 파수꾼 재설계(10월 20일 만든 사람 설계지 + 07:40 보완, nrk-private/제안/파수꾼-설계지-2026-10-20.md) =====
        보완: 태세를 켜는 차례에 작은 효과(수비 보호막 · 공격 가벼운 타격), 신성한 기도는 언제나(수비 태세면 더 세게), 용맹의 반사는 가시 방패(p.thorn), 대응은 막기 주 · 무너뜨리기 부, 태세는 수도승 자세(p.stance)와 따로(p.wdSt)
        태세(수비 · 공격): 켜고 끄는 스킬. 켤 때 유산 2, 유지 무료, 하나만 켜진다(하나를 켜면 다른 하나가 꺼짐). 다시 쓰면 끈다(유산 0). 숫자 · 효과는 data/skillkit.js WD_BOUND */
-    { id: 'w_dstance', row: 1, b: '성벽', tier: '하급', n: '수비 태세', tgt: 'self', time: 'fast', cd: 3, fx: [{ k: 'wdStance', s: 'def', txt: '켜면 수비 태세(켜는 차례에 보호막 +8): 받는 피해 −12%, 내 차례마다 보호막 +3. 공격 태세와 함께 켜지지 않는다. 다시 쓰면 끈다(유산 0).' }] },
-    { id: 'w_shieldhit', row: 1, b: '성벽', tier: '하급', n: '방패 가격', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 10 }, { k: 'ward', n: 8 }, { k: 'wardDmg', per: 0.5, cap: 12 }] }, /* M5-1 값 띠 */
+    { id: 'w_dstance', row: 1, b: '성벽', tier: '하급', n: '수비 태세', tgt: 'self', time: 'fast', cd: 3, fx: [{ k: 'wdStance', s: 'def', txt: '켜면 수비 태세(켜는 차례에 보호막 +8): 받는 피해 −10%, 내 차례마다 보호막 +2. 공격 태세와 함께 켜지지 않는다. 다시 쓰면 끈다(유산 0).' }] },
+    { id: 'w_shieldhit', row: 1, b: '성벽', tier: '하급', n: '방패 가격', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 8 }, { k: 'ward', n: 6 }, { k: 'wardDmg', per: 0.5, cap: 12 }] }, /* M5-1 값 띠 */
     { id: 'w_pray', row: 1, b: '성벽', tier: '하급', n: '신성한 기도', tgt: 'self', time: 'normal', cd: 3, fx: [{ k: 'wdPray', n: 0.03, txt: '최대 생명력 3% 회복. 수비 태세면 6%.' }] },
-    { id: 's_astance', row: 1, b: '파쇄', tier: '하급', n: '공격 태세', tgt: 'self', time: 'fast', cd: 3, fx: [{ k: 'wdStance', s: 'atk', txt: '켜면 공격 태세(켜는 차례에 앞의 적 하나에게 피해 5 · 붕괴 12): 기본 공격 · 강공격 피해 +25% · 강공격 붕괴 +10. 수비 태세와 함께 켜지지 않는다. 다시 쓰면 끈다(유산 0).' }] },
-    { id: 's_regret', row: 1, b: '파쇄', tier: '하급', n: '회한의 검', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'vuln', n: 2 }] }, /* M5-1 값 띠 */
-    { id: 's_march', row: 4, b: '파쇄', tier: '하급', n: '묵직한 걸음', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 8 }, { k: 'wdMarch', n: 3, txt: '3차례 동안 기본 공격 피해 +15% · 강공격 붕괴 +20, 강공격 스태미나 −15.' }] }, // [Claude 초안] 설계지 2고리(붕괴 +15 · 스태미나 −10)를 값 띠에 맞춤. 맞추기 2번: 보호막 8(1챕터 보스는 버티는 쪽이 이긴다)
-    { id: 'f_chainblade', row: 1, b: '전열 장악', tier: '하급', n: '사슬의 검', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 36 }, { k: 'st', s: 'chill', n: 2 }] }, // 파수꾼의 유일한 원거리 견제기(대미지는 얕다)
+    { id: 's_astance', row: 1, b: '파쇄', tier: '하급', n: '공격 태세', tgt: 'self', time: 'fast', cd: 3, fx: [{ k: 'wdStance', s: 'atk', txt: '켜면 공격 태세(켜는 차례에 앞의 적 하나에게 피해 4 · 붕괴 10): 기본 공격 · 강공격 피해 +20% · 강공격 붕괴 +7. 수비 태세와 함께 켜지지 않는다. 다시 쓰면 끈다(유산 0).' }] },
+    { id: 's_regret', row: 1, b: '파쇄', tier: '하급', n: '회한의 검', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'vuln', n: 2 }] }, /* M5-1 값 띠 */
+    { id: 's_march', row: 4, b: '파쇄', tier: '하급', n: '묵직한 걸음', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 6 }, { k: 'wdMarch', n: 3, txt: '3차례 동안 기본 공격 피해 +12% · 강공격 붕괴 +16, 강공격 스태미나 −12.' }] }, // [Claude 초안] 설계지 2고리(붕괴 +15 · 스태미나 −10)를 값 띠에 맞춤. 맞추기 2번: 보호막 8(1챕터 보스는 버티는 쪽이 이긴다)
+    { id: 'f_chainblade', row: 1, b: '전열 장악', tier: '하급', n: '사슬의 검', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 28 }, { k: 'st', s: 'chill', n: 2 }] }, // 파수꾼의 유일한 원거리 견제기(대미지는 얕다)
     /* 경계 칸(입구 · 둘째 · 3고리 둘)은 [Claude 초안]. 기둥 파쇄의 강화 칸 둘(새 칸) */
-    { id: 's_lean', row: 7, b: '기둥 파쇄', tier: '중급', n: '기울어진 대열', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'st', s: 'empower', n: 3 }, { k: 'st', s: 'protect', n: 2 }, { k: 'ward', n: 8 }] },
-    { id: 's_gapwatch', row: 8, b: '기둥 파쇄', tier: '중급', n: '무너짐의 틈', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'ward', n: 32 }, { k: 'st', s: 'empower', n: 3 }] },
+    { id: 's_lean', row: 7, b: '기둥 파쇄', tier: '중급', n: '기울어진 대열', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'st', s: 'empower', n: 3 }, { k: 'st', s: 'protect', n: 2 }, { k: 'ward', n: 4 }] },
+    { id: 's_gapwatch', row: 8, b: '기둥 파쇄', tier: '중급', n: '무너짐의 틈', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'ward', n: 23 }, { k: 'st', s: 'empower', n: 3 }] },
     /* 경계 승부수(만든 사람 문장 · 대사 그대로, 10월 20일 결정 반영) */
-    { id: 'w_siege', row: 10, b: '공성추', tier: '중급', n: '파성추', kind: 'cut', tgt: 'self', time: 'normal', cd: 9, line: '「지키지 못하는 성벽 따위, 이 나락에서는 사치임이 분명하구나.」', cut: 'blade', pay: '그동안 보호막을 얻지 못하고, 3차례 방어 행동을 할 수 없다.', fx: [{ k: 'wdSiege', n: 3, txt: '현재 보호막을 전부 소모하여 3차례 동안 "파성": 강공격 스태미나 −20, 기본 공격과 강공격 피해가 소모한 보호막에 비례해 최대 ×2.0 증폭, 강공격마다 붕괴 +30.' }] },
-    { id: 's_quake', row: 10, b: '기둥 파쇄', tier: '중급', n: '대지 분쇄', tgt: 'front', time: 'normal', cd: 9, line: '「네놈들의 방어선을, 쳐부숴주마.」', cut: 'guard', pay: '사용 후 3라운드 동안 자신의 보호막 획득량 −50%.', fx: [{ k: 'brk', n: 45 }, { k: 'wdQuake', txt: '이번 행동으로 무너진 적이 2명 이상이라면, 다음 차례의 자신 피해를 2배로 한다.' }] },
+    { id: 'w_siege', row: 10, b: '공성추', tier: '중급', n: '파성추', kind: 'cut', tgt: 'self', time: 'normal', cd: 9, line: '「지키지 못하는 성벽 따위, 이 나락에서는 사치임이 분명하구나.」', cut: 'blade', pay: '그동안 보호막을 얻지 못하고, 3차례 방어 행동을 할 수 없다.', fx: [{ k: 'wdSiege', n: 3, txt: '현재 보호막을 전부 소모하여 3차례 동안 "파성": 강공격 스태미나 −20, 기본 공격과 강공격 피해가 소모한 보호막에 비례해 최대 ×2.0 증폭, 강공격마다 붕괴 +26.' }] },
+    { id: 's_quake', row: 10, b: '기둥 파쇄', tier: '중급', n: '대지 분쇄', tgt: 'front', time: 'normal', cd: 9, line: '「네놈들의 방어선을, 쳐부숴주마.」', cut: 'guard', pay: '사용 후 3라운드 동안 자신의 보호막 획득량 −50%.', fx: [{ k: 'brk', n: 35 }, { k: 'wdQuake', txt: '이번 행동으로 무너진 적이 2명 이상이라면, 다음 차례의 자신 피해를 2배로 한다.' }] },
     { id: 'w_valor', row: 10, b: '용맹의 투지', tier: '중급', n: '용맹한 방벽', tgt: 'self', time: 'normal', cd: 9, line: '「이 몸이 물러설 장소 따위. 이미 사라진지 오래렸다.」', cut: 'guard', pay: '그동안 스태미나가 저절로 차지 않고, 흘리기를 할 수 없다.', fx: [{ k: 'wdValor', n: 3, txt: '3차례 동안 "용맹": 방어할 때 보호막 +6 → +18, 내 차례마다 보호막의 50%만큼 가시(맞을 때 그 적에게 되돌린다).' }] },
     /* 결합 칸 셋([Claude 초안]): 원 바깥, 판마다 둘, 꼬리표 조건 */
     { id: 'w_turncoat', row: 7, b: '결합', tier: '중급', n: '돌아선 방패', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'wdTurncoat', txt: '이번 전투 동안 태세를 바꿀 때 비용이 없고, 바꾼 직후 첫 강공격에 붕괴 +25.' }] },
@@ -604,120 +604,120 @@ const SKILLS2 = {
     /* 마검사 (10월 7일, docs/직업/마검사.md): kind 'cut' ⚔ 베기 · 'spell' ✦ 주문. 베기와 주문을 번갈아 쓰면 교대(직업 보호막 +4, 내 차례마다 한 번).
        새 효과: imbue(칼에 싣기) · edgeX(칼 ×) · kwx(쓰기 직전 그 상태였던 적에게 ×) · alt(교대 보상, run 2) · killSpread(쓰러뜨려 출혈 퍼뜨리기), exploit의 s · take, hasten on 'alt' · 'kill' */
     // 시작
-    { id: 'sb_edge', b: '시작', tier: '시작', start: 1, n: '마검 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 29 }] },
-    { id: 'sb_aegis', b: '시작', tier: '시작', start: 1, n: '주문 방패', kind: 'spell', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 7 }, { k: 'st', s: 'protect', n: 1 }] },
+    { id: 'sb_edge', b: '시작', tier: '시작', start: 1, n: '마검 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 35 }] },
+    { id: 'sb_aegis', b: '시작', tier: '시작', start: 1, n: '주문 방패', kind: 'spell', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 10 }, { k: 'st', s: 'protect', n: 1 }] },
     // 혈인
-    { id: 'sb_blooddrop', row: 1, b: '혈인', tier: '하급', n: '핏방울', kind: 'cut', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 1 }] }, // 0.8.0 M5-0 리듬 칸(비용 1, 교대 아님)
-    { id: 'sb_bleedcut', row: 1, b: '혈인', tier: '하급', n: '혈흔 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 4 }] },
-    { id: 'sb_sweepcut', row: 1, b: '혈인', tier: '하급', n: '가로 베기', kind: 'cut', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'bleed', n: 2 }] },
-    { id: 'sb_bloodmark', row: 2, b: '혈인', tier: '하급', n: '피의 낙인', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 5 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'imbue', s: 'bleed', n: 4 }] }, /* M5-0c 맞추기 2번(만든 사람 답 2): 값 띠 안에서 평타 쪽으로. 피해 7 → 5, 칼에 싣는 출혈 3 → 4 */
-    { id: 'sb_throat', row: 2, b: '혈인', tier: '하급', n: '숨통 끊기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, killRecharge: 1, fx: [{ k: 'dmg', n: 12 }, { k: 'lowx', hp: 0.3, mul: 2 }] },
-    { id: 'sb_deepline', row: 3, b: '혈인', tier: '하급', n: '스치는 칼', kind: 'cut', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'bleed', n: 3 }] },
-    { id: 'sb_redwind', row: 3, b: '혈인', tier: '하급', n: '붉은 바람', kind: 'spell', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 2 }] },
-    { id: 'sb_taste', row: 4, b: '혈인', tier: '하급', n: '혈향', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 5 }, { k: 'exploit', s: 'bleed', per: 3 }, { k: 'imbue', s: 'bleed', n: 2 }] }, /* M5-0c 맞추기 2번: 처형 길에 칼에 싣기(기본 공격이 출혈을 나른다), 피해 9 → 5 */ /* M5-0c 만든 사람 답(10월 20일): 길마다 1고리 · 2고리를 베기 · 주문으로 엇갈리게 */
-    { id: 'sb_chaincut', row: 4, b: '혈인', tier: '하급', n: '혈인 연참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, killRecharge: 1, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'bleed', n: 2 }] },
-    { id: 'sb_boil', row: 5, b: '혈인', tier: '하급', n: '피 먹인 칼', kind: 'cut', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 3 }, { k: 'imbue', s: 'bleed', n: 5 }, { k: 'st', s: 'protect', n: 1 }, { k: 'stam', n: 6 }] }, /* M5-0c 만든 사람 답: 싣기 길 2고리는 베기(베고 나서 칼에 출혈을 싣는다). 값 띠: 피해 3, 스태미나 24 → 6 */
-    { id: 'sb_splash', row: 5, b: '혈인', tier: '하급', n: '선혈 비산', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'killSpread', per: 1 }] },
-    { id: 'sb_vein', row: 6, b: '혈인', tier: '하급', n: '핏줄 끊기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 10 }, { k: 'exploit', s: 'bleed', per: 3 }, { k: 'lowx', hp: 0.3, mul: 2 }] },
-    { id: 'sb_whirl', row: 6, b: '혈인', tier: '하급', n: '혈풍참', kind: 'cut', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'hasten', n: 1, on: 'kill' }] },
-    { id: 'sb_pour', row: 7, b: '혈인', tier: '중급', n: '혈류 파열', kind: 'cut', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'bleed', n: 5 }, { k: 'brk', n: 28 }] },
-    { id: 'sb_execchain', row: 7, b: '혈인', tier: '중급', n: '연쇄 처형', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, killRecharge: 1, fx: [{ k: 'dmg', n: 15 }, { k: 'kwx', s: 'bleed', mul: 1.5 }] },
-    { id: 'sb_bloodfog', row: 8, b: '혈인', tier: '중급', n: '피안개', kind: 'spell', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'st', s: 'bleed', n: 4 }, { k: 'imbue', s: 'bleed', n: 4 }] }, /* M5-0c: 3고리 값 띠(칼에 싣는 출혈 5 → 4) */
-    { id: 'sb_redrain', row: 8, b: '혈인', tier: '중급', n: '선혈 수확', kind: 'spell', tgt: 'all', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 6 }, { k: 'exploit', s: 'bleed', per: 1.5 }] },
-    { id: 'sb_draw', row: 9, b: '혈인', tier: '중급', n: '혈각참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 14 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'edgeX', mul: 2 }] },
-    { id: 'sb_redstorm', row: 9, b: '혈인', tier: '중급', n: '붉은 회오리', kind: 'cut', tgt: 'front', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'bleed', n: 1 }, { k: 'killSpread', per: 1 }] },
-    { id: 'sb_crimson', row: 10, b: '혈인', tier: '중급', n: '붉은 처형', kind: 'cut', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 11 }, { k: 'exploit', s: 'bleed', per: 8, take: 1 }, { k: 'lowx', hp: 0.35, mul: 1.5 }] },
-    { id: 'sb_feast', row: 10, b: '혈인', tier: '중급', n: '선혈 난무', kind: 'cut', tgt: 'front', time: 'normal', cd: 10, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'hasten', n: 2, on: 'kill' }] },
-    { id: 'sb_scarlet', row: 11, b: '혈인', tier: '상급', n: '선홍 표식', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 4 }, { k: 'imbue', s: 'bleed', n: 5 }] },
-    { id: 'sb_pathway', row: 11, b: '혈인', tier: '상급', n: '혈로 개척', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, killRecharge: 1, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'lowx', hp: 0.3, mul: 1.5 }] },
-    { id: 'sb_thirst', row: 12, b: '혈인', tier: '상급', n: '혈갈', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'exploit', s: 'bleed', per: 3.5 }] },
-    { id: 'sb_gale', row: 12, b: '혈인', tier: '상급', n: '피바람 가르기', kind: 'cut', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'killSpread', per: 1.5 }] },
-    { id: 'sb_ledger', row: 13, b: '혈인', tier: '상급', n: '피의 결산', kind: 'cut', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 4 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'exploit', s: 'bleed', per: 5 }, { k: 'lowx', hp: 0.35, mul: 1.5 }] },
-    { id: 'sb_deluge', row: 13, b: '혈인', tier: '상급', n: '혈우 낙하', kind: 'spell', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'killSpread', per: 1 }] },
+    { id: 'sb_blooddrop', row: 1, b: '혈인', tier: '하급', n: '핏방울', kind: 'cut', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'bleed', n: 1 }] }, // 0.8.0 M5-0 리듬 칸(비용 1, 교대 아님)
+    { id: 'sb_bleedcut', row: 1, b: '혈인', tier: '하급', n: '혈흔 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 5 }] },
+    { id: 'sb_sweepcut', row: 1, b: '혈인', tier: '하급', n: '가로 베기', kind: 'cut', tgt: 'front', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 2 }] },
+    { id: 'sb_bloodmark', row: 2, b: '혈인', tier: '하급', n: '피의 낙인', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'imbue', s: 'bleed', n: 5 }] }, /* M5-0c 맞추기 2번(만든 사람 답 2): 값 띠 안에서 평타 쪽으로. 피해 7 → 5, 칼에 싣는 출혈 3 → 4 */
+    { id: 'sb_throat', row: 2, b: '혈인', tier: '하급', n: '숨통 끊기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, killRecharge: 1, fx: [{ k: 'dmg', n: 15 }, { k: 'lowx', hp: 0.3, mul: 2 }] },
+    { id: 'sb_deepline', row: 3, b: '혈인', tier: '하급', n: '스치는 칼', kind: 'cut', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'bleed', n: 4 }] },
+    { id: 'sb_redwind', row: 3, b: '혈인', tier: '하급', n: '붉은 바람', kind: 'spell', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'bleed', n: 2 }] },
+    { id: 'sb_taste', row: 4, b: '혈인', tier: '하급', n: '혈향', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 7 }, { k: 'exploit', s: 'bleed', per: 3 }, { k: 'imbue', s: 'bleed', n: 3 }] }, /* M5-0c 맞추기 2번: 처형 길에 칼에 싣기(기본 공격이 출혈을 나른다), 피해 9 → 5 */ /* M5-0c 만든 사람 답(10월 20일): 길마다 1고리 · 2고리를 베기 · 주문으로 엇갈리게 */
+    { id: 'sb_chaincut', row: 4, b: '혈인', tier: '하급', n: '혈인 연참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, killRecharge: 1, fx: [{ k: 'dmg', n: 16 }, { k: 'st', s: 'bleed', n: 2 }] },
+    { id: 'sb_boil', row: 5, b: '혈인', tier: '하급', n: '피 먹인 칼', kind: 'cut', tgt: 'melee', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 4 }, { k: 'imbue', s: 'bleed', n: 7 }, { k: 'st', s: 'protect', n: 1 }, { k: 'stam', n: 6 }] }, /* M5-0c 만든 사람 답: 싣기 길 2고리는 베기(베고 나서 칼에 출혈을 싣는다). 값 띠: 피해 3, 스태미나 24 → 6 */
+    { id: 'sb_splash', row: 5, b: '혈인', tier: '하급', n: '선혈 비산', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'bleed', n: 4 }, { k: 'killSpread', per: 1 }] },
+    { id: 'sb_vein', row: 6, b: '혈인', tier: '하급', n: '핏줄 끊기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 14 }, { k: 'exploit', s: 'bleed', per: 3 }, { k: 'lowx', hp: 0.3, mul: 2 }] },
+    { id: 'sb_whirl', row: 6, b: '혈인', tier: '하급', n: '혈풍참', kind: 'cut', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'hasten', n: 1, on: 'kill' }] },
+    { id: 'sb_pour', row: 7, b: '혈인', tier: '중급', n: '혈류 파열', kind: 'cut', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 15 }, { k: 'st', s: 'bleed', n: 6 }, { k: 'brk', n: 35 }] },
+    { id: 'sb_execchain', row: 7, b: '혈인', tier: '중급', n: '연쇄 처형', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, killRecharge: 1, fx: [{ k: 'dmg', n: 19 }, { k: 'kwx', s: 'bleed', mul: 1.5 }] },
+    { id: 'sb_bloodfog', row: 8, b: '혈인', tier: '중급', n: '피안개', kind: 'spell', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'st', s: 'bleed', n: 5 }, { k: 'imbue', s: 'bleed', n: 5 }] }, /* M5-0c: 3고리 값 띠(칼에 싣는 출혈 5 → 4) */
+    { id: 'sb_redrain', row: 8, b: '혈인', tier: '중급', n: '선혈 수확', kind: 'spell', tgt: 'all', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 9 }, { k: 'exploit', s: 'bleed', per: 1.5 }] },
+    { id: 'sb_draw', row: 9, b: '혈인', tier: '중급', n: '혈각참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 19 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'edgeX', mul: 2 }] },
+    { id: 'sb_redstorm', row: 9, b: '혈인', tier: '중급', n: '붉은 회오리', kind: 'cut', tgt: 'front', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 17 }, { k: 'st', s: 'bleed', n: 1 }, { k: 'killSpread', per: 1 }] },
+    { id: 'sb_crimson', row: 10, b: '혈인', tier: '중급', n: '붉은 처형', kind: 'cut', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 13 }, { k: 'exploit', s: 'bleed', per: 10, take: 1 }, { k: 'lowx', hp: 0.35, mul: 1.5 }] },
+    { id: 'sb_feast', row: 10, b: '혈인', tier: '중급', n: '선혈 난무', kind: 'cut', tgt: 'front', time: 'normal', cd: 10, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'hasten', n: 2, on: 'kill' }] },
+    { id: 'sb_scarlet', row: 11, b: '혈인', tier: '상급', n: '선홍 표식', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 5 }, { k: 'imbue', s: 'bleed', n: 7 }] },
+    { id: 'sb_pathway', row: 11, b: '혈인', tier: '상급', n: '혈로 개척', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, killRecharge: 1, fx: [{ k: 'dmg', n: 17 }, { k: 'st', s: 'bleed', n: 4 }, { k: 'lowx', hp: 0.3, mul: 1.5 }] },
+    { id: 'sb_thirst', row: 12, b: '혈인', tier: '상급', n: '혈갈', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'exploit', s: 'bleed', per: 3.5 }] },
+    { id: 'sb_gale', row: 12, b: '혈인', tier: '상급', n: '피바람 가르기', kind: 'cut', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 2 }, { k: 'killSpread', per: 1.5 }] },
+    { id: 'sb_ledger', row: 13, b: '혈인', tier: '상급', n: '피의 결산', kind: 'cut', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 5 }, { k: 'st', s: 'bleed', n: 3 }, { k: 'exploit', s: 'bleed', per: 6 }, { k: 'lowx', hp: 0.35, mul: 1.5 }] },
+    { id: 'sb_deluge', row: 13, b: '혈인', tier: '상급', n: '혈우 낙하', kind: 'spell', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'bleed', n: 4 }, { k: 'killSpread', per: 1 }] },
     // 염검
-    { id: 'sb_spark', row: 1, b: '염검', tier: '하급', n: '불티', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'ignite', n: 1 }] }, // 0.8.0 M5-0 리듬 칸(비용 1, 교대 아님)
-    { id: 'sb_flamecut', row: 1, b: '염검', tier: '하급', n: '염화 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'imbue', s: 'ignite', n: 3 }] }, // M5-0 보정 5 1고리 갈림: 근접, 칼에 화상 싣기
-    { id: 'sb_ember', row: 1, b: '염검', tier: '하급', n: '불씨 투척', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'ignite', n: 4 }] },
-    { id: 'sb_sparkcut', row: 1, b: '염검', tier: '하급', n: '불씨 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, hits: 2, fx: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'ignite', n: 3 }] },
-    { id: 'sb_flare', row: 2, b: '염검', tier: '하급', n: '불꽃 탄', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 3 }, { k: 'st', s: 'ignite', n: 2 }, { k: 'imbue', s: 'ignite', n: 3 }] },
-    { id: 'sb_heated', row: 2, b: '염검', tier: '하급', n: '작열검', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'kwx', s: 'ignite', mul: 1.5 }] },
-    { id: 'sb_ring', row: 3, b: '염검', tier: '하급', n: '화염 고리', kind: 'spell', tgt: 'all', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 5 }, { k: 'st', s: 'ignite', n: 1 }, { k: 'imbue', s: 'ignite', n: 4 }] },
-    { id: 'sb_kindle', row: 3, b: '염검', tier: '하급', n: '염화 부여', kind: 'spell', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'imbue', s: 'ignite', n: 5 }, { k: 'st', s: 'protect', n: 1 }, { k: 'stam', n: 21 }] },
-    { id: 'sb_snuff', row: 4, b: '염검', tier: '하급', n: '끊는 불길', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'ignite', n: 3 }, { k: 'cutx', brk: 60 }] },
-    { id: 'sb_char', row: 4, b: '염검', tier: '하급', n: '잔화', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 7 }, { k: 'exploit', s: 'ignite', per: 2.5 }] }, /* M5-0c: 2고리 값 띠(피해 6 → 7). 만든 사람 답: 칼불 길 2고리는 주문(잔화 베기 → 잔화) */
-    { id: 'sb_brand', row: 5, b: '염검', tier: '하급', n: '불의 표식', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'ignite', n: 3 }, { k: 'kwx', s: 'ignite', mul: 1.5 }] }, /* M5-0c: 2고리 값 띠(피해 10 → 7) */ /* M5-0c 만든 사람 답(10월 20일): 길마다 1고리 · 2고리를 베기 · 주문으로 엇갈리게 */
-    { id: 'sb_flamedown', row: 5, b: '염검', tier: '하급', n: '염검 강하', kind: 'cut', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'exploit', s: 'ignite', per: 3 }, { k: 'brk', n: 29 }] },
-    { id: 'sb_sear', row: 6, b: '염검', tier: '하급', n: '작열참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 14 }, { k: 'st', s: 'ignite', n: 3 }] },
-    { id: 'sb_flamedance', row: 6, b: '염검', tier: '하급', n: '불꽃 칼춤', kind: 'cut', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 10 }, { k: 'kwx', s: 'ignite', mul: 1.5 }] },
-    { id: 'sb_lance', row: 7, b: '염검', tier: '중급', n: '화염 창', kind: 'spell', tgt: 'ranged', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 14 }, { k: 'st', s: 'ignite', n: 4 }, { k: 'lowx', hp: 0.35, mul: 1.75 }] },
-    { id: 'sb_rush', row: 7, b: '염검', tier: '중급', n: '화염 연참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 8, hits: 3, fx: [{ k: 'dmg', n: 4 }, { k: 'kwx', s: 'ignite', mul: 1.3 }, { k: 'edgeX', mul: 2 }] },
-    { id: 'sb_tome', row: 8, b: '염검', tier: '중급', n: '불의 서', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'st', s: 'ignite', n: 7 }, { k: 'imbue', s: 'ignite', n: 5 }] },
-    { id: 'sb_coil', row: 8, b: '염검', tier: '중급', n: '염화 결속', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 5 }, { k: 'exploit', s: 'ignite', per: 3 }, { k: 'imbue', s: 'ignite', n: 3 }] },
-    { id: 'sb_chainfire', row: 9, b: '염검', tier: '중급', n: '불꽃 사슬', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 8, hits: 3, fx: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'ignite', n: 2 }] },
-    { id: 'sb_blaze', row: 9, b: '염검', tier: '중급', n: '타오르는 일격', kind: 'cut', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 18 }, { k: 'kwx', s: 'ignite', mul: 1.5 }, { k: 'brk', n: 41 }] },
-    { id: 'sb_hellfire', row: 10, b: '염검', tier: '중급', n: '업화', kind: 'spell', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 21 }, { k: 'exploit', s: 'ignite', per: 3 }, { k: 'cutx', brk: 58 }] },
-    { id: 'sb_judgefire', row: 10, b: '염검', tier: '중급', n: '불의 심판', kind: 'cut', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 9 }, { k: 'exploit', s: 'ignite', per: 4 }, { k: 'edgeX', mul: 2 }] },
-    { id: 'sb_pyre', row: 11, b: '염검', tier: '상급', n: '꺼지지 않는 불', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'ignite', n: 4 }, { k: 'imbue', s: 'ignite', n: 4 }] },
-    { id: 'sb_inferno', row: 11, b: '염검', tier: '상급', n: '화염 난도', kind: 'cut', tgt: 'melee', time: 'normal', cd: 8, hits: 3, fx: [{ k: 'dmg', n: 6 }, { k: 'st', s: 'ignite', n: 2 }, { k: 'kwx', s: 'ignite', mul: 1.3 }] },
-    { id: 'sb_ashcut', row: 12, b: '염검', tier: '상급', n: '잔화검', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'ignite', n: 2 }, { k: 'exploit', s: 'ignite', per: 3 }] },
-    { id: 'sb_whet', row: 12, b: '염검', tier: '상급', n: '칼날 달구기', kind: 'spell', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'imbue', s: 'ignite', n: 8 }, { k: 'st', s: 'protect', n: 1 }, { k: 'stam', n: 25 }] },
-    { id: 'sb_firefall', row: 13, b: '염검', tier: '상급', n: '불벼락', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'ignite', n: 2 }, { k: 'exploit', s: 'ignite', per: 3 }, { k: 'cutx', brk: 32 }] },
-    { id: 'sb_drake', row: 13, b: '염검', tier: '상급', n: '화룡 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'ignite', n: 3 }, { k: 'kwx', s: 'ignite', mul: 1.5 }, { k: 'edgeX', mul: 2 }] },
+    { id: 'sb_spark', row: 1, b: '염검', tier: '하급', n: '불티', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'ignite', n: 1 }] }, // 0.8.0 M5-0 리듬 칸(비용 1, 교대 아님)
+    { id: 'sb_flamecut', row: 1, b: '염검', tier: '하급', n: '염화 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 12 }, { k: 'imbue', s: 'ignite', n: 4 }] }, // M5-0 보정 5 1고리 갈림: 근접, 칼에 화상 싣기
+    { id: 'sb_ember', row: 1, b: '염검', tier: '하급', n: '불씨 투척', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'ignite', n: 5 }] },
+    { id: 'sb_sparkcut', row: 1, b: '염검', tier: '하급', n: '불씨 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, hits: 2, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'ignite', n: 4 }] },
+    { id: 'sb_flare', row: 2, b: '염검', tier: '하급', n: '불꽃 탄', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 4 }, { k: 'st', s: 'ignite', n: 2 }, { k: 'imbue', s: 'ignite', n: 4 }] },
+    { id: 'sb_heated', row: 2, b: '염검', tier: '하급', n: '작열검', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 17 }, { k: 'kwx', s: 'ignite', mul: 1.5 }] },
+    { id: 'sb_ring', row: 3, b: '염검', tier: '하급', n: '화염 고리', kind: 'spell', tgt: 'all', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'ignite', n: 1 }, { k: 'imbue', s: 'ignite', n: 5 }] },
+    { id: 'sb_kindle', row: 3, b: '염검', tier: '하급', n: '염화 부여', kind: 'spell', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'imbue', s: 'ignite', n: 7 }, { k: 'st', s: 'protect', n: 1 }, { k: 'stam', n: 21 }] },
+    { id: 'sb_snuff', row: 4, b: '염검', tier: '하급', n: '끊는 불길', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'ignite', n: 4 }, { k: 'cutx', brk: 60 }] },
+    { id: 'sb_char', row: 4, b: '염검', tier: '하급', n: '잔화', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 11 }, { k: 'exploit', s: 'ignite', per: 2.5 }] }, /* M5-0c: 2고리 값 띠(피해 6 → 7). 만든 사람 답: 칼불 길 2고리는 주문(잔화 베기 → 잔화) */
+    { id: 'sb_brand', row: 5, b: '염검', tier: '하급', n: '불의 표식', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'ignite', n: 4 }, { k: 'kwx', s: 'ignite', mul: 1.5 }] }, /* M5-0c: 2고리 값 띠(피해 10 → 7) */ /* M5-0c 만든 사람 답(10월 20일): 길마다 1고리 · 2고리를 베기 · 주문으로 엇갈리게 */
+    { id: 'sb_flamedown', row: 5, b: '염검', tier: '하급', n: '염검 강하', kind: 'cut', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 17 }, { k: 'exploit', s: 'ignite', per: 3 }, { k: 'brk', n: 41 }] },
+    { id: 'sb_sear', row: 6, b: '염검', tier: '하급', n: '작열참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 18 }, { k: 'st', s: 'ignite', n: 4 }] },
+    { id: 'sb_flamedance', row: 6, b: '염검', tier: '하급', n: '불꽃 칼춤', kind: 'cut', tgt: 'front', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 13 }, { k: 'kwx', s: 'ignite', mul: 1.5 }] },
+    { id: 'sb_lance', row: 7, b: '염검', tier: '중급', n: '화염 창', kind: 'spell', tgt: 'ranged', time: 'slow', cd: 8, fx: [{ k: 'dmg', n: 18 }, { k: 'st', s: 'ignite', n: 5 }, { k: 'lowx', hp: 0.35, mul: 1.75 }] },
+    { id: 'sb_rush', row: 7, b: '염검', tier: '중급', n: '화염 연참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 8, hits: 3, fx: [{ k: 'dmg', n: 6 }, { k: 'kwx', s: 'ignite', mul: 1.3 }, { k: 'edgeX', mul: 2 }] },
+    { id: 'sb_tome', row: 8, b: '염검', tier: '중급', n: '불의 서', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'st', s: 'ignite', n: 9 }, { k: 'imbue', s: 'ignite', n: 6 }] },
+    { id: 'sb_coil', row: 8, b: '염검', tier: '중급', n: '염화 결속', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 8 }, { k: 'exploit', s: 'ignite', per: 3 }, { k: 'imbue', s: 'ignite', n: 5 }] },
+    { id: 'sb_chainfire', row: 9, b: '염검', tier: '중급', n: '불꽃 사슬', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 8, hits: 3, fx: [{ k: 'dmg', n: 8 }, { k: 'st', s: 'ignite', n: 2 }] },
+    { id: 'sb_blaze', row: 9, b: '염검', tier: '중급', n: '타오르는 일격', kind: 'cut', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 22 }, { k: 'kwx', s: 'ignite', mul: 1.5 }, { k: 'brk', n: 51 }] },
+    { id: 'sb_hellfire', row: 10, b: '염검', tier: '중급', n: '업화', kind: 'spell', tgt: 'ranged', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 31 }, { k: 'exploit', s: 'ignite', per: 3 }, { k: 'cutx', brk: 58 }] },
+    { id: 'sb_judgefire', row: 10, b: '염검', tier: '중급', n: '불의 심판', kind: 'cut', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 12 }, { k: 'exploit', s: 'ignite', per: 5 }, { k: 'edgeX', mul: 2 }] },
+    { id: 'sb_pyre', row: 11, b: '염검', tier: '상급', n: '꺼지지 않는 불', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'st', s: 'ignite', n: 5 }, { k: 'imbue', s: 'ignite', n: 5 }] },
+    { id: 'sb_inferno', row: 11, b: '염검', tier: '상급', n: '화염 난도', kind: 'cut', tgt: 'melee', time: 'normal', cd: 8, hits: 3, fx: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'ignite', n: 2 }, { k: 'kwx', s: 'ignite', mul: 1.3 }] },
+    { id: 'sb_ashcut', row: 12, b: '염검', tier: '상급', n: '잔화검', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 10 }, { k: 'st', s: 'ignite', n: 3 }, { k: 'exploit', s: 'ignite', per: 3 }] },
+    { id: 'sb_whet', row: 12, b: '염검', tier: '상급', n: '칼날 달구기', kind: 'spell', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'imbue', s: 'ignite', n: 11 }, { k: 'st', s: 'protect', n: 1 }, { k: 'stam', n: 25 }] },
+    { id: 'sb_firefall', row: 13, b: '염검', tier: '상급', n: '불벼락', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'dmg', n: 15 }, { k: 'st', s: 'ignite', n: 3 }, { k: 'exploit', s: 'ignite', per: 3 }, { k: 'cutx', brk: 32 }] },
+    { id: 'sb_drake', row: 13, b: '염검', tier: '상급', n: '화룡 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 15 }, { k: 'st', s: 'ignite', n: 4 }, { k: 'kwx', s: 'ignite', mul: 1.5 }, { k: 'edgeX', mul: 2 }] },
     // 마갑
-    { id: 'sb_bladeward', row: 1, b: '마갑', tier: '하급', n: '마갑참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'ward', n: 6 }] },
-    { id: 'sb_counter', row: 1, b: '마갑', tier: '하급', n: '맞받아 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 16 }, { k: 'alt', ward: 4 }] },
-    { id: 'sb_bolt', row: 2, b: '마갑', tier: '하급', n: '마갑탄', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'wardDmg', per: 0.5, spend: 0.5, cap: 12 }] },
-    { id: 'sb_shard', row: 1, b: '마갑', tier: '하급', n: '마력 파편', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 9 }] }, // 0.8.0 M5-0 보정(10월 20일 만든 사람) 리듬 칸(비용 1, 교대 아님): 피해만 작게, 보호막 없음
-    { id: 'sb_unravel', row: 2, b: '마갑', tier: '하급', n: '마력 교란', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'st', s: 'weak', n: 2 }, { k: 'alt', protect: 1 }] },
-    { id: 'sb_shell', row: 3, b: '마갑', tier: '하급', n: '마갑 휘두르기', kind: 'cut', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 5 }, { k: 'ward', n: 10 }, { k: 'st', s: 'protect', n: 1 }] }, /* M5-0c: 2고리 비용 2 값 띠. 만든 사람 답: 포격 길 2고리는 베기(마갑 전개 → 마갑 휘두르기, 피해 5 · 보호막 10 · 보호 1) */
-    { id: 'sb_beatcut', row: 3, b: '마갑', tier: '하급', n: '교차 주문', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 12 }, { k: 'brk', n: 8 }, { k: 'alt', run: 2, brk: 30 }] }, /* M5-0c: 2고리 값 띠(피해 14 → 12). 만든 사람 답: 교대 붕괴 길 2고리는 주문(교차참 → 교차 주문) */
-    { id: 'sb_rebuke', row: 4, b: '마갑', tier: '하급', n: '마갑 파쇄', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 5 }, { k: 'wardBurn', mul: 2.5, max: 6 }, { k: 'brk', n: 21 }] },
-    { id: 'sb_rebound', row: 4, b: '마갑', tier: '하급', n: '반향 주문', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'cutx', brk: 41 }, { k: 'alt', stam: 10 }] },
-    { id: 'sb_wardbolt', row: 5, b: '마갑', tier: '하급', n: '방벽 포격', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'wardDmg', per: 1, spend: 0.5, cap: 18 }] },
-    { id: 'sb_turn', row: 5, b: '마갑', tier: '하급', n: '회류참', kind: 'cut', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 10 }, { k: 'alt', ward: 4 }, { k: 'hasten', n: 1, on: 'alt' }] },
+    { id: 'sb_bladeward', row: 1, b: '마갑', tier: '하급', n: '마갑참', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 15 }, { k: 'ward', n: 7 }] },
+    { id: 'sb_counter', row: 1, b: '마갑', tier: '하급', n: '맞받아 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 21 }, { k: 'alt', ward: 4 }] },
+    { id: 'sb_bolt', row: 2, b: '마갑', tier: '하급', n: '마갑탄', kind: 'spell', tgt: 'ranged', time: 'fast', cd: 4, fx: [{ k: 'dmg', n: 12 }, { k: 'wardDmg', per: 0.5, spend: 0.5, cap: 12 }] },
+    { id: 'sb_shard', row: 1, b: '마갑', tier: '하급', n: '마력 파편', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 12 }] }, // 0.8.0 M5-0 보정(10월 20일 만든 사람) 리듬 칸(비용 1, 교대 아님): 피해만 작게, 보호막 없음
+    { id: 'sb_unravel', row: 2, b: '마갑', tier: '하급', n: '마력 교란', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 15 }, { k: 'st', s: 'weak', n: 2 }, { k: 'alt', protect: 1 }] },
+    { id: 'sb_shell', row: 3, b: '마갑', tier: '하급', n: '마갑 휘두르기', kind: 'cut', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 6 }, { k: 'ward', n: 13 }, { k: 'st', s: 'protect', n: 1 }] }, /* M5-0c: 2고리 비용 2 값 띠. 만든 사람 답: 포격 길 2고리는 베기(마갑 전개 → 마갑 휘두르기, 피해 5 · 보호막 10 · 보호 1) */
+    { id: 'sb_beatcut', row: 3, b: '마갑', tier: '하급', n: '교차 주문', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 16 }, { k: 'brk', n: 10 }, { k: 'alt', run: 2, brk: 30 }] }, /* M5-0c: 2고리 값 띠(피해 14 → 12). 만든 사람 답: 교대 붕괴 길 2고리는 주문(교차참 → 교차 주문) */
+    { id: 'sb_rebuke', row: 4, b: '마갑', tier: '하급', n: '마갑 파쇄', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 8 }, { k: 'wardBurn', mul: 2.5, max: 6 }, { k: 'brk', n: 36 }] },
+    { id: 'sb_rebound', row: 4, b: '마갑', tier: '하급', n: '반향 주문', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'cutx', brk: 41 }, { k: 'alt', stam: 10 }] },
+    { id: 'sb_wardbolt', row: 5, b: '마갑', tier: '하급', n: '방벽 포격', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 19 }, { k: 'wardDmg', per: 1, spend: 0.5, cap: 18 }] },
+    { id: 'sb_turn', row: 5, b: '마갑', tier: '하급', n: '회류참', kind: 'cut', tgt: 'melee', time: 'fast', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'alt', ward: 4 }, { k: 'hasten', n: 1, on: 'alt' }] },
     { id: 'sb_wardburst', row: 6, b: '마갑', tier: '하급', n: '방벽 해방', kind: 'spell', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'wardBurn', mul: 1.5, max: 8 }, { k: 'st', s: 'weak', n: 1 }] },
-    { id: 'sb_sunder', row: 6, b: '마갑', tier: '하급', n: '균열 주문', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 6 }, { k: 'alt', run: 2, brk: 30 }] },
-    { id: 'sb_armor', row: 7, b: '마갑', tier: '중급', n: '마갑 연성', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'wardFill', to: 0.5 }, { k: 'dmg', n: 12 }, { k: 'brk', n: 16 }] },
-    { id: 'sb_weave', row: 7, b: '마갑', tier: '중급', n: '마검 교직', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 8 }, { k: 'alt', run: 2, brk: 35, ward: 4 }] },
-    { id: 'sb_spellguard', row: 8, b: '마갑', tier: '중급', n: '마갑 방출', kind: 'spell', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 8 }, { k: 'wardDmg', per: 0.8, spend: 1, drainAll: true, cap: 20 }] }, /* M5-0c: 3고리 비용 3 값 띠(피해 7 → 8, 보호막 비례 0.5 → 0.8, 상한 16 → 20) */
-    { id: 'sb_reverse', row: 8, b: '마갑', tier: '중급', n: '역영창', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'brk', n: 8 }, { k: 'alt', run: 2, ward: 6, protect: 2 }] },
-    { id: 'sb_embershell', row: 9, b: '마갑', tier: '중급', n: '잔화 방벽', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'wardBurn', mul: 3, max: 9 }, { k: 'ward', n: 5 }] },
-    { id: 'sb_rhythm', row: 9, b: '마갑', tier: '중급', n: '마검 연무', kind: 'cut', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 10 }, { k: 'brk', n: 9 }, { k: 'alt', ward: 4 }, { k: 'hasten', n: 1, on: 'alt' }] },
-    { id: 'sb_shatter', row: 10, b: '마갑', tier: '중급', n: '갑주 해방', kind: 'cut', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'wardBurn', mul: 1.5 }, { k: 'brk', n: 15 }, { k: 'lowx', hp: 0.35, mul: 1.4 }] },
-    { id: 'sb_finale', row: 10, b: '마갑', tier: '중급', n: '마검 일섬', kind: 'cut', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 26 }, { k: 'brk', n: 25 }, { k: 'alt', run: 2, brk: 30 }, { k: 'brokenx', mul: 1.5 }] },
+    { id: 'sb_sunder', row: 6, b: '마갑', tier: '하급', n: '균열 주문', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 8 }, { k: 'alt', run: 2, brk: 30 }] },
+    { id: 'sb_armor', row: 7, b: '마갑', tier: '중급', n: '마갑 연성', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'wardFill', to: 0.5 }, { k: 'dmg', n: 17 }, { k: 'brk', n: 23 }] },
+    { id: 'sb_weave', row: 7, b: '마갑', tier: '중급', n: '마검 교직', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, hits: 2, fx: [{ k: 'dmg', n: 11 }, { k: 'alt', run: 2, brk: 35, ward: 4 }] },
+    { id: 'sb_spellguard', row: 8, b: '마갑', tier: '중급', n: '마갑 방출', kind: 'spell', tgt: 'all', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 12 }, { k: 'wardDmg', per: 0.8, spend: 1, drainAll: true, cap: 20 }] }, /* M5-0c: 3고리 비용 3 값 띠(피해 7 → 8, 보호막 비례 0.5 → 0.8, 상한 16 → 20) */
+    { id: 'sb_reverse', row: 8, b: '마갑', tier: '중급', n: '역영창', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 19 }, { k: 'brk', n: 11 }, { k: 'alt', run: 2, ward: 6, protect: 2 }] },
+    { id: 'sb_embershell', row: 9, b: '마갑', tier: '중급', n: '잔화 방벽', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 8, fx: [{ k: 'wardBurn', mul: 3.7, max: 9 }, { k: 'ward', n: 6 }] },
+    { id: 'sb_rhythm', row: 9, b: '마갑', tier: '중급', n: '마검 연무', kind: 'cut', tgt: 'front', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 13 }, { k: 'brk', n: 12 }, { k: 'alt', ward: 4 }, { k: 'hasten', n: 1, on: 'alt' }] },
+    { id: 'sb_shatter', row: 10, b: '마갑', tier: '중급', n: '갑주 해방', kind: 'cut', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'wardBurn', mul: 1.8 }, { k: 'brk', n: 18 }, { k: 'lowx', hp: 0.35, mul: 1.4 }] },
+    { id: 'sb_finale', row: 10, b: '마갑', tier: '중급', n: '마검 일섬', kind: 'cut', tgt: 'melee', time: 'slow', cd: 10, fx: [{ k: 'dmg', n: 33 }, { k: 'brk', n: 31 }, { k: 'alt', run: 2, brk: 30 }, { k: 'brokenx', mul: 1.5 }] },
     /* ===== 0.8.0 M5-0 마검사 경계 (10월 19일 만든 사람 결정, 문장 그대로). b = 경계 이름. 새 효과는 js/10-skills-engine.js의 마검사 경계 절, 값(v)은 data/skillkit.js skValue의 경계 식 ===== */
-    { id: 'sb_bloodfire', row: 4, b: '혈염', tier: '중급', n: '핏불 싣기', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'imbue', s: 'bleed', n: 3 }, { k: 'imbue', s: 'ignite', n: 4, also: 1, txt: '칼에 출혈 3 · 화상 4를 함께 싣는다.' }] },
-    { id: 'sb_searcut', row: 7, b: '혈염', tier: '중급', n: '혈염 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 22 }, { k: 'searMerge', txt: '출혈 · 화상이 둘 다 걸린 적을 베면 둘을 합쳐 새 상태 혈염(차례마다 (출혈 + 화상) × 1.5 피해, 정화되지 않음)으로 바꾼다. 혈염 걸린 적이 있는 동안 교대 보호막이 없다.' }] }, /* M5-0c 맞추기 2번: 3고리 값 띠 안에서 피해 20 → 22 */
-    { id: 'sb_kalpa', row: 10, b: '혈염', tier: '중급', n: '겁화', kind: 'spell', tgt: 'self', time: 'normal', cd: 9, line: '「피와 화염이 몸을 감싸니, 그것은 곧 겁화일지어다.」', cut: 'blade', pay: '보호막 전부 소실, 받는 피해 +30%.', fx: [{ k: 'sbBlaze', n: 3, txt: '3차례 동안 모든 베기에 혈염, 주는 피해 +60%.' }] }, // M5-0a: 대사(line) · 컷인(cut) · 대가(pay)는 따로
-    { id: 'sb_bloodmail', row: 4, b: '죄인의 피', tier: '중급', n: '피의 갑주', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'wardPer', s: 'bleed', n: 17, txt: '출혈 걸린 적 하나마다 보호막 +17.' }] },
-    { id: 'sb_film', row: 7, b: '죄인의 피', tier: '중급', n: '피막', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'sbFilm', txt: '이번 차례 보호막으로 받아낸 피해의 75%를 그 적에게 출혈로.' }] }, // M5-0 보정 5(만든 사람): 3고리 공격 칸으로(베기 + 피막)
-    { id: 'sb_sinwall', row: 10, b: '죄인의 피', tier: '중급', n: '죄인의 벽', kind: 'spell', tgt: 'self', time: 'normal', cd: 9, line: '「아아, 죄인의 피가 오만방자하게도 모든 것을 가로막고자 하는구나.」', cut: 'guard', pay: '최대 생명력 15%를 바친다.', fx: [{ k: 'sbSinWall', txt: '바친 생명력의 3배만큼 보호막. 깨지면 전열 모두에게 출혈 5.' }] },
+    { id: 'sb_bloodfire', row: 4, b: '혈염', tier: '중급', n: '핏불 싣기', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'imbue', s: 'bleed', n: 4 }, { k: 'imbue', s: 'ignite', n: 5, also: 1, txt: '칼에 출혈 4 · 화상 5를 함께 싣는다.' }] },
+    { id: 'sb_searcut', row: 7, b: '혈염', tier: '중급', n: '혈염 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 30 }, { k: 'searMerge', txt: '출혈 · 화상이 둘 다 걸린 적을 베면 둘을 합쳐 새 상태 혈염(차례마다 (출혈 + 화상) × 1.5 피해, 정화되지 않음)으로 바꾼다. 혈염 걸린 적이 있는 동안 교대 보호막이 없다.' }] }, /* M5-0c 맞추기 2번: 3고리 값 띠 안에서 피해 20 → 22 */
+    { id: 'sb_kalpa', row: 10, b: '혈염', tier: '중급', n: '겁화', kind: 'spell', tgt: 'self', time: 'normal', cd: 9, line: '「피와 화염이 몸을 감싸니, 그것은 곧 겁화일지어다.」', cut: 'blade', pay: '보호막 전부 소실, 받는 피해 +30%.', fx: [{ k: 'sbBlaze', n: 3, txt: '3차례 동안 모든 베기에 혈염, 주는 피해 +100%.' }] }, // M5-0a: 대사(line) · 컷인(cut) · 대가(pay)는 따로
+    { id: 'sb_bloodmail', row: 4, b: '죄인의 피', tier: '중급', n: '피의 갑주', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'wardPer', s: 'bleed', n: 22, txt: '출혈 걸린 적 하나마다 보호막 +22.' }] },
+    { id: 'sb_film', row: 7, b: '죄인의 피', tier: '중급', n: '피막', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 18 }, { k: 'sbFilm', txt: '이번 차례 보호막으로 받아낸 피해의 75%를 그 적에게 출혈로.' }] }, // M5-0 보정 5(만든 사람): 3고리 공격 칸으로(베기 + 피막)
+    { id: 'sb_sinwall', row: 10, b: '죄인의 피', tier: '중급', n: '죄인의 벽', kind: 'spell', tgt: 'self', time: 'normal', cd: 9, line: '「아아, 죄인의 피가 오만방자하게도 모든 것을 가로막고자 하는구나.」', cut: 'guard', pay: '최대 생명력 15%를 바친다.', fx: [{ k: 'sbSinWall', txt: '바친 생명력의 3.5배만큼 보호막. 깨지면 전열 모두에게 출혈 7.' }] },
     { id: 'sb_heatmail', row: 4, b: '유산의 불', tier: '중급', n: '달군 갑주', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbHeat', txt: '보호막을 태워 다음 기본 공격 ×3.2.' }] },
-    { id: 'sb_embermail', row: 7, b: '유산의 불', tier: '중급', n: '잿불 갑주', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'sbEmberMail', txt: '보호막이 남아 있는 동안 기본 공격 · 강공격에 화상 6을 싣는다.' }] },
-    { id: 'sb_firebody', row: 10, b: '유산의 불', tier: '중급', n: '불의 몸', kind: 'spell', tgt: 'self', time: 'normal', cd: 9, line: '「모든 것을 불태웠을 과거의 유산은, 결국 자신도 불태우기 마련이다.」', cut: 'arcane', pay: '남은 유산을 전부 태운다. 그동안 유산 0(스킬 없음, 평타만).', fx: [{ k: 'sbFireBody', n: 3, txt: '3차례 "불의 몸": 태운 유산 1마다 보호막 +8, 기본 공격 · 강공격 ×1.8 + 화상 4, 받는 화상 무효.' }] },
+    { id: 'sb_embermail', row: 7, b: '유산의 불', tier: '중급', n: '잿불 갑주', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'sbEmberMail', txt: '보호막이 남아 있는 동안 기본 공격 · 강공격에 화상 7을 싣는다.' }] },
+    { id: 'sb_firebody', row: 10, b: '유산의 불', tier: '중급', n: '불의 몸', kind: 'spell', tgt: 'self', time: 'normal', cd: 9, line: '「모든 것을 불태웠을 과거의 유산은, 결국 자신도 불태우기 마련이다.」', cut: 'arcane', pay: '남은 유산을 전부 태운다. 그동안 유산 0(스킬 없음, 평타만).', fx: [{ k: 'sbFireBody', n: 3, txt: '3차례 "불의 몸": 태운 유산 1마다 보호막 +11, 기본 공격 · 강공격 ×1.8 + 화상 5, 받는 화상 무효.' }] },
     /* 0.8.0 M5-0 보정 4(10월 20일 만든 사람 초안): 경계 둘째 칸(2고리) · 3고리 둘째. 꼴은 초안 그대로, 숫자는 값 띠에 맞췄다(data/skillkit.js SB_BOUND). 엔진은 js/10-skills-engine.js 마검사 경계 절 */
-    { id: 'sb_hotedge', row: 5, b: '혈염', tier: '중급', n: '달아오른 칼날', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'sbCross', txt: '출혈 걸린 적에게 화상 +4, 화상 걸린 적에게 출혈 +4.' }] },
-    { id: 'sb_searspread', row: 8, b: '혈염', tier: '중급', n: '핏불 번짐', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 15 }, { k: 'searSpread', txt: '혈염 걸린 적을 쓰러뜨리면 곁의 적에게 그 혈염.' }] },
-    { id: 'sb_searveil', row: 8, b: '혈염', tier: '중급', n: '핏불 장막', kind: 'spell', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'ward', n: 22 }, { k: 'wardPer', s: 'sear', n: 10, txt: '혈염 걸린 적 하나마다 보호막 +10(보호막 상한까지).' }] }, // 0.8.0 M5-0c(10월 20일 만든 사람): 혈염 3고리 방어 칸. 혈염 걸린 적 하나마다 보호막 +10(혈염의 대가 "교대 보호막 없음"을 메운다). 값 띠에 맞춰 바탕 보호막 22
-    { id: 'sb_sinstrike', row: 5, b: '죄인의 피', tier: '중급', n: '죄인의 일격', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 8 }, { k: 'wardDmg', per: 0.5, spend: 0, cap: 12 }, { k: 'st', s: 'bleed', n: 2 }] }, // M5-0 보정 5: 막아 낸 만큼 되갚는 칼(지금 보호막에 비례한 피해 + 출혈, 보호막은 쓰지 않음)
-    { id: 'sb_shackle', row: 8, b: '죄인의 피', tier: '중급', n: '피의 족쇄', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'sbShackle', txt: '이번 전투 동안 출혈 걸린 적의 강타를 막아 내면 그 적에게 붕괴 +90.' }] },
-    { id: 'sb_embercut', row: 5, b: '유산의 불', tier: '중급', n: '잿불 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 9 }, { k: 'sbEmberCut', txt: '보호막을 6까지 태워 그만큼 화상을 건다.' }] }, // M5-0 보정 5: 보호막을 조금 태워 그만큼 화상
+    { id: 'sb_hotedge', row: 5, b: '혈염', tier: '중급', n: '달아오른 칼날', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'sbCross', txt: '출혈 걸린 적에게 화상 +5, 화상 걸린 적에게 출혈 +5.' }] },
+    { id: 'sb_searspread', row: 8, b: '혈염', tier: '중급', n: '핏불 번짐', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 21 }, { k: 'searSpread', txt: '혈염 걸린 적을 쓰러뜨리면 곁의 적에게 그 혈염.' }] },
+    { id: 'sb_searveil', row: 8, b: '혈염', tier: '중급', n: '핏불 장막', kind: 'spell', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'ward', n: 30 }, { k: 'wardPer', s: 'sear', n: 10, txt: '혈염 걸린 적 하나마다 보호막 +10(보호막 상한까지).' }] }, // 0.8.0 M5-0c(10월 20일 만든 사람): 혈염 3고리 방어 칸. 혈염 걸린 적 하나마다 보호막 +10(혈염의 대가 "교대 보호막 없음"을 메운다). 값 띠에 맞춰 바탕 보호막 22
+    { id: 'sb_sinstrike', row: 5, b: '죄인의 피', tier: '중급', n: '죄인의 일격', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 11 }, { k: 'wardDmg', per: 0.5, spend: 0, cap: 12 }, { k: 'st', s: 'bleed', n: 2 }] }, // M5-0 보정 5: 막아 낸 만큼 되갚는 칼(지금 보호막에 비례한 피해 + 출혈, 보호막은 쓰지 않음)
+    { id: 'sb_shackle', row: 8, b: '죄인의 피', tier: '중급', n: '피의 족쇄', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'sbShackle', txt: '이번 전투 동안 출혈 걸린 적의 강타를 막아 내면 그 적에게 붕괴 +115.' }] },
+    { id: 'sb_embercut', row: 5, b: '유산의 불', tier: '중급', n: '잿불 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'dmg', n: 13 }, { k: 'sbEmberCut', txt: '보호막을 6까지 태워 그만큼 화상을 건다.' }] }, // M5-0 보정 5: 보호막을 조금 태워 그만큼 화상
     /* 0.8.0 M5-0 보정 5 P3 결합 칸(꼬리표 조건, 부채꼴 밖) · P4 경계 승부수 후보(판마다 둘 중 하나) */
-    { id: 'sb_bloodfist', row: 5, b: '결합', tier: '중급', n: '피 묻은 주먹', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbFist', txt: '이번 전투 동안 기본 공격이 출혈 걸린 적에게 ×1.5.' }] },
-    { id: 'sb_counterburn', row: 5, b: '결합', tier: '중급', n: '되받아 태우기', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbCounterBurn', txt: '이번 전투 동안 흘리기에 성공하면 그 적에게 화상 3.' }] },
+    { id: 'sb_bloodfist', row: 5, b: '결합', tier: '중급', n: '피 묻은 주먹', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbFist', txt: '이번 전투 동안 기본 공격이 출혈 걸린 적에게 ×1.6.' }] },
+    { id: 'sb_counterburn', row: 5, b: '결합', tier: '중급', n: '되받아 태우기', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbCounterBurn', txt: '이번 전투 동안 흘리기에 성공하면 그 적에게 화상 4.' }] },
     { id: 'sb_tricolor', row: 7, b: '결합', tier: '중급', n: '삼색검', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'sbTricolor', txt: '이번 전투 동안 출혈 · 화상이 함께 걸린 적이 있고 보호막이 있으면 베기 스킬 비용 −1(바닥 1, 내 차례에 한 번, 전투에 두 번).' }] },
-    { id: 'sb_searburst', row: 10, b: '혈염', tier: '중급', n: '혈염 터뜨리기', kind: 'spell', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 6 }, { k: 'searBurst', mul: 3, txt: '혈염 걸린 적마다 그 혈염 × 3 피해(혈염은 남는다).' }] },
-    { id: 'sb_atone', row: 10, b: '죄인의 피', tier: '중급', n: '속죄의 칼', kind: 'cut', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 16 }, { k: 'wardBurn', mul: 1 }, { k: 'st', s: 'bleed', n: 4 }] },
-    { id: 'sb_ashstorm', row: 10, b: '유산의 불', tier: '중급', n: '잿더미 폭풍', kind: 'spell', tgt: 'front', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'ignite', n: 4 }] },
+    { id: 'sb_searburst', row: 10, b: '혈염', tier: '중급', n: '혈염 터뜨리기', kind: 'spell', tgt: 'all', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 11 }, { k: 'searBurst', mul: 3, txt: '혈염 걸린 적마다 그 혈염 × 3 피해(혈염은 남는다).' }] },
+    { id: 'sb_atone', row: 10, b: '죄인의 피', tier: '중급', n: '속죄의 칼', kind: 'cut', tgt: 'melee', time: 'slow', cd: 9, fx: [{ k: 'dmg', n: 22 }, { k: 'wardBurn', mul: 1 }, { k: 'st', s: 'bleed', n: 5 }] },
+    { id: 'sb_ashstorm', row: 10, b: '유산의 불', tier: '중급', n: '잿더미 폭풍', kind: 'spell', tgt: 'front', time: 'normal', cd: 9, fx: [{ k: 'dmg', n: 16 }, { k: 'st', s: 'ignite', n: 5 }] },
     { id: 'sb_bloodecho', row: 5, b: '죄인의 피', tier: '중급', n: '피의 반향', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbEcho', txt: '이번 전투 동안 보호막이 있으면 베기가 출혈 +2 더.' }] }, // M5-0 보정 5에서 트리에서 뺐다(죄인의 일격으로). 데이터는 남긴다
     { id: 'sb_ashhand', row: 5, b: '유산의 불', tier: '중급', n: '재 묻은 손', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbAshHand', txt: '다음 기본 공격 2번에 화상 3.' }] }, // M5-0 보정 5에서 트리에서 뺐다(잿불 베기로)
-    { id: 'sb_cindermail', row: 8, b: '유산의 불', tier: '중급', n: '불씨 갑주', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 11 }, { k: 'sbCinder', txt: '이번 전투 동안 보호막이 피해로 깎일 때마다 전열에 화상 1.' }] }, // M5-0 보정 5(만든 사람): 3고리 공격 칸으로(베기 + 불씨 갑주)
-    { id: 'sb_bulwark', row: 11, b: '마갑', tier: '상급', n: '방벽 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'wardFill', to: 0.75 }, { k: 'dmg', n: 11 }, { k: 'brk', n: 18 }] },
-    { id: 'sb_measure', row: 11, b: '마갑', tier: '상급', n: '교차 일섬', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 19 }, { k: 'alt', run: 2, brk: 40, ward: 4 }] },
-    { id: 'sb_barrage', row: 12, b: '마갑', tier: '상급', n: '방벽 포격', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 18 }, { k: 'wardDmg', per: 1, spend: 0.5, cap: 22 }, { k: 'ward', n: 3 }] },
-    { id: 'sb_twin', row: 12, b: '마갑', tier: '상급', n: '이중 영창', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 18 }, { k: 'cutx', brk: 53 }, { k: 'alt', run: 2, ward: 8, protect: 2 }] },
-    { id: 'sb_breakwall', row: 13, b: '마갑', tier: '상급', n: '방벽 파쇄', kind: 'cut', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'wardBurn', mul: 2.5, max: 9 }, { k: 'brk', n: 12 }, { k: 'lowx', hp: 0.35, mul: 1.5 }] },
-    { id: 'sb_coda', row: 13, b: '마갑', tier: '상급', n: '마검 종곡', kind: 'cut', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 20 }, { k: 'alt', run: 2, brk: 30, ward: 4 }] },
+    { id: 'sb_cindermail', row: 8, b: '유산의 불', tier: '중급', n: '불씨 갑주', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 18 }, { k: 'sbCinder', txt: '이번 전투 동안 보호막이 피해로 깎일 때마다 전열에 화상 1.' }] }, // M5-0 보정 5(만든 사람): 3고리 공격 칸으로(베기 + 불씨 갑주)
+    { id: 'sb_bulwark', row: 11, b: '마갑', tier: '상급', n: '방벽 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'wardFill', to: 0.75 }, { k: 'dmg', n: 16 }, { k: 'brk', n: 27 }] },
+    { id: 'sb_measure', row: 11, b: '마갑', tier: '상급', n: '교차 일섬', kind: 'cut', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 25 }, { k: 'alt', run: 2, brk: 40, ward: 4 }] },
+    { id: 'sb_barrage', row: 12, b: '마갑', tier: '상급', n: '방벽 포격', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 23 }, { k: 'wardDmg', per: 1, spend: 0.5, cap: 22 }, { k: 'ward', n: 4 }] },
+    { id: 'sb_twin', row: 12, b: '마갑', tier: '상급', n: '이중 영창', kind: 'spell', tgt: 'ranged', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 24 }, { k: 'cutx', brk: 53 }, { k: 'alt', run: 2, ward: 8, protect: 2 }] },
+    { id: 'sb_breakwall', row: 13, b: '마갑', tier: '상급', n: '방벽 파쇄', kind: 'cut', tgt: 'melee', time: 'normal', cd: 8, fx: [{ k: 'wardBurn', mul: 3.1, max: 9 }, { k: 'brk', n: 15 }, { k: 'lowx', hp: 0.35, mul: 1.5 }] },
+    { id: 'sb_coda', row: 13, b: '마갑', tier: '상급', n: '마검 종곡', kind: 'cut', tgt: 'melee', time: 'fast', cd: 6, fx: [{ k: 'dmg', n: 18 }, { k: 'brk', n: 26 }, { k: 'alt', run: 2, brk: 30, ward: 4 }] },
   ],
   monk: [
     // 수도승 (10월 7일 구현, docs/직업/수도승.md): 시작 스킬 둘 + 철권 · 부동 · 혈도 60칸. 새 효과 stance · kiBurst · kiPer · kiGrow · sealx, meSt if: chill, hasten on: ctr (index.html runSkill2 · monkCounter)

@@ -41,76 +41,76 @@ const ATREE_DEF = {
       /* M5-0c(10월 20일 만든 사람): 스킬마다 변형 둘(둘 다 제시, 판마다 무작위 제시 없음). [id, 이름, 문장, 바꿈, 꼬리표, { v }]
          v 'deep' 깊게 = 같은 길을 세게(빠르기 · 대상 · 조건, 순수 숫자는 갈래마다 둘까지), v 'link' 잇기 = 다른 빌드의 꼬리표 하나를 더해 경계 · 결합 칸으로 가는 다리 */
       sb_bleedcut: [
-        ['sbv_bleedcut_fast', '스치는 칼', '빠른 칸이 됩니다. 피해 8 → 7.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 7 }] }, ['빠름'], { v: 'deep' }],
-        ['sbv_bleedcut_burn', '불붙은 상처', '화상 2를 더 겁니다. 출혈 4 → 3.', { fxSet: [{ k: 'st', s: 'bleed', n: 3 }], fxAdd: [{ k: 'st', s: 'ignite', n: 2 }] }, ['화상'], { v: 'link' }]],
+        ['sbv_bleedcut_fast', '스치는 칼', '빠른 칸이 됩니다. 피해 10 → 9.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 9 }] }, ['빠름'], { v: 'deep' }],
+        ['sbv_bleedcut_burn', '불붙은 상처', '화상 2를 더 겁니다. 출혈 5 → 3.', { fxSet: [{ k: 'st', s: 'bleed', n: 3 }], fxAdd: [{ k: 'st', s: 'ignite', n: 2 }] }, ['화상'], { v: 'link' }]],
       sb_bloodmark: [
-        ['sbv_mark_fast', '서두른 낙인', '빠른 칸이 됩니다. 피해 5 → 4.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 4 }] }, ['빠름'], { v: 'deep' }],
-        ['sbv_mark_ward', '핏빛 방패 낙인', '보호막 +5를 두릅니다. 피해 5 → 3.', { fxSet: [{ k: 'dmg', n: 3 }], fxAdd: [{ k: 'ward', n: 5 }] }, ['보호막'], { v: 'link' }]],
+        ['sbv_mark_fast', '서두른 낙인', '빠른 칸이 됩니다. 피해 7 → 5.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 5 }] }, ['빠름'], { v: 'deep' }],
+        ['sbv_mark_ward', '핏빛 방패 낙인', '보호막 +7을 두릅니다. 피해 7 → 3.', { fxSet: [{ k: 'dmg', n: 3 }], fxAdd: [{ k: 'ward', n: 7 }] }, ['보호막'], { v: 'link' }]],
       sb_blooddrop: [
         ['sbv_drop_kill', '핏방울 거두기', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유).', { set: { killRecharge: 1 } }, ['처치'], { v: 'deep' }],
-        ['sbv_drop_edge', '피 묻히기', '칼에 출혈 2를 싣습니다(다음 기본 공격에).', { fxAdd: [{ k: 'imbue', s: 'bleed', n: 2 }] }, ['싣기', '기본공격연동'], { v: 'link' }]],
+        ['sbv_drop_edge', '피 묻히기', '칼에 출혈 3을 싣습니다(다음 기본 공격에).', { fxAdd: [{ k: 'imbue', s: 'bleed', n: 3 }] }, ['싣기', '기본공격연동'], { v: 'link' }]],
       sb_taste: [
         ['sbv_taste_trail', '혈흔 추적', '대상의 출혈이 5 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'kw:bleed>=5' } }, ['출혈'], { v: 'deep' }],
         ['sbv_taste_resp', '받아낸 혈향', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기'], { v: 'link' }]],
       sb_boil: [
-        ['sbv_boil_slow', '들끓는 피', '보통 빠르기가 됩니다. 칼에 싣는 출혈 5 → 8.', { set: { time: 'normal' }, fxSet: [{ k: 'imbue', s: 'bleed', n: 8 }] }, [], { v: 'deep' }],
-        ['sbv_boil_fire', '불 먹인 칼', '벤 적에게 화상 2를 겁니다.', { fxAdd: [{ k: 'st', s: 'ignite', n: 2 }] }, ['화상'], { v: 'link' }]],
+        ['sbv_boil_slow', '들끓는 피', '보통 빠르기가 됩니다. 칼에 싣는 출혈 7 → 11.', { set: { time: 'normal' }, fxSet: [{ k: 'imbue', s: 'bleed', n: 11 }] }, [], { v: 'deep' }],
+        ['sbv_boil_fire', '불 먹인 칼', '벤 적에게 화상 3을 겁니다.', { fxAdd: [{ k: 'st', s: 'ignite', n: 3 }] }, ['화상'], { v: 'link' }]],
       sb_crimson: [
-        ['sbv_crim_normal', '서두른 처형', '보통 빠르기가 됩니다. 피해 11 → 7.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 7 }] }, [], { v: 'deep' }],
-        ['sbv_crim_ward', '처형의 갑주', '보호막 +8을 두릅니다.', { fxAdd: [{ k: 'ward', n: 8 }] }, ['보호막'], { v: 'link' }]],
+        ['sbv_crim_normal', '서두른 처형', '보통 빠르기가 됩니다. 피해 13 → 9.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 9 }] }, [], { v: 'deep' }],
+        ['sbv_crim_ward', '처형의 갑주', '보호막 +10을 두릅니다.', { fxAdd: [{ k: 'ward', n: 10 }] }, ['보호막'], { v: 'link' }]],
       sb_bloodfog: [
-        ['sbv_fog_front', '짙은 안개', '전열만 덮습니다. 출혈 4 → 6.', { set: { tgt: 'front' }, fxSet: [{ k: 'st', s: 'bleed', n: 6 }] }, [], { v: 'deep' }],
-        ['sbv_fog_ash', '잿빛 안개', '화상 2를 더 겁니다. 출혈 4 → 3.', { fxSet: [{ k: 'st', s: 'bleed', n: 3 }], fxAdd: [{ k: 'st', s: 'ignite', n: 2 }] }, ['화상'], { v: 'link' }]],
+        ['sbv_fog_front', '짙은 안개', '전열만 덮습니다. 출혈 5 → 8.', { set: { tgt: 'front' }, fxSet: [{ k: 'st', s: 'bleed', n: 8 }] }, [], { v: 'deep' }],
+        ['sbv_fog_ash', '잿빛 안개', '화상 2를 더 겁니다. 출혈 5 → 3.', { fxSet: [{ k: 'st', s: 'bleed', n: 3 }], fxAdd: [{ k: 'st', s: 'ignite', n: 2 }] }, ['화상'], { v: 'link' }]],
       sb_ember: [
-        ['sbv_ember_front', '불씨 흩뿌리기', '전열 모두를 칩니다. 피해 8 → 5. 화상 4 → 3.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 5 }, { k: 'st', s: 'ignite', n: 3 }] }, ['광역'], { v: 'deep' }],
-        ['sbv_ember_blood', '피 섞인 불씨', '출혈 2를 더 겁니다. 화상 4 → 3.', { fxSet: [{ k: 'st', s: 'ignite', n: 3 }], fxAdd: [{ k: 'st', s: 'bleed', n: 2 }] }, ['출혈'], { v: 'link' }]],
+        ['sbv_ember_front', '불씨 흩뿌리기', '전열 모두를 칩니다. 피해 10 → 7. 화상 5 → 3.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'ignite', n: 3 }] }, ['광역'], { v: 'deep' }],
+        ['sbv_ember_blood', '피 섞인 불씨', '출혈 2를 더 겁니다. 화상 5 → 3.', { fxSet: [{ k: 'st', s: 'ignite', n: 3 }], fxAdd: [{ k: 'st', s: 'bleed', n: 2 }] }, ['출혈'], { v: 'link' }]],
       sb_flamecut: [
-        ['sbv_fc_fast', '빠른 달굼', '빠른 칸이 됩니다. 피해 9 → 7.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 7 }] }, ['빠름'], { v: 'deep' }],
+        ['sbv_fc_fast', '빠른 달굼', '빠른 칸이 됩니다. 피해 12 → 9.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 9 }] }, ['빠름'], { v: 'deep' }],
         ['sbv_fc_counter', '맞불', '지난 라운드나 이번 라운드에 대응 충전을 받았으면(흘리기 직후) 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기'], { v: 'link' }]],
       sb_spark: [
         ['sbv_spark_kill', '불티 거두기', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유).', { set: { killRecharge: 1 } }, ['처치'], { v: 'deep' }],
-        ['sbv_spark_ward', '불티 방패', '보호막 +4를 두릅니다. 피해 8 → 6.', { fxSet: [{ k: 'dmg', n: 6 }], fxAdd: [{ k: 'ward', n: 4 }] }, ['보호막'], { v: 'link' }]],
+        ['sbv_spark_ward', '불티 방패', '보호막 +5를 두릅니다. 피해 11 → 8.', { fxSet: [{ k: 'dmg', n: 8 }], fxAdd: [{ k: 'ward', n: 5 }] }, ['보호막'], { v: 'link' }]],
       sb_brand: [
         ['sbv_brand_heat', '타는 표식', '대상의 화상이 3 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'kw:ignite>=3' } }, ['화상'], { v: 'deep' }],
-        ['sbv_brand_blood', '핏빛 표식', '출혈 2를 더 겁니다. 화상 3 → 2.', { fxSet: [{ k: 'st', s: 'ignite', n: 2 }], fxAdd: [{ k: 'st', s: 'bleed', n: 2 }] }, ['출혈'], { v: 'link' }]],
+        ['sbv_brand_blood', '핏빛 표식', '출혈 2를 더 겁니다. 화상 4 → 2.', { fxSet: [{ k: 'st', s: 'ignite', n: 2 }], fxAdd: [{ k: 'st', s: 'bleed', n: 2 }] }, ['출혈'], { v: 'link' }]],
       sb_char: [
-        ['sbv_char_slow', '잔화 일격', '보통 빠르기가 됩니다. 피해 7 → 10, 화상 1마다 피해 +2.5 → +3.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 10 }, { k: 'exploit', s: 'ignite', per: 3 }] }, [], { v: 'deep' }],
-        ['sbv_char_ward', '재 두른 칼', '보호막 +5를 두릅니다. 피해 7 → 5.', { fxSet: [{ k: 'dmg', n: 5 }], fxAdd: [{ k: 'ward', n: 5 }] }, ['보호막'], { v: 'link' }]],
+        ['sbv_char_slow', '잔화 일격', '보통 빠르기가 됩니다. 피해 11 → 16, 화상 1마다 피해 +3.5 → +3.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 16 }, { k: 'exploit', s: 'ignite', per: 3 }] }, [], { v: 'deep' }],
+        ['sbv_char_ward', '재 두른 칼', '보호막 +8을 두릅니다. 피해 11 → 8.', { fxSet: [{ k: 'dmg', n: 8 }], fxAdd: [{ k: 'ward', n: 8 }] }, ['보호막'], { v: 'link' }]],
       sb_hellfire: [
-        ['sbv_hell_normal', '불벼락', '보통 빠르기가 됩니다. 피해 21 → 15.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 15 }] }, [], { v: 'deep' }],
+        ['sbv_hell_normal', '불벼락', '보통 빠르기가 됩니다. 피해 31 → 22.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 22 }] }, [], { v: 'deep' }],
         ['sbv_hell_resp', '받아낸 업화', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기'], { v: 'link' }]],
       sb_inferno: [
-        ['sbv_inf_front', '난도 휩쓸기', '전열 모두를 벱니다. 한 타 피해 6 → 4.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 4 }] }, ['광역'], { v: 'deep' }],
+        ['sbv_inf_front', '난도 휩쓸기', '전열 모두를 벱니다. 한 타 피해 9 → 4.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 4 }] }, ['광역'], { v: 'deep' }],
         ['sbv_inf_blood', '피불 난도', '한 타마다 출혈 1을 더 겁니다. 화상 2 → 1.', { fxSet: [{ k: 'st', s: 'ignite', n: 1 }], fxAdd: [{ k: 'st', s: 'bleed', n: 1 }] }, ['출혈'], { v: 'link' }]],
       sb_bolt: [
         ['sbu_barrage', '방벽 포격', '보호막 비례 피해 0.5 → 1, 상한 12 → 18.', { fxSet: [{ k: 'wardDmg', per: 1, cap: 18 }] }, [], { v: 'deep' }],
-        ['sbv_bolt_fire', '달군 탄', '화상 2를 겁니다. 피해 9 → 7.', { fxSet: [{ k: 'dmg', n: 7 }], fxAdd: [{ k: 'st', s: 'ignite', n: 2 }] }, ['화상'], { v: 'link' }]],
+        ['sbv_bolt_fire', '달군 탄', '화상 2를 겁니다. 피해 12 → 8.', { fxSet: [{ k: 'dmg', n: 8 }], fxAdd: [{ k: 'st', s: 'ignite', n: 2 }] }, ['화상'], { v: 'link' }]],
       sb_bladeward: [
         ['sbu_counter', '맞받아 베기', '교대면 보호막 +4.', { fxAdd: [{ k: 'alt', ward: 4 }] }, ['교대'], { v: 'deep' }],
-        ['sbv_bw_blood', '피 묻은 마갑', '출혈 2를 겁니다. 피해 12 → 10.', { fxSet: [{ k: 'dmg', n: 10 }], fxAdd: [{ k: 'st', s: 'bleed', n: 2 }] }, ['출혈'], { v: 'link' }]],
+        ['sbv_bw_blood', '피 묻은 마갑', '출혈 2를 겁니다. 피해 15 → 12.', { fxSet: [{ k: 'dmg', n: 12 }], fxAdd: [{ k: 'st', s: 'bleed', n: 2 }] }, ['출혈'], { v: 'link' }]],
       sb_shard: [
         ['sbv_shard_kill', '파편 거두기', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유).', { set: { killRecharge: 1 } }, ['처치'], { v: 'deep' }],
-        ['sbv_shard_fire', '불꽃 파편', '화상 1을 겁니다. 피해 9 → 8.', { fxSet: [{ k: 'dmg', n: 8 }], fxAdd: [{ k: 'st', s: 'ignite', n: 1 }] }, ['화상'], { v: 'link' }]],
+        ['sbv_shard_fire', '불꽃 파편', '화상 1을 겁니다. 피해 12 → 9.', { fxSet: [{ k: 'dmg', n: 9 }], fxAdd: [{ k: 'st', s: 'ignite', n: 1 }] }, ['화상'], { v: 'link' }]],
       sb_shell: [
-        ['sbv_shell_slow', '무거운 마갑', '보통 빠르기가 됩니다. 피해 5 → 8, 보호막 10 → 14.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 8 }, { k: 'ward', n: 14 }] }, [], { v: 'deep' }],
+        ['sbv_shell_slow', '무거운 마갑', '보통 빠르기가 됩니다. 피해 6 → 10, 보호막 13 → 17.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 10 }, { k: 'ward', n: 17 }] }, [], { v: 'deep' }],
         ['sbv_shell_fire', '불 두른 마갑', '칼에 화상 3을 싣습니다.', { fxAdd: [{ k: 'imbue', s: 'ignite', n: 3 }] }, ['화상'], { v: 'link' }]],
       sb_beatcut: [
-        ['sbv_beat_fast', '날랜 교차', '빠른 칸이 됩니다. 피해 12 → 9.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 9 }] }, ['빠름'], { v: 'deep' }],
-        ['sbv_beat_blood', '피 교차', '출혈 2를 겁니다. 피해 12 → 10.', { fxSet: [{ k: 'dmg', n: 10 }], fxAdd: [{ k: 'st', s: 'bleed', n: 2 }] }, ['출혈'], { v: 'link' }]],
+        ['sbv_beat_fast', '날랜 교차', '빠른 칸이 됩니다. 피해 16 → 12.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 12 }] }, ['빠름'], { v: 'deep' }],
+        ['sbv_beat_blood', '피 교차', '출혈 2를 겁니다. 피해 16 → 13.', { fxSet: [{ k: 'dmg', n: 13 }], fxAdd: [{ k: 'st', s: 'bleed', n: 2 }] }, ['출혈'], { v: 'link' }]],
       sb_spellguard: [
-        ['sbv_sg_front', '모은 방출', '전열만 칩니다. 피해 8 → 11.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 11 }] }, [], { v: 'deep' }],
-        ['sbv_sg_fire', '타오르는 방출', '화상 2를 겁니다. 피해 8 → 6.', { fxSet: [{ k: 'dmg', n: 6 }], fxAdd: [{ k: 'st', s: 'ignite', n: 2 }] }, ['화상'], { v: 'link' }]],
+        ['sbv_sg_front', '모은 방출', '전열만 칩니다. 피해 12 → 15.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 15 }] }, [], { v: 'deep' }],
+        ['sbv_sg_fire', '타오르는 방출', '화상 3을 겁니다. 피해 12 → 8.', { fxSet: [{ k: 'dmg', n: 8 }], fxAdd: [{ k: 'st', s: 'ignite', n: 3 }] }, ['화상'], { v: 'link' }]],
       sb_finale: [
-        ['sbv_fin_normal', '빠른 일섬', '보통 빠르기가 됩니다. 피해 26 → 20.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 20 }] }, [], { v: 'deep' }],
+        ['sbv_fin_normal', '빠른 일섬', '보통 빠르기가 됩니다. 피해 33 → 25.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 25 }] }, [], { v: 'deep' }],
         ['sbu_release', '갑주 해방', '먼저 보호막 18 · 보호 1을 두르고, 남은 보호막을 모두 태워 피해로 바꿉니다(×1.5).', { fxAdd: [{ k: 'wardFirst', n: 18, protect: 1 }, { k: 'wardBurn', mul: 1.5 }] }, ['보호막'], { v: 'link' }]],
       sb_bloodfire: [
         ['sbu_bf_fast', '번지는 핏불', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
         ['sbv_bf_resp', '받아낸 핏불', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기'], { v: 'link' }]],
       sb_hotedge: [
         ['sbv_he_fast', '달아오른 손놀림', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
-        ['sbv_he_ward', '달군 칼막', '보호막 +5를 두릅니다.', { fxAdd: [{ k: 'ward', n: 5 }] }, ['보호막'], { v: 'link' }]],
+        ['sbv_he_ward', '달군 칼막', '보호막 +6을 두릅니다.', { fxAdd: [{ k: 'ward', n: 6 }] }, ['보호막'], { v: 'link' }]],
       sb_searcut: [
-        ['sbv_sc_fast', '혈염 찌르기', '빠른 칸이 됩니다. 피해 22 → 16.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 16 }] }, ['빠름'], { v: 'deep' }],
+        ['sbv_sc_fast', '혈염 찌르기', '빠른 칸이 됩니다. 피해 30 → 21.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 21 }] }, ['빠름'], { v: 'deep' }],
         ['sbv_sc_resp', '받아친 혈염', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기'], { v: 'link' }]],
       sb_searveil: [
         ['sbv_sv_fast', '서두른 장막', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
@@ -122,7 +122,7 @@ const ATREE_DEF = {
         ['sbu_bm_fast', '서두른 갑주', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
         ['sbv_bm_resp', '받아낸 갑주', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기'], { v: 'link' }]],
       sb_sinstrike: [
-        ['sbv_si_fast', '날랜 일격', '빠른 칸이 됩니다. 피해 8 → 6.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 6 }] }, ['빠름'], { v: 'deep' }],
+        ['sbv_si_fast', '날랜 일격', '빠른 칸이 됩니다. 피해 11 → 7.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 7 }] }, ['빠름'], { v: 'deep' }],
         ['sbv_si_fire', '불붙은 일격', '화상 2를 겁니다. 출혈 2 → 1.', { fxSet: [{ k: 'st', s: 'bleed', n: 1 }], fxAdd: [{ k: 'st', s: 'ignite', n: 2 }] }, ['화상'], { v: 'link' }]],
       sb_film: [
         ['sbv_film_fast', '서두른 피막', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
@@ -138,21 +138,21 @@ const ATREE_DEF = {
         ['sbv_hm_resp', '받아낸 열', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기'], { v: 'link' }]],
       sb_embercut: [
         ['sbu_ash_fast', '털어 낸 재', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
-        ['sbv_ec_blood', '핏물 잿불', '출혈 2를 겁니다.', { fxAdd: [{ k: 'st', s: 'bleed', n: 2 }] }, ['출혈'], { v: 'link' }]],
+        ['sbv_ec_blood', '핏물 잿불', '출혈 3을 겁니다.', { fxAdd: [{ k: 'st', s: 'bleed', n: 3 }] }, ['출혈'], { v: 'link' }]],
       sb_embermail: [
         ['sbv_em_fast', '서두른 잿불', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
         ['sbv_em_resp', '받아낸 잿불', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기'], { v: 'link' }]],
       sb_cindermail: [
         ['sbv_cm_fast', '서두른 불씨', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
-        ['sbv_cm_blood', '피 묻은 불씨', '출혈 2를 겁니다.', { fxAdd: [{ k: 'st', s: 'bleed', n: 2 }] }, ['출혈'], { v: 'link' }]],
+        ['sbv_cm_blood', '피 묻은 불씨', '출혈 3을 겁니다.', { fxAdd: [{ k: 'st', s: 'bleed', n: 3 }] }, ['출혈'], { v: 'link' }]],
       sb_firebody: [
         ['sbv_fb_fast', '순간의 불', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
         ['sbv_fb_alt', '박자의 불', '이어진 교대의 2번째부터면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'alt2' } }, ['교대'], { v: 'link' }]],
       /* P4 (d) 변종(유지): 판마다 10%로 하나가 그 스킬의 변형 제시에 셋째로 섞인다. 값 띠 상한 +15%까지, 대가가 크다(mut). 승부수에 걸려도 승부수는 그대로 나온다 */
       sb_mutants: [
-        ['sbm_kalpa_bulgwi', '불귀', '겁화의 주는 피해 +40% → +80%. 대가: 받는 피해 +30% → +60%.', { fxSet: [{ k: 'sbBlaze', hit: 0.8, inc: 0.6 }] }, ['혈염'], { mut: 1, on: 'sb_kalpa' }],
-        ['sbm_bleedcut_frenzy', '피의 폭주', '피해 8 → 13, 출혈 4 → 6. 대가: 나에게 출혈 3.', { fxSet: [{ k: 'dmg', n: 13 }, { k: 'st', s: 'bleed', n: 6 }], fxAdd: [{ k: 'meSt', s: 'bleed', n: 3 }] }, ['출혈'], { mut: 1, on: 'sb_bleedcut' }],
-        ['sbm_shell_overheat', '과열 마갑', '보호막 10 → 15. 대가: 나에게 화상 3.', { fxSet: [{ k: 'ward', n: 15 }], fxAdd: [{ k: 'meSt', s: 'ignite', n: 3 }] }, ['보호막'], { mut: 1, on: 'sb_shell' }]],
+        ['sbm_kalpa_bulgwi', '불귀', '겁화의 주는 피해 +100% → +130%. 대가: 받는 피해 +30% → +60%.', { fxSet: [{ k: 'sbBlaze', hit: 1.3, inc: 0.6 }] }, ['혈염'], { mut: 1, on: 'sb_kalpa' }],
+        ['sbm_bleedcut_frenzy', '피의 폭주', '피해 10 → 16, 출혈 5 → 8. 대가: 나에게 출혈 3.', { fxSet: [{ k: 'dmg', n: 16 }, { k: 'st', s: 'bleed', n: 8 }], fxAdd: [{ k: 'meSt', s: 'bleed', n: 3 }] }, ['출혈'], { mut: 1, on: 'sb_bleedcut' }],
+        ['sbm_shell_overheat', '과열 마갑', '보호막 13 → 18. 대가: 나에게 화상 3.', { fxSet: [{ k: 'ward', n: 18 }], fxAdd: [{ k: 'meSt', s: 'ignite', n: 3 }] }, ['보호막'], { mut: 1, on: 'sb_shell' }]],
     },
   },
   /* 0.8.0 M5-1(10월 20일 만든 사람 설계지 + 07:40 보완): 파수꾼 액티브 재설계. M5-0c 규격 — 갈래 3 × 길 둘 + 리듬 칸, 경계 5칸(대사 승부수 고정), 결합 칸 3(판마다 둘), 변형 스킬마다 둘.
@@ -184,68 +184,68 @@ const ATREE_DEF = {
     vars: {
       /* 스킬마다 변형 둘(둘 다 제시): v 'deep' 깊게 = 같은 길을 세게, v 'link' 잇기 = 그 스킬에 없던 다른 빌드의 꼬리표를 더해 경계 · 결합 칸으로. [Claude 초안] */
       w_dstance: [
-        ['wv_ds_ward', '굳은 태세', '켤 때 보호막 +10을 더 두릅니다.', { fxAdd: [{ k: 'ward', n: 10 }] }, [], { v: 'deep' }],
+        ['wv_ds_ward', '굳은 태세', '켤 때 보호막 +8을 더 두릅니다.', { fxAdd: [{ k: 'ward', n: 8 }] }, [], { v: 'deep' }],
         ['wv_ds_basic', '맞받는 태세', '켤 때 다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
       w_shieldhit: [
-        ['wv_sh_fast', '날랜 가격', '빠른 칸이 됩니다. 피해 10 → 7.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 7 }] }, ['빠름'], { v: 'deep' }],
-        ['wv_sh_brk', '부수는 가격', '붕괴 +20. 피해 10 → 7.', { fxSet: [{ k: 'dmg', n: 7 }], fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
+        ['wv_sh_fast', '날랜 가격', '빠른 칸이 됩니다. 피해 8 → 6.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 6 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_sh_brk', '부수는 가격', '붕괴 +15. 피해 8 → 6.', { fxSet: [{ k: 'dmg', n: 6 }], fxAdd: [{ k: 'brk', n: 15 }] }, ['붕괴'], { v: 'link' }]],
       w_pray: [
         ['wv_pr_more', '깊은 기도', '회복 3% → 4%(수비 태세면 8%).', { fxSet: [{ k: 'wdPray', n: 0.04 }] }, [], { v: 'deep' }],
         ['wv_pr_ward', '기도의 막', '보호막 +6을 함께 두릅니다.', { fxAdd: [{ k: 'ward', n: 6 }] }, ['보호막'], { v: 'link' }]],
       w_stand: [
-        ['wv_st_fast', '서두른 버티기', '빠른 칸이 됩니다. 보호막 상한의 60% → 45%.', { set: { time: 'fast' }, fxSet: [{ k: 'wardFill', to: 0.45 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_st_fast', '서두른 버티기', '빠른 칸이 됩니다. 보호막 상한의 45% → 35%.', { set: { time: 'fast' }, fxSet: [{ k: 'wardFill', to: 0.35 }] }, ['빠름'], { v: 'deep' }],
         ['wv_st_wst', '태세의 버팀', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
       w_hold: [
         ['wv_ho_ward', '두터운 막기', '보호막이 15 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'ward>=15' } }, [], { v: 'deep' }],
-        ['wv_ho_brk', '막고 꺾기', '붕괴 +25.', { fxAdd: [{ k: 'brk', n: 25 }] }, ['붕괴'], { v: 'link' }]],
+        ['wv_ho_brk', '막고 꺾기', '붕괴 +18.', { fxAdd: [{ k: 'brk', n: 18 }] }, ['붕괴'], { v: 'link' }]],
       w_citadel: [
         ['wv_ci_normal', '서두른 철옹성', '보통 빠르기가 됩니다.', { set: { time: 'normal' } }, [], { v: 'deep' }],
         ['wv_ci_wst', '태세의 성채', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
       w_beyond: [
-        ['wv_be_normal', '빠른 너머', '보통 빠르기가 됩니다. 피해 20 → 15.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 15 }] }, [], { v: 'deep' }],
+        ['wv_be_normal', '빠른 너머', '보통 빠르기가 됩니다. 피해 15 → 11.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 11 }] }, [], { v: 'deep' }],
         ['wv_be_basic', '너머의 박자', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
       s_astance: [
         ['wv_as_basic', '거센 태세', '켤 때 다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, [], { v: 'deep' }],
-        ['wv_as_ward', '버티는 공세', '켤 때 보호막 +10.', { fxAdd: [{ k: 'ward', n: 10 }] }, ['보호막'], { v: 'link' }]],
+        ['wv_as_ward', '버티는 공세', '켤 때 보호막 +8.', { fxAdd: [{ k: 'ward', n: 8 }] }, ['보호막'], { v: 'link' }]],
       s_slam: [
-        ['wv_sl_slow', '무거운 내리 찍기', '느린 행동이 됩니다. 피해 17 → 24.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 24 }] }, [], { v: 'deep' }],
+        ['wv_sl_slow', '무거운 내리 찍기', '느린 행동이 됩니다. 피해 13 → 19.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 19 }] }, [], { v: 'deep' }],
         ['wv_sl_basic', '찍고 이어 치기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
       s_regret: [
         ['wv_rg_kill', '회한 거두기', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유).', { set: { killRecharge: 1 } }, ['처치'], { v: 'deep' }],
-        ['wv_rg_brk', '회한의 일격', '붕괴 +15. 피해 9 → 6.', { fxSet: [{ k: 'dmg', n: 6 }], fxAdd: [{ k: 'brk', n: 15 }] }, ['붕괴'], { v: 'link' }]],
+        ['wv_rg_brk', '회한의 일격', '붕괴 +11. 피해 7 → 5.', { fxSet: [{ k: 'dmg', n: 5 }], fxAdd: [{ k: 'brk', n: 11 }] }, ['붕괴'], { v: 'link' }]],
       s_march: [
         ['wv_ma_long', '긴 행군', '3차례 → 4차례.', { fxSet: [{ k: 'wdMarch', n: 4 }] }, [], { v: 'deep' }],
-        ['wv_ma_ward', '방패 든 걸음', '보호막 8 → 16.', { fxSet: [{ k: 'ward', n: 16 }] }, ['보호막'], { v: 'link' }]],
+        ['wv_ma_ward', '방패 든 걸음', '보호막 6 → 12.', { fxSet: [{ k: 'ward', n: 12 }] }, ['보호막'], { v: 'link' }]],
       s_cut: [
-        ['wv_cu_fast', '빠른 끊기', '빠른 칸이 됩니다. 피해 17 → 12.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 12 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_cu_fast', '빠른 끊기', '빠른 칸이 됩니다. 피해 13 → 9.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 9 }] }, ['빠름'], { v: 'deep' }],
         ['wv_cu_basic', '끊고 잇기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
       s_ruin: [
-        ['wv_ru_normal', '서두른 박살', '보통 빠르기가 됩니다. 피해 24 → 17.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 17 }] }, [], { v: 'deep' }],
+        ['wv_ru_normal', '서두른 박살', '보통 빠르기가 됩니다. 피해 19 → 13.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 13 }] }, [], { v: 'deep' }],
         ['wv_ru_wst', '태세의 박살', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
       s_fall: [
         ['wv_fa_vuln', '무너뜨릴 자리', '대상의 취약이 2 이상이면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'kw:vuln>=2' } }, [], { v: 'deep' }],
-        ['wv_fa_front', '산사태 휩쓸기', '전열 모두를 칩니다. 피해 24 → 14, 붕괴 70 → 40.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 14 }, { k: 'brk', n: 40 }] }, ['광역'], { v: 'link' }]],
+        ['wv_fa_front', '산사태 휩쓸기', '전열 모두를 칩니다. 피해 19 → 11, 붕괴 54 → 31.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 11 }, { k: 'brk', n: 31 }] }, ['광역'], { v: 'link' }]],
       f_sweep: [
         ['wv_sw_kill', '휩쓸어 거두기', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유).', { set: { killRecharge: 1 } }, ['처치'], { v: 'deep' }],
-        ['wv_sw_brk', '무너뜨리는 개기식', '붕괴 +15. 피해 12 → 9.', { fxSet: [{ k: 'dmg', n: 9 }], fxAdd: [{ k: 'brk', n: 15 }] }, ['붕괴'], { v: 'link' }]],
+        ['wv_sw_brk', '무너뜨리는 개기식', '붕괴 +11. 피해 9 → 6.', { fxSet: [{ k: 'dmg', n: 6 }], fxAdd: [{ k: 'brk', n: 11 }] }, ['붕괴'], { v: 'link' }]],
       f_chainblade: [
-        ['wv_cb_fast', '날랜 사슬', '빠른 칸이 됩니다. 피해 12 → 9.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 9 }] }, ['빠름'], { v: 'deep' }],
-        ['wv_cb_ward', '사슬 방패', '보호막 +8을 함께 두릅니다.', { fxAdd: [{ k: 'ward', n: 8 }] }, ['보호막'], { v: 'link' }]],
+        ['wv_cb_fast', '날랜 사슬', '빠른 칸이 됩니다. 피해 9 → 7.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 7 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_cb_ward', '사슬 방패', '보호막 +6을 함께 두릅니다.', { fxAdd: [{ k: 'ward', n: 6 }] }, ['보호막'], { v: 'link' }]],
       f_stomp: [
-        ['wv_stp_more', '세게 구르기', '붕괴 20 → 28.', { fxSet: [{ k: 'brk', n: 28 }] }, [], { v: 'deep' }],
-        ['wv_stp_ward', '발 디딘 방패', '보호막 +5를 함께 두릅니다.', { fxAdd: [{ k: 'ward', n: 5 }] }, ['보호막'], { v: 'link' }]],
+        ['wv_stp_more', '세게 구르기', '붕괴 14 → 20.', { fxSet: [{ k: 'brk', n: 20 }] }, [], { v: 'deep' }],
+        ['wv_stp_ward', '발 디딘 방패', '보호막 +3을 함께 두릅니다.', { fxAdd: [{ k: 'ward', n: 3 }] }, ['보호막'], { v: 'link' }]],
       w_shove: [
-        ['wv_sv_fast', '날랜 밀치기', '빠른 칸이 됩니다. 피해 9 → 6.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 6 }] }, ['빠름'], { v: 'deep' }],
-        ['wv_sv_brk', '밀어 무너뜨리기', '붕괴 +18.', { fxAdd: [{ k: 'brk', n: 18 }] }, ['붕괴'], { v: 'link' }]],
+        ['wv_sv_fast', '날랜 밀치기', '빠른 칸이 됩니다. 피해 8 → 5.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 5 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_sv_brk', '밀어 무너뜨리기', '붕괴 +14.', { fxAdd: [{ k: 'brk', n: 14 }] }, ['붕괴'], { v: 'link' }]],
       f_drag: [
-        ['wv_dr_normal', '빠른 끌기', '보통 빠르기가 됩니다. 피해 15 → 11.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 11 }] }, [], { v: 'deep' }],
-        ['wv_dr_ward', '끌어 막기', '보호막 +10을 함께 두릅니다.', { fxAdd: [{ k: 'ward', n: 10 }] }, ['보호막'], { v: 'link' }]],
+        ['wv_dr_normal', '빠른 끌기', '보통 빠르기가 됩니다. 피해 11 → 7.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 7 }] }, [], { v: 'deep' }],
+        ['wv_dr_ward', '끌어 막기', '보호막 +7을 함께 두릅니다.', { fxAdd: [{ k: 'ward', n: 7 }] }, ['보호막'], { v: 'link' }]],
       f_collapse: [
-        ['wv_co_normal', '서두른 붕괴', '보통 빠르기가 됩니다. 피해 19 → 13.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 13 }] }, [], { v: 'deep' }],
+        ['wv_co_normal', '서두른 붕괴', '보통 빠르기가 됩니다. 피해 15 → 11.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 11 }] }, [], { v: 'deep' }],
         ['wv_co_wst', '태세의 붕괴', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
       f_hook: [
-        ['wv_hk_fast', '날랜 갈고리', '빠른 칸이 됩니다. 피해 20 → 15.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 15 }] }, ['빠름'], { v: 'deep' }],
-        ['wv_hk_brk', '꺾는 갈고리', '붕괴 45 → 60.', { fxSet: [{ k: 'brk', n: 60 }] }, ['붕괴'], { v: 'link' }]],
+        ['wv_hk_fast', '날랜 갈고리', '빠른 칸이 됩니다. 피해 15 → 11.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 11 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_hk_brk', '꺾는 갈고리', '붕괴 32 → 43.', { fxSet: [{ k: 'brk', n: 43 }] }, ['붕괴'], { v: 'link' }]],
       w_flare: [
         ['wv_fl_fast', '번쩍 터뜨리기', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
         ['wv_fl_basic', '터뜨리고 잇기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
@@ -256,7 +256,7 @@ const ATREE_DEF = {
         ['wv_br_slow', '깊은 부수기', '느린 행동이 됩니다. 태우기 상한 16 → 22.', { set: { time: 'slow' }, fxSet: [{ k: 'wardBurn', max: 22 }] }, [], { v: 'deep' }],
         ['wv_br_basic', '부수고 잇기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
       w_rampart: [
-        ['wv_ra_fast', '서두른 철벽', '빠른 칸이 됩니다. 보호막 37 → 27.', { set: { time: 'fast' }, fxSet: [{ k: 'ward', n: 27 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_ra_fast', '서두른 철벽', '빠른 칸이 됩니다. 보호막 28 → 20.', { set: { time: 'fast' }, fxSet: [{ k: 'ward', n: 20 }] }, ['빠름'], { v: 'deep' }],
         ['wv_ra_wst', '태세의 철벽', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
       w_siege: [
         ['wv_si_fast', '순간의 파성', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
@@ -266,27 +266,27 @@ const ATREE_DEF = {
         ['wv_tp_basic', '쓰러뜨리고 잇기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
       s_lean: [
         ['wv_le_fast', '서두른 대열', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
-        ['wv_le_ward', '대열 방패', '보호막 8 → 16.', { fxSet: [{ k: 'ward', n: 16 }] }, ['보호막'], { v: 'link' }]],
+        ['wv_le_ward', '대열 방패', '보호막 4 → 8.', { fxSet: [{ k: 'ward', n: 8 }] }, ['보호막'], { v: 'link' }]],
       f_rampart: [
-        ['wv_rp_fast', '날랜 방패벽 부수기', '빠른 칸이 됩니다. 피해 19 → 14.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 14 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_rp_fast', '날랜 방패벽 부수기', '빠른 칸이 됩니다. 피해 15 → 11.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 11 }] }, ['빠름'], { v: 'deep' }],
         ['wv_rp_wst', '태세의 방패벽', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
       s_gapwatch: [
-        ['wv_gw_fast', '서두른 틈', '빠른 칸이 됩니다. 보호막 32 → 22.', { set: { time: 'fast' }, fxSet: [{ k: 'ward', n: 22 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_gw_fast', '서두른 틈', '빠른 칸이 됩니다. 보호막 23 → 16.', { set: { time: 'fast' }, fxSet: [{ k: 'ward', n: 16 }] }, ['빠름'], { v: 'deep' }],
         ['wv_gw_basic', '틈을 노린 박자', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
       s_quake: [
         ['wv_qk_fast', '순간의 분쇄', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
         ['wv_qk_wst', '태세의 분쇄', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
       f_charge: [
-        ['wv_ch_fast', '날랜 돌진', '빠른 칸이 됩니다. 피해 12 → 9.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 9 }] }, ['빠름'], { v: 'deep' }],
-        ['wv_ch_ward', '방패 든 돌진', '보호막 +8을 함께 두릅니다.', { fxAdd: [{ k: 'ward', n: 8 }] }, ['보호막'], { v: 'link' }]],
+        ['wv_ch_fast', '날랜 돌진', '빠른 칸이 됩니다. 피해 9 → 6.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 6 }] }, ['빠름'], { v: 'deep' }],
+        ['wv_ch_ward', '방패 든 돌진', '보호막 +6을 함께 두릅니다.', { fxAdd: [{ k: 'ward', n: 6 }] }, ['보호막'], { v: 'link' }]],
       w_spikes: [
         ['wv_sp_more', '빽빽한 가시', '가시 4번 → 6번.', { fxSet: [{ k: 'thorn', times: 6 }] }, [], { v: 'deep' }],
         ['wv_sp_wst', '태세의 가시', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
       f_storm: [
-        ['wv_sm_normal', '서두른 폭풍', '보통 빠르기가 됩니다. 피해 18 → 13.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 13 }] }, [], { v: 'deep' }],
-        ['wv_sm_ward', '폭풍의 막', '보호막 +10을 함께 두릅니다.', { fxAdd: [{ k: 'ward', n: 10 }] }, ['보호막'], { v: 'link' }]],
+        ['wv_sm_normal', '서두른 폭풍', '보통 빠르기가 됩니다. 피해 14 → 10.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 10 }] }, [], { v: 'deep' }],
+        ['wv_sm_ward', '폭풍의 막', '보호막 +7을 함께 두릅니다.', { fxAdd: [{ k: 'ward', n: 7 }] }, ['보호막'], { v: 'link' }]],
       w_armor: [
-        ['wv_ar_ward', '두꺼운 갑주', '보호막 18 → 25.', { fxSet: [{ k: 'ward', n: 25 }] }, [], { v: 'deep' }],
+        ['wv_ar_ward', '두꺼운 갑주', '보호막 15 → 21.', { fxSet: [{ k: 'ward', n: 21 }] }, [], { v: 'deep' }],
         ['wv_ar_wst', '태세의 갑주', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
       w_valor: [
         ['wv_va_fast', '순간의 용맹', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
@@ -780,10 +780,10 @@ const ATREE_DEF = {
     vars: {
       /* 스킬마다 변형 둘(둘 다 제시): v 'deep' 깊게 = 같은 길을 세게, v 'link' 잇기 = 그 스킬에 없던 다른 빌드의 꼬리표를 더해 경계 · 결합 칸으로. [Claude 초안] */
       a_dokkal: [
-        ['av_dk_more', '깊은 독 칼', '중독 4 → 6. 피해 18 → 12.', { fxSet: [{ k: 'dmg', n: 12 }, { k: 'poison', n: 6 }] }, [], { v: 'deep' }],
+        ['av_dk_more', '깊은 독 칼', '중독 4 → 7. 피해 20 → 13.', { fxSet: [{ k: 'dmg', n: 13 }, { k: 'poison', n: 7 }] }, [], { v: 'deep' }],
         ['av_dk_par', '독 칼 받기', '다음 흘리기 +10%p.', { fxAdd: [{ k: 'parryBuff', red: 0.1 }] }, ['흘리기'], { v: 'link' }]],
       a_dokan: [
-        ['av_da_thick', '짙은 안개', '느린 행동이 됩니다. 중독 5 → 7.', { set: { time: 'slow' }, fxSet: [{ k: 'poison', n: 7 }] }, [], { v: 'deep' }],
+        ['av_da_thick', '짙은 안개', '느린 행동이 됩니다. 중독 6 → 8.', { set: { time: 'slow' }, fxSet: [{ k: 'poison', n: 8 }] }, [], { v: 'deep' }],
         ['av_da_basic', '안개 속 칼', '다음 기본 공격 1번에 중독 1.', { fxAdd: [{ k: 'asNextPsn', n: 1, poison: 1, txt: '다음 기본 공격 1번에 중독 1' }] }, ['기본공격연동'], { v: 'link' }]],
       a_dokchim: [
         ['av_dc_three', '네 바늘', '기본 공격 3번 → 4번.', { fxSet: [{ k: 'asNextPsn', n: 4, txt: '다음 기본 공격 4번에 중독 2' }] }, [], { v: 'deep' }],
@@ -795,8 +795,8 @@ const ATREE_DEF = {
         ['av_bj_wide', '넓은 번짐', '절반 → 70%를 번지게 합니다.', { fxSet: [{ k: 'spread', per: 0.7 }] }, [], { v: 'deep' }],
         ['av_bj_back', '먼 번짐', '후열까지 닿습니다.', { set: { tgt: 'ranged' } }, ['후열'], { v: 'link' }]],
       a_maengdok: [
-        ['av_md_more', '진한 맹독', '중독 12 → 15.', { fxSet: [{ k: 'poison', n: 15 }] }, [], { v: 'deep' }],
-        ['av_md_brk', '맹독 붕괴', '붕괴 +20.', { fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
+        ['av_md_more', '진한 맹독', '중독 14 → 17.', { fxSet: [{ k: 'poison', n: 17 }] }, [], { v: 'deep' }],
+        ['av_md_brk', '맹독 붕괴', '붕괴 +23.', { fxAdd: [{ k: 'brk', n: 23 }] }, ['붕괴'], { v: 'link' }]],
       a_yeokbyeong: [
         ['av_yb_more', '짙은 역병', '옮겨붙는 중독 1.6배 → 2배.', { fxSet: [{ k: 'asPlague', mul: 2, txt: '이번 전투: 쓰러진 적 중독의 2배가 다른 적에게 옮겨붙음' }] }, [], { v: 'deep' }],
         ['av_yb_par', '시든 칼', '다음 흘리기 +10%p.', { fxAdd: [{ k: 'parryBuff', red: 0.1 }] }, ['흘리기'], { v: 'link' }]],
@@ -808,13 +808,13 @@ const ATREE_DEF = {
         ['av_gj_par', '찌르고 흘리기', '다음 흘리기 +10%p.', { fxAdd: [{ k: 'parryBuff', red: 0.1 }] }, ['흘리기'], { v: 'link' }]],
       a_bangul: [
         ['av_bg_two', '두 방울', '중독 3 → 4.', { fxSet: [{ k: 'poison', n: 4 }] }, [], { v: 'deep' }],
-        ['av_bg_brk', '붕괴 방울', '붕괴 +15.', { fxAdd: [{ k: 'brk', n: 15 }] }, ['붕괴'], { v: 'link' }]],
+        ['av_bg_brk', '붕괴 방울', '붕괴 +17.', { fxAdd: [{ k: 'brk', n: 17 }] }, ['붕괴'], { v: 'link' }]],
       a_dokpyo: [
-        ['av_dp_more', '세 표창', '중독 4 → 5.', { fxSet: [{ k: 'poison', n: 5 }] }, [], { v: 'deep' }],
+        ['av_dp_more', '세 표창', '중독 5 → 7.', { fxSet: [{ k: 'poison', n: 7 }] }, [], { v: 'deep' }],
         ['av_dp_par', '표창 받기', '다음 흘리기 +10%p.', { fxAdd: [{ k: 'parryBuff', red: 0.1 }] }, ['흘리기'], { v: 'link' }]],
       a_dokssae: [
-        ['av_ds_deep', '깊은 쐐기', '느린 행동이 됩니다. 중독 7 → 10.', { set: { time: 'slow' }, fxSet: [{ k: 'poison', n: 10 }] }, [], { v: 'deep' }],
-        ['av_ds_brk', '쐐기 붕괴', '붕괴 +20.', { fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
+        ['av_ds_deep', '깊은 쐐기', '느린 행동이 됩니다. 중독 8 → 11.', { set: { time: 'slow' }, fxSet: [{ k: 'poison', n: 11 }] }, [], { v: 'deep' }],
+        ['av_ds_brk', '쐐기 붕괴', '붕괴 +21.', { fxAdd: [{ k: 'brk', n: 21 }] }, ['붕괴'], { v: 'link' }]],
       a_yeonswae: [
         ['av_ys_brk', '연쇄 붕괴', '터뜨린 중독 1마다 붕괴 +4 → +7.', { fxSet: [{ k: 'burst', brkPer: 7 }] }, [], { v: 'deep' }],
         ['av_ys_psn', '연쇄 독', '터뜨린 뒤 중독 2.', { fxAdd: [{ k: 'poison', n: 2 }] }, ['중독'], { v: 'link' }]],
@@ -825,7 +825,7 @@ const ATREE_DEF = {
         ['av_hb_deep', '깊은 흘림', '흘리기 80% → 90%.', { fxSet: [{ k: 'parry', red: 0.9 }] }, [], { v: 'deep' }],
         ['av_hb_psn', '독 베기', '흘려 내면 그 적에게 중독 2.', { fxAdd: [{ k: 'onParry', poison: 2 }] }, ['중독'], { v: 'link' }]],
       a_balbgi: [
-        ['av_bb_deep', '깊은 밟기', '느린 행동이 됩니다. 피해 35 → 46.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 46 }] }, [], { v: 'deep' }],
+        ['av_bb_deep', '깊은 밟기', '느린 행동이 됩니다. 피해 39 → 51.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 51 }] }, [], { v: 'deep' }],
         ['av_bb_psn', '그림자 독', '중독 2를 겁니다.', { fxAdd: [{ k: 'poison', n: 2 }] }, ['중독'], { v: 'link' }]],
       a_gyeonu: [
         ['av_gn_sharp', '날카로운 칼끝', '+20%p → +30%p.', { fxSet: [{ k: 'parryBuff', red: 0.3 }] }, [], { v: 'deep' }],
@@ -834,14 +834,14 @@ const ATREE_DEF = {
         ['av_hk_deep', '깊은 칼', '×1.7 → ×2.', { fxSet: [{ k: 'asFlowBlade', mul: 2, txt: '이번 전투: 흘려 낸 다음 차례 첫 기본 공격 ×2' }] }, [], { v: 'deep' }],
         ['av_hk_psn', '독 묻은 칼', '그 공격에 중독 3.', { fxSet: [{ k: 'asFlowBlade', poison: 3, txt: '이번 전투: 흘려 낸 다음 차례 첫 기본 공격 ×1.7 · 중독 3' }] }, ['중독'], { v: 'link' }]],
       a_hugyeol: [
-        ['av_hg_fast', '서두른 기습', '빠른 칸이 됩니다. 피해 27 → 19.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 19 }] }, [], { v: 'deep' }],
-        ['av_hg_brk', '기습 붕괴', '붕괴 +20.', { fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
+        ['av_hg_fast', '서두른 기습', '빠른 칸이 됩니다. 피해 30 → 21.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 21 }] }, [], { v: 'deep' }],
+        ['av_hg_brk', '기습 붕괴', '붕괴 +22.', { fxAdd: [{ k: 'brk', n: 22 }] }, ['붕괴'], { v: 'link' }]],
       a_kalchum: [
         ['av_kc_deep', '두 겹 칼춤', '칼춤 기본 공격 ×1.6 → ×1.9.', { fxSet: [{ k: 'asDance', mul: 1.9, txt: '이번 전투: 흘려 낼 때마다 기본 공격 ×1.9 한 번 더' }] }, [], { v: 'deep' }],
         ['av_kc_psn', '독 칼춤', '칼춤 공격에 중독 2.', { fxSet: [{ k: 'asDance', poison: 2, txt: '이번 전투: 흘려 낼 때마다 기본 공격 ×1.6 한 번 더 · 중독 2' }] }, ['중독'], { v: 'link' }]],
       a_cheohyeong: [
         ['av_ch_fast', '서두른 처형', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, [], { v: 'deep' }],
-        ['av_ch_brk', '처형 붕괴', '붕괴 +25.', { fxAdd: [{ k: 'brk', n: 25 }] }, ['붕괴'], { v: 'link' }]],
+        ['av_ch_brk', '처형 붕괴', '붕괴 +28.', { fxAdd: [{ k: 'brk', n: 28 }] }, ['붕괴'], { v: 'link' }]],
       a_pieo: [
         ['av_pe_more', '활짝 핀 독', '먼저 거는 중독 4 → 6.', { fxSet: [{ k: 'burst', pre: 6 }] }, [], { v: 'deep' }],
         ['av_pe_back', '피는 칼', '후열까지 닿습니다.', { set: { tgt: 'ranged' } }, ['후열'], { v: 'link' }]],
@@ -855,26 +855,26 @@ const ATREE_DEF = {
         ['av_jm_long', '긴 장막', '3차례 → 4차례.', { fxSet: [{ k: 'asVeil', n: 4, txt: '4차례 나를 친 적에게 중독 3' }] }, [], { v: 'deep' }],
         ['av_jm_par', '장막 흘리기', '다음 흘리기 +10%p.', { fxAdd: [{ k: 'parryBuff', red: 0.1 }] }, ['흘리기'], { v: 'link' }]],
       a_geuneul: [
-        ['av_gu_deep', '깊은 그늘', '중독 1마다 +3 → +4. 피해 21 → 15.', { fxSet: [{ k: 'dmg', n: 15 }, { k: 'exploit', per: 4 }] }, [], { v: 'deep' }],
+        ['av_gu_deep', '깊은 그늘', '중독 1마다 +3 → +4. 피해 25 → 18.', { fxSet: [{ k: 'dmg', n: 18 }, { k: 'exploit', per: 4 }] }, [], { v: 'deep' }],
         ['av_gu_par', '그늘 흘리기', '다음 흘리기 +10%p.', { fxAdd: [{ k: 'parryBuff', red: 0.1 }] }, ['흘리기'], { v: 'link' }]],
       a_sumjuk: [
         ['av_sj_three', '세 번 숨죽임', '2번 → 3번.', { fxSet: [{ k: 'parryBuff', times: 3 }] }, [], { v: 'deep' }],
         ['av_sj_psn', '독 숨', '흘려 내면 그 적에게 중독 2.', { fxSet: [{ k: 'parryBuff', poison: 2 }] }, ['중독'], { v: 'link' }]],
       a_kkweogi: [
-        ['av_kw_deep', '깊이 꿰기', '무너진 적 2배 → 2.5배. 피해 44 → 35.', { fxSet: [{ k: 'dmg', n: 35 }, { k: 'brokenx', mul: 2.5 }] }, [], { v: 'deep' }],
+        ['av_kw_deep', '깊이 꿰기', '무너진 적 2배 → 2.5배. 피해 49 → 39.', { fxSet: [{ k: 'dmg', n: 39 }, { k: 'brokenx', mul: 2.5 }] }, [], { v: 'deep' }],
         ['av_kw_psn', '꿰는 독', '중독 2를 겁니다.', { fxAdd: [{ k: 'poison', n: 2 }] }, ['중독'], { v: 'link' }]],
       a_yeonmak: [
         ['av_ym_more', '짙은 연막', '보호 18 → 24.', { fxSet: [{ k: 'st', s: 'protect', n: 24 }] }, [], { v: 'deep' }],
         ['av_ym_psn', '연막 독', '2차례 나를 친 적에게 중독 1.', { fxAdd: [{ k: 'asVeil', n: 2, poison: 1, txt: '2차례 나를 친 적에게 중독 1' }] }, ['중독'], { v: 'link' }]],
       a_janjjil: [
-        ['av_jj_three', '세 번 찌르기', '2번 → 3번. 피해 8 → 6.', { set: { hits: 3 }, fxSet: [{ k: 'dmg', n: 6 }] }, [], { v: 'deep' }],
+        ['av_jj_three', '세 번 찌르기', '2번 → 3번. 피해 10 → 7.', { set: { hits: 3 }, fxSet: [{ k: 'dmg', n: 7 }] }, [], { v: 'deep' }],
         ['av_jj_par', '잔영 흘리기', '다음 흘리기 +10%p.', { fxAdd: [{ k: 'parryBuff', red: 0.1 }] }, ['흘리기'], { v: 'link' }]],
       a_geurimdok: [
         ['av_gr_more', '짙은 그림자 독', '중독 3 → 4.', { fxSet: [{ k: 'asNextPsn', poison: 4, txt: '다음 기본 공격 3번에 중독 4' }] }, [], { v: 'deep' }],
         ['av_gr_par', '그림자 흘림', '다음 흘리기 +10%p.', { fxAdd: [{ k: 'parryBuff', red: 0.1 }] }, ['흘리기'], { v: 'link' }]],
       a_pagodeul: [
-        ['av_pg_deep', '깊이 파고들기', '×1.5 → ×1.8. 피해 48 → 37.', { fxSet: [{ k: 'dmg', n: 37 }, { k: 'grow', mul: 1.8 }] }, [], { v: 'deep' }],
-        ['av_pg_brk', '파고드는 칼', '붕괴 +20.', { fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
+        ['av_pg_deep', '깊이 파고들기', '×1.5 → ×1.8. 피해 54 → 41.', { fxSet: [{ k: 'dmg', n: 41 }, { k: 'grow', mul: 1.8 }] }, [], { v: 'deep' }],
+        ['av_pg_brk', '파고드는 칼', '붕괴 +22.', { fxAdd: [{ k: 'brk', n: 22 }] }, ['붕괴'], { v: 'link' }]],
       a_heurit: [
         ['av_hr_three', '더 흐릿한 몸', '2번 → 3번.', { fxSet: [{ k: 'parryBuff', times: 3 }] }, [], { v: 'deep' }],
         ['av_hr_psn', '흐릿한 독', '흘려 내면 그 적에게 중독 2.', { fxSet: [{ k: 'parryBuff', poison: 2 }] }, ['중독'], { v: 'link' }]],

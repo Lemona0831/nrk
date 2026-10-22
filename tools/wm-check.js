@@ -32,7 +32,7 @@ const enemyHit = (b, e, raw, x) => { const cur = b.cur; b.cur = null; const d = 
 { const A = E.atBuild('warden'), N = Object.values(A.nodes); ok(!A.tmp && N.filter(x => x.kind === 'skill').length === 39 && N.filter(x => x.slot).length === 36 && N.filter(x => x.kind === 'skill').every(x => [1, 2, 3, 4].includes(x.ys)), 'warden: 재설계 트리(스킬 노드 39 · 변형 자리 36, 비용 1–4)'); }
 /* 0.8.0 M5-2(10월 20일): 수도승도 재설계로 강화 노드 대신 변형이 됐다. 수도승 트리 규칙은 tools/tree-check.js, 새 효과 · 승부수 · 결합 칸은 tools/mk-check.js */
 { const A = E.atBuild('monk'), N = Object.values(A.nodes); ok(!A.tmp && N.filter(x => x.kind === 'skill').length === 39 && N.filter(x => x.slot).length === 36 && N.filter(x => x.kind === 'skill').every(x => [1, 2, 3, 4].includes(x.ys)), 'monk: 재설계 트리(스킬 노드 39 · 변형 자리 36, 비용 1–4)'); }
-ok(JSON.stringify(E.SK2.w_flare.fx) === JSON.stringify([{ k: 'wardBurn', mul: 2.6, max: 8 }, { k: 'brk', n: 3 }, { k: 'bigx', mul: 1.5 }]), '강화는 원래 스킬 데이터를 바꾸지 않음');
+ok(JSON.stringify(E.SK2.w_flare.fx) === JSON.stringify([{ k: 'wardBurn', mul: 2.6, max: 8 }, { k: 'brk', n: 2 }, { k: 'bigx', mul: 1.5 }]), '강화는 원래 스킬 데이터를 바꾸지 않음');
 
 // ===== 2) 노드 비용 (결정 1: skCost가 노드 ys를 읽음) =====
 { const p = { build: 'warden', aup: [], pn: [] }; ok(skCost(E.skOf(p, 'w_flare')) === 2, '보호막 터뜨리기: 트리 노드 2(0.8.0 M5-0부터 쿨타임 변환표 없음)');
@@ -263,7 +263,7 @@ const near = (a, b2) => Math.abs(a - b2) < 1e-6;
   for (const [cls, a4, a0] of [['assassin', ['a_dokkal', 'a_gyeokpyo', 'a_mandok'], ['a_dokkal', 'a_dokchim', 'a_godok', 'a_maengdok']], ['hunter', ['h5_pierce', 'h5_volley', 'h5_gale'], ['h5_pierce', 'h5_cover']], ['spellblade', ['sb_crimson'], []]]) {
     const r4 = mk(cls, a4), r0 = mk(cls, a0); const P = E.ptBuild(cls); const o4 = E.ksOfferMake(r4), o0 = E.ksOfferMake(r0);
     ok(P.nodes.pwK5.fx === 'ks_sharp' && ksHasCost4(r4) && !ksHasCost4(r0), cls + ': 유산 4 스킬 판정(skCost(skOf)), 화력 K5는 날 선 손(M4)');
-    ok(o4.includes('pwK5') && o0.includes('pwK5') && o0.length === 3 && JSON.stringify(E.ksOfferMake(r0)) === JSON.stringify(o0), cls + ': 결정의 칼이 빠져 화력 K5(날 선 손)는 유산 4 스킬과 상관없이 제시(같은 시드면 같은 셋) ' + o4.join(' ') + ' / ' + o0.join(' '));
+    ok(o4.includes('pwK5') && o0.includes('pwK5') && o0.length >= 1 && o0.length <= 3 && JSON.stringify(E.ksOfferMake(r0)) === JSON.stringify(o0), cls + ': 결정의 칼이 빠져 화력 K5(날 선 손)는 유산 4 스킬과 상관없이 제시(같은 시드면 같은 셋, M7-2부터 3칸 안만) ' + o4.join(' ') + ' / ' + o0.join(' '));
     ok(E.ksCands(r0).some(c => c.id === 'pwK5'), cls + ': 후보 계산(ksCands · ksInfo)은 그대로, 제시에서만 뺀다'); }
   { const run = mk('assassin', ['a_dokkal', 'a_gyeokpyo']); run.skills = ['a_dokkal', 'a_gyeokpyo']; E.atSync(run); ok(!ksHasCost4(run), '시작 스킬은 유산 2'); run.atree.own.push('a_mandok'); ok(ksHasCost4(run), '찍기만 하고 끼우지 않은 유산 4 스킬도 연 스킬로 셈'); } }
 // 결정 5: 끊어진 영창 — 끊기 · 무너뜨리기 · 먼저 치우기만(막기 · 흘리기는 아님), 대응 한도 밖 +1, 전투마다 2번. 테스터 큰 각인 선호에 있음

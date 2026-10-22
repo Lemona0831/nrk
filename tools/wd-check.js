@@ -24,7 +24,7 @@ const act = (b, id, t) => { b.p.ys = 9; b.p.st = b.p.stMax; E.playerAct(b, id, t
 // 태세 효과
 { const { p, b, es } = fight(['w_dstance', 's_astance']); const fx = R_('fxAdd'); act(b, 's_astance'); ok(Math.abs(fx(p, 'hitP', b, p, es[0], {}, { id: 'basic' }) - U.atkHit) < 1e-9 && fx(p, 'hitP', b, p, es[0], {}, { id: 'w_bash' }) === 0, '공격 태세: 기본 공격 · 강공격 +' + U.atkHit * 100 + '%(스킬은 아님)');
   ok(Math.abs(fx(p, 'inP', b, p, {}) + U.atkIn) < 1e-9, '공격 태세: 받는 피해 +' + U.atkIn * 100 + '%(맞추기 1번에서 0)'); act(b, 'w_dstance'); ok(Math.abs(fx(p, 'inP', b, p, {}) - U.defIn) < 1e-9, '수비 태세: 받는 피해 −' + U.defIn * 100 + '%');
-  p.ward = 0; E.playerAct(b, 'guard'); const w0 = p.ward; E.runUntilPlayer(b); ok(b.log.some(x => /^수비 태세: 보호막 \+3/.test(x.m)), '수비 태세: 내 차례마다 보호막 +' + U.defWard); }
+  p.ward = 0; E.playerAct(b, 'guard'); const w0 = p.ward; E.runUntilPlayer(b); ok(b.log.some(x => new RegExp('^수비 태세: 보호막 \\+' + U.defWard).test(x.m)), '수비 태세: 내 차례마다 보호막 +' + U.defWard); }
 // 신성한 기도
 { const { p, b } = fight(['w_shieldhit', 'w_pray', 'w_dstance']); ok(A(b, 'w_pray').ok, '신성한 기도는 언제나 쓸 수 있음(07:40 보완)'); const heal = () => { const L = b.log.filter(x => /^신성한 기도: 생명력 \+/.test(x.m)); return +L[L.length - 1].m.match(/\+([\d.]+)/)[1]; }; p.hp = 50; act(b, 'w_pray'); const g1 = heal(); act(b, 'w_dstance'); p.hp = 50; act(b, 'w_pray'); const g2 = heal(); ok(Math.abs(g2 - 2 * g1) < 0.2 && Math.abs(g1 - p.hpMax * 0.03 * R_('healMul')(p)) < 0.2, '최대 생명력 3%, 수비 태세면 2배 (' + g1 + ' → ' + g2 + ')'); }
 // 조건 wst

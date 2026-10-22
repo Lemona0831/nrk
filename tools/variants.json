@@ -399,10 +399,9 @@
    "name": "YS_BLOCK",
    "kind": "env",
    "default": null,
-   "introduced": null,
-   "expires": "M7",
-   "status": "예정(코드 없음)",
-   "note": "막기 대응 유산을 큰 예고 공격을 막았을 때만(비공개 진단 문서의 제안, 7단계)"
+   "introduced": "M7-2",
+   "expires": "M7 정리 검토",
+   "note": "pre: 막기 대응(방어로 받아 냄 · 되받기) 유산을 큰 예고(YS_PRE_K · 겨눈 한 발) 공격을 받아 냈을 때만. 실제 엔진에만, 한 수 앞 계산은 그대로(M7-2 파수꾼 분해 (d))"
   },
   {
    "name": "PK",

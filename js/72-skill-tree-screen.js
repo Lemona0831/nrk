@@ -71,7 +71,7 @@ function ksCard(run, id, btn) {
 }
 function vKsPick(run) {
   const offer = ksEnsureOffer(run), list = trdListOn() || !offer.length; // 10월 17일 3단계: 후보 셋을 트리 그림 위에도 보인다(카드 · 그림 어느 쪽에서도 고른다)
-  return `<div class="row trd-bar"><p class="mini">찍은 곳 가까이의 큰 각인 셋 가운데 하나를 고릅니다. 고르면 거기까지의 길이 포인트 없이 열립니다. 남은 고를 것 ${run.ksPending}번.</p>${trdListBtn()}</div>${list ? '' : trdView(run, 'k', { offer })}<div class="awklist">${offer.map((id, i) => ksCard(run, id, `<div class="row"><button class="gold" data-a="kspick" data-k="${id}">이것을 고른다</button>${list ? '' : `<button class="sm" data-a="tsel" data-k="${id}" data-e="k">그림에서 보기 · 후보 ${i + 1}</button>`}</div>`)).join('') || '<p class="mini">닿는 큰 각인 자리가 없습니다.</p>'}</div>`;
+  return `<div class="row trd-bar"><p class="mini">찍은 곳 가까이의 큰 각인 셋 가운데 하나를 고릅니다. 고르면 거기까지의 길이 포인트 없이 열립니다. 남은 고를 것 ${run.ksPending}번.${offer.length ? '' : ' 지금은 찍은 곳에서 ' + PT.ksN + '칸 안에 큰 각인이 없습니다. 노드를 더 찍어 가까워지면 고를 수 있습니다.'}</p>${trdListBtn()}</div>${list ? '' : trdView(run, 'k', { offer })}<div class="awklist">${offer.map((id, i) => ksCard(run, id, `<div class="row"><button class="gold" data-a="kspick" data-k="${id}">이것을 고른다</button>${list ? '' : `<button class="sm" data-a="tsel" data-k="${id}" data-e="k">그림에서 보기 · 후보 ${i + 1}</button>`}</div>`)).join('') || '<p class="mini">닿는 큰 각인 자리가 없습니다.</p>'}</div>`;
 }
 /* ---- 배분 흐름 (캐릭터 만들기 · 옛 세이브 옮기기, 9-3절 + 10-4 단계 잠금) ----
    단계: i 안내(옮기기만) → p 패시브 → k 큰 각인(받을 것이 있으면) → a 액티브 · 장착 → 확정. 다음 단계로 넘어가면 앞 단계는 되돌릴 수 없다. 닫기 버튼이 없다 */
@@ -83,12 +83,12 @@ function migBegin(cur) {
 function allocNext(run) {
   const A = run && run.alloc; if (!A) return;
   if (A.step === 'i') A.step = 'p';
-  else if (A.step === 'p') { if (run.ptree.pts > 0 && !ask('패시브 포인트 ' + run.ptree.pts + '점을 남겨 둘까요? 다음 단계로 넘어가면 이 단계의 노드는 되돌릴 수 없습니다.')) return; A.step = run.ksPending > 0 ? 'k' : 'a'; if (A.step === 'k') ksEnsureOffer(run); }
+  else if (A.step === 'p') { if (run.ptree.pts > 0 && !ask('패시브 포인트 ' + run.ptree.pts + '점을 남겨 둘까요? 다음 단계로 넘어가면 이 단계의 노드는 되돌릴 수 없습니다.')) return; A.step = ksCanPick(run) ? 'k' : 'a'; }
   else if (A.step === 'k') A.step = 'a';
   if (A.step === 'a' && A.mode === 'mig') allocOldOrder(run);
   render(); if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo(0, 0);
 }
-function allocAfterKs(run) { if (!(run.ksPending > 0)) { run.alloc.step = 'a'; if (run.alloc.mode === 'mig') allocOldOrder(run); } render(); }
+function allocAfterKs(run) { if (!ksCanPick(run)) { run.alloc.step = 'a'; if (run.alloc.mode === 'mig') allocOldOrder(run); } render(); }
 const allocOldOrder = run => { const old = run.skillsOld || []; const ix = x => old.indexOf(x) < 0 ? 99 : old.indexOf(x); run.skills = (run.skills || []).slice().sort((x, y) => ix(x) - ix(y)); atSync(run); };
 function allocConfirm(run, quiet) {
   const A = run && run.alloc; if (!A || A.step !== 'a') return;
@@ -110,7 +110,7 @@ function vAlloc(run) {
     const old = (run.skillsOld || []).map(id => (SK2[id] ? SK2[id].n : id) + (AT.nodes[id] ? '' : ' (더는 없는 스킬)'));
     return h + `<p>0.8.0에서 능력치 · 스킬 트리 · 각인이 두 트리로 바뀌었습니다. 포인트를 모두 돌려드렸습니다.</p><ul class="rcplain"><li>레벨 ${run.lv}${M.lv && M.lv !== run.lv ? ' (저장된 레벨 ' + M.lv + ')' : ''} · 패시브 <b>${run.ptree.pts}점</b> · 액티브 <b>${run.atree.pts}점</b></li><li>고를 큰 각인 <b>${run.ksPending}번</b></li><li>빠진 옛 각인: ${gone.length ? gone.map(esc).join(', ') : '없음'}</li><li>옛 장착 스킬: ${old.length ? old.map(esc).join(', ') : '없음'} (다시 열면 옛 순서대로 끼웁니다)</li>${M.battle ? '<li>싸우던 전투는 그 방의 처음으로 되돌렸습니다. 확정한 뒤 같은 방을 다시 싸웁니다.</li>' : ''}</ul><p class="mini">패시브 → 큰 각인 → 액티브 순서로 찍습니다. 다음 단계로 넘어가면 앞 단계는 고칠 수 없습니다. 확정해야 저장됩니다. 시작 스킬: ${T2.starters.map(id => esc(SK2[id].n)).join(', ')}.</p><div class="stickbar"><button class="gold wide" data-a="allocgo" data-focus>시작</button></div>`;
   }
-  if (A.step === 'p') return h + `<div class="row trd-bar">${trdListBtn()}</div>` + vPTreeAny(run) + `<div class="stickbar"><button class="gold wide" data-a="allocnext" data-focus>${run.ksPending > 0 ? '다음: 큰 각인 고르기' : '다음: 액티브 트리'}${run.ptree.pts ? ' (남은 ' + run.ptree.pts + '점)' : ''}</button>${A.mode === 'create' ? '<div class="row"><button data-a="cback" data-k="cls">이전: 직업 고르기</button><button data-a="createcancel">그만두기</button></div>' : ''}</div>`;
+  if (A.step === 'p') return h + `<div class="row trd-bar">${trdListBtn()}</div>` + vPTreeAny(run) + `<div class="stickbar"><button class="gold wide" data-a="allocnext" data-focus>${ksCanPick(run) ? '다음: 큰 각인 고르기' : '다음: 액티브 트리'}${run.ptree.pts ? ' (남은 ' + run.ptree.pts + '점)' : ''}</button>${A.mode === 'create' ? '<div class="row"><button data-a="cback" data-k="cls">이전: 직업 고르기</button><button data-a="createcancel">그만두기</button></div>' : ''}</div>`;
   if (A.step === 'k') return h + vKsPick(run);
   return h + `<div class="row trd-bar">${trdListBtn()}</div>` + vATreeAny(run) + `<div class="stickbar"><button class="gold wide" data-a="allocok" data-focus>${A.mode === 'create' ? '이 캐릭터로 시작하기' : '확정하고 이어 하기'}${run.atree.pts ? ' (남은 ' + run.atree.pts + '점)' : ''}</button>${A.mode === 'create' ? '<div class="row"><button data-a="createcancel">그만두기</button></div>' : ''}</div>`;
 }
