@@ -352,26 +352,40 @@ function streetPre(b, P, r) {
 /* 0.8.0 M7-1 신중 성향의 예고 답하기(A1 답 ①, 10월 22일): 내 다음 차례 전에 강적 · 보스의 큰 한 방(아이콘 hv · 피해 숫자 있음)이 오면
    ① 이 행동으로 그 적의 붕괴 게이지를 채울 수 있으면 붕괴 행동 ② 한 적만 노리는 공격이면 흘리기 ③ 아니면 방어. 사람의 실수 몫으로 ANS_P(0.95)만큼만.
    기믹 대상: 1챕터 큰 종(종지기가 있으면 종부터 친다). 봉화 · 부품 · 벽돌 · 종 표식은 w3Pre, 등불은 streetPre, 기도는 devPre, 수도사는 아래 대상 바꾸기(신중 0.9) */
-const ANS_P = 0.95;
+const ANS_P = 0.95; const ANS_PART = process.env.ANS_PART ? process.env.ANS_PART.split(',') : ['ans']; // M7-1: 예고 답하기(ans)만 기본. 큰 종(bell) · 수도사 0.9(monk)는 갈라보기에서 손해라 스위치로만(보고서 M7-1 2절)
 const brkOfA = x => x.id === 'heavy' ? 35 : x.v2 ? x.s.fx.reduce((m, f) => m + (f.k === 'brk' ? f.n : f.k === 'cutx' ? f.brk : 0), 0) : 0;
 function bigIncoming(b) {
   const pv = G0.previewAfter(b, 1).map(x => x.e); const out = [];
   for (const e of pv) { if (!e || !e.alive || !(e.strong || e.role === 'boss') || !e.intent) continue; const bd = G0.intentBadge(b, e); if (bd && bd.cls === 'hv' && +String(bd.num).replace(/[^\d.]/g, '') > 0 && !out.includes(e)) out.push(e); }
   return out;
 }
-function answerPre(b, P, r, pk) {
+function answerPick(b, e, L) { // 끊기 → 흘리기 → 방어
+  const br = L.filter(x => !x.self && G0.canTarget(b, e, x) && brkOfA(x) > 0 && e.brk + brkOfA(x) * (1 + 0.01 * (G0.stat ? G0.stat(b.p, 'str') : 0)) >= e.brkMax).sort((x, y) => brkOfA(y) - brkOfA(x))[0];
+  if (br) return [br.id, br.aoe ? null : e.id];
+  const single = !(e.intent && (e.intent.aoe || ['firerain', 'taintwave'].includes(e.intent.k)));
+  const dg = L.find(x => x.id === 'dodge'); if (single && dg && G0.canTarget(b, e, dg)) return ['dodge', e.id];
+  if (L.find(x => x.id === 'guard')) return ['guard', null];
+  return null;
+}
+const ANS_DEF = ['parry', 'parryBuff', 'guard', 'ward', 'wardFill', 'dodge', 'stance', 'protect', 'evade', 'block'];
+/* 고른 행동이 이미 대응인가: 방어 · 흘리기 · 방어 스킬(보호막 · 보호 · 태세 · 흘리기 류) · 그 적을 이 행동으로 끊는 붕괴 */
+function answered(b, e, a, t) {
+  if (a === 'guard' || a === 'dodge') return true; const act = G0.actionList(b).find(x => x.id === a); if (!act) return false;
+  if (act.v2 && act.s && act.s.fx.some(f => ANS_DEF.includes(f.k) || (f.k === 'st' && ['protect', 'block'].includes(f.s)))) return true;
+  return (t === e.id || act.aoe) && brkOfA(act) > 0 && e.brk + brkOfA(act) >= e.brkMax;
+}
+/* M7-1 예고 답하기: 테스터가 원래대로 고른 행동이 대응이 아닐 때만 끊기 → 흘리기 → 방어로 바꾼다(직업의 더 나은 대응은 그대로 둔다) */
+function answerPost(b, P, r, pk, a, t) {
+  if (pk !== 'careful' || process.env.ANS_OFF || !ANS_PART.includes('ans')) return [a, t]; const big = bigIncoming(b); if (!big.length) return [a, t];
+  const e = big.sort((x, y) => (y.brk / y.brkMax) - (x.brk / x.brkMax))[0]; if (answered(b, e, a, t) || r() >= ANS_P) return [a, t];
+  const x = answerPick(b, e, G0.actionList(b).filter(y => y.ok && y.id !== 'flee')); return x || [a, t];
+}
+let BELL_EV = null;
+function answerPre(b, P, r, pk) { // 기믹 대상: 1챕터 큰 종(다음 라운드에 울리거나 반쯤 깨졌을 때)
   if (pk !== 'careful' || process.env.ANS_OFF) return null; const L = G0.actionList(b).filter(x => x.ok && x.id !== 'flee');
   const bell = G0.alive(b).find(e => e.bell) && G0.alive(b).find(e => e.foe === 'bellringer');
-  const big = bigIncoming(b);
-  if (big.length && r() < ANS_P) {
-    const e = big.sort((x, y) => (y.brk / y.brkMax) - (x.brk / x.brkMax))[0];
-    const br = L.filter(x => !x.self && G0.canTarget(b, e, x) && brkOfA(x) > 0 && e.brk + brkOfA(x) * (1 + 0.01 * (G0.stat ? G0.stat(b.p, 'str') : 0)) >= e.brkMax).sort((x, y) => brkOfA(y) - brkOfA(x))[0];
-    if (br) return [br.id, br.aoe ? null : e.id];
-    const single = !(e.intent && (e.intent.aoe || ['firerain', 'taintwave'].includes(e.intent.k)));
-    const dg = L.find(x => x.id === 'dodge'); if (single && dg && G0.canTarget(b, e, dg)) return ['dodge', e.id];
-    if (L.find(x => x.id === 'guard')) return ['guard', null];
-  }
-  if (bell && r() < 0.9) { const bl = G0.alive(b).find(e => e.bell); const c = L.filter(x => !x.self && G0.canTarget(b, bl, x) && (x.id === 'basic' || x.id === 'heavy' || (x.v2 && x.s.fx.some(f => f.k === 'dmg')))).sort((x, y) => (y.v2 ? 1 : 0) - (x.v2 ? 1 : 0))[0]; if (c) return [c.id, c.aoe ? null : bl.id]; }
+  const bl0 = bell && G0.alive(b).find(e => e.bell); const ringNext = bell && ((b.tick || 0) + 1) % (BELL_EV != null ? BELL_EV : (BELL_EV = run_('STRONG.bellEvery') || 3)) === 0; // 종은 다음 라운드에 울리거나 반쯤 깨졌을 때만(매 차례 치면 오히려 손해, M7-1 갈라보기)
+  if (ANS_PART.includes('bell') && bell && (ringNext || bl0.hp < bl0.hpMax * 0.5) && r() < 0.9) { const bl = bl0; const c = L.filter(x => !x.self && G0.canTarget(b, bl, x) && (x.id === 'basic' || x.id === 'heavy' || (x.v2 && x.s.fx.some(f => f.k === 'dmg')))).sort((x, y) => (y.v2 ? 1 : 0) - (x.v2 ? 1 : 0))[0]; if (c) return [c.id, c.aoe ? null : bl.id]; }
   return null;
 }
 /* 0.8.0 A3 3챕터 판단(사람이 화면을 보고 할 만한 것만): 틈 막기 · 종 표식 · 봉화 · 부품 · 벽돌 · 조준하는 명사수 · 벽돌을 쌓는 루를 붕괴로. 3챕터 전투에서만 난수를 쓴다 */
@@ -451,13 +465,14 @@ function fightCur(pk, r, mem, out) {
     const sr = r() < (P.mech || 0.5) ? sigRule(b, r) : null;
     [a, t] = answerPre(b, P, r, pk) || devPre(b, P, r) || streetPre(b, P, r) || ch2Pre(b, P, r) || w3Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look && hazePick(b)) || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem)); // 0.8.0 5단계: 숙련의 신기루 대응(수도승)
     [a, t] = ch2Post(b, P, r, a, t);
+    [a, t] = answerPost(b, P, r, pk, a, t); // M7-1 신중 성향 예고 답하기
     // 보스를 깎지 못한 채 버티기만 하면 사람은 밀어붙인다 (한 수 앞만 보는 계산이 페이즈 전환을 피하는 것을 막는다)
     const bs = b.en.find(e => e.role === 'boss' && e.alive);
     if (bs) { if (bs.hp < lastHp - 0.5) stall = 0; else stall++; lastHp = bs.hp;
       if (stall >= 3 && b.p.hp > b.p.hpMax * 0.5 && ['guard', 'dodge', 'sig'].includes(a)) { const L = G0.actionList(b).filter(x => x.ok && !x.pull && !['guard', 'dodge', 'flee', 'flaskL', 'flaskM', 'flaskS', 'sig'].includes(x.id)); if (L.length) { a = L[Math.floor(r() * L.length)].id; t = null; } } }
     if (a === 'flee') { const L = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); a = L[0].id; t = null; }
     if (P.look && r() < P.err) { const L = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); a = L[Math.floor(r() * L.length)].id; t = null; }
-    else if (r() < (THINK(pk) || (pk === 'careful' && !process.env.ANS_OFF) ? 0.9 : P.healerFirst)) { // 보스전 기믹에 사람이 하는 대응 (비공개 문서). M7-1: 신중도 0.9
+    else if (r() < (THINK(pk) || (pk === 'careful' && !process.env.ANS_OFF && ANS_PART.includes('monk')) ? 0.9 : P.healerFirst)) { // 보스전 기믹에 사람이 하는 대응 (비공개 문서). M7-1: 신중도 0.9
       const act = G0.actionList(b).find(x => x.id === a); const monk = G0.alive(b).filter(e => e.monk && act && G0.canTarget(b, e, act)).sort((x, y) => (y.role === 'healer') - (x.role === 'healer'))[0];
       if (monk && act && act.tgt !== false && !(b.p.build === 'assassin' && !process.env.ASN_PARRY_OLD && (a === 'dodge' || (act.s && act.s.fx.some(f => f.k === 'parry'))))) t = monk.id; /* 암살자(10월 8일): 흘리기는 공격하는 적에게 건다. 치유 수도사로 바꾸면 흘리기가 엉뚱한 적에게 걸린다(출처: 비공개 문서 보스, 암살자 그림자 칸). ASN_PARRY_OLD=1이면 끈다 */
     }
@@ -863,4 +878,4 @@ function manifestOf(want) {
 }
 /* 판 밖 예외(창 처리 · 트리 찍기 등)로 판이 끝나지 못한 경우의 기록 */
 function crashRow(w, e) { const o = { pk: w.pk, build: w.build, seed: w.seed, res: 'crash', floor: 0, lv: 0, rooms: [], bugs: ['판 밖 예외 ' + e.message], acts: 0, fights: [] }; o.meta = MM.rowMeta(REV, { seed: w.seed, pk: w.pk, build: w.build, from: FROM, chapters: OPT.chapters, variant: OPT.variant, pol: OPT.polId }); failOf(o, 'crash', { msg: String(e.message).slice(0, 200), stack: String(e.stack || '').split('\n').slice(1, 3).join(' | ') }); CUR = null; return o; }
-module.exports = { answerPre, bigIncoming, varPick, sectorPick, secScore, ksPick, manifestOf, crashRow, REV, SKE, sbEquip, sbEquipScore, spendPassive, ptSurvNeed, playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post, ch3Pre, seedWorld };
+module.exports = { answerPre, answerPost, answerPick, answered, bigIncoming, varPick, sectorPick, secScore, ksPick, manifestOf, crashRow, REV, SKE, sbEquip, sbEquipScore, spendPassive, ptSurvNeed, playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post, ch3Pre, seedWorld };

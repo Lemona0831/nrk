@@ -533,6 +533,14 @@
    "note": "M7-1 성향 점검: 평타 성향이 끼운 공격 스킬을 신중이 고른 대로 쓰게 한다(원소술사 평타 0%가 성향 정의 탓인지 가르기)"
   },
   {
+   "name": "ANS_PART",
+   "kind": "env",
+   "default": "ans",
+   "introduced": "M7-1",
+   "expires": "M7-3",
+   "note": "M7-1 신중 성향 판단 조각: ans 예고 답하기(기본) · bell 1챕터 큰 종 치기 · monk 수도사 대상 0.9. 쉼표로 고른다"
+  },
+  {
    "name": "ANS_OFF",
    "kind": "env",
    "default": null,
