@@ -436,7 +436,7 @@ Object.assign(FOE_X, {
   siege: { step: 25, launch: 0.45, parts: 2, partBrk: 30, cut: 25 },
   speaker: { cut: 0.6, need: 2, call: 2, cap: 4, incite: 0.15 },
   marksman: { melee: 0.5, drop: 2, aims: 3, shot: 0.35, brkAim: 1.5 },
-  wallcap: { bricks: 3, cut: 0.7, back: 2, brk: 30 },
+  wallcap: { bricks: 3, cut: 0.5, back: 3, brk: 30 }, // 10월 22일 만든 사람 답(A3 질문 2): 한 단계 완화(비공개 문서 참조)
   lu: { ph: [0.6, 0.3], patrol: 2, bricks: 3 },
 });
 BOSS_DWELL.lu = { mid: 3, last: 3 }; // 확정본: 단계마다 최소 행동 3, 3단계는 최소 3행동 고정(비공개 문서 참조)
