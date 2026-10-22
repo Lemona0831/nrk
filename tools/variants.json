@@ -525,6 +525,14 @@
    "note": "무시 시험: 쉼표로 적은 강적 id · 보스 id의 예고를 행동 고를 때만 평범한 공격으로 보이게 한다"
   },
   {
+   "name": "BASIC_SKILL",
+   "kind": "env",
+   "default": null,
+   "introduced": "M7-1",
+   "expires": "M7-2",
+   "note": "M7-1 성향 점검: 평타 성향이 끼운 공격 스킬을 신중이 고른 대로 쓰게 한다(원소술사 평타 0%가 성향 정의 탓인지 가르기)"
+  },
+  {
    "name": "ANS_OFF",
    "kind": "env",
    "default": null,

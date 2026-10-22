@@ -45,6 +45,7 @@ module.exports = (D, G0) => {
     if (!atk) return null;
     const burnFast = act.v2 && act.s && act.s.time === 'fast' && act.s.fx.some(f => f.k === 'wardDmg' && f.spend > 0); // M5-0 보정 5: 보호막을 태우는 빠른 주문(마갑탄)은 먼저 누르지 않는다
     const resp = b.ysRespLast != null && b.ysRespLast >= (b.ysR || 0) - 1; if (resp && act.v2 && act.s && !burnFast) return null;
+    if (process.env.BASIC_SKILL && act.v2 && act.s) return null; // M7-1 성향 점검 변형: 끼운 공격 스킬은 신중이 고른 대로 쓴다(평타 성향 정의가 원소술사를 막는지 가르기)
     const tgt = x => { const ok = G0.alive(b).filter(e => G0.canTarget(b, e, x)); const keep = ok.find(e => e.id === t); return (keep || ok.sort((p, q) => p.hp - q.hp)[0] || {}).id; };
     const hv = L.find(x => x.id === 'heavy' && x.ok); if (hv && tgt(hv) != null) return ['heavy', tgt(hv)];
     const bs = L.find(x => x.id === 'basic' && x.ok); if (bs && tgt(bs) != null) return ['basic', tgt(bs)];
