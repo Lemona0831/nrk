@@ -191,3 +191,13 @@ const AFFIX = {
   el_ax_still: {"n":["정적의","정적의","정적의"],"back":"정적","slot":["weapon","armor","gloves","amulet","ring","flask"],"cls":"elementalist","fam":"axis","tier":{"1":[19,21],"2":[20,22],"3":[21,22]},"fx":{"k":"dmgP","act":"br:정적"},"txt":"정적 스킬 피해 +{v}%","tags":["둔화"],"vs":{"p":"axis","k":"pct","pool":"skill","per":"skill"},"ax":1,"axis":"정적"},
   el_ax_manaflame: {"n":["마염의","마염의","마염의"],"back":"마염","slot":["weapon","armor","gloves","amulet","ring","flask"],"cls":"elementalist","fam":"axis","tier":{"1":[19,21],"2":[20,22],"3":[21,22]},"fx":{"k":"dmgP","act":"br:마염"},"txt":"마염 스킬 피해 +{v}%","tags":["화상"],"vs":{"p":"axis","k":"pct","pool":"skill","per":"skill"},"ax":1,"axis":"마염"},
 };
+
+/* 0.8.0 A2 챕터 장비 성향(확정본 2챕터 「2챕터 장비 성향」, M6 생성기 6-2의 챕터 가중 칸). up = 잘 나오는 접사 ×upW(출혈 · 중독 · 흘리기 · 무리 싸움 · 궁지),
+   down = 덜 나오는 것 ×downW(신성 · 성소 계열은 수도원 몫), names = 기반 이름(슬롯마다 1 · 2 · 3단 = 평범 · 고급 · 희귀 이상). 활 · 지팡이는 모양이 달라 기반 이름을 그대로 둔다 */
+const G8_CH = {
+  2: {
+    up: ['basicSt_bleed', 'heavySt_bleed', 'vsSt_bleed', 'costOnce_출혈', 'basicSt_poison', 'heavySt_poison', 'vsSt_poison', 'costOnce_중독', 'as_vsPoison', 'as_vsPoisonSkill', 'as_poisonBrk', 'as_vsPoisonRed', 'as_parryPoison', 'parryRed', 'parryStam', 'as_parryStam', 'vsMany', 'aoeDmg', 'costOnce_광역', 'wd_manyRed', 'lowHpDmg', 'lowHpRed'],
+    down: ['wardRed', 'heal', 'flaskWard', 'cleanse'], upW: 1.5, downW: 0.7, keepShape: ['bow', 'staff'],
+    names: { weapon: ['쇠못 곤봉', '톱니 단도', '수금꾼의 철퇴'], armor: ['누빈 외투', '덧댄 가죽 조끼', '경비대 미늘 갑옷'], gloves: ['붕대 감은 손', '투사의 손싸개', '철판 주먹'], amulet: ['놋쇠 패', '장물 목걸이', '등불 기름병'], ring: ['빚 반지', '도박꾼의 반지', '인장 반지'], flask: ['찌그러진 술병', '약장수 병', '유리 등잔'] },
+  },
+};

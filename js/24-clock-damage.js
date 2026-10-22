@@ -2,6 +2,7 @@
 function addS(b, u, k, dur, stacks, max) {
   if (KW[k]) {
     let n = Math.round(dur || 0); if (n <= 0) return 0;
+    if (b && b.ctx && b.ctx.ch === 2) n = ch2StatusAdd(b, u, k, n); // A2 기름 바닥 · 빗속 · 기름 뿌리기
     if (k === 'empower' && b && u === b.p && u.mkSt && u.mkSt.noKi > 0) return 0; // M5-2 일지멸맥의 대가: 기를 얻지 못함
     if (k === 'ignite' && u === b.p && fxFlag(u, 'noIgnite')) return 0; // 0.8.0 M5-0 불의 몸: 받는 화상 무효
     if (k === 'ignite' && u !== b.p && b.p && b.cur && b.sbK === 'spell' && stk(u, 'bleed') > 0 && !b.searBusy && fxFlag(b.p, 'ksSearSpell')) { b.searBusy = 1; const g = sbSear(b, u, n); b.searBusy = 0; return g; } // 0.8.0 M5-0 혈염의 각인: 출혈 걸린 적을 주문으로 치면 화상을 건너뛰고 바로 혈염
@@ -62,7 +63,7 @@ function tickOnce(b) {
   for (const w of alive(b)) if (w.role === 'bonewall' && !b.en.some(m => m.id === w.wallOf && m.alive)) { w.alive = false; w.hp = 0; logp(b, 'good', '쌓은 자가 쓰러져 뼈벽이 무너진다'); }
   for (const e of alive(b)) if (e.under && !alive(b).some(x => x !== e && !x.pile && !x.under && x.role !== 'root')) { e.under = 0; logp(b, 'sys', e.n + '이(가) 땅 위로 밀려 나온다'); } // 칠 수 있는 적이 늘 하나는 있다(G9)
   // 플레이어 자원 자연 회복 (전역 T)
-  if (!(p.wdSt && p.wdSt.valor) && !(p.asSt && p.asSt.noStam > 0)) { const rg = fxVal(p, 'regen', 0, (a, v) => a + v); if (rg && p.st < p.stMax) fxHit('clothgloves'); p.st = Math.min(p.stMax, p.st + ST_REGEN + rg); } /* M5-1 용맹한 방벽 대가: 스태미나 자연 회복 정지 */
+  const st0R = p.st; if (!(p.wdSt && p.wdSt.valor) && !(p.asSt && p.asSt.noStam > 0)) { const rg = fxVal(p, 'regen', 0, (a, v) => a + v); if (rg && p.st < p.stMax) fxHit('clothgloves'); p.st = Math.min(p.stMax, p.st + ST_REGEN + rg); } /* M5-1 용맹한 방벽 대가: 스태미나 자연 회복 정지 */ if (p.noRegenR === b.round) p.st = st0R; else if (p.dreamR === b.round) p.st = st0R + (p.st - st0R) * 0.5; /* A2 진통제 · 꿈 연기 */
   p.mp = Math.min(p.mpMax, p.mp + p.mpMax * 0.05 * (hasMod(b, 'calm') ? 2 : 1));
   if (hasBt(p, 'breath')) p.st = Math.min(p.stMax, p.st + 3);
   if (hasMod(b, 'holy') || hasMod(b, 'shade')) { p.hp = Math.min(p.hpMax, p.hp + p.hpMax * 0.01); for (const e of alive(b)) e.hp = Math.min(e.hpMax, e.hp + e.hpMax * 0.01); }
@@ -80,6 +81,7 @@ function tickOnce(b) {
   }
   if (boss && boss.boss === 'abbot') abbotTick(b, boss, T);
   if ((b.ctx.ch || 1) >= 3) { ch3Tick(b, T); if (b.over) return; } // 3챕터: 해시계, 열기와 열풍
+  if (isCh2(b)) { ch2Tick(b, T); if (b.over) return; } // A2 구경꾼 · 빗속 · 빚 · 함성 · 그림자 하수인
 
   { const rg = alive(b).find(e => e.foe === 'bellringer'); const bell = alive(b).find(e => e.bell); if (rg && bell && T % STRONG.bellEvery === 0) { for (const x of alive(b)) if (x.role !== 'root') x.quick = 1; logp(b, 'bad', rg.n + '이(가) 줄을 당긴다. 종이 울린다'); codexHit(b, 'bellringer', 'ring'); } }
   if (boss && boss.boss === 'tree') {
@@ -126,7 +128,7 @@ function dmgDot(b, u, amt, label) {
   else { hurtEnemy(b, u, amt, { dot: 1, label }); }
 }
 function hurtPlayer(b, raw, o) {
-  const p = b.p; o = o || {}; let rip = null; if (p.asSt && p.asSt.hide && (!o.dot || uqF(p, 'u_hideDot'))) { logp(b, 'good', o.dot ? '숨어 있어 ' + (o.label || '지속 피해') + '도 닿지 않는다' : '숨어 있어 ' + (o.src ? o.src.n + '의 ' : '') + '공격이 닿지 않는다'); return 0; } /* M6-1 고유 as_h8: 숨은 동안 지속 피해도 */ /* M5-3 무영살: 숨은 동안 어떤 공격의 표적도 아님(지속 피해는 받음) */ const raw0 = raw, nr0 = !o.dot && o.src && p.nextRed ? p.nextRed : 0, br0 = !!p.brace; /* 화면용 까닭(읽기만) */
+  const p = b.p; o = o || {}; let rip = null; if (isCh2(b)) { const m2 = ch2InMul(b, o); if (m2 === 0) { logp(b, 'good', (o.src ? o.src.n + '의 공격이 ' : '') + '연막 속에서 빗나간다'); return 0; } raw *= m2; } /* A2 연막탄 · 약장수 병 */ if (p.asSt && p.asSt.hide && (!o.dot || uqF(p, 'u_hideDot'))) { logp(b, 'good', o.dot ? '숨어 있어 ' + (o.label || '지속 피해') + '도 닿지 않는다' : '숨어 있어 ' + (o.src ? o.src.n + '의 ' : '') + '공격이 닿지 않는다'); return 0; } /* M6-1 고유 as_h8: 숨은 동안 지속 피해도 */ /* M5-3 무영살: 숨은 동안 어떤 공격의 표적도 아님(지속 피해는 받음) */ const raw0 = raw, nr0 = !o.dot && o.src && p.nextRed ? p.nextRed : 0, br0 = !!p.brace; /* 화면용 까닭(읽기만) */
   const bigHit = !!(o.charged || (o.src && o.src.intent && o.src.intent.aimed && !o.dot)); // 예고된 큰 공격: 강타 · 강적과 보스의 큰 한 방 · 겨눈 한 발 · 화형
   if (p.foresee && (b.round || 0) < p.foresee.until && bigHit) raw *= 1 - p.foresee.red;
   if (bigHit && hasBt(p, 'firm')) raw *= 0.85; // 굳건함의 성소 // 사냥꾼 예고 읽기 (피할 수 없는 화형에도 든다)
@@ -266,6 +268,7 @@ function chantBreak(b, e, why) { ysResp(b, '끊기'); uqR(b.p, 'u_cut', b, b.p, 
 function bossGate(b, e) {
   if (e.boss === 'queen') queenThresh(b, e);
   if (e.boss === 'cryptlord') { const th = LORD.ph[(e.phase || 1) - 1]; if (th != null && e.hp <= e.hpMax * th) { e.hp = Math.max(1, Math.round(e.hpMax * th)); if (!e.lordNext) { e.lordNext = (e.phase || 1) === 1 ? 'throne' : 'collapse'; } } } // 페이즈 문턱은 한 번에 하나: 넘친 피해는 버린다
+  if (e.boss === 'bardo') { const th = FOE_X.bardo.ph[(e.phase || 1) - 1]; if (th != null && e.hp <= e.hpMax * th) { e.hp = Math.max(1, Math.round(e.hpMax * th)); e.bdNext = 1; } } // A2 바르도 단계 문턱
   if (e.boss === "abbot") { const th = ABBOT.ph[(e.phase || 1) - 1]; if (th != null && e.hp <= e.hpMax * th) { e.hp = Math.max(1, Math.round(e.hpMax * th)); e.abNext = 1; } } // 페이즈 문턱은 한 번에 하나: 넘친 피해는 버린다. 보스가 행동을 마친 뒤 한 단계만 넘어간다
   if (e.role === 'boss' && e.hp <= 0) { const w = bossDwell(e); if (w && w.last && w.left) { e.hp = 1; if (!e.dwellLog) { e.dwellLog = 1; logp(b, 'sys', e.n + '이(가) 쓰러지지 않고 버틴다. 마지막 단계에서 ' + w.left + '번 더 움직인 뒤에야 쓰러뜨릴 수 있다'); } } } // 단계 최소 체류(10월 14일)
 }
@@ -325,6 +328,7 @@ function hurtEnemy(b, e, raw, o) {
   if (e.under && !o.dot && !o.aoe) return 0; // 땅속: 한 적 대상은 닿지 않는다 (광역 ×1.3은 aoeApply)
   if (e.haze > 0 && !o.dot) { const hz = hazeHit(b, e, o, fullF); if (!hz) return 0; d *= hz; } // 3챕터 허상: 한 적 공격 하나가 한 겹을 걷고 헛친다
   if ((b.ctx.ch || 1) >= 3) d *= ch3HitMul(b, e, o); // 붕대 · 모래폭풍 · 왕관 · 강적
+  if (isCh2(b)) { d *= ch2HitMul(b, e, o); if (b.cur || o.ctr) d *= ch2OutMul(b, e, o); if (!(d > 0) && b.smokeR === b.round && e.row === 'back') { logp(b, 'sys', '연막 속이라 후열을 노린 공격이 빗나간다'); return 0; } } // A2 대형 · 거래 · 노래 · 약장수 병 · 밀쳐내기 · 연막탄
   if (!o.aoe && (!o.dot || (o.shock && !o.shockAoe)) && e.row === 'back' && alive(b).some(x => x.role === 'bonewall')) d *= BWALL.cut; // 뼈벽 뒤 후열 (한 적 대상 열충격도)
   if (o.aoe && !o.dot) d = aoeApply(b, e, d); // 광역: 땅속 · 군주의 뼈벽(절반) · 후열 · 방패벽 · 방패병 (10월 7일: 원소술사 열충격과 같은 함수로 뺐다)
   if (!o.dot && b.cur) { d = d * fxMul(b.p, 'hit', b, b.p, e, o, b.cur) + fxAdd(b.p, 'hitAdd', b, b.p, e, o, b.cur); }
@@ -348,7 +352,7 @@ function hurtEnemy(b, e, raw, o) {
   if (e.mimicOn && !o.dot && b.cur && d > e.mimicOn.max) e.mimicOn.max = d; // 메아리 망령: 본뜨는 동안 내가 고른 행동이 준 가장 큰 한 방
   bossGate(b, e); // 보스 단계 문턱 · 마지막 단계 버티기 (10월 15일: 쌓인 피해도 같은 함수를 쓴다)
   if (e.hazeHit && !o.dot && d > 0) e.hazeHit = 0;
-  const actualDealt = Math.max(0, hp0 - Math.max(0, e.hp));
+  const actualDealt = Math.max(0, hp0 - Math.max(0, e.hp)); e.tookSince = (e.tookSince || 0) + actualDealt; // A2 빚 수금꾼 장부 적기
   const held = e.role === 'boss' && e.hp > 0 && e.hp > hp0 - d + 0.001 ? Math.max(0, d - actualDealt) : 0; // 보스 단계 문턱 · 최소 체류로 막힌 몫
   if (held > 0) e.bank = r1((e.bank || 0) + held * BOSS_BANK); // 10월 15일(만든 사람 결정): 막힌 피해는 버리지 않고 쌓았다가 문이 열리면 넣는다
   const damageStats = b.damageStats || (b.damageStats = { v: 0, dealt: 0, taken: 0 }); damageStats.dealt += actualDealt;
@@ -398,6 +402,7 @@ function killEnemy(b, e) {
   if (e.mark && isBm(b.p)) { const M = e.mark; e.mark = null; if (!e.killPaid) { e.killPaid = 1; const n = Math.min(BLOOD.spreadKillMax, Math.ceil(st(e, 'poison') * (M.per || 1))); if (n > 0) { if (b.dotLoop) (b.markQ = b.markQ || []).push({ e, n }); else bmSpread(b, e, n, null); } } } // 숨겨진 직업 3 표식: 무엇으로든 쓰러지면 한 번 (뼈 더미가 될 때는 남는다)
   if (e.role === 'bloat') { if (st(e, 'ignite')) logp(b, 'good', e.n + '이(가) 불에 타 터지지 않는다'); else { fxRun(b.p, 'onBloat', b, b.p, e); if (!b.noBloat) addPoison(b, b.p, BLOAT.me, 0); for (const o of alive(b)) if (o.role !== 'root') addPoison(b, o, BLOAT.foes, 0); logp(b, 'bad', e.n + '이(가) 터진다. 나에게 중독 ' + (b.noBloat ? 0 : BLOAT.me) + ', 다른 적 모두에게 중독 ' + BLOAT.foes); } }
   if ((b.ctx.ch || 1) >= 3) ch3OnKill(b, e);
+  if (isCh2(b)) ch2OnKill(b, e); // A2
   if (e.role === 'bonewall') { const m = b.en.find(x => x.id === e.wallOf); if (m) m.wallWait = BWALL.wait; if (e.lordWall && m && m.alive && !alive(b).some(x => x.lordWall)) { addS(b, m, 'vuln', LORD.expose); logp(b, 'good', '뼈벽이 모두 무너져 ' + m.n + '이(가) 드러난다. 취약 ' + LORD.expose); } }
   if (e.boss === 'abbot') { for (const x of b.en) if (x.alive && (x.monk || x.role === 'candle')) { x.alive = false; x.hp = 0; } } // 수도원장이 쓰러지면 수도사와 촛불도 흩어진다
   if (e.loot) { returnLoot(b, e.loot); logp(b, 'good', e.loot.n + '을(를) 되찾는다'); e.loot = null; }

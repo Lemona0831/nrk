@@ -271,6 +271,7 @@ function vHudField(b, hud, pops) {
     if (e.pile) fl.push(['<span class="nr gd hv" data-info="epile:' + e.id + '">🦴 부활 ' + e.pile.wait + '라운드</span>', '뼈 더미, 일어서기까지 ' + e.pile.wait + '라운드']);
     if (e.under) fl.push(isCh3(b) ? ['<span class="nr gd">🏜️ 모래 속</span>', '모래 속: 한 적 대상으로 고를 수 없음'] : ['<span class="nr gd">🕳️ 땅속</span>', '땅속: 한 적 대상으로 고를 수 없음']);
     if (e.swift) fl.push(['<span class="nr gd">⚡신속</span>', '신속: 라운드마다 가속 1']);
+    if (e.cmd) fl.push(['<span class="nr gd" data-info="ecmd">📣지휘</span>', '지휘: 살아 있는 동안 같은 무리 잡몹의 피해 +15%']); if (e.lootA) fl.push(['<span class="nr gd" data-info="eloot">💰장물</span>', '장물 두른: 맞을 때마다 골드 1을 빼앗긴다']); if (e.oiled) fl.push(['<span class="nr gd" data-info="eoiled">🛢️기름</span>', '기름 먹은: 화상 피해 2배 · 붕괴 1.5배']); // A2
     if (e.role === 'bonewall') fl.push(['<span class="nr gd">🧱 후열 보호</span>', '뼈벽: 후열이 받는 한 적 대상 피해 절반, 붕괴에 약함']);
     if (e.row === 'back' && alive(b).some(x => x.role === 'bonewall')) fl.push(['<span class="nr gd">🧱½</span>', '뼈벽 뒤: 한 적 대상 피해 절반']);
     if (e.haze > 0) fl.push(['<span class="nr gd" data-info="ehaze">🌫️' + e.haze + '</span>', '허상 ' + e.haze + '겹: 한 적을 노린 공격 하나가 한 겹을 걷고 헛친다']);
@@ -283,7 +284,7 @@ function vHudField(b, hud, pops) {
     if (e.stkExp > 0 || (e.role === 'lurker' && e.s.vuln && !e.under && e.intent && e.intent.k === 'exposed')) fl.push(['<span class="nr gd">😵</span>', '드러남: 숨을 고르는 중']);
     if (e.boss === 'tree' && rootRegen(b) > 0) fl.push([`<span class="nr rg2" data-info="regen">🌱 +${rootRegen(b)}/라운드</span>`, '라운드마다 ' + rootRegen(b) + ' 회복']);
     const ed = hud.edet || sel; /* 카드를 눌러 고르면 그 카드는 상세가 모두 보인다 */
-    const KEEP = /data-info="(guarded|ebraced|ecounter|eevade|eguard|echant|edemand|ehaze|ewrap|ectr|efocus)"|땅속|모래 속|후열 보호|🧱½/;
+    const KEEP = /data-info="(guarded|ebraced|ecounter|eevade|eguard|echant|edemand|ehaze|ewrap|ectr|efocus|ecmd|eloot|eoiled)"|땅속|모래 속|후열 보호|🧱½/;
     const flv = ed ? fl : fl.filter(x => KEEP.test(x[0]));
     const wall = wallUp(b, e) ? 'ewall' : wallFrontUp(b, e) ? 'ewallf' : '';
     const sw = stsWords(e, b);

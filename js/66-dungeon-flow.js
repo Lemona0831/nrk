@@ -2,7 +2,10 @@
 /* ===== 던전과 갈림길 (기획서 11.3절) =====
    run.room = 지금 층(1~19). run.doors = 이 층의 문 셋, run.cur = 고른 방. run.dg = 챕터 동안의 집계(유형별 횟수, 본 유형, 이벤트, 강적).
    run.buffs = { 성소·이벤트 버프: 남은 방 수 }, run.next = 다음 전투 방에 걸리는 것, run.gold = 모은 골드(정산은 단계 9) */
-function floorName(f) { const c3 = typeof G !== 'undefined' && G.run && (G.run.ch || 1) >= 3; return f === FLOOR_CAMP ? (c3 ? '오아시스 야영지' : '야영지') : f === FLOOR_BOSS ? (c3 ? '재의 왕좌' : '보스') : f > FLOORS ? '끝' : c3 ? floorBand3(f).n + ' ' + f + '층' : (isLower(f) ? '하층 ' : '상층 ') + f + '층'; } // 3챕터는 해의 흐름 띠 이름
+const floorBands = ch => chData(ch).bands || (ch >= 3 ? BANDS3 : null); // A2: 층 띠는 챕터 데이터(2챕터) 또는 BANDS3(3챕터)
+const floorBandOf = (ch, f) => { const B = floorBands(ch); return B ? B.find(x => f <= x.to) || B[B.length - 1] : null; };
+function floorName(f) { const chN = typeof G !== 'undefined' && G.run ? (G.run.ch || 1) : 1; if (chN === 2) return f > FLOORS ? '끝' : f === FLOOR_CAMP || f === FLOOR_BOSS ? floorBandOf(2, f).n : floorBandOf(2, f).n + ' ' + f + '층'; return floorName0(f); }
+function floorName0(f) { const c3 = typeof G !== 'undefined' && G.run && (G.run.ch || 1) >= 3; return f === FLOOR_CAMP ? (c3 ? '오아시스 야영지' : '야영지') : f === FLOOR_BOSS ? (c3 ? '재의 왕좌' : '보스') : f > FLOORS ? '끝' : c3 ? floorBand3(f).n + ' ' + f + '층' : (isLower(f) ? '하층 ' : '상층 ') + f + '층'; } // 3챕터는 해의 흐름 띠 이름
 const pickR = a => a[Math.floor(Math.random() * a.length)];
 const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 function dgInit(run) {
@@ -25,6 +28,7 @@ function genSeg(run, si, path) {
       if (!sf().length) { run.dg.strongS = {}; const cand = fl.filter(f => f > 1 && typeOk(run, 'strong', f)); if (cand.length) { const f = cand[Math.floor(Math.random() * cand.length)]; const ds = out[f]; const k = ds.findIndex(r => r.type === 'normal'); swap(f, k >= 0 ? k : ds.length - 1, 'strong'); } }
       while (sf().length > STRONG_PER_SEG) { const f = sf()[sf().length - 1]; swap(f, out[f].findIndex(r => r.type === 'strong'), 'normal'); }
     }
+    { let mk = 0; for (const f of fl) { const k = out[f].findIndex(r => r.type === 'market'); if (k >= 0 && mk++) swap(f, k, 'normal'); } } // A2 암시장은 구간에 하나
   } finally { run.dg = JSON.parse(d0); run.path = p0; }
   return out;
 }
@@ -43,6 +47,7 @@ function typeOk(run, t, f) {
   if (t === 'strong' && !STRONG_FOES.some(x => inCh(x, run.ch))) return false; // 그 챕터 강적이 아직 없으면
   if (t === 'strong' && (run.ch || 1) >= 3 && !STRONG_FOES.some(x => inCh(x, run.ch) && strong3Ok(run, x, f))) return false; // 3챕터: 그 축을 만나기 전에는 강적 문이 나오지 않는다(5.1절 2번)
   if (t === 'event' && EVENTS.filter(e => inCh(e, run.ch)).every(e => d.events.includes(e.id))) return false;
+  if ((t === 'market' || t === 'shrine') && !ch2TypeOk(run, t, f)) return false; // A2 암시장 · 닫힌 성소
   return true;
 }
 function pickType(run, f, not, only) {
@@ -52,7 +57,7 @@ function pickType(run, f, not, only) {
   let x = Math.random() * ws.reduce((a, v) => a + v, 0); for (let i = 0; i < opts.length; i++) { x -= ws[i]; if (x <= 0) return opts[i]; } return opts[opts.length - 1];
 }
 const FIGHTS = ['normal', 'ambush', 'strong', 'treasure', 'trial'];
-const RESTS = ['spring', 'shrine', 'altar', 'event'];
+const RESTS = ['spring', 'shrine', 'altar', 'event', 'market'];
 function genDoors(run, f) {
   const d = run.dg; const half = isLower(f) ? 'l' : 'u'; let types = [];
   const need = t => typeOk(run, t, f) && !types.includes(t) && types.push(t);
@@ -77,8 +82,8 @@ const sqPrio = en => !!(en && en.some(x => (ROLES[x[0]] || {}).row === 'back') &
 /* 테마 무리 고르기: 지난 방의 무리와 이 층의 다른 문에 나온 무리는 빼고, 압박이 센 무리는 험한 길에서 잦게 */
 function pickSquad(run, f, t) {
   const d = run.dg; if (!d.fsq || d.fsqF !== f) { d.fsq = []; d.fsqF = f; }
-  const pw = { rough: 1.6, quiet: 0.5 }[run.path] || 1;
-  const ws = SQUADS.map(s => !inCh(s, run.ch) || (s.from && f < s.from) || !(isLower(f) ? s.low : s.up) || ((low => low.filter(x => !introOk(run, x[0])).length >= 2)(isLower(f) ? s.low : s.up)) || d.fsq.includes(s.id) || s.id === d.lastSquad || (s.amb && t !== 'ambush') ? 0 : s.w * (s.press ? pw : 1) * (sqPrio(isLower(f) ? s.low : s.up) ? SQ_PRIO : 1)); // 0.8.0 6단계 A-5: 누구부터 칠지가 있는 무리 ×SQ_PRIO // 챕터가 다른 무리, 아직 나오지 않을 층, 처음 보는 새 역할이 둘 이상인 조합 무리는 무게 0
+  const pw = { rough: 1.6, quiet: 0.5 }[run.path] || 1; const pwS = s => (s.pw && s.pw[run.path]) || 1; // A2 길마다 무리 가중
+  const ws = SQUADS.map(s => !inCh(s, run.ch) || (s.from && f < s.from) || !(isLower(f) ? s.low : s.up) || ((low => low.filter(x => !introOk(run, x[0])).length >= 2)(isLower(f) ? s.low : s.up)) || d.fsq.includes(s.id) || s.id === d.lastSquad || (s.amb && t !== 'ambush') ? 0 : s.w * pwS(s) * (s.press ? pw : 1) * (sqPrio(isLower(f) ? s.low : s.up) ? SQ_PRIO : 1)); // 0.8.0 6단계 A-5: 누구부터 칠지가 있는 무리 ×SQ_PRIO // 챕터가 다른 무리, 아직 나오지 않을 층, 처음 보는 새 역할이 둘 이상인 조합 무리는 무게 0
   let x = Math.random() * ws.reduce((a, v) => a + v, 0), pick = SQUADS[0]; for (let i = 0; i < SQUADS.length; i++) { x -= ws[i]; if (x <= 0 && ws[i] > 0) { pick = SQUADS[i]; break; } }
   d.fsq.push(pick.id); return pick;
 }
@@ -93,17 +98,18 @@ function mkRoom(run, t, f, opt) {
   if (T.fight) {
     if (t === 'strong') { const chA = STRONG_FOES.filter(x => inCh(x, ch)); const chB = chA.filter(x => (low || x.upper !== 0) && (!x.from || f >= x.from) && (!x.needs || x.needs.every(r => introOk(run, r)))); const chF = chB.length ? chB : chA; /* 하층 전용 강적, 호위의 새 역할을 아직 못 만났으면 뽑지 않는다 */ const unused = chF.filter(x => !run.dg.foes.includes(x.id)); const foe = pickR(unused.length ? unused : chF); r.en = JSON.parse(JSON.stringify(foe.en)); r.strong = foe.n; r.foe = foe.id; }
     else if (t === 'treasure') r.en = JSON.parse(JSON.stringify(pickR(ch >= 3 && ENC.treasure3 ? ENC.treasure3 : ch >= 2 && ENC.treasure2 ? ENC.treasure2 : ENC.treasure)));
-    else { const sq = opt.force && SQUADS.find(x => x.id === (ch >= 3 ? INTRO_SQ3 : INTRO_SQ)[opt.force] && inCh(x, ch)) || pickSquad(run, f, t); r.squad = sq.id; r.en = JSON.parse(JSON.stringify(low ? sq.low : sq.up)); if (opt.force === 'bloat' && sq.vary) { r.en[sq.vary[0]][0] = 'bloat'; r.intro = 'bloat'; } else if (sq.vary && Math.random() < SQUAD_VARY) { const [vi, pool] = sq.vary; const pl = pool.filter(x => introOk(run, x) || x === opt.force); if (r.en[vi] && pl.length) r.en[vi][0] = pickR(pl); } if (opt.force) r.intro = opt.force; } // 테마 무리 + 변주 (10월 4일). 2챕터: 처음 만남 보장 문, 아직 만나지 않은 새 역할은 변주에 끼지 않는다
+    else { const sq = opt.force && SQUADS.find(x => x.id === (ch >= 3 ? INTRO_SQ3 : INTRO_SQ)[opt.force] && inCh(x, ch)) || pickSquad(run, f, t); r.squad = sq.id; r.en = JSON.parse(JSON.stringify(low ? sq.low : sq.up)); if (ch === 2) ch2Squad(run, r, sq, t, f); /* A2 */ if (opt.force === 'bloat' && sq.vary) { r.en[sq.vary[0]][0] = 'bloat'; r.intro = 'bloat'; } else if (sq.vary && Math.random() < SQUAD_VARY) { const [vi, pool] = sq.vary; const pl = pool.filter(x => introOk(run, x) || x === opt.force); if (r.en[vi] && pl.length) r.en[vi][0] = pickR(pl); } if (opt.force) r.intro = opt.force; } // 테마 무리 + 변주 (10월 4일). 2챕터: 처음 만남 보장 문, 아직 만나지 않은 새 역할은 변주에 끼지 않는다
     if (ch >= 3) { const fm = opt.force && MOD3_NEW.includes(opt.force) ? opt.force : null; r.mods = t === 'trial' ? rollMods3(run, 2, f, fm) : t !== 'strong' && (fm || Math.random() < chData(ch).modChance[low ? 'lower' : 'upper']) ? rollMods3(run, 1, f, fm) : []; } // 3챕터 특성 (띠 · 길 무게, 처음 만남 문)
     else if (t === 'trial') r.mods = rollMods(2, ch);
     else if (t !== 'strong' && Math.random() < MOD_CHANCE[low ? 'lower' : 'upper']) r.mods = rollMods(1, ch);
     else r.mods = [];
+    if (ch === 2) ch2RoomMods(run, r, t, f); // A2 어둠은 층 띠마다(장치 「등불」)
     if (markOn(run, 'trait') && t !== 'strong') { const ex = ch >= 3 ? rollMods3(run, 1, f, null) : rollMods(1, ch); for (const k of ex) if (!r.mods.includes(k)) r.mods.push(k); } // 표식 trait: 방 특성 하나 더
     if (t === 'normal' && f >= NORMAL_ROOM.from) { const NR = Object.assign({}, NORMAL_ROOM, NORMAL_ROOM.ch[ch] || {}); let k = (f >= NR.from2 ? NR.elite2 : NR.elite) - r.en.filter(x => x[1]).length; for (const x of r.en) if (k > 0 && !x[1] && x[0] !== 'minion' && x[0] !== 'bomber') { x[1] = 1; k--; } } // 0.8.0 6단계 B-5: 일반 방 정예(2층부터 하나 · 4층부터 둘)
     if (t === 'ambush') { r.ambush = 1; let k = AMBUSH.elite; for (const x of r.en) if (k > 0 && !x[1] && x[0] !== 'bomber') { x[1] = 1; k--; } } // 매복: 정예 하나 더
     r.tough = r.en.map((x, k) => x[1] && !(r.strong && k === 0) ? k : -1).filter(k => k >= 0 && Math.random() < TOUGH_CHANCE[low ? 'lower' : 'upper'] * (markOn(run, 'elite') ? MARKS.elite.mul : 1)); // 정예에게 강인 (표식 elite: 접사 확률 배율) (강적 본인은 제외)
     if (ch >= 3) { if (!r.ambush) { const sw = [], fi = []; r.tough = r.tough.filter(k => { const o = [['tough', AFFIX_W3.tough]].concat(f >= SWIFT.from ? [['swift', AFFIX_W3.swift]] : []).concat(f >= FIRE_AFFIX.from ? [['fire', AFFIX_W3.fire * (run.path === 'rough' ? 1.5 : 1)]] : []); let x = Math.random() * o.reduce((a, c) => a + c[1], 0); let pk = o[0][0]; for (const c of o) { x -= c[1]; if (x <= 0) { pk = c[0]; break; } } if (pk === 'swift') sw.push(k); if (pk === 'fire') fi.push(k); return pk === 'tough'; }); r.swift = sw; r.fire = fi; } } // 3챕터 접사: 강인 · 신속 · 화염 강화(FIRE_AFFIX.from층부터), 순찰대는 강인만
-    else if (ch >= 2 && f >= SWIFT.from && !r.ambush) { r.swift = r.tough.filter(() => Math.random() < SWIFT.share); r.tough = r.tough.filter(k => !r.swift.includes(k)); } // 신속 접사: 접사의 절반, 매복은 강인만
+    else if (ch === 2) ch2Affix(r, low); /* A2 2챕터 정예 접사(강인 · 지휘 · 장물 두른 · 기름 먹은). 옛 신속 접사는 3챕터만 */ // 신속 접사: 접사의 절반, 매복은 강인만
     r.gold = Math.round(rint(T.gold[0], T.gold[1]) * P.gold * (chData(ch).gold || 1) * (run.mode === 'hard' ? MODES.hard.gold : 1));
     r.risk = Math.max(1, Math.min(4, T.risk + (low ? 1 : 0) + P.risk));
     r.hide = Math.random() < HIDE_REWARD ? 1 : 0;
@@ -128,7 +134,7 @@ function advanceFloor() {
   const run = G.run;
   for (const k in run.buffs) { run.buffs[k]--; if (run.buffs[k] <= 0) delete run.buffs[k]; }
   run.room++; run.cur = fixedRoom(run.room); if (run.cur && run.cur.type === 'camp' && isV2(run.p)) ringCampOpen(run); /* M5-0 보정 5: 야영지에서 고리가 열린다 */ if (run.cur && run.cur.type === 'camp' && (run.ch || 1) >= 3 && isV2(run.p)) ksGrant(run, 'c3'); // 10월 16일 0.8.0 2단계: 세 번째 큰 각인은 3챕터 야영지에 들어설 때
-  if ((run.ch || 1) >= 3 && run.room <= FLOORS) { const bd = floorBand3(run.room), pv = floorBand3(run.room - 1); if (bd !== pv) toast(bd.n + '. ' + bd.line); } // 3챕터: 해의 흐름 띠에 들어설 때 한 줄
+  if (floorBands(run.ch || 1) && run.room <= FLOORS) { const bd = floorBandOf(run.ch || 1, run.room), pv = floorBandOf(run.ch || 1, run.room - 1); if (bd !== pv) toast(bd.n + '. ' + bd.line); } // 2 · 3챕터: 층 띠에 들어설 때 한 줄
   if (!run.cur && PATH_AT.includes(run.room)) { run.cross = crossMake(run); run.doors = null; } // 갈래길: 길을 고른 뒤 문이 나온다. 0.8.0 6단계: 길 셋의 다음 구간을 미리 만든다
   else run.doors = run.cur ? null : segDoorsAt(run, run.room);
   saveRunLocal(); saveCur();
@@ -347,7 +353,7 @@ function altarReceiptHtml(run) {
 }
 function burnCons(run, n) { if ((run.cons || []).filter(ashOk).reduce((a, c) => a + c.n, 0) < n) return false; for (let k = 0; k < n; k++) { const c = run.cons.find(ashOk); c.n--; if (c.n <= 0) run.cons.splice(run.cons.indexOf(c), 1); } return true; }
 /* 2챕터 이벤트 · 제단 도우미 (10월 5일) */
-const EVBUFF = { snuff: ['꺼진 촛불', '받는 화상 피해 0, 대신 주는 피해 −5%.'], procession: ['장례 행렬', '받는 직접 피해 −10%, 주는 피해 −10%.'], ashcover: ['재를 덮어 주었다', '받는 직접 피해 −5%.'], herald: ['전령에게 무릎 꿇었다', '받는 화상 피해 0, 대신 주는 피해 −5%.'] }; // 이벤트로 얻는 몇 방 동안의 효과
+const EVBUFF = { lit: ['가게 등불', '어둠 방이 나오지 않습니다.'], elixir: ['약장수의 병', '주는 피해 +15%.'], elixirB: ['병의 뒤끝', '받는 피해 +10%.'], fog: ['몽롱한 연기', '주는 피해 −15%.'], names: ['벽의 이름들', '전투를 약화 1로 시작합니다.'], snuff: ['꺼진 촛불', '받는 화상 피해 0, 대신 주는 피해 −5%.'], procession: ['장례 행렬', '받는 직접 피해 −10%, 주는 피해 −10%.'], ashcover: ['재를 덮어 주었다', '받는 직접 피해 −5%.'], herald: ['전령에게 무릎 꿇었다', '받는 화상 피해 0, 대신 주는 피해 −5%.'] }; // 이벤트로 얻는 몇 방 동안의 효과
 const altarGold = run => { const A = ALTARS.find(x => x.id === 'gold'); const v = A && A.cost ? A.cost[Math.min(A.cost.length, run.ch || 1) - 1] : 40; return v; };
 function n3pre(run, k, n) { run.next3 = run.next3 || {}; run.next3.pre = Object.assign({}, run.next3.pre); run.next3.pre[k] = (run.next3.pre[k] || 0) + n; } // 3챕터 이벤트: 다음 일반 · 매복 전투의 시작 상태
 function takeCons(run, n) { const pool = (run.cons || []).filter(c => CONS[c.id].use !== 'none'); if (pool.reduce((a, c) => a + c.n, 0) < n) return false; for (let k = 0; k < n; k++) { const c = run.cons.find(x => CONS[x.id].use !== 'none'); c.n--; if (c.n <= 0) run.cons.splice(run.cons.indexOf(c), 1); } return true; }
@@ -364,6 +370,7 @@ function enterRoom() {
   if (nx.coffin && R.type !== 'boss') room.en = (room.en || []).concat([['skeleton', 1]]); // 봉인된 관
   if (nx.block && R.type !== 'boss') room.en = (room.en || []).concat([['bruiser']]); // 장례 행렬을 막아섰다
   if (nx.reader && R.type !== 'boss') room.en = (room.en || []).concat([['darkmage']]); // A1 무너진 서고: 번진 글자를 읽고 말았다
+  if ((run.ch || 1) === 2) ch2Enter(run, R, room, nx); // A2 등불 기름 · 이벤트 흔적
   run.entry = JSON.parse(JSON.stringify(p));
   run.entryFlasks = Object.assign({}, p.flask); run.entryHp = p.hp / p.hpMax; run.entryFl = p.flask.life + p.flask.mana + (p.flask.stam || 0);
   { const cn = id => (run.cons || []).filter(c => c.id === id).reduce((s, c) => s + (c.n || 0), 0); run.entryHerb = cn("herb"); run.entryBread = cn("bread"); run.entryGold = run.gold || 0; run.entryBag = bagUsed(run); }
@@ -419,6 +426,8 @@ function battleContinue() {
   const PU = pathOf(R.path, G.run && G.run.mode).up || 0; const pg = g => PU > 0 && g !== 'r' && g !== 'h' && g !== 'l' && Math.random() < PU ? (g === 'n' ? 'm' : 'r') : PU < 0 && g !== 'n' && g !== 'h' && g !== 'l' && Math.random() < -PU ? (g === 'r' ? 'm' : 'n') : g; /* 영웅 · 전설은 길로 오르내리지 않는다 */ // 길: 장비 등급 한 단계 오르내림 (10월 4일)
   if (t === 'normal' || t === 'ambush') drops.push(mkItem(dropKey(run, pg(rollGradeCh(run.ch, 'room'))), { g: undefined }));
   if (R.wake) drops.length = 0; // A1 성물함에서 깨어난 전투: 방 보상 장비 없음
+  if (R.wake) ch2WakeWin(run, R, drops); // A2 투기장 링 보상
+  if (t === 'strong' && (run.ch || 1) === 2 && run.dg.strongUp) { drops.push(mkItem(dropKey(run, 'h'))); run.dg.strongUp = 0; } // A2 벽의 이름들: 강적 방 보상 한 단계 위
   if (t === 'strong') drops.push(mkItem(dropKey(run, rollGradeCh(run.ch, 'big')))); /* 강적은 희귀 이상 보장 (10월 4일, 2챕터부터 영웅 · 전설도) */
   if (t === 'trial') drops.push(mkItem(dropKey(run, rollGradeCh(run.ch, 'big'))));
   if (nu.coffin) drops.push(mkItem(dropKey(run, rollGradeCh(run.ch, 'big'))));

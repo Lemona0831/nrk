@@ -116,6 +116,7 @@ function onClick(ev) {
     case 'altar': { const run=G.run,p=run.p,R=roomDef(),yes=el.dataset.k==='1';
       if(yes && R.altar==='offer'){openSheet('offer',{});break;}
       const paid=[],received=[],drops=[];const hpBefore=p.hpMax, gainBefore=(run.consGainLog||[]).length;
+      if(yes && R.altar==='debt'){gainGold(run,DEBT_ALTAR.gold,'빚의 제단');run.shopMarkup=DEBT_ALTAR.markup;paid.push('다음 상점 값 +'+Math.round(DEBT_ALTAR.markup*100)+'% (한 번)');received.push('골드 '+DEBT_ALTAR.gold);} // A2 빚의 제단
       if(yes && R.altar==='blood'){p.hpPen=(p.hpPen||0)+.05;applyGear(run);paid.push('최대 생명력 '+hpBefore+' → '+p.hpMax+' (이 캐릭터가 끝날 때까지)');const it=mkItem(dropKey(run,'r'));drops.push(it);received.push((GRADE[it.g]||GRADE.n).n+' '+itName(it));}
       if(yes && (R.altar==='ash'||R.altar==='bone')){
         const cost=altarConsCost(run,R.altar);if(!cost.length){toast('바칠 소모품이 모자랍니다');break;}
@@ -181,8 +182,10 @@ function onClick(ev) {
       const EO = ((EVENTS.find(x => x.id === R.event) || {}).opts || []).find(x => x.id === o) || {}; // A1: 이야기 조각 · 깨어남(확정본 1챕터 이식)
       if (EO.frag) toast('이야기 조각 — 「' + EO.frag + '」');
       const wake = EO.wake && Math.random() < EO.wake.p;
+      if ((run.ch || 1) === 2) ch2Event(run, R, o, drops); // A2 2챕터 이벤트 아홉
+      if (!wake && EO.wake && EO.wake.elseGold) gainGold(run, EO.wake.elseGold, '지갑에 골드가 들어 있다');
       run.rooms.push({ room: run.room, type: 'event', event: R.event, took: o, wake: wake ? 1 : undefined });
-      if (wake) { run.cur = Object.assign({}, R, { type: 'normal', en: EO.wake.en.map(x => x.slice()), squad: null, mods: [], tough: [], gold: 0, wake: R.event }); toast('성물함 곁에 눕혀 둔 것이 깨어난다'); queueDrops(drops); saveRunLocal(); render(); break; }
+      if (wake) { run.cur = Object.assign({}, R, { type: 'normal', en: EO.wake.en.map(x => x.slice()), squad: null, mods: [], tough: [], gold: 0, wake: R.event, wakeFirst: EO.wake.first ? 1 : 0, wakeWin: EO.wake.gold || EO.wake.item ? { gold: EO.wake.gold || 0, item: EO.wake.item || 0 } : null }); toast(EO.wake.msg || '무언가 깨어난다'); queueDrops(drops); saveRunLocal(); render(); break; }
       advanceFloor();
       if (R.event === 'library' && o === 'read') ptBonus(run, 1, '무너진 서고');
       if (R.event === 'archive' && o === 'pull') ptBonus(run, 1, '불타는 서고');
@@ -193,6 +196,10 @@ function onClick(ev) {
     case 'giveupend': endRun('lose'); break;
     case 'scen': startScen(el.dataset.b); break;
     case 'enter': enterRoom(); break;
+    case 'enterlit': { const run = G.run, R = roomDef(); if (!((run.oil || 0) > 0)) break; run.oil--; R.lit = 1; toast('등불 기름으로 방을 밝힌다. 남은 기름 ' + run.oil); enterRoom(); break; } // A2 장치 「등불」
+    case 'mkbuy': { const run = G.run, R = roomDef(); if (!R || R.type !== 'market') break; const r = ch2MarketBuy(run, R, el.dataset.k); if (!r) { toast('살 수 없습니다'); break; } sfx('coin'); run.rooms.push({ room: run.room, type: 'market', took: el.dataset.k, paid: r.paid }); advanceFloor(); queueDrops(r.drops); render(); break; } // A2 암시장
+    case 'mkleave': { const run = G.run, R = roomDef(); if (!R || R.type !== 'market') break; run.rooms.push({ room: run.room, type: 'market', took: null }); advanceFloor(); render(); break; }
+    case 'oilbuy': { const run = G.run, S = el.dataset.s === 'camp' ? run.camp : run.shop; const o = S && S.oil; if (!o || o.left <= 0) break; if ((run.gold || 0) < o.price) { toast('골드가 모자랍니다'); break; } if ((run.oil || 0) >= LAMP.max) { toast('기름은 ' + LAMP.max + '개까지 들 수 있습니다'); break; } run.gold -= o.price; o.left--; run.oil = (run.oil || 0) + 1; sfx('coin'); toast('등불 기름 +1 (가진 기름 ' + run.oil + ')'); saveRunLocal(); saveCur(); render(); break; } // A2 장터 상점 재고
     case 'statview': if (!G.run || !G.run.p || G.creating) break; hidePop(); openSheet('statview', { from: el.dataset.from || '' }); break;
     case 'equip': if (!runLive()) break; G.eqSel = null; openSheet('equip'); break;
     case 'close': G.sheet = null; render(); break;

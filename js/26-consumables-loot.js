@@ -143,6 +143,9 @@ function consWhyNot(b, run, c, tgtId) {
     case 'escape': return b.ctx.boss || b.ctx.scen || b.ctx.tut ? '보스전에서는 쓰지 못합니다' : '';
     case 'burnpiles': return alive(b).some(e => e.pile) ? '' : '뼈 더미가 없습니다';
     case 'trim': return HEX.kinds.concat(['chill']).some(k => p.s[k]) ? '' : '해로운 상태가 없습니다';
+    case 'smokecan': return alive(b).some(e => e.row === 'back' && realFoe(e)) ? (b.smokeR === b.round ? '이미 이번 라운드에 썼습니다' : '') : '후열 적이 없습니다'; // A2
+    case 'painkill': return HEX.kinds.concat(['chill']).some(k => p.s[k]) ? '' : '해로운 상태가 없습니다';
+    case 'oilpot': return alive(b).some(e => e.row === 'front' && realFoe(e)) ? '' : '전열 적이 없습니다';
     case 'cleanse': return consWorst(p) ? '' : '해로운 상태가 없습니다';
     case 'unearth': return alive(b).some(e => e.under && e.role !== 'boss') ? '' : '땅속의 적이 없습니다';
     case 'nobloat': return b.noBloat ? '이미 효과가 있습니다' : !alive(b).some(e => e.role === 'bloat') ? '부푼 시체가 없습니다' : '';
@@ -186,6 +189,9 @@ function consApply(b, run, c, tgt) {
     case 'norise': if (tgt.pile) { tgt.pile.wait += v; return tgt.n + '의 뼈 더미가 굳는다. 부활까지 ' + tgt.pile.wait + '라운드'; } tgt.limeDelay = v; return tgt.n + '이(가) 쓰러지면 부활이 ' + v + '라운드 늦어진다';
     case 'burnpiles': { let n = 0; for (const e of alive(b).filter(x => x.pile)) { e.norise = 1; e.hp = 0; killEnemy(b, e); n++; } return '뼈 더미 ' + n + '개를 태운다'; }
     case 'trim': { for (const k of HEX.kinds.concat(['chill'])) if (p.s[k]) kwDec(p, k); return '해로운 상태가 종류마다 1씩 준다'; }
+    case 'smokecan': { b.smokeR = b.round; return '연막이 퍼진다. 이번 라운드 후열의 공격이 빗나간다(내 후열 공격도)'; } // A2 연막탄
+    case 'painkill': { const ks = HEX.kinds.concat(['chill']).filter(k => p.s[k]).sort((x, y) => st(p, y) - st(p, x)).slice(0, v); for (const k of ks) delete p.s[k]; p.noRegenR = (b.round || 0) + 1; return '진통제를 삼킨다. ' + ks.map(k => KW_N[k] || k).join(' · ') + ' 지움. 다음 라운드 스태미나 회복 0'; }
+    case 'oilpot': { for (const e of alive(b)) if (e.row === 'front' && realFoe(e)) addS(b, e, 'ignite', v); if (!b.ctx.mods.includes('oilfloor')) b.ctx.mods.push('oilfloor'); addS(b, p, 'ignite', 1); return '기름 단지가 깨진다. 전열에 화상 ' + v + ', 바닥이 기름으로 번들거린다'; }
     case 'unearth': { for (const e of alive(b).filter(x => x.under && x.role !== 'boss')) { e.under = 0; e.stkPrep = 0; e.intent = { k: 'attack' }; e.teleX = 1; e.teleTurn = null; addS(b, e, 'vuln', 1); } return '땅속의 적을 끌어낸다'; }
     case 'cool': { const d = heatAdd(b, -v, D.n); return '열기 ' + Math.round(d); }
     case 'unhaze': { tgt.haze = Math.max(0, (tgt.haze || 0) - 1); if (!tgt.haze) tgt.hazeSrc = null; return tgt.n + '의 허상 한 겹이 걷힌다' + (tgt.haze ? ' (남은 ' + tgt.haze + ')' : ''); }

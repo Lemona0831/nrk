@@ -4,7 +4,7 @@ const BIGK = ['charge', 'heavy', 'burrow', 'erupt', 'chant', 'chanting', 'burn',
 const hexDmgOf = (b, e) => { const k = HEX.kinds.filter(s => st(b.p, s) > 0).length; return enemyHitEst(b, e) / ROLES.hexer.hit * Math.min(HEX.cap, HEX.base + HEX.per * k); }; // 조이기: 내 해로운 상태 가짓수
 const bigPending = (b, e) => alive(b).some(x => x !== e && x.intent && (BIGK.includes(x.intent.k) || (x.intent.k === 'constrict' && hexDmgOf(b, x) >= b.p.hpMax * 0.15))) || (b.heatWarn != null && b.heatWarn >= (b.round || 0)); // 3챕터: 열풍이 예고된 라운드도 큰 공격 하나로 센다
 const wallOf = (b, e) => alive(b).find(x => x.role === 'bonewall' && x.wallOf === e.id);
-const realFoe = e => e.role !== 'root' && !e.pile && e.role !== 'bonewall' && e.role !== 'crown'; // 전투 끝 판정에서 세는 적 (뼈 더미 · 뼈벽은 빼고)
+const realFoe = e => e.role !== 'root' && !e.pile && e.role !== 'bonewall' && e.role !== 'crown' && e.role !== 'lantern'; // A2: 바르도의 등불(물체)도 세지 않는다 // 전투 끝 판정에서 세는 적 (뼈 더미 · 뼈벽은 빼고)
 function buildWall(b, e) {
   if (wallOf(b, e)) return; const w = mkEnemy('bonewall', 0, b.idc++, { lv: e.lv || 1, name: b.ctx.names && b.ctx.names.bonewall });
   w.hpMax = Math.max(1, Math.round(e.hpMax * BWALL.hp)); w.hp = w.hpMax; w.brkMax = BWALL.brk; w.summoned = true; w.wallOf = e.id; w.intent = { k: 'none' }; b.en.push(w);

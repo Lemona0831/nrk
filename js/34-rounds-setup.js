@@ -88,7 +88,8 @@ function roomBattle(player, room, bossKind, seed) {
   setRng(b, seed || 7);
   const pre = room.pre || {};
   if (pre.weak) addS(b, player, 'weak', pre.weak); if (pre.vuln) addS(b, player, 'vuln', pre.vuln); if (pre.poison) addPoison(b, player, pre.poison, 0);
-  if ((room.ch || 1) >= 3) { ch3Setup(b, room); if (pre.ignite) addS(b, player, 'ignite', pre.ignite); if (pre.chill) addS(b, player, 'chill', pre.chill); if (pre.bleed) addS(b, player, 'bleed', pre.bleed); } // 3챕터: 열기 · 아지랑이 · 붕대 · 화염 강화 · 강적 값, 이벤트가 붙인 시작 상태
+  if ((room.ch || 1) >= 3) { ch3Setup(b, room); if (pre.ignite) addS(b, player, 'ignite', pre.ignite); if (pre.chill) addS(b, player, 'chill', pre.chill); if (pre.bleed) addS(b, player, 'bleed', pre.bleed); }
+  if ((room.ch || 1) === 2) { ch2Setup(b, room); if (pre.ignite) addS(b, player, 'ignite', pre.ignite); } // A2 2챕터 시작(정예 접사 · 대형 · 바르도 등불 · 이벤트 흔적) // 3챕터: 열기 · 아지랑이 · 붕대 · 화염 강화 · 강적 값, 이벤트가 붙인 시작 상태
   chDev(b, 'onRoomStart'); // A0 챕터 장치(A1: 난수를 정한 뒤로 옮김)
   // 0.8.0 6단계 A-6: 순찰대(내부 키 ambush)는 먼저 덮치지 않는다(전에는 첫 라운드에 내가 맨 뒤)
   runUntilPlayer(b);

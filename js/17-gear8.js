@@ -134,8 +134,10 @@ const G8_ICON = [['기본공격연동', '🗡'], ['막기', '🛡'], ['보호막
 function g8Icon(A) { if (A.ax) return '★'; for (const [t, i] of G8_ICON) if ((A.tags || []).includes(t)) return i; return A.fx.k === 'dmgP' || A.fx.k === 'hitAdd' ? '🗡' : A.fx.k === 'inR' || A.fx.k === 'stat' ? '🛡' : '·'; }
 const g8AfTxt = a => { const A = AFFIX[a.id]; return A ? A.txt.replace('{v}', a.v) : a.id; };
 const g8Piece = (a, ch) => { const A = AFFIX[a.id]; if (!A) return ''; const n = A.n[Math.min(3, Math.max(1, ch || 1)) - 1]; return n.replace(/\{갈래\}/g, ''); };
+/* A2: 챕터 장비 성향의 기반 이름(G8_CH[챕터].names, 등급 평범 · 고급 · 희귀 이상 = 1 · 2 · 3단) */
+function g8BaseName(it) { const B = AFFIX_BASE[it.tpl] || {}; const T = typeof G8_CH !== 'undefined' && G8_CH[it.ch]; const L = T && T.names[B.slot]; if (!L || (T.keepShape || []).includes(it.tpl)) return B.n || it.tpl; return L[it.g === 'n' ? 0 : it.g === 'm' ? 1 : 2]; }
 function g8Name(it) {
-  if (it.uq && UNIQUE[it.uq]) return UNIQUE[it.uq].n; const base = (AFFIX_BASE[it.tpl] || {}).n || it.tpl, af = it.af || [];
+  if (it.uq && UNIQUE[it.uq]) return UNIQUE[it.uq].n; const base = g8BaseName(it), af = it.af || [];
   if (it.g === 'h' && it.ax && AFFIX[it.ax.id]) return AFFIX[it.ax.id].n[0] + ' ' + base;
   if (it.g === 'r' && af.length >= 2) return g8Piece(af[0], it.ch) + ' ' + base + ' — ' + (AFFIX[af[1].id] || {}).back;
   if ((it.g === 'm' || it.g === 'r') && af.length) return g8Piece(af[0], it.ch) + ' ' + base;

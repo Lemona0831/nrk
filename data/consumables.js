@@ -33,20 +33,21 @@ const CONS = {
   sandbag:   { n: '모래 주머니', ico: '👝', sit: '방 특성이 괴롭다', k: 'unmod', mods: ['dark', 'bloodpool', 'candle', 'ceiling', 'bell', 'narrow', 'bonepile', 'rotair', 'flooded', 'alley', 'pillar', 'shade', 'brazier', 'drums', 'haze', 'sandstorm'], max: 1, price: 14, dw: 0.2, shopP: 0.4, use: 'fight', d: () => '이 전투에서 방 특성 하나(어둠, 피 웅덩이, 촛불 제단, 무너지는 천장, 종소리, 좁은 회랑, 무너진 납골벽, 썩은 공기, 물에 잠긴 바닥, 무너진 골목, 무너지는 기둥, 오아시스 그늘, 불씨 화로, 북소리, 아지랑이, 모래폭풍)를 끕니다. 작열하는 한낮은 끄지 못합니다.' }, // 옛 등잔 기름(어둠)을 합쳤다. 10월 14일 만든 사람 결정: "끄기"는 두고 등장률을 낮춘다(dw 0.5 → 0.2, 상점 진열 후보 40%)
   reliq:     { n: '빈 성물함', ico: '📦', sit: '전리품을 더 원한다', k: 'lootx', v: 1.5, max: 1, price: 18, dw: 0.5, use: 'fight', d: v => '이 전투에서 쓰러뜨린 적의 전리품 확률 ×' + v + '.' }, // 4-2: ×2 → ×1.5
   // 챕터 전용 (only: 그 챕터에서만 나온다)
-  lime:      { n: '석회 가루', ico: '⚪', ch: 2, only: 2, vs: 'skeleton', sit: '해골이 다시 일어선다', k: 'norise', tgt: 'enemy', v: 2, max: 2, price: 10, dw: 2, use: 'fight', d: v => '해골 하나의 부활을 ' + v + '라운드 늦춥니다. 뼈 더미에 쓰면 바로, 아직 서 있는 해골에 쓰면 쓰러질 때 적용됩니다.' }, // 4-2: 부활 막기 → 2라운드 늦추기
   mirror:    { n: '거울 조각', ico: '🪞', ch: 3, only: 3, vs: 'mirage', vsMod: 'haze', sit: '허상이 겹쳐 있다', k: 'unhaze', tgt: 'enemy', max: 2, price: 12, dw: 2, use: 'fight', d: () => '한 적의 허상 한 겹을 걷어 냅니다.' }, // 4-2: 모든 적 · 모든 겹 → 한 적 · 한 겹
+  // 2챕터 소모품 셋(0.8.0 A2 확정본): 모두 대가나 조건이 붙는다
+  smokecan:  { n: '연막탄', ico: '💨', ch: 2, vs: 'xbow', sit: '석궁이 겨누고 있다', k: 'smokecan', max: 2, price: 14, dw: 2, use: 'fight', d: () => '이번 라운드 후열 적의 공격이 모두 빗나갑니다. 대신 내가 후열을 노린 공격도 빗나갑니다.' },
+  painkiller:{ n: '싸구려 진통제', ico: '💊', ch: 2, sit: '해로운 상태가 쌓였다', k: 'painkill', v: 2, max: 2, price: 12, dw: 2, use: 'fight', d: v => '내 해로운 상태 ' + v + '가지를 지웁니다. 대신 다음 라운드 스태미나 회복이 0입니다.' },
+  oilpot:    { n: '기름 단지', ico: '🫙', ch: 2, sit: '전열이 몰려 있다', k: 'oilpot', v: 2, max: 2, price: 14, dw: 2, use: 'fight', d: v => '전열 적들에게 화상 ' + v + '. 그 방이 기름 바닥이 됩니다(나도 화상 +1).' },
   // 판매품: 전리품 주머니에 들어가 상점에 들어갈 때 골드로 바뀐다
   silver:    { n: '은화 주머니', ico: '💰', sit: '팔아서 골드로', k: 'sell', sell: 15, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
   goblet:    { n: '녹슨 성배', ico: '🏆', sit: '팔아서 골드로', k: 'sell', sell: 25, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
   candlest:  { n: '촛대', ico: '🕎', sit: '팔아서 골드로', k: 'sell', sell: 35, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
   beads:     { n: '묵주 구슬', ico: '📿', sit: '팔아서 골드로', k: 'sell', sell: 10, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
-  goldtooth: { n: '금니', ico: '🦷', ch: 2, sit: '팔아서 골드로', k: 'sell', sell: 20, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
-  ring:      { n: '부장품 반지', ico: '💍', ch: 2, sit: '팔아서 골드로', k: 'sell', sell: 30, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
   earring:   { n: '금 귀걸이', ico: '🪙', ch: 3, sit: '팔아서 골드로', k: 'sell', sell: 40, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
   glassbead: { n: '유리 구슬', ico: '🫧', ch: 3, sit: '팔아서 골드로', k: 'sell', sell: 15, max: 5, price: 0, use: 'none', d: () => '쓰지 못합니다. 상점에서 팝니다.' },
 };
 /* 3챕터 전리품 무게: 1 · 2챕터의 판매품은 3챕터 것과 바꾼다 */
-for (const k of ['silver', 'goblet', 'candlest', 'beads', 'goldtooth', 'ring']) CONS[k].dw3 = 0;
+for (const k of ['silver', 'goblet', 'candlest', 'beads']) CONS[k].dw3 = 0; // A2: 금니 · 부장품 반지는 옛 2챕터와 함께 data/archive/old-ch2.js로
 /* 없앤 소모품(10월 14일 개편 4단계, 설계안 8절): [이름, 바뀌는 소모품, 개수 배율] 또는 [이름, null, 옛 가격](판매가만큼 골드).
    이름은 지난 기록 화면에서 쓴다. 고급 약초는 약초 2개(consBagFix) */
 const CONS_GONE = {

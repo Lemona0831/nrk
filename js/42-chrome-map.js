@@ -75,7 +75,7 @@ function dgBar(run) {
   }
   h += '</ol>';
   const bl = Object.keys(run.buffs || {}).map(k => { const S = SHRINES.find(x => x.id === k); return `<span class="chip" data-info="buff:${k}" tabindex="0">${esc(S ? S.n : (EVBUFF[k] || [k])[0])} ${run.buffs[k]}</span>`; }).join('');
-  return `<div class="card dgtop"><div class="dghead"><b>${run.ch || 1}챕터 · ${esc(floorName(run.room))}</b>${run.mode === 'hard' ? '<span class="chip hardtag">가혹</span>' : ''}${run.markCh ? `<span class="chip hardtag">표식 ${run.markPts || 0}점</span>` : ''}<span class="mini">${run.room < FLOOR_CAMP ? '상층' : run.room > FLOOR_CAMP && run.room < FLOOR_BOSS ? '하층' : ''}${run.path && PATHS[run.path] ? ' · ' + PATHS[run.path].ico + ' ' + PATHS[run.path].n : ''} · 남은 층 ${Math.max(0, FLOORS - run.room)}</span><span class="gold-n">골드 ${run.gold || 0}</span></div>${h}${bl ? `<div class="bufs">${bl}</div>` : ''}</div>`;
+  return `<div class="card dgtop"><div class="dghead"><b>${run.ch || 1}챕터 · ${esc(floorName(run.room))}</b>${run.mode === 'hard' ? '<span class="chip hardtag">가혹</span>' : ''}${run.markCh ? `<span class="chip hardtag">표식 ${run.markPts || 0}점</span>` : ''}<span class="mini">${run.room < FLOOR_CAMP ? '상층' : run.room > FLOOR_CAMP && run.room < FLOOR_BOSS ? '하층' : ''}${run.path && PATHS[run.path] ? ' · ' + PATHS[run.path].ico + ' ' + pathTxt(run, run.path).n : ''}${(run.ch || 1) === 2 ? ' · 🛢️ 기름 ' + (run.oil || 0) + '/' + LAMP.max : ''} · 남은 층 ${Math.max(0, FLOORS - run.room)}</span><span class="gold-n">골드 ${run.gold || 0}</span></div>${h}${bl ? `<div class="bufs">${bl}</div>` : ''}</div>`;
 }
 function roomEnemyName(r, x, i) {
   if (i === 0 && r.strong) return r.strong + ' (강적)';
@@ -104,7 +104,7 @@ const RISK_W = { 1: '낮음', 2: '보통', 3: '높음', 4: '매우 높음' }; /*
 const rewardHint = r => r.hide ? '보상은 열어 봐야 안다' : ROOM_TYPES[r.type].hint; // 10월 4일: 보상은 일부 문에만 적힌다
 /* 갈래길: 길 셋 가운데 하나 (다음 갈래길이나 야영지 · 보스 앞까지) */
 function crossCard(id) {
-  const P = pathOf(id, G.run.mode), f = G.run.room; const to = Math.min(f < FLOOR_CAMP ? FLOOR_CAMP : FLOOR_BOSS, PATH_AT.find(x => x > f) || FLOOR_BOSS) - 1;
+  const P = pathTxt(G.run, id), f = G.run.room; /* A2: 길 이름 · 설명은 챕터마다 */ const to = Math.min(f < FLOOR_CAMP ? FLOOR_CAMP : FLOOR_BOSS, PATH_AT.find(x => x > f) || FLOOR_BOSS) - 1;
   const x = v => '×' + v; const W = Object.entries(P.w || {}).filter(([t]) => ROOM_TYPES[t]).map(([t, v]) => ROOM_TYPES[t].n + ' ' + x(v));
   const nums = [P.hp === 1 && P.dmg === 1 ? '적 체력 · 피해 그대로' : `적 체력 <b>${x(P.hp)}</b> · 피해 <b>${x(P.dmg)}</b>`, `전리품 <b>${x(P.loot)}</b> · 골드 <b>${x(P.gold)}</b>`].concat(P.up ? [`장비 등급 ${P.up > 0 ? '오름' : '내림'} <b>${Math.round(Math.abs(P.up) * 100)}%</b>`] : []);
   return `<button class="door t-path-${id}" data-a="path" data-k="${id}"><span class="dr-h"><span class="dr-ico" aria-hidden="true">${P.ico}</span><b>${esc(P.n)}</b>${P.risk ? `<span class="dr-risk${P.risk < 0 ? ' down' : ''}">${P.risk > 0 ? '위험 ▲' : '위험 ▼'}</span>` : ''}</span><span class="mini">${esc(P.d)}</span><span class="dr-nums">${nums.join(' · ')}</span>${W.length ? `<span class="dr-w">나오는 문(큰 길 대비): ${esc(W.join(', '))}</span>` : ''}${crossMap(id)}<span class="dr-hint">${f}층부터 ${to}층까지</span></button>`; /* 10월 7일 2차: PATHS의 배율을 숫자로 함께 */
@@ -136,6 +136,7 @@ function vRoom(run, R) {
   const T = ROOM_TYPES[R.type]; let h = `<section class="card room t-${R.type}">`;
   if (R.type === 'boss') { const B = BOSSES[run.boss]; return h + `<h3>보스</h3><p><b>${B.ico} ${esc(B.n)}</b></p><p class="lore">${esc(B.lore || '')}</p><p class="mini">보스전은 도망칠 수 없고, 너무 오래 끌면 보스가 광폭해집니다.</p><button class="gold" data-a="enter" data-focus>보스와 싸우기</button></section>`; }
   if (R.type === 'fate') return vFateRoom(run, h);
+  if (R.type === 'market') return h + vMarket(run, R) + '</section>'; // A2 암시장
   if (R.type === 'camp') return h + vCamp(run) + '</section>'; // 10월 14일 개편 5단계: 정비 시간(46-screens-shop.js)
   if (R.type === 'spring') return h + `<h3>💧 샘</h3><p>샘에서 쉬면 생명력이 50% 차고, 플라스크가 하나씩 찹니다.</p><button class="gold" data-a="rest" data-focus>샘에서 쉬기</button></section>`;
   if (R.type === 'shrine') { const S = SHRINES.find(x => x.id === R.shrine); return h + `<h3>🕯️ ${esc(S.n)}</h3><p>${esc(S.d)} 다음 3개 방 동안 이어집니다.</p><div class="row"><button class="gold" data-a="shrine" data-k="1" data-focus>기도한다</button><button data-a="shrine" data-k="0">지나친다</button></div></section>`; }
@@ -145,7 +146,7 @@ function vRoom(run, R) {
   }
   if (R.type === 'event') {
     const E0 = EVENTS.find(x => x.id === R.event);
-    const dis = o => (E0.id === 'reliquary' && o.id === 'force' && run.p.st < 40) || (E0.id === 'buried' && o.id === 'dig' && run.p.st < 50) || (E0.id === 'monk' && o.id === 'feed' && !(run.p.flask.life + run.p.flask.mana + (run.p.flask.stam || 0)));
+    const dis = o => (E0.id === 'reliquary' && o.id === 'force' && run.p.st < 40) || (E0.id === 'buried' && o.id === 'dig' && run.p.st < 50) || (E0.id === 'monk' && o.id === 'feed' && !(run.p.flask.life + run.p.flask.mana + (run.p.flask.stam || 0))) || ch2EvDis(run, E0, o);
     return h + `<h3>❔ ${esc(E0.n)}</h3><p class="lore">${esc(E0.lore)}</p><div class="evopts">${E0.opts.map(o => `<button class="evo" data-a="event" data-k="${o.id}"${dis(o) ? ' disabled' : ''}><b>${esc(o.n)}</b>${o.d ? `<small>${esc(o.d)}</small>` : ''}</button>`).join('')}</div></section>`;
   }
   // 전투 방
@@ -156,7 +157,7 @@ function vRoom(run, R) {
   const nx = run.next || {};
   { const n3 = run.next3 || {}; if (['normal', 'ambush'].includes(R.type) && Object.keys(n3).length) h += `<p class="mini warn">${n3.pre ? Object.keys(n3.pre).map(k => KW_N[k] + ' ' + n3.pre[k]).join(' · ') + '을(를) 안고 들어갑니다. ' : ''}${n3.ambush ? '모래 매복입니다. ' : ''}${n3.herald ? '여왕의 전령이 보낸 정예가 기다립니다. ' : ''}${n3.noon ? '작열하는 한낮, 열기 ' + n3.noon + '에서 시작합니다.' : ''}</p>`; } // 3챕터 이벤트가 붙인 것
   if (nx.pre) h += `<p class="mini warn">${nx.pre.weak ? '약화·취약을 안고 ' : ''}${nx.pre.poison ? '중독 ' + nx.pre.poison + '을 안고 ' : ''}들어갑니다.</p>`;
-  h += `<p class="mini">보상: ${R.hide ? esc(rewardHint(R)) : '골드 ' + R.gold + (R.mods && (R.mods.includes('bell') || R.mods.includes('drums')) ? ' ×1.5' : '') + ', ' + esc(T.hint)}. 들어가기 전에 장비를 바꿔도 됩니다.</p><div><button class="gold" data-a="enter" data-focus>방에 들어가기</button></div></section>`;
+  h += `<p class="mini">보상: ${R.hide ? esc(rewardHint(R)) : '골드 ' + R.gold + (R.mods && (R.mods.includes('bell') || R.mods.includes('drums')) ? ' ×1.5' : '') + ', ' + esc(T.hint)}. 들어가기 전에 장비를 바꿔도 됩니다.</p>${ch2EnterBtns(run, R)}</section>`;
   return h;
 }
 

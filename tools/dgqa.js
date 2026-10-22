@@ -65,7 +65,7 @@ function pickDoor(pk, run, r) {
   const P = PERSONAS[pk]; const p = run.p; const h = p.hp / p.hpMax; const fl = p.flask.life;
   const low = G0.isLower(run.room, run.ch);
   const loss = { normal: 0.22, ambush: 0.3, treasure: 0.3, trial: 0.45, strong: low ? 0.75 : 0.5 };
-  const gain = { normal: 3, ambush: 3.3, treasure: 5, trial: 5, strong: 6, spring: 0, shrine: 1.5, altar: 1, event: 1.5, fate: 1.2 };
+  const gain = { normal: 3, ambush: 3.3, treasure: 5, trial: 5, strong: 6, spring: 0, shrine: 1.5, altar: 1, event: 1.5, fate: 1.2, market: 1.4 };
   const sc = run.doors.map(d => {
     const t = d.type; let v;
     if (pk === 'novice') return r();
@@ -216,9 +216,10 @@ function restRoom(pk, run, r) {
     const want = R.altar === 'blood' || R.altar === 'scale' ? (THINK(pk) ? h > 0.6 : r() < 0.5) : can; // 3챕터 재의 제단은 태울 것이 넉넉할 때만
     return click('altar', can && want ? 1 : 0);
   }
+  if (R.type === 'market') { const M = run_('MARKET'), g = run.gold || 0, S = G0.marketStock(run, R); const k = pk === 'novice' ? null : S.uq && g >= M.uq.gold + 40 ? 'uq-gold' : g >= M.bundle.gold + 20 && r() < 0.6 ? 'bundle' : null; return k ? click('mkbuy', k) : click('mkleave'); } // A2 암시장
   if (R.type === 'event') {
     const E0 = G0.EVENTS.find(x => x.id === R.event);
-    const ok = E0.opts.filter(o => !((E0.id === 'reliquary' && o.id === 'force' && p.st < 40) || (E0.id === 'buried' && o.id === 'dig' && p.st < 50) || (E0.id === 'monk' && o.id === 'feed' && !(p.flask.life + p.flask.mana + (p.flask.stam || 0)))));
+    const ok = E0.opts.filter(o => !G0.ch2EvDis(run, E0, o) && !((E0.id === 'reliquary' && o.id === 'force' && p.st < 40) || (E0.id === 'buried' && o.id === 'dig' && p.st < 50) || (E0.id === 'monk' && o.id === 'feed' && !(p.flask.life + p.flask.mana + (p.flask.stam || 0)))));
     let o = ok[Math.floor(r() * ok.length)];
     if (THINK(pk) || pk === 'careful') { // 위험한 선택은 생명력이 넉넉할 때만
       const safe = ok.filter(x => !(x.id === 'drink' && h < 0.5) && !(x.id === 'chase' && h < 0.6) && !(x.id === 'do' && h < 0.6) && !(x.id === 'loot' && h < 0.5) && !((E0.ch || 1) >= 3 && ((['pull', 'take', 'dig', 'hasten'].includes(x.id) && h < 0.6) || (x.id === 'draw' && h < 0.7)))); // 3챕터 위험한 선택 (1 · 2챕터 이벤트는 그대로: 종탑의 줄도 id가 pull이다)
@@ -330,6 +331,15 @@ function devPre(b, P, r) {
   const c = L.filter(x => brkOf(x) > 0).sort((x, y) => brkOf(y) - brkOf(x))[0] || L.find(x => x.v2 && !x.aoe && x.s.fx.some(f => f.k === 'dmg')) || L.find(x => x.id === 'basic');
   return c ? [c.id, c.aoe ? null : pr.id] : null;
 }
+/* 0.8.0 A2 2챕터 판단: 거래창 · 빚 갚기 · 등불 기름 · 바르도의 등불(칩과 카드를 보고 할 만한 것만). 2챕터 전투에서만 난수를 쓴다 */
+function streetPre(b, P, r) {
+  if (!G0.isCh2(b)) return null; const L = G0.actionList(b); const p = b.p, al = G0.alive(b);
+  if (L.some(x => x.id === 'tradeyes')) return [p.hp < p.hpMax * 0.5 || r() < 0.3 ? 'tradeyes' : 'tradeno', null];
+  const pay = L.find(x => x.id === 'paydebt' && x.ok); if (pay && (b.debt || 0) >= 12 && r() < (P.mech || 0.5) + 0.2) return ['paydebt', null];
+  const oil = L.find(x => x.id === 'lampoil' && x.ok); if (oil && (al.some(e => e.foe === 'lampthief' && e.under) || b.ctx.boss || al.some(e => e.strong)) && r() < (P.mech || 0.5) + 0.2) return ['lampoil', null];
+  const lamp = al.find(e => e.role === 'lantern' && e.lit && !e.last); if (lamp && r() < (P.mech || 0.5) + 0.1) { const A = L.filter(x => x.ok && !x.self && x.id !== 'flee' && G0.canTarget(b, lamp, x)); const brkOf = x => x.id === 'heavy' ? 35 : x.v2 ? x.s.fx.reduce((m, f) => m + (f.k === 'brk' ? f.n : f.k === 'cutx' ? f.brk : 0), 0) : 0; const c = A.filter(x => brkOf(x) > 0).sort((x, y) => brkOf(y) - brkOf(x))[0]; if (c) return [c.id, c.aoe ? null : lamp.id]; }
+  return null;
+}
 /* 3챕터 판단 (10월 7일, 비공개 문서의 테스터 판단 가운데 사람이 화면을 보고 할 만한 것만). 3챕터 전투에서만 난수를 쓴다: 1 · 2챕터 측정은 그대로다 */
 function ch3Pre(b, P, r) {
   if (!(((b.ctx && b.ctx.ch) || 1) >= 3)) return null;
@@ -372,6 +382,7 @@ function sbRhythmGate(b, a, t) {
 }
 function fightCur(pk, r, mem, out) {
   const P = PERSONAS[pk]; const G = G0.__G;
+  { const run0 = G.run, R0 = run0.cur; if (R0 && (run0.ch || 1) === 2 && (R0.mods || []).includes('dark') && (run0.oil || 0) > 0 && pk !== 'novice' && (THINK(pk) || pk === 'careful' || ['strong', 'ambush'].includes(R0.type) || r() < 0.6)) { run0.oil--; R0.lit = 1; out.oilUse = (out.oilUse || 0) + 1; } } // A2 어두운 방은 기름이 있으면 대개 밝힌다
   G0.enterRoom(); for (let k = 0; !G.b && G.sheet && k < 4; k++) { handleSheets(pk, r); G0.enterRoom(); } // M5-0: 전투 중 저장본을 이어 한 뒤 받을 큰 각인이 남았으면 enterRoom이 고르기 창을 먼저 연다
   const b = G.b; b.stepMode = false; let n = 0; let stall = 0, lastHp = Infinity; let stuckN = 0;
   // 10월 5일: 전투 난수를 테스터 판단 난수와 나눈다(판단 규칙 하나를 바꿔도 전투 운은 그대로 남아 비교가 깨끗하다). LEGACY_RNG=1이면 예전처럼 같은 난수
@@ -386,7 +397,7 @@ function fightCur(pk, r, mem, out) {
       [a, t] = OPT.policy.chooseAction(b, G.run, n);
     } else {
     const sr = r() < (P.mech || 0.5) ? sigRule(b, r) : null;
-    [a, t] = devPre(b, P, r) || ch2Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look && hazePick(b)) || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem)); // 0.8.0 5단계: 숙련의 신기루 대응(수도승)
+    [a, t] = devPre(b, P, r) || streetPre(b, P, r) || ch2Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look && hazePick(b)) || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem)); // 0.8.0 5단계: 숙련의 신기루 대응(수도승)
     [a, t] = ch2Post(b, P, r, a, t);
     // 보스를 깎지 못한 채 버티기만 하면 사람은 밀어붙인다 (한 수 앞만 보는 계산이 페이즈 전환을 피하는 것을 막는다)
     const bs = b.en.find(e => e.role === 'boss' && e.alive);

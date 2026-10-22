@@ -73,15 +73,17 @@ function g8Affixes(slot, cls, t, g, want, kc) {
     for (let k = 0; k < n; k++) {
       let P = g8Pool(slot, cls, t, g, used, false, kc).filter(id => !(AFFIX[id].pair && AFFIX[id].pair.includes(t)) || (pairs === 0 && n >= 2));
       if (k === 0 && want && want.size) { const W = P.filter(id => (AFFIX[id].tags || []).some(x => want.has(x))); if (W.length) P = W; }
-      if (!P.length) break; const id = P[Math.floor(Math.random() * P.length)]; if (AFFIX[id].pair && AFFIX[id].pair.includes(t)) pairs++; used.push(AFFIX[id].fam); af.push({ id, v: g8RollV(id, t, kc) });
+      if (!P.length) break; const id = g8PickW(P, t); if (AFFIX[id].pair && AFFIX[id].pair.includes(t)) pairs++; used.push(AFFIX[id].fam); af.push({ id, v: g8RollV(id, t, kc) });
     }
     if (af.length < n) continue;
-    let ax = null; if (g === 'h') { let P = g8Pool(slot, cls, t, g, [], true, kc); if (want && want.size) { const W = P.filter(id => (AFFIX[id].tags || []).some(x => want.has(x))); if (W.length) P = W; } if (!P.length) continue; const id = P[Math.floor(Math.random() * P.length)]; ax = { id, v: g8RollV(id, t, kc) }; }
+    let ax = null; if (g === 'h') { let P = g8Pool(slot, cls, t, g, [], true, kc); if (want && want.size) { const W = P.filter(id => (AFFIX[id].tags || []).some(x => want.has(x))); if (W.length) P = W; } if (!P.length) continue; const id = g8PickW(P, t); ax = { id, v: g8RollV(id, t, kc) }; }
     const list = af.concat(ax ? [ax] : []), B = g8Band(g, t), W = G8GEN.aim[g]; if (g8Fit(list, t, W ? [B[0] + W[0] * (B[1] - B[0]), B[0] + W[1] * (B[1] - B[0])] : B, list.map((x, i) => i), kc) || g8Fit(list, t, B, list.map((x, i) => i), kc)) return { af: list.slice(0, af.length), ax };
   }
   return null;
 }
 /* 장비 하나(6-2). o = { slot?, g?, where: room · big · boss · shop · gamble · kit, own?: true(내 직업) · false(공용), want?: 빌드 꼬리표(Set) · true(지금 빌드 보장), noUq? } */
+/* A2 챕터 가중 뽑기: 표가 없는 챕터(1 · 3)는 전과 같은 고른 뽑기(난수 한 번) */
+function g8PickW(P, ch) { const T = typeof G8_CH !== 'undefined' && G8_CH[ch]; if (!T) return P[Math.floor(Math.random() * P.length)]; const w = P.map(id => T.up.includes(id) ? T.upW : T.down.includes(id) ? T.downW : 1); let x = Math.random() * w.reduce((a, v) => a + v, 0); for (let i = 0; i < P.length; i++) { x -= w[i]; if (x <= 0) return P[i]; } return P[P.length - 1]; }
 function g8Gen(run, o) {
   o = o || {}; const ch = Math.min(3, Math.max(1, o.ch || run.ch || 1)), build = run.build;
   const want0 = o.want === true ? g8BuildTags(run) : o.want || null;
@@ -118,7 +120,7 @@ function g8Reroll(run, it, i) {
   const used = it.af.map(a => AFFIX[a.id].fam), pairsElse = it.af.filter((a, k) => k !== i && AFFIX[a.id].pair && AFFIX[a.id].pair.includes(t)).length;
   const kc = it.k || run.build; const P = g8Pool(g8Slot(it), cls, t, it.g, used, false, kc).filter(id => !(AFFIX[id].pair && AFFIX[id].pair.includes(t)) || (!pairsElse && it.af.length >= 2));
   if (!P.length) return null; const price = g8RerollPrice(it); const old = it.af[i];
-  for (let k = 0; k < 20; k++) { const id = P[Math.floor(Math.random() * P.length)]; const list = g8Afs(it).map(a => ({ id: a.id, v: a.v })); list[i] = { id, v: g8RollV(id, t, kc) }; if (g8Fit(list, t, g8Band(it.g, t), [i], kc) || k === 19) { it.af[i] = list[i]; break; } }
+  for (let k = 0; k < 20; k++) { const id = g8PickW(P, t); const list = g8Afs(it).map(a => ({ id: a.id, v: a.v })); list[i] = { id, v: g8RollV(id, t, kc) }; if (g8Fit(list, t, g8Band(it.g, t), [i], kc) || k === 19) { it.af[i] = list[i]; break; } }
   run.gold -= price; it.rr = (it.rr || 0) + 1; (run.rerolls = run.rerolls || []).push({ ch: run.ch || 1, uid: it.uid, from: old.id + ':' + old.v, to: it.af[i].id + ':' + it.af[i].v, gold: price, t: Date.now() });
   return it.af[i];
 }
