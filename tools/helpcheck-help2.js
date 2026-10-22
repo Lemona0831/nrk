@@ -69,7 +69,6 @@ module.exports = function (api) {
   add('help', '기본 공격 10, 강공격 35씩 차고', '실행: 기본 공격 +10, 강공격 +35', E => E(`(() => { const r = []; for (const id of ["basic", "heavy"]) { const b = __mk("warden"); const e = b.en[0]; const k0 = e.brk || 0; playerAct(b, id, e.id); r.push((e.brk || 0) - k0); } return r.join(); })()`) === '10,35');
   add('help', '다음 행동을 잃고, 취약 2가', '실행: 붕괴 가득이면 취약 2', E => E(`(() => { const b = __mk("warden"); const e = b.en[0]; addBreak(b, e, 9999); return st(e, "vuln") === 2; })()`));
   add('help', '사수(후열): 겨누기', '상수: EKW.archerBleed=' + E('EKW.archerBleed') + ', archerEvery=' + E('EKW.archerEvery'), E => E('EKW.archerBleed') === 2);
-  add('help', '저주(약화 1 · 취약 1)', '소스: hexcurse가 weak 1 · vuln 1', E => has("case 'hexcurse': { addS(b, b.p, 'weak', 1); addS(b, b.p, 'vuln', 1);"));
   add('help', '신속이 붙은 적은', '소스: startRound가 e.swift이고 둔화 · 붕괴 · 가속이 없으면 가속 1', E => has('e.swift && !e.s.chill && !e.s.broken && !e.s.haste') && has('e.s.haste = { stacks: 1,'));
   add('help', '출혈 2를 겁니다', '상수: LURK.bleed=' + E('LURK.bleed'), E => E('LURK.bleed') === 2);
   add('help', '붕대가 받는 직접 피해를 30%', '상수: WRAP.cut=' + E('WRAP.cut'), E => pct(E('WRAP.cut')) === 30);
@@ -113,5 +112,5 @@ module.exports = function (api) {
   add('help', '일곱 장면으로 연습합니다', '데이터: TUT.length=' + E('TUT.length'), E => E('TUT.length') === 7);
   add('help', '처음에는 간단입니다', '상수: HUD_NAMES, HUD_DEFAULT=' + E('HUD_DEFAULT'), E => E('HUD_NAMES.join()') === 'simple,normal,full' && E('HUD_DEFAULT') === 'simple');
   add('help', '끔 · 약하게 · 보통 · 강하게를 고릅니다', '데이터: VFX_OPTS 네 단계', E => E('VFX_OPTS.map(o => o[1]).join()') === '끔,약하게,보통,강하게');
-  add('help', '챕터는 1챕터 저주받은 수도원', '데이터: CHAPTERS 이름 셋', E => E('[1,2,3].map(c => CHAPTERS[c].n).join()') === '저주받은 수도원,잊힌 지하묘지,재의 사막 유적');
+  add('help', '챕터는 1챕터 저주받은 수도원', '데이터: CHAPTERS 이름 셋', E => E('[1,2,3].map(c => CHAPTERS[c].n).join()') === '저주받은 수도원,어둠이 가라앉은 거리,재의 사막 유적');
 };

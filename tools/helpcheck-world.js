@@ -24,7 +24,7 @@ module.exports = function (api) {
   const optText = (id, o) => E('EVENTS.find(e => e.id === "' + id + '").opts.find(x => x.id === "' + o + '").d');
   const H = (id, o) => L80.filter(l => l.includes("R.event === '" + id + "' && o === '" + o + "'")).join('\n');
   const sentFind = (tag, text, loc) => { const s = String(text).split(SPLIT).find(x => x.includes(loc)); if (!s) throw new Error('문장 없음: ' + tag + ' ' + loc); return '[' + tag + '] ' + s; }; // 꼬리표가 문장 맨 앞에 붙으므로 찾을글은 그 문장 통째로 쓴다
-  const ev = (id, o, loc, fn) => api.add('world-events', sentFind(id + '.' + o, optText(id, o), loc), '80-events.js ' + id + '.' + o, () => { const h = H(id, o); return !!h && fn(optText(id, o), h); });
+  const ev = (id, o, loc, fn) => !E('!!EVENTS.find(e => e.id === "' + id + '")') ? null : /* A2: 옛 2챕터 이벤트(보관)는 건너뛴다 */ api.add('world-events', sentFind(id + '.' + o, optText(id, o), loc), '80-events.js ' + id + '.' + o, () => { const h = H(id, o); return !!h && fn(optText(id, o), h); });
   const gold = h => nx(h, /gainGold\(run, (\d+),/);
   const heal1 = (h, k) => nx(h, new RegExp('p\\.flask\\.' + k + ' \\+ (\\d+)'));
   const KWN = k => E('KW_N.' + k);
@@ -72,7 +72,7 @@ module.exports = function (api) {
   api.source('world-evbuff', EVB.map(x => ({ id: x.k, text: pref(x.k, x.d) })));
   const mulD = (S, re) => nx(S, re);
   api.add('world-evbuff', '[snuff] ', '24-clock-damage.js · 20-battle-state.js · 32-player-action.js snuff', () => { const d = E('EVBUFF.snuff[1]'); return d.includes('받는 화상 피해 ' + (igSnuff0 ? 0 : -1)) && d.includes('주는 피해 −' + pct(mulD(S32, /hasBt\(p, 'snuff'\)\) d \*= ([\d.]+)/)) + '%'); });
-  api.add('world-evbuff', '[procession] ', '24-clock-damage.js · 32-player-action.js procession', () => { const d = E('EVBUFF.procession[1]'); return d.includes('받는 직접 피해 −' + pct(mulD(S24, /hasBt\(p, 'procession'\) && !o\.dot\) d \*= ([\d.]+)/)) + '%') && d.includes('주는 피해 −' + pct(mulD(S32, /hasBt\(p, 'procession'\)\) d \*= ([\d.]+)/)) + '%'); });
+  if (E('!!EVENTS.find(e => e.id === "procession")')) api.add('world-evbuff', '[procession] ', '24-clock-damage.js · 32-player-action.js procession', () => { const d = E('EVBUFF.procession[1]'); return d.includes('받는 직접 피해 −' + pct(mulD(S24, /hasBt\(p, 'procession'\) && !o\.dot\) d \*= ([\d.]+)/)) + '%') && d.includes('주는 피해 −' + pct(mulD(S32, /hasBt\(p, 'procession'\)\) d \*= ([\d.]+)/)) + '%'); }); // A2: 옛 2챕터(보관)면 건너뛴다
   api.add('world-evbuff', '[ashcover] ', '24-clock-damage.js ashcover', () => E('EVBUFF.ashcover[1]').includes('받는 직접 피해 −' + pct(mulD(S24, /hasBt\(p, 'ashcover'\) && !o\.dot\) d \*= ([\d.]+)/)) + '%'));
   api.add('world-evbuff', '[herald] ', '20-battle-state.js · 32-player-action.js herald', () => { const d = E('EVBUFF.herald[1]'); return d.includes('받는 화상 피해 ' + (/hasBt\(u, 'herald'\)\) x = 0;/.test(S20) ? 0 : -1)) && d.includes('주는 피해 −' + pct(mulD(S32, /hasBt\(p, 'herald'\)\) d \*= ([\d.]+)/)) + '%'); });
 
@@ -153,8 +153,8 @@ module.exports = function (api) {
     api.add('world-mods', '[' + k + '] 이 방의 골드', '66-dungeon-flow.js battleContinue: 골드 × 1.5', () => md(k).includes('이 방의 골드 +' + pct(nx(S66, /R\.mods\.includes\('bell'\) \|\| R\.mods\.includes\('drums'\)\) \? ([\d.]+)/)) + '%'));
   }
   api.add('world-mods', '[calm] ', '24-clock-damage.js tickOnce: 마나 회복 × 2 (rollMods가 뽑지 않아 화면에는 안 나온다)', () => md('calm').includes('양이 ' + nx(S24, /hasMod\(b, 'calm'\) \? (\d+) : 1/) + '배'));
-  api.add('world-mods', '[bonepile] 2라운드', '34-rounds-setup.js bonepile: 뼈 더미 둘, RISE.wait 라운드 뒤 일어섬', () => { const n = nx(S34, /bonepile'\)\) \{[^}]*?for \(let k = 0; k < (\d+); k\+\+\)/); return n === 2 && md('bonepile').includes('뼈 더미 둘') && /s\.pile = \{ wait: RISE\.wait, born: -1 \}/.test(S34) && md('bonepile').includes(E('RISE.wait') + '라운드 뒤'); });
-  api.add('world-mods', '[flooded] ', '34-rounds-setup.js flooded: 나와 모든 적에게 둔화 1', () => md('flooded').includes('둔화 ' + nx(S34, /mods\.includes\('flooded'\)\) \{ addS\(b, player, 'chill', (\d+)\)/) + '을'));
+  if (E('!!ROOM_MODS.bonepile')) api.add('world-mods', '[bonepile] 2라운드', '34-rounds-setup.js bonepile: 뼈 더미 둘, RISE.wait 라운드 뒤 일어섬', () => { const n = nx(S34, /bonepile'\)\) \{[^}]*?for \(let k = 0; k < (\d+); k\+\+\)/); return n === 2 && md('bonepile').includes('뼈 더미 둘') && /s\.pile = \{ wait: RISE\.wait, born: -1 \}/.test(S34) && md('bonepile').includes(E('RISE.wait') + '라운드 뒤'); }); // A2: 옛 2챕터(보관)면 건너뛴다
+  if (E('!!ROOM_MODS.flooded')) api.add('world-mods', '[flooded] ', '34-rounds-setup.js flooded: 나와 모든 적에게 둔화 1', () => md('flooded').includes('둔화 ' + nx(S34, /mods\.includes\('flooded'\)\) \{ addS\(b, player, 'chill', (\d+)\)/) + '을')); // A2: 옛 2챕터(보관)면 건너뛴다
   api.add('world-mods', '[noon] 라운드가', '14-chapter-bodies.js heatRise: HEAT.mod', () => md('noon').includes('열기가 ' + E('HEAT.mod') + ' 오릅니다') && /return Math\.round\(HEAT\.mod \* sh\)/.test(S14));
   api.add('world-mods', '[noon] 100이', '14-chapter-bodies.js heatAdd 상한 100 · heatStorm 뒤 HEAT.reset', () => /b\.heat = Math\.max\(0, Math\.min\((\d+), b\.heat \+ n\)\)/.test(S14) && nx(S14, /b\.heat = Math\.max\(0, Math\.min\((\d+), b\.heat \+ n\)\)/) === 100 && nx(S14, /b\.heat >= (\d+)\) \{ if \(b\.heatWarn/) === 100 && md('noon').includes('100이 되면') && md('noon').includes(E('HEAT.reset') + '으로 내려갑니다') && /b\.heat = q \? QUEEN\.stormReset : HEAT\.reset/.test(S14));
   api.add('world-mods', '[haze] ', '14-chapter-bodies.js ch3Setup: 허상 1', () => md('haze').includes('허상 ' + nx(S14, /mods\.includes\('haze'\)\) for \(const e of alive\(b\)\) if \(realFoe\(e\)\) e\.haze = Math\.max\(e\.haze \|\| 0, (\d+)\)/) + '을'));

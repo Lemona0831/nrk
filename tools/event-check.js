@@ -9,7 +9,7 @@ const CH = arg('--ch', null), NOTES = arg('--notes', path.join(__dirname, '..', 
 const ctx = {}; vm.createContext(ctx); const V_ = s => s.replace(/^const (\w+)/gm, 'var $1');
 vm.runInContext(['data/foes.js', 'data/dungeon.js'].map(f => V_(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'))).join(';\n'), ctx);
 const EVENTS = ctx.EVENTS.filter(e => !CH || String(e.ch || 1) === CH);
-const COST = /대신|줄어|주는 피해 −|쓰고|씁니다|비우|더해지|약화 \d|취약 \d|중독 \d|화상 \d|출혈 \d|둔화 \d|강적이 반드시|주고|넘기|반반|잃/;
+const COST = /대신|줄어|주는 피해 −|매복|쓰고|씁니다|비우|더해지|약화 \d|취약 \d|중독 \d|화상 \d|출혈 \d|둔화 \d|강적이 반드시|주고|넘기|반반|잃/;
 const V = []; const bad = (kind, id, what) => V.push({ kind, id, what });
 for (const e of EVENTS) if (!e.opts.some(o => COST.test(o.d || ''))) bad('벌칙 없음', e.id + ' ' + e.n, e.opts.map(o => o.n).join(' · '));
 let frag = null;

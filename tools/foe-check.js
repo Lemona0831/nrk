@@ -64,7 +64,7 @@ const T = []; const t = (c, m) => { if (!c) T.push(m); };
 }
 /* 4-2. 챕터 장치 틀 */
 const CHD = R_('CH_DEVICE'); const fired = {}; const hooks = ['onRoomStart', 'onRoundEnd', 'onFoeBreak', 'onFoeDown', 'onRoomEnd'];
-const REAL = CHD[1]; t(!CHD[2] && !CHD[3], '2 · 3챕터 장치가 이미 꽂혀 있다(A2 · A3 전에는 비어 있어야 한다)');
+const REAL = CHD[1]; t(!CHD[3], '3챕터 장치가 이미 꽂혀 있다(A3 전에는 비어 있어야 한다)'); t(CHD[2] === R_('LAMP_DEV'), '2챕터 장치가 「등불」이 아니다');
 CHD[1] = { id: 'test', n: '시험 장치', help: '시험용 도움말 한 줄', chip: b => 'T' + (b.tick || 0) }; for (const h of hooks) CHD[1][h] = () => { fired[h] = (fired[h] || 0) + 1; };
 let chip = '', help = null; D.OPT.onTurn = G => { if (!chip) chip = R_('chDevChip')(G.b); if (help == null) { const g = R_('G'); const gb = g.b; g.b = G.b; help = R_('infoHtml') ? String(R_('infoHtml')('chdev') || '') : ''; g.b = gb; } };
 try { D.playChar('careful', 'warden', 5000); } catch (e) { T.push('가짜 장치 판 예외: ' + e.message); } D.OPT.onTurn = null;
@@ -87,6 +87,20 @@ if (CH === 1) {
   { const f = H.fight('warden', { en: ['bruiser', 'archer'] }); f.b.ctx.room = 'ambush'; f.b.ctx.floor = 5; f.b.rngF = () => 0; PD.onRoomStart(f.b); t(!f.b.prayer, '일반 방이 아닌 곳에서 기도가 시작됐다'); }
 }
 
+/* 4-4. 2챕터(A2): 어둠 · 거래 · 빚 · 등불 · 대형 · 정예 접사 */
+if (CH === 2) {
+  const fight2 = (en, setup) => { const f = H.fight('warden', { en, hp: 300, setup }); f.b.ctx.ch = 2; f.b.ctx.mods = f.b.ctx.mods || []; f.b.cur = null; return f; };
+  { const f = fight2(['dun', 'xbow']); const b = f.b, xb = f.es[1]; b.ctx.mods.push('dark'); xb.intent = { k: 'aim' }; const t1 = R_('intentText0')(b, xb).t; xb.intent = { k: 'evade' }; const t2 = R_('intentText0')(b, xb).t;
+    t(/숨을 들이쉰다/.test(t1), '어둠: 후열 큰 공격이 소리로 보이지 않는다(' + t1 + ')'); t(/보이지 않는다/.test(t2), '어둠: 후열 작은 행동이 보인다(' + t2 + ')');
+    const bg = R_('intentBadge0')(b, xb); t(bg.txt === '보이지 않음', '어둠: 후열 아이콘이 보인다'); }
+  { const f = fight2(['fence', 'thug'], (run, es) => { es[0].strong = true; es[0].foe = 'merchant'; }); const b = f.b; b.trade = 'ask'; const L = E.actionList(b); t(L[0].id === 'tradeyes' && L.some(a => a.id === 'tradeno') && L.filter(a => a.ok).length === 2, '거래창: 받기 · 거절만 고를 수 있어야 한다');
+    R_('ch2PlayerAct')(b, 'tradeyes'); t(b.trade === 'yes' && b.tradeHp === 1, '거래를 받았는데 표시가 없다'); const e = f.es[1]; const h0 = e.hp; b.cur = { id: 'basic' }; E.hurtEnemy(b, e, 10, { single: 1 }); b.cur = null; t(Math.abs(h0 - e.hp - 12) < 0.01, '거래: 주는 피해 +20%가 아니다(' + (h0 - e.hp) + ')'); }
+  { const f = fight2(['dun', 'thug'], (run, es) => { es[0].strong = true; es[0].foe = 'ledger'; }); const b = f.b; b.debt = 20; H.G.run.gold = 100; R_('ch2PlayerAct')(b, 'paydebt'); t(b.debt === 10 && H.G.run.gold === 70, '빚 갚기: 골드 30 · 빚 절반이 아니다'); const e = f.es[0]; e.brk = e.brkMax - 0.5; E.addBreak(b, e, 50); t(b.debt === 0, '무너뜨렸는데 빚이 남았다'); }
+  { const f = fight2(['dun', 'thug', 'xbow'], (run, es) => { es[0].strong = true; es[0].foe = 'captain'; }); const b = f.b; b.capForm = 1; const cap = f.es[0], th = f.es[1]; let h0 = cap.hp; E.hurtEnemy(b, cap, 10, { single: 1 }); t(Math.abs(h0 - cap.hp - 5) < 0.01, '대형: 대장이 받는 피해 −50%가 아니다'); th.brk = th.brkMax - 0.5; E.addBreak(b, th, 50); t(b.formBroken === 1, '덩치가 무너졌는데 대형이 남았다'); h0 = cap.hp; E.hurtEnemy(b, cap, 10, { single: 1 }); t(h0 - cap.hp > 9.9, '대형이 깨졌는데 피해가 줄어든다'); }
+  { const f = fight2(['dun']); const b = f.b; const bd = f.es[0]; bd.role = 'boss'; bd.boss = 'bardo'; R_('bardoSetup')(b, bd); const L = b.en.filter(x => x.role === 'lantern'); t(L.length === 5 && L.every(x => x.lit), '바르도: 등불 다섯이 켜진 채 시작하지 않는다'); const l = L[0]; l.brk = l.brkMax - 0.5; E.addBreak(b, l, 50); t(!l.lit && l.alive && bd.relightNext === 1, '등불을 깨면 꺼지고 바르도가 다시 켜려 해야 한다'); t(!R_('realFoe')(l), '등불이 적으로 세어진다(전투가 끝나지 않는다)'); }
+  { const f = fight2(['dun', 'dun'], (run, es) => { es[0].cmd = 1; }); const b = f.b; t(Math.abs(R_('ch2FoeOut')(b, f.es[1]) - 1.15) < 1e-9, '지휘: 같은 무리 잡몹 피해 +15%가 아니다'); E.hurtEnemy(b, f.es[0], 9999, { single: 1 }); t(f.es[1].stun >= 1, '지휘하던 정예가 쓰러졌는데 무리가 흔들리지 않는다'); }
+  { const f = fight2(['dun']); const b = f.b; b.ctx.mods.push('oilfloor'); const n0 = R_('st')(b.p, 'ignite'); E.addS(b, b.p, 'ignite', 2); t(R_('st')(b.p, 'ignite') - n0 === 3, '기름 바닥: 화상 +1이 아니다'); }
+}
 /* 보고 */
 console.log('foe-check (' + CH + '챕터): 적 ' + Object.keys(FOES).filter(id => (FOES[id].ch || 1) === CH).length + ' · 무리 ' + SQUADS.filter(s => (s.ch || 1) === CH).length + ' · 전투 ' + fights + ' · 적 행동 ' + eact);
 for (const g in grade) console.log('  ' + g + ' 패턴 수: ' + grade[g].join(', '));

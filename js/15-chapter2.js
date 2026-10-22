@@ -8,7 +8,7 @@ const ch2RunOf = b => (typeof G !== 'undefined' && G.run && G.run.p === b.p ? G.
 const ch2Mates = (b, e) => alive(b).filter(x => x !== e && realFoe(x));
 const ch2Lamps = b => b.en.filter(x => x.role === 'lantern' && x.alive);
 const ch2Dark = b => hasMod(b, 'dark');
-const CH2_BIG = ['charge', 'heavy', 'aim', 'finalbell', 'douselamp', 'hide', 'seize', 'dunning', 'smoke', 'dream', 'torch', 'douse', 'whip', 'ringbell', 'rally', 'haggle', 'hang', 'pouroil', 'duel'];
+const CH2_BIG = ['charge', 'heavy', 'aim', 'finalbell', 'seize', 'torch', 'pouroil']; // 어둠 속에서도 소리로 알리는 큰 공격(확정본: 큰 공격만)
 
 /* --- 의도(decideIntent의 역할 칸) --- */
 function ch2Intent(b, e, n, al) {
@@ -115,12 +115,12 @@ function ch2Act(b, e, i, d) {
     case 'pouroil': { const x = hurtPlayer(b, d * 0.6, { src: e, single: 1, spell: 1, label: e.n + '이(가) 기름을 붓는다' }); if (!b.over) addS(b, p, 'ignite', 3); return 1; }
     case 'guardlamp': { const c = spawn(b, 'lampkeeper'); if (c) logp(b, 'bad', e.n + '이(가) 등불지기를 부른다'); return 1; }
     case 'hang': { bardoHang(b, e); return 1; }
-    case 'relight': { const lp = ch2Lamps(b).find(x => !x.lit); if (lp) { lp.lit = 1; lp.brk = 0; e.barrier = (e.barrier || 0) + Math.round(e.hpMax * FOE_X.bardo.ward); logp(b, 'bad', '사이 행동 — ' + e.n + '이(가) 깨진 등불을 다시 켠다. 그 사이 몸이 비었다'); e.openR = b.round; codexHit(b, 'bardo', 'relit'); } return 1; }
+    case 'relight': { const lp = ch2Lamps(b).find(x => !x.lit); if (lp) { lp.lit = 1; lp.brk = 0; e.barrier = Math.min((e.barrier || 0) + Math.round(e.hpMax * FOE_X.bardo.ward), Math.round(e.hpMax * FOE_X.bardo.ward * ch2Lamps(b).filter(x => x.lit).length)); /* 비공개 문서 참조 */ logp(b, 'bad', '사이 행동 — ' + e.n + '이(가) 깨진 등불을 다시 켠다. 그 사이 몸이 비었다'); e.openR = b.round; codexHit(b, 'bardo', 'relit'); } return 1; }
   }
   if (i.k === 'heavy' && e.foe === 'ledger') { codexHit(b, 'ledger', 'debt'); }
   return 0;
 }
-/* --- 빚 장부의 주인: 빚(라운드마다 받은 피해 · 쓴 유산에서 쌓인다) --- */
+/* --- 빚 장부의 주인(비공개 문서 참조) --- */
 function ch2Debt(b, n, why) { if (!alive(b).some(x => x.foe === 'ledger')) return; b.debt = Math.max(0, Math.round(((b.debt || 0) + n) * 10) / 10); if (why) logp(b, 'bad', '장부에 빚이 쌓인다(' + why + '). 빚 ' + Math.round(b.debt)); }
 /* --- 바르도 등불 --- */
 function bardoSetup(b, e) {
@@ -164,7 +164,7 @@ function ch2OutMul(b, e, o) { // 내가 주는 피해
   if (hasBt(p, 'elixir')) m *= 1.15; if (hasBt(p, 'fog')) m *= 0.85;
   if (p.shoved && b.cur && b.cur.id === 'basic') { m *= 0.5; p.shoved = 0; }
   if (b.smokeR === b.round && e.row === 'back' && !o.aoe) return 0;
-  if (e.boss === 'bardo' && e.openR === b.round) m *= 1.3; // 다시 켜는 사이 몸이 빈다
+  if (e.boss === 'bardo' && e.openR === b.round) m *= 1.3; // 바르도(비공개 문서 참조)
   return m;
 }
 function ch2InMul(b, o) { // 내가 받는 피해
@@ -313,7 +313,7 @@ function ch2CardChips(b, e) {
   if (e.foe === 'ledger' && (b.debt || 0) > 0) h += '<span class="fdebt" aria-label="빚 ' + Math.round(b.debt) + '">📕<b>' + Math.round(b.debt) + '</b></span>';
   if (e.foe === 'champion' && e.cheer > 0) h += '<span class="fcheer" aria-label="함성 ' + e.cheer + '">📣<b>' + e.cheer + '</b></span>';
   if (e.foe === 'captain' && b.capForm && !b.formBroken && alive(b).some(x => x.role === 'thug')) h += '<span class="fform" aria-label="대형">🛡️ 대형</span>';
-  if (e.role === 'lantern') h += e.lit ? '<span class="flamp" aria-label="켜짐">🔥 켜짐</span>' : '<span class="flamp off" aria-label="깨짐">깨짐</span>';
+  if (e.role === 'lantern') h += (e.lit ? '<span class="flamp" aria-label="켜짐">🔥 켜짐</span>' : '<span class="flamp off" aria-label="깨짐">깨짐</span>') + (e.lit && !e.last ? '<span class="flampbk" aria-label="붕괴 ' + Math.round(e.brk || 0) + '/' + e.brkMax + '">💥' + Math.round(e.brk || 0) + '/' + e.brkMax + '</span>' : '');
   return h;
 }
 /* --- 방 만들기(js/66 mkRoom): 무리 · 어둠 · 정예 접사 --- */

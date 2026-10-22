@@ -203,6 +203,7 @@ function fatePick(pk, run, r) {
   return c ? click('fate', c.uid) : click('fateskip');
 }
 /* 이벤트·제단·성소 고르기 */
+let CUR_OUT = null; // A2 측정: 지금 판의 기록(이벤트 선택)
 function restRoom(pk, run, r) {
   if (OPT.policy?.restRoom && OPT.policy.restRoom(run, r)) return;
   const R = run.cur; const p = run.p; const h = p.hp / p.hpMax;
@@ -225,6 +226,7 @@ function restRoom(pk, run, r) {
       const safe = ok.filter(x => !(x.id === 'drink' && h < 0.5) && !(x.id === 'chase' && h < 0.6) && !(x.id === 'do' && h < 0.6) && !(x.id === 'loot' && h < 0.5) && !((E0.ch || 1) >= 3 && ((['pull', 'take', 'dig', 'hasten'].includes(x.id) && h < 0.6) || (x.id === 'draw' && h < 0.7)))); // 3챕터 위험한 선택 (1 · 2챕터 이벤트는 그대로: 종탑의 줄도 id가 pull이다)
       if (safe.length) o = pk === 'careful' ? safe[safe.length - 1] : safe[Math.floor(r() * safe.length)];
     }
+    if (CUR_OUT) (CUR_OUT.evLog = CUR_OUT.evLog || []).push({ id: E0.id, o: o.id }); // A2 측정: 이벤트 선택 분포
     return click('event', o.id);
   }
 }
@@ -337,7 +339,7 @@ function streetPre(b, P, r) {
   if (L.some(x => x.id === 'tradeyes')) return [p.hp < p.hpMax * 0.5 || r() < 0.3 ? 'tradeyes' : 'tradeno', null];
   const pay = L.find(x => x.id === 'paydebt' && x.ok); if (pay && (b.debt || 0) >= 12 && r() < (P.mech || 0.5) + 0.2) return ['paydebt', null];
   const oil = L.find(x => x.id === 'lampoil' && x.ok); if (oil && (al.some(e => e.foe === 'lampthief' && e.under) || b.ctx.boss || al.some(e => e.strong)) && r() < (P.mech || 0.5) + 0.2) return ['lampoil', null];
-  const lamp = al.find(e => e.role === 'lantern' && e.lit && !e.last); if (lamp && r() < (P.mech || 0.5) + 0.1) { const A = L.filter(x => x.ok && !x.self && x.id !== 'flee' && G0.canTarget(b, lamp, x)); const brkOf = x => x.id === 'heavy' ? 35 : x.v2 ? x.s.fx.reduce((m, f) => m + (f.k === 'brk' ? f.n : f.k === 'cutx' ? f.brk : 0), 0) : 0; const c = A.filter(x => brkOf(x) > 0).sort((x, y) => brkOf(y) - brkOf(x))[0]; if (c) return [c.id, c.aoe ? null : lamp.id]; }
+  const lamps = al.filter(e => e.role === 'lantern'), lamp = lamps.find(e => e.lit && !e.last); if (lamp && lamps.filter(e => e.lit).length >= 4 && !al.some(e => e.boss === 'bardo' && e.intent && e.intent.k === 'relight') && r() < (P.mech || 0.5) + 0.1) { /* 켜진 등불이 많을 때만 깨고, 다시 켜는 사이에는 바르도를 친다 */ const A = L.filter(x => x.ok && !x.self && x.id !== 'flee' && G0.canTarget(b, lamp, x)); const brkOf = x => x.id === 'heavy' ? 35 : x.v2 ? x.s.fx.reduce((m, f) => m + (f.k === 'brk' ? f.n : f.k === 'cutx' ? f.brk : 0), 0) : 0; const c = A.filter(x => brkOf(x) > 0).sort((x, y) => brkOf(y) - brkOf(x))[0]; if (c) return [c.id, c.aoe ? null : lamp.id]; }
   return null;
 }
 /* 3챕터 판단 (10월 7일, 비공개 문서의 테스터 판단 가운데 사람이 화면을 보고 할 만한 것만). 3챕터 전투에서만 난수를 쓴다: 1 · 2챕터 측정은 그대로다 */
@@ -472,7 +474,7 @@ function playChar0(pk, build, seed) {
   delete run.alloc; // 10월 16일 0.8.0 2단계: 만들기 배분 흐름 대신 정책으로 바로 찍는다(능력치 = 시작 노드 + 패시브 노드)
   spendPassive(pk, r); while (run.ksPending > 0) { G0.ksEnsureOffer(run); if (!run.ksOffer) break; G0.ksTake(run, ksChoice(pk, r, run)); spendPassive(pk, r); } spendTree(pk, r); G0.treeSync(run); run.p.hp = run.p.hpMax; run.p.mp = run.p.mpMax; run.p.st = run.p.stMax;
   if (OPT.policy?.start) OPT.policy.start(run, r);
-  const out = { pk, build, seed, res: 'lose', floor: 0, lv: 1, rooms: [], bossHp: null, bugs: [], acts: 0, fights: [] };
+  const out = { pk, build, seed, res: 'lose', floor: 0, lv: 1, rooms: [], bossHp: null, bugs: [], acts: 0, fights: [] }; CUR_OUT = out;
   out.meta = MM.rowMeta(REV, { seed, pk, build, from: FROM, chapters: OPT.chapters, variant: OPT.variant, pol: OPT.polId });
   if (MARKCH) { out.marks = (run.marks || []).slice(); out.markCh = run.markCh; out.markPts = run.markPts || 0; }
   if (FROM > 1 && !MARKCH) jumpTo(pk, r, FROM);

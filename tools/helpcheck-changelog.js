@@ -17,7 +17,7 @@ module.exports = function (api) {
   add(S, '0.6a의 직업과 스킬은', '판 이름(0.6a), 규칙이 아님', () => true);
 
   /* ===== 통합 항목의 구조 ===== */
-  add(S, '챕터 1 · 2 · 3', '데이터: CHAPTERS 이름 셋(저주받은 수도원 · 잊힌 지하묘지 · 재의 사막 유적)', E => E('[1,2,3].map(c => CHAPTERS[c].n).join()') === '저주받은 수도원,잊힌 지하묘지,재의 사막 유적' && E('CHAPTERS[4]') === undefined);
+  add(S, '챕터 1 · 2 · 3', '데이터: CHAPTERS 셋(0.8.0 A2부터 2챕터는 어둠이 가라앉은 거리)', E => E('[1,2,3].map(c => CHAPTERS[c].n).join()') === '저주받은 수도원,어둠이 가라앉은 거리,재의 사막 유적' && E('CHAPTERS[4]') === undefined);
   add(S, '챕터마다 24층', '상수: FLOOR_BOSS=' + E('FLOOR_BOSS') + ' (마지막 층이 보스), 챕터 셋 모두 같은 층 구조', E => E('FLOOR_BOSS') === 24 && E('[1,2,3].every(c => isLower(23, c) && !isLower(11, c) && !!BOSSES[CHAPTERS[c].boss])'));
   add(S, '직업은 암살자, 파수꾼, 사냥꾼, 원소술사, 마검사, 수도승 여섯', '데이터: CLASS_KEYS() = 여섯(숨겨진 직업 제외)', E => E('CLASS_KEYS().join()') === 'assassin,warden,hunter,elementalist,spellblade,monk' && E('ALL_CLASS_KEYS().length') > 6);
   add(S, '적이 30% 더 아프게', '상수: MODES.hard.dmg=' + E('MODES.hard.dmg') + ', 보상 loot · gold · xp > 1, 열림 조건 hardOpen(1챕터 보스)', E => E('MODES.hard.dmg') === 1.3 && E('MODES.hard.loot') > 1 && E('MODES.hard.gold') > 1 && E('MODES.hard.xp') > 1 && has('js/66-dungeon-flow.js', 'G.data.hardOpen = 1'));
@@ -31,7 +31,7 @@ module.exports = function (api) {
   add(S, '포인트는 만들 때 1점이고', 'TREE2 pts=1, 레벨마다 +1', E => E('Object.values(TREE2).every(T => T.pts === 1)') && E(`(() => { const run = { build: "assassin", lv: 10, tree: { pts: 0, open: [], spent: {} } }; treeFix(run); return run.tree.pts; })()`) === 0 && E(`(() => { const run = { build: "assassin", lv: 10, tree: { pts: 30, open: [], spent: {} } }; treeFix(run); return run.tree.pts; })()`) === 10);
   add(S, '순서 줄에서 차례를 미리 봅니다', '소스: 순서 줄 vOrder', E => E('typeof vOrder') === 'function');
   add(S, '능력치는 힘, 민첩, 지능, 체력, 의지 다섯입니다', '상수: STAT_KEYS=' + E('STAT_KEYS.join()') + ', STAT_START=' + E('STAT_START') + ', LV_POINTS=' + E('LV_POINTS'), E => E('STAT_KEYS.join()') === 'str,dex,int,con,wil' && E('STAT_START') === 20 && E('LV_POINTS') === 3);
-  add(S, '2챕터 장비 203종과 3챕터 장비 200종', '데이터: poolOf(2).length=' + E('poolOf(2).length') + ', poolOf(3).length=' + E('poolOf(3).length'), E => E('poolOf(2).length') === 203 && E('poolOf(3).length') === 200);
+  add(S, '2챕터 장비 203종과 3챕터 장비 200종', '데이터: 3챕터 poolOf(3).length=' + E('poolOf(3).length') + ' · 옛 2챕터 203종은 data/archive/items_ch2.js(A2 보관)', E => E('poolOf(3).length') === 200 && (fs.readFileSync(require('path').join(api.ROOT, 'data/archive/items_ch2.js'), 'utf8').match(/^  [a-z0-9_]+: \{/gm) || []).length === 203);
   add(S, '영웅과 전설 등급은 2챕터부터', '데이터: DROP_G에 1챕터 칸이 없고 2챕터 영웅 · 전설 확률 > 0', E => E('DROP_G[1]') === undefined && E('DROP_G[2].room.h') > 0 && E('DROP_G[2].room.l') > 0);
   add(S, '2챕터부터 상점의 봉인된 꾸러미', '상수: GAMBLE.from · FATE.from · AWK.campFrom = 2', E => E('GAMBLE.from') === 2 && E('FATE.from') === 2 && E('AWK.campFrom') === 2);
   add(S, '전투 화면은 간단 · 보통 · 자세히', '상수: HUD_NAMES, HUD_DEFAULT=' + E('HUD_DEFAULT'), E => E('HUD_NAMES.join()') === 'simple,normal,full' && E('HUD_DEFAULT') === 'simple');

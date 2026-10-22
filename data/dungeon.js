@@ -234,8 +234,6 @@ const CODEX = {
   ...Object.fromEntries(Object.values(FOES).filter(f => f.ch === 1 && f.log.codex).map(f => [f.id, f.log.codex])), // A0: 1챕터는 data/foes.js log.codex
 };
 
-/* ===== 2챕터: 잊힌 지하묘지 (10월 5일, docs/챕터/2챕터.md. 강적 · 보스의 기믹과 대처는 비공개 문서) =====
-   틀은 1챕터와 같다(16층, 갈림길 4 · 9 · 12층). 이 칸은 1챕터 배열에 ch: 2 항목을 더하고 CHAPTERS[2]를 채운다. 수치는 모두 [가설] */
 CHAPTERS[1].xp = 1; CHAPTERS[1].gold = 1; CHAPTERS[1].settleStrong = 20;
 /* ===== 2챕터 「어둠이 가라앉은 거리」 (0.8.0 A2, 만든 사람 확정 10월 21일, docs/챕터/2챕터.md) =====
    틀은 1 · 3챕터와 같다(16층, 갈림길 4 · 9 · 12층). 강적 · 보스의 기믹과 대처는 비공개 문서. 숫자 · 타수는 가설(M7). 옛 2챕터(지하묘지)는 data/archive/old-ch2.js */
@@ -319,10 +317,10 @@ Object.assign(FOE_X, {
   merchant: { buff: 0.2, hpPen: 0.05, appraise: 1 },
   bardo: { lamps: 5, per: 0.15, ward: 0.02, lampBrk: 40, shade: 1, ph: [0.6, 0.3] },
 });
-/* 새 역할의 행동 수치 (docs/챕터/2챕터.md 5절) */
+/* 1 · 3챕터가 함께 쓰는 옛 2챕터 역할 수치(해골 · 굴 · 저주 상태 묶음). 옛 지하묘지 설계는 docs/챕터/archive/2챕터-지하묘지.md */
 /* 보스 단계 최소 체류(10월 14일, 만든 사람 결정): mid = 1 · 2단계에서 전환이 아닌 행동을 이만큼 한 뒤에 전환을 예고한다, last = 마지막 단계에서 이만큼 행동하기 전에는 쓰러지지 않는다.
    문턱에서 멈추기(넘친 피해는 버림)는 그대로. 측정 근거는 비공개 검증 문서 */
-const BOSS_DWELL = { abbot: { mid: 1, last: 1 }, cryptlord: { mid: 2, last: 1 }, bardo: { mid: 3, last: 3 }, queen: { mid: 3, last: 1 } }; // A2 바르도: 확정본 단계마다 최소 행동 3 · 마지막 등불 장면 3 // 10월 15일: 쌓인 피해가 들어가도 단계를 건너뛰지 않게 1 · 2단계도 체류(군주 2번은 측정으로 정함: 1번이면 2단계 대표 행동 노출 67%) // 10월 15일: 여왕 마지막 단계 3 → 1(생명력 1로 여러 번 버티는 억울함을 줄인다)
+const BOSS_DWELL = { abbot: { mid: 1, last: 1 }, cryptlord: { mid: 2, last: 1 }, bardo: { mid: 3, last: 3 }, queen: { mid: 3, last: 1 } }; // A2 바르도: 확정본 단계마다 최소 행동 3(비공개 문서 참조) // 10월 15일: 쌓인 피해가 들어가도 단계를 건너뛰지 않게 1 · 2단계도 체류(군주 2번은 측정으로 정함: 1번이면 2단계 대표 행동 노출 67%) // 10월 15일: 여왕 마지막 단계 3 → 1(생명력 1로 여러 번 버티는 억울함을 줄인다)
 const BOSS_BANK = 1; // 막힌 피해 가운데 쌓아 두는 몫(10월 15일)
 const BOSS_TR = ['throne', 'collapse', 'qrise', 'qmelt', 'rest']; // 체류 횟수에 넣지 않는 행동: 단계를 넘기는 행동과 숨 고르기(수도원장 3단계 첫 행동)
 const RISE = { pile: 0.15, wait: 2, hp: 0.5 };   // 해골: 쓰러지면 뼈 더미(최대의 15%), 2라운드 뒤 50%로 한 번만 일어선다

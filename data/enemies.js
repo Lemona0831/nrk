@@ -13,7 +13,7 @@ const ROLES = {
   thief:    { n: '도둑',   ico: '🫳', row: 'front', hp: 0.6, dmg: 0.4, spd: 1.2, hit: 0.07 },
   darkmage: { n: '암흑술사', ico: '🌑', row: 'back', hp: 0.6, dmg: 0.8, spd: 0.9, hit: 0.11 },
   drill:    { n: '우두머리', ico: '📏', row: 'front', hp: 1.4, dmg: 1.0, spd: 1.0, hit: 0.13 }, // A1 1챕터 수련장(순찰대 방). 체력은 타수(data/foes.js)
-  // 2챕터 (10월 5일, docs/챕터/2챕터.md 5절). 행동 수치는 data/dungeon.js의 RISE · HEX · BWALL · BURROW · BLOAT
+  // 옛 2챕터 역할 가운데 3챕터가 함께 쓰는 해골(옛 설계 docs/챕터/archive/2챕터-지하묘지.md 5절). 행동 수치는 data/dungeon.js의 RISE · HEX · BWALL · BURROW · BLOAT
   skeleton: { n: '해골 병사', ico: '🦴', row: 'front', hp: 0.8, dmg: 1.0, spd: 1.0, hit: 0.11 },
   // 3챕터 (10월 7일, docs/챕터/3챕터.md 6절). 행동 수치는 data/dungeon.js의 LURK · EMBER · WRAP · HAZE · HEAT
   // 2챕터 「어둠이 가라앉은 거리」(0.8.0 A2). 체력은 타수(data/foes.js), 피해는 기준표 × hit. 숫자는 가설(M7)

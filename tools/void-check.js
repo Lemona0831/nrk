@@ -3,10 +3,10 @@
    직업 여섯 × 길 고정 빌드(부채꼴 A · B · C × 갈래 a · b, dgqa DG_PATH) × 신중 성향 N판. 강적 · 보스를 만날 때마다 그때 빌드가 쓸 수 있는 대답 태그(js/30 playerAnsTags,
    기절 · 봉인은 빼고 본다 — 빌드가 가진 것만)를 모아, 그 적의 위협 예고(data/foes.js pat 가운데 TELE_WAIT가 아닌 것)마다 닿는 대답이 하나 이상인지 본다.
    data/foes.js에 정의가 없는 적(아직 옮기지 않은 2 · 3챕터)은 "정의 없음"으로 센다.
-   쓰기: node tools/void-check.js [--seeds 5] [--chapters 1]. 공백이 있으면 표를 찍고 1로 끝난다 */
+   쓰기: node tools/void-check.js [--seeds 5] [--chapters 1] [--from 2]. 공백이 있으면 표를 찍고 1로 끝난다 */
 const fs = require('fs'), path = require('path'), cp = require('child_process');
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
-const N = +arg('--seeds', 5), CHS = +arg('--chapters', 1), ONE = arg('--one', null);
+const N = +arg('--seeds', 5), CHS = +arg('--chapters', 1), ONE = arg('--one', null), FROM = arg('--from', null); if (FROM) process.env.DG_FROM = FROM; // A2: --from 2 = 2챕터에서 시작
 const CLASSES = ['spellblade', 'warden', 'monk', 'assassin', 'hunter', 'elementalist'], BUILDS = ['A:a', 'A:b', 'B:a', 'B:b', 'C:a', 'C:b'];
 
 if (ONE) { // 자식: 직업 하나 · 빌드 하나
@@ -25,7 +25,7 @@ if (ONE) { // 자식: 직업 하나 · 빌드 하나
 } else {
   const res = {};
   for (const c of CLASSES) for (const bd of BUILDS) {
-    const r = cp.spawnSync(process.execPath, [__filename, '--one', c, '--seeds', String(N), '--chapters', String(CHS)], { cwd: process.cwd(), env: Object.assign({}, process.env, { DGDIR: '.', DG_PATH: bd }), encoding: 'utf8', maxBuffer: 1 << 26 });
+    const r = cp.spawnSync(process.execPath, [__filename, '--one', c, '--seeds', String(N), '--chapters', String(CHS)].concat(FROM ? ['--from', FROM] : []), { cwd: process.cwd(), env: Object.assign({}, process.env, { DGDIR: '.', DG_PATH: bd }), encoding: 'utf8', maxBuffer: 1 << 26 });
     try { res[c + ' ' + bd] = JSON.parse(r.stdout); } catch (e) { res[c + ' ' + bd] = { _err: (r.stderr || '').slice(0, 200) }; }
   }
   const V = [], seen = {}, nodef = {};
