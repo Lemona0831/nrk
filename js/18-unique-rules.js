@@ -121,8 +121,8 @@ Object.assign(UQFX, {
   mk_h4: { rule: { inDown: (b, p) => Math.min(0.2, 0.05 * (p.ctrN || 0)) }, cost: { hitP: (b, p, e, o) => o && o.ctr ? -0.3 : 0 } },
   // mk_h5 점혈 반지: 봉인한 적(혈도 sealx · 천망, js/10 u_onSeal)에게 주는 피해 +25% / 기본 공격 피해 −10%
   mk_h5: { rule: { u_onSeal: (b, p, e) => { e.uqSeal = 1; return 1; }, pctUp: (b, p, e) => e && e.uqSeal ? 0.25 : 0 }, cost: { hitP: (b, p, e, o, c) => c && c.id === 'basic' ? -0.1 : 0 } },
-  // mk_h6 탈기의 염주: 둔화된 적을 쳐서 얻는 기에 라운드 한도 없음(엔진에 그런 한도가 없어 지금도 참, 표시용 깃발) / 기 상한 −1(kiCapOf)
-  mk_h6: { rule: { u_chillKiFree: 1 }, cost: { kiCap: -1 } },
+  // mk_h6 탈기의 염주(M7-3 새 문장, 만든 사람 확정 10월 22일): 둔화 걸린 적을 치면 기 +1 더(라운드에 두 번까지) / 기 상한 −1(kiCapOf)
+  mk_h6: { rule: { onHit: (b, p, e) => { if (!e || st(e, 'chill') <= 0) return; const r = b.round || 0; if (b.mkH6R !== r) { b.mkH6R = r; b.mkH6N = 0; } if (b.mkH6N >= 2) return; b.mkH6N++; return addS(b, p, 'empower', 1) > 0 ? 1 : 0; } }, cost: { kiCap: -1 } },
   // mk_h7 반탄의 가사: 되받기마다 붕괴 +10(ctrBrk) / 자세 중 받는 피해 +10%
   mk_h7: { rule: { ctrBrk: 10 }, cost: { inP: (b, p) => p.stance ? -0.1 : 0 } },
   // mk_h8 역혈의 고리: 나를 직접 친 적에게 둔화 1(js/24 u_struck) / 최대 생명력 −10%

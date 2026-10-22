@@ -200,8 +200,8 @@ const UNIQUE = {
     rule: { k: "cond", txt: "봉인한 적에게 주는 피해 +25%." }, cost: { kind: "perm", txt: "기본 공격 피해 −10%." },
     af: [["mk_vsChill",19],["mk_kiDmg",19]], ax: ["mk_ax_seal",20], lore: "짚은 자리는 손가락이 기억한다.", vr: 7, vc: 4.5 },
   mk_h6: { n: "탈기의 염주", cls: "monk", slot: "amulet", base: "amulet", g: "h", ch: 2, axis: "혈도 · 사혈",
-    rule: { k: "cnt", txt: "둔화 걸린 적을 치면 얻는 기에 라운드 한도가 없다." }, cost: { kind: "perm", txt: "기 상한 −1." },
-    af: [["mk_stanceSt",10],["stMax",20]], ax: ["mk_ax_sa",9], lore: "구슬 하나하나가 남의 숨이다.", vr: 7, vc: 2 },
+    rule: { k: "cnt", txt: "둔화 걸린 적을 치면 기 +1 더(라운드에 두 번까지)." }, cost: { kind: "perm", txt: "기 상한 −1." },
+    af: [["mk_stanceSt",10],["stMax",20]], ax: ["mk_ax_sa",9], lore: "구슬 하나하나가 남의 숨이다.", vr: 4, vc: 2, chain: 0 }, /* M7-3 새 규칙 값 추정 ≈ +4(확정본) */
   mk_h7: { n: "반탄의 가사", cls: "monk", slot: "armor", base: "kasaya", g: "h", ch: 2, axis: "반탄",
     rule: { k: "conv", txt: "되받기마다 붕괴 +10." }, cost: { kind: "during", txt: "자세 중 받는 피해 +10%." },
     af: [["mk_ctrDmg",33],["mk_kiRed",17]], ax: ["mk_ax_rebound",20], lore: "되돌아간 힘은 뼈를 흔든다.", vr: 4.5, vc: 2.5 },

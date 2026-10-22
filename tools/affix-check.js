@@ -53,6 +53,19 @@ const brkOf = (f, id, e) => { e = e || f.es[0]; const b0 = e.brk; act(f, id, e);
 { const mk = af => fightA('elementalist', af, { base: 'staff' }); const f0 = mk(null), f1 = mk([['el_boltSt', 1]]); act(f0, 'e5_bolt'); act(f1, 'e5_bolt'); ok(st(f1.es[0], 'ignite') - st(f0.es[0], 'ignite') === 1, '마력탄이 거는 상태 +1(화상 ' + st(f0.es[0], 'ignite') + ' → ' + st(f1.es[0], 'ignite') + ')'); }
 // 영웅 축: 공격 태세 중 기본 공격 피해 +N (hitAdd · 조건 stance:atk)
 { const mk = af => { const f = fightA('warden', af); f.p.wdSt = Object.assign(f.p.wdSt || {}, { atk: 1 }); return f; }; const a = dmgOf(mk(null), 'basic'), b = dmgOf(mk([['wd_ax_astance', 4]]), 'basic'); ok(b - a > 3, '진격의(공격 태세 중 기본 공격 피해 +4): ' + a.toFixed(1) + ' → ' + b.toFixed(1)); }
+/* M7-3 장비 보충(만든 사람 확정 10월 22일): 플라스크 접사 셋 · 계승(전투의 첫 스킬은 유산 −1) */
+const fl = (af, o) => fightA('warden', af, Object.assign({ slot: 'flask', base: 'flask' }, o || {}));
+// 마시면 다음 해로운 상태 한 번을 막는다(막음 1)
+{ const a = fl(null), b = fl([['flaskBlock', 1]]); for (const f of [a, b]) { act(f, 'flaskL'); E.addS(f.b, f.p, 'bleed', 3); } ok(st(a.p, 'bleed') === 3 && st(b.p, 'bleed') === 0, '플라스크 막기: 마신 뒤 출혈 3을 막음(' + st(a.p, 'bleed') + ' → ' + st(b.p, 'bleed') + ')'); }
+// 생명력 30% 이하에서 마시면 회복 +N%p
+{ const heal = (af, fr) => { const f = fl(af); f.p.hp = Math.round(f.p.hpMax * fr); const h0 = f.p.hp; act(f, 'flaskL'); return (f.p.hp - h0) / f.p.hpMax; };
+  const lo = heal([['flaskLow', 20]], 0.25) - heal(null, 0.25), hi = heal([['flaskLow', 20]], 0.6) - heal(null, 0.6); ok(Math.abs(lo - 0.2) < 0.02 && Math.abs(hi) < 1e-9, '플라스크 궁지: 30% 이하에서 회복 +20%p(' + (100 * lo).toFixed(1) + ' · 60%에서 ' + (100 * hi).toFixed(1) + ')'); }
+// 마신 뒤 다음 공격 피해 +N%(그 행동만)
+{ const two = af => { const f = fl(af); act(f, 'flaskL'); return [dmgOf(f, 'basic'), dmgOf(f, 'basic')]; }; const a = two(null), b = two([['flaskWrath', 30]]);
+  ok(Math.abs(b[0] / a[0] - 1.3) < 0.02 && Math.abs(b[1] / a[1] - 1) < 0.02, '플라스크 객기: 다음 공격 +30%, 그다음은 그대로(×' + (b[0] / a[0]).toFixed(3) + ' · ×' + (b[1] / a[1]).toFixed(3) + ')'); }
+// 전투의 첫 스킬은 유산 −1(바닥 1), 둘째 스킬부터 그대로
+{ const ca = R_('skCostAt'), sk = E.SK2.w_shieldhit; const a = fightA('warden', null, { slot: 'amulet', base: 'amulet' }), b = fightA('warden', [['ysStart', 1]], { slot: 'amulet', base: 'amulet' });
+  const c0 = ca(a.b, sk).c, c1 = ca(b.b, sk).c; R_('ysSpend')(b.b, sk); const c2 = ca(b.b, sk).c; ok(c0 === 2 && c1 === 1 && c2 === 2, '계승: 첫 스킬 유산 ' + c0 + ' → ' + c1 + ', 둘째는 ' + c2); }
 // 스위치를 끄면(GEAR8.on = false) 새 장비는 들지 않는다 — 기존 장비 길 그대로
 { R_('GEAR8.on = false'); const f = H.fight('warden', {}); ok(!f.p.g8 && !f.p.g8u, '스위치 끔: p.g8 없음'); R_('GEAR8.on = true'); }
 console.log('affix-check: ' + H.C.n + '개 통과 · 실패 ' + H.C.fail.length); for (const m of H.C.fail) console.log('  실패: ' + m); if (H.C.fail.length) process.exit(1);

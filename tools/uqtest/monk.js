@@ -45,10 +45,9 @@ module.exports = H => {
     const bas = only => { const f = F('mk_h5', only, { act: ['m_jeomhyeol'] }); setKi(f.p, 0); act(f, 'basic'); const a = lost(f.es[0]); H.next(f); setKi(f.p, 0); const h1 = f.es[1].hp; act(f, 'm_jeomhyeol', f.es[1]); return [a, h1 - f.es[1].hp]; };
     const c = bas('cost'), z = bas('none'); ok(near(c[0] / z[0], 0.9) && near(c[1] / z[1], 1), '점혈 반지 대가: 기본 공격 피해 −10%, 스킬은 그대로 (' + (c[0] / z[0]).toFixed(3) + ')'); H.cover('mk_h5', 'cost'); }
 
-  /* mk_h6 탈기의 염주 */
-  { const run = only => { const f = F('mk_h6', only, { act: ['m_sahyeol', 'm_talgi'] }); f.p.aup = ['mv_tg_ki']; setKi(f.p, 0); const e = f.es[0]; E.addS(f.b, e, 'chill', 3); act(f, 'm_sahyeol', e); const r0 = f.b.ysR; act(f, 'm_talgi', e);
-      return { n: f.b.log.filter(x => /기 \+\d+ \(늦춘 적에게서\)/.test(x.m)).length, same: f.b.ysR === r0 }; };
-    const r = run('rule'), n = run('none'); ok(r.n === 2 && r.same && R_('fxFlag')(F('mk_h6', 'rule').p, 'u_chillKiFree'), '탈기의 염주: 한 라운드에 둔화된 적을 두 번 쳐도 기를 두 번 얻는다(라운드 한도 없음, ' + r.n + '/' + n.n + ')'); H.cover('mk_h6', 'rule');
+  /* mk_h6 탈기의 염주 (M7-3 새 규칙, 만든 사람 확정 10월 22일): 둔화 걸린 적을 치면 기 +1 더, 라운드에 두 번까지 */
+  { const run = (only, chill) => { const f = F('mk_h6', only); setKi(f.p, 0); const e = f.es[0]; if (chill) E.addS(f.b, e, 'chill', 3); f.b.round = 1; const hit = () => R_('fxRun')(f.p, 'onHit', f.b, f.p, e, {}, { id: 'basic' }); for (let i = 0; i < 3; i++) hit(); const a = st(f.p, 'empower'); f.b.round = 2; hit(); return [a, st(f.p, 'empower') - a]; };
+    const r = run('rule', 1), n = run('none', 1), u = run('rule', 0); ok(r[0] - n[0] === 2 && r[1] - n[1] === 1 && u[0] === n[0], '탈기의 염주: 둔화 걸린 적을 치면 기 +1 더, 라운드에 두 번까지(세 번 쳐서 +' + (r[0] - n[0]) + ', 다음 라운드 +' + (r[1] - n[1]) + ', 둔화 없으면 그대로)'); H.cover('mk_h6', 'rule');
     const c = F('mk_h6', 'cost'), z = F('mk_h6', 'none'); setKi(c.p, 9); ok(kiCap(z.p) === 5 && kiCap(c.p) === 4 && st(c.p, 'empower') === 4, '탈기의 염주 대가: 기 상한 5 → 4'); H.cover('mk_h6', 'cost'); }
 
   /* mk_h7 반탄의 가사 */

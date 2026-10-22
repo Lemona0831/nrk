@@ -53,7 +53,7 @@ function g8Grade(ch, where) {
 }
 function g8Shape(build, slot) { const L = Object.keys(AFFIX_BASE).filter(k => AFFIX_BASE[k].slot === slot && (AFFIX_BASE[k].cls === 'all' || AFFIX_BASE[k].cls.includes(build))); return L[Math.floor(Math.random() * L.length)]; }
 function g8Pool(slot, cls, t, g, used, ax, kc) {
-  return Object.keys(AFFIX).filter(id => { const A = AFFIX[id]; if (!!A.ax !== !!ax || A.pool === false || !A.slot.includes(slot) || !A.tier[t] || used.includes(A.fam)) return false;
+  return Object.keys(AFFIX).filter(id => { const A = AFFIX[id]; if (!!A.ax !== !!ax || A.pool === false || (A.minG === 'r' && g === 'm') || !A.slot.includes(slot) || !A.tier[t] || used.includes(A.fam)) return false;
     if (ax ? A.cls !== cls : !(A.cls === 'all' || A.cls === cls)) return false; if (g === 'm') { if (A.pair && A.pair.includes(t)) return false; const B = g8Band('m', t), [lo, hi] = g8Rng(id, t, kc); if (g8VAf(id, lo, t, kc) > B[1] + 1e-9 || g8VAf(id, hi, t, kc) < B[0] - 1e-9) return false; } return true; });
 }
 const g8Rng = (id, t, cls) => { const c = g8ClsC(AFFIX[id], cls), [lo, hi] = AFFIX[id].tier[t]; return c === 1 ? [lo, hi] : [Math.max(1, Math.round(lo * c)), Math.max(1, Math.round(hi * c))]; };

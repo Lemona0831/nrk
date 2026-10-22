@@ -86,7 +86,10 @@ function g8AfFx(af) {
       case 'cost': on('cost', (p, id) => id === F.act ? -v : 0); break;
       case 'heal': sum('heal', v / 100); break;
       case 'flaskSlot': fx.cap = { life: 1 }; break;
-      case 'ysStart': sum('ysStart', 1); break;
+      case 'ysFirst': sum('ysFirst', 1); break; // M7-3: 전투의 첫 스킬은 유산 −1(바닥 1, 가장 큰 할인 하나만 — skCostAt)
+      case 'flaskBlock': on('onFlask', (b, p, k) => { if (k !== 'life' || st(p, 'block') > 0) return; addS(b, p, 'block', 1); logp(b, 'good', '플라스크가 다음 해로운 상태 하나를 막아 둔다'); return 1; }); break; // M7-3: 막음(정화의 막) 1
+      case 'flaskLow': sum('flaskLow', v / 100); break; // M7-3: 생명력 30% 이하에서 마시면 회복 +v%p(flaskHealFrac)
+      case 'flaskWrath': on('onFlask', (b, p, k) => { if (k !== 'life') return; b.g8Wrath = v; b.g8WrathA = null; return 1; }); dmg.push((b, p, e, o, c) => { if (!b.g8Wrath || !c || o && o.dot) return 0; if (b.g8WrathA != null && b.g8WrathA !== b.actN) { b.g8Wrath = 0; return 0; } return b.g8Wrath / 100; }); on('onHit', b => { if (b.g8Wrath && b.g8WrathA == null) b.g8WrathA = b.actN; }); break; // M7-3: 마신 뒤 다음 공격(그 행동의 모든 타) 피해 +v%
       case 'edgeAdd': on('edgeAdd', () => 1); break;
       case 'altWard': sum('altWardAdd', v); break;
       case 'ctrBrk': sum('ctrBrk', v); break;
