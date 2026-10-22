@@ -8,7 +8,7 @@
 const G8GEN = {
   grade: { 1: { n: 65, m: 28, r: 7, h: 0 }, 2: { n: 45, m: 35, r: 16, h: 4 }, 3: { n: 30, m: 38, r: 24, h: 8 } }, // 평범/고급/희귀/영웅 %
   uq: { r: 0.2, h: 0.35 }, own: 0.6, afN: { n: 0, m: 1, r: 2, h: 2 },
-  slotW: { even: { weapon: 1, armor: 1, gloves: 1, amulet: 1, ring: 1, flask: 1 }, boss: { weapon: 2, armor: 2, gloves: 1, amulet: 1, ring: 1, flask: 1 } },
+  slotW: { even: { weapon: 1, armor: 1, gloves: 1, amulet: 1, ring: 1, flask: 1.5 }, boss: { weapon: 2, armor: 2, gloves: 1, amulet: 1, ring: 1, flask: 1.5 } }, // M7-3 장비 보충: 플라스크 1 → 1.5(플라스크 집중도 ≤50%, 시작 장비가 기반 플라스크라 접사 붙은 플라스크가 갈아 끼워지게)
   reroll: { m: 40, r: 90, h: 200, chMul: 1.5, n: 1.6 },
   aim: { m: [0.65, 1], r: [0.1, 0.45] },
   noAf: 0, noWpnAf: 0, // M6-3 측정 손잡이(DG_NOAF · DG_NOWPNAF): 기반만 · 무기만 접사 없음(K 실측 · 무기 = 평타) // 값을 띠의 이 몫 안으로 겨눈다(못 맞추면 띠 전체) — 챕터 곡선(E4 · 9절): 1챕 희귀 ≈ 2챕 고급, 2챕 희귀 ≈ 3챕 고급 // 다시 굴리기 값 = 기준가(등급) × 1.5^(챕터−1) × 1.6^(그 장비를 굴린 횟수)
