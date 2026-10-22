@@ -302,7 +302,8 @@ function foeHitHp(e, ch, floor) {
    갑옷 N: 맞을 때마다 피해 −N, 단 원래 피해의 1/3은 들어간다. 무너지면 벗겨진다(그 전투 · 보스는 그 단계). 지속 피해는 무시한다.
    방패 N겹: 한 적을 노린 행동 하나를 통째로 막고 한 겹 잃는다(강공격은 두 겹). 광역 · 지속 피해는 지나간다 */
 function foeAS(b, e) { if (e.armor == null) { const F = foeDef(b, e); e.armor = F && typeof F.armor === 'string' ? w3Armor(b, F.armor) : (F && F.armor) || 0; /* A3: 3챕터는 가벼움 · 무거움(ARMOR3) */ e.shield = e.shieldMax = (F && F.shield) || 0; } return e; }
-function foeArmor(b, e, d, o) {
+function foeArmor(b, e, d, o) { if (!(e.armor > 0) && !(e.shield > 0) && e.shBlkA == null) return foeArmor0(b, e, d, o); const r = foeArmor0(b, e, d, o); if (!o.dot) { e.asRaw = (e.asRaw || 0) + d; e.asReal = (e.asReal || 0) + r; } return r; } // A3 측정: 갑옷 · 방패를 만난 적이 받은 피해(전 · 후)
+function foeArmor0(b, e, d, o) {
   if (e.shield > 0 && !o.aoe) { const n = b.cur && b.cur.id === 'heavy' ? 2 : 1; if (e.shBlkA !== b.actN) { e.shBlkA = b.actN; e.shield = Math.max(0, e.shield - n); logp(b, 'sys', e.n + '의 방패가 막는다. 방패 ' + e.shield + '겹'); b.rec.push({ k: 'shieldBlk', role: e.role, n }); } return 0; }
   if (e.shBlkA === b.actN && b.actN != null && !o.aoe) return 0; // 막은 행동의 나머지 타격
   if (e.armor > 0 && !e.armorOff) { const d0 = d; d = Math.max(d / 3, d - e.armor); b.armCut = (b.armCut || 0) + (d0 - d); } // A3 측정: 갑옷이 깎은 몫
