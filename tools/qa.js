@@ -102,7 +102,7 @@ function evalState(b0, b1, risk) {
   const hpLoss = (p0.hp - p1.hp) / p0.hpMax;
   // 0.6a.2 직업: 적에게 쌓인 중독이 앞으로 줄 피해의 절반을 깎은 체력으로 본다(한 수 앞만 보면 지속 피해를 낮게 보는 편향을 줄인다). 옛 직업 측정은 그대로
   const v2 = E.isV2 && E.isV2(b0.p);
-  const eh = bb => E.alive(bb).filter(e => e.role !== 'root').reduce((a, e) => a + Math.max(0, e.hp - (v2 && e.s.poison ? Math.min(e.hp, E.poisonTotal(e.s.poison.stacks) * 0.5) : 0)) / (e.role === 'boss' ? 4 : 1), 0);
+  const eh = bb => E.alive(bb).filter(e => e.role !== 'root' && !LK_OBJ.includes(e.role)).reduce((a, e) => a + Math.max(0, e.hp - (v2 && e.s.poison ? Math.min(e.hp, E.poisonTotal(e.s.poison.stacks) * 0.5) : 0)) / (e.role === 'boss' ? 4 : 1), 0);
   const dealt = eh(b0) - eh(b1);
   const kills = E.alive(b0).length - E.alive(b1).length;
   const flasks = (p0.flask.life + p0.flask.mana + (p0.flask.stam || 0)) - (p1.flask.life + p1.flask.mana + (p1.flask.stam || 0));
@@ -129,7 +129,8 @@ function demandPick(b, P, r) {
   return null;
 }
 /* 10월 18일 0.8.0 5단계 마무리: 한 수 앞 후보가 적에게 준 몫(evalState의 dealt · 처치와 같은 꼴, 중독 덜기는 뺌) */
-const lkHp = bb => E.alive(bb).filter(e => e.role !== 'root').reduce((m, e) => m + Math.max(0, e.hp) / (e.role === 'boss' ? 4 : 1), 0);
+const LK_OBJ = ['bonfire', 'rampart', 'brick', 'barricade']; // M7-1: 3챕터 물체(체력 9999)는 앞을 내다보는 계산의 적 체력 합에서 뺀다. 무너뜨리면 9999가 사라져 숙련이 물체만 노렸다(수비대장 46% 대 무시 100%)
+const lkHp = bb => E.alive(bb).filter(e => e.role !== 'root' && !LK_OBJ.includes(e.role)).reduce((m, e) => m + Math.max(0, e.hp) / (e.role === 'boss' ? 4 : 1), 0);
 const lkGain = (b0, b1) => lkHp(b0) - lkHp(b1) + 6 * (E.alive(b0).length - E.alive(b1).length);
 /* 10월 18일 0.8.0 5단계 마무리(원거리 초안 11-7): 숙련(한 수 앞)의 사냥꾼. 기본 공격 버프(하늘 가르기 · 바꿔 쏘기 · 덧화살 · 가시)가 켜진 채 가속의 두 번째 차례이거나 유산이 가장 싼 스킬보다 적으면
    (2-10 ①과 같은 때), 공격 스킬 · 강공격은 다음 차례로 미뤄도 거의 같은 몫을 내지만 버프는 이번에만 든다. 두 차례로 보면 "스킬 지금 + 버프 없는 기본 공격 다음"과 "버프 기본 공격 지금 + 스킬 다음"의 차이가

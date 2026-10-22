@@ -47,6 +47,10 @@ const strongHeavy = (f, brk) => { const e = f.es[0]; e.strong = true; e.foe = 'k
   const f = mk(['bruiser']); const e = strongHeavy(f, 0); const r = withPv([e], () => [D.answerPost(f.b, {}, one, 'careful', 'guard', null), D.answerPost(f.b, {}, one, 'careful', 'dodge', e.id)]);
   t(r[0][0] === 'guard' && r[1][0] === 'dodge', '이미 고른 대응을 바꿨다 ' + JSON.stringify(r));
 }
+{ // 2-5 준비 동작(방어 · 흘리기가 대답이 아닌 예고)에는 답하지 않는다: 명사수 조준
+  const f = mk(['wallxbow']); const e = f.es[0]; e.strong = true; e.foe = 'marksman'; e.aims = 1; e.intent = { k: 'aimx' }; f.b.ctx.ch = 3; const r = withPv([e], () => D.answerPost(f.b, {}, one, 'careful', 'basic', e.id));
+  t(r[0] === 'basic', '조준(준비)에 답했다 ' + JSON.stringify(r));
+}
 { // 3-0 온전한 종은 울릴 차례가 아니면 치지 않는다
   const f = mk(['bruiser', 'root']); const rg = f.es[0], bell = f.es[1]; rg.strong = true; rg.foe = 'bellringer'; bell.bell = 1; bell.row = 'front'; f.b.tick = 0; const r = withPv([], () => D.answerPre(f.b, {}, one, 'careful'));
   t(r === null || (D.run_('STRONG.bellEvery') === 1), '울릴 차례가 아닌데 온전한 종을 쳤다 ' + JSON.stringify(r));

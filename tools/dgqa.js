@@ -356,7 +356,7 @@ const ANS_P = 0.95; const ANS_PART = process.env.ANS_PART ? process.env.ANS_PART
 const brkOfA = x => x.id === 'heavy' ? 35 : x.v2 ? x.s.fx.reduce((m, f) => m + (f.k === 'brk' ? f.n : f.k === 'cutx' ? f.brk : 0), 0) : 0;
 function bigIncoming(b) {
   const pv = G0.previewAfter(b, 1).map(x => x.e); const out = [];
-  for (const e of pv) { if (!e || !e.alive || !(e.strong || e.role === 'boss') || !e.intent) continue; const bd = G0.intentBadge(b, e); if (bd && bd.cls === 'hv' && +String(bd.num).replace(/[^\d.]/g, '') > 0 && !out.includes(e)) out.push(e); }
+  for (const e of pv) { if (!e || !e.alive || !(e.strong || e.role === 'boss') || !e.intent) continue; const F = G0.foeDef(b, e), A = F && F.ans && F.ans[e.intent.k]; if (A && !A.some(x => x === 'guard' || x === 'parry')) continue; /* M7-1: 방어 · 흘리기로 받는 예고만(조준 · 장전 같은 준비는 숫자가 있어도 뺀다) */ const bd = G0.intentBadge(b, e); if (bd && bd.cls === 'hv' && +String(bd.num).replace(/[^\d.]/g, '') > 0 && !out.includes(e)) out.push(e); }
   return out;
 }
 function answerPick(b, e, L) { // 끊기 → 흘리기 → 방어
@@ -388,18 +388,19 @@ function answerPre(b, P, r, pk) { // 기믹 대상: 1챕터 큰 종(다음 라�
   if (ANS_PART.includes('bell') && bell && (ringNext || bl0.hp < bl0.hpMax * 0.5) && r() < 0.9) { const bl = bl0; const c = L.filter(x => !x.self && G0.canTarget(b, bl, x) && (x.id === 'basic' || x.id === 'heavy' || (x.v2 && x.s.fx.some(f => f.k === 'dmg')))).sort((x, y) => (y.v2 ? 1 : 0) - (x.v2 ? 1 : 0))[0]; if (c) return [c.id, c.aoe ? null : bl.id]; }
   return null;
 }
+/* M7-1(10월 22일): 무시 시험에서 기믹 물체를 일찍 부수러 가면 오히려 손해(수비대장 27.5% 대 무시 99%)라, 곧 터질 봉화(칸 1) · 곧 날아올 공성추(75%) · 마지막 벽돌만 부순다 */
 /* 0.8.0 A3 3챕터 판단(사람이 화면을 보고 할 만한 것만): 틈 막기 · 종 표식 · 봉화 · 부품 · 벽돌 · 조준하는 명사수 · 벽돌을 쌓는 루를 붕괴로. 3챕터 전투에서만 난수를 쓴다 */
-const W3O = ['bonfire', 'rampart', 'brick', 'barricade'];
+const W3O = ['bonfire', 'rampart', 'brick', 'barricade']; const W3OFF = (process.env.W3PRE_OFF || '').split(','); // M7-1 조사 스위치: mk(조준하는 명사수 무너뜨리기)
 function w3Pre(b, P, r) {
   if (!G0.isW3(b)) return null; const al = G0.alive(b); const L = () => G0.actionList(b).filter(x => x.ok && x.id !== 'flee');
   const brkOf = x => x.id === 'heavy' ? 35 : x.v2 ? x.s.fx.reduce((m, f) => m + (f.k === 'brk' ? f.n : f.k === 'cutx' ? f.brk : 0), 0) : 0;
   const brkOn = (e, min) => { const c = L().filter(x => !x.self && G0.canTarget(b, e, x) && brkOf(x) >= (min || 1)).sort((x, y) => brkOf(y) - brkOf(x))[0]; return c ? [c.id, c.aoe ? null : e.id] : null; };
   const m = (P.mech || 0.5);
   if ((b.ctx.mods || []).includes('rift') && !b.riftSealed && (b.round || 0) <= 2 && r() < m + 0.2) { const s = L().find(x => x.id === 'sealrift'); if (s) return ['sealrift', null]; }
-  const fire = al.filter(e => e.role === 'bonfire').sort((x, y) => x.fuse - y.fuse)[0]; if (fire && fire.fuse <= 2 && r() < m + 0.2) { const a = brkOn(fire); if (a) return a; }
-  const part = al.find(e => e.role === 'rampart'); if (part && (b.ram || 0) >= 25 && r() < m + 0.2) { const a = brkOn(part); if (a) return a; }
-  const brick = al.find(e => e.role === 'brick'); if (brick && r() < m + 0.3) { const a = brkOn(brick); if (a) return a; }
-  const mk = al.find(e => e.foe === 'marksman' && e.intent && e.intent.k === 'aimx'); if (mk && r() < m + 0.2) { const a = brkOn(mk, 15); if (a) return a; }
+  const fire = al.filter(e => e.role === 'bonfire').sort((x, y) => x.fuse - y.fuse)[0]; if (fire && fire.fuse <= 1 && r() < m + 0.2) { const a = brkOn(fire); if (a) return a; }
+  const part = al.find(e => e.role === 'rampart'); if (part && (b.ram || 0) >= 75 && r() < m + 0.2) { const a = brkOn(part); if (a) return a; }
+  const bricks = al.filter(e => e.role === 'brick'), brick = bricks[0]; if (brick && bricks.length <= 1 && r() < m + 0.3) { const a = brkOn(brick); if (a) return a; }
+  const mk = al.find(e => e.foe === 'marksman' && e.intent && e.intent.k === 'aimx'); if (mk && !W3OFF.includes('mk') && r() < m + 0.2) { const a = brkOn(mk, 15); if (a) return a; }
   const lu = al.find(e => e.boss === 'lu' && e.intent && e.intent.k === 'rebuild'); if (lu && r() < m + 0.2) { const a = brkOn(lu, 15); if (a) return a; }
   const bm = b.al && b.al.on && !b.al.delayed && al.find(e => e.id === b.bellMark); if (bm && bm.brk + 35 >= bm.brkMax && r() < m) { const a = brkOn(bm, 20); if (a) return a; }
   return null;

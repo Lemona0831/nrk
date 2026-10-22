@@ -541,6 +541,14 @@
    "note": "M7-1 신중 성향 판단 조각: ans 예고 답하기(기본) · bell 1챕터 큰 종 치기 · monk 수도사 대상 0.9. 쉼표로 고른다"
   },
   {
+   "name": "W3PRE_OFF",
+   "kind": "env",
+   "default": null,
+   "introduced": "M7-1",
+   "expires": "M7-3",
+   "note": "M7-1 조사: 3챕터 테스터 판단을 끈다(mk = 조준하는 명사수 무너뜨리기)"
+  },
+  {
    "name": "ANS_OFF",
    "kind": "env",
    "default": null,
