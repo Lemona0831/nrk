@@ -4,12 +4,14 @@
    그래서 스킬마다 "양" 숫자에 곱할 배수 f를 따로 찾아(이분법) 그 스킬의 E가 k배가 되게 한다. 칸마다의 값 띠는 직업 비용 2 평균에 대한 비율이라 그대로다.
    양 숫자 = 피해 · 보호막 · 붕괴 · 중독, 적에게 거는 출혈 · 화상(st · imbue)의 n. 문장(txt)을 가진 효과, 나에게 거는 대가(meSt), 지속 · 배율은 그대로.
    - data/skills.js의 그 직업 스킬 줄과 data/atree.js의 그 직업 변형(붙는 스킬의 f): 같은 효과의 n, 변형 문장 속 "피해 A → B" · "출혈 +N" 같은 숫자(대가: 뒤는 그대로)와 뒤 조사
-   쓰기: node tools/class-scale.js <직업> <k> [--dry] */
+   길 하나만(M7-2 길 맞추기): --path A:a(부채꼴 A의 a 길) · --path AB(경계) 또는 --ids 칸,칸 이면 그 칸만 E × k(값 띠 끝 1.5% 안에서 멈춤), 다른 칸은 그대로
+   쓰기: node tools/class-scale.js <직업> <k> [--path A:a | --ids 칸,…] [--dry] */
 process.env.DGDIR = process.env.DGDIR || '.';
 const fs = require('fs'), path = require('path');
 const [CLS, MUL] = process.argv.slice(2); const DRY = process.argv.includes('--dry'); const K = +MUL;
 if (!CLS || !(K > 0)) { console.error('쓰기: node tools/class-scale.js <직업> <k> [--dry]'); process.exit(2); }
 const D = require('./dgqa.js'), E = D.G0, SC = D.run_('skScore'), SKS = D.run_('SKILLS2');
+const argOf = k => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
 const AMT = ['dmg', 'ward', 'brk', 'poison'], DOT = ['bleed', 'ignite'];
 const WORD = { 피해: ['dmg'], 보호막: ['ward'], 붕괴: ['brk'], 중독: ['poison'], 출혈: ['bleed'], 화상: ['ignite'] };
 const amt = e => typeof e.n === 'number' && !e.txt && (AMT.includes(e.k) || (['st', 'imbue'].includes(e.k) && DOT.includes(e.s)));
@@ -25,14 +27,16 @@ const Eof = (id, f) => { const s = E.SK2[id], m = s.ysMul || 1, base = s._fx0 ||
 const BAND = { 1: [0.5, 0.65], 2: [0.85, 1.15], 3: [1.5, 1.8], 4: [2.2, 2.6] }, EX = ['sb_bolt', 'w_pray'], BD = ['AB', 'BC', 'CA'], MG = 0.015;
 const TWO = Object.values(A.nodes).filter(x => x.kind === 'skill' && x.ys === 2 && ['A', 'B', 'C'].includes(x.sec) && !EX.includes(x.id)).map(x => x.id);
 const bandOf = id => { const x = A.nodes[id]; if (!x || x.kind !== 'skill' || EX.includes(id) || !BAND[x.ys]) return null; const B = BAND[x.ys].slice(); if (BD.includes(x.sec) && x.ring === 3 && x.ys === 4) B[1] *= 1.1; return B; };
+const PATH = argOf('--path'), IDS = argOf('--ids') ? argOf('--ids').split(',') : PATH ? Object.values(A.nodes).filter(x => x.kind === 'skill' && (PATH.includes(':') ? x.sec === PATH.split(':')[0] && x.path === PATH.split(':')[1] : x.sec === PATH)).map(x => x.id) : null;
+if (IDS && !IDS.length) { console.error('그 길에 스킬 칸이 없음: ' + PATH); process.exit(2); }
 const F = {}, E0 = {}, skip = [], clamp = [];
-for (const s0 of SKS[CLS] || []) { const id = s0.id, s = E.SK2[id]; E0[id] = s ? Eof(id, 1) : 0; if (!s || !s.fx.some(amt)) skip.push(id); else F[id] = K; }
-const avg = g => TWO.reduce((a, id) => a + g(id), 0) / TWO.length, avg0 = avg(id => E0[id]); let avgN = K * avg0;
-const want = id => { const B = bandOf(id), r = E0[id] / avg0; return avgN * (B ? Math.min(Math.max(r, B[0] * (1 + MG)), B[1] * (1 - MG)) : K * r / (avgN / avg0)); };
+for (const s0 of SKS[CLS] || []) { const id = s0.id, s = E.SK2[id]; E0[id] = s ? Eof(id, 1) : 0; if (IDS && !IDS.includes(id)) continue; if (!s || !s.fx.some(amt)) skip.push(id); else F[id] = K; }
+const avg = g => TWO.reduce((a, id) => a + g(id), 0) / TWO.length, avg0 = avg(id => E0[id]); let avgN = IDS ? avg0 : K * avg0;
+const want = id => { const B = bandOf(id), r = E0[id] / avg0 * (IDS ? K : 1); if (IDS && !B) return K * E0[id]; return avgN * (B ? Math.min(Math.max(r, B[0] * (1 + MG)), B[1] * (1 - MG)) : K * r / (avgN / avg0)); };
 for (let it = 0; it < 4; it++) { for (const id in F) { const w = want(id), err = f => Math.abs(Eof(id, f) / w - 1); let lo = 0.2, hi = 4; if (it === 0 && (Eof(id, hi) < w || Eof(id, lo) > w)) clamp.push(id); if (clamp.includes(id)) { F[id] = K; continue; } // 값 대부분이 고유 규칙인 칸: 숫자는 직업 배수 그대로, 띠는 고유 값으로 따로
     for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (Eof(id, m) < w) lo = m; else hi = m; } let f = (lo + hi) / 2;
     for (let g = f * 0.85; g <= f * 1.15; g += f * 0.002) if (err(g) < err(f) - 1e-9) f = g; F[id] = f; }
-  avgN = avg(id => F[id] ? Eof(id, F[id]) : K * E0[id]); }
+  avgN = avg(id => F[id] ? Eof(id, F[id]) : (IDS ? 1 : K) * E0[id]); }
 /* 숫자 뒤 조사: 끝자리를 읽은 소리(영 일 이 삼 사 오 육 칠 팔 구, 0으로 끝나면 십 · 백)로 받침을 본다. ㄹ 받침(1 · 7 · 8)은 '로' */
 const josa = (n, j) => { const d = n % 10, hard = [0, 1, 3, 6, 7, 8].includes(d), rieul = [1, 7, 8].includes(d);
   return ({ 을: hard ? '을' : '를', 를: hard ? '을' : '를', 이: hard ? '이' : '가', 가: hard ? '이' : '가', 은: hard ? '은' : '는', 는: hard ? '은' : '는', 으로: hard && !rieul ? '으로' : '로', 로: hard && !rieul ? '으로' : '로' })[j]; };
@@ -56,7 +60,7 @@ function write() { let sk = SK0, at = AT0;
   const vars = lines(cls.slice(va, vEnd), l => { const h = /^\s+([a-z0-9_]+): \[/.exec(l); if (h) cur = h[1];
     return l.replace(/\['([a-z0-9_]+)', '([^']*)', '([^']*)', (\{.*?\}), (\[.*)$/, (all, id, nm, txt, mod, rest) => {
       const kinds = new Set(); mod.replace(FXRE, (x, p, k, s, n, r) => { if (fxOk(k, s, r)) kinds.add(AMT.includes(k) ? k : s); return x; }); if (!kinds.size) return all;
-      const on = (/on: '([a-z0-9_]+)'/.exec(rest) || [])[1] || cur, f = F[on]; if (!f) { miss.add(id + '→' + on); return all; }
+      const on = (/on: '([a-z0-9_]+)'/.exec(rest) || [])[1] || cur, f = F[on]; if (!f) { if (!IDS || IDS.includes(on)) miss.add(id + '→' + on); return all; }
       const cut = txt.search(/대가:|나에게/), head = cut < 0 ? txt : txt.slice(0, cut), tail = cut < 0 ? '' : txt.slice(cut);
       const head2 = head.replace(/(피해|보호막|붕괴|중독|출혈|화상) (\+?)(\d+)(?![\d%])( → (\d+)(?![\d%]))?(을|를|이|가|은|는|으로|로)?/g, (w, word, plus, a1, arr, b1, j) => {
         if (!WORD[word].some(k => kinds.has(k))) return w; nTxt++; const x = sc(+a1, f), y = arr ? sc(+b1, f) : null; return word + ' ' + plus + x + (arr ? ' → ' + y : '') + (j ? josa(arr ? y : x, j) : ''); });

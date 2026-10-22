@@ -331,7 +331,7 @@ const ATREE_DEF = {
         ['mv_hh_deep', '깊은 호흡', '기 +2 → +3.', { fxSet: [{ k: 'st', s: 'empower', n: 3 }] }, [], { v: 'deep' }],
         ['mv_hh_st', '고른 호흡', '자세를 함께 잡습니다.', { fxAdd: [{ k: 'stance' }] }, ['자세'], { v: 'link' }]],
       m_cheonsu: [
-        ['mv_cs_hits', '천수 만타', '3타 → 4타. 피해 7 → 6.', { set: { hits: 4 }, fxSet: [{ k: 'dmg', n: 6 }] }, [], { v: 'deep' }],
+        ['mv_cs_hits', '천수 만타', '3타 → 4타. 피해 8 → 6.', { set: { hits: 4 }, fxSet: [{ k: 'dmg', n: 6 }] }, [], { v: 'deep' }],
         ['mv_cs_chill', '짚는 연타', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
       m_eungchuk: [
         ['mv_ec_more', '단전 응축', '쓸 때 기 +1.', { fxAdd: [{ k: 'st', s: 'empower', n: 1 }] }, [], { v: 'deep' }],
@@ -385,8 +385,8 @@ const ATREE_DEF = {
         ['mv_th_slow', '거두는 탈혼', '느린 행동이 됩니다. 둔화 2 → 3.', { set: { time: 'slow' }, fxSet: [{ k: 'st', s: 'chill', n: 3 }] }, [], { v: 'deep' }],
         ['mv_th_seal', '혼을 묶는 손', '지원 행동을 봉인합니다.', { fxAdd: [{ k: 'sealx', brk: 15 }] }, ['봉인'], { v: 'link' }]],
       m_doedol: [
-        ['mv_dd_more', '배로 돌린 주먹', '되받은 1마다 +7 → +10. 피해 13 → 10.', { fxSet: [{ k: 'dmg', n: 10 }, { k: 'mkCtrPer', per: 10, txt: '지난 적 차례에 되받은 1마다 피해 +10.' }] }, [], { v: 'deep' }],
-        ['mv_dd_brk', '꺾어 돌린 주먹', '붕괴 +20.', { fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
+        ['mv_dd_more', '배로 돌린 주먹', '되받은 1마다 +7 → +10. 피해 14 → 10.', { fxSet: [{ k: 'dmg', n: 10 }, { k: 'mkCtrPer', per: 10, txt: '지난 적 차례에 되받은 1마다 피해 +10.' }] }, [], { v: 'deep' }],
+        ['mv_dd_brk', '꺾어 돌린 주먹', '붕괴 +21.', { fxAdd: [{ k: 'brk', n: 21 }] }, ['붕괴'], { v: 'link' }]],
       m_gibat: [
         ['mv_gb_more', '넘치는 기 받기', '되받으면 기 +1 → +2.', { fxSet: [{ k: 'stance', dmg: 13, ki: 2 }] }, [], { v: 'deep' }],
         ['mv_gb_chill', '맥 받는 자세', '되받은 적에게 둔화 1.', { fxSet: [{ k: 'stance', dmg: 13, ki: 1, chill: 1 }] }, ['둔화'], { v: 'link' }]],
@@ -403,10 +403,10 @@ const ATREE_DEF = {
         ['mv_ym_more', '깊은 역맥', '둔화된 적에게 ×1.5 → ×1.8. 피해 15 → 13.', { fxSet: [{ k: 'dmg', n: 13 }, { k: 'chillx', mul: 1.8 }] }, [], { v: 'deep' }],
         ['mv_ym_st', '역맥 자세', '친 뒤 자세를 잡습니다.', { fxAdd: [{ k: 'stance' }] }, ['자세'], { v: 'link' }]],
       m_maekji: [
-        ['mv_mj_more', '굳게 지키는 맥', '되받은 적에게 둔화 2 → 3.', { fxSet: [{ k: 'stance', dmg: 13, chill: 3 }] }, [], { v: 'deep' }],
-        ['mv_mj_ki', '맥에서 오르는 기', '되받으면 기 +1 더.', { fxSet: [{ k: 'stance', dmg: 13, chill: 2, ki: 1 }] }, ['기'], { v: 'link' }]],
+        ['mv_mj_more', '굳게 지키는 맥', '되받은 적에게 둔화 2 → 3.', { fxSet: [{ k: 'stance', dmg: 14, chill: 3 }] }, [], { v: 'deep' }],
+        ['mv_mj_ki', '맥에서 오르는 기', '되받으면 기 +1 더.', { fxSet: [{ k: 'stance', dmg: 14, chill: 2, ki: 1 }] }, ['기'], { v: 'link' }]],
       m_hyeolryu: [
-        ['mv_hr_fast', '날랜 역행', '빠른 칸이 됩니다. 피해 18 → 13.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 13 }] }, [], { v: 'deep' }],
+        ['mv_hr_fast', '날랜 역행', '빠른 칸이 됩니다. 피해 16 → 11.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 11 }] }, [], { v: 'deep' }],
         ['mv_hr_seal', '봉인하는 역행', '지원 행동을 봉인합니다.', { fxAdd: [{ k: 'sealx', brk: 15 }] }, ['봉인'], { v: 'link' }]],
       m_cheonri: [
         ['mv_cr_dmg', '먼 곳까지 받기', '되받을 때 피해 +31 → +39.', { fxSet: [{ k: 'stance', dmg: 39, far: 1 }] }, [], { v: 'deep' }],
@@ -500,7 +500,7 @@ const ATREE_DEF = {
         ['hv_sk_deep', '갈라진 하늘', '무기 피해의 3배 → 3.5배.', { fxSet: [{ k: 'hnSky', mul: 3.5, txt: '추적 3겹이면 무기 피해의 3.5배' }] }, [], { v: 'deep' }],
         ['hv_sk_brk', '하늘 무너뜨리기', '붕괴 +20.', { fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
       h5_endhunt: [
-        ['hv_eh_deep', '깊은 사냥', '피해 23 → 30.', { fxSet: [{ k: 'dmg', n: 30 }] }, [], { v: 'deep' }],
+        ['hv_eh_deep', '깊은 사냥', '피해 24 → 32.', { fxSet: [{ k: 'dmg', n: 32 }] }, [], { v: 'deep' }],
         ['hv_eh_bleed', '피 흘리는 사냥', '출혈 2를 겁니다.', { fxAdd: [{ k: 'st', s: 'bleed', n: 2 }] }, ['출혈'], { v: 'link' }]],
       h5_volley: [
         ['hv_vl_deep', '빠른 연속', '한 발 피해 7 → 9.', { fxSet: [{ k: 'dmg', n: 9 }] }, [], { v: 'deep' }],
@@ -542,17 +542,17 @@ const ATREE_DEF = {
         ['hv_wv_long', '긴 장막', '5라운드 → 6라운드.', { fxSet: [{ k: 'hnWindVeil', r: 6, txt: '6라운드 공격을 받을 때마다 몸 빼기 1(라운드에 한 번)' }] }, [], { v: 'deep' }],
         ['hv_wv_prot', '바람 갑옷', '보호 2.', { fxAdd: [{ k: 'st', s: 'protect', n: 2 }] }, ['보호'], { v: 'link' }]],
       h5_icecage: [
-        ['hv_ic_deep', '깊은 감옥', '피해 35 → 46.', { fxSet: [{ k: 'dmg', n: 46 }] }, [], { v: 'deep' }],
+        ['hv_ic_deep', '깊은 감옥', '피해 37 → 49.', { fxSet: [{ k: 'dmg', n: 49 }] }, [], { v: 'deep' }],
         ['hv_ic_focus', '갇힌 사냥감', '추적 2겹을 겁니다.', { fxAdd: [{ k: 'focusAdd', n: 2 }] }, ['추적'], { v: 'link' }]],
       h5_aimvol: [
-        ['hv_av_deep', '깊은 겨눔', '한 발 피해 10 → 13.', { fxSet: [{ k: 'dmg', n: 13 }] }, [], { v: 'deep' }],
+        ['hv_av_deep', '깊은 겨눔', '한 발 피해 9 → 11.', { fxSet: [{ k: 'dmg', n: 11 }] }, [], { v: 'deep' }],
         ['hv_av_bleed', '찢는 겨눔', '출혈 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'bleed', n: 1 }] }, ['출혈'], { v: 'link' }]],
       h5_steady: [
         ['hv_st_two', '깊은 숨', '강화 1 → 2.', { fxSet: [{ k: 'st', s: 'empower', n: 2 }] }, [], { v: 'deep' }],
         ['hv_st_dodge', '숨 돌린 발', '몸 빼기 1.', { fxAdd: [{ k: 'evade', n: 1 }] }, ['몸 빼기'], { v: 'link' }]],
       h5_pinpoint: [
-        ['hv_pp_deep', '숨 멈춘 한 발', '느린 행동이 됩니다. 피해 33 → 43.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 43 }] }, [], { v: 'deep' }],
-        ['hv_pp_brk', '급소 부수기', '붕괴 +25.', { fxAdd: [{ k: 'brk', n: 25 }] }, ['붕괴'], { v: 'link' }]],
+        ['hv_pp_deep', '숨 멈춘 한 발', '느린 행동이 됩니다. 피해 30 → 38.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 38 }] }, [], { v: 'deep' }],
+        ['hv_pp_brk', '급소 부수기', '붕괴 +22.', { fxAdd: [{ k: 'brk', n: 22 }] }, ['붕괴'], { v: 'link' }]],
       h5_hawkeye: [
         ['hv_he_long', '긴 눈', '3라운드 → 4라운드.', { fxSet: [{ k: 'foresee', rounds: 4 }] }, [], { v: 'deep' }],
         ['hv_he_focus', '노려보는 눈', '추적한 적 추적 +1겹.', { fxAdd: [{ k: 'hnFocusSelf', n: 1, txt: '추적한 적 추적 +1겹' }] }, ['추적'], { v: 'link' }]],
@@ -560,13 +560,13 @@ const ATREE_DEF = {
         ['hv_mg_deep', '더 당긴 시위', '무기 피해의 6.5배 → 7배.', { fxSet: [{ k: 'hnDraw', mul: 7, txt: '한 차례 시위를 당겼다가, 다음 차례 추적한 적에게 무기 피해의 7배(추적 겹마다 +1배).' }] }, [], { v: 'deep' }],
         ['hv_mg_brk', '무너뜨리는 한 발', '쏠 때 붕괴 +40.', { fxSet: [{ k: 'hnDraw', brk: 40 }] }, ['붕괴'], { v: 'link' }]],
       h5_runshot: [
-        ['hv_rs_deep', '깊은 달음', '피해 12 → 16.', { fxSet: [{ k: 'dmg', n: 16 }] }, [], { v: 'deep' }],
+        ['hv_rs_deep', '깊은 달음', '피해 10 → 13.', { fxSet: [{ k: 'dmg', n: 13 }] }, [], { v: 'deep' }],
         ['hv_rs_bleed', '찢으며 달리기', '출혈 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'bleed', n: 1 }] }, ['출혈'], { v: 'link' }]],
       h5_dust: [
         ['hv_ds_more', '짙은 흙먼지', '보호 11 → 13.', { fxSet: [{ k: 'st', s: 'protect', n: 13 }] }, [], { v: 'deep' }],
         ['hv_ds_chill', '눈보라 흙먼지', '모든 적 둔화 1.', { fxAdd: [{ k: 'hnChillAll', n: 1, txt: '모든 적 둔화 1' }] }, ['둔화'], { v: 'link' }]],
       h5_storm: [
-        ['hv_sm_deep', '거센 폭풍', '느린 행동이 됩니다. 피해 17 → 22.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 22 }] }, [], { v: 'deep' }],
+        ['hv_sm_deep', '거센 폭풍', '느린 행동이 됩니다. 피해 15 → 19.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 19 }] }, [], { v: 'deep' }],
         ['hv_sm_chill', '얼음 폭풍', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
       h5_tailwind: [
         ['hv_tw_three', '센 순풍', '두 발 → 세 발.', { fxSet: [{ k: 'hnNock', shots: 3, txt: '다음 기본 공격 5번이 세 발' }] }, [], { v: 'deep' }],
@@ -575,13 +575,13 @@ const ATREE_DEF = {
         ['hv_gl_long', '긴 질풍', '3라운드 → 4라운드.', { fxSet: [{ k: 'hnGale', r: 4, txt: '4라운드 동안 매 라운드 두 번 움직이고(가속), 기본 공격이 두 발.' }] }, [], { v: 'deep' }],
         ['hv_gl_bleed', '피바람 난사', '그동안 기본 공격에 출혈 1.', { fxSet: [{ k: 'hnGale', bleed: 1 }] }, ['출혈'], { v: 'link' }]],
       h5_snare: [
-        ['hv_sn_deep', '깊은 덫 화살', '피해 20 → 26.', { fxSet: [{ k: 'dmg', n: 26 }] }, [], { v: 'deep' }],
+        ['hv_sn_deep', '깊은 덫 화살', '피해 18 → 23.', { fxSet: [{ k: 'dmg', n: 23 }] }, [], { v: 'deep' }],
         ['hv_sn_focus', '표식 덫', '추적 1겹을 겁니다.', { fxAdd: [{ k: 'focusAdd', n: 1 }] }, ['추적'], { v: 'link' }]],
       h5_hide: [
         ['hv_hd_three', '깊이 숨기', '몸 빼기 2 → 3.', { fxSet: [{ k: 'evade', n: 3 }] }, [], { v: 'deep' }],
         ['hv_hd_prot', '숨은 갑옷', '보호 2.', { fxAdd: [{ k: 'st', s: 'protect', n: 2 }] }, ['보호'], { v: 'link' }]],
       h5_ambush: [
-        ['hv_ab_deep', '긴 매복', '느린 행동이 됩니다. 피해 33 → 43.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 43 }] }, [], { v: 'deep' }],
+        ['hv_ab_deep', '긴 매복', '느린 행동이 됩니다. 피해 29 → 37.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 37 }] }, [], { v: 'deep' }],
         ['hv_ab_focus', '노린 매복', '추적 1겹을 겁니다.', { fxAdd: [{ k: 'focusAdd', n: 1 }] }, ['추적'], { v: 'link' }]],
       h5_camo: [
         ['hv_cm_more', '두꺼운 위장', '보호 19 → 21.', { fxSet: [{ k: 'st', s: 'protect', n: 21 }] }, [], { v: 'deep' }],
@@ -687,7 +687,7 @@ const ATREE_DEF = {
         ['ev_ch_four', '네 번 응축', '기본 공격 4번 → 5번.', { fxSet: [{ k: 'elCharge', n: 5, txt: '다음 기본 공격 5번 피해 +8' }] }, [], { v: 'deep' }],
         ['ev_ch_ign', '불 실은 응축', '그 기본 공격에 화상 1.', { fxAdd: [{ k: 'elChargeEl', ign: 1, txt: '그 기본 공격에 화상 1' }] }, ['화상'], { v: 'link' }]],
       e5_barrier: [
-        ['ev_ba_more', '두꺼운 방벽', '보호막 32 → 40.', { fxSet: [{ k: 'ward', n: 40 }] }, [], { v: 'deep' }],
+        ['ev_ba_more', '두꺼운 방벽', '보호막 28 → 34.', { fxSet: [{ k: 'ward', n: 34 }] }, [], { v: 'deep' }],
         ['ev_ba_chill', '서리 방벽 조각', '쓸 때 대상 없이 나를 친 적에게 다음 2번 둔화 1.', { fxAdd: [{ k: 'rime', s: 'chill', n: 1, times: 2 }] }, ['둔화'], { v: 'link' }]],
       e5_mark: [
         ['ev_mk_more', '깊은 표식', '취약 1 → 2.', { fxSet: [{ k: 'st', s: 'vuln', n: 2 }] }, [], { v: 'deep' }],
@@ -705,16 +705,16 @@ const ATREE_DEF = {
         ['ev_wd_long', '긴 결계', '6라운드 → 7라운드.', { fxSet: [{ k: 'elBarrier', r: 7, txt: '7라운드 받는 피해 −42%' }] }, [], { v: 'deep' }],
         ['ev_wd_chill', '얼음 결계', '쓸 때 대상 없이 나를 친 적에게 다음 3번 둔화 1.', { fxAdd: [{ k: 'rime', s: 'chill', n: 1, times: 3 }] }, ['둔화'], { v: 'link' }]],
       e5_weave: [
-        ['ev_wv_deep', '굵은 엮기', '피해 12 → 16.', { fxSet: [{ k: 'dmg', n: 16 }] }, [], { v: 'deep' }],
+        ['ev_wv_deep', '굵은 엮기', '피해 9 → 11.', { fxSet: [{ k: 'dmg', n: 11 }] }, [], { v: 'deep' }],
         ['ev_wv_vuln', '드러내는 엮기', '취약 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'vuln', n: 1 }] }, ['취약'], { v: 'link' }]],
       e5_catalyst: [
         ['ev_ct_deep', '진한 촉매', '2.1배 → 2.4배.', { fxSet: [{ k: 'elCat', mul: 2.4, txt: '이번 차례 열충격 2.4배' }] }, [], { v: 'deep' }],
         ['ev_ct_prot', '촉매 방벽', '보호 1.', { fxAdd: [{ k: 'st', s: 'protect', n: 1 }] }, ['보호'], { v: 'link' }]],
       e5_arc: [
-        ['ev_arc_deep', '큰 충격', '느린 행동이 됩니다. 피해 21 → 27.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 27 }] }, [], { v: 'deep' }],
-        ['ev_arc_brk', '부수는 충격', '붕괴 +15.', { fxAdd: [{ k: 'brk', n: 15 }] }, ['붕괴'], { v: 'link' }]],
+        ['ev_arc_deep', '큰 충격', '느린 행동이 됩니다. 피해 18 → 23.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 23 }] }, [], { v: 'deep' }],
+        ['ev_arc_brk', '부수는 충격', '붕괴 +13.', { fxAdd: [{ k: 'brk', n: 13 }] }, ['붕괴'], { v: 'link' }]],
       e5_storm: [
-        ['ev_st_deep', '거센 폭풍', '느린 행동이 됩니다. 피해 8 → 11.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 11 }] }, [], { v: 'deep' }],
+        ['ev_st_deep', '거센 폭풍', '느린 행동이 됩니다. 피해 6 → 8.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 8 }] }, [], { v: 'deep' }],
         ['ev_st_vuln', '드러내는 폭풍', '취약 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'vuln', n: 1 }] }, ['취약'], { v: 'link' }]],
       e5_avatar: [
         ['ev_av_long', '긴 화신', '3차례 → 4차례.', { fxSet: [{ k: 'elAvatar', r: 4, txt: '4차례 — 내 모든 공격이 화상 1과 둔화 1을 함께 건다(맞히는 족족 열충격).' }] }, [], { v: 'deep' }],
@@ -735,19 +735,19 @@ const ATREE_DEF = {
         ['ev_ss_brk', '깊은 정적', '강적 · 보스는 붕괴 +30도.', { fxSet: [{ k: 'elStasis', brk: 30 }] }, [], { v: 'deep' }],
         ['ev_ss_vuln', '드러난 정적', '모든 적 취약 1.', { fxAdd: [{ k: 'elVulnAll', n: 1, txt: '모든 적 취약 1' }] }, ['취약'], { v: 'link' }]],
       e5_manaflame: [
-        ['ev_mf_deep', '굵은 마염탄', '피해 21 → 27.', { fxSet: [{ k: 'dmg', n: 27 }] }, [], { v: 'deep' }],
+        ['ev_mf_deep', '굵은 마염탄', '피해 24 → 30.', { fxSet: [{ k: 'dmg', n: 30 }] }, [], { v: 'deep' }],
         ['ev_mf_chill', '서리 마염', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
       e5_kindlemana: [
         ['ev_km_more', '짙은 불씨', '기본 공격 6번 → 8번.', { fxSet: [{ k: 'elCharge', n: 8, txt: '다음 기본 공격 8번에 화상 2' }] }, [], { v: 'deep' }],
         ['ev_km_vuln', '드러내는 불씨', '쓸 때 대상 취약 1.', { fxAdd: [{ k: 'elVulnFocus', n: 1, txt: '가장 센 적 취약 1' }] }, ['취약'], { v: 'link' }]],
       e5_flamelance: [
-        ['ev_fl_deep', '긴 불꽃 창', '느린 행동이 됩니다. 피해 34 → 44.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 44 }] }, [], { v: 'deep' }],
+        ['ev_fl_deep', '긴 불꽃 창', '느린 행동이 됩니다. 피해 36 → 46.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 46 }] }, [], { v: 'deep' }],
         ['ev_fl_chill', '얼음 섞인 창', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
       e5_heatshield: [
         ['ev_hs_more', '타오르는 방패', '3라운드 동안 나를 친 적에게 화상 1도 겁니다.', { fxAdd: [{ k: 'elRimeR', s: 'ignite', n: 1, r: 3 }] }, [], { v: 'deep' }],
         ['ev_hs_chill', '서늘한 방패', '나를 친 적에게 다음 2번 둔화 1.', { fxAdd: [{ k: 'rime', s: 'chill', n: 1, times: 2 }] }, ['둔화'], { v: 'link' }]],
       e5_meteor: [
-        ['ev_mt_deep', '거센 불의 비', '피해 35 → 46.', { fxSet: [{ k: 'dmg', n: 46 }] }, [], { v: 'deep' }],
+        ['ev_mt_deep', '거센 불의 비', '피해 39 → 52.', { fxSet: [{ k: 'dmg', n: 52 }] }, [], { v: 'deep' }],
         ['ev_mt_chill', '얼음비 섞기', '둔화 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'chill', n: 1 }] }, ['둔화'], { v: 'link' }]],
     },
   },
