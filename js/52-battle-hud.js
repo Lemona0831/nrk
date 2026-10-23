@@ -341,7 +341,7 @@ function vHudActions(b, hud, tg) {
 /* 새 전투를 시작할 때 "자세히" 칸은 닫힌 채로 시작한다(전투 중 열고 닫기와 저장 값 G.data.fdet은 그대로. 묶음 "자세히"와는 별개다) */
 function fdetFresh() { if (G.data && G.data.fdet) { G.data.fdet = false; saveLocal(); } }
 function vBattle() {
-  const b = G.b; const pops = hpPops(b); const fdo = !!G.data.fdet; const hud = hudEff(fdo); HUDNOW = hud;
+  const b = G.b; if (typeof fcTip === 'function') fcTip(b); /* 10월 24일 S-4: 강적 시계를 처음 보면 한 줄(한 번만) */ const pops = hpPops(b); const fdo = !!G.data.fdet; const hud = hudEff(fdo); HUDNOW = hud;
   const tg = G.sel ? b.en.find(e => e.id === G.sel && e.alive) : null;
   const html = {
     'hud-player': vHudPlayer(b, hud, pops, fdo), 'hud-classchip': vHudClass(b, hud), 'hud-incoming': vHudIncoming(b, hud), 'hud-status': vHudStatus(b, hud),

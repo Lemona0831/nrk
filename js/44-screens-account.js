@@ -183,8 +183,17 @@ function playTick() { const run = G.run; if (!run || runOver(run) || G.creating)
 function rankEntry(run, st) {
   const e = { id: run.id, v: VERSION, cname: run.cname || '', build: run.build, ch: run.ch || 1, floor: Math.min(run.room || 1, FLOOR_BOSS), clears: run.clears || 0, mode: run.mode || 'normal', lv: run.lv || 1, st: st || (run.clears ? 'clear' : 'alive'), ms: Math.round(run.playMs || 0), at: Date.now(), eq: run.eqU ? EQ_SLOTS.map(sl => { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; return it ? it.tpl : null; }).filter(Boolean) : [] };
   if (G.data && G.data.title && titleEarned(G.data.title)) e.title = G.data.title; // 칭호(계정 목표)
+  e.sum = rankSum(run, e); // S-4(10월 24일): 판 요약
   return e;
 }
+/* S-4 랭킹 위조 막기(10월 24일): 줄마다 판 요약(sum)을 함께 보낸다 — 판 번호 · 시작 시각 · 지금 층 · 전투 수 · 플레이 시간 · 배포 지문 · 점수.
+   서버(nrk-private/서버/S-4-랭킹위조-2026-10-24.sql)가 값 범위 · 판 번호마다 한 줄 · 점수와 요약 · 최소 시간을 맞춰 본다.
+   요약은 문서(data) 안의 칸이라 표에 열이 늘지 않는다 — 서버를 아직 안 바꿨어도 저장은 그대로 되고, 서버가 거절해도 pushRank는 조용히 넘기고 이 브라우저의 rank80은 남긴다 */
+const rankFights = run => (run.rooms || []).filter(x => x && x.res && x.hpOut != null).length; // 전투 기록(afterBattle)만 센다 — 보스 승리 줄 · 이벤트 · 야영지 줄은 뺀다
+const rankRev = () => typeof releaseRev === 'function' ? releaseRev() : ''; // 배포 지문: index.html nrk-release 앞 12자(66-dungeon-flow.js). 파일로 열면 ''
+function rankSum(run, e) { return { rid: run.id, t0: run.startedAt || 0, floor: run.room || 0, fights: rankFights(run), ms: e.ms, rev: rankRev(), sc: rankScore(e) }; }
+/* 랭킹에 세우기 전 거르기: 있을 수 없는 값(범위 밖 · 요약과 어긋남)인 줄은 보이지 않는다. 요약이 없는 옛 줄(S-4 전)은 범위만 본다. 순위 식은 그대로 */
+const rankOk = e => { const n = (x, a, b) => Number.isInteger(x) && x >= a && x <= b, ch = e.ch || 1, cl = e.clears || 0, s = e.sum; if (!n(ch, 1, Object.keys(CHAPTERS).length) || !n(cl, Math.max(0, ch - 1), ch) || !n(e.floor || 1, 1, FLOOR_BOSS) || !n(e.lv || 1, 1, LV_XP.length) || !n(e.ms || 0, 0, 2592e6)) return false; return !s || (s.rid === e.id && s.ms === e.ms && s.sc === rankScore(e) && (s.fights || 0) >= cl); };
 async function pushRank(run, st) {
   if (!run || !run.id || run.markCh) return; const e = rankEntry(run, st); /* 표식 도전 판은 랭킹에 올리지 않는다(표식 기록판에 따로) */
   G.data.rank80 = Object.assign({}, G.data.rank80, { [run.id]: e }); saveLocal(); // M8: 시즌 키(rank80)
@@ -202,7 +211,7 @@ function rankRows() {
   const out = [];
   if (G.db && G.board) { for (const x of G.board) for (const e of Object.values(x.rank80 || {})) out.push(Object.assign({ nick: x.name || '', me: x.uid === G.uid }, e)); }
   else for (const e of Object.values(G.data.rank80 || {})) out.push(Object.assign({ nick: G.data.name || '', me: true }, e));
-  return out.filter(e => BUILDS[e.build]).sort(rankCmp);
+  return out.filter(e => BUILDS[e.build] && rankOk(e)).sort(rankCmp);
 }
 function backBtn() { return `<button class="sm back" data-a="back">← 돌아가기</button>`; }
 

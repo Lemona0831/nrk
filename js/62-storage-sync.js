@@ -77,7 +77,7 @@ function cloudSaveIssue(e) {
   G.saveSync = '계정 전송을 준비하지 못했습니다. 이 기기의 저장본은 유지됩니다.';
 }
 function saveLocal() {
-  if (G.localReadBlocked) return false;
+  if (G.localReadBlocked || G.tabStale) return false; // 10월 24일 S-4: 다른 탭이 저장한 뒤의 낡은 탭은 덮어쓰지 않는다(js/64 tabWatch)
   // 계정 추적·전송 예약 오류는 완료된 로컬 저장을 실패로 되돌리지 않는다.
   try { cloudTrack(); } catch (e) { cloudSaveIssue(e); }
   let json; try { json = JSON.stringify(G.data); if (typeof json !== 'string') throw new Error('save_format'); } catch (e) { localSaveIssue('serialize', e); return false; }

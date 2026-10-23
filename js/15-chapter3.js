@@ -575,7 +575,7 @@ function smugStock(run, R) {
   if (R.stock) return R.stock;
   const uq = typeof UNIQUE !== 'undefined' ? Object.keys(UNIQUE).filter(id => UNIQUE[id].g === 'r' && (UNIQUE[id].cls === 'all' || UNIQUE[id].cls === run.build)) : [];
   const pick = []; while (pick.length < SMUG3.uq.n && pick.length < uq.length) { const id = uq[Math.floor(Math.random() * uq.length)]; if (!pick.includes(id)) pick.push(id); }
-  R.stock = { uq: pick, sold: null }; return R.stock;
+  R.stock = { uq: pick, sold: null }; if (G.run && R === G.run.cur) { saveRunLocal(); saveCur(); } return R.stock; // 10월 24일 S-4: 처음 그릴 때 정한 고유 둘을 바로 저장(새로 고침으로 다시 굴리지 못하게)
 }
 function vSmug(run, R) {
   const S = smugStock(run, R), g = run.gold || 0, M = SMUG3; const btn = (k, t, ok, why) => `<button data-a="smbuy" data-k="${k}"${ok ? '' : ' disabled'}>${esc(t)}${!ok && why ? ` <small>${esc(why)}</small>` : ''}</button>`;

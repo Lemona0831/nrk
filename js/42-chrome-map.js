@@ -145,12 +145,12 @@ function vRoom(run, R) {
   if (R.type === 'spring') return h + `<h3>💧 샘</h3><p>샘에서 쉬면 생명력이 50% 차고, 플라스크가 하나씩 찹니다.</p><button class="gold" data-a="rest" data-focus>샘에서 쉬기</button></section>`;
   if (R.type === 'shrine') { const S = SHRINES.find(x => x.id === R.shrine); return h + `<h3>🕯️ ${esc(S.n)}</h3><p>${esc(S.d)} 다음 3개 방 동안 이어집니다.</p><div class="row"><button class="gold" data-a="shrine" data-k="1" data-focus>기도한다</button><button data-a="shrine" data-k="0">지나친다</button></div></section>`; }
   if (R.type === 'altar') {
-    const A = ALTARS.find(x => x.id === R.altar); const gc = altarGold(run); const useC = (run.cons || []).filter(c => CONS[c.id].use !== 'none').reduce((a, c) => a + c.n, 0); const can = A.id === 'gold' ? (run.gold || 0) >= gc : A.id === 'offer' ? run.bag.length > 0 : A.id === 'bone' ? useC >= 3 : A.id === 'ash' ? (run.cons || []).filter(ashOk).reduce((a, c) => a + c.n, 0) >= 4 : true;
-    return h + `<h3>🩸 ${esc(A.n)}</h3><p>${esc(A.id === 'gold' ? A.d.replace('40', gc) : A.d)}</p>${A.id === 'gold' ? `<p class="mini">가진 골드 ${run.gold || 0}</p>` : ''}${['bone','ash'].includes(A.id) && can ? `<p class="mini"><b>바칠 소모품</b>: ${altarConsCost(run,A.id).map(esc).join(', ')}</p>` : ''}<div class="row"><button class="gold" data-a="altar" data-k="1"${can ? '' : ' disabled'} data-focus>${A.id === 'offer' ? '바칠 장비 고르기' : '거래한다'}</button><button data-a="altar" data-k="0">지나친다</button></div>${!can ? `<p class="mini">${A.id === 'gold' ? '골드가 모자랍니다.' : A.id === 'ash' ? '태울 소모품이 넷 모자랍니다.' : A.id === 'bone' ? '바칠 소모품이 셋 모자랍니다.' : '바칠 장비가 가방에 없습니다.'}</p>` : ''}</section>`;
+    const A = ALTARS.find(x => x.id === R.altar) || { id: '', n: '무너진 제단', d: '바칠 곳이 무너져 내렸다.' }; const gc = altarGold(run); const can = A.id === 'gold' ? (run.gold || 0) >= gc : A.id === 'offer' ? run.bag.length > 0 : !!A.id; // 10월 24일 S-4: 옛 3챕터 제단(재 · 뼈 · 유리 저울)을 뺐다. 지금 풀에 없는 제단은 지나치기만 한다
+    return h + `<h3>🩸 ${esc(A.n)}</h3><p>${esc(A.id === 'gold' ? A.d.replace('40', gc) : A.d)}</p>${A.id === 'gold' ? `<p class="mini">가진 골드 ${run.gold || 0}</p>` : ''}<div class="row"><button class="gold" data-a="altar" data-k="1"${can ? '' : ' disabled'} data-focus>${A.id === 'offer' ? '바칠 장비 고르기' : '거래한다'}</button><button data-a="altar" data-k="0">지나친다</button></div>${!can && A.id ? `<p class="mini">${A.id === 'gold' ? '골드가 모자랍니다.' : '바칠 장비가 가방에 없습니다.'}</p>` : ''}</section>`;
   }
   if (R.type === 'event') {
-    const E0 = EVENTS.find(x => x.id === R.event);
-    const dis = o => (E0.id === 'reliquary' && o.id === 'force' && run.p.st < 40) || (E0.id === 'buried' && o.id === 'dig' && run.p.st < 50) || (E0.id === 'monk' && o.id === 'feed' && !(run.p.flask.life + run.p.flask.mana + (run.p.flask.stam || 0))) || ch2EvDis(run, E0, o) || w3EvDis(run, E0, o);
+    const E0 = EVENTS.find(x => x.id === R.event) || { id: R.event, n: '흔적만 남은 자리', lore: '무언가 있던 자리인데, 이제는 아무것도 없다.', opts: [{ id: 'pass', n: '지나간다' }] }; // 10월 24일 S-4: 지금 풀에 없는 옛 이벤트는 지나가기만 한다
+    const dis = o => (E0.id === 'reliquary' && o.id === 'force' && run.p.st < 40) || (E0.id === 'monk' && o.id === 'feed' && !(run.p.flask.life + run.p.flask.mana + (run.p.flask.stam || 0))) || ch2EvDis(run, E0, o) || w3EvDis(run, E0, o);
     return h + `<h3>❔ ${esc(E0.n)}</h3><p class="lore">${esc(E0.lore)}</p><div class="evopts">${E0.opts.map(o => `<button class="evo" data-a="event" data-k="${o.id}"${dis(o) ? ' disabled' : ''}><b>${esc(o.n)}</b>${o.d ? `<small>${esc(o.d)}</small>` : ''}</button>`).join('')}</div></section>`;
   }
   // 전투 방
@@ -159,7 +159,6 @@ function vRoom(run, R) {
   if (R.mods && R.mods.length) h += R.mods.map(m => `<p class="mini"><b>${esc(ROOM_MODS[m].n)}</b>: ${esc(ROOM_MODS[m].d)}</p>`).join('');
   h += `<p>이 방의 적 <span class="mini">Lv${R.lv || 1}</span></p><ul class="elist">${R.en.map((x, i) => `<li>${ROLES[x[0]].ico} ${esc(roomEnemyName(R, x, i))} <span class="mini">${ROLES[x[0]].n} · ${ROLES[x[0]].row === 'front' ? '전열' : '후열'}</span></li>`).join('')}${run.next && run.next.chase ? '<li>굶주린 수도사 <span class="mini">전열</span></li>' : ''}</ul>${q('roles', '적의 역할')}${roomXpHint(R, run.mode)}`;
   const nx = run.next || {};
-  { const n3 = run.next3 || {}; if (['normal', 'ambush'].includes(R.type) && Object.keys(n3).length) h += `<p class="mini warn">${n3.pre ? Object.keys(n3.pre).map(k => KW_N[k] + ' ' + n3.pre[k]).join(' · ') + '을(를) 안고 들어갑니다. ' : ''}${n3.ambush ? '모래 매복입니다. ' : ''}${n3.herald ? '여왕의 전령이 보낸 정예가 기다립니다. ' : ''}${n3.noon ? '작열하는 한낮, 열기 ' + n3.noon + '에서 시작합니다.' : ''}</p>`; } // 3챕터 이벤트가 붙인 것
   if (nx.pre) h += `<p class="mini warn">${nx.pre.weak ? '약화·취약을 안고 ' : ''}${nx.pre.poison ? '중독 ' + nx.pre.poison + '을 안고 ' : ''}들어갑니다.</p>`;
   h += `<p class="mini">보상: ${R.hide ? esc(rewardHint(R)) : '골드 ' + R.gold + (R.mods && (R.mods.includes('bell') || R.mods.includes('drums')) ? ' ×1.5' : '') + ', ' + esc(T.hint)}. 들어가기 전에 장비를 바꿔도 됩니다.</p>${ch2EnterBtns(run, R)}</section>`;
   return h;

@@ -162,6 +162,7 @@ function campInit(run) {
   run.camp = { room: run.room, ch, mul, rested: 0, log: [], cons: pick.map(id => ({ id, price: price(id), left: id === 'herb' ? Math.min(SHOP_CONS.herb[run.mode === 'hard' ? 'hard' : 'normal'], chData(ch).campHerb != null ? chData(ch).campHerb : 99) : CAMP_SHOP.stock /* 0.8.0 6단계 마감: 챕터별 야영지 약초 재고(campHerb) */ })) };
   const ps = pouchSell(run); if (ps.n) run.camp.sold = ps;
   if (ch === 2) run.camp.oil = { price: LAMP.shop.price, left: LAMP.shop.n }; ch2Markup(run, run.camp); // A2 장터 상점 기름 · 빚의 제단
+  if (run === G.run) { saveRunLocal(); saveCur(); } // 10월 24일 S-4: 진열 · 값 배율은 화면에 그리며 처음 만든다. 바로 저장해 새로 고침으로 다시 굴리지 못하게 한다
   return run.camp;
 }
 /* 10월 24일 만든 사람 요청으로 다시 짠 화면(디자인 재점검): 방 card 하나 안에 불가 · 떠돌이 상인을 가는 선으로 나눈다. 금색은 주 행동 하나(쉬기 전에는 쉬기, 쉰 뒤에는 내려가기). 상인은 단추 → 상인 창 */

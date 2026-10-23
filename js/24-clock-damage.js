@@ -165,8 +165,6 @@ function hurtPlayer(b, raw, o) {
   if (p.build === 'monk' && p.stance && p.stance.red && !o.dot && !o.judgment) d *= 1 - p.stance.red; // 0.8.0 5단계 철산고: 그 자세만 받는 직접 피해를 줄인다
   if (p.ward > 0 && p.eq.armor === 'wardcrest') d *= 0.85;
   if (p.retal) d *= 0.7;
-  if (hasBt(p, 'procession') && !o.dot) d *= 0.9; // 장례 행렬을 뒤따랐다
-  if (hasBt(p, 'ashcover') && !o.dot) d *= 0.95; // 3챕터 재 속의 이름: 재를 덮어 주었다
   if (p.brace) d *= 0.65;
   if (o.charged && hasIt(p, 'fury')) d *= 1.1;
   if (p.st <= 0 || p.exhaust) d *= 1.2;

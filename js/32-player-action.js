@@ -110,7 +110,7 @@ function fleeChance(b) { return clamp(0.6 + (pSpeed(b) - 1) * 0.4, 0.05, 0.95); 
 function outDmg(b, base, o) {
   const p = b.p; let d = base;
   if (b.cur) d *= fxMul(p, 'out', b, p, b.cur);
-  if (hasBt(p, 'wrath')) d *= 1.1; if (hasBt(p, 'snuff')) d *= 0.95; if (hasBt(p, 'procession')) d *= 0.9; if (hasBt(p, 'herald')) d *= 0.95;
+  if (hasBt(p, 'wrath')) d *= 1.1; if (hasBt(p, 'snuff')) d *= 0.95;
   if ((p.eq.weapon === 'hook' || uqF(p, 'u_wpnCut')) && o.weapon) d *= 0.85; /* M6-1 고유 cm_hook 대가: 무기 피해 −15% */
   if (o.weapon) d *= 1 + weaponStatBonus(p);
   if (p.eq.amulet === 'bloodpact' && p.hp < p.hpMax * 0.5) d *= 1.2;

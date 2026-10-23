@@ -39,11 +39,17 @@ function fcDoom(b, e) {
   if (D.perm) C.perm = 1; else C.n = 0;
   D.doom(b, e);
 }
-/* 적 카드 칩: 이름 n/max와 칸. 마지막 칸 앞이면 깜빡임(움직임 줄이기면 색만) */
+/* 적 카드 칩: 이름 n/max와 칸. 마지막 칸 앞이면 ⚠ 글자 · 굵은 테두리 · 깜빡임(움직임 줄이기면 깜빡임 없이 ⚠와 테두리만. 10월 24일 S-4: 색만으로 알리지 않는다) */
 function fcChip(b, e) {
   const D = fcDef(e); if (!D || !e.clk) return ''; const C = e.clk, warn = !C.perm && C.n >= C.max - 1;
   const cells = Array.from({ length: C.max }, (_, i) => `<i class="${i < C.n || C.perm ? 'on' : ''}"></i>`).join('');
-  return `<span class="fclk${warn ? ' warn' : ''}${C.perm ? ' perm' : ''}" data-info="fclk" aria-label="${esc(D.n)} ${C.perm ? '가득' : C.n + '/' + C.max}${warn ? ', 다음이면 위험' : ''}">${esc(D.n)} <b>${C.perm ? C.max : C.n}/${C.max}</b><span class="fclkc" aria-hidden="true">${cells}</span></span>`;
+  return `<span class="fclk${warn ? ' warn' : ''}${C.perm ? ' perm' : ''}" data-info="fclk" aria-label="${esc(D.n)} ${C.perm ? '가득' : C.n + '/' + C.max}${warn ? ', 다음이면 위험' : ''}">${warn ? '<span class="fclkw" aria-hidden="true">⚠</span>' : ''}${esc(D.n)} <b>${C.perm ? C.max : C.n}/${C.max}</b><span class="fclkc" aria-hidden="true">${cells}</span></span>`;
+}
+/* 10월 24일 S-4 처음 만남 한 줄: 시계 칩이 처음 보이는 전투에서 한 번만 알린다(G.data.seenClk. 2챕터 새 역할 처음 만남과 같은 틀: 기록 한 줄 + 알림). 무엇이 답인지는 말하지 않는다 */
+const FC_TIP = '칸이 다 차면 싸움이 크게 위험해집니다. 한 칸 남으면 마지막 경고가 뜹니다';
+function fcTip(b) {
+  if (typeof G === 'undefined' || !G.data || G.data.seenClk || !b || b !== G.b || b.over || G.hudEd || G.scr !== 'run' || !b.en.some(e => e.alive && e.clk && fcDef(e))) return 0;
+  G.data.seenClk = 1; logp(b, 'sys', '처음 만남 · 강적의 시계. ' + FC_TIP); if (typeof toast === 'function' && typeof document !== 'undefined') toast(FC_TIP); if (typeof saveLocal === 'function') saveLocal(); return 1;
 }
 /* 2 · 3챕터 정의는 이 파일보다 먼저 읽히는 챕터 파일에 있다: 여기서 한 번 넣는다 */
 if (typeof ch2ClockReg === 'function') ch2ClockReg(); if (typeof w3ClockReg === 'function') w3ClockReg();

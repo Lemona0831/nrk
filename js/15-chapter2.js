@@ -499,7 +499,7 @@ function marketStock(run, R) {
   if (R.stock) return R.stock;
   const uq = typeof UNIQUE !== 'undefined' ? Object.keys(UNIQUE).filter(id => UNIQUE[id].g === 'r' && (UNIQUE[id].cls === 'all' || UNIQUE[id].cls === run.build)) : [];
   const uid = uq.length ? uq[Math.floor(Math.random() * uq.length)] : null;
-  R.stock = { uq: uid, hero: 1, bundle: 1, sold: null }; return R.stock;
+  R.stock = { uq: uid, hero: 1, bundle: 1, sold: null }; if (G.run && R === G.run.cur) { saveRunLocal(); saveCur(); } return R.stock; // 10월 24일 S-4: 처음 그릴 때 정한 고유를 바로 저장(새로 고침으로 다시 굴리지 못하게)
 }
 /* --- 화면: 방에 들어가기(어둠이면 등불 기름) · 암시장 --- */
 function ch2EnterBtns(run, R) {

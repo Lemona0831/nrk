@@ -33,7 +33,7 @@ function genSeg(run, si, path) {
   } finally { run.dg = JSON.parse(d0); run.path = p0; }
   return out;
 }
-/* 미리 만든 구간의 문(없으면 그 자리에서 만든다). 구간 안에서 생긴 강제 문(종탑의 줄 · 묻힌 문 등)은 그 층의 일반 문 하나를 바꿔 넣는다 */
+/* 미리 만든 구간의 문(없으면 그 자리에서 만든다). 구간 안에서 생긴 강제 문(종탑의 줄 · 무너진 망루 · 다락의 아이들 등)은 그 층의 일반 문 하나를 바꿔 넣는다 */
 function segDoorsAt(run, f) {
   const s = run.segDoors && run.segDoors[f]; if (!s) return genDoors(run, f);
   const d = run.dg; let ds = s.slice(); if (d.force && !ds.some(r => r.type === d.force)) { const k = ds.findIndex(r => r.type === 'normal'); ds[k >= 0 ? k : ds.length - 1] = mkRoom(run, d.force, f); } d.force = null;
@@ -66,7 +66,7 @@ function genDoors(run, f) {
   if (f === 1) types = ['normal', 'normal', typeOk(run, 'treasure', f) && Math.random() < 0.5 ? 'treasure' : 'shrine'];
   else if (f === FLOOR_CAMP + 1) { types = ['normal']; const t2 = pickType(run, f, types, ['ambush', 'strong']); if (t2) types.push(t2); const t3 = pickType(run, f, types, RESTS); if (t3) types.push(t3); }
   else {
-    if (d.force) { need(d.force); d.force = null; } // 종탑의 줄 · 뼈 피리 · 해를 앞당긴다(강적), 묻힌 문(보물)
+    if (d.force) { need(d.force); d.force = null; } // 종탑의 줄 · 무너진 망루(강적), 다락의 아이들(성소). 10월 24일 S-4: 옛 2 · 3챕터 이벤트(뼈 피리 · 해시계 · 묻힌 문)는 뺐다
     // 0.8.0 6단계: "반쯤 왔는데 강적을 못 봤으면"은 구간마다 강적 층을 보장하는 genSeg가 맡는다
   }
   while (types.length < 3) { const t = pickType(run, f, types); if (!t) break; types.push(t); }
@@ -201,13 +201,13 @@ function dropKey(run, g, not) { if (GEAR8.on) return 'g8|' + g; /* 0.8.0 M6-2: �
 }
 /* 챕터 보스를 이기면 장비 하나 (표가 있는 챕터만, 정산 화면에 보인다) */
 function bossLoot(run) { if (!DROP_G[run.ch || 1]) return null; const it = GEAR8.on ? g8Gen(run, { where: 'boss', g: g8Grade(run.ch, 'boss') }) : mkItem(dropKey(run, rollGradeCh(run.ch, 'boss'))); if (!isG8(it)) it.g = ITEMS[it.tpl].g || 'n'; /* 0.8.0 M6-2: 보스는 무기 · 갑옷 가중, 희귀 이상(3챕터 영웅) */ if (!addItem(run, it)) { run.gearPending = { item: it, then: 'boss' }; return { tpl: it.tpl, g: it.g, pending: 1 }; } run.drops.push({ room: run.room, item: it.tpl, g: it.g, b: it.b, boss: 1, ch: run.ch || 1 }); return { tpl: it.tpl, g: it.g }; }
-function queueDrops(list) { G.dropQ = (G.dropQ || []).concat(list); nextDrop(); }
+function queueDrops(list) { G.dropQ = (G.dropQ || []).concat(list); if (G.run) G.run.dropQ = G.dropQ; nextDrop(); } // 10월 24일 S-4: 건넬 전리품 줄은 판(run.dropQ)에 같이 저장한다. 창이 떠 있을 때 새로 고침해도 남은 전리품이 사라지거나 다시 굴려지지 않는다
 function nextDrop() {
   const run = G.run; if (run && run.gearPending) { openSheet('bagfull', run.gearPending); return; } if (G.winSumShown) { G.winSum = null; G.winSumShown = false; }
   if (run && (run.consPending || []).length) { saveRunLocal(); saveCur(); openSheet('consfull'); return; }
   if (run && run.patrolPend && (!G.dropQ || !G.dropQ.length) && !G.b) { saveRunLocal(); saveCur(); openSheet('patrol', {}); return; } // 0.8.0 6단계 A-6: 전리품을 다 건넨 뒤 순찰대 보상 고르기
   if (!run || !G.dropQ || !G.dropQ.length) { G.winSum = null; render(); if (run) ksOpen(); return; } // 10월 16일 0.8.0 2단계: 3챕터 야영지에 들어서며 받은 큰 각인
-  const it = G.dropQ.shift(); if (it.chest) { openSheet('choice', { offer: it.chest, room: it.room, chest: 1 }); if (G.winSum) G.winSumShown = true; return; } run.drops.push({ room: run.room, item: it.tpl, g: it.g, b: it.b, ch: run.ch || 1 }); giveItem(it); if (G.winSum) G.winSumShown = true;
+  const it = G.dropQ.shift(); if (it.chest) { run.chestPend = it; saveRunLocal(); saveCur(); openSheet('choice', { offer: it.chest, room: it.room, chest: 1 }); if (G.winSum) G.winSumShown = true; return; } /* 10월 24일 S-4: 상자의 두 장비는 보이기 전에 저장(chestPend, 고르면 지운다) */ run.drops.push({ room: run.room, item: it.tpl, g: it.g, b: it.b, ch: run.ch || 1 }); giveItem(it); if (G.winSum) G.winSumShown = true;
 }
 function gainXp(run, n) {
   run.xp = (run.xp || 0) + n; let up = 0;
@@ -327,27 +327,10 @@ function statNext(p, k) {
     ? `, ${p.build === 'elementalist' ? '열충격' : '독 격발'} 피해 +${s * TRIGGER_STAT_PCT}% → +${(s + 1) * TRIGGER_STAT_PCT}%` : '';
   return weapon + skill + (isV2(p) ? '' : `마나 ${calcMpMax(p)} → ${calcMpMax(up)}, `) + `${p.build === 'elementalist' ? '중독·출혈·화상·화상 소모 피해' : isV2(p) ? '중독·출혈·화상 피해' : '지속 피해와 정화 피해'} +${s * 2}% → +${(s + 1) * 2}%` + trigger + ((s + 1) % 10 === 0 && !isV2(p) ? '. 10점: 독 격발 붕괴 +5' : '');
 }
-/* 3챕터 이벤트의 "다음 전투" (11.1절): 다음 일반 · 매복 전투에만 붙는다 */
-function next3Room(room, n3) {
-  if (!n3 || !Object.keys(n3).length) return;
-  if (n3.pre) room.pre = Object.assign({}, room.pre || {}, n3.pre);
-  if (n3.herald) { room.en = (room.en || []).concat([['bruiser', 1]]); room.fire = (room.fire || []).concat([room.en.length - 1]); }
-  if (n3.ambush && !room.ambush) room.ambush = 1;
-  if (n3.noon) { room.mods = (room.mods || []).filter(m => m !== 'noon').concat(['noon']); room.heat0 = n3.noon; }
-}
 /* 3챕터: 처음 만난 위협의 방을 이기면 그 상황을 푸는 소모품 하나 (5.1절 5번) */
 function firstGift3(run, b, R) {
   run.dg.gift = run.dg.gift || {}; const keys = b.en.map(e => e.role).concat(R.mods || []);
   for (const k of keys) if (FIRST_GIFT3[k] && !run.dg.gift[k]) { run.dg.gift[k] = 1; if (k === 'haze') run.dg.gift.mirage = 1; if (k === 'mirage') run.dg.gift.haze = 1; if (!consGrant(run, FIRST_GIFT3[k], 'n', 1)) toast('처음 겪은 것의 답: ' + CONS[FIRST_GIFT3[k]].ico + ' ' + CONS[FIRST_GIFT3[k]].n); }
-}
-const ashOk = c => CONS[c.id].use !== 'none' && CONS[c.id].price > 6; // 재의 제단에 태울 수 있는 것 (파는 것 · 돌멩이 제외)
-function altarConsCost(run, id) {
-  let left = id === 'ash' ? 4 : 3; const out = [];
-  for (const c of run.cons || []) {
-    if (!(id === 'ash' ? ashOk(c) : CONS[c.id].use !== 'none')) continue;
-    const n = Math.min(left, c.n); if(n)out.push(consName(c) + ' ×' + n); left -= n; if(!left)break;
-  }
-  return left ? [] : out;
 }
 function altarReceipt(run, id, paid, received) {
   const receipt = { room: run.room, ch: run.ch || 1, name: (ALTARS.find(a=>a.id===id)||{}).n || '제단', paid, received };
@@ -357,29 +340,21 @@ function altarReceiptHtml(run) {
   const x=run.lastAltar;if(!x)return '';
   return `<details class="card"${run.room===x.room+1?' open':''}><summary>${esc(x.name)} · ${x.ch}챕터 ${x.room}층 거래 결과</summary><p><b>바친 것</b>: ${x.paid.map(esc).join(', ') || '없음'}</p><p><b>받은 것</b>: ${x.received.map(esc).join(', ') || '없음'}</p></details>`;
 }
-function burnCons(run, n) { if ((run.cons || []).filter(ashOk).reduce((a, c) => a + c.n, 0) < n) return false; for (let k = 0; k < n; k++) { const c = run.cons.find(ashOk); c.n--; if (c.n <= 0) run.cons.splice(run.cons.indexOf(c), 1); } return true; }
 /* 2챕터 이벤트 · 제단 도우미 (10월 5일) */
-const EVBUFF = { lit: ['가게 등불', '어둠 방이 나오지 않습니다.'], elixir: ['약장수의 병', '주는 피해 +15%.'], elixirB: ['병의 뒤끝', '받는 피해 +10%.'], fog: ['몽롱한 연기', '주는 피해 −15%.'], names: ['벽의 이름들', '전투를 약화 1로 시작합니다.'], snuff: ['꺼진 촛불', '받는 화상 피해 0, 대신 주는 피해 −5%.'], procession: ['장례 행렬', '받는 직접 피해 −10%, 주는 피해 −10%.'], ashcover: ['재를 덮어 주었다', '받는 직접 피해 −5%.'], herald: ['전령에게 무릎 꿇었다', '받는 화상 피해 0, 대신 주는 피해 −5%.'] }; // 이벤트로 얻는 몇 방 동안의 효과
+const EVBUFF = { lit: ['가게 등불', '어둠 방이 나오지 않습니다.'], elixir: ['약장수의 병', '주는 피해 +15%.'], elixirB: ['병의 뒤끝', '받는 피해 +10%.'], fog: ['몽롱한 연기', '주는 피해 −15%.'], names: ['벽의 이름들', '전투를 약화 1로 시작합니다.'], snuff: ['꺼진 촛불', '받는 화상 피해 0, 대신 주는 피해 −5%.'] }; // 이벤트로 얻는 몇 방 동안의 효과
 const altarGold = run => { const A = ALTARS.find(x => x.id === 'gold'); const v = A && A.cost ? A.cost[Math.min(A.cost.length, run.ch || 1) - 1] : 40; return v; };
-function n3pre(run, k, n) { run.next3 = run.next3 || {}; run.next3.pre = Object.assign({}, run.next3.pre); run.next3.pre[k] = (run.next3.pre[k] || 0) + n; } // 3챕터 이벤트: 다음 일반 · 매복 전투의 시작 상태
 /* 가장 많이 찬 플라스크(10월 24일 만든 사람 요청: 둘 이상이 같으면 플레이어가 고른다). flaskTies: 같은 최대 칸 수의 종류들, flaskTake1: 고른 것(없거나 동률 밖이면 첫째)을 한 칸 비운다 */
 const FLASK_K = ['life', 'mana', 'stam'], FLASK_KN = { life: '생명력', mana: '정화', stam: '스태미나' };
 function flaskTies(p) { const m = Math.max(...FLASK_K.map(k => p.flask[k] || 0)); return m > 0 ? FLASK_K.filter(k => (p.flask[k] || 0) === m) : []; }
 function flaskTake1(p, pick) { const T = flaskTies(p), k = T.includes(pick) ? pick : T[0]; if (k) p.flask[k] = Math.max(0, (p.flask[k] || 0) - 1); return k || null; }
 const FLASK_PICK_EV = ['monk:feed', 'attic:feed']; // 가장 많이 찬 플라스크 하나를 비우는 이벤트 선택지
-function takeCons(run, n) { const pool = (run.cons || []).filter(c => CONS[c.id].use !== 'none'); if (pool.reduce((a, c) => a + c.n, 0) < n) return false; for (let k = 0; k < n; k++) { const c = run.cons.find(x => CONS[x.id].use !== 'none'); c.n--; if (c.n <= 0) run.cons.splice(run.cons.indexOf(c), 1); } return true; }
-function giveChCons(run, ch) { const ids = Object.keys(CONS).filter(k => (CONS[k].ch || 1) === ch && CONS[k].use !== 'none'); if (!ids.length) return; const id = pickR(ids); consGrant(run, id, 'n', 1); }
-function refundDeepest(run) { if (!run.atree) return null; return atRefundLeaf(run); } // 10월 16일 0.8.0 2단계: 잊힌 스승의 묘비는 액티브 노드 하나(끝 노드 가운데 가장 바깥 것)
 function enterRoom() {
   const run = G.run; const R = roomDef(); const p = run.p; if (!R.type) return;
   if (run.ksPending > 0 && ksOpen()) return; // 10월 16일 0.8.0 2단계: 받을 큰 각인이 있으면 먼저 고른다
   if (!ROOM_TYPES[R.type] || !ROOM_TYPES[R.type].fight) { if (R.type !== 'boss') return; }
   const nx = run.next || {}; const room = Object.assign({}, R, { buffs: Object.assign({}, run.buffs), pre: nx.pre || null, mode: run.mode || 'normal' });
   if (run.marks && run.marks.length) room.marks = run.marks; // 표식 도전
-  const n3 = ['normal', 'ambush'].includes(R.type) ? (run.next3 || {}) : {}; next3Room(room, n3); if (['normal', 'ambush'].includes(R.type)) { run.next3Used = n3; run.next3 = {}; } else run.next3Used = null; // 3챕터 이벤트의 "다음 전투": 다음 일반 · 매복 전투에만
   if (nx.chase && R.type !== 'boss') { room.en = (room.en || []).concat([['bruiser']]); }
-  if (nx.coffin && R.type !== 'boss') room.en = (room.en || []).concat([['skeleton', 1]]); // 봉인된 관
-  if (nx.block && R.type !== 'boss') room.en = (room.en || []).concat([['bruiser']]); // 장례 행렬을 막아섰다
   if (nx.reader && R.type !== 'boss') room.en = (room.en || []).concat([['darkmage']]); // A1 무너진 서고: 번진 글자를 읽고 말았다
   if ((run.ch || 1) === 2) ch2Enter(run, R, room, nx); // A2 등불 기름 · 이벤트 흔적
   if ((run.ch || 1) === 3 && !OLD3) w3Enter(run, R, room, nx); // A3 경보 당김 · 이벤트 흔적
@@ -431,8 +406,8 @@ function battleContinue() {
   const lootE = (run.lootLog || []).length > nLL ? run.lootLog[run.lootLog.length - 1] : null;
   fxRun(run.p, 'onWin', run);
   const xpGot = Math.round(b.xp || 0); const lvUp = gainXp(run, xpGot);
-  const nu3 = run.next3Used || {}; run.next3Used = null; if (old3(run.ch)) firstGift3(run, b, R);
-  let gold = (R.gold || 0) * (R.mods && (R.mods.includes('bell') || R.mods.includes('drums')) ? 1.5 : 1) + (nu.chase ? 20 : 0) + (nu.block ? 30 : 0) + (R.type === 'treasure' ? fxVal(run.p, 'treasureGold', 0, (a, v) => a + v) : 0);
+  if (old3(run.ch)) firstGift3(run, b, R);
+  let gold = (R.gold || 0) * (R.mods && (R.mods.includes('bell') || R.mods.includes('drums')) ? 1.5 : 1) + (nu.chase ? 20 : 0) + (R.type === 'treasure' ? fxVal(run.p, 'treasureGold', 0, (a, v) => a + v) : 0);
   if (gold) gainGold(run, gold, ROOM_TYPES[R.type].n + ' 방을 넘었습니다');
   G.winSum = { gold: Math.round((run.gold || 0) - g0), xp: xpGot, lv: lvUp ? run.lv : 0, got: lootE ? lootE.got : {}, lost: lootE ? lootE.lost : 0 }; // 화면 요약용(규칙에 쓰지 않는다)
   const drops = []; const t = R.type;
@@ -443,8 +418,6 @@ function battleContinue() {
   if (t === 'strong' && (run.ch || 1) === 2 && run.dg.strongUp) { drops.push(mkItem(dropKey(run, 'h'))); run.dg.strongUp = 0; } // A2 벽의 이름들: 강적 방 보상 한 단계 위
   if (t === 'strong') drops.push(mkItem(dropKey(run, rollGradeCh(run.ch, 'big')))); /* 강적은 희귀 이상 보장 (10월 4일, 2챕터부터 영웅 · 전설도) */
   if (t === 'trial') drops.push(mkItem(dropKey(run, rollGradeCh(run.ch, 'big'))));
-  if (nu.coffin) drops.push(mkItem(dropKey(run, rollGradeCh(run.ch, 'big'))));
-  if (nu3.herald) drops.push(mkItem(dropKey(run, 'r'))); // 여왕의 전령에게 칼을 뽑았다
   for (let k = 0; k < (nu.extraDrop || 0); k++) drops.push(mkItem(dropKey(run, pg(rollGradeCh(run.ch, 'room')))));
   for (const it of drops) if (!isG8(it)) it.g = ITEMS[it.tpl].g || 'n';
   advanceFloor();

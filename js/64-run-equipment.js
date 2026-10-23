@@ -2,7 +2,7 @@
 /* ---------- 런 ---------- */
 function shuffleSeeded(arr, seed) { const a = arr.slice(); const r = mulberry(seed); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function startRun(build, boss) {
-  G.tsel = null; G.tbr = null;
+  G.tsel = null; G.tbr = null; G.dropQ = []; // 10월 24일 S-4: 앞 판의 건넬 전리품 줄을 비운다
   boss = boss || chData(1).boss; // 1챕터 보스: 타락한 수도원장 (기믹 상세는 비공개 문서). 챕터를 넘으면 enterChapter가 바꾼다
   const p = mkPlayer(build, {});
   const seed = Date.now() % 100000;
@@ -347,7 +347,7 @@ function commitAct(id, tid) {
 function monkFix(b) { const p = b.p; delete p.ctrSince; delete b.kiFastHit; delete b.kiFastTurn; if (p.stance) { delete p.stance.max; delete p.stance.half; } }
 function restoreBattle(cur) {
   const bt = cur.battle; delete cur.battle;
-  G.run = cur; consFix(G.run); applyGear(G.run); const b = bt.b; b.p = G.run.p; b.rngF = battleRng(b); b.stepMode = true;
+  G.run = cur; G.dropQ = G.run.dropQ || []; consFix(G.run); applyGear(G.run); const b = bt.b; b.p = G.run.p; b.rngF = battleRng(b); b.stepMode = true;
   if (isV2(b.p)) { treeSync(G.run); applyGear(G.run); if (!b.p.cd) resetCharges(b.p); if (b.p.ys == null) b.p.ys = YUSAN.start; } // 10월 16일 0.8.0 2단계: 트리에서 능력치 · 장착을 다시 셈 // 개편 전 저장본: 바뀐 스킬과 재사용 대기. 10월 15일 유산 1차 시제품 전 저장본의 전투는 유산 가득으로 이어 간다
   if (b.p.build === 'monk') monkFix(b); // 수도승 단순화 전 저장본: 쓰지 않는 칸을 비운다
   if (!b.queue) { b.round = b.tick || 1; b.queue = ['p']; b.bonusUsed = 0; } // 라운드 전 저장본: 지금이 내 차례
@@ -363,4 +363,11 @@ const runLive = () => !!(G.run && !runOver(G.run));
 function curSweep() { const d = G.data; let n = 0; if (d.cur && runOver(d.cur)) { delete d.cur; n++; } if (d.kept) { const k = d.kept.filter(x => !runOver(x)); n += d.kept.length - k.length; d.kept = k; } if (n) saveLocal(); return n; }
 function saveCur() { if (!G.run || runOver(G.run)) return; try { G.data.cur = JSON.parse(JSON.stringify(G.run)); saveLocal(); } catch (e) { } }
 function clearCur() { delete G.data.cur; saveLocal(); }
-function resumeRun() { curSweep(); if (!G.data.cur) { render(); return; } dgFix(G.data.cur); if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (isV2(G.data.cur.p) && G.data.cur.tv !== TV && BUILDS[G.data.cur.build]) { migBegin(JSON.parse(JSON.stringify(G.data.cur))); return; } /* 10월 16일 0.8.0 2단계: 옛 판은 배분 화면을 거친다(확정할 때 저장) */ if (isV2(G.data.cur.p) && G.data.cur.atree && !(G.data.cur.atree.atv >= 10)) { const an = atMigrateM5(G.data.cur); if (an) toast('액티브 트리가 바뀌어 포인트 ' + an + '을(를) 돌려받았습니다'); } /* 0.8.0 M5-0, 보정 4(atv 3), 보정 5(atv 4), M5-0c 마검사 재설계(atv 5), M5-1 파수꾼 재설계(atv 6) */ if (isV2(G.data.cur.p) && G.data.cur.ptree && !(G.data.cur.ptree.ksv >= 3)) { const kn = ksMigrateM4(G.data.cur) + ksMigrateM54(G.data.cur); if (kn) toast('큰 각인 자리가 바뀌어 ' + kn + '개를 돌려받았습니다. 다시 고를 수 있습니다'); } /* 0.8.0 M4: 바뀐 자리의 큰 각인은 다시 고른다 */ if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); consFix(G.run); applyGear(G.run); if (isV2(G.run.p)) { treeSync(G.run); applyGear(G.run); } G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); if(G.run.gearPending)nextDrop();else ksOpen(); }
+/* 10월 24일 S-4 두 탭: 다른 탭(같은 브라우저)이 저장본을 바꾸면 이 탭의 G.data는 낡았다. 낡은 탭이 저장하면 그 진행을 덮어써 결과를 다시 굴리거나 같은 보상을 두 번 받게 된다.
+   낡은 탭(G.tabStale)은 저장하지 않고(js/62 saveLocal) 다시 불러오기만 받는다(js/80 onClick). 뒤로 가기로 되살아난 쪽(bfcache)은 저장본과 다르면 낡은 탭으로 친다 */
+function tabStale() { if (G.tabStale) return; G.tabStale = 1; openSheet('tabstale', {}); }
+function tabWatch() {
+  window.addEventListener('storage', e => { if (e.key === SKEY || e.key === null) tabStale(); });
+  window.addEventListener('pageshow', e => { if (!e.persisted) return; try { const raw = localStorage.getItem(SKEY); if (raw != null && localSaveText(raw) !== JSON.stringify(G.data)) tabStale(); } catch (x) { } });
+}
+function resumeRun() { curSweep(); if (!G.data.cur) { render(); return; } const mig = G.data.cur.dgv !== 3 || !G.data.cur.dg || !G.data.cur.inv; dgFix(G.data.cur); if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (mig) saveLocal(); /* 10월 24일 S-4: 옛 판을 옮기며 새로 만든 문을 바로 저장한다(새로 고침마다 다시 만들지 않게) */ if (isV2(G.data.cur.p) && G.data.cur.tv !== TV && BUILDS[G.data.cur.build]) { migBegin(JSON.parse(JSON.stringify(G.data.cur))); return; } /* 10월 16일 0.8.0 2단계: 옛 판은 배분 화면을 거친다(확정할 때 저장) */ if (isV2(G.data.cur.p) && G.data.cur.atree && !(G.data.cur.atree.atv >= 10)) { const an = atMigrateM5(G.data.cur); if (an) toast('액티브 트리가 바뀌어 포인트 ' + an + '을(를) 돌려받았습니다'); } /* 0.8.0 M5-0, 보정 4(atv 3), 보정 5(atv 4), M5-0c 마검사 재설계(atv 5), M5-1 파수꾼 재설계(atv 6) */ if (isV2(G.data.cur.p) && G.data.cur.ptree && !(G.data.cur.ptree.ksv >= 3)) { const kn = ksMigrateM4(G.data.cur) + ksMigrateM54(G.data.cur); if (kn) toast('큰 각인 자리가 바뀌어 ' + kn + '개를 돌려받았습니다. 다시 고를 수 있습니다'); } /* 0.8.0 M4: 바뀐 자리의 큰 각인은 다시 고른다 */ if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); G.dropQ = null; consFix(G.run); applyGear(G.run); if (isV2(G.run.p)) { treeSync(G.run); applyGear(G.run); } G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); G.dropQ = G.run.dropQ || []; /* 10월 24일 S-4: 저장한 상자 · 남은 전리품부터 건넨다 */ if (G.run.chestPend) openSheet('choice', { offer: G.run.chestPend.chest, room: G.run.chestPend.room, chest: 1 }); else if (G.run.gearPending || G.dropQ.length) nextDrop(); else ksOpen(); }

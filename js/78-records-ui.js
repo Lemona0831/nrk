@@ -148,7 +148,7 @@ function rankDisplayRows() {
   if(G.db && G.board){for(const T of G.board)for(const e of Object.values(T.rank80 || {}))out.push(Object.assign({},e,{uid:T.uid,nick:T.name || '',me:T.uid===G.uid}));}
   else for(const e of Object.values(G.data.rank80 || {}))out.push(Object.assign({},e,{uid:G.uid || 'local',nick:G.data.name || '',me:true}));
   const tab=G.rankTab || 'all',mode=G.rankMode==='hard' ? 'hard' : 'normal';
-  return out.filter(e=>BUILDS[e.build]&&(tab==='all'||e.build===tab)&&(e.mode==='hard'?'hard':'normal')===mode&&(G.rankIncludeDead!==false||e.st!=='dead')).sort(rankCmp);
+  return out.filter(e=>BUILDS[e.build]&&rankOk(e)&&(tab==='all'||e.build===tab)&&(e.mode==='hard'?'hard':'normal')===mode&&(G.rankIncludeDead!==false||e.st!=='dead')).sort(rankCmp); // S-4(10월 24일): rankOk — 있을 수 없는 줄은 세우지 않는다
 }
 function rankBestPlayers(records) {const seen=new Set();return records.filter(e=>{if(seen.has(e.uid))return false;seen.add(e.uid);return true;});}
 function vRank() {

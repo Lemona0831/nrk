@@ -44,29 +44,6 @@ module.exports = function (api) {
   ev('library', 'sell', '골드', (t, h) => t.includes('골드 ' + gold(h) + '.'));
   ev('monk', 'chase', '이기면 골드', (t, h) => /run\.next\.chase = 1/.test(h) && t.includes('이기면 골드 ' + nx(S66, /nu\.chase \? (\d+)/)));
   ev('bell', 'pull', '골드', (t, h) => /run\.dg\.force = 'strong'/.test(h) && t.includes('골드 ' + gold(h) + '.'));
-  ev('tomb', 'carve', '최대 생명력', (t, h) => t.includes('최대 생명력 +' + nx(h, /p\.hpBonus \|\| 0\) \+ (\d+)/) + '(영구)'));
-  ev('tomb', 'carve', '다음 전투를 약화', (t, h) => t.includes('약화 ' + pre(h, 'weak') + ' · 취약 ' + pre(h, 'vuln') + '를'));
-  ev('procession', 'follow', '다음', (t, h) => { const b = nx(h, /run\.buffs\.procession = (\d+)/); return durOk && t.includes('다음 ' + rooms(b) + '개 방 동안 받는 직접 피해 −' + pct(nx(S24, /hasBt\(p, 'procession'\) && !o\.dot\) d \*= ([\d.]+)/)) + '%, 주는 피해 −' + pct(nx(S32, /hasBt\(p, 'procession'\)\) d \*= ([\d.]+)/)) + '%'); });
-  ev('procession', 'block', '이기면 골드', (t, h) => t.includes('이기면 골드 ' + nx(S66, /nu\.block \? (\d+)/)));
-  ev('robber', 'loot', '골드', (t, h) => nx(h, /Math\.random\(\) < ([\d.]+)/) === 0.5 && t.includes('골드 ' + gold(h) + ' 또는 장비'));
-  ev('robber', 'loot', '다음 전투를', (t, h) => t.includes(KWN('poison') + ' ' + nx(h, /\.poison \|\| 0\) \+ (\d+)/) + '으로'));
-  ev('robber', 'bury', '생명력 플라스크', (t, h) => t.includes('플라스크 +' + heal1(h, 'life') + '.'));
-  ev('blackwell', 'drink', '플라스크 각', (t, h) => t.includes('정화 · 스태미나 플라스크 각 +' + heal1(h, 'mana') + '.') && heal1(h, 'mana') === nx(h, /\(p\.flask\.stam \|\| 0\) \+ (\d+)/));
-  ev('blackwell', 'drink', '다음 전투를', (t, h) => t.includes(KWN('vuln') + ' ' + pre(h, 'vuln') + '를'));
-  ev('bonepipe', 'blow', '골드', (t, h) => /run\.dg\.force = 'strong'/.test(h) && t.includes('골드 ' + gold(h) + '.'));
-  ev('camel', 'loot', '다음 전투를', (t, h) => { const m = mx(h, /n3pre\(run, '(\w+)', (\d+)\)/); return t.includes(KWN(m[1]) + ' ' + m[2] + '로'); });
-  ev('oasis', 'drink', '반반 확률로', (t, h) => { const m = mx(h, /n3pre\(run, '(\w+)', (\d+)\)/); return nx(h, /Math\.random\(\) < ([\d.]+)/) === 0.5 && t.includes('생명력 ' + pct(1 + nx(h, /p\.hpMax \* ([\d.]+)/)) + '%') && t.includes(KWN(m[1]) + ' ' + m[2] + '로'); });
-  ev('sundial', 'turn', '열기', (t, h) => t.includes('열기 ' + nx(h, /noon: (\d+)/) + '에서') && /room\.heat0 = n3\.noon/.test(S66));
-  ev('sundial', 'hasten', '골드', (t, h) => /run\.dg\.force = 'strong'/.test(h) && t.includes('골드 ' + gold(h) + '.'));
-  ev('archive', 'pull', '패시브 포인트', (t, h) => t.includes('패시브 포인트 ' + nx(L80.filter(l => l.includes("R.event === 'archive' && o === 'pull'")).join('\n'), /ptBonus\(run, (\d+)/)));
-  ev('archive', 'pull', '대신 다음 전투를', (t, h) => { const m = mx(h, /n3pre\(run, '(\w+)', (\d+)\)/); return t.includes(KWN(m[1]) + ' ' + m[2] + '로'); });
-  ev('archive', 'sweep', '골드', (t, h) => t.includes('골드 ' + gold(h) + '.'));
-  ev('names', 'call', '레벨', (t, h) => { const m = mx(h, /Math\.min\((\d+), \(gv\.lv \|\| 1\) \* (\d+)\)/); return t.includes('레벨 × ' + m[2] + ', 최대 ' + m[1]); });
-  ev('names', 'call', '기록이 없으면', (t, h) => t.includes('기록이 없으면 골드 ' + nx(h, /\) : (\d+); gainGold/) + '입니다'));
-  ev('names', 'cover', '다음', (t, h) => durOk && t.includes('다음 ' + rooms(nx(h, /run\.buffs\.ashcover = (\d+)/)) + '개 방 동안 받는 직접 피해 −' + pct(nx(S24, /hasBt\(p, 'ashcover'\) && !o\.dot\) d \*= ([\d.]+)/)) + '%'));
-  ev('glass', 'take', '다음 전투를', (t, h) => { const m = mx(h, /n3pre\(run, '(\w+)', (\d+)\)/); return t.includes(KWN(m[1]) + ' ' + m[2] + '으로'); });
-  ev('buried', 'dig', '스태미나', (t, h) => t.includes('스태미나 ' + nx(h, /p\.st - (\d+)/) + '을 씁니다') && nx(S42, /id === 'dig' && run\.p\.st < (\d+)/) === nx(h, /p\.st - (\d+)/));
-  ev('herald', 'kneel', '다음', (t, h) => { const b = nx(h, /run\.buffs\.herald = (\d+)/); const ig0 = /hasBt\(u, 'herald'\)\) x = 0;/.test(S20) ? 0 : -1; return durOk && t.includes('다음 ' + rooms(b) + '개 방 동안 받는 화상 피해 ' + ig0 + ', 주는 피해 −' + pct(nx(S32, /hasBt\(p, 'herald'\)\) d \*= ([\d.]+)/)) + '%'); });
 
   /* ===== 0.8.0 M8: 1막 2 · 3챕터 이벤트(A2 · A3)와 깨어나는(바로 싸우는) 선택지 =====
      처리 코드: js/15-chapter2.js ch2Event · js/15-chapter3.js w3Event(case '이벤트:선택'), 깨어남은 EVENTS의 wake(js/80 'event'가 wake.p로 굴린다) */
@@ -124,9 +101,6 @@ module.exports = function (api) {
   api.source('world-evbuff', EVB.map(x => ({ id: x.k, text: pref(x.k, x.d) })));
   const mulD = (S, re) => nx(S, re);
   api.add('world-evbuff', '[snuff] ', '24-clock-damage.js · 20-battle-state.js · 32-player-action.js snuff', () => { const d = E('EVBUFF.snuff[1]'); return d.includes('받는 화상 피해 ' + (igSnuff0 ? 0 : -1)) && d.includes('주는 피해 −' + pct(mulD(S32, /hasBt\(p, 'snuff'\)\) d \*= ([\d.]+)/)) + '%'); });
-  api.add('world-evbuff', '[procession] ', '24-clock-damage.js · 32-player-action.js procession', () => { const d = E('EVBUFF.procession[1]'); return d.includes('받는 직접 피해 −' + pct(mulD(S24, /hasBt\(p, 'procession'\) && !o\.dot\) d \*= ([\d.]+)/)) + '%') && d.includes('주는 피해 −' + pct(mulD(S32, /hasBt\(p, 'procession'\)\) d \*= ([\d.]+)/)) + '%'); }); // A2: 옛 2챕터(보관)면 건너뛴다
-  api.add('world-evbuff', '[ashcover] ', '24-clock-damage.js ashcover', () => E('EVBUFF.ashcover[1]').includes('받는 직접 피해 −' + pct(mulD(S24, /hasBt\(p, 'ashcover'\) && !o\.dot\) d \*= ([\d.]+)/)) + '%'));
-  api.add('world-evbuff', '[herald] ', '20-battle-state.js · 32-player-action.js herald', () => { const d = E('EVBUFF.herald[1]'); return d.includes('받는 화상 피해 ' + (/hasBt\(u, 'herald'\)\) x = 0;/.test(S20) ? 0 : -1)) && d.includes('주는 피해 −' + pct(mulD(S32, /hasBt\(p, 'herald'\)\) d \*= ([\d.]+)/)) + '%'); });
 
   // 0.8.0 M8: 2챕터 이벤트 효과(js/15-chapter2.js ch2OutMul · ch2InMul · 전투 시작)
   api.add('world-evbuff', '[elixir] ', '15-chapter2.js ch2OutMul: hasBt elixir 주는 피해 × 1.15', () => E('EVBUFF.elixir[1]') === '주는 피해 +' + pct(nx(S15b, /hasBt\(p, 'elixir'\)\) m \*= ([\d.]+)/)) + '%.');
@@ -330,21 +304,13 @@ module.exports = function (api) {
   // ===== 이벤트 · 성소 · 제단 처리 중 알림(toast)과 시트 제목에 찍히는 글 (80-events.js의 글을 그대로 읽는다) =====
   const tl = {
     shrine: lit(S80, /toast\('(성소의 힘이 \d+개 방 동안 함께합니다)'\)/),
-    refundA: lit(S80, /\.nodes\[c\]\.n \+ '( 노드를 되돌렸습니다\. 액티브 포인트 \+\d+)'/).trim(),
     refundB: lit(S80, /case 'ptref': case 'atref'[^\n]*toast\('(되돌렸습니다\. 포인트 \+\d+)'\)/),
-    camel: lit(S80, /toast\('(짐에서 소모품 셋을 찾았습니다\. 다음 전투에 화상 \d+)'\)/),
-    oasisA: lit(S80, /toast\('(샘물이 상처를 씻어 낸다\. 생명력 \d+%)'\)/),
-    oasisB: lit(S80, /toast\('(물이 무겁게 가라앉는다\. 다음 전투에 둔화 \d+)'\)/),
   };
   api.source('world-toasts', Object.entries(tl).map(([id, t]) => ({ id, text: pref(id, t) })));
   const tt = (tag, loc, ev2, fn) => api.add('world-toasts', sentFind(tag, tl[tag], loc), ev2, fn);
   tt('shrine', '성소의 힘이', '80-events.js run.buffs[R.shrine] = 4 → 방 수 = 값 − 1', () => durOk && tl.shrine.includes(shrineRooms + '개 방 동안'));
   const S23 = J('23-tree-engine.js'); const costOne = E('Object.keys(BUILDS).filter(k => BUILDS[k].v2).every(k => Object.values(atBuild(k).nodes).concat(Object.values(ptBuild(k).nodes)).every(x => x.kind === "start" || x.kind === "keystone" || x.cost === 1))'); // 10월 16일 0.8.0 2단계: 두 트리
-  tt('refundA', '포인트', '23-tree-engine.js atRefundLeaf → atDrop: atree.pts += 노드 비용(모두 1)', () => tl.refundA.endsWith('+' + (/run\.atree\.pts \+= atBuild\(run\.build\)\.nodes\[id\]\.cost/.test(S23) && costOne ? 1 : NaN)));
   tt('refundB', '포인트', '23-tree-engine.js ptRefund · atRefund: pts += 노드 비용(모두 1)', () => tl.refundB.endsWith('+' + (/run\.ptree\.pts \+= ptBuild\(run\.build\)\.nodes\[id\]\.cost/.test(S23) && costOne ? 1 : NaN)));
-  tt('camel', '화상', '80-events.js camel loot: n3pre ignite n', () => tl.camel.endsWith('화상 ' + nx(H('camel', 'loot'), /n3pre\(run, 'ignite', (\d+)\)/)));
-  tt('oasisA', '생명력', '80-events.js oasis drink: p.hpMax × 0.3', () => tl.oasisA.endsWith('생명력 ' + pct(1 + nx(H('oasis', 'drink'), /p\.hpMax \* ([\d.]+)/)) + '%'));
-  tt('oasisB', '둔화', '80-events.js oasis drink: n3pre chill n', () => tl.oasisB.endsWith('둔화 ' + nx(H('oasis', 'drink'), /n3pre\(run, 'chill', (\d+)\)/)));
 
 
   // ===== 옛 B0.5 자리: 06a2에서 고를 길이 없다 =====
