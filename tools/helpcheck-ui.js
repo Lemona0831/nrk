@@ -77,7 +77,7 @@ module.exports = function (api) {
   A('주는 피해 +40%, 빠르기 +20%, 받는 피해 +15%.', '[도달 불가] 격노는 분노 직업(berserker)만 건다. BUILDS에 없다', DEAD("BUILDS.berserker === undefined && !CLASS_KEYS().includes('berserker')"));
   A('잠시 피해 +40%, 빠르기 +20%, 받는 피해 +15%', '[도달 불가] 분노 직업(berserker)이 BUILDS에 없다', DEAD("BUILDS.berserker === undefined"));
   A('무너질 때 취약 2가 걸리고', "addBreak: addS(e, 'vuln', 2), broken 2", () => has('32-player-action.js', "addS(b, e, 'broken', 2); addS(b, e, 'vuln', 2)"));
-  A('가득 차면 모으던 강타가 끊기고, 다음 행동을 놓치며, 취약 2가 걸립니다', "addBreak: 같은 줄(e.stun = 1, vuln 2)", () => has('32-player-action.js', "addS(b, e, 'vuln', 2)"));
+  A('가득 차면 모으던 강타가 끊기고 다음 행동을 놓치며 취약 2가 걸립니다', "addBreak: 같은 줄(e.stun = 1, vuln 2)", () => has('32-player-action.js', "addS(b, e, 'vuln', 2)"));
   A('모으던 강타가 끊기고, 다음 행동을 잃고, 취약 2가 걸립니다', "addBreak vuln 2", () => has('32-player-action.js', "addS(b, e, 'vuln', 2)"));
 
   // ───────── 공용 행동 설명 AINFO / AINFO2 ─────────
@@ -112,7 +112,7 @@ module.exports = function (api) {
   A('% 아래인 동료를 25% 회복시키고, 아니면 곧 때릴 동료에게 축복(다음 공격 피해 +25%)을 건다', 'healFrac 0.25 · 축복 empower ×1.25(적 empower)', () => has('12-state-class-rules.js', 'const healFrac = e => e.monk ? ABBOT.monkHeal * Math.pow(ABBOT.monkDecay, e.healN || 0) : 0.25 * Math.pow(0.7, e.healN || 0)') && has('30-enemy-ai.js', 'if (e.s.empower) d *= 1.25'));
   // 몬스터 소개와 설명(RINFO 계열) 가운데 53 한 줄
   A('내 차례에는 ⚡빠른 행동 1번', '내 차례: 빠른 칸 1(finishPlayer: !b.bonusUsed) + 주 행동 1', () => has('32-player-action.js', '!b.bonusUsed || b.extraQuick'));
-  A('"1번째"는 내 차례가 끝나면 바로 움직입니다', 'actIdx/preview: 순번은 1부터(나는 빼고 셈)', () => has('34-rounds-setup.js', 'function actIdx(b, e)'));
+  A('"1번째"는 내 차례가 끝나자마자 움직입니다', 'actIdx/preview: 순번은 1부터(나는 빼고 셈)', () => has('34-rounds-setup.js', 'function actIdx(b, e)'));
   A('"1·4번째"처럼', '순번 표기 예시(두 번 움직이는 적은 두 칸에 적힘)', () => has('34-rounds-setup.js', "x.sp >= RND_TWICE") && has('34-rounds-setup.js', "out.push(Object.assign({}, x, { twice: 1 }))"));
   A('두 번 움직이는 적(×2)은 평소 공격을 한 번 더 셉니다', 'RND_TWICE = 1.5 속도 이상은 라운드 끝에 한 번 더(roundOrder)', () => E('RND_TWICE') === 1.5);
   A('빠르기 1.5 이상인 적만', 'RND_TWICE = 1.5', () => E('RND_TWICE') === 1.5);
@@ -135,7 +135,7 @@ module.exports = function (api) {
   A('한 적에게 6까지입니다', 'BLOOD.spreadKillMax = 6', () => E('BLOOD.spreadKillMax') === 6);
   A('또 걸면 횟수를 더합니다(최대 8번)', 'WARD.thornMax = 8 (맞으면 출혈도 같은 상한)', () => E('WARD.thornMax') === 8);
   A('또 걸면 횟수가 더해지고(최대 8번)', 'WARD.thornMax = 8', () => E('WARD.thornMax') === 8);
-  A('적의 직접 공격에 맞을 때마다(보호막이 다 받아내도) 때린 적에게 피해를 되돌리고 1 줄어듭니다', '가시: 맞을 때마다 n 1 감소(hurtPlayer thorn)', () => has('24-clock-damage.js', '--p.thorn.n <= 0'));
+  A('적의 직접 공격에 맞을 때마다 때린 적에게 피해를 되돌리고 1 줄어듭니다', '가시: 맞을 때마다 n 1 감소(hurtPlayer thorn)', () => has('24-clock-damage.js', '--p.thorn.n <= 0'));
   A('적이 나를 직접 칠 때마다 그 적에게 둔화를 걸고 1 줄어듭니다', '되얼림: rime times 1 감소', () => has('12-state-class-rules.js', 'r.times--'));
   A('보호막 · 방어 · 흘리기로 피해가 0이어도 걸립니다', '되얼림은 hurtPlayer에서 피해량과 상관없이 건다', () => has('24-clock-damage.js', /elemRime/));
   A('같은 종류를 이어 쓰면 이어진 교대가 0이 됩니다', 'sbRun = 0 (sbEnd: 같은 종류)', () => has('10-skills-engine.js', 'p.sbRun = b.sbRun2 ? 0 : b.sbRunNow') && has('10-skills-engine.js', 'b.sbRunNow = b.sbAlt ? (p.sbRun || 0) + 1 : 0'));
@@ -158,7 +158,7 @@ module.exports = function (api) {
   A('상흔 × 0.8', '[도달 불가] release: 상흔 × 0.8. 상흔 직업이 없다', () => has('32-player-action.js', 'outDmg(b, s * 0.8 * 1, {})') && E("BUILDS.scar === undefined"));
   A('하급은 1~6줄, 중급은 7~10줄, 상급은 11~13줄입니다', "SKILLS2.assassin 줄 범위 하급 1-6 · 중급 7-10 · 상급 11-13", () => { const o = E('(() => { const o = {}; for (const s of SKILLS2.assassin) { if (!s.tier || s.start) continue; (o[s.tier] = o[s.tier] || []).push(s.row); } return Object.fromEntries(Object.entries(o).map(([k, v]) => [k, [Math.min(...v), Math.max(...v)]])); })()'); return q(o['하급']) === '[1,6]' && q(o['중급']) === '[7,10]' && q(o['상급']) === '[11,13]'; });
   A('상급은 3챕터부터 열립니다', 'TREE_CH.상급 = 3', () => E('TREE_CH.상급') === 3);
-  A('체력이 50% 많습니다', 'mkEnemy tough: hpMax × 1.5', () => has('20-battle-state.js', "(opt.tough ? 1.5 : 1)"));
+  A('생명력이 50% 많습니다', 'mkEnemy tough: hpMax × 1.5', () => has('20-battle-state.js', "(opt.tough ? 1.5 : 1)"));
   N('다음 1점:', '능력치 1점 단위 표기(statNext가 값을 계산한다)');
   // ───────── 옛 장비 스무 개의 문장(60 텍스트층, CH1_OLD + 풀에 없는 옛 장비) ─────────
   const RATIO = (expr, base, e) => near(E(expr), base, e == null ? 0.012 : e);
@@ -244,7 +244,7 @@ module.exports = function (api) {
   A('그 전에 열기를 100 아래로 내리면 불지 않습니다', '열기 100: ch3Tick b.heat >= 100', () => has('14-chapter-bodies.js', 'if (b.heat >= 100) { if (b.heatWarn != null'));
   A('화상 수만큼 피해가 더해지고 1 줄어듭니다', 'kwTaken: ignite n 더하고 kwDec(ignite) 1', () => has('20-battle-state.js', "const n = stk(u, 'ignite'); kwDec(u, 'ignite')"));
   A('그 숫자만큼 피해를 주고 1 줄어듭니다', '중독: tickOnce stacks = n − 1 / 출혈: kwBleed kwDec 1', () => has('24-clock-damage.js', 'u.s.poison.stacks = n - 1') && has('20-battle-state.js', "kwDec(u, 'bleed')"));
-  A('한 적만 치는 공격으로 같은 적을 연달아 맞히면 한 겹씩 쌓입니다(최대 3', 'HUNT.focusMax = 3', () => E('HUNT.focusMax') === 3);
+  A('최대 3겹이고, 연타 스킬도 한 번에 한 겹입니다', 'HUNT.focusMax = 3', () => E('HUNT.focusMax') === 3);
   A('3겹인 적은 몸 낮추기와 버티기가 통하지 않습니다', 'HUNT.focusMax = 3', () => E('HUNT.focusMax') === 3);
   A('다른 적을 치면 그 적에게 1겹부터', '실행: 같은 적 두 번 → 2겹, 다른 적을 치면 그 적 1겹', () => E(`(() => { const p = mkPlayer('hunter', {}, {}), b = newBattle(p, [mkEnemy('bruiser', false, 0), mkEnemy('bruiser', false, 1)], {}); const [x, y] = b.en; hurtEnemy(b, x, 1, { single: 1 }); hurtEnemy(b, x, 1, { single: 1 }); const a = p.focus.n; hurtEnemy(b, y, 1, { single: 1 }); return a + ':' + p.focus.n + ':' + (p.focus.id === y.id); })()`) === '2:1:true');
   A('추적을 더하는 효과로는 2겹까지만 오릅니다', 'HUNT.addMax = 2', () => E('HUNT.addMax') === 2);
@@ -383,8 +383,8 @@ module.exports = function (api) {
   const MKMAX = () => E('SK2.m_geumgang.fx[0].max') === 3 && /yeok \? Infinity/.test(E('monkCtrMax.toString()'));
   A('(금강 자세는 3번, 역천권은 제한 없음)', '금강 자세 stance.max=3, 역천권이면 monkCtrMax=Infinity, 기본 MONK.ctrMax=' + E('MONK.ctrMax'), MKMAX);
   A('(금강 자세 3회, 역천권 제한 없음)', '금강 자세 stance.max=3, 역천권이면 monkCtrMax=Infinity', MKMAX);
-  A('같은 무리 잡몹의 피해가 15% 늘어납니다', '2챕터 정예 접사 지휘: AFFIX2.cmd=' + E('AFFIX2.cmd'), () => Math.round(E('AFFIX2.cmd') * 100) === 15 && has('15-chapter2.js', 'AFFIX2.cmd'));
-  A('같은 무리 잡몹의 피해 +15%', '2챕터 정예 접사 지휘: AFFIX2.cmd=' + E('AFFIX2.cmd'), () => Math.round(E('AFFIX2.cmd') * 100) === 15);
+  A('같은 무리 일반 적의 피해가 15% 늘어납니다', '2챕터 정예 접사 지휘: AFFIX2.cmd=' + E('AFFIX2.cmd'), () => Math.round(E('AFFIX2.cmd') * 100) === 15 && has('15-chapter2.js', 'AFFIX2.cmd'));
+  A('같은 무리 일반 적의 피해 +15%', '2챕터 정예 접사 지휘: AFFIX2.cmd=' + E('AFFIX2.cmd'), () => Math.round(E('AFFIX2.cmd') * 100) === 15);
   A('맞을 때마다 골드 1을 빼앗', '장물 두른: AFFIX2.lootGold=' + E('AFFIX2.lootGold') + ', 맞으면 run.gold −lootGold', () => E('AFFIX2.lootGold') === 1 && has('15-chapter2.js', 'const g = Math.min(run.gold, AFFIX2.lootGold)'));
   A('쓰러뜨리면 되찾고 50% 더 받습니다', '장물 두른: 쓰러뜨리면 빼앗긴 골드 × AFFIX2.lootBack(' + E('AFFIX2.lootBack') + ')', () => E('AFFIX2.lootBack') === 1.5 && has('15-chapter2.js', 'AFFIX2.lootBack'));
   A('화상 피해를 2배로 받는 대신 붕괴 게이지가 1.5배', '기름 먹은: AFFIX2.oiledBurn=' + E('AFFIX2.oiledBurn') + ' · oiledBrk=' + E('AFFIX2.oiledBrk'), () => E('AFFIX2.oiledBurn') === 2 && E('AFFIX2.oiledBrk') === 1.5 && has('20-battle-state.js', 'AFFIX2.oiledBurn') && has('32-player-action.js', 'v *= AFFIX2.oiledBrk'));

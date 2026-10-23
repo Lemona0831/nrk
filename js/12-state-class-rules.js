@@ -115,7 +115,7 @@ function cfCleanse(b, f, label, id) {
     fxRun(p, 'onCleanse', b, p, e);
   }
   if (!n) logp(b, 'sys', label + '. 지울 짐이 없다');
-  else logp(b, 'good', label + '. ' + nm + '을(를) 지운다' + (n > e ? ' (고행 몫 ' + (n - e) + '은(는) 보호가 되지 않는다)' : '') + (tail.length ? '. ' + tail.join(', ') : ''));
+  else logp(b, 'good', label + '. ' + nm + '을(를) 지운다' + (n > e ? ' (고행 몫 ' + (n - e) + '은(는) 보호 없음)' : '') + (tail.length ? '. ' + tail.join(', ') : ''));
   b.rec.push({ k: 'clean', id, c: n, e, over, bd, es, ek: ek.got });
   return { c: n, e };
 }

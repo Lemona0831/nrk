@@ -117,7 +117,7 @@ function ch2Act(b, e, i, d) {
     case 'pouroil': { const x = hurtPlayer(b, d * 0.6, { src: e, single: 1, spell: 1, label: e.n + '이(가) 기름을 붓는다' }); if (!b.over) addS(b, p, 'ignite', 3); return 1; }
     case 'guardlamp': { const c = spawn(b, 'lampkeeper'); if (c) logp(b, 'bad', e.n + '이(가) 등불지기를 부른다'); return 1; }
     case 'hang': { bardoHang(b, e); return 1; }
-    case 'relight': { const lp = ch2Lamps(b).find(x => !x.lit); if (lp) { lp.lit = 1; lp.brk = 0; e.barrier = Math.min((e.barrier || 0) + Math.round(e.hpMax * FOE_X.bardo.ward), Math.round(e.hpMax * FOE_X.bardo.ward * ch2Lamps(b).filter(x => x.lit).length)); /* 비공개 문서 참조 */ logp(b, 'bad', '사이 행동 — ' + e.n + '이(가) 깨진 등불을 다시 켠다. 그 사이 몸이 비었다'); e.openR = b.round; codexHit(b, 'bardo', 'relit'); } return 1; }
+    case 'relight': { const lp = ch2Lamps(b).find(x => !x.lit); if (lp) { lp.lit = 1; lp.brk = 0; e.barrier = Math.min((e.barrier || 0) + Math.round(e.hpMax * FOE_X.bardo.ward), Math.round(e.hpMax * FOE_X.bardo.ward * ch2Lamps(b).filter(x => x.lit).length)); /* 비공개 문서 참조 */ logp(b, 'bad', '사이 행동 · ' + e.n + '이(가) 깨진 등불을 다시 켠다. 몸이 비었다'); e.openR = b.round; codexHit(b, 'bardo', 'relit'); } return 1; }
   }
   return 0;
 }

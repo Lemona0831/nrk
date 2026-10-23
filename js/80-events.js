@@ -119,7 +119,7 @@ function onClick(ev) {
       const sp = 0.5 * (1 + fxVal(p, 'spring', 0, (a, v) => a + v)); p.hp = Math.min(p.hpMax, p.hp + p.hpMax * sp); p.mp = Math.min(p.mpMax, p.mp + p.mpMax * sp);
       p.flask.life = Math.min(flaskCap(p, 'life'), p.flask.life + 1 + fxVal(p, 'springLife', 0, (a, v) => a + v)); p.flask.mana = Math.min(flaskCap(p, 'mana'), p.flask.mana + 1); p.flask.stam = Math.min(flaskCap(p, 'stam'), (p.flask.stam || 0) + 1);
       run.rooms.push({ room: run.room, type: 'spring', spring: 1 }); advanceFloor(); toast('샘물로 상처를 씻었습니다'); render(); break; }
-    case 'shrine': { const run = G.run, R = roomDef(); if (el.dataset.k === '1') { run.buffs[R.shrine] = 4; toast('성소의 힘이 3개 방 동안 함께합니다'); } run.rooms.push({ room: run.room, type: 'shrine', took: el.dataset.k === '1' ? R.shrine : null }); advanceFloor(); render(); break; }
+    case 'shrine': { const run = G.run, R = roomDef(); if (el.dataset.k === '1') { run.buffs[R.shrine] = 4; toast('성소의 힘이 3개 방 동안 이어집니다'); } run.rooms.push({ room: run.room, type: 'shrine', took: el.dataset.k === '1' ? R.shrine : null }); advanceFloor(); render(); break; }
     case 'altar': { const run=G.run,p=run.p,R=roomDef(),yes=el.dataset.k==='1';
       if(yes && R.altar==='offer'){openSheet('offer',{});break;}
       const paid=[],received=[],drops=[];const hpBefore=p.hpMax;
@@ -253,7 +253,7 @@ function onClick(ev) {
     case 'codeshare': { const tb = document.getElementById('codebox'); const txt = tb ? tb.value : ''; navigator.share({ title: '나락의 유산 기록', text: txt }).then(() => toast('보냈습니다'), () => {}); break; }
     case 'codecopy': { const tb = document.getElementById('codebox'); const txt = tb ? tb.value : ''; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(() => toast('복사했습니다. 메신저에 붙여 넣어 보내 주세요'), () => { tb.select(); toast('글자를 길게 눌러 모두 선택한 뒤 복사해 주세요'); }); else { tb.select(); try { document.execCommand('copy'); toast('복사했습니다'); } catch (e2) { toast('글자를 길게 눌러 모두 선택한 뒤 복사해 주세요'); } } break; }
     case 'import': openSheet('import', {}); break;
-    case 'impgo': { const S = G.sheet; const v = val('impbox'); if (!G.db) { S.data.msg = '공유 저장소에 연결되어야 넣습니다.'; S.data.ok = 0; render(); break; } importCode(v).then(r => { S.data.msg = (r.name || '이름 없는 지인') + '의 판 ' + r.runs + '개를 넣었습니다.'; S.data.ok = 1; render(); loadDash(); }, e2 => { S.data.msg = '넣지 못했습니다: ' + (e2 && e2.message || '알 수 없는 오류'); S.data.ok = 0; render(); }); break; }
+    case 'impgo': { const S = G.sheet; const v = val('impbox'); if (!G.db) { S.data.msg = '공유 저장소에 연결된 뒤에 넣을 수 있습니다.'; S.data.ok = 0; render(); break; } importCode(v).then(r => { S.data.msg = (r.name || '이름 없는 지인') + '의 판 ' + r.runs + '개를 넣었습니다.'; S.data.ok = 1; render(); loadDash(); }, e2 => { S.data.msg = '넣지 못했습니다: ' + (e2 && e2.message || '알 수 없는 오류'); S.data.ok = 0; render(); }); break; }
     case 'skilltog': { const S = G.sheet; const k = el.dataset.k; const v2 = G.run && isV2(G.run.p); if (v2) return; const i = S.data.pick.indexOf(k); if (i >= 0) S.data.pick.splice(i, 1); else if (S.data.pick.length < (v2 ? EQUIP_SLOTS2 : SKILL_SLOTS)) S.data.pick.push(k); else { toast('칸이 가득 찼습니다. 먼저 하나를 빼 주세요'); return; } render(); break; }
     case 'tnode': case 'tsel': case 'tzoom': case 'tlist': trdClick(a, el); break; // 10월 17일 0.8.0 3단계: 방사형 트리(js/73-tree-radial.js)
     case 'tview': G.tview = el.dataset.k === 'a' ? 'a' : 'p'; render(); break; // 10월 16일 0.8.0 2단계: 두 트리 화면(목록형, 3단계에서 방사형으로)

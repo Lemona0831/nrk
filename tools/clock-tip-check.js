@@ -30,7 +30,7 @@ function mk(foe, o) {
   ok(/다 차면/.test(TIP) && /한 칸 남으면/.test(TIP), '처음 만남 문장의 뜻(다 차면 위험 · 한 칸 남으면 경고)이 빠졌다'); }
 /* 6. 칩: 마지막 경고 칸이면 ⚠ 글자(색만으로 알리지 않는다), 아니면 없다 */
 { const { b, e } = mk('scribe'); const C = e.clk; C.n = 0; ok(fcChip(b, e).indexOf('fclkw') < 0, '경고 전 칩에 ⚠가 붙었다');
-  C.n = C.max - 1; const h = fcChip(b, e); ok(h.indexOf('fclkw') >= 0 && h.indexOf('⚠') >= 0, '마지막 경고 칩에 ⚠ 글자가 없다'); ok(/다음이면 위험/.test(h), '마지막 경고 칩의 읽는 이름에 위험이 없다'); }
+  C.n = C.max - 1; const h = fcChip(b, e); ok(h.indexOf('fclkw') >= 0 && h.indexOf('⚠') >= 0, '마지막 경고 칩에 ⚠ 글자가 없다'); ok(/마지막 경고/.test(h), '마지막 경고 칩의 읽는 이름에 마지막 경고가 없다'); }
 /* 7. 전투 화면이 부른다(js/52 vBattle) */
 ok(String(R_('vBattle')).indexOf('fcTip(') >= 0, 'vBattle이 fcTip을 부르지 않는다');
 console.log('clock-tip-check: 시험 ' + H.C.n + '개 · 실패 ' + H.C.fail.length);

@@ -51,7 +51,7 @@ const ysNow = p => p.ys == null ? YUSAN.start : p.ys;
 function ysAdd(b, n, src, why) {
   const p = b.p; if (!isV2(p) || b.over) return 0; p.ys = ysNow(p); const y0 = p.ys; const g = p.sbSt && p.sbSt.fireBody ? 0 : Math.max(0, Math.min(n, ysCapOf(p) - p.ys)); p.ys += g; // 0.8.0 M5-0 불의 몸: 그동안 유산 0
   if (b.rec) b.rec.push({ k: 'ys', t: r1(b.t), src, why, n, g, ys: p.ys, r: b.ysR || 0 });
-  if (g > 0) logp(b, 'good', '유산 ' + y0 + ' → ' + p.ys + ' (+' + g + ', ' + why + ')'); // 10월 16일: 앞 → 뒤 값으로 (차례 충전도 적는다)
+  if (g > 0) logp(b, 'good', '유산 ' + y0 + ' → ' + p.ys + ' (' + why + ')'); // 10월 16일: 앞 → 뒤 값으로 (차례 충전도 적는다)
   return g;
 }
 /* 대응 +1: 라운드에 한 번(다섯 수단이 한도를 함께 쓴다). 상한에 막혀도 그 라운드의 대응으로 센다 */
@@ -68,10 +68,10 @@ function ysRefund(b, why) { if (!b || !isV2(b.p) || b.over) return 0; const R = 
 /* 장비의 "쿨타임이 가장 많이 남은 스킬 −1" → 유산 +1, 라운드에 한 번 (모든 장비가 한도를 함께 쓴다). 든 것이 없으면 0 */
 function ysItem(b, why) { if (!b || !isV2(b.p) || b.over) return 0; const R = b.ysR || 0; if (b.ysItemR === R) return 0; const g = ysAdd(b, YUSAN.item, 'item', why || '장비'); if (g) b.ysItemR = R; return g; }
 /* 유산을 깎는 효과(침묵의 종 · 독 거두는 손의 대가): 0 아래로 내려가지 않는다 */
-function ysLose(b, n, why) { const p = b.p; if (!isV2(p)) return 0; p.ys = ysNow(p); const l = Math.min(n, p.ys); p.ys -= l; if (l && !p.ys) uqR(p, 'u_ysZero', b, p); /* M6-1 고유 sb_r4 */ if (b.rec) b.rec.push({ k: 'ys', t: r1(b.t), src: 'lose', why, g: -l, ys: p.ys, r: b.ysR || 0 }); if (l) logp(b, 'bad', '유산 ' + (p.ys + l) + ' → ' + p.ys + ' (−' + l + ', ' + why + ')'); return l; }
+function ysLose(b, n, why) { const p = b.p; if (!isV2(p)) return 0; p.ys = ysNow(p); const l = Math.min(n, p.ys); p.ys -= l; if (l && !p.ys) uqR(p, 'u_ysZero', b, p); /* M6-1 고유 sb_r4 */ if (b.rec) b.rec.push({ k: 'ys', t: r1(b.t), src: 'lose', why, g: -l, ys: p.ys, r: b.ysR || 0 }); if (l) logp(b, 'bad', '유산 ' + (p.ys + l) + ' → ' + p.ys + ' (' + why + ')'); return l; }
 /* 스킬 쓰기: 비용을 낸다(숨겨진 직업 3의 피로 당기기는 bmPull이 모자란 몫을 먼저 채운다) */
 function ysSpend(b, s, tgt) { const p = b.p; const ca = skCostAt(b, s, tgt), c = ca.c; if (ysHealSk(s) || (ysCondSk(s) && c <= 1 && (s.cond || []).some(x => (x.id || s.id) === ca.by))) b.ysNoTurn = s.n; /* S-2 · S-3(10월 24일): 유산 1 회복 · 보호 · 회피 칸(조건 할인으로 1이 된 변형 포함) → 다음 차례 충전 없음 */ b.ysSpent = (b.ysSpent || 0) + (c || 0); b.ysSkN = (b.ysSkN || 0) + 1; /* M7-3 계승 접사: 전투에서 쓴 스킬 수 */ /* A2 빚 장부: 쓴 유산 */ if (ca.by) { (b.condUsed = b.condUsed || {})[ca.by] = b.ysR || 0; if (ca.by === 'tricolor' && p.sbSt && p.sbSt.tricolor > 0) p.sbSt.tricolor--; /* M5-0 보정 5 삼색검: 전투에 두 번 */ if (ca.by === 'altDbl') b.altDisc = 0; if (ca.by === 'ksOver') b.ovDisc = 0; if (ca.by === 'hnWind' && p.hnSt) p.hnSt.windDisc = 0; /* M5-4 바람 걸음 */ logp(b, 'good', s.n + ': ' + (ca.by === 'altDbl' ? '두 번 교대로' : ca.by === 'ksOver' ? '마검 과부하로' : ca.by === 'hnWind' ? '바람 걸음으로' : ca.by === 'ysFirst' ? '물려받은 유산으로' : '조건이 맞아') + ' 유산 비용 −' + (skCost(s) - c)); if (b.rec) b.rec.push({ k: 'ysdisc', id: s.id, by: ca.by, off: skCost(s) - c }); if (p.build === 'assassin' && (s.cond || []).some(x => (x.id || s.id) === ca.by && x.when === 'resp')) fxRun(p, 'onRespDisc', b, p); } /* 10월 18일 0.8.0 5단계 이어진 그림자: resp 조건 할인이 들면 */ /* 10월 16일 0.8.0 2단계: 강화 노드의 조건부 할인 */ const w = b.ysPullW || 0; b.ysPullW = 0; const y0 = ysNow(p) - w; p.ys = Math.max(0, ysNow(p) - c); if (!p.ys && y0 + w > 0) uqR(p, 'u_ysZero', b, p); /* M6-1 고유 sb_r4: 유산이 0이 되면 */ if (s.once) p.cd[s.id] = CD_USED; if (b.rec) b.rec.push({ k: 'yspend', t: r1(b.t), id: s.id, cost: c, ys: p.ys, r: b.ysR || 0 });
-  logp(b, 'sys', '유산 ' + y0 + ' → ' + p.ys + ' (−' + (c - w) + (w ? ', 모자란 ' + w + '은(는) 피로' : '') + ', ' + s.n + ')'); } // 10월 16일: 쓴 유산도 앞 → 뒤로 적는다
+  logp(b, 'sys', w ? '유산 ' + y0 + '에 피로 당긴 ' + w + ' (' + s.n + ')' : '유산 ' + y0 + ' → ' + p.ys + ' (' + s.n + ')'); } // 10월 16일: 쓴 유산도 앞 → 뒤로 적는다
 const ysShort = (p, s, b) => Math.max(0, (b ? skCostAt(b, s).c : skCost(s)) - ysNow(p)); // 모자란 유산
 const ysUsed = (p, s) => !!(s.once && p.cd && p.cd[s.id] > 0); // 전투마다 1번 스킬을 이미 썼는가
 /* 강공격 붕괴를 더하는 예고: 큰 행동(모으기 · 강타 · 영창 · 도화선 · 폭발 · 겨누기). 먼저 치우기는 data/classes.js YS_PRE_K */
@@ -111,7 +111,7 @@ function ysConvexApply() {
   }
 }
 if (YUSAN.convex) ysConvexApply();
-const HS_WHY = { poison: '독을 걸었다', kill: '적을 쓰러뜨렸다', parry: '흘려 냈다', break: '정예 이상을 무너뜨렸다' };
+const HS_WHY = { poison: '독을 걸었다', kill: '적을 쓰러뜨렸다', parry: '흘려 냈다', break: '정예 · 강적 · 보스를 무너뜨렸다' };
 /* 10월 16일 0.8.0 2단계: 옛 스킬 트리(run.tree) · 능력치 나누기(statPending) · 트리 초기화는 두 트리 엔진(js/23-tree-engine.js)으로 바뀌었다. 옛 판은 treeMigrate08이 옮긴다 */
 const treeOwns = (run, id) => !!(run && run.atree && atBuild(run.build).nodes[id] && atBuild(run.build).nodes[id].kind === 'skill');
 function consFix(run) { if (run && !run.cons) run.cons = []; if (run && typeof consBagFix === 'function') consBagFix(run); } // 10월 14일: 소모품 가방 분리 이전

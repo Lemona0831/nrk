@@ -466,7 +466,7 @@ function skScore(s) { const E = skValue(s) * (SKK.brAdj[s.b] || 1) * ((SKK.clsAd
 
 /* 설명 문장. 키워드(중독, 붕괴, 터뜨리기, 흘리기)의 뜻은 설명창의 키워드 칸이 맡고, 스킬 문장은 숫자만 말한다 */
 /* 쿨타임: 쓰고 나면 cd만큼 내 턴을 기다린다(내 턴이 끝날 때마다 1 준다). 갈래 규칙(TREE2.haste)은 10월 3일에 없앴다: 아래 SK_HS는 다시 쓸 때를 위해 남긴다 */
-const SK_HS = { poison: '독을 걸면', kill: '적을 쓰러뜨리면', parry: '흘려 내면', break: '정예 이상을 무너뜨리면' };
+const SK_HS = { poison: '독을 걸면', kill: '적을 쓰러뜨리면', parry: '흘려 내면', break: '정예 · 강적 · 보스를 무너뜨리면' };
 const SK_HSL = { poison: '독을 건 행동마다', kill: '적을 쓰러뜨린 행동마다', parry: '흘리기에 성공할 때마다', break: '정예 · 강적 · 보스를 무너뜨린 행동마다' };
 for (const k in TREE2) for (const x of (SKILLS2[k] || [])) x.hs = (TREE2[k].haste || {})[x.b] || null; // 스킬마다 갈래 규칙을 붙여 둔다
 /* 10월 15일 유산 1차 시제품: 스킬 비용은 데이터의 cd에서 기계적으로 만든다(설계안 4-1). 시작 스킬과 cd 3–5 → 2, 6–8 → 3, 9–10과 전투마다 1번 → 4. cd는 다른 도구가 읽으므로 데이터에 남긴다 */
@@ -632,7 +632,7 @@ function skBody(s) {
     if (bu && e.k === 'drain' && e.s === 'bleed' && e.me) out.push('먼저 내 출혈을 모두 지운다. ' + (e.dmg ? `지운 출혈 1마다 이 스킬의 피해 +${e.dmg}(${e.max || 10}까지 센다).` : `지운 출혈 1마다 나에게 강화 ${e.emp || 1}(최대 4).`));
   }
   for (const e of s.fx) {
-    if (e.k === 'dmg') parts.push(s.id==='tut_bash' ? `피해 ${e.n}` : `기준 피해 ${e.n}(${skillGrowthStat(s)==='int'?'지능':skillGrowthStat(s)==='dex'?'민첩·무기':'힘·무기'}로 성장)`);
+    if (e.k === 'dmg') parts.push(s.id==='tut_bash' ? `피해 ${e.n}` : `기준 피해 ${e.n}(${skillGrowthStat(s)==='int'?'지능으로':skillGrowthStat(s)==='dex'?'민첩·무기로':'힘·무기로'} 성장)`);
     if (e.k === 'poison') parts.push(`중독 ${e.n}`);
     if (e.k === 'brk') parts.push(`붕괴 +${e.n}`);
     if (e.k === 'st' && !eMulti) { const t = `${s.tgt === 'self' ? '나에게 ' : ''}${skKw(s, e.s)} ${e.n}`; if (bu && ((eatT && e.s === 'bleed') || hits > 1)) late.push(e); else (s.kind && hits > 1 && s.tgt !== 'self' ? first : parts).push(t); }
@@ -715,9 +715,9 @@ function skBody(s) {
       case 'spread': out.push(`대상의 중독${e.per === 1 ? '' : e.per === 0.5 ? ' 절반(올림)' : ' ' + Math.round(e.per * 100) + '%'}만큼 다른 적 모두에게 중독을 건다. 대상의 중독은 그대로다.`); break;
       case 'capOver': out.push(`이 스킬로 거는 중독은 상한을 넘어 ${e.cap}까지 쌓인다.`); break;
       case 'wardFill': out.push(e.to && e.to < 1 ? `보호막을 상한의 ${Math.round(e.to * 100)}%까지 채운다. 이미 그만큼 있으면 늘지 않는다.` : '보호막을 상한까지 채운다.'); break;
-      case 'wardFirst': out.push(`먼저 보호막 ${e.n}${e.protect ? ' · 보호 ' + e.protect : ''}을(를) 두른다.`); break; // 10월 17일 보완 5 갑주 해방
+      case 'wardFirst': out.push(`먼저 보호막 ${e.n}${e.protect ? ' · 보호 ' + e.protect : ''}${skJo(e.protect || e.n)} 두른다.`); break; // 10월 17일 보완 5 갑주 해방
       case 'wardBurn': { const wd = (s.kind || String(s.id).slice(0, 2) === 'w_') && s.fx.find(x => x.k === 'ward'); out.push(`보호막을 ${e.max ? '최대 ' + e.max + '까지' : '모두'} 태운다. 태운 보호막 1마다 ${s.tgt === 'front' ? '전열 모두에게 ' : s.tgt === 'all' ? '모든 적에게 ' : ''}피해 ${e.mul}. 보호막이 없으면 ${s.fx.some(x => x.k === 'dmg') ? '더하는 피해는' : '이 피해는'} 0이다.` + (wd ? ` 태운 뒤 나에게 보호막 +${wd.n}.` : '')); break; }
-      case 'wardDmg': out.push(e.drainAll ? `현재 보호막을 전부 소모합니다. 추가 피해 = 소모한 보호막 × ${e.per}(최대 ${e.cap}). 이 행동에서는 교대 보호막을 얻지 않습니다.` : e.spend ? `현재 보호막의 ${e.spend * 100}%를 소모합니다(최대 ${e.cap / e.per}). 추가 피해 = 소모한 보호막 × ${e.per}(최대 ${e.cap}).` : `${e.per >= 1 ? '내 보호막 1마다 피해 +' + e.per : '내 보호막 ' + Math.round(1 / e.per) + '마다 피해 +1'}${e.cap != null ? '(최대 ' + e.cap + ')' : ''}. 보호막은 줄지 않습니다.`); break;
+      case 'wardDmg': out.push(e.drainAll ? `현재 보호막을 모두 소모한다. 추가 피해 = 소모한 보호막 × ${e.per}(최대 ${e.cap}). 이 행동에서는 교대 보호막을 얻지 않는다.` : e.spend ? `현재 보호막의 ${e.spend * 100}%를 소모한다(최대 ${e.cap / e.per}). 추가 피해 = 소모한 보호막 × ${e.per}(최대 ${e.cap}).` : `${e.per >= 1 ? '내 보호막 1마다 피해 +' + e.per : '내 보호막 ' + Math.round(1 / e.per) + '마다 피해 +1'}${e.cap != null ? '(최대 ' + e.cap + ')' : ''}. 보호막은 줄지 않는다.`); break;
       case 'thorn': out.push(`가시 ${e.times}번을 얻는다. 맞을 때마다 때린 적에게 피해 ${e.dmg}. 이미 있으면 횟수를 더한다(최대 8번).`); break;
       case 'vulnPer': out.push(`대상의 취약 1마다 피해 +${e.per}. 취약은 줄지 않는다.`); break;
       case 'shieldx': out.push(`방패병에게는 붕괴 ×${e.mul}.`); break;

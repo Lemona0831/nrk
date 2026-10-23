@@ -17,8 +17,8 @@ module.exports = function ({ E, add, note, source }) {
   add('help', '무기 추가 피해 =', '무기7/8/9/13: 음수 보정 없음, 주문 제외', () => [7,8,9,13].every(w => close(growth(0,w,false),10*(1+Math.max(0,w-8)*.02)) && close(growth(0,w,true),10)));
   add('ui-text', '강공격에 최대 생명력의 6% 소모', '실제 ledgerCost(100, 부족1)=6', E => E('ledgerCost({hpMax:100,eq:{}},1)') === 6);
   const demand = (kind, hit) => E(`(() => { const p=mkPlayer('warden',{},{}), e=mkEnemy('bruiser',false,0), b=newBattle(p,[e],{}); addS(b,p,'brand',999,2,3); e.demand={turn:b.turnIdx,k:'${kind}',hit:${hit}}; abbotDemand(b); return st(p,'brand'); })()`);
-  add('ui-hud', '수도원장에게 피해를 주지 않으면 낙인 1 감소', 'abbotDemand 휴식 요구: 공격하지 않았을 때 2→1', () => demand('rest',false) === 1 && demand('rest',true) === 3);
-  add('ui-hud', '수도원장에게 피해를 주면 낙인 1 감소', 'abbotDemand 공격 요구: 공격했을 때 2→1', () => demand('atk',true) === 1 && demand('atk',false) === 3);
+  add('ui-hud', '수도원장에게 피해를 주지 않으면 낙인이 1 줄어듭니다', 'abbotDemand 휴식 요구: 공격하지 않았을 때 2→1', () => demand('rest',false) === 1 && demand('rest',true) === 3);
+  add('ui-hud', '수도원장에게 피해를 주면 낙인이 1 줄어듭니다', 'abbotDemand 공격 요구: 공격했을 때 2→1', () => demand('atk',true) === 1 && demand('atk',false) === 3);
   add('ui-hud', '열기 100에서 재폭풍', 'ch3Tick: 100 이상에서 예고·발동', E => E('ch3Tick.toString()').includes('b.heat >= 100'));
   add('ui-hud', '내 중독이 10에 닿으면 부화', 'tickOnce: 중독10 이상이면 부화 처리', E => E('tickOnce.toString()').includes("st(p, 'poison') >= 10"));
   for (const text of ['배분" min="0" max="', '남은 비율" min="0" max="100" value="', '사용 횟수" min="0" max="', '0은 미기록을 뜻하지 않습니다.']) note('ui-results',text,'관리자 입력 범위·기록 필드 설명. 게임 능력치·효과 수치 아님');

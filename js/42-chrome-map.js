@@ -108,7 +108,7 @@ function crossCard(id) {
   if (id === 'quiet' && w3NoQuiet(G.run)) { const P = pathTxt(G.run, id); return `<button class="door t-path-${id}" disabled aria-disabled="true"><span class="dr-h"><span class="dr-ico" aria-hidden="true">${P.ico}</span><b>${esc(P.n)}</b></span><span class="mini">수비대의 맹세 때문에 이 챕터에서는 고를 수 없다.</span></button>`; } // A3
   const P = pathTxt(G.run, id), f = G.run.room; /* A2: 길 이름 · 설명은 챕터마다 */ const to = Math.min(f < FLOOR_CAMP ? FLOOR_CAMP : FLOOR_BOSS, PATH_AT.find(x => x > f) || FLOOR_BOSS) - 1;
   const x = v => '×' + v; const W = Object.entries(P.w || {}).filter(([t]) => ROOM_TYPES[t]).map(([t, v]) => ROOM_TYPES[t].n + ' ' + x(v));
-  const nums = [P.hp === 1 && P.dmg === 1 ? '적 체력 · 피해 그대로' : `적 체력 <b>${x(P.hp)}</b> · 피해 <b>${x(P.dmg)}</b>`, `전리품 <b>${x(P.loot)}</b> · 골드 <b>${x(P.gold)}</b>`].concat(P.up ? [`장비 등급 ${P.up > 0 ? '오름' : '내림'} <b>${Math.round(Math.abs(P.up) * 100)}%</b>`] : []);
+  const nums = [P.hp === 1 && P.dmg === 1 ? '적 생명력 · 피해 그대로' : `적 생명력 <b>${x(P.hp)}</b> · 피해 <b>${x(P.dmg)}</b>`, `전리품 <b>${x(P.loot)}</b> · 골드 <b>${x(P.gold)}</b>`].concat(P.up ? [`장비 등급 ${P.up > 0 ? '오름' : '내림'} <b>${Math.round(Math.abs(P.up) * 100)}%</b>`] : []);
   return `<button class="door t-path-${id}" data-a="path" data-k="${id}"><span class="dr-h"><span class="dr-ico" aria-hidden="true">${P.ico}</span><b>${esc(P.n)}</b>${P.risk ? `<span class="dr-risk${P.risk < 0 ? ' down' : ''}">${P.risk > 0 ? '위험 ▲' : '위험 ▼'}</span>` : ''}</span><span class="mini">${esc(P.d)}</span><span class="dr-nums">${nums.join(' · ')}</span>${W.length ? `<span class="dr-w">나오는 문(큰 길 대비): ${esc(W.join(', '))}</span>` : ''}${crossMap(id)}<span class="dr-hint">${f}층부터 ${to}층까지</span></button>`; /* 10월 7일 2차: PATHS의 배율을 숫자로 함께 */
 }
 /* 0.8.0 6단계 A-3: 이 길의 다음 구간에서 등불이 밝힌 문(강적 · 샘 · 이벤트 · 성소)만. 그 밖의 층은 ?. 구간이 야영지 앞에서 끝나면 야영지 상인 */
@@ -125,9 +125,9 @@ function vRunMap() {
   h += `<p class="mini recovery-stock">생명력 플라스크 ${p.flask.life || 0}/${flaskCap(p,'life')}회${p.flask.life ? '' : ' · 남은 충전 없음'}</p>`;
   const R = run.cur;
   if (!R && run.cross) {
-    h += `<section class="card"><h3>갈래길${q('rooms', '방과 보스')}</h3><p class="mini">다음 갈래길까지 걸을 길을 고릅니다. 층마다 문을 고르는 것은 그대로입니다.</p><div class="doors">${Object.keys(PATHS).filter(id => !(id === 'quiet' && markOn(run, 'noquiet'))).map(crossCard).join('')}</div>${markOn(run, 'noquiet') ? '<p class="mini">표식 때문에 샛길은 막혀 있습니다.</p>' : ''}</section>`;
+    h += `<section class="card"><h3>갈래길${q('rooms', '방과 보스')}</h3><p class="mini">다음 갈래길까지 걸을 길을 고릅니다. 층마다 문은 전처럼 고릅니다.</p><div class="doors">${Object.keys(PATHS).filter(id => !(id === 'quiet' && markOn(run, 'noquiet'))).map(crossCard).join('')}</div>${markOn(run, 'noquiet') ? '<p class="mini">표식 때문에 샛길은 막혀 있습니다.</p>' : ''}</section>`;
   } else if (!R && run.doors) {
-    h += `<section class="card"><h3>갈림길${q('rooms', '방과 보스')}</h3><p class="mini">문 하나를 고릅니다. 경험치는 전투 방에서만 얻습니다. 고르기 전에도 장비를 바꿔도 됩니다.</p><div class="doors">${run.doors.map(doorCard).join('')}</div></section>`;
+    h += `<section class="card"><h3>갈림길${q('rooms', '방과 보스')}</h3><p class="mini">문 하나를 고릅니다. 경험치는 전투 방에서만 얻습니다. 고르기 전에 장비를 바꿔도 됩니다.</p><div class="doors">${run.doors.map(doorCard).join('')}</div></section>`;
   } else if (R) h += vRoom(run, R);
   if (run.ptree) h += `<section class="card"><h4>트리${run.ptree.pts + run.atree.pts ? ` <span class="newtag">패시브 ${run.ptree.pts} · 액티브 ${run.atree.pts}</span>` : ''}</h4><p class="mini">시작: ${TREE2[run.build].starters.map(id => esc(SK2[id].n)).join(', ')} · 장착 ${(run.skills || []).length}/${EQUIP_SLOTS2}: ${(run.skills || []).map(id => esc(SK2[id] ? SK2[id].n : id)).join(', ') || '없음'}. 방과 방 사이에 노드를 찍고 스킬을 바꿉니다.</p><button data-a="tree"${run.ptree.pts + run.atree.pts ? ' class="gold"' : ''}>트리 열기</button></section>`;
   const past = (run.rooms || []).filter(x => x.room);
@@ -136,26 +136,26 @@ function vRunMap() {
 }
 function vRoom(run, R) {
   const T = ROOM_TYPES[R.type]; let h = `<section class="card room t-${R.type}">`;
-  if (R.type === 'boss') { const B = BOSSES[run.boss]; return h + `<h3>보스</h3><p><b>${B.ico} ${esc(B.n)}</b></p><p class="lore">${esc(B.lore || '')}</p><p class="mini">보스전은 도망칠 수 없고, 너무 오래 끌면 보스가 광폭해집니다.</p><button class="gold" data-a="enter" data-focus>보스와 싸우기</button></section>`; }
+  if (R.type === 'boss') { const B = BOSSES[run.boss]; return h + `<h3>보스</h3><p><b>${B.ico} ${esc(B.n)}</b></p><p class="lore">${esc(B.lore || '')}</p><p class="mini">보스전에서는 도망칠 수 없습니다. 너무 오래 끌면 보스가 광폭해집니다.</p><button class="gold" data-a="enter" data-focus>보스와 싸우기</button></section>`; }
   if (R.type === 'fate') return vFateRoom(run, h);
   if (R.type === 'market') return h + vMarket(run, R) + '</section>'; // A2 암시장
   if (R.type === 'smugstall') return h + vSmug(run, R) + '</section>'; // A3 밀수꾼의 좌판
   if (R.type === 'checkpoint') return w3CheckRoom(run, R, h); // A3 검문소
   if (R.type === 'camp') return h + vCamp(run) + '</section>'; // 10월 14일 개편 5단계: 정비 시간(46-screens-shop.js)
-  if (R.type === 'spring') return h + `<h3>💧 샘</h3><p>샘에서 쉬면 생명력이 50% 차고, 플라스크가 하나씩 찹니다.</p><button class="gold" data-a="rest" data-focus>샘에서 쉬기</button></section>`;
+  if (R.type === 'spring') return h + `<h3>💧 샘</h3><p>샘에서 쉬면 생명력이 50% 차고 플라스크가 하나씩 찹니다.</p><button class="gold" data-a="rest" data-focus>샘에서 쉬기</button></section>`;
   if (R.type === 'shrine') { const S = SHRINES.find(x => x.id === R.shrine); return h + `<h3>🕯️ ${esc(S.n)}</h3><p>${esc(S.d)} 다음 3개 방 동안 이어집니다.</p><div class="row"><button class="gold" data-a="shrine" data-k="1" data-focus>기도한다</button><button data-a="shrine" data-k="0">지나친다</button></div></section>`; }
   if (R.type === 'altar') {
     const A = ALTARS.find(x => x.id === R.altar) || { id: '', n: '무너진 제단', d: '바칠 곳이 무너져 내렸다.' }; const gc = altarGold(run); const can = A.id === 'gold' ? (run.gold || 0) >= gc : A.id === 'offer' ? run.bag.length > 0 : !!A.id; // 10월 24일 S-4: 옛 3챕터 제단(재 · 뼈 · 유리 저울)을 뺐다. 지금 풀에 없는 제단은 지나치기만 한다
     return h + `<h3>🩸 ${esc(A.n)}</h3><p>${esc(A.id === 'gold' ? A.d.replace('40', gc) : A.d)}</p>${A.id === 'gold' ? `<p class="mini">가진 골드 ${run.gold || 0}</p>` : ''}<div class="row"><button class="gold" data-a="altar" data-k="1"${can ? '' : ' disabled'} data-focus>${A.id === 'offer' ? '바칠 장비 고르기' : '거래한다'}</button><button data-a="altar" data-k="0">지나친다</button></div>${!can && A.id ? `<p class="mini">${A.id === 'gold' ? '골드가 모자랍니다.' : '바칠 장비가 가방에 없습니다.'}</p>` : ''}</section>`;
   }
   if (R.type === 'event') {
-    const E0 = EVENTS.find(x => x.id === R.event) || { id: R.event, n: '흔적만 남은 자리', lore: '무언가 있던 자리인데, 이제는 아무것도 없다.', opts: [{ id: 'pass', n: '지나간다' }] }; // 10월 24일 S-4: 지금 풀에 없는 옛 이벤트는 지나가기만 한다
+    const E0 = EVENTS.find(x => x.id === R.event) || { id: R.event, n: '흔적만 남은 자리', lore: '무언가 있던 자리다. 이제는 아무것도 없다.', opts: [{ id: 'pass', n: '지나간다' }] }; // 10월 24일 S-4: 지금 풀에 없는 옛 이벤트는 지나가기만 한다
     const dis = o => (E0.id === 'reliquary' && o.id === 'force' && run.p.st < 40) || (E0.id === 'monk' && o.id === 'feed' && !(run.p.flask.life + run.p.flask.mana + (run.p.flask.stam || 0))) || ch2EvDis(run, E0, o) || w3EvDis(run, E0, o);
     return h + `<h3>❔ ${esc(E0.n)}</h3><p class="lore">${esc(E0.lore)}</p><div class="evopts">${E0.opts.map(o => `<button class="evo" data-a="event" data-k="${o.id}"${dis(o) ? ' disabled' : ''}><b>${esc(o.n)}</b>${o.d ? `<small>${esc(o.d)}</small>` : ''}</button>`).join('')}</div></section>`;
   }
   // 전투 방
   h += `<h3>${T.ico} ${esc(T.n)}${R.strong ? ' · ' + esc(R.strong) : R.squad && SQUADS.find(x => x.id === R.squad) ? ' · ' + esc(SQUADS.find(x => x.id === R.squad).n) : ''}${q('rooms', '방과 보스')}</h3>`;
-  if (R.ambush) h += `<p class="warn">순찰대입니다. 정예가 둘이라 더 거셉니다. 쓰러뜨린 적이 전리품을 더 자주 떨구고, 이기면 패시브 포인트 +1 또는 소모품 하나를 고릅니다.</p>`; // 0.8.0 6단계 A-6
+  if (R.ambush) h += `<p class="warn">순찰대입니다. 정예가 둘이라 더 거셉니다. 쓰러뜨린 적은 전리품을 더 자주 떨굽니다. 이기면 패시브 포인트 +1 또는 소모품 하나를 고릅니다.</p>`; // 0.8.0 6단계 A-6
   if (R.mods && R.mods.length) h += R.mods.map(m => `<p class="mini"><b>${esc(ROOM_MODS[m].n)}</b>: ${esc(ROOM_MODS[m].d)}</p>`).join('');
   h += `<p>이 방의 적 <span class="mini">Lv${R.lv || 1}</span></p><ul class="elist">${R.en.map((x, i) => `<li>${ROLES[x[0]].ico} ${esc(roomEnemyName(R, x, i))} <span class="mini">${ROLES[x[0]].n} · ${ROLES[x[0]].row === 'front' ? '전열' : '후열'}</span></li>`).join('')}${run.next && run.next.chase ? '<li>굶주린 수도사 <span class="mini">전열</span></li>' : ''}</ul>${q('roles', '적의 역할')}${roomXpHint(R, run.mode)}`;
   const nx = run.next || {};

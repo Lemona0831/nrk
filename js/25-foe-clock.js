@@ -43,7 +43,7 @@ function fcDoom(b, e) {
 function fcChip(b, e) {
   const D = fcDef(e); if (!D || !e.clk) return ''; const C = e.clk, warn = !C.perm && C.n >= C.max - 1;
   const cells = Array.from({ length: C.max }, (_, i) => `<i class="${i < C.n || C.perm ? 'on' : ''}"></i>`).join('');
-  return `<span class="fclk${warn ? ' warn' : ''}${C.perm ? ' perm' : ''}" data-info="fclk" aria-label="${esc(D.n)} ${C.perm ? '가득' : C.n + '/' + C.max}${warn ? ', 다음이면 위험' : ''}">${warn ? '<span class="fclkw" aria-hidden="true">⚠</span>' : ''}${esc(D.n)} <b>${C.perm ? C.max : C.n}/${C.max}</b><span class="fclkc" aria-hidden="true">${cells}</span></span>`;
+  return `<span class="fclk${warn ? ' warn' : ''}${C.perm ? ' perm' : ''}" data-info="fclk" aria-label="${esc(D.n)} ${C.perm ? '가득' : C.n + '/' + C.max}${warn ? ', 마지막 경고' : ''}">${warn ? '<span class="fclkw" aria-hidden="true">⚠</span>' : ''}${esc(D.n)} <b>${C.perm ? C.max : C.n}/${C.max}</b><span class="fclkc" aria-hidden="true">${cells}</span></span>`;
 }
 /* 10월 24일 S-4 처음 만남 한 줄: 시계 칩이 처음 보이는 전투에서 한 번만 알린다(G.data.seenClk. 2챕터 새 역할 처음 만남과 같은 틀: 기록 한 줄 + 알림). 무엇이 답인지는 말하지 않는다 */
 const FC_TIP = '칸이 다 차면 싸움이 크게 위험해집니다. 한 칸 남으면 마지막 경고가 뜹니다';

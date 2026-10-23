@@ -10,7 +10,7 @@ for(const [id,cap] of Object.entries(limits)){
   const es=[0,1].map(i=>{const e=E.mkEnemy('bruiser',false,i);e.hp=e.hpMax=10000;return e});
   const b=E.newBattle(p,es,{});E.runSkill2(b,E.v2Static({...s,fx:s.fx.filter(x=>x.k!=='ward')}),es[0]);
   assert.equal(p.ward,ward-w.take,id);assert.equal(b.rec.filter(x=>x.k==='wardSpend').length,f.spend&&ward>0?1:0);
-  if(f.spend){assert(E.skBody(s).includes(f.drainAll ? '전부 소모' : '50%'));assert(E.skBody(s).includes('최대 '+cap));}
+  if(f.spend){assert(E.skBody(s).includes(f.drainAll ? '모두 소모' : '50%'));assert(E.skBody(s).includes('최대 '+cap));}
  }
  assert.equal(E.wardDamageInfo(f,10000).bonus,cap);
 }

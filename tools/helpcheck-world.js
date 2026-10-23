@@ -223,13 +223,13 @@ module.exports = function (api) {
   api.source('world-paths', pathCards);
   const pathUsed = /P\.hp\); e\.hp = e\.hpMax; e\.dmg \*= D\.dmg \* P\.dmg/.test(S34) && /\.lootMul = \(room\.ambush \? AMBUSH\.loot : 1\) \* pathOf\(room\.path, room\.mode\)\.loot/.test(S34) && /P\.gold \* \(chData\(ch\)\.gold \|\| 1\)/.test(S66) && /const PU = pathOf\(R\.path, G\.run && G\.run\.mode\)\.up/.test(S66) && /const PW = pathOf\(run\.path, run\.mode\)\.w;/.test(S66);
   const pathText = (id, mode) => { const P = E('pathOf("' + id + '", "' + mode + '")'); const w = Object.entries(P.w || {}).filter(([t]) => E('!!ROOM_TYPES.' + t)).map(([t, v]) => E('ROOM_TYPES.' + t + '.n') + ' ×' + v);
-    return [P.hp === 1 && P.dmg === 1 ? '적 체력 · 피해 그대로' : '적 체력 ×' + P.hp + ' · 피해 ×' + P.dmg, '전리품 ×' + P.loot + ' · 골드 ×' + P.gold].concat(P.up ? ['장비 등급 ' + (P.up > 0 ? '오름' : '내림') + ' ' + Math.round(Math.abs(P.up) * 100) + '%'] : []).concat(w.length ? ['나오는 문(큰 길 대비): ' + w.join(', ')] : []); };
+    return [P.hp === 1 && P.dmg === 1 ? '적 생명력 · 피해 그대로' : '적 생명력 ×' + P.hp + ' · 피해 ×' + P.dmg, '전리품 ×' + P.loot + ' · 골드 ×' + P.gold].concat(P.up ? ['장비 등급 ' + (P.up > 0 ? '오름' : '내림') + ' ' + Math.round(Math.abs(P.up) * 100) + '%'] : []).concat(w.length ? ['나오는 문(큰 길 대비): ' + w.join(', ')] : []); };
   for (const mode of ['normal', 'hard']) for (const id of ['rough', 'main', 'quiet']) {
-    api.add('world-paths', '[' + id + '.' + mode + '] 적 체력', '42-chrome-map.js crossCard가 PATHS' + (mode === 'hard' ? '_HARD' : '') + '.' + id + '의 hp · dmg · loot · gold · up · w를 그대로 그림. 34-rounds-setup.js(hp · dmg · loot) · 66-dungeon-flow.js(gold · up · w)가 같은 pathOf 값을 씀', () => {
+    api.add('world-paths', '[' + id + '.' + mode + '] 적 생명력', '42-chrome-map.js crossCard가 PATHS' + (mode === 'hard' ? '_HARD' : '') + '.' + id + '의 hp · dmg · loot · gold · up · w를 그대로 그림. 34-rounds-setup.js(hp · dmg · loot) · 66-dungeon-flow.js(gold · up · w)가 같은 pathOf 값을 씀', () => {
       const t = pathCards.find(c => c.id === id + '.' + mode).text; const P = E('pathOf("' + id + '", "' + mode + '")');
       return pathUsed && P && pathText(id, mode).every(s => t.includes(s)); });
   }
-  PAT.forEach((f, i) => api.add('world-paths', '[' + rl(i) + '] 적 체력', '66-dungeon-flow.js: 길은 f층에서 고르고 다음 갈래길 · 야영지 · 보스 바로 앞까지 간다 (PATH_AT, FLOOR_CAMP, FLOOR_BOSS)', () => {
+  PAT.forEach((f, i) => api.add('world-paths', '[' + rl(i) + '] 적 생명력', '66-dungeon-flow.js: 길은 f층에서 고르고 다음 갈래길 · 야영지 · 보스 바로 앞까지 간다 (PATH_AT, FLOOR_CAMP, FLOOR_BOSS)', () => {
     const stops = PAT.concat([E('FLOOR_CAMP'), E('FLOOR_BOSS')]).filter(x => x > f).sort((a, b) => a - b); const t = pathCards.find(c => c.id === rl(i)).text;
     return pathText('main', 'normal').every(s => t.includes(s)) && t.includes(f + '층부터 ' + (stops[0] - 1) + '층까지') && /PATH_AT\.includes\(run\.room\)\) \{ run\.cross = /.test(S66); }));
 
@@ -303,7 +303,7 @@ module.exports = function (api) {
 
   // ===== 이벤트 · 성소 · 제단 처리 중 알림(toast)과 시트 제목에 찍히는 글 (80-events.js의 글을 그대로 읽는다) =====
   const tl = {
-    shrine: lit(S80, /toast\('(성소의 힘이 \d+개 방 동안 함께합니다)'\)/),
+    shrine: lit(S80, /toast\('(성소의 힘이 \d+개 방 동안 이어집니다)'\)/),
     refundB: lit(S80, /case 'ptref': case 'atref'[^\n]*toast\('(되돌렸습니다\. 포인트 \+\d+)'\)/),
   };
   api.source('world-toasts', Object.entries(tl).map(([id, t]) => ({ id, text: pref(id, t) })));

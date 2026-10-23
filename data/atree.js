@@ -102,7 +102,7 @@ const ATREE_DEF = {
         ['sbv_sg_fire', '타오르는 방출', '화상 3을 겁니다. 피해 12 → 8.', { fxSet: [{ k: 'dmg', n: 8 }], fxAdd: [{ k: 'st', s: 'ignite', n: 3 }] }, ['화상'], { v: 'link' }]],
       sb_finale: [
         ['sbv_fin_normal', '빠른 일섬', '보통 빠르기가 됩니다. 피해 33 → 25.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 25 }] }, [], { v: 'deep' }],
-        ['sbu_release', '갑주 해방', '먼저 보호막 18 · 보호 1을 두르고, 남은 보호막을 모두 태워 피해로 바꿉니다(×1.5).', { fxAdd: [{ k: 'wardFirst', n: 18, protect: 1 }, { k: 'wardBurn', mul: 1.5 }] }, ['보호막'], { v: 'link' }]],
+        ['sbu_release', '갑주 해방', '먼저 보호막 18 · 보호 1을 두르고 남은 보호막을 모두 태워 피해로 바꿉니다(×1.5).', { fxAdd: [{ k: 'wardFirst', n: 18, protect: 1 }, { k: 'wardBurn', mul: 1.5 }] }, ['보호막'], { v: 'link' }]],
       sb_bloodfire: [
         ['sbu_bf_fast', '번지는 핏불', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
         ['sbv_bf_resp', '받아낸 핏불', '지난 라운드나 이번 라운드에 대응 충전을 받았으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기'], { v: 'link' }]],
@@ -572,7 +572,7 @@ const ATREE_DEF = {
         ['hv_tw_three', '센 순풍', '두 발 → 세 발.', { fxSet: [{ k: 'hnNock', shots: 3, txt: '다음 기본 공격 5번이 세 발' }] }, [], { v: 'deep' }],
         ['hv_tw_focus', '겨눈 순풍', '켤 때 추적한 적 추적 +1겹.', { fxAdd: [{ k: 'hnFocusSelf', n: 1, txt: '추적한 적 추적 +1겹' }] }, ['추적'], { v: 'link' }]],
       h5_gale: [
-        ['hv_gl_long', '긴 질풍', '3라운드 → 4라운드.', { fxSet: [{ k: 'hnGale', r: 4, txt: '4라운드 동안 매 라운드 두 번 움직이고(가속), 기본 공격이 두 발.' }] }, [], { v: 'deep' }],
+        ['hv_gl_long', '긴 질풍', '3라운드 → 4라운드.', { fxSet: [{ k: 'hnGale', r: 4, txt: '4라운드 동안 매 라운드 두 번 움직이고(가속) 기본 공격이 두 발.' }] }, [], { v: 'deep' }],
         ['hv_gl_bleed', '피바람 난사', '그동안 기본 공격에 출혈 1.', { fxSet: [{ k: 'hnGale', bleed: 1 }] }, ['출혈'], { v: 'link' }]],
       h5_snare: [
         ['hv_sn_deep', '깊은 덫 화살', '피해 18 → 23.', { fxSet: [{ k: 'dmg', n: 23 }] }, [], { v: 'deep' }],
@@ -717,7 +717,7 @@ const ATREE_DEF = {
         ['ev_st_deep', '거센 폭풍', '느린 행동이 됩니다. 피해 6 → 8.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 8 }] }, [], { v: 'deep' }],
         ['ev_st_vuln', '드러내는 폭풍', '취약 1을 겁니다.', { fxAdd: [{ k: 'st', s: 'vuln', n: 1 }] }, ['취약'], { v: 'link' }]],
       e5_avatar: [
-        ['ev_av_long', '긴 화신', '3차례 → 4차례.', { fxSet: [{ k: 'elAvatar', r: 4, txt: '4차례 — 내 모든 공격이 화상 1과 둔화 1을 함께 건다(맞히는 족족 열충격).' }] }, [], { v: 'deep' }],
+        ['ev_av_long', '긴 화신', '3차례 → 4차례.', { fxSet: [{ k: 'elAvatar', r: 4, txt: '4차례 동안 내 모든 공격이 화상 1과 둔화 1을 함께 건다(맞히는 족족 열충격).' }] }, [], { v: 'deep' }],
         ['ev_av_prot', '화신의 껍질', '쓸 때 보호 3.', { fxAdd: [{ k: 'st', s: 'protect', n: 3 }] }, ['보호'], { v: 'link' }]],
       e5_frostbolt: [
         ['ev_fbt_deep', '굵은 얼음 탄환', '피해 23 → 30.', { fxSet: [{ k: 'dmg', n: 30 }] }, [], { v: 'deep' }],
@@ -885,7 +885,7 @@ const ATREE_DEF = {
         ['av_my_deep', '깊은 무영', '무기 피해의 5.8배 → 6.5배.', { fxSet: [{ k: 'asHide', mul: 6.5, txt: '한 차례 숨었다가, 다음 차례 고른 적의 등 뒤에서 무기 피해의 6.5배로 벤다. 숨은 동안 광역을 포함한 어떤 공격의 표적도 되지 않는다(중독 같은 상태 피해는 받음).' }] }, [], { v: 'deep' }],
         ['av_my_brk', '무너뜨리는 무영', '벨 때 붕괴 +40.', { fxSet: [{ k: 'asHide', brk: 40 }] }, ['붕괴'], { v: 'link' }]],
       a_janyeong: [
-        ['av_jy_long', '긴 난무', '4차례 → 5차례.', { fxSet: [{ k: 'asZan', n: 5, txt: '5차례 — 그림자 분신이 함께해, 내가 누른 기본 공격이 두 번 들어간다(분신은 기본 공격의 1.7배, 반격 · 추가타는 두 번이 아님).' }] }, [], { v: 'deep' }],
+        ['av_jy_long', '긴 난무', '4차례 → 5차례.', { fxSet: [{ k: 'asZan', n: 5, txt: '5차례 동안 그림자 분신이 함께해 내가 누른 기본 공격이 두 번 들어간다(분신은 기본 공격의 1.7배, 반격 · 추가타는 두 번이 아님).' }] }, [], { v: 'deep' }],
         ['av_jy_brk', '흔드는 잔영', '잔영난무 동안 강공격 붕괴 +5.', { fxSet: [{ k: 'asZan', brk: 5 }] }, ['붕괴'], { v: 'link' }]],
     },
   },

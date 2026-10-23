@@ -317,7 +317,7 @@ for (const c of CLS) {
   { const { p, b, es } = fight([], ['sb_searveil']); E.addS(b, es[0], 'sear', 3); p.ward = 0; p.ys = 5; E.playerAct(b, 'sb_searveil'); const L = b.log.map(x => x.m || ''); ok(L.some(m => /^핏불 장막: 혈염 걸린 적 1 → 보호막 \+/.test(m)) && L.some(m => /^핏불 장막\. 보호막 \+/.test(m)), '핏불 장막: 혈염 걸린 적 하나마다 보호막 + 바탕 보호막(상한까지)'); }
   { const { p, b, es } = fight([], ['sb_flamecut']); p.ys = 5; p.edge = null; E.playerAct(b, 'sb_flamecut', es[0].id); ok(p.edge && p.edge.s === 'ignite' && p.edge.n === 4, 'M5-0c: 베기 스킬(염화 베기)도 친 뒤 칼에 싣는다(화상 4, M7-2 직업 기준 옮김 3 → 4)'); }
   { const p = { build: 'spellblade', aup: ['sbv_bleedcut_fast', 'sbv_bleedcut_burn'], pn: [] }; const s = E.skOf(p, 'sb_bleedcut'); ok(s.time === 'fast' && s.fx.some(e => e.k === 'st' && e.s === 'ignite'), '한 스킬에 변형 둘(스치는 칼 · 불붙은 상처)'); }
-  { const { p, b, es } = fight(['sbu_counter'], ['sb_bladeward']); p.sbLast = 'spell'; E.playerAct(b, 'sb_bladeward', es[0].id); const L = b.log.map(x => x.m || ''); ok(L.some(m => /^⇄ 교대: 보호막 \+4$/.test(m)) && L.some(m => /^⇄ 교대: 보호막 \+4 \(/.test(m)), '맞받아 베기: 교대면 강화의 보호막 +4와 직업 교대 보호막 +4'); }
+  { const { p, b, es } = fight(['sbu_counter'], ['sb_bladeward']); p.sbLast = 'spell'; E.playerAct(b, 'sb_bladeward', es[0].id); const L = b.log.map(x => x.m || ''); ok(L.filter(m => /^⇄ 교대: 보호막 \+4$/.test(m)).length >= 2, '맞받아 베기: 교대면 강화의 보호막 +4와 직업 교대 보호막 +4'); }
 }
 // ===== 7) 상점 되돌리기 =====
 { const run = newRun('spellblade'); run.lv = 5; run.ch = 2; E.ptFix(run); run.clears = 1; for (const id of ['lg1C', 'lg2L', 'lg3L']) E.ptBuy(run, id); E.ksGrant(run, 'b1'); E.ksEnsureOffer(run); E.ksTake(run, 'lgK5'); const fr = run.ptree.free.slice();

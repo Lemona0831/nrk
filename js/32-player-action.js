@@ -285,7 +285,7 @@ function playerAct(b, id, tgtId) {
       p.lastSkillDmg = d; break;
     }
     case 'guard': p.st -= guardCost(p); p.guard = 1; if (isCf(p)) cfCleanse(b, { n: CONF.guard }, '방어', 'guard'); // 숨겨진 직업 2: 방어하면 해로운 상태를 지운다
-      if (p.build === 'warden') { const g = addWard(b, p, wdGuardWard(p)); logp(b, 'good', '방패를 세운다. 보호막 +' + Math.round(g) + ' (' + Math.round(p.ward) + '/' + wardMax(p) + ')'); } if (p.build === 'templar') { p.ward = Math.min(30, (p.ward || 0) + 11); logp(b, 'good', '빛의 방패가 몸을 감싼다. 보호막 ' + p.ward); } logp(b, 'sys', '자세를 낮추고 막을 준비를 한다. 다음 차례까지 받는 피해 절반'); break;
+      if (p.build === 'warden') { const g = addWard(b, p, wdGuardWard(p)); logp(b, 'good', '방패를 세운다. 보호막 +' + Math.round(g)); } if (p.build === 'templar') { p.ward = Math.min(30, (p.ward || 0) + 11); logp(b, 'good', '빛의 방패가 몸을 감싼다. 보호막 ' + p.ward); } logp(b, 'sys', '자세를 낮추고 막을 준비를 한다. 다음 차례까지 받는 피해 절반'); break;
     case 'dodge': p.st -= dodgeCost(p); if (p.asChain) p.asChain = 0; /* 10월 18일 0.8.0 5단계 연이은 흘림(한 번) */ setParry(b, tgt, null, null); logp(b, 'sys', tgt.n + '의 다음 공격을 흘릴 준비를 한다' + (p.dodgeRed ? '. 피해 ' + Math.round(p.dodgeRed * 100) + '% 감소' : '')); break;
     case 'flaskL': {
       p.flask.life--; const heal = uqF(p, 'u_flaskNoHp') ? 0 : p.hpMax * flaskHealFrac(p) * healMul(p); /* M6-1 고유 wd_r6 쇳물 플라스크 대가: 생명력을 회복하지 못한다 */ if (uqF(p, 'u_flaskFree')) b.uqFlaskFree = 1; /* M6-1 고유 cm_fastflask: 차례를 끝내지 않는다(finishPlayer) */
@@ -306,7 +306,7 @@ function playerAct(b, id, tgtId) {
     case 'flaskM': {
       if (isV2(p)) { // 0.6a.2 정화 플라스크: 지우지 않고 막는다 (막음 2, 강화판 장비는 blockAdd로 더한다)
         p.flask.mana--; const nb = 2 + fxAdd(p, 'blockAdd', p); const cur = stk(p, 'block'); p.s.block = { stacks: Math.min(KW.block, cur + nb), until: KW_FOREVER, dur: KW_FOREVER };
-        fxRun(p, 'onFlask', b, p, 'mana'); logp(b, 'good', '정화 플라스크를 비운다. 막음 ' + p.s.block.stacks + ': 다음에 걸리는 해로운 상태를 튕겨 낸다'); time = 0.5; break;
+        fxRun(p, 'onFlask', b, p, 'mana'); logp(b, 'good', '정화 플라스크를 비운다. 막음 ' + p.s.block.stacks + ': 다음 해로운 상태를 튕겨 낸다'); time = 0.5; break;
       }
       p.flask.mana--; p.mp = Math.min(p.mpMax, p.mp + p.mpMax * 0.4); fxRun(p, 'onFlask', b, p, 'mana');
       const n = cleanse(b, ['weak', 'vuln', 'brand'], true); logp(b, 'good', '플라스크를 비운다. 마나 +' + r1(p.mpMax * 0.4) + (n ? ', 디버프 ' + n + ' 지움' : '')); time = 0.5; break;

@@ -18,7 +18,7 @@ module.exports = function (api) {
     E => E('VERSION') === '0.8.0' && E('CHANGE_VER') === E('VERSION') && E('CHANGELOG[0].groups') != null && has('index.html', '<title>나락의 유산 · ' + E('VERSION') + '</title>') && has('remote.html', '나락의 유산 ' + E('VERSION') + '</title>') && has('js/44-screens-account.js', '<span class="ver">${esc(VERSION)}</span>') && has('js/76-sound-render.js', "'나락의 유산 · ' + VERSION"));
 
   /* ===== 0.8.0 통합 항목 ===== */
-  note(S, '1막이 세 챕터로 새로 짜였습니다', '막 이름(1막). 챕터 이름 · 장치는 아래 1막 항목에서 대조');
+  note(S, '1막을 세 챕터로 새로 짰습니다', '막 이름(1막). 챕터 이름 · 장치는 아래 1막 항목에서 대조');
   add(S, '저주받은 수도원, 어둠이 가라앉은 거리, 성벽 아래이고', '데이터: CHAPTERS 셋 · CH_DEVICE = 기도 · 등불 · 경보', E => E('[1,2,3].map(c => CHAPTERS[c].n).join()') === '저주받은 수도원,어둠이 가라앉은 거리,성벽 아래' && E('CHAPTERS[4]') === undefined && E('[1,2,3].map(c => CH_DEVICE[c].id).join()') === 'prayer,lamp,alarm');
   for (const f of ['0.8.0은 새로 시작합니다', '0.7.0의 캐릭터와 세이브, 계정 진행은 이어지지 않습니다']) add(S, f, '상수: RSEASON.cur=' + E("typeof RSEASON !== 'undefined' ? RSEASON.cur : ''") + ', 저장 키 SKEY=' + E('SKEY') + '(0.7.0의 nrk_062_v1은 읽지 않음, SKEY_OLD)', E => E('RSEASON.cur') === '0.8.0' && E('SKEY') !== 'nrk_062_v1' && E("SKEY_OLD.includes('nrk_062_v1')"));
   add(S, '챕터마다 16층입니다', 'FLOORS=' + E('FLOORS') + ' · PATH_AT=' + E('PATH_AT.join()') + ' · FLOOR_CAMP=' + E('FLOOR_CAMP') + ' · FLOOR_BOSS=' + E('FLOOR_BOSS'), E => E('FLOORS') === 16 && E('PATH_AT.join()') === '4,9,12' && E('FLOOR_CAMP') === 8 && E('FLOOR_BOSS') === 16);

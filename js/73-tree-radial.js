@@ -236,7 +236,7 @@ function trdInfoP(run, id, mode, opt) {
   }
   h += `<p class="trd-st st-${st}">${TRD_STN[st]}${!ringOpen(run, n.ring) ? ' · ' + trdRingShort(n.ring) : ''}</p>`;
   if (why && !(st === 'near' && !edit)) h += `<p class="mini">${esc(why)}</p>`;
-  if (st === 'free') h += '<p class="mini">큰 각인을 고를 때 보너스 노드로 열렸습니다. 포인트를 쓰지 않았고, 상점 되돌리기에도 남습니다.</p>';
+  if (st === 'free') h += '<p class="mini">큰 각인을 고를 때 보너스 노드로 열렸습니다. 포인트를 쓰지 않았고 상점 되돌리기에도 남습니다.</p>';
   if (st === 'ks') h += '<p class="mini">챕터 보상으로 얻었습니다. 상점 되돌리기에도 남습니다.</p>';
   if (!edit && n.kind !== 'start' && st !== 'own' && st !== 'free' && st !== 'ks') h += `<p class="mini">${G.run && !G.creating && runOver(G.run) ? '끝난 캐릭터의 트리는 볼 수만 있습니다.' : '전투 중에는 볼 수만 있습니다.'}</p>`;
   let b = '';

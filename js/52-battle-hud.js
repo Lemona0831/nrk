@@ -5,7 +5,7 @@ function incHtml(b) {
   return `<div class="incoming${bad}" data-info="incoming" tabindex="0"><i class="swd" aria-hidden="true"></i>다음 차례 전 예상 피해 <b>−${r1(x.sum)}</b> <span class="inca" aria-hidden="true">생명력 ${shownHp(b.p.hp)} → ${shownHp(left)}${x.sum >= b.p.hp ? ' (쓰러질 수 있음)' : ''}</span><span class="sr">, 맞으면 생명력 ${shownHp(left)}${x.sum >= b.p.hp ? ', 쓰러질 수 있음' : ''}</span></div>`;
 }
 /* 예상 피해의 뜻: 접힌 자세한 정보 안에 둔다(10월 7일 2차: 전에는 늘 숨겨져 있었다) */
-function incWhy(b) { if (b.over) return ''; const x = incomingEst(b); return x.n ? `<p class="mini">예상 피해는 공격 ${x.n}번을 보통 행동 기준으로 셉니다. 흘리기와 방어로 줄일 수 있습니다. 생명력 막대의 점 칸이 이 몫입니다.</p>` : ''; }
+function incWhy(b) { if (b.over) return ''; const x = incomingEst(b); return x.n ? `<p class="mini">예상 피해는 공격 ${x.n}번을 보통 행동 기준으로 셉니다. 흘리기와 방어로 줄어듭니다. 생명력 막대의 점 칸이 이 몫입니다.</p>` : ''; }
 /* 생명력 증감 숫자: 그리기 사이의 차이를 1.4초 동안 띄운다. 다시 그려도 애니메이션이 이어지게 지난 시간만큼 당겨 시작한다(엔진은 건드리지 않는다) */
 const POP_MS = 1400;
 /* 피해 숫자(떠올랐다 사라짐)는 dpop. 설명 창(#pop.pop)과 이름이 같으면 설명 창도 1.4초 뒤에 사라진다(10월 3일 고침) */
@@ -36,7 +36,7 @@ const HUD_MODS = [
   { id: 'hud-incoming', mine: 1, n: '예상 피해', fn: 'vHudIncoming', z: 'top1', hm: 1, d: '다음 차례 전에 맞을 피해 한 줄' },
   { id: 'hud-status', mine: 1, n: '상태 칩', fn: 'vHudStatus', z: 'top1', hm: 1, d: '내게 걸린 상태, 봉인, 화상' },
   { id: 'hud-order', n: '순서', fn: 'vHudOrder', z: 'top2', hm: 1, d: '라운드와 행동 순서, 기록 단추' },
-  { id: 'hud-clock', n: '보스 시계와 열기', fn: 'vHudClock', z: 'top2', lock: 1, d: '광폭화까지 남은 라운드, 3챕터 열기' },
+  { id: 'hud-clock', n: '광폭화와 열기', fn: 'vHudClock', z: 'top2', lock: 1, d: '광폭화까지 남은 라운드, 3챕터 열기' },
   { id: 'hud-banner', n: '차례 알림', fn: 'vHudBanner', z: 'top2', d: '내 차례와 적 행동 알림 한 줄' },
   { id: 'hud-log', n: '기록', fn: 'vRecent', z: 'top2', d: '최근 기록' },
   { id: 'hud-danger', n: '지금 위험', fn: 'vHudDanger', z: 'mid', lock: 1, d: '이번 차례에 답이 필요한 일' },
@@ -188,33 +188,33 @@ function bossMechanicsHtml(b, boss) {
   const it = intentText(b, boss);
   if (boss.boss === 'abbot') {
     state.push('낙인 ' + st(b.p, 'brand') + '/3');
-    why.push('낙인이 쌓일수록 수도원장의 강타 피해가 증가합니다.');
+    why.push('낙인이 쌓일수록 수도원장의 강타 피해가 커집니다.');
     if (boss.demand && boss.demand.turn === b.turnIdx) {
       const rest = boss.demand.k === 'rest';
       state.push(rest ? '고해: 수도원장에게 피해 주지 않기' : '심문: 이번 차례 수도원장에게 피해 주기');
-      why.push(rest ? '수도원장에게 피해를 주지 않으면 낙인 1 감소. 피해를 주면 낙인이 늘고 수도원장이 강화됩니다.' : '수도원장에게 피해를 주면 낙인 1 감소. 피해를 주지 않으면 낙인이 늘어납니다.');
+      why.push(rest ? '수도원장에게 피해를 주지 않으면 낙인이 1 줄어듭니다. 피해를 주면 낙인이 늘고 수도원장이 강해집니다.' : '수도원장에게 피해를 주면 낙인이 1 줄어듭니다. 피해를 주지 않으면 낙인이 늘어납니다.');
     }
     if (boss.vow) {
       state.push('서원 중 · 촛불 ' + alive(b).filter(e => e.role === 'candle').length + '개');
-      why.push('서원 중에는 직접 피해가 줄어듭니다. 붕괴시키면 서원이 깨지고 촛불이 꺼집니다. 서원이 끝날 때 남은 촛불은 수도원장을 강화합니다.');
+      why.push('서원 중에는 직접 피해가 줄어듭니다. 무너뜨리면 서원이 깨지고 촛불이 꺼집니다. 서원이 끝날 때 남은 촛불은 수도원장을 강화합니다.');
     }
   } else if (boss.boss === 'cryptlord') {
-    why.push('군주의 새김은 행동 갈래를 약화시킵니다. 적용 중인 새김과 남은 시간은 위에 표시됩니다.');
+    why.push('군주가 새긴 행동 갈래는 약해집니다. 새김과 남은 시간은 위에 보입니다.');
     if (b.carve) {
       state.push('새김: ' + Object.keys(b.carve.g).map(k => CARVE_N[k] + ' −' + Math.round((1-b.carve.g[k])*100) + '%').join(' · ') + ' · 내 차례 ' + b.carve.left + '번');
-      why.push('새겨진 행동 갈래의 효과가 약해집니다. 남은 내 차례가 지나거나 군주를 붕괴시키면 새김이 사라집니다.');
+      why.push('새겨진 행동 갈래의 효과가 약해집니다. 남은 내 차례가 지나거나 군주를 무너뜨리면 새김이 사라집니다.');
     } else state.push('새김 없음');
     const walls = alive(b).filter(e => e.role === 'bonewall').length;
-    if (walls) { state.push('뼈벽 ' + walls + '개'); why.push('뼈벽 뒤 후열은 단일 공격 피해가 줄어듭니다. 뼈벽을 없애면 보호가 사라집니다.'); }
+    if (walls) { state.push('뼈벽 ' + walls + '개'); why.push('뼈벽 뒤 후열은 한 적 대상 피해가 줄어듭니다. 뼈벽을 없애면 이 효과가 사라집니다.'); }
   } else if (boss.boss === 'queen') {
     const crown = alive(b).find(e => e.role === 'crown');
     state.push(crown ? '왕관 생명력 ' + shownHp(crown.hp) + '/' + Math.round(crown.hpMax) : '왕관 없음');
     if (crown) why.push('왕관을 공격하면 열기가 내려갑니다. 왕관을 깨면 열기가 크게 내려가고 여왕이 휘청입니다.');
     if (b.crownBack) state.push('왕관 재생까지 ' + Math.max(0,b.crownBack-(b.round||0)) + '라운드');
     const maids = alive(b).filter(e => e.role === 'maid');
-    if (maids.length) { state.push('시녀 ' + maids.length + '명'); why.push('시녀의 영창이 끝나면 열기가 올라갑니다. 적 카드에서 영창 준비 상태를 확인할 수 있습니다.'); }
+    if (maids.length) { state.push('시녀 ' + maids.length + '명'); why.push('시녀의 영창이 끝나면 열기가 올라갑니다. 영창 준비는 적 카드에 보입니다.'); }
     if (boss.under) { state.push(boss.qPrep ? '솟구침 준비 완료' : '모래 속 잠복'); why.push('잠복 중에는 단일 공격이 닿지 않습니다. 솟구침은 큰 피해와 출혈을 줍니다.'); }
-    why.push('열기 100에서 재폭풍이 발생합니다. 발동 시점과 예상 피해는 열기 막대에 표시됩니다.');
+    why.push('열기 100에서 재폭풍이 붑니다. 언제 불고 얼마나 아픈지는 열기 막대에 보입니다.');
   } else if (boss.boss === 'mother') {
     state.push('내 중독 ' + st(b.p,'poison') + '/10'); why.push('내 중독이 10에 닿으면 부화가 일어납니다.');
     if(ph>=2)state.push('거울 활성');
@@ -223,9 +223,9 @@ function bossMechanicsHtml(b, boss) {
     why.push('뿌리가 남아 있는 동안 수호목이 라운드마다 회복합니다. 계절이 바뀌면 전투 규칙도 달라집니다.');
   }
   const pending = !!(boss.qNext || boss.lordNext || boss.abNext), dw = bossDwell(boss);
-  const hold = pending ? (dw && !dw.last && dw.left ? `버티는 중 · 이 단계에서 ${dw.left}번 더 움직인 뒤 전환` : '단계 전환 대기 · 현재 예고를 마친 뒤 전환') : dw && dw.last && dw.left ? `버티는 중 · 마지막 단계에서 ${dw.left}번 움직이기 전에는 쓰러지지 않음` : '';
+  const hold = pending ? (dw && !dw.last && dw.left ? `버티는 중 · 이 단계에서 ${dw.left}번 더 움직인 뒤 전환` : '단계 전환 대기 · 지금 예고를 마치면 넘어감') : dw && dw.last && dw.left ? `버티는 중 · 마지막 단계에서 ${dw.left}번 움직이기 전에는 쓰러지지 않음` : '';
   const bank = boss.bank > 0 ? ` · 쌓인 피해 ${r1(boss.bank)}(보스가 움직이면 들어감)` : '';
-  return `<section class="boss-mechanics" aria-label="보스 기믹 상태"><div class="boss-state"><b>${esc(boss.n)} · ${ph}단계</b>${hold ? '<span>' + hold + bank + '</span>' : ''}</div>${state.length ? '<div class="boss-state">' + state.map(s=>'<span>'+esc(s)+'</span>').join('') + '</div>' : ''}<div class="boss-next"><b>다음 행동</b> ${esc(fixJosa(it && it.t || '예고 없음'))}</div>${why.length ? '<details><summary>현재 기믹 설명</summary>' + why.map(s=>'<p>'+esc(s)+'</p>').join('') + '</details>' : ''}</section>`;
+  return `<section class="boss-mechanics" aria-label="보스 규칙 상태"><div class="boss-state"><b>${esc(boss.n)} · ${ph}단계</b>${hold ? '<span>' + hold + bank + '</span>' : ''}</div>${state.length ? '<div class="boss-state">' + state.map(s=>'<span>'+esc(s)+'</span>').join('') + '</div>' : ''}<div class="boss-next"><b>다음 행동</b> ${esc(fixJosa(it && it.t || '예고 없음'))}</div>${why.length ? '<details><summary>현재 규칙 설명</summary>' + why.map(s=>'<p>'+esc(s)+'</p>').join('') + '</details>' : ''}</section>`;
 }
 function vHudClock(b) {
   let gim = '';
@@ -258,7 +258,7 @@ function vHudField(b, hud, pops) {
     /* 깃발: [화면에 그리는 것, 읽어 주는 말]. 10월 7일: 카드 버튼 안에서는 따로 초점을 받지 않고, 카드의 읽는 이름에 모두 담는다 */
     const fl = [];
     if (reach && guardOf(b, e)) fl.push(['<span class="nr gd" data-info="guarded">🛡️막힘</span>', '방패병이 막는 중']);
-    if (e.braced) fl.push(['<span class="nr gd" data-info="ebraced">🪨</span>', '버팀']);
+    if (e.braced) fl.push(['<span class="nr gd" data-info="ebraced">🪨</span>', '버티기']);
     if (e.countering) fl.push(['<span class="nr gd" data-info="ecounter">↩️</span>', '반격 태세']);
     if (e.evading) fl.push(['<span class="nr gd" data-info="eevade">🌀</span>', '몸 낮춤']);
     if (e.guarding) fl.push(['<span class="nr gd" data-info="eguard">🙌</span>', '지키는 중']);
@@ -271,8 +271,8 @@ function vHudField(b, hud, pops) {
     if (e.pile) fl.push(['<span class="nr gd hv" data-info="epile:' + e.id + '">🦴 부활 ' + e.pile.wait + '라운드</span>', '뼈 더미, 일어서기까지 ' + e.pile.wait + '라운드']);
     if (e.under) fl.push(isCh3(b) ? ['<span class="nr gd">🏜️ 모래 속</span>', '모래 속: 한 적 대상으로 고를 수 없음'] : ['<span class="nr gd">🕳️ 땅속</span>', '땅속: 한 적 대상으로 고를 수 없음']);
     if (e.swift) fl.push(['<span class="nr gd" data-info="eswift">⚡신속</span>', '신속: 라운드마다 가속 1']);
-    if (e.cmd) fl.push(['<span class="nr gd" data-info="ecmd">📣지휘</span>', '지휘: 살아 있는 동안 같은 무리 잡몹의 피해 +15%']); if (e.lootA) fl.push(['<span class="nr gd" data-info="elootA">💰장물</span>', '장물 두른: 맞을 때마다 골드 1을 빼앗긴다']); if (e.oiled) fl.push(['<span class="nr gd" data-info="eoiled">🛢️기름</span>', '기름 먹은: 화상 피해 2배 · 붕괴 1.5배']); // A2
-    if (e.role === 'bonewall') fl.push(['<span class="nr gd">🧱 후열 보호</span>', '뼈벽: 후열이 받는 한 적 대상 피해 절반, 붕괴에 약함']);
+    if (e.cmd) fl.push(['<span class="nr gd" data-info="ecmd">📣지휘</span>', '지휘: 살아 있는 동안 같은 무리 일반 적의 피해 +15%']); if (e.lootA) fl.push(['<span class="nr gd" data-info="elootA">💰장물</span>', '장물 두른: 맞을 때마다 골드 1을 빼앗긴다']); if (e.oiled) fl.push(['<span class="nr gd" data-info="eoiled">🛢️기름</span>', '기름 먹은: 화상 피해 2배 · 붕괴 1.5배']); // A2
+    if (e.role === 'bonewall') fl.push(['<span class="nr gd">🧱 뼈벽</span>', '뼈벽: 후열이 받는 한 적 대상 피해 절반, 붕괴에 약함']);
     if (e.row === 'back' && alive(b).some(x => x.role === 'bonewall')) fl.push(['<span class="nr gd">🧱½</span>', '뼈벽 뒤: 한 적 대상 피해 절반']);
     if (e.haze > 0) fl.push(['<span class="nr gd" data-info="ehaze">🌫️' + e.haze + '</span>', '허상 ' + e.haze + '겹: 한 적을 노린 공격 하나가 한 겹을 걷고 헛친다']);
     if (e.wrap > 0) fl.push(['<span class="nr gd" data-info="ewrap">🧻' + e.wrap + '</span>', '붕대: 받는 직접 피해 −' + Math.round(WRAP.cut * 100) + '%, ' + e.wrap + '번 더 맞으면 풀림']);
@@ -284,15 +284,15 @@ function vHudField(b, hud, pops) {
     if (e.stkExp > 0 || (e.role === 'lurker' && e.s.vuln && !e.under && e.intent && e.intent.k === 'exposed')) fl.push(['<span class="nr gd">😵</span>', '드러남: 숨을 고르는 중']);
     if (e.boss === 'tree' && rootRegen(b) > 0) fl.push([`<span class="nr rg2" data-info="regen">🌱 +${rootRegen(b)}/라운드</span>`, '라운드마다 ' + rootRegen(b) + ' 회복']);
     const ed = hud.edet || sel; /* 카드를 눌러 고르면 그 카드는 상세가 모두 보인다 */
-    const KEEP = /data-info="(guarded|ebraced|ecounter|eevade|eguard|echant|edemand|ehaze|ewrap|ectr|efocus|ecmd|eloot|elootA|eoiled)"|땅속|모래 속|후열 보호|🧱½/;
+    const KEEP = /data-info="(guarded|ebraced|ecounter|eevade|eguard|echant|edemand|ehaze|ewrap|ectr|efocus|ecmd|eloot|elootA|eoiled)"|땅속|모래 속|🧱 뼈벽|🧱½/;
     const flv = ed ? fl : fl.filter(x => KEEP.test(x[0]));
     const wall = wallUp(b, e) ? 'ewall' : wallFrontUp(b, e) ? 'ewallf' : '';
     const sw = stsWords(e, b);
-    const lab = [(e.pile ? '뼈 더미' : e.n) + (e.role === 'boss' ? ' ' + e.phase + '페이즈' : '') + (e.lv ? ' Lv' + e.lv : '') + (e.rn && e.n.indexOf(e.rn) < 0 ? ' ' + e.rn : '') + (e.tough ? ' 강인' : ''),
+    const lab = [(e.pile ? '뼈 더미' : e.n) + (e.role === 'boss' ? ' ' + e.phase + '단계' : '') + (e.lv ? ' Lv' + e.lv : '') + (e.rn && e.n.indexOf(e.rn) < 0 ? ' ' + e.rn : '') + (e.tough ? ' 강인' : ''),
       '생명력 ' + shownHp(e.hp) + '/' + Math.round(e.hpMax)].concat(e.role !== 'root' && e.role !== 'crown' ? [eordText(b, e), '붕괴 ' + Math.round(e.brk) + '/' + e.brkMax] : [])
       .concat(sw.length ? ['상태: ' + sw.join(', ')] : []).concat(wall || fl.length ? ['표시: ' + (wall ? ['방패벽'] : []).concat(fl.map(x => x[1])).join(', ')] : [])
       .concat(e.role !== 'root' && e.role !== 'crown' ? ['예고: ' + it.t] : ['움직이지 않는다']).join(', ');
-    return `<button class="en${e.pile ? ' pile' : ''}${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(lab)}">${ed ? eordHtml(b, e) : ''}<span class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.pile ? '뼈 더미' : e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wall ? `<span class="wallm" data-info="${wall}">🛡️</span>` : ''}${ed && e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" data-info="etough">강인</small>' : ''}${ed && e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${flv.map(x => x[0]).join('')}</span>${ehpBar(e)}${foeASHtml(b, e)}${ed && e.role !== 'root' && e.role !== 'crown' ? `<span class="bkline" data-info="bar:bk"><small>붕괴<span class="bkl"> 게이지</span></small><span class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></span></span>` : ''}${stsHtml(e, b, 1, { mode: sel ? 'all' : hud.sts })}${e.role !== 'root' && e.role !== 'crown' ? `<span class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${(hud.iaux || sel) && acts1[e.id] > 1 ? `<span class="ix">×${acts1[e.id]}</span>` : ''}</span>` : '<span class="mini emv">움직이지 않는다</span>'}${pop ? popHtml(pop) : ''}</button>`;
+    return `<button class="en${e.pile ? ' pile' : ''}${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(lab)}">${ed ? eordHtml(b, e) : ''}<span class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.pile ? '뼈 더미' : e.n)}${e.role === 'boss' ? ' ' + e.phase + '단계' : ''}${wall ? `<span class="wallm" data-info="${wall}">🛡️</span>` : ''}${ed && e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" data-info="etough">강인</small>' : ''}${ed && e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${flv.map(x => x[0]).join('')}</span>${ehpBar(e)}${foeASHtml(b, e)}${ed && e.role !== 'root' && e.role !== 'crown' ? `<span class="bkline" data-info="bar:bk"><small>붕괴<span class="bkl"> 게이지</span></small><span class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></span></span>` : ''}${stsHtml(e, b, 1, { mode: sel ? 'all' : hud.sts })}${e.role !== 'root' && e.role !== 'crown' ? `<span class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${(hud.iaux || sel) && acts1[e.id] > 1 ? `<span class="ix">×${acts1[e.id]}</span>` : ''}</span>` : '<span class="mini emv">움직이지 않는다</span>'}${pop ? popHtml(pop) : ''}</button>`;
   };
   const bk = b.en.filter(e => e.alive && e.row === 'back'), fr = b.en.filter(e => e.alive && e.row === 'front');
   /* 전열 · 후열 띠 (10월 3일 만든 사람: 한눈에 안 들어온다): 줄마다 색 띠와 머리글, 머리에 근접 공격이 닿는지.

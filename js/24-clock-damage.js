@@ -256,7 +256,7 @@ function monkCounter(b, o) {
 const WD_HELD = { per: 0.5, back: 0.5, cap: 10, brk: 10 };
 function wdHeld(b, p, o, held) {
   const R = b.ysR || 0, e = o.src;
-  if (fxFlag(p, 'heldWard')) { if (b.heldR !== R) { b.heldR = R; b.heldN = 0; } const v = Math.min(held * WD_HELD.per * (e.row === 'back' ? WD_HELD.back : 1), WD_HELD.cap - b.heldN); if (v > 0) { b.heldN += v; const g = addWard(b, p, v, undefined, true); if (g > 0) logp(b, 'good', '받아낸 몫. 보호막 +' + r1(g) + ' (' + Math.round(p.ward) + '/' + wardMax(p) + ')'); b.rec.push({ k: 'held', n: r1(g), want: r1(v) }); } }
+  if (fxFlag(p, 'heldWard')) { if (b.heldR !== R) { b.heldR = R; b.heldN = 0; } const v = Math.min(held * WD_HELD.per * (e.row === 'back' ? WD_HELD.back : 1), WD_HELD.cap - b.heldN); if (v > 0) { b.heldN += v; const g = addWard(b, p, v, undefined, true); if (g > 0) logp(b, 'good', '받아낸 몫. 보호막 +' + r1(g)); b.rec.push({ k: 'held', n: r1(g), want: r1(v) }); } }
   if (fxFlag(p, 'heldBrk') && e.alive && e.row === 'front' && b.heldBrkR !== R) { b.heldBrkR = R; logp(b, 'good', e.n + '의 공격을 방패로 흔든다. 붕괴 +' + WD_HELD.brk); addBreak(b, e, WD_HELD.brk); }
 }
 /* 방어 보호막: 기본 WARD.guard, 다진 의지면 + 의지 × 0.5, 버팀목이면 생명력 50% 이하에서 2배 (생성 배율은 addWard가 곱한다) */
@@ -270,7 +270,7 @@ function bossGate(b, e) {
   if (e.boss === 'lu') { const th = FOE_X.lu.ph[(e.phase || 1) - 1]; if (th != null && e.hp <= e.hpMax * th) { e.hp = Math.max(1, Math.round(e.hpMax * th)); e.bdNext = 1; } } // A3 루 단계 문턱
   if (e.boss === 'bardo') { const th = FOE_X.bardo.ph[(e.phase || 1) - 1]; if (th != null && e.hp <= e.hpMax * th) { e.hp = Math.max(1, Math.round(e.hpMax * th)); e.bdNext = 1; } } // A2 바르도 단계 문턱
   if (e.boss === "abbot") { const th = ABBOT.ph[(e.phase || 1) - 1]; if (th != null && e.hp <= e.hpMax * th) { e.hp = Math.max(1, Math.round(e.hpMax * th)); e.abNext = 1; } } // 페이즈 문턱은 한 번에 하나: 넘친 피해는 버린다. 보스가 행동을 마친 뒤 한 단계만 넘어간다
-  if (e.role === 'boss' && e.hp <= 0) { const w = bossDwell(e); if (w && w.last && w.left) { e.hp = 1; if (!e.dwellLog) { e.dwellLog = 1; logp(b, 'sys', e.n + '이(가) 쓰러지지 않고 버틴다. 마지막 단계에서 ' + w.left + '번 더 움직인 뒤에야 쓰러뜨릴 수 있다'); } } } // 단계 최소 체류(10월 14일)
+  if (e.role === 'boss' && e.hp <= 0) { const w = bossDwell(e); if (w && w.last && w.left) { e.hp = 1; if (!e.dwellLog) { e.dwellLog = 1; logp(b, 'sys', e.n + '이(가) 쓰러지지 않고 버틴다. ' + w.left + '번 더 움직여야 쓰러진다'); } } } // 단계 최소 체류(10월 14일)
 }
 /* 쌓인 피해 넣기: 피해 배율은 이미 붙어 있으므로 다시 계산하지 않는다. 다음 문턱이나 버티기에 걸리면 남은 몫은 다시 쌓인다 */
 function bossBankApply(b, e) {
@@ -279,7 +279,7 @@ function bossBankApply(b, e) {
   const dealt = Math.max(0, hp0 - Math.max(0, e.hp)), held = e.hp > 0 && e.hp > hp0 - n + 0.001 ? Math.max(0, n - dealt) : 0; if (held > 0) e.bank = r1(held);
   const ds = b.damageStats || (b.damageStats = { v: 0, dealt: 0, taken: 0 }); ds.dealt += dealt;
   b.rec.push({ k: 'dealt', t: r1(b.t), d: r1(dealt), role: e.role, a: '쌓인 피해', dot: true, bank: 1 });
-  logp(b, 'good', '쌓였던 피해가 ' + e.n + '에게 들어간다. ' + r1(dealt) + ' 피해' + (held > 0 ? ' (쌓임 ' + r1(held) + ' · ' + ((bossDwell(e) || {}).last ? '버티는 중' : '단계 문턱') + ')' : ''));
+  logp(b, 'good', '쌓인 피해: ' + e.n + '에게 ' + r1(dealt) + ' 피해' + (held > 0 ? ' (쌓임 ' + r1(held) + ' · ' + ((bossDwell(e) || {}).last ? '버티는 중' : '단계 문턱') + ')' : ''));
   if (e.hp <= 0) killEnemy(b, e);
   checkEnd(b);
 }

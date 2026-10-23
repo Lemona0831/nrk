@@ -57,7 +57,7 @@ function infoHtml(key) {
   const b = G.b; const parts = key.split(':');
   const H = (t, body) => `<b class="pt">${esc(t)}</b>${body}`;
   const P = s => `<p>${esc(s)}</p>`;
-  if (key === 'bar:ys' && b) { const p = b.p; return H('유산 ' + ysNow(p) + '/' + ysCapOf(p), P('스킬은 유산을 씁니다(비용 1 · 2 · 3 · 4). 전투를 가득 찬 채 시작하고, 둘째 차례부터 내 차례가 시작될 때 +1 찹니다' + (YUSAN.longFrom ? '(' + (YUSAN.longFrom + 1) + '번째 차례부터는 +2)' : '') + '. 유산은 내 차례에만 씁니다.') + P('대응에 성공하면 +1, 라운드에 한 번: 방어로 받아 내기 · 흘리기 성공 · 적을 무너뜨리기 · 모으기와 영창 끊기 · 큰 공격을 모으는 적을 움직이기 전에 쓰러뜨리기.') + P('스태미나 플라스크는 전투에 한 번 유산 +1을 더 줍니다.')); } // 10월 15일 유산 1차 시제품
+  if (key === 'bar:ys' && b) { const p = b.p; return H('유산 ' + ysNow(p) + '/' + ysCapOf(p), P('스킬은 유산을 씁니다(비용 1 · 2 · 3 · 4). 전투를 가득 찬 채 시작하고, 둘째 차례부터 내 차례가 시작될 때 +1 찹니다' + (YUSAN.longFrom ? '(' + (YUSAN.longFrom + 1) + '번째 차례부터는 +2)' : '') + '. 유산은 내 차례에만 씁니다.') + P('대응에 성공하면 +1, 라운드에 한 번: 막기 · 흘리기 · 무너뜨리기 · 끊기 · 먼저 치우기.') + P('스태미나 플라스크는 전투에 한 번 유산 +1을 더 줍니다.')); } // 10월 15일 유산 1차 시제품
   if (key === 'bar:st' && b) { const p = b.p; return H('스태미나', P('지금 강공격 ' + heavyCost(p) + ', 방어 ' + guardCost(p) + ', 흘리기 ' + dodgeCost(p) + '이 듭니다. 라운드가 끝날 때마다 10씩 차고, 스태미나 플라스크로 60을 채웁니다. 기본 공격은 스태미나를 채우지 않습니다. 0이 되면 탈진합니다.')); } /* 10월 7일: 직업마다 다른 흘리기 비용을 그대로 */
   if (parts[0] === 'tn' && G.run && G.run.atree) { // 10월 16일 0.8.0 2단계: 액티브 트리 노드
     const s = SK2[parts[1]]; if (!s) return ''; const own = s.start || G.run.atree.own.includes(s.id); const why = own ? null : atWhy(G.run, s.id); const ss = skOf(G.run.p, s.id) || s;
@@ -68,7 +68,7 @@ function infoHtml(key) {
     const s = skillMap(b.p.build)[a.id];
     let body = (a.v2 ? P(skHead(a.s)) + (skDescHtml(a.s) || P(skBody(a.s))) + /* M5-0a 승부수: 대사 칸 + 효과 / 대가 / 대상 */ (skillDamageHint(b.p,a.s) ? P(skillDamageHint(b.p,a.s)) : '') + cfKwHtml(a.s) + (a.wait > 0 && a.wait < CD_USED ? P('유산 ' + a.yc + ' 필요, 지금 ' + ysNow(b.p) + '. 내 차례가 시작될 때 +1, 대응에 성공하면 +1' + (a.ok && a.pull ? '. 지금 누르면 모자란 ' + a.wait + '을(를) 피로 당겨 바로 씁니다. 내는 생명력 ' + a.blood : '')) : a.wait >= CD_USED ? P('이번 전투에 이미 썼습니다') : P('사용 가능. 유산 ' + a.yc + '을(를) 씁니다(지금 ' + ysNow(b.p) + ')')) : P(a.id === 'sig' ? '직업 기술. ' + (SIG[b.p.build].cd ? SIG[b.p.build].cd + '차례에 한 번. ' : '') + SIG[b.p.build].d : (s ? resLabel(s, a.mana) + '. ' + s.d : actInfo(b.p, a.id)))) + (a.v2 ? '' : P('빠르기: ' + speedWord(a.time)));
     if (a.v2 && b.p.build === 'monk') { const now = skillHint0(b,a); if (now) body += P('지금: ' + now); }
-    if (a.id !== 'flee') body += `<p class="pv">${esc(previewText(b, a.time))}</p>` + P('예상 수치' + '는 내 행동의 즉시 결과입니다. 이후 적 차례와 라운드 끝 피해는 포함하지 않습니다.');
+    if (a.id !== 'flee') body += `<p class="pv">${esc(previewText(b, a.time))}</p>` + P('예상 수치' + '는 이 행동을 한 직후의 값입니다. 뒤이은 적 차례와 라운드 끝 피해는 넣지 않았습니다.');
     if (a.id === 'dodge') {
       const sel = G.sel ? b.en.find(e => e.id === G.sel && e.alive && e.role !== 'root') : null; const dt = sel || pickDodge(b);
       if (dt) { const moves = previewAfter(b, 1).some(x => x.e === dt); body += moves ? `<p>흘릴 적: <b>${esc(dt.n)}</b> (${esc(intentText(b, dt).t)})</p>` : `<p class="no">${esc(dt.n)}은(는) 내 다음 차례 전에 움직이지 않아 흘리기가 헛됩니다.</p>`; }
@@ -76,7 +76,7 @@ function infoHtml(key) {
     const tg = G.sel ? b.en.find(e => e.id === G.sel && e.alive) : null;
     if (!a.ok) body += `<p class="no">지금은 쓸 수 없음: ${a.why || (a.id === 'heavy' || a.id === 'guard' || a.id === 'dodge' ? '스태미나 부족' : a.skill ? '마나 부족' : '플라스크 없음')}</p>`;
     else if (tg && !a.self && !a.aoe && !canTarget(b, tg, a)) body += `<p class="no">선택한 대상(${esc(tg.n)})에 닿지 않습니다. 전열이 막고 있습니다.</p>`;
-    if (tg && isMeleeAct(b.p, a.id) && guardOf(b, tg) && !(a.id === 'heavy' && b.p.eq.weapon === 'hook' && tg.row === 'back')) body += `<p class="no">이 근접 공격은 ${esc(guardOf(b, tg).n)}이(가) 대신 맞습니다(피해·붕괴·상태이상 모두). 방패병을 붕괴시키거나, 원거리·광역 공격을 쓰면 뚫립니다.</p>`;
+    if (tg && isMeleeAct(b.p, a.id) && guardOf(b, tg) && !(a.id === 'heavy' && b.p.eq.weapon === 'hook' && tg.row === 'back')) body += `<p class="no">이 근접 공격은 ${esc(guardOf(b, tg).n)}이(가) 대신 맞습니다(피해 · 붕괴 · 해로운 상태 모두). 방패병을 무너뜨리거나 원거리 · 광역 공격을 쓰면 뚫립니다.</p>`;
     return H(a.n, body);
   }
   if (parts[0] === 'en' && b) {
@@ -86,7 +86,7 @@ function infoHtml(key) {
     return H(e.n, P(e.info || RINFO[e.role] || '') + P('다음 행동: ' + intentText(b, e).t) + (e.role !== 'root' ? P('붕괴 게이지 ' + Math.round(e.brk) + '/' + e.brkMax + '. 가득 차면 모으던 강타가 끊기고 다음 행동을 놓칩니다.') : '') + (reach ? '' : '<p class="no">지금은 근접 공격이 닿지 않습니다.</p>') + P('누르면 대상으로 고릅니다.'));
   }
   if (key === 'floorbones' && b) { const piles=alive(b).filter(e=>e.pile); return H('바닥의 뼈', P('뼈 더미 '+piles.length+'개가 남아 있습니다.') + piles.map(e=>P('부활까지 '+e.pile.wait+'라운드 · 생명력 '+shownHp(e.hp)+'/'+Math.round(e.hpMax))).join('') + P('더미를 없애면 부활하지 않습니다. 남은 적이 뼈 더미뿐이면 전투가 끝납니다.')); }
-  if (parts[0] === 'bdwell' && b) { const e = b.en.find(x => String(x.id) === parts[1]), w = e && bossDwell(e); if (!w) return ''; return H('🛡️ 버티는 중', P(w.last ? '마지막 단계입니다. 이 단계에서 ' + w.need + '번 움직이기 전에는 생명력이 1 아래로 내려가지 않습니다. 지금 ' + w.n + '번 움직였습니다.' : '단계 문턱에 닿았습니다. 이 단계에서 ' + w.need + '번 움직인 뒤 다음 단계로 넘어가고, 그때까지 문턱을 넘는 피해는 쌓아 둡니다. 지금 ' + w.n + '번 움직였습니다.') + (e.bank > 0 ? P('막힌 피해 ' + r1(e.bank) + '이(가) 쌓여 있습니다. 보스가 움직여 문이 열리면 한꺼번에 들어갑니다. 다음 문턱에 닿으면 남은 몫은 다시 쌓입니다.') : P('막힌 피해는 사라지지 않고 쌓였다가, 보스가 움직여 문이 열리면 한꺼번에 들어갑니다.')) + P('보스가 단계마다 자기 패턴을 보여 주도록 하는 규칙입니다. 단계를 넘기는 행동과 숨 고르기는 횟수에 넣지 않습니다.')); }
+  if (parts[0] === 'bdwell' && b) { const e = b.en.find(x => String(x.id) === parts[1]), w = e && bossDwell(e); if (!w) return ''; return H('🛡️ 버티는 중', P(w.last ? '마지막 단계입니다. 이 단계에서 ' + w.need + '번 움직이기 전에는 생명력이 1 아래로 내려가지 않습니다. 지금 ' + w.n + '번 움직였습니다.' : '단계 문턱에 닿았습니다. 이 단계에서 ' + w.need + '번 움직인 뒤 다음 단계로 넘어가고, 그때까지 문턱을 넘는 피해는 쌓아 둡니다. 지금 ' + w.n + '번 움직였습니다.') + (e.bank > 0 ? P('막힌 피해 ' + r1(e.bank) + '이(가) 쌓여 있습니다. 보스가 움직여 문이 열리면 한꺼번에 들어갑니다. 다음 문턱에 닿으면 남은 몫은 다시 쌓입니다.') : P('막힌 피해는 사라지지 않고 쌓였다가, 보스가 움직여 문이 열리면 한꺼번에 들어갑니다.')) + P('단계마다 보스가 제 행동을 모두 보여 주고 넘어가게 하는 규칙입니다. 단계를 넘기는 행동과 숨 고르기는 횟수에 넣지 않습니다.')); }
   if (parts[0] === 'skrise' && b) { const e = b.en.find(x => String(x.id) === parts[1]), r = e && skelRise(b, e); if (!r) return ''; return H('🦴 해골의 부활', r.no ? P('지금 ' + r.why + ' 상태라 쓰러져도 뼈 더미가 남지 않고 다시 일어서지 못합니다.') : P('쓰러지면 뼈 더미가 되고, ' + r.wait + '라운드 뒤 생명력 ' + Math.round(RISE.hp * 100) + '%로 한 번 다시 일어섭니다.' + (r.lime ? ' 석회 가루로 ' + r.lime + '라운드 늦췄습니다.' : '') + (r.charm ? ' 장비로 1라운드 늦췄습니다.' : '')) + P('화상이 걸렸거나 무너진 채 쓰러지면 일어서지 못합니다. 뼈 더미를 없애도 부활하지 않습니다.')); }
   if (parts[0] === 'cmark' && b) { const e = b.en.find(x => String(x.id) === parts[1]), m = e && consMarks(e).find(x => x[0] === parts[2]); if (!m) return ''; return H(m[1] + ' ' + m[2], P(CONS_MARK_D[m[0]](e)) + (m[0] === 'norise' ? '' : P('소모품으로 건 효과입니다.'))); }
   if (parts[0] === 'epile' && b) { const e = b.en.find(x => String(x.id) === parts[1]); if (!e || !e.pile) return ''; return H('뼈 더미', P('앞으로 ' + e.pile.wait + '라운드 뒤 해골이 한 번 다시 일어섭니다. 그 전에 더미를 없애면 부활하지 않습니다.') + (CONS.lime ? P('석회 가루를 쓰면 부활이 ' + CONS.lime.v + '라운드 늦어집니다.') : '') + P('남은 적이 뼈 더미뿐이면 전투가 끝납니다.')); }
@@ -127,11 +127,11 @@ function infoHtml(key) {
   if (key === 'dodgeon' && b) { // 흘리기 준비: 실제로 줄이는 몫과 흘려 낸 뒤 효과 (스킬마다 50~90%)
     const p = b.p; const de = b.en.find(x => x.id === p.dodge && x.alive); const on = p.dodgeOn;
     const ret = on ? [on.dmg ? '피해 ' + on.dmg : '', on.poison ? '중독 ' + on.poison : '', on.brk ? '붕괴 +' + on.brk : ''].filter(Boolean).join(', ') : '';
-    return H('흘리기 준비', P((de ? de.n + '의' : '고른 적의') + ' 다음 공격 피해가 ' + Math.round(Math.max(0, (p.dodgeRed || parryRed(p)) - parryBigOf(p, de)) * 100) + '% 줄어듭니다' + (parryBig(de) ? '(강적·보스라 ' + Math.round(parryBigOf(p, de) * 100) + '%p 덜)' : '') + '. 강타라면 그 적의 붕괴 게이지가 25 찹니다.') + (ret ? P('흘려 내면 그 적에게 ' + ret + '.') : '') + P('내 다음 차례까지 유효합니다. 고른 적이 그 사이 움직이지 않으면 헛됩니다.'));
+    return H('흘리기 준비', P((de ? de.n + '의' : '고른 적의') + ' 다음 공격 피해가 ' + Math.round(Math.max(0, (p.dodgeRed || parryRed(p)) - parryBigOf(p, de)) * 100) + '% 줄어듭니다' + (parryBig(de) ? '(강적·보스라 ' + Math.round(parryBigOf(p, de) * 100) + '%p 덜)' : '') + '. 강타라면 그 적의 붕괴 게이지가 25 찹니다.') + (ret ? P('흘려 내면 그 적에게 ' + ret + '.') : '') + P('내 다음 차례까지 이어집니다. 고른 적이 그 사이 움직이지 않으면 헛됩니다.'));
   }
   if (parts[0] === 'buff' && G.run) { const k = parts[1], S = SHRINES.find(x => x.id === k); const n = (G.run.buffs || {})[k] || 0; return H(S ? S.n : (EVBUFF[k] || [k])[0], P(S ? S.d : (EVBUFF[k] || ['', ''])[1]) + P('지금 방을 포함해 ' + n + '개 방 동안 이어집니다.')); } // 10월 5일: 브라우저 툴팁 대신 게임 설명 창
   if (parts[0] === 'sk' && SK2[parts[1]]) { const s = SK2[parts[1]]; return H(s.n, P((s.start ? '시작 스킬' : s.b + ' · ' + s.tier + ' · ' + s.row + '줄') + '. ' + skHead(s)) + (skDescHtml(s) || P(skBody(s))) + cfKwHtml(s)); } // 시험 전투의 스킬 칸
-  if (parts[0] === 'fclk') return H('강적의 시계', P('싸우는 동안 칸이 차오르고, 다 차면 싸움이 크게 위험해집니다. 한 칸 남으면 마지막 경고가 뜹니다.') + P('무엇이 칸을 채우고 되돌리는지는 겪어 보며 알게 됩니다.')); // G-1
+  if (parts[0] === 'fclk') return H('강적의 시계', P('싸우는 동안 칸이 차오르고, 다 차면 싸움이 크게 위험해집니다. 한 칸 남으면 마지막 경고가 뜹니다.') + P('무엇이 칸을 채우고 되돌리는지는 겪어 보면 압니다.')); // G-1
   if (parts[0] === 'chdev') { const D = typeof G !== 'undefined' && G.b ? chDevOf(G.b) : null; if (D) return H(D.n || '', P(D.help || '')); } // A0 챕터 장치 도움말 한 줄
   if (parts[0] === 'mod' && ROOM_MODS[parts[1]]) return H(ROOM_MODS[parts[1]].n, P(ROOM_MODS[parts[1]].d));
   if (key === 'heat' && b && b.heat != null) return H('열기', P('지금 ' + Math.round(b.heat) + '/100. 이번 라운드 끝에 약 +' + heatRise(b) + '.') + P('열기가 100 이상인 채 라운드가 끝나면 ' + heatName(b) + '이(가) 붑니다. 예고가 뜬 뒤에는 내 차례가 한 번 옵니다. 그 전에 열기를 100 아래로 내리면 불지 않습니다.') + P('열기가 변할 때마다 전투 기록에 까닭이 적힙니다.'));
@@ -228,7 +228,7 @@ function pvShow(btn) {
     if (sim.p) { const up = sim.p.hi > 0; pvOwn('.fstat .bar.hp', p.hp, up ? sim.p.hi : sim.p.lo, p.hpMax); say.push('내 생명력 ' + (sim.p.hi > 0 ? '+' + pvNum(sim.p.lo, sim.p.hi) : '−' + pvNum(-sim.p.hi, -sim.p.lo))); }
     if (Math.abs(sim.st || 0) > 0.05) { pvOwn('.fstat .bar.st', p.st, sim.st, p.stMax); say.push('내 스태미나 ' + (sim.st > 0 ? '+' : '−') + r1(Math.abs(sim.st))); }
     if (Math.abs(sim.mp || 0) > 0.05 && p.mpMax > 0) { pvOwn('.fstat .bar.mp', p.mp, sim.mp, p.mpMax); say.push('내 마나 ' + (sim.mp > 0 ? '+' : '−') + r1(Math.abs(sim.mp))); } }
-  const d = document.getElementById('pvdesc'); if (d) d.textContent = say.length ? '이 행동의 예상: ' + say.join('. ') + '. 내 행동의 즉시 결과이며, 이후 적 차례와 라운드 끝 피해는 포함하지 않습니다.' : '';
+  const d = document.getElementById('pvdesc'); if (d) d.textContent = say.length ? '이 행동의 예상: ' + say.join('. ') + '. 이 행동을 한 직후의 값이고, 뒤이은 적 차례와 라운드 끝 피해는 넣지 않았습니다.' : '';
   if (say.length) descAdd(btn, 'pvdesc'); PV.btn = btn;
 }
 function pvHide() { if (typeof document === 'undefined') return; ysPvOff(); document.querySelectorAll('.pvg:not(.pvi),.pvk,.pvh,.pvc,.pvx,.en .pvt').forEach(x => x.remove()); document.querySelectorAll('.bar span[data-o]').forEach(sp => { sp.innerHTML = sp.dataset.o; delete sp.dataset.o; }); if (PV.btn) descDel(PV.btn, 'pvdesc'); PV.btn = null; }

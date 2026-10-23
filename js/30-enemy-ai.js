@@ -289,7 +289,7 @@ function enemyAct(b, e) {
     case 'sermon': { addS(b, b.p, 'weak', ABBOT.sermonWeak); logp(b, 'bad', e.n + '이(가) 설교한다. 약화 ' + ABBOT.sermonWeak); break; }
     case 'rest': { logp(b, 'sys', e.n + '이(가) 무너진 제단 위에서 숨을 고른다'); break; }
     case 'sacprep': { const m = b.en.find(x => x.id === i.tgt && x.alive); if (m) { e.sacNext = m.id; e.teleTurn = b.turnIdx; logp(b, 'crit', e.n + '이(가) ' + m.n + '을(를) 끌어당긴다'); codexHit(b, 'abbot', 'sacrifice'); } break; }
-    case 'sacrifice': { const m = b.en.find(x => x.id === i.tgt && x.alive); e.sacNext = null; if (m) { m.alive = false; m.hp = 0; const h = e.hpMax * ABBOT.sacHeal; e.hp = Math.min(e.hpMax, e.hp + h); addS(b, b.p, 'brand', 999, 1, 3); logp(b, 'bad', e.n + '이(가) ' + m.n + '을(를) 제물로 바친다. 생명력 +' + r1(h) + ', 낙인이 깊어진다'); checkEnd(b); } else { addS(b, e, 'empower', 2); logp(b, 'bad', e.n + '이(가) 최후의 기도를 올린다'); } break; }
+    case 'sacrifice': { const m = b.en.find(x => x.id === i.tgt && x.alive); e.sacNext = null; if (m) { m.alive = false; m.hp = 0; const h = e.hpMax * ABBOT.sacHeal; e.hp = Math.min(e.hpMax, e.hp + h); addS(b, b.p, 'brand', 999, 1, 3); logp(b, 'bad', m.n + '이(가) 제물이 된다. ' + e.n + ' 생명력 +' + r1(h) + ', 낙인이 깊어진다'); checkEnd(b); } else { addS(b, e, 'empower', 2); logp(b, 'bad', e.n + '이(가) 최후의 기도를 올린다'); } break; }
     case 'lastprayer': { e.lastPray = 1; addS(b, e, 'empower', 2); logp(b, 'bad', e.n + '이(가) 최후의 기도를 올린다. 강화 2'); break; }
     case 'pick': { const ps = alive(b).filter(x => x.pile); let g = 0; for (const x of ps) { x.norise = 1; x.hp = 0; killEnemy(b, x); g += FOE_X.collector.pick; } if (g) { addS(b, e, 'protect', Math.min(FOE_X.collector.cap, g)); logp(b, 'bad', e.n + '이(가) 뼈 더미 ' + ps.length + '개를 거둔다. 보호 ' + st(e, 'protect')); codexHit(b, 'collector', 'pick'); } else logp(b, 'sys', e.n + '이(가) 바닥을 훑지만 거둘 뼈가 없다'); break; }
     case 'retprep': logp(b, 'sys', e.n + '이(가) 방패를 뒤집는다. 몸에 걸린 것을 되돌려 보내려 한다'); break;
@@ -329,7 +329,7 @@ function enemyAct(b, e) {
       if (e.foe === 'reaper') e.embers = 0;
       if (e.foe === 'well') { codexHit(b, 'well', 'open'); if (b.p.s.poison) { delete b.p.s.poison; logp(b, 'sys', '우물이 몸속의 독을 모두 빨아들인다'); codexHit(b, 'well', 'spent'); } }
       break; }
-    case 'heal': { const hcut = e.noHeal ? CONS.hinder.v : 0; if (hcut) { e.noHeal = 0; logp(b, 'good', e.n + '의 손이 방해 부적에 떨린다. 치유 −' + Math.round(hcut * 100) + '%'); } const t = b.en.find(x => x.id === i.tgt && x.alive) || alive(b).sort((a, c) => a.hp / a.hpMax - c.hp / c.hpMax)[0]; if (t) { const hf = healFrac(e) * (1 - hcut); t.hp = Math.min(t.hpMax, t.hp + t.hpMax * hf); e.healN = (e.healN || 0) + 1; logp(b, 'bad', e.n + '이(가) ' + t.n + '의 상처를 봉합한다. ' + r1(hf * 100) + '% 회복' + (!e.monk ? '. 손이 점점 무뎌진다' : '')); } break; }
+    case 'heal': { const hcut = e.noHeal ? CONS.hinder.v : 0; if (hcut) { e.noHeal = 0; logp(b, 'good', e.n + '의 손이 방해 부적에 떨린다. 치유 −' + Math.round(hcut * 100) + '%'); } const t = b.en.find(x => x.id === i.tgt && x.alive) || alive(b).sort((a, c) => a.hp / a.hpMax - c.hp / c.hpMax)[0]; if (t) { const hf = healFrac(e) * (1 - hcut); t.hp = Math.min(t.hpMax, t.hp + t.hpMax * hf); e.healN = (e.healN || 0) + 1; logp(b, 'bad', e.n + '이(가) ' + t.n + '의 상처를 꿰맨다. ' + r1(hf * 100) + '% 회복' + (!e.monk ? '. 손이 무뎌진다' : '')); } break; }
     case 'raise': fc1Raise(b, e); break; // G-1 시계(비공개 문서 참조)
     case 'tune': logp(b, 'sys', e.n + '이(가) 손끝으로 박자를 센다'); break;
     case 'ring': fc1Ring(b, e); break; // G-1 시계(비공개 문서 참조)
@@ -382,7 +382,7 @@ function abbotCandles(b, e) {
 function abbotBell(b, e) {
   const p = b.p; for (const k of ['protect', 'rage', 'empower', 'haste', 'block']) delete p.s[k]; p.whet = 0; p.nextRed = 0; p.decoy = 0; if (p.rime) p.rime = null; if (p.payCut) p.payCut = []; // 원소술사 되얼림도 흩어진다
   ysLose(b, 1, '침묵의 종'); // 10월 15일 유산 1차 시제품: 쿨타임 +1 대신 유산 −1(0 아래로 내려가지 않는다)
-  logp(b, 'crit', '사이 행동 — ' + e.n + '이(가) 침묵의 종을 울린다. 몸에 두른 기운이 흩어지고, 손이 무거워진다'); codexHit(b, 'abbot', 'bell');
+  logp(b, 'crit', '사이 행동 · ' + e.n + '이(가) 침묵의 종을 울린다. 두른 기운이 흩어진다'); codexHit(b, 'abbot', 'bell');
   e.vow = 1; e.vowTick = b.tick; e.serN = 0; e.intent = { k: 'pray' }; e.teleX = 1; logp(b, 'crit', e.n + '이(가) 입을 다문다'); codexHit(b, 'abbot', 'vow'); abbotCandles(b, e);
 }
 function abbotTick(b, e, T) {
@@ -395,7 +395,7 @@ function abbotTick(b, e, T) {
         const heal = e.hpMax * ABBOT.candleHeal * cs.length * Math.pow(ABBOT.candleDecay, n);
         e.hp = Math.min(e.hpMax, e.hp + heal); addS(b, e, 'empower', cs.length);
         b.rec.push({ k: 'bossheal', t: r1(b.t), role: e.role, phase: e.phase, source: 'candle', cycle: n + 1, d: r1(e.hp - before) });
-        logp(b, 'bad', '남은 촛불 ' + cs.length + '개가 ' + e.n + '에게 스며든다. 생명력 +' + r1(e.hp - before) + ', 강화 ' + cs.length);
+        logp(b, 'bad', '남은 촛불이 ' + e.n + '에게 스며든다. 생명력 +' + r1(e.hp - before) + ', 강화 ' + cs.length);
       }
       e.vow = 0; e.vowTick = T; e.serN = 0; e.intent = null; e.teleX = 1; decideIntent(b, e); logp(b, 'sys', e.n + '이(가) 입을 열어 설교를 시작한다');
     } else if (!e.vow && T - (e.vowTick || 0) >= ABBOT.sermonR) { e.vow = 1; e.vowTick = T; e.intent = { k: 'pray' }; e.teleX = 1; logp(b, 'sys', e.n + '이(가) 다시 입을 다문다'); abbotCandles(b, e); }
@@ -408,7 +408,7 @@ function abbotTick(b, e, T) {
 function abbotAltar(b, e) {
   e.vow = 0; for (const c of b.en.filter(x => x.role === 'candle' && x.alive)) { c.alive = false; c.hp = 0; }
   e.intent = { k: 'rest' }; e.teleX = 1; e.restNext = 0; e.altarT = b.tick;
-  logp(b, 'crit', '사이 행동 — 제단이 무너진다'); codexHit(b, 'abbot', 'altar'); hurtPlayer(b, b.p.hpMax * ABBOT.altar, { aoe: 1, label: '무너지는 제단' });
+  logp(b, 'crit', '사이 행동 · 제단이 무너진다'); codexHit(b, 'abbot', 'altar'); hurtPlayer(b, b.p.hpMax * ABBOT.altar, { aoe: 1, label: '무너지는 제단' });
   const hm = mkEnemy('healer', 0, b.idc++, { lv: e.lv || 1, name: '치유 수도사' }); hm.monk = 1; hm.summoned = true; hm.hpMax = Math.round(e.hpMax * ABBOT.healHp); hm.hp = hm.hpMax;
   const sm = mkEnemy('shield', 0, b.idc++, { lv: e.lv || 1, name: '방패 수도사' }); sm.monk = 1; sm.summoned = true; sm.hpMax = Math.round(e.hpMax * ABBOT.shieldHp); sm.hp = sm.hpMax; sm.brkMax = 100;
   b.en.push(hm, sm); decideIntent(b, hm); decideIntent(b, sm);
@@ -419,8 +419,8 @@ function bossDwell(e) { const D = e && e.role === 'boss' && BOSS_DWELL[e.boss]; 
 const bossWait = e => { const w = bossDwell(e); return !!(w && !w.last && w.left); }; // 단계 전환을 아직 미룬다
 function bossPhase(b, e) {
   if (e.boss === 'abbot' && e.abNext && bossWait(e)) return; // 최소 체류 전에는 전환하지 않는다
-  if (e.boss === 'bardo') { if (!e.bdNext || bossWait(e)) return; e.bdNext = 0; const ph = (e.phase || 1) + 1; e.phase = ph; e.armorOff = 0; logp(b, 'crit', e.n + '의 기세가 바뀐다. ' + ph + '페이즈'); bardoPhaseStep(b, e, ph); return; }
-  if (e.boss === 'lu') { if (!e.bdNext || bossWait(e)) return; e.bdNext = 0; const ph = (e.phase || 1) + 1; e.phase = ph; e.armorOff = 0; logp(b, 'crit', e.n + '의 기세가 바뀐다. ' + ph + '페이즈'); luPhaseStep(b, e, ph); return; } // A3 루: 문턱(FOE_X.lu.ph) + 최소 체류 // A2 바르도: 문턱(FOE_X.bardo.ph) + 최소 체류
+  if (e.boss === 'bardo') { if (!e.bdNext || bossWait(e)) return; e.bdNext = 0; const ph = (e.phase || 1) + 1; e.phase = ph; e.armorOff = 0; logp(b, 'crit', e.n + '의 기세가 바뀐다. ' + ph + '단계'); bardoPhaseStep(b, e, ph); return; }
+  if (e.boss === 'lu') { if (!e.bdNext || bossWait(e)) return; e.bdNext = 0; const ph = (e.phase || 1) + 1; e.phase = ph; e.armorOff = 0; logp(b, 'crit', e.n + '의 기세가 바뀐다. ' + ph + '단계'); luPhaseStep(b, e, ph); return; } // A3 루: 문턱(FOE_X.lu.ph) + 최소 체류 // A2 바르도: 문턱(FOE_X.bardo.ph) + 최소 체류
   if (e.boss === 'cryptlord' || e.boss === 'queen') return; // 군주의 페이즈는 문턱에서 lordThrone · lordFall이 넘긴다
   const f = e.hp / e.hpMax; const ph0 = Math.max(e.phase || 1, e.boss === 'abbot' && e.abNext ? (e.phase || 1) + 1 : 0, e.boss === 'abbot' ? (f > 0.65 ? 1 : f > 0.3 ? 2 : 3) : f > 0.7 ? 1 : f > 0.35 ? 2 : 3); // 페이즈는 되돌아가지 않는다(회복해도 수도사가 다시 일어서지 않게)
   const ph = e.boss === 'abbot' ? Math.min(ph0, (e.phase || 1) + 1) : ph0; // 수도원장은 한 번에 한 단계만 넘어간다
@@ -430,7 +430,7 @@ function bossPhase(b, e) {
     if (ph === 3 && e.phase < 3) abbotAltar(b, e);
     e.phase = ph; return;
   }
-  if (ph !== e.phase) { e.phase = ph; e.armorOff = 0; /* A0: 갑옷은 단계마다 */ logp(b, 'crit', e.n + '의 기세가 바뀐다. ' + ph + '페이즈' + (e.boss === 'mother' && ph === 2 ? '. 나락의 거울이 열린다' : '')); }
+  if (ph !== e.phase) { e.phase = ph; e.armorOff = 0; /* A0: 갑옷은 단계마다 */ logp(b, 'crit', e.n + '의 기세가 바뀐다. ' + ph + '단계' + (e.boss === 'mother' && ph === 2 ? '. 나락의 거울이 열린다' : '')); }
 }
 
 /* ===== 0.8.0 G-1 1챕터 강적 시계 (틀은 js/25 FOE_CLOCK, 값은 data/dungeon.js CLK1). 무엇이 칸을 채우고 되감는지 · 파국 · 보상은 비공개 문서 참조 ===== 2판 · 3판(주교 · 조율자) */
@@ -492,7 +492,7 @@ FOE_CLOCK.pilgrim = {
   warn: () => '순례자의 배가 거의 찼다',
   blocked: b => fc1Stun(b),
   doom(b, e) {
-    e.fcFill = 0; e.hp = e.hpMax; e.fcFeast = 1; logp(b, 'crit', e.n + '의 배가 가득 찼다. 상처가 모두 아물고, 다음 큰 한 방에 힘이 실린다'); codexHit(b, 'pilgrim', 'feast');
+    e.fcFill = 0; e.hp = e.hpMax; e.fcFeast = 1; logp(b, 'crit', e.n + '의 배가 가득 찼다. 상처가 모두 아물고 다음 강타가 세진다'); codexHit(b, 'pilgrim', 'feast');
   },
   reward(b, e) {
     e.fcFill = 0; if (!e.alive) return; e.fcTk = { m: CLK1.pilgrim.crouch, r: (b.round || 0) + CLK1.pilgrim.crouchR };
@@ -595,7 +595,7 @@ FOE_CLOCK.scribe = {
   warn: () => '판결문이 한 줄만 남았다',
   blocked: b => fc1Stun(b),
   doom(b, e) {
-    for (const r of b.seal || []) r.perm = 1; logp(b, 'crit', e.n + '이(가) 판결을 내린다. 적힌 것은 이 싸움이 끝날 때까지 풀리지 않는다'); codexHit(b, 'scribe', 'verdict');
+    for (const r of b.seal || []) r.perm = 1; logp(b, 'crit', e.n + '이(가) 판결을 내린다. 적힌 것은 이 전투 내내 풀리지 않는다'); codexHit(b, 'scribe', 'verdict');
     fc1Hit(b, e, CLK1.scribe.verdict, e.n + '이(가) 선고를 내린다');
   },
   reward(b, e) { if (!e.alive) return; e.stun = Math.max(e.stun || 0, CLK1.scribe.pen); logp(b, 'good', e.n + '이(가) 펜을 다시 적신다'); },

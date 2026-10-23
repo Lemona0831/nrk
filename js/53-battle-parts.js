@@ -172,10 +172,10 @@ function previewText(b, time) {
   for (const x of L) {
     const k = x.e.intent && x.e.intent.k;
     if (k === 'heavy') warn.push(x.e.n + '의 강타');
-    else if (k === 'charge' && x.n >= 2) warn.push(x.e.n + '의 강타(충전 후 이어서)');
+    else if (k === 'charge' && x.n >= 2) warn.push(x.e.n + '의 강타(모은 뒤 이어서)');
     else if (k === 'explode') warn.push(x.e.n + '의 폭발');
     else if (k === 'burn') warn.push(x.e.n + '의 화형');
-    else if (k === 'fuse' && x.n >= 2) warn.push(x.e.n + '의 폭발(준비 후 이어서)');
+    else if (k === 'fuse' && x.n >= 2) warn.push(x.e.n + '의 폭발(준비한 뒤 이어서)');
     else if (k === 'heal') warn.push(x.e.n + '의 치유');
     else if (k === 'mirror') warn.push('나락의 거울');
   }

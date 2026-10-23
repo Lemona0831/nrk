@@ -26,7 +26,7 @@ const setInt = (es, k) => { for (const e of es) e.intent = Object.assign({ k: 'a
   ok(E.actionList(b).some(x => x.id === 'flaskM') && E.flaskCap(p, 'mana') === 3 && p.flask.mana === 3, '정화 플라스크는 그대로 (10월 15일 수정: 되살림)'); }
 // 5) 대응: 막기
 { const { p, b, es } = fight(); setInt(es); p.ys = 1; E.playerAct(b, 'guard'); const r = ysRec(b, 'resp'); ok(r.length === 1 && r[0].why === '막기' && r[0].g === 1, '방어 중 받아 내면 막기 +1'); ok(p.ys === 3, '차례 +1, 막기 +1 → 3');
-  const L = b.log.map(x => x.m || ''); ok(L.some(m => /유산 1 → 2 \(\+1, 막기\)/.test(m)), '기록에 "유산 1 → 2 (+1, 막기)"'); ok(L.some(m => /유산 2 → 3 \(\+1, 차례\)/.test(m)), '차례 충전도 앞 → 뒤로 (다음 내 차례가 시작될 때)'); ok(!L.some(m => /유산 \+1 \(/.test(m)), '옛 "유산 +1 (막기)" 줄은 없다(두 번 적지 않음)'); }
+  const L = b.log.map(x => x.m || ''); ok(L.some(m => /유산 1 → 2 \(막기\)/.test(m)), '기록에 "유산 1 → 2 (막기)"'); ok(L.some(m => /유산 2 → 3 \(차례\)/.test(m)), '차례 충전도 앞 → 뒤로 (다음 내 차례가 시작될 때)'); ok(!L.some(m => /유산 \+1 \(/.test(m)), '옛 "유산 +1 (막기)" 줄은 없다(두 번 적지 않음)'); }
 // 6) 대응: 흘리기
 { const { p, b, es } = fight(); setInt(es); p.ys = 1; E.playerAct(b, 'dodge', es[0].id); const r = ysRec(b, 'resp'); ok(r.length === 1 && r[0].why === '흘리기', '흘리기 성공 +1'); ok(p.ys === 3, '흘리기 뒤 3'); }
 // 7) 대응: 무너뜨리기 · 라운드에 한 번
@@ -81,8 +81,8 @@ ok(Y.longFrom === 8 && !Y.cheap && !Y.convex, '기본값: 1차-b 측정으로 �
   const A0 = runSeq(0), A1 = runSeq(1); if (process.env.YS_SHOW) console.log(A0.seen.join(','), '|', A1.seen.join(','), A0.tot);
   ok(JSON.stringify(A0.seen) === JSON.stringify(A1.seen), '내 차례마다 남은 유산이 두 규칙에서 같다 ' + A1.seen.join(','));
   ok(A0.tot === A1.tot, '충전 합이 같다 (' + A0.tot + ')');
-  ok(A1.log.some(m => /유산 \d → \d \(−2, /.test(m)), '쓰는 줄: 유산 5 → 3 (−2, 스킬 이름)');
-  ok(A1.log.some(m => /\(\+2, 차례\)/.test(m)), '긴 전투 차례 충전 +2 줄'); }
+  ok(A1.log.some(m => { const x = /유산 (\d) → (\d) \(/.exec(m); return x && x[1] - x[2] === 2; }), '쓰는 줄: 유산 5 → 3 (스킬 이름)');
+  ok(A1.log.some(m => { const x = /유산 (\d) → (\d) \(차례\)/.exec(m); return x && x[2] - x[1] === 2; }), '긴 전투 차례 충전 +2 줄'); }
 // 18) 판 기록 요약 rooms[].ys
 { const { p, b, es } = fight(); setInt(es); E.playerAct(b, 'sb_edge', es[0].id); setInt(es); E.playerAct(b, 'guard'); const o = E.ysSum(b); ok(o && o.s === 5 && o.use === 2 && o.sp[2] === 1 && o.ids.sb_edge === 1 && o.ch.turn >= 1 && typeof o.w === 'number', '전투 요약 ysSum: ' + JSON.stringify(o)); }
 // 19–26) 0.8.0 M4 (10월 19일): 방향별 유산 통로 · 날 선 손 · 쉬지 않는 팔 · 깊은 샘 대가 · 평타 노드 · 옛 세이브 각인 환급

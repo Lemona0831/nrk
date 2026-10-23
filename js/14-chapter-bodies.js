@@ -8,7 +8,7 @@ const realFoe = e => e.role !== 'root' && !e.pile && e.role !== 'bonewall' && e.
 function buildWall(b, e) {
   if (wallOf(b, e)) return; const w = mkEnemy('bonewall', 0, b.idc++, { lv: e.lv || 1, name: b.ctx.names && b.ctx.names.bonewall });
   w.hpMax = Math.max(1, Math.round(e.hpMax * BWALL.hp)); w.hp = w.hpMax; w.brkMax = BWALL.brk; w.summoned = true; w.wallOf = e.id; w.intent = { k: 'none' }; b.en.push(w);
-  logp(b, 'bad', e.n + '이(가) 뼈벽을 쌓는다. 후열이 받는 한 적 대상 피해가 절반이 된다');
+  logp(b, 'bad', e.n + '이(가) 뼈벽을 쌓는다. 후열이 받는 한 적 대상 피해 절반');
 }
 /* 서 있는 해골의 부활 예고(10월 14일 개편 4-3): 쓰러지면 뼈 더미가 되어 몇 라운드 뒤 일어서는지, 지금 쓰러지면 일어서지 못하는지 */
 function skelRise(b, e) {
@@ -82,7 +82,7 @@ function heatWarnSet(b, r) {
 function heatAdd(b, n, why) {
   if (b.heat == null || !n) return 0; const h0 = b.heat; b.heat = Math.max(0, Math.min(100, b.heat + n)); const dd = b.heat - h0; if (!dd) return 0;
   if (dd > 0) { b.heatLog = b.heatLog || {}; b.heatLog[why] = (b.heatLog[why] || 0) + dd; }
-  logp(b, dd > 0 ? 'bad' : 'good', '열기 ' + (dd > 0 ? '+' : '') + Math.round(dd) + ' (' + why + ') · ' + Math.round(b.heat) + '/100');
+  logp(b, dd > 0 ? 'bad' : 'good', '열기 ' + (dd > 0 ? '+' : '') + Math.round(dd) + ' (' + why + ')');
   if (b.heat >= 100) heatWarnSet(b, (b.queue || []).slice(b.cur ? 1 : 0).includes('p') ? (b.round || 0) : (b.round || 0) + 1); // 내 차례가 이번 라운드에 남아 있으면 이번 라운드 끝, 아니면 다음 라운드 끝 (2절 4-1번)
   return dd;
 }
@@ -231,7 +231,7 @@ function reapAct(b, e) {
   const half = !!(e.s.chill || e.slowR === b.round); let tot = 0;
   const take = u => { const n0 = st(u, 'ignite'); if (!n0) return 0; const t = half ? Math.floor(n0 / 2) : n0; if (t > 0) kwDec(u, 'ignite', t); return t; };
   tot += take(b.p); for (const x of alive(b)) if (x !== e && x.role !== 'crown') tot += take(x);
-  if (tot > 0) { const g = Math.max(1, Math.floor(tot / 2)); e.embers = Math.min(FOE_X.reaper.cap, (e.embers || 0) + g); logp(b, 'bad', e.n + '이(가) 불씨를 거둔다. 화상 ' + tot + '을(를) 거두어 불씨 ' + e.embers + (half ? ' (둔화로 절반)' : '')); codexHit(b, 'reaper', 'reap'); }
+  if (tot > 0) { const g = Math.max(1, Math.floor(tot / 2)); e.embers = Math.min(FOE_X.reaper.cap, (e.embers || 0) + g); logp(b, 'bad', e.n + '이(가) 화상 ' + tot + '을(를) 거둔다. 불씨 ' + e.embers + (half ? ' (둔화로 절반)' : '')); codexHit(b, 'reaper', 'reap'); }
   else logp(b, 'sys', e.n + '이(가) 낫을 휘젓지만 거둘 불꽃이 없다');
 }
 function noonAct(b, e, d) {
@@ -362,7 +362,7 @@ const ABBOT = { ph: [0.65, 0.3], brand: 0.2, vowTaken: 0.6, monkHeal: 0.05, monk
    라운드가 끝날 때마다 한 칸, 다 차면 적 모두 보호막(각자 최대 생명력 × ward, 한 번). 그 적을 무너뜨리거나 쓰러뜨리면 끊기고 골드 +gold */
 function prayCut(b, e) { const P = b.prayer; if (!P || P.done || P.id !== e.id) return; P.done = 1; P.cut = 1; e.praying = 0; const run = typeof G !== 'undefined' && G.run && G.run.p === b.p ? G.run : null; if (run) run.gold = (run.gold || 0) + DEV_PRAYER.gold; logp(b, 'good', '기도가 끊긴다. 골드 +' + DEV_PRAYER.gold); b.rec.push({ k: 'prayCut' }); }
 const PRAYER_DEV = {
-  id: 'prayer', n: '끝나지 않은 기도', help: '적 하나가 기도하는 채로 시작합니다. 라운드가 끝날 때마다 한 칸 차고, 다 차면 적 모두가 보호막(각자 최대 생명력의 15%)을 두릅니다. 그 적을 무너뜨리거나 쓰러뜨리면 기도가 끊기고 골드 +5.',
+  id: 'prayer', n: '끝나지 않은 기도', help: '적 하나가 기도하는 채로 시작합니다. 기도는 라운드가 끝날 때마다 한 칸씩 차고, 세 칸이 다 차면 적 모두가 보호막(각자 최대 생명력의 15%)을 두릅니다. 그 적을 무너뜨리거나 쓰러뜨리면 기도가 끊기고 골드 +5.',
   chip: b => b.prayer && !b.prayer.done ? b.prayer.n + '/' + DEV_PRAYER.need : '', // M8: 칩은 장치 이름(끝나지 않은 기도) 뒤에 붙는다 — 「기도」를 두 번 쓰지 않게
   onRoomStart(b) {
     const c = b.ctx || {}; if (c.room !== 'normal' || c.wake || c.boss || (c.floor || 0) < DEV_PRAYER.from || b.en.some(e => e.strong)) return;

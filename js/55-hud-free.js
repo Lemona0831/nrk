@@ -430,7 +430,7 @@ function hudFreeOpt(k, v) {
 function hudFreePushSet() {
   const ed = G.hudEd; const L = ed.draft.fr[hudDev()]; hudEdUndoPush(); const wasOn = !!L.pk; if (L.pk || L.au) hfBake(L); /* 끌 때는 지금 보이는 자리를 값으로 굳힌다 */
   L.pk = wasOn ? 0 : 1; if (L.pk) L.au = 0; ed.announce = true; ed.keep = hudEdKeepSel(); ed.chk = { push: 1 };
-  ed.msg = L.pk ? '겹치는 칸을 아래로 자동으로 밉니다. 내용이 늘어도 칸이 겹치지 않습니다' : '칸이 서로 겹칠 수 있습니다. 다만 내 생명력 · 스태미나, 적, 행동 버튼, 지금 위험 줄, 보스 시계는 24px 이상 조작할 수 있게 남깁니다'; render();
+  ed.msg = L.pk ? '겹치는 칸을 아래로 자동으로 밉니다. 내용이 늘어도 칸이 겹치지 않습니다' : '칸이 서로 겹칠 수 있습니다. 다만 내 생명력 · 스태미나, 적, 행동 버튼, 지금 위험 줄, 광폭화와 열기는 24px 이상 조작할 수 있게 남깁니다'; render();
   hudRemoteSync();
 }
 function hudFreeSetMode(mode) {

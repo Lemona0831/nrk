@@ -170,19 +170,19 @@ function vfxPlay(ev, X) {
         h = (me ? '<i class="vf-ar"></i>' : '') + `<i class="vf-hit" style="--dl:${fly}ms">${fl}<i class="vf-rg"></i><i class="vf-rg r2"></i>${sy === 'ctr' ? '<i class="vf-bm"></i><i class="vf-bm t2"></i>' : '<i class="vf-stuck"></i>'}${vfxParts(n(5), 34 * S, 'vf-sp', 0)}</i>`; dur = fly + 520;
         if (sy === 'ctr') lab = '반격';
       }
-      if (ev.big) lab = '강타';
+      if (ev.big) lab = '큰 피해';
       break;
     }
     case 'dot': h = '<i class="vf-dt"></i><i class="vf-dt d2"></i>' + vfxElemParts(ev.el, n(4), 24 * S, false); dur = 520; break;
-    case 'miss': col = '#e8e8e8'; h = '<i class="vf-gz"></i><i class="vf-gx"></i><i class="vf-gx g2"></i>'; dur = 560; lab = '회피'; break;
+    case 'miss': col = '#e8e8e8'; h = '<i class="vf-gz"></i><i class="vf-gx"></i><i class="vf-gx g2"></i>'; dur = 560; lab = '빗나감'; break;
     case 'bktouch': { const g = el && el.querySelector('.bkb'); if (g && g.animate) g.animate(rm ? [{ outlineColor: 'rgba(255,240,210,0)' }, { outline: '1px solid rgba(255,240,210,.85)', offset: .3 }, { outline: '1px solid rgba(255,240,210,0)' }] : [{ transform: 'none', outline: '1px solid rgba(255,240,210,0)' }, { transform: 'translateX(-1.5px)', outline: '1px solid rgba(255,240,210,.85)', offset: .2 }, { transform: 'translateX(1.5px)', offset: .45 }, { transform: 'translateX(-1px)', offset: .7 }, { transform: 'none', outline: '1px solid rgba(255,240,210,0)' }], { duration: rm ? 260 : 220, easing: 'ease-out' }); return 0; } /* M5-7 손맛: 기본 공격이 맞으면 붕괴 게이지 테두리만 짧게 떨린다(장식, 움직임 줄이기면 색만) */
     case 'brk': col = VFX_COL.shard; h = fl + '<i class="vf-ol"></i><i class="vf-rg"></i><i class="vf-crack"></i>' + (low ? '' : vfxParts(n(10), 62 * S, 'vf-sh', 6)); dur = 760; lab = '붕괴'; break;
     case 'kill': col = VFX_COL.shard; h = fl + '<i class="vf-gh"></i><i class="vf-rg"></i>' + vfxParts(n(16), 54 * S, 'vf-p pf-star', -8); dur = 800; lab = '처치'; break;
     case 'phit': col = VFX_COL.hurt; h = '<i class="vf-ol"></i><i class="vf-cl"></i>' + (ev.big ? '<i class="vf-cl c2"></i>' : '') + (ev.dot ? '' : '<i class="vf-rg"></i>'); dur = ev.big ? 760 : 580; cls += ev.big ? ' big' : ''; if (ev.big) lab = '큰 피해'; break;
-    case 'pgd': col = VFX_COL.guard; h = '<i class="vf-ol"></i><i class="vf-rg"></i><i class="vf-rg r2"></i>' + VFX_SHIELD + vfxParts(n(6), 40 * S, 'vf-sp', 0); dur = 720; lab = '막음'; break;
+    case 'pgd': col = VFX_COL.guard; h = '<i class="vf-ol"></i><i class="vf-rg"></i><i class="vf-rg r2"></i>' + VFX_SHIELD + vfxParts(n(6), 40 * S, 'vf-sp', 0); dur = 720; lab = '방어'; break;
     case 'pwd': col = VFX_COL.ward; h = '<i class="vf-ol"></i><i class="vf-rg"></i><i class="vf-rg r2"></i>' + VFX_SHIELD; dur = 720; lab = '보호막 −' + (ev.amt || ''); lab = ev.amt ? lab : '보호막'; break;
     case 'ppr': col = VFX_COL.gold; h = fl + '<i class="vf-ol"></i><i class="vf-rg"></i><i class="vf-rg r2"></i><i class="vf-bu"></i>' + vfxParts(n(14), 54 * S, 'vf-sp', 0); dur = 700; lab = '흘리기'; break;
-    case 'pev': col = '#e8e8e8'; h = '<i class="vf-gz"></i><i class="vf-gx"></i><i class="vf-gx g2"></i>'; dur = 600; lab = '회피'; break;
+    case 'pev': col = '#e8e8e8'; h = '<i class="vf-gz"></i><i class="vf-gx"></i><i class="vf-gx g2"></i>'; dur = 600; lab = '피하기'; break;
     case 'heal': col = VFX_COL.heal; h = '<i class="vf-ol"></i><i class="vf-gl"></i><i class="vf-rg"></i>' + [8, 26, 44, 62, 80].slice(0, n(5) > 5 ? 5 : Math.max(3, n(5))).map((u, i) => `<i class="vf-up" style="--ux:${u}%;animation-delay:${(i * 70) % 220}ms"></i>`).join(''); dur = 900; lab = '회복'; break;
     case 'wgain': col = VFX_COL.ward; h = '<i class="vf-ol"></i><i class="vf-gl"></i><i class="vf-rg"></i>' + [14, 38, 62, 84].map((u, i) => `<i class="vf-up" style="--ux:${u}%;animation-delay:${i * 60}ms"></i>`).join(''); dur = 800; lab = '보호막'; break;
     case 'st': { const bf = typeof BUFFS !== 'undefined' && BUFFS[ev.st]; col = bf ? VFX_COL.buff : VFX_COL.debuff; h = '<i class="vf-ol"></i><i class="vf-rg"></i>' + `<span class="vf-sti">${SICO[ev.st]}</span>`; dur = 760; lab = (typeof SNAMES !== 'undefined' && SNAMES[ev.st]) || ''; break; }
