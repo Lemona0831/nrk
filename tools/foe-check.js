@@ -6,12 +6,14 @@
    1-1. G-1 강적 시계: 강적마다 FOE_CLOCK 정의 · 마지막 경고 · 파국 · 답 태그 2종류 이상(내용은 비공개 문서 참조). 전투에서는 경고 없이 온 파국 0
    4. 갑옷 · 방패 단위 시험, 챕터 장치 틀(가짜 장치를 잠깐 꽂아 훅 다섯 · 칩 · 도움말이 도는지 보고 뺀다)
    쓰기: node tools/foe-check.js [--fights 1000] [--ch 1]. 위반이 있으면 표를 찍고 1로 끝난다 */
-process.env.DGDIR = process.env.DGDIR || '.';
+process.env.DGDIR = process.env.DGDIR || '.'; { const i = process.argv.indexOf('--ch'); if (i > 0 && +process.argv[i + 1] > 1) process.env.DG_FROM = process.argv[i + 1]; } // dgqa가 읽어 들일 때 DG_FROM을 고정하므로 require 전에(그 챕터에서 시작)
 const H = require('./uqtest/_h.js'); const { E, R_, D } = H;
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const NF = +arg('--fights', 1000), CH = +arg('--ch', 1);
 const FOES = R_('FOES'), TELE_T = R_('TELE_T'), TELE_WAIT = R_('TELE_WAIT'), TELE_MOVE = R_('TELE_MOVE'), SQUADS = R_('SQUADS'), SQUAD_ASK = R_('SQUAD_ASK'), FOE_GRAMMAR = R_('FOE_GRAMMAR'), FOE_CLOCK = R_('FOE_CLOCK');
 const V = []; const bad = (kind, id, what) => V.push({ kind, id, what });
+if (CH === 2) R_('ch2ClockReg')(); // G-1: 2챕터도 같다(첫 2챕터 전투 ch2Setup에서 들어간다)
+if (CH === 3) R_('w3ClockReg')(); // G-1: 3챕터 시계 정의는 js/25보다 먼저 읽혀 첫 3챕터 전투(w3Setup)에서 FOE_CLOCK에 들어간다. 정의 점검 전에 넣는다
 
 /* 1. 정의 */
 const grade = {};
@@ -35,7 +37,7 @@ for (const s of SQUADS) if ((s.ch || 1) === CH && !SQUAD_ASK[s.id]) bad('누구�
 /* 2 · 3. 전투 N번 */
 const seen = new WeakMap(); let fights = 0, last = null; const cnt = { teleMis: {}, teleVoid: {}, teleSkip: {} }; let eact = 0; const dev = { prayStart: 0, prayDone: 0, prayCut: 0 }; const clk = { add: 0, warn: 0, doom: 0, back: 0, noWarn: {} }, clkOpen = new WeakMap();
 const scan = b => { if (!b || !b.rec) return; let i = seen.get(b) || 0; for (; i < b.rec.length; i++) { const r = b.rec[i]; if (r.k === 'eact') eact++; if (dev[r.k] != null) dev[r.k]++; if (/^clk/.test(r.k)) { const o = clkOpen.get(b) || {}; clkOpen.set(b, o); if (r.k === 'clk') clk.add++; else if (r.k === 'clkback') clk.back++; else if (r.k === 'clkwarn') { clk.warn++; o[r.foe] = 1; } else if (r.k === 'clkdoom') { clk.doom++; if (!o[r.foe]) clk.noWarn[r.foe] = (clk.noWarn[r.foe] || 0) + 1; o[r.foe] = 0; } } if (cnt[r.k]) { const key = (r.foe || r.role) + ' ' + (r.from || r.i) + (r.to ? '→' + r.to : '') + (r.tags != null ? ' (쓸 수 있던 대답: ' + r.tags + ')' : ''); cnt[r.k][key] = (cnt[r.k][key] || 0) + 1; } } seen.set(b, i); };
-D.OPT.onTurn = G => { const b = G.b; if (b !== last) { if (last) scan(last); last = b; fights++; } }; D.OPT.chapters = 1; if (CH > 1) process.env.DG_FROM = String(CH);
+D.OPT.onTurn = G => { const b = G.b; if (b !== last) { if (last) scan(last); last = b; fights++; } }; D.OPT.chapters = 1;
 const CLS = ['spellblade', 'warden', 'monk', 'assassin', 'hunter', 'elementalist'], PK = ['careful', 'casual', 'expert', 'basic'];
 for (let s = 0; fights < NF && s < 400; s++) for (const c of CLS) { if (fights >= NF) break; try { D.playChar(PK[s % PK.length], c, 5000 + 13 * s); } catch (e) { bad('판 예외', c, String(e && e.message).slice(0, 80)); } }
 if (last) scan(last); D.OPT.onTurn = null;
@@ -67,14 +69,14 @@ const T = []; const t = (c, m) => { if (!c) T.push(m); };
 }
 /* 4-2. 챕터 장치 틀 */
 const CHD = R_('CH_DEVICE'); const fired = {}; const hooks = ['onRoomStart', 'onRoundEnd', 'onFoeBreak', 'onFoeDown', 'onRoomEnd'];
-const REAL = CHD[1]; t(CHD[3] === R_('ALARM_DEV'), '3챕터 장치가 「경보」가 아니다'); t(CHD[2] === R_('LAMP_DEV'), '2챕터 장치가 「등불」이 아니다');
-CHD[1] = { id: 'test', n: '시험 장치', help: '시험용 도움말 한 줄', chip: b => 'T' + (b.tick || 0) }; for (const h of hooks) CHD[1][h] = () => { fired[h] = (fired[h] || 0) + 1; };
+const REAL = CHD[CH]; t(CHD[3] === R_('ALARM_DEV'), '3챕터 장치가 「경보」가 아니다'); t(CHD[2] === R_('LAMP_DEV'), '2챕터 장치가 「등불」이 아니다');
+CHD[CH] = { id: 'test', n: '시험 장치', help: '시험용 도움말 한 줄', chip: b => 'T' + (b.tick || 0) }; for (const h of hooks) CHD[CH][h] = () => { fired[h] = (fired[h] || 0) + 1; };
 let chip = '', help = null; D.OPT.onTurn = G => { if (!chip) chip = R_('chDevChip')(G.b); if (help == null) { const g = R_('G'); const gb = g.b; g.b = G.b; help = R_('infoHtml') ? String(R_('infoHtml')('chdev') || '') : ''; g.b = gb; } };
 try { D.playChar('careful', 'warden', 5000); } catch (e) { T.push('가짜 장치 판 예외: ' + e.message); } D.OPT.onTurn = null;
-CHD[1] = REAL;
+CHD[CH] = REAL;
 for (const h of hooks) t(fired[h] > 0, '장치 훅이 불리지 않았다: ' + h);
 t(chip.includes('시험 장치'), '장치 칩이 그려지지 않았다'); t(help.includes('시험용 도움말 한 줄'), '장치 도움말 한 줄이 보이지 않는다');
-t(R_('chDevOf')({ ctx: { ch: 1 } }) === REAL, '가짜 장치를 뺀 뒤 1챕터 장치가 돌아오지 않았다');
+t(R_('chDevOf')({ ctx: { ch: CH } }) === REAL, '가짜 장치를 뺀 뒤 ' + CH + '챕터 장치가 돌아오지 않았다');
 /* 4-3. 1챕터 장치 「끝나지 않은 기도」(A1) */
 if (CH === 1) {
   const PD = R_('PRAYER_DEV'), DP = R_('DEV_PRAYER'); t(REAL === PD, '1챕터 장치가 끝나지 않은 기도가 아니다');
@@ -98,8 +100,8 @@ if (CH === 2) {
     const bg = R_('intentBadge0')(b, xb); t(bg.txt === '보이지 않음', '어둠: 후열 아이콘이 보인다'); }
   { const f = fight2(['fence', 'thug'], (run, es) => { es[0].strong = true; es[0].foe = 'merchant'; }); const b = f.b; b.trade = 'ask'; const L = E.actionList(b); t(L[0].id === 'tradeyes' && L.some(a => a.id === 'tradeno') && L.filter(a => a.ok).length === 2, '거래창: 받기 · 거절만 고를 수 있어야 한다');
     R_('ch2PlayerAct')(b, 'tradeyes'); t(b.trade === 'yes' && b.tradeHp === 1, '거래를 받았는데 표시가 없다'); const e = f.es[1]; const h0 = e.hp; b.cur = { id: 'basic' }; E.hurtEnemy(b, e, 10, { single: 1 }); b.cur = null; t(Math.abs(h0 - e.hp - 12) < 0.01, '거래: 주는 피해 +20%가 아니다(' + (h0 - e.hp) + ')'); }
-  { const f = fight2(['dun', 'thug'], (run, es) => { es[0].strong = true; es[0].foe = 'ledger'; }); const b = f.b; b.debt = 20; H.G.run.gold = 100; R_('ch2PlayerAct')(b, 'paydebt'); t(b.debt === 10 && H.G.run.gold === 70, '빚 갚기: 골드 30 · 빚 절반이 아니다'); const e = f.es[0]; e.brk = e.brkMax - 0.5; E.addBreak(b, e, 50); t(b.debt === 0, '무너뜨렸는데 빚이 남았다'); }
-  { const f = fight2(['dun', 'thug', 'xbow'], (run, es) => { es[0].strong = true; es[0].foe = 'captain'; }); const b = f.b; b.capForm = 1; const cap = f.es[0], th = f.es[1]; let h0 = cap.hp; E.hurtEnemy(b, cap, 10, { single: 1 }); t(Math.abs(h0 - cap.hp - 5) < 0.01, '대형: 대장이 받는 피해 −50%가 아니다'); th.brk = th.brkMax - 0.5; E.addBreak(b, th, 50); t(b.formBroken === 1, '덩치가 무너졌는데 대형이 남았다'); h0 = cap.hp; E.hurtEnemy(b, cap, 10, { single: 1 }); t(h0 - cap.hp > 9.9, '대형이 깨졌는데 피해가 줄어든다'); }
+  { const f = fight2(['dun', 'thug'], (run, es) => { es[0].strong = true; es[0].foe = 'ledger'; }); const b = f.b, e = f.es[0]; e.clk = null; E.fcInit(b, e); e.clk.n = 4; H.G.run.gold = 100; R_('ch2PlayerAct')(b, 'paydebt'); t(e.clk.n === 1 && H.G.run.gold === 70, '빚 장부 시계(G-1): 갚기가 맞지 않다 ' + e.clk.n); e.brk = e.brkMax - 0.5; E.addBreak(b, e, 50); t(e.clk.n === 0, '빚 장부 시계(G-1): 무너뜨렸는데 칸이 남았다'); } // 시계 단위 시험은 tools/clock-ch2-check.js
+  { const f = fight2(['dun', 'thug', 'xbow'], (run, es) => { es[0].strong = true; es[0].foe = 'captain'; }); const b = f.b; b.capForm = 1; b.formBroken = 0; const cap = f.es[0], th = f.es[1]; cap.clk = null; E.fcInit(b, cap); cap.clk.n = 2; let h0 = cap.hp; E.hurtEnemy(b, cap, 10, { single: 1 }); t(h0 - cap.hp > 9.9, '대형(G-1): 대장이 받는 피해가 줄어든다'); th.brk = th.brkMax - 0.5; E.addBreak(b, th, 50); t(b.formBroken === 1 && cap.clk.n === 0, '대형(G-1): 덩치가 무너졌는데 대형 · 칸이 남았다'); }
   { const f = fight2(['dun']); const b = f.b; const bd = f.es[0]; bd.role = 'boss'; bd.boss = 'bardo'; R_('bardoSetup')(b, bd); const L = b.en.filter(x => x.role === 'lantern'); t(L.length === 5 && L.every(x => x.lit), '바르도: 등불 다섯이 켜진 채 시작하지 않는다'); const l = L[0]; l.brk = l.brkMax - 0.5; E.addBreak(b, l, 50); t(!l.lit && l.alive && bd.relightNext === 1, '등불을 깨면 꺼지고 바르도가 다시 켜려 해야 한다'); t(!R_('realFoe')(l), '등불이 적으로 세어진다(전투가 끝나지 않는다)'); }
   { const f = fight2(['dun', 'dun'], (run, es) => { es[0].cmd = 1; }); const b = f.b; t(Math.abs(R_('ch2FoeOut')(b, f.es[1]) - 1.15) < 1e-9, '지휘: 같은 무리 잡몹 피해 +15%가 아니다'); E.hurtEnemy(b, f.es[0], 9999, { single: 1 }); t(f.es[1].stun >= 1, '지휘하던 정예가 쓰러졌는데 무리가 흔들리지 않는다'); }
   { const f = fight2(['dun']); const b = f.b; b.ctx.mods.push('oilfloor'); const n0 = R_('st')(b.p, 'ignite'); E.addS(b, b.p, 'ignite', 2); t(R_('st')(b.p, 'ignite') - n0 === 3, '기름 바닥: 화상 +1이 아니다'); }
@@ -126,7 +128,7 @@ if (CH === 3) {
   { const f = fight3(['bellman', 'rioter', 'rioter']); const b = f.b, s = f.es[0]; s.strong = true; s.foe = 'speaker'; t(Math.abs(R_('w3HitMul')(b, s, {}) - 0.4) < 1e-9, '대변인: 폭도 둘이면 받는 피해 −60%가 아니다'); }
   { const f = fight3(['wallxbow']); const b = f.b, s = f.es[0]; s.strong = true; s.foe = 'marksman'; b.cur = { id: 'basic' }; t(Math.abs(R_('w3HitMul')(b, s, {}) - 0.5) < 1e-9, '명사수: 근접 −50%가 아니다'); t(R_('w3HitMul')(b, s, { aoe: 1 }) === 1, '명사수: 광역도 줄었다'); b.cur = null; }
   { const f = fight3(['pike']); const b = f.b; const s = f.es[0]; s.strong = true; s.foe = 'beaconlord'; R_('w3Setup')(b, { floor: 10, strong: '봉화대장', foe: 'beaconlord', lv: 12 }); const L = b.en.filter(e => e.role === 'bonfire'); t(L.length === 3 && L.every(x => x.fuse === 3), '봉화 셋 · 칸 3이 아니다');
-    if (L.length === 3) { const h0 = b.p.hp; L[0].fuse = 1; R_('w3Act')(b, s, { k: 'pourbeacon' }, 10); t(!L[0].alive && b.p.hp < h0, '칸 0인 봉화가 터지지 않았다'); L[1].brk = L[1].brkMax - 0.5; E.addBreak(b, L[1], 50); t(!L[1].alive, '봉화가 붕괴로 부서지지 않았다'); } }
+    if (L.length === 3) { const h0 = b.p.hp; L[0].fuse = 1; R_('fcEv')(b, 'onRoomStart'); b.turnIdx = (b.turnIdx || 0) + 1; /* G-1: 마지막 경고 다음 차례에 터진다(tools/clock-ch3-check.js) */ R_('w3Act')(b, s, { k: 'pourbeacon' }, 10); t(!L[0].alive && b.p.hp < h0, '칸 0인 봉화가 터지지 않았다'); L[1].brk = L[1].brkMax - 0.5; E.addBreak(b, L[1], 50); t(!L[1].alive, '봉화가 붕괴로 부서지지 않았다'); } }
   t(!R_('isW3')({ ctx: { ch: 2 } }) && !R_('isW3')({ ctx: { ch: 1 } }) && R_('isW3')({ ctx: { ch: 3 } }), 'isW3가 3챕터만이 아니다');
 }
 /* 보고 */

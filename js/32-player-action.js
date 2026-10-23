@@ -2,7 +2,7 @@
 /* ================= 플레이어 행동 (4.2) ================= */
 function canTarget(b, e, act) {
   if (!e || !e.alive) return false;
-  if (e.under && !act.aoe && !((act.id === 'dodge' || act.dodge) && isCh3(b))) return false; // 땅속: 한 적 대상으로 고를 수 없다. 3챕터는 솟구칠 적을 흘릴 대상으로는 고를 수 있다(설계 6.2절: 솟구침은 흘리기가 듣는다)
+  if (e.under && !act.aoe && !((act.id === 'dodge' || act.dodge) && (isCh3(b) || e.stabOut))) return false; // G-1(비공개 문서 참조) // 땅속: 한 적 대상으로 고를 수 없다. 3챕터는 솟구칠 적을 흘릴 대상으로는 고를 수 있다(설계 6.2절: 솟구침은 흘리기가 듣는다)
   if (rngCls(b.p) && !isMeleeAct(b.p, act.id)) return !(act.id === 'dodge' && e.role === 'root'); // 사냥꾼은 활과 원거리 스킬이 후열에 닿는다. 근접 스킬은 다른 직업처럼 전열에 막힌다 (10월 2일)
   if (isCaster(b.p) && (act.id === 'basic' || act.id === 'heavy')) return true; // 캔트립·집중 주문은 원거리
   if (act.ranged || act.aoe) return true;
@@ -374,8 +374,6 @@ function addBreak(b, e, v) {
     const cut = !!(e.intent && ['heavy', 'charge', 'explode', 'fuse', 'chant', 'chanting', 'burn'].includes(e.intent.k)); const elChant = b.p.build === 'elementalist' && !!(e.chant || (e.intent && (CHANT_K.includes(e.intent.k) || MCH_K.includes(e.intent.k)))); /* 10월 18일 0.8.0 5단계 원소술사: 영창을 끊었는가 */ if (e.chant) { e.chant = null; e.pyreRest = 1; logp(b, 'good', e.n + '의 영창이 끊긴다'); } // 모으던 강타·폭발을 끊었는가 (수련장 목표)
     e.brk = 0; e.stun = 1; addS(b, e, 'broken', 2); addS(b, e, 'vuln', 2); e.braced = 0; e.countering = 0; e.evading = 0; e.guarding = null; // 10월 4일: 무너지면 버티기 · 반격 태세 · 몸 낮추기 · 지키기가 모두 풀린다 /* 붕괴 상태는 다음 라운드가 끝날 때까지 (10월 3일 라운드 방식: 1이면 이번 라운드 끝에 풀려, 무너뜨린 뒤 내 다음 차례에는 붕괴한 적을 칠 수 없었다) */ if (e.elite || e.strong || e.role === 'boss') chargeEv(b, 'break'); // 격발 갈래 규칙: 정예 이상을 무너뜨리면 대기 −1 (하수인·일반은 세지 않는다: 무리에서 돌지 않게)
     if (e.vow) { e.vow = 0; e.vowTick = b.tick; addS(b, e, 'vuln', 2); logp(b, 'crit', e.n + '의 서원이 깨진다'); codexHit(b, 'abbot', 'vowbreak'); const cs = b.en.filter(x => x.role === 'candle' && x.alive); for (const c of cs) { c.alive = false; c.hp = 0; } if (cs.length) logp(b, 'good', '촛불이 모두 꺼진다'); }
-    if (e.foe === 'cantor' && hymnReset(b)) { logp(b, 'good', '노래가 흩어진다'); codexHit(b, 'cantor', 'cut'); }
-    if (e.foe === 'scribe' && (b.seal || []).length) { b.seal = []; logp(b, 'good', '봉인이 풀린다'); codexHit(b, 'scribe', 'unseal'); }
     if (e.intent && e.intent.k === 'sacrifice') { e.sacNext = null; e.sacCool = ABBOT.sacCool; logp(b, 'good', e.n + '의 제사가 끊긴다'); }
     if (e.intent && (e.intent.k === 'heavy' || e.intent.k === 'charge' || e.intent.k === 'explode' || e.intent.k === 'fuse' || CHANT_K.includes(e.intent.k) || e.intent.k === 'sacrifice' || e.intent.k === 'sacprep' || e.intent.k === 'retprep' || e.intent.k === 'return' || e.intent.k === 'mimic' || e.intent.k === 'reflect' || e.intent.k === 'lastmend' || e.intent.k === 'finalbell')) { if (e.foe === 'knight' && ['retprep', 'return'].includes(e.intent.k)) codexHit(b, 'knight', 'stop'); if (e.foe === 'echo' && e.mimicOn) codexHit(b, 'echo', 'cut'); e.intent = { k: 'attack' }; e.teleX = 1; }
     e.mimicOn = null; if (e.foe === 'collector' && e.s.protect) { delete e.s.protect; logp(b, 'good', '몸에 두른 뼈가 쏟아져 내린다'); codexHit(b, 'collector', 'shatter'); } if (e.boss === 'cryptlord' && b.carve) { b.carve = null; logp(b, 'good', '군주가 무너지자 새긴 이름이 흐려진다'); codexHit(b, 'cryptlord', 'carvebreak'); }

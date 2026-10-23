@@ -2,7 +2,7 @@
 /* 테스터 판단 단위 시험 (0.8.0 M7-1, 10월 22일): 신중 성향의 예고 답하기(dgqa answerPost · answerPre)
    1 강적 · 보스의 큰 한 방 예고가 내 다음 차례 전에 오면: 끊을 수 있으면 붕괴 행동 → 아니면 흘리기 → 아니면 방어
    2 강적 · 보스가 아닌 적, 신중이 아닌 성향, 큰 한 방이 아닌 예고(무시 시험으로 가린 예고 포함)에는 답하지 않는다
-   3 1챕터 큰 종이 있으면 종부터 친다
+   3 (G-1) 강적 시계가 마지막 칸 앞이면 신중은 답한다(clockPre). 종지기는 옛 종 판단(answerPre) 대신 시계로 답한다
    쓰기: node tools/tester-check.js. 실패가 있으면 1로 끝난다 */
 process.env.DGDIR = process.env.DGDIR || '.'; process.env.ANS_PART = process.env.ANS_PART || 'ans,bell'; // 큰 종 판단은 스위치로만 켜지므로 시험에서 켠다
 const H = require('./uqtest/_h.js'); const { E, D } = H;
@@ -56,7 +56,10 @@ const strongHeavy = (f, brk) => { const e = f.es[0]; e.strong = true; e.foe = 'k
   t(r === null || (D.run_('STRONG.bellEvery') === 1), '울릴 차례가 아닌데 온전한 종을 쳤다 ' + JSON.stringify(r));
 }
 { // 3 큰 종(반쯤 깨짐)
-  const f = mk(['bruiser', 'root']); const rg = f.es[0], bell = f.es[1]; rg.strong = true; rg.foe = 'bellringer'; bell.bell = 1; bell.row = 'front'; bell.hp = bell.hpMax * 0.4; const r = withPv([], () => D.answerPre(f.b, {}, one, 'careful'));
-  t(r && r[1] === bell.id, '종지기 방에서 종을 치지 않았다 ' + JSON.stringify(r));
+  const f = mk(['bruiser', 'root']); const rg = f.es[0], bell = f.es[1]; rg.strong = true; rg.foe = 'bellringer'; bell.bell = 1; bell.row = 'front'; D.run_('fcInit')(f.b, rg); t(rg.clk, '종지기 시계가 만들어지지 않았다');
+  t(withPv([], () => D.answerPre(f.b, {}, one, 'careful')) === null, '시계가 있는데 옛 종 판단이 돈다');
+  rg.clk.n = rg.clk.max - 2; t(withPv([], () => D.clockPre(f.b, {}, one, 'careful')) == null, '마지막 칸 앞이 아닌데 시계에 답했다');
+  rg.clk.n = rg.clk.max - 1; const r = withPv([], () => D.clockPre(f.b, {}, one, 'careful')); t(r && r[0], '마지막 칸 앞인데 시계에 답하지 않았다 ' + JSON.stringify(r));
+  t(withPv([], () => D.clockPre(f.b, {}, one, 'casual')) == null, '신중 · 숙련이 아닌데 시계에 답했다');
 }
 console.log('tester-check: 시험 ' + n + '개 · 실패 ' + T.length); for (const m of T) console.log('  실패: ' + m); if (T.length) process.exit(1);

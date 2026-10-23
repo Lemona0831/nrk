@@ -348,8 +348,8 @@ function devPre(b, P, r) {
 /* 0.8.0 A2 2챕터 판단: 거래창 · 빚 갚기 · 등불 기름 · 바르도의 등불(칩과 카드를 보고 할 만한 것만). 2챕터 전투에서만 난수를 쓴다 */
 function streetPre(b, P, r) {
   if (!G0.isCh2(b)) return null; const L = G0.actionList(b); const p = b.p, al = G0.alive(b);
-  if (L.some(x => x.id === 'tradeyes')) return [p.hp < p.hpMax * 0.5 || r() < 0.3 ? 'tradeyes' : 'tradeno', null];
-  const pay = L.find(x => x.id === 'paydebt' && x.ok); if (pay && (b.debt || 0) >= 12 && r() < (P.mech || 0.5) + 0.2) return ['paydebt', null];
+  if (b.trade === 'ask' && L.some(x => x.id === 'tradeyes')) return [p.hp < p.hpMax * 0.5 || r() < 0.3 ? 'tradeyes' : 'tradeno', null];
+  /* G-1: 빚 갚기는 시계(clockPre)로 답한다 */
   const oil = L.find(x => x.id === 'lampoil' && x.ok); if (oil && (al.some(e => e.foe === 'lampthief' && e.under) || b.ctx.boss || al.some(e => e.strong)) && r() < (P.mech || 0.5) + 0.2) return ['lampoil', null];
   const lamps = al.filter(e => e.role === 'lantern'), lamp = lamps.find(e => e.lit && !e.last); if (lamp && lamps.filter(e => e.lit).length >= 4 && !al.some(e => e.boss === 'bardo' && e.intent && e.intent.k === 'relight') && r() < (P.mech || 0.5) + 0.1) { /* 켜진 등불이 많을 때만 깨고, 다시 켜는 사이에는 바르도를 친다 */ const A = L.filter(x => x.ok && !x.self && x.id !== 'flee' && G0.canTarget(b, lamp, x)); const brkOf = x => x.id === 'heavy' ? 35 : x.v2 ? x.s.fx.reduce((m, f) => m + (f.k === 'brk' ? f.n : f.k === 'cutx' ? f.brk : 0), 0) : 0; const c = A.filter(x => brkOf(x) > 0).sort((x, y) => brkOf(y) - brkOf(x))[0]; if (c) return [c.id, c.aoe ? null : lamp.id]; }
   return null;
@@ -369,7 +369,8 @@ function answerPick(b, e, L) { // 끊기 → 흘리기 → 방어
   if (br) return [br.id, br.aoe ? null : e.id];
   const single = !(e.intent && (e.intent.aoe || ['firerain', 'taintwave'].includes(e.intent.k)));
   const dg = L.find(x => x.id === 'dodge'); if (single && dg && G0.canTarget(b, e, dg)) return ['dodge', e.id];
-  if (L.find(x => x.id === 'guard')) return ['guard', null];
+  const A = e.intent && (G0.foeDef(b, e) || {}).ans, ak = A && A[e.intent.k]; // G-1: 방어가 대답이 아닌 예고(공성추 발사 · 한 발)에는 방어를 고르지 않는다
+  if ((!ak || ak.includes('guard')) && L.find(x => x.id === 'guard')) return ['guard', null];
   return null;
 }
 const ANS_DEF = ['parry', 'parryBuff', 'guard', 'ward', 'wardFill', 'dodge', 'stance', 'protect', 'evade', 'block'];
@@ -385,9 +386,9 @@ function answerPost(b, P, r, pk, a, t) {
   const e = big.sort((x, y) => (y.brk / y.brkMax) - (x.brk / x.brkMax))[0]; if (answered(b, e, a, t) || r() >= ANS_P) return [a, t];
   const x = answerPick(b, e, G0.actionList(b).filter(y => y.ok && y.id !== 'flee')); return x || [a, t];
 }
-let BELL_EV = null;
+let BELL_EV = null, BELL_CLK = null;
 function answerPre(b, P, r, pk) { // 기믹 대상: 1챕터 큰 종(다음 라운드에 울리거나 반쯤 깨졌을 때)
-  if (pk !== 'careful' || process.env.ANS_OFF) return null; const L = G0.actionList(b).filter(x => x.ok && x.id !== 'flee');
+  if (pk !== 'careful' || process.env.ANS_OFF || (BELL_CLK != null ? BELL_CLK : (BELL_CLK = run_('typeof FOE_CLOCK !== "undefined" && !!FOE_CLOCK.bellringer')))) return null; /* G-1: 종지기는 시계(clockPre)로 답한다 */ const L = G0.actionList(b).filter(x => x.ok && x.id !== 'flee');
   const bell = G0.alive(b).find(e => e.bell) && G0.alive(b).find(e => e.foe === 'bellringer');
   const bl0 = bell && G0.alive(b).find(e => e.bell); const ringNext = bell && ((b.tick || 0) + 1) % (BELL_EV != null ? BELL_EV : (BELL_EV = run_('STRONG.bellEvery') || 3)) === 0; // 종은 다음 라운드에 울리거나 반쯤 깨졌을 때만(매 차례 치면 오히려 손해, M7-1 갈라보기)
   if (ANS_PART.includes('bell') && bell && (ringNext || bl0.hp < bl0.hpMax * 0.5) && r() < 0.9) { const bl = bl0; const c = L.filter(x => !x.self && G0.canTarget(b, bl, x) && (x.id === 'basic' || x.id === 'heavy' || (x.v2 && x.s.fx.some(f => f.k === 'dmg')))).sort((x, y) => (y.v2 ? 1 : 0) - (x.v2 ? 1 : 0))[0]; if (c) return [c.id, c.aoe ? null : bl.id]; }
@@ -403,9 +404,8 @@ function w3Pre(b, P, r) {
   const m = (P.mech || 0.5);
   if ((b.ctx.mods || []).includes('rift') && !b.riftSealed && (b.round || 0) <= 2 && r() < m + 0.2) { const s = L().find(x => x.id === 'sealrift'); if (s) return ['sealrift', null]; }
   const fire = al.filter(e => e.role === 'bonfire').sort((x, y) => x.fuse - y.fuse)[0]; if (fire && fire.fuse <= 1 && r() < m + 0.2) { const a = brkOn(fire); if (a) return a; }
-  const part = al.find(e => e.role === 'rampart'); if (part && (b.ram || 0) >= 75 && r() < m + 0.2) { const a = brkOn(part); if (a) return a; }
   const bricks = al.filter(e => e.role === 'brick'), brick = bricks[0]; if (brick && bricks.length <= 1 && r() < m + 0.3) { const a = brkOn(brick); if (a) return a; }
-  const mk = al.find(e => e.foe === 'marksman' && e.intent && e.intent.k === 'aimx'); if (mk && !W3OFF.includes('mk') && r() < m + 0.2) { const a = brkOn(mk, 15); if (a) return a; }
+  const mk = al.find(e => e.foe === 'marksman' && e.intent && ['aimx', 'oneshot'].includes(e.intent.k)); if (mk && !W3OFF.includes('mk') && r() < m + 0.2) { const a = brkOn(mk, 15); if (a) return a; }
   const lu = al.find(e => e.boss === 'lu' && e.intent && e.intent.k === 'rebuild'); if (lu && r() < m + 0.2) { const a = brkOn(lu, 15); if (a) return a; }
   const bm = b.al && b.al.on && !b.al.delayed && al.find(e => e.id === b.bellMark); if (bm && bm.brk + 35 >= bm.brkMax && r() < m) { const a = brkOn(bm, 20); if (a) return a; }
   return null;
@@ -892,4 +892,4 @@ function manifestOf(want) {
 }
 /* 판 밖 예외(창 처리 · 트리 찍기 등)로 판이 끝나지 못한 경우의 기록 */
 function crashRow(w, e) { const o = { pk: w.pk, build: w.build, seed: w.seed, res: 'crash', floor: 0, lv: 0, rooms: [], bugs: ['판 밖 예외 ' + e.message], acts: 0, fights: [] }; o.meta = MM.rowMeta(REV, { seed: w.seed, pk: w.pk, build: w.build, from: FROM, chapters: OPT.chapters, variant: OPT.variant, pol: OPT.polId }); failOf(o, 'crash', { msg: String(e.message).slice(0, 200), stack: String(e.stack || '').split('\n').slice(1, 3).join(' | ') }); CUR = null; return o; }
-module.exports = { answerPre, answerPost, answerPick, answered, bigIncoming, varPick, sectorPick, secScore, ksPick, manifestOf, crashRow, REV, SKE, sbEquip, sbEquipScore, spendPassive, ptSurvNeed, playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post, ch3Pre, seedWorld };
+module.exports = { answerPre, answerPost, clockPre, answerPick, answered, bigIncoming, varPick, sectorPick, secScore, ksPick, manifestOf, crashRow, REV, SKE, sbEquip, sbEquipScore, spendPassive, ptSurvNeed, playChar, playLoop, handleSheets, click, replayBoss, OPT, G0, run_, PERSONAS, rng, ch2Pre, ch2Post, ch3Pre, seedWorld };

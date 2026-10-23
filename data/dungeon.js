@@ -114,7 +114,7 @@ const ENC = {
 };
 /* 강적 (자리만 먼저. 고유 규칙은 단계 8에서 비공개 문서대로 넣는다) */
 /* 강적 공통 배율과 고유 수치 (11.8절). 일반 방보다 확실히 어렵게 (10월 2일 만든 사람 요청) */
-const STRONG = { big: 0.46, hp: 3.7, dmg: 2.7, bellEvery: 3, leech: 0.45, frenzy: 1.3, lowerHp: 1.3, lowerDmg: 1.15 }; // 하층 강적만 더: 무작위 시험 하층 순례자 40%대(만든 사람 요청) // 무작위 시험: 상층 승률 94%(남은 생명력 60%), 하층 76~82%(약 50%). 일반 방은 95~98%(65~83%)
+const STRONG = { big: 0.46, hp: 3.7, dmg: 2.7, lowerHp: 1.3, lowerDmg: 1.15 }; // 하층 강적만 더: 무작위 시험 하층 순례자 40%대(만든 사람 요청) // 무작위 시험: 상층 승률 94%(남은 생명력 60%), 하층 76~82%(약 50%). 일반 방은 95~98%(65~83%)
 /* 강적의 한 방 (10월 4일 만든 사람 결정: 강적은 보스보다 약하되 생명력의 20~30%를 깎는 한 방이 중심에 있다).
    big: 강적의 강타 = 기준 생명력(HIT_REF) × big. 던전 세기 · 길과 상관없이 늘 같다. 강적은 모두 공격 → 버티기 → 강타 준비 → 강타 */
 /* 매복 (10월 4일 만든 사람 결정: 난이도는 늘 일반과 강적 사이, 강적 쪽에 가깝게). 적 체력 · 피해 배율, elite: 정예로 바꾸는 적 수, loot: 전리품 확률 배율 */
@@ -132,18 +132,18 @@ const STRONG_FOES = [
   { id: 'cantor', n: '성가 조율자', en: [['healer', 1], ['bruiser'], ['bruiser'], ['archer']] }, // 10월 4일 축복 축
   { id: 'scribe', n: '검은 서기관', en: [['darkmage', 1], ['darkmage'], ['bruiser']] }, // 10월 4일 저주 축
 ];
-/* 새 강적 셋의 수치 (10월 4일 만든 사람 결정). 무엇을 하는지와 대처는 비공개 문서에만 적는다.
-   bishop: 한 번에 일으키는 수 raise, 최대 cap, 큰 한 방 = 기준 생명력 × (base + per × 남은 시체)
-   cantor: 한 겹마다 곁의 적 피해 +hymn, 최대 cap, 큰 한 방 = 기준 생명력 × per × 곁의 적 수
-   scribe: 봉인 최대 cap, 큰 한 방은 강적 기본(STRONG.big) */
-/* A1 굶주린 순례자 배 채움 값(확정본 [이식 제안], 규칙은 비공개 문서 참조). 숫자는 가설 */
-const PILGRIM = { fill: 0.15, feast: 1.0 };
+/* 0.8.0 G-1 1챕터 강적 시계 값(만든 사람 확정 10월 23일). 규칙은 비공개 문서 참조. 숫자는 가설 */
+const CLK1 = {
+  bell: { max: 4, big: 0.45, bellHp: 2 },
+  pilgrim: { max: 6, full: 0.6, feast: 0.7, crouch: 1.3 },
+  bishop: { max: 4, march: 0.15 },
+  cantor: { max: 3, per: 0.2, emp: 2, dotCut: 0.08 },
+  scribe: { max: 2, verdict: 0.5 },
+};
 /* A1 1챕터 강적: 큰 한 방 배율(M3 무시 시험에서 예고를 몰라도 96–100% 이겨서, 막지 못한 큰 한 방이 아프게). 숫자는 가설 */
 const STRONG1 = { big: 2.2 };
 const FOE_X = {
-  bishop: { raise: 2, cap: 4, base: 0.30, per: 0.04 },
-  cantor: { hymn: 0.25, cap: 3, per: 0.2 },
-  scribe: { cap: 3 },
+  cantor: { hymn: 0.25 }, // 옛 노래 겹 설명(js/60 ehymn)만 읽는다
 };
 /* 테마 무리 (10월 4일 만든 사람 결정: 테마 무리 + 변주). 일반 · 매복 · 시련 방의 적.
    up · low: 상층 · 하층 구성 [역할, 정예], vary: [칸, 바뀔 수 있는 역할들](반쯤 확률로 그 칸이 바뀐다), w: 가중치, press: 압박이 센 무리(험한 길에서 잦고 샛길에서 드물다) */
@@ -296,10 +296,10 @@ STRONG_FOES.push(
 Object.assign(FOE_INTRO, Object.fromEntries(Object.values(FOES).filter(f => f.ch === 2 && ['strong', 'boss'].includes(f.grade)).map(f => [f.id, { n: f.n, lore: f.log.lore, see: [f.log.see] }])));
 /* 도감: 겪은 결과만(대처는 플레이어 메모) */
 Object.assign(CODEX, {
-  ledger: { debt: '장부에 빚이 쌓일수록 집행이 무거워졌다.', paid: '골드를 내자 빚이 절반으로 줄었다.', torn: '무너뜨리자 장부가 찢어져 빚이 사라졌다.' },
-  champion: { duel: '결투를 선언하자 다른 적이 물러섰다.', cheer: '라운드가 지날수록 함성이 커지고 챔피언의 공격이 세졌다.', boo: '챔피언이 무너지자 함성이 야유로 바뀌었다.' },
-  lampthief: { dark: '도둑이 등불을 끄자 방이 어두워졌다.', hide: '어둠 속에서 도둑이 숨어 칼이 닿지 않았다.', lit: '등불 기름으로 방을 밝히자 숨은 도둑이 드러났다.' },
-  captain: { form: '대형이 서 있는 동안 대장이 받는 피해가 줄었다.', broke: '덩치가 무너지자 대형이 깨졌다.' },
+  ledger: { debt: '빚이 목까지 차자 장부의 주인이 장비 하나를 차압하고 집행했다.', paid: '골드를 내자 빚이 줄었다.', torn: '무너뜨리자 장부가 찢어져 빚이 사라졌다.', back: '장부의 주인이 쓰러지자 빼앗긴 장비를 되찾았다.' },
+  champion: { duel: '결투를 선언하자 다른 적이 물러섰다.', cheer: '함성이 다 차자 챔피언이 결승타를 날렸다.', boo: '함성이 잦아들자 관중이 야유했고, 챔피언의 손이 무뎌졌다.' },
+  lampthief: { dark: '도둑이 등불을 끌 때마다 어둠이 짙어졌다.', hide: '어둠이 완전히 내려앉자 도둑은 그림자 속에서 끝까지 찔러 왔다.', lit: '숨은 도둑이 드러나자 빈틈이 보였다.' },
+  captain: { form: '대형이 자리를 잡자 대장과 부하들이 한꺼번에 쏘았다.', broke: '대형이 깨지자 대장이 부하를 다시 세우느라 빈틈을 보였다.' },
   merchant: { deal: '거래를 받자 상인은 공격을 멈추고 회수만 했다. 전투 뒤 대가를 치렀다.', bill: '거래를 거절하자 청구서가 날아왔다.' },
   bardo: { lamp: '켜진 등불이 많을수록 바르도가 세졌다.', relit: '등불을 깨자 바르도는 그것부터 다시 켰다.', shade: '빛 속에서 그림자 하수인이 나왔다.', last: '마지막 등불은 끝내 깨지지 않았다.' },
 });
@@ -310,11 +310,11 @@ const AFFIX2 = { w: { tough: 1, cmd: 1.2, loot: 0.8, oiled: 0.8 }, cmd: 0.15, lo
 const DEBT_ALTAR = { gold: 60, markup: 0.3 };
 const CH2X = { loser: 0.35, crowd: 3, oilIgn: 1, rainIgn: 2, rainChill: 1, formation: 0.2 };
 Object.assign(FOE_X, {
-  ledger: { perHurt: 0.25, perYs: 3, pay: 30, payCut: 0.5, base: 0.30, per: 0.02, seize: 20 },
-  champion: { cheer: 0.10, combo: 0.4, hits: 3, base: 0.35, per: 0.05 },
-  lampthief: { reveal: 2, vuln: 2 },
-  captain: { form: 0.5 },
-  merchant: { buff: 0.2, hpPen: 0.05, appraise: 1 },
+  ledger: { max: 5, pay: 30, payBack: 3, mark: 2, doom: 0.6, vuln: 2 }, // G-1 시계(비공개 문서 참조)
+  champion: { combo: 0.4, hits: 3, max: 5, coward: 2, big: 0.10, bigBack: 2, parryBack: 1, doom: 0.7, boo: 0.5 }, // G-1 시계(비공개 문서 참조)
+  lampthief: { max: 3, reveal: 2, vuln: 2, stab: 0.2 }, // G-1 시계(비공개 문서 참조)
+  captain: { max: 3, doom: [0.25, 0.2, 0.2], vuln: 2 }, // G-1 시계(비공개 문서 참조)
+  merchant: { buff: 0.2, hpPen: 0.05, appraise: 1, max: 4, gold: 0.5, doom: 0.5, vuln: 2 }, // G-1 시계(비공개 문서 참조)
   bardo: { lamps: 5, per: 0.15, ward: 0.02, lampBrk: 40, shade: 1, ph: [0.6, 0.3] },
 });
 /* 1 · 3챕터가 함께 쓰는 옛 2챕터 역할 수치(해골 · 굴 · 저주 상태 묶음). 옛 지하묘지 설계는 docs/챕터/archive/2챕터-지하묘지.md */
@@ -416,11 +416,11 @@ STRONG_FOES.push(
 Object.assign(FOE_INTRO, Object.fromEntries(Object.values(FOES).filter(f => f.ch === 3 && ['strong', 'boss'].includes(f.grade)).map(f => [f.id, { n: f.n, lore: f.log.lore, see: [f.log.see] }])));
 /* 도감: 겪은 결과만(대처는 플레이어 메모) */
 Object.assign(CODEX, {
-  beaconlord: { oil: '봉화에 기름이 부어질 때마다 남은 칸이 줄었다.', boom: '칸이 다 찬 봉화가 터졌다. 종이 울렸다.', out: '부순 봉화는 다시 켜지지 않았다.' },
+  beaconlord: { oil: '봉화에 기름이 부어질 때마다 남은 칸이 줄었다.', boom: '칸이 다 찬 봉화가 터졌다. 종이 울렸다.', chain: '봉화가 터질 때마다 다음 폭발이 더 컸다.', out: '부순 봉화는 다시 켜지지 않았다.' },
   siege: { ram: '공성추가 다 맞춰지자 날아왔다.', part: '부품을 부수자 공성추가 한 뼘 물러났다.' },
-  speaker: { crowd: '군중이 앞에 있는 동안 대변인에게 칼이 잘 닿지 않았다.', scatter: '대변인이 무너지자 군중이 잠깐 흩어졌다.' },
+  speaker: { crowd: '군중이 앞에 있는 동안 대변인에게 칼이 잘 닿지 않았다.', scatter: '대변인이 무너지자 군중이 잠깐 흩어졌다.', gate: '군중이 다 모이자 성문을 밀고 들어왔다.' },
   marksman: { cover: '엄폐한 사수에게 칼끝이 반쯤 막혔다.', drop: '조준하던 사수가 무너지자 성벽 아래로 떨어졌다.', shot: '조준이 다 쌓이자 한 발이 날아왔다.' },
-  wallcap: { bricks: '벽돌이 서 있는 동안 본체에 칼이 잘 닿지 않았다.', rebuilt: '무너진 벽돌이 다시 섰다.' },
+  wallcap: { bricks: '벽돌이 서 있는 동안 본체에 칼이 잘 닿지 않았다.', rebuilt: '무너진 벽돌이 다시 섰다.', buried: '잠식이 다 차자 성벽에 묻혔다.' },
   lu: { patrol: '성벽 위에서 순찰대가 내려왔다.', rebuild: '그는 무너진 벽돌을 다시 쌓았다. 그동안 몸이 비었다.', endure: '그는 반격하지 않았다. 벽에 등을 대고 버텼다.' },
 });
 /* 3챕터 값(확정본 경제 칸 · 가설). 뜻: ALARM 장치 「경보」 · CHECK3 검문소 · SMUG3 밀수꾼의 좌판 · AFFIX3 정예 접사 · CH3X 방 특성 · 잠식 · OATH 맹세 · ARMOR3 갑옷(층 띠 기본 공격의 몫). 강적 · 보스 값(FOE_X)의 뜻은 비공개 문서 */
@@ -432,11 +432,11 @@ const CH3X = { taint: 0.1, taintCap: 5, wallCover: 0.2, wallBrk: 20, mobP: 0.25,
 const OATH = { hp: 10 };
 const ARMOR3 = { light: 0.2, heavy: 0.35, basic: 0.75 }; // 갑옷 = 그 층 띠 행동 하나의 피해(FOE_HIT_REF) × basic(기본 공격 몫) × light · heavy
 Object.assign(FOE_X, {
-  beaconlord: { fires: 3, fuse: 3, boom: 0.2, boomIgn: 3, brk: 45 },
-  siege: { step: 25, launch: 0.45, parts: 2, partBrk: 30, cut: 25 },
-  speaker: { cut: 0.6, need: 2, call: 2, cap: 4, incite: 0.15 },
-  marksman: { melee: 0.5, drop: 2, aims: 3, shot: 0.35, brkAim: 1.5 },
-  wallcap: { bricks: 3, cut: 0.5, back: 3, brk: 30 }, // 10월 22일 만든 사람 답(A3 질문 2): 한 단계 완화(비공개 문서 참조)
+  beaconlord: { fires: 3, fuse: 3, boom: 0.3, chain: 1.5, brk: 45 }, // G-1 강적 시계(만든 사람 확정 10월 23일, 비공개 문서 참조). 숫자는 가설
+  siege: { launch: 0.8, parts: 2, partBrk: 30 },
+  speaker: { cut: 0.6, need: 2, call: 2, cap: 4, incite: 0.15, push: 0.18 },
+  marksman: { melee: 0.5, drop: 2, shot: 0.75, brkAim: 1.5, dropHit: 1.3 },
+  wallcap: { bricks: 3, cut: 0.5, back: 3, brk: 24, fall: 0.7, clean: 2, bare: 2, atk: 0.85 }, // G-1(비공개 문서 참조)
   lu: { ph: [0.6, 0.3], patrol: 2, bricks: 3 },
 });
 BOSS_DWELL.lu = { mid: 3, last: 3 }; // 확정본: 단계마다 최소 행동 3, 3단계는 최소 3행동 고정(비공개 문서 참조)
