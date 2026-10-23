@@ -113,7 +113,7 @@ module.exports = function (api) {
   // 몬스터 소개와 설명(RINFO 계열) 가운데 53 한 줄
   A('내 차례에는 ⚡빠른 행동 1번', '내 차례: 빠른 칸 1(finishPlayer: !b.bonusUsed) + 주 행동 1', () => has('32-player-action.js', '!b.bonusUsed || b.extraQuick'));
   A('"1번째"는 내 차례가 끝나면 바로 움직입니다', 'actIdx/preview: 순번은 1부터(나는 빼고 셈)', () => has('34-rounds-setup.js', 'function actIdx(b, e)'));
-  A('"1·4번째"처럼', '순번 표기 예시(두 번 움직이는 적은 두 칸에 적힘)', () => has('34-rounds-setup.js', "x.sp >= RND_TWICE) out.push(Object.assign({}, x, { twice: 1 }))"));
+  A('"1·4번째"처럼', '순번 표기 예시(두 번 움직이는 적은 두 칸에 적힘)', () => has('34-rounds-setup.js', "x.sp >= RND_TWICE") && has('34-rounds-setup.js', "out.push(Object.assign({}, x, { twice: 1 }))"));
   A('두 번 움직이는 적(×2)은 평소 공격을 한 번 더 셉니다', 'RND_TWICE = 1.5 속도 이상은 라운드 끝에 한 번 더(roundOrder)', () => E('RND_TWICE') === 1.5);
   A('빠르기 1.5 이상인 적만', 'RND_TWICE = 1.5', () => E('RND_TWICE') === 1.5);
   A('0이 되면 쓰러집니다.', 'checkEnd: 생명력 0 이하면 패배', () => has('24-clock-damage.js', /function checkEnd\(b\) \{[^]{0,400}p\.hp <= 0/));
