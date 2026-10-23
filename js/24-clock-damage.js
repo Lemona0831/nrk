@@ -173,7 +173,7 @@ function hurtPlayer(b, raw, o) {
   const hx = o.dot ? null : { vu: st(p, 'vuln'), pr: st(p, 'protect'), ig: st(p, 'ignite'), ex: p.st <= 0 || !!p.exhaust, gd: !!(p.guard && !o.judgment) }; /* 10월 7일 2차: 쓰러짐 화면에 보일 더해진 것 (값을 바꾸지 않는다) */
   if (p.build === 'elementalist' && o.src && !o.dot && (o.src.s.chill || o.src.chillR === b.round)) { const d0 = d; d *= 1 - elGuardOf(p); b.frostN = (b.frostN || 0) + 1; b.frostSaved = (b.frostSaved || 0) + (d0 - d); } // 원소술사 서리 무게 (10월 7일)
   { const ip = fxAdd(p, 'inP', b, p, o); if (ip) d *= 1 - Math.max(-FX_CAP, Math.min(FX_CAP, ip)); } /* 2챕터 장비(IFX2): 상태(kwTaken) 앞 */
-  d = kwTaken(b, p, d, o);
+  d = kwTaken(b, p, d, o); if (b.over) return 0; // 화상 터짐(상태 피해)으로 끝났으면 타격은 멈춘다
   d *= fxMul(p, 'inMul', b, p, o);
   // 1회 행동 피해 상한 (4.6): 일반 25%, 정예 35% (보스는 기믹 제외)
   if (!o.dot && b.ctx && b.ctx.mode === 'hard') d *= MODES.hard.dmg; /* 가혹: 직접 피해 ×1.3, 한 번 피해 상한은 곱한 뒤에 그대로 */
@@ -342,7 +342,7 @@ function hurtEnemy(b, e, raw, o) {
   if (o.dot && e !== b.p) d *= fxMul(b.p, 'dotOut', b, b.p, e, o.label);
   if (!o.dot && (b.cur || o.ctr)) { const hp = fxAdd(b.p, 'hitP', b, b.p, e, o, b.cur); if (hp) d *= 1 + Math.max(-FX_CAP, Math.min(FX_CAP, hp)); } /* 2챕터 장비(IFX2): 장비끼리 더해 한 번 곱한다 */
   if (o.dot && e !== b.p) { const dp = fxAdd(b.p, 'dotP', b, b.p, e, o); if (dp) d *= 1 + Math.max(-FX_CAP, Math.min(FX_CAP, dp)); }
-  d = kwTaken(b, e, d, o);
+  d = kwTaken(b, e, d, o); if (!e.alive || b.over) return 0; // 화상 터짐(상태 피해)으로 쓰러졌으면 타격은 멈춘다
   if (e.fcTk && e.fcTk.r >= (b.round || 0)) d *= e.fcTk.m; // G-1 강적 시계의 무방비(비공개 문서 참조)
   const boss = b.en.find(x => x.role === 'boss' && x.alive);
   if (boss && boss.boss === 'tree' && e.role === 'boss' && !o.dot) {
