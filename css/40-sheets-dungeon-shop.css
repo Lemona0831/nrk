@@ -150,3 +150,24 @@ body:has(.sheet-bg) .toast{top:calc(env(safe-area-inset-top,0px) + 6px)}
 .bagline.consrow{grid-template-columns:1fr}.bagline.consrow>.row{justify-content:flex-end;flex-wrap:wrap}
 /* 0.8.0 M6-1 장비 틀: 접사 줄(꼬리표 아이콘 하나) · 영웅 축 줄 · 고유 규칙 · 대가 */
 .idet.g8 .l{font-size:calc(13px*var(--fs,1));margin:2px 0;line-height:1.45}.idet.g8 .l.af .afi{display:inline-block;width:1.3em;text-align:center;opacity:.85}.idet.g8 .l.ax{color:var(--gold)}.idet.g8 .l.act{color:var(--ink)}.idet.g8 .l.cost{color:var(--bad,#d77)}.idet.g8 .l.mini{color:var(--muted);font-size:calc(12px*var(--fs,1))}
+/* 야영지(10월 24일 다시 짬): 위 두 칸 · 접사 다시 굴리기 · 아래 붙은 줄. 상점 · 야영지 공통 줄(mrow: 내용 | 단추, 단추는 늘어나지 않는다) */
+.camp{display:flex;flex-direction:column;gap:12px}
+.camp-h h3{margin:0 0 4px}.camp-h .lore{margin:0 0 6px}.camp-note{margin:0;color:var(--muted)}.camp-note b{color:var(--ink)}
+.camp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:12px;align-items:start}
+.camp-grid>.card{margin:0}
+.camp-rest h4,.camp-shop h4{margin:0 0 6px}
+.camp-gain{list-style:none;margin:8px 0 12px;padding:0;display:grid;gap:6px}
+.camp-gain li{display:grid;grid-template-columns:5.5em auto 1fr;align-items:baseline;gap:4px 8px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.camp-gain li span{color:var(--muted);font-size:.9em}.camp-gain li b{font-variant-numeric:tabular-nums}.camp-gain li small{color:var(--muted)}.camp-gain li:last-child b{grid-column:2/4}
+.camp-gain .camp-fl{font-weight:600;font-size:.92em}
+.camp-restbtn{padding:12px;font-size:1.05em}
+.camp-rest.done{opacity:.85}.camp-done{margin:0;padding:10px;text-align:center;border:1px solid var(--line);border-radius:8px;color:var(--good)}
+.camp-shop .dghead{gap:8px;align-items:center}.camp-shop .dghead .tag{font-size:.8em}
+.mlist,.rrlist{display:flex;flex-direction:column;margin-top:6px}
+.mrow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 12px;padding:8px 0;border-top:1px solid var(--line)}
+.mlist .mrow:first-child,.rrlist .mrow:first-child{border-top:0}
+.mrow-t{min-width:0}.mrow-t small{display:block;margin-top:2px}
+.mrow-b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.mrow-b button{flex:0 0 auto;white-space:nowrap}
+.mrow.off .mrow-t b{color:var(--muted)}
+.camp-bar{margin-top:0}.camp-bar button{margin-left:auto}.rrsel>button{flex:0 0 auto}
+@media (max-width:520px){.mrow{grid-template-columns:1fr}.mrow-b{justify-content:flex-start}}
