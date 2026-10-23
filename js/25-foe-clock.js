@@ -23,13 +23,17 @@ function fcAdd(b, e, k, why) {
   if (C.n >= C.max - 1 && n0 < C.max - 1) { C.warnN++; C.blink = 1; C.wT = (b.turnIdx || 0) + (b.cur ? 1 : 0); logp(b, 'crit', '⚠ ' + (D.warn ? D.warn(b, e) : D.n + '이(가) 곧 찬다')); if (typeof sfx === 'function') sfx('b_big'); if (b.rec) b.rec.push({ k: 'clkwarn', foe: e.foe }); }
   return k;
 }
-/* 되감기: 답이 들었다. 0이 되면 정의의 보상(무방비 등) */
-function fcRewind(b, e, k, why) {
+/* 되감기: 답이 들었다. 0이 되면 정의의 보상(무방비 등).
+   2판(비공개 문서 참조): 마지막 경고 칸이 아닐 때는 한 번에 1칸, 강적마다 한 라운드에 한 번까지(o.free: 화면의 물체 수를 세는 시계처럼 예외) */
+function fcRewind(b, e, k, why, o) {
   const D = fcDef(e); if (!D || !e.alive || !(k > 0)) return 0; fcInit(b, e); const C = e.clk; if (C.perm) return 0; const n0 = C.n; if (!n0) return 0;
+  if (!(o && o.free) && n0 < C.max - 1) { const R = b.round || 0; if (C.backR === R) return 0; C.backR = R; k = Math.min(k, 1); }
   C.n = Math.max(0, C.n - k); if (C.n < C.max - 1) C.blink = 0; if (b.rec) b.rec.push({ k: 'clkback', foe: e.foe, n: C.n, why: why || '' });
   if (!C.n && D.reward) D.reward(b, e, why);
   return n0 - C.n;
 }
+/* 결정적 답(2판): 마지막 경고 칸이면 0칸으로(보상), 아니면 평소 되감기 1칸 */
+function fcAnswer(b, e, why) { const D = fcDef(e); if (!D || !e.alive) return 0; fcInit(b, e); const C = e.clk; if (C.perm) return 0; return C.n >= C.max - 1 ? fcRewind(b, e, C.n, why, { free: 1 }) : fcRewind(b, e, 1, why); }
 function fcDoom(b, e) {
   const D = fcDef(e), C = e.clk; C.doomN++; C.blink = 0; if (b.rec) b.rec.push({ k: 'clkdoom', foe: e.foe });
   if (D.perm) C.perm = 1; else C.n = 0;
