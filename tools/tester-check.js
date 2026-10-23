@@ -2,7 +2,7 @@
 /* 테스터 판단 단위 시험 (0.8.0 M7-1, 10월 22일): 신중 성향의 예고 답하기(dgqa answerPost · answerPre)
    1 강적 · 보스의 큰 한 방 예고가 내 다음 차례 전에 오면: 끊을 수 있으면 붕괴 행동 → 아니면 흘리기 → 아니면 방어
    2 강적 · 보스가 아닌 적, 신중이 아닌 성향, 큰 한 방이 아닌 예고(무시 시험으로 가린 예고 포함)에는 답하지 않는다
-   3 (G-1) 강적 시계가 마지막 칸 앞이면 신중은 답한다(clockPre). 종지기는 옛 종 판단(answerPre) 대신 시계로 답한다
+   3 (G-1) 강적 시계가 마지막 칸 앞이면 신중은 답한다(clockPre). G-2: 대충은 경고 한 번마다 절반 확률로 반응. 종지기는 옛 종 판단(answerPre) 대신 시계로 답한다
    쓰기: node tools/tester-check.js. 실패가 있으면 1로 끝난다 */
 process.env.DGDIR = process.env.DGDIR || '.'; process.env.ANS_PART = process.env.ANS_PART || 'ans,bell'; // 큰 종 판단은 스위치로만 켜지므로 시험에서 켠다
 const H = require('./uqtest/_h.js'); const { E, D } = H;
@@ -60,6 +60,7 @@ const strongHeavy = (f, brk) => { const e = f.es[0]; e.strong = true; e.foe = 'k
   t(withPv([], () => D.answerPre(f.b, {}, one, 'careful')) === null, '시계가 있는데 옛 종 판단이 돈다');
   rg.clk.n = rg.clk.max - 2; t(withPv([], () => D.clockPre(f.b, {}, one, 'careful')) == null, '마지막 칸 앞이 아닌데 시계에 답했다');
   rg.clk.n = rg.clk.max - 1; const r = withPv([], () => D.clockPre(f.b, {}, one, 'careful')); t(r && r[0], '마지막 칸 앞인데 시계에 답하지 않았다 ' + JSON.stringify(r));
-  t(withPv([], () => D.clockPre(f.b, {}, one, 'casual')) == null, '신중 · 숙련이 아닌데 시계에 답했다');
+  t(withPv([], () => D.clockPre(f.b, {}, one, 'basic')) == null, '시계를 읽지 않는 성향(basic)이 시계에 답했다');
+  { const lo = () => 0.1, hi = () => 0.9; rg.clk.reactD = null; const a1 = withPv([], () => D.clockPre(f.b, {}, lo, 'casual')); t(a1 && a1[0], '대충: 반응으로 굴렸는데 답하지 않았다'); rg.clk.reactD = null; t(withPv([], () => D.clockPre(f.b, {}, hi, 'casual')) == null, '대충: 반응하지 않기로 굴렸는데 답했다'); t(withPv([], () => D.clockPre(f.b, {}, lo, 'casual')) == null, '대충: 같은 경고에 다시 굴렸다'); rg.clk.reactD = null; }
 }
 console.log('tester-check: 시험 ' + n + '개 · 실패 ' + T.length); for (const m of T) console.log('  실패: ' + m); if (T.length) process.exit(1);

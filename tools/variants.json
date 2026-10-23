@@ -681,7 +681,15 @@
    "default": null,
    "introduced": "G-2",
    "expires": "G-2 정리 검토",
-   "note": "시계를 읽는 성향 목록(쉼표, 기본 careful,expert). G-2 대충 성향 갈라보기"
+   "note": "시계를 읽는 성향 목록(쉼표, 기본 careful,expert,casual). G-2 대충 성향 갈라보기"
+  },
+  {
+   "name": "CLOCK_CASUAL_P",
+   "kind": "env",
+   "default": null,
+   "introduced": "G-2",
+   "expires": "G-2 정리 검토",
+   "note": "대충 성향이 강적 시계 마지막 경고에 반응할 확률(기본 0.5, 만든 사람 결정 10월 24일)"
   }
  ]
 }

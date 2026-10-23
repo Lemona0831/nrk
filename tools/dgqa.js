@@ -457,10 +457,11 @@ function sbRhythmGate(b, a, t) {
    강적마다 답 고르기는 tools/persona/clock-ch1~3.js({ 강적 id: (b, e, G0, r) => [행동, 대상] | null }). 무시(DG_IGNORE)한 강적은 보지 않는다 */
 const CLOCK_ANS = Object.assign({}, ...[1, 2, 3].map(n => { try { return require('./persona/clock-ch' + n + '.js'); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; return {}; } }));
 const CLOCK_AHEAD = Math.max(1, +(process.env.CLOCK_AHEAD || 1)); // G-1 갈라보기: 2면 한 칸 일찍(마지막 경고 한 칸 전부터) 답한다
-const CLOCK_PKS = (process.env.CLOCK_PK || 'careful,expert').split(','); // G-2 갈라보기: 시계를 읽는 성향(기본 신중 · 숙련)
+const CLOCK_PKS = (process.env.CLOCK_PK || 'careful,expert,casual').split(','); // 시계를 읽는 성향(G-2 만든 사람 결정 10월 24일: 대충은 마지막 경고에 절반만 반응)
+const CLOCK_P = { casual: process.env.CLOCK_CASUAL_P != null ? +process.env.CLOCK_CASUAL_P : 0.5 }; // 성향별 반응 확률(없으면 1). 경고 한 번에 한 번만 굴린다
 function clockPre(b, P, r, pk) {
   if (!CLOCK_PKS.includes(pk) || process.env.CLOCK_OFF) return null;
-  for (const e of G0.alive(b)) { const C = e.clk; if (!C || C.perm || IGN.includes(e.foe) || !CLOCK_ANS[e.foe] || C.n < C.max - CLOCK_AHEAD) continue; const x = CLOCK_ANS[e.foe](b, e, G0, r); if (x) return x; }
+  for (const e of G0.alive(b)) { const C = e.clk; if (!C || C.perm || IGN.includes(e.foe) || !CLOCK_ANS[e.foe] || C.n < C.max - CLOCK_AHEAD) continue; const p = CLOCK_P[pk] != null ? CLOCK_P[pk] : 1; if (p < 1) { if (!C.reactD || C.reactD.w !== C.warnN) C.reactD = { w: C.warnN, ok: r() < p }; if (!C.reactD.ok) continue; } const x = CLOCK_ANS[e.foe](b, e, G0, r); if (x) return x; }
   return null;
 }
 function fightCur(pk, r, mem, out) {
