@@ -22,7 +22,7 @@ function loadGame() {
   return ctx;
 }
 const G0 = loadGame();
-const run_ = code => vm.runInContext(code, G0);
+const run_ = code => vm.runInContext(code, G0); let S3_STK_ = null; const S3_STK = (u, k) => (S3_STK_ = S3_STK_ || run_('stk'))(u, k); // S-3 재기용
 if (process.env.HEAVY_17 != null) run_(process.env.HEAVY_17 === '1' ? 'HEAVY_V2 = 1.7; HEAVY_COST = 35' : 'HEAVY_V2 = 1.5; HEAVY_COST = 40'); // M4(D11) 강공격 A/B: 1이면 ×1.7 · 35, 0이면 ×1.5 · 40
 if (process.env.BRK_BASIC0 != null || process.env.HEAVY_BRK) run_('BRK_RULE.basic0 = ' + (process.env.BRK_BASIC0 === '0' ? 'false' : process.env.BRK_BASIC0 != null ? 'true' : 'BRK_RULE.basic0') + '; ' + (process.env.HEAVY_BRK ? 'BRK_RULE.heavyMul = ' + (+process.env.HEAVY_BRK) + '; ' : '') + 'for (const k in PTREE) delete PTREE[k];'); if (process.env.BRK_BASIC0 != null || process.env.HEAVY_BRK) { const R = require('./eng.gen.js').BRK_RULE; if (R) { R.basic0 = run_('BRK_RULE.basic0'); R.heavyMul = run_('BRK_RULE.heavyMul'); } } // M5-7 붕괴 규칙 측정: BRK_BASIC0=1 켬 · 0 끔, HEAVY_BRK 강공격 붕괴 배율
 if (process.env.GEAR8 != null) { run_('GEAR8.on = ' + (process.env.GEAR8 !== '0')); const E8 = require('./eng.gen.js').GEAR8; if (E8) E8.on = process.env.GEAR8 !== '0'; } // M6-1 장비 틀 스위치(gear8): 1 켬 · 0 끔
@@ -313,6 +313,10 @@ function fightRec(R, b, run, hpIn, acts) {
   if (BUILDLOG) { const en = b.en.filter(e => e.role !== 'root'); rec.nEn = en.length; rec.nBack = en.filter(e => e.row === 'back').length; rec.nBig = en.filter(e => e.elite || e.role === 'boss' || e.strong || e.big).length; } // M5-0 보정 5 상황 표(무리 · 거구 · 후열)
   { const y = G0.ysSum ? G0.ysSum(b) : null; if (y) rec.ys = { sp: y.sp, use: y.use, w: y.w, g: Object.values(y.ch || {}).reduce((a, v) => a + v, 0), ch: y.ch }; } // M4: ch = 충전 출처별 든 양(차례 · 대응 이유 · 통로 각인 · 환급 · 장비) // 0.8.0 6단계 유산 리듬: 비용별 횟수 · 쓴 합 · 상한에 막힌 양(넘침) · 든 양
   rec.tk = b.damageStats ? Math.round(100 * b.damageStats.taken / b.p.hpMax) : null; // 0.8.0 6단계: 총피해(회복 전 받은 피해 합, 최대 생명력 %) 보조 지표
+  if (b.s3Tr) { const T = b.s3Tr, o = {}; for (const id of ['f_stomp', 'm_balgyeong', 'a_gyeonu']) { const U = T.filter(x => x[0] === id); if (!U.length) continue; const ts = new Set(U.map(x => x[1])); o[id] = { n: U.length, cons: U.filter(x => ts.has(x[1] - 1)).length }; }
+    const TT = [...new Map(T.map(x => [x[1], x])).values()]; o.turns = TT.length; o.chillAll = TT.filter(x => x[3]).length; let pv = new Set(), bn = 0, bb = 0; for (const x of TT) { const cu = new Set(x[5] ? x[5].split(',') : []); for (const k of cu) if (!pv.has(k)) { if (k.endsWith('*')) bb++; else bn++; } pv = cu; } o.brN = bn; o.brB = bb; o.rounds = b.round || 0;
+    if (o.a_gyeonu) { const R = new Set(T.filter(x => x[0] === 'a_gyeonu').map(x => x[4])); o.a_gyeonu.par = b.rec.filter(x => x.k === 'ys' && x.src === 'resp' && x.why === '흘리기' && R.has(x.r)).reduce((s, x) => s + (x.g || 0), 0); }
+    rec.s3 = o; } // S-3: 제어 칸 연속 사용 · 전열 모두 둔화인 차례 · 새로 무너진 적(일반 · 큰 적, 내 차례 사이 기준) · 겨누기 라운드의 흘리기 충전
   if (b.p.build === 'warden') { const pr = b.log.map(x => /^신성한 기도: 생명력 \+([\d.]+)/.exec(x.m || '')).filter(Boolean); if (pr.length) rec.pray = { n: pr.length, hp: Math.round(pr.reduce((a, m) => a + +m[1], 0) * 10) / 10 }; } // S-2: 신성한 기도 횟수 · 회복한 생명력(전투 기록에서)
   if (b.p.build === 'warden') { const gw = b.log.map(x => /방패를 세운다\. 보호막 \+(\d+)/.exec(x.m || '')).filter(Boolean).map(m => +m[1]); const S = b.wdS || []; const dir = hits.filter(h => !h.dot);
     rec.wd = { g: gw.length, gw: gw.reduce((a, v) => a + v, 0), held: Math.round(b.rec.filter(x => x.k === 'held').reduce((a, x) => a + (x.n || 0), 0) * 10) / 10, gHit: dir.filter(h => h.guard).length, gTaken: Math.round(dir.filter(h => h.guard).reduce((a, h) => a + h.d, 0) * 10) / 10, oHit: dir.filter(h => !h.guard).length, oTaken: Math.round(dir.filter(h => !h.guard).reduce((a, h) => a + h.d, 0) * 10) / 10, turns: S.length, half: S.filter(v => v >= 50).length, hpMax: b.p.hpMax, wil: G0.stat ? G0.stat(b.p, 'wil') : null, ng: (b.wdSG || []).length, ngW: (b.wdSG || []).reduce((s, x) => s + x[0], 0), ngP: (b.wdSG || []).reduce((s, x) => s + x[1], 0) }; } // 0.8.0 5단계 방어 측정(2-10): 방어 횟수 · 방어 보호막 합 · 받아낸 몫 · 방어 중/아닐 때 받은 직접 피해 · 보호막 상한 50% 이상인 내 차례
@@ -505,6 +509,7 @@ function fightCur(pk, r, mem, out) {
     { const g = sbRhythmGate(b, a, t); if (g) { [a, t] = g; if (BUILDLOG) out.rhGate = (out.rhGate || 0) + 1; } } // M5-0 보정: 마검사 리듬 칸은 이어진 교대를 끊지 않을 때만
     if (unIgn) unIgn();
     if (OPT.onTurn) OPT.onTurn(G, n);
+    if (['warden', 'monk', 'assassin'].includes(b.p.build)) { const fr = G0.alive(b).filter(e => e.row === 'front' && e.role !== 'root'); (b.s3Tr = b.s3Tr || []).push([a, b.turnIdx, b.round || 0, fr.length > 0 && fr.every(e => S3_STK(e, 'chill') > 0) ? 1 : 0, b.ysR || 0, G0.alive(b).filter(e => S3_STK(e, 'broken') > 0).map(e => e.id + (e.elite || e.strong || e.role === 'boss' ? '*' : '')).join(',')]); } // S-3: 제어 칸 재기(행동 · 차례 · 라운드 · 전열 모두 둔화 · 유산 라운드 · 무너진 적)
     if (process.env.MK_TRACE && b.p.build === 'monk') (b.mkTr = b.mkTr || []).push([a, G0.st(b.p, 'empower'), b.p.ys, b.turnIdx]); // 0.8.0 5단계: 수도승 행동 · 기 · 유산 흐름(행동 직전)
     if (b.p.build === 'warden' && b.wdT !== b.turnIdx && G0.wardMax) { b.wdT = b.turnIdx; (b.wdS = b.wdS || []).push(Math.round(100 * (b.p.ward || 0) / Math.max(1, G0.wardMax(b.p)))); if (b.wdGd) { b.wdGd = 0; (b.wdSG = b.wdSG || []).push([Math.round(b.p.ward || 0), Math.round(100 * (b.p.ward || 0) / Math.max(1, G0.wardMax(b.p)))]); } } // 보조 지표(10월 17일): 방어한 다음 내 차례의 보호막(값 · 상한 %)
     if (b.p.build === 'warden' && a === 'guard') b.wdGd = 1; // 0.8.0 5단계: 내 차례 첫 행동 때 보호막 / 상한(%)

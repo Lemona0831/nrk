@@ -471,11 +471,14 @@ const SK_HSL = { poison: '독을 건 행동마다', kill: '적을 쓰러뜨린 �
 for (const k in TREE2) for (const x of (SKILLS2[k] || [])) x.hs = (TREE2[k].haste || {})[x.b] || null; // 스킬마다 갈래 규칙을 붙여 둔다
 /* 10월 15일 유산 1차 시제품: 스킬 비용은 데이터의 cd에서 기계적으로 만든다(설계안 4-1). 시작 스킬과 cd 3–5 → 2, 6–8 → 3, 9–10과 전투마다 1번 → 4. cd는 다른 도구가 읽으므로 데이터에 남긴다 */
 function skCost(s) { if (!s) return 0; if (s.ys != null) return s.ys; if (s.once) return 4; return 2; } // 0.8.0 M5-0(10월 19일): 비용은 트리 노드의 ys(skOf가 넣음)만 읽는다. 쿨타임 변환표 · cheap 분기는 없앴다. 노드 밖(시작 스킬 등)은 2, 전투마다 1번은 4. 트리 스킬의 ys 누락은 tree-check 오류
-/* S-2(10월 24일 만든 사람): 유산 1짜리 스킬이 생명력을 회복하면 다음 내 차례 시작의 유산 충전이 없다(차례 충전과 맞물린 공짜 회복 막기, 몸 빼기 무한 회피와 같은 꼴). 대응 · 다른 충전은 그대로.
-   생명력을 채우는 효과: 신성한 기도(wdPray) · 탈기(mkDrainChill) · 먹기(drain, 내 출혈을 지우는 me는 빼고). 보호막 · 보호는 넣지 않는다(만든 사람 결정 전) */
-const YS_HEAL_K = ['wdPray', 'mkDrainChill'];
-const ysHealSk = s => !!(s && s.fx) && skCost(s) === 1 && s.fx.some(e => YS_HEAL_K.includes(e.k) || (e.k === 'drain' && !e.me));
-const skYsTail = s => ysHealSk(s) ? ' 쓰면 다음 차례 유산 충전 없음.' : '';
+/* S-2 · S-3(10월 24일 만든 사람): 유산 1짜리 스킬이 생명력 회복 · 보호 · 보호막 · 회피(몸 빼기)를 주면 다음 내 차례 시작의 유산 충전이 없다(차례 충전 +1과 맞물려 매 차례 공짜인 영구 상태 막기). 대응 · 다른 충전은 그대로.
+   효과: 회복(wdPray · mkDrainChill · drain, 내 출혈을 지우는 me는 빼고) · 보호막(ward · wardPer · wardFill · sbSinWall) · 보호(나에게 거는 protect · elProtR) · 회피(evade).
+   비용: 트리 · 변형 · 강화로 정해진 비용이 1 이하인 칸(ysHealSk), 또는 변형의 조건 할인(cond)으로 1이 되어 쓴 때(ysCondSk). 장비 · 접사 · 첫 스킬 · 교대 같은 다른 할인은 넣지 않는다 */
+const YS_HEAL_K = ['wdPray', 'mkDrainChill'], YS_GUARD_K = ['ward', 'wardPer', 'wardFill', 'sbSinWall', 'evade', 'elProtR'];
+const ysGuardFx = s => !!(s && s.fx) && s.fx.some(e => YS_HEAL_K.includes(e.k) || YS_GUARD_K.includes(e.k) || (e.k === 'drain' && !e.me) || (e.k === 'meSt' && e.s === 'protect') || (e.k === 'st' && e.s === 'protect' && s.tgt === 'self'));
+const ysHealSk = s => ysGuardFx(s) && skCost(s) <= 1; // 이름은 S-2 그대로(S-3에서 보호 · 회피까지 넓힘)
+const ysCondSk = s => ysGuardFx(s) && skCost(s) > 1 && (s.cond || []).length > 0;
+const skYsTail = s => ysHealSk(s) ? ' 쓰면 다음 차례 유산 충전 없음.' : ysCondSk(s) ? ' 비용 1로 쓰면 다음 차례 유산 충전 없음.' : '';
 function skCd(s) { return '유산 ' + skCost(s) + (s.once ? ' · 전투마다 1번' : ''); }
 const skCharge = skCd; // 옛 이름
 const skHz = s => !!(s && s.fx && s.fx.some(e => e.k === 'hasten')); // 🔄 표시를 붙일 스킬

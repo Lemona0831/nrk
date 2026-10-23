@@ -23,7 +23,7 @@ const step = (b, id, t) => { b.p.st = b.p.stMax; const k0 = b.rec.length; E.play
 // 1 대상: 직업 여섯의 유산 1 칸
 { const six = ['warden', 'monk', 'assassin', 'hunter', 'elementalist', 'spellblade'], hit = [];
   for (const c of six) { const byId = Object.fromEntries(SK[c].map(s => [s.id, s])); for (const r of AT[c].skills) if (r[6] === 1 && ysHealSk(Object.assign({}, byId[r[0]], { ys: 1 }))) hit.push(r[0]); }
-  ok(hit.join() === 'w_pray', '유산 1 회복 칸은 신성한 기도 하나: ' + hit.join());
+  ok(hit.join() === 'w_pray,h5_cover,h5_dodge', '유산 1 칸 대상(S-3에서 보호 · 회피까지): ' + hit.join());
   ok(!ysHealSk(Object.assign({}, SK.warden.find(s => s.id === 'w_pray'), { ys: 2 })), '비용 2면 규칙 밖'); }
 // 2 설명
 for (const v of [null, 'wv_pr_more', 'wv_pr_ward']) {
@@ -42,4 +42,33 @@ for (const v of [null, 'wv_pr_more', 'wv_pr_ward']) {
 { const { p, b, es } = fight(['w_shieldhit', 'w_pray']); p.ys = 2; const k0 = b.rec.length; E.playerAct(b, 'w_pray'); ok(!b.ysPend && !b.ysNoTurn, '차례가 끝날 때 다음 차례 충전이 0으로 잡힘');
   const y = p.ys; b.ysRespR = -1; ysResp(b, '방어'); ok(p.ys === y + YUSAN.resp, '대응 충전은 그대로 +' + YUSAN.resp); E.runUntilPlayer(b); ok(turnG(b, k0) === 0, '대응을 받아도 차례 충전은 없음'); }
 if (YUSAN.longFrom > 0) { const { p, b } = fight(['w_shieldhit', 'w_pray']); b.ysTurnN = YUSAN.longFrom + 1; p.ys = 2; const k0 = step(b, 'w_pray'); ok(turnG(b, k0) === 0 && p.ys === 1, '긴 전투(+2)에서도 충전 없음: ' + p.ys); }
+
+/* ===== S-3(10월 24일 만든 사람): 보호 · 보호막 · 회피까지 넓힘, 변형의 조건 할인으로 1이 되어 쓴 때도 ===== */
+const ysCondSk = R_('ysCondSk'), atSlotId = R_('atSlotId');
+function fightC(cls, act, vsel) {
+  G.data = E.blankData(); G.data.unlAll = 1; G.cre = { name: 't' }; G.dropQ = []; G.b = null; G.sheet = null; E.startRun(cls); const run = G.run; delete run.alloc; run.clears = 2; run.lv = 16;
+  const N = E.atBuild(cls).nodes; run.atree.own = act.concat(Object.keys(vsel || {}).map(id => atSlotId(id))); run.skills = act.filter(id => (N[id] || {}).kind === 'skill').slice(0, 4);
+  run.atree.vsel = Object.fromEntries(Object.entries(vsel || {}).map(([id, v]) => [atSlotId(id), v])); E.atSync(run);
+  const es = ['bruiser', 'bruiser'].map((r, i) => E.mkEnemy(r, false, i)); for (const e of es) { e.hp = e.hpMax = 5000; e.dmg = 0; }
+  const b = E.newBattle(run.p, es, {}); b.rngF = () => 0.5; b.stepMode = false; E.runUntilPlayer(b); return { run, p: run.p, b, es };
+}
+// 대상: 직업 여섯의 유산 1 칸(기본) + 변형으로 보호막을 얻는 칸
+{ const six = ['warden', 'monk', 'assassin', 'hunter', 'elementalist', 'spellblade'], hit = [], vhit = [];
+  for (const c of six) { const byId = Object.fromEntries(SK[c].map(s => [s.id, s])); for (const r of AT[c].skills) { if (r[6] !== 1) continue; const s = Object.assign({}, byId[r[0]], { ys: 1 }); if (ysHealSk(s)) hit.push(r[0]);
+    for (const v of (AT[c].vars || {})[r[0]] || []) { const m = v[3] || {}; const fx = s.fx.map(e => Object.assign({}, e)).concat((m.fxAdd || []).map(e => Object.assign({}, e))); if (!ysHealSk(s) && ysHealSk(Object.assign({}, s, { fx }))) vhit.push(r[0] + '+' + v[0]); } } }
+  ok(hit.join() === 'w_pray,h5_cover,h5_dodge', 'S-3 유산 1 칸 대상: 신성한 기도 · 엄폐 · 몸 빼기: ' + hit.join());
+  ok(vhit.join() === 'f_stomp+wv_stp_ward,sb_spark+sbv_spark_ward', 'S-3 변형으로 걸리는 칸: 발 디딘 방패 · 불티 방패: ' + vhit.join()); }
+// 사냥꾼 엄폐 · 몸 빼기
+for (const id of ['h5_cover', 'h5_dodge']) { const { p, b, es } = fightC('hunter', [id]); while (b.turnIdx < 3) step(b, 'basic', es[0].id); /* 개전 가속(한 번 더 움직임, 차례 충전 없음)을 먼저 지난다 */ const a = A(b, id); ok(a.yc === 1 && /쓰면 다음 차례 유산 충전 없음\.$/.test(a.d), id + ': 설명 끝 (' + a.d + ')');
+  p.ys = 2; const k0 = step(b, id); ok(turnG(b, k0) === 0 && noTurn(b, k0), id + ': 쓴 다음 차례 충전 없음');
+  const k1 = step(b, 'basic', es[0].id); ok(turnG(b, k1) === YUSAN.turn, id + ': 그다음 차례는 다시 +' + YUSAN.turn); }
+// 발 구르기: 기본은 그대로, 발 디딘 방패 변형이면 걸림
+{ const { b, es } = fightC('warden', ['f_sweep', 'f_stomp']); ok(!/충전 없음/.test(A(b, 'f_stomp').d), '발 구르기(기본)에는 붙지 않음'); b.p.ys = 2; const k0 = step(b, 'f_stomp'); ok(turnG(b, k0) === YUSAN.turn, '발 구르기(기본)는 충전 그대로'); }
+{ const { b } = fightC('warden', ['f_sweep', 'f_stomp'], { f_stomp: 'wv_stp_ward' }); ok(/쓰면 다음 차례 유산 충전 없음\.$/.test(A(b, 'f_stomp').d), '발 디딘 방패: 설명 끝'); b.p.ys = 2; const k0 = step(b, 'f_stomp'); ok(turnG(b, k0) === 0, '발 디딘 방패: 충전 없음'); }
+// 조건 할인 변형: 태세의 버팀(버티기, 태세가 켜져 있으면 2 → 1)
+{ const { p, b } = fightC('warden', ['w_dstance', 'w_shieldhit', 'w_stand'], { w_stand: 'wv_st_wst' }); const a = A(b, 'w_stand'); ok(ysCondSk(a.s), '태세의 버팀: 조건 할인 보호막 칸');
+  ok(/비용 1로 쓰면 다음 차례 유산 충전 없음\.$/.test(a.d), '태세의 버팀: 설명 끝 "비용 1로 쓰면 …" (' + a.d + ')');
+  p.ys = 5; let k0 = step(b, 'w_stand'); ok(a.yc === 2 && turnG(b, k0) === YUSAN.turn, '태세가 꺼져 있어 비용 2로 쓰면 충전 그대로');
+  p.ys = 5; step(b, 'w_dstance'); ok(A(b, 'w_stand').yc === 1, '태세를 켜면 버티기 비용 1'); p.ys = 3; k0 = step(b, 'w_stand'); ok(turnG(b, k0) === 0 && noTurn(b, k0), '비용 1로 쓰면 다음 차례 충전 없음'); }
+{ const { b } = fightC('warden', ['w_dstance', 'w_shieldhit', 'w_stand']); ok(!/충전 없음/.test(A(b, 'w_stand').d), '버티기(변형 없음, 유산 2)에는 붙지 않음'); }
 console.log('ys-heal-check: ' + n + '개 통과');
