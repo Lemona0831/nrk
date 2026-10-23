@@ -343,7 +343,7 @@ function w3Setup(b, room) {
   if (sF && room.foe === 'beaconlord' && typeof decideIntent === 'function') decideIntent(b, sF); // G-1 2판: 첫 예고를 봉화가 선 뒤에 다시 고른다(비공개 문서 참조)
   if (sF && room.foe === 'siege') { for (let i = 0; i < FOE_X.siege.parts; i++) { const f = mkEnemy('rampart', 0, 80 + i, { lv }); f.hpMax = f.hp = 9999; f.brkMax = FOE_X.siege.partBrk; f.summoned = true; f.xpCh = 0; f.part = 1; f.intent = { k: 'none' }; f.info = '공성추 부품. 붕괴 게이지가 차면 부서진다.'; en.push(f); } }
   if (sF && room.foe === 'marksman') sF.row = 'back';
-  if (sF && room.foe === 'wallcap') { const A = FOE_X.wallcap.atk; sF.dmg *= A; if (sF.bigMul) sF.bigMul /= A; } // G-1(비공개 문서 참조)
+  { const A = sF && FOE_X[room.foe] && FOE_X[room.foe].atk; if (A && A !== 1) { sF.dmg *= A; if (sF.bigMul) sF.bigMul /= A; } } // G-1(비공개 문서 참조)
   if (sF && room.foe === 'wallcap') for (let i = 0; i < FOE_X.wallcap.bricks; i++) { const f = mkEnemy('brick', 0, 80 + i, { lv }); f.hpMax = f.hp = 9999; f.brkMax = FOE_X.wallcap.brk; f.summoned = true; f.xpCh = 0; f.intent = { k: 'none' }; f.info = '벽돌. 붕괴 게이지가 차면 무너진다.'; en.push(f); }
   if (room.ramHit) { for (const e of en) if (e.row === 'front' && realFoe(e) && !w3Obj(e)) { addBreak(b, e, 40); hurtEnemy(b, e, 6, { aoe: 1, label: '굴러온 공성추' }); } logp(b, 'good', '끊어진 밧줄 끝에서 공성추가 굴러 들어간다'); }
   /* 장치 「경보」: 강적 · 보스 · 검문소 거절 싸움은 경보 없음 */

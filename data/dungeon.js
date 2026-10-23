@@ -135,10 +135,10 @@ const STRONG_FOES = [
 /* 0.8.0 G-1 1챕터 강적 시계 값(만든 사람 확정 10월 23일, 2판 같은 날). 규칙 · 손잡이의 뜻은 비공개 문서 참조. 숫자는 가설
    dmg: 강적마다 평소 공격 배율(STRONG_GIM.dmg에 더 곱한다, js/34) */
 const CLK1 = {
-  bell: { max: 2, big: 0.75, bellHp: 2, stun: 1, dmg: 1.3 }, // 비공개 문서 참조
-  pilgrim: { max: 3, full: 0.2, feast: 0.85, crouch: 1.3, crouchR: 1, dmg: 1.3 }, // 비공개 문서 참조
-  bishop: { max: 3, march: 0.2, call: 1, drop: 1, dmg: 1 }, // 비공개 문서 참조
-  cantor: { max: 3, per: 0.3, emp: 2, dotCut: 0.08, off: 1, dmg: 1 }, // 비공개 문서 참조
+  bell: { max: 2, big: 0.95, bellHp: 2, stun: 1, dmg: 1.3 }, // 비공개 문서 참조
+  pilgrim: { max: 3, full: 0.15, feast: 0.95, crouch: 1.3, crouchR: 1, dmg: 1.3 }, // 비공개 문서 참조
+  bishop: { max: 2, march: 0.3, call: 1, drop: 1, dmg: 1 }, // 비공개 문서 참조
+  cantor: { max: 3, per: 0.4, emp: 2, dotCut: 0.08, off: 1, dmg: 1 }, // 비공개 문서 참조
   scribe: { max: 2, verdict: 0.5, pen: 1, dmg: 0.9 }, // 비공개 문서 참조
 };
 /* A1 1챕터 강적: 큰 한 방 배율(M3 무시 시험에서 예고를 몰라도 96–100% 이겨서, 막지 못한 큰 한 방이 아프게). 숫자는 가설 */
@@ -311,11 +311,11 @@ const AFFIX2 = { w: { tough: 1, cmd: 1.2, loot: 0.8, oiled: 0.8 }, cmd: 0.15, lo
 const DEBT_ALTAR = { gold: 60, markup: 0.3 };
 const CH2X = { loser: 0.35, crowd: 3, oilIgn: 1, rainIgn: 2, rainChill: 1, formation: 0.2 };
 Object.assign(FOE_X, {
-  ledger: { max: 6, pay: 30, mark: 2, doom: 0.7, vuln: 2, atk: 0.9 }, // G-1 시계 2판(비공개 문서 참조)
-  champion: { combo: 0.4, hits: 3, max: 3, coward: 2, big: 0.10, doom: 0.75, boo: 0.5 }, // G-1 시계 2판(비공개 문서 참조)
-  lampthief: { max: 2, reveal: 2, vuln: 2, stab: 0.2 }, // G-1 시계 2판(비공개 문서 참조)
-  captain: { max: 3, doom: [0.35, 0.25, 0.2], vuln: 2, atk: 0.9 }, // G-1 시계 2판(비공개 문서 참조)
-  merchant: { buff: 0.2, hpPen: 0.05, appraise: 1, max: 3, gold: 0.5, doom: 0.7, vuln: 2, pay: 30 }, // G-1 시계 2판(비공개 문서 참조)
+  ledger: { max: 6, pay: 30, mark: 2, doom: 0.9, vuln: 2, atk: 0.9 }, // G-1 시계 2판(비공개 문서 참조)
+  champion: { combo: 0.4, hits: 3, max: 2, coward: 2, big: 0.10, doom: 0.9, boo: 0.5 }, // G-1 시계 2판(비공개 문서 참조)
+  lampthief: { max: 2, reveal: 2, vuln: 2, stab: 0.35 }, // G-1 시계 2판(비공개 문서 참조)
+  captain: { max: 2, doom: [0.4, 0.3, 0.25], vuln: 2, atk: 0.9 }, // G-1 시계 2판(비공개 문서 참조)
+  merchant: { buff: 0.2, hpPen: 0.05, appraise: 1, max: 3, gold: 0.5, doom: 0.7, vuln: 2, pay: 30, atk: 0.85 }, // G-1 시계 2판(비공개 문서 참조)
   bardo: { lamps: 5, per: 0.15, ward: 0.02, lampBrk: 40, shade: 1, ph: [0.6, 0.3] },
 });
 /* 1 · 3챕터가 함께 쓰는 옛 2챕터 역할 수치(해골 · 굴 · 저주 상태 묶음). 옛 지하묘지 설계는 docs/챕터/archive/2챕터-지하묘지.md */
@@ -433,11 +433,11 @@ const CH3X = { taint: 0.1, taintCap: 5, wallCover: 0.2, wallBrk: 20, mobP: 0.25,
 const OATH = { hp: 10 };
 const ARMOR3 = { light: 0.2, heavy: 0.35, basic: 0.75 }; // 갑옷 = 그 층 띠 행동 하나의 피해(FOE_HIT_REF) × basic(기본 공격 몫) × light · heavy
 Object.assign(FOE_X, {
-  beaconlord: { fires: 3, fuse: 2, boom: 0.35, chain: 1.5, brk: 45, brkHot: 30, rew: 2, rewIg: 3 }, // G-1 2판 강적 시계(비공개 문서 참조). 숫자는 가설
-  siege: { max: 3, launch: 0.8, parts: 2, partBrk: 30, rew: 2 }, // 비공개 문서 참조
-  speaker: { max: 4, cut: 0.6, need: 2, call: 2, cap: 4, incite: 0.15, push: 0.18, grow: 1, rew: 2 }, // 비공개 문서 참조
-  marksman: { max: 3, melee: 0.5, drop: 2, shot: 0.85, brkAim: 1.5, dropHit: 1.3 }, // 비공개 문서 참조
-  wallcap: { max: 5, bricks: 3, cut: 0.5, back: 3, brk: 24, fall: 0.7, clean: 2, brickBack: 2, bare: 2, rew: 2, atk: 0.7 }, // G-1 2판(비공개 문서 참조)
+  beaconlord: { fires: 3, fuse: 2, boom: 0.5, chain: 1.5, brk: 45, brkHot: 30, rew: 2, rewIg: 3 }, // G-1 2판 강적 시계(비공개 문서 참조). 숫자는 가설
+  siege: { max: 3, launch: 0.95, parts: 2, partBrk: 30, rew: 2 }, // 비공개 문서 참조
+  speaker: { max: 3, cut: 0.6, need: 2, call: 2, cap: 4, incite: 0.15, push: 0.25, atk: 0.75, grow: 1, rew: 2 }, // 비공개 문서 참조
+  marksman: { max: 2, melee: 0.5, drop: 2, shot: 0.85, brkAim: 1.5, dropHit: 1.3 }, // 비공개 문서 참조
+  wallcap: { max: 5, bricks: 3, cut: 0.5, back: 3, brk: 24, fall: 0.7, clean: 2, brickBack: 2, bare: 2, rew: 2, atk: 0.6 }, // G-1 2판(비공개 문서 참조)
   lu: { ph: [0.6, 0.3], patrol: 2, bricks: 3 },
 });
 BOSS_DWELL.lu = { mid: 3, last: 3 }; // 확정본: 단계마다 최소 행동 3, 3단계는 최소 3행동 고정(비공개 문서 참조)
