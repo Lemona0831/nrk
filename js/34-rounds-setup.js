@@ -72,7 +72,7 @@ function roomBattle(player, room, bossKind, seed) {
   if (!room.boss && room.floor) { const D = diffOf(room.ch)[isLower(room.floor) ? 'lower' : 'upper'], P = pathOf(room.path, room.mode); for (const e of en) { e.hpMax = Math.round(e.hpMax * D.hp * P.hp); e.hp = e.hpMax; e.dmg *= D.dmg * P.dmg; } }
   if (room.type === 'normal' && !room.boss && (NORMAL_ROOM.hp !== 1 || NORMAL_ROOM.dmg !== 1)) for (const e of en) { e.hpMax = Math.round(e.hpMax * NORMAL_ROOM.hp); e.hp = e.hpMax; e.dmg *= NORMAL_ROOM.dmg; } // 0.8.0 6단계 보정: 일반 방만
   if (room.ambush && !room.boss) for (const e of en) { e.hpMax = Math.round(e.hpMax * AMBUSH.hp); e.hp = e.hpMax; e.dmg *= AMBUSH.dmg; } // 매복: 일반과 강적 사이
-  if (room.strong && en[0]) { const e = en[0]; e.strong = true; e.foe = room.foe; const low = isLower(room.floor || 0); e.n = room.strong; e.hpMax = Math.round(e.hpMax * STRONG.hp * (low ? STRONG.lowerHp : 1)); e.hp = e.hpMax; { const F = STRONG_FOES.find(x => x.id === room.foe) || {}; e.hpMax = Math.round(e.hpMax * (F.hp || 1)); e.hp = e.hpMax; e.dmg *= F.dmg || 1; } e.dmg *= STRONG.dmg * (low ? STRONG.lowerDmg : 1); e.bigMul = HIT_REF(e.lv || 1) * STRONG.big / e.dmg; e.info = '강적. 무엇을 하는지는 겪어 보아야 안다.'; }
+  if (room.strong && en[0]) { const e = en[0]; e.strong = true; e.foe = room.foe; const low = isLower(room.floor || 0); e.n = room.strong; e.hpMax = Math.round(e.hpMax * STRONG.hp * (low ? STRONG.lowerHp : 1)); e.hp = e.hpMax; { const F = STRONG_FOES.find(x => x.id === room.foe) || {}; e.hpMax = Math.round(e.hpMax * (F.hp || 1)); e.hp = e.hpMax; e.dmg *= F.dmg || 1; } e.dmg *= STRONG.dmg * (low ? STRONG.lowerDmg : 1) * STRONG_GIM.dmg; /* G-1 강적 평소 공격 ×0.8(큰 한 방은 bigMul로 따로) */ e.bigMul = HIT_REF(e.lv || 1) * STRONG.big / e.dmg; e.info = '강적. 무엇을 하는지는 겪어 보아야 안다.'; }
   if (room.foe === 'bellringer') { const bell = mkEnemy('root', 0, 60, { lv: room.lv || 1 }); bell.n = '큰 종'; bell.ico = '🔔'; bell.bell = 1; bell.hpMax = Math.round(bell.hpMax * 1.2); bell.hp = bell.hpMax; bell.info = '큰 종. 후열. 스스로는 움직이지 않는다.'; en.push(bell); }
   { let hx = 0; for (const e of en) { e.xpCh = roomXpMul(room); if (e.role === 'hexer') e.hexOff = hx++; } for (const k of room.swift || []) { const e = en[k]; if (e && !e.strong) { e.swift = 1; e.hpMax = Math.round(e.hpMax * SWIFT.hp); e.hp = e.hpMax; } } }
   { const ch = room.ch || 1, fl = room.boss ? FLOOR_BOSS : room.floor || 0, PH = room.boss ? 1 : pathOf(room.path, room.mode).hp * (room.ambush ? AMBUSH.hp : 1); for (const e of en) { const h = foeHitHp(e, ch, fl); if (h > 0) { e.hpMax = Math.max(1, Math.round(h * PH * (e.swift ? SWIFT.hp : 1))); e.hp = e.hpMax; } if (e.foe === 'pilgrim' && ch === 1) { e.fill = 0; e.fillMax = Math.round(e.hpMax * PILGRIM.fill); } } } // A1 타수 → 체력(data/foes.js FOE_HP_ON) · 순례자 배 채움 칸
@@ -91,7 +91,8 @@ function roomBattle(player, room, bossKind, seed) {
   if ((room.ch || 1) >= 3) { if (OLD3) ch3Setup(b, room); if (pre.ignite) addS(b, player, 'ignite', pre.ignite); if (pre.chill) addS(b, player, 'chill', pre.chill); if (pre.bleed) addS(b, player, 'bleed', pre.bleed); }
   if ((room.ch || 1) === 2) { ch2Setup(b, room); if (pre.ignite) addS(b, player, 'ignite', pre.ignite); } // A2 2챕터 시작(정예 접사 · 대형 · 바르도 등불 · 이벤트 흔적) // 3챕터: 열기 · 아지랑이 · 붕대 · 화염 강화 · 강적 값, 이벤트가 붙인 시작 상태
   if ((room.ch || 1) === 3 && !OLD3) w3Setup(b, room); // A3 3챕터 시작(접사 · 강적 물체 · 경보 · 종 표식 · 잠식 · 이벤트 흔적)
-  chDev(b, 'onRoomStart'); // A0 챕터 장치(A1: 난수를 정한 뒤로 옮김)
+  chDev(b, 'onRoomStart'); // A0 챕터 장치
+  fcEv(b, 'onRoomStart'); // G-1 강적 시계(A1: 난수를 정한 뒤로 옮김)
   // 0.8.0 6단계 A-6: 순찰대(내부 키 ambush)는 먼저 덮치지 않는다(전에는 첫 라운드에 내가 맨 뒤)
   runUntilPlayer(b);
   return b;

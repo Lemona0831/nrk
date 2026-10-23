@@ -658,6 +658,14 @@
    "introduced": "M6-3",
    "expires": "상시",
    "note": "M6-3 고유 존재감: 1챕터 야영지에서 그 고유(id)를 지급해 끼운다"
+  },
+  {
+   "name": "CLOCK_OFF",
+   "kind": "env",
+   "default": null,
+   "introduced": "G-1",
+   "expires": "G-1 정리 검토",
+   "note": "1이면 신중 · 숙련도 강적 시계를 읽지 않는다(G-1 시계 대답 몫 갈라보기)"
   }
  ]
 }

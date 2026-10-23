@@ -58,6 +58,7 @@ function eSpeed(b, e) { let s = e.spd * (hasMod(b, 'bell') || hasMod(b, 'drums')
 function tickOnce(b) {
   b.tick++; const T = b.tick; const p = b.p;
   chDev(b, 'onRoundEnd'); // A0 챕터 장치
+  fcEv(b, 'onRoundEnd'); // G-1 강적 시계
   expireAll(b);
   for (const e of alive(b)) if (e.pile && e.pile.born < T) { e.pile.wait--; if (e.pile.wait <= 0) riseSkel(b, e, ''); } // 뼈 더미: 그 라운드에 생긴 더미는 줄지 않는다
   for (const w of alive(b)) if (w.role === 'bonewall' && !b.en.some(m => m.id === w.wallOf && m.alive)) { w.alive = false; w.hp = 0; logp(b, 'good', '쌓은 자가 쓰러져 뼈벽이 무너진다'); }
@@ -427,6 +428,7 @@ function killEnemy(b, e) {
   for (const x of alive(b)) if (x.role === 'drill' && x !== e && !e.summoned) x.orderNext = 1; // A1 수련장 성향: 동료가 쓰러지면 남은 동료를 먼저 다그친다
   if (e.boss === 'abbot' && (b.ctx.ch || 1) === 1 && FOES.abbot.log.line) logp(b, 'crit', e.n + ': ' + FOES.abbot.log.line); // A1 마지막 한 마디(만든 사람)
   chDev(b, 'onFoeDown', e); // A0 챕터 장치
+  fcEv(b, 'onFoeDown', e); // G-1 강적 시계(쓰러진 강적 자신은 처리기에서 빠진다)
 }
 function checkEnd(b) { const was = b.over; checkEnd0(b); if (!was && b.over) chDev(b, 'onRoomEnd', b.over); } // A0 챕터 장치: 방이 끝날 때 한 번
 function checkEnd0(b) {

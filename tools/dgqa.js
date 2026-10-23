@@ -451,6 +451,14 @@ function sbRhythmGate(b, a, t) {
   const e0 = b.en.find(e => e.id === t); const tt = e0 && e0.alive && G0.canTarget(b, e0, alt) ? t : (G0.alive(b).find(e => G0.canTarget(b, e, alt)) || {}).id;
   return tt ? [alt.id, tt] : null;
 }
+/* 0.8.0 G-1 강적 시계(js/25): 신중 · 숙련은 시계를 읽고 답한다 — 칸이 한 칸 남았으면(경고) 그 라운드 답을 먼저, 답이 여럿이면 가진 수단 중 가장 싼 것.
+   강적마다 답 고르기는 tools/persona/clock-ch1~3.js({ 강적 id: (b, e, G0, r) => [행동, 대상] | null }). 무시(DG_IGNORE)한 강적은 보지 않는다 */
+const CLOCK_ANS = Object.assign({}, ...[1, 2, 3].map(n => { try { return require('./persona/clock-ch' + n + '.js'); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; return {}; } }));
+function clockPre(b, P, r, pk) {
+  if (!(pk === 'careful' || pk === 'expert') || process.env.CLOCK_OFF) return null;
+  for (const e of G0.alive(b)) { const C = e.clk; if (!C || C.perm || IGN.includes(e.foe) || !CLOCK_ANS[e.foe] || C.n < C.max - 1) continue; const x = CLOCK_ANS[e.foe](b, e, G0, r); if (x) return x; }
+  return null;
+}
 function fightCur(pk, r, mem, out) {
   const P = PERSONAS[pk]; const G = G0.__G;
   { const run0 = G.run, R0 = run0.cur; if (R0 && (run0.ch || 1) === 2 && (R0.mods || []).includes('dark') && (run0.oil || 0) > 0 && pk !== 'novice' && (THINK(pk) || pk === 'careful' || ['strong', 'ambush'].includes(R0.type) || r() < 0.6)) { run0.oil--; R0.lit = 1; out.oilUse = (out.oilUse || 0) + 1; } } // A2 어두운 방은 기름이 있으면 대개 밝힌다
@@ -468,7 +476,7 @@ function fightCur(pk, r, mem, out) {
       [a, t] = OPT.policy.chooseAction(b, G.run, n);
     } else {
     const sr = r() < (P.mech || 0.5) ? sigRule(b, r) : null;
-    [a, t] = answerPre(b, P, r, pk) || devPre(b, P, r) || streetPre(b, P, r) || ch2Pre(b, P, r) || w3Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look && hazePick(b)) || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem)); // 0.8.0 5단계: 숙련의 신기루 대응(수도승)
+    [a, t] = clockPre(b, P, r, pk) || answerPre(b, P, r, pk) || devPre(b, P, r) || streetPre(b, P, r) || ch2Pre(b, P, r) || w3Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look && hazePick(b)) || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem)); // 0.8.0 5단계: 숙련의 신기루 대응(수도승)
     [a, t] = ch2Post(b, P, r, a, t);
     [a, t] = answerPost(b, P, r, pk, a, t); // M7-1 신중 성향 예고 답하기
     // 보스를 깎지 못한 채 버티기만 하면 사람은 밀어붙인다 (한 수 앞만 보는 계산이 페이즈 전환을 피하는 것을 막는다)

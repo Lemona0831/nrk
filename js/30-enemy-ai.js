@@ -268,6 +268,7 @@ function enemyHitEst(b, e) {
 }
 function enemyAct(b, e) {
   b.actN = (b.actN || 0) + 1;
+  fcEv(b, 'onFoeAct', e); if (!e.alive || b.over) return; // G-1 강적 시계(행동 전에 칸 · 파국)
   if (e.s.trap) { const tr = e.s.trap; delete e.s.trap; hurtEnemy(b, e, tr.stacks, { label: '덫', aoe: tr.aoe || 0 }); if (e.alive) addBreak(b, e, tr.brk || 0); logp(b, 'good', e.n + '이(가) 덫을 밟는다'); if (!e.alive || b.over) return; }
   if (e.pile || e.role === 'bonewall' || e.role === 'crown') return; // 뼈 더미 · 뼈벽 · 왕관은 움직이지 않는다
   e.exposed = 0;
