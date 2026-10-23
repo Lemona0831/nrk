@@ -11,6 +11,11 @@ function onClick(ev) {
   if (a === 'closebg') { if (ev.target !== el) return; if (G.sheet && !['block', 'choice', 'ks', 'alloc', 'bagfull'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } return; }
   switch (a) {
     case 'cptoggle': { if (!G.sheet || G.sheet.kind !== 'consfull') break; const d = G.sheet.data, i = +el.dataset.k; d.skip = d.skip || []; d.skip = d.skip.includes(i) ? d.skip.filter(x => x !== i) : d.skip.concat([i]); render(); break; }
+    case 'cpswapsel': { if (!G.sheet || G.sheet.kind !== 'consfull') break; const d = G.sheet.data, i = +el.dataset.k; d.sel = d.sel === i ? null : i; render(); break; } // 10월 24일 전리품 화면: 자리 바꿀 전리품 고르기
+    case 'cpswap': consfullSwap(+el.dataset.k); break;
+    case 'campshop': { const run = G.run, R = roomDef(); if (!run || R.type !== 'camp') break; openSheet('campshop', { tab: 'cons', grp: 'all' }); break; } // 10월 24일 야영지 개편: 상인 창
+    case 'cstab': case 'csgrp': { if (!G.sheet || G.sheet.kind !== 'campshop') break; G.sheet.data[a === 'cstab' ? 'tab' : 'grp'] = el.dataset.k; render(); break; }
+    case 'cpusel': case 'cpbrew': { const run = G.run; if (!run || !G.sheet || G.sheet.kind !== 'consfull') break; const d = G.sheet.data; const r = a === 'cpusel' ? consUsePending(run, +el.dataset.k, d.skip) : consBrewLoot(run, el.dataset.k, d.skip); if (r.why) { toast(r.why); break; } d.skip = r.skip; d.sel = null; if (a === 'cpbrew') toast(CONS[el.dataset.k].n + ' ' + r.s.need + '개로 ' + r.s.name + ' 한 칸을 채웠습니다 (' + (r.s.cur + 1) + '/' + r.s.cap + ')'); saveRunLocal(); saveCur(); render(); break; }
     case 'patrolpick': patrolPick(el.dataset.k); break; // 0.8.0 6단계 A-6
     case 'kitpick': kitPick(el.dataset.s, el.dataset.k); break; // 0.8.0 6단계 C
     case 'cptake': { const run = G.run; if (!run || !G.sheet || G.sheet.kind !== 'consfull' || G.b) break; const skip = G.sheet.data.skip || []; consTakePending(run, skip); G.sheet = null; saveRunLocal(); saveCur(); nextDrop(); break; }
@@ -371,3 +376,5 @@ function onKey(ev) {
   }
   if (ev.key !== 'Escape') return; if (POP.cur || (POP.el && POP.el.style.display === 'block')) { hidePop(); return; } /* Esc는 설명 창부터 닫는다 */ if (typing) { ev.target.blur(); return; } /* 입력칸에서는 칸만 벗어난다 */ if (G.menuOpen) { G.menuOpen = false; render(); return; } if (G.logOpen) { G.logOpen = false; render(); return; } /* 휴대폰 기록 창 */ if (G.scr === 'create' && !(G.sheet && !G.sheet.data.first)) { if (ask('캐릭터 만들기를 그만둘까요? 고른 것은 남지 않습니다.')) cancelCreate(); return; } /* 10월 8일: 묻지 않고 그만두던 것 */ if (G.sheet && !['block', 'choice', 'ks', 'alloc', 'bagfull'].includes(G.sheet.kind) && !(G.sheet.kind === 'skills' && G.sheet.data.first)) { G.sheet = null; render(); } else if (G.logOpen) { G.logOpen = false; render(); } }
 
+/* 10월 24일 전리품 화면: 고른 전리품(sel)과 가방 bi 칸의 자리를 바꾼다(누르기 · 끌어 놓기 공통) */
+function consfullSwap(bi) { const run = G.run; if (!run || !G.sheet || G.sheet.kind !== 'consfull') return; const d = G.sheet.data; if (d.sel == null || !(run.cons || [])[bi]) return; d.skip = consSwapIn(run, d.sel, bi, d.skip); d.sel = null; saveRunLocal(); saveCur(); render(); }

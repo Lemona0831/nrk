@@ -164,24 +164,38 @@ function campInit(run) {
   if (ch === 2) run.camp.oil = { price: LAMP.shop.price, left: LAMP.shop.n }; ch2Markup(run, run.camp); // A2 장터 상점 기름 · 빚의 제단
   return run.camp;
 }
-/* 10월 24일 만든 사람 요청으로 다시 짠 화면: 위 두 칸(불가 · 떠돌이 상인), 가운데 접사 다시 굴리기, 아래 붙은 줄(골드 · 가방 · 내려가기) */
+/* 10월 24일 만든 사람 요청으로 다시 짠 화면(2차): 위는 불가(쉬기), 그 아래 떠돌이 상인 단추 하나(누르면 상인 창 — 소모품 사기 · 장비 손질 탭), 아래 붙은 줄(골드 · 내려가기) */
 function vCamp(run) {
-  const C = campInit(run), p = run.p, full = consUsed(run) >= CONS_BAG;
-  const rows = ch2OilRow(run, C, 'camp') + C.cons.map((x, i) => { const D = CONS[x.id]; if (!D) return ''; const why = consBuyWhy(run, x); return `<div class="mrow${why ? ' off' : ''}"><div class="mrow-t"><b>${D.ico} ${esc(D.n)}</b> <span class="mini">남은 ${x.left}개</span><small class="mini">${esc(D.d(D.v))}</small></div><div class="mrow-b">${adisBtn(why, 'sm' + (why ? '' : ' gold'), 'consbuy', i, x.price + ' 골드').replace('data-a="consbuy"', 'data-a="consbuy" data-s="camp"')}${consFillBtn(run, x, i, 'camp')}</div></div>`; }).join('');
+  const C = campInit(run), p = run.p;
   const hpAfter = Math.round(Math.min(p.hpMax, p.hp + p.hpMax * CAMP_REST.hp)), FK = [['life', '생명력'], ['mana', '정화'], ['stam', '스태미나']];
   const flaskTxt = FK.map(([k, n]) => { const a = p.flask[k] || 0, cap = flaskCap(p, k); return `${n} ${a}${C.rested || a >= cap ? '' : '→' + Math.min(cap, a + 1)}/${cap}`; }).join(' · ');
   const gain = `<ul class="camp-gain"><li><span>생명력</span><b>${C.rested ? Math.round(p.hp) : Math.round(p.hp) + ' → ' + hpAfter}</b><small>/ ${Math.round(p.hpMax)}</small></li><li><span>스태미나</span><b>${C.rested ? Math.round(p.st) : Math.round(p.st) + ' → ' + Math.round(p.stMax)}</b><small>/ ${Math.round(p.stMax)}</small></li><li><span>플라스크</span><b class="camp-fl">${flaskTxt}</b></li></ul>`;
+  const rr = vRerollList(run).length;
   return `<div class="camp"><header class="camp-h"><h3>⛺ 야영지</h3><p class="lore">무너진 예배당 한쪽에 아직 따뜻한 재가 남아 있다. 떠돌이 상인이 불가에 짐을 풀었다.</p><p class="camp-note">정비를 마치면 직접 떠납니다. <b>여기서부터 하층</b>이라 적이 더 거셉니다.</p>`
-    + (C.sold ? `<p class="mini">전리품 주머니의 판매품 ${C.sold.n}개를 골드 ${C.sold.gold}로 바꿨습니다.</p>` : '') + '</header><div class="camp-grid">'
+    + (C.sold ? `<p class="mini">전리품 주머니의 판매품 ${C.sold.n}개를 골드 ${C.sold.gold}로 바꿨습니다.</p>` : '') + '</header>'
     + `<section class="card camp-rest${C.rested ? ' done' : ''}"><h4>🔥 불가</h4><p class="mini">${C.rested ? '쉬었습니다. 생명력 ' + Math.round(CAMP_REST.hp * 100) + '%를 되찾고 스태미나와 플라스크가 찼습니다.' : '쉬면 이렇게 됩니다. 한 번만 쉴 수 있습니다.'}</p>${gain}`
     + (C.rested ? '<p class="camp-done">✓ 쉬었습니다</p>' : '<button class="gold wide camp-restbtn" data-a="rest" data-focus>불가에서 쉬기</button>') + '</section>'
-    + `<section class="card camp-shop"><div class="dghead"><h4>떠돌이 상인</h4><span class="tag">물가 ×${C.mul.toFixed(1)}</span><span class="gold-n">골드 ${run.gold || 0}</span></div><p class="mini">소모품 가방 ${consUsed(run)}/${CONS_BAG}칸${full ? ' · 가득 차서 새 칸이 드는 것은 살 수 없습니다' : ''}. 챕터 끝 상점보다 비쌉니다.</p><div class="mlist">${rows}</div></section>`
-    + '</div>' + vReroll(run)
+    + `<button class="camp-shopbtn" data-a="campshop"><span class="cs-ico" aria-hidden="true">🛒</span><span class="cs-txt"><b>떠돌이 상인</b><small>소모품 ${C.cons.length + (C.oil ? 1 : 0)}가지 · 물가 ×${C.mul.toFixed(1)}${rr ? ' · 접사 다시 굴리기' : ''}</small></span><span class="cs-go" aria-hidden="true">›</span></button>`
     + `<div class="stickbar shopbar camp-bar"><span class="gold-n">골드 ${run.gold || 0}</span><span class="mini">소모품 ${consUsed(run)}/${CONS_BAG}${C.rested ? '' : ' · 아직 쉬지 않음'}</span><button class="${C.rested ? 'gold' : ''}" data-a="campleave">${C.rested ? '정비를 마치고 내려간다' : '쉬지 않고 내려간다'}</button></div></div>`;
 }
+/* 떠돌이 상인 창(야영지): 탭 둘 — 소모품 사기(용도별로 거르기 · 카드) · 장비 손질(접사 다시 굴리기) */
+const CS_GROUPS = [['all', '전체'], ['restore', '회복·해제'], ['battle', '전투'], ['other', '기타']];
+function vCampShop(run, d) {
+  const C = campInit(run), rr = vRerollList(run).length, tab = d.tab === 'reroll' && rr ? 'reroll' : 'cons', grp = d.grp || 'all', full = consUsed(run) >= CONS_BAG;
+  let h = `<div class="cs-head"><span class="gold-n">골드 ${run.gold || 0}</span><span class="mini">소모품 가방 ${consUsed(run)}/${CONS_BAG}칸</span><span class="tag">물가 ×${C.mul.toFixed(1)}</span></div>`;
+  h += `<div class="cs-tabs" role="tablist"><button role="tab" aria-selected="${tab === 'cons'}" class="${tab === 'cons' ? 'on' : ''}" data-a="cstab" data-k="cons">🧺 소모품 사기</button>${rr ? `<button role="tab" aria-selected="${tab === 'reroll'}" class="${tab === 'reroll' ? 'on' : ''}" data-a="cstab" data-k="reroll">🔧 장비 손질</button>` : ''}</div>`;
+  if (tab === 'reroll') return h + vReroll(run);
+  const L = C.cons.map((x, i) => ({ x, i, D: CONS[x.id] })).filter(o => o.D); const cnt = k => k === 'all' ? L.length : L.filter(o => consGroup(o.D) === k).length;
+  h += '<div class="cs-chips" role="group" aria-label="용도">' + CS_GROUPS.filter(([k]) => cnt(k)).map(([k, n]) => `<button class="sm${grp === k ? ' on' : ''}" aria-pressed="${grp === k}" data-a="csgrp" data-k="${k}">${n} <small>${cnt(k)}</small></button>`).join('') + '</div>';
+  if (full) h += '<p class="mini cs-warn">소모품 가방이 가득 찼습니다. 가진 묶음에 더 담을 수 있는 것만 살 수 있습니다.</p>';
+  h += (C.oil ? ch2OilRow(run, C, 'camp') : '') + '<div class="cs-grid">' + L.filter(o => grp === 'all' || consGroup(o.D) === grp).map(({ x, i, D }) => { const why = consBuyWhy(run, x);
+    return `<div class="cs-card${why ? ' off' : ''}"><div class="cs-top"><span class="cs-ico" aria-hidden="true">${D.ico}</span><div class="cs-nm"><b>${esc(D.n)}</b><small class="mini">남은 ${x.left}개 · 묶음당 ${D.max}개</small></div><span class="cs-price">${x.price}<small> 골드</small></span></div><p class="cs-eff">${esc(D.d(D.v))}</p>${D.sit ? `<p class="mini">${esc(D.sit)}</p>` : ''}<div class="cs-act">${adisBtn(why, 'sm' + (why ? '' : ' gold'), 'consbuy', i, '사기').replace('data-a="consbuy"', 'data-a="consbuy" data-s="camp"')}${consFillBtn(run, x, i, 'camp')}</div>${why ? `<p class="mini cs-why">${esc(why)}</p>` : ''}</div>`; }).join('') + '</div>';
+  return h;
+}
 /* 0.8.0 M6-2 접사 다시 굴리기(6-4 · 8절): 상점 · 야영지. 접사 하나를 골라 같은 묶음을 뺀 풀에서 새로(값도). 값 = 기준가 × 1.6^n. 고유 · 영웅 축은 안 됨 */
+const vRerollList = run => GEAR8.on && run.inv ? Object.values(run.inv).filter(it => isG8(it) && !it.uq && (it.af || []).length) : [];
 function vReroll(run) {
-  if (!GEAR8.on || !run.inv) return ''; const L = Object.values(run.inv).filter(it => isG8(it) && !it.uq && (it.af || []).length); if (!L.length) return '';
+  const L = vRerollList(run); if (!L.length) return '';
   const sel = run.inv[G.rrSel] && L.includes(run.inv[G.rrSel]) ? run.inv[G.rrSel] : L[0];
   let h = `<section class="card reroll"><h4>접사 다시 굴리기</h4><p class="mini">접사 하나를 같은 묶음을 뺀 풀에서 새로 굴립니다. 같은 묶음은 안 나옵니다. 같은 장비를 굴릴수록 값이 1.6배.</p><div class="row rrsel" role="group" aria-label="굴릴 장비">`;
   h += L.map(it => `<button class="sm${it === sel ? ' on' : ''}" data-a="rrsel" data-k="${it.uid}" aria-pressed="${it === sel}"><span class="gr-${it.g}">${esc(g8Name(it))}</span></button>`).join('') + '</div>';

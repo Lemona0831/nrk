@@ -150,24 +150,48 @@ body:has(.sheet-bg) .toast{top:calc(env(safe-area-inset-top,0px) + 6px)}
 .bagline.consrow{grid-template-columns:1fr}.bagline.consrow>.row{justify-content:flex-end;flex-wrap:wrap}
 /* 0.8.0 M6-1 장비 틀: 접사 줄(꼬리표 아이콘 하나) · 영웅 축 줄 · 고유 규칙 · 대가 */
 .idet.g8 .l{font-size:calc(13px*var(--fs,1));margin:2px 0;line-height:1.45}.idet.g8 .l.af .afi{display:inline-block;width:1.3em;text-align:center;opacity:.85}.idet.g8 .l.ax{color:var(--gold)}.idet.g8 .l.act{color:var(--ink)}.idet.g8 .l.cost{color:var(--bad,#d77)}.idet.g8 .l.mini{color:var(--muted);font-size:calc(12px*var(--fs,1))}
-/* 야영지(10월 24일 다시 짬): 위 두 칸 · 접사 다시 굴리기 · 아래 붙은 줄. 상점 · 야영지 공통 줄(mrow: 내용 | 단추, 단추는 늘어나지 않는다) */
+/* 야영지(10월 24일 다시 짬, 2차): 위 불가, 그 아래 상인 단추 하나, 아래 붙은 줄 */
 .camp{display:flex;flex-direction:column;gap:12px}
 .camp-h h3{margin:0 0 4px}.camp-h .lore{margin:0 0 6px}.camp-note{margin:0;color:var(--muted)}.camp-note b{color:var(--ink)}
-.camp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:12px;align-items:start}
-.camp-grid>.card{margin:0}
-.camp-rest h4,.camp-shop h4{margin:0 0 6px}
-.camp-gain{list-style:none;margin:8px 0 12px;padding:0;display:grid;gap:6px}
-.camp-gain li{display:grid;grid-template-columns:5.5em auto 1fr;align-items:baseline;gap:4px 8px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
-.camp-gain li span{color:var(--muted);font-size:.9em}.camp-gain li b{font-variant-numeric:tabular-nums}.camp-gain li small{color:var(--muted)}.camp-gain li:last-child b{grid-column:2/4}
+.camp>.card{margin:0}.camp-rest h4{margin:0 0 6px}
+.camp-gain{list-style:none;margin:8px 0 12px;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr));gap:6px}
+.camp-gain li{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.camp-gain li span{color:var(--muted);font-size:.9em;min-width:4.5em}.camp-gain li b{font-variant-numeric:tabular-nums}.camp-gain li small{color:var(--muted)}
 .camp-gain .camp-fl{font-weight:600;font-size:.92em}
 .camp-restbtn{padding:12px;font-size:1.05em}
 .camp-rest.done{opacity:.85}.camp-done{margin:0;padding:10px;text-align:center;border:1px solid var(--line);border-radius:8px;color:var(--good)}
-.camp-shop .dghead{gap:8px;align-items:center}.camp-shop .dghead .tag{font-size:.8em}
-.mlist,.rrlist{display:flex;flex-direction:column;margin-top:6px}
-.mrow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 12px;padding:8px 0;border-top:1px solid var(--line)}
-.mlist .mrow:first-child,.rrlist .mrow:first-child{border-top:0}
-.mrow-t{min-width:0}.mrow-t small{display:block;margin-top:2px}
+.camp-shopbtn{display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;text-align:left;border-color:var(--gold);background:linear-gradient(180deg,rgba(201,162,75,.10),rgba(201,162,75,.03)),var(--panel2)}
+.camp-shopbtn .cs-ico{font-size:1.6em}.camp-shopbtn .cs-txt{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}.camp-shopbtn .cs-txt b{color:var(--gold);font-size:1.08em}.camp-shopbtn .cs-txt small{color:var(--muted)}
+.camp-shopbtn .cs-go{font-size:1.6em;color:var(--gold);line-height:1}
+.camp-bar{margin-top:0}.camp-bar button{margin-left:auto}
+/* 떠돌이 상인 창 */
+.cs-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}.cs-head .tag{margin-left:auto}
+.cs-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line2);margin-bottom:10px}
+.cs-tabs button{flex:0 0 auto;border:1px solid transparent;border-bottom:0;border-radius:8px 8px 0 0;background:none;color:var(--muted);padding:8px 14px;margin-bottom:-1px}
+.cs-tabs button.on{background:var(--panel2);border-color:var(--line2);color:var(--gold);font-weight:700}
+.cs-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.cs-chips button{flex:0 0 auto;border-radius:999px;padding:5px 12px}.cs-chips button.on{border-color:var(--gold);color:var(--gold);background:rgba(201,162,75,.08)}.cs-chips small{color:var(--muted);margin-left:2px}
+.cs-warn{margin:0 0 10px;padding:6px 10px;border-left:3px solid var(--bad);background:var(--panel)}
+.cs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,15rem),1fr));gap:10px}
+.cs-card{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.cs-card.off{opacity:.7}.cs-top{display:flex;align-items:center;gap:10px}.cs-ico{font-size:1.5em}.cs-nm{display:flex;flex-direction:column;min-width:0;flex:1}.cs-nm small{font-size:.8em}
+.cs-price{font-weight:700;color:var(--gold);white-space:nowrap;font-variant-numeric:tabular-nums}.cs-price small{font-weight:400;color:var(--muted)}
+.cs-card p{margin:0}.cs-eff{font-size:.95em}.cs-act{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}.cs-act button{flex:1 1 auto}.cs-why{color:var(--bad)}
+/* 접사 다시 굴리기(상점 · 야영지): 장비 고르기 · 장비 설명 · 접사 줄 사이를 띄운다 */
+.reroll .rrsel{margin:10px 0 12px;gap:6px}.rrsel>button{flex:0 0 auto}.rrsel>button.on{border-color:var(--gold);background:rgba(201,162,75,.08)}
+.reroll .idet,.reroll .g8d,.reroll .tdet{margin:0 0 10px}.rrlist{border-top:1px solid var(--line2);padding-top:4px;margin-top:10px}
+.mlist,.rrlist{display:flex;flex-direction:column}
+.mrow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 12px;padding:10px 0;border-top:1px solid var(--line)}
+.rrlist .mrow:first-child{border-top:0}.mrow-t{min-width:0}.mrow-t small{display:block;margin-top:2px}
 .mrow-b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.mrow-b button{flex:0 0 auto;white-space:nowrap}
-.mrow.off .mrow-t b{color:var(--muted)}
-.camp-bar{margin-top:0}.camp-bar button{margin-left:auto}.rrsel>button{flex:0 0 auto}
-@media (max-width:520px){.mrow{grid-template-columns:1fr}.mrow-b{justify-content:flex-start}}
+/* 전리품 화면(10월 24일 개편): 가방 · 전리품 칸을 블록으로 */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,13rem),1fr));gap:8px;margin:6px 0 12px}
+.cblk{display:flex;flex-direction:column;gap:5px;padding:10px;border:1px solid var(--line2);border-radius:10px;background:var(--panel2);min-width:0;position:relative}
+.cblk.e{border-style:dashed;background:none;align-items:center;justify-content:center;min-height:64px;color:var(--muted)}
+.cblk.new{border-color:var(--good);background:linear-gradient(180deg,rgba(134,197,111,.10),rgba(0,0,0,0)),var(--panel2)}
+.cblk.tgt{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+.cblk.loot.off{opacity:.65}.cblk.loot.sel{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}.cblk[draggable=true]{cursor:grab}
+.cblk-h{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;min-width:0}.cblk-h b{flex:1 1 auto;min-width:6em;overflow-wrap:anywhere}.cblk-i{font-size:1.3em}.cblk-c{color:var(--muted);font-size:.85em;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cblk-d{color:var(--muted);line-height:1.4}.cblk-a{display:flex;gap:5px;flex-wrap:wrap;margin-top:auto;padding-top:2px}.cblk-a button{flex:0 0 auto;padding:5px 9px}.cblk-a button.brew{flex:1 1 100%;white-space:normal;text-align:left}
+.cblk .badge{align-self:flex-start;font-size:.75em;padding:1px 7px;border-radius:999px;border:1px solid var(--good);color:var(--good)}
+.cblk .cstat{margin-left:auto;font-size:.78em;white-space:nowrap}
+@media (max-width:520px){.mrow{grid-template-columns:1fr}.mrow-b{justify-content:flex-start}.cgrid{grid-template-columns:1fr 1fr}}

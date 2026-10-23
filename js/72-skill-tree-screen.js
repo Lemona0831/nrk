@@ -141,6 +141,7 @@ function sheetParts(S) {
   } else if (S.kind === 'kitpick') { // 0.8.0 6단계 C: 꾸러미의 무기 · 갑옷을 셋 가운데 하나씩
     const K = run.kitPick || { opts: {} }; const sl = ['weapon', 'armor'].find(x => K.opts[x]); title = sl ? (EQ_SLOT_N[sl] || sl) + '을(를) 고르세요' : '꾸러미';
     body = sl ? '<p class="lead">' + (GRADE[K.opts[sl].g] || GRADE.n).n + ' 등급, 직업에 맞는 셋 가운데 하나를 고릅니다. 고르지 않은 것은 사라집니다.</p>' + K.opts[sl].tpl.map(tpl => `<div class="bagline"><div>${itemDetail(K.opts[sl].its ? K.opts[sl].its[tpl] : mkItem(tpl, { g: K.opts[sl].g, ch: K.ch - 1 }))}</div><button class="gold" data-a="kitpick" data-s="${sl}" data-k="${tpl}">이것으로</button></div>`).join('') : '';
+  } else if (S.kind === 'campshop') { title = '떠돌이 상인'; body = vCampShop(run, S.data || {}); // 10월 24일 야영지 개편
   } else if (S.kind === 'flaskpick') { // 10월 24일: 가장 많이 찬 플라스크가 둘 이상이면 비울 것을 고른다
     const D = S.data || {}; title = '어느 플라스크를 비울까요';
     body = '<p class="lead">가장 많이 찬 플라스크가 둘 이상입니다. 하나를 고릅니다.</p><div class="row col">' + (D.ties || []).map((k, i) => `<button class="wide${i ? '' : ' gold'}" data-a="event" data-k="${esc(D.o)}" data-f="${k}"${i ? '' : ' data-focus'}>🧪 ${FLASK_KN[k]} 플라스크 <small>(${run.p.flask[k] || 0}칸)</small></button>`).join('') + '</div>';
@@ -150,11 +151,28 @@ function sheetParts(S) {
       + (P.cons || []).filter(id => CONS[id]).map(id => `<button class="wide" data-a="patrolpick" data-k="${id}">${CONS[id].ico} ${esc(consName({ id, g: 'n' }))}${CONS[id].d ? ` <small>${esc(CONS[id].d)}</small>` : ''}</button>`).join('') + '</div>';
   } else if (S.kind === 'consfull') {
     title = '전리품을 고르세요';
-    /* 10월 14일 개편 5단계: 나온 소모품을 모두 보여 주고 뺄 것을 고른다. 자리가 모자라면 가방의 묶음을 버릴 수 있다 */
-    const Q = run.consPending || [], skip = S.data.skip || [], plan = consFitPlan(run, Q, skip);
-    const takeN = plan.reduce((a, n) => a + n, 0), lostN = Q.reduce((a, c, i) => a + (skip.includes(i) ? 0 : c.n - plan[i]), 0);
-    body = winSumHtml() + consBagStrip(run) + '<p class="mini">눌러서 뺄 것을 고르세요. 뺀 것과 자리가 없는 것은 이 방에 두고 갑니다.</p><div class="clist">' + Q.map((c, i) => { const D = CONS[c.id]; if (!D) return ''; const off = skip.includes(i), got = plan[i]; const st = off ? '두고 감' : got >= c.n ? '챙김' : got > 0 ? got + '개만 들어감' : '자리 없음'; return `<div class="cline${off ? ' off' : ''}"><button class="cmain" data-a="cptoggle" data-k="${i}" aria-pressed="${!off}"><span class="cn"><b><span aria-hidden="true">${off ? '☐' : '☑'}</span> ${D.ico} ${esc(consName(c))} ×${c.n}</b></span><small class="mini">${esc(D.d(consVal(c)))}</small></button><span class="cstat${off || got < c.n ? ' warn' : ''}">${st}</span></div>`; }).join('') + '</div>';
-    body += (run.cons || []).length ? '<details class="invreason"' + (lostN ? ' open' : '') + '><summary>가방에서 비울 것' + (lostN ? ' (자리가 ' + lostN + '개 모자랍니다)' : '') + '</summary><div class="baglist">' + run.cons.map((x, i) => `<div class="bagline"><div><b>${CONS[x.id] ? CONS[x.id].ico : ''} ${esc(consName(x))} ×${x.n}</b></div><button class="sm" data-a="cpreplace" data-k="${i}" data-s="cons" aria-label="${esc(consName(x))} ${x.n}개 묶음 버리기">묶음 버리기</button></div>`).join('') + '</div></details>' : '';
+    /* 10월 24일 개편(만든 사람 요청): 위는 챙긴 뒤의 가방, 아래는 전리품. 칸마다 효과를 보이고, 바로 쓰기 · 플라스크 채우기(들어오는 약초까지 센다) · 자리 바꾸기(누르거나 끌어서) */
+    const Q = run.consPending || [], d = S.data, skip = d.skip || [], F = consFitSim(run, Q, skip), plan = F.plan, sel = d.sel != null && Q[d.sel] ? d.sel : null;
+    const takeN = plan.reduce((x, n) => x + n, 0), lostN = Q.reduce((x, c, i) => x + (skip.includes(i) ? 0 : c.n - plan[i]), 0);
+    const eff = c => esc(CONS[c.id].d(consVal(c))), brewShown = {};
+    const brewBtn = id => { if (brewShown[id] || !CONS_BREW[id]) return ''; brewShown[id] = 1; const s = consBrewLootOf(run, id); return s ? `<button class="sm brew${s.why ? ' adis' : ' gold'}" data-a="cpbrew" data-k="${id}"${s.why ? ` aria-disabled="true" data-why="${esc(s.why)}"` : ''}>🧪 ${s.name} 채우기 <small>(${CONS[id].n} ${s.need}개 → 한 칸 · 지금 ${s.cur}/${s.cap})</small></button>` : ''; };
+    const outOk = c => !consWhyNot(null, run, c, null);
+    const bag = Array.from({ length: CONS_BAG }, (_, i) => {
+      const x = F.bag[i]; if (!x) return '<div class="cblk e"><span class="cblk-n">빈 칸</span></div>';
+      const D = CONS[x.id]; if (!D) return '';
+      if (x.isNew) return `<div class="cblk new"><div class="cblk-h"><span class="cblk-i" aria-hidden="true">${D.ico}</span><b>${esc(consName(x))}</b><span class="cblk-c">${x.n}/${D.max}</span></div><span class="badge">새로 들어옴</span><small class="cblk-d">${eff(x)}</small></div>`;
+      const o = run.cons[i]; const acts = (sel != null ? `<button class="sm gold" data-a="cpswap" data-k="${i}">여기와 바꾸기</button>` : '') + (outOk(o) ? `<button class="sm" data-a="consuse" data-k="${i}">쓰기</button>` : '') + brewBtn(x.id) + `<button class="sm" data-a="cpreplace" data-k="${i}" data-s="cons" aria-label="${esc(consName(o))} ${o.n}개 묶음 버리기">버리기</button>`;
+      return `<div class="cblk${sel != null ? ' tgt' : ''}" data-drop="${i}"><div class="cblk-h"><span class="cblk-i" aria-hidden="true">${D.ico}</span><b>${esc(consName(o))}</b><span class="cblk-c">${x.n}/${D.max}</span></div>${x.add > 0 ? `<span class="badge">+${x.add} 들어옴</span>` : ''}<small class="cblk-d">${eff(o)}</small><div class="cblk-a">${acts}</div></div>`;
+    }).join('');
+    const loot = Q.map((c, i) => {
+      const D = CONS[c.id]; if (!D) return ''; const off = skip.includes(i), got = plan[i];
+      const st = c.swapOut ? (off ? '가방에서 뺌 · 두고 감' : '다시 챙김') : off ? '두고 감' : got >= c.n ? '챙김' : got > 0 ? got + '개만 들어감' : '자리 없음';
+      const canSwap = (run.cons || []).length && (off || got < c.n) && !c.swapOut;
+      const acts = `<button class="sm${off ? '' : ' on'}" data-a="cptoggle" data-k="${i}" aria-pressed="${!off}">${off ? '챙기기' : '두고 가기'}</button>` + (canSwap ? `<button class="sm${sel === i ? ' gold' : ''}" data-a="cpswapsel" data-k="${i}" aria-pressed="${sel === i}">${sel === i ? '바꿀 칸을 고르세요 · 취소' : '가방과 자리 바꾸기'}</button>` : '') + (outOk(c) ? `<button class="sm" data-a="cpusel" data-k="${i}">바로 쓰기</button>` : '') + brewBtn(c.id);
+      return `<div class="cblk loot${off ? ' off' : ''}${sel === i ? ' sel' : ''}"${canSwap ? ` draggable="true" data-drag="${i}"` : ''}><div class="cblk-h"><span class="cblk-i" aria-hidden="true">${D.ico}</span><b>${esc(consName(c))} ×${c.n}</b><span class="cstat${off || got < c.n ? ' warn' : ''}">${st}</span></div><small class="cblk-d">${eff(c)}${D.sit ? ' · ' + esc(D.sit) : ''}</small><div class="cblk-a">${acts}</div></div>`;
+    }).join('');
+    body = winSumHtml() + `<div class="cbagh"><b>가방 ${F.bag.length}/${CONS_BAG}칸</b><span class="mini">챙긴 뒤의 모습${lostN ? ' · 자리가 ' + lostN + '개 모자랍니다' : ''}</span></div><div class="cgrid">${bag}</div>`
+      + `<div class="cbagh"><b>이번 전리품</b><span class="mini">${sel != null ? '위 가방에서 바꿀 칸을 누르세요' : '전리품 칸을 가방 칸으로 끌어 놓아도 자리가 바뀝니다'}</span></div><div class="cgrid loot">${loot}</div>`;
     body += `<div class="stickbar"><div class="row"><button class="gold wide" data-a="cptake" data-focus>${takeN ? '챙기기 (' + takeN + '개)' + (lostN ? ' · ' + lostN + '개는 두고 감' : '') : '모두 두고 가기'}</button></div></div>`;
   } else if (S.kind === 'changes') {
     title = '업데이트 내역';

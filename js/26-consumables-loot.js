@@ -301,10 +301,35 @@ function rollDrops0(b, e) {
 function lootPend(run, id, g) { g = consGrade(id, g); const q = run.consPending || (run.consPending = []); const x = q.find(y => y.id === id && y.g === g); if (x) x.n++; else q.push({ id, g, n: 1, loot: 1 }); }
 /* 보류 목록을 순서대로 넣어 보면 몇 개씩 들어가는가(skip은 빼는 번호). 저장본은 바꾸지 않는다 */
 function consFitPlan(run, list, skip) { const sim = { cons: JSON.parse(JSON.stringify(run.cons || [])) }; return list.map((c, i) => (skip || []).includes(i) || !CONS[c.id] ? 0 : c.n - consAdd(sim, c.id, c.g, c.n)); }
+/* 10월 24일 전리품 화면 개편(만든 사람 요청): 챙긴 뒤의 가방 미리 보기 · 자리 바꾸기 · 전리품에서 바로 쓰기 · 들어오는 약초까지 세어 플라스크 채우기 */
+function consFitSim(run, list, skip) { const sim = { cons: JSON.parse(JSON.stringify(run.cons || [])) }; const n0 = sim.cons.map(c => c.n); const plan = list.map((c, i) => (skip || []).includes(i) || !CONS[c.id] ? 0 : c.n - consAdd(sim, c.id, c.g, c.n)); return { plan, bag: sim.cons.map((c, i) => Object.assign({}, c, { add: i < n0.length ? c.n - n0[i] : c.n, isNew: i >= n0.length })) }; }
+const consRemap = (P, skip) => { const keep = [], ns = []; P.forEach((c, i) => { if (c.n > 0) { if ((skip || []).includes(i)) ns.push(keep.length); keep.push(c); } }); return { keep, ns }; };
+/* 가방 bi 묶음을 두고 갈 쪽으로 빼고, 전리품 li를 챙길 쪽으로(되돌릴 수 있게 지우지 않는다) */
+function consSwapIn(run, li, bi, skip) { const c = (run.cons || [])[bi], q = run.consPending || []; if (!c || !q[li]) return skip || []; run.cons.splice(bi, 1); c.swapOut = 1; q.push(c); return (skip || []).filter(x => x !== li).concat([q.length - 1]); }
+/* 전리품 하나를 가방에 넣지 않고 바로 쓴다(전투 밖에서 쓸 수 있는 것만, 규칙은 consWhyNot 그대로) */
+function consUsePending(run, i, skip) {
+  const P = run.consPending || [], c = P[i]; if (!c) return { why: '없는 소모품입니다' }; const tmp = { id: c.id, g: c.g, n: 1 }; run.cons.push(tmp); const k = run.cons.length - 1;
+  const why = consUse(null, run, k, null); if (run.cons[k] === tmp) run.cons.splice(k, 1); if (why) return { why };
+  c.n--; const r = consRemap(P, skip); run.consPending = r.keep; return { why: '', skip: r.ns };
+}
+function consBrewLootOf(run, id) {
+  const s = consBrewOf(run, id); if (!s) return null; const pend = (run.consPending || []).filter(c => c.id === id).reduce((a, c) => a + c.n * consUnits(c), 0), have = s.have + pend;
+  const why = s.why && !/필요합니다/.test(s.why) ? s.why : have < s.need ? CONS[id].n + ' ' + s.need + '개가 필요합니다(지금 ' + have + '개)' : '';
+  return Object.assign({}, s, { have, pend, why });
+}
+function consBrewLoot(run, id, skip) {
+  const s = consBrewLootOf(run, id); if (!s) return { why: '채울 수 없는 소모품입니다' }; if (s.why) return { why: s.why };
+  let left = s.need; const P = run.consPending || []; // 들어오는 것부터 쓴다(가방 자리를 아낀다)
+  for (const c of P) { if (c.id !== id) continue; while (left > 0 && c.n > 0) { c.n--; left -= consUnits(c); } if (left <= 0) break; }
+  if (left > 0) { const L = run.cons.filter(c => c.id === id).sort((a, b) => consUnits(a) - consUnits(b) || a.n - b.n); for (const c of L) { while (left > 0 && c.n > 0) { c.n--; left -= consUnits(c); } if (left <= 0) break; } run.cons = run.cons.filter(c => c.n > 0); }
+  const r = consRemap(P, skip); run.consPending = r.keep; run.p.flask[s.flask] = s.cur + 1;
+  (run.brewLog || (run.brewLog = [])).push({ ch: run.ch || 1, room: run.room, id, n: s.need, flask: s.flask, loot: 1, t: Date.now() });
+  return { why: '', skip: r.ns, s };
+}
 /* 고른 것을 챙기고 나머지(뺀 것 · 자리가 없는 것)는 두고 간다 */
 function consTakePending(run, skip) {
   const q = run.consPending || []; let took = 0, left = 0; const log = run.consGainLog || (run.consGainLog = []);
-  q.forEach((c, i) => { if (!CONS[c.id]) return; const off = (skip || []).includes(i); const l = off ? c.n : consAdd(run, c.id, c.g, c.n); const got = c.n - l; took += got; left += l; log.push({ ch: run.ch || 1, room: run.room, id: c.id, g: c.g, n: c.n, received: got, discarded: l, skipped: off ? 1 : 0, fromPending: true, t: Date.now() }); });
+  q.forEach((c, i) => { if (!CONS[c.id]) return; const off = (skip || []).includes(i); const l = off ? c.n : consAdd(run, c.id, c.g, c.n); const got = c.n - l; took += got; left += l; log.push({ ch: run.ch || 1, room: run.room, id: c.id, g: c.g, n: c.n, received: got, discarded: l, skipped: off ? 1 : 0, fromPending: true, swapOut: c.swapOut ? 1 : undefined, t: Date.now() }); delete c.swapOut; });
   run.consPending = []; return { took, left };
 }
 function grantDrops(run, b) {
