@@ -30,7 +30,6 @@ module.exports = function (api) {
   add(S, '강공격은 붕괴 40을 채웁니다', 'BRK_RULE.basic0=' + E('BRK_RULE.basic0') + ' · heavyMul=' + E('BRK_RULE.heavyMul') + ' (강공격 35 × 1.15 = 40.25, 반올림 40)', E => E('BRK_RULE.basic0') === true && Math.round(35 * E('BRK_RULE.heavyMul')) === 40 && JS('32-player-action.js').includes('* (BRK_RULE.basic0 ? BRK_RULE.heavyMul : 1)'));
   add(S, '고급은 1개, 희귀는 2개, 영웅은 2개에', 'G8GEN.afN=' + E('JSON.stringify(G8GEN.afN)') + ', 고유 등급은 희귀 · 영웅뿐, 생성 등급표에 전설 없음', E => E('JSON.stringify(G8GEN.afN)') === '{"n":0,"m":1,"r":2,"h":2}' && E('[...new Set(Object.values(UNIQUE).map(u => u.g))].sort().join()') === 'h,r' && E('[1,2,3].every(c => !G8GEN.grade[c].l)'));
   add(S, '같은 장비를 굴릴수록 값이 1.6배씩 오르고', 'G8GEN.reroll.n=' + E('G8GEN.reroll.n') + ', 소스: g8RerollWhy가 이름 있는 장비를 막는다', E => E('G8GEN.reroll.n') === 1.6 && E('g8RerollWhy.toString()').includes('it.uq ?'));
-  add(S, '"전투의 첫 스킬은 유산 −1"로 바뀌었습니다', '데이터: AFFIX.ysStart(목걸이, 뒷이름 계승) 문장, 소스: ysFirst 할인 1(skCostAt)', E => E('AFFIX.ysStart.txt') === '전투의 첫 스킬은 유산 −1' && E('AFFIX.ysStart.fx.k') === 'ysFirst' && E('AFFIX.ysStart.back') === '계승' && E('AFFIX.ysStart.slot.join()') === 'amulet' && JS('17-gear8.js').includes("case 'ysFirst': sum('ysFirst', 1)"));
-  add(S, '큰 각인은 찍은 곳에서 3칸 안의 자리만 제시합니다', 'PT.ksN=' + E('PT.ksN') + ', 소스: ksOfferMake가 x.d <= PT.ksN', E => E('PT.ksN') === 3 && E('ksOfferMake.toString()').includes('x.d <= PT.ksN'));
-  note(S, '1막 난이도를 맞췄습니다', '막 이름(1막). 체력 배율 문장은 숫자 없이 방향만 적었다(M7-3 보고서)');
+  add(S, '큰 각인 후보는 찍은 노드에서 3칸 안에 있는 자리만 나옵니다', 'PT.ksN=' + E('PT.ksN') + ', 소스: ksOfferMake가 x.d <= PT.ksN', E => E('PT.ksN') === 3 && E('ksOfferMake.toString()').includes('x.d <= PT.ksN'));
+  // 10월 23일 업데이트 내역 다듬기: 개발 중 잔조정 줄(목걸이 계승 접사 · 직업 균형 · 1막 난이도)은 공개 내역에서 빼서 대조 항목도 지웠다
 };

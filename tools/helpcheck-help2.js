@@ -7,7 +7,7 @@ module.exports = function (api) {
   const FREECSS = require('fs').readFileSync(require('path').join(api.ROOT, 'css', '76-hud-free.css'), 'utf8');
   const src = fn => E(fn + '.toString()');
 
-  add('help', '"배열"에서는 배열 칸 1~4를 불러오고', '상수: HUD_SLOT_N=' + E('HUD_SLOT_N') + '(저장 칸 수), 소스: 리모콘 상태가 slots를 HUD_SLOT_N칸만큼 만든다', E => E('HUD_SLOT_N') === 4 && has('slots: sl.map((s, i) =>'));
+  add('help', '"배열"에서는 배열 칸 1부터 4까지를 불러오고', '상수: HUD_SLOT_N=' + E('HUD_SLOT_N') + '(저장 칸 수), 소스: 리모콘 상태가 slots를 HUD_SLOT_N칸만큼 만든다', E => E('HUD_SLOT_N') === 4 && has('slots: sl.map((s, i) =>'));
   const OPS = require('fs').readFileSync(require('path').join(api.ROOT, 'remote', 'ui.js'), 'utf8');
   add('help', '투명도(100 · 90 · 80 · 70%)', '소스: remote/ui.js const OPS = `[100, 90, 80, 70]`(투명도 단추가 차례로 돈다. 바탕 색만 섞이고 글자는 그대로)', E => OPS.includes('const OPS = [100, 90, 80, 70];'));
   add('help', '칸 폭은 96px 아래로 줄지 않습니다', '상수: FREE_MINW=' + E('FREE_MINW') + ', 소스: hudFreeSetRects가 폭을 FREE_MINW 아래로 두지 않고 CSS도 min-width 96px', E => E('FREE_MINW') === 96 && has('Math.max(FREE_MINW, Math.min(W, r.w))') && FREECSS.includes('min-width:96px'));
@@ -42,7 +42,7 @@ module.exports = function (api) {
   add('help', '적 하나를 골라 그 적의 다음 단일 공격 피해를 60%', '실행: parryRed 파수꾼 · 사냥꾼 0.6, 암살자 0.7', E => E(`(() => { const a = __mk("assassin"), w = __mk("warden"); return parryRed(w.p) === 0.6 && parryRed(a.p) === 0.7; })()`));
 
   /* ===== 화면과 조작 ===== */
-  add('help', '숫자 키 1~9가', "소스: onKey가 /^[1-9]$/ 키를 행동 버튼 data-k에 잇는다", E => has("/^[1-9]$/.test(ev.key)") && has('.ab[data-k="'));
+  add('help', '숫자 키 1부터 9까지는', "소스: onKey가 /^[1-9]$/ 키를 행동 버튼 data-k에 잇는다", E => has("/^[1-9]$/.test(ev.key)") && has('.ab[data-k="'));
   add('help', '" 같은 숫자가 보입니다', '실행: 강공격 스태미나 HEAVY_COST, 70 − ' + E('HEAVY_COST') + ' = ' + (70 - E('HEAVY_COST')), E => E('heavyCost(__mk("warden").p)') === E('HEAVY_COST'));
   add('help', '크기(50 · 75 · 100 · 150 · 200%)', '상수: HUD_SIZES=' + E('HUD_SIZES.join()'), E => E('HUD_SIZES.join()') === '50,75,100,150,200');
   add('help', '글자 크기(90%부터 130%까지)', '상수: FS_OPTS=' + E('FS_OPTS.join()'), E => E('Math.min(...FS_OPTS)') === 0.9 && E('Math.max(...FS_OPTS)') === 1.3);
