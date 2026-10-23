@@ -118,14 +118,14 @@ function w3Act(b, e, i, d) {
     case 'assemble': { if (w3Fill(b, e, 1, 'asm') > 0) logp(b, 'bad', e.n + '이(가) 공성추를 맞춘다'); return 1; }
     case 'partthrow': { hurtPlayer(b, d * 0.8, { src: e, single: 1, label: e.n + '이(가) 부품을 던진다' }); return 1; }
     case 'fixram': { const r = b.en.find(x => x.role === 'rampart' && !x.alive && x.part); if (r) { r.alive = true; r.brk = 0; r.hp = r.hpMax; if (r.s.broken) delete r.s.broken; logp(b, 'bad', e.n + '이(가) 부품을 고쳐 끼운다'); } return 1; }
-    case 'launch': { fcInit(b, e); const d0 = e.clk.doomN, r = w3Fill(b, e, 1, 'asm'); if (!r && !e.clk.stop) logp(b, 'sys', e.n + '이(가) 공성추를 붙든 채 노려본다'); else if (r && e.clk.doomN === d0) logp(b, 'bad', e.n + '이(가) 공성추를 맞춘다. 아직 다 맞지 않았다'); return 1; }
+    case 'launch': { fcInit(b, e); if (w3AtWarn(e) && w3Parry(b, e, '날아드는 공성추')) { fcAnswer(b, e, 'parry'); codexHit(b, 'siege', 'deflect'); return 1; } /* 비공개 문서 참조 */ const d0 = e.clk.doomN, r = w3Fill(b, e, 1, 'asm'); if (!r && !e.clk.stop) logp(b, 'sys', e.n + '이(가) 공성추를 붙든 채 노려본다'); else if (r && e.clk.doomN === d0) logp(b, 'bad', e.n + '이(가) 공성추를 맞춘다. 아직 다 맞지 않았다'); return 1; }
     case 'rally3': { let k = 0; for (let j = 0; j < X.call && w3Rioters(b).length < X.cap; j++) { const r = spawn(b, 'rioter'); if (r) { r.xpCh = 0; r.noLoot = 1; k++; } } logp(b, 'bad', e.n + '이(가) 군중을 부른다' + (k ? '. 폭도 ' + k + ' 합류' : '')); w3Fill(b, e, X.call, 'call'); return 1; }
     case 'incite': { b.incite = (b.incite || 0) + 1; logp(b, 'bad', e.n + '이(가) 선동한다. 폭도의 피해 +' + Math.round(X.incite * b.incite * 100) + '%'); return 1; }
     case 'shout': { addS(b, p, 'weak', 1); logp(b, 'bad', e.n + '이(가) 외친다. 약화 1'); return 1; }
     case 'aimx': { if (w3Fill(b, e, 1, 'aim') > 0) logp(b, 'bad', e.n + '이(가) 조준한다'); return 1; }
     case 'snipe': { hurtPlayer(b, d, { src: e, single: 1, label: e.n + '의 저격' }); return 1; }
     case 'shift': { e.evading = 1; logp(b, 'sys', e.n + '이(가) 엄폐를 옮긴다'); return 1; }
-    case 'oneshot': { fcInit(b, e); const d0 = e.clk.doomN, r = w3Fill(b, e, 1, 'aim'); if (!r && !e.clk.stop) logp(b, 'sys', e.n + '이(가) 시위를 당긴 채 노려본다'); else if (r && e.clk.doomN === d0) logp(b, 'bad', e.n + '이(가) 조준을 다시 맞춘다'); return 1; }
+    case 'oneshot': { fcInit(b, e); if (w3AtWarn(e) && w3Parry(b, e, e.n + '의 한 발')) { fcAnswer(b, e, 'parry'); codexHit(b, 'marksman', 'deflect'); return 1; } /* 비공개 문서 참조 */ const d0 = e.clk.doomN, r = w3Fill(b, e, 1, 'aim'); if (!r && !e.clk.stop) logp(b, 'sys', e.n + '이(가) 시위를 당긴 채 노려본다'); else if (r && e.clk.doomN === d0) logp(b, 'bad', e.n + '이(가) 조준을 다시 맞춘다'); return 1; }
     case 'bricks': { const k = b.en.find(x => x.role === 'brick' && x.fallen); if (k) { k.fallen = 0; k.alive = true; k.brk = 0; k.backT = null; } logp(b, 'bad', e.n + '이(가) 벽돌 하나를 다시 세운다'); codexHit(b, 'wallcap', 'rebuilt'); return 1; }
     case 'taintwave': { taintAdd(b, p, 1, '잠식의 파도가 덮친다'); for (const x of w3Mates(b, e)) if (!w3Obj(x)) taintAdd(b, x, 1, null); return 1; }
     case 'topple': { hurtPlayer(b, d, { src: e, single: 1, label: e.n + '이(가) 벽을 무너뜨린다' }); return 1; }
@@ -138,32 +138,47 @@ function w3Act(b, e, i, d) {
   return 0;
 }
 /* ===== G-1 강적 시계: 3챕터 강적 다섯(비공개 문서 참조) =====
-   js/25-foe-clock.js보다 먼저 읽히므로 정의는 W3_CLOCK에 두고 w3ClockReg(w3Setup 맨 앞)가 FOE_CLOCK에 넣는다 */
+   js/25-foe-clock.js보다 먼저 읽히므로 정의는 W3_CLOCK에 두고 w3ClockReg(w3Setup 맨 앞)가 FOE_CLOCK에 넣는다.
+   2판(비공개 문서 참조): 칸 수 · 파국 세기 · 평소 공격 · 보상 길이는 data/dungeon.js FOE_X. 결정적 답은 fcAnswer, 평소 되감기는 fcRewind(화면의 수를 비추는 시계만 free) */
 const w3Blocked = b => (b.p.stun || 0) > 0;
 const w3ClkStop = (b, e) => { const D = fcDef(e); if (!D || !D.blocked || !D.blocked(b, e)) return 0; fcInit(b, e); if (!e.clk.stop) { e.clk.stop = 1; logp(b, 'sys', D.n + ': 멈춰 있다'); } return 1; };
-const w3ClkDoomOk = (b, e) => { fcInit(b, e); const C = e.clk; return !!C && !C.perm && C.n >= C.max - 1 && C.wT !== b.turnIdx && !w3ClkStop(b, e); };
-function w3Fill(b, e, k, why) { // 칸 더하기: 마지막 경고 없이 다 차지 않고, 경고한 그 차례에는 다 차지 않는다
-  if (!e || !e.alive || !fcDef(e)) return 0; fcInit(b, e); const C = e.clk; if (C.perm) return 0;
-  let a = Math.min(k, C.max - C.n); if (C.n + a >= C.max && (C.n < C.max - 1 || C.wT === b.turnIdx)) a = C.max - 1 - C.n; if (a <= 0) return 0;
-  const n0 = C.n, r = fcAdd(b, e, a, why); if (r && C.n >= C.max - 1 && n0 < C.max - 1 && C.n < C.max) C.wT = b.turnIdx; return r;
-}
+const w3AtWarn = e => { const C = e && e.clk; return !!C && !C.perm && C.n >= C.max - 1; }; // 마지막 경고 칸
+const w3ClkDoomOk = (b, e) => { fcInit(b, e); const C = e.clk; return w3AtWarn(e) && (C.wT == null || b.fcNoWait || (b.turnIdx || 0) > C.wT) && !w3ClkStop(b, e); }; // js/25 fcAdd와 같은 기다림
+function w3Fill(b, e, k, why) { if (!e || !e.alive || !fcDef(e)) return 0; return fcAdd(b, e, k, why); } // 칸 더하기(마지막 경고 · 경고 뒤 기다림은 js/25 fcAdd)
 function w3DoomHit(b, e, frac, o) { // 파국 한 방(비공개 문서 참조)
   const p = b.p; let raw = p.hpMax * frac;
   if (o.parry && p.dodge && p.dodge === e.id) { p.dodge = 0; p.dodgeRed = 0; p.dodgeOn = null; raw *= 0.5; logp(b, 'good', o.label + '을(를) 칼날로 흘린다. 피해 50% 감소'); fxRun(p, 'onParry', b, p, e); chargeEv(b, 'parry'); ysResp(b, '흘리기'); }
   return hurtPlayer(b, raw, { charged: 1, judgment: o.noGuard ? 1 : 0, label: o.label });
 }
+function w3Parry(b, e, label) { // 그 행동을 흘려 낸다(피해 없음, 비공개 문서 참조)
+  const p = b.p; if (!p.dodge || p.dodge !== e.id) return 0; p.dodge = 0; p.dodgeRed = 0; p.dodgeOn = null;
+  logp(b, 'good', label + '을(를) 칼날로 흘려 낸다'); fxRun(p, 'onParry', b, p, e); chargeEv(b, 'parry'); ysResp(b, '흘리기'); return 1;
+}
 /* 봉화대장(비공개 문서 참조) */
-function blSync(b, e) { const X = FOE_X.beaconlord, L = w3Bonfires(b); fcInit(b, e); const C = e.clk, t = L.length ? Math.max(0, Math.min(C.max - 1, X.fuse - Math.min(...L.map(f => f.fuse)))) : 0; if (t > C.n) w3Fill(b, e, t - C.n, 'oil'); else if (t < C.n) fcRewind(b, e, C.n - t, 'out'); }
+function blSync(b, e) { const X = FOE_X.beaconlord, L = w3Bonfires(b); fcInit(b, e); const C = e.clk, t = L.length ? Math.max(0, Math.min(C.max - 1, X.fuse - Math.min(...L.map(f => f.fuse)))) : 0; if (t > C.n) w3Fill(b, e, t - C.n, 'oil'); else if (t < C.n) fcRewind(b, e, C.n - t, 'out', { free: 1 }); blHot(b, e); } // 봉화의 남은 칸을 그대로 비춘다
+function blAnswer(b, e, why) { const X = FOE_X.beaconlord; for (const f of w3Bonfires(b)) f.fuse = X.fuse; logp(b, 'good', '남은 봉화의 불길이 잦아든다'); codexHit(b, 'beaconlord', 'flare'); const r = fcAnswer(b, e, why); blHot(b, e); return r; }
+function blHot(b, e) { const X = FOE_X.beaconlord, C = e.clk; for (const f of w3Bonfires(b)) f.brkMax = C && !C.perm && C.n >= C.max - 1 && f.fuse <= X.fuse - C.n ? X.brkHot : X.brk; } // 곧 터질 봉화만 붕괴 상한이 낮다(비공개 문서 참조)
+function blAllOut(b, e) { if (e.blRew || w3Bonfires(b).length || !b.en.some(x => x.role === 'bonfire' && !x.boomed)) return; e.blRew = 1; e.stun = Math.max(e.stun || 0, 1); addS(b, e, 'ignite', 3); addS(b, e, 'vuln', 2); logp(b, 'good', '마지막 봉화가 무너지며 ' + e.n + '이(가) 불길에 휩싸인다. 화상 3 · 취약'); }
+/* 명사수(비공개 문서 참조) */
+function mkDrop(b, e) {
+  if (!e.dropT) { e.dropT = (b.tick || 0) + FOE_X.marksman.drop; e.row = 'front'; logp(b, 'good', e.n + '이(가) 엄폐를 잃고 성벽 아래로 떨어진다'); codexHit(b, 'marksman', 'drop'); }
+  if (e.intent && (e.intent.k === 'aimx' || e.intent.k === 'oneshot')) { e.intent = { k: 'snipe' }; e.teleX = 1; }
+}
 /* 수비대장(비공개 문서 참조) */
 const wcOf = b => b && b.en && b.en.find(x => x.alive && x.strong && x.foe === 'wallcap' && fcDef(x));
-function wcSync(b, e) { fcInit(b, e); const C = e.clk, t = Math.max(0, b.p.taint || 0); if (t < C.n) fcRewind(b, e, C.n - t, 'cleanse'); }
+function wcSync(b, e) { fcInit(b, e); const C = e.clk, t = Math.max(0, b.p.taint || 0); if (t < C.n) fcRewind(b, e, C.n - t, 'cleanse', { free: 1 }); } // 잠식 수(화면의 잠식 칩)를 그대로 비춘다
+function wcClean(b, e, n, why, msg) { // 잠식 걷어 내기: 마지막 경고 칸이면 0, 아니면 n
+  const p = b.p; wcSync(b, e); if (!((p.taint || 0) > 0)) return 0;
+  if (w3AtWarn(e)) { p.taint = 0; logp(b, 'good', msg + '. 잠식 0'); fcAnswer(b, e, why + '0'); return 1; }
+  p.taint = Math.max(0, p.taint - n); logp(b, 'good', msg + '. 잠식 ' + p.taint); wcSync(b, e); return 1;
+}
 function wcTaint(b, e, n, why) {
   const p = b.p; wcSync(b, e); const C = e.clk, d0 = C.doomN, n0 = C.n; w3Fill(b, e, n, 'taint'); if (C.doomN !== d0) return 0;
   p.taint = C.n; const g = C.n - n0; if (g > 0 && why) logp(b, 'bad', why + '. 잠식 ' + p.taint); if (g > 0 && b.rec) b.rec.push({ k: 'taint', who: 'p', n: g }); return g;
 }
 const W3_CLOCK = {
   beaconlord: {
-    n: '봉화', max: 3, ans: ['brk', 'aoe', 'kill'],
+    n: '봉화', get max() { return FOE_X.beaconlord.fuse; }, ans: ['brk', 'aoe'],
     warn: () => '기름에 젖은 봉화가 부글거린다. 한 번만 더 부으면 터진다',
     blocked: w3Blocked,
     doom(b, e) {
@@ -175,50 +190,60 @@ const W3_CLOCK = {
       }
       if (!b.over) blSync(b, e);
     },
-    reward(b, e) { if (e.blRew || w3Bonfires(b).length || !b.en.some(x => x.role === 'bonfire' && !x.boomed)) return; e.blRew = 1; e.stun = Math.max(e.stun || 0, 1); addS(b, e, 'ignite', 3); addS(b, e, 'vuln', 2); logp(b, 'good', '마지막 봉화가 무너지며 ' + e.n + '이(가) 불길에 휩싸인다. 화상 3 · 취약'); },
+    reward(b, e, why) { if (why !== 'brk' && why !== 'aoe') return; const X = FOE_X.beaconlord; addS(b, e, 'ignite', X.rewIg); addS(b, e, 'vuln', X.rew); logp(b, 'good', e.n + '이(가) 불길에 휩싸인다. 화상 ' + X.rewIg + ' · 취약'); },
     on: {
       onRoomStart(b, e) { blSync(b, e); },
-      onFoeBreak(b, e, x) { if (x.role !== 'bonfire') return; blSync(b, e); if (!w3Bonfires(b).length) W3_CLOCK.beaconlord.reward(b, e); },
+      onFoeBreak(b, e, x) { if (x.role !== 'bonfire') return; if (w3AtWarn(e) && x.fuse <= FOE_X.beaconlord.fuse - e.clk.n) blAnswer(b, e, 'brk'); else blSync(b, e); if (!w3Bonfires(b).length) blAllOut(b, e); },
+      onHit(b, e, p, x, o) { if (!o || !o.aoe || !x || x.role !== 'bonfire' || e.blAoeA === b.actN) return; e.blAoeA = b.actN; if (w3AtWarn(e)) blAnswer(b, e, 'aoe'); },
     },
   },
   siege: {
-    n: '공성추', max: 4, ans: ['brk', 'parry'],
+    n: '공성추', get max() { return FOE_X.siege.max; }, ans: ['parry', 'brk'],
     warn: () => '공성추가 거의 다 맞춰졌다. 다음에 날아든다',
     blocked: w3Blocked,
     doom(b, e) { w3DoomHit(b, e, FOE_X.siege.launch, { noGuard: 1, parry: 1, label: '공성추가 날아든다' }); codexHit(b, 'siege', 'ram'); },
-    reward(b, e) { e.stun = Math.max(e.stun || 0, 1); addS(b, e, 'vuln', 2); if (foeAS(b, e).armor > 0) e.armorOff = 1; logp(b, 'good', e.n + '이(가) 공구를 놓는다'); },
-    on: { onFoeBreak(b, e, x) { if (x.role === 'rampart' && x.part) fcRewind(b, e, 1, 'part'); } },
+    reward(b, e) { e.stun = Math.max(e.stun || 0, 1); addS(b, e, 'vuln', FOE_X.siege.rew); if (foeAS(b, e).armor > 0) e.armorOff = 1; logp(b, 'good', e.n + '이(가) 공구를 놓는다'); },
+    on: { onFoeBreak(b, e, x) { if (x.role === 'rampart' && x.part) fcAnswer(b, e, 'part'); } }, // 발사 예고의 흘리기는 w3Act 'launch'
   },
   speaker: {
-    n: '군중', max: 4, ans: ['aoe', 'brk', 'kill'],
+    n: '군중', get max() { return FOE_X.speaker.max; }, ans: ['aoe', 'brk'],
     warn: () => '군중이 성문 앞에 거의 다 모였다. 하나만 더 오면 밀어닥친다',
     blocked: w3Blocked,
     doom(b, e) { w3DoomHit(b, e, FOE_X.speaker.push * e.clk.max, { label: '군중이 성문을 밀고 밀어닥친다' }); codexHit(b, 'speaker', 'gate'); },
-    reward(b, e) { addS(b, e, 'vuln', 2); logp(b, 'good', e.n + '이(가) 혼자 외친다. 곁을 막던 군중이 없다'); },
+    reward(b, e) { addS(b, e, 'vuln', FOE_X.speaker.rew); logp(b, 'good', e.n + '이(가) 혼자 외친다. 곁을 막던 군중이 없다'); },
     on: {
       onRoomStart(b, e) { const k = w3Rioters(b).length; if (k) w3Fill(b, e, k, 'crowd'); },
+      onRoundEnd(b, e) { const X = FOE_X.speaker, C = e.clk, k = Math.min(X.grow, C.max - 1 - C.n); if (k > 0 && w3Rioters(b).length >= X.need) w3Fill(b, e, k, 'crowd'); }, // 군중(폭도 need 이상)이 선 라운드 끝마다. 마지막 경고 칸까지만(파국은 부르기로)
       onFoeDown(b, e, x) { if (x.role === 'rioter' && !x.strong) fcRewind(b, e, 1, 'kill'); },
-      onFoeBreak(b, e, x) { if (x === e) fcRewind(b, e, 2, 'brk'); },
-      onHit(b, e, p, x, o) { if (o && o.aoe && x && x.role === 'rioter' && !x.strong && e.spAoeA !== b.actN) { e.spAoeA = b.actN; if (fcRewind(b, e, 1, 'aoe')) logp(b, 'good', '군중이 흩어진다'); } },
+      onFoeBreak(b, e, x) { if (x === e) fcAnswer(b, e, 'brk'); },
+      onHit(b, e, p, x, o) { if (o && o.aoe && x && (x === e || (x.role === 'rioter' && !x.strong)) && e.spAoeA !== b.actN) { e.spAoeA = b.actN; if (fcAnswer(b, e, 'aoe')) logp(b, 'good', '군중이 흩어진다'); } },
     },
   },
   marksman: {
-    n: '조준', max: 3, ans: ['brk', 'ranged', 'aoe', 'parry'],
+    n: '조준', get max() { return FOE_X.marksman.max; }, ans: ['parry', 'brk', 'ranged', 'aoe'],
     warn: () => '시위가 끝까지 당겨졌다. 표적이 고정됐다. 다음은 한 발이다',
     blocked: w3Blocked,
     doom(b, e) { w3DoomHit(b, e, FOE_X.marksman.shot, { noGuard: 1, parry: 1, label: e.n + '의 한 발' }); codexHit(b, 'marksman', 'shot'); },
-    reward(b, e, why) { if (why === 'drop') logp(b, 'good', e.n + '이(가) 엄폐 없이 드러난다'); },
+    reward(b, e, why) { if (why !== 'shake') mkDrop(b, e); }, // 한 발 예고의 흘리기는 w3Act 'oneshot'
     on: {
-      onFoeBreak(b, e, x) { if (x === e && e.dropT) fcRewind(b, e, e.clk.n, 'drop'); },
-      onHit(b, e, p, x, o) { if (x !== e || !o || !(o.aoe || !w3Melee(b, o)) || e.mkHitA === b.actN || !e.clk.n) return; e.mkHitA = b.actN; e.mkHits = (e.mkHits || 0) + 1; if (e.mkHits >= 2) { e.mkHits = 0; if (fcRewind(b, e, 1, 'shake')) logp(b, 'good', e.n + '의 조준이 흔들린다'); } },
+      onFoeBreak(b, e, x) { if (x === e && e.dropT) fcAnswer(b, e, 'drop'); },
+      onHit(b, e, p, x, o) {
+        if (x !== e || !o || !(o.aoe || !w3Melee(b, o)) || e.mkHitA === b.actN || !e.clk.n) return; e.mkHitA = b.actN;
+        if (w3AtWarn(e)) { e.mkHits = 0; if (fcAnswer(b, e, 'hit')) logp(b, 'good', e.n + '의 조준이 흐트러진다'); return; }
+        e.mkHits = (e.mkHits || 0) + 1; if (e.mkHits >= 2) { e.mkHits = 0; if (fcRewind(b, e, 1, 'shake')) logp(b, 'good', e.n + '의 조준이 흔들린다'); }
+      },
     },
   },
   wallcap: {
-    n: '잠식', max: 5, ans: ['brk', 'aoe', 'cons', 'kill'],
+    n: '잠식', get max() { return FOE_X.wallcap.max; }, ans: ['cons', 'brk'],
     warn: () => '성벽이 몸 안까지 스며들었다. 한 칸만 더 차면 성벽에 묻힌다',
     blocked: w3Blocked,
     doom(b, e) { const p = b.p; p.taint = 0; w3DoomHit(b, e, FOE_X.wallcap.fall, { label: '성벽이 무너져 나를 덮친다' }); if (!b.over) { p.stun = Math.max(p.stun || 0, 1); logp(b, 'bad', '성벽에 묻혀 움직일 수 없다'); } codexHit(b, 'wallcap', 'buried'); },
-    reward(b, e, why) { if (why !== 'bricks') return; const X = FOE_X.wallcap; e.wcBareT = (b.tick || 0) + X.bare; if (foeAS(b, e).armor > 0 && !e.armorOff) { e.armorOff = 1; e.wcArm = 1; } addS(b, e, 'vuln', 2); logp(b, 'good', '벽돌이 모두 무너져 ' + e.n + '의 몸이 드러난다. 갑옷 벗겨짐 · 취약 2'); },
+    reward(b, e, why) {
+      const X = FOE_X.wallcap;
+      if (why === 'clean0' || why === 'brick0') { addS(b, e, 'vuln', X.rew); logp(b, 'good', '성벽이 흔들린다. ' + e.n + ' 취약'); codexHit(b, 'wallcap', 'shaken'); return; }
+      if (why !== 'bricks') return; e.wcBareT = (b.tick || 0) + X.bare; if (foeAS(b, e).armor > 0 && !e.armorOff) { e.armorOff = 1; e.wcArm = 1; } addS(b, e, 'vuln', 2); logp(b, 'good', '벽돌이 모두 무너져 ' + e.n + '의 몸이 드러난다. 갑옷 벗겨짐 · 취약 2');
+    },
     on: {
       onRoomStart(b, e) { fcInit(b, e); const t = b.p.taint || 0; if (t > e.clk.n) w3Fill(b, e, t - e.clk.n, 'taint'); b.p.taint = e.clk.n; },
       onRoundEnd(b, e) {
@@ -226,9 +251,12 @@ const W3_CLOCK = {
         if (w3Bricks(b).length) taintAdd(b, b.p, 1, '성벽이 몸에 스며든다');
       },
       onFoeAct(b, e) { wcSync(b, e); },
-      onFoeBreak(b, e, x) { if (x === e) e.wcArm = 0; /* 무너져 벗겨진 갑옷은 그 전투 동안 */ if (x.role === 'brick' && !w3Bricks(b).length) W3_CLOCK.wallcap.reward(b, e, 'bricks'); },
-      onFlask(b, e, p, kind) { if (kind !== 'mana') return; wcSync(b, e); if ((p.taint || 0) > 0) { p.taint = Math.max(0, p.taint - FOE_X.wallcap.clean); logp(b, 'good', '정화 플라스크가 잠식을 걷어 낸다. 잠식 ' + p.taint); } wcSync(b, e); },
-      onSkill(b, e, p, act) { const fx = (act && ((act.s && act.s.fx) || act.fx)) || []; if (!fx.some(f => f.k === 'cleanse')) return; wcSync(b, e); if ((p.taint || 0) > 0) { p.taint = Math.max(0, p.taint - FOE_X.wallcap.clean); logp(b, 'good', '정화가 잠식을 걷어 낸다. 잠식 ' + p.taint); } wcSync(b, e); },
+      onFoeBreak(b, e, x) {
+        if (x === e) e.wcArm = 0; /* 무너져 벗겨진 갑옷은 그 전투 동안 */ if (x.role !== 'brick') return;
+        wcClean(b, e, FOE_X.wallcap.brickBack, 'brick', '벽돌이 무너지며 몸에 스민 성벽이 빠져나간다'); if (!w3Bricks(b).length) W3_CLOCK.wallcap.reward(b, e, 'bricks');
+      },
+      onFlask(b, e, p, kind) { if (kind === 'mana') wcClean(b, e, FOE_X.wallcap.clean, 'clean', '정화 플라스크가 잠식을 걷어 낸다'); },
+      onSkill(b, e, p, act) { const fx = (act && ((act.s && act.s.fx) || act.fx)) || []; if (fx.some(f => f.k === 'cleanse')) wcClean(b, e, FOE_X.wallcap.clean, 'clean', '정화가 잠식을 걷어 낸다'); },
       onAct(b, e) { wcSync(b, e); },
     },
   },
@@ -312,6 +340,7 @@ function w3Setup(b, room) {
   /* 강적 · 보스(비공개 문서 참조) */
   const lv = room.lv || 1, sF = room.strong ? en[0] : null;
   if (sF && room.foe === 'beaconlord') for (let i = 0; i < FOE_X.beaconlord.fires; i++) { const f = mkEnemy('bonfire', 0, 80 + i, { lv }); f.hpMax = f.hp = 9999; f.brkMax = FOE_X.beaconlord.brk; f.summoned = true; f.xpCh = 0; f.fuse = FOE_X.beaconlord.fuse; f.intent = { k: 'none' }; f.info = '봉화. 붕괴 게이지가 차면 부서진다.'; en.push(f); }
+  if (sF && room.foe === 'beaconlord' && typeof decideIntent === 'function') decideIntent(b, sF); // G-1 2판: 첫 예고를 봉화가 선 뒤에 다시 고른다(비공개 문서 참조)
   if (sF && room.foe === 'siege') { for (let i = 0; i < FOE_X.siege.parts; i++) { const f = mkEnemy('rampart', 0, 80 + i, { lv }); f.hpMax = f.hp = 9999; f.brkMax = FOE_X.siege.partBrk; f.summoned = true; f.xpCh = 0; f.part = 1; f.intent = { k: 'none' }; f.info = '공성추 부품. 붕괴 게이지가 차면 부서진다.'; en.push(f); } }
   if (sF && room.foe === 'marksman') sF.row = 'back';
   if (sF && room.foe === 'wallcap') { const A = FOE_X.wallcap.atk; sF.dmg *= A; if (sF.bigMul) sF.bigMul /= A; } // G-1(비공개 문서 참조)

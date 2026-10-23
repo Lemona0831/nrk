@@ -348,9 +348,9 @@ function devPre(b, P, r) {
 /* 0.8.0 A2 2챕터 판단: 거래창 · 빚 갚기 · 등불 기름 · 바르도의 등불(칩과 카드를 보고 할 만한 것만). 2챕터 전투에서만 난수를 쓴다 */
 function streetPre(b, P, r) {
   if (!G0.isCh2(b)) return null; const L = G0.actionList(b); const p = b.p, al = G0.alive(b);
-  if (b.trade === 'ask' && L.some(x => x.id === 'tradeyes')) return [p.hp < p.hpMax * 0.5 || r() < 0.3 ? 'tradeyes' : 'tradeno', null];
+  if (b.trade === 'ask' && L.some(x => x.id === 'tradeyes')) return [!IGN.includes('merchant') && (p.hp < p.hpMax * 0.5 || r() < 0.3) ? 'tradeyes' : 'tradeno', null]; // G-1: 상인을 무시한 판은 거래(답)를 받지 않는다
   /* G-1: 빚 갚기는 시계(clockPre)로 답한다 */
-  const oil = L.find(x => x.id === 'lampoil' && x.ok); if (oil && (al.some(e => e.foe === 'lampthief' && e.under) || b.ctx.boss || al.some(e => e.strong)) && r() < (P.mech || 0.5) + 0.2) return ['lampoil', null];
+  const oil = L.find(x => x.id === 'lampoil' && x.ok); if (oil && !(IGN.includes('lampthief') && al.some(e => e.foe === 'lampthief')) && (al.some(e => e.foe === 'lampthief' && e.under) || b.ctx.boss || al.some(e => e.strong)) && r() < (P.mech || 0.5) + 0.2) return ['lampoil', null];
   const lamps = al.filter(e => e.role === 'lantern'), lamp = lamps.find(e => e.lit && !e.last); if (lamp && lamps.filter(e => e.lit).length >= 4 && !al.some(e => e.boss === 'bardo' && e.intent && e.intent.k === 'relight') && r() < (P.mech || 0.5) + 0.1) { /* 켜진 등불이 많을 때만 깨고, 다시 켜는 사이에는 바르도를 친다 */ const A = L.filter(x => x.ok && !x.self && x.id !== 'flee' && G0.canTarget(b, lamp, x)); const brkOf = x => x.id === 'heavy' ? 35 : x.v2 ? x.s.fx.reduce((m, f) => m + (f.k === 'brk' ? f.n : f.k === 'cutx' ? f.brk : 0), 0) : 0; const c = A.filter(x => brkOf(x) > 0).sort((x, y) => brkOf(y) - brkOf(x))[0]; if (c) return [c.id, c.aoe ? null : lamp.id]; }
   return null;
 }
@@ -397,15 +397,16 @@ function answerPre(b, P, r, pk) { // 기믹 대상: 1챕터 큰 종(다음 라�
 /* M7-1(10월 22일): 무시 시험에서 기믹 물체를 일찍 부수러 가면 오히려 손해(수비대장 27.5% 대 무시 99%)라, 곧 터질 봉화(칸 1) · 곧 날아올 공성추(75%) · 마지막 벽돌만 부순다 */
 /* 0.8.0 A3 3챕터 판단(사람이 화면을 보고 할 만한 것만): 틈 막기 · 종 표식 · 봉화 · 부품 · 벽돌 · 조준하는 명사수 · 벽돌을 쌓는 루를 붕괴로. 3챕터 전투에서만 난수를 쓴다 */
 const W3O = ['bonfire', 'rampart', 'brick', 'barricade']; const W3OFF = (process.env.W3PRE_OFF || '').split(','); // M7-1 조사 스위치: mk(조준하는 명사수 무너뜨리기)
-function w3Pre(b, P, r) {
+function w3Pre(b, P, r, pk) {
   if (!G0.isW3(b)) return null; const al = G0.alive(b); const L = () => G0.actionList(b).filter(x => x.ok && x.id !== 'flee');
   const brkOf = x => x.id === 'heavy' ? 35 : x.v2 ? x.s.fx.reduce((m, f) => m + (f.k === 'brk' ? f.n : f.k === 'cutx' ? f.brk : 0), 0) : 0;
   const brkOn = (e, min) => { const c = L().filter(x => !x.self && G0.canTarget(b, e, x) && brkOf(x) >= (min || 1)).sort((x, y) => brkOf(y) - brkOf(x))[0]; return c ? [c.id, c.aoe ? null : e.id] : null; };
   const m = (P.mech || 0.5);
   if ((b.ctx.mods || []).includes('rift') && !b.riftSealed && (b.round || 0) <= 2 && r() < m + 0.2) { const s = L().find(x => x.id === 'sealrift'); if (s) return ['sealrift', null]; }
-  const fire = al.filter(e => e.role === 'bonfire').sort((x, y) => x.fuse - y.fuse)[0]; if (fire && fire.fuse <= 1 && r() < m + 0.2) { const a = brkOn(fire); if (a) return a; }
-  const bricks = al.filter(e => e.role === 'brick'), brick = bricks[0]; if (brick && bricks.length <= 1 && r() < m + 0.3) { const a = brkOn(brick); if (a) return a; }
-  const mk = al.find(e => e.foe === 'marksman' && e.intent && ['aimx', 'oneshot'].includes(e.intent.k)); if (mk && !W3OFF.includes('mk') && r() < m + 0.2) { const a = brkOn(mk, 15); if (a) return a; }
+  const clk = (pk === 'careful' || pk === 'expert') && al.some(e => e.strong && e.clk); // G-1 2판: 신중 · 숙련은 시계 강적 방에서 봉화 · 벽돌 · 명사수를 시계(clockPre)로만 답한다
+  const fire = !clk && al.filter(e => e.role === 'bonfire').sort((x, y) => x.fuse - y.fuse)[0]; if (fire && fire.fuse <= 1 && r() < m + 0.2) { const a = brkOn(fire); if (a) return a; }
+  const bricks = clk ? [] : al.filter(e => e.role === 'brick'), brick = bricks[0]; if (brick && bricks.length <= 1 && r() < m + 0.3) { const a = brkOn(brick); if (a) return a; }
+  const mk = !clk && al.find(e => e.foe === 'marksman' && e.intent && ['aimx', 'oneshot'].includes(e.intent.k)); if (mk && !W3OFF.includes('mk') && r() < m + 0.2) { const a = brkOn(mk, 15); if (a) return a; }
   const lu = al.find(e => e.boss === 'lu' && e.intent && e.intent.k === 'rebuild'); if (lu && r() < m + 0.2) { const a = brkOn(lu, 15); if (a) return a; }
   const bm = b.al && b.al.on && !b.al.delayed && al.find(e => e.id === b.bellMark); if (bm && bm.brk + 35 >= bm.brkMax && r() < m) { const a = brkOn(bm, 20); if (a) return a; }
   return null;
@@ -478,7 +479,7 @@ function fightCur(pk, r, mem, out) {
       [a, t] = OPT.policy.chooseAction(b, G.run, n);
     } else {
     const sr = r() < (P.mech || 0.5) ? sigRule(b, r) : null;
-    [a, t] = clockPre(b, P, r, pk) || answerPre(b, P, r, pk) || devPre(b, P, r) || streetPre(b, P, r) || ch2Pre(b, P, r) || w3Pre(b, P, r) || ch3Pre(b, P, r) || sr || (P.look && hazePick(b)) || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem)); // 0.8.0 5단계: 숙련의 신기루 대응(수도승)
+    [a, t] = clockPre(b, P, r, pk) || answerPre(b, P, r, pk) || devPre(b, P, r) || streetPre(b, P, r) || ch2Pre(b, P, r) || w3Pre(b, P, r, pk) || ch3Pre(b, P, r) || sr || (P.look && hazePick(b)) || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem)); // 0.8.0 5단계: 숙련의 신기루 대응(수도승)
     [a, t] = ch2Post(b, P, r, a, t);
     [a, t] = answerPost(b, P, r, pk, a, t); // M7-1 신중 성향 예고 답하기
     // 보스를 깎지 못한 채 버티기만 하면 사람은 밀어붙인다 (한 수 앞만 보는 계산이 페이즈 전환을 피하는 것을 막는다)

@@ -433,8 +433,12 @@ function bossPhase(b, e) {
   if (ph !== e.phase) { e.phase = ph; e.armorOff = 0; /* A0: 갑옷은 단계마다 */ logp(b, 'crit', e.n + '의 기세가 바뀐다. ' + ph + '페이즈' + (e.boss === 'mother' && ph === 2 ? '. 나락의 거울이 열린다' : '')); }
 }
 
-/* ===== 0.8.0 G-1 1챕터 강적 시계 (틀은 js/25 FOE_CLOCK, 값은 data/dungeon.js CLK1). 무엇이 칸을 채우고 되감는지 · 파국 · 보상은 비공개 문서 참조 ===== */
+/* ===== 0.8.0 G-1 1챕터 강적 시계 (틀은 js/25 FOE_CLOCK, 값은 data/dungeon.js CLK1). 무엇이 칸을 채우고 되감는지 · 파국 · 보상은 비공개 문서 참조 ===== 2판 */
+const FC1_KEY = { bellringer: 'bell', pilgrim: 'pilgrim', bishop: 'bishop', cantor: 'cantor', scribe: 'scribe' };
+function fc1K(foe) { return (FC1_KEY[foe] && CLK1[FC1_KEY[foe]]) || null; } // js/34가 강적마다 평소 공격 배율(dmg)을 읽는다
 const fc1Stun = b => b.p.stun > 0;
+const fc1Warn = e => !!(e.clk && !e.clk.perm && e.clk.n > 0 && e.clk.n >= e.clk.max - 1); // 마지막 경고 칸
+const fc1Held = (b, e) => { const C = e.clk; return C.n >= C.max - 1 && C.wT != null && !b.fcNoWait && (b.turnIdx || 0) <= C.wT; }; // 경고 뒤 내 차례가 아직 지나지 않았다(js/25 fcAdd와 같은 조건)
 function fc1Hit(b, src, frac, label) { return hurtPlayer(b, b.p.hpMax * frac, { src, single: 1, charged: 1, cap: frac, label }); }
 const fc1Feast = e => e.foe === 'pilgrim' && e.fcFeast ? CLK1.pilgrim.feast : 0;
 function fc1Intent(b, e, n) {
@@ -448,7 +452,7 @@ function fc1Intent(b, e, n) {
 /* 종지기 */
 function fc1Ring(b, e) {
   if (!alive(b).some(x => x.bell)) { logp(b, 'sys', e.n + '이(가) 끊어진 줄을 당긴다'); return; }
-  if (b.p.dodge === e.id) { b.p.dodge = 0; logp(b, 'good', '줄을 당기는 ' + e.n + '의 손을 흘려 낸다. 종이 제대로 울리지 않는다'); fcRewind(b, e, 1, 'parry'); if (typeof ysResp === 'function') ysResp(b, '흘리기'); return; }
+  if (b.p.dodge === e.id) { b.p.dodge = 0; logp(b, 'good', '줄을 당기는 ' + e.n + '의 손을 흘려 낸다. 종이 제대로 울리지 않는다'); fcAnswer(b, e, 'parry'); if (typeof ysResp === 'function') ysResp(b, '흘리기'); return; }
   logp(b, 'bad', e.n + '이(가) 줄을 당긴다. 종이 울리며 금이 번진다'); fcAdd(b, e, 1, 'ring');
 }
 function fc1BrkAct(b) { const c = b.cur; if (!c) return false; if (c.id === 'heavy') return true; const s = typeof SK2 !== 'undefined' && SK2[c.id]; return !!(s && (s.fx || []).some(x => (x.k === 'brk' && x.n >= 15) || (x.k === 'cutx' && x.brk >= 15))); }
@@ -458,8 +462,8 @@ function fc1BellCrack(b, bell, n) {
 }
 function fc1BellDown(b) {
   const rg = b.en.find(x => x.foe === 'bellringer' && x.alive); codexHit(b, 'bellringer', 'bellbreak'); if (!rg) return;
-  if (rg.strong) { fcInit(b, rg); if (rg.clk && !rg.clk.perm && rg.clk.n) fcRewind(b, rg, rg.clk.n, 'bell'); }
-  rg.stun = Math.max(rg.stun || 0, 1); addS(b, rg, 'vuln', 2); logp(b, 'crit', '큰 종이 부서진다. ' + rg.n + '이(가) 넋을 놓는다. 취약 2');
+  if (rg.strong) { fcInit(b, rg); if (rg.clk && !rg.clk.perm && rg.clk.n) { fcRewind(b, rg, rg.clk.n, 'bell', { free: 1 }); return; } } // 비공개 문서 참조
+  FOE_CLOCK.bellringer.reward(b, rg, 'bell');
 }
 FOE_CLOCK.bellringer = {
   n: '종의 금', max: CLK1.bell.max, ans: ['brk', 'ranged', 'aoe', 'parry'], perm: 1,
@@ -470,13 +474,19 @@ FOE_CLOCK.bellringer = {
     b.fcTwice = 1; logp(b, 'crit', '큰 종이 깨지며 울린다. 적들이 서두르기 시작한다'); codexHit(b, 'bellringer', 'ring');
     fc1Hit(b, e, CLK1.bell.big, e.n + '이(가) 깨진 종소리에 맞춰 내리친다');
   },
+  reward(b, e, why) {
+    if (!e.alive) return; e.stun = Math.max(e.stun || 0, CLK1.bell.stun);
+    if (why === 'bell') { addS(b, e, 'vuln', 2); logp(b, 'crit', '큰 종이 부서진다. ' + e.n + '이(가) 넋을 놓는다. 취약 2'); }
+    else { logp(b, 'good', e.n + '의 손에서 줄이 미끄러진다. 넋을 놓는다'); codexHit(b, 'bellringer', 'slip'); }
+  },
   on: {
-    onFoeBreak(b, e, x) { if (x === e && fcRewind(b, e, 2, 'brk')) logp(b, 'good', e.n + '의 손이 줄을 놓는다'); },
+    onFoeBreak(b, e, x) { if (x === e && fcRewind(b, e, 1, 'brk')) logp(b, 'good', e.n + '의 손이 줄을 놓는다'); },
     onHit(b, e, p, t, o) { if (o && o.aoe) { const bl = alive(b).find(x => x.bell); if (bl) fc1BellCrack(b, bl, 1); } },
   },
 };
 /* 굶주린 순례자 */
 const fc1Unit = b => b.p.hpMax * CLK1.pilgrim.full / CLK1.pilgrim.max;
+const fc1Fed = (b, e) => { e.fcFill = Math.min(e.fcFill || 0, e.clk.n * fc1Unit(b)); }; // 되감긴 칸만큼 막대를 비운다
 FOE_CLOCK.pilgrim = {
   n: '배 채움', max: CLK1.pilgrim.max, ans: ['parry', 'guard', 'brk'],
   warn: () => '순례자의 배가 거의 찼다',
@@ -484,33 +494,43 @@ FOE_CLOCK.pilgrim = {
   doom(b, e) {
     e.fcFill = 0; e.hp = e.hpMax; e.fcFeast = 1; logp(b, 'crit', e.n + '의 배가 가득 찼다. 상처가 모두 아물고, 다음 큰 한 방에 힘이 실린다'); codexHit(b, 'pilgrim', 'feast');
   },
+  reward(b, e) {
+    e.fcFill = 0; if (!e.alive) return; e.fcTk = { m: CLK1.pilgrim.crouch, r: (b.round || 0) + CLK1.pilgrim.crouchR };
+    logp(b, 'good', e.n + '이(가) 배를 움켜쥐고 웅크린다. 받는 피해 +' + Math.round((CLK1.pilgrim.crouch - 1) * 100) + '%'); codexHit(b, 'pilgrim', 'crouch');
+  },
   on: {
+    onFoeAct(b, e, x) { if (x === e) e.fcPar = 0; },
+    onParry(b, e, p, src) { if (src !== e || !fc1Warn(e)) return; e.fcPar = 1; logp(b, 'good', e.n + '의 손이 빈 그릇만 긁는다'); fcAnswer(b, e, 'parry'); },
     onHurt(b, e, p, o, d) {
-      if (!o || o.src !== e || o.dot || !(d > 0) || FOE_CLOCK.pilgrim.blocked(b)) return;
+      if (!o || o.src !== e || o.dot || !(d > 0) || fc1Stun(b)) return;
+      if (e.fcPar) { e.fcPar = 0; return; } // 비공개 문서 참조
+      if (fc1Warn(e) && p.guard && !o.judgment) { logp(b, 'good', e.n + '의 손이 빈 그릇만 긁는다'); fcAnswer(b, e, 'guard'); return; }
       const M = CLK1.pilgrim.max, u = fc1Unit(b); e.fcFill = (e.fcFill || 0) + d; if (e.clk.n < M - 1 && e.fcFill >= u * M) e.fcFill = u * M - 1e-6; /* 마지막 경고 없이 차지 않는다 */ const k = Math.min(M, Math.floor(e.fcFill / u + 1e-9)) - e.clk.n; if (k > 0) fcAdd(b, e, k, 'fill');
     },
-    onFoeBreak(b, e, x) {
-      if (x !== e) return; e.fcFill = (e.fcFill || 0) / 2; const k = e.clk.n - Math.floor(e.fcFill / fc1Unit(b) + 1e-9);
-      if (k > 0) { logp(b, 'good', e.n + '이(가) 먹은 것을 토해 낸다'); fcRewind(b, e, k, 'brk'); }
-      if (e.clk.n <= CLK1.pilgrim.max / 2) { e.fcTk = { m: CLK1.pilgrim.crouch, r: (b.round || 0) + 1 }; logp(b, 'good', e.n + '이(가) 배를 움켜쥐고 웅크린다. 받는 피해 +' + Math.round((CLK1.pilgrim.crouch - 1) * 100) + '%'); codexHit(b, 'pilgrim', 'crouch'); }
-    },
+    onFoeBreak(b, e, x) { if (x !== e || !e.clk.n) return; logp(b, 'good', e.n + '이(가) 먹은 것을 토해 낸다'); fcAnswer(b, e, 'brk'); fc1Fed(b, e); },
   },
 };
 /* 납골당 주교 */
 function fc1Corpse(b) {
   const c = mkEnemy('minion', 0, b.idc++, { lv: (b.ctx && b.ctx.lv) || 1 }); c.summoned = true; c.corpse = 1; c.xpCh = 0; if (FOES.bishop.corpseN) c.n = FOES.bishop.corpseN;
-  const h = foeHitHp(c, (b.ctx && b.ctx.ch) || 1, (b.ctx && b.ctx.floor) || 0); if (h > 0) { c.hpMax = Math.max(1, Math.round(h)); c.hp = c.hpMax; }
+  c.hpMax = c.hp = 1; // 비공개 문서 참조
   decideIntent(b, c); b.en.push(c); return c;
 }
-function fc1Sync(b, e) { fcInit(b, e); const k = e.clk.n - corpsesOf(b).length; if (k > 0) fcRewind(b, e, k, 'corpse'); }
+function fc1Sync(b, e) { fcInit(b, e); const k = e.clk.n - corpsesOf(b).length; if (k > 0) fcRewind(b, e, k, 'corpse', { free: 1 }); }
+function fc1Drop(b, e) { if (!e.alive) return; e.fcNoRaise = (b.round || 0) + CLK1.bishop.drop; addS(b, e, 'vuln', 2); logp(b, 'crit', e.n + '이(가) 지팡이를 떨어뜨린다. 취약 2'); codexHit(b, 'bishop', 'drop'); }
 function fc1Raise(b, e) {
   if (e.noSummon) { e.noSummon = 0; logp(b, 'good', e.n + '의 부름이 방해 부적에 막힌다'); return; }
   if ((e.fcNoRaise || 0) >= (b.round || 0)) { logp(b, 'sys', e.n + '이(가) 떨어뜨린 지팡이를 더듬는다'); return; }
   if (FOE_CLOCK.bishop.blocked(b)) { fcAdd(b, e, 1, 'raise'); logp(b, 'sys', e.n + '의 부름이 허공에 머문다'); return; }
-  fc1Corpse(b); logp(b, 'bad', e.n + '이(가) 이름 하나를 부른다. 흙에서 시체가 일어선다'); codexHit(b, 'bishop', 'raise'); fcAdd(b, e, 1, 'raise');
+  let k = 0;
+  for (let i = 0; i < (CLK1.bishop.call || 1) && e.alive && !b.over; i++) {
+    if (fc1Held(b, e)) break; fc1Corpse(b); k++; logp(b, 'bad', e.n + '이(가) 이름 하나를 부른다. 흙에서 시체가 일어선다'); codexHit(b, 'bishop', 'raise');
+    const d0 = e.clk.doomN; fcAdd(b, e, 1, 'raise'); if (e.clk.doomN > d0) break;
+  }
+  if (!k) logp(b, 'sys', e.n + '이(가) 마지막 이름을 입안에서 굴린다');
 }
 FOE_CLOCK.bishop = {
-  n: '부른 이름', max: CLK1.bishop.max, ans: ['aoe', 'ranged', 'brk', 'kill'],
+  n: '부른 이름', max: CLK1.bishop.max, ans: ['aoe', 'brk', 'kill'],
   warn: () => '주교가 마지막 이름을 부르려 한다',
   blocked: b => fc1Stun(b),
   doom(b, e) {
@@ -521,19 +541,21 @@ FOE_CLOCK.bishop = {
   on: {
     onFoeBreak(b, e, x) {
       if (x !== e) return;
+      if (fc1Warn(e)) { for (const c of corpsesOf(b)) { c.alive = false; c.hp = 0; } logp(b, 'good', '불린 이름들이 모두 흙으로 돌아간다'); fc1Sync(b, e); fc1Drop(b, e); return; } // 비공개 문서 참조
       if (e.intent && e.intent.k === 'raise') { e.intent = { k: 'attack' }; e.teleX = 1; logp(b, 'good', '부르던 이름이 끊긴다'); return; }
       const c = corpsesOf(b).pop(); if (c) { c.alive = false; c.hp = 0; logp(b, 'good', '불린 이름 하나가 흙으로 돌아간다'); fc1Sync(b, e); }
     },
     onFoeDown(b, e, x) {
-      if (!x.corpse) return; fc1Sync(b, e); if (!b.cur) return;
-      if (e.fcKA !== b.actN) { e.fcKA = b.actN; e.fcKN = 0; }
-      if (++e.fcKN === 3) { e.fcNoRaise = (b.round || 0) + 1; addS(b, e, 'vuln', 2); logp(b, 'crit', e.n + '이(가) 지팡이를 떨어뜨린다. 취약 2'); codexHit(b, 'bishop', 'drop'); }
+      if (!x.corpse) return; const a = b.cur ? b.actN : null;
+      if (a != null && e.fcKA !== a) { e.fcKA = a; e.fcKW = fc1Warn(e) ? 1 : 0; }
+      fc1Sync(b, e);
+      if (a != null && e.fcKW && !corpsesOf(b).length) { e.fcKW = 0; fc1Drop(b, e); } // 비공개 문서 참조
     },
   },
 };
 /* 성가 조율자 */
 FOE_CLOCK.cantor = {
-  n: '악보', max: CLK1.cantor.max, ans: ['aoe', 'kill', 'brk', 'dot'],
+  n: '악보', max: CLK1.cantor.max, ans: ['kill', 'ranged', 'aoe', 'brk', 'dot'],
   warn: () => '노래가 마지막 마디에 들어선다',
   blocked: b => fc1Stun(b),
   doom(b, e) {
@@ -541,33 +563,32 @@ FOE_CLOCK.cantor = {
     logp(b, 'crit', '대합창. 곁의 적들의 상처가 아물고 목소리가 하나로 모인다. 강화 ' + CLK1.cantor.emp); codexHit(b, 'cantor', 'chorus');
     if (L.length) fc1Hit(b, e, CLK1.cantor.per * L.length, e.n + '의 대합창이 덮친다');
   },
-  reward(b, e) { const L = chorusOf(b, e); for (const x of L) addS(b, x, 'chill', 1); logp(b, 'good', '박자가 깨진다' + (L.length ? '. 곁의 적들이 엇박에 걸린다' : '')); codexHit(b, 'cantor', 'cut'); },
+  reward(b, e) { const L = chorusOf(b, e); for (const x of L) addS(b, x, 'chill', CLK1.cantor.off); logp(b, 'good', '박자가 깨진다' + (L.length ? '. 곁의 적들이 엇박에 걸린다' : '')); codexHit(b, 'cantor', 'cut'); },
   on: {
     onFoeAct(b, e, x) { if (x !== e || e.stun > 0) return; if (chorusOf(b, e).length >= 2) fcAdd(b, e, 1, 'bar'); else if (!e.fcSolo) { e.fcSolo = 1; logp(b, 'sys', e.n + '의 박자가 허공에 흩어진다'); } },
-    onFoeBreak(b, e, x) { if (x === e && e.clk.n) fcRewind(b, e, e.clk.n, 'brk'); },
+    onFoeBreak(b, e, x) { if (x === e) fcAnswer(b, e, 'brk'); },
+    onFoeDown(b, e, x) { if (x !== e && x.role !== 'root' && !x.corpse && fc1Warn(e)) fcAnswer(b, e, 'kill'); }, // 비공개 문서 참조
+    onHit(b, e, p, t, o) { if (t === e && o && !o.dot && fc1Warn(e)) fcAnswer(b, e, o.aoe ? 'aoe' : 'ranged'); }, // 비공개 문서 참조
     onFoeDot(b, e, x, d) {
       if (x !== e) return; const cut = e.hpMax * CLK1.cantor.dotCut; e.fcDot = Math.min(cut, (e.fcDot || 0) + d);
-      if (e.fcDot >= cut && e.clk.n > 0) { e.fcDot = 0; logp(b, 'good', e.n + '의 숨이 끊겨 노래가 한 마디 뒤로 밀린다'); fcRewind(b, e, 1, 'dot'); }
+      if (e.fcDot >= cut && e.clk.n > 0) { e.fcDot = 0; if (fcRewind(b, e, 1, 'dot')) logp(b, 'good', e.n + '의 숨이 끊겨 노래가 한 마디 뒤로 밀린다'); }
     },
   },
 };
 /* 검은 서기관 */
-function fc1Erase(b, e, why) {
-  if (!e.clk || !(e.clk.n > 0)) return 0; const S = b.seal || [];
-  for (let i = S.length - 1; i >= 0; i--) if (!S[i].perm) { const r = S.splice(i, 1)[0]; logp(b, 'good', '판결문에서 ' + r.n + ' 줄이 지워진다'); break; }
-  codexHit(b, 'scribe', 'unseal'); return fcRewind(b, e, 1, why);
-}
+function fc1Erase(b, n, perm) { const S = b.seal || []; let k = 0; for (let i = S.length - 1; i >= 0 && k < n; i--) if (perm || !S[i].perm) { const r = S.splice(i, 1)[0]; k++; logp(b, 'good', '판결문에서 ' + r.n + ' 줄이 지워진다'); } if (k) codexHit(b, 'scribe', 'unseal'); return k; }
 FOE_CLOCK.scribe = {
-  n: '판결문', max: CLK1.scribe.max, ans: ['brk', 'kill', 'cons'],
+  n: '판결문', max: CLK1.scribe.max, ans: ['brk', 'parry', 'cons', 'kill'],
   warn: () => '판결문이 한 줄만 남았다',
   blocked: b => fc1Stun(b),
   doom(b, e) {
     for (const r of b.seal || []) r.perm = 1; logp(b, 'crit', e.n + '이(가) 판결을 내린다. 적힌 것은 이 싸움이 끝날 때까지 풀리지 않는다'); codexHit(b, 'scribe', 'verdict');
     fc1Hit(b, e, CLK1.scribe.verdict, e.n + '이(가) 선고를 내린다');
   },
-  reward(b, e) { if (!e.alive) return; e.stun = Math.max(e.stun || 0, 1); logp(b, 'good', e.n + '이(가) 펜을 다시 적신다'); },
+  reward(b, e) { if (!e.alive) return; e.stun = Math.max(e.stun || 0, CLK1.scribe.pen); logp(b, 'good', e.n + '이(가) 펜을 다시 적신다'); },
   on: {
-    onFoeBreak(b, e, x) { if (x === e) fc1Erase(b, e, 'brk'); },
-    onFlask(b, e, p, kind) { if (kind === 'mana') fc1Erase(b, e, 'flask'); },
+    onFoeBreak(b, e, x) { if (x === e && e.clk.n) { fc1Erase(b, 1); fcAnswer(b, e, 'brk'); } },
+    onFlask(b, e, p, kind) { if (kind === 'mana' && e.clk.n) { fc1Erase(b, 1); fcAnswer(b, e, 'flask'); } },
+    onParry(b, e, p, src) { if (src === e && e.clk.n) { fc1Erase(b, 1); fc1Erase(b, 1, 1); fcAnswer(b, e, 'parry'); } }, // 비공개 문서 참조
   },
 };
