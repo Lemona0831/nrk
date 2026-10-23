@@ -106,7 +106,7 @@ function ch2Act(b, e, i, d) {
     case 'duel': { b.duel = 1; logp(b, 'crit', e.n + '이(가) 결투를 선언한다. 다른 적들이 뒤로 물러선다'); codexHit(b, 'champion', 'duel'); return 1; }
     case 'combo': { for (let k = 0; k < FOE_X.champion.hits && !b.over; k++) hurtPlayer(b, d * FOE_X.champion.combo, { src: e, single: 1, label: e.n + '의 연타' }); return 1; }
     case 'douselamp': { if (!b.ctx.mods.includes('dark')) b.ctx.mods.push('dark'); logp(b, 'crit', e.n + '이(가) 등불을 끈다. 방이 어두워진다'); codexHit(b, 'lampthief', 'dark'); if (e.strong) { thiefHide(b, e); fcAdd(b, e, 1, 'douse'); } return 1; } // G-1 시계(비공개 문서 참조)
-    case 'shadowstab': { e.stabOut = 0; const perm = !!(e.clk && e.clk.perm); hurtPlayer(b, perm ? p.hpMax * X.stab : d, { src: e, single: 1, label: e.n + '이(가) 그림자 속에서 찌른다' }); if (e.alive && !b.over) { if (perm) thiefHide(b, e); else e.under = 0; } return 1; } // G-1(비공개 문서 참조)
+    case 'shadowstab': { e.stabOut = 0; const perm = !!(e.clk && e.clk.perm); hurtPlayer(b, perm ? p.hpMax * X.stab : d, { src: e, single: 1, cap: perm ? X.stab : 0, label: e.n + '이(가) 그림자 속에서 찌른다' }); if (e.alive && !b.over) { if (perm) thiefHide(b, e); else e.under = 0; } return 1; } // G-1(비공개 문서 참조)
     case 'muster': { e.musterOn = 1; hurtPlayer(b, d, { src: e, single: 1, label: e.n + '이(가) 호령하며 내리친다' }); e.musterOn = 0; return 1; } // G-1 3판(비공개 문서 참조)
     case 'formation': { if (b.capForm && !capMen(b)) { logp(b, 'sys', e.n + '이(가) 부하를 찾지만 대형을 세울 수 없다'); return 1; } if (capDown(b)) { b.formBroken = 0; logp(b, 'bad', e.n + '이(가) 부하들을 다시 세운다. 대형이 선다'); return 1; } logp(b, 'sys', e.n + '이(가) 부하들의 자리를 바꾼다. 대형이 선다'); return 1; }
     case 'rally': { for (const x of ch2Mates(b, e)) addS(b, x, 'empower', 1); logp(b, 'bad', e.n + '이(가) 돌격 명령을 내린다. 부하 모두 강화 1'); return 1; }
