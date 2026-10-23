@@ -1,7 +1,7 @@
 'use strict';
 /* 0.8.0 G-1 2챕터 강적 시계 점검 (js/15-chapter2.js CH2_CLOCK 다섯, 틀은 js/25). 실행: node tools/clock-ch2-check.js
    2판: 강적마다 시계가 있다 · 답이 두 종류 이상 · 한 칸 남으면 마지막 경고 · 다 차면 파국(정한 세기) · 마지막 경고 칸에서 결정적 답 하나 → 0칸 + 보상 ·
-   경고 칸이 아닐 때의 되감기는 1칸 · 라운드에 한 번 · 답 수단이 모두 막히면 멈춤. 칸 수 · 세기는 FOE_X에서 읽는다. 규칙의 뜻은 비공개 문서 참조. 실패가 있으면 1로 끝난다 */
+   경고 칸이 아닐 때의 되감기는 1칸 · 라운드에 한 번 · 답 수단이 모두 막히면 멈춤. 3판(경비대장 · 챔피언): 평소 행동은 경고 칸에서도 1칸(라운드 한 번). 칸 수 · 세기는 FOE_X에서 읽는다. 규칙의 뜻은 비공개 문서 참조. 실패가 있으면 1로 끝난다 */
 const H = require('./uqtest/_h.js'); const { E, R_, ok } = H;
 R_('ch2ClockReg')(); const FC = R_('FOE_CLOCK'), X = R_('FOE_X'), PA = R_('ch2PlayerAct');
 const st = (u, k) => R_('st')(u, k);
@@ -67,22 +67,28 @@ common('ledger');
 }
 /* ---------- 투기장 챔피언 ---------- */
 common('champion');
-{
-  const x = mk('champion', ['loser', 'hound']); const { b, e, p } = x; const K = X.champion;
+{ // 3판: 결정적 답은 챔피언 공격 흘리기 · 챔피언 무너뜨리기. 한 행동 큰 피해는 경고 칸에서도 1칸(라운드 한 번)
+  const x = mk('champion', ['loser', 'hound']); const { b, e, p } = x; const K = X.champion; b.duel = 1;
   E.fcEv(b, 'onRoundEnd'); ok(e.clk.n === 1, 'champion 1: ' + e.clk.n);
   E.fcEv(b, 'onAct', p, 'guard', { id: 'guard' }, null); ok(e.clk.n === Math.min(W('champion'), 1 + K.coward) && warns(b) === (1 + K.coward >= W('champion') ? 1 : 0), 'champion 2: ' + e.clk.n);
   e.clk.n = W('champion'); let h0 = full(p); E.fcEv(b, 'onRoundEnd'); let d = lost(p, h0); ok(e.clk.doomN === 1 && e.clk.n === 0 && near(d, K.doom), 'champion 3: ' + d.toFixed(3)); R.champion = (d * 100).toFixed(1) + '% · ' + K.max + '칸';
   e.clk.n = W('champion'); h0 = full(p); p.guard = 1; E.fcEv(b, 'onRoundEnd'); d = lost(p, h0); p.guard = 0; ok(near(d, K.doom / 2), 'champion 4: ' + d.toFixed(3)); R.champion += ' · 방어 ' + (d * 100).toFixed(1) + '%';
-  nr(b); e.clk.n = W('champion'); e.booArm = 0; myHit(b, e, e.hpMax * (K.big + 0.01)); ok(e.clk.n === 0 && e.booArm === 1, 'champion 5(경고 칸 큰 한 방 → 0 · 야유): ' + e.clk.n);
-  nr(b); e.clk.n = W('champion'); e.booArm = 0; b.actN++; b.cur = { id: 'basic' }; E.hurtEnemy(b, e, e.hpMax * K.big * 0.6, { single: 1 }); E.hurtEnemy(b, e, e.hpMax * K.big * 0.6, { single: 1 }); b.cur = null; ok(e.clk.n === 0 && e.booArm === 1, 'champion 6(한 행동 여러 타): ' + e.clk.n);
-  nr(b); e.clk.n = W('champion'); myHit(b, e, e.hpMax * K.big * 0.5); myHit(b, e, e.hpMax * K.big * 0.5); ok(e.clk.n === W('champion'), 'champion 6b(두 행동은 아님): ' + e.clk.n);
-  nr(b); e.clk.n = W('champion'); e.booArm = 0; p.dodge = e.id; foeHit(b, e, 2); ok(e.clk.n === 0 && e.booArm === 1, 'champion 7(경고 칸 흘리기 → 0): ' + e.clk.n);
-  nr(b); e.clk.n = 1; e.booArm = 0; myHit(b, e, e.hpMax * (K.big + 0.01)); ok(e.clk.n === 0 && !e.booArm, 'champion 7b(경고 칸 아님 → 1칸, 보상 없음): ' + e.clk.n);
-  offCap('champion', x, () => myHit(b, e, e.hpMax * (K.big + 0.01)));
-  nr(b); e.clk.n = W('champion'); e.hp = e.hpMax; e.booArm = 0; breakIt(b, e); ok(e.clk.n === 0 && e.booArm === 1, 'champion 8(경고 칸 무너뜨리기 → 0)');
+  nr(b); e.clk.n = W('champion'); e.booArm = 0; (e.hp = e.hpMax, myHit)(b, e, e.hpMax * (K.big + 0.01)); ok(e.clk.n === W('champion') - 1 && !e.booArm, 'champion 5(경고 칸 큰 한 방 → 1칸만, 보상 없음): ' + e.clk.n);
+  e.clk.n = W('champion'); (e.hp = e.hpMax, myHit)(b, e, e.hpMax * (K.big + 0.01)); ok(e.clk.n === W('champion'), 'champion 5b(경고 칸에서도 라운드 한 번): ' + e.clk.n);
+  nr(b); e.clk.n = W('champion'); e.booArm = 0; e.hp = e.hpMax; b.actN++; b.cur = { id: 'basic' }; E.hurtEnemy(b, e, e.hpMax * K.big * 0.6, { single: 1 }); E.hurtEnemy(b, e, e.hpMax * K.big * 0.6, { single: 1 }); b.cur = null; ok(e.clk.n === W('champion') - 1 && !e.booArm, 'champion 6(한 행동 여러 타 → 1칸): ' + e.clk.n);
+  nr(b); e.clk.n = W('champion'); (e.hp = e.hpMax, myHit)(b, e, e.hpMax * K.big * 0.5); (e.hp = e.hpMax, myHit)(b, e, e.hpMax * K.big * 0.5); ok(e.clk.n === W('champion'), 'champion 6b(두 행동은 아님): ' + e.clk.n);
+  nr(b); e.clk.n = W('champion'); e.booArm = 0; p.dodge = e.id; foeHit(b, e, 2); ok(e.clk.n === 0 && e.booArm === 1, 'champion 7(경고 칸 흘리기 → 0 · 야유): ' + e.clk.n);
+  nr(b); e.clk.n = W('champion'); e.booArm = 0; p.dodge = x.es[1].id; foeHit(b, x.es[1], 2); ok(e.clk.n === W('champion') && !e.booArm, 'champion 7a(다른 적 흘리기는 아님): ' + e.clk.n);
+  nr(b); e.clk.n = 1; e.booArm = 0; (e.hp = e.hpMax, myHit)(b, e, e.hpMax * (K.big + 0.01)); ok(e.clk.n === 0 && !e.booArm, 'champion 7b(경고 칸 아님 → 1칸, 보상 없음): ' + e.clk.n);
+  offCap('champion', x, () => (e.hp = e.hpMax, myHit)(b, e, e.hpMax * (K.big + 0.01)));
+  nr(b); e.clk.n = W('champion'); e.hp = e.hpMax; e.booArm = 0; breakIt(b, e); ok(e.clk.n === 0 && e.booArm === 1, 'champion 8(경고 칸 무너뜨리기 → 0 · 야유)');
   const m = R_('ch2FoeOut'); ok(near(m(b, e), 1 - K.boo, 1e-9), 'champion 9: ' + m(b, e)); e.stun = 0; E.fcEv(b, 'onFoeAct', e); ok(near(m(b, e), 1 - K.boo, 1e-9), 'champion 10'); E.fcEv(b, 'onFoeAct', e); ok(m(b, e) === 1, 'champion 11');
   p.stun = 1; e.clk.n = 1; E.fcEv(b, 'onRoundEnd'); ok(e.clk.n === 1, 'champion 12'); p.stun = 0;
   e.clk.n = 0; E.fcEv(b, 'onAct', p, 'h_dodge', { id: 'h_dodge', v2: 1, s: { fx: [{ k: 'evade', n: 1 }] } }, null); ok(e.clk.n === Math.min(W('champion'), K.coward), 'champion 13: ' + e.clk.n);
+  // 마지막 경고 때 흘릴 공격이 보이게 예고를 바꾼다(새 예고 = 실행)
+  calm(e); e.clk.n = W('champion') - 1; e.intent = e.teleSet = { k: 'charge' }; e.teleX = 0; b.log = []; E.fcEv(b, 'onRoundEnd'); ok(warns(b) === 1 && e.intent.k === 'attack' && e.teleSet === e.intent && !e.teleX, 'champion 14(경고 때 공격 예고): ' + e.intent.k);
+  e.acts = 2; R_('decideIntent')(b, e); ok(['attack', 'combo', 'heavy'].includes(e.intent.k), 'champion 15(경고 칸에서는 공격 예고): ' + e.intent.k);
+  e.clk.n = 0; e.intent = { k: 'attack' }; e.acts = 2; R_('decideIntent')(b, e); ok(e.intent.k === 'charge', 'champion 16(평소 순환 그대로): ' + e.intent.k);
 }
 /* ---------- 등불 도둑 ---------- */
 common('lampthief');
@@ -106,20 +112,39 @@ common('lampthief');
 }
 /* ---------- 장터 경비대장 ---------- */
 common('captain');
-{
+{ // 3판: 결정적 답은 대장 본체 무너뜨리기 · 호령에 흘리기. 덩치 무너뜨리기 · 부하 쓰러뜨리기 · 광역은 경고 칸에서도 1칸(라운드 한 번)
   const x = mk('captain', ['dun', 'thug', 'xbow'], () => { }); const { b, e, p } = x; b.capForm = 1; const [, th, xb] = x.es; const K = X.captain;
+  e.intent = e.teleSet = { k: 'rally' };
   for (let i = 0; i < W('captain'); i++) E.fcEv(b, 'onRoundEnd'); ok(e.clk.n === W('captain') && warns(b) === 1, 'captain 1: ' + e.clk.n);
+  ok(e.intent.k === 'muster' && e.teleSet === e.intent && !e.teleX, 'captain 1b(경고 때 호령 예고): ' + e.intent.k);
+  ok(/\d/.test(R_('intentText')(b, e).t) && R_('intentBadge')(b, e).txt === '호령', 'captain 1c(호령 예고 문장 · 숫자)');
   let h0 = full(p); E.fcEv(b, 'onRoundEnd'); let d = lost(p, h0); const sum = K.doom.reduce((a, v) => a + v, 0);
   ok(e.clk.doomN === 1 && e.clk.n === 0 && near(d, sum), 'captain 2: ' + d.toFixed(3)); R.captain = (d * 100).toFixed(1) + '% · ' + K.max + '칸';
   const aoe3 = () => { b.actN++; b.cur = { id: 'basic' }; E.hurtEnemy(b, e, 1, { aoe: 1 }); E.hurtEnemy(b, th, 1, { aoe: 1 }); E.hurtEnemy(b, xb, 1, { aoe: 1 }); b.cur = null; };
-  nr(b); e.clk.n = W('captain'); calm(e); aoe3(); ok(e.clk.n === 0 && opened(e, K.vuln) && !b.formBroken, 'captain 3(경고 칸 광역 한 번 → 0 · 보상): ' + e.clk.n);
+  nr(b); e.clk.n = W('captain'); calm(e); aoe3(); ok(e.clk.n === W('captain') - 1 && !opened(e, 1) && !b.formBroken, 'captain 3(경고 칸 광역 → 1칸만): ' + e.clk.n);
+  e.clk.n = W('captain'); aoe3(); ok(e.clk.n === W('captain'), 'captain 3b(경고 칸에서도 라운드 한 번): ' + e.clk.n);
   offCap('captain', x, aoe3);
-  nr(b); e.clk.n = W('captain'); calm(e); breakIt(b, th); ok(e.clk.n === 0 && b.formBroken === 1 && opened(e, K.vuln) && e.intent.k === 'formation', 'captain 4(경고 칸 덩치 무너뜨리기 → 0)');
-  E.fcEv(b, 'onRoundEnd'); ok(e.clk.n === 0, 'captain 5'); act(b, e, 'formation'); ok(!b.formBroken, 'captain 6'); E.fcEv(b, 'onRoundEnd'); ok(e.clk.n === 1, 'captain 7');
-  nr(b); e.clk.n = W('captain'); calm(e); E.hurtEnemy(b, xb, 99999, { single: 1 }); ok(e.clk.n === 0 && opened(e, K.vuln), 'captain 8(경고 칸 석궁 쓰러뜨리기 → 0): ' + e.clk.n);
-  e.clk.n = W('captain'); h0 = full(p); E.fcEv(b, 'onRoundEnd'); d = lost(p, h0); ok(near(d, K.doom[0] + K.doom[1]), 'captain 9: ' + d.toFixed(3)); R.captain += ' · 석궁 없이 ' + (d * 100).toFixed(1) + '%';
-  p.stun = 1; e.clk.n = 1; E.fcEv(b, 'onRoundEnd'); ok(e.clk.n === 1, 'captain 10'); p.stun = 0;
-  nr(b); E.hurtEnemy(b, th, 99999, { single: 1 }); ok(e.clk.n === 0 && b.formBroken === 1, 'captain 11'); E.fcEv(b, 'onRoundEnd'); ok(e.clk.n === 0, 'captain 12');
+  nr(b); e.clk.n = W('captain'); calm(e); breakIt(b, th); ok(e.clk.n === W('captain') - 1 && b.formBroken === 1 && !opened(e, 1), 'captain 4(경고 칸 덩치 무너뜨리기 → 1칸만): ' + e.clk.n);
+  e.clk.n = 1; E.fcEv(b, 'onRoundEnd'); ok(e.clk.n === 1, 'captain 5(대형이 깨진 동안 멈춤)'); act(b, e, 'formation'); ok(!b.formBroken, 'captain 6'); E.fcEv(b, 'onRoundEnd'); ok(e.clk.n === 2, 'captain 7');
+  nr(b); e.clk.n = W('captain'); calm(e); p.dodge = e.id; act(b, e, 'muster'); ok(e.clk.n === 0 && opened(e, K.vuln), 'captain 8(경고 칸 호령에 흘리기 → 0 · 보상): ' + e.clk.n);
+  nr(b); e.clk.n = W('captain'); calm(e); p.dodge = e.id; act(b, e, 'attack'); ok(e.clk.n === W('captain') && !opened(e, 1), 'captain 8b(호령이 아닌 공격 흘리기는 아님): ' + e.clk.n);
+  nr(b); e.clk.n = W('captain'); calm(e); breakIt(b, e); ok(e.clk.n === 0 && opened(e, K.vuln), 'captain 9(경고 칸 대장 무너뜨리기 → 0 · 보상): ' + e.clk.n);
+  if (K.max >= 3) { nr(b); e.clk.n = OFF('captain'); calm(e); e.brk = 0; delete e.s.broken; b.log = []; breakIt(b, e); ok(e.clk.n === OFF('captain') - 1 && !b.log.some(l => /몸이 빈다/.test(l.m)), 'captain 9b(경고 칸 아님 → 1칸, 보상 없음): ' + e.clk.n); }
+  nr(b); e.clk.n = W('captain'); calm(e); E.hurtEnemy(b, xb, 99999, { single: 1 }); ok(e.clk.n === W('captain') - 1 && !opened(e, 1), 'captain 10(경고 칸 석궁 쓰러뜨리기 → 1칸만): ' + e.clk.n);
+  e.clk.n = W('captain'); h0 = full(p); E.fcEv(b, 'onRoundEnd'); d = lost(p, h0); ok(near(d, K.doom[0] + K.doom[1]), 'captain 11: ' + d.toFixed(3)); R.captain += ' · 석궁 없이 ' + (d * 100).toFixed(1) + '%';
+  p.stun = 1; e.clk.n = 1; E.fcEv(b, 'onRoundEnd'); ok(e.clk.n === 1, 'captain 12'); p.stun = 0;
+  nr(b); e.clk.n = 1; E.hurtEnemy(b, th, 99999, { single: 1 }); ok(e.clk.n === 0 && b.formBroken === 1, 'captain 13(부하가 모두 쓰러지면 대형이 깨진다)'); E.fcEv(b, 'onRoundEnd'); ok(e.clk.n === 0, 'captain 14');
+}
+{ // 덩치가 쓰러져도 석궁이 서 있으면 대형은 남는다(평소 되감기 1칸)
+  const x = mk('captain', ['dun', 'thug', 'xbow'], () => { }); const { b, e } = x; b.capForm = 1; const th = x.es[1];
+  e.clk.n = W('captain'); E.hurtEnemy(b, th, 99999, { single: 1 }); ok(e.clk.n === W('captain') - 1 && !b.formBroken, 'captain 15: ' + e.clk.n); E.fcEv(b, 'onRoundEnd'); ok(e.clk.n === W('captain'), 'captain 16');
+}
+{ // 마지막 경고 때 덩치는 대장 앞을 막지 않는다 · 몸 빼기로 호령을 피해도 결정적 답
+  const x = mk('captain', ['dun', 'thug', 'xbow'], () => { }); const { b, e, p } = x; b.capForm = 1; const th = x.es[1];
+  th.guarding = e.id; th.intent = th.teleSet = { k: 'guard', tgt: e.id }; e.clk.n = W('captain') - 1; E.fcEv(b, 'onRoundEnd');
+  ok(e.clk.n === W('captain') && !th.guarding && th.intent.k === 'brace' && th.teleSet === th.intent, 'captain 17(경고 때 막아서기 풀림): ' + th.intent.k);
+  th.acts = 0; R_('decideIntent')(b, th); ok(!(th.intent.k === 'guard' && th.intent.tgt === e.id), 'captain 18(경고 칸에서 대장을 막지 않는다): ' + JSON.stringify(th.intent));
+  calm(e); p.evade = 1; act(b, e, 'muster'); ok(e.clk.n === 0 && opened(e, X.captain.vuln) && !p.evade, 'captain 19(몸 빼기로 호령 피하기 → 0): ' + e.clk.n);
 }
 /* ---------- 계약 상인 ---------- */
 common('merchant');
@@ -146,9 +171,9 @@ for (const id of ['ledger', 'champion', 'lampthief', 'captain', 'merchant']) {
   const PS = require('./persona/clock-ch2.js'); const r = () => 0.5;
   ok(['ledger', 'champion', 'lampthief', 'captain', 'merchant'].every(k => typeof PS[k] === 'function'), 'persona: 다섯');
   { const x = mk('ledger', ['dun', 'thug']); x.e.clk.n = W('ledger'); x.e.brk = 0; x.run.gold = 100; const a = PS.ledger(x.b, x.e, E, r); ok(a && a[0] === 'paydebt', 'persona ledger ' + JSON.stringify(a)); x.e.brk = x.e.brkMax - 1; const a2 = PS.ledger(x.b, x.e, E, r); ok(a2 && a2[1] === x.e.id && a2[0] !== 'paydebt', 'persona ledger 2 ' + JSON.stringify(a2)); }
-  { const x = mk('champion', ['loser', 'hound']); x.e.clk.n = W('champion'); x.e.brk = 0; x.e.intent = { k: 'attack' }; const a = PS.champion(x.b, x.e, E, r); ok(a && a[0] === 'dodge' && a[1] === x.e.id, 'persona champion ' + JSON.stringify(a)); x.e.intent = { k: 'duel' }; const a2 = PS.champion(x.b, x.e, E, r); ok(a2 && a2[0] !== 'guard' && a2[0] !== 'dodge' && a2[1] === x.e.id, 'persona champion 2 ' + JSON.stringify(a2)); x.e.brk = x.e.brkMax - 1; const a3 = PS.champion(x.b, x.e, E, r); ok(a3 && a3[1] === x.e.id, 'persona champion 3 ' + JSON.stringify(a3)); }
+  { const x = mk('champion', ['loser', 'hound']); x.e.clk.n = W('champion'); x.e.brk = 0; x.e.intent = { k: 'attack' }; const a = PS.champion(x.b, x.e, E, r); ok(a && a[0] === 'dodge' && a[1] === x.e.id, 'persona champion ' + JSON.stringify(a)); x.e.intent = { k: 'charge' }; const a2 = PS.champion(x.b, x.e, E, r); ok(a2 === null, 'persona champion 2(큰 한 방은 고르지 않는다) ' + JSON.stringify(a2)); x.e.brk = x.e.brkMax - 1; const a3 = PS.champion(x.b, x.e, E, r); ok(a3 && a3[1] === x.e.id && a3[0] !== 'dodge', 'persona champion 3 ' + JSON.stringify(a3)); }
   { const x = mk('lampthief', ['fence', 'xbow']); x.e.clk.n = W('lampthief'); x.b.ctx.mods.push('dark'); x.e.under = 1; x.e.intent = { k: 'shadowstab' }; x.e.stabOut = 1; const a = PS.lampthief(x.b, x.e, E, r); ok(a && a[0] === 'dodge', 'persona lampthief ' + JSON.stringify(a)); x.e.intent = { k: 'douselamp' }; x.run.oil = 1; const a2 = PS.lampthief(x.b, x.e, E, r); ok(a2 && (a2[0] === 'lampoil' || E.actionList(x.b).find(y => y.id === a2[0] && y.aoe)), 'persona lampthief 2 ' + JSON.stringify(a2)); }
-  { const x = mk('captain', ['dun', 'thug', 'xbow']); x.b.capForm = 1; x.e.clk.n = W('captain'); const th = x.es[1]; th.brk = th.brkMax - 1; const a = PS.captain(x.b, x.e, E, r); ok(a && a[1] === th.id, 'persona captain ' + JSON.stringify(a)); }
+  { const x = mk('captain', ['dun', 'thug', 'xbow']); x.b.capForm = 1; x.e.clk.n = W('captain'); const th = x.es[1]; x.e.brk = 0; th.brk = th.brkMax - 1; x.e.intent = { k: 'muster' }; const a = PS.captain(x.b, x.e, E, r); ok(a && a[0] === 'dodge' && a[1] === x.e.id, 'persona captain ' + JSON.stringify(a)); x.e.intent = { k: 'rally' }; const a2 = PS.captain(x.b, x.e, E, r); ok(a2 === null, 'persona captain 2(덩치 무너뜨리기는 고르지 않는다) ' + JSON.stringify(a2)); x.e.brk = x.e.brkMax - 1; const a3 = PS.captain(x.b, x.e, E, r); ok(a3 && a3[1] === x.e.id && a3[0] !== 'dodge', 'persona captain 3 ' + JSON.stringify(a3)); }
   { const x = mk('merchant', ['fence', 'thug']); x.b.trade = 'no'; x.e.clk.n = W('merchant'); x.e.brk = 0; x.run.gold = 0; const a = PS.merchant(x.b, x.e, E, r); ok(a && a[0] === 'tradeyes', 'persona merchant ' + JSON.stringify(a)); x.run.gold = 100; const a2 = PS.merchant(x.b, x.e, E, r); ok(a2 && a2[0] === 'paydebt', 'persona merchant 2 ' + JSON.stringify(a2)); x.e.brk = x.e.brkMax - 1; const a3 = PS.merchant(x.b, x.e, E, r); ok(a3 && a3[1] === x.e.id, 'persona merchant 3 ' + JSON.stringify(a3)); }
 }
 /* 평소 공격 배율(공통) */

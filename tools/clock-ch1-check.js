@@ -2,13 +2,14 @@
 /* 0.8.0 G-1 1챕터 강적 시계 점검 (js/30 FOE_CLOCK 다섯, 틀은 js/25). 실행: node tools/clock-ch1-check.js
    2판: 강적마다 시계가 있다 · 답이 두 종류 이상 · 마지막 경고 칸에서 마지막 경고 · 다 차면 파국(정한 세기) · 경고 칸에서 결정적 답 한 행동 → 0칸 + 보상 ·
    경고 칸이 아닐 때 되감기는 1칸 · 강적마다 라운드에 한 번 · 답 수단이 모두 막히면 멈춤 · 테스터 답 고르기. 값은 data/dungeon.js CLK1에서 읽는다.
+   3판(주교 · 조율자): 결정적 답(주교 무너뜨리기 · 소모품 / 조율자 무너뜨리기 · 지속 피해 걸기) → 경고 칸에서 0칸 + 보상. 평소 행동(시체 · 곁의 적 쓰러뜨리기 · 광역 · 원거리)은 경고 칸에서도 1칸 · 라운드에 한 번.
    규칙의 뜻은 비공개 문서 참조 */
 const H = require('./uqtest/_h.js'); const { E, R_, ok } = H;
 const FC = R_('FOE_CLOCK'), K = R_('CLK1');
 const st = (u, k) => R_('st')(u, k);
 /* 강적 하나 + 곁의 적. 적 피해는 작게(1), 붕괴 상한 100 */
-function mk(foe, en, setup) {
-  const f = H.fight('warden', { en: en || ['bruiser', 'bruiser'], setup: (run, es) => { es[0].strong = true; es[0].foe = foe; for (const e of es) e.brkMax = 100; if (setup) setup(run, es); } });
+function mk(foe, en, setup, build, o) {
+  const f = H.fight(build || 'warden', Object.assign({}, o || {}, { en: en || ['bruiser', 'bruiser'], setup: (run, es) => { es[0].strong = true; es[0].foe = foe; for (const e of es) e.brkMax = 100; if (setup) setup(run, es); } }));
   const b = f.b; b.cur = null; b.rngF = () => 0.5; b.fcNoWait = 1; /* 한 차례 안에서 파국까지 채워 보는 시험(경고 뒤 기다림은 아래 공통 시험에서) */ const e = f.es[0]; E.fcInit(b, e); b.p.hp = b.p.hpMax; b.p.stun = 0; b.p.guard = 0; b.p.dodge = 0; b.round = b.round || 1; return { f, b, e, p: b.p };
 }
 const act = (b, e, k) => { e.intent = { k }; e.teleTurn = -1; e.stun = 0; E.enemyAct(b, e); };
@@ -85,7 +86,7 @@ const pilWarn = x => { const { b, e, p } = x; E.hurtPlayer(b, pilU(p) * (K.pilgr
   p.hp = p.hpMax; E.hurtPlayer(b, u * (K.pilgrim.max - 2) + 0.01, { src: e, single: 1, cap: 0.9 }); ok(e.clk.n === K.pilgrim.max - 1 && warned(b), '순례자: max−1칸에 경고가 아니다 ' + e.clk.n);
   e.hp = e.hpMax * 0.4; p.hp = p.hpMax; E.hurtPlayer(b, u * 1.01, { src: e, single: 1, cap: 0.9 }); ok(e.clk.doomN === 1 && e.clk.n === 0 && e.hp === e.hpMax && e.fcFeast === 1, '순례자: 가득 차서 포식(체력 가득 · 다음 큰 한 방)이 아니다');
   E.decideIntent(b, e); ok(e.intent.k === 'charge', '순례자: 포식 뒤 큰 한 방을 모으지 않는다 ' + e.intent.k);
-  p.hp = p.hpMax; x.hpBefore = p.hp; act(b, e, 'heavy'); const d = lost(x); ok(near(d, K.pilgrim.feast) && !e.fcFeast, '순례자: 포식 뒤 큰 한 방이 CLK1 값이 아니다 ' + d.toFixed(3));
+  p.hp = p.hpMax; x.hpBefore = p.hp; act(b, e, 'heavy'); const d = lost(x); ok(near(d, Math.min(K.pilgrim.feast, 1)) && !e.fcFeast, '순례자: 포식 뒤 큰 한 방이 CLK1 값이 아니다 ' + d.toFixed(3));
   R.pilgrim = '포식 뒤 큰 한 방 ' + (d * 100).toFixed(1) + '%';
 }
 { // 한 방에 막대를 넘겨도 마지막 경고를 건너뛰지 않는다
@@ -116,76 +117,104 @@ const pilWarn = x => { const { b, e, p } = x; E.hurtPlayer(b, pilU(p) * (K.pilgr
   const n1 = e.clk.n, f1 = e.fcFill; p.stun = 1; E.hurtPlayer(b, p.hpMax * 0.2, { src: e, single: 1 }); p.stun = 0; ok(e.clk.n === n1 && e.fcFill === f1, '순례자: 기절 중에도 막대가 찼다');
   const z = mk('pilgrim', ['bruiser', 'bruiser']); z.e.s.weak = { stacks: 2, until: 999, dur: 999 }; const w = R_('enemyHitEst')(z.b, z.e), w0 = (delete z.e.s.weak, R_('enemyHitEst')(z.b, z.e)); ok(w < w0, '순례자: 약화가 주는 피해를 줄이지 않는다');
 }
-/* ---------- 납골당 주교 ---------- */
+/* ---------- 납골당 주교 (3판) ---------- */
 common('bishop');
-{ // 이름을 부를 때마다 시체 하나 · 칸 하나. max−1에 경고, 다 차면 장례 행렬(시체 하나마다) · 그 라운드 무적
-  const x = mk('bishop', ['bruiser', 'summoner']); const { b, e, p } = x; const cs = () => R_('corpsesOf')(b); const M = K.bishop.max;
-  for (let i = 0; i < M - 1; i++) act(b, e, 'raise'); ok(cs().length === M - 1 && e.clk.n === M - 1 && warned(b), '주교: max−1번 불러 시체 · 칸 · 경고가 맞지 않다');
-  ok(cs().every(c => c.hpMax === 1), '주교: 시체가 한 번 맞으면 쓰러질 만큼 약하지 않다');
+const bishopFight = () => mk('bishop', ['bruiser', 'summoner']);
+const raiseToWarn = (b, e) => { for (let i = 0; i < 9 && e.clk.n < e.clk.max - 1; i++) { e.fcNoRaise = 0; act(b, e, 'raise'); } };
+const corpses = b => R_('corpsesOf')(b);
+const killCorpse = (b, c, aoe) => E.hurtEnemy(b, c, c.hpMax + 1, aoe ? { aoe: 1 } : { single: 1 });
+{ // 칸은 주교가 부른 이름 수: 부를 때마다 시체 하나 · 칸 하나(한 번에 CLK1 call번). max−1에 경고, 다 차면 장례 행렬(부른 이름 max개가 모두 돌아와 하나마다) · 그 라운드 무적
+  const x = bishopFight(); const { b, e, p } = x; const M = K.bishop.max;
+  act(b, e, 'raise'); ok(e.clk.n === Math.min(K.bishop.call, M - 1) && corpses(b).length === e.clk.n, '주교: 한 번 부를 때 call번만큼 칸 · 시체가 아니다 ' + e.clk.n);
+  raiseToWarn(b, e); ok(e.clk.n === M - 1 && warned(b) && corpses(b).length === M - 1, '주교: max−1칸에 경고가 아니다 ' + e.clk.n);
+  ok(corpses(b).every(c => c.hpMax >= 1), '주교: 시체 체력이 없다');
   p.hp = p.hpMax; x.hpBefore = p.hp; act(b, e, 'raise'); const d = lost(x);
-  ok(e.clk.doomN === 1 && e.clk.n === 0 && cs().length === 0, '주교: 장례 행렬 뒤 시체가 남았거나 시계가 0이 아니다');
-  ok(near(d, K.bishop.march * M, 0.03), '주교: 행렬이 시체 하나마다 CLK1 값이 아니다 ' + d.toFixed(3));
+  ok(e.clk.doomN === 1 && e.clk.n === 0 && corpses(b).length === 0, '주교: 장례 행렬 뒤 시체가 남았거나 시계가 0이 아니다');
+  ok(near(d, Math.min(1, K.bishop.march * M), 0.03), '주교: 행렬이 부른 이름 max개 × CLK1 값이 아니다 ' + d.toFixed(3));
   const h0 = e.hp; b.cur = { id: 'basic' }; E.hurtEnemy(b, e, 50, { single: 1 }); b.cur = null; ok(e.hp === h0, '주교: 행렬 동안 무적이 아니다');
   R.bishop = '장례 행렬 ' + (d * 100).toFixed(1) + '%';
 }
-{ // 결정적 답 ①: 경고 칸에서 광역 한 번(시체 모두 쓰러짐) → 0칸 · 지팡이(일으키기 없음 · 취약)
-  const x = mk('bishop', ['bruiser', 'summoner']); const { b, e } = x; const cs = () => R_('corpsesOf')(b);
-  for (let i = 0; i < K.bishop.max - 1; i++) act(b, e, 'raise'); b.actN = 950; b.cur = { id: 'x' }; for (const c of cs()) E.hurtEnemy(b, c, 5, { aoe: 1 }); b.cur = null;
-  ok(e.clk.n === 0 && e.fcNoRaise >= b.round && st(e, 'vuln') >= 2, '주교: 경고 칸에서 광역 한 번에 0칸 · 지팡이가 아니다 ' + JSON.stringify({ n: e.clk.n, nr: e.fcNoRaise, r: b.round }));
-  act(b, e, 'raise'); ok(cs().length === 0 && e.clk.n === 0, '주교: 지팡이를 떨어뜨린 라운드에 일으켰다');
+{ // 시체가 줄어도 행렬은 부른 이름 max개(시체를 다 쓰러뜨려도 파국이 가벼워지지 않는다)
+  const x = bishopFight(); const { b, e, p } = x; raiseToWarn(b, e); b.cur = { id: 'x' }; b.actN = 940; for (const c of corpses(b)) killCorpse(b, c, 1); b.cur = null;
+  e.clk.n = e.clk.max - 1; p.hp = p.hpMax; x.hpBefore = p.hp; e.fcNoRaise = 0; act(b, e, 'raise'); const d = lost(x);
+  ok(e.clk.doomN === 1 && near(d, Math.min(1, K.bishop.march * K.bishop.max), 0.03), '주교: 시체가 없을 때 행렬이 부른 이름 max개가 아니다 ' + d.toFixed(3));
 }
-{ // 결정적 답 ②: 경고 칸에서 주교 무너뜨리기 → 시체 모두 무너짐 · 0칸 · 지팡이
-  const x = mk('bishop', ['bruiser', 'summoner']); const { b, e } = x; const cs = () => R_('corpsesOf')(b);
-  for (let i = 0; i < K.bishop.max - 1; i++) act(b, e, 'raise'); e.intent = { k: 'attack' }; breakIt(b, e);
-  ok(e.clk.n === 0 && cs().length === 0 && e.fcNoRaise >= b.round, '주교: 경고 칸에서 무너뜨려 시체 모두 · 0칸 · 지팡이가 아니다 ' + e.clk.n);
+{ // 평소 행동: 경고 칸에서 시체를 쓰러뜨려도 1칸(광역 한 번에 모두 쓰러뜨려도 1칸) · 라운드에 한 번 · 시계가 시체 수를 따르지 않는다
+  const x = bishopFight(); const { b, e } = x; raiseToWarn(b, e); nextRound(b); const M = e.clk.max;
+  b.actN = 941; b.cur = { id: 'x' }; for (const c of corpses(b)) killCorpse(b, c, 1); b.cur = null;
+  ok(e.clk.n === M - 2 && !corpses(b).length && !e.fcNoRaise, '주교: 경고 칸에서 광역으로 시체를 모두 쓰러뜨려 1칸이 아니다 ' + e.clk.n);
+  const y = bishopFight(); raiseToWarn(y.b, y.e); nextRound(y.b); const cs = corpses(y.b);
+  y.b.actN = 942; y.b.cur = { id: 'basic' }; killCorpse(y.b, cs[0]); y.b.actN = 943; if (cs[1]) killCorpse(y.b, cs[1]); y.b.cur = null;
+  ok(y.e.clk.n === M - 2, '주교: 경고 칸에서 시체 둘을 쓰러뜨려 한 라운드에 두 번 되감겼다 ' + y.e.clk.n);
+  if (M >= 3) { const z = bishopFight(); z.e.fcNoRaise = 0; act(z.b, z.e, 'raise'); z.e.clk.n = M - 2; nextRound(z.b); z.b.actN = 944; z.b.cur = { id: 'basic' }; killCorpse(z.b, R_('corpsesOf')(z.b)[0]); z.b.cur = null; ok(z.e.clk.n === M - 3, '주교: 경고 칸이 아닐 때 시체 하나에 1칸이 아니다 ' + z.e.clk.n); }
 }
-{ // 경고 칸이 아닐 때: 시체 하나 쓰러뜨리기(칸 = 시체 수) · 무너뜨리기(부름 끊기 · 이름 하나) · 경고 칸 아닌 한 행동 둘 쓰러뜨림에는 지팡이 없음 · 막힘 · 주교 쓰러뜨리기
-  const x = mk('bishop', ['bruiser', 'summoner']); const { b, e, p } = x; const cs = () => R_('corpsesOf')(b);
-  if (K.bishop.max >= 3) { act(b, e, 'raise'); b.actN = 951; b.cur = { id: 'basic' }; E.hurtEnemy(b, cs()[0], 5, { single: 1 }); b.cur = null; ok(e.clk.n === 0 && !e.fcNoRaise, '주교: 시체 하나를 쓰러뜨려 칸이 시체 수를 따르지 않는다'); }
-  act(b, e, 'raise'); e.intent = { k: 'attack' }; if (K.bishop.max > 2) { breakIt(b, e); ok(e.clk.n === 0 && cs().length === 0 && !e.fcNoRaise, '주교: 경고 칸이 아닌데 무너뜨려 이름 하나 취소가 아니다 ' + e.clk.n); }
-  if (K.bishop.max >= 3) { e.stun = 0; e.intent = { k: 'raise' }; e.brk = 0; delete e.s.broken; breakIt(b, e); ok(e.intent.k === 'attack' && e.teleX === 1, '주교: 부르는 중에 무너뜨려 부름이 끊기지 않았다'); }
-  const n0 = e.clk.n, c0 = cs().length; p.stun = 1; act(b, e, 'raise'); ok(e.clk.n === n0 && cs().length === c0, '주교: 기절 중에도 불렀다'); p.stun = 0;
-  if (K.bishop.max >= 3) act(b, e, 'raise'); /* 칸 2면 둘째 부름이 곧 파국(그 라운드 무적)이라 하나만 */ b.actN = 952; b.cur = { id: 'basic' }; E.hurtEnemy(b, e, 999999, { single: 1 }); b.cur = null; ok(!e.alive && cs().length === 0, '주교가 쓰러졌는데 시체가 남았다');
+{ // 결정적 답 ①: 경고 칸에서 주교 무너뜨리기 → 시체 모두 흙으로 · 0칸 · 지팡이(다음 라운드까지 부르지 못함 · 취약 2)
+  const x = bishopFight(); const { b, e } = x; raiseToWarn(b, e); e.intent = { k: 'attack' }; breakIt(b, e);
+  ok(e.clk.n === 0 && corpses(b).length === 0 && e.fcNoRaise >= b.round && st(e, 'vuln') >= 2, '주교: 경고 칸에서 무너뜨려 시체 모두 · 0칸 · 지팡이가 아니다 ' + e.clk.n);
+  act(b, e, 'raise'); ok(corpses(b).length === 0 && e.clk.n === 0, '주교: 지팡이를 떨어뜨린 라운드에 불렀다');
 }
-/* ---------- 성가 조율자 ---------- */
+{ // 결정적 답 ②: 경고 칸에서 소모품 하나(무엇이든) → 0칸 · 지팡이. 엔진 길(consUse → checkEnd)과 같다
+  const x = bishopFight(); const { b, e } = x; raiseToWarn(b, e); b.consF = (b.consF || 0) + 1; E.checkEnd(b);
+  ok(e.clk.n === 0 && corpses(b).length === 0 && e.fcNoRaise >= b.round, '주교: 경고 칸에서 소모품으로 0칸 · 지팡이가 아니다 ' + e.clk.n);
+  E.checkEnd(b); ok(e.clk.n === 0, '주교: 소모품 하나가 두 번 셌다');
+}
+{ // 같은 행동이 시체를 쓰러뜨려(평소 1칸) 경고 칸에서 내려왔어도 주교를 무너뜨리면 0칸
+  const x = bishopFight(); const { b, e } = x; raiseToWarn(b, e); nextRound(b); e.intent = { k: 'attack' };
+  b.actN = 945; b.cur = { id: 'x' }; killCorpse(b, corpses(b)[0], 1); b.cur = null; ok(e.clk.n === e.clk.max - 2, '주교: 시체 하나 1칸이 아니다');
+  e.brk = e.brkMax - 0.5; delete e.s.broken; E.addBreak(b, e, 50); ok(e.clk.n === 0 && e.fcNoRaise >= b.round, '주교: 같은 행동의 무너뜨리기가 0칸이 아니다 ' + e.clk.n);
+}
+{ // 경고 칸이 아닐 때: 무너뜨리기 · 소모품은 1칸 · 라운드에 한 번 · 부르는 중 무너뜨리면 부름이 끊김 · 막힘 · 주교 쓰러뜨리기
+  const x = bishopFight(); x.e.intent = { k: 'attack' }; capCheck('주교 무너뜨리기', x, () => { x.e.intent = { k: 'attack' }; breakIt(x.b, x.e); });
+  const y = bishopFight(); capCheck('주교 소모품', y, () => { y.b.consF = (y.b.consF || 0) + 1; E.checkEnd(y.b); });
+  const z = bishopFight(); const { b, e, p } = z;
+  if (K.bishop.max >= 3) { e.stun = 0; e.intent = { k: 'raise' }; e.brk = 0; delete e.s.broken; breakIt(b, e); ok(e.intent.k === 'attack' && e.teleX === 1 && e.clk.n === 0, '주교: 부르는 중에 무너뜨려 부름이 끊기지 않았다'); }
+  const n0 = e.clk.n, c0 = corpses(b).length; p.stun = 1; e.fcNoRaise = 0; act(b, e, 'raise'); ok(e.clk.n === n0 && corpses(b).length === c0, '주교: 기절 중에도 불렀다'); p.stun = 0;
+  e.fcNoRaise = 0; act(b, e, 'raise'); b.actN = 952; b.cur = { id: 'basic' }; E.hurtEnemy(b, e, 999999, { single: 1 }); b.cur = null; ok(!e.alive && corpses(b).length === 0, '주교가 쓰러졌는데 시체가 남았다');
+}
+/* ---------- 성가 조율자 (3판) ---------- */
 common('cantor');
 const cantorFight = () => { const x = mk('cantor', ['bruiser', 'bruiser', 'archer']); return x; };
 const barTo = (b, e, n) => { for (let i = 0; i < n; i++) act(b, e, i % 2 ? 'attack' : 'tune'); };
-{ // 곁의 적이 둘 이상이면 조율자 행동마다 한 마디. max−1에 경고, 다 차면 대합창(곁의 적 체력 가득 · 강화 · 하나마다 피해) · 그 행동을 대신
+{ // 조율자 행동마다 한 마디(곁의 적 수와 상관없이). max−1에 경고, 다 차면 대합창(곁의 적 체력 가득 · 강화 · 곁의 적 수만큼, 최소 CLK1 min) · 그 행동을 대신
   const x = cantorFight(); const { b, e, p } = x; const L = x.f.es.slice(1);
   for (const m of L) m.hp = m.hpMax * 0.3;
   barTo(b, e, K.cantor.max - 1); ok(e.clk.n === K.cantor.max - 1 && warned(b), '조율자: max−1마디 · 경고가 아니다 ' + e.clk.n);
   p.hp = p.hpMax; x.hpBefore = p.hp; const lg = b.log.length; act(b, e, 'tune'); const d = lost(x);
   ok(e.clk.doomN === 1 && L.every(m => m.hp === m.hpMax && st(m, 'empower') >= K.cantor.emp), '조율자: 대합창(곁의 적 체력 가득 · 강화)이 아니다');
-  ok(near(d, K.cantor.per * L.length, 0.03), '조율자: 합창이 곁의 적 하나마다 CLK1 값이 아니다 ' + d.toFixed(3));
+  ok(near(d, Math.min(1, K.cantor.per * Math.max(L.length, K.cantor.min)), 0.03), '조율자: 합창이 곁의 적 하나마다 CLK1 값이 아니다 ' + d.toFixed(3));
   ok(!b.log.slice(lg).some(l => l.m.includes('박자를 센다')), '조율자: 파국이 그 행동을 대신하지 않았다');
   R.cantor = '대합창(곁의 적 ' + L.length + ') ' + (d * 100).toFixed(1) + '%';
+  const y = cantorFight(); for (const m of y.f.es.slice(1)) m.alive = false; barTo(y.b, y.e, K.cantor.max - 1); ok(y.e.clk.n === K.cantor.max - 1, '조율자: 곁의 적이 없으면 마디가 멈춘다(평소 처치가 답이 된다) ' + y.e.clk.n);
+  y.p.hp = y.p.hpMax; y.hpBefore = y.p.hp; act(y.b, y.e, 'tune'); const d0 = lost(y); ok(y.e.clk.doomN === 1 && near(d0, Math.min(1, K.cantor.per * K.cantor.min), 0.03), '조율자: 곁의 적이 없을 때 대합창이 최소값이 아니다 ' + d0.toFixed(3));
 }
-{ // 결정적 답 ①: 경고 칸에서 곁의 적 하나 쓰러뜨리기 → 0칸 + 엇박
-  const x = cantorFight(); const { b, e } = x; const L = x.f.es.slice(1); barTo(b, e, K.cantor.max - 1);
-  b.actN = 960; b.cur = { id: 'basic' }; E.hurtEnemy(b, L[0], 999999, { single: 1 }); b.cur = null;
-  ok(e.clk.n === 0 && L.slice(1).every(m => st(m, 'chill') >= K.cantor.off), '조율자: 경고 칸에서 곁의 적 하나 쓰러뜨려 0칸 · 엇박이 아니다 ' + e.clk.n);
-}
-{ // 결정적 답 ②: 경고 칸에서 조율자에게 원거리 피해 한 번 → 0칸 / ③ 광역 한 번 → 0칸
-  const x = cantorFight(); const { b, e } = x; barTo(b, e, K.cantor.max - 1); b.actN = 961; b.cur = { id: 'basic' }; E.hurtEnemy(b, e, 3, { single: 1 }); b.cur = null;
-  ok(e.clk.n === 0, '조율자: 경고 칸에서 원거리 한 번에 0칸이 아니다 ' + e.clk.n);
-  const y = cantorFight(); barTo(y.b, y.e, K.cantor.max - 1); y.b.actN = 962; y.b.cur = { id: 'x' }; E.hurtEnemy(y.b, y.e, 3, { aoe: 1 }); y.b.cur = null;
-  ok(y.e.clk.n === 0, '조율자: 경고 칸에서 광역 한 번에 0칸이 아니다 ' + y.e.clk.n);
-}
-{ // 결정적 답 ④: 경고 칸에서 무너뜨리기 → 0칸
-  const x = cantorFight(); const { b, e } = x; barTo(b, e, K.cantor.max - 1); breakIt(b, e); ok(e.clk.n === 0, '조율자: 경고 칸에서 무너뜨려 0칸이 아니다 ' + e.clk.n);
-}
-{ // 경고 칸이 아닐 때: 곁의 적 쓰러뜨리기 · 직접 피해는 되감지 않는다(마디를 막을 뿐) · 무너뜨리기 · 지속 피해는 1칸 · 라운드에 한 번
+{ // 평소 행동: 경고 칸에서 곁의 적 쓰러뜨리기 · 원거리 · 광역은 1칸만(라운드에 한 번) · 경고 칸이 아니면 되감지 않는다
+  for (const [nm, f] of [['곁의 적 쓰러뜨리기', x => E.hurtEnemy(x.b, x.f.es[1], 999999, { single: 1 })], ['원거리', x => E.hurtEnemy(x.b, x.e, 3, { single: 1 })], ['광역', x => E.hurtEnemy(x.b, x.e, 3, { aoe: 1 })]]) {
+    const x = cantorFight(); const { b, e } = x; barTo(b, e, K.cantor.max - 1); nextRound(b); b.actN = 960; b.cur = { id: 'x' }; f(x); b.cur = null;
+    ok(e.clk.n === K.cantor.max - 2 && !e.clk.doomN, '조율자: 경고 칸에서 ' + nm + '이(가) 1칸이 아니다 ' + e.clk.n);
+    b.actN = 961; b.cur = { id: 'x' }; E.hurtEnemy(b, e, 3, { aoe: 1 }); E.hurtEnemy(b, x.f.es[2], 999999, { single: 1 }); b.cur = null; ok(e.clk.n === K.cantor.max - 2, '조율자: 평소 행동이 한 라운드에 두 번 되감겼다 ' + nm + ' ' + e.clk.n);
+  }
   const x = cantorFight(); const { b, e } = x; const L = x.f.es.slice(1); const C = e.clk; C.max = 5; C.n = 2;
   b.actN = 963; b.cur = { id: 'basic' }; E.hurtEnemy(b, L[0], 999999, { single: 1 }); E.hurtEnemy(b, e, 3, { single: 1 }); b.cur = null; ok(C.n === 2, '조율자: 경고 칸이 아닌데 처치 · 직접 피해로 되감겼다 ' + C.n);
-  const y = cantorFight(); capCheck('조율자 무너뜨리기', y, () => breakIt(y.b, y.e));
-  const z = cantorFight(); capCheck('조율자 지속 피해', z, () => E.hurtEnemy(z.b, z.e, z.e.hpMax * K.cantor.dotCut + 1, { dot: 1, label: '중독' }));
 }
-{ // 기절해 놓친 행동은 세지 않음 · 내가 기절하면 멈춤 · 곁의 적이 하나뿐이면 마디가 안 넘어감
-  const x = cantorFight(); const { b, e, p } = x; const L = x.f.es.slice(1);
+{ // 결정적 답 ①: 경고 칸에서 무너뜨리기 → 0칸 + 엇박
+  const x = cantorFight(); const { b, e } = x; const L = x.f.es.slice(1); barTo(b, e, K.cantor.max - 1); breakIt(b, e);
+  ok(e.clk.n === 0 && L.every(m => st(m, 'chill') >= K.cantor.off), '조율자: 경고 칸에서 무너뜨려 0칸 · 엇박이 아니다 ' + e.clk.n);
+}
+{ // 결정적 답 ②: 경고 칸에서 조율자에게 지속 피해 걸기(출혈 · 화상: 거는 순간, 중독: 그 행동 끝) → 0칸. 같은 행동의 직접 피해가 먼저 1칸 되감았어도 0칸
+  const x = cantorFight(); const { b, e, p } = x; barTo(b, e, K.cantor.max - 1); nextRound(b); b.actN = 964; b.cur = { id: 'x' }; E.hurtEnemy(b, e, 3, { single: 1 }); E.addS(b, e, 'bleed', 2); b.cur = null;
+  ok(e.clk.n === 0, '조율자: 경고 칸에서 출혈을 걸어 0칸이 아니다 ' + e.clk.n);
+  const y = cantorFight(); barTo(y.b, y.e, K.cantor.max - 1); y.b.actN = 965; y.b.cur = { id: 'x' }; E.fcEv(y.b, 'onAct', y.p, 'x'); R_('addPoison')(y.b, y.e, 3, 1); E.fcEv(y.b, 'onSkill', y.p, {}); y.b.cur = null;
+  ok(y.e.clk.n === 0, '조율자: 경고 칸에서 중독을 걸어 0칸이 아니다 ' + y.e.clk.n);
+  const z = cantorFight(); barTo(z.b, z.e, K.cantor.max - 1); z.b.cur = null; E.addS(z.b, z.e, 'bleed', 2); ok(z.e.clk.n === z.e.clk.max - 1, '조율자: 내 행동이 아닌 지속 피해에 되감겼다');
+}
+{ // 경고 칸이 아닐 때: 무너뜨리기 · 지속 피해 걸기는 1칸 · 라운드에 한 번
+  const y = cantorFight(); capCheck('조율자 무너뜨리기', y, () => breakIt(y.b, y.e));
+  const z = cantorFight(); let a = 970; capCheck('조율자 지속 피해', z, () => { z.b.actN = a++; z.b.cur = { id: 'x' }; delete z.e.s.bleed; E.addS(z.b, z.e, 'bleed', 2); z.b.cur = null; });
+}
+{ // 기절해 놓친 행동은 세지 않음 · 내가 기절하면 멈춤
+  const x = cantorFight(); const { b, e, p } = x;
   e.stun = 1; E.enemyAct(b, e); ok(e.clk.n === 0, '조율자: 기절해 놓친 행동에 마디가 넘어갔다');
   p.stun = 1; act(b, e, 'tune'); ok(e.clk.n === 0, '조율자: 내가 기절했는데 마디가 넘어갔다'); p.stun = 0;
-  L[0].alive = false; L[1].alive = false; act(b, e, 'tune'); act(b, e, 'tune'); ok(e.clk.n === 0, '조율자: 곁의 적이 하나뿐인데 마디가 넘어갔다');
 }
 /* ---------- 검은 서기관 ---------- */
 common('scribe');
@@ -227,8 +256,18 @@ const sealTo = (b, e, n) => { for (let i = 0; i < n; i++) act(b, e, 'seal'); };
   for (const id of ['bellringer', 'pilgrim', 'bishop', 'cantor', 'scribe']) ok(typeof PA[id] === 'function', '테스터: ' + id + ' 답 고르기가 없다');
   { const x = bellFight(); const { b, e } = x; b.p.st = b.p.stMax; e.clk.n = e.clk.max - 1; e.intent = { k: 'ring' }; const r = PA.bellringer(b, e, E, () => 0); ok(r && r[0] === 'dodge' && r[1] === e.id, '테스터: 줄 당길 차례에 흘리지 않는다 ' + JSON.stringify(r)); }
   { const x = mk('pilgrim', ['bruiser', 'bruiser']); const { b, e } = x; b.p.st = b.p.stMax; e.clk.n = e.clk.max - 1; e.intent = { k: 'attack' }; const r = PA.pilgrim(b, e, E, () => 0); ok(okAct(b, r) && ['dodge', 'guard'].includes(r[0]), '테스터: 순례자 공격을 흘리거나 막지 않는다 ' + JSON.stringify(r)); }
-  { const x = mk('bishop', ['bruiser', 'summoner']); const { b, e } = x; b.p.st = b.p.stMax; for (let i = 0; i < e.clk.max - 1; i++) act(b, e, 'raise'); const r = PA.bishop(b, e, E, () => 0); ok(okAct(b, r), '테스터: 주교 답이 없다 ' + JSON.stringify(r)); }
-  { const x = cantorFight(); const { b, e } = x; b.p.st = b.p.stMax; e.clk.n = e.clk.max - 1; const r = PA.cantor(b, e, E, () => 0); ok(okAct(b, r), '테스터: 조율자 답이 없다 ' + JSON.stringify(r)); }
+  { // 주교(3판): 한 행동에 무너지면 무너뜨리기 → 아니면 소모품 하나(쓰고 평소 행동) → 둘 다 없으면 평소대로
+    const CONS = R_('CONS'); const x = bishopFight(); const { b, e } = x; const run = H.G.run; b.p.st = b.p.stMax; raiseToWarn(b, e); b.cur = null;
+    e.brk = e.brkMax - 1; run.cons = []; const r1 = PA.bishop(b, e, E, () => 0); ok(okAct(b, r1) && r1[1] === e.id, '테스터: 무너질 주교를 무너뜨리러 가지 않는다 ' + JSON.stringify(r1));
+    e.brk = 0; const id = Object.keys(CONS).find(k => CONS[k].use !== 'none' && !['heal', 'escape', 'healcure'].includes(CONS[k].k) && !E.consWhyNot(b, run, { id: k, n: 1 }, null));
+    ok(!!id, '테스터 시험: 쓸 수 있는 소모품이 없다'); run.cons = [{ id, n: 1 }]; b.consN = 0; const r2 = PA.bishop(b, e, E, () => 0); ok(r2 === null && e.clk.n === 0 && !run.cons.length, '테스터: 경고 칸에서 소모품을 쓰지 않는다 ' + JSON.stringify({ r2, n: e.clk.n, id }));
+    const y = bishopFight(); y.b.p.st = y.b.p.stMax; raiseToWarn(y.b, y.e); y.b.cur = null; y.e.brk = 0; H.G.run.cons = []; const r3 = PA.bishop(y.b, y.e, E, () => 0); ok(r3 === null, '테스터: 결정적 답이 없는데 평소 행동을 바꿨다 ' + JSON.stringify(r3));
+  }
+  { // 조율자(3판): 한 행동에 무너지면 무너뜨리기 · 지속 피해를 거는 행동
+    const x = cantorFight(); const { b, e } = x; b.p.st = b.p.stMax; e.clk.n = e.clk.max - 1; e.brk = e.brkMax - 1; const r = PA.cantor(b, e, E, () => 0); ok(okAct(b, r) && r[1] === e.id, '테스터: 무너질 조율자를 무너뜨리러 가지 않는다 ' + JSON.stringify(r));
+    const y = mk('cantor', ['bruiser', 'bruiser', 'archer'], null, 'assassin', { act: ['a_dokkal'] }); y.b.p.st = y.b.p.stMax; y.b.p.ys = 9; y.e.clk.n = y.e.clk.max - 1; y.e.brk = 0; const r2 = PA.cantor(y.b, y.e, E, () => 0);
+    const A = r2 && E.actionList(y.b).find(a => a.id === r2[0]); ok(!!A && A.ok && r2[1] === y.e.id && A.v2 && A.s.fx.some(f => ['bleed', 'poison', 'ignite'].includes(f.k) || (f.k === 'st' && ['bleed', 'poison', 'ignite'].includes(f.s))), '테스터: 조율자에게 지속 피해를 걸지 않는다 ' + JSON.stringify(r2));
+  }
   { const x = mk('scribe', ['bruiser', 'darkmage']); const { b, e } = x; b.p.st = b.p.stMax; e.clk.n = e.clk.max - 1; e.intent = { k: 'attack' }; const r = PA.scribe(b, e, E, () => 0); ok(r && r[0] === 'dodge' && r[1] === e.id, '테스터: 서기관 공격을 흘리지 않는다 ' + JSON.stringify(r)); }
   { const x = mk('scribe', ['bruiser', 'darkmage']); const { b, e } = x; b.p.st = b.p.stMax; e.brk = e.brkMax - 1; e.clk.n = e.clk.max - 1; e.intent = { k: 'seal' }; const r = PA.scribe(b, e, E, () => 0); ok(okAct(b, r) && r[1] === e.id, '테스터: 줄을 적으려는 서기관을 무너뜨리러 가지 않는다 ' + JSON.stringify(r)); }
 }

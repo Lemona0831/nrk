@@ -17,7 +17,7 @@ function ch2Intent(b, e, n, al) {
     case 'dun': { const c = n % 3; return c === 1 ? { k: 'ledger' } : c === 2 ? { k: 'dunning' } : { k: 'attack' }; } // 몽둥이질 → 장부 적기 → 독촉
     case 'thug': { // 막아서기(우두머리 · 다친 동료) → 밀쳐내기 → 버티기. 혼자 남으면 버티기만
       if (!mates.length) return { k: 'brace' };
-      const c = n % 3; const lead = mates.filter(x => x.elite || x.strong || x.hp < x.hpMax * 0.6).sort((x, y) => (y.elite - x.elite) || (x.hp / x.hpMax - y.hp / y.hpMax))[0];
+      const c = n % 3; const lead = mates.filter(x => (x.elite || x.strong || x.hp < x.hpMax * 0.6) && !(x.strong && x.foe === 'captain' && ch2Hot(x))).sort((x, y) => (y.elite - x.elite) || (x.hp / x.hpMax - y.hp / y.hpMax))[0];
       if (c === 0 && lead && !alive(b).some(x => x !== e && x.guarding === lead.id)) return { k: 'guard', tgt: lead.id };
       return c === 2 ? { k: 'brace' } : { k: 'shove' };
     }
@@ -52,9 +52,9 @@ function strong2Intent(b, e, n) {
   const X = FOE_X[e.foe] || {};
   switch (e.foe) {
     case 'ledger': { const c = n % 4; return c === 0 ? { k: 'dunning' } : c === 2 ? { k: 'charge' } : { k: 'attack' }; }
-    case 'champion': { if (!b.duel) return { k: 'duel' }; const c = n % 3; return c === 0 ? { k: 'combo' } : c === 2 ? { k: 'charge' } : { k: 'attack' }; }
+    case 'champion': { if (!b.duel) return { k: 'duel' }; const c = n % 3; if (ch2Hot(e)) return c === 0 ? { k: 'combo' } : { k: 'attack' }; return c === 0 ? { k: 'combo' } : c === 2 ? { k: 'charge' } : { k: 'attack' }; } // G-1 3판(비공개 문서 참조)
     case 'lampthief': { if (e.intent && e.intent.k === 'charge') return { k: 'heavy' }; if ((e.clk && e.clk.perm) || e.under) return { k: 'shadowstab' }; const q = e.thQ = (e.thQ || 0) + 1; return ['douselamp', 'douselamp', 'charge'][(q - 1) % 3] === 'charge' ? { k: 'charge' } : { k: 'douselamp' }; } // G-1 시계(비공개 문서 참조)
-    case 'captain': { if (capDown(b)) return { k: 'formation' }; const c = n % 4; return c === 0 ? { k: 'formation' } : c === 1 ? { k: 'brace' } : c === 2 ? { k: 'rally' } : { k: 'charge' }; }
+    case 'captain': { if (capDown(b)) return { k: 'formation' }; if (ch2Hot(e) && capIntact(b)) return { k: 'muster' }; /* G-1 3판(비공개 문서 참조) */ const c = n % 4; return c === 0 ? { k: 'formation' } : c === 1 ? { k: 'brace' } : c === 2 ? { k: 'rally' } : { k: 'charge' }; }
     case 'merchant': { if (!b.trade) return { k: 'haggle' }; if (b.trade === 'yes') return { k: 'recover' }; const c = n % 3; return c === 0 ? { k: 'charge' } : c === 1 ? { k: 'appraise' } : { k: 'attack' }; }
   }
   return null;
@@ -107,7 +107,8 @@ function ch2Act(b, e, i, d) {
     case 'combo': { for (let k = 0; k < FOE_X.champion.hits && !b.over; k++) hurtPlayer(b, d * FOE_X.champion.combo, { src: e, single: 1, label: e.n + '의 연타' }); return 1; }
     case 'douselamp': { if (!b.ctx.mods.includes('dark')) b.ctx.mods.push('dark'); logp(b, 'crit', e.n + '이(가) 등불을 끈다. 방이 어두워진다'); codexHit(b, 'lampthief', 'dark'); if (e.strong) { thiefHide(b, e); fcAdd(b, e, 1, 'douse'); } return 1; } // G-1 시계(비공개 문서 참조)
     case 'shadowstab': { e.stabOut = 0; const perm = !!(e.clk && e.clk.perm); hurtPlayer(b, perm ? p.hpMax * X.stab : d, { src: e, single: 1, label: e.n + '이(가) 그림자 속에서 찌른다' }); if (e.alive && !b.over) { if (perm) thiefHide(b, e); else e.under = 0; } return 1; } // G-1(비공개 문서 참조)
-    case 'formation': { if (b.capForm && !capThug(b)) { logp(b, 'sys', e.n + '이(가) 부하를 찾지만 대형을 세울 수 없다'); return 1; } if (capDown(b)) { b.formBroken = 0; logp(b, 'bad', e.n + '이(가) 부하들을 다시 세운다. 대형이 선다'); return 1; } logp(b, 'sys', e.n + '이(가) 부하들의 자리를 바꾼다. 대형이 선다'); return 1; }
+    case 'muster': { e.musterOn = 1; hurtPlayer(b, d, { src: e, single: 1, label: e.n + '이(가) 호령하며 내리친다' }); e.musterOn = 0; return 1; } // G-1 3판(비공개 문서 참조)
+    case 'formation': { if (b.capForm && !capMen(b)) { logp(b, 'sys', e.n + '이(가) 부하를 찾지만 대형을 세울 수 없다'); return 1; } if (capDown(b)) { b.formBroken = 0; logp(b, 'bad', e.n + '이(가) 부하들을 다시 세운다. 대형이 선다'); return 1; } logp(b, 'sys', e.n + '이(가) 부하들의 자리를 바꾼다. 대형이 선다'); return 1; }
     case 'rally': { for (const x of ch2Mates(b, e)) addS(b, x, 'empower', 1); logp(b, 'bad', e.n + '이(가) 돌격 명령을 내린다. 부하 모두 강화 1'); return 1; }
     case 'haggle': { b.trade = 'ask'; b.tradeBy = e.id; logp(b, 'crit', e.n + '이(가) 저울을 내민다. 거래를 받을지 고른다'); return 1; }
     case 'appraise': { addS(b, p, 'vuln', FOE_X.merchant.appraise); logp(b, 'bad', e.n + '이(가) 당신의 값을 매긴다. 취약 ' + FOE_X.merchant.appraise); return 1; }
@@ -132,6 +133,11 @@ function ch2Open(b, e, vuln) { if (!e || !e.alive) return; e.stun = Math.max(e.s
 /* 2판 답(비공개 문서 참조): js/25 fcAnswer를 부르고, 마지막 경고 칸에서 든 답인지(C.dec)를 보상에 알린다 */
 function ch2Ans(b, e, why) { if (!e || !e.alive) return 0; fcInit(b, e); const C = e.clk; if (!C) return 0; C.dec = !C.perm && C.n >= C.max - 1 ? 1 : 0; const k = fcAnswer(b, e, why); C.dec = 0; return k; }
 const ch2Dec = e => !!(e && e.clk && e.clk.dec);
+/* 3판 평소 되감기(비공개 문서 참조) */
+function ch2Ord(b, e, why) { if (!e || !e.alive) return 0; fcInit(b, e); const C = e.clk; if (!C || C.perm || !C.n) return 0; if (C.n >= C.max - 1) { const R = b.round || 0; if (C.backR === R) return 0; C.backR = R; } return fcRewind(b, e, 1, why); }
+const ch2Hot = e => !!(e && e.clk && !e.clk.perm && e.clk.n >= e.clk.max - 1); // 마지막 경고 칸
+/* 3판 예고 바꾸기: 새 예고를 보이고 그대로 실행한다(비공개 문서 참조) */
+function ch2Retell(b, e, it) { if (!e || !e.alive || e.stun > 0 || (e.intent && e.intent.k === it.k)) return; e.intent = e.teleSet = it; e.teleX = 0; e.teleTurn = null; }
 const ch2CanBack = (b, e) => !!(e && e.clk && !e.clk.perm && e.clk.n > 0 && (e.clk.n >= e.clk.max - 1 || e.clk.backR !== (b.round || 0))); // 지금 되감기가 드는가(골드를 헛되이 받지 않는다)
 /* 빚 장부의 주인 */
 function ledgerSeize(b) {
@@ -150,13 +156,18 @@ function thiefHide(b, e) { if (!e.alive || e.under || thiefNoHide(b, e)) return;
 function thiefReveal(b, e, why) { if (!e || !e.alive) return; const X = FOE_X.lampthief; e.under = 0; e.noHideR = (b.round || 0) + X.reveal; addS(b, e, 'vuln', X.vuln); logp(b, 'good', e.n + '이(가) ' + (why || '') + ' 드러난다. 취약 ' + X.vuln); codexHit(b, 'lampthief', 'lit'); }
 const stabEst = (b, e, est) => e.clk && e.clk.perm ? b.p.hpMax * FOE_X.lampthief.stab : est;
 /* 장터 경비대장 */
-const capThug = b => alive(b).some(x => x.role === 'thug');
-const capIntact = b => !!(b.capForm && !b.formBroken && capThug(b));
-const capDown = b => !!(b.capForm && b.formBroken && capThug(b));
-function capBreak(b, e, why) {
+const capMen = b => alive(b).some(x => x.role === 'thug' || x.role === 'xbow'); // 대형을 이루는 부하(덩치 · 석궁)
+const capIntact = b => !!(b.capForm && !b.formBroken && capMen(b));
+const capDown = b => !!(b.capForm && b.formBroken && capMen(b));
+function capBreak(b, e, why) { // 비공개 문서 참조
   if (!capIntact(b)) return; b.formBroken = 1; logp(b, 'good', '대형이 깨진다'); codexHit(b, 'captain', 'broke');
-  ch2Ans(b, e, why); // 비공개 문서 참조
+  ch2Ord(b, e, why);
 }
+function capMuster(b, e) { // 비공개 문서 참조
+  for (const x of alive(b)) if (x.role === 'thug') { if (x.guarding === e.id) x.guarding = null; if (x.intent && x.intent.k === 'guard' && x.intent.tgt === e.id) ch2Retell(b, x, { k: 'brace' }); }
+  if (capIntact(b)) ch2Retell(b, e, { k: 'muster' });
+}
+function champBait(b, e) { if (b.duel && !(e.intent && ['attack', 'combo', 'heavy'].includes(e.intent.k))) ch2Retell(b, e, { k: 'attack' }); }
 const CH2_CLOCK = {
   ledger: {
     n: '빚', get max() { return FOE_X.ledger.max; }, ans: ['gold', 'brk'],
@@ -176,8 +187,8 @@ const CH2_CLOCK = {
     },
   },
   champion: {
-    n: '함성', get max() { return FOE_X.champion.max; }, ans: ['kill', 'brk', 'parry'],
-    warn: (b, e) => '관중석이 들썩인다. ' + e.n + '의 이름이 터져 나오기 직전이다',
+    n: '함성', get max() { return FOE_X.champion.max; }, ans: ['parry', 'brk'], // 3판(비공개 문서 참조)
+    warn: (b, e) => { champBait(b, e); return '관중석이 들썩인다. ' + e.n + '의 이름이 터져 나오기 직전이다'; },
     doom(b, e) { logp(b, 'crit', '관중이 ' + e.n + '의 이름을 외친다'); codexHit(b, 'champion', 'cheer'); ch2Blow(b, e, FOE_X.champion.doom, e.n + '의 결승타'); },
     reward(b, e) { if (!ch2Dec(e)) return; e.booArm = 1; logp(b, 'good', '관중이 야유한다. ' + e.n + '의 손이 무뎌진다'); codexHit(b, 'champion', 'boo'); },
     blocked: b => ch2PStun(b),
@@ -185,7 +196,7 @@ const CH2_CLOCK = {
       onRoundEnd(b, e) { fcAdd(b, e, 1, 'round'); },
       onFoeAct(b, e, x) { if (x !== e || e.stun > 0) return; e.booOn = e.booArm ? 1 : 0; e.booArm = 0; },
       onAct(b, e, p, id, act) { if (id === 'guard' || (act && act.v2 && act.s && (act.s.fx || []).some(f => f.k === 'evade'))) fcAdd(b, e, FOE_X.champion.coward, 'coward'); },
-      onHit(b, e, p, t, o, c, d) { if (t !== e || !(d > 0)) return; if (e.bhA !== b.actN) { e.bhA = b.actN; e.bhD = 0; e.bhDone = 0; } e.bhD += d; if (!e.bhDone && e.bhD >= e.hpMax * FOE_X.champion.big) { e.bhDone = 1; if (ch2Ans(b, e, 'big')) logp(b, 'good', '관중이 당신의 이름을 연호한다'); } },
+      onHit(b, e, p, t, o, c, d) { if (t !== e || !(d > 0)) return; if (e.bhA !== b.actN) { e.bhA = b.actN; e.bhD = 0; e.bhDone = 0; } e.bhD += d; if (!e.bhDone && e.bhD >= e.hpMax * FOE_X.champion.big) { e.bhDone = 1; if (ch2Ord(b, e, 'big')) logp(b, 'good', '관중이 당신의 이름을 연호한다'); } }, // 3판(비공개 문서 참조)
       onParry(b, e, p, src) { if (src === e) ch2Ans(b, e, 'parry'); },
       onFoeBreak(b, e, x) { if (x === e) ch2Ans(b, e, 'brk'); },
     },
@@ -203,22 +214,24 @@ const CH2_CLOCK = {
     },
   },
   captain: {
-    n: '대형', get max() { return FOE_X.captain.max; }, ans: ['brk', 'kill', 'aoe'],
-    warn: (b, e) => e.n + '이(가) 손을 든다. 부하들이 일제히 겨눈다',
+    n: '대형', get max() { return FOE_X.captain.max; }, ans: ['brk', 'parry'], // 3판(비공개 문서 참조)
+    warn: (b, e) => { capMuster(b, e); return e.n + '이(가) 손을 든다. 부하들이 일제히 겨눈다'; },
     doom(b, e) {
       logp(b, 'crit', '대형이 자리를 잡았다. 일제 사격'); codexHit(b, 'captain', 'form'); const D = FOE_X.captain.doom;
       const L = [e].concat(alive(b).filter(x => x.role === 'thug').slice(0, 1), alive(b).filter(x => x.role === 'xbow').slice(0, 1));
       L.forEach((x, i) => { if (!b.over && x.alive) ch2Blow(b, x, D[Math.min(i, D.length - 1)], x.n + '의 일제 사격'); });
     },
-    reward(b, e) { if (!ch2Dec(e)) return; ch2Open(b, e, FOE_X.captain.vuln); if (b.formBroken) { e.intent = e.teleSet = { k: 'formation' }; e.teleX = 0; logp(b, 'good', e.n + '이(가) 부하를 다시 세우느라 몸이 빈다'); } else logp(b, 'good', e.n + '이(가) 흐트러진 대형을 추스르느라 몸이 빈다'); },
+    reward(b, e) { if (!ch2Dec(e)) return; ch2Open(b, e, FOE_X.captain.vuln); logp(b, 'good', e.n + '이(가) 흐트러진 대형을 추스르느라 몸이 빈다'); },
     blocked: b => ch2PStun(b),
-    on: {
+    on: { // 3판(비공개 문서 참조)
       onRoundEnd(b, e) { if (capIntact(b)) fcAdd(b, e, 1, 'form'); },
-      onFoeBreak(b, e, x) { if (x.role === 'thug') capBreak(b, e, 'brk'); },
-      onFoeDown(b, e, x) { if (x.role === 'xbow') ch2Ans(b, e, 'xbow'); if (x.role === 'thug' && !capThug(b)) capBreak2(b, e); },
+      onFoeBreak(b, e, x) { if (x === e) ch2Ans(b, e, 'brk'); else if (x.role === 'thug') capBreak(b, e, 'thug'); },
+      onFoeDown(b, e, x) { if (x.role !== 'xbow' && x.role !== 'thug') return; ch2Ord(b, e, 'kill'); if (b.capForm && !b.formBroken && !capMen(b)) { b.formBroken = 1; codexHit(b, 'captain', 'broke'); } },
+      onParry(b, e, p, src) { if (src === e && e.musterOn) ch2Ans(b, e, 'parry'); },
+      onEvade(b, e, p, src) { if (src === e && e.musterOn) ch2Ans(b, e, 'parry'); },
       onHit(b, e, p, t, o) {
         if (!o || !o.aoe || !capIntact(b)) return; if (e.caA !== b.actN) { e.caA = b.actN; e.caS = []; e.caDone = 0; } if (!e.caS.includes(t.id)) e.caS.push(t.id);
-        const need = [e].concat(alive(b).filter(x => x.role === 'thug' || x.role === 'xbow')); if (!e.caDone && need.every(x => e.caS.includes(x.id))) { e.caDone = 1; if (ch2Ans(b, e, 'aoe')) logp(b, 'good', '대형이 흔들린다'); }
+        const need = [e].concat(alive(b).filter(x => x.role === 'thug' || x.role === 'xbow')); if (!e.caDone && need.every(x => e.caS.includes(x.id))) { e.caDone = 1; if (ch2Ord(b, e, 'aoe')) logp(b, 'good', '대형이 흔들린다'); }
       },
     },
   },
@@ -237,7 +250,6 @@ const CH2_CLOCK = {
     },
   },
 };
-function capBreak2(b, e) { if (!b.capForm || b.formBroken) return; b.formBroken = 1; codexHit(b, 'captain', 'broke'); ch2Ans(b, e, 'thug'); } // 비공개 문서 참조
 function ch2ClockReg() { if (typeof FOE_CLOCK !== 'undefined' && FOE_CLOCK.ledger !== CH2_CLOCK.ledger) Object.assign(FOE_CLOCK, CH2_CLOCK); }
 /* --- 바르도 등불 --- */
 function bardoSetup(b, e) {
@@ -381,6 +393,7 @@ function ch2Text(b, e, i, est) {
     case 'smoke': return teleFill(b, e, 'smoke', { sc: 1, sw: 1 });
     case 'sting': return teleFill(b, e, 'sting', { est: r1(est * 0.5), sp: 2 });
     case 'lunge': return teleFill(b, e, 'lunge', { est: r1(est) });
+    case 'muster': return teleFill(b, e, 'muster', { est: r1(est), hv: 0 }); // G-1 3판
     case 'bark': case 'whip': return teleFill(b, e, i.k, { tgt: tn('w_mate') });
     case 'grab': return teleFill(b, e, 'grab', { est: r1(est * 0.7) });
     case 'combo': return teleFill(b, e, 'combo', { cest: r1(est * FOE_X.champion.combo) });
@@ -422,6 +435,7 @@ function ch2Badge(b, e, i, est, capOf) {
     case 'hide': return { ico: '👤', num: '', txt: '숨기', cls: 'warn' };
     case 'shadowstab': return { ico: '🗡️', num: r1(capOf(stabEst(b, e, est))), txt: '그림자 찌르기', cls: 'atk' };
     case 'formation': return { ico: '🛡️', num: '', txt: '대형', cls: 'sup' };
+    case 'muster': return { ico: '📯', num: r1(capOf(est)), txt: '호령', cls: 'atk' }; // G-1 3판
     case 'rally': return { ico: '📯', num: '', txt: '돌격 명령', cls: 'warn' };
     case 'haggle': return { ico: '⚖️', num: '', txt: '흥정', cls: 'warn' };
     case 'appraise': return { ico: '⚖️', num: '', txt: '값 매기기 · 취약 ' + FOE_X.merchant.appraise, cls: 'warn' };

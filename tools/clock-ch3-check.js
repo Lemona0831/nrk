@@ -1,7 +1,7 @@
 'use strict';
-/* G-1 3챕터 강적 시계 단위 시험 2판 (js/15-chapter3.js W3_CLOCK · js/25-foe-clock.js). 규칙은 비공개 문서 참조.
+/* G-1 3챕터 강적 시계 단위 시험 2판 · 3판(봉화대장 · 대변인) (js/15-chapter3.js W3_CLOCK · js/25-foe-clock.js). 규칙은 비공개 문서 참조.
    강적 다섯마다: 시계 정의 · 답 태그 2종 이상 · 마지막 경고(답을 알려 주지 않음) · 경고 뒤 기다림 · 파국 · 결정적 답(마지막 경고 칸에서 한 행동 → 0칸 + 보상) ·
-   평소 되감기(경고 칸이 아니면 1칸 · 라운드에 한 번, 화면의 수를 비추는 시계는 예외) · 멈춤. 칸 수 · 세기 · 보상 길이는 FOE_X에서 읽는다(손잡이를 바꿔도 시험은 그대로).
+   평소 되감기(경고 칸이 아니면 1칸 · 라운드에 한 번, 화면의 수를 비추는 시계는 예외. 3판 강적은 평소 행동이 경고 칸에서도 1칸) · 멈춤. 칸 수 · 세기 · 보상 길이는 FOE_X에서 읽는다(손잡이를 바꿔도 시험은 그대로).
    쓰기: node tools/clock-ch3-check.js. 실패가 있으면 1로 끝난다 */
 process.env.DGDIR = process.env.DGDIR || '.';
 const H = require('./uqtest/_h.js'); const { E, R_ } = H;
@@ -36,34 +36,45 @@ function common(foe, maxKnob) {
   return D;
 }
 
-/* 1 봉화대장: 시계 = 가장 먼저 터질 봉화의 남은 칸(화면의 수를 비춘다) */
+/* 1 봉화대장: 시계 = 가장 먼저 터질 봉화의 남은 칸(화면의 수를 비춘다). 3판: 결정적 답은 본체 무너뜨리기 · 곧 터질 봉화에 원거리 · 광역 */
 {
   const XB = X.beaconlord, D = common('beaconlord', XB.fuse), M = XB.fuse;
   const toWarn = (b, s) => { for (let k = 0; k < M - 1; k++) w3Act(b, s, { k: 'pourbeacon' }, 10); };
+  const hotOf = b => b.en.filter(e => e.role === 'bonfire' && e.alive).sort((x, y) => x.fuse - y.fuse)[0];
+  t(D.ans.includes('brk'), '봉화대장: 근접도 닿는 답 태그(brk)가 없다');
   { const { b, s, p } = mk('beaconlord', ['pike', 'beacon']); const L = b.en.filter(e => e.role === 'bonfire'); const C = s.clk;
-    t(L.length === XB.fires && L.every(x => x.fuse === M) && C && C.n === 0 && C.max === M, '봉화대장: 봉화 수 · 칸 · 시계 0/' + M + '가 아니다'); t(s.intent && s.intent.k === 'pourbeacon', '봉화대장: 봉화가 선 뒤 첫 예고가 기름 붓기가 아니다(' + (s.intent && s.intent.k) + ')');
+    t(L.length === XB.fires && L.every(x => x.fuse === M && x.brkMax === XB.brk) && C && C.n === 0 && C.max === M, '봉화대장: 봉화 수 · 칸 · 붕괴 상한 · 시계 0/' + M + '가 아니다'); t(s.intent && s.intent.k === 'pourbeacon', '봉화대장: 봉화가 선 뒤 첫 예고가 기름 붓기가 아니다(' + (s.intent && s.intent.k) + ')');
     toWarn(b, s); t(C.n === M - 1 && recN(b, 'clkwarn') === 1 && logHas(b, D.warn()), '봉화대장: ' + (M - 1) + '/' + M + '에서 마지막 경고가 없다(' + C.n + ')');
     w3Act(b, s, { k: 'pourbeacon' }, 10); t(L.every(x => x.alive) && C.n === M - 1, '봉화대장: 경고한 그 차례에 터졌다');
     next(b); const en0 = b.en.length; const d1 = lost(p, () => w3Act(b, s, { k: 'pourbeacon' }, 10));
     t(near(d1, XB.boom) && L.filter(x => x.alive).length === XB.fires - 1 && recN(b, 'clkdoom') === 1, '봉화대장: 첫 폭발 ' + XB.boom + '가 아니다(' + d1.toFixed(3) + ')');
     t(b.en.length === en0 + 1 && b.en[b.en.length - 1].reinf, '봉화대장: 폭발에 경보 한 칸(증원)이 없다');
     t(C.n === 0, '봉화대장: 터진 뒤 다음 봉화로 시계가 돌아오지 않았다(' + C.n + ')');
-    toWarn(b, s); next(b); const d2 = lost(p, () => w3Act(b, s, { k: 'pourbeacon' }, 10));
-    t(near(d2, XB.boom * XB.chain) && recN(b, 'clkdoom') === 2, '봉화대장: 둘째 폭발 ×' + XB.chain + '가 아니다(' + d2.toFixed(3) + ')'); }
-  /* 결정적 답 ① 가장 먼저 터질 봉화를 한 행동으로 무너뜨리기 → 0칸 · 남은 봉화 칸이 가득 · 불길(보상) */
+    toWarn(b, s); next(b); const d2 = lost(p, () => { p.guard = 1; w3Act(b, s, { k: 'pourbeacon' }, 10); });
+    t(near(d2, Math.min(1, XB.boom * XB.chain)) && recN(b, 'clkdoom') === 2, '봉화대장: 둘째 폭발 ×' + XB.chain + '(방어로 줄지 않음)가 아니다(' + d2.toFixed(3) + ')'); }
+  /* 결정적 답 ① 본체 무너뜨리기(기름통을 떨어뜨린다) → 0칸 · 남은 봉화 칸 가득 · 불길(보상) */
   { const { b, s } = mk('beaconlord', ['pike', 'beacon']); const L = b.en.filter(e => e.role === 'bonfire'); const C = s.clk;
-    t(XB.brkHot <= 35 * BR.heavyMul, '봉화대장: 곧 터질 봉화의 붕괴 상한 ' + XB.brkHot + '이 강공격 한 번(' + (35 * BR.heavyMul).toFixed(0) + ')보다 크다');
-    toWarn(b, s); if (M > 2) w3Act(b, s, { k: 'pourbeacon', all: 1 }, 10); const hot = L.slice().sort((x, y) => x.fuse - y.fuse)[0]; t(C.n === M - 1, '봉화대장: 답 시험 전 경고 칸이 아니다'); t(hot.brkMax === XB.brkHot && L.filter(x => x !== hot).every(x => x.brkMax === XB.brk), '봉화대장: 곧 터질 봉화만 붕괴 상한이 낮아야 한다');
-    brkOut(b, hot); t(!hot.alive && C.n === 0 && backWhy(b, 'brk') && L.filter(x => x.alive).every(x => x.fuse === M && x.brkMax === XB.brk), '봉화대장: 경고 칸에서 봉화를 무너뜨렸는데 0칸 · 남은 봉화 가득이 아니다(' + C.n + ')');
-    t(st(s, 'ignite') >= XB.rewIg && vulnOf(s) > 0, '봉화대장: 결정적 답의 보상(불길 · 취약)이 없다');
+    brkOut(b, s); t(C.n === 0 && !backWhy(b, 'brk') && st(s, 'ignite') === 0, '봉화대장: 경고 칸이 아닌데 본체 붕괴가 무엇을 했다'); s.s = {}; s.stun = 0; delete s.s.broken; s.brk = 0;
+    toWarn(b, s); t(C.n === M - 1, '봉화대장: 답 시험 전 경고 칸이 아니다');
+    brkOut(b, s); t(C.n === 0 && backWhy(b, 'brk') && L.every(x => x.alive && x.fuse === M), '봉화대장: 경고 칸에서 본체를 무너뜨렸는데 0칸 · 남은 봉화 가득이 아니다(' + C.n + ')');
+    t(st(s, 'ignite') >= XB.rewIg && vulnOf(s) > 0, '봉화대장: 결정적 답(본체)의 보상(불길 · 취약)이 없다');
     w3Act(b, s, { k: 'pourbeacon' }, 10); t(C.n === 1 && !recN(b, 'clkdoom'), '봉화대장: 답한 뒤 다음 기름이 1칸이 아니다(' + C.n + ')'); }
-  { const { f, b, s } = mk('beaconlord', ['pike', 'beacon'], 'hunter'); const L = b.en.filter(e => e.role === 'bonfire'); toWarn(b, s); const hot = L.slice().sort((x, y) => x.fuse - y.fuse)[0]; // 실제 강공격 한 번(후열 봉화: 원거리)
-    H.act(f, 'heavy', hot); t(!hot.alive && s.clk.n === 0, '봉화대장: 원거리 강공격 한 번으로 가장 먼저 터질 봉화가 무너지지 않았다(붕괴 ' + Math.round(hot.brk) + '/' + hot.brkMax + ', 시계 ' + s.clk.n + ')'); }
-  /* 결정적 답 ② 광역 한 번 */
+  /* 기름통을 든 봉화대장(경고 칸 · 기름 붓기 예고)은 붕괴가 brkWarn배: 실제 근접 강공격 한 번으로 무너진다 */
+  { const { f, b, s } = mk('beaconlord', ['pike', 'beacon']); const BM = R_('w3BrkMul'); s.brkMax = 100; s.brk = 0; s.armor = 0; s.intent = { k: 'pourbeacon' };
+    t(BM(b, s) === 1, '봉화대장: 경고 칸이 아닌데 붕괴 배율이 있다'); toWarn(b, s); s.intent = { k: 'firerain' }; t(BM(b, s) === 1, '봉화대장: 기름 붓기 예고가 아닌데 붕괴 배율이 있다'); s.intent = { k: 'pourbeacon' }; t(BM(b, s) === XB.brkWarn, '봉화대장: 경고 칸 · 기름 붓기 예고의 붕괴 배율이 ' + XB.brkWarn + '가 아니다(' + BM(b, s) + ')');
+    H.act(f, 'heavy', s); t(s.s.broken && s.clk.n === 0 && backWhy(b, 'brk'), '봉화대장: 경고 칸에서 근접 강공격 한 번으로 무너지지 않았다(붕괴 ' + Math.round(s.brk) + '/' + s.brkMax + ', 시계 ' + s.clk.n + ')'); }
+  /* 결정적 답 ② 곧 터질 봉화에 원거리 한 번(실제 사냥꾼 기본 공격) */
+  { const { f, b, s } = mk('beaconlord', ['pike', 'beacon'], 'hunter'); const L = b.en.filter(e => e.role === 'bonfire'); toWarn(b, s); const hot = hotOf(b);
+    H.act(f, 'basic', hot); t(s.clk.n === 0 && backWhy(b, 'hit') && L.filter(x => x.alive).every(x => x.fuse === M) && vulnOf(s) > 0, '봉화대장: 원거리 한 번으로 곧 터질 봉화를 맞혔는데 0칸 · 보상이 아니다(시계 ' + s.clk.n + ')'); }
+  /* 결정적 답 ③ 광역 한 번 */
   { const { b, s } = mk('beaconlord', ['pike', 'beacon']); const L = b.en.filter(e => e.role === 'bonfire'); const C = s.clk;
-    myAct(b, 'f_topple', () => E.hurtEnemy(b, L[1], 1, { aoe: 1 })); t(C.n === 0 && !backWhy(b, 'aoe'), '봉화대장: 경고 칸이 아닌데 광역이 무엇을 했다');
+    myAct(b, 'f_topple', () => E.hurtEnemy(b, L[1], 1, { aoe: 1 })); t(C.n === 0 && !backWhy(b, 'hit') && vulnOf(s) === 0, '봉화대장: 경고 칸이 아닌데 광역이 무엇을 했다');
     toWarn(b, s); myAct(b, 'f_topple', () => { for (const x of L) E.hurtEnemy(b, x, 1, { aoe: 1 }); });
-    t(C.n === 0 && backWhy(b, 'aoe') && L.every(x => x.alive && x.fuse === M) && vulnOf(s) > 0, '봉화대장: 경고 칸에서 광역 한 번에 0칸 · 보상이 아니다(' + C.n + ')'); }
+    t(C.n === 0 && backWhy(b, 'hit') && L.every(x => x.alive && x.fuse === M) && vulnOf(s) > 0, '봉화대장: 경고 칸에서 광역 한 번에 0칸 · 보상이 아니다(' + C.n + ')'); }
+  /* 평소 행동: 근접으로 곧 터질 봉화 치기 · 다른 봉화 부수기는 경고 칸에서도 1칸을 넘게 되감지 않는다(봉화대장은 칸을 옮기지 않는다) */
+  { const { b, s } = mk('beaconlord', ['pike', 'beacon']); const C = s.clk; toWarn(b, s); const hot = hotOf(b), other = b.en.find(e => e.role === 'bonfire' && e.alive && e !== hot);
+    myAct(b, 'basic', () => E.hurtEnemy(b, hot, 1, { single: 1 })); t(C.n === M - 1 && !backWhy(b, 'hit'), '봉화대장: 근접 한 번이 곧 터질 봉화의 결정적 답이 되었다(' + C.n + ')');
+    b.round = 7; myAct(b, 'heavy', () => brkOut(b, other)); t(!other.alive && C.n >= M - 2 && !backWhy(b, 'hit') && vulnOf(s) === 0, '봉화대장: 다른 봉화를 부숴 1칸 넘게 되감기거나 보상이 들었다(' + C.n + ')'); }
   { const { b, s } = mk('beaconlord', ['pike', 'beacon']); const L = b.en.filter(e => e.role === 'bonfire');
     s.intent = { k: 'pourbeacon' }; s.teleSet = s.intent; brkOut(b, s); const f0 = L.map(x => x.fuse).join(); R_('enemyAct')(b, s); t(L.map(x => x.fuse).join() === f0, '봉화대장: 무너진 라운드에 기름을 부었다');
     for (const x of L.filter(x => x.alive)) brkOut(b, x); t(s.stun >= 1 && st(s, 'ignite') >= 3 && st(s, 'vuln') > 0 && s.clk.n === 0, '봉화대장: 봉화를 다 부순 보상(불길 · 화상 3 · 취약)이 없다'); }
@@ -99,34 +110,48 @@ function common(foe, maxKnob) {
   { const { b, s, p } = mk('siege', ['sapper', 'wallguard']); p.stun = 1; w3Act(b, s, { k: 'assemble' }, 10); t(s.clk.n === 0 && s.clk.stop === 1, '공성 기술자: 기절 중에 시계가 멈추지 않았다'); }
 }
 
-/* 3 탄원자들의 대변인 */
+/* 3 탄원자들의 대변인: 시계 = 대변인이 부른 수(3판, 폭도 수를 비추지 않는다). 결정적 답은 대변인 무너뜨리기 · 골드 */
 {
   const XP = X.speaker, D = common('speaker', XP.max), M = XP.max;
-  const toWarn = (b, s) => { for (let k = 0; k < 4 && s.clk.n < M - 1; k++) w3Act(b, s, { k: 'rally3' }, 10); };
+  t(D.ans.includes('brk') && D.ans.includes('gold'), '대변인: 답 태그가 brk · gold가 아니다(' + D.ans + ')');
+  const fillOf = k => k === 'rally3' ? XP.loud : k === 'incite' || k === 'shout' ? XP.stir : 0;
+  const toWarn = (b, s) => { for (let k = 0; k < 9 && s.clk.n < M - 1; k++) w3Act(b, s, { k: 'shout' }, 10); };
   const rioters = b => b.en.filter(e => e.alive && e.role === 'rioter' && !e.strong);
-  { const { b, s, p } = mk('speaker', ['bellman', 'rioter', 'rioter']); const C = s.clk; t(C.n === Math.min(2, M - 1) && C.max === M, '대변인: 폭도 둘로 시작해 2칸이 아니다(' + C.n + ')');
-    toWarn(b, s); t(C.n === M - 1 && recN(b, 'clkwarn') === 1 && logHas(b, D.warn()), '대변인: 부르기가 경고 없이 다 찼거나 마지막 경고가 없다(' + C.n + ')');
-    w3Act(b, s, { k: 'rally3' }, 10); t(C.n === M - 1 && !recN(b, 'clkdoom'), '대변인: 경고한 그 차례에 밀어닥쳤다');
-    next(b); full(p); p.guard = 1; const h0 = p.hp; w3Act(b, s, { k: 'rally3' }, 10); const d = (h0 - p.hp) / p.hpMax;
-    t(near(d, XP.push * M * 0.5) && C.n === 0 && recN(b, 'clkdoom') === 1, '대변인: 「성문을 열어라」(방어 절반 ' + (XP.push * M * 0.5).toFixed(2) + ')가 아니다(' + d.toFixed(3) + ')'); }
-  /* 폭도가 서 있는 라운드 끝마다 군중이 불어난다 */
-  { const { b, s } = mk('speaker', ['bellman', 'rioter', 'rioter']); const C = s.clk, n0 = C.n; fcEv(b, 'onRoundEnd'); t(C.n === Math.min(M - 1, n0 + XP.grow), '대변인: 폭도가 있는데 라운드 끝에 군중이 불지 않았다(' + C.n + ')'); C.n = M - 1; next(b); next(b); fcEv(b, 'onRoundEnd'); t(C.n === M - 1 && !recN(b, 'clkdoom'), '대변인: 라운드 끝 불어남이 파국을 냈다(파국은 부르기로만)');
-    const rs = rioters(b); for (const r of rs.slice(0, rs.length - XP.need + 1)) { r.alive = false; r.hp = 0; } const n1 = C.n; fcEv(b, 'onRoundEnd'); t(C.n === n1, '대변인: 폭도가 군중(' + XP.need + ') 아래인데 군중이 불었다'); }
-  /* 결정적 답 ① 광역 한 번 ② 대변인 무너뜨리기 */
-  { const { b, s } = mk('speaker', ['bellman', 'rioter', 'rioter']); const C = s.clk; toWarn(b, s); const r = rioters(b);
-    myAct(b, 'f_topple', () => { for (const x of r) E.hurtEnemy(b, x, 1, { aoe: 1 }); }); t(C.n === 0 && backWhy(b, 'aoe') && vulnOf(s) > 0, '대변인: 경고 칸에서 광역 한 번에 0칸 · 보상이 아니다(' + C.n + ')'); }
-  { const { b, s } = mk('speaker', ['bellman', 'rioter', 'rioter']); const C = s.clk; toWarn(b, s);
-    brkOut(b, s); t(C.n === 0 && backWhy(b, 'brk') && vulnOf(s) > 0, '대변인: 경고 칸에서 무너뜨렸는데 0칸이 아니다(' + C.n + ')'); }
-  /* 평소 되감기: 폭도 하나 · 광역은 1칸, 라운드에 한 번 */
-  { const { b, s } = mk('speaker', ['bellman', 'rioter', 'rioter']); const C = s.clk; w3Act(b, s, { k: 'incite' }, 10); b.round = 3; C.n = M - 2; const r = rioters(b);
-    E.hurtEnemy(b, r[0], 9999, { single: 1 }); t(C.n === M - 3, '대변인: 폭도를 쓰러뜨려 1칸이 아니다(' + C.n + ')');
-    E.hurtEnemy(b, r[1], 9999, { single: 1 }); t(C.n === M - 3, '대변인: 한 라운드에 평소 되감기가 두 번 들었다(' + C.n + ')');
-    const r2 = R_('spawn')(b, 'rioter'); myAct(b, 'f_topple', () => E.hurtEnemy(b, r2, 1, { aoe: 1 })); t(C.n === M - 3, '대변인: 경고 칸이 아닌 광역이 라운드 한도를 넘었다(' + C.n + ')');
-    b.round = 4; myAct(b, 'f_topple', () => E.hurtEnemy(b, r2, 1, { aoe: 1 })); t(C.n === Math.max(0, M - 4), '대변인: 다음 라운드 광역이 1칸이 아니다(' + C.n + ')'); }
-  { const { b, s } = mk('speaker', ['bellman', 'rioter', 'rioter']); const r = rioters(b); t(near(R_('w3HitMul')(b, s, {}), 1 - XP.cut, 1e-9), '대변인: 군중이 있는데 받는 피해 감소가 없다');
-    E.hurtEnemy(b, r[0], 9999, { single: 1 }); s.clk.n = 1; b.round = 9; E.hurtEnemy(b, r[1], 9999, { single: 1 }); t(s.clk.n === 0 && vulnOf(s) > 0, '대변인: 군중 0 보상(취약)이 없다');
-    const r2 = R_('spawn')(b, 'rioter'), r3 = R_('spawn')(b, 'rioter'); t(r2 && r3 && near(R_('w3HitMul')(b, s, {}), 1, 1e-9), '대변인: 군중 0인데 감소가 풀리지 않았다'); }
+  const goldA = b => E.actionList(b).find(a => a.id === 'tossgold');
+  { const { b, s, p } = mk('speaker', ['bellman', 'rioter', 'rioter']); const C = s.clk; t(C.n === 0 && C.max === M, '대변인: 폭도 둘이 있어도 0칸으로 시작해야 한다(' + C.n + ')');
+    fcEv(b, 'onRoundEnd'); next(b); fcEv(b, 'onRoundEnd'); t(C.n === 0, '대변인: 폭도가 서 있는 라운드 끝에 칸이 찼다(부른 수만 센다)');
+    for (const k of ['rally3', 'incite', 'shout', 'charge', 'attack']) { const n0 = C.n = 0; w3Act(b, s, { k }, 10); t(C.n === Math.min(M - 1, n0 + fillOf(k)), '대변인: ' + k + '이(가) ' + fillOf(k) + '칸이 아니다(' + C.n + ')'); }
+    C.n = 0; b.rec.length = 0; p.weak = 0; toWarn(b, s); t(C.n === M - 1 && recN(b, 'clkwarn') === 1 && logHas(b, D.warn()), '대변인: 부르기가 경고 없이 다 찼거나 마지막 경고가 없다(' + C.n + ')');
+    w3Act(b, s, { k: 'incite' }, 10); t(C.n === M - 1 && !recN(b, 'clkdoom'), '대변인: 경고한 그 차례에 밀어닥쳤다');
+    next(b); full(p); p.guard = 1; const h0 = p.hp; w3Act(b, s, { k: 'incite' }, 10); const d = (h0 - p.hp) / p.hpMax;
+    t(near(d, XP.gate * 0.5) && C.n === 0 && recN(b, 'clkdoom') === 1, '대변인: 「성문을 열어라」(방어 절반 ' + (XP.gate * 0.5).toFixed(2) + ')가 아니다(' + d.toFixed(3) + ')'); }
+  /* 결정적 답 ① 대변인 무너뜨리기 → 0칸 · 군중이 흩어짐(폭도 기절 · 감소 풀림 · 선동 풀림 · 취약). 경고 칸에서는 붕괴가 brkWarn배 */
+  { const { b, s } = mk('speaker', ['bellman', 'rioter', 'rioter']); const C = s.clk, BM = R_('w3BrkMul'); s.intent = { k: 'incite' }; t(BM(b, s) === 1, '대변인: 경고 칸이 아닌데 붕괴 배율이 있다'); toWarn(b, s);
+    t(BM(b, s) === XP.brkWarn, '대변인: 경고 칸의 붕괴 배율이 ' + XP.brkWarn + '가 아니다(' + BM(b, s) + ')');
+    b.incite = 2; brkOut(b, s); t(C.n === 0 && backWhy(b, 'brk') && vulnOf(s) > 0 && rioters(b).every(r => r.stun >= 1) && !b.incite && near(R_('w3HitMul')(b, s, {}), 1, 1e-9), '대변인: 경고 칸에서 무너뜨렸는데 0칸 · 흩어짐 · 선동 풀림이 아니다(' + C.n + ')'); }
+  /* 결정적 답 ② 골드 뿌리기(실제 행동) → 0칸 · 골드 −gold · 흩어짐 */
+  { const { f, b, s, p } = mk('speaker', ['bellman', 'rioter', 'rioter']); const C = s.clk, run = f.run;
+    t(!goldA(b), '대변인: 칸이 없는데 골드 뿌리기가 보인다'); toWarn(b, s); run.gold = XP.gold - 1; t(goldA(b) && !goldA(b).ok, '대변인: 골드가 모자란데 골드 뿌리기를 쓸 수 있다');
+    run.gold = 100; const a = goldA(b); t(a && a.ok && a.self && !/군중이 흩|시계|칸|되감|0칸/.test(a.n + a.d), '대변인: 골드 뿌리기가 없거나 이름 · 설명이 시계를 알려 준다(' + (a && a.n + ' / ' + a.d) + ')');
+    H.act(f, 'tossgold', null); t(C.n === 0 && run.gold === 100 - XP.gold && backWhy(b, 'gold') && vulnOf(s) > 0 && rioters(b).every(r => r.stun >= 1), '대변인: 경고 칸에서 골드를 뿌렸는데 0칸 · 골드 −' + XP.gold + ' · 흩어짐이 아니다(' + C.n + ' / ' + run.gold + ')');
+    t(!goldA(b), '대변인: 칸이 0인데 골드 뿌리기가 남았다'); }
+  /* 평소 행동: 폭도 쓰러뜨리기 · 광역은 경고 칸에서도 1칸, 라운드에 한 번(보상 없음) */
+  { const { b, s } = mk('speaker', ['bellman', 'rioter', 'rioter']); const C = s.clk; b.round = 3; toWarn(b, s); const r = rioters(b);
+    E.hurtEnemy(b, r[0], 9999, { single: 1 }); t(C.n === M - 2 && vulnOf(s) === 0, '대변인: 경고 칸에서 폭도를 쓰러뜨려 1칸(보상 없음)이 아니다(' + C.n + ')');
+    E.hurtEnemy(b, r[1], 9999, { single: 1 }); t(C.n === M - 2, '대변인: 한 라운드에 평소 되감기가 두 번 들었다(' + C.n + ')');
+    const r2 = R_('spawn')(b, 'rioter'); myAct(b, 'f_topple', () => E.hurtEnemy(b, r2, 1, { aoe: 1 })); t(C.n === M - 2, '대변인: 광역이 라운드 한도를 넘었다(' + C.n + ')');
+    b.round = 4; C.n = M - 1; myAct(b, 'f_topple', () => { E.hurtEnemy(b, s, 1, { aoe: 1 }); E.hurtEnemy(b, r2, 1, { aoe: 1 }); }); t(C.n === M - 2 && vulnOf(s) === 0, '대변인: 경고 칸의 광역이 1칸(보상 없음)이 아니다(' + C.n + ')');
+    b.round = 5; C.n = 1; E.hurtEnemy(b, R_('spawn')(b, 'rioter'), 9999, { single: 1 }); t(C.n === 0 && vulnOf(s) === 0, '대변인: 평소 되감기로 0칸이 되었는데 보상이 들었다'); }
+  /* 경고 칸이 아닐 때: 골드 · 무너뜨리기도 1칸, 라운드에 한 번 */
+  if (M >= 3) { const { f, b, s } = mk('speaker', ['bellman', 'rioter', 'rioter']); const C = s.clk, run = f.run; run.gold = 100; b.round = 3; C.n = M - 2;
+    H.act(f, 'tossgold', null); t(C.n === M - 3 && run.gold === 100 - XP.gold && vulnOf(s) === 0, '대변인: 경고 칸이 아닌 골드가 1칸이 아니다(' + C.n + ')');
+    if (C.n > 0) t(goldA(b) && !goldA(b).ok, '대변인: 같은 라운드에 골드 뿌리기를 또 쓸 수 있다');
+    b.round = 4; C.n = M - 2; brkOut(b, s); t(C.n === M - 3, '대변인: 경고 칸이 아닌 무너뜨리기가 1칸이 아니다(' + C.n + ')'); }
+  { const { b, s } = mk('speaker', ['bellman', 'rioter', 'rioter']); t(near(R_('w3HitMul')(b, s, {}), 1 - XP.cut, 1e-9), '대변인: 군중이 있는데 받는 피해 감소가 없다(시계 0칸)');
+    const r = rioters(b); E.hurtEnemy(b, r[0], 9999, { single: 1 }); t(near(R_('w3HitMul')(b, s, {}), 1, 1e-9), '대변인: 폭도가 군중(' + XP.need + ') 아래인데 감소가 남았다'); }
   { const { b, s, p } = mk('speaker', ['bellman', 'rioter', 'rioter']); const n0 = s.clk.n; p.stun = 1; w3Act(b, s, { k: 'rally3' }, 10); t(s.clk.n === n0 && s.clk.stop === 1, '대변인: 기절 중에 시계가 멈추지 않았다'); }
+  { const f0 = H.fight('warden', { en: ['bellman'], hp: 300, ctx: { ch: 3, floor: 10, mods: [] }, setup: (run, es) => { es[0].strong = true; es[0].foe = 'speaker'; } }); const s0 = f0.es[0], dm = s0.dmg, bm = s0.bigMul = 3;
+    R_('w3Setup')(f0.b, { floor: 10, strong: NAMES.speaker, foe: 'speaker', lv: 12 }); t(near(s0.dmg, dm * (XP.atk || 1), 1e-9) && near(s0.dmg * s0.bigMul, dm * bm, 1e-9), '대변인: 평소 공격만 ×' + XP.atk + '(큰 한 방은 그대로)가 아니다'); }
 }
 
 /* 4 성벽 위의 명사수 */

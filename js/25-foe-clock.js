@@ -4,7 +4,7 @@
    파국 뒤 시계는 0부터 다시(정의에 perm: 1이면 그 전투 끝까지 파국 상태). 답이 들면 칸이 되감긴다.
    강적마다 무엇이 칸을 채우고 되감는지 · 파국이 무엇인지는 각 챕터 파일의 FOE_CLOCK[강적]에 둔다 — 내용은 비공개 문서 참조.
    정의 꼴: { n: 칩 이름, max: 칸 수, ans: [답 태그 ≥2 종류], warn(b, e) → 경고 문장, doom(b, e), perm?, reward?(b, e), blocked?(b, e) → 답 수단이 모두 막혔으면 참(그동안 시계가 멈춘다),
-            on: { 사건 이름(b, e, ...): 칸을 더하거나 되감는다 } } — 사건: onRoomStart · onRoundEnd · onFoeAct · onFoeBreak · onFoeDown · onFoeDot · onHurt · onParry · onAct · onFlask · onKill · onHit · onSkill · onEvade · onCounter */
+            on: { 사건 이름(b, e, ...): 칸을 더하거나 되감는다 } } — 사건: onRoomStart · onRoundEnd · onFoeAct · onFoeBreak · onFoeDown · onFoeDot · onFoeDotOn · onCons · onHurt · onParry · onAct · onFlask · onKill · onHit · onSkill · onEvade · onCounter */
 const STRONG_GIM = { dmg: 0.8 }; // 강적 평소 공격 배율(공통 손잡이 하나)
 const FOE_CLOCK = {};
 const FC_HOOKS = ['onHurt', 'onParry', 'onAct', 'onFlask', 'onKill', 'onHit', 'onSkill', 'onEvade', 'onCounter'];
@@ -24,10 +24,10 @@ function fcAdd(b, e, k, why) {
   return k;
 }
 /* 되감기: 답이 들었다. 0이 되면 정의의 보상(무방비 등).
-   2판(비공개 문서 참조): 마지막 경고 칸이 아닐 때는 한 번에 1칸, 강적마다 한 라운드에 한 번까지(o.free: 화면의 물체 수를 세는 시계처럼 예외) */
+   2판(비공개 문서 참조): 마지막 경고 칸이 아닐 때는 한 번에 1칸, 강적마다 한 라운드에 한 번까지(o.free: 화면의 물체 수를 세는 시계처럼 예외. 3판 o.ord: 평소 행동이라 경고 칸에서도 1칸 · 라운드 한 번) */
 function fcRewind(b, e, k, why, o) {
   const D = fcDef(e); if (!D || !e.alive || !(k > 0)) return 0; fcInit(b, e); const C = e.clk; if (C.perm) return 0; const n0 = C.n; if (!n0) return 0;
-  if (!(o && o.free) && n0 < C.max - 1) { const R = b.round || 0; if (C.backR === R) return 0; C.backR = R; k = Math.min(k, 1); }
+  if (!(o && o.free) && (n0 < C.max - 1 || (o && o.ord))) { const R = b.round || 0; if (C.backR === R) return 0; C.backR = R; k = Math.min(k, 1); }
   C.n = Math.max(0, C.n - k); if (C.n < C.max - 1) C.blink = 0; if (b.rec) b.rec.push({ k: 'clkback', foe: e.foe, n: C.n, why: why || '' });
   if (!C.n && D.reward) D.reward(b, e, why);
   return n0 - C.n;

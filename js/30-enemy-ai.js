@@ -433,7 +433,7 @@ function bossPhase(b, e) {
   if (ph !== e.phase) { e.phase = ph; e.armorOff = 0; /* A0: 갑옷은 단계마다 */ logp(b, 'crit', e.n + '의 기세가 바뀐다. ' + ph + '페이즈' + (e.boss === 'mother' && ph === 2 ? '. 나락의 거울이 열린다' : '')); }
 }
 
-/* ===== 0.8.0 G-1 1챕터 강적 시계 (틀은 js/25 FOE_CLOCK, 값은 data/dungeon.js CLK1). 무엇이 칸을 채우고 되감는지 · 파국 · 보상은 비공개 문서 참조 ===== 2판 */
+/* ===== 0.8.0 G-1 1챕터 강적 시계 (틀은 js/25 FOE_CLOCK, 값은 data/dungeon.js CLK1). 무엇이 칸을 채우고 되감는지 · 파국 · 보상은 비공개 문서 참조 ===== 2판 · 3판(주교 · 조율자) */
 const FC1_KEY = { bellringer: 'bell', pilgrim: 'pilgrim', bishop: 'bishop', cantor: 'cantor', scribe: 'scribe' };
 function fc1K(foe) { return (FC1_KEY[foe] && CLK1[FC1_KEY[foe]]) || null; } // js/34가 강적마다 평소 공격 배율(dmg)을 읽는다
 const fc1Stun = b => b.p.stun > 0;
@@ -444,7 +444,7 @@ const fc1Feast = e => e.foe === 'pilgrim' && e.fcFeast ? CLK1.pilgrim.feast : 0;
 function fc1Intent(b, e, n) {
   if (e.foe === 'bellringer') { if ((e.clk && e.clk.perm) || !alive(b).some(x => x.bell)) return null; const c = n % 4; return c === 1 || c === 3 ? { k: 'ring' } : c === 2 ? { k: 'brace' } : { k: 'attack' }; }
   if (e.foe === 'pilgrim') return e.fcFeast && !(e.intent && ['charge', 'heavy'].includes(e.intent.k)) ? { k: 'charge' } : null;
-  if (e.foe === 'bishop') return n % 2 === 0 ? { k: 'raise' } : { k: 'attack' };
+  if (e.foe === 'bishop') return n % (CLK1.bishop.every || 2) === 0 ? { k: 'raise' } : { k: 'attack' }; // 비공개 문서 참조
   if (e.foe === 'cantor') return n % 2 === 0 ? { k: 'tune' } : { k: 'attack' };
   if (e.foe === 'scribe') return n % 2 === 1 ? { k: 'seal' } : { k: 'attack' };
   return null;
@@ -510,14 +510,28 @@ FOE_CLOCK.pilgrim = {
     onFoeBreak(b, e, x) { if (x !== e || !e.clk.n) return; logp(b, 'good', e.n + '이(가) 먹은 것을 토해 낸다'); fcAnswer(b, e, 'brk'); fc1Fed(b, e); },
   },
 };
+/* 납골당 주교 · 성가 조율자 (3판, 비공개 문서 참조) */
+function fc1Ord(b, e, why) { // 평소 행동: 경고 칸에서도 1칸, 강적마다 라운드에 한 번까지(CLK1 ordR 라운드에 한 번)
+  if (!e.alive || !e.clk || e.clk.perm || !e.clk.n) return 0; const C = e.clk, R = b.round || 0, G = (fc1K(e.foe) || {}).ordR || 1; if (C.backR === R || (C.ordR != null && R - C.ordR < G)) return 0;
+  const w = fc1Warn(e), k = fcRewind(b, e, 1, why); if (k) { C.backR = R; C.ordR = R; e.fcOrd = w ? b.actN : null; } return k;
+}
+function fc1Dec(b, e, why) { // 결정적 답: 경고 칸(이 행동이 평소 되감기로 막 끌어내렸어도)이면 0칸 → 'zero', 아니면 평소 1칸 → 'one'
+  if (!e.alive || !e.clk || e.clk.perm || !e.clk.n) return ''; const at = fc1Warn(e) || (e.fcOrd != null && e.fcOrd === b.actN); e.fcOrd = null;
+  if (at) return fcRewind(b, e, e.clk.n, why, { free: 1 }) ? 'zero' : ''; return fcAnswer(b, e, why) ? 'one' : '';
+}
 /* 납골당 주교 */
 function fc1Corpse(b) {
   const c = mkEnemy('minion', 0, b.idc++, { lv: (b.ctx && b.ctx.lv) || 1 }); c.summoned = true; c.corpse = 1; c.xpCh = 0; if (FOES.bishop.corpseN) c.n = FOES.bishop.corpseN;
-  c.hpMax = c.hp = 1; // 비공개 문서 참조
+  const h = foeHitHp(c, (b.ctx && b.ctx.ch) || 1, (b.ctx && b.ctx.floor) || 0) * CLK1.bishop.cHp; c.hpMax = c.hp = Math.max(1, Math.round(h || 0)); // 비공개 문서 참조
   decideIntent(b, c); b.en.push(c); return c;
 }
-function fc1Sync(b, e) { fcInit(b, e); const k = e.clk.n - corpsesOf(b).length; if (k > 0) fcRewind(b, e, k, 'corpse', { free: 1 }); }
+function fc1Bury(b, n) { const cs = corpsesOf(b); let k = 0; for (let i = cs.length - 1; i >= 0 && k < n; i--, k++) { cs[i].alive = false; cs[i].hp = 0; } return k; } // 쓰러뜨림이 아니다(평소 되감기 없음)
 function fc1Drop(b, e) { if (!e.alive) return; e.fcNoRaise = (b.round || 0) + CLK1.bishop.drop; addS(b, e, 'vuln', 2); logp(b, 'crit', e.n + '이(가) 지팡이를 떨어뜨린다. 취약 2'); codexHit(b, 'bishop', 'drop'); }
+function fc1BishopAns(b, e, why) {
+  const r = fc1Dec(b, e, why);
+  if (r === 'zero') { const k = fc1Bury(b, 1e9); logp(b, 'good', '부른 이름들이 지워진다' + (k ? '. 불려 나온 이들이 흙으로 돌아간다' : '')); fc1Drop(b, e); }
+  else if (r === 'one' && fc1Bury(b, 1)) logp(b, 'good', '불린 이름 하나가 흙으로 돌아간다');
+}
 function fc1Raise(b, e) {
   if (e.noSummon) { e.noSummon = 0; logp(b, 'good', e.n + '의 부름이 방해 부적에 막힌다'); return; }
   if ((e.fcNoRaise || 0) >= (b.round || 0)) { logp(b, 'sys', e.n + '이(가) 떨어뜨린 지팡이를 더듬는다'); return; }
@@ -530,10 +544,11 @@ function fc1Raise(b, e) {
   if (!k) logp(b, 'sys', e.n + '이(가) 마지막 이름을 입안에서 굴린다');
 }
 FOE_CLOCK.bishop = {
-  n: '부른 이름', max: CLK1.bishop.max, ans: ['aoe', 'brk', 'kill'],
+  n: '부른 이름', max: CLK1.bishop.max, ans: ['brk', 'cons'],
   warn: () => '주교가 마지막 이름을 부르려 한다',
   blocked: b => fc1Stun(b),
   doom(b, e) {
+    for (let i = corpsesOf(b).length; i < CLK1.bishop.max && !b.over; i++) fc1Corpse(b); // 부른 이름이 모두 돌아온다
     const cs = corpsesOf(b); e.fcInv = b.round || 0; logp(b, 'crit', '장례 행렬이 시작된다. 불려 나온 이들이 한꺼번에 덮친다'); codexHit(b, 'bishop', 'march');
     for (const c of cs) { if (b.over) break; fc1Hit(b, c, CLK1.bishop.march, c.n + '이(가) 행렬로 덮친다'); }
     for (const c of cs) { c.alive = false; c.hp = 0; } if (cs.length && !b.over) logp(b, 'sys', '행렬이 지나가고 시체들이 흙으로 돌아간다');
@@ -541,38 +556,36 @@ FOE_CLOCK.bishop = {
   on: {
     onFoeBreak(b, e, x) {
       if (x !== e) return;
-      if (fc1Warn(e)) { for (const c of corpsesOf(b)) { c.alive = false; c.hp = 0; } logp(b, 'good', '불린 이름들이 모두 흙으로 돌아간다'); fc1Sync(b, e); fc1Drop(b, e); return; } // 비공개 문서 참조
-      if (e.intent && e.intent.k === 'raise') { e.intent = { k: 'attack' }; e.teleX = 1; logp(b, 'good', '부르던 이름이 끊긴다'); return; }
-      const c = corpsesOf(b).pop(); if (c) { c.alive = false; c.hp = 0; logp(b, 'good', '불린 이름 하나가 흙으로 돌아간다'); fc1Sync(b, e); }
+      if (!fc1Warn(e) && e.intent && e.intent.k === 'raise') { e.intent = { k: 'attack' }; e.teleX = 1; logp(b, 'good', '부르던 이름이 끊긴다'); return; }
+      fc1BishopAns(b, e, 'brk');
     },
-    onFoeDown(b, e, x) {
-      if (!x.corpse) return; const a = b.cur ? b.actN : null;
-      if (a != null && e.fcKA !== a) { e.fcKA = a; e.fcKW = fc1Warn(e) ? 1 : 0; }
-      fc1Sync(b, e);
-      if (a != null && e.fcKW && !corpsesOf(b).length) { e.fcKW = 0; fc1Drop(b, e); } // 비공개 문서 참조
-    },
+    onCons(b, e) { fc1BishopAns(b, e, 'cons'); }, // 비공개 문서 참조
+    onFoeDown(b, e, x) { if (x.corpse) fc1Ord(b, e, 'corpse'); }, // 비공개 문서 참조
   },
 };
 /* 성가 조율자 */
+const fc1DotSum = e => st(e, 'bleed') + st(e, 'poison') + st(e, 'ignite');
+function fc1CantorDotAns(b, e) { const r = fc1Dec(b, e, 'dot'); if (r) logp(b, 'good', e.n + '의 숨이 끊겨 노래가 ' + (r === 'zero' ? '흩어진다' : '한 마디 뒤로 밀린다')); }
+function fc1CantorDot(b, e) { const D = e.fcDA; if (D && D.a === b.actN && D.done) return; e.fcDA = { a: b.actN, s: 0, done: 1 }; fc1CantorDotAns(b, e); } // 한 행동에 한 번
+const fc1DotNew = (b, e) => { const D = e.fcDA; if (D && !D.done && fc1DotSum(e) > D.s) { D.done = 1; fc1CantorDotAns(b, e); } }; // 이 행동이 지속 피해를 새로 걸었다(중독처럼 addS를 거치지 않는 것)
 FOE_CLOCK.cantor = {
-  n: '악보', max: CLK1.cantor.max, ans: ['kill', 'ranged', 'aoe', 'brk', 'dot'],
+  n: '악보', max: CLK1.cantor.max, ans: ['brk', 'dot'],
   warn: () => '노래가 마지막 마디에 들어선다',
   blocked: b => fc1Stun(b),
   doom(b, e) {
     const L = chorusOf(b, e); e.fcSkip = 1; for (const x of L) { x.hp = x.hpMax; addS(b, x, 'empower', CLK1.cantor.emp); }
-    logp(b, 'crit', '대합창. 곁의 적들의 상처가 아물고 목소리가 하나로 모인다. 강화 ' + CLK1.cantor.emp); codexHit(b, 'cantor', 'chorus');
-    if (L.length) fc1Hit(b, e, CLK1.cantor.per * L.length, e.n + '의 대합창이 덮친다');
+    logp(b, 'crit', '대합창. ' + (L.length ? '곁의 적들의 상처가 아물고 목소리가 하나로 모인다. 강화 ' + CLK1.cantor.emp : e.n + '이(가) 홀로 마지막 마디를 부른다')); codexHit(b, 'cantor', 'chorus');
+    fc1Hit(b, e, CLK1.cantor.per * Math.max(L.length, CLK1.cantor.min), e.n + '의 대합창이 덮친다'); // 비공개 문서 참조
   },
   reward(b, e) { const L = chorusOf(b, e); for (const x of L) addS(b, x, 'chill', CLK1.cantor.off); logp(b, 'good', '박자가 깨진다' + (L.length ? '. 곁의 적들이 엇박에 걸린다' : '')); codexHit(b, 'cantor', 'cut'); },
   on: {
-    onFoeAct(b, e, x) { if (x !== e || e.stun > 0) return; if (chorusOf(b, e).length >= 2) fcAdd(b, e, 1, 'bar'); else if (!e.fcSolo) { e.fcSolo = 1; logp(b, 'sys', e.n + '의 박자가 허공에 흩어진다'); } },
-    onFoeBreak(b, e, x) { if (x === e) fcAnswer(b, e, 'brk'); },
-    onFoeDown(b, e, x) { if (x !== e && x.role !== 'root' && !x.corpse && fc1Warn(e)) fcAnswer(b, e, 'kill'); }, // 비공개 문서 참조
-    onHit(b, e, p, t, o) { if (t === e && o && !o.dot && fc1Warn(e)) fcAnswer(b, e, o.aoe ? 'aoe' : 'ranged'); }, // 비공개 문서 참조
-    onFoeDot(b, e, x, d) {
-      if (x !== e) return; const cut = e.hpMax * CLK1.cantor.dotCut; e.fcDot = Math.min(cut, (e.fcDot || 0) + d);
-      if (e.fcDot >= cut && e.clk.n > 0) { e.fcDot = 0; if (fcRewind(b, e, 1, 'dot')) logp(b, 'good', e.n + '의 숨이 끊겨 노래가 한 마디 뒤로 밀린다'); }
-    },
+    onAct(b, e) { e.fcDA = { a: b.actN, s: fc1DotSum(e), done: 0 }; },
+    onSkill(b, e) { fc1DotNew(b, e); },
+    onFoeAct(b, e, x) { fc1DotNew(b, e); e.fcDA = null; if (x !== e || e.stun > 0) return; fcAdd(b, e, 1, 'bar'); }, // 비공개 문서 참조
+    onFoeBreak(b, e, x) { if (x === e) fc1Dec(b, e, 'brk'); },
+    onFoeDotOn(b, e, x) { if (x === e) fc1CantorDot(b, e); },
+    onFoeDown(b, e, x) { if (x !== e && x.role !== 'root' && !x.corpse && fc1Warn(e)) fc1Ord(b, e, 'kill'); }, // 비공개 문서 참조
+    onHit(b, e, p, t, o) { if (t === e && o && !o.dot && fc1Warn(e)) fc1Ord(b, e, o.aoe ? 'aoe' : 'ranged'); },
   },
 };
 /* 검은 서기관 */

@@ -27,6 +27,7 @@ function addS(b, u, k, dur, stacks, max) {
     if (nv > cur && isCh3(b)) ch3OnStatus(b, u, k, nv - cur);
     if (u !== b.p && KW_BAD.includes(k) && nv > cur) chargeEv(b, k === 'poison' ? 'poison' : 'apply');
     if (nv > cur && u !== b.p && b.cur && (k === 'ignite' || k === 'chill') && b.p.build === 'elementalist') { const a = b.elSt && b.elSt.a === b.actN ? b.elSt : (b.elSt = { a: b.actN }); a[k] = 1; } // 10월 18일 0.8.0 5단계 원소술사: 이 행동이 건 원소 (가벼운 손 · 고른 원소)
+    if (nv > cur && u !== b.p && u.strong && b.cur && (k === 'bleed' || k === 'poison' || k === 'ignite')) fcEv(b, 'onFoeDotOn', u, k); // G-1 강적 시계: 내 행동이 강적에게 지속 피해를 걸었다
     return nv - cur;
   }
   if (u === b.p && DEBUFFS.includes(k)) {
@@ -430,7 +431,7 @@ function killEnemy(b, e) {
   chDev(b, 'onFoeDown', e); // A0 챕터 장치
   fcEv(b, 'onFoeDown', e); // G-1 강적 시계(쓰러진 강적 자신은 처리기에서 빠진다)
 }
-function checkEnd(b) { const was = b.over; checkEnd0(b); if (!was && b.over) chDev(b, 'onRoomEnd', b.over); } // A0 챕터 장치: 방이 끝날 때 한 번
+function checkEnd(b) { const was = b.over; if (b.consF && b.consF !== b.fcConsF) { b.fcConsF = b.consF; fcEv(b, 'onCons'); } /* G-1 강적 시계: 전투 중 소모품을 썼다(js/26 consUse가 바로 checkEnd를 부른다) */ checkEnd0(b); if (!was && b.over) chDev(b, 'onRoomEnd', b.over); } // A0 챕터 장치: 방이 끝날 때 한 번
 function checkEnd0(b) {
   if (b.over) return;
   if (b.p.hp <= 0 && b.ctx.safe) { b.p.hp = 1; logp(b, 'good', '수련장의 짚 인형처럼 버틴다. 여기서는 쓰러지지 않는다(생명력 1)'); }

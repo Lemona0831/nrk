@@ -20,6 +20,15 @@ const prep = (b, G0, L, e) => dodgeOn(b, G0, L, e) || (L.find(x => x.id === 'gua
 /* 후보 [행동, 결과] 가운데 가장 싼 것 */
 const best = C => { const c = C.filter(x => x && x[0]).sort((x, y) => costOf(x[0]) - costOf(y[0]))[0]; return c ? c[1] : null; };
 const HURTS = ['attack', 'heavy'];
+/* 3판: 지속 피해(출혈 · 중독 · 화상)를 거는 행동 */
+const DOTK = ['bleed', 'poison', 'ignite'];
+const dotAct = x => !!(x.v2 && x.s && x.s.fx.some(f => DOTK.includes(f.k) || (f.k === 'st' && DOTK.includes(f.s))));
+/* 3판: 지금 쓸 수 있는 소모품 하나를 쓴다(회복 · 탈출은 아껴 두고 다른 것이 없을 때만). 썼으면 참 */
+function consAns(b, G0, run) {
+  if (!run || !run.cons || !G0.consUse || !G0.CONS) return false; const keep = c => ['heal', 'escape', 'healcure'].includes(G0.CONS[c.id].k);
+  const ok = run.cons.map((c, i) => [c, i]).filter(([c]) => G0.CONS[c.id] && G0.CONS[c.id].use !== 'none' && !G0.consWhyNot(b, run, c, null));
+  const x = ok.find(([c]) => !keep(c)) || ok[0]; if (!x) return false; G0.consUse(b, run, x[1], null); return true;
+}
 module.exports = {
   /* 종지기: 줄을 당기는 차례에 흘리기 · 종에 붕괴 행동(강공격) 한 번 */
   bellringer(b, e, G0) {
@@ -37,24 +46,17 @@ module.exports = {
     if (e.intent && HURTS.includes(e.intent.k)) { const p = prep(b, G0, L, e); if (p) return p; }
     return breakOn(b, G0, L, e);
   },
-  /* 납골당 주교: 광역 한 번(시체 모두) · 주교 무너뜨리기. 둘 다 없으면 시체 하나라도 */
+  /* 납골당 주교(3판): 한 행동에 무너지면 주교 무너뜨리기, 아니면 소모품 하나(차례 칸을 쓰지 않으므로 여기서 쓰고 평소 행동으로). 둘 다 없으면 평소대로 */
   bishop(b, e, G0) {
-    const L = acts(b, G0), cs = G0.alive(b).filter(x => x.corpse).sort((x, y) => x.hp - y.hp);
-    const C = []; const a = cs.length ? aoeHit(L) : null; if (a) C.push([a, [a.id, null]]); const br = breakAct(b, G0, L, e); if (br) C.push([br, pick(br, e)]);
-    const x = best(C); if (x) return x;
-    for (const c of cs) { const h = hitOn(b, G0, L, c); if (h) return h; }
-    return null;
+    const L = acts(b, G0); const br = breakAct(b, G0, L, e); if (br) return pick(br, e);
+    consAns(b, G0, G0.__G && G0.__G.run); return null;
   },
-  /* 성가 조율자: 조율자에게 원거리 · 광역 피해 · 무너뜨리기 · 곁의 적 하나 쓰러뜨리기 */
+  /* 성가 조율자(3판): 조율자 무너뜨리기 · 조율자에게 지속 피해 걸기. 둘 다 없으면 평소대로 */
   cantor(b, e, G0) {
     const L = acts(b, G0), C = [];
-    const d = hitAct(b, G0, L, e); if (d) C.push([d, pick(d, e)]);
-    const a = aoeHit(L, 1); if (a) C.push([a, [a.id, null]]);
     const br = breakAct(b, G0, L, e); if (br) C.push([br, pick(br, e)]);
-    const x = best(C); if (x) return x;
-    const ch = G0.alive(b).filter(x => x !== e && x.role !== 'root' && !x.corpse).sort((x, y) => x.hp - y.hp);
-    for (const c of ch) { const h = hitOn(b, G0, L, c); if (h) return h; }
-    const af = aoeHit(L); return af ? [af.id, null] : null;
+    const dt = cheap(L.filter(x => dotAct(x) && !x.self && (x.aoe ? !x.front || e.row === 'front' : G0.canTarget(b, e, x)))); if (dt) C.push([dt, pick(dt, e)]);
+    return best(C);
   },
   /* 검은 서기관: 그 공격을 흘리기 · 무너뜨리기 · 정화 플라스크 */
   scribe(b, e, G0) {
