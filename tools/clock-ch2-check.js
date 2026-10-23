@@ -7,7 +7,7 @@ R_('ch2ClockReg')(); const FC = R_('FOE_CLOCK'), X = R_('FOE_X'), PA = R_('ch2Pl
 const st = (u, k) => R_('st')(u, k);
 function mk(foe, en, setup) {
   const f = H.fight('assassin', { en, hp: 400, ctx: { ch: 2, mods: [] }, setup: (run, es) => { es[0].strong = true; es[0].foe = foe; for (const x of es) x.brkMax = 100; if (setup) setup(run, es); } });
-  const b = f.b; b.cur = null; b.rngF = () => 0.5; b.ctx.ch = 2; b.ctx.mods = []; const e = f.es[0]; e.clk = null; E.fcInit(b, e); e.under = 0; e.stabOut = 0; e.thQ = 0; b.log = []; b.duel = 0; b.trade = null; const p = b.p; // 처음 runUntilPlayer에서 움직인 것은 지운다
+  const b = f.b; b.cur = null; b.rngF = () => 0.5; b.fcNoWait = 1; /* 한 차례 안에서 파국까지 채워 보는 시험 */ b.ctx.ch = 2; b.ctx.mods = []; const e = f.es[0]; e.clk = null; E.fcInit(b, e); e.under = 0; e.stabOut = 0; e.thQ = 0; b.log = []; b.duel = 0; b.trade = null; const p = b.p; // 처음 runUntilPlayer에서 움직인 것은 지운다
   p.hp = p.hpMax; p.stun = 0; p.guard = 0; p.dodge = 0; p.ward = 0; p.evade = 0; for (const k of Object.keys(p.s)) delete p.s[k];
   return { f, b, e, p, run: f.run, es: f.es };
 }

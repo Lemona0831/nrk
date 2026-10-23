@@ -8,7 +8,7 @@ const st = (u, k) => R_('st')(u, k);
 /* 강적 하나 + 곁의 적. 적 피해는 작게(1), 붕괴 상한 100 */
 function mk(foe, en, setup) {
   const f = H.fight('warden', { en: en || ['bruiser', 'bruiser'], setup: (run, es) => { es[0].strong = true; es[0].foe = foe; for (const e of es) e.brkMax = 100; if (setup) setup(run, es); } });
-  const b = f.b; b.cur = null; b.rngF = () => 0.5; const e = f.es[0]; E.fcInit(b, e); b.p.hp = b.p.hpMax; b.p.stun = 0; b.p.guard = 0; b.p.dodge = 0; return { f, b, e, p: b.p };
+  const b = f.b; b.cur = null; b.rngF = () => 0.5; b.fcNoWait = 1; /* 한 차례 안에서 파국까지 채워 보는 시험(경고 뒤 기다림은 아래 공통 시험에서) */ const e = f.es[0]; E.fcInit(b, e); b.p.hp = b.p.hpMax; b.p.stun = 0; b.p.guard = 0; b.p.dodge = 0; return { f, b, e, p: b.p };
 }
 const act = (b, e, k) => { e.intent = { k }; e.teleTurn = -1; e.stun = 0; E.enemyAct(b, e); };
 const warned = b => b.log.some(l => /^⚠/.test(l.m));
@@ -160,6 +160,12 @@ common('scribe');
   { const x = mk('bishop', ['bruiser', 'summoner']); const { b, e } = x; b.p.st = b.p.stMax; act(b, e, 'raise'); act(b, e, 'raise'); act(b, e, 'raise'); const r = PA.bishop(b, e, E, () => 0); ok(okAct(b, r), '테스터: 주교 답이 없다 ' + JSON.stringify(r)); }
   { const x = mk('cantor', ['bruiser', 'bruiser', 'archer']); const { b, e } = x; b.p.st = b.p.stMax; e.clk.n = 2; const r = PA.cantor(b, e, E, () => 0); ok(okAct(b, r), '테스터: 조율자 답이 없다 ' + JSON.stringify(r)); }
   { const x = mk('scribe', ['bruiser', 'darkmage']); const { b, e } = x; b.p.st = b.p.stMax; e.brk = e.brkMax - 1; e.clk.n = 1; const r = PA.scribe(b, e, E, () => 0); ok(okAct(b, r) && r[1] === e.id, '테스터: 서기관을 무너뜨리러 가지 않는다 ' + JSON.stringify(r)); }
+}
+{ // 공통 틀: 경고 뒤 내 차례가 한 번 지나기 전에는 파국이 오지 않는다
+  const x = mk('scribe'); const b = x.b, e = x.e, C = e.clk; b.fcNoWait = 0; b.turnIdx = 5; const add = R_('fcAdd');
+  add(b, e, C.max - 1); ok(C.n === C.max - 1 && C.wT === 5, '경고 차례 기록이 없다 ' + C.wT); add(b, e, 1); ok(C.n === C.max - 1 && !C.doomN, '경고한 그 적 차례에 파국이 왔다');
+  b.turnIdx = 6; add(b, e, 1); ok(C.doomN === 1, '내 차례가 지난 뒤에도 파국이 오지 않았다');
+  const y = mk('scribe'); const b2 = y.b, e2 = y.e, C2 = e2.clk; b2.fcNoWait = 0; b2.turnIdx = 3; b2.cur = { id: 'basic' }; add(b2, e2, C2.max - 1); b2.cur = null; b2.turnIdx = 4; add(b2, e2, 1); ok(!C2.doomN, '내 행동 중 경고했는데 바로 다음 적 차례에 파국이 왔다'); b2.turnIdx = 5; add(b2, e2, 1); ok(C2.doomN === 1, '내 행동 중 경고 뒤 한 차례 지나도 파국이 오지 않았다');
 }
 console.log('clock-ch1-check: 시험 ' + H.C.n + '개 · 실패 ' + H.C.fail.length + ' · ' + Object.values(R).join(' · '));
 for (const m of H.C.fail) console.log('  실패: ' + m);
