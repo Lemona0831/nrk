@@ -455,9 +455,10 @@ function sbRhythmGate(b, a, t) {
 /* 0.8.0 G-1 강적 시계(js/25): 신중 · 숙련은 시계를 읽고 답한다 — 칸이 한 칸 남았으면(경고) 그 라운드 답을 먼저, 답이 여럿이면 가진 수단 중 가장 싼 것.
    강적마다 답 고르기는 tools/persona/clock-ch1~3.js({ 강적 id: (b, e, G0, r) => [행동, 대상] | null }). 무시(DG_IGNORE)한 강적은 보지 않는다 */
 const CLOCK_ANS = Object.assign({}, ...[1, 2, 3].map(n => { try { return require('./persona/clock-ch' + n + '.js'); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; return {}; } }));
+const CLOCK_AHEAD = Math.max(1, +(process.env.CLOCK_AHEAD || 1)); // G-1 갈라보기: 2면 한 칸 일찍(마지막 경고 한 칸 전부터) 답한다
 function clockPre(b, P, r, pk) {
   if (!(pk === 'careful' || pk === 'expert') || process.env.CLOCK_OFF) return null;
-  for (const e of G0.alive(b)) { const C = e.clk; if (!C || C.perm || IGN.includes(e.foe) || !CLOCK_ANS[e.foe] || C.n < C.max - 1) continue; const x = CLOCK_ANS[e.foe](b, e, G0, r); if (x) return x; }
+  for (const e of G0.alive(b)) { const C = e.clk; if (!C || C.perm || IGN.includes(e.foe) || !CLOCK_ANS[e.foe] || C.n < C.max - CLOCK_AHEAD) continue; const x = CLOCK_ANS[e.foe](b, e, G0, r); if (x) return x; }
   return null;
 }
 function fightCur(pk, r, mem, out) {

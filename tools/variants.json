@@ -666,6 +666,14 @@
    "introduced": "G-1",
    "expires": "G-1 정리 검토",
    "note": "1이면 신중 · 숙련도 강적 시계를 읽지 않는다(G-1 시계 대답 몫 갈라보기)"
+  },
+  {
+   "name": "CLOCK_AHEAD",
+   "kind": "env",
+   "default": null,
+   "introduced": "G-1",
+   "expires": "G-1 정리 검토",
+   "note": "2면 신중 · 숙련이 강적 시계에 한 칸 일찍(마지막 경고 한 칸 전부터) 답한다(G-1 답 시점 갈라보기)"
   }
  ]
 }
