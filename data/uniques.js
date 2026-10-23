@@ -26,7 +26,7 @@ const UNIQUE = {
     rule: { k: "cond", txt: "중독 걸린 적이 쓰러지면 그 중독의 절반이 곁의 적에게." }, cost: { kind: "perm", txt: "중독 상한 20 → 15." },
     af: [["as_vsPoisonSkill",22],["lowHpDmg",26]], ax: ["as_ax_bloom",20], lore: "꽃은 시체 위에서 핀다.", vr: 18, vc: 1.6, chain: 0 },
   as_h8: { n: "암영의 목걸이", cls: "assassin", slot: "amulet", base: "amulet", g: "h", ch: 2, axis: "암영",
-    rule: { k: "cond", txt: "숨은 동안 지속 피해도 받지 않는다." }, cost: { kind: "perm", txt: "최대 생명력 −10%." },
+    rule: { k: "cond", txt: "숨은 동안 상태 피해도 받지 않는다." }, cost: { kind: "perm", txt: "최대 생명력 −10%." },
     af: [["stMax",21],["stRegen",3]], ax: ["as_ax_dark",20], lore: "그림자 속에는 독도 닿지 않는다.", vr: 6, vc: 9 },
   as_h9: { n: "잔영 장갑", cls: "assassin", slot: "gloves", base: "gloves", g: "h", ch: 2, axis: "잔영",
     rule: { k: "cnt", txt: "흘려 낸 다음 차례의 첫 기본 공격이 두 번." }, cost: { kind: "during", txt: "두 번 치는 차례 받는 피해 +15%." },

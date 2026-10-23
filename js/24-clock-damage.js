@@ -18,7 +18,6 @@ function addS(b, u, k, dur, stacks, max) {
       fxRun(u, 'onDebuff', b, u, k);
     }
     if (u !== b.p && (u.role === 'crown' || (u.hazeHit && b.cur && u.hazeHit === b.actN))) return 0; // 3챕터: 왕관, 허상에 막힌 공격
-    if (u === b.p && k === 'ignite' && isCh3(b)) { n = Math.min(n, IGN_ROUND_CAP - (b.ignR === b.round ? (b.ignN || 0) : 0)); if (n <= 0) return 0; } // 2절 5번: 한 라운드에 새로 붙는 화상
     const opp = KW_OPP[k]; if (opp && u.s[opp]) { const m = Math.min(n, u.s[opp].stacks); kwDec(u, opp, m); n -= m; if (n <= 0) return 0; }
     const cur = stk(u, k); const cap = k === 'empower' && u === b.p ? kiCapOf(u) : KW[k]; const nv = Math.min(Math.max(cap, cur), cur + n);
     if (nv > cur) u.s[k] = { stacks: nv, until: KW_FOREVER, dur: KW_FOREVER };
@@ -130,7 +129,7 @@ function dmgDot(b, u, amt, label) {
   else { hurtEnemy(b, u, amt, { dot: 1, label }); }
 }
 function hurtPlayer(b, raw, o) {
-  const p = b.p; o = o || {}; let rip = null; if (isCh2(b)) { const m2 = ch2InMul(b, o); if (m2 === 0) { logp(b, 'good', (o.src ? o.src.n + '의 공격이 ' : '') + '연막 속에서 빗나간다'); return 0; } raw *= m2; } /* A2 연막탄 · 약장수 병 */ if (isW3(b)) raw *= w3InMul(b, o); /* A3 잠식 · 탄원서 */ if (p.asSt && p.asSt.hide && (!o.dot || uqF(p, 'u_hideDot'))) { logp(b, 'good', o.dot ? '숨어 있어 ' + (o.label || '지속 피해') + '도 닿지 않는다' : '숨어 있어 ' + (o.src ? o.src.n + '의 ' : '') + '공격이 닿지 않는다'); return 0; } /* M6-1 고유 as_h8: 숨은 동안 지속 피해도 */ /* M5-3 무영살: 숨은 동안 어떤 공격의 표적도 아님(지속 피해는 받음) */ const raw0 = raw, nr0 = !o.dot && o.src && p.nextRed ? p.nextRed : 0, br0 = !!p.brace; /* 화면용 까닭(읽기만) */
+  const p = b.p; o = o || {}; let rip = null; if (isCh2(b)) { const m2 = ch2InMul(b, o); if (m2 === 0) { logp(b, 'good', (o.src ? o.src.n + '의 공격이 ' : '') + '연막 속에서 빗나간다'); return 0; } raw *= m2; } /* A2 연막탄 · 약장수 병 */ if (isW3(b)) raw *= w3InMul(b, o); /* A3 잠식 · 탄원서 */ if (p.asSt && p.asSt.hide && (!o.dot || uqF(p, 'u_hideDot'))) { logp(b, 'good', o.dot ? '숨어 있어 ' + (o.label || '상태 피해') + '도 닿지 않는다' : '숨어 있어 ' + (o.src ? o.src.n + '의 ' : '') + '공격이 닿지 않는다'); return 0; } /* M6-1 고유 as_h8: 숨은 동안 지속 피해도 */ /* M5-3 무영살: 숨은 동안 어떤 공격의 표적도 아님(지속 피해는 받음) */ const raw0 = raw, nr0 = !o.dot && o.src && p.nextRed ? p.nextRed : 0, br0 = !!p.brace; /* 화면용 까닭(읽기만) */
   const bigHit = !!(o.charged || (o.src && o.src.intent && o.src.intent.aimed && !o.dot)); // 예고된 큰 공격: 강타 · 강적과 보스의 큰 한 방 · 겨눈 한 발 · 화형
   if (p.foresee && (b.round || 0) < p.foresee.until && bigHit) raw *= 1 - p.foresee.red;
   if (bigHit && hasBt(p, 'firm')) raw *= 0.85; // 굳건함의 성소 // 사냥꾼 예고 읽기 (피할 수 없는 화형에도 든다)

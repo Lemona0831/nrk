@@ -154,7 +154,7 @@ function __hcBlob(k) { return JSON.stringify(IFX[k], (kk, v) => typeof v === 'fu
   W('큰 공격을 흘리면 유산 +1', 'a_flow onParry fxCdMax(10월 15일 유산 1차 시제품: 유산 +1): 큰 공격 ' + A.flow + ', 평소 공격 ' + A.flowSmall, () => A.flow === 1 && A.flowSmall === 0);
   W('받는 피해가 4% 줄어듭니다', 'a_skin inP 0.04', () => near(A.skin, 0.04));
   W('주는 직접 피해가 5% 늘어납니다', 'a_eye hitP 0.05', () => near(A.eye, 0.05));
-  W('내가 건 지속 피해가 10% 늘어납니다', 'a_smolder · k_sb2 dotP 0.10', () => near(A.smolder, 0.1) && near(A.sb2, 0.1));
+  W('내가 건 상태 피해가 10% 늘어납니다', 'a_smolder · k_sb2 dotP 0.10', () => near(A.smolder, 0.1) && near(A.sb2, 0.1));
   W('얻는 보호막이 12% 늘어납니다', 'a_shell · k_sb3 wardP 0.12', () => near(A.shell, 0.12) && near(A.sb3, 0.12));
   W('막음이 1 늘어납니다', 'a_clear blockAdd 1 (기본 막음 2)', () => A.clear === 1 && srcHas('const nb = 2 + fxAdd(p, \'blockAdd\', p)'));
   W('회복이 20% 늘어납니다', 'a_gulp stamMul 1.2 · flaskS STAM_FLASK × stamMul', () => near(A.gulp, 1.2) && srcHas("STAM_FLASK * fxVal(p, 'stamMul', 1"));

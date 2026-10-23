@@ -349,7 +349,7 @@ function devPre(b, P, r) {
 /* 0.8.0 A2 2챕터 판단: 거래창 · 빚 갚기 · 등불 기름 · 바르도의 등불(칩과 카드를 보고 할 만한 것만). 2챕터 전투에서만 난수를 쓴다 */
 function streetPre(b, P, r) {
   if (!G0.isCh2(b)) return null; const L = G0.actionList(b); const p = b.p, al = G0.alive(b);
-  { const sz = L.find(x => x.ok && /^seize_/.test(x.id)); if (sz) return [sz.id, null]; } // 10월 24일: 차압당할 장비 고르기(첫째)
+  { const sz = L.find(x => x.ok && /^seize_/.test(x.id)); if (sz) return [sz.id, null]; } // 10월 24일: 차압당할 장비 고르기(첫째 = 그대로 내준다, 예전과 같은 흐름)
   if (b.trade === 'ask' && L.some(x => x.id === 'tradeyes')) return [!IGN.includes('merchant') && (p.hp < p.hpMax * 0.5 || r() < 0.3) ? 'tradeyes' : 'tradeno', null]; // G-1: 상인을 무시한 판은 거래(답)를 받지 않는다
   /* G-1: 빚 갚기는 시계(clockPre)로 답한다 */
   const oil = L.find(x => x.id === 'lampoil' && x.ok); if (oil && !(IGN.includes('lampthief') && al.some(e => e.foe === 'lampthief')) && (al.some(e => e.foe === 'lampthief' && e.under) || b.ctx.boss || al.some(e => e.strong)) && r() < (P.mech || 0.5) + 0.2) return ['lampoil', null];
@@ -483,6 +483,7 @@ function fightCur(pk, r, mem, out) {
       [a, t] = OPT.policy.chooseAction(b, G.run, n);
     } else {
     const sr = r() < (P.mech || 0.5) ? sigRule(b, r) : null;
+    if (b.seizeAsk) { run_("ch2PlayerAct")(b, "seize_" + b.seizeAsk.at); } // 10월 24일 차압 고르기: 테스터는 그대로 내준다(난수 · 행동을 쓰지 않아 예전과 같은 흐름)
     const ck = clockPre(b, P, r, pk); // G-1: 시계 답을 골랐으면 예고 답하기(answerPost)가 덮지 않는다
     [a, t] = ck || answerPre(b, P, r, pk) || devPre(b, P, r) || streetPre(b, P, r) || ch2Pre(b, P, r) || w3Pre(b, P, r, pk) || ch3Pre(b, P, r) || sr || (P.look && hazePick(b)) || (P.look ? lookahead(b, P, r) : heuristic(b, P, r, mem)); // 0.8.0 5단계: 숙련의 신기루 대응(수도승)
     [a, t] = ch2Post(b, P, r, a, t);

@@ -142,8 +142,8 @@ const ch2CanBack = (b, e) => !!(e && e.clk && !e.clk.perm && e.clk.n > 0 && (e.c
 /* 빚 장부의 주인 */
 function ledgerSeize(b) {
   const run = ch2RunOf(b); if (!run || !run.eqU || typeof EQ_SLOTS === 'undefined') return null;
-  const T = ledgerSeizeTies(run); if (!T.length) return null; if (T.length >= 2) { b.seizeAsk = T; return null; } // 가장 좋은 장비가 둘 이상이면 플레이어가 고른다(10월 24일)
-  return ledgerSeizeSlot(b, run, T[0]);
+  const T = ledgerSeizeTies(run); if (!T.length) return null; const it = ledgerSeizeSlot(b, run, T[0]); if (T.length >= 2) b.seizeAsk = { at: T[0], ties: T }; // 가장 좋은 장비가 둘 이상이면 다음 내 차례에 어느 것을 내줄지 바꿀 수 있다(10월 24일, 행동 아님)
+  return it;
 }
 function ledgerSeizeTies(run) { const L = EQ_SLOTS.filter(s => run.eqU[s] && run.inv[run.eqU[s]]); if (!L.length) return []; const top = Math.max(...L.map(s => G8_RANK[run.inv[run.eqU[s]].g] || 0)); return L.filter(s => (G8_RANK[run.inv[run.eqU[s]].g] || 0) === top); }
 function ledgerSeizeSlot(b, run, sl) { const uid = run.eqU[sl]; if (!uid) return null; run.eqU[sl] = null; (run.seized = run.seized || []).push({ sl, uid }); applyGear(run); return run.inv[uid]; }
@@ -176,7 +176,7 @@ const CH2_CLOCK = {
     warn: (b, e) => e.n + '이(가) 붉은 줄 하나를 남기고 펜을 멈춘다',
     doom(b, e) {
       b.ch2Doom = 1; const it = ledgerSeize(b);
-      logp(b, 'crit', '빚이 목까지 찼다. ' + e.n + '이(가) ' + (it ? (typeof itName === 'function' ? itName(it) : '장비') + '을(를) 차압한다' : b.seizeAsk ? '장비 하나를 내놓으라 한다' : '차압할 것을 찾는다')); codexHit(b, 'ledger', 'debt');
+      logp(b, 'crit', '빚이 목까지 찼다. ' + e.n + '이(가) ' + (it ? (typeof itName === 'function' ? itName(it) : '장비') + '을(를) 차압한다' : '차압할 것을 찾는다')); codexHit(b, 'ledger', 'debt');
       ch2Blow(b, e, FOE_X.ledger.doom, e.n + '이(가) 집행한다'); b.ch2Doom = 0;
     },
     reward(b, e, why) { if (!ch2Dec(e)) return; ch2Open(b, e, FOE_X.ledger.vuln); logp(b, 'good', e.n + '이(가) ' + (why === 'gold' ? '돈을 세느라' : '찢어진 장부를 줍느라') + ' 몸이 빈다'); },
@@ -344,7 +344,7 @@ function ch2OnKill(b, e) {
 function ch2Actions(b, L) {
   ch2ClockReg();
   const p = b.p, run = ch2RunOf(b);
-  if (b.seizeAsk && run && ch2Strong(b, 'ledger')) { const T = b.seizeAsk.filter(s => run.eqU[s] && run.inv[run.eqU[s]]); if (T.length) { for (const a of L) { a.ok = false; a.why = '차압당할 장비를 고른다'; } for (const s of T.slice().reverse()) L.unshift({ id: 'seize_' + s, n: '내준다: ' + itName(run.inv[run.eqU[s]]), self: 1, cost: EQ_SLOT_N[s] || s, time: 0.5, ok: true, d: '장부의 주인이 이 장비를 이 전투 동안 가져간다. 쓰러뜨리면 돌려받는다' }); return; } b.seizeAsk = null; } // 10월 24일: 가장 좋은 장비가 둘 이상이면 고른다
+  if (b.seizeAsk && run && ch2Strong(b, 'ledger')) { const A = b.seizeAsk, cur = (run.seized || []).find(x => x.sl === A.at), T = A.ties.filter(s => s === A.at ? !!cur : run.eqU[s] && run.inv[run.eqU[s]]); if (cur && T.length >= 2) { for (const a of L) { a.ok = false; a.why = '차압당할 장비를 고른다'; } for (const s of T.slice().reverse()) { const it = s === A.at ? run.inv[cur.uid] : run.inv[run.eqU[s]]; L.unshift({ id: 'seize_' + s, n: (s === A.at ? '그대로 내준다: ' : '대신 내준다: ') + itName(it), self: 1, cost: EQ_SLOT_N[s] || s, time: 0, ok: true, d: '장부의 주인이 이 장비를 이 전투 동안 가져간다. 쓰러뜨리면 돌려받는다. 고르는 데 차례를 쓰지 않는다' }); } return; } b.seizeAsk = null; } // 10월 24일: 가장 좋은 장비가 둘 이상이면 내줄 것을 고른다
   if (b.trade === 'ask') { for (const a of L) { a.ok = false; a.why = '거래창에서 고른다'; } L.unshift({ id: 'tradeyes', n: '거래를 받는다', self: 1, cost: '전투 뒤 최대 생명력 −' + Math.round(FOE_X.merchant.hpPen * 100) + '%', time: 0.5, ok: true, d: '이번 전투 동안 주는 피해 +' + Math.round(FOE_X.merchant.buff * 100) + '%. 상인은 공격을 멈춘다. 전투가 끝나면 최대 생명력 −' + Math.round(FOE_X.merchant.hpPen * 100) + '%(캐릭터 끝까지).' }, { id: 'tradeno', n: '거절한다', self: 1, cost: '비용 없음', time: 0.5, ok: true, d: '거래하지 않는다.' }); return; }
   { // G-1(비공개 문서 참조): 빚 갚기(빚 장부의 주인) · 청구서 갚기(계약 상인, 거절한 뒤). 같은 행동 id
     const ld = ch2Strong(b, 'ledger'), mc = !ld && b.trade === 'no' ? ch2Strong(b, 'merchant') : null, t = ld || mc;
@@ -357,7 +357,7 @@ function ch2Actions(b, L) {
 function ch2PlayerAct(b, id) {
   const p = b.p, run = ch2RunOf(b);
   if (id === 'tradeyes') { const late = b.trade === 'no'; b.trade = 'yes'; b.tradeHp = 1; logp(b, 'crit', '거래를 받는다. 주는 피해 +' + Math.round(FOE_X.merchant.buff * 100) + '%. 상인이 공격을 멈춘다'); codexHit(b, 'merchant', 'deal'); const mc = ch2Strong(b, 'merchant'); if (mc && late) { ch2Ans(b, mc, 'deal'); if (mc.intent && mc.intent.k !== 'recover') { mc.intent = { k: 'recover' }; mc.teleX = 1; } } return 1; } // G-1(비공개 문서 참조)
-  if (/^seize_/.test(id)) { const sl = id.slice(6); if (!(b.seizeAsk || []).includes(sl) || !run) return 1; b.seizeAsk = null; const it = ledgerSeizeSlot(b, run, sl); const ld = ch2Strong(b, 'ledger'); if (it) logp(b, 'bad', (ld ? ld.n : '장부의 주인') + '이(가) ' + itName(it) + '을(를) 차압한다'); return 1; }
+  if (/^seize_/.test(id)) { const sl = id.slice(6), A = b.seizeAsk; if (!A || !A.ties.includes(sl) || !run) return 1; b.seizeAsk = null; if (sl === A.at) return 1; const k = (run.seized || []).findIndex(x => x.sl === A.at); if (k < 0) return 1; const back = run.seized.splice(k, 1)[0]; run.eqU[back.sl] = back.uid; const it = ledgerSeizeSlot(b, run, sl); const ld = ch2Strong(b, 'ledger'); if (it) logp(b, 'bad', (ld ? ld.n : '장부의 주인') + '이(가) ' + itName(run.inv[back.uid]) + ' 대신 ' + itName(it) + '을(를) 가져간다'); return 1; }
   if (id === 'tradeno') { b.trade = 'no'; logp(b, 'bad', '거래를 거절한다. 상인의 저울이 기운다'); codexHit(b, 'merchant', 'bill'); return 1; }
   if (id === 'paydebt') { // G-1(비공개 문서 참조)
     const ld = ch2Strong(b, 'ledger'), t = ld || ch2Strong(b, 'merchant'); if (!t) return 1; const pay = FOE_X[t.foe].pay; if (run) run.gold -= pay;

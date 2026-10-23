@@ -51,7 +51,7 @@ common('ledger');
   offCap('ledger', x, () => { if (E.actionList(b).some(a => a.id === 'paydebt' && a.ok)) PA(b, 'paydebt'); });
   if (K.max >= 3) { nr(b); e.clk.n = OFF('ledger'); PA(b, 'paydebt'); ok(!E.actionList(b).some(a => a.id === 'paydebt' && a.ok), 'ledger 5b: 같은 라운드에 또 받음'); }
   const dm0 = K.doom; K.doom = Math.min(dm0, 0.9); /* 파국이 생명력 100% 이상이면 시험 캐릭터가 쓰러져 차압을 볼 수 없다 */ nr(b); e.clk.n = W('ledger'); const eq0 = Object.assign({}, run.eqU); const h0 = full(p); foeHit(b, th, 0.01);
-  if (b.seizeAsk) { const T = b.seizeAsk.slice(), L = E.actionList(b); ok(T.length >= 2 && L.filter(a => a.ok).every(a => /^seize_/.test(a.id)) && L.filter(a => /^seize_/.test(a.id)).length === T.length, 'ledger 6a(가장 좋은 장비가 둘 이상 → 고르기만 열림): ' + T.join(',')); const pick = T[T.length - 1]; PA(b, 'seize_' + pick); ok(!b.seizeAsk && (run.seized || []).length === 1 && run.seized[0].sl === pick, 'ledger 6b(고른 장비를 차압): ' + JSON.stringify(run.seized)); }
+  if (b.seizeAsk) { const A = b.seizeAsk, T = A.ties.slice(), L = E.actionList(b); ok(T.length >= 2 && run.seized.length === 1 && run.seized[0].sl === A.at && L.filter(a => a.ok).every(a => /^seize_/.test(a.id)) && L.filter(a => /^seize_/.test(a.id)).length === T.length, 'ledger 6a(동률 → 첫째를 먼저 차압, 고르기만 열림): ' + T.join(',')); const pick = T[T.length - 1], firstUid = run.seized[0].uid; PA(b, 'seize_' + pick); ok(!b.seizeAsk && run.seized.length === 1 && run.seized[0].sl === pick && run.eqU[A.at] === firstUid, 'ledger 6b(다른 것을 고르면 첫째는 돌아오고 고른 것이 차압): ' + JSON.stringify(run.seized)); }
   const sz = run.seized || []; const sl = sz[0] && sz[0].sl; const d = lost(p, h0);
   ok(e.clk.doomN === 1 && sz.length === 1 && !run.eqU[sl] && eq0[sl] === sz[0].uid, 'ledger 6: ' + JSON.stringify(sz));
   ok(near(d, K.doom), 'ledger 7: ' + d.toFixed(3)); ok(e.clk.n === 0, 'ledger 8: ' + e.clk.n); K.doom = dm0; R.ledger = (d * 100).toFixed(1) + '% · ' + sl + ' · ' + K.max + '칸(시험은 파국 ' + Math.min(dm0, 0.9) + ')';
@@ -63,7 +63,7 @@ common('ledger');
   if (X.ledger.max >= 3) { nr(b); e.clk.n = OFF('ledger'); e.brk = 0; delete e.s.broken; breakIt(b, e); ok(e.clk.n === OFF('ledger') - 1, 'ledger 10b(경고 칸 아님 → 1칸): ' + e.clk.n); }
   calm(e); e.clk.n = 0; p.stun = 1; foeHit(b, x.es[1], 1); ok(e.clk.n === 0 && e.clk.stop === 1, 'ledger 11'); p.stun = 0;
   e.clk = null; b.ledgerMark = 1; E.fcEv(b, 'onRoomStart'); ok(e.clk.n === X.ledger.mark, 'ledger 12: ' + (e.clk && e.clk.n));
-  { const d1 = X.ledger.doom; X.ledger.doom = Math.min(d1, 0.9); full(p); e.clk.n = W('ledger'); foeHit(b, x.es[1], 0.01); if (b.seizeAsk) PA(b, 'seize_' + b.seizeAsk[0]); ok(run.seized && run.seized.length === 1, 'ledger 13'); X.ledger.doom = d1; }
+  { const d1 = X.ledger.doom; X.ledger.doom = Math.min(d1, 0.9); full(p); e.clk.n = W('ledger'); foeHit(b, x.es[1], 0.01); if (b.seizeAsk) PA(b, 'seize_' + b.seizeAsk.at); ok(run.seized && run.seized.length === 1, 'ledger 13'); X.ledger.doom = d1; }
   R_('LAMP_DEV').onRoomEnd(b, 'lose'); ok(!run.seized, 'ledger 14');
 }
 /* ---------- 투기장 챔피언 ---------- */

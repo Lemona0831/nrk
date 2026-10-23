@@ -90,7 +90,7 @@ function deadSvSave() {
 }
 
 /* 결정타: 누가, 무엇으로, 얼마나, 무엇이 더해졌나 (10월 7일 2차) */
-const hitWho = h => h.dot ? (h.l || '지속 피해') : h.n ? h.n + (h.it ? '의 ' + h.it : '') : (h.l || '피해');
+const hitWho = h => h.dot ? (h.l || '상태 피해') : h.n ? h.n + (h.it ? '의 ' + h.it : '') : (h.l || '피해');
 const hitMods = h => h.m && h.m.length ? ` <span class="mini">(${esc(h.m.join(', '))})</span>` : '';
 function graveKill(g) {
   const k = g.kill; if (!k) return '';

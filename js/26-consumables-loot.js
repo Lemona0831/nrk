@@ -256,7 +256,7 @@ function consMarks(e) {
 }
 const CONS_MARK_D = {
   mark: e => '이 적이 받는 다음 직접 피해 한 번이 ' + Math.round(e.markDmg * 100) + '% 커집니다. 맞으면 사라집니다.',
-  red: e => '이 적의 다음 공격 하나가 주는 피해가 ' + Math.round(e.redNext * 100) + '% 줄어듭니다. 화상 같은 지속 피해에는 쓰이지 않습니다.',
+  red: e => '이 적의 다음 공격 하나가 주는 피해가 ' + Math.round(e.redNext * 100) + '% 줄어듭니다. 상태 피해(출혈 · 중독 · 화상)는 줄지 않습니다.',
   miss: () => '이 적의 다음 공격 하나가 빗나갑니다.',
   noheal: () => '이 적의 다음 치유량이 ' + Math.round(CONS.hinder.v * 100) + '% 줄어듭니다.',
   big: e => '이 적이 모으는 큰 공격(강타 · 겨누기 · 영창)의 피해가 ' + Math.round(e.bigRed * 100) + '% 줄어듭니다. 그 공격이 나가면 사라집니다.',

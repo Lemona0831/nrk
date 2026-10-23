@@ -669,7 +669,7 @@ function skBody(s) {
       case 'focusBurst': out.push(`대상의 추적을 모두 터뜨린다. 1겹마다 기준 추가 피해 ${e.n}(민첩 1점마다 ${FOCUS_STAT_PCT}% 증가). 추적은 사라진다.`); break;
       case 'focusAdd': out.push(`대상에게 추적 +${e.n}겹. 이 효과로는 2겹까지만 쌓이고, 3겹째는 같은 적을 다시 맞혀야 쌓인다.`); break;
       case 'swapx': out.push(`직전에 친 적과 다른 적이면 피해 ×${e.mul}.`); break;
-      case 'evade': out.push(`다음에 맞는 공격 ${e.n}번을 피한다. 화형과 지속 피해는 피할 수 없다.`); break;
+      case 'evade': out.push(`다음에 맞는 공격 ${e.n}번을 피한다. 화형과 상태 피해는 피할 수 없다.`); break;
       case 'evadeCtr': out.push((e.charged ? '피한 공격이 강타나 겨눈 한 발이면' : (e.rounds ? e.rounds + '라운드 동안 ' : '') + '공격을 피할 때마다') + ` 그 적에게 반격 사격을 한다(피해 ${e.dmg}${e.chill ? ', 둔화 ' + e.chill : ''}).`); break;
       case 'quick': out.push('이번 차례에 빠른 칸 +1.'); break;
       case 'chillCut': out.push(`대상이 둔화된 채 강타 · 영창 · 겨누기를 모으는 중이면 그 공격을 끊는다. 강적 · 보스는 끊기지 않고 붕괴 +${e.brk}.`); break;
