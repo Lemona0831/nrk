@@ -471,6 +471,11 @@ const SK_HSL = { poison: '독을 건 행동마다', kill: '적을 쓰러뜨린 �
 for (const k in TREE2) for (const x of (SKILLS2[k] || [])) x.hs = (TREE2[k].haste || {})[x.b] || null; // 스킬마다 갈래 규칙을 붙여 둔다
 /* 10월 15일 유산 1차 시제품: 스킬 비용은 데이터의 cd에서 기계적으로 만든다(설계안 4-1). 시작 스킬과 cd 3–5 → 2, 6–8 → 3, 9–10과 전투마다 1번 → 4. cd는 다른 도구가 읽으므로 데이터에 남긴다 */
 function skCost(s) { if (!s) return 0; if (s.ys != null) return s.ys; if (s.once) return 4; return 2; } // 0.8.0 M5-0(10월 19일): 비용은 트리 노드의 ys(skOf가 넣음)만 읽는다. 쿨타임 변환표 · cheap 분기는 없앴다. 노드 밖(시작 스킬 등)은 2, 전투마다 1번은 4. 트리 스킬의 ys 누락은 tree-check 오류
+/* S-2(10월 24일 만든 사람): 유산 1짜리 스킬이 생명력을 회복하면 다음 내 차례 시작의 유산 충전이 없다(차례 충전과 맞물린 공짜 회복 막기, 몸 빼기 무한 회피와 같은 꼴). 대응 · 다른 충전은 그대로.
+   생명력을 채우는 효과: 신성한 기도(wdPray) · 탈기(mkDrainChill) · 먹기(drain, 내 출혈을 지우는 me는 빼고). 보호막 · 보호는 넣지 않는다(만든 사람 결정 전) */
+const YS_HEAL_K = ['wdPray', 'mkDrainChill'];
+const ysHealSk = s => !!(s && s.fx) && skCost(s) === 1 && s.fx.some(e => YS_HEAL_K.includes(e.k) || (e.k === 'drain' && !e.me));
+const skYsTail = s => ysHealSk(s) ? ' 쓰면 다음 차례 유산 충전 없음.' : '';
 function skCd(s) { return '유산 ' + skCost(s) + (s.once ? ' · 전투마다 1번' : ''); }
 const skCharge = skCd; // 옛 이름
 const skHz = s => !!(s && s.fx && s.fx.some(e => e.k === 'hasten')); // 🔄 표시를 붙일 스킬
@@ -610,7 +615,7 @@ function skBodyMk(s) {
   return P.join(' · ') + '.';
 }
 function skBody(s) {
-  if (s.mk5 || s.as5 || s.hn5 || s.el5) return skBodyMk(s) + (s.pay ? ' 대가: ' + s.pay : ''); // M5-2 수도승 · M5-3 암살자 한 줄 설명
+  if (s.mk5 || s.as5 || s.hn5 || s.el5) return skBodyMk(s) + skYsTail(s) + (s.pay ? ' 대가: ' + s.pay : ''); // M5-2 수도승 · M5-3 암살자 한 줄 설명
   const out = []; const hits = s.hits || 1; const parts = []; const first = []; const burnWard = s.fx.some(e => e.k === 'wardBurn'); const isE = String(s.id).slice(0, 2) === 'e_'; // first: 연타의 첫 타격에만 거는 상태 (마검사 연타 칸)
   const eMulti = isE && hits > 1 && s.fx.some(e => e.k === 'st'); // 원소술사 여러 번 쏘기: 상태는 첫 발 뒤에 걸려 다음 발부터 쓴다 (엔진 그대로, 문장만)
   const cf = String(s.id).slice(0, 2) === 'c_'; if (cf) out.push(...skBodyConfPre(s)); // 숨겨진 직업 2: 옮기기 · 벗기기 · 정화 · 사함은 피해보다 먼저
@@ -727,7 +732,7 @@ function skBody(s) {
   if (bu && (s.tgt === 'ranged' || s.tgt === 'all') && s.fx.some(e => e.k === 'dmg')) out.push((s.tgt === 'all' ? '후열에도 닿는다. ' : '') + '근접 공격이 아니라 흡혈은 일어나지 않는다.');
   if (s.fx.some(e => skillResourceGrows(s, e) && e.k !== 'focusBurst')) out.push((/^m_/.test(s.id) ? '이 기 추가 피해' : '이 자원 추가 피해') + '는 힘 1점마다 기준값의 1%씩 증가한다.');
   if (s.pay) out.push('대가: ' + s.pay); // M5-0a 승부수: 대가는 따로 적어 두고(설명란은 skDescHtml이 줄을 나눈다), 글 설명에서는 끝에 붙인다
-  return out.join(' ').replace(/\s+/g, ' ').trim();
+  return (out.join(' ') + skYsTail(s)).replace(/\s+/g, ' ').trim(); // S-2: 유산 1 회복 칸은 끝에 충전 없음
 }
 /* M5-0a(10월 20일 만든 사람): 대사가 있는 스킬(승부수)의 설명란. 대사는 맨 위 따로 한 칸(명조 가운데 인용, 「」는 부채꼴 색 장식 · 위에 ✦ 가는 선, 같은 날 만든 사람 고름), 그 아래 효과 / 대가 / 대상을 줄로 나눈다.
    대가는 색과 "대가" 글자로 구분(색만으로 구분하지 않음). 스크린리더는 "대사: …, 효과: …, 대가: …, 대상: …" 순서. 대사가 없으면 빈 문자열(부른 쪽이 원래 설명을 쓴다) */
