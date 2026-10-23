@@ -21,7 +21,7 @@ ok.push('들어갈 계획');
   run.consPending = [{ id: 'herb', g: 'n', n: 4, loot: 1 }, { id: 'cleanse', g: 'n', n: 1, loot: 1 }]; G.sheet = { kind: 'consfull', data: {} };
   let h = E.sheetParts(G.sheet)[1]; assert(h.includes('2개만 들어감') && h.includes('자리 없음') && h.includes('챙기기 (2개)') && h.includes('자리가 3개 모자랍니다'), '상태 표시');
   D.click('cptoggle', '0'); h = E.sheetParts(G.sheet)[1]; assert(h.includes('두고 감'));
-  D.click('cpreplace', '0', { s: 'cons' }); h = E.sheetParts(G.sheet)[1]; assert(h.includes('☑') && /cleanse|정화 약/.test(h)); D.click('cptake');
+  D.click('cpreplace', '0', { s: 'cons' }); h = E.sheetParts(G.sheet)[1]; assert(/정화 약/.test(h) && h.includes('챙김'), '묶음을 버린 자리에 정화 약이 챙김'); /* 10월 24일 전리품 창 개편: 체크 표시 대신 칸의 상태 글 */ D.click('cptake');
   assert(run.cons.some(c => c.id === 'cleanse'), '묶음을 비운 자리에 정화 약'); assert.equal(run.cons.filter(c => c.id === 'herb').reduce((a, c) => a + c.n, 0), 3, '뺀 약초는 두고 감');
   const log = run.consGainLog.filter(x => x.fromPending); assert.equal(log.length, 2); assert.equal(log[0].skipped, 1); }
 ok.push('화면 · 빼기 · 묶음 버리기 · 기록');

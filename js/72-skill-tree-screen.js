@@ -155,7 +155,7 @@ function sheetParts(S) {
     const Q = run.consPending || [], d = S.data, skip = d.skip || [], F = consFitSim(run, Q, skip), plan = F.plan, sel = d.sel != null && Q[d.sel] ? d.sel : null;
     const takeN = plan.reduce((x, n) => x + n, 0), lostN = Q.reduce((x, c, i) => x + (skip.includes(i) ? 0 : c.n - plan[i]), 0);
     let pk = d.pick; if (!pk || (pk.s === 'loot' ? !Q[pk.i] : !run.cons[pk.i])) pk = Q.length ? { s: 'loot', i: 0 } : run.cons.length ? { s: 'bag', i: 0 } : null;
-    const lootSt = (c, i) => { const off = skip.includes(i), got = plan[i]; return c.swapOut ? (off ? '두고 감' : '다시 챙김') : off ? '두고 감' : got >= c.n ? '챙김' : got > 0 ? got + '개만' : '자리 없음'; };
+    const lootSt = (c, i) => { const off = skip.includes(i), got = plan[i]; return c.swapOut ? (off ? '두고 감' : '다시 챙김') : off ? '두고 감' : got >= c.n ? '챙김' : got > 0 ? got + '개만 들어감' : '자리 없음'; };
     const tile = (side, i, c, extra) => { const D = CONS[c.id], on = pk && pk.s === side && pk.i === i, a = side === 'bag' && sel != null ? 'cpswap' : 'cppick';
       return `<button class="ctile${on ? ' on' : ''}${extra.cls || ''}" data-a="${a}" data-k="${side === 'bag' && sel != null ? i : side + ':' + i}"${extra.drag ? ` draggable="true" data-drag="${i}"` : ''}${side === 'bag' ? ` data-drop="${i}"` : ''} aria-pressed="${on}" title="${esc(consName(c) + ': ' + D.d(consVal(c)))}"><span class="ct-i" aria-hidden="true">${D.ico}</span><span class="ct-n">${esc(consName(c))}</span><span class="ct-c">${extra.cnt}</span>${extra.tag ? `<span class="ct-t">${extra.tag}</span>` : ''}</button>`; };
     const bag = Array.from({ length: CONS_BAG }, (_, i) => { const x = F.bag[i]; if (!x) return '<div class="ctile e" aria-label="빈 칸">빈 칸</div>'; const D = CONS[x.id]; if (!D) return '';
