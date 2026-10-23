@@ -185,7 +185,7 @@ const ATREE_DEF = {
       /* 스킬마다 변형 둘(둘 다 제시): v 'deep' 깊게 = 같은 길을 세게, v 'link' 잇기 = 그 스킬에 없던 다른 빌드의 꼬리표를 더해 경계 · 결합 칸으로. [Claude 초안] */
       w_dstance: [
         ['wv_ds_ward', '굳은 태세', '켤 때 보호막 +8을 더 두릅니다.', { fxAdd: [{ k: 'ward', n: 8 }] }, [], { v: 'deep' }],
-        ['wv_ds_basic', '맞받는 태세', '켤 때 다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+        ['wv_ds_basic', '맞받는 태세', '켤 때 다음 강공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
       w_shieldhit: [
         ['wv_sh_fast', '날랜 가격', '빠른 칸이 됩니다. 피해 8 → 6.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 6 }] }, ['빠름'], { v: 'deep' }],
         ['wv_sh_brk', '부수는 가격', '붕괴 +15. 피해 8 → 6.', { fxSet: [{ k: 'dmg', n: 6 }], fxAdd: [{ k: 'brk', n: 15 }] }, ['붕괴'], { v: 'link' }]],
@@ -203,13 +203,13 @@ const ATREE_DEF = {
         ['wv_ci_wst', '태세의 성채', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
       w_beyond: [
         ['wv_be_normal', '빠른 너머', '보통 빠르기가 됩니다. 피해 15 → 11.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 11 }] }, [], { v: 'deep' }],
-        ['wv_be_basic', '너머의 박자', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+        ['wv_be_basic', '너머의 박자', '다음 강공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
       s_astance: [
-        ['wv_as_basic', '거센 태세', '켤 때 다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, [], { v: 'deep' }],
+        ['wv_as_basic', '거센 태세', '켤 때 다음 강공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, [], { v: 'deep' }],
         ['wv_as_ward', '버티는 공세', '켤 때 보호막 +8.', { fxAdd: [{ k: 'ward', n: 8 }] }, ['보호막'], { v: 'link' }]],
       s_slam: [
         ['wv_sl_slow', '무거운 내리 찍기', '느린 행동이 됩니다. 피해 13 → 19.', { set: { time: 'slow' }, fxSet: [{ k: 'dmg', n: 19 }] }, [], { v: 'deep' }],
-        ['wv_sl_basic', '찍고 이어 치기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+        ['wv_sl_basic', '찍고 이어 치기', '다음 강공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
       s_regret: [
         ['wv_rg_kill', '회한 거두기', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유).', { set: { killRecharge: 1 } }, ['처치'], { v: 'deep' }],
         ['wv_rg_brk', '회한의 일격', '붕괴 +11. 피해 7 → 5.', { fxSet: [{ k: 'dmg', n: 5 }], fxAdd: [{ k: 'brk', n: 11 }] }, ['붕괴'], { v: 'link' }]],
@@ -218,7 +218,7 @@ const ATREE_DEF = {
         ['wv_ma_ward', '방패 든 걸음', '보호막 6 → 12.', { fxSet: [{ k: 'ward', n: 12 }] }, ['보호막'], { v: 'link' }]],
       s_cut: [
         ['wv_cu_fast', '빠른 끊기', '빠른 칸이 됩니다. 피해 13 → 9.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 9 }] }, ['빠름'], { v: 'deep' }],
-        ['wv_cu_basic', '끊고 잇기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+        ['wv_cu_basic', '끊고 잇기', '다음 강공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
       s_ruin: [
         ['wv_ru_normal', '서두른 박살', '보통 빠르기가 됩니다. 피해 19 → 13.', { set: { time: 'normal' }, fxSet: [{ k: 'dmg', n: 13 }] }, [], { v: 'deep' }],
         ['wv_ru_wst', '태세의 박살', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
@@ -248,13 +248,13 @@ const ATREE_DEF = {
         ['wv_hk_brk', '꺾는 갈고리', '붕괴 32 → 43.', { fxSet: [{ k: 'brk', n: 43 }] }, ['붕괴'], { v: 'link' }]],
       w_flare: [
         ['wv_fl_fast', '번쩍 터뜨리기', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
-        ['wv_fl_basic', '터뜨리고 잇기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+        ['wv_fl_basic', '터뜨리고 잇기', '다음 강공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
       w_rebuild: [
         ['wv_rb_more', '더 높은 벽', '보호막 상한의 42% → 57%까지 채웁니다.', { fxSet: [{ k: 'wardFill', to: 0.57 }] }, [], { v: 'deep' }],
         ['wv_rb_wst', '태세의 벽', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
       w_breach: [
         ['wv_br_slow', '깊은 부수기', '느린 행동이 됩니다. 태우기 상한 16 → 22.', { set: { time: 'slow' }, fxSet: [{ k: 'wardBurn', max: 22 }] }, [], { v: 'deep' }],
-        ['wv_br_basic', '부수고 잇기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+        ['wv_br_basic', '부수고 잇기', '다음 강공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
       w_rampart: [
         ['wv_ra_fast', '서두른 철벽', '빠른 칸이 됩니다. 보호막 28 → 20.', { set: { time: 'fast' }, fxSet: [{ k: 'ward', n: 20 }] }, ['빠름'], { v: 'deep' }],
         ['wv_ra_wst', '태세의 철벽', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
@@ -263,7 +263,7 @@ const ATREE_DEF = {
         ['wv_si_wst', '태세의 파성', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
       f_topple: [
         ['wv_tp_kill', '연쇄 거두기', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유).', { set: { killRecharge: 1 } }, ['처치'], { v: 'deep' }],
-        ['wv_tp_basic', '쓰러뜨리고 잇기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+        ['wv_tp_basic', '쓰러뜨리고 잇기', '다음 강공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
       s_lean: [
         ['wv_le_fast', '서두른 대열', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
         ['wv_le_ward', '대열 방패', '보호막 4 → 8.', { fxSet: [{ k: 'ward', n: 8 }] }, ['보호막'], { v: 'link' }]],
@@ -272,7 +272,7 @@ const ATREE_DEF = {
         ['wv_rp_wst', '태세의 방패벽', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
       s_gapwatch: [
         ['wv_gw_fast', '서두른 틈', '빠른 칸이 됩니다. 보호막 23 → 16.', { set: { time: 'fast' }, fxSet: [{ k: 'ward', n: 16 }] }, ['빠름'], { v: 'deep' }],
-        ['wv_gw_basic', '틈을 노린 박자', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+        ['wv_gw_basic', '틈을 노린 박자', '다음 강공격에 붕괴 +15.', { fxAdd: [{ k: 'wdNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
       s_quake: [
         ['wv_qk_fast', '순간의 분쇄', '빠른 칸이 됩니다.', { set: { time: 'fast' } }, ['빠름'], { v: 'deep' }],
         ['wv_qk_wst', '태세의 분쇄', '태세가 켜져 있으면 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'wst' } }, ['태세'], { v: 'link' }]],
@@ -371,7 +371,7 @@ const ATREE_DEF = {
         ['mv_sh_brk', '사혈 꺾기', '붕괴 +20.', { fxAdd: [{ k: 'brk', n: 20 }] }, ['붕괴'], { v: 'link' }]],
       m_maek: [
         ['mv_mk_more', '깊은 맥', '둔화 1 → 2. 피해 12 → 9.', { fxSet: [{ k: 'dmg', n: 9 }, { k: 'st', s: 'chill', n: 2 }] }, [], { v: 'deep' }],
-        ['mv_mk_basic', '맥 짚고 치기', '다음 기본 공격에 붕괴 +15.', { fxAdd: [{ k: 'mkNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
+        ['mv_mk_basic', '맥 짚고 치기', '다음 강공격에 붕괴 +15.', { fxAdd: [{ k: 'mkNextBrk', n: 15 }] }, ['기본공격연동'], { v: 'link' }]],
       m_bongswae: [
         ['mv_bs_fast', '날랜 봉쇄', '빠른 칸이 됩니다. 피해 18 → 13.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 13 }] }, [], { v: 'deep' }],
         ['mv_bs_front', '전열 봉쇄', '전열 모두를 칩니다. 피해 18 → 11.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 11 }] }, ['광역'], { v: 'link' }]],

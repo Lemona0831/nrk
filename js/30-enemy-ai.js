@@ -177,7 +177,7 @@ const INTENT_ICO = { chant: '📿', chanting: '📿', burn: '🔥', raise: '⚰�
 function ignShare(b, e) { const n = st(b.p, 'ignite'); if (!n) return 0; const h = e.foe === 'dancer' && e.intent && e.intent.k === 'heavy' ? 1 + (e.haze || 0) : 1; let g = 0; for (let k = 0; k < h; k++) g += Math.max(0, n - k); return g; }
 function intentBadge(b, e) { const r = intentBadge0(b, e); if (isCh3(b) && e.intent && DMG_K.includes(e.intent.k) && r.num !== '') { const g = ignShare(b, e); if (g) r.txt += ' (+화상 ' + g + ')'; } return r; }
 function intentBadge0(b, e) {
-  if (darkHid(b, e) && !isCh2(b)) return { ico: '❓', num: '', txt: '보이지 않음', cls: '' };
+  if (darkHid(b, e) && !isCh2(b)) return { ico: '❓', num: '', txt: '어둠에 가려 안 보임', cls: '' };
   const i = e.intent || {}; const est = enemyHitEst(b, e); const capOf = d => Math.min(d, b.p.hpMax * (e.role === 'boss' ? 0.45 : e.elite ? 0.35 : 0.25));
   if (isCh2(b)) { const x = ch2Badge(b, e, i, est, capOf); if (x) return x; } // A2
   if (isW3(b)) { const x = w3Badge(b, e, i, est, capOf); if (x) return x; } // A3

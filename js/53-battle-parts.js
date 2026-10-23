@@ -207,6 +207,8 @@ function stsHtml(u, b, inCard, opt) {
     if (u.exhaust) out.push('<i class="d" data-info="exhaust" tabindex="0">탈진</i>');
     if (u.ward > 0) out.push(`<i class="b" data-info="ward" tabindex="0">보호막 <b>${Math.round(u.ward)}</b>${u === (b && b.p) && isV2(u) ? '<small>/' + wardMax(u) + '</small>' : ''}</i>`);
     if (u.thorn) out.push(u.thorn.bleed && !u.thorn.dmg ? `<i class="b" data-info="buthorn" tabindex="0">맞으면 출혈 ${u.thorn.bleed}<small> · ${u.thorn.n}번</small></i>` : `<i class="b" data-info="thorn" tabindex="0">가시 <b>${u.thorn.n}</b><small>·${u.thorn.dmg}</small></i>`);
+    if (u.sbSt && u.sbSt.hold > 0) out.push(`<i class="b" data-info="sbhold" tabindex="0">버팀 <b>${u.sbSt.hold}</b></i>`); // 마검사 버팀(주는 피해 덤). 전에는 칩이 없었다
+    if (u.evade > 0) out.push(`<i class="b" data-info="pevade" tabindex="0">${u.build === 'hunter' ? '몸 빼기' : '피하기'} <b>${u.evade}</b></i>`); // 남은 피하기 횟수(사냥꾼 몸 빼기 · 연막 등). 전에는 칩이 없어 전투 기록으로만 알았다
     if (isBu(u)) { const th = buThirst(u), gn = buGrudgeNow(b); // 숨겨진 직업 1
       if (th > 0) out.push(`<i class="b" data-info="buthirst" tabindex="0"><span class="sic" aria-hidden="true">🩸</span>갈증 +${Math.round(th * 100)}%</i>`);
       if (gn > 0) out.push(`<i class="b" data-info="bugrudge" tabindex="0">받은 피해 <b>${Math.round(gn)}</b></i>`);

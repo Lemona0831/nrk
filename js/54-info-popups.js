@@ -93,7 +93,7 @@ function infoHtml(key) {
   if (parts[0] === 'st' && b) {
     const u = parts[1] === 'p' ? b.p : b.en.find(x => x.id === parts[1]); const k = parts[2]; if (!u || !u.s[k]) return '';
     if (k === 'poison') { const v = u.s.poison.stacks; return H('중독 ' + v, P(SDESC.poison) + P('다음 피해 ' + v + ', 그다음 ' + Math.max(0, v - 1) + '… 이대로 두면 앞으로 총 ' + poisonTotal(v) + ' 피해.')); }
-    if (KW[k]) { const v = u.s[k].stacks; const ki = k === 'empower' && u === b.p && u.build === 'monk'; return H((ki ? '기' : SNAMES[k] || k) + ' ' + v, P((ki ? '되받을 때마다 쌓입니다. ▶ 공격 한 번이 기 1을 써서 피해 +25%입니다. ⚡ 공격은 기를 쓰지 않습니다.' : (SDESC[k] || ''))) + ((k === 'bleed' || k === 'ignite') ? P('이대로 두면 앞으로 ' + v + ' + ' + Math.max(0, v - 1) + ' + … = 총 ' + poisonTotal(v) + ' 피해.') : P('앞으로 ' + v + '번 더 발동합니다.')) + (k === 'bleed' && isBu(b.p) ? (u === b.p ? P('내 출혈은 내 행동마다 들어가고 1 줍니다.') + ((u.selfBl || 0) > 0 ? P('내가 나에게 건 출혈이 남아 있어 출혈로는 생명력 1에서 멈춥니다.') : '') : P('흡혈 ' + Math.round(Math.min(BUTCH.leechMax, BUTCH.leech * v) * 100) + '%: 이 적을 근접으로 치면 준 피해의 그만큼 생명력을 되찾습니다. 맞힌 순간의 출혈로 셉니다.')) : '')); }
+    if (KW[k]) { const v = u.s[k].stacks; const ki = k === 'empower' && u === b.p && u.build === 'monk'; return H((ki ? '기' : SNAMES[k] || k) + ' ' + v, P((ki ? '되받을 때마다 쌓입니다. ▶ 공격 한 번이 기 1을 써서 피해 +25%입니다. ⚡ 공격은 기를 쓰지 않습니다.' : ((k === 'haste' && u !== b.p ? SDESC.hasteFoe : SDESC[k]) || ''))) + ((k === 'bleed' || k === 'ignite') ? P('이대로 두면 앞으로 ' + v + ' + ' + Math.max(0, v - 1) + ' + … = 총 ' + poisonTotal(v) + ' 피해.') : P('앞으로 ' + v + '번 더 발동합니다.')) + (k === 'bleed' && isBu(b.p) ? (u === b.p ? P('내 출혈은 내 행동마다 들어가고 1 줍니다.') + ((u.selfBl || 0) > 0 ? P('내가 나에게 건 출혈이 남아 있어 출혈로는 생명력 1에서 멈춥니다.') : '') : P('흡혈 ' + Math.round(Math.min(BUTCH.leechMax, BUTCH.leech * v) * 100) + '%: 이 적을 근접으로 치면 준 피해의 그만큼 생명력을 되찾습니다. 맞힌 순간의 출혈로 셉니다.')) : '')); }
     const n = leftTurns(b, u.s[k]);
     return H(SNAMES[k] || k, P(SDESC[k] || '') + P(n > 0 ? '내 차례가 ' + n + '번 더 오기 전에 끝납니다.' : '내 다음 차례 전에 끝납니다.'));
   }
@@ -131,7 +131,7 @@ function infoHtml(key) {
   }
   if (parts[0] === 'buff' && G.run) { const k = parts[1], S = SHRINES.find(x => x.id === k); const n = (G.run.buffs || {})[k] || 0; return H(S ? S.n : (EVBUFF[k] || [k])[0], P(S ? S.d : (EVBUFF[k] || ['', ''])[1]) + P('지금 방을 포함해 ' + n + '개 방 동안 이어집니다.')); } // 10월 5일: 브라우저 툴팁 대신 게임 설명 창
   if (parts[0] === 'sk' && SK2[parts[1]]) { const s = SK2[parts[1]]; return H(s.n, P((s.start ? '시작 스킬' : s.b + ' · ' + s.tier + ' · ' + s.row + '줄') + '. ' + skHead(s)) + (skDescHtml(s) || P(skBody(s))) + cfKwHtml(s)); } // 시험 전투의 스킬 칸
-  if (parts[0] === 'fclk') return H('강적의 시계', P('칸이 다 차면 위험하다. 한 칸 남으면 경고가 뜬다. 무엇이 칸을 채우고 되돌리는지는 겪어 보며 알게 된다.')); // G-1
+  if (parts[0] === 'fclk') return H('강적의 시계', P('싸우는 동안 칸이 차오르고, 다 차면 싸움이 크게 위험해집니다. 한 칸 남으면 마지막 경고가 뜹니다.') + P('무엇이 칸을 채우고 되돌리는지는 겪어 보며 알게 됩니다.')); // G-1
   if (parts[0] === 'chdev') { const D = typeof G !== 'undefined' && G.b ? chDevOf(G.b) : null; if (D) return H(D.n || '', P(D.help || '')); } // A0 챕터 장치 도움말 한 줄
   if (parts[0] === 'mod' && ROOM_MODS[parts[1]]) return H(ROOM_MODS[parts[1]].n, P(ROOM_MODS[parts[1]].d));
   if (key === 'heat' && b && b.heat != null) return H('열기', P('지금 ' + Math.round(b.heat) + '/100. 이번 라운드 끝에 약 +' + heatRise(b) + '.') + P('열기가 100 이상인 채 라운드가 끝나면 ' + heatName(b) + '이(가) 붑니다. 예고가 뜬 뒤에는 내 차례가 한 번 옵니다. 그 전에 열기를 100 아래로 내리면 불지 않습니다.') + P('열기가 변할 때마다 전투 기록에 까닭이 적힙니다.'));
@@ -142,6 +142,7 @@ function infoHtml(key) {
   if (parts[0] === 'lock') { const L = typeof UNLOCK !== 'undefined' && UNLOCK[parts[1]]; return L ? H('???', P('숨겨진 직업입니다.') + P(L.hint || '') + P('한 번 열리면 이 계정에 남습니다.')) : ''; }
   if (parts[0] === 'soon') { const c = (typeof CLASS_SOON !== 'undefined' ? CLASS_SOON : []).find(x => x.n === parts[1]); return c ? H(c.n, P(c.d + '.') + P('아직 준비 중입니다.')) : ''; }
   if (parts[0] === 'floor' && G.run) { const f = +parts[1], run = G.run; const rec = (run.rooms || []).filter(x => x.room === f).pop(); const T = rec && ROOM_TYPES[rec.type]; return H(floorName(f), P(f === FLOOR_CAMP ? '야영지: 쉬면 모두 찹니다.' : f === FLOOR_BOSS ? '보스가 기다립니다.' : f === run.room ? '지금 있는 층입니다.' : f < run.room ? (T ? T.n + ' 방을 지났습니다.' : rec && rec.type === 'camp' ? '야영지에서 쉬었습니다.' : '지나온 층입니다.') : PATH_AT.includes(f) ? '갈래길이 나옵니다.' : '아직 가지 않은 층입니다.')); }
+  if (parts[0] === 'stt' && b && SK2[parts[1]]) { const s = skOf(b.p, parts[1]) || SK2[parts[1]]; return H(s.n, P('이 스킬로 생긴 상태입니다. ' + skHead(s)) + (skDescHtml(s) || P(skBody(s)))); } // 승부수 · 강화 칩(js/52): 그 칩을 만든 스킬의 설명
   if (INFO2[key]) return H(INFO2[key][0], INFO2[key].slice(1).map(P).join(''));
   if (key === 'buildrule' && b) { const B = BUILDS[b.p.build]; const SKM = skillMap(b.p.build); return H(B.n, classRuleHtml(b.p.build) + skillsOf(b.p).map(id => P(SKM[id].n + ' (' + resLabel(SKM[id]) + '): ' + SKM[id].d)).join('')); }
   if (fixed[key]) return H(fixed[key][0], P(fixed[key][1]));

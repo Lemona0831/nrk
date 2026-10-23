@@ -410,7 +410,7 @@ function ch2Text(b, e, i, est) {
   return null;
 }
 function ch2Badge(b, e, i, est, capOf) {
-  if (ch2Dark(b) && e.row === 'back' && e.role !== 'boss') return ch2DarkBig(b, e) ? { ico: '👂', num: '', txt: '무언가 크게 숨을 들이쉰다', cls: 'hv' } : { ico: '❓', num: '', txt: '보이지 않음', cls: '' };
+  if (ch2Dark(b) && e.row === 'back' && e.role !== 'boss') return ch2DarkBig(b, e) ? { ico: '👂', num: '', txt: '무언가 크게 숨을 들이쉰다', cls: 'hv' } : { ico: '❓', num: '', txt: '어둠에 가려 안 보임', cls: '' };
   const tn = () => { const t = b.en.find(x => x.id === i.tgt); return t ? t.n : ''; };
   switch (i.k) {
     case 'ledger': return { ico: '📒', num: '', txt: '장부 적기', cls: 'warn' };

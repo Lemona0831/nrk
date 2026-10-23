@@ -22,7 +22,7 @@ const once=JSON.stringify(legacy); legacy.tv=2; assert(!E.treeMigrate08(legacy))
 for (const ch of [2,3]) {const r=fresh();E.__G.data={}; E.markSetup(r,{ch,ids:[]});assert.equal(r.atree.pts,r.lv+1);assert.equal(r.ptree.pts,6+2*(r.lv-1));assert.equal(r.ksPending,ch-1);E.ptFix(r);assert.equal(r.atree.pts,r.lv+1);}
 // 이름과 표시 문장 이외의 전투 데이터를 비교합니다.
 function data(old){const c={};vm.createContext(c);for(const f of ['classes.js','skills.js']){const text=old?execFileSync('git',['show','HEAD:data/'+f],{encoding:'utf8'}):fs.readFileSync('data/'+f,'utf8');vm.runInContext(text,c);}return JSON.parse(vm.runInContext('JSON.stringify({BUILDS,SKILLS2,TREE2})',c));}
-function normalize(x){for(const b of Object.values(x.BUILDS)){delete b.lore;delete b.rule;delete b.intro;}for(const list of Object.values(x.SKILLS2))for(const s of list){delete s.n;if(s.start)delete s.cd;}for(const t of Object.values(x.TREE2))delete t.bd;return JSON.stringify(x).replaceAll('피칼날','혈인').replaceAll('불칼','염검').replaceAll('주문갑','마갑');}
+function normalize(x){for(const b of Object.values(x.BUILDS)){delete b.lore;delete b.rule;delete b.intro;}for(const list of Object.values(x.SKILLS2))for(const s of list){delete s.n;if(s.start)delete s.cd;for(const e of s.fx||[])delete e.txt;} /* 10월 24일: 효과 설명 문장(txt)도 표시 문장이라 빼고 견준다 */for(const t of Object.values(x.TREE2))delete t.bd;return JSON.stringify(x).replaceAll('피칼날','혈인').replaceAll('불칼','염검').replaceAll('주문갑','마갑');}
 assert.equal(normalize(data(false)),normalize(data(true)));
 assert.equal(V("vfxSfxKey({k:'hit',st:'slash',build:'warden',big:true,seq:1})"),'slash');
 assert.equal(V("vfxSfxKey({k:'hit',st:'arrow',build:'hunter',big:true})"),'arrow');

@@ -576,7 +576,7 @@ function skBodyMk(s) {
     case 'evadeCtr': P.push((e.rounds ? e.rounds + '라운드 ' : '') + '피하면 반격 사격 ' + e.dmg + (e.focus ? '(추적 +' + e.focus + '겹)' : '')); break;
     case 'chillCut': P.push('둔화된 채 모으는 적의 공격을 끊음'); break;
     case 'freeze': P.push('대상이 다음 행동을 놓침'); break;
-    case 'foresee': P.push(e.rounds + '라운드 큰 공격 피해 −' + Math.round(e.red * 100) + '%'); break;
+    case 'foresee': P.push(e.rounds + '라운드 큰 공격(강타 · 겨눈 한 발 · 화형) 피해 −' + Math.round(e.red * 100) + '%'); break;
     case 'bbuf': P.push(((e.r || 0) + 1) + '라운드 기본 공격에 ' + (e.s === 'barb' ? '출혈 ' + e.bleed : e.s)); break;
     case 'hnTrap': P.push(e.txt.replace(/\.$/, '') + (e.mul ? ' · 걸린 적에게 무기 피해의 ' + e.mul + '배' : '')); break;
     case 'kiHits': P.push(e.max === 1 ? '기가 있으면 +1타' : '기 1마다 1타 추가(최대 ' + e.max + ')'); break;
@@ -605,7 +605,7 @@ function skBodyMk(s) {
     case 'thorn': P.push('맞을 때마다 때린 적에게 피해 ' + e.dmg + ' · ' + e.times + '번'); break;
     case 'kwx': P.push(skKw(s, e.s) + ' 걸린 적에게 ×' + e.mul); break;
     case 'ward': P.push('보호막 +' + e.n); break;
-    case 'bigx': P.push('큰 적에게 ×' + e.mul); break;
+    case 'bigx': P.push('정예 · 강적 · 보스에게 ×' + e.mul); break;
     case 'stance': { const L = ['자세'];
       if (e.red) L.push('받는 피해 −' + Math.round(e.red * 100) + '%'); if (e.dmg) L.push('되받기 +' + e.dmg); if (e.mul) L.push('되받기 ×' + (1 + e.mul)); if (e.max) L.push(e.max + '번까지'); if (e.keep) L.push(e.keep + '차례 유지');
       if (e.big) L.push('강타를 되받으면 무너뜨림'); if (e.far) L.push('후열도 되받음'); if (e.ki) L.push('되받으면 기 +' + e.ki); if (e.brk) L.push('되받기 붕괴 +' + e.brk); if (e.chill) L.push('되받은 적 둔화 ' + e.chill);
@@ -644,7 +644,7 @@ function skBody(s) {
     if (bu) { const t = skBodyBu(s, e, late); if (t !== null) { if (t) out.push(t); continue; } }
     if (cf) { const t = skBodyConf(s, e); if (t !== null) { if (t) out.push(t); continue; } }
     if (bm) { const t = skBodyBm(s, e); if (t !== null) { if (t) out.push(t); continue; } }
-    if (SB_BD_K.includes(e.k) || (e.k === 'imbue' && (e.txt || (!e.also && s.fx.some(x => x.k === 'imbue' && x.also && x.txt))))) { if (e.txt) out.push(e.txt); continue; } // 0.8.0 M5-0 마검사 경계: 만든 사람 문장 그대로(txt)
+    if (SB_BD_K.includes(e.k) || WD_K.includes(e.k) || (e.k === 'imbue' && (e.txt || (!e.also && s.fx.some(x => x.k === 'imbue' && x.also && x.txt))))) { if (e.txt) out.push(e.txt); continue; } // 0.8.0 M5-0 마검사 경계 · M5-1 파수꾼(WD_K): 만든 사람 문장 그대로(txt). 파수꾼 칸은 전에 이 길에 없어 태세 · 기도 · 승부수 효과 문장이 비어 보였다
     switch (e.k) {
       case 'grow': out.push(`대상의 중독을 ${e.mul}배로 만든다.` + (e.add ? ` 그 뒤 중독 ${e.add}.` : '')); break;
       case 'burst':
@@ -674,7 +674,7 @@ function skBody(s) {
       case 'focusBurst': out.push(`대상의 추적을 모두 터뜨린다. 1겹마다 기준 추가 피해 ${e.n}(민첩 1점마다 ${FOCUS_STAT_PCT}% 증가). 추적은 사라진다.`); break;
       case 'focusAdd': out.push(`대상에게 추적 +${e.n}겹. 이 효과로는 2겹까지만 쌓이고, 3겹째는 같은 적을 다시 맞혀야 쌓인다.`); break;
       case 'swapx': out.push(`직전에 친 적과 다른 적이면 피해 ×${e.mul}.`); break;
-      case 'evade': out.push(`다음에 맞는 공격 ${e.n}번을 피한다. 화형과 상태 피해는 피할 수 없다.`); break;
+      case 'evade': out.push(`다음에 맞는 공격 ${e.n}번을 피한다. 광역 · 화형 · 상태 피해는 피할 수 없다.`); break;
       case 'evadeCtr': out.push((e.charged ? '피한 공격이 강타나 겨눈 한 발이면' : (e.rounds ? e.rounds + '라운드 동안 ' : '') + '공격을 피할 때마다') + ` 그 적에게 반격 사격을 한다(피해 ${e.dmg}${e.chill ? ', 둔화 ' + e.chill : ''}).`); break;
       case 'quick': out.push('이번 차례에 빠른 칸 +1.'); break;
       case 'chillCut': out.push(`대상이 둔화된 채 강타 · 영창 · 겨누기를 모으는 중이면 그 공격을 끊는다. 강적 · 보스는 끊기지 않고 붕괴 +${e.brk}.`); break;

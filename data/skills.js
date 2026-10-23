@@ -227,10 +227,10 @@ const SKILLS2 = {
     /* ===== 0.8.0 M5-1 파수꾼 재설계(10월 20일 만든 사람 설계지 + 07:40 보완, nrk-private/제안/파수꾼-설계지-2026-10-20.md) =====
        보완: 태세를 켜는 차례에 작은 효과(수비 보호막 · 공격 가벼운 타격), 신성한 기도는 언제나(수비 태세면 더 세게), 용맹의 반사는 가시 방패(p.thorn), 대응은 막기 주 · 무너뜨리기 부, 태세는 수도승 자세(p.stance)와 따로(p.wdSt)
        태세(수비 · 공격): 켜고 끄는 스킬. 켤 때 유산 2, 유지 무료, 하나만 켜진다(하나를 켜면 다른 하나가 꺼짐). 다시 쓰면 끈다(유산 0). 숫자 · 효과는 data/skillkit.js WD_BOUND */
-    { id: 'w_dstance', row: 1, b: '성벽', tier: '하급', n: '수비 태세', tgt: 'self', time: 'fast', cd: 3, fx: [{ k: 'wdStance', s: 'def', txt: '켜면 수비 태세(켜는 차례에 보호막 +8): 받는 피해 −10%, 내 차례마다 보호막 +2. 공격 태세와 함께 켜지지 않는다. 다시 쓰면 끈다(유산 0).' }] },
+    { id: 'w_dstance', row: 1, b: '성벽', tier: '하급', n: '수비 태세', tgt: 'self', time: 'fast', cd: 3, fx: [{ k: 'wdStance', s: 'def', txt: '켜 두는 태세. 켜면 보호막 +8, 켜 둔 동안 받는 직접 피해 −10% · 내 차례마다 보호막 +2. 공격 태세와는 하나만 켜진다. 다시 쓰면 끄고, 끌 때는 유산이 들지 않는다.' }] },
     { id: 'w_shieldhit', row: 1, b: '성벽', tier: '하급', n: '방패 가격', tgt: 'melee', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 8 }, { k: 'ward', n: 6 }, { k: 'wardDmg', per: 0.5, cap: 12 }] }, /* M5-1 값 띠 */
     { id: 'w_pray', row: 1, b: '성벽', tier: '하급', n: '신성한 기도', tgt: 'self', time: 'normal', cd: 3, fx: [{ k: 'wdPray', n: 0.03, txt: '최대 생명력 3% 회복. 수비 태세면 6%.' }] },
-    { id: 's_astance', row: 1, b: '파쇄', tier: '하급', n: '공격 태세', tgt: 'self', time: 'fast', cd: 3, fx: [{ k: 'wdStance', s: 'atk', txt: '켜면 공격 태세(켜는 차례에 앞의 적 하나에게 피해 4 · 붕괴 10): 기본 공격 · 강공격 피해 +20% · 강공격 붕괴 +7. 수비 태세와 함께 켜지지 않는다. 다시 쓰면 끈다(유산 0).' }] },
+    { id: 's_astance', row: 1, b: '파쇄', tier: '하급', n: '공격 태세', tgt: 'self', time: 'fast', cd: 3, fx: [{ k: 'wdStance', s: 'atk', txt: '켜 두는 태세. 켜면 적 하나에게 피해 4 · 붕괴 10, 켜 둔 동안 기본 공격 · 강공격 피해 +20% · 강공격 붕괴 +7. 수비 태세와는 하나만 켜진다. 다시 쓰면 끄고, 끌 때는 유산이 들지 않는다.' }] },
     { id: 's_regret', row: 1, b: '파쇄', tier: '하급', n: '회한의 검', tgt: 'melee', time: 'normal', cd: 3, fx: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'vuln', n: 2 }] }, /* M5-1 값 띠 */
     { id: 's_march', row: 4, b: '파쇄', tier: '하급', n: '묵직한 걸음', tgt: 'self', time: 'fast', cd: 5, fx: [{ k: 'ward', n: 6 }, { k: 'wdMarch', n: 3, txt: '3차례 동안 기본 공격 피해 +12% · 강공격 붕괴 +16, 강공격 스태미나 −12.' }] }, // [Claude 초안] 설계지 2고리(붕괴 +15 · 스태미나 −10)를 값 띠에 맞춤. 맞추기 2번: 보호막 8(1챕터 보스는 버티는 쪽이 이긴다)
     { id: 'f_chainblade', row: 1, b: '전열 장악', tier: '하급', n: '사슬의 검', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 9 }, { k: 'brk', n: 28 }, { k: 'st', s: 'chill', n: 2 }] }, // 파수꾼의 유일한 원거리 견제기(대미지는 얕다)
@@ -242,7 +242,7 @@ const SKILLS2 = {
     { id: 's_quake', row: 10, b: '기둥 파쇄', tier: '중급', n: '대지 분쇄', tgt: 'front', time: 'normal', cd: 9, line: '「네놈들의 방어선을, 쳐부숴주마.」', cut: 'guard', pay: '사용 후 3라운드 동안 자신의 보호막 획득량 −50%.', fx: [{ k: 'brk', n: 35 }, { k: 'wdQuake', txt: '이번 행동으로 무너진 적이 2명 이상이라면, 다음 차례의 자신 피해를 2배로 한다.' }] },
     { id: 'w_valor', row: 10, b: '용맹의 투지', tier: '중급', n: '용맹한 방벽', tgt: 'self', time: 'normal', cd: 9, line: '「이 몸이 물러설 장소 따위. 이미 사라진지 오래렸다.」', cut: 'guard', pay: '그동안 스태미나가 저절로 차지 않고, 흘리기를 할 수 없다.', fx: [{ k: 'wdValor', n: 3, txt: '3차례 동안 "용맹": 방어할 때 보호막 +6 → +18, 내 차례마다 보호막의 50%만큼 가시(맞을 때 그 적에게 되돌린다).' }] },
     /* 결합 칸 셋([Claude 초안]): 원 바깥, 판마다 둘, 꼬리표 조건 */
-    { id: 'w_turncoat', row: 7, b: '결합', tier: '중급', n: '돌아선 방패', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'wdTurncoat', txt: '이번 전투 동안 태세를 바꿀 때 비용이 없고, 바꾼 직후 첫 강공격에 붕괴 +25.' }] },
+    { id: 'w_turncoat', row: 7, b: '결합', tier: '중급', n: '돌아선 방패', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'wdTurncoat', txt: '이번 전투 동안 켜진 태세를 다른 태세로 바꿀 때 유산이 들지 않고, 바꾼 직후 첫 강공격에 붕괴 +25.' }] },
     { id: 's_hammerhand', row: 7, b: '결합', tier: '중급', n: '쇠망치 손', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'wdHammer', txt: '이번 전투 동안 무너진 적에게 기본 공격 ×1.5, 강공격으로 무너진 적을 치면 스태미나 15를 돌려받는다.' }] },
     { id: 'f_chainpull', row: 7, b: '결합', tier: '중급', n: '사슬 끌기', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'wdChainPull', txt: '이번 전투 동안 사슬의 검으로 후열 적을 맞히면 그 적을 전열로 끌어오고 붕괴 +30(전투에 두 번).' }] },
   ],
