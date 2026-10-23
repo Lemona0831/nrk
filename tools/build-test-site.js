@@ -15,6 +15,7 @@ if (OUT === ROOT || OUT.startsWith(ROOT + path.sep)) { console.error('출력 폴
 const COPY = ['index.html', 'remote.html', 'privacy.html', 'css', 'js', 'data', 'audio', 'images', 'remote'];
 const SITE = process.env.SITE === 'proto' ? { tag: 'proto', Tag: 'Proto', label: '시제품', title: '시제품 서버: 유산(쿨타임 대신 행동력) 시험판. 실제 게임 · 테스트 서버와 기록이 분리됩니다. 계정 · 랭킹 꺼짐', readme: '# 나락의 유산 시제품 서버\n\n유산(스킬 행동력) 개편 시험판입니다. 실제 게임은 https://lemona0831.github.io/nrk/ 입니다.\n이 사이트는 실제 게임 · 테스트 서버와 브라우저 저장소가 분리되어 있고, 계정 · 랭킹 · 클라우드 저장을 쓰지 않습니다.\n' } : null;
 const RENAME = [ // [원래, 테스트용] — 원래 이름이 사본에 남으면 실패
+  ['nrk_080_v1', 'nrk_test080_v1'], // 0.8.0 M8 새 저장 키(시제품: nrk_proto080_v1). 같은 github.io 주소라 실제 게임과 섞이지 않게
   ['nrk_062_v1', 'nrk_test_v1'],
   ['nrkLoginName', 'nrkTestLoginName'],
   ['nrkLogin', 'nrkTestLogin'],
