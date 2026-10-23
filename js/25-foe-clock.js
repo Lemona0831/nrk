@@ -5,7 +5,7 @@
    강적마다 무엇이 칸을 채우고 되감는지 · 파국이 무엇인지는 각 챕터 파일의 FOE_CLOCK[강적]에 둔다 — 내용은 비공개 문서 참조.
    정의 꼴: { n: 칩 이름, max: 칸 수, ans: [답 태그 ≥2 종류], warn(b, e) → 경고 문장, doom(b, e), perm?, reward?(b, e), blocked?(b, e) → 답 수단이 모두 막혔으면 참(그동안 시계가 멈춘다),
             on: { 사건 이름(b, e, ...): 칸을 더하거나 되감는다 } } — 사건: onRoomStart · onRoundEnd · onFoeAct · onFoeBreak · onFoeDown · onFoeDot · onHurt · onParry · onAct · onFlask · onKill · onHit · onSkill · onEvade · onCounter */
-const STRONG_GIM = { dmg: 0.8 }; // 강적 평소 공격 배율(공통 손잡이 하나)
+const STRONG_GIM = { dmg: 0.8, foe: { cantor: 0.75, scribe: 0.75, speaker: 0.75 } }; // 강적 평소 공격 배율(공통 손잡이 하나 · 강적별 곱, 조정 손잡이)
 const FOE_CLOCK = {};
 const FC_HOOKS = ['onHurt', 'onParry', 'onAct', 'onFlask', 'onKill', 'onHit', 'onSkill', 'onEvade', 'onCounter'];
 const fcDef = e => (e && e.strong && FOE_CLOCK[e.foe]) || null;

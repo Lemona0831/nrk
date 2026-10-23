@@ -163,7 +163,7 @@ function wcTaint(b, e, n, why) {
 }
 const W3_CLOCK = {
   beaconlord: {
-    n: '봉화', max: 3, ans: ['brk', 'aoe', 'kill'],
+    n: '봉화', max: 2, ans: ['brk', 'aoe', 'kill'],
     warn: () => '기름에 젖은 봉화가 부글거린다. 한 번만 더 부으면 터진다',
     blocked: w3Blocked,
     doom(b, e) {
@@ -182,7 +182,7 @@ const W3_CLOCK = {
     },
   },
   siege: {
-    n: '공성추', max: 4, ans: ['brk', 'parry'],
+    n: '공성추', max: 3, ans: ['brk', 'parry'],
     warn: () => '공성추가 거의 다 맞춰졌다. 다음에 날아든다',
     blocked: w3Blocked,
     doom(b, e) { w3DoomHit(b, e, FOE_X.siege.launch, { noGuard: 1, parry: 1, label: '공성추가 날아든다' }); codexHit(b, 'siege', 'ram'); },
@@ -190,7 +190,7 @@ const W3_CLOCK = {
     on: { onFoeBreak(b, e, x) { if (x.role === 'rampart' && x.part) fcRewind(b, e, 1, 'part'); } },
   },
   speaker: {
-    n: '군중', max: 4, ans: ['aoe', 'brk', 'kill'],
+    n: '군중', max: 3, ans: ['aoe', 'brk', 'kill'],
     warn: () => '군중이 성문 앞에 거의 다 모였다. 하나만 더 오면 밀어닥친다',
     blocked: w3Blocked,
     doom(b, e) { w3DoomHit(b, e, FOE_X.speaker.push * e.clk.max, { label: '군중이 성문을 밀고 밀어닥친다' }); codexHit(b, 'speaker', 'gate'); },
