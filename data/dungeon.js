@@ -313,7 +313,7 @@ const CH2X = { loser: 0.35, crowd: 3, oilIgn: 1, rainIgn: 2, rainChill: 1, forma
 Object.assign(FOE_X, {
   ledger: { max: 6, pay: 30, mark: 2, doom: 1.0, vuln: 2, atk: 0.75 }, // G-1 시계 2판(비공개 문서 참조)
   champion: { combo: 0.4, hits: 3, max: 3, coward: 2, big: 0.10, doom: 0.9, boo: 0.5 }, // G-1 시계 2판(비공개 문서 참조)
-  lampthief: { max: 2, reveal: 2, vuln: 2, stab: 0.45, atk: 0.9 }, // G-1 시계 2판(비공개 문서 참조)
+  lampthief: { max: 2, reveal: 2, vuln: 2, stab: 0.25, atk: 0.9 }, // G-1 시계 2판(비공개 문서 참조)
   captain: { max: 3, doom: [0.4, 0.3, 0.25], vuln: 2, atk: 0.9 }, // G-1 시계 2판(비공개 문서 참조)
   merchant: { buff: 0.2, hpPen: 0.05, appraise: 1, max: 3, gold: 0.5, doom: 0.9, vuln: 2, pay: 30, atk: 0.7 }, // G-1 시계 2판(비공개 문서 참조)
   bardo: { lamps: 5, per: 0.15, ward: 0.02, lampBrk: 40, shade: 1, ph: [0.6, 0.3] },

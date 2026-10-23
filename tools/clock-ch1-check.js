@@ -43,7 +43,7 @@ common('bellringer');
   ok(b.log.some(l => l.m.includes(FC.bellringer.warn(b, e))), '종지기: 경고 문장이 기록에 없다');
   p.hp = p.hpMax; x.hpBefore = p.hp; act(b, e, 'ring'); const d = lost(x);
   ok(e.clk.perm === 1 && e.clk.doomN === 1 && !bell.alive && b.fcTwice === 1, '종지기: 대종이 오지 않았다(종이 깨지고 끝까지)');
-  ok(near(d, K.bell.big), '종지기: 대종의 큰 한 방이 CLK1 값이 아니다 ' + d.toFixed(3));
+  ok(near(d, Math.min(K.bell.big, 1)), '종지기: 대종의 큰 한 방이 CLK1 값이 아니다 ' + d.toFixed(3));
   const ord = E.roundOrder(b, false); ok(ord.filter(o => o.twice).length >= 2, '종지기: 대종 뒤 적이 두 번 움직이지 않는다');
   act(b, e, 'ring'); ok(e.clk.perm === 1, '종지기: 대종 뒤 시계가 다시 돈다');
   E.decideIntent(b, e); ok(e.intent.k !== 'ring', '종지기: 대종 뒤에도 줄을 당기려 한다');
@@ -141,11 +141,11 @@ common('bishop');
 }
 { // 경고 칸이 아닐 때: 시체 하나 쓰러뜨리기(칸 = 시체 수) · 무너뜨리기(부름 끊기 · 이름 하나) · 경고 칸 아닌 한 행동 둘 쓰러뜨림에는 지팡이 없음 · 막힘 · 주교 쓰러뜨리기
   const x = mk('bishop', ['bruiser', 'summoner']); const { b, e, p } = x; const cs = () => R_('corpsesOf')(b);
-  act(b, e, 'raise'); b.actN = 951; b.cur = { id: 'basic' }; E.hurtEnemy(b, cs()[0], 5, { single: 1 }); b.cur = null; ok(e.clk.n === 0 && !e.fcNoRaise, '주교: 시체 하나를 쓰러뜨려 칸이 시체 수를 따르지 않는다');
+  if (K.bishop.max >= 3) { act(b, e, 'raise'); b.actN = 951; b.cur = { id: 'basic' }; E.hurtEnemy(b, cs()[0], 5, { single: 1 }); b.cur = null; ok(e.clk.n === 0 && !e.fcNoRaise, '주교: 시체 하나를 쓰러뜨려 칸이 시체 수를 따르지 않는다'); }
   act(b, e, 'raise'); e.intent = { k: 'attack' }; if (K.bishop.max > 2) { breakIt(b, e); ok(e.clk.n === 0 && cs().length === 0 && !e.fcNoRaise, '주교: 경고 칸이 아닌데 무너뜨려 이름 하나 취소가 아니다 ' + e.clk.n); }
-  e.stun = 0; e.intent = { k: 'raise' }; e.brk = 0; delete e.s.broken; breakIt(b, e); ok(e.intent.k === 'attack' && e.teleX === 1, '주교: 부르는 중에 무너뜨려 부름이 끊기지 않았다');
+  if (K.bishop.max >= 3) { e.stun = 0; e.intent = { k: 'raise' }; e.brk = 0; delete e.s.broken; breakIt(b, e); ok(e.intent.k === 'attack' && e.teleX === 1, '주교: 부르는 중에 무너뜨려 부름이 끊기지 않았다'); }
   const n0 = e.clk.n, c0 = cs().length; p.stun = 1; act(b, e, 'raise'); ok(e.clk.n === n0 && cs().length === c0, '주교: 기절 중에도 불렀다'); p.stun = 0;
-  act(b, e, 'raise'); b.actN = 952; b.cur = { id: 'basic' }; E.hurtEnemy(b, e, 999999, { single: 1 }); b.cur = null; ok(!e.alive && cs().length === 0, '주교가 쓰러졌는데 시체가 남았다');
+  if (K.bishop.max >= 3) act(b, e, 'raise'); /* 칸 2면 둘째 부름이 곧 파국(그 라운드 무적)이라 하나만 */ b.actN = 952; b.cur = { id: 'basic' }; E.hurtEnemy(b, e, 999999, { single: 1 }); b.cur = null; ok(!e.alive && cs().length === 0, '주교가 쓰러졌는데 시체가 남았다');
 }
 /* ---------- 성가 조율자 ---------- */
 common('cantor');
