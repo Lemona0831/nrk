@@ -118,7 +118,8 @@ common('captain');
   for (let i = 0; i < W('captain'); i++) E.fcEv(b, 'onRoundEnd'); ok(e.clk.n === W('captain') && warns(b) === 1, 'captain 1: ' + e.clk.n);
   ok(e.intent.k === 'muster' && e.teleSet === e.intent && !e.teleX, 'captain 1b(경고 때 호령 예고): ' + e.intent.k);
   ok(/\d/.test(R_('intentText')(b, e).t) && R_('intentBadge')(b, e).txt === '호령', 'captain 1c(호령 예고 문장 · 숫자)');
-  let h0 = full(p); E.fcEv(b, 'onRoundEnd'); let d = lost(p, h0); const sum = K.doom.reduce((a, v) => a + v, 0);
+  const dm0 = K.doom, s0 = dm0.reduce((a, v) => a + v, 0); K.doom = dm0.map(v => v * Math.min(1, 0.9 / s0)); /* 파국 합이 생명력 100% 이상이면 시험 캐릭터가 쓰러져 뒤 시험을 볼 수 없다 */
+  let h0 = full(p); E.fcEv(b, 'onRoundEnd'); let d = lost(p, h0); const sum = K.doom.reduce((a, v) => a + v, 0); K.doom = dm0;
   ok(e.clk.doomN === 1 && e.clk.n === 0 && near(d, sum), 'captain 2: ' + d.toFixed(3)); R.captain = (d * 100).toFixed(1) + '% · ' + K.max + '칸';
   const aoe3 = () => { b.actN++; b.cur = { id: 'basic' }; E.hurtEnemy(b, e, 1, { aoe: 1 }); E.hurtEnemy(b, th, 1, { aoe: 1 }); E.hurtEnemy(b, xb, 1, { aoe: 1 }); b.cur = null; };
   nr(b); e.clk.n = W('captain'); calm(e); aoe3(); ok(e.clk.n === W('captain') - 1 && !opened(e, 1) && !b.formBroken, 'captain 3(경고 칸 광역 → 1칸만): ' + e.clk.n);
