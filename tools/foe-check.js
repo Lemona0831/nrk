@@ -3,13 +3,14 @@
    1. 정의: 등급별 패턴 수(2~4, 보스는 단계마다) · 예고 문장 · 대답 태그 · 기록 문장(log.see · log.down) 빠짐 · 무리마다 "누구부터"(SQUAD_ASK)
    2. 문법 ①: 예고한 행동 = 실행한 행동(끊기 · 무너짐 · 단계 전환으로 취소된 것만 예외). 전투 N번(기본 1000)에서 teleMis 0이어야 한다
    3. 문법 ②: 대답할 수 없는 예고 0. 문법을 아직 켜지 않은 챕터(FOE_GRAMMAR)는 teleVoid 기록을, 켠 챕터는 teleSkip(바꿔 고름)을 센다
+   1-1. G-1 강적 시계: 강적마다 FOE_CLOCK 정의 · 마지막 경고 · 파국 · 답 태그 2종류 이상(내용은 비공개 문서 참조). 전투에서는 경고 없이 온 파국 0
    4. 갑옷 · 방패 단위 시험, 챕터 장치 틀(가짜 장치를 잠깐 꽂아 훅 다섯 · 칩 · 도움말이 도는지 보고 뺀다)
    쓰기: node tools/foe-check.js [--fights 1000] [--ch 1]. 위반이 있으면 표를 찍고 1로 끝난다 */
 process.env.DGDIR = process.env.DGDIR || '.';
 const H = require('./uqtest/_h.js'); const { E, R_, D } = H;
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const NF = +arg('--fights', 1000), CH = +arg('--ch', 1);
-const FOES = R_('FOES'), TELE_T = R_('TELE_T'), TELE_WAIT = R_('TELE_WAIT'), TELE_MOVE = R_('TELE_MOVE'), SQUADS = R_('SQUADS'), SQUAD_ASK = R_('SQUAD_ASK'), FOE_GRAMMAR = R_('FOE_GRAMMAR');
+const FOES = R_('FOES'), TELE_T = R_('TELE_T'), TELE_WAIT = R_('TELE_WAIT'), TELE_MOVE = R_('TELE_MOVE'), SQUADS = R_('SQUADS'), SQUAD_ASK = R_('SQUAD_ASK'), FOE_GRAMMAR = R_('FOE_GRAMMAR'), FOE_CLOCK = R_('FOE_CLOCK');
 const V = []; const bad = (kind, id, what) => V.push({ kind, id, what });
 
 /* 1. 정의 */
@@ -18,6 +19,7 @@ for (const id in FOES) {
   const F = FOES[id]; if ((F.ch || 1) !== CH || F.unused) continue;
   const pats = Array.isArray(F.pat) ? [F.pat] : Object.values(F.pat || {}); const moves = p => new Set(p.map(k => TELE_MOVE[k] || k)).size; // 모으기 → 큰 한 방 같은 것은 한 수
   (grade[F.grade] = grade[F.grade] || []).push(id + ' ' + pats.map(moves).join('/') + (F.phInherit ? '(3단계는 1단계 순환 + 희생)' : '') + (F.elite ? ' + 필살기 ' + F.elite.n : ''));
+  if (F.grade === 'strong') { const K = FOE_CLOCK[id]; if (!K) bad('시계', id, '없음'); else { if (typeof K.warn !== 'function') bad('시계', id, '마지막 경고 없음'); if (typeof K.doom !== 'function') bad('시계', id, '파국 없음'); if (!(K.max >= 2)) bad('시계', id, '칸 ' + K.max); if (new Set(K.ans || []).size < 2) bad('시계', id, '답 태그 ' + new Set(K.ans || []).size + '종류(2 이상)'); } }
   if (F.grade === 'strong') { if (pats[0].length < 4) bad('패턴 수', id, '강적 ' + pats[0].length + '개(4 이상)'); }
   else for (const p of pats) if (F.grade !== 'add' && (moves(p) < (F.grade === 'boss' ? 1 : 2) || moves(p) > 4)) bad('패턴 수', id, moves(p) + '수(2~4)');
   if (F.grade === 'elite' && !(F.elite && F.elite.ult && F.elite.ult.length)) bad('정예 필살기', id, '없음');
@@ -31,8 +33,8 @@ for (const id in FOES) {
 for (const s of SQUADS) if ((s.ch || 1) === CH && !SQUAD_ASK[s.id]) bad('누구부터', s.id, 'SQUAD_ASK 없음');
 
 /* 2 · 3. 전투 N번 */
-const seen = new WeakMap(); let fights = 0, last = null; const cnt = { teleMis: {}, teleVoid: {}, teleSkip: {} }; let eact = 0; const dev = { prayStart: 0, prayDone: 0, prayCut: 0 };
-const scan = b => { if (!b || !b.rec) return; let i = seen.get(b) || 0; for (; i < b.rec.length; i++) { const r = b.rec[i]; if (r.k === 'eact') eact++; if (dev[r.k] != null) dev[r.k]++; if (cnt[r.k]) { const key = (r.foe || r.role) + ' ' + (r.from || r.i) + (r.to ? '→' + r.to : '') + (r.tags != null ? ' (쓸 수 있던 대답: ' + r.tags + ')' : ''); cnt[r.k][key] = (cnt[r.k][key] || 0) + 1; } } seen.set(b, i); };
+const seen = new WeakMap(); let fights = 0, last = null; const cnt = { teleMis: {}, teleVoid: {}, teleSkip: {} }; let eact = 0; const dev = { prayStart: 0, prayDone: 0, prayCut: 0 }; const clk = { add: 0, warn: 0, doom: 0, back: 0, noWarn: {} }, clkOpen = new WeakMap();
+const scan = b => { if (!b || !b.rec) return; let i = seen.get(b) || 0; for (; i < b.rec.length; i++) { const r = b.rec[i]; if (r.k === 'eact') eact++; if (dev[r.k] != null) dev[r.k]++; if (/^clk/.test(r.k)) { const o = clkOpen.get(b) || {}; clkOpen.set(b, o); if (r.k === 'clk') clk.add++; else if (r.k === 'clkback') clk.back++; else if (r.k === 'clkwarn') { clk.warn++; o[r.foe] = 1; } else if (r.k === 'clkdoom') { clk.doom++; if (!o[r.foe]) clk.noWarn[r.foe] = (clk.noWarn[r.foe] || 0) + 1; o[r.foe] = 0; } } if (cnt[r.k]) { const key = (r.foe || r.role) + ' ' + (r.from || r.i) + (r.to ? '→' + r.to : '') + (r.tags != null ? ' (쓸 수 있던 대답: ' + r.tags + ')' : ''); cnt[r.k][key] = (cnt[r.k][key] || 0) + 1; } } seen.set(b, i); };
 D.OPT.onTurn = G => { const b = G.b; if (b !== last) { if (last) scan(last); last = b; fights++; } }; D.OPT.chapters = 1; if (CH > 1) process.env.DG_FROM = String(CH);
 const CLS = ['spellblade', 'warden', 'monk', 'assassin', 'hunter', 'elementalist'], PK = ['careful', 'casual', 'expert', 'basic'];
 for (let s = 0; fights < NF && s < 400; s++) for (const c of CLS) { if (fights >= NF) break; try { D.playChar(PK[s % PK.length], c, 5000 + 13 * s); } catch (e) { bad('판 예외', c, String(e && e.message).slice(0, 80)); } }
@@ -40,6 +42,7 @@ if (last) scan(last); D.OPT.onTurn = null;
 const sum = o => Object.values(o).reduce((a, x) => a + x, 0);
 for (const k in cnt.teleMis) bad('문법 ①', k, cnt.teleMis[k] + '번');
 for (const k in cnt.teleVoid) bad('문법 ②', k, cnt.teleVoid[k] + '번');
+for (const k in clk.noWarn) bad('시계 문법', k, '경고 없이 온 파국 ' + clk.noWarn[k] + '번');
 
 /* 4-1. 갑옷 · 방패 */
 const T = []; const t = (c, m) => { if (!c) T.push(m); };
@@ -130,6 +133,7 @@ if (CH === 3) {
 console.log('foe-check (' + CH + '챕터): 적 ' + Object.keys(FOES).filter(id => (FOES[id].ch || 1) === CH).length + ' · 무리 ' + SQUADS.filter(s => (s.ch || 1) === CH).length + ' · 전투 ' + fights + ' · 적 행동 ' + eact);
 for (const g in grade) console.log('  ' + g + ' 패턴 수: ' + grade[g].join(', '));
 console.log('  문법 ① 예고 ≠ 실행: ' + sum(cnt.teleMis) + ' · 문법 ② 대답 없는 예고(기록만): ' + sum(cnt.teleVoid) + ' · 바꿔 고름: ' + sum(cnt.teleSkip) + (FOE_GRAMMAR[CH] ? '' : ' (이 챕터는 문법 ②를 아직 켜지 않음 — A1)'));
+console.log('  강적 시계: 칸 ' + clk.add + ' · 되감기 ' + clk.back + ' · 마지막 경고 ' + clk.warn + ' · 파국 ' + clk.doom + ' · 경고 없이 온 파국 ' + sum(clk.noWarn));
 if (CH === 1) console.log('  끝나지 않은 기도: 시작 ' + dev.prayStart + ' · 완성 ' + dev.prayDone + ' · 끊음 ' + dev.prayCut);
 console.log('  갑옷 · 방패 · 장치 시험: 실패 ' + T.length + ' · 장치 훅 ' + hooks.map(h => h + ' ' + (fired[h] || 0)).join(' · '));
 for (const m of T) console.log('  실패: ' + m);

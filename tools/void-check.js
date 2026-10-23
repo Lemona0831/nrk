@@ -2,6 +2,7 @@
 /* 대답 공백 점검 (0.8.0 A0, 1막 재설계 ① 적 문법 엔진 6번)
    직업 여섯 × 길 고정 빌드(부채꼴 A · B · C × 갈래 a · b, dgqa DG_PATH) × 신중 성향 N판. 강적 · 보스를 만날 때마다 그때 빌드가 쓸 수 있는 대답 태그(js/30 playerAnsTags,
    기절 · 봉인은 빼고 본다 — 빌드가 가진 것만)를 모아, 그 적의 위협 예고(data/foes.js pat 가운데 TELE_WAIT가 아닌 것)마다 닿는 대답이 하나 이상인지 본다.
+   G-1: 강적 시계(FOE_CLOCK)의 답 태그도 같은 방법으로 본다(소모품 답 'cons'는 소모품 가방이 비지 않았을 때만 닿는다) — 시계 하나에 닿는 답이 하나도 없으면 공백 '시계'.
    data/foes.js에 정의가 없는 적(아직 옮기지 않은 2 · 3챕터)은 "정의 없음"으로 센다.
    쓰기: node tools/void-check.js [--seeds 5] [--chapters 1] [--from 2]. 공백이 있으면 표를 찍고 1로 끝난다 */
 const fs = require('fs'), path = require('path'), cp = require('child_process');
@@ -12,14 +13,15 @@ const CLASSES = ['spellblade', 'warden', 'monk', 'assassin', 'hunter', 'elementa
 if (ONE) { // 자식: 직업 하나 · 빌드 하나
   process.env.DGDIR = process.env.DGDIR || '.';
   const D = require('./dgqa.js'), R_ = D.run_; D.OPT.chapters = CHS;
-  const FOES = R_('FOES'), WAIT = R_('TELE_WAIT'), foeDef = R_('foeDef'), tagsOf = R_('playerAnsTags');
+  const FOES = R_('FOES'), WAIT = R_('TELE_WAIT'), foeDef = R_('foeDef'), tagsOf = R_('playerAnsTags'), CLK = R_('FOE_CLOCK'), G = R_('G');
   const out = {}; let last = null;
   D.OPT.onTurn = G => { const b = G.b; if (b === last) return; last = b;
     for (const e of b.en) { if (!(e.strong || e.role === 'boss')) continue; const id = e.role === 'boss' ? e.boss : e.foe; const F = foeDef(b, e);
       const o = out[id] = out[id] || { n: 0, def: !!F, miss: {} }; o.n++; if (!F) continue;
       const p = b.p, st0 = p.stun, sl0 = b.seal; p.stun = 0; b.seal = []; const T = tagsOf(b); p.stun = st0; b.seal = sl0;
       const kinds = [...new Set((Array.isArray(F.pat) ? F.pat : Object.values(F.pat)).flat())].filter(k => !WAIT.includes(k) && (F.ans[k] || []).length);
-      for (const k of kinds) if (!F.ans[k].some(x => T.has(x))) o.miss[k] = (o.miss[k] || 0) + 1; } };
+      for (const k of kinds) if (!F.ans[k].some(x => T.has(x))) o.miss[k] = (o.miss[k] || 0) + 1;
+      const K = e.strong && CLK[e.foe]; if (K) { if (G.run && (G.run.cons || []).length) T.add('cons'); if (!(K.ans || []).some(x => T.has(x))) o.miss['시계'] = (o.miss['시계'] || 0) + 1; } } };
   for (let i = 0; i < N; i++) { try { D.playChar('careful', ONE, 5000 + 13 * i); } catch (e) { } }
   process.stdout.write(JSON.stringify(out));
 } else {
