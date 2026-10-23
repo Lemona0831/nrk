@@ -362,6 +362,11 @@ function burnCons(run, n) { if ((run.cons || []).filter(ashOk).reduce((a, c) => 
 const EVBUFF = { lit: ['가게 등불', '어둠 방이 나오지 않습니다.'], elixir: ['약장수의 병', '주는 피해 +15%.'], elixirB: ['병의 뒤끝', '받는 피해 +10%.'], fog: ['몽롱한 연기', '주는 피해 −15%.'], names: ['벽의 이름들', '전투를 약화 1로 시작합니다.'], snuff: ['꺼진 촛불', '받는 화상 피해 0, 대신 주는 피해 −5%.'], procession: ['장례 행렬', '받는 직접 피해 −10%, 주는 피해 −10%.'], ashcover: ['재를 덮어 주었다', '받는 직접 피해 −5%.'], herald: ['전령에게 무릎 꿇었다', '받는 화상 피해 0, 대신 주는 피해 −5%.'] }; // 이벤트로 얻는 몇 방 동안의 효과
 const altarGold = run => { const A = ALTARS.find(x => x.id === 'gold'); const v = A && A.cost ? A.cost[Math.min(A.cost.length, run.ch || 1) - 1] : 40; return v; };
 function n3pre(run, k, n) { run.next3 = run.next3 || {}; run.next3.pre = Object.assign({}, run.next3.pre); run.next3.pre[k] = (run.next3.pre[k] || 0) + n; } // 3챕터 이벤트: 다음 일반 · 매복 전투의 시작 상태
+/* 가장 많이 찬 플라스크(10월 24일 만든 사람 요청: 둘 이상이 같으면 플레이어가 고른다). flaskTies: 같은 최대 칸 수의 종류들, flaskTake1: 고른 것(없거나 동률 밖이면 첫째)을 한 칸 비운다 */
+const FLASK_K = ['life', 'mana', 'stam'], FLASK_KN = { life: '생명력', mana: '정화', stam: '스태미나' };
+function flaskTies(p) { const m = Math.max(...FLASK_K.map(k => p.flask[k] || 0)); return m > 0 ? FLASK_K.filter(k => (p.flask[k] || 0) === m) : []; }
+function flaskTake1(p, pick) { const T = flaskTies(p), k = T.includes(pick) ? pick : T[0]; if (k) p.flask[k] = Math.max(0, (p.flask[k] || 0) - 1); return k || null; }
+const FLASK_PICK_EV = ['monk:feed', 'attic:feed']; // 가장 많이 찬 플라스크 하나를 비우는 이벤트 선택지
 function takeCons(run, n) { const pool = (run.cons || []).filter(c => CONS[c.id].use !== 'none'); if (pool.reduce((a, c) => a + c.n, 0) < n) return false; for (let k = 0; k < n; k++) { const c = run.cons.find(x => CONS[x.id].use !== 'none'); c.n--; if (c.n <= 0) run.cons.splice(run.cons.indexOf(c), 1); } return true; }
 function giveChCons(run, ch) { const ids = Object.keys(CONS).filter(k => (CONS[k].ch || 1) === ch && CONS[k].use !== 'none'); if (!ids.length) return; const id = pickR(ids); consGrant(run, id, 'n', 1); }
 function refundDeepest(run) { if (!run.atree) return null; return atRefundLeaf(run); } // 10월 16일 0.8.0 2단계: 잊힌 스승의 묘비는 액티브 노드 하나(끝 노드 가운데 가장 바깥 것)

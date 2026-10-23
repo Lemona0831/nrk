@@ -141,6 +141,9 @@ function sheetParts(S) {
   } else if (S.kind === 'kitpick') { // 0.8.0 6단계 C: 꾸러미의 무기 · 갑옷을 셋 가운데 하나씩
     const K = run.kitPick || { opts: {} }; const sl = ['weapon', 'armor'].find(x => K.opts[x]); title = sl ? (EQ_SLOT_N[sl] || sl) + '을(를) 고르세요' : '꾸러미';
     body = sl ? '<p class="lead">' + (GRADE[K.opts[sl].g] || GRADE.n).n + ' 등급, 직업에 맞는 셋 가운데 하나를 고릅니다. 고르지 않은 것은 사라집니다.</p>' + K.opts[sl].tpl.map(tpl => `<div class="bagline"><div>${itemDetail(K.opts[sl].its ? K.opts[sl].its[tpl] : mkItem(tpl, { g: K.opts[sl].g, ch: K.ch - 1 }))}</div><button class="gold" data-a="kitpick" data-s="${sl}" data-k="${tpl}">이것으로</button></div>`).join('') : '';
+  } else if (S.kind === 'flaskpick') { // 10월 24일: 가장 많이 찬 플라스크가 둘 이상이면 비울 것을 고른다
+    const D = S.data || {}; title = '어느 플라스크를 비울까요';
+    body = '<p class="lead">가장 많이 찬 플라스크가 둘 이상입니다. 하나를 고릅니다.</p><div class="row col">' + (D.ties || []).map((k, i) => `<button class="wide${i ? '' : ' gold'}" data-a="event" data-k="${esc(D.o)}" data-f="${k}"${i ? '' : ' data-focus'}>🧪 ${FLASK_KN[k]} 플라스크 <small>(${run.p.flask[k] || 0}칸)</small></button>`).join('') + '</div>';
   } else if (S.kind === 'patrol') { // 0.8.0 6단계 A-6: 순찰대를 넘으면 패시브 포인트 +1(챕터에 AMBUSH.ptMax번) 또는 소모품 셋 중 하나
     const P = run.patrolPend || { cons: [] }, used = (run.patrolPt || {})[run.ch || 1] || 0, ptOk = used < AMBUSH.ptMax; title = '순찰대를 넘었습니다';
     body = '<p class="lead">하나를 고릅니다.</p><div class="row col">' + (ptOk ? `<button class="wide gold" data-a="patrolpick" data-k="pt" data-focus>패시브 포인트 +1 <small>(이번 챕터 ${used}/${AMBUSH.ptMax})</small></button>` : `<p class="mini">이번 챕터의 패시브 포인트는 ${AMBUSH.ptMax}번을 모두 받았습니다.</p>`)

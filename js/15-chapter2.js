@@ -142,9 +142,11 @@ const ch2CanBack = (b, e) => !!(e && e.clk && !e.clk.perm && e.clk.n > 0 && (e.c
 /* 빚 장부의 주인 */
 function ledgerSeize(b) {
   const run = ch2RunOf(b); if (!run || !run.eqU || typeof EQ_SLOTS === 'undefined') return null;
-  const sl = EQ_SLOTS.filter(s => run.eqU[s] && run.inv[run.eqU[s]]).sort((x, y) => (G8_RANK[run.inv[run.eqU[y]].g] || 0) - (G8_RANK[run.inv[run.eqU[x]].g] || 0))[0]; if (!sl) return null;
-  const uid = run.eqU[sl]; run.eqU[sl] = null; (run.seized = run.seized || []).push({ sl, uid }); applyGear(run); return run.inv[uid];
+  const T = ledgerSeizeTies(run); if (!T.length) return null; if (T.length >= 2) { b.seizeAsk = T; return null; } // 가장 좋은 장비가 둘 이상이면 플레이어가 고른다(10월 24일)
+  return ledgerSeizeSlot(b, run, T[0]);
 }
+function ledgerSeizeTies(run) { const L = EQ_SLOTS.filter(s => run.eqU[s] && run.inv[run.eqU[s]]); if (!L.length) return []; const top = Math.max(...L.map(s => G8_RANK[run.inv[run.eqU[s]].g] || 0)); return L.filter(s => (G8_RANK[run.inv[run.eqU[s]].g] || 0) === top); }
+function ledgerSeizeSlot(b, run, sl) { const uid = run.eqU[sl]; if (!uid) return null; run.eqU[sl] = null; (run.seized = run.seized || []).push({ sl, uid }); applyGear(run); return run.inv[uid]; }
 function ledgerReturn(b) {
   const run = ch2RunOf(b); if (!run || !(run.seized && run.seized.length)) return 0; let n = 0;
   for (const x of run.seized) { if (!run.inv[x.uid]) continue; if (!run.eqU[x.sl]) run.eqU[x.sl] = x.uid; else run.bag.push(x.uid); n++; }
@@ -174,7 +176,7 @@ const CH2_CLOCK = {
     warn: (b, e) => e.n + '이(가) 붉은 줄 하나를 남기고 펜을 멈춘다',
     doom(b, e) {
       b.ch2Doom = 1; const it = ledgerSeize(b);
-      logp(b, 'crit', '빚이 목까지 찼다. ' + e.n + '이(가) ' + (it ? (typeof itName === 'function' ? itName(it) : '장비') + '을(를) 차압한다' : '차압할 것을 찾는다')); codexHit(b, 'ledger', 'debt');
+      logp(b, 'crit', '빚이 목까지 찼다. ' + e.n + '이(가) ' + (it ? (typeof itName === 'function' ? itName(it) : '장비') + '을(를) 차압한다' : b.seizeAsk ? '장비 하나를 내놓으라 한다' : '차압할 것을 찾는다')); codexHit(b, 'ledger', 'debt');
       ch2Blow(b, e, FOE_X.ledger.doom, e.n + '이(가) 집행한다'); b.ch2Doom = 0;
     },
     reward(b, e, why) { if (!ch2Dec(e)) return; ch2Open(b, e, FOE_X.ledger.vuln); logp(b, 'good', e.n + '이(가) ' + (why === 'gold' ? '돈을 세느라' : '찢어진 장부를 줍느라') + ' 몸이 빈다'); },
@@ -342,6 +344,7 @@ function ch2OnKill(b, e) {
 function ch2Actions(b, L) {
   ch2ClockReg();
   const p = b.p, run = ch2RunOf(b);
+  if (b.seizeAsk && run && ch2Strong(b, 'ledger')) { const T = b.seizeAsk.filter(s => run.eqU[s] && run.inv[run.eqU[s]]); if (T.length) { for (const a of L) { a.ok = false; a.why = '차압당할 장비를 고른다'; } for (const s of T.slice().reverse()) L.unshift({ id: 'seize_' + s, n: '내준다: ' + itName(run.inv[run.eqU[s]]), self: 1, cost: EQ_SLOT_N[s] || s, time: 0.5, ok: true, d: '장부의 주인이 이 장비를 이 전투 동안 가져간다. 쓰러뜨리면 돌려받는다' }); return; } b.seizeAsk = null; } // 10월 24일: 가장 좋은 장비가 둘 이상이면 고른다
   if (b.trade === 'ask') { for (const a of L) { a.ok = false; a.why = '거래창에서 고른다'; } L.unshift({ id: 'tradeyes', n: '거래를 받는다', self: 1, cost: '전투 뒤 최대 생명력 −' + Math.round(FOE_X.merchant.hpPen * 100) + '%', time: 0.5, ok: true, d: '이번 전투 동안 주는 피해 +' + Math.round(FOE_X.merchant.buff * 100) + '%. 상인은 공격을 멈춘다. 전투가 끝나면 최대 생명력 −' + Math.round(FOE_X.merchant.hpPen * 100) + '%(캐릭터 끝까지).' }, { id: 'tradeno', n: '거절한다', self: 1, cost: '비용 없음', time: 0.5, ok: true, d: '거래하지 않는다.' }); return; }
   { // G-1(비공개 문서 참조): 빚 갚기(빚 장부의 주인) · 청구서 갚기(계약 상인, 거절한 뒤). 같은 행동 id
     const ld = ch2Strong(b, 'ledger'), mc = !ld && b.trade === 'no' ? ch2Strong(b, 'merchant') : null, t = ld || mc;
@@ -354,6 +357,7 @@ function ch2Actions(b, L) {
 function ch2PlayerAct(b, id) {
   const p = b.p, run = ch2RunOf(b);
   if (id === 'tradeyes') { const late = b.trade === 'no'; b.trade = 'yes'; b.tradeHp = 1; logp(b, 'crit', '거래를 받는다. 주는 피해 +' + Math.round(FOE_X.merchant.buff * 100) + '%. 상인이 공격을 멈춘다'); codexHit(b, 'merchant', 'deal'); const mc = ch2Strong(b, 'merchant'); if (mc && late) { ch2Ans(b, mc, 'deal'); if (mc.intent && mc.intent.k !== 'recover') { mc.intent = { k: 'recover' }; mc.teleX = 1; } } return 1; } // G-1(비공개 문서 참조)
+  if (/^seize_/.test(id)) { const sl = id.slice(6); if (!(b.seizeAsk || []).includes(sl) || !run) return 1; b.seizeAsk = null; const it = ledgerSeizeSlot(b, run, sl); const ld = ch2Strong(b, 'ledger'); if (it) logp(b, 'bad', (ld ? ld.n : '장부의 주인') + '이(가) ' + itName(it) + '을(를) 차압한다'); return 1; }
   if (id === 'tradeno') { b.trade = 'no'; logp(b, 'bad', '거래를 거절한다. 상인의 저울이 기운다'); codexHit(b, 'merchant', 'bill'); return 1; }
   if (id === 'paydebt') { // G-1(비공개 문서 참조)
     const ld = ch2Strong(b, 'ledger'), t = ld || ch2Strong(b, 'merchant'); if (!t) return 1; const pay = FOE_X[t.foe].pay; if (run) run.gold -= pay;
@@ -504,16 +508,18 @@ function ch2EnterBtns(run, R) {
 }
 function vMarket(run, R) {
   const S = marketStock(run, R), U = S.uq && UNIQUE[S.uq], g = run.gold || 0, pts = (run.ptree && run.ptree.pts) || 0, M = MARKET;
-  const best = ch2BestBag(run); const btn = (k, t, ok, why) => `<button data-a="mkbuy" data-k="${k}"${ok ? '' : ' disabled'}>${esc(t)}${!ok && why ? ` <small>${esc(why)}</small>` : ''}</button>`;
+  const best = ch2BestBag(run), ties = ch2BestBagTies(run); const btn = (k, t, ok, why, u) => `<button data-a="mkbuy" data-k="${k}"${u ? ` data-u="${u}"` : ''}${ok ? '' : ' disabled'}>${esc(t)}${!ok && why ? ` <small>${esc(why)}</small>` : ''}</button>`;
+  const heroItemBtns = ties.length >= 2 ? ties.map(u => btn('hero-item', '가방의 가장 좋은 장비를 내놓는다: ' + itName(run.inv[u]), true, '', u)).join('') : null; // 가장 좋은 것이 둘 이상이면 하나씩 단추
   return `<h3>🏮 암시장</h3><p class="lore">천막 아래 등불 하나. 값은 골드가 아닐 수도 있다.</p><p class="mini">셋 가운데 하나만 살 수 있습니다. 가진 골드 ${g}</p>`
     + (U ? `<div class="card"><p><b>① 고유 장비</b>: ${esc(U.n)} <span class="mini">(희귀)</span></p><div class="row">${btn('uq-gold', '골드 ' + M.uq.gold, g >= M.uq.gold, '골드가 모자랍니다')}${btn('uq-hp', '최대 생명력 −' + Math.round(M.uq.hpPen * 100) + '%(캐릭터 끝까지)', true)}${btn('uq-pt', '패시브 포인트 1', pts >= M.hidden.pt, '패시브 포인트가 없습니다')}</div></div>` : '')
-    + `<div class="card"><p><b>② 영웅 장비 하나</b></p><div class="row">${btn('hero-gold', '골드 ' + M.hero.gold, g >= M.hero.gold, '골드가 모자랍니다')}${btn('hero-item', best ? '가방의 가장 좋은 장비를 내놓는다: ' + itName(run.inv[best]) : '가방의 가장 좋은 장비를 내놓는다', !!best, '가방에 장비가 없습니다')}</div></div>`
+    + `<div class="card"><p><b>② 영웅 장비 하나</b></p><div class="row">${btn('hero-gold', '골드 ' + M.hero.gold, g >= M.hero.gold, '골드가 모자랍니다')}${heroItemBtns || btn('hero-item', best ? '가방의 가장 좋은 장비를 내놓는다: ' + itName(run.inv[best]) : '가방의 가장 좋은 장비를 내놓는다', !!best, '가방에 장비가 없습니다')}</div></div>`
     + `<div class="card"><p><b>③ 수상한 꾸러미</b>: 열어 보기 전에는 모른다.</p><div class="row">${btn('bundle', '골드 ' + M.bundle.gold, g >= M.bundle.gold, '골드가 모자랍니다')}</div></div>`
     + `<div class="row"><button data-a="mkleave" data-focus>그냥 지나간다</button></div>`;
 }
 const G8_RANK = { n: 0, m: 1, r: 2, h: 3, l: 4 };
 function ch2BestBag(run) { const L = (run.bag || []).filter(u => run.inv[u] && !itemRemoveWhy(run, u)); return L.sort((a, b) => (G8_RANK[run.inv[b].g] || 0) - (G8_RANK[run.inv[a].g] || 0))[0] || null; }
-function ch2MarketBuy(run, R, k) {
+function ch2BestBagTies(run) { const u0 = ch2BestBag(run); if (!u0) return []; const g = G8_RANK[run.inv[u0].g] || 0; return (run.bag || []).filter(u => run.inv[u] && !itemRemoveWhy(run, u) && (G8_RANK[run.inv[u].g] || 0) === g); } // 가장 좋은 등급이 같은 것들(둘 이상이면 고른다)
+function ch2MarketBuy(run, R, k, pu) {
   const S = marketStock(run, R), M = MARKET, p = run.p, drops = []; let paid = '';
   if (k === 'uq-gold' || k === 'uq-hp' || k === 'uq-pt') {
     if (!S.uq) return null;
@@ -523,7 +529,7 @@ function ch2MarketBuy(run, R, k) {
     drops.push(mkUq(S.uq, run.ch || 2));
   } else if (k === 'hero-gold' || k === 'hero-item') {
     if (k === 'hero-gold') { if ((run.gold || 0) < M.hero.gold) return null; run.gold -= M.hero.gold; paid = '골드 ' + M.hero.gold; }
-    else { const u = ch2BestBag(run); if (!u) return null; paid = itName(run.inv[u]); discardUid(run, u); }
+    else { const T = ch2BestBagTies(run), u = T.includes(pu) ? pu : T.length === 1 ? T[0] : null; if (!u) return null; paid = itName(run.inv[u]); discardUid(run, u); }
     drops.push(g8Gen(run, { g: 'h' }));
   } else if (k === 'bundle') {
     if ((run.gold || 0) < M.bundle.gold) return null; run.gold -= M.bundle.gold; paid = '골드 ' + M.bundle.gold;
@@ -535,7 +541,7 @@ function ch2MarketBuy(run, R, k) {
 function ch2EvDis(run, E0, o) { const p = run.p; return (E0.id === 'attic' && o.id === 'feed' && !(p.flask.life + p.flask.mana + (p.flask.stam || 0))) || (E0.id === 'betboard' && o.id === 'bet' && (run.gold || 0) < 20); }
 function ch2Event(run, R, o, drops) {
   const p = run.p, nx = run.next = run.next || {};
-  const flask1 = () => { const fk = ['life', 'mana', 'stam'].sort((a, c) => (p.flask[c] || 0) - (p.flask[a] || 0))[0]; p.flask[fk] = Math.max(0, (p.flask[fk] || 0) - 1); };
+  const flask1 = () => flaskTake1(p, G.evFlask); // 동률이면 이벤트 창에서 고른 것(js/80)
   switch (R.event + ':' + o) {
     case 'attic:feed': flask1(); run.dg.force = 'shrine'; break;
     case 'attic:search': gainGold(run, 25, '다락에서 골드를 찾았습니다'); run.dg.noShrine = 1; toast('수도원의 빛이 등을 돌린다. 이 챕터의 성소가 모두 닫힌다'); break;

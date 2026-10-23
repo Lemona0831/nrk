@@ -133,6 +133,7 @@ function handleSheets(pk, r) {
     } else if (S.kind === 'bagfull') { const keep = u => run.inv[u] && ['h', 'l'].includes(run.inv[u].g); click(run.bag.length ? 'bfdrop' : 'bfskip', run.bag.find(u => !keep(u)) || run.bag[0]); } /* 영웅 · 전설은 버리지 않는다 */
     else if (S.kind === 'alloc') { allocAuto(pk, r, run); } /* 10월 16일 0.8.0 2단계: 배분 흐름(옛 세이브 옮기기 · 만들기) */
     else if (S.kind === 'offer') { click('offerpick', run.bag[0]); }
+    else if (S.kind === 'flaskpick') { click('event', S.data.o, { f: (S.data.ties || [])[0] }); } // 10월 24일: 가장 많이 찬 플라스크 동률 → 첫째
     else if (S.kind === 'ks') { spendPassive(pk, r); click('kspick', ksChoice(pk, r, run)); } /* 큰 각인 (1 · 2챕터 정산 뒤, 3챕터 야영지) */
     else if (S.kind === 'swap') { click('swapskip'); }
     else if (S.kind === 'patrol') { const P = run.patrolPend || { cons: [] }; const ptOk = ((run.patrolPt || {})[run.ch || 1] || 0) < run_('AMBUSH').ptMax; const pt = ptOk && ((THINK(pk) || pk === 'careful') ? true : r() < 0.5); click('patrolpick', pt || !P.cons.length ? 'pt' : P.cons[Math.floor(r() * P.cons.length)]); } /* 0.8.0 6단계: 순찰대 보상 — 신중 · 숙련은 패시브 포인트가 남았으면 그것, 초보 · 대충은 반반 */
@@ -348,6 +349,7 @@ function devPre(b, P, r) {
 /* 0.8.0 A2 2챕터 판단: 거래창 · 빚 갚기 · 등불 기름 · 바르도의 등불(칩과 카드를 보고 할 만한 것만). 2챕터 전투에서만 난수를 쓴다 */
 function streetPre(b, P, r) {
   if (!G0.isCh2(b)) return null; const L = G0.actionList(b); const p = b.p, al = G0.alive(b);
+  { const sz = L.find(x => x.ok && /^seize_/.test(x.id)); if (sz) return [sz.id, null]; } // 10월 24일: 차압당할 장비 고르기(첫째)
   if (b.trade === 'ask' && L.some(x => x.id === 'tradeyes')) return [!IGN.includes('merchant') && (p.hp < p.hpMax * 0.5 || r() < 0.3) ? 'tradeyes' : 'tradeno', null]; // G-1: 상인을 무시한 판은 거래(답)를 받지 않는다
   /* G-1: 빚 갚기는 시계(clockPre)로 답한다 */
   const oil = L.find(x => x.id === 'lampoil' && x.ok); if (oil && !(IGN.includes('lampthief') && al.some(e => e.foe === 'lampthief')) && (al.some(e => e.foe === 'lampthief' && e.under) || b.ctx.boss || al.some(e => e.strong)) && r() < (P.mech || 0.5) + 0.2) return ['lampoil', null];

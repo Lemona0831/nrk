@@ -197,6 +197,7 @@ function playerAct(b, id, tgtId) {
     case 'as_mu': { asMuStrike(b, tgt); break; } // M5-3 무영살 베기
     case 'as_end': break; // M5-3 연쇄 격발을 다시 쓰지 않음
     case 'tradeyes': case 'tradeno': case 'paydebt': case 'lampoil': ch2PlayerAct(b, id); break; // A2
+    case 'seize_weapon': case 'seize_armor': case 'seize_gloves': case 'seize_amulet': case 'seize_ring1': case 'seize_ring2': case 'seize_flask': ch2PlayerAct(b, id); break; // 10월 24일: 차압당할 장비 고르기
     case 'sealrift': w3PlayerAct(b, id); break; // A3
     case 'hn_shot': { hnShot(b, tgt); break; } // M5-4 만궁 쏘기
     case 'basic': {

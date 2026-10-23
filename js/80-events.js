@@ -143,6 +143,7 @@ function onClick(ev) {
     case 'awkview': if (!runLive()) break; hidePop(); openSheet('awkview', { from: el.dataset.from || '' }); break;
     case 'offerpick': { const run = G.run, it = run.inv[el.dataset.k]; if(itemRemoveWhy(run,it&&it.uid)){toast(itemRemoveWhy(run,it.uid));break;} if (!it) break; const up = it.g === 'n' ? 'm' : it.g === 'm' || it.g === 'r' ? 'r' : 'h'; const k2 = dropKey(run, up, [it.tpl]); const reward=mkItem(k2),receipt=altarReceipt(run,'offer',[(GRADE[it.g]||GRADE.n).n+' '+itName(it)],[(GRADE[reward.g]||GRADE.n).n+' '+itName(reward)]); discardUid(run, it.uid); G.sheet = null; run.rooms.push({ room: run.room, type: 'altar', took: 'offer', gave: it.tpl, exchange: receipt }); advanceFloor(); toast('바친 것: '+receipt.paid.join(', ')+'\n받은 것: '+receipt.received.join(', ')); queueDrops([reward]); break; }
     case 'event': { const run = G.run, p = run.p, R = roomDef(), o = el.dataset.k; const drops = []; run.next = run.next || {};
+      if (FLASK_PICK_EV.includes(R.event + ':' + o)) { const T = flaskTies(p); if (T.length >= 2 && !T.includes(el.dataset.f)) { openSheet('flaskpick', { ev: R.event, o, ties: T }); break; } G.evFlask = el.dataset.f || null; if (G.sheet && G.sheet.kind === 'flaskpick') G.sheet = null; } // 가장 많이 찬 플라스크가 둘 이상이면 고른다
       if (R.event === 'confess' && o === 'do') { run.next.pre = Object.assign({}, run.next.pre, { weak: 3, vuln: 3 }); drops.push(mkItem(dropKey(run, 'r'))); }
       if (R.event === 'pilgrim' && o === 'loot') { run.next.pre = Object.assign({}, run.next.pre, { poison: 3 }); drops.push(mkItem(dropKey(run, rollGradeCh(run.ch, 'room')))); }
       if (R.event === 'pilgrim' && o === 'pray') p.flask.life = Math.min(flaskCap(p, 'life'), p.flask.life + 1);
@@ -152,7 +153,7 @@ function onClick(ev) {
       if (R.event === 'candle' && o === 'snuff') run.buffs.snuff = 4;
       if (R.event === 'library' && o === 'sell') gainGold(run, 20, '책을 팔 곳을 찾았습니다');
       if (R.event === 'library' && o === 'read') run.next.reader = 1; // A1: 번진 글자를 소리 내어 읽고 만다(다음 전투에 검은 기도사 하나)
-      if (R.event === 'monk' && o === 'feed') { const fk = ['life', 'mana', 'stam'].sort((a, c) => (p.flask[c] || 0) - (p.flask[a] || 0))[0]; p.flask[fk] = Math.max(0, (p.flask[fk] || 0) - 1); run.next.extraDrop = (run.next.extraDrop || 0) + 1; }
+      if (R.event === 'monk' && o === 'feed') { flaskTake1(p, G.evFlask); run.next.extraDrop = (run.next.extraDrop || 0) + 1; }
       if (R.event === 'monk' && o === 'chase') run.next.chase = 1;
       if (R.event === 'bell' && o === 'pull') { run.dg.force = 'strong'; gainGold(run, 15, '종이 울립니다'); }
       if (R.event === 'tomb' && o === 'carve') { p.hpBonus = (p.hpBonus || 0) + 5; applyGear(run); run.next.pre = Object.assign({}, run.next.pre, { weak: 2, vuln: 2 }); }
@@ -189,7 +190,7 @@ function onClick(ev) {
       if (!wake && EO.wake && EO.wake.elseGold) gainGold(run, EO.wake.elseGold, '지갑에 골드가 들어 있다');
       run.rooms.push({ room: run.room, type: 'event', event: R.event, took: o, wake: wake ? 1 : undefined });
       if (wake) { run.cur = Object.assign({}, R, { type: 'normal', en: EO.wake.en.map(x => x.slice()), squad: null, mods: (EO.wake.mods || []).slice(), noAlarm: EO.wake.noAlarm ? 1 : undefined, tough: [], gold: 0, wake: R.event, wakeFirst: EO.wake.first ? 1 : 0, wakeWin: EO.wake.gold || EO.wake.item ? { gold: EO.wake.gold || 0, item: EO.wake.item || 0 } : null }); toast(EO.wake.msg || '무언가 깨어난다'); queueDrops(drops); saveRunLocal(); render(); break; }
-      advanceFloor(); if (skip3) { run.rooms.push({ room: run.room, type: 'skip', took: 'ladder' }); toast('사다리 위로 한 층을 건너뛴다. 그 층의 보상은 없다'); advanceFloor(); }
+      G.evFlask = null; advanceFloor(); if (skip3) { run.rooms.push({ room: run.room, type: 'skip', took: 'ladder' }); toast('사다리 위로 한 층을 건너뛴다. 그 층의 보상은 없다'); advanceFloor(); }
       if (R.event === 'library' && o === 'read') ptBonus(run, 1, '무너진 서고');
       if (R.event === 'shiftlog' && o === 'read') ptBonus(run, 1, '수비대 교대 일지');
       if (R.event === 'archive' && o === 'pull') ptBonus(run, 1, '불타는 서고');
@@ -201,7 +202,7 @@ function onClick(ev) {
     case 'scen': startScen(el.dataset.b); break;
     case 'enter': enterRoom(); break;
     case 'enterlit': { const run = G.run, R = roomDef(); if (!((run.oil || 0) > 0)) break; run.oil--; R.lit = 1; toast('등불 기름으로 방을 밝힌다. 남은 기름 ' + run.oil); enterRoom(); break; } // A2 장치 「등불」
-    case 'mkbuy': { const run = G.run, R = roomDef(); if (!R || R.type !== 'market') break; const r = ch2MarketBuy(run, R, el.dataset.k); if (!r) { toast('살 수 없습니다'); break; } sfx('coin'); run.rooms.push({ room: run.room, type: 'market', took: el.dataset.k, paid: r.paid }); advanceFloor(); queueDrops(r.drops); render(); break; } // A2 암시장
+    case 'mkbuy': { const run = G.run, R = roomDef(); if (!R || R.type !== 'market') break; const r = ch2MarketBuy(run, R, el.dataset.k, el.dataset.u); if (!r) { toast('살 수 없습니다'); break; } sfx('coin'); run.rooms.push({ room: run.room, type: 'market', took: el.dataset.k, paid: r.paid }); advanceFloor(); queueDrops(r.drops); render(); break; } // A2 암시장
     case 'smbuy': { const run = G.run, R = roomDef(); if (!R || R.type !== 'smugstall') break; const r = smugBuy(run, R, el.dataset.k); if (!r) { toast('살 수 없습니다'); break; } sfx('coin'); run.rooms.push({ room: run.room, type: 'smugstall', took: el.dataset.k, paid: r.paid }); advanceFloor(); queueDrops(r.drops); render(); break; } // A3 밀수꾼의 좌판
     case 'smleave': { const run = G.run, R = roomDef(); if (!R || R.type !== 'smugstall') break; run.rooms.push({ room: run.room, type: 'smugstall', took: null }); advanceFloor(); render(); break; }
     case 'mkleave': { const run = G.run, R = roomDef(); if (!R || R.type !== 'market') break; run.rooms.push({ room: run.room, type: 'market', took: null }); advanceFloor(); render(); break; }

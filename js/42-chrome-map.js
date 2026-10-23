@@ -55,7 +55,7 @@ function vPlayerPanel(p, b) {
 
 /* ---------- 전투 ---------- */
 const AGROUP = [
-  ['상황', ['tradeyes', 'tradeno', 'paydebt', 'lampoil', 'sealrift', 'tossgold']], // A3: 챕터 행동(2챕터 거래 · 빚 갚기 · 등불 기름, 3챕터 틈 막기 · 골드 뿌리기). 전에는 묶음에 없어 화면에 그려지지 않았다
+  ['상황', ['seize_weapon', 'seize_armor', 'seize_gloves', 'seize_amulet', 'seize_ring1', 'seize_ring2', 'seize_flask', 'tradeyes', 'tradeno', 'paydebt', 'lampoil', 'sealrift', 'tossgold']], // A3: 챕터 행동(2챕터 거래 · 빚 갚기 · 등불 기름, 3챕터 틈 막기 · 골드 뿌리기). 전에는 묶음에 없어 화면에 그려지지 않았다
   ['공격', ['as_mu', 'hn_shot', 'basic', 'heavy', 'as_end']], // M5-3 암살자: 무영살 베기 · 연쇄 격발 넘기기
   ['스킬', null],
   ['직업', ['sig']],
