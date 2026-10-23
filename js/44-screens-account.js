@@ -28,6 +28,7 @@ function vTitle() {
   else h += `<button class="gold" data-a="newchar" data-focus>시작</button>`;
   h += `<p class="mini">세이브 ${saveCount()}/${SAVE_MAX} · ${G.acct && !G.acct.anon ? esc(G.saveSync || '계정 세이브 연결 중…') : '이 브라우저에 보관됩니다. 구글 로그인으로 계정에 저장하세요.'}</p>${G.acct && !G.acct.anon ? '<button class="sm" data-a="cloudrefresh">계정 세이브 새로 불러오기</button>' : ''}<div class="row tgoal"><button data-a="goals">📋 계정 목표</button>${markOpen() ? '<button data-a="mark">🎖️ 표식 도전</button>' : ''}</div>`;
   h += vLocalSaveError();
+  if (G.resetNote && !c && !(d.runs || []).length) h += '<p class="mini" role="status">0.8.0부터 새로 시작합니다. 0.7.0 캐릭터와 세이브는 이어지지 않습니다(랭킹과 판 기록은 따로 남아 있습니다).</p>'; // M8 전체 초기화 안내 한 줄
   if (d.tutSeen || c) h += `<button class="tutbtn" data-a="tut">🎯 수련장${d.tutDone ? ' <small>수료</small>' : ''}</button>`;
   const kept = (d.kept || []).filter(k => !runOver(k) && BUILDS[k.build]);
   if (kept.length) h += `<div class="tkept"><p class="mini">보관 중인 캐릭터 ${kept.length}</p>${kept.map(k => { const B = BUILDS[k.build]; return `<div class="tcur sm"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(k.cname || B.n)}</b><small>${esc(B.n)} · ${k.mode === 'hard' ? '가혹' : '일반'} · Lv ${k.lv || 1} · ${esc(curDesc(k))}</small></div><button class="sm" data-a="resumekept" data-k="${esc(k.id)}">이어하기</button><button class="sm" data-a="saveabandon" data-k="${esc(k.id)}">포기</button></div>`; }).join('')}</div>`;
@@ -186,11 +187,11 @@ function rankEntry(run, st) {
 }
 async function pushRank(run, st) {
   if (!run || !run.id || run.markCh) return; const e = rankEntry(run, st); /* 표식 도전 판은 랭킹에 올리지 않는다(표식 기록판에 따로) */
-  G.data.rank62 = Object.assign({}, G.data.rank62, { [run.id]: e }); saveLocal();
+  G.data.rank80 = Object.assign({}, G.data.rank80, { [run.id]: e }); saveLocal(); // M8: 시즌 키(rank80)
   if (!G.db || !G.uid || G.conn !== 'ok') return;
   try {
-    const ref = G.db.doc('board/' + G.uid); const cur = await ref.get();
-    const d = cur.exists ? JSON.parse(JSON.stringify(cur.data() || {})) : {}; const R = d.rank62 = d.rank62 || {}; R[run.id] = e;
+    const ref = G.db.doc(BOARD + '/' + G.uid); const cur = await ref.get();
+    const d = cur.exists ? JSON.parse(JSON.stringify(cur.data() || {})) : {}; const R = d.rank80 = d.rank80 || {}; R[run.id] = e;
     Object.keys(R).sort((a, b) => rankCmp(R[a], R[b])).slice(40).forEach(id => delete R[id]); // 한 사람당 40개까지
     d.name = G.data.name || d.name || ''; await ref.set(d); G.board = null; if (G.scr === 'rank') render();
   } catch (e2) { }
@@ -199,8 +200,8 @@ async function pushRank(run, st) {
 function rankClassView(e) { const B = BUILDS[e.build]; return e.me || unlOpen(e.build) ? B : { ico: '❔', n: '숨겨진 직업' }; }
 function rankRows() {
   const out = [];
-  if (G.db && G.board) { for (const x of G.board) for (const e of Object.values(x.rank62 || {})) out.push(Object.assign({ nick: x.name || '', me: x.uid === G.uid }, e)); }
-  else for (const e of Object.values(G.data.rank62 || {})) out.push(Object.assign({ nick: G.data.name || '', me: true }, e));
+  if (G.db && G.board) { for (const x of G.board) for (const e of Object.values(x.rank80 || {})) out.push(Object.assign({ nick: x.name || '', me: x.uid === G.uid }, e)); }
+  else for (const e of Object.values(G.data.rank80 || {})) out.push(Object.assign({ nick: G.data.name || '', me: true }, e));
   return out.filter(e => BUILDS[e.build]).sort(rankCmp);
 }
 function backBtn() { return `<button class="sm back" data-a="back">← 돌아가기</button>`; }
@@ -258,8 +259,8 @@ function classRuleHtml(build) {
   const rows = {
     assassin: [['중독', '적에게 독을 쌓은 뒤, 격발 스킬로 쌓인 독을 터뜨립니다.'], ['흘리기', '선택한 적의 공격 피해 −70% · 스태미나 25.']],
     warden: [['방어', `방어하면 보호막 +${WARD.guard}.`], ['보호막', `상한: 최대 생명력의 ${pct(WARD.cap)}%. 후열 공격은 피해의 절반만 흡수합니다.`]],
-    hunter: [['원거리', '후열 공격 가능 · 기본 공격은 무기 피해의 55%.'], ['가속', '전투 시작 시 1. 라운드 맨 앞에서 2회 연속 행동.'], ['추적과 연계', '같은 적을 연속으로 맞히면 추적이 쌓여 피해가 늘어납니다. 다른 갈래 스킬을 이어 쓰면 피해 +30%.']],
-    elementalist: [['원거리', '기본 공격 50% · 집중 주문 75%. 후열에 닿고 방패병을 통과합니다.'], ['열충격', '같은 적에게 화상과 둔화가 함께 있으면, 내 행동이 끝날 때 두 상태를 모두 소모해 열충격을 일으킵니다.'], ['둔화로 피해 감소', `둔화된 적에게 받는 공격 피해가 ${pct(ELEM.guard)}% 줄어듭니다(강한 공격도).`], ['빙결', `둔화가 가득 차면 그 적은 다음 행동을 놓칩니다(강적 · 보스는 붕괴 +${EL5_BOUND.frzBrk}).`], ['마력탄', '지금 원소(🔥 불 · ❄ 얼음)를 겁니다. 원소 전환으로 바꿉니다.']],
+    hunter: [['원거리', `후열 공격 가능 · 기본 공격은 무기 피해의 ${pct(B.wpnMul)}%.`], ['가속', `전투 시작 시 ${B.openHaste}. 라운드 맨 앞에서 2회 연속 행동.`], ['추적과 연계', '같은 적을 연속으로 맞히면 추적이 쌓여 피해가 늘어납니다. 다른 갈래 스킬을 이어 쓰면 연계: 그 스킬이 빠른 행동이 되어 차례가 이어집니다.']], // M8: M5-4(활 65%, 연계 = 빠른 행동)에 맞춤
+    elementalist: [['원거리', `기본 공격 ${pct(B.wpnMul)}% · 집중 주문 ${pct(B.wpnMul * HEAVY_V2)}%. 후열에 닿고 방패병을 통과합니다.`], ['열충격', '같은 적에게 화상과 둔화가 함께 있으면, 내 행동이 끝날 때 두 상태를 모두 소모해 열충격을 일으킵니다.'], ['둔화로 피해 감소', `둔화된 적에게 받는 공격 피해가 ${pct(ELEM.guard)}% 줄어듭니다(강한 공격도).`], ['빙결', `둔화가 가득 차면 그 적은 다음 행동을 놓칩니다(강적 · 보스는 붕괴 +${EL5_BOUND.frzBrk}).`], ['마력탄', '지금 원소(🔥 불 · ❄ 얼음)를 겁니다. 원소 전환으로 바꿉니다.']],
     spellblade: [['교대', `베기 ⚔ ↔ 주문 ✦: 보호막 +${B.altWard}. 생성 보정 없이 고정 지급 · 내 차례당 1회.`], ['보호막', `상한: 최대 생명력의 ${pct(B.wardCap)}%. 방어·흘리기·플라스크는 교대를 끊지 않습니다.`], ['칼에 싣기', '주문으로 칼에 실은 출혈·화상은 다음 베기로 적을 맞히면 적용됩니다. 주문은 후열의 적도 공격합니다.']],
     monk: [['되받기', '방어하거나 자세를 잡은 동안, 전열 적에게 직접 공격을 받으면 반격합니다.'], ['기', `반격마다 기 +${MONK.kiCtr}. ▶ 공격은 기 1을 써서 피해 +25%. ⚡ 공격은 소모하지 않습니다.`]],
     butcher: [['흡혈', '출혈 상태의 적을 근접 공격하면 생명력을 회복합니다. 출혈을 처음 거는 타격에도 적용됩니다.'], ['피 수확', `출혈된 적 처치·출혈 처치 시 최대 생명력 ${pct(BUTCH.harvest)}% 회복. 전투당 ${pct(BUTCH.harvestFight)}%까지.`], ['갈증', '생명력이 낮을수록 직접 공격 피해가 늘어납니다. 먹기 스킬은 적의 출혈을 소모해 생명력을 회복합니다.']],

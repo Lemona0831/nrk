@@ -13,9 +13,11 @@ for(const ward of [0,1,30,100]){
  const es=[0,1].map(i=>{const e=E.mkEnemy('bruiser',false,i);e.hp=e.hpMax=10000;return e});
  const b=E.newBattle(p,es,{});b.turnIdx=1;const a=E.v2Static(E.SK2.sb_spellguard);
  E.sbBegin(b,a.id,a);E.runSkill2(b,a,null);E.sbEnd(b,a);assert.equal(p.ward,0);assert.equal(b.rec.filter(x=>x.k==='alt').length,0);
- assert.equal(E.wardDamageInfo(E.SK2.sb_spellguard.fx[1],ward).bonus,Math.min(16,ward*.5));
+ { const f=E.SK2.sb_spellguard.fx[1]; assert.equal(E.wardDamageInfo(f,ward).bonus,Math.min(f.cap,ward*f.per)); } // M8: 상한 · 배율은 데이터로(M5 재설계 16 · 0.5 → 20 · 0.8)
 }
 console.log('PASS: fixed alternation 4, once per turn, will-scaled shell, fast shell without stamina, full ward spending once for AoE, no immediate alternation refill');
+/* M8(10월 23일): 아래는 일회성 전후 측정(옛 보스 abbot · cryptlord · queen 고정)이다. 군주 · 여왕이 data/archive로 옮겨져 건너뛴다 */
+if(!D.run_('typeof BOSSES.cryptlord!=="undefined"')){console.log('옛 전후 측정은 건너뜀(보관된 보스)');process.exit(0);}
 const addWard=E.addWard,shell=JSON.parse(JSON.stringify(E.SK2.sb_shell)),guard=JSON.parse(JSON.stringify(E.SK2.sb_spellguard));
 function version(old){
  E.addWard=old?((b,p,n,cap)=>addWard(b,p,n,cap)):addWard;

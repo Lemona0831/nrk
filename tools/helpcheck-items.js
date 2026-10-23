@@ -111,6 +111,31 @@ function __hcBlob(k) { return JSON.stringify(IFX[k], (kk, v) => typeof v === 'fu
   C('종류마다 1씩 줄어듭니다.', 'trim: 약화 3→' + CM.mug[0] + ', 출혈 2→' + CM.mug[1], () => CM.mug[0] === 2 && CM.mug[1] === 1);
   C('가장 많이 쌓인 내 해로운 상태 하나를 2 줄입니다.', 'cleanse: 중독 5→' + CM.cleanse[0] + ', 출혈 2→' + CM.cleanse[1], () => CM.cleanse[0] === 3 && CM.cleanse[1] === 2);
 
+  // 0.7.0 소모품 개편 · A2 · A3 소모품(문장은 v에서 만든다): consApply를 실제로 불러 v가 엔진 값으로 들어가는지, 그 값을 읽는 엔진 줄이 있는지 본다
+  const CX = JSON.parse(E(`(() => { const o = {}; let X;
+    X = __hcMk(); { const t = X.b.en[0]; t.intent = { k: 'heavy' }; consApply(X.b, X.run, { id: 'bellshard', g: 'n' }, t); o.bell = t.bigRed; }
+    X = __hcMk(); { X.b.en.forEach(e => e.row = 'back'); consApply(X.b, X.run, { id: 'smoke', g: 'n' }, null); o.smoke = X.b.en.map(e => e.redNext || 0); }
+    X = __hcMk(); { consApply(X.b, X.run, { id: 'dummy', g: 'n' }, null); o.dummy = X.p.decoy && X.p.decoy.v; }
+    X = __hcMk(); { consApply(X.b, X.run, { id: 'reliq', g: 'n' }, null); o.reliq = X.b.lootX; }
+    X = __hcMk(); { const t = X.b.en[0]; t.role = 'healer'; consApply(X.b, X.run, { id: 'hinder', g: 'n' }, t); o.hinderH = t.noHeal; const u = X.b.en[0]; u.role = 'summoner'; u.noHeal = 0; consApply(X.b, X.run, { id: 'hinder', g: 'n' }, u); o.hinderS = u.noSummon; }
+    X = __hcMk(); { __hcS(X.p, 'weak', 3); __hcS(X.p, 'bleed', 2); __hcS(X.p, 'vuln', 1); X.b.round = 4; consApply(X.b, X.run, { id: 'painkiller', g: 'n' }, null); o.pain = ['weak', 'bleed', 'vuln'].filter(k => X.p.s[k]).length; o.painR = X.p.noRegenR; }
+    X = __hcMk(); { X.b.ctx.mods = []; X.b.en.forEach(e => e.row = 'front'); consApply(X.b, X.run, { id: 'oilpot', g: 'n' }, null); o.oilE = X.b.en.map(e => st(e, 'ignite')); o.oilP = st(X.p, 'ignite'); o.oilF = X.b.ctx.mods.includes('oilfloor'); }
+    X = __hcMk(); { X.b.al = { on: 1, n: 0, cap: 3, next: 4 }; consApply(X.b, X.run, { id: 'flare', g: 'n' }, null); o.flare = X.b.al.next - 4; o.flareU = X.b.flareUsed; }
+    return JSON.stringify(o); })()`));
+  const CV = k => E('CONS.' + k + '.v');
+  C('강타·겨누기·영창을 모으는 한 적의 그 큰 공격 피해', 'consApply interrupt: bigRed = v(' + CX.bell + '), hurtPlayer d *= 1 − bigRed', () => near(CX.bell, CV('bellshard')) && near(CV('bellshard'), 0.2) && srcHas('d *= 1 - o.src.bigRed; o.src.bigRed = 0;'));
+  C('후열 적들의 다음 공격 하나의 피해', 'consApply blind: 후열 redNext = v ' + JSON.stringify(CX.smoke) + ', hurtPlayer d *= 1 − redNext', () => CX.smoke.every(r => near(r, CV('smoke'))) && near(CV('smoke'), 0.2) && srcHas('d *= 1 - o.src.redNext; o.src.redNext = 0;'));
+  C('치유하는 적의 다음 치유량', 'consApply hinder: 사제 noHeal · 소환사 noSummon, 적 치유는 CONS.hinder.v만큼 줄인다', () => CX.hinderH === 1 && CX.hinderS === 1 && near(CV('hinder'), 0.5) && srcHas('const hcut = e.noHeal ? CONS.hinder.v : 0;'));
+  C('이번 라운드에 반격과 후열 사격으로 받는 피해', 'consApply decoy: p.decoy.v = ' + CX.dummy + ', hurtPlayer 반격 · 후열이면 d *= 1 − v', () => near(CX.dummy, CV('dummy')) && near(CV('dummy'), 0.2) && srcHas("(o.counter || o.src.row === 'back')) d *= 1 - p.decoy.v"));
+  C('이 전투에서 쓰러뜨린 적의 전리품 확률', 'consApply lootx: b.lootX = ' + CX.reliq + ', rollDrops 확률 × lootX', () => CX.reliq === CV('reliq') && CV('reliq') === 1.5 && srcHas('L.p * (b.lootMul || 1) * (b.lootX || 1)'));
+  C('내 해로운 상태 2가지를 지웁니다', 'consApply painkill: 셋 중 v(' + CV('painkiller') + ')가지를 지워 ' + CX.pain + '개 남음', () => CV('painkiller') === 2 && CX.pain === 1);
+  C('대신 다음 라운드 스태미나 회복이 0입니다', 'painkill: noRegenR = 다음 라운드(' + CX.painR + '), tickOnce가 그 라운드 회복을 되돌림', () => CX.painR === 5 && srcHas('noRegenR === b.round) p.st = st0R;'));
+  C('전열 적들에게 화상 2', 'consApply oilpot: 전열 화상 ' + JSON.stringify(CX.oilE) + ' = v', () => CV('oilpot') === 2 && CX.oilE.every(n => n === CV('oilpot')));
+  C('그 방이 기름 바닥이 됩니다(나도 화상 +1)', 'oilpot: 방 특성 oilfloor 추가, 나에게 화상 ' + CX.oilP, () => CX.oilF === true && CX.oilP === 1);
+  C('이번 전투의 경보를 3라운드 늦춥니다', 'consApply flare: al.next += v(' + CX.flare + '), ALARM.flare=' + E('ALARM.flare'), () => CX.flare === CV('flare') && CV('flare') === 3 && E('ALARM.flare') === 3);
+  C('대신 다음 전투의 경보가 1라운드 빨리 울립니다', 'flareUsed → 다음 방 alNext −ALARM.flareNext(' + E('ALARM.flareNext') + ')', () => CX.flareU === 1 && E('ALARM.flareNext') === 1 && srcHas('if (b.flareUsed) dg.alNext = (dg.alNext || 0) - ALARM.flareNext;'));
+  C('대신 이 층의 전투는 경보가 1라운드 빨리 울립니다', 'consApply ladder: dg.ladderF = 층, w3Enter: 그 층이면 경보 당김 sh −1', () => srcHas('run.dg.ladderF = run.room') && srcHas('if (dg.ladderF === R.floor) sh -= 1;'));
+
   // 전투 기록 문장 (consApply가 남김)
   const msgs = [['trim', '해로운 상태가 종류마다 1씩 준다'], ['slow', "'에게 둔화 ' + (v || 2)"]];
   api.source('items-consmsg', msgs.map(([k, t]) => ({ id: k, text: SRC.includes(t) ? t : '(소스에 없음) ' + t })));
@@ -151,7 +176,7 @@ function __hcBlob(k) { return JSON.stringify(IFX[k], (kk, v) => typeof v === 'fu
   W('무너진 적에게 주는 직접 피해가 10%', 'k_wd2 ' + A.wd2.join('/'), () => near(A.wd2[0], 0.1) && A.wd2[1] === 0);
   W('전열 적에게 주는 직접 피해가 6%', 'k_wd3 ' + A.wd3.join('/'), () => near(A.wd3[0], 0.06) && A.wd3[1] === 0);
   W('추적 중인 적에게 주는 직접 피해가 8%', 'k_hn1 ' + A.hn1.join('/'), () => near(A.hn1[0], 0.08) && A.hn1[1] === 0);
-  W('기본 공격의 피해가 10%', 'k_hn2 ' + A.hn2.join('/'), () => near(A.hn2[0], 0.1) && A.hn2[1] === 0);
+  W('기본 공격의 피해가 12%', 'k_hn2 ' + A.hn2.join('/'), () => near(A.hn2[0], 0.12) && A.hn2[1] === 0);
   W('몸을 빼 피하면 스태미나가 6 찹니다', 'k_hn3 onEvade fxStam 6 → ' + A.hn3, () => A.hn3 === 6);
   W('화상 3 이상인 적에게 주는 직접 피해가 8%', 'k_el1 화상 3 이상 ' + A.el1.join('/'), () => near(A.el1[0], 0.08) && A.el1[1] === 0);
   W('둔화된 적에게 주는 붕괴가 4 늘어납니다', 'k_el2 brk 4 ' + A.el2.join('/'), () => A.el2[0] === 4 && A.el2[1] === 0);
@@ -183,15 +208,15 @@ function __hcBlob(k) { return JSON.stringify(IFX[k], (kk, v) => typeof v === 'fu
   // IFX 밖(엔진에 박힌) 예전 장비: 문장의 숫자마다 소스에서 찾을 줄 (모두 06a2/js)
   const HAND = {
     twinblades: ["const hd = outDmg(b, heavyBase(p), { weapon: 1 }) * 0.6;", "twinblades: { cost: (p, id) => id === 'heavy' ? 10 : 0 }"],
-    hook: ["p.eq.weapon === 'hook' && o.weapon) d *= 0.85"],
+    hook: ["uqF(p, 'u_wpnCut')) && o.weapon) d *= 0.85"], // M6-1: 고유 cm_hook과 같은 줄
     plate: ["p.eq.armor === 'plate' && !o.dot) p.counter += d * 0.3", "p.eq.armor === 'plate' ? 0.9"],
     witness: ["(p.eq.amulet === 'witness' ? 10 : 0)"],
     chalice: ["p.eq.flask === 'chalice' ? 0.9"],
     pulse: ["(p.eq.ring1 === 'pulse' || p.eq.ring2 === 'pulse')) d *= 1.35"],
-    twin: ["d * 0.5, { single: 1, melee: melee1, label: '첫 날' }", "d * 0.5, { single: 1, melee: melee1, label: '둘째 날' }", "p.eq.weapon === 'twin' ? 0.8 : 1"],
+    twin: ["d * 0.5, { single: 1, melee: melee1, label: '첫 날' }", "d * 0.5, { single: 1, melee: melee1, label: '둘째 날' }", "(p.eq.weapon === 'twin' || uqF(p, 'u_twinHv') ? 0.8 : 1)"],
     maul: ["(p.eq.weapon === 'maul' ? 20 : 0)", "p.eq.weapon === 'maul' && isV2(p) ? 10 : 0"],
-    thorns: ["p.eq.armor === 'thorns' && o.src && o.src.alive && !o.dot && o.src.row === 'front') hurtEnemy(b, o.src, 2", "p.eq.armor === 'cloak' || p.eq.armor === 'thorns' ? 0.95"],
-    cloak: ["(p.eq.armor === 'cloak' ? 0.15 : 0)", "Math.min(0.9, (p.build === 'assassin'", "p.eq.armor === 'cloak' || p.eq.armor === 'thorns' ? 0.95"],
+    thorns: ["(p.eq.armor === 'thorns' || uqF(p, 'u_thorns')) && o.src && o.src.alive && !o.dot && o.src.row === 'front') hurtEnemy(b, o.src, 2", "p.eq.armor === 'cloak' || p.eq.armor === 'thorns' ? 0.95"],
+    cloak: ["(p.eq.armor === 'cloak' || uqF(p, 'u_cloak') ? 0.15 : 0)", "Math.min(0.9, (p.build === 'assassin'", "p.eq.armor === 'cloak' || p.eq.armor === 'thorns' ? 0.95"],
     bloodpact: ["p.eq.amulet === 'bloodpact' && p.hp < p.hpMax * 0.5) d *= 1.2", "p.eq.amulet === 'bloodpact' ? 0.85 : 1"],
     sigil: ["u.mp = Math.min(u.mpMax, u.mp + 4)", "(p.eq.amulet === 'sigil' ? 15 : 0)"],
     fury: ["hasIt(p, 'fury')) d *= 1.1", "if (p.furyNext && !o.ctr) { d *= 1.1;"],
@@ -199,7 +224,7 @@ function __hcBlob(k) { return JSON.stringify(IFX[k], (kk, v) => typeof v === 'fu
     venomring: ["hasIt(p, 'venomring')) addPoison(b, tgt, 1, 1)", "(hasIt(p, 'venomring') ? 0.9 : 1)"],
     boilflask: ["outDmg(b, 5, {}), { aoe: 1, fire: 1, label: '끓는 플라스크' }", "p.eq.flask === 'boilflask' ? 0.75"],
     chaingl: ["addBreak(b, b.chainTgt, 20)", "(p.eq.gloves === 'chaingl' ? 10 : 0)"],
-    ragechain: ["d *= 1 + 0.04 * p.rcN", "p.rcN = Math.min(5, (p.rcN || 0) + 1)", "p.eq.gloves === 'ragechain' ? 0.6 : 0.5"],
+    ragechain: ["d *= 1 + 0.04 * p.rcN", "p.rcN = Math.min(5, (p.rcN || 0) + 1)", "p.eq.gloves === 'ragechain' ? 0.6 : fxFlag(p, 'guardWeak') ? 0.7 : 0.5"],
     markamu: ["addS(b, b.markTgt, 'vuln', 2)", "d *= 0.9; b.p.mk", "if (b.p.mk.n >= 3)"],
     resostone: ["b.echoMul *= 1.06", "hasIt(p, 'resostone') && id === p.lastSkillId ? 2 : 0"],
     wardcrest: ["p.eq.armor === 'wardcrest') d *= 0.85", "p.eq.armor === 'wardcrest' ? 0.95"],

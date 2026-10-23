@@ -1,7 +1,7 @@
 'use strict';
 process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),D=require('./dgqa.js'),E=D.G0,V=D.run_;
-const limits={sb_bolt:12,sb_wardbolt:18,sb_spellguard:16,sb_barrage:22};
+const limits={sb_bolt:12,sb_wardbolt:18,sb_spellguard:20,sb_barrage:22}; // M8(10월 23일): 마갑 방출 상한 16 → 20(M5 재설계 데이터, ×0.8)
 for(const [id,cap] of Object.entries(limits)){
  const s=E.SK2[id],f=s.fx.find(x=>x.k==='wardDmg');
  for(const ward of [0,1,5,33,60,300]){
@@ -32,6 +32,9 @@ try {
  }
 } finally {E.hurtEnemy=hurt;}
 console.log('보호막 상한·0/부족/소수·실제 소모·광역 한 번 소모·파수꾼 기존 동작 통과');
+/* M8(10월 23일): 아래는 10월 11일의 일회성 전후 측정(옛 1 · 2 · 3챕터 보스 abbot · cryptlord · queen과 옛 2챕터 장비 bloodblade 고정)이다.
+   군주 · 여왕 · 옛 2챕터 장비가 data/archive로 옮겨져 더는 돌 수 없어 건너뛴다(점검 몫은 위 단위 확인) */
+if(!V('typeof BOSSES.cryptlord!=="undefined" && typeof ITEMS.bloodblade!=="undefined"')){console.log('옛 전후 측정은 건너뜀(보관된 보스 · 장비)');process.exit(0);}
 // 같은 장비/성장 방향에서 고정 반복과 적 공격에 대응하는 운용을 비교한다.
 const original=Object.fromEntries(Object.keys(limits).map(id=>[id,JSON.parse(JSON.stringify(E.SK2[id].fx))]));
 const shellTime=E.SK2.sb_shell.time,shellCd=E.SK2.sb_shell.cd;

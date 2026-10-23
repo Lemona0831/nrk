@@ -223,7 +223,7 @@ function w3Setup(b, room) {
   /* 장치 「경보」: 강적 · 보스 · 검문소 거절 싸움은 경보 없음 */
   const on = !room.strong && !room.boss && !room.noAlarm && !(dg.noAlarm > 0);
   const first = room.alarmNow ? 1 : Math.max(1, (room.path === 'rough' ? ALARM.rough : ALARM.first) + (room.alarmShift || 0));
-  b.al = { on, next: first, n: 0, cap: ALARM.cap, delayed: 0 };
+  b.al = { on, next: first, n: 0, cap: ALARM.cap, delayed: 0, quiet: !room.strong && !room.boss && !room.noAlarm && dg.noAlarm > 0 }; // quiet: 떼어 낸 종 때문에 쉰 방(M8: 그런 방마다 하나씩 센다)
   if (on) { const L = en.filter(e => realFoe(e) && !w3Obj(e)); const hp = e => ((foeDef(b, e) || {}).hits || {}).hp || 0; const mk = L.slice().sort((x, y) => (y.elite - x.elite) || (hp(y) - hp(x)) || ((x.row === 'front' ? 0 : 1) - (y.row === 'front' ? 0 : 1)))[0]; if (mk) { b.bellMark = mk.id; mk.bellMark = 1; } }
   if (room.alarmNow) logp(b, 'bad', '들켰다. 경보 종이 처음부터 울린다');
 }
@@ -266,7 +266,8 @@ const ALARM_DEV = {
   onRoomEnd(b, over) {
     const run = w3RunOf(b), p = b.p; p.taint = 0; p.noFast1 = 0; p.pushed = 0;
     if (!run || !run.dg) return; const dg = run.dg;
-    if (b.al && b.al.on) { if (b.al.n > 0) dg.alSt = (dg.alSt || 0) + 1; if (dg.noAlarm > 0) dg.noAlarm--; }
+    if (b.al && b.al.on && b.al.n > 0) dg.alSt = (dg.alSt || 0) + 1;
+    if (b.al && b.al.quiet && dg.noAlarm > 0) dg.noAlarm--; // M8 버그 고침: 전에는 경보가 켜진 방에서만 줄여, 종을 떼면 챕터 끝까지 경보가 꺼졌다(문장은 「다음 2개 방」)
     if (b.flareUsed) dg.alNext = (dg.alNext || 0) - ALARM.flareNext;
   },
 };

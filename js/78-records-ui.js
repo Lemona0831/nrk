@@ -1,6 +1,6 @@
 'use strict';
 /* ===== 기록 · 랭킹 · 도감 · 계정 목표 · 표식 도전 화면 (0.6a.2-113, 10월 10일 전면 개편) =====
-   저장 형식은 그대로다: G.data.runs · rank62 · graves · codex · goals · markBest · 랭킹판(G.board)을 읽기만 한다.
+   저장 형식은 그대로다: G.data.runs · rank80(M8 시즌 키, 0.7.0은 rank62) · graves · codex · goals · markBest · 랭킹판(G.board)을 읽기만 한다.
    화면 상태(필터 · 탭 · 열린 판)는 G.rc에만 두고 저장하지 않는다. 단추는 data-a="rc" data-k="종류:값" 하나로 받는다.
    랭킹의 일반 · 가혹과 직업 칩, 목표의 일반 · 가혹, 표식 도전의 고르기는 예전 data-a(rmode · rtab · gmode · mk*)를 그대로 쓴다.
    숨겨진 직업은 랭킹 · 도감 · 목표에서 rankClassView · unlOpen으로 가린다. 내 판 기록은 내 직업 이름 그대로 쓴다. */
@@ -21,9 +21,9 @@ function rcFloor(ch, f) {
 }
 function rcProg(x) { return (x.clears || 0) >= (x.ch || 1) ? x.clears + '챕터 돌파' : (x.ch || 1) + '챕터 ' + rcFloor(x.ch || 1, x.floor || 1); }
 const rcSteps = (a, b) => a.filter(x => x).length + '/' + b;
-/* 내 판 기록: G.data.runs를 바탕으로, 랭킹 줄(rank62)에만 남은 판도 간단한 줄로 함께 센다 */
+/* 내 판 기록: G.data.runs를 바탕으로, 랭킹 줄(rank80)에만 남은 판도 간단한 줄로 함께 센다 */
 function rcRuns() {
-  const d = G.data, R = d.rank62 || {}, seen = {}, out = []; const live = {};
+  const d = G.data, R = d.rank80 || {}, seen = {}, out = []; const live = {};
   if (d.cur) live[d.cur.id] = 1; for (const k of d.kept || []) live[k.id] = 1;
   const stOf = (res, e, lv, clears) => res === 'lose' ? 'dead' : res === 'abandon' ? 'abandon' : res === 'flee' ? 'left' : lv ? 'alive' : (e && e.st === 'dead') ? 'dead' : (e && e.st === 'abandon') ? 'abandon' : clears > 0 ? 'clear' : 'left';
   for (const r of d.runs || []) {
@@ -145,8 +145,8 @@ function vRecords() {
 /* ===== 랭킹 ===== */
 function rankDisplayRows() {
   const out=[];
-  if(G.db && G.board){for(const T of G.board)for(const e of Object.values(T.rank62 || {}))out.push(Object.assign({},e,{uid:T.uid,nick:T.name || '',me:T.uid===G.uid}));}
-  else for(const e of Object.values(G.data.rank62 || {}))out.push(Object.assign({},e,{uid:G.uid || 'local',nick:G.data.name || '',me:true}));
+  if(G.db && G.board){for(const T of G.board)for(const e of Object.values(T.rank80 || {}))out.push(Object.assign({},e,{uid:T.uid,nick:T.name || '',me:T.uid===G.uid}));}
+  else for(const e of Object.values(G.data.rank80 || {}))out.push(Object.assign({},e,{uid:G.uid || 'local',nick:G.data.name || '',me:true}));
   const tab=G.rankTab || 'all',mode=G.rankMode==='hard' ? 'hard' : 'normal';
   return out.filter(e=>BUILDS[e.build]&&(tab==='all'||e.build===tab)&&(e.mode==='hard'?'hard':'normal')===mode&&(G.rankIncludeDead!==false||e.st!=='dead')).sort(rankCmp);
 }

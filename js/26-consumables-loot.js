@@ -320,7 +320,38 @@ function grantDrops(run, b) {
   run.lootLog = run.lootLog || []; run.lootLog.push({ room: run.room, gold, got, lost, pending: (run.consPending || []).map(c => Object.assign({}, c)) });
   b.drops = [];
 }
-function loseLoot(o) { if (o.k === 'item' && o.run && o.run.inv) delete o.run.inv[o.u]; }
+/* 0.8.0 M8 도둑 영구 손해 금지: 잡으면 그 자리에서 되찾고(js/24 returnLoot), 달아나면 훔친 것이 다음 상점으로 간다.
+   장비는 진열에 재고 1로 다시 나오고(값은 평소 진열값), 골드 · 플라스크 한 칸은 상점에 들어설 때 돌려받는다. 판(run)이 없는 시험 전투에서는 예전처럼 잃는다. 맡겼으면 true */
+function fenceAdd(run, x) { if (!run) return false; (run.fenced = run.fenced || []).push(x); return true; }
+const fenceRun = b => typeof G !== 'undefined' && G.run && G.run.p === b.p ? G.run : null;
+/* 장물 두른 정예(A2)가 빼앗은 골드를 쥔 채 전투에서 빠지면 다음 상점에서 돌려받는다 */
+function fenceGold(b, e) { if (!(e.lootGold > 0)) return; if (fenceAdd(fenceRun(b), { k: 'gold', g: e.lootGold })) logp(b, 'sys', e.n + '이(가) 빼앗은 골드 ' + e.lootGold + '은(는) 다음 상점에서 돌려받는다'); e.lootGold = 0; }
+function loseLoot(o) {
+  if (!o || o.k === 'none' || !o.run) return false;
+  if (o.k === 'item') { const it = o.run.inv && o.run.inv[o.u]; if (!it) return false; delete o.run.inv[o.u]; return fenceAdd(o.run, { k: 'item', it }); }
+  if (o.k === 'gold') return fenceAdd(o.run, { k: 'gold', g: o.g });
+  if (o.k === 'flask') return fenceAdd(o.run, { k: 'flask', f: o.f });
+  return false;
+}
+/* 전투가 이기지 않고 끝날 때(내가 물러남) 아직 훔친 것을 쥔 적: 달아난 것과 같이 다음 상점으로. 이겼는데 남아 있으면 바로 돌려받는다. 장물 두른 정예가 빼앗은 골드도 같다 */
+function fenceHeld(b) {
+  for (const e of b.en) {
+    if (e.loot) { if (b.over === 'win') { returnLoot(b, e.loot); logp(b, 'good', e.loot.n + '을(를) 되찾는다'); } else if (loseLoot(e.loot)) logp(b, 'sys', e.n + '이(가) 쥔 ' + e.loot.n + '은(는) 다음 상점에 나온다'); e.loot = null; }
+    if (e.alive && b.over !== 'win') fenceGold(b, e);
+  }
+}
+/* 상점을 차릴 때(genShop) 맡겨 둔 장물을 푼다. 장비는 재고 1 진열, 골드 · 플라스크는 바로 돌려받는다 */
+function fenceShop(run) {
+  const L = run.fenced || []; if (!L.length || !run.shop) return; run.fenced = []; let g = 0; const fl = []; const ch = run.shop.ch || run.ch || 1;
+  for (const x of L) {
+    if (x.k === 'item' && x.it) run.shop.stock.push({ it: x.it, price: priceOf(x.it.g, ch), sold: 0, fenced: 1 });
+    else if (x.k === 'gold') g += x.g || 0;
+    else if (x.k === 'flask' && run.p && run.p.flask) { run.p.flask[x.f] = Math.min(flaskCap(run.p, x.f), (run.p.flask[x.f] || 0) + 1); fl.push({ life: '생명력', mana: '정화', stam: '스태미나' }[x.f] + ' 플라스크 한 칸'); }
+  }
+  if (g) run.gold = (run.gold || 0) + g;
+  const n = L.filter(x => x.k === 'item').length; const msg = [n ? '도둑맞은 장비 ' + n + '개가 진열에 나왔습니다' : '', g ? '골드 ' + g + '을(를) 돌려받았습니다' : '', fl.length ? fl.join(', ') + '을(를) 돌려받았습니다' : ''].filter(Boolean).join('. ');
+  if (msg && typeof toast === 'function') toast('장물: ' + msg);
+}
 function spawn(b, role) {
   if (alive(b).filter(e => e.role === 'minion').length >= 4) return null;
   const e = mkEnemy(role, 0, b.idc++, { lv: (b.ctx && b.ctx.lv) || 1, name: b.ctx && b.ctx.names && b.ctx.names[role] }); e.summoned = true; { const h = foeHitHp(e, (b.ctx && b.ctx.ch) || 1, (b.ctx && b.ctx.floor) || 0); if (h > 0) { e.hpMax = Math.max(1, Math.round(h)); e.hp = e.hpMax; } } /* A1 타수 → 체력 */ decideIntent(b, e); b.en.push(e); return e;

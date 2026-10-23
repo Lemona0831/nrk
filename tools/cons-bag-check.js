@@ -35,7 +35,7 @@ assert.equal(E.consSell({ id: 'silver', g: 'n' }), C.silver.sell); ok.push('판�
 { const old = { cons: [{ id: 'herb', g: 'n', n: 5 }, { id: 'herb', g: 'n', n: 5 }, { id: 'herb', g: 'm', n: 3 }, { id: 'charm', g: 'n', n: 3 }, { id: 'silver', g: 'n', n: 4 }, { id: 'flash', g: 'm', n: 3 }, { id: 'smokebomb', g: 'n', n: 2 }], consPending: [{ id: 'ring', g: 'n', n: 1 }, { id: 'dagger', g: 'n', n: 2 }], consFav: ['herb:n'], bag: [], inv: {} };
   const want = { 'herb:n': 16, 'charm:n': 3, 'flash:m': 3, 'smokebomb:n': 2, 'dagger:n': 2 }; // 고급 약초 3개 = 약초 6개
   E.consBagFix(old);
-  assert.equal(old.consV, 3); assert(E.consUsed(old) <= 5); assert.equal(old.pouch.silver, 4); assert.equal(old.pouch.ring, 1);
+  assert.equal(old.consV, 3); assert(E.consUsed(old) <= 5); assert.equal(old.pouch.silver, 4); assert.equal(old.pouch.ring, undefined); /* A2(10월 22일): 부장품 반지(ring)는 옛 2챕터와 함께 data/archive로 — 이제 버려진다 */
   for (const c of old.cons) assert(c.n <= C[c.id].max, c.id + ' 묶음 초과');
   const got = {}; for (const c of old.cons.concat(old.consPending)) got[c.id + ':' + E.consGrade(c.id, c.g)] = (got[c.id + ':' + E.consGrade(c.id, c.g)] || 0) + c.n;
   assert.deepEqual(got, want, '옮긴 뒤 개수(가방 + 보류)가 같아야 한다');
@@ -53,6 +53,6 @@ assert.equal(E.consSell({ id: 'silver', g: 'n' }), C.silver.sell); ok.push('판�
   assert.equal(old.consRetireLog[0].items.length, 6); assert.equal(E.consName({ id: 'bread', g: 'n' }), '마른 빵', '지난 기록은 옛 이름');
   const snap = JSON.stringify(old); E.consBagFix(old); assert.equal(JSON.stringify(old), snap, '두 번 불러도 같다');
   ok.push('4단계 이전(합치기 · 골드 · 즐겨찾기 · 상점 진열 · 옛 이름)'); }
-assert.equal(Object.keys(C).filter(k => C[k].use !== 'none').length, 20, '소모품 20종'); ok.push('20종');
+assert.equal(Object.keys(C).filter(k => C[k].use !== 'none').length, 24, '소모품 24종'); ok.push('24종'); // A2 · A3(10월 22일): 2챕터 셋 · 3챕터 셋이 들고 옛 2 · 3챕터 것이 빠져 20 → 24
 
 console.log('소모품 가방 1단계 점검 통과: ' + ok.join(' · '));

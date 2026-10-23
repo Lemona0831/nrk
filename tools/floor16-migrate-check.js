@@ -9,6 +9,7 @@
       앵커 −1을 판마다 걸면 자연 판도 떨어진다(3챕터 바로 시작 자연 판의 보스 진입 레벨 중앙 15, 평균 15.1). 3챕터 저장본은 check에도 --from3 */
 const fs = require('fs');
 const mode = process.argv[2] || 'check', FILE = process.argv[3] || 'saves24.json';
+if (mode === 'check' && !fs.existsSync(FILE)) { console.log('저장본 파일 없음(' + FILE + '): 24층 판 옮기기 측정은 make 단계 산출물이 있어야 돈다. 0.8.0 전체 초기화로 24층 판이 남지 않아 회귀 점검에서는 건너뜀(M8 판정: 이월 — 초기화 확정 뒤 폐기)'); process.exit(0); }
 if (process.argv.includes('--from3')) process.env.DG_FROM = '3';
 const D = require('./dgqa.js'); const { G0, OPT, playChar, playLoop, handleSheets, rng, run_ } = D;
 const CLS = ['spellblade', 'warden', 'monk', 'assassin', 'hunter', 'elementalist'];

@@ -381,7 +381,7 @@ SQUADS.push(
 ENC.treasure3 = [[['wallguard', 1], ['pike']], [['pike', 1], ['wallxbow']], [['smuggler', 1], ['rioter'], ['rioter']]];
 /* 방 특성 넷(확정본). 재액의 틈은 야영지(8층) 뒤부터, 배수로에서 잦다 */
 ROOM_MODS.rift = { n: '재액의 틈', chs: [3], d: '라운드가 끝날 때마다 적 하나가 잠식 1을 얻습니다(주는 피해 +10%, 5까지). 행동 하나로 틈을 막으면 멈춥니다. 잠식된 적을 쓰러뜨리면 잠식이 곁의 적에게 옮습니다.' };
-ROOM_MODS.wall = { n: '성벽 위', chs: [3], d: '후열 적이 엄폐해 받는 직접 피해가 20% 줄어듭니다. 전열에는 적이 2기까지만 섭니다. 밀쳐내기가 붕괴를 20 더 채웁니다.' };
+ROOM_MODS.wall = { n: '성벽 위', chs: [3], d: '후열 적이 엄폐해 받는 직접 피해가 20% 줄어듭니다. 전열에는 적이 2기까지만 섭니다.' }; // M8: "밀쳐내기가 붕괴를 20 더 채웁니다"는 뺐다 — CH3X.wallBrk를 읽는 코드가 없다(규칙이 없는 문장)
 ROOM_MODS.mob3 = { n: '군중', chs: [3], d: '라운드가 시작될 때마다 25% 확률로 피난민 폭도 하나가 전열에 끼어듭니다(2까지). 끼어든 폭도는 경험치와 전리품이 없습니다.' };
 ROOM_MODS.rockfall = { n: '낙석', chs: [3], d: '4라운드마다 모두가 피해 4를 입습니다. 무너진 적이 있으면 그 라운드 낙석은 적에게만 떨어집니다.' };
 const MOD3W = { chance: { upper: 0.35, lower: 0.5 }, w: { rift: 1.2, wall: 1, mob3: 1, rockfall: 0.8 }, riftFrom: 9, mobTo: 11, wallFrom: 9, pathRift: { quiet: 2.5, rough: 0.6 }, pathWall: { rough: 1.6 } }; // 특성 확률 · 무게(띠 · 길)

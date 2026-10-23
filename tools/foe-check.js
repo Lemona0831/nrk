@@ -77,7 +77,7 @@ if (CH === 1) {
   const PD = R_('PRAYER_DEV'), DP = R_('DEV_PRAYER'); t(REAL === PD, '1챕터 장치가 끝나지 않은 기도가 아니다');
   const mk = () => { const f = H.fight('warden', { en: ['bruiser', 'archer', 'darkmage'], hp: 100 }); f.b.ctx.room = 'normal'; f.b.ctx.floor = 5; f.b.rngF = () => 0; PD.onRoomStart(f.b); return f; };
   { const f = mk(), b = f.b, dm = f.es[2]; t(b.prayer && b.prayer.id === dm.id && dm.praying, '기도: 후열의 검은 기도사가 먼저 뽑히지 않았다');
-    t(PD.chip(b) === '기도 0/' + DP.need, '기도 칩 글이 "기도 0/3"이 아니다: ' + PD.chip(b));
+    t(PD.chip(b) === '0/' + DP.need, '기도 칩 글이 "0/3"이 아니다(장치 이름 「끝나지 않은 기도」 뒤에 붙음, M8): ' + PD.chip(b));
     for (let k = 0; k < DP.need; k++) PD.onRoundEnd(b); t(b.prayer.done && f.es.every(e => Math.abs(e.barrier - Math.round(e.hpMax * DP.ward)) < 1e-6), '기도 완성: 적 모두 보호막 15%가 아니다');
     const e0 = f.es[0], h0 = e0.hp, bar = e0.barrier; b.cur = null; E.hurtEnemy(b, e0, bar + 5, { single: 1 }); t(Math.abs(h0 - e0.hp - 5) < 1e-6 && !(e0.barrier > 0), '보호막이 피해를 먼저 받지 않는다');
     PD.onRoundEnd(b); t(f.es[1].barrier === Math.round(f.es[1].hpMax * DP.ward), '보호막이 두 번 생겼다(한 번만)'); }

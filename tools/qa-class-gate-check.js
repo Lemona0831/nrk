@@ -14,7 +14,7 @@ process.env.SIT_CLS = process.env.SIT_CLS || 'spellblade';
 const S = require('./sitqa.js'); const D = require('./dgqa.js'); const Q = require('./qa.js'); const SITS = require('./situations.js');
 const G0 = D.G0, run_ = D.run_;
 const LEGACY_RUN = process.argv.includes('--legacy');
-const CLASSES = Object.keys(G0.BUILDS).filter(k => !G0.BUILDS[k].tut && !G0.BUILDS[k].soon);
+const CLASSES = Object.keys(G0.BUILDS).filter(k => !G0.BUILDS[k].tut && !G0.BUILDS[k].soon && setsOf(k).length); // M8(10월 23일): 방사 트리 스킬이 없는 숨은 직업 셋은 뺀다
 const ENAMES = run_('typeof ENEMY_NAMES !== "undefined" ? ENEMY_NAMES : {}');
 const SITL = SITS.SIT.map(s => [1, s]).concat(SITS.SIT2.filter((s, i) => i % 5 === 0).map(s => [2, s]), SITS.SIT3.filter((s, i) => i % 5 === 0).map(s => [3, s]));
 const ownerOk = (cls, owner) => owner === '*' || (Array.isArray(owner) ? owner.includes(cls) : owner === cls);

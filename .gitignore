@@ -7,6 +7,14 @@ tools/eng.gen.js
 tools/qa.json
 tools/final_items.json
 tools/saves06a.json
+tools/qa_b.json
+saves24.json
+hitref*.json
+*.parts/
+debug.log
+# 브라우저 시험 · 측정 산출물(스크린숏 · 표). 이미 추적 중인 output/playwright/equipment/*.png 넷은 그대로 추적된다
+output/
+.playwright-cli/
 node_modules/
 __pycache__/
 

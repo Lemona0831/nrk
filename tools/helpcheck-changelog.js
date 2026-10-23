@@ -1,41 +1,36 @@
-// 업데이트 통합판(0.7.0) 문장과 판 이름을 코드 값과 대조한다 (10월 11일, 0.7.0). tools/helpcheck.js가 읽는다.
-// 값은 문장에서 베끼지 않고 게임 상수 · 데이터에서 계산한다. 숫자를 한글로 쓴 줄(일곱 장면, 여섯 직업)도 같이 닫는다.
+// 업데이트 통합판(0.8.0) 문장과 판 이름을 코드 값과 대조한다 (10월 11일 0.7.0, 10월 23일 M8에서 0.8.0으로). tools/helpcheck.js가 읽는다.
+// 값은 문장에서 베끼지 않고 게임 상수 · 데이터에서 계산한다.
+// 0.7.0 통합 항목은 지난 공개판의 기록이다. 그때의 값(24층, 쿨타임, 세 갈래 트리 …)을 적은 글이라 지금 코드와 대조하지 않고 출처 'changelog-070'으로 따로 세어 이력으로 닫는다.
 module.exports = function (api) {
   const { E, add, note } = api; const fs = require('fs'), path = require('path');
+  const pct = v => Math.round(v * 100);
   const S = 'changelog';
-  const ent = E("CHANGELOG.find(c => c.v === '0.7.0')"); // 10월 14일: 소모품 개편도 통합 항목이라, 0.7.0 본편을 이름으로 찾는다
-  const rows = [];
-  (ent.top || []).forEach((t, i) => rows.push({ id: 'top:' + i, text: t }));
-  ent.groups.forEach((g, gi) => g.items.forEach((t, i) => rows.push({ id: 'g' + gi + ':' + i, text: t })));
-  api.source(S, rows);
+  const rowsOf = ent => { const rows = []; (ent.top || []).forEach((t, i) => rows.push({ id: 'top:' + i, text: t })); (ent.groups || []).forEach((g, gi) => g.items.forEach((t, i) => rows.push({ id: 'g' + gi + ':' + i, text: t }))); return rows; };
+  api.source(S, rowsOf(E("CHANGELOG.find(c => c.v === '0.8.0')")));
+  api.source('changelog-070', rowsOf(E("CHANGELOG.find(c => c.v === '0.7.0')")));
+  api.noteRest('changelog-070', '이력: 0.7.0 공개판 통합 항목(그때의 값). 0.8.0에서 층 · 트리 · 자원 · 장비가 바뀌어 지금 코드와 대조하지 않는다');
   const has = (f, s) => fs.readFileSync(path.join(api.ROOT, f), 'utf8').includes(s);
+  const JS = f => fs.readFileSync(path.join(api.ROOT, 'js', f), 'utf8');
 
   /* ===== 판 이름: 화면에 보이는 모든 판 표시가 VERSION과 CHANGE_VER에서 나온다 ===== */
   api.source('version', [{ id: 'title', text: E('VERSION') + ' 나락의 유산' }]);
-  add('version', '나락의 유산', '상수: VERSION=' + E('VERSION') + ', CHANGE_VER=' + E('CHANGE_VER') + ' (VERSION으로 시작), 타이틀 · 탭 제목 · 리모콘 제목이 VERSION',
-    E => E('CHANGE_VER').startsWith(E('VERSION')) && E('VERSION') === '0.7.0' && has('index.html', '<title>나락의 유산 · ' + E('VERSION') + '</title>') && has('remote.html', '나락의 유산 ' + E('VERSION') + '</title>') && has('js/44-screens-account.js', '<span class="ver">${esc(VERSION)}</span>') && has('js/76-sound-render.js', "'나락의 유산 · ' + VERSION"));
-  add(S, '0.6a의 직업과 스킬은', '판 이름(0.6a), 규칙이 아님', () => true);
+  add('version', '나락의 유산', '상수: VERSION=' + E('VERSION') + ', CHANGE_VER=' + E('CHANGE_VER') + ' (맨 위 통합 항목 = VERSION), 타이틀 · 탭 제목 · 리모콘 제목이 VERSION',
+    E => E('VERSION') === '0.8.0' && E('CHANGE_VER') === E('VERSION') && E('CHANGELOG[0].groups') != null && has('index.html', '<title>나락의 유산 · ' + E('VERSION') + '</title>') && has('remote.html', '나락의 유산 ' + E('VERSION') + '</title>') && has('js/44-screens-account.js', '<span class="ver">${esc(VERSION)}</span>') && has('js/76-sound-render.js', "'나락의 유산 · ' + VERSION"));
 
-  /* ===== 통합 항목의 구조 ===== */
-  add(S, '챕터 1 · 2 · 3', '데이터: CHAPTERS 셋(0.8.0 A2부터 2챕터는 어둠이 가라앉은 거리, A3부터 3챕터는 성벽 아래)', E => E('[1,2,3].map(c => CHAPTERS[c].n).join()') === '저주받은 수도원,어둠이 가라앉은 거리,성벽 아래' && E('CHAPTERS[4]') === undefined);
-  add(S, '챕터마다 24층', '상수: FLOOR_BOSS=' + E('FLOOR_BOSS') + ' (마지막 층이 보스), 챕터 셋 모두 같은 층 구조', E => E('FLOOR_BOSS') === 24 && E('[1,2,3].every(c => isLower(23, c) && !isLower(11, c) && !!BOSSES[CHAPTERS[c].boss])'));
-  add(S, '직업은 암살자, 파수꾼, 사냥꾼, 원소술사, 마검사, 수도승 여섯', '데이터: CLASS_KEYS() = 여섯(숨겨진 직업 제외)', E => E('CLASS_KEYS().join()') === 'assassin,warden,hunter,elementalist,spellblade,monk' && E('ALL_CLASS_KEYS().length') > 6);
-  add(S, '적이 30% 더 아프게', '상수: MODES.hard.dmg=' + E('MODES.hard.dmg') + ', 보상 loot · gold · xp > 1, 열림 조건 hardOpen(1챕터 보스)', E => E('MODES.hard.dmg') === 1.3 && E('MODES.hard.loot') > 1 && E('MODES.hard.gold') > 1 && E('MODES.hard.xp') > 1 && has('js/66-dungeon-flow.js', 'G.data.hardOpen = 1'));
-  add(S, '랭킹은 일반과 따로 매깁니다', '소스: 랭킹 rmode 일반 · 가혹', E => has('js/78-records-ui.js', 'rankMode') || has('js/74-results-viewer.js', 'rankMode') || E('typeof modeTag') === 'function');
-  add(S, '3챕터 보스를 이기면 표식 도전이 열립니다', '소스: markOpen()은 G.data.markOpen, 열림은 3챕터 보스 승리(markWin)', E => E('markOpen.toString()').includes('markOpen') && E('markWin.toString()').length > 0);
-  add(S, '일곱 장면', '데이터: TUT.length=' + E('TUT.length'), E => E('TUT.length') === 7);
-  add(S, '쿨타임으로 씁니다', '상수: EQUIP_SLOTS2=' + E('EQUIP_SLOTS2') + ' (4칸), BUILDS.assassin.v2는 마나 없음', E => E('EQUIP_SLOTS2') === 4 && !!E('BUILDS.assassin.v2') && !E('BUILDS.assassin.mp'));
-  add(S, '연 스킬 중 4칸을 끼워', '상수: EQUIP_SLOTS2=' + E('EQUIP_SLOTS2'), E => E('EQUIP_SLOTS2') === 4);
-  add(S, '만들 때 20점을 나누고 레벨마다 3점', 'STAT_START=20, LV_POINTS=3', E => E('STAT_START') === 20 && E('LV_POINTS') === 3);
-  add(S, '시작 능력치 포인트는 20점', 'STAT_START=20, LV_POINTS=3', E => E('STAT_START') === 20 && E('LV_POINTS') === 3);
-  add(S, '포인트는 만들 때 1점이고', 'TREE2 pts=1, 레벨마다 +1', E => E('Object.values(TREE2).every(T => T.pts === 1)') && E(`(() => { const run = { build: "assassin", lv: 10, tree: { pts: 0, open: [], spent: {} } }; treeFix(run); return run.tree.pts; })()`) === 0 && E(`(() => { const run = { build: "assassin", lv: 10, tree: { pts: 30, open: [], spent: {} } }; treeFix(run); return run.tree.pts; })()`) === 10);
-  add(S, '순서 줄에서 차례를 미리 봅니다', '소스: 순서 줄 vOrder', E => E('typeof vOrder') === 'function');
-  add(S, '능력치는 힘, 민첩, 지능, 체력, 의지 다섯입니다', '상수: STAT_KEYS=' + E('STAT_KEYS.join()') + ', STAT_START=' + E('STAT_START') + ', LV_POINTS=' + E('LV_POINTS'), E => E('STAT_KEYS.join()') === 'str,dex,int,con,wil' && E('STAT_START') === 20 && E('LV_POINTS') === 3);
-  add(S, '2챕터 장비 203종과 3챕터 장비 200종', '데이터: 옛 2챕터 203종 · 옛 3챕터 200종은 data/archive/items_ch2.js · items_ch3.js(A2 · A3 보관), poolOf(3)은 1챕터 풀(' + E('poolOf(3).length') + ')', E => E('poolOf(3) === CH1_POOL') && (fs.readFileSync(require('path').join(api.ROOT, 'data/archive/items_ch3.js'), 'utf8').match(/^  [a-z0-9_]+: \{/gm) || []).length === 200 && (fs.readFileSync(require('path').join(api.ROOT, 'data/archive/items_ch2.js'), 'utf8').match(/^  [a-z0-9_]+: \{/gm) || []).length === 203);
-  add(S, '영웅과 전설 등급은 2챕터부터', '데이터: DROP_G에 1챕터 칸이 없고 2챕터 영웅 · 전설 확률 > 0', E => E('DROP_G[1]') === undefined && E('DROP_G[2].room.h') > 0 && E('DROP_G[2].room.l') > 0);
-  add(S, '2챕터부터 상점의 봉인된 꾸러미', '상수: GAMBLE.from · FATE.from · AWK.campFrom = 2', E => E('GAMBLE.from') === 2 && E('FATE.from') === 2 && E('AWK.campFrom') === 2);
-  add(S, '전투 화면은 간단 · 보통 · 자세히', '상수: HUD_NAMES, HUD_DEFAULT=' + E('HUD_DEFAULT'), E => E('HUD_NAMES.join()') === 'simple,normal,full' && E('HUD_DEFAULT') === 'simple');
-  add(S, '끔 · 약하게 · 보통 · 강하게 네 단계', '데이터: VFX_OPTS=' + E('VFX_OPTS.map(o => o[1]).join()'), E => E('VFX_OPTS.map(o => o[1]).join()') === '끔,약하게,보통,강하게');
-  add(S, '도움말을 아홉 묶음으로', '데이터: HELP_GROUPS.length=' + E('HELP_GROUPS.length') + ', 모든 항목에 묶음', E => E('HELP_GROUPS.length') === 9 && E('HELP.every(h => HELP_GROUPS.some(g => g[0] === h.g))'));
-  add(S, '마지막 층에 보스가 있습니다', '상수: FLOOR_BOSS=24', E => E('FLOOR_BOSS') === 24);
+  /* ===== 0.8.0 통합 항목 ===== */
+  note(S, '1막이 세 챕터로 새로 짜였습니다', '막 이름(1막). 챕터 이름 · 장치는 아래 1막 항목에서 대조');
+  add(S, '저주받은 수도원, 어둠이 가라앉은 거리, 성벽 아래이고', '데이터: CHAPTERS 셋 · CH_DEVICE = 기도 · 등불 · 경보', E => E('[1,2,3].map(c => CHAPTERS[c].n).join()') === '저주받은 수도원,어둠이 가라앉은 거리,성벽 아래' && E('CHAPTERS[4]') === undefined && E('[1,2,3].map(c => CH_DEVICE[c].id).join()') === 'prayer,lamp,alarm');
+  for (const f of ['0.8.0은 새로 시작합니다', '0.7.0의 캐릭터와 세이브, 계정 진행은 이어지지 않습니다']) add(S, f, '상수: RSEASON.cur=' + E("typeof RSEASON !== 'undefined' ? RSEASON.cur : ''") + ', 저장 키 SKEY=' + E('SKEY') + '(0.7.0의 nrk_062_v1은 읽지 않음, SKEY_OLD)', E => E('RSEASON.cur') === '0.8.0' && E('SKEY') !== 'nrk_062_v1' && E("SKEY_OLD.includes('nrk_062_v1')"));
+  add(S, '챕터마다 16층입니다', 'FLOORS=' + E('FLOORS') + ' · PATH_AT=' + E('PATH_AT.join()') + ' · FLOOR_CAMP=' + E('FLOOR_CAMP') + ' · FLOOR_BOSS=' + E('FLOOR_BOSS'), E => E('FLOORS') === 16 && E('PATH_AT.join()') === '4,9,12' && E('FLOOR_CAMP') === 8 && E('FLOOR_BOSS') === 16);
+  add(S, '4 · 9 · 12층에 갈림길', 'PATH_AT · FLOOR_CAMP · FLOOR_BOSS, 실행: fixedRoom(8)=야영지 · fixedRoom(16)=보스', E => E('PATH_AT.join()') === '4,9,12' && E('fixedRoom(FLOOR_CAMP).type') === 'camp' && E('fixedRoom(FLOOR_BOSS).type') === 'boss');
+  add(S, '2고리는 1챕터 야영지, 3고리는 2챕터 야영지에서 열립니다', 'PT.ring · ringCampOpen(want = 챕터 + 1)', E => E('JSON.stringify(PT.ring)') === '{"1":0,"2":1,"3":2}' && E('ringCampOpen.toString()').includes('const want = Math.min(3, (run.ch || 1) + 1)'));
+  add(S, '레벨이 오르면 패시브 포인트 2와 액티브 포인트 1을 얻습니다', 'PT.pts.lv=' + E('PT.pts.lv') + ' · AT_PTS.lv=' + E('AT_PTS.lv') + ', 소스: gainXp', E => E('PT.pts.lv') === 2 && E('AT_PTS.lv') === 1 && E('gainXp.toString()').includes('run.ptree.pts += PT.pts.lv * up; run.atree.pts += AT_PTS.lv * up;'));
+  add(S, '승부수는 3고리 끝의 유산 4 스킬로, 직업마다 셋입니다', '데이터: 공개 직업마다 대사 스킬 셋, 3고리 · 유산 4 · 대가', E => E(`CLASS_KEYS().every(k => { const A = atBuild(k), L = SKILLS2[k].filter(s => s.line); return L.length === 3 && L.every(s => A.nodes[s.id] && A.nodes[s.id].ring === 3 && A.nodes[s.id].ys === 4 && !!s.pay); })`));
+  add(S, '유산은 모든 스킬이 함께 쓰고 최대 5입니다', 'YUSAN.cap=' + E('YUSAN.cap') + ' · turn=' + E('YUSAN.turn') + ' · resp=' + E('YUSAN.resp'), E => E('YUSAN.cap') === 5 && E('YUSAN.turn') === 1 && E('YUSAN.resp') === 1);
+  add(S, '강공격은 붕괴 40을 채웁니다', 'BRK_RULE.basic0=' + E('BRK_RULE.basic0') + ' · heavyMul=' + E('BRK_RULE.heavyMul') + ' (강공격 35 × 1.15 = 40.25, 반올림 40)', E => E('BRK_RULE.basic0') === true && Math.round(35 * E('BRK_RULE.heavyMul')) === 40 && JS('32-player-action.js').includes('* (BRK_RULE.basic0 ? BRK_RULE.heavyMul : 1)'));
+  add(S, '고급은 1개, 희귀는 2개, 영웅은 2개에', 'G8GEN.afN=' + E('JSON.stringify(G8GEN.afN)') + ', 고유 등급은 희귀 · 영웅뿐, 생성 등급표에 전설 없음', E => E('JSON.stringify(G8GEN.afN)') === '{"n":0,"m":1,"r":2,"h":2}' && E('[...new Set(Object.values(UNIQUE).map(u => u.g))].sort().join()') === 'h,r' && E('[1,2,3].every(c => !G8GEN.grade[c].l)'));
+  add(S, '같은 장비를 굴릴수록 값이 1.6배씩 오르고', 'G8GEN.reroll.n=' + E('G8GEN.reroll.n') + ', 소스: g8RerollWhy가 이름 있는 장비를 막는다', E => E('G8GEN.reroll.n') === 1.6 && E('g8RerollWhy.toString()').includes('it.uq ?'));
+  add(S, '"전투의 첫 스킬은 유산 −1"로 바뀌었습니다', '데이터: AFFIX.ysStart(목걸이, 뒷이름 계승) 문장, 소스: ysFirst 할인 1(skCostAt)', E => E('AFFIX.ysStart.txt') === '전투의 첫 스킬은 유산 −1' && E('AFFIX.ysStart.fx.k') === 'ysFirst' && E('AFFIX.ysStart.back') === '계승' && E('AFFIX.ysStart.slot.join()') === 'amulet' && JS('17-gear8.js').includes("case 'ysFirst': sum('ysFirst', 1)"));
+  add(S, '큰 각인은 찍은 곳에서 3칸 안의 자리만 제시합니다', 'PT.ksN=' + E('PT.ksN') + ', 소스: ksOfferMake가 x.d <= PT.ksN', E => E('PT.ksN') === 3 && E('ksOfferMake.toString()').includes('x.d <= PT.ksN'));
+  note(S, '1막 난이도를 맞췄습니다', '막 이름(1막). 체력 배율 문장은 숫자 없이 방향만 적었다(M7-3 보고서)');
 };

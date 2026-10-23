@@ -11,5 +11,5 @@ r=make();r.bag.pop();delete r.inv[Object.keys(r.inv).find(u=>!r.bag.includes(u)&
 assert.equal(E.equipReward(r,it,'weapon'),'');assert(r.bag.includes(prev));assert(r.inv[prev].locked);assert(E.gearCheck(r));
 r=make();const a=E.mkItem('ledger');a.g='l';E.equipReward(r,a,'ring2');it=E.mkItem('bloodblade');it.g='l';const snapshot=JSON.stringify(r);assert(E.equipReward(r,it,'weapon'));assert.equal(JSON.stringify(r),snapshot);
 const p=E.mkPlayer('spellblade',{},{}),e=E.mkEnemy('skeleton',false,0);e.pile={wait:1};const b=E.newBattle(p,[e],{ch:2});E.__G.b=b;
-assert(E.infoHtml('epile:'+e.id).includes('1라운드'));assert(E.infoHtml('epile:'+e.id).includes('석회 가루'));
+assert(E.infoHtml('epile:'+e.id).includes('1라운드')); // M8: 석회 가루 안내 확인은 뺐다(석회 가루는 옛 2챕터와 함께 data/archive로)
 console.log('가득 찬 가방 교체·빈 칸 장착·잠금·전설 제한·장비 무결성·뼈 더미 설명 통과');

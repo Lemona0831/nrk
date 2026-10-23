@@ -24,13 +24,13 @@ module.exports = function (api) {
   add('help', '겹마다 피해 +5%', '상수: HUNT.focusPer 5% · focusBig 10% · focusMax 3, 소스: 3겹이면 몸 낮추기 · 버티기를 꿰뚫음', E => pct(E('HUNT.focusPer')) === 5 && pct(E('HUNT.focusBig')) === 10 && E('HUNT.focusMax') === 3 && has('b.p.focus.n >= HUNT.focusMax') && has('e.braced && !o.dot && !fullF'));
   add('help', '교대가 두 번 이어지면 켜지는', '소스: altF.run === 2는 sbRunNow ≥ 2일 때 켜지고, 쓰면 p.sbRun = 0', E => has("(e.run === 2 ? b.sbRunNow >= 2 : true)") && has('p.sbRun = b.sbRun2 ? 0 : b.sbRunNow')); // 10월 16일 0.8.0 2단계: 교대 보상은 sbAltMerge가 맞는 것끼리 합친다(판정은 같다)
   add('help', '한 차례에 2번까지입니다', '상수: MONK.ctrMax=' + E('MONK.ctrMax') + ', 소스: hurtPlayer가 ctrN < monkCtrMax(p)를 본다(M5-2: 3 → 2, 금강 자세 3 · 역천권 제한 없음)', E => E('MONK.ctrMax') === 2 && has('(p.ctrN || 0) < monkCtrMax(p)'));
-  add('help', '▶ 공격 한 번이 기 1을 써서', '소스: 강화 ×1.25(수도승 ⚡ 제외), 실행: 강화 1 → ×1.25', E => has("if (p.s.empower && !(p.build === 'monk' && b.curFast)) { d *= 1.25;") && E(`(() => { const b = __mk("monk"); addS(b, b.p, "empower", 1); return outDmg(b, 100, {}) === 125; })()`));
+  add('help', '▶ 공격 한 번이 기 1을 써서', '소스: 강화 ×1.25(수도승 ⚡ 제외, curFast), 실행: 강화 1 → ×1.25', E => has("if (p.s.empower && !(p.build === 'monk' && b.curFast") && E(`(() => { const b = __mk("monk"); addS(b, b.p, "empower", 1); return Math.abs(outDmg(b, 100, {}) - 125) < 1e-9; })()`));
   add('help', '힘은 강공격 붕괴 +5', '소스: 강공격 붕괴 35 + 5 × floor(힘/10), 실행: 민첩 20이면 흘리기 스태미나 −2', E => has("(isCaster(p) && !isV2(p) ? 30 : 35) + 5 * Math.floor(stat(p, 'str') / 10)") && E(`(() => { const b = __mk("warden"); const p = b.p; const c0 = dodgeCost(p); p.stat.dex = 20; return c0 - dodgeCost(p) === 2; })()`));
   add('help', '기본 피해 = 원소 합계', '상수: ELEM.Cw=' + E('ELEM.Cw') + ' · D=' + E('ELEM.D') + ' · Bk=' + E('ELEM.Bk') + ', 소스: elemShock가 세 상수를 쓴다', E => E('ELEM.Cw') === 2 && E('ELEM.D') === 3 && E('ELEM.Bk') === 12 && src('elemShock').includes('ELEM.D') && src('elemShock').includes('ELEM.Bk') && src('elemShock').includes('ELEM.Cw'));
 
   /* ===== 쿨타임 · 스태미나 · 플라스크 · 행동 ===== */
   add('help', '한 번에 20판씩 보입니다', '상수: RC_PAGE=' + E('RC_PAGE') + '(기록 목록이 한 번에 보이는 판 수)', E => E('RC_PAGE') === 20);
-  add('help', '표는 위에서 50개까지 보입니다', '소스: 랭킹 표 all.slice(0, 50)', E => has('rows = all.slice(0, 50)'));
+  add('help', '표는 위에서 50개까지 보입니다', '소스: 랭킹 표 rows = all.slice(0, 50)', E => /rows\s*=\s*all\.slice\(0,\s*50\)/.test(SRC)); // 0.8.0: 랭킹 표 줄이 rows=all.slice(0,50)로 붙어 쓰여 공백을 가리지 않게
   add('help', '둘째 차례부터 내 차례가 시작될 때마다 1 찹니다', '소스: chargeEv(turn)이 b.ysPend에 두고 ysTurnStart가 내 차례에 준다 (10월 16일)', E => has('function ysTurnStart(b)') && E('YUSAN.turnAtStart') === 1);
   add('help', '🔄 스킬은 조건을 이루면 유산 +1을 돌려줍니다(차례마다 한 번)', '10월 15일 유산 1차 시제품: hastenBranch → ysRefund(라운드에 한 번, YUSAN.refund=' + E('YUSAN.refund') + ')', E => E('hastenBranch.toString()').includes('ysRefund') && E('YUSAN.refund') === 1);
   add('help', '30까지 차거나', '소스: p.exhaust && p.st >= 30이면 풀림, 스태미나 플라스크는 exhaust = 0', E => has('if (p.exhaust && p.st >= 30) p.exhaust = 0;') && has('p.st += add; p.exhaust = 0;'));
@@ -38,14 +38,12 @@ module.exports = function (api) {
   add('help', '"출혈 2"처럼 걸 상태', '상수: EKW.archerBleed=' + E('EKW.archerBleed') + '(사수 예고 예시)', E => E('EKW.archerBleed') === 2);
   add('help', '스태미나 플라스크는 전투에 한 번 유산 +1을 줍니다', '10월 15일 유산 1차 시제품: 스태미나 플라스크 b.ysFlask, YUSAN.flask=' + E('YUSAN.flask'), E => has('if (isV2(p) && !b.ysFlask) { b.ysFlask = 1; ysAdd(b, YUSAN.flask') && E('YUSAN.flask') === 1);
   add('help', '샘과 야영지에서 셋 다 1씩', '소스: 샘은 life + 1 · mana + 1 · stam + 1, 야영지는 세 플라스크 각 +1', E => has("p.flask.mana = Math.min(flaskCap(p, 'mana'), p.flask.mana + 1); p.flask.stam = Math.min(flaskCap(p, 'stam'), (p.flask.stam || 0) + 1)") && has("for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = Math.min(flaskCap(p, fk), (p.flask[fk] || 0) + 1)"));
-  add('help', '무기 피해만큼 치고 붕괴 게이지를 10', '실행: 기본 공격 한 번에 붕괴 +10', E => E(`(() => { const b = __mk("warden"); const e = b.en[0]; const k0 = e.brk || 0; playerAct(b, "basic", e.id); return (e.brk || 0) - k0 === 10; })()`));
-  add('help', '150% 피해, 붕괴 35', '상수: HEAVY_V2=' + E('HEAVY_V2') + ', 실행: 강공격 한 번에 붕괴 +35', E => pct(E('HEAVY_V2')) === 150 && E(`(() => { const b = __mk("warden"); const e = b.en[0]; const k0 = e.brk || 0; playerAct(b, "heavy", e.id); return (e.brk || 0) - k0 === 35; })()`));
-  add('help', '파수꾼은 보호막 6을 얻습니다', '상수: WARD.guard=' + E('WARD.guard') + ' · cap=30%, 소스: 방어가 addWard(WARD.guard), 전투가 끝나면 p.ward = 0', E => E('WARD.guard') === 6 && pct(E('WARD.cap')) === 30 && has("if (p.build === 'warden') { const g = addWard(b, p, WARD.guard);") && has('p.ward = 0; p.thorn = null;'));
+  add('help', '파수꾼은 보호막 6을 얻습니다', '상수: WARD.guard=' + E('WARD.guard') + ' · cap=30%, 소스: 방어가 addWard(wdGuardWard(p)), 전투가 끝나면 p.ward = 0', E => E('WARD.guard') === 6 && pct(E('WARD.cap')) === 30 && has("if (p.build === 'warden') { const g = addWard(b, p, wdGuardWard(p));") && has('let v = (p.wdSt && p.wdSt.valor ? WD_BOUND.valorGuard : WARD.guard)') && E('wdGuardWard(__mk("warden").p)') === E('WARD.guard') && has('p.ward = 0; p.thorn = null;'));
   add('help', '적 하나를 골라 그 적의 다음 단일 공격 피해를 60%', '실행: parryRed 파수꾼 · 사냥꾼 0.6, 암살자 0.7', E => E(`(() => { const a = __mk("assassin"), w = __mk("warden"); return parryRed(w.p) === 0.6 && parryRed(a.p) === 0.7; })()`));
 
   /* ===== 화면과 조작 ===== */
   add('help', '숫자 키 1~9가', "소스: onKey가 /^[1-9]$/ 키를 행동 버튼 data-k에 잇는다", E => has("/^[1-9]$/.test(ev.key)") && has('.ab[data-k="'));
-  add('help', '"−40 70 → 30" 같은 숫자', '실행: 강공격 스태미나 40, 70 − 40 = 30', E => 70 - E('heavyCost(__mk("warden").p)') === 30);
+  add('help', '" 같은 숫자가 보입니다', '실행: 강공격 스태미나 HEAVY_COST, 70 − ' + E('HEAVY_COST') + ' = ' + (70 - E('HEAVY_COST')), E => E('heavyCost(__mk("warden").p)') === E('HEAVY_COST'));
   add('help', '크기(50 · 75 · 100 · 150 · 200%)', '상수: HUD_SIZES=' + E('HUD_SIZES.join()'), E => E('HUD_SIZES.join()') === '50,75,100,150,200');
   add('help', '글자 크기(90%부터 130%까지)', '상수: FS_OPTS=' + E('FS_OPTS.join()'), E => E('Math.min(...FS_OPTS)') === 0.9 && E('Math.max(...FS_OPTS)') === 1.3);
   add('help', '한 차례에 1개, 한 전투에 5개(가혹 3개)까지', '상수: CONS_TURN=' + E('CONS_TURN') + ' · CONS_FIGHT=' + E('JSON.stringify(CONS_FIGHT)'), E => E('CONS_TURN') === 1 && E('CONS_FIGHT.normal') === 5 && E('CONS_FIGHT.hard') === 3);
@@ -66,7 +64,6 @@ module.exports = function (api) {
   add('help', '광역은 후열에 70%만', '상수: AOE.back=' + E('AOE.back'), E => pct(E('AOE.back')) === 70);
   add('help', '후열이 받는 광역 피해가 다시 절반', '상수: AOE.wall=' + E('AOE.wall') + ' · wallFront=' + E('AOE.wallFront'), E => pct(E('AOE.wall')) === 50 && pct(1 - E('AOE.wallFront')) === 40);
   add('help', '방패병 자신도 광역 피해를 25%', '상수: AOE.shieldSelf=' + E('AOE.shieldSelf'), E => pct(1 - E('AOE.shieldSelf')) === 25);
-  add('help', '기본 공격 10, 강공격 35씩 차고', '실행: 기본 공격 +10, 강공격 +35', E => E(`(() => { const r = []; for (const id of ["basic", "heavy"]) { const b = __mk("warden"); const e = b.en[0]; const k0 = e.brk || 0; playerAct(b, id, e.id); r.push((e.brk || 0) - k0); } return r.join(); })()`) === '10,35');
   add('help', '다음 행동을 잃고, 취약 2가', '실행: 붕괴 가득이면 취약 2', E => E(`(() => { const b = __mk("warden"); const e = b.en[0]; addBreak(b, e, 9999); return st(e, "vuln") === 2; })()`));
   add('help', '사수(후열): 겨누기', '상수: EKW.archerBleed=' + E('EKW.archerBleed') + ', archerEvery=' + E('EKW.archerEvery'), E => E('EKW.archerBleed') === 2);
   /* A3: 옛 3챕터(재의 사막) 대조 열 줄은 새 「성벽 아래」 대조로 바꿨다 */
@@ -78,7 +75,7 @@ module.exports = function (api) {
   add('help', '4라운드째가 끝날 때 경보 종이 울려', '상수: ALARM.first=' + E('ALARM.first') + ' · every=' + E('ALARM.every') + ' · cap=' + E('ALARM.cap') + ' · rough=' + E('ALARM.rough'), E => E('ALARM.first') === 4 && E('ALARM.every') === 3 && E('ALARM.cap') === 3 && E('ALARM.rough') === 3);
   add('help', '경보가 한 라운드 늦어집니다(전투마다 한 번)', '소스: w3BellDelay a.delayed · a.next += 1', E => has('a.delayed = 1; a.next += 1;'));
   add('help', '원래 피해의 1/3은 들어갑니다', '소스: foeArmor Math.max(d / 3, d - e.armor)', E => has('d = Math.max(d / 3, d - e.armor)'));
-  add('help', '강공격은 두 겹', "소스: foeArmor 강공격이면 n = 2", E => has("const n = b.cur && b.cur.id === 'heavy' ? 2 : 1;"));
+  add('help', '강공격은 한 번에 두 겹을 벗깁니다', "소스: foeArmor 강공격이면 n = 2", E => has("const n = b.cur && b.cur.id === 'heavy' ? 2 : 1;"));
   add('help', '낙석(4라운드마다 모두 피해 4)', '상수: CH3X.rock=' + E('CH3X.rock') + ' · rockEvery=' + E('CH3X.rockEvery'), E => E('CH3X.rock') === 4 && E('CH3X.rockEvery') === 4);
 
   /* ===== 상태이상 ===== */
@@ -92,23 +89,16 @@ module.exports = function (api) {
   add('help', '반대되는 상태는 걸 때 숫자끼리 뺍니다', '실행: 보호 2에 취약 3 → 보호 0 · 취약 1', E => E(`(() => { const b = __mk("warden"); const p = b.p; addS(b, p, "protect", 2); addS(b, p, "vuln", 3); return st(p, "protect") === 0 && st(p, "vuln") === 1; })()`));
 
   /* ===== 장비 · 레벨 · 골드 · 도박 · 방 ===== */
-  add('help', '열기를 내리는 장비는 한 전투에 합쳐 20까지', '상수: FX_HEAT_CUT=' + E('FX_HEAT_CUT'), E => E('FX_HEAT_CUT') === 20);
-  add('help', '능력치 3점을 나누고', '상수: LV_POINTS=3, 소스: gainXp가 올라간 레벨 수만큼 tree.pts를 더한다', E => E('LV_POINTS') === 3 && has('if (run.tree) run.tree.pts += up;'));
-  add('help', '산 값의 25%에 팔고', '실행: sellOf(고급 1챕터) = floor(가격 × 0.25), 전설은 sellOf = LEG_SELL=' + E('LEG_SELL'), E => E('sellOf({g:"m",ch:1})') === Math.floor(E('priceOf("m",1)') * 0.25) && E('sellOf({g:"l",ch:2})') === 150);
   add('help', '값은 그 챕터 고급 장비의 1.3배', '상수: GAMBLE.mul=' + E('GAMBLE.mul') + ', 실행: gamblePrice(2) = round(고급 가격 × 1.3)', E => E('GAMBLE.mul') === 1.3 && E('gamblePrice(2)') === Math.round(E('priceOf("m",2)') * 1.3));
   add('help', '평범은 70%, 고급은 45%, 희귀는 20%', '상수: FATE.up', E => pct(E('FATE.up.n')) === 70 && pct(E('FATE.up.m')) === 45 && pct(E('FATE.up.r')) === 20);
-  add('help', '챕터마다 24층입니다', '상수: FLOORS=24 · FLOOR_CAMP=12 · FLOOR_BOSS=24, 실행: isLower 11층 거짓 · 13층 참 · 23층 참', E => E('FLOORS') === 24 && E('FLOOR_CAMP') === 12 && E('FLOOR_BOSS') === 24 && E('isLower(11,1)') === false && E('isLower(13,1)') === true && E('isLower(23,1)') === true);
   add('help', '보스전을 오래 끌면(보통', '상수: ENRAGE.boss=' + E('ENRAGE.boss') + ' (b.t는 라운드마다 1, 45라운드)', E => E('ENRAGE.boss') === 45);
 
   /* 숫자는 있지만 규칙이 아닌 문장, 또는 아래에서 따로 증명하는 문장 */
-  note('help', '"다음 1점"의 효과가 보이고', '화면 이름 예시 ("다음 1점")');
   note('help', '1 · 2 · 3챕터 보스를 넘었는지', '챕터 이름');
   note('help', '버튼에 "유산 3"처럼 보입니다', '표기 예시');
   note('help', '"전투마다 1번"인 스킬은', '표기 이름 (once 스킬은 전투가 끝나야 다시 쓴다: chargeEv가 once를 건너뛴다)');
   add('help', '0이 되면 쓰러지고', '소스: hurtPlayer가 생명력이 0 이하이면 쓰러짐 처리', E => has('p.hp <= 0') || has('p.hp = Math.max(0, p.hp - d)'));
-  add('help', '회복은 생명력 플라스크, 소모품, 샘(50%)', '소스: 샘은 최대 생명력 × 0.5, 야영지 · 정산은 p.hp = p.hpMax', E => has('const sp = 0.5 * (1 + fxVal(p, \'spring\'') && has('p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax;'));
-  note('help', '1챕터를 끝까지 가면 Lv5 안팎', '측정값: 던전 테스터 216판(DGDIR=06a2 node tools/dgqa.js 6), 보스층에 닿은 74판의 레벨 4~6 평균 5.1, 완주 17판 5~6 평균 5.8. 규칙이 아닌 결과 문장이라 코드와 대조하지 않는다');
-  add('help', '스킬 포인트는 레벨만큼, 능력치는 20점에', '상수: STAT_START=15 · LV_POINTS=3, 소스: markSetup이 트리 포인트 += 레벨 − 1, markStat = LV_POINTS × (레벨 − 1)', E => E('STAT_START') === 20 && E('LV_POINTS') === 3 && has('if (run.tree) run.tree.pts += up; run.markStat = LV_POINTS * up;'));
+  add('help', '회복은 생명력 플라스크, 소모품, 샘(50%)', 'CAMP_REST.hp=' + E('CAMP_REST.hp') + ', 소스: 샘은 최대 생명력 × 0.5, 야영지 쉬기는 hpMax × CAMP_REST.hp, 정산은 p.hp = p.hpMax', E => has("const sp = 0.5 * (1 + fxVal(p, 'spring'") && pct(E('CAMP_REST.hp')) === 60 && has('p.hp = Math.min(p.hpMax, p.hp + p.hpMax * CAMP_REST.hp)') && has('p.hp = p.hpMax; p.mp = p.mpMax; p.st = p.stMax;'));
   /* ===== 도움말 정리(0.7.0): 묶음 · 일곱 장면 · 기본 표시 ===== */
   add('help', '일곱 장면으로 연습합니다', '데이터: TUT.length=' + E('TUT.length'), E => E('TUT.length') === 7);
   add('help', '처음에는 간단입니다', '상수: HUD_NAMES, HUD_DEFAULT=' + E('HUD_DEFAULT'), E => E('HUD_NAMES.join()') === 'simple,normal,full' && E('HUD_DEFAULT') === 'simple');

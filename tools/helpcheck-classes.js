@@ -8,20 +8,20 @@ module.exports = function (api) {
 
   add(C, '흘리기는 피해를 70% 줄이고', '실행: parryRed(암살자)=0.7, dodgeCost(암살자)=25', E => E(`(() => { const b = __mk("assassin"); return parryRed(b.p) === 0.7 && dodgeCost(b.p) === 25; })()`));
   add(C, '방어하면 보호막 +6', '상수: WARD.guard=' + E('WARD.guard') + ' · cap=' + E('WARD.cap'), E => E('WARD.guard') === 6 && pct(E('WARD.cap')) === 30);
-  add(C, '대신 활은 무기 피해의 55%', '상수: BUILDS.hunter.wpnMul=' + E('BUILDS.hunter.wpnMul'), E => pct(E('BUILDS.hunter.wpnMul')) === 55);
-  add(C, '전투를 시작하면 가속 1을', '상수: BUILDS.hunter.openHaste=' + E('BUILDS.hunter.openHaste'), E => E('BUILDS.hunter.openHaste') === 1);
+  add(C, '대신 활은 무기 피해의 65%', '상수: BUILDS.hunter.wpnMul=' + E('BUILDS.hunter.wpnMul') + ' (M5-4)', E => pct(E('BUILDS.hunter.wpnMul')) === 65);
   add(C, '추적이 한 겹씩 쌓입니다(최대 3겹)', '상수: HUNT.focusMax=' + E('HUNT.focusMax'), E => E('HUNT.focusMax') === 3);
   add(C, '겹마다 피해 +5%', '상수: HUNT.focusPer · focusBig · focusMax', E => pct(E('HUNT.focusPer')) === 5 && pct(E('HUNT.focusBig')) === 10 && E('HUNT.focusMax') === 3);
-  add(C, '연계로 피해 +30%', '상수: HUNT.link=' + E('HUNT.link'), E => pct(E('HUNT.link')) === 30);
   add(C, '그 적의 출혈 × 4%, 최대 40%', '상수: BUTCH.leech=' + E('BUTCH.leech') + ' · leechMax=' + E('BUTCH.leechMax') + ' · leechTurn=' + E('BUTCH.leechTurn'), E => pct(E('BUTCH.leech')) === 4 && pct(E('BUTCH.leechMax')) === 40 && pct(E('BUTCH.leechTurn')) === 8);
   add(C, '잃은 생명력 10%마다', '상수: BUTCH.thirst=3% · thirstMax=18%, 실행: 생명력 70%면 +9%', E => pct(E('BUTCH.thirst')) === 3 && pct(E('BUTCH.thirstMax')) === 18 && E(`(() => { const p = { build: "butcher", hp: 70, hpMax: 100 }; return Math.round(buThirst(p) * 100); })()`) === 9);
   add(C, '먹기는 한 전투에 최대 생명력의 40%', '상수: BUTCH.eatFight=' + E('BUTCH.eatFight'), E => pct(E('BUTCH.eatFight')) === 40);
   add(C, '생명력 1에서 멈춥니다', '소스: 자해 출혈이 남아 있으면 출혈 피해가 생명력 1을 남긴다(bleedFloor)', E => has('b.bleedFloor = 1') && has('b.bleedFloor = 0'));
-  add(C, '대신 무기 피해의 50%(집중 주문은 85%)', '상수: wpnMul=' + E('BUILDS.elementalist.wpnMul') + ' × HEAVY_V2=' + E('HEAVY_V2') + ' = 집중 주문', E => pct(E('BUILDS.elementalist.wpnMul')) === 50 && pct(E('BUILDS.elementalist.wpnMul') * E('HEAVY_V2')) === 75);
+  add(C, '대신 무기 피해의 50%(집중 주문은 85%)', '상수: wpnMul=' + E('BUILDS.elementalist.wpnMul') + ' × HEAVY_V2=' + E('HEAVY_V2') + ' = 집중 주문', E => pct(E('BUILDS.elementalist.wpnMul')) === 50 && pct(E('BUILDS.elementalist.wpnMul') * E('HEAVY_V2')) === 85);
   add(C, '원소 합계는 화상', '상한 ELEM.cap=16', E => E('ELEM.cap') === 16);
   add(C, '출혈 상태의 적을 처치하거나', '피 수확 3%, 전투당 12%', E => E('BUTCH.harvest')===0.03 && E('BUTCH.harvestFight')===0.12);
-  add(C, '기본 피해는 원소 합계 × 3', '상수: ELEM.Cw · D · Bk', E => E('ELEM.Cw') === 2 && E('ELEM.D') === 3 && E('ELEM.Bk') === 12);
-  add(C, '서리 무게: 둔화된 적이 나를 치는', '상수: ELEM.guard=' + E('ELEM.guard'), E => pct(E('ELEM.guard')) === 30);
+  add(C, '기준 피해는 원소 합계 × 3이며, 지능 1점마다', '상수: ELEM.D=' + E('ELEM.D') + ', TRIGGER_STAT_PCT=' + E('TRIGGER_STAT_PCT') + ', 소스: elemShock 기준 = 합계 × ELEM.D × triggerDamageMul(지능 1점 3%)', E => E('ELEM.D') === 3 && E('TRIGGER_STAT_PCT') === 3 && E('elemShock.toString()').includes('T * ELEM.D * triggerDamageMul(b.p)') && Math.abs(E('triggerDamageMul(mkPlayer("elementalist", {}, { int: 10 }))') - 1.3) < 1e-9);
+  add(C, '붕괴는 둔화 × 12', '상수: ELEM.Bk=' + E('ELEM.Bk') + ', 소스: elemShock brk = C × ELEM.Bk', E => E('ELEM.Bk') === 12 && E('elemShock.toString()').includes('brk = C * ELEM.Bk'));
+  add(C, '빙결: 둔화가 가득 차면(3)', '상수: KW.chill=' + E('KW.chill') + ' · EL5_BOUND.frzBrk=' + E('EL5_BOUND.frzBrk') + ', 소스: elFreeze가 둔화 ≥ KW.chill이면 얼리고 강적 · 보스는 붕괴 frzBrk', E => E('KW.chill') === 3 && E('EL5_BOUND.frzBrk') === 40 && E('elFreeze.toString()').includes("st(e, 'chill') < KW.chill") && E('elFreeze.toString()').includes('EL5_BOUND.frzBrk'));
+  add(C, '서리 무게: 둔화된 적이 나를 치는', '상수: ELEM.guard=' + E('ELEM.guard') + ' (M5-5: 30% → 20%, 큰 공격 포함)', E => pct(E('ELEM.guard')) === 20);
   add(C, '교대하면 그 행동이 끝난 뒤 보호막 +4', '상수: BUILDS.spellblade.altWard=' + E('BUILDS.spellblade.altWard'), E => E('BUILDS.spellblade.altWard') === 4);
   add(C, '보호막은 최대 생명력의 15%까지', '실행: wardMax(마검사) = 최대 생명력 × 0.15', E => E(`(() => { const b = __mk("spellblade", 5); return Math.abs(wardMax(b.p) - b.p.hpMax * 0.15) < 1 && BUILDS.spellblade.wardCap === 0.15; })()`));
   add(C, '되받을 때마다 기가 1 쌓입니다', '상수: MONK.kiCtr=' + E('MONK.kiCtr'), E => E('MONK.kiCtr') === 1);

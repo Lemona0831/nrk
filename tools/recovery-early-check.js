@@ -8,7 +8,7 @@ for(let n=0;n<1000;n++) {
  for(const f of [2,3]) {run.dg.fsq=[];run.dg.lastSquad=null;assert.notEqual(E.pickSquad(run,f).id,'wall');assert(!E.genDoors(run,f).some(r=>r.type==='strong'));}
 }
 assert(E.typeOk(run,'strong',4));
-run.ch=2;assert(!E.typeOk(run,'strong',1));assert(E.typeOk(run,'strong',3)); // 0.8.0 6단계 A-4: 구간마다 강적 길(예외는 1챕터 1구간뿐)이라 2챕터는 2층부터
+run.ch=2;{const sf=D.run_('chData(2).strongFrom')||3;assert(!E.typeOk(run,'strong',sf-1));assert(E.typeOk(run,'strong',sf));} // 0.8.0 6단계 A-4: 구간마다 강적 길. M8: A2 확정본으로 2챕터 강적은 chData(2).strongFrom(4층)부터
 run.ch=1;run.room=2;run.cur=E.mkRoom(run,'normal',2);run.p.flask={life:0,mana:2,stam:1};
 E.enterRoom();run.p.flask.mana=1;run.p.flask.stam=0;G.b.over='win';E.afterBattle();
 const rec=run.rooms.at(-1);assert.equal(rec.flIn,3);assert.equal(rec.flOut,1);assert.equal(rec.flasksIn.life,0);assert.equal(rec.flasksIn.mana,2);assert.equal(rec.flasksOut.mana,1);

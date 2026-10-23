@@ -438,7 +438,7 @@ function checkEnd0(b) {
     b.over = 'win'; logp(b, 'good', '마지막 적이 쓰러진다. 방이 조용해진다'); if (b.p.hp <= b.p.hpMax * 0.3) unlAdd(b, 'edge'); if (b.ctx.boss && b.ctx.bossKind) { unlAdd(b, 'boss:' + b.ctx.bossKind); if (b.p.hpPen) unlAdd(b, 'bloodBoss:' + b.ctx.bossKind); } // 10월 4일: 방을 이기면 플라스크가 차던 규칙은 없앴다(플라스크는 아주 드문 전리품)
   }
 }
-/* 도둑 (10월 4일): 플라스크 한 칸 · 골드 · 가방의 장비(무작위) 가운데 하나. 잡으면 돌려받고, 달아나면 잃는다 */
+/* 도둑 (10월 4일): 플라스크 한 칸 · 골드 · 가방의 장비(무작위) 가운데 하나. 잡으면 돌려받고, 달아나면 다음 상점으로 간다(0.8.0 M8, js/26 loseLoot) */
 function stealLoot(b) {
   if (b.antiSteal) return { k: 'none', n: '쇠붙이' }; // 소모품 쇠붙이 미끼
   const p = b.p; const run = typeof G !== 'undefined' && G.run && G.run.p === p ? G.run : null; const opts = [];
@@ -449,6 +449,6 @@ function stealLoot(b) {
   if (o.k === 'flask') p.flask[o.f]--;
   if (o.k === 'gold') { run.gold -= o.g; o.n = '골드 ' + o.g; }
   if (o.k === 'item') { const u = run.bag.splice(Math.floor(b.rngF() * run.bag.length), 1)[0]; o.u = u; o.run = run; o.n = run.inv[u] ? itName(run.inv[u]) || '장비' : '장비'; /* 0.8.0 M6-2: 새 장비 이름 */ }
-  if (o.k === 'gold') o.run = run; return o;
+  if (o.k === 'gold' || o.k === 'flask') o.run = run; return o; // 플라스크도 판을 쥔다: 달아나면 다음 상점에서 돌려받는다(0.8.0 M8)
 }
 function returnLoot(b, o) { if (o.k === 'flask') b.p.flask[o.f]++; if (o.k === 'gold' && o.run) o.run.gold = (o.run.gold || 0) + o.g; if (o.k === 'item' && o.run) o.run.bag.push(o.u); }

@@ -8,7 +8,7 @@ module.exports = function ({ E, add, note, source }) {
   add('help', '추적 1겹당 기준 추가 피해 8이면', '실제 추적 소모 helper: 민첩0/10/20 → 8/9.6/11.2', () => [0,10,20].every((dex,i)=>close(focusGrowth(dex),[8,9.6,11.2][i])));
   add('help', '스킬 기본 피해의 4% 성장과 따로 계산하며', '기본4%와 추적 소모2% 분리, focusAdd·추적 상한 유지', () => E('SKILL_STAT_PCT')===4 && E('FOCUS_STAT_PCT')===2 && E('HUNT.focusMax')===3 && E('HUNT.addMax')===2 && E('runSkill2.toString()').includes('Math.min(HUNT.addMax, cur + fa.n)'));
   add('help', '캐릭터를 최대 8개 보관', 'SAVE_MAX=8', E => E('SAVE_MAX') === 8);
-  add('help', '원소술사는 열충격과 화상을 소모해 주는 추가 피해도 2%', 'dotMul: 지능 10 → 1.2, 열충격·화상 소모 추가 피해에 적용', E => E(`(() => { const p=mkPlayer('elementalist',{},{}); p.stat={int:10}; return Math.abs(dotMul(p)-1.2)<1e-9; })()`) && E('elemShock.toString()').includes('dotMul(b.p)') && E('runSkill2.toString()').includes('bo.per * preI[e.id] * dotMul(p)'));
+  add('help', '화상을 태워 주는 추가 피해가 2% 증가합니다', 'dotMul: 지능 10 → 1.2, 지속 피해 · 불태우기(화상 소모 추가 피해)에 적용 (0.8.0: 열충격 · 독 격발은 triggerDamageMul 3%라 문장을 나눴다)', E => E(`(() => { const p=mkPlayer('elementalist',{},{}); p.stat={int:10}; return Math.abs(dotMul(p)-1.2)<1e-9; })()`) && E('runSkill2.toString()').includes('base += boPer * preI[e.id] * dotMul(p)'));
   add('help', '공격 능력치 1점마다 기준 피해의 4%', 'SKILL_STAT_PCT=4, 기준 10에 1점 → 10.4', E => E('SKILL_STAT_PCT') === 4 && close(growth(1), 10.4));
   add('help', '기준 피해 10인 스킬은 공격 능력치', '실제 skillBaseDamage(0/5/10/15/20)', () => [0,5,10,15,20].every((p,i) => close(growth(p), 10+i*2)));
   add('help', '무기 피해가 8을 넘는 1마다 기준 피해의 2%', '시작 무기8, 무기9/13, 주문은 제외', () => close(growth(0,9,false),10.2) && close(growth(0,13,false),11) && close(growth(0,13,true),10));

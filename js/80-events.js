@@ -197,7 +197,7 @@ function onClick(ev) {
 
     case 'giveup': { if (!ask('이 캐릭터를 포기할까요? 포기한 캐릭터는 이어 할 수 없습니다.')) break; abandonCur(); render(); toast('캐릭터를 포기했습니다'); break; }
     case 'blockback': if (G.run) G.run.blockOffered = false; G.sheet = null; render(); break;
-    case 'giveupend': endRun('lose'); break;
+    case 'giveupend': deadSvSave(); endRun('lose'); break; // M8: 쓰러진 직후 설문 2문항(js/70 deadSvSave)
     case 'scen': startScen(el.dataset.b); break;
     case 'enter': enterRoom(); break;
     case 'enterlit': { const run = G.run, R = roomDef(); if (!((run.oil || 0) > 0)) break; run.oil--; R.lit = 1; toast('등불 기름으로 방을 밝힌다. 남은 기름 ' + run.oil); enterRoom(); break; } // A2 장치 「등불」
@@ -264,6 +264,7 @@ function onClick(ev) {
     case 'runactpage': G.raPage = Math.max(0, +el.dataset.v || 0); render(); break;
     case 'runscsv': saveFile('nrk-플레이로그-' + new Date().toISOString().slice(0, 10) + '.csv', dashRunsCsv()); break;
     case 'dash': loadDash(); break;
+    case 'dashseason': G.adminSeason = (G.adminSeason || RSEASON.cur) === RSEASON.cur ? '0.7.0' : RSEASON.cur; loadDash(); break; // M8: 관리자 결과 보기만 옛 시즌을 읽는다
     case 'choose': {
       const k = el.dataset.k; const run = G.run; const S = G.sheet;
       const offK = x => x && typeof x === 'object' ? x.uid : x, offN = x => x && typeof x === 'object' ? g8Name(x) : x; /* 0.8.0 M6-2: 상자의 새 장비는 객체 */

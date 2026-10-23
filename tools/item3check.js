@@ -1,3 +1,5 @@
+/* 폐기(0.8.0 M8): 옛 3챕터 장비 표(CH2_POOL · CH3_POOL, 재의 사막 장비) 점검. 그 표는 0.8.0 A2 · A3에서 data/archive/items_ch2.js · items_ch3.js로 보관됐고 새 장비는 gear8(tools/gear8-gen-check.js · unique-check.js). 파일은 기록으로 남긴다. 그래도 돌리려면 RUN_RETIRED=1 */
+if (!process.env.RUN_RETIRED) { console.log('폐기(0.8.0 M8): item3check — 보관된 기능 · 일회성 비교라 건너뜀(RUN_RETIRED=1이면 돈다)'); process.exit(0); }
 /* 3챕터 장비 효과 점검 (10월 8일, docs/아이템/3챕터-장비.md 8절): 06a2의 게임 코드를 vm에서 그대로 돌려, 장비의 새 지점과 핵심 효과가 문장대로 일어나는지 장면마다 확인한다.
    itemcheck는 "발동했는가"를 세고, 이 점검은 "문장대로 바뀌었는가"를 본다. 실패 0이어야 한다.
    실행: DGDIR=06a2 node tools/item3check.js */

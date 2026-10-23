@@ -15,7 +15,7 @@ const SDESC = {
 /* 주문직의 기본 공격·강공격은 캔트립·집중 주문이다 */
 function actInfo(p, id) {
   if (isCaster(p) && isV2(p) && id === 'basic') return CANTRIP[p.build] + '. 비용 없이 원거리 주문을 쏜다. 피해는 무기 피해의 ' + Math.round(((BUILDS[p.build] || {}).wpnMul || 1) * 100) + '%. 후열에 닿고 방패병에게 막히지 않는다. ' + brkBasicTxt() + ' 스태미나는 채우지 않는다.'; // 원소술사 (10월 7일)
-  if (isCaster(p) && isV2(p) && id === 'heavy') return '집중 주문. 스태미나 ' + heavyCost(p) + '. 원거리, 무기 피해의 ' + Math.round(((BUILDS[p.build] || {}).wpnMul || 1) * HEAVY_V2 * 100) + '%, 붕괴 게이지 +' + (35 + 5 * Math.floor(stat(p, 'str') / 10) + (p.eq.weapon === 'maul' ? 20 : 0)) + '. 후열에 닿는다. 느린 행동이라 빠른 칸과 주 행동을 함께 쓴다.';
+  if (isCaster(p) && isV2(p) && id === 'heavy') return '집중 주문. 스태미나 ' + heavyCost(p) + '. 원거리, 무기 피해의 ' + Math.round(((BUILDS[p.build] || {}).wpnMul || 1) * HEAVY_V2 * 100) + '%, 붕괴 게이지 +' + Math.round((35 + 5 * Math.floor(stat(p, 'str') / 10) + (p.eq.weapon === 'maul' ? 20 : 0)) * (BRK_RULE.basic0 ? BRK_RULE.heavyMul : 1)) + '. 후열에 닿는다. 느린 행동이라 빠른 칸과 주 행동을 함께 쓴다.';
   if (isCaster(p) && id === 'basic') return CANTRIP[p.build] + '. 비용 없이 원거리 주문을 쏜다. 피해는 무기 피해의 90%. 후열에 닿고 방패병에게 막히지 않는다. 붕괴 게이지 +10. 스태미나는 채우지 않는다.';
   if (isCaster(p) && id === 'heavy') return '집중 주문. 스태미나 40. 원거리, 무기 피해의 160%, 붕괴 게이지 +30. 느린 행동이라 빠른 칸과 주 행동을 함께 쓴다.';
   if (isV2(p) && AINFO2[id]) return AINFO2[id](p);
@@ -57,7 +57,7 @@ function infoHtml(key) {
   const b = G.b; const parts = key.split(':');
   const H = (t, body) => `<b class="pt">${esc(t)}</b>${body}`;
   const P = s => `<p>${esc(s)}</p>`;
-  if (key === 'bar:ys' && b) { const p = b.p; return H('유산 ' + ysNow(p) + '/' + ysCapOf(p), P('스킬은 유산을 씁니다(비용 2 · 3 · 4). 전투를 가득 찬 채 시작하고, 둘째 차례부터 내 차례가 시작될 때 +1 찹니다' + (YUSAN.longFrom ? '(' + (YUSAN.longFrom + 1) + '번째 차례부터는 +2)' : '') + '. 유산은 내 차례에만 씁니다.') + P('대응에 성공하면 +1, 라운드에 한 번: 방어로 받아 내기 · 흘리기 성공 · 적을 무너뜨리기 · 모으기와 영창 끊기 · 큰 공격을 모으는 적을 움직이기 전에 쓰러뜨리기.') + P('스태미나 플라스크는 전투에 한 번 유산 +1을 더 줍니다.')); } // 10월 15일 유산 1차 시제품
+  if (key === 'bar:ys' && b) { const p = b.p; return H('유산 ' + ysNow(p) + '/' + ysCapOf(p), P('스킬은 유산을 씁니다(비용 1 · 2 · 3 · 4). 전투를 가득 찬 채 시작하고, 둘째 차례부터 내 차례가 시작될 때 +1 찹니다' + (YUSAN.longFrom ? '(' + (YUSAN.longFrom + 1) + '번째 차례부터는 +2)' : '') + '. 유산은 내 차례에만 씁니다.') + P('대응에 성공하면 +1, 라운드에 한 번: 방어로 받아 내기 · 흘리기 성공 · 적을 무너뜨리기 · 모으기와 영창 끊기 · 큰 공격을 모으는 적을 움직이기 전에 쓰러뜨리기.') + P('스태미나 플라스크는 전투에 한 번 유산 +1을 더 줍니다.')); } // 10월 15일 유산 1차 시제품
   if (key === 'bar:st' && b) { const p = b.p; return H('스태미나', P('지금 강공격 ' + heavyCost(p) + ', 방어 ' + guardCost(p) + ', 흘리기 ' + dodgeCost(p) + '이 듭니다. 라운드가 끝날 때마다 10씩 차고, 스태미나 플라스크로 60을 채웁니다. 기본 공격은 스태미나를 채우지 않습니다. 0이 되면 탈진합니다.')); } /* 10월 7일: 직업마다 다른 흘리기 비용을 그대로 */
   if (parts[0] === 'tn' && G.run && G.run.atree) { // 10월 16일 0.8.0 2단계: 액티브 트리 노드
     const s = SK2[parts[1]]; if (!s) return ''; const own = s.start || G.run.atree.own.includes(s.id); const why = own ? null : atWhy(G.run, s.id); const ss = skOf(G.run.p, s.id) || s;

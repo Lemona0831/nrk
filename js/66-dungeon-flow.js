@@ -412,6 +412,7 @@ function battleContinue() {
     run.result = 'lose'; run.sealed = 1; clearCur(); pushRank(run, 'dead');
     G.scr = 'dead'; saveRunLocal(); clearTimeout(syncT); syncRun(run).then(render); render(); return;
   }
+  fenceHeld(b); // 0.8.0 M8: 물러나면 적이 쥔 장물은 다음 상점으로(이겼으면 되찾음)
   endBattleCarry(run.p);
   G.b = null;
   if (b.over === 'flee') { saveRunLocal(); saveCur(); toast('방 밖으로 물러났습니다. 이 방을 이겨야 앞으로 갈 수 있습니다'); render(); return; }

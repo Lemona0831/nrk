@@ -26,8 +26,8 @@ assert.equal(E.consGrant(G.run, 'herb', 'n', 1), 0); assert(G.run.cons.some(c =>
 // 뺀 것은 두고 간다
 E.consGrant(G.run, 'cleanse', 'n', 1); G.sheet = { kind: 'consfull', data: {} }; D.click('cptoggle', '0'); assert.equal(JSON.stringify(G.sheet.data.skip), '[0]'); D.click('cptake');
 assert.equal(G.run.consPending.length, 0); assert(!G.run.cons.some(c => c.id === 'cleanse'), '두고 가기');
-// 자리가 없으면 묻고, 취소하면 그대로
-E.consGrant(G.run, 'cleanse', 'n', 1); G.sheet = { kind: 'consfull', data: {} }; E.ask = () => false; D.click('cptake'); assert.equal(G.run.consPending.length, 1, '취소하면 그대로'); E.ask = () => true; D.click('cptake'); assert.equal(G.run.consPending.length, 0);
+// 자리가 없으면 묻지 않고 두고 간다(10월 17일 0adf7f8: 확인 창 대신 [챙기기 (N개) · M개는 두고 감] 단추 글로 알린다)
+E.consGrant(G.run, 'cleanse', 'n', 1); G.sheet = { kind: 'consfull', data: {} }; E.ask = () => false; D.click('cptake'); assert.equal(G.run.consPending.length, 0, '자리가 없으면 두고 간다'); assert(!G.run.cons.some(c => c.id === 'cleanse')); E.ask = () => true;
 // 판매품은 넘치지 않고 주머니로
 assert.equal(E.consGrant(G.run, 'silver', 'n', 3), 0); assert.equal(G.run.pouch.silver, 3); assert.equal(G.run.consPending.length, 0);
-console.log('소모품 보류·저장 복원·장비 버리기 차단·확인 취소·묶음 버리기 뒤 챙기기·합치기·빼고 두고 가기·자리 없음 확인·판매품 주머니 통과');
+console.log('소모품 보류·저장 복원·장비 버리기 차단·확인 취소·묶음 버리기 뒤 챙기기·합치기·빼고 두고 가기·자리 없으면 두고 감·판매품 주머니 통과');

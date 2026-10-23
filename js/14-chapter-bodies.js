@@ -363,7 +363,7 @@ const ABBOT = { ph: [0.65, 0.3], brand: 0.2, vowTaken: 0.6, monkHeal: 0.05, monk
 function prayCut(b, e) { const P = b.prayer; if (!P || P.done || P.id !== e.id) return; P.done = 1; P.cut = 1; e.praying = 0; const run = typeof G !== 'undefined' && G.run && G.run.p === b.p ? G.run : null; if (run) run.gold = (run.gold || 0) + DEV_PRAYER.gold; logp(b, 'good', '기도가 끊긴다. 골드 +' + DEV_PRAYER.gold); b.rec.push({ k: 'prayCut' }); }
 const PRAYER_DEV = {
   id: 'prayer', n: '끝나지 않은 기도', help: '적 하나가 기도하는 채로 시작합니다. 라운드가 끝날 때마다 한 칸 차고, 다 차면 적 모두가 보호막(각자 최대 생명력의 15%)을 두릅니다. 그 적을 무너뜨리거나 쓰러뜨리면 기도가 끊기고 골드 +5.',
-  chip: b => b.prayer && !b.prayer.done ? '기도 ' + b.prayer.n + '/' + DEV_PRAYER.need : '',
+  chip: b => b.prayer && !b.prayer.done ? b.prayer.n + '/' + DEV_PRAYER.need : '', // M8: 칩은 장치 이름(끝나지 않은 기도) 뒤에 붙는다 — 「기도」를 두 번 쓰지 않게
   onRoomStart(b) {
     const c = b.ctx || {}; if (c.room !== 'normal' || c.wake || c.boss || (c.floor || 0) < DEV_PRAYER.from || b.en.some(e => e.strong)) return;
     if ((b.rngF || Math.random)() >= DEV_PRAYER.p) return;

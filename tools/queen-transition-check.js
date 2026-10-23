@@ -1,4 +1,6 @@
+/* 폐기(0.8.0 M8): 옛 3챕터 보스 재의 여왕(queen)의 단계 전환 점검. 여왕은 0.8.0 A3에서 data/archive로 보관됐다. 단계 체류는 tools/boss-dwell-check.js가 지금 보스로 본다. 파일은 기록으로 남긴다. 그래도 돌리려면 RUN_RETIRED=1 */
 'use strict';
+if (!process.env.RUN_RETIRED) { console.log('폐기(0.8.0 M8): queen-transition-check — 보관된 기능 · 일회성 비교라 건너뜀(RUN_RETIRED=1이면 돈다)'); process.exit(0); }
 process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),{G0:E,run_:V}=require('./dgqa.js');
 function setup(phase,k){const p=E.mkPlayer('warden',{},{});p.hp=p.hpMax=10000;const b=E.roomBattle(p,{ch:3,lv:12,floor:24,names:V('ENEMY_NAMES[3]'),boss:1},'queen',300);const e=b.en.find(x=>x.boss==='queen');e.phase=phase;e.hp=e.hpMax*V('QUEEN.ph['+(phase-1)+']')+1;e.intent={k};e.teleTurn=1;b.turnIdx=5;if(k==='surgeprep'||k==='erupt')e.under=1;if(k==='erupt')e.qPrep=1;return {b,e};}

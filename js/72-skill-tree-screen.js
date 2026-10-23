@@ -155,7 +155,7 @@ function sheetParts(S) {
     body += `<div class="stickbar"><div class="row"><button class="gold wide" data-a="cptake" data-focus>${takeN ? '챙기기 (' + takeN + '개)' + (lostN ? ' · ' + lostN + '개는 두고 감' : '') : '모두 두고 가기'}</button></div></div>`;
   } else if (S.kind === 'changes') {
     title = '업데이트 내역';
-    const mj = CHANGELOG.findIndex(c => c.v === '0.7.0'), cut = mj >= 0 ? mj + 1 : CHANGELOG.length;
+    const mj = CHANGELOG.findIndex(c => c.v === VERSION), cut = mj >= 0 ? mj + 1 : CHANGELOG.length; // 0.8.0 M8: 지금 판의 통합 항목까지 펼치고, 0.7.0과 그 개발 중 항목은 "이전 공개판"으로 접는다
     const folded = c => `<details class="chgarchive"><summary><span><b>${esc(c.v)} · ${esc(c.t || '업데이트')}</b><small class="chgd">${esc(c.d || '')}</small></span></summary>${chgEntry(c, false)}</details>`;
     body = `<p class="mini">최근 변경부터 읽습니다. 이전 내역은 제목을 눌러 펼칩니다.</p>` + CHANGELOG.slice(0, cut).map((c, i) => i === 0 ? chgEntry(c, true) : folded(c)).join('') + (cut < CHANGELOG.length ? `<details class="chgdev"><summary>이전 공개판</summary>${CHANGELOG.slice(cut).map(folded).join('')}</details>` : '');
   } else if (S.kind === 'bossinfo' && S.data.foe) {

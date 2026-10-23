@@ -11,8 +11,8 @@ b=battle();E.addS(b,b.en[0],'bleed',3);E.hurtEnemy(b,b.en[0],20,{melee:1,single:
 b=battle();E.hurtEnemy(b,b.en[0],20,{melee:1,single:1,leechBleed:3});assert(Math.abs(b.p.hp-42.4)<1e-6); // 처음 거는 타격부터
 b=battle();b.en[0].hp=2;E.hurtEnemy(b,b.en[0],20,{melee:1,single:1,leechBleed:3});assert(Math.abs(b.p.hp-43.24)<1e-6);assert.equal(b.over,'win'); // 초과 피해는 흡혈에 넣지 않음, 마지막 적 수확
 b=battle();b.en[0].hp=1;E.addS(b,b.en[0],'bleed',1);E.kwBleed(b,b.en[0]);assert.equal(b.p.hp,43); // 출혈 1이 사라진 뒤 처치도 회복
-b=battle();b.en[0].evading=1;E.hurtEnemy(b,b.en[0],20,{melee:1,single:1,leechBleed:3});assert.equal(b.p.hp,40);
-b=battle();b.stepMode=true;b.en[0].hp=2;E.playerAct(b,'b_hook',b.en[0].id);assert.equal(b.over,'win');assert(Math.abs(b.p.hp-43.24)<1e-6);assert.equal(b.p.cd.b_hook,4);
+b=battle();b.en[0].evading=1;E.hurtEnemy(b,b.en[0],20,{melee:1,single:1,leechBleed:3});assert(Math.abs(b.p.hp-41.2)<1e-6); // 0.8.0 6단계 A-7: 몸 낮춘 적은 피해 절반(전에는 빗나감) → 흡혈도 절반 몫
+b=battle();b.stepMode=true;b.en[0].hp=2;E.playerAct(b,'b_hook',b.en[0].id);assert.equal(b.over,'win');assert(Math.abs(b.p.hp-43.24)<1e-6); // 0.8.0: 쿨타임 대신 유산 비용(p.cd는 전투마다 1번 스킬 표시에만) — 쿨타임 확인은 뺐다
 b=battle();b.over='win';assert.equal(E.bHeal(b,12,'eat'),12);b.over='lose';assert.equal(E.bHeal(b,12,'eat'),0);
 b=battle();E.buHarvest(b,b.en[0]);E.buHarvest(b,b.en[0]);assert.equal(b.p.hp,43);
 for(let i=0;i<6;i++)E.buHarvest(b,{role:'melee',alive:true});assert.equal(b.harvestGot,12);assert.equal(b.p.hp,52);
@@ -22,5 +22,5 @@ for(const build of V('ALL_CLASS_KEYS()')) {const h=V(`classRuleHtml(${JSON.strin
 assert(V("classRuleHtml('elementalist')").includes('상한 16'));
 const sb=E.newBattle(E.mkPlayer('elementalist',{}),[E.mkEnemy('bruiser',false,0)],{test:1});sb.actN=1;sb.en[0].hp=sb.en[0].hpMax=1000;E.addS(sb,sb.en[0],'ignite',10);E.addS(sb,sb.en[0],'chill',10);E.elemShock(sb,'me');assert.equal(sb.rec.find(x=>x.k==='shock').T,16);assert.equal(sb.rec.find(x=>x.k==='shock').dmg,48);assert.equal(sb.rec.find(x=>x.k==='shock').brk,36);
 b=battle();b.stepMode=true;b.p.eq.flask='hungerflask';E.playerAct(b,'flaskL');assert.equal(b.p.hp,73);assert(Math.abs(E.bHeal(b,2,'leech')-2.2)<1e-6);
-const expected={a_vital:4,a_slip:5,w_bash:4,w_brace:5,h_aim:5,h_step:6,b_hook:4,b_lap:4,e_ember:5,e_touch:4,sb_edge:5,sb_aegis:4,m_palm:5,m_brace:4,c_mace:5,c_confess:4,v_taint:4,v_drink:4};for(const [id,cd] of Object.entries(expected))assert.equal(E.SK2[id].cd,cd,id);
+// 쿨타임 표(SK2[id].cd) 확인은 뺐다: 0.8.0 M5-0(10월 19일)부터 비용은 트리 노드 ys만 읽고 cd는 쓰지 않는다(data/skillkit.js skCost)
 console.log('패시브 포인트 시작 6 · 레벨마다 2 · 다시 맞춤 중복 방지·흡혈/먹기/피 수확·처치/출혈 마지막 적·빗나감/소환물 제외·상한·열충격 공식 통과');

@@ -1,3 +1,5 @@
+/* 폐기(0.8.0 M8): 옛 2챕터 「잊힌 지하묘지」(저주술사 · 뼈 더미 · CURSE 등)를 보는 점검. 0.8.0 A2에서 data/archive/old-ch2.js로 보관돼 게임이 읽지 않는다. 새 2챕터는 tools/foe-check.js · event-check.js. 파일은 기록으로 남긴다. 그래도 돌리려면 RUN_RETIRED=1 */
+if (!process.env.RUN_RETIRED) { console.log('폐기(0.8.0 M8): ch2check — 보관된 기능 · 일회성 비교라 건너뜀(RUN_RETIRED=1이면 돈다)'); process.exit(0); }
 /* ===== 2챕터 적·방 특성·이벤트 점검 (0.6b 단계 2, 기획서 11.12절)
    역할 기믹(해골, 저주술사), 상태 저주, 정예 접사 신속, 지하묘지 방 특성 4, 이벤트 8이 실제로 일어나는지 본다.
    실행: node tools/ch2check.js */

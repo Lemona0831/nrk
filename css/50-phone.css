@@ -28,7 +28,7 @@
  .fq{display:inline-flex;min-height:26px;padding:0 8px;font-size:calc(13px*var(--fs,1));margin-left:auto}
  .fhelp{display:none}
  .field .enemies{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-bottom:5px}
- .field .en{padding:4px 6px;border-radius:8px}
+ .field .en{padding:11px 6px 4px;border-radius:8px} /* 0.8.0 M8: 위쪽은 순번 표시(.eord, 카드 위로 8px 걸침)가 적 이름을 가리지 않게 */
  .field .enh{gap:4px;margin-bottom:1px;min-height:0;flex-wrap:nowrap}.field .enh .ico{font-size:calc(16px*var(--fs,1))}
  .field .enh .nm{font-size:calc(13px*var(--fs,1));min-width:0;flex:1;white-space:normal;word-break:keep-all;overflow-wrap:anywhere;line-height:1.3}
  .field .elv,.field .erole{font-size:calc(13px*var(--fs,1))}

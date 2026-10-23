@@ -13,6 +13,26 @@ if (mode === 'floor16') { process.argv.splice(2, 1); require('./floor16-migrate-
 if (mode === 'ks-m4') { require('./savecheck-ksm4.js'); return; }
 /* 0.8.0 M5-0: 임시 액티브 트리 폐기 뒤 옛 판 이어 하기(tools/savecheck-atm5.js) */
 if (mode === 'at-m5') { require('./savecheck-atm5.js'); return; }
+/* 0.8.0 M8 전체 초기화(만든 사람 결정 10월 21일): 기본(check)은 초기화 시험이다 — 0.7.0 브라우저 저장 키(nrk_062_v1)만 있으면 오류 없이 새로 시작하고
+   첫 화면에 안내 한 줄, 새 키(nrk_080_v1)가 있으면 그것을 열고, 옛 키는 지우지 않는다. 옛 0.6a 저장본 이주 점검은 node tools/savecheck.js legacy(tools/saves06a.json 필요) */
+if (mode === 'check' || mode === 'reset') {
+  const D = require('./dgqa.js'), G0 = D.G0, run_ = D.run_; const G = G0.__G; let n = 0; const fail = []; const ok = (c, m) => { n++; if (!c) fail.push(m); };
+  const mem = init => { const s = Object.assign({}, init); return { getItem: k => (k in s ? s[k] : null), setItem: (k, v) => { s[k] = String(v); }, removeItem: k => { delete s[k]; }, _s: s }; };
+  const boot = ls => { G0.__ls = ls; run_('localStorage = __ls'); G.resetNote = 0; G.localReadBlocked = false; G.localSaveError = null; G.data = G0.loadLocal(); return G.data; };
+  const SK = run_('SKEY'), OLD = run_('SKEY_OLD');
+  const old = JSON.stringify({ v: '0.7.0', runs: [{ id: 'r1' }], scen: {}, prog: {}, cur: { build: 'warden', room: 7, ch: 1, lv: 5 }, rank62: { r1: { id: 'r1' } } });
+  { const ls = mem({ [OLD[0]]: old }); let d = null, err = null; try { d = boot(ls); } catch (e) { err = e; }
+    ok(!err && d && !d.cur && !(d.runs || []).length && d.v === run_('VERSION'), '옛 키만 있으면 빈 새 자료로 시작(오류 없음)');
+    ok(G.resetNote === 1, '옛 키가 있으면 안내 깃발'); G.scr = 'title'; let h = ''; try { h = G0.vTitle(); } catch (e) { h = 'ERR ' + e.message; } ok(/0\.8\.0부터 새로 시작합니다/.test(h), '첫 화면에 안내 한 줄');
+    ok(ls._s[OLD[0]] === old && !(SK in ls._s), '옛 키는 지우지 않고, 읽기만으로 새 키를 만들지 않음'); }
+  { const cur = JSON.stringify({ v: '0.8.0', runs: [{ id: 'n1' }], scen: {}, prog: {}, name: '새' }); const ls = mem({ [OLD[0]]: old, [SK]: cur }); const d = boot(ls);
+    ok(d.name === '새' && (d.runs || []).length === 1 && !G.resetNote, '새 키가 있으면 그것을 열고 안내 없음'); G.scr = 'title'; ok(!/0\.8\.0부터 새로 시작합니다/.test(G0.vTitle()), '새 키로 이어 하면 안내 줄 없음'); }
+  { const ls = mem({}); const d = boot(ls); ok(!G.resetNote && d && !d.cur, '처음 여는 브라우저는 안내 없이 새로 시작'); }
+  { const ls = mem({ [SK]: '{깨짐' }); const d = boot(ls); ok(G.localReadBlocked && d && !d.cur, '새 키가 깨져 있으면 읽기를 막고(덮어쓰지 않음) 빈 자료'); }
+  ok(run_('COL.runs') === 'runs80' && run_('BOARD') === 'board80' && run_("RSEASON.key['0.7.0'].rank") === 'rank62', '시즌 키: 기록 runs80 · 기록판 board80 · 랭킹 rank80, 옛 시즌 rank62는 관리자 결과 보기만');
+  console.log('savecheck(초기화 시험): ' + n + '개 · 실패 ' + fail.length); for (const m of fail) console.log('  실패: ' + m); process.exitCode = fail.length ? 1 : 0; return;
+}
+if (mode === 'legacy') process.argv[2] = 'check';
 const FILE = path.join(__dirname, 'saves06a.json');
 if (mode === 'make') process.env.DGDIR = '.';
 const D = require('./dgqa.js');

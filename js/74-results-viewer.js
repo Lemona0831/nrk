@@ -1,12 +1,13 @@
 'use strict';
 /* ---------- 결과 보기 (소유자) ---------- */
 async function readTester(id) {
-  const [rs, ss, fs, ms, bs] = await Promise.all([G.db.collection('playtest/' + id + '/' + COL.runs).get(), G.db.collection('playtest/' + id + '/' + COL.scen).get(), G.db.doc('playtest/' + id + '/' + COL.survey + '/final').get(), G.db.doc('playtest/' + id).get(), G.db.doc('board/' + id).get().catch(() => ({ exists: false }))]);
+  const C = colOf(G.adminSeason), BD = RSEASON.key[G.adminSeason || RSEASON.cur].board; // M8: 관리자만 옛 시즌(0.7.0)을 고를 수 있다
+  const [rs, ss, fs, ms, bs] = await Promise.all([G.db.collection('playtest/' + id + '/' + C.runs).get(), G.db.collection('playtest/' + id + '/' + C.scen).get(), G.db.doc('playtest/' + id + '/' + C.survey + '/final').get(), G.db.doc('playtest/' + id).get(), G.db.doc(BD + '/' + id).get().catch(() => ({ exists: false }))]);
   const runs = [];
   for (const d of rs.docs) {
     const r = Object.assign({}, d.data());
     if (!r.acts && r.chunks) {
-      const cs = await G.db.collection('playtest/' + id + '/' + COL.runs + '/' + d.id + '/acts').get();
+      const cs = await G.db.collection('playtest/' + id + '/' + C.runs + '/' + d.id + '/acts').get();
       r.acts = cs.docs.map(x => x.data()).sort((x, y) => x.i - y.i).reduce((acc, x) => acc.concat(x.a || []), []);
     }
     runs.push(r);
@@ -44,6 +45,7 @@ function collectNotes(testers) {
     for (const r of T.runs || []) {
       if (!r || !BUILDS[r.build]) continue;
       const ctx = { who, build: r.build, run: bossN[r.boss] || r.boss, at: r.endedAt || r.updatedAt || r.startedAt };
+      if (r.grave && r.grave.sv && (r.grave.sv.fun || r.grave.sv.cause)) out.push(Object.assign({}, ctx, { type: 'survey', where: '쓰러진 직후', label: '재미 ' + (r.grave.sv.fun || '-'), text: r.grave.sv.cause ? '사인: ' + (SV_CAUSE[r.grave.sv.cause] || r.grave.sv.cause) : '' })); // M8 쓰러진 직후 2문항
       if (r.survey) {
         if (r.survey.dilemma || r.survey.note) out.push(Object.assign({}, ctx, { type: 'survey', where: '판 설문', label: r.survey.dilemma === 'yes' ? '고민 있었음' : r.survey.dilemma === 'no' ? '고민 없었음' : '', text: r.survey.note || '' }));
         if ((r.survey.issues && r.survey.issues.some(k => k !== 'none')) || r.survey.issueNote) out.push(Object.assign({}, ctx, { type: 'issue', where: '판 설문', label: (r.survey.issues || []).filter(k => k !== 'none').map(k => SV.is[k] || k).join(', '), text: r.survey.issueNote || '' }));
@@ -175,7 +177,7 @@ async function delTesters() {
   G.delMsg = '백업을 받고 지우는 중…'; render();
   try {
     await saveFile('nrk-' + VERSION + '-지우기전-백업-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify({ v: VERSION, exportedAt: Date.now(), testers: raw.map(T => Object.assign({ label: testerLabel(T, 0) }, T)) }, null, 1));
-    const paths = []; sel.forEach(u => { paths.push('playtest/' + u, 'board/' + u); });
+    const paths = []; sel.forEach(u => { paths.push('playtest/' + u, 'board/' + u, BOARD + '/' + u); });
     const { data, error } = await G.sb.rpc('admin_delete', { pass: G.adminPass || '', paths });
     if (error) throw Object.assign(new Error(error.message), { code: error.code || '' });
     G.delMsg = raw.length + '명의 기록을 지웠습니다(문서 ' + (data == null ? '?' : data) + '개). 백업 파일은 내려받은 폴더에 있습니다.'; G.delSel = []; G.delAsk = false; G.dash = null; G.dashReq = 0; render();
@@ -310,7 +312,7 @@ async function deleteOneRun(word, backup=true) {
   try {
     if(backup){const backed=await saveFile('nrk-플레이기록-삭제전-'+Date.now()+'.json',JSON.stringify({v:VERSION,exportedAt:Date.now(),testers:raw},null,2));if(!backed){G.runDelMsg='백업을 받지 못해 삭제를 중단했습니다.';return;}}
     if(!canDeleteRun()){G.runDelMsg='관리자 권한을 다시 확인하세요. 삭제하지 않았습니다.';return;}
-    const paths=[...new Set(targets.map(t=>'playtest/'+t.uid+'/'+COL.runs+'/'+t.id))];
+    const paths=[...new Set(targets.map(t=>'playtest/'+t.uid+'/'+colOf(G.adminSeason).runs+'/'+t.id))];
     const {data,error}=await G.sb.rpc('admin_delete',{pass:G.adminPass || '',paths});if(error)throw error;
     if(!data){G.runDelMsg='저장소에 해당 기록이 없습니다. 새로 고침해 확인하세요.';return;}
     for(const T of G.dashRaw || [])T.runs=(T.runs || []).filter(r=>!targets.some(t=>t.uid===T.uid&&t.id===r.id));
@@ -364,7 +366,7 @@ function vRunLogs() {
 
 function vDash() {
   let h = `<section class="card"><h3>결과 보기</h3>${G.dashErr ? `<div class="banner info">${esc(G.dashErr)}</div>` : ''}${G.archMsg ? `<div class="banner" role="status">${esc(G.archMsg)}</div>` : ''}${G.dash ? '' : '<p>불러오는 중…</p>'}
-  <div class="row"><button class="sm gold" data-a="import">지인 기록 넣기</button><button class="sm" data-a="dash">새로 고침</button><button class="sm" data-a="dashjson"${G.dash ? '' : ' disabled'}>전체 기록 내려받기 (JSON)</button><button class="sm" data-a="notescsv"${G.dash ? '' : ' disabled'}>의견만 내려받기 (CSV)</button>${G.site ? '' : `<button class="sm gold" data-a="archive"${G.dash && G.db ? '' : ' disabled'}>전체 기록 저장</button>`}</div>
+  <div class="row"><button class="sm gold" data-a="import">지인 기록 넣기</button><button class="sm" data-a="dash">새로 고침</button><button class="sm" data-a="dashseason" aria-pressed="${G.adminSeason === '0.7.0' ? 'true' : 'false'}">${esc(G.adminSeason || RSEASON.cur)} 시즌 기록 보는 중 · 시즌 바꾸기</button><button class="sm" data-a="dashjson"${G.dash ? '' : ' disabled'}>전체 기록 내려받기 (JSON)</button><button class="sm" data-a="notescsv"${G.dash ? '' : ' disabled'}>의견만 내려받기 (CSV)</button>${G.site ? '' : `<button class="sm gold" data-a="archive"${G.dash && G.db ? '' : ' disabled'}>전체 기록 저장</button>`}</div>
   <p class="mini">저장소에 연결되지 않은 지인은 첫 화면의 "기록 보내기 코드"를 메신저로 보내 줍니다. 그 코드를 "지인 기록 넣기"에 붙여 넣으면 여기에 함께 모입니다. 자동 기록은 테스터가 방을 끝낼 때마다, 쓰러질 때, 처음으로 나갈 때, 판을 끝낼 때 자동으로 들어옵니다. "전체 기록 저장"은 지금 시점의 모든 테스터 기록을 소유자만 읽는 보관 공간에 날짜별로 남깁니다.</p></section>`;
   const D = G.dash; if (!D) return h;
   h += vRunLogs();

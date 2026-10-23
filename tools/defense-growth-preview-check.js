@@ -13,7 +13,8 @@ for(const s of E.SKILLS2.bloodmage.filter(s=>s.fx.some(f=>f.k==='hpCost')))for(c
  const p=E.mkPlayer('bloodmage',eq,{con},[s.id]);p.lv=lv;E.applyStats(p,p.stat);p.hp=p.hpMax;const state=JSON.stringify({p,hit:D.run_('FXHIT')}),text=E.statGrowthPreview(p,'con');assert(text.includes('스킬 생명력 비용: '+s.n+' '));assert.equal(JSON.stringify({p,hit:D.run_('FXHIT')}),state,'피 비용 미리보기는 지불하지 않음');
  const e=E.mkEnemy('bruiser',false,0);e.hp=e.hpMax=1e6;const b=E.newBattle(p,[e],{});b.rngF=()=>.99;E.runSkill2(b,E.v2Static(s),e);const paid=b.rec.find(r=>r.k==='blood'&&r.w==='hp'&&r.id===s.id)?.n||0;assert(text.includes(s.n+' '+paid+' →'),s.id+' 실제 비용과 표시 일치');costCases++;
 }
-for(const [build,list] of Object.entries(E.SKILLS2))for(const skill of list)for(const k of ['str','dex','int','con','wil'])for(const value of [0,10,30]){
+const SK2=D.run_('SK2'); // 0.8.0 M5: 게임은 방사 트리가 다시 정의한 SK2를 읽는다(SKILLS2는 옛 정의가 남은 목록)
+for(const [build,list] of Object.entries(E.SKILLS2))for(const skill of list.map(s=>SK2[s.id]||s))for(const k of ['str','dex','int','con','wil'])for(const value of [0,10,30]){
  const p=E.mkPlayer(build,{},Object.fromEntries(['str','dex','int','con','wil'].map(key=>[key,value])),[skill.id]);
  const before=JSON.stringify({p,hit:D.run_('FXHIT')}),text=E.statNext(p,k),dm=skill.fx.find(f=>f.k==='dmg');
  assert.equal(JSON.stringify({p,hit:D.run_('FXHIT')}),before,'다음 1점 안내 부작용 없음');

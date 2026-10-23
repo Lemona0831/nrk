@@ -6,8 +6,8 @@
   const go=url=>{ history.replaceState(null,'',url); location.reload(); };
   function client(){
     let uid=sessionStorage.getItem('MOCK_UID');
-    const own=p=>uid&&(p==='playtest/'+uid||p.startsWith('playtest/'+uid+'/')||p==='board/'+uid);
-    const canRead=p=>p.startsWith('board/')||own(p);
+    const own=p=>uid&&(p==='playtest/'+uid||p.startsWith('playtest/'+uid+'/')||p==='board80/'+uid); // 0.8.0 M8: 새 시즌 기록판(nrk-private/서버/M8-전체초기화 4단계와 같은 정책)
+    const canRead=p=>p.startsWith('board80/')||own(p); // 옛 시즌 기록판(board/)은 관리자만(같은 파일 5단계)
     const api={
       auth:{
         // 구글 로그인 흉내: 구글 계정 → uid 짝은 localStorage(MOCK_IDS)에, 이 탭의 로그인 방식은 sessionStorage(MOCK_PROV)에 둔다.
