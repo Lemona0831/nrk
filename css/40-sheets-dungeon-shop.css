@@ -150,48 +150,45 @@ body:has(.sheet-bg) .toast{top:calc(env(safe-area-inset-top,0px) + 6px)}
 .bagline.consrow{grid-template-columns:1fr}.bagline.consrow>.row{justify-content:flex-end;flex-wrap:wrap}
 /* 0.8.0 M6-1 장비 틀: 접사 줄(꼬리표 아이콘 하나) · 영웅 축 줄 · 고유 규칙 · 대가 */
 .idet.g8 .l{font-size:calc(13px*var(--fs,1));margin:2px 0;line-height:1.45}.idet.g8 .l.af .afi{display:inline-block;width:1.3em;text-align:center;opacity:.85}.idet.g8 .l.ax{color:var(--gold)}.idet.g8 .l.act{color:var(--ink)}.idet.g8 .l.cost{color:var(--bad,#d77)}.idet.g8 .l.mini{color:var(--muted);font-size:calc(12px*var(--fs,1))}
-/* 야영지(10월 24일 다시 짬, 2차): 위 불가, 그 아래 상인 단추 하나, 아래 붙은 줄 */
-.camp{display:flex;flex-direction:column;gap:12px}
-.camp-h h3{margin:0 0 4px}.camp-h .lore{margin:0 0 6px}.camp-note{margin:0;color:var(--muted)}.camp-note b{color:var(--ink)}
-.camp>.card{margin:0}.camp-rest h4{margin:0 0 6px}
-.camp-gain{list-style:none;margin:8px 0 12px;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr));gap:6px}
-.camp-gain li{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
-.camp-gain li span{color:var(--muted);font-size:.9em;min-width:4.5em}.camp-gain li b{font-variant-numeric:tabular-nums}.camp-gain li small{color:var(--muted)}
-.camp-gain .camp-fl{font-weight:600;font-size:.92em}
-.camp-restbtn{padding:12px;font-size:1.05em}
-.camp-rest.done{opacity:.85}.camp-done{margin:0;padding:10px;text-align:center;border:1px solid var(--line);border-radius:8px;color:var(--good)}
-.camp-shopbtn{display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;text-align:left;border-color:var(--gold);background:linear-gradient(180deg,rgba(201,162,75,.10),rgba(201,162,75,.03)),var(--panel2)}
-.camp-shopbtn .cs-ico{font-size:1.6em}.camp-shopbtn .cs-txt{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}.camp-shopbtn .cs-txt b{color:var(--gold);font-size:1.08em}.camp-shopbtn .cs-txt small{color:var(--muted)}
-.camp-shopbtn .cs-go{font-size:1.6em;color:var(--gold);line-height:1}
-.camp-bar{margin-top:0}.camp-bar button{margin-left:auto}
-/* 떠돌이 상인 창 */
-.cs-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}.cs-head .tag{margin-left:auto}
-.cs-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line2);margin-bottom:10px}
-.cs-tabs button{flex:0 0 auto;border:1px solid transparent;border-bottom:0;border-radius:8px 8px 0 0;background:none;color:var(--muted);padding:8px 14px;margin-bottom:-1px}
-.cs-tabs button.on{background:var(--panel2);border-color:var(--line2);color:var(--gold);font-weight:700}
-.cs-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.cs-chips button{flex:0 0 auto;border-radius:999px;padding:5px 12px}.cs-chips button.on{border-color:var(--gold);color:var(--gold);background:rgba(201,162,75,.08)}.cs-chips small{color:var(--muted);margin-left:2px}
-.cs-warn{margin:0 0 10px;padding:6px 10px;border-left:3px solid var(--bad);background:var(--panel)}
-.cs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,15rem),1fr));gap:10px}
-.cs-card{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
-.cs-card.off{opacity:.7}.cs-top{display:flex;align-items:center;gap:10px}.cs-ico{font-size:1.5em}.cs-nm{display:flex;flex-direction:column;min-width:0;flex:1}.cs-nm small{font-size:.8em}
-.cs-price{font-weight:700;color:var(--gold);white-space:nowrap;font-variant-numeric:tabular-nums}.cs-price small{font-weight:400;color:var(--muted)}
-.cs-card p{margin:0}.cs-eff{font-size:.95em}.cs-act{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}.cs-act button{flex:1 1 auto}.cs-why{color:var(--bad)}
-/* 접사 다시 굴리기(상점 · 야영지): 장비 고르기 · 장비 설명 · 접사 줄 사이를 띄운다 */
-.reroll .rrsel{margin:10px 0 12px;gap:6px}.rrsel>button{flex:0 0 auto}.rrsel>button.on{border-color:var(--gold);background:rgba(201,162,75,.08)}
-.reroll .idet,.reroll .g8d,.reroll .tdet{margin:0 0 10px}.rrlist{border-top:1px solid var(--line2);padding-top:4px;margin-top:10px}
-.mlist,.rrlist{display:flex;flex-direction:column}
-.mrow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 12px;padding:10px 0;border-top:1px solid var(--line)}
-.rrlist .mrow:first-child{border-top:0}.mrow-t{min-width:0}.mrow-t small{display:block;margin-top:2px}
-.mrow-b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.mrow-b button{flex:0 0 auto;white-space:nowrap}
-/* 전리품 화면(10월 24일 개편): 가방 · 전리품 칸을 블록으로 */
-.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,13rem),1fr));gap:8px;margin:6px 0 12px}
-.cblk{display:flex;flex-direction:column;gap:5px;padding:10px;border:1px solid var(--line2);border-radius:10px;background:var(--panel2);min-width:0;position:relative}
-.cblk.e{border-style:dashed;background:none;align-items:center;justify-content:center;min-height:64px;color:var(--muted)}
-.cblk.new{border-color:var(--good);background:linear-gradient(180deg,rgba(134,197,111,.10),rgba(0,0,0,0)),var(--panel2)}
-.cblk.tgt{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
-.cblk.loot.off{opacity:.65}.cblk.loot.sel{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}.cblk[draggable=true]{cursor:grab}
-.cblk-h{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;min-width:0}.cblk-h b{flex:1 1 auto;min-width:6em;overflow-wrap:anywhere}.cblk-i{font-size:1.3em}.cblk-c{color:var(--muted);font-size:.85em;white-space:nowrap;font-variant-numeric:tabular-nums}
-.cblk-d{color:var(--muted);line-height:1.4}.cblk-a{display:flex;gap:5px;flex-wrap:wrap;margin-top:auto;padding-top:2px}.cblk-a button{flex:0 0 auto;padding:5px 9px}.cblk-a button.brew{flex:1 1 100%;white-space:normal;text-align:left}
-.cblk .badge{align-self:flex-start;font-size:.75em;padding:1px 7px;border-radius:999px;border:1px solid var(--good);color:var(--good)}
-.cblk .cstat{margin-left:auto;font-size:.78em;white-space:nowrap}
-@media (max-width:520px){.mrow{grid-template-columns:1fr}.mrow-b{justify-content:flex-start}.cgrid{grid-template-columns:1fr 1fr}}
+/* 야영지 · 떠돌이 상인 창 · 전리품 창 (10월 24일 디자인 재점검): 기존 체계를 따른다 — 단추 44px(button.sm 그대로), 글자는 px × --fs, 한국어는 keep-all, 방 card 안에 상자를 겹치지 않는다, 금색은 주 행동 하나 */
+.camp-note,.camp-sec p,.cs-row p,.cdet p,.ctile{word-break:keep-all;overflow-wrap:break-word}
+.camp-note{margin:0 0 4px}
+.camp-sec{border-top:1px solid var(--line);margin-top:12px;padding-top:12px}
+.camp-sec h4{margin:0 0 4px}.camp-sec>.mini{margin:0 0 8px}
+.camp-gain{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0 12px}
+.camp-gain>div{min-width:0}.camp-gain dt{font-size:calc(13px*var(--fs,1));color:var(--muted)}.camp-gain dd{margin:2px 0 0;font-size:calc(16px*var(--fs,1));font-weight:700;font-variant-numeric:tabular-nums}.camp-gain dd small{font-weight:400;color:var(--muted);font-size:calc(13px*var(--fs,1))}
+.camp-done{margin:0;color:var(--good)}
+.camp-shop{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.camp-shop>div{flex:1 1 16rem;min-width:0}.camp-shop>button{flex:0 0 auto}
+.camp-bar{margin-top:12px}.camp-bar button{margin-left:auto}
+/* 상인 창 */
+.cs-head{margin:0 0 8px}
+.cs-warn{margin:0 0 8px;color:var(--bad)}
+.cs-list{display:flex;flex-direction:column}
+.cs-row{display:grid;grid-template-columns:2em minmax(0,1fr) auto;gap:4px 10px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+.cs-row:first-child{border-top:0}.cs-row.off .cs-txt>b{color:var(--muted)}
+.cs-ico{font-size:calc(20px*var(--fs,1));line-height:1.4;text-align:center}
+.cs-txt{min-width:0}.cs-txt p{margin:2px 0 0}.cs-why{color:var(--bad)}
+.cs-buy{display:flex;flex-direction:column;gap:6px;align-items:stretch}.cs-buy button{white-space:nowrap}
+/* 접사 다시 굴리기(상점 · 야영지 공통): 고르기 · 설명 · 접사 줄 사이 */
+.reroll .rrsel{margin:10px 0 12px;gap:6px}.rrsel>button{flex:0 0 auto}.rrsel>button.on{border-color:var(--gold);color:var(--gold)}
+.rrlist{display:flex;flex-direction:column;border-top:1px solid var(--line2);margin-top:12px}
+.mrow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 12px;padding:8px 0;border-top:1px solid var(--line)}
+.rrlist .mrow:first-child{border-top:0}.mrow-t{min-width:0;word-break:keep-all}.mrow-b{display:flex;gap:6px}.mrow-b button{white-space:nowrap}
+/* 전리품 창: 칸(정사각 비슷하게) + 설명 줄 */
+.ctiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(calc(84px*var(--fs,1)),1fr));gap:6px;margin:6px 0 12px}
+.ctile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:calc(88px*var(--fs,1));padding:6px 4px;border:1px solid var(--line2);border-radius:8px;background:var(--panel2);color:var(--ink);text-align:center;min-width:0;position:relative;font-size:calc(13px*var(--fs,1))}
+.ctile.e{border-style:dashed;background:none;color:var(--muted)}
+.ctile.new{border-color:var(--good)}
+.ctile.off{opacity:.6}
+.ctile.on{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.ctile.tgt{border-color:var(--gold);border-style:dashed}
+.ctile.swap{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+.ctile[draggable=true]{cursor:grab}
+.ct-i{font-size:calc(22px*var(--fs,1));line-height:1}
+.ct-n{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ct-c{color:var(--muted);font-variant-numeric:tabular-nums}
+.ct-t{font-size:calc(12px*var(--fs,1));color:var(--gold);line-height:1.2}
+.ctile.off .ct-t{color:var(--bad)}.ctile.new .ct-t{color:var(--good)}
+.cdet{border-top:1px solid var(--line2);padding-top:10px;margin-bottom:8px}
+.cdet p{margin:0 0 4px}.cd-h b{font-size:calc(15px*var(--fs,1))}.cd-a{margin-top:8px}.cd-a>button{flex:0 0 auto}
+@media (max-width:520px){.cs-row{grid-template-columns:2em minmax(0,1fr)}.cs-buy{grid-column:2;flex-direction:row;flex-wrap:wrap}.camp-gain{grid-template-columns:1fr 1fr 1fr}}
