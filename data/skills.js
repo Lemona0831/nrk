@@ -128,9 +128,9 @@ const SKILLS2 = {
     { id: 'a_pagodeul', row: 8, b: '잔영', tier: '중급', n: '파고드는 그림자', tgt: 'melee', time: 'normal', cd: 7, fx: [{ k: 'dmg', n: 54 }, { k: 'grow', mul: 1.5 }] },
     { id: 'a_heurit', row: 8, b: '잔영', tier: '중급', n: '흐릿한 몸', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'parryBuff', red: 0.2, stam: 45, times: 2, dmg: 24 }] },
     /* 경계 승부수(만든 사람 문장 · 대사 그대로) */
-    { id: 'a_mandok', row: 10, b: '독화', tier: '중급', n: '만독개화', tgt: 'ranged', time: 'normal', cd: 9, line: '「피어나라. 한 송이도 남김없이 아름다울 기생화를.」', cut: 'arcane', pay: '쓰는 즉시 지금 생명력에서 최대 생명력의 15%를 잃는다(최대치는 그대로). 지금 생명력이 최대치의 15% 이하면 쓸 수 없다.', fx: [{ k: 'asBloom', mul: 2.9, txt: '모든 적의 중독을 적 하나에게 모아 터뜨린다(그 터뜨리기 피해 2.9배).' }] },
+    { id: 'a_mandok', row: 10, b: '독화', tier: '중급', n: '만독개화', tgt: 'ranged', time: 'normal', cd: 9, line: '「피어나라. 한 송이도 남김없이 아름다울 기생화를.」', cut: 'arcane', pay: '쓰는 즉시 최대 생명력의 15%만큼 생명력을 잃는다. 최대 생명력은 그대로다. 지금 생명력이 최대치의 15% 이하면 쓸 수 없다.', fx: [{ k: 'asBloom', mul: 2.9, txt: '모든 적의 중독을 적 하나에게 모아 터뜨린다(그 터뜨리기 피해 2.9배).' }] },
     { id: 'a_muyeong', row: 10, b: '암영', tier: '중급', n: '무영살', tgt: 'self', time: 'normal', cd: 9, line: '「보이지 않는 칼이야말로, 가장 깊이 박히는 법이렸다.」', cut: 'blade', pay: '숨은 차례에는 아무것도 못 한다. 베기 차례에는 무영살을 다시 쓸 수 없다. 벤 뒤 2차례 흘리기를 못 한다.', fx: [{ k: 'asHide', mul: 5.8, txt: '한 차례 숨었다가, 다음 차례 고른 적의 등 뒤에서 무기 피해의 5.8배로 벤다. 숨은 동안 광역을 포함한 어떤 공격의 표적도 되지 않는다(중독 같은 상태 피해는 받음).' }] },
-    { id: 'a_janyeong', row: 10, b: '잔영', tier: '중급', n: '잔영난무', tgt: 'self', time: 'normal', cd: 9, line: '「그림자는 하나가 아니다. 네가 벤 것은, 처음부터 내가 아니었으니.」', cut: 'guard', pay: '그동안 받는 피해 +20%, 끝난 뒤 2차례 스태미나가 차지 않는다.', fx: [{ k: 'asZan', n: 4, mul: 1.7, txt: '4차례 동안 그림자 분신이 함께해 내가 누른 기본 공격이 두 번 들어간다(분신은 기본 공격의 1.7배, 반격 · 추가타는 두 번이 아님).' }] },
+    { id: 'a_janyeong', row: 10, b: '잔영', tier: '중급', n: '잔영난무', tgt: 'self', time: 'normal', cd: 9, line: '「그림자는 하나가 아니다. 네가 벤 것은, 처음부터 내가 아니었으니.」', cut: 'guard', pay: '그동안 받는 피해 +20%. 끝난 뒤 2차례 스태미나가 차지 않는다.', fx: [{ k: 'asZan', n: 4, mul: 1.7, txt: '4차례 동안 그림자 분신이 함께해 내가 누른 기본 공격이 두 번 들어간다(분신은 기본 공격의 1.7배, 반격 · 추가타는 두 번이 아님).' }] },
     /* 결합 칸 셋(설계지): 원 바깥, 판마다 둘, 꼬리표 조건 */
     { id: 'a_dokni', row: 7, b: '결합', tier: '중급', n: '독니', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'asFangC', n: 2, txt: '이번 전투: 중독 걸린 적을 기본 공격으로 치면 중독 +2' }] },
     { id: 'a_heuldok', row: 7, b: '결합', tier: '중급', n: '흘린 독', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'asParPsn', n: 3, txt: '이번 전투: 흘려 낼 때 그 적 중독 +3' }] },
@@ -238,9 +238,9 @@ const SKILLS2 = {
     { id: 's_lean', row: 7, b: '기둥 파쇄', tier: '중급', n: '기울어진 대열', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'st', s: 'empower', n: 3 }, { k: 'st', s: 'protect', n: 2 }, { k: 'ward', n: 4 }] },
     { id: 's_gapwatch', row: 8, b: '기둥 파쇄', tier: '중급', n: '무너짐의 틈', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'ward', n: 23 }, { k: 'st', s: 'empower', n: 3 }] },
     /* 경계 승부수(만든 사람 문장 · 대사 그대로, 10월 20일 결정 반영) */
-    { id: 'w_siege', row: 10, b: '공성추', tier: '중급', n: '파성추', kind: 'cut', tgt: 'self', time: 'normal', cd: 9, line: '「지키지 못하는 성벽 따위, 이 나락에서는 사치임이 분명하구나.」', cut: 'blade', pay: '그동안 보호막을 얻지 못하고, 3차례 방어 행동을 할 수 없다.', fx: [{ k: 'wdSiege', n: 3, txt: '현재 보호막을 모두 소모해 3차례 동안 "파성": 강공격 스태미나 −20, 기본 공격과 강공격 피해가 소모한 보호막에 비례해 최대 ×2.0 증폭, 강공격마다 붕괴 +26.' }] },
-    { id: 's_quake', row: 10, b: '기둥 파쇄', tier: '중급', n: '대지 분쇄', tgt: 'front', time: 'normal', cd: 9, line: '「네놈들의 방어선을, 쳐부숴주마.」', cut: 'guard', pay: '사용 후 3라운드 동안 자신의 보호막 획득량 −50%.', fx: [{ k: 'brk', n: 35 }, { k: 'wdQuake', txt: '이번 행동으로 적이 2명 이상 무너지면 다음 차례에 주는 피해가 2배다.' }] },
-    { id: 'w_valor', row: 10, b: '용맹의 투지', tier: '중급', n: '용맹한 방벽', tgt: 'self', time: 'normal', cd: 9, line: '「이 몸이 물러설 장소 따위. 이미 사라진지 오래렸다.」', cut: 'guard', pay: '그동안 스태미나가 저절로 차지 않고, 흘리기를 할 수 없다.', fx: [{ k: 'wdValor', n: 3, txt: '3차례 동안 "용맹": 방어할 때 보호막 +6 → +18, 내 차례마다 보호막의 50%만큼 가시(맞을 때 그 적에게 되돌린다).' }] },
+    { id: 'w_siege', row: 10, b: '공성추', tier: '중급', n: '파성추', kind: 'cut', tgt: 'self', time: 'normal', cd: 9, line: '「지키지 못하는 성벽 따위, 이 나락에서는 사치임이 분명하구나.」', cut: 'blade', pay: '그동안 보호막을 얻지 못한다. 3차례 방어할 수 없다.', fx: [{ k: 'wdSiege', n: 3, txt: '현재 보호막을 모두 소모해 3차례 동안 "파성": 강공격 스태미나 −20, 기본 공격과 강공격 피해가 소모한 보호막에 비례해 최대 ×2.0 증폭, 강공격마다 붕괴 +26.' }] },
+    { id: 's_quake', row: 10, b: '기둥 파쇄', tier: '중급', n: '대지 분쇄', tgt: 'front', time: 'normal', cd: 9, line: '「네놈들의 방어선을, 쳐부숴주마.」', cut: 'guard', pay: '쓴 뒤 3라운드 동안 얻는 보호막 −50%.', fx: [{ k: 'brk', n: 35 }, { k: 'wdQuake', txt: '이번 행동으로 적이 2명 이상 무너지면 다음 차례에 주는 피해가 2배다.' }] },
+    { id: 'w_valor', row: 10, b: '용맹의 투지', tier: '중급', n: '용맹한 방벽', tgt: 'self', time: 'normal', cd: 9, line: '「이 몸이 물러설 장소 따위. 이미 사라진지 오래렸다.」', cut: 'guard', pay: '그동안 스태미나가 저절로 차지 않는다. 흘리기도 할 수 없다.', fx: [{ k: 'wdValor', n: 3, txt: '3차례 동안 "용맹": 방어할 때 보호막 +6 → +18, 내 차례마다 보호막의 50%만큼 가시(맞을 때 그 적에게 되돌린다).' }] },
     /* 결합 칸 셋([Claude 초안]): 원 바깥, 판마다 둘, 꼬리표 조건 */
     { id: 'w_turncoat', row: 7, b: '결합', tier: '중급', n: '돌아선 방패', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'wdTurncoat', txt: '이번 전투 동안 켜진 태세를 다른 태세로 바꿀 때 유산이 들지 않는다. 바꾼 직후 첫 강공격에 붕괴 +25.' }] },
     { id: 's_hammerhand', row: 7, b: '결합', tier: '중급', n: '쇠망치 손', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'wdHammer', txt: '이번 전투 동안 무너진 적에게 기본 공격 ×1.5, 강공격으로 무너진 적을 치면 스태미나 15를 돌려받는다.' }] },
@@ -362,17 +362,17 @@ const SKILLS2 = {
     { id: 'h5_steady', row: 4, b: '명궁', tier: '하급', n: '숨 고르기', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'st', s: 'empower', n: 6 }] },
     { id: 'h5_pinpoint', row: 8, b: '명궁', tier: '중급', n: '급소 꿰기', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 30 }, { k: 'bigx', mul: 1.5 }] },
     { id: 'h5_hawkeye', row: 8, b: '명궁', tier: '중급', n: '매의 눈', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'foresee', red: 0.5, rounds: 9 }] },
-    { id: 'h5_mangung', row: 10, b: '명궁', tier: '중급', n: '만궁', tgt: 'self', time: 'normal', cd: 4, line: '「한 호흡이면 족하다. 끝까지 당긴 시위는, 결코 빗나가지 않으니.」', cut: 'blade', pay: '당기는 차례에는 아무것도 못 하고, 그동안 받는 피해 +30%.', fx: [{ k: 'hnDraw', mul: 6.5, per: 1, txt: '한 차례 시위를 당겼다가, 다음 차례 추적한 적에게 무기 피해의 6.5배(추적 겹마다 +1배).' }] },
+    { id: 'h5_mangung', row: 10, b: '명궁', tier: '중급', n: '만궁', tgt: 'self', time: 'normal', cd: 4, line: '「한 호흡이면 족하다. 끝까지 당긴 시위는, 결코 빗나가지 않으니.」', cut: 'blade', pay: '당기는 차례에는 아무것도 못 한다. 그동안 받는 피해 +30%.', fx: [{ k: 'hnDraw', mul: 6.5, per: 1, txt: '한 차례 시위를 당겼다가, 다음 차례 추적한 적에게 무기 피해의 6.5배(추적 겹마다 +1배).' }] },
     { id: 'h5_runshot', row: 4, b: '유격', tier: '하급', n: '달리며 쏘기', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 10 }, { k: 'evade', n: 1 }] },
     { id: 'h5_dust', row: 4, b: '유격', tier: '하급', n: '흙먼지', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'st', s: 'protect', n: 11 }] },
     { id: 'h5_storm', row: 8, b: '유격', tier: '중급', n: '폭풍 사격', tgt: 'all', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 15 }, { k: 'st', s: 'bleed', n: 2 }] },
     { id: 'h5_tailwind', row: 8, b: '유격', tier: '중급', n: '순풍', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'hnNock', n: 5, shots: 2, txt: '다음 기본 공격 5번이 두 발' }] },
-    { id: 'h5_gale', row: 10, b: '유격', tier: '중급', n: '질풍난사', tgt: 'self', time: 'normal', cd: 4, line: '「바람보다 빠르게, 비보다 많이. 사냥은 이제부터다.」', cut: 'guard', pay: '그동안 몸 빼기 · 방어 불가, 받는 피해 +20%.', fx: [{ k: 'hnGale', r: 3, txt: '3라운드 동안 매 라운드 두 번 움직이고(가속) 기본 공격이 두 발.' }] },
+    { id: 'h5_gale', row: 10, b: '유격', tier: '중급', n: '질풍난사', tgt: 'self', time: 'normal', cd: 4, line: '「바람보다 빠르게, 비보다 많이. 사냥은 이제부터다.」', cut: 'guard', pay: '그동안 몸 빼기와 방어를 할 수 없다. 받는 피해 +20%.', fx: [{ k: 'hnGale', r: 3, txt: '3라운드 동안 매 라운드 두 번 움직이고(가속) 기본 공격이 두 발.' }] },
     { id: 'h5_snare', row: 4, b: '잠복', tier: '하급', n: '덫 화살', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 18 }, { k: 'st', s: 'chill', n: 1 }] },
     { id: 'h5_hide', row: 4, b: '잠복', tier: '하급', n: '숨은 사수', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'evade', n: 2 }] },
     { id: 'h5_ambush', row: 8, b: '잠복', tier: '중급', n: '매복 사격', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 29 }, { k: 'chillx', mul: 1.5 }] },
     { id: 'h5_camo', row: 8, b: '잠복', tier: '중급', n: '위장', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'st', s: 'protect', n: 19 }] },
-    { id: 'h5_trap', row: 10, b: '잠복', tier: '중급', n: '혈향의 덫', tgt: 'self', time: 'normal', cd: 4, line: '「피 냄새를 맡고 온 짐승이, 덫을 피하는 법은 없지.」', cut: 'arcane', pay: '깔 때 지금 생명력에서 최대치의 15%를 미끼로 흘린다(15% 이하면 못 씀).', fx: [{ k: 'hnTrap', mul: 3.5, txt: '이번 라운드 나를 치는 적은 모두 다음 행동을 놓치고 추적 3겹이 된다.' }] },
+    { id: 'h5_trap', row: 10, b: '잠복', tier: '중급', n: '혈향의 덫', tgt: 'self', time: 'normal', cd: 4, line: '「피 냄새를 맡고 온 짐승이, 덫을 피하는 법은 없지.」', cut: 'arcane', pay: '깔 때 최대 생명력의 15%만큼 생명력을 미끼로 흘린다. 생명력이 최대치의 15% 이하면 깔 수 없다.', fx: [{ k: 'hnTrap', mul: 3.5, txt: '이번 라운드 나를 치는 적은 모두 다음 행동을 놓치고 추적 3겹이 된다.' }] },
     { id: 'h5_chase', row: 7, b: '결합', tier: '중급', n: '추격', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'hnChaseC', txt: '이번 전투: 피할 때마다 그 적에게 추적 +1겹', n: 1 }] },
     { id: 'h5_scent', row: 7, b: '결합', tier: '중급', n: '피 냄새', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'hnScent', txt: '이번 전투: 출혈 걸린 적을 맞히면 추적 +1겹', n: 1 }] },
     { id: 'h5_frozen', row: 7, b: '결합', tier: '중급', n: '얼어붙은 사냥감', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'hnFrozen', mul: 1.8, txt: '이번 전투: 둔화 걸린 적에게 기본 공격 ×1.8' }] },
@@ -589,7 +589,7 @@ const SKILLS2 = {
     { id: 'e5_stillward', row: 4, b: '정적', tier: '하급', n: '고요한 방벽', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'elProtR', n: 2, r: 6, txt: '6라운드 동안 내 차례마다 보호 2까지' }] },
     { id: 'e5_shardrain', row: 8, b: '정적', tier: '중급', n: '얼음 파편비', tgt: 'all', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 18 }, { k: 'st', s: 'chill', n: 1 }] },
     { id: 'e5_stilleye', row: 8, b: '정적', tier: '중급', n: '고요의 눈', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'foresee', red: 0.55, rounds: 10 }] },
-    { id: 'e5_stasis', row: 10, b: '정적', tier: '중급', n: '영겁의 정적', tgt: 'self', time: 'normal', cd: 4, line: '「모든 것이 멈춘 이 한순간만이, 나락에서 유일한 고요로구나.」', cut: 'guard', pay: '내 다음 차례도 아무것도 못 한다(나도 함께 멈춘다).', fx: [{ k: 'elStasis', r: 2, txt: '이번 라운드와 다음 라운드 모든 적이 행동을 놓친다(강적 · 보스는 대신 둔화 3). 빙결 · 정적으로 행동을 놓친 적은 그다음 라운드가 끝날 때까지 다시 멈추지 않고 둔화만 받는다.' }] },
+    { id: 'e5_stasis', row: 10, b: '정적', tier: '중급', n: '영겁의 정적', tgt: 'self', time: 'normal', cd: 4, line: '「모든 것이 멈춘 이 한순간만이, 나락에서 유일한 고요로구나.」', cut: 'guard', pay: '나도 함께 멈춰 내 다음 차례에 아무것도 못 한다.', fx: [{ k: 'elStasis', r: 2, txt: '이번 라운드와 다음 라운드 모든 적이 행동을 놓친다(강적 · 보스는 대신 둔화 3). 빙결 · 정적으로 행동을 놓친 적은 그다음 라운드가 끝날 때까지 다시 멈추지 않고 둔화만 받는다.' }] },
     { id: 'e5_manaflame', row: 4, b: '마염', tier: '하급', n: '마염탄', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 24 }, { k: 'st', s: 'ignite', n: 2 }] },
     { id: 'e5_kindlemana', row: 4, b: '마염', tier: '하급', n: '불씨 응축', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'elCharge', n: 6, mul: 1, ign: 2, txt: '다음 기본 공격 6번에 화상 2' }] },
     { id: 'e5_flamelance', row: 8, b: '마염', tier: '중급', n: '불꽃 창', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 36 }, { k: 'kwx', s: 'ignite', mul: 1.5 }] },
@@ -688,13 +688,13 @@ const SKILLS2 = {
     /* ===== 0.8.0 M5-0 마검사 경계 (10월 19일 만든 사람 결정, 문장 그대로). b = 경계 이름. 새 효과는 js/10-skills-engine.js의 마검사 경계 절, 값(v)은 data/skillkit.js skValue의 경계 식 ===== */
     { id: 'sb_bloodfire', row: 4, b: '혈염', tier: '중급', n: '핏불 싣기', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'imbue', s: 'bleed', n: 4 }, { k: 'imbue', s: 'ignite', n: 5, also: 1, txt: '칼에 출혈 4 · 화상 5를 함께 싣는다.' }] },
     { id: 'sb_searcut', row: 7, b: '혈염', tier: '중급', n: '혈염 베기', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 30 }, { k: 'searMerge', txt: '출혈 · 화상이 둘 다 걸린 적을 베면 둘을 합쳐 새 상태 혈염으로 바꾼다. 혈염은 차례마다 (출혈 + 화상) × 1.5 피해를 주고 정화되지 않는다. 혈염 걸린 적이 있는 동안 교대 보호막이 없다.' }] }, /* M5-0c 맞추기 2번: 3고리 값 띠 안에서 피해 20 → 22 */
-    { id: 'sb_kalpa', row: 10, b: '혈염', tier: '중급', n: '겁화', kind: 'spell', tgt: 'self', time: 'normal', cd: 9, line: '「피와 화염이 몸을 감싸니, 그것은 곧 겁화일지어다.」', cut: 'blade', pay: '보호막 전부 소실, 받는 피해 +30%.', fx: [{ k: 'sbBlaze', n: 3, txt: '3차례 동안 모든 베기에 혈염, 주는 피해 +100%.' }] }, // M5-0a: 대사(line) · 컷인(cut) · 대가(pay)는 따로
+    { id: 'sb_kalpa', row: 10, b: '혈염', tier: '중급', n: '겁화', kind: 'spell', tgt: 'self', time: 'normal', cd: 9, line: '「피와 화염이 몸을 감싸니, 그것은 곧 겁화일지어다.」', cut: 'blade', pay: '보호막을 모두 잃고 받는 피해 +30%.', fx: [{ k: 'sbBlaze', n: 3, txt: '3차례 동안 모든 베기에 혈염, 주는 피해 +100%.' }] }, // M5-0a: 대사(line) · 컷인(cut) · 대가(pay)는 따로
     { id: 'sb_bloodmail', row: 4, b: '죄인의 피', tier: '중급', n: '피의 갑주', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'wardPer', s: 'bleed', n: 22, txt: '출혈 걸린 적 하나마다 보호막 +22.' }] },
     { id: 'sb_film', row: 7, b: '죄인의 피', tier: '중급', n: '피막', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 18 }, { k: 'sbFilm', txt: '이번 차례 보호막으로 받아낸 피해의 75%를 그 적에게 출혈로.' }] }, // M5-0 보정 5(만든 사람): 3고리 공격 칸으로(베기 + 피막)
-    { id: 'sb_sinwall', row: 10, b: '죄인의 피', tier: '중급', n: '죄인의 벽', kind: 'spell', tgt: 'self', time: 'normal', cd: 9, line: '「아아, 죄인의 피가 오만방자하게도 모든 것을 가로막고자 하는구나.」', cut: 'guard', pay: '최대 생명력 15%를 바친다.', fx: [{ k: 'sbSinWall', txt: '바친 생명력의 3.5배만큼 보호막. 깨지면 전열 모두에게 출혈 7.' }] },
+    { id: 'sb_sinwall', row: 10, b: '죄인의 피', tier: '중급', n: '죄인의 벽', kind: 'spell', tgt: 'self', time: 'normal', cd: 9, line: '「아아, 죄인의 피가 오만방자하게도 모든 것을 가로막고자 하는구나.」', cut: 'guard', pay: '최대 생명력의 15%를 바친다.', fx: [{ k: 'sbSinWall', txt: '바친 생명력의 3.5배만큼 보호막. 깨지면 전열 모두에게 출혈 7.' }] },
     { id: 'sb_heatmail', row: 4, b: '유산의 불', tier: '중급', n: '달군 갑주', kind: 'spell', tgt: 'self', time: 'normal', cd: 5, fx: [{ k: 'sbHeat', txt: '보호막을 태워 다음 기본 공격 ×3.2.' }] },
     { id: 'sb_embermail', row: 7, b: '유산의 불', tier: '중급', n: '잿불 갑주', kind: 'spell', tgt: 'self', time: 'normal', cd: 6, fx: [{ k: 'sbEmberMail', txt: '보호막이 남아 있는 동안 기본 공격 · 강공격에 화상 7을 싣는다.' }] },
-    { id: 'sb_firebody', row: 10, b: '유산의 불', tier: '중급', n: '불의 몸', kind: 'spell', tgt: 'self', time: 'normal', cd: 9, line: '「모든 것을 불태웠을 과거의 유산은, 결국 자신도 불태우기 마련이다.」', cut: 'arcane', pay: '남은 유산을 전부 태운다. 그동안 유산 0(스킬 없음, 평타만).', fx: [{ k: 'sbFireBody', n: 3, txt: '3차례 "불의 몸": 태운 유산 1마다 보호막 +11, 기본 공격 · 강공격 ×1.8 + 화상 5, 받는 화상 무효.' }] },
+    { id: 'sb_firebody', row: 10, b: '유산의 불', tier: '중급', n: '불의 몸', kind: 'spell', tgt: 'self', time: 'normal', cd: 9, line: '「모든 것을 불태웠을 과거의 유산은, 결국 자신도 불태우기 마련이다.」', cut: 'arcane', pay: '남은 유산을 전부 태운다. 그동안 유산 0. 스킬은 쓸 수 없고 기본 공격만 한다.', fx: [{ k: 'sbFireBody', n: 3, txt: '3차례 "불의 몸": 태운 유산 1마다 보호막 +11, 기본 공격 · 강공격 ×1.8 + 화상 5, 받는 화상 무효.' }] },
     /* 0.8.0 M5-0 보정 4(10월 20일 만든 사람 초안): 경계 둘째 칸(2고리) · 3고리 둘째. 꼴은 초안 그대로, 숫자는 값 띠에 맞췄다(data/skillkit.js SB_BOUND). 엔진은 js/10-skills-engine.js 마검사 경계 절 */
     { id: 'sb_hotedge', row: 5, b: '혈염', tier: '중급', n: '달아오른 칼날', kind: 'cut', tgt: 'melee', time: 'normal', cd: 5, fx: [{ k: 'sbCross', txt: '출혈 걸린 적에게 화상 +5, 화상 걸린 적에게 출혈 +5.' }] },
     { id: 'sb_searspread', row: 8, b: '혈염', tier: '중급', n: '핏불 번짐', kind: 'cut', tgt: 'melee', time: 'normal', cd: 6, fx: [{ k: 'dmg', n: 21 }, { k: 'searSpread', txt: '혈염 걸린 적을 쓰러뜨리면 곁의 적에게 그 혈염.' }] },
@@ -850,9 +850,9 @@ const SKILLS2 = {
     { id: 'm_gwanhyeol', row: 8, b: '파혈', tier: '중급', n: '관혈 일격', tgt: 'melee', time: 'slow', cd: 7, fx: [{ k: 'dmg', n: 28 }, { k: 'chillx', mul: 1.5 }] },
     { id: 'm_sunhwan', row: 8, b: '파혈', tier: '중급', n: '내공 순환', tgt: 'self', time: 'normal', cd: 7, fx: [{ k: 'mkFlow', n: 3, mul: 0.55, txt: '3차례 동안 ▶ 공격 피해 +55%.' }] },
     /* 경계 승부수(만든 사람 문장 · 대사 그대로) */
-    { id: 'm_yeokcheon', row: 10, b: '반탄', tier: '중급', n: '역천권', tgt: 'self', time: 'normal', cd: 9, line: '「쳐라. 네놈이 휘두른 그 힘이, 곧 나의 주먹이 될 터이니.」', cut: 'guard', pay: '방어 불가, 받는 피해 +30%.', fx: [{ k: 'mkYeok', n: 3, txt: '3차례 동안 자세 유지, 되받기 횟수 제한 없음, 되받기마다 붕괴 +15.' }] },
+    { id: 'm_yeokcheon', row: 10, b: '반탄', tier: '중급', n: '역천권', tgt: 'self', time: 'normal', cd: 9, line: '「쳐라. 네놈이 휘두른 그 힘이, 곧 나의 주먹이 될 터이니.」', cut: 'guard', pay: '방어할 수 없고 받는 피해 +30%.', fx: [{ k: 'mkYeok', n: 3, txt: '3차례 동안 자세 유지, 되받기 횟수 제한 없음, 되받기마다 붕괴 +15.' }] },
     { id: 'm_cheonmang', row: 10, b: '역혈', tier: '중급', n: '천망', tgt: 'self', time: 'normal', cd: 9, line: '「나를 친 그 손이, 이미 너의 숨통을 내게 쥐여 주었음을 알지 못하는구나.」', cut: 'arcane', pay: '되받기 피해 0.', fx: [{ k: 'mkCheon', n: 3, txt: '3차례 동안 나를 친 적에게 둔화 +2. 둔화 5가 된 적은 봉인.' }] },
-    { id: 'm_ilji', row: 10, b: '파혈', tier: '중급', n: '일지멸맥', tgt: 'melee', time: 'normal', cd: 9, line: '「단 한 점이면 족하다. 무너지는 것은, 언제나 안에서부터이니.」', cut: 'blade', pay: '생명력 10%, 3차례 기를 얻지 못함.', fx: [{ k: 'mkIlji', per: 10, txt: '적 하나에게 기를 모두 쏟아 (둔화 × 기 × 10) 피해.' }] },
+    { id: 'm_ilji', row: 10, b: '파혈', tier: '중급', n: '일지멸맥', tgt: 'melee', time: 'normal', cd: 9, line: '「단 한 점이면 족하다. 무너지는 것은, 언제나 안에서부터이니.」', cut: 'blade', pay: '최대 생명력의 10%를 잃고 3차례 기를 얻지 못한다.', fx: [{ k: 'mkIlji', per: 10, txt: '적 하나에게 기를 모두 쏟아 (둔화 × 기 × 10) 피해.' }] },
     /* 결합 칸 셋(설계지): 원 바깥, 판마다 둘, 꼬리표 조건 */
     { id: 'm_samjae', row: 7, b: '결합', tier: '중급', n: '삼재권', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'mkSamjae', txt: '이번 전투: 기가 가득 차면 ⚡ 공격도 +25%.' }] },
     { id: 'm_yeokryu', row: 7, b: '결합', tier: '중급', n: '역류', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'mkReflux', txt: '이번 전투: 둔화된 적을 기본 공격으로 치면 기 +1.' }] },
@@ -1084,7 +1084,7 @@ const TREE2 = {
   },
   spellblade: {
     branches: ['혈인', '염검', '마갑'],
-    bd: { 혈인: '베어서 출혈을 겁니다. 쓰러뜨리면 다음 베기의 쿨타임을 초기화합니다. 무리에 강하고 뒤에 선 적에게 약합니다', 염검: '주문으로 화상을 걸고 화상 걸린 적을 베어 거둡니다. 영창하는 적에 강하고 무리에 약합니다', 마갑: '검과 주문을 교대하며 보호막을 두릅니다. 보호막을 남겨 버티거나 공명으로 소모해 적을 압박합니다' },
+    bd: { 혈인: '베어서 출혈을 겁니다. 처형 길은 쌓인 출혈을 거둬 큰 피해를 주고 싣기 길은 칼에 출혈을 실어 다음 기본 공격에 겁니다. 무리에 강하고 뒤에 선 적에게 약합니다', 염검: '주문으로 화상을 걸고 화상 걸린 적을 베어 거둡니다. 영창하는 적에 강하고 무리에 약합니다', 마갑: '검과 주문을 교대하며 보호막을 두릅니다. 보호막을 남겨 버티거나 공명으로 소모해 적을 압박합니다' },
     haste: {},
     // 갈래 성격 (10월 7일 설계, docs/직업/마검사.md D-1): 직업 약점은 거구(큰 적 배수 칸이 없고 보호막 상한 15%)
     profile: { 혈인: { strong: ['무리'], weak: ['후열'] }, 염검: { strong: ['영창'], weak: ['무리'] }, 마갑: { strong: ['강타'], weak: ['지원'] }, 직업: { strong: [], weak: ['거구'] } },

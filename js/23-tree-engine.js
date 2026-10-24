@@ -216,7 +216,9 @@ function skMod(s, m) {
   for (const x of m.fxAdd || []) s.fx.push(Object.assign({}, x));
   if (m.cond) s.cond = (s.cond || []).concat([Object.assign({}, m.cond)]);
 }
-function skOf(p, id) {
+/* 10월 24일: 고유가 주문 비용을 올리면(붉은 손 u_spellYs) 보호 · 회복 칸 사본에 ysUp을 적어 카드 끝 "충전 없음" 문장이 실제 비용을 따르게 한다(규칙은 js/22 ysSpend가 낸 비용으로 본다) */
+function skOf(p, id) { const s = skOf0(p, id); const u = s && p && s.kind === 'spell' ? uqV(p, 'u_spellYs', 0, (a, v) => a + v) : 0; return u > 0 && ysGuardFx(s) ? Object.assign({}, s, { ysUp: u }) : s; }
+function skOf0(p, id) {
   const base = SK2[id]; if (!base || !p) return base; const A = ATREE_DEF[p.build] ? atBuild(p.build) : null; const node = A && A.nodes[id];
   const upN = u => A && (A.nodes[u] || (A.vars && A.vars[u])); const ups = (p.aup || []).filter(u => upN(u) && upN(u).on === id); /* M5-0 보정 5: 고른 변형(A.vars)도 강화처럼 */ const pk = (p.pn || []).filter(k => PN_SK[k] && PN_SK[k].on === id);
   const pl = pnLead(p, id);

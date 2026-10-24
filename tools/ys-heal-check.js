@@ -80,4 +80,7 @@ for (const id of ['h5_cover', 'h5_dodge']) { const { p, b, es } = fightC('hunter
   p.ys = 5; let k0 = step(b, 'w_dstance'); step(b, 'basic', es[0].id); ok(turnG(b, k0) === YUSAN.turn, '태세를 켜며 비용 2를 내면 충전 그대로'); /* 수비 태세는 빠른 행동: 기본 공격으로 차례를 끝낸다 */
   ok(A(b, 'w_dstance').yc === 0 && !A(b, 'w_dstance').noT, '켜진 태세 끄기는 비용 0, 버튼에 충전 없음 없음'); p.ys = 3; k0 = step(b, 'w_dstance'); step(b, 'basic', es[0].id); ok(turnG(b, k0) === YUSAN.turn && !noTurn(b, k0), '태세 끄기(비용 0, wdOff)는 새 보호가 아니라 충전 그대로'); }
 { const src = R_('ysSpend.toString()'); ok(src.includes("ca.by !== 'wdOff' && ca.by !== 'wdTurn'"), '돌아선 방패의 태세 바꾸기(wdTurn)도 뺀다(소스)'); }
+/* 10월 24일: 고유 붉은 손(주문 유산 +1)이 비용 1 보호 주문을 2로 올리면 카드 끝 문장도 사라진다 */
+{ const { p, b } = fightC('spellblade', ['sb_bolt', 'sb_shard', 'sb_ember', 'sb_spark'], { sb_spark: 'sbv_spark_ward' }); const a0 = A(b, 'sb_spark'); ok(a0.yc === 1 && /쓰면 다음 차례 유산 충전 없음\.$/.test(a0.d) && a0.noT === 1, '불티 방패(주문 · 보호막 · 비용 1): 끝 문장 + 버튼 충전 없음 (' + a0.cost + ')');
+  { const run = G.run, it = E.mkUq('sb_r3'); run.inv[it.uid] = it; run.eqU.gloves = it.uid; E.applyGear(run, true); } const sk = R_('skOf')(G.run.p, 'sb_spark'); ok(sk.ysUp === 1 && !R_('ysHealSk')(sk) && !/충전 없음/.test(R_('skBody')(sk)), '붉은 손(주문 +1)을 끼면 비용 2: 카드 끝 문장 없음'); }
 console.log('ys-heal-check: ' + n + '개 통과');

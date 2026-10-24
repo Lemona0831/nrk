@@ -477,8 +477,8 @@ function skCost(s) { if (!s) return 0; if (s.ys != null) return s.ys; if (s.once
    설명 끝: 비용 1 이하 칸(ysHealSk)은 "쓰면 …", 비용 2 이상이라 할인으로 1이 될 수 있는 칸(ysCondSk)은 "비용 1로 쓰면 …" */
 const YS_HEAL_K = ['wdPray', 'mkDrainChill'], YS_GUARD_K = ['ward', 'wardPer', 'wardFill', 'sbSinWall', 'evade', 'elProtR'];
 const ysGuardFx = s => !!(s && s.fx) && s.fx.some(e => YS_HEAL_K.includes(e.k) || YS_GUARD_K.includes(e.k) || (e.k === 'drain' && !e.me) || (e.k === 'meSt' && e.s === 'protect') || (e.k === 'st' && e.s === 'protect' && s.tgt === 'self'));
-const ysHealSk = s => ysGuardFx(s) && skCost(s) <= 1; // 이름은 S-2 그대로(S-3에서 보호 · 회피까지 넓힘)
-const ysCondSk = s => ysGuardFx(s) && skCost(s) > 1 && (s.cond || []).length > 0; // 설명 끝 "비용 1로 쓰면 …"은 변형 조건 할인 칸에만(S-5 만든 사람 결정 10월 24일: 장비 · 접사 할인은 쓸 때 전투 버튼 · 설명 창에서 알린다. 규칙 자체는 js/22 ysSpend가 실제로 낸 비용으로 본다)
+const ysHealSk = s => ysGuardFx(s) && skCost(s) + (s.ysUp || 0) <= 1; /* ysUp: 고유가 올린 비용(js/23 skOf) */ // 이름은 S-2 그대로(S-3에서 보호 · 회피까지 넓힘)
+const ysCondSk = s => ysGuardFx(s) && skCost(s) + (s.ysUp || 0) > 1 && (s.cond || []).length > 0; // 설명 끝 "비용 1로 쓰면 …"은 변형 조건 할인 칸에만(S-5 만든 사람 결정 10월 24일: 장비 · 접사 할인은 쓸 때 전투 버튼 · 설명 창에서 알린다. 규칙 자체는 js/22 ysSpend가 실제로 낸 비용으로 본다)
 const skYsTail = s => ysHealSk(s) ? ' 쓰면 다음 차례 유산 충전 없음.' : ysCondSk(s) ? ' 비용 1로 쓰면 다음 차례 유산 충전 없음.' : '';
 function skCd(s) { return '유산 ' + skCost(s) + (s.once ? ' · 전투마다 1번' : ''); }
 const skCharge = skCd; // 옛 이름
