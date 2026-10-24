@@ -378,7 +378,7 @@ function afterBattle() {
   codexMerge(b);
   const rec = { damageStats: b.damageStats ? Object.assign({}, b.damageStats) : null, ys: ysSum(b), ch: run.ch || 1, type: (G.run.cur || {}).type || '', squad: (G.run.cur || {}).squad || undefined, foe: (G.run.cur || {}).foe || undefined, mods: (G.run.cur || {}).mods || [], gearDetails: adminGearSnapshot(run), stats: Object.assign({}, run.stats), treeOpen: run.atree ? run.atree.own.slice() : null, pOpen: run.ptree ? run.ptree.own.length + run.ptree.free.length : null, skills: (run.skills || []).slice(), gear: run.eqU ? EQ_SLOTS.map(sl => { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; return it ? it.tpl + ':' + it.g : null; }) : null, room: run.room, res: b.over, acts: b.turnIdx, t: Math.round(b.t * 10) / 10, hpIn: r1(run.entryHp), hpOut: r1(p.hp / p.hpMax), flIn: run.entryFl, flOut: p.flask.life + p.flask.mana + (p.flask.stam || 0), flasksIn: Object.assign({}, run.entryFlasks || (run.entry && run.entry.flask) || {}), flasksOut: Object.assign({}, p.flask), hpMax: p.hpMax, herbIn: run.entryHerb, breadIn: run.entryBread, goldIn: run.entryGold, bagIn: run.entryBag, rev: releaseRev(), item: Object.values(p.eq).filter(Boolean) };
   run.rooms.push(rec);
-  for (const x of b.rec) run.acts.push(Object.assign({ ch: run.ch || 1, r: run.room }, x));
+  actsLive(run, b); // 10월 24일: 전투 중에 이미 붙인 행동은 다시 붙이지 않는다(b.recSent)
   if (b.over === 'lose') { run.deaths.push(run.room); }
 }
 function battleContinue() {
@@ -452,6 +452,10 @@ function runMeta(run, status) {
   return r;
 }
 let syncT = 0, syncBusy = false;
+/* 10월 24일 만든 사람 요청: 행동 기록을 더 실시간으로. 전투 중 행동은 전투가 끝날 때 한꺼번에 붙었다 → 10초마다 · 탭을 숨기거나 닫을 때 그동안의 행동을 붙여 보내고, 화면 오류는 한 줄로 남겨 바로 보낸다(js/90) */
+function actsLive(run, b) { if (!run || !b || !b.rec) return 0; const from = b.recSent || 0; for (const x of b.rec.slice(from)) run.acts.push(Object.assign({ ch: run.ch || 1, r: run.room }, x)); b.recSent = b.rec.length; return b.rec.length - from; }
+function liveSync(force) { const run = G.run; if (!run || run.endedAt) return; const n = G.b && G.b.rec && !G.b.preview ? actsLive(run, G.b) : 0; if (n || force) syncRun(run); }
+function liveErr(msg, where) { const run = G.run; if (!run || run.endedAt || Date.now() - (G.liveErrT || 0) < 5000) return; G.liveErrT = Date.now(); try { if (G.b && G.b.rec) actsLive(run, G.b); run.acts.push({ k: 'err', ch: run.ch || 1, r: run.room, msg: String(msg || '').slice(0, 200), at: String(where || '').slice(0, 120), scr: G.scr || '', sheet: (G.sheet && G.sheet.kind) || '', b: G.b ? (G.b.over ? 'over' : 'on') : '' }); syncRun(run); } catch (e) { } }
 function scheduleSync() { clearTimeout(syncT); syncT = setTimeout(() => { if (G.run) syncRun(G.run); }, 1500); }
 async function syncRun(run, status) {
   if (status) run.status = status;

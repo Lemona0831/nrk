@@ -19,7 +19,9 @@ if (typeof document !== 'undefined') {
   let rz = 0; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (G.b && window.innerWidth >= 1100) G.logOpen = false; render(); }, 120); });
   render();
   window.addEventListener('online', () => { if (G.cloud && G.cloud.ready) cloudFlush(); else if (G.scr === 'title' && G.acct && !G.acct.anon) cloudLoad().then(render); });
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') cloudFlush(); });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { cloudFlush(); liveSync(true); } });
+  window.addEventListener('pagehide', () => liveSync(true)); setInterval(() => liveSync(), 10000); // 10월 24일: 행동 기록을 10초마다 · 탭을 숨기거나 닫을 때 보낸다
+  window.addEventListener('error', e => liveErr(e.message, (String(e.filename || '').split('/').pop().split('?')[0]) + ':' + e.lineno + ':' + e.colno)); window.addEventListener('unhandledrejection', e => liveErr('promise: ' + (e.reason && (e.reason.message || e.reason)), '')); // 화면 오류는 판 기록에 한 줄로 남겨 바로 보낸다
   Promise.resolve(initCaps()).then(initSiteUpdates, initSiteUpdates);
 }
 if (typeof module !== 'undefined') module.exports.UI = { G, vTitle, vBattle, vRunMap, vDash, aggregate, blankData, startRun, enterRoom, battleContinue, doAct, vSheet, scenAxes };
