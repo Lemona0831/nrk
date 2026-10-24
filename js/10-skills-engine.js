@@ -475,8 +475,8 @@ function elUse(b, s, targets, tgt) {
   if (F('elFrostWall')) { S.frostWall = 1; logp(b, 'good', '서리 방벽: 이번 전투 동안 보호가 있을 때 나를 친 적에게 둔화 1'); }
   if (F('elManaFire')) { S.manaFire = 1; logp(b, 'good', '마염 화살: 이번 전투 동안 화상 걸린 적을 기본 공격하면 화상 +1'); }
   const av = F('elAvatar'); if (av) { S.avatar = av.r || 3; S.avatarT = b.turnIdx; logp(b, 'crit', '빙염의 화신: ' + S.avatar + '차례 동안 모든 공격이 화상 · 둔화를 함께 건다'); }
-  const ss = F('elStasis'); if (ss) { let k = 0; for (const e of alive(b)) { if (e.role === 'root') continue; if (e.strong || e.role === 'boss') { b.elNoFrz = 1; addS(b, e, 'chill', EL5_BOUND.stasisChill); b.elNoFrz = 0; if (ss.brk) addBreak(b, e, ss.brk); } else { const tl = ysBigTele(e); e.stun = Math.max(e.stun || 0, ss.r || 1); k++; if (tl) ysResp(b, '끊기'); } }
-    p.stun = Math.max(p.stun || 0, 1); S.stasisT = b.turnIdx; logp(b, 'crit', '영겁의 정적: 적 ' + k + '이(가) ' + ((ss.r || 1) > 1 ? ss.r + '번 ' : '') + '행동을 놓친다. 나도 다음 차례를 쉰다'); b.rec.push({ k: 'elStasis', n: k }); }
+  const ss = F('elStasis'); if (ss) { let k = 0, lk = 0; for (const e of alive(b)) { if (e.role === 'root') continue; if (e.strong || e.role === 'boss' || elFrzLk(b, e)) { b.elNoFrz = 1; addS(b, e, 'chill', EL5_BOUND.stasisChill); b.elNoFrz = 0; if (ss.brk && (e.strong || e.role === 'boss')) addBreak(b, e, ss.brk); if (!(e.strong || e.role === 'boss')) lk++; } else { const tl = ysBigTele(e); e.stun = Math.max(e.stun || 0, ss.r || 1); e.elStun = 1; k++; if (tl) ysResp(b, '끊기'); } } /* S-5(10월 24일): 막 풀려난 적(elFrzLk)은 둔화만 */
+    p.stun = Math.max(p.stun || 0, 1); p.stunSelf = 1; /* S-5: 내가 건 기절은 강적 시계를 멈추지 않는다(fcPStun) */ S.stasisT = b.turnIdx; logp(b, 'crit', '영겁의 정적: 적 ' + k + '이(가) ' + ((ss.r || 1) > 1 ? ss.r + '번 ' : '') + '행동을 놓친다' + (lk ? '. 막 풀려난 적 ' + lk + '은(는) 둔화만 받는다' : '') + '. 나도 다음 차례를 쉰다'); b.rec.push({ k: 'elStasis', n: k, lk }); }
   const mt = F('elMeteor'); if (mt) { const hp = Math.floor(p.hp * EL5_BOUND.meteorHp); p.hp = Math.max(1, p.hp - hp); logp(b, 'bad', '천화: 생명력 ' + hp + '을(를) 불의 비에 바친다'); }
 }
 /* 타격 피해(runSkill2 대상 고리): 비전 일격 = 취약 걸린 적에게 ×, 빙결 파쇄 = 둔화 1마다 피해 더함(지능으로 큼). 원소술사 무기 피해는 시작 4라 무기 피해 배수를 쓰지 않는다 */
@@ -509,11 +509,14 @@ function elBasicAfter(b, tgt, d, melee1) { const p = b.p, S = p.elSt; if (!tgt) 
 function elProtFill(b, p) { const S = p.elSt; if (!S.protR) return; if ((b.round || 0) > S.protR.until) { S.protR = null; return; } const c = st(p, 'protect'); if (c < S.protR.n) addS(b, p, 'protect', S.protR.n - c); }
 function elTurnStart(b, p) { const S = p.elSt; if (S.cat && S.catT !== b.turnIdx) S.cat = 0; if (S.protR) elProtFill(b, p);
   if (S.avatar > 0 && S.avatarT !== b.turnIdx) { S.avatar--; S.avOnT = b.turnIdx; const hp = Math.max(1, Math.round(p.hpMax * EL5_BOUND.avatarHp)); p.hp = Math.max(1, p.hp - hp); logp(b, 'bad', '빙염의 화신: 생명력 −' + hp + (S.avatar ? ' (남은 ' + S.avatar + '차례)' : ' (마지막 차례)')); } }
-/* 빙결(elemShock 끝, 열충격 뒤): 이번에 둔화가 가득 찬 적(addS의 e.frzP). 영겁의 정적이 거는 둔화 3은 얼리지 않는다(b.elNoFrz) */
+/* 빙결(elemShock 끝, 열충격 뒤): 이번에 둔화가 가득 찬 적(addS의 e.frzP). 영겁의 정적이 거는 둔화 3은 얼리지 않는다(b.elNoFrz)
+   S-5(10월 24일 만든 사람): 빙결 · 정적으로 행동을 놓친 적(js/30이 e.elLk = 그 라운드 + 1)은 다음 라운드가 끝날 때까지 다시 얼지도 · 정적에 멈추지도 않고 둔화만 남는다 */
+const elFrzLk = (b, e) => (e.elLk || 0) >= (b.round || 0);
 function elFreeze(b, by) { for (const e of b.en) { if (!e.frzP) continue; e.frzP = 0; if (!e.alive || b.over || e.role === 'root' || st(e, 'chill') < KW.chill) continue;
+  if (!(e.strong || e.role === 'boss') && elFrzLk(b, e)) { logp(b, 'sys', e.n + '은(는) 막 얼음에서 풀려나 다시 얼지 않는다. 둔화는 남는다'); b.rec.push({ k: 'freeze', big: 0, lk: 1, by }); continue; }
   delete e.s.chill; e.chillR = 0;
   if (e.strong || e.role === 'boss') { const fb = uqV(b.p, 'u_frzBrk', EL5_BOUND.frzBrk, (a, v) => Math.max(a, v)) + uqV(b.p, 'u_freezeBrk', 0, (a, v) => a + v); /* M6-1 접사 el_freezeBrk */ /* M6-1 고유 el_h3: 붕괴 +40 → +60 */ addBreak(b, e, fb); logp(b, 'good', e.n + '이(가) 얼어붙다 만다. 둔화가 풀리고 붕괴 +' + fb); b.rec.push({ k: 'freeze', big: 1, by }); }
-  else { const tl = ysBigTele(e); e.stun = Math.max(e.stun || 0, 1); if (b.p.g8u) e.uqFrz = 1; /* M6-1 고유 el_h8: 얼어서 놓치는 행동 표시(js/30) */ logp(b, 'crit', '빙결: ' + e.n + '이(가) 얼어붙는다. 다음 행동을 놓친다'); if (tl) ysResp(b, '끊기'); b.rec.push({ k: 'freeze', big: 0, by }); } } }
+  else { const tl = ysBigTele(e); e.stun = Math.max(e.stun || 0, 1); e.elStun = 1; if (b.p.g8u) e.uqFrz = 1; /* M6-1 고유 el_h8: 얼어서 놓치는 행동 표시(js/30) */ logp(b, 'crit', '빙결: ' + e.n + '이(가) 얼어붙는다. 다음 행동을 놓친다'); if (tl) ysResp(b, '끊기'); b.rec.push({ k: 'freeze', big: 0, by }); } } }
 /* M6-1 고유 장비 읽는 곳(원소술사): 주문의 상태 더하기(el_h2) · 마력 화살 무기 피해 배율(el_h5, basicBase) · 미리 보기용 조용한 합(발동을 세지 않는다) */
 const elStAdd = (b, s, x) => uqA(b.p, 'u_elStAdd', b, s, x);
 const elWpnK = p => { const m = uqV(p, 'u_wpnMul', 0, (a, v) => Math.max(a, v)); return m ? m / ((BUILDS[p.build] || {}).wpnMul || 1) : 1; };

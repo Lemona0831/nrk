@@ -145,8 +145,8 @@ function vRecords() {
 /* ===== 랭킹 ===== */
 function rankDisplayRows() {
   const out=[];
-  if(G.db && G.board){for(const T of G.board)for(const e of Object.values(T.rank80 || {}))out.push(Object.assign({},e,{uid:T.uid,nick:T.name || '',me:T.uid===G.uid}));}
-  else for(const e of Object.values(G.data.rank80 || {}))out.push(Object.assign({},e,{uid:G.uid || 'local',nick:G.data.name || '',me:true}));
+  if(G.db && G.board){for(const T of G.board)for(const e of Object.values(T.rank80 || {}))out.push(Object.assign({},e,{uid:T.uid,nick:T.name || '',me:T.uid===G.uid,login:T.login}));} // 10월 24일: login — 손님 표시(js/44 rankGuest)
+  else for(const e of Object.values(G.data.rank80 || {}))out.push(Object.assign({},e,{uid:G.uid || 'local',nick:G.data.name || '',me:true,login:boardLogin({}).login}));
   const tab=G.rankTab || 'all',mode=G.rankMode==='hard' ? 'hard' : 'normal';
   return out.filter(e=>BUILDS[e.build]&&rankOk(e)&&(tab==='all'||e.build===tab)&&(e.mode==='hard'?'hard':'normal')===mode&&(G.rankIncludeDead!==false||e.st!=='dead')).sort(rankCmp); // S-4(10월 24일): rankOk — 있을 수 없는 줄은 세우지 않는다
 }
@@ -164,7 +164,7 @@ function vRank() {
     body+=mi>=0?'<p class="rcme">내 최고 순위 <b>'+(mi+1)+'위</b> · '+esc(rcProg(all[mi]))+'</p>':'<p class="mini">이 조건에는 내 기록이 없습니다.</p>';
     body+='<div class="rkwrap"><table class="rkt"><caption class="sr">플레이어별 최고 기록</caption><thead><tr><th>순위</th><th>플레이어·캐릭터</th><th>직업</th><th>도달</th><th>상세</th></tr></thead><tbody>';
     body+=rows.map((e,i)=>{const B=rankClassView(e),other=records.filter(x=>x.uid===e.uid);
-      return '<tr class="'+(e.me?'me':'')+'"><th class="c-rank" scope="row" data-l="순위">'+(i+1)+'</th><td class="c-name" data-l="플레이어·캐릭터"><b>'+esc(e.nick || '이름 없는 방랑자')+(e.me?' · 나':'')+'</b><small>'+esc(e.cname || '이름 없음')+'</small></td><td class="c-cls" data-l="직업">'+esc(B.n)+'</td><td class="c-prog" data-l="도달"><b>'+esc(rcProg(e))+'</b><small>'+esc(RANK_ST[e.st] || '기록 없음')+'</small></td><td class="c-time" data-l="상세"><details><summary>상세 · '+other.length+'판</summary><p>대표 기록: Lv '+(e.lv || 1)+' · '+(e.ms>0?fmtMs(e.ms):'시간 미기록')+' · '+esc(rcDate(e.at))+'</p><ol>'+other.map(x=>'<li>'+esc(x.cname || '이름 없음')+' · '+esc(rankClassView(x).n)+' · '+esc(rcProg(x))+' · Lv '+(x.lv || 1)+' · '+esc(RANK_ST[x.st] || '기록 없음')+' · '+(x.ms>0?fmtMs(x.ms):'시간 미기록')+'</li>').join('')+'</ol></details></td></tr>';
+      return '<tr class="'+(e.me?'me':'')+'"><th class="c-rank" scope="row" data-l="순위">'+(i+1)+'</th><td class="c-name" data-l="플레이어·캐릭터"><b>'+esc(e.nick || '이름 없는 방랑자')+(e.me?' · 나':'')+'</b>'+rankGuestTag(e)+'<small>'+esc(e.cname || '이름 없음')+'</small></td><td class="c-cls" data-l="직업">'+esc(B.n)+'</td><td class="c-prog" data-l="도달"><b>'+esc(rcProg(e))+'</b><small>'+esc(RANK_ST[e.st] || '기록 없음')+'</small></td><td class="c-time" data-l="상세"><details><summary>상세 · '+other.length+'판</summary><p>대표 기록: Lv '+(e.lv || 1)+' · '+(e.ms>0?fmtMs(e.ms):'시간 미기록')+' · '+esc(rcDate(e.at))+'</p><ol>'+other.map(x=>'<li>'+esc(x.cname || '이름 없음')+' · '+esc(rankClassView(x).n)+' · '+esc(rcProg(x))+' · Lv '+(x.lv || 1)+' · '+esc(RANK_ST[x.st] || '기록 없음')+' · '+(x.ms>0?fmtMs(x.ms):'시간 미기록')+'</li>').join('')+'</ol></details></td></tr>';
     }).join('') || '<tr><td colspan="5">아직 기록이 없습니다.</td></tr>';
     body+='</tbody></table></div><p class="mini">'+all.length+'명의 최고 기록 중 50위까지 표시합니다. 상세에는 현재 조건의 보관된 랭킹 기록이 표시됩니다. 분석용 플레이 로그는 그대로 유지됩니다.</p>';
   }

@@ -124,7 +124,7 @@ function ch2Act(b, e, i, d) {
 /* --- G-1 강적 시계 다섯(틀은 js/25 FOE_CLOCK, 값은 data/dungeon.js FOE_X). 무엇이 칸을 채우고 되감는지 · 파국 · 보상은 비공개 문서 참조.
    js/25보다 먼저 읽히므로 정의는 CH2_CLOCK에 두고 ch2ClockReg가 FOE_CLOCK에 넣는다(2챕터 전투 시작 · 라운드 · 행동 목록에서) --- */
 const ch2Strong = (b, id) => alive(b).find(x => x.strong && x.foe === id) || null;
-const ch2PStun = b => !!(b && b.p && b.p.stun > 0);
+const ch2PStun = b => fcPStun(b); // S-5(10월 24일): 내가 건 기절은 빼고(js/25)
 function ch2Blow(b, src, pct, label) { // 비공개 문서 참조(한 번에, 생명력 비율로)
   const p = b.p; if (b.over || !(p.hp > 0)) return 0;
   return hurtPlayer(b, p.hpMax * pct, { src, single: 1, charged: 1, cap: pct, label }) || 0;
@@ -153,7 +153,7 @@ function ledgerReturn(b) {
   delete run.seized; applyGear(run); return n;
 }
 /* 등불 도둑 */
-const thiefNoHide = (b, e) => e.noHideR != null && (b.round || 0) <= e.noHideR;
+const thiefNoHide = (b, e) => (e.noHideR != null && (b.round || 0) <= e.noHideR) || !alive(b).some(x => x !== e && !x.pile && !x.under && x.role !== 'root'); // S-5(10월 24일 만든 사람): G9 — 칠 수 있는 다른 적이 없으면 숨지 않는다(3챕터 canHide3 · 라운드 끝 G9와 같은 규칙)
 function thiefHide(b, e) { if (!e.alive || e.under || thiefNoHide(b, e)) return; e.under = 1; logp(b, 'sys', e.n + '이(가) 그림자 속으로 숨는다'); }
 function thiefReveal(b, e, why) { if (!e || !e.alive) return; const X = FOE_X.lampthief; e.under = 0; e.noHideR = (b.round || 0) + X.reveal; addS(b, e, 'vuln', X.vuln); logp(b, 'good', e.n + '이(가) ' + (why || '') + ' 드러난다. 취약 ' + X.vuln); codexHit(b, 'lampthief', 'lit'); }
 const stabEst = (b, e, est) => e.clk && e.clk.perm ? b.p.hpMax * FOE_X.lampthief.stab : est;
@@ -509,16 +509,18 @@ function ch2EnterBtns(run, R) {
 function vMarket(run, R) {
   const S = marketStock(run, R), U = S.uq && UNIQUE[S.uq], g = run.gold || 0, pts = (run.ptree && run.ptree.pts) || 0, M = MARKET;
   const best = ch2BestBag(run), ties = ch2BestBagTies(run); const btn = (k, t, ok, why, u) => `<button data-a="mkbuy" data-k="${k}"${u ? ` data-u="${u}"` : ''}${ok ? '' : ' disabled'}>${esc(t)}${!ok && why ? ` <small>${esc(why)}</small>` : ''}</button>`;
-  const heroItemBtns = ties.length >= 2 ? ties.map(u => btn('hero-item', '가방의 가장 좋은 장비를 내놓는다: ' + itName(run.inv[u]), true, '', u)).join('') : null; // 가장 좋은 것이 둘 이상이면 하나씩 단추
+  const lowWhy = best && ch2HeroLow(run, best) ? '희귀 이상 장비만 받습니다' : ''; // 10월 24일: 내놓을 장비가 희귀 미만이면 닫는다
+  const heroItemBtns = ties.length >= 2 && !lowWhy ? ties.map(u => btn('hero-item', '가방의 가장 좋은 장비를 내놓는다: ' + itName(run.inv[u]), true, '', u)).join('') : null; // 가장 좋은 것이 둘 이상이면 하나씩 단추
   return `<h3>🏮 암시장</h3><p class="lore">천막 아래 등불 하나. 값은 골드가 아닐 수도 있다.</p><p class="mini">셋 가운데 하나만 살 수 있습니다. 가진 골드 ${g}</p>`
     + (U ? `<div class="card"><p><b>① 고유 장비</b>: ${esc(U.n)} <span class="mini">(희귀)</span></p><div class="row">${btn('uq-gold', '골드 ' + M.uq.gold, g >= M.uq.gold, '골드가 모자랍니다')}${btn('uq-hp', '최대 생명력 −' + Math.round(M.uq.hpPen * 100) + '%(캐릭터 끝까지)', true)}${btn('uq-pt', '패시브 포인트 1', pts >= M.hidden.pt, '패시브 포인트가 없습니다')}</div></div>` : '')
-    + `<div class="card"><p><b>② 영웅 장비 하나</b></p><div class="row">${btn('hero-gold', '골드 ' + M.hero.gold, g >= M.hero.gold, '골드가 모자랍니다')}${heroItemBtns || btn('hero-item', best ? '가방의 가장 좋은 장비를 내놓는다: ' + itName(run.inv[best]) : '가방의 가장 좋은 장비를 내놓는다', !!best, '가방에 장비가 없습니다')}</div></div>`
+    + `<div class="card"><p><b>② 영웅 장비 하나</b> <span class="mini">(장비로 낼 때는 희귀 이상)</span></p><div class="row">${btn('hero-gold', '골드 ' + M.hero.gold, g >= M.hero.gold, '골드가 모자랍니다')}${heroItemBtns || btn('hero-item', best ? '가방의 가장 좋은 장비를 내놓는다: ' + itName(run.inv[best]) : '가방의 가장 좋은 장비를 내놓는다', !!best && !lowWhy, lowWhy || '가방에 장비가 없습니다')}</div></div>`
     + `<div class="card"><p><b>③ 수상한 꾸러미</b>: 열어 보기 전에는 모른다.</p><div class="row">${btn('bundle', '골드 ' + M.bundle.gold, g >= M.bundle.gold, '골드가 모자랍니다')}</div></div>`
     + `<div class="row"><button data-a="mkleave" data-focus>그냥 지나간다</button></div>`;
 }
 const G8_RANK = { n: 0, m: 1, r: 2, h: 3, l: 4 };
 function ch2BestBag(run) { const L = (run.bag || []).filter(u => run.inv[u] && !itemRemoveWhy(run, u)); return L.sort((a, b) => (G8_RANK[run.inv[b].g] || 0) - (G8_RANK[run.inv[a].g] || 0))[0] || null; }
 function ch2BestBagTies(run) { const u0 = ch2BestBag(run); if (!u0) return []; const g = G8_RANK[run.inv[u0].g] || 0; return (run.bag || []).filter(u => run.inv[u] && !itemRemoveWhy(run, u) && (G8_RANK[run.inv[u].g] || 0) === g); } // 가장 좋은 등급이 같은 것들(둘 이상이면 고른다)
+const ch2HeroLow = (run, u) => (G8_RANK[run.inv[u].g] || 0) < G8_RANK.r; // 10월 24일 만든 사람 결정: 영웅과 바꿀 장비는 희귀 이상만(평범 하나만 두고 영웅을 받던 길을 막는다)
 function ch2MarketBuy(run, R, k, pu) {
   const S = marketStock(run, R), M = MARKET, p = run.p, drops = []; let paid = '';
   if (k === 'uq-gold' || k === 'uq-hp' || k === 'uq-pt') {
@@ -529,7 +531,7 @@ function ch2MarketBuy(run, R, k, pu) {
     drops.push(mkUq(S.uq, run.ch || 2));
   } else if (k === 'hero-gold' || k === 'hero-item') {
     if (k === 'hero-gold') { if ((run.gold || 0) < M.hero.gold) return null; run.gold -= M.hero.gold; paid = '골드 ' + M.hero.gold; }
-    else { const T = ch2BestBagTies(run), u = T.includes(pu) ? pu : T.length === 1 ? T[0] : null; if (!u) return null; paid = itName(run.inv[u]); discardUid(run, u); }
+    else { const T = ch2BestBagTies(run), u = T.includes(pu) ? pu : T.length === 1 ? T[0] : null; if (!u || ch2HeroLow(run, u)) return null; paid = itName(run.inv[u]); discardUid(run, u); }
     drops.push(g8Gen(run, { g: 'h' }));
   } else if (k === 'bundle') {
     if ((run.gold || 0) < M.bundle.gold) return null; run.gold -= M.bundle.gold; paid = '골드 ' + M.bundle.gold;
@@ -563,7 +565,7 @@ function ch2Event(run, R, o, drops) {
 /* 깨어난(바로 싸우는) 이벤트 전투의 보상: 투기장 링 */
 function ch2WakeWin(run, R, drops) { const W = R.wakeWin; if (!W) return; if (W.gold) gainGold(run, W.gold, '링에서 이겼습니다'); if (W.item) drops.push(mkItem(dropKey(run, rollGradeCh(run.ch, 'room')))); }
 
-/* --- 상점 · 야영지: 등불 기름 재고(25골드 · 2개) · 빚의 제단 값 +30%(한 번) --- */
+/* --- 상점 · 야영지: 등불 기름 재고(25골드 · 2개) · 빚의 제단 값 +30%(한 번, 10월 24일부터 챕터 끝 상점만 — 야영지 상인은 쓰지도 붙이지도 않는다) --- */
 function ch2OilRow(run, S, s) { const o = S && S.oil; if (!o) return ''; const why = (run.gold || 0) < o.price ? '골드가 모자랍니다' : (run.oil || 0) >= LAMP.max ? '기름은 ' + LAMP.max + '개까지' : o.left <= 0 ? '다 팔렸습니다' : ''; return '<div class="bagline consrow"><div><b>🛢️ 등불 기름</b> <span class="mini">남은 ' + o.left + '개 · 가진 기름 ' + (run.oil || 0) + '/' + LAMP.max + '</span><br><small class="mini">어두운 방에 들어설 때나 싸우는 중에 하나 써서 밝힌다. 소모품 칸을 쓰지 않는다.</small></div><div class="row"><button class="sm' + (why ? '' : ' gold') + '" data-a="oilbuy"' + (s ? ' data-s="' + s + '"' : '') + (why ? ' aria-disabled="true" title="' + esc(why) + '"' : '') + '>' + o.price + ' 골드에 사기</button></div></div>'; }
 function ch2Markup(run, S) { const m = run.shopMarkup; if (!m || !S) return; for (const x of S.stock || []) x.price = Math.round(x.price * (1 + m)); for (const x of S.cons || []) x.price = Math.round(x.price * (1 + m)); if (S.oil) S.oil.price = Math.round(S.oil.price * (1 + m)); run.shopMarkup = 0; if (typeof toast === 'function') toast('빚의 제단: 이번 상점 값 +' + Math.round(m * 100) + '%'); }
 

@@ -69,6 +69,15 @@ const near = (a, b, t) => Math.abs(a - b) <= (t || 0.06) * Math.max(1, Math.abs(
   const e = f.es[0]; const h0 = e.hp; use(f.b, 'as_mu', e.id); ok(!f.p.asSt.hide && near(h0 - e.hp, R_('outDmg')(f.b, R_('wpnDmg')(f.p) * E.SK2.a_muyeong.fx[0].mul, { weapon: 1 }), 0.25) && !A(f.b, 'dodge').ok, '고른 적의 등 뒤에서 무기 피해의 ' + E.SK2.a_muyeong.fx[0].mul + '배, 대가: 흘리기 못 함');
   ok(f.p.asSt.noParry === 2 && !A(f.b, 'dodge').ok, '벤 뒤 첫 차례: 흘리기 못 함'); use(f.b, 'basic', e.id); ok(!A(f.b, 'dodge').ok, '둘째 차례: 흘리기 못 함'); use(f.b, 'basic', e.id); ok(A(f.b, 'dodge').ok, '셋째 차례: 흘리기 됨'); }
 { const f = fight(['a_muyeong']); use(f.b, 'a_muyeong'); E.runUntilPlayer(f.b); use(f.b, 'basic', f.es[0].id); ok(!f.p.asSt.mu || !A(f.b, 'as_mu').ok, '무영살 베기는 숨은 다음 차례에만'); }
+/* S-5(10월 24일 만든 사람): 무영살 → 무영살 · 연막 번갈아 받는 피해 0 끊기 */
+{ const f = fight(['a_muyeong']); use(f.b, 'a_muyeong'); E.runUntilPlayer(f.b); const m = A(f.b, 'a_muyeong'); ok(A(f.b, 'as_mu').ok && !m.ok && m.why === '베기 차례에는 무영살을 다시 쓸 수 없다', '베기 차례에는 무영살을 다시 쓸 수 없다 (' + m.why + ')');
+  use(f.b, 'as_mu', f.es[0].id); E.runUntilPlayer(f.b); ok(A(f.b, 'a_muyeong').ok, '벤 다음 차례에는 다시 쓸 수 있음'); }
+{ const f = fight(['a_muyeong']); use(f.b, 'a_muyeong'); E.runUntilPlayer(f.b); use(f.b, 'basic', f.es[0].id); E.runUntilPlayer(f.b); ok(A(f.b, 'a_muyeong').ok, '베지 않고 넘긴 뒤(벨 때를 놓침)에는 다시 쓸 수 있음'); }
+{ const f = fight(['a_yeonmak'], ['bruiser', 'bruiser']); const { p, b, es } = f; es[0].elite = 1; use(b, 'a_yeonmak'); const ev0 = p.evade; ok(ev0 === 3, '연막: 몸 빼기 3');
+  const hit = (e, raw, x) => { const cur = b.cur; b.cur = null; delete p.s.protect; const d = R_('hurtPlayer')(b, raw, Object.assign({ src: e }, x || {})); b.cur = cur; return d; };
+  const d1 = hit(es[0], 20, { charged: 1 }); ok(p.evade === 2 && d1 > 0 && b.log.some(x => /강타는 몸을 빼도 절반이 닿는다/.test(x.m)), '정예의 강타는 연막 몸 빼기로도 절반이 닿음 (' + d1 + ')');
+  const d2 = hit(es[1], 20, { charged: 1 }); ok(p.evade === 1 && d2 === 0, '일반 적의 강타는 그대로 피함');
+  const d3 = hit(es[0], 20); ok(p.evade === 0 && d3 === 0, '정예의 평소 공격은 그대로 피함'); }
 { const f = fight(['a_janyeong']); use(f.b, 'a_janyeong'); ok(Math.abs(fx(f.p, 'inP', f.b, f.p, {}) + U.zanIn) < 1e-9, '잔영난무 대가: 받는 피해 +20%');
   for (let i = 0; i < 4; i++) use(f.b, 'guard'); ok(f.p.asSt.zan === 1, '넷째 차례까지 이어짐'); use(f.b, 'guard'); ok(!f.p.asSt.zan && f.p.asSt.noStam === U.zanNoStam, '끝난 뒤 2차례 스태미나가 차지 않음');
   f.p.st = 10; f.b.stepMode = true; E.playerAct(f.b, 'basic', f.es[0].id); f.b.stepMode = false; E.runUntilPlayer(f.b); ok(f.p.st === 10, '스태미나 그대로 — ' + f.p.st); }
@@ -77,6 +86,6 @@ const near = (a, b, t) => Math.abs(a - b) <= (t || 0.06) * Math.max(1, Math.abs(
 { const f = fight(['a_gyeokpyo', 'a_dwikkot'], ['bruiser', 'archer']); use(f.b, 'a_dwikkot'); const e = f.es[1]; ok(e.row === 'back', '후열 궁수'); psn(f, e, 4); const g = fight(['a_gyeokpyo'], ['bruiser', 'archer']);
   use(f.b, 'a_gyeokpyo', e.id); use(g.b, 'a_gyeokpyo', g.es[1].id); ok(lost(e) - lost(g.es[1]) > PT(4) * (E.SK2.a_dwikkot.fx[0].mul - 0.1) * R_('triggerDamageMul')(f.p), '등 뒤의 꽃: 후열 적에게 터뜨리기 ' + E.SK2.a_dwikkot.fx[0].mul + '배'); }
 // 한 줄 설명 · 승부수 문장
-{ const A2 = E.atBuild('assassin'); for (const x of Object.values(A2.nodes).filter(x => x.kind === 'skill')) { const s = E.SK2[x.id], d = E.skBody(s); ok(!/\s{2}/.test(d) && d.length > 4 && (s.line || d.length <= R_('MK_DESC_MAX')), s.n + ' 한 줄 설명: ' + d); }
+{ const A2 = E.atBuild('assassin'); for (const x of Object.values(A2.nodes).filter(x => x.kind === 'skill')) { const s = E.SK2[x.id], d = E.skBody(s); ok(!/\s{2}/.test(d) && d.length > 4 && (s.line || d.replace(/ (비용 1로 )?쓰면 다음 차례 유산 충전 없음\.$/, '').length <= R_('MK_DESC_MAX')), s.n + ' 한 줄 설명: ' + d); }
   ok(E.SK2.a_mandok.cut === 'arcane' && E.SK2.a_muyeong.cut === 'blade' && E.SK2.a_janyeong.cut === 'guard', '컷인: 만독개화 마법 · 무영살 검 · 잔영난무 방어'); }
 console.log('as-check: ' + n + '개 통과');

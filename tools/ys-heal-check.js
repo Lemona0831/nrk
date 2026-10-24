@@ -4,7 +4,8 @@
    1 대상: 직업 여섯의 유산 1 칸 가운데 회복 칸은 신성한 기도(변형 깊은 기도 · 기도의 막 포함)뿐
    2 설명: 칸 설명 끝에 "쓰면 다음 차례 유산 충전 없음."
    3 동작: 쓴 다음 차례 충전 없음 → 그다음 차례는 다시 +1, 긴 전투 +2도 없음, 대응 충전은 그대로, 회복 없는 유산 1 칸은 그대로
-   4 유산 0이면 고를 수 없다(테스터는 ok인 행동만 고른다) */
+   4 유산 0이면 고를 수 없다(테스터는 ok인 행동만 고른다)
+   S-5(10월 24일 만든 사람): 실제로 낸 비용(skCostAt)이 1 이하면 모두(접사 · 고유 · 장비 할인 포함), 태세 끄기 · 바꾸기는 뺀다. 할인으로 1이 될 수 있는 칸은 설명 끝 "비용 1로 쓰면 …" */
 process.env.DGDIR = process.env.DGDIR || '.';
 const assert = require('assert/strict'), D = require('./dgqa.js'), E = D.G0, R_ = D.run_;
 let n = 0; const ok = (c, m) => { assert(c, m); n++; };
@@ -29,7 +30,7 @@ const step = (b, id, t) => { b.p.st = b.p.stMax; const k0 = b.rec.length; E.play
 for (const v of [null, 'wv_pr_more', 'wv_pr_ward']) {
   const { b, run } = fight(['w_shieldhit', 'w_pray', 'sv_w_pray']); if (v) { run.atree.vsel = { sv_w_pray: v }; E.atSync(run); }
   const a = A(b, 'w_pray'); ok(a.yc === 1 && /쓰면 다음 차례 유산 충전 없음\.$/.test(a.d), (v || '기본') + ': 설명 끝 "쓰면 다음 차례 유산 충전 없음." (' + a.d + ')');
-  const s2 = A(b, 'w_shieldhit'); ok(!/충전 없음/.test(s2.d), '방패 가격(유산 2)에는 붙지 않음'); }
+  const s2 = A(b, 'w_shieldhit'); ok(!/충전 없음/.test(s2.d) && !/충전 없음/.test(s2.cost), '방패 가격(유산 2, 할인 없음): 카드 · 버튼에 충전 없음이 붙지 않음 (' + s2.d + ')'); }
 // 3 동작
 { const { p, b, es } = fight(['w_shieldhit', 'w_pray', 's_slam', 's_regret']);
   p.ys = 1; p.hp = 50; let k0 = step(b, 'basic', es[0].id); ok(turnG(b, k0) === YUSAN.turn, '기본 공격 뒤 차례 충전 +' + YUSAN.turn + ' (' + turnG(b, k0) + ')');
@@ -45,10 +46,11 @@ if (YUSAN.longFrom > 0) { const { p, b } = fight(['w_shieldhit', 'w_pray']); b.y
 
 /* ===== S-3(10월 24일 만든 사람): 보호 · 보호막 · 회피까지 넓힘, 변형의 조건 할인으로 1이 되어 쓴 때도 ===== */
 const ysCondSk = R_('ysCondSk'), atSlotId = R_('atSlotId');
-function fightC(cls, act, vsel) {
+function fightC(cls, act, vsel, af) {
   G.data = E.blankData(); G.data.unlAll = 1; G.cre = { name: 't' }; G.dropQ = []; G.b = null; G.sheet = null; E.startRun(cls); const run = G.run; delete run.alloc; run.clears = 2; run.lv = 16;
   const N = E.atBuild(cls).nodes; run.atree.own = act.concat(Object.keys(vsel || {}).map(id => atSlotId(id))); run.skills = act.filter(id => (N[id] || {}).kind === 'skill').slice(0, 4);
   run.atree.vsel = Object.fromEntries(Object.entries(vsel || {}).map(([id, v]) => [atSlotId(id), v])); E.atSync(run);
+  if (af) { const it = E.mkItem8({ base: 'gloves', g: 'r', ch: 3, b: 0, af: [af] }); run.inv[it.uid] = it; run.eqU.gloves = it.uid; E.applyGear(run, true); run.p.hp = run.p.hpMax = E.calcHpMax(run.p); } // S-5: 접사 장갑 하나
   const es = ['bruiser', 'bruiser'].map((r, i) => E.mkEnemy(r, false, i)); for (const e of es) { e.hp = e.hpMax = 5000; e.dmg = 0; }
   const b = E.newBattle(run.p, es, {}); b.rngF = () => 0.5; b.stepMode = false; E.runUntilPlayer(b); return { run, p: run.p, b, es };
 }
@@ -70,5 +72,12 @@ for (const id of ['h5_cover', 'h5_dodge']) { const { p, b, es } = fightC('hunter
   ok(/비용 1로 쓰면 다음 차례 유산 충전 없음\.$/.test(a.d), '태세의 버팀: 설명 끝 "비용 1로 쓰면 …" (' + a.d + ')');
   p.ys = 5; let k0 = step(b, 'w_stand'); ok(a.yc === 2 && turnG(b, k0) === YUSAN.turn, '태세가 꺼져 있어 비용 2로 쓰면 충전 그대로');
   p.ys = 5; step(b, 'w_dstance'); ok(A(b, 'w_stand').yc === 1, '태세를 켜면 버티기 비용 1'); p.ys = 3; k0 = step(b, 'w_stand'); ok(turnG(b, k0) === 0 && noTurn(b, k0), '비용 1로 쓰면 다음 차례 충전 없음'); }
-{ const { b } = fightC('warden', ['w_dstance', 'w_shieldhit', 'w_stand']); ok(!/충전 없음/.test(A(b, 'w_stand').d), '버티기(변형 없음, 유산 2)에는 붙지 않음'); }
+/* ===== S-5(10월 24일 만든 사람): 실제로 낸 비용 1 이하면 할인 출처를 가리지 않는다. 태세 끄기 · 바꾸기(비용 0, wdOff · wdTurn)는 뺀다 ===== */
+{ const { b } = fightC('warden', ['w_dstance', 'w_shieldhit', 'w_stand']); ok(!/충전 없음/.test(A(b, 'w_stand').d), '버티기(변형 없음, 유산 2): 카드 끝 문장 없음(쓸 때만 알림) (' + A(b, 'w_stand').d + ')'); }
+{ const { p, b } = fightC('warden', ['w_dstance', 'w_shieldhit', 'w_stand'], null, ['costOnce_보호막', 1]); const a = A(b, 'w_stand'); ok(a.yc === 1, '아끼는 장갑(costOnce 보호막): 버티기 비용 2 → 1 (' + a.yc + ')'); ok(a.noT === 1 && / · 충전 없음$/.test(a.cost) && !/충전 없음/.test(a.d), '할인으로 1이 되면 카드가 아니라 전투 버튼에 "충전 없음" (' + a.cost + ')');
+  p.ys = 5; let k0 = step(b, 'w_stand'); ok(turnG(b, k0) === 0 && noTurn(b, k0), '접사 할인으로 비용 1로 쓰면 다음 차례 충전 없음(S-3 우회 막기)'); }
+{ const { p, b, es } = fightC('warden', ['w_dstance', 'w_shieldhit', 'w_stand'], { w_dstance: 'wv_ds_ward' }); ok(!/충전 없음/.test(A(b, 'w_dstance').d) && !A(b, 'w_dstance').noT, '굳은 태세(보호막 +8, 유산 2): 카드 · 버튼에 충전 없음 없음');
+  p.ys = 5; let k0 = step(b, 'w_dstance'); step(b, 'basic', es[0].id); ok(turnG(b, k0) === YUSAN.turn, '태세를 켜며 비용 2를 내면 충전 그대로'); /* 수비 태세는 빠른 행동: 기본 공격으로 차례를 끝낸다 */
+  ok(A(b, 'w_dstance').yc === 0 && !A(b, 'w_dstance').noT, '켜진 태세 끄기는 비용 0, 버튼에 충전 없음 없음'); p.ys = 3; k0 = step(b, 'w_dstance'); step(b, 'basic', es[0].id); ok(turnG(b, k0) === YUSAN.turn && !noTurn(b, k0), '태세 끄기(비용 0, wdOff)는 새 보호가 아니라 충전 그대로'); }
+{ const src = R_('ysSpend.toString()'); ok(src.includes("ca.by !== 'wdOff' && ca.by !== 'wdTurn'"), '돌아선 방패의 태세 바꾸기(wdTurn)도 뺀다(소스)'); }
 console.log('ys-heal-check: ' + n + '개 통과');

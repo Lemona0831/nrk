@@ -20,6 +20,7 @@ b=battle();for(const role of ['root','candle','bonewall','crown'])E.buHarvest(b,
 b=battle();E.bHeal(b,100,'leech');assert.equal(b.p.hp,48);E.bHeal(b,100,'leech');assert.equal(b.p.hp,48);b.turnIdx++;E.bHeal(b,100,'leech');assert.equal(b.p.hp,56);
 for(const build of V('ALL_CLASS_KEYS()')) {const h=V(`classRuleHtml(${JSON.stringify(build)})`);assert(h.includes('rule-details'));assert(h.includes('자세한 조건과 예외'));}
 assert(V("classRuleHtml('elementalist')").includes('상한 16'));
+assert(V("classRuleHtml('elementalist')").includes('빙결 · 영겁의 정적으로 행동을 놓친 적은 그다음 라운드가 끝날 때까지 다시 얼거나 멈추지 않고 둔화만 남습니다') && V('typeof elFrzLk')==='function'); // 10월 24일 S-5: 직업 카드도 다시 얼림 막기(js/10 elFrzLk)를 적는다
 const sb=E.newBattle(E.mkPlayer('elementalist',{}),[E.mkEnemy('bruiser',false,0)],{test:1});sb.actN=1;sb.en[0].hp=sb.en[0].hpMax=1000;E.addS(sb,sb.en[0],'ignite',10);E.addS(sb,sb.en[0],'chill',10);E.elemShock(sb,'me');assert.equal(sb.rec.find(x=>x.k==='shock').T,16);assert.equal(sb.rec.find(x=>x.k==='shock').dmg,48);assert.equal(sb.rec.find(x=>x.k==='shock').brk,36);
 b=battle();b.stepMode=true;b.p.eq.flask='hungerflask';E.playerAct(b,'flaskL');assert.equal(b.p.hp,73);assert(Math.abs(E.bHeal(b,2,'leech')-2.2)<1e-6);
 // 쿨타임 표(SK2[id].cd) 확인은 뺐다: 0.8.0 M5-0(10월 19일)부터 비용은 트리 노드 ys만 읽고 cd는 쓰지 않는다(data/skillkit.js skCost)

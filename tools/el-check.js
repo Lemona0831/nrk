@@ -49,7 +49,17 @@ const recN = (b, k, f) => b.rec.filter(r => r.k === k && (!f || f(r))).length;
 // 영겁의 정적
 { const f = fight(['e5_icespear', 'e5_charge', 'e5_frostbolt', 'e5_stillward', 'e5_shardrain', 'e5_stilleye', 'e5_stasis'], ['bruiser', 'bruiser', 'bruiser']); const { p, b, es } = f; es[2].strong = 1; const b2 = es[2].brk;
   use(b, 'e5_stasis'); ok(es[0].stun === 2 && es[1].stun === 2 && !(es[2].stun > 0) && st(es[2], 'chill') === 3 && es[2].brk === b2, '영겁의 정적: 작은 적은 이번 · 다음 라운드 행동을 놓침, 강적은 대신 둔화 3(얼지 않음)');
-  ok(p.stun === 1, '대가: 내 다음 차례도 못 함'); const t0 = b.turnIdx; next(b); const L0 = b.log.length; b.stepMode = true; E.playerAct(b, 'basic', es[0].id); ok(b.log.slice(L0).some(x => /행동을 놓친다/.test(x.m)) && p.stun === 0, '다음 차례는 놓침'); }
+  ok(p.stun === 1 && p.stunSelf === 1 && !R_('fcPStun')(b), 'S-5: 정적으로 내가 건 기절은 강적 시계의 "답할 수 없음"이 아님(fcPStun 거짓)'); p.stunSelf = 0; ok(R_('fcPStun')(b), 'S-5: 다른 까닭의 기절(성벽에 묻힘)은 그대로 멈춤'); p.stunSelf = 1;
+  ok(p.stun === 1, '대가: 내 다음 차례도 못 함'); const t0 = b.turnIdx; next(b); const L0 = b.log.length; b.stepMode = true; E.playerAct(b, 'basic', es[0].id); ok(b.log.slice(L0).some(x => /행동을 놓친다/.test(x.m)) && p.stun === 0 && !p.stunSelf, '다음 차례는 놓침(내 기절 표시도 풀림)'); }
+/* S-5(10월 24일 만든 사람): 빙결 · 정적으로 행동을 놓친 적은 다음 라운드가 끝날 때까지 다시 얼거나 멈추지 않고 둔화만 */
+{ const f = fight([]); const { p, b, es } = f; const e = es[0]; p.elSt.el = 'ice'; E.addS(b, e, 'chill', 1); use(b, 'e5_bolt', e.id); ok(e.stun === 1 && e.elStun === 1, '빙결: 얼어붙음(표시 elStun)'); use(b, 'guard'); next(b);
+  const R1 = b.round; ok(!(e.stun > 0) && e.elLk === R1 && !e.elStun, '얼어서 행동을 놓친 적: 다음 라운드(' + R1 + ')가 끝날 때까지 잠김 (elLk ' + e.elLk + ')');
+  delete e.s.chill; E.addS(b, e, 'chill', 1); use(b, 'e5_bolt', e.id); ok(!(e.stun > 0) && st(e, 'chill') === 3 && recN(b, 'freeze', r => r.lk) === 1, '잠긴 동안 둔화가 가득 차도 얼지 않고 둔화 3이 남음'); use(b, 'guard'); next(b);
+  ok(b.round > e.elLk, '그다음 라운드에는 풀림'); delete e.s.chill; E.addS(b, e, 'chill', 1); use(b, 'e5_bolt', e.id); ok(e.stun === 1, '풀린 뒤에는 다시 얼어붙음'); }
+{ const f = fight(['e5_icespear', 'e5_charge', 'e5_frostbolt', 'e5_stillward', 'e5_shardrain', 'e5_stilleye', 'e5_stasis'], ['bruiser', 'bruiser']); const { b, es } = f; es[0].elLk = b.round;
+  use(b, 'e5_stasis'); ok(!(es[0].stun > 0) && st(es[0], 'chill') === 3 && es[1].stun === 2 && es[1].elStun === 1, '영겁의 정적: 막 풀려난 적(잠김)은 둔화 3만, 다른 적은 두 번 놓침');
+  next(b); b.stepMode = true; E.playerAct(b, 'basic', es[0].id); b.stepMode = false; E.runUntilPlayer(b); ok(!(es[1].stun > 0) && es[1].elLk === b.round, '정적으로 두 번 놓친 적: 마지막으로 놓친 다음 라운드 끝까지 잠김 (elLk ' + es[1].elLk + ' · 라운드 ' + b.round + ')');
+  b.p.ys = 9; ok(A(b, 'e5_stasis').ok, '정적은 다시 쓸 수 있음'); use(b, 'e5_stasis'); ok(!(es[1].stun > 0) && recN(b, 'elStasis', r => r.lk >= 1) >= 1, '잠긴 적에게 다시 쓴 정적은 둔화만'); }
 // 천화
 { const f = fight(['e5_charge', 'e5_firebolt', 'e5_manaflame', 'e5_kindlemana', 'e5_flamelance', 'e5_heatshield', 'e5_meteor']); const { p, b, es } = f; p.hp = 100; p.hpMax = Math.max(p.hpMax, 100); use(b, 'e5_meteor');
   ok(p.hp === 50 && es.every(e => e.hp < e.hpMax && st(e, 'ignite') >= 2), '천화: 지금 생명력의 절반을 바치고 모든 적에게 피해 · 화상 3'); }
@@ -81,6 +91,6 @@ const recN = (b, k, f) => b.rec.filter(r => r.k === k && (!f || f(r))).length;
   const got = R_('atMigrateM5')(run); ok(got === 3 && run.atree.pts === pts0 + 3 && run.atree.own.length === 0 && run.atree.atv === 10 && run.atree.log.pop().why === '원소술사 재설계', '옛 판: 옛 칸 · 강화 3개 환급(원소술사 재설계, atv 10)');
   ok(!run.skills.includes('e_ember') && JSON.stringify(R_('v2Equip')(run).slice(0, 2)) === JSON.stringify(['e5_bolt', 'e5_switch']), '옛 시작 스킬은 빠지고 새 시작 스킬(마력탄 · 원소 전환)이 끼워짐'); }
 // 한 줄 설명 · 승부수
-{ const A2 = E.atBuild('elementalist'); for (const x of Object.values(A2.nodes).filter(x => x.kind === 'skill')) { const s = E.SK2[x.id], d = E.skBody(s); ok(!/\s{2}/.test(d) && d.length > 4 && (s.line || d.length <= R_('MK_DESC_MAX')), s.n + ' 한 줄 설명: ' + d); }
+{ const A2 = E.atBuild('elementalist'); for (const x of Object.values(A2.nodes).filter(x => x.kind === 'skill')) { const s = E.SK2[x.id], d = E.skBody(s); ok(!/\s{2}/.test(d) && d.length > 4 && (s.line || d.replace(/ (비용 1로 )?쓰면 다음 차례 유산 충전 없음\.$/, '').length <= R_('MK_DESC_MAX')), s.n + ' 한 줄 설명: ' + d); }
   ok(E.SK2.e5_avatar.cut === 'arcane' && E.SK2.e5_stasis.cut === 'guard' && E.SK2.e5_meteor.cut === 'blade', '컷인: 화신 마법 · 정적 방어 · 천화 검'); }
 console.log('el-check: ' + n + '개 통과');

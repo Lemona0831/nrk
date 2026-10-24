@@ -270,7 +270,7 @@ function enemyAct(b, e) {
   e.exposed = 0;
   if (e.boss === 'cryptlord' && e.phase === 2 && e.row === 'front') { e.row = 'back'; logp(b, 'sys', e.n + '이(가) 옥좌로 되돌아간다'); }
   if (e.role === 'mason' && e.wallWait > 0) e.wallWait--;
-  if (e.stun > 0) { e.stun--; logp(b, 'sys', e.n + '이(가) 비틀거린다. 행동을 놓친다'); if (e.uqFrz) { e.uqFrz = 0; uqR(b.p, 'u_frzSkip', b, b.p, e); } /* M6-1 고유 el_h8: 얼어붙은 적이 행동을 놓칠 때 */ e.acts++; return; }
+  if (e.stun > 0) { e.stun--; if (e.elStun) { e.elLk = (b.round || 0) + 1; if (!(e.stun > 0)) e.elStun = 0; } /* S-5(10월 24일): 빙결 · 정적으로 놓쳤으면 다음 라운드 끝까지 다시 얼지 않는다(js/10 elFrzLk) */ logp(b, 'sys', e.n + '이(가) 비틀거린다. 행동을 놓친다'); if (e.uqFrz) { e.uqFrz = 0; uqR(b.p, 'u_frzSkip', b, b.p, e); } /* M6-1 고유 el_h8: 얼어붙은 적이 행동을 놓칠 때 */ e.acts++; return; }
   e.braced = 0; e.countering = 0; e.evading = 0; e.guarding = null; e.unguard = 0; // 버티기 · 반격 태세 · 몸 낮추기 · 지키기는 그 적의 다음 행동까지
   const i = e.intent || { k: 'attack' }; const d = enemyHitEst(b, e);
   if ((i.k === 'heavy' || i.k === 'explode' || i.k === 'burn' || i.aimed || i.k === 'sacrifice' || i.k === 'erupt' || i.k === 'reflect' || i.k === 'collapse' || i.k === 'noon') && e.teleTurn === b.turnIdx) { logp(b, 'sys', e.n + '이(가) 힘을 모은 채 노려본다'); return; } // 10월 4일: 예고한 큰 공격은 내 차례가 한 번 지난 뒤에 나간다 (한 라운드에 두 번 움직이는 적이 모은 바로 그 라운드에 내리쳤다)
@@ -436,7 +436,7 @@ function bossPhase(b, e) {
 /* ===== 0.8.0 G-1 1챕터 강적 시계 (틀은 js/25 FOE_CLOCK, 값은 data/dungeon.js CLK1). 무엇이 칸을 채우고 되감는지 · 파국 · 보상은 비공개 문서 참조 ===== 2판 · 3판(주교 · 조율자) */
 const FC1_KEY = { bellringer: 'bell', pilgrim: 'pilgrim', bishop: 'bishop', cantor: 'cantor', scribe: 'scribe' };
 function fc1K(foe) { return (FC1_KEY[foe] && CLK1[FC1_KEY[foe]]) || null; } // js/34가 강적마다 평소 공격 배율(dmg)을 읽는다
-const fc1Stun = b => b.p.stun > 0;
+const fc1Stun = b => fcPStun(b); // S-5(10월 24일): 내가 건 기절(영겁의 정적)은 빼고(js/25)
 const fc1Warn = e => !!(e.clk && !e.clk.perm && e.clk.n > 0 && e.clk.n >= e.clk.max - 1); // 마지막 경고 칸
 const fc1Held = (b, e) => { const C = e.clk; return C.n >= C.max - 1 && C.wT != null && !b.fcNoWait && (b.turnIdx || 0) <= C.wT; }; // 경고 뒤 내 차례가 아직 지나지 않았다(js/25 fcAdd와 같은 조건)
 function fc1Hit(b, src, frac, label) { return hurtPlayer(b, b.p.hpMax * frac, { src, single: 1, charged: 1, cap: frac, label }); }

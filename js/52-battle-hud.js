@@ -227,17 +227,20 @@ function bossMechanicsHtml(b, boss) {
   const bank = boss.bank > 0 ? ` · 쌓인 피해 ${r1(boss.bank)}(보스가 움직이면 들어감)` : '';
   return `<section class="boss-mechanics" aria-label="보스 규칙 상태"><div class="boss-state"><b>${esc(boss.n)} · ${ph}단계</b>${hold ? '<span>' + hold + bank + '</span>' : ''}</div>${state.length ? '<div class="boss-state">' + state.map(s=>'<span>'+esc(s)+'</span>').join('') + '</div>' : ''}<div class="boss-next"><b>다음 행동</b> ${esc(fixJosa(it && it.t || '예고 없음'))}</div>${why.length ? '<details><summary>현재 규칙 설명</summary>' + why.map(s=>'<p>'+esc(s)+'</p>').join('') + '</details>' : ''}</section>`;
 }
+/* S-5(10월 24일 만든 사람) 광폭의 끝: 남은 라운드, 시작했으면 다음 라운드 끝의 피할 수 없는 피해 */
+function enrEndTxt(b) { const eA = enrageEndAt(b); if (eA == null) return ''; const T = (b.tick || 0) + 1; return T >= eA ? ` · ⚠ 광폭의 끝: 라운드가 끝날 때 피할 수 없는 피해 ${enrageEndDmg(b.p, T - eA)}` : ` · 광폭의 끝까지 ${myTurnsUntil(b, eA)}라운드`; }
 function vHudClock(b) {
   let gim = '';
   const boss = b.en.find(e => e.role === 'boss' && e.alive);
   if (boss) {
-    let g = b.enrage ? '광폭화 중' : `광폭화까지 ${myTurnsUntil(b, (ENRAGE.byBoss || {})[boss.boss] || ENRAGE.boss)}라운드`;
+    let g = b.enrage ? '광폭화 중' + enrEndTxt(b) : `광폭화까지 ${myTurnsUntil(b, (ENRAGE.byBoss || {})[boss.boss] || ENRAGE.boss)}라운드`;
     if (boss.boss === 'mother') g += ` · 내 중독 ${st(b.p, 'poison')}/10 (10이면 부화) · ${boss.phase >= 2 ? '거울 활성' : '2페이즈부터 거울'}`;
     if (boss.boss === 'tree') { const roots = alive(b).filter(e => e.role === 'root').length; g += ` · 뿌리 때문에 라운드마다 약 +${rootRegen(b)} 회복 · 계절 ${SEASONS[b.season]} → ${SEASONS[(b.season + 1) % 4]} (${myTurnsUntil(b, (Math.floor(b.tick / 4) + 1) * 4)}라운드 뒤) · 뿌리 ${roots}/3`; }
     gim = `<div class="gimmick" data-info="gim" tabindex="0">${esc(g)}</div>`;
     gim += bossMechanicsHtml(b, boss);
     if (boss.demand && boss.demand.turn === b.turnIdx) gim += `<div class="gimmick dmd" data-info="edemand" tabindex="0">${boss.demand.k === 'rest' ? '🤲 수도원장이 고해를 기다린다' : '⚖️ 수도원장이 심문한다'}</div>`; // 10월 4일: 휴대폰에서 카드의 표시가 잘려 따로 한 줄
   }
+  else if (b.enrage && enrageEndAt(b) != null) gim = `<div class="gimmick" data-info="enrage" tabindex="0">${esc('광폭화 중' + enrEndTxt(b))}</div>`; // S-5(10월 24일): 보스가 아닌 싸움도 광폭의 끝을 보인다
   const piles=alive(b).filter(e=>e.pile);
   if(piles.length)gim += `<div class="gimmick" data-info="floorbones" tabindex="0">🦴 바닥의 뼈 ${piles.length}더미 · 가장 빠른 부활까지 ${Math.min(...piles.map(e=>e.pile.wait))}라운드</div>`;
   if (b.heat != null) gim += heatHtml(b); // 3챕터 열기 칸

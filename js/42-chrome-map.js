@@ -88,6 +88,9 @@ function roomExpectedXp(r, mode) {
   return Math.round((r.en || []).reduce((n, x, i) => n + xpOf({ role: x[0], elite: !!x[1], strong: !!(i === 0 && r.strong), lv: r.lv || 1, xpCh: mul }), 0));
 }
 function roomXpHint(r, mode) { return `<span class="mini dr-xp" title="표시된 적을 모두 쓰러뜨렸을 때의 경험치입니다. 추가로 합류하는 적은 제외합니다. 소환된 적은 경험치가 없습니다.">기본 경험치 ${roomExpectedXp(r, mode)}</span>`; }
+/* 10월 24일 S-5: 지금 풀에 없는 옛 성소(3챕터 rest · firm · shade · clarity, 10월 22일 A3에서 뺌)가 미리 만든 지도에 남아 있으면 그리기가 S.n에서 멈췄다 — 제단처럼 지나치기만 */
+const shrineOf = r => r && SHRINES.find(x => x.id === r.shrine) || null;
+const SHRINE_GONE = { n: '꺼진 성소', d: '촛불이 모두 꺼져 기도할 곳이 없다.' };
 function doorCard(r, i) {
   const T = ROOM_TYPES[r.type]; const stars = T.fight ? '★'.repeat(r.risk || 1) + '☆'.repeat(4 - (r.risk || 1)) : '';
   let body = '';
@@ -97,7 +100,7 @@ function doorCard(r, i) {
     if (r.ambush) body += `<span class="mini">정예 ${AMBUSH.elite} · 생명력 ×${AMBUSH.hp} · 피해 ×${AMBUSH.dmg}</span>`;
     body += roomXpHint(r, G.run && G.run.mode);
   }
-  if (r.shrine) { const S = SHRINES.find(x => x.id === r.shrine); body += `<span class="dr-what">${esc(S.n)}</span><span class="mini">${esc(S.d)} 3개 방 동안.</span>`; }
+  if (r.shrine) { const S = shrineOf(r); body += S ? `<span class="dr-what">${esc(S.n)}</span><span class="mini">${esc(S.d)} 3개 방 동안.</span>` : `<span class="dr-what">${esc(SHRINE_GONE.n)}</span><span class="mini">${esc(SHRINE_GONE.d)}</span>`; }
   if (r.mods && r.mods.length) body += `<span class="dr-mods">${r.mods.map(m => `<span class="chip mod" data-info="mod:${m}">${esc(ROOM_MODS[m].n)}</span>`).join('')}</span><span class="mini">${r.mods.map(m => esc(ROOM_MODS[m].d)).join(' ')}</span>`;
   return `<button class="door t-${r.type}" data-a="door" data-k="${i}"><span class="dr-h"><span class="dr-ico" aria-hidden="true">${T.ico}</span><b>${esc(T.n)}</b>${stars ? `<span class="dr-risk"><span aria-hidden="true">${stars}</span><span class="rw">위험 ${RISK_W[Math.max(1, Math.min(4, r.risk || 1))]}</span></span>` : ''}</span>${body}<span class="dr-hint">${esc(rewardHint(r))}</span></button>`;
 }
@@ -143,7 +146,7 @@ function vRoom(run, R) {
   if (R.type === 'checkpoint') return w3CheckRoom(run, R, h); // A3 검문소
   if (R.type === 'camp') return h + vCamp(run) + '</section>'; // 10월 14일 개편 5단계: 정비 시간(46-screens-shop.js)
   if (R.type === 'spring') return h + `<h3>💧 샘</h3><p>샘에서 쉬면 생명력이 50% 차고 플라스크가 하나씩 찹니다.</p><button class="gold" data-a="rest" data-focus>샘에서 쉬기</button></section>`;
-  if (R.type === 'shrine') { const S = SHRINES.find(x => x.id === R.shrine); return h + `<h3>🕯️ ${esc(S.n)}</h3><p>${esc(S.d)} 다음 3개 방 동안 이어집니다.</p><div class="row"><button class="gold" data-a="shrine" data-k="1" data-focus>기도한다</button><button data-a="shrine" data-k="0">지나친다</button></div></section>`; }
+  if (R.type === 'shrine') { const S = shrineOf(R); if (!S) return h + `<h3>🕯️ ${esc(SHRINE_GONE.n)}</h3><p>${esc(SHRINE_GONE.d)}</p><div class="row"><button data-a="shrine" data-k="0" data-focus>지나친다</button></div></section>`; /* 10월 24일 S-5: 지금 풀에 없는 옛 성소는 지나치기만 */ return h + `<h3>🕯️ ${esc(S.n)}</h3><p>${esc(S.d)} 다음 3개 방 동안 이어집니다.</p><div class="row"><button class="gold" data-a="shrine" data-k="1" data-focus>기도한다</button><button data-a="shrine" data-k="0">지나친다</button></div></section>`; }
   if (R.type === 'altar') {
     const A = ALTARS.find(x => x.id === R.altar) || { id: '', n: '무너진 제단', d: '바칠 곳이 무너져 내렸다.' }; const gc = altarGold(run); const can = A.id === 'gold' ? (run.gold || 0) >= gc : A.id === 'offer' ? run.bag.length > 0 : !!A.id; // 10월 24일 S-4: 옛 3챕터 제단(재 · 뼈 · 유리 저울)을 뺐다. 지금 풀에 없는 제단은 지나치기만 한다
     return h + `<h3>🩸 ${esc(A.n)}</h3><p>${esc(A.id === 'gold' ? A.d.replace('40', gc) : A.d)}</p>${A.id === 'gold' ? `<p class="mini">가진 골드 ${run.gold || 0}</p>` : ''}<div class="row"><button class="gold" data-a="altar" data-k="1"${can ? '' : ' disabled'} data-focus>${A.id === 'offer' ? '바칠 장비 고르기' : '거래한다'}</button><button data-a="altar" data-k="0">지나친다</button></div>${!can && A.id ? `<p class="mini">${A.id === 'gold' ? '골드가 모자랍니다.' : '바칠 장비가 가방에 없습니다.'}</p>` : ''}</section>`;

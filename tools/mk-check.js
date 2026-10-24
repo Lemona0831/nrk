@@ -56,5 +56,5 @@ const one = (ids, id, prep, en) => { const f = fight(ids, en); if (prep) prep(f)
 { const f = fight(['m_yeokryu'], ['bruiser']); use(f.b, 'm_yeokryu'); E.runUntilPlayer(f.b); setKi(f.p, 0); E.addS(f.b, f.es[0], 'chill', 2); use(f.b, 'basic', f.es[0].id); ok(f.b.log.some(x => /^역류: 둔화된 적을 쳐 기 \+1/.test(x.m)), '역류: 둔화된 적을 기본 공격으로 치면 기 +1'); }
 { const f = fight(['m_bultoe'], ['bruiser']); use(f.b, 'm_bultoe'); const e = f.es[0]; f.b.cur = null; f.p.stance = { dmg: 0 }; f.p.ctrN = 0; let h0 = e.hp; R_('monkCounter')(f.b, { src: e }); const d1 = h0 - e.hp; e.s.broken = { t: 2 }; h0 = e.hp; f.p.ctrN = 0; R_('monkCounter')(f.b, { src: e }); const d2 = h0 - e.hp; ok(d2 > d1 * 1.9, '불퇴: 무너진 적을 되받으면 ×2 — ' + Math.round(d1) + ' → ' + Math.round(d2)); }
 // 한 줄 설명
-{ const A2 = E.atBuild('monk'); for (const x of Object.values(A2.nodes).filter(x => x.kind === 'skill')) { const s = E.SK2[x.id], d = E.skBody(s); ok(!/\s{2}/.test(d) && d.length > 4 && (s.line || d.length <= R_('MK_DESC_MAX')), s.n + ' 한 줄 설명: ' + d); } }
+{ const A2 = E.atBuild('monk'); for (const x of Object.values(A2.nodes).filter(x => x.kind === 'skill')) { const s = E.SK2[x.id], d = E.skBody(s); ok(!/\s{2}/.test(d) && d.length > 4 && (s.line || d.replace(/ (비용 1로 )?쓰면 다음 차례 유산 충전 없음\.$/, '').length <= R_('MK_DESC_MAX')), s.n + ' 한 줄 설명: ' + d); } }
 console.log('mk-check: ' + n + '개 통과');

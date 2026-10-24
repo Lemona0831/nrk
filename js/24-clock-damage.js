@@ -105,10 +105,21 @@ function tickOnce(b) {
     if ((u.pile || u.role === 'bonewall') && u.alive && u.s.bleed) kwBleed(b, u); if ((u.pile || u.role === 'bonewall') && u.alive && u.s.sear) kwSear(b, u); // 움직이지 않는 몸의 출혈은 라운드 끝에
   }
   if (bmQ) { b.dotLoop = 0; bmMarkFlush(b); }
+  { const eA = enrageEndAt(b); if (b.enrage && eA != null && T >= eA && !b.over) enrageEnd(b, T - eA); } // S-5 광폭의 끝
   expireAll(b);
   if (!b.over) fxRun(p, 'onRound', b, p);
   checkEnd(b);
 }
+/* S-5(10월 24일 만든 사람) 광폭의 끝: 광폭이 ENRAGE_END.after라운드 이어진 뒤 라운드 끝마다 피할 수 없는 피해(최대 생명력 비율, 라운드마다 커짐).
+   hurtPlayer를 거치지 않는다: 보호막 · 방어 · 피하기 · 숨기 · 흘리기 · 피해 상한이 모두 들지 않는다. 연습 장면(scen) · 수련장(tut)은 없음(null) */
+function enrageEndAt(b) { if (!b || !b.ctx || b.ctx.scen || b.ctx.tut) return null; const boss = b.en.find(e => e.role === 'boss' && e.alive); return (boss ? ((ENRAGE.byBoss || {})[boss.boss] || ENRAGE.boss) : ENRAGE.room) + ENRAGE_END.after + 1; } // 광폭은 b.tick 40 끝에 걸려 r41부터, 광폭의 끝은 광폭 after라운드(r41–r60) 뒤 r61 끝부터(보스 r66 · 여왕 r71)
+const enrageEndDmg = (p, k) => Math.max(1, Math.round(p.hpMax * (ENRAGE_END.base + ENRAGE_END.step * Math.max(0, k)))); // k: 광폭의 끝이 시작된 뒤 지난 라운드(첫 라운드 0)
+function enrageEnd(b, k) { const p = b.p, d = enrageEndDmg(p, k), taken = Math.max(0, Math.min(p.hp, d)); if (!k) logp(b, 'crit', '⚠ 광폭의 끝: 싸움이 너무 길어졌다. 이제 라운드가 끝날 때마다 피할 수 없는 피해를 입고, 피해는 라운드마다 커진다');
+  (b.damageStats || (b.damageStats = { v: 0, dealt: 0, taken: 0 })).taken += taken; p.hp -= d; b.enrEndN = (b.enrEndN || 0) + 1;
+  logp(b, 'bad', '광폭의 끝: 피할 수 없는 피해 ' + d + ' (최대 생명력의 ' + Math.round((ENRAGE_END.base + ENRAGE_END.step * k) * 100) + '%, 보호막 · 방어 · 피하기로 막지 못한다)');
+  if (b.rec) b.rec.push({ k: 'enrEnd', t: r1(b.t), d, actual: r1(taken), r: b.round || 0 });
+  (b.hits3 = b.hits3 || []).push({ n: '', it: '', l: '광폭의 끝', d, dot: 0, big: 0, m: ['피할 수 없음'], left: r1(Math.max(0, p.hp)), r: b.round || 0 }); if (b.hits3.length > 3) b.hits3.shift();
+  checkEnd(b); }
 /* 끝날 시각이 지난 상태는 바로 지운다 (지속 피해보다 먼저) */
 function expireAll(b) {
   for (const u of [b.p].concat(b.en)) for (const k of Object.keys(u.s)) if (u.s[k].until <= b.t + 1e-9) {
@@ -133,7 +144,7 @@ function hurtPlayer(b, raw, o) {
   const bigHit = !!(o.charged || (o.src && o.src.intent && o.src.intent.aimed && !o.dot)); // 예고된 큰 공격: 강타 · 강적과 보스의 큰 한 방 · 겨눈 한 발 · 화형
   if (p.foresee && (b.round || 0) < p.foresee.until && bigHit) raw *= 1 - p.foresee.red;
   if (bigHit && hasBt(p, 'firm')) raw *= 0.85; // 굳건함의 성소 // 사냥꾼 예고 읽기 (피할 수 없는 화형에도 든다)
-  const hnHalf = p.build === 'hunter' && p.evade > 0 && !o.dot && (!o.aoe || uqF(p, 'u_evAoe')) /* M6-1 고유 hn_r2 */ && !o.spell && o.src && bigHit && (o.src.elite || o.src.strong || o.src.role === 'boss'); /* M5-4 몸 빼기 무한 회피 막기(설계지 11, 측정 뒤 조건): 강적 · 정예 · 보스의 강타는 몸 빼기로 절반만 피한다 */
+  const hnHalf = p.evade > 0 && /* S-5(10월 24일 만든 사람): 사냥꾼만이 아니라 몸 빼기를 쓰는 모든 직업(암살자 연막)에 */ !o.dot && (!o.aoe || uqF(p, 'u_evAoe')) /* M6-1 고유 hn_r2 */ && !o.spell && o.src && bigHit && (o.src.elite || o.src.strong || o.src.role === 'boss'); /* M5-4 몸 빼기 무한 회피 막기(설계지 11, 측정 뒤 조건): 강적 · 정예 · 보스의 강타는 몸 빼기로 절반만 피한다 */
   if (hnHalf) { p.evade--; raw *= 0.5; logp(b, 'bad', o.src.n + '의 강타는 몸을 빼도 절반이 닿는다' + (p.evade ? ' (남은 ' + p.evade + '번)' : '')); fxRun(p, 'onEvade', b, p, o.src); hnOnEvade(b, o.src); }
   else if (p.evade > 0 && !o.dot && (!o.aoe || uqF(p, 'u_evAoe')) && !o.spell && o.src && carveMul(b, 'prep') < 1) { p.evade--; raw *= 1 - carveMul(b, 'prep'); logp(b, 'bad', '새겨진 이름 때문에 몸이 둔하다. 일부를 맞는다'); } // 새김: 피하기는 확률이 아니라 받는 몫으로
   else if (p.evade > 0 && !o.dot && (!o.aoe || uqF(p, 'u_evAoe')) && !o.spell && o.src) { p.evade--; logp(b, 'good', (o.src.n || '적') + '의 공격을 몸을 빼 피한다' + (p.evade ? ' (남은 ' + p.evade + '번)' : '')); fxRun(p, 'onEvade', b, p, o.src); const c = p.evadeCtr; if (c && o.src.alive && (!c.charged || bigHit)) { hurtEnemy(b, o.src, outDmg(b, c.dmg, {}), { single: 1, label: '반격 사격' }); if (c.chill && o.src.alive) addS(b, o.src, 'chill', c.chill); } if (c && c.focus && o.src.alive && p.build === 'hunter') hnFoc(b, o.src, c.focus); if (p.evadeHz) hastenBranch(b, p.evadeHz.br, p.evadeHz.n, p.evadeHz.id); if (p.build === 'hunter') hnOnEvade(b, o.src); else ysResp(b, '흘리기'); /* M5-4: 사냥꾼은 몸 빼기로 피하면 대응 충전 없음(회피만) */ if (!p.evade && !(c && c.until > (b.round || 0))) p.evadeCtr = null; return 0; } // 사냥꾼 몸 빼기 (10월 5일): 실제로 피했을 때만 반격 · 🔄

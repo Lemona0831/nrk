@@ -111,6 +111,16 @@ common('lampthief');
 { // 멈춤
   const x = mk('lampthief', ['fence', 'xbow']); const { b, e, p } = x; p.stun = 1; act(b, e, 'douselamp'); ok(e.clk.n === 0 && e.clk.stop === 1, 'lampthief 15');
 }
+{ // S-5(10월 24일 만든 사람): 내가 건 기절(영겁의 정적)은 멈춤이 아니다
+  const x = mk('lampthief', ['fence', 'xbow']); const { b, e, p } = x; p.stun = 1; p.stunSelf = 1; act(b, e, 'douselamp'); ok(e.clk.n === 1 && !e.clk.stop, 'lampthief 15b(내가 건 기절은 시계가 돈다): ' + e.clk.n);
+}
+{ // S-5(10월 24일 만든 사람): 혼자 남은 등불 도둑은 숨지 않는다(G9 — 칠 수 있는 적이 늘 하나는 있다)
+  const x = mk('lampthief', ['fence', 'xbow']); const { b, e, es } = x; for (const o of es) if (o !== e) { o.alive = false; o.hp = 0; }
+  e.clk.n = W('lampthief'); e.noHideR = -1; act(b, e, 'douselamp'); ok(e.clk.perm === 1 && !e.under, 'lampthief 16(혼자면 파국 뒤에도 숨지 않음)');
+  e.intent = { k: 'shadowstab' }; e.stabOut = 1; e.teleTurn = -1; E.enemyAct(b, e); ok(!e.under && E.canTarget(b, e, { id: 'basic' }), 'lampthief 17(혼자면 찌른 뒤에도 숨지 않음 · 칠 수 있음)');
+  E.fcEv(b, 'onRoundEnd'); ok(!e.under, 'lampthief 18(라운드 끝에도 숨지 않음)');
+  const y = mk('lampthief', ['fence', 'xbow']); y.e.clk.n = W('lampthief'); y.e.noHideR = -1; act(y.b, y.e, 'douselamp'); ok(y.e.under === 1, 'lampthief 19(다른 적이 있으면 그대로 숨음)');
+}
 /* ---------- 장터 경비대장 ---------- */
 common('captain');
 { // 3판: 결정적 답은 대장 본체 무너뜨리기 · 호령에 흘리기. 덩치 무너뜨리기 · 부하 쓰러뜨리기 · 광역은 경고 칸에서도 1칸(라운드 한 번)

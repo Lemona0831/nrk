@@ -15,6 +15,8 @@ function fcStrongs(b) { return alive(b).filter(e => fcDef(e)); }
 function fcEv(b, ev, ...a) { if (!b || b.over) return; for (const e of fcStrongs(b)) { fcInit(b, e); const D = fcDef(e), f = D.on && D.on[ev]; if (f) f(b, e, ...a); } }
 /* 칸 더하기: 답 수단이 모두 막혀 있으면 멈춘다(대답할 수 없는 파국은 오지 않는다). 아직 경고하지 않았는데 한꺼번에 여러 칸이 차면 마지막 칸 앞에서 멈춘다(파국은 늘 경고 뒤에 온다).
    경고 뒤 내 차례가 한 번 지나기 전에는 다 차지 않는다(C.wT: 경고 뒤 첫 적 차례의 turnIdx. 내 행동 중(b.cur)에 경고하면 다음 적 차례까지 기다린다. b.fcNoWait: 단위 시험용) */
+/* 강적들의 blocked가 쓰는 "내가 기절해 답할 수 없다". S-5(10월 24일 만든 사람): 내가 스스로 건 기절(영겁의 정적, p.stunSelf)은 답이 막힌 것으로 치지 않는다. 시계는 그대로 돈다 */
+const fcPStun = b => !!(b && b.p && b.p.stun > 0 && !b.p.stunSelf);
 function fcAdd(b, e, k, why) {
   const D = fcDef(e); if (!D || !e.alive || b.over || !(k > 0)) return 0; fcInit(b, e); const C = e.clk; if (C.perm) return 0;
   if (D.blocked && D.blocked(b, e)) { if (!C.stop) { C.stop = 1; logp(b, 'sys', D.n + ': 멈춰 있다'); } return 0; } C.stop = 0;

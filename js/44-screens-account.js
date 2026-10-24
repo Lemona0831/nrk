@@ -183,6 +183,7 @@ function playTick() { const run = G.run; if (!run || runOver(run) || G.creating)
 function rankEntry(run, st) {
   const e = { id: run.id, v: VERSION, cname: run.cname || '', build: run.build, ch: run.ch || 1, floor: Math.min(run.room || 1, FLOOR_BOSS), clears: run.clears || 0, mode: run.mode || 'normal', lv: run.lv || 1, st: st || (run.clears ? 'clear' : 'alive'), ms: Math.round(run.playMs || 0), at: Date.now(), eq: run.eqU ? EQ_SLOTS.map(sl => { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; return it ? it.tpl : null; }).filter(Boolean) : [] };
   if (G.data && G.data.title && titleEarned(G.data.title)) e.title = G.data.title; // 칭호(계정 목표)
+  if (run.mkLeg) e.leg = 1; // 10월 24일 S-5: 판 지문이 생기기 전 저장본에서 이어 온 판(js/62 mkCheck) — 받아 주되 표시만
   e.sum = rankSum(run, e); // S-4(10월 24일): 판 요약
   return e;
 }
@@ -195,22 +196,27 @@ function rankSum(run, e) { return { rid: run.id, t0: run.startedAt || 0, floor: 
 /* 랭킹에 세우기 전 거르기: 있을 수 없는 값(범위 밖 · 요약과 어긋남)인 줄은 보이지 않는다. 요약이 없는 옛 줄(S-4 전)은 범위만 본다. 순위 식은 그대로 */
 const rankOk = e => { const n = (x, a, b) => Number.isInteger(x) && x >= a && x <= b, ch = e.ch || 1, cl = e.clears || 0, s = e.sum; if (!n(ch, 1, Object.keys(CHAPTERS).length) || !n(cl, Math.max(0, ch - 1), ch) || !n(e.floor || 1, 1, FLOOR_BOSS) || !n(e.lv || 1, 1, LV_XP.length) || !n(e.ms || 0, 0, 2592e6)) return false; return !s || (s.rid === e.id && s.ms === e.ms && s.sc === rankScore(e) && (s.fights || 0) >= cl); };
 async function pushRank(run, st) {
-  if (!run || !run.id || run.markCh) return; const e = rankEntry(run, st); /* 표식 도전 판은 랭킹에 올리지 않는다(표식 기록판에 따로) */
+  if (!run || !run.id || !run.startedAt || run.markCh || run.noRank) return; const e = rankEntry(run, st); /* 표식 도전 판은 랭킹에 올리지 않는다(표식 기록판에 따로). 10월 24일 S-5: 손으로 고친 저장본에서 이어 온 판(noRank, js/62 mkCheck)도 보내지 않는다 */
   G.data.rank80 = Object.assign({}, G.data.rank80, { [run.id]: e }); saveLocal(); // M8: 시즌 키(rank80)
   if (!G.db || !G.uid || G.conn !== 'ok') return;
   try {
     const ref = G.db.doc(BOARD + '/' + G.uid); const cur = await ref.get();
     const d = cur.exists ? JSON.parse(JSON.stringify(cur.data() || {})) : {}; const R = d.rank80 = d.rank80 || {}; R[run.id] = e;
     Object.keys(R).sort((a, b) => rankCmp(R[a], R[b])).slice(40).forEach(id => delete R[id]); // 한 사람당 40개까지
-    d.name = G.data.name || d.name || ''; await ref.set(d); G.board = null; if (G.scr === 'rank') render();
+    d.name = G.data.name || d.name || ''; boardLogin(d); await ref.set(d); G.board = null; if (G.scr === 'rank') render();
   } catch (e2) { }
 }
+/* 10월 24일 만든 사람 결정: 랭킹의 손님 표시. board80 문서에 login(구글 등 공급자, 손님이면 '')을 함께 적는다(playtest 문서의 testerMeta와 같은 뜻).
+   login 칸이 없는 옛 문서는 알 수 없어 표시하지 않는다. 손님이 구글을 이으면(같은 uid) 다음 랭킹 · 이름 저장 때 바뀐다 */
+function boardLogin(d) { if (G.acct) d.login = G.acct.anon ? '' : G.acct.provider || 'account'; return d; }
+const rankGuest = e => e.login === '';
+const rankGuestTag = e => rankGuest(e) ? ' <span class="rctag">손님</span>' : '';
 /* 랭킹의 직업 표시: 아직 열지 않은 숨겨진 직업은 이름 · 아이콘을 숨긴다(내 줄은 그대로). 필터는 e.build를 그대로 쓴다 */
 function rankClassView(e) { const B = BUILDS[e.build]; return e.me || unlOpen(e.build) ? B : { ico: '❔', n: '숨겨진 직업' }; }
 function rankRows() {
   const out = [];
-  if (G.db && G.board) { for (const x of G.board) for (const e of Object.values(x.rank80 || {})) out.push(Object.assign({ nick: x.name || '', me: x.uid === G.uid }, e)); }
-  else for (const e of Object.values(G.data.rank80 || {})) out.push(Object.assign({ nick: G.data.name || '', me: true }, e));
+  if (G.db && G.board) { for (const x of G.board) for (const e of Object.values(x.rank80 || {})) out.push(Object.assign({ nick: x.name || '', me: x.uid === G.uid }, e, { login: x.login })); }
+  else for (const e of Object.values(G.data.rank80 || {})) out.push(Object.assign({ nick: G.data.name || '', me: true }, e, { login: boardLogin({}).login }));
   return out.filter(e => BUILDS[e.build] && rankOk(e)).sort(rankCmp);
 }
 function backBtn() { return `<button class="sm back" data-a="back">← 돌아가기</button>`; }
@@ -269,7 +275,7 @@ function classRuleHtml(build) {
     assassin: [['중독', '적에게 독을 쌓은 뒤, 격발 스킬로 쌓인 독을 터뜨립니다.'], ['흘리기', '선택한 적의 공격 피해 −70% · 스태미나 25.']],
     warden: [['방어', `방어하면 보호막 +${WARD.guard}.`], ['보호막', `상한: 최대 생명력의 ${pct(WARD.cap)}%. 후열 공격은 피해의 절반만 흡수합니다.`]],
     hunter: [['원거리', `후열 공격 가능 · 기본 공격은 무기 피해의 ${pct(B.wpnMul)}%.`], ['가속', `전투 시작 시 ${B.openHaste}. 라운드 맨 앞에서 2회 연속 행동.`], ['추적과 연계', '같은 적을 연속으로 맞히면 추적이 쌓여 피해가 늘어납니다. 다른 갈래 스킬을 이어 쓰면 연계: 그 스킬이 빠른 행동이 되어 차례가 이어집니다.']], // M8: M5-4(활 65%, 연계 = 빠른 행동)에 맞춤
-    elementalist: [['원거리', `기본 공격 ${pct(B.wpnMul)}% · 집중 주문 ${pct(B.wpnMul * HEAVY_V2)}%. 후열에 닿고 방패병을 통과합니다.`], ['열충격', '같은 적에게 화상과 둔화가 함께 있으면, 내 행동이 끝날 때 두 상태를 모두 소모해 열충격을 일으킵니다.'], ['둔화로 피해 감소', `둔화된 적에게 받는 공격 피해가 ${pct(ELEM.guard)}% 줄어듭니다(강한 공격도).`], ['빙결', `둔화가 가득 차면 그 적은 다음 행동을 놓칩니다(강적 · 보스는 붕괴 +${EL5_BOUND.frzBrk}).`], ['마력탄', '지금 원소(🔥 불 · ❄ 얼음)를 겁니다. 원소 전환으로 바꿉니다.']],
+    elementalist: [['원거리', `기본 공격 ${pct(B.wpnMul)}% · 집중 주문 ${pct(B.wpnMul * HEAVY_V2)}%. 후열에 닿고 방패병을 통과합니다.`], ['열충격', '같은 적에게 화상과 둔화가 함께 있으면, 내 행동이 끝날 때 두 상태를 모두 소모해 열충격을 일으킵니다.'], ['둔화로 피해 감소', `둔화된 적에게 받는 공격 피해가 ${pct(ELEM.guard)}% 줄어듭니다(강한 공격도).`], ['빙결', `둔화가 가득 차면 그 적은 다음 행동을 놓칩니다(강적 · 보스는 붕괴 +${EL5_BOUND.frzBrk}). 빙결 · 영겁의 정적으로 행동을 놓친 적은 그다음 라운드가 끝날 때까지 다시 얼거나 멈추지 않고 둔화만 남습니다.`] /* 10월 24일 S-5 전투 규칙(js/10 elFrzLk)에 맞춤 */, ['마력탄', '지금 원소(🔥 불 · ❄ 얼음)를 겁니다. 원소 전환으로 바꿉니다.']],
     spellblade: [['교대', `베기 ⚔ ↔ 주문 ✦: 보호막 +${B.altWard}. 생성 보정 없이 고정 지급 · 내 차례당 1회.`], ['보호막', `상한: 최대 생명력의 ${pct(B.wardCap)}%. 방어·흘리기·플라스크는 교대를 끊지 않습니다.`], ['칼에 싣기', '주문으로 칼에 실은 출혈·화상은 다음 베기로 적을 맞히면 적용됩니다. 주문은 후열의 적도 공격합니다.']],
     monk: [['되받기', '방어하거나 자세를 잡은 동안, 전열 적에게 직접 공격을 받으면 반격합니다.'], ['기', `반격마다 기 +${MONK.kiCtr}. ▶ 공격은 기 1을 써서 피해 +25%. ⚡ 공격은 소모하지 않습니다.`]],
     butcher: [['흡혈', '출혈 상태의 적을 근접 공격하면 생명력을 회복합니다. 출혈을 처음 거는 타격에도 적용됩니다.'], ['피 수확', `출혈된 적 처치·출혈 처치 시 최대 생명력 ${pct(BUTCH.harvest)}% 회복. 전투당 ${pct(BUTCH.harvestFight)}%까지.`], ['갈증', '생명력이 낮을수록 직접 공격 피해가 늘어납니다. 먹기 스킬은 적의 출혈을 소모해 생명력을 회복합니다.']],

@@ -125,7 +125,7 @@ module.exports = function (api) {
   const ALTA = (id, re) => re.test(S80) && E('!!ALTARS.find(a => a.id === "' + id + '")');
   if (E('!!ALTARS.find(a => a.id === "debt")')) {
     api.add('world-altars', '[debt] 지금 골드', '80-events.js debt: gainGold(run, DEBT_ALTAR.gold)', () => ALTA('debt', /R\.altar==='debt'\)\{gainGold\(run,DEBT_ALTAR\.gold/) && E('ALTARS.find(a => a.id === "debt").d').includes('골드 ' + E('DEBT_ALTAR.gold') + '을 가불'));
-    api.add('world-altars', '[debt] 대신 다음 상점', '80-events.js run.shopMarkup = DEBT_ALTAR.markup, 15-chapter2.js ch2Markup이 다음 상점 값 × (1 + m) 뒤 0으로', () => /run\.shopMarkup=DEBT_ALTAR\.markup/.test(S80) && S15b.includes('x.price = Math.round(x.price * (1 + m))') && S15b.includes('run.shopMarkup = 0') && E('ALTARS.find(a => a.id === "debt").d').includes('다음 상점 값 +' + P(E('DEBT_ALTAR.markup')) + '%(한 번)'));
+    api.add('world-altars', '[debt] 대신 챕터 끝 상점', '80-events.js run.shopMarkup = DEBT_ALTAR.markup, 15-chapter2.js ch2Markup이 상점 값 × (1 + m) 뒤 0으로. 10월 24일: 46-screens-shop.js genShop만 부르고 campInit(야영지 상인)은 부르지 않는다', () => /run\.shopMarkup=DEBT_ALTAR\.markup/.test(S80) && S15b.includes('x.price = Math.round(x.price * (1 + m))') && S15b.includes('run.shopMarkup = 0') && E('genShop.toString()').includes('ch2Markup(run, run.shop)') && !E('campInit.toString()').includes('ch2Markup(') && E('ALTARS.find(a => a.id === "debt").d').includes('챕터 끝 상점 값 +' + P(E('DEBT_ALTAR.markup')) + '%(한 번, 야영지 상인은 그대로)'));
   }
   if (E('!!ALTARS.find(a => a.id === "oath")')) api.add('world-altars', '[oath] ', '80-events.js oath: p.hpBonus += OATH.hp', () => ALTA('oath', /R\.altar==='oath'\)\{p\.hpBonus=\(p\.hpBonus\|\|0\)\+OATH\.hp/) && E('ALTARS.find(a => a.id === "oath").d').includes('최대 생명력 +' + E('OATH.hp') + '('));
 

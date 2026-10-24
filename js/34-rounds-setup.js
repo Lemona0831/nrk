@@ -78,7 +78,7 @@ function roomBattle(player, room, bossKind, seed) {
   { const ch = room.ch || 1, fl = room.boss ? FLOOR_BOSS : room.floor || 0, PH = room.boss ? 1 : pathOf(room.path, room.mode).hp * (room.ambush ? AMBUSH.hp : 1); for (const e of en) { const h = foeHitHp(e, ch, fl); if (h > 0) { e.hpMax = Math.max(1, Math.round(h * PH * (e.swift ? SWIFT.hp : 1))); e.hp = e.hpMax; } if (e.bell) { e.hpMax = e.hp = CLK1.bell.bellHp; } } } // A1 타수 → 체력(data/foes.js FOE_HP_ON). G-1 큰 종(비공개 문서 참조)
   if (room.mode === 'hard') for (const e of en) if (e.role !== 'root') { e.hpMax = Math.round(e.hpMax * MODES.hard.hp); e.hp = Math.min(e.hpMax, Math.round(e.hp * MODES.hard.hp)); } /* 가혹: 적 생명력 배율(지금 ×1) (피해 ×1.3은 hurtPlayer) */
   if (room.marks) markEnemies(en, room.marks); /* 표식 도전: 적 생명력 · 보스 생명력 */
-  const mods = room.mods || [];
+  const mods = (room.mods || []).slice(); // 10월 24일 S-5: 전투 중 바뀌는 특성(등불 도둑의 어둠 · 기름 단지의 기름 바닥)이 방 정의(run.cur.mods)에 새지 않게 따로 둔다. 전에는 도망쳐 다시 들어가면 어둠 · 기름 바닥으로 시작했다
   if (mods.includes('bonepile')) { const D = diffOf(room.ch)[isLower(room.floor || 0) ? 'lower' : 'upper'], P = pathOf(room.path, room.mode); for (let k = 0; k < 2; k++) { const s = mkEnemy('skeleton', 0, 70 + k, { lv: room.lv || 1, name: room.names && room.names.skeleton }); s.hpMax = Math.round(s.hpMax * D.hp * P.hp); s.dmg *= D.dmg * P.dmg; s.rose = 1; s.summoned = true; s.pile = { wait: RISE.wait, born: -1 }; s.hp = Math.max(1, Math.round(s.hpMax * RISE.pile)); s.intent = { k: 'none' }; en.push(s); } } // 무너진 납골벽: 이미 한 번 일어선 해골로 친다(경험치 · 전리품 없음)
   if (mods.includes('narrow') || mods.includes('alley')) { let f = 0; for (const e of en) if (e.row === 'front' && e.role !== 'boss') { f++; if (f > 2) e.row = 'back'; } }
   player.bt = Object.assign({}, room.buffs || {});

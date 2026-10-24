@@ -129,7 +129,7 @@ const SKILLS2 = {
     { id: 'a_heurit', row: 8, b: '잔영', tier: '중급', n: '흐릿한 몸', tgt: 'self', time: 'fast', cd: 7, fx: [{ k: 'parryBuff', red: 0.2, stam: 45, times: 2, dmg: 24 }] },
     /* 경계 승부수(만든 사람 문장 · 대사 그대로) */
     { id: 'a_mandok', row: 10, b: '독화', tier: '중급', n: '만독개화', tgt: 'ranged', time: 'normal', cd: 9, line: '「피어나라. 한 송이도 남김없이 아름다울 기생화를.」', cut: 'arcane', pay: '쓰는 즉시 지금 생명력에서 최대 생명력의 15%를 잃는다(최대치는 그대로). 지금 생명력이 최대치의 15% 이하면 쓸 수 없다.', fx: [{ k: 'asBloom', mul: 2.9, txt: '모든 적의 중독을 적 하나에게 모아 터뜨린다(그 터뜨리기 피해 2.9배).' }] },
-    { id: 'a_muyeong', row: 10, b: '암영', tier: '중급', n: '무영살', tgt: 'self', time: 'normal', cd: 9, line: '「보이지 않는 칼이야말로, 가장 깊이 박히는 법이렸다.」', cut: 'blade', pay: '숨은 차례에는 아무것도 못 한다. 벤 뒤 2차례 흘리기를 못 한다.', fx: [{ k: 'asHide', mul: 5.8, txt: '한 차례 숨었다가, 다음 차례 고른 적의 등 뒤에서 무기 피해의 5.8배로 벤다. 숨은 동안 광역을 포함한 어떤 공격의 표적도 되지 않는다(중독 같은 상태 피해는 받음).' }] },
+    { id: 'a_muyeong', row: 10, b: '암영', tier: '중급', n: '무영살', tgt: 'self', time: 'normal', cd: 9, line: '「보이지 않는 칼이야말로, 가장 깊이 박히는 법이렸다.」', cut: 'blade', pay: '숨은 차례에는 아무것도 못 한다. 베기 차례에는 무영살을 다시 쓸 수 없다. 벤 뒤 2차례 흘리기를 못 한다.', fx: [{ k: 'asHide', mul: 5.8, txt: '한 차례 숨었다가, 다음 차례 고른 적의 등 뒤에서 무기 피해의 5.8배로 벤다. 숨은 동안 광역을 포함한 어떤 공격의 표적도 되지 않는다(중독 같은 상태 피해는 받음).' }] },
     { id: 'a_janyeong', row: 10, b: '잔영', tier: '중급', n: '잔영난무', tgt: 'self', time: 'normal', cd: 9, line: '「그림자는 하나가 아니다. 네가 벤 것은, 처음부터 내가 아니었으니.」', cut: 'guard', pay: '그동안 받는 피해 +20%, 끝난 뒤 2차례 스태미나가 차지 않는다.', fx: [{ k: 'asZan', n: 4, mul: 1.7, txt: '4차례 동안 그림자 분신이 함께해 내가 누른 기본 공격이 두 번 들어간다(분신은 기본 공격의 1.7배, 반격 · 추가타는 두 번이 아님).' }] },
     /* 결합 칸 셋(설계지): 원 바깥, 판마다 둘, 꼬리표 조건 */
     { id: 'a_dokni', row: 7, b: '결합', tier: '중급', n: '독니', tgt: 'self', time: 'fast', cd: 9, fx: [{ k: 'asFangC', n: 2, txt: '이번 전투: 중독 걸린 적을 기본 공격으로 치면 중독 +2' }] },
@@ -589,7 +589,7 @@ const SKILLS2 = {
     { id: 'e5_stillward', row: 4, b: '정적', tier: '하급', n: '고요한 방벽', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'elProtR', n: 2, r: 6, txt: '6라운드 동안 내 차례마다 보호 2까지' }] },
     { id: 'e5_shardrain', row: 8, b: '정적', tier: '중급', n: '얼음 파편비', tgt: 'all', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 18 }, { k: 'st', s: 'chill', n: 1 }] },
     { id: 'e5_stilleye', row: 8, b: '정적', tier: '중급', n: '고요의 눈', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'foresee', red: 0.55, rounds: 10 }] },
-    { id: 'e5_stasis', row: 10, b: '정적', tier: '중급', n: '영겁의 정적', tgt: 'self', time: 'normal', cd: 4, line: '「모든 것이 멈춘 이 한순간만이, 나락에서 유일한 고요로구나.」', cut: 'guard', pay: '내 다음 차례도 아무것도 못 한다(나도 함께 멈춘다).', fx: [{ k: 'elStasis', r: 2, txt: '이번 라운드와 다음 라운드 모든 적이 행동을 놓친다(강적 · 보스는 대신 둔화 3).' }] },
+    { id: 'e5_stasis', row: 10, b: '정적', tier: '중급', n: '영겁의 정적', tgt: 'self', time: 'normal', cd: 4, line: '「모든 것이 멈춘 이 한순간만이, 나락에서 유일한 고요로구나.」', cut: 'guard', pay: '내 다음 차례도 아무것도 못 한다(나도 함께 멈춘다).', fx: [{ k: 'elStasis', r: 2, txt: '이번 라운드와 다음 라운드 모든 적이 행동을 놓친다(강적 · 보스는 대신 둔화 3). 빙결 · 정적으로 행동을 놓친 적은 그다음 라운드가 끝날 때까지 다시 멈추지 않고 둔화만 받는다.' }] },
     { id: 'e5_manaflame', row: 4, b: '마염', tier: '하급', n: '마염탄', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 24 }, { k: 'st', s: 'ignite', n: 2 }] },
     { id: 'e5_kindlemana', row: 4, b: '마염', tier: '하급', n: '불씨 응축', tgt: 'self', time: 'fast', cd: 4, fx: [{ k: 'elCharge', n: 6, mul: 1, ign: 2, txt: '다음 기본 공격 6번에 화상 2' }] },
     { id: 'e5_flamelance', row: 8, b: '마염', tier: '중급', n: '불꽃 창', tgt: 'ranged', time: 'normal', cd: 4, fx: [{ k: 'dmg', n: 36 }, { k: 'kwx', s: 'ignite', mul: 1.5 }] },

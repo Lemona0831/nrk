@@ -140,7 +140,7 @@ function w3Act(b, e, i, d) {
 /* ===== G-1 강적 시계: 3챕터 강적 다섯(비공개 문서 참조) =====
    js/25-foe-clock.js보다 먼저 읽히므로 정의는 W3_CLOCK에 두고 w3ClockReg(w3Setup 맨 앞)가 FOE_CLOCK에 넣는다.
    2판 · 3판(봉화대장 · 대변인, 비공개 문서 참조): 칸 수 · 파국 세기 · 평소 공격 · 보상 길이는 data/dungeon.js FOE_X. 결정적 답은 fcAnswer, 평소 되감기는 fcRewind(화면의 수를 비추는 시계만 free, 3판 평소 행동은 ord) */
-const w3Blocked = b => (b.p.stun || 0) > 0;
+const w3Blocked = b => fcPStun(b); // S-5(10월 24일): 내가 건 기절은 빼고(js/25)
 const w3ClkStop = (b, e) => { const D = fcDef(e); if (!D || !D.blocked || !D.blocked(b, e)) return 0; fcInit(b, e); if (!e.clk.stop) { e.clk.stop = 1; logp(b, 'sys', D.n + ': 멈춰 있다'); } return 1; };
 const w3AtWarn = e => { const C = e && e.clk; return !!C && !C.perm && C.n >= C.max - 1; }; // 마지막 경고 칸
 const w3ClkDoomOk = (b, e) => { fcInit(b, e); const C = e.clk; return w3AtWarn(e) && (C.wT == null || b.fcNoWait || (b.turnIdx || 0) > C.wT) && !w3ClkStop(b, e); }; // js/25 fcAdd와 같은 기다림
@@ -247,7 +247,7 @@ const W3_CLOCK = {
     n: '잠식', get max() { return FOE_X.wallcap.max; }, ans: ['cons', 'brk'],
     warn: () => '성벽이 몸 안까지 스며들었다. 한 칸만 더 차면 성벽에 묻힌다',
     blocked: w3Blocked,
-    doom(b, e) { const p = b.p; p.taint = 0; w3DoomHit(b, e, FOE_X.wallcap.fall, { label: '성벽이 무너져 나를 덮친다' }); if (!b.over) { p.stun = Math.max(p.stun || 0, 1); logp(b, 'bad', '성벽에 묻혀 움직일 수 없다'); } codexHit(b, 'wallcap', 'buried'); },
+    doom(b, e) { const p = b.p; p.taint = 0; w3DoomHit(b, e, FOE_X.wallcap.fall, { label: '성벽이 무너져 나를 덮친다' }); if (!b.over) { p.stun = Math.max(p.stun || 0, 1); p.stunSelf = 0; logp(b, 'bad', '성벽에 묻혀 움직일 수 없다'); } codexHit(b, 'wallcap', 'buried'); },
     reward(b, e, why) {
       const X = FOE_X.wallcap;
       if (why === 'clean0' || why === 'brick0') { addS(b, e, 'vuln', X.rew); logp(b, 'good', '성벽이 흔들린다. ' + e.n + ' 취약'); codexHit(b, 'wallcap', 'shaken'); return; }

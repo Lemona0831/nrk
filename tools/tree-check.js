@@ -124,7 +124,7 @@ for (const c of CLS) {
   ok(R_('MONK').ctrMax === 2, '되받기 기본 한도 2(만든 사람 결정 10월 20일)');
   const NEWST = ['chillCut', 'freeze', 'chillShatter', 'chillSpread']; ok(SK.every(x => !SK2[x.id].fx.some(e => NEWST.includes(e.k))) && Object.values(A.vars).every(v => ![...(v.mod.fxSet || []), ...(v.mod.fxAdd || [])].some(e => NEWST.includes(e.k))), '사냥꾼 · 원소술사의 둔화 계열 키를 쓰지 않음(수도승 문서 A절)');
   /* 칸 설명은 한 줄(만든 사람): 수도승부터 효과 문장 40자 넘으면 경고. 승부수(대사가 있는 칸)는 만든 사람 문장 그대로라 뺀다 */
-  const MAX = R_('MK_DESC_MAX'), long = []; for (const x of SK) { const s = SK2[x.id]; if (s.line) continue; const d = E.skBody(s); if (d.length > MAX) long.push(s.n + '(' + d.length + ')'); }
+  const MAX = R_('MK_DESC_MAX'), long = []; for (const x of SK) { const s = SK2[x.id]; if (s.line) continue; const d = E.skBody(s).replace(/ (비용 1로 )?쓰면 다음 차례 유산 충전 없음\.$/, ''); /* S-5: 끝의 유산 충전 문장은 길이에서 뺀다 */ if (d.length > MAX) long.push(s.n + '(' + d.length + ')'); }
   for (const v of Object.values(A.vars)) if (v.d && v.d.length > MAX) long.push(v.n + '(' + v.d.length + ')');
   if (long.length) console.warn('경고: 수도승 설명 ' + MAX + '자 넘음 — ' + long.join(', ')); else n++; }
 
@@ -141,7 +141,7 @@ for (const c of CLS) {
   for (const k of ['AB', 'BC', 'CA']) { const S5 = SK.filter(x => x.sec === k), fin = S5.filter(x => x.ys === 4); const atk = S5.filter(x => x.ys !== 4 && SK2[x.id].tgt !== 'self').length;
     ok(S5.length === 5 && fin.length === 1 && SK2[fin[0].id].line && atk === 2, A.sec[k] + ': 경계 5칸(공격 2 · 강화/방어 2 · 대사 승부수 ' + (fin[0] && fin[0].n) + ')'); }
   ok(SK2.a_mandok.line === '「피어나라. 한 송이도 남김없이 아름다울 기생화를.」' && SK2.a_muyeong.line === '「보이지 않는 칼이야말로, 가장 깊이 박히는 법이렸다.」' && SK2.a_janyeong.line === '「그림자는 하나가 아니다. 네가 벤 것은, 처음부터 내가 아니었으니.」' && SK2.a_mandok.cut === 'arcane' && SK2.a_muyeong.cut === 'blade' && SK2.a_janyeong.cut === 'guard', '승부수 대사 셋(만든 사람 문장 그대로) · 컷인 종류(만독개화 마법 · 무영살 검 · 잔영난무 방어)');
-  ok(SK2.a_mandok.pay === '쓰는 즉시 지금 생명력에서 최대 생명력의 15%를 잃는다(최대치는 그대로). 지금 생명력이 최대치의 15% 이하면 쓸 수 없다.' && SK2.a_muyeong.pay === '숨은 차례에는 아무것도 못 한다. 벤 뒤 2차례 흘리기를 못 한다.' && SK2.a_janyeong.pay === '그동안 받는 피해 +20%, 끝난 뒤 2차례 스태미나가 차지 않는다.', '승부수 대가(설계지 문장)');
+  ok(SK2.a_mandok.pay === '쓰는 즉시 지금 생명력에서 최대 생명력의 15%를 잃는다(최대치는 그대로). 지금 생명력이 최대치의 15% 이하면 쓸 수 없다.' && SK2.a_muyeong.pay === '숨은 차례에는 아무것도 못 한다. 베기 차례에는 무영살을 다시 쓸 수 없다. 벤 뒤 2차례 흘리기를 못 한다.' /* S-5(10월 24일 만든 사람): 베기 차례 다시 쓰기 금지 더함 */ && SK2.a_janyeong.pay === '그동안 받는 피해 +20%, 끝난 뒤 2차례 스태미나가 차지 않는다.', '승부수 대가(설계지 문장)');
   const ULT = ['asBloom', 'asHide', 'asZan'], PS = e => e.k === 'poison' || (e.poison > 0); ok(SK.every(x => !SK2[x.id].fx.some(e => ULT.includes(e.k)) || x.ys === 4) && Object.values(A.vars).every(v => ![...(v.mod.fxSet || []), ...(v.mod.fxAdd || [])].some(e => (e.k === 'asHide' || e.k === 'asZan') && PS(e))) && !SK2.a_muyeong.fx.some(PS) && !SK2.a_janyeong.fx.some(PS), '새 상태(숨음 · 분신 · 모아 터뜨리기)는 승부수에만, 승부수 가운데 독은 만독개화만(변형 포함)');
   const STG = R_('AS_TAGS'), BRIDGE = ['중독', '터뜨리기', '흘리기', '후열', '기본공격연동', '붕괴', '광역', '원거리'], pureN = {};
   for (const u of up) { const V = u.vars.map(v => A.vars[v]); ok(V.length === 2 && V.map(v => v.v).sort().join() === 'deep,link', u.id + ': 깊게 하나 · 잇기 하나'); const lk = V.find(v => v.v === 'link'); ok(lk.tags.some(g => BRIDGE.includes(g) && !(STG[u.on] || []).includes(g)), u.id + ' 잇기 ' + lk.n + ': 없던 꼬리표 더함');
@@ -152,7 +152,7 @@ for (const c of CLS) {
   ok(A.nodes.a_dokni.reqTags.중독 === 2 && A.nodes.a_dokni.reqTags.기본공격연동 === 1 && A.nodes.a_heuldok.reqTags.흘리기 === 1 && A.nodes.a_heuldok.reqTags.중독 === 1 && A.nodes.a_dwikkot.reqTags.터뜨리기 === 1 && A.nodes.a_dwikkot.reqTags.후열 === 1, '결합 칸 셋(독니 중독 2 · 기본공격연동 1, 흘린 독 흘리기 1 · 중독 1, 등 뒤의 꽃 터뜨리기 1 · 후열 1)');
   ok(SK2.a_gyeokjjil.fx.find(e => e.k === 'burst').mul === 1.5 && SK2.a_godok.fx.find(e => e.k === 'grow').mul === 2 && R_('AS_BOUND').virMin === 10 && R_('AS_BOUND').bloomHp === 0.15 && R_('AS_BOUND').zanIn === 0.2 && R_('AS_BOUND').hideNoParry === 2 && R_('AS_BOUND').zanNoStam === 2, '설계지 숫자: 격발 찌르기 1.5배 · 고독 ×2 · 맹독 10 · 대가 15% · +20% · 2차례');
   /* 칸 설명은 한 줄(만든 사람): 효과 문장 40자 넘으면 경고. 승부수(대사가 있는 칸)는 만든 사람 문장 그대로라 뺀다 */
-  const MAX = R_('MK_DESC_MAX'), long = []; for (const x of SK) { const s = SK2[x.id]; if (s.line) continue; const d = E.skBody(s); if (d.length > MAX) long.push(s.n + '(' + d.length + ')'); }
+  const MAX = R_('MK_DESC_MAX'), long = []; for (const x of SK) { const s = SK2[x.id]; if (s.line) continue; const d = E.skBody(s).replace(/ (비용 1로 )?쓰면 다음 차례 유산 충전 없음\.$/, ''); /* S-5: 끝의 유산 충전 문장은 길이에서 뺀다 */ if (d.length > MAX) long.push(s.n + '(' + d.length + ')'); }
   for (const v of Object.values(A.vars)) if (v.d && v.d.length > MAX) long.push(v.n + '(' + v.d.length + ')');
   if (long.length) console.warn('경고: 암살자 설명 ' + MAX + '자 넘음 — ' + long.join(', ')); else n++; }
 
@@ -183,7 +183,7 @@ for (const c of CLS) {
   ok(A.nodes.h5_chase.reqTags.추적 === 1 && A.nodes.h5_chase.reqTags['몸 빼기'] === 1 && A.nodes.h5_scent.reqTags.출혈 === 1 && A.nodes.h5_scent.reqTags.추적 === 1 && A.nodes.h5_frozen.reqTags.둔화 === 2 && A.nodes.h5_frozen.reqTags.기본공격연동 === 1, '결합 칸 셋(추격 추적 1 · 몸 빼기 1, 피 냄새 출혈 1 · 추적 1, 얼어붙은 사냥감 둔화 2 · 기본공격연동 1)');
   ok(R_('HN5_BOUND').trapHp === 0.15 && R_('HN5_BOUND').drawIn === 0.3 && R_('HN5_BOUND').galeIn === 0.2 && R_('HN5_BOUND').trapFocus === 3, '설계지 숫자: 대가 15% · +30% · +20% · 추적 3겹');
   /* 칸 설명은 한 줄(만든 사람): 효과 문장 40자 넘으면 경고. 승부수(대사가 있는 칸)는 만든 사람 문장 그대로라 뺀다 */
-  const MAX = R_('MK_DESC_MAX'), long = []; for (const x of SK) { const s = SK2[x.id]; if (s.line) continue; const d = E.skBody(s); if (d.length > MAX) long.push(s.n + '(' + d.length + ')'); }
+  const MAX = R_('MK_DESC_MAX'), long = []; for (const x of SK) { const s = SK2[x.id]; if (s.line) continue; const d = E.skBody(s).replace(/ (비용 1로 )?쓰면 다음 차례 유산 충전 없음\.$/, ''); /* S-5: 끝의 유산 충전 문장은 길이에서 뺀다 */ if (d.length > MAX) long.push(s.n + '(' + d.length + ')'); }
   for (const v of Object.values(A.vars)) if (v.d && v.d.length > MAX) long.push(v.n + '(' + v.d.length + ')');
   if (long.length) console.warn('경고: 사냥꾼 설명 ' + MAX + '자 넘음 — ' + long.join(', ')); else n++; }
 
@@ -211,7 +211,7 @@ for (const c of CLS) {
   ok(!dup.length && !clash.length, '원소술사 이름 겹침 0, 상태 · 부채꼴과 같은 스킬 이름 0' + (dup.length || clash.length ? ' — ' + dup.concat(clash).join(', ') : ''));
   ok(A.nodes.e5_frostember.reqTags.둔화 === 2 && A.nodes.e5_frostember.reqTags.화상 === 1 && A.nodes.e5_frostwall.reqTags.보호 === 1 && A.nodes.e5_frostwall.reqTags.둔화 === 1 && A.nodes.e5_manafire.reqTags.기본공격연동 === 1 && A.nodes.e5_manafire.reqTags.화상 === 1, '결합 칸 셋(얼어붙은 불씨 둔화 2 · 화상 1, 서리 방벽 보호 1 · 둔화 1, 마염 화살 기본공격연동 1 · 화상 1)');
   ok(R_('EL5_BOUND').frzBrk === 40 && R_('EL5_BOUND').avatarHp === 0.05 && R_('EL5_BOUND').meteorHp === 0.5 && R_('EL5_BOUND').stasisChill === 3 && R_('ELEM').guard === 0.2, '설계지 숫자: 빙결 붕괴 +40 · 화신 5% · 천화 절반 · 정적 둔화 3 · 서리 무게 −20%');
-  const MAX = R_('MK_DESC_MAX'), long = []; for (const x of SK) { const s = SK2[x.id]; if (s.line) continue; const d = E.skBody(s); if (d.length > MAX) long.push(s.n + '(' + d.length + ')'); }
+  const MAX = R_('MK_DESC_MAX'), long = []; for (const x of SK) { const s = SK2[x.id]; if (s.line) continue; const d = E.skBody(s).replace(/ (비용 1로 )?쓰면 다음 차례 유산 충전 없음\.$/, ''); /* S-5: 끝의 유산 충전 문장은 길이에서 뺀다 */ if (d.length > MAX) long.push(s.n + '(' + d.length + ')'); }
   for (const v of Object.values(A.vars)) if (v.d && v.d.length > MAX) long.push(v.n + '(' + v.d.length + ')');
   if (long.length) console.warn('경고: 원소술사 설명 ' + MAX + '자 넘음 — ' + long.join(', ')); else n++; }
 

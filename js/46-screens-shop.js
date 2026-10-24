@@ -161,7 +161,7 @@ function campInit(run) {
   const price = id => Math.round(CONS[id].price * Math.pow(1.5, ch - 1) * mul);
   run.camp = { room: run.room, ch, mul, rested: 0, log: [], cons: pick.map(id => ({ id, price: price(id), left: id === 'herb' ? Math.min(SHOP_CONS.herb[run.mode === 'hard' ? 'hard' : 'normal'], chData(ch).campHerb != null ? chData(ch).campHerb : 99) : CAMP_SHOP.stock /* 0.8.0 6단계 마감: 챕터별 야영지 약초 재고(campHerb) */ })) };
   const ps = pouchSell(run); if (ps.n) run.camp.sold = ps;
-  if (ch === 2) run.camp.oil = { price: LAMP.shop.price, left: LAMP.shop.n }; ch2Markup(run, run.camp); // A2 장터 상점 기름 · 빚의 제단
+  if (ch === 2) run.camp.oil = { price: LAMP.shop.price, left: LAMP.shop.n }; // A2 장터 상점 기름. 10월 24일 만든 사람 결정: 빚의 제단 값 올림(ch2Markup)은 챕터 끝 상점에만 — 야영지 상인이 그 한 번을 가져가 60골드가 공짜가 되던 길을 막는다
   if (run === G.run) { saveRunLocal(); saveCur(); } // 10월 24일 S-4: 진열 · 값 배율은 화면에 그리며 처음 만든다. 바로 저장해 새로 고침으로 다시 굴리지 못하게 한다
   return run.camp;
 }

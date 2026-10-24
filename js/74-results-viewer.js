@@ -190,6 +190,8 @@ async function delTesters() {
 function dashRunResult(r) { return r.result || (r.status === 'done' ? 'done' : 'progress'); }
 function dashRunTime(r) { return r.updatedAt || r.endedAt || r.startedAt || 0; }
 const DASH_RESULTS = { progress: '진행 중', win: '돌파', lose: '쓰러짐', abandon: '포기', flee: '도망', done: '완료' };
+/* 10월 24일: 판 지문 표시(js/66 runRecord) — noRank 고친 저장본에서 이어 와 랭킹에 안 감 · mkLeg 지문 전 저장본(랭킹 줄에 leg: 1) */
+const dashRunFlags = r => (r.noRank ? ' <span class="rctag warn" title="저장본 지문이 어긋나 랭킹에 보내지 않은 판">랭킹 제외</span>' : '') + (r.mkLeg ? ' <span class="rctag" title="판 지문이 생기기 전 저장본에서 이어 온 판">옛 저장본</span>' : '');
 function dashRunRows() {
   const f = G.rf || {}, q = (f.q || '').trim().toLocaleLowerCase();
   const from = f.from ? new Date(f.from + 'T00:00:00').getTime() : 0;
@@ -326,7 +328,7 @@ function vRunDetail(x) {
   const r = x.r, acts = r.acts || [], page = Math.max(0, Math.min(G.raPage || 0, Math.ceil(acts.length / 100) - 1));
   const names = { act: '행동', hit: '피격', break: '붕괴', kill: '처치', dead: '사망', heal: '회복', dodge: '흘리기', dealt: '가한 피해', eact: '적 행동', cons: '소모품' };
   const skills = allSkillNames();
-  let h = '<section class="card admin-detail" id="admin-run-detail"><h4>' + esc(r.cname || '이름 없는 캐릭터') + ' 상세 기록</h4><p>' + esc(x.who) + '</p><p class="mini">판 ID: ' + esc(r.id || '없음') + ' · 행동 기록 ' + acts.length + '건</p><button class="sm" data-a="runclose">상세 닫기</button>';
+  let h = '<section class="card admin-detail" id="admin-run-detail"><h4>' + esc(r.cname || '이름 없는 캐릭터') + ' 상세 기록</h4><p>' + esc(x.who) + '</p><p class="mini">판 ID: ' + esc(r.id || '없음') + ' · 행동 기록 ' + acts.length + '건' + dashRunFlags(r) + '</p><button class="sm" data-a="runclose">상세 닫기</button>';
   h += vRunDelete(x);
   const tab=G.rdTab || 'summary';
   h += '<div class="admin-tabs" role="group" aria-label="개인 상세 보기">'+[['summary','요약'],['gear','장비·아이템'],['growth','스탯·스킬 트리'],['battle','행동 기록']].map(([k,n])=>'<button class="chip'+(tab===k ? ' on' : '')+'" data-a="runtab" data-k="'+k+'" aria-pressed="'+(tab===k)+'">'+n+'</button>').join('')+'</div><div class="row"><button class="sm" data-a="runroomcsv">이 판의 방별 통계 CSV</button></div>';
@@ -359,7 +361,7 @@ function vRunLogs() {
   h += vBatchRunDelete();
   h += vAdminOverview(rows);
   h += '<div class="tbl"><table class="st2"><caption class="sr">검색된 플레이 로그</caption><thead><tr><th>플레이어</th><th>캐릭터·직업</th><th>결과</th><th>도달</th><th>마지막 기록</th><th>상세</th></tr></thead><tbody>';
-  h += rows.slice(page * 25, (page + 1) * 25).map(x => { const r = x.r; return '<tr><td>' + (canDeleteRun() ? '<label><input type="checkbox" data-a="rundeltick" data-k="'+esc(JSON.stringify({uid:x.uid,id:r.id}))+'"'+((G.runDeleteSel || []).some(t=>t.uid===x.uid&&t.id===r.id) ? ' checked' : '')+(G.runDelBusy ? ' disabled' : '')+' aria-label="'+esc((r.cname || r.id)+' 삭제 선택')+'"> 선택</label><br>' : '') + esc(x.who) + '</td><td>' + esc(r.cname || '—') + '<br>' + esc((BUILDS[r.build] || {}).n || r.build || '—') + '</td><td>' + esc(DASH_RESULTS[dashRunResult(r)] || dashRunResult(r)) + '</td><td>' + esc(rankProg({ ch: r.ch, clears: r.clears, floor: r.roomReached })) + '</td><td>' + esc(dashRunTime(r) ? new Date(dashRunTime(r)).toLocaleString('ko-KR') : '—') + '</td><td><button class="sm" data-a="runopen" data-k="' + x.key + '" aria-expanded="' + (G.rfOpen === x.key) + '">기록 보기</button></td></tr>'; }).join('') || '<tr><td colspan="6">조건에 맞는 기록이 없습니다.</td></tr>';
+  h += rows.slice(page * 25, (page + 1) * 25).map(x => { const r = x.r; return '<tr><td>' + (canDeleteRun() ? '<label><input type="checkbox" data-a="rundeltick" data-k="'+esc(JSON.stringify({uid:x.uid,id:r.id}))+'"'+((G.runDeleteSel || []).some(t=>t.uid===x.uid&&t.id===r.id) ? ' checked' : '')+(G.runDelBusy ? ' disabled' : '')+' aria-label="'+esc((r.cname || r.id)+' 삭제 선택')+'"> 선택</label><br>' : '') + esc(x.who) + '</td><td>' + esc(r.cname || '—') + '<br>' + esc((BUILDS[r.build] || {}).n || r.build || '—') + '</td><td>' + esc(DASH_RESULTS[dashRunResult(r)] || dashRunResult(r)) + dashRunFlags(r) + '</td><td>' + esc(rankProg({ ch: r.ch, clears: r.clears, floor: r.roomReached })) + '</td><td>' + esc(dashRunTime(r) ? new Date(dashRunTime(r)).toLocaleString('ko-KR') : '—') + '</td><td><button class="sm" data-a="runopen" data-k="' + x.key + '" aria-expanded="' + (G.rfOpen === x.key) + '">기록 보기</button></td></tr>'; }).join('') || '<tr><td colspan="6">조건에 맞는 기록이 없습니다.</td></tr>';
   h += '</tbody></table></div><div class="row"><button class="sm" data-a="runpage" data-v="' + (page - 1) + '"' + (page ? '' : ' disabled') + '>이전</button><button class="sm" data-a="runpage" data-v="' + (page + 1) + '"' + (page + 1 < pages ? '' : ' disabled') + '>다음</button></div></section>';
   const opened = rows.find(x => x.key === G.rfOpen); return (opened ? vRunDetail(opened) : '') + h;
 }

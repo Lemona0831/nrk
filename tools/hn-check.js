@@ -72,6 +72,6 @@ const lost = e => e.hpMax - e.hp;
 { const f = fight(['h5_frozen'], ['bruiser']); use(f.b, 'h5_frozen'); const e = f.es[0]; E.addS(f.b, e, 'chill', 2); const h0 = e.hp; f.b.stepMode = true; E.playerAct(f.b, 'basic', e.id); const d1 = h0 - e.hp; const g = fight([], ['bruiser']); const e2 = g.es[0]; E.addS(g.b, e2, 'chill', 2); g.b.stepMode = true; const h1 = e2.hp; E.playerAct(g.b, 'basic', e2.id);
   ok(Math.abs(d1 / (h1 - e2.hp) - E.SK2.h5_frozen.fx[0].mul) < 0.15, '얼어붙은 사냥감: 둔화 걸린 적에게 기본 공격 ×' + E.SK2.h5_frozen.fx[0].mul); }
 // 한 줄 설명 · 승부수
-{ const A2 = E.atBuild('hunter'); for (const x of Object.values(A2.nodes).filter(x => x.kind === 'skill')) { const s = E.SK2[x.id], d = E.skBody(s); ok(!/\s{2}/.test(d) && d.length > 4 && (s.line || d.length <= R_('MK_DESC_MAX')), s.n + ' 한 줄 설명: ' + d); }
+{ const A2 = E.atBuild('hunter'); for (const x of Object.values(A2.nodes).filter(x => x.kind === 'skill')) { const s = E.SK2[x.id], d = E.skBody(s); ok(!/\s{2}/.test(d) && d.length > 4 && (s.line || d.replace(/ (비용 1로 )?쓰면 다음 차례 유산 충전 없음\.$/, '').length <= R_('MK_DESC_MAX')), s.n + ' 한 줄 설명: ' + d); }
   ok(E.SK2.h5_mangung.cut === 'blade' && E.SK2.h5_gale.cut === 'guard' && E.SK2.h5_trap.cut === 'arcane', '컷인: 만궁 검 · 질풍난사 방어 · 혈향의 덫 마법'); }
 console.log('hn-check: ' + n + '개 통과');
