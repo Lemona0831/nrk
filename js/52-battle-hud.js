@@ -415,13 +415,13 @@ function consScore(b, c, D) {
     default: return 0;
   }
 }
-function consReason(b, D) {
+function consReason(b, D, c) { /* 10월 24일: 방해 칸이 c(소모품)를 읽는데 받지 않아 전투 화면을 그리다 멈췄다(공개 직후 신고 "10층에서 전투 시작 안 됨") */
   const p = b.p;
   switch (D.k) {
     case 'heal': case 'healcure': return '생명력 ' + Math.round(p.hp / p.hpMax * 100) + '%';
     case 'stam': return '스태미나 ' + Math.round(p.st);
     case 'cure': return (SNAMES[D.s] || D.s) + ' ' + st(p, D.s) + ' 지움';
-    case 'interrupt': { const t = consTarget(b, D, G.sel); return t ? t.n + ' 큰 공격 −' + Math.round(consVal(c) * 100) + '%' : D.sit; }
+    case 'interrupt': { const t = consTarget(b, D, G.sel); return t ? t.n + ' 큰 공격 −' + Math.round((c ? consVal(c) : D.v || 0) * 100) + '%' : D.sit; }
     default: return D.sit;
   }
 }
@@ -436,7 +436,7 @@ function consQuick(b, hud) {
   const keys = G.data.numKeys !== false;
   const btns = cand.slice(0, 3).map((x, k) => {
     const why = ready ? consWhyNot(b, run, x.c, G.sel) : '적이 움직이는 중'; const nm = x.D.n + (x.c.g === 'm' ? ' (고급)' : '');
-    const rs = why || consReason(b, x.D), shortcut=x.qSlot == null ? k : x.qSlot;
+    const rs = why || consReason(b, x.D, x.c), shortcut=x.qSlot == null ? k : x.qSlot;
     return `<button class="qc${why ? ' dis' : ''}" data-a="consuse" data-k="${x.i}" data-q="${shortcut + 1}" aria-disabled="${!!why}" title="${esc((keys ? 'QWE'[shortcut] + ': ' : '') + nm + ' · ' + rs)}"><b>${keys ? '<kbd>' + 'QWE'[shortcut] + '</kbd>' : ''}<span class="qi" aria-hidden="true">${x.D.ico}</span> <span class="qnm">${esc(nm)}</span> <span class="qn">×${x.c.n}</span></b><small>${esc(rs)}</small></button>`;
   }).join('');
   const qz = hud && hud.tools && !G.toolsOpen ? ' tlz' : hud && !hud.qcons && !(hud.tools && G.toolsOpen) ? ' qoff' : '';
