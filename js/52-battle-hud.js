@@ -415,7 +415,7 @@ function consScore(b, c, D) {
     default: return 0;
   }
 }
-function consReason(b, D, c) { /* 10월 24일: 방해 칸이 c(소모품)를 읽는데 받지 않아 전투 화면을 그리다 멈췄다(공개 직후 신고 "10층에서 전투 시작 안 됨") */
+function consReason(b, D, c) { /* 10월 24일: 방해 칸이 c(소모품)를 읽는데 받지 않아 전투 화면을 그리다 멈췄다(공개 직후 1챕터 10층 신고) */
   const p = b.p;
   switch (D.k) {
     case 'heal': case 'healcure': return '생명력 ' + Math.round(p.hp / p.hpMax * 100) + '%';
