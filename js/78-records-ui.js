@@ -1,6 +1,6 @@
 'use strict';
 /* ===== 기록 · 랭킹 · 도감 · 계정 목표 · 표식 도전 화면 (0.6a.2-113, 10월 10일 전면 개편) =====
-   저장 형식은 그대로다: G.data.runs · rank62 · graves · codex · goals · markBest · 랭킹판(G.board)을 읽기만 한다.
+   저장 형식은 그대로다: G.data.runs · rank80(M8 시즌 키, 0.7.0은 rank62) · graves · codex · goals · markBest · 랭킹판(G.board)을 읽기만 한다.
    화면 상태(필터 · 탭 · 열린 판)는 G.rc에만 두고 저장하지 않는다. 단추는 data-a="rc" data-k="종류:값" 하나로 받는다.
    랭킹의 일반 · 가혹과 직업 칩, 목표의 일반 · 가혹, 표식 도전의 고르기는 예전 data-a(rmode · rtab · gmode · mk*)를 그대로 쓴다.
    숨겨진 직업은 랭킹 · 도감 · 목표에서 rankClassView · unlOpen으로 가린다. 내 판 기록은 내 직업 이름 그대로 쓴다. */
@@ -12,6 +12,7 @@ const rcClock = t => t ? new Date(t).toLocaleTimeString('ko-KR', { hour: '2-digi
 const rcMs = ms => ms > 0 ? fmtMs(ms) : '기록 없음';
 function rcFloor(ch, f) {
   if (!f) return '';
+  if (ch === 3 && !OLD3) return f > FLOORS ? '끝' : f === FLOOR_CAMP || f === FLOOR_BOSS ? floorBandOf(3, f).n : floorBandOf(3, f).n + ' ' + f + '층'; // A3 「성벽 아래」 층 띠
   if (f === FLOOR_BOSS) return ch >= 3 ? '재의 왕좌' : '보스';
   if (f === FLOOR_CAMP) return ch >= 3 && typeof floorBand3 === 'function' ? '오아시스 야영지' : '야영지';
   if (f > FLOORS) return '끝';
@@ -20,9 +21,9 @@ function rcFloor(ch, f) {
 }
 function rcProg(x) { return (x.clears || 0) >= (x.ch || 1) ? x.clears + '챕터 돌파' : (x.ch || 1) + '챕터 ' + rcFloor(x.ch || 1, x.floor || 1); }
 const rcSteps = (a, b) => a.filter(x => x).length + '/' + b;
-/* 내 판 기록: G.data.runs를 바탕으로, 랭킹 줄(rank62)에만 남은 판도 간단한 줄로 함께 센다 */
+/* 내 판 기록: G.data.runs를 바탕으로, 랭킹 줄(rank80)에만 남은 판도 간단한 줄로 함께 센다 */
 function rcRuns() {
-  const d = G.data, R = d.rank62 || {}, seen = {}, out = []; const live = {};
+  const d = G.data, R = d.rank80 || {}, seen = {}, out = []; const live = {};
   if (d.cur) live[d.cur.id] = 1; for (const k of d.kept || []) live[k.id] = 1;
   const stOf = (res, e, lv, clears) => res === 'lose' ? 'dead' : res === 'abandon' ? 'abandon' : res === 'flee' ? 'left' : lv ? 'alive' : (e && e.st === 'dead') ? 'dead' : (e && e.st === 'abandon') ? 'abandon' : clears > 0 ? 'clear' : 'left';
   for (const r of d.runs || []) {
@@ -99,11 +100,12 @@ function rcRunDetail(id) {
   if (r.combatStats) h += `<section class="rcsec"><h4>전투 수치</h4><dl class="rcfacts">${GSTAT.filter(([k])=>Number.isFinite(r.combatStats[k]) && !(isV2({build:x.build}) && k==='mp')).map(([k,lab,fmt])=>row(esc(lab),esc(String(fmt(r.combatStats[k]))))).join('')}</dl><p class="mini">마지막 저장 당시의 수치입니다. 공격 피해는 장비 기준이며 힘 배율·일시 효과·적의 피해 감소 적용 전입니다.</p></section>`;
   /* 장비 · 스킬 · 각인 */
   const eq = Array.isArray(r.eqDetails) ? r.eqDetails : (r.eq7 || []).map((s, i) => s ? {sl:EQ_SLOTS[i],tpl:s.split(':')[0],g:s.split(':')[1] || 'n'} : null).filter(Boolean);
-  h += `<section class="rcsec"><h4>최종 장비</h4>${eq.length ? `<ul class="rcplain">${eq.map(e=>`<li><span class="mini">${esc(EQ_SLOT_N[e.sl] || e.sl || '')}</span> <span class="gr-${['n','m','r','h','l'].includes(e.g)?e.g:'n'}">${ITEMS[e.tpl] ? inm(e.tpl,e.g) : esc(e.tpl)}</span>${e.base ? `<p class="mini">${esc(e.base)}</p>` : ''}${e.effect ? `<p>${esc(e.effect)}</p>` : ''}${e.cost ? `<p class="mini">대가: ${esc(e.cost)}</p>` : ''}</li>`).join('')}</ul>` : '<p class="mini">기록 없음</p>'}</section>`;
+  h += `<section class="rcsec"><h4>최종 장비</h4>${eq.length ? `<ul class="rcplain">${eq.map(e=>`<li><span class="mini">${esc(EQ_SLOT_N[e.sl] || e.sl || '')}</span> <span class="gr-${['n','m','r','h','l'].includes(e.g)?e.g:'n'}">${ITEMS[e.tpl] ? inm(e.tpl,e.g) : esc(e.name || e.tpl)}</span>${e.base ? `<p class="mini">${esc(e.base)}</p>` : ''}${e.effect ? `<p>${esc(e.effect)}</p>` : ''}${e.cost ? `<p class="mini">대가: ${esc(e.cost)}</p>` : ''}</li>`).join('')}</ul>` : '<p class="mini">기록 없음</p>'}</section>`;
   const SM = skillMap(x.build), starters = (TREE2[x.build] && TREE2[x.build].starters) || [], sk = (r.skills || []).filter(s => SM[s]);
   h += `<section class="rcsec"><h4>스킬</h4>${starters.length || sk.length ? `<ul class="rcplain">${[...new Set(starters.concat(sk))].filter(id=>SM[id]).map(id=>`<li>${SM[id].v2 ? `<details><summary>${esc(SM[id].n)}</summary><p class="mini">${esc(skHead(SM[id].s))}</p><p>${esc(skBody(SM[id].s))}</p></details>` : esc(SM[id].n)}</li>`).join('')}</ul><p class="mini">설명은 현재 규칙을 기준으로 표시합니다.</p>` : '<p class="mini">기록 없음</p>'}</section>`;
   const aw = (r.awk || []).filter(a => AWK_MAP[a]);
-  h += `<section class="rcsec"><h4>각인</h4>${aw.length ? `<ul class="rcplain">${aw.map(a => `<li><b>${esc(AWK_MAP[a].n)}</b> <span class="mini">${esc(AWK_MAP[a].d)}</span></li>`).join('')}</ul>` : '<p class="mini">얻은 각인이 없습니다.</p>'}</section>`;
+  if (r.ptree && BUILDS[r.build]) { const T = ptBuild(r.build); const ks = (r.ptree.ks || []).map(id => T.nodes[id]).filter(Boolean); h += `<section class="rcsec"><h4>큰 각인</h4>${ks.length ? `<ul class="rcplain">${ks.map(n => `<li><b>${esc(n.n)}</b> <span class="mini">${esc(n.d)}</span></li>`).join('')}</ul>` : '<p class="mini">얻은 큰 각인이 없습니다.</p>'}<p class="mini">패시브 노드 ${(r.ptree.own || []).length} · 보너스 노드 ${(r.ptree.free || []).length}${r.atree ? ' · 액티브 노드 ' + (r.atree.own || []).length : ''}</p></section>`; } // 10월 16일 0.8.0 2단계
+  h += `<section class="rcsec"><h4>각인(옛 판 · 챕터 선물)</h4>${aw.length ? `<ul class="rcplain">${aw.map(a => `<li><b>${esc(AWK_MAP[a].n)}</b> <span class="mini">${esc(AWK_MAP[a].d)}</span></li>`).join('')}</ul>` : '<p class="mini">얻은 각인이 없습니다.</p>'}</section>`;
   /* 어떻게 끝났나 */
   let why = '';
   if (x.st === 'dead') { why = `<p>${esc(g ? g.roomN || rcFloor(x.ch, x.floor) : rcFloor(x.ch, x.floor))}에서 쓰러졌습니다.</p>${g ? graveKill(g) + graveContext(g) : '<p class="mini">결정타 기록 없음</p>'}`; }
@@ -143,10 +145,10 @@ function vRecords() {
 /* ===== 랭킹 ===== */
 function rankDisplayRows() {
   const out=[];
-  if(G.db && G.board){for(const T of G.board)for(const e of Object.values(T.rank62 || {}))out.push(Object.assign({},e,{uid:T.uid,nick:T.name || '',me:T.uid===G.uid}));}
-  else for(const e of Object.values(G.data.rank62 || {}))out.push(Object.assign({},e,{uid:G.uid || 'local',nick:G.data.name || '',me:true}));
+  if(G.db && G.board){for(const T of G.board)for(const e of Object.values(T.rank80 || {}))out.push(Object.assign({},e,{uid:T.uid,nick:T.name || '',me:T.uid===G.uid,login:T.login}));} // 10월 24일: login — 손님 표시(js/44 rankGuest)
+  else for(const e of Object.values(G.data.rank80 || {}))out.push(Object.assign({},e,{uid:G.uid || 'local',nick:G.data.name || '',me:true,login:boardLogin({}).login}));
   const tab=G.rankTab || 'all',mode=G.rankMode==='hard' ? 'hard' : 'normal';
-  return out.filter(e=>BUILDS[e.build]&&(tab==='all'||e.build===tab)&&(e.mode==='hard'?'hard':'normal')===mode&&(G.rankIncludeDead!==false||e.st!=='dead')).sort(rankCmp);
+  return out.filter(e=>BUILDS[e.build]&&rankOk(e)&&(tab==='all'||e.build===tab)&&(e.mode==='hard'?'hard':'normal')===mode&&(G.rankIncludeDead!==false||e.st!=='dead')).sort(rankCmp); // S-4(10월 24일): rankOk — 있을 수 없는 줄은 세우지 않는다
 }
 function rankBestPlayers(records) {const seen=new Set();return records.filter(e=>{if(seen.has(e.uid))return false;seen.add(e.uid);return true;});}
 function vRank() {
@@ -162,7 +164,7 @@ function vRank() {
     body+=mi>=0?'<p class="rcme">내 최고 순위 <b>'+(mi+1)+'위</b> · '+esc(rcProg(all[mi]))+'</p>':'<p class="mini">이 조건에는 내 기록이 없습니다.</p>';
     body+='<div class="rkwrap"><table class="rkt"><caption class="sr">플레이어별 최고 기록</caption><thead><tr><th>순위</th><th>플레이어·캐릭터</th><th>직업</th><th>도달</th><th>상세</th></tr></thead><tbody>';
     body+=rows.map((e,i)=>{const B=rankClassView(e),other=records.filter(x=>x.uid===e.uid);
-      return '<tr class="'+(e.me?'me':'')+'"><th class="c-rank" scope="row" data-l="순위">'+(i+1)+'</th><td class="c-name" data-l="플레이어·캐릭터"><b>'+esc(e.nick || '이름 없는 방랑자')+(e.me?' · 나':'')+'</b><small>'+esc(e.cname || '이름 없음')+'</small></td><td class="c-cls" data-l="직업">'+esc(B.n)+'</td><td class="c-prog" data-l="도달"><b>'+esc(rcProg(e))+'</b><small>'+esc(RANK_ST[e.st] || '기록 없음')+'</small></td><td class="c-time" data-l="상세"><details><summary>상세 · '+other.length+'판</summary><p>대표 기록: Lv '+(e.lv || 1)+' · '+(e.ms>0?fmtMs(e.ms):'시간 미기록')+' · '+esc(rcDate(e.at))+'</p><ol>'+other.map(x=>'<li>'+esc(x.cname || '이름 없음')+' · '+esc(rankClassView(x).n)+' · '+esc(rcProg(x))+' · Lv '+(x.lv || 1)+' · '+esc(RANK_ST[x.st] || '기록 없음')+' · '+(x.ms>0?fmtMs(x.ms):'시간 미기록')+'</li>').join('')+'</ol></details></td></tr>';
+      return '<tr class="'+(e.me?'me':'')+'"><th class="c-rank" scope="row" data-l="순위">'+(i+1)+'</th><td class="c-name" data-l="플레이어·캐릭터"><b>'+esc(e.nick || '이름 없는 방랑자')+(e.me?' · 나':'')+'</b>'+rankGuestTag(e)+'<small>'+esc(e.cname || '이름 없음')+'</small></td><td class="c-cls" data-l="직업">'+esc(B.n)+'</td><td class="c-prog" data-l="도달"><b>'+esc(rcProg(e))+'</b><small>'+esc(RANK_ST[e.st] || '기록 없음')+'</small></td><td class="c-time" data-l="상세"><details><summary>상세 · '+other.length+'판</summary><p>대표 기록: Lv '+(e.lv || 1)+' · '+(e.ms>0?fmtMs(e.ms):'시간 미기록')+' · '+esc(rcDate(e.at))+'</p><ol>'+other.map(x=>'<li>'+esc(x.cname || '이름 없음')+' · '+esc(rankClassView(x).n)+' · '+esc(rcProg(x))+' · Lv '+(x.lv || 1)+' · '+esc(RANK_ST[x.st] || '기록 없음')+' · '+(x.ms>0?fmtMs(x.ms):'시간 미기록')+'</li>').join('')+'</ol></details></td></tr>';
     }).join('') || '<tr><td colspan="5">아직 기록이 없습니다.</td></tr>';
     body+='</tbody></table></div><p class="mini">'+all.length+'명의 최고 기록 중 50위까지 표시합니다. 상세에는 현재 조건의 보관된 랭킹 기록이 표시됩니다. 분석용 플레이 로그는 그대로 유지됩니다.</p>';
   }

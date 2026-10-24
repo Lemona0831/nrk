@@ -1,8 +1,11 @@
+/* 폐기(0.8.0 M8): 옛 3챕터 장비 표(CH2_POOL · CH3_POOL, 재의 사막 장비) 점검. 그 표는 0.8.0 A2 · A3에서 data/archive/items_ch2.js · items_ch3.js로 보관됐고 새 장비는 gear8(tools/gear8-gen-check.js · unique-check.js). 파일은 기록으로 남긴다. 그래도 돌리려면 RUN_RETIRED=1 */
+if (!process.env.RUN_RETIRED) { console.log('폐기(0.8.0 M8): item3check — 보관된 기능 · 일회성 비교라 건너뜀(RUN_RETIRED=1이면 돈다)'); process.exit(0); }
 /* 3챕터 장비 효과 점검 (10월 8일, docs/아이템/3챕터-장비.md 8절): 06a2의 게임 코드를 vm에서 그대로 돌려, 장비의 새 지점과 핵심 효과가 문장대로 일어나는지 장면마다 확인한다.
    itemcheck는 "발동했는가"를 세고, 이 점검은 "문장대로 바뀌었는가"를 본다. 실패 0이어야 한다.
    실행: DGDIR=06a2 node tools/item3check.js */
 process.env.DGDIR = process.env.DGDIR || '.';
 const D = require('./dgqa.js'); const G0 = D.G0; const run_ = D.run_;
+run_('GEAR8.on = false'); // 옛 장비(3챕터 장비 557종 쪽)를 재는 점검: 옛 길에서(0.8.0 M6-2부터 기본은 새 장비, GEAR8=0이 기준선)
 let fail = 0, pass = 0; const ok = (c, m) => { if (c) pass++; else { fail++; console.log('실패:', m); } };
 const V = k => run_(k);
 function battle(room, build, lv, items) {
@@ -169,7 +172,7 @@ T('purgingchalice', () => { const b = flask(['purgingchalice'], 'flaskM', b => {
 
 /* 셋째 묶음: 남은 효과 */
 const dmgRatio = (items, room, bd, prep, raw) => { const f = it => { const b = battle(room, bd || 'assassin', 13, it); const e = b.en[0]; if (prep) prep(b, e); return hit(b, e, raw || 100); }; return f(items) / f([]); };
-T('ashrake', () => { const f = it => { const b = battle({ en: [['wrapped', 0]] }, 'assassin', 13, it); const e = b.en[0]; b.actN++; b.cur = { id: 'basic' }; const k0 = e.brk; G0.addBreak(b, e, 5); b.cur = null; return e.brk - k0; }; ok(f(['ashrake']) - f([]) >= 4 - 0.01, '재 긁는 갈퀴: 붕대 감긴 적에게 기본 공격 붕괴 +4'); });
+T('ashrake', () => { const f = it => { const b = battle({ en: [['wrapped', 0]] }, 'assassin', 13, it); const e = b.en[0]; b.actN++; b.cur = { id: run_('BRK_RULE').basic0 ? 'heavy' : 'basic' }; const k0 = e.brk; G0.addBreak(b, e, 5); b.cur = null; return e.brk - k0; }; /* M5-7: 규칙을 켜면 강공격 붕괴 */ ok(f(['ashrake']) - f([]) >= 4 - 0.01, '재 긁는 갈퀴: 붕대 감긴 적에게 기본 공격 붕괴 +4'); });
 T('brandaxe', () => { const r = dmgRatio(['brandaxe'], { en: [['bruiser', 1]] }, 'assassin', (b, e) => { e.fire = 1; }); ok(near(r, 1.08, 0.01), '낙인 깨는 도끼 +8% (' + r.toFixed(3) + ')'); });
 T('noonblade', () => { const r = dmgRatio(['noonblade'], { en: [['bruiser', 0]], mods: ['noon'] }, 'assassin', (b) => { b.heat = 60; }); ok(near(r, 1.06, 0.01), '한낮의 검: 열기 50 이상 기본 공격 +6% (' + r.toFixed(3) + ')'); });
 T('lurkspike', () => { const f = it => { const b = battle({ en: [['lurker', 0], ['bruiser', 0], ['archer', 0]] }, 'assassin', 13, it); b.en[0].under = 1; return hit(b, b.en[2], 100); }; ok(near(f(['lurkspike']) / f([]), 1.1, 0.01), '숨은 적 찌르개: 숨은 적이 있으면 후열 +10%'); });
@@ -248,6 +251,6 @@ T('emberring', () => { const f = it => { const b = battle({ en: [['ember', 0]] }
 T('plain-stats', () => { const hp = it => G0.calcHpMax(battle({ en: [['bruiser', 0]] }, 'warden', 13, it).p); const st = it => G0.calcStMax(battle({ en: [['bruiser', 0]] }, 'warden', 13, it).p); ok(hp(['thickhide']) - hp([]) === 9 && hp(['sandband']) - hp([]) === 8 && hp(['dunebeads']) - hp([]) === 7, '숫자만 올리는 장비: 최대 생명력 +9 · +8 · +7'); ok(st(['sandglove']) - st([]) === 7, '낙타 가죽 장갑: 최대 스태미나 +7'); const r = dmgRatio(['sandiron'], { en: [['bruiser', 0]] }); ok(near(r, 1.04, 0.005), '모래쇠 막대: 기본 공격 +4% (' + r.toFixed(3) + ')'); });
 T('merchantcharm', () => { const b = battle({ en: [['bruiser', 0]] }, 'assassin', 13, ['merchantcharm']); const run = { p: b.p, gold: 0 }; ok(G0.calcHpMax(b.p) < G0.calcHpMax(battle({ en: [['bruiser', 0]] }, 'assassin', 13, []).p), '상인의 부적: 대가로 최대 생명력 −6%'); });
 
-T('sandtimer', () => { const mk = () => { const b = battle({ en: [['bruiser', 0]] }, 'assassin', 13, ['sandtimer']); const ids = G0.TREE2.assassin.starters; b.p.skills = ids.slice(); b.p.cd = {}; b.p.cd[ids[0]] = 3; b.actN = 5; b.round = 2; return [b, ids]; }; let [b, ids] = mk(); G0.fxRun(b.p, 'onRound', b, b.p); ok(b.p.cd[ids[0]] === 2, '모래시계 반지: 피해 없는 라운드 → 쿨타임 −1 (' + b.p.cd[ids[0]] + ')'); [b, ids] = mk(); b.p.ward = 0; G0.hurtPlayer(b, 10, { src: b.en[0], single: 1, label: '시험' }); G0.fxRun(b.p, 'onRound', b, b.p); ok(b.p.cd[ids[0]] === 3, '피해를 받은 라운드에는 당기지 않는다'); });
+T('sandtimer', () => { const mk = () => { const b = battle({ en: [['bruiser', 0]] }, 'assassin', 13, ['sandtimer']); b.p.ys = 2; b.actN = 5; b.round = 2; b.ysR = 3; return b; }; let b = mk(); G0.fxRun(b.p, 'onRound', b, b.p); ok(b.p.ys === 3, '모래시계 반지: 피해 없는 라운드 → 유산 +1 (' + b.p.ys + ')'); b = mk(); b.p.ward = 0; G0.hurtPlayer(b, 10, { src: b.en[0], single: 1, label: '시험' }); G0.fxRun(b.p, 'onRound', b, b.p); ok(b.p.ys === 2, '피해를 받은 라운드에는 주지 않는다'); }); // 10월 15일 유산 1차 시제품: 쿨타임 −1 → 유산 +1
 T('copperjug', () => { const b = battle({ en: [['bruiser', 0]] }, 'warden', 13, ['copperjug']); ok(near(G0.fxVal(b.p, 'stamMul', 1, (a, v) => a * v), 1.1, 0.0001), '구리 물동이: 스태미나 플라스크 회복 +10%'); });
 console.log('3챕터 장비 점검: 통과 ' + pass + ', 실패 ' + fail); process.exitCode = fail ? 1 : 0;

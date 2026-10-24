@@ -17,13 +17,13 @@ process.env.DGDIR = process.env.DGDIR || '.';
 const D = require('./dgqa.js');
 const Q = require('./qa.js');
 const SITS = require('./situations.js'); const SIT_CH = +(process.env.SIT_CH || 1); const SIT = (SIT_CH >= 3 ? SITS.SIT3 : SIT_CH >= 2 ? SITS.SIT2 : SITS.SIT).filter(x => !process.env.SIT_ONLY || process.env.SIT_ONLY.split(',').includes(String(x.id))); /* SIT_ONLY=128 등: 몇 상황만 (보스 이길 수단만 다시 잴 때) */ const SIT_CATS = SITS.SIT_CATS; // 10월 7일: SIT_CH=2면 2챕터 50상황
-const G0 = D.G0; const run_ = D.run_;
+const G0 = D.G0; const run_ = D.run_; const SKE = D.SKE; // 강화를 반영한 스킬 값 (tools/skeval.js, dgqa와 같은 것)
 /* 기준 세기 (10월 3일): 50상황은 갈래끼리의 상대 균형을 재는 고정 시험이다. 던전 난이도(DIFF·보스 배수)를 바꿔도 기준이 움직이지 않게,
    균형을 맞춘 날의 세기(하층 체력 ×1.05·피해 ×0.9, 수도원장 ×6·피해 ×1.6)로 고정한다. 던전 전체 난이도는 dgqa.js로 따로 맞춘다.
    SIT_REAL=1이면 게임의 지금 세기 그대로 잰다(참고용) */
 const SIT_REAL = !!process.env.SIT_REAL;
 // 3챕터 기준 세기: 하층은 10월 15일 전 게임 값(×0.62 · ×0.68)으로 고정한다. 재의 여왕은 1 · 2챕터 보스와 같은 규칙으로 게임 값(×4.5)의 장비 없는 기준 ×0.6 = ×2.7 (10월 8일. 50상황은 장비가 없다. 4.5에서는 암살자 그림자 · 사냥꾼 · 피의 술사가 이길 수단이 없었다)
-if (!SIT_REAL) run_('DIFF.lower = { hp: 1.05, dmg: 0.9 }; BOSSES.abbot.mult = 6; BOSSES.abbot.dmgMul = 1.6; if (typeof CHAPTERS !== "undefined" && CHAPTERS[2] && CHAPTERS[2].diff) CHAPTERS[2].diff.lower = { hp: 0.92, dmg: 0.62 }; BOSSES.cryptlord.mult = 6; BOSSES.cryptlord.dmgMul = 1.6; if (typeof CHAPTERS !== "undefined" && CHAPTERS[3] && CHAPTERS[3].diff) { CHAPTERS[3].diff.lower = { hp: 0.62, dmg: 0.68 }; BOSSES.queen.mult = QUEEN_SIT; }'.replace('QUEEN_SIT', process.env.SIT_QUEEN || '2.7')); // 2챕터 기준 세기: 하층은 10월 7일 게임 값(×0.92 · ×0.62). 보스는 1챕터와 같은 규칙으로 게임 값(×10 · ×2.2)의 장비 없는 기준(×6 · ×1.6)으로 고정한다(10월 7일. 50상황은 장비가 없다)
+if (!SIT_REAL) run_('DIFF.lower = { hp: 1.05, dmg: 0.9 }; BOSSES.abbot.mult = 6; BOSSES.abbot.dmgMul = 1.6; if (typeof CHAPTERS !== "undefined" && CHAPTERS[2] && CHAPTERS[2].diff) CHAPTERS[2].diff.lower = { hp: 0.92, dmg: 0.62 }; if (BOSSES.cryptlord) { BOSSES.cryptlord.mult = 6; BOSSES.cryptlord.dmgMul = 1.6; } if (typeof CHAPTERS !== "undefined" && CHAPTERS[3] && CHAPTERS[3].diff) { CHAPTERS[3].diff.lower = { hp: 0.62, dmg: 0.68 }; if (BOSSES.queen) BOSSES.queen.mult = QUEEN_SIT; }' /* M8(10월 23일): 군주 · 여왕은 0.8.0 A2 · A3에서 data/archive로 — 없으면 건너뛴다 */.replace('QUEEN_SIT', process.env.SIT_QUEEN || '2.7')); // 2챕터 기준 세기: 하층은 10월 7일 게임 값(×0.92 · ×0.62). 보스는 1챕터와 같은 규칙으로 게임 값(×10 · ×2.2)의 장비 없는 기준(×6 · ×1.6)으로 고정한다(10월 7일. 50상황은 장비가 없다)
 const ENAMES = run_('typeof ENEMY_NAMES !== "undefined" ? ENEMY_NAMES : {}');
 const MAIN = require.main === module; const MIX = {};
 const TH = { cat: 0.04, parity: 0.06, col: 0.10, means: 0.5 }; // 기준 문턱 (점수 100점 만점): 강함 +4 이상·약함 −4 이하(세 갈래 평균 대비), 갈래 평균 차이 6 이하, 기둥 차이 10 이하
@@ -40,36 +40,45 @@ function buildOf(br, col, lv) {
   if (process.env.SIT_EXTRA && MAXROW > 10) { let left = lv - Math.min(lv, MAXROW); for (let r = MAXROW; r >= 1 && left > 0; r--) { const row = SKL.filter(s => s.b === br && s.row === r); const o = row[1 - col]; if (o && !open.includes(o.id)) { open.push(o.id); left--; } } }
   return { br, col, lv, open };
 }
-/* 끼울 4칸: 문에 보이는 적을 보고 고르는 사람처럼 (후열이 있으면 후열에 닿는 스킬, 셋 이상이면 광역, 강타형이 있으면 흘리기·끊기, 큰 적 하나면 터뜨리기) */
+/* 끼울 4칸: 문에 보이는 적을 보고 고르는 사람처럼 (후열이 있으면 후열에 닿는 스킬, 셋 이상이면 광역, 강타형이 있으면 흘리기·끊기, 큰 적 하나면 터뜨리기)
+   10월 17일 측정 도구 보완:
+   - 직업 전용 짝 맞추기는 모두 직업으로 막는다(cls = bd.cls · bd.run.build · SIT_CLS). 보완 전에는 파수꾼 짝(태우기 ↔ 얻기)과 해금 1 짝이
+     효과만 보고 다른 직업에도 걸렸다. 칸마다 qa.js의 이름표(GATE.on)를 남긴다. QA_GATE_LEGACY=1이면 보완 전 조건
+   - 강화가 있는 트리(마검사)의 실제 캐릭터(bd.run, treeBuild)를 주면 강화를 반영한 실제 스킬(skOf)로 효과 짝을 보고, 기본 순서도 줄 번호가 아니라
+     강화를 반영한 한 차례 값(tools/skeval.js)의 순위(가장 큰 칸 5)로 매긴다. bd.run이 없으면(기둥 빌드 buildOf · sitloo) 예전 그대로 */
 function equipFor(bd, sit) {
+  const cls = bd.cls || (bd.run && bd.run.build) || CLS; const LEG = Q.GATE.legacy; const gq = (owner, name) => { if (Q.GATE.on) Q.GATE.on(cls, owner, name); return true; };
+  const upRun = bd.run && !process.env.EQUIP_OLD && SKE.hasUps(cls) ? bd.run : null; // 강화를 반영해 고를 실제 캐릭터
+  const SKc = {}; const SK = id => SKc[id] || (SKc[id] = upRun ? G0.skOf(SKE.pFor(upRun, id), id) : G0.SK2[id]);
+  const rank = (() => { if (!upRun) return null; const pt = {}; for (const id of bd.open) pt[id] = SKE.evalRun(upRun, id).perTurn; const mx = Math.max(1e-9, ...Object.values(pt)); return id => 5 * pt[id] / mx; })();
   const en = (sit.room.en || []).map(x => x[0]); const big = !!sit.room.boss || en.length <= 1 || !!sit.room.strong;
   const back = en.some(r => ['archer', 'healer', 'summoner', 'ember', 'mirage'].includes(r)); const many = en.length >= 3; const heavy = en.includes('bruiser') || en.includes('wrapped') || en.includes('lurker') || !!sit.room.boss || !!sit.room.strong; const boom = en.includes('bomber') || en.includes('pyre'); /* 10월 5일: 화형 사제도 끊는 스킬을 반긴다 */
   const has = (s, k) => s.fx.some(e => e.k === k);
-  const val = id => { const s = G0.SK2[id]; let v = s.row;
+  const val = id => { const s = SK(id); let v = rank ? rank(id) : s.row;
     if (back && s.tgt === 'ranged') v += 6; if (many && (s.tgt === 'front' || s.tgt === 'all' || has(s, 'spread'))) v += 6; if (big && has(s, 'bigx')) v += 4;
     if (heavy && (has(s, 'parry') || has(s, 'parryBuff') || has(s, 'onParry') || has(s, 'cutx') || has(s, 'evade') || has(s, 'evadeCtr') || has(s, 'foresee') || s.fx.some(e => e.k === 'brk' && e.n >= 25))) v += 6; /* 10월 5일: 사냥꾼 피하기 · 예고 읽기도 */ if (boom && (has(s, 'cutx') || s.fx.some(e => e.k === 'brk' && e.n >= 25))) v += 4; if (big && (has(s, 'burst') || has(s, 'grow') || has(s, 'exploit') || has(s, 'lowx'))) v += 2;
-    if (String(id).slice(0, 2) === 'm_') { /* 수도승 (10월 7일): 근접 무리에는 자세, 강타에는 자세 · 끊기, 영창(화형 사제)에는 후열까지 닿는 칸 */ if (many && has(s, 'stance')) v += 4; if (heavy && (has(s, 'stance') || s.fx.some(e => e.k === 'st' && e.s === 'weak'))) v += 3; if (boom && s.tgt === 'ranged') v += 6; }
+    if ((LEG ? String(id).slice(0, 2) === 'm_' : cls === 'monk') && gq('monk', 'equip-val')) { /* 수도승 (10월 7일): 근접 무리에는 자세, 강타에는 자세 · 끊기, 영창(화형 사제)에는 후열까지 닿는 칸 */ if (many && has(s, 'stance')) v += 4; if (heavy && (has(s, 'stance') || s.fx.some(e => e.k === 'st' && e.s === 'weak'))) v += 3; if (boom && s.tgt === 'ranged') v += 6; }
     return v; };
   const pick = bd.open.slice().sort((a, c) => val(c) - val(a)).slice(0, G0.EQUIP_SLOTS2);
   // 독을 쓰는 스킬(터뜨리기·키우기·중독 비례)을 끼웠으면 독을 거는 스킬도 하나는 끼운다 (사람은 짝을 맞춘다)
-  const pay = id => G0.SK2[id].fx.some(e => ['burst', 'grow', 'exploit', 'brkPer', 'spread', 'drain'].includes(e.k));
-  const src = id => G0.SK2[id].fx.some(e => e.k === 'poison' && e.n >= 3);
-  if (pick.some(pay) && !pick.some(src)) { const cand = bd.open.filter(id => src(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (cand) { const lo = pick.slice().sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; } }
+  const pay = id => SK(id).fx.some(e => ['burst', 'grow', 'exploit', 'brkPer', 'spread', 'drain'].includes(e.k));
+  const src = id => SK(id).fx.some(e => e.k === 'poison' && e.n >= 3);
+  if (pick.some(pay) && !pick.some(src) && gq('*', 'equip-poison')) { const cand = bd.open.filter(id => src(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (cand) { const lo = pick.slice().sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; } }
   // 수도승 (10월 7일, 수도승.md F-4 11): 터뜨리기 · 기 비례 칸을 끼웠으면 기를 만드는 칸(자세 · 기 모으기 · 기를 주는 공격) 하나, 거두기 칸을 끼웠으면 둔화를 거는 칸 하나를 함께 (사람은 짝을 맞춘다)
-  { const S = id => G0.SK2[id]; const mk = id => String(id).slice(0, 2) === 'm_';
+  if (LEG || (cls === 'monk' && gq('monk', 'equip-pair'))) { const S = SK; const mk = id => String(id).slice(0, 2) === 'm_';
     const swap = (need, give) => { if (pick.some(need) && !pick.some(give)) { const cand = bd.open.filter(id => give(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (cand) { const lo = (pick.filter(id => !need(id)).length ? pick.filter(id => !need(id)) : pick).sort((a, c) => val(a) - val(c))[0]; if (lo) pick[pick.indexOf(lo)] = cand; } } };
     swap(id => mk(id) && S(id).fx.some(e => (e.k === 'kiBurst' && !e.max) || e.k === 'kiPer'), id => mk(id) && (process.env.MONK_TEST_OLD ? ((S(id).time === 'fast' && has(S(id), 'dmg')) || S(id).fx.some(e => (e.k === 'st' && e.s === 'empower') || (e.k === 'stance' && e.ki))) : (!S(id).fx.some(e => e.k === 'kiBurst' || e.k === 'kiPer' || e.k === 'kiGrow') && S(id).fx.some(e => (e.k === 'st' && e.s === 'empower') || (e.k === 'meSt' && e.s === 'empower' && !e.if) || e.k === 'stance')))); /* 규칙 문장: 기는 되받을 때와 스킬이 줄 때만 쌓인다(⚡ 공격은 기를 만들지 않는다). 터뜨리기 · 기 비례 칸이 스스로 주는 기는 짝으로 세지 않는다 */
     swap(id => mk(id) && S(id).fx.some(e => (e.k === 'meSt' && e.if === 'chill') || e.k === 'chillx' || (e.k === 'kiBurst' && e.pre)), id => mk(id) && S(id).fx.some(e => e.k === 'st' && e.s === 'chill') && !S(id).fx.some(e => e.k === 'kiBurst')); }
   // 파수꾼 (10월 4일): 보호막을 태우는 스킬이 보호막을 얻는 스킬보다 많으면 얻는 스킬로 바꾼다 (태울 보호막이 있어야 한다. 사람은 짝을 맞춘다)
-  const burn = id => G0.SK2[id].fx.some(e => e.k === 'wardBurn'); const gain = id => G0.SK2[id].fx.some(e => e.k === 'ward' || e.k === 'wardFill') && !(CLS === 'warden' && !process.env.WARD_BG_OLD && burn(id)); /* 10월 8일 파수꾼 상급: 태우고 다시 두르는 칸(달군 방벽 · 재가 되는 성벽)은 태우는 칸으로만 센다. 얻는 칸으로도 세면 서로 바꾸는 반복이 끝나지 않는다. WARD_BG_OLD=1이면 끔 */
-  while (pick.filter(burn).length > Math.max(1, pick.filter(gain).length)) { const cand = bd.open.filter(id => gain(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) break; const lo = pick.filter(burn).sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; }
+  const burn = id => SK(id).fx.some(e => e.k === 'wardBurn'); const gain = id => SK(id).fx.some(e => e.k === 'ward' || e.k === 'wardFill') && !(cls === 'warden' && !process.env.WARD_BG_OLD && burn(id)); /* 10월 8일 파수꾼 상급: 태우고 다시 두르는 칸(달군 방벽 · 재가 되는 성벽)은 태우는 칸으로만 센다. 얻는 칸으로도 세면 서로 바꾸는 반복이 끝나지 않는다. WARD_BG_OLD=1이면 끔 */
+  if (LEG || cls === 'warden') while (pick.filter(burn).length > Math.max(1, pick.filter(gain).length) && gq('warden', 'equip-ward')) { const cand = bd.open.filter(id => gain(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) break; const lo = pick.filter(burn).sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; }
   // 숨겨진 직업 1 (10월 7일): 나에게 출혈을 거는 스킬은 둘까지 (사람은 대가를 겹쳐 지지 않는다)
-  const selfBl = id => G0.SK2[id].fx.some(e => e.k === 'meSt' && e.s === 'bleed');
-  while (pick.filter(selfBl).length > 2) { const cand = bd.open.filter(id => !selfBl(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) break; const lo = pick.filter(selfBl).sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; }
+  const selfBl = id => SK(id).fx.some(e => e.k === 'meSt' && e.s === 'bleed');
+  if (LEG || cls === 'butcher') while (pick.filter(selfBl).length > 2 && gq('butcher', 'equip-selfbleed')) { const cand = bd.open.filter(id => !selfBl(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) break; const lo = pick.filter(selfBl).sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; }
   // 숨겨진 직업 2 (10월 7일, 비공개 문서 F-3 4): 짐 비례 · 사함 칸을 끼우면 고행 칸 하나(상태를 거는 적이 둘 이상이면 빼도 됨), 보호 비례는 정화 칸과 짝,
   // 강화 · 소환 적이 있으면 벗기기 칸, 정화 · 옮기기 칸은 넷 가운데 둘까지 (시작 스킬 고해가 이미 지운다). 다른 직업은 그대로
-  if (CLS === 'confessor') {
-    const S = id => G0.SK2[id]; const fx = (id, f) => S(id).fx.some(f); const swapIn = (need, ok, keep) => { if (!pick.some(need) || pick.some(ok)) return; const cand = bd.open.filter(id => ok(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) return; const lo = pick.filter(id => !need(id) && !(keep && keep(id))).sort((a, c) => val(a) - val(c))[0]; if (lo) pick[pick.indexOf(lo)] = cand; };
+  if (cls === 'confessor' && gq('confessor', 'equip')) {
+    const S = SK; const fx = (id, f) => S(id).fx.some(f); const swapIn = (need, ok, keep) => { if (!pick.some(need) || pick.some(ok)) return; const cand = bd.open.filter(id => ok(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) return; const lo = pick.filter(id => !need(id) && !(keep && keep(id))).sort((a, c) => val(a) - val(c))[0]; if (lo) pick[pick.indexOf(lo)] = cand; };
     const bad = ['bleed', 'ignite', 'weak', 'vuln', 'chill']; const fuel = id => fx(id, e => e.k === 'meSt' && bad.includes(e.s)); const usesB = id => fx(id, e => (e.k === 'perDmg' && e.of === 'burden') || (e.k === 'cleanse' && e.offer));
     const srcN = en.filter(r => ['archer', 'darkmage', 'pyre', 'bruiser'].includes(r)).length + (sit.room.boss || sit.room.strong ? 2 : 0);
     if (srcN < 2) swapIn(usesB, fuel);
@@ -79,15 +88,15 @@ function equipFor(bd, sit) {
     while (pick.filter(pure).length > 2) { const cand = bd.open.filter(id => !pure(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) break; const lo = pick.filter(pure).sort((a, c) => val(a) - val(c))[0]; pick[pick.indexOf(lo)] = cand; }
   }
   // 원소술사 (10월 7일, 설계 F-3절 10): 물결(모든 적에게 한 원소) 하나를 끼우면 반대 원소의 물결도 하나, 강타 · 보스 상황에는 약화 칸 하나와 열충격 붕괴 ×2 칸 하나 (사람은 짝을 맞춘다). 다른 직업은 그대로
-  if (CLS === 'elementalist') {
-    const wave = (id, k) => { const s = G0.SK2[id]; return s.tgt === 'all' && s.fx.some(e => e.k === 'st' && e.s === k) && !s.fx.some(e => e.k === 'st' && e.s === (k === 'ignite' ? 'chill' : 'ignite')); };
+  if (cls === 'elementalist' && gq('elementalist', 'equip')) {
+    const wave = (id, k) => { const s = SK(id); return s.tgt === 'all' && s.fx.some(e => e.k === 'st' && e.s === k) && !s.fx.some(e => e.k === 'st' && e.s === (k === 'ignite' ? 'chill' : 'ignite')); };
     const swapIn = (want, keep) => { if (pick.some(want)) return; const cand = bd.open.filter(id => want(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) return; const lo = pick.filter(id => !keep(id)).sort((a, c) => val(a) - val(c))[0]; if (lo) pick[pick.indexOf(lo)] = cand; };
     for (const [k, o] of [['ignite', 'chill'], ['chill', 'ignite']]) if (pick.some(id => wave(id, k))) swapIn(id => wave(id, o), id => wave(id, k));
-    if (heavy) { const weak = id => G0.SK2[id].fx.some(e => e.k === 'st' && e.s === 'weak'); const brk2 = id => G0.SK2[id].fx.some(e => e.k === 'shockx' && (e.brk || 1) >= 2); swapIn(weak, id => brk2(id) || weak(id)); swapIn(brk2, id => weak(id) || brk2(id)); }
+    if (heavy) { const weak = id => SK(id).fx.some(e => e.k === 'st' && e.s === 'weak'); const brk2 = id => SK(id).fx.some(e => e.k === 'shockx' && (e.brk || 1) >= 2); swapIn(weak, id => brk2(id) || weak(id)); swapIn(brk2, id => weak(id) || brk2(id)); }
   }
   // 마검사 (10월 7일, docs/직업/마검사.md F-2의 13): 짝 맞추기(칼 × ↔ 칼에 싣기, 상태 조건 · 상태 비례 ↔ 그 상태를 거는 칸, 퍼뜨리기 ↔ 출혈), 그리고 4칸에 ⚔ 베기 · ✦ 주문을 하나 이상씩(시작 스킬과 합쳐 둘 이상씩)
-  if (pick.some(id => G0.SK2[id].kind)) {
-    const S = id => G0.SK2[id]; const kd = k => id => S(id).kind === k; const fxs = (id, f) => S(id).fx.some(f);
+  if ((LEG ? pick.some(id => SK(id).kind) : cls === 'spellblade') && gq('spellblade', 'equip')) {
+    const S = SK; const kd = k => id => S(id).kind === k; const fxs = (id, f) => S(id).fx.some(f);
     const swapIn = (need, ok) => { if (!pick.some(need) || pick.some(ok)) return; const cand = bd.open.filter(id => ok(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) return; const lo = pick.filter(id => !need(id)).sort((a, c) => val(a) - val(c))[0]; if (lo) pick[pick.indexOf(lo)] = cand; };
     swapIn(id => has(S(id), 'edgeX'), id => has(S(id), 'imbue'));
     for (const k of ['bleed', 'ignite']) swapIn(id => fxs(id, e => (e.k === 'kwx' || e.k === 'exploit') && e.s === k), id => fxs(id, e => (e.k === 'st' && e.s === k && S(id).tgt !== 'self') || (e.k === 'imbue' && e.s === k)));
@@ -95,8 +104,8 @@ function equipFor(bd, sit) {
     for (const k of ['cut', 'spell']) if (!pick.some(kd(k))) { const cand = bd.open.filter(id => kd(k)(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) continue; const lo = pick.filter(id => !kd(k)(id)).sort((a, c) => val(a) - val(c))[0]; if (lo) pick[pick.indexOf(lo)] = cand; }
   }
   // 숨겨진 직업 3 (10월 7일, 비공개 문서 F4-10): 약화 비례 · 약화 퍼뜨리기를 끼우면 약화를 거는 칸도 하나, 낸 피 칸을 끼우면 생명력을 내는 칸도 하나 (사람은 짝을 맞춘다)
-  if (CLS === 'bloodmage') {
-    const S = id => G0.SK2[id]; const swapIn = (need, ok) => { if (!pick.some(need) || pick.some(ok)) return; const cand = bd.open.filter(id => ok(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) return; const lo = pick.filter(id => !need(id)).sort((a, c) => val(a) - val(c))[0]; if (lo) pick[pick.indexOf(lo)] = cand; };
+  if (cls === 'bloodmage' && gq('bloodmage', 'equip')) {
+    const S = SK; const swapIn = (need, ok) => { if (!pick.some(need) || pick.some(ok)) return; const cand = bd.open.filter(id => ok(id) && !pick.includes(id)).sort((a, c) => val(c) - val(a))[0]; if (!cand) return; const lo = pick.filter(id => !need(id)).sort((a, c) => val(a) - val(c))[0]; if (lo) pick[pick.indexOf(lo)] = cand; };
     swapIn(id => S(id).fx.some(e => e.k === 'perDmg' || (e.k === 'spread' && e.s === 'weak')), id => S(id).tgt !== 'self' && S(id).fx.some(e => e.k === 'st' && e.s === 'weak') && !S(id).fx.some(e => e.k === 'perDmg' || (e.k === 'spread' && e.s === 'weak')));
     swapIn(id => has(S(id), 'bloodDmg'), id => has(S(id), 'hpCost') && !has(S(id), 'bloodDmg'));
   }
@@ -123,7 +132,54 @@ function fight(bd, sit, seed, eqOver) { // eqOver: 장착을 직접 줄 때(보�
   }
   return { win: b.over === 'win' ? 1 : 0, hp: b.p.hp / b.p.hpMax, rounds: b.round || 0, timeout: !b.over, b };
 }
-module.exports = { buildOf, equipFor, statsOf, fight, MLV, G0 };
+/* 트리 직업(0.8.0) 캐릭터를 실제 게임의 길로 만든다 (10월 17일 0.8.0 4단계 재검증).
+   그전 마검사 50상황(비공개 sit4.js)은 mkPlayer + ptSync로 전투 캐릭터를 따로 만들어 이끄는 갈래(p.sbLead → 칼에 새긴 주문의 시작 스킬 덤)가 빠졌고,
+   패시브 포인트를 고리가 닫힌 채(깬 챕터 0) 한 번에 다 찍어 2 · 3고리 패시브가 큰 각인 길 덤으로만 들어왔다.
+   여기서는 화면 · 던전과 같은 함수만 쓴다: seedWorld → startRun → 만들기 배분(정책이 ptBuy · atBuy) → 레벨마다 gainXp(패시브 +2 · 액티브 +1) 뒤 찍기 →
+   보스를 이긴 레벨에 clears +1 · 정산 큰 각인(ksGrant · ksEnsureOffer · ksTake, 그 레벨 포인트는 고리가 열린 뒤 찍는다) → 3챕터 야영지 큰 각인(c3) → treeSync.
+   spec = { cls, lv, clearAt: [챕터 보스를 이긴 레벨, …], c3At: 레벨 | null, seed, spendP(run), spendA(run), ksPick(run) }. 돌려주는 것은 게임 안의 run */
+function treeChar(spec) {
+  D.seedWorld(spec.seed || 1);
+  const G = G0.__G; G.data = G0.blankData(); G.data.unlAll = 1; G.cre = { name: 'sit' }; G.dropQ = []; G.b = null; G.sheet = null;
+  G0.startRun(spec.cls); const run = G.run; delete run.alloc; G.sheet = null; G.creating = false; G.cre = null; G.scr = 'run';
+  const spend = () => { spec.spendP(run); spec.spendA(run); };
+  const ks = key => { if (!G0.ksGrant(run, key)) return; spec.spendP(run); G0.ksEnsureOffer(run); if (run.ksOffer) { const e = G0.ksTake(run, spec.ksPick(run)); if (e) throw new Error('ksTake ' + e); } };
+  spend(); G0.treeSync(run);
+  for (let lv = 2; lv <= spec.lv; lv++) {
+    G0.gainXp(run, G0.LV_XP_[lv - 1] - (run.xp || 0)); if (run.lv !== lv) throw new Error('gainXp ' + run.lv + ' != ' + lv);
+    if ((spec.clearAt || []).includes(lv)) { run.clears = (run.clears || 0) + 1; ks('b' + run.ch); run.ch = (run.ch || 1) + 1; }
+    if (spec.c3At === lv) { run.ch = 3; ks('c3'); }
+    spend();
+  }
+  G0.treeSync(run); return run;
+}
+/* 트리 캐릭터로 상황 하나: 실제 캐릭터 사본의 장착만 상황에 맞게 바꾸고(atEquip → atSync, 화면의 장착과 같다) 그 run.p로 roomBattle */
+function treePlayer(run0, eq) {
+  G0.__x = run0; const run = run_('JSON.parse(JSON.stringify(__x))');
+  run.skills = []; for (const id of eq) { const e = G0.atEquip(run, id); if (e) throw new Error('atEquip ' + id + ' ' + e); } G0.treeSync(run);
+  const p = run.p; p.hp = p.hpMax; p.st = p.stMax; return run;
+}
+function treeFight(run0, sit, seed, eq) {
+  const r = D.rng(seed); G0.__rnd = D.rng(seed * 31 + 7); run_('Math.random = __rnd');
+  const run = treePlayer(run0, eq); const p = run.p;
+  const sp = sit.p || {}; if (sp.hp) p.hp = Math.round(p.hpMax * sp.hp); if (sp.st != null) p.st = sp.st;
+  for (const k in (sp.s || {})) p.s[k] = { stacks: sp.s[k], until: 1e9, dur: 1e9 };
+  const room = JSON.parse(JSON.stringify(sit.room)); const bossKind = room.boss || null; if (room.boss) room.boss = true;
+  room.lv = (sit.lv && sit.lv[run.lv]) || MLV[run.lv]; room.floor = 13; if (SIT_CH >= 2) { room.ch = SIT_CH; room.names = ENAMES[SIT_CH]; } if (!room.en) room.en = [];
+  const b = G0.roomBattle(p, room, bossKind, seed); b.rngF = r; b.stepMode = false;
+  const P = Q.PERSONAS[PK]; const mem = {}; let n = 0;
+  while (!b.over && n++ < 250) {
+    const sr = r() < (P.mech || 0.5) ? Q.sigRule(b, r) : null;
+    let [a, t] = D.ch2Pre(b, P, r) || D.ch3Pre(b, P, r) || sr || (P.look ? Q.lookahead(b, P, r) : Q.heuristic(b, P, r, mem));
+    [a, t] = D.ch2Post(b, P, r, a, t);
+    if (a === 'flee') { const L = G0.actionList(b).filter(x => x.ok && !x.pull && x.id !== 'flee'); a = L[0].id; t = null; }
+    try { G0.playerAct(b, a, t); } catch (e) { return { win: 0, bug: e.message }; }
+  }
+  return { win: b.over === 'win' ? 1 : 0, hp: b.p.hp / b.p.hpMax, rounds: b.round || 0, timeout: !b.over, b };
+}
+/* 실제 트리 캐릭터의 상황별 장착용 빌드 (10월 17일): 연 스킬 전부와 run을 넘겨 equipFor가 강화를 반영해 고르게 한다. 사용: treeFight(run, sit, seed, equipFor(treeBuild(run), sit)) */
+function treeBuild(run) { const A = G0.atBuild(run.build); const T2 = G0.TREE2[run.build]; return { cls: run.build, lv: run.lv, br: run.focus || null, open: run.atree.own.filter(id => A.nodes[id] && A.nodes[id].kind === 'skill' && !T2.starters.includes(id)), run }; }
+module.exports = { buildOf, equipFor, statsOf, fight, MLV, G0, treeChar, treePlayer, treeFight, treeBuild, SKE };
 if (MAIN) {
 const builds = []; for (const lv of LVS) for (const br of T.branches) for (const col of [0, 1]) builds.push(buildOf(br, col, lv));
 const res = {}; let bugs = 0, touts = 0;

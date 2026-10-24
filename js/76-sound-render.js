@@ -28,7 +28,7 @@ function sndSync() {
   let v = el.volume; SND.fadeT = setInterval(() => { v = Math.max(0, v - Math.max(0.02, c.music / 8)); el.volume = v; if (v <= 0) { clearInterval(SND.fadeT); start(); } }, 60);
 }
 function sfx(k) {
-  const c = sndCfg(); if (!c.on || !SND.unlocked || typeof Audio === 'undefined' || !SFX[k]) return;
+  const c = sndCfg(); if (!c.on || !SND.unlocked || typeof Audio === 'undefined' || !SFX[k] || !SFX[k].src) return;
   try { const a = new Audio(SFX[k].src); a.volume = c.sfx; a.play().catch(() => { }); } catch (e) { }
 }
 /* 전투 효과음(59번이 부른다): 파일을 한 번 받아 두고 복제해 쓴다. 동시에 3개까지, 같은 소리는 80ms에 한 번. 사람이 누른 뒤에만(SND.unlocked) */
@@ -38,7 +38,7 @@ function sfxPreload() {
   for (const k of Object.keys(SFX)) if (k.startsWith('b_')) { try { const a = new Audio(); a.preload = 'auto'; a.src = SFX[k].src; SFXB.cache[k] = a; } catch (e) { } }
 }
 function sfxPlay(k, o) {
-  const c = sndCfg(); if (!c.on || !c.bfx || !SND.unlocked || typeof Audio === 'undefined' || !SFX[k]) return;
+  const c = sndCfg(); if (!c.on || !c.bfx || !SND.unlocked || typeof Audio === 'undefined' || !SFX[k] || !SFX[k].src) return; // M5-0a: 파일이 없는 키(컷인)는 59번이 합성음으로
   let release = () => {};
   try {
     const now = Date.now(); if (SFXB.last[k] && now - SFXB.last[k] < 80) return; if (SFXB.live >= 3) return; SFXB.last[k] = now;
@@ -71,6 +71,7 @@ function vSettings() {
 function render() {
   if (typeof document === 'undefined') return;
   if (!G.sheet && !G.b && G.run && (G.run.consPending || []).length && ['run','settle','shop'].includes(G.scr)) G.sheet = {kind:'consfull',data:{}};
+  if (!G.sheet && !G.b && G.run && G.run.patrolPend && !(G.dropQ || []).length && G.scr === 'run') G.sheet = { kind: 'patrol', data: {} }; // 0.8.0 6단계 A-6: 순찰대 보상 고르기
   sndSync(); applyPrefs();
   { const bd = (G.b && G.b.p && G.b.p.build) || (G.run && G.run.build) || ''; document.documentElement.style.setProperty('--cls', CLS_COLOR[bd] || 'transparent'); }
   const root = document.getElementById('root');
@@ -123,6 +124,7 @@ function render() {
   focusBack(tail ? (hadSheet ? fk : null) : (hadSheet ? G.sheetRet || fk : fk), !!tail && !hadSheet, fit);
   if (G.hudEd) { const ef = document.querySelector('#root > .fit'); if (ef) ef.scrollTop = efy; hudEdPost(); } /* 편집 중: 보던 자리를 지키고 틀을 실제 요소에 붙인다 */
   if (typeof vfxFlush === 'function') vfxFlush(); /* 전투 이펙트(59번): 그리기가 끝난 화면 위에 덮개로 얹는다. 게임 값은 건드리지 않는다 */
+  if (typeof trdAfter === 'function') trdAfter(); /* 10월 17일 0.8.0 3단계: 방사형 트리의 글자 크기 · 초점 (73번) */
 }
 /* 10월 7일 2차: 전투 화면은 창 높이에 맞춰 한 화면에 두되, 그러면 전장이 모자란 창(확대 · 가로 휴대폰 · 짧은 휴대폰)에서는
    고정을 풀고 페이지를 스크롤한다(10월 2일의 원래 뜻). 같은 창 크기 · 같은 전투 · 같은 글자 크기에서는 한 번 정한 대로 둔다(차례마다 바뀌지 않게) */

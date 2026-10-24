@@ -1,12 +1,13 @@
 'use strict';
 /* ---------- 결과 보기 (소유자) ---------- */
 async function readTester(id) {
-  const [rs, ss, fs, ms, bs] = await Promise.all([G.db.collection('playtest/' + id + '/' + COL.runs).get(), G.db.collection('playtest/' + id + '/' + COL.scen).get(), G.db.doc('playtest/' + id + '/' + COL.survey + '/final').get(), G.db.doc('playtest/' + id).get(), G.db.doc('board/' + id).get().catch(() => ({ exists: false }))]);
+  const C = colOf(G.adminSeason), BD = RSEASON.key[G.adminSeason || RSEASON.cur].board; // M8: 관리자만 옛 시즌(0.7.0)을 고를 수 있다
+  const [rs, ss, fs, ms, bs] = await Promise.all([G.db.collection('playtest/' + id + '/' + C.runs).get(), G.db.collection('playtest/' + id + '/' + C.scen).get(), G.db.doc('playtest/' + id + '/' + C.survey + '/final').get(), G.db.doc('playtest/' + id).get(), G.db.doc(BD + '/' + id).get().catch(() => ({ exists: false }))]);
   const runs = [];
   for (const d of rs.docs) {
     const r = Object.assign({}, d.data());
     if (!r.acts && r.chunks) {
-      const cs = await G.db.collection('playtest/' + id + '/' + COL.runs + '/' + d.id + '/acts').get();
+      const cs = await G.db.collection('playtest/' + id + '/' + C.runs + '/' + d.id + '/acts').get();
       r.acts = cs.docs.map(x => x.data()).sort((x, y) => x.i - y.i).reduce((acc, x) => acc.concat(x.a || []), []);
     }
     runs.push(r);
@@ -44,6 +45,7 @@ function collectNotes(testers) {
     for (const r of T.runs || []) {
       if (!r || !BUILDS[r.build]) continue;
       const ctx = { who, build: r.build, run: bossN[r.boss] || r.boss, at: r.endedAt || r.updatedAt || r.startedAt };
+      if (r.grave && r.grave.sv && (r.grave.sv.fun || r.grave.sv.cause)) out.push(Object.assign({}, ctx, { type: 'survey', where: '쓰러진 직후', label: '재미 ' + (r.grave.sv.fun || '-'), text: r.grave.sv.cause ? '사인: ' + (SV_CAUSE[r.grave.sv.cause] || r.grave.sv.cause) : '' })); // M8 쓰러진 직후 2문항
       if (r.survey) {
         if (r.survey.dilemma || r.survey.note) out.push(Object.assign({}, ctx, { type: 'survey', where: '판 설문', label: r.survey.dilemma === 'yes' ? '고민 있었음' : r.survey.dilemma === 'no' ? '고민 없었음' : '', text: r.survey.note || '' }));
         if ((r.survey.issues && r.survey.issues.some(k => k !== 'none')) || r.survey.issueNote) out.push(Object.assign({}, ctx, { type: 'issue', where: '판 설문', label: (r.survey.issues || []).filter(k => k !== 'none').map(k => SV.is[k] || k).join(', '), text: r.survey.issueNote || '' }));
@@ -175,7 +177,7 @@ async function delTesters() {
   G.delMsg = '백업을 받고 지우는 중…'; render();
   try {
     await saveFile('nrk-' + VERSION + '-지우기전-백업-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify({ v: VERSION, exportedAt: Date.now(), testers: raw.map(T => Object.assign({ label: testerLabel(T, 0) }, T)) }, null, 1));
-    const paths = []; sel.forEach(u => { paths.push('playtest/' + u, 'board/' + u); });
+    const paths = []; sel.forEach(u => { paths.push('playtest/' + u, 'board/' + u, BOARD + '/' + u); });
     const { data, error } = await G.sb.rpc('admin_delete', { pass: G.adminPass || '', paths });
     if (error) throw Object.assign(new Error(error.message), { code: error.code || '' });
     G.delMsg = raw.length + '명의 기록을 지웠습니다(문서 ' + (data == null ? '?' : data) + '개). 백업 파일은 내려받은 폴더에 있습니다.'; G.delSel = []; G.delAsk = false; G.dash = null; G.dashReq = 0; render();
@@ -188,6 +190,8 @@ async function delTesters() {
 function dashRunResult(r) { return r.result || (r.status === 'done' ? 'done' : 'progress'); }
 function dashRunTime(r) { return r.updatedAt || r.endedAt || r.startedAt || 0; }
 const DASH_RESULTS = { progress: '진행 중', win: '돌파', lose: '쓰러짐', abandon: '포기', flee: '도망', done: '완료' };
+/* 10월 24일: 판 지문 표시(js/66 runRecord) — noRank 고친 저장본에서 이어 와 랭킹에 안 감 · mkLeg 지문 전 저장본(랭킹 줄에 leg: 1) */
+const dashRunFlags = r => (r.noRank ? ' <span class="rctag warn" title="저장본 지문이 어긋나 랭킹에 보내지 않은 판">랭킹 제외</span>' : '') + (r.mkLeg ? ' <span class="rctag" title="판 지문이 생기기 전 저장본에서 이어 온 판">옛 저장본</span>' : '');
 function dashRunRows() {
   const f = G.rf || {}, q = (f.q || '').trim().toLocaleLowerCase();
   const from = f.from ? new Date(f.from + 'T00:00:00').getTime() : 0;
@@ -310,7 +314,7 @@ async function deleteOneRun(word, backup=true) {
   try {
     if(backup){const backed=await saveFile('nrk-플레이기록-삭제전-'+Date.now()+'.json',JSON.stringify({v:VERSION,exportedAt:Date.now(),testers:raw},null,2));if(!backed){G.runDelMsg='백업을 받지 못해 삭제를 중단했습니다.';return;}}
     if(!canDeleteRun()){G.runDelMsg='관리자 권한을 다시 확인하세요. 삭제하지 않았습니다.';return;}
-    const paths=[...new Set(targets.map(t=>'playtest/'+t.uid+'/'+COL.runs+'/'+t.id))];
+    const paths=[...new Set(targets.map(t=>'playtest/'+t.uid+'/'+colOf(G.adminSeason).runs+'/'+t.id))];
     const {data,error}=await G.sb.rpc('admin_delete',{pass:G.adminPass || '',paths});if(error)throw error;
     if(!data){G.runDelMsg='저장소에 해당 기록이 없습니다. 새로 고침해 확인하세요.';return;}
     for(const T of G.dashRaw || [])T.runs=(T.runs || []).filter(r=>!targets.some(t=>t.uid===T.uid&&t.id===r.id));
@@ -324,7 +328,7 @@ function vRunDetail(x) {
   const r = x.r, acts = r.acts || [], page = Math.max(0, Math.min(G.raPage || 0, Math.ceil(acts.length / 100) - 1));
   const names = { act: '행동', hit: '피격', break: '붕괴', kill: '처치', dead: '사망', heal: '회복', dodge: '흘리기', dealt: '가한 피해', eact: '적 행동', cons: '소모품' };
   const skills = allSkillNames();
-  let h = '<section class="card admin-detail" id="admin-run-detail"><h4>' + esc(r.cname || '이름 없는 캐릭터') + ' 상세 기록</h4><p>' + esc(x.who) + '</p><p class="mini">판 ID: ' + esc(r.id || '없음') + ' · 행동 기록 ' + acts.length + '건</p><button class="sm" data-a="runclose">상세 닫기</button>';
+  let h = '<section class="card admin-detail" id="admin-run-detail"><h4>' + esc(r.cname || '이름 없는 캐릭터') + ' 상세 기록</h4><p>' + esc(x.who) + '</p><p class="mini">판 ID: ' + esc(r.id || '없음') + ' · 행동 기록 ' + acts.length + '건' + dashRunFlags(r) + '</p><button class="sm" data-a="runclose">상세 닫기</button>';
   h += vRunDelete(x);
   const tab=G.rdTab || 'summary';
   h += '<div class="admin-tabs" role="group" aria-label="개인 상세 보기">'+[['summary','요약'],['gear','장비·아이템'],['growth','스탯·스킬 트리'],['battle','행동 기록']].map(([k,n])=>'<button class="chip'+(tab===k ? ' on' : '')+'" data-a="runtab" data-k="'+k+'" aria-pressed="'+(tab===k)+'">'+n+'</button>').join('')+'</div><div class="row"><button class="sm" data-a="runroomcsv">이 판의 방별 통계 CSV</button></div>';
@@ -357,14 +361,14 @@ function vRunLogs() {
   h += vBatchRunDelete();
   h += vAdminOverview(rows);
   h += '<div class="tbl"><table class="st2"><caption class="sr">검색된 플레이 로그</caption><thead><tr><th>플레이어</th><th>캐릭터·직업</th><th>결과</th><th>도달</th><th>마지막 기록</th><th>상세</th></tr></thead><tbody>';
-  h += rows.slice(page * 25, (page + 1) * 25).map(x => { const r = x.r; return '<tr><td>' + (canDeleteRun() ? '<label><input type="checkbox" data-a="rundeltick" data-k="'+esc(JSON.stringify({uid:x.uid,id:r.id}))+'"'+((G.runDeleteSel || []).some(t=>t.uid===x.uid&&t.id===r.id) ? ' checked' : '')+(G.runDelBusy ? ' disabled' : '')+' aria-label="'+esc((r.cname || r.id)+' 삭제 선택')+'"> 선택</label><br>' : '') + esc(x.who) + '</td><td>' + esc(r.cname || '—') + '<br>' + esc((BUILDS[r.build] || {}).n || r.build || '—') + '</td><td>' + esc(DASH_RESULTS[dashRunResult(r)] || dashRunResult(r)) + '</td><td>' + esc(rankProg({ ch: r.ch, clears: r.clears, floor: r.roomReached })) + '</td><td>' + esc(dashRunTime(r) ? new Date(dashRunTime(r)).toLocaleString('ko-KR') : '—') + '</td><td><button class="sm" data-a="runopen" data-k="' + x.key + '" aria-expanded="' + (G.rfOpen === x.key) + '">기록 보기</button></td></tr>'; }).join('') || '<tr><td colspan="6">조건에 맞는 기록이 없습니다.</td></tr>';
+  h += rows.slice(page * 25, (page + 1) * 25).map(x => { const r = x.r; return '<tr><td>' + (canDeleteRun() ? '<label><input type="checkbox" data-a="rundeltick" data-k="'+esc(JSON.stringify({uid:x.uid,id:r.id}))+'"'+((G.runDeleteSel || []).some(t=>t.uid===x.uid&&t.id===r.id) ? ' checked' : '')+(G.runDelBusy ? ' disabled' : '')+' aria-label="'+esc((r.cname || r.id)+' 삭제 선택')+'"> 선택</label><br>' : '') + esc(x.who) + '</td><td>' + esc(r.cname || '—') + '<br>' + esc((BUILDS[r.build] || {}).n || r.build || '—') + '</td><td>' + esc(DASH_RESULTS[dashRunResult(r)] || dashRunResult(r)) + dashRunFlags(r) + '</td><td>' + esc(rankProg({ ch: r.ch, clears: r.clears, floor: r.roomReached })) + '</td><td>' + esc(dashRunTime(r) ? new Date(dashRunTime(r)).toLocaleString('ko-KR') : '—') + '</td><td><button class="sm" data-a="runopen" data-k="' + x.key + '" aria-expanded="' + (G.rfOpen === x.key) + '">기록 보기</button></td></tr>'; }).join('') || '<tr><td colspan="6">조건에 맞는 기록이 없습니다.</td></tr>';
   h += '</tbody></table></div><div class="row"><button class="sm" data-a="runpage" data-v="' + (page - 1) + '"' + (page ? '' : ' disabled') + '>이전</button><button class="sm" data-a="runpage" data-v="' + (page + 1) + '"' + (page + 1 < pages ? '' : ' disabled') + '>다음</button></div></section>';
   const opened = rows.find(x => x.key === G.rfOpen); return (opened ? vRunDetail(opened) : '') + h;
 }
 
 function vDash() {
   let h = `<section class="card"><h3>결과 보기</h3>${G.dashErr ? `<div class="banner info">${esc(G.dashErr)}</div>` : ''}${G.archMsg ? `<div class="banner" role="status">${esc(G.archMsg)}</div>` : ''}${G.dash ? '' : '<p>불러오는 중…</p>'}
-  <div class="row"><button class="sm gold" data-a="import">지인 기록 넣기</button><button class="sm" data-a="dash">새로 고침</button><button class="sm" data-a="dashjson"${G.dash ? '' : ' disabled'}>전체 기록 내려받기 (JSON)</button><button class="sm" data-a="notescsv"${G.dash ? '' : ' disabled'}>의견만 내려받기 (CSV)</button>${G.site ? '' : `<button class="sm gold" data-a="archive"${G.dash && G.db ? '' : ' disabled'}>전체 기록 저장</button>`}</div>
+  <div class="row"><button class="sm gold" data-a="import">지인 기록 넣기</button><button class="sm" data-a="dash">새로 고침</button><button class="sm" data-a="dashseason" aria-pressed="${G.adminSeason === '0.7.0' ? 'true' : 'false'}">${esc(G.adminSeason || RSEASON.cur)} 시즌 기록 보는 중 · 시즌 바꾸기</button><button class="sm" data-a="dashjson"${G.dash ? '' : ' disabled'}>전체 기록 내려받기 (JSON)</button><button class="sm" data-a="notescsv"${G.dash ? '' : ' disabled'}>의견만 내려받기 (CSV)</button>${G.site ? '' : `<button class="sm gold" data-a="archive"${G.dash && G.db ? '' : ' disabled'}>전체 기록 저장</button>`}</div>
   <p class="mini">저장소에 연결되지 않은 지인은 첫 화면의 "기록 보내기 코드"를 메신저로 보내 줍니다. 그 코드를 "지인 기록 넣기"에 붙여 넣으면 여기에 함께 모입니다. 자동 기록은 테스터가 방을 끝낼 때마다, 쓰러질 때, 처음으로 나갈 때, 판을 끝낼 때 자동으로 들어옵니다. "전체 기록 저장"은 지금 시점의 모든 테스터 기록을 소유자만 읽는 보관 공간에 날짜별로 남깁니다.</p></section>`;
   const D = G.dash; if (!D) return h;
   h += vRunLogs();

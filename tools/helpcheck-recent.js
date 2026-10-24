@@ -8,7 +8,7 @@ module.exports = function ({ E, add, note, source }) {
   add('help', '추적 1겹당 기준 추가 피해 8이면', '실제 추적 소모 helper: 민첩0/10/20 → 8/9.6/11.2', () => [0,10,20].every((dex,i)=>close(focusGrowth(dex),[8,9.6,11.2][i])));
   add('help', '스킬 기본 피해의 4% 성장과 따로 계산하며', '기본4%와 추적 소모2% 분리, focusAdd·추적 상한 유지', () => E('SKILL_STAT_PCT')===4 && E('FOCUS_STAT_PCT')===2 && E('HUNT.focusMax')===3 && E('HUNT.addMax')===2 && E('runSkill2.toString()').includes('Math.min(HUNT.addMax, cur + fa.n)'));
   add('help', '캐릭터를 최대 8개 보관', 'SAVE_MAX=8', E => E('SAVE_MAX') === 8);
-  add('help', '원소술사는 열충격과 화상을 소모해 주는 추가 피해도 2%', 'dotMul: 지능 10 → 1.2, 열충격·화상 소모 추가 피해에 적용', E => E(`(() => { const p=mkPlayer('elementalist',{},{}); p.stat={int:10}; return Math.abs(dotMul(p)-1.2)<1e-9; })()`) && E('elemShock.toString()').includes('dotMul(b.p)') && E('runSkill2.toString()').includes('bo.per * preI[e.id] * dotMul(p)'));
+  add('help', '화상을 태워 주는 추가 피해가 2% 증가합니다', 'dotMul: 지능 10 → 1.2, 지속 피해 · 불태우기(화상 소모 추가 피해)에 적용 (0.8.0: 열충격 · 독 격발은 triggerDamageMul 3%라 문장을 나눴다)', E => E(`(() => { const p=mkPlayer('elementalist',{},{}); p.stat={int:10}; return Math.abs(dotMul(p)-1.2)<1e-9; })()`) && E('runSkill2.toString()').includes('base += boPer * preI[e.id] * dotMul(p)'));
   add('help', '공격 능력치 1점마다 기준 피해의 4%', 'SKILL_STAT_PCT=4, 기준 10에 1점 → 10.4', E => E('SKILL_STAT_PCT') === 4 && close(growth(1), 10.4));
   add('help', '기준 피해 10인 스킬은 공격 능력치', '실제 skillBaseDamage(0/5/10/15/20)', () => [0,5,10,15,20].every((p,i) => close(growth(p), 10+i*2)));
   add('help', '무기 피해가 8을 넘는 1마다 기준 피해의 2%', '시작 무기8, 무기9/13, 주문은 제외', () => close(growth(0,9,false),10.2) && close(growth(0,13,false),11) && close(growth(0,13,true),10));
@@ -17,8 +17,8 @@ module.exports = function ({ E, add, note, source }) {
   add('help', '무기 추가 피해 =', '무기7/8/9/13: 음수 보정 없음, 주문 제외', () => [7,8,9,13].every(w => close(growth(0,w,false),10*(1+Math.max(0,w-8)*.02)) && close(growth(0,w,true),10)));
   add('ui-text', '강공격에 최대 생명력의 6% 소모', '실제 ledgerCost(100, 부족1)=6', E => E('ledgerCost({hpMax:100,eq:{}},1)') === 6);
   const demand = (kind, hit) => E(`(() => { const p=mkPlayer('warden',{},{}), e=mkEnemy('bruiser',false,0), b=newBattle(p,[e],{}); addS(b,p,'brand',999,2,3); e.demand={turn:b.turnIdx,k:'${kind}',hit:${hit}}; abbotDemand(b); return st(p,'brand'); })()`);
-  add('ui-hud', '수도원장에게 피해를 주지 않으면 낙인 1 감소', 'abbotDemand 휴식 요구: 공격하지 않았을 때 2→1', () => demand('rest',false) === 1 && demand('rest',true) === 3);
-  add('ui-hud', '수도원장에게 피해를 주면 낙인 1 감소', 'abbotDemand 공격 요구: 공격했을 때 2→1', () => demand('atk',true) === 1 && demand('atk',false) === 3);
+  add('ui-hud', '수도원장에게 피해를 주지 않으면 낙인이 1 줄어듭니다', 'abbotDemand 휴식 요구: 공격하지 않았을 때 2→1', () => demand('rest',false) === 1 && demand('rest',true) === 3);
+  add('ui-hud', '수도원장에게 피해를 주면 낙인이 1 줄어듭니다', 'abbotDemand 공격 요구: 공격했을 때 2→1', () => demand('atk',true) === 1 && demand('atk',false) === 3);
   add('ui-hud', '열기 100에서 재폭풍', 'ch3Tick: 100 이상에서 예고·발동', E => E('ch3Tick.toString()').includes('b.heat >= 100'));
   add('ui-hud', '내 중독이 10에 닿으면 부화', 'tickOnce: 중독10 이상이면 부화 처리', E => E('tickOnce.toString()').includes("st(p, 'poison') >= 10"));
   for (const text of ['배분" min="0" max="', '남은 비율" min="0" max="100" value="', '사용 횟수" min="0" max="', '0은 미기록을 뜻하지 않습니다.']) note('ui-results',text,'관리자 입력 범위·기록 필드 설명. 게임 능력치·효과 수치 아님');
@@ -30,7 +30,6 @@ module.exports = function ({ E, add, note, source }) {
   add('changelog-latest','힘 1점마다 기준값의 1%','실제 기·짐 추가 피해의 힘0/1/10/20점 계수', E=>E(`(() => {const samples=[SK2.m_kifist,SKILLS2.confessor.find(s=>s.fx.some(f=>f.k==='perDmg'&&f.of==='burden'))];return samples.every(s=>{const f=s.fx.find(f=>skillResourceGrows(s,f));return [0,1,10,20].every(n=>Math.abs(skillResourceDamage(mkPlayer(s.id.startsWith('m_')?'monk':'confessor',{}, {str:n}),s,f,10)-10*(1+n*.01))<1e-9);});})()`));
   add('changelog-latest','힘 10점은 기준 추가 피해의 110%','힘 10/20점의 실제 추가 피해는 기준 100에서 110/120', E=>E(`(() => {const s=SK2.m_kifist,f=s.fx.find(f=>f.k==='kiPer');return Math.abs(skillResourceDamage(mkPlayer('monk',{}, {str:10}),s,f,100)-110)<1e-9&&Math.abs(skillResourceDamage(mkPlayer('monk',{}, {str:20}),s,f,100)-120)<1e-9;})()`));
   add('changelog-latest','3점 투자 시 성장 비교','9직업 모두 표시 함수가 3점 비교를 생성', E=>E(`Object.keys(TREE2).every(build=>STAT_KEYS.every(k=>{const p=mkPlayer(build,{},{});return typeof statGrowthPreview(p,k)==='string'&&statGrowthPreview(p,k).length>0;}))`));
-  add('ui-tree','3점 투자 시 성장 비교','실제 체력 3점 투자로 9직업 최대 생명력 +9를 표시', E=>E(`Object.keys(TREE2).every(build=>{const p=mkPlayer(build,{},{}),hp=calcHpMax(p);return statGrowthPreview(p,'con').includes('최대 생명력 '+hp+' → '+(hp+9));})`));
   note('changelog-latest','해금 2 · 자원 피해','직업 공개 명칭의 번호. 효과 수치 아님');
   add('changelog-latest','9직업·27갈래','현재 트리 9직업, 갈래 합계 27, 모두 갈래별 투자 안내 제공', E=>E('Object.keys(TREE2).length===9&&Object.values(TREE2).reduce((n,t)=>n+t.branches.length,0)===27&&Object.keys(TREE2).every(build=>statBranchGuidance({build}).length===TREE2[build].branches.length)'));
   note('changelog-latest','해금 1·2·3','잠긴 직업을 공개 업데이트에서 구분하는 이름. 효과 수치 아님');

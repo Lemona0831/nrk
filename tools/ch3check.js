@@ -1,3 +1,5 @@
+/* 폐기(0.8.0 M8): 옛 3챕터 「재의 사막」(열기 HEAT · 재의 여왕 등)을 보는 점검. 0.8.0 A3에서 data/archive/old-ch3.js로 보관돼 게임이 읽지 않는다. 새 3챕터는 tools/foe-check.js · event-check.js. 파일은 기록으로 남긴다. 그래도 돌리려면 RUN_RETIRED=1 */
+if (!process.env.RUN_RETIRED) { console.log('폐기(0.8.0 M8): ch3check — 보관된 기능 · 일회성 비교라 건너뜀(RUN_RETIRED=1이면 돈다)'); process.exit(0); }
 /* 3챕터 규칙 점검 (10월 7일, docs/챕터/3챕터.md 19.2절 도구): 06a2의 게임 코드를 vm에서 그대로 돌려, 3챕터 몸 · 게이지 · 강적 · 보스 · 소모품이 설계대로 움직이는지 장면마다 확인한다.
    강적 · 보스의 값은 비공개 문서와 data/dungeon.js의 FOE_X · QUEEN을 읽는다(여기에 대처를 적지 않는다). 실패 0이어야 한다.
    실행: node tools/ch3check.js */

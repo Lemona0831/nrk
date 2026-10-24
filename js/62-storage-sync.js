@@ -1,12 +1,24 @@
 'use strict';
 /* ===== B0 화면 · 기록 · 결과 보기 ===== */
 const esc = s => fixJosa(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const SKEY = 'nrk_062_v1';    // 0.6a.2 스킬 시험판: 지인 주소 0.6a·next/(nrk_06_v1), B0.5(nrk_b0_v1)와 브라우저 기록이 섞이지 않게
-/* 저장소 경로: 0.6a.2 스킬 시험판 기록은 지인 주소 0.6a(runs6 등)와 섞이지 않게 runs62·scen62·survey62에, 기록판은 board/<id> 문서의 best62 칸, 랭킹은 rank62 칸에 둔다 */
-const COL = { runs: 'runs62', scen: 'scen62', survey: 'survey62', best: 'best62' };
-const SNAMES = { trap: '덫', rift: '균열', echo: '메아리', plague: '역병', smite: '단죄', bond: '피의 연결', brand: '낙인', poison: '중독', bleed: '출혈', ignite: '화상', chill: '둔화', weak: '약화', empower: '강화', vuln: '취약', protect: '보호', haste: '가속', block: '막음', rage: '격노', broken: '붕괴' };
+/* 0.8.0 M8 전체 초기화 · 새 시즌(만든 사람 결정 10월 21일): 저장 키와 저장소 경로를 시즌에 묶는다.
+   0.7.0(옛 키 nrk_062_v1 · runs62 · scen62 · survey62 · saves62 · unl62 · board/<id>의 rank62 · best62)은 읽지 않는다 — 랭킹 · 판 기록은 서버에 남고(시즌 0.7.0 꼬리표, 관리자만), 캐릭터 · 세이브 · 계정 진행은 이어지지 않는다.
+   옛 키가 있는 브라우저는 오류 없이 새로 시작하고 첫 화면에 안내 한 줄(G.resetNote). 옛 키는 지우지 않는다(되돌릴 수 있게) */
+const RSEASON = {
+  cur: '0.8.0',
+  key: { '0.8.0': { local: 'nrk_080_v1', runs: 'runs80', scen: 'scen80', survey: 'survey80', best: 'best80', saves: 'saves80', unl: 'unl80', board: 'board80', rank: 'rank80' },
+         '0.7.0': { local: 'nrk_062_v1', runs: 'runs62', scen: 'scen62', survey: 'survey62', best: 'best62', saves: 'saves62', unl: 'unl62', board: 'board', rank: 'rank62' } },
+};
+const SK8 = RSEASON.key[RSEASON.cur];
+const SKEY = SK8.local;
+const SKEY_OLD = ['nrk_062_v1']; // 0.7.0까지의 브라우저 저장 키
+const COL = { runs: SK8.runs, scen: SK8.scen, survey: SK8.survey, best: SK8.best };
+const BOARD = SK8.board; // 기록판 · 랭킹: board80/<uid> 문서의 rank80 칸
+/* 관리자 결과 보기만 옛 시즌을 고를 수 있다(G.adminSeason) */
+const colOf = s => { const k = RSEASON.key[s || RSEASON.cur] || SK8; return { runs: k.runs, scen: k.scen, survey: k.survey, best: k.best }; };
+const SNAMES = { sear: '혈염', trap: '덫', rift: '균열', echo: '메아리', plague: '역병', smite: '단죄', bond: '피의 연결', brand: '낙인', poison: '중독', bleed: '출혈', ignite: '화상', chill: '둔화', weak: '약화', empower: '강화', vuln: '취약', protect: '보호', haste: '가속', block: '막음', rage: '격노', broken: '붕괴' };
 const BUFFS = { protect: 1, rage: 1, empower: 1, haste: 1, block: 1 };
-const SICO = { poison: '☠️', bleed: '🩸', ignite: '🔥', weak: '🥀', empower: '💪', vuln: '💔', protect: '🛡️', chill: '❄️', haste: '💨', block: '✨', broken: '💫', brand: '📜', rage: '😡', trap: '🪤' }; // 상태 아이콘 (10월 3일)
+const SICO = { sear: '♨️', poison: '☠️', bleed: '🩸', ignite: '🔥', weak: '🥀', empower: '💪', vuln: '💔', protect: '🛡️', chill: '❄️', haste: '💨', block: '✨', broken: '💫', brand: '📜', rage: '😡', trap: '🪤' }; // 상태 아이콘 (10월 3일)
 const REASONS = [['need', '필요해서'], ['curious', '재미있어 보여서'], ['other', '기타']];
 
 const G = {
@@ -54,9 +66,18 @@ function vLocalSaveError() {
   const e = G.localSaveError; if (!e) return '';
   return `<p class="mini" role="alert">${esc(localSaveReason())} 기존 저장본은 삭제하지 않았습니다.</p><details class="mini"><summary>저장 오류 정보</summary><p>${esc(e.stage)} · ${esc(e.name)}${e.chars ? ' · 저장 자료 약 ' + (e.chars * 2 / 1048576).toFixed(2) + ' MiB' : ''}</p>${!G.localReadBlocked ? '<button class="sm" data-a="localsaveretry">저장 다시 시도</button><button class="sm" data-a="dl">저장 자료 내려받기</button>' : ''}</details>`;
 }
+/* 10월 24일 S-5 손으로 고친 저장본: 이어 하기 판(cur · kept)마다 핵심 칸의 지문(mk)을 저장할 때 함께 적고, 브라우저 저장본을 읽을 때 맞춰 본다.
+   어긋나거나 지문이 빠진 판은 noRank — 랭킹에 보내지 않는다(js/44 pushRank). 지문이 생기기 전 저장본(mkv 없음)은 그대로 열되 mkLeg 표시(랭킹 줄에 leg: 1).
+   계정 세이브(서버)에서 받은 판은 맞춰 보지 않는다(받은 뒤 저장할 때 새로 적는다). 지문 식이 소스에 있으니 소스를 읽고 다시 만드는 사람은 못 막는다 — 가벼운 손질만 막는다 */
+const MK_F = ['id', 'build', 'mode', 'startedAt', 'ch', 'clears', 'room', 'lv', 'xp', 'gold', 'playMs', 'markCh', 'markPts', 'stats', 'inv', 'eqU', 'bag', 'cons', 'pouch', 'p', 'ptree', 'atree', 'result', 'endedAt', 'sealed', 'noRank', 'mkLeg'];
+function runMark(r) { const b = r.battle && r.battle.b, rm = Array.isArray(r.rooms) ? r.rooms : []; const t = JSON.stringify([MK_F.map(k => r[k] === undefined ? null : r[k]), rm.length, rm.filter(x => x && x.res && x.hpOut != null).length, b && Array.isArray(b.en) ? b.en.map(e => e && [e.id, e.hp, e.alive]) : null]); let h = 2166136261; for (let i = 0; i < t.length; i++) h = Math.imul(h ^ t.charCodeAt(i), 16777619); return 'mk1:' + t.length + ':' + (h >>> 0).toString(36); }
+const mkRuns = d => [d.cur, ...(Array.isArray(d.kept) ? d.kept : [])].filter(r => r && typeof r === 'object' && r.id && r.startedAt); // 시작 시각이 없는 판은 진짜 판이 아니다(startRun이 늘 적는다) — 랭킹에도 보내지 않는다(js/44)
+function mkStamp(d) { if (!d || typeof d !== 'object') return; d.mkv = 1; for (const r of mkRuns(d)) r.mk = runMark(r); }
+function mkCheck(d) { try { const leg = !d.mkv; for (const r of mkRuns(d)) { if (runOver(r)) continue; if (r.mk ? r.mk !== runMark(r) : !leg) r.noRank = 1; else if (!r.mk) r.mkLeg = 1; } } catch (e) { } return d; }
 function loadLocal() {
-  try { const s = localStorage.getItem(SKEY); if (s) return localSaveRead(s); }
-  catch (e) { G.localReadBlocked = true; localSaveIssue('read', e); }
+  try { const s = localStorage.getItem(SKEY); if (s) return mkCheck(localSaveRead(s)); }
+  catch (e) { G.localReadBlocked = true; localSaveIssue('read', e); return blankData(); }
+  try { if (SKEY_OLD.some(k => localStorage.getItem(k) != null)) G.resetNote = 1; } catch (e) { } // M8: 0.7.0 저장본이 있으면 새로 시작(안내 한 줄, 옛 키는 그대로)
   return blankData();
 }
 function cloudSaveIssue(e) {
@@ -64,7 +85,8 @@ function cloudSaveIssue(e) {
   G.saveSync = '계정 전송을 준비하지 못했습니다. 이 기기의 저장본은 유지됩니다.';
 }
 function saveLocal() {
-  if (G.localReadBlocked) return false;
+  if (G.localReadBlocked || G.tabStale) return false; // 10월 24일 S-4: 다른 탭이 저장한 뒤의 낡은 탭은 덮어쓰지 않는다(js/64 tabWatch)
+  try { mkStamp(G.data); } catch (e) { } // 10월 24일 S-5: 판 지문(계정 추적보다 먼저 — 지문까지 든 판으로 계정 서명을 낸다)
   // 계정 추적·전송 예약 오류는 완료된 로컬 저장을 실패로 되돌리지 않는다.
   try { cloudTrack(); } catch (e) { cloudSaveIssue(e); }
   let json; try { json = JSON.stringify(G.data); if (typeof json !== 'string') throw new Error('save_format'); } catch (e) { localSaveIssue('serialize', e); return false; }
@@ -74,7 +96,7 @@ function saveLocal() {
   return true;
 }
 /* 결과 보기에서 누구 기록인지 바로 알 수 있게, 기록마다 닉네임과 로그인 방식을 함께 남긴다 */
-function testerMeta() { const m = { v: VERSION, updatedAt: Date.now(), runs: G.data.runs.length, name: G.data.name || '', login: G.acct && !G.acct.anon ? G.acct.provider : '' }; if (G.data.unl) m.unl62 = { c: G.data.unl.c || {}, open: G.data.unl.open || {} }; if (G.data.goals || G.data.markOpen || G.data.title || G.data.markBest) m.goals62 = { g: G.data.goals || { n: {}, h: {} }, markOpen: G.data.markOpen ? 1 : 0, title: G.data.title || '', mb: G.data.markBest || {} }; return m; }
+function testerMeta() { const m = { v: VERSION, updatedAt: Date.now(), runs: G.data.runs.length, name: G.data.name || '', login: G.acct && !G.acct.anon ? G.acct.provider : '' }; if (G.data.unl) m[SK8.unl] = { c: G.data.unl.c || {}, open: G.data.unl.open || {} }; if (G.data.goals || G.data.markOpen || G.data.title || G.data.markBest) m.goals62 = { g: G.data.goals || { n: {}, h: {} }, markOpen: G.data.markOpen ? 1 : 0, title: G.data.title || '', mb: G.data.markBest || {} }; return m; }
 async function pushDb(path, obj) {
   if (!G.db || !G.uid || G.conn === 'readonly') { G.sync = CONN_MSG[G.conn] || CONN_MSG.nodb; return false; }
   try {
@@ -123,11 +145,11 @@ async function importCode(code) {
 async function pushName() {
   if (!G.db || !G.uid) return;
   if (G.conn === 'ok') try { await G.db.doc('playtest/' + G.uid).set(testerMeta()); } catch (e) { }
-  try { const ref = G.db.doc('board/' + G.uid); const cur = await ref.get(); if (cur.exists) { const d = JSON.parse(JSON.stringify(cur.data() || {})); d.name = G.data.name || d.name; await ref.set(d); G.board = null; render(); } } catch (e) { }
+  try { const ref = G.db.doc(BOARD + '/' + G.uid); const cur = await ref.get(); if (cur.exists) { const d = JSON.parse(JSON.stringify(cur.data() || {})); d.name = G.data.name || d.name; boardLogin(d); /* 10월 24일: 손님 표시(js/44) */ await ref.set(d); G.board = null; render(); } } catch (e) { }
 }
 async function loadBoard() {
   if (!G.db || G.boardLoading) return; G.boardLoading = true;
-  try { const qs = await G.db.collection('board').get(); G.board = qs.docs.map(x => Object.assign({ uid: x.id }, x.data())); } catch (e) { G.board = []; }
+  try { const qs = await G.db.collection(BOARD).get(); G.board = qs.docs.map(x => Object.assign({ uid: x.id }, x.data())); } catch (e) { G.board = []; }
   G.boardLoading = false; render();
 }
 const CONN_MSG = {
@@ -152,7 +174,7 @@ async function refreshAdminAuth() {
   }
 }
 function sbDb(sb, uid) {
-  const own = path => path === 'playtest/' + uid || path.startsWith('playtest/' + uid + '/') || path === 'board/' + uid;
+  const own = path => path === 'playtest/' + uid || path.startsWith('playtest/' + uid + '/') || path === BOARD + '/' + uid; // M8: 새 시즌 기록판(board80)
   return {
     doc: path => ({
       get: async () => { const { data, error } = await sb.from('docs').select('id,data').eq('path', path).maybeSingle(); if (error) throw Object.assign(new Error(error.message), { code: error.code }); return { exists: !!data, id: data && data.id, data: () => data ? clone(data.data) : undefined }; },
@@ -185,7 +207,7 @@ async function initSite(cfg) {
     await readAcct(session.user);
     await cloudLoad();
     await refreshAdminAuth();
-  } catch (e) { G.conn = 'sitefail'; G.siteErr = (e && e.message) || String(e); }
+  } catch (e) { G.conn = 'sitefail'; G.siteErr = (e && e.message) || String(e); if (G.db && G.data.accountId !== G.uid) G.db = null; } // 10월 24일 S-5: 계정 바꾸기(accountLocal)가 실패해 이 기기 자료가 앞 계정 것이면 저장소를 끊는다 — 판 기록(syncRun) · 이름(pushName)이 새 계정 경로로 가지 않게
   if (G.conn === 'ok') reviveCloud(); // 다른 브라우저에서 들어와도 저장소 기록으로 되살린다
   if (G.scr === 'admin' && G.db && G.owner && (!G.dash || G.dashErr)) { G.dash = null; G.dashErr = ''; G.dashReq = 0; } // 접속 전에 열린 관리자 화면은 접속 뒤 다시 불러온다
   render();
@@ -199,10 +221,10 @@ const AUTH_BACK = () => location.href.split('#')[0].split('?')[0];
 function accountLocal(uid) {
   const old = G.data.accountId;
   let archived = null;
-  try { const raw = localStorage.getItem(SKEY + ':account:' + uid); if (raw) archived = localSaveRead(raw); }
+  try { const raw = localStorage.getItem(SKEY + ':account:' + uid); if (raw) archived = mkCheck(localSaveRead(raw)); } // S-5: 보관본도 판 지문을 맞춰 본다
   catch (e) { localSaveIssue('account-read', e); throw e; }
   if (old && old !== uid) {
-    try { localSaveWrite(SKEY + ':account:' + old, JSON.stringify(G.data)); }
+    try { mkStamp(G.data); localSaveWrite(SKEY + ':account:' + old, JSON.stringify(G.data)); }
     catch (e) { localSaveIssue('account-write', e); throw e; } // 보관 실패 시 현재 계정 자료를 비우지 않는다.
     const prefs = {}; for (const k of ['audio','opt','fs','rm','infoOn','numKeys','pace','hud']) if (G.data[k] != null) prefs[k] = G.data[k];
     G.data = archived || Object.assign(blankData(), prefs);
@@ -211,6 +233,11 @@ function accountLocal(uid) {
   } else if (!old && archived) { G.data = archived; curSweep(); reviveLocal(); }
   G.data.accountId = uid; saveLocal();
 }
+/* 10월 24일 S-5 옛 시즌 찌꺼기: playtest/<uid> 문서는 시즌을 가리지 않는 경로이고 계정 목표 칸 이름(goals62)도 두 시즌이 같다.
+   문서를 쓴 판의 v(testerMeta)가 지금 시즌(0.8)보다 앞이면 그 목표 · 표식 도전 열림 · 칭호 · 표식 기록은 새 시즌에 합치지 않는다(M8: 계정 진행은 이어지지 않는다). 이름은 그대로 이어진다.
+   M8 SQL의 season 꼬리표는 보지 않는다 — SQL보다 먼저 0.8.0이 쓴 문서에도 꼬리표가 붙을 수 있어서 */
+const verMM = v => { const m = String(v || '').match(/^(\d+)\.(\d+)/); return m ? +m[1] * 1000 + +m[2] : -1; };
+const seasonDoc = d => !!d && verMM(d.v) >= verMM(RSEASON.cur);
 async function readAcct(user) {
   const ids = (user.identities || []).map(x => x.provider).filter(p => PROVIDER_N[p]);
   const anon = user.is_anonymous !== false && !ids.length;
@@ -227,7 +254,7 @@ async function readAcct(user) {
   if (anon) return;
   // 닉네임은 계정을 따라간다. 저장소에 남긴 이름 → 구글 계정의 이름 순서로 채운다
   let saved = '';
-  try { const cur = await G.db.doc('playtest/' + G.uid).get(); if (cur.exists) { const cd = cur.data() || {}; saved = cd.name || ''; if (cd.unl62) { const U = unlData(); for (const [k, v] of Object.entries(cd.unl62.c || {})) U.c[k] = Math.max(U.c[k] || 0, v || 0); for (const [k, v] of Object.entries(cd.unl62.open || {})) if (v && !U.open[k]) U.open[k] = v; saveLocal(); } if (cd.goals62) goalsMerge(cd.goals62); } } catch (e) { } // 해금 · 목표는 기기와 계정 가운데 큰 값(합집합)을 남긴다
+  try { const cur = await G.db.doc('playtest/' + G.uid).get(); if (cur.exists) { const cd = cur.data() || {}; saved = cd.name || ''; if (cd[SK8.unl]) { const U = unlData(); for (const [k, v] of Object.entries(cd[SK8.unl].c || {})) U.c[k] = Math.max(U.c[k] || 0, v || 0); for (const [k, v] of Object.entries(cd[SK8.unl].open || {})) if (v && !U.open[k]) U.open[k] = v; saveLocal(); } if (cd.goals62 && seasonDoc(cd)) goalsMerge(cd.goals62); } } catch (e) { } // 해금 · 목표는 기기와 계정 가운데 큰 값(합집합)을 남긴다
   const md = user.user_metadata || {};
   const nick = saved || loginName || G.data.name || md.name || md.full_name || md.nickname || md.preferred_username || md.user_name || '';
   if (nick && nick !== G.data.name) { G.data.name = String(nick).trim().slice(0, 16); saveLocal(); }
@@ -252,7 +279,7 @@ async function socialLogin(provider, switchAcct) {
 async function socialLogout() {
   if (!G.sb) return;
   if (G.cloud && G.cloud.ready && !(await cloudFlush())) { toast('계정 세이브를 보내지 못했습니다. 인터넷 연결을 확인한 뒤 로그아웃해 주세요.'); return; }
-  if (G.uid) { try { localSaveWrite(SKEY + ':account:' + G.uid, JSON.stringify(G.data)); }
+  if (G.uid) { try { mkStamp(G.data); localSaveWrite(SKEY + ':account:' + G.uid, JSON.stringify(G.data)); }
     catch (e) { localSaveIssue('account-write', e); render(); toast(localSaveReason()+' 저장 자료를 보관한 뒤 로그아웃해 주세요.'); return; } }
   const r = await G.sb.auth.signOut(); if (r && r.error) { toast('로그아웃하지 못했습니다. 다시 시도해 주세요.'); return; }
   const prefs = {}; for (const k of ['audio','opt','fs','rm','infoOn','numKeys','pace','hud']) if (G.data[k] != null) prefs[k] = G.data[k];
@@ -348,9 +375,9 @@ function cloudHeads(entries) {
   return unique.filter(e => !unique.some(o => o !== e && cloudDominates(o.clock, e.clock)));
 }
 async function cloudReadDevices(uid) {
-  if (!G.sb) return G.db.collection('playtest/' + uid + '/saves62').get();
+  if (!G.sb) return G.db.collection('playtest/' + uid + '/' + SK8.saves).get();
   // 진행 세이브는 실제 문서 경로로 찾는다. 서버의 parent 파생 값에 의존하지 않는다.
-  const prefix = 'playtest/' + uid + '/saves62/';
+  const prefix = 'playtest/' + uid + '/' + SK8.saves + '/';
   const {data,error} = await G.sb.from('docs').select('path,data').like('path',prefix+'%');
   if(error) throw Object.assign(new Error(error.message),{code:error.code});
   return {docs:(data || []).filter(r=>r.path && !r.path.slice(prefix.length).includes('/')).map(r=>({id:r.path.slice(prefix.length),data:()=>clone(r.data)}))};
@@ -365,8 +392,8 @@ async function cloudFlush() {
   c.dirty = false;
   c.writing = (async () => {
     try {
-      await G.db.doc('playtest/' + c.uid + '/saves62/' + c.device).set(snapshot);
-      const saved = await G.db.doc('playtest/' + c.uid + '/saves62/' + c.device).get();
+      await G.db.doc('playtest/' + c.uid + '/' + SK8.saves + '/' + c.device).set(snapshot);
+      const saved = await G.db.doc('playtest/' + c.uid + '/' + SK8.saves + '/' + c.device).get();
       if(!saved.exists || cloudSig(saved.data()) !== cloudSig(snapshot)) throw Object.assign(new Error('저장본 확인 실패'),{code:'save_readback'});
       const visible = await cloudReadDevices(c.uid);
       if(!visible.docs.some(d=>d.id===c.device && cloudSig(d.data())===cloudSig(snapshot))) throw Object.assign(new Error('기기 간 조회 확인 실패'),{code:'save_discovery'});
@@ -398,18 +425,21 @@ async function cloudLoad() {
         if (!by.has(e.id)) by.set(e.id, []); by.get(e.id).push(e);
       }
     }
-    const chosen = [];
+    const chosen = []; let gones = 0, forks = 0;
+    // 10월 24일 S-5: 끝난 판은 되살리지 않는다. 어느 기기에서든 지워진 가지(쓰러짐 · 포기 · 마침)가 있거나 판 기록이 끝났다고 하면, 고르는 창 없이 지운 쪽으로 맞춘다
+    //   — 낡은 기기 · 오프라인에서 이어 한 가지를 골라 쓰러진 판을 되돌리는 길을 막는다(양쪽 원본 백업은 그대로)
+    const ended = new Set([...(G.data.runs || []), ...rs.docs.map(d => d.data())].filter(r => r && r.id && runOver(r)).map(r => r.id));
     for (const [id, entries] of by) {
       const heads = cloudHeads(entries); let pick = heads[0];
-      if (heads.length > 1) {
+      const gone = ended.has(id) || heads.some(e => !e.run);
+      if (heads.length > 1 || (gone && pick && pick.run)) {
         // 선택 전에 양쪽 원본을 서버에 따로 보관한다. 백업 실패 시 선택·반영을 진행하지 않는다.
-        await G.db.doc('playtest/' + c.uid + '/saveBackups62/' + c.device + '-' + Date.now() + '-' + chosen.length).set({ id, versions: heads });
-        const mine = local.slots.find(e => e.id === id);
+        if (heads.length > 1) await G.db.doc('playtest/' + c.uid + '/saveBackups' + SK8.saves.slice(5) + '/' + c.device + '-' + Date.now() + '-' + chosen.length).set({ id, versions: heads });
+        if (gone) { pick = { id, run: null }; if (local.slots.some(e => e.id === id && e.run)) gones++; } else {
+        // 10월 24일 만든 사람 결정: 살아 있는 두 가지가 갈리면 고르는 창 없이 플레이 시간(playMs)이 긴 쪽을 남긴다(같으면 이 기기 쪽). 창으로 고르면 위험한 싸움 전 상태로 되돌려 다시 하기가 됐다
+        const mine = local.slots.find(e => e.id === id), ms = e => +(e.run && e.run.playMs) || 0;
         pick = heads.find(e => mine && JSON.stringify(e.clock) === JSON.stringify(mine.clock)) || heads[0];
-        for (const other of heads.filter(e => e !== pick)) {
-          const label = e => e.run ? (e.run.cname || '캐릭터') + ' · Lv ' + (e.run.lv || 1) + ' · ' + (e.run.ch || 1) + '챕터 · 방 ' + (e.run.room || 0) : '삭제된 세이브';
-          if (confirm('같은 캐릭터를 여러 기기에서 진행했습니다.\n현재 선택: ' + label(pick) + '\n다른 저장본: ' + label(other) + '\n\n확인: 다른 저장본으로 변경\n취소: 현재 선택 유지\n양쪽 원본은 계정에 백업됩니다.')) pick = other;
-        }
+        for (const e of heads) if (ms(e) > ms(pick)) pick = e; forks++; }
         const clock = {}; for (const h of heads) for (const [k,v] of Object.entries(h.clock)) clock[k] = Math.max(clock[k] || 0, v);
         clock[c.device] = (clock[c.device] || 0) + 1; pick = Object.assign({}, pick, {clock, at: Date.now()});
       }
@@ -437,7 +467,7 @@ async function cloudLoad() {
       graves.set(r.id, r.grave || { recovered:true, id:r.id, cname:r.cname, build:r.build, ch:r.ch || 1, lv:r.lv, room:r.roomReached, roomN:r.roomReached ? floorName(r.roomReached) : '', stats:r.stats, eq:(r.eq7 || []).filter(Boolean).map(s=>s.split(':')[0]), at:r.endedAt || r.updatedAt || r.startedAt, kill:null, hits:[], last:[] });
     }
     G.data.graves = [...graves.values()].sort((a,b)=>(b.at || 0)-(a.at || 0)).slice(0,20);
-    c.ready = true; c.dirty = true; G.saveSync = '계정 세이브를 불러왔습니다';
+    c.ready = true; c.dirty = true; G.saveSync = '계정 세이브를 불러왔습니다'; if (gones || forks) toast([gones ? '다른 기기에서 끝난 캐릭터를 이어 하기에서 뺐습니다. 판 기록은 남아 있습니다.' : '', forks ? '여러 기기에서 이어 한 캐릭터는 플레이 시간이 긴 저장본으로 맞췄습니다. 양쪽 원본은 계정에 백업했습니다.' : ''].filter(Boolean).join(' '));
     // 초기 접속 중 화면에서 캐릭터를 이미 연 경우, 반영된 저장본을 타이틀에서 다시 선택한다.
     if (G.run && !G.creating) { G.run = null; G.b = null; G.scr = 'title'; G.sheet = null; }
     saveLocal(); await cloudFlush();

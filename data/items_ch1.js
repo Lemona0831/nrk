@@ -4,7 +4,7 @@
    g: n 평범 / m 고급 / r 희귀 */
 const ITEMS_CH1 = {
   // 무기
-  rustsword: { n: '녹슨 장검', slot: 'weapon', g: 'n', act: '기본 공격 붕괴 +2.', cost: '', lore: '수도원 문지기가 버리고 간 칼.' },
+  rustsword: { n: '녹슨 장검', slot: 'weapon', g: 'n', act: '강공격 붕괴 +2.', cost: '', lore: '수도원 문지기가 버리고 간 칼.' },
   pilgstaff: { n: '순례자의 지팡이', slot: 'weapon', g: 'n', act: '캔트립과 주문 피해 +3%.', cost: '', lore: '먼 길을 짚어 온 나무에 기도가 배었다.' },
   huntbow: { n: '사냥꾼의 짧은활', slot: 'weapon', g: 'n', act: '후열 적에게 주는 피해 +5%.', cost: '', lore: '숲에서 쓰던 활. 회랑에서도 쓸 만하다.' },
   dullknife: { n: '무딘 단검', slot: 'weapon', g: 'n', act: '중독된 적에게 기본 공격 피해 +1.', cost: '', lore: '날은 죽었지만 홈에 독이 남아 있다.' },
@@ -29,7 +29,7 @@ const ITEMS_CH1 = {
   leathervest: { n: '가죽 조끼', slot: 'armor', g: 'n', act: '흘리기 스태미나 −3.', cost: '', lore: '가볍다. 몸을 돌리기 쉽다.' },
   novicetunic: { n: '수련생의 튜닉', slot: 'armor', g: 'n', act: '최대 스태미나 +5.', cost: '', lore: '새벽 기도에 늦지 않으려 뛰던 옷.' },
   oldchain: { n: '낡은 사슬 셔츠', slot: 'armor', g: 'n', act: '받는 강타 피해 −5%.', cost: '', lore: '고리 몇 개가 빠졌지만 아직 버틴다.' },
-  pilgcoat: { n: '순례자의 외투', slot: 'armor', g: 'n', act: '받는 지속 피해 −5%.', cost: '', lore: '비와 재를 함께 막아 온 외투.' },
+  pilgcoat: { n: '순례자의 외투', slot: 'armor', g: 'n', act: '받는 상태 피해 −5%.', cost: '', lore: '비와 재를 함께 막아 온 외투.' },
   waxrobe: { n: '촛농 묻은 로브', slot: 'armor', g: 'n', act: '내게 걸리는 화상 · 출혈이 1 줄어든다(최소 1).', cost: '', lore: '굳은 촛농이 불길을 먼저 받는다.' },
   guardplate: { n: '수도원 경비의 흉갑', slot: 'armor', g: 'n', act: '최대 생명력 +5.', cost: '', lore: '가슴에 수도원의 문장이 찍혀 있다.' },
   chainmail: { n: '사슬 갑옷', slot: 'armor', g: 'm', act: '강타에 받는 피해 −10%.', cost: '', lore: '무거운 한 방을 고리마다 나눠 받는다.' },
@@ -66,7 +66,7 @@ const ITEMS_CH1 = {
   deadrosary: { n: '망자의 묵주', slot: 'amulet', g: 'r', act: '쓰러질 피해를 받으면 생명력 1로 한 번 버틴다(한 판에 한 번).', cost: '최대 생명력 −10%', lore: '죽은 자의 기도가 한 번은 들어준다.' },
   // 반지
   copperring: { n: '구리 반지', slot: 'ring1', g: 'n', act: '최대 스태미나 +3.', cost: '', lore: '초록 녹이 손가락에 남는다.' },
-  silverring: { n: '은 반지', slot: 'ring1', g: 'n', act: '받는 지속 피해 −5%.', cost: '', lore: '독을 만나면 검게 변한다고들 한다.' },
+  silverring: { n: '은 반지', slot: 'ring1', g: 'n', act: '받는 상태 피해 −5%.', cost: '', lore: '독을 만나면 검게 변한다고들 한다.' },
   obsidianring: { n: '흑요석 반지', slot: 'ring1', g: 'n', act: '주문 피해 +3%.', cost: '', lore: '들여다보면 깊이가 없다.' },
   ironring: { n: '철 반지', slot: 'ring1', g: 'n', act: '최대 생명력 +3.', cost: '', lore: '무겁고 차갑다.' },
   garnetring: { n: '석류석 반지', slot: 'ring1', g: 'n', act: '기본 공격 피해 +3%.', cost: '', lore: '핏빛 알이 주먹 위에서 빛난다.' },
@@ -113,7 +113,7 @@ const ITEMS_CH1 = {
   gripgloves: { n: '미끄럼 막는 장갑', slot: 'gloves', g: 'n', act: '강공격 스태미나 −2.', cost: '', lore: '송진을 먹인 가죽.' },
   duelgloves: { n: '결투 장갑', slot: 'gloves', g: 'm', act: '적이 하나만 남으면 주는 피해 +12%.', cost: '', lore: '마지막 하나와는 눈을 맞춘다.' },
   breakerhands: { n: '부수는 손', slot: 'gloves', g: 'm', act: '붕괴한 적에게 강공격 피해 +20%.', cost: '', lore: '금 간 곳을 찾아 다시 친다.' },
-  alchemgloves: { n: '연금술사의 장갑', slot: 'gloves', g: 'm', act: '내가 건 지속 피해 +8%.', cost: '', lore: '손가락 끝이 늘 초록빛이다.' },
+  alchemgloves: { n: '연금술사의 장갑', slot: 'gloves', g: 'm', act: '내가 건 상태 피해 +8%.', cost: '', lore: '손가락 끝이 늘 초록빛이다.' },
   reaperhands: { n: '수확자의 손', slot: 'gloves', g: 'r', act: '적을 쓰러뜨리면 다음 빠른 행동 한 번은 빠른 칸을 쓰지 않는다.', cost: '받는 피해 +6%', lore: '거둔 다음에는 쉬지 않는다.' },
   smallicon: { n: '작은 성상', slot: 'amulet', g: 'n', act: '최대 생명력 +4.', cost: '', lore: '손바닥만 한 성인이 늘 같은 쪽을 본다.' },
   waxseal: { n: '밀랍 봉인', slot: 'amulet', g: 'n', act: '내게 걸리는 취약이 1 줄어든다(최소 1).', cost: '', lore: '봉인을 뜯지 않은 편지가 하나 있다.' },
@@ -144,3 +144,4 @@ for (const k in ITEMS_CH1) ITEMS[k] = Object.assign({ kind: 'free' }, ITEMS_CH1[
 /* 1챕터 장비 풀: B0.5에서 온 20종 + 새 79종 + 10월 2일 50종 (시작 장비 제외) */
 const CH1_OLD = ['twin', 'maul', 'hook', 'thorns', 'cloak', 'plate', 'chaingl', 'knot', 'ragechain', 'bloodpact', 'vanguard', 'witness', 'focusring', 'venomring', 'fury', 'echo', 'pulse', 'ledger', 'chalice', 'boilflask'];
 const CH1_POOL = CH1_OLD.concat(Object.keys(ITEMS_CH1));
+const CH_POOLS = { 1: CH1_POOL }; // A2: 옛 2챕터 장비(items_ch2)는 data/archive로 옮겼다. 3챕터는 items_ch3이 더한다

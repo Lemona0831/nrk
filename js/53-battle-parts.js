@@ -78,11 +78,19 @@ function bmHint(b, a) {
   const pc = f.find(e => e.k === 'payCut'); if (pc) out.push(pc.off != null ? '다음 당기기 −' + pc.off + '턴' : '다음 당기기 절반');
   return out.join(' · ');
 }
+/* 사냥꾼 기본 공격 버튼 아랫줄 (원거리 초안 2-6a 규칙 7): 켜진 버프를 짧게. 예: "⇄×1.5 · +50% · 출혈+2". 대상이 직전에 친 적이면 바꿔 쏘기는 "⇄ 다른 적" */
+function hnBasicHint(b, a) {
+  const p = b.p, t = actTarget(b, a); const o = t ? hnBasicBuf(b, t) : null; if (!o) return ''; const B = p.bbuf, R = hnRound(b), on = k => B[k] && B[k].until >= R; const L = [];
+  if (on('swap')) L.push(o.tag.some(x => /^⇄/.test(x)) ? '⇄×' + B.swap.mul : '⇄ 다른 적'); if (on('extra')) L.push('+' + Math.round(B.extra.mul * 100) + '%' + (B.extra.turn && o.tag.some(x => /^선회/.test(x)) ? ' ×' + B.extra.turn : ''));
+  if (on('sky')) L.push('×' + B.sky.mul); if (o.bleed) L.push('출혈+' + o.bleed);
+  return L.join(' · ');
+}
 function skillHint0(b, a) {
   const p = b.p; const tg = G.sel ? b.en.find(e => e.id === G.sel && e.alive) : null;
   if (a.v2 && a.s && isBu(p)) return buHint(b, a);
   if (a.v2 && a.s && isCf(p)) return cfHint(b, a); // 숨겨진 직업 2
   if (a.v2 && a.s && isBm(p)) return bmHint(b, a);
+  if (a.id === 'basic' && p.build === 'hunter' && p.bbuf) return hnBasicHint(b, a); // 0.8.0 5단계 연사(2-6a 규칙 7): 켜진 기본 공격 버프
   if (a.v2 && a.s && p.build === 'hunter') { const f = a.s.fx.find(e => e.k === 'focusBurst'); if (f) { const t = actTarget(b, a), n = t && p.focus && p.focus.id === t.id ? p.focus.n : 0; return n ? '추적 ' + n + '겹 소모 → 추가 피해 +' + r1(skillResourceDamage(p, a.s, f, f.n * n)) + ' (피해 증감 전)' : '소모할 추적 없음'; } }
   if (a.id === 'release') return p.scar < 1 ? '상흔 없음' : `상흔 ${Math.round(p.scar)} → 적마다 ${r1(p.scar * 0.8 * dmgMult(p))}`;
   if (a.id === 'scarcut') return p.scar < 1 ? '상흔 없음' : `상흔 추가 ${r1(p.scar * 0.5 * 1.5 * dmgMult(p))}`;
@@ -91,7 +99,7 @@ function skillHint0(b, a) {
   if (a.v2 && a.s && p.build === 'elementalist' && a.s.tgt !== 'self') return elemHint(b, a); // 원소술사: 열충격 미리 보기
   if (a.v2 && a.s && p.build === 'monk') { const fx = k => a.s.fx.find(e => e.k === k); const ki = st(p, 'empower'); const t = actTarget(b, a); const out = []; // 수도승 (10월 7일): 터뜨리기 · 기 비례 · 거두기 · 끊기 미리보기
     const base = fx('dmg'), noKi = base ? '기 없음 · 기본 피해 ' + r1(skillBaseDamage(p,a.s,base.n)) + ((a.s.hits || 1) > 1 ? ' × ' + a.s.hits + '타' : '') + ' (피해 증감 전)' : '기 없음 · 추가 피해 0';
-    const kb = fx('kiBurst'); if (kb) { const pre = kb.pre && t && st(t, 'chill') > 0 ? kb.pre : 0; const tk = Math.min(kb.max || KW.empower, KW.empower, ki + pre); out.push(tk ? '기 ' + tk + ' 터뜨림 → 추가 피해 +' + r1(skillResourceDamage(p,a.s,kb,tk * kb.per)) + (kb.brk ? ' · 붕괴 +' + tk * kb.brk : '') : noKi); }
+    const kb = fx('kiBurst'); if (kb) { const pre = kb.pre && t && st(t, 'chill') > 0 ? kb.pre : 0; const tk = Math.min(kb.max || KW.empower, KW.empower, ki + pre); out.push(tk ? '기 ' + tk + ' 터뜨림 → ' + (kb.mul ? '피해 +' + Math.round(kb.mul * tk * 100) + '%' + (kb.per ? ' · ' : '') : '') + (kb.per || !kb.mul ? '추가 피해 +' + r1(skillResourceDamage(p,a.s,kb,tk * (kb.per || 0))) : '') + (kb.brk ? ' · 붕괴 +' + tk * kb.brk : '') : noKi); } /* M8(10월 23일): 붕권처럼 기마다 배율(mul)만 있는 스킬이 '+NaN'으로 보이던 것 */
     const kp = fx('kiPer'); if (kp) out.push(ki ? '기 ' + ki + ' → 추가 피해 +' + r1(skillResourceDamage(p,a.s,kp,kp.per * ki)) + ((a.s.hits || 1) > 1 ? '씩' : '') : noKi);
     const kg = fx('kiGrow'); if (kg) out.push('기 → ' + Math.min(KW.empower, (Math.max(0, ki - 1) + (kg.add || 0)) * (kg.mul || 1)));
     const mi = a.s.fx.find(e => e.k === 'meSt' && e.if === 'chill'); if (mi) { const n = a.aoe ? alive(b).filter(e => e.row === 'front' && st(e, 'chill') > 0).length : t && st(t, 'chill') > 0 ? 1 : 0; out.push(n ? (a.aoe ? '둔화된 적 ' + n : '대상 둔화 ' + st(t, 'chill')) + ' → 기 +' + mi.n * n : '둔화 없음'); }
@@ -164,10 +172,10 @@ function previewText(b, time) {
   for (const x of L) {
     const k = x.e.intent && x.e.intent.k;
     if (k === 'heavy') warn.push(x.e.n + '의 강타');
-    else if (k === 'charge' && x.n >= 2) warn.push(x.e.n + '의 강타(충전 후 이어서)');
+    else if (k === 'charge' && x.n >= 2) warn.push(x.e.n + '의 강타(모은 뒤 이어서)');
     else if (k === 'explode') warn.push(x.e.n + '의 폭발');
     else if (k === 'burn') warn.push(x.e.n + '의 화형');
-    else if (k === 'fuse' && x.n >= 2) warn.push(x.e.n + '의 폭발(준비 후 이어서)');
+    else if (k === 'fuse' && x.n >= 2) warn.push(x.e.n + '의 폭발(준비한 뒤 이어서)');
     else if (k === 'heal') warn.push(x.e.n + '의 치유');
     else if (k === 'mirror') warn.push('나락의 거울');
   }
@@ -199,6 +207,8 @@ function stsHtml(u, b, inCard, opt) {
     if (u.exhaust) out.push('<i class="d" data-info="exhaust" tabindex="0">탈진</i>');
     if (u.ward > 0) out.push(`<i class="b" data-info="ward" tabindex="0">보호막 <b>${Math.round(u.ward)}</b>${u === (b && b.p) && isV2(u) ? '<small>/' + wardMax(u) + '</small>' : ''}</i>`);
     if (u.thorn) out.push(u.thorn.bleed && !u.thorn.dmg ? `<i class="b" data-info="buthorn" tabindex="0">맞으면 출혈 ${u.thorn.bleed}<small> · ${u.thorn.n}번</small></i>` : `<i class="b" data-info="thorn" tabindex="0">가시 <b>${u.thorn.n}</b><small>·${u.thorn.dmg}</small></i>`);
+    if (u.sbSt && u.sbSt.hold > 0) out.push(`<i class="b" data-info="sbhold" tabindex="0">버팀 <b>${u.sbSt.hold}</b></i>`); // 마검사 버팀(주는 피해 덤). 전에는 칩이 없었다
+    if (u.evade > 0) out.push(`<i class="b" data-info="pevade" tabindex="0">${u.build === 'hunter' ? '몸 빼기' : '피하기'} <b>${u.evade}</b></i>`); // 남은 피하기 횟수(사냥꾼 몸 빼기 · 연막 등). 전에는 칩이 없어 전투 기록으로만 알았다
     if (isBu(u)) { const th = buThirst(u), gn = buGrudgeNow(b); // 숨겨진 직업 1
       if (th > 0) out.push(`<i class="b" data-info="buthirst" tabindex="0"><span class="sic" aria-hidden="true">🩸</span>갈증 +${Math.round(th * 100)}%</i>`);
       if (gn > 0) out.push(`<i class="b" data-info="bugrudge" tabindex="0">받은 피해 <b>${Math.round(gn)}</b></i>`);
@@ -209,7 +219,7 @@ function stsHtml(u, b, inCard, opt) {
       const paid = b.prepTurn === b.turnIdx ? (b.paidTurn || 0) : 0; if (paid > 0 && skillsOf(u).some(id => SK2[id] && SK2[id].fx.some(e => e.k === 'bloodDmg'))) out.push(`<i class="b" data-info="bmpaid" tabindex="0">🩸 낸 피 <b>${Math.round(paid)}</b></i>`);
       const pc = u.payCut || []; const nh = pc.filter(x => x.mul != null).length, no = pc.filter(x => x.off != null); if (nh) out.push(`<i class="b" data-info="bmcut" tabindex="0">🩸½ ×${nh}</i>`); if (no.length) out.push(`<i class="b" data-info="bmcut" tabindex="0">🩸−${no[0].off}턴 ×${no.length}</i>`); }
     if (u.rime) for (const k in u.rime) if (u.rime[k] && u.rime[k].times > 0) out.push(`<i class="b" data-info="rime" tabindex="0">${k === 'ignite' ? '🔥' : '❄️'}↩ <b>${u.rime[k].times}</b><small>·${u.rime[k].n}</small></i>`); // 원소술사 되얼림 · 불꽃 외투
-    if (u.build === 'monk' && (u.stance || u.guard)) out.push(`<i class="b" data-info="mstance" tabindex="0"><span class="sic" aria-hidden="true">🥋</span>자세</i>`); // 수도승: 자세 칩 하나(숫자와 덤은 설명 창)
+    if (u.build === 'monk' && (u.stance || u.guard)) { const cm = monkCtrMax(u), left = isFinite(cm) ? Math.max(0, cm - (u.ctrN || 0)) : '∞'; out.push(`<i class="b" data-info="mstance" tabindex="0"><span class="sic" aria-hidden="true">🥋</span>자세${u.stance && u.stance.keep > 1 ? ' <small>' + u.stance.keep + '차례</small>' : ''} <span aria-hidden="true">↩</span><b>${left}</b><span class="sr">번 더 되받을 수 있음</span></i>`); } // 수도승: 자세 칩 하나(덤은 설명 창). M5-2: 남은 되받기 횟수 ↩ n(만든 사람 결정)
     if (u.counter > 0) out.push(`<i class="b" data-info="counter" tabindex="0">반격 +${r1(u.counter)}</i>`);
     if (u.reflux) out.push('<i class="b" data-info="reflux" tabindex="0">되돌릴 독</i>');
   }
@@ -255,7 +265,9 @@ function eordHtml(b, e) {
   return L.length ? `<span class="eord${L[0] === 1 ? ' soon' : ''}" data-info="eord">${L.join('·')}번째</span>` : '<span class="eord done" data-info="eord">✓ 다음 라운드</span>';
 }
 /* 적 생명력: 굵은 막대 + 큰 숫자. 30% 아래면 붉게 */
-function ehpBar(e) { const r = e.hpMax > 0 ? Math.max(0, Math.min(1, e.hp / e.hpMax)) : 0; return `<span class="bar hp ehp${r <= 0.3 ? ' lo' : ''}" role="progressbar" aria-label="생명력" aria-valuemin="0" aria-valuemax="${Math.round(e.hpMax)}" aria-valuenow="${shownHp(e.hp)}"><i style="width:${r * 100}%"></i><span><b>${shownHp(e.hp)}</b> / ${Math.round(e.hpMax)}</span></span>`; }
+/* A0 갑옷 · 방패 칩: 생명력 막대 옆. 둘 다 0이면 아무것도 그리지 않는다. 10월 24일 S-4: 방패 칸 앞에 🛡 (칸만 있으면 시계 칸과 색으로만 갈렸다) */
+function foeASHtml(b, e) { foeAS(b, e); const ex = fcChip(b, e) /* G-1 강적 시계 */ + (isCh2(b) ? ch2CardChips(b, e) : '') + (isW3(b) ? w3CardChips(b, e) : '') + (e.praying ? '<span class="fpray" data-info="chdev">🙏 기도</span>' : '') + (e.fillMax > 0 ? `<span class="ffill" aria-label="배 채움 ${Math.round(e.fill || 0)}/${e.fillMax}">🍞<b>${Math.round(e.fill || 0)}/${e.fillMax}</b></span>` : '') + (e.barrier > 0 ? `<span class="fbar" aria-label="보호막 ${Math.round(e.barrier)}">🔰<b>${Math.round(e.barrier)}</b></span>` : ''); if (!(e.armor > 0) && !(e.shieldMax > 0)) return ex ? `<span class="foeas">${ex}</span>` : ''; return `<span class="foeas">${ex}${e.armor > 0 ? `<span class="farm${e.armorOff ? ' off' : ''}" data-info="farmor" aria-label="갑옷 ${e.armorOff ? '벗겨짐' : e.armor}">🪖<b>${e.armorOff ? '–' : e.armor}</b></span>` : ''}${e.shieldMax > 0 ? `<span class="fshd" data-info="fshield" aria-label="방패 ${e.shield}/${e.shieldMax}겹"><span class="fshi" aria-hidden="true">🛡️</span>${'<i class="on"></i>'.repeat(e.shield)}${'<i></i>'.repeat(Math.max(0, e.shieldMax - e.shield))}</span>` : ''}</span>`; }
+function ehpBar(e) { if (e.role === 'lantern') return ''; /* A2 등불은 생명력 대신 붕괴로 깨진다 */ const r = e.hpMax > 0 ? Math.max(0, Math.min(1, e.hp / e.hpMax)) : 0; return `<span class="bar hp ehp${r <= 0.3 ? ' lo' : ''}" role="progressbar" aria-label="생명력" aria-valuemin="0" aria-valuemax="${Math.round(e.hpMax)}" aria-valuenow="${shownHp(e.hp)}"><i style="width:${r * 100}%"></i><span><b>${shownHp(e.hp)}</b> / ${Math.round(e.hpMax)}</span></span>`; }
 /* 이번 차례에 남은 칸: ⚡ 빠른 행동(먼저) + ▶ 주 행동(차례를 끝냄) */
 function slotHtml(b) {
   const nf = noFast(b.p); const f = !b.bonusUsed && !nf;
@@ -276,7 +288,7 @@ function vOrder(b, hud) {
   });
   if (hud && !hud.ord) {
     const cur = tl.filter(x => x.r === rN); const nx = cur.find((x, i) => i > 0 && !x.me);
-    return `<div class="order osum" data-hud="hud-order"><div class="axhead"><span><b>${rN}라운드</b></span><span class="ordnx">${cur[0] && cur[0].me ? '내 차례' : '적 차례'}${nx ? ' · 다음 ' + esc(nx.n) : ''}</span></div><ol class="ord sr" aria-label="행동 순서">${hudQuiet(lis)}</ol></div>`;
+    return `<div class="order osum" data-hud="hud-order"><div class="axhead"><span><b>${rN}라운드</b></span><span class="ordnx">${b.over ? '전투 끝' : (cur[0] && cur[0].me ? '내 차례' : '적 차례') + (nx ? ' · 다음 ' + esc(nx.n) : '')}</span></div><ol class="ord sr" aria-label="행동 순서">${hudQuiet(lis)}</ol></div>`;
   }
   return `<div class="order" data-hud="hud-order"><div class="axhead"><span><b>${rN}라운드</b></span><span class="axdef">모두 한 번씩, 왼쪽부터 움직입니다</span></div><ol class="ord" aria-label="행동 순서, 좌우 화살표로 옮겨 봅니다">${lis}</ol></div>`;
 }

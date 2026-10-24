@@ -1,0 +1,57 @@
+'use strict';
+/* ===== 0.8.0 G-1 강적 시계 (만든 사람 확정 10월 23일) =====
+   강적 하나 = 시계 하나. 시계는 적 카드 위 칩("이름 n/max" + 칸)으로 보이고, 다 차기 한 칸 전에 마지막 경고(문장 · 소리 · 칩 깜빡임), 다 차면 파국.
+   파국 뒤 시계는 0부터 다시(정의에 perm: 1이면 그 전투 끝까지 파국 상태). 답이 들면 칸이 되감긴다.
+   강적마다 무엇이 칸을 채우고 되감는지 · 파국이 무엇인지는 각 챕터 파일의 FOE_CLOCK[강적]에 둔다 — 내용은 비공개 문서 참조.
+   정의 꼴: { n: 칩 이름, max: 칸 수, ans: [답 태그 ≥2 종류], warn(b, e) → 경고 문장, doom(b, e), perm?, reward?(b, e), blocked?(b, e) → 답 수단이 모두 막혔으면 참(그동안 시계가 멈춘다),
+            on: { 사건 이름(b, e, ...): 칸을 더하거나 되감는다 } } — 사건: onRoomStart · onRoundEnd · onFoeAct · onFoeBreak · onFoeDown · onFoeDot · onFoeDotOn · onCons · onHurt · onParry · onAct · onFlask · onKill · onHit · onSkill · onEvade · onCounter */
+const STRONG_GIM = { dmg: 0.8 }; // 강적 평소 공격 배율(공통 손잡이 하나)
+const FOE_CLOCK = {};
+const FC_HOOKS = ['onHurt', 'onParry', 'onAct', 'onFlask', 'onKill', 'onHit', 'onSkill', 'onEvade', 'onCounter'];
+const fcDef = e => (e && e.strong && FOE_CLOCK[e.foe]) || null;
+function fcInit(b, e) { const D = fcDef(e); if (!D || e.clk) return; e.clk = { n: 0, max: D.max, doomN: 0, warnN: 0, perm: 0, stop: 0 }; }
+function fcStrongs(b) { return alive(b).filter(e => fcDef(e)); }
+/* 사건 알림: 살아 있는 강적마다 그 사건 처리기를 부른다(시계를 처음 보면 만든다) */
+function fcEv(b, ev, ...a) { if (!b || b.over) return; for (const e of fcStrongs(b)) { fcInit(b, e); const D = fcDef(e), f = D.on && D.on[ev]; if (f) f(b, e, ...a); } }
+/* 칸 더하기: 답 수단이 모두 막혀 있으면 멈춘다(대답할 수 없는 파국은 오지 않는다). 아직 경고하지 않았는데 한꺼번에 여러 칸이 차면 마지막 칸 앞에서 멈춘다(파국은 늘 경고 뒤에 온다).
+   경고 뒤 내 차례가 한 번 지나기 전에는 다 차지 않는다(C.wT: 경고 뒤 첫 적 차례의 turnIdx. 내 행동 중(b.cur)에 경고하면 다음 적 차례까지 기다린다. b.fcNoWait: 단위 시험용) */
+/* 강적들의 blocked가 쓰는 "내가 기절해 답할 수 없다". S-5(10월 24일 만든 사람): 내가 스스로 건 기절(영겁의 정적, p.stunSelf)은 답이 막힌 것으로 치지 않는다. 시계는 그대로 돈다 */
+const fcPStun = b => !!(b && b.p && b.p.stun > 0 && !b.p.stunSelf);
+function fcAdd(b, e, k, why) {
+  const D = fcDef(e); if (!D || !e.alive || b.over || !(k > 0)) return 0; fcInit(b, e); const C = e.clk; if (C.perm) return 0;
+  if (D.blocked && D.blocked(b, e)) { if (!C.stop) { C.stop = 1; logp(b, 'sys', D.n + ': 멈춰 있다'); } return 0; } C.stop = 0;
+  const n0 = C.n; C.n = Math.min(C.max, C.n + k); if (n0 < C.max - 1 && C.n >= C.max) C.n = C.max - 1; if (b.rec) b.rec.push({ k: 'clk', foe: e.foe, n: C.n, max: C.max, why: why || '' });
+  if (C.n >= C.max) { if (C.wT != null && !b.fcNoWait && (b.turnIdx || 0) <= C.wT) { C.n = C.max - 1; return 0; } fcDoom(b, e); return k; }
+  if (C.n >= C.max - 1 && n0 < C.max - 1) { C.warnN++; C.blink = 1; C.wT = (b.turnIdx || 0) + (b.cur ? 1 : 0); logp(b, 'crit', '⚠ ' + (D.warn ? D.warn(b, e) : D.n + '이(가) 곧 찬다')); if (typeof sfx === 'function') sfx('b_big'); if (b.rec) b.rec.push({ k: 'clkwarn', foe: e.foe }); }
+  return k;
+}
+/* 되감기: 답이 들었다. 0이 되면 정의의 보상(무방비 등).
+   2판(비공개 문서 참조): 마지막 경고 칸이 아닐 때는 한 번에 1칸, 강적마다 한 라운드에 한 번까지(o.free: 화면의 물체 수를 세는 시계처럼 예외. 3판 o.ord: 평소 행동이라 경고 칸에서도 1칸 · 라운드 한 번) */
+function fcRewind(b, e, k, why, o) {
+  const D = fcDef(e); if (!D || !e.alive || !(k > 0)) return 0; fcInit(b, e); const C = e.clk; if (C.perm) return 0; const n0 = C.n; if (!n0) return 0;
+  if (!(o && o.free) && (n0 < C.max - 1 || (o && o.ord))) { const R = b.round || 0; if (C.backR === R) return 0; C.backR = R; k = Math.min(k, 1); }
+  C.n = Math.max(0, C.n - k); if (C.n < C.max - 1) C.blink = 0; if (b.rec) b.rec.push({ k: 'clkback', foe: e.foe, n: C.n, why: why || '' });
+  if (!C.n && D.reward) D.reward(b, e, why);
+  return n0 - C.n;
+}
+/* 결정적 답(2판): 마지막 경고 칸이면 0칸으로(보상), 아니면 평소 되감기 1칸 */
+function fcAnswer(b, e, why) { const D = fcDef(e); if (!D || !e.alive) return 0; fcInit(b, e); const C = e.clk; if (C.perm) return 0; return C.n >= C.max - 1 ? fcRewind(b, e, C.n, why, { free: 1 }) : fcRewind(b, e, 1, why); }
+function fcDoom(b, e) {
+  const D = fcDef(e), C = e.clk; C.doomN++; C.blink = 0; if (b.rec) b.rec.push({ k: 'clkdoom', foe: e.foe });
+  if (D.perm) C.perm = 1; else C.n = 0;
+  D.doom(b, e);
+}
+/* 적 카드 칩: 이름 n/max와 칸. 마지막 칸 앞이면 ⚠ 글자 · 굵은 테두리 · 깜빡임(움직임 줄이기면 깜빡임 없이 ⚠와 테두리만. 10월 24일 S-4: 색만으로 알리지 않는다) */
+function fcChip(b, e) {
+  const D = fcDef(e); if (!D || !e.clk) return ''; const C = e.clk, warn = !C.perm && C.n >= C.max - 1;
+  const cells = Array.from({ length: C.max }, (_, i) => `<i class="${i < C.n || C.perm ? 'on' : ''}"></i>`).join('');
+  return `<span class="fclk${warn ? ' warn' : ''}${C.perm ? ' perm' : ''}" data-info="fclk" aria-label="${esc(D.n)} ${C.perm ? '가득' : C.n + '/' + C.max}${warn ? ', 마지막 경고' : ''}">${warn ? '<span class="fclkw" aria-hidden="true">⚠</span>' : ''}${esc(D.n)} <b>${C.perm ? C.max : C.n}/${C.max}</b><span class="fclkc" aria-hidden="true">${cells}</span></span>`;
+}
+/* 10월 24일 S-4 처음 만남 한 줄: 시계 칩이 처음 보이는 전투에서 한 번만 알린다(G.data.seenClk. 2챕터 새 역할 처음 만남과 같은 틀: 기록 한 줄 + 알림). 무엇이 답인지는 말하지 않는다 */
+const FC_TIP = '칸이 다 차면 싸움이 크게 위험해집니다. 한 칸 남으면 마지막 경고가 뜹니다';
+function fcTip(b) {
+  if (typeof G === 'undefined' || !G.data || G.data.seenClk || !b || b !== G.b || b.over || G.hudEd || G.scr !== 'run' || !b.en.some(e => e.alive && e.clk && fcDef(e))) return 0;
+  G.data.seenClk = 1; logp(b, 'sys', '처음 만남 · 강적의 시계. ' + FC_TIP); if (typeof toast === 'function' && typeof document !== 'undefined') toast(FC_TIP); if (typeof saveLocal === 'function') saveLocal(); return 1;
+}
+/* 2 · 3챕터 정의는 이 파일보다 먼저 읽히는 챕터 파일에 있다: 여기서 한 번 넣는다 */
+if (typeof ch2ClockReg === 'function') ch2ClockReg(); if (typeof w3ClockReg === 'function') w3ClockReg();

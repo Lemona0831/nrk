@@ -57,7 +57,7 @@ const HUD_VARIANTS = {
   ],
   'hud-actions': [
     { k: 'core', n: '핵심만(도구 접음)', d: '플라스크 · 소모품 · 도망을 도구 한 칸에 모읍니다', set: { abaux: 0, agl: 0, tools: 1 } },
-    { k: 'cost', n: '묶음 이름 + 비용', d: '공격 · 스킬 같은 묶음 제목과 비용 · 쿨타임', set: { abaux: 0, agl: 1, tools: 0 } },
+    { k: 'cost', n: '묶음 이름 + 비용', d: '공격 · 스킬 같은 묶음 제목과 비용', set: { abaux: 0, agl: 1, tools: 0 } },
     { k: 'aux', n: '보조 글자 포함', d: '빠르기 표시, 대상, 남은 칸, 진행 속도까지', set: { abaux: 1, agl: 1, tools: 0 } },
   ],
 };
@@ -430,7 +430,7 @@ function hudFreeOpt(k, v) {
 function hudFreePushSet() {
   const ed = G.hudEd; const L = ed.draft.fr[hudDev()]; hudEdUndoPush(); const wasOn = !!L.pk; if (L.pk || L.au) hfBake(L); /* 끌 때는 지금 보이는 자리를 값으로 굳힌다 */
   L.pk = wasOn ? 0 : 1; if (L.pk) L.au = 0; ed.announce = true; ed.keep = hudEdKeepSel(); ed.chk = { push: 1 };
-  ed.msg = L.pk ? '겹치는 칸을 아래로 자동으로 밉니다. 내용이 늘어도 칸이 겹치지 않습니다' : '칸이 서로 겹칠 수 있습니다. 다만 내 생명력 · 스태미나, 적, 행동 버튼, 지금 위험 줄, 보스 시계는 24px 이상 조작할 수 있게 남깁니다'; render();
+  ed.msg = L.pk ? '겹치는 칸을 아래로 자동으로 밉니다. 내용이 늘어도 칸이 겹치지 않습니다' : '칸이 서로 겹칠 수 있습니다. 다만 내 생명력 · 스태미나, 적, 행동 버튼, 지금 위험 줄, 광폭화와 열기는 24px 이상 조작할 수 있게 남깁니다'; render();
   hudRemoteSync();
 }
 function hudFreeSetMode(mode) {

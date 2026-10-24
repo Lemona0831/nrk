@@ -5,7 +5,7 @@
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const DIR = path.join(__dirname, '..', process.env.SKDIR || '.', 'data');
 const ctx = {}; vm.createContext(ctx);
-vm.runInContext(['skills.js', 'skillkit.js'].map(f => fs.readFileSync(path.join(DIR, f), 'utf8')).join('\n') + '\n;this.SKILLS2 = SKILLS2; this.skScore = skScore; this.skHead = skHead; this.skBody = skBody;', ctx);
+vm.runInContext(['skills.js', 'skillkit.js'].map(f => fs.readFileSync(path.join(DIR, f), 'utf8')).join('\n') + '\n;this.SKILLS2 = SKILLS2; this.skScore = skScore; this.skHead = skHead; this.skBody = skBody; this.skBbufE = typeof skBbufE !== "undefined" ? skBbufE : null;', ctx);
 const args = process.argv.slice(2); const md = args.includes('md'); const build = args.find(a => a !== 'md') || 'assassin';
 const SK = ctx.SKILLS2[build]; if (!SK) { console.error('직업 없음: ' + build + ' (있는 직업: ' + Object.keys(ctx.SKILLS2).join(', ') + ')'); process.exit(1); }
 const rows = SK.map(s => Object.assign({ s }, ctx.skScore(s)));
@@ -13,7 +13,7 @@ let out = 0;
 if (!md) {
   for (const r of rows) {
     const ok = r.s.exc ? '예외 ' + (r.V / r.B * 100 - 100).toFixed(0) + '% (' + r.s.exc + ')' : Math.abs(r.V / r.B - 1) <= 0.08 + 1e-9 ? 'ok' : (r.V > r.B ? '높음' : '낮음'); if (ok !== 'ok' && !r.s.exc) out++; // exc: 줄 예산의 예외로 표시한 칸 (10월 4일: 아껴 두는 마무리)
-    console.log(`${r.s.b}\t${r.s.tier}\t${r.s.n.padEnd(8)}\tE ${r.E.toFixed(1)}\t순 ${r.net.toFixed(1)}\t× ${r.F.toFixed(1)}\t= ${r.V.toFixed(1)} / ${r.B}\t${ok}`);
+    console.log(`${r.s.b}\t${r.s.tier}\t${r.s.n.padEnd(8)}\tE ${r.E.toFixed(1)}\t순 ${r.net.toFixed(1)}\t× ${r.F.toFixed(1)}\t= ${r.V.toFixed(1)} / ${r.B}\t${ok}` + (ctx.skBbufE && r.s.fx.some(e => e.k === 'bbuf') ? `\t(E 가운데 기본 공격 버프 ${ctx.skBbufE(r.s).toFixed(1)})` : '')); // 0.8.0 5단계 연사 버프 몫(원거리 초안 2-10)
   }
   console.log(`${rows.length}개, 예산 밖 ${out}개` + (rows.some(r => r.s.exc) ? `, 예외 ${rows.filter(r => r.s.exc).length}개` : ''));
 } else {

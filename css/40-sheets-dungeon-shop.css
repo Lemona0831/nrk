@@ -132,6 +132,8 @@
 .title-scr{position:relative;isolation:isolate}.title-art{position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--bg)}.title-art img{width:100%;height:100%;object-fit:cover;object-position:50% 50%;display:block}.title-art:after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 44% 60% at 50% 44%,rgba(8,10,15,.8),rgba(8,10,15,.35) 78%,rgba(8,10,15,.22)),linear-gradient(0deg,var(--bg),transparent 38%,rgba(8,10,15,.18))}.tlogo{padding:16px 12px}.tlogo .ver,.tlogo .lore{color:#e6dccb;text-shadow:0 1px 4px #000}.tlogo .tlh{color:#e8c579;text-shadow:0 2px 6px #000,0 0 22px rgba(0,0,0,.65)}.title-scr .tcur{background:rgba(13,11,10,.85);border-radius:8px;padding:10px}.title-scr .tgoal button{background-color:var(--panel2)}
 @media(max-width:719px){.title-art img{object-position:48% 50%}.title-art:after{background:radial-gradient(ellipse 76% 58% at 50% 38%,rgba(8,10,15,.82),rgba(8,10,15,.4)),linear-gradient(0deg,var(--bg),transparent 50%)} }
 @media(prefers-contrast:more){.title-art:after{background:rgba(0,0,0,.9)}}
+/* 0.8.0 M8 KWCAG: 타이틀 그림 위 글자 대비 4.5:1 이상(390 · 1280 화소 측정에서 소개 글 4.1, 세이브 안내 4.3이었다) */
+.tlogo .lore{color:#f2ebe0}.title-scr .mini{color:#d0c4b0}
 /* 타이틀을 스크롤할 때 상단 메뉴가 제목을 덮지 않게 합니다. */
 .app:has(.title-scr)>.hdr{position:relative;top:auto}
 /* 손으로 그린 제목과 느린 촛불 밝기 변화 */
@@ -146,3 +148,47 @@ body:has(.sheet-bg) .toast{top:calc(env(safe-area-inset-top,0px) + 6px)}
 .cacts{display:flex;gap:4px;align-items:center}.cline .cbrew{min-height:44px;white-space:nowrap}.cbrewl{color:var(--good)}
 .cstat{font-size:13px;color:var(--good);white-space:nowrap}.cstat.warn{color:var(--muted)}
 .bagline.consrow{grid-template-columns:1fr}.bagline.consrow>.row{justify-content:flex-end;flex-wrap:wrap}
+/* 0.8.0 M6-1 장비 틀: 접사 줄(꼬리표 아이콘 하나) · 영웅 축 줄 · 고유 규칙 · 대가 */
+.idet.g8 .l{font-size:calc(13px*var(--fs,1));margin:2px 0;line-height:1.45}.idet.g8 .l.af .afi{display:inline-block;width:1.3em;text-align:center;opacity:.85}.idet.g8 .l.ax{color:var(--gold)}.idet.g8 .l.act{color:var(--ink)}.idet.g8 .l.cost{color:var(--bad,#d77)}.idet.g8 .l.mini{color:var(--muted);font-size:calc(12px*var(--fs,1))}
+/* 야영지 · 떠돌이 상인 창 · 전리품 창 (10월 24일 디자인 재점검): 기존 체계를 따른다 — 단추 44px(button.sm 그대로), 글자는 px × --fs, 한국어는 keep-all, 방 card 안에 상자를 겹치지 않는다, 금색은 주 행동 하나 */
+.camp-note,.camp-sec p,.cs-row p,.cdet p,.ctile{word-break:keep-all;overflow-wrap:break-word}
+.camp-note{margin:0 0 4px}
+.camp-sec{border-top:1px solid var(--line);margin-top:12px;padding-top:12px}
+.camp-sec h4{margin:0 0 4px}.camp-sec>.mini{margin:0 0 8px}
+.camp-gain{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0 12px}
+.camp-gain>div{min-width:0}.camp-gain dt{font-size:calc(13px*var(--fs,1));color:var(--muted)}.camp-gain dd{margin:2px 0 0;font-size:calc(16px*var(--fs,1));font-weight:700;font-variant-numeric:tabular-nums}.camp-gain dd small{font-weight:400;color:var(--muted);font-size:calc(13px*var(--fs,1))}
+.camp-done{margin:0;color:var(--good)}
+.camp-shop{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.camp-shop>div{flex:1 1 16rem;min-width:0}.camp-shop>button{flex:0 0 auto}
+.camp-bar{margin-top:12px}.camp-bar button{margin-left:auto}
+/* 상인 창 */
+.cs-head{margin:0 0 8px}
+.cs-warn{margin:0 0 8px;color:var(--bad)}
+.cs-list{display:flex;flex-direction:column}
+.cs-row{display:grid;grid-template-columns:2em minmax(0,1fr) auto;gap:4px 10px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+.cs-row:first-child{border-top:0}.cs-row.off .cs-txt>b{color:var(--muted)}
+.cs-ico{font-size:calc(20px*var(--fs,1));line-height:1.4;text-align:center}
+.cs-txt{min-width:0}.cs-txt p{margin:2px 0 0}.cs-why{color:var(--bad)}
+.cs-buy{display:flex;flex-direction:column;gap:6px;align-items:stretch}.cs-buy button{white-space:nowrap}
+/* 접사 다시 굴리기(상점 · 야영지 공통): 고르기 · 설명 · 접사 줄 사이 */
+.reroll .rrsel{margin:10px 0 12px;gap:6px}.rrsel>button{flex:0 0 auto}.rrsel>button.on{border-color:var(--gold);color:var(--gold)}
+.rrlist{display:flex;flex-direction:column;border-top:1px solid var(--line2);margin-top:12px}
+.mrow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 12px;padding:8px 0;border-top:1px solid var(--line)}
+.rrlist .mrow:first-child{border-top:0}.mrow-t{min-width:0;word-break:keep-all}.mrow-b{display:flex;gap:6px}.mrow-b button{white-space:nowrap}
+/* 전리품 창: 칸(정사각 비슷하게) + 설명 줄 */
+.ctiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(calc(84px*var(--fs,1)),1fr));gap:6px;margin:6px 0 12px}
+.ctile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:calc(88px*var(--fs,1));padding:6px 4px;border:1px solid var(--line2);border-radius:8px;background:var(--panel2);color:var(--ink);text-align:center;min-width:0;position:relative;font-size:calc(13px*var(--fs,1))}
+.ctile.e{border-style:dashed;background:none;color:var(--muted)}
+.ctile.new{border-color:var(--good)}
+.ctile.off{opacity:.6}
+.ctile.on{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.ctile.tgt{border-color:var(--gold);border-style:dashed}
+.ctile.swap{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+.ctile[draggable=true]{cursor:grab}
+.ct-i{font-size:calc(22px*var(--fs,1));line-height:1}
+.ct-n{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ct-c{color:var(--muted);font-variant-numeric:tabular-nums}
+.ct-t{font-size:calc(12px*var(--fs,1));color:var(--gold);line-height:1.2}
+.ctile.off .ct-t{color:var(--bad)}.ctile.new .ct-t{color:var(--good)}
+.cdet{border-top:1px solid var(--line2);padding-top:10px;margin-bottom:8px}
+.cdet p{margin:0 0 4px}.cd-h b{font-size:calc(15px*var(--fs,1))}.cd-a{margin-top:8px}.cd-a>button{flex:0 0 auto}
+@media (max-width:520px){.cs-row{grid-template-columns:2em minmax(0,1fr)}.cs-buy{grid-column:2;flex-direction:row;flex-wrap:wrap}.camp-gain{grid-template-columns:1fr 1fr 1fr}}

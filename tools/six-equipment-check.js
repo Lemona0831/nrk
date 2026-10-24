@@ -1,4 +1,5 @@
 'use strict';process.env.DGDIR = process.env.DGDIR || '.';const assert=require('assert/strict'),D=require('./dgqa.js'),E=D.G0,V=D.run_;let n=0;
+V('GEAR8.on = false'); // M8(10월 23일): 옛 장비 흐름 점검 — 0.8.0 M6-2부터 시작 장비가 새 장비(gear8)라 비교 창이 g8Compare로 간다. 새 장비 비교는 tools/gear8-gen-check.js
 for(const build of V('Object.keys(TREE2)')) {
  const run={build,p:E.mkPlayer(build,{}),bag:[]};E.initGear(run);
  for(const [tpl,I] of Object.entries(E.ITEMS)) {
@@ -28,8 +29,7 @@ for(const tpl of ['twinblades','saintgrail']) {
 }
 for(const ids of [[],['h_double'],['h_double','h_triple'],['h_double','h_mark']]) {
  E.__hintRun={build:'hunter',skills:ids};const original=JSON.stringify(E.__hintRun),html=V('hunterLoadoutHint(__hintRun)');assert.equal(JSON.stringify(E.__hintRun),original);
- assert(html.includes('다른 갈래 스킬을 이어 쓰면 피해 +30%'));assert(!html.includes('<button'));assert(!html.includes('연계 불가'));assert(html.includes('data-info="elink"'));
- if(ids.includes('h_mark'))assert(html.includes('피해 +30%'));
+ assert(html.includes('다른 갈래 스킬을 이어 쓰면 그 스킬이 빠른 행동'));assert(!html.includes('<button'));assert(!html.includes('연계 불가'));assert(html.includes('data-info="elink"')); // M8: M5-4 사냥꾼 재설계로 연계 = 빠른 행동(전에는 피해 +30%)
 }
 assert.equal(V('hunterLoadoutHint({build:"warden",skills:[]})'),'');
 console.log('사냥꾼 단일/복수 갈래 안내·비용 증감 방향·플라스크 즉시 손실·원본 불변 통과');

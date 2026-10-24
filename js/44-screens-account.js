@@ -28,6 +28,7 @@ function vTitle() {
   else h += `<button class="gold" data-a="newchar" data-focus>시작</button>`;
   h += `<p class="mini">세이브 ${saveCount()}/${SAVE_MAX} · ${G.acct && !G.acct.anon ? esc(G.saveSync || '계정 세이브 연결 중…') : '이 브라우저에 보관됩니다. 구글 로그인으로 계정에 저장하세요.'}</p>${G.acct && !G.acct.anon ? '<button class="sm" data-a="cloudrefresh">계정 세이브 새로 불러오기</button>' : ''}<div class="row tgoal"><button data-a="goals">📋 계정 목표</button>${markOpen() ? '<button data-a="mark">🎖️ 표식 도전</button>' : ''}</div>`;
   h += vLocalSaveError();
+  if (G.resetNote && !c && !(d.runs || []).length) h += '<p class="mini" role="status">0.8.0부터 새로 시작합니다. 0.7.0 캐릭터와 세이브는 이어지지 않습니다(랭킹과 판 기록은 따로 남아 있습니다).</p>'; // M8 전체 초기화 안내 한 줄
   if (d.tutSeen || c) h += `<button class="tutbtn" data-a="tut">🎯 수련장${d.tutDone ? ' <small>수료</small>' : ''}</button>`;
   const kept = (d.kept || []).filter(k => !runOver(k) && BUILDS[k.build]);
   if (kept.length) h += `<div class="tkept"><p class="mini">보관 중인 캐릭터 ${kept.length}</p>${kept.map(k => { const B = BUILDS[k.build]; return `<div class="tcur sm"><span class="big" aria-hidden="true">${B.ico}</span><div><b>${esc(k.cname || B.n)}</b><small>${esc(B.n)} · ${k.mode === 'hard' ? '가혹' : '일반'} · Lv ${k.lv || 1} · ${esc(curDesc(k))}</small></div><button class="sm" data-a="resumekept" data-k="${esc(k.id)}">이어하기</button><button class="sm" data-a="saveabandon" data-k="${esc(k.id)}">포기</button></div>`; }).join('')}</div>`;
@@ -45,15 +46,15 @@ function vTitle() {
 const CNAMES = ['아르덴', '베일', '카엘', '로웬', '세린', '이렌', '모르간', '하엘', '테오', '엘다', '미르', '오웬', '리안', '세라', '단테', '노아', '에반', '루카', '시엘', '하린', '바엘', '유리엘', '케인', '마렌'];
 function vCreate() {
   const C = G.cre || { step: 'name' }; const S = G.sheet && G.sheet.data.first ? G.sheet : null;
-  const step = S ? S.kind : C.step; const si = { name: 0, cls: 1, skills: 2, stats: 3 }[step] || 0;
-  let h = `<ol class="stepper" aria-label="캐릭터 만들기">${['이름', '직업', '스킬', '능력치'].map((x, i) => `<li class="${i < si ? 'done' : i === si ? 'now' : ''}"${i === si ? ' aria-current="step"' : ''}><span>${i + 1}</span>${x}</li>`).join('')}</ol>`;
+  const step = S ? (S.kind === 'alloc' && G.run && G.run.alloc ? (G.run.alloc.step === 'a' ? 'act' : 'pas') : S.kind) : C.step; const si = { name: 0, cls: 1, pas: 2, act: 3 }[step] || 0; // 10월 16일 0.8.0 2단계: 이름 → 직업 → 패시브(큰 각인) → 액티브
+  let h = `<ol class="stepper" aria-label="캐릭터 만들기">${['이름', '직업', '패시브', '액티브'].map((x, i) => `<li class="${i < si ? 'done' : i === si ? 'now' : ''}"${i === si ? ' aria-current="step"' : ''}><span>${i + 1}</span>${x}</li>`).join('')}</ol>`;
   if (S) { const [t, body] = sheetParts(S); return h + `<section class="card cstep"><h3>${esc(t)}</h3>${body}</section>`; }
   if (step === 'name') {
     return h + `<section class="card cstep"><h3>이름을 정하세요</h3><p class="lore">수도원 아래로 내려갈 사람의 이름. 쓰러지면 이 이름은 돌아오지 않는다.</p><label for="cname">캐릭터 이름 (12자까지)</label><div class="row nowrap"><input id="cname" type="text" maxlength="12" autocomplete="off" value="${esc(C.name || '')}" placeholder="이름을 적거나 주사위를 누르세요"><button data-a="cnroll" aria-label="이름 추천 받기" title="이름 추천">🎲</button></div><p class="mini">랭킹에는 이 이름과 함께 플레이어 이름${G.data.name ? ' "' + esc(G.data.name) + '"' : '(랭킹 화면에서 정함)'}이 보입니다.</p>${G.abandonOnCreate ? '<p class="warn">기존 캐릭터는 보관됩니다. 타이틀에서 골라 이어할 수 있습니다.</p>' : ''}<div class="row"><button class="gold" data-a="cnok">다음: 직업 고르기</button><button data-a="createcancel">그만두기</button></div></section>`;
   }
   const pk = C.pick && BUILDS[C.pick] ? C.pick : null;
   h += `<section class="card cstep"><h3>직업을 고르세요${q('build', '직업과 빌드')}</h3><p class="mini"><b>${esc(C.name)}</b>의 직업입니다. 직업을 누르면 규칙과 스킬이 아래에 보입니다.</p><div class="clsgrid" role="group" aria-label="직업">`;
-  const clsBtn = k => { const B = BUILDS[k]; return `<button class="clsc${pk === k ? ' on' : ''}" data-a="clspick" data-k="${k}" aria-pressed="${pk === k}" style="--c:${CLS_COLOR[k] || 'var(--gold)'}"><span class="big" aria-hidden="true">${B.ico}</span><b>${esc(B.n)}</b><small>생명력 ${B.hp + SLOT_BASE.armor.v[0]}${B.v2 ? ' · 쿨타임 스킬' : ' · 마나 ' + B.mp}</small></button>`; };
+  const clsBtn = k => { const B = BUILDS[k]; return `<button class="clsc${pk === k ? ' on' : ''}" data-a="clspick" data-k="${k}" aria-pressed="${pk === k}" style="--c:${CLS_COLOR[k] || 'var(--gold)'}"><span class="big" aria-hidden="true">${B.ico}</span><b>${esc(B.n)}</b><small>생명력 ${B.hp + SLOT_BASE.armor.v[0]}${B.v2 ? ' · 유산 스킬' : ' · 마나 ' + B.mp}</small></button>`; };
   /* 10월 10일 결정 66: 3열 × 2행(공개 직업 여섯). 숨겨진 직업은 열린 뒤에만 열 아래(세 번째 행)에 생긴다. 잠긴 칸은 그리지 않는다 */
   const openKeys = CLASS_KEYS(), placed = {};
   for (const col of CLASS_GRID) for (const k of col) placed[k] = 1;
@@ -61,6 +62,7 @@ function vCreate() {
   const rest = openKeys.filter(k => !placed[k]);
   for (const c of (typeof CLASS_SOON !== 'undefined' ? CLASS_SOON : []).filter(c => !openKeys.some(k => BUILDS[k].n === c.n))) h += `<button class="clsc" aria-disabled="true" data-info="soon:${esc(c.n)}"><span class="big" aria-hidden="true">${c.ico}</span><b>${esc(c.n)}</b><small>준비 중</small></button>`;
   if (rest.length) h += `<div class="clscol">${rest.map(clsBtn).join('')}</div>`;
+  if (typeof HIDDEN_LOCK !== 'undefined' && HIDDEN_LOCK && typeof UNLOCK !== 'undefined' && Object.keys(UNLOCK).some(k => unlOpen(k))) h += `<div class="clscol"><button class="clsc" aria-disabled="true"><span class="big" aria-hidden="true">🚪</span><b>숨겨진 직업</b><small>준비 중 · 다음 판에서 새로 엽니다</small></button></div>`; // 0.8.0: 옛 숨은 셋 잠금(이름은 보이지 않는다)
   h += `</div>`;
   if (pk) {
     const B = BUILDS[pk];
@@ -78,12 +80,12 @@ const markOpen = () => !!(G.data && (G.data.markOpen || G.data.unlAll));
 function goalsData() { const d = G.data; if (!d.goals) d.goals = { n: {}, h: {} }; if (!d.goals.n) d.goals.n = {}; if (!d.goals.h) d.goals.h = {}; return d.goals; }
 function markBestData() { const d = G.data; if (!d.markBest) d.markBest = {}; return d.markBest; }
 const goalKey = (build, br, ch) => build + '|' + br + '|' + ch;
-const statStartPts = run => STAT_START + (run && run.markStat ? run.markStat : 0);
 function goalBranch(run) {
-  const T = TREE2[run.build], t = run.tree; if (!T || !t || !t.open.length) return null;
-  const cnt = {}; for (const id of t.open) { const sk = SK2[id]; if (sk && sk.b) cnt[sk.b] = (cnt[sk.b] || 0) + 1; }
+  const T = TREE2[run.build], open = run.atree ? run.atree.own : run.tree ? run.tree.open : []; if (!T || !open.length) return null; // 10월 16일 0.8.0 2단계: 액티브 트리의 연 노드(강화 포함)를 갈래별로 센다
+  const A = run.atree ? atBuild(run.build) : null; const brOf = id => A ? (A.nodes[id] || {}).br : (SK2[id] || {}).b;
+  const cnt = {}; for (const id of open) { const b0 = brOf(id); if (b0) cnt[b0] = (cnt[b0] || 0) + 1; }
   const by = list => list.slice().sort((x, y) => (cnt[y] || 0) - (cnt[x] || 0))[0];
-  let main, base = t.open.length;
+  let main, base = open.length;
   if (run.build === 'hunter') { // 사냥꾼: 기동은 피해 갈래와 함께 여는 갈래라, 기동을 뺀 피해 갈래를 주로 센다
     const dm = T.branches.filter(b => b !== '기동'); const tot = dm.reduce((a, b) => a + (cnt[b] || 0), 0);
     if ((cnt['기동'] || 0) > tot) main = '기동'; else { main = by(dm); base = tot; }
@@ -91,7 +93,7 @@ function goalBranch(run) {
   return main && base > 0 && (cnt[main] || 0) * 2 >= base ? main : null;
 }
 function goalsRecord(run) { // 보스를 이겼을 때(표식 도전 판은 제외). 새로 적힌 칸의 이름을 돌려준다
-  if (!run || run.markCh || !run.tree) return '';
+  if (!run || run.markCh || !(run.atree || run.tree)) return '';
   const br = goalBranch(run), g = goalsData(), m = run.mode === 'hard' ? 'h' : 'n', ch = run.ch || 1; let news = '';
   if (br) { const k = goalKey(run.build, br, ch); if (!g[m][k]) { g[m][k] = Date.now(); news = BUILDS[run.build].n + ' ' + br + ' ' + ch + '챕터' + (m === 'h' ? ' 가혹' : ''); } }
   if (ch >= 3) G.data.markOpen = 1;
@@ -121,18 +123,23 @@ function markSetup(run, M) {
   if (markOn(run, 'flask')) run.p.markFlask = 1;
   if (ch > 1) {
     const lv = MARK_START[ch].lv, up = lv - 1;
-    run.lv = lv; run.xp = LV_XP[lv - 1]; run.p.lv = lv; if (run.tree) run.tree.pts += up; run.markStat = LV_POINTS * up;
+    run.lv = lv; run.xp = LV_XP[lv - 1]; run.p.lv = lv; void up;
     run.ch = ch; run.boss = chData(ch).boss;
+    if (run.ptree) { ptFix(run); for (let c = 1; c < ch; c++) ksGrant(run, 'b' + c); treeSync(run); } // 10월 16일 0.8.0 2단계: 시작 레벨의 포인트와 시작 챕터 앞 큰 각인(markCh − 1)
   }
   delete run.dg; dgInit(run); // 표식이 정해진 뒤에 첫 문을 만든다
   if (ch > 1) markKit(run, ch);
   else { for (const fk of ['life', 'mana', 'stam']) run.p.flask[fk] = Math.min(run.p.flask[fk], flaskCap(run.p, fk)); }
 }
-/* 챕터 시작 꾸러미: 앞 챕터 풀의 장비. 무기 · 갑옷은 고급, 나머지는 평범(직업에 맞는 첫 장비, 수치는 등급의 가운데), 약초 묶음 셋 */
+/* 챕터 시작 꾸러미 (0.8.0 6단계 C, MARK_KIT): 앞 챕터 풀의 장비, 수치는 등급의 가운데. 무기 · 갑옷은 직업에 맞는 셋 가운데 하나를 상점에 들어설 때 고른다(kitpick).
+   나머지 칸은 직업에 맞는 첫 장비. 골드 · 약초 묶음은 MARK_KIT. 시작 자리는 앞 챕터 정산 뒤 상점(run.markShop) */
+const kitCands = (run, ch, sl, g) => { const p = run.p; const kind = sl === 'ring1' || sl === 'ring2' ? 'ring' : sl; const owned = Object.values(run.inv).map(x => x.tpl); const pool = poolOf(ch - 1).filter(k => ITEMS[k] && ITEMS[k].kind !== 'start' && tplKind(k) === kind && poolOk(p, k) && !owned.includes(k)); const fit = pool.filter(k => itemFits(p, k) && (ITEMS[k].g || 'n') === g), any = pool.filter(k => (ITEMS[k].g || 'n') === g); return fit.length ? fit : any.length ? any : pool; };
 function markKit(run, ch) {
-  const p = run.p;
-  for (const sl of ['weapon', 'armor', 'gloves', 'amulet', 'ring1', 'ring2']) {
-    const kind = sl === 'ring1' || sl === 'ring2' ? 'ring' : sl; const g = sl === 'weapon' || sl === 'armor' ? 'm' : 'n';
+  const p = run.p; const K = MARK_KIT[ch] || MARK_KIT[2];
+  run.kitPick = { ch, opts: {} }; if (GEAR8.on) { for (const sl of ['weapon', 'armor']) { const its = {}; for (let k = 0; k < 3; k++) { const it = g8Gen(run, { slot: sl, g: K[sl], ch: ch - 1, own: true, noUq: true }); its[it.uid] = it; } run.kitPick.opts[sl] = { g: K[sl], tpl: Object.keys(its), its }; }
+    for (const sl of ['gloves', 'amulet', 'ring1', 'ring2']) { const it = g8Gen(run, { slot: sl.startsWith('ring') ? 'ring' : sl, g: K.rest[sl] || 'n', ch: ch - 1, noUq: true }); run.inv[it.uid] = it; run.bag.push(it.uid); equipUid(run, it.uid, sl); } } /* 0.8.0 M6-2: 새 장비 꾸러미 */ else for (const sl of ['weapon', 'armor']) { const L = kitCands(run, ch, sl, K[sl]).slice(); const o = []; while (o.length < 3 && L.length) o.push(L.splice(Math.floor(Math.random() * L.length), 1)[0]); run.kitPick.opts[sl] = { g: K[sl], tpl: o }; }
+  if (!GEAR8.on) for (const sl of ['gloves', 'amulet', 'ring1', 'ring2']) {
+    const kind = sl === 'ring1' || sl === 'ring2' ? 'ring' : sl; const g = K.rest[sl] || 'n';
     const owned = Object.values(run.inv).map(x => x.tpl);
     const pool = poolOf(ch - 1).filter(k => ITEMS[k] && ITEMS[k].kind !== 'start' && tplKind(k) === kind && poolOk(p, k) && !owned.includes(k));
     const fit = pool.filter(k => itemFits(p, k) && (ITEMS[k].g || 'n') === g), any = pool.filter(k => (ITEMS[k].g || 'n') === g);
@@ -141,9 +148,18 @@ function markKit(run, ch) {
     const it = mkItem(L[0], { g: ig, ch: ch - 1, b: Math.round((R.lo + R.hi) / 2 * 10) / 10 }); run.inv[it.uid] = it; run.bag.push(it.uid); equipUid(run, it.uid, sl);
   }
   for (const u of run.bag.slice()) discardUid(run, u); // 바꾸고 남은 시작 장비
-  consAdd(run, 'herb', 'n', 3);
+  consAdd(run, 'herb', 'n', K.herb); run.gold = K.gold; run.markShop = 1;
   applyGear(run); p.hp = p.hpMax; p.st = p.stMax; for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = flaskCap(p, fk);
 }
+/* 꾸러미 무기 · 갑옷 고르기: 고른 것을 끼우고 시작 장비는 버린다. 둘 다 고르면 창을 닫는다 */
+function kitPick(sl, tpl) {
+  const run = G.run, K = run && run.kitPick; if (!K || !K.opts[sl] || !K.opts[sl].tpl.includes(tpl)) return;
+  const g = K.opts[sl].g, R = GRADE[g] || GRADE.n; const old = run.eqU[sl]; const it = K.opts[sl].its ? K.opts[sl].its[tpl] : mkItem(tpl, { g, ch: K.ch - 1, b: Math.round((R.lo + R.hi) / 2 * 10) / 10 }); run.inv[it.uid] = it; run.bag.push(it.uid); equipUid(run, it.uid, sl);
+  if (old && run.inv[old] && (isG8(run.inv[old]) ? run.inv[old].start : ITEMS[run.inv[old].tpl].kind === 'start')) discardUid(run, old); delete K.opts[sl];
+  if (!Object.keys(K.opts).length) { run.kitPick = null; G.sheet = null; } applyGear(run); run.p.hp = run.p.hpMax; saveRunLocal(); saveCur(); render();
+}
+/* 꾸러미로 시작하는 판(표식 도전 2 · 3챕터): 배분을 마치면 앞 챕터 정산 뒤 상점에 선다. 상점 물건은 앞 챕터 것 */
+function markShopOpen(run) { const c0 = run.ch; run.ch = c0 - 1; genShop(run); run.ch = c0; run.phase = 'shop'; G.scr = 'shop'; if (run.kitPick) openSheet('kitpick', {}); saveRunLocal(); saveCur(); render(); }
 function markWin(run) { // 표식 도전의 보스를 이겼을 때: 최고 점수를 남긴다
   const k = run.build + '|' + run.markCh + '|' + (run.mode === 'hard' ? 'h' : 'n'), mb = markBestData(), sc = run.markPts || 0;
   run.markScore = sc; if (!mb[k] || sc > (mb[k].score || 0)) mb[k] = { score: sc, ids: (run.marks || []).slice(), lv: run.lv || 1, cname: run.cname || '', at: Date.now() };
@@ -167,26 +183,41 @@ function playTick() { const run = G.run; if (!run || runOver(run) || G.creating)
 function rankEntry(run, st) {
   const e = { id: run.id, v: VERSION, cname: run.cname || '', build: run.build, ch: run.ch || 1, floor: Math.min(run.room || 1, FLOOR_BOSS), clears: run.clears || 0, mode: run.mode || 'normal', lv: run.lv || 1, st: st || (run.clears ? 'clear' : 'alive'), ms: Math.round(run.playMs || 0), at: Date.now(), eq: run.eqU ? EQ_SLOTS.map(sl => { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; return it ? it.tpl : null; }).filter(Boolean) : [] };
   if (G.data && G.data.title && titleEarned(G.data.title)) e.title = G.data.title; // 칭호(계정 목표)
+  if (run.mkLeg) e.leg = 1; // 10월 24일 S-5: 판 지문이 생기기 전 저장본에서 이어 온 판(js/62 mkCheck) — 받아 주되 표시만
+  e.sum = rankSum(run, e); // S-4(10월 24일): 판 요약
   return e;
 }
+/* S-4 랭킹 위조 막기(10월 24일): 줄마다 판 요약(sum)을 함께 보낸다 — 판 번호 · 시작 시각 · 지금 층 · 전투 수 · 플레이 시간 · 배포 지문 · 점수.
+   서버(nrk-private/서버/S-4-랭킹위조-2026-10-24.sql)가 값 범위 · 판 번호마다 한 줄 · 점수와 요약 · 최소 시간을 맞춰 본다.
+   요약은 문서(data) 안의 칸이라 표에 열이 늘지 않는다 — 서버를 아직 안 바꿨어도 저장은 그대로 되고, 서버가 거절해도 pushRank는 조용히 넘기고 이 브라우저의 rank80은 남긴다 */
+const rankFights = run => (run.rooms || []).filter(x => x && x.res && x.hpOut != null).length; // 전투 기록(afterBattle)만 센다 — 보스 승리 줄 · 이벤트 · 야영지 줄은 뺀다
+const rankRev = () => typeof releaseRev === 'function' ? releaseRev() : ''; // 배포 지문: index.html nrk-release 앞 12자(66-dungeon-flow.js). 파일로 열면 ''
+function rankSum(run, e) { return { rid: run.id, t0: run.startedAt || 0, floor: run.room || 0, fights: rankFights(run), ms: e.ms, rev: rankRev(), sc: rankScore(e) }; }
+/* 랭킹에 세우기 전 거르기: 있을 수 없는 값(범위 밖 · 요약과 어긋남)인 줄은 보이지 않는다. 요약이 없는 옛 줄(S-4 전)은 범위만 본다. 순위 식은 그대로 */
+const rankOk = e => { const n = (x, a, b) => Number.isInteger(x) && x >= a && x <= b, ch = e.ch || 1, cl = e.clears || 0, s = e.sum; if (!n(ch, 1, Object.keys(CHAPTERS).length) || !n(cl, Math.max(0, ch - 1), ch) || !n(e.floor || 1, 1, FLOOR_BOSS) || !n(e.lv || 1, 1, LV_XP.length) || !n(e.ms || 0, 0, 2592e6)) return false; return !s || (s.rid === e.id && s.ms === e.ms && s.sc === rankScore(e) && (s.fights || 0) >= cl); };
 async function pushRank(run, st) {
-  if (!run || !run.id || run.markCh) return; const e = rankEntry(run, st); /* 표식 도전 판은 랭킹에 올리지 않는다(표식 기록판에 따로) */
-  G.data.rank62 = Object.assign({}, G.data.rank62, { [run.id]: e }); saveLocal();
+  if (!run || !run.id || !run.startedAt || run.markCh || run.noRank) return; const e = rankEntry(run, st); /* 표식 도전 판은 랭킹에 올리지 않는다(표식 기록판에 따로). 10월 24일 S-5: 손으로 고친 저장본에서 이어 온 판(noRank, js/62 mkCheck)도 보내지 않는다 */
+  G.data.rank80 = Object.assign({}, G.data.rank80, { [run.id]: e }); saveLocal(); // M8: 시즌 키(rank80)
   if (!G.db || !G.uid || G.conn !== 'ok') return;
   try {
-    const ref = G.db.doc('board/' + G.uid); const cur = await ref.get();
-    const d = cur.exists ? JSON.parse(JSON.stringify(cur.data() || {})) : {}; const R = d.rank62 = d.rank62 || {}; R[run.id] = e;
+    const ref = G.db.doc(BOARD + '/' + G.uid); const cur = await ref.get();
+    const d = cur.exists ? JSON.parse(JSON.stringify(cur.data() || {})) : {}; const R = d.rank80 = d.rank80 || {}; R[run.id] = e;
     Object.keys(R).sort((a, b) => rankCmp(R[a], R[b])).slice(40).forEach(id => delete R[id]); // 한 사람당 40개까지
-    d.name = G.data.name || d.name || ''; await ref.set(d); G.board = null; if (G.scr === 'rank') render();
+    d.name = G.data.name || d.name || ''; boardLogin(d); await ref.set(d); G.board = null; if (G.scr === 'rank') render();
   } catch (e2) { }
 }
+/* 10월 24일 만든 사람 결정: 랭킹의 손님 표시. board80 문서에 login(구글 등 공급자, 손님이면 '')을 함께 적는다(playtest 문서의 testerMeta와 같은 뜻).
+   login 칸이 없는 옛 문서는 알 수 없어 표시하지 않는다. 손님이 구글을 이으면(같은 uid) 다음 랭킹 · 이름 저장 때 바뀐다 */
+function boardLogin(d) { if (G.acct) d.login = G.acct.anon ? '' : G.acct.provider || 'account'; return d; }
+const rankGuest = e => e.login === '';
+const rankGuestTag = e => rankGuest(e) ? ' <span class="rctag">손님</span>' : '';
 /* 랭킹의 직업 표시: 아직 열지 않은 숨겨진 직업은 이름 · 아이콘을 숨긴다(내 줄은 그대로). 필터는 e.build를 그대로 쓴다 */
 function rankClassView(e) { const B = BUILDS[e.build]; return e.me || unlOpen(e.build) ? B : { ico: '❔', n: '숨겨진 직업' }; }
 function rankRows() {
   const out = [];
-  if (G.db && G.board) { for (const x of G.board) for (const e of Object.values(x.rank62 || {})) out.push(Object.assign({ nick: x.name || '', me: x.uid === G.uid }, e)); }
-  else for (const e of Object.values(G.data.rank62 || {})) out.push(Object.assign({ nick: G.data.name || '', me: true }, e));
-  return out.filter(e => BUILDS[e.build]).sort(rankCmp);
+  if (G.db && G.board) { for (const x of G.board) for (const e of Object.values(x.rank80 || {})) out.push(Object.assign({ nick: x.name || '', me: x.uid === G.uid }, e, { login: x.login })); }
+  else for (const e of Object.values(G.data.rank80 || {})) out.push(Object.assign({ nick: G.data.name || '', me: true }, e, { login: boardLogin({}).login }));
+  return out.filter(e => BUILDS[e.build] && rankOk(e)).sort(rankCmp);
 }
 function backBtn() { return `<button class="sm back" data-a="back">← 돌아가기</button>`; }
 
@@ -243,31 +274,31 @@ function classRuleHtml(build) {
   const rows = {
     assassin: [['중독', '적에게 독을 쌓은 뒤, 격발 스킬로 쌓인 독을 터뜨립니다.'], ['흘리기', '선택한 적의 공격 피해 −70% · 스태미나 25.']],
     warden: [['방어', `방어하면 보호막 +${WARD.guard}.`], ['보호막', `상한: 최대 생명력의 ${pct(WARD.cap)}%. 후열 공격은 피해의 절반만 흡수합니다.`]],
-    hunter: [['원거리', '후열 공격 가능 · 기본 공격은 무기 피해의 55%.'], ['가속', '전투 시작 시 1. 라운드 맨 앞에서 2회 연속 행동.'], ['추적과 연계', '같은 적을 연속으로 맞히면 추적이 쌓여 피해가 늘어납니다. 다른 갈래 스킬을 이어 쓰면 피해 +30%.']],
-    elementalist: [['원거리', '기본 공격 50% · 집중 주문 75%. 후열에 닿고 방패병을 통과합니다.'], ['열충격', '같은 적에게 화상과 둔화가 함께 있으면, 내 행동이 끝날 때 두 상태를 모두 소모해 열충격을 일으킵니다.'], ['둔화로 피해 감소', `둔화된 적에게 받는 일반 공격 피해가 ${pct(ELEM.guard)}% 줄어듭니다. 강한 공격은 그대로 받습니다.`]],
+    hunter: [['원거리', `후열 공격 가능 · 기본 공격은 무기 피해의 ${pct(B.wpnMul)}%.`], ['가속', `전투 시작 시 ${B.openHaste}. 라운드 맨 앞에서 2회 연속 행동.`], ['추적과 연계', '같은 적을 연속으로 맞히면 추적이 쌓여 피해가 늘어납니다. 다른 갈래 스킬을 이어 쓰면 연계: 그 스킬이 빠른 행동이 되어 차례가 이어집니다.']], // M8: M5-4(활 65%, 연계 = 빠른 행동)에 맞춤
+    elementalist: [['원거리', `기본 공격 ${pct(B.wpnMul)}% · 집중 주문 ${pct(B.wpnMul * HEAVY_V2)}%. 후열에 닿고 방패병을 통과합니다.`], ['열충격', '같은 적에게 화상과 둔화가 함께 있으면, 내 행동이 끝날 때 두 상태를 모두 소모해 열충격을 일으킵니다.'], ['둔화로 피해 감소', `둔화된 적에게 받는 공격 피해가 ${pct(ELEM.guard)}% 줄어듭니다(강한 공격도).`], ['빙결', `둔화가 가득 차면 그 적은 다음 행동을 놓칩니다(강적 · 보스는 붕괴 +${EL5_BOUND.frzBrk}). 빙결 · 영겁의 정적으로 행동을 놓친 적은 그다음 라운드가 끝날 때까지 다시 얼거나 멈추지 않고 둔화만 남습니다.`] /* 10월 24일 S-5 전투 규칙(js/10 elFrzLk)에 맞춤 */, ['마력탄', '지금 원소(🔥 불 · ❄ 얼음)를 겁니다. 원소 전환으로 바꿉니다.']],
     spellblade: [['교대', `베기 ⚔ ↔ 주문 ✦: 보호막 +${B.altWard}. 생성 보정 없이 고정 지급 · 내 차례당 1회.`], ['보호막', `상한: 최대 생명력의 ${pct(B.wardCap)}%. 방어·흘리기·플라스크는 교대를 끊지 않습니다.`], ['칼에 싣기', '주문으로 칼에 실은 출혈·화상은 다음 베기로 적을 맞히면 적용됩니다. 주문은 후열의 적도 공격합니다.']],
     monk: [['되받기', '방어하거나 자세를 잡은 동안, 전열 적에게 직접 공격을 받으면 반격합니다.'], ['기', `반격마다 기 +${MONK.kiCtr}. ▶ 공격은 기 1을 써서 피해 +25%. ⚡ 공격은 소모하지 않습니다.`]],
     butcher: [['흡혈', '출혈 상태의 적을 근접 공격하면 생명력을 회복합니다. 출혈을 처음 거는 타격에도 적용됩니다.'], ['피 수확', `출혈된 적 처치·출혈 처치 시 최대 생명력 ${pct(BUTCH.harvest)}% 회복. 전투당 ${pct(BUTCH.harvestFight)}%까지.`], ['갈증', '생명력이 낮을수록 직접 공격 피해가 늘어납니다. 먹기 스킬은 적의 출혈을 소모해 생명력을 회복합니다.']],
     confessor: [['짐', '내 출혈·화상·약화·취약·둔화 겹수의 합입니다. 최대 5까지 계산.'], ['정화', `적이 나에게 건 해로운 상태를 지우면 보호를 얻습니다. 방어하면 해로운 상태 ${CONF.guard}겹을 지웁니다.`], ['고행', '내 스킬이 나에게 거는 해로운 상태입니다. 일부 스킬은 이 상태를 소모하거나, 남아 있는 짐에 비례해 피해를 더합니다. 지워도 보호를 얻지 못하며 적에게 옮길 수 없습니다.']],
-    bloodmage: [['원거리', '후열 공격 가능 · 기본 공격은 무기 피해의 80%.'], ['피로 당기기', '생명력을 소모해 쿨타임이 남은 스킬을 바로 사용합니다. 내 차례당 1회.'], ['먹기', '적의 중독을 소모해 생명력을 회복합니다. 한 번에 최대 생명력의 25%까지.']]
+    bloodmage: [['원거리', '후열 공격 가능 · 기본 공격은 무기 피해의 80%.'], ['피로 당기기', '생명력을 소모해 유산이 모자란 스킬을 바로 사용합니다. 내 차례당 1회.'], ['먹기', '적의 중독을 소모해 생명력을 회복합니다. 한 번에 최대 생명력의 25%까지.']]
   }[build] || [];
   const math = {
     hunter: [`추적 보너스 = 공격 전 추적 × ${pct(HUNT.focusPer)}% (정예·강적·보스: × ${pct(HUNT.focusBig)}%)`, `추적 상한 ${HUNT.focusMax}겹 · 3겹: 몸 낮추기·버티기 관통`],
     elementalist: [`원소 합계 = 화상 겹수 + (둔화 겹수 × ${ELEM.Cw}) [상한 ${ELEM.cap}]`, `열충격 기본 피해 = 원소 합계 × ${ELEM.D}`, `열충격 붕괴 = 둔화 겹수 × ${ELEM.Bk}`],
-    monk: [`반격 기본 피해 = 무기 피해 × ${pct(MONK.ctr)}% + 자세 보너스`, `반격 상한: 내 차례당 ${MONK.ctrMax}회`],
+    monk: [`반격 기본 피해 = 무기 피해 × ${pct(MONK.ctr)}% + 자세 보너스`, `반격 상한: 내 차례당 ${MONK.ctrMax}회(금강 자세 3회, 역천권 제한 없음)`],
     butcher: [`흡혈률 = 출혈 × ${pct(BUTCH.leech)}% [상한 ${pct(BUTCH.leechMax)}%]`, `흡혈 기본 회복 = 실제로 깎은 생명력 × 흡혈률`, `흡혈 상한: 내 차례당 최대 생명력의 ${pct(BUTCH.leechTurn)}%`, `갈증: 잃은 생명력 10%마다 피해 +${pct(BUTCH.thirst)}% [상한 +${pct(BUTCH.thirstMax)}%]`],
     confessor: [`보호 = 지운 상태 중 적이 나에게 건 겹수 ÷ ${CONF.per} [올림 · 상한 ${CONF.protMax}]`],
-    bloodmage: [`기본 비용 = 최대 생명력 × ${pct(BLOOD.per)}% × 남은 쿨타임`, '비용 감소를 적용한 뒤 최종 값을 올림']
+    bloodmage: [`기본 비용 = 최대 생명력 × ${pct(BLOOD.per)}% × 모자란 유산`, '비용 감소를 적용한 뒤 최종 값을 올림']
   }[build] || [];
   const extras = {
     assassin: ['예고된 강한 공격은 흘리기의 피해 감소율을 낮춥니다.'],
-    hunter: ['가속은 라운드당 1회. 두 번째 차례에는 쿨타임이 줄지 않습니다. 방어·흘리기는 유지됩니다.', '추적은 단일 직접 공격으로만 쌓이며, 다른 적을 치면 1겹부터 시작합니다. 연계는 시작 스킬·기본 공격으로 만들거나 끊지 않습니다.'],
+    hunter: ['가속은 라운드당 1회. 두 번째 차례에는 유산이 차지 않습니다. 방어·흘리기는 유지됩니다.', '추적은 단일 직접 공격으로만 쌓이며, 다른 적을 치면 1겹부터 시작합니다. 연계는 시작 스킬·기본 공격으로 만들거나 끊지 않습니다.'],
     elementalist: ['공식은 기본값입니다. 지능·장비·스킬·광역 보정으로 최종 피해가 달라집니다. 열충격은 몸 낮추기를 통과하고 피해 감소는 절반만 적용됩니다.'],
     spellblade: ['베기가 빗나가거나 첫 타격에 적이 쓰러지면 칼에 실은 상태는 남습니다.'],
-    monk: ['광역·주문·지속 피해와 방어로 줄지 않는 공격은 반격하지 못합니다. 기본 자세는 후열 적을 반격하지 못합니다.'],
+    monk: ['광역·주문·상태 피해와 방어로 줄지 않는 공격은 반격하지 못합니다. 기본 자세는 후열 적을 반격하지 못합니다.'],
     butcher: ['회복은 최대 생명력까지 가능합니다. 회복 보정은 공식 뒤에 적용하고, 흡혈·먹기·피 수확의 상한은 보정 뒤 실제 회복량에 적용합니다. 피 수확은 적 하나당 한 번이며 소환물·구조물은 제외합니다.'],
     bloodmage: ['먹기·비용 감소·전투당 1회 스킬은 당길 수 없습니다. 비용을 낸 뒤 생명력 1 미만이면 사용할 수 없습니다.']
   }[build] || [];
   const mathHtml = math.length ? `<div class="rule-math" aria-label="${build === 'elementalist' ? '열충격 계산식' : '계산식'}">${math.map(t => `<p>${esc(t)}</p>`).join('')}</div>` : '';
-  return `<div class="class-rules" aria-label="직업 규칙"><b class="class-rules-title">직업 규칙</b>${rows.map(([title, text], i) => `<section class="class-rule"><h4>${esc(title)}</h4><p>${esc(text)}</p></section>${['elementalist', 'confessor'].includes(build) && i === 1 ? mathHtml : ''}`).join('')}${!['elementalist', 'confessor'].includes(build) ? mathHtml : ''}<details class="rule-details"><summary>자세한 조건과 예외</summary>${B.rule.split('. ').map(t => `<p>${esc(t)}</p>`).join('')}${extras.map(t => `<p>${esc(t)}</p>`).join('')}</details><p class="mini rule-cooldown">쿨타임은 내 차례마다 1 감소합니다. 사용한 차례는 제외합니다.</p></div>`;
+  return `<div class="class-rules" aria-label="직업 규칙"><b class="class-rules-title">직업 규칙</b>${rows.map(([title, text], i) => `<section class="class-rule"><h4>${esc(title)}</h4><p>${esc(text)}</p></section>${['elementalist', 'confessor'].includes(build) && i === 1 ? mathHtml : ''}`).join('')}${!['elementalist', 'confessor'].includes(build) ? mathHtml : ''}<details class="rule-details"><summary>자세한 조건과 예외</summary>${B.rule.split('. ').map(t => `<p>${esc(t)}</p>`).join('')}${extras.map(t => `<p>${esc(t)}</p>`).join('')}</details><p class="mini rule-cooldown">스킬은 유산을 씁니다. 유산은 내 차례가 시작될 때마다 1 차고, 대응에 성공하면 라운드에 한 번 1 더 찹니다.</p></div>`;
 }

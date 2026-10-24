@@ -1,87 +1,119 @@
 'use strict';
-/* ===== 0.6a.2 스킬 트리 화면 (10월 3일 만든 사람 요청) =====
-   원형 칸이 기본 → 중급 → 상급 → 궁극으로 아래로 가지처럼 뻗고, 부모와 선으로 잇는다. 칸에 마우스를 올리면 설명창, 누르면 아래 상세 칸.
-   보이는 범위는 treeVis(기본·부모가 열린 칸은 다 보이고, 궁극은 이름만, 나머지는 ?). 휴대폰은 갈래 탭, PC는 세 갈래를 나란히.
-   쓰는 곳: 캐릭터 만들기의 스킬 단계(mode 'create'), 따로 보는 페이지 'tree'(메뉴·지도). 전투 중에는 보기만 한다 */
-const TIERS2 = ['하급', '중급', '상급']; // 줄 1~6 하급 · 7~10 중급 · 11~13 상급(3챕터부터 열림, 10월 8일 암살자 시범). 궁극(5챕터)은 아직 칸이 없다
-/* 이 챕터에서 그리는 등급: 챕터가 된 등급과, 이미 연 칸이 있는 등급(예전 저장본). 열 수 없는 등급은 그리지 않고 아래 한 줄로만 알린다 */
-const treeTiersOf = (run, cells) => TIERS2.filter(tier => (run.ch || 1) >= (TREE_CH[tier] || 1) || cells.some(x => x.tier === tier && run.tree.open.includes(x.id)));
-const TREE_ROW_H = 82, TREE_TOP = 38;
-function treeLayout(build, br, tiers) {
-  const all = SKILLS2[build].filter(s => s.b === br && !s.start && (tiers || TIERS2).includes(s.tier)); const pos = {};
-  const nums = [...new Set(all.map(s => s.row || 1))].sort((a, b) => a - b);
-  const rows = nums.map(n => all.filter(s => (s.row || 1) === n));
-  rows.forEach((row, ri) => row.forEach((s, i) => { pos[s.id] = { x: row.length === 1 ? 50 : (i === 0 ? 30 : 70), y: ri }; }));
-  return { rows, pos };
-}
+/* ===== 0.8.0 두 트리 화면 (10월 16일 0.8.0 2단계: 목록형. 10월 17일 3단계: 방사형 그림은 js/73-tree-radial.js, 목록형은 "목록으로 보기"로 남긴다) =====
+   패시브: 방향 탭 6개, 고리 · 반지름 순서로 노드 줄. 액티브: 갈래 탭 3개, 스킬 · 강화 노드 줄과 장착 6칸(시작 2 + 4).
+   쓰는 곳: 트리 페이지('tree'), 캐릭터 만들기와 옛 세이브 옮기기의 배분 흐름(sheet 'alloc'), 큰 각인 고르기(sheet 'ks'). 전투 중에는 보기만 한다 */
 const treeCanEdit = () => !(G.b && !G.b.over) && !(G.run && !G.creating && runOver(G.run));
-function vTreeBranch(run, br) {
-  const ch = run.ch || 1; const T = TREE2[run.build] || {};
-  const all = SKILLS2[run.build].filter(x => x.b === br && !x.start);
-  const tiers = treeTiersOf(run, all); // 챕터가 안 된 등급은 그리지 않는다(예전 저장본에서 이미 연 칸은 그린다)
-  const { rows, pos } = treeLayout(run.build, br, tiers); const H = TREE_TOP * 2 + TREE_ROW_H * (rows.length - 1) + 14;
-  const yp = r => (TREE_TOP + r * TREE_ROW_H) / H * 100; let lines = '', nodes = '';
-  const rowOpen = ri => rows[ri].some(x => run.tree.open.includes(x.id));
-  rows.forEach((row, ri) => {
-    if (row.length === 2) lines += `<line vector-effect="non-scaling-stroke" class="rung${rowOpen(ri) ? ' lit' : ''}" x1="30" y1="${yp(ri)}" x2="70" y2="${yp(ri)}"/>`; // 한 줄: 두 칸 가운데 하나를 고른다
-    if (ri > 0) { const lit = rowOpen(ri - 1) ? ' class="lit"' : ''; const up = rows[ri - 1];
-      if (row.length === 2 && up.length === 2) lines += `<line vector-effect="non-scaling-stroke"${lit} x1="30" y1="${yp(ri - 1)}" x2="30" y2="${yp(ri)}"/><line vector-effect="non-scaling-stroke"${lit} x1="70" y1="${yp(ri - 1)}" x2="70" y2="${yp(ri)}"/>`;
-      else for (const a of up) for (const c of row) lines += `<line vector-effect="non-scaling-stroke"${lit} x1="${pos[a.id].x}" y1="${yp(ri - 1)}" x2="${pos[c.id].x}" y2="${yp(ri)}"/>`; }
-  });
-  for (const row of rows) for (const s of row) {
-    const p = pos[s.id]; const vis = treeVis(run, s.id); const open = run.tree.open.includes(s.id); const eq = (run.skills || []).includes(s.id); const can = !open && !treeWhy(run, s.id);
-    const cls = ['tnode', 't-' + vis, open ? 'open' : '', eq ? 'eq' : '', can ? 'can' : '', G.tsel === s.id ? 'sel' : '', s.tier === '궁극' ? 'ult' : '', row.length >= 4 ? 'r5' : ''].filter(Boolean).join(' ');
-    const glyph = vis === 'hidden' ? '?' : eq ? '✓' : open ? '●' : can ? '+' : s.tier === '궁극' ? '★' : '·';
-    nodes += `<button class="${cls}" style="left:${p.x}%;top:${TREE_TOP + p.y * TREE_ROW_H}px" data-a="tsel" data-k="${s.id}" data-info="tn:${s.id}" aria-label="${esc(vis === 'hidden' ? '아직 보이지 않는 칸' : s.n + ', ' + s.tier + (open ? ', 열림' : can ? ', 열 수 있음' : '') + (eq ? ', 장착' : ''))}"><span class="tc">${glyph}${vis !== 'hidden' && skHz(s) ? '<span class="thz" aria-hidden="true">🔄</span>' : ''}</span><small>${vis === 'hidden' ? '' : esc(s.n)}</small></button>`;
-  }
-  const hs = (T.haste || {})[br];
-  const shown = rows.flat(); const op = shown.filter(x => run.tree.open.includes(x.id)).length; const hid = shown.filter(x => treeVis(run, x.id) === 'hidden').length; const nAll = shown.length;
-  const head = `<div class="thead2">${hs ? `<p class="thaste"><b>갈래 규칙</b> ${esc(SK_HS[hs])} 이 갈래 스킬 대기 −1</p>` : ''}<p class="tcount">스킬 <b>${nAll}칸</b> · 열림 ${op}${hid ? ` · 숨은 칸 ${hid}` : ''}<span class="tleg"><i>+</i>열 수 있음 <i>?</i>윗줄을 열면 보임 <i>🔄</i>다른 스킬 쿨타임을 당김</span></p><p class="tcount">한 줄에 두 칸: 윗줄에서 하나만 열어도 아랫줄이 열립니다.</p></div>`;
-  const tl = rows.map((row, i) => (i === 0 || rows[i - 1][0].tier !== row[0].tier) ? `<span class="ttier" style="top:${TREE_TOP + i * TREE_ROW_H}px"><b>${row[0].tier}</b></span>` : '').join(''); // 등급 이름은 그 등급의 첫 줄에
-  // 잠긴 등급: 그림 대신 한 줄 (깊이는 보이게: 칸 수, 궁극은 이름)
-  const lockT = TIERS2.filter(tier => !tiers.includes(tier) && all.some(x => x.tier === tier));
-  const rowsOf = xs => { const n = xs.map(x => x.row); return Math.min(...n) + '~' + Math.max(...n) + '줄'; };
-  const noAdv = !all.some(x => x.tier === '상급');
-  const foot = `<div class="tlocked">${lockT.map(tier => { const xs = all.filter(x => x.tier === tier); return `<span>🔒 <b>${TREE_CH[tier]}챕터부터 열립니다</b> ${tier} ${xs.length}칸 (${rowsOf(xs)})</span>`; }).join('')}${noAdv ? `<span>🔒 <b>${(run.ch || 1) < TREE_CH['상급'] ? TREE_CH['상급'] + '챕터부터 열립니다</b> 상급 (준비 중)' : '상급</b> 이 직업은 준비 중'}</span>` : ''}<span>🔒 <b>${TREE_CH['궁극']}챕터부터</b> 궁극 (준비 중)</span></div>`;
-  return `<div class="tbranch">${head}<div class="tcwrap"><div class="ttiers" style="height:${H}px" aria-hidden="true" data-info="ttier">${tl}</div><div class="tcanvas" style="height:${H}px"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${nodes}</div></div>${foot}</div>`;
+function treeHover() { } // 옛 트리 화면의 설명 미리보기 자리(부팅이 붙인다). 목록형 화면은 설명이 줄 안에 있다
+const PT_LANE_O = { LL: -1, L: 0, C: 1, R: 2, RR: 3 };
+const ptNodeSort = T => (a, b) => (T.nodes[a].ring - T.nodes[b].ring) || (T.nodes[a].pos.r - T.nodes[b].pos.r) || (PT_LANE_O[T.nodes[a].pos.lane] - PT_LANE_O[T.nodes[b].pos.lane]);
+const PT_STATE_N = { own: '찍음', free: '보너스 노드', ks: '얻은 큰 각인', can: '찍을 수 있음', lock: '잠김' };
+function ptStateOf(run, id) { const t = run.ptree; return t.own.includes(id) ? 'own' : t.free.includes(id) ? 'free' : t.ks.includes(id) ? 'ks' : ptWhy(run, id) ? 'lock' : 'can'; }
+function vStatTotals(run) {
+  const src = ptStatSrc(run), sm = ptSmall(run); const tot = ptStats(run);
+  const row = k => { const parts = [['시작', src.start[k]], ['노드', src.own[k]], ['보너스', src.free[k]]].filter(x => x[1]).map(x => x[0] + ' ' + x[1]); return `<div><dt>${esc(STATN[k])}</dt><dd><b>${tot[k] || 0}</b>${parts.length ? ' <small class="mini">(' + parts.join(' + ') + ')</small>' : ''}</dd></div>`; };
+  return `<dl class="stat-read" aria-label="능력치 합계">${STAT_KEYS.map(row).join('')}</dl><p class="mini">작은 노드 효과: 주는 붕괴 +${Math.round((Math.pow(1 + PT.smallBrk, sm.brk) - 1) * 100)}% · 스태미나 +${sm.st * PT.smallSt}</p>`;
 }
-function vTreeDetail(run, id, preview) {
-  const s = id && SK2[id]; if (!s) return `<p class="mini">스킬을 선택하면 효과와 해금 조건을 확인합니다. 배운 스킬은 장착해야 전투에서 씁니다.</p>`;
-  const vis = treeVis(run, id); const open = s.start || run.tree.open.includes(id); const eq = (run.skills || []).includes(id); const why = open ? null : treeWhy(run, id); const edit = treeCanEdit();
-  if (vis === 'hidden') return `<b class="tdn">?</b><p class="mini">아직 보이지 않는 칸입니다. 선으로 이어진 앞 칸을 열면 드러납니다.</p>`;
-  let h = `<b class="tdn">${esc(s.n)}</b><div class="mini">${esc(s.start ? '시작 스킬 · 항상 장착' : s.b + ' · ' + s.tier + (open ? ' · 열림' : '') + (eq ? ' · 장착' : ''))}</div>`;
-  h += vis === 'name' ? `<p class="mini">이 갈래의 궁극입니다. 이어진 앞 칸을 열면 자세히 드러납니다.</p>` : `<p class="tdh">${esc(skHead(s))}</p><p>${esc(skBody(s))}</p>${run.p && skillDamageHint(run.p,s) ? `<p class="mini">${esc(skillDamageHint(run.p,s))}</p>` : ''}`;
-  if (preview) return h + (s.start ? '' : `<p class="mini tdp">눌러서 고르면 ${open ? '장착하거나 해제합니다' : '엽니다'}.</p>`);
-  if (s.start) h += `<p class="mini">시작 스킬은 항상 장착되어 있으며 장착 칸을 차지하지 않습니다.</p>`;
-  else if (open) { const rw = G.creating ? treeRefundWhy(run, id) : 'x'; h += `<div class="tdb">${edit ? `<button class="${eq ? '' : 'gold'}" data-a="tequip" data-k="${id}">${eq ? '해제' : '장착'}</button>` : ''}${G.creating ? `<button data-a="trefund" data-k="${id}"${rw ? ' aria-disabled="true"' : ''}>되돌리기 · 포인트 +1</button>` : ''}${edit ? '' : '<span class="mini">전투 중에는 바꿀 수 없습니다.</span>'}</div>${G.creating ? `<p class="mini">${rw ? esc(rw) : '캐릭터를 만드는 동안에는 연 칸을 되돌려 다른 칸을 열 수 있습니다. 만든 뒤에는 되돌릴 수 없습니다.'}</p>` : ''}`; }
-  else if (vis === 'full') h += `<div class="tdb">${edit ? `<button class="${why ? '' : 'gold'}" data-a="tunlock" data-k="${id}"${why ? ' aria-disabled="true"' : ''}>열기 · 포인트 1</button>` : ''}${why ? `<span class="mini">${esc(why)}</span>` : ''}</div>`;
-  return h;
+function vPTreeList(run) {
+  const T = ptBuild(run.build), t = run.ptree, d = PT.dirs.includes(G.ptd) ? G.ptd : PT.dirs[0], edit = treeCanEdit(), refund = allocStep(run) === 'p'; const tilt = PT_TILT[run.build] || {};
+  const tabs = PT.dirs.map(x => { const ids = Object.keys(T.nodes).filter(id => T.nodes[id].dir === x); const op = ids.filter(id => !['lock', 'can'].includes(ptStateOf(run, id))).length; const can = ids.some(id => ptStateOf(run, id) === 'can'); return `<button class="tseg${d === x ? ' on' : ''}" data-a="pdir" data-k="${x}" aria-pressed="${d === x}"><b>${esc(PT.dir[x].n)}</b> <small>${tilt[x] === 'A' ? '가까움' : tilt[x] === 'C' ? '멂' : '보통'} · ${op}${can ? ' · +' : ''}</small></button>`; }).join('');
+  const ids = Object.keys(T.nodes).filter(id => T.nodes[id].dir === d).sort(ptNodeSort(T)); let lastRing = 0, rows = '';
+  for (const id of ids) {
+    const n = T.nodes[id], stt = ptStateOf(run, id), why = stt === 'lock' ? ptWhy(run, id) : null;
+    if (n.ring !== lastRing) { lastRing = n.ring; rows += `<h5 class="ptring">${n.ring}고리${ringOpen(run, n.ring) ? '' : ' 🔒 ' + esc(RING_WHY[n.ring] || '')}</h5>`; }
+    const kindN = n.kind === 'keystone' ? '큰 각인 자리' : n.kind === 'notable' ? '중간 노드' + (n.pool === 'common' ? ' · 공용' : ' · 직업') : '작은 노드';
+    const btn = stt === 'can' && edit ? `<button class="sm gold" data-a="ptbuy" data-k="${id}">찍기 · 포인트 ${n.cost}</button>` : stt === 'own' && refund ? `<button class="sm" data-a="ptref" data-k="${id}">되돌리기</button>` : '';
+    rows += `<div class="ptnode pt-${stt} pk-${n.kind}"><div><b>${n.kind === 'keystone' ? '◆ ' : n.kind === 'notable' ? '● ' : '○ '}${esc(n.n)}</b> <small class="mini">${esc(id)} · ${kindN} · ${PT_STATE_N[stt]}</small>${n.kind !== 'small' ? `<p class="mini">${esc(n.d || '')}${n.pay ? ` <span class="no">대가: ${esc(n.pay)}</span>` : ''}</p>` : ''}${why && n.kind !== 'keystone' && !/고리/.test(why) && why !== '포인트가 없습니다' ? `<p class="mini">${esc(why)}</p>` : ''}</div>${btn}</div>`;
+  }
+  const ks = t.ks.map(id => T.nodes[id].n);
+  return `<div class="tsum"><div class="tpts">패시브 포인트 <b>${t.pts}</b><small>시작 ${PT.pts.start} + 레벨마다 ${PT.pts.lv}${t.bonus ? ' + 보너스 ' + t.bonus : ''}</small></div><div>${vStatTotals(run)}</div><div><span class="mini">큰 각인 ${t.ks.length}/${PT.ksN}${ks.length ? ': ' + ks.map(esc).join(', ') : ''}${run.ksPending > 0 ? ' · 고를 것 ' + run.ksPending + '번' : ''}</span></div></div>${T.tmp ? '<p class="mini">이 직업의 패시브 트리는 임시 배치입니다(공용 노드를 기울기대로 채움). 직업 노드는 다음 단계에서 들어옵니다.</p>' : ''}<nav class="tbmenu ptmenu" aria-label="패시브 방향">${tabs}</nav><div class="ptlist">${rows}</div>`;
+}
+/* M5-0 보정 5: 변형 자리의 변형 목록(이번 판에 제시된 것). 열 때 하나를 고르고, 야영지에서 바꾼다(포인트 그대로) */
+function atVarHtml(run, n, own, can, edit) {
+  const A = atBuild(run.build), cur = (run.atree.vsel || {})[n.id], camp = !!(run.cur && run.cur.type === 'camp');
+  const rows = atVarsOffered(run, n.id).map(vid => { const v = A.vars[vid]; const on = cur === vid;
+    const btn = !own ? (can && edit ? `<button class="sm gold" data-a="atbuy" data-k="${n.id}" data-v="${vid}">이 변형으로 열기 · 포인트 ${n.cost}</button>` : '') : on ? '' : edit && camp ? `<button class="sm" data-a="atvar" data-k="${n.id}" data-v="${vid}">${cur ? '바꾸기' : '고르기'}</button>` : '';
+    return `<div class="vrow${on ? ' on' : ''}"><b>${on ? '✔ ' : ''}${esc(v.n)}</b>${v.mut ? ' <span class="newtag">변종</span>' : ''} <span class="mini">${esc(v.d)}</span>${btn ? ' ' + btn : ''}</div>`; }).join('');
+  return `<div class="vlist">${rows}</div>` + (own && !camp ? `<p class="mini">${cur ? '변형은 야영지에서 바꿀 수 있습니다(포인트는 그대로).' : '아직 고른 변형이 없습니다. 야영지에서 고릅니다.'}</p>` : '');
+}
+function vATreeList(run) {
+  const A = atBuild(run.build), a = run.atree, brs = A.sec ? Object.values(A.sec).concat(Object.values(A.nodes).some(x => x.reqTags) ? ['결합'] : []) : A.br, /* 보정 5: 부채꼴 여섯(경계 포함) + 결합 칸 */ br = brs.includes(G.abr) ? G.abr : brs[0], edit = treeCanEdit(), refund = allocStep(run) === 'a'; const T2 = TREE2[run.build]; const eqd = run.skills || [];
+  const st = T2.starters.map(id => `<span class="tslot on">${esc(SK2[id].n)} <small>유산 ${skCost(skOf(run.p, id))}</small></span>`).join('');
+  const slots = Array.from({ length: EQUIP_SLOTS2 }, (_, i) => eqd[i] && SK2[eqd[i]] ? `<button class="tslot on" data-a="ateq" data-k="${eqd[i]}" aria-label="${esc(SK2[eqd[i]].n)} 빼기">${esc(SK2[eqd[i]].n)} ✕</button>` : `<span class="tslot">빈 칸</span>`).join('');
+  const tabs = brs.map(x => { const ids = Object.keys(A.nodes).filter(id => A.nodes[id].br === x); const op = ids.filter(id => a.own.includes(id)).length; const can = ids.some(id => !a.own.includes(id) && !atWhy(run, id)); return `<button class="tseg${br === x ? ' on' : ''}" data-a="abr" data-k="${esc(x)}" aria-pressed="${br === x}"><b>${esc(x)}</b> <small>${op}${can ? ' · +' : ''}</small></button>`; }).join('');
+  const ids = Object.keys(A.nodes).filter(id => A.nodes[id].br === br && !(run.offer && atAbsent(run, id))).sort(ptNodeSort(A)); let lastRing = 0, rows = ''; // 보정 5: 이번 판에 없는 칸은 빼고
+  for (const id of ids) {
+    const n = A.nodes[id], own = a.own.includes(id), why = own ? null : atWhy(run, id), eq = eqd.includes(id);
+    if (n.ring !== lastRing) { lastRing = n.ring; rows += `<h5 class="ptring">${n.ring}고리${ringOpen(run, n.ring) ? '' : ' 🔒 ' + esc(RING_WHY[n.ring] || '')}</h5>`; }
+    let body; if (n.kind === 'skill') { const s = skOf(run.p, id); body = `<b>⚔ ${esc(n.n)}</b> <small class="mini">스킬 · 유산 ${skCost(s)}${own ? ' · 열림' : ''}${eq ? ' · 장착' : ''}</small><p class="mini">${esc(skHead(s))}${skDescHtml(s) ? '' : ' ' + esc(skBody(s))}</p>${skDescHtml(s)}`; } // M5-0a: 승부수는 대사 칸 + 효과 / 대가 / 대상
+    else if (n.slot) body = `<b>✚ ${esc(n.n)}</b> <small class="mini">변형 · ${esc((SK2[n.on] || {}).n || n.on)}${own ? ' · 열림' : ''}</small>` + atVarHtml(run, n, own, !why, edit);
+    else body = `<b>✚ ${esc(n.n)}</b> <small class="mini">강화 · ${esc((SK2[n.on] || {}).n || n.on)}${own ? ' · 열림' + (run.p && (run.p.aup || []).includes(id) ? ' · 일함' : ' · 그 스킬을 끼우면 일함') : ''}</small><p class="mini">${esc(n.d)}</p>`;
+    const btn = (!own && !why && edit && !n.slot ? `<button class="sm gold" data-a="atbuy" data-k="${id}">열기 · 포인트 ${n.cost}</button>` : '') + (own && n.kind === 'skill' && edit ? `<button class="sm${eq ? '' : ' gold'}" data-a="ateq" data-k="${id}">${eq ? '빼기' : '장착'}</button>` : '') + (own && refund ? `<button class="sm" data-a="atref" data-k="${id}">되돌리기</button>` : '');
+    rows += `<div class="ptnode pt-${own ? 'own' : why ? 'lock' : 'can'} pk-${n.kind}"><div>${body}${why && !/고리/.test(why) && why !== '포인트가 없습니다' ? `<p class="mini">${esc(why)}</p>` : ''}</div><div class="row">${btn}</div></div>`;
+  }
+  return `<div class="tsum"><div class="tpts">액티브 포인트 <b>${a.pts}</b><small>시작 ${AT_PTS.start} + 레벨마다 ${AT_PTS.lv}</small></div><div><span class="mini">시작 스킬 · 항상 장착</span><div class="trow">${st}</div></div><div><span class="mini">장착 ${eqd.length}/${EQUIP_SLOTS2}</span><div class="trow">${slots}</div>${hunterLoadoutHint(run)}</div></div>${A.tmp ? '<p class="mini">이 직업의 액티브 트리는 임시 배치입니다(지금 스킬 칸을 갈래 · 줄 순서로 이음, 강화 노드 없음).</p>' : ''}<nav class="tbmenu ptmenu" aria-label="액티브 갈래">${tabs}</nav><div class="ptlist">${rows}</div>`;
 }
 // 사냥꾼의 연계는 장착한 갈래 스킬끼리만 만듭니다.
 function hunterLoadoutHint(run) {
   if (run.build !== 'hunter') return '';
-  return `<p class="mini loadout-hint" data-info="elink" tabindex="0">연계: 다른 갈래 스킬을 이어 쓰면 피해 +${Math.round(HUNT.link * 100)}%.</p>`;
+  return `<p class="mini loadout-hint" data-info="elink" tabindex="0">연계: 다른 갈래 스킬을 이어 쓰면 그 스킬이 빠른 행동(내 차례에 한 번).</p>`;
 }
-function vTreeView(mode) {
-  treeFix(G.run);
-  if (!treeOwns(G.run,G.tsel)) G.tsel = null;
-  const run = G.run, T = TREE2[run.build], t = run.tree, eqd = run.skills || [];
-  const brs = T.branches; const tab = brs.includes(G.tbr) ? G.tbr : brs[0];
-  const st = T.starters.map(id => `<button class="tstart${G.tsel === id ? ' sel' : ''}" data-a="tsel" data-k="${id}" data-info="tn:${id}"><span class="tc">✓</span>${esc(SK2[id].n)}</button>`).join('');
-  const slots = Array.from({ length: EQUIP_SLOTS2 }, (_, i) => eqd[i] ? `<button class="tslot on" data-a="tsel" data-k="${eqd[i]}" data-info="tn:${eqd[i]}">${esc(SK2[eqd[i]].n)}</button>` : `<span class="tslot">빈 칸</span>`).join('');
-  let h = `<div class="tsum"><div><span class="mini">시작 스킬 · 항상 장착</span><div class="trow">${st}</div></div><div><span class="mini">장착 ${eqd.length}/${EQUIP_SLOTS2}</span><div class="trow">${slots}</div>${hunterLoadoutHint(run)}</div><div class="tpts">포인트 <b>${t.pts}</b><small>레벨마다 +1 (Lv${run.ch >= 3 ? 15 : 10}에 ${run.ch >= 3 ? 15 : 10}점)</small></div></div>`;
-  if (!treeCanEdit()) h += `<p class="mini">${G.run && !G.creating && runOver(G.run) ? '끝난 캐릭터의 트리는 볼 수만 있습니다.' : '전투 중에는 볼 수만 있습니다. 방과 방 사이에 열고 바꿉니다.'}</p>`;
-  const menu = `<nav class="tbmenu" aria-label="스킬 트리 갈래">${brs.map(br => { const ns0 = SKILLS2[run.build].filter(x => x.b === br && !x.start); const tiersN = treeTiersOf(run, ns0); const ns = ns0.filter(x => tiersN.includes(x.tier)); const op = ns.filter(x => t.open.includes(x.id)).length; const can = ns.some(x => !t.open.includes(x.id) && !treeWhy(run, x.id)); return `<button class="tseg${tab === br ? ' on' : ''}" data-a="tbr" data-k="${br}" aria-pressed="${tab === br}"><b>${esc(br)}${can ? ' <i class="tcan"><span aria-hidden="true">+</span><span class="sr">열 수 있는 칸 있음</span></i>' : ''}</b><small>${esc(T.bd[br])}</small><span>포인트 ${t.spent[br] || 0} · ${op}/${ns.length}칸</span></button>`; }).join('')}</nav>`;
-  return h + `<div class="tlay treev">${menu}<div class="tmain">${vTreeBranch(run, tab)}</div><div class="tside"><div id="tdet" class="tdet">${vTreeDetail(run, G.tsel)}</div></div></div>`;
+function vTreeView() {
+  const run = G.run; if (!run.ptree) treeSync(run); const v = G.tview === 'a' ? 'a' : 'p';
+  let h = `<div class="invtools" role="group" aria-label="트리 고르기"><button class="sm" data-a="tview" data-k="p" aria-pressed="${v === 'p'}">패시브 · ${run.ptree.pts}점</button><button class="sm" data-a="tview" data-k="a" aria-pressed="${v === 'a'}">액티브 · ${run.atree.pts}점</button>${trdListBtn()}</div>`;
+  if (!treeCanEdit()) h += `<p class="mini">${G.run && !G.creating && runOver(G.run) ? '끝난 캐릭터의 트리는 볼 수만 있습니다.' : '전투 중에는 볼 수만 있습니다. 방과 방 사이에 찍고 바꿉니다.'}</p>`;
+  return h + (v === 'a' ? vATreeAny(run) : vPTreeAny(run));
 }
-function treeHover(ev) {
-  if (!G.run || !G.run.tree || window.innerWidth < 900) return; const box = document.getElementById('tdet'); if (!box || !ev.target.closest) return;
-  if (ev.target.closest('.tside')) return;
-  const nd = ev.target.closest('.treev [data-a="tsel"], .tsum [data-a="tsel"]'); const id = nd ? nd.dataset.k : (G.tsel || ''); const pv = nd && id !== G.tsel ? '1' : '';
-  if (box.dataset.k === id && box.dataset.pv === pv) return;
-  box.innerHTML = vTreeDetail(G.run, id, !!pv); box.dataset.k = id; box.dataset.pv = pv;
+function vTreePage() { return `<section class="card"><div class="phead">${backBtn()}<h3>트리</h3></div>${G.run && G.run.ptree ? vTreeView() : '<p class="mini">진행 중인 캐릭터가 없습니다.</p>'}</section>`; }
+/* 큰 각인 카드: 효과 · 대가 · 보너스 노드 칸 수와 함께 열리는 중간 노드 */
+function ksCard(run, id, btn) {
+  const T = ptBuild(run.build), n = T.nodes[id], c = ksInfo(run, id) || { d: 0, path: [] }; const open = ptOpenIds(run); const fr = c.path.filter(x => !open.includes(x)); const nn = fr.filter(x => T.nodes[x].kind === 'notable').map(x => T.nodes[x].n);
+  return `<div class="awkc"><div class="awkh"><b>◆ ${esc(n.n)}</b><span class="chip">${esc(PT.dir[n.dir].n)} · ${n.ring}고리</span></div><p>${esc(n.d)}</p>${n.pay ? `<p class="no">대가: ${esc(n.pay)}</p>` : ''}<p class="mini">보너스 노드 ${fr.length}칸${nn.length ? ' · 함께 열리는 중간 노드: ' + nn.map(esc).join(', ') : ''} (찍은 곳에서 ${c.d}칸)</p>${btn || ''}</div>`;
 }
-function vTreePage() { return `<section class="card"><div class="phead">${backBtn()}<h3>스킬 트리</h3></div>${G.run && G.run.tree ? vTreeView('page') : '<p class="mini">진행 중인 캐릭터가 없습니다.</p>'}</section>`; }
+function vKsPick(run) {
+  const offer = ksEnsureOffer(run), list = trdListOn() || !offer.length; // 10월 17일 3단계: 후보 셋을 트리 그림 위에도 보인다(카드 · 그림 어느 쪽에서도 고른다)
+  return `<div class="row trd-bar"><p class="mini">찍은 곳 가까이의 큰 각인 셋 가운데 하나를 고릅니다. 고르면 거기까지의 길이 포인트 없이 열립니다. 남은 고를 것 ${run.ksPending}번.${offer.length ? '' : ' 지금은 찍은 곳에서 ' + PT.ksN + '칸 안에 큰 각인이 없습니다. 노드를 더 찍어 가까워지면 고를 수 있습니다.'}</p>${trdListBtn()}</div>${list ? '' : trdView(run, 'k', { offer })}<div class="awklist">${offer.map((id, i) => ksCard(run, id, `<div class="row"><button class="gold" data-a="kspick" data-k="${id}">이것을 고른다</button>${list ? '' : `<button class="sm" data-a="tsel" data-k="${id}" data-e="k">그림에서 보기 · 후보 ${i + 1}</button>`}</div>`)).join('') || '<p class="mini">닿는 큰 각인 자리가 없습니다.</p>'}</div>`;
+}
+/* ---- 배분 흐름 (캐릭터 만들기 · 옛 세이브 옮기기, 9-3절 + 10-4 단계 잠금) ----
+   단계: i 안내(옮기기만) → p 패시브 → k 큰 각인(받을 것이 있으면) → a 액티브 · 장착 → 확정. 다음 단계로 넘어가면 앞 단계는 되돌릴 수 없다. 닫기 버튼이 없다 */
+function allocBegin(run, mode) { run.alloc = { mode, step: mode === 'mig' ? 'i' : 'p' }; G.sheet = null; openSheet('alloc', { first: mode === 'create' ? 1 : 0 }); }
+function migBegin(cur) {
+  treeMigrate08(cur); G.run = cur; consFix(cur); ptInit(cur); atMigrateM5(cur); { const kn = ksMigrateM4(cur) + ksMigrateM54(cur); if (kn) toast('큰 각인 자리가 바뀌어 ' + kn + '개를 돌려받았습니다. 다시 고를 수 있습니다'); } ptSync(cur); applyGear(cur); G.b = null; G.sel = null; G.scr = cur.phase === 'clearsv' ? 'survey' : cur.phase || 'run';
+  allocBegin(cur, 'mig'); render();
+}
+function allocNext(run) {
+  const A = run && run.alloc; if (!A) return;
+  if (A.step === 'i') A.step = 'p';
+  else if (A.step === 'p') { if (run.ptree.pts > 0 && !ask('패시브 포인트 ' + run.ptree.pts + '점을 남겨 둘까요? 다음 단계로 넘어가면 이 단계의 노드는 되돌릴 수 없습니다.')) return; A.step = ksCanPick(run) ? 'k' : 'a'; }
+  else if (A.step === 'k') A.step = 'a';
+  if (A.step === 'a' && A.mode === 'mig') allocOldOrder(run);
+  render(); if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo(0, 0);
+}
+function allocAfterKs(run) { if (!ksCanPick(run)) { run.alloc.step = 'a'; if (run.alloc.mode === 'mig') allocOldOrder(run); } render(); }
+const allocOldOrder = run => { const old = run.skillsOld || []; const ix = x => old.indexOf(x) < 0 ? 99 : old.indexOf(x); run.skills = (run.skills || []).slice().sort((x, y) => ix(x) - ix(y)); atSync(run); };
+function allocConfirm(run, quiet) {
+  const A = run && run.alloc; if (!A || A.step !== 'a') return;
+  if (run.atree.pts > 0 && !quiet && !ask('액티브 포인트 ' + run.atree.pts + '점을 남겨 둘까요? 나중에 트리에서 씁니다.')) return;
+  if (A.mode === 'create') {
+    const original = clone(run); delete run.alloc; treeSync(run); const p = run.p; p.hp = p.hpMax; p.st = p.stMax; run.tick = Date.now();
+    if (!keepCur(run)) { G.run = original; render(); return; }
+    G.creating = false; G.abandonOnCreate = false; G.cre = null; G.scr = 'run'; G.sheet = null; scheduleSync(); if (run.markShop) { toast('캐릭터를 만들었습니다. 앞 챕터 정산 뒤 상점입니다'); markShopOpen(run); return; } toast('캐릭터를 만들었습니다. 첫 방 앞입니다'); render(); return;
+  }
+  treeMigrateDone(run); applyGear(run); G.sheet = null; saveRunLocal(); saveCur(); scheduleSync();
+  toast('0.8.0 트리로 옮겼습니다. 멈췄던 곳에서 이어 갑니다'); render(); if (run.gearPending) nextDrop(); else ksOpen();
+}
+function vAlloc(run) {
+  const A = run.alloc || { step: 'p', mode: 'create' }; const mig = A.mode === 'mig'; const steps = (mig ? [['i', '안내']] : []).concat([['p', '패시브'], ['k', '큰 각인'], ['a', '액티브 · 장착']]);
+  const at = steps.findIndex(x => x[0] === A.step);
+  let h = `<ol class="stepper allocst">${steps.map(([k, n], i) => `<li class="${i === at ? 'now' : i < at ? 'done' : ''}">${esc(n)}</li>`).join('')}</ol>`;
+  if (A.step === 'i') {
+    const M = run.mig08 || {}; const gone = (run.awkOld || []).map(k => (AWK_MAP[k] || { n: k }).n); const T2 = TREE2[run.build]; const AT = atBuild(run.build);
+    const old = (run.skillsOld || []).map(id => (SK2[id] ? SK2[id].n : id) + (AT.nodes[id] ? '' : ' (더는 없는 스킬)'));
+    return h + `<p>0.8.0에서 능력치 · 스킬 트리 · 각인이 두 트리로 바뀌었습니다. 포인트를 모두 돌려드렸습니다.</p><ul class="rcplain"><li>레벨 ${run.lv}${M.lv && M.lv !== run.lv ? ' (저장된 레벨 ' + M.lv + ')' : ''} · 패시브 <b>${run.ptree.pts}점</b> · 액티브 <b>${run.atree.pts}점</b></li><li>고를 큰 각인 <b>${run.ksPending}번</b></li><li>빠진 옛 각인: ${gone.length ? gone.map(esc).join(', ') : '없음'}</li><li>옛 장착 스킬: ${old.length ? old.map(esc).join(', ') : '없음'} (다시 열면 옛 순서대로 끼웁니다)</li>${M.battle ? '<li>싸우던 전투는 그 방의 처음으로 되돌렸습니다. 확정한 뒤 같은 방을 다시 싸웁니다.</li>' : ''}</ul><p class="mini">패시브 → 큰 각인 → 액티브 순서로 찍습니다. 다음 단계로 넘어가면 앞 단계는 고칠 수 없습니다. 확정해야 저장됩니다. 시작 스킬: ${T2.starters.map(id => esc(SK2[id].n)).join(', ')}.</p><div class="stickbar"><button class="gold wide" data-a="allocgo" data-focus>시작</button></div>`;
+  }
+  if (A.step === 'p') return h + `<div class="row trd-bar">${trdListBtn()}</div>` + vPTreeAny(run) + `<div class="stickbar"><button class="gold wide" data-a="allocnext" data-focus>${ksCanPick(run) ? '다음: 큰 각인 고르기' : '다음: 액티브 트리'}${run.ptree.pts ? ' (남은 ' + run.ptree.pts + '점)' : ''}</button>${A.mode === 'create' ? '<div class="row"><button data-a="cback" data-k="cls">이전: 직업 고르기</button><button data-a="createcancel">그만두기</button></div>' : ''}</div>`;
+  if (A.step === 'k') return h + vKsPick(run);
+  return h + `<div class="row trd-bar">${trdListBtn()}</div>` + vATreeAny(run) + `<div class="stickbar"><button class="gold wide" data-a="allocok" data-focus>${A.mode === 'create' ? '이 캐릭터로 시작하기' : '확정하고 이어 하기'}${run.atree.pts ? ' (남은 ' + run.atree.pts + '점)' : ''}</button>${A.mode === 'create' ? '<div class="row"><button data-a="createcancel">그만두기</button></div>' : ''}</div>`;
+}
 /* 소모품 가방 칸 그림(10월 14일): 칸마다 아이콘과 든 수, 빈 칸은 점선 */
 function consBagStrip(run, sub) {
   const L = run.cons || [];
@@ -95,28 +127,59 @@ function sheetParts(S) {
   if (S.kind === 'block') {
     title = '막힌 문 앞에서 아이템 하나를 고르세요';
     body = `<p class="mini">${S.data.retry ? '다시 하기 전에 다른 아이템으로 바꿔도 됩니다.' : ''}문 너머에는 정예 방패병과 정예 치유사, 정예 돌격병이 있습니다. 강타와 치유가 한꺼번에 몰려옵니다.</p>`;
-    for (const k of Object.keys(ITEMS).filter(k => ITEMS[k].kind === 'block')) body += itemCard(k, `<button class="gold" data-a="pickblock" data-k="${k}">이 아이템 끼우기</button>`);
+    for (const k of (GEAR8.on ? Object.keys(UNIQUE).filter(id => UNIQUE[id].cls === 'all' && !(run.uqSeen || []).includes(id)) : Object.keys(ITEMS).filter(k => ITEMS[k].kind === 'block'))) body += itemCard(GEAR8.on ? mkUq(k, run.ch) : k, `<button class="gold" data-a="pickblock" data-k="${k}">이 아이템 끼우기</button>`); /* 0.8.0 M6-2: 새 장비면 공용 고유 */
     body += `<div class="row"><button data-a="pickblock" data-k="">아이템 없이 들어가기</button><button data-a="blockback">아직 들어가지 않기</button></div>`;
   } else if (S.kind === 'drop') {
     const it = run.inv[S.data.uid]; const kind = tplKind(it.tpl); const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind;
     title = '장비를 얻었습니다';
     const ew = equipWhy(run, it.uid, sl); const used = bagUsed(run), left = BAG_MAX - used; const hasCur = !!run.eqU[sl];
-    body = winSumHtml() + itemDetail(it) + compareHtml(run, it.uid, sl) + (ew ? `<p class="warn">${esc(ew)} 가방에 두었다가 끼던 전설을 빼고 끼세요.</p>` : '') + `<div class="actbar"><button class="gold" data-a="dropequip" data-k="${it.uid}" data-s="${sl}">${hasCur ? '바꿔 끼기' : '지금 끼기'}${kind === 'ring' ? ' (' + EQ_SLOT_N[sl] + ')' : ''}</button><button data-a="dropkeep">가방에 두기</button></div>` + (left <= 1 ? `<p class="warn">${left <= 0 ? '가방이 가득 찼습니다. 다음 장비는 하나를 버려야 받습니다.' : '가방이 한 칸 남았습니다.'}</p>` : '') + `<div class="row dropfoot"><span class="mini">가방 ${used}/${BAG_MAX}. 방과 방 사이에 언제든 바꿀 수 있습니다.</span><button class="sm" data-a="dropdiscard" data-k="${it.uid}"${it.locked ? ' disabled' : ''}>버리기</button></div>`;
+    body = winSumHtml() + itemDetail(it) + compareHtml(run, it.uid, sl) + (ew ? `<p class="warn">${esc(ew)} 가방에 두었다가 끼던 전설을 빼고 끼세요.</p>` : '') + `<div class="actbar"><button class="gold" data-a="dropequip" data-k="${it.uid}" data-s="${sl}">${hasCur ? '바꿔 끼기' : '지금 끼기'}${kind === 'ring' ? ' (' + EQ_SLOT_N[sl] + ')' : ''}</button><button data-a="dropkeep" data-k="${it.uid}">가방에 두기</button></div>` + (left <= 1 ? `<p class="warn">${left <= 0 ? '가방이 가득 찼습니다. 다음 장비는 하나를 버려야 받습니다.' : '가방이 한 칸 남았습니다.'}</p>` : '') + `<div class="row dropfoot"><span class="mini">가방 ${used}/${BAG_MAX}. 방과 방 사이에 언제든 바꿀 수 있습니다.</span><button class="sm" data-a="dropdiscard" data-k="${it.uid}"${it.locked ? ' disabled' : ''}>버리기</button></div>`;
     if(!(G.dropQ||[]).length)body += '<button class="wide" data-a="droporganize">가방에 두고 정리하기</button>';
   } else if (S.kind === 'bagfull') {
     const it = S.data.item; title = '가방이 가득 찼습니다'; const nc = (run.cons || []).length;
-    body = winSumHtml() + `<p class="lead">새 장비를 바로 장착하거나, 가방에서 하나를 비워 챙길 수 있습니다.</p>${itemDetail(it)}${shopCmp(run, it)}${rewardEquipButtons(run, it)}<button class="wide" data-a="bfskip">새 장비를 버리기</button><h4 class="bfh">또는 가방에서 하나를 버리고 새 장비를 받기</h4><div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${inm(x.tpl, x.g)}</span>${gradeTag(x.g)}<br><small class="mini">${EQ_SLOT_N[kindOf(ITEMS[x.tpl].slot) === 'ring' ? 'ring1' : ITEMS[x.tpl].slot].replace(' 1', '')} · ${baseText(x)}</small></div><button class="sm" data-a="bfdrop" data-k="${u}"${x.locked ? ' disabled' : ''}>${x.locked ? '잠김' : '이것을 버리기'}</button></div>`; }).join('')}</div>`;
+    body = winSumHtml() + `<p class="lead">새 장비를 바로 장착하거나, 가방에서 하나를 비워 챙길 수 있습니다.</p>${itemDetail(it)}${shopCmp(run, it)}${rewardEquipButtons(run, it)}<button class="wide" data-a="bfskip" data-k="${esc(it.uid || '')}">새 장비를 버리기</button><h4 class="bfh">또는 가방에서 하나를 버리고 새 장비를 받기</h4><div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${inmIt(x)}</span>${gradeTag(x.g)}<br><small class="mini">${EQ_SLOT_N[tplKind(x.tpl) === 'ring' ? 'ring1' : tplKind(x.tpl)].replace(' 1', '')} · ${baseText(x)}</small></div><button class="sm" data-a="bfdrop" data-k="${u}"${x.locked ? ' disabled' : ''}>${x.locked ? '잠김' : '이것을 버리기'}</button></div>`; }).join('')}</div>`;
+  } else if (S.kind === 'kitpick') { // 0.8.0 6단계 C: 꾸러미의 무기 · 갑옷을 셋 가운데 하나씩
+    const K = run.kitPick || { opts: {} }; const sl = ['weapon', 'armor'].find(x => K.opts[x]); title = sl ? (EQ_SLOT_N[sl] || sl) + '을(를) 고르세요' : '꾸러미';
+    body = sl ? '<p class="lead">' + (GRADE[K.opts[sl].g] || GRADE.n).n + ' 등급, 직업에 맞는 셋 가운데 하나를 고릅니다. 고르지 않은 것은 사라집니다.</p>' + K.opts[sl].tpl.map(tpl => `<div class="bagline"><div>${itemDetail(K.opts[sl].its ? K.opts[sl].its[tpl] : mkItem(tpl, { g: K.opts[sl].g, ch: K.ch - 1 }))}</div><button class="gold" data-a="kitpick" data-s="${sl}" data-k="${tpl}">이것으로</button></div>`).join('') : '';
+  } else if (S.kind === 'campshop') { title = '떠돌이 상인'; body = vCampShop(run, S.data || {}); // 10월 24일 야영지 개편
+  } else if (S.kind === 'flaskpick') { // 10월 24일: 가장 많이 찬 플라스크가 둘 이상이면 비울 것을 고른다
+    const D = S.data || {}; title = '어느 플라스크를 비울까요';
+    body = '<p class="lead">가장 많이 찬 플라스크가 둘 이상입니다. 하나를 고릅니다.</p><div class="row col">' + (D.ties || []).map((k, i) => `<button class="wide${i ? '' : ' gold'}" data-a="event" data-k="${esc(D.o)}" data-f="${k}"${i ? '' : ' data-focus'}>🧪 ${FLASK_KN[k]} 플라스크 <small>(${run.p.flask[k] || 0}칸)</small></button>`).join('') + '</div>';
+  } else if (S.kind === 'patrol') { // 0.8.0 6단계 A-6: 순찰대를 넘으면 패시브 포인트 +1(챕터에 AMBUSH.ptMax번) 또는 소모품 셋 중 하나
+    const P = run.patrolPend || { cons: [] }, used = (run.patrolPt || {})[run.ch || 1] || 0, ptOk = used < AMBUSH.ptMax; title = '순찰대를 넘었습니다';
+    body = '<p class="lead">하나를 고릅니다.</p><div class="row col">' + (ptOk ? `<button class="wide gold" data-a="patrolpick" data-k="pt" data-focus>패시브 포인트 +1 <small>(이번 챕터 ${used}/${AMBUSH.ptMax})</small></button>` : `<p class="mini">이번 챕터의 패시브 포인트는 ${AMBUSH.ptMax}번을 모두 받았습니다.</p>`)
+      + (P.cons || []).filter(id => CONS[id]).map(id => `<button class="wide" data-a="patrolpick" data-k="${id}">${CONS[id].ico} ${esc(consName({ id, g: 'n' }))}${CONS[id].d ? ` <small>${esc(CONS[id].d)}</small>` : ''}</button>`).join('') + '</div>';
   } else if (S.kind === 'consfull') {
     title = '전리품을 고르세요';
-    /* 10월 14일 개편 5단계: 나온 소모품을 모두 보여 주고 뺄 것을 고른다. 자리가 모자라면 가방의 묶음을 버릴 수 있다 */
-    const Q = run.consPending || [], skip = S.data.skip || [], plan = consFitPlan(run, Q, skip);
-    const takeN = plan.reduce((a, n) => a + n, 0), lostN = Q.reduce((a, c, i) => a + (skip.includes(i) ? 0 : c.n - plan[i]), 0);
-    body = winSumHtml() + consBagStrip(run) + '<p class="mini">눌러서 뺄 것을 고르세요. 뺀 것과 자리가 없는 것은 이 방에 두고 갑니다.</p><div class="clist">' + Q.map((c, i) => { const D = CONS[c.id]; if (!D) return ''; const off = skip.includes(i), got = plan[i]; const st = off ? '두고 감' : got >= c.n ? '챙김' : got > 0 ? got + '개만 들어감' : '자리 없음'; return `<div class="cline${off ? ' off' : ''}"><button class="cmain" data-a="cptoggle" data-k="${i}" aria-pressed="${!off}"><span class="cn"><b><span aria-hidden="true">${off ? '☐' : '☑'}</span> ${D.ico} ${esc(consName(c))} ×${c.n}</b></span><small class="mini">${esc(D.d(consVal(c)))}</small></button><span class="cstat${off || got < c.n ? ' warn' : ''}">${st}</span></div>`; }).join('') + '</div>';
-    body += (run.cons || []).length ? '<details class="invreason"' + (lostN ? ' open' : '') + '><summary>가방에서 비울 것' + (lostN ? ' (자리가 ' + lostN + '개 모자랍니다)' : '') + '</summary><div class="baglist">' + run.cons.map((x, i) => `<div class="bagline"><div><b>${CONS[x.id] ? CONS[x.id].ico : ''} ${esc(consName(x))} ×${x.n}</b></div><button class="sm" data-a="cpreplace" data-k="${i}" data-s="cons" aria-label="${esc(consName(x))} ${x.n}개 묶음 버리기">묶음 버리기</button></div>`).join('') + '</div></details>' : '';
-    body += `<div class="stickbar"><div class="row"><button class="gold wide" data-a="cptake" data-focus>${takeN ? '챙기기 (' + takeN + '개)' : '모두 두고 가기'}</button></div></div>`;
+    /* 10월 24일 개편(만든 사람 요청 · 디자인 재점검): 가방(챙긴 뒤 모습)과 전리품을 칸으로. 칸을 누르면 아래 설명 줄에 효과와 할 수 있는 일(쓰기 · 플라스크 채우기 · 버리기 · 자리 바꾸기). 칸 안에는 단추를 두지 않는다 */
+    const Q = run.consPending || [], d = S.data, skip = d.skip || [], F = consFitSim(run, Q, skip), plan = F.plan, sel = d.sel != null && Q[d.sel] ? d.sel : null;
+    const takeN = plan.reduce((x, n) => x + n, 0), lostN = Q.reduce((x, c, i) => x + (skip.includes(i) ? 0 : c.n - plan[i]), 0);
+    let pk = d.pick; if (!pk || (pk.s === 'loot' ? !Q[pk.i] : !run.cons[pk.i])) pk = Q.length ? { s: 'loot', i: 0 } : run.cons.length ? { s: 'bag', i: 0 } : null;
+    const lootSt = (c, i) => { const off = skip.includes(i), got = plan[i]; return c.swapOut ? (off ? '두고 감' : '다시 챙김') : off ? '두고 감' : got >= c.n ? '챙김' : got > 0 ? got + '개만 들어감' : '자리 없음'; };
+    const tile = (side, i, c, extra) => { const D = CONS[c.id], on = pk && pk.s === side && pk.i === i, a = side === 'bag' && sel != null ? 'cpswap' : 'cppick';
+      return `<button class="ctile${on ? ' on' : ''}${extra.cls || ''}" data-a="${a}" data-k="${side === 'bag' && sel != null ? i : side + ':' + i}"${extra.drag ? ` draggable="true" data-drag="${i}"` : ''}${side === 'bag' ? ` data-drop="${i}"` : ''} aria-pressed="${on}" title="${esc(consName(c) + ': ' + D.d(consVal(c)))}"><span class="ct-i" aria-hidden="true">${D.ico}</span><span class="ct-n">${esc(consName(c))}</span><span class="ct-c">${extra.cnt}</span>${extra.tag ? `<span class="ct-t">${extra.tag}</span>` : ''}</button>`; };
+    const bag = Array.from({ length: CONS_BAG }, (_, i) => { const x = F.bag[i]; if (!x) return '<div class="ctile e" aria-label="빈 칸">빈 칸</div>'; const D = CONS[x.id]; if (!D) return '';
+      if (x.isNew) return `<div class="ctile new" title="${esc(consName(x) + ': ' + D.d(consVal(x)))}"><span class="ct-i" aria-hidden="true">${D.ico}</span><span class="ct-n">${esc(consName(x))}</span><span class="ct-c">${x.n}/${D.max}</span><span class="ct-t">새로</span></div>`;
+      return tile('bag', i, run.cons[i], { cnt: x.n + '/' + D.max, tag: x.add > 0 ? '+' + x.add : '', cls: sel != null ? ' tgt' : '' }); }).join('');
+    const loot = Q.map((c, i) => { if (!CONS[c.id]) return ''; const st = lootSt(c, i), off = skip.includes(i) || plan[i] < c.n; return tile('loot', i, c, { cnt: '×' + c.n, tag: st, cls: (off ? ' off' : '') + (sel === i ? ' swap' : ''), drag: (run.cons || []).length && !c.swapOut }); }).join('');
+    /* 고른 칸의 설명 줄 */
+    let det = '';
+    if (pk) { const c = pk.s === 'loot' ? Q[pk.i] : run.cons[pk.i], D = CONS[c.id], acts = [];
+      const brew = CONS_BREW[c.id] ? consBrewLootOf(run, c.id) : null, outOk = !consWhyNot(null, run, c, null);
+      if (pk.s === 'loot') { const off = skip.includes(pk.i);
+        acts.push(`<button class="sm" data-a="cptoggle" data-k="${pk.i}" aria-pressed="${!off}">${off ? '챙기기' : '두고 가기'}</button>`);
+        if ((run.cons || []).length && !c.swapOut && (off || plan[pk.i] < c.n)) acts.push(`<button class="sm${sel === pk.i ? ' on' : ''}" data-a="cpswapsel" data-k="${pk.i}" aria-pressed="${sel === pk.i}">${sel === pk.i ? '바꾸기 취소' : '가방과 자리 바꾸기'}</button>`);
+        if (outOk) acts.push(`<button class="sm" data-a="cpusel" data-k="${pk.i}">바로 쓰기</button>`);
+      } else { if (outOk) acts.push(`<button class="sm" data-a="consuse" data-k="${pk.i}">쓰기</button>`); acts.push(`<button class="sm" data-a="cpreplace" data-k="${pk.i}" data-s="cons" aria-label="${esc(consName(c))} ${c.n}개 묶음 버리기">버리기</button>`); }
+      if (brew) acts.push(adisBtn(brew.why, 'sm', 'cpbrew', c.id, brew.name + ' 채우기 (' + brew.need + '개)'));
+      det = `<div class="cdet" aria-live="polite"><p class="cd-h"><span aria-hidden="true">${D.ico}</span> <b>${esc(consName(c))}</b> <span class="mini">${pk.s === 'loot' ? '전리품 · ' + lootSt(c, pk.i) : '가방 · ' + c.n + '/' + D.max}</span></p><p class="cd-e">${esc(D.d(consVal(c)))}</p>${D.sit ? `<p class="mini">쓸 때: ${esc(D.sit)}</p>` : ''}${brew ? `<p class="mini">${esc(brew.name)} ${brew.cur}/${brew.cap} · 들어오는 것까지 ${esc(D.n)} ${brew.have}개(${brew.need}개로 한 칸)</p>` : ''}<div class="row cd-a">${acts.join('')}</div></div>`; }
+    body = winSumHtml()
+      + `<div class="cbagh"><b>가방 ${F.bag.length}/${CONS_BAG}칸</b><span class="mini">챙긴 뒤의 모습${lostN ? ' · 자리가 ' + lostN + '개 모자랍니다' : ''}</span></div><div class="ctiles">${bag}</div>`
+      + `<div class="cbagh"><b>이번 전리품</b><span class="mini">${sel != null ? '위 가방에서 바꿀 칸을 누르세요' : '칸을 누르면 아래에 효과와 할 일이 나옵니다'}</span></div><div class="ctiles">${loot}</div>` + det;
+    body += `<div class="stickbar"><div class="row"><button class="gold wide" data-a="cptake" data-focus>${takeN ? '챙기기 (' + takeN + '개)' + (lostN ? ' · ' + lostN + '개는 두고 감' : '') : '모두 두고 가기'}</button></div></div>`;
   } else if (S.kind === 'changes') {
     title = '업데이트 내역';
-    const mj = CHANGELOG.findIndex(c => c.v === '0.7.0'), cut = mj >= 0 ? mj + 1 : CHANGELOG.length;
+    const mj = CHANGELOG.findIndex(c => c.v === VERSION), cut = mj >= 0 ? mj + 1 : CHANGELOG.length; // 0.8.0 M8: 지금 판의 통합 항목까지 펼치고, 0.7.0과 그 개발 중 항목은 "이전 공개판"으로 접는다
     const folded = c => `<details class="chgarchive"><summary><span><b>${esc(c.v)} · ${esc(c.t || '업데이트')}</b><small class="chgd">${esc(c.d || '')}</small></span></summary>${chgEntry(c, false)}</details>`;
     body = `<p class="mini">최근 변경부터 읽습니다. 이전 내역은 제목을 눌러 펼칩니다.</p>` + CHANGELOG.slice(0, cut).map((c, i) => i === 0 ? chgEntry(c, true) : folded(c)).join('') + (cut < CHANGELOG.length ? `<details class="chgdev"><summary>이전 공개판</summary>${CHANGELOG.slice(cut).map(folded).join('')}</details>` : '');
   } else if (S.kind === 'bossinfo' && S.data.foe) {
@@ -138,9 +201,10 @@ function sheetParts(S) {
   } else if (S.kind === 'import') {
     title = '지인 기록 넣기';
     body = `<p class="mini">지인이 메신저로 보낸 "기록 보내기 코드"를 붙여 넣으세요. 결과 보기에 그 사람의 기록으로 들어갑니다. 같은 코드를 두 번 넣어도 한 번만 들어갑니다.</p><label for="impbox" class="sr">기록 보내기 코드</label><textarea id="impbox" rows="6" placeholder="NRK1:로 시작하는 글자"></textarea>${S.data.msg ? `<p class="${S.data.ok ? 'mini' : 'no'}" role="status">${esc(S.data.msg)}</p>` : ''}<button class="gold" data-a="impgo">넣기</button>`;
-  } else if (S.kind === 'skills' && G.run && isV2(G.run.p)) {
-    title = '스킬 트리';
-    body = vTreeView('create') + `<div class="stickbar"><button class="gold wide" data-a="skillok" data-focus>${G.run.tree.pts ? '다음: 능력치 나누기 (포인트는 나중에 써도 됩니다)' : '다음: 능력치 나누기'}</button>${S.data.first ? '<div class="row"><button data-a="cback" data-k="cls">이전: 직업 고르기</button><button data-a="createcancel">그만두기</button></div>' : ''}</div>`;
+  } else if (S.kind === 'alloc' && G.run) {
+    const A = G.run.alloc || {}; title = A.mode === 'mig' ? '0.8.0 트리로 옮기기' : A.step === 'a' ? '액티브 트리 · 장착' : A.step === 'k' ? '큰 각인 고르기' : '패시브 트리'; body = vAlloc(G.run); // 10월 16일 0.8.0 2단계: 배분 흐름(닫기 없음)
+  } else if (S.kind === 'ks' && G.run) {
+    title = '큰 각인을 고를 때입니다'; body = vKsPick(G.run);
   } else if (S.kind === 'skills') {
     const run = G.run, p = run.p; const SKM = skillMap(p.build); const pick = S.data.pick;
     title = S.data.first ? '스킬 세 칸을 고르세요' : '스킬 바꾸기';
@@ -156,18 +220,6 @@ function sheetParts(S) {
     }
     const dmgIds = ['viper', 'flame', 'scarcut', 'reverse', 'crush', 'aimshot', 'fireball', 'lava', 'drain'].concat(exclOf(p.build).filter(s => s.dmg > 0 || (s.fx && s.fx.scarAll)).map(s => s.id)); const noDmg = pick.length && !pick.some(id => dmgIds.includes(id));
     body += `</div>${noDmg ? '<p class="warn">지금 고른 스킬에는 적을 직접 때리는 스킬이 없습니다. 피해 대부분을 기본 공격에 기대야 합니다. 그래도 괜찮으면 그대로 시작하세요.</p>' : ''}<div class="stickbar"><button class="gold wide" data-a="skillok" ${pick.length ? '' : 'disabled'} data-focus>${pick.length ? (S.data.first ? '다음: 능력치 나누기 (' + pick.length + '/' + SKILL_SLOTS + '칸)' : '이대로 바꾸기') : '스킬을 하나 이상 골라 주세요'}</button>${S.data.first ? '<div class="row"><button data-a="cback" data-k="cls">이전: 직업 고르기</button><button data-a="createcancel">그만두기</button></div>' : ''}</div>${S.data.first ? '' : '<button class="wide" data-a="close">바꾸지 않기</button>'}`;
-  } else if (S.kind === 'stats') {
-    const run = G.run, p = run.p; const al = S.data.alloc || (S.data.alloc = { str: 0, dex: 0, int: 0, con: 0, wil: 0 }); for (const k of STAT_KEYS) al[k] = al[k] || 0;
-    const left = S.data.pts - statSum(al);
-    const tmp = Object.assign({}, p, { stat: Object.fromEntries(STAT_KEYS.map(k => [k, stat(p, k) + al[k]])) });
-    title = S.data.first ? '능력치 ' + S.data.pts + '점을 나누세요' : (S.data.why || '능력치 ' + S.data.pts + '점');
-    body = `<p class="mini">${S.data.first ? S.data.pts + '점을 힘, 민첩, 지능, 체력, 의지에 나눕니다. 각 능력치의 효과는 아래에서 확인합니다. 배분이 어렵다면 "추천 배분"을 누르세요.' : S.data.respec ? '지금까지 나눈 점수를 모두 거두었습니다. 처음부터 다시 나눕니다.' : '아래의 "다음 1점" 효과를 확인하고 능력치를 올리세요.'}</p><p><b>남은 점수 ${left}</b></p>`;
-    body += `<div class="row"><button class="sm" data-a="statrec" ${left ? '' : 'disabled'}>추천 배분</button><button class="sm" data-a="statclear" ${statSum(al) ? '' : 'disabled'}>다시 나누기</button></div>`;
-    for (const k of STAT_KEYS) body += `<div class="statrow"><div class="sname"><b>${STATN[k]} ${stat(tmp, k)}</b>${al[k] ? ` <span class="mini">(+${al[k]})</span>` : ''}</div><div class="snext mini">다음 1점: ${esc(statNext(tmp, k))}</div><div class="sbtn"><button class="sm" data-a="stat-" data-k="${k}" ${al[k] ? '' : 'disabled'} aria-label="${STATN[k]} 1점 빼기">−</button><button class="sm gold" data-a="stat+" data-k="${k}" ${left ? '' : 'disabled'} aria-label="${STATN[k]} 1점 더하기">+</button></div></div>`;
-    body += `<details id="statgrowth" class="invreason"${S.data.growthOpen?' open':''}><summary>3점 투자 시 성장 비교</summary><p class="mini">지금 배분에서 같은 능력치에 3점을 더한 예시입니다. 기본·강공격과 장착 스킬의 기본·자원 추가 피해, 보호막 부여량과 생명력 비용을 비교하며, 적 상태에 따른 최종 피해는 달라집니다.${weaponGrowthStat(tmp)!=='str'?' 기본·강공격은 힘과 직업 공격 능력치 중 높은 값 하나를 씁니다.':''} 고정 교대와 비율 보호막 채우기는 의지로 늘지 않습니다.</p>${STAT_KEYS.map(k=>`<p class="mini"><b>${esc(STATN[k])} +3</b>: ${esc(statGrowthPreview(tmp,k))}</p>`).join('')}</details>`;
-    const guides = statBranchGuidance(p);
-    if (guides.length) body += `<details id="statbranches" class="invreason"${S.data.branchGuideOpen?' open':''}><summary>갈래별 투자 안내</summary><p class="mini">추천 배분은 직업 공통 기준입니다. 갈래와 장착 스킬에 맞춰 직접 조정할 수 있습니다.</p>${guides.map(x=>`<p class="mini"><b>${esc(x.branch)}</b>: ${esc(x.text)}</p>`).join('')}</details>`;
-    body += `<div class="stickbar"><button class="gold wide" data-a="statok" ${left ? 'disabled' : ''} data-focus>${left ? '점수를 모두 나눠 주세요 (남은 ' + left + '점)' : S.data.first ? '이 캐릭터로 시작하기' : '이대로 정하기'}</button>${S.data.first ? '<div class="row"><button data-a="createback">이전: 스킬 고르기</button><button data-a="createcancel">그만두기</button></div>' : ''}</div>`;
   } else if (S.kind === 'cons') {
     /* 10월 14일 개편: 같은 종류는 한 줄로 합치고, 칸 수는 맨 위 가방 칸 그림과 줄마다의 "N칸 · 5/5 · 3/5"로 보인다. 즐겨찾기·버리기·대상 바꾸기는 줄을 눌러 펼칠 때만 */
     const run = G.run, b = G.b && !G.b.over ? G.b : null; const L = run.cons || [];
@@ -201,20 +253,20 @@ function sheetParts(S) {
   } else if (S.kind === 'choice') {
     title = S.data.chest ? '상자를 열었습니다' : '둘 중 하나만 가져갑니다';
     body = winSumHtml() + `<p class="lead">하나만 가져갑니다. 고르지 않은 쪽은 이 방에 남습니다. 고른 뒤 바로 끼울지 정합니다.</p>`;
-    for (const k of S.data.offer) body += itemCard(k, curLine(run, k) + `<button class="gold" data-a="choose" data-k="${k}">이것을 가진다</button>`);
+    for (const k of S.data.offer) body += itemCard(k, curLine(run, k) + `<button class="gold" data-a="choose" data-k="${k && typeof k === 'object' ? k.uid : k}">이것을 가진다</button>`);
     body += `<button data-a="choose" data-k="">둘 다 두고 간다</button>`;
-  } else if (S.kind === 'awk') {
-    title = '각인을 얻을 때입니다'; const offer = run.awkOffer || [];
-    body = `<p class="mini">셋 가운데 하나를 고릅니다. 던전이 끝나면 소멸되고 대가는 없습니다. 같은 각인은 한 번만 얻습니다. 지금까지 ${(run.awk || []).length}개를 얻었습니다.</p><div class="awklist">${offer.map(id => awkCard(id, `<button class="gold" data-a="awkpick" data-k="${id}">이것을 새긴다</button>`)).join('')}</div>`;
   } else if (S.kind === 'awkview') {
-    title = '적용 중인 각인'; const own = run && run.awk || [];
-    body = `<p class="mini">던전이 끝나면 소멸되는 작은 힘입니다. 정산을 확정한 뒤와 2챕터부터의 야영지에서 하나씩 얻습니다. 대가는 없습니다.</p><div class="awklist">${own.length ? own.map(id => awkCard(id)).join('') : '<p class="mini">아직 얻은 각인이 없습니다.</p>'}</div>${S.data && S.data.from === 'equip' ? '<button class="wide" data-a="equip">장비로 돌아가기</button>' : ''}`;
+    title = '큰 각인 · 중간 노드'; const own = run && run.ptree ? ptBuild(run.build) : null; const ks = own ? run.ptree.ks.map(id => own.nodes[id]) : []; const nt = own ? run.ptree.own.concat(run.ptree.free).map(id => own.nodes[id]).filter(n => n && n.kind === 'notable') : [];
+    body = `<p class="mini">패시브 트리에서 얻은 큰 각인과 중간 노드입니다. 큰 각인은 1 · 2챕터 정산 뒤와 3챕터 야영지에서 하나씩 고릅니다.</p><h4>큰 각인 ${ks.length}/${PT.ksN}</h4><div class="awklist">${ks.map(n => `<div class="awkc"><div class="awkh"><b>◆ ${esc(n.n)}</b></div><p>${esc(n.d)}</p>${n.pay ? `<p class="no">대가: ${esc(n.pay)}</p>` : ''}</div>`).join('') || '<p class="mini">아직 없습니다.</p>'}</div><h4>중간 노드 ${nt.length}</h4><div class="awklist">${nt.map(n => `<div class="awkc"><div class="awkh"><b>● ${esc(n.n)}</b><span class="chip">${esc(PT.dir[n.dir].n)}</span></div><p>${esc(n.d)}</p></div>`).join('') || '<p class="mini">아직 없습니다.</p>'}</div>${(run.awk || []).length ? `<h4>챕터 선물</h4><div class="awklist">${run.awk.map(id => awkCard(id)).join('')}</div>` : ''}${S.data && S.data.from === 'equip' ? '<button class="wide" data-a="equip">장비로 돌아가기</button>' : ''}`;
+    body = `<p class="mini">던전이 끝나면 사라지는 작은 힘입니다. 정산을 확정한 뒤와 2챕터부터의 야영지에서 하나씩 얻습니다. 대가는 없습니다.</p><div class="awklist">${own.length ? own.map(id => awkCard(id)).join('') : '<p class="mini">아직 얻은 각인이 없습니다.</p>'}</div>${S.data && S.data.from === 'equip' ? '<button class="wide" data-a="equip">장비로 돌아가기</button>' : ''}`;
+  } else if (S.kind === 'tabstale') { // 10월 24일 S-4 두 탭(js/64 tabWatch)
+    title = '다른 탭에서 저장했습니다'; body = `<p>이 브라우저의 다른 탭이나 창에서 진행을 저장했습니다. 이 탭의 화면은 그보다 앞의 상태라, 여기서 고르면 그 진행을 덮어씁니다.</p><p class="mini">이 탭은 더 저장하지 않습니다. 다시 불러오면 마지막으로 저장한 곳에서 이어 갑니다.</p><button class="gold wide" data-a="tabreload" data-focus>다시 불러오기</button>`;
   } else if (S.kind === 'fateres') {
     const r = S.data; title = r.ok ? '저울이 기웁니다' : '저울이 기울지 않았습니다';
-    body = `<p class="mini">올린 장비</p><div class="idet"><b class="gr-${r.from.g}">${inm(r.from.tpl, r.from.g)}</b></div>${r.ok ? `<p>한 단계 위 장비로 바뀌었습니다. 가방에 넣었습니다.</p>${itemDetail(r.to)}` : '<p>올린 장비는 사라졌습니다.</p>'}<button class="gold wide" data-a="close" data-focus>확인</button>`;
+    body = `<p class="mini">올린 장비</p><div class="idet"><b class="gr-${r.from.g}">${inmIt(r.from)}</b></div>${r.ok ? `<p>한 단계 위 장비로 바뀌었습니다. 가방에 넣었습니다.</p>${itemDetail(r.to)}` : '<p>올린 장비는 사라졌습니다.</p>'}<button class="gold wide" data-a="close" data-focus>확인</button>`;
   } else if (S.kind === 'offer') {
     title = '바칠 장비를 고르세요';
-    body = `<p class="mini">고른 장비는 사라지고, 한 등급 위의 장비 하나를 받습니다(희귀는 다시 희귀, 영웅 · 전설은 영웅).</p><div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${inm(x.tpl, x.g)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${baseText(x)}</small></div><button class="sm" data-a="offerpick" data-k="${u}"${x.locked ? ' disabled' : ''}>${x.locked ? '잠김' : '바친다'}</button></div>`; }).join('')}</div>`;
+    body = `<p class="mini">고른 장비는 사라지고, 한 등급 위의 장비 하나를 받습니다(희귀는 다시 희귀, 영웅 · 전설은 영웅).</p><div class="baglist">${run.bag.map(u => { const x = run.inv[u]; return `<div class="bagline"><div><span class="gr-${x.g}">${inmIt(x)}</span><br><small class="mini">${(GRADE[x.g] || GRADE.n).n} · ${baseText(x)}</small></div><button class="sm" data-a="offerpick" data-k="${u}"${x.locked ? ' disabled' : ''}>${x.locked ? '잠김' : '바친다'}</button></div>`; }).join('')}</div>`;
   } else if (S.kind === 'codex') {
     title = '보스 도감'; body = vCodex(); /* 78-records-ui.js */
   } else if (S.kind === 'itembook') {
@@ -228,7 +280,7 @@ function sheetParts(S) {
     title = S.data.first ? '방금 적이 무너졌습니다' : '도움말'; body = (S.data.first ? '<p class="mini">처음 보는 규칙이라 잠깐 설명합니다. 이 창은 한 번만 뜹니다.</p>' : '') + vHelpBody(S.data.k);
   } else if (S.kind === 'statview') {
     title = '능력치'; const run = G.run;
-    body = run && run.p ? `<p><b>${esc(run.cname || BUILDS[run.build].n)}</b> · ${esc(BUILDS[run.build].n)} · Lv ${run.lv || 1}</p>${statReadHtml(run.p.stat || run.stats)}<p class="mini">현재 배분된 능력치입니다.${run.statPending ? ' 미배분 ' + run.statPending + '점.' : ''}</p>${S.data.from === 'equip' ? '<button data-a="equip">장비로 돌아가기</button>' : ''}` : '<p>캐릭터 정보가 없습니다.</p>';
+    body = run && run.p ? `<p><b>${esc(run.cname || BUILDS[run.build].n)}</b> · ${esc(BUILDS[run.build].n)} · Lv ${run.lv || 1}</p>${run.ptree ? vStatTotals(run) : statReadHtml(run.p.stat || run.stats)}<p class="mini">능력치는 패시브 트리의 시작 노드와 찍은 노드의 합입니다. 트리에서 노드를 찍어 올립니다.</p>${S.data.from === 'equip' ? '<button data-a="equip">장비로 돌아가기</button>' : ''}` : '<p>캐릭터 정보가 없습니다.</p>';
   } else if (S.kind === 'equip') {
     title = '장비'; body = vEquip();
   }

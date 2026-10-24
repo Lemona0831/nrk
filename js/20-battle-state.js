@@ -1,10 +1,10 @@
 'use strict';
-const fxList = p => { const out = []; if (!p || !p.eq) return out; for (const sl in p.eq) { const k = p.eq[sl]; if (k && IFX[k]) out.push([k, IFX[k]]); } if (p.awk && p.awk.length) for (const a of p.awk) if (IFX_AWK[a]) out.push(['awk_' + a, IFX_AWK[a]]); /* 각인 */ return out; };
+const fxList = p => { const out = []; if (!p || !p.eq) return out; for (const sl in p.eq) { const k = p.eq[sl]; if (k && IFX[k]) out.push([k, IFX[k]]); } if (p.awk && p.awk.length) for (const a of p.awk) if (IFX_AWK[a]) out.push(['awk_' + a, IFX_AWK[a]]); /* 각인(챕터 선물) */ if (p.pn && p.pn.length) for (const k of p.pn) { const f = IFX_NODE[k] || IFX_AWK[k]; if (f) out.push(['pn_' + k, f]); } if (p.psm && (p.psm.brk || p.psm.st || p.psm.skb)) out.push(['pn_small', ptSmallFx(p.psm)]); /* 10월 16일 0.8.0 2단계: 패시브 트리 노드 */ if (p.sbSt) for (const k in p.sbSt) if (p.sbSt[k] && typeof IFX_SB !== 'undefined' && IFX_SB[k]) out.push(['sb_' + k, IFX_SB[k]]); /* 0.8.0 M5-0 마검사 경계 상태 */ if (p.wdSt) for (const k in p.wdSt) if (p.wdSt[k] && typeof IFX_WD !== 'undefined' && IFX_WD[k]) out.push(['wd_' + k, IFX_WD[k]]); /* 0.8.0 M5-1 파수꾼 태세 · 승부수 */ if (p.mkSt) for (const k in p.mkSt) if (p.mkSt[k] && typeof IFX_MK !== 'undefined' && IFX_MK[k]) out.push(['mk_' + k, IFX_MK[k]]); /* 0.8.0 M5-2 수도승 */ if (p.asSt) for (const k in p.asSt) if (p.asSt[k] && typeof IFX_AS !== 'undefined' && IFX_AS[k]) out.push(['as_' + k, IFX_AS[k]]); /* 0.8.0 M5-3 암살자 */ if (p.hnSt) for (const k in p.hnSt) if (p.hnSt[k] && typeof IFX_HN !== 'undefined' && IFX_HN[k]) out.push(['hn_' + k, IFX_HN[k]]); /* 0.8.0 M5-4 사냥꾼 */ if (p.elSt) for (const k in p.elSt) if (p.elSt[k] && typeof IFX_EL !== 'undefined' && IFX_EL[k]) out.push(['el_' + k, IFX_EL[k]]); /* 0.8.0 M5-5 원소술사 */ if (p.g8) { const g8 = g8Entries(p); if (g8) for (const x of g8) out.push(x); } /* 0.8.0 M6-1 장비 틀(gear8): 접사 묶음 · 고유 규칙 · 대가 */ return out; };
 /* 배율·더하기 지점: 바뀌면 센다 */
 function fxMul(p, hook, ...a) { let m = 1; for (const [k, f] of fxList(p)) if (f[hook]) { const v = f[hook](...a); if (v !== 1 && v != null) { m *= v; fxHit(k); } } return m; }
 function fxAdd(p, hook, ...a) { let m = 0; for (const [k, f] of fxList(p)) if (f[hook]) { const v = f[hook](...a); if (v) { m += v; fxHit(k); } } return m; }
 function fxFlag(p, key) { for (const [k, f] of fxList(p)) if (f[key]) { fxHit(k); return true; } return false; }
-function fxRun(p, hook, ...a) { for (const [k, f] of fxList(p)) if (f[hook] && f[hook](...a)) fxHit(k); }
+function fxRun(p, hook, ...a) { for (const [k, f] of fxList(p)) if (f[hook] && f[hook](...a)) fxHit(k); if (typeof fcEv === 'function' && FC_HOOKS.includes(hook) && a[0] && a[0].p === p) fcEv(a[0], hook, ...a.slice(1)); } // G-1 강적 시계에도 알린다(js/25)
 function fxVal(p, key, init, comb) { let v = init; for (const [k, f] of fxList(p)) if (f[key] != null) { v = comb(v, f[key]); } return v; }
 function fxStat(p, key) { let v = 0; for (const [, f] of fxList(p)) if (f.st && f.st[key]) v += f.st[key]; return v; }
 const consTurnOf = p => CONS_TURN + fxVal(p, 'consTurn', 0, (a, v) => a + v); /* 한 차례에 쓰는 소모품 수 */
@@ -15,26 +15,38 @@ function actCost(p, id, base) { return Math.max(0, base + fxAdd(p, 'cost', p, id
 const ST_REGEN = 10; // 스태미나 자연 회복 (라운드가 끝날 때마다). B0.5의 8에서 올림: 기본 공격이 스태미나를 채우지 않게 되면서 3,840판 비교로 정함 (11.6절)
 const gearOf = p => p.gear || START_GEAR;
 function wpnDmg(p) { return gearOf(p).wpn * ((BUILDS[p.build] || {}).wpnMul || 1); } // wpnMul: 직업마다 무기 피해 배율 (사냥꾼 활 55%: 후열에 바로 닿는 물리직, 10월 5일)
-function basicBase(p) { return wpnDmg(p) * (isCaster(p) && !isV2(p) ? 0.9 : 1) * (hasIt(p, 'venomring') ? 0.9 : 1); }
+function basicBase(p) { return wpnDmg(p) * (isCaster(p) && !isV2(p) ? 0.9 : 1) * (hasIt(p, 'venomring') ? 0.9 : 1) * (p.g8u && p.build === 'elementalist' ? elWpnK(p) : 1); } /* M6-1 고유 el_h5: 마력 화살 무기 피해 배율 50% → 65% */
 // 기본·강공격은 한 능력치만 사용한다. 기존 힘 투자도 보존한다.
 function weaponGrowthStat(p) { return p.build === 'assassin' || p.build === 'hunter' ? 'dex' : p.build === 'elementalist' || p.build === 'bloodmage' ? 'int' : 'str'; }
 function weaponStatBonus(p) { return .01 * Math.max(stat(p, 'str'), stat(p, weaponGrowthStat(p))); }
-const HEAVY_V2 = 1.5; // 0.6a.2 직업의 강공격 배율 (도움말·설명 창도 이 값을 쓴다)
-function heavyBase(p) { return wpnDmg(p) * (isCaster(p) && !isV2(p) ? 1.6 : isV2(p) ? HEAVY_V2 : 1.8) * (p.eq.weapon === 'twin' ? 0.8 : 1); } // 0.6a.2: 강공격 180% → 150% (10월 3일: 공통 행동이 갈래 스킬보다 세서 갈래 성격이 묻혔다)
-function flaskHealFrac(p) { return (gearOf(p).flask + (hasBt(p, 'mercy') ? 0.1 : 0) + fxVal(p, 'heal', 0, (a, v) => a + v)) * fxVal(p, 'healMul', 1, (a, v) => a * v) * (p.eq.flask === 'chalice' ? 0.9 : p.eq.flask === 'boilflask' ? 0.75 : p.eq.flask === 'bloodoil' ? 0.8 : 1); }
+/* 0.8.0 M5-7 붕괴 규칙(10월 21일 만든 사람): basic0 = 기본 공격(평타 · 연타 · 추가 기본 공격 · 분신 기본 공격)은 붕괴를 채우지 않는다. 반격(흘려 베기 · 칼춤 · 받아넘기기 · 되받기 · 가시)과 강공격 · 스킬은 채운다.
+   "기본 공격 붕괴"에 기대던 효과(장비 · 패시브 · 태세 · 다음 기본 공격 붕괴)는 같은 자리에서 강공격 붕괴로(brkB). heavyMul: 강공격 붕괴 배율(측정 손잡이 HEAVY_BRK), bsHeavy: 패시브 n_bs_brk의 강공격 붕괴,
+   skbS · skbM: 제어 방향 작은 노드(ct4L · ct6L · ct8L) · 중간 노드(ct5L)의 스킬 붕괴 배율. 측정 스위치 BRK_BASIC0(tools/variants.json) */
+let BRK_RULE = { basic0: true, heavyMul: 1.15, bsHeavy: 8, skbS: 0.1, skbM: 0.2 }; // 10월 21일 M5-7 측정 3차로 정함(직업 여섯 × 네 성향 × 120시드 × 3챕터): 기본값 켬. BRK_BASIC0=0이면 옛 규칙(기준선)
+const brkB = c => !!c && !c.extra && (BRK_RULE.basic0 ? c.id === 'heavy' : c.id === 'basic'); // "기본 공격 붕괴" 효과가 붙는 행동(규칙을 켜면 강공격)
+let HEAVY_V2 = 1.7, HEAVY_COST = 35; // 0.6a.2 직업의 강공격 배율 · 스태미나 (도움말·설명 창도 이 값을 쓴다). 0.8.0 M4(D11): 1.5 · 40 → 1.7 · 35. 같은 시드 A/B(4성향 × 6직업 × 120)에서 유의한 변화 없음
+function heavyBase(p) { return wpnDmg(p) * (isCaster(p) && !isV2(p) ? 1.6 : isV2(p) ? HEAVY_V2 : 1.8) * (p.eq.weapon === 'twin' || uqF(p, 'u_twinHv') ? 0.8 : 1); } /* M6-1 고유 cm_twin 대가: 강공격 피해 −20% */ // 0.6a.2: 강공격 180% → 150% (10월 3일: 공통 행동이 갈래 스킬보다 세서 갈래 성격이 묻혔다)
+function flaskHealFrac(p) { return (gearOf(p).flask + (hasBt(p, 'mercy') ? 0.1 : 0) + fxVal(p, 'heal', 0, (a, v) => a + v) + (p.hp <= p.hpMax * 0.3 ? fxVal(p, 'flaskLow', 0, (a, v) => a + v) : 0)) * fxVal(p, 'healMul', 1, (a, v) => a * v) * (p.eq.flask === 'chalice' ? 0.9 : p.eq.flask === 'boilflask' ? 0.75 : p.eq.flask === 'bloodoil' ? 0.8 : 1); }
 function calcMpMax(p) { if (isV2(p)) return 0; return BUILDS[p.build].mp + gearOf(p).mp + fxStat(p, 'mp') + ((p.lv || 1) - 1) * ((LV_GAIN[p.build] || {}).mp || 0) + stat(p, 'int') - (p.eq.amulet === 'sigil' ? 15 : 0) - (p.eq.gloves === 'vpouch' ? 10 : 0); }
-function calcStMax(p) { return 100 + gearOf(p).st + fxStat(p, 'st') + stat(p, 'dex') - (p.eq.amulet === 'vanguard' ? 20 : 0) - (p.eq.gloves === 'chaingl' ? 10 : 0); }
+function calcStMax(p) { return 100 + gearOf(p).st + fxStat(p, 'st') + stat(p, 'dex') + (p.stBonus || 0) /* A3 재액이 스민 우물 */ - (p.eq.amulet === 'vanguard' ? 20 : 0) - (p.eq.gloves === 'chaingl' ? 10 : 0); }
 function calcHpMax(p) { return Math.round(fxVal(p, 'hpMul', 1, (a, v) => a * v) * (1 - (p.hpPen || 0)) * (BUILDS[p.build].hp + gearOf(p).hp + fxStat(p, 'hp') + (p.hpBonus || 0) + ((p.lv || 1) - 1) * ((LV_GAIN[p.build] || {}).hp || 0) + stat(p, 'str') + 3 * stat(p, 'con')) * (p.eq.armor === 'plate' ? 0.9 : p.eq.armor === 'wardcrest' ? 0.95 : p.eq.armor === 'cloak' || p.eq.armor === 'thorns' ? 0.95 : 1) * (p.eq.amulet === 'rosary' ? 0.97 : 1)); }
-function parryRed(p) { return Math.min(0.9, (p.build === 'assassin' && isV2(p) ? 0.7 : 0.6) + 0.005 * stat(p, 'dex') + (p.eq.armor === 'cloak' ? 0.15 : 0)); }
+function parryRed(p) { return Math.min(0.9, (p.build === 'assassin' && isV2(p) ? 0.7 - asParryCut(p) : 0.6) + 0.005 * stat(p, 'dex') + (p.eq.armor === 'cloak' || uqF(p, 'u_cloak') ? 0.15 : 0) + uqV(p, 'u_parryRed', 0, (a, v) => a + v)); } /* M6-1 접사 parryRed */ /* M6-1 고유 cm_cloak: 흘리기 +15%p */ // 10월 18일 0.8.0 5단계 독의 군주의 대가: 70% → 55%(asParryCut)
 /* 강적·보스의 공격은 흘려도 줄이는 몫이 작다(모든 흘리기, 10월 3일 만든 사람: 거구의 힘은 칼끝으로 다 흘리지 못한다. 흘리기로 싸우는 그림자의 거구 약점).
    50상황 2차 탐색에서 고른 중간 지점: 정예까지 넣으면 독사의 장기전 강점이 깨지고, 25%p면 그림자의 보스전 이길 수단이 문턱 아래로 떨어졌다 */
 const PARRY_BIG = 0.2;
 /* 보호막 (0.6a.2, 10월 3일 만든 사람 결정): 피해를 먼저 대신 받아낸다. v2 직업의 상한은 최대 생명력의 30%이고, 라운드가 지나도 줄지 않으며 전투가 끝나면 사라진다(endBattleCarry).
    파수꾼은 방어할 때마다 +6. 옛 직업(0.6a)의 상한 40은 그대로 둔다 */
 const WARD = { cap: 0.3, guard: 6, thornMax: 8, back: 0.5 }; // back: 후열 적의 공격은 보호막이 이만큼만 받아낸다 (10월 4일 만든 사람 결정: 파수꾼의 약점은 후열)
-function wardMax(p) { return isV2(p) ? Math.round(p.hpMax * ((BUILDS[p.build] || {}).wardCap || WARD.cap)) : 40; } // wardCap: 직업마다 상한 (마검사 15%)
-function addWard(b, p, n, cap, fixed) { if (!fixed) { n *= 1 + 0.02 * stat(p, 'wil'); const wp = p.eq ? fxAdd(p, 'wardP', b, p) : 0; if (wp) n *= 1 + Math.min(FX_CAP, wp); if (b && b.carve && b.cur && b.cur.grp) n *= carveMul(b, b.cur.grp); } /* 고정 교대는 생성 보정을 적용하지 않는다 */ const m = Math.min(cap != null ? cap : Infinity, wardMax(p)); const w0 = p.ward || 0; p.ward = Math.max(w0, Math.min(m, w0 + n)); if (w0 + n > m && p.eq) fxRun(p, 'onWardOver', b, p, w0 + n - Math.max(m, w0)); return p.ward - w0; }
+function wardMax(p) { return isV2(p) ? Math.round(p.hpMax * Math.max(0, ((p.eq && fxVal(p, 'wardCap', 0, (a, v) => Math.max(a, v))) || (BUILDS[p.build] || {}).wardCap || WARD.cap) + uqV(p, 'u_wardCapAdd', 0, (a, v) => a + v))) : 40; } /* M6-1 고유 sb_h5 · sb_r2 대가: 보호막 상한 −5%p */ // 10월 16일 0.8.0 2단계: 큰 각인 피를 두른 갑주(마검사 15% → 22%) // wardCap: 직업마다 상한 (마검사 15%)
+function addWard(b, p, n, cap, fixed) { if (p && p.wdSt) { if (p.wdSt.siege) return 0; if (p.wdSt.wardHalf) n *= 1 - WD_BOUND.quakeWard; } /* M5-1 파성(보호막 생성 X) · 대지 분쇄 대가(−50%) */ if (!fixed) { n *= 1 + 0.02 * stat(p, 'wil'); const wp = p.eq ? fxAdd(p, 'wardP', b, p) : 0; if (wp) n *= 1 + Math.min(FX_CAP, wp); if (b && b.carve && b.cur && b.cur.grp) n *= carveMul(b, b.cur.grp); } /* 고정 교대는 생성 보정을 적용하지 않는다 */ const m = Math.min(cap != null ? cap : Infinity, wardMax(p)); const w0 = p.ward || 0; p.ward = Math.max(w0, Math.min(m, w0 + n)); if (w0 + n > m && p.eq) fxRun(p, 'onWardOver', b, p, w0 + n - Math.max(m, w0)); return p.ward - w0; }
 const parryBig = e => (e && (e.strong || e.role === 'boss') ? PARRY_BIG : 0);
+/* 10월 18일 0.8.0 5단계 암살자 (docs/제안/0.8.0-5단계-원거리3직업-트리초안-2026-10-17.md 1-3 · 4-6): 노드가 읽는 값. 다른 직업은 늘 기본값
+   psnCapOf: 내가 적에게 거는 중독의 상한(KW.poison 20, 독의 저장고 24 · 독의 군주 30, 큰 값). asParryCut: 흘리기 감소분 빼기(독의 군주의 대가, 공통 · 스킬 흘리기 모두).
+   parryBigOf: 강적 · 보스 공격의 흘리기 감소 −20%p를 줄인다(피하는 몸 −15%p). asSum: 노드 값 더하기 */
+const asSum = (p, k) => p && p.build === 'assassin' ? fxVal(p, k, 0, (a, v) => a + v) : 0;
+const psnCapOf = p => p && p.build === 'assassin' ? fxVal(p, 'psnCap', uqV(p, 'u_psnCap', KW.poison, Math.min), Math.max) : KW.poison; /* M6-1 고유 as_h7 대가: 기본 상한 20 → 15(노드의 24 · 30은 그대로) */
+const asParryCut = p => asSum(p, 'parryCut');
+const parryBigOf = (p, e) => { const g = parryBig(e); return g && p && p.build === 'assassin' ? Math.max(0, g - asSum(p, 'parryBigCut')) : g; };
 function dotMul(p) { return 1 + 0.02 * stat(p, 'int'); }
 function applyStats(p, stats) {
   const f = { hp: p.hp / p.hpMax, mp: p.mpMax ? p.mp / p.mpMax : 1, st: p.st / p.stMax };
@@ -83,7 +95,7 @@ function mkBoss(kind, hpFrac, lv) {
 /* ================= 전역 시계 (4.1 시계 배정) ================= */
 function newBattle(player, enemies, ctx) {
   if (player.build === 'arcanist') player.ward = 14;
-  player.vanguard = player.eq && player.eq.amulet === 'vanguard' ? 1 : 0;
+  player.vanguard = player.eq && player.eq.amulet === 'vanguard' ? 1 : uqF(player, 'u_vanguard') ? 2 : 0; /* M6-1 고유 cm_vanguard: 2 = 첫 공격이 빠른 행동 */
   const b = {
     t: 0, p: player, en: enemies, log: [], over: null, ctx: ctx || {}, seq: 0,
     round: 0, queue: null, bonusUsed: 0, tick: 0, season: 0, enrage: false, mirrorCount: 0, hatchLock: false, missToggle: false,
@@ -134,11 +146,11 @@ function st(u, k) { const x = u.s[k]; return x ? (x.stacks || 1) : 0; }
    약화↔강화: 공격할 때마다 그 공격 −25%/+25%. 취약↔보호: 직접 피해를 받을 때마다 +25%/−25%. 둔화↔가속: 라운드가 시작될 때 그 라운드의 맨 뒤/맨 앞에서 움직이고 1 감소 (roundOrder).
    반대 쌍은 걸 때 숫자끼리 뺀다. 상한을 넘친 몫은 버린다. 막음: 걸리려는 해로운 상태를 튕겨 낸다(정화 플라스크).
    붕괴(broken)와 낙인(brand, 보스 기믹)은 예전 규칙을 따른다. */
-const KW = { poison: 20, bleed: 10, ignite: 10, weak: 5, empower: 5, vuln: 5, protect: 5, chill: 3, haste: 3, block: 5 };
+const KW = { poison: 20, bleed: 10, ignite: 10, weak: 5, empower: 5, vuln: 5, protect: 5, chill: 3, haste: 3, block: 5, sear: 20 }; // sear 혈염(0.8.0 M5-0 마검사 경계): KW_BAD에 넣지 않아 정화 · 막음으로 지워지지 않는다
 const KW_OPP = { weak: 'empower', empower: 'weak', vuln: 'protect', protect: 'vuln', chill: 'haste', haste: 'chill' };
 const KW_BAD = ['poison', 'bleed', 'ignite', 'weak', 'vuln', 'chill'];
 const KW_FOREVER = 1e9;
-const KW_N = { poison: '중독', bleed: '출혈', ignite: '화상', weak: '약화', empower: '강화', vuln: '취약', protect: '보호', chill: '둔화', haste: '가속', block: '막음' }; // 엔진 기록용 이름 (화면은 SNAMES)
+const KW_N = { poison: '중독', bleed: '출혈', ignite: '화상', weak: '약화', empower: '강화', vuln: '취약', protect: '보호', chill: '둔화', haste: '가속', block: '막음', sear: '혈염' }; // 엔진 기록용 이름 (화면은 SNAMES)
 function kwDec(u, k, n) { const x = u.s && u.s[k]; if (!x) return; x.stacks -= (n || 1); if (x.stacks <= 0) delete u.s[k]; }
 /* 막음: 플레이어에게 해로운 상태가 걸리려 할 때 1 써서 튕겨 낸다 */
 function kwBlocked(b, u, k) {
@@ -147,11 +159,16 @@ function kwBlocked(b, u, k) {
 }
 /* 출혈: 걸린 쪽이 행동할 때마다 N 피해, 1 감소 */
 function kwBleed(b, u) { const n = stk(u, 'bleed'); if (!n || b.over) return; kwDec(u, 'bleed'); const fl = u === b.p && isBu(u) && (u.selfBl || 0) > 0; if (fl) b.bleedFloor = 1; dmgDot(b, u, n * (u === b.p ? 1 : dotMul(b.p)), '출혈'); if (fl) { b.bleedFloor = 0; u.selfBl = Math.min(u.selfBl - 1, stk(u, 'bleed')); } /* 피 웅덩이 ×2는 dmgDot이 한 번만 곱한다 (10월 5일 고침: 여기서도 곱해 4배였다) */ }
+/* 혈염 (0.8.0 M5-0, 10월 19일 만든 사람 마검사 경계 혈염): 출혈 · 화상을 합친 상태. 걸린 쪽이 행동할 때마다 N × SEAR.mul 피해, 1 감소. 정화되지 않는다 */
+const SEAR = { mul: 1.5 };
+function kwSear(b, u) { const n = stk(u, 'sear'); if (!n || b.over) return; kwDec(u, 'sear'); const a = n * SEAR.mul * (u === b.p ? 1 : dotMul(b.p)); dmgDot(b, u, a, '혈염'); if (u !== b.p) uqR(b.p, 'u_searTick', b, b.p, u, a); } /* M6-1 고유 sb_h7: 혈염 피해의 절반이 곁의 적에게 */
+/* 출혈 · 화상을 혈염으로 합친다(둘 다 지운다). extra = 더 거는 혈염 */
+function sbSear(b, e, extra) { if (!e || !e.alive) return 0; const n = stk(e, 'bleed') + stk(e, 'ignite') + (extra || 0); if (!n) return 0; delete e.s.bleed; delete e.s.ignite; const got = addS(b, e, 'sear', n); logp(b, 'good', e.n + '의 피와 불이 엉겨 혈염 ' + stk(e, 'sear') + '이(가) 된다'); b.rec.push({ k: 'sear', e: e.id, n }); return got; }
 /* 직접 피해를 받을 때: 취약 ×1.25 / 보호 ×0.75 (1 감소), 화상 N 더 (1 감소). 지속 피해는 발동시키지 않는다 */
 function kwTaken(b, u, d, o) {
   if (o.dot || !(d > 0)) return d;
   if (u.s.vuln) { d *= 1.25; kwDec(u, 'vuln'); }
   if (u.s.protect) { d *= 0.75; kwDec(u, 'protect'); }
-  if (u.s.ignite && !o.noIgn) { const n = stk(u, 'ignite'); kwDec(u, 'ignite'); let x = n * (hasMod(b, 'candle') ? 1.5 : 1) * (u === b.p ? 1 : dotMul(b.p)); if (u === b.p && hasBt(u, 'snuff')) x = isCf(u) ? Math.min(x, Math.min(n, (u.selfN || {}).ignite || 0) * (hasMod(b, 'candle') ? 1.5 : 1)) : 0; if ((b.ctx.ch || 1) >= 3) { if (u !== b.p) u.ignLast = b.actN; if (hasMod(b, 'brazier')) x *= 1.5; if (hasMod(b, 'shade')) x *= 0.5; if (u === b.p && hasBt(u, 'shade')) x *= 0.5; if (u === b.p && hasBt(u, 'herald')) x = 0; if (u.boss === 'queen' && b.heat != null) { logp(b, 'bad', '불길이 여왕에게 스며든다'); heatAdd(b, QUEEN.ignTick, '불'); codexHit(b, 'queen', 'fire'); } } if (u === b.p) { const gi = fxAdd(u, 'igIn', b, u, x); if (gi) x *= 1 - Math.max(-FX_CAP, Math.min(1, gi)); } else if (b.p.eq) { const go = fxAdd(b.p, 'igOut', b, b.p, u, x); if (go) x *= Math.max(0, 1 + Math.min(FX_CAP, go)); } /* 3챕터 장비: 화상의 추가 피해 */ d += x; } // 숨겨진 직업 2: 촛불 끄기 축복은 고행 몫의 화상에는 들지 않는다
+  if (u.s.ignite && !o.noIgn) { const n = stk(u, 'ignite'); kwDec(u, 'ignite'); let x = n * (hasMod(b, 'candle') ? 1.5 : 1) * (u === b.p ? 1 : dotMul(b.p)) * (u.oiled ? AFFIX2.oiledBurn : 1); /* A2 기름 먹은 정예 */ if (u === b.p && hasBt(u, 'snuff')) x = isCf(u) ? Math.min(x, Math.min(n, (u.selfN || {}).ignite || 0) * (hasMod(b, 'candle') ? 1.5 : 1)) : 0; if (isCh3(b)) { if (u !== b.p) u.ignLast = b.actN; if (hasMod(b, 'brazier')) x *= 1.5; if (hasMod(b, 'shade')) x *= 0.5; if (u === b.p && hasBt(u, 'shade')) x *= 0.5; if (u.boss === 'queen' && b.heat != null) { logp(b, 'bad', '불길이 여왕에게 스며든다'); heatAdd(b, QUEEN.ignTick, '불'); codexHit(b, 'queen', 'fire'); } } if (u === b.p) { const gi = fxAdd(u, 'igIn', b, u, x); if (gi) x *= 1 - Math.max(-FX_CAP, Math.min(1, gi)); } else if (b.p.eq) { const go = fxAdd(b.p, 'igOut', b, b.p, u, x); if (go) x *= Math.max(0, 1 + Math.min(FX_CAP, go)); } /* 3챕터 장비: 화상의 추가 피해 */ if (x > 0 && !b.over) dmgDot(b, u, x, '화상'); } /* 10월 24일 만든 사람 결정(S-1): 화상이 터지는 몫은 그 타격에 더하지 않고 상태 피해로 따로 — 갑옷 · 방패 · 방어 · 한 번 피해 상한을 지나고 상태 피해 효과를 받는다. 타격 자체는 그대로 */ // 숨겨진 직업 2: 촛불 끄기 축복은 고행 몫의 화상에는 들지 않는다
   return d;
 }

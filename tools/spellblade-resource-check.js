@@ -6,13 +6,15 @@ assert.equal(aegis.cd,5);assert.equal(aegis.time,'fast');assert(!aegis.fx.some(f
 const p=E.mkPlayer('spellblade',{}, {wil:24});p.st=10;p.ward=0;
 const e=E.mkEnemy('bruiser',false,0),b=E.newBattle(p,[e],{});
 E.runSkill2(b,E.v2Static(aegis),null);
-assert.equal(p.st,10);assert.equal(E.st(p,'protect'),1);assert(Math.abs(p.ward-7*1.48)<1e-6);
+assert.equal(p.st,10);assert.equal(E.st(p,'protect'),1);assert(Math.abs(p.ward-aegis.fx.find(f=>f.k==='ward').n*1.48)<1e-6); // M8: 보호막 값은 데이터로(M5 재설계 7 → 10)
 const af=rebound.fx.find(f=>f.k==='alt');assert.equal(af.stam,10);
 for(const alt of [false,true]){
  p.st=10;b.sbK='spell';b.sbAlt=alt;b.sbRunNow=1;b.over=null;
  e.hp=e.hpMax=10000; E.runSkill2(b,E.v2Static(rebound),e); E.sbEnd(b,E.v2Static(rebound));assert.equal(p.st,alt?20:10);
 }
 console.log('주문 방패: 보호막·보호·회복 삭제, 반향 주문: 교대시에만 +10 통과');
+/* M8(10월 23일): 아래는 일회성 전후 비교(옛 보스 abbot · cryptlord · queen 고정)다. 군주 · 여왕이 data/archive로 옮겨져 건너뛴다 */
+if(!V('typeof BOSSES.cryptlord!=="undefined"')){console.log('옛 전후 비교는 건너뜀(보관된 보스)');process.exit(0);}
 // 현재 장비 규칙은 고정하고 이번 두 스킬만 전후 비교. 실제 기록 재생은 아니다.
 const original=JSON.parse(JSON.stringify(aegis)),originalRe=JSON.parse(JSON.stringify(rebound));
 function trial(ch,seed,respond){

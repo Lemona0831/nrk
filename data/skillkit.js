@@ -4,11 +4,12 @@ const FOCUS_STAT_PCT = 2;
 // 상태를 준비해 소모하는 피해. 지속 피해와 화상 소모의 dotMul은 따로 유지한다.
 const TRIGGER_STAT_PCT = 3;
 function triggerDamageMul(p) { return 1 + stat(p, 'int') * TRIGGER_STAT_PCT / 100; }
-function skillGrowthStat(s) { return s.kind === 'spell' || /^(e_|v_)/.test(s.id) ? 'int' : /^(a_|h_)/.test(s.id) ? 'dex' : 'str'; }
+function skillGrowthStat(s) { return s.kind === 'spell' || /^(e_|e5_|v_)/.test(s.id) ? 'int' : /^(a_|h_)/.test(s.id) ? 'dex' : 'str'; }
 function skillBaseDamage(p, s, n) {
   if (!n || s.id === 'tut_bash' || p.build === 'novice') return n || 0;
   const k=skillGrowthStat(s), weapon=k==='int'?0:Math.max(0,gearOf(p).wpn-START_GEAR.wpn)*0.02;
-  return n*(1+stat(p,k)*SKILL_STAT_PCT/100+weapon);
+  const x=p.build==='spellblade'&&s.kind&&typeof fxVal==='function'?fxVal(p,'sbCross',0,(a,v)=>a+v):0; // 10월 17일 보완 2 양손의 마검: 베기는 지능, 주문은 힘의 x만큼 더한다
+  return n*(1+(stat(p,k)+(x?x*stat(p,k==='int'?'str':'int'):0))*SKILL_STAT_PCT/100+weapon);
 }
 function skillResourceGrows(s, e) {
   return /^m_/.test(s.id) && ['kiBurst', 'kiPer'].includes(e.k)
@@ -59,7 +60,9 @@ const SKK = {
      v: 보호막 1의 값, loss: 태운 보호막이 막았을 몫, thorn: 가시가 맞는 몫, vuln: 쓸 때 대상의 취약, shield: 방패병이 있는 몫, pull: 끌어내기, chill: 둔화된 적이 있는 몫 [가설] */
   ward: { v: 0.8, S: [8, 12.5], B: [15, 21], cap: [45, 58], loss: 0.5, thorn: 0.85, vuln: 2, shield: 0.3, pull: 6, chill: 0.35, all: [12, 22], fin: 0.9 }, // 10월 5일 4차 측정(적 행동 개편 · 강적 다섯 · 후열 절반 뒤): 보호막 비례 때 보유 하급 7~9 · 중급 12~13, 최후의 성벽이 태운 양 Lv10 23. B는 그대로(태우기 전 보유 하급 16~22 · 중급 16~35, 상한이 먼저 걸린다). // 10월 4일 3차 측정(테스터가 보호막을 얻는 스킬을 태우는 스킬만큼 끼우고, 한 적의 공격에도 막는 스킬을 쓴 뒤): all은 모두 태우는 스킬이 한 번에 태우는 양(지금 10줄 최후의 성벽뿐, Lv10 측정 18), fin은 마무리 태우기를 생명력이 낮은 적에게 쓴 몫(측정 91~100%)
   /* 사냥꾼 (10월 5일 초안, 가설): F 쓸 때 대상의 추적 겹(최대 3), swap 직전과 다른 적을 칠 몫, ev 몸 빼기 한 번이 막는 피해, hx 쓸 때 가속 상태일 몫, fa 추적 한 겹을 더하는 값 */
-  hunt: { F: 1.5, swap: 0.5, ev: 7, hx: 0.5, fa: 1.5, ctr: 0.85, ctrBig: 0.4, q: 6, fs: 8, ch: 1.5, stop: 0.25, stopV: 14, stun: 10, ocb: 0.2 }, // ch: 쓸 때 대상의 둔화, stop: 둔화된 적이 모으는 중일 몫, stopV: 끊은 큰 공격의 값, stun: 적 행동 하나를 놓치게 한 값, ocb: 모으는 적을 무너뜨릴 몫 // ctr: 피한 뒤 반격이 나갈 몫(강타일 때만이면 ctrBig), q: 빠른 칸 하나, fs: 한 라운드에 받는 예고된 큰 공격 피해
+  hunt: { F: 1.5, swap: 0.5, ev: 7, hx: 0.5, fa: 1.5, ctr: 0.85, ctrBig: 0.4, q: 6, fs: 8, ch: 1.5, stop: 0.25, stopV: 14, stun: 10, ocb: 0.2,
+    /* 0.8.0 5단계 연사 기본 공격 버프 (원거리 초안 2-6a · 2-10, 10월 18일) [가설]: n 기간 안 기대 기본 공격 횟수(버프마다, 기본 기간 r0일 때), per 기간이 한 라운드 늘 때 더하는 횟수, sw 기본 공격이 직전과 다른 적을 칠 몫(둘 이상 남은 몫), D 기본 공격 한 번의 피해 값(SKK.B의 무기 피해 8) */
+    bb: { n: { swap: 1, extra: 1.5, barb: 2, sky: 1 }, r0: { swap: 0, extra: 1, barb: 1, sky: 0 }, per: 0.8, sw: 0.75, D: 8 } }, // ch: 쓸 때 대상의 둔화, stop: 둔화된 적이 모으는 중일 몫, stopV: 끊은 큰 공격의 값, stun: 적 행동 하나를 놓치게 한 값, ocb: 모으는 적을 무너뜨릴 몫 // ctr: 피한 뒤 반격이 나갈 몫(강타일 때만이면 ctrBig), q: 빠른 칸 하나, fs: 한 라운드에 받는 예고된 큰 공격 피해
   /* 숨겨진 직업 1 (10월 7일, 'b_' 칸에만): bl 출혈 1의 값(적이 움직일 때마다 약 2 + 흡혈 근원 약 1), S 먹기 · 이용을 쓸 때 대상의 출혈 [하급, 중급], spr 튀길 때 그 적의 출혈,
      hv 먹기 회복이 한도에 잘리지 않는 몫, loss 먹어 없앤 출혈이 앞으로 줬을 몫, took 받은 피해 칸을 쓸 때 받은 피해 [하급, 중급], low 내 생명력 문턱마다 들 몫,
      killP 처치 조건이 일어날 몫 [한 적, 광역], selfHp 나에게 건 출혈 피해의 값, meS 쓸 때 내 출혈, thornHit 맞을 때 출혈이 걸릴 몫, kwEat 먹기로 얻는 약화 · 강화 1의 값 [가설] */
@@ -67,6 +70,10 @@ const SKK = {
   /* 수도승 (10월 7일 가설, docs/직업/수도승.md F-3): K 터뜨릴 때 기(하급 · 중급), Kp kiPer를 쓸 때 기, Kg kiGrow를 쓸 때 기, loss 거둔 기 1이 다음 ▶에 줬을 몫의 비율,
      cN 자세 하나에 되받는 횟수, gIn 피해 절반이 막는 값, ctr 직업 되받기 한 번의 기본 값, cS ctrPer를 쓸 때 지난 차례 뒤 되받은 수, ch 쓸 때 대상이 이미 둔화일 몫,
      ride ▶ 공격에 기 ×1.25가 실리는 몫, fast ⚡ 공격이 주는 기 +1의 몫, seal 끊기를 쓸 때 지원 예고가 있을 몫, sealV 끊은 지원 행동의 값 */
+  as5: { Sb: 4, B: 12, Wd: 13 },
+  el5: { B: 5, Wd: 5, hitR: 1.5, hitD: 11, I: 3, C: 1.5, T: 10, vP: 0.5 }, // 0.8.0 M5-5 원소술사 새 칸 [가설, 측정으로 확인]
+  hn5: { B: 8, Wd: 8, F: 2, ev: 10 }, // 0.8.0 M5-4 사냥꾼 새 칸 [가설, 측정으로 확인]: 기본 공격 한 대 8 · 무기 피해 8(활 55–65%) · 쓸 때 대상 추적 2 // 0.8.0 M5-3 암살자 새 칸 [가설, 측정으로 확인]: 터뜨릴 때 대상 중독 5(길마다 독을 대고 터뜨린다), 늦은 챕터 기본 공격 한 대 12 · 무기 피해 13(승부수 · 그림자 칸)
+  monk5: { K: [0.7, 0.9], Kp: [0.6, 0.8], KpB: {} }, // 0.8.0 M5-2 새 트리 측정(10월 20일, 수도승 360판 · 테스터 v2Pick): 쓸 때 기 — 쏟는 칸 0.4–0.5, 타수 · 기 비례 칸 0.8–1.1. ▶ 공격이 기를 하나씩 쓰고 빠른 기 모으기 칸이 없어 옛 트리(2.5 · 2.2)의 절반 아래
   monk: { K: [2.5, 2.5], Kp: [2, 2.2], KpB: { 부동: [0.8, 0.8] }, loss: 0.5, cN: 0.8, ctr: 9, ch: 0.6, ride: 0.1, seal: 0.25, sealV: 12, Kg: 2 }, // 10월 7일 50상황 측정(Lv5 · Lv10, 테스터 v2Pick 수도승 칸): 터뜨릴 때 기 3.6 · 2.5, 기 비례 때 기 2.9 · 2.2, 끌어올리기 때 기 1.6, 자세 하나에 되받기 1.36 · 1.38, 되받기 한 번 피해 12, 되갚기 때 되받은 수 0.8 · 1.0, 거두기 때 대상 둔화 0.9(Lv5). 자세 칸은 측정값으로 다시 맞추면 줄 예산의 2배가 되어(직업 규칙의 되받기 몫이 칸마다 들어간다) 가설 그대로 두고 50상황 점수로 본다. 중급(Lv10)의 K · Kp만 측정값(2.5 · 2.2)으로 내렸다(처음 가설 3.5 · 3: 중급 터뜨리기 칸이 기가 모자라 오른쪽 기둥이 왼쪽보다 15 낮았다)
   hz: 1.5,                      // 🔄 쿨타임 당기기 1번의 값 [가설] (10월 3일 50상황: 평소 싸움에서는 스킬이 늘 3~4개 준비되어 있어 거의 0, 쿨타임이 묶이는 보스전에서만 크다)
   Fmax: 6,                      // 한 스킬을 전투에서 쓰는 횟수의 상한 (실측: 바탕 스킬 독니 5.4)
@@ -78,22 +85,179 @@ const SKK = {
 };
 const skTri = n => n * (n + 1) / 2;
 const skJo = n => '013678'.includes(String(n).slice(-1)) ? '을' : '를'; // 숫자 뒤 을/를
+/* 0.8.0 M5-0 마검사 경계 효과 (10월 19일). 값은 기존 상수로 센 추정이다(측정이 아님):
+   searMerge 둘 다 걸린 적(쓸 때 열에 여섯)을 합치면 출혈 · 화상 보유량의 SEAR.mul − 1 몫이 더 들어간다.
+   sbBlaze n차례 × 한 행동 값(K.B) × 피해 +40% + 베기 둘에 혈염(더 거는 2 + 합치기) − 잃는 보호막 − 받는 피해 +30%(적 한 방 K.B × 0.8을 n번).
+   wardPer 출혈 걸린 적(평균 1.1) × n × 보호막 값. sbFilm 한 차례에 받아내는 보호막 몫(W.S) × 50%가 출혈. sbSinWall 보호막(최대 생명력 15% × 3, 기준 생명력 SB_HP) − 바친 생명력 + 깨질 때(반쯤) 전열 둘 출혈 4.
+   sbHeat 기본 공격 하나 × 0.5 − 태운 보호막. sbEmberMail 보호막이 있는 동안 평타 두 번 화상 2. sbFireBody 남은 유산(평균 1) × 8 보호막 + n차례 평타 ×1.3 · 화상 2 − n차례 스킬을 못 쓰는 몫 */
+const SB_BD_K = ['searMerge', 'sbBlaze', 'wardPer', 'sbFilm', 'sbSinWall', 'sbHeat', 'sbEmberMail', 'sbFireBody', 'sbCross', 'searSpread', 'sbEcho', 'sbShackle', 'sbAshHand', 'sbCinder', 'sbEmberCut', 'sbFist', 'sbCounterBurn', 'sbTricolor', 'searBurst'];
+/* 보정 5 결합 칸 · 승부수 후보(추정): sbFist 전투에 기본 공격 5번 × 출혈 걸린 적일 확률 0.7 × (배율 − 1). sbCounterBurn 흘리기 성공 2번 × 화상. sbTricolor 할인 2번(전투에 두 번, 보정 5 2차 답) × 유산 1의 값(갈래 비용 2 평균의 절반 ≈ 8.3). searBurst 대상 1.5 × 혈염 보유(출혈 + 화상 몫 0.6) × 배율 */
+/* M5-0 보정 4 새 칸(추정, 측정 아님): sbCross 대상이 출혈 · 화상 중 하나를 가졌을 확률 0.8씩 × n × 상태 값. searSpread 혈염 걸린 적을 쓰러뜨릴 확률 0.35 × 곁의 적 1.5 × 혈염 보유(출혈 + 화상 몫 0.6) × 혈염 값(×1.5).
+   sbEcho 보호막이 있는 동안의 베기 3번 × n. sbShackle 출혈 걸린 적의 강타를 막아 내는 일 전투에 2번 × 붕괴. sbAshHand 기본 공격 k번 × 화상. sbCinder 보호막이 깎이는 일 3번 × 전열 2 × 화상 */
+const SB_HP = 120;
+/* 경계 숫자 (엔진 js/10-skills-engine.js의 IFX_SB · sbBoundUse · sbWardHit와 값 식이 함께 읽는다). 스킬 문장(data/skills.js txt)의 숫자와 맞춰 둔다 */
+/* M5-0 마감(10월 19일 만든 사람): 문장의 꼴은 그대로, 숫자만 값 띠 하한까지 올렸다. 보정 4(10월 20일)에서 갈래 칸을 잘라 기준 평균이 오르자 다시 맞췄다(피막 130%, 잿불 갑주 화상 6). 겁화 피해 +40 → +60%, 피막 50 → 125%, 죄인의 벽 출혈 4 → 5, 달군 갑주 ×1.5 → ×2.8, 잿불 갑주 화상 2 → 5, 불의 몸 ×1.3 → ×1.8 · 화상 2 → 4 (피의 갑주 +4 → +17, 핏불 싣기 출혈 2 · 화상 2 → 3 · 4는 data/skills.js fx) */
+const SB_BOUND = { blazeHit: 1, blazeIn: 0.3, blazeSear: 2, filmPer: 0.75, sinPay: 0.15, sinMul: 3.5, sinBleed: 7, heatMul: 3.2, /* M5-0c 맞추기 2번: 2.8 → 3.2(평타 쪽으로, 값 띠 안) */ emberIgn: 7, bodyPer: 11, bodyMul: 0.8, bodyIgn: 5, sinBlock: 0.3, ashMul: 0.5, ashIgn: 2,
+  crossN: 5, ssPer: 1, echoN: 2, shackleBrk: 115, ashHandK: 2, ashHandIgn: 3, cinderIgn: 1, emberCutBurn: 6, fistMul: 1.6, cbIgn: 4,
+  holdPer: 0.05, holdMax: 5 }; // M5-0 보정 5 2차(만든 사람): 버팀 — 보호막 꼬리표 스킬을 쓴 전투에서 보호막을 지킨 채 차례를 넘기면 쌓이는 피해 +5%(최대 5) // M5-0 보정 4 새 칸 숫자(문장과 맞춘다)
+/* 0.8.0 M5-1 파수꾼(10월 20일 만든 사람 설계지 + 07:40 보완): 태세 · 경계 승부수 · 결합 칸 숫자. 엔진은 js/10 파수꾼 절(p.wdSt).
+   값 식(추정, 측정 아님): 태세는 켜 둔 채 평균 5차례(받는 피해 차례마다 8), 승부수 3차례, 결합 칸은 전투 한 번 몫 */
+const WD_BOUND = { defIn: 0.1, /* 맞추기 2번: 0.15 → 0.12(수비 태세를 품은 공성추 · 용맹의 투지가 1챕터에서 셈) */ defWard: 2, defOn: 8, atkHit: 0.2, atkBrk: 7, atkIn: 0, /* 맞추기 1번: 받는 피해 +10%를 뺐다(1챕터 보스에서 공격 태세 길이 버티지 못함), 대신 +30% → +25% · 붕괴 12 → 10 */ atkOnDmg: 4, atkOnBrk: 10, prayDef: 2,
+  marchHit: 0.12, /* 맞추기 2번: 묵직한 걸음에 보호막 8을 주고 피해 +20% → +15% */ marchBrk: 16, marchHeavy: 12, siegeMax: 2.0, siegePer: 20, siegeBrk: 26, siegeHeavy: 20, /* 파성 붕괴 · 스태미나는 설계지 "확인 후 밸런스 조절" */ quakeMul: 2, quakeWard: 0.5, quakeN: 3, valorGuard: 18, valorThorn: 0.5,
+  turnBrk: 25, hammerMul: 1.5, hammerSt: 15, pullN: 2, pullBrk: 30 };
+const WD_K = ['wdStance', 'wdPray', 'wdMarch', 'wdSiege', 'wdQuake', 'wdValor', 'wdTurncoat', 'wdHammer', 'wdChainPull', 'wdNextBrk'];
+function skValueWd(e, K, W, hi) { const U = WD_BOUND, Wv = K.ward.v, nT = e.n || 3, inc = 8;
+  switch (e.k) {
+    case 'wdStance': return e.s === 'def' ? U.defOn * Wv + 5 * (U.defWard * Wv + U.defIn * inc) : (U.atkOnDmg + U.atkOnBrk * K.brk) + 5 * (K.B * U.atkHit + U.atkBrk * K.brk) - 5 * U.atkIn * inc;
+    case 'wdPray': return 125 * e.n * (1 + 0.5 * (U.prayDef - 1)) * 1.5; // 최대 생명력 125 기준, 수비 태세(2배)는 반쯤
+    case 'wdMarch': return nT * (K.B * U.marchHit + U.marchBrk * K.brk + U.marchHeavy * 0.15);
+    case 'wdSiege': return nT * (1.4 * K.B * 1.3 * (U.siegeMax - 1) * 0.9 + U.siegeBrk * K.brk * 1.4 + U.siegeHeavy * 0.15) - W.S[hi] * Wv - nT * 0.7 * 6 * Wv; // 차례마다 기본 공격 · 강공격 1.4번(빠른 칸 포함, 강공격 ×1.3), 잃는 보호막 · 방어
+    case 'wdQuake': return 1.7 * (8 + 1.6 * K.B) + 0.5 * K.B * 1.5 * (U.quakeMul - 1) - U.quakeN * 0.5 * 6 * Wv * U.quakeWard; // 무너뜨리는 적 1.7(놓치는 행동 8 · 무너진 틈), 둘 이상이면(반쯤) 다음 차례 ×2
+    case 'wdValor': return nT * ((U.valorGuard - 6) * Wv + W.S[hi] * U.valorThorn * K.ward.thorn * 2.2) - nT * (10 * 0.15) - nT * 2; // 방어 보호막, 가시(보호막의 절반 × 맞는 2.2번), 스태미나 · 흘리기 대가
+    case 'wdTurncoat': return 16.7 + U.turnBrk * K.brk; // 바꾸는 유산 2 한 번 + 붕괴
+    case 'wdHammer': return 10 * 0.4 * K.B * (U.hammerMul - 1) + 2 * 0.4 * U.hammerSt * 0.15; // 전투에 기본 공격 10번, 무너진 적일 확률 0.4
+    case 'wdChainPull': return U.pullN * (K.ward.pull + U.pullBrk * K.brk);
+    case 'wdNextBrk': return e.n * K.brk;
+  } return 0; }
+/* 0.8.0 M5-2 수도승(10월 20일 만든 사람 설계지 2판): 새 효과의 숫자. 설계지 숫자(연환권 기마다 1타 · 붕권 +20% · 금강 +20% · 역천권 받는 피해 +30%)는 그대로, 나머지는 가설 — 값 띠 · 측정으로 정한다 */
+const MK_BOUND = { adamantRed: 0.45, /* 맞추기 1번: 금강불괴 −40% → −45%(비용 3 값 띠) */ yeokBrk: 15, yeokIn: 0.3, cheonChill: 2, cheonSeal: 5, cheonBrk: 22, iljiHp: 0.1, iljiNoKi: 3, samjaeMul: 0.25, refluxKi: 1, bultoeMul: 2, bigBrk: 200 }; /* 기공 응축(설계지 ×2)은 쏟는 기 +3(mkCondense add): 새 트리는 쓸 때 기가 0.5 안팎이라 ×2가 0에 가깝다(M5-2 측정) */
+const MK_K = ['mkChain', 'mkCondense', 'mkAdamant', 'mkDrainChill', 'mkChillBurst', 'mkCtrPer', 'mkFlow', 'mkNextBrk', 'mkYeok', 'mkCheon', 'mkIlji', 'mkSamjae', 'mkReflux', 'mkBultoe'];
+function skValueMk(e, s, K, M, hi, mt) { const U = MK_BOUND, inc = hi ? 14 : 8, nT = e.n || 3, d = (s.fx.find(x => x.k === 'dmg') || { n: 0 }).n * (s.hits || 1), C = 2.2; /* C: 쓸 때 대상의 둔화(혈도 · 역혈 · 파혈 판) */
+  switch (e.k) {
+    case 'mkChain': return ((e.add || 0) + Math.min(e.max || 5, M.Kp[hi] * (e.per || 1))) * (6.5 * 1.125 + (e.brk || 0) * K.brk); // 이번 차례 기본 공격에 더하는 타격: 한 대 = 기본 공격 피해 6.5(M5-2 측정, 붕괴는 기본 공격 한 번), ▶에 기가 실릴 때가 반쯤(×1.125)
+    case 'mkCondense': return (e.add || 3) * 9 * 0.8; // 다음에 쏟는 기 +add: 쏟는 칸 하나(기 1당 9쯤)에 더해지는 기
+    case 'mkAdamant': return nT * U.adamantRed * inc * 1.5; // 큰 공격 앞에 쓰면 몫이 크다(중급: 받는 피해 14/차례)
+    case 'mkDrainChill': return e.per * C * 0.9;
+    case 'mkChillBurst': return (e.per + (e.brk || 0) * K.brk) * C * mt - C * K.kw.chill * 0.5;
+    case 'mkCtrPer': return e.per * 0.8; // 지난 적 차례에 되받은 수(자세 판 0.8)
+    case 'mkFlow': return nT * 24 * e.mul; // ▶ 공격(스킬 · 기본 공격) 한 번 24쯤
+    case 'mkNextBrk': return e.n * K.brk;
+    case 'mkYeok': return nT * (1.8 * (M.ctr + U.yeokBrk * K.brk) + 2) - nT * (U.yeokIn * 8 + 2); // 차례마다 되받기 1.8(한도 없음, 전열 모두) · 자세 유지, 대가: 받는 피해 · 방어 불가
+    case 'mkCheon': return nT * (2 * U.cheonChill * 3.5 + 0.6 * M.sealV) - nT * M.cN * M.ctr * 0.5; // 차례마다 나를 치는 2번(둘째 차례부터 쌓인 둔화 5로 봉인 0.6), 둔화 1의 값은 혈도 판 3.5(폭쇄 · ×1.5가 거둔다)
+    case 'mkIlji': return e.per * C * 3 * 1.2 - 125 * U.iljiHp - U.iljiNoKi * K.kw.empower * 0.6; // 기 3 이상일 때 아껴 쓴다(테스터 · 사람) // (둔화 × 기) 피해, 대가: 생명력 · 기를 얻지 못함
+    case 'mkSamjae': return 6 * 0.6 * 18 * U.samjaeMul + 4; // 전투에 ⚡ 공격 6번, 기가 가득일 때 0.6(기 · 되받기 판), 넘쳐 버리던 기를 쓰는 몫
+    case 'mkReflux': return 9 * 0.65 * U.refluxKi * K.kw.empower; // 기본 공격 9번(기본공격연동 판), 둔화된 적일 확률 0.65
+    case 'mkBultoe': return 5 * 0.35 * M.ctr * (U.bultoeMul - 1) * 1.5; // 되받기 5번(자세 꼬리표 판), 무너진 적 0.35
+  } return 0; }
+/* 0.8.0 M5-3 암살자(10월 20일 만든 사람 설계지 4판): 새 효과의 숫자. 설계지 숫자(격발 찌르기 1.5배 · 고독 ×2 · 독 결산 2배 · 무영살 무기 피해 3배 · 만독개화 2배 · 대가 15% · +20%)는 그대로, 나머지는 가설 */
+const AS_BOUND = { virMin: 10, bloomHp: 0.15, hideNoParry: 2, zanIn: 0.2, zanNoStam: 2, flowMul: 1.5, backFlower: 1.5, fangPsn: 1, wpn: 8 };
+const AS_K = ['asNextPsn', 'asVirulent', 'asPlague', 'asTwin', 'asChain', 'asCounter', 'asFlowBlade', 'asBackx', 'asDance', 'asNextBurst', 'asVeil', 'asBloom', 'asHide', 'asZan', 'asFangC', 'asParPsn', 'asBackFlower'];
+function skValueAs(e, s, K, hi, tm) { const U = AS_BOUND, P = K.poison, Wd = K.as5.Wd, B = K.as5.B, S0 = K.S, pn = (s.fx.find(x => x.k === 'poison') || { n: 0 }).n, bu = s.fx.find(x => x.k === 'burst'), nT = e.n || 3;
+  switch (e.k) {
+    case 'asNextPsn': return (e.n || 2) * (e.poison || 1) * P * 0.9; // 다음 기본 공격 n번(쓸 확률 0.9)
+    case 'asVirulent': return 0.35 * 6 * P; // 중독 10을 넘겨 둔 대상(3할)에 줄지 않는 몫 라운드 6
+    case 'asPlague': return 3 * S0 * (e.mul || 1) * 1.3 * P * 0.6; // 전투에 쓰러지는 적 3, 그때 중독 S, 다른 적 1.3에게(옮겨붙은 독이 다 들지는 않음 0.6)
+    case 'asTwin': return pn * P * 0.7; // 후열 하나에게 같은 중독(후열이 있을 확률 0.7)
+    case 'asChain': return 0.3 * 0.6 * 20; // 쓰러뜨릴 확률 0.3, 다시 쓰는 터뜨리기 한 번(쓴 유산 몫을 빼고)
+    case 'asCounter': return K.pOk * (B * 1.1) * (e.mul || 1); // 흘려 내면 기본 공격 한 번(흘리기 성공 · 기본 공격 효과 포함)
+    case 'asFlowBlade': return 6 * K.pOk * 0.8 * B * ((e.mul || U.flowMul) - 1) + 6 * 0.6 * (e.poison || 0) * P; // 전투에 흘리기 6번(흘리기 길), 다음 차례 기본 공격으로 이어짐 0.8
+    case 'asBackx': { const d = s.fx.find(x => x.k === 'dmg'); return (d ? d.n : 0) * ((e.mul || 1) - 1) * (e.low ? 0.25 : 0.55); } // 후열(0.55) · 생명력 낮은 후열(0.25)에게 ×
+    case 'asDance': return 4 * K.pOk * B * (e.mul || 1) * 0.9 + 4 * K.pOk * (e.poison || 0) * P; // 전투에 흘리기 4번, 그때마다 기본 공격 한 번
+    case 'asNextBurst': return skTri(K.as5.Sb + 2) * ((e.mul || 1.5) - 1) * 0.9; // 다음 터뜨리기(쓸 때 중독 S + 먼저 거는 3)
+    case 'asVeil': return nT * 1.3 * (e.poison || 2) * P * 0.7; // 차례마다 나를 치는 1.3
+    case 'asBloom': { const n = Math.min(20, S0 * 3); return skTri(n) * ((e.mul || 2) - 1) * 0.55 + skTri(n) * 0.35 - 125 * U.bloomHp; } // 모인 중독(적 2.5 몫)을 2배로, 터뜨려 사라지는 몫 · 생명력 15%
+    case 'asHide': return Wd * (e.mul || 3) * 1.2 + 8 + (e.poison || 0) * P + (e.brk || 0) * 0.2 - U.hideNoParry * 4; // 무기 피해 × 3(큰 한 방) + 숨은 차례 피한 피해 8, 대가 흘리기 2차례
+    case 'asZan': return nT * B * 1.2 * (e.mul || 1) + nT * (e.poison || 0) * P + nT * 1.2 * (e.brk || 0) * 0.2 - nT * U.zanIn * 8 - U.zanNoStam * 1.5; // 스태미나 회복 한 차례 10 × 0.15 // 차례마다 기본 공격 한 번 더, 대가 받는 피해 · 스태미나
+    case 'asFangC': return 8 * 0.5 * (e.n || U.fangPsn) * P; // 기본 공격 8번, 중독 걸린 적 0.5(M5-3 2배 맞추기: 0.6 → 0.5, 정수 칸이라 +2가 띠 위로 넘던 것)
+    case 'asParPsn': return 4 * K.pOk * (e.n || 2) * P * 0.8;
+    case 'asBackFlower': return 3 * 0.4 * skTri(K.as5.Sb + 2) * ((e.mul || U.backFlower) - 1) + 6; // 터뜨리기 3번, 후열 0.4
+  } return 0; }
+/* 0.8.0 M5-4 사냥꾼(10월 20일 만든 사람 설계지 2판): 새 효과의 숫자. 설계지 숫자(대가 15% · +30% · +20% · 추적 3겹)는 그대로, 나머지는 가설.
+   evadeNoResp: 몸 빼기로 피한 공격은 대응 충전을 주지 않는다(사냥꾼, 만든 사람 검토 11). linkMax: 연계 빠른 행동은 내 차례에 한 번(이어 쏘기 숙련 2번) */
+const HN5_BOUND = { drawIn: 0.3, galeIn: 0.2, trapHp: 0.15, trapFocus: 3, linkMax: 1, linkMaxUp: 2, Fv: 5 };
+const HN_K = ['hnLock', 'hnSky', 'hnCarry', 'hnVolley', 'hnNock', 'hnBloodRain', 'hnWindStep', 'hnWindVeil', 'hnDraw', 'hnGale', 'hnTrap', 'hnChaseC', 'hnScent', 'hnFrozen', 'hnNockChill', 'hnFocusSelf', 'hnChillAll'];
+function skValueHn(e, s, K, tm) { const U = HN5_BOUND, H = K.hn5, B = H.B, Wd = H.Wd, F = H.F, Fv = U.Fv, dm = (s.fx.find(x => x.k === 'dmg') || { n: 0 }).n, hits = s.hits || 1, nT = tm || 2;
+  switch (e.k) {
+    case 'hnLock': return ((e.r || 0) + 1) * 1.1 * B * (e.per || 0.1) * F * 0.9; // 라운드마다 기본 공격 1.1번, 그때 대상 추적 F
+    case 'hnSky': return 0.55 * Math.max(0, Wd * (e.mul || 3) - dm * hits); // 추적 3겹일 몫 0.55: 피해 대신 무기 피해 × mul
+    case 'hnCarry': return 1.5 * F * Fv; // 전투에 넘어가는 추적 1.5번
+    case 'hnVolley': return (hits - 1) * dm * 0.25; // 발마다 다른 적(후열 · 지원하는 적에게 닿는 몫)
+    case 'hnNock': return (e.n || 2) * (1 + 0.7 * ((e.shots || 2) - 2)) * B * 0.9; // 세 발째부터는 0.7(대상이 먼저 쓰러지는 몫)
+    case 'hnBloodRain': return nT * 0.7 * Wd * (e.mul || 2); // 출혈 걸린 적 0.7(화살비 · 덧화살 길)
+    case 'hnWindStep': return 6 * 0.6 * 7; // 피함 6번(받아넘기기 · 몸 빼기 길), 그 뒤 기동 스킬 0.6 · 유산 1의 값 7
+    case 'hnWindVeil': return (e.r || 3) * 0.9 * H.ev; // 라운드마다 맞을 몫 0.9, 피한 한 대
+    case 'hnDraw': return Wd * ((e.mul || 3) + (e.per || 1) * F) * 1.1 + (e.brk || 0) * K.brk - B - 6; // 당기는 차례(기본 공격 한 번) · 받는 피해 +30%
+    case 'hnGale': return (e.r || 3) * (B * 1.5 + 1.5 * B * 0.9 + (e.bleed || 0) * 3) - (e.r || 3) * 4 - 6; // 한 번 더 움직임 = 기본 공격 1.5배(스킬도 씀), 두 번째 화살은 라운드에 1.5번 // 라운드마다 한 번 더 움직임 · 두 번째 화살, 대가 받는 피해 +20% · 몸 빼기 · 방어 불가
+    case 'hnTrap': return 1.6 * (K.hunt.stun + U.trapFocus * Fv * 0.5 + Wd * (e.mul || 0) + (e.brk || 0) * K.brk + (e.bleed || 0) * 3) - 125 * U.trapHp * 0.6; // 이번 라운드 나를 치는 적 1.6, 생명력 15%
+    case 'hnChaseC': return 4 * (e.n || 1) * Fv; // 전투에 피함 4번
+    case 'hnScent': return 6 * 0.7 * (e.n || 1) * Fv; // 출혈 걸린 적을 맞히는 행동 6 · 그때 추적이 쌓일 몫 0.7
+    case 'hnFrozen': return 8 * 0.45 * B * ((e.mul || 1.5) - 1); // 기본 공격 8번, 둔화 걸린 적 0.45
+    case 'hnNockChill': return 2 * (e.n || 1) * K.kw.chill;
+    case 'hnFocusSelf': return (e.n || 1) * Fv * 0.7;
+    case 'hnChillAll': return (e.n || 1) * K.kw.chill * 2;
+  } return 0; }
+/* 0.8.0 M5-5 원소술사(10월 20일 만든 사람 설계지 2판): 새 효과의 숫자. 설계지 숫자(빙결 붕괴 +40 · 화신 5% · 천화 절반 · 정적 둔화 3 · 서리 무게 −20%)는 그대로, 나머지는 가설 */
+const EL5_BOUND = { frzBrk: 40, stasisChill: 3, avatarHp: 0.05, meteorHp: 0.5 };
+const EL_K = ['elBolt', 'elSwitch', 'elRimeR', 'elCharge', 'elMulti', 'elChargeEl', 'elCat', 'elBarrier', 'elChillAll', 'elVulnAll', 'elVulnFocus', 'elFrostEmber', 'elFrostWall', 'elManaFire', 'elAvatar', 'elStasis', 'elMeteor', 'elArcane', 'elShatter', 'elChillBrk', 'elSpreadIgn', 'elProtR', 'elIgnGuard'];
+/* 값 식: K.el5 = { B 기본 공격 한 대, Wd 무기 피해, hitR 라운드마다 나를 치는 적, hitD 그 한 대, I 쓸 때 대상 화상, C 쓸 때 대상 둔화, T 그 차례 열충격 합계, vP 비전 일격 때 취약 몫 } [가설] */
+function skValueEl(e, s, K, tm) { const X = K.elem, H = K.el5, B = H.B, Wd = H.Wd, dm = (s.fx.find(x => x.k === 'dmg') || { n: 0 }).n, hits = s.hits || 1, nT = tm || 2;
+  switch (e.k) {
+    case 'elBolt': return (e.n || 1) * 3; // 원소 1의 값(화상 · 둔화 가운데). 피해는 dmg
+    case 'elRimeR': return (e.r || 2) * H.hitR * X.hit * (e.n || 1) * X.kw[e.s || 'chill'];
+    case 'elCharge': return (e.ign || e.chill) ? (e.n || 3) * 0.9 * ((e.ign || 0) * X.kw.ignite + (e.chill || 0) * X.kw.chill) : (e.n || 3) * 0.9 * (e.add || 6); // 기본 공격 n번 · 쓰기 전에 끝날 몫 0.1
+    case 'elMulti': return (e.n || 2) * ((e.shots || 2) - 1) * B * 0.9;
+    case 'elChargeEl': return 2.5 * 0.9 * ((e.ign || 0) * X.kw.ignite + (e.chill || 0) * X.kw.chill);
+    case 'elCat': return ((e.mul || 1.5) - 1) * X.D * H.T * 0.8; // 그 차례 열충격이 일어날 몫 0.8
+    case 'elProtR': return (e.r || 3) * Math.min(e.n || 3, H.hitR) * H.hitD * 0.25; // 라운드마다 보호가 막는 몫(맞는 수까지)
+    case 'elIgnGuard': return 6 * H.hitR * H.hitD * (e.red || 0.4) * 0.7; // 전투 6라운드, 나를 치는 적이 화상일 몫 0.7(마염 · 불꽃 빌드). 받는 피해 줄이기는 모두 합쳐 FX_CAP 0.6까지
+    case 'elBarrier': return (e.r || 3) * H.hitR * H.hitD * (e.red || 0.4);
+    case 'elChillAll': return (e.n || 1) * X.kw.chill * 2;
+    case 'elVulnAll': return (e.n || 1) * K.kw.vuln * 2;
+    case 'elVulnFocus': return (e.n || 1) * K.kw.vuln;
+    case 'elFrostEmber': return 9 * (e.n || 1) * X.D; // 둔화된 적에게 화상을 거는 행동 9번, 화상 1이 열충격 합계 +1
+    case 'elFrostWall': return 7.5 * X.kw.chill; // 보호 · 보호막이 있을 때 맞는 7.5번(보호 꼬리표 빌드)
+    case 'elManaFire': return 12 * 0.7 * X.D; // 기본 공격 12번(기본공격연동 빌드), 화상 걸린 적 0.7 · 화상 1이 열충격 합계 +1
+    case 'elAvatar': return (e.r || 3) * 1.2 * 1.6 * (X.D * 3.5 + X.Bk * K.brk) - (e.r || 3) * 110 * EL5_BOUND.avatarHp * 0.6; // 차례마다 행동 1.2 · 맞히는 적 1.6 · 맞히는 족족 열충격(합계 3.5쯤) · 대가 생명력
+    case 'elStasis': return (e.r || 1) * 3 * K.hunt.stun + 0.5 * EL5_BOUND.stasisChill * X.kw.chill + (e.brk || 0) * K.brk * 0.5 - 1.2 * B; // 놓치게 한 적 3(승부수는 큰 싸움 앞에서), 강적 · 보스 0.5 · 내 다음 차례
+    case 'elMeteor': return -70 * EL5_BOUND.meteorHp * 0.6; // 대가: 지금 생명력의 절반(70쯤), 생명력 1의 값 0.6 (피해는 dmg)
+    case 'elArcane': return H.vP * ((e.mul || 2) - 1) * dm * hits; // 취약 걸린 적일 몫(약화의 표식 길)
+    case 'elShatter': return (e.per || 8) * H.C * 0.8 - H.C * X.kw.chill * 0.5; // 쓸 때 대상 둔화 C, 깬 둔화의 값 절반
+    case 'elChillBrk': return (e.per || 12) * H.C * K.brk;
+    case 'elSpreadIgn': return (e.per || 0.5) * H.I * 1.5 * X.kw.ignite; // 다른 적 1.5
+  } return 0; }
 function skValue(s, ov) {
   if (!ov && SKK.butch && /^b_/.test(String(s.id)) && !s._bu) return skValueBu(s);
-  if (!ov && String(s.id).slice(0, 2) === 'e_') return skValueElem(s);
+  if (!ov && (String(s.id).slice(0, 2) === 'e_' || s.el5)) return skValueElem(s); // M5-5 새 칸(e5_)도 열충격 몫으로 센다
   if (!ov && String(s.id).slice(0, 2) === 'c_' && !s._cf && SKK.conf) return skValueConf(s); // 숨겨진 직업 2: 정화 · 옮기기 · 비례 · 벗기기 · 고행 몫을 더한다(아래 skValueConf) // 원소술사: 열충격 가설(아래 skValueElem)이 화상 · 둔화 값을 바꿔 이 함수를 다시 부른다
   if (!ov && SKK.blood && /^v_/.test(String(s.id)) && !s._bm) return skValueBm(s); // 숨겨진 직업 3: 먹기 · 생명력 내기 · 값 깎기 · 번짐 몫을 더한다 // 원소술사: 열충격 가설(아래 skValueElem)이 화상 · 둔화 값을 바꿔 이 함수를 다시 부른다
-  const KWv = (ov && ov.kw) || SKK.kw; const K = SKK; const Sof = k => (K.Sk && K.Sk[k] != null ? K.Sk[k] : K.S); const tm = K.tmul[s.tgt]; const hits = s.hits || 1; let v = 0; const hi = (s.row || 0) >= 7 ? 1 : 0; // hi: 중급(7~10줄)은 Lv7 이상에서 쓴다
+  const KWv = (ov && ov.kw) || SKK.kw; const K = SKK; const Sof = k => (s.as5 && k === 'burst' && K.as5 ? K.as5.Sb : K.Sk && K.Sk[k] != null ? K.Sk[k] : K.S); /* M5-3: 새 암살자 칸의 터뜨리기는 K.as5.Sb */ const tm = K.tmul[s.tgt]; const hits = s.hits || 1; let v = 0; const hi = (s.row || 0) >= 7 ? 1 : 0; // hi: 중급(7~10줄)은 Lv7 이상에서 쓴다
   const sbk = /^sb_/.test(s.id || ''); const W = sbk && K.wardCls ? Object.assign({}, K.ward, K.wardCls.spellblade) : K.ward; const SB = K.sb; const multi = s.tgt === 'front' || s.tgt === 'all'; // 마검사: 직업 보호막 표, 출혈 · 화상 값
   const burnTake = e => e.max ? Math.min(e.max, W.B[hi]) : W.all[hi]; // 한 번에 태우는 양: 상한이 있으면 측정 보유량과 상한 가운데 작은 쪽, 모두 태우면 측정값
-  const mk = String(s.id).slice(0, 2) === 'm_'; const mt = s.tgt === 'front' || s.tgt === 'all' ? tm : 1; const M = K.monk; // 수도승 (10월 7일)
+  const mk = String(s.id).slice(0, 2) === 'm_'; const mt = s.tgt === 'front' || s.tgt === 'all' ? tm : 1; const M = s.mk5 && K.monk5 ? Object.assign({}, K.monk, K.monk5) : K.monk; // 수도승 (10월 7일). M5-2 새 칸은 새 트리 측정값(K.monk5)
   for (const e of s.fx) {
+    if (WD_K.includes(e.k)) { v += skValueWd(e, K, W, hi); continue; } // 0.8.0 M5-1 파수꾼
+    if (MK_K.includes(e.k)) { v += skValueMk(e, s, K, M, hi, mt); continue; } // 0.8.0 M5-2 수도승
+    if (AS_K.includes(e.k)) { v += skValueAs(e, s, K, hi, tm); continue; } // 0.8.0 M5-3 암살자
+    if (HN_K.includes(e.k)) { v += skValueHn(e, s, K, tm); continue; } // 0.8.0 M5-4 사냥꾼
+    if (EL_K.includes(e.k)) { v += skValueEl(e, s, K, tm); continue; } // 0.8.0 M5-5 원소술사
+    if (SB_BD_K.includes(e.k)) { const Sbi = SB.S.bleed[hi] + SB.S.ignite[hi], kw = SB.kw.bleed, Wv = K.ward.v; const nT = e.n || 3; const U = SB_BOUND;
+      switch (e.k) {
+        case 'searMerge': v += 0.6 * Sbi * kw * (1.5 - 1); break;
+        case 'sbBlaze': v += nT * K.B * (e.hit != null ? e.hit : U.blazeHit) + 2 * (U.blazeSear * kw + 0.5 * Sbi * kw) - W.S[hi] * Wv - nT * K.B * 0.8 * (e.inc != null ? e.inc : U.blazeIn); break;
+        case 'wardPer': v += 1.1 * e.n * Wv; break;
+        case 'sbFilm': v += W.S[hi] * U.filmPer * kw; break;
+        case 'sbSinWall': v += SB_HP * U.sinPay * U.sinMul * Wv - SB_HP * U.sinPay + 0.5 * 2 * U.sinBleed * kw; break;
+        case 'sbHeat': v += K.B * (U.heatMul - 1) - W.S[hi] * Wv * 0.5; break;
+        case 'sbEmberMail': v += 2 * U.emberIgn * kw; break;
+        case 'sbFireBody': v += 1 * U.bodyPer * Wv + nT * (K.B * U.bodyMul + U.bodyIgn * kw) - nT * (SKK.B * 0.75); break;
+        case 'sbCross': v += 2 * 0.8 * U.crossN * kw; break;
+        case 'searSpread': v += 0.35 * 1.5 * 0.6 * Sbi * U.ssPer * kw * 1.5; break;
+        case 'sbEcho': v += 3 * U.echoN * kw; break;
+        case 'sbShackle': v += 2 * U.shackleBrk * K.brk; break;
+        case 'sbAshHand': v += U.ashHandK * U.ashHandIgn * kw; break;
+        case 'sbEmberCut': { const bn = Math.min(U.emberCutBurn, W.S[hi]); v += bn * kw * 0.8 - bn * Wv; break; } // 태운 보호막만큼 화상(상한 10에 걸리는 몫 0.8)
+        case 'sbFist': v += 5 * K.B * 0.7 * (U.fistMul - 1); break;
+        case 'sbCounterBurn': v += 2 * U.cbIgn * kw; break;
+        case 'sbTricolor': v += 2 * 10.75; break; // 유산 1의 값 = 갈래 비용 2 평균의 절반 (M7-2 직업 기준 옮김: 16.7 → 21.5)
+        case 'searBurst': v += 1.5 * 0.6 * Sbi * (e.mul || 2); break;
+        case 'sbCinder': v += 3 * 2 * U.cinderIgn * kw; break; // 보호막 경계 판은 라운드마다 보호막을 두르고 깎인다(전투 6–8라운드)
+      } continue; }
     switch (e.k) {
       case 'dmg': v += e.n * hits * (s.tgt === 'self' ? 1 : tm); break;
       case 'poison': v += e.n * hits * K.poison * (s.tgt === 'self' ? 1 : tm); break;
       case 'grow': v += (Sof('grow') * (e.mul - 1) * K.poison + (e.add || 0) * K.poison) * (s.tgt === 'all' || s.tgt === 'front' ? tm : 1); break;
       case 'burst': { const S0 = Sof('burst') + (e.pre || 0); const S = e.half ? Math.ceil(S0 / 2) : e.top ? Math.min(e.top, S0) : S0; const tot = (e.top || e.half) ? (skTri(S0) - skTri(S0 - S)) : skTri(S0); // pre: 터뜨리기 전에 거는 중독
-        const am = s.tgt === 'all' || s.tgt === 'front' ? tm : 1; v += tot * ((e.mul || 1) - 0.5) * am + (e.keep || 0) * S0 * K.poison + S * (e.brkPer || 0) * K.brk * am; break; } // 광역 터뜨리기는 맞히는 수만큼
+        const am = s.tgt === 'all' || s.tgt === 'front' ? tm : 1; v += tot * ((e.mul || 1) - 0.5 + (e.big ? (e.big - (e.mul || 1)) * 0.3 : 0)) * am + (e.keep || 0) * S0 * K.poison + S * (e.brkPer || 0) * K.brk * am; break; } // 광역 터뜨리기는 맞히는 수만큼
       case 'exploit': if (e.s) { const S0 = SB.S[e.s][hi]; v += e.per * S0 * (multi ? tm : 1) - (e.take ? S0 * SB.kw[e.s] : 0); break; } v += e.per * Sof('exploit') + (e.n || 0); break; // s: 출혈 · 화상 1마다(마검사). take: 거둔 상태가 앞으로 냈을 몫을 뺀다
       case 'brk': v += e.n * K.brk * (s.tgt === 'self' ? 1 : tm); break;
       case 'stam': v += e.n * 0.15; break;
@@ -110,7 +274,7 @@ function skValue(s, ov) {
       case 'parryBuff': v += K.ph * e.red * (e.times || 1) + (e.stam || 0) * 0.15 * (e.times || 1) + K.pOk * (e.times || 1) * ((e.dmg || 0) + (e.poison || 0) * K.poison); break;
       case 'execute': v += skTri(Sof('burst') + 2) * (e.mul - 1) * 0.5; break;
       case 'capOver': break;
-      case 'ward': v += e.n * K.ward.v; break; // 나에게 보호막 (공격 스킬에 붙어도 나에게)
+      case 'ward': case 'wardFirst': v += e.n * K.ward.v; break; // 나에게 보호막 (공격 스킬에 붙어도 나에게)
       case 'wardFill': v += (e.to || 1) * W.cap[hi] * K.ward.v; break; // 쓸 때 거의 비어 있어 상한의 to만큼 찬다 (10월 4일 측정)
       case 'wardBurn': { const take = burnTake(e); v += take * e.mul * (s.tgt === 'front' || s.tgt === 'all' ? tm : 1) - take * K.ward.v * K.ward.loss; break; } // 태운 만큼 × 배수, 태운 보호막이 막았을 몫을 뺀다
       case 'wardDmg': { const w = wardDamageInfo(e, W.S[hi]); v += w.bonus * (s.tgt === 'front' || s.tgt === 'all' ? tm : 1) - w.take * K.ward.v * K.ward.loss; break; } // 보호막 추가 피해 상한과 소모로 잃는 방어 가치
@@ -120,23 +284,25 @@ function skValue(s, ov) {
       case 'pull': v += K.ward.pull; break;
       case 'vulnGrow': v += K.ward.vuln * (e.mul - 1) * K.kw.vuln; break; // 쓸 때 대상의 취약을 키운다
       case 'chillx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * (ov && ov.chx != null ? ov.chx : (mk ? M.ch : K.ward.chill)) * (s.tgt === 'front' || s.tgt === 'all' ? tm : 1); break; } // 둔화된 적에게 × (수도승 혈도는 스스로 둔화를 걸어 몫이 크다)
-      case 'stance': v += M.cN * (M.ctr + (e.dmg || 0) + (e.brk || 0) * K.brk + (e.ki || 0) * K.kw.empower + (e.chill || 0) * K.kw.chill + (e.weak || 0) * K.kw.weak) * (e.far ? 1.25 : 1); break; // 수도승 자세: 되받기 몫 (10월 10일 단순화: 막기 몫과 상한 몫을 뺐다)
-      case 'kiBurst': { const t = Math.min(e.max || 5, M.K[hi] + (e.pre ? e.pre * M.ch : 0)); v += t * (e.per + (e.brk || 0) * K.brk) * mt - Math.min(e.max || 5, M.K[hi]) * K.kw.empower * M.loss + (e.keep ? Math.floor(M.K[hi] * e.keep) * K.kw.empower * M.loss : 0); break; } // 기 터뜨리기: 거둔 기 × per, 거둔 기가 다음 ▶에 줬을 몫을 뺀다
+      case 'stance': { const one = M.cN * ((M.ctr + (e.dmg || 0)) * (1 + (e.mul || 0)) + (e.brk || 0) * K.brk + (e.ki || 0) * K.kw.empower + (e.chill || 0) * K.kw.chill + (e.weak || 0) * K.kw.weak) * (e.far ? 1.25 : 1) + (e.max ? 0.12 * (M.ctr + (e.dmg || 0)) * (1 + (e.mul || 0)) : 0) + (e.big ? 0.3 * (8 + 1.6 * K.B) : 0) + (s.mk5 ? (e.red || 0) * 8 : 0); v += one * (e.keep ? 1 + (e.keep - 1) * 0.85 : 1); break; } // M5-2: 되받기 배수 · 한도 3 · 강타를 되받아 무너뜨림 · 받는 피해(새 칸만, 옛 철산고 값은 그대로) · 유지 차례 // 수도승 자세: 되받기 몫 (10월 10일 단순화: 막기 몫과 상한 몫을 뺐다)
+      case 'kiBurst': { const t = Math.min(e.max || 5, M.K[hi] + (e.pre ? e.pre * M.ch : 0)); const dd = s.fx.find(x => x.k === 'dmg'); v += t * ((e.per || 0) + (e.brk || 0) * K.brk + (e.mul ? e.mul * (dd ? dd.n * hits : 0) : 0)) * mt - Math.min(e.max || 5, M.K[hi]) * K.kw.empower * M.loss + (e.keep ? Math.floor(M.K[hi] * e.keep) * K.kw.empower * M.loss : 0); break; } // 기 터뜨리기: 거둔 기 × per, 거둔 기가 다음 ▶에 줬을 몫을 뺀다
       case 'kiPer': v += e.per * (M.KpB && M.KpB[s.b] ? M.KpB[s.b][hi] : M.Kp[hi]) * hits * mt; break; // 쓰기 전의 기 1마다 타격마다 (갈래마다 평균 기)
+      case 'kiHits': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n : 0) * Math.min(e.max || 5, M.Kp[hi] * (e.per || 1) * (e.max === 1 ? 0.45 : 1)) * mt; break; } // M5-2 기 1마다 1타 추가(max 1이면 기가 있을 때 +1타: 기가 있을 확률)
       case 'kiGrow': { const k0 = M.Kg - 1; v += (Math.min(5, (k0 + (e.add || 0)) * e.mul) - k0) * K.kw.empower * 0.8; break; }
       case 'sealx': v += M.seal * (M.sealV * 0.8 + e.brk * K.brk * 0.2) * mt; break; // 지원 행동 끊기
       case 'focusx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * e.per * K.hunt.F; break; } // 추적 1겹마다 피해 +per
       case 'focusBurst': v += e.n * K.hunt.F; break; // 추적을 터뜨린다: 1겹마다 피해 +n
       case 'focusAdd': v += e.n * K.hunt.fa; break; // 대상에게 추적 +n겹
       case 'swapx': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n : 0) * (e.mul - 1) * K.hunt.swap; break; } // 직전과 다른 적이면 × (첫 발만)
-      case 'evade': v += e.n * K.hunt.ev; break; // 다음에 맞는 공격 n번을 피한다
+      case 'evade': v += e.n * (s.hn5 && K.hn5 ? K.hn5.ev : K.hunt.ev); break; // 다음에 맞는 공격 n번을 피한다
       case 'hastex': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * K.hunt.hx; break; } // 가속 상태면 ×
-      case 'meSt': v += e.n * (KWv[e.s] || 1) * (e.if === 'chill' ? M.ch * mt : 1); break; // if: 'chill' 대상이 이미 둔화일 때만(수도승 거두기)
+      case 'meSt': v += e.n * (KWv[e.s] || 1) * (e.if === 'chill' ? M.ch * mt : e.if === 'hit' ? mt : e.on === 'cut' ? 0.25 : 1); break; // if: 'chill' 대상이 이미 둔화일 때만(수도승 거두기). on 'cut'(10월 18일 원소 장막): 영창을 끊을 때만(cutx와 같은 넷 중 하나)
       case 'hasteSpend': { const d = s.fx.find(x => x.k === 'dmg'); v += (d ? d.n * hits : 0) * (e.mul - 1) * 0.4; break; } // 가속이 있으면 써서 ×
       case 'chillCut': v += K.hunt.stop * (K.hunt.stopV * 0.8 + e.brk * K.brk * 0.2); break; // 둔화된 적이 모으는 중이면 끊는다(강적 · 보스는 붕괴)
       case 'chillShatter': v += K.hunt.ch * (e.dmg + e.brk * K.brk); break; // 둔화를 깨뜨려 1마다 피해 · 붕괴
       case 'chillSpread': v += K.hunt.ch * (e.per || 1) * 1.5 * K.kw.chill; break; // 다른 적 평균 1.5
       case 'freeze': v += 0.7 * K.hunt.stun + 0.3 * (e.chill * K.kw.chill + e.brk * K.brk); break; // 일반 · 정예는 행동 하나를 놓친다
+      case 'bbuf': v += skBbufV(e); break; // 0.8.0 5단계 연사: 기간 안 기본 공격에 얹히는 몫
       case 'onCutBreak': v += K.hunt.ocb * (e.haste * K.kw.haste + (e.hasten || 0) * K.hz); break;
       case 'evadeCtr': { const evn = (s.fx.find(x => x.k === 'evade') || { n: 1 }).n; const m = (e.charged ? K.hunt.ctrBig : K.hunt.ctr) * evn; v += m * (e.dmg + (e.chill || 0) * K.kw.chill); break; } // 피할 때마다 반격
       case 'quick': v += e.n * K.hunt.q; break; // 이번 차례 빠른 칸 +n
@@ -292,14 +458,29 @@ SKK.clsMid = { h_: 0.85 }; // 직업마다 중급(7~10줄) 예산 배율 (10월 
 SKK.clsAdj = { h_: 1.4, b_: 1, e_: 1, v_: 1 }; // 직업마다 실제로 버는 몫 (10월 5일 50상황: 사냥꾼 스킬은 조건 없이 바로 들어가는 피해라 점수보다 1.6배쯤 번다. 같은 예산이면 라운드당 피해가 암살자의 1.7배였다) // 직업마다 예산 배율 (10월 5일 만든 사람: 사냥꾼은 후열에 바로 닿는 물리직이라 화력이 암살자를 넘지 않게 90%)
 SKK.brAdj = { 독사: 0.97, 격발: 1.1, 그림자: 0.95, 성벽: 1, 파쇄: 1, '전열 장악': 1, 도륙: 1, 광기: 1, 학살: 1, 서리: 0.9, 공명: 1.1, 마갑: 1.08, 혈도: 0.88, 속죄: 1, 전가: 1.1, 고행: 1, 역병: 1.08, 포식: 0.92, 혈약: 1.15, 기동: 0.85 }; // 혈도 (10월 7일 50상황): 둔화를 걸고 거두는 두 박자라 점수보다 덜 번다(Lv10 갈래 평균이 다른 두 갈래보다 11 낮았다) // 파수꾼 세 갈래는 50상황으로 재기 전이라 1 [가설]
 /* 원소술사 갈래 몫 (10월 7일 50상황 12판, 기준 세기): 서리 0.9 · 공명 1.1 */
+/* 0.8.0 5단계 연사 기본 공격 버프 한 칸의 값 (2-6a): 기간 안 기대 기본 공격 횟수 × 기본 공격 값 × 덤. D를 주면 그 기본 공격 피해로(skeval: 실제 무기 · 능력치) */
+function skBbufV(e, D) { const B = SKK.hunt.bb, d = D || B.D; const n = Math.max(0, (B.n[e.s] || 1) + B.per * ((e.r || 0) - (B.r0[e.s] || 0)));
+  return e.s === 'swap' ? n * B.sw * (d * ((e.mul || 1) - 1) + (e.bleed || 0)) : e.s === 'extra' ? n * (d * (e.mul || 0) + (e.turn ? B.sw * d * (1 + (e.mul || 0)) * (e.turn - 1) : 0)) : e.s === 'barb' ? n * (e.bleed || 0) : n * d * ((e.mul || 1) - 1); }
+const skBbufE = (s, D) => s.fx.filter(e => e.k === 'bbuf').reduce((m, e) => m + skBbufV(e, D), 0) * (SKK.brAdj[s.b] || 1) * ((SKK.clsAdj || {})[String(s.id).slice(0, 2)] || 1); // skScore E 가운데 버프 몫
 function skScore(s) { const E = skValue(s) * (SKK.brAdj[s.b] || 1) * ((SKK.clsAdj || {})[String(s.id).slice(0, 2)] || 1); const net = E - SKK.B * SKK.T[s.time]; const F = skUses(s); return { E, net, F, V: net * F, B: Math.round(((s.row && SKK.rowB[s.row]) || SKK.budget[s.tier]) * ((SKK.clsB || {})[String(s.id).slice(0, 2)] || 1) * ((s.row || 0) >= 7 ? ((SKK.clsMid || {})[String(s.id).slice(0, 2)] || 1) : 1) * 10) / 10 }; }
 
 /* 설명 문장. 키워드(중독, 붕괴, 터뜨리기, 흘리기)의 뜻은 설명창의 키워드 칸이 맡고, 스킬 문장은 숫자만 말한다 */
 /* 쿨타임: 쓰고 나면 cd만큼 내 턴을 기다린다(내 턴이 끝날 때마다 1 준다). 갈래 규칙(TREE2.haste)은 10월 3일에 없앴다: 아래 SK_HS는 다시 쓸 때를 위해 남긴다 */
-const SK_HS = { poison: '독을 걸면', kill: '적을 쓰러뜨리면', parry: '흘려 내면', break: '정예 이상을 무너뜨리면' };
+const SK_HS = { poison: '독을 걸면', kill: '적을 쓰러뜨리면', parry: '흘려 내면', break: '정예 · 강적 · 보스를 무너뜨리면' };
 const SK_HSL = { poison: '독을 건 행동마다', kill: '적을 쓰러뜨린 행동마다', parry: '흘리기에 성공할 때마다', break: '정예 · 강적 · 보스를 무너뜨린 행동마다' };
 for (const k in TREE2) for (const x of (SKILLS2[k] || [])) x.hs = (TREE2[k].haste || {})[x.b] || null; // 스킬마다 갈래 규칙을 붙여 둔다
-function skCd(s) { return s.once ? '전투마다 1번' : `쿨타임 ${s.cd}턴` + (s.hs ? ` · ${SK_HS[s.hs]} −1` : ''); } // 갈래 규칙(hs)은 지금 없다
+/* 10월 15일 유산 1차 시제품: 스킬 비용은 데이터의 cd에서 기계적으로 만든다(설계안 4-1). 시작 스킬과 cd 3–5 → 2, 6–8 → 3, 9–10과 전투마다 1번 → 4. cd는 다른 도구가 읽으므로 데이터에 남긴다 */
+function skCost(s) { if (!s) return 0; if (s.ys != null) return s.ys; if (s.once) return 4; return 2; } // 0.8.0 M5-0(10월 19일): 비용은 트리 노드의 ys(skOf가 넣음)만 읽는다. 쿨타임 변환표 · cheap 분기는 없앴다. 노드 밖(시작 스킬 등)은 2, 전투마다 1번은 4. 트리 스킬의 ys 누락은 tree-check 오류
+/* S-2 · S-3(10월 24일 만든 사람): 유산 1짜리 스킬이 생명력 회복 · 보호 · 보호막 · 회피(몸 빼기)를 주면 다음 내 차례 시작의 유산 충전이 없다(차례 충전 +1과 맞물려 매 차례 공짜인 영구 상태 막기). 대응 · 다른 충전은 그대로.
+   효과: 회복(wdPray · mkDrainChill · drain, 내 출혈을 지우는 me는 빼고) · 보호막(ward · wardPer · wardFill · sbSinWall) · 보호(나에게 거는 protect · elProtR) · 회피(evade).
+   비용: S-5(10월 24일 만든 사람) 실제로 낸 비용(skCostAt)이 1 이하면 모두. 변형 조건 · 장비 · 접사 · 고유 · 첫 스킬 · 교대 할인도 넣는다. 태세 끄기(wdOff) · 돌아선 방패의 태세 바꾸기(wdTurn)는 새 보호가 아니라 켜고 끄기라 뺀다(js/22 ysSpend).
+   설명 끝: 비용 1 이하 칸(ysHealSk)은 "쓰면 …", 비용 2 이상이라 할인으로 1이 될 수 있는 칸(ysCondSk)은 "비용 1로 쓰면 …" */
+const YS_HEAL_K = ['wdPray', 'mkDrainChill'], YS_GUARD_K = ['ward', 'wardPer', 'wardFill', 'sbSinWall', 'evade', 'elProtR'];
+const ysGuardFx = s => !!(s && s.fx) && s.fx.some(e => YS_HEAL_K.includes(e.k) || YS_GUARD_K.includes(e.k) || (e.k === 'drain' && !e.me) || (e.k === 'meSt' && e.s === 'protect') || (e.k === 'st' && e.s === 'protect' && s.tgt === 'self'));
+const ysHealSk = s => ysGuardFx(s) && skCost(s) + (s.ysUp || 0) <= 1; /* ysUp: 고유가 올린 비용(js/23 skOf) */ // 이름은 S-2 그대로(S-3에서 보호 · 회피까지 넓힘)
+const ysCondSk = s => ysGuardFx(s) && skCost(s) + (s.ysUp || 0) > 1 && (s.cond || []).length > 0; // 설명 끝 "비용 1로 쓰면 …"은 변형 조건 할인 칸에만(S-5 만든 사람 결정 10월 24일: 장비 · 접사 할인은 쓸 때 전투 버튼 · 설명 창에서 알린다. 규칙 자체는 js/22 ysSpend가 실제로 낸 비용으로 본다)
+const skYsTail = s => ysHealSk(s) ? ' 쓰면 다음 차례 유산 충전 없음.' : ysCondSk(s) ? ' 비용 1로 쓰면 다음 차례 유산 충전 없음.' : '';
+function skCd(s) { return '유산 ' + skCost(s) + (s.once ? ' · 전투마다 1번' : ''); }
 const skCharge = skCd; // 옛 이름
 const skHz = s => !!(s && s.fx && s.fx.some(e => e.k === 'hasten')); // 🔄 표시를 붙일 스킬
 const SK_KIND = { cut: '⚔ 베기', spell: '✦ 주문' }; // 마검사 행동 종류 (kind)
@@ -333,7 +514,7 @@ function skBodyBu(s, e, late) {
       if (e.bl) t += ` 그 잃은 생명력 ${e.bl}마다 출혈 1을 건다(최대 6).`; if (e.vu) t += ` 그 잃은 생명력 ${e.vu}마다 취약 1을 건다(최대 3).`; if (e.brk) t += ` 그 잃은 생명력 1마다 붕괴 +${e.brk}(최대 +${e.brkMax}).`; return t; }
     case 'lowx': return e.me ? `내 생명력이 ${Math.round(e.hp * 100)}% 이하면 피해 ×${e.mul}.` : null;
     case 'spread': if (e.s !== 'bleed') return null; return '이 스킬로 쓰러뜨리면 그 적에게 있던 출혈과 이 스킬의 출혈을 더한 만큼 다른 적 모두에게 출혈을 건다(한 번에 최대 6).';
-    case 'hasten': if (e.on !== 'kill') return null; return `🔄 이 스킬로 적을 쓰러뜨리면 다른 ${s.b} 스킬 쿨타임 −${e.n || 1}.`;
+    case 'hasten': if (e.on !== 'kill') return null; return `🔄 이 스킬로 적을 쓰러뜨리면 유산 +1(차례마다 한 번).`;
     case 'quick': if (e.on !== 'kill') return null; return `이 스킬로 적을 쓰러뜨리면 ${e.next ? '다음' : '이번'} 차례에 빠른 칸 +${e.n || 1}.`;
     case 'thorn': return `다음에 맞는 직접 공격 ${e.times}번은 때린 적에게 ${e.dmg ? '피해 ' + e.dmg + ', ' : ''}출혈 ${e.bleed}${skJo(e.bleed)} 건다. 이미 있으면 횟수를 더한다(최대 8번).`;
     case 'onParry': return `그 공격을 흘려 내면 그 적에게 ${[e.dmg ? '피해 ' + e.dmg : '', e.bleed ? '출혈 ' + e.bleed : '', e.brk ? '붕괴 +' + e.brk : ''].filter(Boolean).join(', ')}.`;
@@ -366,7 +547,7 @@ function skBodyConf(s, e) { // null이면 공통 문장, ''이면 문장 없음
       if (e.of === 'tbad') return `대상의 해로운 상태 1마다 ${g}.`;
       { const w = SK_KWN[e.of] || e.of; return `대상의 ${w} 1마다 ${g}. ${w}${skJoW(w, '은', '는')} 줄지 않는다.`; } }
     case 'meSt': if (!CF_BAD.includes(e.s)) return null; if (s.tgt === 'self') return ''; { const ms = s.fx.filter(x => x.k === 'meSt' && CF_BAD.includes(x.s)); return ms[0] === e ? `행동이 끝나면 나에게 ${ms.map(x => (SK_KWN[x.s] || x.s) + ' ' + x.n).join(', ')}(고행).` : ''; }
-    case 'hasten': return e.on === 'clean' ? `🔄 하나라도 지우면 다른 ${s.b} 스킬 쿨타임 −${e.n || 1}.` : null;
+    case 'hasten': return e.on === 'clean' ? `🔄 하나라도 지우면 유산 +1(차례마다 한 번).` : null;
   }
   return null;
 }
@@ -376,7 +557,7 @@ function skBodyBm(s, e) {
   switch (e.k) {
     case 'hpCost': case 'drain': return e.k === 'drain' && !e.eat ? null : ''; // 앞에서 먼저 적는다
     case 'bloodDmg': return e.per >= 1 ? `이번 차례에 낸 생명력 1마다 피해 +${e.per}(20까지 센다).` : `이번 차례에 낸 생명력 ${Math.round(1 / e.per)}마다 피해 +1(20까지 센다).`;
-    case 'payCut': return e.off != null ? `이번 전투에서 다음 피로 당기기 ${e.n}번은 남은 쿨타임 ${e.off}턴 몫까지 생명력이 들지 않는다.` : `이번 전투에서 다음 피로 당기기 ${e.n}번은 드는 생명력이 ${e.mul === 0.5 ? '절반' : Math.round(e.mul * 100) + '%'}이다.`;
+    case 'payCut': return e.off != null ? `이번 전투에서 다음 피로 당기기 ${e.n}번은 모자란 유산 ${e.off} 몫까지 생명력이 들지 않는다.` : `이번 전투에서 다음 피로 당기기 ${e.n}번은 드는 생명력이 ${e.mul === 0.5 ? '절반' : Math.round(e.mul * 100) + '%'}이다.`;
     case 'spread':
       if (e.mark) return '이번 전투에서 이 적이 무엇으로든 쓰러지면, 그때 남아 있던 중독만큼(최대 6) 다른 적 모두에게 중독을 건다.';
       if (e.kill) return many ? '이 스킬로 쓰러뜨린 적마다 남아 있던 중독만큼(최대 6) 다른 적 모두에게 중독을 건다. 한 번 쓸 때 적 하나가 받는 번진 중독은 6까지다.' : '이 스킬로 적을 쓰러뜨리면 그 적에게 남아 있던 중독만큼(최대 6) 다른 적 모두에게 중독을 건다.';
@@ -386,7 +567,59 @@ function skBodyBm(s, e) {
   }
   return null;
 }
+/* 0.8.0 M5-2 수도승 칸의 한 줄 설명(만든 사람: 칸 설명은 한 줄, 효과는 칸마다 하나). 숫자는 효과에서 읽어 변형을 따라간다. 대가는 skDescHtml이 따로 */
+const MK_DESC_MAX = 40;
+function skBodyMk(s) {
+  const hits = s.hits || 1, multi = s.tgt === 'front' || s.tgt === 'all', P = [];
+  for (const e of s.fx) switch (e.k) {
+    case 'dmg': P.push((multi ? (s.tgt === 'front' ? '전열 모두에게 ' : '모든 적에게 ') : '') + '피해 ' + e.n + (hits > 1 ? ' × ' + hits + '타' : '')); break;
+    case 'brk': P.push('붕괴 +' + e.n); break;
+    case 'st': P.push(s.tgt === 'self' ? (e.s === 'empower' && !s.hn5 ? '기 +' + e.n : e.s === 'empower' ? '다음 공격 피해 ×1.25' : '나에게 ' + skKw(s, e.s) + ' ' + e.n) : (multi && s.hn5 && !s.fx.some(x => x.k === 'dmg') ? (s.tgt === 'front' ? '전열 모두에게 ' : '모든 적에게 ') : '') + skKw(s, e.s) + ' ' + e.n); break;
+    case 'focusx': P.push('추적 겹마다 피해 +' + Math.round(e.per * 100) + '%'); break;
+    case 'focusAdd': P.push('추적 ' + e.n + '겹'); break;
+    case 'evadeCtr': P.push((e.rounds ? e.rounds + '라운드 ' : '') + '피하면 반격 사격 ' + e.dmg + (e.focus ? '(추적 +' + e.focus + '겹)' : '')); break;
+    case 'chillCut': P.push('둔화된 채 모으는 적의 공격을 끊음'); break;
+    case 'freeze': P.push('대상이 다음 행동을 놓침'); break;
+    case 'foresee': P.push(e.rounds + '라운드 큰 공격(강타 · 겨눈 한 발 · 화형) 피해 −' + Math.round(e.red * 100) + '%'); break;
+    case 'bbuf': P.push(((e.r || 0) + 1) + '라운드 기본 공격에 ' + (e.s === 'barb' ? '출혈 ' + e.bleed : e.s)); break;
+    case 'hnTrap': P.push(e.txt.replace(/\.$/, '') + (e.mul ? ' · 걸린 적에게 무기 피해의 ' + e.mul + '배' : '')); break;
+    case 'kiHits': P.push(e.max === 1 ? '기가 있으면 +1타' : '기 1마다 1타 추가(최대 ' + e.max + ')'); break;
+    case 'kiBurst': P.push((e.max ? '기를 ' + e.max + '까지' : '기를 모두') + ' 쏟아 기마다 ' + (e.mul ? '피해 +' + Math.round(e.mul * 100) + '%' : '+' + e.per) + (e.brk ? ' · 붕괴 +' + e.brk : '')); break;
+    case 'kiPer': P.push('기마다 피해 +' + e.per); break;
+    case 'stam': P.push('스태미나 +' + e.n); break;
+    case 'poison': P.push((multi ? (s.tgt === 'front' ? '전열 모두에게 ' : '모든 적에게 ') : '') + '중독 ' + e.n); break;
+    case 'burst': P.push((e.pre ? '중독 ' + e.pre + '을을를을를를을을을를'[e.pre % 10] + ' 건 뒤 ' : '') + (multi ? '전열 모두의 ' : '대상 ') + '중독을 터뜨림' + (e.mul && e.mul !== 1 ? '(터뜨리기 피해 ' + e.mul + '배)' : '') + (e.big ? '(정예 · 보스는 터뜨리기 피해 ' + e.big + '배)' : '')); break;
+    case 'grow': P.push('대상 중독 ×' + e.mul); break;
+    case 'spread': P.push('대상 중독 ' + (e.per === 0.5 ? '절반' : Math.round(e.per * 100) + '%') + '을 다른 적 모두에게'); break;
+    case 'exploit': P.push('대상 중독 1마다 피해 +' + e.per); break;
+    case 'brkPer': P.push('대상 중독 1마다 붕괴 +' + e.per); break;
+    case 'brokenx': P.push('무너진 적에게 ×' + e.mul); break;
+    case 'asBackx': P.push((e.low ? '생명력 ' + Math.round(e.low * 100) + '% 이하 ' : '') + '후열 적에게 ×' + e.mul); break;
+    case 'evade': P.push(s.hn5 ? '몸 빼기 ' + e.n : '다음에 맞는 공격 ' + e.n + '번을 피함'); break;
+    case 'parry': P.push('다음 공격을 흘림(' + Math.round(e.red * 100) + '%)'); break; // 대상은 버튼에서 고른다
+    case 'onParry': P.push('흘려 내면 그 적에게 ' + [e.dmg ? '피해 ' + e.dmg : '', e.poison ? '중독 ' + e.poison : '', e.brk ? '붕괴 +' + e.brk : ''].filter(Boolean).join(' · ')); break;
+    case 'parryBuff': P.push('다음 흘리기' + ((e.times || 1) > 1 ? ' ' + e.times + '번' : '') + ' +' + Math.round((e.red || 0) * 100) + '%p' + (e.stam ? ' · 스태미나 없이' : '') + (e.dmg ? ' · 흘려 내면 피해 ' + e.dmg : '') + (e.poison ? ' · 흘려 내면 중독 ' + e.poison : '')); break;
+    case 'meSt': P.push(e.if === 'chill' ? '둔화된 적이면 기 +' + e.n : e.if === 'hit' ? '맞은 적마다 기 +' + e.n : '기 +' + e.n); break;
+    case 'sealx': P.push('지원 행동 봉인'); break;
+    case 'chillx': P.push('둔화된 적에게 ×' + e.mul); break;
+    case 'rime': P.push('나를 친 적 다음 ' + e.times + '번 ' + skKw(s, e.s || 'chill') + ' ' + e.n); break;
+    case 'elRimeR': P.push(e.r + '라운드 나를 친 적에게 ' + skKw(s, e.s) + ' ' + e.n); break;
+    case 'shockx': P.push(e.arc ? '열충격이 다른 적에게 ' + Math.round(e.arc * 100) + '%' : '열충격 ×' + (e.dmg || 1)); break;
+    case 'burnOut': P.push('대상 화상을 모두 태워 1마다 피해 +' + e.per + ' · 붕괴 +' + e.brk); break;
+    case 'thorn': P.push('맞을 때마다 때린 적에게 피해 ' + e.dmg + ' · ' + e.times + '번'); break;
+    case 'kwx': P.push(skKw(s, e.s) + ' 걸린 적에게 ×' + e.mul); break;
+    case 'ward': P.push('보호막 +' + e.n); break;
+    case 'bigx': P.push('정예 · 강적 · 보스에게 ×' + e.mul); break;
+    case 'stance': { const L = ['자세'];
+      if (e.red) L.push('받는 피해 −' + Math.round(e.red * 100) + '%'); if (e.dmg) L.push('되받기 +' + e.dmg); if (e.mul) L.push('되받기 ×' + (1 + e.mul)); if (e.max) L.push(e.max + '번까지'); if (e.keep) L.push(e.keep + '차례 유지');
+      if (e.big) L.push('강타를 되받으면 무너뜨림'); if (e.far) L.push('후열도 되받음'); if (e.ki) L.push('되받으면 기 +' + e.ki); if (e.brk) L.push('되받기 붕괴 +' + e.brk); if (e.chill) L.push('되받은 적 둔화 ' + e.chill);
+      P.push(s.tgt === 'self' ? L.join(' · ') : '친 뒤 ' + L.join(' · ')); break; }
+    default: if (e.txt) P.push(e.txt.replace(/\.$/, ''));
+  }
+  return P.join(' · ') + '.';
+}
 function skBody(s) {
+  if (s.mk5 || s.as5 || s.hn5 || s.el5) return skBodyMk(s) + skYsTail(s) + (s.pay ? ' 대가: ' + s.pay : ''); // M5-2 수도승 · M5-3 암살자 한 줄 설명
   const out = []; const hits = s.hits || 1; const parts = []; const first = []; const burnWard = s.fx.some(e => e.k === 'wardBurn'); const isE = String(s.id).slice(0, 2) === 'e_'; // first: 연타의 첫 타격에만 거는 상태 (마검사 연타 칸)
   const eMulti = isE && hits > 1 && s.fx.some(e => e.k === 'st'); // 원소술사 여러 번 쏘기: 상태는 첫 발 뒤에 걸려 다음 발부터 쓴다 (엔진 그대로, 문장만)
   const cf = String(s.id).slice(0, 2) === 'c_'; if (cf) out.push(...skBodyConfPre(s)); // 숨겨진 직업 2: 옮기기 · 벗기기 · 정화 · 사함은 피해보다 먼저
@@ -400,7 +633,7 @@ function skBody(s) {
     if (bu && e.k === 'drain' && e.s === 'bleed' && e.me) out.push('먼저 내 출혈을 모두 지운다. ' + (e.dmg ? `지운 출혈 1마다 이 스킬의 피해 +${e.dmg}(${e.max || 10}까지 센다).` : `지운 출혈 1마다 나에게 강화 ${e.emp || 1}(최대 4).`));
   }
   for (const e of s.fx) {
-    if (e.k === 'dmg') parts.push(s.id==='tut_bash' ? `피해 ${e.n}` : `기준 피해 ${e.n}(${skillGrowthStat(s)==='int'?'지능':skillGrowthStat(s)==='dex'?'민첩·무기':'힘·무기'}로 성장)`);
+    if (e.k === 'dmg') parts.push(s.id==='tut_bash' ? `피해 ${e.n}` : `기준 피해 ${e.n}(${skillGrowthStat(s)==='int'?'지능으로':skillGrowthStat(s)==='dex'?'민첩·무기로':'힘·무기로'} 성장)`);
     if (e.k === 'poison') parts.push(`중독 ${e.n}`);
     if (e.k === 'brk') parts.push(`붕괴 +${e.n}`);
     if (e.k === 'st' && !eMulti) { const t = `${s.tgt === 'self' ? '나에게 ' : ''}${skKw(s, e.s)} ${e.n}`; if (bu && ((eatT && e.s === 'bleed') || hits > 1)) late.push(e); else (s.kind && hits > 1 && s.tgt !== 'self' ? first : parts).push(t); }
@@ -415,6 +648,7 @@ function skBody(s) {
     if (bu) { const t = skBodyBu(s, e, late); if (t !== null) { if (t) out.push(t); continue; } }
     if (cf) { const t = skBodyConf(s, e); if (t !== null) { if (t) out.push(t); continue; } }
     if (bm) { const t = skBodyBm(s, e); if (t !== null) { if (t) out.push(t); continue; } }
+    if (SB_BD_K.includes(e.k) || WD_K.includes(e.k) || (e.k === 'imbue' && (e.txt || (!e.also && s.fx.some(x => x.k === 'imbue' && x.also && x.txt))))) { if (e.txt) out.push(e.txt); continue; } // 0.8.0 M5-0 마검사 경계 · M5-1 파수꾼(WD_K): 만든 사람 문장 그대로(txt). 파수꾼 칸은 전에 이 길에 없어 태세 · 기도 · 승부수 효과 문장이 비어 보였다
     switch (e.k) {
       case 'grow': out.push(`대상의 중독을 ${e.mul}배로 만든다.` + (e.add ? ` 그 뒤 중독 ${e.add}.` : '')); break;
       case 'burst':
@@ -444,19 +678,21 @@ function skBody(s) {
       case 'focusBurst': out.push(`대상의 추적을 모두 터뜨린다. 1겹마다 기준 추가 피해 ${e.n}(민첩 1점마다 ${FOCUS_STAT_PCT}% 증가). 추적은 사라진다.`); break;
       case 'focusAdd': out.push(`대상에게 추적 +${e.n}겹. 이 효과로는 2겹까지만 쌓이고, 3겹째는 같은 적을 다시 맞혀야 쌓인다.`); break;
       case 'swapx': out.push(`직전에 친 적과 다른 적이면 피해 ×${e.mul}.`); break;
-      case 'evade': out.push(`다음에 맞는 공격 ${e.n}번을 피한다. 화형과 지속 피해는 피할 수 없다.`); break;
+      case 'evade': out.push(`다음에 맞는 공격 ${e.n}번을 피한다. 광역 · 화형 · 상태 피해는 피할 수 없다.`); break;
       case 'evadeCtr': out.push((e.charged ? '피한 공격이 강타나 겨눈 한 발이면' : (e.rounds ? e.rounds + '라운드 동안 ' : '') + '공격을 피할 때마다') + ` 그 적에게 반격 사격을 한다(피해 ${e.dmg}${e.chill ? ', 둔화 ' + e.chill : ''}).`); break;
       case 'quick': out.push('이번 차례에 빠른 칸 +1.'); break;
       case 'chillCut': out.push(`대상이 둔화된 채 강타 · 영창 · 겨누기를 모으는 중이면 그 공격을 끊는다. 강적 · 보스는 끊기지 않고 붕괴 +${e.brk}.`); break;
       case 'chillShatter': out.push(`대상의 둔화를 모두 깨뜨린다. 둔화 1마다 피해 +${e.dmg}, 붕괴 +${e.brk}.`); break;
       case 'chillSpread': out.push(`대상의 둔화${(e.per || 1) === 1 ? '만큼' : ' × ' + e.per + '만큼'} 다른 적 모두에게 둔화를 건다. 대상의 둔화는 그대로다.`); break;
       case 'freeze': out.push(`일반 · 정예 적은 다음 행동을 놓친다(얼어붙음). 강적 · 보스는 둔화 ${e.chill}, 붕괴 +${e.brk}.`); break;
-      case 'onCutBreak': out.push(`모으던 적을 이 스킬로 무너뜨리면 나에게 가속 ${e.haste}${e.hasten ? ', 다른 ' + s.b + ' 스킬 쿨타임 −' + e.hasten : ''}.`); break;
+      case 'onCutBreak': out.push(`모으던 적을 이 스킬로 무너뜨리면 나에게 가속 ${e.haste}${e.hasten ? ', 유산 +1(차례마다 한 번)' : ''}.`); break;
       case 'quickTurns': out.push(`이번 차례부터 내 차례 ${e.n}번 동안 빠른 칸 +1.`); break;
       case 'foresee': out.push(`${e.rounds}라운드 동안 강타 · 겨눈 한 발 · 화형의 피해가 ${Math.round(e.red * 100)}% 줄어든다. 피할 수 없는 화형도 줄어든다.`); break;
       case 'hastex': out.push(`가속으로 두 번 움직이는 라운드면 피해 ×${e.mul}.`); break;
+      case 'bbuf': { const til = (e.r || 0) === 0 ? '이번 라운드가 끝날 때까지' : (e.r || 0) === 1 ? (e.s === 'barb' ? '2라운드(이번 + 다음) 동안' : '다음 라운드가 끝날 때까지') : (e.r + 1) + '라운드(이번 라운드부터) 동안'; // 0.8.0 5단계 연사 기본 공격 버프 (2-6a)
+        out.push(`${til} 기본 공격이 ` + (e.s === 'swap' ? `직전에 친 적과 다른 적을 치면 피해 ×${e.mul}, 출혈 ${e.bleed}.` : e.s === 'extra' ? `같은 대상에게 덧화살 한 발을 더 쏜다(그 기본 공격 피해의 ${Math.round(e.mul * 100)}%, 출혈은 걸지 않는다).` + (e.turn ? ` 덧화살이 켜진 동안 기본 공격이 직전에 친 적과 다른 적을 치면 ×${e.turn}(덧화살 포함).` : '') : e.s === 'barb' ? `출혈 ${e.bleed}${skJo(e.bleed)} 건다.` : `피해 ×${e.mul}.`) + ' 강공격 · 스킬은 받지 않는다. 다시 걸면 기간만 새로 한다.'); break; }
       case 'hasteSpend': out.push(`가속이 있으면 1을 써서 피해 ×${e.mul}. 그 대신 다음 라운드에 연속 행동을 하지 못한다.`); break;
-      case 'meSt': out.push(e.if === 'chill' ? (s.tgt === 'front' || s.tgt === 'all' ? `이미 둔화되어 있던 적 하나마다 나에게 ${skKw(s, e.s)} +${e.n}.` : `대상이 이미 둔화되어 있었으면 때린 뒤 나에게 ${skKw(s, e.s)} +${e.n}.`) : e.s === 'empower' && String(s.id).slice(0, 2) === 'm_' ? `때린 뒤 나에게 ${skKw(s, e.s)} +${e.n}.` : `나에게 ${SK_KWN[e.s] || e.s} ${e.n}.`); break; // "때린 뒤"는 수도승(m_)만: 엔진이 수도승의 기만 피해 뒤에 준다(b.kiPend). 다른 직업의 강화는 먼저 걸린다
+      case 'meSt': if (e.on === 'cut') { out.push(`이 행동으로 영창을 끊으면 나에게 ${SK_KWN[e.s] || e.s} ${e.n}.`); break; } /* 10월 18일 0.8.0 5단계 원소 장막 */ out.push(e.if === 'chill' ? (s.tgt === 'front' || s.tgt === 'all' ? `이미 둔화되어 있던 적 하나마다 나에게 ${skKw(s, e.s)} +${e.n}.` : `대상이 이미 둔화되어 있었으면 때린 뒤 나에게 ${skKw(s, e.s)} +${e.n}.`) : e.s === 'empower' && String(s.id).slice(0, 2) === 'm_' ? `때린 뒤 나에게 ${skKw(s, e.s)} +${e.n}.` : `나에게 ${SK_KWN[e.s] || e.s} ${e.n}.`); break; // "때린 뒤"는 수도승(m_)만: 엔진이 수도승의 기만 피해 뒤에 준다(b.kiPend). 다른 직업의 강화는 먼저 걸린다
       case 'stance': { const ex = [e.dmg ? '피해 +' + e.dmg : '', e.brk ? '붕괴 +' + e.brk : '', e.ki ? '기 +' + e.ki : ''].filter(Boolean); const on = [e.chill ? '둔화 ' + e.chill : '', e.weak ? '약화 ' + e.weak : ''].filter(Boolean);
         out.push((s.tgt === 'self' ? '' : '친 뒤 ') + '자세를 잡는다. 내 다음 차례까지 ' + (e.far ? '전열 적과 후열에서 직접 쏘는 적의 공격을 되받는다. 화형은 되받지 못한다.' : '전열 적의 직접 공격을 되받는다.') + ' 받는 피해는 줄지 않는다.'
           + (ex.length ? ` 되받을 때마다 ${ex.join(', ')}.` : '') + (on.length ? ` 되받은 적에게 ${on.join(', ')}.` : '')); break; }
@@ -480,23 +716,33 @@ function skBody(s) {
       case 'spread': out.push(`대상의 중독${e.per === 1 ? '' : e.per === 0.5 ? ' 절반(올림)' : ' ' + Math.round(e.per * 100) + '%'}만큼 다른 적 모두에게 중독을 건다. 대상의 중독은 그대로다.`); break;
       case 'capOver': out.push(`이 스킬로 거는 중독은 상한을 넘어 ${e.cap}까지 쌓인다.`); break;
       case 'wardFill': out.push(e.to && e.to < 1 ? `보호막을 상한의 ${Math.round(e.to * 100)}%까지 채운다. 이미 그만큼 있으면 늘지 않는다.` : '보호막을 상한까지 채운다.'); break;
+      case 'wardFirst': out.push(`먼저 보호막 ${e.n}${e.protect ? ' · 보호 ' + e.protect : ''}${skJo(e.protect || e.n)} 두른다.`); break; // 10월 17일 보완 5 갑주 해방
       case 'wardBurn': { const wd = (s.kind || String(s.id).slice(0, 2) === 'w_') && s.fx.find(x => x.k === 'ward'); out.push(`보호막을 ${e.max ? '최대 ' + e.max + '까지' : '모두'} 태운다. 태운 보호막 1마다 ${s.tgt === 'front' ? '전열 모두에게 ' : s.tgt === 'all' ? '모든 적에게 ' : ''}피해 ${e.mul}. 보호막이 없으면 ${s.fx.some(x => x.k === 'dmg') ? '더하는 피해는' : '이 피해는'} 0이다.` + (wd ? ` 태운 뒤 나에게 보호막 +${wd.n}.` : '')); break; }
-      case 'wardDmg': out.push(e.drainAll ? `현재 보호막을 전부 소모합니다. 추가 피해 = 소모한 보호막 × ${e.per}(최대 ${e.cap}). 이 행동에서는 교대 보호막을 얻지 않습니다.` : e.spend ? `현재 보호막의 ${e.spend * 100}%를 소모합니다(최대 ${e.cap / e.per}). 추가 피해 = 소모한 보호막 × ${e.per}(최대 ${e.cap}).` : `${e.per >= 1 ? '내 보호막 1마다 피해 +' + e.per : '내 보호막 ' + Math.round(1 / e.per) + '마다 피해 +1'}${e.cap != null ? '(최대 ' + e.cap + ')' : ''}. 보호막은 줄지 않습니다.`); break;
+      case 'wardDmg': out.push(e.drainAll ? `현재 보호막을 모두 소모한다. 추가 피해 = 소모한 보호막 × ${e.per}(최대 ${e.cap}). 이 행동에서는 교대 보호막을 얻지 않는다.` : e.spend ? `현재 보호막의 ${e.spend * 100}%를 소모한다(최대 ${e.cap / e.per}). 추가 피해 = 소모한 보호막 × ${e.per}(최대 ${e.cap}).` : `${e.per >= 1 ? '내 보호막 1마다 피해 +' + e.per : '내 보호막 ' + Math.round(1 / e.per) + '마다 피해 +1'}${e.cap != null ? '(최대 ' + e.cap + ')' : ''}. 보호막은 줄지 않는다.`); break;
       case 'thorn': out.push(`가시 ${e.times}번을 얻는다. 맞을 때마다 때린 적에게 피해 ${e.dmg}. 이미 있으면 횟수를 더한다(최대 8번).`); break;
       case 'vulnPer': out.push(`대상의 취약 1마다 피해 +${e.per}. 취약은 줄지 않는다.`); break;
       case 'shieldx': out.push(`방패병에게는 붕괴 ×${e.mul}.`); break;
       case 'pull': out.push('대상이 후열이면 전열로 끌어낸다.'); break;
       case 'vulnGrow': out.push(`대상의 취약을 ${e.mul}배로 만든다(상한 5).`); break;
       case 'chillx': out.push(`둔화된 적에게는 피해 ×${e.mul}.`); break;
-      case 'hasten': if (e.on === 'ctr') { out.push(`🔄 이 자세에서 처음 되받으면 다른 ${s.b} 스킬 쿨타임 −${e.n || 1}.`); break; } if (e.on === 'shock') { out.push(`🔄 이 스킬로 열충격이 일어나면 다른 ${s.b} 스킬 쿨타임 −${e.n || 1}.`); break; } if (e.on === 'evade') { out.push(`🔄 공격을 피할 때마다 다른 ${s.b} 스킬 쿨타임 −${e.n || 1}.`); break; }
-      if (e.on === 'alt' || e.on === 'kill') { out.push(`🔄 ${e.on === 'alt' ? '교대로 쓰면' : '이 스킬로 적을 쓰러뜨리면'} 다른 ${s.b} 스킬 쿨타임 −${e.n || 1}.`); break; }
-      { const pb = s.fx.find(x => x.k === 'parryBuff'); out.push((e.on === 'parry' ? (pb ? ((pb.times || 1) > 1 ? '🔄 그 흘리기에 성공할 때마다' : '🔄 그 흘리기에 성공하면') : '🔄 그 공격을 흘려 내면') : '🔄 쓰면') + ` 다른 ${s.b} 스킬 쿨타임 −${e.n || 1}.`); break; }
+      case 'hasten': if (e.on === 'ctr') { out.push(`🔄 이 자세에서 처음 되받으면 유산 +1(차례마다 한 번).`); break; } if (e.on === 'shock') { out.push(`🔄 이 스킬로 열충격이 일어나면 유산 +1(차례마다 한 번).`); break; } if (e.on === 'evade') { out.push(`🔄 공격을 피할 때마다 유산 +1(차례마다 한 번).`); break; }
+      if (e.on === 'alt' || e.on === 'kill') { out.push(`🔄 ${e.on === 'alt' ? '교대로 쓰면' : '이 스킬로 적을 쓰러뜨리면'} 유산 +1(차례마다 한 번).`); break; }
+      { const pb = s.fx.find(x => x.k === 'parryBuff'); out.push((e.on === 'parry' ? (pb ? ((pb.times || 1) > 1 ? '🔄 그 흘리기에 성공할 때마다' : '🔄 그 흘리기에 성공하면') : '🔄 그 공격을 흘려 내면') : '🔄 쓰면') + ` 유산 +1(차례마다 한 번).`); break; }
     }
   }
   { const g = bu && s.fx.find(e => e.k === 'grow' && e.s === 'bleed'); if (g) out.push(`그 뒤 대상의 출혈을 ${g.mul}배${Number.isInteger(g.mul) ? '' : '(올림)'}로 만${g.add ? `들고 ${g.add}${skJo(g.add)} 더한다` : '든다'}(최대 10).`); }
   if (s.fx.filter(e => ['lowx', 'brokenx', 'bigx', 'chillx', 'kwx'].includes(e.k)).length >= 2) out.push('조건이 겹치면 배수를 곱한다.'); // 10월 4일: 박살(붕괴한 정예 · 보스에게 ×2.5 × 1.5) 등
-  if (s.killRecharge) out.push(s.once ? '이 스킬로 적을 쓰러뜨리면 한 번 더 쓸 수 있다.' : bu ? '이 스킬로 적을 쓰러뜨리면 쿨타임이 돌지 않아 다음 차례에 다시 쓸 수 있다.' : '이 스킬로 적을 쓰러뜨리면 기다리지 않고 바로 다시 쓸 수 있다.');
+  if (s.killRecharge) out.push(s.once ? '이 스킬로 적을 쓰러뜨리면 한 번 더 쓸 수 있다.' : s.krShock ? '이 행동으로 적을 쓰러뜨리면(행동 끝 열충격 포함) 유산 +1(차례마다 한 번).' : '이 스킬로 적을 쓰러뜨리면 유산 +1(차례마다 한 번).'); // krShock: 10월 18일 0.8.0 5단계 공명
   if (bu && (s.tgt === 'ranged' || s.tgt === 'all') && s.fx.some(e => e.k === 'dmg')) out.push((s.tgt === 'all' ? '후열에도 닿는다. ' : '') + '근접 공격이 아니라 흡혈은 일어나지 않는다.');
   if (s.fx.some(e => skillResourceGrows(s, e) && e.k !== 'focusBurst')) out.push((/^m_/.test(s.id) ? '이 기 추가 피해' : '이 자원 추가 피해') + '는 힘 1점마다 기준값의 1%씩 증가한다.');
-  return out.join(' ').replace(/\s+/g, ' ').trim();
+  if (s.pay) out.push('대가: ' + s.pay); // M5-0a 승부수: 대가는 따로 적어 두고(설명란은 skDescHtml이 줄을 나눈다), 글 설명에서는 끝에 붙인다
+  return (out.join(' ') + skYsTail(s)).replace(/\s+/g, ' ').trim(); // S-2: 유산 1 회복 칸은 끝에 충전 없음
+}
+/* M5-0a(10월 20일 만든 사람): 대사가 있는 스킬(승부수)의 설명란. 대사는 맨 위 따로 한 칸(명조 가운데 인용, 「」는 부채꼴 색 장식 · 위에 ✦ 가는 선, 같은 날 만든 사람 고름), 그 아래 효과 / 대가 / 대상을 줄로 나눈다.
+   대가는 색과 "대가" 글자로 구분(색만으로 구분하지 않음). 스크린리더는 "대사: …, 효과: …, 대가: …, 대상: …" 순서. 대사가 없으면 빈 문자열(부른 쪽이 원래 설명을 쓴다) */
+const SK_LINE_COL = { 빙염: '#b48cf0', 정적: '#a8d8f0', 마염: '#f07a3c', /* M5-5 원소술사: 빙염의 화신 비전빛 · 영겁의 정적 얼음빛 · 천화 불빛 */ 명궁: '#e8d48a', 유격: '#9fd0e8', 잠복: '#d0604a', /* M5-4 사냥꾼: 만궁 활빛 · 질풍난사 바람빛 · 혈향의 덫 핏빛 */ 독화: '#9ad46a', 암영: '#c9d2e0', 잔영: '#8b7bd8', /* M5-3 암살자: 만독개화 독빛 · 무영살 칼빛 · 잔영난무 잔상빛 */ 반탄: '#f0903c', 역혈: '#e6c060', 파혈: '#e8eef5', /* M5-2 수도승: 역천권 주황 · 천망 금빛 경락 · 일지멸맥 하얀 빛 */ 혈염: '#ef5d3c', '죄인의 피': '#c23a52', '유산의 불': '#f0ac48', 공성추: '#a8bace', '기둥 파쇄': '#c98b4a', '용맹의 투지': '#e8c25a' };
+function skDescHtml(s) {
+  if (!s || !s.line) return ''; const e = x => String(x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const body = skBody(Object.assign({}, s, { pay: null })), col = SK_LINE_COL[s.b] || 'var(--gold)', who = `${SKK.TGN[s.tgt]} · ${SKK.TN[s.time]}`;
+  return `<div class="skd" style="--lc:${col}"><p class="skd-line"><span class="sr">대사: </span><span class="skd-q" aria-hidden="true">「</span>${e(s.line.replace(/^「|」$/g, ''))}<span class="skd-q" aria-hidden="true">」</span></p><div class="skd-rows"><div class="skd-r"><span class="k">효과</span><span class="v">${e(body)}</span></div>${s.pay ? `<div class="skd-r pay"><span class="k">대가</span><span class="v">${e(s.pay)}</span></div>` : ''}<div class="skd-r"><span class="k">대상</span><span class="v">${e(who)}</span></div></div></div>`;
 }

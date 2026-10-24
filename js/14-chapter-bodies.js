@@ -4,11 +4,11 @@ const BIGK = ['charge', 'heavy', 'burrow', 'erupt', 'chant', 'chanting', 'burn',
 const hexDmgOf = (b, e) => { const k = HEX.kinds.filter(s => st(b.p, s) > 0).length; return enemyHitEst(b, e) / ROLES.hexer.hit * Math.min(HEX.cap, HEX.base + HEX.per * k); }; // 조이기: 내 해로운 상태 가짓수
 const bigPending = (b, e) => alive(b).some(x => x !== e && x.intent && (BIGK.includes(x.intent.k) || (x.intent.k === 'constrict' && hexDmgOf(b, x) >= b.p.hpMax * 0.15))) || (b.heatWarn != null && b.heatWarn >= (b.round || 0)); // 3챕터: 열풍이 예고된 라운드도 큰 공격 하나로 센다
 const wallOf = (b, e) => alive(b).find(x => x.role === 'bonewall' && x.wallOf === e.id);
-const realFoe = e => e.role !== 'root' && !e.pile && e.role !== 'bonewall' && e.role !== 'crown'; // 전투 끝 판정에서 세는 적 (뼈 더미 · 뼈벽은 빼고)
+const realFoe = e => e.role !== 'root' && !e.pile && e.role !== 'bonewall' && e.role !== 'crown' && e.role !== 'lantern' && !['bonfire', 'rampart', 'brick', 'barricade'].includes(e.role); // A3: 3챕터 물체(봉화 · 부품 · 벽돌 · 바리케이드)도 세지 않는다. A2: 바르도의 등불(물체)도 세지 않는다 // 전투 끝 판정에서 세는 적 (뼈 더미 · 뼈벽은 빼고)
 function buildWall(b, e) {
   if (wallOf(b, e)) return; const w = mkEnemy('bonewall', 0, b.idc++, { lv: e.lv || 1, name: b.ctx.names && b.ctx.names.bonewall });
   w.hpMax = Math.max(1, Math.round(e.hpMax * BWALL.hp)); w.hp = w.hpMax; w.brkMax = BWALL.brk; w.summoned = true; w.wallOf = e.id; w.intent = { k: 'none' }; b.en.push(w);
-  logp(b, 'bad', e.n + '이(가) 뼈벽을 쌓는다. 후열이 받는 한 적 대상 피해가 절반이 된다');
+  logp(b, 'bad', e.n + '이(가) 뼈벽을 쌓는다. 후열이 받는 한 적 대상 피해 절반');
 }
 /* 서 있는 해골의 부활 예고(10월 14일 개편 4-3): 쓰러지면 뼈 더미가 되어 몇 라운드 뒤 일어서는지, 지금 쓰러지면 일어서지 못하는지 */
 function skelRise(b, e) {
@@ -18,7 +18,7 @@ function skelRise(b, e) {
   return { wait: RISE.wait + lime + charm, lime, charm };
 }
 function makePile(b, e) { // 해골이 쓰러지면 뼈 더미가 된다 (경험치 · 전리품은 마지막에 한 번)
-  e.pile = { wait: RISE.wait + (e.limeDelay || 0), born: b.tick }; if (e.limeDelay) { logp(b, 'good', e.n + '의 뼈에 석회가 배어 있다. 부활 +' + e.limeDelay + '라운드'); e.limeDelay = 0; } e.hp = Math.max(1, Math.round(e.hpMax * RISE.pile)); e.intent = { k: 'none' }; e.braced = 0; e.countering = 0; e.evading = 0; e.guarding = null; e.stun = 0; e.brk = 0;
+  e.pile = { wait: RISE.wait + (e.limeDelay || 0), born: b.tick }; if (e.limeDelay) { logp(b, 'good', e.n + '의 뼈에 석회가 배어 있다. 부활 +' + e.limeDelay + '라운드'); e.limeDelay = 0; } e.hp = Math.max(1, Math.round(e.hpMax * RISE.pile)); e.intent = { k: 'none' }; e.teleX = 1; e.braced = 0; e.countering = 0; e.evading = 0; e.guarding = null; e.stun = 0; e.brk = 0;
   for (const k of Object.keys(e.s)) if (!['poison', 'bleed'].includes(k)) delete e.s[k];
   logp(b, 'good', e.n + '이(가) 무너진다. 뼈가 아직 꿈틀거린다');
   fxRun(b.p, 'onPile', b, b.p, e);
@@ -55,11 +55,14 @@ function lordFall(b, e) {
   for (const x of alive(b).filter(x => x.pile)) riseSkel(b, x, ''); codexHit(b, 'cryptlord', 'fall');
 }
 function lordGuard(lv, id, ch) { const s0 = mkEnemy('skeleton', 0, id, { lv, name: (ENEMY_NAMES[ch] || ENEMY_NAMES[2] || {}).skeleton }); const D = diffOf(ch).lower; s0.hpMax = Math.round(s0.hpMax * D.hp * LORD.gHp); s0.hp = s0.hpMax; s0.dmg *= D.dmg * LORD.gDmg; s0.summoned = true; return s0; } // 근위 · 부름 해골: 하층 해골과 같은 세기 (10월 7일: 던전 배율이 빠져 1.6배로 때렸다)
-function riseSkel(b, e, pre) { e.pile = null; e.rose = 1; e.hp = Math.max(1, Math.round(e.hpMax * RISE.hp)); e.intent = { k: 'brace' }; e.acts = 2; logp(b, 'bad', (pre || '') + '뼈 더미가 다시 맞춰져 ' + e.n + '이(가) 일어선다'); fxRun(b.p, 'onRise', b, b.p, e); }
-/* ===== 3챕터 몸과 역할 · 열기 · 강적 · 재의 여왕 (10월 7일, docs/챕터/3챕터.md 6 · 9 · 10절. 강적 · 보스의 상세 · 대처는 비공개 문서) =====
+function riseSkel(b, e, pre) { e.pile = null; e.rose = 1; e.hp = Math.max(1, Math.round(e.hpMax * RISE.hp)); e.intent = { k: 'brace' }; e.teleX = 1; e.acts = 2; logp(b, 'bad', (pre || '') + '뼈 더미가 다시 맞춰져 ' + e.n + '이(가) 일어선다'); fxRun(b.p, 'onRise', b, b.p, e); }
+/* ===== 3챕터 몸과 역할 · 열기 · 강적 · 재의 여왕 (10월 7일, docs/챕터/archive/3챕터-재의사막.md 6 · 9 · 10절. 강적 · 보스의 상세 · 대처는 비공개 문서) =====
    모래 잠복자는 2챕터 땅속(e.under, BURROW)을 그대로 쓴다. 허상 e.haze(카드 🌫️n), 붕대 e.wrap(🧻n), 열기 b.heat(전장 게이지), 화염 강화 e.fire.
    여기의 함수는 3챕터 몸(또는 3챕터 전투 b.ctx.ch ≥ 3)이 있을 때만 무언가를 한다. 1 · 2챕터 전투의 결과는 그대로다 */
-const isCh3 = b => ((b && b.ctx && b.ctx.ch) || 1) >= 3;
+/* 0.8.0 A3(10월 22일): 3챕터를 「성벽 아래」로 바꾸면서 옛 재의 사막 엔진은 OLD3 깃발(거짓)로 잠들었다. 옛 데이터는 data/archive/old-ch3.js(index.html은 읽지 않음) */
+const OLD3 = false;
+const isCh3 = b => OLD3 && ((b && b.ctx && b.ctx.ch) || 1) >= 3;
+const old3 = ch => OLD3 && (ch || 1) >= 3;
 const queenOf = b => b.en.find(e => e.boss === 'queen' && e.alive);
 const MCH_K = ['mchant', 'mchanting', 'msong']; // 재의 시녀의 영창
 const DMG_K = ['attack', 'heavy', 'firepot', 'ash', 'noon', 'erupt', 'constrict', 'burn', 'explode', 'brand', 'mirror', 'reflect', 'hand']; // 나를 직접 치는 예고 (내 화상 몫을 더해 보인다)
@@ -79,7 +82,7 @@ function heatWarnSet(b, r) {
 function heatAdd(b, n, why) {
   if (b.heat == null || !n) return 0; const h0 = b.heat; b.heat = Math.max(0, Math.min(100, b.heat + n)); const dd = b.heat - h0; if (!dd) return 0;
   if (dd > 0) { b.heatLog = b.heatLog || {}; b.heatLog[why] = (b.heatLog[why] || 0) + dd; }
-  logp(b, dd > 0 ? 'bad' : 'good', '열기 ' + (dd > 0 ? '+' : '') + Math.round(dd) + ' (' + why + ') · ' + Math.round(b.heat) + '/100');
+  logp(b, dd > 0 ? 'bad' : 'good', '열기 ' + (dd > 0 ? '+' : '') + Math.round(dd) + ' (' + why + ')');
   if (b.heat >= 100) heatWarnSet(b, (b.queue || []).slice(b.cur ? 1 : 0).includes('p') ? (b.round || 0) : (b.round || 0) + 1); // 내 차례가 이번 라운드에 남아 있으면 이번 라운드 끝, 아니면 다음 라운드 끝 (2절 4-1번)
   return dd;
 }
@@ -105,7 +108,7 @@ function ch3Tick(b, T) {
     if (e.s.chill || e.slowR === b.round) { codexHit(b, 'sundial', 'stall'); continue; }
     e.clock = Math.max(0, (e.clock != null ? e.clock : FOE_X.sundial.clock) - 1);
     if (e.clock === 1) logp(b, 'bad', '해시계의 그림자가 짧아진다. 다음 라운드 끝에 정오');
-    if (e.clock <= 0) { e.noonNext = 1; e.intent = { k: 'noon' }; e.teleTurn = b.turnIdx; logp(b, 'crit', '해시계의 그림자가 사라진다. ' + e.n + '에게 빛이 모인다'); }
+    if (e.clock <= 0) { e.noonNext = 1; e.intent = { k: 'noon' }; e.teleX = 1; e.teleTurn = b.turnIdx; logp(b, 'crit', '해시계의 그림자가 사라진다. ' + e.n + '에게 빛이 모인다'); }
   }
   if (b.heat == null) return;
   const q = queenOf(b); const r = heatRise(b);
@@ -154,7 +157,7 @@ function ch3HitMul(b, e, o) {
   if (e.row === 'back' && hasMod(b, 'sandstorm')) m *= 0.8;
   if (e.foe === 'stalker') {
     if (e.stkExp > 0) m *= 1 + FOE_X.stalker.exposedTaken;
-    if (e.under && o.aoe && e.stlAct !== b.actN) { e.stlAct = b.actN; e.startle = (e.startle || 0) + 1; if (e.startle >= FOE_X.stalker.aoeReveal) { e.under = 0; e.stkPrep = 0; e.teleTurn = null; e.startle = 0; e.stkExp = 1; e.intent = { k: 'exposed' }; logp(b, 'crit', e.n + '이(가) 놀라 모래 위로 튀어나온다'); codexHit(b, 'stalker', 'startle'); } }
+    if (e.under && o.aoe && e.stlAct !== b.actN) { e.stlAct = b.actN; e.startle = (e.startle || 0) + 1; if (e.startle >= FOE_X.stalker.aoeReveal) { e.under = 0; e.stkPrep = 0; e.teleTurn = null; e.startle = 0; e.stkExp = 1; e.intent = { k: 'exposed' }; e.teleX = 1; logp(b, 'crit', e.n + '이(가) 놀라 모래 위로 튀어나온다'); codexHit(b, 'stalker', 'startle'); } }
   }
   if (e.foe === 'sundial' && !e.noonNext && (e.clock != null ? e.clock : 9) <= FOE_X.sundial.lowAt && e.rwR !== b.round) { e.rwR = b.round; e.clock += FOE_X.sundial.lowBack; logp(b, 'good', e.n + '이(가) 움찔한다. 해시계 +' + FOE_X.sundial.lowBack + ' (' + e.clock + ')'); codexHit(b, 'sundial', 'shadow'); }
   return m;
@@ -174,9 +177,9 @@ function ch3OnBreak(b, e) {
   if (e.wrap > 0) wrapOff(b, e, '찢겨');
   if (e.foe === 'colossus' && e.glow) { e.glow = 0; logp(b, 'good', e.n + '의 붉은 빛이 꺼진다'); }
   if (e.foe === 'reaper' && e.embers) { e.embers = 0; logp(b, 'good', '낫의 불씨가 흩어진다'); codexHit(b, 'reaper', 'scatter'); }
-  if (e.foe === 'sundial') { e.clock = Math.min(FOE_X.sundial.clock, (e.clock || 0) + FOE_X.sundial.brkBack); if (e.noonNext) { e.noonNext = 0; e.teleTurn = null; } if (e.intent && e.intent.k === 'noon') e.intent = { k: 'attack' }; logp(b, 'good', '그림자가 다시 길어진다. 해시계 ' + e.clock); codexHit(b, 'sundial', 'shadow'); }
+  if (e.foe === 'sundial') { e.clock = Math.min(FOE_X.sundial.clock, (e.clock || 0) + FOE_X.sundial.brkBack); if (e.noonNext) { e.noonNext = 0; e.teleTurn = null; } if (e.intent && e.intent.k === 'noon') { e.intent = { k: 'attack' }; e.teleX = 1; } logp(b, 'good', '그림자가 다시 길어진다. 해시계 ' + e.clock); codexHit(b, 'sundial', 'shadow'); }
   if (e.boss === 'queen') heatAdd(b, -QUEEN.breakHeat, '여왕이 무너짐');
-  if (e.role === 'maid' && e.intent && MCH_K.includes(e.intent.k)) e.intent = { k: 'attack' };
+  if (e.role === 'maid' && e.intent && MCH_K.includes(e.intent.k)) { e.intent = { k: 'attack' }; e.teleX = 1; }
 }
 /* 쓰러졌을 때 (killEnemy) */
 function ch3OnKill(b, e) {
@@ -228,7 +231,7 @@ function reapAct(b, e) {
   const half = !!(e.s.chill || e.slowR === b.round); let tot = 0;
   const take = u => { const n0 = st(u, 'ignite'); if (!n0) return 0; const t = half ? Math.floor(n0 / 2) : n0; if (t > 0) kwDec(u, 'ignite', t); return t; };
   tot += take(b.p); for (const x of alive(b)) if (x !== e && x.role !== 'crown') tot += take(x);
-  if (tot > 0) { const g = Math.max(1, Math.floor(tot / 2)); e.embers = Math.min(FOE_X.reaper.cap, (e.embers || 0) + g); logp(b, 'bad', e.n + '이(가) 불씨를 거둔다. 화상 ' + tot + '을(를) 거두어 불씨 ' + e.embers + (half ? ' (둔화로 절반)' : '')); codexHit(b, 'reaper', 'reap'); }
+  if (tot > 0) { const g = Math.max(1, Math.floor(tot / 2)); e.embers = Math.min(FOE_X.reaper.cap, (e.embers || 0) + g); logp(b, 'bad', e.n + '이(가) 화상 ' + tot + '을(를) 거둔다. 불씨 ' + e.embers + (half ? ' (둔화로 절반)' : '')); codexHit(b, 'reaper', 'reap'); }
   else logp(b, 'sys', e.n + '이(가) 낫을 휘젓지만 거둘 불꽃이 없다');
 }
 function noonAct(b, e, d) {
@@ -350,6 +353,29 @@ const EKW = { archerBleed: 2, archerEvery: 3, heavyVuln: 2, explodeWeak: 2, expl
 const HIT_REF = lv => 102 + 5 * (lv - 1);
 const PRIEST = { heal: 0.4 };
 const SUMMON = { n: 1, cap: 3 };
-const heavyMulOf = (e, b) => e.role === 'boss' ? TELE.boss : e.strong && e.bigMul ? e.bigMul * foeBigMul(b, e) : TELE.heavy; // 강적의 강타는 기준 생명력 × STRONG.big (e.bigMul) // explodeMul: 자폭병 폭발 = 평소 공격 × 3 (10월 3일: 폭발이 평소 공격과 같아 "터지기 전에 끊는다"는 판단이 없었다)
+const heavyMulOf = (e, b) => e.role === 'boss' ? TELE.boss : e.strong && e.bigMul ? e.bigMul * foeBigMul(b, e) * (b && (b.ctx.ch || 1) === 1 ? STRONG1.big : 1) : TELE.heavy; /* A1: 1챕터 강적의 큰 한 방 배율(기믹이 승패에 닿게) */ // 강적의 강타는 기준 생명력 × STRONG.big (e.bigMul) // explodeMul: 자폭병 폭발 = 평소 공격 × 3 (10월 3일: 폭발이 평소 공격과 같아 "터지기 전에 끊는다"는 판단이 없었다)
 const ENRAGE = { boss: 45, room: 40, step: 10, byBoss: { queen: 50 } }; // byBoss: 보스마다 다른 광폭화 시각 (3챕터 재의 여왕) // 광폭화 시각(시간 단위)과 짙어지는 간격
 const ABBOT = { ph: [0.65, 0.3], brand: 0.2, vowTaken: 0.6, monkHeal: 0.05, monkDecay: 0.85, healHp: 0.10, shieldHp: 0.18, candleHp: 0.04, candles: [2, 3, 4], candleHeal: 0.03, candleDecay: 0.65, vowR: 3, sermonR: 3, sermonWeak: 2, stoneEvery: 3, stoneP: 0.06, stoneM: 0.10, altar: 0.08, sacHp: 0.15, sacHeal: 0.20, sacCool: 3 }; // 10월 4일 고해의 밤 (상세는 비공개 문서)
+
+/* ===== 0.8.0 A1 1챕터 장치 「끝나지 않은 기도」 (만든 사람 확정 10월 21일, 값은 data/foes.js DEV_PRAYER) =====
+   일반 방 약 1/3(2층부터, 강적 · 보스 · 성물함에서 깨어난 전투는 없음): 그 무리의 후열 하나(검은 기도사 먼저, 후열이 없으면 아무나)가 기도하는 채로 시작한다.
+   라운드가 끝날 때마다 한 칸, 다 차면 적 모두 보호막(각자 최대 생명력 × ward, 한 번). 그 적을 무너뜨리거나 쓰러뜨리면 끊기고 골드 +gold */
+function prayCut(b, e) { const P = b.prayer; if (!P || P.done || P.id !== e.id) return; P.done = 1; P.cut = 1; e.praying = 0; const run = typeof G !== 'undefined' && G.run && G.run.p === b.p ? G.run : null; if (run) run.gold = (run.gold || 0) + DEV_PRAYER.gold; logp(b, 'good', '기도가 끊긴다. 골드 +' + DEV_PRAYER.gold); b.rec.push({ k: 'prayCut' }); }
+const PRAYER_DEV = {
+  id: 'prayer', n: '끝나지 않은 기도', help: '적 하나가 기도하는 채로 시작합니다. 기도는 라운드가 끝날 때마다 한 칸씩 차고, 세 칸이 다 차면 적 모두가 보호막(각자 최대 생명력의 15%)을 두릅니다. 그 적을 무너뜨리거나 쓰러뜨리면 기도가 끊기고 골드 +5.',
+  chip: b => b.prayer && !b.prayer.done ? b.prayer.n + '/' + DEV_PRAYER.need : '', // M8: 칩은 장치 이름(끝나지 않은 기도) 뒤에 붙는다 — 「기도」를 두 번 쓰지 않게
+  onRoomStart(b) {
+    const c = b.ctx || {}; if (c.room !== 'normal' || c.wake || c.boss || (c.floor || 0) < DEV_PRAYER.from || b.en.some(e => e.strong)) return;
+    if ((b.rngF || Math.random)() >= DEV_PRAYER.p) return;
+    const L = b.en.filter(e => e.alive && e.role !== 'root' && !e.pile), back = L.filter(e => e.row === 'back'); const pr = back.find(e => e.role === 'darkmage') || back[0] || L[0]; if (!pr) return;
+    b.prayer = { id: pr.id, n: 0 }; pr.praying = 1; logp(b, 'crit', pr.n + '이(가) 기도하는 채로 서 있다. 끝나지 않은 기도 0/' + DEV_PRAYER.need); b.rec.push({ k: 'prayStart', role: pr.role });
+  },
+  onRoundEnd(b) {
+    const P = b.prayer; if (!P || P.done || b.over) return; const e = b.en.find(x => x.id === P.id); if (!e || !e.alive) return; P.n++;
+    if (P.n < DEV_PRAYER.need) { logp(b, 'sys', e.n + '의 기도가 이어진다. ' + P.n + '/' + DEV_PRAYER.need); return; }
+    P.done = 1; e.praying = 0; for (const x of alive(b)) if (x.role !== 'root' && !x.pile) x.barrier = (x.barrier || 0) + Math.round(x.hpMax * DEV_PRAYER.ward);
+    logp(b, 'bad', '기도가 끝난다. 적 모두가 보호막을 두른다'); b.rec.push({ k: 'prayDone' });
+  },
+  onFoeBreak(b, e) { prayCut(b, e); }, onFoeDown(b, e) { prayCut(b, e); },
+};
+CH_DEVICE[1] = PRAYER_DEV;

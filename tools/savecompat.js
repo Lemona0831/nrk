@@ -66,7 +66,7 @@ if (process.argv[2] === 'make') {
             }
             // gamble: 정산 → 각인 → 상점 → 도박 → 떠남 → 설문
             run.rooms.push({ room: 24, type: 'boss', res: 'win', ch: run.ch || 1 }); G0.startSettle(run); take('정산 ' + run.ch + '챕터'); click('settleok');
-            if (G.sheet && G.sheet.kind === 'awk') { take('각인 고르는 중'); click('awkpick', (run.awkOffer || [])[0]); take('각인 고른 뒤'); }
+            if (G.sheet && G.sheet.kind === 'ks') { take('큰 각인 고르는 중'); click('kspick', (run.ksOffer || [])[0]); take('큰 각인 고른 뒤'); } // 10월 16일 0.8.0 2단계
             handleSheets('expert', rng(2)); if (run.phase === 'shop') { take('상점 ' + run.ch + '챕터'); run.gold = Math.max(run.gold || 0, 600); const slot = (run_('GAMBLE.slots') || [])[0]; if (slot) { click('gamble', slot); take('도박 뒤 상점'); handleSheets('expert', rng(3)); take('도박 장비 처리 뒤 상점'); } }
             click('shopleave'); take('챕터 설문 ' + run.ch + '챕터'); G0.finishSurvey({ fun: 4, note: '' }); take('다음 챕터 대기');
           });
@@ -89,7 +89,7 @@ if (process.argv[2] === 'check') {
   const VIEW = { title: 'vTitle', create: 'vCreate', settle: 'vSettle', shop: 'vShop', wait: 'vWait', rank: 'vRank', records: 'vRecords', goals: 'vGoals', mark: 'vMark', tree: 'vTreePage', dead: 'vDead', survey: 'vSurvey', final: 'vFinal' };
   const views = () => { const out = []; const f = G.scr === 'run' ? (G.b ? 'vBattle' : 'vRunMap') : VIEW[G.scr]; if (f) out.push([f, run_(f + '()')]); out.push(['vHeader', run_('vHeader()')]); out.push(['vSheet', run_('vSheet()')]); return out; };
   const viewErr = tag => { const e = []; try { for (const [n, h] of views()) { const m = /undefined|NaN|\[object|Infinity|null</.exec(String(h || '')); if (m) e.push(tag + ' ' + n + ' 글에 "' + m[0] + '"'); } } catch (x) { e.push(tag + ' 화면 만들기 예외 ' + x.message); } return e; };
-  const invariants = run => { const e = []; const T = run.tree; if (T && !(run.marks && run.marks.length) && !run.markCh) { if (T.pts < 0 || T.pts + T.open.length > (run.lv || 1) + 0) e.push('트리 포인트 어긋남 pts ' + T.pts + ' + 연 칸 ' + T.open.length + ' > Lv' + run.lv); } if (G0.bagUsed && G0.bagUsed(run) > run_('BAG_MAX')) e.push('가방이 넘침'); if (run.p && run.p.skills && G0.BUILDS[run.build].v2 && JSON.stringify(run.p.skills) !== JSON.stringify(G0.v2Equip(run))) e.push('장착 스킬이 v2Equip와 다름'); return e; };
+  const invariants = run => { const e = []; const T = run.atree; if (T) { if (T.pts < 0 || T.pts + T.own.length > (run.lv || 1) + 0) e.push('액티브 포인트 어긋남 pts ' + T.pts + ' + 연 노드 ' + T.own.length + ' > Lv' + run.lv); } if (run.ptree && run.ptree.pts < 0) e.push('패시브 포인트 음수'); /* 10월 16일 0.8.0 2단계: 두 트리 */ if (G0.bagUsed && G0.bagUsed(run) > run_('BAG_MAX')) e.push('가방이 넘침'); if (run.p && run.p.skills && G0.BUILDS[run.build].v2 && JSON.stringify(run.p.skills) !== JSON.stringify(G0.v2Equip(run))) e.push('장착 스킬이 v2Equip와 다름'); return e; };
   for (const label of labels) {
     if (!fs.existsSync(sfile(label))) { console.log('[' + label + '] 저장본 없음(만들지 못함)'); continue; }
     const F = JSON.parse(fs.readFileSync(sfile(label), 'utf8'));
@@ -111,7 +111,7 @@ if (process.argv[2] === 'check') {
         errs.push(...invariants(run)); errs.push(...viewErr('이어 직후'));
         if (G.scr === 'run') {
           if (G.b && !G.b.over) { let n = 0; while (!G.b.over && n++ < 400) { const L = G0.actionList(G.b).filter(x => x.ok && x.id !== 'flee'); if (!L.length) break; G0.playerAct(G.b, L[0].id, null); } G0.battleContinue(); handleSheets('expert', rng(i)); }
-          else if (G.sheet && G.sheet.kind === 'awk') { click('awkpick', (run.awkOffer || [])[0]); }
+          else if (G.sheet && G.sheet.kind === 'ks') { click('kspick', (run.ksOffer || [])[0]); }
           else if (G.sheet) handleSheets('expert', rng(i));
           errs.push(...viewErr('이어 한 뒤'));
           const out = { bugs: [], rooms: [], acts: 0, fights: [] }; OPT.chapters = Math.max(run.ch || 1, 1); playLoop('expert', rng(8000 + i), out); OPT.chapters = 1; errs.push(...out.bugs); info.push('→' + (G.scr === 'settle' ? '챕터 돌파' : G.scr === 'dead' ? '쓰러짐' : G.scr) + ' ' + (G.run.room || 0) + '층 Lv' + G.run.lv);

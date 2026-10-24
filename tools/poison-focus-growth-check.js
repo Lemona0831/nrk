@@ -1,4 +1,6 @@
+/* 폐기(0.8.0 M8): 10월 12일 커밋 d82245f의 runSkill2와 지금 엔진을 한 줄씩 대조하는 일회성 비교. 0.8.0 M5-0(쿨타임 → 유산 비용)과 직업 재설계로 엔진이 일부러 갈라져 대조 기준이 의미를 잃었다. 파일은 기록으로 남긴다. 그래도 돌리려면 RUN_RETIRED=1 */
 'use strict';
+if (!process.env.RUN_RETIRED) { console.log('폐기(0.8.0 M8): poison-focus-growth-check — 보관된 기능 · 일회성 비교라 건너뜀(RUN_RETIRED=1이면 돈다)'); process.exit(0); }
 // 현재 전투를 고정한 변경 전 엔진과 비교한다. 자원 수급·소모·행동 보상은 그대로여야 한다.
 process.env.DGDIR=process.env.DGDIR || '.';
 const assert=require('assert/strict'),cp=require('child_process'),path=require('path');

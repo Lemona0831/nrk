@@ -5,7 +5,7 @@ const DEBUFFS = ['poison', 'bleed', 'ignite', 'chill', 'weak', 'vuln', 'brand'];
 const nDebuff = e => DEBUFFS.concat(['broken']).filter(k => e.s[k]).length;
 const isSpell = c => !!(c && c.spell);
 const IFX = {
-  rustsword: { brk: (b, p, e, c) => c.id === 'basic' ? 2 : 0 },
+  rustsword: { brk: (b, p, e, c) => brkB(c) ? 2 : 0 }, // M5-7: 규칙을 켜면 강공격 붕괴
   pilgstaff: { out: (b, p, c) => (isSpell(c) || c.cantrip) ? 1.03 : 1 },
   huntbow: { hit: (b, p, e, o) => e.row === 'back' ? 1.05 : 1 },
   dullknife: { hitAdd: (b, p, e, o, c) => c.id === 'basic' && e.s.poison ? 1 : 0 },
@@ -133,7 +133,7 @@ const IFX = {
   copperflask: { heal: 0.01, onFlask: (b, p, k) => { if (k === 'mana') { p.st = Math.min(p.stMax, p.st + 8); return 1; } } },
   towerflask: { onFlask: (b, p, k) => { if (k === 'stam') { addWard(b, p, 10); return 1; } } },
   bigtonic: { cap: { stam: 1 } },
-  holywater: { cap: { life: -1 }, onFlask: (b) => { const e = alive(b).find(x => x.intent && (x.intent.k === 'charge' || x.intent.k === 'heavy') && x.role !== 'boss'); if (!e) return; e.intent = { k: 'attack' }; logp(b, 'good', '성수가 튀자 ' + e.n + '이(가) 강타를 거둔다'); return 1; } },
+  holywater: { cap: { life: -1 }, onFlask: (b) => { const e = alive(b).find(x => x.intent && (x.intent.k === 'charge' || x.intent.k === 'heavy') && x.role !== 'boss'); if (!e) return; e.intent = { k: 'attack' }; e.teleX = 1; logp(b, 'good', '성수가 튀자 ' + e.n + '이(가) 강타를 거둔다'); return 1; } },
   emberflask: { heal: -0.05, onFlask: (b, p, k) => { if (k !== 'life') return; let n = 0; for (const e of alive(b)) if (e.role !== 'root') { addS(b, e, 'ignite', 1); n++; } return n ? 1 : 0; } },
 };
 /* ===== 2챕터 장비 효과 (IFX2, 10월 7일, docs/아이템/2챕터-장비.md · 장비-경제.md 9절) =====
@@ -143,7 +143,7 @@ const IFX = {
    일 지점: onAct(행동을 시작할 때) onSkill(스킬을 쓴 뒤) onRound(라운드가 끝날 때) onPile(해골이 뼈 더미가 될 때) onRise(뼈 더미가 일어설 때) onBloat(부푼 시체가 터지기 전)
             onBreak(적이 무너질 때) onShock(열충격) onCounter(되받기) onEvade(몸 빼기로 피함) onAlt(교대) onProt(보호를 얻음) onWardOver(보호막이 상한을 넘침) onWin(방을 이김, 전투 밖)
    규칙 표시: quick2(내 차례마다 빠른 칸 하나 더) first(라운드 맨 앞) condCost(조건이 붙은 비용이라 점검의 고정 비용 비교를 건너뛴다)
-   쿨타임을 당기는 효과는 한 행동에 1까지(fxCdMax) */
+   쿨타임을 당기는 효과는 한 행동에 1까지(fxCdMax). 10월 15일 유산 1차 시제품: fxCdMax는 "유산 +1, 라운드에 한 번(모든 장비가 함께)"으로 바뀌었다(ysItem) */
 const FX_CAP = 0.6;
 const fxHas = (c, k) => { const s = c && (c.s || SK2[c.id]); return !!(s && s.fx && s.fx.some(x => x.k === k)); };
 const fxBr = c => { const s = c && (c.s || SK2[c.id]); return (s && s.b) || null; };
@@ -158,8 +158,8 @@ const fxHeal = (p, x) => { const v = Math.max(0, Math.min(p.hpMax - p.hp, x)); p
 const fxStam = (p, x) => { p.st = Math.min(p.stMax, p.st + x); if (p.exhaust && p.st >= 30) p.exhaust = 0; };
 const fxOnce = (b, key) => { b.fxOn = b.fxOn || {}; if (b.fxOn[key] === b.actN) return false; b.fxOn[key] = b.actN; return true; };
 const fxCnt = (b, key, max) => { b.fxN = b.fxN || {}; if ((b.fxN[key] || 0) >= max) return false; b.fxN[key] = (b.fxN[key] || 0) + 1; return true; };
-function fxCdMax(b, p, not) { if (!p.cd || b.fxCdAct === b.actN) return null; let best = null; for (const id of p.skills || []) { const s = SK2[id]; if (!s || s.once || id === not || !(p.cd[id] > 0)) continue; if (!best || p.cd[id] > p.cd[best]) best = id; } if (best) { p.cd[best]--; b.fxCdAct = b.actN; logp(b, 'good', SK2[best].n + ' 쿨타임 −1'); } return best; }
-function fxUnearth(b, e, vuln) { if (e.foe === 'stalker') return; e.under = 0; e.intent = { k: 'attack' }; e.teleTurn = null; if (vuln) addS(b, e, 'vuln', vuln); logp(b, 'good', e.n + '이(가) 땅 위로 끌려 나온다'); }
+function fxCdMax(b, p, not) { return ysItem(b, '장비') || null; } // 10월 15일 유산 1차 시제품 변환: 쿨타임이 가장 많이 남은 스킬 −1 → 유산 +1(라운드에 한 번)
+function fxUnearth(b, e, vuln) { if (e.foe === 'stalker') return; e.under = 0; e.intent = { k: 'attack' }; e.teleX = 1; e.teleTurn = null; if (vuln) addS(b, e, 'vuln', vuln); logp(b, 'good', e.n + '이(가) 땅 위로 끌려 나온다'); }
 function fxPileKill(b, e) { e.norise = 1; e.hp = 0; killEnemy(b, e); checkEnd(b); }
 const fxBig = o => !!(o.charged || (o.src && o.src.intent && o.src.intent.aimed && !o.dot));
 function fxApplyKw(b, e, k, n) { if (!e || !e.alive || !(n > 0)) return 0; return k === 'poison' ? addPoison(b, e, n, 1) : addS(b, e, k, n); }
@@ -169,7 +169,7 @@ const IFX2 = {
   torchclub: { onHit: (b, p, e, o, c) => { if (c.id !== 'basic' || e.role !== 'skeleton' || e.pile || !e.alive) return; addS(b, e, 'ignite', 1); return 1; } },
   spadespear: { hitP: (b, p, e) => e.role === 'burrower' && !e.under ? 0.12 : 0 },
   mournsickle: { onKill: (b, p, e) => { if (!stk(e, 'bleed')) return; fxStam(p, 6); return 1; } },
-  venomawl: { brk: (b, p, e, c) => c.id === 'basic' && st(e, 'poison') >= 3 ? 4 : 0 },
+  venomawl: { brk: (b, p, e, c) => brkB(c) && st(e, 'poison') >= 3 ? 4 : 0 },
   mossstaff: { hitP: (b, p, e) => st(e, 'chill') ? 0.05 : 0 },
   scorchrod: { hitP: (b, p, e) => st(e, 'ignite') >= 3 ? 0.05 : 0 },
   wardhammer: { brk: (b, p, e, c) => c.id === 'heavy' && p.ward > 0 ? 4 : 0 },
@@ -198,7 +198,8 @@ const IFX2 = {
   altblades: { hitP: (b, p) => b.sbAlt && b.sbK === 'cut' ? 0.15 : 0, brk: (b, p) => b.sbAlt && b.sbK === 'spell' ? 8 : 0 },
   swiftbow: { onHit: (b, p, e) => { if (!e.alive || !e.swift || !fxOnce(b, 'swiftbow')) return; addS(b, e, 'chill', 1); logp(b, 'good', e.n + '의 발이 묶인다. 둔화 1'); return 1; }, hitP: (b, p, e) => st(e, 'chill') ? 0.08 : 0 },
   censer: { onSkill: (b, p, act) => { if (!fxHas(act, 'transfer')) return; p.fxCens = 1; return 1; }, hitP: (b, p, e, o, c) => { if (!p.fxCens || !isAtkC(c) || fxHas(c, 'transfer')) return 0; p.fxCens = 0; return 0.06 * badKinds(e); } },
-  graverobber: { onKill: (b, p, e) => { if (!e.pile && e.role !== 'bonewall') return; p.fxCdNext = 1; return 1; }, onSkill: (b, p, act) => { if (!p.fxCdNext || !p.cd || !(p.cd[act.id] > 1)) return; p.cd[act.id]--; p.fxCdNext = 0; logp(b, 'good', act.n + ' 쿨타임 −1'); return 1; }, hitP: (b, p, e) => e.pile || e.role === 'bonewall' ? 0 : -0.06 },
+  graverobber: { onKill: (b, p, e) => { if (!e.pile && e.role !== 'bonewall') return; return ysItem(b, '도굴왕의 곡괭이') ? 1 : 0; }, // 10월 15일 유산 1차 시제품 변환: 다음 스킬 쿨타임 −1 → 유산 +1(라운드에 한 번)
+    hitP: (b, p, e) => e.pile || e.role === 'bonewall' ? 0 : -0.06 },
   blackwaterblade: { st: { st: -15 }, hitP: (b, p, e) => st(e, 'chill') ? 0.15 : 0, onKill: (b, p, e) => { if (!st(e, 'chill')) return; let n = 0; for (const x of fFoes(b)) if (x !== e) { addS(b, x, 'chill', 1); n++; } if (n) logp(b, 'good', '검은 물이 번진다. 남은 적 모두 둔화 1'); return n ? 1 : 0; } },
   bloodash: { hpMul: 0.92, hitP: (b, p, e) => stk(e, 'bleed') && st(e, 'ignite') ? 0.2 : 0, onHit: (b, p, e) => { if (!e.alive || !fxOnce(b, 'bloodash')) return; const bl = stk(e, 'bleed'), ig = st(e, 'ignite'); if (!!bl === !!ig) return; addS(b, e, bl ? 'ignite' : 'bleed', 1); return 1; } },
   kingsaxe: { onHit: (b, p, e, o, c, d) => { if (c.id !== 'heavy' || !(d > 0) || !fxOnce(b, 'kingsaxe')) return; const xs = fFoes(b).filter(x => x !== e && x.row === 'front' && !x.under); for (const x of xs) hurtEnemy(b, x, d * 0.5, { label: '수문장의 도끼' }); return xs.length ? 1 : 0; }, hitP: (b, p, e, o, c) => c && c.id === 'basic' ? -0.1 : 0, cost: (p, id) => id === 'heavy' ? 10 : 0 },
@@ -223,7 +224,7 @@ const IFX2 = {
   bloodvest: { inP: (b, p, o) => o.src && !o.dot && stk(o.src, 'bleed') ? 0.1 : 0 },
   frostcloak: { inP: (b, p, o) => o.src && !o.dot && st(o.src, 'chill') ? 0.1 : 0 },
   flamecoat: { onHurt: (b, p, o) => { if (!o.src || o.dot || !o.src.alive || b.fxFcR === b.round) return; b.fxFcR = b.round; addS(b, o.src, 'ignite', 1); return 1; } },
-  bracerobe: { onHurt: (b, p, o) => { if (!p.guard || !o.charged) return; p.fxQuickNext = 1; logp(b, 'good', '강타를 받아 낸 몸이 가볍다. 다음 빠른 행동 하나는 빠른 칸을 쓰지 않는다'); return 1; } },
+  bracerobe: { onHurt: (b, p, o) => { if (!p.guard || !o.charged) return; p.fxQuickNext = 1; logp(b, 'good', '강타를 받아 낸 몸이 가볍다. 다음 빠른 행동은 빠른 칸을 쓰지 않는다'); return 1; } },
   altcloak: { onAlt: (b, p) => addWard(b, p, 2) > 0 ? 1 : 0 },
   penancegarb: { inP: (b, p, o) => !o.dot && badKinds(p) >= 3 ? 0.12 : 0 },
   earthmail: { inP: (b, p, o) => !o.dot && alive(b).some(x => x.under) ? 0.1 : 0 },
@@ -262,7 +263,7 @@ const IFX2 = {
   bloodcost: { condCost: 1, cost: (p, id) => id === 'heavy' && p.s && stk(p, 'bleed') ? -10 : 0 },
   bonesetter: { onKill: (b, p, e) => { if (!e.pile) return; const t = fOther(b, e); if (!t) return; addBreak(b, t, 15); return 1; }, onRise: (b, p) => { addS(b, p, 'haste', 1); return 1; } },
   breakfist: { condCost: 1, onKill: (b, p, e) => { if (!e.s.broken) return; let n = 0; for (const x of fFoes(b)) if (x !== e) { addBreak(b, x, 10); n++; } return n ? 1 : 0; }, onBreak: (b, p) => { p.fxBf = 1; return 1; }, onAct: (b, p, id) => { if (id === 'heavy') p.fxBf = 0; }, cost: (p, id) => id === 'heavy' && p.fxBf ? -15 : 0 },
-  poisonreaper: { onAct: (b, p, id, act) => { if (!act || !act.v2 || !(fxHas(act, 'burst') || fxHas(act, 'drain'))) return; p.fxPr = alive(b).reduce((a, e) => a + st(e, 'poison'), 0); }, onSkill: (b, p, act) => { if (fxHas(act, 'poison') && p.cd && p.cd[act.id] > 0) { p.cd[act.id]++; fxHit('poisonreaper'); } if (!(fxHas(act, 'burst') || fxHas(act, 'drain')) || p.fxPr == null) return; const d = p.fxPr - alive(b).reduce((a, e) => a + st(e, 'poison'), 0); p.fxPr = null; const g = d > 0 ? fxHeal(p, d / 2) : 0; if (g > 0) logp(b, 'good', '거둔 독이 손바닥으로 스민다. 생명력 +' + r1(g)); return g > 0 ? 1 : 0; } },
+  poisonreaper: { onAct: (b, p, id, act) => { if (!act || !act.v2 || !(fxHas(act, 'burst') || fxHas(act, 'drain'))) return; p.fxPr = alive(b).reduce((a, e) => a + st(e, 'poison'), 0); }, onSkill: (b, p, act) => { if (fxHas(act, 'poison') && act.v2 && b.fxPrR !== b.ysR) { b.fxPrR = b.ysR; if (ysLose(b, 1, '독 거두는 손')) fxHit('poisonreaper'); } /* 10월 15일 유산 1차 시제품 변환: 독을 거는 스킬 쿨타임 +1 → 유산 −1(라운드에 한 번) */ if (!(fxHas(act, 'burst') || fxHas(act, 'drain')) || p.fxPr == null) return; const d = p.fxPr - alive(b).reduce((a, e) => a + st(e, 'poison'), 0); p.fxPr = null; const g = d > 0 ? fxHeal(p, d / 2) : 0; if (g > 0) logp(b, 'good', '거둔 독이 손바닥으로 스민다. 생명력 +' + r1(g)); return g > 0 ? 1 : 0; } },
   frostgrip: { onHit: (b, p, e) => { if (!e.alive || st(e, 'chill') < 3) return; delete e.s.chill; addBreak(b, e, 15); logp(b, 'good', e.n + '의 언 몸이 깨진다. 붕괴 +15'); return 1; } },
   trackmark: { onKill: (b, p, e) => { if (!p.focus || p.focus.id !== e.id || p.focus.n < 3) return; p.fxCarry = 1; return 1; }, onHit: (b, p, e) => { if (!p.fxCarry || !p.focus || p.focus.id !== e.id || p.focus.n >= 2 || !e.alive) return; p.focus.n = 2; p.fxCarry = 0; logp(b, 'good', e.n + '에게 표식을 옮긴다. 추적 2겹'); return 1; }, hitP: (b, p, e, o) => !o.aoe && p.focus && p.focus.id === e.id && p.focus.n === 1 ? -0.1 : 0 },
   flamehands: { onHit: (b, p, e, o, c) => { if (!c.skill || st(e, 'ignite') < 5 || !fxOnce(b, 'flamehands')) return; const t = fOther(b, e); if (!t) return; addS(b, t, 'ignite', 2); return 1; } },
@@ -307,7 +308,7 @@ const IFX2 = {
   kingseal: { healMul: 0.8, onKill: (b, p, e) => { if (e.pile || e.summoned) return; return addWard(b, p, e.elite || e.strong ? 15 : 5) > 0 ? 1 : 0; } },
   twicering: { hpMul: 0.88, onHurt: (b, p) => { if (p.hp > 0 || b.fxTw) return; b.fxTw = 1; p.hp = 1; addS(b, p, 'haste', 1); logp(b, 'crit', '반지가 한 번 더 일으킨다. 생명력 1, 가속 1'); return 1; } },
   mirrorring: { onDebuff: (b, u, k) => { if (!KW_BAD.includes(k) || b.fxMrR === b.round) return; b.fxMrR = b.round; let n = 0; for (const x of fFoes(b)) n += fxApplyKw(b, x, k, 1) ? 1 : 0; if (n) logp(b, 'good', '검은 물이 ' + KW_N[k] + '을(를) 되비춘다. 적 모두 ' + KW_N[k] + ' 1'); return n ? 1 : 0; }, dur: k => KW_BAD.includes(k) ? 1 : 0 },
-  voidring: { onSkill: (b, p, act) => { if (!p.cd || !(p.cd[act.id] > 2) || b.fxVoidTurn === b.turnIdx) return; b.fxVoidTurn = b.turnIdx; p.cd[act.id]--; return 1; }, hitP: (b, p, e, o, c) => c && c.skill ? -0.15 : 0 },
+  voidring: { /* 10월 15일 유산 1차 시제품: 쓴 스킬 쿨타임 −1(차례마다)은 유산으로 옮기면 차례 충전을 두 배로 만들어 껐다. 드롭에서도 뺀다(YS_OFF) */ hitP: (b, p, e, o, c) => c && c.skill ? -0.15 : 0 },
   firstring: { first: 1, onRound: () => 1, inP: (b, p, o) => o.src && !o.dot ? -0.1 : 0 },
   // 목걸이
   limecharm: { onPile: (b, p, e) => { e.pile.wait++; return 1; }, onStart: b => { let n = 0; for (const e of b.en) if (e.alive && e.pile) { e.pile.wait++; n++; } return n ? 1 : 0; } },
@@ -410,11 +411,11 @@ const IFX_AWK = {
   k_wd2: { hitP: (b, p, e) => e.s && e.s.broken ? 0.10 : 0 },
   k_wd3: { hitP: (b, p, e) => e.row === 'front' ? 0.06 : 0 },
   k_hn1: { hitP: (b, p, e) => p.focus && p.focus.id === e.id && p.focus.n >= 1 ? 0.08 : 0 },
-  k_hn2: { hitP: (b, p, e, o, c) => c && c.id === 'basic' ? 0.10 : 0 },
+  k_hn2: { hitP: (b, p, e, o, c) => c && c.id === 'basic' ? 0.12 : 0 }, // 0.8.0 5단계(원거리 초안 2-5 화력 C1): 10% → 12%
   k_hn3: { onEvade: (b, p) => { fxStam(p, 6); return 1; } },
   k_el1: { hitP: (b, p, e) => st(e, 'ignite') >= 3 ? 0.08 : 0 },
   k_el2: { brk: (b, p, e) => st(e, 'chill') ? 4 : 0 },
-  k_el3: { onShock: (b, p) => { fxStam(p, 6); return 1; } },
+  k_el3: { flatAdd: (b, p, e, o) => o.shock && !o.arc ? 3 : 0 }, // 10월 18일 0.8.0 5단계(원거리 초안 3-2 · 결정 10) 남는 울림: 열충격 피해 +3(열충격마다, 배율 뒤 더함). 옛 효과(스태미나 +6)는 이어지는 울림(n_el_echo)
   k_sb1: { hitP: (b, p, e) => stk(e, 'bleed') ? 0.06 : 0 },
   k_sb2: { dotP: () => 0.10 },
   k_sb3: { wardP: () => 0.12 },
@@ -460,7 +461,7 @@ function hazePeel(b, e) { if (!(e.haze > 0)) return; e.haze--; e.hazeLast = b.ro
 function wrapWear(b, e, why) { if (!(e.wrap > 0)) return; if (e.wrap <= 1) wrapOff(b, e, why); else e.wrap--; }
 const IFX3 = {
   // 무기
-  ashrake: { brk: (b, p, e, c) => c.id === 'basic' && wrE(e) ? 4 : 0 },
+  ashrake: { brk: (b, p, e, c) => brkB(c) && wrE(e) ? 4 : 0 },
   glassknife: { onHaze: (b, p, e, why) => { if (why !== 'hit') return; fxStam(p, 6); return 1; } },
   brandaxe: { hitP: (b, p, e) => e.fire ? 0.08 : 0 },
   noonblade: { hitP: (b, p, e, o, c) => c && c.id === 'basic' && b.heat >= 50 ? 0.06 : 0 },
@@ -550,14 +551,14 @@ const IFX3 = {
   sparkhands: { onShock: b => b.heat != null && fxHeat(b, 2, '불똥 손') > 0 ? 1 : 0 },
   pennancehands: { onCleanse: (b, p, n) => n > 0 && b.heat != null && fxHeat(b, 3, '고행의 손') > 0 ? 1 : 0 },
   stainedglove: { onHit: (b, p, e, o, c) => { if (!wrE(e) || !e.alive || !c.skill) return; const ps = fxSk(c, 'poison'), bl = fxSk(c, 'st', 'bleed'); if (!(ps || bl) || !fxOnce(b, 'stainedglove')) return; if (ps) addPoison(b, e, 1, 1); if (bl) addS(b, e, 'bleed', 1); return 1; } },
-  splitglove: { onHaze: (b, p, e, why) => { if (why !== 'hit') return; const t = fOther(b, e); if (!t) return; addBreak(b, t, 10); return 1; }, brk: (b, p, e, c) => c.id === 'basic' && !hzE(e) ? -2 : 0 },
+  splitglove: { onHaze: (b, p, e, why) => { if (why !== 'hit') return; const t = fOther(b, e); if (!t) return; addBreak(b, t, 10); return 1; }, brk: (b, p, e, c) => brkB(c) && !hzE(e) ? -2 : 0 },
   wearinggrip: { onHit: (b, p, e) => { if (!wrE(e) || !e.alive || !fxOnce(b, 'wearinggrip')) return; wrapWear(b, e, '닳아'); return 1; }, hitP: (b, p, e, o, c) => c && c.id === 'basic' ? -0.05 : 0 },
   heatpalm: { brk: (b, p, e, c) => b.heat != null && c.time <= 0.6 ? Math.floor(b.heat / 20) * 2 : 0, onRound: b => { if (b.heat == null) return; heatAdd(b, 1, '달군 손바닥'); return 1; } },
   blazeglove: { onAlt: (b, p) => { let n = 0; for (const e of fFoes(b)) if (st(e, 'ignite') && !e.under) { addS(b, e, 'ignite', 1); n++; } return n ? 1 : 0; } },
   shieldknuckle: { wardP: () => -0.15, block: (b, p, k) => k === 'ignite' && p.ward > 0 },
   sunfist: { onHit: (b, p, e, o, c) => { if (!e.alive || !st(e, 'ignite') || !st(p, 'empower') || b.curFast || !isAtkC(c) || !fxOnce(b, 'sunfist')) return; addS(b, p, 'empower', 1); return 1; } },
   poisonwrap: { onSkill: (b, p, act) => { if (!(fxSk(act, 'burst') || fxSk(act, 'drain'))) return; let n = 0; for (const e of fFoes(b)) if (wrE(e)) { wrapOff(b, e, '독에 삭아'); n++; } return n ? 1 : 0; } },
-  quickdraw: { onKill: (b, p, e) => { if (!hzE(e) && !wrE(e)) return; p.fxQuickNext = 1; logp(b, 'good', '장막이 걷힌 순간 손이 가볍다. 다음 빠른 행동 하나는 빠른 칸을 쓰지 않는다'); return 1; } },
+  quickdraw: { onKill: (b, p, e) => { if (!hzE(e) && !wrE(e)) return; p.fxQuickNext = 1; logp(b, 'good', '장막이 걷힌 순간 손이 가볍다. 다음 빠른 행동은 빠른 칸을 쓰지 않는다'); return 1; } },
   unveilfist: { onHaze: (b, p, e, why) => { if (why !== 'hit') return; fxStackAdd(b, 'uv', 3); return 1; }, onWrap: b => { fxStackAdd(b, 'uv', 3); return 1; }, hitP: (b, p, e, o, c) => isAtkC(c) ? fxStackUse(b, 'uv', 0.25) + (hzE(e) || wrE(e) || e.hazeHit === b.actN ? 0 : -0.05) : 0 },
   kindlerglove: { hpMul: 0.96, onHit: (b, p, e, o, c) => { if (!e.alive || !fxSk(c, 'st', 'ignite') || st(e, 'ignite') || !fxOnce(b, 'kindlerglove')) return; addS(b, e, 'ignite', 2); return 1; } },
   furnacegauntlet: { onRound: (b, p) => { if (b.heat == null) return; const f = F3(b); const prev = f.fgPrev != null ? f.fgPrev : b.heat; const gain = Math.min(10, Math.max(0, b.heat - prev)); if (gain > 0) fxStam(p, gain); heatAdd(b, 4, '용광로 건틀릿'); f.fgPrev = b.heat; return gain > 0 ? 1 : 0; } },

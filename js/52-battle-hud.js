@@ -5,7 +5,7 @@ function incHtml(b) {
   return `<div class="incoming${bad}" data-info="incoming" tabindex="0"><i class="swd" aria-hidden="true"></i>다음 차례 전 예상 피해 <b>−${r1(x.sum)}</b> <span class="inca" aria-hidden="true">생명력 ${shownHp(b.p.hp)} → ${shownHp(left)}${x.sum >= b.p.hp ? ' (쓰러질 수 있음)' : ''}</span><span class="sr">, 맞으면 생명력 ${shownHp(left)}${x.sum >= b.p.hp ? ', 쓰러질 수 있음' : ''}</span></div>`;
 }
 /* 예상 피해의 뜻: 접힌 자세한 정보 안에 둔다(10월 7일 2차: 전에는 늘 숨겨져 있었다) */
-function incWhy(b) { if (b.over) return ''; const x = incomingEst(b); return x.n ? `<p class="mini">예상 피해는 공격 ${x.n}번을 보통 행동 기준으로 셉니다. 흘리기와 방어로 줄일 수 있습니다. 생명력 막대의 점 칸이 이 몫입니다.</p>` : ''; }
+function incWhy(b) { if (b.over) return ''; const x = incomingEst(b); return x.n ? `<p class="mini">예상 피해는 공격 ${x.n}번을 보통 행동 기준으로 셉니다. 흘리기와 방어로 줄어듭니다. 생명력 막대의 점 칸이 이 몫입니다.</p>` : ''; }
 /* 생명력 증감 숫자: 그리기 사이의 차이를 1.4초 동안 띄운다. 다시 그려도 애니메이션이 이어지게 지난 시간만큼 당겨 시작한다(엔진은 건드리지 않는다) */
 const POP_MS = 1400;
 /* 피해 숫자(떠올랐다 사라짐)는 dpop. 설명 창(#pop.pop)과 이름이 같으면 설명 창도 1.4초 뒤에 사라진다(10월 3일 고침) */
@@ -36,7 +36,7 @@ const HUD_MODS = [
   { id: 'hud-incoming', mine: 1, n: '예상 피해', fn: 'vHudIncoming', z: 'top1', hm: 1, d: '다음 차례 전에 맞을 피해 한 줄' },
   { id: 'hud-status', mine: 1, n: '상태 칩', fn: 'vHudStatus', z: 'top1', hm: 1, d: '내게 걸린 상태, 봉인, 화상' },
   { id: 'hud-order', n: '순서', fn: 'vHudOrder', z: 'top2', hm: 1, d: '라운드와 행동 순서, 기록 단추' },
-  { id: 'hud-clock', n: '보스 시계와 열기', fn: 'vHudClock', z: 'top2', lock: 1, d: '광폭화까지 남은 라운드, 3챕터 열기' },
+  { id: 'hud-clock', n: '광폭화와 열기', fn: 'vHudClock', z: 'top2', lock: 1, d: '광폭화까지 남은 라운드, 3챕터 열기' },
   { id: 'hud-banner', n: '차례 알림', fn: 'vHudBanner', z: 'top2', d: '내 차례와 적 행동 알림 한 줄' },
   { id: 'hud-log', n: '기록', fn: 'vRecent', z: 'top2', d: '최근 기록' },
   { id: 'hud-danger', n: '지금 위험', fn: 'vHudDanger', z: 'mid', lock: 1, d: '이번 차례에 답이 필요한 일' },
@@ -47,7 +47,7 @@ const HUD_MODS = [
 const HUD_ITEMS = [
   { k: 'hpst', mod: 'hud-player', n: '내 생명력과 스태미나', lock: 1 },
   { k: 'ehp', mod: 'hud-field', n: '적의 생명력과 다음 행동 예고', lock: 1 },
-  { k: 'abtn', mod: 'hud-actions', n: '행동 버튼(비용과 쿨타임)', lock: 1 },
+  { k: 'abtn', mod: 'hud-actions', n: '행동 버튼(비용)', lock: 1 },
   { k: 'danger', mod: 'hud-danger', n: '지금 위험 줄', lock: 1 },
   { k: 'sts', mod: 'hud-status', n: '상태 칩', d: ['bad', 'few', 'all'], opts: [['bad', '해로운 것만 3개'], ['few', '3개까지'], ['all', '모두']], desc: '내게 걸린 상태와 적에게 걸린 상태를 칩으로 보입니다. 넘치는 것은 "+N"으로 접힙니다. "해로운 것만"은 내 상태에만 걸리고, 적 카드에는 두 개까지 보입니다' },
   { k: 'prev', mod: 'hud-player', n: '막대 미리보기', d: [0, 1, 1], desc: '행동에 올리면 생명력 · 스태미나 · 적 막대에 예상 변화를 겹쳐 보입니다' },
@@ -121,22 +121,51 @@ function vHudClass(b, hud) {
   const h = buildRes(b.p) + focusLine(b) + sbLine(b) + cfLine(b); if (!h) return '';
   return hud.cls ? `<div class="hudm" data-hud="hud-classchip">${h}</div>` : `<div class="sr" data-hud="hud-classchip">${hudQuiet(h)}</div>`;
 }
-const AGROUP4 = [['공격', ['basic', 'heavy']], ['스킬', null], ['지키기', ['guard', 'dodge']], ['도구', ['flaskL', 'flaskM', 'flaskS', 'flee']]];
+const AGROUP4 = [['상황', ['seize_weapon', 'seize_armor', 'seize_gloves', 'seize_amulet', 'seize_ring1', 'seize_ring2', 'seize_flask', 'tradeyes', 'tradeno', 'paydebt', 'lampoil', 'sealrift', 'tossgold']], ['공격', ['as_mu', 'hn_shot', 'basic', 'heavy', 'as_end']], ['스킬', null], ['지키기', ['guard', 'dodge']], ['도구', ['flaskL', 'flaskM', 'flaskS', 'flee']]];
 function consUsefulN(b) {
   const run = G.run; if (!run || !Array.isArray(run.cons) || b.over || !b.p) return 0;
   const bq = Object.assign({}, b, { consN: 0, consF: 0, queue: ['p'] }); let n = 0;
   run.cons.forEach(c => { const D = CONS[c.id]; if (!D || D.use === 'none' || D.use === 'out' || consWhyNot(bq, run, c, G.sel)) return; if (consScore(b, c, D) > 0) n++; });
   return Math.min(n, 3);
 }
+/* 10월 15일 유산 1차 시제품: 유산 칸(◆ 찬 칸, ◇ 빈 칸). 생명력 · 스태미나 막대 옆 세 번째 칸 */
+/* 유산 줄 (10월 16일 화면 정리): 생명력 · 스태미나 막대 아래 큰 ◆ 다섯 칸 + "2/5". 바뀌면 칸 위에 짧게 −3 · +1 차례 · +1 막기가 떠오른다(기록 b.rec의 ys · yspend를 읽는다, 1.6초).
+   스킬 버튼에 올리거나(PC) 길게 누르면(휴대폰) 쓸 칸이 깜빡이고 "5 → 2"를 보인다(ysPv). 모자라면 모자란 칸과 "1 모자람" */
+const YS_LAB = x => x.src === 'turn' ? '차례' : x.src === 'resp' ? x.why : x.src === 'refund' ? '🔄' : x.src === 'item' ? '장비' : x.src === 'flask' ? '플라스크' : (x.why || '');
+function ysRow(b) {
+  const p = b.p, n = ysNow(p), c = ysCapOf(p), now = Date.now(); // 10월 16일 0.8.0 2단계: 큰 각인으로 상한이 오른다
+  if (!b.ysUi) b.ysUi = { seen: b.rec.length, fl: [] }; const U = b.ysUi;
+  for (; U.seen < b.rec.length; U.seen++) { const x = b.rec[U.seen]; let t = null, cl = 'pos';
+    if (x.k === 'yspend') { t = '−' + x.cost; cl = 'neg'; } else if (x.k === 'ys' && x.g) { t = (x.g > 0 ? '+' + x.g : '−' + (-x.g)) + ' ' + YS_LAB(x); cl = x.g > 0 ? 'pos' : 'neg'; }
+    if (t) U.fl.push({ t, cl, at: now }); }
+  U.fl = U.fl.filter(f => now - f.at < 1600).slice(-3);
+  const pips = Array.from({ length: c }, (_, i) => `<i class="yp${i < n ? ' on' : ''}"></i>`).join('');
+  const fl = U.fl.map(f => `<span class="ysd ${f.cl}" style="animation-delay:-${now - f.at}ms">${esc(f.t)}</span>`).join('');
+  return `<div class="ysrow${typeof vfxRm === 'function' && vfxRm() ? ' rm' : ''}" data-info="bar:ys" tabindex="0" role="meter" aria-label="유산" aria-valuemin="0" aria-valuemax="${c}" aria-valuenow="${n}" aria-valuetext="유산 ${n}/${c}"><b class="ysl">유산</b><span class="ysp" aria-hidden="true">${pips}</span><b class="ysn" aria-hidden="true">${n}/${c}</b><span class="yspv" aria-hidden="true"></span><span class="ysds" aria-hidden="true">${fl}</span></div>`;
+}
+function ysPvOff() { if (typeof document === 'undefined') return; document.querySelectorAll('.ysrow.pv').forEach(r => { r.classList.remove('pv', 'short'); r.querySelectorAll('.yp').forEach(x => x.classList.remove('spend', 'lack', 'blood')); const t = r.querySelector('.yspv'); if (t) t.textContent = ''; }); }
+function ysPv(btn) {
+  ysPvOff(); const b = G.b; if (!b || b.over || !isV2(b.p) || !btn || !btn.dataset) return; const a = actionList(b).find(x => x.id === btn.dataset.id); if (!a || !a.v2 || !a.yc) return;
+  const row = document.querySelector('.ysrow'); if (!row) return; const P = row.querySelectorAll('.yp'); const n = ysNow(b.p), c = a.yc, lack = Math.max(0, c - n); let t;
+  const mark = (from, to, k) => { for (let i = Math.max(0, from); i < Math.min(P.length, to); i++) P[i].classList.add(k); };
+  if (a.wait >= CD_USED) t = '이번 전투에 이미 씀';
+  else if (lack && a.pull && a.ok) { mark(0, n, 'spend'); mark(n, c, 'blood'); t = n + ' → 0 · 모자란 ' + lack + '은(는) 🩸 ' + a.blood; }
+  else if (lack) { mark(n, c, 'lack'); row.classList.add('short'); t = '유산 ' + c + ' 필요 · ' + lack + ' 모자람'; }
+  else { mark(n - c, n, 'spend'); t = n + ' → ' + (n - c); }
+  row.classList.add('pv'); const tx = row.querySelector('.yspv'); if (tx) tx.textContent = fixJosa(t);
+}
 function vHudPlayer(b, hud, pops, fdo) {
   const p = b.p; const B = BUILDS[p.build];
   const extra = [];
   extra.push(`<span data-info="stats" tabindex="0">${STAT_KEYS.map(k => STATN[k] + ' ' + stat(p, k)).join(' · ')}</span>`);
   extra.push(`<span data-info="speed" tabindex="0">속도 ${r1(pSpeed(b))}</span>`);
-  const eq = Object.values(p.eq).filter(Boolean); if (eq.length) extra.push(eq.map(k => `<span class="gr-${ITEMS[k].g || 'n'}">${inm(k, ITEMS[k].g || 'n')}</span>`).join(', '));
+  const eq = Object.values(p.eq).filter(Boolean); const g8n = (typeof G !== 'undefined' && G.run && G.run.p === p && G.run.eqU) ? EQ_SLOTS.map(sl => G.run.inv[G.run.eqU[sl]]).filter(it => it && isG8(it) && it.g !== 'n').map(it => `<span class="gr-${it.g}">${g8NameHtml(it)}</span>`) : []; /* 0.8.0 M6-2: 새 장비(평범 빼고) */ if (eq.length || g8n.length) extra.push(eq.map(k => `<span class="gr-${ITEMS[k].g || 'n'}">${inm(k, ITEMS[k].g || 'n')}</span>`).concat(g8n).join(', '));
   const scen = G.scr === 'scen' ? `<div class="scenline"><b>${SCEN[G.scen.i].id}. ${esc(SCEN[G.scen.i].n)}</b> ${esc(SCEN[G.scen.i].d)} 최대 10행동 중 ${b.pActs || 0}행동.</div>` : '';
-  const status = `<section class="fstat" data-hud="hud-player" aria-label="내 상태">${scen}${hud.flk ? '' : `<span class="sr">플라스크 생명력 ${p.flask.life}, ${isV2(p) ? '정화' : '마나'} ${p.flask.mana}, 스태미나 ${p.flask.stam || 0}, 최대 ${p.flaskMax}</span>`}<div class="mehead"><b data-info="buildrule" tabindex="0">${B.ico} ${esc(B.n)}</b><span class="flk" data-info="flask" tabindex="0">플라스크 <span aria-hidden="true">❤️</span><span class="sr">생명력 </span>${p.flask.life} ${isV2(p) ? '<span aria-hidden="true">🧪</span><span class="sr">정화 </span>' : '<span aria-hidden="true">💧</span><span class="sr">마나 </span>'}${p.flask.mana} <span aria-hidden="true">⚡</span><span class="sr">스태미나 </span>${p.flask.stam || 0} <small><span class="sr">, 최대 </span>/${p.flaskMax}</small></span><button class="sm fdtog" data-a="fdet" aria-expanded="${fdo}" aria-controls="fdet"><span aria-hidden="true">${fdo ? '▴' : '▾'}</span> 자세히</button></div>
-    <div class="mbars">${pops.p ? popHtml(pops.p) : ''}${mbar('hp', p.hp, p.hpMax, '생명력', b.over || !hud.prev ? 0 : incomingEst(b).sum)}${p.mpMax > 0 ? mbar('mp', p.mp, p.mpMax, '마나') : ''}${mbar('st', p.st, p.stMax, '스태미나')}</div><div class="fdet" id="fdet"${fdo ? '' : ' hidden'}><div class="mini">${extra.join(' · ')}</div><div><button class="sm rulebtn" data-a="help" data-k="row">전투 규칙 보기</button></div><div class="rule" data-info="buildrule" tabindex="0">${classRuleHtml(p.build)}</div>${incWhy(b)}</div></section>`;
+  /* M5-0a 승부수 상태 표시(장식): 카드 테두리 색과 모서리 글자(이름 · 남은 차례). 값은 읽기만 한다 */
+  const sbS = p.sbSt || {}, sk = k => { const id = skillsOf(p).find(i => SK2[i] && SK2[i].fx.some(e => e.k === k)); return id ? 'stt:' + id : ''; }, stL = [sbS.blaze > 0 ? ['st-blaze', '겁화', sbS.blaze, sk('sbBlaze')] : null, sbS.sinWall ? ['st-wall', '죄인의 벽', 0, sk('sbSinWall')] : null, sbS.fireBody > 0 ? ['st-fire', '불의 몸', sbS.fireBody, sk('sbFireBody')] : null, ...(p.wdSt ? [p.wdSt.def ? ['st-wdst', '수비 태세', 0, 'wdstance'] : p.wdSt.atk ? ['st-wdst', '공격 태세', 0, 'wdstance'] : null, p.wdSt.siege > 0 ? ['st-siege', '파성', p.wdSt.siege, sk('wdSiege')] : null, p.wdSt.valor > 0 ? ['st-valor', '용맹', p.wdSt.valor, sk('wdValor')] : null, p.wdSt.quakeX ? ['st-quake', '대지 분쇄 ×2', 0, sk('wdQuake')] : null] : []), ...(p.mkSt ? [p.mkSt.yeok > 0 ? ['st-yeok', '역천', p.mkSt.yeok, sk('mkYeok')] : null, p.mkSt.cheon > 0 ? ['st-cheon', '천망', p.mkSt.cheon, sk('mkCheon')] : null, p.mkSt.noKi > 0 ? ['st-noki', '기 막힘', p.mkSt.noKi, sk('mkIlji')] : null, p.mkSt.adamant > 0 ? ['st-mkbuf', '금강불괴', p.mkSt.adamant, sk('mkAdamant')] : null, p.mkSt.flow > 0 ? ['st-mkbuf', '내공 순환', p.mkSt.flow, sk('mkFlow')] : null, p.mkSt.condense ? ['st-mkbuf', '기공 응축', 0, sk('mkCondense')] : null] : []), ...(p.asSt ? (A => { const pre = b.prepTurn !== b.turnIdx; return [A.hide && !A.mu ? ['st-cheon', '숨음', 0, sk('asHide')] : null, A.mu && A.muT === b.turnIdx ? ['st-cheon', '무영살 베기', 0, sk('asHide')] : null, A.zan > 0 ? ['st-yeok', '잔영난무', Math.max(1, A.zan - (pre ? 1 : 0)), sk('asZan')] : null, A.noParry > 0 ? ['st-noki', '흘리기 못 함', A.noParry, sk('asHide')] : null, A.noStam > 0 ? ['st-noki', '스태미나 안 참', A.noStam, sk('asZan')] : null, A.veil ? ['st-mkbuf', '독의 장막', A.veil.n, sk('asVeil')] : null, A.nextBurst > 1 ? ['st-mkbuf', '꽃잎 ' + A.nextBurst + '배', 0, sk('asNextBurst')] : null]; })(p.asSt) : []), ...(p.hnSt ? (H => [H.draw ? ['st-cheon', H.drawT === b.turnIdx ? '만궁 쏘기' : '시위 당김', 0, sk('hnDraw')] : null, H.gale > 0 ? ['st-yeok', '질풍난사', H.gale, sk('hnGale')] : null, H.trap ? ['st-cheon', '혈향의 덫', 0, sk('hnTrap')] : null, H.veilU >= (b.round || 0) ? ['st-mkbuf', '바람의 장막', H.veilU - (b.round || 0) + 1, sk('hnWindVeil')] : null, H.nock ? ['st-mkbuf', '화살 재기 ' + H.nock.shots + '발', H.nock.n, sk('hnNock')] : null])(p.hnSt) : []), ...(p.elSt ? (E => [['st-mkbuf', E.el === 'ice' ? '❄ 얼음' : '🔥 불', 0, 'elmode'], E.avatar > 0 || elAvOn(b) ? ['st-blaze', '빙염의 화신', E.avatar + (elAvOn(b) ? 1 : 0), sk('elAvatar')] : null, p.stun > 0 && E.stasisT != null ? ['st-noki', '정적의 대가', 0, sk('elStasis')] : null, E.wardU >= (b.round || 0) && E.wardRed ? ['st-mkbuf', '마력 결계', E.wardU - (b.round || 0) + 1, sk('elBarrier')] : null, E.charge ? ['st-mkbuf', '마력 응축', E.charge.n, sk('elCharge')] : null, E.multi ? ['st-mkbuf', '마력 연사', E.multi.n, sk('elMulti')] : null, E.cat && E.catT === b.turnIdx ? ['st-mkbuf', '촉매 ×' + E.cat, 0, sk('elCat')] : null])(p.elSt) : [])].filter(Boolean); /* M5-5 원소술사: 마력탄의 원소(🔥/❄), 승부수 상태(빙염의 화신 · 정적의 대가)와 강화 */ /* M5-4 사냥꾼: 승부수 상태(시위 당김 · 질풍난사 · 혈향의 덫)와 강화(바람의 장막 · 화살 재기) */ /* M5-3 암살자: 승부수 상태(숨음 · 무영살 베기 · 잔영난무)와 대가(흘리기 못 함 · 스태미나 안 참), 강화(독의 장막 · 꽃잎 모으기) */ /* M5-1 파수꾼: 지금 태세를 한 단어로, 승부수 상태. M5-2 수도승 승부수 · 강화 */
+  const stB = stL.length ? `<span class="stt-row">${stL.map(x => `<span class="stt ${x[0]}"${x[3] ? ` data-info="${x[3]}" tabindex="0"` : ''}><span class="sr">승부수 상태: </span>${x[1]}${x[2] ? ` <b>${x[2]}</b><span class="sr">차례 남음</span>` : ''}</span>`).join('')}</span>` : '';
+  const status = `<section class="fstat${(stL.find(x => !['st-wdst', 'st-quake', 'st-mkbuf', 'st-noki'].includes(x[0])) || [''])[0] ? ' ' + (stL.find(x => !['st-wdst', 'st-quake', 'st-mkbuf', 'st-noki'].includes(x[0])))[0] : ''}" data-hud="hud-player" aria-label="내 상태">${stB}${scen}${hud.flk ? '' : `<span class="sr">플라스크 생명력 ${p.flask.life}, ${isV2(p) ? '정화' : '마나'} ${p.flask.mana}, 스태미나 ${p.flask.stam || 0}, 최대 ${p.flaskMax}</span>`}<div class="mehead"><b data-info="buildrule" tabindex="0">${B.ico} ${esc(B.n)}</b><span class="flk" data-info="flask" tabindex="0">플라스크 <span aria-hidden="true">❤️</span><span class="sr">생명력 </span>${p.flask.life} ${isV2(p) ? '<span aria-hidden="true">🧪</span><span class="sr">정화 </span>' : '<span aria-hidden="true">💧</span><span class="sr">마나 </span>'}${p.flask.mana} <span aria-hidden="true">⚡</span><span class="sr">스태미나 </span>${p.flask.stam || 0} <small><span class="sr">, 최대 </span>/${p.flaskMax}</small></span><button class="sm fdtog" data-a="fdet" aria-expanded="${fdo}" aria-controls="fdet"><span aria-hidden="true">${fdo ? '▴' : '▾'}</span> 자세히</button></div>
+    <div class="mbars">${pops.p ? popHtml(pops.p) : ''}${mbar('hp', p.hp, p.hpMax, '생명력', b.over || !hud.prev ? 0 : incomingEst(b).sum)}${p.mpMax > 0 ? mbar('mp', p.mp, p.mpMax, '마나') : ''}${mbar('st', p.st, p.stMax, '스태미나')}</div>${isV2(p) ? ysRow(b) : ''}<div class="fdet" id="fdet"${fdo ? '' : ' hidden'}><div class="mini">${extra.join(' · ')}</div><div><button class="sm rulebtn" data-a="help" data-k="row">전투 규칙 보기</button></div><div class="rule" data-info="buildrule" tabindex="0">${classRuleHtml(p.build)}</div>${incWhy(b)}</div></section>`;
   return status;
 }
 /* 예상 피해 모듈: 끄면 읽는 글만 남긴다 */
@@ -159,33 +188,33 @@ function bossMechanicsHtml(b, boss) {
   const it = intentText(b, boss);
   if (boss.boss === 'abbot') {
     state.push('낙인 ' + st(b.p, 'brand') + '/3');
-    why.push('낙인이 쌓일수록 수도원장의 강타 피해가 증가합니다.');
+    why.push('낙인이 쌓일수록 수도원장의 강타 피해가 커집니다.');
     if (boss.demand && boss.demand.turn === b.turnIdx) {
       const rest = boss.demand.k === 'rest';
       state.push(rest ? '고해: 수도원장에게 피해 주지 않기' : '심문: 이번 차례 수도원장에게 피해 주기');
-      why.push(rest ? '수도원장에게 피해를 주지 않으면 낙인 1 감소. 피해를 주면 낙인이 늘고 수도원장이 강화됩니다.' : '수도원장에게 피해를 주면 낙인 1 감소. 피해를 주지 않으면 낙인이 늘어납니다.');
+      why.push(rest ? '수도원장에게 피해를 주지 않으면 낙인이 1 줄어듭니다. 피해를 주면 낙인이 늘고 수도원장이 강해집니다.' : '수도원장에게 피해를 주면 낙인이 1 줄어듭니다. 피해를 주지 않으면 낙인이 늘어납니다.');
     }
     if (boss.vow) {
       state.push('서원 중 · 촛불 ' + alive(b).filter(e => e.role === 'candle').length + '개');
-      why.push('서원 중에는 직접 피해가 줄어듭니다. 붕괴시키면 서원이 깨지고 촛불이 꺼집니다. 서원이 끝날 때 남은 촛불은 수도원장을 강화합니다.');
+      why.push('서원 중에는 직접 피해가 줄어듭니다. 무너뜨리면 서원이 깨지고 촛불이 꺼집니다. 서원이 끝날 때 남은 촛불은 수도원장을 강화합니다.');
     }
   } else if (boss.boss === 'cryptlord') {
-    why.push('군주의 새김은 행동 갈래를 약화시킵니다. 적용 중인 새김과 남은 시간은 위에 표시됩니다.');
+    why.push('군주가 새긴 행동 갈래는 약해집니다. 새김과 남은 시간은 위에 보입니다.');
     if (b.carve) {
       state.push('새김: ' + Object.keys(b.carve.g).map(k => CARVE_N[k] + ' −' + Math.round((1-b.carve.g[k])*100) + '%').join(' · ') + ' · 내 차례 ' + b.carve.left + '번');
-      why.push('새겨진 행동 갈래의 효과가 약해집니다. 남은 내 차례가 지나거나 군주를 붕괴시키면 새김이 사라집니다.');
+      why.push('새겨진 행동 갈래의 효과가 약해집니다. 남은 내 차례가 지나거나 군주를 무너뜨리면 새김이 사라집니다.');
     } else state.push('새김 없음');
     const walls = alive(b).filter(e => e.role === 'bonewall').length;
-    if (walls) { state.push('뼈벽 ' + walls + '개'); why.push('뼈벽 뒤 후열은 단일 공격 피해가 줄어듭니다. 뼈벽을 없애면 보호가 사라집니다.'); }
+    if (walls) { state.push('뼈벽 ' + walls + '개'); why.push('뼈벽 뒤 후열은 한 적 대상 피해가 줄어듭니다. 뼈벽을 없애면 이 효과가 사라집니다.'); }
   } else if (boss.boss === 'queen') {
     const crown = alive(b).find(e => e.role === 'crown');
     state.push(crown ? '왕관 생명력 ' + shownHp(crown.hp) + '/' + Math.round(crown.hpMax) : '왕관 없음');
     if (crown) why.push('왕관을 공격하면 열기가 내려갑니다. 왕관을 깨면 열기가 크게 내려가고 여왕이 휘청입니다.');
     if (b.crownBack) state.push('왕관 재생까지 ' + Math.max(0,b.crownBack-(b.round||0)) + '라운드');
     const maids = alive(b).filter(e => e.role === 'maid');
-    if (maids.length) { state.push('시녀 ' + maids.length + '명'); why.push('시녀의 영창이 끝나면 열기가 올라갑니다. 적 카드에서 영창 준비 상태를 확인할 수 있습니다.'); }
+    if (maids.length) { state.push('시녀 ' + maids.length + '명'); why.push('시녀의 영창이 끝나면 열기가 올라갑니다. 영창 준비는 적 카드에 보입니다.'); }
     if (boss.under) { state.push(boss.qPrep ? '솟구침 준비 완료' : '모래 속 잠복'); why.push('잠복 중에는 단일 공격이 닿지 않습니다. 솟구침은 큰 피해와 출혈을 줍니다.'); }
-    why.push('열기 100에서 재폭풍이 발생합니다. 발동 시점과 예상 피해는 열기 막대에 표시됩니다.');
+    why.push('열기 100에서 재폭풍이 붑니다. 언제 불고 얼마나 아픈지는 열기 막대에 보입니다.');
   } else if (boss.boss === 'mother') {
     state.push('내 중독 ' + st(b.p,'poison') + '/10'); why.push('내 중독이 10에 닿으면 부화가 일어납니다.');
     if(ph>=2)state.push('거울 활성');
@@ -194,21 +223,24 @@ function bossMechanicsHtml(b, boss) {
     why.push('뿌리가 남아 있는 동안 수호목이 라운드마다 회복합니다. 계절이 바뀌면 전투 규칙도 달라집니다.');
   }
   const pending = !!(boss.qNext || boss.lordNext || boss.abNext), dw = bossDwell(boss);
-  const hold = pending ? (dw && !dw.last && dw.left ? `버티는 중 · 이 단계에서 ${dw.left}번 더 움직인 뒤 전환` : '단계 전환 대기 · 현재 예고를 마친 뒤 전환') : dw && dw.last && dw.left ? `버티는 중 · 마지막 단계에서 ${dw.left}번 움직이기 전에는 쓰러지지 않음` : '';
+  const hold = pending ? (dw && !dw.last && dw.left ? `버티는 중 · 이 단계에서 ${dw.left}번 더 움직인 뒤 전환` : '단계 전환 대기 · 지금 예고를 마치면 넘어감') : dw && dw.last && dw.left ? `버티는 중 · 마지막 단계에서 ${dw.left}번 움직이기 전에는 쓰러지지 않음` : '';
   const bank = boss.bank > 0 ? ` · 쌓인 피해 ${r1(boss.bank)}(보스가 움직이면 들어감)` : '';
-  return `<section class="boss-mechanics" aria-label="보스 기믹 상태"><div class="boss-state"><b>${esc(boss.n)} · ${ph}단계</b>${hold ? '<span>' + hold + bank + '</span>' : ''}</div>${state.length ? '<div class="boss-state">' + state.map(s=>'<span>'+esc(s)+'</span>').join('') + '</div>' : ''}<div class="boss-next"><b>다음 행동</b> ${esc(fixJosa(it && it.t || '예고 없음'))}</div>${why.length ? '<details><summary>현재 기믹 설명</summary>' + why.map(s=>'<p>'+esc(s)+'</p>').join('') + '</details>' : ''}</section>`;
+  return `<section class="boss-mechanics" aria-label="보스 규칙 상태"><div class="boss-state"><b>${esc(boss.n)} · ${ph}단계</b>${hold ? '<span>' + hold + bank + '</span>' : ''}</div>${state.length ? '<div class="boss-state">' + state.map(s=>'<span>'+esc(s)+'</span>').join('') + '</div>' : ''}<div class="boss-next"><b>다음 행동</b> ${esc(fixJosa(it && it.t || '예고 없음'))}</div>${why.length ? '<details><summary>현재 규칙 설명</summary>' + why.map(s=>'<p>'+esc(s)+'</p>').join('') + '</details>' : ''}</section>`;
 }
+/* S-5(10월 24일 만든 사람) 광폭의 끝: 남은 라운드, 시작했으면 다음 라운드 끝의 피할 수 없는 피해 */
+function enrEndTxt(b) { const eA = enrageEndAt(b); if (eA == null) return ''; const T = (b.tick || 0) + 1; return T >= eA ? ` · ⚠ 광폭의 끝: 라운드가 끝날 때 피할 수 없는 피해 ${enrageEndDmg(b.p, T - eA)}` : ` · 광폭의 끝까지 ${myTurnsUntil(b, eA)}라운드`; }
 function vHudClock(b) {
   let gim = '';
   const boss = b.en.find(e => e.role === 'boss' && e.alive);
   if (boss) {
-    let g = b.enrage ? '광폭화 중' : `광폭화까지 ${myTurnsUntil(b, (ENRAGE.byBoss || {})[boss.boss] || ENRAGE.boss)}라운드`;
+    let g = b.enrage ? '광폭화 중' + enrEndTxt(b) : `광폭화까지 ${myTurnsUntil(b, (ENRAGE.byBoss || {})[boss.boss] || ENRAGE.boss)}라운드`;
     if (boss.boss === 'mother') g += ` · 내 중독 ${st(b.p, 'poison')}/10 (10이면 부화) · ${boss.phase >= 2 ? '거울 활성' : '2페이즈부터 거울'}`;
     if (boss.boss === 'tree') { const roots = alive(b).filter(e => e.role === 'root').length; g += ` · 뿌리 때문에 라운드마다 약 +${rootRegen(b)} 회복 · 계절 ${SEASONS[b.season]} → ${SEASONS[(b.season + 1) % 4]} (${myTurnsUntil(b, (Math.floor(b.tick / 4) + 1) * 4)}라운드 뒤) · 뿌리 ${roots}/3`; }
     gim = `<div class="gimmick" data-info="gim" tabindex="0">${esc(g)}</div>`;
     gim += bossMechanicsHtml(b, boss);
     if (boss.demand && boss.demand.turn === b.turnIdx) gim += `<div class="gimmick dmd" data-info="edemand" tabindex="0">${boss.demand.k === 'rest' ? '🤲 수도원장이 고해를 기다린다' : '⚖️ 수도원장이 심문한다'}</div>`; // 10월 4일: 휴대폰에서 카드의 표시가 잘려 따로 한 줄
   }
+  else if (b.enrage && enrageEndAt(b) != null) gim = `<div class="gimmick" data-info="enrage" tabindex="0">${esc('광폭화 중' + enrEndTxt(b))}</div>`; // S-5(10월 24일): 보스가 아닌 싸움도 광폭의 끝을 보인다
   const piles=alive(b).filter(e=>e.pile);
   if(piles.length)gim += `<div class="gimmick" data-info="floorbones" tabindex="0">🦴 바닥의 뼈 ${piles.length}더미 · 가장 빠른 부활까지 ${Math.min(...piles.map(e=>e.pile.wait))}라운드</div>`;
   if (b.heat != null) gim += heatHtml(b); // 3챕터 열기 칸
@@ -217,7 +249,7 @@ function vHudClock(b) {
 /* 차례 알림 모듈: 내 차례 · 적 행동 한 줄 */
 function vHudBanner(b) {
   const last = b.log[b.log.length - 1];
-  const lastl = G.banner ? `<div class="turnban ${G.banner.phase}"><span class="ic">${G.banner.ico}</span><b>${esc(G.banner.who)}</b><span>${esc(G.banner.phase === 'post' && last ? last.m : G.banner.what)}</span></div>` : G.myTurnFlash ? '<div class="turnban me"><b>내 차례</b><span>무엇을 할지 고르세요</span></div>' : '';
+  const lastl = G.banner ? `<div class="turnban ${G.banner.phase}"><span class="ic">${G.banner.ico}</span><b>${esc(G.banner.who)}</b><span>${esc(G.banner.phase === 'post' && last ? last.m : G.banner.what)}</span></div>` : G.myTurnFlash && !b.over ? '<div class="turnban me"><b>내 차례</b><span>무엇을 할지 고르세요</span></div>' : '';
   return lastl ? `<div class="logrow">${lastl}</div>` : '';
 }
 function vHudField(b, hud, pops) {
@@ -229,7 +261,7 @@ function vHudField(b, hud, pops) {
     /* 깃발: [화면에 그리는 것, 읽어 주는 말]. 10월 7일: 카드 버튼 안에서는 따로 초점을 받지 않고, 카드의 읽는 이름에 모두 담는다 */
     const fl = [];
     if (reach && guardOf(b, e)) fl.push(['<span class="nr gd" data-info="guarded">🛡️막힘</span>', '방패병이 막는 중']);
-    if (e.braced) fl.push(['<span class="nr gd" data-info="ebraced">🪨</span>', '버팀']);
+    if (e.braced) fl.push(['<span class="nr gd" data-info="ebraced">🪨</span>', '버티기']);
     if (e.countering) fl.push(['<span class="nr gd" data-info="ecounter">↩️</span>', '반격 태세']);
     if (e.evading) fl.push(['<span class="nr gd" data-info="eevade">🌀</span>', '몸 낮춤']);
     if (e.guarding) fl.push(['<span class="nr gd" data-info="eguard">🙌</span>', '지키는 중']);
@@ -241,8 +273,9 @@ function vHudField(b, hud, pops) {
     if (e.loot) fl.push(['<span class="nr gd" data-info="eloot">🫳</span>', '훔친 것: ' + e.loot.n]);
     if (e.pile) fl.push(['<span class="nr gd hv" data-info="epile:' + e.id + '">🦴 부활 ' + e.pile.wait + '라운드</span>', '뼈 더미, 일어서기까지 ' + e.pile.wait + '라운드']);
     if (e.under) fl.push(isCh3(b) ? ['<span class="nr gd">🏜️ 모래 속</span>', '모래 속: 한 적 대상으로 고를 수 없음'] : ['<span class="nr gd">🕳️ 땅속</span>', '땅속: 한 적 대상으로 고를 수 없음']);
-    if (e.swift) fl.push(['<span class="nr gd">⚡신속</span>', '신속: 라운드마다 가속 1']);
-    if (e.role === 'bonewall') fl.push(['<span class="nr gd">🧱 후열 보호</span>', '뼈벽: 후열이 받는 한 적 대상 피해 절반, 붕괴에 약함']);
+    if (e.swift) fl.push(['<span class="nr gd" data-info="eswift">⚡신속</span>', '신속: 라운드마다 가속 1']);
+    if (e.cmd) fl.push(['<span class="nr gd" data-info="ecmd">📣지휘</span>', '지휘: 살아 있는 동안 같은 무리 일반 적의 피해 +15%']); if (e.lootA) fl.push(['<span class="nr gd" data-info="elootA">💰장물</span>', '장물 두른: 맞을 때마다 골드 1을 빼앗긴다']); if (e.oiled) fl.push(['<span class="nr gd" data-info="eoiled">🛢️기름</span>', '기름 먹은: 화상 피해 2배 · 붕괴 1.5배']); // A2
+    if (e.role === 'bonewall') fl.push(['<span class="nr gd">🧱 뼈벽</span>', '뼈벽: 후열이 받는 한 적 대상 피해 절반, 붕괴에 약함']);
     if (e.row === 'back' && alive(b).some(x => x.role === 'bonewall')) fl.push(['<span class="nr gd">🧱½</span>', '뼈벽 뒤: 한 적 대상 피해 절반']);
     if (e.haze > 0) fl.push(['<span class="nr gd" data-info="ehaze">🌫️' + e.haze + '</span>', '허상 ' + e.haze + '겹: 한 적을 노린 공격 하나가 한 겹을 걷고 헛친다']);
     if (e.wrap > 0) fl.push(['<span class="nr gd" data-info="ewrap">🧻' + e.wrap + '</span>', '붕대: 받는 직접 피해 −' + Math.round(WRAP.cut * 100) + '%, ' + e.wrap + '번 더 맞으면 풀림']);
@@ -254,15 +287,15 @@ function vHudField(b, hud, pops) {
     if (e.stkExp > 0 || (e.role === 'lurker' && e.s.vuln && !e.under && e.intent && e.intent.k === 'exposed')) fl.push(['<span class="nr gd">😵</span>', '드러남: 숨을 고르는 중']);
     if (e.boss === 'tree' && rootRegen(b) > 0) fl.push([`<span class="nr rg2" data-info="regen">🌱 +${rootRegen(b)}/라운드</span>`, '라운드마다 ' + rootRegen(b) + ' 회복']);
     const ed = hud.edet || sel; /* 카드를 눌러 고르면 그 카드는 상세가 모두 보인다 */
-    const KEEP = /data-info="(guarded|ebraced|ecounter|eevade|eguard|echant|edemand|ehaze|ewrap|ectr|efocus)"|땅속|모래 속|후열 보호|🧱½/;
+    const KEEP = /data-info="(guarded|ebraced|ecounter|eevade|eguard|echant|edemand|ehaze|ewrap|ectr|efocus|ecmd|eloot|elootA|eoiled)"|땅속|모래 속|🧱 뼈벽|🧱½/;
     const flv = ed ? fl : fl.filter(x => KEEP.test(x[0]));
     const wall = wallUp(b, e) ? 'ewall' : wallFrontUp(b, e) ? 'ewallf' : '';
     const sw = stsWords(e, b);
-    const lab = [(e.pile ? '뼈 더미' : e.n) + (e.role === 'boss' ? ' ' + e.phase + '페이즈' : '') + (e.lv ? ' Lv' + e.lv : '') + (e.rn && e.n.indexOf(e.rn) < 0 ? ' ' + e.rn : '') + (e.tough ? ' 강인' : ''),
+    const lab = [(e.pile ? '뼈 더미' : e.n) + (e.role === 'boss' ? ' ' + e.phase + '단계' : '') + (e.lv ? ' Lv' + e.lv : '') + (e.rn && e.n.indexOf(e.rn) < 0 ? ' ' + e.rn : '') + (e.tough ? ' 강인' : ''),
       '생명력 ' + shownHp(e.hp) + '/' + Math.round(e.hpMax)].concat(e.role !== 'root' && e.role !== 'crown' ? [eordText(b, e), '붕괴 ' + Math.round(e.brk) + '/' + e.brkMax] : [])
       .concat(sw.length ? ['상태: ' + sw.join(', ')] : []).concat(wall || fl.length ? ['표시: ' + (wall ? ['방패벽'] : []).concat(fl.map(x => x[1])).join(', ')] : [])
       .concat(e.role !== 'root' && e.role !== 'crown' ? ['예고: ' + it.t] : ['움직이지 않는다']).join(', ');
-    return `<button class="en${e.pile ? ' pile' : ''}${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(lab)}">${ed ? eordHtml(b, e) : ''}<span class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.pile ? '뼈 더미' : e.n)}${e.role === 'boss' ? ' ' + e.phase + '페이즈' : ''}${wall ? `<span class="wallm" data-info="${wall}">🛡️</span>` : ''}${ed && e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" data-info="etough">강인</small>' : ''}${ed && e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${flv.map(x => x[0]).join('')}</span>${ehpBar(e)}${ed && e.role !== 'root' && e.role !== 'crown' ? `<span class="bkline" data-info="bar:bk"><small>붕괴<span class="bkl"> 게이지</span></small><span class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></span></span>` : ''}${stsHtml(e, b, 1, { mode: sel ? 'all' : hud.sts })}${e.role !== 'root' && e.role !== 'crown' ? `<span class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${(hud.iaux || sel) && acts1[e.id] > 1 ? `<span class="ix">×${acts1[e.id]}</span>` : ''}</span>` : '<span class="mini emv">움직이지 않는다</span>'}${pop ? popHtml(pop) : ''}</button>`;
+    return `<button class="en${e.pile ? ' pile' : ''}${sel ? ' tg' : ''}${b.lastActor === e.id ? ' acting' : ''}" data-a="sel" data-e="${e.id}" data-info="en:${e.id}" aria-pressed="${sel}" aria-label="${esc(lab)}">${ed ? eordHtml(b, e) : ''}<span class="enh"><span class="ico" aria-hidden="true">${e.ico}</span><span class="nm">${esc(e.pile ? '뼈 더미' : e.n)}${e.role === 'boss' ? ' ' + e.phase + '단계' : ''}${wall ? `<span class="wallm" data-info="${wall}">🛡️</span>` : ''}${ed && e.lv ? `<small class="elv"> Lv${e.lv}</small>` : ''}${e.tough ? '<small class="etough" data-info="etough">강인</small>' : ''}${ed && e.rn && e.n.indexOf(e.rn) < 0 ? `<small class="erole"> ${esc(e.rn)}</small>` : ''}</span>${flv.map(x => x[0]).join('')}</span>${ehpBar(e)}${foeASHtml(b, e)}${ed && e.role !== 'root' && e.role !== 'crown' ? `<span class="bkline" data-info="bar:bk"><small>붕괴<span class="bkl"> 게이지</span></small><span class="bkb" role="progressbar" aria-label="붕괴" aria-valuemin="0" aria-valuemax="${e.brkMax}" aria-valuenow="${Math.round(e.brk)}"><i style="width:${Math.min(100, e.brk / e.brkMax * 100)}%"></i></span></span>` : ''}${stsHtml(e, b, 1, { mode: sel ? 'all' : hud.sts })}${e.role !== 'root' && e.role !== 'crown' ? `<span class="intent ik-${ib.cls}${it.hv ? ' hv' : ''}"><span class="ii" aria-hidden="true">${ib.ico}</span>${ib.num !== '' ? `<b class="inum">${esc(String(ib.num))}</b>` : ''}<span class="itx">${esc(ib.txt)}</span>${(hud.iaux || sel) && acts1[e.id] > 1 ? `<span class="ix">×${acts1[e.id]}</span>` : ''}</span>` : '<span class="mini emv">움직이지 않는다</span>'}${pop ? popHtml(pop) : ''}</button>`;
   };
   const bk = b.en.filter(e => e.alive && e.row === 'back'), fr = b.en.filter(e => e.alive && e.row === 'front');
   /* 전열 · 후열 띠 (10월 3일 만든 사람: 한눈에 안 들어온다): 줄마다 색 띠와 머리글, 머리에 근접 공격이 닿는지.
@@ -270,7 +303,7 @@ function vHudField(b, hud, pops) {
   const blocked = frontBlocked(b);
   const lane = (k, nm, list, reach, extra) => `<div class="lane ${k}${list.length ? '' : ' empty'}" role="group" aria-label="${nm}" style="--n:${Math.max(1, list.length)}"><div class="lanehd"><b>${nm}</b><span class="lanect">${list.length ? list.length + '명' : '비어 있음'}</span>${list.length ? `<span class="reach ${reach[0]}">${reach[1]}</span>` : ''}${extra || ''}</div>${list.length ? `<div class="enemies">${list.map(ecard).join('')}</div>` : ''}</div>`;
   const field = `<section class="field" data-hud="hud-field" aria-label="전장">${G.scr === 'tut' ? vTutGoal(b) : ''}
-    <div class="lanes">${lane('back', '후열', bk, blocked ? ['no', '근접 불가<span class="rlhint"> · 전열이 막는 중</span>'] : ['ok', '근접 닿음<span class="rlhint"> · 전열이 비었거나 무너짐</span>'])}${lane('front', '전열', fr, ['ok', '근접 닿음'])}</div></section>`;
+    ${chDevChip(b)}<div class="lanes">${!bk.length && !fr.length ? '<p class="fieldclr">적이 모두 쓰러졌습니다</p>' : ''}${lane('back', '후열', bk, blocked ? ['no', '근접 불가<span class="rlhint"> · 전열이 막는 중</span>'] : ['ok', '근접 닿음<span class="rlhint"> · 전열이 비었거나 무너짐</span>'])}${lane('front', '전열', fr, ['ok', '근접 닿음'])}</div></section>`;
   return field;
 }
 function vHudActions(b, hud, tg) {
@@ -299,7 +332,7 @@ function vHudActions(b, hud, tg) {
         const urgent = !dis && (a.id === 'flaskL') && p.hp < p.hpMax * 0.35; const tnew = G.scr === 'tut' && tutNew(b, a.id);
         const at = !dis ? actTarget(b, a) : null; const gd = at && isMeleeAct(p, a.id) ? guardOf(b, at) : null;
         kn++;
-        btns += `<button class="ab g-${lab === '공격' ? 'atk' : lab === '스킬' ? 'sk' : lab === '지키기' ? 'def' : lab === '직업' ? 'sig' : 'etc'}${dis ? ' dis' : ''}${urgent ? ' urgent' : ''}${tnew ? ' tnew' : ''}${a.v2 && skHz(a.s) ? ' hzb' : ''}${!dis && a.pull ? ' blood' : ''}" data-a="act" data-id="${a.id}" data-info="act:${a.id}" data-k="${kn}" aria-disabled="${dis}"><b>${kn <= 9 && G.data.numKeys !== false ? `<kbd>${kn}</kbd>` : ''}<span class="anl">${p.build === 'spellblade' && sbKindOf(p, a.id, a) ? (sbKindOf(p, a.id, a) === 'cut' ? '⚔ ' : '✦ ') : ''}${esc(a.n)}</span><span class="ans" aria-hidden="true">${p.build === 'spellblade' && sbKindOf(p, a.id, a) ? (sbKindOf(p, a.id, a) === 'cut' ? '⚔ ' : '✦ ') : ''}${esc(a.id === 'flaskM' && isV2(p) ? '🧪 정화' : ASHORT[a.id] || a.n)}</span>${spdIco(noFast(p) && a.time <= 0.6 ? 1 : a.time)}${a.v2 && skHz(a.s) ? '<span class="hz" aria-hidden="true">🔄</span>' : ''}</b><small>${why ? esc(why) : '<span class="ac">' + (linkOn(b, a) ? '<span class="lk">🔗 연계 +' + Math.round(HUNT.link * 100) + '%</span>' : esc(a.cost)) + '</span><span class="ax">' + (skillHint(b, a) ? ' · ' + esc(skillHint(b, a)) : '') + (at ? ' → ' + esc(at.n) + (gd ? ' 🛡' : '') : a.aoe ? ' → 전체' : '') + '</span>'}</small></button>`;
+        btns += `<button class="ab g-${lab === '공격' ? 'atk' : lab === '스킬' ? 'sk' : lab === '지키기' ? 'def' : lab === '직업' ? 'sig' : 'etc'}${dis ? ' dis' : ''}${urgent ? ' urgent' : ''}${tnew ? ' tnew' : ''}${a.v2 && skHz(a.s) ? ' hzb' : ''}${!dis && a.pull ? ' blood' : ''}" data-a="act" data-id="${a.id}" data-info="act:${a.id}" data-k="${kn}" aria-disabled="${dis}"><b>${kn <= 9 && G.data.numKeys !== false ? `<kbd>${kn}</kbd>` : ''}<span class="anl">${p.build === 'spellblade' && sbKindOf(p, a.id, a) ? (sbKindOf(p, a.id, a) === 'cut' ? '⚔ ' : '✦ ') : ''}${esc(a.n)}</span><span class="ans" aria-hidden="true">${p.build === 'spellblade' && sbKindOf(p, a.id, a) ? (sbKindOf(p, a.id, a) === 'cut' ? '⚔ ' : '✦ ') : ''}${esc(a.id === 'flaskM' && isV2(p) ? '🧪 정화' : ASHORT[a.id] || a.n)}</span>${spdIco(noFast(p) && a.time <= 0.6 ? 1 : a.time)}${a.v2 && skHz(a.s) ? '<span class="hz" aria-hidden="true">🔄</span>' : ''}</b><small>${why ? esc(why) : '<span class="ac">' + (linkOn(b, a) ? '<span class="lk">🔗 연계' + (hnLinkFastOk(b, a) ? ' ⚡' : '') + '</span>' : soloOn(b, a) ? '<span class="lk">⇉ 외길 +' + Math.round(HN.solo * 100) + '%</span>' : esc(a.cost)) + '</span><span class="ax">' + (skillHint(b, a) ? ' · ' + esc(skillHint(b, a)) : '') + (at ? ' → ' + esc(at.n) + (gd ? ' 🛡' : '') : a.aoe ? ' → 전체' : '') + '</span>'}</small></button>`;
       }
       btns += '</div>';
     }
@@ -311,7 +344,7 @@ function vHudActions(b, hud, tg) {
 /* 새 전투를 시작할 때 "자세히" 칸은 닫힌 채로 시작한다(전투 중 열고 닫기와 저장 값 G.data.fdet은 그대로. 묶음 "자세히"와는 별개다) */
 function fdetFresh() { if (G.data && G.data.fdet) { G.data.fdet = false; saveLocal(); } }
 function vBattle() {
-  const b = G.b; const pops = hpPops(b); const fdo = !!G.data.fdet; const hud = hudEff(fdo); HUDNOW = hud;
+  const b = G.b; if (typeof fcTip === 'function') fcTip(b); /* 10월 24일 S-4: 강적 시계를 처음 보면 한 줄(한 번만) */ const pops = hpPops(b); const fdo = !!G.data.fdet; const hud = hudEff(fdo); HUDNOW = hud;
   const tg = G.sel ? b.en.find(e => e.id === G.sel && e.alive) : null;
   const html = {
     'hud-player': vHudPlayer(b, hud, pops, fdo), 'hud-classchip': vHudClass(b, hud), 'hud-incoming': vHudIncoming(b, hud), 'hud-status': vHudStatus(b, hud),

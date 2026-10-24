@@ -5,7 +5,7 @@ const ITEMS = {
   plate:    { n: '인내의 흉갑', slot: 'armor', kind: 'block', act: '방어 중 받은 피해의 30%를 다음 공격 피해에 더한다.', cost: '최대 생명력 −10%' },
   witness:  { n: '증인의 부적', slot: 'amulet', kind: 'block', act: '적의 강타를 흘리면 그 적이 잠시 취약해진다.', cost: '흘리기 스태미나 +10' },
   chalice:  { n: '역류의 성배', slot: 'flask', kind: 'free', act: '생명력 플라스크로 지운 해로운 상태를 다음 공격이 대상에게 그대로 건다.', cost: '생명력 플라스크 회복 −10%' },
-  pulse:    { n: '느린 맥박', slot: 'ring1', kind: 'free', act: '공격 한 번의 직접 피해 +35%. 중독 같은 지속 피해는 그대로다.', cost: '내 차례에 빠른 칸이 없다(플라스크, 빠른 스킬 같은 빠른 행동도 차례를 끝낸다)' },
+  pulse:    { n: '느린 맥박', slot: 'ring1', kind: 'free', act: '공격 한 번의 직접 피해 +35%. 중독 같은 상태 피해는 그대로다.', cost: '내 차례에 빠른 칸이 없다(플라스크, 빠른 스킬 같은 빠른 행동도 차례를 끝낸다)' },
   twin:     { n: '쌍날 단검', slot: 'weapon', kind: 'free', act: '기본 공격이 두 번 친다. 한 번에 50%, 합쳐 100%다. 중독이나 반격처럼 맞을 때마다 일어나는 효과는 두 번 걸린다.', cost: '강공격 피해 −20%' },
   maul:     { n: '무거운 망치', slot: 'weapon', kind: 'free', act: '강공격의 붕괴 +20.', cost: '강공격 스태미나 +10' },
   thorns:   { n: '가시 갑옷', slot: 'armor', kind: 'free', act: '방어하는 동안 전열 적에게 맞으면 그 적에게 피해 2를 되돌린다.', cost: '최대 생명력 −5%' },

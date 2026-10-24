@@ -1,6 +1,7 @@
 'use strict';
 process.env.DGDIR = process.env.DGDIR || '.';
 const assert = require('assert/strict'), D = require('./dgqa.js'), E = D.G0, V = D.run_;
+V('GEAR8.on = false'); // 옛 장비 흐름 점검: 옛 길에서(0.8.0 M6-2부터 기본은 새 장비, 새 장비 흐름은 tools/gear8-gen-check.js · gear8-shop-browser.py)
 let count = 0;
 function fresh(build) {
   const r = { build, p: E.mkPlayer(build, {}), bag: [], swaps: [], room: 0, cons: [] };
@@ -34,16 +35,18 @@ for (const build of V('Object.keys(TREE2)')) for (const tpl of Object.keys(E.ITE
   count++;
 }
 const r = fresh('assassin'), legs = Object.keys(E.ITEMS).filter(k => E.ITEMS[k].g === 'l');
+if (legs.length >= 2) { // M8(10월 23일): 옛 전설 장비는 옛 2 · 3챕터 표와 함께 data/archive로 — 옛 표에 전설이 없으면 "전설 하나만" 확인은 건너뛴다(새 장비 고유는 tools/unique-check.js)
 const a = E.mkItem(legs[0], { b: 0 }), b = E.mkItem(legs.find(k => E.tplKind(k) !== E.tplKind(a.tpl)), { b: 0 });
 E.addItem(r, a); E.addItem(r, b);
 const slot = it => E.tplKind(it.tpl) === 'ring' ? 'ring1' : E.tplKind(it.tpl);
 assert.equal(E.equipUid(r, a.uid, slot(a)), '');
 const before = JSON.stringify(r); assert(E.equipUid(r, b.uid, slot(b))); assert.equal(JSON.stringify(r), before);
 invariant(r);
+} else console.log('옛 표에 전설 장비가 없어 전설 하나만 확인은 건너뜀');
 let drops = 0;
 for (const build of V('Object.keys(TREE2)')) for (let ch = 1; ch <= 3; ch++) {
   const q = fresh(build); q.ch = ch; q.legSeen = [];
-  for (const grade of (ch === 1 ? ['n', 'm', 'r'] : ['n', 'm', 'r', 'h', 'l'])) for (let i = 0; i < 60; i++) {
+  for (const grade of (ch === 1 ? ['n', 'm', 'r'] : ['n', 'm', 'r', 'h', 'l']).filter(g => Object.values(E.ITEMS).some(x => x.g === g))) for /* M8: 옛 표에 없는 등급(영웅 · 전설, 옛 2 · 3챕터와 함께 보관)은 뺀다 */ (let i = 0; i < 60; i++) {
     const k = E.dropKey(q, grade);
     assert(E.ITEMS[k], build + ' / ' + ch + ' / ' + grade + ' / ' + k); assert(E.poolOk_(q.p, k), '직업에 맞지 않거나 제외된 장비 드롭');
     drops++;

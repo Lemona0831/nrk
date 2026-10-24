@@ -26,7 +26,7 @@ const STATES = [
   ['battle-tools', `TM.preset('${P}'); if (G.run.doors) chooseDoor(0); enterRoom(); render(); const t = document.querySelector('[data-a=tools]'); if (t) t.click()`],
   ['sheet-cons', `TM.preset('${P}'); if (G.run.doors) chooseDoor(0); enterRoom(); render(); openSheet('cons', {}); render()`],
   ['sheet-equip', `TM.preset('${P}'); openSheet('equip', {}); render()`],
-  ['sheet-stats', `TM.preset('${P}'); G.run.statPending = 3; openSheet('stats', { pts: 3, pending: 1, why: '시험' }); render()`],
+  ['sheet-ks', `TM.preset('${P}'); G.run.clears = Math.max(1, G.run.clears || 0); ksGrant(G.run, 'b1'); ksOpen(); render()`], // 10월 16일 0.8.0 2단계: 능력치 창 대신 큰 각인 고르기
   ['sheet-skills', `TM.preset('${P}'); openSheet('skills', {}); render()`],
   ['tree', `TM.preset('${P}'); G.back = G.scr; G.scr = 'tree'; render()`],
   ['camp', `TM.preset('${P}'); TM.floor(12); render()`],

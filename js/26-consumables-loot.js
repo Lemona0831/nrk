@@ -143,6 +143,12 @@ function consWhyNot(b, run, c, tgtId) {
     case 'escape': return b.ctx.boss || b.ctx.scen || b.ctx.tut ? '보스전에서는 쓰지 못합니다' : '';
     case 'burnpiles': return alive(b).some(e => e.pile) ? '' : '뼈 더미가 없습니다';
     case 'trim': return HEX.kinds.concat(['chill']).some(k => p.s[k]) ? '' : '해로운 상태가 없습니다';
+    case 'smokecan': return alive(b).some(e => e.row === 'back' && realFoe(e)) ? (b.smokeR === b.round ? '이미 이번 라운드에 썼습니다' : '') : '후열 적이 없습니다'; // A2
+    case 'painkill': return HEX.kinds.concat(['chill']).some(k => p.s[k]) ? '' : '해로운 상태가 없습니다';
+    case 'oilpot': return alive(b).some(e => e.row === 'front' && realFoe(e)) ? '' : '전열 적이 없습니다';
+    case 'flare': return !(b.al && b.al.on) ? '이 싸움에는 경보가 없습니다' : b.al.n >= b.al.cap ? '경보가 다 울렸습니다' : ''; // A3
+    case 'holyw': return (p.taint || 0) > 0 || KW_BAD.some(k => p.s[k]) || alive(b).some(e => (e.taint || 0) > 0) ? '' : '지울 잠식 · 해로운 상태가 없습니다';
+    case 'ladder': return !run.doors ? '문 앞에서 씁니다' : run.doors.length >= 4 ? '이미 문이 넷입니다' : '';
     case 'cleanse': return consWorst(p) ? '' : '해로운 상태가 없습니다';
     case 'unearth': return alive(b).some(e => e.under && e.role !== 'boss') ? '' : '땅속의 적이 없습니다';
     case 'nobloat': return b.noBloat ? '이미 효과가 있습니다' : !alive(b).some(e => e.role === 'bloat') ? '부푼 시체가 없습니다' : '';
@@ -186,12 +192,18 @@ function consApply(b, run, c, tgt) {
     case 'norise': if (tgt.pile) { tgt.pile.wait += v; return tgt.n + '의 뼈 더미가 굳는다. 부활까지 ' + tgt.pile.wait + '라운드'; } tgt.limeDelay = v; return tgt.n + '이(가) 쓰러지면 부활이 ' + v + '라운드 늦어진다';
     case 'burnpiles': { let n = 0; for (const e of alive(b).filter(x => x.pile)) { e.norise = 1; e.hp = 0; killEnemy(b, e); n++; } return '뼈 더미 ' + n + '개를 태운다'; }
     case 'trim': { for (const k of HEX.kinds.concat(['chill'])) if (p.s[k]) kwDec(p, k); return '해로운 상태가 종류마다 1씩 준다'; }
-    case 'unearth': { for (const e of alive(b).filter(x => x.under && x.role !== 'boss')) { e.under = 0; e.stkPrep = 0; e.intent = { k: 'attack' }; e.teleTurn = null; addS(b, e, 'vuln', 1); } return '땅속의 적을 끌어낸다'; }
+    case 'smokecan': { b.smokeR = b.round; return '연막이 퍼진다. 이번 라운드 후열의 공격이 빗나간다(내 후열 공격도)'; } // A2 연막탄
+    case 'painkill': { const ks = HEX.kinds.concat(['chill']).filter(k => p.s[k]).sort((x, y) => st(p, y) - st(p, x)).slice(0, v); for (const k of ks) delete p.s[k]; p.noRegenR = (b.round || 0) + 1; return '진통제를 삼킨다. ' + ks.map(k => KW_N[k] || k).join(' · ') + ' 지움. 다음 라운드 스태미나 회복 0'; }
+    case 'flare': { b.al.next += v; b.flareUsed = 1; return '신호탄을 쏘아 올린다. 경보가 ' + v + '라운드 늦어진다. 다음 전투는 1라운드 빠르다'; } // A3
+    case 'holyw': { p.taint = 0; for (const k of KW_BAD) delete p.s[k]; const t = tgt && (tgt.taint || 0) > 0 ? tgt : alive(b).filter(e => (e.taint || 0) > 0).sort((x, y) => y.taint - x.taint)[0]; if (t) t.taint = 0; return '성수를 뿌린다. 내 잠식과 해로운 상태' + (t ? ', ' + t.n + '의 잠식' : '') + '이(가) 사라진다'; }
+    case 'ladder': { const tp = pickType(run, run.room, run.doors.map(d => d.type)) || 'normal'; run.doors.push(mkRoom(run, tp, run.room)); run.dg.ladderF = run.room; return '줄사다리를 건다. 문이 하나 더 열린다. 이 층의 전투는 경보가 1라운드 빠르다'; }
+    case 'oilpot': { for (const e of alive(b)) if (e.row === 'front' && realFoe(e)) addS(b, e, 'ignite', v); if (!b.ctx.mods.includes('oilfloor')) b.ctx.mods.push('oilfloor'); addS(b, p, 'ignite', 1); return '기름 단지가 깨진다. 전열에 화상 ' + v + ', 바닥이 기름으로 번들거린다'; }
+    case 'unearth': { for (const e of alive(b).filter(x => x.under && x.role !== 'boss')) { e.under = 0; e.stkPrep = 0; e.intent = { k: 'attack' }; e.teleX = 1; e.teleTurn = null; addS(b, e, 'vuln', 1); } return '땅속의 적을 끌어낸다'; }
     case 'cool': { const d = heatAdd(b, -v, D.n); return '열기 ' + Math.round(d); }
     case 'unhaze': { tgt.haze = Math.max(0, (tgt.haze || 0) - 1); if (!tgt.haze) tgt.hazeSrc = null; return tgt.n + '의 허상 한 겹이 걷힌다' + (tgt.haze ? ' (남은 ' + tgt.haze + ')' : ''); }
     case 'healcure': { const h = Math.min(p.hpMax - p.hp, p.hpMax * v * healMul(p)); p.hp += h; delete p.s.ignite; return '생명력 +' + r1(h) + ', 화상이 사라진다'; }
     case 'reveal': { for (const d of run.doors || []) d.hide = 0; run.dg.reveal = (run.dg.reveal || []).concat([run.room + 1]); return '이 층과 다음 층 문의 보상이 보인다'; }
-    case 'rewind': { if (tgt.foe === 'sundial') { tgt.clock = Math.min(FOE_X.sundial.clock, (tgt.clock || 0) + FOE_X.sundial.glassBack); if (tgt.noonNext) { tgt.noonNext = 0; tgt.teleTurn = null; tgt.intent = { k: 'attack' }; } return tgt.n + '의 해시계 +' + FOE_X.sundial.glassBack; } if (tgt.chant) { tgt.chant = null; tgt.teleTurn = null; tgt.pyreRest = 0; tgt.intent = { k: tgt.role === 'maid' ? 'mchant' : 'chant' }; return tgt.n + '의 영창이 처음으로 돌아간다'; } if (tgt.glow > 0) { tgt.glow = Math.max(0, tgt.glow - 2); if (tgt.intent && tgt.intent.k === 'charge') { tgt.intent = { k: 'attack' }; tgt.teleTurn = null; } return tgt.n + '의 달아오름 ' + tgt.glow; } if (tgt.embers > 0) { tgt.embers = Math.max(0, tgt.embers - 2); return tgt.n + '의 불씨 ' + tgt.embers; } return '되돌릴 것이 없다'; }
+    case 'rewind': { if (tgt.foe === 'sundial') { tgt.clock = Math.min(FOE_X.sundial.clock, (tgt.clock || 0) + FOE_X.sundial.glassBack); if (tgt.noonNext) { tgt.noonNext = 0; tgt.teleTurn = null; tgt.intent = { k: 'attack' }; tgt.teleX = 1; } return tgt.n + '의 해시계 +' + FOE_X.sundial.glassBack; } if (tgt.chant) { tgt.chant = null; tgt.teleTurn = null; tgt.pyreRest = 0; tgt.intent = { k: tgt.role === 'maid' ? 'mchant' : 'chant' }; tgt.teleX = 1; return tgt.n + '의 영창이 처음으로 돌아간다'; } if (tgt.glow > 0) { tgt.glow = Math.max(0, tgt.glow - 2); if (tgt.intent && tgt.intent.k === 'charge') { tgt.intent = { k: 'attack' }; tgt.teleX = 1; tgt.teleTurn = null; } return tgt.n + '의 달아오름 ' + tgt.glow; } if (tgt.embers > 0) { tgt.embers = Math.max(0, tgt.embers - 2); return tgt.n + '의 불씨 ' + tgt.embers; } return '되돌릴 것이 없다'; }
     case 'wallbreak': addBreak(b, tgt, 30); return tgt.n + '에게 붕괴 +30';
     case 'slow': addS(b, tgt, 'chill', v || 2); return tgt.n + '에게 둔화 ' + (v || 2);
     case 'nobloat': b.noBloat = 1; return '숯 천으로 코와 입을 막는다';
@@ -244,7 +256,7 @@ function consMarks(e) {
 }
 const CONS_MARK_D = {
   mark: e => '이 적이 받는 다음 직접 피해 한 번이 ' + Math.round(e.markDmg * 100) + '% 커집니다. 맞으면 사라집니다.',
-  red: e => '이 적의 다음 공격 하나가 주는 피해가 ' + Math.round(e.redNext * 100) + '% 줄어듭니다. 화상 같은 지속 피해에는 쓰이지 않습니다.',
+  red: e => '이 적의 다음 공격 하나가 주는 피해가 ' + Math.round(e.redNext * 100) + '% 줄어듭니다. 상태 피해(출혈 · 중독 · 화상)는 줄지 않습니다.',
   miss: () => '이 적의 다음 공격 하나가 빗나갑니다.',
   noheal: () => '이 적의 다음 치유량이 ' + Math.round(CONS.hinder.v * 100) + '% 줄어듭니다.',
   big: e => '이 적이 모으는 큰 공격(강타 · 겨누기 · 영창)의 피해가 ' + Math.round(e.bigRed * 100) + '% 줄어듭니다. 그 공격이 나가면 사라집니다.',
@@ -275,12 +287,12 @@ function dropText(L) { const m = {}; let g = 0; for (const d of L) { if (d.gold)
 function cons3W(b, k, vsR) { const D = CONS[k]; const base = D.dw3 != null ? D.dw3 : (D.dw != null ? D.dw : D.use === 'none' ? 0.5 : 1) * (D.ch === 3 ? 2 : 1); const vs = (D.vs && vsR.includes(D.vs)) || (D.vs3 && vsR.includes(D.vs3)) || (D.vsMod && hasMod(b, D.vsMod)); return base * (vs ? 2 : 1); }
 function rollDrops0(b, e) {
   const L = e.role === 'boss' ? LOOT.big : e.strong ? (LOOT.strong || LOOT.big) : e.elite ? LOOT.elite : LOOT.normal; const rr = b.rngF || Math.random;
-  const chN = (b.ctx && b.ctx.ch) || 1; const noCure = !!(b.ctx && b.ctx.marks && b.ctx.marks.indexOf('nocure') >= 0); const ids = Object.keys(CONS).filter(k => (CONS[k].ch || 1) <= chN && !(CONS[k].only && CONS[k].only !== chN) && !(noCure && (CONS[k].k === 'heal' || CONS[k].k === 'healcure'))); /* 표식 도전 nocure: 생명력을 되찾는 소모품은 떨어지지 않는다 */ const vsR = b.vsRoles || (b.vsRoles = b.en.map(x => x.role)); const pick = () => { const seen = b.dropSeen || (b.dropSeen = []); const P = ids.filter(k => k === 'herb' || !seen.includes(k)); const Q = P.length ? P : ids; const w = Q.map(k => chN >= 3 ? cons3W(b, k, vsR) : (chN >= 2 && CONS[k].dw2 != null ? CONS[k].dw2 : CONS[k].ch === chN && chN >= 2 ? 1.5 : CONS[k].dw != null ? CONS[k].dw : CONS[k].use === 'none' ? 0.5 : 1) * (CONS[k].vs && vsR.includes(CONS[k].vs) ? 1.5 : 1)); /* 10월 5일: 챕터 소모품, 방금 싸운 역할의 답(vs) ×1.5 */ let x = rr() * w.reduce((a, c) => a + c, 0); let id = Q[0]; for (let i = 0; i < Q.length; i++) { x -= w[i]; if (x <= 0) { id = Q[i]; break; } } seen.push(id); return id; }; /* 10월 14일 개편 5단계: 한 전투에서 같은 소모품은 한 번만 나온다(약초 빼고) */
+  const chN = (b.ctx && b.ctx.ch) || 1; const noCure = !!(b.ctx && b.ctx.marks && b.ctx.marks.indexOf('nocure') >= 0); const ids = Object.keys(CONS).filter(k => (CONS[k].ch || 1) <= chN && !(CONS[k].only && CONS[k].only !== chN) && !(noCure && (CONS[k].k === 'heal' || CONS[k].k === 'healcure'))); /* 표식 도전 nocure: 생명력을 되찾는 소모품은 떨어지지 않는다 */ const vsR = b.vsRoles || (b.vsRoles = b.en.map(x => x.role)); const pick = () => { const seen = b.dropSeen || (b.dropSeen = []); const P = ids.filter(k => k === 'herb' || !seen.includes(k)); const Q = P.length ? P : ids; const w = Q.map(k => old3(chN) ? cons3W(b, k, vsR) : (chN >= 2 && CONS[k].dw2 != null ? CONS[k].dw2 : CONS[k].ch === chN && chN >= 2 ? 1.5 : CONS[k].dw != null ? CONS[k].dw : CONS[k].use === 'none' ? 0.5 : 1) * (CONS[k].vs && vsR.includes(CONS[k].vs) ? 1.5 : 1)); /* 10월 5일: 챕터 소모품, 방금 싸운 역할의 답(vs) ×1.5 */ let x = rr() * w.reduce((a, c) => a + c, 0); let id = Q[0]; for (let i = 0; i < Q.length; i++) { x -= w[i]; if (x <= 0) { id = Q[i]; break; } } seen.push(id); return id; }; /* 10월 14일 개편 5단계: 한 전투에서 같은 소모품은 한 번만 나온다(약초 빼고) */
   b.drops = b.drops || [];
   if (rr() < Math.min(0.01, L.flask * (b.lootMul || 1) * (b.lootX || 1))) b.drops.push({ flask: ['life', 'mana', 'stam'][Math.floor(rr() * 3)] }); // 플라스크 한 칸: 1% 이하
   for (let k = 0; k < L.rolls; k++) {
     if (rr() >= Math.min(1, L.p * (b.lootMul || 1) * (b.lootX || 1))) continue;
-    const x = rr() * (L.gold + L.cons);
+    const x = rr() * (L.gold + L.cons * (chData(chN).consDrop || 1)); // 0.8.0 6단계 마감: 챕터별 소모품 몫(consDrop, 빠진 몫은 골드)
     if (x < L.gold) b.drops.push({ gold: LOOT.goldPer(e.lv || 1) });
     else { const n = L.n[0] + Math.floor(rr() * (L.n[1] - L.n[0] + 1)); for (let i = 0; i < n; i++) { const id = pick(); b.drops.push({ cons: id, g: CONS[id].vm != null && rr() < L.hi + (b.ctx.lower ? LOOT.lowerHi : 0) ? 'm' : 'n' }); } }
   }
@@ -289,10 +301,35 @@ function rollDrops0(b, e) {
 function lootPend(run, id, g) { g = consGrade(id, g); const q = run.consPending || (run.consPending = []); const x = q.find(y => y.id === id && y.g === g); if (x) x.n++; else q.push({ id, g, n: 1, loot: 1 }); }
 /* 보류 목록을 순서대로 넣어 보면 몇 개씩 들어가는가(skip은 빼는 번호). 저장본은 바꾸지 않는다 */
 function consFitPlan(run, list, skip) { const sim = { cons: JSON.parse(JSON.stringify(run.cons || [])) }; return list.map((c, i) => (skip || []).includes(i) || !CONS[c.id] ? 0 : c.n - consAdd(sim, c.id, c.g, c.n)); }
+/* 10월 24일 전리품 화면 개편(만든 사람 요청): 챙긴 뒤의 가방 미리 보기 · 자리 바꾸기 · 전리품에서 바로 쓰기 · 들어오는 약초까지 세어 플라스크 채우기 */
+function consFitSim(run, list, skip) { const sim = { cons: JSON.parse(JSON.stringify(run.cons || [])) }; const n0 = sim.cons.map(c => c.n); const plan = list.map((c, i) => (skip || []).includes(i) || !CONS[c.id] ? 0 : c.n - consAdd(sim, c.id, c.g, c.n)); return { plan, bag: sim.cons.map((c, i) => Object.assign({}, c, { add: i < n0.length ? c.n - n0[i] : c.n, isNew: i >= n0.length })) }; }
+const consRemap = (P, skip) => { const keep = [], ns = []; P.forEach((c, i) => { if (c.n > 0) { if ((skip || []).includes(i)) ns.push(keep.length); keep.push(c); } }); return { keep, ns }; };
+/* 가방 bi 묶음을 두고 갈 쪽으로 빼고, 전리품 li를 챙길 쪽으로(되돌릴 수 있게 지우지 않는다) */
+function consSwapIn(run, li, bi, skip) { const c = (run.cons || [])[bi], q = run.consPending || []; if (!c || !q[li]) return skip || []; run.cons.splice(bi, 1); c.swapOut = 1; q.push(c); return (skip || []).filter(x => x !== li).concat([q.length - 1]); }
+/* 전리품 하나를 가방에 넣지 않고 바로 쓴다(전투 밖에서 쓸 수 있는 것만, 규칙은 consWhyNot 그대로) */
+function consUsePending(run, i, skip) {
+  const P = run.consPending || [], c = P[i]; if (!c) return { why: '없는 소모품입니다' }; const tmp = { id: c.id, g: c.g, n: 1 }; run.cons.push(tmp); const k = run.cons.length - 1;
+  const why = consUse(null, run, k, null); if (run.cons[k] === tmp) run.cons.splice(k, 1); if (why) return { why };
+  c.n--; const r = consRemap(P, skip); run.consPending = r.keep; return { why: '', skip: r.ns };
+}
+function consBrewLootOf(run, id) {
+  const s = consBrewOf(run, id); if (!s) return null; const pend = (run.consPending || []).filter(c => c.id === id).reduce((a, c) => a + c.n * consUnits(c), 0), have = s.have + pend;
+  const why = s.why && !/필요합니다/.test(s.why) ? s.why : have < s.need ? CONS[id].n + ' ' + s.need + '개가 필요합니다(지금 ' + have + '개)' : '';
+  return Object.assign({}, s, { have, pend, why });
+}
+function consBrewLoot(run, id, skip) {
+  const s = consBrewLootOf(run, id); if (!s) return { why: '채울 수 없는 소모품입니다' }; if (s.why) return { why: s.why };
+  let left = s.need; const P = run.consPending || []; // 들어오는 것부터 쓴다(가방 자리를 아낀다)
+  for (const c of P) { if (c.id !== id) continue; while (left > 0 && c.n > 0) { c.n--; left -= consUnits(c); } if (left <= 0) break; }
+  if (left > 0) { const L = run.cons.filter(c => c.id === id).sort((a, b) => consUnits(a) - consUnits(b) || a.n - b.n); for (const c of L) { while (left > 0 && c.n > 0) { c.n--; left -= consUnits(c); } if (left <= 0) break; } run.cons = run.cons.filter(c => c.n > 0); }
+  const r = consRemap(P, skip); run.consPending = r.keep; run.p.flask[s.flask] = s.cur + 1;
+  (run.brewLog || (run.brewLog = [])).push({ ch: run.ch || 1, room: run.room, id, n: s.need, flask: s.flask, loot: 1, t: Date.now() });
+  return { why: '', skip: r.ns, s };
+}
 /* 고른 것을 챙기고 나머지(뺀 것 · 자리가 없는 것)는 두고 간다 */
 function consTakePending(run, skip) {
   const q = run.consPending || []; let took = 0, left = 0; const log = run.consGainLog || (run.consGainLog = []);
-  q.forEach((c, i) => { if (!CONS[c.id]) return; const off = (skip || []).includes(i); const l = off ? c.n : consAdd(run, c.id, c.g, c.n); const got = c.n - l; took += got; left += l; log.push({ ch: run.ch || 1, room: run.room, id: c.id, g: c.g, n: c.n, received: got, discarded: l, skipped: off ? 1 : 0, fromPending: true, t: Date.now() }); });
+  q.forEach((c, i) => { if (!CONS[c.id]) return; const off = (skip || []).includes(i); const l = off ? c.n : consAdd(run, c.id, c.g, c.n); const got = c.n - l; took += got; left += l; log.push({ ch: run.ch || 1, room: run.room, id: c.id, g: c.g, n: c.n, received: got, discarded: l, skipped: off ? 1 : 0, fromPending: true, swapOut: c.swapOut ? 1 : undefined, t: Date.now() }); delete c.swapOut; });
   run.consPending = []; return { took, left };
 }
 function grantDrops(run, b) {
@@ -308,9 +345,40 @@ function grantDrops(run, b) {
   run.lootLog = run.lootLog || []; run.lootLog.push({ room: run.room, gold, got, lost, pending: (run.consPending || []).map(c => Object.assign({}, c)) });
   b.drops = [];
 }
-function loseLoot(o) { if (o.k === 'item' && o.run && o.run.inv) delete o.run.inv[o.u]; }
+/* 0.8.0 M8 도둑 영구 손해 금지: 잡으면 그 자리에서 되찾고(js/24 returnLoot), 달아나면 훔친 것이 다음 상점으로 간다.
+   장비는 진열에 재고 1로 다시 나오고(값은 평소 진열값), 골드 · 플라스크 한 칸은 상점에 들어설 때 돌려받는다. 판(run)이 없는 시험 전투에서는 예전처럼 잃는다. 맡겼으면 true */
+function fenceAdd(run, x) { if (!run) return false; (run.fenced = run.fenced || []).push(x); return true; }
+const fenceRun = b => typeof G !== 'undefined' && G.run && G.run.p === b.p ? G.run : null;
+/* 장물 두른 정예(A2)가 빼앗은 골드를 쥔 채 전투에서 빠지면 다음 상점에서 돌려받는다 */
+function fenceGold(b, e) { if (!(e.lootGold > 0)) return; if (fenceAdd(fenceRun(b), { k: 'gold', g: e.lootGold })) logp(b, 'sys', e.n + '이(가) 빼앗은 골드 ' + e.lootGold + '은(는) 다음 상점에서 돌려받는다'); e.lootGold = 0; }
+function loseLoot(o) {
+  if (!o || o.k === 'none' || !o.run) return false;
+  if (o.k === 'item') { const it = o.run.inv && o.run.inv[o.u]; if (!it) return false; delete o.run.inv[o.u]; return fenceAdd(o.run, { k: 'item', it }); }
+  if (o.k === 'gold') return fenceAdd(o.run, { k: 'gold', g: o.g });
+  if (o.k === 'flask') return fenceAdd(o.run, { k: 'flask', f: o.f });
+  return false;
+}
+/* 전투가 이기지 않고 끝날 때(내가 물러남) 아직 훔친 것을 쥔 적: 달아난 것과 같이 다음 상점으로. 이겼는데 남아 있으면 바로 돌려받는다. 장물 두른 정예가 빼앗은 골드도 같다 */
+function fenceHeld(b) {
+  for (const e of b.en) {
+    if (e.loot) { if (b.over === 'win') { returnLoot(b, e.loot); logp(b, 'good', e.loot.n + '을(를) 되찾는다'); } else if (loseLoot(e.loot)) logp(b, 'sys', e.n + '이(가) 쥔 ' + e.loot.n + '은(는) 다음 상점에 나온다'); e.loot = null; }
+    if (e.alive && b.over !== 'win') fenceGold(b, e);
+  }
+}
+/* 상점을 차릴 때(genShop) 맡겨 둔 장물을 푼다. 장비는 재고 1 진열, 골드 · 플라스크는 바로 돌려받는다 */
+function fenceShop(run) {
+  const L = run.fenced || []; if (!L.length || !run.shop) return; run.fenced = []; let g = 0; const fl = []; const ch = run.shop.ch || run.ch || 1;
+  for (const x of L) {
+    if (x.k === 'item' && x.it) run.shop.stock.push({ it: x.it, price: priceOf(x.it.g, ch), sold: 0, fenced: 1 });
+    else if (x.k === 'gold') g += x.g || 0;
+    else if (x.k === 'flask' && run.p && run.p.flask) { run.p.flask[x.f] = Math.min(flaskCap(run.p, x.f), (run.p.flask[x.f] || 0) + 1); fl.push({ life: '생명력', mana: '정화', stam: '스태미나' }[x.f] + ' 플라스크 한 칸'); }
+  }
+  if (g) run.gold = (run.gold || 0) + g;
+  const n = L.filter(x => x.k === 'item').length; const msg = [n ? '도둑맞은 장비 ' + n + '개가 진열에 나왔습니다' : '', g ? '골드 ' + g + '을(를) 돌려받았습니다' : '', fl.length ? fl.join(', ') + '을(를) 돌려받았습니다' : ''].filter(Boolean).join('. ');
+  if (msg && typeof toast === 'function') toast('장물: ' + msg);
+}
 function spawn(b, role) {
   if (alive(b).filter(e => e.role === 'minion').length >= 4) return null;
-  const e = mkEnemy(role, 0, b.idc++, { lv: (b.ctx && b.ctx.lv) || 1, name: b.ctx && b.ctx.names && b.ctx.names[role] }); e.summoned = true; decideIntent(b, e); b.en.push(e); return e;
+  const e = mkEnemy(role, 0, b.idc++, { lv: (b.ctx && b.ctx.lv) || 1, name: b.ctx && b.ctx.names && b.ctx.names[role] }); e.summoned = true; { const h = foeHitHp(e, (b.ctx && b.ctx.ch) || 1, (b.ctx && b.ctx.floor) || 0); if (h > 0) { e.hpMax = Math.max(1, Math.round(h)); e.hp = e.hpMax; } } /* A1 타수 → 체력 */ decideIntent(b, e); b.en.push(e); return e;
 }
 

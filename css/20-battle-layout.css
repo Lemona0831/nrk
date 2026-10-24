@@ -136,6 +136,7 @@ html.fitmode,html.fitmode body{overflow:hidden}
 .en .eord.soon{background:#a8362b;border-color:#a8362b;color:var(--hi)}.en .eord.done{color:var(--muted);font-weight:500}
 .en .bar.ehp,.field .en .bar.ehp{height:20px;margin:3px 0 2px;border-radius:5px}
 .en .bar.ehp span,.field .en .bar.ehp span{font-size:calc(13px*var(--fs,1));line-height:calc(18px*var(--fs,1));font-weight:600}
+.en .foeas{display:inline-flex;gap:6px;align-items:center;font-size:calc(12px*var(--fs,1));margin:0 0 2px}.en .farm b{margin-left:2px}.en .farm.off{opacity:.45}.en .fshd{display:inline-flex;gap:2px}.en .fshd i{width:8px;height:10px;border:1px solid var(--line,#888);border-radius:2px}.en .fshd i.on{background:var(--bk,#9ab)}
 .bar.ehp span b{font-size:calc(16px*var(--fs,1));font-weight:700}.bar.ehp.lo{border-color:var(--bad)}.bar.ehp.lo i{background:#a8362b}
 .field .en .sts{margin:3px 0 1px}.field .en .sts i{font-size:calc(13px*var(--fs,1))}
 .slotrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 6px}
@@ -151,3 +152,18 @@ html.fitmode,html.fitmode body{overflow:hidden}
 
 .en.pile{border-style:dashed}.en.pile .enh{flex-wrap:wrap}.en.pile .nr{margin-left:0}
 .boss-mechanics{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--panel);margin:6px 0;font-size:calc(13px*var(--fs,1));overflow-wrap:anywhere}.boss-state{display:flex;flex-wrap:wrap;gap:5px 12px;margin-bottom:5px}.boss-state>b{color:var(--gold)}.boss-next{border-top:1px solid var(--line);padding-top:6px;line-height:1.5}.boss-mechanics details{margin-top:6px;color:var(--muted)}.boss-mechanics summary{cursor:pointer}.boss-mechanics p{margin:6px 0;line-height:1.55}
+/* 적이 모두 쓰러진 뒤 빈 전장 칸을 한 줄로 채운다 */
+.fieldclr{margin:2px 0;color:var(--muted);font-size:calc(14px*var(--fs,1))}
+
+/* G-1 강적 시계 칩: 이름 n/max + 칸, 한 칸 남으면 깜빡임(움직임 줄이기면 색만) */
+.en .fclk{display:inline-flex;gap:4px;align-items:center;padding:1px 6px;border-radius:9px;background:#2a2230;border:1px solid #6b5a7a;color:#efe6f5}.en .fclk b{font-variant-numeric:tabular-nums}.en .fclkc{display:inline-flex;gap:2px}.en .fclkc i{width:7px;height:9px;border:1px solid #b9a6c9;border-radius:2px}.en .fclkc i.on{background:#d9b64a;border-color:#d9b64a}
+.en .fclk.warn{border-color:#e05a4a;background:#3a1d1d;animation:fclkBlink 1s steps(2,start) infinite}.en .fclk.perm{border-color:#e05a4a;background:#4a1818}
+@keyframes fclkBlink{to{border-color:#ffd27a}}
+@media(prefers-reduced-motion:reduce){.en .fclk.warn{animation:none}}
+html.rm .en .fclk.warn{animation:none} /* 10월 24일 S-4: 게임의 움직임 줄이기(html.rm)를 따른다. 전에는 쓰지 않는 .no-motion을 보고 있었다 */
+/* 10월 24일 S-4 색만으로 알리지 않는다(회색 · 색각 모의 화면으로 점검): 시계 마지막 경고는 ⚠ 글자 + 굵은 테두리, 큰 공격 예고(hv)는 겹테두리, 주의 예고(warn)는 점선 테두리.
+   390px: 칩(시계 · 장치 표식 · 갑옷 · 방패)이 한 카드에 함께 있으면 다음 줄로 넘긴다(전에는 한 줄에 눌려 카드 밖으로 밀렸다) */
+.en .foeas{display:flex;flex-wrap:wrap;row-gap:3px;max-width:100%}.en .foeas>*{flex:none;white-space:nowrap;word-break:keep-all}
+.en .fclk.warn,.en .fclk.perm{border-width:2px;border-color:var(--bad)}.en .fclkw{color:var(--bad);font-weight:700;font-size:calc(13px*var(--fs,1));line-height:1}
+.intent.hv,.intent.ik-hv{border-style:double;border-width:3px}.intent.ik-warn:not(.hv){border-style:dashed}
+.en .fshd .fshi{font-size:calc(12px*var(--fs,1));line-height:1;margin-right:1px}

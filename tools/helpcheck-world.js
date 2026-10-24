@@ -9,13 +9,14 @@ module.exports = function (api) {
     S34 = J('34-rounds-setup.js'), S14 = J('14-chapter-bodies.js'), S30 = J('30-enemy-ai.js'), S42 = J('42-chrome-map.js'), S22 = J('22-class-tree-rules.js');
   const L80 = S80.split('\n');
   const SPLIT = /(?<=[.?!])\s+(?=\S)/;
-  const pref = (id, text) => String(text).split(SPLIT).filter(Boolean).map(s => '[' + id + '] ' + s).join(' ');
+  const tagOf = id => String(id).replace(/\d/g, d => 'ABCDEFGHIJ'[d]); // 0.8.0 M8: 꼬리표의 숫자(checkpoint3 · mob3)는 글자로 바꾼다. 꼬리표 숫자가 숫자 문장으로 세지면 숫자 없는 문장까지 미대조로 남는다
+  const pref = (id, text) => String(text).split(SPLIT).filter(Boolean).map(s => '[' + tagOf(id) + '] ' + s).join(' ');
   const strip = h => String(h).replace(/<[^>]*>/g, ' ').replace(/&[a-z]+;/g, ' ').replace(/\s+/g, ' ').trim();
   const mx = (s, re) => { const m = s.match(re); if (!m) throw new Error('코드에서 못 찾음: ' + re); return m; };
   const nx = (s, re) => +mx(s, re)[1];
   const pct = f => Math.round(Math.abs(f - 1) * 100);          // 배율 → 늘거나 준 퍼센트
   const rooms = buff => buff - 1;                                // run.buffs 값 → 이어지는 방 수 (advanceFloor가 방을 넘길 때마다 1씩 줄이고, 고른 방에서 한 번 줄어든 채 시작한다)
-  const igSnuff0 = /hasBt\(u, 'snuff'\)\) x = isCf\(u\) \?.*?\) : 0; if \(\(b\.ctx\.ch/.test(S20); // 꺼진 촛불: 내게 오는 화상 피해 0 (숨겨진 직업의 고행 몫만 예외)
+  const igSnuff0 = /hasBt\(u, 'snuff'\)\) x = isCf\(u\) \?.*?\) : 0; if \((\(b\.ctx\.ch|isCh3\(b\))/.test(S20); // A3: 옛 3챕터 갈래는 isCh3(OLD3) // 꺼진 촛불: 내게 오는 화상 피해 0 (숨겨진 직업의 고행 몫만 예외)
   const durOk =/for \(const k in run\.buffs\) \{ run\.buffs\[k\]--; if \(run\.buffs\[k\] <= 0\) delete run\.buffs\[k\]; \}/.test(S66);
 
   // ===== 이벤트 =====
@@ -23,8 +24,8 @@ module.exports = function (api) {
   api.source('world-events', EV.flatMap(e => e.opts.filter(o => o.d).map(o => ({ id: e.id + '.' + o.id, text: pref(e.id + '.' + o.id, o.d) }))));
   const optText = (id, o) => E('EVENTS.find(e => e.id === "' + id + '").opts.find(x => x.id === "' + o + '").d');
   const H = (id, o) => L80.filter(l => l.includes("R.event === '" + id + "' && o === '" + o + "'")).join('\n');
-  const sentFind = (tag, text, loc) => { const s = String(text).split(SPLIT).find(x => x.includes(loc)); if (!s) throw new Error('문장 없음: ' + tag + ' ' + loc); return '[' + tag + '] ' + s; }; // 꼬리표가 문장 맨 앞에 붙으므로 찾을글은 그 문장 통째로 쓴다
-  const ev = (id, o, loc, fn) => api.add('world-events', sentFind(id + '.' + o, optText(id, o), loc), '80-events.js ' + id + '.' + o, () => { const h = H(id, o); return !!h && fn(optText(id, o), h); });
+  const sentFind = (tag, text, loc) => { const s = String(text).split(SPLIT).find(x => x.includes(loc)); if (!s) throw new Error('문장 없음: ' + tag + ' ' + loc); return '[' + tagOf(tag) + '] ' + s; }; // 꼬리표가 문장 맨 앞에 붙으므로 찾을글은 그 문장 통째로 쓴다
+  const ev = (id, o, loc, fn) => !E('!!EVENTS.find(e => e.id === "' + id + '")') ? null : /* A2: 옛 2챕터 이벤트(보관)는 건너뛴다 */ api.add('world-events', sentFind(id + '.' + o, optText(id, o), loc), '80-events.js ' + id + '.' + o, () => { const h = H(id, o); return !!h && fn(optText(id, o), h); });
   const gold = h => nx(h, /gainGold\(run, (\d+),/);
   const heal1 = (h, k) => nx(h, new RegExp('p\\.flask\\.' + k + ' \\+ (\\d+)'));
   const KWN = k => E('KW_N.' + k);
@@ -39,42 +40,73 @@ module.exports = function (api) {
   ev('chalice', 'spill', '정화 플라스크', (t, h) => /mana: '정화 플라스크'/.test(S24) && t.includes('정화 플라스크 +' + heal1(h, 'mana') + '.'));
   ev('candle', 'snuff', '받는 화상 피해가', (t, h) => durOk && t.includes('다음 ' + rooms(nx(h, /run\.buffs\.snuff = (\d+)/)) + '개 방 동안 받는 화상 피해가 ' + (igSnuff0 ? 0 : -1) + '이'));
   ev('candle', 'snuff', '대신 주는 피해', (t, h) => t.includes('주는 피해 −' + pct(nx(S32, /hasBt\(p, 'snuff'\)\) d \*= ([\d.]+)/)) + '%'));
-  ev('library', 'read', '능력치', (t, h) => t.includes('능력치 ' + nx(h, /openSheet\('stats', \{ pts: (\d+)/) + '점'));
+  ev('library', 'read', '패시브 포인트', (t, h) => t.includes('패시브 포인트 ' + nx(h, /ptBonus\(run, (\d+)/))); // 10월 16일 0.8.0 2단계: 능력치 1점 → 패시브 포인트 1
   ev('library', 'sell', '골드', (t, h) => t.includes('골드 ' + gold(h) + '.'));
   ev('monk', 'chase', '이기면 골드', (t, h) => /run\.next\.chase = 1/.test(h) && t.includes('이기면 골드 ' + nx(S66, /nu\.chase \? (\d+)/)));
   ev('bell', 'pull', '골드', (t, h) => /run\.dg\.force = 'strong'/.test(h) && t.includes('골드 ' + gold(h) + '.'));
-  ev('tomb', 'carve', '최대 생명력', (t, h) => t.includes('최대 생명력 +' + nx(h, /p\.hpBonus \|\| 0\) \+ (\d+)/) + '(영구)'));
-  ev('tomb', 'carve', '다음 전투를 약화', (t, h) => t.includes('약화 ' + pre(h, 'weak') + ' · 취약 ' + pre(h, 'vuln') + '를'));
-  ev('procession', 'follow', '다음', (t, h) => { const b = nx(h, /run\.buffs\.procession = (\d+)/); return durOk && t.includes('다음 ' + rooms(b) + '개 방 동안 받는 직접 피해 −' + pct(nx(S24, /hasBt\(p, 'procession'\) && !o\.dot\) d \*= ([\d.]+)/)) + '%, 주는 피해 −' + pct(nx(S32, /hasBt\(p, 'procession'\)\) d \*= ([\d.]+)/)) + '%'); });
-  ev('procession', 'block', '이기면 골드', (t, h) => t.includes('이기면 골드 ' + nx(S66, /nu\.block \? (\d+)/)));
-  ev('robber', 'loot', '골드', (t, h) => nx(h, /Math\.random\(\) < ([\d.]+)/) === 0.5 && t.includes('골드 ' + gold(h) + ' 또는 장비'));
-  ev('robber', 'loot', '다음 전투를', (t, h) => t.includes(KWN('poison') + ' ' + nx(h, /\.poison \|\| 0\) \+ (\d+)/) + '으로'));
-  ev('robber', 'bury', '생명력 플라스크', (t, h) => t.includes('플라스크 +' + heal1(h, 'life') + '.'));
-  ev('blackwell', 'drink', '플라스크 각', (t, h) => t.includes('정화 · 스태미나 플라스크 각 +' + heal1(h, 'mana') + '.') && heal1(h, 'mana') === nx(h, /\(p\.flask\.stam \|\| 0\) \+ (\d+)/));
-  ev('blackwell', 'drink', '다음 전투를', (t, h) => t.includes(KWN('vuln') + ' ' + pre(h, 'vuln') + '를'));
-  ev('bonepipe', 'blow', '골드', (t, h) => /run\.dg\.force = 'strong'/.test(h) && t.includes('골드 ' + gold(h) + '.'));
-  ev('camel', 'loot', '다음 전투를', (t, h) => { const m = mx(h, /n3pre\(run, '(\w+)', (\d+)\)/); return t.includes(KWN(m[1]) + ' ' + m[2] + '로'); });
-  ev('oasis', 'drink', '반반 확률로', (t, h) => { const m = mx(h, /n3pre\(run, '(\w+)', (\d+)\)/); return nx(h, /Math\.random\(\) < ([\d.]+)/) === 0.5 && t.includes('생명력 ' + pct(1 + nx(h, /p\.hpMax \* ([\d.]+)/)) + '%') && t.includes(KWN(m[1]) + ' ' + m[2] + '로'); });
-  ev('sundial', 'turn', '열기', (t, h) => t.includes('열기 ' + nx(h, /noon: (\d+)/) + '에서') && /room\.heat0 = n3\.noon/.test(S66));
-  ev('sundial', 'hasten', '골드', (t, h) => /run\.dg\.force = 'strong'/.test(h) && t.includes('골드 ' + gold(h) + '.'));
-  ev('archive', 'pull', '능력치', (t, h) => t.includes('능력치 ' + nx(L80.filter(l => l.includes("R.event === 'archive' && o === 'pull'")).join('\n'), /openSheet\('stats', \{ pts: (\d+)/) + '점'));
-  ev('archive', 'pull', '대신 다음 전투를', (t, h) => { const m = mx(h, /n3pre\(run, '(\w+)', (\d+)\)/); return t.includes(KWN(m[1]) + ' ' + m[2] + '로'); });
-  ev('archive', 'sweep', '골드', (t, h) => t.includes('골드 ' + gold(h) + '.'));
-  ev('names', 'call', '레벨', (t, h) => { const m = mx(h, /Math\.min\((\d+), \(gv\.lv \|\| 1\) \* (\d+)\)/); return t.includes('레벨 × ' + m[2] + ', 최대 ' + m[1]); });
-  ev('names', 'call', '기록이 없으면', (t, h) => t.includes('기록이 없으면 골드 ' + nx(h, /\) : (\d+); gainGold/) + '입니다'));
-  ev('names', 'cover', '다음', (t, h) => durOk && t.includes('다음 ' + rooms(nx(h, /run\.buffs\.ashcover = (\d+)/)) + '개 방 동안 받는 직접 피해 −' + pct(nx(S24, /hasBt\(p, 'ashcover'\) && !o\.dot\) d \*= ([\d.]+)/)) + '%'));
-  ev('glass', 'take', '다음 전투를', (t, h) => { const m = mx(h, /n3pre\(run, '(\w+)', (\d+)\)/); return t.includes(KWN(m[1]) + ' ' + m[2] + '으로'); });
-  ev('buried', 'dig', '스태미나', (t, h) => t.includes('스태미나 ' + nx(h, /p\.st - (\d+)/) + '을 씁니다') && nx(S42, /id === 'dig' && run\.p\.st < (\d+)/) === nx(h, /p\.st - (\d+)/));
-  ev('herald', 'kneel', '다음', (t, h) => { const b = nx(h, /run\.buffs\.herald = (\d+)/); const ig0 = /hasBt\(u, 'herald'\)\) x = 0;/.test(S20) ? 0 : -1; return durOk && t.includes('다음 ' + rooms(b) + '개 방 동안 받는 화상 피해 ' + ig0 + ', 주는 피해 −' + pct(nx(S32, /hasBt\(p, 'herald'\)\) d \*= ([\d.]+)/)) + '%'); });
+
+  /* ===== 0.8.0 M8: 1막 2 · 3챕터 이벤트(A2 · A3)와 깨어나는(바로 싸우는) 선택지 =====
+     처리 코드: js/15-chapter2.js ch2Event · js/15-chapter3.js w3Event(case '이벤트:선택'), 깨어남은 EVENTS의 wake(js/80 'event'가 wake.p로 굴린다) */
+  const S15b = J('15-chapter2.js'), S15c = J('15-chapter3.js');
+  const caseOf = S => (id, o) => S.split('\n').filter(l => l.includes("case '" + id + ':' + o + "'")).join('\n');
+  const C2 = caseOf(S15b), C3 = caseOf(S15c);
+  const evc = (file, hf) => (id, o, loc, fn) => !E('!!EVENTS.find(e => e.id === "' + id + '")') ? null : api.add('world-events', sentFind(id + '.' + o, optText(id, o), loc), file + ' ' + id + '.' + o, () => { const h = hf(id, o); return !!h && fn(optText(id, o), h); });
+  const ev2 = evc('15-chapter2.js', C2), ev3 = evc('15-chapter3.js', C3);
+  const WK = (id, o) => E('EVENTS.find(e => e.id === "' + id + '").opts.find(x => x.id === "' + o + '").wake');
+  const WAKE_OK = S80.includes('const wake = EO.wake && Math.random() < EO.wake.p;');
+  const evw = evc('80-events.js wake(EVENTS 데이터)', (id, o) => WAKE_OK && WK(id, o) ? 'wake' : '');
+  const P = v => Math.round(v * 100);
+  const rnd = h => nx(h, /Math\.random\(\) < ([\d.]+)/);
+  evw('reliquary', 'force', '30%로', t => { const W = WK('reliquary', 'force'); return t.includes(P(W.p) + '%로') && W.en.length === 2 && t.includes('둘)'); });
+  ev2('attic', 'search', '골드', (t, h) => t.includes('골드 ' + gold(h) + '.'));
+  ev2('ledgerpage', 'erase', '최대 생명력', (t, h) => t.includes('최대 생명력 +' + nx(h, /p\.hpBonus \|\| 0\) \+ (\d+)/) + '와'));
+  ev2('ledgerpage', 'take', '골드', (t, h) => t.includes('골드 ' + gold(h) + '.'));
+  ev2('lampshop', 'open', '등불 기름', (t, h) => nx(h, /\(run\.oil \|\| 0\) \+ (\d+)/) === 2 && t.includes(P(rnd(h)) + '%로 등불 기름 둘'));
+  ev2('lampshop', 'open', '통이 터져', (t, h) => /nx\.oilfloor = 1/.test(h) && t.includes((100 - P(rnd(h))) + '%로 통이 터져 화상 ' + nx(h, /ignite \|\| 0\) \+ (\d+)/) + '를'));
+  ev2('lampshop', 'light', '어둠이', (t, h) => durOk && S15b.includes('(run.buffs && run.buffs.lit)) return;') && t.includes('다음 ' + rooms(nx(h, /run\.buffs\.lit = (\d+)/)) + '개 방에 어둠이 없습니다'));
+  ev2('betboard', 'bet', '라운드 안에', (t, h) => { const m = mx(S15b, /b\.bet && \(b\.round \|\| 0\) <= (\d+)\) \{ run\.gold = \(run\.gold \|\| 0\) \+ (\d+)/); return /nx\.bet = 1/.test(h) && S15b.includes('if (room.bet) b.bet = 1') && t.includes(m[1] + '라운드 안에 이기면 골드 ' + m[2]); });
+  evw('betboard', 'ring', '이기면 골드', t => { const W = WK('betboard', 'ring'); return W.p === 1 && W.item === 1 && /if \(W\.gold\) gainGold\(run, W\.gold/.test(S15b) && t.includes('이기면 골드 ' + W.gold + '과 장비 하나'); });
+  ev2('keys', 'sell', '골드', (t, h) => t.includes('골드 ' + gold(h) + '.'));
+  ev2('tavern', 'listen', '생명력', (t, h) => /p\.st = p\.stMax/.test(h) && t.includes('생명력 ' + P(nx(h, /p\.hpMax \* ([\d.]+)/)) + '%와 스태미나를 가득'));
+  ev2('tavern', 'sing', '첫 라운드', (t, h) => /nx\.sing = 1/.test(h) && S15b.includes('if (room.sing) b.singR = 1') && t.includes('첫 라운드에 주는 피해 +' + pct(nx(S15b, /if \(b\.singR && \(b\.round \|\| 1\) <= b\.singR\) m \*= ([\d.]+)/)) + '%'));
+  ev2('tavern', 'ignore', '주는 피해', (t, h) => /nx\.jeer = 1/.test(h) && t.includes('주는 피해 −' + pct(nx(S15b, /if \(b\.jeer\) m \*= ([\d.]+)/)) + '%'));
+  ev2('elixir', 'drink', '주는 피해', (t, h) => { const a = nx(h, /run\.buffs\.elixir = (\d+)/), bb = nx(h, /run\.buffs\.elixirB = (\d+)/); return durOk && t.includes('다음 ' + rooms(a) + '개 방 동안 주는 피해 +' + pct(nx(S15b, /hasBt\(p, 'elixir'\)\) m \*= ([\d.]+)/)) + '%, 그 뒤 ' + (bb - a) + '개 방 동안 받는 피해 +' + pct(nx(S15b, /hasBt\(p, 'elixirB'\) && !hasBt\(p, 'elixir'\)\) m \*= ([\d.]+)/)) + '%'); });
+  ev2('elixir', 'dump', '주는 피해', (t, h) => durOk && t.includes('다음 ' + rooms(nx(h, /run\.buffs\.fog = (\d+)/)) + '개 방 동안 주는 피해 −' + pct(nx(S15b, /hasBt\(p, 'fog'\)\) m \*= ([\d.]+)/)) + '%'));
+  ev2('wallnames', 'read', '약화', (t, h) => durOk && t.includes('다음 ' + rooms(nx(h, /run\.buffs\.names = (\d+)/)) + '개 방 동안 약화 ' + nx(S15b, /hasBt\(b\.p, 'names'\)\) addS\(b, b\.p, 'weak', (\d+)\)/)));
+  evw('wallet', 'pick', '골드', t => { const W = WK('wallet', 'pick'); return /if \(!wake && EO\.wake && EO\.wake\.elseGold\) gainGold\(run, EO\.wake\.elseGold/.test(S80) && t.includes(P(1 - W.p) + '%로 골드 ' + W.elseGold); });
+  evw('wallet', 'pick', '매복', t => { const W = WK('wallet', 'pick'); return W.first === 1 && W.en.length === 3 && t.includes(P(W.p) + '%로 장물아비 매복') && t.includes('적이 먼저'); });
+  ev3('heightpost', 'touch', '생명력', (t, h) => t.includes('생명력 ' + P(nx(h, /p\.hpMax \* ([\d.]+)/)) + '%.'));
+  ev3('heightpost', 'touch', '출혈', (t, h) => t.includes(P(rnd(h)) + '%로') && t.includes('출혈 ' + nx(h, /bleed \|\| 0\) \+ (\d+)/) + '을'));
+  ev3('petitions', 'read', '받는 피해', (t, h) => durOk && t.includes('다음 ' + rooms(nx(h, /run\.buffs\.petition = (\d+)/)) + '개 방 동안 받는 피해 −' + pct(nx(S15c, /hasBt\(p, 'petition'\)\) m \*= ([\d.]+)/)) + '%'));
+  ev3('petitions', 'read', '경보가', (t, h) => t.includes('다음 ' + nx(h, /dg\.petition = (\d+)/) + '개 방은 경보가 ' + nx(S15c, /dg\.petition > 0 && R\.type !== 'boss'\) \{ sh -= (\d+); dg\.petition--/) + '라운드 빨리')); // w3Enter: 보스가 아닌 방에 들어설 때마다 1 줄어든다
+  ev3('shiftlog', 'read', '패시브 포인트', t => t.includes('패시브 포인트 ' + nx(S80, /ptBonus\(run, (\d+), '수비대 교대 일지'\)/)));
+  ev3('shiftlog', 'read', '약화', (t, h) => t.includes('약화 ' + nx(h, /weak \|\| 0\) \+ (\d+)/) + '로'));
+  evw('smugladder', 'climb', '건너뜁니다', t => /const skip3 = R\.event === 'smugladder' && o === 'climb' && !wake && w3LadderSkip\(run\)/.test(S80) && t.includes(P(1 - WK('smugladder', 'climb').p) + '%로 다음 층을 건너뜁니다'));
+  evw('smugladder', 'climb', '매복', t => { const W = WK('smugladder', 'climb'); return W.first === 1 && W.en.length === 3 && (W.mods || []).includes('wall') && t.includes(P(W.p) + '%로 위에서 매복'); });
+  ev3('taintwell', 'drink', '최대 스태미나', (t, h) => t.includes('최대 스태미나 +' + nx(h, /p\.stBonus \|\| 0\) \+ (\d+)/)));
+  ev3('taintwell', 'drink', '잠식', (t, h) => /dg\.wellTaint = 1/.test(h) && t.includes('잠식 ' + nx(S15c, /hasMod\(b, 'rift'\) && dg\.wellTaint\) taintAdd\(b, p, (\d+)/) + '을'));
+  ev3('fallentower', 'ring', '골드', (t, h) => /dg\.force = 'strong'/.test(h) && t.includes('골드 ' + gold(h) + '.'));
+  ev3('fallentower', 'take', '스태미나', (t, h) => nx(h, /p\.st - (\d+)/) === nx(S15c, /o\.id === 'take' && run\.p\.st < (\d+)/) && t.includes('스태미나 ' + nx(h, /p\.st - (\d+)/) + '을 씁니다'));
+  ev3('fallentower', 'take', '경보가 울리지', (t, h) => S15c.includes('!(dg.noAlarm > 0)') && S15c.includes('if (b.al && b.al.quiet && dg.noAlarm > 0) dg.noAlarm--;') && t.includes('다음 ' + nx(h, /dg\.noAlarm = (\d+)/) + '개 방은 경보가 울리지 않습니다')); // M8: 종 때문에 쉰 방(b.al.quiet)마다 하나씩 준다
+  ev3('gatevoice', 'answer', '보스방', (t, h) => S15c.includes('if (R.boss && dg.bossHp) { run.p.hp = Math.min(run.p.hpMax, run.p.hp + run.p.hpMax * dg.bossHp)') && t.includes('생명력 +' + P(nx(h, /dg\.bossHp = ([\d.]+)/)) + '%p'));
+  ev3('gatevoice', 'answer', '잃습니다', (t, h) => t.includes('생명력 ' + P(nx(h, /p\.hp - p\.hpMax \* ([\d.]+)/)) + '%를 잃습니다'));
+  ev3('oldram', 'cut', '붕괴', (t, h) => { const m = mx(S15c, /room\.ramHit\) \{ for \(const e of en\) if \(e\.row === 'front'[^\n]*?addBreak\(b, e, (\d+)\); hurtEnemy\(b, e, (\d+)/); return /nx\.ramHit = 1/.test(h) && t.includes('전열 적 모두 붕괴 +' + m[1] + ' · 피해 ' + m[2]); });
+  ev3('oldram', 'cut', '나도 피해', (t, h) => t.includes(P(rnd(h)) + '%로') && t.includes('나도 피해 ' + nx(h, /p\.hp - (\d+)\)/)));
+  ev3('checkpoint3', 'toll', '골드', (t, h) => /run\.gold \|\| 0\) - CHECK3\.toll/.test(h) && t.includes('골드 ' + E('CHECK3.toll') + '.'));
+  ev3('checkpoint3', 'sneak', '그냥 지나갑니다', (t, h) => /if \(Math\.random\(\) < CHECK3\.sneak\)/.test(h) && t.includes(P(E('CHECK3.sneak')) + '%로 그냥'));
+  ev3('checkpoint3', 'sneak', '들켜', (t, h) => /dg\.alarmNow = 1/.test(h) && S15c.includes('const first = room.alarmNow ? 1 :') && t.includes(P(1 - E('CHECK3.sneak')) + '%로 들켜'));
 
   // ===== 이벤트로 얻는 몇 방 동안의 효과 (상단 칩과 설명 창) =====
   const EVB = E('Object.keys(EVBUFF).map(k => ({ k, n: EVBUFF[k][0], d: EVBUFF[k][1] }))');
   api.source('world-evbuff', EVB.map(x => ({ id: x.k, text: pref(x.k, x.d) })));
   const mulD = (S, re) => nx(S, re);
   api.add('world-evbuff', '[snuff] ', '24-clock-damage.js · 20-battle-state.js · 32-player-action.js snuff', () => { const d = E('EVBUFF.snuff[1]'); return d.includes('받는 화상 피해 ' + (igSnuff0 ? 0 : -1)) && d.includes('주는 피해 −' + pct(mulD(S32, /hasBt\(p, 'snuff'\)\) d \*= ([\d.]+)/)) + '%'); });
-  api.add('world-evbuff', '[procession] ', '24-clock-damage.js · 32-player-action.js procession', () => { const d = E('EVBUFF.procession[1]'); return d.includes('받는 직접 피해 −' + pct(mulD(S24, /hasBt\(p, 'procession'\) && !o\.dot\) d \*= ([\d.]+)/)) + '%') && d.includes('주는 피해 −' + pct(mulD(S32, /hasBt\(p, 'procession'\)\) d \*= ([\d.]+)/)) + '%'); });
-  api.add('world-evbuff', '[ashcover] ', '24-clock-damage.js ashcover', () => E('EVBUFF.ashcover[1]').includes('받는 직접 피해 −' + pct(mulD(S24, /hasBt\(p, 'ashcover'\) && !o\.dot\) d \*= ([\d.]+)/)) + '%'));
-  api.add('world-evbuff', '[herald] ', '20-battle-state.js · 32-player-action.js herald', () => { const d = E('EVBUFF.herald[1]'); return d.includes('받는 화상 피해 ' + (/hasBt\(u, 'herald'\)\) x = 0;/.test(S20) ? 0 : -1)) && d.includes('주는 피해 −' + pct(mulD(S32, /hasBt\(p, 'herald'\)\) d \*= ([\d.]+)/)) + '%'); });
+
+  // 0.8.0 M8: 2챕터 이벤트 효과(js/15-chapter2.js ch2OutMul · ch2InMul · 전투 시작)
+  api.add('world-evbuff', '[elixir] ', '15-chapter2.js ch2OutMul: hasBt elixir 주는 피해 × 1.15', () => E('EVBUFF.elixir[1]') === '주는 피해 +' + pct(nx(S15b, /hasBt\(p, 'elixir'\)\) m \*= ([\d.]+)/)) + '%.');
+  api.add('world-evbuff', '[elixirB] ', '15-chapter2.js ch2InMul: elixirB(elixir가 끝난 뒤) 받는 피해 × 1.1', () => E('EVBUFF.elixirB[1]') === '받는 피해 +' + pct(nx(S15b, /hasBt\(p, 'elixirB'\) && !hasBt\(p, 'elixir'\)\) m \*= ([\d.]+)/)) + '%.');
+  api.add('world-evbuff', '[fog] ', '15-chapter2.js ch2OutMul: hasBt fog 주는 피해 × 0.85', () => E('EVBUFF.fog[1]') === '주는 피해 −' + pct(nx(S15b, /hasBt\(p, 'fog'\)\) m \*= ([\d.]+)/)) + '%.');
+  api.add('world-evbuff', '[names] ', '15-chapter2.js 전투 시작: hasBt names면 addS weak n', () => E('EVBUFF.names[1]') === '전투를 약화 ' + nx(S15b, /hasBt\(b\.p, 'names'\)\) addS\(b, b\.p, 'weak', (\d+)\)/) + '로 시작합니다.');
 
   // ===== 제단 =====
   const ALT = E('ALTARS.map(a => ({ id: a.id, d: a.d }))');
@@ -87,7 +119,15 @@ module.exports = function (api) {
   api.add('world-altars', '[blood] ', '80-events.js altar blood hpPen', () => E('ALTARS.find(a => a.id === "blood").d').includes('최대 생명력 ' + Math.round(nx(altH('blood'), /p\.hpPen\s*\|\|\s*0\)\s*\+\s*([\d.]+)/) * 100) + '%를'));
   const paysGold = () => /const\s+cost\s*=\s*altarGold\(run\)/.test(altH('gold')) && /run\.gold\s*-=\s*cost/.test(altH('gold'));
   api.add('world-altars', '[gold] ', '66-dungeon-flow.js altarGold · ALTARS.gold.cost[0]', () => E('ALTARS.find(a => a.id === "gold").d').includes('골드 ' + E('altarGold({ ch: 1 })') + '을 내면') && E('ALTARS.find(a => a.id === "gold").cost[0]') === E('altarGold({ ch: 1 })') && paysGold());
-  api.add('world-altars', '[scale] 최대 생명력', '80-events.js altar scale hpPen', () => { const t = E('ALTARS.find(a => a.id === "scale").d'); return t.includes('최대 생명력 ' + Math.round(nx(altH('scale'), /p\.hpPen\s*\|\|\s*0\)\s*\+\s*([\d.]+)/) * 100) + '%를') && t.includes('능력치 ' + nx(altH('scale'), /pts:\s*(\d+)/) + '점'); });
+  if (E('!!(ALTARS.find(a => a.id === "scale"))')) api.add('world-altars', '[scale] 최대 생명력', '80-events.js altar scale hpPen', () => { const t = E('ALTARS.find(a => a.id === "scale").d'); return t.includes('최대 생명력 ' + Math.round(nx(altH('scale'), /p\.hpPen\s*\|\|\s*0\)\s*\+\s*([\d.]+)/) * 100) + '%를') && t.includes('패시브 포인트 ' + nx(altH('scale'), /ptBonus\(run,\s*(\d+)/) + '을'); }); // A3: 옛 3챕터 항목(보관)은 있을 때만
+
+  // 0.8.0 M8: 2 · 3챕터 제단(빚의 제단 · 수비대의 맹세, js/80-events.js 'altar')
+  const ALTA = (id, re) => re.test(S80) && E('!!ALTARS.find(a => a.id === "' + id + '")');
+  if (E('!!ALTARS.find(a => a.id === "debt")')) {
+    api.add('world-altars', '[debt] 지금 골드', '80-events.js debt: gainGold(run, DEBT_ALTAR.gold)', () => ALTA('debt', /R\.altar==='debt'\)\{gainGold\(run,DEBT_ALTAR\.gold/) && E('ALTARS.find(a => a.id === "debt").d').includes('골드 ' + E('DEBT_ALTAR.gold') + '을 가불'));
+    api.add('world-altars', '[debt] 대신 챕터 끝 상점', '80-events.js run.shopMarkup = DEBT_ALTAR.markup, 15-chapter2.js ch2Markup이 상점 값 × (1 + m) 뒤 0으로. 10월 24일: 46-screens-shop.js genShop만 부르고 campInit(야영지 상인)은 부르지 않는다', () => /run\.shopMarkup=DEBT_ALTAR\.markup/.test(S80) && S15b.includes('x.price = Math.round(x.price * (1 + m))') && S15b.includes('run.shopMarkup = 0') && E('genShop.toString()').includes('ch2Markup(run, run.shop)') && !E('campInit.toString()').includes('ch2Markup(') && E('ALTARS.find(a => a.id === "debt").d').includes('챕터 끝 상점 값 +' + P(E('DEBT_ALTAR.markup')) + '%(한 번, 야영지 상인은 그대로)'));
+  }
+  if (E('!!ALTARS.find(a => a.id === "oath")')) api.add('world-altars', '[oath] ', '80-events.js oath: p.hpBonus += OATH.hp', () => ALTA('oath', /R\.altar==='oath'\)\{p\.hpBonus=\(p\.hpBonus\|\|0\)\+OATH\.hp/) && E('ALTARS.find(a => a.id === "oath").d').includes('최대 생명력 +' + E('OATH.hp') + '('));
 
   // 화면에 그려지는 제단 카드: 챕터마다 황금 촛대의 값이 다르다 (A.d의 40을 실제 값으로 바꿔 보인다)
   const altUi = [];
@@ -106,9 +146,9 @@ module.exports = function (api) {
   api.add('world-shrines', '[wrath] ', '32-player-action.js hasBt wrath', () => shd('wrath').includes('+' + pct(nx(S32, /hasBt\(p, 'wrath'\)\) d \*= ([\d.]+)/)) + '%'));
   api.add('world-shrines', '[breath] ', '24-clock-damage.js hasBt breath', () => shd('breath').includes('+' + nx(S24, /hasBt\(p, 'breath'\)\) p\.st = Math\.min\(p\.stMax, p\.st \+ (\d+)\)/)));
   api.add('world-shrines', '[mercy] ', '20-battle-state.js flaskHealFrac mercy', () => shd('mercy').includes('+' + Math.round(nx(S20, /hasBt\(p, 'mercy'\) \? ([\d.]+)/) * 100) + '%p'));
-  api.add('world-shrines', '[firm] ', '24-clock-damage.js hasBt firm', () => shd('firm').includes('−' + pct(nx(S24, /hasBt\(p, 'firm'\)\) raw \*= ([\d.]+)/)) + '%'));
-  api.add('world-shrines', '[shade] 받는 화상', '20-battle-state.js hasBt shade', () => shd('shade').includes('화상 피해 −' + pct(nx(S20, /u === b\.p && hasBt\(u, 'shade'\)\) x \*= ([\d.]+)/)) + '%'));
-  api.add('world-shrines', '[shade] 열기', '14-chapter-bodies.js heatRise shade', () => shd('shade').includes('열기가 오르는 양 −' + pct(nx(S14, /hasBt\(b\.p, 'shade'\) \? ([\d.]+)/)) + '%'));
+  if (E('!!(SHRINES.find(x => x.id === "firm"))')) api.add('world-shrines', '[firm] ', '24-clock-damage.js hasBt firm', () => shd('firm').includes('−' + pct(nx(S24, /hasBt\(p, 'firm'\)\) raw \*= ([\d.]+)/)) + '%')); // A3: 옛 3챕터 항목(보관)은 있을 때만
+  if (E('!!(SHRINES.find(x => x.id === "shade"))')) api.add('world-shrines', '[shade] 받는 화상', '20-battle-state.js hasBt shade', () => shd('shade').includes('화상 피해 −' + pct(nx(S20, /u === b\.p && hasBt\(u, 'shade'\)\) x \*= ([\d.]+)/)) + '%')); // A3: 옛 3챕터 항목(보관)은 있을 때만
+  if (E('!!(SHRINES.find(x => x.id === "shade"))')) api.add('world-shrines', '[shade] 열기', '14-chapter-bodies.js heatRise shade', () => shd('shade').includes('열기가 오르는 양 −' + pct(nx(S14, /hasBt\(b\.p, 'shade'\) \? ([\d.]+)/)) + '%')); // A3: 옛 3챕터 항목(보관)은 있을 때만
 
   // 성소가 이어지는 방 수: 문 · 방 카드 · 상단 칩 설명이 모두 "3개 방"이라고 쓴다
   const shUi = [
@@ -141,24 +181,37 @@ module.exports = function (api) {
   const RM = E('Object.keys(ROOM_MODS).map(k => ({ id: k, d: ROOM_MODS[k].d }))');
   api.source('world-mods', RM.map(x => ({ id: x.id, text: pref(x.id, x.d) })));
   const md = id => E('ROOM_MODS.' + id + '.d');
-  for (const k of ['narrow', 'alley']) api.add('world-mods', '[' + k + '] ', '34-rounds-setup.js narrow/alley: 전열 f > n이면 후열', () => md(k).includes('전열에 적이 ' + nx(S34, /mods\.includes\('narrow'\) \|\| mods\.includes\('alley'\)\) \{ let f = 0; for \(const e of en\) if \(e\.row === 'front' && e\.role !== 'boss'\) \{ f\+\+; if \(f > (\d+)\)/) + '기까지'));
+  for (const k of ['narrow', 'alley'].filter(k => E('!!ROOM_MODS.' + k))) api.add('world-mods', '[' + k + '] ', '34-rounds-setup.js narrow/alley: 전열 f > n이면 후열', () => md(k).includes('전열에 적이 ' + nx(S34, /mods\.includes\('narrow'\) \|\| mods\.includes\('alley'\)\) \{ let f = 0; for \(const e of en\) if \(e\.row === 'front' && e\.role !== 'boss'\) \{ f\+\+; if \(f > (\d+)\)/) + '기까지'));
   const ceil = () => ({ T: nx(S24, /hasMod\(b, 'pillar'\)\) && T % (\d+) === 0/), a: nx(S24, /hurtPlayer\(b, (\d+), \{ aoe: 1, label: '무너지는 천장' \}\)/), b: nx(S24, /hurtEnemy\(b, e, (\d+), \{ aoe: 1, label: '무너지는 천장' \}\)/) });
-  for (const k of ['ceiling', 'pillar']) api.add('world-mods', '[' + k + '] ', '24-clock-damage.js tickOnce: T % n === 0, 나와 적 모두 n 피해', () => { const c = ceil(); return c.a === c.b && md(k).includes(c.T + '라운드마다 모두가 피해 ' + c.a); });
-  for (const k of ['holy', 'shade']) api.add('world-mods', '[' + k + '] ', '24-clock-damage.js tickOnce: 나와 적 hpMax × 0.01', () => { const h = mx(S24, /hasMod\(b, 'holy'\) \|\| hasMod\(b, 'shade'\)\) \{ p\.hp = Math\.min\(p\.hpMax, p\.hp \+ p\.hpMax \* ([\d.]+)\); for \(const e of alive\(b\)\) e\.hp = Math\.min\(e\.hpMax, e\.hp \+ e\.hpMax \* ([\d.]+)\)/); return h[1] === h[2] && md(k).includes('생명력 ' + Math.round(h[1] * 100) + '%를') && (k !== 'shade' || md(k).includes('화상 피해는 절반') && nx(S20, /hasMod\(b, 'shade'\)\) x \*= ([\d.]+)/) === 0.5); });
+  for (const k of ['ceiling', 'pillar'].filter(k => E('!!ROOM_MODS.' + k))) api.add('world-mods', '[' + k + '] ', '24-clock-damage.js tickOnce: T % n === 0, 나와 적 모두 n 피해', () => { const c = ceil(); return c.a === c.b && md(k).includes(c.T + '라운드마다 모두가 피해 ' + c.a); });
+  for (const k of ['holy', 'shade'].filter(k => E('!!ROOM_MODS.' + k))) api.add('world-mods', '[' + k + '] ', '24-clock-damage.js tickOnce: 나와 적 hpMax × 0.01', () => { const h = mx(S24, /hasMod\(b, 'holy'\) \|\| hasMod\(b, 'shade'\)\) \{ p\.hp = Math\.min\(p\.hpMax, p\.hp \+ p\.hpMax \* ([\d.]+)\); for \(const e of alive\(b\)\) e\.hp = Math\.min\(e\.hpMax, e\.hp \+ e\.hpMax \* ([\d.]+)\)/); return h[1] === h[2] && md(k).includes('생명력 ' + Math.round(h[1] * 100) + '%를') && (k !== 'shade' || md(k).includes('화상 피해는 절반') && nx(S20, /hasMod\(b, 'shade'\)\) x \*= ([\d.]+)/) === 0.5); });
   api.add('world-mods', '[candle] ', '20-battle-state.js kwTaken: 화상 × 1.5', () => md('candle').includes('화상 피해가 모두 ' + pct(nx(S20, /hasMod\(b, 'candle'\) \? ([\d.]+)/)) + '% 늘'));
-  api.add('world-mods', '[brazier] ', '20-battle-state.js kwTaken: 화상 × 1.5', () => md('brazier').includes('화상 피해가 모두 ' + pct(nx(S20, /hasMod\(b, 'brazier'\)\) x \*= ([\d.]+)/)) + '% 늘'));
+  if (E('!!(ROOM_MODS.brazier)')) api.add('world-mods', '[brazier] ', '20-battle-state.js kwTaken: 화상 × 1.5', () => md('brazier').includes('화상 피해가 모두 ' + pct(nx(S20, /hasMod\(b, 'brazier'\)\) x \*= ([\d.]+)/)) + '% 늘')); // A3: 옛 3챕터 항목(보관)은 있을 때만
   api.add('world-mods', '[bloodpool] ', '24-clock-damage.js dmgDot: 출혈 × 2', () => md('bloodpool').includes('출혈 피해가 모두 ' + nx(S24, /label === '출혈' && hasMod\(b, 'bloodpool'\)\) amt \*= (\d+)/) + '배'));
-  for (const k of ['bell', 'drums']) {
+  for (const k of ['bell', 'drums'].filter(k => E('!!ROOM_MODS.' + k))) {
     api.add('world-mods', '[' + k + '] 적 속도', '24-clock-damage.js eSpeed: 속도 × 1.1', () => md(k).includes('적 속도 +' + pct(nx(S24, /hasMod\(b, 'bell'\) \|\| hasMod\(b, 'drums'\) \? ([\d.]+)/)) + '%'));
     api.add('world-mods', '[' + k + '] 이 방의 골드', '66-dungeon-flow.js battleContinue: 골드 × 1.5', () => md(k).includes('이 방의 골드 +' + pct(nx(S66, /R\.mods\.includes\('bell'\) \|\| R\.mods\.includes\('drums'\)\) \? ([\d.]+)/)) + '%'));
   }
   api.add('world-mods', '[calm] ', '24-clock-damage.js tickOnce: 마나 회복 × 2 (rollMods가 뽑지 않아 화면에는 안 나온다)', () => md('calm').includes('양이 ' + nx(S24, /hasMod\(b, 'calm'\) \? (\d+) : 1/) + '배'));
-  api.add('world-mods', '[bonepile] 2라운드', '34-rounds-setup.js bonepile: 뼈 더미 둘, RISE.wait 라운드 뒤 일어섬', () => { const n = nx(S34, /bonepile'\)\) \{[^}]*?for \(let k = 0; k < (\d+); k\+\+\)/); return n === 2 && md('bonepile').includes('뼈 더미 둘') && /s\.pile = \{ wait: RISE\.wait, born: -1 \}/.test(S34) && md('bonepile').includes(E('RISE.wait') + '라운드 뒤'); });
-  api.add('world-mods', '[flooded] ', '34-rounds-setup.js flooded: 나와 모든 적에게 둔화 1', () => md('flooded').includes('둔화 ' + nx(S34, /mods\.includes\('flooded'\)\) \{ addS\(b, player, 'chill', (\d+)\)/) + '을'));
-  api.add('world-mods', '[noon] 라운드가', '14-chapter-bodies.js heatRise: HEAT.mod', () => md('noon').includes('열기가 ' + E('HEAT.mod') + ' 오릅니다') && /return Math\.round\(HEAT\.mod \* sh\)/.test(S14));
-  api.add('world-mods', '[noon] 100이', '14-chapter-bodies.js heatAdd 상한 100 · heatStorm 뒤 HEAT.reset', () => /b\.heat = Math\.max\(0, Math\.min\((\d+), b\.heat \+ n\)\)/.test(S14) && nx(S14, /b\.heat = Math\.max\(0, Math\.min\((\d+), b\.heat \+ n\)\)/) === 100 && nx(S14, /b\.heat >= (\d+)\) \{ if \(b\.heatWarn/) === 100 && md('noon').includes('100이 되면') && md('noon').includes(E('HEAT.reset') + '으로 내려갑니다') && /b\.heat = q \? QUEEN\.stormReset : HEAT\.reset/.test(S14));
-  api.add('world-mods', '[haze] ', '14-chapter-bodies.js ch3Setup: 허상 1', () => md('haze').includes('허상 ' + nx(S14, /mods\.includes\('haze'\)\) for \(const e of alive\(b\)\) if \(realFoe\(e\)\) e\.haze = Math\.max\(e\.haze \|\| 0, (\d+)\)/) + '을'));
-  api.add('world-mods', '[sandstorm] ', '14-chapter-bodies.js ch3HitMul · 30-enemy-ai.js: 후열 × 0.8 (받는 · 주는)', () => { const a = nx(S14, /hasMod\(b, 'sandstorm'\)\) m \*= ([\d.]+)/), b = nx(S30, /hasMod\(b, 'sandstorm'\)\) d \*= ([\d.]+)/); return a === b && md('sandstorm').includes('모두 ' + pct(a) + '% 줄어듭니다'); });
+  if (E('!!ROOM_MODS.bonepile')) api.add('world-mods', '[bonepile] 2라운드', '34-rounds-setup.js bonepile: 뼈 더미 둘, RISE.wait 라운드 뒤 일어섬', () => { const n = nx(S34, /bonepile'\)\) \{[^}]*?for \(let k = 0; k < (\d+); k\+\+\)/); return n === 2 && md('bonepile').includes('뼈 더미 둘') && /s\.pile = \{ wait: RISE\.wait, born: -1 \}/.test(S34) && md('bonepile').includes(E('RISE.wait') + '라운드 뒤'); }); // A2: 옛 2챕터(보관)면 건너뛴다
+  if (E('!!ROOM_MODS.flooded')) api.add('world-mods', '[flooded] ', '34-rounds-setup.js flooded: 나와 모든 적에게 둔화 1', () => md('flooded').includes('둔화 ' + nx(S34, /mods\.includes\('flooded'\)\) \{ addS\(b, player, 'chill', (\d+)\)/) + '을')); // A2: 옛 2챕터(보관)면 건너뛴다
+  if (E('!!(ROOM_MODS.noon)')) api.add('world-mods', '[noon] 라운드가', '14-chapter-bodies.js heatRise: HEAT.mod', () => md('noon').includes('열기가 ' + E('HEAT.mod') + ' 오릅니다') && /return Math\.round\(HEAT\.mod \* sh\)/.test(S14)); // A3: 옛 3챕터 항목(보관)은 있을 때만
+  if (E('!!(ROOM_MODS.noon)')) api.add('world-mods', '[noon] 100이', '14-chapter-bodies.js heatAdd 상한 100 · heatStorm 뒤 HEAT.reset', () => /b\.heat = Math\.max\(0, Math\.min\((\d+), b\.heat \+ n\)\)/.test(S14) && nx(S14, /b\.heat = Math\.max\(0, Math\.min\((\d+), b\.heat \+ n\)\)/) === 100 && nx(S14, /b\.heat >= (\d+)\) \{ if \(b\.heatWarn/) === 100 && md('noon').includes('100이 되면') && md('noon').includes(E('HEAT.reset') + '으로 내려갑니다') && /b\.heat = q \? QUEEN\.stormReset : HEAT\.reset/.test(S14)); // A3: 옛 3챕터 항목(보관)은 있을 때만
+  if (E('!!(ROOM_MODS.haze)')) api.add('world-mods', '[haze] ', '14-chapter-bodies.js ch3Setup: 허상 1', () => md('haze').includes('허상 ' + nx(S14, /mods\.includes\('haze'\)\) for \(const e of alive\(b\)\) if \(realFoe\(e\)\) e\.haze = Math\.max\(e\.haze \|\| 0, (\d+)\)/) + '을')); // A3: 옛 3챕터 항목(보관)은 있을 때만
+  if (E('!!(ROOM_MODS.sandstorm)')) api.add('world-mods', '[sandstorm] ', '14-chapter-bodies.js ch3HitMul · 30-enemy-ai.js: 후열 × 0.8 (받는 · 주는)', () => { const a = nx(S14, /hasMod\(b, 'sandstorm'\)\) m \*= ([\d.]+)/), b = nx(S30, /hasMod\(b, 'sandstorm'\)\) d \*= ([\d.]+)/); return a === b && md('sandstorm').includes('모두 ' + pct(a) + '% 줄어듭니다'); }); // A3: 옛 3챕터 항목(보관)은 있을 때만
+
+  // 0.8.0 M8: 2 · 3챕터 방 특성(js/15-chapter2.js · js/15-chapter3.js, 값 CH2X · CH3X)
+  const mdIf = (k, loc, ev2x, fn) => { if (E('!!ROOM_MODS.' + k)) api.add('world-mods', '[' + tagOf(k) + '] ' + loc, ev2x, fn); };
+  mdIf('crowd', '', '15-chapter2.js: 라운드 끝 hurtPlayer · hurtEnemy CH2X.crowd', () => S15b.includes('hurtPlayer(b, CH2X.crowd') && S15b.includes('hurtEnemy(b, L[k], CH2X.crowd') && md('crowd').includes('(피해 ' + E('CH2X.crowd') + ', 나와 적 모두)'));
+  mdIf('oilfloor', '화상이 걸릴 때', '15-chapter2.js: ignite를 걸면 n += CH2X.oilIgn', () => S15b.includes("if (k === 'ignite' && hasMod(b, 'oilfloor')) n += CH2X.oilIgn") && md('oilfloor').includes('화상이 걸릴 때 ' + E('CH2X.oilIgn') + ' 더'));
+  mdIf('oilfloor', '해결사가', '15-chapter2.js 전투 시작: 해결사(arson)가 있으면 나와 적 모두 addS ignite n', () => md('oilfloor').includes('모두 화상 ' + nx(S15b, /hasMod\(b, 'oilfloor'\) && en\.some\(e => e\.role === 'arson'\)\) \{ for \(const u of \[b\.p\]\.concat\(en\.filter\(realFoe\)\)\) addS\(b, u, 'ignite', (\d+)\)/)));
+  mdIf('rain', '화상이', '15-chapter2.js 라운드 끝: CH2X.rainIgn번 kwDec(ignite)', () => S15b.includes("if (hasMod(b, 'rain')) for (const u of [p].concat(alive(b))) for (let k = 0; k < CH2X.rainIgn; k++) if (u.s.ignite) kwDec(u, 'ignite')") && md('rain').includes('화상이 라운드마다 ' + E('CH2X.rainIgn') + '씩'));
+  mdIf('rain', '둔화가', '15-chapter2.js: chill을 걸면 n += CH2X.rainChill', () => S15b.includes("if (k === 'chill' && hasMod(b, 'rain')) n += CH2X.rainChill") && md('rain').includes('둔화가 걸릴 때 ' + E('CH2X.rainChill') + ' 더'));
+  mdIf('rift', '', '15-chapter3.js 라운드 끝: 적 하나 taintAdd n, 잠식 하나마다 CH3X.taint · 상한 CH3X.taintCap', () => md('rift').includes('잠식 ' + nx(S15c, /taintAdd\(b, t, (\d+), '틈에서/) + '을 얻습니다(주는 피해 +' + P(E('CH3X.taint')) + '%, ' + E('CH3X.taintCap') + '까지)') && S15c.includes('(x.taint || 0) < CH3X.taintCap'));
+  mdIf('wall', '후열 적이', '15-chapter3.js w3HitMul: 후열 직접 피해 × (1 − CH3X.wallCover)', () => S15c.includes("if (hasMod(b, 'wall') && e.row === 'back' && !o.dot) m *= 1 - CH3X.wallCover") && md('wall').includes('직접 피해가 ' + P(E('CH3X.wallCover')) + '% 줄어듭니다'));
+  mdIf('wall', '전열에는', '15-chapter3.js w3Setup: 전열 f > n이면 후열로', () => md('wall').includes('전열에는 적이 ' + nx(S15c, /hasMod\(b, 'wall'\)\) \{ let f = 0; for \(const e of en\) if \(e\.row === 'front' && e\.role !== 'boss'\) \{ f\+\+; if \(f > (\d+)\) e\.row = 'back'/) + '기까지만'));
+  mdIf('mob3', '', '15-chapter3.js 라운드 시작: CH3X.mobP 확률, CH3X.mobCap까지, 끼어든 폭도 xpCh 0 · noLoot', () => S15c.includes("hasMod(b, 'mob3') && (b.mobN || 0) < CH3X.mobCap && (b.rngF || Math.random)() < CH3X.mobP") && S15c.includes('r.xpCh = 0; r.noLoot = 1;') && md('mob3').includes(P(E('CH3X.mobP')) + '% 확률로') && md('mob3').includes('(' + E('CH3X.mobCap') + '까지)'));
+  mdIf('rockfall', '', '15-chapter3.js w3Tick: T % CH3X.rockEvery === 0이면 나와 적 모두 CH3X.rock', () => S15c.includes("hasMod(b, 'rockfall') && T % CH3X.rockEvery === 0") && S15c.includes('hurtPlayer(b, CH3X.rock,') && S15c.includes('hurtEnemy(b, e, CH3X.rock,') && md('rockfall').includes(E('CH3X.rockEvery') + '라운드마다 모두가 피해 ' + E('CH3X.rock')));
 
   // ===== 갈래길 (화면에 그려진 카드의 숫자) =====
   const pathCards = [];
@@ -170,13 +223,13 @@ module.exports = function (api) {
   api.source('world-paths', pathCards);
   const pathUsed = /P\.hp\); e\.hp = e\.hpMax; e\.dmg \*= D\.dmg \* P\.dmg/.test(S34) && /\.lootMul = \(room\.ambush \? AMBUSH\.loot : 1\) \* pathOf\(room\.path, room\.mode\)\.loot/.test(S34) && /P\.gold \* \(chData\(ch\)\.gold \|\| 1\)/.test(S66) && /const PU = pathOf\(R\.path, G\.run && G\.run\.mode\)\.up/.test(S66) && /const PW = pathOf\(run\.path, run\.mode\)\.w;/.test(S66);
   const pathText = (id, mode) => { const P = E('pathOf("' + id + '", "' + mode + '")'); const w = Object.entries(P.w || {}).filter(([t]) => E('!!ROOM_TYPES.' + t)).map(([t, v]) => E('ROOM_TYPES.' + t + '.n') + ' ×' + v);
-    return [P.hp === 1 && P.dmg === 1 ? '적 체력 · 피해 그대로' : '적 체력 ×' + P.hp + ' · 피해 ×' + P.dmg, '전리품 ×' + P.loot + ' · 골드 ×' + P.gold].concat(P.up ? ['장비 등급 ' + (P.up > 0 ? '오름' : '내림') + ' ' + Math.round(Math.abs(P.up) * 100) + '%'] : []).concat(w.length ? ['나오는 문(큰 길 대비): ' + w.join(', ')] : []); };
+    return [P.hp === 1 && P.dmg === 1 ? '적 생명력 · 피해 그대로' : '적 생명력 ×' + P.hp + ' · 피해 ×' + P.dmg, '전리품 ×' + P.loot + ' · 골드 ×' + P.gold].concat(P.up ? ['장비 등급 ' + (P.up > 0 ? '오름' : '내림') + ' ' + Math.round(Math.abs(P.up) * 100) + '%'] : []).concat(w.length ? ['나오는 문(큰 길 대비): ' + w.join(', ')] : []); };
   for (const mode of ['normal', 'hard']) for (const id of ['rough', 'main', 'quiet']) {
-    api.add('world-paths', '[' + id + '.' + mode + '] 적 체력', '42-chrome-map.js crossCard가 PATHS' + (mode === 'hard' ? '_HARD' : '') + '.' + id + '의 hp · dmg · loot · gold · up · w를 그대로 그림. 34-rounds-setup.js(hp · dmg · loot) · 66-dungeon-flow.js(gold · up · w)가 같은 pathOf 값을 씀', () => {
+    api.add('world-paths', '[' + id + '.' + mode + '] 적 생명력', '42-chrome-map.js crossCard가 PATHS' + (mode === 'hard' ? '_HARD' : '') + '.' + id + '의 hp · dmg · loot · gold · up · w를 그대로 그림. 34-rounds-setup.js(hp · dmg · loot) · 66-dungeon-flow.js(gold · up · w)가 같은 pathOf 값을 씀', () => {
       const t = pathCards.find(c => c.id === id + '.' + mode).text; const P = E('pathOf("' + id + '", "' + mode + '")');
       return pathUsed && P && pathText(id, mode).every(s => t.includes(s)); });
   }
-  PAT.forEach((f, i) => api.add('world-paths', '[' + rl(i) + '] 적 체력', '66-dungeon-flow.js: 길은 f층에서 고르고 다음 갈래길 · 야영지 · 보스 바로 앞까지 간다 (PATH_AT, FLOOR_CAMP, FLOOR_BOSS)', () => {
+  PAT.forEach((f, i) => api.add('world-paths', '[' + rl(i) + '] 적 생명력', '66-dungeon-flow.js: 길은 f층에서 고르고 다음 갈래길 · 야영지 · 보스 바로 앞까지 간다 (PATH_AT, FLOOR_CAMP, FLOOR_BOSS)', () => {
     const stops = PAT.concat([E('FLOOR_CAMP'), E('FLOOR_BOSS')]).filter(x => x > f).sort((a, b) => a - b); const t = pathCards.find(c => c.id === rl(i)).text;
     return pathText('main', 'normal').every(s => t.includes(s)) && t.includes(f + '층부터 ' + (stops[0] - 1) + '층까지') && /PATH_AT\.includes\(run\.room\)\) \{ run\.cross = /.test(S66); }));
 
@@ -195,8 +248,8 @@ module.exports = function (api) {
   // ===== 처음 만남 (역할 소개) =====
   const RI = E('Object.keys(ROLE_INTRO).map(k => ({ k, a: ROLE_INTRO[k][0], b: ROLE_INTRO[k][1] }))');
   api.source('world-roleintro', RI.map(x => ({ id: x.k, text: pref(x.k, x.a + ' ' + x.b) })));
-  api.add('world-roleintro', '[ember] ', '20-battle-state.js kwTaken: 화상 n 더하고 kwDec 기본 1', () => { const t = E('ROLE_INTRO.ember[1]'); return t.includes('그 수만큼 피해를 더하고 ' + nx(S20, /function kwDec\(u, k, n\) \{[^}]*x\.stacks -= \(n \|\| (\d+)\)/) + ' 줄어듭니다') && /const n = stk\(u, 'ignite'\); kwDec\(u, 'ignite'\);/.test(S20) && /d \+= x; \}/.test(S20); });
-  api.add('world-roleintro', '[noon] ', '14-chapter-bodies.js heatAdd: 열기 100이면 열풍', () => nx(S14, /b\.heat >= (\d+)\) \{ if \(b\.heatWarn/) === 100 && E('ROLE_INTRO.noon[1]').includes('100이 되면 열풍이 붑니다'));
+  if (E('!!(ROLE_INTRO.ember)')) api.add('world-roleintro', '[ember] ', '20-battle-state.js kwTaken: 화상 n 더하고 kwDec 기본 1', () => { const t = E('ROLE_INTRO.ember[1]'); return t.includes('그 수만큼 피해를 더하고 ' + nx(S20, /function kwDec\(u, k, n\) \{[^}]*x\.stacks -= \(n \|\| (\d+)\)/) + ' 줄어듭니다') && /const n = stk\(u, 'ignite'\); kwDec\(u, 'ignite'\);/.test(S20) && /d \+= x; \}/.test(S20); }); // A3: 옛 3챕터 항목(보관)은 있을 때만
+  if (E('!!(ROLE_INTRO.noon)')) api.add('world-roleintro', '[noon] ', '14-chapter-bodies.js heatAdd: 열기 100이면 열풍', () => nx(S14, /b\.heat >= (\d+)\) \{ if \(b\.heatWarn/) === 100 && E('ROLE_INTRO.noon[1]').includes('100이 되면 열풍이 붑니다')); // A3: 옛 3챕터 항목(보관)은 있을 때만
   api.add('world-roleintro', '[swift] ', '34-rounds-setup.js startRound: 신속은 라운드마다 haste stacks 1', () => E('ROLE_INTRO.swift[1]').includes('가속 ' + nx(S34, /e\.swift && !e\.s\.chill && !e\.s\.broken && !e\.s\.haste\) e\.s\.haste = \{ stacks: (\d+)/) + '을') && E('ROLE_INTRO.swift[1]').includes('둔화가 걸리면'));
 
   // ===== 이야기 · 도감 · 층 이름: 숫자가 없어야 한다 (숫자가 생기면 이 출처에서 걸린다) =====
@@ -205,7 +258,7 @@ module.exports = function (api) {
   for (const [k, v] of Object.entries(E('FOE_INTRO'))) { add('intro.' + k + '.lore', v.lore); (v.see || []).forEach((s, i) => add('intro.' + k + '.see' + i, s)); }
   for (const [k, v] of Object.entries(E('CODEX'))) for (const [j, s] of Object.entries(v)) add('codex.' + k + '.' + j, s);
   for (const [k, v] of Object.entries(E('CHAPTERS'))) for (const j of ['n', 'settleLore', 'nextLore', 'enterLore', 'deathLine']) add('chapter.' + k + '.' + j, v[j]);
-  for (const [i, b] of E('BANDS3').entries()) { add('band.' + i + '.n', b.n); add('band.' + i + '.line', b.line); }
+  for (const c of [2, 3]) for (const [i, b] of (E('CHAPTERS[' + c + '].bands') || []).entries()) { add('band' + c + '.' + i + '.n', b.n); add('band' + c + '.' + i + '.line', b.line); } // A3: 층 띠는 챕터 데이터에서(옛 BANDS3은 보관)
   for (const [k, v] of Object.entries(E('ROLE_INTRO'))) add('role.' + k + '.0', v[0]);
   for (const e of EV) add('lore.' + e.id, e.lore);
   for (const [k, v] of Object.entries(E('BOSSES'))) if (['abbot', 'cryptlord', 'queen'].includes(k)) { add('boss.' + k + '.d', v.d); add('boss.' + k + '.lore', v.lore); }
@@ -214,10 +267,10 @@ module.exports = function (api) {
   // ===== 전투 기록 · 예고에 찍히는 문장 (적 행동 · 방 시작). 글은 코드의 문자열에서 읽어 오고, 숫자는 처리 코드와 대조한다 =====
   const lit = (S, re) => mx(S, re)[1];
   const lg = {
-    pyrea: '장송곡 · 중독 ' + lit(S30, /'장송곡 ' \+ r1\(chantDmg\(b, e\)\) \+ ' · 중독 (\d+)'/),
+    pyrea: '장송곡 · 중독 ' + mx(E('TELE_T.burn_ch2[0]'), /^장송곡 \{cdmg\} · 중독 (\d+)$/)[1], // A0: 예고 문장은 data/foes.js TELE_T
     pyrec: '장송곡 · 중독 ' + lit(S30, /\? '장송곡 · 중독 (\d+)' :/),
     hex: '저주를 맺는다. 나에게 약화 ' + lit(S30, /logp\(b, 'bad', e\.n \+ '이\(가\) 저주를 맺는다\. 약화 (\d+) · 취약 \d+'\)/) + ' · 취약 ' + lit(S30, /저주를 맺는다\. 약화 \d+ · 취약 (\d+)'/),
-    bless: '동료에게 축복. 다음 공격 피해 +' + lit(S30, /에게 축복\. 다음 공격 피해 \+(\d+)%/) + '%',
+    bless: '동료에게 축복. 다음 공격 피해 +' + mx(E('TELE_T.bless[0]'), /에게 축복\. 다음 공격 피해 \+(\d+)%/)[1] + '%',
     prayer: '최후의 기도를 올린다. 강화 ' + lit(S30, /최후의 기도를 올린다\. 강화 (\d+)'/),
     flooded: '발목까지 물이 찬다. 모두 둔화 ' + lit(S34, /발목까지 물이 찬다\. 모두 둔화 (\d+)'/),
     rot: '썩은 기운이 몸에 남았습니다. 다음 전투에 중독 ' + lit(S66, /썩은 기운이 몸에 남았습니다\. 다음 전투에 중독 (\d+)'/),
@@ -246,31 +299,19 @@ module.exports = function (api) {
   bl('[exh] ', '24-clock-damage.js hurtPlayer: 스태미나 0이면 받는 피해 × 1.2', () => lg.exh.endsWith('+' + pct(nx(S24, /if \(p\.st <= 0 \|\| p\.exhaust\) d \*= ([\d.]+)/)) + '%'));
   bl('[brace] ', '24-clock-damage.js hurtPlayer: p.brace면 받는 피해 × 0.65', () => lg.brace.endsWith('−' + pct(nx(S24, /if \(p\.brace\) d \*= ([\d.]+)/)) + '%'));
   bl('[weakOut] ', '32-player-action.js: 약화면 내 피해 × 0.75', () => lg.weakOut.endsWith('−' + pct(nx(S32, /s\.weak\) d \*= ([\d.]+)/)) + '%'));
-  bl('[empOut] ', '32-player-action.js: 강화면 내 피해 × 1.25', () => lg.empOut.endsWith('+' + pct(nx(S32, /s\.empower && !\(p\.build === 'monk' && b\.curFast\)\) \{ d \*= ([\d.]+)/)) + '%'));
+  bl('[empOut] ', '32-player-action.js: 강화면 내 피해 × 1.25(실린 주먹 노드의 기본 · 강공격 1.4는 따로)', () => lg.empOut.endsWith('+' + pct(nx(S32, /if \(p\.s\.empower && !\(p\.build === 'monk' && b\.curFast[^\n]*?\{ d \*= [^\n]*?\? [\d.]+ : ([\d.]+)/)) + '%'));
 
   // ===== 이벤트 · 성소 · 제단 처리 중 알림(toast)과 시트 제목에 찍히는 글 (80-events.js의 글을 그대로 읽는다) =====
   const tl = {
-    shrine: lit(S80, /toast\('(성소의 힘이 \d+개 방 동안 함께합니다)'\)/),
-    scale: lit(S80, /why:\s*'(유리 저울에서 능력치 \d+점)'/),
-    refundA: lit(S80, /SK2\[c\]\.n \+ '( 칸을 되돌렸습니다\. 포인트 \+\d+)'/).trim(),
-    refundB: lit(S80, /case 'trefund'[^\n]*toast\('(되돌렸습니다\. 포인트 \+\d+)'\)/),
-    camel: lit(S80, /toast\('(짐에서 소모품 셋을 찾았습니다\. 다음 전투에 화상 \d+)'\)/),
-    oasisA: lit(S80, /toast\('(샘물이 상처를 씻어 낸다\. 생명력 \d+%)'\)/),
-    oasisB: lit(S80, /toast\('(물이 무겁게 가라앉는다\. 다음 전투에 둔화 \d+)'\)/),
-    library: lit(S80, /why: '(무너진 서고에서 능력치 \d+점)'/),
-    archive: lit(S80, /why: '(불타는 서고에서 능력치 \d+점)'/),
+    shrine: lit(S80, /toast\('(성소의 힘이 \d+개 방 동안 이어집니다)'\)/),
+    refundB: lit(S80, /case 'ptref': case 'atref'[^\n]*toast\('(되돌렸습니다\. 포인트 \+\d+)'\)/),
   };
   api.source('world-toasts', Object.entries(tl).map(([id, t]) => ({ id, text: pref(id, t) })));
   const tt = (tag, loc, ev2, fn) => api.add('world-toasts', sentFind(tag, tl[tag], loc), ev2, fn);
   tt('shrine', '성소의 힘이', '80-events.js run.buffs[R.shrine] = 4 → 방 수 = 값 − 1', () => durOk && tl.shrine.includes(shrineRooms + '개 방 동안'));
-  tt('scale', '유리 저울', '80-events.js altar scale: openSheet stats pts', () => tl.scale.includes('능력치 ' + nx(altH('scale'), /pts:\s*(\d+)/) + '점'));
-  tt('refundA', '포인트', '66-dungeon-flow.js refundDeepest: t.pts++ (포인트 1 돌려줌)', () => tl.refundA.endsWith('+' + (/t\.pts\+\+/.test(S66) ? 1 : NaN)));
-  tt('refundB', '포인트', '22-class-tree-rules.js treeRefund: t.pts++ (포인트 1 돌려줌)', () => tl.refundB.endsWith('+' + (/t\.open = t\.open\.filter\(x => x !== id\); t\.pts\+\+;/.test(S22) ? 1 : NaN)));
-  tt('camel', '화상', '80-events.js camel loot: n3pre ignite n', () => tl.camel.endsWith('화상 ' + nx(H('camel', 'loot'), /n3pre\(run, 'ignite', (\d+)\)/)));
-  tt('oasisA', '생명력', '80-events.js oasis drink: p.hpMax × 0.3', () => tl.oasisA.endsWith('생명력 ' + pct(1 + nx(H('oasis', 'drink'), /p\.hpMax \* ([\d.]+)/)) + '%'));
-  tt('oasisB', '둔화', '80-events.js oasis drink: n3pre chill n', () => tl.oasisB.endsWith('둔화 ' + nx(H('oasis', 'drink'), /n3pre\(run, 'chill', (\d+)\)/)));
-  tt('library', '서고', '80-events.js library read: openSheet stats pts', () => tl.library.includes('능력치 ' + nx(H('library', 'read'), /pts: (\d+)/) + '점'));
-  tt('archive', '서고', '80-events.js archive pull: openSheet stats pts', () => tl.archive.includes('능력치 ' + nx(H('archive', 'pull'), /pts: (\d+)/) + '점'));
+  const S23 = J('23-tree-engine.js'); const costOne = E('Object.keys(BUILDS).filter(k => BUILDS[k].v2).every(k => Object.values(atBuild(k).nodes).concat(Object.values(ptBuild(k).nodes)).every(x => x.kind === "start" || x.kind === "keystone" || x.cost === 1))'); // 10월 16일 0.8.0 2단계: 두 트리
+  tt('refundB', '포인트', '23-tree-engine.js ptRefund · atRefund: pts += 노드 비용(모두 1)', () => tl.refundB.endsWith('+' + (/run\.ptree\.pts \+= ptBuild\(run\.build\)\.nodes\[id\]\.cost/.test(S23) && costOne ? 1 : NaN)));
+
 
   // ===== 옛 B0.5 자리: 06a2에서 고를 길이 없다 =====
   const legacyT = [{ id: 'mother', text: E('BOSSES.mother.d') }, { id: 'tree', text: E('BOSSES.tree.d') }].concat(E('SCEN').map(s => ({ id: s.id, text: s.d }))).concat(E('ROOMS').map((r, i) => ({ id: 'room' + i, text: r.n })));

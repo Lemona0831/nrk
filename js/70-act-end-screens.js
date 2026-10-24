@@ -71,11 +71,26 @@ function vDead() {
   return vPlayerPanel(run.p, null) + `<section class="card grave"><h3>쓰러졌습니다${modeTag(run)}${run.markCh ? ' <span class="chip hardtag">표식 도전</span>' : ''}</h3>${unlNewsHtml()}<p class="lore">${c3 ? esc(chData(3).deathLine) : '돌바닥이 차갑다. 이 이름은 더 내려가지 못한다.'}</p>${hz ? `<p class="mini">열기가 오른 곳: ${esc(hz)}</p>` : ''}
 <p>${esc(run.cname || BUILDS[run.build].n)}(${esc(BUILDS[run.build].n)}, Lv ${run.lv || 1})의 여정은 ${esc(g.roomN || '')}에서 끝났습니다. 쓰러진 캐릭터는 돌아오지 않습니다. 새 캐릭터로 다시 시작합니다.</p>
 ${graveKill(g)}${graveContext(g)}<dl class="gdl"><dt>장비</dt><dd>${(g.eq || []).map(k => esc((ITEMS[k] || { n: k }).n)).join(', ') || '없음'}</dd><dt>능력치</dt><dd>${STAT_KEYS.map(k => STATN[k] + ' ' + (g.stats ? g.stats[k] || 0 : 0)).join(' · ')}</dd></dl>
-<button class="gold wide" data-a="giveupend" data-focus>기록을 남기고 마치기</button></section>`;
+${deadSvHtml(g)}<button class="gold wide" data-a="giveupend" data-focus>기록을 남기고 마치기</button></section>`;
+}
+/* 쓰러진 직후 설문 2문항 (0.8.0 M8, 10월 23일): 재미 1–5와 사인 하나. 답은 [기록을 남기고 마치기]를 누를 때 판 기록(grave.sv)과 설문 경로(COL.survey/dead_판 id)에 남는다.
+   고르지 않아도 넘어간다. 이어지는 긴 설문은 그대로 */
+const SV_CAUSE = { big: '큰 공격을 막지 못했다', res: '플라스크 · 스태미나가 바닥났다', status: '해로운 상태가 쌓였다', many: '적이 너무 많거나 셌다', rule: '적이나 방의 규칙을 몰랐다', slip: '잘못 눌렀거나 실수했다', other: '기타' };
+function deadSvHtml(g) {
+  const sv = g.sv || {}; const pick = (name, map, inline, cur) => svRadio(name, map, inline).replace(`value="${cur}"`, `value="${cur}" checked`);
+  return `<div class="survey deadsv"><p class="mini">두 가지만 물어볼게요. 고르지 않아도 됩니다.</p>
+<fieldset><legend>이번 판은 재미있었나요?</legend><div class="sv-row">${pick('dfun', SV.fun, true, sv.fun)}</div></fieldset>
+<fieldset><legend>무엇 때문에 쓰러졌다고 생각하나요? 하나만 골라 주세요.</legend>${pick('dcause', SV_CAUSE, false, sv.cause)}</fieldset></div>`;
+}
+if (typeof document !== 'undefined') document.addEventListener('change', ev => { const t = ev.target, run = G.run; if (!t || (t.name !== 'dfun' && t.name !== 'dcause') || !run || !run.grave) return; const sv = run.grave.sv = run.grave.sv || {}; if (t.name === 'dfun') sv.fun = +t.value; else sv.cause = t.value; }); // 기록 전송 뒤 화면을 다시 그려도 고른 답이 남게
+function deadSvSave() {
+  const run = G.run; if (!run || run.result !== 'lose' || !run.grave) return; const sv0 = run.grave.sv || {}; const fun = radio('dfun') || sv0.fun, cause = radio('dcause') || sv0.cause; if (!fun && !cause) return;
+  run.grave.sv = { fun: fun ? +fun : null, cause: cause || '', at: Date.now() }; saveRunLocal();
+  pushDb(COL.survey + '/dead_' + run.id, Object.assign({ run: run.id, build: run.build, ch: run.ch || 1, room: run.room || 0, lv: run.lv || 1 }, run.grave.sv));
 }
 
 /* 결정타: 누가, 무엇으로, 얼마나, 무엇이 더해졌나 (10월 7일 2차) */
-const hitWho = h => h.dot ? (h.l || '지속 피해') : h.n ? h.n + (h.it ? '의 ' + h.it : '') : (h.l || '피해');
+const hitWho = h => h.dot ? (h.l || '상태 피해') : h.n ? h.n + (h.it ? '의 ' + h.it : '') : (h.l || '피해');
 const hitMods = h => h.m && h.m.length ? ` <span class="mini">(${esc(h.m.join(', '))})</span>` : '';
 function graveKill(g) {
   const k = g.kill; if (!k) return '';
@@ -136,6 +151,7 @@ function vFinal() {
 
 /* 아직 얻지 않은 장비(고르기 창): 등급과 기본 수치 범위를 함께 보인다 */
 function itemCard(k, extra) {
+  if (k && typeof k === 'object') return `<div class="icard">${g8Detail(k)}${extra || ''}</div>`; /* 0.8.0 M6-2: 새 장비 */
   const I = ITEMS[k]; const g = I.g || 'n'; const R = GRADE[g]; const sb = SLOT_BASE[tplKind(k)]; const v = sb.v[itemChOf(k) - 1] || sb.v[0];
   const range = sb.k === 'flask' ? `${sb.lab} ${Math.round(v * (1 + R.lo / 100) * 1000) / 10}~${Math.round(v * (1 + R.hi / 100) * 1000) / 10}%` : `${sb.lab} ${r1(v * (1 + R.lo / 100))}~${r1(v * (1 + R.hi / 100))}`;
   return `<div class="icard grb-${g}"><div class="idet-h"><b class="in gr-${g}">${inm(k, g)}</b>${gradeTag(g)}<span class="mini">${SLOT_N[I.slot]}</span></div><div class="idet-base">${range}</div>${I.act ? `<div class="l act">${esc(I.act)}</div>` : ''}${I.cost ? `<div class="l cost">대가: ${esc(I.cost)}</div>` : ''}${I.lore ? `<p class="lore">${esc(I.lore)}</p>` : ''}${extra || ''}</div>`;
@@ -143,7 +159,7 @@ function itemCard(k, extra) {
 
 function reasonPicker() { return `<fieldset class="reasons"><legend>왜 바꾸나요?</legend>${REASONS.map((r, i) => `<label><input type="radio" name="rs" value="${r[0]}"${i === 0 ? '' : ''}> ${r[1]}</label>`).join(' ')}</fieldset><label for="rnote">메모. 적지 않아도 됩니다.</label><input id="rnote" type="text">`; }
 function vSheet() {
-  const S = G.sheet; if (!S || (S.data.first && (S.kind === 'skills' || S.kind === 'stats'))) return ''; // 캐릭터 만들기의 스킬·능력치는 창이 아니라 만들기 화면 안에 그린다
+  const S = G.sheet; if (!S || (S.data.first && (S.kind === 'skills' || S.kind === 'alloc'))) return ''; // 캐릭터 만들기의 스킬·능력치는 창이 아니라 만들기 화면 안에 그린다
   const [title, body] = sheetParts(S);
   return `<div class="sheet-bg${hudLiveSheet() ? ' live' + (G.hudTop ? ' ltop' : '') : ''}" data-a="closebg"><div class="sheet sh-${S.kind}" role="dialog" aria-modal="true" aria-labelledby="shtitle"><div class="shead"><h3 id="shtitle">${esc(title)}</h3>${S.kind === 'equip' || S.kind === 'drop' || S.kind === 'help' || S.kind === 'settings' || S.kind === 'toasts' || S.kind === 'offer' || S.kind === 'awkview' || S.kind === 'statview' || S.kind === 'codex' || S.kind === 'itembook' || S.kind === 'changes' ? '<button class="sm" data-a="close">닫기</button>' : ''}</div>${body}</div></div>`;
 }

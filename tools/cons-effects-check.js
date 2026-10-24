@@ -36,23 +36,16 @@ ok.push('미끼 인형');
 // 6. 빈 성물함 ×1.5
 { const { b, run } = mk([['bruiser', 0]]); E.consApply(b, run, { id: 'reliq', g: 'n' }, null); assert.equal(b.lootX, 1.5); }
 ok.push('빈 성물함 ×1.5');
-// 7. 석회 가루: 뼈 더미 +2라운드, 서 있는 해골은 쓰러질 때
-{ const { b, run } = mk([['skeleton', 0], ['skeleton', 0]], 2); const [s1, s2] = b.en;
-  E.makePile(b, s1); const w0 = s1.pile.wait; E.consApply(b, run, { id: 'lime', g: 'n' }, s1); assert.equal(s1.pile.wait, w0 + 2); assert(s1.alive !== false, '없애지 않는다');
-  E.consApply(b, run, { id: 'lime', g: 'n' }, s2); assert.equal(s2.limeDelay, 2); assert(E.stsHtml(s2, b, true).includes('쓰러지면 ' + (E.RISE.wait + 2) + '라운드 뒤 부활 (석회 +2)'), '카드 표시'); E.makePile(b, s2); assert.equal(s2.pile.wait, E.RISE.wait + 2); assert(!s2.limeDelay); }
-ok.push('석회 가루 2라운드');
+// 7. 석회 가루 · 8. 거울 조각 확인은 뺐다: 두 소모품은 옛 2 · 3챕터와 함께 data/archive로(A2 · A3, 10월 22일)
 // 7-1. 해골 부활 예고(4-3): 서 있는 해골 카드에 부활 라운드, 화상이면 부활 못 함, 설명 창
 { const { b } = mk([['skeleton', 0]], 2); const s = b.en[0]; let h = E.stsHtml(s, b, true); assert(h.includes('쓰러지면 ' + E.RISE.wait + '라운드 뒤 부활'), h);
   assert(E.infoHtml('skrise:' + s.id).includes('한 번 다시 일어섭니다'));
   E.addS(b, s, 'ignite', 1); h = E.stsHtml(s, b, true); assert(h.includes('지금 쓰러지면 부활 못 함')); assert(E.infoHtml('skrise:' + s.id).includes('화상 상태라'));
   s.rose = 1; assert(!E.stsHtml(s, b, true).includes('skrise'), '이미 일어선 해골은 표시 없음'); }
 ok.push('해골 부활 예고');
-// 8. 거울 조각: 한 적 · 한 겹
-{ const { b, run } = mk([['bruiser', 0], ['bruiser', 0]]); const [a, c] = b.en; a.haze = 2; c.haze = 1; E.consApply(b, run, { id: 'mirror', g: 'n' }, a); assert.equal(a.haze, 1); assert.equal(c.haze, 1); }
-ok.push('거울 조각 한 겹');
 // 9. 챕터 전용 자동 반환
-{ const run = { ch: 2, gold: 0, cons: [{ id: 'lime', g: 'n', n: 2 }, { id: 'herb', g: 'n', n: 3 }], consPending: [{ id: 'lime', g: 'n', n: 1 }] }; run.ch = 3; const r = E.consChRefund(run);
-  assert.equal(r.gold, E.consSell({ id: 'lime', g: 'n' }) * 3); assert.equal(run.gold, r.gold); assert.equal(JSON.stringify(run.cons.map(c => c.id)), '["herb"]'); assert.equal(run.consPending.length, 0);
-  const keep = { ch: 2, gold: 0, cons: [{ id: 'lime', g: 'n', n: 1 }] }; assert.equal(E.consChRefund(keep).gold, 0, '그 챕터에서는 그대로'); }
+{ const run = { ch: 3, gold: 0, cons: [{ id: 'flare', g: 'n', n: 2 }, { id: 'herb', g: 'n', n: 3 }], consPending: [{ id: 'flare', g: 'n', n: 1 }] }; run.ch = 4; const r = E.consChRefund(run); // 3챕터 전용 신호탄(only 3)으로 바꿨다(석회 가루는 보관)
+  assert.equal(r.gold, E.consSell({ id: 'flare', g: 'n' }) * 3); assert.equal(run.gold, r.gold); assert.equal(JSON.stringify(run.cons.map(c => c.id)), '["herb"]'); assert.equal(run.consPending.length, 0);
+  const keep = { ch: 3, gold: 0, cons: [{ id: 'flare', g: 'n', n: 1 }] }; assert.equal(E.consChRefund(keep).gold, 0, '그 챕터에서는 그대로'); }
 ok.push('챕터 전용 반환');
 console.log('소모품 효과 변경 점검 통과: ' + ok.join(' · '));

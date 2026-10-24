@@ -2,20 +2,20 @@
 /* ---------- 런 ---------- */
 function shuffleSeeded(arr, seed) { const a = arr.slice(); const r = mulberry(seed); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function startRun(build, boss) {
-  G.tsel = null; G.tbr = null;
+  G.tsel = null; G.tbr = null; G.dropQ = []; // 10월 24일 S-4: 앞 판의 건넬 전리품 줄을 비운다
   boss = boss || chData(1).boss; // 1챕터 보스: 타락한 수도원장 (기믹 상세는 비공개 문서). 챕터를 넘으면 enterChapter가 바꾼다
   const p = mkPlayer(build, {});
   const seed = Date.now() % 100000;
   G.run = {
     id: 'r' + Date.now().toString(36), build, boss, startedAt: Date.now(), room: 0, p, bag: [], swaps: [], rooms: [], acts: [],
     deaths: [], result: null, blockPicked: null, entry: null, survey: null, drops: [], legSeen: [], awk: [],
-    stats: { str: 0, dex: 0, int: 0, con: 0, wil: 0 }, statGrowth: LV_POINTS, statBase: STAT_START, statLog: [], pool: shuffleSeeded(FREE_POOL, seed), choices: [], seed,
+    stats: { str: 0, dex: 0, int: 0, con: 0, wil: 0 }, statLog: [], pool: shuffleSeeded(FREE_POOL, seed), choices: [], seed, tv: TV,
   };
-  G.run.skills = isV2(p) ? [] : DEFAULT_SKILLS[build].slice(); G.run.bag = []; G.run.cons = []; G.run.consV = 3; G.run.pouch = {}; initGear(G.run); dgInit(G.run); G.run.skillLog = []; treeInit(G.run); if (isV2(p)) p.skills = v2Equip(G.run);
+  G.run.skills = isV2(p) ? [] : DEFAULT_SKILLS[build].slice(); G.run.bag = []; G.run.cons = []; G.run.consV = 3; G.run.pouch = {}; initGear(G.run); dgInit(G.run); G.run.skillLog = []; if (isV2(p)) { ptInit(G.run); atOfferInit(G.run); /* M5-0 보정 5 P4 */ treeSync(G.run); p.hp = p.hpMax; p.st = p.stMax; } // 10월 16일 0.8.0 2단계: 두 트리(시작 노드 능력치 12점)
   G.run.mode = G.cre && G.cre.mode === 'hard' && G.data.hardOpen ? 'hard' : 'normal'; G.run.cname = (G.cre && G.cre.name) || ''; G.run.ch = 1; G.run.playMs = 0; G.run.tut = G.data.tutDone ? 1 : 0; // 수련장을 마친 뒤 만든 캐릭터인가
   if (G.cre && G.cre.mark) markSetup(G.run, G.cre.mark); // 표식 도전: 챕터 시작 레벨 · 꾸러미 · 표식
   G.scr = 'create'; G.b = null; G.sel = null; G.creating = true;
-  openSheet('skills', { first: 1, pick: G.run.skills.slice() });
+  if (isV2(p)) allocBegin(G.run, 'create'); else openSheet('skills', { first: 1, pick: G.run.skills.slice() }); // 배분 흐름: 패시브 → (큰 각인) → 액티브 · 장착 → 시작
 }
 /* 이어 하기: 방과 방 사이마다 판을 통째로 저장 */
 /* ===== 장비 (기획서 11.5절) =====
@@ -25,32 +25,35 @@ function startRun(build, boss) {
 const EQ_SLOTS = ['weapon', 'armor', 'gloves', 'amulet', 'ring1', 'ring2', 'flask'];
 const EQ_SLOT_N = { weapon: '무기', armor: '갑옷', gloves: '장갑', amulet: '목걸이', ring1: '반지 1', ring2: '반지 2', flask: '플라스크' };
 const kindOf = slot => slot === 'ring1' || slot === 'ring2' ? 'ring' : slot;
-const tplKind = k => kindOf(ITEMS[k].slot);
+const tplKind = k => kindOf((ITEMS[k] || AFFIX_BASE[k]).slot); // M6-1: g8 장비의 tpl은 기반 모양(AFFIX_BASE)
 function rollBonus(g) { const R = GRADE[g] || GRADE.n; return Math.round((R.lo + Math.random() * (R.hi - R.lo)) * 10) / 10; }
 /* 챕터마다 장비 풀 (CH_POOLS[ch], 없으면 1챕터 풀) */
 function poolOf(ch) { return (typeof CH_POOLS !== 'undefined' && CH_POOLS[ch]) || CH1_POOL; }
 /* 장비의 챕터(기본 수치의 챕터): 지금 챕터 풀에 없고 이전 챕터 풀에 있으면 그 챕터 (장비-경제.md 3절 옛 장비) */
 function itemChOf(k) { const c = (typeof G !== 'undefined' && G.run && G.run.ch) || 1; if (c >= 2 && typeof CH_POOLS !== 'undefined' && CH_POOLS[c] && !CH_POOLS[c].includes(k)) for (let x = c - 1; x >= 1; x--) if (CH_POOLS[x] && CH_POOLS[x].includes(k)) return x; return c; }
-function mkItem(k, o) { o = o || {}; const g = o.g || ITEMS[k].g || 'n'; return { rollV: 2, foundAt: Date.now(), uid: 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tpl: k, g, ch: o.ch || itemChOf(k), /* 10월 5일: 기본값이 늘 1이라 2챕터 드롭이 1챕터 수치로 나올 뻔했다 */ b: o.b != null ? o.b : rollBonus(g) }; }
-function itemBase(it) { const sb = SLOT_BASE[tplKind(it.tpl)]; const v = sb.v[(it.ch || 1) - 1] * (1 + (it.b || 0) / 100); return { k: sb.k, lab: sb.lab, v }; }
+function mkItem(k, o) { o = o || {}; if (typeof k === 'string' && k.startsWith('g8|')) { const [, g, slot] = k.split('|'); return g8Gen(G.run, { g, slot: slot || undefined, ch: o.ch }); } /* 0.8.0 M6-2: 드롭 자리(dropKey · rollSlotItem)가 넘긴 새 장비 표 */ const g = o.g || ITEMS[k].g || 'n'; return { rollV: 2, foundAt: Date.now(), uid: 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), tpl: k, g, ch: o.ch || itemChOf(k), /* 10월 5일: 기본값이 늘 1이라 2챕터 드롭이 1챕터 수치로 나올 뻔했다 */ b: o.b != null ? o.b : rollBonus(g) }; }
+function itemBase(it) { const sb = SLOT_BASE[tplKind(it.tpl)]; const v = sb.v[(it.ch || 1) - 1] * (1 + (it.b || 0) / 100) * (isG8(it) && sb.k !== 'flask' ? ITEM_V.obs.base * GEAR8.baseScale * (((GEAR8.slotBase || {})[sb.k]) || 1) : 1) /* M6-3 실측: 새 장비 기반 수치 × 0.7(장비는 힘을 옮긴다 — 접사로) */; return { k: sb.k, lab: sb.lab, v }; }
 function baseText(it) { const x = itemBase(it); return x.k === 'flask' ? `${x.lab} ${Math.round(x.v * 1000) / 10}%` : x.k === 'wpn' ? `${x.lab} ${r1(x.v)}` : `${x.lab} +${Math.round(x.v)}`; }
 /* 장비 이름: 등급 글자(평 · 고 · 희 · 영 · 전, 색과 함께 글자로도 보인다)와 전설의 ✦. 색은 부르는 쪽의 gr-g가 입힌다 */
 function inm(tpl, g) { const R = GRADE[g] || GRADE.n; return `<span class="gl" aria-hidden="true">${R.n[0]}</span><span class="sr">${R.n} </span>${g === 'l' ? '<span aria-hidden="true">✦ </span>' : ''}${esc((ITEMS[tpl] || {}).n || tpl)}`; }
+const inmIt = it => isG8(it) ? g8NameHtml(it) : inm(it.tpl, it.g); // 0.8.0 M6-2: 새 장비 이름(js/17)
+const itName = it => !it ? '' : isG8(it) ? g8Name(it) : (ITEMS[it.tpl] || {}).n || it.tpl;
 function gradeTag(g) { return `<span class="gtag gr-${g}">${(GRADE[g] || GRADE.n).n}</span>`; }
 function initGear(run) {
-  if (run.inv) return;
+  if (run.inv) { if (GEAR8.on && g8Purge(run)) applyGear(run); return; } /* 0.8.0 M6-2: 개발 중 세이브의 옛 장비는 그 칸을 비운다(변환 없음, 만든 사람 10월 21일) */
   const p = run.p; run.inv = {}; run.eqU = {}; for (const sl of EQ_SLOTS) run.eqU[sl] = null;
   const put = (it, sl) => { run.inv[it.uid] = it; run.eqU[sl] = it.uid; };
-  put(mkItem('start_wpn_' + run.build, { b: 0 }), 'weapon'); put(mkItem('start_armor', { b: 0 }), 'armor'); put(mkItem('start_flask', { b: 0 }), 'flask');
-  const oldBag = Array.isArray(run.bag) ? run.bag.filter(k => ITEMS[k]) : []; run.bag = [];
-  for (const sl of EQ_SLOTS) { const k = p.eq && p.eq[sl]; if (k && ITEMS[k] && ITEMS[k].kind !== 'start') { const it = mkItem(k); run.inv[it.uid] = it; const prev = run.eqU[sl]; run.eqU[sl] = it.uid; if (prev) run.bag.push(prev); } }
+  if (GEAR8.on) { const S8 = g8StartGear(run); for (const sl in S8) { S8[sl].start = 1; put(S8[sl], sl); } } /* 0.8.0 M6-2: 시작 장비도 새 장비(평범, 기반만) */ else { put(mkItem('start_wpn_' + run.build, { b: 0 }), 'weapon'); put(mkItem('start_armor', { b: 0 }), 'armor'); put(mkItem('start_flask', { b: 0 }), 'flask'); }
+  const oldBag = !GEAR8.on && Array.isArray(run.bag) ? run.bag.filter(k => ITEMS[k]) : []; run.bag = [];
+  for (const sl of EQ_SLOTS) { const k = p.eq && p.eq[sl]; if (!GEAR8.on && k && ITEMS[k] && ITEMS[k].kind !== 'start') { const it = mkItem(k); run.inv[it.uid] = it; const prev = run.eqU[sl]; run.eqU[sl] = it.uid; if (prev) run.bag.push(prev); } }
   for (const k of oldBag) if (!Object.values(run.inv).some(x => x.tpl === k) && run.bag.length < BAG_MAX) { const it = mkItem(k); run.inv[it.uid] = it; run.bag.push(it.uid); }
   applyGear(run, true);
 }
 /* 장비 칸의 장비로 엔진 값(p.eq, p.gear)과 최대치를 다시 맞춘다. 남은 비율은 유지한다 */
 function applyGear(run, full) {
   const p = run.p; const g = { wpn: 0, hp: 0, st: 0, mp: 0, flask: 0 };
-  for (const sl of EQ_SLOTS) { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; p.eq[sl] = it ? it.tpl : null; if (it) { const x = itemBase(it); g[x.k] += x.v; } }
+  const g8 = []; for (const sl of EQ_SLOTS) { const it = run.eqU[sl] && run.inv[run.eqU[sl]]; p.eq[sl] = it && !isG8(it) ? it.tpl : null; if (it) { const x = itemBase(it); g[x.k] += x.v; if (isG8(it)) g8.push(it); } }
+  if (g8.length) { p.g8 = g8Collect(g8); p.g8u = 1; } else { delete p.g8; delete p.g8u; } /* 0.8.0 M6-1 장비 틀: g8 장비의 접사 · 고유는 p.g8로(js/17) */
   if (!g.wpn) g.wpn = 4; if (!g.flask) g.flask = START_GEAR.flask;
   const f = { hp: p.hpMax ? p.hp / p.hpMax : 1, mp: p.mpMax ? p.mp / p.mpMax : 1, st: p.stMax ? p.st / p.stMax : 1 };
   p.gear = g; p.hpMax = calcHpMax(p); p.mpMax = calcMpMax(p); p.stMax = calcStMax(p);
@@ -62,6 +65,7 @@ function slotOfUid(run, uid) { return EQ_SLOTS.find(sl => run.eqU[sl] === uid) |
 function gearCheck(run) { const seen = {}; for (const u of run.bag.concat(EQ_SLOTS.map(sl => run.eqU[sl]).filter(Boolean))) { if (seen[u] || !run.inv[u]) return false; seen[u] = 1; } return Object.keys(run.inv).length === Object.keys(seen).length; }
 /* 저장 시점의 장비 실물 수치와 설명을 보존한다. 조회 시 재계산하지 않는다. */
 function adminItemSnapshot(it, sl) {
+  if (isG8(it)) { const U = it.uq && UNIQUE[it.uq]; return { sl: sl || '', uid: it.uid || '', tpl: it.tpl, name: g8Name(it), g: it.g, ch: it.ch || 1, b: it.b, base: baseText(it), baseValue: itemBase(it).v, effect: U ? U.rule.txt : g8Afs(it).map(g8AfTxt).join(' · '), cost: U ? U.cost.txt : '', af: g8Afs(it).map(a => a.id + ':' + a.v), uq: it.uq || null }; } /* 0.8.0 M6-2 */
   const d = it && ITEMS[it.tpl]; if (!d) return null;
   return { sl: sl || '', uid: it.uid || '', tpl: it.tpl, name: d.n, g: it.g, ch: it.ch || 1, b: it.b == null ? null : it.b, base: baseText(it), baseValue: itemBase(it).v, effect: d.act || '', cost: d.cost || '' };
 }
@@ -69,7 +73,7 @@ function adminGearSnapshot(run) { return run.eqU && run.inv ? EQ_SLOTS.map(sl =>
 
 function logSwap(run, it, on, ctx) { const r = G.eqWhy || {}; run.swaps.push({ ch: run.ch || 1, detail: adminItemSnapshot(it), room: run.room, item: it.tpl, uid: it.uid, g: it.g, b: it.b, on: on ? 1 : 0, reason: r.reason || '', note: r.note || '', ctx: ctx || 'free', t: Date.now() }); }
 function newBadge(x) { return x && x.fresh ? '<span class="item-new"><span class="sr">새로 획득 </span><span aria-hidden="true">new!</span></span>' : ''; }
-function lockButton(it) { return `<button class="sm" data-a="eqlock" data-k="${it.uid}" aria-pressed="${!!it.locked}" aria-label="${esc(ITEMS[it.tpl].n)} ${it.locked ? '잠금 해제' : '잠금'}">${it.locked ? '잠금 해제' : '잠금'}</button>`; }
+function lockButton(it) { return `<button class="sm" data-a="eqlock" data-k="${it.uid}" aria-pressed="${!!it.locked}" aria-label="${esc(isG8(it) ? g8Name(it) : ITEMS[it.tpl].n)} ${it.locked ? '잠금 해제' : '잠금'}">${it.locked ? '잠금 해제' : '잠금'}</button>`; }
 function itemRemoveWhy(run, uid) { return run.inv[uid] && run.inv[uid].locked ? '잠긴 장비입니다. 먼저 잠금을 해제하세요' : ''; }
 function addItem(run, it) { if (bagUsed(run) >= BAG_MAX) return false; it.fresh = true; run.inv[it.uid] = it; run.bag.push(it.uid); return true; }
 function rewardEquipSlots(it) { const kind = tplKind(it.tpl); return kind === 'ring' ? ['ring1', 'ring2'] : [kind]; }
@@ -146,6 +150,7 @@ function simEquip(run, uid, slot) {
   applyGear(t); return gearStats(t.p);
 }
 function compareHtml(run, uid, slot) {
+  if (isG8(run.inv[uid]) || (run.eqU[slot] && isG8(run.inv[run.eqU[slot]]))) return g8Compare(run, run.inv[uid], slot); /* 0.8.0 M6-1 장비 틀(js/17) */
   const it = run.inv[uid]; const curU = run.eqU[slot]; const cur = curU && run.inv[curU];
   const a = gearStats(run.p), b = simEquip(run, uid, slot);
   const rows = []; let up = 0, down = 0;
@@ -171,14 +176,15 @@ function compareHtml(run, uid, slot) {
   return `<div class="cmp"><div class="cmpv ${v[0]}">${v[1]}</div><div class="cmph">${cur ? `지금 낀 <b class="gr-${cur.g}">${inm(cur.tpl, cur.g)}</b>과 비교` : '이 칸은 비어 있습니다'}</div>${rows.length ? `<ul class="cmpl" aria-label="바뀌는 것">${rows.join('')}</ul>` : ''}</div>`;
 }
 function itemDetail(it, opt) {
+  if (isG8(it)) return g8Detail(it, opt); /* 0.8.0 M6-1 장비 틀: 다섯 줄(js/17) */
   const I = ITEMS[it.tpl]; const R = GRADE[it.g] || GRADE.n; const o = opt || {};
   return `<div class="idet grb-${it.g}${it.fresh ? ' has-new' : ''}">${newBadge(it)}<div class="idet-h"><b class="gr-${it.g}">${inm(it.tpl, it.g)}</b>${gradeTag(it.g)}<span class="mini">${EQ_SLOT_N[kindOf(I.slot) === 'ring' ? 'ring1' : I.slot].replace(' 1', '')}</span></div>
 <div class="idet-base"><b>${baseText(it)}</b>${o.compact ? '' : ` <span class="mini">${I.kind === 'start' ? '시작 장비' : it.rollV===2 ? `${R.n} 범위 +${R.lo}~${R.hi}% 중 +${it.b}%` : `보유 보너스 +${it.b}%`}</span>`}</div>${I.act ? `<div class="l act">${esc(I.act)}</div>` : ''}${I.cost ? `<div class="l cost">대가: ${esc(I.cost)}</div>` : ''}${I.lore && !o.compact ? `<p class="lore">${esc(I.lore)}</p>` : ''}</div>`;
 }
 /* 지금 낀 장비 한 줄 (고르기 창: 아직 얻지 않은 장비는 비교할 수 없어 낀 것을 보인다) */
 function curLine(run, k) {
-  const kind = tplKind(k); const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind; const u = run.eqU[sl], x = u && run.inv[u];
-  return `<p class="mini nowl">${x ? `지금 낀 장비: <b class="gr-${x.g}">${inm(x.tpl, x.g)}</b> · ${baseText(x)}` : `${EQ_SLOT_N[sl].replace(' 1', '')} 칸은 비어 있습니다`}</p>`;
+  const kind = k && typeof k === 'object' ? g8Slot(k) : tplKind(k); /* 0.8.0 M6-2: 새 장비(객체)도 */ const sl = kind === 'ring' ? (!run.eqU.ring1 ? 'ring1' : !run.eqU.ring2 ? 'ring2' : 'ring1') : kind; const u = run.eqU[sl], x = u && run.inv[u];
+  return `<p class="mini nowl">${x ? `지금 낀 장비: <b class="gr-${x.g}">${isG8(x) ? g8NameHtml(x) : inmIt(x)}</b> · ${baseText(x)}` : `${EQ_SLOT_N[sl].replace(' 1', '')} 칸은 비어 있습니다`}</p>`;
 }
 /* 방을 이긴 직후 얻은 것 한 줄 요약 (G.winSum: 이긴 방의 골드 · 경험치 · 소모품, 첫 창에만 보인다) */
 function winSumHtml() {
@@ -198,12 +204,12 @@ function vEquip() {
   const filter = G.eqFilter || 'all', order = G.eqOrder || 'recent';
   const a = gearStats(p);
   let h = `<div class="eqsum" role="group" aria-label="지금 수치">${GSTAT.filter(x => !['heavyCost', 'lifeCap', 'manaCap', 'stamCap'].includes(x[0]) && (x[0] !== 'mp' || !isV2(p))).map(([k, lab, fmt]) => `<span><small>${lab}</small><b>${fmt(a[k])}</b></span>`).join('')}</div>`;
-  h += `<div class="row"><button class="sm" data-a="statview" data-from="equip">능력치 보기</button><button class="sm" data-a="awkview" data-from="equip">✨ 각인 ${(run.awk || []).length}개 보기</button></div>`;
+  h += `<div class="row"><button class="sm" data-a="statview" data-from="equip">능력치 보기</button><button class="sm" data-a="awkview" data-from="equip">✨ 큰 각인 ${run.ptree ? run.ptree.ks.length : 0}개 보기</button></div>`;
   if (inFight) h += `<p class="warn">전투 중에는 보기만 합니다. 전투가 끝나면 바꿉니다.</p>`;
   h += `<div class="eqcols"><section class="eqslots" aria-label="장비 칸">`;
   for (const sl of EQ_SLOTS) {
     const u = run.eqU[sl], it = u && run.inv[u]; const on = !sel.uid && sel.slot === sl;
-    h += `<button class="eqrow${on ? ' on' : ''}${it ? ' grb-' + it.g : ''}" data-a="eqsel" data-k="${sl}" aria-pressed="${on}"><span class="eqsl">${EQ_SLOT_N[sl]}</span>${it ? `<span class="eqn gr-${it.g}"><span class="eqg" aria-hidden="true">${(GRADE[it.g] || GRADE.n).n[0]}</span><span class="sr">${(GRADE[it.g] || GRADE.n).n} </span>${it.g === 'l' ? '<span aria-hidden="true">✦ </span>' : ''}${esc(ITEMS[it.tpl].n)}</span><span class="eqb">${baseText(it)}</span>` : '<span class="eqn empty">비어 있음</span>'}</button>`;
+    h += `<button class="eqrow${on ? ' on' : ''}${it ? ' grb-' + it.g : ''}" data-a="eqsel" data-k="${sl}" aria-pressed="${on}"><span class="eqsl">${EQ_SLOT_N[sl]}</span>${it ? `<span class="eqn gr-${it.g}"><span class="eqg" aria-hidden="true">${(GRADE[it.g] || GRADE.n).n[0]}</span><span class="sr">${(GRADE[it.g] || GRADE.n).n} </span>${it.g === 'l' || it.uq ? '<span aria-hidden="true">✦ </span>' : ''}${esc(isG8(it) ? g8Name(it) : ITEMS[it.tpl].n)}</span><span class="eqb">${baseText(it)}</span>` : '<span class="eqn empty">비어 있음</span>'}</button>`;
   }
   h += `</section><div class="eqdet" aria-live="polite">`;
   if (sel.uid && run.inv[sel.uid]) {
@@ -232,7 +238,7 @@ function vEquip() {
     const u = bag[i], it = u && run.inv[u];
     if (!it) { h += `<div class="bagc empty" aria-hidden="true"></div>`; continue; }
     const fits = kindOf(sel.slot) === tplKind(it.tpl) && !sel.uid; const on = sel.uid === u;
-    h += `<button class="bagc grb-${it.g}${on ? ' on' : ''}${fits ? ' fits' : ''}${it.fresh ? ' has-new' : ''}" data-a="eqpick" data-k="${u}" aria-pressed="${on}">${newBadge(it)}${it.locked ? '<span class="item-lock" aria-label="잠김">🔒</span>' : ''}<span class="gr-${it.g}">${inm(it.tpl, it.g)}</span><small>${EQ_SLOT_N[kindOf(ITEMS[it.tpl].slot) === 'ring' ? 'ring1' : ITEMS[it.tpl].slot].replace(' 1', '')} · ${it.ch || 1}챕터</small><small>${baseText(it)}</small></button>`;
+    h += `<button class="bagc grb-${it.g}${on ? ' on' : ''}${fits ? ' fits' : ''}${it.fresh ? ' has-new' : ''}" data-a="eqpick" data-k="${u}" aria-pressed="${on}">${newBadge(it)}${it.locked ? '<span class="item-lock" aria-label="잠김">🔒</span>' : ''}<span class="gr-${it.g}">${isG8(it) ? g8NameHtml(it) : inm(it.tpl, it.g)}</span><small>${EQ_SLOT_N[tplKind(it.tpl) === 'ring' ? 'ring1' : tplKind(it.tpl)].replace(' 1', '')} · ${it.ch || 1}챕터</small><small>${baseText(it)}</small></button>`;
   }
   h += `</div></section>`;
   const w = G.eqWhy || {};
@@ -299,7 +305,7 @@ function reviveRun(r) {
   EQ_SLOTS.forEach((sl, i) => { const s2 = r.eq7[i]; if (!s2) return; const [tpl, g] = s2.split(':'); const it = items.find(x => x.tpl === tpl && x.g === g && !used().includes(x.uid)); if (it) run.eqU[sl] = it.uid; });
   run.bag = items.filter(x => !used().includes(x.uid)).slice(0, BAG_MAX).map(x => x.uid);
   for (const it of items) if (used().includes(it.uid) || run.bag.includes(it.uid)) run.inv[it.uid] = it;
-  if (!run.eqU.weapon) { const w = mkItem('start_wpn_' + run.build, { b: 0 }); run.inv[w.uid] = w; run.eqU.weapon = w.uid; }
+  if (GEAR8.on) g8Purge(run); else if (!run.eqU.weapon) { const w = mkItem('start_wpn_' + run.build, { b: 0 }); run.inv[w.uid] = w; run.eqU.weapon = w.uid; } /* 0.8.0 M6-2: 기록의 옛 장비는 되살리지 않는다 */
   applyGear(run, true); for (const fk of ['life', 'mana', 'stam']) p.flask[fk] = flaskCap(p, fk);
   return run;
 }
@@ -341,8 +347,8 @@ function commitAct(id, tid) {
 function monkFix(b) { const p = b.p; delete p.ctrSince; delete b.kiFastHit; delete b.kiFastTurn; if (p.stance) { delete p.stance.max; delete p.stance.half; } }
 function restoreBattle(cur) {
   const bt = cur.battle; delete cur.battle;
-  G.run = cur; statFix(G.run); applyGear(G.run); const b = bt.b; b.p = G.run.p; b.rngF = battleRng(b); b.stepMode = true;
-  if (G.run.tree && isV2(b.p)) { treeFix(G.run); b.p.skills = v2Equip(G.run); if (!b.p.cd) resetCharges(b.p); } // 개편 전 저장본: 바뀐 스킬과 재사용 대기
+  G.run = cur; G.dropQ = G.run.dropQ || []; consFix(G.run); applyGear(G.run); const b = bt.b; b.p = G.run.p; b.rngF = battleRng(b); b.stepMode = true;
+  if (isV2(b.p)) { treeSync(G.run); applyGear(G.run); if (!b.p.cd) resetCharges(b.p); if (b.p.ys == null) b.p.ys = YUSAN.start; } // 10월 16일 0.8.0 2단계: 트리에서 능력치 · 장착을 다시 셈 // 개편 전 저장본: 바뀐 스킬과 재사용 대기. 10월 15일 유산 1차 시제품 전 저장본의 전투는 유산 가득으로 이어 간다
   if (b.p.build === 'monk') monkFix(b); // 수도승 단순화 전 저장본: 쓰지 않는 칸을 비운다
   if (!b.queue) { b.round = b.tick || 1; b.queue = ['p']; b.bonusUsed = 0; } // 라운드 전 저장본: 지금이 내 차례
   G.b = b; G.scr = 'run'; G.sel = null; G.busy = false; G.banner = null; render();
@@ -357,4 +363,11 @@ const runLive = () => !!(G.run && !runOver(G.run));
 function curSweep() { const d = G.data; let n = 0; if (d.cur && runOver(d.cur)) { delete d.cur; n++; } if (d.kept) { const k = d.kept.filter(x => !runOver(x)); n += d.kept.length - k.length; d.kept = k; } if (n) saveLocal(); return n; }
 function saveCur() { if (!G.run || runOver(G.run)) return; try { G.data.cur = JSON.parse(JSON.stringify(G.run)); saveLocal(); } catch (e) { } }
 function clearCur() { delete G.data.cur; saveLocal(); }
-function resumeRun() { curSweep(); if (!G.data.cur) { render(); return; } dgFix(G.data.cur); if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); statFix(G.run); applyGear(G.run); if (G.run.tree && isV2(G.run.p)) { treeFix(G.run); G.run.p.skills = v2Equip(G.run); } /* 0.6a.2: 시작 스킬이 생기기 전 저장본도 시작 스킬을 끼운다 */ G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); if(G.run.gearPending)nextDrop();else awkOpen(); }
+/* 10월 24일 S-4 두 탭: 다른 탭(같은 브라우저)이 저장본을 바꾸면 이 탭의 G.data는 낡았다. 낡은 탭이 저장하면 그 진행을 덮어써 결과를 다시 굴리거나 같은 보상을 두 번 받게 된다.
+   낡은 탭(G.tabStale)은 저장하지 않고(js/62 saveLocal) 다시 불러오기만 받는다(js/80 onClick). 뒤로 가기로 되살아난 쪽(bfcache)은 저장본과 다르면 낡은 탭으로 친다 */
+function tabStale() { if (G.tabStale) return; G.tabStale = 1; openSheet('tabstale', {}); }
+function tabWatch() {
+  window.addEventListener('storage', e => { if (e.key === SKEY || e.key === null) tabStale(); });
+  window.addEventListener('pageshow', e => { if (!e.persisted) return; try { const raw = localStorage.getItem(SKEY); if (raw != null && JSON.stringify(mkCheck(JSON.parse(localSaveText(raw)))) !== JSON.stringify(G.data)) tabStale(); /* 10월 24일: 옛 저장본은 읽을 때 mkLeg가 메모리에만 붙어 같은 탭인데도 낡은 탭으로 보였다 */ } catch (x) { } });
+}
+function resumeRun() { curSweep(); if (!G.data.cur) { render(); return; } const mig = G.data.cur.dgv !== 3 || !G.data.cur.dg || !G.data.cur.inv; dgFix(G.data.cur); if (!G.data.cur.dg) { const r0 = JSON.parse(JSON.stringify(G.data.cur)); initGear(r0); dgInit(r0); G.data.cur = r0; } if (!G.data.cur.inv) { G.run = JSON.parse(JSON.stringify(G.data.cur)); initGear(G.run); G.data.cur = JSON.parse(JSON.stringify(G.run)); } if (mig) saveLocal(); /* 10월 24일 S-4: 옛 판을 옮기며 새로 만든 문을 바로 저장한다(새로 고침마다 다시 만들지 않게) */ if (isV2(G.data.cur.p) && G.data.cur.tv !== TV && BUILDS[G.data.cur.build]) { migBegin(JSON.parse(JSON.stringify(G.data.cur))); return; } /* 10월 16일 0.8.0 2단계: 옛 판은 배분 화면을 거친다(확정할 때 저장) */ if (isV2(G.data.cur.p) && G.data.cur.atree && !(G.data.cur.atree.atv >= 10)) { const an = atMigrateM5(G.data.cur); if (an) toast('액티브 트리가 바뀌어 포인트 ' + an + '을(를) 돌려받았습니다'); } /* 0.8.0 M5-0, 보정 4(atv 3), 보정 5(atv 4), M5-0c 마검사 재설계(atv 5), M5-1 파수꾼 재설계(atv 6) */ if (isV2(G.data.cur.p) && G.data.cur.ptree && !(G.data.cur.ptree.ksv >= 3)) { const kn = ksMigrateM4(G.data.cur) + ksMigrateM54(G.data.cur); if (kn) toast('큰 각인 자리가 바뀌어 ' + kn + '개를 돌려받았습니다. 다시 고를 수 있습니다'); } /* 0.8.0 M4: 바뀐 자리의 큰 각인은 다시 고른다 */ if (G.data.cur.battle) { restoreBattle(JSON.parse(JSON.stringify(G.data.cur))); return; } G.run = JSON.parse(JSON.stringify(G.data.cur)); G.dropQ = null; consFix(G.run); applyGear(G.run); if (isV2(G.run.p)) { treeSync(G.run); applyGear(G.run); } G.scr = G.run.phase === 'clearsv' ? 'survey' : G.run.phase || 'run'; G.b = null; G.sel = null; render(); toast('멈췄던 곳에서 이어 갑니다'); G.dropQ = G.run.dropQ || []; /* 10월 24일 S-4: 저장한 상자 · 남은 전리품부터 건넨다 */ if (G.run.chestPend) openSheet('choice', { offer: G.run.chestPend.chest, room: G.run.chestPend.room, chest: 1 }); else if (G.run.gearPending || G.dropQ.length) nextDrop(); else ksOpen(); }

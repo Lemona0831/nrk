@@ -4,34 +4,28 @@ const assert = require('assert/strict'), fs = require('fs'), vm = require('vm');
 const {execFileSync} = require('child_process');
 const D = require('./dgqa.js'), E = D.G0, V = D.run_;
 let count = 0;
+// 10월 16일 0.8.0 2단계: 옛 트리 고치기(treeFix) · 능력치 보충(statFix)은 두 트리의 포인트 다시 맞추기(ptFix)와 옛 세이브 옮기기(treeMigrate08)로 바뀌었다
+function fresh(build){E.__G.data=E.blankData();E.__G.cre={name:'g'};E.startRun(build||'assassin');const r=E.__G.run;delete r.alloc;E.__G.sheet=null;E.__G.creating=false;return r;}
 for (const build of V('ALL_CLASS_KEYS()')) for (let lv = 1; lv <= 15; lv++) {
-  const open = lv > 1 ? [E.SKILLS2[build].find(s => s.row === 1).id] : [];
-  const run = {build, lv, skills: open.slice(), tree: {pts: lv - open.length, open, spent: {}}};
-  for (const id of open) run.tree.spent[E.SK2[id].b] = 1;
-  E.treeFix(run);
-  assert.equal(run.tree.pts + run.tree.open.length, lv);
-  const once = JSON.stringify(run); E.treeFix(run); assert.equal(JSON.stringify(run), once);
-  assert.deepEqual(run.skills, open); count++;
+  const r = fresh(build); const s0 = Object.values(E.atBuild(build).nodes).find(n => n.kind === 'skill' && n.links.includes('S')); const open = lv > 1 && s0 ? [s0.id] : []; /* 0.8.0 M5-0: 숨겨진 직업은 액티브 노드가 없다 */ // 0.8.0 5단계: 트리에서 가운데와 이어진 스킬(옛 줄 1 칸은 새 트리에 없을 수 있다)
+  r.lv = lv; r.atree.own = open.slice(); r.skills = open.slice(); E.ptFix(r);
+  assert.equal(r.atree.pts + r.atree.own.length, lv + 1); assert.equal(r.ptree.pts, 6 + 2 * (lv - 1));
+  const once = JSON.stringify([r.atree, r.ptree]); E.ptFix(r); assert.equal(JSON.stringify([r.atree, r.ptree]), once);
+  assert.equal(JSON.stringify(r.skills), JSON.stringify(open)); count++;
 }
-const legacy = {build:'spellblade',lv:10,skills:['sb_bleedcut'],tree:{pts:7,open:['sb_bleedcut','sb_ember','sb_bladeward'],spent:{피칼날:1,불칼:1,주문갑:1}}};
-E.treeFix(legacy);
-assert.equal(legacy.tree.pts,7);
-assert.equal(legacy.tree.spent.혈인,1); assert.equal(legacy.tree.spent.염검,1); assert.equal(legacy.tree.spent.마갑,1);
-assert(!Object.hasOwn(legacy.tree.spent,'피칼날'));
-for(let lv=1;lv<=15;lv++){const r={lv,stats:{str:15,dex:0,int:0,con:0,wil:0},statPending:4};E.statFix(r);assert.equal(r.statPending,9+lv-1);assert.equal(r.statGrowth,3);E.statFix(r);assert.equal(r.statPending,9+lv-1);assert.equal(r.stats.str,15);}
-const current={lv:10,statGrowth:3,statBase:20,stats:{str:42,dex:0,int:0,con:0,wil:0}};E.statFix(current);assert.equal(current.statPending,undefined);assert.equal(V('LV_POINTS'),3);
-const once=JSON.stringify(legacy); E.treeFix(legacy); assert.equal(JSON.stringify(legacy),once);
-E.treeReset(legacy); assert.equal(legacy.tree.pts,10); E.treeFix(legacy); assert.equal(legacy.tree.pts,10);
-function fresh(){const r={build:'assassin',lv:1,xp:0,stats:{str:0,dex:0,int:0,con:0,wil:0},p:E.mkPlayer('assassin',{}),bag:[],cons:[],swaps:[]};E.treeInit(r);E.initGear(r);return r;}
-const r=fresh(); const target=V('LV_XP')[4]; E.gainXp(r,target);
-assert.equal(r.lv,5);assert.equal(r.tree.pts,5);E.treeFix(r);assert.equal(r.tree.pts,5);
-for (const ch of [2,3]) {const r=fresh();E.__G.data={}; E.markSetup(r,{ch,ids:[]});assert.equal(r.tree.pts,r.lv);assert.equal(r.markStat,3*(r.lv-1));E.treeFix(r);assert.equal(r.tree.pts,r.lv);}
+{ const r = fresh('spellblade'); r.lv = 2; r.atree.own = ['sb_bleedcut', 'sb_boil', 'sb_ember', 'sb_kindle', 'sb_bladeward']; r.skills = ['sb_boil']; E.ptFix(r); assert.equal(r.atree.own.length, 3); assert.equal(r.atree.pts, 0); assert(!r.atree.own.includes('sb_boil') || r.atree.own.includes('sb_bleedcut')); } // 넘친 포인트는 가장 바깥의 끝 노드부터 거둔다
+const legacy = {build:'spellblade',lv:10,xp:1350,ch:2,clears:1,skills:['sb_bleedcut'],stats:{str:20,dex:0,int:20,con:7,wil:0},statPending:3,tree:{pts:7,open:['sb_bleedcut','sb_ember','sb_bladeward'],spent:{피칼날:1,불칼:1,주문갑:1}},awk:['a_eye']};
+assert(E.treeMigrate08(legacy)); assert.equal(legacy.atree.pts,11); assert.equal(legacy.ptree.pts,24); assert.equal(legacy.treeOld.open.length,3); assert.equal(legacy.statPending,undefined); assert.equal(legacy.ksPending,1);
+const once=JSON.stringify(legacy); legacy.tv=2; assert(!E.treeMigrate08(legacy)); delete legacy.tv; assert.equal(JSON.stringify(legacy),once);
+{ const r = fresh('spellblade'); r.lv = 10; E.ptFix(r); E.atBuy(r,'sb_ember'); E.atBuy(r,'sb_kindle'); E.atReset(r); assert.equal(r.atree.pts,11); E.ptFix(r); assert.equal(r.atree.pts,11); }
+{ const r=fresh(); const target=V('LV_XP')[4]; E.gainXp(r,target); assert.equal(r.lv,5);assert.equal(r.atree.pts,6);assert.equal(r.ptree.pts,14);E.ptFix(r);assert.equal(r.atree.pts,6);assert.equal(r.ptree.pts,14); }
+for (const ch of [2,3]) {const r=fresh();E.__G.data={}; E.markSetup(r,{ch,ids:[]});assert.equal(r.atree.pts,r.lv+1);assert.equal(r.ptree.pts,6+2*(r.lv-1));assert.equal(r.ksPending,ch-1);E.ptFix(r);assert.equal(r.atree.pts,r.lv+1);}
 // 이름과 표시 문장 이외의 전투 데이터를 비교합니다.
 function data(old){const c={};vm.createContext(c);for(const f of ['classes.js','skills.js']){const text=old?execFileSync('git',['show','HEAD:data/'+f],{encoding:'utf8'}):fs.readFileSync('data/'+f,'utf8');vm.runInContext(text,c);}return JSON.parse(vm.runInContext('JSON.stringify({BUILDS,SKILLS2,TREE2})',c));}
-function normalize(x){for(const b of Object.values(x.BUILDS)){delete b.lore;delete b.rule;delete b.intro;}for(const list of Object.values(x.SKILLS2))for(const s of list){delete s.n;if(s.start)delete s.cd;}for(const t of Object.values(x.TREE2))delete t.bd;return JSON.stringify(x).replaceAll('피칼날','혈인').replaceAll('불칼','염검').replaceAll('주문갑','마갑');}
+function normalize(x){for(const b of Object.values(x.BUILDS)){delete b.lore;delete b.rule;delete b.intro;}for(const list of Object.values(x.SKILLS2))for(const s of list){delete s.n;if(s.start)delete s.cd;for(const e of s.fx||[])delete e.txt;if(typeof s.pay==='string')delete s.pay;} /* 10월 24일: 효과 설명 문장(txt) · 승부수 대가 문장(pay)도 표시 문장이라 빼고 견준다(대가 규칙은 엔진 코드가 정한다) */for(const t of Object.values(x.TREE2))delete t.bd;return JSON.stringify(x).replaceAll('피칼날','혈인').replaceAll('불칼','염검').replaceAll('주문갑','마갑');}
 assert.equal(normalize(data(false)),normalize(data(true)));
 assert.equal(V("vfxSfxKey({k:'hit',st:'slash',build:'warden',big:true,seq:1})"),'slash');
 assert.equal(V("vfxSfxKey({k:'hit',st:'arrow',build:'hunter',big:true})"),'arrow');
 assert.equal(V("vfxSfxKey({k:'hit',st:'blunt',build:'spellblade',big:true})"),'slash2');
 assert.equal(V("vfxSfxKey({k:'st',st:'weak'})"),null);
-console.log('기존 저장본',count,'조건·능력치 추가 보충 15조건·중복 보충 방지·갈래 이전·초기화·여러 레벨업·표식 시작·스킬 전투값 유지·무기별 소리 통과');
+console.log('두 트리 포인트',count,'조건·넘친 포인트 거두기·옛 세이브 옮기기·중복 방지·액티브 되돌리기·여러 레벨업·표식 시작·스킬 전투값 유지·무기별 소리 통과');

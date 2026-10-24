@@ -1,0 +1,695 @@
+{
+ "about": "측정 스위치 레지스트리 (M3, 10월 19일). kind env = 측정 도구가 읽는 동작 환경 변수, run = 실행 설정, game = 게임 데이터 손잡이. 도구가 읽는 env가 여기 없으면 measure-meta가 경고한다.",
+ "switches": [
+  {
+   "name": "ASN_LOAD_OLD",
+   "kind": "env",
+   "default": null,
+   "introduced": "d55dcd8",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "ASN_PARRY_OLD",
+   "kind": "env",
+   "default": null,
+   "introduced": "cb1266e",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "ASN_SHADOW_VAR",
+   "kind": "env",
+   "default": null,
+   "introduced": "c8768a4",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "BAN_UP",
+   "kind": "env",
+   "default": null,
+   "introduced": "98f251e",
+   "expires": "상시",
+   "note": ""
+  },
+  {
+   "name": "BM_LOAD_OLD",
+   "kind": "env",
+   "default": null,
+   "introduced": "932ff6f",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "BM_OFF",
+   "kind": "env",
+   "default": null,
+   "introduced": "6cc66f4",
+   "expires": "상시",
+   "note": ""
+  },
+  {
+   "name": "BM_VAR",
+   "kind": "env",
+   "default": null,
+   "introduced": "6cc66f4",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "CFG",
+   "kind": "env",
+   "default": null,
+   "introduced": "8550c0e",
+   "expires": "상시",
+   "note": "측정 설정 파일"
+  },
+  {
+   "name": "CONV_OLD",
+   "kind": "env",
+   "default": null,
+   "introduced": "6b2892d",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "DG_FROM",
+   "kind": "env",
+   "default": null,
+   "introduced": "ef8bb74",
+   "expires": "상시",
+   "note": "시작 챕터"
+  },
+  {
+   "name": "DG_GIVE",
+   "kind": "env",
+   "default": null,
+   "introduced": "0bf5303",
+   "expires": "상시",
+   "note": ""
+  },
+  {
+   "name": "DG_JUMP",
+   "kind": "env",
+   "default": null,
+   "introduced": "db20bbf",
+   "expires": "상시",
+   "note": "chrono면 레벨을 하나씩 올리며 트리 찍기"
+  },
+  {
+   "name": "DG_KIT",
+   "kind": "env",
+   "default": null,
+   "introduced": "ab0c10a",
+   "expires": "상시",
+   "note": "game이면 챕터 시작 꾸러미(MARK_KIT)로 시작"
+  },
+  {
+   "name": "DG_REALCLOCK",
+   "kind": "env",
+   "default": null,
+   "introduced": "3768b48",
+   "expires": "상시",
+   "note": ""
+  },
+  {
+   "name": "ELEM_BURN_OLD",
+   "kind": "env",
+   "default": null,
+   "introduced": "d390fb6",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "ELEM_OFF",
+   "kind": "env",
+   "default": null,
+   "introduced": "32ad3e2",
+   "expires": "상시",
+   "note": ""
+  },
+  {
+   "name": "ELEM_PATH_OLD",
+   "kind": "env",
+   "default": null,
+   "introduced": "e2e81a5",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "EQUIP_OLD",
+   "kind": "env",
+   "default": null,
+   "introduced": "915f934",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "FOCUS",
+   "kind": "env",
+   "default": null,
+   "introduced": "228c6f4",
+   "expires": "상시",
+   "note": "측정 초점"
+  },
+  {
+   "name": "FORCE_UP",
+   "kind": "env",
+   "default": null,
+   "introduced": "98f251e",
+   "expires": "상시",
+   "note": ""
+  },
+  {
+   "name": "HAZE_OLD",
+   "kind": "env",
+   "default": null,
+   "introduced": "98f251e",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "HUNT_BBUF_OLD",
+   "kind": "env",
+   "default": null,
+   "introduced": "fe387fd",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "HUNT_BRIDGE",
+   "kind": "env",
+   "default": null,
+   "introduced": "fe387fd",
+   "expires": "상시",
+   "note": ""
+  },
+  {
+   "name": "HUNT_CROWN_OLD",
+   "kind": "env",
+   "default": null,
+   "introduced": "cb1266e",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "HUNT_DODGE",
+   "kind": "env",
+   "default": null,
+   "introduced": "cd47d40",
+   "expires": "상시",
+   "note": ""
+  },
+  {
+   "name": "HUNT_ROOT_OLD",
+   "kind": "env",
+   "default": null,
+   "introduced": "cd47d40",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "HUNT_X2_OLD",
+   "kind": "env",
+   "default": null,
+   "introduced": "d390fb6",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "KS_ACT_OLD",
+   "kind": "env",
+   "default": null,
+   "introduced": "c8768a4",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "LEGACY_RNG",
+   "kind": "env",
+   "default": null,
+   "introduced": "76318fb",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "MARKCH",
+   "kind": "env",
+   "default": null,
+   "introduced": "41a4f8c",
+   "expires": "상시",
+   "note": "표식 도전 챕터"
+  },
+  {
+   "name": "AS_TRACE",
+   "kind": "env",
+   "default": null,
+   "introduced": "M5-3",
+   "expires": "상시",
+   "note": "암살자 터뜨린 중독 크기 기록(판정 칸 아님)"
+  },
+  {
+   "name": "HN_LINK_GREEDY",
+   "kind": "env",
+   "default": null,
+   "introduced": "M5-4",
+   "expires": "상시",
+   "note": "사냥꾼 테스터: 연계 뒤에도 유산을 아끼지 않는 정책(비교 측정용)"
+  },
+  {
+   "name": "EL5_OFF",
+   "kind": "env",
+   "default": null,
+   "introduced": "M5-5",
+   "expires": "상시",
+   "note": "원소술사 테스터: 원소 전환 · 승부수 · 강화 칸 판단을 끈다(비교 측정용)"
+  },
+  {
+   "name": "MARKS",
+   "kind": "env",
+   "default": null,
+   "introduced": "41a4f8c",
+   "expires": "상시",
+   "note": "표식 목록"
+  },
+  {
+   "name": "MK_TRACE",
+   "kind": "env",
+   "default": null,
+   "introduced": "98f251e",
+   "expires": "상시",
+   "note": "수도승 행동 흐름 기록(판정 칸 아님)"
+  },
+  {
+   "name": "MODE",
+   "kind": "env",
+   "default": null,
+   "introduced": "0400530",
+   "expires": "상시",
+   "note": "hard면 가혹"
+  },
+  {
+   "name": "MONK_GUARD_ROLL",
+   "kind": "env",
+   "default": null,
+   "introduced": "4c6acc3",
+   "expires": "상시",
+   "note": ""
+  },
+  {
+   "name": "MONK_TEST_OLD",
+   "kind": "env",
+   "default": null,
+   "introduced": "4c6acc3",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "NO_STUCK_FIX",
+   "kind": "env",
+   "default": null,
+   "introduced": "3a4d1a7",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "PATH_FIX",
+   "kind": "env",
+   "default": null,
+   "introduced": "ef156e7",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "PN_OFF",
+   "kind": "env",
+   "default": null,
+   "introduced": "6b2892d",
+   "expires": "상시",
+   "note": "그 전투에서 끌 패시브 노드 효과(쉼표)"
+  },
+  {
+   "name": "PT_SURV_OLD",
+   "kind": "env",
+   "default": null,
+   "introduced": "3da63fd",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "PT_SURV_RING1",
+   "kind": "env",
+   "default": null,
+   "introduced": "d390fb6",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "QA_GATE_LEGACY",
+   "kind": "env",
+   "default": null,
+   "introduced": "915f934",
+   "expires": "M5-0 정리 검토",
+   "note": ""
+  },
+  {
+   "name": "SH_RANDOM",
+   "kind": "env",
+   "default": null,
+   "introduced": "954ca2d",
+   "expires": "상시",
+   "note": ""
+  },
+  {
+   "name": "WD_DEF_OLD",
+   "kind": "env",
+   "default": null,
+   "introduced": "6b2892d",
+   "expires": "M5-0 정리 검토",
+   "note": "파수꾼 방어 정책 옛 판단"
+  },
+  {
+   "name": "YS_V",
+   "kind": "env",
+   "default": null,
+   "introduced": "b3f7ecc",
+   "expires": "상시",
+   "note": ""
+  },
+  {
+   "name": "YU_CHEAP",
+   "kind": "env",
+   "default": null,
+   "introduced": "789d8dc",
+   "expires": "만료됨 M5-0",
+   "note": "유산 리듬 측정: 1이면 빠른 스킬 · 쿨타임 4 이하 비용 1(노드 비용보다 먼저). 기본 0에서 동작 같음(바이트 동일 확인)",
+   "status": "만료(M5-0, 코드 없음)"
+  },
+  {
+   "name": "YU_START",
+   "kind": "env",
+   "default": null,
+   "introduced": "789d8dc",
+   "expires": "만료됨 M5-0",
+   "note": "유산 리듬 측정: 시작 유산",
+   "status": "만료(M5-0, 코드 없음)"
+  },
+  {
+   "name": "YS_BLOCK",
+   "kind": "env",
+   "default": null,
+   "introduced": "M7-2",
+   "expires": "M7 정리 검토",
+   "note": "pre: 막기 대응(방어로 받아 냄 · 되받기) 유산을 큰 예고(YS_PRE_K · 겨눈 한 발) 공격을 받아 냈을 때만. 실제 엔진에만, 한 수 앞 계산은 그대로(M7-2 파수꾼 분해 (d))"
+  },
+  {
+   "name": "PK",
+   "kind": "run",
+   "default": null,
+   "introduced": "ac9a011",
+   "expires": "상시",
+   "note": "무엇을 몇 판 돌릴지 · 어디에 쓸지(동작 아님)"
+  },
+  {
+   "name": "CLS",
+   "kind": "run",
+   "default": null,
+   "introduced": "76318fb",
+   "expires": "상시",
+   "note": "무엇을 몇 판 돌릴지 · 어디에 쓸지(동작 아님)"
+  },
+  {
+   "name": "SEED",
+   "kind": "run",
+   "default": null,
+   "introduced": "76318fb",
+   "expires": "상시",
+   "note": "무엇을 몇 판 돌릴지 · 어디에 쓸지(동작 아님)"
+  },
+  {
+   "name": "SHARD",
+   "kind": "run",
+   "default": null,
+   "introduced": "76318fb",
+   "expires": "상시",
+   "note": "무엇을 몇 판 돌릴지 · 어디에 쓸지(동작 아님)"
+  },
+  {
+   "name": "DETAIL",
+   "kind": "run",
+   "default": null,
+   "introduced": "76318fb",
+   "expires": "상시",
+   "note": "무엇을 몇 판 돌릴지 · 어디에 쓸지(동작 아님)"
+  },
+  {
+   "name": "DGDIR",
+   "kind": "run",
+   "default": null,
+   "introduced": "86c3091",
+   "expires": "상시",
+   "note": "무엇을 몇 판 돌릴지 · 어디에 쓸지(동작 아님)"
+  },
+  {
+   "name": "DG_LOCK",
+   "kind": "run",
+   "default": null,
+   "introduced": "6c2373e",
+   "expires": "상시",
+   "note": "무엇을 몇 판 돌릴지 · 어디에 쓸지(동작 아님)"
+  },
+  {
+   "name": "DG_SOON",
+   "kind": "run",
+   "default": null,
+   "introduced": "c3d715f",
+   "expires": "상시",
+   "note": "무엇을 몇 판 돌릴지 · 어디에 쓸지(동작 아님)"
+  },
+  {
+   "name": "DG_VARIANT",
+   "kind": "run",
+   "default": null,
+   "introduced": "915f934",
+   "expires": "상시",
+   "note": "무엇을 몇 판 돌릴지 · 어디에 쓸지(동작 아님)"
+  },
+  {
+   "name": "MEASURE_GIT",
+   "kind": "run",
+   "default": null,
+   "introduced": "915f934",
+   "expires": "상시",
+   "note": "무엇을 몇 판 돌릴지 · 어디에 쓸지(동작 아님)"
+  },
+  {
+   "name": "NORMAL_ROOM.hp",
+   "kind": "game",
+   "default": "1",
+   "introduced": "28e732c",
+   "expires": "M7",
+   "note": "일반 방 적 체력 배율 (M2 손잡이, 기본 그대로)"
+  },
+  {
+   "name": "NORMAL_ROOM.dmg",
+   "kind": "game",
+   "default": "1",
+   "introduced": "28e732c",
+   "expires": "M7",
+   "note": "일반 방 적 피해 배율 (M2 손잡이, 기본 그대로)"
+  },
+  {
+   "name": "CHAPTERS[n].consDrop",
+   "kind": "game",
+   "default": "없음(=1)",
+   "introduced": "789d8dc",
+   "expires": "M7",
+   "note": "챕터 전리품의 소모품 몫 (M2 손잡이, 기본 그대로)"
+  },
+  {
+   "name": "CHAPTERS[n].campHerb",
+   "kind": "game",
+   "default": "없음(=재고 그대로)",
+   "introduced": "039f55b",
+   "expires": "M7",
+   "note": "챕터 야영지 약초 재고 (M2 손잡이, 기본 그대로)"
+  },
+  {
+   "name": "DG_IGNORE",
+   "kind": "env",
+   "default": null,
+   "introduced": "f7f6630",
+   "expires": "상시",
+   "note": "무시 시험: 쉼표로 적은 강적 id · 보스 id의 예고를 행동 고를 때만 평범한 공격으로 보이게 한다"
+  },
+  {
+   "name": "BASIC_SKILL",
+   "kind": "env",
+   "default": null,
+   "introduced": "M7-1",
+   "expires": "M7-2",
+   "note": "M7-1 성향 점검: 평타 성향이 끼운 공격 스킬을 신중이 고른 대로 쓰게 한다(원소술사 평타 0%가 성향 정의 탓인지 가르기)"
+  },
+  {
+   "name": "ANS_PART",
+   "kind": "env",
+   "default": "ans",
+   "introduced": "M7-1",
+   "expires": "M7-3",
+   "note": "M7-1 신중 성향 판단 조각: ans 예고 답하기(기본) · bell 1챕터 큰 종 치기 · monk 수도사 대상 0.9. 쉼표로 고른다"
+  },
+  {
+   "name": "W3PRE_OFF",
+   "kind": "env",
+   "default": null,
+   "introduced": "M7-1",
+   "expires": "M7-3",
+   "note": "M7-1 조사: 3챕터 테스터 판단을 끈다(mk = 조준하는 명사수 무너뜨리기)"
+  },
+  {
+   "name": "ANS_OFF",
+   "kind": "env",
+   "default": null,
+   "introduced": "M7-1",
+   "expires": "M7-3",
+   "note": "M7-1 신중 성향의 예고 답하기(dgqa answerPre)와 수도사 대상 바꾸기 0.9를 끈다(옛 테스터와 비교용)"
+  },
+  {
+   "name": "DG_BUILDLOG",
+   "kind": "env",
+   "default": null,
+   "introduced": "f7f6630",
+   "expires": "상시",
+   "note": "빌드 표(tools/buildmix.js)용 기록(행동별 준 피해 actDmg)을 결과에 더한다. 끄면 결과 파일은 그대로"
+  },
+  {
+   "name": "HEAVY_17",
+   "kind": "env",
+   "default": null,
+   "introduced": "M4",
+   "expires": "M5-0",
+   "note": "강공격 A/B(D11): 1이면 HEAVY_V2 1.7 · HEAVY_COST 35, 0이면 1.5 · 40. 끄면 게임 기본값"
+  },
+  {
+   "name": "DG_SECTOR",
+   "kind": "env",
+   "default": null,
+   "introduced": "M5-0",
+   "expires": "상시",
+   "note": "목표 부채꼴 강제(A · AB · B · BC · C · CA, 반반 빌드 AB_HALF · BC_HALF · CA_HALF). 없으면 tools/persona/sector-pref.json"
+  },
+  {
+   "name": "DG_LOGBOSS",
+   "kind": "env",
+   "default": null,
+   "introduced": "M5-3",
+   "expires": "상시",
+   "note": "보스전 로그 기록(조사용, 판정 칸 아님)"
+  },
+  {
+   "name": "DG_PATH",
+   "kind": "env",
+   "default": null,
+   "introduced": "M5-0c",
+   "expires": "상시",
+   "note": "길 고정(마검사 갈래 길 a · b, 예 B:a). 목표 부채꼴을 그 갈래로 두고 그 갈래의 다른 길 칸은 찍지 않는다"
+  },
+  {
+   "name": "BRK_BASIC0",
+   "kind": "env",
+   "default": null,
+   "introduced": "M5-7",
+   "expires": "상시",
+   "note": "M5-7 붕괴 규칙: 1이면 기본 공격 붕괴 0 · 기본 공격 붕괴 효과 → 강공격 · 제어 스킬 붕괴 노드, 0이면 끔(기준선)"
+  },
+  {
+   "name": "HEAVY_BRK",
+   "kind": "env",
+   "default": null,
+   "introduced": "M5-7",
+   "expires": "상시",
+   "note": "M5-7 강공격 붕괴 배율(규칙을 켰을 때, 기본 1)"
+  },
+  {
+   "name": "GEAR8",
+   "kind": "env",
+   "default": null,
+   "introduced": "M6-1",
+   "expires": "M7 정리 검토",
+   "note": "M6 장비(gear8): 기본 켬(M6-2, 10월 21일). 0이면 옛 장비(기준선), 1 · 없음이면 새 장비(접사 · 고유, data/affixes.js · data/uniques.js)"
+  },
+  {
+   "name": "GEAR8.on",
+   "kind": "game",
+   "default": "true",
+   "introduced": "M6-1",
+   "expires": "M7",
+   "note": "gear8 스위치(js/17). M6-2에서 기본값 켬"
+  },
+  {
+   "name": "DG_STACK",
+   "kind": "env",
+   "default": null,
+   "introduced": "M6-2",
+   "expires": "상시",
+   "note": "조사용: 판 안 행동 예외의 스택을 stderr에 찍는다(동작 아님)"
+  },
+  {
+   "name": "DG_NOAF",
+   "kind": "env",
+   "default": null,
+   "introduced": "M6-3",
+   "expires": "상시",
+   "note": "M6-3 측정: 새 장비를 기반만(접사 · 고유 없이) 만든다(K 실측)"
+  },
+  {
+   "name": "DG_NOWPNAF",
+   "kind": "env",
+   "default": null,
+   "introduced": "M6-3",
+   "expires": "상시",
+   "note": "M6-3 측정: 무기만 접사 · 고유 없이(무기 = 평타)"
+  },
+  {
+   "name": "DG_UQ",
+   "kind": "env",
+   "default": null,
+   "introduced": "M6-3",
+   "expires": "상시",
+   "note": "M6-3 고유 존재감: 1챕터 야영지에서 그 고유(id)를 지급해 끼운다"
+  },
+  {
+   "name": "CLOCK_OFF",
+   "kind": "env",
+   "default": null,
+   "introduced": "G-1",
+   "expires": "G-1 정리 검토",
+   "note": "1이면 신중 · 숙련도 강적 시계를 읽지 않는다(G-1 시계 대답 몫 갈라보기)"
+  },
+  {
+   "name": "CLOCK_AHEAD",
+   "kind": "env",
+   "default": null,
+   "introduced": "G-1",
+   "expires": "G-1 정리 검토",
+   "note": "2면 신중 · 숙련이 강적 시계에 한 칸 일찍(마지막 경고 한 칸 전부터) 답한다(G-1 답 시점 갈라보기)"
+  },
+  {
+   "name": "CLOCK_PK",
+   "kind": "env",
+   "default": null,
+   "introduced": "G-2",
+   "expires": "G-2 정리 검토",
+   "note": "시계를 읽는 성향 목록(쉼표, 기본 careful,expert,casual). G-2 대충 성향 갈라보기"
+  },
+  {
+   "name": "CLOCK_CASUAL_P",
+   "kind": "env",
+   "default": null,
+   "introduced": "G-2",
+   "expires": "G-2 정리 검토",
+   "note": "대충 성향이 강적 시계 마지막 경고에 반응할 확률(기본 0.5, 만든 사람 결정 10월 24일)"
+  }
+ ]
+}
