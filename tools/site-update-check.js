@@ -18,7 +18,7 @@ async function main(){
  g.b={};await E.siteUpdateCheck();assert.equal(U.pending,next);assert.equal(destination,'');g.b=null;
  indexRevision=meta;assert.equal(await E.siteUpdateApply(),false);assert.equal(destination,'');indexRevision=next;
  fail=true;assert.equal(await E.siteUpdateApply(),false);assert.equal(destination,'');fail=false;
- assert.equal(await E.siteUpdateApply(),true);timers.at(-1)();assert(destination.includes('nrk_update='+next));assert(destination.includes('mode=1'));assert(destination.endsWith('#keep'));
+ assert.equal(await E.siteUpdateApply(),true);timers.at(-2)();assert(destination.includes('nrk_update='+next));assert(U.applying);timers.at(-1)();assert(!U.applying,'이동이 끝나지 않으면 6초 뒤 입력 차단을 푼다(10월 24일)');U.applying=true;assert(destination.includes('mode=1'));assert(destination.endsWith('#keep'));
  const saved=JSON.parse(store.get(V('SKEY')));assert.equal(saved.cur.id,'r-update');assert.equal(saved.cur.gold,123);assert.equal(saved.runs[0].id,'r-update');
  U.applying=false;U.pending='';offline=true;await E.siteUpdateCheck();assert.equal(U.pending,'');
  console.log('전투·보상·생성·입력 보류, 배포 불일치·저장 실패·오프라인 보류, 진행 저장·주소 유지·자동 갱신 통과');

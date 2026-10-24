@@ -39,6 +39,7 @@ async function siteUpdateApply() {
     toast('진행 상황을 저장했습니다. 업데이트를 적용합니다');
     const url = new URL(location.href); url.searchParams.set('nrk_update', target);
     setTimeout(() => location.replace(url.href), 700);
+    setTimeout(() => { if (SITE_UPDATE.applying) { SITE_UPDATE.applying = false; SITE_UPDATE.ready = ''; toast('업데이트 이동이 늦어 잠시 미뤘습니다. 진행은 저장되어 있습니다'); } }, 6000); // 10월 24일: 이동이 끝나지 않으면 클릭 · 키가 영영 막히던 것
     return true;
   } catch (e) { return false; } finally { U.preparing = false; }
 }

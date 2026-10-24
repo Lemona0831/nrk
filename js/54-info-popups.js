@@ -256,6 +256,8 @@ function initPop() {
   });
   document.addEventListener('focusin', ev => { if (POP.mute) return; const t = ev.target.closest && ev.target.closest('[data-info]'); if (t && ev.target.matches(':focus-visible')) showPop(t); });
   document.addEventListener('focusout', () => hidePop());
+  document.addEventListener('pointerdown', ev => { if (ev.pointerType === 'touch' || !(ev.target.closest && ev.target.closest('#popbox')) || ev.target.closest('a, button, input, select, [data-a]')) return; const x = ev.clientX, y = ev.clientY; hidePop(); const b = document.elementsFromPoint(x, y).map(e => e.closest && e.closest('button, [data-a]')).find(e => e && !e.closest('#popbox')); if (b) { ev.preventDefault(); b.click(); POP.eat = 1; } }, true);
+  document.addEventListener('click', ev => { if (POP.eat) { POP.eat = 0; ev.stopPropagation(); ev.preventDefault(); } }, true); // 10월 24일: PC에서 설명 창이 윗줄 단추(기본 공격 등)를 덮으면, 누를 때 포커스가 바뀌며 설명 창이 사라져 클릭이 body로 가 아무 일도 없었다(전투 중 '아무것도 안 눌림'). 누르는 순간 아래 단추를 누른다
   document.addEventListener('pointerdown', ev => {
     if (ev.pointerType !== 'touch') { return; }
     const t = ev.target.closest && ev.target.closest('[data-info]'); hidePop(); if (!(t && t.closest('.ab[data-a=act]'))) pvHide(); if (!t) return;

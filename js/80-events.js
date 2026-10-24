@@ -200,7 +200,7 @@ function onClick(ev) {
     case 'stsmore': G.stsMore = !G.stsMore; render(); { const x = document.querySelector('[data-a="stsmore"]'); if (x) x.focus(); } break;
     case 'numkeys': G.data.numKeys = G.data.numKeys === false; saveLocal(); toast(G.data.numKeys ? '숫자 키로 행동합니다' : '숫자 키 행동을 껐습니다'); render(); break;
     case 'infotoggle': G.infoOn = !G.infoOn; G.data.infoOn = G.infoOn; saveLocal(); hidePop(); toast(G.infoOn ? '설명 창을 켰습니다' : '설명 창을 껐습니다'); if (G.sheet && G.sheet.kind === 'settings') render(); break;
-    case 'bcont': if (!G.b) break; battleContinue(); break; // 10월 24일 S-5: 두 번째 누름은 전투가 없다
+    case 'bcont': if (!G.b) { render(); break; } battleContinue(); break; /* 10월 24일: 전투 자료 없이 남은 [계속]은 화면을 다시 그린다(아무 일도 안 일어나던 것) */ // 10월 24일 S-5: 두 번째 누름은 전투가 없다
     case 'scennext': scenNext(); break;
     case 'retry': retryRoom(); break;
     case 'endrun': endRun('lose'); break;
