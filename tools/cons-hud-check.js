@@ -14,5 +14,7 @@ for (const id of Object.keys(CONS)) for (const g of ['n', 'm']) {
   try { const t = consReason(b, CONS[id], c); if (t != null && typeof t !== 'string') bad.push(id + ': 글이 아님'); } catch (e) { bad.push(id + '/' + g + ': ' + e.message); }
 }
 { run.cons = Object.keys(CONS).slice(0, 8).map(id => ({ id, n: 1, g: 'n' })); n++; try { const h = consQuick(b); if (typeof h !== 'string') bad.push('consQuick: 글이 아님'); } catch (e) { bad.push('consQuick: ' + e.message); } }
+/* 10월 24일: 순찰대 보상 창이 소모품 설명 함수를 실행하지 않고 코드 글자로 찍었다 → 모든 소모품을 후보로 넣어 창 글에 코드가 없는지 */
+{ const sheetParts = R_('sheetParts'); G.b = null; run.patrolPend = { cons: Object.keys(CONS) }; n++; try { const P = sheetParts({ kind: 'patrol', data: {} }); const h = JSON.stringify(P); if (/=>|=&gt;|Math.|function/.test(h)) bad.push('순찰대 창에 코드 글자: ' + (h.match(/.{0,30}(=>|Math.|function).{0,30}/) || [''])[0]); } catch (e) { bad.push('순찰대 창: ' + e.message); } }
 console.log('cons-hud-check: ' + n + '개 · 실패 ' + bad.length + (bad.length ? '\n  ' + bad.slice(0, 10).join('\n  ') : ''));
 process.exit(bad.length ? 1 : 0);

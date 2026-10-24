@@ -148,7 +148,7 @@ function sheetParts(S) {
   } else if (S.kind === 'patrol') { // 0.8.0 6단계 A-6: 순찰대를 넘으면 패시브 포인트 +1(챕터에 AMBUSH.ptMax번) 또는 소모품 셋 중 하나
     const P = run.patrolPend || { cons: [] }, used = (run.patrolPt || {})[run.ch || 1] || 0, ptOk = used < AMBUSH.ptMax; title = '순찰대를 넘었습니다';
     body = '<p class="lead">하나를 고릅니다.</p><div class="row col">' + (ptOk ? `<button class="wide gold" data-a="patrolpick" data-k="pt" data-focus>패시브 포인트 +1 <small>(이번 챕터 ${used}/${AMBUSH.ptMax})</small></button>` : `<p class="mini">이번 챕터의 패시브 포인트는 ${AMBUSH.ptMax}번을 모두 받았습니다.</p>`)
-      + (P.cons || []).filter(id => CONS[id]).map(id => `<button class="wide" data-a="patrolpick" data-k="${id}">${CONS[id].ico} ${esc(consName({ id, g: 'n' }))}${CONS[id].d ? ` <small>${esc(CONS[id].d)}</small>` : ''}</button>`).join('') + '</div>';
+      + (P.cons || []).filter(id => CONS[id]).map(id => `<button class="wide" data-a="patrolpick" data-k="${id}">${CONS[id].ico} ${esc(consName({ id, g: 'n' }))}${CONS[id].d ? ` <small>${esc(typeof CONS[id].d === 'function' ? CONS[id].d(CONS[id].v) : CONS[id].d)}</small>` : ''}</button>`).join('') + '</div>';
   } else if (S.kind === 'consfull') {
     title = '전리품을 고르세요';
     /* 10월 24일 개편(만든 사람 요청 · 디자인 재점검): 가방(챙긴 뒤 모습)과 전리품을 칸으로. 칸을 누르면 아래 설명 줄에 효과와 할 수 있는 일(쓰기 · 플라스크 채우기 · 버리기 · 자리 바꾸기). 칸 안에는 단추를 두지 않는다 */
