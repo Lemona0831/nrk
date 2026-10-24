@@ -17,17 +17,19 @@ const fake = cls => ({ build: cls, p: { pn: [], sbLead: null }, atree: { own: []
 const clsUp = Object.keys(G0.BUILDS).filter(c => !G0.BUILDS[c].tut && SKE.hasUps(c)); ok(clsUp.length >= 1, '강화 노드가 있는 트리: ' + clsUp.join(', '));
 for (const cls of clsUp) {
   const A = G0.atBuild(cls); const ups = Object.keys(A.nodes).filter(u => A.nodes[u].kind === 'upgrade'); let k = 0;
-  for (const u of ups) {
-    const on = A.nodes[u].on; const b = SKE.evalSkill(SKE.pFor(fake(cls), on, []), on), e = SKE.evalSkill(SKE.pFor(fake(cls), on, [u]), on);
-    const diff = Math.abs(e.E - b.E) > 1e-9 || Math.abs(e.net - b.net) > 1e-9 || e.cost !== b.cost || Math.abs(e.costEff - b.costEff) > 1e-9;
+  for (const u0 of ups.flatMap(u => A.nodes[u].vars && A.nodes[u].vars.length ? A.nodes[u].vars : [u])) { /* 10월 24일: 변형 자리(vars)는 고르기 전에는 값이 같다 — 변형마다 본다 */
+    const u = u0, on = (A.nodes[u] || A.vars[u] || {}).on; const b = SKE.evalSkill(SKE.pFor(fake(cls), on, []), on), e = SKE.evalSkill(SKE.pFor(fake(cls), on, [u]), on);
+    const diff = Math.abs(e.E - b.E) > 1e-9 || Math.abs(e.net - b.net) > 1e-9 || e.cost !== b.cost || Math.abs(e.costEff - b.costEff) > 1e-9 || (() => { const sk = ups0 => { const q = SKE.pFor(fake(cls), on, ups0); return JSON.stringify(G0.skOf(q.p || q, on)); }; return sk([]) !== sk([u]); })(); /* 값 말고 대상 · 빠르기 등을 바꾸는 변형(먼 번짐: 후열까지)도 바뀐 것으로 본다 */
     assert(diff, cls + ' ' + u + ': 강화를 끼워도 값이 같음'); k++;
     console.log(`     ${u.padEnd(14)} → ${on.padEnd(13)} 값 E ${r1(b.E)} → ${r1(e.E)} · net ${r1(b.net)} → ${r1(e.net)} · 유산 ${b.cost}(실제 ${r1(b.costEff)}) → ${e.cost}(실제 ${r1(e.costEff)}) · 한 차례 ${r1(b.perTurn)} → ${r1(e.perTurn)}`);
   }
-  ok(k === ups.length, `${cls} 강화 ${k}/${ups.length}개 모두 값이 기본과 다름`);
+  { const nU = ups.flatMap(u => A.nodes[u].vars && A.nodes[u].vars.length ? A.nodes[u].vars : [u]).length; ok(k === nU, `${cls} 강화 · 변형 ${k}/${nU}개 모두 기본과 다름`); }
 }
-{ const e = SKE.evalSkill(SKE.pFor(fake('spellblade'), 'sb_sunder', ['sbu_measure']), 'sb_sunder'), b = SKE.evalSkill(SKE.pFor(fake('spellblade'), 'sb_sunder', []), 'sb_sunder');
-  ok(e.E === b.E && e.disc > 0 && e.costEff < b.costEff && e.perTurn > b.perTurn, `조건부 할인(교차 일섬): 효과 값은 같고 실제 유산 ${r1(b.costEff)} → ${r1(e.costEff)}, 한 차례 값 ${r1(b.perTurn)} → ${r1(e.perTurn)}`); }
+{ const e = SKE.evalSkill(SKE.pFor(fake('spellblade'), 'sb_taste', ['sbv_taste_trail']), 'sb_taste'), b = SKE.evalSkill(SKE.pFor(fake('spellblade'), 'sb_taste', []), 'sb_taste'); /* 10월 24일: 교차 일섬(sbu_measure)은 M5 재설계에서 빠졌다 — 지금 있는 조건 할인 변형 혈흔 추적으로 */
+  ok(e.E === b.E && e.disc > 0 && e.costEff < b.costEff && e.perTurn > b.perTurn, `조건부 할인(혈흔 추적): 효과 값은 같고 실제 유산 ${r1(b.costEff)} → ${r1(e.costEff)}, 한 차례 값 ${r1(b.perTurn)} → ${r1(e.perTurn)}`); }
 
+if (!process.env.RUN_RETIRED) console.log('2) · 3) · 4) 폐기(10월 24일): M5 재설계에서 빠진 마검사 칸(회류참 강화 · 반향 주문 · 균열 주문 · 방벽 포격)과 없앤 YUSAN.cheap 분기를 보는 시험이라 건너뜀(RUN_RETIRED=1이면 돈다). 지금 트리의 강화 · 변형은 1)이 본다');
+else {
 console.log('2) 유산 비용은 강화를 적용한 실제 스킬의 skCost');
 { const Y = run_('YUSAN'); const c0 = Y.cheap; Y.cheap = 1;
   try { const b = SKE.evalSkill(SKE.pFor(fake('spellblade'), 'sb_turn', []), 'sb_turn'), e = SKE.evalSkill(SKE.pFor(fake('spellblade'), 'sb_turn', ['sbu_rhythm']), 'sb_turn');
@@ -60,4 +62,5 @@ console.log('4) 50상황 장착 (sitqa equipFor)');
   ok(G0.skOf(SKE.pFor(run, 'sb_turn'), 'sb_turn').tgt === 'front' && G0.SK2.sb_turn.tgt !== 'front', '마검 연무: 강화를 끼운 회류참은 전열 모두를 벤다');
   ok(eR[0] === 'sb_turn' && eB[0] !== 'sb_turn', '실제 캐릭터를 주면 무리 상황에서 전열 모두로 바뀐 칸(마검 연무)을 맨 먼저 고른다(기본 스킬로는 한 적 베기라 무리 덤이 없다)');
   ok(JSON.stringify(eR) !== JSON.stringify(eB), '기본 스킬만 보는 예전 길과 고른 것이 다르다'); }
+}
 console.log(`강화를 반영한 장착 점검: ${n}개 통과`);
