@@ -25,7 +25,7 @@ function setTabGo(k, focusTab) {
     hudSlotAsk(el, hudSlotNeedsAsk(i), () => { if (hudSlotLoadLive(i)) { toast('배열 칸 ' + (i + 1) + '을 불러왔습니다'); render(); const x = document.querySelector('[data-a="hudslotload"][data-n="' + i + '"]'); if (x) x.focus(); } });
   });
   document.addEventListener('keydown', ev => {
-    const t = ev.target && ev.target.closest ? ev.target.closest('.settab') : null; if (!t || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+    const t = ev.target && ev.target.closest ? ev.target.closest('.settab[data-a="settab"]') : null; if (!t || ev.ctrlKey || ev.metaKey || ev.altKey) return;
     const ks = SET_TABS.map(x => x[0]); const i = ks.indexOf(t.dataset.k); let n = -1;
     if (ev.key === 'ArrowRight') n = (i + 1) % ks.length; else if (ev.key === 'ArrowLeft') n = (i + ks.length - 1) % ks.length; else if (ev.key === 'Home') n = 0; else if (ev.key === 'End') n = ks.length - 1;
     if (n < 0) return; ev.preventDefault(); ev.stopPropagation(); setTabGo(ks[n], true);

@@ -21,22 +21,23 @@ async function loadDash() {
   G.rfOpen = null; G.raPage = 0; G.dash = null; G.dashErr = ''; G.dashReq = 1; if (!PAGES.includes(G.scr)) G.back = G.scr; G.scr = 'admin'; render();
   if (!G.db && siteCfg() && G.conn !== 'sitefail') { G.dashReq = 0; G.dashErr = '저장소에 연결하는 중입니다. 연결되면 자동으로 불러옵니다.'; render(); return; } // 접속 전에는 이 브라우저 기록으로 대신하지 않는다
   if (!G.db) { G.dashRaw = [{ uid: 'local', runs: G.data.runs, scen: Object.values(G.data.scen), final: G.data.final }]; G.dash = aggregate(G.dashRaw); G.dashErr = G.conn === 'sitefail' ? '저장소에 연결하지 못했습니다(' + (G.siteErr || '') + '). 이 브라우저 기록만 보여줍니다.' : '공유 저장소에 연결되지 않아 이 브라우저 기록만 보여줍니다.'; render(); return; }
-  try {
-    if (G.site) {
-      const { data: rows, error } = await G.sb.rpc('admin_dump', { pass: G.adminPass || '' });
-      if (error) throw Object.assign(new Error(error.message), { code: '관리자 암호 확인 실패' });
-      const live = G.db; G.db = memDb(rows || []);
-      try { const qs2 = await G.db.collection('playtest').get(); const testers2 = []; for (const d of qs2.docs) testers2.push(await readTester(d.id)); testers2.sort((x, y) => Math.min(...(x.runs.map(r => r.startedAt || 9e15)), 9e15) - Math.min(...(y.runs.map(r => r.startedAt || 9e15)), 9e15)); G.dashRaw = testers2; G.dash = aggregate(testers2); }
-      finally { G.db = live; }
-      render(); return;
-    }
-    const qs = await G.db.collection('playtest').get();
-    const testers = [];
-    for (const d of qs.docs) testers.push(await readTester(d.id));
-    testers.sort((x, y) => Math.min(...(x.runs.map(r => r.startedAt || 9e15)), 9e15) - Math.min(...(y.runs.map(r => r.startedAt || 9e15)), 9e15));
-    G.dashRaw = testers; G.dash = aggregate(testers);
-  } catch (e) { G.dashErr = '기록을 읽지 못했습니다(' + (e && e.code || '오류') + ').'; }
+  try { const testers = await dashFetch(); G.dashRaw = testers; G.dash = aggregate(testers); G.dashAt = Date.now(); }
+  catch (e) { G.dashErr = '기록을 읽지 못했습니다(' + (e && e.code || '오류') + ').'; }
   render();
+}
+/* 10월 24일 관리자 개편: 기록 읽기만 떼어 냄 — 결과 보기 열기(loadDash)와 지금 하는 판 새로 고침(liveRefresh)이 같이 쓴다. 사이트는 admin_dump 한 번, 그 밖은 저장소에서 테스터마다 */
+async function dashReadAll() {
+  const qs = await G.db.collection('playtest').get(); const testers = [];
+  for (const d of qs.docs) testers.push(await readTester(d.id));
+  testers.sort((x, y) => Math.min(...(x.runs.map(r => r.startedAt || 9e15)), 9e15) - Math.min(...(y.runs.map(r => r.startedAt || 9e15)), 9e15));
+  return testers;
+}
+async function dashFetch() {
+  if (!G.site) return dashReadAll();
+  const { data: rows, error } = await G.sb.rpc('admin_dump', { pass: G.adminPass || '' });
+  if (error) throw Object.assign(new Error(error.message), { code: '관리자 암호 확인 실패' });
+  const live = G.db; G.db = memDb(rows || []);
+  try { return await dashReadAll(); } finally { G.db = live; }
 }
 function collectNotes(testers) {
   const out = []; const bossN = { mother: '1회차', tree: '2회차' };
@@ -106,15 +107,16 @@ async function archiveAll() {
   } catch (e) { G.archMsg = '전체 기록을 저장하지 못했습니다(' + (e && e.code || '오류') + ').'; }
   render();
 }
-function aggregate(testers) {
+function aggregate(testers, opt) { // 10월 24일: opt.ch — 통계 탭의 챕터 거르기(쓰러진 곳 · 강적 · 보스는 그 챕터 방만)
   const byB = {}; const bn = CLASS_KEYS();
   for (const k of bn) byB[k] = { runs: 0, wins: { mother: 0, tree: 0 }, tries: { mother: 0, tree: 0 }, deathRoom: {}, hardRoom: {}, heavyResp: {}, healResp: {}, actCount: {}, breaks: 0, dodgedCharged: 0, deliberate: 0, fl5: [], dilemma: { yes: 0, no: 0 }, block: {}, room5: {}, stat: { str: 0, dex: 0, int: 0 }, statN: 0, picks: {}, combos: {}, fun: [], skw: {}, stk: {}, cf: {}, is: {} };
+  const x8 = { chF: (opt && opt.ch) || 0, ch1: {}, death: {}, foes: {}, picks: {} }; // 10월 24일 관리자 개편: 0.8.0 통계(aggX8)
   let freeTry = 0, freeCurious = 0, testerN = testers.length, finals = { very: 0, some: 0, same: 0, again: [], want: {}, board: {} };
   const scen = {};
   for (const T of testers) {
     let triedFree = false;
     for (const r of T.runs || []) {
-      if (!r || !BUILDS[r.build]) continue; const B = byB[r.build]; B.runs++;
+      if (!r || !BUILDS[r.build] || !byB[r.build]) continue; const B = byB[r.build]; B.runs++; aggX8(x8, r); // 10월 24일: 고를 수 없는(잠긴) 직업 판은 세지 않는다(전에는 여기서 멈췄다)
       B.tries[r.boss] = (B.tries[r.boss] || 0) + 1; if (r.result === 'win') B.wins[r.boss]++;
       if (r.stats) { B.statN++; for (const k in B.stat) B.stat[k] += r.stats[k] || 0; }
       for (const c of r.choices || []) { const k = c.picked || 'none'; B.picks[k] = (B.picks[k] || 0) + 1; }
@@ -144,7 +146,7 @@ function aggregate(testers) {
     if (T.final && T.final.diff) finals[T.final.diff] = (finals[T.final.diff] || 0) + 1;
     if (T.final) { if (T.final.again) finals.again.push(T.final.again); if (T.final.want) finals.want[T.final.want] = (finals.want[T.final.want] || 0) + 1; if (T.final.board) finals.board[T.final.board] = (finals.board[T.final.board] || 0) + 1; }
   }
-  return { byB, testerN, freeTry, freeCurious, finals, scen };
+  return { byB, testerN, freeTry, freeCurious, finals, scen, x8 };
 }
 const ANAME = { basic: '기본 공격', heavy: '강공격', guard: '방어', dodge: '흘리기', eact: '적 행동', cons: '소모품 사용', flaskL: '생명력 플라스크', flaskM: '마나 플라스크', flee: '도망', viper: '독사의 일격', cloud: '독구름', scarcut: '상흔 베기', release: '상흔 방출', flame: '신성한 불꽃', purge: '정화의 빛', reverse: '역전' };
 const topShare = m => { const v = Object.values(m); const s = v.reduce((a, c) => a + c, 0); if (!s) return null; const mx = Math.max(...v); const k = Object.keys(m).find(x => m[x] === mx); return { k, p: mx / s, n: s }; };
@@ -224,7 +226,7 @@ function dashRunsCsv() {
   for(const x of dashRunRows()) { const r=x.r,c=dashCombatStats(r),st=r.stats || {};rows.push([x.who,r.cname,(BUILDS[r.build]||{}).n || r.build,DASH_RESULTS[dashRunResult(r)] || dashRunResult(r),r.lv,r.ch || 1,r.roomReached,c.dealt,c.taken,c.complete ? '완료된 전투 전체' : '일부 기록 ('+c.coverage+' 전투)',c.actions,c.kills,c.truncated ? '일부 보관 기록' : '보관된 행동 기록',st.str,st.dex,st.int,st.con,st.wil,dashRunTime(r) ? new Date(dashRunTime(r)).toLocaleString('ko-KR') : '',x.uid,r.id]); }
   return adminCsv(rows);
 }
-function dashSelectedRun() { return dashRunRows().find(x=>x.key===G.rfOpen); }
+function dashSelectedRun() { return dashAllRuns().find(x=>x.key===G.rfOpen); } // 10월 24일: 거르기와 상관없이(문제 판 · 지금 하는 판에서도 연다)
 function dashRoomCsv() {
   const x=dashSelectedRun();if(!x)return adminCsv([['기록 없음']]);
   const rows=[['플레이어','캐릭터','챕터','층','방 종류','결과','가한 피해','받은 피해','집계 상태','전투 시간(초)','종료 생명력(%)','착용 장비']];
@@ -324,57 +326,266 @@ async function deleteOneRun(word, backup=true) {
   finally{G.runDelBusy=false;render();}
 }
 
+/* ===== 10월 24일 관리자 결과 보기 개편 (만든 사람 요청) =====
+   긴 한 쪽을 탭 다섯으로: 문제 판 · 지금 하는 판 · 한 판 따라가기 · 통계 · 스킬 트리 · 도구. 탭 모양은 설정 창 탭(.settabs · .settab), 고른 탭은 G.admTab.
+   PC 넓은 화면은 여러 칸, 좁은 화면은 쌓는다. 행동 기록은 결과 보기를 열 때 읽은 것(readTester)만 쓰고, 지금 하는 판 새로 고침만 다시 읽는다(liveRefresh) */
+const ADM_TABS = [['prob', '문제 판'], ['live', '지금 하는 판'], ['run', '한 판 따라가기'], ['stat', '통계 · 스킬 트리'], ['tools', '도구']];
+const ADM = { liveMin: 10, stuckMin: 15, stuckActs: 300, recentH: 24, cap: 900, autoS: 30, find: 20 }; // 지금 하는 판(분 안에 기록) · 멈춘 듯한 판(같은 방 분 · 한 방 행동 수 · 최근 시간) · 행동 기록 한도(runRecord의 acts.slice(-900)) · 자동 새로 고침(초) · 찾기 결과 수
+const ADM_PRB = [0.25, 0.5, 0.75]; // 통계 트리: 고른 판 비율 칸(0 · 1–24 · 25–49 · 50–74 · 75–100%)
+const admTabCur = () => ADM_TABS.some(x => x[0] === G.admTab) ? G.admTab : 'prob';
+function admTabGo(k, focus) { if (!ADM_TABS.some(x => x[0] === k)) return; G.admTab = k; render(); liveAutoSync(); if (focus && typeof document !== 'undefined') { const t = document.getElementById('admtab-' + k); if (t) t.focus(); } }
+const dashAlive = r => !r.endedAt && r.status !== 'done' && !['lose', 'abandon', 'flee'].includes(r.result); // 끝나지 않은 판(챕터를 깨고 이어 하는 판 · 기다리는 판도)
+function dashAllRuns() { return (G.dashRaw || []).flatMap((T, ti) => (T.runs || []).filter(Boolean).map((r, ri) => ({ r, who: testerLabel(T, ti), uid: T.uid, key: ti + ':' + ri }))); } // 거르기 없이(키는 dashRunRows와 같다)
+const admFloor = (ch, f) => (ch || 1) + '챕터 · ' + (!f ? '위치 미기록' : f === FLOOR_BOSS ? '보스' : f === FLOOR_CAMP ? '야영지' : f + '층');
+function admAgo(ms) { const m = Math.floor(Math.max(0, ms) / 60000); return m < 1 ? '방금' : m < 60 ? m + '분 전' : m < 1440 ? Math.floor(m / 60) + '시간 전' : Math.floor(m / 1440) + '일 전'; }
+const admTime = t => t ? new Date(t).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+const admCls = r => (BUILDS[r.build] || {}).n || r.build || '—';
+const admPct = (a, b) => b ? Math.round(a / b * 100) + '%' : '—';
+const admAvg = a => a.length ? a.reduce((s, v) => s + v, 0) / a.length : 0;
+function admRunBtn(x, sub) { const nm = x.r.cname || '이름 없는 캐릭터'; return '<button class="sm adm-runbtn" data-a="runopen" data-k="' + esc(x.key) + '" aria-label="' + esc(nm + ' · ' + x.who + ' 판 따라가기') + '"><b>' + esc(nm) + '</b><small>' + esc(sub == null ? x.who : sub) + '</small></button>'; }
+const ADM_ROOM_N = { boss: '보스', camp: '야영지', skip: '건너뜀', checkpoint: '검문소', smugstall: '밀수꾼의 좌판' };
+const admRoomN = t => (ROOM_TYPES[t] && ROOM_TYPES[t].n) || ADM_ROOM_N[t] || t || '방 미기록';
+const admRoomIco = t => (ROOM_TYPES[t] && ROOM_TYPES[t].ico) || (t === 'boss' ? '👑' : t === 'camp' ? '⛺' : '');
+const admFoeName = id => ((typeof STRONG_FOES !== 'undefined' ? STRONG_FOES : []).find(y => y.id === id) || {}).n || (BOSSES[id] || {}).n || id;
+const admMods = ms => (ms || []).map(m => (ROOM_MODS[m] || {}).n || m).join(' · ');
+function admFoeN(x, ch) { if (!x) return ''; if (x.type === 'boss') return admFoeName(chData(ch).boss); const s = x.squad && (typeof SQUADS !== 'undefined' ? SQUADS : []).find(y => y.id === x.squad); return [x.foe ? admFoeName(x.foe) : '', s ? s.n : x.squad || ''].filter(Boolean).join(' · '); }
+function admDoor(d) { return (d.offered || []).map((o, i) => { const [t, ...m] = String(o).split('+'), s = admRoomIco(t) + ' ' + admRoomN(t) + (m.length ? ' (' + admMods(m) + ')' : ''); return i === d.picked ? '<b class="adm-pick">▶ ' + esc(s) + '</b>' : '<span>' + esc(s) + '</span>'; }).join(''); }
+function admTook(x) { if (x.type === 'camp') return x.rested ? '쉼' : '쉬지 않음'; if (x.type === 'spring') return '씻음'; if (x.type === 'skip') return '건너뜀'; return x.took ? '고름: ' + (ITEMS[x.took] ? ITEMS[x.took].n : x.took) : '지나감'; }
+const admErrTxt = e => (e.msg || '메시지 없음') + (e.at ? ' @ ' + e.at : '') + (e.scr ? ' · 화면 ' + e.scr : '') + (e.sheet ? ' · 창 ' + e.sheet : '') + (e.b ? ' · 전투 ' + e.b : '');
+/* 방마다 한 줄: 문(나온 것 · 고른 것) · 방 종류 · 적 · HP 들어감 → 나옴 · 차례 · 결과 · 그 방의 화면 오류 · 쓰러짐.
+   챕터: 방 기록의 ch, 없으면 방 번호가 줄어들 때 넘어간 것으로 본다(문 기록에는 챕터 칸이 없다). 아직 끝나지 않은 방은 "지금 여기" 줄 */
+function dashTimeline(r) {
+  const out = [], st = r.markCh || 1; let ch = st, prev = 0;
+  for (const x of r.rooms || []) { if (!x || x.room == null) continue; if (x.ch) ch = x.ch; else if (x.room < prev) ch++; prev = x.room;
+    if (x.type === 'boss' && x.hpOut == null && out.some(y => y.ch === ch && y.room === x.room && y.x.type === 'boss')) continue; // 보스 승리 줄은 전투 줄과 겹친다(js/66 battleContinue)
+    out.push({ ch, room: x.room, x }); }
+  const doors = {}; let dc = st, dp = 0; for (const d of r.doorLog || []) { if (!d) continue; if (d.floor <= dp) dc++; dp = d.floor; doors[dc + ':' + d.floor] = d; }
+  const errs = {}, nAct = {}; for (const a of r.acts || []) { if (!a) continue; const k = (a.ch || 1) + ':' + (a.r || 0); if (a.k === 'err') (errs[k] = errs[k] || []).push(a); else if (a.k === 'act') nAct[k] = (nAct[k] || 0) + 1; }
+  const last = {}; out.forEach((y, i) => { last[y.ch + ':' + y.room] = i; });
+  const curK = (r.ch || 1) + ':' + (r.roomReached || 0);
+  if (dashAlive(r) && r.roomReached && last[curK] == null && r.phase !== 'wait') { out.push({ ch: r.ch || 1, room: r.roomReached, x: null, cur: 1 }); last[curK] = out.length - 1; }
+  for (const k in errs) if (last[k] == null) { const [c, f] = k.split(':'); out.push({ ch: +c, room: +f, x: null }); last[k] = out.length - 1; }
+  const seen = {}; out.forEach((y, i) => { const k = y.ch + ':' + y.room; y.door = seen[k] ? null : doors[k] || null; seen[k] = 1; y.errs = last[k] === i ? errs[k] || [] : []; y.nAct = last[k] === i ? nAct[k] || 0 : 0; });
+  return out.map((y, i) => [y, i]).sort((a, b) => (a[0].ch - b[0].ch) || (a[0].room - b[0].room) || (a[1] - b[1])).map(a => a[0]);
+}
+const admRowType = y => y.x ? y.x.type : y.door ? String((y.door.offered || [])[y.door.picked] || '').split('+')[0] : y.room === FLOOR_BOSS ? 'boss' : y.room === FLOOR_CAMP ? 'camp' : '';
+function vRunTimeline(r) {
+  const rows = dashTimeline(r); if (!rows.length) return '<p class="mini">방 기록이 없습니다.</p>';
+  const RES = { win: '이김', lose: '쓰러짐', flee: '물러남' }, pc = v => v == null ? '—' : Math.round(v * 100) + '%';
+  let h = '<div class="tbl"><table class="st2 adm-tl"><caption class="sr">방별 흐름</caption><thead><tr><th scope="col">챕터 · 층</th><th scope="col">나온 문 · 고른 문</th><th scope="col">방 · 적</th><th scope="col">HP 들어감 → 나옴</th><th scope="col">차례 · 시간</th><th scope="col">결과</th></tr></thead><tbody>';
+  for (const y of rows) {
+    const x = y.x || {}, t = admRowType(y), dead = x.res === 'lose', fight = x.hpOut != null, foe = y.x ? admFoeN(x, y.ch) : '';
+    const res = y.cur ? '<span class="rctag warn">지금 여기</span>' : dead ? '<b class="adm-dead">☠ 쓰러짐</b>' : fight ? esc(RES[x.res] || x.res || '—') : y.x ? esc(admTook(x)) : '—';
+    h += '<tr class="' + (dead ? 'adm-deadrow' : y.cur ? 'adm-currow' : '') + '"><th scope="row">' + esc(admFloor(y.ch, y.room)) + '</th><td class="adm-door">' + (y.door ? admDoor(y.door) : '<span class="mini">' + (y.room === FLOOR_BOSS || y.room === FLOOR_CAMP ? '정해진 방' : '문 기록 없음') + '</span>') + '</td><td>' + esc((admRoomIco(t) + ' ' + admRoomN(t)).trim()) + (foe ? '<br><small>' + esc(foe) + '</small>' : '') + (x.mods && x.mods.length ? '<br><small class="mini">' + esc(admMods(x.mods)) + '</small>' : '') + '</td><td>' + (fight ? pc(x.hpIn) + ' → ' + pc(x.hpOut) : '—') + '</td><td>' + (fight ? '차례 ' + (x.acts == null ? '—' : x.acts) + (x.t != null ? ' · ' + x.t + '초' : '') : '') + (y.nAct ? '<br><small class="mini">행동 기록 ' + y.nAct + '건</small>' : '') + '</td><td>' + res + '</td></tr>';
+    for (const e of y.errs) h += '<tr class="adm-errrow"><td colspan="6"><b>⚠ 화면 오류</b> ' + esc(admErrTxt(e)) + '</td></tr>';
+  }
+  return h + '</tbody></table></div>';
+}
+/* 판 하나의 문제: 화면 오류 · 멈춘 듯함(같은 방에 오래 · 한 방에 행동이 많음) · 행동 기록 한도 · 랭킹 제외 · 옛 저장본 */
+function dashIssues(r, now) {
+  const acts = r.acts || [], errs = acts.filter(a => a && a.k === 'err'); let stuck = null;
+  if (dashAlive(r) && r.phase !== 'wait') {
+    const per = {}; for (const a of acts) if (a && a.k === 'act') { const k = (a.ch || 1) + ':' + a.r; per[k] = (per[k] || 0) + 1; }
+    const curN = per[(r.ch || 1) + ':' + (r.roomReached || 0)] || 0, maxN = Math.max(0, ...Object.values(per));
+    const d = (r.doorLog || []).slice(-1)[0], since = d && d.t && r.updatedAt ? r.updatedAt - d.t : 0, longRoom = now - (r.updatedAt || 0) < ADM.recentH * 3600000 && since >= ADM.stuckMin * 60000;
+    if (longRoom || maxN >= ADM.stuckActs) stuck = { min: Math.round(since / 60000), curN, maxN, longRoom };
+  }
+  return { errs, stuck, cap: (r.actsN || 0) > acts.length || (!r.actsN && acts.length >= ADM.cap), noRank: !!r.noRank, mkLeg: !!r.mkLeg };
+}
+function admProblems(all, now) {
+  const L = all.map(x => Object.assign({ is: dashIssues(x.r, now) }, x)).sort((a, b) => dashRunTime(b.r) - dashRunTime(a.r)), any = x => x.is.errs.length || x.is.stuck || x.is.cap || x.is.noRank || x.is.mkLeg;
+  return { err: L.filter(x => x.is.errs.length), stuck: L.filter(x => x.is.stuck), cap: L.filter(x => x.is.cap || x.is.noRank || x.is.mkLeg), n: L.filter(any).length };
+}
+function admFind(q) { q = String(q || '').trim().toLocaleLowerCase(); if (!q) return []; return dashAllRuns().filter(x => [x.who, x.uid, x.r.cname, x.r.id].join(' ').toLocaleLowerCase().includes(q)).sort((a, b) => dashRunTime(b.r) - dashRunTime(a.r)); }
+const admTbl = (cap, heads, rows, empty) => '<div class="tbl"><table class="st2 adm-list"><caption class="sr">' + esc(cap) + '</caption><thead><tr>' + heads.map(x => '<th scope="col">' + x + '</th>').join('') + '</tr></thead><tbody>' + (rows.join('') || '<tr><td colspan="' + heads.length + '">' + esc(empty) + '</td></tr>') + '</tbody></table></div>';
+const admWhere = r => esc(rankProg({ ch: r.ch, clears: r.clears, floor: r.roomReached }));
+/* 탭 1: 문제 판 */
+function vAdmProblems(P, now) {
+  let h = '<div class="admin-metrics">' + [['화면 오류가 난 판', P.err.length], ['멈춘 듯한 판', P.stuck.length], ['기록 한도 · 랭킹 제외 · 옛 저장본', P.cap.length], ['전체 판', dashAllRuns().length]].map(([n, v]) => '<div><span>' + n + '</span><strong>' + v + '</strong></div>').join('') + '</div>';
+  const q = G.admQ || '', F = admFind(q);
+  h += '<section class="card"><h4>판 찾기</h4><div class="adm-find"><label for="admq">플레이어 이름 · 캐릭터 · 계정 ID · 판 ID</label><div class="adm-findrow"><input id="admq" type="search" value="' + esc(q) + '" placeholder="이름이나 ID 일부" autocomplete="off"><button class="sm gold" data-a="admfind">찾기</button></div></div>';
+  if (q) h += '<p class="mini" role="status">찾은 판 ' + F.length + '개' + (F.length > ADM.find ? ' · 최근 ' + ADM.find + '개만 보입니다' : '') + '. 고르면 한 판 따라가기 탭이 열립니다.</p>' + admTbl('찾은 판', ['판', '직업', '결과', '도달', '마지막 기록'], F.slice(0, ADM.find).map(x => '<tr><td>' + admRunBtn(x) + '</td><td>' + esc(admCls(x.r)) + '</td><td>' + esc(DASH_RESULTS[dashRunResult(x.r)] || dashRunResult(x.r)) + dashRunFlags(x.r) + '</td><td>' + admWhere(x.r) + '</td><td>' + esc(admTime(dashRunTime(x.r))) + '</td></tr>'), '찾은 판이 없습니다.');
+  h += '</section>';
+  h += '<section class="card"><h4>화면 오류가 난 판</h4><p class="mini">판 기록에 남은 화면 오류 줄입니다. 같은 오류는 판마다 한 번만 셉니다.</p>' + admTbl('화면 오류가 난 판', ['판', '직업', '오류', '첫 메시지', '첫 오류 위치', '마지막 기록'], P.err.map(x => { const e = x.is.errs[0]; return '<tr><td>' + admRunBtn(x) + '</td><td>' + esc(admCls(x.r)) + '</td><td><b class="adm-warn">' + x.is.errs.length + '건</b></td><td class="adm-msg">' + esc(admErrTxt(e)) + '</td><td>' + esc(admFloor(e.ch, e.r)) + '</td><td>' + esc(admAgo(now - dashRunTime(x.r))) + '</td></tr>'; }), '화면 오류가 난 판이 없습니다.') + '</section>';
+  h += '<div class="adm-cols"><section class="card"><h4>멈춘 듯한 판</h4><p class="mini">끝나지 않은 판 가운데, 최근 ' + ADM.recentH + '시간 안에 기록이 들어왔는데 같은 방에 ' + ADM.stuckMin + '분 넘게 있거나, 한 방에 행동이 ' + ADM.stuckActs + '번 넘게 쌓인 판입니다.</p>' + admTbl('멈춘 듯한 판', ['판', '지금 위치', '같은 방', '한 방 행동 최다', '마지막 기록'], P.stuck.map(x => { const s = x.is.stuck; return '<tr><td>' + admRunBtn(x, admCls(x.r) + ' · ' + x.who) + '</td><td>' + esc(admFloor(x.r.ch, x.r.roomReached)) + '</td><td>' + (s.longRoom ? '<b class="adm-warn">' + s.min + '분</b>' : s.min + '분') + '</td><td>' + (s.maxN >= ADM.stuckActs ? '<b class="adm-warn">' + s.maxN + '번</b>' : s.maxN + '번') + '</td><td>' + esc(admAgo(now - dashRunTime(x.r))) + '</td></tr>'; }), '멈춘 듯한 판이 없습니다.') + '</section>';
+  h += '<section class="card"><h4>기록 한도 · 랭킹 제외 · 옛 저장본</h4><p class="mini">기록 한도: 보관된 행동 기록이 전체보다 적은 판(이 브라우저 기록은 최근 ' + ADM.cap + '건까지)입니다.</p>' + admTbl('기록 한도 · 랭킹 제외 · 옛 저장본', ['판', '표시', '행동 기록', '마지막 기록'], P.cap.map(x => '<tr><td>' + admRunBtn(x, admCls(x.r) + ' · ' + x.who) + '</td><td>' + (x.is.cap ? '<span class="rctag warn">기록 한도</span> ' : '') + dashRunFlags(x.r) + '</td><td>' + (x.r.acts || []).length + (x.r.actsN ? ' / ' + x.r.actsN : '') + '건</td><td>' + esc(admAgo(now - dashRunTime(x.r))) + '</td></tr>'), '해당하는 판이 없습니다.') + '</section></div>';
+  return h;
+}
+/* 탭 2: 지금 하는 판 — 최근 기록이 들어온 끝나지 않은 판. 마지막 행동은 행동 기록의 마지막 조각에서 */
+function admLiveRows(all, now) { return all.filter(x => dashAlive(x.r) && x.r.updatedAt && now - x.r.updatedAt <= ADM.liveMin * 60000).sort((a, b) => b.r.updatedAt - a.r.updatedAt); }
+function dashLastAct(r) { const a = r.acts || []; for (let i = a.length - 1; i >= 0; i--) if (a[i] && a[i].k !== 'dealt') return a[i]; return null; }
+function admActTxt(a, r) { if (!a) return '기록 없음'; const N = { hit: '피격', break: '붕괴', kill: '처치', dead: '사망', heal: '회복', dodge: '흘리기', eact: '적 행동', cons: '소모품', err: '⚠ 화면 오류' }; return (a.k === 'act' ? dashActionName(a.a, r) : a.k === 'cons' ? '소모품 · ' + ((CONS[a.id] || {}).n || a.id || '') : (N[a.k] || a.k || '기록') + (a.k === 'eact' && a.role ? ' · ' + ((ROLES[a.role] || {}).n || a.role) : '') + (a.k === 'hit' && a.d != null ? ' ' + a.d : '')) + (a.t != null ? ' · 전투 ' + a.t + '초' : ''); }
+function vAdmLive(rows, now) {
+  let h = '<section class="card"><div class="adm-headrow"><div><h4>지금 하는 판</h4><p class="mini">최근 ' + ADM.liveMin + '분 안에 기록이 들어온, 끝나지 않은 판입니다. 전투 중 행동도 곧바로 들어옵니다.</p></div><div class="row"><button class="sm gold" data-a="livego"' + (G.liveBusy ? ' disabled' : '') + '>새로 고침</button><label class="adm-auto"><input type="checkbox" data-a="liveauto"' + (G.liveAuto ? ' checked' : '') + '> ' + ADM.autoS + '초마다 자동으로</label></div></div>';
+  h += '<p class="mini" role="status">' + esc(G.liveMsg || ((G.liveAt || G.dashAt) ? admTime(G.liveAt || G.dashAt) + '에 읽은 기록입니다.' : '')) + '</p>';
+  h += admTbl('지금 하는 판', ['판', '직업', '챕터 · 층', '방', 'HP', '마지막 행동', '기록'], rows.map(x => { const r = x.r, tl = dashTimeline(r), y = tl.find(z => z.cur) || tl[tl.length - 1], t = y ? admRowType(y) : '', ps = r.playerState, hp = ps && ps.hpMax ? Math.max(0, Math.min(100, Math.round(ps.hp / ps.hpMax * 100))) : null;
+    return '<tr><td>' + admRunBtn(x) + '</td><td>' + esc(admCls(r)) + '</td><td>' + esc(admFloor(r.ch, r.roomReached)) + '</td><td>' + esc((admRoomIco(t) + ' ' + admRoomN(t)).trim()) + '</td><td class="adm-hp">' + (hp == null ? '—' : '<meter min="0" max="100" low="30" high="60" optimum="100" value="' + hp + '" aria-label="HP ' + hp + '%">' + hp + '%</meter><b>' + hp + '%</b>') + '</td><td>' + esc(admActTxt(dashLastAct(r), r)) + '</td><td>' + esc(admAgo(now - r.updatedAt)) + '</td></tr>'; }), '지금 하는 판이 없습니다.');
+  return h + '</section>';
+}
+let liveTimer = 0;
+/* 지금 하는 판 새로 고침: 탭 · 고른 판은 두고 기록만 다시 읽는다. 사이트는 admin_dump(그것밖에 없다), 저장소에서 바로 읽을 때는 판 문서와 지금 하는 판의 마지막 조각만 */
+async function liveRefresh() {
+  if (G.liveBusy) return; G.liveBusy = 1; G.liveMsg = '기록을 다시 읽는 중…'; render();
+  const sel = dashSelectedRun(), keep = sel ? { uid: sel.uid, id: sel.r.id } : null;
+  try {
+    if (!G.db) G.dashRaw = [{ uid: 'local', runs: G.data.runs, scen: Object.values(G.data.scen), final: G.data.final }];
+    else if (G.site) G.dashRaw = await dashFetch();
+    else await liveReadLight();
+    G.dash = aggregate(G.dashRaw); G.liveAt = Date.now(); G.liveMsg = '';
+    if (keep) { const x = dashAllRuns().find(y => y.uid === keep.uid && y.r.id === keep.id); G.rfOpen = x ? x.key : null; }
+  } catch (e) { G.liveMsg = '기록을 다시 읽지 못했습니다(' + (e && e.code || '오류') + ').'; }
+  G.liveBusy = 0; render();
+}
+async function liveReadLight() {
+  const C = colOf(G.adminSeason), now = Date.now();
+  for (const T of G.dashRaw || []) {
+    if (!T.uid || T.uid === 'local') continue; const base = 'playtest/' + T.uid + '/' + C.runs, rs = await G.db.collection(base).get();
+    for (const d of rs.docs) {
+      const m = d.data() || {}, runs = T.runs = T.runs || [], i = runs.findIndex(x => x && x.id === (m.id || d.id)), old = i >= 0 ? runs[i] : null, r = Object.assign({}, m, { acts: old && old.acts ? old.acts : [] });
+      if (dashAlive(r) && m.updatedAt && now - m.updatedAt <= ADM.liveMin * 60000 && m.chunks) { const c = await G.db.doc(base + '/' + d.id + '/acts/c' + String(m.chunks - 1).padStart(3, '0')).get(), tail = c.exists ? (c.data() || {}).a || [] : [], from = (m.chunks - 1) * CHUNK; r.acts = r.acts.length >= from ? r.acts.slice(0, from).concat(tail) : r.acts.concat(tail); }
+      if (i >= 0) runs[i] = r; else runs.push(r);
+    }
+  }
+}
+function liveAutoSync() {
+  const on = !!(G.liveAuto && G.scr === 'admin' && admTabCur() === 'live' && G.dash);
+  if (on && !liveTimer) liveTimer = setInterval(() => { if (G.liveAuto && G.scr === 'admin' && admTabCur() === 'live') { if (!(typeof document !== 'undefined' && document.hidden)) liveRefresh(); } else { clearInterval(liveTimer); liveTimer = 0; } }, ADM.autoS * 1000);
+  else if (!on && liveTimer) { clearInterval(liveTimer); liveTimer = 0; }
+}
+/* 방사형 트리(js/73) 보기 전용: 기록에서 만든 사본 판으로 그린다(G.run · 기록을 바꾸지 않는다). G.trdRO가 켜진 동안 찍기 · 되돌리기 단추가 없다(js/72 treeCanEdit) */
+function admTreeRun(r) {
+  const cp = o => JSON.parse(JSON.stringify(o || {})), a = cp(r.atree), p = cp(r.ptree);
+  a.own = a.own || []; a.pts = a.pts || 0; a.vsel = a.vsel || {}; p.own = p.own || []; p.free = p.free || []; p.ks = p.ks || []; p.pts = p.pts || 0;
+  const run = { build: r.build, lv: r.lv || 1, ch: r.ch || 1, clears: r.clears || 0, markCh: r.markCh || 0, atree: a, ptree: p, skills: (r.skills || []).slice(), p: null, ringCamp: 1 };
+  try { const P = ptBuild(r.build), A = atBuild(r.build); for (const id of p.own.concat(p.free, p.ks)) if (P.nodes[id]) run.ringCamp = Math.max(run.ringCamp, P.nodes[id].ring || 1); for (const id of a.own) if (A.nodes[id]) run.ringCamp = Math.max(run.ringCamp, A.nodes[id].ring || 1); } catch (e) { } // 찍은 노드가 있는 고리는 열린 것으로 본다(야영지 열림은 기록에 없다)
+  return run;
+}
+function admRateSvg(svg, rates) { // 통계: 노드마다 고른 판 비율 칸(prb0–4)과 숫자
+  return svg.replace(/<g class="tn ([^"]*)" data-a="tnode" data-k="([^"]+)"([^>]*)aria-label="([^"]*)">([\s\S]*?)<\/g>/g, (m, cls, id, mid, lab, inner) => {
+    if (id === 'S') return m; const v = rates[id] || 0, pc = Math.round(v * 100), b = !v ? 0 : 1 + ADM_PRB.filter(x => v >= x).length, hr = +((/class="hit" r="([\d.]+)"/.exec(inner) || [])[1] || 13);
+    return '<g class="tn ' + cls + ' prb' + b + '" data-a="tnode" data-k="' + id + '"' + mid + 'aria-label="' + lab + ', 고른 판 ' + pc + '%">' + inner + (v ? '<text class="prt" y="' + trdF(-hr + 3) + '" dy="-0.15em">' + pc + '</text>' : '') + '</g>';
+  });
+}
+function admRateLegend() {
+  const it = (b, t) => '<li><svg class="trd-li" viewBox="-13 -13 26 26" aria-hidden="true"><g class="tn tn-notable ' + (b ? 'st-own' : 'st-lock') + ' prb' + b + '"><circle class="bd" r="9"/></g></svg><span><b>' + t + '</b></span></li>';
+  const cut = [0].concat(ADM_PRB.map(x => Math.round(x * 100)), [100]);
+  return '<div class="trd-leg adm-rleg"><b>고른 판 비율</b><ul>' + it(0, 0 + '% · 아무도 안 고름') + [1, 2, 3, 4].map(b => it(b, (b === 1 ? 1 : cut[b - 1]) + '–' + (b === 4 ? 100 : cut[b] - 1) + '%')).join('') + '</ul><p class="mini">노드 위 숫자가 고른 판 비율(%)입니다. 밝을수록 많이 골랐습니다.</p></div>';
+}
+function admTrdView(run, mode, rates) {
+  let L; try { L = mode === 'p' ? trdLayP(run.build) : trdLayA(run.build); } catch (e) { return '<p class="mini">이 직업은 방사형 트리를 그릴 수 없습니다.</p>'; }
+  const v = trdVw(run, mode, L), sel = trdSelOf(run, mode, L);
+  G.trdRO = 1;
+  try {
+    let svg = trdSvg(run, mode, L, v, sel); if (rates) svg = admRateSvg(svg, rates.r);
+    let info = sel ? (mode === 'p' ? trdInfoP(run, sel, mode) : trdInfoA(run, sel)) : '';
+    if (info && rates) { info = info.replace(/<p class="trd-st[^"]*">[\s\S]*?<\/p>/g, '').replace(/<p class="mini">관리자 보기입니다\.[^<]*<\/p>/g, '').replace(/<div class="vlist">[\s\S]*?<\/div>/g, '') + admRateInfo(run, mode, sel, rates); }
+    const ctl = '<div class="trd-ctl" role="group" aria-label="확대와 이동"><button class="sm" data-a="tzoom" data-k="in" data-e="' + mode + '" aria-label="확대">＋</button><button class="sm" data-a="tzoom" data-k="out" data-e="' + mode + '" aria-label="축소">－</button><button class="sm" data-a="tzoom" data-k="fit" data-e="' + mode + '" aria-label="전체 보기">전체</button></div>';
+    return '<div class="trd trd-' + mode + ' adm-trd' + (sel ? ' has-sel' : '') + '"><div class="trd-map">' + svg + ctl + '<div class="trd-hint" aria-hidden="true">Ctrl(⌘) + 휠로 확대합니다</div></div><div class="trd-info' + (sel ? '' : ' empty') + '" role="region" aria-label="노드 설명">' + (info || '<p class="mini">노드를 누르면 이름 · 효과' + (rates ? ' · 고른 판 비율' : ' · 상태') + '이 여기에 보입니다.</p>') + '</div>' + (rates ? admRateLegend() : trdLegend(mode)) + '</div>';
+  } finally { G.trdRO = 0; }
+}
+function admRateInfo(run, mode, id, rates) {
+  const n = rates.n || 0, c = id => Math.round((rates.r[id] || 0) * n), A = mode === 'a' ? atBuild(run.build) : null, node = A && A.nodes[id];
+  let h = '<p class="trd-st st-own">고른 판 ' + admPct(c(id), n) + ' (' + c(id) + '/' + n + '판)</p>';
+  if (node && node.kind === 'skill') h += '<p class="mini">장착한 판 ' + admPct(rates.eq[id] || 0, n) + ' (' + (rates.eq[id] || 0) + '판)</p>';
+  if (node && node.slot) h += '<p class="mini">고른 변형: ' + ((node.vars || []).map(vid => esc((A.vars[vid] || {}).n || vid) + ' ' + (rates.v[vid] || 0) + '판').join(' · ') || '없음') + '</p>';
+  return h;
+}
+/* 탭 3 스킬 트리: 액티브 · 패시브를 바꾸는 탭(.settabs) + 방사형 그림 + 장착 스킬 · 큰 각인 */
+function vAdminTree08(r) {
+  if (!r.atree && !r.ptree) return '<h4>스킬 트리</h4><p class="mini">이 판에는 방사형 트리 기록이 없습니다(옛 판). 아래 스탯·옛 트리 탭에서 봅니다.</p>';
+  const run = admTreeRun(r), m = G.admTv === 'p' ? 'p' : 'a', st = ((TREE2[r.build] || {}).starters || []), eq = run.skills, sn = id => (SK2[id] || {}).n || id;
+  let P = null; try { P = ptBuild(r.build); } catch (e) { }
+  let h = '<h4>스킬 트리</h4><p class="mini">마지막 저장 시점입니다. 액티브 포인트 ' + run.atree.pts + ' · 패시브 포인트 ' + run.ptree.pts + ' 남음. 볼 수만 있습니다.</p>';
+  h += '<div class="adm-treesum"><div><span class="mini">장착 스킬</span><div class="trow">' + st.map(id => '<span class="tslot on">' + esc(sn(id)) + ' <small>시작</small></span>').join('') + (eq.length ? eq.map(id => '<span class="tslot on">✓ ' + esc(sn(id)) + '</span>').join('') : '<span class="tslot">장착한 스킬 없음</span>') + '</div></div><div><span class="mini">큰 각인</span><div class="trow">' + (run.ptree.ks.length ? run.ptree.ks.map(id => '<span class="tslot on">◆ ' + esc(((P && P.nodes[id]) || {}).n || id) + '</span>').join('') : '<span class="tslot">얻은 큰 각인 없음</span>') + '</div></div>' + (Object.keys(run.atree.vsel).length ? '<div><span class="mini">고른 변형</span><div class="trow">' + Object.values(run.atree.vsel).map(v => { let n = v; try { n = (atBuild(r.build).vars[v] || {}).n || v; } catch (e) { } return '<span class="tslot on">✚ ' + esc(n) + '</span>'; }).join('') + '</div></div>' : '') + '</div>';
+  h += '<div class="settabs" role="tablist" aria-label="트리 고르기">' + [['a', '액티브 트리 · 열린 칸 ' + run.atree.own.length], ['p', '패시브 트리 · 찍은 칸 ' + (run.ptree.own.length + run.ptree.free.length)]].map(([k, n]) => '<button type="button" role="tab" id="admtv-' + k + '" class="settab' + (m === k ? ' on' : '') + '" aria-selected="' + (m === k) + '" aria-controls="admtvp" tabindex="' + (m === k ? 0 : -1) + '" data-a="admtv" data-k="' + k + '">' + esc(n) + '</button>').join('') + '</div>';
+  return h + '<div role="tabpanel" id="admtvp" aria-labelledby="admtv-' + m + '">' + admTrdView(run, m) + '</div>';
+}
 function vRunDetail(x) {
-  const r = x.r, acts = r.acts || [], page = Math.max(0, Math.min(G.raPage || 0, Math.ceil(acts.length / 100) - 1));
+  const r = x.r, acts = r.acts || [], page = Math.max(0, Math.min(G.raPage || 0, Math.ceil(acts.length / 100) - 1)), is = dashIssues(r, Date.now());
   const names = { act: '행동', hit: '피격', break: '붕괴', kill: '처치', dead: '사망', heal: '회복', dodge: '흘리기', dealt: '가한 피해', eact: '적 행동', cons: '소모품', err: '⚠ 화면 오류' };
-  const skills = allSkillNames();
-  let h = '<section class="card admin-detail" id="admin-run-detail"><h4>' + esc(r.cname || '이름 없는 캐릭터') + ' 상세 기록</h4><p>' + esc(x.who) + '</p><p class="mini">판 ID: ' + esc(r.id || '없음') + ' · 행동 기록 ' + acts.length + '건' + dashRunFlags(r) + '</p><button class="sm" data-a="runclose">상세 닫기</button>';
+  const ps = r.playerState, chips = [['직업', admCls(r)], ['결과', DASH_RESULTS[dashRunResult(r)] || dashRunResult(r)], ['도달', rankProg({ ch: r.ch, clears: r.clears, floor: r.roomReached })], ['레벨', 'Lv' + (r.lv || 1)], ['HP', ps && ps.hpMax ? Math.round(ps.hp / ps.hpMax * 100) + '%' : '미기록'], ['플레이 시간', fmtMs(r.playMs)], ['시작', admTime(r.startedAt)], ['마지막 기록', admTime(dashRunTime(r))], ['화면 오류', is.errs.length + '건'], ['쓰러짐', (r.deaths || []).length + '번']];
+  let h = '<section class="card admin-detail" id="admin-run-detail"><div class="adm-headrow"><div><h4>' + esc(r.cname || '이름 없는 캐릭터') + ' 상세 기록</h4><p>' + esc(x.who) + '</p><p class="mini">판 ID: ' + esc(r.id || '없음') + ' · 행동 기록 ' + acts.length + '건' + dashRunFlags(r) + (is.cap ? ' <span class="rctag warn">기록 한도</span>' : '') + (is.stuck ? ' <span class="rctag warn">멈춘 듯함</span>' : '') + '</p></div><button class="sm" data-a="runclose">상세 닫기</button></div>';
+  h += '<dl class="adm-chips">' + chips.map(([k, v]) => '<div><dt>' + k + '</dt><dd' + ((k === '화면 오류' && is.errs.length) || (k === '쓰러짐' && (r.deaths || []).length) ? ' class="adm-warn"' : '') + '>' + esc(v) + '</dd></div>').join('') + '</dl>';
   h += vRunDelete(x);
-  const tab=G.rdTab || 'summary';
-  h += '<div class="admin-tabs" role="group" aria-label="개인 상세 보기">'+[['summary','요약'],['gear','장비·아이템'],['growth','스탯·스킬 트리'],['battle','행동 기록']].map(([k,n])=>'<button class="chip'+(tab===k ? ' on' : '')+'" data-a="runtab" data-k="'+k+'" aria-pressed="'+(tab===k)+'">'+n+'</button>').join('')+'</div><div class="row"><button class="sm" data-a="runroomcsv">이 판의 방별 통계 CSV</button></div>';
-  if(tab==='summary') return h+vAdminCombat(r)+'</section>';
-  if(tab==='gear') return h+vAdminGear(r)+'</section>';
-  if(tab==='growth') return h+vAdminBuild(r)+'</section>';
-
-  h += '<h4>전투 행동 흐름</h4><p class="mini">HP·스태미나는 행동을 기록한 시점의 상태입니다. 과거 기록에 최대값이 없으면 비율 또는 남은 값만 표시합니다. 행동 기록은 전투가 끝난 뒤 저장됩니다.</p>';
+  const TABS = [['flow', '방별 흐름'], ['tree', '스킬 트리'], ['summary', '전투 요약'], ['gear', '장비·아이템'], ['growth', '스탯·옛 트리'], ['battle', '행동 기록']], tab = TABS.some(t => t[0] === G.rdTab) ? G.rdTab : 'flow';
+  h += '<div class="admin-tabs" role="group" aria-label="이 판 보기">' + TABS.map(([k, n]) => '<button class="chip' + (tab === k ? ' on' : '') + '" data-a="runtab" data-k="' + k + '" aria-pressed="' + (tab === k) + '">' + n + '</button>').join('') + '</div>';
+  const raw = '<details class="admin-fold"><summary>이 판의 원본 기록 보기</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:400px;overflow:auto">' + esc(JSON.stringify(r, null, 2)) + '</pre></details></section>';
+  if (tab === 'flow') return h + '<p class="mini">방마다 나온 문과 고른 문, 적, 들어갈 때와 나올 때의 HP입니다. 화면 오류는 그 방 아래 줄에 붉은 테로 보입니다.</p>' + vRunTimeline(r) + '<div class="row"><button class="sm" data-a="runroomcsv">이 판의 방별 통계 CSV</button></div>' + raw;
+  if (tab === 'tree') return h + vAdminTree08(r) + raw;
+  if (tab === 'summary') return h + vAdminCombat(r) + raw;
+  if (tab === 'gear') return h + vAdminGear(r) + raw;
+  if (tab === 'growth') return h + vAdminBuild(r) + raw;
+  h += '<h4>전투 행동 흐름</h4><p class="mini">HP·스태미나는 행동을 기록한 시점의 상태입니다. 과거 기록에 최대값이 없으면 비율 또는 남은 값만 표시합니다. 전투 중 행동도 곧바로 저장됩니다.</p>';
   h += '<button class="sm" data-a="runactioncsv">행동별 HP·스태미나 CSV</button>';
   if (r.actsN > acts.length) h += '<p class="mini">전체 ' + r.actsN + '건 중 보관된 ' + acts.length + '건을 표시합니다.</p>';
   if (!acts.length) h += '<p class="mini">저장된 행동 기록이 없습니다.</p>';
   else {
     h += '<div class="tbl"><table class="st2"><caption class="sr">행동 흐름</caption><thead><tr><th>순서</th><th>층</th><th>전투 시간</th><th>종류</th><th>HP</th><th>스태미나</th><th>내용</th></tr></thead><tbody>';
     h += acts.slice(page * 100, (page + 1) * 100).map((a, i) => {
-      const text = [a.k === 'err' ? (a.msg || '') + (a.at ? ' @ ' + a.at : '') + (a.sheet ? ' · 창 ' + a.sheet : '') + (a.b ? ' · 전투 ' + a.b : '') : '', typeof a.a === 'string' ? (dashActionName(a.a,r)) : '', a.id && a.k === 'cons' ? ((CONS[a.id] || {}).n || a.id) : '', a.tg ? '대상: ' + ((ROLES[a.tg] || {}).n || a.tg) : '', a.role ? '적: ' + ((ROLES[a.role] || {}).n || a.role) : '', a.i ? '적 행동: ' + a.i : '', a.st != null ? '스태미나 ' + a.st : '', a.heavyIn ? '강타 예고 중' : '', a.healIn ? '치유 예고 중' : '', a.d != null ? (a.k==='dealt' ? '가한 피해 ' : a.k==='hit' ? '받은 피해 ' : '피해 ') + a.d : '', a.hp != null ? '생명력 ' + Math.round(a.hp * 100) + '%' : '', a.mp != null ? '마나 ' + Math.round(a.mp * 100) + '%' : '', a.charged ? '강타' : '', a.parried ? '흘리기 성공' : '', a.guard ? '방어 중' : ''].filter(Boolean).join(' · ');
-      return '<tr><td>' + (page * 100 + i + 1) + '</td><td>' + esc((a.ch ? a.ch + '챕터 · ' : '') + (a.r == null ? '—' : floorName(a.r))) + '</td><td>' + esc(a.t == null ? '—' : a.t + '초') + '</td><td>' + esc(names[a.k] || a.k || '기록') + '</td><td>' + dashResource('HP',a.hpNow,a.hpMax,a.hp) + '</td><td>' + dashResource('스태미나',a.st,a.stMax) + '</td><td>' + esc(text || '원본 기록에서 확인') + '</td></tr>';
+      const text = [a.k === 'err' ? admErrTxt(a) : '', typeof a.a === 'string' ? (dashActionName(a.a,r)) : '', a.id && a.k === 'cons' ? ((CONS[a.id] || {}).n || a.id) : '', a.tg ? '대상: ' + ((ROLES[a.tg] || {}).n || a.tg) : '', a.role ? '적: ' + ((ROLES[a.role] || {}).n || a.role) : '', a.i ? '적 행동: ' + a.i : '', a.st != null ? '스태미나 ' + a.st : '', a.heavyIn ? '강타 예고 중' : '', a.healIn ? '치유 예고 중' : '', a.d != null ? (a.k==='dealt' ? '가한 피해 ' : a.k==='hit' ? '받은 피해 ' : '피해 ') + a.d : '', a.hp != null ? '생명력 ' + Math.round(a.hp * 100) + '%' : '', a.mp != null ? '마나 ' + Math.round(a.mp * 100) + '%' : '', a.charged ? '강타' : '', a.parried ? '흘리기 성공' : '', a.guard ? '방어 중' : ''].filter(Boolean).join(' · ');
+      return '<tr' + (a.k === 'err' ? ' class="adm-errrow"' : '') + '><td>' + (page * 100 + i + 1) + '</td><td>' + esc((a.ch ? a.ch + '챕터 · ' : '') + (a.r == null ? '—' : floorName(a.r))) + '</td><td>' + esc(a.t == null ? '—' : a.t + '초') + '</td><td>' + esc(names[a.k] || a.k || '기록') + '</td><td>' + dashResource('HP',a.hpNow,a.hpMax,a.hp) + '</td><td>' + dashResource('스태미나',a.st,a.stMax) + '</td><td>' + esc(text || '원본 기록에서 확인') + '</td></tr>';
     }).join('') + '</tbody></table></div><div class="row"><button class="sm" data-a="runactpage" data-v="' + (page - 1) + '"' + (page ? '' : ' disabled') + '>이전 행동</button><span>' + (page + 1) + '/' + Math.ceil(acts.length / 100) + '</span><button class="sm" data-a="runactpage" data-v="' + (page + 1) + '"' + ((page + 1) * 100 < acts.length ? '' : ' disabled') + '>다음 행동</button></div>';
   }
-  return h + '<details><summary>이 판의 원본 기록 보기</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:400px;overflow:auto">' + esc(JSON.stringify(r, null, 2)) + '</pre></details></section>';
+  return h + raw;
 }
 function vAdminOverview(rows) {
   const by = {};for(const x of rows){const k=x.r.build || 'unknown',c=dashCombatStats(x.r),o=by[k] || (by[k]={runs:0,measured:0,dealt:0,taken:0,received:0});o.runs++;if(c.dealt!=null){o.measured++;o.dealt+=c.dealt;}if(c.taken!=null){o.received++;o.taken+=c.taken;}}
   return '<details class="admin-fold" open><summary>검색 결과 전투 통계 · '+rows.length+'판</summary><p class="mini">집계 가능한 기록만 합산합니다. 미기록은 평균에서 제외합니다. 일부 기록은 해당 기록 범위의 값입니다.</p><div class="tbl"><table class="st2"><caption class="sr">직업별 전투 통계</caption><thead><tr><th>직업</th><th>판 수</th><th>가한 피해 합계</th><th>판당 평균</th><th>받은 피해 합계</th><th>판당 평균</th><th>집계 가능한 판 (가함/받음)</th></tr></thead><tbody>'+Object.entries(by).map(([k,o])=>'<tr><td>'+esc((BUILDS[k]||{}).n || k)+'</td><td>'+o.runs+'</td><td>'+adminNum(o.measured ? o.dealt : null)+'</td><td>'+adminNum(o.measured ? o.dealt/o.measured : null)+'</td><td>'+adminNum(o.received ? o.taken : null)+'</td><td>'+adminNum(o.received ? o.taken/o.received : null)+'</td><td>'+o.measured+'/'+o.received+'</td></tr>').join('')+'</tbody></table></div></details>';
 }
-
+/* 탭 3: 판 고르기(검색 · 목록) + 고른 판 */
 function vRunLogs() {
-  const f = G.rf || {}, rows = dashRunRows(), pages = Math.max(1, Math.ceil(rows.length / 25));
-  const page = Math.max(0, Math.min(G.rfPage || 0, pages - 1));
-  let h = '<section class="card">'+(G.runDelMsg ? '<p class="banner" role="status">'+esc(G.runDelMsg)+'</p>' : '')+'<h4>플레이 로그 찾기</h4><p class="mini">마지막 기록이 최신인 순서입니다. 검색 조건을 고른 뒤 적용을 누르세요.</p><div class="admin-filters"><label>플레이어 <select id="runperson"><option value="">전체 플레이어</option>' + (G.dashRaw || []).map((T,i)=>'<option value="' + esc(T.uid) + '"' + (f.uid === T.uid ? ' selected' : '') + '>' + esc(testerLabel(T,i)) + '</option>').join('') + '</select></label><label>이름·ID 검색 <input id="runquery" type="search" value="' + esc(f.q || '') + '" placeholder="플레이어, 캐릭터, 계정·판 ID"></label><label>직업 <select id="runbuild"><option value="all">전체 직업</option>' + CLASS_KEYS().map(k => '<option value="' + k + '"' + (f.b === k ? ' selected' : '') + '>' + esc(BUILDS[k].n) + '</option>').join('') + '</select></label><label>결과 <select id="runresult"><option value="all">전체 결과</option>' + Object.entries(DASH_RESULTS).map(([k, n]) => '<option value="' + k + '"' + (f.result === k ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></label><label>시작일 <input id="runfrom" type="date" value="' + esc(f.from || '') + '"></label><label>종료일 <input id="runto" type="date" value="' + esc(f.to || '') + '"></label></div><div class="row"><button class="sm gold" data-a="runfilter">검색 적용</button><button class="sm" data-a="runreset">초기화</button><button class="sm" data-a="runscsv">검색 결과 CSV 받기</button></div><p role="status">검색 결과 ' + rows.length + '판 · ' + (page + 1) + '/' + pages + '페이지 (25판씩)</p>';
-  h += vBatchRunDelete();
-  h += vAdminOverview(rows);
-  h += '<div class="tbl"><table class="st2"><caption class="sr">검색된 플레이 로그</caption><thead><tr><th>플레이어</th><th>캐릭터·직업</th><th>결과</th><th>도달</th><th>마지막 기록</th><th>상세</th></tr></thead><tbody>';
-  h += rows.slice(page * 25, (page + 1) * 25).map(x => { const r = x.r; return '<tr><td>' + (canDeleteRun() ? '<label><input type="checkbox" data-a="rundeltick" data-k="'+esc(JSON.stringify({uid:x.uid,id:r.id}))+'"'+((G.runDeleteSel || []).some(t=>t.uid===x.uid&&t.id===r.id) ? ' checked' : '')+(G.runDelBusy ? ' disabled' : '')+' aria-label="'+esc((r.cname || r.id)+' 삭제 선택')+'"> 선택</label><br>' : '') + esc(x.who) + '</td><td>' + esc(r.cname || '—') + '<br>' + esc((BUILDS[r.build] || {}).n || r.build || '—') + '</td><td>' + esc(DASH_RESULTS[dashRunResult(r)] || dashRunResult(r)) + dashRunFlags(r) + '</td><td>' + esc(rankProg({ ch: r.ch, clears: r.clears, floor: r.roomReached })) + '</td><td>' + esc(dashRunTime(r) ? new Date(dashRunTime(r)).toLocaleString('ko-KR') : '—') + '</td><td><button class="sm" data-a="runopen" data-k="' + x.key + '" aria-expanded="' + (G.rfOpen === x.key) + '">기록 보기</button></td></tr>'; }).join('') || '<tr><td colspan="6">조건에 맞는 기록이 없습니다.</td></tr>';
-  h += '</tbody></table></div><div class="row"><button class="sm" data-a="runpage" data-v="' + (page - 1) + '"' + (page ? '' : ' disabled') + '>이전</button><button class="sm" data-a="runpage" data-v="' + (page + 1) + '"' + (page + 1 < pages ? '' : ' disabled') + '>다음</button></div></section>';
-  const opened = rows.find(x => x.key === G.rfOpen); return (opened ? vRunDetail(opened) : '') + h;
+  const f = G.rf || {}, rows = dashRunRows(), pages = Math.max(1, Math.ceil(rows.length / 25)), page = Math.max(0, Math.min(G.rfPage || 0, pages - 1)), opened = dashSelectedRun();
+  let h = (G.runDelMsg ? '<p class="banner" role="status">' + esc(G.runDelMsg) + '</p>' : '') + '<section class="card"><details class="adm-finder"' + (opened ? '' : ' open') + '><summary><b>판 고르기</b> <span class="mini">검색 결과 ' + rows.length + '판' + (opened ? ' · 펼치면 다른 판을 고릅니다' : '') + '</span></summary>';
+  h += '<div class="admin-filters"><label>플레이어 <select id="runperson"><option value="">전체 플레이어</option>' + (G.dashRaw || []).map((T,i)=>'<option value="' + esc(T.uid) + '"' + (f.uid === T.uid ? ' selected' : '') + '>' + esc(testerLabel(T,i)) + '</option>').join('') + '</select></label><label>이름·ID 검색 <input id="runquery" type="search" value="' + esc(f.q || '') + '" placeholder="플레이어, 캐릭터, 계정·판 ID"></label><label>직업 <select id="runbuild"><option value="all">전체 직업</option>' + CLASS_KEYS().map(k => '<option value="' + k + '"' + (f.b === k ? ' selected' : '') + '>' + esc(BUILDS[k].n) + '</option>').join('') + '</select></label><label>결과 <select id="runresult"><option value="all">전체 결과</option>' + Object.entries(DASH_RESULTS).map(([k, n]) => '<option value="' + k + '"' + (f.result === k ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></label><label>시작일 <input id="runfrom" type="date" value="' + esc(f.from || '') + '"></label><label>종료일 <input id="runto" type="date" value="' + esc(f.to || '') + '"></label></div><div class="row"><button class="sm gold" data-a="runfilter">검색 적용</button><button class="sm" data-a="runreset">초기화</button></div><p role="status" class="mini">검색 결과 ' + rows.length + '판 · ' + (page + 1) + '/' + pages + '페이지 (25판씩). 마지막 기록이 최신인 순서입니다.</p>';
+  h += admTbl('검색된 플레이 로그', ['판', '직업', '결과', '도달', '마지막 기록'], rows.slice(page * 25, (page + 1) * 25).map(x => '<tr' + (G.rfOpen === x.key ? ' class="adm-currow"' : '') + '><td>' + admRunBtn(x) + '</td><td>' + esc(admCls(x.r)) + '</td><td>' + esc(DASH_RESULTS[dashRunResult(x.r)] || dashRunResult(x.r)) + dashRunFlags(x.r) + '</td><td>' + admWhere(x.r) + '</td><td>' + esc(dashRunTime(x.r) ? new Date(dashRunTime(x.r)).toLocaleString('ko-KR') : '—') + '</td></tr>'), '조건에 맞는 기록이 없습니다.');
+  h += '<div class="row"><button class="sm" data-a="runpage" data-v="' + (page - 1) + '"' + (page ? '' : ' disabled') + '>이전</button><button class="sm" data-a="runpage" data-v="' + (page + 1) + '"' + (page + 1 < pages ? '' : ' disabled') + '>다음</button></div></details></section>';
+  return h + (opened ? vRunDetail(opened) : '<p class="mini">위 목록에서 판을 고르면 방별 흐름이 보입니다.</p>');
 }
-
-function vDash() {
-  let h = `<section class="card"><h3>결과 보기</h3>${G.dashErr ? `<div class="banner info">${esc(G.dashErr)}</div>` : ''}${G.archMsg ? `<div class="banner" role="status">${esc(G.archMsg)}</div>` : ''}${G.dash ? '' : '<p>불러오는 중…</p>'}
-  <div class="row"><button class="sm gold" data-a="import">지인 기록 넣기</button><button class="sm" data-a="dash">새로 고침</button><button class="sm" data-a="dashseason" aria-pressed="${G.adminSeason === '0.7.0' ? 'true' : 'false'}">${esc(G.adminSeason || RSEASON.cur)} 시즌 기록 보는 중 · 시즌 바꾸기</button><button class="sm" data-a="dashjson"${G.dash ? '' : ' disabled'}>전체 기록 내려받기 (JSON)</button><button class="sm" data-a="notescsv"${G.dash ? '' : ' disabled'}>의견만 내려받기 (CSV)</button>${G.site ? '' : `<button class="sm gold" data-a="archive"${G.dash && G.db ? '' : ' disabled'}>전체 기록 저장</button>`}</div>
-  <p class="mini">저장소에 연결되지 않은 지인은 첫 화면의 "기록 보내기 코드"를 메신저로 보내 줍니다. 그 코드를 "지인 기록 넣기"에 붙여 넣으면 여기에 함께 모입니다. 자동 기록은 테스터가 방을 끝낼 때마다, 쓰러질 때, 처음으로 나갈 때, 판을 끝낼 때 자동으로 들어옵니다. "전체 기록 저장"은 지금 시점의 모든 테스터 기록을 소유자만 읽는 보관 공간에 날짜별로 남깁니다.</p></section>`;
-  const D = G.dash; if (!D) return h;
-  h += vRunLogs();
-  const TR = testerRows(G.dashRaw || []); const delOn = !!(G.site && G.owner && (G.superAdmin || G.adminPass)); /* 서버가 확인한 관리자 계정 또는 기존 관리자 암호 */
-  h += `<section class="card"><h4>테스터별 진행</h4><div class="tbl"><table class="st2"><caption class="sr">테스터별 진행</caption><thead><tr>${delOn ? '<th scope="col">지울 기록 고르기</th>' : ''}<th scope="col">테스터</th><th scope="col">시작한 판</th><th scope="col">끝낸 판</th><th scope="col">고정 상황</th><th scope="col">마지막 질문</th><th scope="col">마지막 기록</th></tr></thead><tbody>${TR.map(t => `<tr>${delOn ? `<td><input type="checkbox" data-a="deltick" data-k="${esc(t.uid)}" aria-label="${esc(t.who)} 기록 지우기에 포함"${(G.delSel || []).includes(t.uid) ? ' checked' : ''}></td>` : ''}<td>${esc(t.who)}<br><button class="sm" data-a="runperson" data-k="${esc(t.uid)}">이 사람의 상세 기록</button></td><td>${t.started}</td><td>${t.done}</td><td>${t.scen}/3</td><td>${t.final ? '✓' : '—'}</td><td>${t.last ? esc(new Date(t.last).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })) : '—'}</td></tr>`).join('') || '<tr><td colspan="7">아직 없음</td></tr>'}</tbody></table></div>${delOn ? vDelBox(TR) : ''}</section>`;
-  h += vNotes();
+/* 탭 4: 통계 · 스킬 트리 (거르기: 판 · 챕터 · 직업 · 기간) */
+function dashStatTesters() {
+  const f = G.admSF || {}, from = f.from ? new Date(f.from + 'T00:00:00').getTime() : 0, until = f.to ? new Date(f.to + 'T00:00:00').getTime() + 86400000 : Infinity;
+  return (G.dashRaw || []).map(T => Object.assign({}, T, { runs: (T.runs || []).filter(r => r && (!f.v || r.v === f.v) && (!f.b || r.build === f.b) && (!f.ch || (r.ch || 1) >= f.ch) && (r.startedAt || 0) >= from && (r.startedAt || 0) < until) }));
+}
+/* aggregate가 판마다 부른다: 1챕터 돌파 · 쓰러진 곳 · 강적 · 보스 승률 · 트리 노드 고른 판 · 돌파 시간 */
+function aggX8(o, r) {
+  const k = r.build, c = o.ch1[k] = o.ch1[k] || { n: 0, pass: 0, fail: 0, live: 0, ms: [] }; c.n++;
+  if ((r.clears || 0) >= 1 || (r.ch || 1) > 1) { c.pass++; if (r.playMs) c.ms.push(r.playMs); } else if (dashAlive(r)) c.live++; else c.fail++;
+  let lost = 0;
+  for (const t of dashTimeline(r)) { const x = t.x; if (!x || x.hpOut == null || (o.chF && t.ch !== o.chF)) continue;
+    if (x.res === 'lose') { lost++; o.death[t.ch + ':' + t.room] = (o.death[t.ch + ':' + t.room] || 0) + 1; }
+    if (x.type === 'strong' || x.type === 'boss') { const id = x.type === 'boss' ? chData(t.ch).boss : x.foe || '?', F = o.foes[id] = o.foes[id] || { kind: x.type, ch: t.ch, n: 0, win: 0, hp: 0 }; F.n++; if (x.res === 'win') { F.win++; F.hp += x.hpOut; } } }
+  if (!lost && !o.chF) for (const f of r.deaths || []) o.death[(r.ch || 1) + ':' + f] = (o.death[(r.ch || 1) + ':' + f] || 0) + 1; // 방 기록이 없는 옛 판
+  if (r.atree || r.ptree) { const p = o.picks[k] = o.picks[k] || { n: 0, at: {}, pt: {}, eq: {}, v: {} }, a = r.atree || {}, q = r.ptree || {}; p.n++;
+    for (const id of new Set(a.own || [])) p.at[id] = (p.at[id] || 0) + 1; for (const id of new Set(r.skills || [])) p.eq[id] = (p.eq[id] || 0) + 1; for (const v of Object.values(a.vsel || {})) p.v[v] = (p.v[v] || 0) + 1;
+    for (const id of new Set([].concat(q.own || [], q.free || [], q.ks || []))) p.pt[id] = (p.pt[id] || 0) + 1; }
+}
+function vAdmStats() {
+  const f = G.admSF || {}, TS = dashStatTesters(), D = aggregate(TS, { ch: f.ch }), X = D.x8, bn = CLASS_KEYS(), runs = TS.flatMap(T => T.runs.map(r => ({ r }))), vs = [...new Set(dashAllRuns().map(x => x.r.v).filter(Boolean))].sort(), chs = Object.keys(CHAPTERS).map(Number);
+  let h = '<section class="card"><h4>거르기</h4><div class="admin-filters"><label>판 <select id="sfv"><option value="">모든 판</option>' + vs.map(v => '<option value="' + esc(v) + '"' + (f.v === v ? ' selected' : '') + '>' + esc(v) + '</option>').join('') + '</select></label><label>챕터 <select id="sfch"><option value="0">모든 챕터</option>' + chs.map(c => '<option value="' + c + '"' + (+f.ch === c ? ' selected' : '') + '>' + c + '챕터까지 간 판</option>').join('') + '</select></label><label>직업 <select id="sfb"><option value="">모든 직업</option>' + bn.map(k => '<option value="' + k + '"' + (f.b === k ? ' selected' : '') + '>' + esc(BUILDS[k].n) + '</option>').join('') + '</select></label><label>시작일 <input id="sffrom" type="date" value="' + esc(f.from || '') + '"></label><label>종료일 <input id="sfto" type="date" value="' + esc(f.to || '') + '"></label></div><div class="row"><button class="sm gold" data-a="admsf">거르기 적용</button><button class="sm" data-a="admsfreset">초기화</button></div><p class="mini" role="status">고른 판 ' + runs.length + '개. 챕터를 고르면 그 챕터까지 간 판만 세고, 쓰러진 곳 · 강적 · 보스는 그 챕터 방만 셉니다.</p></section>';
+  h += '<div class="adm-cols">';
+  h += '<section class="card"><h4>직업별 1챕터 돌파 · 돌파 시간</h4>' + admTbl('직업별 1챕터 돌파율과 돌파한 판의 평균 플레이 시간', ['직업', '판', '돌파', '실패', '진행 중', '돌파율', '돌파한 판 평균 시간'], bn.map(k => { const c = X.ch1[k] || { n: 0, pass: 0, fail: 0, live: 0, ms: [] }; return '<tr><th scope="row">' + esc(BUILDS[k].n) + '</th><td>' + c.n + '</td><td>' + c.pass + '</td><td>' + c.fail + '</td><td>' + c.live + '</td><td><b>' + admPct(c.pass, c.pass + c.fail) + '</b></td><td>' + (c.ms.length ? esc(fmtMs(admAvg(c.ms))) + ' <small class="mini">(' + c.ms.length + '판)</small>' : '—') + '</td></tr>'; }), '판이 없습니다.') + '<p class="mini">돌파율 = 돌파 ÷ (돌파 + 실패). 진행 중인 판은 빼고 셉니다. 시간은 판 전체의 플레이 시간이라, 다음 챕터까지 한 판은 길게 나옵니다.</p></section>';
+  const dk = Object.entries(X.death).sort(([a], [b]) => { const [ca, fa] = a.split(':').map(Number), [cb, fb] = b.split(':').map(Number); return ca - cb || fa - fb; }), dmax = Math.max(1, ...dk.map(x => x[1])), dsum = dk.reduce((s, x) => s + x[1], 0);
+  h += '<section class="card"><h4>쓰러진 곳</h4><p class="mini">챕터 · 층마다 쓰러진 횟수입니다. 모두 ' + dsum + '번.</p>' + (dk.length ? '<div class="admin-action-bars adm-bars">' + dk.map(([k, n]) => { const [c, fl] = k.split(':').map(Number), nm = admFloor(c, fl); return '<div><span>' + esc(nm) + '</span><meter min="0" max="' + dmax + '" value="' + n + '" aria-label="' + esc(nm) + ' 쓰러진 횟수">' + n + '</meter><b>' + n + '번</b></div>'; }).join('') + '</div>' : '<p class="mini">쓰러진 기록이 없습니다.</p>') + '</section>';
+  const fo = Object.entries(X.foes).sort((a, b) => (a[1].ch - b[1].ch) || ((a[1].kind === 'boss') - (b[1].kind === 'boss')) || (b[1].n - a[1].n));
+  h += '<section class="card"><h4>강적 · 보스 승률</h4>' + admTbl('강적과 보스별 승률', ['적', '종류', '챕터', '싸움', '이김', '승률', '이긴 뒤 남은 HP'], fo.map(([id, F]) => '<tr><th scope="row">' + esc(admFoeName(id)) + '</th><td>' + (F.kind === 'boss' ? '보스' : '강적') + '</td><td>' + F.ch + '</td><td>' + F.n + '</td><td>' + F.win + '</td><td><b>' + admPct(F.win, F.n) + '</b></td><td>' + (F.win ? Math.round(F.hp / F.win * 100) + '%' : '—') + '</td></tr>'), '강적 · 보스 전투 기록이 없습니다.') + '</section>';
+  h += '<section class="card">' + vAdminOverview(runs).replace('검색 결과 전투 통계', '고른 판 전투 통계') + '</section></div>';
+  const pc = bn.includes(G.admPc) ? G.admPc : f.b && bn.includes(f.b) ? f.b : bn.slice().sort((a, b) => ((X.picks[b] || {}).n || 0) - ((X.picks[a] || {}).n || 0))[0], P = X.picks[pc] || { n: 0, at: {}, pt: {}, eq: {}, v: {} }, tm = G.admSv === 'p' ? 'p' : 'a';
+  h += '<section class="card"><h4>스킬 · 트리 노드 고른 비율</h4><p class="mini">직업마다 트리 기록이 있는 판 가운데 그 노드를 연 판의 비율입니다. 노드를 누르면 장착 비율 · 고른 변형이 보입니다.</p><div class="wrap" role="group" aria-label="직업 고르기">' + bn.map(k => '<button class="chip' + (k === pc ? ' on' : '') + '" data-a="admpc" data-k="' + k + '" aria-pressed="' + (k === pc) + '">' + esc(BUILDS[k].n) + ' · ' + ((X.picks[k] || {}).n || 0) + '판</button>').join('') + '</div>';
+  if (pc && P.n) {
+    const fake = admTreeRun({ build: pc, clears: 3, ch: 3, atree: { own: Object.keys(P.at), pts: 0 }, ptree: { own: Object.keys(P.pt), free: [], ks: [], pts: 0 }, skills: [] }), rate = m => Object.fromEntries(Object.entries(m).map(([id, c]) => [id, c / P.n]));
+    fake.ringCamp = 3; let PT0 = null; try { PT0 = ptBuild(pc); } catch (e) { } if (PT0) { fake.ptree.ks = fake.ptree.own.filter(id => PT0.nodes[id] && PT0.nodes[id].kind === 'keystone'); fake.ptree.own = fake.ptree.own.filter(id => !fake.ptree.ks.includes(id)); }
+    h += '<div class="settabs" role="tablist" aria-label="트리 고르기">' + [['a', '액티브 트리'], ['p', '패시브 트리']].map(([k, n]) => '<button type="button" role="tab" id="admsv-' + k + '" class="settab' + (tm === k ? ' on' : '') + '" aria-selected="' + (tm === k) + '" aria-controls="admsvp" tabindex="' + (tm === k ? 0 : -1) + '" data-a="admsv" data-k="' + k + '">' + n + '</button>').join('') + '</div><div role="tabpanel" id="admsvp" aria-labelledby="admsv-' + tm + '">' + admTrdView(fake, tm, { n: P.n, r: rate(tm === 'a' ? P.at : P.pt), eq: P.eq, v: P.v }) + '</div>';
+    const top = (m, nm) => Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([id, c]) => '<tr><th scope="row">' + esc(nm(id)) + '</th><td>' + c + '</td><td><b>' + admPct(c, P.n) + '</b></td></tr>');
+    let A0 = null; try { A0 = atBuild(pc); } catch (e) { }
+    h += '<details class="admin-fold"><summary>표로 보기 · 많이 고른 노드</summary><div class="adm-cols">' + admTbl('많이 연 액티브 노드', ['액티브 노드', '판', '비율'], top(P.at, id => ((A0 && A0.nodes[id]) || {}).n || id), '기록 없음') + admTbl('많이 찍은 패시브 노드', ['패시브 노드', '판', '비율'], top(P.pt, id => ((PT0 && PT0.nodes[id]) || {}).n || id), '기록 없음') + admTbl('많이 장착한 스킬', ['장착 스킬', '판', '비율'], top(P.eq, id => (SK2[id] || {}).n || id), '기록 없음') + '</div></details>';
+  } else h += '<p class="mini">이 직업은 트리 기록이 있는 판이 없습니다.</p>';
+  h += '</section>';
+  h += '<details class="admin-fold"><summary>옛 시험 질문지 집계 · 빌드별 요약</summary>' + vAdmOld(D) + '</details>';
+  h += '<details class="admin-fold"><summary>옛 요약 · 직업별 완주 · 문 고르기 · 방 결과 · 상점</summary>' + vDash06() + '</details>';
+  return h;
+}
+function vAdmOld(D) {
+  let h = '';
   const bn = CLASS_KEYS();
   h += `<section class="card"><h4>테스터 ${D.testerN}명</h4><p class="mini">질문 5 자발적 시험: 막히지 않았는데 아이템을 장착해 본 테스터 ${D.freeTry}명 (${D.testerN ? Math.round(D.freeTry / D.testerN * 100) : 0}%), 그중 "재미있어 보여서" 교체 ${D.freeCurious}회. 목표: 50% 이상, "재미있어 보여서" 1회 이상.</p>
   <p class="mini">질문 8 방식 차이: 많이 달랐다 ${D.finals.very} · 조금 ${D.finals.some} · 거의 같았다 ${D.finals.same}. 목표: 5명 중 4명 이상.</p><p class="mini">다시 하고 싶음 평균 ${D.finals.again.length ? r1(D.finals.again.reduce((a, c) => a + c, 0) / D.finals.again.length) : '—'} (1~5). 기록판을 보고 다시 하고 싶어짐: ${Object.entries(D.finals.board).map(([k, v]) => (SV.board[k] || k) + ' ' + v).join(', ') || '—'}. 바라는 것: ${Object.entries(D.finals.want).sort((a, c) => c[1] - a[1]).map(([k, v]) => (SV.want[k] || k) + ' ' + v).join(', ') || '—'}.</p></section>`;
@@ -418,6 +629,42 @@ function vDash() {
   h += `</tbody></table></div><p><b>두 축 이상 다른 상황: ${pass}/5</b> (목표 3 이상)</p></section>`;
   return h;
 }
+/* 탭 5: 도구 — 기록 넣기 · 내려받기 · 보관 · 테스터 기록 지우기 · 판 기록 지우기 · 의견 모아 보기(전과 같이 동작) */
+function vAdmTools() {
+  const TR = testerRows(G.dashRaw || []); const delOn = !!(G.site && G.owner && (G.superAdmin || G.adminPass)); /* 서버가 확인한 관리자 계정 또는 기존 관리자 암호 */
+  let h = '<div class="adm-cols"><section class="card"><h4>기록 넣기 · 내려받기</h4><div class="row"><button class="sm gold" data-a="import">지인 기록 넣기</button><button class="sm" data-a="dashjson">전체 기록 내려받기 (JSON)</button><button class="sm" data-a="notescsv">의견만 내려받기 (CSV)</button><button class="sm" data-a="runscsv">판 목록 내려받기 (CSV)</button>' + (G.site ? '' : '<button class="sm" data-a="archive"' + (G.db ? '' : ' disabled') + '>전체 기록 저장</button>') + '</div><p class="mini">저장소에 연결되지 않은 지인은 첫 화면의 "기록 보내기 코드"를 메신저로 보내 줍니다. 그 코드를 "지인 기록 넣기"에 붙여 넣으면 여기에 함께 모입니다. 자동 기록은 테스터가 방을 끝낼 때마다, 쓰러질 때, 처음으로 나갈 때, 판을 끝낼 때 자동으로 들어옵니다. "전체 기록 저장"은 지금 시점의 모든 테스터 기록을 소유자만 읽는 보관 공간에 날짜별로 남깁니다.</p><p class="mini">판 목록 CSV는 한 판 따라가기 탭의 검색 조건을 따릅니다.</p></section>';
+  h += `<section class="card"><h4>테스터별 진행</h4><div class="tbl"><table class="st2"><caption class="sr">테스터별 진행</caption><thead><tr>${delOn ? '<th scope="col">지울 기록 고르기</th>' : ''}<th scope="col">테스터</th><th scope="col">시작한 판</th><th scope="col">끝낸 판</th><th scope="col">고정 상황</th><th scope="col">마지막 질문</th><th scope="col">마지막 기록</th></tr></thead><tbody>${TR.map(t => `<tr>${delOn ? `<td><input type="checkbox" data-a="deltick" data-k="${esc(t.uid)}" aria-label="${esc(t.who)} 기록 지우기에 포함"${(G.delSel || []).includes(t.uid) ? ' checked' : ''}></td>` : ''}<td>${esc(t.who)}<br><button class="sm" data-a="runperson" data-k="${esc(t.uid)}">이 사람의 상세 기록</button></td><td>${t.started}</td><td>${t.done}</td><td>${t.scen}/3</td><td>${t.final ? '✓' : '—'}</td><td>${t.last ? esc(new Date(t.last).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })) : '—'}</td></tr>`).join('') || '<tr><td colspan="7">아직 없음</td></tr>'}</tbody></table></div>${delOn ? vDelBox(TR) : ''}</section>`;
+  h += '</div>';
+  if (canDeleteRun()) {
+    const rows = dashRunRows(), pages = Math.max(1, Math.ceil(rows.length / 25)), page = Math.max(0, Math.min(G.tlPage || 0, pages - 1));
+    h += '<section class="card"><h4>판 기록 지우기</h4><p class="mini">한 판 따라가기 탭의 검색 조건을 따릅니다. 판 ' + rows.length + '개 · ' + (page + 1) + '/' + pages + '페이지.</p>' + (G.runDelMsg ? '<p class="banner" role="status">' + esc(G.runDelMsg) + '</p>' : '') + vBatchRunDelete();
+    h += admTbl('지울 판 고르기', ['고르기', '판', '직업', '결과', '마지막 기록'], rows.slice(page * 25, (page + 1) * 25).map(x => { const r = x.r; return '<tr><td><label class="adm-tick"><input type="checkbox" data-a="rundeltick" data-k="' + esc(JSON.stringify({ uid: x.uid, id: r.id })) + '"' + ((G.runDeleteSel || []).some(t => t.uid === x.uid && t.id === r.id) ? ' checked' : '') + (G.runDelBusy ? ' disabled' : '') + ' aria-label="' + esc((r.cname || r.id) + ' 삭제 선택') + '"> 선택</label></td><td>' + esc(r.cname || '—') + '<br><small class="mini">' + esc(x.who) + '</small></td><td>' + esc(admCls(r)) + '</td><td>' + esc(DASH_RESULTS[dashRunResult(r)] || dashRunResult(r)) + dashRunFlags(r) + '</td><td>' + esc(admTime(dashRunTime(r))) + '</td></tr>'; }), '조건에 맞는 기록이 없습니다.');
+    h += '<div class="row"><button class="sm" data-a="tlpage" data-v="' + (page - 1) + '"' + (page ? '' : ' disabled') + '>이전</button><button class="sm" data-a="tlpage" data-v="' + (page + 1) + '"' + (page + 1 < pages ? '' : ' disabled') + '>다음</button></div></section>';
+  }
+  return h + vNotes();
+}
+function vDash() {
+  const D = G.dash, tab = admTabCur(), now = Date.now(), all = D ? dashAllRuns() : [];
+  let h = '<section class="card adm-head"><div class="adm-headrow"><div><h3>결과 보기</h3><p class="mini">' + esc(G.adminSeason || RSEASON.cur) + ' 시즌 · 테스터 ' + (G.dashRaw || []).length + '명 · 판 ' + all.length + '개' + (G.dashAt ? ' · ' + esc(admTime(G.dashAt)) + '에 읽음' : '') + '</p></div><div class="row"><button class="sm" data-a="dash">새로 고침</button><button class="sm" data-a="dashseason" aria-pressed="' + (G.adminSeason === '0.7.0' ? 'true' : 'false') + '">' + esc(G.adminSeason || RSEASON.cur) + ' 시즌 기록 보는 중 · 시즌 바꾸기</button></div></div>' + (G.dashErr ? '<div class="banner info">' + esc(G.dashErr) + '</div>' : '') + (G.archMsg ? '<div class="banner" role="status">' + esc(G.archMsg) + '</div>' : '') + (D ? '' : '<p>불러오는 중…</p>') + '</section>';
+  if (!D) return h;
+  const P = admProblems(all, now), LV = admLiveRows(all, now), badge = { prob: P.n, live: LV.length };
+  h += '<div class="settabs adm-tabs" role="tablist" aria-label="결과 보기 구분">' + ADM_TABS.map(([k, n]) => '<button type="button" role="tab" id="admtab-' + k + '" class="settab' + (tab === k ? ' on' : '') + '" aria-selected="' + (tab === k) + '" aria-controls="admpan-' + k + '" tabindex="' + (tab === k ? 0 : -1) + '" data-a="admtab" data-k="' + k + '">' + n + (badge[k] ? ' <span class="adm-badge">' + badge[k] + '</span>' : '') + '</button>').join('') + '</div>';
+  const body = tab === 'live' ? vAdmLive(LV, now) : tab === 'run' ? vRunLogs() : tab === 'stat' ? vAdmStats() : tab === 'tools' ? vAdmTools() : vAdmProblems(P, now);
+  liveAutoSync();
+  return h + ADM_TABS.map(([k]) => '<div role="tabpanel" id="admpan-' + k + '" aria-labelledby="admtab-' + k + '" tabindex="0" class="setpan adm-pan"' + (k === tab ? '>' + body : ' hidden>') + '</div>').join('');
+}
+/* 결과 보기 탭 · 트리 탭: 좌우 화살표 · Home · End로 옮기고 옮기면 바로 연다(설정 창 탭과 같다) */
+(function initAdmTabs() {
+  if (typeof document === 'undefined' || !document.addEventListener) return;
+  document.addEventListener('keydown', ev => {
+    const t = ev.target && ev.target.closest ? ev.target.closest('.settab[data-a="admtab"],.settab[data-a="admtv"],.settab[data-a="admsv"]') : null; if (!t || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+    const a = t.dataset.a, ks = a === 'admtab' ? ADM_TABS.map(x => x[0]) : ['a', 'p'], i = ks.indexOf(t.dataset.k); let n = -1;
+    if (ev.key === 'ArrowRight') n = (i + 1) % ks.length; else if (ev.key === 'ArrowLeft') n = (i + ks.length - 1) % ks.length; else if (ev.key === 'Home') n = 0; else if (ev.key === 'End') n = ks.length - 1;
+    if (n < 0) return; ev.preventDefault(); ev.stopPropagation();
+    if (a === 'admtab') { admTabGo(ks[n], true); return; }
+    G[a === 'admtv' ? 'admTv' : 'admSv'] = ks[n]; render(); const b = document.getElementById(a + '-' + ks[n]); if (b) b.focus();
+  }, true);
+})();
 
 /* ---------- 전체 렌더 ---------- */
 const CLS_COLOR = { monk: '#8a5a2b', warden: '#4a6f94', berserker: '#b3402a', hunter: '#3f7d3a', arcanist: '#3f5fb3', templar: '#a0692a', assassin: '#4f7a2a', warlock: '#6b3a8a', priest: '#c49a1f', scar: '#8e2f5f' };

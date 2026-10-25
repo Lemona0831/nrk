@@ -168,7 +168,7 @@
 /* 관리자 상세: 통계, 장비, 성장, 행동을 분리하고 긴 내용은 칸 안에서 줄바꿈한다. */
 .admin-detail{scroll-margin-top:80px;min-width:0;overflow-wrap:anywhere}
 .admin-detail h4{margin:18px 0 10px}.admin-detail>h4:first-child{margin-top:0}
-.admin-detail p{margin:8px 0;line-height:1.65}.admin-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}.admin-tabs button{min-height:40px}
+.admin-detail p{margin:8px 0;line-height:1.65}.admin-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}.admin-tabs button{min-height:44px}
 .admin-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;margin:14px 0}
 .admin-filters label{display:grid;gap:5px;min-width:0}.admin-filters input,.admin-filters select{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
 .admin-items{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px;margin:12px 0}
@@ -191,6 +191,37 @@
 @media(max-width:600px){.admin-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-tabs button{flex:1 1 40%}.admin-tree-rows{max-height:420px}.admin-action-bars>div{grid-template-columns:100px minmax(0,1fr) 45px}}
 
 .admin-resources{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin:12px 0}.admin-resource{display:grid;gap:6px;min-width:110px}.admin-resources>.admin-resource{padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)}.admin-resource span{color:var(--muted);font-size:calc(12px*var(--fs,1))}.admin-resource b{font-variant-numeric:tabular-nums}.admin-resource meter{width:100%;height:18px;min-width:0}
+/* 10월 24일 관리자 결과 보기 개편: 탭 다섯(.settabs) · PC 넓은 화면은 여러 칸, 좁은 화면은 쌓는다 */
+.app.scr-admin{max-width:1560px}
+.scr-admin main{word-break:keep-all}.scr-admin .rctag{white-space:nowrap}.scr-admin .adm-msg,.scr-admin pre{overflow-wrap:anywhere}
+.adm-headrow{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:8px 16px}.adm-headrow>.row{margin:0;flex-wrap:wrap}.adm-headrow>div:first-child{min-width:0;flex:1 1 260px}
+.adm-tabs{flex-wrap:wrap;margin:4px 0 12px}.adm-tabs .settab{flex:1 1 128px;word-break:keep-all}
+.adm-badge{display:inline-block;min-width:1.7em;margin-left:6px;padding:0 6px;border-radius:999px;border:1px solid currentColor;font-size:calc(12px*var(--fs,1));font-variant-numeric:tabular-nums}
+.adm-pan:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.adm-cols{display:grid;gap:12px;align-items:start;grid-template-columns:minmax(0,1fr)}.adm-cols>.card,.adm-cols>.tbl{margin:0;min-width:0}
+@media(min-width:1100px){.adm-cols{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.scr-admin .admin-metrics{margin:0 0 12px}.scr-admin .admin-metrics>div{min-height:84px}
+.adm-runbtn{display:block;width:100%;min-width:150px;text-align:left;padding:6px 10px}.adm-runbtn b,.adm-runbtn small{display:block}.adm-runbtn small{color:var(--muted);font-size:calc(12px*var(--fs,1));font-weight:400}
+table.adm-list td,table.adm-list th{vertical-align:middle}.adm-msg{min-width:220px;max-width:420px}
+.adm-warn{color:var(--bad)}
+.adm-find label{display:block;font-size:calc(14px*var(--fs,1))}.adm-findrow{display:flex;gap:8px;align-items:center;max-width:720px}.adm-findrow input{margin:4px 0;flex:1 1 auto;min-width:0}.adm-findrow button{flex:none}
+.adm-auto{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:calc(14px*var(--fs,1))}.adm-auto input{width:22px;height:22px;margin:0}
+.adm-hp{white-space:nowrap}.adm-hp meter{width:70px;height:14px;vertical-align:middle;margin-right:6px}
+.adm-tick{display:inline-flex;align-items:center;gap:6px;min-height:44px}.adm-tick input{width:22px;height:22px;margin:0}
+.adm-finder>summary{cursor:pointer;min-height:44px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:calc(16px*var(--fs,1))}.adm-finder>summary b{color:var(--gold)}
+.adm-chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));gap:8px;margin:10px 0}.adm-chips>div{border:1px solid var(--line);border-radius:8px;background:var(--panel2);padding:8px 10px;min-width:0}.adm-chips dt{color:var(--muted);font-size:calc(12px*var(--fs,1))}.adm-chips dd{margin:2px 0 0;font-weight:600}
+table.adm-tl{min-width:860px}table.adm-tl th[scope=row]{white-space:nowrap;color:var(--gold)}
+.adm-door span,.adm-door b{display:block;font-size:calc(13px*var(--fs,1))}.adm-door span{color:var(--muted)}.adm-pick{color:var(--ink)}
+table.st2 tr.adm-deadrow>*{background:var(--panel2)}table.st2 tr.adm-deadrow>:first-child{box-shadow:inset 4px 0 0 var(--blood)}.adm-dead{color:var(--bad)}
+table.st2 tr.adm-currow>*{background:var(--panel2)}table.st2 tr.adm-currow>:first-child{box-shadow:inset 4px 0 0 var(--gold)}
+table.st2 tr.adm-errrow>td{background:var(--panel);color:var(--bad);box-shadow:inset 4px 0 0 var(--bad);font-size:calc(13px*var(--fs,1))}table.st2 tr.adm-errrow b{color:var(--bad)}
+.adm-bars{max-width:none}.adm-bars>div{grid-template-columns:minmax(110px,150px) minmax(0,1fr) 48px}
+.adm-treesum{display:flex;flex-wrap:wrap;gap:10px 24px;margin:8px 0 12px}.adm-treesum>div{min-width:0}
+.adm-trd .trd-map{height:clamp(420px,72vh,820px)}
+.trd-svg .tn .prt{fill:var(--hi);font-size:calc(11px*var(--tu,1)*var(--fs,1));font-weight:700;text-anchor:middle;paint-order:stroke;stroke:var(--bg);stroke-width:calc(3px*var(--tu,1));stroke-linejoin:round;pointer-events:none} /* 글자는 확대와 상관없이 같은 크기(js/73 trdScale의 --tu) */
+.trd-svg .tn.prb1 .bd,.trd-li .tn.prb1 .bd{opacity:.4}.trd-svg .tn.prb2 .bd,.trd-li .tn.prb2 .bd{opacity:.6}.trd-svg .tn.prb3 .bd,.trd-li .tn.prb3 .bd{opacity:.8}
+.adm-rleg{grid-area:leg;border:1px solid var(--line);border-radius:10px;padding:8px 12px}.adm-rleg ul{list-style:none;margin:6px 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 16px}.adm-rleg li{display:flex;align-items:center;gap:6px}.adm-rleg .trd-li{width:22px;height:22px}
+@media(max-width:600px){.adm-findrow{flex-wrap:wrap}.adm-findrow button{flex:1 1 100%}.adm-tabs .settab{flex:1 1 40%}}
 /* 10월 16일 0.8.0 2단계: 목록형 두 트리 화면(3단계에서 방사형으로 바꾼다) */
 .ptmenu{display:flex;flex-wrap:wrap;gap:6px;position:static;grid-template-columns:none;grid-template-rows:none}.ptmenu .tseg{min-height:0;padding:6px 10px;flex:1 1 90px}.ptmenu .tseg b{font-size:calc(15px*var(--fs,1))}
 .ptlist{display:flex;flex-direction:column;gap:4px;margin-top:8px}.ptring{margin:10px 0 2px;color:var(--gold)}

@@ -222,7 +222,7 @@ function onClick(ev) {
     case 'gdone': G.data.seenGuide = true; saveLocal(); if (G.afterGuide === 'create') { G.afterGuide = null; beginCreate(); } else { G.scr = 'title'; render(); } break;
     case 'logopen': G.logOpen = true; render(); setTimeout(() => { const c = document.querySelector('[data-a="logclose"]'); if (c) c.focus(); }, 0); break; /* 휴대폰 기록 창: 초점을 창 안으로 */
     case 'logclose': G.logOpen = false; render(); setTimeout(() => { const c = document.querySelector('[data-a="logopen"]'); if (c && c.getClientRects().length) c.focus(); }, 0); break;
-    case 'runperson': G.rf = { uid: el.dataset.k }; G.rfPage = 0; G.rfOpen = null; render(); break;
+    case 'runperson': G.rf = { uid: el.dataset.k }; G.rfPage = 0; G.rfOpen = null; G.admTab = 'run'; render(); break;
     case 'runfilter': G.rf = { uid: val('runperson'), q: val('runquery'), b: val('runbuild'), result: val('runresult'), from: val('runfrom'), to: val('runto') }; G.rfPage = 0; G.rfOpen = null; render(); break;
     case 'runreset': G.rf = {}; G.rfPage = 0; G.rfOpen = null; render(); break;
     case 'runpage': G.rfPage = Math.max(0, +el.dataset.v || 0); G.rfOpen = null; render(); break;
@@ -231,7 +231,7 @@ function onClick(ev) {
     case 'rundelask': {const x=dashSelectedRun();if(x && canDeleteRun()){G.runDelTargets=null;G.runDelTarget={uid:x.uid,id:x.r.id};G.runDelMsg='';render();}break;}
     case 'rundelno': if(!G.runDelBusy){G.runDelTarget=null;G.runDelTargets=null;G.runDelMsg='';render();}break;
     case 'rundelgo': deleteOneRun((val('rundelword') || '').trim(), document.getElementById('rundelbackup')?.checked !== false); break;
-    case 'runopen': G.rfOpen = el.dataset.k; G.raPage = 0; G.rdTab = 'summary'; render(); document.getElementById('admin-run-detail')?.scrollIntoView({ block: 'start' }); break;
+    case 'runopen': G.rfOpen = el.dataset.k; G.raPage = 0; G.rdTab = 'flow'; G.admTab = 'run'; render(); document.getElementById('admin-run-detail')?.scrollIntoView({ block: 'start' }); break;
     case 'runtab': G.rdTab = el.dataset.k; render(); document.getElementById('admin-run-detail')?.scrollIntoView({ block: 'start' }); break;
     case 'runactioncsv': saveFile('nrk-행동별상태.csv', dashActionCsv()); break;
     case 'runroomcsv': saveFile('nrk-방별통계.csv', dashRoomCsv()); break;
@@ -239,6 +239,15 @@ function onClick(ev) {
     case 'runactpage': G.raPage = Math.max(0, +el.dataset.v || 0); render(); break;
     case 'runscsv': saveFile('nrk-플레이로그-' + new Date().toISOString().slice(0, 10) + '.csv', dashRunsCsv()); break;
     case 'dash': loadDash(); break;
+    case 'admtab': admTabGo(el.dataset.k, true); break; // 10월 24일 관리자 결과 보기 개편(js/74): 탭 · 판 찾기 · 지금 하는 판 · 통계 거르기 · 트리 보기
+    case 'admfind': G.admQ = val('admq'); render(); break;
+    case 'livego': liveRefresh(); break;
+    case 'liveauto': G.liveAuto = !!el.checked; liveAutoSync(); break;
+    case 'admsf': G.admSF = { v: val('sfv'), ch: +val('sfch') || 0, b: val('sfb'), from: val('sffrom'), to: val('sfto') }; render(); break;
+    case 'admsfreset': G.admSF = {}; render(); break;
+    case 'admpc': G.admPc = el.dataset.k; render(); break;
+    case 'admtv': case 'admsv': G[a === 'admtv' ? 'admTv' : 'admSv'] = el.dataset.k; render(); { const b = document.getElementById(a + '-' + el.dataset.k); if (b) b.focus(); } break;
+    case 'tlpage': G.tlPage = Math.max(0, +el.dataset.v || 0); render(); break;
     case 'dashseason': G.adminSeason = (G.adminSeason || RSEASON.cur) === RSEASON.cur ? '0.7.0' : RSEASON.cur; loadDash(); break; // M8: 관리자 결과 보기만 옛 시즌을 읽는다
     case 'choose': {
       const k = el.dataset.k; const run = G.run; const S = G.sheet;
@@ -329,7 +338,7 @@ function onKey(ev) {
   if (G.hudEd && hudEdKey(ev)) return;
   if (ev.key === 'Tab' && G.sheet) sheetTrap(ev);
   const typing = ev.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ev.target.tagName);
-  if (ev.key === 'Enter' && ev.target && ['cname', 'adminpass', 'pname', 'runquery'].includes(ev.target.id)) { ev.preventDefault(); const b = document.querySelector({ cname: '[data-a=cnok]', adminpass: '[data-a=admingo]', pname: '[data-a=namesave]', runquery: '[data-a=runfilter]' }[ev.target.id]); if (b) b.click(); return; }
+  if (ev.key === 'Enter' && ev.target && ['cname', 'adminpass', 'pname', 'runquery', 'admq'].includes(ev.target.id)) { ev.preventDefault(); const b = document.querySelector({ cname: '[data-a=cnok]', adminpass: '[data-a=admingo]', pname: '[data-a=namesave]', runquery: '[data-a=runfilter]', admq: '[data-a=admfind]' }[ev.target.id]); if (b) b.click(); return; }
   if (!typing) playTick();
   if (!typing && (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') && ev.target && ev.target.closest && ev.target.closest('.ord, .dgbar')) { /* 순서 줄 · 던전 진행 막대: 한 칸씩 옮긴다 */
     const L = [...ev.target.closest('.ord, .dgbar').querySelectorAll('li[data-info]')]; const i = L.indexOf(ev.target);

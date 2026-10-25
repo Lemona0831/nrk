@@ -71,7 +71,9 @@ with sync_playwright() as p:
     print('틀린 암호:', pg2.inner_text('main [role=status]') if pg2.query_selector('main [role=status]') else None)
     pg2.fill('#adminpass','test-pass'); pg2.press('#adminpass', 'Enter'); pg2.wait_for_timeout(1500)
     print('관리자 됨:', pg2.evaluate("()=>G.owner"))
+    pg2.click('[data-a=admtab][data-k=tools]'); pg2.wait_for_timeout(200) # 10월 24일: 결과 보기가 탭으로 — 테스터별 진행 · 지우기는 도구 탭
     t=pg2.inner_text('main'); i=t.find('테스터별 진행'); print('결과 보기:', t[i:i+160].replace('\n',' ') if i>=0 else t[:200])
+    t=pg2.evaluate("()=>{G.admTab='stat';render();document.querySelectorAll('main details').forEach(d=>d.open=true);return document.querySelector('main').innerText}"); pg2.click('[data-a=admtab][data-k=tools]'); pg2.wait_for_timeout(200)
     t2=t.find('0.6 캐릭터'); print('0.6 요약:', t[t2:t2+60].replace(chr(10),' ') if t2>=0 else '없음')
     print('랭킹(지인 판):', pg2.evaluate("async()=>{ G.board=null; await loadBoard(); return rankRows().map(e=>[e.nick,e.cname,e.build,rankProg(e)]) }"))
     # 관리자: 테스터 기록 지우기 (고르기 → 확인 문장 → 백업 → 지우기). 지우기 함수가 없을 때는 아무것도 지우지 않고 안내한다

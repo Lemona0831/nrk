@@ -238,7 +238,7 @@ function trdInfoP(run, id, mode, opt) {
   if (why && !(st === 'near' && !edit)) h += `<p class="mini">${esc(why)}</p>`;
   if (st === 'free') h += '<p class="mini">큰 각인을 고를 때 보너스 노드로 열렸습니다. 포인트를 쓰지 않았고 상점 되돌리기에도 남습니다.</p>';
   if (st === 'ks') h += '<p class="mini">챕터 보상으로 얻었습니다. 상점 되돌리기에도 남습니다.</p>';
-  if (!edit && n.kind !== 'start' && st !== 'own' && st !== 'free' && st !== 'ks') h += `<p class="mini">${G.run && !G.creating && runOver(G.run) ? '끝난 캐릭터의 트리는 볼 수만 있습니다.' : '전투 중에는 볼 수만 있습니다.'}</p>`;
+  if (!edit && n.kind !== 'start' && st !== 'own' && st !== 'free' && st !== 'ks') h += `<p class="mini">${G.trdRO ? '관리자 보기입니다. 볼 수만 있습니다.' : G.run && !G.creating && runOver(G.run) ? '끝난 캐릭터의 트리는 볼 수만 있습니다.' : '전투 중에는 볼 수만 있습니다.'}</p>`;
   let b = '';
   if (st === 'can' && edit) b += `<button class="gold" data-a="ptbuy" data-k="${id}" data-e="${mode}">찍기 · 포인트 ${n.cost}</button>`;
   if (st === 'own' && allocStep(run) === 'p') b += `<button data-a="ptref" data-k="${id}" data-e="${mode}">되돌리기</button>`;
@@ -265,7 +265,7 @@ function trdInfoA(run, id) {
     else { h = `<div class="trd-ih"><b>✚ ${esc(n.n)}</b><button class="sm trd-x" data-a="tsel" data-k="" data-e="a" aria-label="설명 닫기">✕</button></div><p class="mini">강화 · ${esc(on.n)}에 붙음 · ${n.ring}고리 · 포인트 ${n.cost}</p><p>${esc(n.d)}</p>`; h += `<p class="trd-st st-${st}${st === 'own' && !work ? ' idle' : ''}">${TRD_STA[st]}${st === 'own' ? (work ? ' · 일함' : ' · ' + esc(on.n) + '을(를) 끼우면 일함') : ''}${!ringOpen(run, n.ring) ? ' · ' + trdRingShort(n.ring) : ''}</p>`; }
   }
   if (why && !(st === 'near' && !edit)) h += `<p class="mini">${esc(why)}</p>`;
-  if (!edit && st !== 'own') h += `<p class="mini">${G.run && !G.creating && runOver(G.run) ? '끝난 캐릭터의 트리는 볼 수만 있습니다.' : '전투 중에는 볼 수만 있습니다.'}</p>`;
+  if (!edit && st !== 'own') h += `<p class="mini">${G.trdRO ? '관리자 보기입니다. 볼 수만 있습니다.' : G.run && !G.creating && runOver(G.run) ? '끝난 캐릭터의 트리는 볼 수만 있습니다.' : '전투 중에는 볼 수만 있습니다.'}</p>`;
   if (st === 'can' && edit && !n.slot) b = `<button class="gold" data-a="atbuy" data-k="${id}" data-e="a">열기 · 포인트 ${n.cost}</button>` + b; // 변형 자리는 변형마다 버튼(atVarHtml)
   if (st === 'own' && allocStep(run) === 'a') b += `<button data-a="atref" data-k="${id}" data-e="a">되돌리기</button>`;
   return h + trdBtnRow(b);

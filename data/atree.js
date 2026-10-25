@@ -63,10 +63,10 @@ const ATREE_DEF = {
         ['sbv_fog_ash', '잿빛 안개', '화상 2를 더 겁니다. 출혈 5 → 3.', { fxSet: [{ k: 'st', s: 'bleed', n: 3 }], fxAdd: [{ k: 'st', s: 'ignite', n: 2 }] }, ['화상'], { v: 'link' }]],
       sb_ember: [
         ['sbv_ember_front', '불씨 흩뿌리기', '전열 모두를 칩니다. 피해 10 → 7. 화상 5 → 3.', { set: { tgt: 'front' }, fxSet: [{ k: 'dmg', n: 7 }, { k: 'st', s: 'ignite', n: 3 }] }, ['광역'], { v: 'deep' }],
-        ['sbv_ember_blood', '피 섞인 불씨', '출혈 2를 더 겁니다. 화상 5 → 3.', { fxSet: [{ k: 'st', s: 'ignite', n: 3 }], fxAdd: [{ k: 'st', s: 'bleed', n: 2 }] }, ['출혈'], { v: 'link' }]],
+        ['sbv_ember_blood', '불씨 방패', '보호막 +7을 두릅니다. 피해 10 → 6.', { fxSet: [{ k: 'dmg', n: 6 }], fxAdd: [{ k: 'ward', n: 7 }] }, ['보호막'], { v: 'link' }] /* 10월 25일: 마갑 쪽 칸이라 보호막 연계(혈인 핏빛 방패 낙인과 같은 꼴, 옛 피 섞인 불씨, id 그대로) */],
       sb_flamecut: [
         ['sbv_fc_fast', '빠른 달굼', '빠른 칸이 됩니다. 피해 12 → 9.', { set: { time: 'fast' }, fxSet: [{ k: 'dmg', n: 9 }] }, ['빠름'], { v: 'deep' }],
-        ['sbv_fc_counter', '맞불', '지난 라운드나 이번 라운드에 대응 충전을 받았으면(흘리기 직후) 비용 −1(바닥 1, 내 차례에 한 번).', { cond: { off: 1, when: 'resp' } }, ['대응', '흘리기'], { v: 'link' }]],
+        ['sbv_fc_counter', '피 먹인 불칼', '출혈 2를 겁니다. 칼에 싣는 화상 4 → 2.', { fxSet: [{ k: 'imbue', s: 'ignite', n: 2 }], fxAdd: [{ k: 'st', s: 'bleed', n: 2 }] }, ['출혈'], { v: 'link' }] /* 10월 25일: 혈인 쪽 칸이라 출혈 연계(옛 맞불, id 그대로) */],
       sb_spark: [
         ['sbv_spark_kill', '불티 거두기', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유).', { set: { killRecharge: 1 } }, ['처치'], { v: 'deep' }],
         ['sbv_spark_ward', '불티 방패', '보호막 +5를 두릅니다. 피해 11 → 8.', { fxSet: [{ k: 'dmg', n: 8 }], fxAdd: [{ k: 'ward', n: 5 }] }, ['보호막'], { v: 'link' }]],
@@ -84,10 +84,10 @@ const ATREE_DEF = {
         ['sbv_inf_blood', '피불 난도', '한 타마다 출혈 1을 더 겁니다. 화상 2 → 1.', { fxSet: [{ k: 'st', s: 'ignite', n: 1 }], fxAdd: [{ k: 'st', s: 'bleed', n: 1 }] }, ['출혈'], { v: 'link' }]],
       sb_bolt: [
         ['sbu_barrage', '방벽 포격', '보호막 비례 피해 0.5 → 1, 상한 12 → 18.', { fxSet: [{ k: 'wardDmg', per: 1, cap: 18 }] }, [], { v: 'deep' }],
-        ['sbv_bolt_fire', '달군 탄', '화상 2를 겁니다. 피해 12 → 8.', { fxSet: [{ k: 'dmg', n: 8 }], fxAdd: [{ k: 'st', s: 'ignite', n: 2 }] }, ['화상'], { v: 'link' }]],
+        ['sbv_bolt_fire', '피 묻은 탄', '출혈 2를 겁니다. 피해 12 → 8.', { fxSet: [{ k: 'dmg', n: 8 }], fxAdd: [{ k: 'st', s: 'bleed', n: 2 }] }, ['출혈'], { v: 'link' }] /* 10월 25일: 혈인 쪽 칸이라 출혈 연계(옛 달군 탄, id 그대로) */],
       sb_bladeward: [
         ['sbu_counter', '맞받아 베기', '교대면 보호막 +4.', { fxAdd: [{ k: 'alt', ward: 4 }] }, ['교대'], { v: 'deep' }],
-        ['sbv_bw_blood', '피 묻은 마갑', '출혈 2를 겁니다. 피해 15 → 12.', { fxSet: [{ k: 'dmg', n: 12 }], fxAdd: [{ k: 'st', s: 'bleed', n: 2 }] }, ['출혈'], { v: 'link' }]],
+        ['sbv_bw_blood', '달군 마갑', '화상 2를 겁니다. 피해 15 → 12.', { fxSet: [{ k: 'dmg', n: 12 }], fxAdd: [{ k: 'st', s: 'ignite', n: 2 }] }, ['화상'], { v: 'link' }] /* 10월 25일: 염검 쪽 칸이라 화상 연계(옛 피 묻은 마갑, id 그대로) */],
       sb_shard: [
         ['sbv_shard_kill', '파편 거두기', '이 스킬로 적을 쓰러뜨리면 유산 +1(라운드에 한 번, 환급 한도 공유).', { set: { killRecharge: 1 } }, ['처치'], { v: 'deep' }],
         ['sbv_shard_fire', '불꽃 파편', '화상 1을 겁니다. 피해 12 → 9.', { fxSet: [{ k: 'dmg', n: 9 }], fxAdd: [{ k: 'st', s: 'ignite', n: 1 }] }, ['화상'], { v: 'link' }]],

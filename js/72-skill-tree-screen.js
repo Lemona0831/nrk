@@ -2,7 +2,7 @@
 /* ===== 0.8.0 두 트리 화면 (10월 16일 0.8.0 2단계: 목록형. 10월 17일 3단계: 방사형 그림은 js/73-tree-radial.js, 목록형은 "목록으로 보기"로 남긴다) =====
    패시브: 방향 탭 6개, 고리 · 반지름 순서로 노드 줄. 액티브: 갈래 탭 3개, 스킬 · 강화 노드 줄과 장착 6칸(시작 2 + 4).
    쓰는 곳: 트리 페이지('tree'), 캐릭터 만들기와 옛 세이브 옮기기의 배분 흐름(sheet 'alloc'), 큰 각인 고르기(sheet 'ks'). 전투 중에는 보기만 한다 */
-const treeCanEdit = () => !(G.b && !G.b.over) && !(G.run && !G.creating && runOver(G.run));
+const treeCanEdit = () => !G.trdRO && !(G.b && !G.b.over) && !(G.run && !G.creating && runOver(G.run)); // 10월 24일: G.trdRO — 관리자 결과 보기의 방사형 트리는 보기만(js/74 admTrdView)
 function treeHover() { } // 옛 트리 화면의 설명 미리보기 자리(부팅이 붙인다). 목록형 화면은 설명이 줄 안에 있다
 const PT_LANE_O = { LL: -1, L: 0, C: 1, R: 2, RR: 3 };
 const ptNodeSort = T => (a, b) => (T.nodes[a].ring - T.nodes[b].ring) || (T.nodes[a].pos.r - T.nodes[b].pos.r) || (PT_LANE_O[T.nodes[a].pos.lane] - PT_LANE_O[T.nodes[b].pos.lane]);
